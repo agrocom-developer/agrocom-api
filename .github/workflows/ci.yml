@@ -1,0 +1,100 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, master]
+  push:
+    branches: [develop, master]
+
+jobs:
+  docs-legacy-guard:
+    name: docs-legacy-guard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verifica que docs/legacy/ no fue modificado
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="origin/${{ github.event.pull_request.base.ref }}"
+            git fetch origin "${{ github.event.pull_request.base.ref }}" --depth=1
+          else
+            BASE="${{ github.event.before }}"
+          fi
+
+          if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ]; then
+            echo "Sin base de comparación (primer push a la rama) — se omite el chequeo."
+            exit 0
+          fi
+
+          CHANGED=$(git diff --name-only "$BASE"...HEAD -- docs/legacy/ || true)
+          if [ -n "$CHANGED" ]; then
+            echo "docs/legacy/ es histórico congelado (ver docs/README.md) y no se edita más:"
+            echo "$CHANGED"
+            exit 1
+          fi
+          echo "OK: docs/legacy/ intacto."
+
+  detect-laravel:
+    name: detect-laravel
+    runs-on: ubuntu-latest
+    outputs:
+      exists: ${{ steps.check.outputs.exists }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        run: |
+          if [ -f composer.json ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  laravel-tests:
+    name: laravel-tests
+    needs: detect-laravel
+    if: needs.detect-laravel.outputs.exists == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pgsql, pdo_pgsql
+          coverage: none
+
+      - name: Instalar dependencias
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Análisis estático (Larastan)
+        run: composer larastan --no-interaction || vendor/bin/phpstan analyse
+
+      - name: Estilo de código (Pint)
+        run: vendor/bin/pint --test
+
+      - name: Tests (Pest)
+        run: vendor/bin/pest
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_DATABASE: agrocom_test
+          DB_USERNAME: postgres
+          DB_PASSWORD: postgres
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: agrocom_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5

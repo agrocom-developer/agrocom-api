@@ -27,5 +27,14 @@ Homestead.json
 /storage/pail
 .env.backup
 .env.production
+.env.local
+.env.*.local
 .phpactor.json
 auth.json
+
+# Editores
+.idea/
+.vscode/
+
+# SO
+Thumbs.db
