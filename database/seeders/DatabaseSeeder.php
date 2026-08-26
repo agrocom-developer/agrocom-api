@@ -2,24 +2,28 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Database\Seeders\Catalogo\CatalogoSeeder;
+use Database\Seeders\Demo\DemoSeeder;
 use Illuminate\Database\Seeder;
 
+/**
+ * Dos familias de seeders, separadas desde el día uno (insumos §7):
+ *
+ * - Catálogo: datos que el sistema necesita para operar. Corren en TODOS los
+ *   entornos, producción incluida.
+ * - Demo: datos de ejemplo para ejecutar el flujo transaccional. Corren SOLO
+ *   en local y staging — nunca en producción.
+ */
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Familia catálogo — todos los entornos (insumos §7.1).
+        $this->call(CatalogoSeeder::class);
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // Familia demo — solo local y staging, nunca producción (insumos §7.2).
+        if (app()->environment(['local', 'staging'])) {
+            $this->call(DemoSeeder::class);
+        }
     }
 }
