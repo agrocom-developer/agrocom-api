@@ -1,7 +1,7 @@
 # Entorno de desarrollo LOCAL únicamente (docs/decisiones/0010-entorno-local-docker-compose.md).
-# El servicio "app" arranca vacío hasta el esqueleto Laravel real (Sprint 1,
-# TE-01 — docs/gestion/plan_sprints.md); mientras tanto podés levantar "db" y
-# "mail" solos: docker compose up -d db mail
+# Uso típico: docker compose up -d  →  API en http://localhost:8000,
+# Mailpit en http://localhost:8025. La suite completa como en CI:
+# docker compose run --rm app sh -c "vendor/bin/pint --test && composer larastan && vendor/bin/pest"
 
 services:
   app:
@@ -23,7 +23,7 @@ services:
       DB_DATABASE: agrocom
       DB_USERNAME: agrocom
       DB_PASSWORD: agrocom
-    command: sh -c "if [ -f artisan ]; then php artisan serve --host=0.0.0.0 --port=8000; else echo 'Sin esqueleto Laravel todavia (Sprint 1, TE-01) — este servicio queda a la espera.'; sleep infinity; fi"
+    command: sh -c "if [ ! -d vendor ]; then composer install --no-interaction; fi && php artisan serve --host=0.0.0.0 --port=8000"
 
   db:
     image: postgres:16

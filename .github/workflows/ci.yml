@@ -7,36 +7,6 @@ on:
     branches: [develop, master]
 
 jobs:
-  docs-legacy-guard:
-    name: docs-legacy-guard
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-
-      - name: Verifica que docs/legacy/ no fue modificado
-        run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            BASE="origin/${{ github.event.pull_request.base.ref }}"
-            git fetch origin "${{ github.event.pull_request.base.ref }}" --depth=1
-          else
-            BASE="${{ github.event.before }}"
-          fi
-
-          if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ]; then
-            echo "Sin base de comparación (primer push a la rama) — se omite el chequeo."
-            exit 0
-          fi
-
-          CHANGED=$(git diff --name-only "$BASE"...HEAD -- docs/legacy/ || true)
-          if [ -n "$CHANGED" ]; then
-            echo "docs/legacy/ es histórico congelado (ver docs/README.md) y no se edita más:"
-            echo "$CHANGED"
-            exit 1
-          fi
-          echo "OK: docs/legacy/ intacto."
-
   detect-laravel:
     name: detect-laravel
     runs-on: ubuntu-latest

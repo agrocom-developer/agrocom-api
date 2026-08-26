@@ -21,13 +21,14 @@ Al empezar una iteración nueva: leé este documento completo primero (es corto)
 
 ## Fase actual
 
-**Fundación de documentación y tooling — todavía sin código de aplicación.** No existe `composer.json` ni esqueleto Laravel/Flutter. El plan de sprints (`docs/gestion/plan_sprints.md`) arranca formalmente en Sprint 1, TE-01.
+**Sprint 1 en curso — TE-01 parcial (26/8/2026).** El esqueleto Laravel de `agrocom-api` existe y la suite (Pint + Larastan + Pest) corre en CI. De TE-01 faltan: el repo `agrocom-field` (Flutter) y el entorno staging (diferido — ADR 0010, el servidor no está definido). Después siguen TE-02 (spike RC) y TE-03 (migraciones del núcleo comercial).
 
 ## Avanzado hasta ahora
 
-- **Documentación oficial** consolidada: `docs/especificacion/`, `docs/decisiones/` (10 ADRs), `docs/negocio/`, `docs/gestion/`, `docs/glosario.md` — reemplaza a `docs/legacy/` (7 documentos originales, congelados, nunca se editan).
+- **Documentación oficial** consolidada: `docs/especificacion/`, `docs/decisiones/` (10 ADRs), `docs/negocio/`, `docs/gestion/`, `docs/glosario.md`. `docs/legacy/` (los 7 documentos originales) se eliminó el 26/8/2026 — queda en el historial de git (`git log --oneline -- docs/legacy/`).
 - **GitFlow simplificado** adoptado y en uso real: `master` + `develop` + `feature/*` + `fix/*`, todo por PR.
-- **CI/CD funcionando de punta a punta y probado en vivo**: `.github/workflows/ci.yml` (`docs-legacy-guard` activo; `laravel-tests` condicionado a que exista `composer.json`) + `.github/workflows/auto-merge.yml` (mergea solo cuando los checks requeridos están en verde, sin depender del auto-merge nativo de GitHub — no disponible en repos privados de plan Free). Validado con el PR #1: se auto-fusionó a `develop` sin intervención manual.
+- **CI/CD funcionando de punta a punta y probado en vivo**: `.github/workflows/ci.yml` (`laravel-tests`: Pint + Larastan + Pest sobre PHP 8.3 con Postgres 16 de servicio; `docs-legacy-guard` retirado junto con `docs/legacy/`) + `.github/workflows/auto-merge.yml` (mergea solo cuando `laravel-tests` está en verde, sin depender del auto-merge nativo de GitHub — no disponible en repos privados de plan Free). Validado con el PR #1: se auto-fusionó a `develop` sin intervención manual.
+- **Esqueleto Laravel (26/8/2026)**: Laravel 13 sobre PHP 8.3 (`composer.lock` resuelto con `config.platform.php = 8.3` para cuadrar con el Dockerfile y CI), Pest 4 + Pint + Larastan nivel 6 (`phpstan.neon`), `.env.example` completo con las decisiones vigentes (PostgreSQL, colas/sesión/caché en BD, disco `r2` en `config/filesystems.php`, locale `es`), descripciones de tests en español. Suite verificada dentro del contenedor Docker y migraciones corridas contra el Postgres 16 del compose.
 - **Entorno de desarrollo local con Docker** (ADR 0010): `docker-compose.yml` + `Dockerfile` + `.dockerignore`, reemplaza MAMP.
 - **Doce subagentes especializados** en `.claude/agents/`: los diez por capa (arquitectura, backend, frontend, design-ui, modelo-datos, estandares-programacion, distribucion, modulos-roles, negocio, memoria-contexto) más `orquestador` y `validador`. Cada uno con el modelo asignado según si su trabajo es de ejecución/instrucciones (modelo económico) o de juicio/coordinación (modelo capaz) — ver `.claude/agents/README.md`.
 - **Convención de commits sin coautoría de IA**: desde el commit `084b732` en adelante, los mensajes de commit no llevan el trailer `Co-Authored-By: Claude...`. Los commits anteriores a esa fecha sí lo llevan y quedan así — decisión explícita del usuario de no reescribir historia ya pusheada.
@@ -36,15 +37,15 @@ Al empezar una iteración nueva: leé este documento completo primero (es corto)
 ## Ramas y remoto (estado real, no solo local)
 
 - `master`: en GitHub, sin cambios desde el commit inicial.
-- `develop`: en GitHub, al día — incluye los merges de los PR #1 a #3.
-- Local: parada actual en `feature/analisis-respuestas-campo`, nacida de `develop` (procesamiento de las respuestas de campo).
+- `develop`: en GitHub, al día — incluye los merges de los PR #1 a #7.
+- Local: parada actual en `feature/laravel-base`, nacida de `develop` (esqueleto Laravel). Convención nueva: nombres de rama cortos (2–3 palabras).
 - `gh` autenticado como `Angello-27` (permisos `push`/`pull`/`triage`, sin `admin`) — suficiente para todo el flujo de PRs y Actions; **no** suficiente para branch protection ni settings del repo.
 
 ## Próximo paso inmediato
 
 1. ~~Capturas del RC~~ **hecho (26/8/2026)**: 21 capturas analizadas en `docs/especificacion/analisis_capturas_rc.md` — campos DJI exactos, validación aritmética de áreas, columnas nuevas para el cierre de sesión.
 2. **Reunión de cierre** con la agenda de `analisis_clasificacion.md` §7 (mezcla, clima, acta, montos, lotes feos, EPP, boleo) más las 5 preguntas de semántica del RC (`analisis_capturas_rc.md` §5) → actualizar la especificación (§3, §4, §5, §7, §9, §10, §16) en una iteración dedicada.
-3. Después: Sprint 1 del plan de sprints — esqueleto Laravel + Flutter + spike de hardware en el RC real. Ahí el job `laravel-tests` deja de estar condicionado.
+3. ~~Esqueleto Laravel~~ **hecho (26/8/2026)**: Laravel 13 + Pest/Pint/Larastan, CI real en verde. Siguen de Sprint 1: esqueleto Flutter (`agrocom-field`), spike de hardware en el RC real (TE-02) y TE-03 en adelante.
 
 ## Decisiones diferidas explícitamente (no reabrir sin que el usuario lo pida)
 

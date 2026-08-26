@@ -2,7 +2,7 @@
 
 **Agrocom SRL · Sistema de Gestión de Operaciones de Fumigación · Documento oficial vigente**
 
-*Actualizado desde `docs/legacy/plan_sprints_hu_betas.md`: las referencias de branching pasan de trunk-based a GitFlow simplificado (ADR 0006). El resto del plan no cambia — ya estaba pensado para un desarrollador con agentes de IA a dedicación completa.*
+*Actualizado desde el histórico `plan_sprints_hu_betas.md` (hoy solo en el historial de git): las referencias de branching pasan de trunk-based a GitFlow simplificado (ADR 0006). El resto del plan no cambia — ya estaba pensado para un desarrollador con agentes de IA a dedicación completa.*
 
 Marco: **6 sprints de 2 semanas** (12 semanas), un desarrollador con agentes de IA a dedicación completa. Capacidad estimada por sprint: **8–9 días ideales** (los días ideales ya descuentan interrupciones). Las estimaciones asumen las decisiones vigentes: PostgreSQL 16 (ADR 0001), AdminLTE + Blade/Livewire con Atomic Design (ADR 0002), arquitectura modular Clean por feature (ADR 0003), modelo `sec_*` ajustado — permiso abstracto + multi-rol con un único login (ADR 0004), Flutter con BLoC feature-first (ADR 0005), GitFlow simplificado (ADR 0006), soft delete + bitácora de auditoría transversal (ADR 0007).
 
