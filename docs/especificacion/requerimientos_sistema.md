@@ -24,7 +24,7 @@ Prioridad: **[C]** crítico para la primera campaña con sistema (fases 1–2 de
 ### Mezcla y recargas (app celular del auxiliar)
 
 - **RF-10 [C]** Registrar toda mezcla con su **origen**: preparada por el cliente (escenario dominante) o por Agrocom. Si prepara Agrocom: checklist secuencial bloqueante con cantidades calculadas vs. reales (espec §7). Si prepara el cliente: registro de recepción, quién la preparó y problema detectado.
-- **RF-11 [C]** Calcular automáticamente cantidades por tanque y orden de mezcla a partir de la orden (dosis por ha o por 100 L, volumen del tanque por modelo, tipo de siembra).
+- **RF-11 [C]** Calcular automáticamente cantidades por tanque y orden de mezcla a partir de la orden (dosis por ha o por 100 L, volumen del tanque de mezcla o del tanque del dron según el caso, tipo de siembra).
 - **RF-12 [C]** Registrar recargas: litros de caldo, batería saliente con temperatura, hora — en el tiempo muerto del ciclo (~5 min).
 - **RF-13 [A]** Registrar cargas de combustible del generador (litros; el precio lo carga el encargado después).
 - **RF-14 [A]** Registrar sobrante del último tanque y destino (incluida la aplicación en cortinas) y disposición de envases.

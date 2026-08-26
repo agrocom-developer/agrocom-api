@@ -34,6 +34,9 @@ Jerga real del equipo, registrada al procesar las respuestas del banco de pregun
 |---|---|---|
 | **Chaco** | El campo/terreno del cliente donde se fumiga (uso regional cruceño) | negocio/politicas/rol_piloto.md |
 | **Caldo / calda** | La mezcla líquida de agua + productos que aplica el dron; "calda" es la forma habitual del equipo | especificación §7 |
+| **Tanque de mezcla** | Recipiente en tierra (200–1.000 L) donde se prepara la calda; de ahí se recarga el dron. Cuando se habla de "tanque" hay que especificar cuál de los tres | especificación §7 |
+| **Tanque del dron** | Depósito líquido del dron que se llena de caldo en cada vuelo (T30 20–26 L, T50 30–36 L, T70 ~50 L, T100 ~60 L); no se carga al máximo para cuidar las baterías | especificación §7.1 |
+| **Tolva / boleadora** | Depósito de sólidos del dron para el boleo (esparcido de semilla/fertilizante); es un accesorio distinto del tanque líquido, con volumen propio | negocio/politicas/rol_jefe_campo.md |
 | **Mapeo** | Planificación de la misión de vuelo sobre el lote en el RC; solo se hace con luz de día; los obstáculos marcados quedan registrados y el dron los rodea | negocio/flujo_base_y_excepciones.md |
 | **Cortinas** | Bordes arbolados del lote; ahí se aplica ("repaca") el sobrante del último tanque | negocio/politicas/rol_auxiliar.md |
 | **Sereno** | Humedad nocturna que hace resbalar la gota de la planta; límite natural del vuelo nocturno | negocio/politicas/rol_piloto.md |
