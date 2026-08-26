@@ -20,6 +20,7 @@ Prioridad: **[C]** crítico para la primera campaña con sistema (fases 1–2 de
 - **RF-06 [C]** Si las condiciones están fuera del rango de la orden, bloquear la apertura salvo autorización del agrónomo, que queda firmada (`autorizado_con_observacion`).
 - **RF-07 [A]** Presentar el acta para firma (en pantalla o foto del papel), por lote. La firma agrupada al cierre de la aplicación es una flexibilización en disputa (CR-06 de `analisis_clasificacion.md`), pendiente de decisión del dueño.
 - **RF-08 [C]** Toda interacción de captura debe poder completarse con el dron en tierra en menos de un cambio de batería (~5 min); ninguna pantalla exige entrada durante el vuelo.
+- **RF-09 [A]** Captura nativa de la pantalla del RC con **OCR de a bordo** (offline) que prellena los campos de la carta DJI (áreas, tiempo, litros, L/ha); el piloto confirma, la validación aritmética verifica al OCR (`analisis_capturas_rc.md` §3) y la entrada manual queda como respaldo. El screenshot se adjunta siempre como evidencia.
 
 ### Mezcla y recargas (app celular del auxiliar)
 
@@ -58,6 +59,10 @@ Prioridad: **[C]** crítico para la primera campaña con sistema (fases 1–2 de
 - **RF-52 [M]** Portal del cliente: reportes, actas e historial, siempre desde el contrato del usuario autenticado (invariante 5, test A→B → 404).
 - **RF-53 [M]** Dashboard del dueño con estado de resultados básico y costo Bs/ha.
 
+### Integraciones externas
+
+- **RF-70 [A]** Clima vía **Weather API de Google Maps Platform** (elegida por precisión; requiere API key), en tres capas compatibles con el lote sin señal: pronóstico horario cacheado en base antes de salir; el anemómetro sigue siendo el dato de la autorización en campo; y el backend enriquece cada sesión al sincronizar con el histórico horario por coordenadas del lote — segundo testigo ante reclamos de deriva/eficacia (`analisis_capturas_rc.md` §6).
+
 ### Parámetros de negocio (configuración, no código)
 
 - **RF-60 [C]** Límites de condiciones (viento, temperatura, humedad), ventanas horarias y velocidad máxima **por contrato y por orden** — los clientes los modulan (caso real: velocidad ≤15 km/h impuesta).
@@ -86,6 +91,8 @@ Prioridad: **[C]** crítico para la primera campaña con sistema (fases 1–2 de
 | Backend | Laravel + PostgreSQL 16, API REST | ADR 0001 |
 | Panel/portal | AdminLTE + Blade/Livewire, guards separados | ADR 0002 |
 | Distribución app | APK con `GET /api/version` (sin store, sin FCM) | espec §16 |
+| Clima | Weather API de Google Maps Platform: caché en base + enriquecimiento retroactivo en backend | decisión del 26/8/2026 |
+| OCR | On-device en la app del RC (p. ej. ML Kit), sobre screenshot nativo con layout DJI fijo | decisión del 26/8/2026 |
 | Flota a soportar | T30, T50 (operados hoy); T70, T100 (previstos) — volúmenes de carga por modelo parametrizados | campo 25/8/2026 |
 
 ## 4. Trazabilidad de origen
