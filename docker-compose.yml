@@ -1,0 +1,51 @@
+# Entorno de desarrollo LOCAL únicamente (docs/decisiones/0010-entorno-local-docker-compose.md).
+# El servicio "app" arranca vacío hasta el esqueleto Laravel real (Sprint 1,
+# TE-01 — docs/gestion/plan_sprints.md); mientras tanto podés levantar "db" y
+# "mail" solos: docker compose up -d db mail
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/var/www/html
+    ports:
+      - "8000:8000"
+    working_dir: /var/www/html
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: agrocom
+      DB_USERNAME: agrocom
+      DB_PASSWORD: agrocom
+    command: sh -c "if [ -f artisan ]; then php artisan serve --host=0.0.0.0 --port=8000; else echo 'Sin esqueleto Laravel todavia (Sprint 1, TE-01) — este servicio queda a la espera.'; sleep infinity; fi"
+
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: agrocom
+      POSTGRES_USER: agrocom
+      POSTGRES_PASSWORD: agrocom
+    ports:
+      - "5432:5432"
+    volumes:
+      - agrocom-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agrocom"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mail:
+    image: axllent/mailpit
+    ports:
+      - "8025:8025" # UI web
+      - "1025:1025" # SMTP
+
+volumes:
+  agrocom-db-data:

@@ -35,6 +35,16 @@ GitHub Actions (`.github/workflows/`):
 
 Ver `docs/gestion/entornos.md` y `.env.example`. Ningún `.env` real se versiona; cada entorno (local, CI, staging, producción) tiene el suyo.
 
+### Desarrollo local con Docker
+
+Ver `docs/decisiones/0010-entorno-local-docker-compose.md`. Reemplaza MAMP + una base de datos instalada aparte:
+
+```
+docker compose up -d
+```
+
+Levanta PHP 8.3 (`app`, a la espera hasta que exista el esqueleto Laravel), PostgreSQL 16 (`db`, puerto 5432) y Mailpit (`mail`, UI en `localhost:8025`).
+
 ## Agentes especializados
 
 Subagentes de Claude Code en `.claude/agents/`, uno por capa del proyecto — cada uno ancla su trabajo a los documentos oficiales que le corresponden:
