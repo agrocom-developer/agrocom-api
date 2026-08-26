@@ -29,7 +29,7 @@ Detalle completo y el porqué de cada decisión en `docs/`.
 GitHub Actions (`.github/workflows/`):
 
 - **`ci.yml`** — `docs-legacy-guard` (siempre activo: ningún PR puede modificar `docs/legacy/`) + `laravel-tests` (Pest, Larastan, Pint; se activa solo cuando exista `composer.json`).
-- **`auto-merge.yml`** — arma el auto-merge de cada PR contra `develop`/`master`. Con un solo desarrollador, el gate es **CI en verde**, sin exigir aprobación humana (ver `docs/decisiones/0006-gitflow-simplificado.md`).
+- **`auto-merge.yml`** — mergea cada PR contra `develop`/`master` apenas los checks requeridos están en verde. No usa el "Enable auto-merge" nativo de GitHub (requiere repo público en plan Free; este repo es privado) — espera por polling y mergea directo con `gh pr merge`. Con un solo desarrollador, el gate es **CI en verde**, sin exigir aprobación humana (ver `docs/decisiones/0006-gitflow-simplificado.md`).
 
 ## Entornos
 

@@ -1,28 +1,64 @@
 name: Auto-merge
 
+# No usa el "Enable auto-merge" nativo de GitHub: esa característica requiere
+# repositorio público en el plan Free (github.com/es/pull-requests/how-tos/
+# merge-and-close-pull-requests/automatically-merging-a-pull-request), y este
+# repo es privado. En su lugar, este workflow espera a que los checks
+# requeridos terminen y mergea directamente por `gh pr merge` — mismo
+# resultado, sin depender del plan de la organización.
+
 on:
-  pull_request_target:
+  pull_request:
     types: [opened, reopened, synchronize]
     branches: [develop, master]
 
 permissions:
   pull-requests: write
   contents: write
+  checks: read
 
 jobs:
-  enable-auto-merge:
-    name: enable-auto-merge
+  merge-when-green:
+    name: merge-when-green
     runs-on: ubuntu-latest
     steps:
-      - name: Habilitar auto-merge (squash) del PR
+      - name: Esperar checks requeridos y mergear si todos pasan
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
         run: |
-          gh pr merge --auto --squash "${{ github.event.pull_request.html_url }}"
+          # Solo estos dos — nunca "todos los checks del PR", porque este
+          # mismo job también es un check y esperarse a sí mismo colgaría
+          # el workflow para siempre.
+          REQUIRED=("docs-legacy-guard" "laravel-tests")
 
-# Este workflow solo ARMA el auto-merge de GitHub sobre el PR — no mergea nada
-# por sí mismo. GitHub completa el merge cuando los status checks requeridos
-# por la branch protection (job "docs-legacy-guard", y "laravel-tests" cuando
-# exista código) quedan en verde. Con un solo desarrollador, el gate es
-# exclusivamente CI en verde: no se exige aprobación humana (ver
-# docs/decisiones/0006-gitflow-simplificado.md).
+          for i in $(seq 1 60); do
+            JSON=$(gh pr checks "$PR_URL" --json name,state 2>/dev/null || echo "[]")
+            ALL_DONE=true
+            ANY_FAILED=false
+
+            for name in "${REQUIRED[@]}"; do
+              STATE=$(echo "$JSON" | jq -r --arg n "$name" \
+                '[.[] | select(.name | test($n))] | .[0].state // "PENDING"')
+              case "$STATE" in
+                SUCCESS|SKIPPED) ;;
+                FAILURE|ERROR|CANCELLED) ANY_FAILED=true ;;
+                *) ALL_DONE=false ;;
+              esac
+            done
+
+            if [ "$ANY_FAILED" = true ]; then
+              echo "Un check requerido falló — no se mergea."
+              exit 1
+            fi
+            if [ "$ALL_DONE" = true ]; then
+              echo "Checks requeridos en verde — mergeando."
+              gh pr merge --squash "$PR_URL"
+              exit 0
+            fi
+
+            sleep 15
+          done
+
+          echo "Tiempo de espera agotado (15 minutos) sin que los checks terminaran."
+          exit 1

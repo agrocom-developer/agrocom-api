@@ -16,6 +16,7 @@ El proyecto lo desarrolla una sola persona con agentes de IA como implementadore
 - **`fix/*`**: para correcciones puntuales; nace de `master`, se mergea a `master` y se reincorpora a `develop` para que no se pierda en la siguiente integración.
 - **Sin `release/*` ni `hotfix/*` formales** — no hay equipo esperando una rama de release; una corrección urgente es directamente una `fix/*` corta.
 - **Todo por Pull Request**, aunque el desarrollo sea en solitario: el PR es el punto en el que el desarrollador y el agente de IA revisan el diff antes de integrar — no es una formalidad de equipo, es el mecanismo de control de calidad.
+- **Merge automatizado sin el "Enable auto-merge" nativo de GitHub**: esa característica requiere repositorio público en el plan Free (o cualquier visibilidad en planes de pago); `agrocom-api` es privado, así que no está disponible sin cambiar de plan. En su lugar, `.github/workflows/auto-merge.yml` espera a que los checks requeridos terminen y mergea directamente por `gh pr merge` — mismo resultado (nadie hace el merge a mano), sin depender del plan de la organización.
 - **Commits en español, imperativo**: `agrega validación de solape en sesiones` (heredado de la convención ya definida en los documentos legacy).
 
 ## Alternativas descartadas
