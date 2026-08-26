@@ -8,10 +8,18 @@ Los documentos originales de la fase de propuesta y primer diseño, tal como se 
 
 ## Estructura oficial vigente
 
-- **`especificacion/especificacion_funcional_tecnica.md`** — qué hace el sistema y cómo se modela: alcance, arquitectura, roles y permisos, modelo de datos, máquinas de estado, endpoints, alertas. Es el contrato funcional+técnico.
+- **`especificacion/`** — el contrato funcional+técnico:
+  - `especificacion_funcional_tecnica.md` — qué hace el sistema y cómo se modela: alcance, arquitectura, roles y permisos, modelo de datos, máquinas de estado, endpoints, alertas. Fuente única del *qué*.
+  - `requerimientos_sistema.md` — RF/RNF verificables derivados de las respuestas de campo, con prioridad por fase.
+  - `insumos_modelo_datos.md` — preparación de la consolidación del modelo: módulos potenciales, procesos críticos, ajustes a máquinas de estado y separación de superficies (pendiente de las capturas del RC).
 - **`decisiones/`** — ADRs (Architecture Decision Records), uno por decisión de arquitectura, formato Contexto → Decisión → Alternativas descartadas → Consecuencias. Explican el *por qué* detrás de cada pieza del stack.
-- **`negocio/ventana_al_negocio.md`** — el negocio de punta a punta (cadena comercial, economía del piloto, conflictos típicos). No cambia con las decisiones técnicas.
-- **`gestion/`** — plan de sprints/HU/betas y el banco de preguntas por rol para capturar procesos de campo. Son instrumentos activos de trabajo, no decisiones congeladas.
+- **`negocio/`** — el negocio, no la técnica:
+  - `ventana_al_negocio.md` — el negocio de punta a punta (cadena comercial, economía del piloto, conflictos típicos).
+  - `politicas/` — políticas y lógica de negocio por rol (piloto, auxiliar, jefe de campo, encargado, agrónomo, dueño, cliente), derivadas de las respuestas de campo del 25/8/2026.
+  - `flujo_base_y_excepciones.md` — el flujo operativo de la orden al cobro, con sus excepciones reales ancladas por etapa.
+  - `automatizacion_sistematizacion.md` — qué automatiza el sistema, qué sistematiza y qué queda humano.
+  - `alcance_objetivos.md` — objetivos medibles del proyecto y alcance v1 ajustado por el campo.
+- **`gestion/`** — plan de sprints/HU/betas, el banco de preguntas por rol, y `respuestas_campo/` (los CSV crudos de las encuestas + `analisis_clasificacion.md`, la clasificación CONFIRMADO/CORREGIDO/DESCUBIERTO consolidada con la matriz de límites y la agenda de la reunión de cierre). Son instrumentos activos de trabajo, no decisiones congeladas.
 - **`api/`** — contrato de API (`openapi.yaml`) cuando arranque el desarrollo del motor de sync.
 
 ## Qué reemplaza a qué
