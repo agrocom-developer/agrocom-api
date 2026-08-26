@@ -1,0 +1,85 @@
+<?php
+
+namespace App\Dominios\Operaciones\Infraestructura\Eloquent;
+
+use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
+use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
+use Carbon\CarbonImmutable;
+
+/**
+ * Orden de aplicación (espec §4.3, tabla ope_ordenes_aplicacion).
+ *
+ * `contrato_id`, `lote_id` y `emitida_por_contacto_id` referencian tablas del
+ * módulo Comercial **solo por ID** (ADR 0003, regla 3): acá no hay relaciones
+ * Eloquent hacia Comercial — si Operaciones necesita datos del contrato o del
+ * lote, los pide por `Contratos/` del módulo dueño, nunca importando sus
+ * modelos.
+ *
+ * Los límites por orden en NULL heredan del contrato o del parámetro por
+ * defecto del sistema (RF-60). Las transiciones de `estado` (emitida →
+ * vigente → consumida | vencida) pasarán por el servicio de dominio de la
+ * máquina de estados cuando se implemente (invariante 7) — este modelo no
+ * ofrece atajos para mutarlas.
+ *
+ * @property int $id
+ * @property int $contrato_id
+ * @property int $lote_id
+ * @property int $nro_aplicacion
+ * @property string $litros_ha
+ * @property string|null $humedad_min_pct
+ * @property string|null $viento_max_kmh
+ * @property string|null $temperatura_max_c
+ * @property string|null $humedad_max_pct
+ * @property string|null $velocidad_max_kmh
+ * @property string|null $altura_vuelo_m
+ * @property string|null $velocidad_vuelo_kmh
+ * @property string|null $ancho_pasada_m
+ * @property string|null $observaciones
+ * @property int|null $emitida_por_contacto_id
+ * @property CarbonImmutable $fecha_emision
+ * @property EstadoOrdenAplicacion $estado
+ */
+class OrdenAplicacion extends ModeloDominio
+{
+    /** Prefijo de módulo en el nombre físico (ADR 0011); el global lo pone la conexión. */
+    protected $table = 'ope_ordenes_aplicacion';
+
+    /** @var list<string> */
+    protected $fillable = [
+        'contrato_id',
+        'lote_id',
+        'nro_aplicacion',
+        'litros_ha',
+        'humedad_min_pct',
+        'viento_max_kmh',
+        'temperatura_max_c',
+        'humedad_max_pct',
+        'velocidad_max_kmh',
+        'altura_vuelo_m',
+        'velocidad_vuelo_kmh',
+        'ancho_pasada_m',
+        'observaciones',
+        'emitida_por_contacto_id',
+        'fecha_emision',
+        'estado',
+    ];
+
+    /** @return array<string, string> */
+    protected function casts(): array
+    {
+        return [
+            'nro_aplicacion' => 'integer',
+            'litros_ha' => 'decimal:2',
+            'humedad_min_pct' => 'decimal:2',
+            'viento_max_kmh' => 'decimal:2',
+            'temperatura_max_c' => 'decimal:2',
+            'humedad_max_pct' => 'decimal:2',
+            'velocidad_max_kmh' => 'decimal:2',
+            'altura_vuelo_m' => 'decimal:2',
+            'velocidad_vuelo_kmh' => 'decimal:2',
+            'ancho_pasada_m' => 'decimal:2',
+            'fecha_emision' => 'immutable_date',
+            'estado' => EstadoOrdenAplicacion::class,
+        ];
+    }
+}
