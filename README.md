@@ -47,10 +47,11 @@ Levanta PHP 8.3 (`app`, a la espera hasta que exista el esqueleto Laravel), Post
 
 ## Agentes especializados
 
-Subagentes de Claude Code en `.claude/agents/`, uno por capa del proyecto — cada uno ancla su trabajo a los documentos oficiales que le corresponden:
+Doce subagentes de Claude Code en `.claude/agents/` — diez por capa del proyecto más dos de coordinación (`orquestador`, `validador`). Cada uno ancla su trabajo a los documentos oficiales que le corresponden, y usa un modelo económico o el de la sesión según si su tarea es mecánica o de juicio (ver `.claude/agents/README.md`):
 
 | Agente | Cuándo invocarlo |
 |---|---|
+| `orquestador` | Tareas que cruzan varias capas — decide qué agente(s) usar y en qué orden |
 | `arquitectura` | Dónde encaja código nuevo, o cuando haga falta un ADR |
 | `backend` | Casos de uso, modelos Eloquent, endpoints de API |
 | `frontend` | Pantallas del panel, componentes Livewire |
@@ -61,6 +62,7 @@ Subagentes de Claude Code en `.claude/agents/`, uno por capa del proyecto — ca
 | `modulos-roles` | Permisos `sec_*`, roles múltiples, policies |
 | `negocio` | Reglas de negocio, respuestas del banco de preguntas por rol |
 | `memoria-contexto` | Recuperar o actualizar el estado del proyecto al abrir/cerrar una sesión |
+| `validador` | Revisar un cambio ya hecho contra `CLAUDE.md`/ADRs antes de darlo por cerrado |
 
 ## Desarrollo
 

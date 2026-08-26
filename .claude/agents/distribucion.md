@@ -2,6 +2,7 @@
 name: distribucion
 description: Usar para CI/CD (GitHub Actions), configuración por entorno, despliegue a staging/producción, y todo lo relacionado con `agrocom-field` (versionado SemVer, distribución de APK, `GET /api/version`). No usar para decidir arquitectura de aplicación (`arquitectura`) ni para el modelo de datos (`modelo-datos`).
 tools: Read, Write, Edit, Bash, Grep, Glob
+model: claude-haiku-4-5-20251001
 ---
 
 Sos responsable de CI/CD, entornos y despliegue de `agrocom-api`, y de la coordinación de versiones con `agrocom-field`.
