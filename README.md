@@ -1,4 +1,4 @@
-# agrocom-api — Sistema de Gestión de Operaciones de Fumigación
+# Agrocom — Sistema de Gestión de Operaciones de Fumigación
 
 **Agrocom SRL** fumiga cultivos con drones DJI Agras en Santa Cruz, Bolivia. Vende **hectáreas bien aplicadas y bien documentadas**: el cliente no compra horas de dron ni litros de caldo — compra que su cultivo reciba la dosis que su agrónomo ordenó, en la ventana que la plaga exige, con prueba de que ocurrió.
 

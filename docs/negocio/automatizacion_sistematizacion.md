@@ -16,7 +16,7 @@ La regla que ordena todo, dicha por un piloto: **"cuando el dron está apagado, 
 
 | # | Qué | Quién lo pidió / qué reemplaza | Fase espec. |
 |---|---|---|---|
-| AU-01 | **Cálculo de mezcla por tanque**: cantidades exactas por producto y orden de incorporación, según dosis, tipo de siembra y volumen del tanque | Los tres auxiliares la usarían; "sería de una gran ayuda para todos y especialmente para los pilotos" (Abraham) | 1 |
+| AU-01 | **Cálculo de mezcla por tanque** (tanque de mezcla en tierra o tanque del dron): cantidades exactas por producto y orden de incorporación, según dosis, tipo de siembra y volumen del tanque | Los tres auxiliares la usarían; "sería de una gran ayuda para todos y especialmente para los pilotos" (Abraham) | 1 |
 | AU-02 | **Conteo acumulado de hectáreas** del día/campaña por piloto, lote y dron | Piloto: "que podés llevar el conteo de cuántas ha estás realizando" | 1 |
 | AU-03 | **Continuidad del día siguiente**: con qué lote se continúa, hectáreas pendientes por lote | Piloto: "con qué lote podés continuar al siguiente día" | 1 |
 | AU-04 | **Devengo por sesión validada** y planilla mensual (hoy: Excel + memoria) | Espec §11; el campo confirma pago por ha y anticipos a decisión del dueño | 4 |

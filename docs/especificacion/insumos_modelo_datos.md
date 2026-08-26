@@ -50,7 +50,7 @@ Los de CLAUDE.md, ratificados y ampliados por el campo:
 
 | Entidad | Cambio | Fuente |
 |---|---|---|
-| `drones` | Catálogo de modelos: agregar **T30** (operado hoy; una de las dos caídas relatadas, junto al T50) y revisar T70P; volúmenes de carga por modelo parametrizados (T30 20–26 L, T40/T50 30–36 L) | piloto/auxiliar/jefe |
+| `drones` | Catálogo de modelos: agregar **T30** (operado hoy; una de las dos caídas relatadas, junto al T50) y revisar T70P; volúmenes por modelo parametrizados distinguiendo **tanque líquido** de fumigación (T30 20–26 L, T40/T50 30–36 L) y **tolva/boleadora** del boleo (volumen aparte) | piloto/auxiliar/jefe |
 | `clientes` | Contactos operativos: **encargado de la propiedad** (indica lotes, prepara caldo, ordena pausas — opera mucho, no firma nada) | los 5 cuestionarios |
 | `contratos` | Parámetros: ventanas horarias permitidas, límites de condiciones, velocidad máxima exigida, umbral de reporte de avance (~500 ha) | piloto/encargado/agrónomo |
 | `mezclas` | `origen` (cliente / agrocom) + quién preparó; el checklist §7 aplica solo al origen agrocom | los 3 auxiliares + 3 pilotos |
@@ -93,3 +93,44 @@ Los de CLAUDE.md, ratificados y ampliados por el campo:
 ² La espec §3 permite al encargado registrar cobranza/facturar; la práctica actual es solo-dueño ("no tengo ese dato, lo maneja el dueño con trato directo con el cliente"). Mantener el permiso, registrar la práctica.
 
 **Regla UX transversal de la app RC** (unánime): captura solo con el dron en tierra — inicio de jornada, mapeo/esperas, cambio de lote, pausas, cierre. "En pleno vuelo nada se debe hacer, solo pilotear."
+
+## 6. Estrategia de arranque: procesos esenciales primero, no CRUD
+
+El sistema **no arranca construyendo el CRUD de todos los catálogos**: arranca por el proceso transaccional crítico de punta a punta (la ruta crítica de espec §15, fase 1):
+
+> orden vigente → abrir trabajo → sesión → mezcla/recarga → cierre con evidencia → validación → devengo
+
+Reglas de la estrategia:
+
+- **Cada módulo entra al desarrollo por su caso de uso transaccional**, no por sus pantallas de administración. Los catálogos que ese proceso necesita se resuelven con seeders (§7); las pantallas CRUD llegan después, cuando el proceso ya corre.
+- **Los módulos de §1 son capas aisladas que simulan microservicios sin serlo** (ADR 0003: monolito modular — un módulo solo escribe sus propias tablas; entre módulos se viaja por contratos o eventos de dominio, nunca por modelos ajenos). El beneficio es doble: hoy no se paga el costo de una red distribuida, y mañana cualquier módulo puede extraerse a servicio real sin reescribir sus fronteras.
+- **Orden de arranque propuesto** (consistente con las fases de espec §15):
+  1. **Plataforma**: Seguridad (`sec_*`) + Sync — sin esto no hay escritura confiable desde el campo.
+  2. **Núcleo transaccional**: Operaciones + Mezcla — el corte vertical completo del día de campo, corriendo con datos semilla.
+  3. **El dinero**: validación cruzada + devengo + actas (fase 2).
+  4. **El resto por fases**: Finanzas y Personal (3–4), Inventario y Mantenimiento (5–6), Portal y Reportes/Dashboard (7–8).
+- **Criterio de terminado del arranque**: el test de idempotencia del sync (espec §2.1) en verde y el flujo orden→devengo ejecutable de punta a punta con datos semilla — antes de cualquier pantalla CRUD.
+
+## 7. Datos semilla (seeders por defecto)
+
+Dos familias de seeders, separadas desde el día uno:
+
+### 7.1 Seeders de catálogo — van a todos los entornos, producción incluida
+
+| Seeder | Contenido | Fuente |
+|---|---|---|
+| Roles y permisos `sec_*` | Los 7 roles y la matriz de permisos de espec §3 | ADR 0004 |
+| Modelos de dron | T30, T50, T70/T70P, T100, con volumen de **tanque líquido** por modelo (T30 20–26 L, T50 30–36 L, T70 ~50 L, T100 ~60 L) y volumen de **tolva/boleadora** aparte | campo + espec §7.1 |
+| Productos y formulaciones | Catálogo inicial de fitosanitarios y coadyuvantes habituales con su formulación (WG/WP/SC/SL/EC/EW/OD), para no cargarlos a mano en plena campaña | espec §4.3, §16 |
+| Rubros y subrubros de gasto | Los 8 del presupuesto + Indirectos | espec §4.4 |
+| Enums operativos | Motivos de cierre de sesión, causas de pausa (`clima` / `imprevisto_del_cliente` / `falla_equipo` / `logistica`), tipos de incidencia (incluye `salud_personal` y `caida_dron`), problemas de caldo, destinos de sobrante | análisis de campo |
+| Parámetros de negocio | Límites de condiciones por defecto (viento, temperatura, humedad), ventanas horarias 6–10 / 16–20, tarifas 7 / 4,25 Bs/ha, topes de anticipo 3.000 Bs y 70%, escalera de autorización (jefe ~500 / encargado ~1.000 Bs), umbral de reporte ~500 ha, ±5% de desvío de mezcla, batería mínima 5%, tolerancia de solape | `analisis_clasificacion.md` §5–6 |
+| Checklists | Prevuelo del piloto (10 ítems reales), cierre de jornada (limpieza), orden de mezcla por defecto (los 10 pasos de espec §7.2) | politicas/rol_piloto.md, espec §7.2 |
+
+Los parámetros de negocio del seeder son los **valores por defecto**; el contrato y la orden pueden sobrescribirlos (RF-60/RF-61 de `requerimientos_sistema.md`).
+
+### 7.2 Seeders de demo — solo local y staging, nunca producción
+
+Lo mínimo para ejecutar el flujo transaccional completo en el primer `migrate --seed`: un cliente con contrato, campo y lotes de ejemplo; personas de los 7 roles (al menos una con multi-rol, para probar que el validador ≠ piloto se aplica por persona); drones y baterías; y una orden de aplicación vigente.
+
+Con esto, el primer arranque ya corre un proceso real — abrir trabajo → sesión → recarga → cierre → validación → devengo — sin que exista una sola pantalla de administración de catálogos.
