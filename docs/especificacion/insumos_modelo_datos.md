@@ -63,7 +63,7 @@ Los de CLAUDE.md, ratificados y ampliados por el campo:
 | `trabajos` | Motivo de no aplicación por **ausencia de contraparte del cliente** (caso real: 1 ha sin fumigar porque no había nadie que indicara el lugar) | piloto |
 | `evidencias` | Tipo `captura_qr` (rendiciones y pagos) | encargado |
 
-**Pendiente de las capturas del RC** (bloquea la consolidación): campos exactos del reporte de misión DJI (qué números muestra: ha, tiempo, caudal, altura, % avance), formato del mapeo y sus obstáculos, y qué muestra la pantalla al retomar misión de otro piloto — definen qué se transcribe, qué se adjunta como imagen y qué se puede validar automáticamente.
+**Capturas del RC: recibidas y analizadas el 26/8/2026** — ver `analisis_capturas_rc.md`: campos exactos de las cuatro pantallas DJI, la relación `plan = trabajo + pendiente + margen + obstáculo` como validación aritmética, columnas nuevas sugeridas (`area_pendiente_ha`, `area_plan_ha`, `area_margen_ha`, `area_obstaculo_ha`, `lha_real`, `modo_vuelo` en el cierre de sesión; `litros_aplicados_rc` en recargas) y 5 ambigüedades de semántica para la reunión de cierre. La consolidación de espec §4 ya solo espera esa reunión.
 
 ## 5. Separación de superficies (qué proceso vive dónde)
 
