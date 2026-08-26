@@ -26,6 +26,39 @@ Referencia rápida de vocabulario — de negocio y técnico — para que cualqui
 | **Solape** | Superposición real entre pasadas de vuelo; tolerado hasta un parámetro configurable antes de disparar `observado` | especificación §5, §16 |
 | **EPP** | Equipo de protección personal del auxiliar (guantes, respirador, antiparras, ropa impermeable); se confirma al iniciar cada mezcla | especificación §7.3 |
 
+## Vocabulario de campo (capturado en las encuestas del 25/8/2026)
+
+Jerga real del equipo, registrada al procesar las respuestas del banco de preguntas (`docs/gestion/respuestas_campo/`). El detalle por rol vive en `docs/negocio/politicas/`.
+
+| Término | Definición | Referencia |
+|---|---|---|
+| **Chaco** | El campo/terreno del cliente donde se fumiga (uso regional cruceño) | negocio/politicas/rol_piloto.md |
+| **Caldo / calda** | La mezcla líquida de agua + productos que aplica el dron; "calda" es la forma habitual del equipo | especificación §7 |
+| **Mapeo** | Planificación de la misión de vuelo sobre el lote en el RC; solo se hace con luz de día; los obstáculos marcados quedan registrados y el dron los rodea | negocio/flujo_base_y_excepciones.md |
+| **Cortinas** | Bordes arbolados del lote; ahí se aplica ("repaca") el sobrante del último tanque | negocio/politicas/rol_auxiliar.md |
+| **Sereno** | Humedad nocturna que hace resbalar la gota de la planta; límite natural del vuelo nocturno | negocio/politicas/rol_piloto.md |
+| **Ventana horaria de aplicación** | Franjas típicas 6:00–10:00 y 16:00–20:00: con sol fuerte la gota se pulveriza antes de caer; modulable por cliente y clima | negocio/flujo_base_y_excepciones.md §3 |
+| **Pausa atribuible** | Interrupción de la operación con causa registrada (clima / imprevisto del cliente / falla / logística); hoy no se registra y es la información que "falta siempre" | especificación (pendiente §4.3) |
+| **Encargado de la propiedad** | Persona del cliente en campo: indica lotes, prepara el caldo, ordena pausas y recoge envases; opera mucho, no firma nada | negocio/politicas/rol_cliente.md |
+| **Anemómetro ("medidor del tiempo")** | Instrumento con que el equipo mide el viento para decidir pausas y reanudaciones | negocio/politicas/rol_jefe_campo.md |
+| **Captura del RC** | Foto de la pantalla del control remoto al cerrar un lote: hectáreas, tiempo, caudal, altura — la evidencia que hoy zanja toda disputa | especificación §4.3 |
+| **Nube DJI** | Respaldo en línea de las misiones del RC; de ahí se descarga hoy el PDF para el reporte al cliente | negocio/politicas/rol_encargado_operaciones.md |
+| **Inicio de sesión (RC)** | Registro de quién operó el control; junto a las capturas, prueba quién voló qué | negocio/politicas/rol_jefe_campo.md |
+| **Pines** | Contactos eléctricos de batería y dron; su limpieza evita el "ciclo de daños" (pines sucios → placa del dron → daña las demás baterías) | negocio/politicas/rol_auxiliar.md |
+| **RPM de bombas y centrífugas** | Indicador de salud del sistema de aspersión; una caída delata grumos en el tanque ("el enemigo silencioso") | negocio/politicas/rol_auxiliar.md |
+| **Carga rápida** | Carga de batería en ~8 min con el generador DJI — menos que un vuelo (10–12 min): con 3 baterías el dron no espera | negocio/politicas/rol_auxiliar.md |
+| **Boleo** | Aplicación de sólidos al voleo con dron (esparcido); línea de servicio adicional a la fumigación líquida | negocio/politicas/rol_jefe_campo.md |
+| **Zona GEO** | Geocerca de DJI donde el dron no puede volar; exclusión técnica, no decisión del agrónomo | negocio/politicas/rol_agronomo.md |
+| **Papel hidrosensible** | Tarjeta que revela la cobertura de gota; verificación de calidad deseada por el agrónomo | negocio/politicas/rol_agronomo.md |
+| **Deriva** | Arrastre de la gota fuera del lote por viento; riesgo con vecinos y colmenas, y motivo de pausa | negocio/ventana_al_negocio.md §7 |
+| **Lote bueno / lote feo** | Bueno: plano, recto, sin obstáculos. Feo: desniveles, árboles, bordes irregulares — menos ha/hora a igual tarifa; su reparto equitativo es la regla abierta de `ventana_al_negocio.md` §6.3 | negocio/politicas/rol_piloto.md |
+| **Día volable / día perdido** | Día con ventana de aplicación aprovechable vs. día comido por lluvia o viento (≈1 de cada 4; 15–16 volables/mes) | negocio/politicas/rol_jefe_campo.md |
+| **Trufi / encomienda** | Transporte interurbano usado para enviar repuestos al campo (4–48 h según distancia) | negocio/politicas/rol_encargado_operaciones.md |
+| **QR (pago por)** | Medio de pago bancario usado para pagar al personal y respaldar rendiciones con capturas | negocio/politicas/rol_encargado_operaciones.md |
+| **Aplicación de emergencia** | Trabajo spot para otro cliente, negociado por el encargado fuera del contrato residente | negocio/politicas/rol_encargado_operaciones.md |
+| **Chata** | Carro de arrastre donde viaja el dron cuando no va en la camioneta | negocio/politicas/rol_piloto.md |
+| **Ración seca** | Víveres de respaldo del equipo para cuando el cliente no provee alimentación | negocio/politicas/rol_jefe_campo.md |
+
 ## Técnico
 
 | Término | Definición | Referencia |
