@@ -16,8 +16,8 @@
 ## Ramas activas (a la fecha de esta actualización)
 
 - `master`: sin tocar desde el commit inicial. Solo existe en el remoto de GitHub (todo lo demás es local).
-- `develop`: al día — incluye la consolidación de documentación y el bloque de CI/CD, agentes y ADRs 0008/0009 (ambas features ya mergeadas, fast-forward). Todavía no está pusheada al remoto.
-- `feature/entorno-docker-local`: en curso — Docker Compose para desarrollo local (`docker-compose.yml`, `Dockerfile`, ADR 0010), nacida de `develop`.
+- `develop`: al día — incluye consolidación de documentación, CI/CD/agentes/ADRs 0008-0009, y el entorno Docker local (ADR 0010) — tres features ya mergeadas, todas fast-forward. Todavía no está pusheada al remoto.
+- `fix/auto-merge-sin-plan-pago`: en curso — corrige `auto-merge.yml` para no depender del "Enable auto-merge" nativo de GitHub (no disponible en repos privados de plan Free), nacida de `develop`.
 
 ## Próximo paso inmediato
 
@@ -26,7 +26,8 @@ Sprint 1 del plan de sprints: esqueleto Laravel (`composer.json`, migraciones de
 ## Pendiente de decidir o confirmar
 
 - **Prefijo de tabla por módulo**: en discusión. El usuario pidió separar "Personal" (personas operativas) de "Identidad" como módulo propio, y un módulo de "Recursos"/"Inventario" para los activos físicos (drones, baterías, vehículos, bases, generadores) — falta cerrar el mapeo final módulo↔prefijo↔tablas antes de reescribir `docs/especificacion/especificacion_funcional_tecnica.md` sección 4 y crear el ADR correspondiente.
-- **Configuración remota de GitHub**: la cuenta de `gh` usada en esta sesión (`Angello-27`) no tiene rol admin sobre `agrocom-developer/agrocom-api` (404 al intentar `allow_auto_merge`). El usuario tiene la cuenta admin y confirmó ver el checkbox "Allow auto-merge" deshabilitado en Settings → Pull Requests — probablemente por una política a nivel de la organización `agrocom-developer` (member privileges). Pendiente que el usuario revise el link "Why is this option disabled?" de GitHub y, si aplica, lo habilite en `github.com/organizations/agrocom-developer/settings/member_privileges`.
+- **Auto-merge nativo de GitHub descartado**: confirmado por la propia documentación de GitHub — esa característica requiere repositorio público en plan Free (o cualquier visibilidad en planes de pago); `agrocom-api` es privado, así que el checkbox "Allow auto-merge" nunca se va a poder habilitar sin cambiar el plan de la organización. Se resolvió en `fix/auto-merge-sin-plan-pago`: `auto-merge.yml` ahora espera los checks requeridos por polling y mergea directo con `gh pr merge`, sin depender de esa característica ni de permisos de admin sobre el repo.
+- **Branch protection en `develop`/`master`** (status checks requeridos) sigue pendiente de aplicarse — eso sí requiere permisos de admin sobre el repo remoto (la cuenta `gh` de esta sesión, `Angello-27`, no los tiene; el usuario sí tiene una cuenta admin).
 - **Push al remoto**: confirmado explícitamente que todavía NO se debe pushear `develop` ni las features — todo el trabajo vive solo en la copia local hasta que el usuario lo pida.
 - Respuestas del banco de preguntas por rol (`docs/gestion/banco_preguntas_por_rol.md`) — a medida que lleguen, el agente `negocio` las clasifica en CONFIRMADO/CORREGIDO/DESCUBIERTO y propone ajustes a la especificación.
 - Supuestos abiertos de `docs/especificacion/especificacion_funcional_tecnica.md` §16 (tolerancia de solape, ±5% de mezcla, formato de firma).
