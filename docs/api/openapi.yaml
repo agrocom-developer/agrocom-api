@@ -1,0 +1,348 @@
+openapi: 3.0.0
+info:
+  title: 'Agrocom API'
+  description: 'API del Sistema de Gestión de Operaciones de Fumigación de Agrocom SRL. Sirve a las apps de campo (`agrocom-field`) y al portal del cliente; el spec generado desde el código es el contrato de la API (ADR 0014). Dinero y hectáreas viajan como string decimal, nunca como número de punto flotante.'
+  version: 0.1.0
+servers:
+  -
+    url: /
+    description: 'Servidor actual — la URL base la define el entorno (local, staging, producción).'
+paths:
+  /api/ordenes:
+    get:
+      tags:
+        - Operaciones
+      summary: 'Lista las órdenes de aplicación con filtros'
+      description: 'Listado paginado de órdenes de aplicación para la app de campo (espec §8). Todos los filtros se combinan por AND; si `vigentes` y `estado` se contradicen, el resultado es vacío — no hay prevalencia silenciosa entre filtros. Las órdenes borradas lógicamente nunca aparecen.'
+      operationId: listarOrdenes
+      parameters:
+        -
+          name: estado
+          in: query
+          description: 'Filtra por estado de la orden.'
+          required: false
+          schema:
+            type: string
+            enum:
+              - emitida
+              - vigente
+              - consumida
+              - vencida
+        -
+          name: lote_id
+          in: query
+          description: 'Filtra por lote (ID del módulo Comercial).'
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+        -
+          name: contrato_id
+          in: query
+          description: 'Filtra por contrato (ID del módulo Comercial).'
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+        -
+          name: nro_aplicacion
+          in: query
+          description: 'Filtra por número de aplicación dentro del contrato (1..n).'
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+        -
+          name: vigentes
+          in: query
+          description: 'Con valor verdadero devuelve solo las órdenes vigentes (atajo para la app del piloto; equivale a `estado=vigente`).'
+          required: false
+          schema:
+            type: boolean
+            default: false
+        -
+          name: per_page
+          in: query
+          description: 'Registros por página.'
+          required: false
+          schema:
+            type: integer
+            default: 15
+            maximum: 100
+            minimum: 1
+        -
+          name: page
+          in: query
+          description: 'Número de página.'
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+      responses:
+        200:
+          description: 'Listado paginado de órdenes, ordenado por fecha de emisión descendente.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - data
+                  - links
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OrdenAplicacion'
+                  links:
+                    $ref: '#/components/schemas/PaginacionLinks'
+                  meta:
+                    $ref: '#/components/schemas/PaginacionMeta'
+                type: object
+        422:
+          description: 'Algún filtro no pasó la validación (estado desconocido, per_page fuera de 1..100, etc.).'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+components:
+  schemas:
+    PaginacionLinks:
+      title: 'Links de paginación'
+      description: 'Links de navegación de la respuesta paginada estándar de Laravel.'
+      required:
+        - first
+        - last
+        - prev
+        - next
+      properties:
+        first:
+          description: 'URL de la primera página.'
+          type: string
+          example: 'http://localhost:8000/api/ordenes?page=1'
+        last:
+          description: 'URL de la última página.'
+          type: string
+          example: 'http://localhost:8000/api/ordenes?page=3'
+        prev:
+          description: 'URL de la página anterior; null en la primera.'
+          type: string
+          example: null
+          nullable: true
+        next:
+          description: 'URL de la página siguiente; null en la última.'
+          type: string
+          example: 'http://localhost:8000/api/ordenes?page=2'
+          nullable: true
+      type: object
+    PaginacionMeta:
+      title: 'Metadatos de paginación'
+      description: 'Metadatos de la respuesta paginada estándar de Laravel.'
+      required:
+        - current_page
+        - from
+        - last_page
+        - links
+        - path
+        - per_page
+        - to
+        - total
+      properties:
+        current_page:
+          description: 'Página actual.'
+          type: integer
+          example: 1
+        from:
+          description: 'Posición del primer registro de la página; null si está vacía.'
+          type: integer
+          example: 1
+          nullable: true
+        last_page:
+          description: 'Última página disponible.'
+          type: integer
+          example: 3
+        links:
+          description: 'Elementos del paginador para renderizar la navegación.'
+          type: array
+          items:
+            required:
+              - url
+              - label
+              - page
+              - active
+            properties:
+              url:
+                type: string
+                example: 'http://localhost:8000/api/ordenes?page=1'
+                nullable: true
+              label:
+                type: string
+                example: '1'
+              page:
+                type: integer
+                example: 1
+                nullable: true
+              active:
+                type: boolean
+                example: true
+            type: object
+        path:
+          description: 'URL base del listado, sin query string.'
+          type: string
+          example: 'http://localhost:8000/api/ordenes'
+          nullable: true
+        per_page:
+          description: 'Registros por página.'
+          type: integer
+          example: 15
+        to:
+          description: 'Posición del último registro de la página; null si está vacía.'
+          type: integer
+          example: 15
+          nullable: true
+        total:
+          description: 'Total de registros que matchean los filtros.'
+          type: integer
+          example: 42
+      type: object
+    ErrorValidacion:
+      title: 'Error de validación'
+      description: 'Respuesta 422 estándar de Laravel: un mensaje general y los mensajes por campo.'
+      required:
+        - message
+        - errors
+      properties:
+        message:
+          description: 'Mensaje general del primer error.'
+          type: string
+          example: 'El valor seleccionado para estado no es válido.'
+        errors:
+          description: 'Mensajes de validación agrupados por campo.'
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+      type: object
+    OrdenAplicacion:
+      title: 'Orden de aplicación'
+      description: 'Orden de aplicación emitida por el cliente para un lote (espec §4.3). Los valores DECIMAL (dosis, límites climáticos y de vuelo) viajan como string. Los límites en null heredan del contrato o del parámetro por defecto del sistema (RF-60).'
+      required:
+        - id
+        - contrato_id
+        - lote_id
+        - nro_aplicacion
+        - litros_ha
+        - humedad_min_pct
+        - viento_max_kmh
+        - temperatura_max_c
+        - humedad_max_pct
+        - velocidad_max_kmh
+        - altura_vuelo_m
+        - velocidad_vuelo_kmh
+        - ancho_pasada_m
+        - observaciones
+        - emitida_por_contacto_id
+        - fecha_emision
+        - estado
+        - created_at
+        - updated_at
+      properties:
+        id:
+          description: 'Identificador de la orden.'
+          type: integer
+          example: 1
+        contrato_id:
+          description: 'Contrato al que pertenece la orden (módulo Comercial, solo ID).'
+          type: integer
+          example: 1
+        lote_id:
+          description: 'Lote sobre el que se aplica (módulo Comercial, solo ID).'
+          type: integer
+          example: 3
+        nro_aplicacion:
+          description: 'Número de aplicación dentro del contrato (1..n).'
+          type: integer
+          example: 1
+        litros_ha:
+          description: 'Dosis en litros por hectárea. DECIMAL como string.'
+          type: string
+          example: '10.00'
+        humedad_min_pct:
+          description: 'Humedad relativa mínima para aplicar (%). DECIMAL como string; null hereda.'
+          type: string
+          example: '60.00'
+          nullable: true
+        viento_max_kmh:
+          description: 'Viento máximo para aplicar (km/h). DECIMAL como string; null hereda.'
+          type: string
+          example: '15.00'
+          nullable: true
+        temperatura_max_c:
+          description: 'Temperatura máxima para aplicar (°C). DECIMAL como string; null hereda.'
+          type: string
+          example: '32.00'
+          nullable: true
+        humedad_max_pct:
+          description: 'Humedad relativa máxima para aplicar (%). DECIMAL como string; null hereda.'
+          type: string
+          example: '90.00'
+          nullable: true
+        velocidad_max_kmh:
+          description: 'Velocidad máxima del equipo (km/h). DECIMAL como string; null hereda.'
+          type: string
+          example: '25.00'
+          nullable: true
+        altura_vuelo_m:
+          description: 'Altura de vuelo indicada (m). DECIMAL como string; null hereda.'
+          type: string
+          example: '3.00'
+          nullable: true
+        velocidad_vuelo_kmh:
+          description: 'Velocidad de vuelo indicada (km/h). DECIMAL como string; null hereda.'
+          type: string
+          example: '18.00'
+          nullable: true
+        ancho_pasada_m:
+          description: 'Ancho de pasada indicado (m). DECIMAL como string; null hereda.'
+          type: string
+          example: '7.00'
+          nullable: true
+        observaciones:
+          description: 'Observaciones libres del emisor.'
+          type: string
+          example: 'Aplicar en horas de la mañana.'
+          nullable: true
+        emitida_por_contacto_id:
+          description: 'Contacto del cliente que emitió la orden (módulo Comercial, solo ID).'
+          type: integer
+          example: 2
+          nullable: true
+        fecha_emision:
+          description: 'Fecha de emisión de la orden.'
+          type: string
+          format: date
+          example: '2026-08-26'
+        estado:
+          description: 'Estado de la orden (espec §5: emitida → vigente → consumida | vencida).'
+          type: string
+          enum:
+            - emitida
+            - vigente
+            - consumida
+            - vencida
+        created_at:
+          type: string
+          format: date-time
+          example: '2026-08-26T12:00:00+00:00'
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+          example: '2026-08-26T12:00:00+00:00'
+          nullable: true
+      type: object
+tags:
+  -
+    name: Operaciones
+    description: 'Órdenes de aplicación y, más adelante, trabajos y sesiones de vuelo (espec §5).'

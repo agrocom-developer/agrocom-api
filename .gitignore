@@ -22,6 +22,8 @@
 /public/hot
 /public/storage
 /storage/*.key
+# Salida de l5-swagger: el contrato versionado vive en docs/api/openapi.yaml (ADR 0014)
+/storage/api-docs
 /storage/pail
 /vendor
 _ide_helper.php

@@ -10,6 +10,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
+        "darkaonline/l5-swagger": "^11.1",
         "laravel/framework": "^13.17",
         "laravel/tinker": "^3.0",
         "league/flysystem-aws-s3-v3": "^3.35"
@@ -72,7 +73,11 @@
         "pre-package-uninstall": [
             "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
         ],
-        "larastan": "phpstan analyse --memory-limit=512M"
+        "larastan": "phpstan analyse --memory-limit=512M",
+        "openapi": [
+            "@php artisan l5-swagger:generate",
+            "@php -r \"copy('storage/api-docs/api-docs.yaml', 'docs/api/openapi.yaml');\""
+        ]
     },
     "extra": {
         "laravel": {
