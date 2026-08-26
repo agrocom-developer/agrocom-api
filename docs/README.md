@@ -1,10 +1,6 @@
 # Documentación de `agrocom-api`
 
-Este `docs/` separa dos cosas: lo que fue el camino hasta acá, y lo que rige hoy.
-
-## `legacy/` — histórico, no se edita más
-
-Los documentos originales de la fase de propuesta y primer diseño, tal como se escribieron, uno construido sobre el anterior sin que los previos se corrigieran. Se conservan porque documentan *por qué* se llegó a cada decisión (por ejemplo, el panel web pasó de React → Filament → AdminLTE+Livewire entre tres documentos legacy sucesivos). No son la fuente de verdad — están congelados.
+Este `docs/` contiene solo la documentación vigente. Los documentos originales de la fase de propuesta (el antiguo `docs/legacy/`) se eliminaron el 26/8/2026 al arrancar el desarrollo: ya estaban íntegramente reemplazados por la estructura oficial (ver la tabla al final) y siguen disponibles en el historial de git (`git log --oneline -- docs/legacy/`).
 
 ## Estructura oficial vigente
 
@@ -24,7 +20,9 @@ Los documentos originales de la fase de propuesta y primer diseño, tal como se 
 
 ## Qué reemplaza a qué
 
-| Legacy | Reemplazado por |
+Mapa histórico: cada documento de propuesta (hoy solo en el historial de git) y el documento oficial que lo reemplazó.
+
+| Legacy (eliminado) | Reemplazado por |
 |---|---|
 | `Especificacion_Tecnica_Sistema_Fumigacion_v1.0.docx` | `especificacion/especificacion_funcional_tecnica.md` |
 | `enfoque_desarrollo_sistema_fumigacion.md` | `especificacion/` (protocolo de sync, sección 2) + `decisiones/` (arquitectura) + `gestion/plan_sprints.md` (plan de ejecución) |
