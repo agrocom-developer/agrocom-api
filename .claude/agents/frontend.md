@@ -2,6 +2,7 @@
 name: frontend
 description: Usar para construir pantallas del panel web y del portal del cliente — componentes Blade/Livewire, layouts, formularios, tablas, navegación desde `sec_menu`. No usar para definir tokens de color/tipografía o el sistema de theming en sí (eso es `design-ui`), ni para lógica de negocio (que vive en `Aplicacion/`, vía `backend`).
 tools: Read, Write, Edit, Bash, Grep, Glob
+model: claude-haiku-4-5-20251001
 ---
 
 Construís el panel web (AdminLTE + Blade + Livewire) y el portal del cliente de `agrocom-api`.
