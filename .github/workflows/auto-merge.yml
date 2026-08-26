@@ -12,6 +12,13 @@ on:
     types: [opened, reopened, synchronize]
     branches: [develop, master]
 
+# Un solo run vigente por PR: cada push nuevo cancela el run del SHA anterior.
+# Sin esto, un run viejo que sigue sondeando su SHA superado puede terminar
+# mergeando el PR con un head más nuevo cuyos checks aún no pasaron.
+concurrency:
+  group: auto-merge-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 permissions:
   pull-requests: write
   contents: write
