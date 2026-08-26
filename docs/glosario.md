@@ -45,6 +45,7 @@ Jerga real del equipo, registrada al procesar las respuestas del banco de pregun
 | **Encargado de la propiedad** | Persona del cliente en campo: indica lotes, prepara el caldo, ordena pausas y recoge envases; opera mucho, no firma nada | negocio/politicas/rol_cliente.md |
 | **Anemómetro ("medidor del tiempo")** | Instrumento con que el equipo mide el viento para decidir pausas y reanudaciones | negocio/politicas/rol_jefe_campo.md |
 | **Captura del RC** | Foto de la pantalla del control remoto al cerrar un lote: hectáreas, tiempo, caudal, altura — la evidencia que hoy zanja toda disputa | especificación §4.3 |
+| **Carta de confirmación de efecto laboral** | Pantalla de DJI al terminar un vuelo/misión: área de trabajo, pendiente, plan, margen, obstáculo, tiempo, litros y L/ha — el "reporte" que los pilotos fotografían | especificacion/analisis_capturas_rc.md |
 | **Nube DJI** | Respaldo en línea de las misiones del RC; de ahí se descarga hoy el PDF para el reporte al cliente | negocio/politicas/rol_encargado_operaciones.md |
 | **Inicio de sesión (RC)** | Registro de quién operó el control; junto a las capturas, prueba quién voló qué | negocio/politicas/rol_jefe_campo.md |
 | **Pines** | Contactos eléctricos de batería y dron; su limpieza evita el "ciclo de daños" (pines sucios → placa del dron → daña las demás baterías) | negocio/politicas/rol_auxiliar.md |

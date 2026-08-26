@@ -42,8 +42,8 @@ Al empezar una iteración nueva: leé este documento completo primero (es corto)
 
 ## Próximo paso inmediato
 
-1. **Capturas del RC** (las consigue el usuario) → consolidar el modelo de datos en la especificación §4 con `docs/especificacion/insumos_modelo_datos.md`.
-2. **Reunión de cierre** con la agenda de `analisis_clasificacion.md` §7 (mezcla, clima, acta, montos, lotes feos, EPP, boleo) → actualizar la especificación (§3, §4, §5, §7, §9, §10, §16) en una iteración dedicada.
+1. ~~Capturas del RC~~ **hecho (26/8/2026)**: 21 capturas analizadas en `docs/especificacion/analisis_capturas_rc.md` — campos DJI exactos, validación aritmética de áreas, columnas nuevas para el cierre de sesión.
+2. **Reunión de cierre** con la agenda de `analisis_clasificacion.md` §7 (mezcla, clima, acta, montos, lotes feos, EPP, boleo) más las 5 preguntas de semántica del RC (`analisis_capturas_rc.md` §5) → actualizar la especificación (§3, §4, §5, §7, §9, §10, §16) en una iteración dedicada.
 3. Después: Sprint 1 del plan de sprints — esqueleto Laravel + Flutter + spike de hardware en el RC real. Ahí el job `laravel-tests` deja de estar condicionado.
 
 ## Decisiones diferidas explícitamente (no reabrir sin que el usuario lo pida)

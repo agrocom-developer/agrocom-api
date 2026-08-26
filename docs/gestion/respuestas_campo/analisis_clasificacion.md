@@ -133,6 +133,6 @@ Ejecuta el "circuito de cierre" del banco de preguntas (`banco_preguntas_por_rol
 
 ## 8. Pendientes que bloquean la consolidación del modelo de datos
 
-- **Capturas del RC** (las consigue el usuario): definen los campos del reporte de misión, el mapeo/obstáculos y la pantalla de retoma de misión → con ellas se consolida espec §4.
+- ~~**Capturas del RC**~~ **RESUELTO (26/8/2026)**: 21 capturas recibidas y analizadas en `docs/especificacion/analisis_capturas_rc.md` (crudas en `capturas_rc/`). Quedan 5 preguntas de semántica fina para la reunión de cierre (tasa 100% vs. pendiente, alcance de tiempo/litros, colores de pasadas, marca "M", carta corta vs. larga).
 - **Voz real del cliente**: ni el agrónomo ni el dueño del campo respondieron; validar con ellos lo derivado en `politicas/rol_agronomo.md` y `politicas/rol_cliente.md`.
 - La actualización de `especificacion_funcional_tecnica.md` (§3, §4, §5, §7, §9, §10, §16) se hace **después** de la reunión de cierre, en una iteración dedicada.
