@@ -93,7 +93,10 @@ return [
             'username' => env('DB_USERNAME', 'root'),
             'password' => env('DB_PASSWORD', ''),
             'charset' => env('DB_CHARSET', 'utf8'),
-            'prefix' => '',
+            // Prefijo global opcional de tablas (estilo $table_prefix de WordPress).
+            // Vacío por defecto; los prefijos de módulo (com_, ope_, ...) van en el
+            // nombre físico de cada tabla, no acá.
+            'prefix' => env('DB_TABLE_PREFIX', ''),
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => env('DB_SSLMODE', 'prefer'),
