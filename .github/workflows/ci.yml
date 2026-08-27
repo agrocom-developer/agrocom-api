@@ -37,6 +37,9 @@ jobs:
           extensions: pgsql, pdo_pgsql
           coverage: none
 
+      - name: Crear .env
+        run: cp .env.example .env
+
       - name: Instalar dependencias
         run: composer install --no-interaction --prefer-dist
 
