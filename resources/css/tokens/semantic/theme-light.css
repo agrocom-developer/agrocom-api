@@ -60,6 +60,17 @@
     /* Foco (accesibilidad) */
     --ag-color-focus-ring: var(--ag-color-blue-500);
 
+    /* Overlay/texto sobre foto de marca (auth-layout, HU-02) — DELIBERADAMENTE
+       constantes entre temas, mismo criterio que --ag-color-primary(-contrast):
+       la fotografía (drone-hero.jpg) no reasigna por tema, así que el scrim y
+       el texto que van encima tampoco pueden hacerlo. Nunca usar
+       --ag-color-text-inverse acá: en tema oscuro resuelve a gris-900 (casi
+       negro), invisible sobre una foto ya oscurecida por el scrim. Ver
+       verificación de contraste en sistema_diseno_panel.md §1.3. */
+    --ag-color-scrim-strong: rgba(0, 0, 0, 0.82);
+    --ag-color-scrim: rgba(0, 0, 0, 0.68);
+    --ag-color-text-on-scrim: var(--ag-color-gray-0);
+
     /* Bootstrap 5 hereda la marca reasignando sus propias variables nativas
        — así `.btn-primary`, `.alert-success`, el sidebar de AdminLTE, etc.
        no necesitan overrides por componente ni por tema. */

@@ -1,0 +1,74 @@
+{{--
+    Molecule: menu-item (docs/diseno/sistema_diseno_panel.md §4.3)
+    El ítem hoja del menú (ver organisms/collapsible-menu-group para el caso
+    con submenú). Encaja directo con la forma de `ItemMenu`
+    (App\Dominios\Seguridad\Aplicacion\ItemMenu): `label` es la CLAVE de
+    traducción sin resolver (se resuelve acá vía `__()`, nunca antes —
+    ADR 0013, docblock de ItemMenu), `icon`/`href` ya vienen resueltos por
+    quien arma el árbol (sidebar-nav/collapsible-menu-group no llaman a
+    `route()` ni conocen `sec_menu`).
+
+    Props:
+    - label (requerido): clave de traducción (p. ej. "seguridad.menu.usuarios").
+    - icon (nullable): nombre de ícono Material Symbols.
+    - href (nullable): URL ya resuelta. Sin ella, renderiza <button> (grupo
+      sin acción propia, o placeholder).
+    - active (bool, default false): estado visual + `aria-current`.
+    - badge (nullable, string|int): contador opcional.
+    - permission (nullable string): código `sec_permission`, informativo —
+      esta molécula no consulta `sec_*`, el filtrado ya ocurrió antes
+      (App\Dominios\Seguridad\Aplicacion\ObtenerMenuPorRolActivo).
+    - staggerIndex (nullable int): posición del ítem en su lista, para el
+      efecto de aparición escalonada (ver menu-item.css) — puramente visual,
+      quien arma la lista (sidebar-nav/collapsible-menu-group) lo pasa como
+      el índice del `@foreach`.
+--}}
+@props([
+    'label',
+    'icon' => null,
+    'href' => null,
+    'active' => false,
+    'badge' => null,
+    'permission' => null,
+    'staggerIndex' => null,
+])
+
+@php
+    $resolvedLabel = __($label);
+    $classes = ['ag-menu-item', $active ? 'is-active' : ''];
+    $style = $staggerIndex !== null ? "--ag-menu-item-index: {$staggerIndex}" : null;
+@endphp
+
+@if ($href)
+    <a
+        href="{{ $href }}"
+        {{ $attributes->class($classes) }}
+        @if ($style) style="{{ $style }}" @endif
+        @if ($active) aria-current="page" @endif
+        @if ($permission) data-ag-permission="{{ $permission }}" @endif
+    >
+        @if ($icon)
+            <x-atoms.icon :name="$icon" size="sm" class="ag-menu-item__icon" />
+        @endif
+        <span class="ag-menu-item__label">{{ $resolvedLabel }}</span>
+        @if ($badge !== null)
+            <span class="ag-menu-item__badge">{{ $badge }}</span>
+        @endif
+    </a>
+@else
+    <button
+        type="button"
+        {{ $attributes->class($classes) }}
+        @if ($style) style="{{ $style }}" @endif
+        @if ($active) aria-current="true" @endif
+        @if ($permission) data-ag-permission="{{ $permission }}" @endif
+    >
+        @if ($icon)
+            <x-atoms.icon :name="$icon" size="sm" class="ag-menu-item__icon" />
+        @endif
+        <span class="ag-menu-item__label">{{ $resolvedLabel }}</span>
+        @if ($badge !== null)
+            <span class="ag-menu-item__badge">{{ $badge }}</span>
+        @endif
+    </button>
+@endif

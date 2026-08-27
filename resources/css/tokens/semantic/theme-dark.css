@@ -59,6 +59,13 @@
 
     --ag-color-focus-ring: #6ea8fe;
 
+    /* Mismo valor que theme-light.css, a propósito — ver el comentario de
+       ese archivo. La foto no cambia entre temas, así que su overlay/texto
+       tampoco. */
+    --ag-color-scrim-strong: rgba(0, 0, 0, 0.82);
+    --ag-color-scrim: rgba(0, 0, 0, 0.68);
+    --ag-color-text-on-scrim: var(--ag-color-gray-0);
+
     --bs-body-bg: var(--ag-color-bg);
     --bs-body-color: var(--ag-color-text);
     --bs-border-color: var(--ag-color-border);

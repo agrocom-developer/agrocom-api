@@ -48,6 +48,16 @@
        cifras tabulares (hectáreas, montos, códigos de sesión), no de uso general. */
     --ag-font-family-base: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
     --ag-font-family-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+    /* Tipografía de titulares (HU-02, refinamiento de auth-layout): ADICIONAL
+       a --ag-font-family-base, nunca la reemplaza — solo para headlines
+       grandes tipo hero (hoy: el wordmark y el headline editorial sobre
+       drone-hero.jpg). "Instrument Serif" todavía NO está instalada
+       (`@fontsource/instrument-serif` no está en package.json/node_modules a
+       la fecha de este token) — mismo criterio que se usó con Material
+       Symbols antes de que `frontend` lo instalara (ver catálogo §6): el
+       token queda declarado con fallback serif del sistema, listo para
+       consumir la fuente en cuanto exista. */
+    --ag-font-family-display: 'Instrument Serif', ui-serif, Georgia, 'Times New Roman', serif;
     --ag-font-size-xs: 0.75rem;
     --ag-font-size-sm: 0.875rem;
     --ag-font-size-base: 1rem;
@@ -74,4 +84,17 @@
     /* Transiciones */
     --ag-transition-fast: 150ms ease-in-out;
     --ag-transition-base: 250ms ease-in-out;
+
+    /* Curvas de easing propias (HU-02), solo la curva — la duración se
+       compone en cada sitio de uso (`Nms var(--ag-ease-*)`), a diferencia de
+       --ag-transition-fast/base que empaquetan duración+curva. Existen para
+       que las animaciones de entrada/expansión de moléculas/organismos usen
+       una curva deliberada en vez del `ease`/`ease-in-out` genérico:
+       - `--ag-ease-emphasized`: entradas con "decelerate" marcado (stagger
+         del menú, popover de cambio de rol, tarjeta de auth-layout).
+       - `--ag-ease-drawer`: deslizamiento de paneles tipo cajón (sidebar
+         offcanvas en mobile — sobreescribe `--bs-offcanvas-transition` de
+         Bootstrap, nunca reemplaza el mecanismo, solo su curva). */
+    --ag-ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
+    --ag-ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
 }

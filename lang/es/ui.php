@@ -34,4 +34,19 @@ return [
         'close' => 'Cerrar',
     ],
 
+    // Chrome genérico del panel (organisms/sidebar-nav, organisms/topbar,
+    // HU-02): acciones de la cáscara de navegación, reutilizables en
+    // cualquier pantalla — no específicas de una pantalla de negocio, por
+    // eso viven acá y no en seguridad.php (ver sistema_diseno_panel.md §5).
+    'sidebar' => [
+        'open' => 'Abrir menú',
+        'close' => 'Cerrar menú',
+        'collapse' => 'Colapsar menú',
+        'expand' => 'Expandir menú',
+    ],
+
+    'footer' => [
+        'copyright' => 'Agrocom SRL — :year',
+    ],
+
 ];

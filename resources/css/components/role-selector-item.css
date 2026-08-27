@@ -1,0 +1,107 @@
+/*
+ * Molecule: role-selector-item (resources/views/components/molecules/role-selector-item.blade.php)
+ * Base: `list-group`/`form-check` conceptual de Bootstrap para la estructura
+ * de lista (fila con ícono + cuerpo + indicador), skin y elevación Material
+ * propios (catálogo §4.1) — marcado propio, no clases de Bootstrap, mismo
+ * criterio que los átomos ya implementados (input.css, button.css).
+ */
+
+.ag-role-item {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+    width: 100%;
+    text-align: left;
+    background: var(--ag-color-bg);
+    border: 1px solid var(--ag-color-border);
+    border-radius: var(--ag-radius-md);
+    padding: var(--ag-space-3) var(--ag-space-4);
+    cursor: pointer;
+    font-family: var(--ag-font-family-base);
+    color: var(--ag-color-text);
+    box-shadow: var(--ag-shadow-sm);
+    transition:
+        border-color var(--ag-transition-fast),
+        box-shadow var(--ag-transition-fast),
+        background-color var(--ag-transition-fast),
+        transform var(--ag-transition-fast);
+}
+
+.ag-role-item:hover {
+    border-color: var(--ag-color-border-strong);
+    box-shadow: var(--ag-shadow-md);
+}
+
+.ag-role-item:active {
+    transform: scale(0.99);
+}
+
+.ag-role-item:focus-visible {
+    outline: 2px solid var(--ag-color-focus-ring);
+    outline-offset: 2px;
+}
+
+.ag-role-item.is-selected {
+    background: var(--ag-color-primary-subtle);
+    border-color: var(--ag-color-primary);
+}
+
+.ag-role-item__icon {
+    flex-shrink: 0;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: var(--ag-radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ag-color-bg-elevated);
+    color: var(--ag-color-primary-emphasis);
+}
+
+.ag-role-item__body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.ag-role-item__name {
+    font-weight: var(--ag-font-weight-medium);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ag-role-item__desc {
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text-muted);
+}
+
+/* Estado inicial deliberadamente `scale(0.6)`, nunca `scale(0)`: el check
+   solo se anuncia visualmente (está en `aria-hidden`, el estado real lo
+   comunica el atributo aria-pressed/aria-current del botón). */
+.ag-role-item__check {
+    flex-shrink: 0;
+    color: var(--ag-color-primary-emphasis);
+    opacity: 0;
+    transform: scale(0.6);
+    transition:
+        opacity var(--ag-transition-fast),
+        transform var(--ag-transition-fast);
+}
+
+.ag-role-item.is-selected .ag-role-item__check {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Reduced motion: solo se acorta la duración — la opacidad/transform final
+   por estado (`.is-selected`) sigue aplicándose, nunca se fuerza
+   `transform: none` (eso dejaría el check visible a mitad de camino en vez
+   de simplemente aparecer/desaparecer sin animación). */
+@media (prefers-reduced-motion: reduce) {
+    .ag-role-item,
+    .ag-role-item__check {
+        transition-duration: 0.01ms !important;
+    }
+}

@@ -1,0 +1,93 @@
+/*
+ * Molecule: menu-item (resources/views/components/molecules/menu-item.blade.php)
+ * Base: estructura de lista tipo `nav-link` de Bootstrap (conceptual, marcado
+ * propio), color/hover Material — catálogo §4.3. La aparición escalonada
+ * (stagger) se resuelve 100% en CSS con `animation` + `animation-delay`
+ * calculado desde `--ag-menu-item-index` (sin JS: en una app Blade multi-
+ * página cada carga de página es un "montaje" real, no hace falta togglear
+ * una clase "revealed" por JS).
+ */
+
+.ag-menu-item {
+    --ag-menu-item-index: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+    width: 100%;
+    padding: var(--ag-space-3);
+    border: none;
+    border-radius: var(--ag-radius-md);
+    background: transparent;
+    color: var(--ag-color-text-muted);
+    text-decoration: none;
+    text-align: left;
+    font-family: var(--ag-font-family-base);
+    font-size: var(--ag-font-size-sm);
+    cursor: pointer;
+    animation: ag-menu-item-in 320ms var(--ag-ease-emphasized) both;
+    animation-delay: calc(var(--ag-menu-item-index) * 40ms);
+    transition:
+        background-color var(--ag-transition-fast),
+        color var(--ag-transition-fast);
+}
+
+.ag-menu-item:hover {
+    background: var(--ag-color-primary-subtle);
+    color: var(--ag-color-text);
+}
+
+.ag-menu-item:focus-visible {
+    outline: 2px solid var(--ag-color-focus-ring);
+    outline-offset: -2px;
+}
+
+.ag-menu-item.is-active {
+    background: var(--ag-color-primary-subtle);
+    color: var(--ag-color-primary-emphasis);
+    font-weight: var(--ag-font-weight-medium);
+}
+
+.ag-menu-item__icon {
+    flex-shrink: 0;
+}
+
+.ag-menu-item__label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ag-menu-item__badge {
+    flex-shrink: 0;
+    background: var(--ag-color-accent-subtle);
+    color: var(--ag-color-accent-contrast);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-medium);
+    line-height: 1.5;
+    padding: 0 var(--ag-space-2);
+    border-radius: var(--ag-radius-pill);
+}
+
+@keyframes ag-menu-item-in {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Puramente decorativo (entrada de una vez, no gatilla estado): seguro
+   anular vía duración sin perder ningún significado. */
+@media (prefers-reduced-motion: reduce) {
+    .ag-menu-item {
+        animation-duration: 0.01ms !important;
+        animation-delay: 0ms !important;
+        transition-duration: 0.01ms !important;
+    }
+}
