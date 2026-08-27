@@ -4,6 +4,7 @@ use App\Dominios\Compartido\Dominio\Excepciones\BorradoFisicoNoPermitido;
 use App\Dominios\Personal\Dominio\RolOperativoPersona;
 use App\Dominios\Personal\Infraestructura\Eloquent\PerBase;
 use App\Dominios\Personal\Infraestructura\Eloquent\PerPersona;
+use App\Dominios\Seguridad\Infraestructura\Eloquent\SecMenu;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecPermission;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRolePermission;
@@ -36,6 +37,13 @@ beforeEach(function () {
     $idRol = SecRole::query()->value('id');
 
     (new SecUserRole(['id_user' => $usuario->id, 'id_role' => $idRol]))->save();
+
+    SecMenu::query()->create([
+        'label' => 'seguridad.menu.demo',
+        'icono' => 'home',
+        'ruta' => null,
+        'orden' => 1,
+    ]);
 });
 
 dataset('modelos de dominio de Personal y Seguridad', [
@@ -46,6 +54,7 @@ dataset('modelos de dominio de Personal y Seguridad', [
     'SecPermission' => [SecPermission::class],
     'SecUserRole' => [SecUserRole::class],
     'SecRolePermission' => [SecRolePermission::class],
+    'SecMenu' => [SecMenu::class],
 ]);
 
 it('delete() hace borrado lógico y saca el registro de los listados por defecto', function (string $clase) {
