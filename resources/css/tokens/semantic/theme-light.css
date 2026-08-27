@@ -40,12 +40,27 @@
 
     /* Marca — acento (ámbar). Texto oscuro sobre acento, no blanco: el ámbar
        de marca (#E8720C) da ~3.1:1 con blanco (falla AA texto normal) y
-       ~5:1 con gris-900 (pasa AA). */
+       ~5:1 con gris-900 (pasa AA). `--ag-color-accent-contrast` es el que
+       usan las superficies TINTADAS/sutiles de acento (`--ag-color-accent-subtle`
+       — badge de rol en topbar.css, badge de menu-item.css): ahí gris-900
+       es correcto porque el fondo es un ámbar muy claro (casi blanco), no el
+       relleno sólido. */
     --ag-color-accent: var(--ag-color-amber-700);
     --ag-color-accent-hover: var(--ag-color-amber-900);
     --ag-color-accent-contrast: var(--ag-color-gray-900);
     --ag-color-accent-emphasis: var(--ag-color-amber-700);
     --ag-color-accent-subtle: var(--ag-color-amber-100);
+
+    /* Texto sobre el RELLENO SÓLIDO de acento (botón `variant="accent"` —
+       hoy solo "Enviar solicitud" del tab de recuperar acceso). Deliberadamente
+       DISTINTO de `--ag-color-accent-contrast`: gris-900 puro ahí se lee muy
+       duro/negro sobre el naranja vivo del relleno (pedido explícito del
+       usuario de suavizarlo). Ámbar-100 (el mismo tono cálido y claro que ya
+       usa `--ag-color-accent-subtle` como fondo) funciona igual de bien como
+       TEXTO acá: da ~5.1:1 contra `--ag-color-accent` (ámbar-700), pasa AA
+       con margen, y se ve como un blanco cálido en vez de un blanco clínico
+       o un negro duro. */
+    --ag-color-accent-contrast-fill: var(--ag-color-amber-100);
 
     /* Estados */
     --ag-color-success: var(--ag-color-green-700);
@@ -70,6 +85,65 @@
     --ag-color-scrim-strong: rgba(0, 0, 0, 0.82);
     --ag-color-scrim: rgba(0, 0, 0, 0.68);
     --ag-color-text-on-scrim: var(--ag-color-gray-0);
+
+    /* Superficie de auth-layout (HU-02, rediseño login, tercera vuelta) —
+       tokens EXCLUSIVOS del panel de formulario, deliberadamente separados
+       de --ag-color-bg/--ag-color-bg-elevated: esta vuelta quita la tarjeta
+       blanca elevada de las anteriores y pinta el panel completo con un
+       tono propio ("ocre pastel"), a propósito distinto del gris neutro que
+       usa el resto del panel. Si el panel reasignara --ag-color-bg-elevated
+       en cambio, cualquier otra tarjeta genérica del sistema (que sí usa
+       ese token) heredaría sin querer el tinte ocre — de ahí un token
+       nuevo, no una reasignación del existente. */
+    --ag-color-bg-auth: color-mix(in srgb, var(--ag-color-amber-100) 45%, var(--ag-color-gray-50) 55%);
+
+    /* Texto muted EXCLUSIVO de superficies montadas sobre --ag-color-bg-auth
+       (labels uppercase, subtítulos, pie mono del formulario de login).
+       --ag-color-text-muted (gris-600) ya está al límite de AA (~4.7:1)
+       contra blanco puro — ver §1.3 — y contra el tono ocre tintado de
+       --ag-color-bg-auth el ratio cae por debajo de 4.5:1 (verificado:
+       ~4.3:1, falla). La corrección NO es oscurecer el token global
+       --ag-color-text-muted (afectaría todo el panel, que hoy sí pasa AA
+       sobre blanco/gris-50 sin margen para perder) sino declarar esta
+       variante propia de la superficie auth: gris-700 (más oscuro que el
+       gris-600 de --ag-color-text-muted) da ~7.5:1 contra
+       --ag-color-bg-auth claro, AAA. */
+    --ag-color-text-muted-auth: var(--ag-color-gray-700);
+
+    /* Ámbar seguro como TEXTO de enlace ("¿Olvidaste tu contraseña?" del
+       login). Distinto de --ag-color-accent-emphasis: ese token resuelve a
+       ámbar-700 en claro y ya está documentado como no apto para texto
+       (~3.1:1 con blanco, fila de arriba en §1.3) — sobre el nuevo
+       --ag-color-bg-auth (más claro que blanco) seguiría fallando. Usa el
+       primitivo --ag-color-amber-800 (ver primitives/brand.css) en vez de
+       -900 para no perder la identidad de "ámbar" como marrón oscuro.
+       Verificado ~4.9:1 contra --ag-color-bg-auth claro, pasa AA.
+       El link verde ("Volver al ingreso", estado de recuperación) NO
+       necesita un token equivalente: reutiliza --ag-color-primary-emphasis
+       (verde-700 en claro), ya ~4.9:1 contra este mismo fondo — pasa AA sin
+       declarar nada nuevo. Tampoco hace falta token para el subrayado
+       ámbar del tab activo (decorativo, no-texto): reutiliza
+       --ag-color-accent directamente, porque el contraste no-texto exigido
+       es 3:1, que --ag-color-accent ya cumple de sobra contra
+       --ag-color-bg-auth. */
+    --ag-color-accent-link: var(--ag-color-amber-800);
+
+    /* Editorial de auth-layout: wordmark bicromía "COM" + chip de ícono,
+       constantes entre temas (igual que --ag-color-scrim*), porque la foto
+       no cambia por tema — así el branding tipográfico y el ícono quedan con
+       identidad visual fija. */
+    --ag-color-wordmark-accent: var(--ag-color-amber-300);
+    --ag-color-chip-icon: var(--ag-color-green-300);
+
+    /* Borde y texto translúcidos del chip/subheadline montados sobre la foto
+       (CLAUDE.md invariante 11: ningún color hardcodeado en un componente —
+       estos dos NO pueden vivir como rgba() sueltos en auth-layout.css).
+       Mismo criterio "constante entre temas" que el resto de este bloque:
+       blanco es blanco encima de la foto en los dos temas, la opacidad no
+       depende de [data-bs-theme]. */
+    --ag-color-chip-border: rgba(255, 255, 255, 0.22);
+    --ag-color-chip-text: rgba(255, 255, 255, 0.86);
+    --ag-color-text-on-scrim-muted: rgba(255, 255, 255, 0.8);
 
     /* Bootstrap 5 hereda la marca reasignando sus propias variables nativas
        — así `.btn-primary`, `.alert-success`, el sidebar de AdminLTE, etc.

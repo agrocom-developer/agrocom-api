@@ -1,11 +1,14 @@
 /*
  * Molecule: theme-toggle (resources/views/components/molecules/theme-toggle.blade.php)
- * Base: marcado propio (track + thumb), no `.form-switch` de Bootstrap —
- * catálogo §4.2. El thumb se posiciona a partir del atributo global
- * `[data-bs-theme]` en <html> (selector `:root[data-bs-theme='dark']`), no
- * de una clase que el JS alterne por instancia: así todas las instancias del
- * toggle en la página (topbar + pie del sidebar) quedan sincronizadas sin
- * coordinación explícita entre ellas.
+ * Base: "segmented control" de dos celdas fijas (rediseño HU-02, tercera
+ * vuelta de login) — no `.form-switch`/`.btn-group` de Bootstrap, catálogo
+ * §4.2. Reemplaza el track+thumb deslizante de vueltas anteriores; el
+ * criterio de "un solo atributo global decide todo" no cambia: la celda
+ * activa se resuelve con el selector `[data-bs-theme='dark']` en <html>, la
+ * misma fuente de verdad que ya usaba el thumb — así todas las instancias
+ * del toggle en la página (topbar + pie del sidebar) quedan sincronizadas
+ * sin coordinación explícita entre ellas, y sin que el JS necesite tocar
+ * ninguna clase por instancia.
  */
 
 .ag-theme-toggle {
@@ -14,60 +17,58 @@
     gap: var(--ag-space-2);
 }
 
-.ag-theme-toggle__track {
+.ag-theme-toggle__control {
     position: relative;
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    justify-content: space-between;
-    width: 3.25rem;
-    height: 1.75rem;
-    padding: 0.1875rem;
+    gap: 2px;
+    padding: 3px;
     border: none;
     border-radius: var(--ag-radius-pill);
-    background: var(--ag-color-border);
+    /* Fondo neutro de la pastilla contenedora: el mismo tono de fondo de
+       página, no el elevado (ese lo lleva la celda activa, para que el
+       contraste "celda activa vs. pastilla" sea visible). */
+    background: var(--ag-color-bg);
     cursor: pointer;
-    transition: background-color var(--ag-transition-fast);
 }
 
-.ag-theme-toggle__track:focus-visible {
+.ag-theme-toggle__control:focus-visible {
     outline: 2px solid var(--ag-color-focus-ring);
     outline-offset: 2px;
 }
 
-.ag-theme-toggle__icon {
+.ag-theme-toggle__cell {
     position: relative;
     z-index: 1;
-    font-size: 0.9rem;
-    color: var(--ag-color-text-inverse);
-    transition: opacity var(--ag-transition-fast);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: var(--ag-radius-pill);
+    color: var(--ag-color-text-muted);
+    background-color: transparent;
+    box-shadow: none;
+    transition:
+        background-color var(--ag-transition-fast),
+        color var(--ag-transition-fast),
+        box-shadow var(--ag-transition-fast);
 }
 
-:root[data-bs-theme='dark'] .ag-theme-toggle__icon--sun {
-    opacity: 0.45;
+.ag-theme-toggle__icon {
+    font-size: 1rem;
 }
 
-:root:not([data-bs-theme='dark']) .ag-theme-toggle__icon--moon {
-    opacity: 0.45;
-}
-
-/* El thumb codifica ESTADO (qué tema está activo), no es decorativo: bajo
-   `prefers-reduced-motion` solo se acorta la duración más abajo — nunca se
-   fuerza `transform: none`, porque eso dejaría el thumb siempre en posición
-   "claro" aunque el tema activo sea oscuro. */
-.ag-theme-toggle__thumb {
-    position: absolute;
-    top: 0.1875rem;
-    left: 0.1875rem;
-    width: 1.375rem;
-    height: 1.375rem;
-    border-radius: 50%;
-    background: var(--ag-color-primary);
+/* Celda activa = tema activo. Mismo mecanismo que el thumb anterior (el
+   estado se lee del atributo global, nunca de una clase que el JS alterne
+   por instancia): en claro, la celda "light" queda con fondo elevado +
+   color de acento (ámbar); en oscuro, la celda "dark". La celda inactiva
+   nunca lleva fondo/sombra propios, solo color muted. */
+:root:not([data-bs-theme='dark']) .ag-theme-toggle__cell--light,
+:root[data-bs-theme='dark'] .ag-theme-toggle__cell--dark {
+    background-color: var(--ag-color-bg-elevated);
+    color: var(--ag-color-accent);
     box-shadow: var(--ag-shadow-sm);
-    transition: transform 220ms var(--ag-ease-emphasized);
-}
-
-:root[data-bs-theme='dark'] .ag-theme-toggle__thumb {
-    transform: translateX(1.5rem);
 }
 
 /* Las dos etiquetas ocupan la misma celda de grid (mismo ancho reservado =
@@ -91,10 +92,13 @@
     opacity: 1;
 }
 
+/* El estado de "celda activa" se codifica en background-color/color, no en
+   `transform` (a diferencia del thumb anterior) — por eso acá alcanza con
+   acortar duraciones bajo reduced-motion, sin la salvedad que exigía el
+   `transform` del thumb (nunca forzar `transform: none` de forma general,
+   ver nota en sistema_diseno_panel.md §3). */
 @media (prefers-reduced-motion: reduce) {
-    .ag-theme-toggle__thumb,
-    .ag-theme-toggle__track,
-    .ag-theme-toggle__icon,
+    .ag-theme-toggle__cell,
     .ag-theme-toggle__label-text {
         transition-duration: 0.01ms !important;
     }
