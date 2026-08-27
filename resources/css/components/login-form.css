@@ -1,52 +1,214 @@
 /*
  * Organism: login-form (resources/views/components/organisms/login-form.blade.php)
- * Base: `form` + utilidades de layout propias para la estructura; input/
- * button ya son Material (§3 del catálogo) — este archivo solo aporta el
- * marco (título, subtítulo, alerta de error general).
+ * Base: dos tabs (ingreso / recuperar) con paneles contenedores, `<form>`
+ * real de autenticación en el primero, panel presentacional sin form en el
+ * segundo, y línea de información "sin alta pública" abajo.
+ *
+ * Estructura: título, subtítulo, inputs en variante "line", checkbox +
+ * acciones (link "¿Olvidaste?"), botón submit. La mayoría de las clases
+ * (`ag-input`, `ag-button`, etc.) ya son Material (§3 del catálogo) — este
+ * archivo solo aporta el marco (tabs, paneles, acciones, error general).
+ *
+ * Los inputs/buttons heredan los colores de su superficie (`--ag-color-bg-auth`,
+ * `--ag-color-text-muted-auth`) a través de las variables CSS, el organism
+ * no agrega estilos propios encima salvo layout (gap, ancho) — ver criterio
+ * en ADR 0002 punto 3.
  */
 
 .ag-login-form {
-    width: 100%;
-    max-width: 26rem;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: var(--ag-space-2);
+    gap: var(--ag-space-5);
     text-align: center;
 }
 
-.ag-login-form__logo {
-    margin-bottom: var(--ag-space-2);
+/* Tabs: flexbox con borde inferior, cada tab con border-bottom activo. */
+.ag-login-form__tabs {
+    display: flex;
+    gap: 22px;
+    border-bottom: 1px solid var(--ag-color-border);
+    margin-bottom: var(--ag-space-4);
+}
+
+.ag-login-form__tab {
+    background: none;
+    border: none;
+    padding: 0 0 var(--ag-space-2) 0;
+    font-size: 13.5px;
+    font-family: var(--ag-font-family-base);
+    font-weight: var(--ag-font-weight-regular);
+    color: var(--ag-color-text-muted-auth);
+    cursor: pointer;
+    transition: color var(--ag-transition-fast), border-color var(--ag-transition-fast);
+}
+
+.ag-login-form__tab[aria-selected="true"] {
+    color: var(--ag-color-text);
+    border-bottom: 2px solid var(--ag-color-accent);
+    padding-bottom: calc(var(--ag-space-2) - 1px);
+}
+
+.ag-login-form__tab:hover {
+    color: var(--ag-color-text);
+}
+
+.ag-login-form__tab:focus-visible {
+    outline: 2px solid var(--ag-color-focus-ring);
+    outline-offset: 2px;
+}
+
+/* Paneles tab: contenedor flexible que solo muestra el activo. */
+.ag-login-form__panel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-4);
+    text-align: center;
+    animation: ag-login-panel-in 300ms var(--ag-ease-emphasized) both;
+}
+
+.ag-login-form__panel[hidden] {
+    display: none;
+}
+
+@keyframes ag-login-panel-in {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .ag-login-form__title {
-    font-size: var(--ag-font-size-xl);
-    font-weight: var(--ag-font-weight-bold);
+    font-family: var(--ag-font-family-display);
+    font-optical-sizing: auto;
+    font-size: 38px;
+    line-height: 1.1;
     color: var(--ag-color-text);
     margin: 0;
 }
 
 .ag-login-form__subtitle {
-    font-size: var(--ag-font-size-sm);
-    color: var(--ag-color-text-muted);
-    margin: 0 0 var(--ag-space-5);
+    font-size: 13.5px;
+    color: var(--ag-color-text-muted-auth);
+    margin: 0;
 }
 
 .ag-login-form__error {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: var(--ag-space-2);
     width: 100%;
     text-align: left;
     background: var(--ag-color-danger-subtle);
     color: var(--ag-color-danger);
+    border-left: 3px solid var(--ag-color-danger);
     border-radius: var(--ag-radius-md);
     padding: var(--ag-space-3) var(--ag-space-4);
     font-size: var(--ag-font-size-sm);
-    margin-bottom: var(--ag-space-4);
 }
 
 .ag-login-form__form {
     width: 100%;
     text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-4);
+}
+
+/* Acciones: checkbox + link "¿Olvidaste?" en fila con gap entre ellos. */
+.ag-login-form__actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--ag-space-3);
+}
+
+.ag-login-form__checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+}
+
+.ag-login-form__checkbox {
+    accent-color: var(--ag-color-primary);
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+}
+
+.ag-login-form__checkbox-label {
+    font-size: 13.5px;
+    color: var(--ag-color-text);
+    cursor: pointer;
+    user-select: none;
+}
+
+/* Link "¿Olvidaste?" y "Volver al ingreso": sin fondo/borde, solo color
+   de enlace. El de recuperar es `variant="text"` del átomo button, que ya
+   usa --ag-color-primary-emphasis. El de ingreso es un <button> estilizado
+   como link con color ámbar. */
+.ag-login-form__link {
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: var(--ag-font-family-base);
+    font-size: 13.5px;
+    color: var(--ag-color-accent-link);
+    cursor: pointer;
+    text-decoration: none;
+    text-align: right;
+    transition: opacity var(--ag-transition-fast);
+}
+
+.ag-login-form__link:hover {
+    opacity: 0.8;
+}
+
+.ag-login-form__link:focus-visible {
+    outline: 2px solid var(--ag-color-focus-ring);
+    outline-offset: 2px;
+}
+
+/* "Volver al ingreso": link verde centrado (átomo button variant="text",
+   que renderiza con --ag-color-primary-emphasis). Vamos a asegurarnos de
+   que esté centrado en el panel de recuperar. */
+.ag-login-form__link-back {
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: var(--ag-font-family-base);
+    font-size: 13.5px;
+    color: var(--ag-color-primary-emphasis);
+    cursor: pointer;
+    text-decoration: none;
+    margin-top: var(--ag-space-2);
+    transition: opacity var(--ag-transition-fast);
+}
+
+.ag-login-form__link-back:hover {
+    opacity: 0.8;
+}
+
+.ag-login-form__link-back:focus-visible {
+    outline: 2px solid var(--ag-color-focus-ring);
+    outline-offset: 2px;
+}
+
+/* Línea de "sin alta pública": siempre visible, fuera de los paneles,
+   pequeño y muted. */
+.ag-login-form__sin-alta {
+    font-size: 12.5px;
+    color: var(--ag-color-text-muted-auth);
+    margin: var(--ag-space-4) 0 0 0;
+    line-height: 1.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ag-login-form__panel {
+        animation-duration: 0.01ms !important;
+    }
 }
