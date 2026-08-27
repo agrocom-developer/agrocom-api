@@ -3,8 +3,9 @@
 namespace App\Dominios\Seguridad\Infraestructura\Http\Middleware;
 
 use App\Dominios\Seguridad\Aplicacion\ElegirRolActivo;
-use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
+use App\Dominios\Seguridad\Aplicacion\ListarRolesDisponibles;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
+use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\RolActivoController;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -45,14 +46,20 @@ final class ResolverRolActivo
     private const CLAVE_SESION = 'sec_rol_activo_id';
 
     /**
-     * Nombre de ruta del selector de rol, a cargo del panel/frontend
-     * (Blade/Livewire, fuera de alcance de este módulo). Se verifica con
-     * `Route::has()` antes de redirigir: mientras esa pantalla no exista
-     * todavía, cae a la raíz en vez de lanzar `RouteNotFoundException`.
+     * Nombre de ruta del selector de rol (`GET /panel/seleccionar-rol`,
+     * {@see RolActivoController::create()}).
+     * Se sigue verificando con `Route::has()` antes de redirigir — mismo
+     * criterio defensivo que antes de que la ruta existiera, ahora cubre el
+     * caso de que `routes/web.php` no la haya registrado en un entorno dado
+     * (p. ej. un test que monta rutas ad-hoc sin cargar `routes/web.php`
+     * completo) en vez de lanzar `RouteNotFoundException`.
      */
     private const RUTA_SELECTOR = 'panel.rol-activo.selector';
 
-    public function __construct(private readonly ElegirRolActivo $elegirRolActivo) {}
+    public function __construct(
+        private readonly ElegirRolActivo $elegirRolActivo,
+        private readonly ListarRolesDisponibles $listarRolesDisponibles,
+    ) {}
 
     /**
      * @param  Closure(Request): Response  $next
@@ -88,11 +95,7 @@ final class ResolverRolActivo
         // deja pasar el request.
         $request->session()->forget(self::CLAVE_SESION);
 
-        $rolesDisponibles = SecRole::query()
-            ->whereIn('id', $idsRolesVivos)
-            ->where('state', true)
-            ->orderBy('name')
-            ->get(['id', 'name', 'description']);
+        $rolesDisponibles = $this->listarRolesDisponibles->ejecutar($usuario);
 
         if ($request->expectsJson()) {
             return response()->json([

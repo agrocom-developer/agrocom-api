@@ -1,7 +1,9 @@
 <?php
 
+use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\DashboardController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\RolActivoController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\SesionController;
+use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\UsuariosController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -21,8 +23,12 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route(auth('interno')->check() ? 'panel.dashboard' : 'login.form');
 });
+
+Route::get('/login', function () {
+    return view('seguridad::pages.login');
+})->name('login.form');
 
 Route::post('/login', [SesionController::class, 'store'])->name('login');
 
@@ -37,4 +43,20 @@ Route::middleware('auth:interno')->group(function () {
     // para resolverlo.
     Route::post('/panel/rol-activo', [RolActivoController::class, 'update'])
         ->name('panel.rol-activo.actualizar');
+
+    // Selector de rol (GET): misma vía de escape que la ruta de arriba,
+    // deliberadamente sin `rol.activo` — ver RolActivoController::create().
+    Route::get('/panel/seleccionar-rol', [RolActivoController::class, 'create'])
+        ->name('panel.rol-activo.selector');
+
+    Route::middleware('rol.activo')->group(function () {
+        Route::get('/panel/dashboard', [DashboardController::class, 'index'])
+            ->name('panel.dashboard');
+
+        // Permiso `seguridad.usuario.ver` verificado dentro del controlador
+        // (contra el ROL ACTIVO, no la unión) — no hay middleware de permiso
+        // genérico todavía, así que se resuelve ahí (ver UsuariosController).
+        Route::get('/panel/usuarios', [UsuariosController::class, 'index'])
+            ->name('panel.usuarios.index');
+    });
 });
