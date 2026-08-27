@@ -1,24 +1,20 @@
-@import 'tailwindcss';
-
 /*
  * Sistema de diseño del panel (ADR 0002, docs/diseno/sistema_diseno_panel.md).
- * NOTA (design-ui, HU-02): lo de arriba es el scaffold de Tailwind que trae
- * `laravel new` por defecto — ADR 0002 elige AdminLTE (Bootstrap) + Material
- * Design, no Tailwind. Los tokens de abajo son custom properties CSS puras,
- * agnósticas del framework de utilidades, así que sobreviven el reemplazo;
- * lo que falta (instalar Bootstrap/AdminLTE/la fuente de íconos Material vía
- * npm y, eventualmente, retirar Tailwind) es infraestructura de build que
- * este agente no ejecuta por no tener shell — pendiente para `frontend`.
- * Los `@import` van antes que `@source`/`@theme` porque la regla CSS de
- * `@import` exige que preceda a cualquier otra sentencia del archivo.
+ * AdminLTE (Bootstrap 5.3) + Material Design Symbols + IBM Plex fonts.
+ * Los tokens de abajo son custom properties CSS puras, agnósticas del framework.
  */
+
+/* Fuentes auto-hospedadas vía npm */
+@import '@fontsource/ibm-plex-sans/400.css';
+@import '@fontsource/ibm-plex-sans/500.css';
+@import '@fontsource/ibm-plex-sans/600.css';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/600.css';
+@import 'material-symbols/outlined.css';
+
+/* Bootstrap 5.3 base (versión compilada CSS) */
+@import 'bootstrap/dist/css/bootstrap.css';
+
+/* Tokens y componentes propios (ganan especificidad sobre Bootstrap) */
 @import './tokens/index.css';
 @import './components/index.css';
-
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
-}
