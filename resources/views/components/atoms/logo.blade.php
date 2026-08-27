@@ -1,9 +1,12 @@
 {{--
     Atom: logo
-    Alterna entre `logo-light.jpeg`/`logo-dark.jpeg` según el tema activo,
-    resuelto en CSS puro (ver resources/css/components/logo.css) — no decide
-    el tema, solo se pinta distinto según el `[data-bs-theme]` ya resuelto en
-    el <html> por quien arma la página.
+    Un único archivo (`public/logo.png`, fondo transparente) — ya no alterna
+    entre versiones "light"/"dark" por tema: eran dos JPEG con el mismo
+    isotipo sobre fondo sólido horneado (blanco/negro) porque JPEG no soporta
+    transparencia; se reprocesó a PNG con canal alfa real (limitación que
+    documentaba `logo.css`, ya resuelta), así que el mismo archivo se ve bien
+    sobre cualquier superficie/tema sin necesitar una variante por color de
+    fondo.
 
     Props:
     - alt (string|null): por defecto, clave de traducción `ui.logo.alt`.
@@ -18,13 +21,8 @@
 
 <span {{ $attributes->class(['ag-logo', "ag-logo--{$size}"]) }}>
     <img
-        src="{{ asset('logo-light.jpeg') }}"
+        src="{{ asset('logo.png') }}"
         alt="{{ $resolvedAlt }}"
-        class="ag-logo__image ag-logo__image--light"
-    >
-    <img
-        src="{{ asset('logo-dark.jpeg') }}"
-        alt="{{ $resolvedAlt }}"
-        class="ag-logo__image ag-logo__image--dark"
+        class="ag-logo__image"
     >
 </span>
