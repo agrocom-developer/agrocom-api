@@ -3,12 +3,14 @@
 namespace App\Dominios\Seguridad\Infraestructura\Eloquent;
 
 use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
+use App\Dominios\Seguridad\Aplicacion\AsignarRolesUsuario;
 use App\Dominios\Seguridad\Dominio\TipoUsuario;
 use Database\Factories\SecUserFactory;
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * Cuenta de acceso (ADR 0004; HU-01 diseño `modulos-roles` §5): un usuario,
@@ -113,7 +115,14 @@ class SecUser extends ModeloDominio implements AuthenticatableContract
         return $this->hasMany(SecUserRole::class, 'id_user');
     }
 
-    /** @return list<int> IDs de los roles vivos del usuario. */
+    /**
+     * @return list<int> IDs de los roles asignados y vivos del usuario
+     *                   (`sec_user_role.deleted_at IS NULL`), sin filtrar
+     *                   por `sec_role.state` — úsalo para gestionar
+     *                   asignaciones (p. ej. `AsignarRolesUsuario`), no para
+     *                   decidir rol activo. Para eso, ver
+     *                   {@see self::idsDeRolesActivos()}.
+     */
     public function idsDeRoles(): array
     {
         return $this->asignacionesDeRol()
@@ -123,14 +132,68 @@ class SecUser extends ModeloDominio implements AuthenticatableContract
     }
 
     /**
-     * Unión de permisos de todos los roles vivos del usuario (invariante 10:
-     * "los permisos se evalúan por unión de roles"). Un rol o permiso
-     * desactivado a nivel de catálogo (`state = false`) no cuenta. Join
-     * explícito en vez de relaciones anidadas: cada tabla intermedia
-     * (`sec_user_role`, `sec_role_permission`) es soft-deleteable y un JOIN
-     * de query builder no hereda el scope de borrado lógico del modelo, así
-     * que se filtra a mano igual que se filtraría con cualquier otra
-     * consulta cruda sobre esas tablas.
+     * @return list<int> IDs de los roles del usuario que además de vivos
+     *                   (asignación no revocada) siguen activos en el
+     *                   catálogo (`sec_role.state = true`). Es la lista que
+     *                   gobierna el rol activo de sesión (ADR 0004,
+     *                   extensión 27/8/2026): un rol desactivado en el
+     *                   catálogo nunca cuenta como "el único rol vivo" para
+     *                   auto-activarlo, ni aparece como opción en el
+     *                   selector — evita que {@see ElegirRolActivo} reciba
+     *                   un id que después rechaza por catálogo, cosa que
+     *                   convertiría un login válido en un error 500.
+     */
+    public function idsDeRolesActivos(): array
+    {
+        return SecRole::query()
+            ->join('sec_user_role', 'sec_user_role.id_role', '=', 'sec_role.id')
+            ->where('sec_user_role.id_user', $this->id)
+            ->whereNull('sec_user_role.deleted_at')
+            ->where('sec_role.state', true)
+            ->pluck('sec_role.id')
+            ->map(static fn (int|string $id): int => (int) $id)
+            ->all();
+    }
+
+    /**
+     * Preferencia de panel del usuario (tema/idioma, HU-02). Relación
+     * `HasOne` dentro del mismo módulo `Seguridad` — no cruza a otro módulo,
+     * así que no aplica la restricción de `belongsTo`/`hasOne` cross-módulo
+     * de ADR 0011 (extensión 26/8/2026, punto 5); esa restricción rige
+     * relaciones hacia modelos de *otro* módulo (ADR 0011, extensión
+     * 27/8/2026, punto 8).
+     *
+     * @return HasOne<SecUserPreferencia, $this>
+     */
+    public function preferencia(): HasOne
+    {
+        return $this->hasOne(SecUserPreferencia::class, 'user_id');
+    }
+
+    /**
+     * Unión de permisos de TODOS los roles vivos del usuario, sin importar
+     * cuál esté activo en la sesión actual. Correcto únicamente para
+     * llamadores sin contexto de sesión de panel — hoy, exclusivamente
+     * {@see AsignarRolesUsuario}, que su
+     * propio docblock declara "no depende de `Auth::id()`" (ADR 0004,
+     * extensión 27/8/2026, punto 5).
+     *
+     * Cualquier llamador con una sesión de panel autenticada (controlador,
+     * middleware, componente Livewire) NUNCA debe usar este método para
+     * decidir permisos — usa {@see self::tienePermisoEnRol()} pasando el rol
+     * activo de la sesión de forma explícita. Se optó por un método
+     * separado sin parámetro opcional (alternativa (b) de la nota técnica
+     * del ADR) en vez de agregar un parámetro `?int $idRolActivo = null` a
+     * este mismo método: un default `null` que cae en unión es un
+     * "fail-open" fácil de heredar por olvido en un call site nuevo con
+     * sesión — invariante 10 de `CLAUDE.md` es no negociable.
+     *
+     * Un rol o permiso desactivado a nivel de catálogo (`state = false`) no
+     * cuenta. Join explícito en vez de relaciones anidadas: cada tabla
+     * intermedia (`sec_user_role`, `sec_role_permission`) es soft-deleteable
+     * y un JOIN de query builder no hereda el scope de borrado lógico del
+     * modelo, así que se filtra a mano igual que se filtraría con cualquier
+     * otra consulta cruda sobre esas tablas.
      */
     public function tienePermiso(string $codigo): bool
     {
@@ -140,6 +203,35 @@ class SecUser extends ModeloDominio implements AuthenticatableContract
             ->join('sec_permission', 'sec_permission.id', '=', 'sec_role_permission.id_permission')
             ->where('sec_user_role.id_user', $this->id)
             ->whereNull('sec_user_role.deleted_at')
+            ->whereNull('sec_role_permission.deleted_at')
+            ->whereNull('sec_permission.deleted_at')
+            ->where('sec_role.state', true)
+            ->where('sec_permission.code', $codigo)
+            ->where('sec_permission.state', true)
+            ->exists();
+    }
+
+    /**
+     * Variante consciente del rol activo (ADR 0004, extensión 27/8/2026,
+     * punto 5, alternativa (b)): evalúa el permiso SOLO dentro de `$idRol`,
+     * nunca la unión de todos los roles del usuario. Sin parámetro por
+     * default a propósito — todo call site con sesión de panel (login, menú,
+     * cambio de rol activo, y la re-exposición de `AsignarRolesUsuario`
+     * detrás de un controlador) está obligado a resolver y pasar el rol
+     * activo explícitamente, nunca a heredar la unión por omisión.
+     *
+     * No exige que `$idRol` sea uno de los roles vivos de este usuario: esa
+     * verificación es responsabilidad de quien resuelve el rol activo de la
+     * sesión (middleware `ResolverRolActivo`, caso de uso `ElegirRolActivo`)
+     * — acá solo se evalúa el permiso puro rol→permiso, igual que
+     * {@see self::tienePermiso()} lo hace para la unión.
+     */
+    public function tienePermisoEnRol(string $codigo, int $idRol): bool
+    {
+        return SecRole::query()
+            ->join('sec_role_permission', 'sec_role_permission.id_role', '=', 'sec_role.id')
+            ->join('sec_permission', 'sec_permission.id', '=', 'sec_role_permission.id_permission')
+            ->where('sec_role.id', $idRol)
             ->whereNull('sec_role_permission.deleted_at')
             ->whereNull('sec_permission.deleted_at')
             ->where('sec_role.state', true)
