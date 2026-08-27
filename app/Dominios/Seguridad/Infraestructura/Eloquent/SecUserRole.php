@@ -3,14 +3,14 @@
 namespace App\Dominios\Seguridad\Infraestructura\Eloquent;
 
 use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
-use Illuminate\Database\Eloquent\Relations\Concerns\AsPivot;
 
 /**
  * Pivote usuario↔rol, modelo Eloquent propio — NO pivote implícito de
- * Laravel (HU-01, diseño `modulos-roles` §5): revocar un rol es un soft
- * delete de la fila (auditoría de quién lo asignó/revocó), nunca un DELETE.
- * Ver {@see SecRolePermission} para el porqué de `ModeloDominio` + `AsPivot`
- * en lugar de la clase `Pivot` de Laravel.
+ * Laravel (HU-01): revocar un rol es un soft delete de la fila (auditoría
+ * de quién lo asignó/revocó), nunca un DELETE. Se navega vía `HasMany`
+ * (ver {@see SecUser::asignacionesDeRol()}), no `belongsToMany()->using()`
+ * — ver esa nota para el porqué. Modelo normal, sin `AsPivot`: no hace
+ * falta, esa relación no se usa acá.
  *
  * @property int $id
  * @property int $id_user
@@ -18,8 +18,6 @@ use Illuminate\Database\Eloquent\Relations\Concerns\AsPivot;
  */
 class SecUserRole extends ModeloDominio
 {
-    use AsPivot;
-
     protected $table = 'sec_user_role';
 
     /** @var list<string> */
