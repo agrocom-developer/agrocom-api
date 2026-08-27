@@ -13,7 +13,7 @@ Este repo es el backend (Laravel + PostgreSQL) y el panel web (AdminLTE + Blade/
 7. **Toda transición de estado pasa por el servicio de dominio de la máquina de estados correspondiente** (tabla de transiciones permitidas + guardas) — nunca un `estado = ...` suelto en un controlador.
 8. **Soft delete por defecto en todo modelo de dominio.** Ningún `DELETE` físico salvo excepción justificada explícitamente en el PR (`docs/decisiones/0007-soft-delete-y-bitacora-auditoria.md`).
 9. **Bitácora de auditoría en toda mutación relevante**: quién, cuándo, qué entidad, qué acción, valores antes/después donde aplique. Es un trait/observer de plataforma — no una llamada manual que cada caso de uso deba recordar.
-10. **Un usuario, un login, múltiples roles.** Nunca se crean cuentas duplicadas por rol; los permisos se evalúan por unión de roles vía `sec_user_role`.
+10. **Un usuario, un login, múltiples roles, un rol activo por sesión.** Nunca se crean cuentas duplicadas por rol. Un usuario puede tener varios roles asignados vía `sec_user_role`, pero en cada sesión opera bajo un único **rol activo** (elegido al iniciar sesión entre los roles asignados); los permisos efectivos son los de ese rol activo, nunca la unión de todos los roles del usuario. Cambiar de rol activo no requiere volver a loguearse.
 11. **Ningún color hardcodeado en el panel.** Todo color se referencia por token CSS — es lo que permite el theming por usuario (`docs/decisiones/0002-panel-web-adminlte-livewire-atomic-design.md`).
 
 ## Convenciones
