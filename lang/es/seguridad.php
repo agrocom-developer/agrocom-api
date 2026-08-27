@@ -20,15 +20,30 @@ return [
     // ("Agrocom"), no hace falta una clave nueva para eso.
     'auth' => [
         'headline' => 'Cada hectárea, medida y tratada con precisión.',
+        'subheadline' => 'Planificación de vuelo, mezclas y reportes de aplicación en un solo panel.',
+        'tagline' => 'FUMIGACIÓN CON DRONES',
+        'sin_alta_publica' => '¿No tenés cuenta? Las altas las gestiona el administrador de tu operación.',
     ],
 
     'login' => [
+        'tabs_aria_label' => 'Opciones de acceso',
+        'tab_ingreso' => 'Ingreso',
+        'tab_recuperar' => 'Recuperar acceso',
         'titulo' => 'Ingresá a tu panel',
-        'subtitulo' => 'Gestión de fumigación con drones — Agrocom SRL',
+        'subtitulo' => 'Usá el usuario que te asignó el administrador.',
         'campo_usuario' => 'Usuario',
         'campo_password' => 'Contraseña',
+        'recordarme' => 'Recordarme',
+        'olvido_password' => '¿Olvidaste tu contraseña?',
         'boton_ingresar' => 'Iniciar sesión',
-        'boton_ingresando' => 'Ingresando…',
+        'boton_ingresando' => 'Verificando acceso…',
+    ],
+
+    'recuperar' => [
+        'titulo' => 'Recuperar acceso',
+        'subtitulo' => 'Ingresá tu usuario. El administrador recibe la solicitud y te entrega una clave temporal.',
+        'boton_enviar' => 'Enviar solicitud',
+        'volver' => 'Volver al ingreso',
     ],
 
     'rol' => [

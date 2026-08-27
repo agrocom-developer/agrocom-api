@@ -12,6 +12,15 @@
       (este átomo no decide textos, ADR 0013).
     - icon: nombre de ícono Material Symbols para el prefijo del campo.
     - required (bool, default false).
+    - variant: "boxed" (default, Material outlined — caja con borde/fondo
+      propios, la de siempre) | "line" (línea editorial: sin caja, solo
+      `border-bottom`, label uppercase — rediseño de login, HU-02 tercera
+      vuelta). Mismo marcado/props/accesibilidad en ambas variantes (label,
+      icon, error, help, toggle de password, `aria-describedby`): "line" es
+      un modificador de clase (`ag-input--line`) resuelto en CSS
+      (`resources/css/components/input.css`), no un componente aparte —
+      así el resto del panel sigue usando "boxed" sin que este átomo se
+      bifurque en dos archivos.
 --}}
 @props([
     'type' => 'text',
@@ -24,6 +33,7 @@
     'icon' => null,
     'help' => null,
     'required' => false,
+    'variant' => 'boxed',
 ])
 
 @php
@@ -32,9 +42,10 @@
     $helpId = $help ? "{$inputId}-help" : null;
     $errorId = $error ? "{$inputId}-error" : null;
     $describedBy = trim(($helpId ?? '').' '.($errorId ?? ''));
+    $variantClass = $variant === 'line' ? 'ag-input--line' : '';
 @endphp
 
-<div class="ag-input">
+<div class="{{ trim('ag-input '.$variantClass) }}">
     @if ($label)
         <label for="{{ $inputId }}" class="ag-input__label">
             {{ $label }}

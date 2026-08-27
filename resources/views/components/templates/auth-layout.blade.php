@@ -6,33 +6,42 @@
     Decisión de composición (no estaba cerrada en el catálogo): split-screen
     con la foto real `public/images/drone-hero.jpg` en vez de la tarjeta
     centrada sobre fondo liso — es explícitamente lo que HU-02 pidió para
-    dejar de verse "plano". Refinamiento editorial (segunda vuelta, a pedido
-    del usuario sobre un mockup de referencia — dirección "1a: editorial
-    cálido"): wordmark arriba y headline grande en serif abajo, ambos
-    montados sobre la foto con un scrim degradado para legibilidad. Sin
-    blobs/gradientes decorativos de color: la profundidad la da la foto, el
-    scrim (solo negro a distinta opacidad, nunca un color de marca) y
-    `--ag-shadow-lg` en el panel del formulario. Colapsa a imagen-arriba/
-    formulario-abajo en tablet y a solo-formulario en mobile (ahí no se
-    renderiza wordmark/headline — la foto es decorativa, no compite con el
+    dejar de verse "plano". Refinamiento editorial (tercera vuelta, rediseño
+    visual a partir de mockup de referencia aprobado): wordmark arriba en dos
+    tonos (AGRO blanco + COM ámbar) con chip verde a la derecha, headline
+    grande en serif abajo, ambos montados sobre la foto con un scrim
+    degradado para legibilidad y una regla de gradiente que marca la
+    transición visual. Sin blobs/gradientes decorativos de color: la
+    profundidad la da la foto, el scrim (solo negro a distinta opacidad,
+    nunca un color de marca) y la estructura nítida del panel del
+    formulario (ya sin `box-shadow` ni elevación, con fondo propio
+    `--ag-color-bg-auth` tintado de marca).
+
+    Split-screen: 55% foto (desktop ≥992px) / 45% panel de formulario, sin
+    cap de `max-width` sobre la foto para mantener el ratio flexible en
+    cualquier ancho de escritorio. Colapsa a imagen-arriba/formulario-abajo
+    (~240px de altura de imagen) en tablet, y a solo-formulario en mobile
+    (ahí la foto es decorativa en segundo plano, no compite con el
     formulario en pantallas chicas).
 
-    El wordmark NO usa el átomo `logo` (las imágenes `logo-light.jpeg`/
-    `logo-dark.jpeg` traen fondo sólido horneado — ver limitación documentada
-    en logo.css; sobre una foto, cualquiera de las dos mostraría un recuadro
-    blanco/negro visible). Se resuelve como texto en `--ag-font-family-display`
-    reutilizando `ui.logo.alt` — sin duplicar el logo de `login-form` en
-    desktop (ese sigue viviendo en la tarjeta, es el único que se ve en
-    mobile).
-
-    El color del wordmark/headline y el scrim son tokens CONSTANTES entre
-    temas (`--ag-color-text-on-scrim`, `--ag-color-scrim*`) — la foto no
+    El wordmark NO usa el átomo `logo` (aunque `public/logo.png` ya es
+    transparente — la limitación de fondo horneado que forzaba esto antes
+    está resuelta, ver logo.css): sobre la foto el mockup pide el tratamiento
+    tipográfico bicromía "AGRO"/"COM" en `--ag-font-family-display`, no el
+    isotipo cuadrado del logo — es una decisión de diseño, no una limitación
+    técnica. Se resuelve como texto tipográfico con `--ag-font-family-display`,
+    partiendo "AGRO" (blanco) de "COM" (ámbar) para marcar el branding de
+    marca. El color del wordmark, el scrim y el headline son tokens CONSTANTES
+    entre temas (`--ag-color-text-on-scrim`, `--ag-color-scrim*`,
+    `--ag-color-wordmark-accent`, `--ag-color-chip-icon`) — la foto no
     reasigna por tema, así que lo que va montado sobre ella tampoco. Ver
     tokens/semantic/theme-{light,dark}.css y la verificación de contraste en
     sistema_diseno_panel.md §1.3.
 
-    Incluye su propio `theme-toggle` arriba a la derecha (login y selección
-    de rol no tienen sidebar/topbar todavía).
+    Header/footer (logo + theme-toggle arriba, copyright + versión abajo)
+    se renderiza en el template (no en `login-form`) para que
+    `seleccionar-rol.blade.php` los herede gratis y manteng coherencia entre
+    ambas pantallas (nunca duplicar markup, ADR 0008).
 
     Slot (default): el organism de esa pantalla (`login-form`, o la lista de
     `role-selector-item` + botón continuar que arme `frontend`).
@@ -43,18 +52,38 @@
         <div class="ag-auth-layout__scrim" aria-hidden="true"></div>
 
         <div class="ag-auth-layout__editorial">
-            <p class="ag-auth-layout__wordmark">{{ __('ui.logo.alt') }}</p>
-            <p class="ag-auth-layout__headline">{{ __('seguridad.auth.headline') }}</p>
+            <div class="ag-auth-layout__top">
+                <div class="ag-auth-layout__wordmark">
+                    <span class="ag-auth-layout__wordmark-agro">AGRO</span><span class="ag-auth-layout__wordmark-com">COM</span>
+                </div>
+
+                <div class="ag-auth-layout__chip">
+                    <x-atoms.icon name="flight_takeoff" size="sm" />
+                    <span class="ag-auth-layout__chip-text">{{ __('seguridad.auth.tagline') }}</span>
+                </div>
+            </div>
+
+            <div class="ag-auth-layout__bottom">
+                <div class="ag-auth-layout__divider" aria-hidden="true"></div>
+                <h1 class="ag-auth-layout__headline">{{ __('seguridad.auth.headline') }}</h1>
+                <p class="ag-auth-layout__subheadline">{{ __('seguridad.auth.subheadline') }}</p>
+            </div>
         </div>
     </div>
 
     <div class="ag-auth-layout__panel">
-        <div class="ag-auth-layout__topbar">
+        <div class="ag-auth-layout__header">
+            <x-atoms.logo size="md" />
             <x-molecules.theme-toggle />
         </div>
 
         <div class="ag-auth-layout__content">
             {{ $slot }}
+        </div>
+
+        <div class="ag-auth-layout__footer">
+            <span>{{ __('ui.footer.copyright', ['year' => date('Y')]) }}</span>
+            <span class="ag-auth-layout__version">v1.0</span>
         </div>
     </div>
 </div>

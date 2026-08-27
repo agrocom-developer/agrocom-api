@@ -9,7 +9,13 @@
     - size: sm|md|lg (default "md").
     - type: button|submit|reset (default "button"), ignorado si se pasa `href`.
     - href: si se pasa, renderiza <a> en vez de <button>.
-    - icon: nombre de ícono Material Symbols, al inicio del botón.
+    - icon: nombre de ícono Material Symbols.
+    - iconPosition: "start" (default, ícono antes del texto — comportamiento
+      de siempre, sin cambios para ningún consumidor existente) | "end"
+      (ícono después del texto — p. ej. "Iniciar sesión" + `arrow_forward`
+      al final, rediseño de login HU-02 tercera vuelta). No cambia CSS: el
+      `gap` del flex de `.ag-button` ya se aplica sea cual sea el orden de
+      los hijos, así que alcanza con invertir el orden de render en Blade.
     - loading (bool): reemplaza el ícono por un spinner y deshabilita el botón
       (solo estado visual — el llamador decide cuándo está en `loading`).
     - block (bool): ocupa el 100% del ancho disponible.
@@ -20,6 +26,7 @@
     'type' => 'button',
     'href' => null,
     'icon' => null,
+    'iconPosition' => 'start',
     'loading' => false,
     'block' => false,
 ])
@@ -31,14 +38,22 @@
         "ag-button--{$size}",
         $block ? 'ag-button--block' : '',
     ];
+    $iconAtEnd = $iconPosition === 'end';
 @endphp
 
 @if ($href)
     <a href="{{ $href }}" {{ $attributes->class($classes) }}>
-        @if ($icon)
-            <x-atoms.icon :name="$icon" size="sm" class="ag-button__icon" />
+        @if ($iconAtEnd)
+            <span class="ag-button__label">{{ $slot }}</span>
+            @if ($icon)
+                <x-atoms.icon :name="$icon" size="sm" class="ag-button__icon" />
+            @endif
+        @else
+            @if ($icon)
+                <x-atoms.icon :name="$icon" size="sm" class="ag-button__icon" />
+            @endif
+            <span class="ag-button__label">{{ $slot }}</span>
         @endif
-        <span class="ag-button__label">{{ $slot }}</span>
     </a>
 @else
     <button
@@ -46,11 +61,20 @@
         {{ $attributes->class($classes) }}
         @if ($loading) aria-busy="true" disabled @endif
     >
-        @if ($loading)
-            <span class="ag-button__spinner" aria-hidden="true"></span>
-        @elseif ($icon)
-            <x-atoms.icon :name="$icon" size="sm" class="ag-button__icon" />
+        @if ($iconAtEnd)
+            <span class="ag-button__label">{{ $slot }}</span>
+            @if ($loading)
+                <span class="ag-button__spinner" aria-hidden="true"></span>
+            @elseif ($icon)
+                <x-atoms.icon :name="$icon" size="sm" class="ag-button__icon" />
+            @endif
+        @else
+            @if ($loading)
+                <span class="ag-button__spinner" aria-hidden="true"></span>
+            @elseif ($icon)
+                <x-atoms.icon :name="$icon" size="sm" class="ag-button__icon" />
+            @endif
+            <span class="ag-button__label">{{ $slot }}</span>
         @endif
-        <span class="ag-button__label">{{ $slot }}</span>
     </button>
 @endif

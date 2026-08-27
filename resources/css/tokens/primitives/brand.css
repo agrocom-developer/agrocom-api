@@ -1,8 +1,8 @@
 /*
  * Tokens de marca (capa 1 — primitivos de marca)
  * ------------------------------------------------
- * Únicos valores literales (hex) de todo el sistema de diseño derivados de
- * los logos oficiales de Agrocom (`public/logo-dark.jpeg`, `public/logo-light.jpeg`):
+ * Únicos valores literales (hex) de todo el sistema de diseño derivados del
+ * logo oficial de Agrocom (`public/logo.png`):
  *   - Verde: degradado de la letra "A" del isotipo, de lima a bosque.
  *   - Ámbar: degradado del ícono de señal (wifi) sobre la "A".
  *
@@ -31,5 +31,16 @@
     --ag-color-amber-300: #f5a623;
     --ag-color-amber-500: #ef8c18;
     --ag-color-amber-700: #e8720c;
+    /* Escalón intermedio 700→900 (rediseño login, HU-02 tercera vuelta):
+       existe específicamente para dar un ámbar oscurecido usable como TEXTO
+       sobre superficie clara. Ámbar-700 falla AA como texto (~3.1:1 con
+       blanco — ver sistema_diseno_panel.md §1.3, ya documentado para el
+       botón de acento); ámbar-900 sí pasa contraste pero es demasiado
+       oscuro/marrón para leerse como "ámbar" (pierde la identidad del
+       color de acento como enlace). --ag-color-amber-800 es el punto medio
+       entre ambos: oscuro suficiente para servir de texto de enlace,
+       todavía reconociblemente ámbar. Consumido por
+       --ag-color-accent-link en tokens/semantic/theme-light.css. */
+    --ag-color-amber-800: #a85408;
     --ag-color-amber-900: #743906;
 }

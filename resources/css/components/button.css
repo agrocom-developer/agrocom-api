@@ -68,7 +68,7 @@
 
 .ag-button--accent {
     background-color: var(--ag-color-accent);
-    color: var(--ag-color-accent-contrast);
+    color: var(--ag-color-accent-contrast-fill);
 }
 
 .ag-button--accent:hover {
