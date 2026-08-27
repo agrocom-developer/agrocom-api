@@ -43,6 +43,18 @@ jobs:
       - name: Instalar dependencias
         run: composer install --no-interaction --prefer-dist
 
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Instalar dependencias de Node
+        run: npm ci
+
+      - name: Compilar assets (Vite)
+        run: npm run build
+
       - name: Análisis estático (Larastan)
         run: composer larastan --no-interaction || vendor/bin/phpstan analyse
 
