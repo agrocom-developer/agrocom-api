@@ -48,16 +48,18 @@
        cifras tabulares (hectáreas, montos, códigos de sesión), no de uso general. */
     --ag-font-family-base: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
     --ag-font-family-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
-    /* Tipografía de titulares (HU-02, refinamiento de auth-layout): ADICIONAL
-       a --ag-font-family-base, nunca la reemplaza — solo para headlines
-       grandes tipo hero (hoy: el wordmark y el headline editorial sobre
-       drone-hero.jpg). "Instrument Serif" todavía NO está instalada
-       (`@fontsource/instrument-serif` no está en package.json/node_modules a
-       la fecha de este token) — mismo criterio que se usó con Material
-       Symbols antes de que `frontend` lo instalara (ver catálogo §6): el
-       token queda declarado con fallback serif del sistema, listo para
-       consumir la fuente en cuanto exista. */
-    --ag-font-family-display: 'Instrument Serif', ui-serif, Georgia, 'Times New Roman', serif;
+    /* Tipografía de titulares (HU-02, rediseño de login): ADICIONAL a
+       --ag-font-family-base, nunca la reemplaza — solo para headlines
+       grandes tipo hero (wordmark, título de login/recuperar, headline
+       editorial sobre drone-hero.jpg). Reemplaza a "Instrument Serif"
+       (tercera vuelta): a los tamaños grandes que usa este token (38-44px)
+       se leía muy angosta/apretada — pedido explícito del usuario de buscar
+       una alternativa. "Fraunces" (variable, `@fontsource-variable/fraunces`,
+       import `standard.css` en app.css) es notablemente más ancha/cálida a
+       igual tamaño, tiene eje óptico (`opsz`) que se ajusta solo con
+       `font-optical-sizing: auto` — por eso los usos de este token en
+       auth-layout.css/login-form.css agregan esa propiedad. */
+    --ag-font-family-display: 'Fraunces Variable', 'Fraunces', ui-serif, Georgia, 'Times New Roman', serif;
     --ag-font-size-xs: 0.75rem;
     --ag-font-size-sm: 0.875rem;
     --ag-font-size-base: 1rem;

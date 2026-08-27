@@ -10,7 +10,10 @@
 @import '@fontsource/ibm-plex-sans/600.css';
 @import '@fontsource/ibm-plex-mono/400.css';
 @import '@fontsource/ibm-plex-mono/600.css';
-@import '@fontsource/instrument-serif/400.css';
+/* Variable font (ejes wght + opsz): el headline grande de auth-layout usa
+   font-optical-sizing: auto para que el eje óptico se ajuste solo a su
+   tamaño — ver --ag-font-family-display en tokens/primitives/base.css. */
+@import '@fontsource-variable/fraunces/standard.css';
 @import 'material-symbols/outlined.css';
 
 /* Bootstrap 5.3 base (versión compilada CSS) */
