@@ -1,0 +1,19 @@
+/*
+ * Punto de entrada único del sistema de tokens del panel (ADR 0002, punto 2;
+ * CLAUDE.md invariante 11). Orden de import deliberado: primitivos antes que
+ * semánticos, porque `semantic/theme-*.css` referencia variables definidas acá.
+ *
+ * Dos capas (ver detalle en cada archivo):
+ *   1. primitives/  — valores literales (hex). `brand.css` es la única pieza
+ *      atada a la identidad visual de Agrocom; `base.css` es neutra.
+ *   2. semantic/     — los tokens que de verdad consumen los componentes,
+ *      reasignados por tema vía `[data-bs-theme]`.
+ *
+ * Ningún componente debe importar `primitives/*.css` directamente ni usar un
+ * valor `--ag-color-green-*`/`--ag-color-amber-*` fuera de `semantic/`.
+ */
+
+@import './primitives/base.css';
+@import './primitives/brand.css';
+@import './semantic/theme-light.css';
+@import './semantic/theme-dark.css';

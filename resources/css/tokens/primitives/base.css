@@ -1,0 +1,77 @@
+/*
+ * Tokens base (capa 1 — primitivos no ligados a marca)
+ * ------------------------------------------------------
+ * Escala neutra (grises), colores de estado universales (rojo/amarillo/azul,
+ * ninguno viene del logo porque la marca no define un color de error) y las
+ * escalas de espaciado/tipografía/radio/elevación. A diferencia de
+ * `brand.css`, esto es infraestructura de diseño tenant-agnóstica: incluso
+ * en un futuro hipotético multi-tenant (ver nota en `brand.css`), estos
+ * valores no tendrían por qué cambiar por cliente.
+ */
+
+:root {
+    /* Escala neutra — texto, superficies, bordes */
+    --ag-color-gray-0: #ffffff;
+    --ag-color-gray-50: #f8f9fa;
+    --ag-color-gray-100: #f1f3f5;
+    --ag-color-gray-200: #e9ecef;
+    --ag-color-gray-300: #dee2e6;
+    --ag-color-gray-400: #ced4da;
+    --ag-color-gray-500: #adb5bd;
+    --ag-color-gray-600: #6c757d;
+    --ag-color-gray-700: #495057;
+    --ag-color-gray-800: #343a40;
+    --ag-color-gray-850: #1e1e1e;
+    --ag-color-gray-900: #212529;
+    --ag-color-gray-950: #121212;
+    --ag-color-gray-1000: #000000;
+
+    /* Estados universales — no derivados de la marca (Agrocom no define un rojo) */
+    --ag-color-red-500: #dc3545;
+    --ag-color-red-100: #f8d7da;
+    --ag-color-yellow-500: #ffc107;
+    --ag-color-yellow-100: #fff3cd;
+    --ag-color-blue-500: #0d6efd;
+    --ag-color-blue-100: #cfe2ff;
+
+    /* Espaciado — escala de 8px, compatible con los spacers de Bootstrap y la grilla de 8dp de Material */
+    --ag-space-1: 0.25rem;
+    --ag-space-2: 0.5rem;
+    --ag-space-3: 0.75rem;
+    --ag-space-4: 1rem;
+    --ag-space-5: 1.5rem;
+    --ag-space-6: 2rem;
+    --ag-space-8: 3rem;
+
+    /* Tipografía — IBM Plex Sans/Mono (elección deliberada, no el default de
+       Material: ver catálogo §2 para la justificación). Plex Mono es para
+       cifras tabulares (hectáreas, montos, códigos de sesión), no de uso general. */
+    --ag-font-family-base: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+    --ag-font-family-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+    --ag-font-size-xs: 0.75rem;
+    --ag-font-size-sm: 0.875rem;
+    --ag-font-size-base: 1rem;
+    --ag-font-size-lg: 1.125rem;
+    --ag-font-size-xl: 1.5rem;
+    --ag-font-size-2xl: 2rem;
+    --ag-line-height-tight: 1.25;
+    --ag-line-height-base: 1.5;
+    --ag-font-weight-regular: 400;
+    --ag-font-weight-medium: 500;
+    --ag-font-weight-bold: 700;
+
+    /* Radios — Material favorece esquinas más redondeadas que el default de Bootstrap */
+    --ag-radius-sm: 0.25rem;
+    --ag-radius-md: 0.5rem;
+    --ag-radius-lg: 1rem;
+    --ag-radius-pill: 999px;
+
+    /* Elevación (vocabulario Material) */
+    --ag-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.08);
+    --ag-shadow-md: 0 2px 8px rgba(0, 0, 0, 0.12);
+    --ag-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.16);
+
+    /* Transiciones */
+    --ag-transition-fast: 150ms ease-in-out;
+    --ag-transition-base: 250ms ease-in-out;
+}

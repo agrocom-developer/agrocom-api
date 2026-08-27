@@ -1,5 +1,20 @@
 @import 'tailwindcss';
 
+/*
+ * Sistema de diseño del panel (ADR 0002, docs/diseno/sistema_diseno_panel.md).
+ * NOTA (design-ui, HU-02): lo de arriba es el scaffold de Tailwind que trae
+ * `laravel new` por defecto — ADR 0002 elige AdminLTE (Bootstrap) + Material
+ * Design, no Tailwind. Los tokens de abajo son custom properties CSS puras,
+ * agnósticas del framework de utilidades, así que sobreviven el reemplazo;
+ * lo que falta (instalar Bootstrap/AdminLTE/la fuente de íconos Material vía
+ * npm y, eventualmente, retirar Tailwind) es infraestructura de build que
+ * este agente no ejecuta por no tener shell — pendiente para `frontend`.
+ * Los `@import` van antes que `@source`/`@theme` porque la regla CSS de
+ * `@import` exige que preceda a cualquier otra sentencia del archivo.
+ */
+@import './tokens/index.css';
+@import './components/index.css';
+
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 

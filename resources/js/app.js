@@ -1,1 +1,1 @@
-//
+import './atoms/input.js';

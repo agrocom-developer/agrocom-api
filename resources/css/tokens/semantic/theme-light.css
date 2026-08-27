@@ -1,0 +1,77 @@
+/*
+ * Tokens semánticos (capa 2) — tema claro
+ * -----------------------------------------
+ * Ningún valor literal (hex) acá: todo resuelve sobre los primitivos de
+ * `../primitives/brand.css` y `../primitives/base.css`. Los componentes
+ * (atoms/molecules/organisms) SOLO referencian los tokens de esta capa
+ * (`--ag-color-*` semánticos), nunca los de `primitives/` directamente —
+ * así el cambio de tema es reasignar valores acá, sin tocar ninguna regla
+ * de componente (CLAUDE.md invariante 11).
+ *
+ * `[data-bs-theme]` es el atributo nativo de Bootstrap 5.3 para color modes;
+ * lo reutilizamos en vez de inventar uno propio para que los componentes
+ * Bootstrap/AdminLTE de estructura hereden el tema sin overrides adicionales.
+ */
+
+:root,
+[data-bs-theme='light'] {
+    /* Superficie */
+    --ag-color-bg: var(--ag-color-gray-50);
+    --ag-color-bg-elevated: var(--ag-color-gray-0);
+    --ag-color-bg-chrome: var(--ag-color-gray-0);
+    --ag-color-overlay: rgba(0, 0, 0, 0.5);
+
+    /* Texto */
+    --ag-color-text: var(--ag-color-gray-900);
+    --ag-color-text-muted: var(--ag-color-gray-600);
+    --ag-color-text-inverse: var(--ag-color-gray-0);
+
+    /* Bordes */
+    --ag-color-border: var(--ag-color-gray-300);
+    --ag-color-border-strong: var(--ag-color-gray-500);
+
+    /* Marca — primario (verde). Fondo sólido de botones/CTA: constante entre
+       temas (identidad de marca), verificado AA (~5.4:1) con texto blanco. */
+    --ag-color-primary: var(--ag-color-green-700);
+    --ag-color-primary-hover: var(--ag-color-green-900);
+    --ag-color-primary-contrast: var(--ag-color-gray-0);
+    --ag-color-primary-emphasis: var(--ag-color-green-700);
+    --ag-color-primary-subtle: var(--ag-color-green-100);
+
+    /* Marca — acento (ámbar). Texto oscuro sobre acento, no blanco: el ámbar
+       de marca (#E8720C) da ~3.1:1 con blanco (falla AA texto normal) y
+       ~5:1 con gris-900 (pasa AA). */
+    --ag-color-accent: var(--ag-color-amber-700);
+    --ag-color-accent-hover: var(--ag-color-amber-900);
+    --ag-color-accent-contrast: var(--ag-color-gray-900);
+    --ag-color-accent-emphasis: var(--ag-color-amber-700);
+    --ag-color-accent-subtle: var(--ag-color-amber-100);
+
+    /* Estados */
+    --ag-color-success: var(--ag-color-green-700);
+    --ag-color-success-subtle: var(--ag-color-green-100);
+    --ag-color-danger: var(--ag-color-red-500);
+    --ag-color-danger-subtle: var(--ag-color-red-100);
+    --ag-color-warning: var(--ag-color-yellow-500);
+    --ag-color-warning-subtle: var(--ag-color-yellow-100);
+    --ag-color-info: var(--ag-color-blue-500);
+    --ag-color-info-subtle: var(--ag-color-blue-100);
+
+    /* Foco (accesibilidad) */
+    --ag-color-focus-ring: var(--ag-color-blue-500);
+
+    /* Bootstrap 5 hereda la marca reasignando sus propias variables nativas
+       — así `.btn-primary`, `.alert-success`, el sidebar de AdminLTE, etc.
+       no necesitan overrides por componente ni por tema. */
+    --bs-body-bg: var(--ag-color-bg);
+    --bs-body-color: var(--ag-color-text);
+    --bs-border-color: var(--ag-color-border);
+    --bs-primary: var(--ag-color-primary);
+    --bs-primary-rgb: 30, 122, 52;
+    --bs-secondary: var(--ag-color-accent);
+    --bs-secondary-rgb: 232, 114, 12;
+    --bs-success: var(--ag-color-success);
+    --bs-danger: var(--ag-color-danger);
+    --bs-warning: var(--ag-color-warning);
+    --bs-info: var(--ag-color-info);
+}

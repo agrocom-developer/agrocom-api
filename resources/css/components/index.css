@@ -1,0 +1,10 @@
+/*
+ * Estilos de los átomos del catálogo (resources/views/components/atoms/).
+ * Cada archivo consume exclusivamente tokens semánticos de `../tokens/` —
+ * ningún valor hexadecimal ni px suelto vive acá (CLAUDE.md invariante 11).
+ */
+
+@import './icon.css';
+@import './logo.css';
+@import './input.css';
+@import './button.css';

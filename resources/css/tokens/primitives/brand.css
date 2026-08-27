@@ -1,0 +1,35 @@
+/*
+ * Tokens de marca (capa 1 — primitivos de marca)
+ * ------------------------------------------------
+ * Únicos valores literales (hex) de todo el sistema de diseño derivados de
+ * los logos oficiales de Agrocom (`public/logo-dark.jpeg`, `public/logo-light.jpeg`):
+ *   - Verde: degradado de la letra "A" del isotipo, de lima a bosque.
+ *   - Ámbar: degradado del ícono de señal (wifi) sobre la "A".
+ *
+ * Por qué este archivo existe separado de `base.css` y de `semantic/`:
+ * hoy el sistema es de una sola marca (Agrocom). Si en el futuro el panel
+ * se ofrece como SaaS multi-tenant (cada cliente con su propio logo/colores
+ * corporativos), el único archivo que un tenant nuevo necesitaría reemplazar
+ * u override-ar es este — ninguna otra capa (semantic/theme-*, componentes,
+ * Blade) cambia, porque nada fuera de acá referencia estos valores por su
+ * hex: todo pasa por los tokens semánticos de `semantic/`. Esto NO implementa
+ * multi-tenant (no hay tabla, no hay selector de marca, no hay resolución
+ * por tenant) — es únicamente el criterio de organización del archivo para
+ * que esa puerta quede abierta sin costo adicional hoy.
+ */
+
+:root {
+    /* Rampa verde — degradado del isotipo, de #8CC63F (lima) a #1E7A34 (bosque) */
+    --ag-color-green-100: #e8f4d9;
+    --ag-color-green-300: #8cc63f;
+    --ag-color-green-500: #55a03a;
+    --ag-color-green-700: #1e7a34;
+    --ag-color-green-900: #0f3d1a;
+
+    /* Rampa ámbar — degradado del ícono de señal, de #F5A623 a #E8720C */
+    --ag-color-amber-100: #fdedd3;
+    --ag-color-amber-300: #f5a623;
+    --ag-color-amber-500: #ef8c18;
+    --ag-color-amber-700: #e8720c;
+    --ag-color-amber-900: #743906;
+}
