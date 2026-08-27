@@ -1,0 +1,26 @@
+/*
+ * Estilos del catálogo Atomic Design (resources/views/components/). Cada
+ * archivo consume exclusivamente tokens semánticos de `../tokens/` — ningún
+ * valor hexadecimal ni px suelto vive acá (CLAUDE.md invariante 11).
+ */
+
+/* Atoms */
+@import './icon.css';
+@import './logo.css';
+@import './input.css';
+@import './button.css';
+
+/* Molecules (HU-02) */
+@import './role-selector-item.css';
+@import './theme-toggle.css';
+@import './menu-item.css';
+
+/* Organisms (HU-02) */
+@import './collapsible-menu-group.css';
+@import './login-form.css';
+@import './sidebar-nav.css';
+@import './topbar.css';
+
+/* Templates (HU-02) */
+@import './panel-layout.css';
+@import './auth-layout.css';

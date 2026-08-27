@@ -1,5 +1,6 @@
 <?php
 
+use App\Dominios\Seguridad\Infraestructura\Http\Middleware\ResolverRolActivo;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -15,7 +16,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // ADR 0004, extensión 27/8/2026: resuelve/revalida el rol activo de
+        // la sesión del panel. Alias disponible para que las rutas del panel
+        // (fuera de alcance de HU-02 backend, a cargo de `frontend`) lo
+        // agreguen después de `auth:interno` sin depender del FQCN.
+        $middleware->alias([
+            'rol.activo' => ResolverRolActivo::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

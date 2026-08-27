@@ -1,0 +1,107 @@
+/*
+ * Átomo: input (resources/views/components/atoms/input.blade.php)
+ * Base: campo de texto Material (contenedor "outlined", radio de borde
+ * mayor al default de Bootstrap) montado sobre utilidades de layout propias;
+ * el `<input>` nativo no lleva ninguna clase de Bootstrap para no heredar
+ * su estética de formulario, que es la que ADR 0002 pide reemplazar.
+ */
+
+.ag-input {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-1);
+    margin-bottom: var(--ag-space-4);
+    font-family: var(--ag-font-family-base);
+}
+
+.ag-input__label {
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+    color: var(--ag-color-text);
+}
+
+.ag-input__required {
+    color: var(--ag-color-danger);
+    margin-inline-start: var(--ag-space-1);
+}
+
+.ag-input__control {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background-color: var(--ag-color-bg-elevated);
+    border: 1px solid var(--ag-color-border-strong);
+    border-radius: var(--ag-radius-md);
+    transition:
+        border-color var(--ag-transition-fast),
+        box-shadow var(--ag-transition-fast);
+}
+
+.ag-input__control:focus-within {
+    border-color: var(--ag-color-primary);
+    box-shadow: 0 0 0 3px var(--ag-color-primary-subtle);
+}
+
+.ag-input__control--error {
+    border-color: var(--ag-color-danger);
+}
+
+.ag-input__control--error:focus-within {
+    box-shadow: 0 0 0 3px var(--ag-color-danger-subtle);
+}
+
+.ag-input__icon {
+    margin-inline-start: var(--ag-space-3);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-input__field {
+    flex: 1;
+    width: 100%;
+    border: none;
+    background: transparent;
+    color: var(--ag-color-text);
+    font-size: var(--ag-font-size-base);
+    font-family: inherit;
+    padding: var(--ag-space-3) var(--ag-space-4);
+    outline: none;
+}
+
+.ag-input__field::placeholder {
+    color: var(--ag-color-text-muted);
+}
+
+.ag-input__toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: var(--ag-color-text-muted);
+    padding: var(--ag-space-2);
+    margin-inline-end: var(--ag-space-2);
+    cursor: pointer;
+    border-radius: var(--ag-radius-pill);
+}
+
+.ag-input__toggle:hover {
+    color: var(--ag-color-primary);
+    background-color: var(--ag-color-primary-subtle);
+}
+
+.ag-input__toggle:focus-visible {
+    outline: 2px solid var(--ag-color-focus-ring);
+    outline-offset: 2px;
+}
+
+.ag-input__help {
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+    margin: 0;
+}
+
+.ag-input__error {
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-danger);
+    margin: 0;
+}

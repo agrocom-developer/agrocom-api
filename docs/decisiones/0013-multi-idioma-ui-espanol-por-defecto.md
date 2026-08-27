@@ -20,6 +20,10 @@ El sistema es **multi-idioma**: el panel web y las apps soportan cambio de idiom
 
 Es el paralelo exacto de la invariante 11 de `CLAUDE.md`: los tokens permiten theming sin tocar componentes; las claves de traducción permiten idioma sin tocar pantallas.
 
+### Extensión (27/8/2026) — corrige la referencia a "módulo `Identidad`" del punto 2, para HU-02
+
+El punto 2 ubica la preferencia de idioma en "el modelo de usuario del módulo `Identidad`". Mismo caso que ADR 0002 (punto 4, misma fecha de extensión): ese módulo no existe ni debe crearse (ADR 0011, extensión 26/8/2026, punto 4, y extensión 27/8/2026, puntos 7–8). El destino resuelto es `sec_user_preferencia.idioma`, en la misma tabla que `tema`, dentro de `app/Dominios/Seguridad/` — persistidos por la misma migración de HU-02, tal como ya preveía este punto ("junto a la preferencia de tema de color"). El resto del punto 2 sigue vigente sin cambios: español como único valor habilitado en v1, estructura lista para agregar idiomas después sin refactor.
+
 ## Alternativas descartadas
 
 - **Monolingüe fijo con textos directos en las vistas**: más rápido hoy (cero indirección), pero convierte cualquier requerimiento futuro de idioma en un refactor total de la capa de presentación — y ese requerimiento es plausible (clientes/agrónomos de otros mercados). El costo de escribir `__('clave')` en vez del literal es marginal si se paga desde la primera pantalla; el de retro-instalarlo, no.
@@ -29,6 +33,6 @@ Es el paralelo exacto de la invariante 11 de `CLAUDE.md`: los tokens permiten th
 
 - Toda pantalla, componente Blade, mensaje de validación y widget Flutter nace referenciando claves de traducción, nunca literales — un string de UI hardcodeado es detectable a simple vista en el diff del PR, igual que un color hexadecimal.
 - Agregar un idioma nuevo se reduce a agregar catálogos (`lang/xx/*.php` en el backend, un archivo ARB en las apps) y habilitarlo en el selector de preferencia — sin tocar componentes ni pantallas.
-- El modelo de usuario de `Identidad` suma el campo de preferencia de idioma junto al de tema (misma HU-02, misma migración de preferencia); en v1 el selector ofrece solo español.
+- `sec_user_preferencia` (módulo `Seguridad`, no `Identidad` — ver extensión 27/8/2026 más arriba) suma la columna `idioma` junto a `tema` (misma HU-02, misma migración); en v1 el selector ofrece solo español.
 - **Pendiente:** proponer al usuario agregar la invariante "ningún texto de UI hardcodeado" a `CLAUDE.md` cuando arranque HU-02 — este ADR no modifica `CLAUDE.md`.
 - **Pendiente:** definir el catálogo de claves de traducción (`lang/es/`, convención de nombrado y organización por módulo/pantalla) como parte del sistema de diseño, a cargo del agente `design-ui` junto con el catálogo de componentes Atomic Design (ADR 0002).

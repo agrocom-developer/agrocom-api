@@ -1,0 +1,35 @@
+/*
+ * Organism: collapsible-menu-group (resources/views/components/organisms/collapsible-menu-group.blade.php)
+ * El mecanismo de expandir/colapsar (altura, `.collapsing`, `.show`) es 100%
+ * CSS/JS de Bootstrap — acá solo se estiliza la cabecera (reutiliza
+ * `.ag-menu-item`) y la rotación del chevron según `.collapsed`, que
+ * Bootstrap mantiene sincronizado con `aria-expanded` sin JS propio.
+ */
+
+.ag-menu-group__chevron {
+    margin-inline-start: auto;
+    flex-shrink: 0;
+    transition: transform var(--ag-transition-fast);
+}
+
+.ag-menu-group__toggle:not(.collapsed) .ag-menu-group__chevron {
+    transform: rotate(180deg);
+}
+
+.ag-menu-group__items {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-inline-start: var(--ag-space-5);
+    margin-top: 2px;
+}
+
+.ag-menu-group__item {
+    font-size: var(--ag-font-size-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ag-menu-group__chevron {
+        transition-duration: 0.01ms !important;
+    }
+}

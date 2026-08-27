@@ -1,0 +1,101 @@
+/*
+ * Molecule: theme-toggle (resources/views/components/molecules/theme-toggle.blade.php)
+ * Base: marcado propio (track + thumb), no `.form-switch` de Bootstrap —
+ * catálogo §4.2. El thumb se posiciona a partir del atributo global
+ * `[data-bs-theme]` en <html> (selector `:root[data-bs-theme='dark']`), no
+ * de una clase que el JS alterne por instancia: así todas las instancias del
+ * toggle en la página (topbar + pie del sidebar) quedan sincronizadas sin
+ * coordinación explícita entre ellas.
+ */
+
+.ag-theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+}
+
+.ag-theme-toggle__track {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 3.25rem;
+    height: 1.75rem;
+    padding: 0.1875rem;
+    border: none;
+    border-radius: var(--ag-radius-pill);
+    background: var(--ag-color-border);
+    cursor: pointer;
+    transition: background-color var(--ag-transition-fast);
+}
+
+.ag-theme-toggle__track:focus-visible {
+    outline: 2px solid var(--ag-color-focus-ring);
+    outline-offset: 2px;
+}
+
+.ag-theme-toggle__icon {
+    position: relative;
+    z-index: 1;
+    font-size: 0.9rem;
+    color: var(--ag-color-text-inverse);
+    transition: opacity var(--ag-transition-fast);
+}
+
+:root[data-bs-theme='dark'] .ag-theme-toggle__icon--sun {
+    opacity: 0.45;
+}
+
+:root:not([data-bs-theme='dark']) .ag-theme-toggle__icon--moon {
+    opacity: 0.45;
+}
+
+/* El thumb codifica ESTADO (qué tema está activo), no es decorativo: bajo
+   `prefers-reduced-motion` solo se acorta la duración más abajo — nunca se
+   fuerza `transform: none`, porque eso dejaría el thumb siempre en posición
+   "claro" aunque el tema activo sea oscuro. */
+.ag-theme-toggle__thumb {
+    position: absolute;
+    top: 0.1875rem;
+    left: 0.1875rem;
+    width: 1.375rem;
+    height: 1.375rem;
+    border-radius: 50%;
+    background: var(--ag-color-primary);
+    box-shadow: var(--ag-shadow-sm);
+    transition: transform 220ms var(--ag-ease-emphasized);
+}
+
+:root[data-bs-theme='dark'] .ag-theme-toggle__thumb {
+    transform: translateX(1.5rem);
+}
+
+/* Las dos etiquetas ocupan la misma celda de grid (mismo ancho reservado =
+   el de la más larga) para que el crossfade de opacidad no mueva el layout
+   al cambiar de tema. */
+.ag-theme-toggle__label {
+    display: inline-grid;
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text-muted);
+    white-space: nowrap;
+}
+
+.ag-theme-toggle__label-text {
+    grid-area: 1 / 1;
+    opacity: 0;
+    transition: opacity var(--ag-transition-fast);
+}
+
+:root:not([data-bs-theme='dark']) .ag-theme-toggle__label-text--light,
+:root[data-bs-theme='dark'] .ag-theme-toggle__label-text--dark {
+    opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ag-theme-toggle__thumb,
+    .ag-theme-toggle__track,
+    .ag-theme-toggle__icon,
+    .ag-theme-toggle__label-text {
+        transition-duration: 0.01ms !important;
+    }
+}

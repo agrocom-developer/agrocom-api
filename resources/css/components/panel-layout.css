@@ -1,0 +1,41 @@
+/*
+ * Template: panel-layout (resources/views/components/templates/panel-layout.blade.php)
+ * Cáscara sidebar + content + footer (ADR 0002 punto 1) — el resto del
+ * layout ya lo aportan sidebar-nav/topbar.
+ */
+
+.ag-panel-layout {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+}
+
+.ag-panel-layout__main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.ag-panel-layout__content {
+    flex: 1;
+    padding: var(--ag-space-6);
+}
+
+.ag-panel-layout__footer {
+    padding: var(--ag-space-4) var(--ag-space-6);
+    border-top: 1px solid var(--ag-color-border);
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-xs);
+}
+
+@media (max-width: 991.98px) {
+    .ag-panel-layout__content {
+        padding: var(--ag-space-4);
+    }
+
+    .ag-panel-layout__footer {
+        padding: var(--ag-space-3) var(--ag-space-4);
+    }
+}

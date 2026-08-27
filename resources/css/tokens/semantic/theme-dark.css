@@ -1,0 +1,77 @@
+/*
+ * Tokens semánticos (capa 2) — tema oscuro
+ * ------------------------------------------
+ * Mismo set de nombres de token que `theme-light.css`, valores reasignados.
+ * Ningún componente tiene una regla `[data-bs-theme='dark'] .algo { ... }`
+ * propia — el tema oscuro existe enteramente reasignando estos tokens.
+ *
+ * El negro puro (`--ag-color-gray-1000`, el fondo del logo dark) se reserva
+ * para el chrome de marca (sidebar/topbar) vía `--ag-color-bg-chrome`; el
+ * área de contenido usa un gris muy oscuro (`--ag-color-gray-950`, superficie
+ * "Material dark") para poder mostrar tarjetas elevadas sin fundirse con el
+ * fondo — con negro puro de fondo y de tarjeta no hay forma de expresar
+ * elevación por color.
+ */
+
+[data-bs-theme='dark'] {
+    /* Superficie */
+    --ag-color-bg: var(--ag-color-gray-950);
+    --ag-color-bg-elevated: var(--ag-color-gray-850);
+    --ag-color-bg-chrome: var(--ag-color-gray-1000);
+    --ag-color-overlay: rgba(0, 0, 0, 0.7);
+
+    /* Texto */
+    --ag-color-text: var(--ag-color-gray-100);
+    --ag-color-text-muted: var(--ag-color-gray-500);
+    --ag-color-text-inverse: var(--ag-color-gray-900);
+
+    /* Bordes */
+    --ag-color-border: var(--ag-color-gray-700);
+    --ag-color-border-strong: var(--ag-color-gray-500);
+
+    /* Marca — primario. Fondo de botón se mantiene igual que en claro (la
+       identidad de marca no cambia); el tono "emphasis" (texto/ícono sobre
+       el chrome negro, sin relleno propio) sí se aclara a green-300 —
+       green-700 sobre negro puro da ~2:1, insuficiente para texto/ícono. */
+    --ag-color-primary: var(--ag-color-green-700);
+    --ag-color-primary-hover: var(--ag-color-green-500);
+    --ag-color-primary-contrast: var(--ag-color-gray-0);
+    --ag-color-primary-emphasis: var(--ag-color-green-300);
+    --ag-color-primary-subtle: rgba(140, 198, 63, 0.16);
+
+    /* Marca — acento. Mismo criterio que primario. */
+    --ag-color-accent: var(--ag-color-amber-700);
+    --ag-color-accent-hover: var(--ag-color-amber-500);
+    --ag-color-accent-contrast: var(--ag-color-gray-900);
+    --ag-color-accent-emphasis: var(--ag-color-amber-300);
+    --ag-color-accent-subtle: rgba(245, 166, 35, 0.16);
+
+    /* Estados — aclarados sobre fondo oscuro (mismo criterio que las
+       variantes `-text-emphasis` del dark mode nativo de Bootstrap 5.3). */
+    --ag-color-success: var(--ag-color-green-300);
+    --ag-color-success-subtle: rgba(140, 198, 63, 0.16);
+    --ag-color-danger: #ea868f;
+    --ag-color-danger-subtle: rgba(220, 53, 69, 0.2);
+    --ag-color-warning: #ffda6a;
+    --ag-color-warning-subtle: rgba(255, 193, 7, 0.2);
+    --ag-color-info: #6ea8fe;
+    --ag-color-info-subtle: rgba(13, 110, 253, 0.2);
+
+    --ag-color-focus-ring: #6ea8fe;
+
+    /* Mismo valor que theme-light.css, a propósito — ver el comentario de
+       ese archivo. La foto no cambia entre temas, así que su overlay/texto
+       tampoco. */
+    --ag-color-scrim-strong: rgba(0, 0, 0, 0.82);
+    --ag-color-scrim: rgba(0, 0, 0, 0.68);
+    --ag-color-text-on-scrim: var(--ag-color-gray-0);
+
+    --bs-body-bg: var(--ag-color-bg);
+    --bs-body-color: var(--ag-color-text);
+    --bs-border-color: var(--ag-color-border);
+    --bs-primary: var(--ag-color-primary);
+    --bs-success: var(--ag-color-success);
+    --bs-danger: var(--ag-color-danger);
+    --bs-warning: var(--ag-color-warning);
+    --bs-info: var(--ag-color-info);
+}

@@ -20,5 +20,8 @@ class CatalogoSeeder extends Seeder
     public function run(): void
     {
         $this->call(SeguridadSeeder::class);
+        // Depende de sec_permission ya sembrado por SeguridadSeeder (arriba):
+        // gatea el ítem "Usuarios" con seguridad.usuario.ver.
+        $this->call(SecMenuSeeder::class);
     }
 }

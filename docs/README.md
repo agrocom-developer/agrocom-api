@@ -16,6 +16,7 @@ Este `docs/` contiene solo la documentación vigente. Los documentos originales 
   - `automatizacion_sistematizacion.md` — qué automatiza el sistema, qué sistematiza y qué queda humano.
   - `alcance_objetivos.md` — objetivos medibles del proyecto y alcance v1 ajustado por el campo.
 - **`gestion/`** — plan de sprints/HU/betas, el banco de preguntas por rol, y `respuestas_campo/` (los CSV crudos de las encuestas + `analisis_clasificacion.md`, la clasificación CONFIRMADO/CORREGIDO/DESCUBIERTO consolidada con la matriz de límites y la agenda de la reunión de cierre). Son instrumentos activos de trabajo, no decisiones congeladas.
+- **`diseno/`** — catálogo vivo del sistema de diseño del panel (tokens CSS, catálogo Atomic Design), a cargo del agente `design-ui`: qué componente existe, en qué nivel (atom/molecule/organism/template), en qué archivo, y qué queda pendiente para `frontend`. Complementa a ADR 0002, no lo reemplaza.
 - **`api/`** — contrato de API (`openapi.yaml`) cuando arranque el desarrollo del motor de sync.
 
 ## Qué reemplaza a qué

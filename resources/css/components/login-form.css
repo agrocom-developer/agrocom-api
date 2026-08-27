@@ -1,0 +1,52 @@
+/*
+ * Organism: login-form (resources/views/components/organisms/login-form.blade.php)
+ * Base: `form` + utilidades de layout propias para la estructura; input/
+ * button ya son Material (§3 del catálogo) — este archivo solo aporta el
+ * marco (título, subtítulo, alerta de error general).
+ */
+
+.ag-login-form {
+    width: 100%;
+    max-width: 26rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--ag-space-2);
+    text-align: center;
+}
+
+.ag-login-form__logo {
+    margin-bottom: var(--ag-space-2);
+}
+
+.ag-login-form__title {
+    font-size: var(--ag-font-size-xl);
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-color-text);
+    margin: 0;
+}
+
+.ag-login-form__subtitle {
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text-muted);
+    margin: 0 0 var(--ag-space-5);
+}
+
+.ag-login-form__error {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    width: 100%;
+    text-align: left;
+    background: var(--ag-color-danger-subtle);
+    color: var(--ag-color-danger);
+    border-radius: var(--ag-radius-md);
+    padding: var(--ag-space-3) var(--ag-space-4);
+    font-size: var(--ag-font-size-sm);
+    margin-bottom: var(--ag-space-4);
+}
+
+.ag-login-form__form {
+    width: 100%;
+    text-align: left;
+}

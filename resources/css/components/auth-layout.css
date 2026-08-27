@@ -1,0 +1,174 @@
+/*
+ * Template: auth-layout (resources/views/components/templates/auth-layout.blade.php)
+ * Split-screen con la foto real (public/images/drone-hero.jpg) en desktop;
+ * imagen arriba + formulario abajo en tablet; solo formulario en mobile. La
+ * profundidad viene de la foto + el scrim (negro a distinta opacidad, nunca
+ * un color de marca) + `--ag-shadow-lg` sobre el panel del formulario — no
+ * de blobs/gradientes de color decorativos.
+ *
+ * El scrim y el texto que van sobre la foto usan tokens CONSTANTES entre
+ * temas (`--ag-color-scrim*`, `--ag-color-text-on-scrim`) a propósito: la
+ * fotografía no reasigna por `[data-bs-theme]`, así que lo que va montado
+ * encima tampoco puede hacerlo (si usara `--ag-color-text-inverse` acá, en
+ * tema oscuro resolvería a gris-900 — casi invisible sobre la foto
+ * oscurecida). Ver verificación de contraste en sistema_diseno_panel.md §1.3.
+ */
+
+.ag-auth-layout {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--ag-color-bg);
+}
+
+.ag-auth-layout__visual {
+    position: relative;
+    flex-shrink: 0;
+    height: 14rem;
+    overflow: hidden;
+    /* Tono de respaldo mientras carga la imagen (o si no llega a cargar):
+       ya es oscuro en los dos temas, así el wordmark/headline nunca quedan
+       ilegibles por falta de imagen. */
+    background: var(--ag-color-bg-chrome);
+}
+
+.ag-auth-layout__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* Vignette: oscurece los bordes superior/inferior (donde van wordmark y
+   headline) y deja el centro de la foto visible sin oscurecer — así el
+   panel conserva el color/textura real de la foto (verde del cultivo, cielo)
+   en vez de leerse como un rectángulo plano oscuro, incluso en tema oscuro
+   donde el resto de la UI ya es oscura (lo que distingue a este panel del
+   fondo circundante es la foto en sí, no un salto de luminosidad). */
+.ag-auth-layout__scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        180deg,
+        var(--ag-color-scrim-strong) 0%,
+        transparent 32%,
+        transparent 56%,
+        var(--ag-color-scrim) 100%
+    );
+}
+
+.ag-auth-layout__editorial {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: var(--ag-space-4);
+    padding: var(--ag-space-5);
+    color: var(--ag-color-text-on-scrim);
+}
+
+.ag-auth-layout__wordmark {
+    margin: 0;
+    font-family: var(--ag-font-family-display);
+    font-size: var(--ag-font-size-lg);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.ag-auth-layout__headline {
+    margin: 0;
+    max-width: 26rem;
+    font-family: var(--ag-font-family-display);
+    font-size: clamp(2.25rem, 1.2rem + 2.2vw, 3rem);
+    line-height: 1.12;
+    font-weight: var(--ag-font-weight-regular);
+}
+
+.ag-auth-layout__panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: var(--ag-space-6) var(--ag-space-5);
+    position: relative;
+}
+
+.ag-auth-layout__topbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: var(--ag-space-4);
+}
+
+.ag-auth-layout__content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: ag-auth-content-in 420ms var(--ag-ease-emphasized) both;
+}
+
+@keyframes ag-auth-content-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+    .ag-auth-layout__visual {
+        height: 20rem;
+    }
+}
+
+@media (min-width: 992px) {
+    .ag-auth-layout {
+        flex-direction: row;
+    }
+
+    .ag-auth-layout__visual {
+        height: auto;
+        flex: 1 1 50%;
+        max-width: 42rem;
+    }
+
+    /* Más aire/jerarquía en el panel editorial a partir de acá (pedido
+       explícito: "más presencia editorial") — wordmark arriba del todo,
+       headline pegado abajo cerca del borde de la foto. */
+    .ag-auth-layout__editorial {
+        padding: var(--ag-space-6);
+    }
+
+    .ag-auth-layout__panel {
+        flex: 1 1 50%;
+        justify-content: center;
+        background: var(--ag-color-bg-elevated);
+        box-shadow: var(--ag-shadow-lg);
+        z-index: 1;
+        padding: var(--ag-space-8);
+    }
+}
+
+/* La foto es decorativa (`aria-hidden` en el <img>/scrim del Blade, no en el
+   wordmark/headline, que sí son contenido real) — en mobile se prioriza el
+   formulario en vez de competir por espacio con la imagen y su texto. */
+@media (max-width: 767.98px) {
+    .ag-auth-layout__visual {
+        display: none;
+    }
+
+    .ag-auth-layout__panel {
+        padding: var(--ag-space-5) var(--ag-space-4);
+    }
+}
+
+/* Entrada de una vez, no gatilla estado: segura de anular vía duración. */
+@media (prefers-reduced-motion: reduce) {
+    .ag-auth-layout__content {
+        animation-duration: 0.01ms !important;
+    }
+}

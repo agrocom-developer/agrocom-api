@@ -1,0 +1,42 @@
+/*
+ * Átomo: logo (resources/views/components/atoms/logo.blade.php)
+ * No usa color propio: alterna entre las dos imágenes oficiales según el
+ * tema activo (`[data-bs-theme]`), pura visibilidad CSS, sin JS.
+ *
+ * Limitación conocida (no resuelta acá): `logo-light.jpeg`/`logo-dark.jpeg`
+ * son JPEG con fondo sólido "horneado" en la imagen (blanco/negro), no PNG/SVG
+ * transparente. Funciona bien sobre `--ag-color-bg-chrome` (que coincide con
+ * ese mismo blanco/negro por tema) pero mostraría un recuadro visible sobre
+ * cualquier otra superficie de color. Pendiente de un asset transparente si
+ * el logo llega a usarse fuera del chrome de marca.
+ */
+
+.ag-logo {
+    display: inline-flex;
+}
+
+.ag-logo__image {
+    display: none;
+    height: var(--ag-logo-height, 2.5rem);
+    width: auto;
+}
+
+.ag-logo--sm {
+    --ag-logo-height: 1.75rem;
+}
+
+.ag-logo--md {
+    --ag-logo-height: 2.5rem;
+}
+
+.ag-logo--lg {
+    --ag-logo-height: 4rem;
+}
+
+:root:not([data-bs-theme='dark']) .ag-logo__image--light {
+    display: block;
+}
+
+[data-bs-theme='dark'] .ag-logo__image--dark {
+    display: block;
+}
