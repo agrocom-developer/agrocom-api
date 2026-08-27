@@ -14,7 +14,8 @@ use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
 use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraAutoria;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
-use App\Models\User;
+use App\Dominios\Seguridad\Dominio\TipoUsuario;
+use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use Illuminate\Database\Seeder;
 
 /**
@@ -43,9 +44,9 @@ class NucleoComercialSeeder extends Seeder
             return;
         }
 
-        $usuarioDemo = User::query()->firstOrCreate(
-            ['email' => 'demo@agrocom.example'],
-            ['name' => 'Usuario Demo', 'password' => 'password'],
+        $usuarioDemo = SecUser::query()->firstOrCreate(
+            ['username' => 'demo'],
+            ['name' => 'Usuario Demo', 'password' => 'password', 'type' => TipoUsuario::Interno],
         );
         $autorId = $usuarioDemo->id;
 

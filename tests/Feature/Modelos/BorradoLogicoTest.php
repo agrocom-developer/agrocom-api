@@ -8,7 +8,7 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\ContratoVentana;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
 use App\Dominios\Compartido\Dominio\Excepciones\BorradoFisicoNoPermitido;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
-use App\Models\User;
+use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use Database\Seeders\Demo\DemoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -62,7 +62,7 @@ it('bloquea el borrado físico también vía forceDestroy() y forceDeleteQuietly
 });
 
 it('registra created_by y updated_by desde el usuario autenticado', function () {
-    $autora = User::factory()->create();
+    $autora = SecUser::factory()->create();
     $this->actingAs($autora);
 
     $cliente = Cliente::query()->create([
@@ -73,7 +73,7 @@ it('registra created_by y updated_by desde el usuario autenticado', function () 
     expect($cliente->created_by)->toBe($autora->id)
         ->and($cliente->updated_by)->toBe($autora->id);
 
-    $editor = User::factory()->create();
+    $editor = SecUser::factory()->create();
     $this->actingAs($editor);
 
     $cliente->update(['razon_social' => 'Cliente Auditado y Editado S.R.L.']);
