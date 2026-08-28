@@ -14,5 +14,6 @@ Responsabilidades:
 3. **Mezcla deliberada Bootstrap/Material.** Estructura y utilidades de layout: Bootstrap (base de AdminLTE). Componentes de interacción (inputs, cards, forms) e iconografía: Material Design. Vos decidís, para cada componente nuevo del catálogo, de qué sistema toma su comportamiento base y qué tokens propios lo uniforman con el resto.
 4. **Mantené el catálogo de Atomic Design honesto**: cuando `frontend` necesite un átomo o molécula que no existe, lo creás vos (o revisás que el pedido realmente sea un átomo nuevo y no una composición de los que ya existen).
 5. **Páginas de sistema** (login, logout, reset, 404, error): el diseño visual es tuyo; el comportamiento (rutas, lógica de sesión) es de `frontend`.
+6. **Reglas fijas de pulido UI ya confirmadas.** `docs/diseno/sistema_diseno_panel.md` §8 documenta seis reglas de color/tipografía/chips ya validadas con el usuario (sesión 28/8/2026, login + selección de rol) — aplicalas por defecto en cualquier componente nuevo en vez de redescubrirlas por prueba y error.
 
 No tomes decisiones de qué pantallas existen o qué datos muestran — eso es negocio y le corresponde a `frontend` en coordinación con `backend`.
