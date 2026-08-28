@@ -35,21 +35,25 @@ final class DatosDemoPanel
 
     /**
      * Contadores de pendientes de los ítems del menú (badge ámbar del nivel
-     * 2), indexados por la clave `label` de `sec_menu`.
+     * 3), indexados por la clave `label` de `sec_menu`. `numero` es lo único
+     * que pinta el badge en el sidebar (compacto); `texto` es la frase
+     * completa que se lee en el tooltip — mismo criterio que tendrá el dato
+     * real cuando exista el caso de uso (un contador + su descripción, no un
+     * string ya formateado para la UI).
      *
-     * @return array<string, string>
+     * @return array<string, array{numero: string, texto: string}>
      */
     public function badgesMenu(): array
     {
         return [
-            'menu.operacion.items.programacion' => 'Hoy · 3',
-            'menu.operacion.items.ordenes' => '12 vigentes',
-            'menu.operacion.items.sesiones' => '6 sin validar',
-            'menu.operacion.items.pausas' => '4 sin causa',
-            'menu.comercial.items.reportes_cliente' => '2 por enviar',
-            'menu.recursos.items.drones' => '1 en taller',
-            'menu.mantenimiento.items.stock' => '2 bajo mínimo',
-            'menu.financiero.items.devengos' => 'Bs 18.490',
+            'menu.operacion.items.programacion' => ['numero' => '3', 'texto' => 'Hoy · 3'],
+            'menu.operacion.items.ordenes' => ['numero' => '12', 'texto' => '12 vigentes'],
+            'menu.operacion.items.sesiones' => ['numero' => '6', 'texto' => '6 sin validar'],
+            'menu.operacion.items.pausas' => ['numero' => '4', 'texto' => '4 sin causa'],
+            'menu.comercial.items.reportes_cliente' => ['numero' => '2', 'texto' => '2 por enviar'],
+            'menu.recursos.items.drones' => ['numero' => '1', 'texto' => '1 en taller'],
+            'menu.mantenimiento.items.stock' => ['numero' => '2', 'texto' => '2 bajo mínimo'],
+            'menu.financiero.items.devengos' => ['numero' => '18.490', 'texto' => 'Bs 18.490'],
         ];
     }
 
@@ -91,8 +95,12 @@ final class DatosDemoPanel
     /**
      * Los 4 KPI del período (maqueta 4a; en móvil el primero es el
      * protagonista y el cuarto se pliega a su bajada — maqueta 5b).
+     * `estado` (sexta vuelta parte 2, lenguaje visual de
+     * docs/ganadosoft-dashboard.html) gobierna el contenedor del ícono y,
+     * solo para `warning`/`danger`, la barra izquierda de atención —
+     * independiente de `pieTono`, que solo colorea la línea de pie.
      *
-     * @return list<array{clave: string, label: string, icono: string, valor: string, sufijo: ?string, pie: string, pieIcono: ?string, pieTono: string}>
+     * @return list<array{clave: string, label: string, icono: string, valor: string, sufijo: ?string, pie: string, pieIcono: ?string, pieTono: string, estado: ?string}>
      */
     public function kpis(): array
     {
@@ -106,6 +114,7 @@ final class DatosDemoPanel
                 'pie' => '+12% vs. julio',
                 'pieIcono' => 'trending_up',
                 'pieTono' => 'success',
+                'estado' => 'success',
             ],
             [
                 'clave' => 'validadas',
@@ -117,6 +126,7 @@ final class DatosDemoPanel
                 'pie' => '6 pendientes de validar',
                 'pieIcono' => 'pending',
                 'pieTono' => 'warning',
+                'estado' => 'warning',
             ],
             [
                 'clave' => 'devengo',
@@ -128,6 +138,7 @@ final class DatosDemoPanel
                 'pie' => '7 personas · corte 31/08',
                 'pieIcono' => 'group',
                 'pieTono' => 'muted',
+                'estado' => null,
             ],
             [
                 'clave' => 'costo_ha',
@@ -138,6 +149,33 @@ final class DatosDemoPanel
                 'pie' => '-3% con la flota T70',
                 'pieIcono' => 'trending_down',
                 'pieTono' => 'success',
+                'estado' => 'success',
+            ],
+        ];
+    }
+
+    /**
+     * Distribución de sesiones del período por estado (Fase 4 — gráfica
+     * mock, donut CSS puro, sin librería). Consistente con el KPI
+     * "Sesiones validadas 42/48" de arriba: 42 validadas + 6 restantes
+     * repartidas entre los otros tres estados visibles en la programación
+     * de hoy. `estado` es la CLAVE de `operaciones.sesion.estado.*` (se
+     * resuelve en la vista, mismo criterio que `_tabla-sesiones.blade.php`
+     * — nunca el texto ya traducido acá, ADR 0013). `tono` reutiliza el
+     * mismo vocabulario que `variante` en {@see sesiones()}
+     * (success|warning|info|neutral).
+     *
+     * @return array{total: int, segmentos: list<array{estado: string, valor: int, pct: float, tono: string}>}
+     */
+    public function distribucionSesiones(): array
+    {
+        return [
+            'total' => 48,
+            'segmentos' => [
+                ['estado' => 'validada', 'valor' => 42, 'pct' => 87.5, 'tono' => 'success'],
+                ['estado' => 'programada', 'valor' => 3, 'pct' => 6.25, 'tono' => 'neutral'],
+                ['estado' => 'sin_evidencia', 'valor' => 2, 'pct' => 4.17, 'tono' => 'warning'],
+                ['estado' => 'en_vuelo', 'valor' => 1, 'pct' => 2.08, 'tono' => 'info'],
             ],
         ];
     }
@@ -160,18 +198,77 @@ final class DatosDemoPanel
     /**
      * Programación de hoy (maqueta 4a — 5 sesiones con el vocabulario de
      * estados de la maqueta; el label de cada estado sale de
-     * `lang/es/operaciones.php`).
+     * `lang/es/operaciones.php`). `rcEstado` y `detalle` (Fase 6 — drill-down
+     * del tab Sesiones) son consumidos SOLO por `_tabla-sesiones` cuando
+     * `$conRc` es true; la tabla condensada del tab Resumen los ignora.
      *
-     * @return list<array{hora: string, lote: string, piloto: string, dron: string, ha: string, estado: string, variante: string}>
+     * @return list<array{hora: string, lote: string, piloto: string, dron: string, ha: string, estado: string, variante: string, rcEstado: string, detalle: array{orden: string, mezcla: string, preparadoPor: string, condiciones: string, pausas: list<array{causa: string, duracion: string}>}}>
      */
     public function sesiones(): array
     {
         return [
-            ['hora' => '05:45', 'lote' => 'Lote 12 — San Marcos', 'piloto' => 'R. Vaca', 'dron' => 'T50 · AG-04', 'ha' => '86 ha', 'estado' => 'validada', 'variante' => 'success'],
-            ['hora' => '07:10', 'lote' => 'Lote 12 — San Marcos', 'piloto' => 'R. Vaca', 'dron' => 'T50 · AG-04', 'ha' => '74 ha', 'estado' => 'sin_evidencia', 'variante' => 'warning'],
-            ['hora' => '08:30', 'lote' => 'Lote 3 — El Carmen', 'piloto' => 'M. Ordóñez', 'dron' => 'T70 · AG-07', 'ha' => '112 ha', 'estado' => 'en_vuelo', 'variante' => 'info'],
-            ['hora' => '09:50', 'lote' => 'Lote 8 — El Carmen', 'piloto' => 'J. Peña', 'dron' => 'T30 · AG-02', 'ha' => '48 ha', 'estado' => 'programada', 'variante' => 'neutral'],
-            ['hora' => '11:15', 'lote' => 'Lote 1 — Santa Rosa', 'piloto' => 'M. Ordóñez', 'dron' => 'T100 · AG-09', 'ha' => '130 ha', 'estado' => 'programada', 'variante' => 'neutral'],
+            [
+                'hora' => '05:45', 'lote' => 'Lote 12 — San Marcos', 'piloto' => 'R. Vaca', 'dron' => 'T50 · AG-04', 'ha' => '86 ha', 'estado' => 'validada', 'variante' => 'success',
+                'rcEstado' => 'capturado',
+                'detalle' => [
+                    'orden' => 'OT-1042', 'mezcla' => 'Fungicida XR + adherente · 12 L/ha', 'preparadoPor' => 'L. Cardozo',
+                    'condiciones' => 'Viento 6 km/h · Humedad 68% · Temp. 24°C',
+                    'pausas' => [],
+                ],
+            ],
+            [
+                'hora' => '07:10', 'lote' => 'Lote 12 — San Marcos', 'piloto' => 'R. Vaca', 'dron' => 'T50 · AG-04', 'ha' => '74 ha', 'estado' => 'sin_evidencia', 'variante' => 'warning',
+                'rcEstado' => 'sin_evidencia',
+                'detalle' => [
+                    'orden' => 'OT-1042', 'mezcla' => 'Fungicida XR + adherente · 12 L/ha', 'preparadoPor' => 'L. Cardozo',
+                    'condiciones' => 'Viento 9 km/h · Humedad 65% · Temp. 26°C',
+                    'pausas' => [['causa' => 'Cliente sin agua o químico', 'duracion' => '0 h 20']],
+                ],
+            ],
+            [
+                'hora' => '08:30', 'lote' => 'Lote 3 — El Carmen', 'piloto' => 'M. Ordóñez', 'dron' => 'T70 · AG-07', 'ha' => '112 ha', 'estado' => 'en_vuelo', 'variante' => 'info',
+                'rcEstado' => 'no_aplica',
+                'detalle' => [
+                    'orden' => 'OT-1043', 'mezcla' => 'Herbicida selectivo · 8 L/ha', 'preparadoPor' => 'L. Cardozo',
+                    'condiciones' => 'Viento 7 km/h · Humedad 60% · Temp. 27°C',
+                    'pausas' => [],
+                ],
+            ],
+            [
+                'hora' => '09:50', 'lote' => 'Lote 8 — El Carmen', 'piloto' => 'J. Peña', 'dron' => 'T30 · AG-02', 'ha' => '48 ha', 'estado' => 'programada', 'variante' => 'neutral',
+                'rcEstado' => 'no_aplica',
+                'detalle' => [
+                    'orden' => 'OT-1044', 'mezcla' => 'Insecticida biológico · 6 L/ha', 'preparadoPor' => 'V. Suárez',
+                    'condiciones' => 'Pendiente — sesión aún no iniciada',
+                    'pausas' => [],
+                ],
+            ],
+            [
+                'hora' => '11:15', 'lote' => 'Lote 1 — Santa Rosa', 'piloto' => 'M. Ordóñez', 'dron' => 'T100 · AG-09', 'ha' => '130 ha', 'estado' => 'programada', 'variante' => 'neutral',
+                'rcEstado' => 'no_aplica',
+                'detalle' => [
+                    'orden' => 'OT-1045', 'mezcla' => 'Fungicida XR + adherente · 12 L/ha', 'preparadoPor' => 'V. Suárez',
+                    'condiciones' => 'Pendiente — sesión aún no iniciada',
+                    'pausas' => [],
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * Eventos individuales de pausa (Fase 6 — drill-down del tab Pausas,
+     * bajo el agregado por causa de {@see pausas()}). Mismo período.
+     *
+     * @return list<array{hora: string, lote: string, causa: string, duracion: string, tono: string}>
+     */
+    public function pausasEventos(): array
+    {
+        return [
+            ['hora' => '07:10', 'lote' => 'Lote 12 — San Marcos', 'causa' => 'Cliente sin agua o químico', 'duracion' => '0 h 20', 'tono' => 'accent'],
+            ['hora' => '09:15', 'lote' => 'Lote 5 — La Loma', 'causa' => 'Clima fuera de rango', 'duracion' => '0 h 35', 'tono' => 'info'],
+            ['hora' => '10:40', 'lote' => 'Lote 3 — El Carmen', 'causa' => 'Falla de equipo', 'duracion' => '1 h 10', 'tono' => 'danger'],
+            ['hora' => '13:05', 'lote' => 'Lote 8 — El Carmen', 'causa' => 'Logística y traslados', 'duracion' => '0 h 50', 'tono' => 'neutral'],
+            ['hora' => '14:20', 'lote' => 'Lote 1 — Santa Rosa', 'causa' => 'Sin causa asignada', 'duracion' => '1 h 30', 'tono' => 'unassigned'],
         ];
     }
 

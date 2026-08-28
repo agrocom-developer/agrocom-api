@@ -32,6 +32,16 @@ return [
             'en_vuelo' => 'En vuelo',
             'programada' => 'Programada',
         ],
+
+        // Estado de captura del RC (Fase 6 — columna RC del tab Sesiones):
+        // "no_aplica" es una sesión que todavía no voló (en vuelo/programada),
+        // no una tercera variante de "sin_evidencia" — evita que una sesión
+        // futura se lea como una falla ya ocurrida.
+        'rc_estado' => [
+            'capturado' => 'Capturada',
+            'sin_evidencia' => 'Falta',
+            'no_aplica' => '—',
+        ],
     ],
 
 ];

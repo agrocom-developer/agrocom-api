@@ -1,6 +1,8 @@
 {{--
     Molecule: stat-card (quinta vuelta — tarjeta KPI de las maquetas
-    4a/5a/5b): rótulo uppercase + ícono a la derecha, cifra grande en la
+    4a/5a/5b; sexta vuelta parte 2 — ícono en contenedor + `state`,
+    lenguaje visual de docs/ganadosoft-dashboard.html §2.2): rótulo
+    uppercase + ícono en contenedor 34×34 a la derecha, cifra grande en la
     fuente display (Fraunces — puede llevar un sufijo muted, "ha" o "/ 48"),
     y una línea de pie con ícono y tono semántico (éxito/aviso/muted).
 
@@ -17,6 +19,11 @@
     - footIcon (nullable): ícono de la línea de pie.
     - footTone (success|warning|muted, default "muted"): color del pie —
       tono semántico independiente del signo (una baja de costo es éxito).
+    - state (success|warning|danger|info|null, default null): tono del
+      CONTENEDOR del ícono — independiente de footTone. Solo warning/danger
+      además pintan una barra izquierda de 4px (estados que requieren
+      atención); success/info/null quedan sin barra, igual que el original
+      de referencia (no todo estado necesita gritar).
     - hero (bool, default false): variante protagonista del móvil (maqueta
       5b — cifra 40px). El grid/columna lo decide el llamador.
 --}}
@@ -28,14 +35,20 @@
     'foot' => null,
     'footIcon' => null,
     'footTone' => 'muted',
+    'state' => null,
     'hero' => false,
 ])
 
-<div {{ $attributes->class(['ag-stat-card', $hero ? 'ag-stat-card--hero' : '']) }}>
+<div
+    {{ $attributes->class(['ag-stat-card', $hero ? 'ag-stat-card--hero' : '']) }}
+    @if ($state) data-state="{{ $state }}" @endif
+>
     <div class="ag-stat-card__head">
         <span class="ag-stat-card__label">{{ $label }}</span>
         @if ($icon)
-            <x-atoms.icon :name="$icon" size="sm" class="ag-stat-card__icon" />
+            <span class="ag-stat-card__icon-box">
+                <x-atoms.icon :name="$icon" size="sm" class="ag-stat-card__icon" />
+            </span>
         @endif
     </div>
 

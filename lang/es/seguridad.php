@@ -152,6 +152,35 @@ return [
         'filtro_evidencia' => 'Con evidencia',
         'sesiones_nota' => 'Cada fila abre el detalle en un panel lateral: orden, mezcla y quién la preparó, condiciones, pausas y la captura del RC.',
         'pausas_sin_causa' => ':horas de pausa sigue sin causa asignada. Toda jornada de baja producción debe quedar explicada.',
+
+        // Sectorización (sexta vuelta parte 2 — Fases 3/4): títulos de
+        // section-head, nunca los rótulos genéricos de ui.php porque son
+        // copy de ESTA pantalla, no del catálogo de componentes.
+        'seccion_indicadores' => 'Indicadores del período',
+        'seccion_distribucion' => 'Distribución de sesiones',
+        'distribucion_centro' => 'sesiones',
+
+        // Fase 6 — drill-down del tab Sesiones (columna RC + panel lateral)
+        // y tabla de eventos individuales del tab Pausas.
+        'col_rc' => 'RC',
+        'detalle_ver' => 'Ver detalle',
+        'detalle_titulo' => 'Detalle de la sesión',
+        'detalle_cerrar' => 'Cerrar',
+        'detalle_orden' => 'Orden de trabajo',
+        'detalle_mezcla' => 'Mezcla aplicada',
+        'detalle_preparado_por' => 'Preparado por',
+        'detalle_condiciones' => 'Condiciones',
+        'detalle_pausas' => 'Pausas de la sesión',
+        'detalle_sin_pausas' => 'Sin pausas registradas.',
+        'detalle_rc' => 'Captura del RC',
+        'detalle_rc_capturado' => 'Capturada y adjunta a la sesión.',
+        'detalle_rc_sin_evidencia' => 'Falta — bloquea la validación y el devengo.',
+        'detalle_rc_no_aplica' => 'La sesión todavía no vuela.',
+        'pausas_eventos_titulo' => 'Eventos del período',
+        'pausas_col_hora' => 'Hora',
+        'pausas_col_lote' => 'Lote',
+        'pausas_col_causa' => 'Causa',
+        'pausas_col_duracion' => 'Duración',
     ],
 
     'usuarios' => [

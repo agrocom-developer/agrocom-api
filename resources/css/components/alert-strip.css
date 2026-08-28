@@ -1,10 +1,15 @@
 /*
  * Molecule: alert-strip (resources/views/components/molecules/alert-strip.blade.php)
- * Franja de aviso del dashboard (quinta vuelta, maquetas 4a/5a/5b):
- * variante "accent" (ámbar, borde izquierdo 3px, ventana volable) y
- * "danger" (rojiza con borde, alerta de RC). El texto fuerte va en
- * <strong> dentro del slot — el par tenue/fuerte de cada variante está
- * verificado AA en sistema_diseno_panel.md §1.3.
+ * Franja de aviso del dashboard (quinta vuelta, maquetas 4a/5a/5b; sexta
+ * vuelta parte 2 — feedback directo del 28/8/2026): las 4 variantes
+ * semánticas del catálogo (warning|danger|success|info) comparten la MISMA
+ * anatomía — gradiente + borde izquierdo 3px + esquinas 0/10/10/0 — solo
+ * cambia el token de color. El gradiente sostiene el color del estado al
+ * 100% hasta el 55% del ancho antes de empezar a apagarse hacia
+ * --ag-color-bg-table-head (antes empezaba a apagarse desde el borde
+ * mismo — el color se leía como un filo fino en vez de predominar). El
+ * texto fuerte va en <strong> dentro del slot — el par tenue/fuerte de
+ * cada variante está verificado AA en sistema_diseno_panel.md §1.3.
  */
 
 .ag-alert-strip {
@@ -13,6 +18,9 @@
     gap: var(--ag-space-3);
     padding: var(--ag-space-3) var(--ag-space-4);
     font-size: 0.84375rem;
+    border-radius: 0 10px 10px 0;
+    border-left: 3px solid;
+    color: var(--ag-color-text-muted);
 }
 
 .ag-alert-strip__icon {
@@ -29,30 +37,26 @@
     flex-shrink: 0;
 }
 
-/* Ámbar (ventana volable, nota de pausas): gradiente tenue que muere en la
-   superficie, borde izquierdo de acento, esquinas 0/10/10/0. */
-.ag-alert-strip--accent {
-    background: linear-gradient(90deg, var(--ag-color-warning-subtle), var(--ag-color-bg-table-head));
-    border-left: 3px solid var(--ag-color-accent);
-    border-radius: 0 10px 10px 0;
-    color: var(--ag-color-text-muted);
+/* Ámbar (ventana volable, nota de pausas) — es el warning del catálogo,
+   antes se llamaba "accent" (nombre de marca, no de estado). */
+.ag-alert-strip--warning {
+    background: linear-gradient(90deg, var(--ag-color-warning-subtle) 0%, var(--ag-color-warning-subtle) 55%, var(--ag-color-bg-table-head) 100%);
+    border-left-color: var(--ag-color-warning);
 }
 
-.ag-alert-strip--accent .ag-alert-strip__icon {
+.ag-alert-strip--warning .ag-alert-strip__icon {
     color: var(--ag-color-warning-strong);
 }
 
-.ag-alert-strip--accent strong {
+.ag-alert-strip--warning strong {
     color: var(--ag-color-warning-strong);
     font-weight: var(--ag-font-weight-bold);
 }
 
-/* Rojo óxido (RC sin captura). */
+/* Rojo óxido (sesiones sin captura del RC). */
 .ag-alert-strip--danger {
-    background: var(--ag-color-danger-subtle);
-    border: 1px solid var(--ag-color-danger-border);
-    border-radius: 12px;
-    color: var(--ag-color-danger-strong);
+    background: linear-gradient(90deg, var(--ag-color-danger-subtle) 0%, var(--ag-color-danger-subtle) 55%, var(--ag-color-bg-table-head) 100%);
+    border-left-color: var(--ag-color-danger);
 }
 
 .ag-alert-strip--danger .ag-alert-strip__icon {
@@ -60,5 +64,36 @@
 }
 
 .ag-alert-strip--danger strong {
+    color: var(--ag-color-danger-strong);
+    font-weight: var(--ag-font-weight-bold);
+}
+
+/* Verde (confirmaciones — p. ej. corte de planilla cerrado sin pendientes). */
+.ag-alert-strip--success {
+    background: linear-gradient(90deg, var(--ag-color-success-subtle) 0%, var(--ag-color-success-subtle) 55%, var(--ag-color-bg-table-head) 100%);
+    border-left-color: var(--ag-color-success);
+}
+
+.ag-alert-strip--success .ag-alert-strip__icon {
+    color: var(--ag-color-success-strong);
+}
+
+.ag-alert-strip--success strong {
+    color: var(--ag-color-success-strong);
+    font-weight: var(--ag-font-weight-bold);
+}
+
+/* Azul (avisos informativos sin urgencia — p. ej. cambios de campaña/período). */
+.ag-alert-strip--info {
+    background: linear-gradient(90deg, var(--ag-color-info-subtle) 0%, var(--ag-color-info-subtle) 55%, var(--ag-color-bg-table-head) 100%);
+    border-left-color: var(--ag-color-info);
+}
+
+.ag-alert-strip--info .ag-alert-strip__icon {
+    color: var(--ag-color-info-strong);
+}
+
+.ag-alert-strip--info strong {
+    color: var(--ag-color-info-strong);
     font-weight: var(--ag-font-weight-bold);
 }

@@ -3,8 +3,10 @@
     Quinta vuelta — maquetas aprobadas 4a (escritorio), 5a (tablet) y 5b
     (móvil): título en display + acciones, pestañas de NIVEL 3 (Resumen /
     Sesiones / Pausas, mecanismo `tab` nativo de Bootstrap con skin
-    ag-tabs), franja de ventana volable, 4 KPI, grilla 1.55fr/1fr con la
-    programación del día y pausas/stock, y alerta de RC al pie.
+    ag-tabs). Sexta vuelta parte 2 — orden del tab Resumen, alertas
+    primero por criticidad (danger > accent, RC ya no queda al pie),
+    sectores con section-head (Indicadores del período / Distribución de
+    sesiones — gráfica mock antes de Programación/Pausas/Stock).
 
     Los DATOS son demo (DatosDemoPanel — nunca hardcodeados acá); el copy
     fijo vive en lang/es/seguridad.php. Las variantes responsivas de la
@@ -13,7 +15,7 @@
 
     Datos esperados (ver DashboardController::index()): la cáscara de
     CascaraPanel (menu/roles/…/tema/campana/periodo/version) + fechaBajada,
-    ventana, kpis, kpiMovil, sesiones, pausas, stock, alertaRc,
+    ventana, kpis, kpiMovil, distribucion, sesiones, pausas, stock, alertaRc,
     pausasSinCausa.
 --}}
 <x-templates.panel-shell :title="__('seguridad.dashboard.titulo')" :tema="$tema">
@@ -59,7 +61,18 @@
                 {{-- ============ Pestaña Resumen (maquetas 4a/5a/5b) ============ --}}
                 <div class="tab-pane fade show active" id="ag-tab-resumen" role="tabpanel" tabindex="0">
                     <div class="ag-dash__stack">
-                        <x-molecules.alert-strip variant="accent" icon="wb_twilight">
+                        {{-- Alertas primero, en orden de criticidad (danger > accent) —
+                             Fase 5: antes el aviso de RC (el más crítico) estaba al final
+                             de la página, después de todo lo demás. --}}
+                        <x-molecules.alert-strip variant="danger" icon="photo_camera">
+                            <strong>{{ __('seguridad.dashboard.rc_alerta', ['cantidad' => $alertaRc['cantidad']]) }}</strong>
+                            <span class="ag-dash__rc-detalle">{{ __('seguridad.dashboard.rc_detalle') }}</span>
+                            <x-slot:action>
+                                <x-atoms.button variant="danger" size="sm">{{ __('seguridad.dashboard.rc_resolver') }}</x-atoms.button>
+                            </x-slot:action>
+                        </x-molecules.alert-strip>
+
+                        <x-molecules.alert-strip variant="warning" icon="wb_twilight">
                             <strong>{{ __('seguridad.dashboard.ventana_titulo', ['horario' => $ventana['horario']]) }}</strong>
                             {{ $ventana['detalle'] }}
                             <x-slot:action>
@@ -69,19 +82,23 @@
 
                         {{-- KPIs: 4 en escritorio, 2×2 en tablet (mismo bloque);
                              en móvil manda el bloque protagonista de abajo. --}}
-                        <div class="ag-dash__kpis">
-                            @foreach ($kpis as $kpi)
-                                <x-molecules.stat-card
-                                    :label="$kpi['label']"
-                                    :icon="$kpi['icono']"
-                                    :value="$kpi['valor']"
-                                    :value-suffix="$kpi['sufijo']"
-                                    :foot="$kpi['pie']"
-                                    :foot-icon="$kpi['pieIcono']"
-                                    :foot-tone="$kpi['pieTono']"
-                                />
-                            @endforeach
-                        </div>
+                        <section>
+                            <x-molecules.section-head :title="__('seguridad.dashboard.seccion_indicadores')" />
+                            <div class="ag-dash__kpis">
+                                @foreach ($kpis as $kpi)
+                                    <x-molecules.stat-card
+                                        :label="$kpi['label']"
+                                        :icon="$kpi['icono']"
+                                        :value="$kpi['valor']"
+                                        :value-suffix="$kpi['sufijo']"
+                                        :foot="$kpi['pie']"
+                                        :foot-icon="$kpi['pieIcono']"
+                                        :foot-tone="$kpi['pieTono']"
+                                        :state="$kpi['estado'] ?? null"
+                                    />
+                                @endforeach
+                            </div>
+                        </section>
 
                         <div class="ag-dash__kpis-movil">
                             <x-molecules.stat-card
@@ -100,11 +117,25 @@
                                             :value-suffix="$kpi['sufijo']"
                                             :foot="$kpi['pie']"
                                             :foot-tone="$kpi['pieTono']"
+                                            :state="$kpi['estado'] ?? null"
                                         />
                                     @endif
                                 @endforeach
                             </div>
                         </div>
+
+                        {{-- Gráfica mock (Fase 4) — antes de Programación/Pausas/Stock,
+                             pedido explícito del 28/8/2026. --}}
+                        <section>
+                            <x-molecules.section-head :title="__('seguridad.dashboard.seccion_distribucion')" :count="$distribucion['total']" />
+                            <div class="ag-card ag-card--padded">
+                                <x-molecules.donut-chart
+                                    :segments="$distribucion['segmentos']"
+                                    :total="$distribucion['total']"
+                                    :center-label="__('seguridad.dashboard.distribucion_centro')"
+                                />
+                            </div>
+                        </section>
 
                         {{-- Grilla 1.55fr/1fr (escritorio); apilada en tablet;
                              en móvil la reemplaza el bloque de fichas. --}}
@@ -154,14 +185,6 @@
                             </div>
                             @include('seguridad::pages.dashboard._fichas-sesiones', ['sesiones' => $sesiones])
                         </div>
-
-                        <x-molecules.alert-strip variant="danger" icon="photo_camera">
-                            <strong>{{ __('seguridad.dashboard.rc_alerta', ['cantidad' => $alertaRc['cantidad']]) }}</strong>
-                            <span class="ag-dash__rc-detalle">{{ __('seguridad.dashboard.rc_detalle') }}</span>
-                            <x-slot:action>
-                                <x-atoms.button variant="danger" size="sm">{{ __('seguridad.dashboard.rc_resolver') }}</x-atoms.button>
-                            </x-slot:action>
-                        </x-molecules.alert-strip>
                     </div>
                 </div>
 
@@ -188,7 +211,7 @@
                         </div>
 
                         <div class="ag-card">
-                            @include('seguridad::pages.dashboard._tabla-sesiones', ['sesiones' => $sesiones])
+                            @include('seguridad::pages.dashboard._tabla-sesiones', ['sesiones' => $sesiones, 'conRc' => true])
                         </div>
 
                         <div class="ag-dash__solo-movil">
@@ -209,7 +232,14 @@
                             @include('seguridad::pages.dashboard._barras-pausas', ['causas' => $pausas['causas'], 'grande' => true])
                         </div>
 
-                        <x-molecules.alert-strip variant="accent" icon="help">
+                        <div class="ag-card">
+                            <div class="ag-card__head">
+                                <h2 class="ag-card__title">{{ __('seguridad.dashboard.pausas_eventos_titulo') }}</h2>
+                            </div>
+                            @include('seguridad::pages.dashboard._tabla-eventos-pausas', ['eventos' => $pausasEventos])
+                        </div>
+
+                        <x-molecules.alert-strip variant="warning" icon="help">
                             {{ __('seguridad.dashboard.pausas_sin_causa', ['horas' => $pausasSinCausa]) }}
                         </x-molecules.alert-strip>
                     </div>

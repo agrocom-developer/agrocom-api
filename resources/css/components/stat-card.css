@@ -1,14 +1,15 @@
 /*
  * Molecule: stat-card (resources/views/components/molecules/stat-card.blade.php)
- * Tarjeta KPI del rediseño (quinta vuelta, maquetas 4a/5a/5b): superficie
- * de tarjeta con borde propio, rótulo uppercase + ícono verde, cifra en la
- * fuente display y pie con tono semántico. La cifra usa 2.125rem (un punto
- * bajo los 38px del mockup: Fraunces es más ancha que la serif del mockup —
- * ajuste de tamaño por familia pedido el 28/8/2026). El grid responsivo lo
- * arma la página (4 col escritorio / 2×2 tablet-móvil).
+ * Tarjeta KPI del rediseño (quinta vuelta, maquetas 4a/5a/5b; sexta vuelta
+ * parte 2: cifra en mono, ver .ag-stat-card__value más abajo — nunca la
+ * display, que es la fuente del titular de la página). Superficie de
+ * tarjeta con borde propio, rótulo uppercase + ícono en contenedor con
+ * estado (sexta vuelta parte 2). El grid responsivo lo arma la página
+ * (4 col escritorio / 2×2 tablet-móvil).
  */
 
 .ag-stat-card {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: var(--ag-space-2);
@@ -17,6 +18,15 @@
     border: 1px solid var(--ag-color-border-card);
     border-radius: 12px;
     min-width: 0;
+    overflow: hidden;
+    transition:
+        transform var(--ag-transition-fast),
+        box-shadow var(--ag-transition-fast);
+}
+
+.ag-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--ag-shadow-md);
 }
 
 .ag-stat-card__head {
@@ -37,17 +47,75 @@
     white-space: nowrap;
 }
 
-.ag-stat-card__icon {
+/* Contenedor del ícono (sexta vuelta parte 2, §2.2): por defecto neutro —
+   se colorea vía `data-state` en .ag-stat-card, ver abajo. */
+.ag-stat-card__icon-box {
     flex-shrink: 0;
-    color: var(--ag-color-primary-emphasis);
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: var(--ag-radius-md);
+    background: var(--ag-color-neutral-subtle);
+    color: var(--ag-color-text-muted);
 }
 
+.ag-stat-card__icon {
+    flex-shrink: 0;
+}
+
+/* Tono del contenedor del ícono por estado. */
+.ag-stat-card[data-state='success'] .ag-stat-card__icon-box {
+    background: var(--ag-color-success-subtle);
+    color: var(--ag-color-success-strong);
+}
+
+.ag-stat-card[data-state='warning'] .ag-stat-card__icon-box {
+    background: var(--ag-color-warning-subtle);
+    color: var(--ag-color-warning-strong);
+}
+
+.ag-stat-card[data-state='danger'] .ag-stat-card__icon-box {
+    background: var(--ag-color-danger-subtle);
+    color: var(--ag-color-danger-strong);
+}
+
+.ag-stat-card[data-state='info'] .ag-stat-card__icon-box {
+    background: var(--ag-color-info-subtle);
+    color: var(--ag-color-info-strong);
+}
+
+/* Barra izquierda de atención: SOLO warning/danger (estados que requieren
+   acción) — success/info quedan sin barra, mismo criterio que el original
+   de referencia. */
+.ag-stat-card[data-state='warning']::before,
+.ag-stat-card[data-state='danger']::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+}
+
+.ag-stat-card[data-state='warning']::before {
+    background: var(--ag-color-warning);
+}
+
+.ag-stat-card[data-state='danger']::before {
+    background: var(--ag-color-danger);
+}
+
+/* Mono, NUNCA la display (Fraunces) — pedido explícito del 28/8/2026: la
+   cifra del KPI no puede competir/confundirse con el titular serif de la
+   página ("Operación de hoy"). Mismo criterio que la referencia
+   ganadosoft (§2.2, IBM Plex Mono) y que el total del donut-chart. */
 .ag-stat-card__value {
     margin: 0;
-    font-family: var(--ag-font-family-display);
-    font-optical-sizing: auto;
-    font-weight: var(--ag-font-weight-regular);
-    font-size: 2.125rem;
+    font-family: var(--ag-font-family-mono);
+    font-weight: var(--ag-font-weight-bold);
+    letter-spacing: -0.02em;
+    font-size: 1.875rem;
     line-height: 1;
     color: var(--ag-color-text);
 }
@@ -93,4 +161,14 @@
 
 .ag-stat-card--hero .ag-stat-card__foot {
     font-size: var(--ag-font-size-xs);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ag-stat-card {
+        transition-duration: 0.01ms;
+    }
+
+    .ag-stat-card:hover {
+        transform: none;
+    }
 }
