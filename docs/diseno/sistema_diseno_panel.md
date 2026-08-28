@@ -116,6 +116,9 @@ Consecuencia de diseño explícita: **el relleno sólido de marca (botones) es c
 | Molecule | `stat-card` | `resources/views/components/molecules/stat-card.blade.php` | Implementado (2026-08-28) |
 | Molecule | `plan-card` | `resources/views/components/molecules/plan-card.blade.php` | Implementado (2026-08-28) |
 | Molecule | `form-section` | `resources/views/components/molecules/form-section.blade.php` | Implementado (2026-08-28) |
+| Molecule | `role-card` | `resources/views/components/molecules/role-card.blade.php` | Implementado (2026-08-28, quinta vuelta) |
+| Molecule | `section-head` | `resources/views/components/molecules/section-head.blade.php` | Implementado (2026-08-28, sexta vuelta parte 2) |
+| Molecule | `donut-chart` | `resources/views/components/molecules/donut-chart.blade.php` | Implementado (2026-08-28, sexta vuelta parte 2) |
 
 Por qué solo los átomos estaban implementados en el pase anterior: era el límite de alcance fijado para la primera entrega de HU-02 (tokens + piezas de más bajo nivel, sin lógica de negocio). Este pase (27/8/2026) implementa el resto del catálogo, a pedido explícito de HU-02 (el usuario vio un prototipo interactivo aparte y pidió la construcción real). Decisiones de composición que no estaban 100% cerradas en la especificación de §4 y se resolvieron acá:
 
@@ -417,3 +420,156 @@ de rol" del sidebar/menú de usuario, con `?cambiar=1`).
   de stock, ventana volable, badges del menú, campaña/período/versión) —
   marcado MOCK, nunca hardcodeado en vistas; usuario demo multirol
   `camila.rojas`/`password` en `Demo/PanelDemoSeeder`.
+
+## 8. Reglas fijas de pulido UI (sexta vuelta, 28/8/2026)
+
+Seis reglas derivadas de la sesión de login + `seleccionar-rol` del
+28/8/2026, para aplicar por defecto en cualquier componente nuevo del
+catálogo en vez de redescubrirlas por prueba y error en cada pantalla.
+
+1. **Tipografía display: `font-weight` siempre explícito.**
+   `.ag-login-form__title` no lo declaraba (heredaba el 500 de Bootstrap
+   Reboot); `.ag-role-select__title` sí, pero en
+   `--ag-font-weight-regular` (400) a 2rem — un peldaño más chico/liviano
+   que el login pese a compartir `auth-layout`. Igualados a 38px +
+   `--ag-font-weight-bold` explícito en ambos. Regla: todo consumidor de
+   `--ag-font-family-display` declara `font-weight` con el token, nunca
+   depende del peso por defecto de Bootstrap para headings.
+2. **Color de "estado seleccionado" vs. contenido informativo repetido —
+   mismo eje, nunca ámbar para lo segundo.** En `role-card`, se probó
+   ámbar de marca en los chips de permisos (dos intentos, incluyendo
+   también el ícono) y ambos se revirtieron por feedback del usuario.
+   Regla fija: el estado de selección de una tarjeta (ícono, borde) y
+   cualquier chip informativo que se repite fila a fila comparten el
+   mismo eje gris↔verde (nunca ámbar); para no repetir el mismo verde del
+   borde/ícono (`--ag-color-primary`), el chip interno usa el par
+   `success` (`--ag-color-success-strong`/`-subtle` + borde
+   `--ag-color-primary-border-subtle`). El ámbar de marca queda reservado
+   para acentos editoriales puntuales que NO se repiten por fila (badge
+   "ÚLTIMO USADO", link "¿Olvidaste tu contraseña?").
+3. **Todo chip/pill lleva borde del mismo tono que su texto** — no solo
+   fondo tenue + texto (se veía "plano, sin relieve" sin él).
+4. **Un chip/contenedor de texto sobre un fondo ya tintado
+   (`--ag-color-bg-auth` u otro) necesita borde propio** para no
+   fundirse — el `-subtle` solo no alcanza cuando la superficie base ya
+   tiene color.
+5. **Hover de una acción secundaria en texto plano (sin botón/fondo por
+   defecto) necesita fondo sutil + transición**, no solo cambio de color
+   de texto.
+6. **Transición nativa entre navegaciones del mismo flujo**:
+   `@view-transition { navigation: auto; }` declarado una sola vez en
+   `app.css` (transversal, no por template), con el bloque
+   `prefers-reduced-motion` correspondiente sobre `::view-transition-*`.
+7. **Cifra grande de KPI: mono, nunca la display.** `--ag-font-family-display`
+   (Fraunces) es la fuente del TITULAR de la página ("Operación de hoy",
+   `.ag-dash__title`) — una cifra de `stat-card` en la misma fuente compite
+   visualmente con el titular en vez de leerse como un dato. Regla fija:
+   toda cifra grande de KPI/métrica usa `--ag-font-family-mono` (mismo
+   criterio que el total del `donut-chart` y los badges de menú), la
+   display queda reservada para titulares editoriales.
+8. **Variantes de una misma franja/alerta comparten anatomía, solo cambia
+   el tono.** `alert-strip--danger` empezó como un recuadro completo
+   (border 1px en las 4 esquinas) mientras `--accent`/`--warning` usaban
+   gradiente + borde izquierdo de 3px + esquinas 0/10/10/0 — dos
+   variantes del mismo componente que leían como dos componentes
+   distintos. Regla fija: todas las variantes de un componente de alerta
+   comparten la MISMA estructura visual (gradiente, radios, grosor de
+   borde); la severidad se expresa solo con el token de color, nunca con
+   una anatomía distinta.
+
+## 9. Sexta vuelta — parte 2 (28/8/2026): rediseño del dashboard
+
+Ejecuta `docs/gestion/plan_dashboard_rediseno.md` — Anexo A y fases 1 a 7 de
+ese plan (queda solo la Fase 8, auditoría final, que es este mismo cierre).
+Verificado en navegador (Playwright, claro/oscuro/móvil, usuario
+`camila.rojas`) antes de cerrar cada fase.
+
+- **Fase 1 — sidebar (nivel 2)**: collapse/expand nuevo (botón hamburguesa
+  en `.ag-module-sidebar__header`, JS propio
+  `resources/js/organisms/module-sidebar.js`, estado en localStorage —
+  72px colapsado, oculta título/descripción/labels/badges). Badge de
+  `menu-item` separado en `{numero, texto}`: el pill solo pinta el número,
+  el texto completo se resuelve como tooltip nativo de Bootstrap
+  (`data-bs-title`, inicializado globalmente en `app.js` — Bootstrap NO
+  auto-inicializa tooltips como sí hace con collapse/dropdown/offcanvas).
+  `DatosDemoPanel::badgesMenu()` cambió de forma
+  (`array<string, array{numero, texto}>`) — mismo criterio que tendrá el
+  caso de uso real. Nuevo token `--ag-color-accent-border-subtle` (borde
+  del badge, regla §8.3/§8.4: un chip sobre el chrome ya tintado necesita
+  borde propio).
+  **Trampa encontrada**: `data_get($menuBadges, "{$label}.numero")` NO
+  funciona — `$label` ya es la clave completa (p. ej.
+  `"menu.operacion.items.programacion"`) y `data_get()` interpreta sus
+  puntos como un path anidado. Acceso directo al array
+  (`$menuBadges[$label]['numero']`), nunca `data_get()` sobre una clave que
+  ya trae puntos.
+- **Fase 2 — header**: dos bloques CSS explícitos
+  `.ag-topbar__left`/`.ag-topbar__right` (antes dependía solo del `flex:1`
+  del buscador). Derecha, en el orden pedido: usuario, tema, notificación,
+  período, campaña.
+- **Fase 7 — contraste sistémico en oscuro**: `--ag-color-bg-elevated`,
+  `--ag-color-bg-chrome` y `--ag-color-surface-card` eran EL MISMO valor
+  (`color-mix(olive-900 22%, gray-850 78%)`) — contra `--ag-color-bg`
+  (`bg-auth`) la diferencia real era de ~2 unidades de RGB, imperceptible
+  (confirmado con captura real, no solo cálculo). Reemplazado por una
+  escala de elevación tipo Material dark theme (overlay de blanco creciente
+  sobre `--ag-color-bg-auth`, no mezclas de marca independientes que
+  convergían al mismo tono): chrome 4%, tarjeta 8%, cabecera de
+  tabla/hover/input 12%, borde de tarjeta 20%, borde de fila 16%, pista de
+  progreso 6% (deliberadamente por DEBAJO de la tarjeta — es un inset, no
+  una superficie que deba "flotar"). El riel (`--ag-color-bg-rail`,
+  constante entre temas) no se tocó. Solo `theme-dark.css` — `theme-light.css`
+  no tenía la queja y no se tocó.
+- **Fase 3 — KPI cards + sectorización**: molecule nuevo `section-head`
+  (barra 4px + rótulo uppercase + contador mono, §2.1 de la referencia).
+  `stat-card` gana prop `state` (success|warning|danger|info|null,
+  independiente de `footTone`): colorea el contenedor del ícono (34×34,
+  antes el ícono flotaba sin contenedor) y, SOLO para warning/danger, pinta
+  una barra izquierda de 4px — success/info/null quedan sin barra, mismo
+  criterio que la referencia (no todo estado necesita gritar). Datos mock:
+  `DatosDemoPanel::kpis()` gana la clave `estado` por KPI.
+- **Fase 4 — gráfica mock**: molecule nuevo `donut-chart` (anillo hueco
+  `conic-gradient` + leyenda, CERO librería — §2.3 de la referencia).
+  Reutiliza los tonos categóricos ya existentes (success/warning/info/
+  neutral, mismo vocabulario que `variante` en las filas de sesiones) — sin
+  paleta propia. Dato: `DatosDemoPanel::distribucionSesiones()`,
+  consistente con el KPI "Sesiones validadas 42/48" (42 validadas + 6
+  repartidas entre los otros tres estados). Ubicado antes de "Programación
+  de hoy"/Pausas/Stock, pedido explícito.
+- **Fase 5 — orden de alertas**: el aviso de RC (`danger`, el más crítico)
+  pasó del pie de la página al inicio, antes que la franja de ventana
+  volable (`accent`) — criterio: `danger` siempre antes que `accent`/
+  `warning`.
+- **Fixes de feedback directo (durante Fase 3/5)**: (a) la cifra de
+  `stat-card` pasó de `--ag-font-family-display` a `--ag-font-family-mono`
+  — competía con el titular "Operación de hoy" (misma fuente); (b)
+  `alert-strip--danger` pasó de recuadro completo (border 1px, radio 12px
+  parejo) a la MISMA anatomía que `--accent`/`--warning` (gradiente + borde
+  izquierdo 3px + esquinas 0/10/10/0) — dos variantes de un componente
+  deben compartir estructura, solo cambia el tono. Ambas reglas quedaron
+  fijadas en §8.7/§8.8.
+- **Fase 6 — detalle de Sesiones/Pausas** (decisión confirmada: enriquecer
+  los TABS existentes, no rutas propias — no toca `SecMenuSeeder`).
+  - Tab Sesiones: columna RC nueva (`operaciones.sesion.rc_estado`:
+    capturado|sin_evidencia|no_aplica — "no_aplica" es una sesión que
+    todavía no vuela, no una tercera variante de falla) + drill-down: cada
+    fila es un `<button>` (`.ag-table__row--clickable`) que abre un
+    offcanvas nativo de Bootstrap (`.ag-session-detail`, `offcanvas-end`,
+    cero JS propio) con orden/mezcla/preparado por/condiciones/pausas de
+    la sesión/captura del RC — cumple la promesa que ya traía
+    `sesiones_nota` (existía como texto desde la quinta vuelta, sin panel
+    real detrás). Nuevo parcial `_detalle-sesion.blade.php`. `_tabla-sesiones`
+    gana el prop opcional `$conRc` (default false, el tab Resumen sigue
+    igual que siempre) y `.ag-table--detallado` (7ª columna).
+  - Tab Pausas: tabla nueva de eventos individuales (bajo el agregado por
+    causa) — `_tabla-eventos-pausas.blade.php`, `.ag-table--eventos` (4
+    columnas), dato `DatosDemoPanel::pausasEventos()`.
+- **Fixes de feedback directo (post Fase 6)**: `alert-strip` pasó de 2
+  variantes (`accent`/`danger`, distinta anatomía cada una) a las 4
+  variantes semánticas del catálogo (`warning`/`danger`/`success`/`info`,
+  MISMA anatomía) — "accent" era el nombre de marca de lo que siempre fue
+  visualmente un warning, se renombró. El gradiente de las 4 ahora sostiene
+  el color al 100% hasta el 55% del ancho antes de apagarse hacia
+  `--ag-color-bg-table-head` (antes el color se apagaba desde el borde
+  mismo y se leía como un filo fino, no como el protagonista de la
+  franja).
