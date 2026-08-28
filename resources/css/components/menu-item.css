@@ -10,6 +10,7 @@
 
 .ag-menu-item {
     --ag-menu-item-index: 0;
+    position: relative;
     display: flex;
     align-items: center;
     gap: var(--ag-space-3);
@@ -45,6 +46,25 @@
     background: var(--ag-color-primary-subtle);
     color: var(--ag-color-primary-emphasis);
     font-weight: var(--ag-font-weight-medium);
+}
+
+/* Barra de acento a la izquierda del ítem activo (pulido de jerarquía,
+   mockup de dashboard, segunda ronda de HU-02): refuerza el estado activo
+   más allá del tinte de fondo, y sigue siendo visible en icon-rail
+   (desktop colapsado, donde el label desaparece pero el ítem conserva su
+   caja). `left` negativo compensa el padding-inline de `.ag-menu` (ver
+   sidebar-nav.css) para que la barra llegue al borde del sidebar, no al
+   borde del ítem. */
+.ag-menu-item.is-active::before {
+    content: '';
+    position: absolute;
+    left: calc(var(--ag-space-2) * -1);
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 1.25rem;
+    border-radius: var(--ag-radius-pill);
+    background-color: var(--ag-color-primary-emphasis);
 }
 
 .ag-menu-item__icon {

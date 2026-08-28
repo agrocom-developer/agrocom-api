@@ -49,4 +49,15 @@ return [
         'copyright' => 'Agrocom SRL — :year',
     ],
 
+    // organisms/topbar (mockup de dashboard, HU-02 segunda ronda): chrome
+    // genérico de la campana de notificaciones, reutilizable en cualquier
+    // pantalla — el CONTENIDO de cada notificación (título, ícono, hora) lo
+    // pasa quien arme la pantalla, esta clave es solo el rótulo del
+    // disparador y el estado vacío.
+    'topbar' => [
+        'notifications' => 'Notificaciones',
+        'no_notifications' => 'Sin notificaciones nuevas',
+        'logout' => 'Cerrar sesión',
+    ],
+
 ];

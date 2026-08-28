@@ -24,10 +24,22 @@
 }
 
 .ag-panel-layout__footer {
-    padding: var(--ag-space-4) var(--ag-space-6);
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-5) var(--ag-space-6);
     border-top: 1px solid var(--ag-color-border);
     color: var(--ag-color-text-muted);
     font-size: var(--ag-font-size-xs);
+}
+
+.ag-panel-layout__footer-brand {
+    font-weight: var(--ag-font-weight-medium);
+    color: var(--ag-color-text);
+}
+
+.ag-panel-layout__footer-separator {
+    color: var(--ag-color-border-strong);
 }
 
 @media (max-width: 991.98px) {
@@ -36,6 +48,6 @@
     }
 
     .ag-panel-layout__footer {
-        padding: var(--ag-space-3) var(--ag-space-4);
+        padding: var(--ag-space-4);
     }
 }

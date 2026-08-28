@@ -25,12 +25,22 @@
 
 @media (min-width: 992px) {
     .ag-sidebar.offcanvas-lg {
+        /* Bootstrap resetea `background-color` para este breakpoint (ver
+           docblock de arriba) pero NO `position`/`visibility`/`transform` —
+           la base `.offcanvas`/`.offcanvas-start` (sin sufijo de breakpoint)
+           trae `position: fixed; visibility: hidden; transform:
+           translateX(-100%)` de forma incondicional, y ningún selector
+           `.offcanvas-lg` del propio Bootstrap los revierte a este ancho.
+           Sin este reset el sidebar queda invisible/fuera de pantalla en
+           desktop aunque nunca se haya interactuado con el offcanvas. */
         background-color: var(--ag-color-bg-chrome) !important;
         border-right: 1px solid var(--ag-color-border);
         width: 17rem;
         height: 100vh;
         position: sticky;
         top: 0;
+        visibility: visible;
+        transform: none;
     }
 
     /* Colapso a icon-rail: el ancho del CONTENEDOR cambia de forma

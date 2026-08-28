@@ -52,6 +52,22 @@
     gap: var(--ag-space-3);
 }
 
+/* Jerarquía visual (mockup de dashboard, segunda ronda de HU-02): agrupa
+   "utilidades" (notificaciones + tema) separado de "identidad" (rol +
+   usuario) con un divisor sutil, en vez de una fila plana de íconos. */
+.ag-topbar__group {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+}
+
+.ag-topbar__divider {
+    width: 1px;
+    height: 1.5rem;
+    flex-shrink: 0;
+    background-color: var(--ag-color-border);
+}
+
 .ag-role-badge {
     display: inline-flex;
     align-items: center;
@@ -193,6 +209,154 @@
    se ve o no. Seguro anular solo la duración. */
 @media (prefers-reduced-motion: reduce) {
     .ag-role-popover {
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/*
+ * Campana de notificaciones — mismo mecanismo de `dropdown` nativo de
+ * Bootstrap que el popover de rol (arriba); popover propio
+ * (`.ag-notifications-popover`) porque el contenido es una lista de
+ * ítems icono+título+hora, no la lista de roles.
+ */
+.ag-topbar__notifications {
+    position: relative;
+}
+
+.ag-topbar__notifications-trigger {
+    position: relative;
+}
+
+.ag-topbar__notifications-count {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    min-width: 1rem;
+    height: 1rem;
+    padding: 0 3px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--ag-radius-pill);
+    background-color: var(--ag-color-danger);
+    color: var(--ag-color-gray-0);
+    font-size: 0.625rem;
+    font-weight: var(--ag-font-weight-bold);
+    line-height: 1;
+    border: 2px solid var(--ag-color-bg-elevated);
+}
+
+.ag-notifications-popover {
+    display: block !important;
+    width: 22rem;
+    max-width: calc(100vw - var(--ag-space-6));
+    max-height: 24rem;
+    overflow-y: auto;
+    background: var(--ag-color-bg-elevated);
+    border: 1px solid var(--ag-color-border);
+    border-radius: var(--ag-radius-lg);
+    box-shadow: var(--ag-shadow-lg);
+    padding: var(--ag-space-4);
+    margin-top: var(--ag-space-2) !important;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: scale(0.95);
+    transform-origin: top right;
+    transition:
+        opacity 180ms var(--ag-ease-emphasized),
+        transform 180ms var(--ag-ease-emphasized),
+        visibility 0s linear 180ms;
+}
+
+.ag-notifications-popover.show {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: scale(1);
+    transition:
+        opacity 180ms var(--ag-ease-emphasized),
+        transform 180ms var(--ag-ease-emphasized),
+        visibility 0s linear 0s;
+}
+
+.ag-notifications-popover__empty {
+    margin: 0;
+    padding: var(--ag-space-4) 0;
+    text-align: center;
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-notification-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ag-notification-item {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-3);
+    border-radius: var(--ag-radius-md);
+}
+
+.ag-notification-item.is-unread {
+    background-color: var(--ag-color-primary-subtle);
+}
+
+.ag-notification-item__icon {
+    flex-shrink: 0;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--ag-radius-pill);
+    background-color: var(--ag-color-bg);
+    color: var(--ag-color-primary-emphasis);
+}
+
+.ag-notification-item__body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ag-notification-item__title {
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text);
+}
+
+.ag-notification-item__time {
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-notification-item__dot {
+    flex-shrink: 0;
+    width: 0.5rem;
+    height: 0.5rem;
+    margin-top: var(--ag-space-1);
+    border-radius: 50%;
+    background-color: var(--ag-color-primary);
+}
+
+@media (max-width: 480px) {
+    .ag-notifications-popover {
+        width: calc(100vw - 2.5rem);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ag-notifications-popover {
         transition-duration: 0.01ms !important;
     }
 }

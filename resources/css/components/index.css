@@ -9,11 +9,16 @@
 @import './logo.css';
 @import './input.css';
 @import './button.css';
+@import './badge.css';
+@import './switch.css';
 
 /* Molecules (HU-02) */
 @import './role-selector-item.css';
 @import './theme-toggle.css';
 @import './menu-item.css';
+@import './stat-card.css';
+@import './plan-card.css';
+@import './form-section.css';
 
 /* Organisms (HU-02) */
 @import './collapsible-menu-group.css';

@@ -63,6 +63,11 @@
             const btnContinuar = section.querySelector('[data-ag-rol-activo-continuar]');
             let rolSeleccionado = null;
 
+            // Sin roles asignados (ver el bloque forelse/empty arriba): ni
+            // los botones de rol ni el botón "Continuar" existen en el DOM —
+            // no hay nada que wirear.
+            if (!btnContinuar) return;
+
             // Click en un botón de rol: toggle aria-pressed
             botones.forEach((btn) => {
                 btn.addEventListener('click', () => {

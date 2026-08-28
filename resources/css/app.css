@@ -22,3 +22,4 @@
 /* Tokens y componentes propios (ganan especificidad sobre Bootstrap) */
 @import './tokens/index.css';
 @import './components/index.css';
+@import './pages/index.css';

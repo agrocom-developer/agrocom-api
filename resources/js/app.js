@@ -3,6 +3,7 @@ import './atoms/input.js';
 import './molecules/theme-toggle.js';
 import './organisms/sidebar-nav.js';
 import './organisms/login-form.js';
+import './organisms/topbar.js';
 import './templates/auth-layout.js';
 import './pages/login.js';
 

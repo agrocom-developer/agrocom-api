@@ -55,6 +55,14 @@ class SecMenuSeeder extends Seeder
             orden: 2,
             codigoPermiso: 'seguridad.usuario.ver',
         );
+
+        $this->item(
+            label: 'seguridad.menu.organizacion',
+            icono: 'apartment',
+            ruta: 'panel.organizacion.index',
+            orden: 3,
+            codigoPermiso: null,
+        );
     }
 
     private function item(string $label, string $icono, ?string $ruta, int $orden, ?string $codigoPermiso): SecMenu

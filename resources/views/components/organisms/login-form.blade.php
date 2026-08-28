@@ -55,7 +55,7 @@
     'submitting' => false,
 ])
 
-<div class="ag-login-form" style="max-width: 380px; width: 100%; margin-inline: auto;">
+<div {{ $attributes->class(['ag-login-form']) }}>
     {{-- Tabs --}}
     <div role="tablist" class="ag-login-form__tabs" aria-label="{{ __('seguridad.login.tabs_aria_label') }}">
         <button

@@ -89,10 +89,11 @@
                     :stagger-index="$index"
                 />
             @else
+                @php($ruta = data_get($item, 'ruta', data_get($item, 'href')))
                 <x-molecules.menu-item
                     :label="data_get($item, 'label')"
                     :icon="data_get($item, 'icono', data_get($item, 'icon'))"
-                    :href="data_get($item, 'ruta', data_get($item, 'href'))"
+                    :href="$ruta && \Route::has($ruta) ? route($ruta) : $ruta"
                     :active="(bool) data_get($item, 'active', false)"
                     :badge="data_get($item, 'badge')"
                     :permission="data_get($item, 'permission')"

@@ -62,6 +62,12 @@
        o un negro duro. */
     --ag-color-accent-contrast-fill: var(--ag-color-amber-100);
 
+    /* Gris neutro para superficies "sin estado" (atoms/badge variante
+       "neutral", molecules/stat-card ídem) — un peldaño más oscuro que
+       `--ag-color-bg`/`-bg-elevated` para que el pill/chip se distinga de
+       la superficie que lo rodea sin necesitar un tinte de color. */
+    --ag-color-neutral-subtle: var(--ag-color-gray-200);
+
     /* Estados */
     --ag-color-success: var(--ag-color-green-700);
     --ag-color-success-subtle: var(--ag-color-green-100);

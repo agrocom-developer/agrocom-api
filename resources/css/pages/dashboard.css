@@ -1,0 +1,36 @@
+/*
+ * Page: dashboard (app/Dominios/Seguridad/Infraestructura/Http/Views/pages/dashboard.blade.php)
+ * CSS propio de ESTA página (no es componente de catálogo — ver convención
+ * en resources/css/pages/index.css). Solo layout: grid de stat-cards y
+ * sección de "órdenes por estado", ambos con datos MOCK que arma el
+ * controlador — este archivo no sabe nada de eso, solo posiciona.
+ */
+
+.ag-dashboard__intro {
+    color: var(--ag-color-text-muted);
+    margin-top: var(--ag-space-2);
+    max-width: 40rem;
+}
+
+.ag-dashboard__stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--ag-space-4);
+    margin-top: var(--ag-space-6);
+}
+
+.ag-dashboard__orders-section {
+    margin-top: var(--ag-space-8);
+}
+
+.ag-dashboard__orders-title {
+    font-size: var(--ag-font-size-lg);
+    color: var(--ag-color-text);
+    margin-bottom: var(--ag-space-4);
+}
+
+.ag-dashboard__orders-badges {
+    display: flex;
+    gap: var(--ag-space-3);
+    flex-wrap: wrap;
+}
