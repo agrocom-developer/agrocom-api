@@ -56,7 +56,12 @@
 }
 
 .ag-theme-toggle__icon {
-    font-size: 1rem;
+    /* Un poco más grande (cuarta vuelta, pedido puntual) — este componente
+       ya define su propio font-size aislado (no depende de --ag-icon--sm
+       ni de la prop `size` del átomo `icon`), así que subir este valor es
+       local al componente, sin riesgo de afectar otros consumidores del
+       átomo. --ag-font-size-lg ya es un token existente. */
+    font-size: var(--ag-font-size-lg);
 }
 
 /* Celda activa = tema activo. Mismo mecanismo que el thumb anterior (el

@@ -86,28 +86,38 @@
     --ag-color-scrim: rgba(0, 0, 0, 0.68);
     --ag-color-text-on-scrim: var(--ag-color-gray-0);
 
-    /* Superficie de auth-layout (HU-02, rediseño login, tercera vuelta) —
-       tokens EXCLUSIVOS del panel de formulario, deliberadamente separados
-       de --ag-color-bg/--ag-color-bg-elevated: esta vuelta quita la tarjeta
-       blanca elevada de las anteriores y pinta el panel completo con un
-       tono propio ("ocre pastel"), a propósito distinto del gris neutro que
-       usa el resto del panel. Si el panel reasignara --ag-color-bg-elevated
-       en cambio, cualquier otra tarjeta genérica del sistema (que sí usa
-       ese token) heredaría sin querer el tinte ocre — de ahí un token
-       nuevo, no una reasignación del existente. */
-    --ag-color-bg-auth: color-mix(in srgb, var(--ag-color-amber-100) 45%, var(--ag-color-gray-50) 55%);
+    /* Superficie de auth-layout (HU-02, rediseño login, tercera vuelta;
+       retocado en la cuarta vuelta) — tokens EXCLUSIVOS del panel de
+       formulario, deliberadamente separados de --ag-color-bg/-bg-elevated:
+       esta vuelta quita la tarjeta blanca elevada de las anteriores y pinta
+       el panel completo con un tono propio, a propósito distinto del gris
+       neutro que usa el resto del panel. Si el panel reasignara
+       --ag-color-bg-elevated en cambio, cualquier otra tarjeta genérica del
+       sistema (que sí usa ese token) heredaría sin querer el tinte — de ahí
+       un token nuevo, no una reasignación del existente.
+
+       Cuarta vuelta (ajuste puntual, mismo criterio de color-mix() sobre
+       primitivos, ningún hex nuevo): el usuario pidió "más blanco crema"
+       manteniendo el guiño anaranjado — se bajó el peso de
+       --ag-color-amber-100 (45%→30%) y se cambió la base de mezcla de
+       --ag-color-gray-50 a --ag-color-gray-0 (blanco puro), para que el
+       resultado se lea "crema" en vez de "ocre pastel"/"gris tibio". El
+       contraste de texto MEJORA con este cambio (el fondo es más luminoso
+       que antes) — ver tabla actualizada en sistema_diseno_panel.md §1.3. */
+    --ag-color-bg-auth: color-mix(in srgb, var(--ag-color-amber-100) 30%, var(--ag-color-gray-0) 70%);
 
     /* Texto muted EXCLUSIVO de superficies montadas sobre --ag-color-bg-auth
        (labels uppercase, subtítulos, pie mono del formulario de login).
        --ag-color-text-muted (gris-600) ya está al límite de AA (~4.7:1)
-       contra blanco puro — ver §1.3 — y contra el tono ocre tintado de
+       contra blanco puro — ver §1.3 — y contra el tono tintado de
        --ag-color-bg-auth el ratio cae por debajo de 4.5:1 (verificado:
-       ~4.3:1, falla). La corrección NO es oscurecer el token global
-       --ag-color-text-muted (afectaría todo el panel, que hoy sí pasa AA
-       sobre blanco/gris-50 sin margen para perder) sino declarar esta
-       variante propia de la superficie auth: gris-700 (más oscuro que el
-       gris-600 de --ag-color-text-muted) da ~7.5:1 contra
-       --ag-color-bg-auth claro, AAA. */
+       ~4.3:1 con el tono anterior, falla). La corrección NO es oscurecer el
+       token global --ag-color-text-muted (afectaría todo el panel, que hoy
+       sí pasa AA sobre blanco/gris-50 sin margen para perder) sino declarar
+       esta variante propia de la superficie auth: gris-700 (más oscuro que
+       el gris-600 de --ag-color-text-muted) da ~7.9:1 contra el
+       --ag-color-bg-auth claro reajustado en la cuarta vuelta (era ~7.5:1
+       con el tono anterior, más oscuro — AAA en ambos casos). */
     --ag-color-text-muted-auth: var(--ag-color-gray-700);
 
     /* Ámbar seguro como TEXTO de enlace ("¿Olvidaste tu contraseña?" del
@@ -117,12 +127,14 @@
        --ag-color-bg-auth (más claro que blanco) seguiría fallando. Usa el
        primitivo --ag-color-amber-800 (ver primitives/brand.css) en vez de
        -900 para no perder la identidad de "ámbar" como marrón oscuro.
-       Verificado ~4.9:1 contra --ag-color-bg-auth claro, pasa AA.
+       Verificado ~5.2:1 contra --ag-color-bg-auth claro reajustado en la
+       cuarta vuelta (era ~4.9:1 con el tono anterior — pasa AA en ambos
+       casos, con más margen ahora por ser el fondo más claro).
        El link verde ("Volver al ingreso", estado de recuperación) NO
        necesita un token equivalente: reutiliza --ag-color-primary-emphasis
-       (verde-700 en claro), ya ~4.9:1 contra este mismo fondo — pasa AA sin
-       declarar nada nuevo. Tampoco hace falta token para el subrayado
-       ámbar del tab activo (decorativo, no-texto): reutiliza
+       (verde-700 en claro), ~5.2:1 contra este mismo fondo (era ~4.9:1) —
+       pasa AA sin declarar nada nuevo. Tampoco hace falta token para el
+       subrayado ámbar del tab activo (decorativo, no-texto): reutiliza
        --ag-color-accent directamente, porque el contraste no-texto exigido
        es 3:1, que --ag-color-accent ya cumple de sobra contra
        --ag-color-bg-auth. */

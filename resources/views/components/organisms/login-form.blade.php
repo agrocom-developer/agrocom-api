@@ -15,11 +15,17 @@
     IniciarSesionRequest) para que ese wiring no tenga que inventar nada.
 
     Tab "Recuperar acceso": panel presentacional SIN form (es fuera de alcance
-    de esta tarea, el backend no existe todavía), solo input de usuario y
-    botón "Enviar solicitud" de tipo `button`. Link "Volver al ingreso" cambia
-    de tab. El selector `document.querySelector('[data-ag-login-form] form')`
-    de resources/js/pages/login.js sigue resolviendo a UN ÚNICO form (el de
-    login) porque no hay `<form>` en este panel.
+    de esta tarea, el backend no existe todavía), solo input de correo
+    electrónico y botón "Enviar solicitud" de tipo `button`. Link "Volver al
+    ingreso" cambia de tab. El selector
+    `document.querySelector('[data-ag-login-form] form')` de
+    resources/js/pages/login.js sigue resolviendo a UN ÚNICO form (el de
+    login) porque no hay `<form>` en este panel — el input+botón de este
+    panel se envuelven en un `<div class="ag-login-form__form">` (NO un
+    `<form>`: es la misma clase que usa el `<form>` de ingreso, reutilizada
+    solo por su CSS de alineación/ancho/gap, cuarta vuelta — antes este panel
+    no tenía ningún wrapper con `text-align: left`, por eso el label del
+    input quedaba centrado por el `text-align: center` heredado del panel).
 
     Props:
     - action (requerido): URL del POST.
@@ -82,8 +88,10 @@
         data-ag-login-panel="ingreso"
         class="ag-login-form__panel"
     >
-        <h1 class="ag-login-form__title">{{ __('seguridad.login.titulo') }}</h1>
-        <p class="ag-login-form__subtitle">{{ __('seguridad.login.subtitulo') }}</p>
+        <div class="ag-login-form__header">
+            <h1 class="ag-login-form__title">{{ __('seguridad.login.titulo') }}</h1>
+            <p class="ag-login-form__subtitle">{{ __('seguridad.login.subtitulo') }}</p>
+        </div>
 
         @if ($slot->isNotEmpty())
             <div class="ag-login-form__error" role="alert">
@@ -165,28 +173,33 @@
         class="ag-login-form__panel"
         hidden
     >
-        <h1 class="ag-login-form__title">{{ __('seguridad.recuperar.titulo') }}</h1>
-        <p class="ag-login-form__subtitle">{{ __('seguridad.recuperar.subtitulo') }}</p>
+        <div class="ag-login-form__header">
+            <h1 class="ag-login-form__title">{{ __('seguridad.recuperar.titulo') }}</h1>
+            <p class="ag-login-form__subtitle">{{ __('seguridad.recuperar.subtitulo') }}</p>
+        </div>
 
-        <x-atoms.input
-            variant="line"
-            type="text"
-            name="username_recuperar"
-            :label="__('seguridad.login.campo_usuario')"
-            icon="person"
-            :required="true"
-        />
+        <div class="ag-login-form__form">
+            <x-atoms.input
+                variant="line"
+                type="email"
+                name="email_recuperar"
+                :label="__('seguridad.recuperar.campo_email')"
+                icon="mail"
+                autocomplete="email"
+                :required="true"
+            />
 
-        <x-atoms.button
-            type="button"
-            variant="accent"
-            size="lg"
-            :block="true"
-            icon="send"
-            iconPosition="end"
-        >
-            {{ __('seguridad.recuperar.boton_enviar') }}
-        </x-atoms.button>
+            <x-atoms.button
+                type="button"
+                variant="accent"
+                size="lg"
+                :block="true"
+                icon="send"
+                iconPosition="end"
+            >
+                {{ __('seguridad.recuperar.boton_enviar') }}
+            </x-atoms.button>
+        </div>
 
         <button
             type="button"

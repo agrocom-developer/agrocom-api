@@ -73,21 +73,35 @@
     --ag-color-scrim: rgba(0, 0, 0, 0.68);
     --ag-color-text-on-scrim: var(--ag-color-gray-0);
 
-    /* Superficie de auth-layout (HU-02, rediseño login, tercera vuelta) —
-       mismo criterio que theme-light.css: tono propio, deliberadamente
-       distinto del gris-950/negro puro del resto del chrome oscuro
-       ("verde-oliva muy oscuro" en vez de gris neutro), para que el panel
-       de formulario no se confunda con cualquier otra tarjeta genérica que
-       sí use --ag-color-bg-elevated. */
-    --ag-color-bg-auth: color-mix(in srgb, var(--ag-color-green-900) 40%, var(--ag-color-gray-950) 60%);
+    /* Superficie de auth-layout (HU-02, rediseño login, tercera vuelta;
+       retocado en la cuarta vuelta) — mismo criterio que theme-light.css:
+       tono propio, deliberadamente distinto del gris-950/negro puro del
+       resto del chrome oscuro, para que el panel de formulario no se
+       confunda con cualquier otra tarjeta genérica que sí use
+       --ag-color-bg-elevated.
+
+       Cuarta vuelta (ajuste puntual): el usuario pidió que se incline más a
+       gris (petróleo/grafito neutro) que a verde oliva, sin perder el verde
+       del todo. Se bajó el peso de --ag-color-green-900 (40%→25%) y se
+       cambió la base de mezcla de --ag-color-gray-950 a --ag-color-gray-850
+       (más luminosa) para que el matiz verde siga siendo perceptible pese a
+       pesar menos en la mezcla — el resultado es un grafito/petróleo oscuro
+       con un dejo verde (no un gris puro), en vez del "verde-oliva muy
+       oscuro" de antes. El contraste de texto se mantiene AAA en los cuatro
+       casos verificados, con margen algo más ajustado que antes por ser el
+       fondo un poco más luminoso — ver tabla actualizada en
+       sistema_diseno_panel.md §1.3. */
+    --ag-color-bg-auth: color-mix(in srgb, var(--ag-color-green-900) 25%, var(--ag-color-gray-850) 75%);
 
     /* A diferencia de claro, acá NO hace falta oscurecer/aclarar el token
-       global: --ag-color-text-muted (gris-500) ya pasa cómodo (~8.2:1)
-       contra el nuevo --ag-color-bg-auth oscuro, así que esta variante
-       simplemente reutiliza el mismo valor — existe como token propio (en
-       vez de que el consumidor use --ag-color-text-muted directo) solo
-       para que ambos temas expongan el mismo nombre de token y quien
-       consuma la superficie auth no tenga que ramificar por tema. */
+       global: --ag-color-text-muted (gris-500) sigue pasando cómodo
+       (~7.6:1 contra el --ag-color-bg-auth reajustado en la cuarta vuelta,
+       era ~8.2:1 contra el tono anterior más oscuro — AAA en ambos casos)
+       así que esta variante simplemente reutiliza el mismo valor — existe
+       como token propio (en vez de que el consumidor use
+       --ag-color-text-muted directo) solo para que ambos temas expongan el
+       mismo nombre de token y quien consuma la superficie auth no tenga que
+       ramificar por tema. */
     --ag-color-text-muted-auth: var(--ag-color-gray-500);
 
     /* Ámbar seguro como TEXTO de enlace. Mismo valor que ya usa
@@ -96,11 +110,12 @@
        texto", no "genérico de acento" — si el día de mañana
        --ag-color-accent-emphasis cambia de valor por otra razón (p. ej. un
        ajuste de énfasis que no sea de contraste), este token no debería
-       moverse con él sin verificación explícita. Verificado ~8.4:1 contra
-       --ag-color-bg-auth oscuro, AAA. El link verde reutiliza
-       --ag-color-primary-emphasis (verde-300 en oscuro, ~8.3:1 contra este
-       fondo — AAA) sin necesidad de token propio, mismo criterio que en
-       claro. */
+       moverse con él sin verificación explícita. Verificado ~7.8:1 contra
+       el --ag-color-bg-auth reajustado en la cuarta vuelta (era ~8.4:1
+       contra el tono anterior), AAA en ambos casos. El link verde reutiliza
+       --ag-color-primary-emphasis (verde-300 en oscuro, ~7.7:1 contra este
+       fondo, era ~8.3:1 — AAA) sin necesidad de token propio, mismo
+       criterio que en claro. */
     --ag-color-accent-link: var(--ag-color-amber-300);
 
     /* Editorial de auth-layout: wordmark bicromía "COM" + chip de ícono,
