@@ -24,6 +24,24 @@
     border-bottom: 1px solid var(--ag-color-border);
 }
 
+/* Dos bloques explícitos (sexta vuelta parte 2) — antes el header dependía
+   solo del flex:1 del buscador para empujar todo lo demás a la derecha. */
+.ag-topbar__left {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+    overflow: hidden;
+}
+
+.ag-topbar__right {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+}
+
 .ag-topbar__breadcrumb {
     flex: 0 0 auto;
     display: flex;
