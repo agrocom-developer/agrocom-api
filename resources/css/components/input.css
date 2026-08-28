@@ -61,6 +61,15 @@
 .ag-input__icon {
     margin-inline-start: var(--ag-space-3);
     color: var(--ag-color-text-muted);
+    /* Un poco más grande que el tamaño que ya aplica `size="sm"` del átomo
+       `icon` (--ag-font-size-sm, 0.875rem, vía `.ag-icon--sm`) — override
+       LOCAL a este componente, nunca se toca `--ag-icon--sm`/`.ag-icon--sm`
+       en icon.css (lo usan sidebar/topbar/menú/botones en todo el panel).
+       `--ag-font-size-base` (1rem) ya es un token existente, no un valor
+       nuevo (cuarta vuelta, pedido puntual). Misma especificidad que
+       `.ag-icon--sm` (una clase); gana por orden de import (input.css se
+       importa después de icon.css en components/index.css). */
+    font-size: var(--ag-font-size-base);
 }
 
 .ag-input__field {
@@ -77,6 +86,21 @@
 
 .ag-input__field::placeholder {
     color: var(--ag-color-text-muted);
+}
+
+/* Oculta los controles nativos que algunos navegadores (Chrome/Edge/Safari)
+   inyectan automáticamente en `<input type="password">` (el "ojo" de
+   revelar contraseña, el botón de limpiar de Edge) — sin esto se veían DOS
+   glifos de ojo superpuestos: el nativo del navegador y `.ag-input__toggle`
+   (nuestro control custom, que sigue siendo el único visible/funcional
+   después de este fix). Bug real reportado por el usuario, cuarta vuelta. */
+.ag-input__field[type='password']::-ms-reveal,
+.ag-input__field[type='password']::-ms-clear {
+    display: none;
+}
+
+.ag-input__field::-webkit-textfield-decoration-container {
+    visibility: hidden;
 }
 
 .ag-input__toggle {
@@ -100,6 +124,13 @@
 .ag-input__toggle:focus-visible {
     outline: 2px solid var(--ag-color-focus-ring);
     outline-offset: 2px;
+}
+
+/* Mismo criterio que `.ag-input__icon` de arriba: ícono del botón
+   mostrar/ocultar contraseña un poco más grande que el `size="sm"` por
+   defecto, override local sin tocar `.ag-icon--sm` global. */
+.ag-input__toggle .ag-icon {
+    font-size: var(--ag-font-size-base);
 }
 
 .ag-input__help {

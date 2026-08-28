@@ -13,6 +13,15 @@
  * `--ag-color-text-muted-auth`) a través de las variables CSS, el organism
  * no agrega estilos propios encima salvo layout (gap, ancho) — ver criterio
  * en ADR 0002 punto 3.
+ *
+ * Cuarta vuelta (ajustes puntuales): el panel "recuperar" envuelve su
+ * input+botón en un `<div class="ag-login-form__form">` (reutiliza esta
+ * misma clase, sin agregar un `<form>` real — ver comentario en el Blade)
+ * para heredar `text-align: left`/`width: 100%`/`gap` y así dejar de
+ * heredar el `text-align: center` del panel (bug: el label del input
+ * quedaba centrado). Título+subtítulo de ambos paneles se agrupan en
+ * `.ag-login-form__header` con un gap propio, más chico que el gap del
+ * panel (que ahora es mayor, para dar más aire antes del form/inputs).
  */
 
 .ag-login-form {
@@ -57,13 +66,27 @@
     outline-offset: 2px;
 }
 
-/* Paneles tab: contenedor flexible que solo muestra el activo. */
+/* Paneles tab: contenedor flexible que solo muestra el activo. El gap acá
+   separa BLOQUES (header de texto vs. error vs. form/inputs) — el gap
+   interno entre título y subtítulo vive en `.ag-login-form__header` (más
+   chico, cuarta vuelta: antes un único gap uniforme no distinguía "aire
+   dentro del bloque de texto" de "aire hacia el formulario", y el usuario
+   pidió específicamente más aire antes de los inputs). */
 .ag-login-form__panel {
     display: flex;
     flex-direction: column;
-    gap: var(--ag-space-4);
+    gap: var(--ag-space-6);
     text-align: center;
     animation: ag-login-panel-in 300ms var(--ag-ease-emphasized) both;
+}
+
+/* Agrupa título + subtítulo con un gap chico entre ellos, distinto (y menor)
+   del gap del panel que ya los separa del form/inputs siguientes. Mismo
+   criterio en los dos paneles (ingreso y recuperar). */
+.ag-login-form__header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-2);
 }
 
 .ag-login-form__panel[hidden] {

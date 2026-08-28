@@ -14,13 +14,32 @@
 
 return [
 
-    // Copy del panel editorial de templates/auth-layout (foto + wordmark +
-    // headline) — compartido por login y selección de rol, ambos armados
-    // sobre ese mismo template. El wordmark reutiliza `ui.logo.alt`
+    // Copy del panel editorial de templates/auth-layout (galería de fotos +
+    // wordmark + headline) — compartido por login y selección de rol, ambos
+    // armados sobre ese mismo template. El wordmark reutiliza `ui.logo.alt`
     // ("Agrocom"), no hace falta una clave nueva para eso.
     'auth' => [
-        'headline' => 'Cada hectárea, medida y tratada con precisión.',
-        'subheadline' => 'Planificación de vuelo, mezclas y reportes de aplicación en un solo panel.',
+        // Galería de 3 imágenes (rediseño de login, cuarta vuelta): un
+        // headline/subheadline por slide, en el mismo orden que
+        // `$galeriaImagenes` de templates/auth-layout.blade.php (drone-hero.jpg,
+        // -2.jpg, -3.jpg). Los nombres de archivo NO viven acá: no son copy,
+        // son datos de presentación que arma el Blade.
+        'galeria' => [
+            [
+                'headline' => 'Cada hectárea, medida y tratada con precisión.',
+                'subheadline' => 'Planificación de vuelo, mezclas y reportes de aplicación en un solo panel.',
+            ],
+            [
+                'headline' => 'Cada vuelo, documentado desde el despegue.',
+                'subheadline' => 'Sesiones, mezclas y áreas cubiertas, trazables en tiempo real.',
+            ],
+            [
+                'headline' => 'Del campo a la planilla, sin perder un dato.',
+                'subheadline' => 'Los devengos se generan solos al validar cada sesión.',
+            ],
+        ],
+        'galeria_aria_label' => 'Elegí qué imagen mostrar',
+        'galeria_dot' => 'Mostrar imagen :numero de :total',
         'tagline' => 'FUMIGACIÓN CON DRONES',
         'sin_alta_publica' => '¿No tenés cuenta? Las altas las gestiona el administrador de tu operación.',
     ],
@@ -41,7 +60,8 @@ return [
 
     'recuperar' => [
         'titulo' => 'Recuperar acceso',
-        'subtitulo' => 'Ingresá tu usuario. El administrador recibe la solicitud y te entrega una clave temporal.',
+        'subtitulo' => 'Ingresá tu correo electrónico. El administrador recibe la solicitud y te entrega una clave temporal.',
+        'campo_email' => 'Correo electrónico',
         'boton_enviar' => 'Enviar solicitud',
         'volver' => 'Volver al ingreso',
     ],
