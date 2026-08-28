@@ -23,6 +23,7 @@
     padding: var(--ag-space-1);
     padding-right: var(--ag-space-3);
     background: var(--ag-color-neutral-subtle);
+    border: 1px solid var(--ag-color-border);
     border-radius: var(--ag-radius-pill);
 }
 
@@ -50,12 +51,17 @@
     gap: var(--ag-space-2);
 }
 
+/* Mismo tratamiento que `.ag-login-form__title` (login-form.css): 38px +
+   bold explícito — antes este título quedaba en 2rem/regular, un peldaño
+   más chico y más liviano que el del login pese a compartir el mismo
+   template `auth-layout`, lo que se leía como una inconsistencia entre
+   ambas pantallas del mismo flujo (feedback del 28/8/2026). */
 .ag-role-select__title {
     margin: 0;
     font-family: var(--ag-font-family-display);
     font-optical-sizing: auto;
-    font-weight: var(--ag-font-weight-regular);
-    font-size: 2rem;
+    font-weight: var(--ag-font-weight-bold);
+    font-size: 38px;
     line-height: 1.1;
     color: var(--ag-color-text);
 }
@@ -113,13 +119,29 @@
     font-size: 0.78rem;
     color: var(--ag-color-text-muted-auth);
     cursor: pointer;
+    transition:
+        color var(--ag-transition-fast),
+        background-color var(--ag-transition-fast),
+        transform var(--ag-transition-fast);
 }
 
 .ag-role-select__logout:hover {
     color: var(--ag-color-text);
+    background: var(--ag-color-neutral-subtle);
+    transform: translateY(-1px);
 }
 
 .ag-role-select__logout:focus-visible {
     outline: 2px solid var(--ag-color-focus-ring);
     outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ag-role-select__logout {
+        transition-duration: 0.01ms !important;
+    }
+
+    .ag-role-select__logout:hover {
+        transform: none;
+    }
 }

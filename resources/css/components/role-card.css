@@ -103,12 +103,28 @@
     margin-top: var(--ag-space-1);
 }
 
+/* El ámbar de marca no combinó acá (probado y revertido, feedback del
+   28/8/2026): gris neutral por defecto — igual que el ícono sin
+   seleccionar, mismo criterio que [[color-estado-seleccion-vs-etiquetas]] —
+   y un verde de estado (`--ag-color-success*`, DISTINTO del
+   `--ag-color-primary` que ya usan el borde de la tarjeta y el ícono
+   seleccionado, para que no se lea repetido) cuando la tarjeta está
+   seleccionada. Borde del mismo tono que el texto en los dos estados (no
+   solo fondo tenue + texto): sin él el chip se leía plano/sin relieve
+   contra la tarjeta. */
 .ag-role-card__perm {
     font-size: 0.6875rem;
     color: var(--ag-color-neutral-strong);
     background: var(--ag-color-neutral-subtle);
+    border: 1px solid var(--ag-color-border);
     border-radius: var(--ag-radius-pill);
-    padding: 3px 9px;
+    padding: 2px 8px;
+}
+
+.ag-role-card.is-selected .ag-role-card__perm {
+    color: var(--ag-color-success-strong);
+    background: var(--ag-color-success-subtle);
+    border-color: var(--ag-color-primary-border-subtle);
 }
 
 /* Check circular: vacío (borde) sin seleccionar, relleno verde al

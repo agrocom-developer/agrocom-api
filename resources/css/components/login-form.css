@@ -111,6 +111,7 @@
 .ag-login-form__title {
     font-family: var(--ag-font-family-display);
     font-optical-sizing: auto;
+    font-weight: var(--ag-font-weight-bold);
     font-size: 38px;
     line-height: 1.1;
     color: var(--ag-color-text);
