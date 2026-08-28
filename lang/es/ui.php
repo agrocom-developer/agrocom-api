@@ -46,7 +46,28 @@ return [
     ],
 
     'footer' => [
-        'copyright' => 'Agrocom SRL — :year',
+        'copyright' => 'AGROCOM SRL · :year',
+    ],
+
+    // Chrome del layout de tres niveles (quinta vuelta — organisms/module-rail,
+    // organisms/module-sidebar, organisms/topbar): riel de módulos, buscador
+    // global, chips del header y drawer móvil. Genérico del catálogo — el
+    // CONTENIDO (nombre de campaña, período, badges) lo pasa quien arma la
+    // página.
+    'rail' => [
+        'aria' => 'Módulos',
+        'configuracion' => 'Configuración',
+    ],
+    'header' => [
+        'buscador_placeholder' => 'Buscar lote, orden, piloto o dron',
+        'buscador_aria' => 'Buscador global',
+        'atajo_buscador' => '⌘K',
+        'campana_activa' => 'Campaña activa',
+        'periodo' => 'Período',
+    ],
+    'drawer' => [
+        'abrir' => 'Abrir módulos',
+        'cerrar' => 'Cerrar módulos',
     ],
 
     // organisms/topbar (mockup de dashboard, HU-02 segunda ronda): chrome

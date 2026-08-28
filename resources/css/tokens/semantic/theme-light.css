@@ -15,20 +15,32 @@
 
 :root,
 [data-bs-theme='light'] {
-    /* Superficie */
-    --ag-color-bg: var(--ag-color-gray-50);
-    --ag-color-bg-elevated: var(--ag-color-gray-0);
-    --ag-color-bg-chrome: var(--ag-color-gray-0);
+    /* Superficie — retinte cálido (quinta vuelta, maquetas aprobadas
+       4a/5a/5b/5c): el panel completo pasa de grises fríos a la rampa arena
+       de brand.css. El FONDO del contenido es EL MISMO crema del login
+       (--ag-color-bg-auth, definido más abajo en este archivo — pedido
+       explícito del 28/8/2026: el bg de temas claro/oscuro definido en el
+       login se mantiene en el dashboard y todo el layout del panel; el
+       resto de componentes sí sigue los colores de la maqueta).
+       bg-elevated/bg-chrome comparten el arena más claro (tarjetas y chrome
+       de header/sidebar son la misma superficie en las maquetas). */
+    --ag-color-bg: var(--ag-color-bg-auth);
+    --ag-color-bg-elevated: var(--ag-color-sand-50);
+    --ag-color-bg-chrome: var(--ag-color-sand-50);
     --ag-color-overlay: rgba(0, 0, 0, 0.5);
 
-    /* Texto */
-    --ag-color-text: var(--ag-color-gray-900);
-    --ag-color-text-muted: var(--ag-color-gray-600);
+    /* Texto — escala oliva sobre arena (quinta vuelta). text-muted usa
+       olive-500, NO olive-400: es el escalón más claro que pasa AA 4.5:1
+       contra sand-50 (~5.0:1) y sand-150 (~4.6:1) — ver §1.3. olive-400
+       queda en --ag-color-text-faint, solo decorativo. */
+    --ag-color-text: var(--ag-color-olive-950);
+    --ag-color-text-muted: var(--ag-color-olive-500);
+    --ag-color-text-faint: var(--ag-color-olive-400);
     --ag-color-text-inverse: var(--ag-color-gray-0);
 
     /* Bordes */
-    --ag-color-border: var(--ag-color-gray-300);
-    --ag-color-border-strong: var(--ag-color-gray-500);
+    --ag-color-border: var(--ag-color-sand-500);
+    --ag-color-border-strong: var(--ag-color-sand-600);
 
     /* Marca — primario (verde). Fondo sólido de botones/CTA: constante entre
        temas (identidad de marca), verificado AA (~5.4:1) con texto blanco. */
@@ -62,24 +74,67 @@
        o un negro duro. */
     --ag-color-accent-contrast-fill: var(--ag-color-amber-100);
 
-    /* Gris neutro para superficies "sin estado" (atoms/badge variante
-       "neutral", molecules/stat-card ídem) — un peldaño más oscuro que
-       `--ag-color-bg`/`-bg-elevated` para que el pill/chip se distinga de
-       la superficie que lo rodea sin necesitar un tinte de color. */
-    --ag-color-neutral-subtle: var(--ag-color-gray-200);
+    /* Neutro para superficies "sin estado" (atoms/badge variante "neutral",
+       chips de filtro inactivos) — arena un peldaño más oscuro que la
+       tarjeta. `-strong` es su par de texto AA (chip "Programada"). */
+    --ag-color-neutral-subtle: var(--ag-color-sand-200);
+    --ag-color-neutral-strong: var(--ag-color-olive-600);
 
-    /* Estados */
+    /* Estados (quinta vuelta): el aviso pasa del amarillo Bootstrap al ÁMBAR
+       de marca (lenguaje aprobado — "Sin evidencia", franja de ventana
+       volable) y el peligro al rojo óxido cálido (base.css). Cada estado
+       expone el trío `-subtle` (fondo tenue) / crudo (ícono, dot, relleno) /
+       `-strong` (TEXTO apto AA 4.5:1 sobre su propio `-subtle`, verificado
+       en §1.3 en ambos temas — los chips de estado usan siempre el par
+       subtle+strong, nunca el crudo como texto). */
     --ag-color-success: var(--ag-color-green-700);
     --ag-color-success-subtle: var(--ag-color-green-100);
-    --ag-color-danger: var(--ag-color-red-500);
-    --ag-color-danger-subtle: var(--ag-color-red-100);
-    --ag-color-warning: var(--ag-color-yellow-500);
-    --ag-color-warning-subtle: var(--ag-color-yellow-100);
+    --ag-color-success-strong: color-mix(in srgb, var(--ag-color-green-700) 50%, var(--ag-color-green-900) 50%);
+    --ag-color-danger: var(--ag-color-red-600);
+    --ag-color-danger-subtle: var(--ag-color-red-50);
+    --ag-color-danger-strong: var(--ag-color-red-900);
+    --ag-color-danger-border: var(--ag-color-red-200);
+    --ag-color-warning: var(--ag-color-amber-500);
+    --ag-color-warning-subtle: var(--ag-color-amber-100);
+    --ag-color-warning-strong: var(--ag-color-amber-800);
     --ag-color-info: var(--ag-color-blue-500);
-    --ag-color-info-subtle: var(--ag-color-blue-100);
+    --ag-color-info-subtle: var(--ag-color-blue-50);
+    --ag-color-info-strong: var(--ag-color-blue-700);
 
     /* Foco (accesibilidad) */
     --ag-color-focus-ring: var(--ag-color-blue-500);
+
+    /* Layout de tres niveles (quinta vuelta, maqueta 4a) — nivel 1: riel de
+       módulos. Superficie oliva OSCURA EN AMBOS TEMAS (mismo criterio de
+       constancia que --ag-color-scrim*): el riel es chrome de marca, no
+       sigue al tema. Contrastes sobre olive-1000/olive-900 en §1.3. */
+    --ag-color-bg-rail: var(--ag-color-olive-1000);
+    --ag-color-bg-rail-active: var(--ag-color-olive-900);
+    --ag-color-text-rail: var(--ag-color-olive-300);
+    --ag-color-text-rail-active: var(--ag-color-green-200);
+
+    /* Tarjetas y tablas del panel (quinta vuelta). La tarjeta tiene borde
+       propio más suave que --ag-color-border (que queda para el chrome);
+       la cabecera de tabla y el borde de fila son todavía más tenues. */
+    --ag-color-surface-card: var(--ag-color-sand-50);
+    --ag-color-border-card: var(--ag-color-sand-400);
+    --ag-color-bg-table-head: var(--ag-color-sand-100);
+    --ag-color-border-row: color-mix(in srgb, var(--ag-color-sand-300) 65%, var(--ag-color-sand-50) 35%);
+    --ag-color-bg-row-hover: var(--ag-color-sand-100);
+
+    /* Inputs/píldoras del chrome (buscador del header, chips de filtro
+       inactivos) — arena de relleno, ni blanco ni el fondo del panel. */
+    --ag-color-bg-input-chrome: var(--ag-color-sand-200);
+
+    /* Borde tenue verde (chip de campaña, píldora de filtro activa, tarjeta
+       de rol seleccionada usa --ag-color-primary directo). */
+    --ag-color-primary-border-subtle: color-mix(in srgb, var(--ag-color-green-500) 30%, var(--ag-color-sand-50) 70%);
+
+    /* Barras de progreso de "Pausas por causa": pista + el "piedra" de la
+       barra sin causa asignada (las demás barras reutilizan accent /
+       info-strong / danger / text-faint — no-texto, exigencia 3:1). */
+    --ag-color-track: var(--ag-color-sand-300);
+    --ag-color-bar-unassigned: var(--ag-color-sand-700);
 
     /* Overlay/texto sobre foto de marca (auth-layout, HU-02) — DELIBERADAMENTE
        constantes entre temas, mismo criterio que --ag-color-primary(-contrast):
@@ -109,7 +164,13 @@
        --ag-color-gray-50 a --ag-color-gray-0 (blanco puro), para que el
        resultado se lea "crema" en vez de "ocre pastel"/"gris tibio". El
        contraste de texto MEJORA con este cambio (el fondo es más luminoso
-       que antes) — ver tabla actualizada en sistema_diseno_panel.md §1.3. */
+       que antes) — ver tabla actualizada en sistema_diseno_panel.md §1.3.
+
+       Quinta vuelta: este tono dejó de ser exclusivo del panel de login —
+       por pedido explícito (28/8/2026) también es el FONDO del contenido de
+       todo el panel admin (--ag-color-bg lo referencia arriba). La
+       advertencia original de "no reasignar --ag-color-bg-elevated" sigue
+       vigente: las tarjetas usan su propio --ag-color-surface-card. */
     --ag-color-bg-auth: color-mix(in srgb, var(--ag-color-amber-100) 30%, var(--ag-color-gray-0) 70%);
 
     /* Texto muted EXCLUSIVO de superficies montadas sobre --ag-color-bg-auth
@@ -166,6 +227,10 @@
     /* Bootstrap 5 hereda la marca reasignando sus propias variables nativas
        — así `.btn-primary`, `.alert-success`, el sidebar de AdminLTE, etc.
        no necesitan overrides por componente ni por tema. */
+    /* Fuente de interfaz explícita (quinta vuelta): sin esto, el body cae
+       al stack del sistema de Bootstrap — los subtítulos/textos de interfaz
+       deben ser SIEMPRE IBM Plex Sans (tres familias, una por contexto). */
+    --bs-body-font-family: var(--ag-font-family-base);
     --bs-body-bg: var(--ag-color-bg);
     --bs-body-color: var(--ag-color-text);
     --bs-border-color: var(--ag-color-border);

@@ -15,15 +15,17 @@
     align-items: center;
     gap: var(--ag-space-3);
     width: 100%;
-    padding: var(--ag-space-3);
+    padding: var(--ag-space-2) var(--ag-space-3);
     border: none;
-    border-radius: var(--ag-radius-md);
+    /* Radio 9 del ítem del sidebar de nivel 2 (quinta vuelta, maqueta 4a). */
+    border-radius: 9px;
     background: transparent;
     color: var(--ag-color-text-muted);
     text-decoration: none;
     text-align: left;
     font-family: var(--ag-font-family-base);
-    font-size: var(--ag-font-size-sm);
+    font-size: 0.84375rem;
+    font-weight: var(--ag-font-weight-medium);
     cursor: pointer;
     animation: ag-menu-item-in 320ms var(--ag-ease-emphasized) both;
     animation-delay: calc(var(--ag-menu-item-index) * 40ms);
@@ -33,8 +35,9 @@
 }
 
 .ag-menu-item:hover {
-    background: var(--ag-color-primary-subtle);
+    background: var(--ag-color-bg-row-hover);
     color: var(--ag-color-text);
+    opacity: 1;
 }
 
 .ag-menu-item:focus-visible {
@@ -42,29 +45,11 @@
     outline-offset: -2px;
 }
 
+/* Activo (maqueta 4a): texto verde en negrita sobre verde muy tenue. */
 .ag-menu-item.is-active {
     background: var(--ag-color-primary-subtle);
-    color: var(--ag-color-primary-emphasis);
-    font-weight: var(--ag-font-weight-medium);
-}
-
-/* Barra de acento a la izquierda del ítem activo (pulido de jerarquía,
-   mockup de dashboard, segunda ronda de HU-02): refuerza el estado activo
-   más allá del tinte de fondo, y sigue siendo visible en icon-rail
-   (desktop colapsado, donde el label desaparece pero el ítem conserva su
-   caja). `left` negativo compensa el padding-inline de `.ag-menu` (ver
-   sidebar-nav.css) para que la barra llegue al borde del sidebar, no al
-   borde del ítem. */
-.ag-menu-item.is-active::before {
-    content: '';
-    position: absolute;
-    left: calc(var(--ag-space-2) * -1);
-    top: 50%;
-    transform: translateY(-50%);
-    width: 3px;
-    height: 1.25rem;
-    border-radius: var(--ag-radius-pill);
-    background-color: var(--ag-color-primary-emphasis);
+    color: var(--ag-color-success-strong);
+    font-weight: var(--ag-font-weight-bold);
 }
 
 .ag-menu-item__icon {
@@ -79,13 +64,16 @@
     white-space: nowrap;
 }
 
+/* Badge de pendientes (maqueta 4a): mono chico en ámbar sobre tenue ámbar
+   — par accent-subtle / accent-link verificado AA en §1.3. */
 .ag-menu-item__badge {
     flex-shrink: 0;
     background: var(--ag-color-accent-subtle);
-    color: var(--ag-color-accent-contrast);
-    font-size: var(--ag-font-size-xs);
-    font-weight: var(--ag-font-weight-medium);
-    line-height: 1.5;
+    color: var(--ag-color-accent-link);
+    font-family: var(--ag-font-family-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.04em;
+    line-height: 1.6;
     padding: 0 var(--ag-space-2);
     border-radius: var(--ag-radius-pill);
 }

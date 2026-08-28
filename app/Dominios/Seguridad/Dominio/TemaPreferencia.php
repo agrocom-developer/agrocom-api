@@ -14,4 +14,24 @@ enum TemaPreferencia: string
 {
     case Claro = 'claro';
     case Oscuro = 'oscuro';
+
+    /**
+     * Valor que espera `data-bs-theme` (Bootstrap 5.3 color modes). El enum
+     * persiste vocabulario en español (`claro`/`oscuro`, ADR 0013); el
+     * atributo del DOM habla el idioma de Bootstrap (`light`/`dark`) — este
+     * par de mapeos es el único puente entre ambos, nunca un ternario suelto
+     * en una vista o un controlador.
+     */
+    public function atributoBootstrap(): string
+    {
+        return match ($this) {
+            self::Claro => 'light',
+            self::Oscuro => 'dark',
+        };
+    }
+
+    public static function desdeAtributoBootstrap(string $atributo): self
+    {
+        return $atributo === 'dark' ? self::Oscuro : self::Claro;
+    }
 }

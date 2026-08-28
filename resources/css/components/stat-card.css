@@ -1,143 +1,96 @@
 /*
  * Molecule: stat-card (resources/views/components/molecules/stat-card.blade.php)
- * Base: tarjeta elevada Material (misma familia visual que
- * `molecules/role-selector-item`/`molecules/plan-card` — fondo elevado,
- * borde sutil, sombra chica que crece al hover); la barra superior de acento
- * y el chip circular de ícono son las dos superficies que llevan color de
- * variante, ver el docblock del Blade para el criterio de contraste.
+ * Tarjeta KPI del rediseño (quinta vuelta, maquetas 4a/5a/5b): superficie
+ * de tarjeta con borde propio, rótulo uppercase + ícono verde, cifra en la
+ * fuente display y pie con tono semántico. La cifra usa 2.125rem (un punto
+ * bajo los 38px del mockup: Fraunces es más ancha que la serif del mockup —
+ * ajuste de tamaño por familia pedido el 28/8/2026). El grid responsivo lo
+ * arma la página (4 col escritorio / 2×2 tablet-móvil).
  */
 
 .ag-stat-card {
-    position: relative;
     display: flex;
     flex-direction: column;
-    gap: var(--ag-space-1);
-    padding: var(--ag-space-5);
-    background-color: var(--ag-color-bg-elevated);
-    border: 1px solid var(--ag-color-border);
-    border-radius: var(--ag-radius-lg);
-    box-shadow: var(--ag-shadow-sm);
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-4);
+    background: var(--ag-color-surface-card);
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: 12px;
+    min-width: 0;
+}
+
+.ag-stat-card__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ag-space-2);
+}
+
+.ag-stat-card__label {
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ag-color-text-muted);
+    min-width: 0;
     overflow: hidden;
-    transition:
-        box-shadow var(--ag-transition-fast),
-        border-color var(--ag-transition-fast);
-}
-
-.ag-stat-card:hover {
-    box-shadow: var(--ag-shadow-md);
-    border-color: var(--ag-color-border-strong);
-}
-
-.ag-stat-card__bar {
-    position: absolute;
-    inset: 0 0 auto 0;
-    height: 3px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .ag-stat-card__icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.75rem;
-    height: 2.75rem;
-    margin-bottom: var(--ag-space-2);
-    border-radius: var(--ag-radius-md);
+    flex-shrink: 0;
+    color: var(--ag-color-primary-emphasis);
 }
 
 .ag-stat-card__value {
     margin: 0;
-    font-family: var(--ag-font-family-mono);
-    font-size: var(--ag-font-size-2xl);
-    font-weight: var(--ag-font-weight-bold);
+    font-family: var(--ag-font-family-display);
+    font-optical-sizing: auto;
+    font-weight: var(--ag-font-weight-regular);
+    font-size: 2.125rem;
+    line-height: 1;
     color: var(--ag-color-text);
-    line-height: var(--ag-line-height-tight);
 }
 
-.ag-stat-card__label {
-    margin: 0;
-    font-size: var(--ag-font-size-sm);
+.ag-stat-card__value-suffix {
+    font-size: 1.0625rem;
     color: var(--ag-color-text-muted);
 }
 
-.ag-stat-card__trend {
-    display: inline-flex;
+.ag-stat-card__foot {
+    margin: 0;
+    display: flex;
     align-items: center;
     gap: var(--ag-space-1);
-    margin: var(--ag-space-2) 0 0;
-    font-family: var(--ag-font-family-mono);
     font-size: var(--ag-font-size-xs);
-    font-weight: var(--ag-font-weight-medium);
 }
 
-.ag-stat-card__trend-icon {
-    flex-shrink: 0;
+.ag-stat-card__foot-icon {
+    font-size: 0.9375rem;
 }
 
-.ag-stat-card__trend--up {
-    color: var(--ag-color-success);
+.ag-stat-card__foot--success {
+    color: var(--ag-color-success-strong);
 }
 
-.ag-stat-card__trend--down {
-    color: var(--ag-color-danger);
+.ag-stat-card__foot--warning {
+    color: var(--ag-color-warning-strong);
 }
 
-.ag-stat-card__trend--neutral {
+.ag-stat-card__foot--muted {
     color: var(--ag-color-text-muted);
 }
 
-/* Variantes: barra superior con el color CRUDO de la marca (decorativo, no
-   texto); chip de ícono con el mismo criterio bg-subtle+texto-seguro que
-   atoms/badge. */
-.ag-stat-card--neutral .ag-stat-card__bar {
-    background-color: var(--ag-color-border-strong);
+/* Protagonista del móvil (maqueta 5b): cifra 2.5rem. */
+.ag-stat-card--hero {
+    padding: var(--ag-space-4);
+    gap: var(--ag-space-2);
 }
 
-.ag-stat-card--neutral .ag-stat-card__icon {
-    background-color: var(--ag-color-neutral-subtle);
-    color: var(--ag-color-text);
+.ag-stat-card--hero .ag-stat-card__value {
+    font-size: 2.5rem;
 }
 
-.ag-stat-card--success .ag-stat-card__bar {
-    background-color: var(--ag-color-success);
-}
-
-.ag-stat-card--success .ag-stat-card__icon {
-    background-color: var(--ag-color-success-subtle);
-    color: var(--ag-color-text);
-}
-
-.ag-stat-card--danger .ag-stat-card__bar {
-    background-color: var(--ag-color-danger);
-}
-
-.ag-stat-card--danger .ag-stat-card__icon {
-    background-color: var(--ag-color-danger-subtle);
-    color: var(--ag-color-text);
-}
-
-.ag-stat-card--warning .ag-stat-card__bar {
-    background-color: var(--ag-color-warning);
-}
-
-.ag-stat-card--warning .ag-stat-card__icon {
-    background-color: var(--ag-color-warning-subtle);
-    color: var(--ag-color-text);
-}
-
-.ag-stat-card--info .ag-stat-card__bar {
-    background-color: var(--ag-color-info);
-}
-
-.ag-stat-card--info .ag-stat-card__icon {
-    background-color: var(--ag-color-info-subtle);
-    color: var(--ag-color-text);
-}
-
-.ag-stat-card--accent .ag-stat-card__bar {
-    background-color: var(--ag-color-accent);
-}
-
-.ag-stat-card--accent .ag-stat-card__icon {
-    background-color: var(--ag-color-accent-subtle);
-    color: var(--ag-color-accent-contrast);
+.ag-stat-card--hero .ag-stat-card__foot {
+    font-size: var(--ag-font-size-xs);
 }

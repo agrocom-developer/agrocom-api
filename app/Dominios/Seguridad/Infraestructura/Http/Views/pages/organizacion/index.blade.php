@@ -4,30 +4,24 @@
     gestión de organización multi-tenant futura (SIN implementación real de tenancy,
     sin tabla, sin persistencia). Prellenada con datos realistas para demostración.
 
-    Datos esperados (ver OrganizacionController::index()): igual forma que otras
-    páginas del panel (menu/roles/rolActivoId/activeRoleLabel/userName).
+    Datos esperados (ver OrganizacionController::index()): la cáscara
+    completa de CascaraPanel (menu/roles/…/tema/campana/periodo/version).
 
     Este es un mockup de PRESENTACIÓN sin guardado funcional. El botón "Guardar"
     está deshabilitado con un help text visual que lo aclara.
 --}}
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-bs-theme="light">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ config('app.name', 'Agrocom') }} — Organización</title>
-
-    @vite('resources/css/app.css')
-    @livewireStyles
-</head>
-<body>
+<x-templates.panel-shell :title="__('seguridad.organizacion.titulo')" :tema="$tema">
     <x-templates.panel-layout
         :menu="$menu"
         :roles="$roles"
         :rol-activo-id="$rolActivoId"
         :active-role-label="$activeRoleLabel"
         :user-name="$userName"
+        :notifications="$notifications"
+        :menu-badges="$menuBadges"
+        :campana="$campana"
+        :periodo="$periodo"
+        :version="$version"
     >
         <h1>{{ __('seguridad.organizacion.titulo') }}</h1>
         <p class="ag-organizacion__intro">
@@ -166,8 +160,4 @@
             </div>
         </form>
     </x-templates.panel-layout>
-
-    @vite('resources/js/app.js')
-    @livewireScripts
-</body>
-</html>
+</x-templates.panel-shell>

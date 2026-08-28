@@ -5,8 +5,13 @@ namespace App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web;
 use App\Dominios\Seguridad\Aplicacion\ElegirRolActivo;
 use App\Dominios\Seguridad\Aplicacion\IniciarSesionPanel;
 use App\Dominios\Seguridad\Aplicacion\ListarRolesDisponibles;
+use App\Dominios\Seguridad\Aplicacion\RecordarRolPreferido;
+use App\Dominios\Seguridad\Dominio\TemaPreferencia;
+use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
+use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUserPreferencia;
 use App\Dominios\Seguridad\Infraestructura\Http\Middleware\ResolverRolActivo;
+use App\Dominios\Seguridad\Infraestructura\Http\Presentacion\PresentadorRol;
 use App\Dominios\Seguridad\Infraestructura\Http\Requests\ActualizarRolActivoRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -41,9 +46,16 @@ final class RolActivoController
      * que romper: no hay guarda especial que agregar en el controlador para
      * ese caso, tal como permite la consigna).
      *
-     * Con 2+ roles vivos (haya o no ya un rol activo válido en sesión) se
-     * muestra el selector completo: volver a verla con un rol activo válido
-     * no rompe nada, así que no hace falta una guarda extra para ese caso.
+     * Con rol preferido vivo ("Entrar siempre con este rol", quinta vuelta —
+     * maqueta 5c) la pantalla también se saltea, SALVO que la visita sea un
+     * cambio de rol explícito (`?cambiar=1`, el link "Cambiar de rol" del
+     * menú) — ese es exactamente el único momento en que la maqueta dice que
+     * debe reaparecer.
+     *
+     * Con 2+ roles vivos sin preferido (haya o no ya un rol activo válido en
+     * sesión) se muestra el selector completo: volver a verla con un rol
+     * activo válido no rompe nada, así que no hace falta una guarda extra
+     * para ese caso.
      */
     public function create(
         Request $request,
@@ -61,9 +73,43 @@ final class RolActivoController
             return redirect()->route('panel.dashboard');
         }
 
+        $preferencia = SecUserPreferencia::query()->where('user_id', $usuario->id)->first();
+        $idsVivos = $roles->pluck('id')->map(fn ($id) => (int) $id)->all();
+
+        $idPreferido = $preferencia?->rol_preferido_id;
+        $preferidoVivo = $idPreferido !== null && in_array((int) $idPreferido, $idsVivos, true);
+
+        $esCambioExplicito = $request->boolean('cambiar');
+
+        if ($preferidoVivo && ! $esCambioExplicito) {
+            $elegirRolActivo->ejecutar($usuario, (int) $idPreferido);
+
+            return redirect()->route('panel.dashboard');
+        }
+
+        $idUltimo = $preferencia?->ultimo_rol_id;
+        $ultimoVivo = $idUltimo !== null && in_array((int) $idUltimo, $idsVivos, true) ? (int) $idUltimo : null;
+
+        // Preselección: preferido vivo > último usado vivo > rol activo de la
+        // sesión > primero de la lista. Solo estado inicial de la UI — la
+        // elección real la revalida ElegirRolActivo en el POST.
+        $idRolActivo = $request->session()->get('sec_rol_activo_id');
+        $preseleccion = $preferidoVivo ? (int) $idPreferido : ($ultimoVivo ?? (
+            $idRolActivo !== null && in_array((int) $idRolActivo, $idsVivos, true)
+                ? (int) $idRolActivo
+                : ($idsVivos[0] ?? null)
+        ));
+
         return view('seguridad::pages.seleccionar-rol', [
-            'roles' => $roles,
+            'roles' => $roles->map(fn (SecRole $rol) => PresentadorRol::presentar($rol))->values(),
+            'preseleccionId' => $preseleccion,
+            'ultimoRolId' => $ultimoVivo,
+            'recordarInicial' => $preferidoVivo,
+            'usuarioNombre' => $usuario->name,
+            'usuarioUsername' => $usuario->username,
+            'tema' => ($preferencia->tema ?? TemaPreferencia::Claro)->atributoBootstrap(),
             'accionActualizar' => route('panel.rol-activo.actualizar'),
+            'urlDashboard' => route('panel.dashboard'),
         ]);
     }
 
@@ -79,12 +125,26 @@ final class RolActivoController
      * `sec_user.id` ya autenticado por la ruta (`auth:interno`), por eso no
      * regenera sesión ni token CSRF.
      */
-    public function update(ActualizarRolActivoRequest $request, ElegirRolActivo $elegirRolActivo): JsonResponse
-    {
+    public function update(
+        ActualizarRolActivoRequest $request,
+        ElegirRolActivo $elegirRolActivo,
+        RecordarRolPreferido $recordarRolPreferido,
+    ): JsonResponse {
         /** @var SecUser $usuario */
         $usuario = $request->user('interno');
 
         $rol = $elegirRolActivo->ejecutar($usuario, (int) $request->validated('id_role'));
+
+        // Checkbox "Entrar siempre con este rol" (quinta vuelta, maqueta 5c):
+        // solo se toca la preferencia si el request la trae explícita —
+        // `true` la fija al rol recién activado, `false` la limpia. Un POST
+        // sin el campo (p. ej. un cliente de API viejo) no la altera.
+        if ($request->has('recordar')) {
+            $recordarRolPreferido->ejecutar(
+                $usuario,
+                $request->boolean('recordar') ? $rol->id : null,
+            );
+        }
 
         return response()->json([
             'rol_activo_id' => $rol->id,

@@ -1,12 +1,12 @@
 /*
  * Átomo: icon (resources/views/components/atoms/icon.blade.php)
- * Base: Material Symbols (fuente por ligadura). Requiere que el proyecto
- * cargue la fuente "Material Symbols Outlined" (pendiente de infraestructura,
- * ver docs/diseno/sistema_diseno_panel.md §6).
+ * Base: Material Symbols (fuente por ligadura), variante Rounded — la de las
+ * maquetas aprobadas del panel (quinta vuelta). La fuente la carga
+ * resources/css/app.css (`material-symbols/rounded.css`).
  */
 
 .ag-icon {
-    font-family: 'Material Symbols Outlined';
+    font-family: 'Material Symbols Rounded';
     font-weight: normal;
     font-style: normal;
     line-height: 1;

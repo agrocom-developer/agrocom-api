@@ -2,9 +2,8 @@
 
 namespace App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web;
 
-use App\Dominios\Seguridad\Aplicacion\ListarRolesDisponibles;
-use App\Dominios\Seguridad\Aplicacion\ObtenerMenuPorRolActivo;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
+use App\Dominios\Seguridad\Infraestructura\Http\Presentacion\CascaraPanel;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -39,23 +38,12 @@ use Illuminate\View\View;
  */
 final class OrganizacionController
 {
-    public function index(
-        Request $request,
-        ObtenerMenuPorRolActivo $obtenerMenu,
-        ListarRolesDisponibles $listarRolesDisponibles,
-    ): View {
+    public function index(Request $request, CascaraPanel $cascara): View
+    {
         /** @var SecUser $usuario */
         $usuario = $request->user('interno');
         $idRolActivo = (int) $request->session()->get('sec_rol_activo_id');
 
-        $roles = $listarRolesDisponibles->ejecutar($usuario);
-
-        return view('seguridad::pages.organizacion.index', [
-            'menu' => $obtenerMenu->ejecutar($usuario, $idRolActivo),
-            'roles' => $roles,
-            'rolActivoId' => $idRolActivo,
-            'activeRoleLabel' => $roles->firstWhere('id', $idRolActivo)?->name,
-            'userName' => $usuario->name,
-        ]);
+        return view('seguridad::pages.organizacion.index', $cascara->para($usuario, $idRolActivo));
     }
 }

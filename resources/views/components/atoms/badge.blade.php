@@ -1,51 +1,31 @@
 {{--
     Atom: badge
-    Pill de estado (docs/diseno/sistema_diseno_panel.md §3). Sin lógica de
-    negocio ni texto propio: el contenido va por el slot, ya traducido por
-    quien lo consume (mismo criterio que `atoms/button`, que tampoco tiene
-    una prop `label` — el texto es el slot).
+    Chip/pill de estado (quinta vuelta — chips de la tabla de sesiones de
+    las maquetas 4a/5a/5b). Sin lógica de negocio ni texto propio: el
+    contenido va por el slot, ya traducido por quien lo consume (mismo
+    criterio que `atoms/button`).
 
-    Set de variantes de color, todas resueltas contra el fondo `-subtle`
-    correspondiente + `--ag-color-text` (o `--ag-color-accent-contrast` para
-    "accent", que ya es el token que el resto del sistema usa como texto
-    seguro sobre `--ag-color-accent-subtle` — ver `.ag-role-badge` en
-    topbar.css y `.ag-menu-item__badge` en menu-item.css): usar el token de
-    estado crudo (`--ag-color-warning`, por ejemplo) como COLOR DE TEXTO
-    sobre su propio `-subtle` falla contraste en varios casos (amarillo
-    sobre amarillo pálido es el peor: ratio ~1.4:1, muy por debajo de AA) —
-    por eso el texto de las variantes de estado es siempre `--ag-color-text`
-    (que sí pasa AA/AAA contra cualquier `-subtle`, en los dos temas: en
-    claro el `-subtle` es un tinte pálido y el texto es oscuro; en oscuro el
-    `-subtle` es un overlay de baja opacidad sobre una superficie oscura y el
-    texto es claro). El color de marca de cada estado no se pierde: lo lleva
-    el punto (`__dot`) o el ícono, elementos decorativos no-texto (exigencia
-    de contraste más laxa, 3:1, y aun así secundarios a la etiqueta de texto,
-    que ya comunica el estado por sí sola).
+    Cada variante resuelve fondo `-subtle` + texto `-strong` de su estado
+    (par verificado AA 4.5:1 en ambos temas — sistema_diseno_panel.md §1.3):
+    nunca el token de estado crudo como texto (amarillo sobre amarillo
+    pálido ronda 1.4:1) ni `--ag-color-text` genérico (el chip perdería el
+    color del estado, que en las maquetas ES el texto). El punto de color de
+    la versión anterior desaparece: el texto tintado ya comunica el estado.
 
     Props:
     - variant: success|warning|info|danger|neutral|accent (default
-      "neutral"). Mismo set que consume `molecules/stat-card`.
-    - icon (nullable): ícono Material Symbols al inicio del pill. Si no se
-      pasa icon Y la variante es de estado (success/warning/info/danger), se
-      renderiza un punto de color en su lugar (indicador liviano). Las
-      variantes "neutral"/"accent" no llevan punto (ya se distinguen por el
-      tinte de fondo).
+      "neutral"). Mismo set que consumen los estados de sesión del
+      dashboard.
+    - icon (nullable): ícono Material Symbols al inicio del pill.
 --}}
 @props([
     'variant' => 'neutral',
     'icon' => null,
 ])
 
-@php
-    $estadoVariants = ['success', 'warning', 'info', 'danger'];
-    $showDot = ! $icon && in_array($variant, $estadoVariants, true);
-@endphp
-
 <span {{ $attributes->class(['ag-badge', "ag-badge--{$variant}"]) }}>
     @if ($icon)
         <x-atoms.icon :name="$icon" size="sm" class="ag-badge__icon" />
-    @elseif ($showDot)
-        <span class="ag-badge__dot" aria-hidden="true"></span>
     @endif
 
     <span class="ag-badge__label">{{ $slot }}</span>

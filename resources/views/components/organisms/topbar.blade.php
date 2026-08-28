@@ -1,53 +1,46 @@
 {{--
-    Organism: topbar (docs/diseno/sistema_diseno_panel.md §4.7)
-    Composición: hamburguesa (mobile) + nombre de usuario + badge del rol
-    activo + theme-toggle propio + botón que abre el popover de cambio de rol
-    (dropdown nativo de Bootstrap, anclado a ESTE trigger — independiente del
-    que vive en el pie de organisms/sidebar-nav, cada uno con su propio
-    Popper). Es donde vive, visualmente, "cambiar de rol activo sin volver a
-    loguearse" (CA de HU-02) — el disparador, no la lógica: la acción real
-    (POST /panel/rol-activo) la implementa `frontend`.
+    Organism: topbar (docs/diseno/sistema_diseno_panel.md §4.7 — quinta
+    vuelta, header del layout de tres niveles, maqueta 4a)
 
-    Lleva SU PROPIO theme-toggle (no solo el del pie del sidebar): en mobile,
-    con el sidebar cerrado, es la única forma de cambiar de tema sin abrir el
-    menú.
+    62px de alto fijo (`flex:0 0 62px`, overflow hidden), de izquierda a
+    derecha: breadcrumb "Módulo › Vista" · buscador global (alto 36px, el
+    ÚNICO elemento que cede espacio: `flex:1 1 300px; min-width:220px;
+    max-width:400px`, atajo ⌘K) · chip de campaña activa · selector de
+    período · campana con badge · toggle de tema (segmented, molecule
+    theme-toggle) · usuario con el ROL ACTIVO visible bajo el nombre. Todo
+    salvo el buscador lleva `flex:0 0 auto; white-space:nowrap` — ver
+    topbar.css. En tablet (<1200) el header se compacta: breadcrumb, campaña
+    y período se ocultan (maqueta 5a). En móvil (<768) este header entero se
+    reemplaza por organisms/mobile-topbar.
 
-    Jerarquía visual (mockup de dashboard, segunda ronda de HU-02): el lado
-    derecho se agrupa en dos bloques separados por un divisor —
-    "utilidades" (notificaciones + tema) vs. "identidad" (rol + usuario) —
-    para que no se lea como una fila plana de íconos sueltos.
+    El buscador y el selector de período son demo visual (sin backend
+    todavía); la campana muestra las notificaciones que pasa el llamador; el
+    menú de usuario tiene "Cambiar de rol" (link a la pantalla de selección,
+    `?cambiar=1`) y "Cerrar sesión" (data-ag-logout → organisms/topbar.js).
 
     Props:
-    - roles (list, default []): igual forma que sidebar-nav. El botón de
-      cambio de rol solo se muestra con 2+.
-    - rolActivoId (nullable).
-    - activeRoleLabel (nullable string): `sec_role.name` del rol activo, ya
-      resuelto por el llamador (dominio, no se traduce — ADR 0013 punto 3).
-    - userName (nullable string): nombre completo, para el avatar (iniciales)
-      y el texto junto a él.
-    - sidebarId (default "ag-sidebar"): debe coincidir con el `id` que se le
-      pasó a `<x-organisms.sidebar-nav>` para que el botón hamburguesa abra
-      el offcanvas correcto.
-    - notifications (list, default []): cada ítem `{icon, title, time,
-      unread}` ya resuelto/traducido por el llamador — este organism no
-      inventa contenido, solo lo presenta. `icon` es un nombre de Material
-      Symbols (default "notifications" si falta); `title`/`time` son texto
-      plano; `unread` (bool) pinta el ítem con fondo tenue y suma al
-      contador del badge de la campana. Con la lista vacía, el popover
-      muestra el estado vacío (`ui.topbar.no_notifications`) — degrada bien
-      sin datos, no se oculta el disparador.
+    - moduloLabel / vistaActual (nullable string): breadcrumb, ya traducidos.
+    - campana (nullable string): texto del chip de campaña activa (demo).
+    - periodo (nullable string): texto del selector de período (demo).
+    - notifications (list, default []): `{icon, title, time, unread}` ya
+      resueltos por el llamador. Lista vacía = estado vacío del popover.
+    - activeRoleLabel (nullable string): nombre LEGIBLE del rol activo
+      (PresentadorRol), mono uppercase bajo el nombre.
+    - userName (nullable string).
+    - cambiarRolHref (nullable string): null con un solo rol (no se muestra).
 --}}
 @props([
-    'roles' => [],
-    'rolActivoId' => null,
+    'moduloLabel' => null,
+    'vistaActual' => null,
+    'campana' => null,
+    'periodo' => null,
+    'notifications' => [],
     'activeRoleLabel' => null,
     'userName' => null,
-    'sidebarId' => 'ag-sidebar',
-    'notifications' => [],
+    'cambiarRolHref' => null,
 ])
 
 @php
-    $tieneVariosRoles = count($roles) > 1;
     $iniciales = collect(preg_split('/\s+/', trim((string) $userName)))
         ->filter()
         ->map(fn ($palabra) => mb_strtoupper(mb_substr($palabra, 0, 1)))
@@ -57,123 +50,125 @@
 @endphp
 
 <header {{ $attributes->class(['ag-topbar']) }}>
-    <button
-        type="button"
-        class="ag-topbar__hamburger"
-        data-bs-toggle="offcanvas"
-        data-bs-target="#{{ $sidebarId }}"
-        aria-controls="{{ $sidebarId }}"
-        aria-label="{{ __('ui.sidebar.open') }}"
-    >
-        <x-atoms.icon name="menu" />
-    </button>
-
-    <span class="ag-topbar__spacer"></span>
-
-    <div class="ag-topbar__right">
-        <div class="ag-topbar__group">
-            <div class="dropdown ag-topbar__notifications">
-                <button
-                    type="button"
-                    class="ag-topbar__icon-btn ag-topbar__notifications-trigger"
-                    data-bs-toggle="dropdown"
-                    aria-expanded="false"
-                    aria-label="{{ __('ui.topbar.notifications') }}"
-                >
-                    <x-atoms.icon name="notifications" size="sm" />
-                    @if ($notificacionesSinLeer > 0)
-                        <span class="ag-topbar__notifications-count" aria-hidden="true">{{ $notificacionesSinLeer > 9 ? '9+' : $notificacionesSinLeer }}</span>
-                    @endif
-                </button>
-
-                <div class="dropdown-menu dropdown-menu-end ag-notifications-popover">
-                    <h2 class="ag-role-popover__title">{{ __('ui.topbar.notifications') }}</h2>
-
-                    @if (count($notifications) === 0)
-                        <p class="ag-notifications-popover__empty">{{ __('ui.topbar.no_notifications') }}</p>
-                    @else
-                        <ul class="ag-notification-list">
-                            @foreach ($notifications as $notification)
-                                <li class="ag-notification-item {{ data_get($notification, 'unread') ? 'is-unread' : '' }}">
-                                    <span class="ag-notification-item__icon" aria-hidden="true">
-                                        <x-atoms.icon :name="data_get($notification, 'icon', 'notifications')" size="sm" />
-                                    </span>
-                                    <span class="ag-notification-item__body">
-                                        <span class="ag-notification-item__title">{{ data_get($notification, 'title') }}</span>
-                                        <span class="ag-notification-item__time">{{ data_get($notification, 'time') }}</span>
-                                    </span>
-                                    @if (data_get($notification, 'unread'))
-                                        <span class="ag-notification-item__dot" aria-hidden="true"></span>
-                                    @endif
-                                </li>
-                            @endforeach
-                        </ul>
-                    @endif
-                </div>
-            </div>
-
-            <x-molecules.theme-toggle />
+    @if ($moduloLabel)
+        <div class="ag-topbar__breadcrumb">
+            <span>{{ $moduloLabel }}</span>
+            @if ($vistaActual)
+                <x-atoms.icon name="chevron_right" size="sm" class="ag-topbar__breadcrumb-sep" />
+                <span class="ag-topbar__breadcrumb-current">{{ $vistaActual }}</span>
+            @endif
         </div>
+    @endif
 
-        @if ($activeRoleLabel || $tieneVariosRoles || $userName)
-            <span class="ag-topbar__divider" aria-hidden="true"></span>
-        @endif
+    <label class="ag-topbar__search">
+        <x-atoms.icon name="search" size="sm" class="ag-topbar__search-icon" />
+        <input
+            type="search"
+            class="ag-topbar__search-input"
+            placeholder="{{ __('ui.header.buscador_placeholder') }}"
+            aria-label="{{ __('ui.header.buscador_aria') }}"
+        >
+        <kbd class="ag-topbar__search-kbd" aria-hidden="true">{{ __('ui.header.atajo_buscador') }}</kbd>
+    </label>
 
-        <div class="ag-topbar__group">
-            @if ($activeRoleLabel)
-                <span class="ag-role-badge">
-                    <span class="visually-hidden">{{ __('seguridad.rol.badge_activo') }}:</span>
-                    {{ $activeRoleLabel }}
-                </span>
+    @if ($campana)
+        <span class="ag-topbar__campaign" title="{{ __('ui.header.campana_activa') }}">
+            <span class="ag-topbar__campaign-dot" aria-hidden="true"></span>
+            {{ $campana }}
+        </span>
+    @endif
+
+    @if ($periodo)
+        <button type="button" class="ag-topbar__period" title="{{ __('ui.header.periodo') }}">
+            <x-atoms.icon name="calendar_month" size="sm" />
+            {{ $periodo }}
+            <x-atoms.icon name="expand_more" size="sm" class="ag-topbar__period-chevron" />
+        </button>
+    @endif
+
+    <div class="dropdown ag-topbar__notifications">
+        <button
+            type="button"
+            class="ag-topbar__icon-btn ag-topbar__notifications-trigger"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+            aria-label="{{ __('ui.topbar.notifications') }}"
+        >
+            <x-atoms.icon name="notifications" size="sm" />
+            @if ($notificacionesSinLeer > 0)
+                <span class="ag-topbar__notifications-count" aria-hidden="true">{{ $notificacionesSinLeer > 9 ? '9+' : $notificacionesSinLeer }}</span>
             @endif
+        </button>
 
-            @if ($tieneVariosRoles)
-                {{-- `.ag-role-popover`/`.ag-role-list`: ver topbar.css. --}}
-                <div class="dropdown ag-topbar__role-switch">
-                    <button
-                        type="button"
-                        class="ag-topbar__icon-btn"
-                        data-bs-toggle="dropdown"
-                        aria-expanded="false"
-                        aria-label="{{ __('seguridad.rol.switch_trigger') }}"
-                    >
-                        <x-atoms.icon name="swap_horiz" size="sm" />
-                    </button>
+        <div class="dropdown-menu dropdown-menu-end ag-notifications-popover">
+            <h2 class="ag-popover__title">{{ __('ui.topbar.notifications') }}</h2>
 
-                    <div class="dropdown-menu dropdown-menu-end ag-role-popover">
-                        <h2 class="ag-role-popover__title">{{ __('seguridad.rol.switch_titulo') }}</h2>
-                        <livewire:panel.role-switcher :roles="$roles" :rol-activo-id="$rolActivoId" />
-                    </div>
-                </div>
-            @endif
-
-            @if ($userName)
-                <div class="dropdown ag-topbar__user-menu">
-                    <button
-                        type="button"
-                        class="ag-topbar__user"
-                        data-bs-toggle="dropdown"
-                        aria-expanded="false"
-                        aria-label="{{ $userName }}"
-                    >
-                        <span class="ag-topbar__avatar" aria-hidden="true">{{ $iniciales ?: '?' }}</span>
-                        <span class="ag-topbar__user-name">{{ $userName }}</span>
-                    </button>
-
-                    <ul class="dropdown-menu dropdown-menu-end ag-user-menu">
-                        <li>
-                            <button
-                                type="button"
-                                class="dropdown-item ag-user-menu__logout"
-                                data-ag-logout
-                            >
-                                <x-atoms.icon name="logout" size="sm" class="ag-user-menu__logout-icon" />
-                                {{ __('ui.topbar.logout') }}
-                            </button>
+            @if (count($notifications) === 0)
+                <p class="ag-notifications-popover__empty">{{ __('ui.topbar.no_notifications') }}</p>
+            @else
+                <ul class="ag-notification-list">
+                    @foreach ($notifications as $notification)
+                        <li class="ag-notification-item {{ data_get($notification, 'unread') ? 'is-unread' : '' }}">
+                            <span class="ag-notification-item__icon" aria-hidden="true">
+                                <x-atoms.icon :name="data_get($notification, 'icon', 'notifications')" size="sm" />
+                            </span>
+                            <span class="ag-notification-item__body">
+                                <span class="ag-notification-item__title">{{ data_get($notification, 'title') }}</span>
+                                <span class="ag-notification-item__time">{{ data_get($notification, 'time') }}</span>
+                            </span>
+                            @if (data_get($notification, 'unread'))
+                                <span class="ag-notification-item__dot" aria-hidden="true"></span>
+                            @endif
                         </li>
-                    </ul>
-                </div>
+                    @endforeach
+                </ul>
             @endif
         </div>
     </div>
+
+    <x-molecules.theme-toggle />
+
+    @if ($userName)
+        <div class="dropdown ag-topbar__user-menu">
+            <button
+                type="button"
+                class="ag-topbar__user"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+                aria-label="{{ $userName }}"
+            >
+                <span class="ag-topbar__avatar" aria-hidden="true">{{ $iniciales ?: '?' }}</span>
+                <span class="ag-topbar__user-id">
+                    <span class="ag-topbar__user-name">{{ $userName }}</span>
+                    @if ($activeRoleLabel)
+                        <span class="ag-topbar__user-role">
+                            <span class="visually-hidden">{{ __('seguridad.rol.badge_activo') }}:</span>
+                            {{ $activeRoleLabel }}
+                        </span>
+                    @endif
+                </span>
+            </button>
+
+            <ul class="dropdown-menu dropdown-menu-end ag-user-menu">
+                @if ($cambiarRolHref)
+                    <li>
+                        <a href="{{ $cambiarRolHref }}" class="dropdown-item ag-user-menu__item">
+                            <x-atoms.icon name="swap_horiz" size="sm" class="ag-user-menu__icon" />
+                            {{ __('seguridad.rol.switch_trigger') }}
+                        </a>
+                    </li>
+                @endif
+                <li>
+                    <button
+                        type="button"
+                        class="dropdown-item ag-user-menu__item ag-user-menu__logout"
+                        data-ag-logout
+                    >
+                        <x-atoms.icon name="logout" size="sm" class="ag-user-menu__icon" />
+                        {{ __('ui.topbar.logout') }}
+                    </button>
+                </li>
+            </ul>
+        </div>
+    @endif
 </header>

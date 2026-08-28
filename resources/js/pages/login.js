@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Limpiar y establecer el nuevo mensaje
         errorContainer.innerHTML = `
-            <i class="material-symbols-outlined" style="font-size: 1.25rem;">error</i>
+            <i class="material-symbols-rounded" style="font-size: 1.25rem;">error</i>
             <span>${message}</span>
         `;
     }

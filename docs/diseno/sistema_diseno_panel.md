@@ -271,3 +271,149 @@ Convención de catálogo de claves, definida acá (era un pendiente explícito d
 - **Ensamblar las páginas concretas** (`pages/login`, `pages/seleccionar-rol`, el dashboard de cada rol) usando `auth-layout`/`panel-layout`, conectar el submit de `login-form` y los triggers de `role-selector-item`/popovers de rol a `SesionController`/`RolActivoController` (ambos responden JSON, pensados para fetch/Livewire, no submit clásico con redirect). → `frontend`.
 - ~~Asset de logo transparente~~ — resuelto (rediseño de login, tercera vuelta): los dos JPEG (`logo-light.jpeg`/`logo-dark.jpeg`, fondo sólido horneado blanco/negro) se reprocesaron a un único `public/logo.png` con canal alfa real (recorte del isotipo + wordmark, extracción de alfa por chroma-key con limpieza de ruido de compresión — filtro de mediana + erosión + blur suave sobre el canal alfa, no sobre el color). Ya no hace falta variante por tema: `atoms/logo` renderiza un solo `<img>`, `logo.css` perdió la regla `[data-bs-theme]` que alternaba `display`. El wordmark editorial de `auth-layout` sigue en texto (no en esta imagen) por decisión de diseño del mockup (bicromía tipográfica "AGRO"/"COM"), no ya por la limitación técnica — ver notas de §3.
 - ~~Instalar la fuente de `--ag-font-family-display` vía npm~~ — resuelto, dos vueltas: primero se instaló `@fontsource/instrument-serif`; en el rediseño de login (tercera vuelta) se reemplazó por `@fontsource-variable/fraunces` (más ancha/cálida a 38-44px, con eje óptico `opsz`) y se desinstaló el paquete de Instrument Serif (sin otros consumidores).
+
+## 7. Quinta vuelta (28/8/2026) — layout de tres niveles del panel
+
+Rediseño del panel completo sobre las maquetas aprobadas del mockup
+`docs/Login Agro Drones.dc.html` (`4a` escritorio, `5a` tablet, `5b` móvil,
+`5c` selección de rol). Tres decisiones del pedido gobiernan todo el pase:
+el **layout** es el de las maquetas; los **módulos del menú** salen de la
+especificación (`especificacion_funcional_tecnica.md` §4), no del mockup; y
+los **hex del mockup nunca se copian** — cada color se tradujo a un token
+semántico (invariante 11).
+
+### 7.1. Los tres niveles
+
+| Nivel | Componente | Qué es |
+|---|---|---|
+| 1 | `organisms/module-rail` | Riel de módulos, 74px (64px tablet), superficie oliva oscura **en ambos temas** (`--ag-color-bg-rail*`, constantes — chrome de marca, mismo criterio que `--ag-color-scrim*`). Solo los módulos que el rol activo puede ver; engranaje al pie → `panel.organizacion.index`. |
+| 2 | `organisms/module-sidebar` | Ítems del módulo activo, 252px, solo ≥1200px: nombre en display 22px + descripción (`sec_menu.descripcion`, clave i18n nueva), lista de `menu-item` (radio 9, activo verde negrita sobre tenue, badge de pendientes en mono ámbar), pie "Cambiar de rol" (link a la pantalla 5c con `?cambiar=1`). |
+| 3 | `tabs.css` (skin del `tab` nativo de Bootstrap) | Pestañas dentro del contenido (Resumen / Sesiones / Pausas en el dashboard), subrayado ámbar 2px en la activa. |
+
+Módulos sembrados (`SecMenuSeeder`, vocabulario de la especificación):
+**Operación** (4.3), **Comercial** (4.1 + cap. 9), **Recursos** (4.2),
+**Mantenimiento** (4.5), **Financiero** (4.4 + cap. 11), **Reportes**
+(cap. 9/10) y **Seguridad** (4.6 + cap. 14). Las tres pantallas existentes
+siguen en el árbol (pedido explícito): Inicio → Operación › Programación
+(misma fila migrada, id estable), Usuarios y Organización → Seguridad.
+`panel-layout` normaliza el árbol (resuelve `route()`, marca activo por
+ruta actual, cuelga los badges demo) — `ObtenerMenuPorRolActivo` sigue sin
+saber de rutas resueltas.
+
+### 7.2. Breakpoints (768 / 1200)
+
+| Rango | Maqueta | Qué cambia |
+|---|---|---|
+| ≥1200 | 4a | Riel 74px + sidebar 252px + header 62px completo (breadcrumb · buscador flexible `flex:1 1 300px` con ⌘K · chip campaña · período · campana · toggle de tema · usuario con rol activo debajo). Tabla de sesiones en grilla de columnas. |
+| 768–1199.98 | 5a | Riel 64px; el sidebar desaparece → banda de módulo (nombre + **píldoras horizontales** `flex:0 0 auto; white-space:nowrap`, nunca el ítem vertical de `width:100%`); header compacto 58px; KPIs 2×2; tabla → lista de dos líneas. |
+| <768 | 5b | Web, no app: sin barra inferior ni FAB. Header oscuro (`mobile-topbar`: hamburguesa → `module-drawer` offcanvas con los 7 módulos colapsables, logo, `ROL · CAMPAÑA` en mono lima, campana, avatar) + banda de breadcrumb con lupa; KPI protagonista (cifra 2.5rem) + 2 secundarios; sesiones como fichas; pie mono `AGROCOM SRL · año` + versión. Objetivos táctiles ≥44px. |
+
+El chrome no scrollea, el contenido sí: `.ag-panel` fija `100dvh` y cada
+columna flex interna lleva `min-height: 0` (sin eso el hijo flex nunca
+encoge y el scroll interno no aparece); las tarjetas que no deben encogerse
+van `flex: 0 0 auto`.
+
+### 7.3. Tipografía — tres familias, una por contexto
+
+Confirmado en este pase (pedido del 28/8/2026): **Fraunces** es LA fuente
+display del sistema — el mockup traía Instrument Serif, pero esa no es la
+del sistema (ya reemplazada en la tercera vuelta); se mantiene Fraunces y
+los tamaños del panel se calibran a su métrica más ancha (título de página
+2.125rem vs. 36px del mockup, KPI 2.125rem vs. 38px, sidebar 1.375rem vs.
+23px). **IBM Plex Sans** para toda la interfaz/subtítulos — ahora cableada
+explícitamente a `--bs-body-font-family` para que nada caiga al stack del
+sistema — e **IBM Plex Mono** para datos/metadatos (horas, drones, badges
+de pendientes, `ROL · CAMPAÑA`, pie). Los íconos pasan de Material Symbols
+Outlined a **Rounded** (los de las maquetas): `material-symbols/rounded.css`
++ clase `material-symbols-rounded` en `atoms/icon`.
+
+### 7.4. Tokens nuevos (ambos temas)
+
+Primitivas (`tokens/primitives/`): rampa **arena** `--ag-color-sand-50…700`
+y rampa **oliva** `--ag-color-olive-150…1000` en `brand.css` (neutros
+cálidos del lenguaje aprobado — un tenant las reemplazaría junto con las
+rampas de marca); `--ag-color-green-200` (lima del riel); en `base.css` el
+rojo óxido `--ag-color-red-50|200|600|900` y el azul `--ag-color-blue-50|700`.
+
+Semánticos (mismo nombre en ambos temas, valores reasignados):
+
+| Token | Uso |
+|---|---|
+| `--ag-color-bg` (reasignado) | El fondo del contenido del panel es **el mismo `--ag-color-bg-auth` del login** en ambos temas (pedido explícito del 28/8/2026) — crema en claro, grafito-petróleo en oscuro |
+| `--ag-color-bg-rail`, `-bg-rail-active`, `-text-rail`, `-text-rail-active` | Riel de módulos — **constantes entre temas** (oliva-1000/900, oliva-300, verde-200) |
+| `--ag-color-surface-card`, `--ag-color-border-card` | Tarjeta del panel (KPI, tablas, fichas) y su borde suave, separados del chrome |
+| `--ag-color-bg-table-head`, `--ag-color-border-row`, `--ag-color-bg-row-hover` | Cabecera mono de tabla, borde de fila, hover de fila |
+| `--ag-color-bg-input-chrome` | Relleno del buscador del header y píldoras inactivas |
+| `--ag-color-success-strong`, `-warning-strong`, `-info-strong`, `-danger-strong`, `-neutral-strong` | TEXTO de los chips de estado sobre su propio `-subtle` — cada par verificado AA (ver §7.5). `warning` pasa del amarillo Bootstrap al ámbar de marca; `danger` al rojo óxido |
+| `--ag-color-danger-border` | Borde de la alerta de RC |
+| `--ag-color-primary-border-subtle` | Borde tenue verde (chip de campaña, píldora/filtro activo) |
+| `--ag-color-text-faint` | Oliva decorativa (íconos apagados, barras) — **no pasa AA como texto**, documentado |
+| `--ag-color-track`, `--ag-color-bar-unassigned` | Pista de las barras de pausas y la barra "sin causa asignada" |
+
+`--ag-color-text`/`-text-muted`/`-border`/`-neutral-subtle` se reasignaron
+a la escala oliva/arena (claro) y a mezclas oliva-sobre-gris + texto crema
+(oscuro).
+
+### 7.5. Contraste verificado (se suma a §1.3)
+
+| Combinación (tema claro) | Ratio aprox. | Resultado |
+|---|---|---|
+| `--ag-color-text` (oliva-950) sobre `--ag-color-surface-card` (arena-50) | ~12.9:1 | AAA |
+| `--ag-color-text-muted` (oliva-500) sobre arena-50 / `--ag-color-bg` crema | ~5.0:1 / ~5.1:1 | AA — por eso muted es oliva-500 y NO la oliva-400 del mockup (~3.5:1, falla; quedó como `-text-faint` decorativo) |
+| `--ag-color-success-strong` sobre `--ag-color-success-subtle` | ~7.2:1 | AAA (chip "Validada") |
+| `--ag-color-warning-strong` (ámbar-800) sobre `--ag-color-warning-subtle` (ámbar-100) | ~4.6:1 | AA (chip "Sin evidencia", badges de pendientes, "ÚLTIMO USADO") |
+| `--ag-color-info-strong` (azul-700) sobre `--ag-color-info-subtle` (azul-50) | ~5.5:1 | AA (chip "En vuelo") |
+| `--ag-color-danger-strong` (rojo-900) sobre `--ag-color-danger-subtle` (rojo-50) | ~9.2:1 | AAA (alerta de RC) |
+| `--ag-color-neutral-strong` (oliva-600) sobre `--ag-color-neutral-subtle` (arena-200) | ~5.2:1 | AA (chip "Programada") |
+| Blanco sobre `--ag-color-danger` (rojo-600) | ~5.1:1 | AA (botón "Resolver") |
+| `--ag-color-text-rail` (oliva-300) sobre `--ag-color-bg-rail` (oliva-1000) | ~4.9:1 | AA (íconos del riel; el mínimo exigido para no-texto es 3:1) |
+| `--ag-color-text-rail-active` (verde-200) sobre `--ag-color-bg-rail-active` (oliva-900) | ~8.7:1 | AAA |
+
+| Combinación (tema oscuro) | Ratio aprox. | Resultado |
+|---|---|---|
+| Texto crema sobre `--ag-color-surface-card` | ~14:1 | AAA |
+| `--ag-color-text-muted` (salvia) sobre la tarjeta oscura | ~6:1 | AA+ |
+| `-strong` de cada estado sobre su `-subtle` (overlay sobre tarjeta): success ~5.6, warning ~5.6, info ~5.3, danger ~5.3, neutral ~9.6 | ≥5.3:1 | AA todos |
+
+Regla operativa que queda fijada: **un chip de estado usa siempre el par
+`-subtle` (fondo) + `-strong` (texto)**, nunca el token crudo como texto;
+el ámbar como texto sobre superficie clara es siempre el oscurecido
+(ámbar-800 vía `-warning-strong`/`-accent-link`) porque el tono base falla AA.
+
+### 7.6. Catálogo — altas y bajas
+
+Altas: `organisms/module-rail`, `organisms/module-sidebar`,
+`organisms/module-drawer`, `organisms/mobile-topbar`,
+`molecules/alert-strip` (variantes accent/danger — ventana volable y alerta
+de RC), `molecules/role-card` (tarjeta 5c con chips de permisos y badge
+"ÚLTIMO USADO"), `tabs.css`, `templates/panel-shell` (esqueleto HTML único
+de las páginas del panel, con `data-bs-theme` desde la preferencia
+persistida). Reescritos: `templates/panel-layout` (tres niveles),
+`organisms/topbar` (header 62px), `molecules/stat-card` (anatomía KPI de la
+maqueta), `atoms/badge` (pares subtle/strong, sin dot).
+
+Bajas: `organisms/sidebar-nav` (+ su JS de icon-rail),
+`molecules/role-selector-item` y el Livewire `RoleSwitcher` con sus
+popovers — el cambio de rol ahora es siempre la pantalla 5c (link "Cambiar
+de rol" del sidebar/menú de usuario, con `?cambiar=1`).
+
+### 7.7. Selección de rol y preferencias (backend que acompaña)
+
+- `sec_menu.descripcion` (clave i18n de la bajada del módulo) y
+  `lang/es/menu.php` nuevos.
+- `sec_user_preferencia.rol_preferido_id` ("Entrar siempre con este rol":
+  login y middleware lo activan solos y el selector solo reaparece con
+  `?cambiar=1`) y `ultimo_rol_id` (badge "ÚLTIMO USADO", lo registra
+  `ElegirRolActivo`, único punto de activación). Ninguno gobierna permisos
+  y ambos se revalidan como "rol vivo" antes de usarse (ADR 0004 intacto).
+- `PresentadorRol`: nombre legible/ícono/chips por slug (metadata de
+  presentación en `seguridad.rol.meta.*`, con fallback al vocabulario crudo
+  de la base — no traduce dominio, ADR 0013).
+- El tema ahora PERSISTE: `POST panel.preferencias.tema` (oyente de
+  `agrocom:theme-changed` en `theme-toggle.js`) + `panel-shell` renderiza
+  `data-bs-theme` desde la preferencia.
+- Datos de demo de las maquetas centralizados en
+  `Http/Demo/DatosDemoPanel` (KPIs, 5 sesiones, 5 causas de pausa, 3 ítems
+  de stock, ventana volable, badges del menú, campaña/período/versión) —
+  marcado MOCK, nunca hardcodeado en vistas; usuario demo multirol
+  `camila.rojas`/`password` en `Demo/PanelDemoSeeder`.

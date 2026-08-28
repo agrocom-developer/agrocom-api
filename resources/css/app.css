@@ -10,11 +10,15 @@
 @import '@fontsource/ibm-plex-sans/600.css';
 @import '@fontsource/ibm-plex-mono/400.css';
 @import '@fontsource/ibm-plex-mono/600.css';
-/* Variable font (ejes wght + opsz): el headline grande de auth-layout usa
-   font-optical-sizing: auto para que el eje óptico se ajuste solo a su
-   tamaño — ver --ag-font-family-display en tokens/primitives/base.css. */
+/* Titulares en Fraunces (variable, ejes wght + opsz): la fuente display del
+   sistema — la del login y los headlines del panel de fotos. El mockup del
+   panel traía Instrument Serif, pero esa NO es la del sistema (decisión
+   confirmada el 28/8/2026): se mantiene Fraunces y los tamaños del panel se
+   ajustan a su métrica más ancha — ver --ag-font-family-display en
+   tokens/primitives/base.css. */
 @import '@fontsource-variable/fraunces/standard.css';
-@import 'material-symbols/outlined.css';
+/* Rounded, no Outlined: iconografía de las maquetas aprobadas (quinta vuelta). */
+@import 'material-symbols/rounded.css';
 
 /* Bootstrap 5.3 base (versión compilada CSS) */
 @import 'bootstrap/dist/css/bootstrap.css';

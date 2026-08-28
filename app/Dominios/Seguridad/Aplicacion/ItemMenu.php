@@ -23,6 +23,11 @@ final readonly class ItemMenu
      * @param  list<self>  $hijos  Solo los hijos ya visibles para el rol
      *                             activo — nunca los que quedaron ocultos
      *                             por falta de permiso.
+     * @param  ?string  $descripcion  Clave de traducción de la bajada del
+     *                                módulo (solo la llevan las raíces del
+     *                                árbol — layout de tres niveles, quinta
+     *                                vuelta), SIN resolver, igual que
+     *                                `label`.
      */
     public function __construct(
         public int $id,
@@ -31,5 +36,6 @@ final readonly class ItemMenu
         public ?string $ruta,
         public int $orden,
         public array $hijos = [],
+        public ?string $descripcion = null,
     ) {}
 }

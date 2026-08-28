@@ -1,0 +1,125 @@
+/*
+ * Page: seleccionar-rol
+ * (app/Dominios/Seguridad/Infraestructura/Http/Views/pages/seleccionar-rol.blade.php)
+ * Quinta vuelta — maqueta 5c. Las tarjetas en sí son molecules/role-card;
+ * acá solo el armado de la columna: chip de usuario, titular en display,
+ * grupo de tarjetas, checkbox y botón. Cero hex, todo por token.
+ */
+
+.ag-role-select {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-4);
+    width: 100%;
+    max-width: 30rem;
+}
+
+/* Chip del usuario actual (iniciales + nombre + username). */
+.ag-role-select__user {
+    align-self: flex-start;
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-1);
+    padding-right: var(--ag-space-3);
+    background: var(--ag-color-neutral-subtle);
+    border-radius: var(--ag-radius-pill);
+}
+
+.ag-role-select__avatar {
+    width: 1.875rem;
+    height: 1.875rem;
+    border-radius: var(--ag-radius-pill);
+    background: var(--ag-color-primary);
+    color: var(--ag-color-primary-contrast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-bold);
+}
+
+.ag-role-select__user-text {
+    font-size: 0.78rem;
+    color: var(--ag-color-neutral-strong);
+}
+
+.ag-role-select__heading {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-2);
+}
+
+.ag-role-select__title {
+    margin: 0;
+    font-family: var(--ag-font-family-display);
+    font-optical-sizing: auto;
+    font-weight: var(--ag-font-weight-regular);
+    font-size: 2rem;
+    line-height: 1.1;
+    color: var(--ag-color-text);
+}
+
+.ag-role-select__subtitle {
+    margin: 0;
+    font-size: 0.84375rem;
+    line-height: 1.5;
+    color: var(--ag-color-text-muted-auth);
+}
+
+.ag-role-select__group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-3);
+}
+
+.ag-role-select__remember {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    font-size: 0.8125rem;
+    color: var(--ag-color-text-muted-auth);
+    cursor: pointer;
+}
+
+.ag-role-select__checkbox {
+    width: 0.9375rem;
+    height: 0.9375rem;
+    accent-color: var(--ag-color-primary);
+}
+
+.ag-role-select__empty {
+    margin: 0;
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text-muted-auth);
+}
+
+.ag-role-select__error {
+    margin: 0;
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-danger);
+}
+
+/* "Cerrar sesión" del header (slot headerEnd de auth-layout). */
+.ag-role-select__logout {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ag-space-1);
+    border: none;
+    background: none;
+    padding: var(--ag-space-1) var(--ag-space-2);
+    border-radius: var(--ag-radius-md);
+    font-family: var(--ag-font-family-base);
+    font-size: 0.78rem;
+    color: var(--ag-color-text-muted-auth);
+    cursor: pointer;
+}
+
+.ag-role-select__logout:hover {
+    color: var(--ag-color-text);
+}
+
+.ag-role-select__logout:focus-visible {
+    outline: 2px solid var(--ag-color-focus-ring);
+    outline-offset: 2px;
+}

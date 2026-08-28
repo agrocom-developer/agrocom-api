@@ -1,0 +1,149 @@
+/*
+ * Molecule: role-card (resources/views/components/molecules/role-card.blade.php)
+ * Tarjeta de rol de la pantalla de selección (quinta vuelta, maqueta 5c).
+ * Seleccionada: borde verde 1.5px + fondo verde tenue + sombra suave +
+ * check circular relleno. Radio 12. Todo por token, ambos temas.
+ */
+
+.ag-role-card {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--ag-space-3);
+    width: 100%;
+    text-align: left;
+    padding: var(--ag-space-4);
+    background: var(--ag-color-surface-card);
+    border: 1.5px solid var(--ag-color-border);
+    border-radius: 12px;
+    cursor: pointer;
+    font-family: var(--ag-font-family-base);
+    transition:
+        border-color var(--ag-transition-fast),
+        background-color var(--ag-transition-fast),
+        box-shadow var(--ag-transition-fast);
+}
+
+.ag-role-card:hover {
+    border-color: var(--ag-color-border-strong);
+}
+
+.ag-role-card:focus-visible {
+    outline: 2px solid var(--ag-color-focus-ring);
+    outline-offset: 2px;
+}
+
+.ag-role-card.is-selected {
+    background: var(--ag-color-primary-subtle);
+    border-color: var(--ag-color-primary);
+    box-shadow: 0 4px 14px rgba(30, 122, 52, 0.14);
+}
+
+.ag-role-card__icon {
+    flex: 0 0 auto;
+    width: 2.625rem;
+    height: 2.625rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 11px;
+    background: var(--ag-color-neutral-subtle);
+    color: var(--ag-color-text-muted);
+    transition:
+        background-color var(--ag-transition-fast),
+        color var(--ag-transition-fast);
+}
+
+.ag-role-card.is-selected .ag-role-card__icon {
+    background: var(--ag-color-primary);
+    color: var(--ag-color-primary-contrast);
+}
+
+.ag-role-card__body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-1);
+}
+
+.ag-role-card__head {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    flex-wrap: wrap;
+}
+
+.ag-role-card__name {
+    font-size: 0.9375rem;
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-color-text);
+}
+
+/* Badge "ÚLTIMO USADO": mono ámbar sobre tenue ámbar (par AA de §1.3). */
+.ag-role-card__last {
+    font-family: var(--ag-font-family-mono);
+    font-size: 0.59rem;
+    letter-spacing: 0.07em;
+    color: var(--ag-color-accent-link);
+    background: var(--ag-color-accent-subtle);
+    padding: 2px 7px;
+    border-radius: var(--ag-radius-pill);
+}
+
+.ag-role-card__desc {
+    font-size: 0.78rem;
+    line-height: 1.45;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-role-card__perms {
+    display: flex;
+    gap: var(--ag-space-1);
+    flex-wrap: wrap;
+    margin-top: var(--ag-space-1);
+}
+
+.ag-role-card__perm {
+    font-size: 0.6875rem;
+    color: var(--ag-color-neutral-strong);
+    background: var(--ag-color-neutral-subtle);
+    border-radius: var(--ag-radius-pill);
+    padding: 3px 9px;
+}
+
+/* Check circular: vacío (borde) sin seleccionar, relleno verde al
+   seleccionar — decorativo, el estado real lo comunica aria-checked. */
+.ag-role-card__check {
+    flex: 0 0 auto;
+    width: 1.25rem;
+    height: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--ag-radius-pill);
+    border: 1.5px solid var(--ag-color-border-strong);
+    background: transparent;
+    color: transparent;
+    transition:
+        background-color var(--ag-transition-fast),
+        border-color var(--ag-transition-fast),
+        color var(--ag-transition-fast);
+}
+
+.ag-role-card__check .ag-icon {
+    font-size: 0.875rem;
+}
+
+.ag-role-card.is-selected .ag-role-card__check {
+    border-color: var(--ag-color-primary);
+    background: var(--ag-color-primary);
+    color: var(--ag-color-primary-contrast);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ag-role-card,
+    .ag-role-card__icon,
+    .ag-role-card__check {
+        transition-duration: 0.01ms !important;
+    }
+}

@@ -1,0 +1,91 @@
+/*
+ * Organism: module-sidebar (resources/views/components/organisms/module-sidebar.blade.php)
+ * Nivel 2 del layout (quinta vuelta, maqueta 4a): sidebar de ítems del
+ * módulo activo — 252px, superficie clara con borde derecho, cabecera con
+ * nombre en serif 23px + descripción, lista de menu-item, pie "Cambiar de
+ * rol". Visible solo ≥1200px (tablet usa la banda de píldoras; móvil, el
+ * drawer).
+ */
+
+.ag-module-sidebar {
+    flex: 0 0 252px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: var(--ag-color-bg-chrome);
+    border-right: 1px solid var(--ag-color-border);
+}
+
+.ag-module-sidebar__header {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-1);
+    padding: var(--ag-space-5) var(--ag-space-4) var(--ag-space-4);
+    border-bottom: 1px solid var(--ag-color-border-row);
+}
+
+.ag-module-sidebar__title {
+    margin: 0;
+    font-family: var(--ag-font-family-display);
+    font-optical-sizing: auto;
+    font-weight: var(--ag-font-weight-regular);
+    font-size: 1.375rem;
+    line-height: 1.1;
+    color: var(--ag-color-text);
+}
+
+.ag-module-sidebar__desc {
+    margin: 0;
+    font-size: var(--ag-font-size-xs);
+    line-height: 1.45;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-module-sidebar__nav {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--ag-space-3);
+}
+
+.ag-module-sidebar__footer {
+    flex: 0 0 auto;
+    padding: var(--ag-space-3) var(--ag-space-4);
+    border-top: 1px solid var(--ag-color-border-row);
+}
+
+/* Compartido con el pie de organisms/module-drawer (mismo skin). */
+.ag-module-sidebar__role-link {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-sm);
+    text-decoration: none;
+    transition: color var(--ag-transition-fast);
+}
+
+.ag-module-sidebar__role-link .ag-icon {
+    color: var(--ag-color-primary-emphasis);
+}
+
+.ag-module-sidebar__role-link:hover {
+    color: var(--ag-color-text);
+    opacity: 1;
+}
+
+.ag-module-sidebar__role-link:focus-visible {
+    outline: 2px solid var(--ag-color-focus-ring);
+    outline-offset: 2px;
+    border-radius: var(--ag-radius-sm);
+}
+
+@media (max-width: 1199.98px) {
+    .ag-module-sidebar {
+        display: none;
+    }
+}

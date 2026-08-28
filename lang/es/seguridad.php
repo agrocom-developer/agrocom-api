@@ -66,51 +66,92 @@ return [
         'volver' => 'Volver al ingreso',
     ],
 
+    // Pantalla de selección de rol (quinta vuelta, maqueta 5c) y cambio de
+    // rol activo. `meta.*` es METADATA de presentación por slug de rol
+    // (nombre legible, descripción comercial, chips de permisos) — no
+    // traduce vocabulario de dominio (ADR 0013 punto 3): el slug sigue
+    // viajando intacto, y un rol sin metadata degrada al `name`/
+    // `description` crudos de la base (ver PresentadorRol).
     'rol' => [
-        'seleccion_titulo' => 'Elegí con qué rol continuar',
-        'seleccion_subtitulo' => 'Tu cuenta tiene más de un rol asignado. Los permisos de esta sesión serán los del rol que elijas — podés cambiarlo después sin volver a loguearte.',
-        'seleccion_boton_continuar' => 'Continuar',
+        'foto_headline' => 'Un solo usuario, varias responsabilidades.',
+        'foto_subheadline' => 'El rol define qué módulos ves y qué podés aprobar durante esta sesión.',
+        'seleccion_titulo' => '¿Con qué rol vas a trabajar?',
+        'seleccion_subtitulo' => 'Podés cambiarlo en cualquier momento desde el menú, sin volver a ingresar.',
+        'seleccion_boton_continuar' => 'Continuar como :rol',
+        'seleccion_grupo_aria' => 'Roles disponibles',
         'seleccion_vacia' => 'Todavía no tenés ningún rol asignado. Contactá a un administrador.',
+        'ultimo_usado' => 'ÚLTIMO USADO',
+        'recordar' => 'Entrar siempre con este rol',
+        'error_actualizar' => 'No se pudo cambiar de rol. Intentá nuevamente.',
+        'error_red' => 'Error de red. Intentá nuevamente.',
         'switch_trigger' => 'Cambiar de rol',
         'switch_titulo' => 'Cambiar de rol activo',
         'badge_activo' => 'Rol activo',
-    ],
-
-    // Etiquetas del menú lateral (sec_menu.label guarda estas claves tal
-    // cual, ver Database\Seeders\Catalogo\SecMenuSeeder) — resueltas por
-    // molecules/menu-item vía __(), nunca antes (ADR 0013).
-    'menu' => [
-        'inicio' => 'Inicio',
-        'usuarios' => 'Usuarios',
-        'organizacion' => 'Organización',
-    ],
-
-    // Copy mínimo de las páginas placeholder de HU-02 (GET /panel/dashboard,
-    // GET /panel/usuarios) — `frontend` lo reemplaza al ensamblar el
-    // contenido real de cada pantalla.
-    'dashboard' => [
-        'titulo' => 'Panel',
-        'bienvenida' => 'Hola, :nombre. Estás operando como :rol — el menú de la izquierda muestra solo lo que tu rol activo puede ver.',
-        // Datos MOCK para mockup de dashboard (reemplazar cuando existan módulos reales)
-        'mock' => [
-            'sesiones_personales' => 'Sesiones personales (este mes)',
-            'hectareas_cubiertas' => 'Hectáreas cubiertas',
-            'proxima_orden' => 'Próxima orden',
-            'sesiones_equipo' => 'Sesiones del equipo',
-            'hectareas_equipo' => 'Hectáreas del equipo',
-            'pendientes_validar' => 'Pendientes de validar',
-            'usuarios_activos' => 'Usuarios activos',
-            'sesiones_mes' => 'Sesiones este mes',
-            'hectareas_totales' => 'Hectáreas totales cubiertas',
-            'devengos_pendientes' => 'Devengos pendientes',
-            'ordenes_por_estado' => 'Órdenes por estado',
-            'notificacion_1_titulo' => 'Nueva orden asignada',
-            'notificacion_1_hora' => 'hace 5 minutos',
-            'notificacion_2_titulo' => 'Sesión validada correctamente',
-            'notificacion_2_hora' => 'hace 1 hora',
-            'notificacion_3_titulo' => 'Actualización de sistema disponible',
-            'notificacion_3_hora' => 'hace 3 horas',
+        'meta' => [
+            'dueno' => [
+                'nombre' => 'Dueño',
+                'descripcion' => 'Acceso total: finanzas, personas, contratos y gestión de otros dueños.',
+                'permisos' => ['Todos los módulos', 'Aprobar devengos', 'Ver costos'],
+            ],
+            'piloto' => [
+                'nombre' => 'Piloto de dron',
+                'descripcion' => 'Ejecuta sesiones de vuelo en campo y carga la evidencia del RC.',
+                'permisos' => ['Programación', 'Sesiones', 'Mezclas'],
+            ],
+            'auxiliar' => [
+                'nombre' => 'Auxiliar de campo',
+                'descripcion' => 'Apoya la preparación de mezclas y la logística de cada sesión.',
+                'permisos' => ['Mezclas', 'Checklist', 'Evidencias'],
+            ],
+            'jefe_campo' => [
+                'nombre' => 'Jefe de campo',
+                'descripcion' => 'Coordina la cuadrilla y valida sesiones ajenas — nunca las propias.',
+                'permisos' => ['Programación', 'Validación', 'Pausas'],
+            ],
+            'encargado_operaciones' => [
+                'nombre' => 'Encargado de operaciones',
+                'descripcion' => 'Administra usuarios, órdenes, stock y la planificación de la base.',
+                'permisos' => ['Operación', 'Recursos', 'Usuarios'],
+            ],
         ],
+    ],
+
+    // Dashboard "Operación de hoy" (quinta vuelta — maquetas 4a/5a/5b):
+    // copy fijo de pantalla; los DATOS (cifras, sesiones, causas) viajan por
+    // DatosDemoPanel, nunca por acá.
+    'dashboard' => [
+        'titulo' => 'Operación de hoy',
+        'bajada' => ':fecha · lo que falta cerrar antes del corte de planilla.',
+        'exportar' => 'Exportar',
+        'programar_sesion' => 'Programar sesión',
+        'tabs_aria' => 'Vistas del dashboard',
+        'tab_resumen' => 'Resumen',
+        'tab_sesiones' => 'Sesiones',
+        'tab_pausas' => 'Pausas',
+        'ventana_titulo' => 'Ventana volable :horario.',
+        'ventana_accion' => 'Revisar autorización',
+        'programacion_titulo' => 'Programación de hoy',
+        'ver_todas' => 'Ver todas',
+        'hoy' => 'Hoy',
+        'col_hora' => 'Hora',
+        'col_lote' => 'Lote',
+        'col_piloto' => 'Piloto',
+        'col_dron' => 'Dron',
+        'col_ha' => 'Ha',
+        'col_estado' => 'Estado',
+        'pausas_titulo' => 'Pausas por causa',
+        'pausas_titulo_mes' => 'Horas perdidas por causa · :periodo',
+        'stock_titulo' => 'Stock bajo mínimo',
+        'stock_accion' => 'Generar pedido',
+        'rc_alerta' => ':cantidad sesiones cerradas sin captura del RC.',
+        'rc_detalle' => 'Ninguna sesión se valida ni devenga sin evidencia adjunta.',
+        'rc_resolver' => 'Resolver',
+        'filtro_sin_validar' => 'Sin validar',
+        'filtro_pilotos' => 'Todos los pilotos',
+        'filtro_drones' => 'Todos los drones',
+        'filtro_evidencia' => 'Con evidencia',
+        'sesiones_nota' => 'Cada fila abre el detalle en un panel lateral: orden, mezcla y quién la preparó, condiciones, pausas y la captura del RC.',
+        'pausas_sin_causa' => ':horas de pausa sigue sin causa asignada. Toda jornada de baja producción debe quedar explicada.',
     ],
 
     'usuarios' => [

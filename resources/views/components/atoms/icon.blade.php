@@ -1,8 +1,8 @@
 {{--
     Atom: icon
-    Envoltorio del ícono Material Symbols (ligadura de texto → glifo).
-    Requiere que el proyecto cargue la fuente "Material Symbols Outlined"
-    (pendiente de infraestructura, ver docs/diseno/sistema_diseno_panel.md §6).
+    Envoltorio del ícono Material Symbols (ligadura de texto → glifo),
+    variante Rounded — la de las maquetas aprobadas del panel (quinta
+    vuelta). La fuente la carga resources/css/app.css.
 
     Props:
     - name (string, requerido): nombre del ícono de Material Symbols, p. ej. "visibility".
@@ -18,7 +18,7 @@
 ])
 
 <span
-    {{ $attributes->class(['material-symbols-outlined', 'ag-icon', "ag-icon--{$size}"]) }}
+    {{ $attributes->class(['material-symbols-rounded', 'ag-icon', "ag-icon--{$size}"]) }}
     @if ($label)
         role="img"
         aria-label="{{ $label }}"

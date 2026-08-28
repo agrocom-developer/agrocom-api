@@ -20,4 +20,18 @@ return [
         'vencida' => 'Vencida',
     ],
 
+    // Estados de sesión del dashboard demo (quinta vuelta — maquetas
+    // 4a/5a/5b). "Validada"/"En vuelo"/"Programada" son vocabulario del
+    // ciclo de vida real de `sesiones` (especificación §4.3/§5);
+    // "Sin evidencia" es la condición de captura_rc faltante que bloquea la
+    // validación. Consumidos por los chips de estado vía DatosDemoPanel.
+    'sesion' => [
+        'estado' => [
+            'validada' => 'Validada',
+            'sin_evidencia' => 'Sin evidencia',
+            'en_vuelo' => 'En vuelo',
+            'programada' => 'Programada',
+        ],
+    ],
+
 ];

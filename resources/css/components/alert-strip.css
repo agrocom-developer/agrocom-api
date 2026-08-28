@@ -1,0 +1,64 @@
+/*
+ * Molecule: alert-strip (resources/views/components/molecules/alert-strip.blade.php)
+ * Franja de aviso del dashboard (quinta vuelta, maquetas 4a/5a/5b):
+ * variante "accent" (ámbar, borde izquierdo 3px, ventana volable) y
+ * "danger" (rojiza con borde, alerta de RC). El texto fuerte va en
+ * <strong> dentro del slot — el par tenue/fuerte de cada variante está
+ * verificado AA en sistema_diseno_panel.md §1.3.
+ */
+
+.ag-alert-strip {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-3) var(--ag-space-4);
+    font-size: 0.84375rem;
+}
+
+.ag-alert-strip__icon {
+    flex-shrink: 0;
+}
+
+.ag-alert-strip__body {
+    flex: 1;
+    min-width: 0;
+    line-height: 1.45;
+}
+
+.ag-alert-strip__action {
+    flex-shrink: 0;
+}
+
+/* Ámbar (ventana volable, nota de pausas): gradiente tenue que muere en la
+   superficie, borde izquierdo de acento, esquinas 0/10/10/0. */
+.ag-alert-strip--accent {
+    background: linear-gradient(90deg, var(--ag-color-warning-subtle), var(--ag-color-bg-table-head));
+    border-left: 3px solid var(--ag-color-accent);
+    border-radius: 0 10px 10px 0;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-alert-strip--accent .ag-alert-strip__icon {
+    color: var(--ag-color-warning-strong);
+}
+
+.ag-alert-strip--accent strong {
+    color: var(--ag-color-warning-strong);
+    font-weight: var(--ag-font-weight-bold);
+}
+
+/* Rojo óxido (RC sin captura). */
+.ag-alert-strip--danger {
+    background: var(--ag-color-danger-subtle);
+    border: 1px solid var(--ag-color-danger-border);
+    border-radius: 12px;
+    color: var(--ag-color-danger-strong);
+}
+
+.ag-alert-strip--danger .ag-alert-strip__icon {
+    color: var(--ag-color-danger);
+}
+
+.ag-alert-strip--danger strong {
+    font-weight: var(--ag-font-weight-bold);
+}
