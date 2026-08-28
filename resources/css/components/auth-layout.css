@@ -267,6 +267,15 @@
     margin-bottom: var(--ag-space-6);
 }
 
+/* Extremo derecho del header (quinta vuelta): agrupa el theme-toggle con lo
+   que la pantalla agregue vía slot `headerEnd` (p. ej. "Cerrar sesión" en
+   la selección de rol, maqueta 5c). */
+.ag-auth-layout__header-end {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+}
+
 /* Logo del header de auth-layout un poco más grande que el resto del panel
    (pedido puntual, cuarta vuelta) — override LOCAL vía la custom property
    que ya expone el átomo (`--ag-logo-height`, ver atoms/logo.blade.php/css),

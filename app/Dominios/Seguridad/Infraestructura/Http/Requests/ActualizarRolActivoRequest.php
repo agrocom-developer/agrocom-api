@@ -29,6 +29,9 @@ class ActualizarRolActivoRequest extends FormRequest
     {
         return [
             'id_role' => ['required', 'integer', 'min:1'],
+            // "Entrar siempre con este rol" (quinta vuelta, maqueta 5c) —
+            // opcional: sin el campo, la preferencia no se toca.
+            'recordar' => ['sometimes', 'boolean'],
         ];
     }
 }

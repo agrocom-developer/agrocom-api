@@ -1,0 +1,770 @@
+/*
+ * Page: dashboard "Operación de hoy"
+ * (app/Dominios/Seguridad/Infraestructura/Http/Views/pages/dashboard.blade.php)
+ * Quinta vuelta — maquetas 4a (escritorio ≥1200), 5a (tablet 768–1199) y 5b
+ * (móvil <768). Mismo criterio del resto de pages/: cero color/tamaño
+ * hardcodeado, todo por token (CLAUDE.md invariante 11).
+ *
+ * Conmutación responsiva de la programación del día:
+ * - `.ag-table` (grilla de columnas) solo ≥1200.
+ * - `.ag-session-list` (dos líneas por fila) solo 768–1199.
+ * - `.ag-session-cards` (fichas) y los bloques `--movil` solo <768.
+ */
+
+.ag-dash {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-4);
+}
+
+.ag-dash__header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--ag-space-4);
+    flex-wrap: wrap;
+}
+
+.ag-dash__heading {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-1);
+}
+
+.ag-dash__title {
+    margin: 0;
+    font-family: var(--ag-font-family-display);
+    font-optical-sizing: auto;
+    font-weight: var(--ag-font-weight-regular);
+    font-size: 2.125rem;
+    line-height: 1.05;
+    color: var(--ag-color-text);
+}
+
+.ag-dash__subtitle {
+    margin: 0;
+    font-size: 0.84375rem;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-dash__actions {
+    display: flex;
+    gap: var(--ag-space-2);
+}
+
+.ag-dash__panes {
+    min-width: 0;
+}
+
+.ag-dash__stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-4);
+    padding-top: var(--ag-space-1);
+}
+
+/* ---------- KPIs ---------- */
+
+.ag-dash__kpis {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--ag-space-4);
+}
+
+.ag-dash__kpis-movil {
+    display: none;
+}
+
+/* ---------- Grilla principal 1.55fr / 1fr ---------- */
+
+.ag-dash__grid {
+    display: grid;
+    grid-template-columns: 1.55fr 1fr;
+    gap: var(--ag-space-4);
+    align-items: start;
+}
+
+.ag-dash__aside {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-4);
+    min-width: 0;
+}
+
+/* ---------- Tarjeta genérica de esta página ---------- */
+
+.ag-card {
+    background: var(--ag-color-surface-card);
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: 12px;
+    overflow: hidden;
+    min-width: 0;
+}
+
+.ag-card--padded {
+    padding: var(--ag-space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-3);
+}
+
+.ag-card__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-4);
+    border-bottom: 1px solid var(--ag-color-border-row);
+}
+
+.ag-card--padded .ag-card__head,
+.ag-card__head--flush {
+    padding: 0;
+    border-bottom: none;
+}
+
+.ag-card__title {
+    margin: 0;
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-color-text);
+}
+
+.ag-dash__link {
+    border: none;
+    background: none;
+    padding: 0;
+    font-family: var(--ag-font-family-base);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-color-accent-link);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.ag-dash__mono-note {
+    font-family: var(--ag-font-family-mono);
+    font-size: 0.656rem;
+    color: var(--ag-color-text-muted);
+    white-space: nowrap;
+}
+
+/* ---------- Tabla de sesiones (escritorio) ---------- */
+
+.ag-table {
+    display: block;
+    min-width: 0;
+}
+
+.ag-table__head,
+.ag-table__row {
+    display: grid;
+    grid-template-columns: 64px 1.6fr 1fr 1fr 70px 110px;
+    align-items: center;
+    column-gap: var(--ag-space-2);
+    padding: var(--ag-space-3) var(--ag-space-4);
+}
+
+/* Fase 6 — tab Sesiones: columna RC + columna de acción (drill-down). */
+.ag-table--detallado .ag-table__head,
+.ag-table--detallado .ag-table__row {
+    grid-template-columns: 64px 1.6fr 1fr 1fr 70px 110px 90px 32px;
+}
+
+/* Fase 6 — tab Pausas: tabla de eventos individuales, 4 columnas. */
+.ag-table--eventos .ag-table__head,
+.ag-table--eventos .ag-table__row {
+    grid-template-columns: 70px 1.4fr 1.6fr 90px;
+}
+
+/* Botón de acción del drill-down (Fase 8 — auditoría: la FILA no es
+   interactiva, `role="row"` estático es el patrón ARIA "table" correcto;
+   el control focoable vive en su propia celda). */
+.ag-table__row-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: var(--ag-radius-sm);
+    background: transparent;
+    color: var(--ag-color-text-faint);
+    cursor: pointer;
+    transition:
+        background-color var(--ag-transition-fast),
+        color var(--ag-transition-fast);
+}
+
+.ag-table__row-action:hover {
+    background: var(--ag-color-bg-row-hover);
+    color: var(--ag-color-text);
+}
+
+.ag-table__row-action:focus-visible {
+    outline: 2px solid var(--ag-color-focus-ring);
+    outline-offset: 1px;
+}
+
+.ag-table__dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: var(--ag-radius-pill);
+    margin-right: var(--ag-space-2);
+}
+
+.ag-table__dot--accent {
+    background: var(--ag-color-accent);
+}
+
+.ag-table__dot--info {
+    background: var(--ag-color-info-strong);
+}
+
+.ag-table__dot--danger {
+    background: var(--ag-color-danger);
+}
+
+.ag-table__dot--neutral {
+    background: var(--ag-color-text-faint);
+}
+
+.ag-table__dot--unassigned {
+    background: var(--ag-color-bar-unassigned);
+}
+
+.ag-table__head {
+    padding-top: var(--ag-space-2);
+    padding-bottom: var(--ag-space-2);
+    background: var(--ag-color-bg-table-head);
+    border-bottom: 1px solid var(--ag-color-border-row);
+    font-family: var(--ag-font-family-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-table__row {
+    border-bottom: 1px solid var(--ag-color-border-row);
+    font-size: 0.8125rem;
+    color: var(--ag-color-text);
+    transition: background-color var(--ag-transition-fast);
+}
+
+/* Una línea por fila (maqueta 4a): las celdas truncan con elipsis en vez de
+   envolver — en la tarjeta angosta del Resumen "Lote 12 — San Marcos" o
+   "T100 · AG-09" partían en dos líneas. */
+.ag-table__row > span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ag-table__row:last-child {
+    border-bottom: none;
+}
+
+.ag-table__row:hover {
+    background: var(--ag-color-bg-row-hover);
+}
+
+.ag-table__mono {
+    font-family: var(--ag-font-family-mono);
+    font-size: 0.71875rem;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-table__strong {
+    font-weight: var(--ag-font-weight-medium);
+    color: var(--ag-color-text);
+}
+
+/* ---------- Lista de dos líneas (tablet, maqueta 5a) ---------- */
+
+.ag-session-list {
+    display: none;
+}
+
+.ag-session-list__row {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-3) var(--ag-space-4);
+    border-bottom: 1px solid var(--ag-color-border-row);
+}
+
+.ag-session-list__row:last-child {
+    border-bottom: none;
+}
+
+.ag-session-list__hora {
+    flex: 0 0 auto;
+    width: 44px;
+    font-family: var(--ag-font-family-mono);
+    font-size: 0.71875rem;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-session-list__body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ag-session-list__lote {
+    font-size: 0.8125rem;
+    font-weight: var(--ag-font-weight-medium);
+    color: var(--ag-color-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ag-session-list__meta {
+    font-size: 0.71875rem;
+    color: var(--ag-color-text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ---------- Fichas (móvil, maqueta 5b) ---------- */
+
+.ag-session-cards {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-2);
+}
+
+.ag-session-cards__card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-3) var(--ag-space-4);
+    background: var(--ag-color-surface-card);
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: 12px;
+}
+
+.ag-session-cards__head {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+}
+
+.ag-session-cards__hora {
+    font-family: var(--ag-font-family-mono);
+    font-size: 0.71875rem;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-session-cards__lote {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.84375rem;
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-color-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ag-session-cards__meta {
+    display: flex;
+    gap: var(--ag-space-3);
+    font-size: 0.71875rem;
+    color: var(--ag-color-text-muted);
+}
+
+/* ---------- Barras de pausas ---------- */
+
+.ag-bars {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-3);
+}
+
+.ag-bars__item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-1);
+}
+
+.ag-bars__meta {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--ag-space-3);
+    font-size: 0.78rem;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-bars__horas {
+    font-family: var(--ag-font-family-mono);
+    white-space: nowrap;
+}
+
+.ag-bars__track {
+    height: 6px;
+    border-radius: var(--ag-radius-pill);
+    background: var(--ag-color-track);
+    overflow: hidden;
+}
+
+.ag-bars__fill {
+    height: 100%;
+    border-radius: var(--ag-radius-pill);
+}
+
+/* Tonos de barra: no-texto (3:1), verificados contra la pista en §1.3. */
+.ag-bars__fill--accent {
+    background: var(--ag-color-accent);
+}
+
+.ag-bars__fill--info {
+    background: var(--ag-color-info-strong);
+}
+
+.ag-bars__fill--danger {
+    background: var(--ag-color-danger);
+}
+
+.ag-bars__fill--neutral {
+    background: var(--ag-color-text-faint);
+}
+
+.ag-bars__fill--unassigned {
+    background: var(--ag-color-bar-unassigned);
+}
+
+.ag-bars--lg .ag-bars__track {
+    height: 9px;
+}
+
+.ag-bars--lg .ag-bars__meta {
+    font-size: 0.8125rem;
+}
+
+/* ---------- Stock bajo mínimo ---------- */
+
+.ag-dash__stock {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-2);
+}
+
+.ag-dash__stock-title {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+}
+
+.ag-dash__stock-icon {
+    color: var(--ag-color-danger);
+}
+
+.ag-dash__stock-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ag-space-3);
+    font-size: 0.78rem;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-dash__stock-nivel {
+    font-family: var(--ag-font-family-mono);
+    font-size: 0.71875rem;
+    font-weight: var(--ag-font-weight-bold);
+    white-space: nowrap;
+}
+
+.ag-dash__stock-nivel--danger {
+    color: var(--ag-color-danger);
+}
+
+.ag-dash__stock-nivel--accent {
+    color: var(--ag-color-warning-strong);
+}
+
+.ag-dash__stock-accion {
+    align-self: flex-start;
+}
+
+/* ---------- Filtros de la pestaña Sesiones ---------- */
+
+.ag-dash__filters {
+    display: flex;
+    gap: var(--ag-space-2);
+    flex-wrap: wrap;
+}
+
+.ag-dash__filter {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-2) var(--ag-space-3);
+    border-radius: var(--ag-radius-pill);
+    border: 1px solid var(--ag-color-border);
+    background: var(--ag-color-bg-chrome);
+    color: var(--ag-color-text-muted);
+    font-family: var(--ag-font-family-base);
+    font-size: 0.78rem;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.ag-dash__filter.is-active {
+    background: var(--ag-color-primary-subtle);
+    border-color: var(--ag-color-primary-border-subtle);
+    color: var(--ag-color-success-strong);
+    font-weight: var(--ag-font-weight-bold);
+}
+
+.ag-dash__nota {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--ag-color-text-muted);
+}
+
+/* ---------- Bloques solo-móvil ---------- */
+
+.ag-dash__hoy,
+.ag-dash__solo-movil {
+    display: none;
+}
+
+.ag-dash__hoy-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--ag-space-2);
+}
+
+/* ---------- Tablet (maqueta 5a) ---------- */
+
+@media (max-width: 1199.98px) {
+    .ag-dash__kpis {
+        grid-template-columns: 1fr 1fr;
+        gap: var(--ag-space-3);
+    }
+
+    .ag-dash__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .ag-table {
+        display: none;
+    }
+
+    .ag-session-list {
+        display: block;
+    }
+
+    .ag-dash__title {
+        font-size: 1.75rem;
+    }
+}
+
+/* ---------- Móvil (maqueta 5b) ---------- */
+
+@media (max-width: 767.98px) {
+    /* El título vive en la banda de breadcrumb; las acciones desaparecen. */
+    .ag-dash__header {
+        display: none;
+    }
+
+    .ag-dash__kpis,
+    .ag-dash__grid,
+    .ag-session-list {
+        display: none;
+    }
+
+    .ag-dash__kpis-movil {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ag-space-3);
+    }
+
+    .ag-dash__kpis-movil-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--ag-space-3);
+    }
+
+    /* KPI secundarios a media columna (maqueta 5b: cifra 26px) — la cifra
+       por defecto (34px) hacía envolver "Bs 18.490". */
+    .ag-dash__kpis-movil-grid .ag-stat-card__value {
+        font-size: 1.625rem;
+    }
+
+    .ag-dash__hoy {
+        display: block;
+    }
+
+    .ag-dash__solo-movil {
+        display: block;
+    }
+
+    /* La franja pierde el botón y el detalle largo (maqueta 5b). */
+    .ag-alert-strip__action,
+    .ag-dash__rc-detalle {
+        display: none;
+    }
+}
+
+/* ---------- Panel de detalle de sesión (Fase 6 — offcanvas nativo) ---------- */
+
+.ag-session-detail {
+    --bs-offcanvas-transition: transform 320ms var(--ag-ease-drawer);
+    --bs-offcanvas-width: 24rem;
+    background-color: var(--ag-color-bg-elevated);
+    display: flex;
+    flex-direction: column;
+}
+
+.ag-session-detail__header {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-4);
+    border-bottom: 1px solid var(--ag-color-border);
+}
+
+.ag-session-detail__title {
+    margin: 0;
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-color-text);
+}
+
+.ag-session-detail__subtitle {
+    margin: var(--ag-space-1) 0 0;
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-session-detail__close {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border: none;
+    border-radius: var(--ag-radius-pill);
+    background: transparent;
+    color: var(--ag-color-text-muted);
+    cursor: pointer;
+}
+
+.ag-session-detail__close:hover {
+    background: var(--ag-color-bg-row-hover);
+    color: var(--ag-color-text);
+}
+
+.ag-session-detail__body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: var(--ag-space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-4);
+}
+
+.ag-session-detail__list {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-3);
+}
+
+.ag-session-detail__row {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ag-session-detail__row dt {
+    font-size: 0.6875rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-session-detail__row dd {
+    margin: 0;
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text);
+}
+
+.ag-session-detail__section {
+    padding-top: var(--ag-space-4);
+    border-top: 1px solid var(--ag-color-border-row);
+}
+
+.ag-session-detail__section-title {
+    margin: 0 0 var(--ag-space-2);
+    font-size: 0.6875rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-session-detail__empty {
+    margin: 0;
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-session-detail__pausas {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-2);
+}
+
+.ag-session-detail__pausas li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ag-space-3);
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text);
+}
+
+.ag-session-detail__pausas-duracion {
+    font-family: var(--ag-font-family-mono);
+    color: var(--ag-color-text-muted);
+    white-space: nowrap;
+}
+
+.ag-session-detail__rc {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-session-detail__rc--capturado {
+    color: var(--ag-color-success-strong);
+}
+
+.ag-session-detail__rc--sin_evidencia {
+    color: var(--ag-color-warning-strong);
+}
+
+.ag-session-detail__rc--no_aplica {
+    color: var(--ag-color-text-muted);
+}

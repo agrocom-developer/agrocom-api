@@ -1,6 +1,8 @@
 <?php
 
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\DashboardController;
+use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\OrganizacionController;
+use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\PreferenciasController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\RolActivoController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\SesionController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\UsuariosController;
@@ -49,6 +51,12 @@ Route::middleware('auth:interno')->group(function () {
     Route::get('/panel/seleccionar-rol', [RolActivoController::class, 'create'])
         ->name('panel.rol-activo.selector');
 
+    // Persistencia del tema claro/oscuro (quinta vuelta). Sin `rol.activo`:
+    // el tema es del usuario, no del rol — y el toggle también vive en la
+    // pantalla de selección de rol, que corre sin rol activo resuelto.
+    Route::post('/panel/preferencias/tema', [PreferenciasController::class, 'actualizarTema'])
+        ->name('panel.preferencias.tema');
+
     Route::middleware('rol.activo')->group(function () {
         Route::get('/panel/dashboard', [DashboardController::class, 'index'])
             ->name('panel.dashboard');
@@ -58,5 +66,10 @@ Route::middleware('auth:interno')->group(function () {
         // genérico todavía, así que se resuelve ahí (ver UsuariosController).
         Route::get('/panel/usuarios', [UsuariosController::class, 'index'])
             ->name('panel.usuarios.index');
+
+        // Mockup visual de "Registro de la compañía" — GET/solo-lectura, sin
+        // persistencia real, para demostración de visión multi-tenant futura.
+        Route::get('/panel/organizacion', [OrganizacionController::class, 'index'])
+            ->name('panel.organizacion.index');
     });
 });

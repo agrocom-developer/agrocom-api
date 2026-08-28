@@ -60,6 +60,20 @@
     Slot (default): el organism de esa pantalla (`login-form`, o la lista de
     `role-selector-item` + botón continuar que arme `frontend`).
 --}}
+{{--
+    Props (quinta vuelta — la pantalla de selección de rol, maqueta 5c,
+    reutiliza este template con copy PROPIO y fijo):
+    - headline / subheadline (nullable string): si se pasan, TODOS los
+      slides muestran ese copy fijo (el crossfade solo cambia la foto) en
+      vez del copy por slide de `seguridad.auth.galeria`.
+    Slot opcional `headerEnd`: contenido extra a la derecha del header del
+    panel (p. ej. "Cerrar sesión" en la selección de rol).
+--}}
+@props([
+    'headline' => null,
+    'subheadline' => null,
+])
+
 @php
     // Datos de la galería: nombres de archivo (presentación, propiedad de
     // este Blade) + copy por slide (lang/es/seguridad.php, propiedad del
@@ -69,8 +83,8 @@
     $galeriaImagenes = ['drone-hero.jpg', 'drone-hero-2.jpg', 'drone-hero-3.jpg'];
     $galeria = collect($galeriaImagenes)->values()->map(fn ($imagen, $indice) => [
         'imagen' => $imagen,
-        'headline' => $galeriaCopy[$indice]['headline'],
-        'subheadline' => $galeriaCopy[$indice]['subheadline'],
+        'headline' => $headline ?? $galeriaCopy[$indice]['headline'],
+        'subheadline' => $subheadline ?? $galeriaCopy[$indice]['subheadline'],
     ]);
 @endphp
 
@@ -129,7 +143,12 @@
     <div class="ag-auth-layout__panel">
         <div class="ag-auth-layout__header">
             <x-atoms.logo size="md" />
-            <x-molecules.theme-toggle />
+            <span class="ag-auth-layout__header-end">
+                <x-molecules.theme-toggle />
+                @isset($headerEnd)
+                    {{ $headerEnd }}
+                @endisset
+            </span>
         </div>
 
         <div class="ag-auth-layout__content">

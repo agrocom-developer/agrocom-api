@@ -14,20 +14,41 @@
  */
 
 [data-bs-theme='dark'] {
-    /* Superficie */
-    --ag-color-bg: var(--ag-color-gray-950);
-    --ag-color-bg-elevated: var(--ag-color-gray-850);
-    --ag-color-bg-chrome: var(--ag-color-gray-1000);
+    /* Superficie — par oscuro del retinte cálido (quinta vuelta): olivas
+       oscuras mezcladas sobre los grises de base.css. El FONDO del
+       contenido es EL MISMO grafito/petróleo del login (--ag-color-bg-auth,
+       más abajo — pedido explícito del 28/8/2026, ver theme-light.css).
+       bg-elevated/bg-chrome comparten superficie (igual que en claro) y
+       quedan un paso más luminosos que ese fondo para que la elevación por
+       color siga existiendo. El negro puro queda solo debajo del riel
+       (--ag-color-bg-rail, constante). */
+    --ag-color-bg: var(--ag-color-bg-auth);
+
+    /* Fase 7 (sexta vuelta parte 2, contraste sistémico): antes bg-elevated/
+       bg-chrome/surface-card eran EL MISMO valor (color-mix(olive-900 22%,
+       gray-850 78%)) — sin ningún salto de luminosidad perceptible entre
+       "chrome" y "tarjeta" (~2 unidades de RGB de diferencia contra --ag-color-bg,
+       verificado con captura real, ver docs/gestion/plan_dashboard_rediseno.md
+       §3). Criterio Material dark theme: elevación = overlay de blanco
+       creciente sobre el fondo, en vez de mezclas de marca independientes
+       que casualmente convergían al mismo tono. Riel (--ag-color-bg-rail,
+       más abajo) sigue siendo constante y el más oscuro — no se toca. */
+    --ag-color-bg-elevated: color-mix(in srgb, white 4%, var(--ag-color-bg-auth) 96%);
+    --ag-color-bg-chrome: color-mix(in srgb, white 4%, var(--ag-color-bg-auth) 96%);
     --ag-color-overlay: rgba(0, 0, 0, 0.7);
 
-    /* Texto */
-    --ag-color-text: var(--ag-color-gray-100);
-    --ag-color-text-muted: var(--ag-color-gray-500);
+    /* Texto — crema (gris-100 entibiado con ámbar-100) sobre las olivas
+       oscuras; muted en salvia (olive-150/300), ~6:1 sobre la tarjeta
+       oscura (§1.3). faint solo decorativo, igual que en claro. */
+    --ag-color-text: color-mix(in srgb, var(--ag-color-amber-100) 25%, var(--ag-color-gray-100) 75%);
+    --ag-color-text-muted: color-mix(in srgb, var(--ag-color-olive-150) 40%, var(--ag-color-olive-300) 60%);
+    --ag-color-text-faint: var(--ag-color-olive-300);
     --ag-color-text-inverse: var(--ag-color-gray-900);
 
-    /* Bordes */
-    --ag-color-border: var(--ag-color-gray-700);
-    --ag-color-border-strong: var(--ag-color-gray-500);
+    /* Bordes — oliva agrisada, visible sin rayar sobre las superficies de
+       arriba. */
+    --ag-color-border: color-mix(in srgb, var(--ag-color-olive-300) 22%, var(--ag-color-gray-850) 78%);
+    --ag-color-border-strong: color-mix(in srgb, var(--ag-color-olive-300) 45%, var(--ag-color-gray-850) 55%);
 
     /* Marca — primario. Fondo de botón se mantiene igual que en claro (la
        identidad de marca no cambia); el tono "emphasis" (texto/ícono sobre
@@ -53,18 +74,69 @@
        comentario completo en theme-light.css. */
     --ag-color-accent-contrast-fill: var(--ag-color-amber-100);
 
+    /* Ídem theme-light.css: neutro un peldaño más claro que la tarjeta,
+       ahora oliva en vez de gris. `-strong` = salvia clara, texto AA del
+       chip neutral. */
+    --ag-color-neutral-subtle: color-mix(in srgb, var(--ag-color-olive-900) 40%, var(--ag-color-gray-850) 60%);
+    --ag-color-neutral-strong: var(--ag-color-olive-150);
+
     /* Estados — aclarados sobre fondo oscuro (mismo criterio que las
-       variantes `-text-emphasis` del dark mode nativo de Bootstrap 5.3). */
+       variantes `-text-emphasis` del dark mode nativo de Bootstrap 5.3).
+       El aviso pasa a ámbar de marca (igual que en claro); cada `-strong`
+       es el TEXTO del chip sobre su `-subtle` montado en la tarjeta oscura,
+       verificado ≥4.5:1 en §1.3. */
     --ag-color-success: var(--ag-color-green-300);
     --ag-color-success-subtle: rgba(140, 198, 63, 0.16);
+    --ag-color-success-strong: var(--ag-color-green-300);
     --ag-color-danger: #ea868f;
     --ag-color-danger-subtle: rgba(220, 53, 69, 0.2);
-    --ag-color-warning: #ffda6a;
-    --ag-color-warning-subtle: rgba(255, 193, 7, 0.2);
+    --ag-color-danger-strong: #ea868f;
+    --ag-color-danger-border: rgba(220, 53, 69, 0.35);
+    --ag-color-warning: var(--ag-color-amber-300);
+    --ag-color-warning-subtle: rgba(245, 166, 35, 0.16);
+    --ag-color-warning-strong: var(--ag-color-amber-300);
     --ag-color-info: #6ea8fe;
     --ag-color-info-subtle: rgba(13, 110, 253, 0.2);
+    --ag-color-info-strong: #6ea8fe;
 
     --ag-color-focus-ring: #6ea8fe;
+
+    /* Riel de módulos (nivel 1) — CONSTANTE entre temas, mismo criterio que
+       --ag-color-scrim*: chrome de marca, no sigue al tema. */
+    --ag-color-bg-rail: var(--ag-color-olive-1000);
+    --ag-color-bg-rail-active: var(--ag-color-olive-900);
+    --ag-color-text-rail: var(--ag-color-olive-300);
+    --ag-color-text-rail-active: var(--ag-color-green-200);
+
+    /* Tarjetas y tablas — Fase 7: un escalón MÁS luminoso que
+       --ag-color-bg-chrome (8% de overlay blanco vs 4%), no el mismo valor
+       — la tarjeta "flota" sobre el chrome que la rodea, mismo criterio de
+       elevación por overlay que arriba. */
+    --ag-color-surface-card: color-mix(in srgb, white 8%, var(--ag-color-bg-auth) 92%);
+
+    /* Escalones DENTRO/sobre la tarjeta (cabecera de tabla, hover de fila,
+       borde) — más luminosos que --ag-color-surface-card (8%), no atados a
+       la mezcla de marca vieja que quedaba más oscura que la propia
+       tarjeta nueva. */
+    --ag-color-border-card: color-mix(in srgb, white 20%, var(--ag-color-bg-auth) 80%);
+    --ag-color-bg-table-head: color-mix(in srgb, white 12%, var(--ag-color-bg-auth) 88%);
+    --ag-color-border-row: color-mix(in srgb, white 16%, var(--ag-color-bg-auth) 84%);
+    --ag-color-bg-row-hover: color-mix(in srgb, white 12%, var(--ag-color-bg-auth) 88%);
+
+    --ag-color-bg-input-chrome: color-mix(in srgb, white 12%, var(--ag-color-bg-auth) 88%);
+
+    --ag-color-primary-border-subtle: rgba(140, 198, 63, 0.35);
+
+    /* Borde tenue ámbar (badge de pendientes de menu-item) — mismo criterio
+       que --ag-color-primary-border-subtle: sistema_diseno_panel.md §8
+       regla 3/4. */
+    --ag-color-accent-border-subtle: rgba(245, 166, 35, 0.35);
+
+    /* Pista de barra de progreso: deliberadamente MENOS luminosa que
+       --ag-color-surface-card (6% vs 8%) — es un surco/inset dentro de la
+       tarjeta, no una superficie que deba "flotar". */
+    --ag-color-track: color-mix(in srgb, white 6%, var(--ag-color-bg-auth) 94%);
+    --ag-color-bar-unassigned: var(--ag-color-gray-600);
 
     /* Mismo valor que theme-light.css, a propósito — ver el comentario de
        ese archivo. La foto no cambia entre temas, así que su overlay/texto
@@ -132,6 +204,8 @@
     --ag-color-chip-text: rgba(255, 255, 255, 0.86);
     --ag-color-text-on-scrim-muted: rgba(255, 255, 255, 0.8);
 
+    /* Ídem theme-light.css: la interfaz es siempre IBM Plex Sans. */
+    --bs-body-font-family: var(--ag-font-family-base);
     --bs-body-bg: var(--ag-color-bg);
     --bs-body-color: var(--ag-color-text);
     --bs-border-color: var(--ag-color-border);

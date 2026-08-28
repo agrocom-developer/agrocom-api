@@ -5,6 +5,7 @@ namespace App\Dominios\Seguridad\Infraestructura\Http\Middleware;
 use App\Dominios\Seguridad\Aplicacion\ElegirRolActivo;
 use App\Dominios\Seguridad\Aplicacion\ListarRolesDisponibles;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
+use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUserPreferencia;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\RolActivoController;
 use Closure;
 use Illuminate\Http\Request;
@@ -85,6 +86,21 @@ final class ResolverRolActivo
 
         if (count($idsRolesVivos) === 1) {
             $this->elegirRolActivo->ejecutar($usuario, $idsRolesVivos[0]);
+
+            return $next($request);
+        }
+
+        // "Entrar siempre con este rol" (quinta vuelta, maqueta 5c): con
+        // 2+ roles vivos y un preferido todavía vivo, se activa solo — mismo
+        // criterio que el login. Si el preferido dejó de estar vivo, se
+        // ignora (nunca fallback silencioso a otro rol) y se cae a la
+        // selección explícita de siempre.
+        $idRolPreferido = SecUserPreferencia::query()
+            ->where('user_id', $usuario->id)
+            ->value('rol_preferido_id');
+
+        if ($idRolPreferido !== null && in_array((int) $idRolPreferido, $idsRolesVivos, true)) {
+            $this->elegirRolActivo->ejecutar($usuario, (int) $idRolPreferido);
 
             return $next($request);
         }

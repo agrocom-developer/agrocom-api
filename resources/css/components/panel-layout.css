@@ -1,41 +1,140 @@
 /*
  * Template: panel-layout (resources/views/components/templates/panel-layout.blade.php)
- * Cáscara sidebar + content + footer (ADR 0002 punto 1) — el resto del
- * layout ya lo aportan sidebar-nav/topbar.
+ * Cáscara del layout de TRES NIVELES (quinta vuelta, maquetas 4a/5a/5b):
+ * riel (module-rail) + sidebar de módulo (module-sidebar) + columna
+ * principal (topbar/mobile-topbar + banda tablet + contenido + pie).
+ *
+ * Breakpoints del rediseño: 768 (móvil→tablet) y 1200 (tablet→escritorio).
+ * El CONTENIDO scrollea, el chrome no: el contenedor raíz fija la altura de
+ * viewport y cada columna interna lleva min-height:0 (el paso de
+ * verificación de la consigna — sin él, el hijo flex nunca encoge y el
+ * scroll interno no aparece).
  */
 
-.ag-panel-layout {
+.ag-panel {
     display: flex;
-    min-height: 100vh;
+    height: 100dvh;
     width: 100%;
+    overflow: hidden;
+    background: var(--ag-color-bg);
 }
 
-.ag-panel-layout__main {
+.ag-panel__main {
     flex: 1;
     min-width: 0;
+    min-height: 0;
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
 }
 
-.ag-panel-layout__content {
+.ag-panel__content {
     flex: 1;
-    padding: var(--ag-space-6);
+    min-height: 0;
+    overflow-y: auto;
+    padding: var(--ag-space-5) calc(var(--ag-space-5) + var(--ag-space-1));
 }
 
-.ag-panel-layout__footer {
-    padding: var(--ag-space-4) var(--ag-space-6);
+/* Pie en mono (maqueta 5b: "AGROCOM SRL · 2026" + versión) — presente en
+   todos los breakpoints, fijo bajo el contenido scrolleable. */
+.ag-panel__footer {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--ag-space-3) calc(var(--ag-space-5) + var(--ag-space-1));
     border-top: 1px solid var(--ag-color-border);
+    background: var(--ag-color-bg-chrome);
+    font-family: var(--ag-font-family-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.08em;
     color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-xs);
 }
 
-@media (max-width: 991.98px) {
-    .ag-panel-layout__content {
+/*
+ * Banda de módulo (SOLO tablet 768–1199.98, maqueta 5a): nombre del módulo
+ * en serif + ítems como fila de píldoras horizontales. Cada píldora es
+ * flex:0 0 auto + nowrap (nunca el estilo del ítem vertical del sidebar,
+ * que lleva width:100% y rompería la fila).
+ */
+.ag-module-band {
+    display: none;
+    flex: 0 0 auto;
+    flex-direction: column;
+    gap: var(--ag-space-3);
+    background: var(--ag-color-bg-chrome);
+    border-bottom: 1px solid var(--ag-color-border);
+    padding: var(--ag-space-3) var(--ag-space-4);
+}
+
+.ag-module-band__title {
+    margin: 0;
+    font-family: var(--ag-font-family-display);
+    font-optical-sizing: auto;
+    font-weight: var(--ag-font-weight-regular);
+    font-size: 1.375rem;
+    line-height: 1.05;
+    color: var(--ag-color-text);
+}
+
+.ag-module-band__pills {
+    display: flex;
+    gap: var(--ag-space-2);
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.ag-module-band__pill {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    white-space: nowrap;
+    padding: var(--ag-space-2) var(--ag-space-3);
+    border-radius: var(--ag-radius-pill);
+    border: 1px solid var(--ag-color-border);
+    background: var(--ag-color-bg-input-chrome);
+    color: var(--ag-color-text-muted);
+    font-family: var(--ag-font-family-base);
+    font-size: 0.78rem;
+    font-weight: var(--ag-font-weight-medium);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.ag-module-band__pill.is-active {
+    background: var(--ag-color-primary-subtle);
+    border-color: var(--ag-color-primary-border-subtle);
+    color: var(--ag-color-success-strong);
+    font-weight: var(--ag-font-weight-bold);
+}
+
+.ag-module-band__pill:focus-visible {
+    outline: 2px solid var(--ag-color-focus-ring);
+    outline-offset: 2px;
+}
+
+/* Tablet (maqueta 5a): sin sidebar de módulo — aparece la banda de píldoras. */
+@media (min-width: 768px) and (max-width: 1199.98px) {
+    .ag-module-band {
+        display: flex;
+    }
+
+    .ag-panel__content {
         padding: var(--ag-space-4);
     }
 
-    .ag-panel-layout__footer {
+    .ag-panel__footer {
+        padding: var(--ag-space-3) var(--ag-space-4);
+    }
+}
+
+/* Móvil (maqueta 5b): pila de tarjetas, header propio (mobile-topbar). */
+@media (max-width: 767.98px) {
+    .ag-panel__content {
+        padding: var(--ag-space-4);
+    }
+
+    .ag-panel__footer {
         padding: var(--ag-space-3) var(--ag-space-4);
     }
 }

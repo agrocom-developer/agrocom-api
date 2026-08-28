@@ -29,6 +29,9 @@
     flex-direction: column;
     gap: var(--ag-space-5);
     text-align: center;
+    max-width: 380px;
+    width: 100%;
+    margin-inline: auto;
 }
 
 /* Tabs: flexbox con borde inferior, cada tab con border-bottom activo. */
@@ -108,6 +111,7 @@
 .ag-login-form__title {
     font-family: var(--ag-font-family-display);
     font-optical-sizing: auto;
+    font-weight: var(--ag-font-weight-bold);
     font-size: 38px;
     line-height: 1.1;
     color: var(--ag-color-text);

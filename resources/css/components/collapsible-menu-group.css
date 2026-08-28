@@ -20,8 +20,16 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
-    padding-inline-start: var(--ag-space-5);
     margin-top: 2px;
+    margin-inline-start: var(--ag-space-4);
+    padding-inline-start: var(--ag-space-3);
+    /* Guía vertical (pulido de jerarquía/agrupación visual, mockup de
+       dashboard, segunda ronda de HU-02): conecta visualmente los ítems
+       hijos con su cabecera, sin depender solo de la indentación. Se oculta
+       sola en icon-rail (desktop colapsado) porque `.ag-sidebar.is-collapsed
+       .ag-menu-group__items { display: none }` ya oculta todo el bloque —
+       ver sidebar-nav.css. */
+    border-inline-start: 1px solid var(--ag-color-border);
 }
 
 .ag-menu-group__item {

@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  *
  * @property int $id
  * @property string $label clave de traducción (ADR 0013), no texto plano
+ * @property string|null $descripcion clave de traducción de la bajada del módulo (solo raíces), no texto plano
  * @property string $icono nombre de ícono Material Symbols, no un asset
  * @property string|null $ruta nombre de ruta Laravel o URL; null = agrupador visual sin link propio
  * @property int|null $padre_id
@@ -33,6 +34,7 @@ class SecMenu extends ModeloDominio
     /** @var list<string> */
     protected $fillable = [
         'label',
+        'descripcion',
         'icono',
         'ruta',
         'padre_id',

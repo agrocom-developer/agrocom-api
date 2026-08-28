@@ -67,6 +67,7 @@ Consecuencia de diseño explícita: **el relleno sólido de marca (botones) es c
 | `--ag-color-primary(-hover|-contrast|-emphasis|-subtle)` | Verde de marca — botones, foco, estado activo |
 | `--ag-color-accent(-hover|-contrast|-emphasis|-subtle)` | Ámbar de marca — CTA secundario, resaltados |
 | `--ag-color-success|danger|warning|info(-subtle)` | Estados de formulario/alertas |
+| `--ag-color-neutral-subtle` (nuevo, mockup de dashboard 2026-08-28) | Gris "sin estado" para `atoms/badge`/`molecules/stat-card` variante "neutral" — un peldaño más marcado que `--ag-color-bg`/`-bg-elevated` (gray-200 claro / gray-800 oscuro) para que el pill/chip se distinga de la superficie sin necesitar tinte de color |
 | `--ag-color-focus-ring` | Contorno de foco de teclado (accesibilidad) |
 | `--ag-space-1`…`--ag-space-8` | Espaciado, escala de 8px |
 | `--ag-font-family-base|mono`, `--ag-font-size-*`, `--ag-line-height-*`, `--ag-font-weight-*` | Tipografía de texto/cifras |
@@ -110,6 +111,14 @@ Consecuencia de diseño explícita: **el relleno sólido de marca (botones) es c
 | Organism | `topbar` | `resources/views/components/organisms/topbar.blade.php` | Implementado |
 | Template | `panel-layout` | `resources/views/components/templates/panel-layout.blade.php` | Implementado |
 | Template | `auth-layout` | `resources/views/components/templates/auth-layout.blade.php` | Implementado |
+| Atom | `badge` | `resources/views/components/atoms/badge.blade.php` | Implementado (2026-08-28) |
+| Atom | `switch` | `resources/views/components/atoms/switch.blade.php` | Implementado (2026-08-28) |
+| Molecule | `stat-card` | `resources/views/components/molecules/stat-card.blade.php` | Implementado (2026-08-28) |
+| Molecule | `plan-card` | `resources/views/components/molecules/plan-card.blade.php` | Implementado (2026-08-28) |
+| Molecule | `form-section` | `resources/views/components/molecules/form-section.blade.php` | Implementado (2026-08-28) |
+| Molecule | `role-card` | `resources/views/components/molecules/role-card.blade.php` | Implementado (2026-08-28, quinta vuelta) |
+| Molecule | `section-head` | `resources/views/components/molecules/section-head.blade.php` | Implementado (2026-08-28, sexta vuelta parte 2) |
+| Molecule | `donut-chart` | `resources/views/components/molecules/donut-chart.blade.php` | Implementado (2026-08-28, sexta vuelta parte 2) |
 
 Por qué solo los átomos estaban implementados en el pase anterior: era el límite de alcance fijado para la primera entrega de HU-02 (tokens + piezas de más bajo nivel, sin lógica de negocio). Este pase (27/8/2026) implementa el resto del catálogo, a pedido explícito de HU-02 (el usuario vio un prototipo interactivo aparte y pidió la construcción real). Decisiones de composición que no estaban 100% cerradas en la especificación de §4 y se resolvieron acá:
 
@@ -159,9 +168,33 @@ Por qué solo los átomos estaban implementados en el pase anterior: era el lím
 - **Bug real: doble ícono de "ojo" en el input de password — corregido**: no era un bug de Blade/JS (ambos ya renderizaban un solo ícono), sino los controles nativos de "revelar contraseña" que Chrome/Edge/Safari inyectan en `<input type="password">`, superpuestos al botón custom `.ag-input__toggle`. Fix en `input.css`: `::-ms-reveal`/`::-ms-clear` ocultos y `::-webkit-textfield-decoration-container` con `visibility: hidden`. El botón custom sigue siendo el único control visible/funcional.
 - **Galería de 3 imágenes en el panel visual de `auth-layout`** (reemplaza la foto estática única): `public/images/drone-hero.jpg` (se mantiene, slide 1) + `drone-hero-2.jpg`/`drone-hero-3.jpg` (nuevas, misma fotógrafa/serie de Pexels, ver `public/images/CREDITS.md`), con crossfade cada 6s (`var(--ag-ease-emphasized)`) e indicadores (dots) para navegación manual. Estructura Blade: `.ag-auth-layout__slides` (3× `.ag-auth-layout__slide`, cada uno imagen+scrim+headline/subheadline propios, crossfadeados como unidad vía `opacity`) + `.ag-auth-layout__top` (wordmark/chip, **fijo, fuera del loop**, no cambia por slide) + `.ag-auth-layout__dots`. Primera imagen `loading="eager"`, las otras dos `loading="lazy"` (criterio de rendimiento: la primera es la que se ve al entrar, las otras se difieren). Bajo `prefers-reduced-motion: reduce` el auto-avance se apaga en JS (es un timer que mueve contenido solo, no un estado codificado en `transform` que deba preservarse) — la navegación manual sigue funcionando, con el crossfade acortado vía CSS (mismo criterio de "nunca anular, solo acortar duración" del resto del sistema). Copy nuevo: `seguridad.auth.galeria` (array de 3 `{headline, subheadline}` en `lang/es/seguridad.php` — reemplaza los strings sueltos `auth.headline`/`auth.subheadline`; los nombres de archivo de imagen NO viven en el lang file, los arma `templates/auth-layout.blade.php` porque no son copy) + `auth.galeria_aria_label`/`auth.galeria_dot`. JS nuevo: `resources/js/templates/auth-layout.js` (mismo patrón vanilla de delegación/inicialización que `theme-toggle.js`), importado en `resources/js/app.js`.
 
+**Mockup de dashboard admin — catálogo nuevo + mejoras de chrome (2026-08-28)** — hay una presentación de aprobación de proyecto próxima; se pidió un mockup visual de alta fidelidad del panel de admin (dashboard con métricas, topbar con más jerarquía/notificaciones, sidebar pulido, footer mejorado, y una pantalla nueva de "Registro de la compañía" que muestra la visión de pivotar a SaaS multi-tenant — sin implementar tenancy real). Este pase es SOLO el catálogo de componentes y las mejoras a los organisms/template compartidos que ya eran de `design-ui` (`topbar`, `sidebar-nav`, `panel-layout`); el ensamblado de las pantallas concretas con datos mock queda para `frontend`:
+
+- **`atoms/badge`** (nuevo): pill de estado, variantes `success|warning|info|danger|neutral|accent`. Decisión de contraste deliberada: el texto de las variantes de estado es SIEMPRE `--ag-color-text` (nunca el token crudo del estado, p. ej. `--ag-color-warning`, como color de texto) — se verificó que amarillo-sobre-amarillo-pálido da ~1.4:1 (falla catastrófica) y que azul/rojo rondan el límite de AA (~4.4-4.8:1) en vez de pasarlo con margen. `--ag-color-text` sobre cualquier `-subtle` (tinte pálido en claro, overlay de baja opacidad sobre superficie oscura en oscuro) pasa AAA en los dos temas sin excepción — el color de marca de cada estado se conserva en un punto decorativo (`.ag-badge__dot`, no-texto, exigencia de contraste más laxa) o en el ícono si se pasa uno, nunca en el texto. La variante "accent" reutiliza el par ya establecido y verificado en el sistema (`--ag-color-accent-subtle`/`--ag-color-accent-contrast`, el mismo que ya usan `.ag-role-badge` y `.ag-menu-item__badge`). Nuevo token semántico `--ag-color-neutral-subtle` (gray-200 claro / gray-800 oscuro) para la variante "neutral", que no tenía un `-subtle` propio en el sistema.
+- **`molecules/stat-card`** (nuevo): tarjeta de métrica de dashboard — ícono + valor grande (`--ag-font-family-mono`, cifras tabulares, mismo criterio que el resto del sistema) + label + variante de acento (mismo set que `badge`, aplicado a una barra superior decorativa con el color crudo del estado + un chip de ícono con el mismo criterio bg-subtle/texto-seguro de `badge`) + tendencia opcional (texto ya formateado + ícono `trending_up`/`trending_down`/`trending_flat`, color éxito/peligro/muted independiente de la `variant` de la tarjeta). El grid de 4-5 tarjetas por dashboard es Bootstrap y lo arma quien componga la pantalla (`frontend`) — la molécula no se envuelve en su propio grid.
+- **`atoms/switch`** (nuevo): toggle on/off de FORMULARIO real (`<input type="checkbox">`, se envía con el form) — deliberadamente distinto de `molecules/theme-toggle` (ese es presentación pura sin `name`/`checked`, atado al tema, con JS propio). Sin JS: el estado visual (track+thumb) se resuelve 100% en CSS con `:checked` + combinador de hermanos.
+- **`molecules/plan-card`** (nuevo): tarjeta seleccionable tipo radio para elegir un plan de suscripción (pensada para 2-3 planes uno al lado del otro). `<input type="radio">` real, visualmente oculto pero accesible (la asociación `<label for>` nativa ya cubre el requisito de "role correcto, navegable por teclado" sin ARIA adicional) — la tarjeta completa (el `<label>`) es el target de click, elevación Material (`shadow-sm` → `shadow-lg`) al seleccionar, sin JS propio (mismo mecanismo `:checked` que `atoms/switch`). Prop `highlightedLabel` opcional compone `atoms/badge` (variante "accent") para marcar un plan destacado — quien arme el grupo de 2+ tarjetas es responsable del contenedor `role="radiogroup"` (mismo criterio de responsabilidad que `role-selector-item`, que tampoco arma su lista contenedora).
+- **`organisms/topbar` — jerarquía visual + dropdown de notificaciones**: el lado derecho se reagrupa en dos bloques (`.ag-topbar__group`) separados por un divisor sutil — "utilidades" (notificaciones + tema) vs. "identidad" (badge de rol + selector de rol + usuario) — en vez de una fila plana de íconos. Nueva prop `notifications` (list de `{icon, title, time, unread}`, default `[]`): dropdown nativo de Bootstrap (mismo mecanismo que el popover de cambio de rol, popover propio `.ag-notifications-popover` porque el contenido es distinto), badge de contador de no leídas sobre la campana (`9+` si supera 9), degrada bien con `[]` mostrando el estado vacío. Dos claves nuevas en `lang/es/ui.php`: `ui.topbar.notifications`/`ui.topbar.no_notifications` — el CONTENIDO de cada notificación no se traduce acá (lo arma `frontend`, ya traducido, mismo criterio que el resto del catálogo). `templates/panel-layout` reenvía la prop `notifications` a `topbar` sin tocarla.
+- **`organisms/sidebar-nav` — pulido de jerarquía/agrupación, sin cambios de props**: barra de acento a la izquierda del ítem de menú activo (`.ag-menu-item.is-active::before`, refuerza el estado más allá del tinte de fondo, visible también en icon-rail colapsado) y guía vertical a la izquierda de los ítems anidados de un `collapsible-menu-group` (`border-inline-start`, conecta visualmente hijos con su cabecera). Ambos cambios son solo CSS sobre `menu-item.css`/`collapsible-menu-group.css` — la estructura de props (`menu`/`roles`/`rolActivoId`/`id`/`collapsed`) y la mecánica de offcanvas/collapse/icon-rail no cambiaron.
+- **`templates/panel-layout` — footer rediseñado**: de un único `<span>` con el copyright a tres piezas (`ui.logo.alt` en peso medio + separador `&bull;` + `ui.footer.copyright`) con más aire vertical (`--ag-space-5` en vez de `--ag-space-4`). Reutiliza las DOS claves de traducción que ya existían — ninguna clave nueva, nada de datos dinámicos reales (versión, build, git — explícitamente fuera de alcance).
+- Ningún componente de este pase necesitó JS propio: `badge`/`stat-card` son presentación pura; `switch`/`plan-card` resuelven su estado con `:checked` nativo; el dropdown de notificaciones reutiliza el `dropdown` de Bootstrap ya cargado (mismo patrón que el popover de rol).
+
+**Ensamblado de páginas + auditoría de tokens/arquitectura (2026-08-28, mismo pase)** — `frontend` ensambló `pages/dashboard`, `pages/organizacion/index` y el logout de `topbar` sobre el catálogo de arriba. Una revisión posterior (pedida explícitamente por el usuario: "verificar arquitectura, clean code, Atomic Design y separación de tokens") encontró y corrigió lo siguiente:
+
+- **`molecules/form-section`** (nuevo, este pase): agrupador `<fieldset>` (sin chrome nativo) + `<legend>` como título + grid de una columna para el contenido — existe porque `pages/organizacion/index.blade.php` repetía el mismo `<fieldset style="...">` suelto 4 veces (una por sección del formulario mock). Props: `title` (requerido). Sin lógica, sin átomos propios (por eso molecule y no organism) — mismo criterio de "si un patrón se repite en una página, es un componente del catálogo, no markup suelto" (CLAUDE.md, sección de agentes).
+- **Nueva convención `resources/css/pages/`** (nuevo, este pase): CSS que NO es catálogo Atomic Design (no lo mantiene `design-ui`, no es reutilizable entre pantallas) pero tampoco debe vivir como `style=""` inline en el Blade de una página — es el layout propio de ESA página (grids, secciones) una vez que deja de caber en un one-liner razonable. `resources/css/pages/index.css` importa un archivo por página (`dashboard.css`, `organizacion.css`), importado a su vez desde `app.css` después de `components/index.css`. Mismo criterio de tokens que el resto del sistema (cero hex/px suelto que ya tenga equivalente en la escala — ver hallazgo siguiente). El ensamblado original de `frontend` (25 `style=""` inline entre las dos páginas) se migró íntegro acá.
+- **Corregido, mismo pase**: dos usos de valores crudos que duplicaban un token ya existente en vez de referenciarlo — `font-size: 1.125rem` → `var(--ag-font-size-lg)`, `font-size: 0.875rem` → `var(--ag-font-size-sm)`, `font-weight: 500` → `var(--ag-font-weight-medium)` (los tres, en los títulos de sección y el label del logo de `organizacion`). Los anchos de layout puntuales (`max-width: 600px` del form, `minmax(280px|250px, 1fr)` de los grids, `60px` del preview de logo) NO se tokenizaron — no hay (ni debe inventarse acá) un token de "ancho de contenedor" en este sistema, mismo criterio ya aplicado a `login-form`'s `max-width: 380px`.
+- **`DashboardController` — "órdenes por estado" atado al vocabulario real, sin acoplar el módulo**: los 4 estados (`emitida|vigente|consumida|vencida`) son los valores reales de `App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion` — pero el controlador NO importa ese enum: Operaciones todavía no tiene `Contratos/`, y ADR 0003 exige viajar entre módulos por `Contratos/` o eventos de dominio, nunca alcanzando directo el `Dominio/` ajeno. Se optó por strings literales documentados (riesgo aceptado y explícito: si el enum cambia algún día, este mock queda desincronizado) antes que crear el acoplamiento prohibido. Las 4 etiquetas se movieron a `lang/es/operaciones.php` (nuevo — primer archivo de idioma de ese módulo), no a `seguridad.php`, para que la futura pantalla real de órdenes las reutilice sin duplicar claves.
+- **Dos bugs reales encontrados por verificación en navegador (Playwright), pre-existentes desde la implementación original de HU-02 — ninguno introducido por el catálogo de este pase**:
+  1. `organisms/sidebar-nav` era invisible en desktop: `.offcanvas`/`.offcanvas-start` de Bootstrap traen `position:fixed; visibility:hidden; transform:translateX(-100%)` incondicionales (sin media query), y el override responsivo `.offcanvas-lg` de Bootstrap a `min-width:992px` nunca los revierte — solo toca `background-color`/bordes. `sidebar-nav.css` ya sabía que había que "restituir con la misma especificidad" (lo hacía para `background-color`) pero le faltaba hacerlo para `transform`/`visibility`. Corregido en el mismo bloque `@media (min-width: 992px) { .ag-sidebar.offcanvas-lg {...} }`.
+  2. Todos los links del menú apuntaban al nombre de ruta crudo (`href="panel.dashboard"`) en vez de la URL resuelta: `sidebar-nav.blade.php`/`collapsible-menu-group.blade.php` pasaban `data_get($item, 'ruta', ...)` directo a `menu-item`, que documenta esperar la URL YA resuelta. Corregido con `\Route::has($ruta) ? route($ruta) : $ruta` en ambos puntos de desempaquetado (el `Route::has()` guarda la tolerancia que el propio `SecMenuSeeder` ya documentaba para rutas sembradas antes de existir).
+- **`organisms/login-form`** (bug encontrado antes de este pase, mismo día): no fusionaba `$attributes` en su `<div>` raíz — el `data-ag-login-form` que `pages/login.blade.php` le pasa para que `resources/js/pages/login.js` intercepte el submit se descartaba en silencio, y el login hacía un POST nativo (el navegador termina mostrando el JSON crudo de `SesionController::store`). Corregido con `{{ $attributes->class(['ag-login-form']) }}`, mismo patrón que `topbar`/`sidebar-nav`; el `max-width`/`margin-inline` que estaba inline se movió a `login-form.css`.
+
 ### 3.1. Convención de ubicación
 
 `resources/views/components/{atoms|molecules|organisms|templates}/<nombre>.blade.php` → invocable como `<x-atoms.button>`, `<x-molecules.theme-toggle>`, etc. (resolución automática de Blade por subcarpeta). `pages/` no es una carpeta de componentes: son las vistas reales bajo `Infraestructura/Http/` de cada módulo (ADR 0008) — no le corresponde a `design-ui`.
+
+El CSS sigue la misma frontera: `resources/css/components/` es el catálogo (un archivo por componente, mantenido acá); `resources/css/pages/` (nuevo, 2026-08-28) es CSS de UNA página concreta que ya no entra en un `style=""` razonable — no es catálogo, no es reutilizable, y NO le corresponde a `design-ui` mantenerlo (mismo criterio que `pages/` en Blade), pero sí queda documentado acá una vez porque el criterio de "cuándo migrar de inline a archivo" es del sistema de diseño, no de cada página.
 
 ## 4. Especificación de moléculas/organismos/templates pendientes
 
@@ -241,3 +274,302 @@ Convención de catálogo de claves, definida acá (era un pendiente explícito d
 - **Ensamblar las páginas concretas** (`pages/login`, `pages/seleccionar-rol`, el dashboard de cada rol) usando `auth-layout`/`panel-layout`, conectar el submit de `login-form` y los triggers de `role-selector-item`/popovers de rol a `SesionController`/`RolActivoController` (ambos responden JSON, pensados para fetch/Livewire, no submit clásico con redirect). → `frontend`.
 - ~~Asset de logo transparente~~ — resuelto (rediseño de login, tercera vuelta): los dos JPEG (`logo-light.jpeg`/`logo-dark.jpeg`, fondo sólido horneado blanco/negro) se reprocesaron a un único `public/logo.png` con canal alfa real (recorte del isotipo + wordmark, extracción de alfa por chroma-key con limpieza de ruido de compresión — filtro de mediana + erosión + blur suave sobre el canal alfa, no sobre el color). Ya no hace falta variante por tema: `atoms/logo` renderiza un solo `<img>`, `logo.css` perdió la regla `[data-bs-theme]` que alternaba `display`. El wordmark editorial de `auth-layout` sigue en texto (no en esta imagen) por decisión de diseño del mockup (bicromía tipográfica "AGRO"/"COM"), no ya por la limitación técnica — ver notas de §3.
 - ~~Instalar la fuente de `--ag-font-family-display` vía npm~~ — resuelto, dos vueltas: primero se instaló `@fontsource/instrument-serif`; en el rediseño de login (tercera vuelta) se reemplazó por `@fontsource-variable/fraunces` (más ancha/cálida a 38-44px, con eje óptico `opsz`) y se desinstaló el paquete de Instrument Serif (sin otros consumidores).
+
+## 7. Quinta vuelta (28/8/2026) — layout de tres niveles del panel
+
+Rediseño del panel completo sobre las maquetas aprobadas del mockup
+`docs/Login Agro Drones.dc.html` (`4a` escritorio, `5a` tablet, `5b` móvil,
+`5c` selección de rol). Tres decisiones del pedido gobiernan todo el pase:
+el **layout** es el de las maquetas; los **módulos del menú** salen de la
+especificación (`especificacion_funcional_tecnica.md` §4), no del mockup; y
+los **hex del mockup nunca se copian** — cada color se tradujo a un token
+semántico (invariante 11).
+
+### 7.1. Los tres niveles
+
+| Nivel | Componente | Qué es |
+|---|---|---|
+| 1 | `organisms/module-rail` | Riel de módulos, 74px (64px tablet), superficie oliva oscura **en ambos temas** (`--ag-color-bg-rail*`, constantes — chrome de marca, mismo criterio que `--ag-color-scrim*`). Solo los módulos que el rol activo puede ver; engranaje al pie → `panel.organizacion.index`. |
+| 2 | `organisms/module-sidebar` | Ítems del módulo activo, 252px, solo ≥1200px: nombre en display 22px + descripción (`sec_menu.descripcion`, clave i18n nueva), lista de `menu-item` (radio 9, activo verde negrita sobre tenue, badge de pendientes en mono ámbar), pie "Cambiar de rol" (link a la pantalla 5c con `?cambiar=1`). |
+| 3 | `tabs.css` (skin del `tab` nativo de Bootstrap) | Pestañas dentro del contenido (Resumen / Sesiones / Pausas en el dashboard), subrayado ámbar 2px en la activa. |
+
+Módulos sembrados (`SecMenuSeeder`, vocabulario de la especificación):
+**Operación** (4.3), **Comercial** (4.1 + cap. 9), **Recursos** (4.2),
+**Mantenimiento** (4.5), **Financiero** (4.4 + cap. 11), **Reportes**
+(cap. 9/10) y **Seguridad** (4.6 + cap. 14). Las tres pantallas existentes
+siguen en el árbol (pedido explícito): Inicio → Operación › Programación
+(misma fila migrada, id estable), Usuarios y Organización → Seguridad.
+`panel-layout` normaliza el árbol (resuelve `route()`, marca activo por
+ruta actual, cuelga los badges demo) — `ObtenerMenuPorRolActivo` sigue sin
+saber de rutas resueltas.
+
+### 7.2. Breakpoints (768 / 1200)
+
+| Rango | Maqueta | Qué cambia |
+|---|---|---|
+| ≥1200 | 4a | Riel 74px + sidebar 252px + header 62px completo (breadcrumb · buscador flexible `flex:1 1 300px` con ⌘K · chip campaña · período · campana · toggle de tema · usuario con rol activo debajo). Tabla de sesiones en grilla de columnas. |
+| 768–1199.98 | 5a | Riel 64px; el sidebar desaparece → banda de módulo (nombre + **píldoras horizontales** `flex:0 0 auto; white-space:nowrap`, nunca el ítem vertical de `width:100%`); header compacto 58px; KPIs 2×2; tabla → lista de dos líneas. |
+| <768 | 5b | Web, no app: sin barra inferior ni FAB. Header oscuro (`mobile-topbar`: hamburguesa → `module-drawer` offcanvas con los 7 módulos colapsables, logo, `ROL · CAMPAÑA` en mono lima, campana, avatar) + banda de breadcrumb con lupa; KPI protagonista (cifra 2.5rem) + 2 secundarios; sesiones como fichas; pie mono `AGROCOM SRL · año` + versión. Objetivos táctiles ≥44px. |
+
+El chrome no scrollea, el contenido sí: `.ag-panel` fija `100dvh` y cada
+columna flex interna lleva `min-height: 0` (sin eso el hijo flex nunca
+encoge y el scroll interno no aparece); las tarjetas que no deben encogerse
+van `flex: 0 0 auto`.
+
+### 7.3. Tipografía — tres familias, una por contexto
+
+Confirmado en este pase (pedido del 28/8/2026): **Fraunces** es LA fuente
+display del sistema — el mockup traía Instrument Serif, pero esa no es la
+del sistema (ya reemplazada en la tercera vuelta); se mantiene Fraunces y
+los tamaños del panel se calibran a su métrica más ancha (título de página
+2.125rem vs. 36px del mockup, KPI 2.125rem vs. 38px, sidebar 1.375rem vs.
+23px). **IBM Plex Sans** para toda la interfaz/subtítulos — ahora cableada
+explícitamente a `--bs-body-font-family` para que nada caiga al stack del
+sistema — e **IBM Plex Mono** para datos/metadatos (horas, drones, badges
+de pendientes, `ROL · CAMPAÑA`, pie). Los íconos pasan de Material Symbols
+Outlined a **Rounded** (los de las maquetas): `material-symbols/rounded.css`
++ clase `material-symbols-rounded` en `atoms/icon`.
+
+### 7.4. Tokens nuevos (ambos temas)
+
+Primitivas (`tokens/primitives/`): rampa **arena** `--ag-color-sand-50…700`
+y rampa **oliva** `--ag-color-olive-150…1000` en `brand.css` (neutros
+cálidos del lenguaje aprobado — un tenant las reemplazaría junto con las
+rampas de marca); `--ag-color-green-200` (lima del riel); en `base.css` el
+rojo óxido `--ag-color-red-50|200|600|900` y el azul `--ag-color-blue-50|700`.
+
+Semánticos (mismo nombre en ambos temas, valores reasignados):
+
+| Token | Uso |
+|---|---|
+| `--ag-color-bg` (reasignado) | El fondo del contenido del panel es **el mismo `--ag-color-bg-auth` del login** en ambos temas (pedido explícito del 28/8/2026) — crema en claro, grafito-petróleo en oscuro |
+| `--ag-color-bg-rail`, `-bg-rail-active`, `-text-rail`, `-text-rail-active` | Riel de módulos — **constantes entre temas** (oliva-1000/900, oliva-300, verde-200) |
+| `--ag-color-surface-card`, `--ag-color-border-card` | Tarjeta del panel (KPI, tablas, fichas) y su borde suave, separados del chrome |
+| `--ag-color-bg-table-head`, `--ag-color-border-row`, `--ag-color-bg-row-hover` | Cabecera mono de tabla, borde de fila, hover de fila |
+| `--ag-color-bg-input-chrome` | Relleno del buscador del header y píldoras inactivas |
+| `--ag-color-success-strong`, `-warning-strong`, `-info-strong`, `-danger-strong`, `-neutral-strong` | TEXTO de los chips de estado sobre su propio `-subtle` — cada par verificado AA (ver §7.5). `warning` pasa del amarillo Bootstrap al ámbar de marca; `danger` al rojo óxido |
+| `--ag-color-danger-border` | Borde de la alerta de RC |
+| `--ag-color-primary-border-subtle` | Borde tenue verde (chip de campaña, píldora/filtro activo) |
+| `--ag-color-text-faint` | Oliva decorativa (íconos apagados, barras) — **no pasa AA como texto**, documentado |
+| `--ag-color-track`, `--ag-color-bar-unassigned` | Pista de las barras de pausas y la barra "sin causa asignada" |
+
+`--ag-color-text`/`-text-muted`/`-border`/`-neutral-subtle` se reasignaron
+a la escala oliva/arena (claro) y a mezclas oliva-sobre-gris + texto crema
+(oscuro).
+
+### 7.5. Contraste verificado (se suma a §1.3)
+
+| Combinación (tema claro) | Ratio aprox. | Resultado |
+|---|---|---|
+| `--ag-color-text` (oliva-950) sobre `--ag-color-surface-card` (arena-50) | ~12.9:1 | AAA |
+| `--ag-color-text-muted` (oliva-500) sobre arena-50 / `--ag-color-bg` crema | ~5.0:1 / ~5.1:1 | AA — por eso muted es oliva-500 y NO la oliva-400 del mockup (~3.5:1, falla; quedó como `-text-faint` decorativo) |
+| `--ag-color-success-strong` sobre `--ag-color-success-subtle` | ~7.2:1 | AAA (chip "Validada") |
+| `--ag-color-warning-strong` (ámbar-800) sobre `--ag-color-warning-subtle` (ámbar-100) | ~4.6:1 | AA (chip "Sin evidencia", badges de pendientes, "ÚLTIMO USADO") |
+| `--ag-color-info-strong` (azul-700) sobre `--ag-color-info-subtle` (azul-50) | ~5.5:1 | AA (chip "En vuelo") |
+| `--ag-color-danger-strong` (rojo-900) sobre `--ag-color-danger-subtle` (rojo-50) | ~9.2:1 | AAA (alerta de RC) |
+| `--ag-color-neutral-strong` (oliva-600) sobre `--ag-color-neutral-subtle` (arena-200) | ~5.2:1 | AA (chip "Programada") |
+| Blanco sobre `--ag-color-danger` (rojo-600) | ~5.1:1 | AA (botón "Resolver") |
+| `--ag-color-text-rail` (oliva-300) sobre `--ag-color-bg-rail` (oliva-1000) | ~4.9:1 | AA (íconos del riel; el mínimo exigido para no-texto es 3:1) |
+| `--ag-color-text-rail-active` (verde-200) sobre `--ag-color-bg-rail-active` (oliva-900) | ~8.7:1 | AAA |
+
+| Combinación (tema oscuro) | Ratio aprox. | Resultado |
+|---|---|---|
+| Texto crema sobre `--ag-color-surface-card` | ~14:1 | AAA |
+| `--ag-color-text-muted` (salvia) sobre la tarjeta oscura | ~6:1 | AA+ |
+| `-strong` de cada estado sobre su `-subtle` (overlay sobre tarjeta): success ~5.6, warning ~5.6, info ~5.3, danger ~5.3, neutral ~9.6 | ≥5.3:1 | AA todos |
+
+Regla operativa que queda fijada: **un chip de estado usa siempre el par
+`-subtle` (fondo) + `-strong` (texto)**, nunca el token crudo como texto;
+el ámbar como texto sobre superficie clara es siempre el oscurecido
+(ámbar-800 vía `-warning-strong`/`-accent-link`) porque el tono base falla AA.
+
+### 7.6. Catálogo — altas y bajas
+
+Altas: `organisms/module-rail`, `organisms/module-sidebar`,
+`organisms/module-drawer`, `organisms/mobile-topbar`,
+`molecules/alert-strip` (variantes accent/danger — ventana volable y alerta
+de RC), `molecules/role-card` (tarjeta 5c con chips de permisos y badge
+"ÚLTIMO USADO"), `tabs.css`, `templates/panel-shell` (esqueleto HTML único
+de las páginas del panel, con `data-bs-theme` desde la preferencia
+persistida). Reescritos: `templates/panel-layout` (tres niveles),
+`organisms/topbar` (header 62px), `molecules/stat-card` (anatomía KPI de la
+maqueta), `atoms/badge` (pares subtle/strong, sin dot).
+
+Bajas: `organisms/sidebar-nav` (+ su JS de icon-rail),
+`molecules/role-selector-item` y el Livewire `RoleSwitcher` con sus
+popovers — el cambio de rol ahora es siempre la pantalla 5c (link "Cambiar
+de rol" del sidebar/menú de usuario, con `?cambiar=1`).
+
+### 7.7. Selección de rol y preferencias (backend que acompaña)
+
+- `sec_menu.descripcion` (clave i18n de la bajada del módulo) y
+  `lang/es/menu.php` nuevos.
+- `sec_user_preferencia.rol_preferido_id` ("Entrar siempre con este rol":
+  login y middleware lo activan solos y el selector solo reaparece con
+  `?cambiar=1`) y `ultimo_rol_id` (badge "ÚLTIMO USADO", lo registra
+  `ElegirRolActivo`, único punto de activación). Ninguno gobierna permisos
+  y ambos se revalidan como "rol vivo" antes de usarse (ADR 0004 intacto).
+- `PresentadorRol`: nombre legible/ícono/chips por slug (metadata de
+  presentación en `seguridad.rol.meta.*`, con fallback al vocabulario crudo
+  de la base — no traduce dominio, ADR 0013).
+- El tema ahora PERSISTE: `POST panel.preferencias.tema` (oyente de
+  `agrocom:theme-changed` en `theme-toggle.js`) + `panel-shell` renderiza
+  `data-bs-theme` desde la preferencia.
+- Datos de demo de las maquetas centralizados en
+  `Http/Demo/DatosDemoPanel` (KPIs, 5 sesiones, 5 causas de pausa, 3 ítems
+  de stock, ventana volable, badges del menú, campaña/período/versión) —
+  marcado MOCK, nunca hardcodeado en vistas; usuario demo multirol
+  `camila.rojas`/`password` en `Demo/PanelDemoSeeder`.
+
+## 8. Reglas fijas de pulido UI (sexta vuelta, 28/8/2026)
+
+Seis reglas derivadas de la sesión de login + `seleccionar-rol` del
+28/8/2026, para aplicar por defecto en cualquier componente nuevo del
+catálogo en vez de redescubrirlas por prueba y error en cada pantalla.
+
+1. **Tipografía display: `font-weight` siempre explícito.**
+   `.ag-login-form__title` no lo declaraba (heredaba el 500 de Bootstrap
+   Reboot); `.ag-role-select__title` sí, pero en
+   `--ag-font-weight-regular` (400) a 2rem — un peldaño más chico/liviano
+   que el login pese a compartir `auth-layout`. Igualados a 38px +
+   `--ag-font-weight-bold` explícito en ambos. Regla: todo consumidor de
+   `--ag-font-family-display` declara `font-weight` con el token, nunca
+   depende del peso por defecto de Bootstrap para headings.
+2. **Color de "estado seleccionado" vs. contenido informativo repetido —
+   mismo eje, nunca ámbar para lo segundo.** En `role-card`, se probó
+   ámbar de marca en los chips de permisos (dos intentos, incluyendo
+   también el ícono) y ambos se revirtieron por feedback del usuario.
+   Regla fija: el estado de selección de una tarjeta (ícono, borde) y
+   cualquier chip informativo que se repite fila a fila comparten el
+   mismo eje gris↔verde (nunca ámbar); para no repetir el mismo verde del
+   borde/ícono (`--ag-color-primary`), el chip interno usa el par
+   `success` (`--ag-color-success-strong`/`-subtle` + borde
+   `--ag-color-primary-border-subtle`). El ámbar de marca queda reservado
+   para acentos editoriales puntuales que NO se repiten por fila (badge
+   "ÚLTIMO USADO", link "¿Olvidaste tu contraseña?").
+3. **Todo chip/pill lleva borde del mismo tono que su texto** — no solo
+   fondo tenue + texto (se veía "plano, sin relieve" sin él).
+4. **Un chip/contenedor de texto sobre un fondo ya tintado
+   (`--ag-color-bg-auth` u otro) necesita borde propio** para no
+   fundirse — el `-subtle` solo no alcanza cuando la superficie base ya
+   tiene color.
+5. **Hover de una acción secundaria en texto plano (sin botón/fondo por
+   defecto) necesita fondo sutil + transición**, no solo cambio de color
+   de texto.
+6. **Transición nativa entre navegaciones del mismo flujo**:
+   `@view-transition { navigation: auto; }` declarado una sola vez en
+   `app.css` (transversal, no por template), con el bloque
+   `prefers-reduced-motion` correspondiente sobre `::view-transition-*`.
+7. **Cifra grande de KPI: mono, nunca la display.** `--ag-font-family-display`
+   (Fraunces) es la fuente del TITULAR de la página ("Operación de hoy",
+   `.ag-dash__title`) — una cifra de `stat-card` en la misma fuente compite
+   visualmente con el titular en vez de leerse como un dato. Regla fija:
+   toda cifra grande de KPI/métrica usa `--ag-font-family-mono` (mismo
+   criterio que el total del `donut-chart` y los badges de menú), la
+   display queda reservada para titulares editoriales.
+8. **Variantes de una misma franja/alerta comparten anatomía, solo cambia
+   el tono.** `alert-strip--danger` empezó como un recuadro completo
+   (border 1px en las 4 esquinas) mientras `--accent`/`--warning` usaban
+   gradiente + borde izquierdo de 3px + esquinas 0/10/10/0 — dos
+   variantes del mismo componente que leían como dos componentes
+   distintos. Regla fija: todas las variantes de un componente de alerta
+   comparten la MISMA estructura visual (gradiente, radios, grosor de
+   borde); la severidad se expresa solo con el token de color, nunca con
+   una anatomía distinta.
+
+## 9. Sexta vuelta — parte 2 (28/8/2026): rediseño del dashboard
+
+Ejecuta `docs/gestion/plan_dashboard_rediseno.md` — Anexo A y fases 1 a 7 de
+ese plan (queda solo la Fase 8, auditoría final, que es este mismo cierre).
+Verificado en navegador (Playwright, claro/oscuro/móvil, usuario
+`camila.rojas`) antes de cerrar cada fase.
+
+- **Fase 1 — sidebar (nivel 2)**: collapse/expand nuevo (botón hamburguesa
+  en `.ag-module-sidebar__header`, JS propio
+  `resources/js/organisms/module-sidebar.js`, estado en localStorage —
+  72px colapsado, oculta título/descripción/labels/badges). Badge de
+  `menu-item` separado en `{numero, texto}`: el pill solo pinta el número,
+  el texto completo se resuelve como tooltip nativo de Bootstrap
+  (`data-bs-title`, inicializado globalmente en `app.js` — Bootstrap NO
+  auto-inicializa tooltips como sí hace con collapse/dropdown/offcanvas).
+  `DatosDemoPanel::badgesMenu()` cambió de forma
+  (`array<string, array{numero, texto}>`) — mismo criterio que tendrá el
+  caso de uso real. Nuevo token `--ag-color-accent-border-subtle` (borde
+  del badge, regla §8.3/§8.4: un chip sobre el chrome ya tintado necesita
+  borde propio).
+  **Trampa encontrada**: `data_get($menuBadges, "{$label}.numero")` NO
+  funciona — `$label` ya es la clave completa (p. ej.
+  `"menu.operacion.items.programacion"`) y `data_get()` interpreta sus
+  puntos como un path anidado. Acceso directo al array
+  (`$menuBadges[$label]['numero']`), nunca `data_get()` sobre una clave que
+  ya trae puntos.
+- **Fase 2 — header**: dos bloques CSS explícitos
+  `.ag-topbar__left`/`.ag-topbar__right` (antes dependía solo del `flex:1`
+  del buscador). Derecha, en el orden pedido: usuario, tema, notificación,
+  período, campaña.
+- **Fase 7 — contraste sistémico en oscuro**: `--ag-color-bg-elevated`,
+  `--ag-color-bg-chrome` y `--ag-color-surface-card` eran EL MISMO valor
+  (`color-mix(olive-900 22%, gray-850 78%)`) — contra `--ag-color-bg`
+  (`bg-auth`) la diferencia real era de ~2 unidades de RGB, imperceptible
+  (confirmado con captura real, no solo cálculo). Reemplazado por una
+  escala de elevación tipo Material dark theme (overlay de blanco creciente
+  sobre `--ag-color-bg-auth`, no mezclas de marca independientes que
+  convergían al mismo tono): chrome 4%, tarjeta 8%, cabecera de
+  tabla/hover/input 12%, borde de tarjeta 20%, borde de fila 16%, pista de
+  progreso 6% (deliberadamente por DEBAJO de la tarjeta — es un inset, no
+  una superficie que deba "flotar"). El riel (`--ag-color-bg-rail`,
+  constante entre temas) no se tocó. Solo `theme-dark.css` — `theme-light.css`
+  no tenía la queja y no se tocó.
+- **Fase 3 — KPI cards + sectorización**: molecule nuevo `section-head`
+  (barra 4px + rótulo uppercase + contador mono, §2.1 de la referencia).
+  `stat-card` gana prop `state` (success|warning|danger|info|null,
+  independiente de `footTone`): colorea el contenedor del ícono (34×34,
+  antes el ícono flotaba sin contenedor) y, SOLO para warning/danger, pinta
+  una barra izquierda de 4px — success/info/null quedan sin barra, mismo
+  criterio que la referencia (no todo estado necesita gritar). Datos mock:
+  `DatosDemoPanel::kpis()` gana la clave `estado` por KPI.
+- **Fase 4 — gráfica mock**: molecule nuevo `donut-chart` (anillo hueco
+  `conic-gradient` + leyenda, CERO librería — §2.3 de la referencia).
+  Reutiliza los tonos categóricos ya existentes (success/warning/info/
+  neutral, mismo vocabulario que `variante` en las filas de sesiones) — sin
+  paleta propia. Dato: `DatosDemoPanel::distribucionSesiones()`,
+  consistente con el KPI "Sesiones validadas 42/48" (42 validadas + 6
+  repartidas entre los otros tres estados). Ubicado antes de "Programación
+  de hoy"/Pausas/Stock, pedido explícito.
+- **Fase 5 — orden de alertas**: el aviso de RC (`danger`, el más crítico)
+  pasó del pie de la página al inicio, antes que la franja de ventana
+  volable (`accent`) — criterio: `danger` siempre antes que `accent`/
+  `warning`.
+- **Fixes de feedback directo (durante Fase 3/5)**: (a) la cifra de
+  `stat-card` pasó de `--ag-font-family-display` a `--ag-font-family-mono`
+  — competía con el titular "Operación de hoy" (misma fuente); (b)
+  `alert-strip--danger` pasó de recuadro completo (border 1px, radio 12px
+  parejo) a la MISMA anatomía que `--accent`/`--warning` (gradiente + borde
+  izquierdo 3px + esquinas 0/10/10/0) — dos variantes de un componente
+  deben compartir estructura, solo cambia el tono. Ambas reglas quedaron
+  fijadas en §8.7/§8.8.
+- **Fase 6 — detalle de Sesiones/Pausas** (decisión confirmada: enriquecer
+  los TABS existentes, no rutas propias — no toca `SecMenuSeeder`).
+  - Tab Sesiones: columna RC nueva (`operaciones.sesion.rc_estado`:
+    capturado|sin_evidencia|no_aplica — "no_aplica" es una sesión que
+    todavía no vuela, no una tercera variante de falla) + drill-down: cada
+    fila es un `<button>` (`.ag-table__row--clickable`) que abre un
+    offcanvas nativo de Bootstrap (`.ag-session-detail`, `offcanvas-end`,
+    cero JS propio) con orden/mezcla/preparado por/condiciones/pausas de
+    la sesión/captura del RC — cumple la promesa que ya traía
+    `sesiones_nota` (existía como texto desde la quinta vuelta, sin panel
+    real detrás). Nuevo parcial `_detalle-sesion.blade.php`. `_tabla-sesiones`
+    gana el prop opcional `$conRc` (default false, el tab Resumen sigue
+    igual que siempre) y `.ag-table--detallado` (7ª columna).
+  - Tab Pausas: tabla nueva de eventos individuales (bajo el agregado por
+    causa) — `_tabla-eventos-pausas.blade.php`, `.ag-table--eventos` (4
+    columnas), dato `DatosDemoPanel::pausasEventos()`.
+- **Fixes de feedback directo (post Fase 6)**: `alert-strip` pasó de 2
+  variantes (`accent`/`danger`, distinta anatomía cada una) a las 4
+  variantes semánticas del catálogo (`warning`/`danger`/`success`/`info`,
+  MISMA anatomía) — "accent" era el nombre de marca de lo que siempre fue
+  visualmente un warning, se renombró. El gradiente de las 4 ahora sostiene
+  el color al 100% hasta el 55% del ancho antes de apagarse hacia
+  `--ag-color-bg-table-head` (antes el color se apagaba desde el borde
+  mismo y se leía como un filo fino, no como el protagonista de la
+  franja).

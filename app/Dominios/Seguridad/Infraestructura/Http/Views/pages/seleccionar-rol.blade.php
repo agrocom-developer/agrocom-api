@@ -1,117 +1,122 @@
 {{--
     Page: seleccionar-rol (GET /panel/seleccionar-rol, panel.rol-activo.selector)
-    Estructura: layout HTML + auth-layout + selector de rol + JS de wiring.
+    Quinta vuelta — maqueta 5c: layout partido del login (foto 55% / panel
+    45%, templates/auth-layout con copy fijo propio), chip del usuario +
+    "Cerrar sesión" arriba, tarjetas de rol seleccionables
+    (molecules/role-card: nombre legible, ícono, descripción, chips de
+    permisos, badge "ÚLTIMO USADO"), checkbox "Entrar siempre con este rol"
+    y botón pill con el nombre del rol elegido.
+
+    Accesibilidad (consigna 5c): `role="radiogroup"` + navegación por
+    flechas y Enter — resources/js/organisms/role-selection.js (que también
+    postea a POST /panel/rol-activo con `recordar`).
+
+    Esta pantalla NO se muestra con un solo rol, y con rol preferido se
+    saltea salvo `?cambiar=1` — esa lógica vive en
+    RolActivoController::create(), no acá.
 
     Datos esperados (ver RolActivoController::create()):
-    - roles (Collection<SecRole>): opciones vivas del usuario. Puede llegar
-      vacía (usuario sin ningún rol asignado) — se maneja como estado propio,
-      no como error.
-    - accionActualizar (string): URL de POST /panel/rol-activo, expuesta como
-      data-attribute para que el JS la ejecute.
+    - roles (list<array{id, name, nombre, descripcion, permisos, icono}>):
+      ya presentados por PresentadorRol. Puede llegar vacía.
+    - preseleccionId (int|null), ultimoRolId (int|null),
+      recordarInicial (bool), usuarioNombre / usuarioUsername (string),
+      tema ("light"|"dark"), accionActualizar (URL POST),
+      urlDashboard (URL destino tras elegir).
 --}}
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-bs-theme="light">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ config('app.name', 'Agrocom') }} — Seleccionar rol</title>
+<x-templates.panel-shell :title="__('seguridad.rol.seleccion_titulo')" :tema="$tema">
+    <x-templates.auth-layout
+        :headline="__('seguridad.rol.foto_headline')"
+        :subheadline="__('seguridad.rol.foto_subheadline')"
+    >
+        <x-slot:headerEnd>
+            <button type="button" class="ag-role-select__logout" data-ag-logout>
+                <x-atoms.icon name="logout" size="sm" />
+                {{ __('ui.topbar.logout') }}
+            </button>
+        </x-slot:headerEnd>
 
-    @vite('resources/css/app.css')
-</head>
-<body>
-    <x-templates.auth-layout>
-    <section class="ag-role-selector" data-ag-rol-activo-accion="{{ $accionActualizar }}">
-        <h1>{{ __('seguridad.rol.seleccion_titulo') }}</h1>
-        <p>{{ __('seguridad.rol.seleccion_subtitulo') }}</p>
+        <section
+            class="ag-role-select"
+            data-ag-role-select
+            data-accion="{{ $accionActualizar }}"
+            data-url-dashboard="{{ $urlDashboard }}"
+        >
+            @php
+                $iniciales = collect(preg_split('/\s+/', trim((string) $usuarioNombre)))
+                    ->filter()
+                    ->map(fn ($palabra) => mb_strtoupper(mb_substr($palabra, 0, 1)))
+                    ->take(2)
+                    ->implode('');
+            @endphp
 
-        <div class="ag-role-list">
-            @forelse ($roles as $rol)
-                <x-molecules.role-selector-item
-                    variant="pick"
-                    :id="$rol->id"
-                    :label="$rol->name"
-                    :description="$rol->description"
-                />
-            @empty
-                <p>{{ __('seguridad.rol.seleccion_vacia') }}</p>
-            @endforelse
-        </div>
+            <div class="ag-role-select__user">
+                <span class="ag-role-select__avatar" aria-hidden="true">{{ $iniciales ?: '?' }}</span>
+                <span class="ag-role-select__user-text">{{ $usuarioNombre }} · {{ $usuarioUsername }}</span>
+            </div>
 
-        @if ($roles->isNotEmpty())
-            <x-atoms.button type="button" variant="primary" :block="true" disabled data-ag-rol-activo-continuar>
-                {{ __('seguridad.rol.seleccion_boton_continuar') }}
-            </x-atoms.button>
-        @endif
-    </section>
+            <div class="ag-role-select__heading">
+                <h1 class="ag-role-select__title">{{ __('seguridad.rol.seleccion_titulo') }}</h1>
+                <p class="ag-role-select__subtitle">{{ __('seguridad.rol.seleccion_subtitulo') }}</p>
+            </div>
+
+            @if (count($roles) === 0)
+                <p class="ag-role-select__empty">{{ __('seguridad.rol.seleccion_vacia') }}</p>
+            @else
+                <div
+                    class="ag-role-select__group"
+                    role="radiogroup"
+                    aria-label="{{ __('seguridad.rol.seleccion_grupo_aria') }}"
+                    data-ag-role-group
+                >
+                    @foreach ($roles as $rol)
+                        <x-molecules.role-card
+                            :id="$rol['id']"
+                            :nombre="$rol['nombre']"
+                            :descripcion="$rol['descripcion']"
+                            :permisos="$rol['permisos']"
+                            :icon="$rol['icono']"
+                            :selected="$preseleccionId !== null && (int) $rol['id'] === (int) $preseleccionId"
+                            :ultimo-usado="$ultimoRolId !== null && (int) $rol['id'] === (int) $ultimoRolId"
+                        />
+                    @endforeach
+                </div>
+
+                <label class="ag-role-select__remember">
+                    <input
+                        type="checkbox"
+                        class="ag-role-select__checkbox"
+                        data-ag-role-recordar
+                        @checked($recordarInicial)
+                    >
+                    {{ __('seguridad.rol.recordar') }}
+                </label>
+
+                <p
+                    class="ag-role-select__error"
+                    data-ag-role-error
+                    data-mensaje-error="{{ __('seguridad.rol.error_actualizar') }}"
+                    data-mensaje-red="{{ __('seguridad.rol.error_red') }}"
+                    hidden
+                ></p>
+
+                @php
+                    $nombreInicial = collect($roles)->firstWhere('id', $preseleccionId)['nombre'] ?? collect($roles)->first()['nombre'];
+                @endphp
+                <x-atoms.button
+                    type="button"
+                    variant="primary"
+                    :block="true"
+                    icon="arrow_forward"
+                    icon-position="end"
+                    data-ag-role-continuar
+                >
+                    <span data-ag-role-continuar-label>{{ __('seguridad.rol.seleccion_boton_continuar', ['rol' => $nombreInicial]) }}</span>
+                </x-atoms.button>
+
+                {{-- Plantilla del label del botón para el JS (":rol" se
+                     sustituye por el nombre del rol elegido). --}}
+                <template data-ag-role-boton-template>{{ __('seguridad.rol.seleccion_boton_continuar', ['rol' => '__ROL__']) }}</template>
+            @endif
+        </section>
     </x-templates.auth-layout>
-
-    <script>
-        /**
-         * Selector de rol inicial (tras login con 2+ roles).
-         *
-         * Los botones de role-selector-item pueden seleccionarse (aria-pressed).
-         * El botón de continuar se habilita cuando hay al menos uno seleccionado.
-         * Al hacer click en continuar, postea el rol seleccionado a POST /panel/rol-activo.
-         */
-        document.addEventListener('DOMContentLoaded', () => {
-            const section = document.querySelector('[data-ag-rol-activo-accion]');
-            if (!section) return;
-
-            const accion = section.getAttribute('data-ag-rol-activo-accion');
-            const botones = section.querySelectorAll('[data-ag-role-id]');
-            const btnContinuar = section.querySelector('[data-ag-rol-activo-continuar]');
-            let rolSeleccionado = null;
-
-            // Click en un botón de rol: toggle aria-pressed
-            botones.forEach((btn) => {
-                btn.addEventListener('click', () => {
-                    // Deseleccionar todos
-                    botones.forEach((b) => b.setAttribute('aria-pressed', 'false'));
-                    // Seleccionar este
-                    btn.setAttribute('aria-pressed', 'true');
-                    rolSeleccionado = btn.getAttribute('data-ag-role-id');
-
-                    // Habilitar el botón de continuar
-                    btnContinuar.disabled = false;
-                });
-            });
-
-            // Click en continuar: POST el rol seleccionado
-            btnContinuar.addEventListener('click', async () => {
-                if (!rolSeleccionado) return;
-
-                btnContinuar.disabled = true;
-
-                try {
-                    const response = await fetch(accion, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content,
-                            'Accept': 'application/json',
-                        },
-                        body: JSON.stringify({ id_role: parseInt(rolSeleccionado) }),
-                    });
-
-                    if (response.ok) {
-                        // Redirigir al dashboard
-                        window.location.href = '/panel/dashboard';
-                    } else {
-                        // Rehabilitar e intentar nuevamente
-                        btnContinuar.disabled = false;
-                        alert('Error al cambiar de rol. Intenta nuevamente.');
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                    btnContinuar.disabled = false;
-                    alert('Error de red. Intenta nuevamente.');
-                }
-            });
-        });
-    </script>
-
-    @vite('resources/js/app.js')
-</body>
-</html>
-
+</x-templates.panel-shell>

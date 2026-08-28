@@ -103,6 +103,7 @@ final class ObtenerMenuPorRolActivo
             ruta: $item->ruta,
             orden: $item->orden,
             hijos: $hijosVisibles,
+            descripcion: $item->descripcion,
         );
     }
 

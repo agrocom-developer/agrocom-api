@@ -10,19 +10,22 @@
 
 .ag-menu-item {
     --ag-menu-item-index: 0;
+    position: relative;
     display: flex;
     align-items: center;
     gap: var(--ag-space-3);
     width: 100%;
-    padding: var(--ag-space-3);
+    padding: var(--ag-space-2) var(--ag-space-3);
     border: none;
-    border-radius: var(--ag-radius-md);
+    /* Radio 9 del ítem del sidebar de nivel 2 (quinta vuelta, maqueta 4a). */
+    border-radius: 9px;
     background: transparent;
     color: var(--ag-color-text-muted);
     text-decoration: none;
     text-align: left;
     font-family: var(--ag-font-family-base);
-    font-size: var(--ag-font-size-sm);
+    font-size: 0.84375rem;
+    font-weight: var(--ag-font-weight-medium);
     cursor: pointer;
     animation: ag-menu-item-in 320ms var(--ag-ease-emphasized) both;
     animation-delay: calc(var(--ag-menu-item-index) * 40ms);
@@ -32,8 +35,9 @@
 }
 
 .ag-menu-item:hover {
-    background: var(--ag-color-primary-subtle);
+    background: var(--ag-color-bg-row-hover);
     color: var(--ag-color-text);
+    opacity: 1;
 }
 
 .ag-menu-item:focus-visible {
@@ -41,10 +45,11 @@
     outline-offset: -2px;
 }
 
+/* Activo (maqueta 4a): texto verde en negrita sobre verde muy tenue. */
 .ag-menu-item.is-active {
     background: var(--ag-color-primary-subtle);
-    color: var(--ag-color-primary-emphasis);
-    font-weight: var(--ag-font-weight-medium);
+    color: var(--ag-color-success-strong);
+    font-weight: var(--ag-font-weight-bold);
 }
 
 .ag-menu-item__icon {
@@ -59,15 +64,26 @@
     white-space: nowrap;
 }
 
+/* Badge de pendientes (sexta vuelta — parte 2): SOLO el número corto, mono
+   chico en ámbar sobre tenue ámbar — par accent-subtle / accent-link
+   verificado AA en §1.3. La frase completa (antes pintada acá entera, p. ej.
+   "Hoy · 3") se movió al tooltip (data-bs-title, ver menu-item.blade.php),
+   inicializado en app.js. Borde propio (regla §8.3/§8.4): un chip sobre el
+   chrome ya tintado del sidebar (--ag-color-bg-chrome) necesita borde del
+   mismo tono que su texto para no leerse plano/apagado. */
 .ag-menu-item__badge {
     flex-shrink: 0;
+    min-width: 1.25rem;
     background: var(--ag-color-accent-subtle);
-    color: var(--ag-color-accent-contrast);
-    font-size: var(--ag-font-size-xs);
-    font-weight: var(--ag-font-weight-medium);
+    color: var(--ag-color-accent-link);
+    border: 1px solid var(--ag-color-accent-border-subtle);
+    font-family: var(--ag-font-family-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.04em;
     line-height: 1.5;
     padding: 0 var(--ag-space-2);
     border-radius: var(--ag-radius-pill);
+    text-align: center;
 }
 
 @keyframes ag-menu-item-in {

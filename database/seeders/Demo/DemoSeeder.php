@@ -14,5 +14,6 @@ class DemoSeeder extends Seeder
     public function run(): void
     {
         $this->call(NucleoComercialSeeder::class);
+        $this->call(PanelDemoSeeder::class);
     }
 }

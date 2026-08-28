@@ -66,35 +66,169 @@ return [
         'volver' => 'Volver al ingreso',
     ],
 
+    // Pantalla de selección de rol (quinta vuelta, maqueta 5c) y cambio de
+    // rol activo. `meta.*` es METADATA de presentación por slug de rol
+    // (nombre legible, descripción comercial, chips de permisos) — no
+    // traduce vocabulario de dominio (ADR 0013 punto 3): el slug sigue
+    // viajando intacto, y un rol sin metadata degrada al `name`/
+    // `description` crudos de la base (ver PresentadorRol).
     'rol' => [
-        'seleccion_titulo' => 'Elegí con qué rol continuar',
-        'seleccion_subtitulo' => 'Tu cuenta tiene más de un rol asignado. Los permisos de esta sesión serán los del rol que elijas — podés cambiarlo después sin volver a loguearte.',
-        'seleccion_boton_continuar' => 'Continuar',
+        'foto_headline' => 'Un solo usuario, varias responsabilidades.',
+        'foto_subheadline' => 'El rol define qué módulos ves y qué podés aprobar durante esta sesión.',
+        'seleccion_titulo' => '¿Con qué rol vas a trabajar?',
+        'seleccion_subtitulo' => 'Podés cambiarlo en cualquier momento desde el menú, sin volver a ingresar.',
+        'seleccion_boton_continuar' => 'Continuar como :rol',
+        'seleccion_grupo_aria' => 'Roles disponibles',
         'seleccion_vacia' => 'Todavía no tenés ningún rol asignado. Contactá a un administrador.',
+        'ultimo_usado' => 'ÚLTIMO USADO',
+        'recordar' => 'Entrar siempre con este rol',
+        'error_actualizar' => 'No se pudo cambiar de rol. Intentá nuevamente.',
+        'error_red' => 'Error de red. Intentá nuevamente.',
         'switch_trigger' => 'Cambiar de rol',
         'switch_titulo' => 'Cambiar de rol activo',
         'badge_activo' => 'Rol activo',
+        'meta' => [
+            'dueno' => [
+                'nombre' => 'Dueño',
+                'descripcion' => 'Acceso total: finanzas, personas, contratos y gestión de otros dueños.',
+                'permisos' => ['Todos los módulos', 'Aprobar devengos', 'Ver costos'],
+            ],
+            'piloto' => [
+                'nombre' => 'Piloto de dron',
+                'descripcion' => 'Ejecuta sesiones de vuelo en campo y carga la evidencia del RC.',
+                'permisos' => ['Programación', 'Sesiones', 'Mezclas'],
+            ],
+            'auxiliar' => [
+                'nombre' => 'Auxiliar de campo',
+                'descripcion' => 'Apoya la preparación de mezclas y la logística de cada sesión.',
+                'permisos' => ['Mezclas', 'Checklist', 'Evidencias'],
+            ],
+            'jefe_campo' => [
+                'nombre' => 'Jefe de campo',
+                'descripcion' => 'Coordina la cuadrilla y valida sesiones ajenas — nunca las propias.',
+                'permisos' => ['Programación', 'Validación', 'Pausas'],
+            ],
+            'encargado_operaciones' => [
+                'nombre' => 'Encargado de operaciones',
+                'descripcion' => 'Administra usuarios, órdenes, stock y la planificación de la base.',
+                'permisos' => ['Operación', 'Recursos', 'Usuarios'],
+            ],
+        ],
     ],
 
-    // Etiquetas del menú lateral (sec_menu.label guarda estas claves tal
-    // cual, ver Database\Seeders\Catalogo\SecMenuSeeder) — resueltas por
-    // molecules/menu-item vía __(), nunca antes (ADR 0013).
-    'menu' => [
-        'inicio' => 'Inicio',
-        'usuarios' => 'Usuarios',
-    ],
-
-    // Copy mínimo de las páginas placeholder de HU-02 (GET /panel/dashboard,
-    // GET /panel/usuarios) — `frontend` lo reemplaza al ensamblar el
-    // contenido real de cada pantalla.
+    // Dashboard "Operación de hoy" (quinta vuelta — maquetas 4a/5a/5b):
+    // copy fijo de pantalla; los DATOS (cifras, sesiones, causas) viajan por
+    // DatosDemoPanel, nunca por acá.
     'dashboard' => [
-        'titulo' => 'Panel',
-        'bienvenida' => 'Hola, :nombre. Estás operando como :rol — el menú de la izquierda muestra solo lo que tu rol activo puede ver.',
+        'titulo' => 'Operación de hoy',
+        'bajada' => ':fecha · lo que falta cerrar antes del corte de planilla.',
+        'exportar' => 'Exportar',
+        'programar_sesion' => 'Programar sesión',
+        'tabs_aria' => 'Vistas del dashboard',
+        'tab_resumen' => 'Resumen',
+        'tab_sesiones' => 'Sesiones',
+        'tab_pausas' => 'Pausas',
+        'ventana_titulo' => 'Ventana volable :horario.',
+        'ventana_accion' => 'Revisar autorización',
+        'programacion_titulo' => 'Programación de hoy',
+        'ver_todas' => 'Ver todas',
+        'hoy' => 'Hoy',
+        'col_hora' => 'Hora',
+        'col_lote' => 'Lote',
+        'col_piloto' => 'Piloto',
+        'col_dron' => 'Dron',
+        'col_ha' => 'Ha',
+        'col_estado' => 'Estado',
+        'pausas_titulo' => 'Pausas por causa',
+        'pausas_titulo_mes' => 'Horas perdidas por causa · :periodo',
+        'stock_titulo' => 'Stock bajo mínimo',
+        'stock_accion' => 'Generar pedido',
+        'rc_alerta' => ':cantidad sesiones cerradas sin captura del RC.',
+        'rc_detalle' => 'Ninguna sesión se valida ni devenga sin evidencia adjunta.',
+        'rc_resolver' => 'Resolver',
+        'filtro_sin_validar' => 'Sin validar',
+        'filtro_pilotos' => 'Todos los pilotos',
+        'filtro_drones' => 'Todos los drones',
+        'filtro_evidencia' => 'Con evidencia',
+        'sesiones_nota' => 'Cada fila abre el detalle en un panel lateral: orden, mezcla y quién la preparó, condiciones, pausas y la captura del RC.',
+        'pausas_sin_causa' => ':horas de pausa sigue sin causa asignada. Toda jornada de baja producción debe quedar explicada.',
+
+        // Sectorización (sexta vuelta parte 2 — Fases 3/4): títulos de
+        // section-head, nunca los rótulos genéricos de ui.php porque son
+        // copy de ESTA pantalla, no del catálogo de componentes.
+        'seccion_indicadores' => 'Indicadores del período',
+        'seccion_distribucion' => 'Distribución de sesiones',
+        'distribucion_centro' => 'sesiones',
+
+        // Fase 6 — drill-down del tab Sesiones (columna RC + panel lateral)
+        // y tabla de eventos individuales del tab Pausas.
+        'col_rc' => 'RC',
+        'detalle_ver' => 'Ver detalle',
+        'detalle_titulo' => 'Detalle de la sesión',
+        'detalle_cerrar' => 'Cerrar',
+        'detalle_orden' => 'Orden de trabajo',
+        'detalle_mezcla' => 'Mezcla aplicada',
+        'detalle_preparado_por' => 'Preparado por',
+        'detalle_condiciones' => 'Condiciones',
+        'detalle_pausas' => 'Pausas de la sesión',
+        'detalle_sin_pausas' => 'Sin pausas registradas.',
+        'detalle_rc' => 'Captura del RC',
+        'detalle_rc_capturado' => 'Capturada y adjunta a la sesión.',
+        'detalle_rc_sin_evidencia' => 'Falta — bloquea la validación y el devengo.',
+        'detalle_rc_no_aplica' => 'La sesión todavía no vuela.',
+        'pausas_eventos_titulo' => 'Eventos del período',
+        'pausas_col_hora' => 'Hora',
+        'pausas_col_lote' => 'Lote',
+        'pausas_col_causa' => 'Causa',
+        'pausas_col_duracion' => 'Duración',
     ],
 
     'usuarios' => [
         'titulo' => 'Usuarios',
         'proximamente' => 'Próximamente: gestión de usuarios.',
+    ],
+
+    // Mockup de "Registro de la compañía" (GET /panel/organizacion, vista previa de SaaS multi-tenant)
+    'organizacion' => [
+        'titulo' => 'Registro de la compañía',
+        'subtitulo' => 'Gestión centralizada de tu organización y configuración de suscripción. Esta es una vista previa — sin guardado funcional en esta versión.',
+        'seccion_datos_empresa' => 'Datos de empresa',
+        'campo_nombre' => 'Nombre de empresa',
+        'campo_rubro' => 'Rubro',
+        'campo_logo' => 'Logo de empresa',
+        'seccion_contacto' => 'Datos de contacto',
+        'campo_email' => 'Correo electrónico',
+        'campo_telefono' => 'Teléfono',
+        'campo_direccion' => 'Dirección',
+        'seccion_plan' => 'Plan de suscripción',
+        'plan_group_label' => 'Elige tu plan de suscripción',
+        'plan_basico_nombre' => 'Básico',
+        'plan_basico_precio' => 'Bs 250',
+        'plan_basico_feat_1' => 'Hasta 3 usuarios',
+        'plan_basico_feat_2' => 'Sesiones y reportes básicos',
+        'plan_basico_feat_3' => 'Soporte por correo',
+        'plan_profesional_nombre' => 'Profesional',
+        'plan_profesional_precio' => 'Bs 450',
+        'plan_profesional_feat_1' => 'Hasta 10 usuarios',
+        'plan_profesional_feat_2' => 'Análisis avanzado y dashboard',
+        'plan_profesional_feat_3' => 'Soporte prioritario',
+        'plan_profesional_feat_4' => 'Integración con terceros',
+        'plan_enterprise_nombre' => 'Enterprise',
+        'plan_enterprise_precio' => 'Bs 1.200',
+        'plan_enterprise_feat_1' => 'Usuarios ilimitados',
+        'plan_enterprise_feat_2' => 'Análisis en tiempo real',
+        'plan_enterprise_feat_3' => 'Soporte dedicado 24/7',
+        'plan_enterprise_feat_4' => 'Multi-sucursal incluido',
+        'plan_enterprise_feat_5' => 'Personalización avanzada',
+        'plan_destacado' => 'Más elegido',
+        'plan_period' => '/mes',
+        'seccion_funcionalidades' => 'Funcionalidades',
+        'switch_multi_sucursal' => 'Habilitar multi-sucursal',
+        'switch_multi_sucursal_help' => 'Permite gestionar múltiples sucursales desde una sola cuenta.',
+        'vista_previa_nota' => 'Mockup visual — sin guardado real en esta versión',
+        'mock_rubro' => 'Fumigación aérea con drones',
+        'mock_logo_desc' => 'Logo de Agrocom SRL — transparente y listo para usar',
+        'mock_direccion' => 'Av. Simonó 1150, San Miguel de Tucumán, Argentina',
     ],
 
 ];

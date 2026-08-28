@@ -1,0 +1,119 @@
+/*
+ * Molecule: donut-chart (resources/views/components/molecules/donut-chart.blade.php)
+ * Anillo hueco con conic-gradient (CSS puro, cero librería) + leyenda —
+ * Fase 4 del rediseño de dashboard, docs/ganadosoft-dashboard.html §2.3
+ * traducido a tokens. El agujero usa --ag-color-surface-card para "flotar"
+ * igual que cualquier tarjeta (Fase 7 — ver theme-dark.css).
+ */
+
+.ag-donut-chart {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-5);
+}
+
+.ag-donut-chart__ring {
+    position: relative;
+    flex-shrink: 0;
+    width: 148px;
+    height: 148px;
+    border-radius: 50%;
+}
+
+.ag-donut-chart__hole {
+    position: absolute;
+    inset: 24px;
+    border-radius: 50%;
+    background: var(--ag-color-surface-card);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.ag-donut-chart__total {
+    font-family: var(--ag-font-family-display);
+    font-optical-sizing: auto;
+    font-weight: var(--ag-font-weight-regular);
+    font-size: 1.75rem;
+    line-height: 1;
+    color: var(--ag-color-text);
+}
+
+.ag-donut-chart__center-label {
+    margin-top: var(--ag-space-1);
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-donut-chart__legend {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-2);
+}
+
+.ag-donut-chart__legend-item {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-donut-chart__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: var(--ag-radius-pill);
+    flex-shrink: 0;
+}
+
+.ag-donut-chart__dot--success {
+    background: var(--ag-color-success);
+}
+
+.ag-donut-chart__dot--warning {
+    background: var(--ag-color-warning);
+}
+
+.ag-donut-chart__dot--info {
+    background: var(--ag-color-info);
+}
+
+.ag-donut-chart__dot--neutral {
+    background: var(--ag-color-text-faint);
+}
+
+.ag-donut-chart__legend-label {
+    flex: 1;
+    min-width: 0;
+    color: var(--ag-color-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ag-donut-chart__legend-value {
+    font-family: var(--ag-font-family-mono);
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-color-text);
+}
+
+.ag-donut-chart__legend-pct {
+    min-width: 3em;
+    text-align: right;
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+}
+
+@media (max-width: 767.98px) {
+    .ag-donut-chart {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--ag-space-4);
+    }
+}

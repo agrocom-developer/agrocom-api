@@ -34,6 +34,20 @@
     --ag-color-blue-500: #0d6efd;
     --ag-color-blue-100: #cfe2ff;
 
+    /* Extensión del rediseño del panel (quinta vuelta, maquetas 4a/5a/5b/5c):
+       el lenguaje aprobado usa un rojo ÓXIDO cálido para peligro (no el
+       carmín Bootstrap de red-500, que queda frío junto a los ocres) y un
+       azul acero oscurecido como texto "info" apto AA sobre su tenue
+       (blue-500 baja de 4.5:1 sobre blue-50/blue-100). Siguen siendo estados
+       universales no derivados del logo — por eso viven acá y no en
+       brand.css. */
+    --ag-color-red-50: #fbede9;
+    --ag-color-red-200: #f1d6ce;
+    --ag-color-red-600: #c0442e;
+    --ag-color-red-900: #6b2b20;
+    --ag-color-blue-50: #e4edf8;
+    --ag-color-blue-700: #1d5fa8;
+
     /* Espaciado — escala de 8px, compatible con los spacers de Bootstrap y la grilla de 8dp de Material */
     --ag-space-1: 0.25rem;
     --ag-space-2: 0.5rem;
@@ -48,17 +62,19 @@
        cifras tabulares (hectáreas, montos, códigos de sesión), no de uso general. */
     --ag-font-family-base: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
     --ag-font-family-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
-    /* Tipografía de titulares (HU-02, rediseño de login): ADICIONAL a
-       --ag-font-family-base, nunca la reemplaza — solo para headlines
-       grandes tipo hero (wordmark, título de login/recuperar, headline
-       editorial sobre drone-hero.jpg). Reemplaza a "Instrument Serif"
-       (tercera vuelta): a los tamaños grandes que usa este token (38-44px)
-       se leía muy angosta/apretada — pedido explícito del usuario de buscar
-       una alternativa. "Fraunces" (variable, `@fontsource-variable/fraunces`,
-       import `standard.css` en app.css) es notablemente más ancha/cálida a
-       igual tamaño, tiene eje óptico (`opsz`) que se ajusta solo con
-       `font-optical-sizing: auto` — por eso los usos de este token en
-       auth-layout.css/login-form.css agregan esa propiedad. */
+    /* Tipografía de titulares: ADICIONAL a --ag-font-family-base, nunca la
+       reemplaza — para headlines/títulos de página/cifras de KPI. "Fraunces"
+       (variable, `@fontsource-variable/fraunces`, import `standard.css` en
+       app.css), con eje óptico que se ajusta solo vía
+       `font-optical-sizing: auto` en los consumidores. Es LA fuente display
+       del sistema (confirmado el 28/8/2026, quinta vuelta): el mockup del
+       panel traía Instrument Serif, pero el sistema ya la había reemplazado
+       por Fraunces (tercera vuelta del login, se leía muy angosta) — se
+       mantiene Fraunces y los TAMAÑOS del panel se calibran a su métrica
+       más ancha (títulos/cifras un punto por debajo del mockup donde el
+       contenedor es angosto, ver los componentes del panel). Tres familias,
+       una por contexto: Fraunces títulos/cifras protagonistas, IBM Plex
+       Sans interfaz/subtítulos, IBM Plex Mono datos/metadatos. */
     --ag-font-family-display: 'Fraunces Variable', 'Fraunces', ui-serif, Georgia, 'Times New Roman', serif;
     --ag-font-size-xs: 0.75rem;
     --ag-font-size-sm: 0.875rem;

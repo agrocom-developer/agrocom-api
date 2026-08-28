@@ -1,73 +1,177 @@
 /*
  * Organism: topbar (resources/views/components/organisms/topbar.blade.php)
- * Base: flex de Bootstrap para la estructura; el botón hamburguesa dispara
- * el `offcanvas` nativo de sidebar-nav; el popover de rol es un `dropdown`
- * nativo (Popper incluido, cada trigger ancla el suyo propio — por eso las
- * reglas `.ag-role-popover`/`.ag-role-list` de acá también las usa el pie de
- * organisms/sidebar-nav sin redeclararlas, mismo skin, misma clase).
+ * Header del layout de tres niveles (quinta vuelta, maqueta 4a): 62px de
+ * alto fijo con overflow hidden; el buscador es el ÚNICO hijo que cede
+ * espacio (flex:1 1 300px, min 220 / max 400) — todo lo demás va
+ * flex:0 0 auto + nowrap, exactamente la receta anti-desborde de la
+ * consigna. En tablet (maqueta 5a) se compacta a 58px ocultando breadcrumb,
+ * campaña y período; en móvil (<768) se oculta entero (lo reemplaza
+ * organisms/mobile-topbar, al final de este archivo).
+ *
+ * También viven acá los skins compartidos de popover (notificaciones, menú
+ * de usuario) — dropdowns nativos de Bootstrap con animación propia.
  */
 
 .ag-topbar {
-    height: 4rem;
-    flex-shrink: 0;
+    height: 62px;
+    flex: 0 0 62px;
     display: flex;
     align-items: center;
     gap: var(--ag-space-3);
     padding: 0 var(--ag-space-5);
-    background: var(--ag-color-bg-elevated);
+    overflow: hidden;
+    background: var(--ag-color-bg-chrome);
     border-bottom: 1px solid var(--ag-color-border);
-    position: sticky;
-    top: 0;
-    z-index: 20;
 }
 
-.ag-topbar__hamburger {
-    display: none;
+/* Dos bloques explícitos (sexta vuelta parte 2) — antes el header dependía
+   solo del flex:1 del buscador para empujar todo lo demás a la derecha. */
+.ag-topbar__left {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
     align-items: center;
-    justify-content: center;
-    width: 2.5rem;
-    height: 2.5rem;
-    border: none;
-    border-radius: var(--ag-radius-pill);
-    background: transparent;
-    color: var(--ag-color-text-muted);
-    cursor: pointer;
-    transition:
-        background-color var(--ag-transition-fast),
-        color var(--ag-transition-fast);
-}
-
-.ag-topbar__hamburger:hover {
-    background: var(--ag-color-primary-subtle);
-    color: var(--ag-color-primary-emphasis);
-}
-
-.ag-topbar__spacer {
-    flex: 1;
+    gap: var(--ag-space-3);
+    overflow: hidden;
 }
 
 .ag-topbar__right {
+    flex: 0 0 auto;
     display: flex;
     align-items: center;
     gap: var(--ag-space-3);
 }
 
-.ag-role-badge {
-    display: inline-flex;
+.ag-topbar__breadcrumb {
+    flex: 0 0 auto;
+    display: flex;
     align-items: center;
-    background: var(--ag-color-accent-subtle);
-    color: var(--ag-color-accent-contrast);
-    font-size: var(--ag-font-size-xs);
-    font-weight: var(--ag-font-weight-medium);
-    padding: var(--ag-space-1) var(--ag-space-3);
-    border-radius: var(--ag-radius-pill);
-    max-width: 10rem;
-    overflow: hidden;
+    gap: var(--ag-space-1);
+    white-space: nowrap;
+    font-size: 0.78rem;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-topbar__breadcrumb-sep {
+    font-size: 0.9375rem;
+}
+
+.ag-topbar__breadcrumb-current {
+    color: var(--ag-color-text);
+    font-weight: var(--ag-font-weight-bold);
+}
+
+/* Buscador global — el único elemento flexible del header. */
+.ag-topbar__search {
+    flex: 1 1 300px;
+    min-width: 220px;
+    max-width: 400px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    padding: 0 var(--ag-space-3);
+    background: var(--ag-color-bg-input-chrome);
+    border: 1px solid var(--ag-color-border);
+    border-radius: 9px;
+    cursor: text;
+}
+
+.ag-topbar__search:focus-within {
+    outline: 2px solid var(--ag-color-focus-ring);
+    outline-offset: 1px;
+}
+
+.ag-topbar__search-icon {
+    flex: 0 0 auto;
+    color: var(--ag-color-text-faint);
+}
+
+.ag-topbar__search-input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    font-family: var(--ag-font-family-base);
+    font-size: 0.8125rem;
+    color: var(--ag-color-text);
     text-overflow: ellipsis;
     white-space: nowrap;
+    overflow: hidden;
+}
+
+.ag-topbar__search-input::placeholder {
+    color: var(--ag-color-text-muted);
+}
+
+.ag-topbar__search-input:focus {
+    outline: none;
+}
+
+.ag-topbar__search-kbd {
+    flex: 0 0 auto;
+    font-family: var(--ag-font-family-mono);
+    font-size: 0.656rem;
+    color: var(--ag-color-text-muted);
+    border: 1px solid var(--ag-color-border-strong);
+    border-radius: 5px;
+    padding: 1px 5px;
+    background: transparent;
+}
+
+/* Chip de campaña activa. */
+.ag-topbar__campaign {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    white-space: nowrap;
+    padding: var(--ag-space-1) var(--ag-space-3);
+    background: var(--ag-color-success-subtle);
+    border: 1px solid var(--ag-color-primary-border-subtle);
+    border-radius: var(--ag-radius-pill);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-color-success-strong);
+}
+
+.ag-topbar__campaign-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: var(--ag-radius-pill);
+    background: var(--ag-color-primary);
+}
+
+/* Selector de período. */
+.ag-topbar__period {
+    flex: 0 0 auto;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    white-space: nowrap;
+    padding: 0 var(--ag-space-3);
+    background: var(--ag-color-bg-chrome);
+    border: 1px solid var(--ag-color-border);
+    border-radius: 9px;
+    font-family: var(--ag-font-family-base);
+    font-size: 0.78rem;
+    color: var(--ag-color-text-muted);
+    cursor: pointer;
+}
+
+.ag-topbar__period .ag-icon,
+.ag-topbar__period-chevron {
+    color: var(--ag-color-text-faint);
+}
+
+/* Campana. */
+.ag-topbar__notifications {
+    flex: 0 0 auto;
 }
 
 .ag-topbar__icon-btn {
+    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -89,17 +193,52 @@
     color: var(--ag-color-primary-emphasis);
 }
 
+.ag-topbar__notifications-count {
+    position: absolute;
+    top: 1px;
+    right: 0;
+    min-width: 15px;
+    height: 15px;
+    padding: 0 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--ag-radius-pill);
+    background: var(--ag-color-danger);
+    color: var(--ag-color-gray-0);
+    font-size: 0.59rem;
+    font-weight: var(--ag-font-weight-bold);
+}
+
+/* Bloque de usuario: avatar + nombre + rol activo (mono ámbar, uppercase). */
+.ag-topbar__user-menu {
+    flex: 0 0 auto;
+    padding-left: var(--ag-space-3);
+    border-left: 1px solid var(--ag-color-border);
+}
+
 .ag-topbar__user {
     display: flex;
     align-items: center;
     gap: var(--ag-space-2);
-    font-size: var(--ag-font-size-sm);
-    font-weight: var(--ag-font-weight-medium);
+    white-space: nowrap;
+    border: none;
+    background: transparent;
+    padding: var(--ag-space-1);
+    border-radius: var(--ag-radius-md);
+    cursor: pointer;
+    font-family: var(--ag-font-family-base);
+    text-align: left;
+}
+
+.ag-topbar__user:hover,
+.ag-topbar__user[aria-expanded='true'] {
+    background: var(--ag-color-bg-row-hover);
 }
 
 .ag-topbar__avatar {
-    width: 2rem;
-    height: 2rem;
+    width: 1.9375rem;
+    height: 1.9375rem;
     flex-shrink: 0;
     border-radius: 50%;
     background: var(--ag-color-primary);
@@ -111,54 +250,54 @@
     font-weight: var(--ag-font-weight-bold);
 }
 
+.ag-topbar__user-id {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+}
+
 .ag-topbar__user-name {
+    font-size: 0.78rem;
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-color-text);
     white-space: nowrap;
 }
 
-@media (max-width: 991.98px) {
-    .ag-topbar__hamburger {
-        display: inline-flex;
-    }
-
-    .ag-topbar__user-name {
-        display: none;
-    }
+.ag-topbar__user-role {
+    font-family: var(--ag-font-family-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ag-color-accent-link);
 }
 
 /*
- * Popover de cambio de rol (dropdown-menu con skin propio), compartido por
- * organisms/topbar y el pie de organisms/sidebar-nav. `display: block` con
- * `!important` es deliberado: pisa el `.dropdown-menu { display: none }` de
- * Bootstrap a propósito para poder animar con opacity/transform/visibility
- * en vez del salto instantáneo de `display` — el propio Bootstrap resuelve
- * su `.show` con la misma técnica de "ganarle a su regla por defecto".
+ * Popovers (dropdown-menu de Bootstrap con skin propio). `display: block`
+ * con `!important` es deliberado: pisa el `display: none` por defecto de
+ * Bootstrap para animar con opacity/transform/visibility — misma técnica
+ * que el propio Bootstrap usa con `.show`.
  */
-.ag-role-popover {
+.ag-notifications-popover,
+.ag-user-menu {
     display: block !important;
-    width: 20rem;
-    max-width: calc(100vw - var(--ag-space-6));
     background: var(--ag-color-bg-elevated);
     border: 1px solid var(--ag-color-border);
     border-radius: var(--ag-radius-lg);
     box-shadow: var(--ag-shadow-lg);
-    padding: var(--ag-space-4);
     margin-top: var(--ag-space-2) !important;
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
     transform: scale(0.95);
-    transform-origin: top left;
+    transform-origin: top right;
     transition:
         opacity 180ms var(--ag-ease-emphasized),
         transform 180ms var(--ag-ease-emphasized),
         visibility 0s linear 180ms;
 }
 
-.ag-role-popover.dropdown-menu-end {
-    transform-origin: top right;
-}
-
-.ag-role-popover.show {
+.ag-notifications-popover.show,
+.ag-user-menu.show {
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
@@ -169,30 +308,276 @@
         visibility 0s linear 0s;
 }
 
-.ag-role-popover__title {
+.ag-notifications-popover {
+    width: 20rem;
+    max-width: calc(100vw - var(--ag-space-6));
+    padding: var(--ag-space-4);
+}
+
+.ag-popover__title {
     font-size: var(--ag-font-size-sm);
     font-weight: var(--ag-font-weight-medium);
     color: var(--ag-color-text-muted);
     margin: 0 0 var(--ag-space-3);
 }
 
-.ag-role-list {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-2);
+.ag-notifications-popover__empty {
+    margin: 0;
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text-muted);
 }
 
-@media (max-width: 480px) {
-    .ag-role-popover {
-        width: calc(100vw - 2.5rem);
+.ag-notification-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-1);
+}
+
+.ag-notification-item {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-2) var(--ag-space-3);
+    border-radius: var(--ag-radius-md);
+}
+
+.ag-notification-item.is-unread {
+    background: var(--ag-color-primary-subtle);
+}
+
+.ag-notification-item__icon {
+    flex-shrink: 0;
+    color: var(--ag-color-primary-emphasis);
+}
+
+.ag-notification-item__body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.ag-notification-item__title {
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text);
+}
+
+.ag-notification-item__time {
+    font-family: var(--ag-font-family-mono);
+    font-size: 0.6875rem;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-notification-item__dot {
+    flex-shrink: 0;
+    align-self: center;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: var(--ag-radius-pill);
+    background: var(--ag-color-accent);
+}
+
+.ag-user-menu {
+    min-width: 12rem;
+    padding: var(--ag-space-2);
+}
+
+.ag-user-menu__item {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    border-radius: var(--ag-radius-md);
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text);
+    padding: var(--ag-space-2) var(--ag-space-3);
+}
+
+.ag-user-menu__item:hover {
+    background: var(--ag-color-primary-subtle);
+    color: var(--ag-color-text);
+    opacity: 1;
+}
+
+.ag-user-menu__icon {
+    color: var(--ag-color-text-muted);
+}
+
+.ag-user-menu__logout:hover .ag-user-menu__icon {
+    color: var(--ag-color-danger);
+}
+
+/* Tablet (maqueta 5a): header compacto de 58px — buscador + campana + tema
+   + usuario. */
+@media (min-width: 768px) and (max-width: 1199.98px) {
+    .ag-topbar {
+        height: 58px;
+        flex-basis: 58px;
+        padding: 0 var(--ag-space-4);
+    }
+
+    .ag-topbar__breadcrumb,
+    .ag-topbar__campaign,
+    .ag-topbar__period {
+        display: none;
+    }
+
+    .ag-topbar__search {
+        max-width: none;
     }
 }
 
-/* El popover ya está oculto por opacity+visibility+pointer-events cuando no
-   tiene `.show` — el `scale()` es un adorno de apertura, no lo que decide si
-   se ve o no. Seguro anular solo la duración. */
+/* Móvil: el header estándar desaparece — manda mobile-topbar. */
+@media (max-width: 767.98px) {
+    .ag-topbar {
+        display: none;
+    }
+}
+
+/*
+ * Organism: mobile-topbar (maqueta 5b) — header oscuro del móvil, con los
+ * tokens constantes del riel, + banda de breadcrumb clara debajo. Oculto
+ * fuera de <768px. Objetivos táctiles ≥44px (consigna).
+ */
+.ag-mobile-topbar {
+    display: none;
+    flex: 0 0 auto;
+    flex-direction: column;
+}
+
+.ag-mobile-topbar__bar {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-3) var(--ag-space-4);
+    background: var(--ag-color-bg-rail);
+}
+
+.ag-mobile-topbar__menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    margin-left: calc(var(--ag-space-2) * -1);
+    border: none;
+    border-radius: var(--ag-radius-pill);
+    background: transparent;
+    color: var(--ag-color-olive-150);
+    cursor: pointer;
+}
+
+/* `contain` — mismo motivo que .ag-rail__logo (wordmark bajo el isotipo). */
+.ag-mobile-topbar__logo {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 9px;
+    object-fit: contain;
+}
+
+.ag-mobile-topbar__id {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.3;
+}
+
+.ag-mobile-topbar__app {
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-color-olive-150);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ag-mobile-topbar__meta {
+    font-family: var(--ag-font-family-mono);
+    font-size: 0.59rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ag-color-text-rail-active);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ag-mobile-topbar__bell {
+    position: relative;
+    display: flex;
+    color: var(--ag-color-olive-150);
+}
+
+.ag-mobile-topbar__bell-count {
+    position: absolute;
+    top: -3px;
+    right: -4px;
+    min-width: 15px;
+    height: 15px;
+    padding: 0 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--ag-radius-pill);
+    background: var(--ag-color-red-600);
+    color: var(--ag-color-gray-0);
+    font-size: 0.59rem;
+    font-weight: var(--ag-font-weight-bold);
+}
+
+.ag-mobile-topbar__avatar {
+    width: 1.875rem;
+    height: 1.875rem;
+    border-radius: var(--ag-radius-pill);
+    background: var(--ag-color-bg-rail-active);
+    color: var(--ag-color-text-rail-active);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-bold);
+}
+
+.ag-mobile-topbar__crumb {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-2) var(--ag-space-4);
+    background: var(--ag-color-bg-chrome);
+    border-bottom: 1px solid var(--ag-color-border);
+    font-size: 0.78rem;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-mobile-topbar__crumb-icon {
+    color: var(--ag-color-primary-emphasis);
+}
+
+.ag-mobile-topbar__crumb-current {
+    color: var(--ag-color-text);
+    font-weight: var(--ag-font-weight-bold);
+}
+
+.ag-mobile-topbar__crumb-spacer {
+    flex: 1;
+}
+
+.ag-mobile-topbar__crumb-search {
+    color: var(--ag-color-text-faint);
+}
+
+@media (max-width: 767.98px) {
+    .ag-mobile-topbar {
+        display: flex;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
-    .ag-role-popover {
+    .ag-notifications-popover,
+    .ag-user-menu {
         transition-duration: 0.01ms !important;
     }
 }

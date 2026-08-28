@@ -9,18 +9,29 @@
 @import './logo.css';
 @import './input.css';
 @import './button.css';
+@import './badge.css';
+@import './switch.css';
 
-/* Molecules (HU-02) */
-@import './role-selector-item.css';
+/* Molecules */
 @import './theme-toggle.css';
 @import './menu-item.css';
+@import './stat-card.css';
+@import './plan-card.css';
+@import './form-section.css';
+@import './alert-strip.css';
+@import './role-card.css';
+@import './section-head.css';
+@import './donut-chart.css';
 
-/* Organisms (HU-02) */
+/* Organisms (quinta vuelta — layout de tres niveles) */
 @import './collapsible-menu-group.css';
 @import './login-form.css';
-@import './sidebar-nav.css';
+@import './module-rail.css';
+@import './module-sidebar.css';
+@import './module-drawer.css';
 @import './topbar.css';
+@import './tabs.css';
 
-/* Templates (HU-02) */
+/* Templates */
 @import './panel-layout.css';
 @import './auth-layout.css';

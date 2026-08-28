@@ -5,6 +5,7 @@ namespace App\Dominios\Seguridad\Aplicacion;
 use App\Dominios\Seguridad\Dominio\Excepciones\RolNoAsignado;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
+use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUserPreferencia;
 use Illuminate\Support\Facades\Session;
 
 /**
@@ -46,7 +47,35 @@ final class ElegirRolActivo
 
         Session::put(self::CLAVE_SESION, $rol->id);
 
+        $this->registrarUltimoRol($usuario, $rol);
+
         return $rol;
+    }
+
+    /**
+     * Registra `sec_user_preferencia.ultimo_rol_id` (badge "ÚLTIMO USADO" de
+     * la pantalla de selección, quinta vuelta — maqueta 5c). Va acá y no en
+     * cada llamador porque esta clase ya es el ÚNICO punto que activa roles
+     * (ver docblock de la clase) — cualquier activación, venga del login, del
+     * selector o del middleware, ES el "último rol usado". Puramente
+     * informativo: nunca gobierna permisos ni se revalida acá.
+     */
+    private function registrarUltimoRol(SecUser $usuario, SecRole $rol): void
+    {
+        $preferencia = SecUserPreferencia::query()->firstOrNew(['user_id' => $usuario->id]);
+
+        if ($preferencia->ultimo_rol_id === $rol->id) {
+            return;
+        }
+
+        $preferencia->ultimo_rol_id = $rol->id;
+
+        if (! $preferencia->exists) {
+            $preferencia->created_by = $usuario->id;
+        }
+        $preferencia->updated_by = $usuario->id;
+
+        $preferencia->save();
     }
 
     private function rolVivoDelUsuario(SecUser $usuario, int $idRol): ?SecRole

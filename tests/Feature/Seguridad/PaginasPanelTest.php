@@ -95,9 +95,22 @@ it('el dashboard responde 200 con el árbol de menú del rol activo de la sesió
     $respuesta->assertOk()
         ->assertViewIs('seguridad::pages.dashboard')
         ->assertViewHas('rolActivoId', $idDueno)
-        ->assertViewHas('activeRoleLabel', 'dueno')
+        // Nombre LEGIBLE del rol (PresentadorRol, quinta vuelta — maqueta
+        // 4a: el header muestra "Dueño", nunca el slug `dueno`).
+        ->assertViewHas('activeRoleLabel', 'Dueño')
         ->assertViewHas('userName', $usuario->name)
         ->assertViewHas('menu', fn (array $menu): bool => $menu !== [] && $menu[0] instanceof ItemMenu);
+});
+
+it('la página de organización responde 200 para cualquier rol activo (sin permiso propio)', function () {
+    $usuario = SecUser::factory()->create();
+    $idPiloto = panelAsignarRol($usuario, 'piloto');
+
+    $this->actingAs($usuario, 'interno')->withSession(['sec_rol_activo_id' => $idPiloto]);
+
+    $this->get(route('panel.organizacion.index'))
+        ->assertOk()
+        ->assertViewIs('seguridad::pages.organizacion.index');
 });
 
 it('el dashboard sin rol activo resoluble no deja pasar (409 vía middleware rol.activo)', function () {

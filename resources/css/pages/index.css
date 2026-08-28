@@ -1,0 +1,12 @@
+/*
+ * CSS específico de páginas (app/Dominios/{Modulo}/Infraestructura/Http/Views/pages/).
+ * Distinto de ../components/: esto NO es catálogo Atomic Design (no lo
+ * mantiene `design-ui`, no es reutilizable entre pantallas) — es el layout
+ * propio de una página concreta que ya no entra en un `style=""` inline
+ * razonable. Mismo criterio de "cero color/tamaño hardcodeado, todo por
+ * token de ../tokens/" que el resto del sistema (CLAUDE.md invariante 11).
+ */
+
+@import './dashboard.css';
+@import './organizacion.css';
+@import './seleccionar-rol.css';
