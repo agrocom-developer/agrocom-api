@@ -23,8 +23,18 @@
        color siga existiendo. El negro puro queda solo debajo del riel
        (--ag-color-bg-rail, constante). */
     --ag-color-bg: var(--ag-color-bg-auth);
-    --ag-color-bg-elevated: color-mix(in srgb, var(--ag-color-olive-900) 22%, var(--ag-color-gray-850) 78%);
-    --ag-color-bg-chrome: color-mix(in srgb, var(--ag-color-olive-900) 22%, var(--ag-color-gray-850) 78%);
+
+    /* Fase 7 (sexta vuelta parte 2, contraste sistémico): antes bg-elevated/
+       bg-chrome/surface-card eran EL MISMO valor (color-mix(olive-900 22%,
+       gray-850 78%)) — sin ningún salto de luminosidad perceptible entre
+       "chrome" y "tarjeta" (~2 unidades de RGB de diferencia contra --ag-color-bg,
+       verificado con captura real, ver docs/gestion/plan_dashboard_rediseno.md
+       §3). Criterio Material dark theme: elevación = overlay de blanco
+       creciente sobre el fondo, en vez de mezclas de marca independientes
+       que casualmente convergían al mismo tono. Riel (--ag-color-bg-rail,
+       más abajo) sigue siendo constante y el más oscuro — no se toca. */
+    --ag-color-bg-elevated: color-mix(in srgb, white 4%, var(--ag-color-bg-auth) 96%);
+    --ag-color-bg-chrome: color-mix(in srgb, white 4%, var(--ag-color-bg-auth) 96%);
     --ag-color-overlay: rgba(0, 0, 0, 0.7);
 
     /* Texto — crema (gris-100 entibiado con ámbar-100) sobre las olivas
@@ -98,19 +108,34 @@
     --ag-color-text-rail: var(--ag-color-olive-300);
     --ag-color-text-rail-active: var(--ag-color-green-200);
 
-    /* Tarjetas y tablas — pares oscuros de los tokens de theme-light.css,
-       todos mezclas oliva-sobre-gris. */
-    --ag-color-surface-card: color-mix(in srgb, var(--ag-color-olive-900) 22%, var(--ag-color-gray-850) 78%);
-    --ag-color-border-card: color-mix(in srgb, var(--ag-color-olive-900) 45%, var(--ag-color-gray-800) 55%);
-    --ag-color-bg-table-head: color-mix(in srgb, var(--ag-color-olive-900) 30%, var(--ag-color-gray-850) 70%);
-    --ag-color-border-row: color-mix(in srgb, var(--ag-color-olive-900) 45%, var(--ag-color-gray-850) 55%);
-    --ag-color-bg-row-hover: color-mix(in srgb, var(--ag-color-olive-900) 35%, var(--ag-color-gray-850) 65%);
+    /* Tarjetas y tablas — Fase 7: un escalón MÁS luminoso que
+       --ag-color-bg-chrome (8% de overlay blanco vs 4%), no el mismo valor
+       — la tarjeta "flota" sobre el chrome que la rodea, mismo criterio de
+       elevación por overlay que arriba. */
+    --ag-color-surface-card: color-mix(in srgb, white 8%, var(--ag-color-bg-auth) 92%);
 
-    --ag-color-bg-input-chrome: color-mix(in srgb, var(--ag-color-olive-900) 35%, var(--ag-color-gray-850) 65%);
+    /* Escalones DENTRO/sobre la tarjeta (cabecera de tabla, hover de fila,
+       borde) — más luminosos que --ag-color-surface-card (8%), no atados a
+       la mezcla de marca vieja que quedaba más oscura que la propia
+       tarjeta nueva. */
+    --ag-color-border-card: color-mix(in srgb, white 20%, var(--ag-color-bg-auth) 80%);
+    --ag-color-bg-table-head: color-mix(in srgb, white 12%, var(--ag-color-bg-auth) 88%);
+    --ag-color-border-row: color-mix(in srgb, white 16%, var(--ag-color-bg-auth) 84%);
+    --ag-color-bg-row-hover: color-mix(in srgb, white 12%, var(--ag-color-bg-auth) 88%);
+
+    --ag-color-bg-input-chrome: color-mix(in srgb, white 12%, var(--ag-color-bg-auth) 88%);
 
     --ag-color-primary-border-subtle: rgba(140, 198, 63, 0.35);
 
-    --ag-color-track: color-mix(in srgb, var(--ag-color-olive-900) 45%, var(--ag-color-gray-850) 55%);
+    /* Borde tenue ámbar (badge de pendientes de menu-item) — mismo criterio
+       que --ag-color-primary-border-subtle: sistema_diseno_panel.md §8
+       regla 3/4. */
+    --ag-color-accent-border-subtle: rgba(245, 166, 35, 0.35);
+
+    /* Pista de barra de progreso: deliberadamente MENOS luminosa que
+       --ag-color-surface-card (6% vs 8%) — es un surco/inset dentro de la
+       tarjeta, no una superficie que deba "flotar". */
+    --ag-color-track: color-mix(in srgb, white 6%, var(--ag-color-bg-auth) 94%);
     --ag-color-bar-unassigned: var(--ag-color-gray-600);
 
     /* Mismo valor que theme-light.css, a propósito — ver el comentario de
