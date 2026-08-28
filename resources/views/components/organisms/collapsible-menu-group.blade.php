@@ -16,7 +16,7 @@
     - icon (nullable): ícono del grupo.
     - items (requerido): lista de ítems hijo, cada uno con la forma de
       `ItemMenu` (o un array equivalente: label/icono|icon/ruta|href/active/
-      badge/permission) — acepta ambas formas vía `data_get()`.
+      badge/badgeTitle/permission) — acepta ambas formas vía `data_get()`.
     - open (bool, default false): estado inicial. Se fuerza a `true` además
       si algún hijo está `active` (no se puede mostrar un grupo colapsado con
       la sección actual adentro, oculta).
@@ -69,6 +69,7 @@
                 :href="$ruta && \Route::has($ruta) ? route($ruta) : $ruta"
                 :active="(bool) data_get($item, 'active', false)"
                 :badge="data_get($item, 'badge')"
+                :badge-title="data_get($item, 'badgeTitle')"
                 :permission="data_get($item, 'permission')"
                 :stagger-index="$index"
                 class="ag-menu-group__item"

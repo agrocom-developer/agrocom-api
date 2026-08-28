@@ -14,15 +14,66 @@
     min-height: 0;
     background: var(--ag-color-bg-chrome);
     border-right: 1px solid var(--ag-color-border);
+    transition: flex-basis 220ms var(--ag-ease-drawer);
+}
+
+/* Colapsado (sexta vuelta parte 2): icon-rail angosto — mismo criterio de
+   ancho que organisms/module-rail (nivel 1), pero es un componente propio
+   (nivel 2, ítems del módulo activo, no los módulos del riel). */
+.ag-module-sidebar.is-collapsed {
+    flex-basis: 72px;
 }
 
 .ag-module-sidebar__header {
     flex: 0 0 auto;
     display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-1);
+    align-items: flex-start;
+    gap: var(--ag-space-2);
     padding: var(--ag-space-5) var(--ag-space-4) var(--ag-space-4);
     border-bottom: 1px solid var(--ag-color-border-row);
+}
+
+.ag-module-sidebar.is-collapsed .ag-module-sidebar__header {
+    justify-content: center;
+    padding-inline: var(--ag-space-3);
+}
+
+.ag-module-sidebar__toggle {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: var(--ag-radius-sm);
+    background: transparent;
+    color: var(--ag-color-text-muted);
+    cursor: pointer;
+    transition:
+        background-color var(--ag-transition-fast),
+        color var(--ag-transition-fast);
+}
+
+.ag-module-sidebar__toggle:hover {
+    background: var(--ag-color-bg-row-hover);
+    color: var(--ag-color-text);
+}
+
+.ag-module-sidebar__toggle:focus-visible {
+    outline: 2px solid var(--ag-color-focus-ring);
+    outline-offset: 2px;
+}
+
+.ag-module-sidebar__heading {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-1);
+    min-width: 0;
+}
+
+.ag-module-sidebar.is-collapsed .ag-module-sidebar__heading {
+    display: none;
 }
 
 .ag-module-sidebar__title {
@@ -33,6 +84,9 @@
     font-size: 1.375rem;
     line-height: 1.1;
     color: var(--ag-color-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .ag-module-sidebar__desc {
@@ -52,10 +106,31 @@
     padding: var(--ag-space-3);
 }
 
+/* Colapsado: ítems centrados, solo ícono (label/badge ocultos — mismo
+   criterio ya usado en este componente para el breakpoint <1200px de más
+   abajo: ocultar por completo en vez de truncar). */
+.ag-module-sidebar.is-collapsed .ag-menu-item {
+    justify-content: center;
+    padding-inline: 0;
+}
+
+.ag-module-sidebar.is-collapsed .ag-menu-item__label,
+.ag-module-sidebar.is-collapsed .ag-menu-item__badge {
+    display: none;
+}
+
 .ag-module-sidebar__footer {
     flex: 0 0 auto;
     padding: var(--ag-space-3) var(--ag-space-4);
     border-top: 1px solid var(--ag-color-border-row);
+}
+
+.ag-module-sidebar.is-collapsed .ag-module-sidebar__role-link {
+    justify-content: center;
+}
+
+.ag-module-sidebar.is-collapsed .ag-module-sidebar__role-link span {
+    display: none;
 }
 
 /* Compartido con el pie de organisms/module-drawer (mismo skin). */
@@ -87,5 +162,11 @@
 @media (max-width: 1199.98px) {
     .ag-module-sidebar {
         display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ag-module-sidebar {
+        transition-duration: 0.01ms;
     }
 }

@@ -52,6 +52,7 @@
                     'href' => $item['href'],
                     'active' => $item['active'],
                     'badge' => $item['badge'],
+                    'badgeTitle' => $item['badgeTitle'] ?? null,
                 ])->all()"
                 :stagger-index="$index"
             />

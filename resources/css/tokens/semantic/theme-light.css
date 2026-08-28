@@ -130,6 +130,12 @@
        de rol seleccionada usa --ag-color-primary directo). */
     --ag-color-primary-border-subtle: color-mix(in srgb, var(--ag-color-green-500) 30%, var(--ag-color-sand-50) 70%);
 
+    /* Borde tenue ámbar (badge de pendientes de menu-item) — mismo criterio
+       que --ag-color-primary-border-subtle: sistema_diseno_panel.md §8
+       regla 3/4, un chip sobre una superficie de chrome ya tintada necesita
+       borde propio del mismo tono que su texto para no leerse plano. */
+    --ag-color-accent-border-subtle: color-mix(in srgb, var(--ag-color-amber-500) 30%, var(--ag-color-sand-50) 70%);
+
     /* Barras de progreso de "Pausas por causa": pista + el "piedra" de la
        barra sin causa asignada (las demás barras reutilizan accent /
        info-strong / danger / text-faint — no-texto, exigencia 3:1). */

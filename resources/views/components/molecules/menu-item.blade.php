@@ -14,7 +14,12 @@
     - href (nullable): URL ya resuelta. Sin ella, renderiza <button> (grupo
       sin acción propia, o placeholder).
     - active (bool, default false): estado visual + `aria-current`.
-    - badge (nullable, string|int): contador opcional.
+    - badge (nullable, string|int): SOLO el número/contador corto que se
+      pinta en el pill (p. ej. "3", "12") — nunca la frase completa.
+    - badgeTitle (nullable string): frase completa del contador (p. ej.
+      "Hoy · 3"), se resuelve como tooltip nativo de Bootstrap
+      (`data-bs-toggle="tooltip"`, inicializado globalmente en app.js) sobre
+      el badge — sin ella el badge no lleva tooltip.
     - permission (nullable string): código `sec_permission`, informativo —
       esta molécula no consulta `sec_*`, el filtrado ya ocurrió antes
       (App\Dominios\Seguridad\Aplicacion\ObtenerMenuPorRolActivo).
@@ -29,6 +34,7 @@
     'href' => null,
     'active' => false,
     'badge' => null,
+    'badgeTitle' => null,
     'permission' => null,
     'staggerIndex' => null,
 ])
@@ -52,7 +58,14 @@
         @endif
         <span class="ag-menu-item__label">{{ $resolvedLabel }}</span>
         @if ($badge !== null)
-            <span class="ag-menu-item__badge">{{ $badge }}</span>
+            <span
+                class="ag-menu-item__badge"
+                @if ($badgeTitle)
+                    data-bs-toggle="tooltip"
+                    data-bs-placement="right"
+                    data-bs-title="{{ $badgeTitle }}"
+                @endif
+            >{{ $badge }}</span>
         @endif
     </a>
 @else
@@ -68,7 +81,14 @@
         @endif
         <span class="ag-menu-item__label">{{ $resolvedLabel }}</span>
         @if ($badge !== null)
-            <span class="ag-menu-item__badge">{{ $badge }}</span>
+            <span
+                class="ag-menu-item__badge"
+                @if ($badgeTitle)
+                    data-bs-toggle="tooltip"
+                    data-bs-placement="right"
+                    data-bs-title="{{ $badgeTitle }}"
+                @endif
+            >{{ $badge }}</span>
         @endif
     </button>
 @endif

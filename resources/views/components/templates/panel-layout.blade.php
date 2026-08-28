@@ -33,8 +33,10 @@
       pantalla de selección con `?cambiar=1`).
     - activeRoleLabel / userName (nullable string).
     - notifications (list, default []): ver organisms/topbar.
-    - menuBadges (array<string,string>, default []): contadores de
-      pendientes por clave `label` de sec_menu (demo — DatosDemoPanel).
+    - menuBadges (array<string, array{numero: string, texto: string}>,
+      default []): contadores de pendientes por clave `label` de sec_menu
+      (demo — DatosDemoPanel). `numero` es lo que pinta el badge; `texto`,
+      la frase completa que se resuelve como tooltip en menu-item.
     - campana / periodo / version (nullable string): chips del header y pie.
     - vistaActual (nullable string): segundo tramo del breadcrumb
       ("Módulo › Vista"), ya traducido por la página. Default: el label del
@@ -79,7 +81,13 @@
                 'icono' => data_get($item, 'icono'),
                 'href' => $resolverHref($ruta),
                 'active' => $ruta !== null && $ruta === $rutaActual,
-                'badge' => $menuBadges[$label] ?? null,
+                // OJO: acceso directo al array, NUNCA data_get() acá — $label
+                // ya es en sí mismo la clave completa (p. ej.
+                // "menu.operacion.items.programacion") y data_get()
+                // interpreta sus puntos como un path anidado, no como parte
+                // de la clave literal.
+                'badge' => $menuBadges[$label]['numero'] ?? null,
+                'badgeTitle' => $menuBadges[$label]['texto'] ?? null,
             ];
         })->values();
 
