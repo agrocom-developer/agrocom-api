@@ -149,6 +149,58 @@ final class DatosDemoPanel
     }
 
     /**
+     * Detalle de clientes (Fase 5 — actividad reciente + estado de contrato
+     * combinados en una sola sección de Resumen). `contrato.estado` usa los
+     * valores REALES de `App\Dominios\Comercial\Dominio\EstadoContrato`
+     * como string literal documentado — Seguridad no importa el enum de
+     * Comercial (cruzar así violaría el aislamiento entre módulos de la
+     * arquitectura modular, ADR 0003); si `EstadoContrato` cambia sus
+     * valores, este mock queda desincronizado hasta que el caso de uso real
+     * lo reemplace.
+     *
+     * @return list<array{
+     *     cliente: string, nit: string,
+     *     contrato: array{estado: string, hectareasContratadas: string, hectareasEjecutadas: string, pctEjecutado: float, fechaFin: string, diasParaVencer: int},
+     *     actividad: array{sesionesPeriodo: int, hectareasPeriodo: string, ultimaSesion: string}
+     * }>
+     */
+    public function detalleClientes(): array
+    {
+        return [
+            [
+                'cliente' => 'Agropecuaria San Marcos S.R.L.',
+                'nit' => '1023456789',
+                'contrato' => ['estado' => 'vigente', 'hectareasContratadas' => '450 ha', 'hectareasEjecutadas' => '312,5 ha', 'pctEjecutado' => 69.4, 'fechaFin' => '30/11/2026', 'diasParaVencer' => 94],
+                'actividad' => ['sesionesPeriodo' => 8, 'hectareasPeriodo' => '160 ha', 'ultimaSesion' => 'Hoy, 07:10'],
+            ],
+            [
+                'cliente' => 'El Carmen Agroindustrial S.A.',
+                'nit' => '1078451234',
+                'contrato' => ['estado' => 'vigente', 'hectareasContratadas' => '620 ha', 'hectareasEjecutadas' => '598 ha', 'pctEjecutado' => 96.5, 'fechaFin' => '15/09/2026', 'diasParaVencer' => 18],
+                'actividad' => ['sesionesPeriodo' => 6, 'hectareasPeriodo' => '112 ha', 'ultimaSesion' => 'Hoy, 08:30'],
+            ],
+            [
+                'cliente' => 'Grupo Santa Rosa',
+                'nit' => '1055987654',
+                'contrato' => ['estado' => 'vigente', 'hectareasContratadas' => '300 ha', 'hectareasEjecutadas' => '130 ha', 'pctEjecutado' => 43.3, 'fechaFin' => '28/02/2027', 'diasParaVencer' => 184],
+                'actividad' => ['sesionesPeriodo' => 3, 'hectareasPeriodo' => '130 ha', 'ultimaSesion' => 'Hoy, 11:15'],
+            ],
+            [
+                'cliente' => 'La Loma Cultivos',
+                'nit' => '1099112233',
+                'contrato' => ['estado' => 'finalizado', 'hectareasContratadas' => '200 ha', 'hectareasEjecutadas' => '200 ha', 'pctEjecutado' => 100.0, 'fechaFin' => '20/08/2026', 'diasParaVencer' => -8],
+                'actividad' => ['sesionesPeriodo' => 0, 'hectareasPeriodo' => '0 ha', 'ultimaSesion' => '22/08, 09:15'],
+            ],
+            [
+                'cliente' => 'Hacienda Warnes Sur',
+                'nit' => '1044556677',
+                'contrato' => ['estado' => 'borrador', 'hectareasContratadas' => '500 ha', 'hectareasEjecutadas' => '0 ha', 'pctEjecutado' => 0.0, 'fechaFin' => '31/01/2027', 'diasParaVencer' => 155],
+                'actividad' => ['sesionesPeriodo' => 0, 'hectareasPeriodo' => '0 ha', 'ultimaSesion' => 'Sin sesiones'],
+            ],
+        ];
+    }
+
+    /**
      * Programación de hoy (maqueta 4a — 5 sesiones con el vocabulario de
      * estados de la maqueta; el label de cada estado sale de
      * `lang/es/operaciones.php`).

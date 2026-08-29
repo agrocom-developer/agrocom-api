@@ -131,8 +131,14 @@
                             </div>
                         </section>
 
-                        {{-- Fase 5 (pendiente): detalle de clientes — actividad
-                             reciente + estado de contrato combinados. --}}
+                        {{-- Detalle de clientes: actividad reciente + estado de
+                             contrato combinados. --}}
+                        <section>
+                            <x-molecules.section-head :title="__('seguridad.dashboard.seccion_clientes')" />
+                            <div class="ag-card">
+                                @include('seguridad::pages.dashboard._detalle-clientes', ['clientes' => $detalleClientes])
+                            </div>
+                        </section>
 
                         {{-- Grilla 1.55fr/1fr (escritorio); apilada en tablet;
                              en móvil la reemplaza el bloque de fichas. --}}

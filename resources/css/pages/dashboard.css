@@ -195,6 +195,41 @@
     padding: var(--ag-space-3) var(--ag-space-4);
 }
 
+/* Fase 5 — tabla de detalle de clientes: 6 columnas propias, más anchas que
+   la grilla de sesiones (nombre de cliente + barra de ejecución). Sin
+   variante de tablet/móvil (ver _detalle-clientes.blade.php): en vez de
+   ocultarse bajo el breakpoint de .ag-table, mantiene su grilla fija y
+   scrollea horizontal dentro de .ag-table-scroll. */
+.ag-table--clientes .ag-table__head,
+.ag-table--clientes .ag-table__row {
+    grid-template-columns: 1.8fr 1fr 100px 110px 180px 90px;
+    min-width: 780px;
+}
+
+.ag-table-scroll {
+    overflow-x: auto;
+}
+
+.ag-dash__clientes-ejecucion {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+}
+
+.ag-dash__clientes-track {
+    flex: 1;
+    min-width: 48px;
+}
+
+.ag-dash__clientes-vencido {
+    color: var(--ag-color-text-faint);
+}
+
+.ag-dash__clientes-por-vencer {
+    color: var(--ag-color-warning-strong);
+    font-weight: var(--ag-font-weight-bold);
+}
+
 .ag-table__dot {
     display: inline-block;
     width: 8px;
@@ -443,6 +478,13 @@
     background: var(--ag-color-bar-unassigned);
 }
 
+/* Fase 5 — barra de ejecución de contrato (% ha ejecutadas vs. contratadas):
+   siempre el mismo tono de progreso, independiente del estado del contrato
+   (ese ya lo comunica el badge de al lado). */
+.ag-bars__fill--primary {
+    background: var(--ag-color-primary);
+}
+
 .ag-bars--lg .ag-bars__track {
     height: 9px;
 }
@@ -523,6 +565,12 @@
 
     .ag-table {
         display: none;
+    }
+
+    /* Excepción: la tabla de clientes no tiene variante de tablet, se
+       mantiene con scroll horizontal (ver .ag-table-scroll arriba). */
+    .ag-table.ag-table--clientes {
+        display: block;
     }
 
     .ag-session-list {

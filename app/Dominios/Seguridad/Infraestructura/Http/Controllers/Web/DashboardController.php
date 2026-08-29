@@ -46,6 +46,7 @@ final class DashboardController
             'distribucion' => $demo->distribucionSesiones(),
             'hectareasPorDia' => $demo->hectareasPorDia(),
             'avanceMeta' => $demo->avanceMeta(),
+            'detalleClientes' => $demo->detalleClientes(),
             'sesiones' => $demo->sesiones(),
             'pausas' => $demo->pausas(),
             'stock' => $demo->stockBajoMinimo(),

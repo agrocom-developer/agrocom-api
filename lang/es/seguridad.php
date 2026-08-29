@@ -159,6 +159,19 @@ return [
         'seccion_avance_meta' => 'Avance de meta del mes',
         'avance_meta_label' => 'Cumplido',
         'avance_meta_pie' => ':valor ha de :meta ha planificadas',
+
+        // Fase 5 (novena vuelta) — detalle de clientes del tab Resumen:
+        // actividad reciente + estado de contrato combinados.
+        'seccion_clientes' => 'Clientes',
+        'clientes_col_cliente' => 'Cliente',
+        'clientes_col_actividad' => 'Actividad del período',
+        'clientes_col_ultima_sesion' => 'Última sesión',
+        'clientes_col_contrato' => 'Contrato',
+        'clientes_col_ejecucion' => 'Ejecución',
+        'clientes_col_vence' => 'Vence en',
+        'clientes_actividad' => ':sesiones sesiones · :ha',
+        'clientes_vencido' => 'Venció',
+        'clientes_vence_en' => ':dias días',
     ],
 
     'usuarios' => [
