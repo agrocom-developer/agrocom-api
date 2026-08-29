@@ -3,17 +3,18 @@
     vuelta, header del layout de tres niveles, maqueta 4a)
 
     62px de alto fijo (`flex:0 0 62px`, overflow hidden), agrupado en DOS
-    bloques explícitos (sexta vuelta parte 2 — `.ag-topbar__left`/`__right`,
-    pedido explícito del 28/8/2026: dejar de depender solo del `flex:1` del
-    buscador para separar los grupos):
-    - IZQUIERDA (`.ag-topbar__left`, cede el espacio sobrante): breadcrumb
-      "Módulo › Vista" · buscador global (alto 36px, el ÚNICO elemento que
-      cede espacio dentro del bloque: `flex:1 1 300px; min-width:220px;
-      max-width:400px`, atajo ⌘K).
-    - DERECHA (`.ag-topbar__right`, ancho fijo): usuario (con el ROL ACTIVO
-      visible bajo el nombre) · toggle de tema (segmented, molecule
-      theme-toggle) · campana con badge · selector de período · chip de
-      campaña activa — en ESE orden exacto, pedido explícito.
+    bloques explícitos (sexta vuelta parte 2 — `.ag-topbar__left`/`__right`;
+    auditoría visual externa obs. #6, 28/8/2026: `__left` dejó de crecer con
+    `flex:1` — antes se estiraba de más y dejaba un vacío antes del bloque
+    derecho):
+    - IZQUIERDA (`.ag-topbar__left`, ahora `flex:0 0 auto`, sin ceder
+      espacio sobrante): breadcrumb "Módulo › Vista" · buscador global (alto
+      36px, `flex:0 1 480px; min-width:220px; max-width:480px`, atajo ⌘K).
+    - DERECHA (`.ag-topbar__right`, ancho fijo, `margin-left:auto` para
+      anclarse al extremo): usuario (con el ROL ACTIVO visible bajo el
+      nombre) · toggle de tema (segmented, molecule theme-toggle) · campana
+      con badge · selector de período · chip de campaña activa — en ESE
+      orden exacto, pedido explícito.
     Todo salvo el buscador lleva `flex:0 0 auto; white-space:nowrap` — ver
     topbar.css. En tablet (<1200) el header se compacta: breadcrumb, campaña
     y período se ocultan (maqueta 5a). En móvil (<768) este header entero se

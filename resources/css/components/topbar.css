@@ -25,9 +25,13 @@
 }
 
 /* Dos bloques explícitos (sexta vuelta parte 2) — antes el header dependía
-   solo del flex:1 del buscador para empujar todo lo demás a la derecha. */
+   solo del flex:1 del buscador para empujar todo lo demás a la derecha.
+   Auditoría visual externa, obs. #6: ese flex:1 en __left se estiraba de
+   más y dejaba un vacío entre el buscador y el bloque derecho — ahora
+   __left solo ocupa lo que su contenido necesita y __right se ancla al
+   extremo con margin-left: auto. */
 .ag-topbar__left {
-    flex: 1 1 auto;
+    flex: 0 0 auto;
     min-width: 0;
     display: flex;
     align-items: center;
@@ -37,6 +41,7 @@
 
 .ag-topbar__right {
     flex: 0 0 auto;
+    margin-left: auto;
     display: flex;
     align-items: center;
     gap: var(--ag-space-3);
@@ -61,11 +66,15 @@
     font-weight: var(--ag-font-weight-bold);
 }
 
-/* Buscador global — el único elemento flexible del header. */
+/* Buscador global. Auditoría visual externa, obs. #6: ya no crece dentro de
+   __left (que dejó de recibir espacio sobrante de .ag-topbar) — flex-basis
+   sube a 480px (antes 300, con max-width 400 que dependía del grow para
+   alcanzarlo) para no quedar angosto ahora que su ancho es prácticamente
+   fijo; sigue pudiendo encoger bajo presión real de espacio. */
 .ag-topbar__search {
-    flex: 1 1 300px;
+    flex: 0 1 480px;
     min-width: 220px;
-    max-width: 400px;
+    max-width: 480px;
     height: 36px;
     display: flex;
     align-items: center;
@@ -142,7 +151,12 @@
     background: var(--ag-color-primary);
 }
 
-/* Selector de período. */
+/* Selector de período. Pedido explícito del usuario (28/8/2026): no daba
+   ningún indicio visual de haber sido presionado — a diferencia del resto
+   de controles del header, ni siquiera tenía :hover propio. Mismo lenguaje
+   de "presionado" que .ag-topbar__icon-btn/__user más abajo, aunque hoy no
+   abre un dropdown real (fuera de alcance de este ajuste, ver
+   docs/diseno/sistema_diseno_panel.md §10). */
 .ag-topbar__period {
     flex: 0 0 auto;
     height: 36px;
@@ -158,6 +172,26 @@
     font-size: 0.78rem;
     color: var(--ag-color-text-muted);
     cursor: pointer;
+    transition:
+        background-color var(--ag-transition-fast),
+        border-color var(--ag-transition-fast),
+        transform var(--ag-transition-fast);
+}
+
+.ag-topbar__period:hover {
+    background: var(--ag-color-bg-row-hover);
+    border-color: var(--ag-color-border-strong);
+}
+
+.ag-topbar__period:active {
+    background: var(--ag-color-primary-subtle);
+    border-color: var(--ag-color-primary-border-subtle);
+    transform: scale(0.97);
+}
+
+.ag-topbar__period:focus-visible {
+    outline: 2px solid var(--ag-color-focus-ring);
+    outline-offset: 2px;
 }
 
 .ag-topbar__period .ag-icon,
@@ -184,13 +218,31 @@
     cursor: pointer;
     transition:
         background-color var(--ag-transition-fast),
-        color var(--ag-transition-fast);
+        color var(--ag-transition-fast),
+        box-shadow var(--ag-transition-fast),
+        transform var(--ag-transition-fast);
 }
 
-.ag-topbar__icon-btn:hover,
+.ag-topbar__icon-btn:hover {
+    background: var(--ag-color-primary-subtle);
+    color: var(--ag-color-primary-emphasis);
+}
+
+.ag-topbar__icon-btn:active {
+    background: var(--ag-color-primary-subtle);
+    color: var(--ag-color-primary-emphasis);
+    transform: scale(0.92);
+}
+
+/* Popover realmente ABIERTO (mismo trigger de bootstrap.Dropdown que pinta
+   aria-expanded) — pedido explícito del usuario (28/8/2026): el estado
+   "hover" y el estado "abierto" se veían idénticos, sin forma de notar a
+   simple vista que el popover seguía desplegado. Suma un anillo interior
+   propio encima del fondo/color de :hover para diferenciarlos. */
 .ag-topbar__icon-btn[aria-expanded='true'] {
     background: var(--ag-color-primary-subtle);
     color: var(--ag-color-primary-emphasis);
+    box-shadow: inset 0 0 0 1.5px var(--ag-color-primary-border-subtle);
 }
 
 .ag-topbar__notifications-count {
@@ -229,11 +281,26 @@
     cursor: pointer;
     font-family: var(--ag-font-family-base);
     text-align: left;
+    transition:
+        background-color var(--ag-transition-fast),
+        box-shadow var(--ag-transition-fast),
+        transform var(--ag-transition-fast);
 }
 
-.ag-topbar__user:hover,
-.ag-topbar__user[aria-expanded='true'] {
+.ag-topbar__user:hover {
     background: var(--ag-color-bg-row-hover);
+}
+
+.ag-topbar__user:active {
+    background: var(--ag-color-primary-subtle);
+    transform: scale(0.98);
+}
+
+/* Ídem .ag-topbar__icon-btn[aria-expanded='true'] — el menú de usuario
+   realmente abierto necesita distinguirse del simple :hover. */
+.ag-topbar__user[aria-expanded='true'] {
+    background: var(--ag-color-primary-subtle);
+    box-shadow: inset 0 0 0 1.5px var(--ag-color-primary-border-subtle);
 }
 
 .ag-topbar__avatar {
@@ -579,5 +646,11 @@
     .ag-notifications-popover,
     .ag-user-menu {
         transition-duration: 0.01ms !important;
+    }
+
+    .ag-topbar__user:active,
+    .ag-topbar__icon-btn:active,
+    .ag-topbar__period:active {
+        transform: none;
     }
 }
