@@ -152,6 +152,13 @@ return [
         // copy de ESTA pantalla, no del catálogo de componentes.
         'seccion_distribucion' => 'Distribución de sesiones',
         'distribucion_centro' => 'sesiones',
+
+        // Fase 4 (novena vuelta) — gráficos ApexCharts del tab Resumen.
+        'seccion_sesiones_estado' => 'Sesiones por estado',
+        'seccion_hectareas_periodo' => 'Hectáreas aplicadas por día',
+        'seccion_avance_meta' => 'Avance de meta del mes',
+        'avance_meta_label' => 'Cumplido',
+        'avance_meta_pie' => ':valor ha de :meta ha planificadas',
     ],
 
     'usuarios' => [

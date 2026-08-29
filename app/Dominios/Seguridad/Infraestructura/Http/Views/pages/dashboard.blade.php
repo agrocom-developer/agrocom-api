@@ -86,9 +86,50 @@
                             </x-slot:action>
                         </x-molecules.alert-strip>
 
-                        {{-- Fase 4 (pendiente): gráficos ApexCharts — sesiones por
-                             estado (donut), hectáreas aplicadas por día (area),
-                             avance de meta del mes (radialBar). --}}
+                        {{-- Gráficos ApexCharts: sesiones por estado (donut),
+                             hectáreas aplicadas por día (area), avance de meta
+                             del mes (radialBar). --}}
+                        @php
+                            $colorTokenPorTono = [
+                                'success' => '--ag-color-success',
+                                'warning' => '--ag-color-warning',
+                                'info' => '--ag-color-info',
+                                'neutral' => '--ag-color-text-faint',
+                            ];
+                        @endphp
+                        <section class="ag-dash__charts">
+                            <div class="ag-card ag-card--padded">
+                                <x-molecules.section-head :title="__('seguridad.dashboard.seccion_sesiones_estado')" />
+                                <x-molecules.apex-chart
+                                    type="donut"
+                                    :series="array_column($distribucion['segmentos'], 'valor')"
+                                    :labels="array_map(fn ($s) => __('operaciones.sesion.estado.'.$s['estado']), $distribucion['segmentos'])"
+                                    :color-tokens="array_map(fn ($s) => $colorTokenPorTono[$s['tono']] ?? $colorTokenPorTono['neutral'], $distribucion['segmentos'])"
+                                    :height="320"
+                                />
+                            </div>
+
+                            <div class="ag-card ag-card--padded">
+                                <x-molecules.section-head :title="__('seguridad.dashboard.seccion_hectareas_periodo')" />
+                                <x-molecules.apex-chart
+                                    type="area"
+                                    :series="[['name' => __('seguridad.dashboard.seccion_hectareas_periodo'), 'data' => $hectareasPorDia['valores']]]"
+                                    :labels="$hectareasPorDia['fechas']"
+                                    :color-tokens="['--ag-color-primary']"
+                                />
+                            </div>
+
+                            <div class="ag-card ag-card--padded">
+                                <x-molecules.section-head :title="__('seguridad.dashboard.seccion_avance_meta')" />
+                                <x-molecules.apex-chart
+                                    type="radialBar"
+                                    :series="[$avanceMeta['pct']]"
+                                    :labels="[__('seguridad.dashboard.avance_meta_label')]"
+                                    :color-tokens="['--ag-color-success']"
+                                />
+                                <p class="ag-dash__mono-note">{{ __('seguridad.dashboard.avance_meta_pie', ['valor' => number_format($avanceMeta['valor'], 0, ',', '.'), 'meta' => number_format($avanceMeta['meta'], 0, ',', '.')]) }}</p>
+                            </div>
+                        </section>
 
                         {{-- Fase 5 (pendiente): detalle de clientes — actividad
                              reciente + estado de contrato combinados. --}}

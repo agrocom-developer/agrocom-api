@@ -22,6 +22,7 @@
 @import './role-card.css';
 @import './section-head.css';
 @import './distribution-bar.css';
+@import './apex-chart.css';
 
 /* Organisms (quinta vuelta — layout de tres niveles) */
 @import './collapsible-menu-group.css';

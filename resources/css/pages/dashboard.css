@@ -96,6 +96,14 @@
     padding-top: var(--ag-space-1);
 }
 
+/* ---------- Gráficos (Fase 4) ---------- */
+
+.ag-dash__charts {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--ag-space-4);
+}
+
 /* ---------- Grilla principal 2fr / 1fr (auditoría visual externa, obs. #6:
    antes 1.55fr/1fr, más cerca del 8/4 de 12 columnas pedido) ---------- */
 
@@ -505,6 +513,10 @@
 /* ---------- Tablet (maqueta 5a) ---------- */
 
 @media (max-width: 1199.98px) {
+    .ag-dash__charts {
+        grid-template-columns: 1fr 1fr;
+    }
+
     .ag-dash__grid {
         grid-template-columns: 1fr;
     }
@@ -528,6 +540,10 @@
     /* El título vive en la banda de breadcrumb; las acciones desaparecen. */
     .ag-dash__header {
         display: none;
+    }
+
+    .ag-dash__charts {
+        grid-template-columns: 1fr;
     }
 
     .ag-dash__grid,

@@ -44,6 +44,8 @@ final class DashboardController
             'fechaBajada' => $demo->fechaBajada(),
             'ventana' => $demo->ventanaVolable(),
             'distribucion' => $demo->distribucionSesiones(),
+            'hectareasPorDia' => $demo->hectareasPorDia(),
+            'avanceMeta' => $demo->avanceMeta(),
             'sesiones' => $demo->sesiones(),
             'pausas' => $demo->pausas(),
             'stock' => $demo->stockBajoMinimo(),

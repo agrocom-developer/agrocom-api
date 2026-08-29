@@ -119,6 +119,36 @@ final class DatosDemoPanel
     }
 
     /**
+     * Hectáreas aplicadas por día del período (Fase 4 — gráfica de área).
+     * 10 puntos a lo largo de agosto, suma 1.284 ha — mismo total que
+     * mostraba el KPI "Hectáreas aplicadas" antes de retirarse de esta
+     * página (sigue viviendo en `stat-card`, para páginas futuras).
+     *
+     * @return array{fechas: list<string>, valores: list<int>}
+     */
+    public function hectareasPorDia(): array
+    {
+        return [
+            'fechas' => ['01/08', '04/08', '07/08', '10/08', '13/08', '16/08', '19/08', '22/08', '25/08', '28/08'],
+            'valores' => [98, 145, 110, 160, 135, 90, 150, 125, 140, 131],
+        ];
+    }
+
+    /**
+     * Avance de la meta de hectáreas del mes (Fase 4 — gráfica radialBar).
+     *
+     * @return array{valor: float, meta: float, pct: float}
+     */
+    public function avanceMeta(): array
+    {
+        return [
+            'valor' => 1284,
+            'meta' => 1500,
+            'pct' => 85.6,
+        ];
+    }
+
+    /**
      * Programación de hoy (maqueta 4a — 5 sesiones con el vocabulario de
      * estados de la maqueta; el label de cada estado sale de
      * `lang/es/operaciones.php`).
