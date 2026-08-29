@@ -26,6 +26,15 @@
     --ag-color-green-100: #e8f4d9;
     --ag-color-green-200: #c6e86a;
     --ag-color-green-300: #8cc63f;
+    /* green-400 (auditoría visual externa, obs. #1): paso intermedio 300→500
+       (65% green-300 / 35% green-500), menos saturado que el lima puro del
+       logo. Existe para que el tema oscuro deje de usar green-300 crudo como
+       texto/ícono de marca — en tema claro la identidad "verde de marca" es
+       green-700 (bosque); en oscuro usar green-300 (lima muy saturado)
+       leía como una marca distinta. AA verificado contra las superficies
+       oscuras: 5.2:1 sobre --ag-color-surface-card, 5.86:1 sobre
+       --ag-color-bg-chrome (cálculo en sistema_diseno_panel.md §1.3). */
+    --ag-color-green-400: #79b93d;
     --ag-color-green-500: #55a03a;
     --ag-color-green-700: #1e7a34;
     --ag-color-green-900: #0f3d1a;
