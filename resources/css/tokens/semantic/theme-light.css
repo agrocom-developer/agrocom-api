@@ -50,6 +50,15 @@
     --ag-color-primary-emphasis: var(--ag-color-green-700);
     --ag-color-primary-subtle: var(--ag-color-green-100);
 
+    /* Fondo del ítem de menú/píldora ACTIVO del sidebar (nivel 2) — séptima
+       vuelta (28/8/2026, ver theme-dark.css): token propio en vez de
+       reutilizar --ag-color-primary-subtle directamente, para que ambos
+       temas expongan el mismo NOMBRE de token aunque en oscuro deba ser un
+       sólido en vez de una mezcla. Acá el valor es idéntico al de
+       --ag-color-primary-subtle (green-100, ya sólido) — sin cambio visual
+       en claro. */
+    --ag-color-bg-nav-active: var(--ag-color-green-100);
+
     /* Marca — acento (ámbar). Texto oscuro sobre acento, no blanco: el ámbar
        de marca (#E8720C) da ~3.1:1 con blanco (falla AA texto normal) y
        ~5:1 con gris-900 (pasa AA). `--ag-color-accent-contrast` es el que

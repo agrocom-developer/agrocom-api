@@ -71,7 +71,7 @@ Consecuencia de diseño explícita: **el relleno sólido de marca (botones) es c
 | `--ag-color-focus-ring` | Contorno de foco de teclado (accesibilidad) |
 | `--ag-space-1`…`--ag-space-8` | Espaciado, escala de 8px |
 | `--ag-font-family-base|mono`, `--ag-font-size-*`, `--ag-line-height-*`, `--ag-font-weight-*` | Tipografía de texto/cifras |
-| `--ag-font-family-display` | Tipografía de titulares grandes tipo hero (HU-02). Aditivo, no reemplaza `-base` en ningún otro lado — la usan `templates/auth-layout` (wordmark + headline) y `organisms/login-form` (título de "Ingreso"/"Recuperar acceso"). **"Fraunces"** (variable, `@fontsource-variable/fraunces`, import `standard.css`), instalada — reemplazó a "Instrument Serif" en el rediseño de login (tercera vuelta): a 38-44px esa fuente se leía muy angosta/apretada (pedido explícito del usuario), Fraunces es notablemente más ancha/cálida al mismo tamaño. Todo consumidor de este token agrega `font-optical-sizing: auto` (eje `opsz` variable de la fuente, se ajusta solo al tamaño real) |
+| `--ag-font-family-display` | Tipografía de titulares grandes tipo hero (HU-02). Aditivo, no reemplaza `-base` en ningún otro lado — la usan `templates/auth-layout` (wordmark + headline), `organisms/login-form` (título de "Ingreso"/"Recuperar acceso") y el resto de consumidores de §7.3/§11.2. **"IBM Plex Sans Condensed"** (`@fontsource/ibm-plex-sans-condensed`, pesos 400/500/600/700) desde la séptima vuelta (§11.2) — reemplazó a "Fraunces" (serif), que a su vez había reemplazado a "Instrument Serif" en la tercera vuelta. Historial completo en §11.2 |
 | `--ag-radius-sm|md|lg|pill` | Radio de borde |
 | `--ag-shadow-sm|md|lg` | Elevación (vocabulario Material) |
 | `--ag-transition-fast|base` | Duración de transiciones |
@@ -213,6 +213,11 @@ Justificación de nivel: agrupa átomos (`icon` + `button`, o una lista de opcio
 - Comportamiento que sí es del átomo/molécula (presentación pura, sin llamar al backend): alternar el atributo `data-bs-theme` del `<html>` y despachar un evento de navegador `agrocom:theme-changed` con el nuevo valor (`"light"|"dark"`).
 - Lo que **no** hace esta molécula: persistir la preferencia. Quien la use (un componente Livewire de `frontend`) escucha `agrocom:theme-changed` y hace el POST/guardado contra la columna de preferencia del usuario (ver §6 — esa columna todavía no existe).
 - Tokens: `--ag-color-*` estándar; ícono activo usa `--ag-color-primary-emphasis`.
+
+> **Estado actual (29/8/2026):** esta entrada describe el diseño original de
+> esta HU. Pasó por un segmented control de 3 estados (§7.7, obs. #9) y
+> volvió a un botón único de 2 estados en la octava vuelta — ver §12 para el
+> marcado, tokens y comportamiento vigentes.
 
 ### 4.3. `menu-item` — **molecule** (el ítem hoja; ver `collapsible-menu-group` para el caso con submenú)
 
@@ -686,7 +691,8 @@ sans + `tabular-nums`, mismo criterio que §10.6).
 tabular-nums`. El mono abría demasiado el tracking de una cifra de varios
 dígitos ("Bs 18.490"); tabular-nums da el mismo efecto de "dígitos
 alineados en columna" que motivaba el mono original, sin ese tracking. La
-display (Fraunces) sigue reservada para el titular de página — eso no
+display (Fraunces en su momento, IBM Plex Sans Condensed desde la séptima
+vuelta — ver §11.2) sigue reservada para el titular de página — eso no
 cambió. Los usos mono CHICOS (horas, drones, `ROL · CAMPAÑA`, valores de
 leyenda) no cambian. §8.7 marcada como superada.
 Título de card (`.ag-card__title`, sans/bold/`font-size-sm` en las tres
@@ -770,3 +776,155 @@ distinguen la tarjeta del fondo con margen claro en la captura. No se tocó
 
 Título de card (`.ag-card__title`, sans/bold/`font-size-sm`) se fijó como
 regla 9 de §8 — ver ahí.
+
+## 11. Séptima vuelta (28/8/2026) — ajuste puntual: tema oscuro y tipografía display
+
+Feedback directo sobre captura real del dashboard en producción local (no
+una auditoría externa formal como §10): "el tema oscuro está demasiado
+verdoso" + "se nota que el sistema está generado con IA, como si fuera
+Times New Roman". Dos cambios independientes, misma vuelta.
+
+### 11.1. Tema oscuro — el tinte de marca se retira de la superficie estructural
+
+Diagnóstico: `--ag-color-bg-auth` (tokens/semantic/theme-dark.css) alimentaba
+TODO el cascade de superficie (`--ag-color-bg`, `-bg-elevated`, `-bg-chrome`,
+`-surface-card`, `-border-card`, `-bg-table-head`, `-border-row`,
+`-bg-row-hover`, `-bg-input-chrome`, `-track`) con un mismo tinte
+verde/oliva — cuatro vueltas previas (§9, §10.1) ya habían diluido ese
+tinte (40%→25% de peso, base gray-950→gray-850) sin resolver la percepción
+de "todo verde", precisamente porque diluir un valor que se repite en cada
+superficie a la vez no cambia que se repita en cada superficie a la vez.
+
+Corrección (pedido explícito del usuario, no una preferencia de
+`design-ui`): **el lienzo de contenido (`--ag-color-bg`) mantiene su tinte**
+— es el mismo criterio "un fondo con identidad propia" que ya rige en claro
+(`--ag-color-bg-auth` ahí es crema, no gris puro) y el usuario lo confirmó
+explícitamente como correcto. Lo que cambia es que **el chrome estructural
+deja de heredar ese tinte**:
+
+- `--ag-color-bg-elevated` / `--ag-color-bg-chrome` (sidebar de nivel 2,
+  header): pasan de derivar de `--ag-color-bg-auth` a `--ag-color-gray-900`
+  plano — mismo criterio que en claro, donde ese chrome es `sand-50` (más
+  neutro que el `bg-auth` crema del lienzo).
+- `--ag-color-surface-card` y toda su escala derivada (`-border-card`,
+  `-bg-table-head`, `-border-row`, `-bg-row-hover`, `-bg-input-chrome`,
+  `-track`, `-border`, `-border-strong`, `-neutral-subtle`): mismo overlay
+  blanco creciente de siempre, pero ahora sobre `--ag-color-gray-900` en vez
+  de `--ag-color-bg-auth`.
+- `--ag-color-text-muted`/`-text-faint`: de mezcla oliva a gris neutro
+  (`gray-500`/`gray-600`) — pasan más contraste que antes en ambas
+  superficies.
+- `--ag-color-primary-subtle` (el wash translúcido más usado del sistema —
+  15+ consumidores): 0.16→0.10 de opacidad. Sobre un fondo casi negro un
+  verde lima translúcido se percibe más vívido que el mismo % sobre un fondo
+  claro (el alpha-blend deja pasar más croma cuanto más oscura es la base).
+- **Selección del ítem de menú activo** (`.ag-menu-item.is-active`,
+  `.ag-module-band__pill.is-active` — sidebar de nivel 2): dejó de reutilizar
+  `--ag-color-primary-subtle` (un wash translúcido que se ve distinto según
+  qué color tenga debajo, señalado explícitamente como otra causa de
+  "demasiado verde") y pasa a un token propio, **`--ag-color-bg-nav-active`**
+  — sólido, sin alpha, en los dos temas: `green-100` en claro (idéntico al
+  valor previo, sin cambio visual), `green-900` sólido en oscuro. Contraste
+  con `--ag-color-success-strong` (texto de ese estado): ~9:1 en oscuro, AAA.
+- `--ag-color-bg-rail`/`-bg-rail-active` (riel, nivel 1) y el resto de la
+  paleta de acento (`primary`, `success`, `accent`) **no cambiaron** — la
+  identidad de marca en oscuro queda 100% en los acentos (botones, badges,
+  texto cálido, riel, ítem de menú activo), nunca en la superficie de fondo
+  del chrome. Referencia externa verificada (hoja de estilos real de
+  deere.com, un actor del mismo rubro): cromo estructural neutro
+  (blanco/gris/negro), verde de marca reservado a CTAs/badges — nunca al
+  fondo, pese a que JD es una marca todavía más asociada al verde que
+  Agrocom.
+
+`theme-light.css` no se tocó (ningún cambio visual en claro) salvo el nuevo
+token `--ag-color-bg-nav-active`, con el mismo valor que ya tenía
+`--ag-color-primary-subtle` ahí.
+
+### 11.2. Tipografía display — Fraunces (serif) → IBM Plex Sans Condensed
+
+`--ag-font-family-display` (tokens/primitives/base.css) deja de ser
+**"Fraunces"** (confirmada como LA fuente display en la quinta vuelta, §7.3)
+— feedback directo: un serif editorial en un panel operativo de campo lee
+como plantilla genérica ("se nota que está generado con IA"), no como
+identidad propia; irónico además porque el fallback de ese mismo token
+terminaba en `'Times New Roman', serif`.
+
+Se verificó `deere.com` (hoja de estilos real, no captura) como referencia
+del rubro: usa un sans grotesco propio (`jd_sans_pro*`, fallback
+`"Helvetica Neue", Helvetica, Arial`) SIEMPRE bold/condensado en titulares,
+nunca serif. Nueva fuente display: **`IBM Plex Sans Condensed`**
+(`@fontsource/ibm-plex-sans-condensed`, pesos 400/500/600/700 importados en
+`app.css`) — misma familia tipográfica que `--ag-font-family-base` (IBM Plex
+Sans), diferenciada de la interfaz por condensación + peso en vez de por una
+tipografía ajena. Resuelve más angosta que Fraunces (favorable para
+KPIs/títulos de contenedor angosto — lo opuesto al problema que tenía
+Instrument Serif en la tercera vuelta, §3).
+
+`@fontsource-variable/fraunces` se desinstaló (sin otros consumidores,
+mismo criterio que la baja de `@fontsource/instrument-serif` en la tercera
+vuelta). Ningún consumidor de `--ag-font-family-display` (§4.8, §4.9,
+`login-form`, `module-sidebar`, `panel-layout`, `dashboard.css`,
+`seleccionar-rol.css`) cambió de código — todos ya declaraban
+`font-weight`/`font-optical-sizing` explícitos por consumidor (regla 1 de
+§8), así que el swap de familia en el token alcanzó sin tocar componentes.
+Las tres familias del sistema (§7.3) siguen siendo tres, solo que la
+"protagonista" cambió: **IBM Plex Sans Condensed** títulos/cifras
+protagonistas, **IBM Plex Sans** interfaz/subtítulos, **IBM Plex Mono**
+datos/metadatos.
+
+Nota para quien lea §1.4, §3 y §7.3 más arriba: describen decisiones
+históricas correctas para su momento (Instrument Serif → Fraunces, tercera
+vuelta) — el estado ACTUAL del token es el de esta sección, no el de esas
+tablas/párrafos, que se dejan como registro histórico sin reescribir.
+
+## 12. Octava vuelta (29/8/2026) — `theme-toggle`: de segmented control a botón único
+
+Pedido explícito sobre `molecules/theme-toggle`, componente cubierto en
+§4.2 y extendido a 3 estados en la auditoría visual externa (§7.7, obs. #9).
+Dos cambios, misma vuelta:
+
+**Se retira "sistema".** El enum del backend (`sec_user_preferencia.tema`)
+siempre fue Claro|Oscuro únicamente — "sistema" vivía enteramente en
+localStorage, con un atributo propio `data-ag-theme-preference` en `<html>`
+para distinguir "preferencia elegida" de "tema resuelto" (necesario solo
+porque "sistema" resuelto a oscuro debía pintar la celda "sistema" como
+activa, no la celda "oscuro"). Sin "sistema" esa distinción no existe:
+`[data-bs-theme]` vuelve a ser la única fuente de verdad, tanto para los
+tokens de color como para el propio control. Se retiran también la
+entrada `ui.theme.system` (`lang/es/ui.php`) y el atributo
+`data-ag-theme-preference` de `panel-shell.blade.php`.
+
+**De 3 celdas con pastilla contenedora a un solo botón-ícono.** Motivo
+concreto, no solo preferencia estética: el contenedor (`.ag-theme-toggle__control`,
+`background: var(--ag-color-bg)`) dependía de compartir superficie con el
+chrome que lo rodea (topbar/sidebar, `--ag-color-bg-chrome`) — cierto hasta
+la séptima vuelta (§11.1), donde `-bg` y `-bg-chrome` dejan de compartir
+superficie a propósito en oscuro. Resultado no anticipado: el contenedor
+del toggle pasó a verse como un parche verde suelto en el topbar oscuro
+(`--ag-color-bg`, ahora con tinte, sentado sobre `--ag-color-bg-chrome`,
+ahora neutro) — visible en captura real, señalado explícitamente ("en mi
+tema claro dentro dashboard su contenedor no se nota en relación al estilo
+del oscuro"). Se retira el contenedor en vez de perseguirle un tono
+correcto: ahora es un ícono suelto, mismo lenguaje que
+`.ag-topbar__icon-btn` (topbar.css) — transparente en reposo, wash de
+acento en hover/foco, sin fondo permanente.
+
+Con un solo botón (ya no 3 radios), el ícono visible es el de la PRÓXIMA
+preferencia — la que se aplica al presionar, no la actual — para que el
+control se lea como una acción ("tocá esto para pasar a oscuro") y no como
+un indicador de estado. Los dos `<x-atoms.icon>` (`dark_mode`/`light_mode`)
+quedan siempre en el DOM; `theme-toggle.css` muestra solo uno según
+`[data-bs-theme]` en `<html>` — mismo criterio de "un atributo global
+decide todo" que ya regía, sin JS de sincronización entre instancias
+(topbar + auth-layout).
+
+**Color de acento por tema (pedido explícito, no una regla nueva de §8):**
+a diferencia de `.ag-topbar__icon-btn` (siempre primary/verde), el hover/
+active de `theme-toggle` usa **primary (verde) en claro** y **accent (ámbar)
+en oscuro** — la única superficie del sistema con esta inversión deliberada;
+no se generaliza a otros íconos del topbar.
+
+`resources/js/molecules/theme-toggle.js` se simplifica en la misma
+proporción: sin `SISTEMA`, sin el listener de `matchMedia`, sin
+`sincronizarInterruptores` (no hay más que un `data-bs-theme` que alternar
+y persistir).

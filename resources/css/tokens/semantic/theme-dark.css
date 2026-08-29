@@ -5,50 +5,64 @@
  * Ningún componente tiene una regla `[data-bs-theme='dark'] .algo { ... }`
  * propia — el tema oscuro existe enteramente reasignando estos tokens.
  *
- * El negro puro (`--ag-color-gray-1000`, el fondo del logo dark) se reserva
- * para el chrome de marca (sidebar/topbar) vía `--ag-color-bg-chrome`; el
- * área de contenido usa un gris muy oscuro (`--ag-color-gray-950`, superficie
- * "Material dark") para poder mostrar tarjetas elevadas sin fundirse con el
- * fondo — con negro puro de fondo y de tarjeta no hay forma de expresar
- * elevación por color.
+ * Superficies (séptima vuelta, 28/8/2026): el LIENZO de contenido
+ * (`--ag-color-bg`, vía `--ag-color-bg-auth`) mantiene su tono propio
+ * grafito/petróleo con un dejo de verde de marca — pedido explícito del
+ * usuario. El chrome estructural (sidebar de nivel 2, header, tarjetas —
+ * `--ag-color-bg-chrome`/`-bg-elevated`/`-surface-card`) es en cambio gris
+ * NEUTRO (`--ag-color-gray-900` y su escala de elevación por overlay
+ * blanco), sin tinte de marca — mismo criterio que en claro, donde ese
+ * chrome es `sand-50` (más neutro que el `bg-auth` crema del lienzo). El
+ * riel de módulos (nivel 1, `--ag-color-bg-rail`) es oliva oscuro CONSTANTE
+ * entre temas, chrome de marca aparte de esta escala.
  */
 
 [data-bs-theme='dark'] {
-    /* Superficie — par oscuro del retinte cálido (quinta vuelta): olivas
-       oscuras mezcladas sobre los grises de base.css. El FONDO del
-       contenido es EL MISMO grafito/petróleo del login (--ag-color-bg-auth,
-       más abajo — pedido explícito del 28/8/2026, ver theme-light.css).
-       bg-elevated/bg-chrome comparten superficie (igual que en claro) y
-       quedan un paso más luminosos que ese fondo para que la elevación por
-       color siga existiendo. El negro puro queda solo debajo del riel
-       (--ag-color-bg-rail, constante). */
+    /* Superficie — séptima vuelta (28/8/2026, feedback directo sobre
+       captura real). Las cuatro vueltas anteriores diluyeron el peso de
+       verde/oliva en --ag-color-bg-auth (40%→25%, base gray-950→gray-850)
+       pero el resultado seguía leyéndose "todo verde" — porque bg-auth
+       alimentaba TODO el cascade (fondo + chrome + tarjetas), así que hasta
+       un tinte diluido se veía repetido en cada superficie del panel a la
+       vez. Corrección (pedido explícito): --ag-color-bg (el LIENZO de
+       contenido, detrás de todo) SÍ mantiene el tono grafito/petróleo con
+       verde de --ag-color-bg-auth — eso es lo que ya funcionaba y el
+       usuario pidió conservar, es el mismo criterio "un solo fondo con
+       identidad propia" que ya rige en claro (ver theme-light.css). Lo que
+       cambia es que bg-chrome/bg-elevated (sidebar de nivel 2, header) y
+       surface-card (tarjetas) DEJAN de derivar de bg-auth — pasan a un gris
+       neutro propio (--ag-color-gray-900) más abajo, exactamente el mismo
+       criterio que en claro: ahí bg-chrome/bg-elevated son sand-50, más
+       neutro/blanco que el bg-auth crema del lienzo. El resultado: el
+       lienzo de fondo conserva su identidad tintada, pero sidebar/header/
+       tarjetas — la mayor superficie visible de golpe — leen neutras, con
+       el verde reservado a acentos (botones, badges, ítem activo). */
     --ag-color-bg: var(--ag-color-bg-auth);
 
-    /* Fase 7 (sexta vuelta parte 2, contraste sistémico): antes bg-elevated/
-       bg-chrome/surface-card eran EL MISMO valor (color-mix(olive-900 22%,
-       gray-850 78%)) — sin ningún salto de luminosidad perceptible entre
-       "chrome" y "tarjeta" (~2 unidades de RGB de diferencia contra --ag-color-bg,
-       verificado con captura real, ver docs/gestion/plan_dashboard_rediseno.md
-       §3). Criterio Material dark theme: elevación = overlay de blanco
-       creciente sobre el fondo, en vez de mezclas de marca independientes
-       que casualmente convergían al mismo tono. Riel (--ag-color-bg-rail,
-       más abajo) sigue siendo constante y el más oscuro — no se toca. */
-    --ag-color-bg-elevated: color-mix(in srgb, white 4%, var(--ag-color-bg-auth) 96%);
-    --ag-color-bg-chrome: color-mix(in srgb, white 4%, var(--ag-color-bg-auth) 96%);
+    /* Séptima vuelta: bg-elevated/bg-chrome dejan de derivar de bg-auth
+       (verde) y pasan a gray-900 plano — mismo criterio que theme-light.css,
+       donde bg-elevated/bg-chrome son sand-50 (un tono MÁS neutro/blanco que
+       el bg-auth crema del lienzo, no una simple mezcla con blanco de ese
+       mismo tono). Ver comentario de --ag-color-bg arriba. */
+    --ag-color-bg-elevated: var(--ag-color-gray-900);
+    --ag-color-bg-chrome: var(--ag-color-gray-900);
     --ag-color-overlay: rgba(0, 0, 0, 0.7);
 
-    /* Texto — crema (gris-100 entibiado con ámbar-100) sobre las olivas
-       oscuras; muted en salvia (olive-150/300), ~6:1 sobre la tarjeta
-       oscura (§1.3). faint solo decorativo, igual que en claro. */
+    /* Texto — crema (gris-100 entibiado con ámbar-100), funciona igual sobre
+       el lienzo tintado que sobre el chrome/tarjeta neutros. muted/faint
+       pasan a gris neutro (gray-500/600) — dejan de ser oliva, con más
+       margen de contraste que antes en ambas superficies. */
     --ag-color-text: color-mix(in srgb, var(--ag-color-amber-100) 25%, var(--ag-color-gray-100) 75%);
-    --ag-color-text-muted: color-mix(in srgb, var(--ag-color-olive-150) 40%, var(--ag-color-olive-300) 60%);
-    --ag-color-text-faint: var(--ag-color-olive-300);
+    --ag-color-text-muted: var(--ag-color-gray-500);
+    --ag-color-text-faint: var(--ag-color-gray-600);
     --ag-color-text-inverse: var(--ag-color-gray-900);
 
-    /* Bordes — oliva agrisada, visible sin rayar sobre las superficies de
-       arriba. */
-    --ag-color-border: color-mix(in srgb, var(--ag-color-olive-300) 22%, var(--ag-color-gray-850) 78%);
-    --ag-color-border-strong: color-mix(in srgb, var(--ag-color-olive-300) 45%, var(--ag-color-gray-850) 55%);
+    /* Bordes — chrome/tarjeta (séptima vuelta: dejan de mezclar oliva),
+       derivan de --ag-color-gray-900 con el mismo criterio de overlay
+       blanco creciente que el resto de la escala de elevación (ver
+       --ag-color-surface-card/--ag-color-bg-table-head más abajo). */
+    --ag-color-border: color-mix(in srgb, white 12%, var(--ag-color-gray-900) 88%);
+    --ag-color-border-strong: color-mix(in srgb, white 26%, var(--ag-color-gray-900) 74%);
 
     /* Marca — primario. Fondo de botón se mantiene igual que en claro (la
        identidad de marca no cambia); el tono "emphasis" (texto/ícono sobre
@@ -62,7 +76,29 @@
     --ag-color-primary-hover: var(--ag-color-green-500);
     --ag-color-primary-contrast: var(--ag-color-gray-0);
     --ag-color-primary-emphasis: var(--ag-color-green-400);
-    --ag-color-primary-subtle: rgba(140, 198, 63, 0.16);
+    /* Séptima vuelta: 0.16→0.10 de opacidad. Este token es el más usado de
+       todo el sistema (item de menú activo, hover de botón ghost, foco de
+       input, badge de rol seleccionado, chip de campaña del header — más de
+       15 consumidores en components/*.css) y sobre un fondo casi negro un
+       verde lima (140,198,63) al 16% de opacidad se percibe bastante más
+       vívido que el mismo % sobre un fondo claro (el alpha-blend deja pasar
+       más croma cuanto más oscura es la base) — señalado explícitamente como
+       causa de "demasiado verde" en la selección de ítems de menú (feedback
+       28/8/2026). 0.10 mantiene el wash reconocible como marca sin que cada
+       ítem seleccionado se lea como un parche de color aparte. */
+    --ag-color-primary-subtle: rgba(140, 198, 63, 0.1);
+
+    /* Fondo del ítem de menú/píldora ACTIVO del sidebar (nivel 2) — séptima
+       vuelta (28/8/2026): antes reutilizaba --ag-color-primary-subtle (wash
+       translúcido), pero un alpha-blend se ve distinto según qué color
+       tenga debajo — inconsistente entre temas y una de las causas
+       señaladas de "demasiado verde" (la selección se leía como un parche
+       de intensidad impredecible). Token propio, SÓLIDO (sin alpha):
+       green-900, un verde bosque sólido y oscuro — mismo criterio "color
+       comprometido, no un wash" en los dos temas (ver theme-light.css).
+       Contraste con --ag-color-success-strong (green-200, el texto de este
+       mismo estado): ~9:1, AAA. */
+    --ag-color-bg-nav-active: var(--ag-color-green-900);
 
     /* Marca — acento. Mismo criterio que primario. */
     --ag-color-accent: var(--ag-color-amber-700);
@@ -78,11 +114,12 @@
        comentario completo en theme-light.css. */
     --ag-color-accent-contrast-fill: var(--ag-color-amber-100);
 
-    /* Ídem theme-light.css: neutro un peldaño más claro que la tarjeta,
-       ahora oliva en vez de gris. `-strong` = salvia clara, texto AA del
-       chip neutral. */
-    --ag-color-neutral-subtle: color-mix(in srgb, var(--ag-color-olive-900) 40%, var(--ag-color-gray-850) 60%);
-    --ag-color-neutral-strong: var(--ag-color-olive-150);
+    /* Ídem theme-light.css: neutro un peldaño más claro que la tarjeta.
+       Séptima vuelta: vuelve a ser gris neutro (antes mezclaba oliva),
+       derivado de --ag-color-gray-900 (chrome/tarjeta), no de bg-auth
+       (lienzo con tinte). `-strong` = gris claro, texto AA del chip neutral. */
+    --ag-color-neutral-subtle: color-mix(in srgb, white 12%, var(--ag-color-gray-900) 88%);
+    --ag-color-neutral-strong: var(--ag-color-gray-200);
 
     /* Estados — aclarados sobre fondo oscuro (mismo criterio que las
        variantes `-text-emphasis` del dark mode nativo de Bootstrap 5.3).
@@ -126,22 +163,21 @@
     --ag-color-text-rail: var(--ag-color-olive-300);
     --ag-color-text-rail-active: var(--ag-color-green-200);
 
-    /* Tarjetas y tablas — Fase 7: un escalón MÁS luminoso que
-       --ag-color-bg-chrome (8% de overlay blanco vs 4%), no el mismo valor
-       — la tarjeta "flota" sobre el chrome que la rodea, mismo criterio de
-       elevación por overlay que arriba. */
-    --ag-color-surface-card: color-mix(in srgb, white 8%, var(--ag-color-bg-auth) 92%);
+    /* Tarjetas y tablas — séptima vuelta: la escala de elevación por overlay
+       blanco se mantiene, pero ahora sobre --ag-color-gray-900 (chrome
+       neutro) en vez de --ag-color-bg-auth (lienzo con tinte) — ver
+       comentario de --ag-color-bg al inicio del archivo. La tarjeta sigue
+       "flotando" un escalón más luminoso que bg-chrome (6% vs 0%). */
+    --ag-color-surface-card: color-mix(in srgb, white 6%, var(--ag-color-gray-900) 94%);
 
     /* Escalones DENTRO/sobre la tarjeta (cabecera de tabla, hover de fila,
-       borde) — más luminosos que --ag-color-surface-card (8%), no atados a
-       la mezcla de marca vieja que quedaba más oscura que la propia
-       tarjeta nueva. */
-    --ag-color-border-card: color-mix(in srgb, white 20%, var(--ag-color-bg-auth) 80%);
-    --ag-color-bg-table-head: color-mix(in srgb, white 12%, var(--ag-color-bg-auth) 88%);
-    --ag-color-border-row: color-mix(in srgb, white 16%, var(--ag-color-bg-auth) 84%);
-    --ag-color-bg-row-hover: color-mix(in srgb, white 12%, var(--ag-color-bg-auth) 88%);
+       borde) — más luminosos que --ag-color-surface-card, misma base neutra. */
+    --ag-color-border-card: color-mix(in srgb, white 18%, var(--ag-color-gray-900) 82%);
+    --ag-color-bg-table-head: color-mix(in srgb, white 12%, var(--ag-color-gray-900) 88%);
+    --ag-color-border-row: color-mix(in srgb, white 16%, var(--ag-color-gray-900) 84%);
+    --ag-color-bg-row-hover: color-mix(in srgb, white 12%, var(--ag-color-gray-900) 88%);
 
-    --ag-color-bg-input-chrome: color-mix(in srgb, white 12%, var(--ag-color-bg-auth) 88%);
+    --ag-color-bg-input-chrome: color-mix(in srgb, white 12%, var(--ag-color-gray-900) 88%);
 
     --ag-color-primary-border-subtle: rgba(140, 198, 63, 0.35);
 
@@ -151,9 +187,10 @@
     --ag-color-accent-border-subtle: rgba(245, 166, 35, 0.35);
 
     /* Pista de barra de progreso: deliberadamente MENOS luminosa que
-       --ag-color-surface-card (6% vs 8%) — es un surco/inset dentro de la
-       tarjeta, no una superficie que deba "flotar". */
-    --ag-color-track: color-mix(in srgb, white 6%, var(--ag-color-bg-auth) 94%);
+       --ag-color-surface-card (4% vs 6%) — es un surco/inset dentro de la
+       tarjeta, no una superficie que deba "flotar". Misma base neutra
+       gray-900 que el resto de la escala (séptima vuelta). */
+    --ag-color-track: color-mix(in srgb, white 4%, var(--ag-color-gray-900) 96%);
     --ag-color-bar-unassigned: var(--ag-color-gray-600);
 
     /* Mismo valor que theme-light.css, a propósito — ver el comentario de
@@ -175,12 +212,19 @@
        del todo. Se bajó el peso de --ag-color-green-900 (40%→25%) y se
        cambió la base de mezcla de --ag-color-gray-950 a --ag-color-gray-850
        (más luminosa) para que el matiz verde siga siendo perceptible pese a
-       pesar menos en la mezcla — el resultado es un grafito/petróleo oscuro
-       con un dejo verde (no un gris puro), en vez del "verde-oliva muy
-       oscuro" de antes. El contraste de texto se mantiene AAA en los cuatro
-       casos verificados, con margen algo más ajustado que antes por ser el
-       fondo un poco más luminoso — ver tabla actualizada en
-       sistema_diseno_panel.md §1.3. */
+       pesar menos en la mezcla. Este valor se MANTIENE sin cambios en la
+       séptima vuelta (pedido explícito 28/8/2026: "el bg content ese color
+       se mantiene") — lo que cambió fue el ALCANCE del token, no su
+       fórmula: antes alimentaba bg/bg-elevated/bg-chrome/surface-card y
+       toda la escala de tablas/bordes a la vez (de ahí que hasta un 25% de
+       mezcla se sintiera "todo verde" — se repetía en cada superficie del
+       panel simultáneamente); ahora SOLO pinta --ag-color-bg (el lienzo de
+       contenido, detrás de sidebar/header/tarjetas) y el panel de login —
+       bg-chrome/bg-elevated/surface-card y su escala derivada pasan a
+       --ag-color-gray-900 neutro (ver esos tokens más arriba). Mismo
+       criterio que ya regía en claro: el lienzo (bg-auth) tiene identidad
+       propia, el chrome/tarjetas (bg-chrome/bg-elevated = sand-50 en claro)
+       son más neutros — ver theme-light.css. */
     --ag-color-bg-auth: color-mix(in srgb, var(--ag-color-green-900) 25%, var(--ag-color-gray-850) 75%);
 
     /* A diferencia de claro, acá NO hace falta oscurecer/aclarar el token

@@ -10,13 +10,19 @@
 @import '@fontsource/ibm-plex-sans/600.css';
 @import '@fontsource/ibm-plex-mono/400.css';
 @import '@fontsource/ibm-plex-mono/600.css';
-/* Titulares en Fraunces (variable, ejes wght + opsz): la fuente display del
-   sistema — la del login y los headlines del panel de fotos. El mockup del
-   panel traía Instrument Serif, pero esa NO es la del sistema (decisión
-   confirmada el 28/8/2026): se mantiene Fraunces y los tamaños del panel se
-   ajustan a su métrica más ancha — ver --ag-font-family-display en
-   tokens/primitives/base.css. */
-@import '@fontsource-variable/fraunces/standard.css';
+/* Titulares en IBM Plex Sans Condensed (séptima vuelta, 28/8/2026): la
+   fuente display del sistema — headlines/cifras del login y del panel. Se
+   retira Fraunces (serif, "se ve genérico/IA/Times New Roman" — feedback
+   externo directo sobre captura real) a favor de un sans condensado bold,
+   en la línea de referencias industriales del rubro (deere.com usa un sans
+   grotesco propio, JD Sans Pro, siempre bold/condensado en titulares, nunca
+   serif). Al ser de la MISMA familia que el texto de interfaz (Plex Sans),
+   el titular se diferencia por peso/condensación, no por una tipografía
+   ajena — ver --ag-font-family-display en tokens/primitives/base.css. */
+@import '@fontsource/ibm-plex-sans-condensed/400.css';
+@import '@fontsource/ibm-plex-sans-condensed/500.css';
+@import '@fontsource/ibm-plex-sans-condensed/600.css';
+@import '@fontsource/ibm-plex-sans-condensed/700.css';
 /* Rounded, no Outlined: iconografía de las maquetas aprobadas (quinta vuelta). */
 @import 'material-symbols/rounded.css';
 

@@ -112,8 +112,9 @@
    el tracking de una cifra grande ("Bs 18.490" se leía espaciada/floja). La
    sans (IBM Plex Base) + font-variant-numeric: tabular-nums da dígitos de
    ancho fijo (se siguen alineando en columna, mismo motivo original de usar
-   mono) sin el tracking abierto — y sigue sin ser la display (Fraunces):
-   el titular de la página sigue siendo el único texto en esa fuente. */
+   mono) sin el tracking abierto — y sigue sin ser la display (IBM Plex Sans
+   Condensed): el titular de la página sigue siendo el único texto en esa
+   fuente. */
 .ag-stat-card__value {
     margin: 0;
     font-family: var(--ag-font-family-base);
