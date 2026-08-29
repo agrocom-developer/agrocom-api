@@ -460,22 +460,28 @@ catálogo en vez de redescubrirlas por prueba y error en cada pantalla.
    `@view-transition { navigation: auto; }` declarado una sola vez en
    `app.css` (transversal, no por template), con el bloque
    `prefers-reduced-motion` correspondiente sobre `::view-transition-*`.
-7. **Cifra grande de KPI: mono, nunca la display.** `--ag-font-family-display`
-   (Fraunces) es la fuente del TITULAR de la página ("Operación de hoy",
-   `.ag-dash__title`) — una cifra de `stat-card` en la misma fuente compite
-   visualmente con el titular en vez de leerse como un dato. Regla fija:
-   toda cifra grande de KPI/métrica usa `--ag-font-family-mono` (mismo
-   criterio que el total del `donut-chart` y los badges de menú), la
-   display queda reservada para titulares editoriales.
-8. **Variantes de una misma franja/alerta comparten anatomía, solo cambia
-   el tono.** `alert-strip--danger` empezó como un recuadro completo
-   (border 1px en las 4 esquinas) mientras `--accent`/`--warning` usaban
-   gradiente + borde izquierdo de 3px + esquinas 0/10/10/0 — dos
-   variantes del mismo componente que leían como dos componentes
-   distintos. Regla fija: todas las variantes de un componente de alerta
-   comparten la MISMA estructura visual (gradiente, radios, grosor de
-   borde); la severidad se expresa solo con el token de color, nunca con
-   una anatomía distinta.
+7. ~~**Cifra grande de KPI: mono, nunca la display.**~~ **SUPERADA — ver §10
+   (auditoría visual externa, obs. #7).** El mono abría demasiado el
+   tracking de una cifra de varios dígitos ("Bs 18.490"). Regla vigente:
+   toda cifra grande de KPI/métrica usa `--ag-font-family-base` +
+   `font-variant-numeric: tabular-nums` (dígitos de ancho fijo, sin el
+   tracking abierto del mono) — la display sigue reservada para titulares
+   editoriales, eso no cambió. Los usos MONO CHICOS (horas, drones,
+   `ROL · CAMPAÑA`, valores de leyenda) no cambian, siguen en mono.
+8. ~~**Variantes de una misma franja/alerta comparten anatomía (gradiente +
+   borde izquierdo).**~~ **SUPERADA — ver §10 (auditoría visual externa,
+   obs. #3).** El gradiente diagonal se veía como un artefacto de render en
+   tema oscuro (un filo duro donde el degradado cortaba, no un degradado
+   limpio). Regla vigente: las variantes de `alert-strip` comparten
+   anatomía de superficie PLANA (`background: var(--ag-color-{variante}-subtle)`)
+   + borde izquierdo 3px — el principio de "una sola anatomía, el tono
+   cambia el color" se mantiene, solo cambió CUÁL es esa anatomía.
+9. **Título de card: siempre sans/bold/`font-size-sm`.** (Auditoría visual
+   externa, §10.6 — regla nueva, no superada.) Las tres cards del dashboard
+   (Programación de hoy, Pausas por causa, Stock) ya lo cumplían antes de
+   esta vuelta; se fija acá para que todo consumidor nuevo de
+   `.ag-card__title` lo herede sin tener que redescubrirlo por prueba y
+   error.
 
 ## 9. Sexta vuelta — parte 2 (28/8/2026): rediseño del dashboard
 
@@ -573,3 +579,194 @@ Verificado en navegador (Playwright, claro/oscuro/móvil, usuario
   `--ag-color-bg-table-head` (antes el color se apagaba desde el borde
   mismo y se leía como un filo fino, no como el protagonista de la
   franja).
+
+## 10. Auditoría visual externa (28/8/2026) — respuesta a 9 observaciones
+
+Cierra la Fase 8 (auditoría final) que `docs/gestion/plan_dashboard_rediseno.md`
+había dejado pendiente, y la amplía con una revisión de diseño externa sobre
+el panel completo (tokens de color, contraste AA, alertas, botones, gráfica
+de distribución, grilla, tipografía, elevación en oscuro, detalles menores).
+Rama `feature/auditoria-visual`, plan completo en el historial de la sesión.
+Tres observaciones de la revisión no aplicaban (ya resueltas por trabajo
+previo, no se tocó código): la rampa neutra ya estaba "teñida" (arena/oliva,
+no grises fríos), el padding de KPI vs. tarjeta de distribución ya era el
+mismo (`var(--ag-space-4)`), y el azul de "En vuelo" ya era
+`--ag-color-info` del catálogo semántico.
+
+### 10.1. Sistema de color — consistencia de marca
+
+Verificado con cálculo exacto de contraste WCAG (script Python, no a ojo),
+antes de fijar cualquier hex.
+
+| Combinación | Ratio | Resultado | Dónde se usa |
+|---|---|---|---|
+| `--ag-color-green-400` (`#79b93d`, nuevo primitivo — blend 65% green-300/35% green-500) sobre `--ag-color-surface-card` (oscuro) | 5.21:1 | Pasa AA | `--ag-color-primary-emphasis`/`-success` (crudo), tema oscuro |
+| `--ag-color-green-400` sobre `--ag-color-bg-chrome` (oscuro) | 5.86:1 | Pasa AA | Ídem |
+| `--ag-color-green-200` (success-strong, oscuro) sobre su propio `--ag-color-success-subtle` (`rgba(198,232,106,.16)`) | 5.95:1 | Pasa AA | Chip "Validada" (`atoms/badge`), tema oscuro |
+| `--ag-color-green-500` (success crudo, claro) sobre `--ag-color-sand-50` | 3.10:1 | Pasa 3:1 no-texto | Uso decorativo (borde/relleno de gráfica), NUNCA como texto |
+| `--ag-color-success-strong` (claro, `color-mix(green-500 30%, green-900 70%)` ≈ `#245b24`) sobre su propio `--ag-color-success-subtle` (`color-mix(green-500 16%, sand-50 84%)` ≈ `#e0ecd8`) | 6.61:1 | Pasa AAA | Chip "Validada", tema claro |
+| `--ag-color-danger-contrast-fill` (`--ag-color-red-600`, `#c0442e`) con texto blanco | 5.11:1 | Pasa AA | Relleno sólido de `.ag-button--danger`, ambos temas |
+
+Cambios de token (`tokens/primitives/brand.css`, `tokens/semantic/theme-{dark,light}.css`):
+
+1. **Verde de marca entre temas (obs. #1).** Nuevo primitivo
+   `--ag-color-green-400` — paso intermedio 300→500, menos saturado que el
+   lima puro del logo. `--ag-color-primary-emphasis`/`-success` (crudo) en
+   oscuro pasan de `green-300` a `green-400`. `--ag-color-text-rail-active`/
+   `--ag-color-chip-icon` (chrome de marca fijo) y el relleno sólido de
+   `--ag-color-primary` (ya constante) NO se tocaron.
+2. **`success` ≠ `primary` (obs. #2).** Antes eran literalmente el mismo
+   valor en ambos temas. Ahora: oscuro usa `green-200` para
+   `-success-strong` (distinto del `green-400` de `-primary-emphasis`);
+   claro usa `green-500` como base de `success`/`-subtle`/`-strong`, sin
+   reutilizar `green-700` (el primitivo de `primary`) en ningún punto de la
+   cadena — antes `-success-strong` sí lo reutilizaba al 50%.
+3. **Patrón `-subtle`/`-border`/`-strong` completo (obs. #1.3).** Nuevos
+   `--ag-color-success-border`, `-warning-border`, `-info-border` en ambos
+   temas (mismo criterio que `--ag-color-danger-border`: literal/mix en
+   claro, `rgba` del tono crudo en oscuro) — `atoms/badge` puede dar borde
+   a los cuatro estados por igual (regla §8 punto 3). El propio `badge.css`
+   no se tocó (ninguna variante aplicaba borde todavía, ni siquiera danger
+   — queda fuera de esta vuelta, es un cambio de componente, no de tokens).
+
+### 10.2. Botón "Resolver" en oscuro (obs. #2)
+
+`.ag-button--danger` usaba `background: var(--ag-color-danger)` — en
+oscuro ese token es `#ea868f`, calibrado para TEXTO sobre superficie
+oscura, no para relleno sólido (blanco sobre ese rosa claro se leía
+"deshabilitado"). Nuevo `--ag-color-danger-contrast-fill` (constante entre
+temas, mismo criterio que `--ag-color-accent-contrast-fill`, reutiliza
+`--ag-color-red-600`) como `background` del botón. Verificado en navegador,
+ambos temas.
+
+### 10.3. Alertas (obs. #3) — superó la regla §8.8 anterior
+
+- Degradado diagonal → superficie plana (`background: var(--ag-color-{variante}-subtle)`)
+  + borde izquierdo 3px, misma anatomía para las 4 variantes. El degradado
+  se veía como un artefacto de render en oscuro (filo duro, no un
+  degradado limpio). §8.8 marcada como superada, ver ahí.
+- `.ag-alert-strip__body` pasó de `flex:1` a `flex:0 1 auto; max-width:75ch`
+  — antes se estiraba para llenar todo el ancho disponible, alejando el
+  botón de acción del texto en monitores anchos. El fondo de la franja
+  sigue ocupando el 100% del ancho (`.ag-alert-strip` es block-level).
+- La alerta de "ventana volable" (antes un segundo `alert-strip` warning de
+  igual peso visual que el aviso de RC, bloqueante) baja a una tira
+  compacta (`.ag-dash__ventana-chip`) junto a `.ag-dash__subtitle` —
+  `alert-strip` sigue existiendo como componente para RC y Pausas, no se
+  reemplazó.
+
+### 10.4. Un solo botón sólido sobre el pliegue (obs. #4)
+
+Nueva variante `atoms/button` `danger-outline` (mismo patrón que
+`outline`: transparente + borde + hover con `-subtle`, coloreado con
+`danger`). El botón "Resolver" de la alerta de RC pasa de `variant="danger"`
+sólido a `variant="danger-outline"`. La acción de "ventana volable" ya no
+es un `atoms/button` (ver 10.3) — quedó como link de texto
+(`.ag-dash__link`), inherentemente sin relleno. Resultado: "Programar
+sesión" es el único botón sólido/primario visible sobre el pliegue;
+"Exportar" sigue outline.
+
+### 10.5. `distribution-bar` reemplaza a `donut-chart` (obs. #5, #6)
+
+`donut-chart` (blade + css) se retiró — no tenía otro consumidor.
+`molecules/distribution-bar` (mismo prop shape: `segments`, `total`,
+`centerLabel` — `DatosDemoPanel::distribucionSesiones()` no cambió): KPI
+grande a la izquierda + barra horizontal 100% apilada a la derecha (18px
+de alto), leyenda debajo como grid de 4 columnas (`auto 1fr auto auto`:
+punto/etiqueta/valor mono/%, cada `<li>` en `display:contents` para que
+sus 4 hijos caigan directo en las columnas del padre y se alineen entre
+filas). El "48" del `count` de `section-head` se quitó de esa llamada —
+ahora vive dentro de la tarjeta como KPI (`.ag-distribution-bar__total`,
+sans + `tabular-nums`, mismo criterio que §10.6).
+
+### 10.6. Tipografía — superó la regla §8.7 anterior (obs. #7)
+
+`.ag-stat-card__value` y `.ag-distribution-bar__total` pasan de
+`--ag-font-family-mono` a `--ag-font-family-base` + `font-variant-numeric:
+tabular-nums`. El mono abría demasiado el tracking de una cifra de varios
+dígitos ("Bs 18.490"); tabular-nums da el mismo efecto de "dígitos
+alineados en columna" que motivaba el mono original, sin ese tracking. La
+display (Fraunces) sigue reservada para el titular de página — eso no
+cambió. Los usos mono CHICOS (horas, drones, `ROL · CAMPAÑA`, valores de
+leyenda) no cambian. §8.7 marcada como superada.
+Título de card (`.ag-card__title`, sans/bold/`font-size-sm` en las tres
+cards del dashboard): ya cumplía, se declaró como regla fija (§8, entrada
+nueva más abajo).
+
+### 10.7. Grilla y alineación (obs. #6)
+
+- `.ag-topbar__left` pasa de `flex:1 1 auto` a `flex:0 0 auto`;
+  `.ag-topbar__right` gana `margin-left:auto` para anclarse al extremo —
+  antes `__left` se estiraba de más y dejaba un vacío antes del bloque
+  derecho. El buscador (que vive dentro de `__left`) ya no crece con el
+  espacio sobrante del header; su `flex-basis`/`max-width` suben de 300/400
+  a 480px para no quedar angosto ahora que su ancho es prácticamente fijo.
+- `.ag-dash__grid` pasa de `1.55fr 1fr` a `2fr 1fr` (más cerca del 8/4 de
+  12 columnas pedido), `align-items:start` sin cambios.
+
+### 10.8. Elevación en tema oscuro (obs. sobre contraste general) — SIN CAMBIOS
+
+Reverificado con capturas reales (Playwright, dashboard, `camila.rojas`,
+oscuro) antes de tocar cualquier valor: el sistema de overlays de la Fase 7
+del rediseño anterior (4%/8%/12%/20% sobre `--ag-color-bg-auth`) sigue
+siendo suficiente tras todos los cambios de esta vuelta — borde + superficie
+distinguen la tarjeta del fondo con margen claro en la captura. No se tocó
+`theme-dark.css` para esto. `.ag-stat-card` y la tarjeta de
+`distribution-bar` (vía su wrapper `.ag-card`) ya aplican
+`border: 1px solid var(--ag-color-border-card)`.
+
+### 10.9. Detalles menores (obs. varias + pedidos directos del usuario, 28/8/2026)
+
+- **Theme-toggle de 3 vías** (Claro/Oscuro/Sistema). El switch binario
+  (`role="switch"`) no representa 3 opciones mutuamente excluyentes — pasa
+  a `role="radiogroup"` con 3 `role="radio"` (un `<button>` por celda). El
+  estado activo ya no se lee de `[data-bs-theme]` (solo conoce claro/oscuro
+  RESUELTOS, nunca "sistema") sino de un atributo propio,
+  `[data-ag-theme-preference]` en `<html>` (inicial server-side en
+  `panel-shell.blade.php`, mismo valor que `$tema`). "Sistema" se resuelve
+  vía `matchMedia('(prefers-color-scheme: dark)')` y se re-resuelve en vivo
+  si cambia la preferencia del SO mientras esté activo. Persistencia: el
+  enum de `sec_user_preferencia.tema` (Claro|Oscuro) NO se tocó — "sistema"
+  se guarda solo en `localStorage` de ese navegador (decisión explícita:
+  no coordinar con backend en esta vuelta). Nueva clave `ui.theme.system`.
+- `module-sidebar__desc` gana `-webkit-line-clamp:2` — sin tope, una
+  descripción larga hacía crecer el bloque de cabecera en varias líneas.
+- `module-rail`: tooltips nativos del navegador (`title`) → tooltip de
+  Bootstrap (`data-bs-toggle="tooltip"` + `data-bs-title`, inicializado
+  globalmente en `app.js`), mismo patrón que ya usaba el badge de
+  `menu-item`.
+- **`menu-item` (nivel 3, pedido directo del usuario durante esta sesión):**
+  el elemento raíz (`<a>`/`<button>`) suma el mismo tooltip de Bootstrap con
+  el label resuelto — con `module-sidebar` colapsado (icon-rail angosto,
+  Fase 1 del rediseño anterior) el label/badge se ocultan y sin esto no
+  había forma de saber a qué ítem corresponde cada ícono sin expandir.
+  Irrelevante-pero-inofensivo cuando el sidebar está expandido.
+- Chips de estado de la tabla de sesiones (escritorio, columna Estado):
+  badge relleno → punto de color + texto plano (`.ag-table__dot`, mismo
+  patrón que ya usaba la tabla de eventos de pausas — se completó con los
+  tonos `success`/`warning` que faltaban). Acotado a esa columna de esa
+  tabla; `atoms/badge` no cambió para sus otros usos (KPI, alertas, columna
+  RC de la misma tabla).
+- Columna HA de la tabla de sesiones: `text-align:right` (header + celdas)
+  — una cifra alineada a la izquierda se compara peor que a la derecha.
+- **Feedback de "presionado/abierto" en los popups del header (pedido
+  directo del usuario durante esta sesión):** avatar de usuario y campana
+  de notificaciones ya abrían un dropdown real de Bootstrap, pero el estado
+  `:hover` y el estado realmente ABIERTO (`[aria-expanded='true']`) se
+  veían idénticos — sin forma de notar a simple vista que el popover seguía
+  desplegado. Ahora `[aria-expanded='true']` suma un anillo interior propio
+  (`box-shadow: inset 0 0 0 1.5px var(--ag-color-primary-border-subtle)`)
+  encima del fondo/color que ya traía, y ambos controles suman un
+  `:active` con `transform: scale()` para el instante de presionado
+  (respetando `prefers-reduced-motion`). El selector de período
+  (`.ag-topbar__period`) no tenía NINGÚN estilo de interacción — hoy no
+  abre un dropdown real (fuera de alcance, decisión explícita del usuario:
+  solo refuerzo visual, no funcionalidad nueva) pero suma `:hover`/`:active`/
+  `:focus-visible` con el mismo lenguaje. El chip de campaña
+  (`.ag-topbar__campaign`) se dejó como estaba — es informativo, no un
+  control clicable.
+
+### 10.10. Regla nueva en §8
+
+Título de card (`.ag-card__title`, sans/bold/`font-size-sm`) se fijó como
+regla 9 de §8 — ver ahí.
