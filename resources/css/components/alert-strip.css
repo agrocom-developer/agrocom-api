@@ -1,15 +1,16 @@
 /*
  * Molecule: alert-strip (resources/views/components/molecules/alert-strip.blade.php)
  * Franja de aviso del dashboard (quinta vuelta, maquetas 4a/5a/5b; sexta
- * vuelta parte 2 — feedback directo del 28/8/2026): las 4 variantes
- * semánticas del catálogo (warning|danger|success|info) comparten la MISMA
- * anatomía — gradiente + borde izquierdo 3px + esquinas 0/10/10/0 — solo
- * cambia el token de color. El gradiente sostiene el color del estado al
- * 100% hasta el 55% del ancho antes de empezar a apagarse hacia
- * --ag-color-bg-table-head (antes empezaba a apagarse desde el borde
- * mismo — el color se leía como un filo fino en vez de predominar). El
- * texto fuerte va en <strong> dentro del slot — el par tenue/fuerte de
- * cada variante está verificado AA en sistema_diseno_panel.md §1.3.
+ * vuelta parte 2; auditoría visual externa, obs. #3 — superó la regla §8.8
+ * anterior, documentado como tal en sistema_diseno_panel.md): las 4
+ * variantes semánticas del catálogo (warning|danger|success|info) comparten
+ * la MISMA anatomía — superficie plana `-subtle` + borde izquierdo 3px +
+ * esquinas 0/10/10/0 — solo cambia el token de color. Antes usaba un
+ * degradado diagonal que mezclaba un `-subtle` semitransparente con un
+ * color opaco: en tema oscuro se veía como un artefacto de render (un filo
+ * duro donde el gradiente cortaba), no un degradado limpio. El texto fuerte
+ * va en <strong> dentro del slot — el par tenue/fuerte de cada variante
+ * está verificado AA en sistema_diseno_panel.md §1.3.
  */
 
 .ag-alert-strip {
@@ -27,9 +28,17 @@
     flex-shrink: 0;
 }
 
+/* flex:0 1 auto (no 1 1 auto) + max-width, auditoría visual externa obs.
+   #3: antes el body crecía para llenar todo el ancho disponible, dejando el
+   botón de acción pegado al borde derecho en monitores anchos — lejos del
+   texto que lo motiva. Ahora el body ocupa solo lo que su contenido (hasta
+   75ch) necesita y el botón queda inmediatamente después, sin perder el
+   fondo de franja completa (--ag-color-{variante}-subtle sigue pintando
+   el 100% del ancho del contenedor, que es block-level). */
 .ag-alert-strip__body {
-    flex: 1;
+    flex: 0 1 auto;
     min-width: 0;
+    max-width: 75ch;
     line-height: 1.45;
 }
 
@@ -40,7 +49,7 @@
 /* Ámbar (ventana volable, nota de pausas) — es el warning del catálogo,
    antes se llamaba "accent" (nombre de marca, no de estado). */
 .ag-alert-strip--warning {
-    background: linear-gradient(90deg, var(--ag-color-warning-subtle) 0%, var(--ag-color-warning-subtle) 55%, var(--ag-color-bg-table-head) 100%);
+    background: var(--ag-color-warning-subtle);
     border-left-color: var(--ag-color-warning);
 }
 
@@ -55,7 +64,7 @@
 
 /* Rojo óxido (sesiones sin captura del RC). */
 .ag-alert-strip--danger {
-    background: linear-gradient(90deg, var(--ag-color-danger-subtle) 0%, var(--ag-color-danger-subtle) 55%, var(--ag-color-bg-table-head) 100%);
+    background: var(--ag-color-danger-subtle);
     border-left-color: var(--ag-color-danger);
 }
 
@@ -70,7 +79,7 @@
 
 /* Verde (confirmaciones — p. ej. corte de planilla cerrado sin pendientes). */
 .ag-alert-strip--success {
-    background: linear-gradient(90deg, var(--ag-color-success-subtle) 0%, var(--ag-color-success-subtle) 55%, var(--ag-color-bg-table-head) 100%);
+    background: var(--ag-color-success-subtle);
     border-left-color: var(--ag-color-success);
 }
 
@@ -85,7 +94,7 @@
 
 /* Azul (avisos informativos sin urgencia — p. ej. cambios de campaña/período). */
 .ag-alert-strip--info {
-    background: linear-gradient(90deg, var(--ag-color-info-subtle) 0%, var(--ag-color-info-subtle) 55%, var(--ag-color-bg-table-head) 100%);
+    background: var(--ag-color-info-subtle);
     border-left-color: var(--ag-color-info);
 }
 

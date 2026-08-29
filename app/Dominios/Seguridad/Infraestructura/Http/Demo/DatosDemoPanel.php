@@ -156,7 +156,8 @@ final class DatosDemoPanel
 
     /**
      * Distribución de sesiones del período por estado (Fase 4 — gráfica
-     * mock, donut CSS puro, sin librería). Consistente con el KPI
+     * mock, barra apilada CSS puro, sin librería; auditoría visual externa
+     * obs. #5: reemplazó al donut original, mismo shape). Consistente con el KPI
      * "Sesiones validadas 42/48" de arriba: 42 validadas + 6 restantes
      * repartidas entre los otros tres estados visibles en la programación
      * de hoy. `estado` es la CLAVE de `operaciones.sesion.estado.*` (se

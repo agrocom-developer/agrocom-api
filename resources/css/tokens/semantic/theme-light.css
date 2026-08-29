@@ -87,19 +87,34 @@
        `-strong` (TEXTO apto AA 4.5:1 sobre su propio `-subtle`, verificado
        en §1.3 en ambos temas — los chips de estado usan siempre el par
        subtle+strong, nunca el crudo como texto). */
-    --ag-color-success: var(--ag-color-green-700);
-    --ag-color-success-subtle: var(--ag-color-green-100);
-    --ag-color-success-strong: color-mix(in srgb, var(--ag-color-green-700) 50%, var(--ag-color-green-900) 50%);
+    /* success (auditoría visual externa, obs. #2): antes era literalmente
+       igual a primary en los tres tonos (green-700 crudo, green-100 subtle)
+       — un chip "Validada" competía visualmente con el botón "Programar
+       sesión". Ahora usa el escalón green-500 (ni el primitivo de primary
+       ni el de success-strong), sin reutilizar green-700 en ningún punto de
+       la cadena. success-strong ya no deriva de green-700+green-900 sino de
+       green-500+green-900 — AA verificado: 6.61:1 contra el nuevo
+       success-subtle (antes 7.08:1 contra green-100, margen equivalente). */
+    --ag-color-success: var(--ag-color-green-500);
+    --ag-color-success-subtle: color-mix(in srgb, var(--ag-color-green-500) 16%, var(--ag-color-sand-50) 84%);
+    --ag-color-success-strong: color-mix(in srgb, var(--ag-color-green-500) 30%, var(--ag-color-green-900) 70%);
+    --ag-color-success-border: color-mix(in srgb, var(--ag-color-green-500) 30%, var(--ag-color-sand-50) 70%);
     --ag-color-danger: var(--ag-color-red-600);
     --ag-color-danger-subtle: var(--ag-color-red-50);
     --ag-color-danger-strong: var(--ag-color-red-900);
     --ag-color-danger-border: var(--ag-color-red-200);
+    /* Relleno sólido de botón "danger", constante entre temas (mismo
+       criterio que --ag-color-accent-contrast-fill) — ver button.css. Mismo
+       valor que --ag-color-danger en este tema, a propósito. */
+    --ag-color-danger-contrast-fill: var(--ag-color-red-600);
     --ag-color-warning: var(--ag-color-amber-500);
     --ag-color-warning-subtle: var(--ag-color-amber-100);
     --ag-color-warning-strong: var(--ag-color-amber-800);
+    --ag-color-warning-border: color-mix(in srgb, var(--ag-color-amber-500) 30%, var(--ag-color-sand-50) 70%);
     --ag-color-info: var(--ag-color-blue-500);
     --ag-color-info-subtle: var(--ag-color-blue-50);
     --ag-color-info-strong: var(--ag-color-blue-700);
+    --ag-color-info-border: color-mix(in srgb, var(--ag-color-blue-500) 30%, var(--ag-color-sand-50) 70%);
 
     /* Foco (accesibilidad) */
     --ag-color-focus-ring: var(--ag-color-blue-500);

@@ -1,47 +1,87 @@
 // Comportamiento de la molécula `theme-toggle`
-// (resources/views/components/molecules/theme-toggle.blade.php): alterna
-// `data-bs-theme` en <html>, despacha `agrocom:theme-changed` y — quinta
-// vuelta — PERSISTE la preferencia contra `sec_user_preferencia.tema` vía
-// POST a la URL que la página autenticada expone en
-// `<meta name="ag-preferencias-tema-url">` (templates/panel-shell). En
-// páginas sin esa meta (login, sin usuario) el cambio queda solo en el DOM,
-// como antes. Fire-and-forget: si el POST falla, el tema del DOM ya cambió
-// y el usuario no pierde nada más que la persistencia entre recargas.
+// (resources/views/components/molecules/theme-toggle.blade.php): resuelve y
+// aplica `data-bs-theme` en <html>, despacha `agrocom:theme-changed` y
+// persiste la preferencia.
+//
+// Auditoría visual externa, obs. #9 (28/8/2026): pasa de 2 estados
+// (claro/oscuro) a 3 (claro/oscuro/sistema). Dos atributos en <html>, cada
+// uno con un rol distinto:
+// - `data-bs-theme` ("light"|"dark"): el tema RESUELTO — el único que
+//   consumen los tokens CSS (theme-light.css/theme-dark.css). "Sistema"
+//   nunca es un valor válido acá.
+// - `data-ag-theme-preference` ("light"|"dark"|"system"): lo que el usuario
+//   ELIGIÓ — la fuente de verdad de qué celda del segmented control se pinta
+//   activa (ver theme-toggle.css).
+//
+// Persistencia: `sec_user_preferencia.tema` (POST a la URL de
+// `<meta name="ag-preferencias-tema-url">`) es un enum Claro|Oscuro — no
+// puede guardar "sistema". Por pedido explícito del plan de auditoría
+// (no tocar ese enum sin coordinar con backend), "sistema" se persiste SOLO
+// en localStorage de este navegador: sobrevive a recargas en el mismo
+// dispositivo, pero no viaja entre dispositivos ni aparece en el valor
+// server-rendered de data-bs-theme/data-ag-theme-preference (ambos arrancan
+// en claro/oscuro — panel-shell.blade.php). Por eso la resolución de
+// "sistema" ocurre acá, en un script diferido (bundle de Vite, no bloqueante
+// en <head>): hay un margen breve donde el HTML se pinta con el tema
+// servidor antes de que este script lo corrija a lo que el SO pide. Aceptado
+// como costo de no tocar el backend en esta vuelta.
 //
 // Puede haber más de una instancia del switch en la misma página: el click
-// en CUALQUIERA de ellas cambia el único atributo global, y acá se
-// sincroniza `aria-checked` de TODAS.
+// en CUALQUIERA de ellas cambia el único estado global, y acá se sincroniza
+// TODAS.
 
 const OSCURO = 'dark';
 const CLARO = 'light';
+const SISTEMA = 'system';
+const CLAVE_LOCALSTORAGE = 'ag-theme-preference';
 
-function temaActual() {
-    return document.documentElement.getAttribute('data-bs-theme') === OSCURO ? OSCURO : CLARO;
+const consultaOscuro = window.matchMedia?.('(prefers-color-scheme: dark)');
+
+function resolverSistema() {
+    return consultaOscuro?.matches ? OSCURO : CLARO;
 }
 
-function sincronizarInterruptores() {
-    const esOscuro = temaActual() === OSCURO;
+function preferenciaActual() {
+    const valor = document.documentElement.getAttribute('data-ag-theme-preference');
 
-    document.querySelectorAll('[data-ag-theme-toggle]').forEach((boton) => {
-        boton.setAttribute('aria-checked', String(esOscuro));
+    return valor === SISTEMA || valor === OSCURO || valor === CLARO ? valor : CLARO;
+}
+
+function sincronizarInterruptores(preferencia) {
+    document.querySelectorAll('[data-ag-theme-toggle]').forEach((grupo) => {
+        grupo.querySelectorAll('[data-ag-theme-option]').forEach((boton) => {
+            boton.setAttribute('aria-checked', String(boton.dataset.agThemeOption === preferencia));
+        });
     });
 }
 
-document.addEventListener('click', (event) => {
-    const boton = event.target.closest('[data-ag-theme-toggle]');
+/**
+ * Aplica una preferencia (claro/oscuro/sistema): resuelve el tema real,
+ * actualiza los dos atributos de <html> y sincroniza todas las instancias
+ * del control. NO persiste — eso lo decide cada llamador (ver abajo).
+ */
+function aplicarPreferencia(preferencia) {
+    const resuelto = preferencia === SISTEMA ? resolverSistema() : preferencia;
 
-    if (!boton) {
-        return;
+    document.documentElement.setAttribute('data-bs-theme', resuelto);
+    document.documentElement.setAttribute('data-ag-theme-preference', preferencia);
+    sincronizarInterruptores(preferencia);
+
+    return resuelto;
+}
+
+function persistirPreferencia(preferencia, resuelto) {
+    try {
+        localStorage.setItem(CLAVE_LOCALSTORAGE, preferencia);
+    } catch {
+        // Almacenamiento no disponible (modo privado, cuota) — el DOM ya
+        // refleja la preferencia, solo se pierde que sobreviva a un reload.
     }
 
-    const siguiente = temaActual() === OSCURO ? CLARO : OSCURO;
-    document.documentElement.setAttribute('data-bs-theme', siguiente);
-    sincronizarInterruptores();
+    if (preferencia === SISTEMA) {
+        return; // el enum del backend no admite "sistema" — ver cabecera.
+    }
 
-    window.dispatchEvent(new CustomEvent('agrocom:theme-changed', { detail: { theme: siguiente } }));
-});
-
-window.addEventListener('agrocom:theme-changed', (event) => {
     const url = document.querySelector('meta[name="ag-preferencias-tema-url"]')?.content;
 
     if (!url) {
@@ -55,10 +95,57 @@ window.addEventListener('agrocom:theme-changed', (event) => {
             'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content,
             Accept: 'application/json',
         },
-        body: JSON.stringify({ tema: event.detail.theme }),
+        body: JSON.stringify({ tema: resuelto }),
     }).catch(() => {
         // Fire-and-forget: el DOM ya refleja el tema elegido.
     });
+}
+
+document.addEventListener('click', (event) => {
+    const boton = event.target.closest('[data-ag-theme-option]');
+
+    if (!boton) {
+        return;
+    }
+
+    const preferencia = boton.dataset.agThemeOption;
+
+    if (preferencia === preferenciaActual()) {
+        return;
+    }
+
+    const resuelto = aplicarPreferencia(preferencia);
+    persistirPreferencia(preferencia, resuelto);
+
+    window.dispatchEvent(new CustomEvent('agrocom:theme-changed', { detail: { theme: resuelto, preference: preferencia } }));
 });
 
-document.addEventListener('DOMContentLoaded', sincronizarInterruptores);
+// Mientras la preferencia activa sea "sistema", re-resolver en vivo si
+// cambia la preferencia del SO (sin volver a persistir: la preferencia del
+// usuario sigue siendo "sistema", solo cambió a qué resuelve).
+consultaOscuro?.addEventListener('change', () => {
+    if (preferenciaActual() !== SISTEMA) {
+        return;
+    }
+
+    const resuelto = aplicarPreferencia(SISTEMA);
+    window.dispatchEvent(new CustomEvent('agrocom:theme-changed', { detail: { theme: resuelto, preference: SISTEMA } }));
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    let guardada = null;
+
+    try {
+        guardada = localStorage.getItem(CLAVE_LOCALSTORAGE);
+    } catch {
+        // Almacenamiento no disponible — se queda con lo que trajo el servidor.
+    }
+
+    if (guardada && guardada !== preferenciaActual() && [CLARO, OSCURO, SISTEMA].includes(guardada)) {
+        aplicarPreferencia(guardada);
+
+        return;
+    }
+
+    sincronizarInterruptores(preferenciaActual());
+});

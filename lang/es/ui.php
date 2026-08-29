@@ -24,6 +24,7 @@ return [
     'theme' => [
         'light' => 'Tema claro',
         'dark' => 'Tema oscuro',
+        'system' => 'Tema del sistema',
         'toggle' => 'Cambiar tema',
     ],
 

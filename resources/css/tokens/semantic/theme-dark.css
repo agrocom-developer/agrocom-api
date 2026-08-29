@@ -52,12 +52,16 @@
 
     /* Marca — primario. Fondo de botón se mantiene igual que en claro (la
        identidad de marca no cambia); el tono "emphasis" (texto/ícono sobre
-       el chrome negro, sin relleno propio) sí se aclara a green-300 —
-       green-700 sobre negro puro da ~2:1, insuficiente para texto/ícono. */
+       el chrome negro, sin relleno propio) se aclara a green-400 (auditoría
+       visual externa, obs. #1) — green-700 sobre negro puro da ~2:1,
+       insuficiente para texto/ícono, y green-300 (usado antes) es el lima
+       más saturado del logo, una identidad visualmente distinta del bosque
+       green-700 que representa la marca en tema claro. green-400 es el paso
+       intermedio (ver primitives/brand.css), AA verificado. */
     --ag-color-primary: var(--ag-color-green-700);
     --ag-color-primary-hover: var(--ag-color-green-500);
     --ag-color-primary-contrast: var(--ag-color-gray-0);
-    --ag-color-primary-emphasis: var(--ag-color-green-300);
+    --ag-color-primary-emphasis: var(--ag-color-green-400);
     --ag-color-primary-subtle: rgba(140, 198, 63, 0.16);
 
     /* Marca — acento. Mismo criterio que primario. */
@@ -85,19 +89,33 @@
        El aviso pasa a ámbar de marca (igual que en claro); cada `-strong`
        es el TEXTO del chip sobre su `-subtle` montado en la tarjeta oscura,
        verificado ≥4.5:1 en §1.3. */
-    --ag-color-success: var(--ag-color-green-300);
-    --ag-color-success-subtle: rgba(140, 198, 63, 0.16);
-    --ag-color-success-strong: var(--ag-color-green-300);
+    /* success (crudo, usos decorativos no-texto — fill de gráficas, borde
+       izquierdo de alert-strip) comparte green-400 con primary-emphasis: no
+       hay conflicto visual porque nunca se usa como texto (badge.css usa
+       siempre el par subtle/strong, nunca el crudo). success-strong SÍ es
+       texto de chip y por eso usa un escalón DISTINTO (green-200, auditoría
+       visual externa obs. #2: "success ≠ primary" — un chip "Validada" no
+       debe competir con el botón "Programar sesión", que usa green-400 como
+       emphasis). AA verificado: 5.95:1 contra su propio success-subtle. */
+    --ag-color-success: var(--ag-color-green-400);
+    --ag-color-success-subtle: rgba(198, 232, 106, 0.16);
+    --ag-color-success-strong: var(--ag-color-green-200);
+    --ag-color-success-border: rgba(198, 232, 106, 0.35);
     --ag-color-danger: #ea868f;
     --ag-color-danger-subtle: rgba(220, 53, 69, 0.2);
     --ag-color-danger-strong: #ea868f;
     --ag-color-danger-border: rgba(220, 53, 69, 0.35);
+    /* Relleno sólido de botón "danger", constante entre temas (mismo
+       criterio que --ag-color-accent-contrast-fill) — ver button.css. */
+    --ag-color-danger-contrast-fill: var(--ag-color-red-600);
     --ag-color-warning: var(--ag-color-amber-300);
     --ag-color-warning-subtle: rgba(245, 166, 35, 0.16);
     --ag-color-warning-strong: var(--ag-color-amber-300);
+    --ag-color-warning-border: rgba(245, 166, 35, 0.35);
     --ag-color-info: #6ea8fe;
     --ag-color-info-subtle: rgba(13, 110, 253, 0.2);
     --ag-color-info-strong: #6ea8fe;
+    --ag-color-info-border: rgba(110, 168, 254, 0.35);
 
     --ag-color-focus-ring: #6ea8fe;
 

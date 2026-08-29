@@ -1,0 +1,138 @@
+/*
+ * Molecule: distribution-bar (resources/views/components/molecules/distribution-bar.blade.php)
+ * Auditoría visual externa, obs. #5 y #6 — reemplaza a donut-chart
+ * (retirado): mismo dato (DatosDemoPanel::distribucionSesiones()),
+ * presentación nueva. KPI + barra horizontal 100% apilada, leyenda en
+ * grilla de 4 columnas (dot/label/valor/%) — la leyenda es un <ul> grid de
+ * 4 columnas con cada <li> en `display: contents` para que sus 4 hijos
+ * caigan directo en las columnas del padre y se alineen entre filas (el
+ * flex-por-fila del donut-chart anterior no lograba esa alineación).
+ */
+
+.ag-distribution-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-5);
+}
+
+.ag-distribution-bar__kpi {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+/* Sans + tabular-nums, mismo criterio que .ag-stat-card__value tras la
+   auditoría visual externa obs. #7 (sistema_diseno_panel.md §8, regla 7
+   actualizada): la cifra protagonista nunca compite con la display, y el
+   mono abría demasiado el tracking de una cifra de 2 dígitos. */
+.ag-distribution-bar__total {
+    font-family: var(--ag-font-family-base);
+    font-variant-numeric: tabular-nums;
+    font-weight: var(--ag-font-weight-bold);
+    letter-spacing: -0.02em;
+    font-size: 2.25rem;
+    line-height: 1;
+    color: var(--ag-color-text);
+}
+
+.ag-distribution-bar__label {
+    margin-top: var(--ag-space-1);
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+    white-space: nowrap;
+}
+
+.ag-distribution-bar__main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-3);
+}
+
+/* Un tercio de la altura que ocupaba el anillo del donut (148px). */
+.ag-distribution-bar__track {
+    display: flex;
+    height: 18px;
+    border-radius: var(--ag-radius-pill);
+    overflow: hidden;
+    background: var(--ag-color-track);
+}
+
+.ag-distribution-bar__segment {
+    height: 100%;
+}
+
+.ag-distribution-bar__segment:not(:last-child) {
+    border-right: 2px solid var(--ag-color-surface-card);
+}
+
+.ag-distribution-bar__legend {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    column-gap: var(--ag-space-3);
+    row-gap: var(--ag-space-2);
+    align-items: center;
+}
+
+.ag-distribution-bar__legend-item {
+    display: contents;
+}
+
+.ag-distribution-bar__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: var(--ag-radius-pill);
+    flex-shrink: 0;
+}
+
+.ag-distribution-bar__dot--success {
+    background: var(--ag-color-success);
+}
+
+.ag-distribution-bar__dot--warning {
+    background: var(--ag-color-warning);
+}
+
+.ag-distribution-bar__dot--info {
+    background: var(--ag-color-info);
+}
+
+.ag-distribution-bar__dot--neutral {
+    background: var(--ag-color-text-faint);
+}
+
+.ag-distribution-bar__legend-label {
+    min-width: 0;
+    color: var(--ag-color-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ag-distribution-bar__legend-value {
+    font-family: var(--ag-font-family-mono);
+    font-variant-numeric: tabular-nums;
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-color-text);
+}
+
+.ag-distribution-bar__legend-pct {
+    font-family: var(--ag-font-family-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.6875rem;
+    color: var(--ag-color-text-muted);
+    text-align: right;
+}
+
+@media (max-width: 767.98px) {
+    .ag-distribution-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--ag-space-4);
+    }
+}

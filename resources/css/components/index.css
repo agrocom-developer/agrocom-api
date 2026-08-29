@@ -21,7 +21,7 @@
 @import './alert-strip.css';
 @import './role-card.css';
 @import './section-head.css';
-@import './donut-chart.css';
+@import './distribution-bar.css';
 
 /* Organisms (quinta vuelta — layout de tres niveles) */
 @import './collapsible-menu-group.css';

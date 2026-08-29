@@ -8,6 +8,15 @@
     quien arma el árbol (sidebar-nav/collapsible-menu-group no llaman a
     `route()` ni conocen `sec_menu`).
 
+    El elemento raíz (`<a>`/`<button>`) siempre lleva tooltip de Bootstrap
+    con el label resuelto (`data-bs-toggle="tooltip"`, `data-bs-placement="right"`
+    — el sidebar vive a la izquierda), pedido explícito del 28/8/2026: con
+    `module-sidebar` colapsado (`.is-collapsed`, ver module-sidebar.css) el
+    `__label`/`__badge` se ocultan y el ítem queda solo-ícono — sin esto no
+    había forma de saber a qué ítem corresponde cada ícono sin expandir.
+    Irrelevante-pero-inofensivo cuando el sidebar está expandido (el label ya
+    es visible).
+
     Props:
     - label (requerido): clave de traducción (p. ej. "seguridad.menu.usuarios").
     - icon (nullable): nombre de ícono Material Symbols.
@@ -52,6 +61,9 @@
         @if ($style) style="{{ $style }}" @endif
         @if ($active) aria-current="page" @endif
         @if ($permission) data-ag-permission="{{ $permission }}" @endif
+        data-bs-toggle="tooltip"
+        data-bs-placement="right"
+        data-bs-title="{{ $resolvedLabel }}"
     >
         @if ($icon)
             <x-atoms.icon :name="$icon" size="sm" class="ag-menu-item__icon" />
@@ -75,6 +87,9 @@
         @if ($style) style="{{ $style }}" @endif
         @if ($active) aria-current="true" @endif
         @if ($permission) data-ag-permission="{{ $permission }}" @endif
+        data-bs-toggle="tooltip"
+        data-bs-placement="right"
+        data-bs-title="{{ $resolvedLabel }}"
     >
         @if ($icon)
             <x-atoms.icon :name="$icon" size="sm" class="ag-menu-item__icon" />
