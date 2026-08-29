@@ -112,7 +112,10 @@ final class DatosDemoMapaOperativo
         ];
     }
 
-    /** @param list<list<float>> $anillo */
+    /**
+     * @param  list<list<float>>  $anillo
+     * @return array{type: string, properties: array{nombre: string, cliente: string, hectareas: string, tono: string}, geometry: array{type: string, coordinates: list<list<list<float>>>}}
+     */
     private function lote(string $nombre, string $cliente, string $hectareas, string $tono, array $anillo): array
     {
         return [
@@ -130,6 +133,7 @@ final class DatosDemoMapaOperativo
         ];
     }
 
+    /** @return array{type: string, properties: array{hora: string, piloto: string, dron: string, ha: string, tono: string}, geometry: array{type: string, coordinates: list<float>}} */
     private function sesion(string $hora, string $piloto, string $dron, string $ha, string $tono, float $lng, float $lat): array
     {
         return [

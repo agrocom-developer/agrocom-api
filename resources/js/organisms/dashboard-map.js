@@ -75,7 +75,7 @@ function inicializar(el) {
     const capaSesiones = L.geoJSON(sesiones, {
         pointToLayer: (feature, latlng) => L.circleMarker(latlng, {
             radius: 8,
-            color: '#fff',
+            color: leerColorToken('--ag-color-gray-0'),
             weight: 2,
             fillColor: colorDeTono(feature.properties.tono),
             fillOpacity: 0.95,
