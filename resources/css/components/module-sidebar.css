@@ -89,11 +89,17 @@
     white-space: nowrap;
 }
 
+/* -webkit-line-clamp (auditoría visual externa, obs. #9): sin tope, una
+   descripción larga hacía crecer el bloque de cabecera en varias líneas. */
 .ag-module-sidebar__desc {
     margin: 0;
     font-size: var(--ag-font-size-xs);
     line-height: 1.45;
     color: var(--ag-color-text-muted);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .ag-module-sidebar__nav {

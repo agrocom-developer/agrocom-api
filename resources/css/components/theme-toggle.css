@@ -1,14 +1,16 @@
 /*
  * Molecule: theme-toggle (resources/views/components/molecules/theme-toggle.blade.php)
- * Base: "segmented control" de dos celdas fijas (rediseño HU-02, tercera
- * vuelta de login) — no `.form-switch`/`.btn-group` de Bootstrap, catálogo
- * §4.2. Reemplaza el track+thumb deslizante de vueltas anteriores; el
- * criterio de "un solo atributo global decide todo" no cambia: la celda
- * activa se resuelve con el selector `[data-bs-theme='dark']` en <html>, la
- * misma fuente de verdad que ya usaba el thumb — así todas las instancias
+ * Base: "segmented control" de TRES celdas fijas (auditoría visual externa,
+ * obs. #9 — antes dos: claro/oscuro; ahora suma "sistema"). El criterio de
+ * "un solo atributo global decide todo" no cambia, pero deja de ser
+ * `[data-bs-theme]` (que solo conoce claro/oscuro RESUELTOS, nunca
+ * "sistema" — cuando la preferencia es "sistema" resuelta a oscuro,
+ * `[data-bs-theme='dark']` es verdadero pero la celda que debe verse activa
+ * es "sistema", no "oscuro"): la celda activa se resuelve con
+ * `[data-ag-theme-preference]` en <html>, un atributo propio que sí
+ * distingue las 3 preferencias (ver theme-toggle.js). Todas las instancias
  * del toggle en la página (topbar + pie del sidebar) quedan sincronizadas
- * sin coordinación explícita entre ellas, y sin que el JS necesite tocar
- * ninguna clase por instancia.
+ * sin coordinación explícita entre ellas.
  */
 
 .ag-theme-toggle {
@@ -29,14 +31,10 @@
        página, no el elevado (ese lo lleva la celda activa, para que el
        contraste "celda activa vs. pastilla" sea visible). */
     background: var(--ag-color-bg);
-    cursor: pointer;
 }
 
-.ag-theme-toggle__control:focus-visible {
-    outline: 2px solid var(--ag-color-focus-ring);
-    outline-offset: 2px;
-}
-
+/* `<button role="radio">` (antes `<span aria-hidden>` dentro de un único
+   `<button role="switch">`) — reset de los estilos nativos de <button>. */
 .ag-theme-toggle__cell {
     position: relative;
     z-index: 1;
@@ -45,14 +43,23 @@
     justify-content: center;
     width: 1.75rem;
     height: 1.75rem;
+    border: none;
+    padding: 0;
+    font: inherit;
     border-radius: var(--ag-radius-pill);
     color: var(--ag-color-text-muted);
     background-color: transparent;
     box-shadow: none;
+    cursor: pointer;
     transition:
         background-color var(--ag-transition-fast),
         color var(--ag-transition-fast),
         box-shadow var(--ag-transition-fast);
+}
+
+.ag-theme-toggle__cell:focus-visible {
+    outline: 2px solid var(--ag-color-focus-ring);
+    outline-offset: 2px;
 }
 
 .ag-theme-toggle__icon {
@@ -64,21 +71,21 @@
     font-size: var(--ag-font-size-lg);
 }
 
-/* Celda activa = tema activo. Mismo mecanismo que el thumb anterior (el
-   estado se lee del atributo global, nunca de una clase que el JS alterne
-   por instancia): en claro, la celda "light" queda con fondo elevado +
-   color de acento (ámbar); en oscuro, la celda "dark". La celda inactiva
-   nunca lleva fondo/sombra propios, solo color muted. */
-:root:not([data-bs-theme='dark']) .ag-theme-toggle__cell--light,
-:root[data-bs-theme='dark'] .ag-theme-toggle__cell--dark {
+/* Celda activa = PREFERENCIA activa (no el tema resuelto — ver cabecera del
+   archivo: con "sistema" resuelto a oscuro, [data-bs-theme='dark'] es
+   verdadero pero la celda que debe verse activa es "sistema"). La celda
+   inactiva nunca lleva fondo/sombra propios, solo color muted. */
+:root[data-ag-theme-preference='light'] .ag-theme-toggle__cell--light,
+:root[data-ag-theme-preference='dark'] .ag-theme-toggle__cell--dark,
+:root[data-ag-theme-preference='system'] .ag-theme-toggle__cell--system {
     background-color: var(--ag-color-bg-elevated);
     color: var(--ag-color-accent);
     box-shadow: var(--ag-shadow-sm);
 }
 
-/* Las dos etiquetas ocupan la misma celda de grid (mismo ancho reservado =
+/* Las tres etiquetas ocupan la misma celda de grid (mismo ancho reservado =
    el de la más larga) para que el crossfade de opacidad no mueva el layout
-   al cambiar de tema. */
+   al cambiar de preferencia. */
 .ag-theme-toggle__label {
     display: inline-grid;
     font-size: var(--ag-font-size-sm);
@@ -92,8 +99,9 @@
     transition: opacity var(--ag-transition-fast);
 }
 
-:root:not([data-bs-theme='dark']) .ag-theme-toggle__label-text--light,
-:root[data-bs-theme='dark'] .ag-theme-toggle__label-text--dark {
+:root[data-ag-theme-preference='light'] .ag-theme-toggle__label-text--light,
+:root[data-ag-theme-preference='dark'] .ag-theme-toggle__label-text--dark,
+:root[data-ag-theme-preference='system'] .ag-theme-toggle__label-text--system {
     opacity: 1;
 }
 

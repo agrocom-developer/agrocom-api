@@ -1,9 +1,14 @@
 {{--
     Organism: module-rail (quinta vuelta — nivel 1 del layout, maqueta 4a)
     Riel vertical de módulos: logo arriba, un botón-ícono de 46px por módulo
-    (title + aria-label con el nombre — el label visible vive en el nivel 2),
-    engranaje de configuración al pie. Superficie oliva oscura EN AMBOS temas
-    (tokens --ag-color-bg-rail*, constantes — chrome de marca).
+    (tooltip de Bootstrap con el nombre — `data-bs-toggle="tooltip"` +
+    `data-bs-title`, inicializado globalmente en app.js; auditoría visual
+    externa obs. #9: antes era el `title` nativo del navegador, menos prolijo
+    que el resto del panel — mismo criterio ya usado en menu-item.blade.php.
+    `aria-label` se mantiene como refuerzo de accesibilidad, el label visible
+    vive en el nivel 2), engranaje de configuración al pie. Superficie oliva
+    oscura EN AMBOS temas (tokens --ag-color-bg-rail*, constantes — chrome de
+    marca).
 
     Solo recibe los módulos que el rol activo puede ver: el árbol llega
     filtrado por ObtenerMenuPorRolActivo y normalizado por panel-layout —
@@ -38,7 +43,8 @@
                     <a
                         href="{{ $destino }}"
                         class="ag-rail__btn {{ $modulo['active'] ? 'is-active' : '' }}"
-                        title="{{ $nombre }}"
+                        data-bs-toggle="tooltip"
+                        data-bs-title="{{ $nombre }}"
                         aria-label="{{ $nombre }}"
                         @if ($modulo['active']) aria-current="true" @endif
                     >
@@ -48,7 +54,8 @@
                     <button
                         type="button"
                         class="ag-rail__btn {{ $modulo['active'] ? 'is-active' : '' }}"
-                        title="{{ $nombre }}"
+                        data-bs-toggle="tooltip"
+                        data-bs-title="{{ $nombre }}"
                         aria-label="{{ $nombre }}"
                         @if ($modulo['active']) aria-current="true" @endif
                     >
@@ -63,7 +70,8 @@
         <a
             href="{{ $configuracionHref }}"
             class="ag-rail__btn ag-rail__config"
-            title="{{ __('ui.rail.configuracion') }}"
+            data-bs-toggle="tooltip"
+            data-bs-title="{{ __('ui.rail.configuracion') }}"
             aria-label="{{ __('ui.rail.configuracion') }}"
         >
             <x-atoms.icon name="settings" />
