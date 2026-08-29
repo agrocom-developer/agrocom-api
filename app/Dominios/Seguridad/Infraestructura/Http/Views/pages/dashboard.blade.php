@@ -1,22 +1,22 @@
 {{--
     Page: dashboard "Operación de hoy" (GET /panel/dashboard, panel.dashboard)
-    Quinta vuelta — maquetas aprobadas 4a (escritorio), 5a (tablet) y 5b
-    (móvil): título en display + acciones, pestañas de NIVEL 3 (Resumen /
-    Sesiones / Pausas, mecanismo `tab` nativo de Bootstrap con skin
-    ag-tabs). Sexta vuelta parte 2 — orden del tab Resumen, alertas
-    primero por criticidad (danger > accent, RC ya no queda al pie),
-    sectores con section-head (Indicadores del período / Distribución de
-    sesiones — gráfica mock antes de Programación/Pausas/Stock).
+    Pivote a panel visual/estadístico (novena vuelta): el dashboard deja de
+    ser un ERP genérico de tablas — pestañas de NIVEL 3 (mecanismo `tab`
+    nativo de Bootstrap, skin ag-tabs) ahora son Resumen / Mapa / Resumen
+    por lote / Multimedia. Los tabs "Sesiones" y "Pausas" se eliminaron: su
+    contenido esencial ya vivía dentro de Resumen (tabla de programación,
+    barras de pausas por causa); las tarjetas KPI también se quitaron de
+    esta página (el componente `stat-card` sigue en el catálogo, para
+    páginas dedicadas futuras de cada módulo del menú).
 
-    Los DATOS son demo (DatosDemoPanel — nunca hardcodeados acá); el copy
-    fijo vive en lang/es/seguridad.php. Las variantes responsivas de la
-    tabla (lista de dos líneas en tablet, fichas en móvil) son los parciales
-    de pages/dashboard/.
+    Los DATOS son demo (DatosDemoPanel y clases hermanas — nunca
+    hardcodeados acá); el copy fijo vive en lang/es/seguridad.php. Las
+    variantes responsivas de la tabla (lista de dos líneas en tablet,
+    fichas en móvil) son los parciales de pages/dashboard/.
 
     Datos esperados (ver DashboardController::index()): la cáscara de
     CascaraPanel (menu/roles/…/tema/campana/periodo/version) + fechaBajada,
-    ventana, kpis, kpiMovil, distribucion, sesiones, pausas, stock, alertaRc,
-    pausasSinCausa.
+    ventana, distribucion, sesiones, pausas, stock, alertaRc.
 --}}
 <x-templates.panel-shell :title="__('seguridad.dashboard.titulo')" :tema="$tema">
     <x-templates.panel-layout
@@ -60,11 +60,14 @@
                 <button type="button" class="ag-tabs__tab active" data-bs-toggle="tab" data-bs-target="#ag-tab-resumen" role="tab" aria-controls="ag-tab-resumen" aria-selected="true">
                     {{ __('seguridad.dashboard.tab_resumen') }}
                 </button>
-                <button type="button" class="ag-tabs__tab" data-bs-toggle="tab" data-bs-target="#ag-tab-sesiones" role="tab" aria-controls="ag-tab-sesiones" aria-selected="false">
-                    {{ __('seguridad.dashboard.tab_sesiones') }}
+                <button type="button" class="ag-tabs__tab" data-bs-toggle="tab" data-bs-target="#ag-tab-mapa" role="tab" aria-controls="ag-tab-mapa" aria-selected="false">
+                    {{ __('seguridad.dashboard.tab_mapa') }}
                 </button>
-                <button type="button" class="ag-tabs__tab" data-bs-toggle="tab" data-bs-target="#ag-tab-pausas" role="tab" aria-controls="ag-tab-pausas" aria-selected="false">
-                    {{ __('seguridad.dashboard.tab_pausas') }}
+                <button type="button" class="ag-tabs__tab" data-bs-toggle="tab" data-bs-target="#ag-tab-resumen-lote" role="tab" aria-controls="ag-tab-resumen-lote" aria-selected="false">
+                    {{ __('seguridad.dashboard.tab_resumen_lote') }}
+                </button>
+                <button type="button" class="ag-tabs__tab" data-bs-toggle="tab" data-bs-target="#ag-tab-multimedia" role="tab" aria-controls="ag-tab-multimedia" aria-selected="false">
+                    {{ __('seguridad.dashboard.tab_multimedia') }}
                 </button>
             </div>
 
@@ -83,62 +86,12 @@
                             </x-slot:action>
                         </x-molecules.alert-strip>
 
-                        {{-- KPIs: 4 en escritorio, 2×2 en tablet (mismo bloque);
-                             en móvil manda el bloque protagonista de abajo. --}}
-                        <section>
-                            <x-molecules.section-head :title="__('seguridad.dashboard.seccion_indicadores')" />
-                            <div class="ag-dash__kpis">
-                                @foreach ($kpis as $kpi)
-                                    <x-molecules.stat-card
-                                        :label="$kpi['label']"
-                                        :icon="$kpi['icono']"
-                                        :value="$kpi['valor']"
-                                        :value-suffix="$kpi['sufijo']"
-                                        :foot="$kpi['pie']"
-                                        :foot-icon="$kpi['pieIcono']"
-                                        :foot-tone="$kpi['pieTono']"
-                                        :state="$kpi['estado'] ?? null"
-                                    />
-                                @endforeach
-                            </div>
-                        </section>
+                        {{-- Fase 4 (pendiente): gráficos ApexCharts — sesiones por
+                             estado (donut), hectáreas aplicadas por día (area),
+                             avance de meta del mes (radialBar). --}}
 
-                        <div class="ag-dash__kpis-movil">
-                            <x-molecules.stat-card
-                                :label="$kpiMovil['label']"
-                                :value="$kpiMovil['valor']"
-                                :foot="$kpiMovil['pie']"
-                                foot-tone="success"
-                                :hero="true"
-                            />
-                            <div class="ag-dash__kpis-movil-grid">
-                                @foreach ($kpis as $kpi)
-                                    @if (isset($kpi['labelCorto']))
-                                        <x-molecules.stat-card
-                                            :label="$kpi['labelCorto']"
-                                            :value="$kpi['valor']"
-                                            :value-suffix="$kpi['sufijo']"
-                                            :foot="$kpi['pie']"
-                                            :foot-tone="$kpi['pieTono']"
-                                            :state="$kpi['estado'] ?? null"
-                                        />
-                                    @endif
-                                @endforeach
-                            </div>
-                        </div>
-
-                        {{-- Gráfica mock (Fase 4) — antes de Programación/Pausas/Stock,
-                             pedido explícito del 28/8/2026. --}}
-                        <section>
-                            <x-molecules.section-head :title="__('seguridad.dashboard.seccion_distribucion')" />
-                            <div class="ag-card ag-card--padded">
-                                <x-molecules.distribution-bar
-                                    :segments="$distribucion['segmentos']"
-                                    :total="$distribucion['total']"
-                                    :center-label="__('seguridad.dashboard.distribucion_centro')"
-                                />
-                            </div>
-                        </section>
+                        {{-- Fase 5 (pendiente): detalle de clientes — actividad
+                             reciente + estado de contrato combinados. --}}
 
                         {{-- Grilla 1.55fr/1fr (escritorio); apilada en tablet;
                              en móvil la reemplaza el bloque de fichas. --}}
@@ -191,60 +144,41 @@
                     </div>
                 </div>
 
-                {{-- ============ Pestaña Sesiones (maqueta 4a) ============ --}}
-                <div class="tab-pane fade" id="ag-tab-sesiones" role="tabpanel" tabindex="0">
+                {{-- ============ Pestaña Mapa (nueva) ============ --}}
+                <div class="tab-pane fade" id="ag-tab-mapa" role="tabpanel" tabindex="0">
                     <div class="ag-dash__stack">
-                        <div class="ag-dash__filters">
-                            <button type="button" class="ag-dash__filter is-active">
-                                <x-atoms.icon name="filter_alt" size="sm" />
-                                {{ __('seguridad.dashboard.filtro_sin_validar') }}
-                            </button>
-                            <button type="button" class="ag-dash__filter">
-                                {{ __('seguridad.dashboard.filtro_pilotos') }}
-                                <x-atoms.icon name="expand_more" size="sm" />
-                            </button>
-                            <button type="button" class="ag-dash__filter">
-                                {{ __('seguridad.dashboard.filtro_drones') }}
-                                <x-atoms.icon name="expand_more" size="sm" />
-                            </button>
-                            <button type="button" class="ag-dash__filter">
-                                {{ __('seguridad.dashboard.filtro_evidencia') }}
-                                <x-atoms.icon name="expand_more" size="sm" />
-                            </button>
-                        </div>
-
-                        <div class="ag-card">
-                            @include('seguridad::pages.dashboard._tabla-sesiones', ['sesiones' => $sesiones, 'conRc' => true])
-                        </div>
-
-                        <div class="ag-dash__solo-movil">
-                            @include('seguridad::pages.dashboard._fichas-sesiones', ['sesiones' => $sesiones, 'limite' => count($sesiones)])
-                        </div>
-
-                        <p class="ag-dash__nota">{{ __('seguridad.dashboard.sesiones_nota') }}</p>
+                        {{-- Fase 6 (pendiente): mapa satelital (Leaflet + Esri World
+                             Imagery) con puntos de sesión y polígonos de lotes,
+                             más cuadros informativos. --}}
                     </div>
                 </div>
 
-                {{-- ============ Pestaña Pausas (maqueta 4a) ============ --}}
-                <div class="tab-pane fade" id="ag-tab-pausas" role="tabpanel" tabindex="0">
+                {{-- ============ Pestaña Resumen por lote (nueva) ============ --}}
+                <div class="tab-pane fade" id="ag-tab-resumen-lote" role="tabpanel" tabindex="0">
                     <div class="ag-dash__stack">
-                        <div class="ag-card ag-card--padded">
-                            <div class="ag-card__head ag-card__head--flush">
-                                <h2 class="ag-card__title">{{ __('seguridad.dashboard.pausas_titulo_mes', ['periodo' => mb_strtolower($periodo ?? '')]) }}</h2>
+                        {{-- Distribución de sesiones, reubicada acá desde Resumen. --}}
+                        <section>
+                            <x-molecules.section-head :title="__('seguridad.dashboard.seccion_distribucion')" />
+                            <div class="ag-card ag-card--padded">
+                                <x-molecules.distribution-bar
+                                    :segments="$distribucion['segmentos']"
+                                    :total="$distribucion['total']"
+                                    :center-label="__('seguridad.dashboard.distribucion_centro')"
+                                />
                             </div>
-                            @include('seguridad::pages.dashboard._barras-pausas', ['causas' => $pausas['causas'], 'grande' => true])
-                        </div>
+                        </section>
 
-                        <div class="ag-card">
-                            <div class="ag-card__head">
-                                <h2 class="ag-card__title">{{ __('seguridad.dashboard.pausas_eventos_titulo') }}</h2>
-                            </div>
-                            @include('seguridad::pages.dashboard._tabla-eventos-pausas', ['eventos' => $pausasEventos])
-                        </div>
+                        {{-- Fase 7 (pendiente): cuadros informativos por lote
+                             (hectáreas totales/completadas/pendientes, litros de
+                             pesticida, tiempo de vuelo). --}}
+                    </div>
+                </div>
 
-                        <x-molecules.alert-strip variant="warning" icon="help">
-                            {{ __('seguridad.dashboard.pausas_sin_causa', ['horas' => $pausasSinCausa]) }}
-                        </x-molecules.alert-strip>
+                {{-- ============ Pestaña Multimedia (nueva) ============ --}}
+                <div class="tab-pane fade" id="ag-tab-multimedia" role="tabpanel" tabindex="0">
+                    <div class="ag-dash__stack">
+                        {{-- Fase 8 (pendiente): capturas RC — galería agrupada,
+                             carrusel cronológico y tabla, mismas 21 imágenes. --}}
                     </div>
                 </div>
             </div>
