@@ -1,95 +1,98 @@
 /*
  * Molecule: theme-toggle (resources/views/components/molecules/theme-toggle.blade.php)
- * Base: "segmented control" de TRES celdas fijas (auditoría visual externa,
- * obs. #9 — antes dos: claro/oscuro; ahora suma "sistema"). El criterio de
- * "un solo atributo global decide todo" no cambia, pero deja de ser
- * `[data-bs-theme]` (que solo conoce claro/oscuro RESUELTOS, nunca
- * "sistema" — cuando la preferencia es "sistema" resuelta a oscuro,
- * `[data-bs-theme='dark']` es verdadero pero la celda que debe verse activa
- * es "sistema", no "oscuro"): la celda activa se resuelve con
- * `[data-ag-theme-preference]` en <html>, un atributo propio que sí
- * distingue las 3 preferencias (ver theme-toggle.js). Todas las instancias
- * del toggle en la página (topbar + pie del sidebar) quedan sincronizadas
- * sin coordinación explícita entre ellas.
+ * Octava vuelta (29/8/2026): de segmented control de 3 celdas con pastilla
+ * contenedora propia a un solo botón-ícono binario (claro/oscuro), mismo
+ * lenguaje visual que `.ag-topbar__icon-btn` (topbar.css) — transparente en
+ * reposo, wash sutil de marca en hover/foco. El contenedor anterior
+ * (`background: var(--ag-color-bg)`) dependía de compartir superficie con
+ * el chrome que lo rodea; dejó de ser así en la séptima vuelta (tema
+ * oscuro) y el contenedor pasó a verse como un parche de color aparte — se
+ * retira en vez de perseguir el tono correcto.
+ *
+ * El control ya no distingue "preferencia" de "tema resuelto" (eso solo
+ * hacía falta para "sistema", retirado en esta misma vuelta) — `[data-bs-theme]`
+ * es la única fuente de verdad, tanto para los tokens de color como para
+ * qué ícono se muestra acá: el de la PRÓXIMA preferencia (a la que pasa al
+ * presionar), no la actual. Los dos `<x-atoms.icon>` quedan siempre en el
+ * DOM; esta hoja decide cuál se ve. Todas las instancias de la página
+ * (topbar + auth-layout) leen el mismo atributo global, así que quedan
+ * sincronizadas sin JS de sincronización.
  */
 
 .ag-theme-toggle {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--ag-space-2);
-}
-
-.ag-theme-toggle__control {
     position: relative;
-    display: inline-flex;
-    align-items: center;
-    gap: 2px;
-    padding: 3px;
-    border: none;
-    border-radius: var(--ag-radius-pill);
-    /* Fondo neutro de la pastilla contenedora: el mismo tono de fondo de
-       página, no el elevado (ese lo lleva la celda activa, para que el
-       contraste "celda activa vs. pastilla" sea visible). */
-    background: var(--ag-color-bg);
-}
-
-/* `<button role="radio">` (antes `<span aria-hidden>` dentro de un único
-   `<button role="switch">`) — reset de los estilos nativos de <button>. */
-.ag-theme-toggle__cell {
-    position: relative;
-    z-index: 1;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 1.75rem;
-    height: 1.75rem;
+    gap: var(--ag-space-2);
+    width: 2.25rem;
+    height: 2.25rem;
     border: none;
     padding: 0;
     font: inherit;
     border-radius: var(--ag-radius-pill);
+    background: transparent;
     color: var(--ag-color-text-muted);
-    background-color: transparent;
-    box-shadow: none;
     cursor: pointer;
     transition:
         background-color var(--ag-transition-fast),
         color var(--ag-transition-fast),
-        box-shadow var(--ag-transition-fast);
+        transform var(--ag-transition-fast);
 }
 
-.ag-theme-toggle__cell:focus-visible {
+/* Mismo trío hover/active/focus-visible que .ag-topbar__icon-btn — acción
+   secundaria en ícono suelto, wash de marca en vez de un fondo permanente.
+   Pedido explícito (29/8/2026): a diferencia de .ag-topbar__icon-btn (que
+   siempre usa primary/verde), ESTE control cambia de acento según el tema
+   — verde (primary) en claro, ámbar (accent) en oscuro. Solo el hover/active
+   de este ícono puntual, no una regla general de §8. */
+.ag-theme-toggle:hover {
+    background: var(--ag-color-primary-subtle);
+    color: var(--ag-color-primary-emphasis);
+}
+
+.ag-theme-toggle:active {
+    background: var(--ag-color-primary-subtle);
+    color: var(--ag-color-primary-emphasis);
+    transform: scale(0.92);
+}
+
+[data-bs-theme='dark'] .ag-theme-toggle:hover {
+    background: var(--ag-color-accent-subtle);
+    color: var(--ag-color-accent-emphasis);
+}
+
+[data-bs-theme='dark'] .ag-theme-toggle:active {
+    background: var(--ag-color-accent-subtle);
+    color: var(--ag-color-accent-emphasis);
+}
+
+.ag-theme-toggle:focus-visible {
     outline: 2px solid var(--ag-color-focus-ring);
     outline-offset: 2px;
 }
 
 .ag-theme-toggle__icon {
-    /* Un poco más grande (cuarta vuelta, pedido puntual) — este componente
-       ya define su propio font-size aislado (no depende de --ag-icon--sm
-       ni de la prop `size` del átomo `icon`), así que subir este valor es
-       local al componente, sin riesgo de afectar otros consumidores del
-       átomo. --ag-font-size-lg ya es un token existente. */
+    display: none;
     font-size: var(--ag-font-size-lg);
 }
 
-/* Celda activa = PREFERENCIA activa (no el tema resuelto — ver cabecera del
-   archivo: con "sistema" resuelto a oscuro, [data-bs-theme='dark'] es
-   verdadero pero la celda que debe verse activa es "sistema"). La celda
-   inactiva nunca lleva fondo/sombra propios, solo color muted. */
-:root[data-ag-theme-preference='light'] .ag-theme-toggle__cell--light,
-:root[data-ag-theme-preference='dark'] .ag-theme-toggle__cell--dark,
-:root[data-ag-theme-preference='system'] .ag-theme-toggle__cell--system {
-    background-color: var(--ag-color-bg-elevated);
-    color: var(--ag-color-accent);
-    box-shadow: var(--ag-shadow-sm);
+/* Ícono de la PRÓXIMA preferencia (a la que pasa al presionar), no la
+   actual — el botón se lee como una acción, no como un indicador de
+   estado. */
+[data-bs-theme='light'] .ag-theme-toggle__icon--to-dark,
+[data-bs-theme='dark'] .ag-theme-toggle__icon--to-light {
+    display: inline-flex;
 }
 
-/* Las tres etiquetas ocupan la misma celda de grid (mismo ancho reservado =
-   el de la más larga) para que el crossfade de opacidad no mueva el layout
-   al cambiar de preferencia. */
+/* Mismo criterio que el ícono: el texto (prop showLabel) anuncia la
+   PRÓXIMA preferencia, no la actual. Sin uso hoy en el código (ningún
+   consumidor pasa showLabel), se mantiene por si un contexto futuro lo
+   necesita. */
 .ag-theme-toggle__label {
     display: inline-grid;
     font-size: var(--ag-font-size-sm);
-    color: var(--ag-color-text-muted);
+    color: inherit;
     white-space: nowrap;
 }
 
@@ -99,19 +102,13 @@
     transition: opacity var(--ag-transition-fast);
 }
 
-:root[data-ag-theme-preference='light'] .ag-theme-toggle__label-text--light,
-:root[data-ag-theme-preference='dark'] .ag-theme-toggle__label-text--dark,
-:root[data-ag-theme-preference='system'] .ag-theme-toggle__label-text--system {
+[data-bs-theme='light'] .ag-theme-toggle__label-text--to-dark,
+[data-bs-theme='dark'] .ag-theme-toggle__label-text--to-light {
     opacity: 1;
 }
 
-/* El estado de "celda activa" se codifica en background-color/color, no en
-   `transform` (a diferencia del thumb anterior) — por eso acá alcanza con
-   acortar duraciones bajo reduced-motion, sin la salvedad que exigía el
-   `transform` del thumb (nunca forzar `transform: none` de forma general,
-   ver nota en sistema_diseno_panel.md §3). */
 @media (prefers-reduced-motion: reduce) {
-    .ag-theme-toggle__cell,
+    .ag-theme-toggle,
     .ag-theme-toggle__label-text {
         transition-duration: 0.01ms !important;
     }

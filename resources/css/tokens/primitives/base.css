@@ -63,19 +63,33 @@
     --ag-font-family-base: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
     --ag-font-family-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
     /* Tipografía de titulares: ADICIONAL a --ag-font-family-base, nunca la
-       reemplaza — para headlines/títulos de página/cifras de KPI. "Fraunces"
-       (variable, `@fontsource-variable/fraunces`, import `standard.css` en
-       app.css), con eje óptico que se ajusta solo vía
-       `font-optical-sizing: auto` en los consumidores. Es LA fuente display
-       del sistema (confirmado el 28/8/2026, quinta vuelta): el mockup del
-       panel traía Instrument Serif, pero el sistema ya la había reemplazado
-       por Fraunces (tercera vuelta del login, se leía muy angosta) — se
-       mantiene Fraunces y los TAMAÑOS del panel se calibran a su métrica
-       más ancha (títulos/cifras un punto por debajo del mockup donde el
-       contenedor es angosto, ver los componentes del panel). Tres familias,
-       una por contexto: Fraunces títulos/cifras protagonistas, IBM Plex
-       Sans interfaz/subtítulos, IBM Plex Mono datos/metadatos. */
-    --ag-font-family-display: 'Fraunces Variable', 'Fraunces', ui-serif, Georgia, 'Times New Roman', serif;
+       reemplaza — para headlines/títulos de página/cifras de KPI.
+
+       Séptima vuelta (28/8/2026): se retira Fraunces (serif editorial, LA
+       fuente display desde la quinta vuelta) — feedback externo directo
+       sobre captura real: "se nota que el sistema está generado con IA,
+       como si fuera Times New Roman" (irónico: el fallback de este mismo
+       token terminaba en 'Times New Roman', serif). Un serif display en un
+       panel operativo de campo (hectáreas, sesiones, planilla) lee como
+       plantilla genérica, no como identidad propia. Se verificó deere.com
+       como referencia del rubro: usa un sans grotesco propio (JD Sans Pro,
+       fallback `"Helvetica Neue", Helvetica, Arial`) SIEMPRE bold/condensado
+       en titulares, nunca serif — mismo criterio que ya regía para el color
+       de superficies (ver theme-dark.css §bg-auth): la identidad se expresa
+       en peso/acento, no en un recurso tipográfico ajeno al resto del
+       sistema.
+
+       'IBM Plex Sans Condensed' (`@fontsource/ibm-plex-sans-condensed`,
+       pesos 400/500/600/700 importados en app.css) es la nueva fuente
+       display: misma familia tipográfica que el texto de interfaz (Plex
+       Sans), diferenciada por condensación + peso en vez de por una
+       tipografía distinta — evita el efecto "tres fuentes sin relación" y
+       resuelve más angosta que Fraunces (útil en KPIs/títulos de contenedor
+       angosto, lo opuesto al problema que tenía Fraunces en la tercera
+       vuelta del login). Tres familias, una por contexto: Plex Sans
+       Condensed títulos/cifras protagonistas, Plex Sans interfaz/subtítulos,
+       Plex Mono datos/metadatos. */
+    --ag-font-family-display: 'IBM Plex Sans Condensed', 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
     --ag-font-size-xs: 0.75rem;
     --ag-font-size-sm: 0.875rem;
     --ag-font-size-base: 1rem;

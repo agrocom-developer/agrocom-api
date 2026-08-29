@@ -3,7 +3,9 @@
     4a/5a/5b; sexta vuelta parte 2 — ícono en contenedor + `state`,
     lenguaje visual de docs/ganadosoft-dashboard.html §2.2): rótulo
     uppercase + ícono en contenedor 34×34 a la derecha, cifra grande en la
-    fuente display (Fraunces — puede llevar un sufijo muted, "ha" o "/ 48"),
+    cifra grande en sans + tabular-nums (auditoría visual externa, obs. #7 —
+    ya no la fuente display, ver stat-card.css §.ag-stat-card__value; puede
+    llevar un sufijo muted, "ha" o "/ 48"),
     y una línea de pie con ícono y tono semántico (éxito/aviso/muted).
 
     Sin lógica de negocio: no calcula ni formatea nada — el llamador pasa

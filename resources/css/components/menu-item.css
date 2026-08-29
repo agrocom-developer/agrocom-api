@@ -45,9 +45,14 @@
     outline-offset: -2px;
 }
 
-/* Activo (maqueta 4a): texto verde en negrita sobre verde muy tenue. */
+/* Activo (maqueta 4a; séptima vuelta 28/8/2026: fondo sólido propio en vez
+   de --ag-color-primary-subtle). El wash translúcido de --ag-color-primary-subtle
+   dependía de qué color hubiera debajo — se veía distinto de intensidad
+   entre temas y contribuía a la sensación de "todo verde" del oscuro
+   (feedback directo). --ag-color-bg-nav-active es un color PROPIO, sólido
+   (no alpha), igual de "comprometido" en ambos temas — ver theme-*.css. */
 .ag-menu-item.is-active {
-    background: var(--ag-color-primary-subtle);
+    background: var(--ag-color-bg-nav-active);
     color: var(--ag-color-success-strong);
     font-weight: var(--ag-font-weight-bold);
 }

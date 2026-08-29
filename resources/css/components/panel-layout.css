@@ -101,8 +101,11 @@
     cursor: pointer;
 }
 
+/* Fondo sólido propio (séptima vuelta) — mismo criterio y mismo token que
+   .ag-menu-item.is-active (menu-item.css): es el mismo sidebar de nivel 2,
+   solo que en su variante de banda de píldoras para tablet. */
 .ag-module-band__pill.is-active {
-    background: var(--ag-color-primary-subtle);
+    background: var(--ag-color-bg-nav-active);
     border-color: var(--ag-color-primary-border-subtle);
     color: var(--ag-color-success-strong);
     font-weight: var(--ag-font-weight-bold);

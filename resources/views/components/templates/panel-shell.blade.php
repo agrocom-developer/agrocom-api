@@ -11,12 +11,12 @@
     Props:
     - title (nullable string): sufijo del <title>, ya traducido.
     - tema ("light"|"dark", default "light"): valor inicial de
-      `data-bs-theme`, resuelto por el controlador desde la preferencia.
-      `data-ag-theme-preference` arranca en el mismo valor — el enum del
-      backend (`sec_user_preferencia.tema`) solo conoce claro/oscuro, nunca
-      "sistema"; si el navegador tiene "sistema" guardado en localStorage,
-      theme-toggle.js lo resuelve y sobreescribe ambos atributos al cargar
-      (auditoría visual externa, obs. #9).
+      `data-bs-theme`, resuelto por el controlador desde la preferencia
+      (`sec_user_preferencia.tema`). Si el navegador tiene un tema distinto
+      guardado en localStorage, theme-toggle.js lo aplica al cargar (octava
+      vuelta, 29/8/2026: ya no existe "sistema" ni el atributo
+      `data-ag-theme-preference` que distinguía preferencia de tema
+      resuelto — ver theme-toggle.js).
 
     Slot (default): el cuerpo completo de la página.
 --}}
@@ -26,7 +26,7 @@
 ])
 
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-bs-theme="{{ $tema }}" data-ag-theme-preference="{{ $tema }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-bs-theme="{{ $tema }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
