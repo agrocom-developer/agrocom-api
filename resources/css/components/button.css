@@ -98,12 +98,35 @@
 }
 
 .ag-button--danger {
-    background-color: var(--ag-color-danger);
+    /* Relleno sólido constante entre temas (mismo criterio que
+       --ag-color-accent-contrast-fill), NO --ag-color-danger directo:
+       --ag-color-danger en oscuro es #ea868f, calibrado para TEXTO sobre
+       superficie oscura (chip), no para relleno sólido de botón — blanco
+       sobre ese rosa claro se leía "deshabilitado" (auditoría visual
+       externa). --ag-color-danger-contrast-fill reutiliza --ag-color-red-600
+       (el mismo valor que ya usa --ag-color-danger en tema claro), AA 5.1:1
+       con texto blanco. */
+    background-color: var(--ag-color-danger-contrast-fill);
     color: var(--ag-color-gray-0);
 }
 
 .ag-button--danger:hover {
     filter: brightness(0.9);
+}
+
+/* Auditoría visual externa, obs. #4: dentro de una franja de alerta, un
+   botón sólido compite con el único CTA sólido que debe quedar visible
+   sobre el pliegue ("Programar sesión"). Mismo criterio que --outline
+   (transparente + borde + hover con -subtle), con el tono de danger. */
+.ag-button--danger-outline {
+    background-color: transparent;
+    color: var(--ag-color-danger-strong);
+    border-color: var(--ag-color-danger-border);
+    box-shadow: none;
+}
+
+.ag-button--danger-outline:hover {
+    background-color: var(--ag-color-danger-subtle);
 }
 
 .ag-button__spinner {

@@ -5,7 +5,13 @@
     que agregue vía `$attributes`, que este átomo respeta y no pisa).
 
     Props:
-    - variant: primary|accent|outline|text|danger (default "primary").
+    - variant: primary|accent|outline|text|danger|danger-outline (default "primary").
+      danger-outline (auditoría visual externa, obs. #4): mismo tono
+      semántico que "danger" pero sin relleno — para acciones dentro de una
+      franja de alerta, donde un botón sólido compite con el CTA primario
+      del pliegue ("Programar sesión"). Sigue la misma anatomía que
+      "outline" (transparente + borde + hover con `-subtle`), coloreada con
+      los tokens de danger en vez de primary.
     - size: sm|md|lg (default "md").
     - type: button|submit|reset (default "button"), ignorado si se pasa `href`.
     - href: si se pasa, renderiza <a> en vez de <button>.
