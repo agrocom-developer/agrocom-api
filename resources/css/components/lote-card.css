@@ -1,0 +1,77 @@
+/*
+ * Molecule: lote-resumen-card (resources/views/components/molecules/lote-resumen-card.blade.php)
+ */
+
+.ag-lote-card {
+    background: var(--ag-color-surface-card);
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: 12px;
+    padding: var(--ag-space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-3);
+    min-width: 0;
+}
+
+.ag-lote-card__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--ag-space-3);
+}
+
+.ag-lote-card__id {
+    min-width: 0;
+}
+
+.ag-lote-card__nombre {
+    margin: 0;
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-color-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ag-lote-card__cliente {
+    margin: 2px 0 0;
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ag-lote-card__progreso {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+}
+
+.ag-lote-card__progreso .ag-bars__track {
+    flex: 1;
+}
+
+.ag-lote-card__grid {
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--ag-space-3);
+    padding-top: var(--ag-space-2);
+    border-top: 1px solid var(--ag-color-border-row);
+}
+
+.ag-lote-card__metric dt {
+    font-size: 0.6875rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ag-color-text-faint);
+}
+
+.ag-lote-card__metric dd {
+    margin: 2px 0 0;
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text);
+}

@@ -52,6 +52,7 @@ final class DashboardController
             'mapaLotes' => $demoMapa->lotes(),
             'mapaSesiones' => $demoMapa->sesionesGeo(),
             'resumenMapa' => $demoMapa->resumenMapa(),
+            'resumenPorLote' => $demoMapa->resumenPorLote(),
             'sesiones' => $demo->sesiones(),
             'pausas' => $demo->pausas(),
             'stock' => $demo->stockBajoMinimo(),

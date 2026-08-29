@@ -76,6 +76,28 @@ final class DatosDemoMapaOperativo
     }
 
     /**
+     * Resumen operativo por lote (Fase 7 — tab "Resumen por lote"): mismos
+     * 4 lotes de {@see lotes()}, con las métricas que ya se ven en la
+     * pantalla del control remoto del dron durante el vuelo (área
+     * completada/pendiente, litros de pesticida, L/ha, tiempo de vuelo).
+     * Cifras ancladas a los datos REALES transcritos en
+     * `docs/especificacion/analisis_capturas_rc.md` §8 (L/ha entre 9,15 y
+     * 12,15 en 7 misiones reales, mediana ~10,05; tiempos de vuelo entre
+     * 2:54 y 10:40) para que no se sientan arbitrarias.
+     *
+     * @return list<array{lote: string, cliente: string, hectareasTotales: float, hectareasCompletadas: float, hectareasPendientes: float, litrosPesticida: float, litrosPorHectarea: float, tiempoVuelo: string, pctCompletado: float, tono: string}>
+     */
+    public function resumenPorLote(): array
+    {
+        return [
+            ['lote' => 'Lote 12 — San Marcos', 'cliente' => 'Agropecuaria San Marcos S.R.L.', 'hectareasTotales' => 86.0, 'hectareasCompletadas' => 74.2, 'hectareasPendientes' => 11.8, 'litrosPesticida' => 745.6, 'litrosPorHectarea' => 10.05, 'tiempoVuelo' => '4:56', 'pctCompletado' => 86.3, 'tono' => 'warning'],
+            ['lote' => 'Lote 3 — El Carmen', 'cliente' => 'El Carmen Agroindustrial S.A.', 'hectareasTotales' => 112.0, 'hectareasCompletadas' => 72.8, 'hectareasPendientes' => 39.2, 'litrosPesticida' => 730.4, 'litrosPorHectarea' => 10.03, 'tiempoVuelo' => '1:42', 'pctCompletado' => 65.0, 'tono' => 'info'],
+            ['lote' => 'Lote 8 — El Carmen', 'cliente' => 'El Carmen Agroindustrial S.A.', 'hectareasTotales' => 48.0, 'hectareasCompletadas' => 0.0, 'hectareasPendientes' => 48.0, 'litrosPesticida' => 0.0, 'litrosPorHectarea' => 0.0, 'tiempoVuelo' => '0:00', 'pctCompletado' => 0.0, 'tono' => 'neutral'],
+            ['lote' => 'Lote 1 — Santa Rosa', 'cliente' => 'Grupo Santa Rosa', 'hectareasTotales' => 130.0, 'hectareasCompletadas' => 0.0, 'hectareasPendientes' => 130.0, 'litrosPesticida' => 0.0, 'litrosPorHectarea' => 0.0, 'tiempoVuelo' => '0:00', 'pctCompletado' => 0.0, 'tono' => 'neutral'],
+        ];
+    }
+
+    /**
      * Cuadros informativos del tab Mapa — agregados simples sobre el mismo
      * dato geoespacial de arriba.
      *

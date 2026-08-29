@@ -96,6 +96,14 @@
     padding-top: var(--ag-space-1);
 }
 
+/* ---------- Cuadros por lote (Fase 7) ---------- */
+
+.ag-dash__lotes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: var(--ag-space-4);
+}
+
 /* ---------- Grilla de 3 tarjetas (gráficos en Resumen, cuadros
    informativos en Mapa) ---------- */
 

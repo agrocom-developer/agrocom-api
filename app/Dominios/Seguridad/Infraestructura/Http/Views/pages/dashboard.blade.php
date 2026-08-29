@@ -231,9 +231,10 @@
                             </div>
                         </section>
 
-                        {{-- Fase 7 (pendiente): cuadros informativos por lote
-                             (hectáreas totales/completadas/pendientes, litros de
-                             pesticida, tiempo de vuelo). --}}
+                        <section>
+                            <x-molecules.section-head :title="__('seguridad.dashboard.seccion_resumen_lote')" />
+                            @include('seguridad::pages.dashboard._resumen-por-lote', ['lotes' => $resumenPorLote])
+                        </section>
                     </div>
                 </div>
 

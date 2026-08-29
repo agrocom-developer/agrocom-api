@@ -181,6 +181,15 @@ return [
         'mapa_leyenda_atencion' => 'Necesita atención',
         'mapa_leyenda_programado' => 'Programado',
         'mapa_leyenda_completado' => 'Completado',
+
+        // Fase 7 (novena vuelta) — tab Resumen por lote.
+        'seccion_resumen_lote' => 'Cuadros por lote',
+        'lote_col_completadas' => 'Completadas',
+        'lote_col_pendientes' => 'Pendientes',
+        'lote_col_total' => 'Total',
+        'lote_col_litros' => 'Pesticida',
+        'lote_col_litros_ha' => 'L/ha',
+        'lote_col_tiempo' => 'Tiempo de vuelo',
     ],
 
     'usuarios' => [
