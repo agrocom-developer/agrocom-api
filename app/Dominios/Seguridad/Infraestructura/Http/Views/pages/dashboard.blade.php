@@ -241,8 +241,35 @@
                 {{-- ============ Pestaña Multimedia (nueva) ============ --}}
                 <div class="tab-pane fade" id="ag-tab-multimedia" role="tabpanel" tabindex="0">
                     <div class="ag-dash__stack">
-                        {{-- Fase 8 (pendiente): capturas RC — galería agrupada,
-                             carrusel cronológico y tabla, mismas 21 imágenes. --}}
+                        {{-- 3 subvistas de las mismas capturas — mismo mecanismo
+                             `tab` de Bootstrap que los tabs de nivel 3, con skin
+                             de píldora en vez de subrayado. --}}
+                        <div class="ag-multimedia-toggle" role="tablist" aria-label="{{ __('seguridad.dashboard.multimedia_vistas_aria') }}">
+                            <button type="button" class="ag-multimedia-toggle__btn active" data-bs-toggle="tab" data-bs-target="#ag-multimedia-galeria" role="tab" aria-selected="true">
+                                <x-atoms.icon name="grid_view" size="sm" />
+                                {{ __('seguridad.dashboard.multimedia_vista_galeria') }}
+                            </button>
+                            <button type="button" class="ag-multimedia-toggle__btn" data-bs-toggle="tab" data-bs-target="#ag-multimedia-carrusel-pane" role="tab" aria-selected="false">
+                                <x-atoms.icon name="view_carousel" size="sm" />
+                                {{ __('seguridad.dashboard.multimedia_vista_carrusel') }}
+                            </button>
+                            <button type="button" class="ag-multimedia-toggle__btn" data-bs-toggle="tab" data-bs-target="#ag-multimedia-tabla-pane" role="tab" aria-selected="false">
+                                <x-atoms.icon name="table_rows" size="sm" />
+                                {{ __('seguridad.dashboard.multimedia_vista_tabla') }}
+                            </button>
+                        </div>
+
+                        <div class="tab-content">
+                            <div class="tab-pane fade show active" id="ag-multimedia-galeria" role="tabpanel" tabindex="0">
+                                @include('seguridad::pages.dashboard._multimedia-galeria', ['sesiones' => $capturasRc])
+                            </div>
+                            <div class="tab-pane fade" id="ag-multimedia-carrusel-pane" role="tabpanel" tabindex="0">
+                                @include('seguridad::pages.dashboard._multimedia-carrusel', ['sesiones' => $capturasRc])
+                            </div>
+                            <div class="tab-pane fade" id="ag-multimedia-tabla-pane" role="tabpanel" tabindex="0">
+                                @include('seguridad::pages.dashboard._multimedia-tabla', ['sesiones' => $capturasRc])
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

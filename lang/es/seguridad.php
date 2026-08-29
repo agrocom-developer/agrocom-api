@@ -190,6 +190,20 @@ return [
         'lote_col_litros' => 'Pesticida',
         'lote_col_litros_ha' => 'L/ha',
         'lote_col_tiempo' => 'Tiempo de vuelo',
+
+        // Fase 8 (novena vuelta) — tab Multimedia.
+        'multimedia_vistas_aria' => 'Formato de las capturas',
+        'multimedia_vista_galeria' => 'Galería',
+        'multimedia_vista_carrusel' => 'Carrusel',
+        'multimedia_vista_tabla' => 'Tabla',
+        'multimedia_anterior' => 'Anterior',
+        'multimedia_siguiente' => 'Siguiente',
+        'multimedia_col_fecha' => 'Fecha',
+        'multimedia_col_sesion' => 'Sesión',
+        'multimedia_col_piloto' => 'Piloto',
+        'multimedia_col_lote' => 'Lote',
+        'multimedia_col_descripcion' => 'Descripción',
+        'multimedia_ver' => 'Ver',
     ],
 
     'usuarios' => [

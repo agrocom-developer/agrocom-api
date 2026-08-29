@@ -24,6 +24,7 @@
 @import './distribution-bar.css';
 @import './apex-chart.css';
 @import './lote-card.css';
+@import './captura-rc-card.css';
 
 /* Organisms (quinta vuelta — layout de tres niveles) */
 @import './collapsible-menu-group.css';

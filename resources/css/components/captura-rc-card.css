@@ -1,0 +1,79 @@
+/*
+ * Molecule: captura-rc-card (resources/views/components/molecules/captura-rc-card.blade.php)
+ */
+
+.ag-captura-card {
+    background: var(--ag-color-surface-card);
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.ag-captura-card__imagenes {
+    display: flex;
+    gap: 2px;
+    background: var(--ag-color-bg-table-head);
+}
+
+.ag-captura-card__imagen-link {
+    flex: 1;
+    display: block;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+}
+
+.ag-captura-card__imagen {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform var(--ag-transition-fast);
+}
+
+.ag-captura-card__imagen-link:hover .ag-captura-card__imagen {
+    transform: scale(1.05);
+}
+
+.ag-captura-card__body {
+    padding: var(--ag-space-3) var(--ag-space-4);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ag-captura-card__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ag-space-2);
+}
+
+.ag-captura-card__lote {
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-color-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ag-captura-card__meta,
+.ag-captura-card__cifras {
+    margin: 0;
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-captura-card__cifras {
+    font-family: var(--ag-font-family-mono);
+    font-size: 0.71875rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ag-captura-card__imagen {
+        transition-duration: 0.01ms;
+    }
+}

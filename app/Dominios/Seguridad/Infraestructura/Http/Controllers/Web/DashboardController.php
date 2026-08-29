@@ -3,6 +3,7 @@
 namespace App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web;
 
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
+use App\Dominios\Seguridad\Infraestructura\Http\Demo\DatosDemoCapturasRc;
 use App\Dominios\Seguridad\Infraestructura\Http\Demo\DatosDemoMapaOperativo;
 use App\Dominios\Seguridad\Infraestructura\Http\Demo\DatosDemoPanel;
 use App\Dominios\Seguridad\Infraestructura\Http\Middleware\ResolverRolActivo;
@@ -36,6 +37,7 @@ final class DashboardController
         CascaraPanel $cascara,
         DatosDemoPanel $demo,
         DatosDemoMapaOperativo $demoMapa,
+        DatosDemoCapturasRc $demoCapturas,
     ): View {
         /** @var SecUser $usuario */
         $usuario = $request->user('interno');
@@ -53,6 +55,7 @@ final class DashboardController
             'mapaSesiones' => $demoMapa->sesionesGeo(),
             'resumenMapa' => $demoMapa->resumenMapa(),
             'resumenPorLote' => $demoMapa->resumenPorLote(),
+            'capturasRc' => $demoCapturas->sesiones(),
             'sesiones' => $demo->sesiones(),
             'pausas' => $demo->pausas(),
             'stock' => $demo->stockBajoMinimo(),

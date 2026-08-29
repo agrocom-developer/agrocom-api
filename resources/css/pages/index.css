@@ -8,5 +8,6 @@
  */
 
 @import './dashboard.css';
+@import './multimedia.css';
 @import './organizacion.css';
 @import './seleccionar-rol.css';
