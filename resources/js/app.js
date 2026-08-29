@@ -18,3 +18,18 @@ window.bootstrap = bootstrap;
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((el) => new bootstrap.Tooltip(el));
 });
+
+// Carga diferida de ApexCharts/Leaflet (dashboard): un solo entrypoint Vite
+// para todo el panel, así que un import estático acá los bajaría hasta en el
+// login. `import()` dinámico + guard de presencia en el DOM hace que Vite
+// genere chunks separados que el navegador solo pide cuando la página
+// realmente tiene un gráfico o un mapa.
+document.addEventListener('DOMContentLoaded', () => {
+    if (document.querySelector('[data-ag-chart]')) {
+        import('./organisms/dashboard-charts.js');
+    }
+
+    if (document.querySelector('[data-ag-map]')) {
+        import('./organisms/dashboard-map.js');
+    }
+});
