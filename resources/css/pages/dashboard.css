@@ -96,9 +96,10 @@
     padding-top: var(--ag-space-1);
 }
 
-/* ---------- Gráficos (Fase 4) ---------- */
+/* ---------- Grilla de 3 tarjetas (gráficos en Resumen, cuadros
+   informativos en Mapa) ---------- */
 
-.ag-dash__charts {
+.ag-dash__cards-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: var(--ag-space-4);
@@ -555,7 +556,7 @@
 /* ---------- Tablet (maqueta 5a) ---------- */
 
 @media (max-width: 1199.98px) {
-    .ag-dash__charts {
+    .ag-dash__cards-grid {
         grid-template-columns: 1fr 1fr;
     }
 
@@ -590,7 +591,7 @@
         display: none;
     }
 
-    .ag-dash__charts {
+    .ag-dash__cards-grid {
         grid-template-columns: 1fr;
     }
 

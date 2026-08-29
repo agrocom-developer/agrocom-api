@@ -32,6 +32,7 @@
 @import './module-drawer.css';
 @import './topbar.css';
 @import './tabs.css';
+@import './mapa-operativo.css';
 
 /* Templates */
 @import './panel-layout.css';

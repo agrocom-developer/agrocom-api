@@ -172,6 +172,15 @@ return [
         'clientes_actividad' => ':sesiones sesiones · :ha',
         'clientes_vencido' => 'Venció',
         'clientes_vence_en' => ':dias días',
+
+        // Fase 6 (novena vuelta) — tab Mapa.
+        'mapa_lotes_titulo' => 'Lotes en el mapa',
+        'mapa_hectareas_titulo' => 'Hectáreas en el mapa',
+        'mapa_sesiones_titulo' => 'Sesiones georreferenciadas',
+        'mapa_leyenda_en_vuelo' => 'En vuelo',
+        'mapa_leyenda_atencion' => 'Necesita atención',
+        'mapa_leyenda_programado' => 'Programado',
+        'mapa_leyenda_completado' => 'Completado',
     ],
 
     'usuarios' => [

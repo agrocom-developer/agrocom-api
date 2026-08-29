@@ -3,6 +3,7 @@
 namespace App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web;
 
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
+use App\Dominios\Seguridad\Infraestructura\Http\Demo\DatosDemoMapaOperativo;
 use App\Dominios\Seguridad\Infraestructura\Http\Demo\DatosDemoPanel;
 use App\Dominios\Seguridad\Infraestructura\Http\Middleware\ResolverRolActivo;
 use App\Dominios\Seguridad\Infraestructura\Http\Presentacion\CascaraPanel;
@@ -34,6 +35,7 @@ final class DashboardController
         Request $request,
         CascaraPanel $cascara,
         DatosDemoPanel $demo,
+        DatosDemoMapaOperativo $demoMapa,
     ): View {
         /** @var SecUser $usuario */
         $usuario = $request->user('interno');
@@ -47,6 +49,9 @@ final class DashboardController
             'hectareasPorDia' => $demo->hectareasPorDia(),
             'avanceMeta' => $demo->avanceMeta(),
             'detalleClientes' => $demo->detalleClientes(),
+            'mapaLotes' => $demoMapa->lotes(),
+            'mapaSesiones' => $demoMapa->sesionesGeo(),
+            'resumenMapa' => $demoMapa->resumenMapa(),
             'sesiones' => $demo->sesiones(),
             'pausas' => $demo->pausas(),
             'stock' => $demo->stockBajoMinimo(),

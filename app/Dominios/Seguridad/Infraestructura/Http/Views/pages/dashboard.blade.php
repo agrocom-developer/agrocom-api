@@ -97,7 +97,7 @@
                                 'neutral' => '--ag-color-text-faint',
                             ];
                         @endphp
-                        <section class="ag-dash__charts">
+                        <section class="ag-dash__cards-grid">
                             <div class="ag-card ag-card--padded">
                                 <x-molecules.section-head :title="__('seguridad.dashboard.seccion_sesiones_estado')" />
                                 <x-molecules.apex-chart
@@ -194,9 +194,25 @@
                 {{-- ============ Pestaña Mapa (nueva) ============ --}}
                 <div class="tab-pane fade" id="ag-tab-mapa" role="tabpanel" tabindex="0">
                     <div class="ag-dash__stack">
-                        {{-- Fase 6 (pendiente): mapa satelital (Leaflet + Esri World
-                             Imagery) con puntos de sesión y polígonos de lotes,
-                             más cuadros informativos. --}}
+                        <div class="ag-dash__cards-grid">
+                            <x-molecules.stat-card
+                                :label="__('seguridad.dashboard.mapa_lotes_titulo')"
+                                icon="layers"
+                                :value="$resumenMapa['lotesEnMapa']"
+                            />
+                            <x-molecules.stat-card
+                                :label="__('seguridad.dashboard.mapa_hectareas_titulo')"
+                                icon="landscape"
+                                :value="$resumenMapa['hectareasEnMapa']"
+                            />
+                            <x-molecules.stat-card
+                                :label="__('seguridad.dashboard.mapa_sesiones_titulo')"
+                                icon="share_location"
+                                :value="$resumenMapa['sesionesGeorreferenciadas']"
+                            />
+                        </div>
+
+                        <x-organisms.mapa-operativo :lotes="$mapaLotes" :sesiones="$mapaSesiones" />
                     </div>
                 </div>
 

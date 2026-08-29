@@ -1,0 +1,68 @@
+/*
+ * Organism: mapa-operativo (resources/views/components/organisms/mapa-operativo.blade.php)
+ * El lienzo lo pinta Leaflet en JS (dashboard-map.js) — colores de
+ * polígonos/puntos siempre resueltos de tokens (shared/color-tokens.js).
+ * El chrome NATIVO de Leaflet (botones de zoom, atribución) queda con su
+ * estilo propio de librería — no se re-skinea con tokens, mismo criterio
+ * que el resto del ecosistema no re-tokeniza el chrome interno de
+ * dependencias de terceros (p. ej. los tooltips nativos de Bootstrap).
+ */
+
+.ag-mapa-operativo {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-3);
+}
+
+.ag-mapa-operativo__lienzo {
+    width: 100%;
+    height: 480px;
+    border-radius: var(--ag-radius-md);
+    overflow: hidden;
+    background: var(--ag-color-bg-table-head);
+}
+
+.ag-mapa-operativo__leyenda {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ag-space-4);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ag-mapa-operativo__leyenda-item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-mapa-operativo__dot {
+    width: 10px;
+    height: 10px;
+    border-radius: var(--ag-radius-pill);
+}
+
+.ag-mapa-operativo__dot--info {
+    background: var(--ag-color-info);
+}
+
+.ag-mapa-operativo__dot--warning {
+    background: var(--ag-color-warning);
+}
+
+.ag-mapa-operativo__dot--neutral {
+    background: var(--ag-color-text-faint);
+}
+
+.ag-mapa-operativo__dot--success {
+    background: var(--ag-color-success);
+}
+
+@media (max-width: 767.98px) {
+    .ag-mapa-operativo__lienzo {
+        height: 320px;
+    }
+}
