@@ -47,6 +47,39 @@
     color: var(--ag-color-text-muted);
 }
 
+/* Auditoría visual externa, obs. #3: la ventana volable dejó de ser un
+   segundo alert-strip de igual peso que el aviso de RC — ahora es una tira
+   compacta junto al subtítulo, mismo tono warning sin la anatomía completa
+   de franja/banner. */
+.ag-dash__subtitle-row {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+    flex-wrap: wrap;
+}
+
+.ag-dash__ventana-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-1) var(--ag-space-3);
+    border-radius: var(--ag-radius-pill);
+    background: var(--ag-color-warning-subtle);
+    border: 1px solid var(--ag-color-warning-border);
+    color: var(--ag-color-warning-strong);
+    font-size: var(--ag-font-size-xs);
+    white-space: nowrap;
+}
+
+.ag-dash__ventana-chip .ag-icon {
+    color: var(--ag-color-warning-strong);
+}
+
+.ag-dash__ventana-chip .ag-dash__link {
+    color: var(--ag-color-warning-strong);
+    text-decoration: underline;
+}
+
 .ag-dash__actions {
     display: flex;
     gap: var(--ag-space-2);
@@ -75,11 +108,12 @@
     display: none;
 }
 
-/* ---------- Grilla principal 1.55fr / 1fr ---------- */
+/* ---------- Grilla principal 2fr / 1fr (auditoría visual externa, obs. #6:
+   antes 1.55fr/1fr, más cerca del 8/4 de 12 columnas pedido) ---------- */
 
 .ag-dash__grid {
     display: grid;
-    grid-template-columns: 1.55fr 1fr;
+    grid-template-columns: 2fr 1fr;
     gap: var(--ag-space-4);
     align-items: start;
 }
@@ -233,6 +267,31 @@
 
 .ag-table__dot--unassigned {
     background: var(--ag-color-bar-unassigned);
+}
+
+/* Auditoría visual externa, obs. #9: el estado de la tabla de sesiones
+   (escritorio) pasa de badge relleno a punto + texto plano — la columna
+   Estado ya no compite visualmente con el resto de chips reales de la
+   página; atoms/badge sigue igual para sus otros usos (KPI, alertas, RC). */
+.ag-table__dot--success {
+    background: var(--ag-color-success-strong);
+}
+
+.ag-table__dot--warning {
+    background: var(--ag-color-warning-strong);
+}
+
+.ag-table__estado {
+    display: inline-flex;
+    align-items: center;
+    color: var(--ag-color-text);
+}
+
+/* Auditoría visual externa, obs. #9: la columna HA (cifra) alineaba a la
+   izquierda como el resto de columnas de texto — las cifras se leen/comparan
+   mejor alineadas a la derecha. */
+.ag-table__ha {
+    text-align: right;
 }
 
 .ag-table__head {

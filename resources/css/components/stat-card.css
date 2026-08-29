@@ -106,13 +106,18 @@
     background: var(--ag-color-danger);
 }
 
-/* Mono, NUNCA la display (Fraunces) — pedido explícito del 28/8/2026: la
-   cifra del KPI no puede competir/confundirse con el titular serif de la
-   página ("Operación de hoy"). Mismo criterio que la referencia
-   ganadosoft (§2.2, IBM Plex Mono) y que el total del donut-chart. */
+/* Sans + tabular-nums (auditoría visual externa, obs. #7 — supera la regla
+   §8.7 anterior, "mono, nunca la display", documentado como tal en
+   sistema_diseno_panel.md): la versión mono (IBM Plex Mono) abría demasiado
+   el tracking de una cifra grande ("Bs 18.490" se leía espaciada/floja). La
+   sans (IBM Plex Base) + font-variant-numeric: tabular-nums da dígitos de
+   ancho fijo (se siguen alineando en columna, mismo motivo original de usar
+   mono) sin el tracking abierto — y sigue sin ser la display (Fraunces):
+   el titular de la página sigue siendo el único texto en esa fuente. */
 .ag-stat-card__value {
     margin: 0;
-    font-family: var(--ag-font-family-mono);
+    font-family: var(--ag-font-family-base);
+    font-variant-numeric: tabular-nums;
     font-weight: var(--ag-font-weight-bold);
     letter-spacing: -0.02em;
     font-size: 1.875rem;

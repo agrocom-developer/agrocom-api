@@ -42,7 +42,7 @@
         <span role="columnheader">{{ __('seguridad.dashboard.col_lote') }}</span>
         <span role="columnheader">{{ __('seguridad.dashboard.col_piloto') }}</span>
         <span role="columnheader">{{ __('seguridad.dashboard.col_dron') }}</span>
-        <span role="columnheader">{{ __('seguridad.dashboard.col_ha') }}</span>
+        <span role="columnheader" class="ag-table__ha">{{ __('seguridad.dashboard.col_ha') }}</span>
         <span role="columnheader">{{ __('seguridad.dashboard.col_estado') }}</span>
         @if ($conRc)
             <span role="columnheader">{{ __('seguridad.dashboard.col_rc') }}</span>
@@ -59,9 +59,10 @@
             <span class="ag-table__strong" role="cell">{{ $sesion['lote'] }}</span>
             <span role="cell">{{ $sesion['piloto'] }}</span>
             <span class="ag-table__mono" role="cell">{{ $sesion['dron'] }}</span>
-            <span role="cell">{{ $sesion['ha'] }}</span>
-            <span role="cell">
-                <x-atoms.badge :variant="$sesion['variante']">{{ __('operaciones.sesion.estado.'.$sesion['estado']) }}</x-atoms.badge>
+            <span role="cell" class="ag-table__ha">{{ $sesion['ha'] }}</span>
+            <span role="cell" class="ag-table__estado">
+                <span class="ag-table__dot ag-table__dot--{{ $sesion['variante'] }}" aria-hidden="true"></span>
+                {{ __('operaciones.sesion.estado.'.$sesion['estado']) }}
             </span>
             @if ($conRc)
                 <span role="cell">

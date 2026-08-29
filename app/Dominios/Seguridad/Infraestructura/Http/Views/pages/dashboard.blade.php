@@ -36,7 +36,18 @@
             <div class="ag-dash__header">
                 <div class="ag-dash__heading">
                     <h1 class="ag-dash__title">{{ __('seguridad.dashboard.titulo') }}</h1>
-                    <p class="ag-dash__subtitle">{{ __('seguridad.dashboard.bajada', ['fecha' => $fechaBajada]) }}</p>
+                    <div class="ag-dash__subtitle-row">
+                        <p class="ag-dash__subtitle">{{ __('seguridad.dashboard.bajada', ['fecha' => $fechaBajada]) }}</p>
+                        {{-- Auditoría visual externa, obs. #3: la ventana volable era un
+                             segundo banner de igual peso que el aviso de RC (bloqueante),
+                             compitiendo por atención. Baja a tira compacta junto al
+                             subtítulo — sigue siendo warning, ya no un alert-strip completo. --}}
+                        <div class="ag-dash__ventana-chip">
+                            <x-atoms.icon name="wb_twilight" size="sm" />
+                            <span>{{ __('seguridad.dashboard.ventana_titulo', ['horario' => $ventana['horario']]) }}</span>
+                            <button type="button" class="ag-dash__link">{{ __('seguridad.dashboard.ventana_accion') }}</button>
+                        </div>
+                    </div>
                 </div>
                 <div class="ag-dash__actions">
                     <x-atoms.button variant="outline" icon="download">{{ __('seguridad.dashboard.exportar') }}</x-atoms.button>
@@ -68,15 +79,7 @@
                             <strong>{{ __('seguridad.dashboard.rc_alerta', ['cantidad' => $alertaRc['cantidad']]) }}</strong>
                             <span class="ag-dash__rc-detalle">{{ __('seguridad.dashboard.rc_detalle') }}</span>
                             <x-slot:action>
-                                <x-atoms.button variant="danger" size="sm">{{ __('seguridad.dashboard.rc_resolver') }}</x-atoms.button>
-                            </x-slot:action>
-                        </x-molecules.alert-strip>
-
-                        <x-molecules.alert-strip variant="warning" icon="wb_twilight">
-                            <strong>{{ __('seguridad.dashboard.ventana_titulo', ['horario' => $ventana['horario']]) }}</strong>
-                            {{ $ventana['detalle'] }}
-                            <x-slot:action>
-                                <x-atoms.button variant="accent" size="sm">{{ __('seguridad.dashboard.ventana_accion') }}</x-atoms.button>
+                                <x-atoms.button variant="danger-outline" size="sm">{{ __('seguridad.dashboard.rc_resolver') }}</x-atoms.button>
                             </x-slot:action>
                         </x-molecules.alert-strip>
 
@@ -127,9 +130,9 @@
                         {{-- Gráfica mock (Fase 4) — antes de Programación/Pausas/Stock,
                              pedido explícito del 28/8/2026. --}}
                         <section>
-                            <x-molecules.section-head :title="__('seguridad.dashboard.seccion_distribucion')" :count="$distribucion['total']" />
+                            <x-molecules.section-head :title="__('seguridad.dashboard.seccion_distribucion')" />
                             <div class="ag-card ag-card--padded">
-                                <x-molecules.donut-chart
+                                <x-molecules.distribution-bar
                                     :segments="$distribucion['segmentos']"
                                     :total="$distribucion['total']"
                                     :center-label="__('seguridad.dashboard.distribucion_centro')"
