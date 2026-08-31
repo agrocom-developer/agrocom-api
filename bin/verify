@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+#
+# Cascada de verificación de agrocom-api — la "compuerta".
+#
+# Devuelve exit 0 solo si TODO pasa. Es el único criterio de aceptación
+# que un cambio necesita cumplir para poder commitearse sin revisión
+# humana previa (ver docs/gestion/automatizacion_desarrollo.md).
+#
+# El grueso corre DENTRO del contenedor `app` (PHP 8.3, igual que CI —
+# el PHP del host puede ser otra versión). Los assets se compilan en el
+# host porque la imagen no trae Node.
+#
+#   bin/verify                # cascada completa
+#   bin/verify --sin-assets   # solo PHP (más rápido, para iterar)
+#
+set -uo pipefail
+
+cd "$(dirname "$0")/.." || exit 1
+
+CON_ASSETS=1
+[ "${1:-}" = "--sin-assets" ] && CON_ASSETS=0
+
+# --- Dónde corre PHP -------------------------------------------------
+# Preferencia: contenedor ya levantado > contenedor efímero > host.
+if docker compose ps --services --filter status=running 2>/dev/null | grep -qx app; then
+    ENTORNO="contenedor app (en ejecución)"
+    php_en() { docker compose exec -T app "$@"; }
+elif docker info >/dev/null 2>&1; then
+    ENTORNO="contenedor app (efímero)"
+    php_en() { docker compose run --rm -T app "$@"; }
+else
+    ENTORNO="host (Docker no disponible — la versión de PHP puede no coincidir con CI)"
+    php_en() { "$@"; }
+fi
+
+FALLO=""
+
+etapa() {
+    local nombre="$1"; shift
+    printf '\n\033[1m▸ %s\033[0m\n' "$nombre"
+    if "$@"; then
+        printf '\033[32m  ✓ %s\033[0m\n' "$nombre"
+    else
+        printf '\033[31m  ✗ %s\033[0m\n' "$nombre"
+        FALLO="$nombre"
+        return 1
+    fi
+}
+
+printf '\033[1mVerificación de agrocom-api\033[0m — PHP: %s\n' "$ENTORNO"
+
+# Pint, Larastan y Pest en un solo paso: `composer verify` ya los encadena
+# y se detiene en el primero que falle.
+etapa "Estilo, análisis estático y tests (composer verify)" php_en composer verify || true
+
+if [ -z "$FALLO" ] && [ "$CON_ASSETS" = "1" ]; then
+    etapa "Compilación de assets (Vite, en el host)" npm run build || true
+fi
+
+echo
+if [ -n "$FALLO" ]; then
+    printf '\033[31m✗ La cascada falló en: %s\033[0m\n' "$FALLO"
+    printf '  El cambio NO está listo para commitear.\n'
+    exit 1
+fi
+
+printf '\033[32m✓ Cascada completa en verde.\033[0m\n'
+exit 0

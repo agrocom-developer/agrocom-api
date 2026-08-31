@@ -22,6 +22,16 @@ git push -u origin feature/nombre-de-la-hu
 # abrir PR contra develop
 ```
 
+## Antes de pushear
+
+```
+./bin/verify
+```
+
+Es la misma cascada que corre CI (Pint + Larastan + Pest en el contenedor con PHP
+8.3, más la compilación de assets en el host) y devuelve 0 solo si todo pasa.
+Detalle en `docs/gestion/automatizacion_desarrollo.md`.
+
 El PR es el punto de revisión — propio y del agente de IA — antes de integrar, aunque el desarrollo sea en solitario. Se mergea cuando: la suite está en verde, el criterio de aceptación de la HU/TE tiene test, y (si toca sync, estados o dinero) se revisó línea por línea.
 
 `develop` se mergea a `master` cuando un conjunto de features está listo para desplegarse — no automáticamente en cada PR a develop.
