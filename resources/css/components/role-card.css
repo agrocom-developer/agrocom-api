@@ -35,7 +35,7 @@
 .ag-role-card.is-selected {
     background: var(--ag-color-primary-subtle);
     border-color: var(--ag-color-primary);
-    box-shadow: 0 4px 14px rgba(30, 122, 52, 0.14);
+    box-shadow: var(--ag-shadow-selected);
 }
 
 .ag-role-card__icon {

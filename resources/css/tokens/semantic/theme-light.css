@@ -254,6 +254,15 @@
     --ag-color-chip-text: rgba(255, 255, 255, 0.86);
     --ag-color-text-on-scrim-muted: rgba(255, 255, 255, 0.8);
 
+    /* Elevación de una tarjeta SELECCIONADA (hoy: role-card en el selector de
+       rol, maqueta 5c) — halo del verde bosque de marca. Vive en el tema y no
+       en primitives/base.css junto a --ag-shadow-sm/-md/-lg porque es la única
+       sombra teñida del sistema: las tres genéricas son negro neutro y no
+       necesitan reasignar por tema, esta sí. Antes era un rgba() suelto dentro
+       de role-card.css, que es exactamente lo que prohíbe la invariante 11 de
+       CLAUDE.md; el color resultante es idéntico (green-700 = #1e7a34 al 14%). */
+    --ag-shadow-selected: 0 4px 14px color-mix(in srgb, var(--ag-color-green-700) 14%, transparent);
+
     /* Bootstrap 5 hereda la marca reasignando sus propias variables nativas
        — así `.btn-primary`, `.alert-success`, el sidebar de AdminLTE, etc.
        no necesitan overrides por componente ni por tema. */
