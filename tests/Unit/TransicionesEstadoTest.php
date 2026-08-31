@@ -280,3 +280,45 @@ test('la única excepción es el servicio de máquina de estados del módulo', f
         // …ni nada que solo se llame parecido.
         ->and(estadosEsServicioDeEstados('app/Dominios/Operaciones/Infraestructura/Http/Controllers/Api/MaquinaEstadosController.php'))->toBeFalse();
 });
+
+/*
+ * Los dos tests que siguen son la aduana probándose a sí misma. Un gate que
+ * hoy solo pasa en verde no prueba nada: sin esto, un patrón mal escrito
+ * (o desafinado en un refactor futuro) dejaría de detectar y la suite seguiría
+ * igual de verde que cuando detectaba.
+ */
+
+test('el detector encuentra cada forma de asignar un estado a mano', function (string $codigo, int $lineaEsperada) {
+    $hallazgos = estadosAsignacionesSueltas($codigo);
+
+    expect($hallazgos)->toHaveCount(1)
+        ->and($hallazgos[0]['linea'])->toBe($lineaEsperada);
+})->with([
+    'propiedad estado' => ["<?php\n\n\$orden->estado = EstadoOrdenAplicacion::Vigente;\n", 3],
+    'propiedad estado_actual' => ["<?php\n\n\$sesion->estado_actual = 'validada';\n", 3],
+    'propiedad con sufijo _estado' => ["<?php\n\n\$parte->rc_estado = 'capturado';\n", 3],
+    'asignación con ??=' => ["<?php\n\n\$orden->estado ??= EstadoOrdenAplicacion::Emitida;\n", 3],
+    'update en una línea' => ["<?php\n\n\$orden->update(['estado' => EstadoOrdenAplicacion::Consumida]);\n", 3],
+    'update multilínea' => ["<?php\n\n\$orden->update([\n    'litros_ha' => 12,\n    'estado' => 'consumida',\n]);\n", 5],
+    'create estático' => ["<?php\n\nContrato::create(['cliente_id' => 1, 'estado' => 'vigente']);\n", 3],
+    'fill' => ["<?php\n\n\$contrato->fill(['estado' => EstadoContrato::Vigente])->save();\n", 3],
+    'forceFill' => ["<?php\n\n\$contrato->forceFill(['estado' => 'cancelado'])->saveQuietly();\n", 3],
+    'clave en el segundo arreglo de updateOrCreate' => ["<?php\n\nOrden::updateOrCreate(['uuid_cliente' => \$u], ['estado' => 'vigente']);\n", 3],
+    'insert del query builder' => ["<?php\n\nDB::table('ope_ordenes')->insert(['estado' => 'emitida']);\n", 3],
+    'línea correcta después de un docblock multilínea' => ["<?php\n\n/**\n * Un docblock\n * de varias líneas.\n */\n\$orden->estado = 'vencida';\n", 7],
+]);
+
+test('el detector no confunde con una asignación lo que solo lee o declara un estado', function (string $codigo) {
+    expect(estadosAsignacionesSueltas($codigo))->toBe([]);
+})->with([
+    'lectura en un Resource' => "<?php\n\nreturn ['estado' => \$this->estado->value];\n",
+    'declaración de fillable' => "<?php\n\nprotected \$fillable = ['estado'];\n",
+    'declaración de casts' => "<?php\n\nreturn ['estado' => EstadoContrato::class];\n",
+    'filtro de consulta' => "<?php\n\n\$consulta->where('estado', \$estado);\n",
+    'comparación' => "<?php\n\nif (\$orden->estado === EstadoOrdenAplicacion::Vigente) {\n}\n",
+    'escritura masiva sin clave de estado' => "<?php\n\n\$token->forceFill(['last_used_at' => now()])->saveQuietly();\n",
+    'propiedad que solo empieza igual' => "<?php\n\n\$this->estadoDelArte = 'moderno';\n",
+    'declaración de un método llamado create' => "<?php\n\npublic function create(array \$datos): void\n{\n}\n",
+    'comentario de una línea que cita el antipatrón' => "<?php\n\n// \$orden->estado = 'vigente';\n",
+    'docblock que cita el antipatrón' => "<?php\n\n/** Nunca un \$orden->estado = ... suelto. */\n",
+]);
