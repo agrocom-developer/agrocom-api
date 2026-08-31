@@ -1,81 +1,140 @@
 #!/usr/bin/env bash
 #
-# Runner de una iteración: una sesión de Claude Code POR TAREA.
+# Runner de iteraciones: una sesión de Claude Code POR TAREA, con reintentos.
 #
-# Cada `claude -p` arranca con contexto limpio — no es la misma conversación
-# que se va llenando, son sesiones independientes. Eso es lo que baja el costo
-# por turno y lo que evita que la tarea 3 arrastre el ruido de la 1.
+# Cada `claude -p` arranca con contexto limpio — no es una conversación que se
+# va llenando, son sesiones independientes. El estado NO vive en la charla:
+# vive en git (ramas, commits, PRs) y en runs/*.estado, que se pueden auditar
+# después. Una afirmación en una conversación, no.
 #
-# El estado NO vive en la conversación: vive en git (ramas, commits, PRs) y en
-# runs/*.estado. Por eso una tarea puede leer lo que dejó la anterior sin que
-# nadie le "recuerde" nada.
-#
-#   bin/iteracion           # corre las tres tareas en orden
-#   bin/iteracion 02        # corre solo una
+#   bin/iteracion              # toda la cola (01, 02, 03)
+#   bin/iteracion 02           # una sola
+#   bin/iteracion 02 03        # un tramo
 #
 # Deliberadamente NO usa --bare: ese modo exige ANTHROPIC_API_KEY (no lee el
-# login de suscripción) y saltea los hooks — es decir, correría sin los
-# guardarraíles de .claude/. Acá los queremos puestos.
+# login de suscripción) y saltea los hooks — correría sin los guardarraíles de
+# .claude/, que son la única barrera cuando no hay nadie mirando.
 #
 set -uo pipefail
 cd "$(dirname "$0")/.." || exit 1
 mkdir -p runs
 
-# dontAsk es obligatorio en no interactivo: no hay nadie para responder un
-# prompt de permiso a las 3 AM. Lo que evita el desastre no es la pregunta,
-# es la lista negra de .claude/hooks/, que deniega por encima de este modo.
-COMUNES=(
-    --permission-mode dontAsk
-    --allowedTools "Read Edit Write Glob Grep Bash"
-    --output-format json
-)
+INTENTOS_MAX=3
 
-correr() {
-    local id="$1"
-    local archivo
-    archivo=$(ls prompts/"$id"-*.md 2>/dev/null | head -1)
+# dontAsk es obligatorio sin humano presente: nadie va a contestar un prompt de
+# permiso. Lo que evita el desastre no es la pregunta, es la lista negra de
+# .claude/hooks/, que deniega por encima de este modo.
+COMUNES=(--permission-mode dontAsk --allowedTools "Read Edit Write Glob Grep Bash" --output-format json)
 
-    if [ -z "$archivo" ]; then
-        printf '\033[31m✗ No existe prompt para la tarea %s\033[0m\n' "$id"
-        return 1
-    fi
+log()   { printf '\033[90m%s\033[0m %s\n' "$(date +%H:%M:%S)" "$1"; }
+ok()    { printf '\033[32m  ✓ %s\033[0m\n' "$1"; }
+malo()  { printf '\033[31m  ✗ %s\033[0m\n' "$1"; }
 
-    printf '\n\033[1m━━━ Tarea %s — sesión nueva ━━━\033[0m\n%s\n' "$id" "$archivo"
-    rm -f "runs/$id.estado"
-
-    claude -p "$(cat "$archivo")" "${COMUNES[@]}" > "runs/$id.json" 2>&1
-    local salida=$?
-
-    local estado="SIN-ESTADO"
-    [ -f "runs/$id.estado" ] && estado=$(tr -d '[:space:]' < "runs/$id.estado")
-
-    printf '  exit %s · estado declarado: \033[1m%s\033[0m\n' "$salida" "$estado"
-    [ -f "runs/$id.md" ] && printf '  reporte: runs/%s.md\n' "$id"
-
-    echo "$estado"
+leer_estado() {
+    [ -f "runs/$1.estado" ] && tr -d '[:space:]' < "runs/$1.estado" || echo "SIN-ESTADO"
 }
 
-if [ $# -gt 0 ]; then
-    correr "$1" > /dev/null
-    exit $?
-fi
+# Un estado terminal es el que no mejora reintentando: la tarea se cerró bien,
+# o se topó con algo que necesita una decisión humana. BLOQUEADA no se reintenta
+# — insistir sobre una pregunta sin responder solo quema tokens.
+es_terminal() {
+    case "$1" in OK|CERRADA|OMITIDA|BLOQUEADA) return 0 ;; *) return 1 ;; esac
+}
 
-correr 01 > /dev/null
+# Cada tarea arranca desde una base conocida. Sin esto, la tarea 03 heredaría
+# la rama donde la 02 dejó el checkout, y dejaría de ser independiente.
+preparar_base() {
+    if [ -n "$(git status --porcelain)" ]; then
+        malo "Working tree sucio — no arranco una tarea sobre cambios sin commitear"
+        git status --short | head -5
+        return 1
+    fi
+    git checkout develop --quiet 2>/dev/null || return 1
+    git pull --quiet --ff-only origin develop 2>/dev/null
+    return 0
+}
 
-# La tarea 03 solo corre si la 02 declaró HU-02 cerrada. La condición se lee
-# de un archivo, no de lo que la sesión anterior "dijo" — un archivo se puede
-# verificar después; una afirmación en una conversación, no.
-estado02=$(correr 02 | tail -1)
+correr() {
+    local id="$1" archivo intento estado
+    archivo=$(ls prompts/"$id"-*.md 2>/dev/null | head -1)
+    [ -z "$archivo" ] && { malo "No existe prompt para la tarea $id"; return 1; }
 
-if [ "$estado02" = "CERRADA" ]; then
-    correr 03 > /dev/null
-else
-    printf '\n\033[33m⊘ Tarea 03 omitida: HU-02 quedó en "%s", no CERRADA.\033[0m\n' "$estado02"
-    echo "OMITIDA" > runs/03.estado
-fi
+    for intento in $(seq 1 "$INTENTOS_MAX"); do
+        printf '\n\033[1m━━━ Tarea %s · intento %s/%s · sesión nueva ━━━\033[0m\n' "$id" "$intento" "$INTENTOS_MAX"
+        preparar_base || return 1
+        rm -f "runs/$id.estado"
+
+        local entrada
+        entrada=$(cat "$archivo")
+
+        # El reintento no repite el pedido a secas: le devuelve a la sesión
+        # nueva lo que produjo la anterior. Sin esa evidencia, adivina.
+        if [ "$intento" -gt 1 ]; then
+            entrada="$entrada
+
+---
+## Reintento $intento de $INTENTOS_MAX
+
+El intento anterior NO llegó a un estado terminal. Esto es lo que dejó:
+
+### runs/$id.md
+$(tail -40 "runs/$id.md" 2>/dev/null || echo '(no escribió reporte)')
+
+### Últimas líneas de la corrida
+$(tail -30 "runs/$id.log" 2>/dev/null || echo '(sin log)')
+
+Corregí la causa. No toques los tests para que pasen. Si lo que falta es una
+decisión que no te corresponde, escribí BLOQUEADA con la pregunta concreta —
+eso es una respuesta válida y termina la tarea."
+        fi
+
+        log "lanzando sesión…"
+        claude -p "$entrada" "${COMUNES[@]}" > "runs/$id.log" 2>&1
+        local salida=$?
+
+        estado=$(leer_estado "$id")
+        log "exit $salida · estado declarado: $estado"
+
+        if es_terminal "$estado"; then
+            case "$estado" in
+                BLOQUEADA) malo "Tarea $id BLOQUEADA — necesita una decisión tuya" ;;
+                *)         ok "Tarea $id: $estado" ;;
+            esac
+            echo "$estado"
+            return 0
+        fi
+
+        malo "Sin estado terminal (quedó en '$estado')"
+    done
+
+    malo "Tarea $id agotó los $INTENTOS_MAX intentos"
+    echo "AGOTADA" > "runs/$id.estado"
+    echo "AGOTADA"
+    return 1
+}
+
+TAREAS=("$@")
+[ ${#TAREAS[@]} -eq 0 ] && TAREAS=(01 02 03)
+
+printf '\033[1mIteración — %s\033[0m · tareas: %s\n' "$(date '+%d/%m %H:%M')" "${TAREAS[*]}"
+
+for id in "${TAREAS[@]}"; do
+    # La 03 solo corre si HU-02 quedó cerrada. La condición se lee de un
+    # archivo, no de lo que la sesión anterior "dijo".
+    if [ "$id" = "03" ]; then
+        e02=$(leer_estado 02)
+        if [ "$e02" != "CERRADA" ]; then
+            printf '\n\033[33m⊘ Tarea 03 omitida: HU-02 quedó en "%s", no CERRADA.\033[0m\n' "$e02"
+            echo "OMITIDA" > runs/03.estado
+            continue
+        fi
+    fi
+    correr "$id" > /dev/null
+done
 
 printf '\n\033[1mResumen\033[0m\n'
-for id in 01 02 03; do
-    e="—"; [ -f "runs/$id.estado" ] && e=$(tr -d '[:space:]' < "runs/$id.estado")
-    printf '  %s: %s\n' "$id" "$e"
+for id in "${TAREAS[@]}"; do
+    printf '  %s: %s' "$id" "$(leer_estado "$id")"
+    [ -f "runs/$id.md" ] && printf '   (runs/%s.md)' "$id"
+    echo
 done
