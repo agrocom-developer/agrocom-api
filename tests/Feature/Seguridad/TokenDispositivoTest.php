@@ -3,12 +3,14 @@
 use App\Dominios\Compartido\Dominio\Excepciones\BorradoFisicoNoPermitido;
 use App\Dominios\Seguridad\Aplicacion\EmitirTokenDispositivo;
 use App\Dominios\Seguridad\Dominio\Excepciones\EmisionDirectaDeTokenNoPermitida;
+use App\Dominios\Seguridad\Dominio\TipoUsuario;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecTokenDispositivo;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUserRole;
 use Database\Seeders\Catalogo\SeguridadSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 
 /*
  * HU-03 — token Sanctum por dispositivo para la app de campo.
@@ -377,4 +379,48 @@ it('registra el último uso sin reescribir quién emitió el token', function ()
         // diciendo quién lo emitió, no quién lo usó (por eso el listener de
         // último uso escribe con saveQuietly()).
         ->and($token->updated_by)->toBe($usuario->id);
+});
+
+it('no emite token a una cuenta de portal, ni la deja autenticar si alguien se lo emitiera', function () {
+    // La app de campo es de personal interno. La defensa es doble y ninguna
+    // de las dos estaba blindada: el global scope `type = 'interno'` de
+    // SecUsuarioInterno, que impide el login, y el provider
+    // `usuarios_internos` del guard sanctum (config/auth.php), que hace que
+    // `Guard::hasValidProvider()` rechace al dueño del token aunque el token
+    // exista y esté vivo.
+    $cliente = SecUser::factory()->create([
+        'username' => 'cliente.portal',
+        'password' => 'Secreta123',
+        'type' => TipoUsuario::Cliente,
+    ]);
+    asignarRol($cliente, 'piloto');
+
+    // 422 y no 401: para el guard `interno` esa cuenta directamente no
+    // existe, así que el login la trata igual que a un username inventado —
+    // sin revelar que existe como cuenta de portal.
+    test()->postJson('/api/auth/token', [
+        'username' => 'cliente.portal',
+        'password' => 'Secreta123',
+        'uuid_dispositivo' => UUID_EQUIPO,
+    ])->assertUnprocessable();
+
+    expect(SecTokenDispositivo::withTrashed()->count())->toBe(0);
+
+    // Y por si el token naciera por otra vía que la del login:
+    $plano = Str::random(40);
+    $token = new SecTokenDispositivo([
+        'user_id' => $cliente->id,
+        'role_id' => SecRole::query()->where('name', 'piloto')->value('id'),
+        'uuid_dispositivo' => UUID_EQUIPO,
+        'name' => 'equipo de un cliente',
+        'token' => hash('sha256', $plano),
+        'abilities' => ['*'],
+    ]);
+    $token->created_by = $cliente->id;
+    $token->updated_by = $cliente->id;
+    $token->save();
+
+    comoDispositivo("{$token->id}|{$plano}")
+        ->getJson('/api/auth/sesion')
+        ->assertUnauthorized();
 });
