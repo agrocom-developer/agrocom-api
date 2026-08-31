@@ -38,6 +38,14 @@ scoping del portal del cliente — **sí se toman**, pero se marcan
 `critica=si`: su PR se abre en borrador y lo revisa una persona. No las
 saltees por críticas ni las degrades para que dejen de serlo.
 
+## Si la próxima tarea ya tiene prompt
+
+Puede pasar: alguien la escribió a mano por adelantado. Si
+`prompts/NN-*.md` ya existe para la tarea que elegiste, **no la reescribas ni
+la dupliques**. Confirmá que su id esté en `runs/cola.txt` (agregalo si no
+está), anotá en tu reporte que ya estaba escrito, y terminá. Un prompt
+reescrito por encima de otro pierde el criterio con el que se redactó.
+
 ## Escribí `prompts/NN-slug.md`
 
 `NN` es el número siguiente de dos dígitos; `slug` de 2–3 palabras. La primera
