@@ -412,7 +412,7 @@ it('no emite token a una cuenta de portal, ni la deja autenticar si alguien se l
         'user_id' => $cliente->id,
         'role_id' => SecRole::query()->where('name', 'piloto')->value('id'),
         'uuid_dispositivo' => UUID_EQUIPO,
-        'name' => 'equipo de un cliente',
+        'nombre_dispositivo' => 'equipo de un cliente',
         'token' => hash('sha256', $plano),
         'abilities' => ['*'],
     ]);
