@@ -5,6 +5,7 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
+use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use Database\Seeders\Demo\DemoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -12,12 +13,22 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
  * GET /api/ordenes (espec §8) — listado con filtros para la app piloto.
  * La demo siembra exactamente una orden vigente (nro_aplicacion 1, lote L-01);
  * cada test agrega lo que necesita encima de ese punto de partida.
+ *
+ * Desde HU-03 el endpoint corre detrás de `auth:sanctum` (era el TODO(HU-03)
+ * de routes/api.php: la API de campo no expone datos operativos sin token de
+ * dispositivo). Acá se autentica con el guard directamente porque lo que se
+ * prueba son los filtros del listado, no la autenticación — el token real, su
+ * emisión y su revocación se prueban en tests/Feature/Seguridad
+ * (TokenDispositivoTest, ScopingDispositivosTest), y que este endpoint
+ * responda 401 sin token, en ambos.
  */
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
     $this->seed(DemoSeeder::class);
+
+    $this->actingAs(SecUser::factory()->create(), 'sanctum');
 });
 
 /**
