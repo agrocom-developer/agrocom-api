@@ -1,0 +1,500 @@
+#!/usr/bin/env bash
+#
+# Ciclo de desarrollo continuo — el bucle que sigue solo hasta que se le diga
+# que pare.
+#
+#   bin/ciclo                  # en primer plano, encadenando tareas
+#   bin/ciclo --fondo          # se desprende de la terminal: cerrar la ventana ya no lo mata
+#   bin/ciclo --detener        # parada ordenada: termina lo que está haciendo y no toma otra tarea
+#   bin/ciclo --reanudar       # levanta la bandera de parada
+#   bin/ciclo --estado         # en qué fase de qué tarea está
+#   bin/ciclo --vueltas 2      # tope de tareas en esta corrida (por defecto, hasta que se detenga)
+#
+# `bin/iteracion` corre una cola FIJA de prompts escritos a mano. Esto corre
+# una cola que se extiende sola: cuando una tarea queda integrada, una sesión
+# de planificación lee el backlog y escribe el prompt de la siguiente. Ese es
+# el punto 5 de docs/gestion/automatizacion_desarrollo.md.
+#
+# Cinco fases por tarea, cada una en su propia sesión de Claude Code con
+# contexto limpio:
+#
+#   implementar → verificar → abrir PR → esperar CI → planificar la siguiente
+#
+# El estado no vive en ninguna conversación: vive en git (ramas, commits, PRs)
+# y en runs/, que se puede auditar después. Por eso el ciclo se puede matar en
+# cualquier punto y retomar — que es exactamente lo que pasó la primera vez que
+# se cerró la ventana en medio de una tarea.
+#
+set -uo pipefail
+cd "$(dirname "$0")/.." || exit 1
+mkdir -p runs
+
+COLA=runs/cola.txt
+DETENER=runs/DETENER
+BITACORA=runs/ciclo.log
+PID=runs/ciclo.pid
+
+INTENTOS_IMPL=3      # sesiones de implementación por tarea antes de rendirse
+INTENTOS_ARREGLO=2   # vueltas de corrección tras un veredicto RECHAZADO o un CI en rojo
+ESPERA_CI=2700       # 45 min: tope para que CI termine y el auto-merge integre
+SONDEO_CI=30
+
+# --- Modelo por fase --------------------------------------------------
+# Mismo criterio que .claude/agents/README.md, aplicado a las sesiones del
+# ciclo: el trabajo que decide algo —implementar, verificar, corregir
+# hallazgos, elegir la próxima tarea— va en el modelo mediano; el repetitivo
+# —leer un log de CI en rojo, reproducirlo con bin/verify y arreglar lo que
+# rompió— va en el más chico. Sin esto todas las sesiones salían en el modelo
+# por defecto de la cuenta, que es el más caro, y una noche entera de vueltas
+# se paga completa a ese precio.
+#
+# Fable no se usa en ninguna fase: decisión del usuario.
+#
+# Un prompt puede pedir otro modelo con `modelo=` en su metadato — para una
+# tarea crítica que convenga correr con más criterio, por ejemplo.
+MODELO_PESADO=${AGROCOM_MODELO_PESADO:-sonnet}
+MODELO_LIVIANO=${AGROCOM_MODELO_LIVIANO:-haiku}
+
+# --- Salida ----------------------------------------------------------
+# Con --fondo, nohup ya redirige stdout a la bitácora: duplicar con tee dejaría
+# cada línea escrita dos veces.
+eco()   { if [ "${CICLO_EN_FONDO:-0}" = "1" ]; then cat; else tee -a "$BITACORA"; fi; }
+log()   { printf '\033[90m%s\033[0m %s\n' "$(date +%H:%M:%S)" "$1" | eco; }
+ok()    { printf '\033[32m  ✓ %s\033[0m\n' "$1" | eco; }
+malo()  { printf '\033[31m  ✗ %s\033[0m\n' "$1" | eco; }
+aviso() { printf '\033[33m  ⊘ %s\033[0m\n' "$1" | eco; }
+fase()  { printf '\n\033[1m── %s ──\033[0m\n' "$1" | eco; }
+
+marcar() { printf '%s\n' "$1" > runs/ciclo.estado; log "$1"; }
+
+# --- Banderas de control ---------------------------------------------
+detencion_pedida() { [ -f "$DETENER" ]; }
+
+# La parada se chequea entre fases, nunca en medio de una: cortar una sesión a
+# la mitad deja el working tree sucio y la tarea siguiente no puede arrancar.
+abortar_si_detenido() {
+    detencion_pedida || return 1
+    aviso "Parada pedida: $(cat "$DETENER" 2>/dev/null | head -1)"
+    return 0
+}
+
+# --- Metadatos del prompt --------------------------------------------
+# Cada prompt declara en su primera línea cómo debe tratarse la tarea:
+#   <!-- ciclo: critica=no turno-noche=1 rama=feature/gate-invariantes -->
+meta() {
+    local archivo="$1" clave="$2" defecto="$3" valor
+    valor=$(grep -m1 -oE "<!--[[:space:]]*ciclo:.*-->" "$archivo" 2>/dev/null |
+            grep -oE "$clave=[^[:space:]\"'>]+" | head -1 | cut -d= -f2-)
+    printf '%s' "${valor:-$defecto}"
+}
+
+prompt_de() { ls prompts/"$1"-*.md 2>/dev/null | head -1; }
+
+leer_estado() {
+    [ -f "runs/$1.estado" ] && tr -d '[:space:]' < "runs/$1.estado" || echo "SIN-ESTADO"
+}
+
+es_terminal() {
+    case "$1" in OK|CERRADA|OMITIDA|BLOQUEADA) return 0 ;; *) return 1 ;; esac
+}
+
+# Estados en los que la tarea ya no avanza sin una persona: reintentarla en frío
+# al reanudar solo repetiría el mismo callejón, y encima sobre una rama que ya
+# tiene trabajo hecho.
+necesita_humano() {
+    case "$1" in BLOQUEADA|RECHAZADA|AGOTADA) return 0 ;; *) return 1 ;; esac
+}
+
+# --- Sesión de Claude Code -------------------------------------------
+# Nunca --bare: ese modo exige ANTHROPIC_API_KEY y saltea los hooks, es decir,
+# correría sin los guardarraíles de .claude/ — la única barrera que queda de pie
+# cuando no hay nadie mirando.
+sesion() {
+    local texto="$1" salida="$2" herramientas="${3:-Read Edit Write Glob Grep Bash}" noche="${4:-0}" modelo="${5:-$MODELO_PESADO}"
+    log "  modelo: $modelo"
+    AGROCOM_TURNO_NOCHE="$noche" claude -p "$texto" \
+        --model "$modelo" \
+        --permission-mode dontAsk \
+        --allowedTools "$herramientas" \
+        --output-format json > "$salida" 2>&1
+}
+
+# --- Base limpia ------------------------------------------------------
+preparar_base() {
+    if [ -n "$(git status --porcelain)" ]; then
+        malo "Working tree sucio — no arranco una tarea sobre cambios sin commitear"
+        git status --short | head -5 | eco
+        return 1
+    fi
+    git checkout develop --quiet 2>/dev/null || return 1
+    git fetch --quiet origin develop 2>/dev/null
+    git merge --quiet --ff-only origin/develop 2>/dev/null
+    return 0
+}
+
+# --- Fase 1: implementar ---------------------------------------------
+fase_implementar() {
+    local id="$1" archivo intento estado texto
+    archivo=$(prompt_de "$id") || true
+    [ -z "$archivo" ] && { malo "No existe prompt para la tarea $id"; return 1; }
+
+    local noche modelo
+    noche=$(meta "$archivo" "turno-noche" "1")
+    modelo=$(meta "$archivo" "modelo" "$MODELO_PESADO")
+
+    for intento in $(seq 1 "$INTENTOS_IMPL"); do
+        marcar "$id implementar intento $intento/$INTENTOS_IMPL"
+        preparar_base || return 1
+        rm -f "runs/$id.estado"
+
+        texto=$(cat "$archivo")
+        if [ "$intento" -gt 1 ]; then
+            texto="$texto
+
+---
+## Reintento $intento de $INTENTOS_IMPL
+
+El intento anterior no llegó a un estado terminal. Esto es lo que dejó:
+
+### runs/$id.md
+$(tail -40 "runs/$id.md" 2>/dev/null || echo '(no escribió reporte)')
+
+### Últimas líneas de la corrida
+$(tail -30 "runs/$id.log" 2>/dev/null || echo '(sin log)')
+
+Corregí la causa. No toques los tests para que pasen. Si lo que falta es una
+decisión que no te corresponde, escribí BLOQUEADA con la pregunta concreta —
+eso es una respuesta válida y termina la tarea."
+        fi
+
+        sesion "$texto" "runs/$id.log" "Read Edit Write Glob Grep Bash" "$noche" "$modelo"
+        estado=$(leer_estado "$id")
+        log "sesión terminada · estado declarado: $estado"
+
+        if es_terminal "$estado"; then
+            [ "$estado" = "BLOQUEADA" ] && { malo "Tarea $id BLOQUEADA — necesita una decisión del usuario"; return 2; }
+            ok "Tarea $id implementada ($estado)"
+            return 0
+        fi
+        malo "Sin estado terminal (quedó en '$estado')"
+    done
+
+    echo "AGOTADA" > "runs/$id.estado"
+    malo "Tarea $id agotó los $INTENTOS_IMPL intentos de implementación"
+    return 1
+}
+
+# --- Fase 2: verificar ------------------------------------------------
+# Sesión separada, y a propósito: quien implementó ya se convenció de que está
+# bien. La verificación corre siempre con los tests congelados —no edita código,
+# solo escribe su veredicto en runs/, que no está congelado— así que no puede
+# "arreglar" el criterio que la evalúa.
+#
+# La sesión de CORRECCIÓN, en cambio, hereda el turno-noche del prompt de la
+# tarea. Congelarla siempre parecía la opción segura y no lo era: una tarea cuyo
+# entregable ES un test —una aduana, un gate— quedaba sin poder corregir su
+# propio archivo, y la vuelta se agotaba sola. Pasó en la tarea 04. La garantía
+# que importa no se pierde: quien juzga sigue siendo el verificador, que no
+# puede tocar nada.
+fase_verificar() {
+    local id="$1" intento veredicto texto archivo noche
+    local plantilla=prompts/plantillas/verificar.md
+    [ -f "$plantilla" ] || { malo "Falta $plantilla"; return 1; }
+
+    archivo=$(prompt_de "$id")
+    noche=$(meta "$archivo" "turno-noche" "1")
+
+    for intento in $(seq 0 "$INTENTOS_ARREGLO"); do
+        marcar "$id verificar (vuelta $intento)"
+        rm -f "runs/$id.veredicto"
+        texto=$(sed "s/{{ID}}/$id/g" "$plantilla")
+        sesion "$texto" "runs/$id-verificar.log" "Read Glob Grep Bash Write" 1 "$MODELO_PESADO"
+
+        veredicto=$(tr -d '[:space:]' < "runs/$id.veredicto" 2>/dev/null || echo "SIN-VEREDICTO")
+        log "veredicto: $veredicto"
+        [ "$veredicto" = "APROBADO" ] && { ok "Tarea $id aprobada por el verificador"; return 0; }
+
+        [ "$intento" -eq "$INTENTOS_ARREGLO" ] && break
+        abortar_si_detenido && return 2
+
+        # Corrección: sesión nueva que recibe los hallazgos, no la sesión que
+        # los produjo. Los tests siguen congelados.
+        marcar "$id corregir hallazgos (vuelta $((intento + 1)))"
+        sesion "Sos una sesión de corrección sobre la rama actual del repo agrocom-api.
+
+Un verificador independiente RECHAZÓ el trabajo de la tarea $id. Sus hallazgos:
+
+$(cat "runs/$id-veredicto.md" 2>/dev/null || echo '(no escribió detalle)')
+
+Corregí cada hallazgo en la rama actual, sin cambiar el alcance de la tarea y
+sin tocar los tests para que pasen: si un test está mal, eso es un hallazgo
+para el usuario, no algo que arregles vos.
+
+Commiteá en grupos por función — un commit por pieza coherente, con mensaje en
+español, imperativo, explicando el porqué. Corré ./bin/verify y no cierres
+hasta que devuelva 0.
+
+Escribí runs/$id.md agregando qué corregiste." \
+            "runs/$id-corregir-$intento.log" "Read Edit Write Glob Grep Bash" "$noche" "$MODELO_PESADO"
+    done
+
+    malo "Tarea $id sigue RECHAZADA tras $INTENTOS_ARREGLO correcciones"
+    echo "RECHAZADA" > "runs/$id.estado"
+    return 1
+}
+
+# --- Fase 3: abrir el PR ----------------------------------------------
+# El título y el cuerpo los escribe la sesión (sabe qué hizo); el ciclo decide
+# si va en borrador, porque eso depende de si la tarea es crítica y esa es una
+# regla del proceso, no del contenido.
+fase_pr() {
+    local id="$1" archivo critica rama numero
+    archivo=$(prompt_de "$id")
+    critica=$(meta "$archivo" "critica" "no")
+    rama=$(git rev-parse --abbrev-ref HEAD)
+
+    if [ "$rama" = "develop" ] || [ "$rama" = "master" ]; then
+        malo "La tarea $id no dejó una rama feature/* con el trabajo"
+        return 1
+    fi
+
+    marcar "$id abrir PR desde $rama"
+    git push --quiet -u origin "$rama" 2>&1 | tail -2 | eco
+
+    numero=$(gh pr list --head "$rama" --json number -q '.[0].number' 2>/dev/null)
+    if [ -n "$numero" ]; then
+        log "PR #$numero ya existía para $rama"
+    else
+        local titulo cuerpo
+        if [ -f "runs/$id.pr.md" ]; then
+            titulo=$(head -1 "runs/$id.pr.md")
+            cuerpo=$(tail -n +2 "runs/$id.pr.md")
+        else
+            titulo="Tarea $id"
+            cuerpo=$(cat "runs/$id.md" 2>/dev/null || echo "Ver runs/$id.md")
+        fi
+
+        local extra=()
+        [ "$critica" = "si" ] && extra+=(--draft)
+
+        printf '%s' "$cuerpo" > runs/.cuerpo-pr.md
+        gh pr create --base develop --head "$rama" \
+            --title "$titulo" --body-file runs/.cuerpo-pr.md "${extra[@]}" 2>&1 | tail -3 | eco
+        rm -f runs/.cuerpo-pr.md
+        numero=$(gh pr list --head "$rama" --json number -q '.[0].number' 2>/dev/null)
+    fi
+
+    [ -z "$numero" ] && { malo "No se pudo abrir ni encontrar el PR de $rama"; return 1; }
+    echo "$numero" > "runs/$id.pr"
+    ok "PR #$numero$([ "$critica" = "si" ] && echo ' (borrador: tarea crítica, espera revisión humana)')"
+    return 0
+}
+
+# --- Fase 4: esperar a CI ---------------------------------------------
+# Devuelve: 0 integrado · 1 CI en rojo · 2 PR cerrado sin merge
+#           3 borrador verde (crítica, esperando a una persona) · 4 se agotó la espera
+esperar_ci() {
+    local numero="$1" limite=$((SECONDS + ESPERA_CI)) estado borrador fallidos pendientes
+    while [ "$SECONDS" -lt "$limite" ]; do
+        estado=$(gh pr view "$numero" --json state -q .state 2>/dev/null || echo "")
+        case "$estado" in
+            MERGED) return 0 ;;
+            CLOSED) return 2 ;;
+        esac
+
+        fallidos=$(gh pr checks "$numero" --json state -q '[.[] | select(.state == "FAILURE" or .state == "TIMED_OUT" or .state == "CANCELLED")] | length' 2>/dev/null || echo 0)
+        [ "${fallidos:-0}" -gt 0 ] && return 1
+
+        pendientes=$(gh pr checks "$numero" --json state -q '[.[] | select(.state == "PENDING" or .state == "QUEUED" or .state == "IN_PROGRESS")] | length' 2>/dev/null || echo 1)
+        borrador=$(gh pr view "$numero" --json isDraft -q .isDraft 2>/dev/null || echo false)
+        if [ "${pendientes:-1}" -eq 0 ] && [ "$borrador" = "true" ]; then
+            return 3
+        fi
+
+        sleep "$SONDEO_CI"
+    done
+    return 4
+}
+
+fase_ci() {
+    local id="$1" numero intento archivo noche
+    archivo=$(prompt_de "$id")
+    noche=$(meta "$archivo" "turno-noche" "1")
+    numero=$(cat "runs/$id.pr" 2>/dev/null || echo "")
+    [ -z "$numero" ] && { malo "Tarea $id sin PR registrado"; return 1; }
+
+    for intento in $(seq 0 "$INTENTOS_ARREGLO"); do
+        marcar "$id esperando CI del PR #$numero"
+        esperar_ci "$numero"
+        case $? in
+            0) ok "PR #$numero integrado en develop"; return 0 ;;
+            2) malo "PR #$numero cerrado sin mergear — alguien lo cerró a mano"; return 1 ;;
+            3) aviso "PR #$numero en verde y en borrador: es una tarea crítica, la revisa una persona"; return 0 ;;
+            4) malo "Se agotaron los $((ESPERA_CI / 60)) min de espera de CI"; return 1 ;;
+        esac
+
+        malo "CI en rojo en el PR #$numero"
+        [ "$intento" -eq "$INTENTOS_ARREGLO" ] && break
+        abortar_si_detenido && return 2
+
+        marcar "$id corregir CI (vuelta $((intento + 1)))"
+        sesion "El PR #$numero del repo agrocom-api quedó con CI en rojo. Estás parado en su rama.
+
+Salida de los checks:
+
+$(gh pr checks "$numero" 2>&1 | head -30)
+
+$(gh run view "$(gh run list --branch "$(git rev-parse --abbrev-ref HEAD)" --limit 1 --json databaseId -q '.[0].databaseId' 2>/dev/null)" --log-failed 2>/dev/null | tail -60)
+
+Reproducí la falla en local con ./bin/verify, corregí la causa y commiteá el
+arreglo (mensaje en español, imperativo, explicando qué rompía). Después
+pusheá a la misma rama: el auto-merge reintenta solo cuando CI queda verde.
+
+No toques los tests para que pasen. Si el test tiene razón y el código está
+mal, el que se corrige es el código." \
+            "runs/$id-ci-$intento.log" "Read Edit Write Glob Grep Bash" "$noche" "$MODELO_LIVIANO"
+    done
+
+    malo "Tarea $id: CI sigue en rojo tras $INTENTOS_ARREGLO intentos"
+    return 1
+}
+
+# --- Fase 5: planificar la siguiente ----------------------------------
+fase_planificar() {
+    local id="$1" texto
+    local plantilla=prompts/plantillas/planificar.md
+    [ -f "$plantilla" ] || { malo "Falta $plantilla"; return 1; }
+
+    marcar "$id planificar la tarea siguiente"
+    preparar_base || return 1
+
+    texto=$(sed "s/{{ID}}/$id/g" "$plantilla")
+    sesion "$texto" "runs/$id-planificar.log" "Read Glob Grep Bash Write" 0 "$MODELO_PESADO"
+
+    local ultima; ultima=$(tail -1 "$COLA" 2>/dev/null || echo "")
+    log "cola: $(tr '\n' ' ' < "$COLA" 2>/dev/null)"
+
+    if detencion_pedida; then
+        aviso "La planificación pidió detener el ciclo: $(head -1 "$DETENER")"
+        return 1
+    fi
+    [ -z "$ultima" ] && { malo "La planificación no dejó ninguna tarea en la cola"; return 1; }
+    [ -z "$(prompt_de "$ultima")" ] && { malo "La cola pide '$ultima' pero no existe prompts/$ultima-*.md"; return 1; }
+
+    ok "Próxima tarea: $ultima ($(basename "$(prompt_de "$ultima")"))"
+    return 0
+}
+
+# --- Una vuelta completa ----------------------------------------------
+# Códigos: 0 siguió · 1 falló · 2 necesita al usuario (tarea bloqueada o parada
+# pedida). El 2 no es un error: es el ciclo entregando el turno.
+vuelta() {
+    local id="$1" r
+    fase "Tarea $id — $(basename "$(prompt_de "$id")" 2>/dev/null || echo 'sin prompt')"
+
+    fase_implementar "$id"; r=$?; [ "$r" -ne 0 ] && return "$r"
+    abortar_si_detenido && return 2
+    fase_verificar "$id";   r=$?; [ "$r" -ne 0 ] && return "$r"
+    abortar_si_detenido && return 2
+    fase_pr "$id"        || return 1
+    fase_ci "$id";          r=$?; [ "$r" -ne 0 ] && return "$r"
+    abortar_si_detenido && return 2
+    fase_planificar "$id" || return 1
+    return 0
+}
+
+# --- Cola --------------------------------------------------------------
+# La cola es un archivo de ids, uno por línea. Se toma el primero que todavía
+# no tenga estado terminal — así retomar después de un corte es leer un archivo,
+# no reconstruir de memoria dónde se había quedado.
+siguiente_id() {
+    [ -f "$COLA" ] || return 1
+    local id
+    while read -r id; do
+        [ -z "$id" ] && continue
+        case "$id" in \#*) continue ;; esac
+        local estado; estado=$(leer_estado "$id")
+        es_terminal "$estado" && continue
+        necesita_humano "$estado" && continue
+        printf '%s' "$id"
+        return 0
+    done < "$COLA"
+    return 1
+}
+
+# --- Modos de invocación -----------------------------------------------
+case "${1:-}" in
+    --detener)
+        shift
+        printf '%s\n' "${*:-parada pedida a mano el $(date '+%d/%m %H:%M')}" > "$DETENER"
+        printf 'Parada pedida. El ciclo termina la fase en curso y no toma otra tarea.\n'
+        [ -f "$PID" ] && printf 'Corriendo con PID %s — para cortarlo ya: kill %s\n' "$(cat "$PID")" "$(cat "$PID")"
+        exit 0 ;;
+    --reanudar)
+        rm -f "$DETENER"; printf 'Bandera de parada levantada. Podés arrancar con bin/ciclo.\n'; exit 0 ;;
+    --estado)
+        printf 'Fase actual : %s\n' "$(cat runs/ciclo.estado 2>/dev/null || echo '—')"
+        printf 'Cola        : %s\n' "$(tr '\n' ' ' < "$COLA" 2>/dev/null || echo '—')"
+        printf 'Parada      : %s\n' "$([ -f "$DETENER" ] && head -1 "$DETENER" || echo 'no')"
+        if [ -f "$PID" ] && kill -0 "$(cat "$PID")" 2>/dev/null; then
+            printf 'Proceso     : vivo (PID %s)\n' "$(cat "$PID")"
+        else
+            printf 'Proceso     : no está corriendo\n'
+        fi
+        printf '\nÚltimas líneas de la bitácora:\n'; tail -12 "$BITACORA" 2>/dev/null
+        exit 0 ;;
+    --fondo)
+        shift
+        rm -f "$DETENER"
+        CICLO_EN_FONDO=1 nohup "$0" "$@" >> "$BITACORA" 2>&1 &
+        echo $! > "$PID"
+        printf 'Ciclo corriendo en segundo plano (PID %s).\n' "$(cat "$PID")"
+        printf 'Sobrevive a cerrar la terminal. Seguimiento: bin/ciclo --estado · tail -f %s\n' "$BITACORA"
+        printf 'Para pararlo: bin/ciclo --detener\n'
+        exit 0 ;;
+esac
+
+VUELTAS_MAX=0
+[ "${1:-}" = "--vueltas" ] && { VUELTAS_MAX="${2:-0}"; shift 2; }
+
+if detencion_pedida; then
+    printf 'Hay una parada pedida (%s). Levantala con bin/ciclo --reanudar.\n' "$(head -1 "$DETENER")"
+    exit 1
+fi
+
+echo $$ > "$PID"
+trap 'rm -f "$PID"' EXIT
+
+fase "Ciclo continuo — $(date '+%d/%m %H:%M')"
+log "cola inicial: $(tr '\n' ' ' < "$COLA" 2>/dev/null || echo '(vacía)')"
+
+vueltas=0
+while :; do
+    if abortar_si_detenido; then break; fi
+
+    id=$(siguiente_id) || { aviso "No queda ninguna tarea pendiente en la cola"; break; }
+
+    vuelta "$id"
+    resultado=$?
+
+    case "$resultado" in
+        0) ok "Tarea $id completa: implementada, verificada, integrada y con la siguiente planificada" ;;
+        2) aviso "Ciclo detenido en medio de la tarea $id"; break ;;
+        *) malo "Ciclo detenido: la tarea $id no llegó a integrarse. Mirá runs/$id.md y runs/ciclo.log"; break ;;
+    esac
+
+    vueltas=$((vueltas + 1))
+    if [ "$VUELTAS_MAX" -gt 0 ] && [ "$vueltas" -ge "$VUELTAS_MAX" ]; then
+        aviso "Alcanzó el tope de $VUELTAS_MAX vuelta(s) de esta corrida"
+        break
+    fi
+done
+
+fase "Resumen"
+while read -r id; do
+    [ -z "$id" ] && continue
+    case "$id" in \#*) continue ;; esac
+    printf '  %-4s %-12s %s\n' "$id" "$(leer_estado "$id")" \
+        "$([ -f "runs/$id.pr" ] && echo "PR #$(cat "runs/$id.pr")")"
+done < "$COLA" 2>/dev/null
+marcar "ciclo terminado"

@@ -2,6 +2,7 @@
 name: backend
 description: Usar para implementar lógica de dominio en Laravel — casos de uso, modelos Eloquent, eventos de dominio, listeners, servicios de máquina de estados, endpoints de API. El trabajo central de cada HU/TE del backend de `agrocom-api`. No usar para pantallas del panel (`frontend`), para diseño visual (`design-ui`), para migraciones puras de esquema (`modelo-datos`, aunque suele coordinar con este), ni para permisos/roles (`modulos-roles`).
 tools: Read, Write, Edit, Bash, Grep, Glob
+model: claude-sonnet-5
 ---
 
 Implementás la lógica de dominio de `agrocom-api`: casos de uso, modelos Eloquent, eventos, listeners, servicios de estado, endpoints de `routes/api.php`.

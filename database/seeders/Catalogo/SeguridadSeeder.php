@@ -39,6 +39,12 @@ class SeguridadSeeder extends Seeder
         'seguridad.usuario.bloquear' => 'Bloquear/desbloquear (toggle de state, no es baja)',
         'seguridad.usuario.eliminar' => 'Baja lógica (soft delete)',
         'seguridad.usuario.asignar_rol_dueno' => 'Asignar o quitar el rol dueño a cualquier usuario',
+        // HU-03: ver y revocar sesiones de la app de campo. Separados a
+        // propósito — mirar quién tiene sesión abierta y dejar a alguien
+        // afuera en medio de una jornada de vuelo no son la misma
+        // responsabilidad.
+        'seguridad.dispositivo.ver' => 'Ver los dispositivos con sesión abierta en la app de campo',
+        'seguridad.dispositivo.revocar' => 'Revocar el acceso de un dispositivo de campo',
     ];
 
     /** @var list<string> Todo, salvo asignar_rol_dueno (diseño §2). */
@@ -48,6 +54,11 @@ class SeguridadSeeder extends Seeder
         'seguridad.usuario.editar',
         'seguridad.usuario.bloquear',
         'seguridad.usuario.eliminar',
+        // Es quien administra la operación diaria: si un piloto pierde el
+        // teléfono en campo, tiene que poder cortarle el acceso sin
+        // escalar al dueño (HU-03).
+        'seguridad.dispositivo.ver',
+        'seguridad.dispositivo.revocar',
     ];
 
     public function run(): void
@@ -60,7 +71,7 @@ class SeguridadSeeder extends Seeder
             fn (string $description, string $code) => [$code => $this->permiso($code, $description)],
         );
 
-        // dueno: los 6 permisos, sin excepción (diseño §2).
+        // dueno: todos los permisos del catálogo, sin excepción (diseño §2).
         $this->asignar($roles['dueno'], $permisos->values()->all());
 
         // encargado_operaciones: todo salvo asignar_rol_dueno.

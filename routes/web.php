@@ -1,6 +1,7 @@
 <?php
 
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\DashboardController;
+use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\DispositivosController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\OrganizacionController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\PreferenciasController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\RolActivoController;
@@ -66,6 +67,16 @@ Route::middleware('auth:interno')->group(function () {
         // genérico todavía, así que se resuelve ahí (ver UsuariosController).
         Route::get('/panel/usuarios', [UsuariosController::class, 'index'])
             ->name('panel.usuarios.index');
+
+        // Revocación de sesiones de la app de campo (HU-03). Los permisos
+        // `seguridad.dispositivo.ver`/`.revocar` se verifican DENTRO del
+        // controlador contra el ROL ACTIVO, igual que en usuarios: no hay
+        // middleware de permiso genérico todavía.
+        Route::get('/panel/dispositivos', [DispositivosController::class, 'index'])
+            ->name('panel.dispositivos.index');
+
+        Route::delete('/panel/dispositivos/{dispositivo}', [DispositivosController::class, 'destroy'])
+            ->name('panel.dispositivos.revocar');
 
         // Mockup visual de "Registro de la compañía" — GET/solo-lectura, sin
         // persistencia real, para demostración de visión multi-tenant futura.

@@ -266,6 +266,13 @@
     --ag-color-chip-text: rgba(255, 255, 255, 0.86);
     --ag-color-text-on-scrim-muted: rgba(255, 255, 255, 0.8);
 
+    /* Elevación de una tarjeta seleccionada — ver el comentario extenso en
+       theme-light.css. En oscuro NO se tiñe de verde: un halo del verde de
+       marca sobre superficie oscura se lee como suciedad, no como selección
+       (la señal de "seleccionada" ya la dan el fondo -primary-subtle y el
+       borde -primary). Sombra neutra, mismo vocabulario que --ag-shadow-*. */
+    --ag-shadow-selected: 0 4px 14px color-mix(in srgb, var(--ag-color-gray-1000) 40%, transparent);
+
     /* Ídem theme-light.css: la interfaz es siempre IBM Plex Sans. */
     --bs-body-font-family: var(--ag-font-family-base);
     --bs-body-bg: var(--ag-color-bg);

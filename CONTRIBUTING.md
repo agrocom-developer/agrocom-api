@@ -34,6 +34,11 @@ Detalle en `docs/gestion/automatizacion_desarrollo.md`.
 
 El PR es el punto de revisión — propio y del agente de IA — antes de integrar, aunque el desarrollo sea en solitario. Se mergea cuando: la suite está en verde, el criterio de aceptación de la HU/TE tiene test, y (si toca sync, estados o dinero) se revisó línea por línea.
 
+El merge no es manual: `.github/workflows/auto-merge.yml` integra el PR con
+squash en cuanto el check `laravel-tests` queda verde. Un PR en **draft** queda
+excluido a propósito (el job se saltea los borradores) — es la forma de decir
+"esto espera revisión". Al marcarlo *Ready for review* el auto-merge corre.
+
 `develop` se mergea a `master` cuando un conjunto de features está listo para desplegarse — no automáticamente en cada PR a develop.
 
 ## Commits

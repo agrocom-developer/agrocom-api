@@ -1,0 +1,62 @@
+<?php
+
+namespace Laravel\Sanctum;
+
+/**
+ * Stub de tipos para `Laravel\Sanctum\Sanctum` (HU-03).
+ *
+ * NO es un baseline ni un `@phpstan-ignore`: no oculta ningún error del
+ * código de este proyecto. Corrige una firma de la dependencia que está
+ * subespecificada para el uso que el propio Sanctum documenta.
+ *
+ * El paquete declara `@template TToken of HasAbilities = PersonalAccessToken`
+ * a nivel de CLASE, y tipa el modelo de token como `class-string<TToken>`.
+ * En una llamada estática, PHPStan no puede inferir un template de clase
+ * desde los argumentos: lo resuelve a su valor por defecto
+ * (`PersonalAccessToken`). Consecuencia: rechaza cualquier modelo de token
+ * propio — justamente el caso que Sanctum soporta y documenta, y el que este
+ * proyecto necesita, porque su modelo de token extiende `ModeloDominio`
+ * (soft delete + bloqueo de borrado físico + autoría, ADR 0007) y PHP no
+ * admite herencia múltiple.
+ *
+ * El bound real del paquete es `HasAbilities`, así que eso es lo que se
+ * declara acá. La validación no se debilita: un modelo que no implemente
+ * `HasAbilities` sigue siendo un error.
+ */
+class Sanctum
+{
+    /** @var class-string<\Laravel\Sanctum\Contracts\HasAbilities> */
+    public static $personalAccessTokenModel;
+
+    /**
+     * @param  class-string<\Laravel\Sanctum\Contracts\HasAbilities>  $model
+     * @return void
+     */
+    public static function usePersonalAccessTokenModel($model) {}
+
+    /** @return class-string<\Laravel\Sanctum\Contracts\HasAbilities> */
+    public static function personalAccessTokenModel() {}
+}
+
+/**
+ * La interfaz se declara acá también porque PHPStan resuelve los tipos de un
+ * stub file contra los demás stubs, no contra el autoloader de vendor: sin
+ * esta copia, las tres firmas de arriba fallan con `class.notFound`. Es la
+ * misma interfaz que trae el paquete, sin agregados.
+ */
+namespace Laravel\Sanctum\Contracts;
+
+interface HasAbilities
+{
+    /**
+     * @param  string  $ability
+     * @return bool
+     */
+    public function can($ability);
+
+    /**
+     * @param  string  $ability
+     * @return bool
+     */
+    public function cant($ability);
+}
