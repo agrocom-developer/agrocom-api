@@ -74,6 +74,12 @@
         "pre-package-uninstall": [
             "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
         ],
+        "verify": [
+            "@php artisan config:clear --ansi",
+            "vendor/bin/pint --test",
+            "vendor/bin/phpstan analyse --memory-limit=512M",
+            "vendor/bin/pest"
+        ],
         "larastan": "phpstan analyse --memory-limit=512M",
         "openapi": [
             "@php artisan l5-swagger:generate",
