@@ -2,7 +2,7 @@
 
 **Estado: CERRADO (28/8/2026).** Este documento se escribió en lugar de implementar directamente porque el pedido original (sesión del 28/8/2026) toca demasiadas piezas a la vez para una sola pasada segura: sidebar, header, KPIs, gráficas, alertas, vistas de Sesiones/Pausas, contraste de tema oscuro, y además la sincronización de reglas de diseño ya confirmadas en login/selección de rol hacia agentes/memoria/documentación. Se investigó todo el contexto necesario (código actual + referencia visual + catálogo vigente) para que la próxima iteración pueda ejecutar directamente, fase por fase, sin tener que re-descubrir nada.
 
-**Progreso:** Anexo A ✅ · Fase 1 (sidebar) ✅ · Fase 2 (header) ✅ · Fase 7 (contraste oscuro) ✅ · Fase 3 (KPI cards + sectorización) ✅ · Fase 4 (gráfica mock, donut sesiones por estado) ✅ · Fase 5 (reordenar alertas) ✅ · Fase 6 (detalle de Sesiones/Pausas) ✅ · Fase 8 (auditoría final) ✅ — las ocho verificadas en navegador (Playwright, claro/oscuro/móvil). Detalle de qué cambió en cada una: `docs/diseno/sistema_diseno_panel.md` §9 (fases 1-6) y §10 (fase 8).
+**Progreso:** Anexo A ✅ · Fase 1 (sidebar) ✅ · Fase 2 (header) ✅ · Fase 7 (contraste oscuro) ✅ · Fase 3 (KPI cards + sectorización) ✅ · Fase 4 (gráfica mock, donut sesiones por estado) ✅ · Fase 5 (reordenar alertas) ✅ · Fase 6 (detalle de Sesiones/Pausas) ✅ · Fase 8 (auditoría final) ✅ — las ocho verificadas en navegador (Playwright, claro/oscuro/móvil). Detalle de qué cambió en cada una: `docs/diseno/sistema_diseno_panel.md` §9 (fases 1-6) y §10 (fase 8). **La Fase 6 fue reemplazada el 29/8/2026 (novena vuelta) — ver §6, más abajo.**
 
 **Decisión de Fase 6 (confirmada 28/8/2026):** enriquecer los tabs "Sesiones"/"Pausas" que ya existen dentro del dashboard — NO rutas propias. No tocó `SecMenuSeeder` ni creó controllers nuevos.
 
@@ -170,6 +170,18 @@ Tomado de `docs/diseno/diseno-laravel.md` §11 + CLAUDE.md invariante 11, adapta
 - [ ] ¿Toda animación nueva (hover de tile, collapse del sidebar) respeta `prefers-reduced-motion` con el mismo criterio del resto del sistema (acortar duración, nunca anular `transform` de golpe)?
 - [ ] ¿Se verificó el resultado en el navegador (Playwright, ambos temas) antes de dar la fase por cerrada — no alcanza con el cálculo de contraste en papel?
 - [ ] ¿Las claves i18n nuevas van al archivo de módulo correcto (`lang/es/operaciones.php` para vocabulario de Operaciones, no `seguridad.php`)?
+
+---
+
+## 6. Novena vuelta (29/8/2026) — el dashboard reemplaza Sesiones/Pausas/KPIs por Mapa/Resumen por lote/Multimedia
+
+La Fase 6 (arriba, §4 y línea de Progreso) construyó tabs "Sesiones" y "Pausas" enriquecidos dentro del dashboard, más tarjetas KPI — y quedó cerrada ✅ el 28/8/2026. La novena vuelta (rama `feature/dashboard-agro`, commit `53ca4df` en adelante) **los quitó a propósito** y los reemplazó por tres tabs nuevos: **Mapa** (mapa satelital Leaflet con polígonos de lotes y sesiones georreferenciadas), **Resumen por lote** (cuadros informativos por lote) y **Multimedia** (galería/carrusel/tabla de capturas RC). El tab "Resumen" se quedó y se amplió con gráficas ApexCharts y detalle de clientes.
+
+Esto no es un olvido ni una reversión accidental de la Fase 6: es una decisión de producto tomada en esa misma rama, documentada en el mensaje del commit `53ca4df` — el contenido esencial de Sesiones/Pausas ya vivía en el tab Resumen (tabla de sesiones, agregado de pausas), y las tarjetas KPI (`stat-card`) no desaparecieron del catálogo, quedan disponibles para páginas dedicadas futuras si Operaciones las necesita fuera del dashboard.
+
+Este documento **no reescribe la Fase 6** (arriba queda intacta, como registro de lo que se construyó y se decidió en su momento) — esta sección la reemplaza en el dashboard actual. Detalle completo de la novena vuelta (componentes nuevos, convenciones de carga diferida de JS pesado, gotchas de ApexCharts/Leaflet en tabs ocultos, resultado de la auditoría de colores/tipos): `docs/diseno/sistema_diseno_panel.md` §13.
+
+**Pendiente:** esta rama se integró a `develop` sin verificación visual manual en navegador (claro/oscuro) — ver la advertencia en el PR de integración. No cubre regresión visual; queda como trabajo de una tarea de gate visual posterior.
 
 ---
 
