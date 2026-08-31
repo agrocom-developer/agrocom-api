@@ -188,6 +188,24 @@ return [
         'proximamente' => 'Próximamente: gestión de usuarios.',
     ],
 
+    // Revocación de sesiones de la app de campo (HU-03). El nombre del rol
+    // (`sec_role.name`) NO se traduce acá: es vocabulario de dominio y llega
+    // resuelto desde la base (ADR 0013 punto 3).
+    'dispositivos' => [
+        'titulo' => 'Dispositivos',
+        'subtitulo' => 'Equipos con sesión abierta en la app de campo. Revocar deja al dispositivo sin acceso en el acto: quien lo use tendrá que volver a iniciar sesión.',
+        'col_usuario' => 'Usuario',
+        'col_dispositivo' => 'Dispositivo',
+        'col_rol' => 'Rol',
+        'col_ultimo_uso' => 'Último uso',
+        'revocar' => 'Revocar',
+        'revocado' => 'El dispositivo perdió el acceso.',
+        'vacio' => 'No hay dispositivos con sesión abierta.',
+        'equipo_sin_nombre' => 'Equipo sin nombre',
+        'usuario_desconocido' => 'Cuenta dada de baja',
+        'sin_uso' => 'Todavía sin uso',
+    ],
+
     // Mockup de "Registro de la compañía" (GET /panel/organizacion, vista previa de SaaS multi-tenant)
     'organizacion' => [
         'titulo' => 'Registro de la compañía',
