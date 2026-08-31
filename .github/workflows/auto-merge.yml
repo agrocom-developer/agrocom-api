@@ -94,7 +94,12 @@ jobs:
             fi
             if [ "$ALL_DONE" = true ]; then
               echo "Checks requeridos en verde — mergeando."
-              gh pr merge --squash "$PR_URL"
+              # --delete-branch borra la rama al integrar. Con squash los
+              # commits originales no quedan como ancestros de develop, así que
+              # una rama vieja no se distingue de una viva mirando el grafo: sin
+              # esto la lista crece hasta que nadie sabe qué está integrado. La
+              # referencia queda en el PR y GitHub la restaura con un clic.
+              gh pr merge --squash --delete-branch "$PR_URL"
               exit 0
             fi
 
