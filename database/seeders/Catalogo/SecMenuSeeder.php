@@ -54,7 +54,7 @@ class SecMenuSeeder extends Seeder
         // identidad bajo su módulo.
         $this->migrar('seguridad.menu.inicio', 'menu.operacion.items.programacion', $operacion, 'event_available', 1);
         $this->migrar('seguridad.menu.usuarios', 'menu.seguridad.items.usuarios', $seguridad, 'group', 1);
-        $this->migrar('seguridad.menu.organizacion', 'menu.seguridad.items.organizacion', $seguridad, 'apartment', 2);
+        $this->migrar('seguridad.menu.organizacion', 'menu.seguridad.items.organizacion', $seguridad, 'apartment', 3);
 
         // Operación (§4.3)
         $this->item($operacion, 'operacion', 'programacion', 'event_available', 1, ruta: 'panel.dashboard');
@@ -101,7 +101,12 @@ class SecMenuSeeder extends Seeder
         // migración de arriba ya las convirtió, el firstOrCreate las
         // encuentra y no duplica.
         $this->item($seguridad, 'seguridad', 'usuarios', 'group', 1, ruta: 'panel.usuarios.index', codigoPermiso: 'seguridad.usuario.ver');
-        $this->item($seguridad, 'seguridad', 'organizacion', 'apartment', 2, ruta: 'panel.organizacion.index');
+        // HU-03: revocación de sesiones de la app de campo. Gateado por el
+        // permiso de LISTADO (`ver`); el de revocar rige el botón dentro de
+        // la pantalla, no la visibilidad del ítem — mismo criterio que
+        // Usuarios.
+        $this->item($seguridad, 'seguridad', 'dispositivos', 'smartphone', 2, ruta: 'panel.dispositivos.index', codigoPermiso: 'seguridad.dispositivo.ver');
+        $this->item($seguridad, 'seguridad', 'organizacion', 'apartment', 3, ruta: 'panel.organizacion.index');
     }
 
     private function modulo(string $clave, string $icono, int $orden): SecMenu

@@ -24,10 +24,12 @@ final class OrdenAplicacionController
         path: '/api/ordenes',
         operationId: 'listarOrdenes',
         description: 'Listado paginado de órdenes de aplicación para la app de campo (espec §8). '
+            .'Exige el token del dispositivo desde HU-03: dejó de ser público. '
             .'Todos los filtros se combinan por AND; si `vigentes` y `estado` se contradicen, el '
             .'resultado es vacío — no hay prevalencia silenciosa entre filtros. Las órdenes '
             .'borradas lógicamente nunca aparecen.',
         summary: 'Lista las órdenes de aplicación con filtros',
+        security: [['tokenDispositivo' => []]],
         tags: ['Operaciones'],
         parameters: [
             new OA\Parameter(
@@ -98,6 +100,7 @@ final class OrdenAplicacionController
                     type: 'object',
                 ),
             ),
+            new OA\Response(response: 401, description: 'Token ausente, revocado o ya sin rol válido.'),
             new OA\Response(
                 response: 422,
                 description: 'Algún filtro no pasó la validación (estado desconocido, per_page fuera de 1..100, etc.).',

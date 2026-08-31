@@ -20,6 +20,7 @@ dataset('tablas de Personal y Seguridad', [
     'sec_user_role',
     'sec_role_permission',
     'sec_user_preferencia',
+    'sec_token_dispositivo',
 ]);
 
 it('crea la tabla con soft delete y columnas de auditoría', function (string $tabla) {
@@ -32,3 +33,28 @@ it('crea la tabla con soft delete y columnas de auditoría', function (string $t
             'updated_at',
         ]))->toBeTrue();
 })->with('tablas de Personal y Seguridad');
+
+/*
+ * HU-03 — `sec_token_dispositivo`. La tabla NO es la `personal_access_tokens`
+ * de Sanctum: lleva prefijo de módulo (ADR 0011), auditoría y soft delete
+ * (ADR 0007), y una FK real al usuario en vez de las columnas polimórficas
+ * `tokenable_type`/`tokenable_id`.
+ */
+it('crea sec_token_dispositivo con FK real al usuario y al rol, sin columnas polimórficas', function () {
+    expect(Schema::hasColumns('sec_token_dispositivo', [
+        'user_id',
+        'role_id',
+        'uuid_dispositivo',
+        'nombre_dispositivo',
+        'token',
+        'abilities',
+        'last_used_at',
+        'expires_at',
+    ]))->toBeTrue()
+        ->and(Schema::hasColumn('sec_token_dispositivo', 'tokenable_type'))->toBeFalse()
+        ->and(Schema::hasColumn('sec_token_dispositivo', 'tokenable_id'))->toBeFalse();
+});
+
+it('no crea la tabla personal_access_tokens de Sanctum', function () {
+    expect(Schema::hasTable('personal_access_tokens'))->toBeFalse();
+});

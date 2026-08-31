@@ -98,6 +98,7 @@ return [
         'descripcion' => 'Usuarios, roles y organización del sistema.',
         'items' => [
             'usuarios' => 'Usuarios',
+            'dispositivos' => 'Dispositivos',
             'organizacion' => 'Organización',
         ],
     ],

@@ -42,6 +42,17 @@ return [
             'driver' => 'session',
             'provider' => 'usuarios_cliente',
         ],
+
+        // Apps de campo (`agrocom-field`): token por dispositivo, sin sesión
+        // (HU-03, ADR 0008). El provider NO es opcional aunque Sanctum lo
+        // admita nulo: con `usuarios_internos`, `Guard::hasValidProvider()`
+        // comprueba que el dueño del token sea una cuenta interna, así que
+        // una cuenta de portal jamás autentica en `/api/*` ni siquiera si
+        // alguien le emitiera un token por error.
+        'sanctum' => [
+            'driver' => 'sanctum',
+            'provider' => 'usuarios_internos',
+        ],
     ],
 
     'providers' => [

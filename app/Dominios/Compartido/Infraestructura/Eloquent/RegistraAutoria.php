@@ -8,8 +8,7 @@ use Illuminate\Support\Facades\Auth;
  * Completa las columnas de auditoría `created_by` / `updated_by` (ADR 0007)
  * desde el usuario autenticado, vía eventos de Eloquent — no depende de que
  * cada caso de uso lo recuerde. Si no hay usuario autenticado (seeders,
- * comandos, endpoints aún sin auth — HU-03 pendiente) quedan en NULL o en el
- * valor asignado explícitamente.
+ * comandos) quedan en NULL o en el valor asignado explícitamente.
  *
  * La bitácora transversal (quién/qué/antes/después) del ADR 0007 es una pieza
  * aparte, todavía pendiente: este trait solo cubre la autoría por fila.

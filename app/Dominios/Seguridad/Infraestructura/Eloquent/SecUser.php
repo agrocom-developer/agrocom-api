@@ -4,13 +4,17 @@ namespace App\Dominios\Seguridad\Infraestructura\Eloquent;
 
 use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
 use App\Dominios\Seguridad\Aplicacion\AsignarRolesUsuario;
+use App\Dominios\Seguridad\Aplicacion\EmitirTokenDispositivo;
+use App\Dominios\Seguridad\Dominio\Excepciones\EmisionDirectaDeTokenNoPermitida;
 use App\Dominios\Seguridad\Dominio\TipoUsuario;
 use Database\Factories\SecUserFactory;
+use DateTimeInterface;
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Laravel\Sanctum\HasApiTokens;
 
 /**
  * Cuenta de acceso (ADR 0004; HU-01 diseño `modulos-roles` §5): un usuario,
@@ -53,6 +57,16 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class SecUser extends ModeloDominio implements AuthenticatableContract
 {
     use Authenticatable;
+
+    /**
+     * Trait de Sanctum, obligatorio y no decorativo: `Guard::supportsTokens()`
+     * comprueba literalmente que el modelo autenticable lo use
+     * (`in_array(HasApiTokens::class, class_uses_recursive(...))`) — sin él
+     * ningún token de dispositivo autentica. De acá se usan `withAccessToken()`
+     * y `currentAccessToken()`; `tokens()` se sobrescribe abajo y
+     * `createToken()` queda sellado.
+     */
+    use HasApiTokens;
 
     /** @use HasFactory<SecUserFactory> */
     use HasFactory;
@@ -153,6 +167,42 @@ class SecUser extends ModeloDominio implements AuthenticatableContract
             ->pluck('sec_role.id')
             ->map(static fn (int|string $id): int => (int) $id)
             ->all();
+    }
+
+    /**
+     * Tokens de dispositivo vivos del usuario (HU-03). Sobrescribe el
+     * `morphMany` del trait de Sanctum por un `HasMany` sobre `user_id`:
+     * `sec_token_dispositivo` no lleva las columnas polimórficas
+     * `tokenable_type`/`tokenable_id` porque el único portador posible de un
+     * token en este sistema es una cuenta `sec_user` — con morph se perdería
+     * la FK real a cambio de una flexibilidad que nadie va a usar.
+     *
+     * Relación dentro del mismo módulo `Seguridad`, así que no aplica la
+     * restricción de relaciones cruzadas de ADR 0011 (extensión 26/8/2026,
+     * punto 5).
+     *
+     * @return HasMany<SecTokenDispositivo, $this>
+     */
+    public function tokens(): HasMany
+    {
+        return $this->hasMany(SecTokenDispositivo::class, 'user_id');
+    }
+
+    /**
+     * Sellado. `createToken()` no conoce el dispositivo ni el rol activo, que
+     * son obligatorios en `sec_token_dispositivo` (invariantes 1 y 10 de
+     * CLAUDE.md), y además construye un `NewAccessToken` que exige una
+     * instancia del modelo de token de Sanctum — que este proyecto no usa
+     * (ver {@see SecTokenDispositivo}). Se sobrescribe para que el error
+     * salga con nombre en vez de como un `TypeError` del paquete.
+     *
+     * @param  list<string>  $abilities
+     *
+     * @throws EmisionDirectaDeTokenNoPermitida siempre
+     */
+    public function createToken(string $name, array $abilities = ['*'], ?DateTimeInterface $expiresAt = null): never
+    {
+        throw EmisionDirectaDeTokenNoPermitida::usar(EmitirTokenDispositivo::class);
     }
 
     /**

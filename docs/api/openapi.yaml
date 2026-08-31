@@ -13,7 +13,7 @@ paths:
       tags:
         - Operaciones
       summary: 'Lista las órdenes de aplicación con filtros'
-      description: 'Listado paginado de órdenes de aplicación para la app de campo (espec §8). Todos los filtros se combinan por AND; si `vigentes` y `estado` se contradicen, el resultado es vacío — no hay prevalencia silenciosa entre filtros. Las órdenes borradas lógicamente nunca aparecen.'
+      description: 'Listado paginado de órdenes de aplicación para la app de campo (espec §8). Exige el token del dispositivo desde HU-03: dejó de ser público. Todos los filtros se combinan por AND; si `vigentes` y `estado` se contradicen, el resultado es vacío — no hay prevalencia silenciosa entre filtros. Las órdenes borradas lógicamente nunca aparecen.'
       operationId: listarOrdenes
       parameters:
         -
@@ -99,12 +99,214 @@ paths:
                   meta:
                     $ref: '#/components/schemas/PaginacionMeta'
                 type: object
+        401:
+          description: 'Token ausente, revocado o ya sin rol válido.'
         422:
           description: 'Algún filtro no pasó la validación (estado desconocido, per_page fuera de 1..100, etc.).'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+  /api/dispositivos:
+    get:
+      tags:
+        - Seguridad
+      summary: 'Lista los dispositivos del operario autenticado'
+      description: 'Dispositivos donde el operario autenticado tiene sesión abierta. Solo los suyos: no existe forma de listar los de otro usuario desde la app de campo.'
+      operationId: listarDispositivosPropios
+      responses:
+        200:
+          description: 'Dispositivos con sesión viva, el usado más recientemente primero.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Dispositivo'
+                type: object
+        401:
+          description: 'Token ausente, revocado o ya sin rol válido.'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/dispositivos/{id}':
+    get:
+      tags:
+        - Seguridad
+      summary: 'Muestra un dispositivo del operario autenticado'
+      description: 'Un dispositivo del operario autenticado. Un id que no le pertenece devuelve 404 y no 403: un 403 confirmaría que ese dispositivo existe.'
+      operationId: verDispositivoPropio
+      parameters:
+        -
+          name: id
+          in: path
+          description: 'Identificador del dispositivo.'
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        200:
+          description: 'El dispositivo pedido.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Dispositivo'
+                type: object
+        401:
+          description: 'Token ausente, revocado o ya sin rol válido.'
+        404:
+          description: 'No existe, o es de otro usuario — indistinguibles a propósito.'
+      security:
+        -
+          tokenDispositivo: []
+  /api/auth/token:
+    post:
+      tags:
+        - Seguridad
+      summary: 'Emite el token de un dispositivo de campo'
+      description: 'Autentica al operario y emite el token con el que ese dispositivo opera sin volver a loguearse. El token no caduca por tiempo (sesión persistente offline): deja de valer cuando se lo revoca desde el panel. Reintentar desde el mismo `uuid_dispositivo` revoca el token anterior y emite uno nuevo — nunca acumula credenciales vivas. El valor en claro se devuelve UNA sola vez.'
+      operationId: emitirTokenDispositivo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - username
+                - password
+                - uuid_dispositivo
+              properties:
+                username:
+                  description: 'Login del operario (nunca un correo).'
+                  type: string
+                  example: camila.rojas
+                password:
+                  type: string
+                  format: password
+                  example: password
+                uuid_dispositivo:
+                  description: 'UUID generado en el dispositivo.'
+                  type: string
+                  format: uuid
+                  example: 6f1d0a2e-1f34-4c9f-9a8b-2b7c1d5e0f31
+                nombre_dispositivo:
+                  description: 'Nombre legible del equipo, para que el panel sepa cuál revoca.'
+                  type: string
+                  example: 'Moto G84 — piloto 2'
+                  nullable: true
+                role_id:
+                  description: 'Rol con el que se quiere operar. Opcional si el usuario tiene un único rol vivo.'
+                  type: integer
+                  example: 1
+                  nullable: true
+              type: object
+      responses:
+        201:
+          description: 'Token emitido. `token` es el único momento en que la credencial existe en claro.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - token
+                  - token_type
+                  - usuario
+                  - rol
+                  - dispositivo
+                properties:
+                  token:
+                    description: 'Credencial completa, para el header `Authorization: Bearer`.'
+                    type: string
+                    example: 12|aB3cD4...
+                  token_type:
+                    type: string
+                    example: Bearer
+                  usuario:
+                    $ref: '#/components/schemas/UsuarioCampo'
+                  rol:
+                    $ref: '#/components/schemas/RolActivo'
+                  dispositivo:
+                    $ref: '#/components/schemas/Dispositivo'
+                type: object
+        403:
+          description: 'El `role_id` pedido no está entre los roles vivos del usuario.'
+        409:
+          description: 'El usuario tiene más de un rol vivo (o ninguno) y no indicó `role_id`: hay que elegir con cuál entra. Mismo contrato que el 409 del panel.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - message
+                  - roles
+                properties:
+                  message:
+                    type: string
+                  roles:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RolActivo'
+                type: object
+        422:
+          description: 'Credenciales incorrectas, cuenta deshabilitada, o payload inválido.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+    delete:
+      tags:
+        - Seguridad
+      summary: 'Cierra la sesión del dispositivo actual'
+      description: 'Cierra la sesión de ESTE dispositivo revocando el token con el que se hizo el request. Un dispositivo nunca puede cerrar la sesión de otro: para eso está la pantalla de revocación del panel.'
+      operationId: cerrarSesionCampo
+      responses:
+        204:
+          description: 'Sesión cerrada; el token deja de valer de inmediato.'
+        401:
+          description: 'Token ausente o ya revocado.'
+      security:
+        -
+          tokenDispositivo: []
+  /api/auth/sesion:
+    get:
+      tags:
+        - Seguridad
+      summary: 'Datos de la sesión del dispositivo'
+      description: 'Quién es el operario, con qué rol opera y desde qué dispositivo. La app la consulta al reconectarse para saber si su token sigue vigente: un token revocado, una cuenta deshabilitada o un rol que le sacaron devuelven 401 acá.'
+      operationId: verSesionCampo
+      responses:
+        200:
+          description: 'Sesión vigente.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - usuario
+                  - rol
+                  - dispositivo
+                properties:
+                  usuario:
+                    $ref: '#/components/schemas/UsuarioCampo'
+                  rol:
+                    $ref: '#/components/schemas/RolActivo'
+                  dispositivo:
+                    $ref: '#/components/schemas/Dispositivo'
+                type: object
+        401:
+          description: 'Token ausente, revocado o ya sin rol válido.'
+      security:
+        -
+          tokenDispositivo: []
 components:
   schemas:
     PaginacionLinks:
@@ -342,7 +544,101 @@ components:
           example: '2026-08-26T12:00:00+00:00'
           nullable: true
       type: object
+    Dispositivo:
+      title: 'Dispositivo con sesión'
+      description: 'Dispositivo de campo con una sesión viva (HU-03). El token en sí nunca se devuelve.'
+      required:
+        - id
+        - uuid_dispositivo
+        - nombre_dispositivo
+        - rol
+        - last_used_at
+        - created_at
+      properties:
+        id:
+          description: 'Identificador del token de dispositivo.'
+          type: integer
+          example: 1
+        uuid_dispositivo:
+          description: 'UUID generado por el dispositivo.'
+          type: string
+          format: uuid
+          example: 6f1d0a2e-1f34-4c9f-9a8b-2b7c1d5e0f31
+        nombre_dispositivo:
+          description: 'Nombre legible informado por la app.'
+          type: string
+          example: 'Moto G84 — piloto 2'
+          nullable: true
+        rol:
+          $ref: '#/components/schemas/RolActivo'
+        last_used_at:
+          description: 'Último request autenticado con este token.'
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          description: 'Cuándo se emitió el token.'
+          type: string
+          format: date-time
+      type: object
+    RolActivo:
+      title: Rol
+      description: 'Rol bajo el que opera una sesión de la app de campo.'
+      required:
+        - id
+        - name
+        - description
+      properties:
+        id:
+          description: "Rol tal como lo ve la app de campo. Es el rol ÚNICO bajo el que opera la\nsesión —del token o del selector—, nunca una lista de permisos efectivos\n(invariante 10 de CLAUDE.md): los permisos se resuelven en el servidor\ncontra la base en cada request, no se le entregan a la app para que decida\nsola."
+          type: integer
+          example: 1
+        name:
+          description: 'Nombre interno del rol.'
+          type: string
+          example: piloto
+        description:
+          description: 'Descripción legible del rol.'
+          type: string
+          example: 'Piloto de dron: ejecuta sesiones de vuelo en campo.'
+          nullable: true
+      type: object
+    UsuarioCampo:
+      title: 'Usuario de campo'
+      description: 'Cuenta con la que opera la app de campo.'
+      required:
+        - id
+        - name
+        - username
+        - persona_id
+      properties:
+        id:
+          description: "Identidad del operario tal como la necesita la app de campo: lo justo para\nsaludarlo y para saber a qué persona operativa corresponde.\n\n`persona_id` viaja como ID pelado (ADR 0003, regla 3): el detalle de la\npersona pertenece al módulo `Personal` y la app lo resuelve desde su\ncatálogo sincronizado, no anidado acá."
+          type: integer
+          example: 7
+        name:
+          description: 'Nombre para mostrar.'
+          type: string
+          example: 'Camila Rojas'
+        username:
+          description: 'Identificador de login (nunca un correo).'
+          type: string
+          example: camila.rojas
+        persona_id:
+          description: 'Persona operativa enlazada (módulo Personal, solo ID).'
+          type: integer
+          example: 3
+          nullable: true
+      type: object
+  securitySchemes:
+    tokenDispositivo:
+      type: http
+      description: 'Token por dispositivo emitido por `POST /api/auth/token` (HU-03). Se envía como `Authorization: Bearer {token}`. No caduca por tiempo: vale hasta que se lo revoque desde el panel, o hasta que la cuenta o el rol con el que se emitió dejen de estar vigentes.'
+      scheme: bearer
 tags:
   -
     name: Operaciones
     description: 'Órdenes de aplicación y, más adelante, trabajos y sesiones de vuelo (espec §5).'
+  -
+    name: Seguridad
+    description: 'Sesión de la app de campo por token de dispositivo (espec §4.6, HU-03).'
