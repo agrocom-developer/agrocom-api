@@ -274,12 +274,20 @@ fase_pr() {
             cuerpo=$(cat "runs/$id.md" 2>/dev/null || echo "Ver runs/$id.md")
         fi
 
-        local extra=()
-        [ "$critica" = "si" ] && extra+=(--draft)
+        # El borrador es la entrega de una tarea crítica: se implementa igual,
+        # pero no se integra sin que la mire una persona.
+        local borrador=""
+        [ "$critica" = "si" ] && borrador="--draft"
 
         printf '%s' "$cuerpo" > runs/.cuerpo-pr.md
+        # Sin comillas alrededor de $borrador, a propósito: cuando está vacío
+        # tiene que desaparecer de la línea de comando. Un array daba el mismo
+        # resultado pero explotaba con `set -u` en la bash 3.2 de macOS, que es
+        # la que corre esto — "extra[@]: unbound variable" dejó a la tarea 05
+        # implementada, verificada y pusheada, y sin PR.
+        # shellcheck disable=SC2086
         gh pr create --base develop --head "$rama" \
-            --title "$titulo" --body-file runs/.cuerpo-pr.md "${extra[@]}" 2>&1 | tail -3 | eco
+            --title "$titulo" --body-file runs/.cuerpo-pr.md $borrador 2>&1 | tail -3 | eco
         rm -f runs/.cuerpo-pr.md
         numero=$(gh pr list --head "$rama" --json number -q '.[0].number' 2>/dev/null)
     fi
