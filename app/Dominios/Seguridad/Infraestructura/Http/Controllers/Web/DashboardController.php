@@ -3,6 +3,8 @@
 namespace App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web;
 
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
+use App\Dominios\Seguridad\Infraestructura\Http\Demo\DatosDemoCapturasRc;
+use App\Dominios\Seguridad\Infraestructura\Http\Demo\DatosDemoMapaOperativo;
 use App\Dominios\Seguridad\Infraestructura\Http\Demo\DatosDemoPanel;
 use App\Dominios\Seguridad\Infraestructura\Http\Middleware\ResolverRolActivo;
 use App\Dominios\Seguridad\Infraestructura\Http\Presentacion\CascaraPanel;
@@ -12,11 +14,10 @@ use Illuminate\View\View;
 
 /**
  * `GET /panel/dashboard` (`panel.dashboard`): página de aterrizaje del panel
- * tras el login — el "Operación de hoy" de las maquetas aprobadas (4a
- * escritorio, 5a tablet, 5b móvil), con pestañas Resumen / Sesiones /
- * Pausas. Sin permiso propio: visible para cualquier usuario autenticado con
- * rol activo resuelto (`sec_menu` la siembra sin `permission_id`,
- * {@see SecMenuSeeder}).
+ * tras el login — el "Operación de hoy", panel visual/estadístico con
+ * pestañas Resumen / Mapa / Resumen por lote / Multimedia. Sin permiso
+ * propio: visible para cualquier usuario autenticado con rol activo
+ * resuelto (`sec_menu` la siembra sin `permission_id`, {@see SecMenuSeeder}).
  *
  * Middleware `auth:interno` + `rol.activo`: para cuando este controlador se
  * ejecuta, `session('sec_rol_activo_id')` ya es un rol vivo válido de este
@@ -25,9 +26,9 @@ use Illuminate\View\View;
  *
  * Adaptador delgado (ADR 0008): la cáscara (menú del rol activo, roles,
  * tema, chrome) la resuelve {@see CascaraPanel}; el contenido del dashboard
- * es íntegramente DEMO ({@see DatosDemoPanel} — KPIs, sesiones, pausas,
- * stock, ventana volable), a reemplazar por los casos de uso reales de cada
- * módulo cuando existan.
+ * es íntegramente DEMO ({@see DatosDemoPanel} — sesiones, pausas, stock,
+ * ventana volable), a reemplazar por los casos de uso reales de cada módulo
+ * cuando existan.
  */
 final class DashboardController
 {
@@ -35,6 +36,8 @@ final class DashboardController
         Request $request,
         CascaraPanel $cascara,
         DatosDemoPanel $demo,
+        DatosDemoMapaOperativo $demoMapa,
+        DatosDemoCapturasRc $demoCapturas,
     ): View {
         /** @var SecUser $usuario */
         $usuario = $request->user('interno');
@@ -44,15 +47,19 @@ final class DashboardController
             ...$cascara->para($usuario, $idRolActivo),
             'fechaBajada' => $demo->fechaBajada(),
             'ventana' => $demo->ventanaVolable(),
-            'kpis' => $demo->kpis(),
-            'kpiMovil' => $demo->kpiProtagonistaMovil(),
             'distribucion' => $demo->distribucionSesiones(),
+            'hectareasPorDia' => $demo->hectareasPorDia(),
+            'avanceMeta' => $demo->avanceMeta(),
+            'detalleClientes' => $demo->detalleClientes(),
+            'mapaLotes' => $demoMapa->lotes(),
+            'mapaSesiones' => $demoMapa->sesionesGeo(),
+            'resumenMapa' => $demoMapa->resumenMapa(),
+            'resumenPorLote' => $demoMapa->resumenPorLote(),
+            'capturasRc' => $demoCapturas->sesiones(),
             'sesiones' => $demo->sesiones(),
             'pausas' => $demo->pausas(),
-            'pausasEventos' => $demo->pausasEventos(),
             'stock' => $demo->stockBajoMinimo(),
             'alertaRc' => $demo->alertaRc(),
-            'pausasSinCausa' => $demo->pausasSinCausa(),
         ]);
     }
 }

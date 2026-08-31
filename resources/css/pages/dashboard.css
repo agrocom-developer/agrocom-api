@@ -96,16 +96,21 @@
     padding-top: var(--ag-space-1);
 }
 
-/* ---------- KPIs ---------- */
+/* ---------- Cuadros por lote (Fase 7) ---------- */
 
-.ag-dash__kpis {
+.ag-dash__lotes-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     gap: var(--ag-space-4);
 }
 
-.ag-dash__kpis-movil {
-    display: none;
+/* ---------- Grilla de 3 tarjetas (gráficos en Resumen, cuadros
+   informativos en Mapa) ---------- */
+
+.ag-dash__cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--ag-space-4);
 }
 
 /* ---------- Grilla principal 2fr / 1fr (auditoría visual externa, obs. #6:
@@ -199,46 +204,39 @@
     padding: var(--ag-space-3) var(--ag-space-4);
 }
 
-/* Fase 6 — tab Sesiones: columna RC + columna de acción (drill-down). */
-.ag-table--detallado .ag-table__head,
-.ag-table--detallado .ag-table__row {
-    grid-template-columns: 64px 1.6fr 1fr 1fr 70px 110px 90px 32px;
+/* Fase 5 — tabla de detalle de clientes: 6 columnas propias, más anchas que
+   la grilla de sesiones (nombre de cliente + barra de ejecución). Sin
+   variante de tablet/móvil (ver _detalle-clientes.blade.php): en vez de
+   ocultarse bajo el breakpoint de .ag-table, mantiene su grilla fija y
+   scrollea horizontal dentro de .ag-table-scroll. */
+.ag-table--clientes .ag-table__head,
+.ag-table--clientes .ag-table__row {
+    grid-template-columns: 1.8fr 1fr 100px 110px 180px 90px;
+    min-width: 780px;
 }
 
-/* Fase 6 — tab Pausas: tabla de eventos individuales, 4 columnas. */
-.ag-table--eventos .ag-table__head,
-.ag-table--eventos .ag-table__row {
-    grid-template-columns: 70px 1.4fr 1.6fr 90px;
+.ag-table-scroll {
+    overflow-x: auto;
 }
 
-/* Botón de acción del drill-down (Fase 8 — auditoría: la FILA no es
-   interactiva, `role="row"` estático es el patrón ARIA "table" correcto;
-   el control focoable vive en su propia celda). */
-.ag-table__row-action {
-    display: inline-flex;
+.ag-dash__clientes-ejecucion {
+    display: flex;
     align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    padding: 0;
-    border: none;
-    border-radius: var(--ag-radius-sm);
-    background: transparent;
+    gap: var(--ag-space-2);
+}
+
+.ag-dash__clientes-track {
+    flex: 1;
+    min-width: 48px;
+}
+
+.ag-dash__clientes-vencido {
     color: var(--ag-color-text-faint);
-    cursor: pointer;
-    transition:
-        background-color var(--ag-transition-fast),
-        color var(--ag-transition-fast);
 }
 
-.ag-table__row-action:hover {
-    background: var(--ag-color-bg-row-hover);
-    color: var(--ag-color-text);
-}
-
-.ag-table__row-action:focus-visible {
-    outline: 2px solid var(--ag-color-focus-ring);
-    outline-offset: 1px;
+.ag-dash__clientes-por-vencer {
+    color: var(--ag-color-warning-strong);
+    font-weight: var(--ag-font-weight-bold);
 }
 
 .ag-table__dot {
@@ -249,24 +247,12 @@
     margin-right: var(--ag-space-2);
 }
 
-.ag-table__dot--accent {
-    background: var(--ag-color-accent);
-}
-
 .ag-table__dot--info {
     background: var(--ag-color-info-strong);
 }
 
-.ag-table__dot--danger {
-    background: var(--ag-color-danger);
-}
-
 .ag-table__dot--neutral {
     background: var(--ag-color-text-faint);
-}
-
-.ag-table__dot--unassigned {
-    background: var(--ag-color-bar-unassigned);
 }
 
 /* Auditoría visual externa, obs. #9: el estado de la tabla de sesiones
@@ -501,6 +487,13 @@
     background: var(--ag-color-bar-unassigned);
 }
 
+/* Fase 5 — barra de ejecución de contrato (% ha ejecutadas vs. contratadas):
+   siempre el mismo tono de progreso, independiente del estado del contrato
+   (ese ya lo comunica el badge de al lado). */
+.ag-bars__fill--primary {
+    background: var(--ag-color-primary);
+}
+
 .ag-bars--lg .ag-bars__track {
     height: 9px;
 }
@@ -555,46 +548,9 @@
     align-self: flex-start;
 }
 
-/* ---------- Filtros de la pestaña Sesiones ---------- */
+/* ---------- Bloque "Hoy" (solo móvil) ---------- */
 
-.ag-dash__filters {
-    display: flex;
-    gap: var(--ag-space-2);
-    flex-wrap: wrap;
-}
-
-.ag-dash__filter {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--ag-space-2);
-    padding: var(--ag-space-2) var(--ag-space-3);
-    border-radius: var(--ag-radius-pill);
-    border: 1px solid var(--ag-color-border);
-    background: var(--ag-color-bg-chrome);
-    color: var(--ag-color-text-muted);
-    font-family: var(--ag-font-family-base);
-    font-size: 0.78rem;
-    white-space: nowrap;
-    cursor: pointer;
-}
-
-.ag-dash__filter.is-active {
-    background: var(--ag-color-primary-subtle);
-    border-color: var(--ag-color-primary-border-subtle);
-    color: var(--ag-color-success-strong);
-    font-weight: var(--ag-font-weight-bold);
-}
-
-.ag-dash__nota {
-    margin: 0;
-    font-size: 0.78rem;
-    color: var(--ag-color-text-muted);
-}
-
-/* ---------- Bloques solo-móvil ---------- */
-
-.ag-dash__hoy,
-.ag-dash__solo-movil {
+.ag-dash__hoy {
     display: none;
 }
 
@@ -608,9 +564,8 @@
 /* ---------- Tablet (maqueta 5a) ---------- */
 
 @media (max-width: 1199.98px) {
-    .ag-dash__kpis {
+    .ag-dash__cards-grid {
         grid-template-columns: 1fr 1fr;
-        gap: var(--ag-space-3);
     }
 
     .ag-dash__grid {
@@ -619,6 +574,12 @@
 
     .ag-table {
         display: none;
+    }
+
+    /* Excepción: la tabla de clientes no tiene variante de tablet, se
+       mantiene con scroll horizontal (ver .ag-table-scroll arriba). */
+    .ag-table.ag-table--clientes {
+        display: block;
     }
 
     .ag-session-list {
@@ -638,35 +599,16 @@
         display: none;
     }
 
-    .ag-dash__kpis,
+    .ag-dash__cards-grid {
+        grid-template-columns: 1fr;
+    }
+
     .ag-dash__grid,
     .ag-session-list {
         display: none;
     }
 
-    .ag-dash__kpis-movil {
-        display: flex;
-        flex-direction: column;
-        gap: var(--ag-space-3);
-    }
-
-    .ag-dash__kpis-movil-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: var(--ag-space-3);
-    }
-
-    /* KPI secundarios a media columna (maqueta 5b: cifra 26px) — la cifra
-       por defecto (34px) hacía envolver "Bs 18.490". */
-    .ag-dash__kpis-movil-grid .ag-stat-card__value {
-        font-size: 1.625rem;
-    }
-
     .ag-dash__hoy {
-        display: block;
-    }
-
-    .ag-dash__solo-movil {
         display: block;
     }
 
@@ -675,155 +617,4 @@
     .ag-dash__rc-detalle {
         display: none;
     }
-}
-
-/* ---------- Panel de detalle de sesión (Fase 6 — offcanvas nativo) ---------- */
-
-.ag-session-detail {
-    --bs-offcanvas-transition: transform 320ms var(--ag-ease-drawer);
-    --bs-offcanvas-width: 24rem;
-    background-color: var(--ag-color-bg-elevated);
-    display: flex;
-    flex-direction: column;
-}
-
-.ag-session-detail__header {
-    flex: 0 0 auto;
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: var(--ag-space-3);
-    padding: var(--ag-space-4);
-    border-bottom: 1px solid var(--ag-color-border);
-}
-
-.ag-session-detail__title {
-    margin: 0;
-    font-size: var(--ag-font-size-sm);
-    font-weight: var(--ag-font-weight-bold);
-    color: var(--ag-color-text);
-}
-
-.ag-session-detail__subtitle {
-    margin: var(--ag-space-1) 0 0;
-    font-size: var(--ag-font-size-xs);
-    color: var(--ag-color-text-muted);
-}
-
-.ag-session-detail__close {
-    flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2rem;
-    height: 2rem;
-    border: none;
-    border-radius: var(--ag-radius-pill);
-    background: transparent;
-    color: var(--ag-color-text-muted);
-    cursor: pointer;
-}
-
-.ag-session-detail__close:hover {
-    background: var(--ag-color-bg-row-hover);
-    color: var(--ag-color-text);
-}
-
-.ag-session-detail__body {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    padding: var(--ag-space-4);
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-4);
-}
-
-.ag-session-detail__list {
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-3);
-}
-
-.ag-session-detail__row {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.ag-session-detail__row dt {
-    font-size: 0.6875rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--ag-color-text-muted);
-}
-
-.ag-session-detail__row dd {
-    margin: 0;
-    font-size: var(--ag-font-size-sm);
-    color: var(--ag-color-text);
-}
-
-.ag-session-detail__section {
-    padding-top: var(--ag-space-4);
-    border-top: 1px solid var(--ag-color-border-row);
-}
-
-.ag-session-detail__section-title {
-    margin: 0 0 var(--ag-space-2);
-    font-size: 0.6875rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--ag-color-text-muted);
-}
-
-.ag-session-detail__empty {
-    margin: 0;
-    font-size: var(--ag-font-size-sm);
-    color: var(--ag-color-text-muted);
-}
-
-.ag-session-detail__pausas {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-2);
-}
-
-.ag-session-detail__pausas li {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--ag-space-3);
-    font-size: var(--ag-font-size-sm);
-    color: var(--ag-color-text);
-}
-
-.ag-session-detail__pausas-duracion {
-    font-family: var(--ag-font-family-mono);
-    color: var(--ag-color-text-muted);
-    white-space: nowrap;
-}
-
-.ag-session-detail__rc {
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: var(--ag-space-2);
-    font-size: var(--ag-font-size-sm);
-}
-
-.ag-session-detail__rc--capturado {
-    color: var(--ag-color-success-strong);
-}
-
-.ag-session-detail__rc--sin_evidencia {
-    color: var(--ag-color-warning-strong);
-}
-
-.ag-session-detail__rc--no_aplica {
-    color: var(--ag-color-text-muted);
 }

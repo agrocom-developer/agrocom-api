@@ -118,7 +118,12 @@ Consecuencia de diseño explícita: **el relleno sólido de marca (botones) es c
 | Molecule | `form-section` | `resources/views/components/molecules/form-section.blade.php` | Implementado (2026-08-28) |
 | Molecule | `role-card` | `resources/views/components/molecules/role-card.blade.php` | Implementado (2026-08-28, quinta vuelta) |
 | Molecule | `section-head` | `resources/views/components/molecules/section-head.blade.php` | Implementado (2026-08-28, sexta vuelta parte 2) |
-| Molecule | `donut-chart` | `resources/views/components/molecules/donut-chart.blade.php` | Implementado (2026-08-28, sexta vuelta parte 2) |
+| Molecule | `donut-chart` | `resources/views/components/molecules/donut-chart.blade.php` | **Retirado** (28/8/2026, auditoría visual externa obs. #5/#6 — ver §10.5). Reemplazado por `distribution-bar`, mismo prop shape. |
+| Molecule | `distribution-bar` | `resources/views/components/molecules/distribution-bar.blade.php` | Implementado (2026-08-28, auditoría visual externa obs. #5/#6) |
+| Molecule | `apex-chart` | `resources/views/components/molecules/apex-chart.blade.php` | Implementado (29/8/2026, novena vuelta — ver §13) |
+| Molecule | `lote-resumen-card` | `resources/views/components/molecules/lote-resumen-card.blade.php` | Implementado (29/8/2026, novena vuelta) |
+| Molecule | `captura-rc-card` | `resources/views/components/molecules/captura-rc-card.blade.php` | Implementado (29/8/2026, novena vuelta) |
+| Organism | `mapa-operativo` | `resources/views/components/organisms/mapa-operativo.blade.php` | Implementado (29/8/2026, novena vuelta — ver §13) |
 
 Por qué solo los átomos estaban implementados en el pase anterior: era el límite de alcance fijado para la primera entrega de HU-02 (tokens + piezas de más bajo nivel, sin lógica de negocio). Este pase (27/8/2026) implementa el resto del catálogo, a pedido explícito de HU-02 (el usuario vio un prototipo interactivo aparte y pidió la construcción real). Decisiones de composición que no estaban 100% cerradas en la especificación de §4 y se resolvieron acá:
 
@@ -928,3 +933,92 @@ no se generaliza a otros íconos del topbar.
 proporción: sin `SISTEMA`, sin el listener de `matchMedia`, sin
 `sincronizarInterruptores` (no hay más que un `data-bs-theme` que alternar
 y persistir).
+
+## 13. Novena vuelta (29/8/2026) — dashboard: de ERP genérico a panel visual/estadístico
+
+Pedido explícito del usuario: el rubro (fumigación agrícola con drones) le
+interesa más ver estadísticas y mapas que tablas. El dashboard
+(`app/Dominios/Seguridad/Infraestructura/Http/Views/pages/dashboard.blade.php`)
+pasa de 3 pestañas (Resumen/Sesiones/Pausas + KPIs) a 4: **Resumen** (sin
+KPIs, con 3 gráficos ApexCharts + detalle de clientes), **Mapa** (Leaflet),
+**Resumen por lote** (cuadros por lote + `distribution-bar` reubicada acá
+desde Resumen) y **Multimedia** (capturas RC reales). Detalle completo del
+plan y las 9 fases ejecutadas: rama `feature/dashboard-agro`, plan en
+`docs/gestion/` de esa sesión.
+
+### 13.1. Primera vez que el panel carga una librería JS pesada — convención de import() dinámico
+
+Hasta ahora todo el JS del panel (`resources/js/organisms/*.js`,
+`molecules/theme-toggle.js`) se importa estático desde `app.js`, porque es
+vanilla sin dependencias de terceros. **ApexCharts** (gráficos de Resumen)
+y **Leaflet** (mapa satelital) son las primeras dependencias npm pesadas
+del panel (~130 KB y ~40 KB respectivamente) — como Vite solo tiene un
+entrypoint (`resources/js/app.js`, cargado en TODAS las páginas vía
+`panel-shell.blade.php`), un import estático las bajaría hasta en el
+login. Regla nueva, exclusiva para dependencias de este tamaño (el resto
+del catálogo sigue con import estático simple):
+
+```js
+// resources/js/app.js
+document.addEventListener('DOMContentLoaded', () => {
+    if (document.querySelector('[data-ag-chart]')) import('./organisms/dashboard-charts.js');
+    if (document.querySelector('[data-ag-map]')) import('./organisms/dashboard-map.js');
+});
+```
+
+Vite genera un chunk separado por cada import() dinámico (`dashboard-charts-*.js`,
+`dashboard-map-*.js`, con su CSS propio en el caso de Leaflet) que el
+navegador solo pide si el DOM de la página tiene el contenedor
+correspondiente — verificado con Playwright que login/selección de rol no
+descargan ninguno de los dos chunks.
+
+**Gotcha real, no obvio**: el módulo importado dinámicamente se carga
+DESPUÉS de que `DOMContentLoaded` ya disparó (por definición: el import()
+ocurre dentro de un handler de ese mismo evento). Si el módulo hijo
+también hace `document.addEventListener('DOMContentLoaded', renderizar)`,
+ese listener nunca se ejecuta. `dashboard-charts.js`/`dashboard-map.js`
+renderizan de inmediato al cargar, sin volver a esperar el evento.
+
+### 13.2. Resolución de colores en JS — `resources/js/shared/color-tokens.js`
+
+ApexCharts y Leaflet piden colores ya resueltos en JS (`colors: [...]`,
+`fillColor`), nunca `var(--ag-color-x)` literal — y `getComputedStyle().getPropertyValue()`
+no alcanza para tokens con `color-mix()` (varios navegadores devuelven el
+texto tal cual, no el color mezclado). `leerColorToken(nombreToken)`
+aplica el token a `color` de un `<span>` oculto y lee
+`getComputedStyle().color`, forzando la resolución completa a `rgb()`.
+Todo color nuevo en JS pasa por acá — confirmado en auditoría que es el
+único mecanismo usado (excepción encontrada y corregida: un `#fff` literal
+en el borde de los `circleMarker` del mapa, ver 13.4).
+
+### 13.3. `apex-chart` y `mapa-operativo` — altura declarada vs. altura real
+
+`apex-chart.blade.php` NO fija `height` como CSS del contenedor — lo pasa
+como `chart.height` (número) a ApexCharts vía `data-ag-chart-height`, y el
+contenedor solo lleva ese valor como `min-height` mientras el chunk
+diferido carga. Motivo: con `chart.height: '100%'` sobre un contenedor de
+altura CSS fija, ApexCharts llena esa altura solo con el gráfico y agrega
+la leyenda POR ENCIMA — el `overflow:hidden` de `.ag-card` recortaba la
+segunda fila de leyenda del donut de 4 estados. Con un alto numérico,
+ApexCharts reserva espacio para la leyenda dentro de ese total.
+
+`mapa-operativo` tiene su propio gotcha de layout: el pane "Mapa" no es el
+tab activo por defecto (Bootstrap lo deja en `display:none` hasta el
+primer click) y Leaflet inicializado en un contenedor de tamaño cero
+renderiza mal — `dashboard-map.js` escucha `shown.bs.tab` del botón del
+tab para llamar `mapa.invalidateSize()` la primera vez que se muestra.
+
+### 13.4. Auditoría (`validador`, 29/8/2026) — 2 hallazgos bloqueantes, ambos corregidos
+
+- Invariante 11: `dashboard-map.js` tenía `color: '#fff'` literal en el
+  borde de los `circleMarker` de sesión (único hex de toda la rama) —
+  corregido a `leerColorToken('--ag-color-gray-0')`.
+- Larastan (nivel 6): los métodos privados `lote()`/`sesion()` de
+  `DatosDemoMapaOperativo` devolvían `array` sin value type — se
+  completó el docblock con el shape exacto (mismo criterio que
+  `lotes()`/`sesionesGeo()`).
+
+Resto de la auditoría (ADR 0003, ADR 0009, ADR 0013, seguridad de los
+popups de Leaflet vía `createElement`/`textContent` — nunca `innerHTML`—,
+Atomic Design, CSS/i18n huérfanos, patrón de template) sin hallazgos.
+`pint`/`phpstan`/`pest` (159/159) pasan limpio tras las dos correcciones.
