@@ -50,14 +50,36 @@
  * la invariante citando el antipatrón textual ("nunca en un `estado = ...`
  * suelto") y esas citas son el valor del comentario, no la fuga.
  *
+ * Esa excepción vale con una salvedad, y conviene conocerla antes de escribir
+ * la cita: un comentario de una línea cuenta como comentario solo cuando ABRE
+ * la línea. Pegado al final de una línea de código —`$x = 5; // ojo, nunca
+ * $orden->estado = ...`— no se blanquea, y la cita se reporta. Es deliberado:
+ * en el HTML de una vista Blade un `//` a mitad de línea es texto corriente
+ * (`https://…` fuera de comillas), y tratarlo como comentario blanquearía
+ * hasta el fin de esa línea, con el código que hubiera en el medio. El precio
+ * de la salvedad es un hallazgo de más —ruidoso, visible, se corrige—; el de
+ * levantarla sería uno de menos, silencioso. La aduana elige el ruido. Para
+ * citar el antipatrón, el comentario va en su propia línea.
+ *
  * ── Lo que la aduana NO puede ver (por eso no reemplaza a la revisión) ────
  *
  *   - `$modelo->update($datos)` con el arreglo armado en otro lado.
  *   - SQL crudo (`DB::statement("UPDATE ... SET estado = ...")`), que además
  *     se saltea la bitácora — el riesgo que anota el ADR 0012.
  *   - Nombres de propiedad resueltos en runtime (`$modelo->{$campo} = ...`).
+ *   - Texto que no sea PHP válido: para no confundir un comentario con la cita
+ *     de un comentario, el archivo se recorre como lo lee PHP, dando por hecho
+ *     que las comillas cierran. En el HTML de una vista Blade un apóstrofe
+ *     suelto puede dejar un comentario sin blanquear, y eso cae del lado del
+ *     hallazgo de más: lo que se saltea se sigue buscando igual.
  *
- * Se queda con lo que se escribe literal, que es como se cuela en la práctica.
+ * Se queda con lo que se escribe literal, que es como se cuela en la práctica
+ * — incluidas las dos formas que son la misma escritura con otra sintaxis:
+ * `$orden['estado'] = ...` (Eloquent implementa ArrayAccess, así que por debajo
+ * es el mismo `setAttribute` que la flecha) y el `setAttribute('estado', ...)`
+ * explícito. Si solo se vigilara `->estado =`, quien viera fallar el gate no
+ * tendría que cambiar de carpeta para pasar: le alcanzaría con cambiar de
+ * sintaxis, sin que el diff lo delate. Las tres se vigilan juntas.
  */
 
 $raizProyecto = dirname(__DIR__, 2);
@@ -65,7 +87,7 @@ $raizProyecto = dirname(__DIR__, 2);
 /**
  * Nombre de un estado de dominio: `estado`, `estado_actual` y cualquier cosa
  * con sufijo `_estado` (`rc_estado`, `sesion_estado`). Fragmento reutilizado
- * por los dos patrones de abajo para que no se desincronicen.
+ * por los patrones de abajo para que no se desincronicen.
  */
 const NOMBRE_ESTADO_DOMINIO = '(?:estado(?:_actual)?|[A-Za-z0-9_]+_estado)';
 
@@ -77,13 +99,28 @@ const NOMBRE_ESTADO_DOMINIO = '(?:estado(?:_actual)?|[A-Za-z0-9_]+_estado)';
 const PATRON_ASIGNACION_DIRECTA = '/->\s*'.NOMBRE_ESTADO_DOMINIO.'\b\s*(?:\?\?)?=(?!=)/';
 
 /**
+ * La misma asignación por índice: `$orden['estado'] = ...`. Eloquent implementa
+ * ArrayAccess, así que termina en el mismo `setAttribute` que la flecha y tiene
+ * el mismo efecto sobre el modelo.
+ */
+const PATRON_ASIGNACION_INDICE = '/\[\s*([\'"])'.NOMBRE_ESTADO_DOMINIO.'\1\s*\]\s*(?:\?\?)?=(?!=)/';
+
+/** Y por la API del modelo: `->setAttribute('estado', ...)`, `->offsetSet(...)`. */
+const PATRON_ASIGNACION_POR_METODO = '/->\s*(?:setAttribute|offsetSet)\s*\(\s*([\'"])'.NOMBRE_ESTADO_DOMINIO.'\1\s*,/';
+
+/**
  * Escritura masiva por arreglo. Se exige `->` o `::` delante para no confundir
  * la llamada con la declaración del método (`public function create(...)`, que
  * existe hoy en `RolActivoController`). La lista incluye las variantes que
- * pasan por Eloquent y también `insert`/`upsert` del query builder: escriben
- * el estado igual y encima sin pasar por el modelo.
+ * pasan por Eloquent y también las del query builder —`insert`, `insertGetId`,
+ * `insertOrIgnore`, `upsert`, `updateOrInsert`—: escriben el estado igual y
+ * encima sin pasar por el modelo. `firstOrNew` entra por el mismo criterio que
+ * su gemela `firstOrCreate`: asigna el atributo aunque no persista sola.
+ *
+ * Las variantes largas van antes que las cortas (`updateOrInsert` antes de
+ * `update`) para que la alternancia no corte corto.
  */
-const PATRON_ESCRITURA_MASIVA = '/(?:->|::)\s*(?:forceCreate|createOrFirst|create|forceFill|fill|updateOrCreate|updateQuietly|update|firstOrCreate|insertOrIgnore|insert|upsert)\s*\(/';
+const PATRON_ESCRITURA_MASIVA = '/(?:->|::)\s*(?:forceCreate|createOrFirst|create|forceFill|fill|updateOrCreate|updateOrInsert|updateQuietly|update|firstOrCreate|firstOrNew|insertOrIgnore|insertGetId|insert|upsert)\s*\(/';
 
 /** Clave de estado dentro del arreglo de una escritura masiva. */
 const PATRON_CLAVE_ESTADO = '/([\'"])'.NOMBRE_ESTADO_DOMINIO.'\1\s*=>/';
@@ -101,23 +138,149 @@ function estadosEsServicioDeEstados(string $rutaRelativa): bool
 }
 
 /**
- * Blanquea comentarios **conservando los saltos de línea**: el gate reporta
- * `archivo:línea`, y borrar de cuajo un docblock de diez líneas correría todo
- * lo de abajo y mandaría a leer la línea equivocada.
+ * Fin de un literal de texto que arranca en `$offset` —comilla simple, doble,
+ * heredoc o nowdoc—, o `null` si ahí no arranca ninguno.
  *
- * Los comentarios de una línea se descartan solo cuando abren la línea, igual
- * que en `TokensColorTest`: así un `'https://…'` no se confunde con un `//`.
- * `#[` queda fuera del blanqueo porque es un atributo PHP 8, no un comentario.
+ * Adentro de un literal no hay comentarios que blanquear ni paréntesis que
+ * contar: `'ver inciso b) del contrato'` es texto, no el cierre de una llamada.
+ * Saltearlos es lo que evita que el detector se equivoque en silencio.
+ *
+ * @return int|null offset del primer carácter DESPUÉS del literal
+ */
+function estadosFinDeLiteral(string $codigo, int $offset): ?int
+{
+    $largo = strlen($codigo);
+    $comilla = $codigo[$offset] ?? '';
+
+    if ($comilla === "'" || $comilla === '"') {
+        for ($i = $offset + 1; $i < $largo; $i++) {
+            if ($codigo[$i] === '\\') {
+                $i++;
+
+                continue;
+            }
+
+            if ($codigo[$i] === $comilla) {
+                return $i + 1;
+            }
+        }
+
+        return $largo;
+    }
+
+    if (preg_match('~<<<[ \t]*([\'"]?)([A-Za-z_][A-Za-z0-9_]*)\1\R~A', $codigo, $apertura, 0, $offset) !== 1) {
+        return null;
+    }
+
+    $inicioCuerpo = $offset + strlen($apertura[0]);
+    $cierre = '~^[ \t]*'.preg_quote($apertura[2], '~').'(?![A-Za-z0-9_])~m';
+
+    if (preg_match($cierre, $codigo, $coincidencia, PREG_OFFSET_CAPTURE, $inicioCuerpo) !== 1) {
+        return $largo;
+    }
+
+    return $coincidencia[0][1] + strlen($coincidencia[0][0]);
+}
+
+/** ¿Del principio de la línea hasta `$offset` hay solo espacios? */
+function estadosAbreLaLinea(string $codigo, int $offset): bool
+{
+    for ($i = $offset - 1; $i >= 0; $i--) {
+        if ($codigo[$i] === "\n") {
+            return true;
+        }
+
+        if ($codigo[$i] !== ' ' && $codigo[$i] !== "\t") {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+/**
+ * Fin del comentario que arranca en `$offset`, o `null` si ahí no arranca uno.
+ * `#[` queda afuera: es un atributo PHP 8, no un comentario.
+ *
+ * Los de una línea se reconocen solo cuando abren la línea, igual que en
+ * `TokensColorTest` — salvo cuando se pide lo contrario, que es dentro de los
+ * argumentos de una llamada: ahí ya se sabe que se está mirando código PHP, y
+ * un `)` comentado al final de la línea desbalancea la cuenta.
+ */
+function estadosFinDeComentario(string $codigo, int $offset, bool $soloAlAbrirLaLinea = true): ?int
+{
+    $largo = strlen($codigo);
+
+    foreach (['/*' => '*/', '{{--' => '--}}', '<!--' => '-->'] as $abre => $cierra) {
+        if (! str_starts_with(substr($codigo, $offset, strlen($abre)), $abre)) {
+            continue;
+        }
+
+        $fin = strpos($codigo, $cierra, $offset + strlen($abre));
+
+        return $fin === false ? $largo : $fin + strlen($cierra);
+    }
+
+    $dos = substr($codigo, $offset, 2);
+
+    if ($dos !== '//' && ! (($codigo[$offset] ?? '') === '#' && $dos !== '#[')) {
+        return null;
+    }
+
+    if ($soloAlAbrirLaLinea && ! estadosAbreLaLinea($codigo, $offset)) {
+        return null;
+    }
+
+    $fin = strpos($codigo, "\n", $offset);
+
+    // El salto de línea queda afuera a propósito: se conserva.
+    return $fin === false ? $largo : $fin;
+}
+
+/**
+ * Blanquea comentarios **conservando la longitud y los saltos de línea**: el
+ * gate reporta `archivo:línea`, y borrar de cuajo un docblock de diez líneas
+ * correría todo lo de abajo y mandaría a leer la línea equivocada.
+ *
+ * Recorre en vez de reemplazar con una expresión regular sobre todo el archivo
+ * porque hay que distinguir el comentario de la cita del comentario: una
+ * apertura de bloque escrita dentro de un literal de texto no abre nada, y con
+ * un reemplazo global se blanqueaba desde ahí hasta el próximo cierre —
+ * llevándose por delante, en silencio, las asignaciones del medio.
  */
 function estadosSinComentarios(string $codigo): string
 {
-    $blanquear = static fn (array $coincidencia): string => str_repeat("\n", substr_count($coincidencia[0], "\n"));
+    $limpio = $codigo;
+    $largo = strlen($codigo);
+    $i = 0;
 
-    $limpio = preg_replace_callback('~/\*.*?\*/~s', $blanquear, $codigo) ?? $codigo;
-    $limpio = preg_replace_callback('~\{\{--.*?--\}\}~s', $blanquear, $limpio) ?? $limpio;
-    $limpio = preg_replace_callback('~<!--.*?-->~s', $blanquear, $limpio) ?? $limpio;
+    while ($i < $largo) {
+        $finLiteral = estadosFinDeLiteral($codigo, $i);
 
-    return preg_replace('~^[ \t]*(?://|#(?!\[)).*$~m', '', $limpio) ?? $limpio;
+        if ($finLiteral !== null) {
+            $i = $finLiteral;
+
+            continue;
+        }
+
+        $finComentario = estadosFinDeComentario($codigo, $i);
+
+        if ($finComentario === null) {
+            $i++;
+
+            continue;
+        }
+
+        for ($j = $i; $j < $finComentario; $j++) {
+            if ($limpio[$j] !== "\n") {
+                $limpio[$j] = ' ';
+            }
+        }
+
+        $i = $finComentario;
+    }
+
+    return $limpio;
 }
 
 /**
@@ -125,30 +288,43 @@ function estadosSinComentarios(string $codigo): string
  *
  * Recorre equilibrando paréntesis y corchetes en vez de cortar en el primer
  * `]`: `updateOrCreate(['uuid_cliente' => $u], ['estado' => $e])` lleva la
- * clave de estado en el SEGUNDO arreglo, y un `[^\]]*` la perdería. Un
- * paréntesis dentro de un literal de texto desbalancea la cuenta y agranda la
- * ventana — hacia el falso positivo, que es ruidoso y se corrige, no hacia el
- * falso negativo, que es silencioso.
+ * clave de estado en el SEGUNDO arreglo, y un `[^\]]*` la perdería.
+ *
+ * Los literales de texto y los comentarios no cuentan para el equilibrio, y no
+ * es un detalle cosmético: el desbalance corre en las DOS direcciones. Uno de
+ * apertura de más agranda la ventana —falso positivo, ruidoso, se corrige—,
+ * pero uno de cierre sin abrir la corta ahí mismo y todo lo que venga después
+ * queda sin mirar. `['motivo' => 'ver inciso b) del contrato'], ['estado' =>
+ * $e]` perdía así la clave de estado, en silencio y sobre la forma exacta que
+ * va a usar el motor de sync: un falso negativo, que es justo el modo de fallo
+ * que esta aduana existe para cerrar, movido un nivel más arriba.
  */
 function estadosArgumentosDeLlamada(string $codigo, int $offsetParentesis): string
 {
     $profundidad = 0;
     $largo = strlen($codigo);
+    $i = $offsetParentesis;
 
-    for ($i = $offsetParentesis; $i < $largo; $i++) {
-        if ($codigo[$i] === '(' || $codigo[$i] === '[') {
-            $profundidad++;
+    while ($i < $largo) {
+        $salto = estadosFinDeLiteral($codigo, $i) ?? estadosFinDeComentario($codigo, $i, false);
+
+        if ($salto !== null) {
+            $i = $salto;
 
             continue;
         }
 
-        if ($codigo[$i] === ')' || $codigo[$i] === ']') {
+        if ($codigo[$i] === '(' || $codigo[$i] === '[') {
+            $profundidad++;
+        } elseif ($codigo[$i] === ')' || $codigo[$i] === ']') {
             $profundidad--;
 
             if ($profundidad === 0) {
                 return substr($codigo, $offsetParentesis + 1, $i - $offsetParentesis - 1);
             }
         }
+
+        $i++;
     }
 
     return substr($codigo, $offsetParentesis + 1);
@@ -175,9 +351,13 @@ function estadosAsignacionesSueltas(string $codigo): array
     /** @var array<int, true> $lineas */
     $lineas = [];
 
-    if (preg_match_all(PATRON_ASIGNACION_DIRECTA, $limpio, $coincidencias, PREG_OFFSET_CAPTURE) > 0) {
-        foreach ($coincidencias[0] as [, $offset]) {
-            $lineas[estadosLineaDe($limpio, $offset)] = true;
+    $directos = [PATRON_ASIGNACION_DIRECTA, PATRON_ASIGNACION_INDICE, PATRON_ASIGNACION_POR_METODO];
+
+    foreach ($directos as $patron) {
+        if (preg_match_all($patron, $limpio, $coincidencias, PREG_OFFSET_CAPTURE) > 0) {
+            foreach ($coincidencias[0] as [, $offset]) {
+                $lineas[estadosLineaDe($limpio, $offset)] = true;
+            }
         }
     }
 
@@ -281,6 +461,36 @@ test('la única excepción es el servicio de máquina de estados del módulo', f
         ->and(estadosEsServicioDeEstados('app/Dominios/Operaciones/Infraestructura/Http/Controllers/Api/MaquinaEstadosController.php'))->toBeFalse();
 });
 
+test('la excepción también rige en el recorrido del árbol, no solo como predicado', function () {
+    // El test de arriba prueba el predicado sobre strings; éste prueba el
+    // camino por el que la exclusión ocurre de verdad — el filtro dentro de
+    // `estadosArchivosVigilados()`. Sin esto, desafinar ese filtro dejaría los
+    // otros tests igual de verdes, que es el mismo modo de fallo silencioso
+    // que los datasets de más abajo existen para cerrar. Se arma un árbol
+    // temporal porque hoy ningún módulo estrenó su máquina de estados.
+    $raiz = sys_get_temp_dir().'/aduana-estados-'.bin2hex(random_bytes(8));
+    $aplicacion = $raiz.'/app/Dominios/Operaciones/Aplicacion';
+
+    mkdir($aplicacion.'/MaquinaEstados', 0o755, true);
+    file_put_contents($aplicacion.'/CerrarSesion.php', "<?php\n");
+    file_put_contents($aplicacion.'/MaquinaEstados/MaquinaEstadosSesion.php', "<?php\n");
+
+    $vigilados = estadosArchivosVigilados($raiz);
+
+    // Se limpia ANTES de comparar: si la expectativa falla, el temporal no
+    // queda colgado igual.
+    unlink($aplicacion.'/MaquinaEstados/MaquinaEstadosSesion.php');
+    unlink($aplicacion.'/CerrarSesion.php');
+
+    for ($directorio = $aplicacion.'/MaquinaEstados'; $directorio !== $raiz; $directorio = dirname($directorio)) {
+        rmdir($directorio);
+    }
+
+    rmdir($raiz);
+
+    expect($vigilados)->toBe(['app/Dominios/Operaciones/Aplicacion/CerrarSesion.php']);
+});
+
 /*
  * Los dos tests que siguen son la aduana probándose a sí misma. Un gate que
  * hoy solo pasa en verde no prueba nada: sin esto, un patrón mal escrito
@@ -298,6 +508,9 @@ test('el detector encuentra cada forma de asignar un estado a mano', function (s
     'propiedad estado_actual' => ["<?php\n\n\$sesion->estado_actual = 'validada';\n", 3],
     'propiedad con sufijo _estado' => ["<?php\n\n\$parte->rc_estado = 'capturado';\n", 3],
     'asignación con ??=' => ["<?php\n\n\$orden->estado ??= EstadoOrdenAplicacion::Emitida;\n", 3],
+    'índice de arreglo, que es el mismo setAttribute' => ["<?php\n\n\$orden['estado'] = EstadoOrdenAplicacion::Consumida;\n", 3],
+    'índice de arreglo con sufijo _estado' => ["<?php\n\n\$parte[\"rc_estado\"] = 'capturado';\n", 3],
+    'setAttribute explícito' => ["<?php\n\n\$orden->setAttribute('estado', EstadoOrdenAplicacion::Consumida);\n", 3],
     'update en una línea' => ["<?php\n\n\$orden->update(['estado' => EstadoOrdenAplicacion::Consumida]);\n", 3],
     'update multilínea' => ["<?php\n\n\$orden->update([\n    'litros_ha' => 12,\n    'estado' => 'consumida',\n]);\n", 5],
     'create estático' => ["<?php\n\nContrato::create(['cliente_id' => 1, 'estado' => 'vigente']);\n", 3],
@@ -305,17 +518,33 @@ test('el detector encuentra cada forma de asignar un estado a mano', function (s
     'forceFill' => ["<?php\n\n\$contrato->forceFill(['estado' => 'cancelado'])->saveQuietly();\n", 3],
     'clave en el segundo arreglo de updateOrCreate' => ["<?php\n\nOrden::updateOrCreate(['uuid_cliente' => \$u], ['estado' => 'vigente']);\n", 3],
     'insert del query builder' => ["<?php\n\nDB::table('ope_ordenes')->insert(['estado' => 'emitida']);\n", 3],
+    'insertGetId del query builder' => ["<?php\n\n\$id = DB::table('ope_ordenes')->insertGetId(['estado' => 'emitida']);\n", 3],
+    'updateOrInsert del query builder' => ["<?php\n\nDB::table('ope_ordenes')->updateOrInsert(['id' => 1], ['estado' => 'vencida']);\n", 3],
+    'firstOrNew, que asigna aunque no persista' => ["<?php\n\nOrden::firstOrNew(['estado' => 'vigente']);\n", 3],
     'línea correcta después de un docblock multilínea' => ["<?php\n\n/**\n * Un docblock\n * de varias líneas.\n */\n\$orden->estado = 'vencida';\n", 7],
+    // Los cuatro que siguen son el detector contra su propio modo de fallo
+    // silencioso: texto que parece sintaxis y descuadraba la cuenta.
+    'paréntesis de cierre dentro de un literal de texto' => ["<?php\n\nOrden::updateOrCreate(\n    ['motivo' => 'ver inciso b) del contrato'],\n    ['estado' => 'vencida'],\n);\n", 5],
+    'paréntesis de cierre dentro de un nowdoc' => ["<?php\n\nOrden::updateOrCreate(\n    ['motivo' => <<<'TXT'\n        ver inciso b) del contrato\n        TXT],\n    ['estado' => 'vencida'],\n);\n", 7],
+    'paréntesis de cierre en un comentario al final de la línea' => ["<?php\n\n\$orden->update([  // ver a) y b)\n    'estado' => 'consumida',\n]);\n", 4],
+    'apertura de comentario dentro de un literal de texto' => ["<?php\n\n\$abre = '/*';\n\$orden->estado = 'vigente';\n\$cierra = '*/';\n", 4],
+    // Y éste fija el precio elegido en el encabezado: la cita del antipatrón
+    // vale como comentario cuando ABRE la línea; pegada al final de una línea
+    // de código se reporta, porque en Blade un `//` a mitad de línea es texto
+    // y blanquear desde ahí escondería el código que venga después.
+    'cita del antipatrón pegada al final de una línea de código' => ["<?php\n\n\$total = 5; // ojo: nunca \$orden->estado = 'vigente';\n", 3],
 ]);
 
 test('el detector no confunde con una asignación lo que solo lee o declara un estado', function (string $codigo) {
     expect(estadosAsignacionesSueltas($codigo))->toBe([]);
 })->with([
     'lectura en un Resource' => "<?php\n\nreturn ['estado' => \$this->estado->value];\n",
+    'lectura por índice' => "<?php\n\nreturn \$fila['estado'];\n",
     'declaración de fillable' => "<?php\n\nprotected \$fillable = ['estado'];\n",
     'declaración de casts' => "<?php\n\nreturn ['estado' => EstadoContrato::class];\n",
     'filtro de consulta' => "<?php\n\n\$consulta->where('estado', \$estado);\n",
     'comparación' => "<?php\n\nif (\$orden->estado === EstadoOrdenAplicacion::Vigente) {\n}\n",
+    'comparación por índice' => "<?php\n\nif (\$fila['estado'] === 'vigente') {\n}\n",
     'escritura masiva sin clave de estado' => "<?php\n\n\$token->forceFill(['last_used_at' => now()])->saveQuietly();\n",
     'propiedad que solo empieza igual' => "<?php\n\n\$this->estadoDelArte = 'moderno';\n",
     'declaración de un método llamado create' => "<?php\n\npublic function create(array \$datos): void\n{\n}\n",
