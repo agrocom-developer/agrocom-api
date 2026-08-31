@@ -39,6 +39,22 @@ INTENTOS_ARREGLO=2   # vueltas de corrección tras un veredicto RECHAZADO o un C
 ESPERA_CI=2700       # 45 min: tope para que CI termine y el auto-merge integre
 SONDEO_CI=30
 
+# --- Modelo por fase --------------------------------------------------
+# Mismo criterio que .claude/agents/README.md, aplicado a las sesiones del
+# ciclo: el trabajo que decide algo —implementar, verificar, corregir
+# hallazgos, elegir la próxima tarea— va en el modelo mediano; el repetitivo
+# —leer un log de CI en rojo, reproducirlo con bin/verify y arreglar lo que
+# rompió— va en el más chico. Sin esto todas las sesiones salían en el modelo
+# por defecto de la cuenta, que es el más caro, y una noche entera de vueltas
+# se paga completa a ese precio.
+#
+# Fable no se usa en ninguna fase: decisión del usuario.
+#
+# Un prompt puede pedir otro modelo con `modelo=` en su metadato — para una
+# tarea crítica que convenga correr con más criterio, por ejemplo.
+MODELO_PESADO=${AGROCOM_MODELO_PESADO:-sonnet}
+MODELO_LIVIANO=${AGROCOM_MODELO_LIVIANO:-haiku}
+
 # --- Salida ----------------------------------------------------------
 # Con --fondo, nohup ya redirige stdout a la bitácora: duplicar con tee dejaría
 # cada línea escrita dos veces.
@@ -94,8 +110,10 @@ necesita_humano() {
 # correría sin los guardarraíles de .claude/ — la única barrera que queda de pie
 # cuando no hay nadie mirando.
 sesion() {
-    local texto="$1" salida="$2" herramientas="${3:-Read Edit Write Glob Grep Bash}" noche="${4:-0}"
+    local texto="$1" salida="$2" herramientas="${3:-Read Edit Write Glob Grep Bash}" noche="${4:-0}" modelo="${5:-$MODELO_PESADO}"
+    log "  modelo: $modelo"
     AGROCOM_TURNO_NOCHE="$noche" claude -p "$texto" \
+        --model "$modelo" \
         --permission-mode dontAsk \
         --allowedTools "$herramientas" \
         --output-format json > "$salida" 2>&1
@@ -120,7 +138,9 @@ fase_implementar() {
     archivo=$(prompt_de "$id") || true
     [ -z "$archivo" ] && { malo "No existe prompt para la tarea $id"; return 1; }
 
-    local noche; noche=$(meta "$archivo" "turno-noche" "1")
+    local noche modelo
+    noche=$(meta "$archivo" "turno-noche" "1")
+    modelo=$(meta "$archivo" "modelo" "$MODELO_PESADO")
 
     for intento in $(seq 1 "$INTENTOS_IMPL"); do
         marcar "$id implementar intento $intento/$INTENTOS_IMPL"
@@ -147,7 +167,7 @@ decisión que no te corresponde, escribí BLOQUEADA con la pregunta concreta —
 eso es una respuesta válida y termina la tarea."
         fi
 
-        sesion "$texto" "runs/$id.log" "Read Edit Write Glob Grep Bash" "$noche"
+        sesion "$texto" "runs/$id.log" "Read Edit Write Glob Grep Bash" "$noche" "$modelo"
         estado=$(leer_estado "$id")
         log "sesión terminada · estado declarado: $estado"
 
@@ -166,18 +186,29 @@ eso es una respuesta válida y termina la tarea."
 
 # --- Fase 2: verificar ------------------------------------------------
 # Sesión separada, y a propósito: quien implementó ya se convenció de que está
-# bien. La verificación corre con los tests congelados (turno noche), así que
-# no puede "arreglar" el criterio que la evalúa.
+# bien. La verificación corre siempre con los tests congelados —no edita código,
+# solo escribe su veredicto en runs/, que no está congelado— así que no puede
+# "arreglar" el criterio que la evalúa.
+#
+# La sesión de CORRECCIÓN, en cambio, hereda el turno-noche del prompt de la
+# tarea. Congelarla siempre parecía la opción segura y no lo era: una tarea cuyo
+# entregable ES un test —una aduana, un gate— quedaba sin poder corregir su
+# propio archivo, y la vuelta se agotaba sola. Pasó en la tarea 04. La garantía
+# que importa no se pierde: quien juzga sigue siendo el verificador, que no
+# puede tocar nada.
 fase_verificar() {
-    local id="$1" intento veredicto texto
+    local id="$1" intento veredicto texto archivo noche
     local plantilla=prompts/plantillas/verificar.md
     [ -f "$plantilla" ] || { malo "Falta $plantilla"; return 1; }
+
+    archivo=$(prompt_de "$id")
+    noche=$(meta "$archivo" "turno-noche" "1")
 
     for intento in $(seq 0 "$INTENTOS_ARREGLO"); do
         marcar "$id verificar (vuelta $intento)"
         rm -f "runs/$id.veredicto"
         texto=$(sed "s/{{ID}}/$id/g" "$plantilla")
-        sesion "$texto" "runs/$id-verificar.log" "Read Glob Grep Bash Write" 1
+        sesion "$texto" "runs/$id-verificar.log" "Read Glob Grep Bash Write" 1 "$MODELO_PESADO"
 
         veredicto=$(tr -d '[:space:]' < "runs/$id.veredicto" 2>/dev/null || echo "SIN-VEREDICTO")
         log "veredicto: $veredicto"
@@ -204,7 +235,7 @@ español, imperativo, explicando el porqué. Corré ./bin/verify y no cierres
 hasta que devuelva 0.
 
 Escribí runs/$id.md agregando qué corregiste." \
-            "runs/$id-corregir-$intento.log" "Read Edit Write Glob Grep Bash" 1
+            "runs/$id-corregir-$intento.log" "Read Edit Write Glob Grep Bash" "$noche" "$MODELO_PESADO"
     done
 
     malo "Tarea $id sigue RECHAZADA tras $INTENTOS_ARREGLO correcciones"
@@ -286,7 +317,9 @@ esperar_ci() {
 }
 
 fase_ci() {
-    local id="$1" numero intento
+    local id="$1" numero intento archivo noche
+    archivo=$(prompt_de "$id")
+    noche=$(meta "$archivo" "turno-noche" "1")
     numero=$(cat "runs/$id.pr" 2>/dev/null || echo "")
     [ -z "$numero" ] && { malo "Tarea $id sin PR registrado"; return 1; }
 
@@ -319,7 +352,7 @@ pusheá a la misma rama: el auto-merge reintenta solo cuando CI queda verde.
 
 No toques los tests para que pasen. Si el test tiene razón y el código está
 mal, el que se corrige es el código." \
-            "runs/$id-ci-$intento.log" "Read Edit Write Glob Grep Bash" 1
+            "runs/$id-ci-$intento.log" "Read Edit Write Glob Grep Bash" "$noche" "$MODELO_LIVIANO"
     done
 
     malo "Tarea $id: CI sigue en rojo tras $INTENTOS_ARREGLO intentos"
@@ -336,7 +369,7 @@ fase_planificar() {
     preparar_base || return 1
 
     texto=$(sed "s/{{ID}}/$id/g" "$plantilla")
-    sesion "$texto" "runs/$id-planificar.log" "Read Glob Grep Bash Write" 0
+    sesion "$texto" "runs/$id-planificar.log" "Read Glob Grep Bash Write" 0 "$MODELO_PESADO"
 
     local ultima; ultima=$(tail -1 "$COLA" 2>/dev/null || echo "")
     log "cola: $(tr '\n' ' ' < "$COLA" 2>/dev/null)"
