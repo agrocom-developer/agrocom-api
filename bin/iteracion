@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+#
+# Runner de una iteración: una sesión de Claude Code POR TAREA.
+#
+# Cada `claude -p` arranca con contexto limpio — no es la misma conversación
+# que se va llenando, son sesiones independientes. Eso es lo que baja el costo
+# por turno y lo que evita que la tarea 3 arrastre el ruido de la 1.
+#
+# El estado NO vive en la conversación: vive en git (ramas, commits, PRs) y en
+# runs/*.estado. Por eso una tarea puede leer lo que dejó la anterior sin que
+# nadie le "recuerde" nada.
+#
+#   bin/iteracion           # corre las tres tareas en orden
+#   bin/iteracion 02        # corre solo una
+#
+# Deliberadamente NO usa --bare: ese modo exige ANTHROPIC_API_KEY (no lee el
+# login de suscripción) y saltea los hooks — es decir, correría sin los
+# guardarraíles de .claude/. Acá los queremos puestos.
+#
+set -uo pipefail
+cd "$(dirname "$0")/.." || exit 1
+mkdir -p runs
+
+# dontAsk es obligatorio en no interactivo: no hay nadie para responder un
+# prompt de permiso a las 3 AM. Lo que evita el desastre no es la pregunta,
+# es la lista negra de .claude/hooks/, que deniega por encima de este modo.
+COMUNES=(
+    --permission-mode dontAsk
+    --allowedTools "Read Edit Write Glob Grep Bash"
+    --output-format json
+)
+
+correr() {
+    local id="$1"
+    local archivo
+    archivo=$(ls prompts/"$id"-*.md 2>/dev/null | head -1)
+
+    if [ -z "$archivo" ]; then
+        printf '\033[31m✗ No existe prompt para la tarea %s\033[0m\n' "$id"
+        return 1
+    fi
+
+    printf '\n\033[1m━━━ Tarea %s — sesión nueva ━━━\033[0m\n%s\n' "$id" "$archivo"
+    rm -f "runs/$id.estado"
+
+    claude -p "$(cat "$archivo")" "${COMUNES[@]}" > "runs/$id.json" 2>&1
+    local salida=$?
+
+    local estado="SIN-ESTADO"
+    [ -f "runs/$id.estado" ] && estado=$(tr -d '[:space:]' < "runs/$id.estado")
+
+    printf '  exit %s · estado declarado: \033[1m%s\033[0m\n' "$salida" "$estado"
+    [ -f "runs/$id.md" ] && printf '  reporte: runs/%s.md\n' "$id"
+
+    echo "$estado"
+}
+
+if [ $# -gt 0 ]; then
+    correr "$1" > /dev/null
+    exit $?
+fi
+
+correr 01 > /dev/null
+
+# La tarea 03 solo corre si la 02 declaró HU-02 cerrada. La condición se lee
+# de un archivo, no de lo que la sesión anterior "dijo" — un archivo se puede
+# verificar después; una afirmación en una conversación, no.
+estado02=$(correr 02 | tail -1)
+
+if [ "$estado02" = "CERRADA" ]; then
+    correr 03 > /dev/null
+else
+    printf '\n\033[33m⊘ Tarea 03 omitida: HU-02 quedó en "%s", no CERRADA.\033[0m\n' "$estado02"
+    echo "OMITIDA" > runs/03.estado
+fi
+
+printf '\n\033[1mResumen\033[0m\n'
+for id in 01 02 03; do
+    e="—"; [ -f "runs/$id.estado" ] && e=$(tr -d '[:space:]' < "runs/$id.estado")
+    printf '  %s: %s\n' "$id" "$e"
+done
