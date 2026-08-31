@@ -110,6 +110,24 @@ Tres cosas que hacen que el bucle no sea un lazo suelto:
   de una tarea. Con `--fondo` corre bajo `nohup`: cerrar la terminal ya no lo
   mata.
 
+**Un modelo por fase.** El trabajo que decide algo —implementar, verificar,
+corregir hallazgos, elegir la próxima tarea— corre en el modelo mediano; el
+repetitivo —leer un log de CI en rojo, reproducirlo con `bin/verify`, arreglar
+lo que rompió— en el más chico. Es el mismo criterio que
+`.claude/agents/README.md` aplica a los subagentes. Sin esto, todas las
+sesiones salían con el modelo por defecto de la cuenta y una noche entera de
+vueltas se pagaba completa a ese precio. Se ajusta por tarea con `modelo=` en
+el metadato del prompt, o por entorno con `AGROCOM_MODELO_PESADO` y
+`AGROCOM_MODELO_LIVIANO`. Fable no se usa en ninguna fase.
+
+**Qué se congela y qué no.** La sesión de verificación corre siempre con
+`AGROCOM_TURNO_NOCHE=1`: no edita código, solo escribe su veredicto en `runs/`,
+que no está congelado. La de corrección hereda el `turno-noche` del prompt de
+la tarea — congelarla siempre parecía la opción segura y no lo era: una tarea
+cuyo entregable **es** un test (una aduana, un gate) quedaba sin poder corregir
+su propio archivo. Pasó en la tarea 04. La garantía que importa no se pierde,
+porque quien juzga sigue siendo el verificador, que no puede tocar nada.
+
 El backlog que consume está en [cola_tareas.md](cola_tareas.md): solo entra ahí
 lo que tiene criterio de aceptación ejecutable, que es la regla que ordena todo
 este documento.

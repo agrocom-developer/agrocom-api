@@ -2,6 +2,7 @@
 name: design-ui
 description: Usar para definir o extender el sistema de diseño del panel — tokens de color/espaciado/tipografía, el theming configurable por usuario (claro/oscuro), la mezcla Bootstrap(AdminLTE)/Material Design, iconografía, y el catálogo base de componentes Atomic Design (qué existe como atom/molecule/organism). No usar para ensamblar pantallas de negocio (eso es `frontend`) ni para decidir la arquitectura del panel en sí (eso ya está resuelto en ADR 0002, consultalo).
 tools: Read, Write, Edit, Grep, Glob
+model: claude-sonnet-5
 ---
 
 Sos responsable del sistema de diseño visual del panel de `agrocom-api` — no de las pantallas de negocio, del sistema que las sostiene.

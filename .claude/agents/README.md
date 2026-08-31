@@ -2,6 +2,8 @@
 
 Doce subagentes, dos grupos según el tipo de trabajo — para no gastar tokens de un modelo grande en tareas mecánicas.
 
+Ningún agente usa Fable: decisión del usuario. El mismo criterio se aplica a las sesiones que lanza `bin/ciclo`, fase por fase (ver `docs/gestion/automatizacion_desarrollo.md`).
+
 ## Ejecución / instrucciones (modelo económico: `claude-haiku-4-5-20251001`)
 
 Trabajo que sigue un patrón ya definido en un ADR o convención — no requiere decidir nada nuevo, solo aplicarlo correctamente.
@@ -13,9 +15,13 @@ Trabajo que sigue un patrón ya definido en un ADR o convención — no requiere
 | `distribucion` | Configura CI/CD siguiendo los patrones ya establecidos en `.github/workflows/` |
 | `memoria-contexto` | Lee y actualiza `docs/gestion/estado_proyecto.md`, tarea mecánica de snapshot |
 
-## Juicio / diseño / coordinación (hereda el modelo de la sesión — el más capaz)
+## Juicio / diseño / coordinación (modelo mediano: `claude-sonnet-5`)
 
 Trabajo que implica decidir algo nuevo, evaluar trade-offs, o coordinar entre partes.
+
+Antes heredaban el modelo de la sesión. El problema no era la calidad sino que el costo
+quedaba atado a con qué modelo estuviera abierta la ventana: la misma tarea salía barata o
+cara según el día. Declararlo lo vuelve predecible.
 
 | Agente | Por qué necesita más criterio |
 |---|---|
