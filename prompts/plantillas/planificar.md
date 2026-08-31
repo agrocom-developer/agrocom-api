@@ -59,7 +59,11 @@ línea, exactamente este formato:
 - `turno-noche=0` **solo** si la tarea consiste en escribir tests, ADRs o
   configuración de `.claude/`: con `1` esos archivos están congelados, que es
   lo que impide que un agente edite el criterio que lo evalúa. Si la tarea es
-  implementar código, va en `1` siempre.
+  implementar código, va en `1` siempre. El valor lo hereda también la sesión
+  de corrección, así que una tarea cuyo entregable es un test necesita `0` para
+  poder corregirlo.
+- `modelo=` solo si la tarea justifica salirse del modelo por fase que ya usa
+  el ciclo. No lo pongas por costumbre.
 
 El cuerpo, con estas secciones y sin relleno — mirá `prompts/03-implementar-hu03.md`
 como referencia de tono y densidad:
