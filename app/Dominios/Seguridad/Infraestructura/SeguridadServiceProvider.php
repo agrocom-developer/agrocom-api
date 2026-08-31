@@ -2,6 +2,8 @@
 
 namespace App\Dominios\Seguridad\Infraestructura;
 
+use App\Dominios\Seguridad\Infraestructura\Http\Presentacion\PermisoVista;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -21,11 +23,20 @@ use Illuminate\Support\ServiceProvider;
  * (`seguridad::pages.dashboard`, etc.) en vez de agregar la ruta a secas
  * (`View::addLocation`) evita colisiones de nombre con vistas de otro módulo
  * que en el futuro adopte el mismo patrón.
+ *
+ * También registra la directiva `@puede('codigo.del.permiso')`, con la que
+ * cualquier vista oculta un control sin permiso — ver {@see PermisoVista}
+ * para por qué la decisión vive en una sola clase y por qué es fail-closed.
  */
 final class SeguridadServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
         View::addNamespace('seguridad', app_path('Dominios/Seguridad/Infraestructura/Http/Views'));
+
+        // Genera @puede / @elsepuede / @endpuede. Evalúa SIEMPRE contra el rol
+        // activo de la sesión, nunca contra la unión de roles del usuario
+        // (CLAUDE.md invariante 10).
+        Blade::if('puede', fn (string $codigo): bool => PermisoVista::puede($codigo));
     }
 }
