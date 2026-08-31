@@ -55,6 +55,12 @@ Consecuencias prácticas:
 - El gate real es `ci.yml` → `laravel-tests` (Pint + Larastan + Pest sobre PHP 8.3
   con Postgres 16). Lo mismo que corre `bin/verify` localmente — por eso conviene
   que la cascada esté en verde **antes** de pushear, no después.
+- **Un PR en draft NO se integra.** El job `merge-when-green` se saltea los
+  borradores (`if: github.event.pull_request.draft == false`); al marcarlo
+  "Ready for review" salta el evento `ready_for_review` y ahí sí corre. Un draft
+  es, por definición, trabajo que espera un gesto humano — así que **una tarea
+  automatizada abre PR normal, no draft**, o el turno se detiene esperando a
+  alguien.
 - El gesto manual de aprobación (comentario `/merge`) fue evaluado y descartado
   por el usuario: el gate de CI en verde ya cumple lo que necesita.
 - No hay branch protection formal en GitHub (requiere permisos de admin que la
