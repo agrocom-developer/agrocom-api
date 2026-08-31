@@ -26,7 +26,7 @@ final class ListarDispositivosRegistrados
     {
         return SecTokenDispositivo::query()
             ->when($incluirRevocados, fn ($consulta) => $consulta->withTrashed())
-            ->with('rol')
+            ->with(['rol', 'tokenable'])
             ->orderByDesc('last_used_at')
             ->orderByDesc('id')
             ->get();

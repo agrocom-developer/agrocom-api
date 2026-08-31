@@ -23,6 +23,7 @@ final class ListarDispositivosDeUsuario
     public function ejecutar(SecUser $usuario): Collection
     {
         return $usuario->tokens()
+            ->with('rol')
             ->orderByDesc('last_used_at')
             ->orderByDesc('id')
             ->get();

@@ -116,7 +116,9 @@ class SecTokenDispositivo extends ModeloDominio implements HasAbilities
      * que emite Sanctum. Misma implementación que
      * `PersonalAccessToken::findToken()`, con dos diferencias que importan:
      * hereda el global scope de `SoftDeletes` (un token revocado no se
-     * encuentra) y compara con `hash_equals` incluso en la rama sin `|`.
+     * encuentra) y devuelve `static`, no `PersonalAccessToken`. La rama sin
+     * `|` busca por hash directo, igual que Sanctum: ahí no hay secreto que
+     * comparar en tiempo constante, el hash ES la clave de búsqueda.
      */
     public static function findToken(string $token): ?static
     {
