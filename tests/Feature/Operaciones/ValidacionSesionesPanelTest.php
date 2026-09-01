@@ -146,7 +146,7 @@ it('exige sesión de panel para llegar a la pantalla', function () {
 
 it('un jefe que no es el piloto valida la sesión — pasa a validado', function () {
     $trabajo = trabajoParaValidacionPanel();
-    $piloto = PerPersona::create(['nombre' => 'Piloto ajeno', 'rol' => RolOperativoPersona::Piloto, 'activo' => true]);
+    $piloto = PerPersona::create(['nombre' => 'Piloto ajeno', 'rol' => RolOperativoPersona::Piloto, 'tarifa_ha' => '150.00', 'activo' => true]);
     $sesion = sesionParaValidacionPanel($trabajo, $piloto, EstadoSesion::Cerrado);
 
     $jefePersona = PerPersona::create(['nombre' => 'Jefe persona', 'rol' => RolOperativoPersona::JefeCampo, 'activo' => true]);

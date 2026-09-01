@@ -66,7 +66,7 @@ function trabajoAbiertoParaValidarSesion(): Trabajo
 function sesionCerradaParaValidarSesion(): array
 {
     $trabajo = trabajoAbiertoParaValidarSesion();
-    $piloto = PerPersona::create(['nombre' => 'Piloto a validar', 'rol' => RolOperativoPersona::Piloto, 'activo' => true]);
+    $piloto = PerPersona::create(['nombre' => 'Piloto a validar', 'rol' => RolOperativoPersona::Piloto, 'tarifa_ha' => '150.00', 'activo' => true]);
 
     $sesion = Sesion::create([
         'uuid_cliente' => 'uuid-sesion-valses-'.uniqid(),

@@ -4,6 +4,7 @@ namespace App\Dominios\Operaciones\Infraestructura;
 
 use App\Dominios\Operaciones\Contratos\EscrituraSincronizacion;
 use App\Dominios\Operaciones\Contratos\LecturaOrdenesVigentes;
+use App\Dominios\Operaciones\Contratos\LecturaSesionValidada;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -23,6 +24,7 @@ final class OperacionesServiceProvider extends ServiceProvider
     {
         $this->app->bind(LecturaOrdenesVigentes::class, LecturaOrdenesVigentesEloquent::class);
         $this->app->bind(EscrituraSincronizacion::class, EscrituraSincronizacionEloquent::class);
+        $this->app->bind(LecturaSesionValidada::class, LecturaSesionValidadaEloquent::class);
     }
 
     public function boot(): void

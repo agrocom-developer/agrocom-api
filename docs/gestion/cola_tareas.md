@@ -48,9 +48,12 @@ exista el módulo `Mezclas`).
 | 10 | HU-20 — `GET /api/version` y autorización de versiones del APK, sin hospedar el binario (vive en `agrocom-field`, ver regla de exclusión abajo) | `./bin/verify` = 0 | módulo nuevo `Distribucion` (`dis_`), `sec_action`/seed de permisos, rutas de API, pantalla del panel, tests | no | 3 | **hecha** (tarea 11 corrigió el alcance: la columna pasó de `ruta_apk`/disco `r2` a `url_apk`, la URL del release en `agrocom-field`; PR #47, mergeado 1/9/2026) |
 | 11 | Corrección de alcance de la 10: el binario del APK no se hospeda en este repo | `./bin/verify` = 0 | `Distribucion`, migración, pantalla del panel | no | 2 | **hecha** (PR #47) |
 | 12 | Los dos hallazgos de la revisión del motor de sync: `hectareas_declaradas` sin validar y `POST /api/sync` sin scoping por el operario del token | `./bin/verify` = 0, con un test de `hectareas_declaradas` no numérica y otro de `lote_id`/`piloto_id` ajenos al token | `Operaciones/Contratos/**`, `EscrituraSincronizacionEloquent`, `Sincronizacion/Aplicacion/**`, tests | **sí** | 2 | **hecha** (PR #49, mergeado 1/9/2026) |
-| 13 | HU-05 — cierre real de trabajo y sesión (`abierto → cerrado`), motor de sync extendido, visible en una pantalla mínima del panel | `./bin/verify` = 0, con test de cierre idempotente y de rechazo de transición inválida | `Operaciones/**`, `Sincronizacion/Aplicacion/**`, migraciones, `Seguridad/**` (pantalla panel), tests | **sí** | 4 | **siguiente** |
-| 14 | HU-14 — cola de validación de sesiones: transición `cerrado → validado` con evento `SesionValidada`, policy validador≠piloto, mecanismo de corrección para el rechazo (primera implementación de la invariante 2) | `./bin/verify` = 0, con test de policy y de que el rechazo nunca hace `UPDATE` sobre la fila original | `Operaciones/**`, migraciones, `Seguridad/**`, tests | **sí** | 4 | encolada |
-| 15 | HU-15 — tablero de trabajos por estado con filtros y detalle con sesiones (y evidencias, hoy vacío) | `./bin/verify` = 0, con test de filtro por estado y de detalle | `Operaciones/**` (pantalla panel), tests | no | 3 | encolada |
+| 13 | HU-05 — cierre real de trabajo y sesión (`abierto → cerrado`), motor de sync extendido, visible en una pantalla mínima del panel | `./bin/verify` = 0, con test de cierre idempotente y de rechazo de transición inválida | `Operaciones/**`, `Sincronizacion/Aplicacion/**`, migraciones, `Seguridad/**` (pantalla panel), tests | **sí** | 4 | **hecha** (PR #50, mergeado 1/9/2026) |
+| 14 | HU-14 — cola de validación de sesiones: transición `cerrado → validado` con evento `SesionValidada`, policy validador≠piloto, mecanismo de corrección para el rechazo (primera implementación de la invariante 2) | `./bin/verify` = 0, con test de policy y de que el rechazo nunca hace `UPDATE` sobre la fila original | `Operaciones/**`, migraciones, `Seguridad/**`, tests | **sí** | 4 | **hecha** (PR #51, mergeado 1/9/2026) |
+| 15 | HU-15 — tablero de trabajos por estado con filtros y detalle con sesiones (y evidencias, hoy vacío) | `./bin/verify` = 0, con test de filtro por estado y de detalle | `Operaciones/**` (pantalla panel), tests | no | 3 | **hecha** (PR #52, mergeado 1/9/2026) |
+| 16 | HU-16 — devengo automático del piloto y su auxiliar al validar una sesión (`SesionValidada` → listener real, módulo `Finanzas` nuevo) | `./bin/verify` = 0, con test de idempotencia (`UNIQUE sesion_id+persona_id`), de exactitud decimal y de que `cerrar()` nunca genera devengo | módulo nuevo `Finanzas` (`fin_`), `ALTER per_personas` (`tarifa_ha`), `Personal/Contratos/**`, `Operaciones/Contratos/**`, tests | **sí** | 4 | encolada |
+| 17 | HU-06 — condiciones al iniciar sesión (viento/temperatura/humedad), autoriza / autoriza con observación / rechaza, vía el motor de sync | `./bin/verify` = 0, con test de cada rango y de rechazo sin observación | `Operaciones/**`, `Sincronizacion/Aplicacion/**`, migración `ope_condiciones`, tests | **sí** | 4 | encolada |
+| 18 | HU-10 (redefinida por CR-01) — recepción de caldo: litros recibidos por trabajo, consumidos por sesión, sobrante al cierre, cuadre recalculable | `./bin/verify` = 0, con test de cuadre (recibido = consumido + sobrante) e idempotencia | `Operaciones/**` o módulo nuevo `Mezclas` (decisión de la propia tarea), `Sincronizacion/Aplicacion/**`, tests | **sí** | 4 | encolada |
 
 ### Fuera del ciclo automático
 
@@ -91,9 +94,12 @@ lo corrigió.
 PR #46 se integró a `develop`: `ope_trabajos`/`ope_sesiones` existen y HU-04 a
 HU-19 vuelven a calificar todas. Y CR-01 se cerró: HU-10 y HU-13 quedan
 redefinidas sobre volumen de caldo, HU-11 y HU-12 desaparecen. El orden
-sugerido de acá en adelante: **12** (hallazgos del sync) → **HU-05** (esqueleto
-vertical del lado servidor) → **HU-14** y **HU-15** (las dos pantallas de panel
-que faltan) → **HU-16** (devengo al validar, crítica) → **HU-06** → **HU-10**.
+seguido desde entonces: **12** (hallazgos del sync) → **HU-05** (esqueleto
+vertical del lado servidor, tarea 13) → **HU-14** y **HU-15** (las dos
+pantallas de panel, tareas 14/15) — las cinco ya cerradas. Sigue: **HU-16**
+(devengo al validar, crítica, tarea 16) → **HU-06** (condiciones de vuelo,
+crítica, tarea 17) → **HU-10** (recepción de caldo redefinida, crítica, tarea
+18).
 
 La regla que decide es la del punto 1 de
 [automatizacion_desarrollo.md](automatizacion_desarrollo.md): una tarea avanza
@@ -110,11 +116,14 @@ Las invariantes 2 (nunca se sobrescribe un registro validado) y 3 (el devengo
 se genera solo al validar) vigilan tablas que aún no existen: `sesion`,
 `devengo`, la máquina de estados operativos. Su gate se escribe **en la misma
 tarea que cree ese dominio**, no antes: un test de aduana sobre un dominio
-inexistente pasa siempre y da una sensación de cobertura que no existe. Quedan
-anotadas acá para que la sesión de planificación las enganche cuando el Sprint
-2 traiga las tablas — que ya trajo TE-05 (`sesion`/`trabajo` existen desde el
-PR #46), pero sin el concepto de "validado" todavía no hay nada que guardar:
-el gate real sigue esperando a HU-14/HU-16.
+inexistente pasa siempre y da una sensación de cobertura que no existe.
+
+La invariante 2 ya tiene su gate: la tarea 14 lo escribió junto con el
+mecanismo de corrección del rechazo (`RechazoSesionTest.php`, compara
+columna por columna que solo `anulada_en` cambia). La invariante 3 sigue
+esperando — su gate (que `cerrar()` nunca genere un devengo) se escribe en
+la tarea 16, junto con el dominio de `Finanzas` que hace que haya algo que
+guardar.
 
 ## Por qué ese orden
 
@@ -168,7 +177,18 @@ mergee (revisión humana) o CR-01 se resuelva, la próxima planificación vuelve
 al orden normal del plan — no hace falta reordenar nada a mano, las filas
 bloqueadas se reevalúan solas en la próxima vuelta.
 
-**Detenida el 1/9/2026 tras la tarea 11.** HU-20 (10/11) era la última fila
-que no dependía de ninguno de los dos bloqueos. Con ella cerrada, cada HU/TE
-pendiente de los seis sprints depende del PR #46, de CR-01, de otro repo, o de
-campo/producción — ninguna califica. Ver `runs/DETENER` y `runs/11-plan.md`.
+**Detenida el 1/9/2026 tras la tarea 11, y retomada el mismo día.** HU-20
+(10/11) era la última fila que no dependía de ninguno de los dos bloqueos —
+ver `runs/DETENER` y `runs/11-plan.md`. El PR #46 se mergeó horas después
+(tarea 09) y CR-01 se cerró el mismo día: los seis sprints volvieron a
+calificar, y el ciclo retomó con la 12.
+
+**16 → 17 → 18 siguen el orden literal de "acá en adelante" fijado arriba.**
+Las tres son críticas y las tres tocan el motor de sync o el servicio de
+estados (Finanzas necesita el evento `SesionValidada` que ya dispara la
+máquina de estados de sesión; condiciones y caldo se suman como tipos nuevos
+al mismo `SincronizarLote` que extendieron las tareas 09/12/13). Ninguna
+depende de la otra dos — se podrían reordenar sin romper nada — pero HU-16
+va primero porque cierra la invariante 3 (la única de las once sin gate
+todavía) y su tabla de devengos no depende de ningún dato que HU-06/HU-10
+todavía no produzcan.
