@@ -6,7 +6,7 @@ Ver el porqué en `docs/decisiones/0006-gitflow-simplificado.md`. Esta es la ver
 
 - **`master`**: rama estable. Cada merge dispara el deploy continuo (staging → producción).
 - **`develop`**: rama de integración. Toda `feature/*` se mergea acá primero, por PR.
-- **`feature/<nombre-corto>`**: una por historia de usuario o tarea técnica del plan de sprints (`docs/gestion/plan_sprints.md`). Nace de `develop`, muere mergeada a `develop`.
+- **`feature/<nombre-corto>`**: una por historia de usuario o tarea técnica del plan de sprints (`docs/gestion/plan_sprints.md`). Nace de `develop`, muere mergeada a `develop`. El nombre son 2–3 palabras de **la función del proyecto** que construye (`feature/sync-idempotente`, `feature/ordenes-offline`), nunca de la actividad ni del número de tarea.
 - **`fix/<nombre-corto>`**: corrección puntual. Nace de `master`, se mergea a `master` y se reincorpora a `develop`.
 
 No hay `release/*` ni `hotfix/*` — un solo desarrollador no necesita esa ceremonia.
@@ -41,6 +41,22 @@ excluido a propósito (el job se saltea los borradores) — es la forma de decir
 
 `develop` se mergea a `master` cuando un conjunto de features está listo para desplegarse — no automáticamente en cada PR a develop.
 
+## Un PR = una HU
+
+La unidad de entrega es la historia de usuario o la tarea técnica completa, con
+todos sus criterios de aceptación cubiertos — no el commit, y no el pedazo que
+entró en una sesión de trabajo. Mientras se avance sobre el mismo objetivo se
+suman commits a la misma rama y al mismo PR. Un PR nuevo se abre cuando cambia
+el objetivo.
+
+Vale abrir el PR a mitad de camino si sirve para ver el avance, siempre que sea
+**en borrador**: el auto-merge se saltea los borradores, así que no se integra
+hasta marcarlo *Ready for review*.
+
 ## Commits
 
 En español, imperativo: `agrega validación de solape en sesiones`, `corrige cálculo de hectárea acumulada en relevo`.
+
+**Sin trailer `Co-Authored-By`.** Decisión explícita del usuario; desde el
+1/9/2026 está aplicada mecánicamente con `includeCoAuthoredBy: false` en
+`.claude/settings.json`, para que no dependa de que cada sesión se acuerde.

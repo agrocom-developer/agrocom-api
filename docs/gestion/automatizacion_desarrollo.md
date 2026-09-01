@@ -1,6 +1,6 @@
 # Automatización del desarrollo
 
-**Última actualización: 31/8/2026.** Este documento describe qué parte del ciclo de
+**Última actualización: 1/9/2026.** Este documento describe qué parte del ciclo de
 desarrollo ya no depende de que una persona esté mirando la pantalla, y qué falta
 para que deje de depender del todo. No es una decisión de arquitectura (esas van a
 `docs/decisiones/`): es el estado operativo de la automatización.
@@ -91,11 +91,36 @@ Cinco fases por tarea, cada una en su **propia sesión** con contexto limpio:
 
 | Fase | Qué hace | Dónde queda el resultado |
 |---|---|---|
-| implementar | Ejecuta `prompts/NN-*.md`, commitea agrupado por función y corre la cascada | `runs/NN.estado`, `runs/NN.md` |
+| implementar | Encadena hasta `etapas=` sesiones sobre la misma rama hasta cerrar la HU; cada una commitea agrupado por función y corre la cascada | `runs/NN.estado`, `runs/NN.md` |
 | verificar | Sesión independiente, con los tests congelados, que decide si se puede integrar | `runs/NN.veredicto` |
 | PR | Abre el PR con el título y cuerpo que dejó la tarea | `runs/NN.pr` |
 | esperar CI | Sondea hasta que `auto-merge` integra, o corrige si queda en rojo | bitácora |
 | planificar | Elige la próxima tarea del backlog y escribe su prompt | `prompts/NN+1-*.md`, `runs/cola.txt` |
+
+**Una tarea = una HU o TE completa = un PR.** La primera versión del ciclo hacía
+una sesión = una tarea = un PR, y como una HU del plan de sprints no entra en
+una sesión, el planificador la partía hasta que cupiera. El resultado fue un
+historial de PRs de un commit, donde ningún PR se correspondía con nada del
+plan. Ahora el tamaño de la sesión no manda: la fase de implementación encadena
+sesiones sobre la **misma rama**, cada una retomando lo que dejó la anterior.
+La sesión declara `PARCIAL` mientras la historia siga abierta y `OK` recién
+cuando está entera con todos sus criterios de aceptación cubiertos — y el PR se
+abre al `OK`, con todos los commits adentro.
+
+Tres piezas más que hacen que eso funcione sin supervisión:
+
+- **La rama la crea el ciclo, no la sesión**, desde el metadato `rama=` del
+  prompt (`feature/` + 2–3 palabras de la función del proyecto). Cuando la
+  elegía la sesión, cada reintento inventaba una distinta y el trabajo de la
+  vuelta anterior quedaba colgando donde nadie volvía a mirarlo.
+- **El prompt de la tarea siguiente viaja en la rama de esa misma tarea.** La
+  planificación lo deja escrito y sin commitear; lo commitea la vuelta siguiente
+  como primer commit de su rama. Antes entraba por un PR propio de una sola
+  línea (`chore/cola-NN`), uno por vuelta.
+- **Una HU que se queda sin etapas no se tira ni se mergea a medias**: el ciclo
+  abre su PR en borrador, marca la tarea `INCOMPLETA` y le devuelve el turno al
+  usuario. El trabajo hecho queda a la vista y la decisión de seguirlo o
+  cerrarlo es de una persona.
 
 Tres cosas que hacen que el bucle no sea un lazo suelto:
 
@@ -113,7 +138,8 @@ Tres cosas que hacen que el bucle no sea un lazo suelto:
   el ciclo se puede matar en cualquier punto y retomar leyendo un archivo — que
   es exactamente lo que faltó la primera vez que se cerró la ventana en medio
   de una tarea. Con `--fondo` corre bajo `nohup`: cerrar la terminal ya no lo
-  mata.
+  mata. `bin/ciclo --estado` muestra además en qué rama está parado y si hay
+  una planificación escrita esperando a que su tarea la commitee.
 
 **Un modelo por fase.** El trabajo que decide algo —implementar, verificar,
 corregir hallazgos, elegir la próxima tarea— corre en el modelo mediano; el
@@ -135,6 +161,21 @@ tocar nada.
 El backlog que consume está en [cola_tareas.md](cola_tareas.md): solo entra ahí
 lo que tiene criterio de aceptación ejecutable, que es la regla que ordena todo
 este documento.
+
+### 6. La limpieza de ramas: `bin/limpiar-ramas`
+
+Con `--squash` en el auto-merge, los commits de una rama integrada no quedan
+como ancestros de `develop` — solo su contenido. Así que `git branch -d` no
+reconoce como integrada ninguna rama que sí lo está, y la lista crece hasta que
+nadie sabe qué está vivo. `bin/limpiar-ramas` decide por evidencia: PR mergeado
+en GitHub, o rama ancestro de otra cuyo PR sí entró, o contenido idéntico al de
+`develop`. Lo que no cumple ninguna de las tres se reporta con su diff y **no se
+toca**.
+
+**Se corre a mano.** Sin `--ejecutar` solo informa, y `bin/ciclo` no lo invoca:
+qué historia se descarta no es una decisión que deba tomar un bucle desatendido.
+El momento natural es después de un tramo largo de avance, cuando la lista ya
+creció.
 
 ## Lo que falta para un turno desatendido
 
