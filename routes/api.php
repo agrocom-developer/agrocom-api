@@ -5,6 +5,7 @@ use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Api\OrdenAplicacio
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api\DispositivoController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api\SesionCampoController;
 use App\Dominios\Sincronizacion\Infraestructura\Http\Controllers\Api\CatalogoController;
+use App\Dominios\Sincronizacion\Infraestructura\Http\Controllers\Api\SyncController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -61,4 +62,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // con cursor (TE-06 parcial: órdenes, lotes y personas; ver
     // runs/08-diseno.md para lo que queda afuera y por qué).
     Route::get('/sync/catalogo', [CatalogoController::class, 'index'])->name('api.sync.catalogo');
+
+    // Espec §2.1 puntos 3 a 5: POST /api/sync — push en lote de la cola
+    // offline. TE-05 (tarea 09): solo trabajo y sesion; ver "Recorte de
+    // alcance" en el prompt de la tarea para mezcla/recarga/incidencia/acta.
+    Route::post('/sync', [SyncController::class, 'store'])->name('api.sync.store');
 });

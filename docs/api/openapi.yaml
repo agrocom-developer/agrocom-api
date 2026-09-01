@@ -383,6 +383,47 @@ paths:
       security:
         -
           tokenDispositivo: []
+  /api/sync:
+    post:
+      tags:
+        - Sincronizacion
+      summary: 'Push de sincronización en lote (trabajo, sesión)'
+      description: 'Push en lote de la cola offline (espec §2.1). Cada registro se procesa en su propia transacción —nunca el lote completo en una— y se responde con uno de tres estados: `aplicado`, `duplicado` (reintento de un `uuid_cliente` ya aplicado, se trata como éxito) o `rechazado` con motivo. El servidor agrupa por tipo y aplica siempre `trabajo` antes que `sesion`, sin importar el orden del arreglo recibido, así que una `sesion` puede referenciar un `trabajo` del mismo lote aunque venga antes en el arreglo.'
+      operationId: sincronizarLote
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - registros
+              properties:
+                registros:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/RegistroSync'
+              type: object
+      responses:
+        200:
+          description: 'Resultado por registro, en el mismo orden del arreglo de entrada.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - resultados
+                properties:
+                  resultados:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ResultadoSync'
+                type: object
+        401:
+          description: 'Token ausente, revocado o ya sin rol válido.'
+        422:
+          description: 'Falta `registros`, o no es un arreglo.'
+      security:
+        -
+          tokenDispositivo: []
 components:
   schemas:
     PaginacionLinks:
@@ -886,6 +927,94 @@ components:
           format: date-time
           example: '2026-08-26T12:00:00+00:00'
       type: object
+    RegistroSync:
+      title: 'Registro de entrada del lote de sync'
+      description: "Un elemento del arreglo `registros`. La forma exacta de los campos depende de `tipo` ('trabajo' o 'sesion'); un registro con datos incompletos o inválidos se responde `rechazado` sin frenar el resto del lote — nunca un 422 para el lote completo."
+      required:
+        - tipo
+        - uuid_cliente
+      properties:
+        tipo:
+          description: "Adaptador delgado (ADR 0008): valida el sobre del lote, invoca el caso de\nuso y devuelve la respuesta — ninguna regla de negocio vive acá."
+          type: string
+          example: trabajo
+          enum:
+            - trabajo
+            - sesion
+        uuid_cliente:
+          type: string
+          example: a1b2c3d4-0000-4000-8000-000000000001
+        orden_id:
+          description: '`trabajo`: id de servidor de la orden (del pull de catálogo).'
+          type: integer
+          example: 1
+        lote_id:
+          description: '`trabajo`: id de servidor del lote (del pull de catálogo).'
+          type: integer
+          example: 3
+        nro_aplicacion:
+          description: '`trabajo`.'
+          type: integer
+          example: 1
+        trabajo_uuid_cliente:
+          description: '`sesion`: `uuid_cliente` de su trabajo — nunca el id de servidor, que puede no existir todavía si el trabajo llegó en este mismo lote.'
+          type: string
+          example: a1b2c3d4-0000-4000-8000-000000000001
+        secuencia:
+          description: '`sesion`.'
+          type: integer
+          example: 1
+        piloto_id:
+          description: '`sesion`: id de servidor de la persona (del pull de catálogo).'
+          type: integer
+          example: 5
+        auxiliar_id:
+          description: '`sesion`, opcional.'
+          type: integer
+          example: null
+          nullable: true
+        hectareas_declaradas:
+          description: 'DECIMAL como string (invariante 6). `0` si se omite.'
+          type: string
+          example: '0'
+        inicio:
+          type: string
+          format: date-time
+          example: '2026-09-01T10:00:00-04:00'
+        fin:
+          type: string
+          format: date-time
+          example: null
+          nullable: true
+      type: object
+    ResultadoSync:
+      title: 'Resultado de aplicar un registro del lote'
+      description: 'Uno por registro de entrada, en el mismo orden (espec §2.1, punto 3).'
+      required:
+        - uuid_cliente
+        - tipo
+        - estado
+      properties:
+        uuid_cliente:
+          type: string
+          example: a1b2c3d4-0000-4000-8000-000000000001
+          nullable: true
+        tipo:
+          type: string
+          example: trabajo
+          nullable: true
+        estado:
+          type: string
+          example: aplicado
+          enum:
+            - aplicado
+            - duplicado
+            - rechazado
+        motivo:
+          description: 'Presente solo cuando `estado` es `rechazado`.'
+          type: string
+          example: 'el trabajo referenciado no existe todavía'
+      type: object
   securitySchemes:
     tokenDispositivo:
       type: http
@@ -903,4 +1032,4 @@ tags:
     description: 'Sesión de la app de campo por token de dispositivo (espec §4.6, HU-03).'
   -
     name: Sincronizacion
-    description: 'Pull de catálogo con cursor para la app de campo (espec §2.1, punto 6). TE-06 parcial: órdenes, lotes y personas — recetas y productos quedan fuera hasta que exista el módulo Mezclas (ver docs/gestion/cola_tareas.md).'
+    description: 'Push de escritura offline de la app de campo (espec §2.1, puntos 3 a 5; TE-05). Recorte de alcance de la tarea 09: solo `trabajo` y `sesion` — `mezcla`, `recarga`, `incidencia` y `acta` llegan con sus propias tareas (ver docs/gestion/cola_tareas.md).'
