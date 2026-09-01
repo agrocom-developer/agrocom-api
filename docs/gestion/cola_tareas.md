@@ -1,6 +1,6 @@
 # Cola de tareas automatizables
 
-**Última actualización: 31/8/2026.** Este es el backlog que el ciclo de
+**Última actualización: 1/9/2026.** Este es el backlog que el ciclo de
 `bin/ciclo` consume solo — el punto 3 de
 [automatizacion_desarrollo.md](automatizacion_desarrollo.md). No reemplaza a
 `plan_sprints.md`: ahí están las HU y TE con su alcance de negocio; acá está lo
@@ -10,6 +10,20 @@ puede avanzar sin nadie mirando la pantalla.
 La cola en ejecución es `runs/cola.txt` (ids, uno por línea, en orden). Esta
 tabla es su versión legible, con el porqué de cada fila.
 
+**Punto de partida limpio (1/9/2026).** Los prompts de las tareas 01 a 08 se
+borraron del árbol —quedan en el historial de git— y `runs/cola.txt` arrancó
+vacía. La numeración **sigue desde 09**, no vuelve a 01: `runs/` conserva los
+estados de las tareas viejas y un id repetido se leería como ya cerrado, así que
+la tarea nueva se saltearía sola. `runs/` no se versiona; es la bitácora local de
+lo que ya corrió.
+
+**Una fila = una HU o TE entera del plan de sprints = un PR.** No media
+historia, no "la primera parte de". Si no entra en una sesión, el ciclo le da
+varias etapas sobre la misma rama — ver `automatizacion_desarrollo.md` §5. El
+único recorte válido es el que tiene una razón de dominio y queda escrito con su
+porqué en el prompt (como el de la 08, que dejó recetas y productos para cuando
+exista el módulo `Mezclas`).
+
 ## Cómo se lee una fila
 
 | Campo | Qué significa |
@@ -18,11 +32,11 @@ tabla es su versión legible, con el porqué de cada fila.
 | **Criterio** | El comando que la acepta. Si no se puede escribir un comando, la tarea no entra en la cola |
 | **Puede tocar** | El alcance de archivos. Lo de afuera es un hallazgo del verificador |
 | **Crítica** | `sí` = está en la lista de "qué no delegar sin revisión línea por línea" de `CLAUDE.md`. Se implementa igual, pero el PR se abre en borrador y lo revisa una persona |
-| **Intentos** | Sesiones antes de rendirse y dejarla marcada para el usuario |
+| **Etapas** | Sesiones que el ciclo puede encadenar sobre la misma rama para cerrar la HU. Se dimensiona por el tamaño de la historia, no por miedo |
 
 ## Cola
 
-| Id | Tarea | Criterio | Puede tocar | Crítica | Intentos | Estado |
+| Id | Tarea | Criterio | Puede tocar | Crítica | Etapas | Estado |
 |---|---|---|---|---|---|---|
 | 03 | HU-03 — token Sanctum por dispositivo | `./bin/verify` = 0 | `app/Dominios/Seguridad/**`, migraciones, seeders de catálogo, rutas, `tests/Feature/Seguridad/**` | no | 3 | **hecha** |
 | 04 | Aduana de la invariante 7: ninguna asignación de estado fuera del servicio de estados | `./bin/verify` = 0, y el gate falla al inyectarle una asignación suelta | `tests/Unit/**`, `app/Dominios/Compartido/**` | no | 3 | **hecha** |

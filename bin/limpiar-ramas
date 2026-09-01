@@ -1,0 +1,213 @@
+#!/usr/bin/env bash
+#
+# Limpieza de ramas ya integradas — deja el repo en master + develop.
+#
+#   bin/limpiar-ramas              # solo informa qué borraría y por qué
+#   bin/limpiar-ramas --ejecutar   # borra las que estén integradas
+#
+# **Se corre a mano, cuando el usuario lo decide** — típicamente después de un
+# tramo largo de avance, con la lista de ramas ya crecida. `bin/ciclo` no lo
+# invoca ni lo va a invocar: qué historia se descarta no es una decisión que
+# deba tomar un bucle desatendido. Por eso el borrado exige `--ejecutar`
+# explícito y sin él el script solo informa.
+#
+# Por qué es un script y no un comando suelto: el merge de este repo es
+# `--squash` (auto-merge.yml), así que `git branch -d` NO reconoce como
+# integrada ninguna rama que sí lo está — sus commits no son ancestros de
+# develop, solo su contenido. Borrar a mano con -D obliga a decidir rama por
+# rama sin evidencia, que es exactamente lo que este script evita.
+#
+# Se clasifican en una sola pasada los nombres que existan en local, en origin o
+# en ambos, y lo que se borra se borra en los dos lados. Una rama se considera
+# integrada si cumple UNA de estas tres:
+#
+#   1. Su PR figura MERGED en GitHub.
+#   2. Es ancestro de otra rama cuyo PR sí se mergeó (el caso de
+#      feature/panel-admin, cuyo trabajo entró dentro del PR #18).
+#   3. El árbol de la rama no difiere de develop en ningún archivo que ella
+#      haya tocado — el contenido ya está, sin importar por qué camino llegó.
+#
+# Lo que NO cumpla ninguna se reporta y NO se toca: eso es trabajo que se
+# perdería, y esa decisión es del usuario.
+#
+set -uo pipefail
+cd "$(dirname "$0")/.." || exit 1
+
+EJECUTAR=0
+INCLUIR=""
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --ejecutar) EJECUTAR=1 ;;
+        # Rama que el script no puede dar por integrada pero el usuario sí, tras
+        # mirar el diff que el ensayo imprime. Se puede repetir.
+        --incluir)  shift; INCLUIR="$INCLUIR ${1:-}" ;;
+        *) printf 'Uso: bin/limpiar-ramas [--ejecutar] [--incluir <rama>]...\n'; exit 1 ;;
+    esac
+    shift
+done
+
+ok()    { printf '\033[32m  ✓ %s\033[0m\n' "$1"; }
+malo()  { printf '\033[31m  ✗ %s\033[0m\n' "$1"; }
+aviso() { printf '\033[33m  ⊘ %s\033[0m\n' "$1"; }
+fase()  { printf '\n\033[1m── %s ──\033[0m\n' "$1"; }
+
+# El ensayo no toca nada, así que puede correrse con cambios en curso. El
+# borrado sí necesita pasar a develop primero, y eso pisaría lo que haya suelto.
+if [ "$EJECUTAR" -eq 1 ] && [ -n "$(git status --porcelain)" ]; then
+    malo "Working tree sucio — commiteá o guardá lo pendiente antes de borrar ramas"
+    exit 1
+fi
+
+fase "Poniendo al día las referencias del remoto"
+git fetch --prune --quiet origin || { malo "No se pudo hacer fetch"; exit 1; }
+ok "origin/* al día, referencias muertas podadas"
+
+# --- Ramas con PR mergeado -------------------------------------------
+fase "Consultando el estado de los PR en GitHub"
+MERGEADAS=$(mktemp)
+trap 'rm -f "$MERGEADAS"' EXIT
+if gh pr list --state merged --limit 200 --json headRefName -q '.[].headRefName' > "$MERGEADAS" 2>/dev/null; then
+    ok "$(wc -l < "$MERGEADAS" | tr -d ' ') ramas con PR mergeado"
+else
+    aviso "No se pudo consultar GitHub — se decide solo por contenido"
+    : > "$MERGEADAS"
+fi
+
+tuvo_pr_mergeado() { grep -qxF "$1" "$MERGEADAS"; }
+
+# La ref con la que comparar: la local si existe, si no la de origin.
+ref_de() {
+    if git rev-parse --verify --quiet "refs/heads/$1" >/dev/null; then
+        printf '%s' "$1"
+    else
+        printf 'origin/%s' "$1"
+    fi
+}
+
+# Ancestro de una rama cuyo PR sí entró: su trabajo viajó adentro de ese PR.
+ancestro_de_mergeada() {
+    local rama="$1" otra
+    while read -r otra; do
+        [ -z "$otra" ] && continue
+        [ "$otra" = "$rama" ] && continue
+        otra=$(ref_de "$otra")
+        git rev-parse --verify --quiet "$otra" >/dev/null || continue
+        if git merge-base --is-ancestor "$(ref_de "$rama")" "$otra" 2>/dev/null; then
+            printf '%s' "$otra"
+            return 0
+        fi
+    done < "$MERGEADAS"
+    return 1
+}
+
+# El contenido ya está en develop: ningún archivo que la rama tocó difiere.
+# Es el criterio más estricto de los tres — si develop siguió evolucionando esos
+# mismos archivos, da negativo aunque el aporte de la rama sí esté adentro. Ese
+# caso cae en el informe para que lo mire una persona, que es lo correcto: la
+# alternativa sería que el script adivine y borre trabajo.
+contenido_en_develop() {
+    local rama archivos
+    rama=$(ref_de "$1")
+    archivos=$(git diff --name-only "develop...$rama" 2>/dev/null)
+    [ -z "$archivos" ] && return 0
+    # shellcheck disable=SC2086
+    [ -z "$(git diff --name-only "$rama" develop -- $archivos 2>/dev/null)" ]
+}
+
+pedida_a_mano() {
+    local rama="$1" otra
+    for otra in $INCLUIR; do
+        [ "$otra" = "$rama" ] && return 0
+    done
+    return 1
+}
+
+# --- Clasificación ----------------------------------------------------
+# Una sola pasada sobre el conjunto de nombres —los que existen en local, los
+# que existen en origin, o ambos— y una sola decisión por nombre. Cuando las
+# remotas se listaban aparte, sin clasificar, una rama en curso quedaba
+# conservada en local y borrada en el remoto a la vez.
+fase "Clasificando ramas"
+BORRAR=""
+CONSERVAR=""
+TODAS=$(
+    { git for-each-ref --format='%(refname:short)' refs/heads
+      git for-each-ref --format='%(refname:short)' refs/remotes/origin | sed 's|^origin/||'
+    } | sort -u
+)
+for rama in $TODAS; do
+    case "$rama" in master|develop|HEAD|origin) continue ;; esac
+
+    if pedida_a_mano "$rama"; then
+        ok "$rama — incluida a mano con --incluir"
+        BORRAR="$BORRAR $rama"
+    elif tuvo_pr_mergeado "$rama"; then
+        ok "$rama — su PR está mergeado"
+        BORRAR="$BORRAR $rama"
+    elif otra=$(ancestro_de_mergeada "$rama"); then
+        ok "$rama — entró dentro del PR de $otra (es su ancestro)"
+        BORRAR="$BORRAR $rama"
+    elif contenido_en_develop "$rama"; then
+        ok "$rama — su contenido ya está en develop"
+        BORRAR="$BORRAR $rama"
+    else
+        malo "$rama — no se puede dar por integrada"
+        # Solo los archivos que la rama tocó: el resto del diff contra develop
+        # es evolución posterior del repo y no dice nada sobre esta rama.
+        ref=$(ref_de "$rama")
+        archivos=$(git diff --name-only "develop...$ref")
+        # shellcheck disable=SC2086
+        git diff --stat "$ref" develop -- $archivos | sed 's/^/       /'
+        CONSERVAR="$CONSERVAR $rama"
+    fi
+done
+
+# De lo que se borra, cuáles tienen además rama en origin.
+REMOTAS=""
+for rama in $BORRAR; do
+    git rev-parse --verify --quiet "refs/remotes/origin/$rama" >/dev/null &&
+        REMOTAS="$REMOTAS $rama"
+done
+
+# --- Resumen ----------------------------------------------------------
+fase "Resumen"
+printf 'Ramas a borrar     : %s\n' "$(echo $BORRAR | tr ' ' '\n' | grep -c . )"
+printf '  de ellas, en origin: %s\n' "${REMOTAS:-(ninguna)}"
+if [ -n "$CONSERVAR" ]; then
+    printf '\033[33mSe conservan       : %s\033[0m\n' "$CONSERVAR"
+    printf '  Mirá el diff de arriba. Si el aporte ya está en develop por otro\n'
+    printf '  camino, agregala con --incluir <rama>.\n'
+fi
+
+if [ "$EJECUTAR" -ne 1 ]; then
+    printf '\nEnsayo. Para borrar de verdad:\n\n    bin/limpiar-ramas --ejecutar\n\n'
+    exit 0
+fi
+
+# --- Borrado ----------------------------------------------------------
+fase "Borrando"
+actual=$(git rev-parse --abbrev-ref HEAD)
+case "$actual" in
+    master|develop) ;;
+    *) git checkout develop --quiet || { malo "No se pudo pasar a develop"; exit 1; } ;;
+esac
+
+for rama in $REMOTAS; do
+    if git push --quiet origin --delete "$rama" 2>/dev/null; then
+        ok "origin/$rama borrada"
+    else
+        malo "no se pudo borrar origin/$rama"
+    fi
+done
+
+for rama in $BORRAR; do
+    git rev-parse --verify --quiet "refs/heads/$rama" >/dev/null || continue
+    if git branch -D "$rama" >/dev/null 2>&1; then
+        ok "$rama borrada"
+    else
+        malo "no se pudo borrar $rama"
+    fi
+done
+
+fase "Estado final"
+git branch -a

@@ -26,6 +26,30 @@ Documentadas completas en `docs/diseno/sistema_diseno_panel.md` §8. Resumen:
 5. Hover de una acción secundaria en texto plano necesita fondo sutil + transición, no solo cambio de color de texto.
 6. Transición nativa entre navegaciones del mismo flujo: `@view-transition { navigation: auto; }` una sola vez en `app.css`, con `prefers-reduced-motion` sobre `::view-transition-*`.
 
+## Explorar diseño antes de implementarlo
+
+Cuando lo que hace falta es **decidir cómo se ve algo** —una pantalla nueva, un
+rediseño, comparar dos direcciones visuales— conviene explorarlo antes de
+escribir Blade y CSS. Para eso están las skills de diseño del entorno, que la
+sesión principal puede invocar (los subagentes no: no tienen la herramienta
+`Skill`):
+
+| Skill | Para qué |
+|---|---|
+| `design` | Canvas de varios artboards en un Artifact: mockups de pantalla, flujos, variantes lado a lado. Es lo que reemplaza al mockup HTML suelto (`docs/ganadosoft-dashboard.html`, `Login Agro Drones.dc.html`) que se usó hasta ahora |
+| `impeccable` | Revisión y pulido de una interfaz existente: jerarquía visual, carga cognitiva, accesibilidad, estados vacíos y de error |
+| `emil-design-eng` | Detalles de interacción y animación — el pulido fino de un componente |
+| `design-taste-frontend` | Dirección de diseño de cero, cuando no hay referencia y hay que proponer una |
+
+Dos límites que no cambian por usar estas skills:
+
+- **Del mockup se toma estructura y medidas, nunca el vocabulario ni la paleta.**
+  Los módulos salen de la especificación y los colores de los tokens `--ag-color-*`
+  derivados de los logos oficiales. Es la regla que ya se aplicó al mockup
+  ganadosoft y al de login (ver memoria `maquetas-fijan-layout-no-vocabulario`).
+- **Un canvas no es la implementación.** Lo aprobado se traduce a componentes
+  Atomic Design con tokens; nada de HTML del mockup se copia literal.
+
 ## Verificación visual (obligatoria antes de cerrar un cambio)
 
 El cálculo de contraste en papel no alcanza — hay que ver el resultado real en navegador, en ambos temas, antes de dar una fase por cerrada (checklist de `docs/diseno/diseno-laravel.md` §11 + `docs/gestion/plan_dashboard_rediseno.md` §5).
@@ -33,7 +57,7 @@ El cálculo de contraste en papel no alcanza — hay que ver el resultado real e
 Procedimiento usado en la sesión del 28/8/2026 (login + selección de rol):
 
 1. Levantar el panel local (`php artisan serve` o el server ya corriendo en `localhost:8000`).
-2. Loguear con el usuario demo multirol: `camila.rojas` / `password` (seeded por `Demo/PanelDemoSeeder`).
+2. Loguear con el usuario demo multirol: `camila.rojas` / `password` (seeded por `Demo/PanelDemoSeeder`). **Los datos demo de la base del compose no se borran nunca** — ver el skill [verificacion].
 3. Correr un script Playwright headless con el binario ya instalado como dependencia del repo (no hace falta `npm install -g` ni un nuevo `package.json`):
    ```
    NODE_PATH=<repo>/node_modules node <script>.js
