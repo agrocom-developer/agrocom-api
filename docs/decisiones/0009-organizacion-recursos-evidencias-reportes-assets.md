@@ -23,3 +23,7 @@ Tres categorías, cada una con su regla:
 - Flysystem se configura con el disco `r2` como default para evidencias y reportes; el disco `public` (local, versionado en el repo) se reserva exclusivamente para assets de marca.
 - Ningún caso de uso genera una URL pública directa a una evidencia o reporte — siempre pasa por el mecanismo de firma con expiración.
 - El costo de este bucket es marginal al volumen de la operación (`docs/negocio/ventana_al_negocio.md`, sección 2.2) y no requiere revisitarse en v1.
+
+### Extensión (1/9/2026) — ruta del binario `.apk`, para HU-20
+
+Un binario de instalación no es evidencia ni reporte ni asset de marca, pero el mecanismo que le corresponde es el mismo que ya rige acá: bucket `r2`, URL siempre firmada con expiración, nunca pública (nunca el disco `public`, reservado a assets de marca). Ruta propia: `distribucion/apk/{version}.apk`. No se abre categoría nueva en la Decisión de arriba — es el mismo patrón aplicado a un cuarto tipo de archivo, sin alterar los tres ya decididos.
