@@ -121,17 +121,21 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
     }
 
     /**
-     * Condiciones de vuelo (HU-06, tarea 17): mismo mecanismo de
-     * idempotencia que `abrirTrabajo()`/`abrirSesion()` — el `UNIQUE` parcial
-     * de `uuid_cliente` resuelve `duplicado`, nunca un `SELECT` previo.
+     * Condiciones de vuelo (HU-06, tarea 17): a diferencia de
+     * `abrirTrabajo()`/`abrirSesion()`, un registro puede ser estructuralmente
+     * válido y aun así no persistirse — fuera de rango sin observación
+     * firmada del agrónomo se rechaza ANTES de intentar el `INSERT` (espec
+     * §5: "condiciones dentro de rango" u "observación firmada" son las dos
+     * únicas condiciones que autorizan; ninguna de las dos, no autoriza
+     * nada).
      *
      * `trabajo_id` se resuelve leyendo la sesión (denormalizado, ver
      * docblock de `RegistroCondiciones` y de la migración): no hace falta un
      * segundo `uuid_cliente` de trabajo en el payload.
      *
-     * La decisión de rechazar un registro fuera de rango sin observación
-     * firmada (espec §5) es el próximo commit — acá solo se persiste
-     * `autorizado` según {@see RegistroCondiciones::dentroDeRango()}.
+     * `autorizado` (bool persistido): TRUE cuando cae dentro de rango, FALSE
+     * cuando quedó autorizado solo por la observación del agrónomo — nunca
+     * FALSE por rechazo, porque ese caso no llega a crear fila (ver arriba).
      */
     public function registrarCondiciones(RegistroCondiciones $datos): ResultadoSincronizacion
     {
@@ -141,8 +145,14 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
             return ResultadoSincronizacion::rechazado('la sesión referenciada no existe todavía');
         }
 
+        $dentroDeRango = $datos->dentroDeRango();
+
+        if (! $dentroDeRango && ! $datos->tieneObservacionFirmada()) {
+            return ResultadoSincronizacion::rechazado('condiciones fuera de rango sin observación firmada del agrónomo');
+        }
+
         try {
-            DB::transaction(function () use ($datos, $sesion): void {
+            DB::transaction(function () use ($datos, $sesion, $dentroDeRango): void {
                 Condiciones::query()->create([
                     'uuid_cliente' => $datos->uuidCliente,
                     'trabajo_id' => $sesion->trabajo_id,
@@ -151,7 +161,7 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
                     'viento_kmh' => $datos->vientoKmh,
                     'temperatura_c' => $datos->temperaturaC,
                     'humedad_pct' => $datos->humedadPct,
-                    'autorizado' => $datos->dentroDeRango(),
+                    'autorizado' => $dentroDeRango,
                     'observacion_agronomo' => $datos->observacionAgronomo,
                     'firma_observacion' => $datos->firmaObservacion,
                 ]);
