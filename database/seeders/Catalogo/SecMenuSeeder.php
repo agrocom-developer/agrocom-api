@@ -59,7 +59,9 @@ class SecMenuSeeder extends Seeder
         // Operación (§4.3)
         $this->item($operacion, 'operacion', 'programacion', 'event_available', 1, ruta: 'panel.dashboard');
         $this->item($operacion, 'operacion', 'ordenes', 'assignment', 2);
-        $this->item($operacion, 'operacion', 'trabajos', 'fact_check', 3);
+        // HU-05 (tarea 13): listado mínimo de trabajos/sesiones — el jefe ve
+        // qué se cerró. Detalle con evidencias y filtros llegan con HU-15.
+        $this->item($operacion, 'operacion', 'trabajos', 'fact_check', 3, ruta: 'panel.trabajos.index', codigoPermiso: 'operaciones.trabajo.ver');
         $this->item($operacion, 'operacion', 'sesiones', 'flight', 4);
         $this->item($operacion, 'operacion', 'pausas', 'pause_circle', 5);
         $this->item($operacion, 'operacion', 'mezclas', 'science', 6);
@@ -149,6 +151,17 @@ class SecMenuSeeder extends Seeder
         $fila->save();
     }
 
+    /**
+     * `firstOrCreate` para la fila; además, si ya existía como "botón sin
+     * link" (pantalla todavía no construida cuando se sembró por primera
+     * vez) y esta vuelta SÍ trae `ruta`/`codigoPermiso`, completa esos dos
+     * campos — nunca pisa un valor que ya estaba seteado (ni por una vuelta
+     * anterior del seeder ni por una edición manual). Necesario porque el
+     * catálogo de ítems se siembra completo desde el principio (quinta
+     * vuelta) con placeholders para las pantallas que todavía no existían;
+     * activarlas más tarde no puede depender de truncar `sec_menu` — los
+     * datos demo no se borran.
+     */
     private function item(
         SecMenu $padre,
         string $claveModulo,
@@ -162,7 +175,7 @@ class SecMenuSeeder extends Seeder
             ? null
             : SecPermission::query()->where('code', $codigoPermiso)->value('id');
 
-        return SecMenu::query()->firstOrCreate(
+        $fila = SecMenu::query()->firstOrCreate(
             ['label' => "menu.{$claveModulo}.items.{$claveItem}", 'padre_id' => $padre->id],
             [
                 'icono' => $icono,
@@ -171,5 +184,16 @@ class SecMenuSeeder extends Seeder
                 'permission_id' => $permissionId,
             ],
         );
+
+        $activaRuta = $fila->ruta === null && $ruta !== null;
+        $activaPermiso = $fila->permission_id === null && $permissionId !== null;
+
+        if ($activaRuta || $activaPermiso) {
+            $fila->ruta ??= $ruta;
+            $fila->permission_id ??= $permissionId;
+            $fila->save();
+        }
+
+        return $fila;
     }
 }

@@ -48,6 +48,11 @@ class SeguridadSeeder extends Seeder
         // HU-20: autorizar una versión del APK para distribución (RC). Solo
         // el dueño — ningún RC se actualiza sin su visto bueno.
         'distribucion.version.autorizar' => 'Autorizar una versión del APK para distribución',
+        // HU-05 (tarea 13): ver el listado de trabajos/sesiones del panel —
+        // "hasta que el jefe lo vea en el panel" (prompt de la tarea). Un
+        // único permiso de lectura: el detalle con evidencias y los filtros
+        // llegan con HU-15.
+        'operaciones.trabajo.ver' => 'Ver el listado de trabajos y sesiones en el panel',
     ];
 
     /** @var list<string> Todo, salvo asignar_rol_dueno (diseño §2). */
@@ -62,6 +67,19 @@ class SeguridadSeeder extends Seeder
         // escalar al dueño (HU-03).
         'seguridad.dispositivo.ver',
         'seguridad.dispositivo.revocar',
+        // Administra órdenes y planificación (diseño §2): ve qué trabajos y
+        // sesiones se cerraron en el panel, igual que el jefe de campo.
+        'operaciones.trabajo.ver',
+    ];
+
+    /**
+     * Coordina la cuadrilla y valida sesiones ajenas (diseño §2) — necesita
+     * ver qué se cerró en el panel para poder coordinar la jornada siguiente.
+     *
+     * @var list<string>
+     */
+    private const PERMISOS_JEFE_CAMPO = [
+        'operaciones.trabajo.ver',
     ];
 
     public function run(): void
@@ -83,7 +101,14 @@ class SeguridadSeeder extends Seeder
             $permisos->only(self::PERMISOS_ENCARGADO_OPERACIONES)->values()->all(),
         );
 
-        // piloto, auxiliar, jefe_campo: sin permisos de seguridad (diseño §2).
+        // jefe_campo: solo lo suyo (diseño §2) — antes ninguno, ahora ver
+        // trabajos/sesiones (HU-05, tarea 13).
+        $this->asignar(
+            $roles['jefe_campo'],
+            $permisos->only(self::PERMISOS_JEFE_CAMPO)->values()->all(),
+        );
+
+        // piloto, auxiliar: sin permisos de seguridad ni de panel (diseño §2).
     }
 
     private function rol(string $name, string $description): SecRole
