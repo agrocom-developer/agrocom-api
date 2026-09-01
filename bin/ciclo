@@ -367,6 +367,44 @@ mal, el que se corrige es el código." \
     return 1
 }
 
+# --- Integrar lo que la planificación escribió ------------------------
+# La sesión de planificación deja archivos VERSIONADOS: el prompt de la tarea
+# siguiente y la cola legible. Los commitea el ciclo y no la sesión — si
+# dependiera de que una sesión se acuerde, la vuelta siguiente arrancaría con el
+# árbol sucio y `preparar_base` la abortaría antes de empezar. Que es exactamente
+# lo que pasó al planificar la 07.
+#
+# Entra por PR como todo lo demás (ADR 0006): pushear a develop está prohibido,
+# y el guardarraíl de .claude/hooks/ lo deniega aunque alguien lo intente.
+integrar_planificacion() {
+    local id="$1" rama="chore/cola-$id" numero
+    [ -z "$(git status --porcelain prompts docs/gestion/cola_tareas.md)" ] && return 0
+
+    marcar "$id integrar la planificación"
+    git checkout -b "$rama" --quiet 2>/dev/null || git checkout "$rama" --quiet || return 1
+    git add prompts docs/gestion/cola_tareas.md
+    git commit -q -m "encola la tarea $id" \
+        -m "Prompt escrito por la sesión de planificación del ciclo al cerrar la tarea anterior. Lo commitea el ciclo para que la tarea siguiente arranque desde un árbol limpio."
+
+    git push -q -u origin "$rama" 2>&1 | tail -1 | eco
+    gh pr create --base develop --head "$rama" \
+        --title "Encola la tarea $id" \
+        --body "Prompt de la tarea $id y su fila en la cola, escritos por la sesión de planificación del ciclo al cerrar la tarea anterior.
+
+Entra por PR como todo lo demás (ADR 0006): el ciclo no puede pushear a develop, y el guardarraíl lo deniega aunque se intente." 2>&1 | tail -2 | eco
+
+    numero=$(gh pr list --head "$rama" --json number -q '.[0].number' 2>/dev/null)
+    [ -z "$numero" ] && { malo "No se pudo abrir el PR de la planificación"; return 1; }
+
+    log "planificación en el PR #$numero — esperando que integre"
+    if esperar_ci "$numero"; then
+        ok "Planificación integrada en develop"
+        return 0
+    fi
+    malo "El PR #$numero de la planificación no integró: la tarea siguiente no tendría su prompt"
+    return 1
+}
+
 # --- Fase 5: planificar la siguiente ----------------------------------
 fase_planificar() {
     local id="$1" texto
@@ -390,6 +428,7 @@ fase_planificar() {
     [ -z "$(prompt_de "$ultima")" ] && { malo "La cola pide '$ultima' pero no existe prompts/$ultima-*.md"; return 1; }
 
     ok "Próxima tarea: $ultima ($(basename "$(prompt_de "$ultima")"))"
+    integrar_planificacion "$ultima" || return 1
     return 0
 }
 

@@ -97,6 +97,12 @@ Escribí `runs/DETENER` con el motivo en una línea y, debajo, la pregunta
 concreta que el usuario tiene que responder para que el ciclo pueda seguir. Eso
 detiene el bucle de forma ordenada — es una respuesta válida, no una falla.
 
+## No commitees
+
+Dejá los archivos escritos y nada más: el ciclo los commitea y abre su PR. Si
+commiteás vos, el PR sale sin el criterio con el que se decidió, y si además
+creás una rama, la tarea siguiente arranca parada en el lugar equivocado.
+
 ## Cierre obligatorio
 
 `runs/{{ID}}-plan.md`: qué tarea elegiste, por qué esa y no otra, y qué queda
