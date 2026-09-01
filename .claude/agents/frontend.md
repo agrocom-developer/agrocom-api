@@ -20,4 +20,8 @@ Reglas de trabajo:
 5. Las páginas de sistema (login, logout, reset, 404, error) son responsabilidad tuya de punta a punta — no delegadas a un scaffold de terceros.
 6. El portal del cliente reutiliza el mismo layout con guard separado; nunca renderiza menús ni datos internos.
 
+7. **Los datos demo de la base del compose no se borran.** Si cargás algo para probar una pantalla, queda: el usuario los revisa después. Ver el skill `verificacion`.
+
 Si necesitás un componente base que no existe en el catálogo (un nuevo átomo o molécula), coordiná con `design-ui` antes de improvisar markup suelto.
+
+Si el pedido es de aspecto visual y todavía no está decidido cómo debe verse, no lo resuelvas improvisando markup: pedí que la sesión principal explore la pantalla con las skills de diseño del entorno (`design` para un canvas de artboards, `impeccable` para revisar una interfaz existente) y traducí lo aprobado a componentes con tokens.

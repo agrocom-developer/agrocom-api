@@ -49,6 +49,22 @@ CONSTRAINT` van dentro de `if (DB::getDriverName() === 'pgsql')`). Si tu cambio
 depende de una función específica de Postgres, el test tiene que saltarse en
 SQLite explícitamente, no asumir el motor.
 
+## Los datos demo de la base del compose no se borran
+
+Todo lo que se cargue en el Postgres del compose para probar —seeders, un
+usuario, un lote, una orden de ejemplo— **se deja ahí**. El usuario los revisa
+por su cuenta después, así que borrarlos "para dejar limpio" destruye
+justamente lo que quería mirar.
+
+Concretamente: nada de `migrate:fresh`, `migrate:refresh`, `db:wipe`,
+`docker compose down -v` ni `TRUNCATE` sobre esa base (el guardarraíl de
+`.claude/hooks/guardarrail-bash.sh` los deniega, y por esto). Tampoco un
+`delete()` de limpieza al final de un script de prueba.
+
+No hace falta limpiar para probar: la suite corre contra SQLite en memoria y no
+toca esa base. Si un dato demo nuevo estorba, se agrega uno distinto, no se
+borra el anterior.
+
 ## Lo que no se hace para que la cascada pase
 
 - **No se edita un test para que deje de fallar.** El test es el criterio de
