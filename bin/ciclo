@@ -8,6 +8,7 @@
 #   bin/ciclo --detener        # parada ordenada: termina lo que está haciendo y no toma otra tarea
 #   bin/ciclo --reanudar       # levanta la bandera de parada
 #   bin/ciclo --estado         # en qué fase de qué tarea está
+#   bin/ciclo --planificar 08  # planifica lo que sigue a la 08, si esa vuelta se cortó
 #   bin/ciclo --vueltas 2      # tope de tareas en esta corrida (por defecto, hasta que se detenga)
 #
 # `bin/iteracion` corre una cola FIJA de prompts escritos a mano. Esto corre
@@ -304,8 +305,8 @@ fase_pr() {
 # Devuelve: 0 integrado · 1 CI en rojo · 2 PR cerrado sin merge
 #           3 borrador verde (crítica, esperando a una persona) · 4 se agotó la espera
 esperar_ci() {
-    local numero="$1" limite=$((SECONDS + ESPERA_CI)) estado borrador fallidos pendientes
-    while [ "$SECONDS" -lt "$limite" ]; do
+    local numero="$1" limite=$((SECONDS + ESPERA_CI)) estado borrador fallidos pendientes previo salto
+    while :; do
         estado=$(gh pr view "$numero" --json state -q .state 2>/dev/null || echo "")
         case "$estado" in
             MERGED) return 0 ;;
@@ -321,9 +322,24 @@ esperar_ci() {
             return 3
         fi
 
+        # El límite se evalúa DESPUÉS de consultar, nunca antes: si se evalúa
+        # primero, un PR que se integró mientras se dormía el último sondeo se
+        # reporta como "se agotó la espera" sin haberlo mirado una última vez.
+        # Pasó con el PR #40, que estaba mergeado hacía horas.
+        [ "$SECONDS" -ge "$limite" ] && return 4
+
+        previo=$SECONDS
         sleep "$SONDEO_CI"
+
+        # La máquina se suspende de noche, que es justamente cuando esto corre.
+        # El tiempo dormido no es tiempo de espera: si el reloj saltó mucho más
+        # de lo que duraba el sondeo, se le devuelve al presupuesto.
+        salto=$((SECONDS - previo - SONDEO_CI))
+        if [ "$salto" -gt "$((SONDEO_CI * 2))" ]; then
+            limite=$((limite + salto))
+            log "  la máquina estuvo suspendida $((salto / 60)) min — no cuentan como espera"
+        fi
     done
-    return 4
 }
 
 fase_ci() {
@@ -482,6 +498,11 @@ case "${1:-}" in
         exit 0 ;;
     --reanudar)
         rm -f "$DETENER"; printf 'Bandera de parada levantada. Podés arrancar con bin/ciclo.\n'; exit 0 ;;
+    --planificar)
+        shift
+        [ -z "${1:-}" ] && { printf 'Uso: bin/ciclo --planificar <id de la tarea que cerró>\n'; exit 1; }
+        fase_planificar "$1"
+        exit $? ;;
     --estado)
         printf 'Fase actual : %s\n' "$(cat runs/ciclo.estado 2>/dev/null || echo '—')"
         printf 'Cola        : %s\n' "$(tr '\n' ' ' < "$COLA" 2>/dev/null || echo '—')"
