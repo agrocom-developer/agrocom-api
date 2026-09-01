@@ -37,6 +37,14 @@
 # planificación, viaja como primer commit de la rama de esa misma tarea — antes
 # entraba por un PR propio de una línea (`chore/cola-NN`).
 #
+# **Una tarea trabada no corta el bucle.** Queda marcada en `runs/NN.estado` y,
+# si tenía trabajo hecho, en un PR en borrador; el ciclo planifica igual y sigue
+# con la próxima. Lo único que lo detiene es una parada pedida, que se acabe la
+# cola, o TAREAS_TRABADAS seguidas sin integrar — que ya no es una tarea difícil
+# sino algo sistemático. Va a chocar seguido con tareas que no le corresponden
+# (el spike del RC, lo que vive en `agrocom-field`), y frenar el turno entero por
+# eso sería dejar el backlog parado por una fila que nunca iba a poder tomar.
+#
 # El estado no vive en ninguna conversación: vive en git (ramas, commits, PRs)
 # y en runs/, que se puede auditar después. Por eso el ciclo se puede matar en
 # cualquier punto y retomar — que es exactamente lo que pasó la primera vez que
@@ -53,6 +61,7 @@ PID=runs/ciclo.pid
 
 ETAPAS_IMPL=5        # sesiones encadenadas sobre la misma rama para terminar una HU
 FALLOS_IMPL=3        # sesiones SEGUIDAS sin estado declarado antes de rendirse
+TAREAS_TRABADAS=3    # tareas SEGUIDAS sin integrarse antes de parar el bucle entero
 INTENTOS_ARREGLO=2   # vueltas de corrección tras un veredicto RECHAZADO o un CI en rojo
 ESPERA_CI=2700       # 45 min: tope para que CI termine y el auto-merge integre
 SONDEO_CI=30
@@ -550,31 +559,64 @@ fase_planificar() {
 }
 
 # --- Una vuelta completa ----------------------------------------------
-# Códigos: 0 siguió · 1 falló · 2 necesita al usuario (tarea bloqueada o parada
-# pedida). El 2 no es un error: es el ciclo entregando el turno.
+# Códigos: 0 integrada · 1 no llegó a integrarse · 2 parada pedida.
+#
+# Que una tarea trabada NO corte el bucle es deliberado. El usuario mira el
+# proyecto en paralelo y prefiere que el ciclo siga avanzando por el backlog
+# antes que quedarse esperándolo despierto. Lo trabado queda marcado en
+# `runs/NN.estado` —`siguiente_id` no lo vuelve a tomar— y, si tenía trabajo
+# hecho, en un PR en borrador que el auto-merge no toca. Lo único que corta el
+# bucle es una parada pedida, o TAREAS_TRABADAS seguidas sin integrar.
 vuelta() {
-    local id="$1" r
+    local id="$1" r salida=0
     fase "Tarea $id — $(basename "$(prompt_de "$id")" 2>/dev/null || echo 'sin prompt')"
 
     fase_implementar "$id"; r=$?
-    if [ "$r" -eq 3 ]; then
-        # La HU no se cerró, pero lo hecho está commiteado y pasa la cascada:
-        # se entrega en borrador y se le devuelve el turno al usuario. Descartar
-        # varias etapas de trabajo por no haber llegado sería peor que dejarlas
-        # a la vista.
-        fase_pr "$id" "si" || return 1
-        aviso "Tarea $id entregada incompleta en el PR #$(cat "runs/$id.pr" 2>/dev/null) — decidí vos si se sigue o se cierra"
-        return 2
-    fi
-    [ "$r" -ne 0 ] && return "$r"
-    abortar_si_detenido && return 2
-    fase_verificar "$id";   r=$?; [ "$r" -ne 0 ] && return "$r"
-    abortar_si_detenido && return 2
-    fase_pr "$id"        || return 1
-    fase_ci "$id";          r=$?; [ "$r" -ne 0 ] && return "$r"
-    abortar_si_detenido && return 2
+    case "$r" in
+        0)
+            abortar_si_detenido && return 2
+            if fase_verificar "$id"; then
+                abortar_si_detenido && return 2
+                if fase_pr "$id"; then
+                    fase_ci "$id" || salida=1
+                else
+                    salida=1
+                fi
+            else
+                # Rechazada tras las vueltas de corrección. El trabajo existe y
+                # está commiteado: se publica en borrador —con los hallazgos del
+                # verificador en runs/— en vez de quedar solo en una rama local
+                # que nadie va a mirar. El auto-merge saltea los borradores.
+                salida=1
+                abortar_si_detenido || fase_pr "$id" "si" ||
+                    malo "Tarea $id rechazada y sin PR: el trabajo quedó solo en la rama local"
+            fi
+            ;;
+        2)
+            # BLOQUEADA, o parada pedida en medio de las etapas.
+            detencion_pedida || malo "Tarea $id necesita una decisión del usuario — mirá runs/$id.md"
+            salida=1
+            ;;
+        3)
+            # Se acabaron las etapas con la HU sin cerrar: se entrega lo hecho.
+            salida=1
+            if fase_pr "$id" "si"; then
+                aviso "Tarea $id entregada incompleta en el PR #$(cat "runs/$id.pr" 2>/dev/null) — decidís vos si se sigue o se cierra"
+            fi
+            ;;
+        *)
+            salida=1
+            ;;
+    esac
+
+    detencion_pedida && return 2
+
+    # La planificación corre SIEMPRE, incluso si la tarea se trabó: sin ella la
+    # cola se queda sin fila siguiente y el bucle se detendría por falta de
+    # trabajo, que es justo lo que no se quiere. Que una HU se haya trabado no
+    # dice nada sobre la que sigue.
     fase_planificar "$id" || return 1
-    return 0
+    return "$salida"
 }
 
 # --- Cola --------------------------------------------------------------
@@ -621,6 +663,18 @@ case "${1:-}" in
         # confundirlo con trabajo olvidado.
         pendiente=$(git status --porcelain -- "${PLANIFICACION[@]}" 2>/dev/null | sed -E 's/^.{3}//' | tr '\n' ' ')
         printf 'Planificado : %s\n' "${pendiente:-nada pendiente de commitear}"
+        # Lo que el ciclo dejó atrás sin integrar: sigue avanzando, pero esto
+        # espera una decisión y si no se mira, no se mira nunca.
+        trabadas=""
+        for e in runs/[0-9][0-9].estado; do
+            [ -f "$e" ] || continue
+            v=$(tr -d '[:space:]' < "$e")
+            case "$v" in
+                BLOQUEADA|RECHAZADA|AGOTADA|INCOMPLETA)
+                    trabadas="$trabadas $(basename "$e" .estado):$v" ;;
+            esac
+        done
+        printf 'Trabadas    : %s\n' "${trabadas:-ninguna}"
         if [ -f "$PID" ] && kill -0 "$(cat "$PID")" 2>/dev/null; then
             printf 'Proceso     : vivo (PID %s)\n' "$(cat "$PID")"
         else
@@ -654,6 +708,7 @@ fase "Ciclo continuo — $(date '+%d/%m %H:%M')"
 log "cola inicial: $(tr '\n' ' ' < "$COLA" 2>/dev/null || echo '(vacía)')"
 
 vueltas=0
+trabadas=0
 while :; do
     if abortar_si_detenido; then break; fi
 
@@ -663,9 +718,18 @@ while :; do
     resultado=$?
 
     case "$resultado" in
-        0) ok "Tarea $id completa: implementada, verificada, integrada y con la siguiente planificada" ;;
-        2) aviso "Ciclo detenido en medio de la tarea $id"; break ;;
-        *) malo "Ciclo detenido: la tarea $id no llegó a integrarse. Mirá runs/$id.md y runs/ciclo.log"; break ;;
+        0)
+            ok "Tarea $id completa: implementada, verificada, integrada y con la siguiente planificada"
+            trabadas=0 ;;
+        2)
+            aviso "Ciclo detenido en medio de la tarea $id"; break ;;
+        *)
+            trabadas=$((trabadas + 1))
+            malo "La tarea $id no llegó a integrarse ($trabadas seguida(s)). Queda marcada en runs/$id.estado; sigo con la próxima."
+            if [ "$trabadas" -ge "$TAREAS_TRABADAS" ]; then
+                malo "Ciclo detenido: $TAREAS_TRABADAS tareas seguidas sin integrarse. Algo sistemático está fallando — mirá runs/ciclo.log"
+                break
+            fi ;;
     esac
 
     vueltas=$((vueltas + 1))
