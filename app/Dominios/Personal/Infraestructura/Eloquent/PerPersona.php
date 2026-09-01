@@ -9,8 +9,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * Persona operativa de campo (espec §4.2, tabla per_personas), alcance
  * mínimo para HU-01 (ADR 0011, extensión 26/8/2026, punto 6): id, nombre,
- * rol, base_id, activo. `tarifa_ha`/`sueldo_mensual` quedan diferidos a
- * devengos/planilla.
+ * rol, base_id, activo. `sueldo_mensual` (jefe/encargado) sigue diferido a
+ * planilla — fuera de alcance de HU-16.
+ *
+ * `tarifa_ha` (HU-16, tarea 16): agregada por `ALTER TABLE`, nullable y sin
+ * default de negocio — las `per_personas` de antes de esta migración no
+ * tienen tarifa. Qué pasa si una persona sin `tarifa_ha` termina siendo
+ * `piloto_id`/`auxiliar_id` de una sesión que se valida es una decisión de
+ * `Finanzas/Aplicacion/GenerarDevengosSesion.php`, no de este modelo — ver
+ * runs/16.md.
  *
  * `PerBase` es del mismo módulo (Personal), así que el `belongsTo` es
  * legítimo — lo que está prohibido es cruzar hacia modelos Eloquent de
@@ -19,6 +26,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $id
  * @property string $nombre
  * @property RolOperativoPersona $rol
+ * @property string|null $tarifa_ha
  * @property int|null $base_id
  * @property bool $activo
  */
@@ -30,6 +38,7 @@ class PerPersona extends ModeloDominio
     protected $fillable = [
         'nombre',
         'rol',
+        'tarifa_ha',
         'base_id',
         'activo',
     ];
@@ -39,6 +48,7 @@ class PerPersona extends ModeloDominio
     {
         return [
             'rol' => RolOperativoPersona::class,
+            'tarifa_ha' => 'decimal:2',
             'activo' => 'boolean',
         ];
     }
