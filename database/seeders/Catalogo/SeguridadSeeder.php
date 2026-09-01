@@ -53,6 +53,12 @@ class SeguridadSeeder extends Seeder
         // único permiso de lectura: el detalle con evidencias y los filtros
         // llegan con HU-15.
         'operaciones.trabajo.ver' => 'Ver el listado de trabajos y sesiones en el panel',
+        // HU-14 (tarea 14): cola de validación — aprobar o rechazar una
+        // sesión cerrada. Un único permiso gatea listar y decidir (mismo
+        // criterio que `distribucion.version.autorizar`): la policy
+        // validador≠piloto (invariante 4) rige la fila puntual, no la
+        // visibilidad de la pantalla.
+        'operaciones.sesion.validar' => 'Validar o rechazar sesiones cerradas desde el panel',
     ];
 
     /** @var list<string> Todo, salvo asignar_rol_dueno (diseño §2). */
@@ -70,16 +76,21 @@ class SeguridadSeeder extends Seeder
         // Administra órdenes y planificación (diseño §2): ve qué trabajos y
         // sesiones se cerraron en el panel, igual que el jefe de campo.
         'operaciones.trabajo.ver',
+        // HU-14: administra la operación diaria, así que también puede
+        // destrabar la cola de validación — mismo criterio que trabajo.ver.
+        'operaciones.sesion.validar',
     ];
 
     /**
      * Coordina la cuadrilla y valida sesiones ajenas (diseño §2) — necesita
-     * ver qué se cerró en el panel para poder coordinar la jornada siguiente.
+     * ver qué se cerró en el panel para poder coordinar la jornada siguiente,
+     * y (HU-14) aprobar o rechazar sesiones cerradas.
      *
      * @var list<string>
      */
     private const PERMISOS_JEFE_CAMPO = [
         'operaciones.trabajo.ver',
+        'operaciones.sesion.validar',
     ];
 
     public function run(): void

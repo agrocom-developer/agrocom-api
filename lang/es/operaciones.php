@@ -66,6 +66,10 @@ return [
         'estado' => [
             'abierto' => 'Abierto',
             'cerrado' => 'Cerrado',
+            // HU-14 (tarea 14): la sesión validada sigue apareciendo en esta
+            // sub-tabla de "Operación › Trabajos" (HU-05) — necesita su
+            // propia etiqueta para no quedar como clave cruda.
+            'validado' => 'Validado',
         ],
         // Catálogo espec §4.3.
         'motivo_cierre' => [
@@ -77,6 +81,30 @@ return [
             'fin_jornada' => 'Fin de jornada',
             'otro' => 'Otro',
         ],
+    ],
+
+    // Pantalla de panel "Operación › Sesiones" (HU-14, tarea 14): cola de
+    // validación — el jefe aprueba o rechaza cada sesión cerrada.
+    'sesiones_validacion' => [
+        'titulo' => 'Validación de sesiones',
+        'subtitulo' => 'Sesiones cerradas pendientes de aprobación del jefe de campo.',
+        'vacio' => 'No hay sesiones cerradas pendientes de validación.',
+        'sesion_titulo' => 'Sesión #:id',
+        'col_sesion' => 'Sesión',
+        'col_trabajo' => 'Trabajo',
+        'col_piloto' => 'Piloto',
+        'col_hectareas' => 'Hectáreas',
+        'col_fin' => 'Fin',
+        'col_motivo_cierre' => 'Motivo de cierre',
+        'validar' => 'Validar',
+        'rechazar' => 'Rechazar',
+        'motivo_label' => 'Motivo del rechazo',
+        'motivo_placeholder' => 'Por qué se rechaza esta sesión…',
+        // Invariante 4: el piloto de la sesión no puede decidir sobre su
+        // propio vuelo, ni para aprobar ni para rechazar.
+        'propia' => 'Sos el piloto de esta sesión: no podés validarla ni rechazarla.',
+        'validada' => 'Sesión validada correctamente.',
+        'rechazada' => 'Sesión rechazada: se registró la corrección con el motivo indicado.',
     ],
 
 ];

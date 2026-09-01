@@ -2,6 +2,7 @@
 
 use App\Dominios\Distribucion\Infraestructura\Http\Controllers\Web\VersionesApkController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\TrabajosController;
+use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\ValidacionSesionesController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\DashboardController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\DispositivosController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\OrganizacionController;
@@ -104,5 +105,19 @@ Route::middleware('auth:interno')->group(function () {
         // arriba.
         Route::get('/panel/trabajos', [TrabajosController::class, 'index'])
             ->name('panel.trabajos.index');
+
+        // HU-14 (tarea 14): cola de validación de sesiones cerradas.
+        // Permiso `operaciones.sesion.validar` verificado DENTRO del
+        // controlador contra el ROL ACTIVO, mismo criterio que las rutas de
+        // arriba; la policy validador≠piloto (invariante 4) se reverifica
+        // del lado del servidor en cada acción, no solo en el listado.
+        Route::get('/panel/sesiones/validacion', [ValidacionSesionesController::class, 'index'])
+            ->name('panel.sesiones.validacion.index');
+
+        Route::post('/panel/sesiones/{sesion}/validar', [ValidacionSesionesController::class, 'validar'])
+            ->name('panel.sesiones.validacion.validar');
+
+        Route::post('/panel/sesiones/{sesion}/rechazar', [ValidacionSesionesController::class, 'rechazar'])
+            ->name('panel.sesiones.validacion.rechazar');
     });
 });
