@@ -44,8 +44,10 @@ exista el módulo `Mezclas`).
 | 06 | Bitácora de auditoría transversal (invariante 9, ADR 0007) y su gate | `./bin/verify` = 0, y el gate falla ante un modelo de dominio sin bitácora | `app/Dominios/Compartido/**`, migraciones, `tests/**`, la fila de prefijo del ADR 0011 | no | 3 | **hecha** |
 | 07 | Regresión visual del panel con Playwright | `npx playwright test` = 0 con capturas de referencia versionadas | `playwright.config.*`, `tests/Visual/**`, `package.json` | no | 3 | **hecha** |
 | 08 | TE-06 (parcial) — pull de catálogo con cursor: órdenes, lotes y personas | `./bin/verify` = 0 | `app/Dominios/Sincronizacion/**`, `Contratos/` de Operaciones/Comercial/Personal, rutas de API, tests de feature | no | 3 | **hecha** (PR #40) |
-| 09 | TE-05 — `POST /api/sync` idempotente | `./bin/verify` = 0, con test de replay (mismo lote 10 veces, en orden y en desorden → base idéntica) | `app/Dominios/Sincronizacion/**`, migraciones, tests | **sí** | 5 | **implementada, sin mergear** — `runs/09.estado`=OK, veredicto APROBADO, pero el PR #46 sigue **en borrador** esperando revisión humana línea por línea (`CLAUDE.md`, "qué no delegar"). Mientras no se mergee, ninguna tarea nueva puede usar `ope_trabajos`/`ope_sesiones`: `bin/ciclo` crea toda rama desde `develop` al día, y esas tablas solo existen en `feature/sync-idempotente` |
-| 10 | HU-20 — `GET /api/version` y autorización de versiones del APK, sin hospedar el binario (vive en `agrocom-field`, ver regla de exclusión abajo) | `./bin/verify` = 0 | módulo nuevo `Distribucion` (`dis_`), `sec_action`/seed de permisos, rutas de API, pantalla del panel, tests | no | 3 | **hecha** (tarea 11 corrigió el alcance: la columna pasó de `ruta_apk`/disco `r2` a `url_apk`, la URL del release en `agrocom-field`) |
+| 09 | TE-05 — `POST /api/sync` idempotente | `./bin/verify` = 0, con test de replay (mismo lote 10 veces, en orden y en desorden → base idéntica) | `app/Dominios/Sincronizacion/**`, migraciones, tests | **sí** | 5 | **hecha** (PR #46, mergeado 1/9/2026 después de la revisión línea por línea; dejó dos hallazgos abiertos que cierra la tarea 12) |
+| 10 | HU-20 — `GET /api/version` y autorización de versiones del APK, sin hospedar el binario (vive en `agrocom-field`, ver regla de exclusión abajo) | `./bin/verify` = 0 | módulo nuevo `Distribucion` (`dis_`), `sec_action`/seed de permisos, rutas de API, pantalla del panel, tests | no | 3 | **hecha** (tarea 11 corrigió el alcance: la columna pasó de `ruta_apk`/disco `r2` a `url_apk`, la URL del release en `agrocom-field`; PR #47, mergeado 1/9/2026) |
+| 11 | Corrección de alcance de la 10: el binario del APK no se hospeda en este repo | `./bin/verify` = 0 | `Distribucion`, migración, pantalla del panel | no | 2 | **hecha** (PR #47) |
+| 12 | Los dos hallazgos de la revisión del motor de sync: `hectareas_declaradas` sin validar y `POST /api/sync` sin scoping por el operario del token | `./bin/verify` = 0, con un test de `hectareas_declaradas` no numérica y otro de `lote_id`/`piloto_id` ajenos al token | `Operaciones/Contratos/**`, `EscrituraSincronizacionEloquent`, `Sincronizacion/Aplicacion/**`, tests | **sí** | 2 | **siguiente** |
 
 ### Fuera del ciclo automático
 
@@ -70,19 +72,25 @@ lo corrigió.
 
 | Id | Por qué no califica |
 |---|---|
-| TE-01 (resto) | El repo `agrocom-field` no existe y staging está diferido (ADR 0010, el servidor no está definido) |
+| TE-01 (resto) | Staging sigue diferido (ADR 0010, el servidor no está definido). El repo `agrocom-field` ya existe pero es Flutter — fuera de este ciclo por la regla permanente de arriba, no porque no exista |
 | TE-02 | Spike de hardware: necesita el RC Agras en mano. Su entregable es un informe, no un exit code |
 | TE-04 | Base local drift + outbox: vive en `agrocom-field`, otro repo |
-| HU-04, HU-05 | La parte de API depende de `ope_trabajos`/`ope_sesiones` (TE-05), que solo existen en `feature/sync-idempotente` — el PR #46 sigue en borrador sin mergear. El resto del criterio se demuestra en la app y en el RC. Vuelve a calificar en cuanto el PR #46 se integre a `develop` |
-| HU-06, HU-07, HU-08, HU-09, TE-07 | Sprint 3 entero opera sobre `ope_sesiones` (condiciones, cierre, incidencias, evidencia) — mismo bloqueo que HU-04/05: la tabla no está en `develop` todavía |
-| HU-10, HU-11, HU-12, HU-13 | Dependen de CR-01 (`analisis_clasificacion.md:36,122`): si Agrocom prepara la mezcla o la prepara el cliente — decisión de negocio no tomada, "define el módulo entero" |
-| HU-14, HU-15 | Dependen de `ope_sesiones`/`ope_trabajos` (cola de validación, tablero de trabajos) — mismo bloqueo que HU-04/05 |
-| HU-16, HU-17, HU-18, HU-19 | Sprint 5 restante: devengos, actas, reporte técnico y alertas dependen todos de sesión/trabajo validados — mismo bloqueo |
+| HU-11, HU-12 | **Fuera de alcance desde el 1/9/2026** (CR-01 cerrada): Agrocom no prepara la mezcla ni dosifica. No están pendientes — están eliminadas del plan |
+| TE-02 | Spike de hardware: necesita el RC Agras en mano. Su entregable es un informe, no un exit code |
+| TE-07 (parte app) | Compresión y cola de subida viven en `agrocom-field`; el endpoint que recibe la evidencia sí califica |
 | TE-08 | Endurecimiento del sync con datos de las betas: no hay datos de beta real todavía, depende de que exista staging con tráfico |
 | TE-09, HU-21 | Ensayo general en campo con operarios reales y sus correcciones de adopción |
 | TE-10, TE-11 | Producción (VPS, HTTPS, respaldos, Sentry) y carga de datos maestros reales: dependen de infraestructura y de datos que no están |
-| TE-12 | Cierre de ruta crítica (matriz de permisos, seeds de producción, tag v1.0): prematuro mientras el grueso del plan siga bloqueado por lo de arriba |
+| TE-12 | Cierre de ruta crítica (matriz de permisos, seeds de producción, tag v1.0): prematuro mientras el grueso del plan siga sin hacer |
 | Reunión de cierre de la especificación | Es de negocio. `analisis_clasificacion.md` §7 tiene la agenda |
+
+**Los dos bloqueos que detuvieron el ciclo el 1/9/2026 están levantados.** El
+PR #46 se integró a `develop`: `ope_trabajos`/`ope_sesiones` existen y HU-04 a
+HU-19 vuelven a calificar todas. Y CR-01 se cerró: HU-10 y HU-13 quedan
+redefinidas sobre volumen de caldo, HU-11 y HU-12 desaparecen. El orden
+sugerido de acá en adelante: **12** (hallazgos del sync) → **HU-05** (esqueleto
+vertical del lado servidor) → **HU-14** y **HU-15** (las dos pantallas de panel
+que faltan) → **HU-16** (devengo al validar, crítica) → **HU-06** → **HU-10**.
 
 La regla que decide es la del punto 1 de
 [automatizacion_desarrollo.md](automatizacion_desarrollo.md): una tarea avanza
@@ -156,3 +164,8 @@ HU-04 a HU-19. HU-20 no depende de ninguno de los dos. En cuanto el PR #46 se
 mergee (revisión humana) o CR-01 se resuelva, la próxima planificación vuelve
 al orden normal del plan — no hace falta reordenar nada a mano, las filas
 bloqueadas se reevalúan solas en la próxima vuelta.
+
+**Detenida el 1/9/2026 tras la tarea 11.** HU-20 (10/11) era la última fila
+que no dependía de ninguno de los dos bloqueos. Con ella cerrada, cada HU/TE
+pendiente de los seis sprints depende del PR #46, de CR-01, de otro repo, o de
+campo/producción — ninguna califica. Ver `runs/DETENER` y `runs/11-plan.md`.

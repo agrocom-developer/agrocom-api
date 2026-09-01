@@ -237,19 +237,53 @@ Este es el activo real del sistema: defiende ante el reclamo de eficacia del agr
 
 ---
 
-## 7. Preparación de mezcla
+## 7. Recepción del caldo (lo prepara el cliente)
 
-Vive en la app del auxiliar. Es el punto donde una aplicación se arruina sin que nadie se dé cuenta hasta 15 días después.
+**Agrocom no prepara la mezcla y no quiere prepararla.** El caldo lo formula y
+lo prepara el cliente, con su propio ingeniero agrónomo. Agrocom recibe el
+caldo ya hecho y lo rocía. Esta es la decisión de negocio CR-01, cerrada el
+1/9/2026 por el dueño y confirmada en todas las entrevistas de campo.
 
-### 7.1 Cálculo automático
+### 7.1 Por qué el alcance termina acá
 
-```
-hectáreas por tanque = volumen de carga ÷ litros por hectárea de la orden
-cantidad de producto = dosis por hectárea × hectáreas por tanque
-                        (o dosis por 100 L × volumen ÷ 100, según la unidad)
-```
+Es un deslinde de responsabilidad, no una comodidad. Quien elige el producto,
+la dosis y la compatibilidad de la mezcla asume el resultado agronómico. Si la
+aplicación se hace y el producto no hace efecto, o el cultivo se daña, o falla
+la germinación, la causa está en la formulación — y la formulación no es de
+Agrocom. Tomar la preparación sería tomar esa responsabilidad junto con ella.
 
-Volúmenes de carga reales por modelo (no nominales):
+Por eso el sistema **no** modela: fórmula, receta, dosis por hectárea, cálculo
+de producto por tanque, checklist secuencial de incorporación, orden de mezcla,
+compatibilidad entre productos, ni triple lavado de envases. Nada de eso entra
+al alcance, ni siquiera como campo opcional: un dato de fórmula guardado acá
+sugiere una responsabilidad que Agrocom no tiene.
+
+### 7.2 Qué sí registra Agrocom
+
+Lo que necesita para cobrar y para demostrar qué hizo con lo que le dieron:
+
+- **Litros recibidos**: cuánto caldo entrega el cliente, cuándo y quién lo entregó.
+- **Litros consumidos por sesión**: qué se roció efectivamente en cada sesión.
+- **Sobrante**: cuánto quedó sin aplicar al cerrar, y que se devuelve al cliente.
+- **Retraso o rechazo por calidad del caldo**: si el vuelo se demoró, se
+  interrumpió o no se hizo porque el caldo llegó tarde, en mal estado, mal
+  filtrado o en cantidad insuficiente. Se registra con hora y motivo.
+
+Ese último punto es el que más protege: es la prueba de que la demora o el
+resultado no fueron del servicio de aplicación.
+
+### 7.3 Qué protege esto
+
+Cierra el circuito del volumen sin entrar en el del contenido: Agrocom puede
+demostrar cuántos litros recibió, cuántos aplicó sobre qué lote y cuántos
+devolvió, y que la diferencia cuadra. Sobre la composición de esos litros no
+opina, no calcula y no responde.
+
+### 7.4 Volúmenes de carga de la flota
+
+Esto sí es de Agrocom — es su equipo — y se usa para planificar cuántas
+recargas lleva un lote, no para calcular producto. Volúmenes reales, no
+nominales:
 
 | Dron | Carga habitual |
 |---|---|
@@ -257,33 +291,8 @@ Volúmenes de carga reales por modelo (no nominales):
 | T70 | 50 L |
 | T100 | 60 L |
 
-El T100 admite más, pero cargarlo al máximo devuelve baterías muy descargadas y calientes.
-
-### 7.2 Checklist secuencial
-
-Lista ordenada bloqueante: no se habilita el paso siguiente sin confirmar el anterior con la cantidad realmente incorporada. Orden por defecto (configurable y sobrescribible por el agrónomo en cada receta):
-
-1. Agua: 50–75% del volumen final, con agitación activa
-2. Corrector de pH / acidificante
-3. Antiespumante
-4. Formulaciones sólidas (WG, WP) pre-disueltas aparte
-5. Suspensiones concentradas (SC)
-6. Solubles (SL)
-7. Emulsionables (EC, EW, OD)
-8. Aceites, coadyuvantes y surfactantes
-9. Antideriva
-10. Completar agua hasta el volumen final
-
-### 7.3 Registros asociados
-
-- Foto de la mezcla o etiquetas como evidencia.
-- Confirmación de EPP al iniciar (guantes, protección respiratoria, antiparras, ropa impermeable).
-- Sobrantes: volumen, destino y triple lavado de envases.
-- Vinculación mezcla → recarga → sesión → lote.
-
-### 7.4 Qué protege esto
-
-Demuestra, tanque por tanque, que se incorporó lo que la orden pedía, en el orden y cantidad que pedía. El desvío entre cantidad calculada y real es control interno propio: si aparece de forma sistemática, hay un problema de proceso antes de que se convierta en reclamo.
+El T100 admite más, pero cargarlo al máximo devuelve baterías muy descargadas
+y calientes.
 
 ---
 
@@ -295,11 +304,9 @@ GET    /api/ordenes?lote_id=&estado=  Órdenes vigentes para el piloto
 POST   /api/trabajos                  Abrir trabajo (valida orden + condiciones)
 POST   /api/trabajos/{id}/sesiones    Abrir sesión (piloto + dron + ha acumulada)
 POST   /api/sesiones/{id}/condiciones Registrar condiciones
-POST   /api/mezclas                   Abrir mezcla (devuelve cantidades calculadas)
-POST   /api/mezclas/{id}/items/{n}    Confirmar paso con cantidad real
-POST   /api/mezclas/{id}/cerrar       Cierra mezcla, EPP y evidencia
-POST   /api/mezclas/{id}/sobrante     Registrar sobrante y destino
-POST   /api/sesiones/{id}/recargas    Registrar recarga + batería + mezcla
+POST   /api/trabajos/{id}/caldo       Registrar caldo recibido del cliente (litros)
+POST   /api/trabajos/{id}/caldo/sobrante  Sobrante devuelto al cerrar
+POST   /api/sesiones/{id}/recargas    Registrar recarga + batería + litros cargados
 POST   /api/sesiones/{id}/incidencias Registrar incidencia con evidencia
 POST   /api/sesiones/{id}/cerrar      Hectáreas + captura RC + motivo de cierre
 POST   /api/sesiones/{id}/validar     Validación (bloquea si validador = piloto de la sesión)
