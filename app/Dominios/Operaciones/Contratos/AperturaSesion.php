@@ -37,6 +37,7 @@ final readonly class AperturaSesion
             || ! self::esEntero($datos['secuencia'] ?? null)
             || ! self::esEntero($datos['piloto_id'] ?? null)
             || ! self::esEnteroOAusente($datos['auxiliar_id'] ?? null)
+            || ! self::esNumeroNoNegativoOAusente($datos['hectareas_declaradas'] ?? null)
             || ! self::esStringNoVacio($datos['inicio'] ?? null)
             || ! self::esStringOAusente($datos['fin'] ?? null)
         ) {
@@ -73,5 +74,23 @@ final readonly class AperturaSesion
     private static function esEnteroOAusente(mixed $valor): bool
     {
         return $valor === null || self::esEntero($valor);
+    }
+
+    /**
+     * Forma de un `DECIMAL` no negativo (invariante 6 de CLAUDE.md): entero,
+     * float o string numérica, nunca menor que cero. Ausente cuenta como
+     * válido — `intentarDesdeArreglo()` lo completa con `'0'`.
+     */
+    private static function esNumeroNoNegativoOAusente(mixed $valor): bool
+    {
+        if ($valor === null) {
+            return true;
+        }
+
+        if (is_int($valor) || is_float($valor)) {
+            return $valor >= 0;
+        }
+
+        return is_string($valor) && is_numeric($valor) && (float) $valor >= 0;
     }
 }
