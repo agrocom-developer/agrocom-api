@@ -54,13 +54,34 @@ final readonly class CursorCatalogo
 
         $posiciones = [];
         foreach (self::SECCIONES as $seccion) {
-            $fila = $datos[$seccion] ?? null;
-            $posiciones[$seccion] = (is_array($fila) && isset($fila['u'], $fila['id']) && is_scalar($fila['u']) && is_scalar($fila['id']))
-                ? new PosicionCursor((string) $fila['u'], (int) $fila['id'])
-                : null;
+            $posiciones[$seccion] = self::posicionDesdeFila($datos[$seccion] ?? null);
         }
 
         return new self($posiciones);
+    }
+
+    /**
+     * Una fila con forma correcta pero `u` no parseable como fecha (p. ej. un
+     * cursor corrupto que sobrevivió al `base64`/`json` decode) se descarta
+     * igual que una fila mal formada: "sin posición" para esa sección, nunca
+     * un error. Sin esta validación, un `u` corrupto llegaría intacto hasta
+     * `Carbon::parse()` en los adaptadores Eloquent y rompería la
+     * sincronización con un 500 — exactamente lo que este value object
+     * declara que no debe pasar.
+     */
+    private static function posicionDesdeFila(mixed $fila): ?PosicionCursor
+    {
+        if (! is_array($fila) || ! isset($fila['u'], $fila['id']) || ! is_scalar($fila['u']) || ! is_scalar($fila['id'])) {
+            return null;
+        }
+
+        try {
+            new \DateTimeImmutable((string) $fila['u']);
+        } catch (\Exception) {
+            return null;
+        }
+
+        return new PosicionCursor((string) $fila['u'], (int) $fila['id']);
     }
 
     public function posicion(string $seccion): ?PosicionCursor

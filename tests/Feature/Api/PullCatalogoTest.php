@@ -75,6 +75,15 @@ it('un cursor no decodificable se trata como primera sincronización, no como er
         ->and($respuesta->json('lotes'))->toHaveCount(3);
 });
 
+it('un cursor con `u` no parseable como fecha se trata como primera sincronización para esa sección, no como error', function () {
+    $cursor = base64_encode(json_encode(['ordenes' => ['u' => 'no-es-fecha', 'id' => 1]]));
+
+    $respuesta = $this->getJson('/api/sync/catalogo?desde='.$cursor)->assertOk();
+
+    expect($respuesta->json('ordenes'))->toHaveCount(1)
+        ->and($respuesta->json('lotes'))->toHaveCount(3);
+});
+
 it('dos pulls sucesivos con el cursor del primero no repiten ningún registro', function () {
     crearPersonaDemo();
 
