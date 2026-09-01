@@ -3,6 +3,7 @@
 namespace App\Dominios\Seguridad\Infraestructura\Eloquent;
 
 use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
+use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
 use App\Dominios\Seguridad\Aplicacion\AsignarRolesUsuario;
 use App\Dominios\Seguridad\Aplicacion\EmitirTokenDispositivo;
 use App\Dominios\Seguridad\Dominio\Excepciones\EmisionDirectaDeTokenNoPermitida;
@@ -70,6 +71,16 @@ class SecUser extends ModeloDominio implements AuthenticatableContract
 
     /** @use HasFactory<SecUserFactory> */
     use HasFactory;
+
+    /**
+     * Bitácora de auditoría transversal (ADR 0007, invariante 9 de
+     * CLAUDE.md): la cuenta lleva la misma columna `state` que los catálogos
+     * de rol/permiso (activa/desactiva el acceso de todo el sistema), así
+     * que la regla de `tests/Unit/BitacoraAuditoriaTest.php` la exige acá
+     * también. `password` nunca entra al antes/después: ver
+     * `BitacoraObserver::COLUMNAS_SENSIBLES`.
+     */
+    use RegistraBitacora;
 
     protected $table = 'sec_user';
 

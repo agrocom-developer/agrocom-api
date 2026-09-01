@@ -3,6 +3,7 @@
 namespace App\Dominios\Seguridad\Infraestructura\Eloquent;
 
 use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
+use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
@@ -11,6 +12,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * `encargado_operaciones`, `dueno`. Un `SecUser` puede tener varios roles
  * vía `sec_user_role` — multi-rol con un único login.
  *
+ * Lleva {@see RegistraBitacora} (ADR 0007, invariante 9 de CLAUDE.md): es
+ * catálogo de control de acceso, con la columna `state` que activa/desactiva
+ * el rol para todo el sistema.
+ *
  * @property int $id
  * @property string $name
  * @property string $description
@@ -18,6 +23,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class SecRole extends ModeloDominio
 {
+    use RegistraBitacora;
+
     protected $table = 'sec_role';
 
     /** @var list<string> */
