@@ -10,6 +10,7 @@ use App\Dominios\Operaciones\Dominio\EstadoSesion;
 use App\Dominios\Operaciones\Dominio\EstadoTrabajo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\SesionRechazo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
 use App\Dominios\Personal\Dominio\RolOperativoPersona;
 use App\Dominios\Personal\Infraestructura\Eloquent\PerPersona;
@@ -21,12 +22,19 @@ use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUserRole;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUsuarioInterno;
 use Database\Seeders\Catalogo\CatalogoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 
 /*
  * `GET /panel/trabajos` (HU-05, tarea 13): pantalla mínima de Operaciones —
  * el jefe ve que algo se cerró. Gateada por `operaciones.trabajo.ver` (CA
  * obligatorio: sin el permiso, 403). Mismo patrón que
  * tests/Feature/Distribucion/VersionesApkPanelTest.php.
+ *
+ * HU-15 (tarea 15): se extiende con filtros (estado de tablero, lote,
+ * orden), paginado y el detalle de un trabajo (`GET
+ * /panel/trabajos/{trabajo}`) — mismos helpers de autenticación, más
+ * `crearTrabajo()` (fixture parametrizable, en vez de duplicar
+ * `trabajoCerradoDemo()` para cada combinación de filtro).
  */
 
 uses(RefreshDatabase::class);
@@ -136,4 +144,264 @@ it('publica el ítem de menú de trabajos gateado por operaciones.trabajo.ver', 
 
     expect($itemMenu->ruta)->toBe('panel.trabajos.index')
         ->and($itemMenu->permission_id)->toBe($idPermiso);
+});
+
+/*
+ * HU-15 (tarea 15): tablero — filtros, paginado y detalle.
+ */
+
+/**
+ * Fixture parametrizable: crea la cadena completa (Cliente → Campo → Lote →
+ * Contrato → OrdenAplicacion → Trabajo, con sesiones opcionales) — las FKs
+ * son reales, no hay atajo. `$atributosTrabajo` acepta `estado` (default
+ * Cerrado) y `nro_aplicacion` (default 1); `$sesiones` es una lista de
+ * arreglos de atributos de `Sesion` (fusionados sobre un default "cerrada,
+ * completa" — solo se sobreescribe lo que el test necesita, p. ej. `estado`
+ * o `anulada_en`).
+ *
+ * @param  array<string, mixed>  $atributosTrabajo
+ * @param  list<array<string, mixed>>  $sesiones
+ */
+function crearTrabajo(array $atributosTrabajo = [], array $sesiones = []): Trabajo
+{
+    $cliente = Cliente::create(['razon_social' => 'Cliente panel trabajos '.Str::random(6)]);
+    $campo = Campo::create(['cliente_id' => $cliente->id, 'nombre' => 'Campo panel '.Str::random(6)]);
+    $lote = Lote::create([
+        'campo_id' => $campo->id,
+        'codigo' => 'L-'.Str::random(6),
+        'hectareas' => '40.00',
+    ]);
+    $contrato = Contrato::create([
+        'cliente_id' => $cliente->id,
+        'hectareas_contratadas' => '40.00',
+        'aplicaciones_previstas' => 1,
+        'precio_ha' => '10.00',
+        'monto_total' => '400.00',
+        'fecha_inicio' => '2026-09-01',
+        'estado' => EstadoContrato::Vigente,
+    ]);
+
+    $nroAplicacion = $atributosTrabajo['nro_aplicacion'] ?? 1;
+    $orden = OrdenAplicacion::create([
+        'contrato_id' => $contrato->id,
+        'lote_id' => $lote->id,
+        'nro_aplicacion' => $nroAplicacion,
+        'litros_ha' => '10.00',
+        'fecha_emision' => '2026-09-01',
+        'estado' => EstadoOrdenAplicacion::Vigente,
+    ]);
+
+    $estadoTrabajo = $atributosTrabajo['estado'] ?? EstadoTrabajo::Cerrado;
+
+    $trabajo = Trabajo::create([
+        'uuid_cliente' => (string) Str::uuid(),
+        'orden_id' => $orden->id,
+        'lote_id' => $lote->id,
+        'nro_aplicacion' => $nroAplicacion,
+        'estado' => $estadoTrabajo,
+        'inicio' => '2026-09-01T09:00:00-04:00',
+        'fin' => $estadoTrabajo === EstadoTrabajo::Cerrado ? '2026-09-01T12:00:00-04:00' : null,
+        'cierre_uuid_cliente' => $estadoTrabajo === EstadoTrabajo::Cerrado ? (string) Str::uuid() : null,
+    ]);
+
+    foreach ($sesiones as $atributosSesion) {
+        $piloto = PerPersona::create(['nombre' => 'Piloto '.Str::random(6), 'rol' => RolOperativoPersona::Piloto, 'activo' => true]);
+
+        Sesion::create([
+            'uuid_cliente' => (string) Str::uuid(),
+            'trabajo_id' => $trabajo->id,
+            'secuencia' => 1,
+            'piloto_id' => $piloto->id,
+            'hectareas_declaradas' => '12.00',
+            'estado' => EstadoSesion::Cerrado,
+            'inicio' => '2026-09-01T09:05:00-04:00',
+            'fin' => '2026-09-01T10:05:00-04:00',
+            'motivo_cierre' => 'completado',
+            'cierre_uuid_cliente' => (string) Str::uuid(),
+            ...$atributosSesion,
+        ]);
+    }
+
+    return $trabajo;
+}
+
+it('el filtro por estado abierto devuelve solo los trabajos abiertos', function () {
+    $abierto = crearTrabajo(['estado' => EstadoTrabajo::Abierto]);
+    $cerrado = crearTrabajo(['estado' => EstadoTrabajo::Cerrado], [['estado' => EstadoSesion::Cerrado]]);
+
+    [$jefe, $idRol] = usuarioConRolParaTrabajos('jefe.filtro.abierto', 'jefe_campo');
+    entrarAlPanelParaTrabajos($jefe, $idRol);
+
+    $this->get('/panel/trabajos?estado=abierto')
+        ->assertOk()
+        ->assertViewHas('trabajos', fn ($trabajos) => $trabajos->pluck('id')->all() === [$abierto->id]
+            && ! $trabajos->pluck('id')->contains($cerrado->id));
+});
+
+it('el filtro por estado cerrado devuelve solo los cerrados con alguna sesión vigente sin validar', function () {
+    $cerrado = crearTrabajo(['estado' => EstadoTrabajo::Cerrado], [['estado' => EstadoSesion::Cerrado]]);
+    $validado = crearTrabajo(['estado' => EstadoTrabajo::Cerrado], [['estado' => EstadoSesion::Validado]]);
+    $abierto = crearTrabajo(['estado' => EstadoTrabajo::Abierto]);
+
+    [$jefe, $idRol] = usuarioConRolParaTrabajos('jefe.filtro.cerrado', 'jefe_campo');
+    entrarAlPanelParaTrabajos($jefe, $idRol);
+
+    $this->get('/panel/trabajos?estado=cerrado')
+        ->assertOk()
+        ->assertViewHas('trabajos', fn ($trabajos) => $trabajos->pluck('id')->all() === [$cerrado->id]);
+});
+
+it('el filtro por estado validado devuelve solo trabajos con TODAS sus sesiones vigentes validadas', function () {
+    $validado = crearTrabajo(['estado' => EstadoTrabajo::Cerrado], [['estado' => EstadoSesion::Validado]]);
+    $parcial = crearTrabajo(['estado' => EstadoTrabajo::Cerrado], [
+        ['estado' => EstadoSesion::Validado],
+        ['estado' => EstadoSesion::Cerrado],
+    ]);
+
+    [$jefe, $idRol] = usuarioConRolParaTrabajos('jefe.filtro.validado', 'jefe_campo');
+    entrarAlPanelParaTrabajos($jefe, $idRol);
+
+    $this->get('/panel/trabajos?estado=validado')
+        ->assertOk()
+        ->assertViewHas('trabajos', fn ($trabajos) => $trabajos->pluck('id')->all() === [$validado->id]
+            && ! $trabajos->pluck('id')->contains($parcial->id));
+});
+
+it('un trabajo cerrado sin ninguna sesión vigente cuenta como cerrado, nunca como validado', function () {
+    $sinSesiones = crearTrabajo(['estado' => EstadoTrabajo::Cerrado]);
+    $soloRechazada = crearTrabajo(['estado' => EstadoTrabajo::Cerrado], [
+        ['estado' => EstadoSesion::Cerrado, 'anulada_en' => now()],
+    ]);
+
+    [$jefe, $idRol] = usuarioConRolParaTrabajos('jefe.filtro.sinvigentes', 'jefe_campo');
+    entrarAlPanelParaTrabajos($jefe, $idRol);
+
+    $this->get('/panel/trabajos?estado=validado')
+        ->assertOk()
+        ->assertViewHas('trabajos', fn ($trabajos) => $trabajos->isEmpty());
+
+    $this->get('/panel/trabajos?estado=cerrado')
+        ->assertOk()
+        ->assertViewHas('trabajos', fn ($trabajos) => $trabajos->pluck('id')->sort()->values()->all()
+            === collect([$sinSesiones->id, $soloRechazada->id])->sort()->values()->all());
+});
+
+it('una sesión rechazada no impide que el trabajo cuente como validado', function () {
+    $trabajo = crearTrabajo(['estado' => EstadoTrabajo::Cerrado], [
+        ['estado' => EstadoSesion::Validado],
+        ['estado' => EstadoSesion::Cerrado, 'anulada_en' => now()],
+    ]);
+
+    [$jefe, $idRol] = usuarioConRolParaTrabajos('jefe.filtro.rechazada', 'jefe_campo');
+    entrarAlPanelParaTrabajos($jefe, $idRol);
+
+    $this->get('/panel/trabajos?estado=validado')
+        ->assertOk()
+        ->assertViewHas('trabajos', fn ($trabajos) => $trabajos->pluck('id')->all() === [$trabajo->id]);
+});
+
+it('el filtro por lote devuelve solo los trabajos de ese lote', function () {
+    $trabajoA = crearTrabajo(['estado' => EstadoTrabajo::Abierto]);
+    $trabajoB = crearTrabajo(['estado' => EstadoTrabajo::Abierto]);
+
+    [$jefe, $idRol] = usuarioConRolParaTrabajos('jefe.filtro.lote', 'jefe_campo');
+    entrarAlPanelParaTrabajos($jefe, $idRol);
+
+    $this->get("/panel/trabajos?lote_id={$trabajoA->lote_id}")
+        ->assertOk()
+        ->assertViewHas('trabajos', fn ($trabajos) => $trabajos->pluck('id')->all() === [$trabajoA->id]
+            && ! $trabajos->pluck('id')->contains($trabajoB->id));
+});
+
+it('el filtro por orden de aplicación devuelve solo los trabajos de esa orden', function () {
+    $trabajoA = crearTrabajo(['estado' => EstadoTrabajo::Abierto]);
+    $trabajoB = crearTrabajo(['estado' => EstadoTrabajo::Abierto]);
+
+    [$jefe, $idRol] = usuarioConRolParaTrabajos('jefe.filtro.orden', 'jefe_campo');
+    entrarAlPanelParaTrabajos($jefe, $idRol);
+
+    $this->get("/panel/trabajos?orden_id={$trabajoA->orden_id}")
+        ->assertOk()
+        ->assertViewHas('trabajos', fn ($trabajos) => $trabajos->pluck('id')->all() === [$trabajoA->id]
+            && ! $trabajos->pluck('id')->contains($trabajoB->id));
+});
+
+it('pagina el listado de trabajos', function () {
+    collect(range(1, 16))->each(fn () => crearTrabajo(['estado' => EstadoTrabajo::Abierto]));
+
+    [$jefe, $idRol] = usuarioConRolParaTrabajos('jefe.paginado', 'jefe_campo');
+    entrarAlPanelParaTrabajos($jefe, $idRol);
+
+    $this->get('/panel/trabajos')
+        ->assertOk()
+        ->assertViewHas('trabajos', fn ($trabajos) => $trabajos->count() === 15 && $trabajos->total() === 16);
+
+    $this->get('/panel/trabajos?page=2')
+        ->assertOk()
+        ->assertViewHas('trabajos', fn ($trabajos) => $trabajos->count() === 1);
+});
+
+it('el detalle de un trabajo muestra sus sesiones asociadas', function () {
+    $trabajo = crearTrabajo(['estado' => EstadoTrabajo::Cerrado], [
+        ['estado' => EstadoSesion::Cerrado, 'hectareas_declaradas' => '12.00'],
+    ]);
+    $sesion = $trabajo->sesiones()->sole();
+
+    [$jefe, $idRol] = usuarioConRolParaTrabajos('jefe.detalle', 'jefe_campo');
+    entrarAlPanelParaTrabajos($jefe, $idRol);
+
+    $this->get("/panel/trabajos/{$trabajo->id}")
+        ->assertOk()
+        ->assertViewHas('trabajo', fn ($trabajoVista) => $trabajoVista->sesiones->pluck('id')->all() === [$sesion->id])
+        ->assertSee(__('operaciones.trabajos.sesion_piloto', ['id' => $sesion->piloto_id]))
+        ->assertSee(__('operaciones.trabajos.detalle_evidencias_vacio'));
+});
+
+it('el detalle de un trabajo sin sesiones no rompe y muestra la ausencia con normalidad', function () {
+    $trabajo = crearTrabajo(['estado' => EstadoTrabajo::Abierto]);
+
+    [$jefe, $idRol] = usuarioConRolParaTrabajos('jefe.detalle.vacio', 'jefe_campo');
+    entrarAlPanelParaTrabajos($jefe, $idRol);
+
+    $this->get("/panel/trabajos/{$trabajo->id}")
+        ->assertOk()
+        ->assertSee(__('operaciones.trabajos.sesiones_vacio'))
+        ->assertSee(__('operaciones.trabajos.detalle_evidencias_vacio'));
+});
+
+it('el detalle muestra que una sesión fue rechazada, con su motivo, sin tocar la fila original', function () {
+    $trabajo = crearTrabajo(['estado' => EstadoTrabajo::Cerrado], [
+        ['estado' => EstadoSesion::Cerrado, 'anulada_en' => now()],
+    ]);
+    $sesion = $trabajo->sesiones()->sole();
+    $jefeQueRechazo = PerPersona::create(['nombre' => 'Jefe rechazo', 'rol' => RolOperativoPersona::JefeCampo, 'activo' => true]);
+
+    SesionRechazo::create([
+        'anula_a_id' => $sesion->id,
+        'motivo' => 'Hectáreas informadas no coinciden con el vuelo real',
+        'rechazado_por' => $jefeQueRechazo->id,
+    ]);
+
+    [$jefe, $idRol] = usuarioConRolParaTrabajos('jefe.detalle.rechazo', 'jefe_campo');
+    entrarAlPanelParaTrabajos($jefe, $idRol);
+
+    $this->get("/panel/trabajos/{$trabajo->id}")
+        ->assertOk()
+        ->assertSee(__('operaciones.trabajos.sesion_rechazada'))
+        ->assertSee('Hectáreas informadas no coinciden con el vuelo real');
+
+    // La fila original de `Sesion` no se tocó (invariante 2): sigue
+    // `cerrado`, con sus columnas de negocio intactas — solo la marca
+    // `anulada_en` distingue el rechazo.
+    expect($sesion->refresh()->estado)->toBe(EstadoSesion::Cerrado)
+        ->and($sesion->anulada_en)->not->toBeNull();
+});
+
+it('sin el permiso operaciones.trabajo.ver, el detalle de un trabajo responde 403', function () {
+    $trabajo = crearTrabajo(['estado' => EstadoTrabajo::Cerrado], [['estado' => EstadoSesion::Cerrado]]);
+
+    [$piloto, $idRol] = usuarioConRolParaTrabajos('piloto.detalle.403', 'piloto');
+    entrarAlPanelParaTrabajos($piloto, $idRol);
+
+    $this->get("/panel/trabajos/{$trabajo->id}")->assertForbidden();
 });
