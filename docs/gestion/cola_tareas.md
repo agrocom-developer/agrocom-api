@@ -28,8 +28,8 @@ tabla es su versión legible, con el porqué de cada fila.
 | 04 | Aduana de la invariante 7: ninguna asignación de estado fuera del servicio de estados | `./bin/verify` = 0, y el gate falla al inyectarle una asignación suelta | `tests/Unit/**`, `app/Dominios/Compartido/**` | no | 3 | **hecha** |
 | 05 | Rescate del dashboard: integrar `feature/dashboard-agro`, cuyo PR se cerró sin mergear | `./bin/verify` = 0 y el PR abierto fuera de borrador | la rama `feature/dashboard-agro`, `docs/gestion/plan_dashboard_rediseno.md` | no | 3 | **hecha** |
 | 06 | Bitácora de auditoría transversal (invariante 9, ADR 0007) y su gate | `./bin/verify` = 0, y el gate falla ante un modelo de dominio sin bitácora | `app/Dominios/Compartido/**`, migraciones, `tests/**`, la fila de prefijo del ADR 0011 | no | 3 | **hecha** |
-| 07 | Regresión visual del panel con Playwright | `npx playwright test` = 0 con capturas de referencia versionadas | `playwright.config.*`, `tests/Visual/**`, `package.json` | no | 3 | siguiente |
-| 08 | TE-06 — pull de catálogo con cursor | `./bin/verify` = 0 | `app/Dominios/**`, rutas de API, tests de feature | no | 3 | encolada |
+| 07 | Regresión visual del panel con Playwright | `npx playwright test` = 0 con capturas de referencia versionadas | `playwright.config.*`, `tests/Visual/**`, `package.json` | no | 3 | **hecha** |
+| 08 | TE-06 (parcial) — pull de catálogo con cursor: órdenes, lotes y personas | `./bin/verify` = 0 | `app/Dominios/Sincronizacion/**`, `Contratos/` de Operaciones/Comercial/Personal, rutas de API, tests de feature | no | 3 | siguiente |
 | 09 | TE-05 — `POST /api/sync` idempotente | `./bin/verify` = 0, con test de replay (mismo lote 10 veces, en orden y en desorden → base idéntica) | `app/Dominios/Sincronizacion/**`, migraciones, tests | **sí** | 3 | encolada |
 
 ### Condicionadas — todavía no tienen sobre qué correr
@@ -73,3 +73,14 @@ del turno desatendido a todo el frontend.
 implemente y lo deje en un PR en borrador con su test de replay en verde es
 útil: el trabajo mecánico queda hecho y la revisión humana empieza sobre algo
 que ya pasa la cascada. Que se mergee solo, no.
+
+**08 recorta el alcance de TE-06.** `plan_sprints.md` describe TE-06 como el
+pull de cinco catálogos (órdenes, recetas, productos, lotes, personas), pero
+`receta` y `producto` no tienen migración ni módulo dueño: `Mezclas`
+(prefijo `mez_`) está reservado en el ADR 0011 desde que se fijaron los
+prefijos, pero la carpeta nunca se creó — no le toca el turno hasta el
+sprint 4 (HU-10 en adelante). Meter la creación de `Mezclas` en la misma
+tarea que el endpoint de pull duplicaría el tamaño de la sesión y mezclaría
+modelo de datos nuevo con un endpoint de sync. La 08 cubre las tres entidades
+que sí existen (órdenes, lotes, personas) — suficiente para lo que HU-04
+necesita — y deja anotado que el pull se extiende cuando `Mezclas` exista.
