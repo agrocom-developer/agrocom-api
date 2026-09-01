@@ -1,6 +1,6 @@
 # Estado y continuidad del proyecto
 
-**Última actualización: 2026-08-27.** Este documento no es la especificación (que es estable) ni el plan de sprints (que es la estrategia global con HU y fases): es la bitácora de continuidad entre iteraciones — qué se avanzó, qué falta, y qué leer primero para no releer todo `docs/` de cero en cada sesión nueva. Lo mantiene el agente `memoria-contexto` (`.claude/agents/memoria-contexto.md`) al cierre de cada sesión de trabajo relevante.
+**Última actualización: 2026-09-01.** Este documento no es la especificación (que es estable) ni el plan de sprints (que es la estrategia global con HU y fases): es la bitácora de continuidad entre iteraciones — qué se avanzó, qué falta, y qué leer primero para no releer todo `docs/` de cero en cada sesión nueva. Lo mantiene el agente `memoria-contexto` (`.claude/agents/memoria-contexto.md`) al cierre de cada sesión de trabajo relevante.
 
 ## Cómo usar este documento
 
@@ -21,7 +21,28 @@ Al empezar una iteración nueva: leé este documento completo primero (es corto)
 
 ## Fase actual
 
-**Sprint 1 en curso (27/8/2026).** TE-01 parcial: el esqueleto Laravel de `agrocom-api` existe y la suite (Pint + Larastan + Pest) corre en CI; de TE-01 faltan el repo `agrocom-field` (Flutter) y el entorno staging (diferido — ADR 0010, el servidor no está definido). TE-03 (migraciones del núcleo comercial) **hecho** — PR #9, commit `02c6927`. TE-02 (spike de hardware en el RC real) sigue pendiente. HU-01 (usuarios multi-rol) **completamente hecho** — PR #10 en automatización (feature/usuarios-multirol → develop, auto-merge en verde): módulos `Personal`/`Seguridad` con sus migraciones y modelos, caso de uso `AsignarRolesUsuario`, seeder de catálogo, `App\Models\User` eliminado e íntegramente reemplazado por `SecUser`, decisión de "rol activo por sesión" documentada como extensión de ADR 0004 (cada usuario elige un rol al iniciar sesión, cambiable sin volver a loguear), 86 tests en verde. Falta el panel (HU-02: login, elección de rol, menú según rol) y los endpoints/tokens (HU-03).
+**Sprint 1 cerrado en lo que es de este repo; sprint 2 en curso (1/9/2026).**
+
+| Id | Qué | Estado |
+|---|---|---|
+| TE-01 | Esqueleto, CI, GitFlow, `CLAUDE.md` | **hecho** en `agrocom-api`. Faltan el repo `agrocom-field` (Flutter) y staging (diferido, ADR 0010: el servidor no está definido) |
+| TE-02 | Spike de hardware en el RC real | **pendiente**, sin dependencias — necesita el RC en mano |
+| TE-03 | Migraciones del núcleo comercial | **hecho** (PR #9) |
+| HU-01 | Usuarios multi-rol con un solo login | **hecho** (PR #10) |
+| HU-02 | Panel: login, rol activo, menú dinámico, tema | **hecho** (PR #14, más las vueltas de diseño #15 a #20 y #31) |
+| HU-03 | Token Sanctum por dispositivo | **hecho** (PR #26) |
+| TE-04 | Base local drift + outbox | **pendiente** — es de `agrocom-field`, no de este repo |
+| TE-05 | `POST /api/sync` idempotente | **pendiente**, próxima en la cola (tarea 09, crítica) |
+| TE-06 | Pull de catálogo con cursor | **parcial** (PR #40): órdenes, lotes y personas. Recetas y productos esperan al módulo `Mezclas`, que no existe |
+| HU-04 | Órdenes vigentes offline | **pendiente** — depende de TE-06 (ya cubierto) y del lado app |
+| HU-05 | Esqueleto vertical | **pendiente** |
+
+Además, fuera del plan de sprints, se construyó la automatización del
+desarrollo: `bin/verify`, `auto-merge.yml`, los guardarraíles de `.claude/hooks/`,
+las skills por área y el ciclo continuo `bin/ciclo`. Está descrita en
+[automatizacion_desarrollo.md](automatizacion_desarrollo.md) y las invariantes 7
+y 9 ya tienen gate propio (`tests/Unit/TransicionesEstadoTest.php`,
+`tests/Unit/BitacoraAuditoriaTest.php`).
 
 ## Avanzado hasta ahora
 
@@ -31,24 +52,43 @@ Al empezar una iteración nueva: leé este documento completo primero (es corto)
 - **Esqueleto Laravel (26/8/2026)**: Laravel 13 sobre PHP 8.3 (`composer.lock` resuelto con `config.platform.php = 8.3` para cuadrar con el Dockerfile y CI), Pest 4 + Pint + Larastan nivel 6 (`phpstan.neon`), `.env.example` completo con las decisiones vigentes (PostgreSQL, colas/sesión/caché en BD, disco `r2` en `config/filesystems.php`, locale `es`), descripciones de tests en español. Suite verificada dentro del contenedor Docker y migraciones corridas contra el Postgres 16 del compose.
 - **Entorno de desarrollo local con Docker** (ADR 0010): `docker-compose.yml` + `Dockerfile` + `.dockerignore`, reemplaza MAMP.
 - **Doce subagentes especializados** en `.claude/agents/`: los diez por capa (arquitectura, backend, frontend, design-ui, modelo-datos, estandares-programacion, distribucion, modulos-roles, negocio, memoria-contexto) más `orquestador` y `validador`. Cada uno con el modelo asignado según si su trabajo es de ejecución/instrucciones (modelo económico) o de juicio/coordinación (modelo capaz) — ver `.claude/agents/README.md`.
-- **Convención de commits sin coautoría de IA**: desde el commit `084b732` en adelante, los mensajes de commit no llevan el trailer `Co-Authored-By: Claude...`. Los commits anteriores a esa fecha sí lo llevan y quedan así — decisión explícita del usuario de no reescribir historia ya pusheada.
+- **Convención de commits sin coautoría de IA**: desde el commit `084b732` en adelante, los mensajes de commit no llevan el trailer `Co-Authored-By: Claude...`. Los commits anteriores a esa fecha sí lo llevan y quedan así — decisión explícita del usuario de no reescribir historia ya pusheada. **Desde el 1/9/2026 la regla es mecánica**: `.claude/settings.json` declara `"includeCoAuthoredBy": false`. Hasta entonces dependía de que cada sesión se acordara, y se filtraba igual — el squash de GitHub arrastra el trailer de cualquier commit que lo traiga, así que varios merges a `develop` lo llevan puesto.
 - **Respuestas de campo procesadas (26/8/2026)**: los 5 CSV del banco de preguntas clasificados en CONFIRMADO/CORREGIDO/DESCUBIERTO con matriz de límites (`docs/gestion/respuestas_campo/analisis_clasificacion.md`), 7 documentos de políticas por rol (`docs/negocio/politicas/` — incluye dueño y cliente, derivados), flujo base y excepciones, automatización/sistematización, alcance y objetivos, requerimientos de sistema (RF/RNF) e insumos para el modelo de datos. Hallazgos mayores: la mezcla la prepara hoy el cliente (CR-01), las pausas atribuibles nunca se registran (DS-01), el actor "encargado de la propiedad" (DS-02), límites de clima como parámetros por contrato, y T30 en la flota real. Supuestos §16 cerrados: ±5% aceptado, firma en cualquier formato, vuelo nocturno confirmado.
 - **Auditoría SOLID/Clean Code de HU-01 y TE-03 (27/8/2026)**, hecha por `estandares-programacion` a pedido explícito del usuario (quedó sin argumentar al tomar las decisiones de código, y quería la constancia antes de seguir a HU-02): **cumple**, con evidencia archivo:línea para los 5 principios SOLID y para las convenciones de CLAUDE.md — casos de uso con responsabilidad única (`AsignarRolesUsuario`, `ListarOrdenesAplicacion`), controladores delgados (`OrdenAplicacionController`, comentario explícito "ninguna regla de negocio vive acá"), subtipos sin romper el contrato del padre (`SecUsuarioInterno`/`SecUsuarioCliente` sobre `SecUser`), inyección de dependencias y cero relaciones Eloquent cruzando módulos (solo FK por ID). Dos huecos reales pero no causados por mal diseño, sino por alcance aún no llegado — ver gaps abajo. No bloquean HU-02 (login/menú/tema no tocan estados de contrato/orden ni mutan dinero/hectáreas).
 
 ## Ramas y remoto (estado real, no solo local)
 
-- `master`: en GitHub, sin cambios desde el commit inicial.
-- `develop`: en GitHub, al día — incluye los merges de los PR #1 a #9 (el #8 corrige `.env.example` para Docker, el #9 es TE-03: núcleo comercial).
-- `feature/usuarios-multirol`: rama local que ya existe remoto en GitHub; PR #10 abierto (`feature/usuarios-multirol` → `develop`, auto-merge configurado, CI en ejecución). Commits en esta rama en orden: `ac5bd53` (ADR 0011 extendido), `e34512f` (módulos Personal/Seguridad + migraciones), `54b5cbe` (reemplazo User → SecUser), `c551182` (limpieza código muerto), `d8fa254` (documenta rol activo en ADR 0004/CLAUDE.md), `738961c` (logos oficiales de marca).
-- `gh` autenticado como `Angello-27` (permisos `push`/`pull`/`triage`, sin `admin`) — suficiente para todo el flujo de PRs y Actions; **no** suficiente para branch protection ni settings del repo.
+- `master`: en GitHub, sin cambios desde el commit inicial. `develop` nunca se
+  mergeó a `master` todavía — no hay despliegue, así que no hubo motivo.
+- `develop`: al día, con los PR #1 a #41 integrados.
+- **Todas las `feature/*` y `fix/*` anteriores están integradas.** Se verificó
+  una por una con `bin/limpiar-ramas`: PR mergeado, o ancestro de una rama cuyo
+  PR entró (el caso de `feature/panel-admin`, cuyo trabajo viajó dentro del
+  PR #18 porque `feature/layout-panel` nace de ella), o contenido idéntico al de
+  `develop`. Ninguna tiene trabajo que se pierda al borrarla. La limpieza en sí
+  la ejecuta el usuario cuando lo decide, no el ciclo.
+- `gh` autenticado como `Angello-27` (permisos `push`/`pull`/`triage`, sin
+  `admin`) — suficiente para todo el flujo de PRs y Actions; **no** suficiente
+  para branch protection ni settings del repo.
 
 ## Próximo paso inmediato
 
-1. ~~Capturas del RC~~ **hecho (26/8/2026)**: 21 capturas analizadas en `docs/especificacion/analisis_capturas_rc.md` — campos DJI exactos, validación aritmética de áreas, columnas nuevas para el cierre de sesión.
-2. **Reunión de cierre** con la agenda de `analisis_clasificacion.md` §7 (mezcla, clima, acta, montos, lotes feos, EPP, boleo) más las 5 preguntas de semántica del RC (`analisis_capturas_rc.md` §5) → actualizar la especificación (§3, §4, §5, §7, §9, §10, §16) en una iteración dedicada.
-3. ~~Esqueleto Laravel~~ **hecho (26/8/2026)**: Laravel 13 + Pest/Pint/Larastan, CI real en verde. ~~TE-03~~ **hecho (26/8/2026, PR #9)**: migraciones del núcleo comercial (clientes, contratos, campos, lotes, órdenes), modelos y API de órdenes con Swagger. Siguen de Sprint 1: esqueleto Flutter (`agrocom-field`) y spike de hardware en el RC real (TE-02).
-4. **HU-01 (27/8/2026, completamente hecho, PR #10 en automatización)**: backend, decisión de arquitectura y activos de marca — todo listo. ADR 0011 extendido documentó la convención de prefijos y el modelo (`Personal` con `per_personas`/`per_bases`, `Seguridad` con `sec_*`). `sec_user.persona_id` referencia `per_personas.id` por FK de BD + atributo entero plano (sin `belongsTo` Eloquent cross-módulo). Migraciones + modelos (`PerBase`, `PerPersona`, `SecRole`, `SecPermission`, `SecUser`, `SecUserRole`, `SecRolePermission`, con `SecUsuarioInterno`/`SecUsuarioCliente` para guards) + caso de uso `AsignarRolesUsuario` (traduce violaciones de unicidad a excepción de dominio) + seeder `SeguridadSeeder` (5 roles, 6 permisos) + 86 tests en verde contra Sqlite y Postgres 16 (Pint + Larastan 6 + Pest). Decisión de "rol activo por sesión" documentada en extensión de ADR 0004: un usuario elige un rol al iniciar sesión (sin volver a loguear), cambiable en cualquier momento — esto corrigió la redacción original de CLAUDE.md invariante 10 y del CA de HU-02 en `plan_sprints.md`. Logos oficiales de marca agregados: `public/logo-dark.jpeg` y `public/logo-light.jpeg`. **Validado por `validador`** contra CLAUDE.md (invariantes 4, 8, 9, 10), ADR 0003, ADR 0004, ADR 0011 — sin hallazgos bloqueantes. Commits (en rama `feature/usuarios-multirol`, PR #10): `ac5bd53`, `e34512f`, `54b5cbe`, `c551182`, `d8fa254`, `738961c`. **Pendiente para más adelante, no ahora**: agregar `tarifa_ha` y `sueldo_mensual` a `per_personas` (esperan ADR de máquina de estados de devengos/planilla). **Falta**: panel web (HU-02: login, elegir rol si hay varios, menú según rol, cambiar rol sin re-loguear, tema persistido) y endpoints/tokens (HU-03: Sanctum para app de campo).
-5. **HU-02 (próximo paso lógico, diseño de rol activo ya resuelto en HU-01)**: panel web — login con username/password, si el usuario tiene múltiples roles asignados entonces muestra selector para elegir cuál usar en esta sesión, renderiza el menú AdminLTE según los permisos del rol activo, sidebar con opción de cambiar de rol sin volver a loguear, tema de color persistido por usuario (paleta definida: verde marca ~#8CC63F a ~#1E7A34, naranja/ámbar ~#F5A623 a ~#E8720C). No hay diseño técnico nuevo que resolver, solo implementación UI — puede arrancar directo a código con componentes Blade/Livewire siguiendo ADR 0002 (Atomic Design + AdminLTE + Material Design). TE-02 (spike de hardware en RC real) sigue pendiente sin dependencias.
+1. **TE-05 — `POST /api/sync` idempotente** (tarea 09 de la cola, `critica=si`).
+   Es la apuesta más riesgosa del proyecto y la que habilita todo el sprint 2.
+   Su criterio es el test de replay: el mismo lote aplicado 10 veces, en orden y
+   en desorden, deja la base idéntica. El PR se abre en borrador y lo revisa una
+   persona línea por línea (`CLAUDE.md`, "qué no delegar").
+2. **HU-04 y HU-05** detrás de ella: órdenes vigentes offline y el esqueleto
+   vertical, que es lo que se demuestra en la Beta interna A.
+3. **Reunión de cierre** con la agenda de `analisis_clasificacion.md` §7 (mezcla,
+   clima, acta, montos, lotes feos, EPP, boleo) más las 5 preguntas de semántica
+   del RC (`analisis_capturas_rc.md` §5) → actualizar la especificación (§3, §4,
+   §5, §7, §9, §10, §16) en una iteración dedicada. **Sigue pendiente y es de
+   negocio: no lo puede resolver el ciclo automático.**
+4. **TE-02, spike de hardware en el RC real**: pendiente, sin dependencias
+   técnicas — necesita el equipo en mano.
+5. **`agrocom-field`**: el repo Flutter no existe todavía. TE-04 (drift +
+   outbox) vive ahí, no acá.
 
 ## Decisiones diferidas explícitamente (no reabrir sin que el usuario lo pida)
 
@@ -62,6 +102,8 @@ Al empezar una iteración nueva: leé este documento completo primero (es corto)
 - No existe un documento oficial de riesgos (el legacy tenía uno en `enfoque_desarrollo_sistema_fumigacion.md` §6 que nunca migró a `docs/gestion/`).
 - No hay diagrama ER ni de arquitectura en la documentación oficial (el primer Mermaid es el flujo operativo en `docs/negocio/flujo_base_y_excepciones.md`; ER y arquitectura siguen pendientes).
 - **FK real de `created_by`/`updated_by` a `sec_user.id`** (HU-01, diseño `modulos-roles` §6): ahora que `sec_user` existe, las columnas `created_by`/`updated_by` de `com_clientes`, `com_contratos` y el resto de tablas de TE-03 (y de `per_bases`/`per_personas`/`sec_*` de HU-01 mismo) siguen siendo `unsignedBigInteger` sin FK. Retrofit deliberadamente fuera de alcance de HU-01 (toca migraciones de otro módulo ya mergeado) — resolver en un solo pase futuro que agregue la FK a todas las tablas de una vez, no módulo por módulo.
-- **Invariante 7 (máquina de estados) sin servicio de dominio todavía**: `EstadoContrato` y `EstadoOrdenAplicacion` (TE-03) son enums con los valores correctos, pero ninguna clase controla qué transiciones son válidas — hoy nada en el código muta esos estados, así que la invariante no está violada, pero hay que resolverlo (tabla de transiciones + guardas) antes de que cualquier caso de uso empiece a cambiar `estado`. Candidato natural: cuando se ataque TE-04/05 (motor de sync, sesiones de vuelo).
-- **Invariante 9 (bitácora de auditoría) incompleta**: hoy solo existe autoría (`created_by`/`updated_by` vía trait `RegistraAutoria`); falta el registro de valores antes/después por mutación que pide ADR 0007. Mismo criterio que el punto anterior: no bloquea HU-02, sí antes de tocar dinero/hectáreas/estados.
-- **Tests de arquitectura ausentes** (ADR 0003): no hay ningún test tipo Pest Arch que impida que un módulo importe modelos Eloquent de otro módulo por accidente — hoy se cumple por disciplina, no por gate automático.
+- ~~**Invariante 7 (máquina de estados) sin gate**~~ **resuelto (PR #29)**: `tests/Unit/TransicionesEstadoTest.php` es la aduana — ninguna asignación de estado fuera del servicio de dominio pasa la cascada.
+- ~~**Invariante 9 (bitácora de auditoría) incompleta**~~ **resuelto (PR #35)**: bitácora transversal con valores antes/después (ADR 0007) más su gate en `tests/Unit/BitacoraAuditoriaTest.php`, que falla ante un modelo de dominio sin bitácora.
+- ~~**Tests de arquitectura ausentes**~~ **resuelto**: `tests/Unit/ArquitecturaModulosTest.php` prohíbe, por descubrimiento automático de carpetas, que un módulo importe `Infraestructura\Eloquent` de otro. Es lo que forzó el patrón de contratos de lectura de TE-06.
+- **Invariantes 2 y 3 sin gate todavía** (no sobrescribir un registro validado, devengo solo al validar): vigilan tablas que aún no existen (`sesion`, `devengo`). Su aduana se escribe **en la misma tarea que cree ese dominio** — un test sobre un dominio inexistente pasa siempre y simula una cobertura que no hay.
+- **Regresión visual fuera de `bin/verify`** (PR #37): Playwright existe con capturas de referencia, pero corre en el host y no dentro de la cascada (la imagen no trae Node ni navegadores). Un verde de `bin/verify` **no** implica haber corrido la regresión visual.
