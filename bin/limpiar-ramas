@@ -17,7 +17,9 @@
 # develop, solo su contenido. Borrar a mano con -D obliga a decidir rama por
 # rama sin evidencia, que es exactamente lo que este script evita.
 #
-# Una rama se considera integrada si cumple UNA de estas tres:
+# Se clasifican en una sola pasada los nombres que existan en local, en origin o
+# en ambos, y lo que se borra se borra en los dos lados. Una rama se considera
+# integrada si cumple UNA de estas tres:
 #
 #   1. Su PR figura MERGED en GitHub.
 #   2. Es ancestro de otra rama cuyo PR sí se mergeó (el caso de
@@ -73,14 +75,24 @@ fi
 
 tuvo_pr_mergeado() { grep -qxF "$1" "$MERGEADAS"; }
 
+# La ref con la que comparar: la local si existe, si no la de origin.
+ref_de() {
+    if git rev-parse --verify --quiet "refs/heads/$1" >/dev/null; then
+        printf '%s' "$1"
+    else
+        printf 'origin/%s' "$1"
+    fi
+}
+
 # Ancestro de una rama cuyo PR sí entró: su trabajo viajó adentro de ese PR.
 ancestro_de_mergeada() {
     local rama="$1" otra
     while read -r otra; do
         [ -z "$otra" ] && continue
         [ "$otra" = "$rama" ] && continue
-        git rev-parse --verify --quiet "refs/heads/$otra" >/dev/null || continue
-        if git merge-base --is-ancestor "$rama" "$otra" 2>/dev/null; then
+        otra=$(ref_de "$otra")
+        git rev-parse --verify --quiet "$otra" >/dev/null || continue
+        if git merge-base --is-ancestor "$(ref_de "$rama")" "$otra" 2>/dev/null; then
             printf '%s' "$otra"
             return 0
         fi
@@ -94,7 +106,8 @@ ancestro_de_mergeada() {
 # caso cae en el informe para que lo mire una persona, que es lo correcto: la
 # alternativa sería que el script adivine y borre trabajo.
 contenido_en_develop() {
-    local rama="$1" archivos
+    local rama archivos
+    rama=$(ref_de "$1")
     archivos=$(git diff --name-only "develop...$rama" 2>/dev/null)
     [ -z "$archivos" ] && return 0
     # shellcheck disable=SC2086
@@ -110,11 +123,20 @@ pedida_a_mano() {
 }
 
 # --- Clasificación ----------------------------------------------------
-fase "Clasificando ramas locales"
+# Una sola pasada sobre el conjunto de nombres —los que existen en local, los
+# que existen en origin, o ambos— y una sola decisión por nombre. Cuando las
+# remotas se listaban aparte, sin clasificar, una rama en curso quedaba
+# conservada en local y borrada en el remoto a la vez.
+fase "Clasificando ramas"
 BORRAR=""
 CONSERVAR=""
-for rama in $(git for-each-ref --format='%(refname:short)' refs/heads); do
-    case "$rama" in master|develop) continue ;; esac
+TODAS=$(
+    { git for-each-ref --format='%(refname:short)' refs/heads
+      git for-each-ref --format='%(refname:short)' refs/remotes/origin | sed 's|^origin/||'
+    } | sort -u
+)
+for rama in $TODAS; do
+    case "$rama" in master|develop|HEAD|origin) continue ;; esac
 
     if pedida_a_mano "$rama"; then
         ok "$rama — incluida a mano con --incluir"
@@ -132,27 +154,25 @@ for rama in $(git for-each-ref --format='%(refname:short)' refs/heads); do
         malo "$rama — no se puede dar por integrada"
         # Solo los archivos que la rama tocó: el resto del diff contra develop
         # es evolución posterior del repo y no dice nada sobre esta rama.
-        archivos=$(git diff --name-only "develop...$rama")
+        ref=$(ref_de "$rama")
+        archivos=$(git diff --name-only "develop...$ref")
         # shellcheck disable=SC2086
-        git diff --stat "$rama" develop -- $archivos | sed 's/^/       /'
+        git diff --stat "$ref" develop -- $archivos | sed 's/^/       /'
         CONSERVAR="$CONSERVAR $rama"
     fi
 done
 
+# De lo que se borra, cuáles tienen además rama en origin.
 REMOTAS=""
-for ref in $(git for-each-ref --format='%(refname:short)' refs/remotes/origin); do
-    rama=${ref#origin/}
-    # `git for-each-ref refs/remotes/origin` incluye el HEAD simbólico, cuyo
-    # nombre corto es "origin" a secas: sin este filtro se intentaría borrar
-    # una rama llamada así, que no existe.
-    case "$rama" in master|develop|HEAD|origin) continue ;; esac
-    REMOTAS="$REMOTAS $rama"
+for rama in $BORRAR; do
+    git rev-parse --verify --quiet "refs/remotes/origin/$rama" >/dev/null &&
+        REMOTAS="$REMOTAS $rama"
 done
 
 # --- Resumen ----------------------------------------------------------
 fase "Resumen"
-printf 'Locales a borrar   : %s\n' "$(echo $BORRAR | tr ' ' '\n' | wc -l | tr -d ' ')"
-printf 'Remotas a borrar   : %s\n' "${REMOTAS:-(ninguna)}"
+printf 'Ramas a borrar     : %s\n' "$(echo $BORRAR | tr ' ' '\n' | grep -c . )"
+printf '  de ellas, en origin: %s\n' "${REMOTAS:-(ninguna)}"
 if [ -n "$CONSERVAR" ]; then
     printf '\033[33mSe conservan       : %s\033[0m\n' "$CONSERVAR"
     printf '  Mirá el diff de arriba. Si el aporte ya está en develop por otro\n'
@@ -181,6 +201,7 @@ for rama in $REMOTAS; do
 done
 
 for rama in $BORRAR; do
+    git rev-parse --verify --quiet "refs/heads/$rama" >/dev/null || continue
     if git branch -D "$rama" >/dev/null 2>&1; then
         ok "$rama borrada"
     else
