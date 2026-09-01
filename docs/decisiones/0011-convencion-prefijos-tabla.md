@@ -26,6 +26,7 @@ Doble nivel, estilo WordPress:
    | Inventario | `inv_` |
    | Mantenimiento | `man_` |
    | Vistas de solo lectura | `vw_` (ver ADR 0012) |
+   | Compartido (tablas transversales de plataforma) | `plt_` (asignado en la extensión 31/8/2026, tarea 06 — ver `plt_bitacoras`, ADR 0007) |
 
    Reportes y Portal no tienen prefijo propio porque no escriben tablas: son módulos de solo lectura (`docs/especificacion/insumos_modelo_datos.md`, sección 1) y sus lecturas van por vistas `vw_*`.
 
@@ -73,6 +74,13 @@ La base de datos es dedicada al sistema, así que el prefijo global no aporta ho
 
 10. **ADR 0004 sigue vigente en todo lo demás de su esquema de `sec_user`.** Su listado de columnas queda desactualizado únicamente en **`language`**, que se resuelve vía `sec_user_preferencia.idioma` en lugar de una columna de `sec_user` (punto 8). `profile_pic_url` e `initial_path` quedan fuera del alcance de HU-02 (que es tema + idioma) y sin resolver por esta extensión — es una decisión pendiente y explícita para cuando alguna historia los implemente, no una inclusión tácita en `sec_user_preferencia` ni una confirmación de que siguen en `sec_user`.
 
+### Extensión (31/8/2026) — prefijo de las tablas transversales de `Compartido/`, para la tarea 06 (bitácora de auditoría)
+
+**Contexto de la extensión:** este mismo ADR dejaba abierto, en sus "Consecuencias", el prefijo de una futura tabla transversal de `Compartido/` — nombraba como ejemplo, sin resolverlo todavía, "la bitácora de auditoría del ADR 0007". La tarea 06 (`docs/gestion/cola_tareas.md`) implementa esa bitácora y necesita cerrar el punto antes de escribir su primera migración.
+
+11. **Prefijo `plt_` ("plataforma") para las tablas transversales de `Compartido/`.** Fila agregada a la tabla de prefijos del punto 1 de este ADR. Primera (y hoy única) tabla: `plt_bitacoras` (ADR 0007, invariante 9 de CLAUDE.md). Se descarta `cmp_` por parecerse demasiado, a simple vista, a `com_` (Comercial) — justo el tipo de ambigüedad que la regla 1 del ADR 0003 quiere evitar en el esquema; y se descarta un prefijo específico de la bitácora (p. ej. `aud_`) porque `Compartido/` es plataforma en general, no solo auditoría, y una segunda tabla transversal futura (p. ej. un log de trabajos en cola propio, si alguna vez hiciera falta uno que no sea la tabla `jobs` de Laravel) debe caer bajo el mismo prefijo sin que este ADR necesite una fila nueva por cada pieza de plataforma.
+12. **`plt_bitacoras` no sigue el molde de `ModeloDominio`.** No es una tabla de dominio de ningún módulo de negocio: es un libro de solo-inserción, sin `deleted_at` ni `created_by`/`updated_by` propios — el detalle completo y su porqué están en el docblock de su migración (`database/migrations/2026_08_31_100002_create_plt_bitacoras_table.php`) y en el ADR 0007 (nota del 31/8/2026). No se generaliza esta excepción a otras tablas: sigue siendo la regla, no la excepción, que toda tabla de dominio lleve soft delete y auditoría por fila (ADR 0007, invariante 8 de CLAUDE.md).
+
 ## Alternativas descartadas
 
 - **Solo prefijo global `agrocom_`**: identifica al sistema pero no dice nada del módulo dueño de cada tabla — que es justo la información que la regla 1 del ADR 0003 necesita hacer visible.
@@ -87,7 +95,7 @@ La base de datos es dedicada al sistema, así que el prefijo global no aporta ho
 - `config/database.php` cambia `'prefix' => ''` por `'prefix' => env('DB_TABLE_PREFIX', '')` en la conexión `pgsql`, y `.env.example` documenta `DB_TABLE_PREFIX=` vacío — es la única pieza de código de este ADR (la aplica el agente `backend` en la rama en curso).
 - El prefijo global de Laravel se aplica automáticamente en Eloquent, query builder y schema builder, pero **no** dentro de SQL crudo: las migraciones de vistas por `DB::statement` (ADR 0012) deben interpolar `DB::getTablePrefix()` para no romper si algún día `DB_TABLE_PREFIX` deja de estar vacío.
 - Los nombres físicos con prefijo se incorporan a la sección 4 de la especificación en su consolidación (pendiente de la reunión de cierre) — este ADR no modifica `docs/especificacion/`.
-- Queda abierto el prefijo de las tablas transversales de `Compartido/` (p. ej. la bitácora de auditoría del ADR 0007): se define al implementarlas, ampliando la tabla de este ADR. Todo módulo nuevo registra aquí su prefijo antes de su primera migración.
+- Queda abierto el prefijo de las tablas transversales de `Compartido/` (p. ej. la bitácora de auditoría del ADR 0007): se define al implementarlas, ampliando la tabla de este ADR. Todo módulo nuevo registra aquí su prefijo antes de su primera migración. **Resuelto (31/8/2026)**: el prefijo es `plt_` — ver la extensión de esa fecha y la fila agregada en el punto 1.
 - HU-01 crea `app/Dominios/Personal/` (`per_personas`, `per_bases`) y `app/Dominios/Seguridad/` (`sec_*`, ADR 0004) como primeros módulos nuevos desde ADR 0003; ambos quedan automáticamente cubiertos por `tests/Unit/ArquitecturaModulosTest.php` sin editar el test (descubrimiento por carpeta).
 - `tarifa_ha` y `sueldo_mensual` de `personas` quedan fuera de la migración de HU-01 — anotado como pendiente en `docs/gestion/estado_proyecto.md` para que no se pierda antes de implementar devengos/planilla.
 - HU-02 crea `sec_user_preferencia` (`tema`, `idioma`) dentro de `app/Dominios/Seguridad/` — no un módulo `Identidad` nuevo (extensión 27/8/2026). Queda pendiente, sin resolver por esta extensión, el destino de `profile_pic_url` e `initial_path` (columnas que ADR 0004 también listaba en `sec_user`) para cuando alguna historia los implemente.
