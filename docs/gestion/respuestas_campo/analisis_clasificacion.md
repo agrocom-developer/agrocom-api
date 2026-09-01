@@ -33,7 +33,7 @@ Ejecuta el "circuito de cierre" del banco de preguntas (`banco_preguntas_por_rol
 
 | # | La espec dice | El campo hace | Impacto |
 |---|---|---|---|
-| CR-01 | La mezcla la prepara el auxiliar con checklist en su app (§7) | **La prepara el cliente** (su agrónomo/personal) en el escenario dominante; Agrocom a veces solo la carga y sugiere qué no mezclar | **ALTO** — mezcla con `origen` (cliente/Agrocom); checklist solo en origen Agrocom; flujo de recepción en el otro. Decisión de negocio previa: ¿Agrocom toma la preparación en modalidad residente? |
+| CR-01 | La mezcla la prepara el auxiliar con checklist en su app (§7) | **La prepara el cliente** (su agrónomo/personal) en el escenario dominante; Agrocom a veces solo la carga y sugiere qué no mezclar | **CERRADA 1/9/2026 — la prepara siempre el cliente.** Agrocom NO toma la preparación en ninguna modalidad: no tiene la fórmula ni quiere la responsabilidad agronómica del resultado. Sin `origen`, sin checklist, sin receta. Solo recepción de litros, consumo por sesión, sobrante y constancia de retraso por calidad del caldo (espec §7). |
 | CR-02 | Temperatura límite ≤30 °C (ventana §4.1) | El campo opera con <40 °C; lo que manda son las **ventanas horarias** (6–10 y 16–20: la gota se pulveriza con sol fuerte) | Límites como **parámetros por contrato/orden**; posible doble umbral (operativo vs. agronómico) |
 | CR-03 | Viento ≤17 km/h constante | Ráfagas ~20 km/h como umbral práctico; un cliente exigió además velocidad de vuelo ≤15 km/h | Parámetro por contrato/orden, no constante global |
 | CR-04 | Quién reanuda tras pausa: jefe (ventana §7) | Cuatro versiones distintas (agrónomo / cliente / piloto con anemómetro / piloto+cliente); consenso solo en que **el piloto siempre puede parar por seguridad del dron** | Regla a cerrar en reunión; el veto de seguridad del piloto sí es firme |
@@ -119,7 +119,7 @@ Ejecuta el "circuito de cierre" del banco de preguntas (`banco_preguntas_por_rol
 
 ## 7. Agenda de la reunión de cierre (solo conflictos y vacíos)
 
-1. **Mezcla** (CR-01): ¿Agrocom asume la preparación en modalidad residente o se modela el escenario cliente como primario? Define el módulo entero.
+1. ~~**Mezcla** (CR-01)~~ — **cerrada el 1/9/2026**: no hay módulo de mezcla. El cliente prepara, Agrocom rocía y registra volumen. Ver espec §7 y `plan_sprints.md` (HU-10/HU-13 redefinidas, HU-11/HU-12 eliminadas).
 2. **Clima** (CR-02/03/04): cerrar la regla de parar/reanudar/forzar y los umbrales por defecto; ratificar el veto de seguridad del piloto.
 3. **Acta** (CR-06): ¿por lote inmediata o agrupable? Recordar el racional comercial de ventana §2.2 antes de ceder.
 4. **Escalera de montos** (DS-10) y naturaleza caja chica vs. viáticos.

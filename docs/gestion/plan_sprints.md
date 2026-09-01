@@ -80,10 +80,19 @@ Mostrar la Beta App Piloto a los pilotos al fin del sprint 3 —y no al final—
 
 | ID | Historia / tarea | CA esenciales | Est. |
 |---|---|---|---|
-| HU-10 | Como **agrónomo/encargado**, quiero cargar la receta de la orden con su secuencia de incorporación, para que el auxiliar la ejecute tal cual | Receta con ítems ordenados, dosis y unidad (ml/ha, g/ha, ml/100L, %v/v), pre-disolución | 1,5 d |
-| HU-11 | Como **auxiliar**, quiero que la app calcule las cantidades por tanque según volumen del dron y L/ha de la orden, para no hacer regla de tres en el campo | Cálculo por unidad de dosis; volúmenes reales por modelo (30/50/60 L) | 1,0 d |
-| HU-12 | Como **auxiliar**, quiero un checklist secuencial bloqueante donde confirmo cada producto con la **cantidad real**, para que la mezcla quede demostrada paso a paso | No avanza sin confirmar el anterior; desvío real vs. calculado se registra; EPP al inicio; foto de evidencia | 2,5 d |
-| HU-13 | Como **auxiliar**, quiero registrar sobrantes (volumen, destino, triple lavado) y recargas con batería y temperatura, para cerrar el circuito del caldo | Alerta local si temperatura > 50 °C; recarga vincula mezcla ↔ sesión; litros de combustible del generador | 2,0 d |
+| HU-10 | Como **auxiliar**, quiero registrar el caldo que el cliente me entrega (litros, hora, quién lo entregó) y el sobrante que le devuelvo, para demostrar qué recibí y qué apliqué | Litros recibidos por trabajo; consumido por sesión; sobrante al cierre; el total cuadra (recibido = aplicado + sobrante) | 1,0 d |
+| HU-11 | ~~Cálculo de cantidades por tanque~~ — **fuera de alcance (CR-01, 1/9/2026)**: la dosificación es del agrónomo del cliente | — | — |
+| HU-12 | ~~Checklist secuencial de incorporación~~ — **fuera de alcance (CR-01, 1/9/2026)**: Agrocom no prepara la mezcla | — | — |
+| HU-13 | Como **auxiliar**, quiero registrar cada recarga del dron con batería, temperatura y litros cargados, y dejar constancia si el vuelo se retrasó o se rechazó por la calidad del caldo, para deslindar responsabilidad | Alerta local si temperatura > 50 °C; recarga vincula sesión ↔ litros; combustible del generador; motivo y hora del retraso por caldo | 1,5 d |
+
+> **CR-01 cerrada el 1/9/2026 — la mezcla no es de Agrocom.** El caldo lo
+> formula y lo prepara el cliente con su propio ingeniero agrónomo; Agrocom
+> recibe litros ya hechos y los rocía. Es un deslinde de responsabilidad: quien
+> elige producto y dosis responde por el resultado agronómico (efectividad,
+> daño al cultivo, germinación). HU-11 y HU-12 quedan fuera de alcance, y HU-10
+> y HU-13 pasan a registrar volumen y trazabilidad, nunca composición. Detalle
+> en la §7 de la especificación funcional.
+
 | HU-14 | Como **jefe de campo**, quiero una cola de validación de sesiones en el panel, para aprobar lo volado sin revisar todo a mano | Validador ≠ piloto de la sesión (policy a nivel persona); rechazo con motivo genera corrección, nunca edición | 1,5 d |
 | HU-15 | Como **encargado**, quiero ver trabajos y avance por lote/aplicación en el panel, para seguir la campaña desde la ciudad | Tablero de trabajos por estado con filtros; detalle con sesiones y evidencias | 1,0 d |
 
