@@ -10,6 +10,13 @@ puede avanzar sin nadie mirando la pantalla.
 La cola en ejecución es `runs/cola.txt` (ids, uno por línea, en orden). Esta
 tabla es su versión legible, con el porqué de cada fila.
 
+**Punto de partida limpio (1/9/2026).** Los prompts de las tareas 01 a 08 se
+borraron del árbol —quedan en el historial de git— y `runs/cola.txt` arrancó
+vacía. La numeración **sigue desde 09**, no vuelve a 01: `runs/` conserva los
+estados de las tareas viejas y un id repetido se leería como ya cerrado, así que
+la tarea nueva se saltearía sola. `runs/` no se versiona; es la bitácora local de
+lo que ya corrió.
+
 **Una fila = una HU o TE entera del plan de sprints = un PR.** No media
 historia, no "la primera parte de". Si no entra en una sesión, el ciclo le da
 varias etapas sobre la misma rama — ver `automatizacion_desarrollo.md` §5. El

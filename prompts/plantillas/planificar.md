@@ -114,8 +114,13 @@ línea, exactamente este formato:
 - `modelo=` solo si la tarea justifica salirse del modelo por fase que ya usa
   el ciclo. No lo pongas por costumbre.
 
-El cuerpo, con estas secciones y sin relleno — mirá `prompts/03-implementar-hu03.md`
-como referencia de tono y densidad:
+El cuerpo, con estas secciones y sin relleno. Tono: frases cortas, el porqué
+antes del qué, cero relleno. Si querés una referencia de densidad, los prompts
+de las tareas 01 a 08 están en el historial de git
+(`git show "$(git rev-list -1 HEAD -- prompts/03-implementar-hu03.md)":prompts/03-implementar-hu03.md`)
+— se borraron del árbol al reiniciar la cola, no porque estuvieran mal escritos.
+
+Secciones:
 
 - **Qué hacer**: el objetivo en una frase, y después los pasos concretos. Decí
   qué skills cargar (`verificacion` siempre; los demás según el área). Nombrá
