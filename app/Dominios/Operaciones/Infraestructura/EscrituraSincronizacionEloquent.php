@@ -9,12 +9,14 @@ use App\Dominios\Operaciones\Contratos\AperturaTrabajo;
 use App\Dominios\Operaciones\Contratos\CierreSesion;
 use App\Dominios\Operaciones\Contratos\CierreTrabajo;
 use App\Dominios\Operaciones\Contratos\EscrituraSincronizacion;
+use App\Dominios\Operaciones\Contratos\RegistroCondiciones;
 use App\Dominios\Operaciones\Contratos\ResultadoSincronizacion;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Dominio\EstadoSesion;
 use App\Dominios\Operaciones\Dominio\EstadoTrabajo;
 use App\Dominios\Operaciones\Dominio\Excepciones\TransicionSesionNoPermitida;
 use App\Dominios\Operaciones\Dominio\Excepciones\TransicionTrabajoNoPermitida;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\Condiciones;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
@@ -113,6 +115,59 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
             });
         } catch (QueryException $excepcion) {
             return $this->resultadoDesdeExcepcion($excepcion, 'ope_sesiones');
+        }
+
+        return ResultadoSincronizacion::aplicado();
+    }
+
+    /**
+     * Condiciones de vuelo (HU-06, tarea 17): a diferencia de
+     * `abrirTrabajo()`/`abrirSesion()`, un registro puede ser estructuralmente
+     * válido y aun así no persistirse — fuera de rango sin observación
+     * firmada del agrónomo se rechaza ANTES de intentar el `INSERT` (espec
+     * §5: "condiciones dentro de rango" u "observación firmada" son las dos
+     * únicas condiciones que autorizan; ninguna de las dos, no autoriza
+     * nada).
+     *
+     * `trabajo_id` se resuelve leyendo la sesión (denormalizado, ver
+     * docblock de `RegistroCondiciones` y de la migración): no hace falta un
+     * segundo `uuid_cliente` de trabajo en el payload.
+     *
+     * `autorizado` (bool persistido): TRUE cuando cae dentro de rango, FALSE
+     * cuando quedó autorizado solo por la observación del agrónomo — nunca
+     * FALSE por rechazo, porque ese caso no llega a crear fila (ver arriba).
+     */
+    public function registrarCondiciones(RegistroCondiciones $datos): ResultadoSincronizacion
+    {
+        $sesion = Sesion::query()->where('uuid_cliente', $datos->sesionUuidCliente)->first();
+
+        if ($sesion === null) {
+            return ResultadoSincronizacion::rechazado('la sesión referenciada no existe todavía');
+        }
+
+        $dentroDeRango = $datos->dentroDeRango();
+
+        if (! $dentroDeRango && ! $datos->tieneObservacionFirmada()) {
+            return ResultadoSincronizacion::rechazado('condiciones fuera de rango sin observación firmada del agrónomo');
+        }
+
+        try {
+            DB::transaction(function () use ($datos, $sesion, $dentroDeRango): void {
+                Condiciones::query()->create([
+                    'uuid_cliente' => $datos->uuidCliente,
+                    'trabajo_id' => $sesion->trabajo_id,
+                    'sesion_id' => $sesion->id,
+                    'momento' => $datos->momento,
+                    'viento_kmh' => $datos->vientoKmh,
+                    'temperatura_c' => $datos->temperaturaC,
+                    'humedad_pct' => $datos->humedadPct,
+                    'autorizado' => $dentroDeRango,
+                    'observacion_agronomo' => $datos->observacionAgronomo,
+                    'firma_observacion' => $datos->firmaObservacion,
+                ]);
+            });
+        } catch (QueryException $excepcion) {
+            return $this->resultadoDesdeExcepcion($excepcion, 'ope_condiciones');
         }
 
         return ResultadoSincronizacion::aplicado();

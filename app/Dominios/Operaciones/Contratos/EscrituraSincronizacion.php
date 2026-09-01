@@ -22,6 +22,16 @@ namespace App\Dominios\Operaciones\Contratos;
  * ambas reciben `$operarioPersonaId` explícito, igual que
  * `SincronizarLote::ejecutar()`: nunca un modo "sin verificar" alcanzable
  * por omitir un parámetro opcional.
+ *
+ * `registrarCondiciones()` (HU-06, tarea 17) crea una fila nueva, mismo
+ * mecanismo de idempotencia que `abrirTrabajo()`/`abrirSesion()` — pero, a
+ * diferencia de esos dos, puede terminar en `rechazado` por una razón
+ * adicional a "dato inválido o referencia inexistente": condiciones fuera de
+ * rango sin observación firmada del agrónomo (espec §5) nunca llegan a
+ * persistirse. Sin `$operarioPersonaId`: la espec no define una noción de
+ * pertenencia para este registro (piloto y jefe de campo pueden registrar
+ * condiciones por igual, ver §2 tabla de acciones por rol), así que no hay
+ * nada que verificar acá — mismo criterio que `abrirTrabajo()`.
  */
 interface EscrituraSincronizacion
 {
@@ -32,4 +42,6 @@ interface EscrituraSincronizacion
     public function cerrarTrabajo(CierreTrabajo $datos, ?int $operarioPersonaId): ResultadoSincronizacion;
 
     public function cerrarSesion(CierreSesion $datos, ?int $operarioPersonaId): ResultadoSincronizacion;
+
+    public function registrarCondiciones(RegistroCondiciones $datos): ResultadoSincronizacion;
 }

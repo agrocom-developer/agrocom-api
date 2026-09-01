@@ -8,7 +8,9 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
 use App\Dominios\Operaciones\Contratos\AperturaSesion;
 use App\Dominios\Operaciones\Contratos\AperturaTrabajo;
 use App\Dominios\Operaciones\Contratos\EscrituraSincronizacion;
+use App\Dominios\Operaciones\Contratos\RegistroCondiciones;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\Condiciones;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
@@ -319,4 +321,200 @@ test('abrirTrabajo con una orden no vigente se rechaza sin persistir la fila', f
         ->and($resultado->motivo)->not->toBeNull();
 
     expect(Trabajo::query()->where('uuid_cliente', 'uuid-trabajo-orden-no-vigente')->exists())->toBeFalse();
+});
+
+/*
+ * HU-06, tarea 17: condiciones al iniciar sesión, autoriza o bloquea. DTO y
+ * caso de uso (`registrarCondiciones()`), sin pasar por HTTP — eso lo cubre
+ * `tests/Feature/Api/CondicionesSincronizacionTest.php`.
+ */
+
+/** Abre trabajo + sesión vía el propio contrato, para referenciar por `uuid_cliente` en los tests de abajo. */
+function sesionAbiertaParaCondiciones(string $id): Sesion
+{
+    $orden = ordenVigenteParaEscritura();
+    $piloto = pilotoParaEscritura();
+    $contrato = app(EscrituraSincronizacion::class);
+
+    $contrato->abrirTrabajo(AperturaTrabajo::intentarDesdeArreglo([
+        'uuid_cliente' => "uuid-trabajo-cond-{$id}",
+        'orden_id' => $orden->id,
+        'lote_id' => $orden->lote_id,
+        'nro_aplicacion' => 1,
+        'inicio' => '2026-09-01T10:00:00-04:00',
+    ]));
+
+    $contrato->abrirSesion(AperturaSesion::intentarDesdeArreglo([
+        'uuid_cliente' => "uuid-sesion-cond-{$id}",
+        'trabajo_uuid_cliente' => "uuid-trabajo-cond-{$id}",
+        'secuencia' => 1,
+        'piloto_id' => $piloto->id,
+        'inicio' => '2026-09-01T10:05:00-04:00',
+    ]));
+
+    return Sesion::query()->where('uuid_cliente', "uuid-sesion-cond-{$id}")->firstOrFail();
+}
+
+/** @return array<string, mixed> */
+function registroCondicionesArreglo(array $sobrescribir = []): array
+{
+    return array_merge([
+        'uuid_cliente' => 'uuid-condiciones-default',
+        'sesion_uuid_cliente' => 'uuid-sesion-cond-default',
+        'momento' => 'inicio_sesion',
+        'viento_kmh' => '10.00',
+        'temperatura_c' => '22.00',
+        'humedad_pct' => '60.00',
+    ], $sobrescribir);
+}
+
+test('RegistroCondiciones::intentarDesdeArreglo devuelve null ante un campo requerido faltante', function () {
+    expect(RegistroCondiciones::intentarDesdeArreglo([
+        'uuid_cliente' => 'uuid-incompleto',
+        'sesion_uuid_cliente' => 'uuid-sesion',
+        // falta momento, viento_kmh, temperatura_c, humedad_pct
+    ]))->toBeNull();
+});
+
+test('RegistroCondiciones::intentarDesdeArreglo devuelve null con un momento fuera de catálogo (incidencia es HU-08)', function () {
+    expect(RegistroCondiciones::intentarDesdeArreglo(registroCondicionesArreglo(['momento' => 'incidencia'])))->toBeNull();
+});
+
+test('RegistroCondiciones::intentarDesdeArreglo devuelve null con viento_kmh negativo', function () {
+    expect(RegistroCondiciones::intentarDesdeArreglo(registroCondicionesArreglo(['viento_kmh' => '-1'])))->toBeNull();
+});
+
+test('RegistroCondiciones::intentarDesdeArreglo devuelve null con humedad_pct no numérica', function () {
+    expect(RegistroCondiciones::intentarDesdeArreglo(registroCondicionesArreglo(['humedad_pct' => ['no', 'numerico']])))->toBeNull();
+});
+
+test('RegistroCondiciones::intentarDesdeArreglo acepta temperatura_c negativa (a diferencia de viento/humedad, sí puede ser negativa)', function () {
+    $datos = RegistroCondiciones::intentarDesdeArreglo(registroCondicionesArreglo(['temperatura_c' => '-5.50']));
+
+    expect($datos)->not->toBeNull()
+        ->and($datos->temperaturaC)->toBe('-5.50');
+});
+
+test('RegistroCondiciones::dentroDeRango es true justo en el límite superior de cada umbral (17/30/90)', function () {
+    $datos = RegistroCondiciones::intentarDesdeArreglo(registroCondicionesArreglo([
+        'viento_kmh' => '17',
+        'temperatura_c' => '30',
+        'humedad_pct' => '90',
+    ]));
+
+    expect($datos->dentroDeRango())->toBeTrue();
+});
+
+test('RegistroCondiciones::dentroDeRango es false apenas por encima de un umbral', function () {
+    $datos = RegistroCondiciones::intentarDesdeArreglo(registroCondicionesArreglo(['viento_kmh' => '17.01']));
+
+    expect($datos->dentroDeRango())->toBeFalse();
+});
+
+test('RegistroCondiciones::tieneObservacionFirmada exige observación Y firma, no alcanza con una sola', function () {
+    $soloObservacion = RegistroCondiciones::intentarDesdeArreglo(registroCondicionesArreglo(['observacion_agronomo' => 'vuela igual, ventana angosta']));
+    $soloFirma = RegistroCondiciones::intentarDesdeArreglo(registroCondicionesArreglo(['firma_observacion' => 'Agr. Pérez']));
+    $ambas = RegistroCondiciones::intentarDesdeArreglo(registroCondicionesArreglo([
+        'observacion_agronomo' => 'vuela igual, ventana angosta',
+        'firma_observacion' => 'Agr. Pérez',
+    ]));
+
+    expect($soloObservacion->tieneObservacionFirmada())->toBeFalse()
+        ->and($soloFirma->tieneObservacionFirmada())->toBeFalse()
+        ->and($ambas->tieneObservacionFirmada())->toBeTrue();
+});
+
+test('registrarCondiciones dentro de rango aplica autorizado, sin observación, con trabajo_id resuelto de la sesión', function () {
+    $sesion = sesionAbiertaParaCondiciones('a');
+    $contrato = app(EscrituraSincronizacion::class);
+
+    $datos = RegistroCondiciones::intentarDesdeArreglo(registroCondicionesArreglo([
+        'uuid_cliente' => 'uuid-condiciones-a',
+        'sesion_uuid_cliente' => $sesion->uuid_cliente,
+    ]));
+
+    $resultado = $contrato->registrarCondiciones($datos);
+
+    expect($resultado->estado)->toBe('aplicado');
+
+    $condiciones = Condiciones::query()->where('uuid_cliente', 'uuid-condiciones-a')->firstOrFail();
+    expect($condiciones->autorizado)->toBeTrue()
+        ->and($condiciones->resultado())->toBe('autorizado')
+        ->and($condiciones->trabajo_id)->toBe($sesion->trabajo_id)
+        ->and($condiciones->sesion_id)->toBe($sesion->id)
+        ->and($condiciones->observacion_agronomo)->toBeNull();
+});
+
+test('registrarCondiciones fuera de rango con observación firmada aplica autorizado_con_observacion', function () {
+    $sesion = sesionAbiertaParaCondiciones('b');
+    $contrato = app(EscrituraSincronizacion::class);
+
+    $datos = RegistroCondiciones::intentarDesdeArreglo(registroCondicionesArreglo([
+        'uuid_cliente' => 'uuid-condiciones-b',
+        'sesion_uuid_cliente' => $sesion->uuid_cliente,
+        'viento_kmh' => '25.00',
+        'observacion_agronomo' => 'viento fuerte, se autoriza por ventana angosta',
+        'firma_observacion' => 'Agr. Pérez',
+    ]));
+
+    $resultado = $contrato->registrarCondiciones($datos);
+
+    expect($resultado->estado)->toBe('aplicado');
+
+    $condiciones = Condiciones::query()->where('uuid_cliente', 'uuid-condiciones-b')->firstOrFail();
+    expect($condiciones->autorizado)->toBeFalse()
+        ->and($condiciones->resultado())->toBe('autorizado_con_observacion')
+        ->and($condiciones->observacion_agronomo)->not->toBeNull()
+        ->and($condiciones->firma_observacion)->toBe('Agr. Pérez');
+});
+
+test('registrarCondiciones fuera de rango sin observación se rechaza sin crear fila', function () {
+    $sesion = sesionAbiertaParaCondiciones('c');
+    $contrato = app(EscrituraSincronizacion::class);
+
+    $datos = RegistroCondiciones::intentarDesdeArreglo(registroCondicionesArreglo([
+        'uuid_cliente' => 'uuid-condiciones-c',
+        'sesion_uuid_cliente' => $sesion->uuid_cliente,
+        'humedad_pct' => '95.00',
+    ]));
+
+    $resultado = $contrato->registrarCondiciones($datos);
+
+    expect($resultado->estado)->toBe('rechazado')
+        ->and($resultado->motivo)->not->toBeNull();
+
+    expect(Condiciones::query()->where('uuid_cliente', 'uuid-condiciones-c')->exists())->toBeFalse();
+});
+
+test('registrarCondiciones con el mismo uuid_cliente responde duplicado sin crear una fila nueva', function () {
+    $sesion = sesionAbiertaParaCondiciones('d');
+    $contrato = app(EscrituraSincronizacion::class);
+
+    $datos = RegistroCondiciones::intentarDesdeArreglo(registroCondicionesArreglo([
+        'uuid_cliente' => 'uuid-condiciones-d',
+        'sesion_uuid_cliente' => $sesion->uuid_cliente,
+    ]));
+
+    expect($contrato->registrarCondiciones($datos)->estado)->toBe('aplicado');
+
+    $resultado = $contrato->registrarCondiciones($datos);
+
+    expect($resultado->estado)->toBe('duplicado')
+        ->and(Condiciones::query()->where('uuid_cliente', 'uuid-condiciones-d')->count())->toBe(1);
+});
+
+test('registrarCondiciones con una sesion_uuid_cliente que no existe se rechaza sin romper nada', function () {
+    $contrato = app(EscrituraSincronizacion::class);
+
+    $datos = RegistroCondiciones::intentarDesdeArreglo(registroCondicionesArreglo([
+        'uuid_cliente' => 'uuid-condiciones-huerfana',
+        'sesion_uuid_cliente' => 'uuid-sesion-que-no-existe',
+    ]));
+
+    $resultado = $contrato->registrarCondiciones($datos);
+
+    expect($resultado->estado)->toBe('rechazado')
+        ->and($resultado->motivo)->not->toBeNull();
+
+    expect(Condiciones::query()->where('uuid_cliente', 'uuid-condiciones-huerfana')->exists())->toBeFalse();
 });
