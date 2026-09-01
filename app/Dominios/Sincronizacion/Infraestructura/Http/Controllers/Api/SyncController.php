@@ -21,29 +21,45 @@ use OpenApi\Attributes as OA;
 #[OA\Schema(
     schema: 'RegistroSync',
     title: 'Registro de entrada del lote de sync',
-    description: 'Un elemento del arreglo `registros`. La forma exacta de los campos depende de `tipo` '
-        ."('trabajo' o 'sesion'); un registro con datos incompletos o inválidos se responde `rechazado` "
-        .'sin frenar el resto del lote — nunca un 422 para el lote completo.',
+    description: 'Un elemento del arreglo `registros`. La forma exacta de los campos depende de `tipo`; '
+        .'un registro con datos incompletos o inválidos se responde `rechazado` sin frenar el resto del '
+        .'lote — nunca un 422 para el lote completo. `cierre_trabajo`/`cierre_sesion` (HU-05) MUTAN una '
+        .'fila existente en vez de crear una nueva: `uuid_cliente` identifica el EVENTO de cierre — '
+        .'distinto del `uuid_cliente` de apertura del trabajo/sesión que referencian.',
     required: ['tipo', 'uuid_cliente'],
     properties: [
-        new OA\Property(property: 'tipo', type: 'string', enum: ['trabajo', 'sesion'], example: 'trabajo'),
+        new OA\Property(property: 'tipo', type: 'string', enum: ['trabajo', 'sesion', 'cierre_trabajo', 'cierre_sesion'], example: 'trabajo'),
         new OA\Property(property: 'uuid_cliente', type: 'string', example: 'a1b2c3d4-0000-4000-8000-000000000001'),
         new OA\Property(property: 'orden_id', description: '`trabajo`: id de servidor de la orden (del pull de catálogo).', type: 'integer', example: 1),
         new OA\Property(property: 'lote_id', description: '`trabajo`: id de servidor del lote (del pull de catálogo).', type: 'integer', example: 3),
         new OA\Property(property: 'nro_aplicacion', description: '`trabajo`.', type: 'integer', example: 1),
         new OA\Property(
             property: 'trabajo_uuid_cliente',
-            description: '`sesion`: `uuid_cliente` de su trabajo — nunca el id de servidor, que puede no existir '
-                .'todavía si el trabajo llegó en este mismo lote.',
+            description: '`sesion`/`cierre_trabajo`: `uuid_cliente` de apertura del trabajo — nunca el id de '
+                .'servidor, que puede no existir todavía si el trabajo llegó en este mismo lote.',
             type: 'string',
             example: 'a1b2c3d4-0000-4000-8000-000000000001',
+        ),
+        new OA\Property(
+            property: 'sesion_uuid_cliente',
+            description: '`cierre_sesion`: `uuid_cliente` de apertura de la sesión a cerrar.',
+            type: 'string',
+            example: 'a1b2c3d4-0000-4000-8000-000000000002',
         ),
         new OA\Property(property: 'secuencia', description: '`sesion`.', type: 'integer', example: 1),
         new OA\Property(property: 'piloto_id', description: '`sesion`: id de servidor de la persona (del pull de catálogo).', type: 'integer', example: 5),
         new OA\Property(property: 'auxiliar_id', description: '`sesion`, opcional.', type: 'integer', nullable: true, example: null),
         new OA\Property(property: 'hectareas_declaradas', description: 'DECIMAL como string (invariante 6). `0` si se omite.', type: 'string', example: '0'),
         new OA\Property(property: 'inicio', type: 'string', format: 'date-time', example: '2026-09-01T10:00:00-04:00'),
-        new OA\Property(property: 'fin', type: 'string', format: 'date-time', nullable: true, example: null),
+        new OA\Property(property: 'fin', type: 'string', format: 'date-time', nullable: true, description: 'Requerido en `cierre_trabajo`/`cierre_sesion`.', example: null),
+        new OA\Property(
+            property: 'motivo_cierre',
+            description: '`cierre_sesion`: catálogo espec §4.3.',
+            type: 'string',
+            enum: ['completado', 'relevo_piloto', 'cambio_dron', 'falla_equipo', 'clima', 'fin_jornada', 'otro'],
+            nullable: true,
+            example: null,
+        ),
     ],
     type: 'object',
 )]
@@ -67,10 +83,10 @@ final class SyncController
         operationId: 'sincronizarLote',
         description: 'Push en lote de la cola offline (espec §2.1). Cada registro se procesa en su propia '
             .'transacción —nunca el lote completo en una— y se responde con uno de tres estados: `aplicado`, '
-            .'`duplicado` (reintento de un `uuid_cliente` ya aplicado, se trata como éxito) o `rechazado` con '
-            .'motivo. El servidor agrupa por tipo y aplica siempre `trabajo` antes que `sesion`, sin importar '
-            .'el orden del arreglo recibido, así que una `sesion` puede referenciar un `trabajo` del mismo '
-            .'lote aunque venga antes en el arreglo.',
+            .'`duplicado` (reintento del mismo `uuid_cliente` ya aplicado, se trata como éxito) o `rechazado` con '
+            .'motivo. El servidor agrupa por tipo y aplica siempre en el orden `trabajo`, `sesion`, '
+            .'`cierre_trabajo`, `cierre_sesion`, sin importar el orden del arreglo recibido, así que un registro '
+            .'puede referenciar otro del mismo lote aunque venga antes en el arreglo.',
         summary: 'Push de sincronización en lote (trabajo, sesión)',
         security: [['tokenDispositivo' => []]],
         tags: ['Sincronizacion'],

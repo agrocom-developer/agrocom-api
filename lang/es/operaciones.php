@@ -44,4 +44,39 @@ return [
         ],
     ],
 
+    // Pantalla de panel "Operación › Trabajos" (HU-05, tarea 13): listado
+    // mínimo, sin filtros ni detalle de evidencias (eso es HU-15). Vocabulario
+    // real del ciclo de vida — no confundir con `sesion.estado` de arriba
+    // (el mock del dashboard demo).
+    'trabajos' => [
+        'titulo' => 'Trabajos',
+        'subtitulo' => 'Trabajos sincronizados desde la app de campo, con sus sesiones.',
+        'vacio' => 'Todavía no llegó ningún trabajo sincronizado.',
+        'col_trabajo' => 'Trabajo',
+        'col_estado' => 'Estado',
+        'col_hectareas' => 'Hectáreas declaradas',
+        'col_inicio' => 'Inicio',
+        'col_fin' => 'Fin',
+        'col_sesiones' => 'Sesiones',
+        'col_piloto' => 'Piloto',
+        'sesiones_ver' => 'Ver sesiones (:cantidad)',
+        'sesiones_vacio' => 'Sin sesiones todavía.',
+        'sesion_piloto' => 'Piloto #:id',
+        'sin_fin' => '—',
+        'estado' => [
+            'abierto' => 'Abierto',
+            'cerrado' => 'Cerrado',
+        ],
+        // Catálogo espec §4.3.
+        'motivo_cierre' => [
+            'completado' => 'Completado',
+            'relevo_piloto' => 'Relevo de piloto',
+            'cambio_dron' => 'Cambio de dron',
+            'falla_equipo' => 'Falla de equipo',
+            'clima' => 'Clima',
+            'fin_jornada' => 'Fin de jornada',
+            'otro' => 'Otro',
+        ],
+    ],
+
 ];

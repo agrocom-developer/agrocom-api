@@ -1,6 +1,7 @@
 <?php
 
 use App\Dominios\Distribucion\Infraestructura\Http\Controllers\Web\VersionesApkController;
+use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\TrabajosController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\DashboardController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\DispositivosController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\OrganizacionController;
@@ -96,5 +97,12 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::post('/panel/versiones-apk/{version}/autorizar', [VersionesApkController::class, 'autorizar'])
             ->name('panel.versiones-apk.autorizar');
+
+        // HU-05 (tarea 13): listado mínimo de trabajos/sesiones cerrados.
+        // Permiso `operaciones.trabajo.ver` verificado DENTRO del
+        // controlador contra el ROL ACTIVO, mismo criterio que las rutas de
+        // arriba.
+        Route::get('/panel/trabajos', [TrabajosController::class, 'index'])
+            ->name('panel.trabajos.index');
     });
 });

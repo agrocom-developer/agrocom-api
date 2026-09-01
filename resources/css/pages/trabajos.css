@@ -1,0 +1,124 @@
+/*
+ * Page: trabajos/index (app/Dominios/Operaciones/Infraestructura/Http/Views/pages/trabajos/index.blade.php)
+ * CSS propio de ESTA página (ver convención en resources/css/pages/index.css).
+ * Cada fila de trabajo es una grilla de 5 columnas; el `<details>` de
+ * sesiones ocupa el ancho completo debajo (`grid-column: 1 / -1`), nativo,
+ * sin JS. Todo color y medida por token (CLAUDE.md invariante 11).
+ */
+
+.ag-trabajos__intro {
+    color: var(--ag-color-text-muted);
+    margin-top: var(--ag-space-2);
+    max-width: 50rem;
+}
+
+.ag-trabajos__aviso {
+    margin-top: var(--ag-space-4);
+}
+
+.ag-trabajos__tabla {
+    margin-top: var(--ag-space-5);
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+    overflow: hidden;
+}
+
+.ag-trabajos__head,
+.ag-trabajos__fila {
+    display: grid;
+    grid-template-columns: 0.7fr 1fr 1fr 1.2fr 1.2fr;
+    gap: var(--ag-space-4);
+    align-items: center;
+    padding: var(--ag-space-3) var(--ag-space-4);
+}
+
+.ag-trabajos__head {
+    background-color: var(--ag-color-bg-table-head);
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ag-trabajos__fila {
+    border-top: 1px solid var(--ag-color-border-row);
+    color: var(--ag-color-text);
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-trabajos__trabajo {
+    font-family: var(--ag-font-family-mono);
+    font-weight: var(--ag-font-weight-medium);
+}
+
+.ag-trabajos__sesiones {
+    grid-column: 1 / -1;
+    margin-top: var(--ag-space-2);
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-trabajos__sesiones > summary {
+    cursor: pointer;
+    color: var(--ag-color-text-muted);
+    font-weight: var(--ag-font-weight-medium);
+}
+
+.ag-trabajos__sesiones-vacio {
+    color: var(--ag-color-text-faint);
+    margin-top: var(--ag-space-2);
+}
+
+.ag-trabajos__sesiones-tabla {
+    margin-top: var(--ag-space-2);
+    border: 1px solid var(--ag-color-border-row);
+    border-radius: var(--ag-radius-sm);
+    overflow: hidden;
+}
+
+.ag-trabajos__sesiones-head,
+.ag-trabajos__sesiones-fila {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr 0.8fr 1fr 1fr;
+    gap: var(--ag-space-3);
+    align-items: center;
+    padding: var(--ag-space-2) var(--ag-space-3);
+}
+
+.ag-trabajos__sesiones-head {
+    background-color: var(--ag-color-bg-table-head);
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ag-trabajos__sesiones-fila {
+    border-top: 1px solid var(--ag-color-border-row);
+}
+
+.ag-trabajos__motivo-cierre {
+    display: block;
+    color: var(--ag-color-text-faint);
+    font-size: var(--ag-font-size-xs);
+    margin-top: var(--ag-space-1);
+}
+
+@media (max-width: 992px) {
+    .ag-trabajos__head {
+        display: none;
+    }
+
+    .ag-trabajos__fila,
+    .ag-trabajos__sesiones-head,
+    .ag-trabajos__sesiones-fila {
+        grid-template-columns: 1fr;
+        gap: var(--ag-space-1);
+    }
+
+    .ag-trabajos__sesiones-head {
+        display: none;
+    }
+}
