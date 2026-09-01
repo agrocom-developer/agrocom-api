@@ -172,9 +172,26 @@ Secciones:
   commit único con todo, ni un commit por archivo. **Sin trailer
   `Co-Authored-By`.** Varios commits por PR es lo normal y lo buscado.
 
+## Escribí de a varias, no de a una
+
+Planificá **las próximas 3 tareas de una sola vez**, no una. Cada una con su
+prompt completo en `prompts/NN-slug.md` y su línea en `runs/cola.txt`, en el
+orden en que deben hacerse. El ciclo las consume seguidas sin volver a
+planificar hasta agotarlas.
+
+Es deliberado: planificar de a una costaba entre 5 y 9 minutos por vuelta, y el
+1/9/2026 llegó a costar tres horas eligiendo contra una cola bloqueada. Pensar
+tres juntas cuesta casi lo mismo que pensar una.
+
+Si al escribir la segunda o la tercera dependés de algo que la primera todavía
+no creó, está bien: escribila igual, asumiendo que la anterior se integró — es
+el orden de la cola lo que lo garantiza. Si de verdad no podés decidirla sin ver
+el resultado, escribí solo las que sí podés y decilo en una línea al final del
+prompt de la última.
+
 ## Actualizá la cola
 
-- Agregá `NN` como última línea de `runs/cola.txt`.
+- Agregá los `NN` como últimas líneas de `runs/cola.txt`, en orden.
 - Marcá en `docs/gestion/cola_tareas.md` lo que se cerró y agregá la fila nueva
   si no estaba, con la HU/TE que cubre.
 
