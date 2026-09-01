@@ -6,6 +6,7 @@ use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
 use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
 use App\Dominios\Operaciones\Dominio\EstadoTrabajo;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Trabajo (espec §4.3, tabla ope_trabajos; TE-05). Nace en la app de campo
@@ -15,12 +16,17 @@ use Carbon\CarbonImmutable;
  * `orden_id` y `lote_id` referencian tablas de otro módulo (`Operaciones`
  * dueño de `ope_ordenes_aplicacion`, `Comercial` dueño de `com_lotes`) solo
  * por FK + entero plano (ADR 0003, regla 3) — sin relaciones Eloquent
- * cruzadas.
+ * cruzadas. `sesiones()`, en cambio, SÍ es una relación Eloquent normal:
+ * `Sesion` vive en el mismo módulo (ADR 0003, regla 1).
  *
  * Las transiciones de `estado` (abierto → cerrado) pasan por
  * `Aplicacion/MaquinaEstados/MaquinaEstadosTrabajo.php` (invariante 7); este
  * modelo no ofrece atajos para mutarlas. `RegistraBitacora`: `estado` es un
  * estado operativo (ADR 0007), misma categoría que `ope_ordenes_aplicacion`.
+ *
+ * `cierre_uuid_cliente` (HU-05, tarea 13): `uuid_cliente` del EVENTO de
+ * cierre, distinto del de apertura — mecanismo de idempotencia de una
+ * mutación sobre fila existente, documentado en runs/13.md.
  *
  * @property int $id
  * @property string $uuid_cliente
@@ -31,6 +37,7 @@ use Carbon\CarbonImmutable;
  * @property EstadoTrabajo $estado
  * @property CarbonImmutable $inicio
  * @property CarbonImmutable|null $fin
+ * @property string|null $cierre_uuid_cliente
  */
 class Trabajo extends ModeloDominio
 {
@@ -49,6 +56,7 @@ class Trabajo extends ModeloDominio
         'estado',
         'inicio',
         'fin',
+        'cierre_uuid_cliente',
     ];
 
     /** @return array<string, string> */
@@ -61,5 +69,11 @@ class Trabajo extends ModeloDominio
             'inicio' => 'immutable_datetime',
             'fin' => 'immutable_datetime',
         ];
+    }
+
+    /** @return HasMany<Sesion, $this> */
+    public function sesiones(): HasMany
+    {
+        return $this->hasMany(Sesion::class, 'trabajo_id');
     }
 }

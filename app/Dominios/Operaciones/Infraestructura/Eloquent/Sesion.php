@@ -20,12 +20,17 @@ use Carbon\CarbonImmutable;
  *
  * Recorte de alcance de la tarea 09: sin `dron_id` (ADR 0011 punto 3, tabla
  * `drones` inexistente) ni `captura_rc_id` (evidencias, TE-07). Sin
- * `validado_por`/`fecha_validacion`/`motivo_cierre` (HU-05/HU-14).
+ * `validado_por`/`fecha_validacion` (HU-14).
  *
  * Las transiciones de `estado` (abierto → cerrado) pasan por
  * `Aplicacion/MaquinaEstados/MaquinaEstadosSesion.php` (invariante 7); este
  * modelo no ofrece atajos para mutarlas. `RegistraBitacora`: `estado` es un
  * estado operativo (ADR 0007), misma categoría que `ope_ordenes_aplicacion`.
+ *
+ * `motivo_cierre` (HU-05, tarea 13): catálogo de la espec §4.3, columna
+ * simple sin la lógica de relevo de HU-07. `cierre_uuid_cliente`:
+ * `uuid_cliente` del EVENTO de cierre, distinto del de apertura — mecanismo
+ * de idempotencia documentado en runs/13.md.
  *
  * @property int $id
  * @property string $uuid_cliente
@@ -37,6 +42,8 @@ use Carbon\CarbonImmutable;
  * @property EstadoSesion $estado
  * @property CarbonImmutable $inicio
  * @property CarbonImmutable|null $fin
+ * @property string|null $motivo_cierre
+ * @property string|null $cierre_uuid_cliente
  */
 class Sesion extends ModeloDominio
 {
@@ -56,6 +63,8 @@ class Sesion extends ModeloDominio
         'estado',
         'inicio',
         'fin',
+        'motivo_cierre',
+        'cierre_uuid_cliente',
     ];
 
     /** @return array<string, string> */
