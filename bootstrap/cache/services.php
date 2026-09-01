@@ -37,6 +37,9 @@
     33 => 'Pest\\Laravel\\PestServiceProvider',
     34 => 'App\\Providers\\AppServiceProvider',
     35 => 'App\\Dominios\\Seguridad\\Infraestructura\\SeguridadServiceProvider',
+    36 => 'App\\Dominios\\Comercial\\Infraestructura\\ComercialServiceProvider',
+    37 => 'App\\Dominios\\Operaciones\\Infraestructura\\OperacionesServiceProvider',
+    38 => 'App\\Dominios\\Personal\\Infraestructura\\PersonalServiceProvider',
   ),
   'eager' => 
   array (
@@ -61,6 +64,9 @@
     18 => 'Pest\\Laravel\\PestServiceProvider',
     19 => 'App\\Providers\\AppServiceProvider',
     20 => 'App\\Dominios\\Seguridad\\Infraestructura\\SeguridadServiceProvider',
+    21 => 'App\\Dominios\\Comercial\\Infraestructura\\ComercialServiceProvider',
+    22 => 'App\\Dominios\\Operaciones\\Infraestructura\\OperacionesServiceProvider',
+    23 => 'App\\Dominios\\Personal\\Infraestructura\\PersonalServiceProvider',
   ),
   'deferred' => 
   array (

@@ -307,6 +307,54 @@ paths:
       security:
         -
           tokenDispositivo: []
+  /api/sync/catalogo:
+    get:
+      tags:
+        - Sincronizacion
+      summary: 'Pull de catálogo con cursor (órdenes, lotes, personas)'
+      description: 'Baja el catálogo de órdenes vigentes, lotes y personas modificados desde la posición del cursor recibido, con paginación por cursor (`updated_at`, `id`) — nunca por número de página, para no perder ni repetir registros entre pulls. `desde` vacío o ausente trae todo lo vigente (primera sincronización). Un `desde` no decodificable se trata igual que vacío, nunca como error de validación.'
+      operationId: obtenerCatalogoSincronizacion
+      parameters:
+        -
+          name: desde
+          in: query
+          description: 'Cursor opaco devuelto por el pull anterior. Ausente o vacío en la primera sincronización.'
+          required: false
+          schema:
+            type: string
+      responses:
+        200:
+          description: 'Catálogo modificado desde el cursor, y el cursor de continuación para el próximo pull.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - ordenes
+                  - lotes
+                  - personas
+                  - cursor
+                properties:
+                  ordenes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OrdenCatalogo'
+                  lotes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LoteCatalogo'
+                  personas:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PersonaCatalogo'
+                  cursor:
+                    description: 'Cursor opaco a reenviar tal cual en `desde` en el próximo pull.'
+                    type: string
+                type: object
+        401:
+          description: 'Token ausente, revocado o ya sin rol válido.'
+      security:
+        -
+          tokenDispositivo: []
 components:
   schemas:
     PaginacionLinks:
@@ -630,6 +678,165 @@ components:
           example: 3
           nullable: true
       type: object
+    OrdenCatalogo:
+      title: 'Orden de aplicación (catálogo)'
+      description: 'Orden vigente para el pull de catálogo (espec §4.3). Los DECIMAL viajan como string (invariante 6).'
+      required:
+        - id
+        - contrato_id
+        - lote_id
+        - nro_aplicacion
+        - litros_ha
+        - humedad_min_pct
+        - viento_max_kmh
+        - temperatura_max_c
+        - humedad_max_pct
+        - velocidad_max_kmh
+        - altura_vuelo_m
+        - velocidad_vuelo_kmh
+        - ancho_pasada_m
+        - observaciones
+        - emitida_por_contacto_id
+        - fecha_emision
+        - estado
+        - updated_at
+      properties:
+        id:
+          description: "Adaptador delgado (ADR 0008): valida la query string, invoca el caso de\nuso y devuelve la respuesta — ninguna regla de negocio vive acá."
+          type: integer
+          example: 1
+        contrato_id:
+          type: integer
+          example: 1
+        lote_id:
+          type: integer
+          example: 3
+        nro_aplicacion:
+          type: integer
+          example: 1
+        litros_ha:
+          type: string
+          example: '10.00'
+        humedad_min_pct:
+          type: string
+          example: '60.00'
+          nullable: true
+        viento_max_kmh:
+          type: string
+          example: '15.00'
+          nullable: true
+        temperatura_max_c:
+          type: string
+          example: '32.00'
+          nullable: true
+        humedad_max_pct:
+          type: string
+          example: '90.00'
+          nullable: true
+        velocidad_max_kmh:
+          type: string
+          example: '25.00'
+          nullable: true
+        altura_vuelo_m:
+          type: string
+          example: '3.00'
+          nullable: true
+        velocidad_vuelo_kmh:
+          type: string
+          example: '18.00'
+          nullable: true
+        ancho_pasada_m:
+          type: string
+          example: '7.00'
+          nullable: true
+        observaciones:
+          type: string
+          example: 'Aplicar en horas de la mañana.'
+          nullable: true
+        emitida_por_contacto_id:
+          type: integer
+          example: 2
+          nullable: true
+        fecha_emision:
+          type: string
+          format: date
+          example: '2026-08-26'
+        estado:
+          type: string
+          example: vigente
+        updated_at:
+          type: string
+          format: date-time
+          example: '2026-08-26T12:00:00+00:00'
+      type: object
+    LoteCatalogo:
+      title: 'Lote (catálogo)'
+      description: 'Lote vigente (no borrado) para el pull de catálogo (espec §4.1). `hectareas` es DECIMAL como string (invariante 6).'
+      required:
+        - id
+        - campo_id
+        - codigo
+        - hectareas
+        - geometria
+        - restricciones
+        - updated_at
+      properties:
+        id:
+          type: integer
+          example: 3
+        campo_id:
+          type: integer
+          example: 1
+        codigo:
+          type: string
+          example: L-01
+        hectareas:
+          type: string
+          example: '120.50'
+        geometria:
+          description: 'GeoJSON del lote, o null si no está cargado.'
+          type: object
+          nullable: true
+        restricciones:
+          type: string
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+          example: '2026-08-26T12:00:00+00:00'
+      type: object
+    PersonaCatalogo:
+      title: 'Persona operativa (catálogo)'
+      description: 'Persona vigente (no borrada) para el pull de catálogo (espec §4.2).'
+      required:
+        - id
+        - nombre
+        - rol
+        - base_id
+        - activo
+        - updated_at
+      properties:
+        id:
+          type: integer
+          example: 5
+        nombre:
+          type: string
+          example: 'Piloto Uno'
+        rol:
+          type: string
+          example: piloto
+        base_id:
+          type: integer
+          example: 1
+          nullable: true
+        activo:
+          type: boolean
+          example: true
+        updated_at:
+          type: string
+          format: date-time
+          example: '2026-08-26T12:00:00+00:00'
+      type: object
   securitySchemes:
     tokenDispositivo:
       type: http
@@ -642,3 +849,6 @@ tags:
   -
     name: Seguridad
     description: 'Sesión de la app de campo por token de dispositivo (espec §4.6, HU-03).'
+  -
+    name: Sincronizacion
+    description: 'Pull de catálogo con cursor para la app de campo (espec §2.1, punto 6). TE-06 parcial: órdenes, lotes y personas — recetas y productos quedan fuera hasta que exista el módulo Mezclas (ver docs/gestion/cola_tareas.md).'
