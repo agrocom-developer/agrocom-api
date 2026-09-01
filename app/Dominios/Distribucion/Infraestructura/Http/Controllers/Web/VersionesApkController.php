@@ -3,20 +3,20 @@
 namespace App\Dominios\Distribucion\Infraestructura\Http\Controllers\Web;
 
 use App\Dominios\Distribucion\Aplicacion\MaquinaEstados\MaquinaEstadosVersionApk;
-use App\Dominios\Distribucion\Aplicacion\SubirVersionApk;
+use App\Dominios\Distribucion\Aplicacion\RegistrarVersionApk;
 use App\Dominios\Distribucion\Infraestructura\Eloquent\VersionApk;
-use App\Dominios\Distribucion\Infraestructura\Http\Requests\SubirVersionApkRequest;
+use App\Dominios\Distribucion\Infraestructura\Http\Requests\RegistrarVersionApkRequest;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\UploadedFile;
 use Illuminate\View\View;
 
 /**
  * `GET /panel/versiones-apk`, `POST /panel/versiones-apk`, `POST
  * /panel/versiones-apk/{version}/autorizar` (HU-20): la pantalla desde la
- * que el dueño sube y autoriza versiones del APK — "ningún RC se actualiza
- * sin su visto bueno".
+ * que el dueño registra y autoriza versiones del APK — "ningún RC se
+ * actualiza sin su visto bueno". El binario vive en el release de
+ * `agrocom-field`; acá solo se guarda su URL.
  *
  * Un único permiso gatea toda la pantalla (`distribucion.version.autorizar`):
  * a diferencia de dispositivos (ver/revocar separados), acá nadie más que
@@ -43,15 +43,17 @@ final class VersionesApkController
         ]);
     }
 
-    public function store(SubirVersionApkRequest $request, SubirVersionApk $subirVersion): RedirectResponse
+    public function store(RegistrarVersionApkRequest $request, RegistrarVersionApk $registrarVersion): RedirectResponse
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO), 403);
 
         $datos = $request->validated();
-        /** @var UploadedFile $archivo */
-        $archivo = $datos['apk'];
 
-        $subirVersion->ejecutar((string) $datos['version'], (int) $datos['version_code'], $archivo);
+        $registrarVersion->ejecutar(
+            (string) $datos['version'],
+            (int) $datos['version_code'],
+            (string) $datos['url_apk'],
+        );
 
         return redirect()
             ->route('panel.versiones-apk.index')

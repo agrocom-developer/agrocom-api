@@ -1,13 +1,15 @@
 {{--
     Page: versiones-apk/index (GET /panel/versiones-apk, panel.versiones-apk.index)
-    Pantalla desde la que el dueño sube y autoriza versiones del APK de
-    agrocom-field (HU-20): "ningún RC se actualiza sin su visto bueno".
+    Pantalla desde la que el dueño registra y autoriza versiones del APK de
+    agrocom-field (HU-20): "ningún RC se actualiza sin su visto bueno". El
+    binario vive en el release de agrocom-field (GitHub Releases); acá solo
+    se registra su URL.
 
     Datos esperados (ver VersionesApkController::index()): la cáscara de
     CascaraPanel, más:
     - $versiones (Collection<VersionApk>): todas, más nueva primero.
 
-    El formulario de subida y el botón "Autorizar" se gatean con `@puede`
+    El formulario de registro y el botón "Autorizar" se gatean con `@puede`
     (evalúa contra el ROL ACTIVO, invariante 10 de CLAUDE.md); el servidor
     igual vuelve a verificar en VersionesApkController::store()/autorizar().
 
@@ -40,7 +42,6 @@
             <form
                 method="POST"
                 action="{{ route('panel.versiones-apk.subir') }}"
-                enctype="multipart/form-data"
                 class="ag-versiones-apk__form"
             >
                 @csrf
@@ -67,12 +68,13 @@
                     />
 
                     <x-atoms.input
-                        type="file"
-                        name="apk"
-                        :label="__('distribucion.versiones.campo_apk')"
-                        :error="$errors->first('apk')"
+                        type="url"
+                        name="url_apk"
+                        :label="__('distribucion.versiones.campo_url_apk')"
+                        placeholder="https://github.com/agrocom-developer/agrocom-field/releases/download/..."
+                        :value="old('url_apk')"
+                        :error="$errors->first('url_apk')"
                         :required="true"
-                        accept=".apk"
                     />
 
                     <x-atoms.button type="submit" variant="accent" icon="upload">

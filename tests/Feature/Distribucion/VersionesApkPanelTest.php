@@ -10,20 +10,18 @@ use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUserRole;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUsuarioInterno;
 use Database\Seeders\Catalogo\CatalogoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 
 /*
- * HU-20 — pantalla del panel (listar, subir, autorizar), gateada por el
+ * HU-20 — pantalla del panel (listar, registrar, autorizar), gateada por el
  * único permiso `distribucion.version.autorizar`. Sin ese permiso, cualquier
- * acción responde 403 (CA obligatorio del criterio de aceptación).
+ * acción responde 403 (CA obligatorio del criterio de aceptación). El
+ * binario vive en el release de `agrocom-field`; acá solo se registra su URL.
  */
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
     $this->seed(CatalogoSeeder::class);
-    Storage::fake('r2');
 });
 
 function usuarioConRolDistribucion(string $username, string $rol): array
@@ -56,22 +54,23 @@ it('el dueño ve el listado de versiones', function () {
         ->assertSee('1.0.0');
 });
 
-it('el dueño sube una versión nueva: queda pendiente en el disco r2', function () {
+it('el dueño registra una versión nueva con la url del release: queda pendiente', function () {
     [$dueno, $idRol] = usuarioConRolDistribucion('duenio', 'dueno');
     entrarAlPanelDistribucion($dueno, $idRol);
+
+    $url = 'https://github.com/agrocom-developer/agrocom-field/releases/download/v1.5.0/agrocom-field.apk';
 
     $this->post('/panel/versiones-apk', [
         'version' => '1.5.0',
         'version_code' => 15000,
-        'apk' => UploadedFile::fake()->create('agrocom-field.apk', 2048),
+        'url_apk' => $url,
     ])->assertRedirect(route('panel.versiones-apk.index'));
 
     $version = VersionApk::query()->where('version', '1.5.0')->sole();
 
     expect($version->estado)->toBe(EstadoVersionApk::Pendiente)
-        ->and($version->version_code)->toBe(15000);
-
-    Storage::disk('r2')->assertExists('distribucion/apk/1.5.0.apk');
+        ->and($version->version_code)->toBe(15000)
+        ->and($version->url_apk)->toBe($url);
 });
 
 it('el dueño autoriza una versión pendiente y desautoriza la vigente anterior', function () {
@@ -103,7 +102,7 @@ it('sin el permiso distribucion.version.autorizar, listar/subir/autorizar respon
     $this->post('/panel/versiones-apk', [
         'version' => '9.9.9',
         'version_code' => 99999,
-        'apk' => UploadedFile::fake()->create('agrocom-field.apk', 1024),
+        'url_apk' => 'https://github.com/agrocom-developer/agrocom-field/releases/download/v9.9.9/agrocom-field.apk',
     ])->assertForbidden();
 
     $this->post("/panel/versiones-apk/{$version->id}/autorizar")->assertForbidden();

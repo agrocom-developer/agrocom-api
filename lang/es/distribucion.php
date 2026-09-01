@@ -27,7 +27,7 @@ return [
         'vacio' => 'Todavía no se subió ninguna versión.',
         'campo_version' => 'Versión (SemVer)',
         'campo_version_code' => 'Código de versión (Android)',
-        'campo_apk' => 'Archivo .apk',
+        'campo_url_apk' => 'URL del release en agrocom-field',
     ],
 
 ];
