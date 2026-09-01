@@ -1,5 +1,6 @@
 <?php
 
+use App\Dominios\Distribucion\Infraestructura\Http\Controllers\Api\VersionController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Api\OrdenAplicacionController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api\DispositivoController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api\SesionCampoController;
@@ -30,6 +31,13 @@ use Illuminate\Support\Facades\Route;
 Route::post('/auth/token', [SesionCampoController::class, 'store'])
     ->middleware('throttle:6,1')
     ->name('api.auth.token.emitir');
+
+// HU-20: la app todavía no tiene token cuando consulta esto — es lo primero
+// que hace antes de operar. Mismo throttle que el login: sin límite sería
+// un endpoint de descubrimiento gratis para golpear el bucket de r2.
+Route::get('/version', [VersionController::class, 'show'])
+    ->middleware('throttle:6,1')
+    ->name('api.version.show');
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/auth/sesion', [SesionCampoController::class, 'show'])->name('api.auth.sesion');
