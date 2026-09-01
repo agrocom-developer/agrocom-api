@@ -27,3 +27,5 @@ Este repo es el backend (Laravel + PostgreSQL) y el panel web (AdminLTE + Blade/
 ## Qué no delegar sin revisión línea por línea
 
 El motor de sync, el servicio de estados, los listeners que generan dinero (devengos, planilla), y el scoping del portal del cliente. El resto (CRUDs, pantallas no críticas, recursos de listado, plantillas PDF) se revisa por diff y test en el PR.
+
+**Esa revisión es posterior a la integración, no previa.** Se hace sobre `develop`, con el cambio ya mergeado, y queda anotada en `runs/revision-pendiente.txt`. Retener el PR en borrador hasta que una persona lo mirara fue peor que el problema que resolvía: el PR #46 (motor de sync) quedó esperando, y como toda rama nueva sale de `develop`, bloqueó doce HU de los sprints 2 a 5 hasta que el ciclo se quedó sin trabajo y se detuvo solo. Un cambio crítico sin revisar es un riesgo acotado y visible; una rama que no entra bloquea todo lo que viene detrás.
