@@ -6,6 +6,7 @@ use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
 use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
 use App\Dominios\Operaciones\Dominio\EstadoSesion;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * Sesión (espec §4.3, tabla ope_sesiones; TE-05): unidad de trabajo continua
@@ -93,5 +94,18 @@ class Sesion extends ModeloDominio
             'fecha_validacion' => 'immutable_datetime',
             'anulada_en' => 'immutable_datetime',
         ];
+    }
+
+    /**
+     * La corrección que anuló esta sesión, si la hay (HU-14: inversa de
+     * `SesionRechazo::sesion()`). Solo lectura, para mostrar el motivo del
+     * rechazo en el detalle de HU-15 — nunca se usa para decidir nada acá
+     * (esa lógica vive en `Aplicacion/RechazarSesion.php`).
+     *
+     * @return HasOne<SesionRechazo, $this>
+     */
+    public function rechazo(): HasOne
+    {
+        return $this->hasOne(SesionRechazo::class, 'anula_a_id');
     }
 }
