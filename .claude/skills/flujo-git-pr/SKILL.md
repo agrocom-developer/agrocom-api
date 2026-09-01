@@ -94,6 +94,12 @@ push directo a `master`/`develop`, `push --force`, `reset --hard`, `clean -fdx`,
 commits sobre `master` (y pide confirmación sobre `develop`). No son sugerencias:
 son denegaciones.
 
+Si tocás ese hook, corré `.claude/hooks/prueba-guardarrail.sh` — 22 casos que
+verifican tanto lo que tiene que denegar como lo que tiene que dejar pasar. La
+excepción de "esto es solo una búsqueda" se evalúa **línea por línea**: cuando se
+evaluaba sobre el comando entero, un `echo` en cualquier línea apagaba todas las
+reglas.
+
 ## Limpieza de ramas
 
 Con squash, una rama integrada no queda como ancestro de `develop`, así que

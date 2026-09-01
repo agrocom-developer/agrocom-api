@@ -64,6 +64,14 @@ y cuya denegación gana incluso sobre los modos permisivos:
   también los ADRs y los agentes. `CLAUDE.md` no se abre con ninguna zona: las
   invariantes son del usuario, no del turno.
 
+Los hooks tienen su propia prueba: `.claude/hooks/prueba-guardarrail.sh`, 22
+casos que se corren a mano. Existe porque el guardarraíl falló en silencio una
+vez: la excepción de "esto es solo una búsqueda" se evaluaba sobre el comando
+entero, así que un `echo` en cualquier línea desactivaba **todas** las reglas
+—push a `develop`, `reset --hard`, `migrate:fresh` pasaban sin que el hook
+dijera nada. Un guardarraíl que se puede apagar sin querer no es un guardarraíl,
+y este es el único que queda de pie cuando el ciclo corre de noche.
+
 Ese último punto es el que evita la trampa clásica: un agente que puede editar el
 test que lo evalúa no está siendo evaluado. Los tests se escriben en una tarea
 distinta de la que implementa el código que deben validar.
