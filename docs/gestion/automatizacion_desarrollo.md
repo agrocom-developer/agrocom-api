@@ -118,9 +118,27 @@ Tres piezas más que hacen que eso funcione sin supervisión:
   como primer commit de su rama. Antes entraba por un PR propio de una sola
   línea (`chore/cola-NN`), uno por vuelta.
 - **Una HU que se queda sin etapas no se tira ni se mergea a medias**: el ciclo
-  abre su PR en borrador, marca la tarea `INCOMPLETA` y le devuelve el turno al
-  usuario. El trabajo hecho queda a la vista y la decisión de seguirlo o
-  cerrarlo es de una persona.
+  abre su PR en borrador y marca la tarea `INCOMPLETA`. Lo mismo con una que el
+  verificador rechazó tras sus vueltas de corrección. El trabajo hecho queda a la
+  vista y la decisión de seguirlo o cerrarlo es de una persona.
+- **Una tarea trabada no corta el bucle.** Queda marcada en `runs/NN.estado`
+  —`BLOQUEADA`, `RECHAZADA`, `AGOTADA` o `INCOMPLETA`, y ya no se vuelve a
+  tomar—, el ciclo planifica igual y sigue con la próxima. Lo único que lo
+  detiene es una parada pedida, que se acabe la cola, o tres tareas seguidas sin
+  integrar, que ya no es una tarea difícil sino algo sistemático.
+  `bin/ciclo --estado` lista lo trabado.
+
+  Es lo que permite dejarlo corriendo mientras se mira el proyecto en paralelo:
+  el ciclo va a chocar seguido con tareas que no le corresponden —el spike del
+  RC con el equipo en mano, lo que vive en `agrocom-field`, la reunión de cierre
+  de la especificación— y frenar el turno entero por eso dejaría el backlog
+  parado por una fila que nunca iba a poder tomar. La planificación las saltea
+  anotándolas en la sección "Fuera del ciclo automático" de
+  [cola_tareas.md](cola_tareas.md), y solo escribe `runs/DETENER` si **ninguna**
+  pendiente de los seis sprints califica.
+- **Terminar un sprint no termina el trabajo.** Cerrada la última HU pendiente
+  de un sprint, la planificación sigue con la primera del siguiente. El plan
+  tiene seis y el ciclo los recorre en orden.
 
 Tres cosas que hacen que el bucle no sea un lazo suelto:
 

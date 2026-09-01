@@ -46,6 +46,32 @@ exista el módulo `Mezclas`).
 | 08 | TE-06 (parcial) — pull de catálogo con cursor: órdenes, lotes y personas | `./bin/verify` = 0 | `app/Dominios/Sincronizacion/**`, `Contratos/` de Operaciones/Comercial/Personal, rutas de API, tests de feature | no | 3 | siguiente |
 | 09 | TE-05 — `POST /api/sync` idempotente | `./bin/verify` = 0, con test de replay (mismo lote 10 veces, en orden y en desorden → base idéntica) | `app/Dominios/Sincronizacion/**`, migraciones, tests | **sí** | 3 | encolada |
 
+### Fuera del ciclo automático
+
+Estas HU y TE del plan de sprints **no califican** y la sesión de planificación
+las saltea sin detenerse — están anotadas acá para que no las redescubra en cada
+vuelta. Saltearlas no las cancela: siguen en `plan_sprints.md` y las hace una
+persona cuando corresponda.
+
+| Id | Por qué no califica |
+|---|---|
+| TE-01 (resto) | El repo `agrocom-field` no existe y staging está diferido (ADR 0010, el servidor no está definido) |
+| TE-02 | Spike de hardware: necesita el RC Agras en mano. Su entregable es un informe, no un exit code |
+| TE-04 | Base local drift + outbox: vive en `agrocom-field`, otro repo |
+| HU-04, HU-05 | El criterio se demuestra en la app y en el RC ("el piloto sale al lote", "flujo mínimo con avión-modo"). La parte de API que las habilita sí entra, como tarea propia |
+| TE-09, HU-21 | Ensayo general en campo con operarios reales y sus correcciones de adopción |
+| TE-10, TE-11 | Producción (VPS, HTTPS, respaldos, Sentry) y carga de datos maestros reales: dependen de infraestructura y de datos que no están |
+| Reunión de cierre de la especificación | Es de negocio. `analisis_clasificacion.md` §7 tiene la agenda |
+
+La regla que decide es la del punto 1 de
+[automatizacion_desarrollo.md](automatizacion_desarrollo.md): una tarea avanza
+sin supervisión solo si su criterio de aceptación es un comando que devuelve 0 o
+1. Lo de otro repo no lo toca este ciclo, y punto.
+
+Muchas de estas tienen **una parte que sí califica**: de HU-04, los endpoints y
+sus tests; de HU-05, el lado servidor del flujo. Cuando sea el caso, la tarea se
+escribe sobre esa parte y se dice explícitamente qué queda del lado de la app.
+
 ### Condicionadas — todavía no tienen sobre qué correr
 
 Las invariantes 2 (nunca se sobrescribe un registro validado) y 3 (el devengo

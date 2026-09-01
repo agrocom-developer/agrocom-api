@@ -25,8 +25,13 @@ con recetas y productos, que esperan al módulo `Mezclas`).
 
 ## Leé, en este orden
 
-1. `runs/{{ID}}.md` y `runs/{{ID}}-veredicto.md` — qué acaba de cerrarse y qué
-   quedó afuera. Lo que quedó afuera suele ser la próxima tarea.
+1. `runs/{{ID}}.md`, `runs/{{ID}}-veredicto.md` y `runs/{{ID}}.estado` — qué
+   acaba de cerrarse y qué quedó afuera. Lo que quedó afuera suele ser la
+   próxima tarea. **Ojo con el estado**: si dice `BLOQUEADA`, `RECHAZADA`,
+   `AGOTADA` o `INCOMPLETA`, esa tarea se trabó y el ciclo te llamó igual para
+   que la cola no se quede vacía. No la reescribas ni la repitas: quedó marcada
+   para el usuario. Elegí la siguiente, y si lo que la trabó también afecta a la
+   que sigue, decilo en tu reporte.
 2. `docs/gestion/cola_tareas.md` — el backlog automatizable, con su orden.
 3. `docs/gestion/plan_sprints.md` — las HU y TE con sus criterios de
    aceptación. **Es la fuente del alcance de la tarea que escribas.**
@@ -47,6 +52,10 @@ Si la cola se quedó sin filas, la próxima tarea sale de la primera HU o TE
 pendiente de `plan_sprints.md`, en el orden del sprint. Agregá su fila a
 `cola_tareas.md` con su criterio ejecutable.
 
+**Terminar un sprint no termina el trabajo.** Si la última HU pendiente del
+sprint en curso ya está hecha, seguí con la primera del sprint siguiente. El
+plan tiene seis; el ciclo los recorre en orden sin detenerse entre uno y otro.
+
 Una tarea entra en el ciclo automático solo si cumple estas tres condiciones:
 
 - **Su criterio de aceptación es un comando con exit code.** Si el criterio es
@@ -55,6 +64,22 @@ Una tarea entra en el ciclo automático solo si cumple estas tres condiciones:
   este ciclo no lo toca.
 - **No depende de una decisión que no está tomada.** Si depende, la tarea es
   escribir la pregunta, no adivinar la respuesta.
+
+### Una tarea que no califica se saltea, no detiene el ciclo
+
+Varias HU y TE del plan no son automatizables desde acá, y son parte del camino
+normal: TE-02 es un spike de hardware con el RC en mano; TE-04 vive en
+`agrocom-field`; HU-05 necesita la app para demostrarse; la reunión de cierre de
+la especificación es de negocio. Toparse con una de ellas **no es motivo para
+parar**.
+
+Cuando la primera pendiente no califica: anotala en la sección "Fuera del ciclo
+automático" de `cola_tareas.md` —con cuál de las tres condiciones incumple, en
+una línea— y seguí bajando hasta la primera que sí califique. Esa es la que
+escribís.
+
+Detener el ciclo (ver más abajo) es el último recurso: solo si **ninguna** de las
+pendientes de los seis sprints califica.
 
 Las tareas de la lista "qué no delegar sin revisión línea por línea" de
 `CLAUDE.md` — motor de sync, servicio de estados, listeners que generan dinero,
@@ -153,11 +178,16 @@ Secciones:
 - Marcá en `docs/gestion/cola_tareas.md` lo que se cerró y agregá la fila nueva
   si no estaba, con la HU/TE que cubre.
 
-## Si no hay ninguna tarea que califique
+## Si NINGUNA tarea de los seis sprints califica
 
-Escribí `runs/DETENER` con el motivo en una línea y, debajo, la pregunta
-concreta que el usuario tiene que responder para que el ciclo pueda seguir. Eso
-detiene el bucle de forma ordenada — es una respuesta válida, no una falla.
+Recién ahí escribí `runs/DETENER` con el motivo en una línea y, debajo, la
+pregunta concreta que el usuario tiene que responder para que el ciclo pueda
+seguir. Eso detiene el bucle de forma ordenada — es una respuesta válida, no una
+falla.
+
+No lo uses porque la primera pendiente no calificaba, ni porque la tarea anterior
+se trabó: para lo primero, salteá y anotá; lo segundo no dice nada sobre la que
+sigue, y el ciclo va a tomar la próxima igual.
 
 ## No commitees
 
