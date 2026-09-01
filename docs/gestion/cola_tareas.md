@@ -43,8 +43,8 @@ exista el módulo `Mezclas`).
 | 05 | Rescate del dashboard: integrar `feature/dashboard-agro`, cuyo PR se cerró sin mergear | `./bin/verify` = 0 y el PR abierto fuera de borrador | la rama `feature/dashboard-agro`, `docs/gestion/plan_dashboard_rediseno.md` | no | 3 | **hecha** |
 | 06 | Bitácora de auditoría transversal (invariante 9, ADR 0007) y su gate | `./bin/verify` = 0, y el gate falla ante un modelo de dominio sin bitácora | `app/Dominios/Compartido/**`, migraciones, `tests/**`, la fila de prefijo del ADR 0011 | no | 3 | **hecha** |
 | 07 | Regresión visual del panel con Playwright | `npx playwright test` = 0 con capturas de referencia versionadas | `playwright.config.*`, `tests/Visual/**`, `package.json` | no | 3 | **hecha** |
-| 08 | TE-06 (parcial) — pull de catálogo con cursor: órdenes, lotes y personas | `./bin/verify` = 0 | `app/Dominios/Sincronizacion/**`, `Contratos/` de Operaciones/Comercial/Personal, rutas de API, tests de feature | no | 3 | siguiente |
-| 09 | TE-05 — `POST /api/sync` idempotente | `./bin/verify` = 0, con test de replay (mismo lote 10 veces, en orden y en desorden → base idéntica) | `app/Dominios/Sincronizacion/**`, migraciones, tests | **sí** | 3 | encolada |
+| 08 | TE-06 (parcial) — pull de catálogo con cursor: órdenes, lotes y personas | `./bin/verify` = 0 | `app/Dominios/Sincronizacion/**`, `Contratos/` de Operaciones/Comercial/Personal, rutas de API, tests de feature | no | 3 | **hecha** (PR #40) |
+| 09 | TE-05 — `POST /api/sync` idempotente: `trabajo` y `sesión`, con la máquina de estados de `Operaciones` que ambas necesitan | `./bin/verify` = 0, con test de replay (mismo lote 10 veces, en orden y en desorden → base idéntica) | `app/Dominios/Sincronizacion/**`, `app/Dominios/Operaciones/**` (migraciones `ope_trabajos`/`ope_sesiones`, máquina de estados, contrato de escritura), rutas de API, tests | **sí** | 5 | siguiente |
 
 ### Fuera del ciclo automático
 
@@ -75,12 +75,17 @@ escribe sobre esa parte y se dice explícitamente qué queda del lado de la app.
 ### Condicionadas — todavía no tienen sobre qué correr
 
 Las invariantes 2 (nunca se sobrescribe un registro validado) y 3 (el devengo
-se genera solo al validar) vigilan tablas que aún no existen: `sesion`,
-`devengo`, la máquina de estados operativos. Su gate se escribe **en la misma
-tarea que cree ese dominio**, no antes: un test de aduana sobre un dominio
-inexistente pasa siempre y da una sensación de cobertura que no existe. Quedan
-anotadas acá para que la sesión de planificación las enganche cuando el Sprint
-2 traiga las tablas.
+se genera solo al validar) vigilan un concepto que todavía no existe: una
+sesión **validada**, con su corrección por `anula_a_id`, y el devengo que esa
+validación dispara. La tarea 09 (TE-05) trae la tabla `sesion` — pero
+deliberadamente sin `validado_por`, `fecha_validacion` ni `motivo_cierre` (ver
+el "Recorte de alcance" de `prompts/09-sync-idempotente.md`): sin el flujo de
+validación, esas columnas no tienen quién las escriba, y el gate seguiría
+pasando por vacío. El gate real se escribe recién con **HU-14** (cola de
+validación, Sprint 4) y **HU-16** (devengo automático al validar, Sprint 5) —
+son esas dos tareas, no la 09, las que "crean ese dominio" en el sentido que
+importa para esta nota. Quedan anotadas acá para que la sesión de planificación
+las enganche cuando le toque el turno a esas HU.
 
 ## Por qué ese orden
 
@@ -108,12 +113,6 @@ por fila pero no el antes/después de cada mutación.
 cambio visual puede cerrarse sin que una persona mire la pantalla — y eso saca
 del turno desatendido a todo el frontend.
 
-**09 al final y en borrador.** El motor de sync es lo primero de la lista de
-`CLAUDE.md` que no se delega sin revisión línea por línea. Que el ciclo lo
-implemente y lo deje en un PR en borrador con su test de replay en verde es
-útil: el trabajo mecánico queda hecho y la revisión humana empieza sobre algo
-que ya pasa la cascada. Que se mergee solo, no.
-
 **08 recorta el alcance de TE-06.** `plan_sprints.md` describe TE-06 como el
 pull de cinco catálogos (órdenes, recetas, productos, lotes, personas), pero
 `receta` y `producto` no tienen migración ni módulo dueño: `Mezclas`
@@ -124,3 +123,18 @@ tarea que el endpoint de pull duplicaría el tamaño de la sesión y mezclaría
 modelo de datos nuevo con un endpoint de sync. La 08 cubre las tres entidades
 que sí existen (órdenes, lotes, personas) — suficiente para lo que HU-04
 necesita — y deja anotado que el pull se extiende cuando `Mezclas` exista.
+
+**09 en borrador, con `trabajo`/`sesión` recortados igual que la 08 recortó
+TE-06.** El motor de sync es lo primero de la lista de `CLAUDE.md` que no se
+delega sin revisión línea por línea: se implementa igual, pero el PR queda en
+borrador y lo revisa una persona. La espec describe `sesion` con `dron_id` y
+`captura_rc_id`; ninguna de las dos tiene destino todavía (`drones` es de
+`Mantenimiento`/`Inventario`, ninguno existe — ADR 0011 punto 3 ya lo pospuso
+explícitamente; `evidencias` llega con TE-07, Sprint 3). Se agregan por
+`ALTER TABLE` cuando esos módulos existan, no antes — mismo criterio que el
+propio ADR 0011 ya aplicó con `tarifa_ha`/`sueldo_mensual`. Etapas en 5 (no 3)
+porque, a diferencia de la 08, esta tarea no reutiliza tablas existentes: crea
+`ope_trabajos` y `ope_sesiones` desde cero, y con ellas la primera máquina de
+estados real del proyecto (invariante 7) — es la tarea más grande de las que
+pasaron por la cola hasta ahora, y `plan_sprints.md` ya la estimaba en 3 días,
+el doble que cualquier otra de esta lista.
