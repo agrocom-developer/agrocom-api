@@ -45,11 +45,6 @@ decidir() {
 # como si fuera una opción suya y aborta.
 coincide() { printf '%s' "$comando" | grep -qE -- "$1"; }
 
-# Un comando de búsqueda que solo MENCIONA un patrón peligroso no es
-# peligroso. Se exceptúa .env: ahí leer es justamente el riesgo.
-solo_busqueda=0
-coincide '^[[:space:]]*(grep|rg|ag|echo|printf)[[:space:]]' && solo_busqueda=1
-
 rama=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
 
 # --- Secretos --------------------------------------------------------
@@ -60,7 +55,25 @@ if coincide '(^|[[:space:]/"'"'"'])\.env([[:space:]"'"'"';|&]|$)' && ! coincide 
         decidir deny 'Escritura o borrado del .env real: es el único archivo del repo que no está versionado y no se puede recuperar.'
 fi
 
-[ "$solo_busqueda" = "1" ] && exit 0
+# Un comando de búsqueda que solo MENCIONA un patrón peligroso no es peligroso:
+# `echo "no uses git reset --hard"` no resetea nada. Esas líneas se descartan
+# antes de evaluar las reglas de abajo.
+#
+# Se descartan LÍNEA POR LÍNEA, y esto es lo que importa: cuando la excepción se
+# evaluaba sobre el comando entero, un solo `echo` en cualquier línea desactivaba
+# todas las reglas que siguen. Un script de varias líneas que empezara imprimiendo
+# un encabezado podía después pushear a develop, resetear en duro o vaciar la base
+# sin que el hook dijera nada — y este hook es la única barrera que queda de pie
+# cuando no hay nadie mirando.
+#
+# Una línea se descarta solo si es ENTERAMENTE una búsqueda: encadenar con `&&`,
+# `;`, un backtick o un `$(...)` la vuelve a poner bajo la lupa, porque
+# `echo x && git push` y `echo $(git push)` sí pushean. Un `$` suelto sigue
+# permitido: `echo $RAMA` no ejecuta nada. Las reglas del .env ya se evaluaron
+# arriba, sobre el comando completo: ahí leer es justamente el riesgo.
+comando=$(printf '%s' "$comando" |
+    grep -vE '^[[:space:]]*(grep|rg|ag|echo|printf)[[:space:]]([^;&`$]|[$][^(])*$' || true)
+[ -z "$(printf '%s' "$comando" | tr -d '[:space:]')" ] && exit 0
 
 # --- Historia de git -------------------------------------------------
 if coincide '\bgit[[:space:]]+push\b'; then
