@@ -10,6 +10,16 @@
 #      editar un ADR no está respetando una decisión, la está borrando.
 #      De día esos archivos se editan normalmente.
 #
+#      El congelamiento es por zona, no todo o nada: AGROCOM_DESCONGELA
+#      lista las que la tarea declaró necesitar (`tests`, `decisiones`,
+#      `claude`, `github`). Sin esa granularidad, una tarea cuyo
+#      entregable ES un test tenía que apagar el turno noche entero —y
+#      quedaba habilitada a editar también los ADRs y los agentes, que no
+#      necesitaba para nada. Pasó con las tareas 04 y 07.
+#
+#      CLAUDE.md no se descongela nunca: las invariantes son del usuario,
+#      no del turno.
+#
 set -uo pipefail
 
 entrada=$(cat)
@@ -32,13 +42,28 @@ esac
 
 [ "${AGROCOM_TURNO_NOCHE:-0}" != "1" ] && exit 0
 
+# Una zona queda editable solo si la tarea la declaró. La lista viaja en
+# AGROCOM_DESCONGELA separada por comas; las comas de los extremos hacen que
+# "tests" no coincida con "tests-visuales" si algún día existiera.
+descongelada() {
+    printf '%s' ",${AGROCOM_DESCONGELA:-},"  | grep -q ",$1,"
+}
+
 case "$relativa" in
+    CLAUDE.md)
+        decidir deny 'CLAUDE.md son las invariantes del proyecto, escritas por el usuario. No se editan desde dentro del turno, con ninguna bandera.' ;;
     tests/*)
-        decidir deny 'Turno noche: los tests son el criterio de aceptación, no parte de la tarea. Si el test está mal, la tarea se marca bloqueada y la revisa el usuario.' ;;
+        descongelada tests && exit 0
+        decidir deny 'Turno noche: los tests son el criterio de aceptación, no parte de la tarea. Si el test está mal, la tarea se marca bloqueada y la revisa el usuario. Si el entregable de la tarea ES un test, su prompt tiene que declarar descongela=tests.' ;;
     docs/decisiones/*)
-        decidir deny 'Turno noche: los ADRs registran decisiones tomadas por una persona. Un agente no las reescribe solo.' ;;
-    CLAUDE.md|.claude/*|.github/*)
-        decidir deny 'Turno noche: las invariantes, los agentes y el CI definen las reglas del turno. No se editan desde dentro del turno.' ;;
+        descongelada decisiones && exit 0
+        decidir deny 'Turno noche: los ADRs registran decisiones tomadas por una persona. Un agente no las reescribe solo. Para ampliar lo que un ADR dejó explícitamente abierto, el prompt declara descongela=decisiones.' ;;
+    .claude/*)
+        descongelada claude && exit 0
+        decidir deny 'Turno noche: los agentes, hooks y skills definen las reglas del turno. No se editan desde dentro del turno salvo que el prompt declare descongela=claude.' ;;
+    .github/*)
+        descongelada github && exit 0
+        decidir deny 'Turno noche: el CI es la compuerta que valida el turno. No se edita desde dentro salvo que el prompt declare descongela=github.' ;;
 esac
 
 exit 0

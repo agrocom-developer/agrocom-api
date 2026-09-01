@@ -57,7 +57,12 @@ y cuya denegación gana incluso sobre los modos permisivos:
   `master` se deniega; sobre `develop` se pide confirmación.
 - `.claude/hooks/guardarrail-archivos.sh` — el `.env` real no se edita nunca. Con
   `AGROCOM_TURNO_NOCHE=1` se congelan además `tests/`, `docs/decisiones/`,
-  `CLAUDE.md`, `.claude/` y `.github/`.
+  `.claude/` y `.github/`, **por zona**: cada tarea declara en su prompt cuáles
+  necesita (`descongela=tests`, `decisiones`, `claude`, `github`) y las demás
+  siguen cerradas. Sin esa granularidad, una tarea cuyo entregable es un test
+  tenía que apagar el turno noche entero, y quedaba habilitada a reescribir
+  también los ADRs y los agentes. `CLAUDE.md` no se abre con ninguna zona: las
+  invariantes son del usuario, no del turno.
 
 Ese último punto es el que evita la trampa clásica: un agente que puede editar el
 test que lo evalúa no está siendo evaluado. Los tests se escriben en una tarea
@@ -120,13 +125,12 @@ vueltas se pagaba completa a ese precio. Se ajusta por tarea con `modelo=` en
 el metadato del prompt, o por entorno con `AGROCOM_MODELO_PESADO` y
 `AGROCOM_MODELO_LIVIANO`. Fable no se usa en ninguna fase.
 
-**Qué se congela y qué no.** La sesión de verificación corre siempre con
-`AGROCOM_TURNO_NOCHE=1`: no edita código, solo escribe su veredicto en `runs/`,
-que no está congelado. La de corrección hereda el `turno-noche` del prompt de
-la tarea — congelarla siempre parecía la opción segura y no lo era: una tarea
-cuyo entregable **es** un test (una aduana, un gate) quedaba sin poder corregir
-su propio archivo. Pasó en la tarea 04. La garantía que importa no se pierde,
-porque quien juzga sigue siendo el verificador, que no puede tocar nada.
+**Qué se congela y qué no.** La sesión de verificación corre siempre congelada
+y sin ninguna zona abierta: no edita código, solo escribe su veredicto en
+`runs/`. La de implementación y la de corrección comparten exactamente las
+zonas que el prompt de la tarea declaró — ni una más. La garantía que importa
+no se pierde, porque quien juzga sigue siendo el verificador, que no puede
+tocar nada.
 
 El backlog que consume está en [cola_tareas.md](cola_tareas.md): solo entra ahí
 lo que tiene criterio de aceptación ejecutable, que es la regla que ordena todo

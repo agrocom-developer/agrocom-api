@@ -110,9 +110,9 @@ necesita_humano() {
 # correría sin los guardarraíles de .claude/ — la única barrera que queda de pie
 # cuando no hay nadie mirando.
 sesion() {
-    local texto="$1" salida="$2" herramientas="${3:-Read Edit Write Glob Grep Bash}" noche="${4:-0}" modelo="${5:-$MODELO_PESADO}"
-    log "  modelo: $modelo"
-    AGROCOM_TURNO_NOCHE="$noche" claude -p "$texto" \
+    local texto="$1" salida="$2" herramientas="${3:-Read Edit Write Glob Grep Bash}" noche="${4:-0}" modelo="${5:-$MODELO_PESADO}" zonas="${6:-}"
+    log "  modelo: $modelo${zonas:+ · descongela: $zonas}"
+    AGROCOM_TURNO_NOCHE="$noche" AGROCOM_DESCONGELA="$zonas" claude -p "$texto" \
         --model "$modelo" \
         --permission-mode dontAsk \
         --allowedTools "$herramientas" \
@@ -138,9 +138,10 @@ fase_implementar() {
     archivo=$(prompt_de "$id") || true
     [ -z "$archivo" ] && { malo "No existe prompt para la tarea $id"; return 1; }
 
-    local noche modelo
+    local noche modelo zonas
     noche=$(meta "$archivo" "turno-noche" "1")
     modelo=$(meta "$archivo" "modelo" "$MODELO_PESADO")
+    zonas=$(meta "$archivo" "descongela" "")
 
     for intento in $(seq 1 "$INTENTOS_IMPL"); do
         marcar "$id implementar intento $intento/$INTENTOS_IMPL"
@@ -167,7 +168,7 @@ decisión que no te corresponde, escribí BLOQUEADA con la pregunta concreta —
 eso es una respuesta válida y termina la tarea."
         fi
 
-        sesion "$texto" "runs/$id.log" "Read Edit Write Glob Grep Bash" "$noche" "$modelo"
+        sesion "$texto" "runs/$id.log" "Read Edit Write Glob Grep Bash" "$noche" "$modelo" "$zonas"
         estado=$(leer_estado "$id")
         log "sesión terminada · estado declarado: $estado"
 
@@ -197,18 +198,19 @@ eso es una respuesta válida y termina la tarea."
 # que importa no se pierde: quien juzga sigue siendo el verificador, que no
 # puede tocar nada.
 fase_verificar() {
-    local id="$1" intento veredicto texto archivo noche
+    local id="$1" intento veredicto texto archivo noche zonas
     local plantilla=prompts/plantillas/verificar.md
     [ -f "$plantilla" ] || { malo "Falta $plantilla"; return 1; }
 
     archivo=$(prompt_de "$id")
     noche=$(meta "$archivo" "turno-noche" "1")
+    zonas=$(meta "$archivo" "descongela" "")
 
     for intento in $(seq 0 "$INTENTOS_ARREGLO"); do
         marcar "$id verificar (vuelta $intento)"
         rm -f "runs/$id.veredicto"
         texto=$(sed "s/{{ID}}/$id/g" "$plantilla")
-        sesion "$texto" "runs/$id-verificar.log" "Read Glob Grep Bash Write" 1 "$MODELO_PESADO"
+        sesion "$texto" "runs/$id-verificar.log" "Read Glob Grep Bash Write" 1 "$MODELO_PESADO" ""
 
         veredicto=$(tr -d '[:space:]' < "runs/$id.veredicto" 2>/dev/null || echo "SIN-VEREDICTO")
         log "veredicto: $veredicto"
@@ -235,7 +237,7 @@ español, imperativo, explicando el porqué. Corré ./bin/verify y no cierres
 hasta que devuelva 0.
 
 Escribí runs/$id.md agregando qué corregiste." \
-            "runs/$id-corregir-$intento.log" "Read Edit Write Glob Grep Bash" "$noche" "$MODELO_PESADO"
+            "runs/$id-corregir-$intento.log" "Read Edit Write Glob Grep Bash" "$noche" "$MODELO_PESADO" "$zonas"
     done
 
     malo "Tarea $id sigue RECHAZADA tras $INTENTOS_ARREGLO correcciones"
@@ -325,9 +327,10 @@ esperar_ci() {
 }
 
 fase_ci() {
-    local id="$1" numero intento archivo noche
+    local id="$1" numero intento archivo noche zonas
     archivo=$(prompt_de "$id")
     noche=$(meta "$archivo" "turno-noche" "1")
+    zonas=$(meta "$archivo" "descongela" "")
     numero=$(cat "runs/$id.pr" 2>/dev/null || echo "")
     [ -z "$numero" ] && { malo "Tarea $id sin PR registrado"; return 1; }
 
@@ -360,7 +363,7 @@ pusheá a la misma rama: el auto-merge reintenta solo cuando CI queda verde.
 
 No toques los tests para que pasen. Si el test tiene razón y el código está
 mal, el que se corrige es el código." \
-            "runs/$id-ci-$intento.log" "Read Edit Write Glob Grep Bash" "$noche" "$MODELO_LIVIANO"
+            "runs/$id-ci-$intento.log" "Read Edit Write Glob Grep Bash" "$noche" "$MODELO_LIVIANO" "$zonas"
     done
 
     malo "Tarea $id: CI sigue en rojo tras $INTENTOS_ARREGLO intentos"
@@ -415,7 +418,7 @@ fase_planificar() {
     preparar_base || return 1
 
     texto=$(sed "s/{{ID}}/$id/g" "$plantilla")
-    sesion "$texto" "runs/$id-planificar.log" "Read Glob Grep Bash Write" 0 "$MODELO_PESADO"
+    sesion "$texto" "runs/$id-planificar.log" "Read Glob Grep Bash Write" 1 "$MODELO_PESADO" ""
 
     local ultima; ultima=$(tail -1 "$COLA" 2>/dev/null || echo "")
     log "cola: $(tr '\n' ' ' < "$COLA" 2>/dev/null)"
