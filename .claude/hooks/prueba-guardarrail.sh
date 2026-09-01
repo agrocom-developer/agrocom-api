@@ -66,7 +66,16 @@ caso pasa "echo que MENCIONA un destructivo" "echo 'no uses $G reset --hard nunc
 caso pasa "grep que menciona migrate:fresh"  "grep -rn 'migrate:fresh' docs/"
 caso pasa "varias líneas de echo"            'echo uno
 echo dos'
-caso pasa "push a una rama feature"          "$G push -u origin feature/algo"
+# El hook consulta la rama en la que estás parado, así que este caso depende de
+# ella: desde master o develop deniega TODO push, y con razón —`git push -u
+# origin feature/algo` parado en develop empuja develop, no una rama feature.
+# Desde cualquier otra rama tiene que pasar.
+case "$(git rev-parse --abbrev-ref HEAD 2>/dev/null)" in
+    master|develop)
+        caso deny "push desde una rama base (deniega, y debe)" "$G push -u origin feature/algo" ;;
+    *)
+        caso pasa "push a una rama feature"          "$G push -u origin feature/algo" ;;
+esac
 caso pasa "echo y después un comando inocuo" "${ECHO_ANTES}$G status --short"
 caso pasa "lectura del .env.example"         "cat ${ENV_REAL}.example"
 caso pasa "rm -rf en el scratchpad"          'rm -rf /tmp/claude-501/algo'
