@@ -8,6 +8,34 @@ servers:
     url: /
     description: 'Servidor actual — la URL base la define el entorno (local, staging, producción).'
 paths:
+  /api/version:
+    get:
+      tags:
+        - Distribucion
+      summary: 'Versión mínima y vigente del APK'
+      description: 'Versión mínima aceptada y versión vigente del APK, con la URL de su release en agrocom-field (GitHub Releases) — el binario no se hospeda en este servidor. Sin autenticación: la app todavía no tiene ningún token emitido cuando la consulta. Con la invariante de negocio "una sola versión autorizada a la vez" (HU-20), hoy `minima` y `vigente` son la misma versión — el contrato ya distingue ambas claves para el día que una historia futura las separe.'
+      operationId: obtenerVersionVigente
+      responses:
+        200:
+          description: 'Ambas claves son `null` si el dueño todavía no autorizó ninguna versión.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - minima
+                  - vigente
+                properties:
+                  minima:
+                    oneOf:
+                      -
+                        $ref: '#/components/schemas/VersionApk'
+                    nullable: true
+                  vigente:
+                    oneOf:
+                      -
+                        $ref: '#/components/schemas/VersionApk'
+                    nullable: true
+                type: object
   /api/ordenes:
     get:
       tags:
@@ -474,6 +502,27 @@ components:
             items:
               type: string
       type: object
+    VersionApk:
+      title: 'Versión del APK'
+      description: 'Versión autorizada del APK de agrocom-field, con la URL de su release (HU-20).'
+      required:
+        - version
+        - version_code
+        - url_descarga
+      properties:
+        version:
+          description: 'Versión SemVer.'
+          type: string
+          example: 1.4.2
+        version_code:
+          description: 'Código de versión de Android.'
+          type: integer
+          example: 14002
+        url_descarga:
+          description: 'URL del release del `.apk` publicado en agrocom-field (GitHub Releases).'
+          type: string
+          format: uri
+      type: object
     OrdenAplicacion:
       title: 'Orden de aplicación'
       description: 'Orden de aplicación emitida por el cliente para un lote (espec §4.3). Los valores DECIMAL (dosis, límites climáticos y de vuelo) viajan como string. Los límites en null heredan del contrato o del parámetro por defecto del sistema (RF-60).'
@@ -843,6 +892,9 @@ components:
       description: 'Token por dispositivo emitido por `POST /api/auth/token` (HU-03). Se envía como `Authorization: Bearer {token}`. No caduca por tiempo: vale hasta que se lo revoque desde el panel, o hasta que la cuenta o el rol con el que se emitió dejen de estar vigentes.'
       scheme: bearer
 tags:
+  -
+    name: Distribucion
+    description: 'Versionado y distribución del APK de agrocom-field (HU-20).'
   -
     name: Operaciones
     description: 'Órdenes de aplicación y, más adelante, trabajos y sesiones de vuelo (espec §5).'

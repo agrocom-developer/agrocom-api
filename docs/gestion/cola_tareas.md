@@ -43,8 +43,9 @@ exista el módulo `Mezclas`).
 | 05 | Rescate del dashboard: integrar `feature/dashboard-agro`, cuyo PR se cerró sin mergear | `./bin/verify` = 0 y el PR abierto fuera de borrador | la rama `feature/dashboard-agro`, `docs/gestion/plan_dashboard_rediseno.md` | no | 3 | **hecha** |
 | 06 | Bitácora de auditoría transversal (invariante 9, ADR 0007) y su gate | `./bin/verify` = 0, y el gate falla ante un modelo de dominio sin bitácora | `app/Dominios/Compartido/**`, migraciones, `tests/**`, la fila de prefijo del ADR 0011 | no | 3 | **hecha** |
 | 07 | Regresión visual del panel con Playwright | `npx playwright test` = 0 con capturas de referencia versionadas | `playwright.config.*`, `tests/Visual/**`, `package.json` | no | 3 | **hecha** |
-| 08 | TE-06 (parcial) — pull de catálogo con cursor: órdenes, lotes y personas | `./bin/verify` = 0 | `app/Dominios/Sincronizacion/**`, `Contratos/` de Operaciones/Comercial/Personal, rutas de API, tests de feature | no | 3 | siguiente |
-| 09 | TE-05 — `POST /api/sync` idempotente | `./bin/verify` = 0, con test de replay (mismo lote 10 veces, en orden y en desorden → base idéntica) | `app/Dominios/Sincronizacion/**`, migraciones, tests | **sí** | 3 | encolada |
+| 08 | TE-06 (parcial) — pull de catálogo con cursor: órdenes, lotes y personas | `./bin/verify` = 0 | `app/Dominios/Sincronizacion/**`, `Contratos/` de Operaciones/Comercial/Personal, rutas de API, tests de feature | no | 3 | **hecha** (PR #40) |
+| 09 | TE-05 — `POST /api/sync` idempotente | `./bin/verify` = 0, con test de replay (mismo lote 10 veces, en orden y en desorden → base idéntica) | `app/Dominios/Sincronizacion/**`, migraciones, tests | **sí** | 5 | **implementada, sin mergear** — `runs/09.estado`=OK, veredicto APROBADO, pero el PR #46 sigue **en borrador** esperando revisión humana línea por línea (`CLAUDE.md`, "qué no delegar"). Mientras no se mergee, ninguna tarea nueva puede usar `ope_trabajos`/`ope_sesiones`: `bin/ciclo` crea toda rama desde `develop` al día, y esas tablas solo existen en `feature/sync-idempotente` |
+| 10 | HU-20 — `GET /api/version` y autorización de versiones del APK, sin hospedar el binario (vive en `agrocom-field`, ver regla de exclusión abajo) | `./bin/verify` = 0 | módulo nuevo `Distribucion` (`dis_`), `sec_action`/seed de permisos, rutas de API, pantalla del panel, tests | no | 3 | **hecha** (tarea 11 corrigió el alcance: la columna pasó de `ruta_apk`/disco `r2` a `url_apk`, la URL del release en `agrocom-field`) |
 
 ### Fuera del ciclo automático
 
@@ -53,14 +54,34 @@ las saltea sin detenerse — están anotadas acá para que no las redescubra en 
 vuelta. Saltearlas no las cancela: siguen en `plan_sprints.md` y las hace una
 persona cuando corresponda.
 
+**La app no entra al ciclo automático.** `agrocom-field`
+(`https://github.com/agrocom-developer/agrocom-field.git`, creado el
+25/8/2026) **ya existe** y es un proyecto **Flutter**. Todo lo que sea de la
+app queda fuera de este ciclo, sin excepción y sin importar en qué sprint
+aparezca: el build del APK, su binario y su publicación, el bloqueo por
+versión mínima del lado cliente, la UI del piloto, el outbox offline (TE-04)
+y cualquier código Dart/Flutter. `agrocom-api` aporta solo el lado servidor:
+endpoints, panel web y permisos. Si una HU mezcla ambas cosas, entra al ciclo
+**únicamente** su parte de servidor, y el prompt debe decir explícitamente
+qué queda del lado de la app. Es regla permanente, no acotada a una tarea:
+la tarea 10 (HU-20) la incumplió al asumir que `agrocom-field` "no existe
+todavía" y terminó hospedando el binario del `.apk` en este repo; la tarea 11
+lo corrigió.
+
 | Id | Por qué no califica |
 |---|---|
 | TE-01 (resto) | El repo `agrocom-field` no existe y staging está diferido (ADR 0010, el servidor no está definido) |
 | TE-02 | Spike de hardware: necesita el RC Agras en mano. Su entregable es un informe, no un exit code |
 | TE-04 | Base local drift + outbox: vive en `agrocom-field`, otro repo |
-| HU-04, HU-05 | El criterio se demuestra en la app y en el RC ("el piloto sale al lote", "flujo mínimo con avión-modo"). La parte de API que las habilita sí entra, como tarea propia |
+| HU-04, HU-05 | La parte de API depende de `ope_trabajos`/`ope_sesiones` (TE-05), que solo existen en `feature/sync-idempotente` — el PR #46 sigue en borrador sin mergear. El resto del criterio se demuestra en la app y en el RC. Vuelve a calificar en cuanto el PR #46 se integre a `develop` |
+| HU-06, HU-07, HU-08, HU-09, TE-07 | Sprint 3 entero opera sobre `ope_sesiones` (condiciones, cierre, incidencias, evidencia) — mismo bloqueo que HU-04/05: la tabla no está en `develop` todavía |
+| HU-10, HU-11, HU-12, HU-13 | Dependen de CR-01 (`analisis_clasificacion.md:36,122`): si Agrocom prepara la mezcla o la prepara el cliente — decisión de negocio no tomada, "define el módulo entero" |
+| HU-14, HU-15 | Dependen de `ope_sesiones`/`ope_trabajos` (cola de validación, tablero de trabajos) — mismo bloqueo que HU-04/05 |
+| HU-16, HU-17, HU-18, HU-19 | Sprint 5 restante: devengos, actas, reporte técnico y alertas dependen todos de sesión/trabajo validados — mismo bloqueo |
+| TE-08 | Endurecimiento del sync con datos de las betas: no hay datos de beta real todavía, depende de que exista staging con tráfico |
 | TE-09, HU-21 | Ensayo general en campo con operarios reales y sus correcciones de adopción |
 | TE-10, TE-11 | Producción (VPS, HTTPS, respaldos, Sentry) y carga de datos maestros reales: dependen de infraestructura y de datos que no están |
+| TE-12 | Cierre de ruta crítica (matriz de permisos, seeds de producción, tag v1.0): prematuro mientras el grueso del plan siga bloqueado por lo de arriba |
 | Reunión de cierre de la especificación | Es de negocio. `analisis_clasificacion.md` §7 tiene la agenda |
 
 La regla que decide es la del punto 1 de
@@ -80,7 +101,9 @@ se genera solo al validar) vigilan tablas que aún no existen: `sesion`,
 tarea que cree ese dominio**, no antes: un test de aduana sobre un dominio
 inexistente pasa siempre y da una sensación de cobertura que no existe. Quedan
 anotadas acá para que la sesión de planificación las enganche cuando el Sprint
-2 traiga las tablas.
+2 traiga las tablas — que ya trajo TE-05 (`sesion`/`trabajo` existen desde el
+PR #46), pero sin el concepto de "validado" todavía no hay nada que guardar:
+el gate real sigue esperando a HU-14/HU-16.
 
 ## Por qué ese orden
 
@@ -124,3 +147,12 @@ tarea que el endpoint de pull duplicaría el tamaño de la sesión y mezclaría
 modelo de datos nuevo con un endpoint de sync. La 08 cubre las tres entidades
 que sí existen (órdenes, lotes, personas) — suficiente para lo que HU-04
 necesita — y deja anotado que el pull se extiende cuando `Mezclas` exista.
+
+**10 salta a Sprint 5 porque casi todo Sprint 2/3/4 quedó bloqueado a la vez.**
+No es un cambio de estrategia: es que el PR #46 (crítico, en borrador) y CR-01
+(decisión de negocio sin tomar) bloquean, entre los dos, prácticamente todo lo
+que sigue en orden — ver la tabla "Fuera del ciclo automático" arriba, filas
+HU-04 a HU-19. HU-20 no depende de ninguno de los dos. En cuanto el PR #46 se
+mergee (revisión humana) o CR-01 se resuelva, la próxima planificación vuelve
+al orden normal del plan — no hace falta reordenar nada a mano, las filas
+bloqueadas se reevalúan solas en la próxima vuelta.

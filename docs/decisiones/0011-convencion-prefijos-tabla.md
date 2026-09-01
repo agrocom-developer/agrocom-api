@@ -27,6 +27,7 @@ Doble nivel, estilo WordPress:
    | Mantenimiento | `man_` |
    | Vistas de solo lectura | `vw_` (ver ADR 0012) |
    | Compartido (tablas transversales de plataforma) | `plt_` (asignado en la extensión 31/8/2026, tarea 06 — ver `plt_bitacoras`, ADR 0007) |
+   | Distribucion | `dis_` (asignado en la extensión 1/9/2026, tarea 10 — ver `dis_versiones_apk`, HU-20) |
 
    Reportes y Portal no tienen prefijo propio porque no escriben tablas: son módulos de solo lectura (`docs/especificacion/insumos_modelo_datos.md`, sección 1) y sus lecturas van por vistas `vw_*`.
 
@@ -99,3 +100,9 @@ La base de datos es dedicada al sistema, así que el prefijo global no aporta ho
 - HU-01 crea `app/Dominios/Personal/` (`per_personas`, `per_bases`) y `app/Dominios/Seguridad/` (`sec_*`, ADR 0004) como primeros módulos nuevos desde ADR 0003; ambos quedan automáticamente cubiertos por `tests/Unit/ArquitecturaModulosTest.php` sin editar el test (descubrimiento por carpeta).
 - `tarifa_ha` y `sueldo_mensual` de `personas` quedan fuera de la migración de HU-01 — anotado como pendiente en `docs/gestion/estado_proyecto.md` para que no se pierda antes de implementar devengos/planilla.
 - HU-02 crea `sec_user_preferencia` (`tema`, `idioma`) dentro de `app/Dominios/Seguridad/` — no un módulo `Identidad` nuevo (extensión 27/8/2026). Queda pendiente, sin resolver por esta extensión, el destino de `profile_pic_url` e `initial_path` (columnas que ADR 0004 también listaba en `sec_user`) para cuando alguna historia los implemente.
+
+### Extensión (1/9/2026) — prefijo `dis_` para el módulo `Distribucion`, para HU-20
+
+**Contexto de la extensión:** HU-20 ("autorizar versiones del APK desde el panel") no encaja en ningún módulo existente — no es identidad/permisos (`Seguridad`), no es negocio de fumigación (`Comercial`/`Operaciones`). Ninguna tarea anterior había reservado prefijo para esto. Detalle completo del análisis en `runs/10-diseno.md`.
+
+13. **Prefijo `dis_` para el módulo `Distribucion`.** Fila agregada a la tabla del punto 1. Primera (y hoy única) tabla: `dis_versiones_apk` (versión SemVer, `version_code` de Android, ruta del `.apk` en el disco `r2`, estado `pendiente`/`autorizada`/`rechazada` — única fila `autorizada` a la vez). Extiende `ModeloDominio` (soft delete + auditoría, ADR 0007) como todo modelo de dominio.

@@ -45,6 +45,9 @@ class SeguridadSeeder extends Seeder
         // responsabilidad.
         'seguridad.dispositivo.ver' => 'Ver los dispositivos con sesión abierta en la app de campo',
         'seguridad.dispositivo.revocar' => 'Revocar el acceso de un dispositivo de campo',
+        // HU-20: autorizar una versión del APK para distribución (RC). Solo
+        // el dueño — ningún RC se actualiza sin su visto bueno.
+        'distribucion.version.autorizar' => 'Autorizar una versión del APK para distribución',
     ];
 
     /** @var list<string> Todo, salvo asignar_rol_dueno (diseño §2). */

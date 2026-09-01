@@ -100,6 +100,10 @@ return [
             'usuarios' => 'Usuarios',
             'dispositivos' => 'Dispositivos',
             'organizacion' => 'Organización',
+            // HU-20: sin módulo raíz propio en la espec §4 — entra acá, mismo
+            // criterio que "Organización" (pantalla de administración
+            // transversal, ver runs/10-diseno.md).
+            'versiones_apk' => 'Versiones del APK',
         ],
     ],
 

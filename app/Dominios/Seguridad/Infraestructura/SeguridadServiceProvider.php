@@ -2,8 +2,10 @@
 
 namespace App\Dominios\Seguridad\Infraestructura;
 
+use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecTokenDispositivo;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUsuarioInterno;
+use App\Dominios\Seguridad\Infraestructura\Http\AutorizacionPanelWebSesion;
 use App\Dominios\Seguridad\Infraestructura\Http\Middleware\ResolverRolActivo;
 use App\Dominios\Seguridad\Infraestructura\Http\Presentacion\PermisoVista;
 use Illuminate\Support\Facades\Blade;
@@ -39,6 +41,14 @@ use Laravel\Sanctum\Sanctum;
  */
 final class SeguridadServiceProvider extends ServiceProvider
 {
+    public function register(): void
+    {
+        // Frontera de Seguridad hacia otros módulos (ADR 0003, regla 2): un
+        // controlador web de OTRO módulo (p. ej. Distribucion, HU-20) nunca
+        // importa `SecUser` — pide el permiso/la cáscara por acá.
+        $this->app->bind(AutorizacionPanelWeb::class, AutorizacionPanelWebSesion::class);
+    }
+
     public function boot(): void
     {
         View::addNamespace('seguridad', app_path('Dominios/Seguridad/Infraestructura/Http/Views'));
