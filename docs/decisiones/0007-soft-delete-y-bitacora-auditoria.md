@@ -26,3 +26,11 @@ Implementación de referencia: un trait `Auditable` (o el paquete `spatie/larave
 - Las consultas de listados por defecto excluyen soft-deleted (comportamiento estándar de Eloquent); las vistas de auditoría e historial los incluyen explícitamente.
 - El panel web (ADR 0002) necesita una vista de bitácora (quién hizo qué, cuándo) accesible al menos para encargado y dueño — no es una pantalla opcional, es la razón de ser de este ADR.
 - Se agrega como invariante en `CLAUDE.md` para que ningún agente de IA genere un modelo o migración sin estos dos mecanismos.
+
+## Nota (31/8/2026) — la bitácora del punto 2 ya existe
+
+La pieza que este ADR dejaba pendiente ("todavía a evaluar en la implementación") ya está construida, en `app/Dominios/Compartido/Infraestructura/Eloquent/`: trait `RegistraBitacora` (colgable por modelo) + observer `BitacoraObserver`, sobre la tabla `plt_bitacoras` (prefijo `plt_`, asignado en ADR 0011, extensión 31/8/2026).
+
+Se optó por el trait/observer propio en vez de `spatie/laravel-activitylog`: el paquete trae su propia tabla sin prefijo de módulo y su propio modelo, que no extiende `ModeloDominio` — el mismo problema que HU-03 resolvió no publicando la tabla de Sanctum (ver `SecTokenDispositivo`). Mantener el mecanismo propio, del mismo tamaño que `RegistraAutoria`, evita esa dualidad sin sumar una dependencia para algo que el proyecto ya sabe construir con sus propias convenciones (soft delete, prefijo de tabla, columnas de auditoría).
+
+Aplicado hoy a los modelos `sec_*` de roles y permisos (`SecRole`, `SecPermission`, `SecUser`, `SecUserRole`, `SecRolePermission`), que es la categoría "roles/permisos" que este ADR nombra explícitamente. Las categorías "dinero" y "estados operativos" (`com_contratos`, `com_lotes`, `ope_ordenes_aplicacion`) quedan para la tarea que implemente la máquina de estados/devengos — la siguiente en la cola después de ésta —, que de todos modos va a tocar esos modelos. `tests/Unit/BitacoraAuditoriaTest.php` decide, a partir del esquema real de cada tabla, qué modelos están obligados a llevar el trait, y falla si a alguno le falta.
