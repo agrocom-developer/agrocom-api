@@ -21,6 +21,22 @@
 #
 #   implementar → verificar → abrir PR → esperar CI → planificar la siguiente
 #
+# **Una tarea = una HU o TE completa = un PR.** La fase de implementación no es
+# una sola sesión: encadena hasta `etapas=` sesiones sobre la MISMA rama, cada
+# una retomando donde quedó la anterior. La sesión declara `PARCIAL` mientras
+# la historia siga abierta y `OK` recién cuando esté entera; el PR se abre al
+# `OK`, con todos los commits acumulados adentro.
+#
+# Eso corrige el defecto que tenía la primera versión: una sesión = una tarea =
+# un PR, lo que obligaba al planificador a partir cada HU en pedazos hasta que
+# cupieran en una sesión, y llenaba el historial de PRs de un commit. La unidad
+# de entrega ahora la fija el plan de sprints, no el tamaño de una sesión.
+#
+# La rama tampoco la elige la sesión: la crea el ciclo, desde el metadato
+# `rama=` del prompt. Y el prompt de la tarea siguiente, que escribe la
+# planificación, viaja como primer commit de la rama de esa misma tarea — antes
+# entraba por un PR propio de una línea (`chore/cola-NN`).
+#
 # El estado no vive en ninguna conversación: vive en git (ramas, commits, PRs)
 # y en runs/, que se puede auditar después. Por eso el ciclo se puede matar en
 # cualquier punto y retomar — que es exactamente lo que pasó la primera vez que
@@ -35,10 +51,18 @@ DETENER=runs/DETENER
 BITACORA=runs/ciclo.log
 PID=runs/ciclo.pid
 
-INTENTOS_IMPL=3      # sesiones de implementación por tarea antes de rendirse
+ETAPAS_IMPL=5        # sesiones encadenadas sobre la misma rama para terminar una HU
+FALLOS_IMPL=3        # sesiones SEGUIDAS sin estado declarado antes de rendirse
 INTENTOS_ARREGLO=2   # vueltas de corrección tras un veredicto RECHAZADO o un CI en rojo
 ESPERA_CI=2700       # 45 min: tope para que CI termine y el auto-merge integre
 SONDEO_CI=30
+
+# Lo único que puede estar sin commitear al arrancar una tarea: lo que dejó
+# escrito la sesión de planificación de la vuelta anterior. Los globs los
+# resuelve git, no el shell — por eso van entre comillas. `prompts/plantillas/`
+# queda deliberadamente afuera: si alguien está editando una plantilla, eso es
+# trabajo humano en curso y el ciclo tiene que abortar, no commitearlo.
+PLANIFICACION=('prompts/[0-9][0-9]-*.md' 'docs/gestion/cola_tareas.md')
 
 # --- Modelo por fase --------------------------------------------------
 # Mismo criterio que .claude/agents/README.md, aplicado a las sesiones del
@@ -95,6 +119,9 @@ leer_estado() {
     [ -f "runs/$1.estado" ] && tr -d '[:space:]' < "runs/$1.estado" || echo "SIN-ESTADO"
 }
 
+# Estados que cierran la tarea. `PARCIAL` NO está acá a propósito: es el que
+# declara una sesión que avanzó de verdad —commiteó— pero no terminó la HU, y
+# habilita otra etapa sobre la misma rama en vez de dar la vuelta por perdida.
 es_terminal() {
     case "$1" in OK|CERRADA|OMITIDA|BLOQUEADA) return 0 ;; *) return 1 ;; esac
 }
@@ -103,7 +130,7 @@ es_terminal() {
 # al reanudar solo repetiría el mismo callejón, y encima sobre una rama que ya
 # tiene trabajo hecho.
 necesita_humano() {
-    case "$1" in BLOQUEADA|RECHAZADA|AGOTADA) return 0 ;; *) return 1 ;; esac
+    case "$1" in BLOQUEADA|RECHAZADA|AGOTADA|INCOMPLETA) return 0 ;; *) return 1 ;; esac
 }
 
 # --- Sesión de Claude Code -------------------------------------------
@@ -120,70 +147,168 @@ sesion() {
         --output-format json > "$salida" 2>&1
 }
 
-# --- Base limpia ------------------------------------------------------
-preparar_base() {
-    if [ -n "$(git status --porcelain)" ]; then
-        malo "Working tree sucio — no arranco una tarea sobre cambios sin commitear"
-        git status --short | head -5 | eco
-        return 1
-    fi
+# --- Rama de la tarea -------------------------------------------------
+# La elige el ciclo, no la sesión: desde el metadato `rama=` del prompt, y si no
+# está, derivada del nombre del propio archivo. Cuando la elegía la sesión, cada
+# reintento inventaba una distinta y el trabajo de la vuelta anterior quedaba
+# colgando en una rama que nadie volvía a mirar.
+rama_de() {
+    local archivo="$1" id="$2" valor
+    valor=$(meta "$archivo" "rama" "")
+    [ -z "$valor" ] && valor="feature/$(basename "$archivo" .md | sed "s/^${id}-//")"
+    printf '%s' "$valor"
+}
+
+# Todo lo sucio que NO sea el prompt que dejó la planificación de la vuelta
+# anterior. Sobre eso sí hay que abortar: es trabajo de alguien más.
+sucio_ajeno() {
+    git status --porcelain |
+        sed -E 's/^.{3}//; s/^.* -> //' |
+        grep -vE '^(prompts/[0-9]{2}-[^/]*\.md|docs/gestion/cola_tareas\.md)$' |
+        head -5
+}
+
+volver_a_develop() {
     git checkout develop --quiet 2>/dev/null || return 1
     git fetch --quiet origin develop 2>/dev/null
-    git merge --quiet --ff-only origin/develop 2>/dev/null
+    git merge --quiet --ff-only origin/develop 2>/dev/null ||
+        aviso "develop local no pudo adelantarse a origin/develop — la rama nace de una base vieja"
+    return 0
+}
+
+# --- Base limpia ------------------------------------------------------
+# Deja al ciclo parado en la rama de la tarea, nacida de un develop al día, con
+# el prompt de esta misma tarea ya commiteado adentro.
+preparar_rama() {
+    local id="$1" rama="$2" ajeno
+    ajeno=$(sucio_ajeno)
+    if [ -n "$ajeno" ]; then
+        malo "Working tree sucio fuera de la planificación — no arranco una tarea encima"
+        printf '%s\n' "$ajeno" | eco
+        return 1
+    fi
+
+    volver_a_develop || { malo "No pude pararme en un develop al día"; return 1; }
+
+    if git rev-parse --verify --quiet "refs/heads/$rama" >/dev/null; then
+        git checkout "$rama" --quiet || { malo "No pude retomar $rama"; return 1; }
+        log "  retomo la rama $rama ($(git rev-list --count develop.."$rama") commit(s) ya hechos)"
+    else
+        git checkout -b "$rama" --quiet || { malo "No pude crear $rama"; return 1; }
+        log "  rama $rama creada desde develop"
+    fi
+
+    # El prompt de esta tarea lo escribió la planificación de la vuelta anterior
+    # y quedó sin commitear a propósito: entra como primer commit de la rama de
+    # la HU que encola. Antes iba por un PR aparte de un solo commit, que era
+    # justamente el PR más chico del historial.
+    if [ -n "$(git status --porcelain -- "${PLANIFICACION[@]}")" ]; then
+        git add -- "${PLANIFICACION[@]}"
+        git commit -q -m "encola la tarea $id y su prompt" \
+            -m "Lo escribió la sesión de planificación al cerrar la tarea anterior. Viaja en la rama de la tarea que encola, no en un PR propio: la unidad de entrega es la HU completa." || return 1
+        ok "prompt de la tarea $id commiteado en $rama"
+    fi
     return 0
 }
 
 # --- Fase 1: implementar ---------------------------------------------
+# Códigos: 0 la HU quedó completa · 1 se rindió · 2 BLOQUEADA (decisión humana)
+#          3 avanzó pero se le acabaron las etapas sin cerrarla
+#
+# Una HU del plan de sprints no entra en una sesión, y partirla en tareas para
+# que entre es lo que llenaba el historial de PRs de un commit. Así que la fase
+# encadena sesiones sobre la MISMA rama: cada una lee lo que dejó la anterior,
+# suma sus commits, y declara `PARCIAL` mientras la historia siga abierta. El PR
+# se abre recién al `OK`.
 fase_implementar() {
-    local id="$1" archivo intento estado texto
+    local id="$1" archivo rama estado texto sesiones fallos hechos
     archivo=$(prompt_de "$id") || true
     [ -z "$archivo" ] && { malo "No existe prompt para la tarea $id"; return 1; }
 
-    local noche modelo zonas
+    local noche modelo zonas etapas
     noche=$(meta "$archivo" "turno-noche" "1")
     modelo=$(meta "$archivo" "modelo" "$MODELO_PESADO")
     zonas=$(meta "$archivo" "descongela" "")
+    etapas=$(meta "$archivo" "etapas" "$ETAPAS_IMPL")
+    rama=$(rama_de "$archivo" "$id")
 
-    for intento in $(seq 1 "$INTENTOS_IMPL"); do
-        marcar "$id implementar intento $intento/$INTENTOS_IMPL"
-        preparar_base || return 1
+    preparar_rama "$id" "$rama" || return 1
+
+    sesiones=0
+    fallos=0
+    while [ "$sesiones" -lt "$etapas" ]; do
+        sesiones=$((sesiones + 1))
+        marcar "$id implementar · etapa $sesiones/$etapas en $rama"
         rm -f "runs/$id.estado"
 
         texto=$(cat "$archivo")
-        if [ "$intento" -gt 1 ]; then
+        if [ "$sesiones" -gt 1 ]; then
             texto="$texto
 
 ---
-## Reintento $intento de $INTENTOS_IMPL
+## Etapa $sesiones de $etapas — continuación, no arranque
 
-El intento anterior no llegó a un estado terminal. Esto es lo que dejó:
+Ya estás parado en la rama \`$rama\`, con el trabajo de las etapas anteriores
+commiteado. **No empieces de cero ni rehagas lo hecho**: leé lo que hay y seguí.
 
-### runs/$id.md
+### Commits que ya tiene la rama
+$(git log --oneline develop.."$rama" 2>/dev/null || echo '(ninguno)')
+
+### runs/$id.md — lo que reportó la etapa anterior
 $(tail -40 "runs/$id.md" 2>/dev/null || echo '(no escribió reporte)')
 
-### Últimas líneas de la corrida
+### Últimas líneas de su corrida
 $(tail -30 "runs/$id.log" 2>/dev/null || echo '(sin log)')
 
-Corregí la causa. No toques los tests para que pasen. Si lo que falta es una
-decisión que no te corresponde, escribí BLOQUEADA con la pregunta concreta —
-eso es una respuesta válida y termina la tarea."
+Seguí desde ahí hasta cerrar la historia entera. Al terminar esta etapa escribí
+en \`runs/$id.estado\` una sola palabra:
+
+- \`PARCIAL\` — avanzaste y commiteaste, pero la HU todavía no está completa.
+  Habrá otra etapa que retome desde acá. Dejá en \`runs/$id.md\` qué falta,
+  concreto, para que la etapa siguiente no tenga que adivinarlo.
+- \`OK\` — la HU está entera: todos sus criterios de aceptación cubiertos y
+  \`./bin/verify\` en 0. Recién con esto se abre el PR.
+- \`BLOQUEADA\` — falta una decisión que no te corresponde. Escribí la pregunta
+  concreta. Es una respuesta válida y termina la tarea.
+
+No toques los tests para que pasen."
         fi
 
         sesion "$texto" "runs/$id.log" "Read Edit Write Glob Grep Bash" "$noche" "$modelo" "$zonas"
         estado=$(leer_estado "$id")
-        log "sesión terminada · estado declarado: $estado"
+        hechos=$(git rev-list --count develop.."$rama" 2>/dev/null || echo 0)
+        log "sesión terminada · estado declarado: $estado · $hechos commit(s) en $rama"
 
-        if es_terminal "$estado"; then
-            [ "$estado" = "BLOQUEADA" ] && { malo "Tarea $id BLOQUEADA — necesita una decisión del usuario"; return 2; }
-            ok "Tarea $id implementada ($estado)"
-            return 0
-        fi
-        malo "Sin estado terminal (quedó en '$estado')"
+        case "$estado" in
+            BLOQUEADA)
+                malo "Tarea $id BLOQUEADA — necesita una decisión del usuario"
+                return 2 ;;
+            OK|CERRADA|OMITIDA)
+                ok "Tarea $id completa ($estado) en $sesiones etapa(s), $hechos commit(s)"
+                return 0 ;;
+            PARCIAL)
+                fallos=0
+                ok "Etapa $sesiones cerrada · $hechos commit(s) · la HU sigue abierta"
+                abortar_si_detenido && return 2
+                ;;
+            *)
+                fallos=$((fallos + 1))
+                malo "Sin estado declarado (quedó en '$estado') — fallo $fallos/$FALLOS_IMPL"
+                if [ "$fallos" -ge "$FALLOS_IMPL" ]; then
+                    echo "AGOTADA" > "runs/$id.estado"
+                    malo "Tarea $id: $FALLOS_IMPL sesiones seguidas sin declarar estado"
+                    return 1
+                fi
+                ;;
+        esac
     done
 
-    echo "AGOTADA" > "runs/$id.estado"
-    malo "Tarea $id agotó los $INTENTOS_IMPL intentos de implementación"
-    return 1
+    # Se acabaron las etapas con la historia todavía abierta. El trabajo hecho es
+    # válido y está commiteado: se entrega en un PR en borrador para que lo mire
+    # una persona, en vez de tirarlo o de mergear media HU.
+    echo "INCOMPLETA" > "runs/$id.estado"
+    aviso "Tarea $id: se agotaron las $etapas etapas con la HU sin cerrar ($hechos commit(s) hechos)"
+    return 3
 }
 
 # --- Fase 2: verificar ------------------------------------------------
@@ -251,7 +376,7 @@ Escribí runs/$id.md agregando qué corregiste." \
 # si va en borrador, porque eso depende de si la tarea es crítica y esa es una
 # regla del proceso, no del contenido.
 fase_pr() {
-    local id="$1" archivo critica rama numero
+    local id="$1" forzar_borrador="${2:-no}" archivo critica rama numero
     archivo=$(prompt_de "$id")
     critica=$(meta "$archivo" "critica" "no")
     rama=$(git rev-parse --abbrev-ref HEAD)
@@ -278,9 +403,10 @@ fase_pr() {
         fi
 
         # El borrador es la entrega de una tarea crítica: se implementa igual,
-        # pero no se integra sin que la mire una persona.
+        # pero no se integra sin que la mire una persona. También lo es la HU que
+        # se quedó sin etapas antes de cerrarse: media historia no se mergea sola.
         local borrador=""
-        [ "$critica" = "si" ] && borrador="--draft"
+        { [ "$critica" = "si" ] || [ "$forzar_borrador" = "si" ]; } && borrador="--draft"
 
         printf '%s' "$cuerpo" > runs/.cuerpo-pr.md
         # Sin comillas alrededor de $borrador, a propósito: cuando está vacío
@@ -297,7 +423,10 @@ fase_pr() {
 
     [ -z "$numero" ] && { malo "No se pudo abrir ni encontrar el PR de $rama"; return 1; }
     echo "$numero" > "runs/$id.pr"
-    ok "PR #$numero$([ "$critica" = "si" ] && echo ' (borrador: tarea crítica, espera revisión humana)')"
+    local motivo=""
+    [ "$critica" = "si" ] && motivo=' (borrador: tarea crítica, espera revisión humana)'
+    [ "$forzar_borrador" = "si" ] && motivo=' (borrador: la HU quedó sin cerrar, espera revisión humana)'
+    ok "PR #$numero$motivo"
     return 0
 }
 
@@ -386,44 +515,6 @@ mal, el que se corrige es el código." \
     return 1
 }
 
-# --- Integrar lo que la planificación escribió ------------------------
-# La sesión de planificación deja archivos VERSIONADOS: el prompt de la tarea
-# siguiente y la cola legible. Los commitea el ciclo y no la sesión — si
-# dependiera de que una sesión se acuerde, la vuelta siguiente arrancaría con el
-# árbol sucio y `preparar_base` la abortaría antes de empezar. Que es exactamente
-# lo que pasó al planificar la 07.
-#
-# Entra por PR como todo lo demás (ADR 0006): pushear a develop está prohibido,
-# y el guardarraíl de .claude/hooks/ lo deniega aunque alguien lo intente.
-integrar_planificacion() {
-    local id="$1" rama="chore/cola-$id" numero
-    [ -z "$(git status --porcelain prompts docs/gestion/cola_tareas.md)" ] && return 0
-
-    marcar "$id integrar la planificación"
-    git checkout -b "$rama" --quiet 2>/dev/null || git checkout "$rama" --quiet || return 1
-    git add prompts docs/gestion/cola_tareas.md
-    git commit -q -m "encola la tarea $id" \
-        -m "Prompt escrito por la sesión de planificación del ciclo al cerrar la tarea anterior. Lo commitea el ciclo para que la tarea siguiente arranque desde un árbol limpio."
-
-    git push -q -u origin "$rama" 2>&1 | tail -1 | eco
-    gh pr create --base develop --head "$rama" \
-        --title "Encola la tarea $id" \
-        --body "Prompt de la tarea $id y su fila en la cola, escritos por la sesión de planificación del ciclo al cerrar la tarea anterior.
-
-Entra por PR como todo lo demás (ADR 0006): el ciclo no puede pushear a develop, y el guardarraíl lo deniega aunque se intente." 2>&1 | tail -2 | eco
-
-    numero=$(gh pr list --head "$rama" --json number -q '.[0].number' 2>/dev/null)
-    [ -z "$numero" ] && { malo "No se pudo abrir el PR de la planificación"; return 1; }
-
-    log "planificación en el PR #$numero — esperando que integre"
-    if esperar_ci "$numero"; then
-        ok "Planificación integrada en develop"
-        return 0
-    fi
-    malo "El PR #$numero de la planificación no integró: la tarea siguiente no tendría su prompt"
-    return 1
-}
-
 # --- Fase 5: planificar la siguiente ----------------------------------
 fase_planificar() {
     local id="$1" texto
@@ -431,7 +522,10 @@ fase_planificar() {
     [ -f "$plantilla" ] || { malo "Falta $plantilla"; return 1; }
 
     marcar "$id planificar la tarea siguiente"
-    preparar_base || return 1
+    # De vuelta a develop con lo recién integrado: el prompt que se escriba acá
+    # tiene que decidirse mirando el estado real del repo, no el de la rama que
+    # acaba de mergearse.
+    volver_a_develop || { malo "No pude pararme en un develop al día"; return 1; }
 
     texto=$(sed "s/{{ID}}/$id/g" "$plantilla")
     sesion "$texto" "runs/$id-planificar.log" "Read Glob Grep Bash Write" 1 "$MODELO_PESADO" ""
@@ -446,8 +540,12 @@ fase_planificar() {
     [ -z "$ultima" ] && { malo "La planificación no dejó ninguna tarea en la cola"; return 1; }
     [ -z "$(prompt_de "$ultima")" ] && { malo "La cola pide '$ultima' pero no existe prompts/$ultima-*.md"; return 1; }
 
+    # Los archivos quedan escritos y SIN commitear a propósito: los commitea
+    # `preparar_rama` como primer commit de la rama de esa misma tarea, en la
+    # vuelta siguiente. Antes entraban por un PR propio (`chore/cola-NN`) de un
+    # solo commit — el PR más chico del historial, y uno por vuelta.
     ok "Próxima tarea: $ultima ($(basename "$(prompt_de "$ultima")"))"
-    integrar_planificacion "$ultima" || return 1
+    log "queda sin commitear (viaja en la rama de la $ultima): $(git status --porcelain -- "${PLANIFICACION[@]}" | sed -E 's/^.{3}//' | tr '\n' ' ')"
     return 0
 }
 
@@ -458,7 +556,17 @@ vuelta() {
     local id="$1" r
     fase "Tarea $id — $(basename "$(prompt_de "$id")" 2>/dev/null || echo 'sin prompt')"
 
-    fase_implementar "$id"; r=$?; [ "$r" -ne 0 ] && return "$r"
+    fase_implementar "$id"; r=$?
+    if [ "$r" -eq 3 ]; then
+        # La HU no se cerró, pero lo hecho está commiteado y pasa la cascada:
+        # se entrega en borrador y se le devuelve el turno al usuario. Descartar
+        # varias etapas de trabajo por no haber llegado sería peor que dejarlas
+        # a la vista.
+        fase_pr "$id" "si" || return 1
+        aviso "Tarea $id entregada incompleta en el PR #$(cat "runs/$id.pr" 2>/dev/null) — decidí vos si se sigue o se cierra"
+        return 2
+    fi
+    [ "$r" -ne 0 ] && return "$r"
     abortar_si_detenido && return 2
     fase_verificar "$id";   r=$?; [ "$r" -ne 0 ] && return "$r"
     abortar_si_detenido && return 2
@@ -506,7 +614,13 @@ case "${1:-}" in
     --estado)
         printf 'Fase actual : %s\n' "$(cat runs/ciclo.estado 2>/dev/null || echo '—')"
         printf 'Cola        : %s\n' "$(tr '\n' ' ' < "$COLA" 2>/dev/null || echo '—')"
+        printf 'Rama        : %s\n' "$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '—')"
         printf 'Parada      : %s\n' "$([ -f "$DETENER" ] && head -1 "$DETENER" || echo 'no')"
+        # El prompt de la tarea siguiente queda sin commitear entre vueltas: lo
+        # commitea la vuelta que lo va a usar. Conviene verlo acá para no
+        # confundirlo con trabajo olvidado.
+        pendiente=$(git status --porcelain -- "${PLANIFICACION[@]}" 2>/dev/null | sed -E 's/^.{3}//' | tr '\n' ' ')
+        printf 'Planificado : %s\n' "${pendiente:-nada pendiente de commitear}"
         if [ -f "$PID" ] && kill -0 "$(cat "$PID")" 2>/dev/null; then
             printf 'Proceso     : vivo (PID %s)\n' "$(cat "$PID")"
         else
