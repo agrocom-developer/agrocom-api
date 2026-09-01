@@ -7,6 +7,7 @@ use App\Dominios\Operaciones\Contratos\AperturaTrabajo;
 use App\Dominios\Operaciones\Contratos\CierreSesion;
 use App\Dominios\Operaciones\Contratos\CierreTrabajo;
 use App\Dominios\Operaciones\Contratos\EscrituraSincronizacion;
+use App\Dominios\Operaciones\Contratos\RegistroCondiciones;
 use App\Dominios\Operaciones\Contratos\ResultadoSincronizacion;
 
 /**
@@ -29,11 +30,13 @@ use App\Dominios\Operaciones\Contratos\ResultadoSincronizacion;
 final class SincronizarLote
 {
     /**
-     * Orden causal fijo (espec §2.1, punto 3, extendido por la tarea 13):
-     * apertura antes que su propio cierre, para el caso —raro pero posible—
-     * de que ambos lleguen en el mismo lote.
+     * Orden causal fijo (espec §2.1, punto 3, extendido por las tareas 13 y
+     * 17): apertura antes que su propio cierre, y `condiciones` justo después
+     * de `sesion` —la referencia por `uuid_cliente`—, para el caso —raro pero
+     * posible— de que ambos lleguen en el mismo lote (un piloto que registra
+     * las condiciones al mismo tiempo que abre la sesión).
      */
-    private const array ORDEN_CAUSAL = ['trabajo', 'sesion', 'cierre_trabajo', 'cierre_sesion'];
+    private const array ORDEN_CAUSAL = ['trabajo', 'sesion', 'condiciones', 'cierre_trabajo', 'cierre_sesion'];
 
     public function __construct(
         private readonly EscrituraSincronizacion $operaciones,
@@ -88,6 +91,7 @@ final class SincronizarLote
         return match ($tipo) {
             'trabajo' => $this->aplicarTrabajo($registro),
             'sesion' => $this->aplicarSesion($registro, $operarioPersonaId),
+            'condiciones' => $this->aplicarCondiciones($registro),
             'cierre_trabajo' => $this->aplicarCierreTrabajo($registro, $operarioPersonaId),
             'cierre_sesion' => $this->aplicarCierreSesion($registro, $operarioPersonaId),
             default => ResultadoSincronizacion::rechazado('tipo de registro desconocido o dato mal formado'),
@@ -130,6 +134,22 @@ final class SincronizarLote
         }
 
         return $this->operaciones->abrirSesion($datos);
+    }
+
+    /**
+     * @param  array<string, mixed>  $registro
+     *
+     * Sin verificación de pertenencia (ver docblock de
+     * `EscrituraSincronizacion::registrarCondiciones()`): la espec no define
+     * una noción de "dueño" para este registro.
+     */
+    private function aplicarCondiciones(array $registro): ResultadoSincronizacion
+    {
+        $datos = RegistroCondiciones::intentarDesdeArreglo($registro);
+
+        return $datos === null
+            ? ResultadoSincronizacion::rechazado('condiciones con datos incompletos o inválidos')
+            : $this->operaciones->registrarCondiciones($datos);
     }
 
     /**
