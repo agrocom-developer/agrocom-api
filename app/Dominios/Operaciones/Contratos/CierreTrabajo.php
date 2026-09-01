@@ -18,6 +18,17 @@ namespace App\Dominios\Operaciones\Contratos;
  * Mismo criterio que `AperturaTrabajo`: constructor privado, solo
  * `intentarDesdeArreglo()` construye, devuelve `null` ante un dato faltante
  * o mal tipado — el registro se rechaza sin frenar el resto del lote.
+ *
+ * A propósito, este DTO NO lleva un campo de hectáreas (hallazgo del
+ * veredicto de la tarea 13): la espec (§4.3) define
+ * `trabajos.hectareas_declaradas` como "suma de sesiones" — un campo
+ * DERIVADO, no un dato que el cliente declare en el cierre. Aceptar acá un
+ * valor de hectáreas arbitrario violaría la invariante 6 de CLAUDE.md ("todo
+ * monto derivado debe poder recalcularse desde los registros de origen y
+ * cuadrar exacto"): la fuente de verdad es `CierreSesion::$hectareasDeclaradas`
+ * de cada sesión del trabajo. `EscrituraSincronizacionEloquent` recalcula la
+ * suma tanto al cerrar cada sesión como al cerrar el propio trabajo (por si
+ * el trabajo se cierra antes de que se cierren todas sus sesiones).
  */
 final readonly class CierreTrabajo
 {

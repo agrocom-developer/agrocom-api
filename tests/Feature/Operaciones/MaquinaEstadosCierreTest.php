@@ -98,25 +98,28 @@ test('MaquinaEstadosTrabajo::cerrar() rechaza un trabajo que ya está cerrado', 
         ->toThrow(TransicionTrabajoNoPermitida::class);
 });
 
-test('MaquinaEstadosSesion::cerrar() deja la sesión cerrada, con fin y motivo_cierre persistidos', function () {
+test('MaquinaEstadosSesion::cerrar() deja la sesión cerrada, con fin, motivo_cierre y hectareas_declaradas persistidos', function () {
     $trabajo = trabajoAbiertoParaCierre();
     $sesion = sesionAbiertaParaCierre($trabajo);
 
-    $cerrada = (new MaquinaEstadosSesion)->cerrar($sesion, 'uuid-cierre-sesion-1', '2026-09-01T12:00:00-04:00', 'completado');
+    $cerrada = (new MaquinaEstadosSesion)->cerrar($sesion, 'uuid-cierre-sesion-1', '2026-09-01T12:00:00-04:00', 'completado', '18.40');
 
     expect($cerrada->estado)->toBe(EstadoSesion::Cerrado)
         ->and($cerrada->cierre_uuid_cliente)->toBe('uuid-cierre-sesion-1')
         ->and($cerrada->motivo_cierre)->toBe('completado')
+        ->and($cerrada->hectareas_declaradas)->toBe('18.40')
         ->and($cerrada->fin?->toIso8601String())->toContain('2026-09-01T12:00:00');
 
-    expect(Sesion::query()->findOrFail($sesion->id)->estado)->toBe(EstadoSesion::Cerrado);
+    $recargada = Sesion::query()->findOrFail($sesion->id);
+    expect($recargada->estado)->toBe(EstadoSesion::Cerrado)
+        ->and($recargada->hectareas_declaradas)->toBe('18.40');
 });
 
 test('MaquinaEstadosSesion::cerrar() rechaza una sesión que ya está cerrada', function () {
     $trabajo = trabajoAbiertoParaCierre();
     $sesion = sesionAbiertaParaCierre($trabajo);
-    (new MaquinaEstadosSesion)->cerrar($sesion, 'uuid-cierre-sesion-2', '2026-09-01T12:00:00-04:00', 'completado');
+    (new MaquinaEstadosSesion)->cerrar($sesion, 'uuid-cierre-sesion-2', '2026-09-01T12:00:00-04:00', 'completado', '10.00');
 
-    expect(fn () => (new MaquinaEstadosSesion)->cerrar($sesion, 'uuid-cierre-sesion-3', '2026-09-01T13:00:00-04:00', 'otro'))
+    expect(fn () => (new MaquinaEstadosSesion)->cerrar($sesion, 'uuid-cierre-sesion-3', '2026-09-01T13:00:00-04:00', 'otro', '5.00'))
         ->toThrow(TransicionSesionNoPermitida::class);
 });

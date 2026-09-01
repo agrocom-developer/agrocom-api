@@ -185,6 +185,13 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
                     return ResultadoSincronizacion::rechazado('el operario no participó en este trabajo');
                 }
 
+                // `hectareas_declaradas` del trabajo es un campo DERIVADO
+                // (espec §4.3: "suma de sesiones"), no un dato que traiga
+                // `CierreTrabajo` (ver docblock de ese DTO). Se recalcula acá
+                // también, no solo en `cerrarSesion()`, por si el trabajo se
+                // cierra antes de que se hayan cerrado todas sus sesiones.
+                $trabajo->hectareas_declaradas = $this->sumaHectareasSesiones($trabajo->id);
+
                 $this->maquinaTrabajo->cerrar($trabajo, $datos->uuidCliente, $datos->fin);
 
                 return ResultadoSincronizacion::aplicado();
@@ -210,6 +217,12 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
      * la sesión por `uuid_cliente`): resolverlo exige leer la fila
      * persistida, así que la verificación vive en esta implementación, no en
      * `SincronizarLote`.
+     *
+     * Tras aplicar el cierre, recalcula `trabajo.hectareas_declaradas`
+     * (hallazgo del veredicto de la tarea 13): la espec (§4.3) lo define como
+     * "suma de sesiones", así que cada cierre de sesión — la única operación
+     * que muta `sesion.hectareas_declaradas` con un valor real — deja
+     * también al trabajo consistente con el nuevo total.
      */
     public function cerrarSesion(CierreSesion $datos, ?int $operarioPersonaId): ResultadoSincronizacion
     {
@@ -234,7 +247,9 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
                     return ResultadoSincronizacion::rechazado('el piloto de la sesión no corresponde al operario autenticado');
                 }
 
-                $this->maquinaSesion->cerrar($sesion, $datos->uuidCliente, $datos->fin, $datos->motivoCierre);
+                $this->maquinaSesion->cerrar($sesion, $datos->uuidCliente, $datos->fin, $datos->motivoCierre, $datos->hectareasDeclaradas);
+
+                $this->recalcularHectareasTrabajo((int) $sesion->trabajo_id);
 
                 return ResultadoSincronizacion::aplicado();
             });
@@ -254,5 +269,25 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
         }
 
         return Sesion::query()->where('trabajo_id', $trabajoId)->where('piloto_id', $personaId)->exists();
+    }
+
+    /**
+     * `trabajo.hectareas_declaradas` (espec §4.3: "suma de sesiones") tras el
+     * cierre de una de sus sesiones. Bloquea la fila del trabajo
+     * (`lockForUpdate`, mismo criterio que `cerrarTrabajo()`/`cerrarSesion()`)
+     * para que dos cierres de sesión concurrentes del mismo trabajo no
+     * pisen la suma del otro con una lectura desactualizada.
+     */
+    private function recalcularHectareasTrabajo(int $trabajoId): void
+    {
+        /** @var Trabajo $trabajo */
+        $trabajo = Trabajo::query()->whereKey($trabajoId)->lockForUpdate()->firstOrFail();
+        $trabajo->hectareas_declaradas = $this->sumaHectareasSesiones($trabajoId);
+        $trabajo->save();
+    }
+
+    private function sumaHectareasSesiones(int $trabajoId): string
+    {
+        return (string) Sesion::query()->where('trabajo_id', $trabajoId)->sum('hectareas_declaradas');
     }
 }

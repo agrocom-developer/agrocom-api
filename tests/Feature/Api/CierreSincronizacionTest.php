@@ -89,7 +89,7 @@ function registroCierreTrabajo(string $uuidCliente, string $trabajoUuidCliente, 
 }
 
 /** @return array<string, mixed> */
-function registroCierreSesion(string $uuidCliente, string $sesionUuidCliente, string $motivo = 'completado', string $fin = '2026-09-01T12:00:00-04:00'): array
+function registroCierreSesion(string $uuidCliente, string $sesionUuidCliente, string $motivo = 'completado', string $fin = '2026-09-01T12:00:00-04:00', string $hectareasDeclaradas = '18.40'): array
 {
     return [
         'tipo' => 'cierre_sesion',
@@ -97,6 +97,7 @@ function registroCierreSesion(string $uuidCliente, string $sesionUuidCliente, st
         'sesion_uuid_cliente' => $sesionUuidCliente,
         'fin' => $fin,
         'motivo_cierre' => $motivo,
+        'hectareas_declaradas' => $hectareasDeclaradas,
     ];
 }
 
@@ -125,7 +126,7 @@ it('cierra un trabajo abierto y lo deja cerrado, con fin seteado', function () {
         ->and($trabajo->fin?->toIso8601String())->toContain('2026-09-01T12:00:00');
 });
 
-it('cierra una sesión abierta y la deja cerrada, con fin y motivo_cierre persistidos', function () {
+it('cierra una sesión abierta y la deja cerrada, con fin, motivo_cierre y hectareas_declaradas persistidos', function () {
     $piloto = pilotoParaCierre();
     $this->postJson('/api/sync', ['registros' => [
         registroTrabajoParaCierre('uuid-t2'),
@@ -133,7 +134,7 @@ it('cierra una sesión abierta y la deja cerrada, con fin y motivo_cierre persis
     ]])->assertOk();
 
     $respuesta = $this->postJson('/api/sync', ['registros' => [
-        registroCierreSesion('uuid-cierre-s2', 'uuid-s2', 'relevo_piloto'),
+        registroCierreSesion('uuid-cierre-s2', 'uuid-s2', 'relevo_piloto', hectareasDeclaradas: '9.75'),
     ]])->assertOk();
 
     expect($respuesta->json('resultados.0.estado'))->toBe('aplicado');
@@ -142,7 +143,45 @@ it('cierra una sesión abierta y la deja cerrada, con fin y motivo_cierre persis
     expect($sesion->estado)->toBe(EstadoSesion::Cerrado)
         ->and($sesion->cierre_uuid_cliente)->toBe('uuid-cierre-s2')
         ->and($sesion->motivo_cierre)->toBe('relevo_piloto')
+        ->and($sesion->hectareas_declaradas)->toBe('9.75')
         ->and($sesion->fin?->toIso8601String())->toContain('2026-09-01T12:00:00');
+});
+
+it('cerrar una sesión sin hectareas_declaradas se rechaza', function () {
+    $piloto = pilotoParaCierre();
+    $this->postJson('/api/sync', ['registros' => [
+        registroTrabajoParaCierre('uuid-t2b'),
+        registroSesionParaCierre('uuid-s2b', 'uuid-t2b', $piloto->id),
+    ]])->assertOk();
+
+    $sinHectareas = registroCierreSesion('uuid-cierre-s2b', 'uuid-s2b');
+    unset($sinHectareas['hectareas_declaradas']);
+
+    $respuesta = $this->postJson('/api/sync', ['registros' => [$sinHectareas]])->assertOk();
+
+    expect($respuesta->json('resultados.0.estado'))->toBe('rechazado');
+    expect(Sesion::query()->where('uuid_cliente', 'uuid-s2b')->firstOrFail()->estado)->toBe(EstadoSesion::Abierto);
+});
+
+it('cerrar la sesión de un trabajo actualiza hectareas_declaradas del trabajo con la suma de sus sesiones', function () {
+    $piloto = pilotoParaCierre();
+    $this->postJson('/api/sync', ['registros' => [
+        registroTrabajoParaCierre('uuid-t2c'),
+        registroSesionParaCierre('uuid-s2c-1', 'uuid-t2c', $piloto->id),
+        [...registroSesionParaCierre('uuid-s2c-2', 'uuid-t2c', $piloto->id), 'secuencia' => 2],
+    ]])->assertOk();
+
+    $this->postJson('/api/sync', ['registros' => [
+        registroCierreSesion('uuid-cierre-s2c-1', 'uuid-s2c-1', hectareasDeclaradas: '12.00'),
+    ]])->assertOk();
+
+    expect(Trabajo::query()->where('uuid_cliente', 'uuid-t2c')->firstOrFail()->hectareas_declaradas)->toBe('12.00');
+
+    $this->postJson('/api/sync', ['registros' => [
+        registroCierreSesion('uuid-cierre-s2c-2', 'uuid-s2c-2', hectareasDeclaradas: '6.40'),
+    ]])->assertOk();
+
+    expect(Trabajo::query()->where('uuid_cliente', 'uuid-t2c')->firstOrFail()->hectareas_declaradas)->toBe('18.40');
 });
 
 it('un cierre_trabajo y un cierre_sesion pueden llegar en el mismo lote que su propia apertura', function () {

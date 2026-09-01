@@ -23,7 +23,11 @@ use Carbon\CarbonImmutable;
  * `$motivoCierre` es la columna simple del catálogo de la espec §4.3
  * (completado / relevo_piloto / cambio_dron / falla_equipo / clima /
  * fin_jornada / otro) — sin la lógica de relevo de HU-07, que esta tarea no
- * implementa.
+ * implementa. `$hectareasDeclaradas` es la condición central de la
+ * transición (espec §5: "Sesión → cerrada | Hectáreas de la sesión + ...") —
+ * pisa el valor de la apertura (que en el caso normal llega en `'0'`, porque
+ * el piloto no sabe cuánto va a cubrir antes de volar) con lo realmente
+ * cubierto.
  */
 final class MaquinaEstadosSesion
 {
@@ -38,7 +42,7 @@ final class MaquinaEstadosSesion
     /**
      * @throws TransicionSesionNoPermitida si `$sesion` no está `abierto`.
      */
-    public function cerrar(Sesion $sesion, string $cierreUuidCliente, string $fin, string $motivoCierre): Sesion
+    public function cerrar(Sesion $sesion, string $cierreUuidCliente, string $fin, string $motivoCierre, string $hectareasDeclaradas): Sesion
     {
         $desde = $sesion->estado;
         $hasta = EstadoSesion::Cerrado;
@@ -51,6 +55,7 @@ final class MaquinaEstadosSesion
         $sesion->cierre_uuid_cliente = $cierreUuidCliente;
         $sesion->fin = CarbonImmutable::parse($fin);
         $sesion->motivo_cierre = $motivoCierre;
+        $sesion->hectareas_declaradas = $hectareasDeclaradas;
         $sesion->save();
 
         return $sesion;
