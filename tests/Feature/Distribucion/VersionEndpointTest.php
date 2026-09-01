@@ -3,25 +3,14 @@
 use App\Dominios\Distribucion\Dominio\EstadoVersionApk;
 use App\Dominios\Distribucion\Infraestructura\Eloquent\VersionApk;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Storage;
 
 /*
  * HU-20 — CA "GET /api/version": sin autenticación (la app todavía no tiene
- * token), devuelve la versión vigente autorizada con su URL de descarga
- * firmada.
+ * token), devuelve la versión vigente autorizada con la URL de su release en
+ * agrocom-field.
  */
 
 uses(RefreshDatabase::class);
-
-beforeEach(function () {
-    Storage::fake('r2');
-    // `buildTemporaryUrlsUsing` es el escape hatch de Laravel para simular
-    // la firma sin depender de credenciales reales de R2 (ni siquiera en
-    // testing): en producción, el disco 's3' real firma con el SDK.
-    Storage::disk('r2')->buildTemporaryUrlsUsing(
-        fn (string $ruta, $expiracion) => "https://r2.test/{$ruta}?firma=simulada",
-    );
-});
 
 it('responde minima y vigente en null cuando el dueño todavía no autorizó ninguna versión', function () {
     $this->getJson('/api/version')
@@ -29,11 +18,13 @@ it('responde minima y vigente en null cuando el dueño todavía no autorizó nin
         ->assertExactJson(['minima' => null, 'vigente' => null]);
 });
 
-it('devuelve la versión autorizada como mínima y vigente, con url de descarga firmada', function () {
+it('devuelve la versión autorizada como mínima y vigente, con la url del release', function () {
+    $url = 'https://github.com/agrocom-developer/agrocom-field/releases/download/v1.4.2/agrocom-field.apk';
+
     VersionApk::factory()->create([
         'version' => '1.4.2',
         'version_code' => 14002,
-        'ruta_apk' => 'distribucion/apk/1.4.2.apk',
+        'url_apk' => $url,
         'estado' => EstadoVersionApk::Autorizada,
     ]);
 
@@ -42,7 +33,7 @@ it('devuelve la versión autorizada como mínima y vigente, con url de descarga 
     $esperado = [
         'version' => '1.4.2',
         'version_code' => 14002,
-        'url_descarga' => 'https://r2.test/distribucion/apk/1.4.2.apk?firma=simulada',
+        'url_descarga' => $url,
     ];
 
     $respuesta->assertExactJson(['minima' => $esperado, 'vigente' => $esperado]);

@@ -24,11 +24,12 @@ final class VersionController
     #[OA\Get(
         path: '/api/version',
         operationId: 'obtenerVersionVigente',
-        description: 'Versión mínima aceptada y versión vigente del APK, con su enlace de descarga '
-            .'firmado. Sin autenticación: la app todavía no tiene ningún token emitido cuando la '
-            .'consulta. Con la invariante de negocio "una sola versión autorizada a la vez" (HU-20), '
-            .'hoy `minima` y `vigente` son la misma versión — el contrato ya distingue ambas claves '
-            .'para el día que una historia futura las separe.',
+        description: 'Versión mínima aceptada y versión vigente del APK, con la URL de su release en '
+            .'agrocom-field (GitHub Releases) — el binario no se hospeda en este servidor. Sin '
+            .'autenticación: la app todavía no tiene ningún token emitido cuando la consulta. Con la '
+            .'invariante de negocio "una sola versión autorizada a la vez" (HU-20), hoy `minima` y '
+            .'`vigente` son la misma versión — el contrato ya distingue ambas claves para el día que '
+            .'una historia futura las separe.',
         summary: 'Versión mínima y vigente del APK',
         tags: ['Distribucion'],
         responses: [

@@ -13,7 +13,7 @@ paths:
       tags:
         - Distribucion
       summary: 'Versión mínima y vigente del APK'
-      description: 'Versión mínima aceptada y versión vigente del APK, con su enlace de descarga firmado. Sin autenticación: la app todavía no tiene ningún token emitido cuando la consulta. Con la invariante de negocio "una sola versión autorizada a la vez" (HU-20), hoy `minima` y `vigente` son la misma versión — el contrato ya distingue ambas claves para el día que una historia futura las separe.'
+      description: 'Versión mínima aceptada y versión vigente del APK, con la URL de su release en agrocom-field (GitHub Releases) — el binario no se hospeda en este servidor. Sin autenticación: la app todavía no tiene ningún token emitido cuando la consulta. Con la invariante de negocio "una sola versión autorizada a la vez" (HU-20), hoy `minima` y `vigente` son la misma versión — el contrato ya distingue ambas claves para el día que una historia futura las separe.'
       operationId: obtenerVersionVigente
       responses:
         200:
@@ -504,7 +504,7 @@ components:
       type: object
     VersionApk:
       title: 'Versión del APK'
-      description: 'Versión autorizada del APK de agrocom-field, con su enlace de descarga firmado (HU-20).'
+      description: 'Versión autorizada del APK de agrocom-field, con la URL de su release (HU-20).'
       required:
         - version
         - version_code
@@ -519,7 +519,7 @@ components:
           type: integer
           example: 14002
         url_descarga:
-          description: 'Enlace de descarga del `.apk`, firmado con expiración corta — nunca una URL pública.'
+          description: 'URL del release del `.apk` publicado en agrocom-field (GitHub Releases).'
           type: string
           format: uri
       type: object
