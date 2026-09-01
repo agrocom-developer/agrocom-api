@@ -3,6 +3,7 @@
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Api\OrdenAplicacionController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api\DispositivoController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api\SesionCampoController;
+use App\Dominios\Sincronizacion\Infraestructura\Http\Controllers\Api\CatalogoController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -47,4 +48,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Espec §8: GET /api/ordenes?lote_id=&estado= — órdenes para el piloto.
     Route::get('/ordenes', [OrdenAplicacionController::class, 'index'])->name('api.ordenes.index');
+
+    // Espec §2.1 punto 6: GET /api/sync/catalogo?desde= — pull de catálogo
+    // con cursor (TE-06 parcial: órdenes, lotes y personas; ver
+    // runs/08-diseno.md para lo que queda afuera y por qué).
+    Route::get('/sync/catalogo', [CatalogoController::class, 'index'])->name('api.sync.catalogo');
 });
