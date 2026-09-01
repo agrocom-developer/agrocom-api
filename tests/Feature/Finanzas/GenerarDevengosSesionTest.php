@@ -5,6 +5,8 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
+use App\Dominios\Compartido\Dominio\AccionBitacora;
+use App\Dominios\Compartido\Infraestructura\Eloquent\Bitacora;
 use App\Dominios\Finanzas\Dominio\Excepciones\PersonaSinTarifaHa;
 use App\Dominios\Finanzas\Infraestructura\Eloquent\DevengoPersonal;
 use App\Dominios\Operaciones\Aplicacion\MaquinaEstados\MaquinaEstadosSesion;
@@ -18,6 +20,7 @@ use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
 use App\Dominios\Personal\Dominio\RolOperativoPersona;
 use App\Dominios\Personal\Infraestructura\Eloquent\PerPersona;
+use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 /*
@@ -214,4 +217,31 @@ test('el listener es idempotente por UNIQUE aunque el evento se dispare dos vece
     event(new SesionValidada($sesion->id));
 
     expect(DevengoPersonal::query()->count())->toBe(2);
+});
+
+test('crear un devengo deja rastro en la bitácora de auditoría (invariante 9)', function () {
+    // DevengoPersonal crea dinero — la categoría que ADR 0007 (nota
+    // 31/8/2026) dejó diferida a "la tarea que implemente la máquina de
+    // estados/devengos". Mismo patrón de prueba que
+    // tests/Feature/Compartido/BitacoraAuditoriaTest.php, acá acotado al
+    // modelo nuevo de este módulo.
+    $actor = SecUser::factory()->create();
+    test()->actingAs($actor, 'interno');
+
+    [$sesion, $piloto] = sesionParaDevengo(conAuxiliar: false);
+    $jefe = jefeValidadorParaDevengo();
+
+    (new ValidarSesion(new MaquinaEstadosSesion))->ejecutar($sesion, $jefe->id);
+
+    $devengo = DevengoPersonal::query()->sole();
+
+    $fila = Bitacora::query()
+        ->where('tabla', 'fin_devengos_personal')
+        ->where('registro_id', $devengo->id)
+        ->where('accion', AccionBitacora::Creado)
+        ->sole();
+
+    expect($fila->user_id)->toBe($actor->id)
+        ->and($fila->despues['persona_id'])->toBe($piloto->id)
+        ->and($fila->despues['monto'])->toBe('1800.00');
 });

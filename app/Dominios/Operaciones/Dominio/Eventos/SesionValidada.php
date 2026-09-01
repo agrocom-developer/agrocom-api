@@ -15,10 +15,10 @@ namespace App\Dominios\Operaciones\Dominio\Eventos;
  * por construcción: esa misma clase no lo vuelve a disparar si la sesión ya
  * estaba `validado` (ver su docblock).
  *
- * Sin oyente real todavía (HU-16, tarea aparte): el listener que genera el
- * devengo real, idempotente por `UNIQUE (sesion_id, persona_id)` sobre una
- * tabla que hoy no existe, es responsabilidad de esa tarea — ver runs/14.md.
- * Laravel no exige que un evento tenga oyente para poder dispararse.
+ * Oyente real desde HU-16 (tarea 16): `Finanzas\Infraestructura\FinanzasServiceProvider::boot()`
+ * registra el listener que genera el devengo, idempotente por
+ * `UNIQUE (sesion_id, persona_id)` sobre `fin_devengos_personal` — ver
+ * `Finanzas\Aplicacion\GenerarDevengosSesion` y runs/16.md.
  */
 final readonly class SesionValidada
 {

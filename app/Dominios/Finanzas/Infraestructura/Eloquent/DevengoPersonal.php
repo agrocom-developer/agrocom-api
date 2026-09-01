@@ -3,6 +3,7 @@
 namespace App\Dominios\Finanzas\Infraestructura\Eloquent;
 
 use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
+use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
 use Illuminate\Support\Carbon;
 
 /**
@@ -21,6 +22,17 @@ use Illuminate\Support\Carbon;
  * no una referencia recalculable contra el estado actual de `per_personas`
  * ni de `ope_sesiones`.
  *
+ * `RegistraBitacora` (invariante 9 de CLAUDE.md): `tests/Unit/BitacoraAuditoriaTest.php`
+ * (aduana desde la tarea 06) todavía no detecta "dinero" como señal
+ * automática — su propio comentario deja esa categoría diferida
+ * explícitamente a "la tarea que implemente la máquina de
+ * estados/devengos" (ADR 0007, nota 31/8/2026). Esta es esa tarea, y este
+ * modelo es, literalmente, el que crea dinero: se declara el trait acá, en
+ * el modelo nuevo que le corresponde, sin extender la aduana automática a
+ * TODAS las tablas de dinero del esquema (`com_contratos`, `com_lotes`
+ * incluidas) — ese es un cambio de alcance mucho mayor, fuera de lo que esta
+ * tarea puede tocar, y queda anotado en runs/16.md para no perderse.
+ *
  * @property int $id
  * @property int $sesion_id
  * @property int $persona_id
@@ -31,6 +43,8 @@ use Illuminate\Support\Carbon;
  */
 class DevengoPersonal extends ModeloDominio
 {
+    use RegistraBitacora;
+
     protected $table = 'fin_devengos_personal';
 
     /** @var list<string> */
