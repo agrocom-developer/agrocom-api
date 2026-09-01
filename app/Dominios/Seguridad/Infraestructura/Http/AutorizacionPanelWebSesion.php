@@ -38,4 +38,12 @@ final class AutorizacionPanelWebSesion implements AutorizacionPanelWeb
 
         return $this->cascaraPanel->para($usuario, $idRolActivo);
     }
+
+    public function personaId(Request $request): ?int
+    {
+        /** @var SecUser|null $usuario */
+        $usuario = $request->user('interno');
+
+        return $usuario?->persona_id;
+    }
 }

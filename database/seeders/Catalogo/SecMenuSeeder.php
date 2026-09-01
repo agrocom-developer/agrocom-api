@@ -62,7 +62,8 @@ class SecMenuSeeder extends Seeder
         // HU-05 (tarea 13): listado mínimo de trabajos/sesiones — el jefe ve
         // qué se cerró. Detalle con evidencias y filtros llegan con HU-15.
         $this->item($operacion, 'operacion', 'trabajos', 'fact_check', 3, ruta: 'panel.trabajos.index', codigoPermiso: 'operaciones.trabajo.ver');
-        $this->item($operacion, 'operacion', 'sesiones', 'flight', 4);
+        // HU-14 (tarea 14): cola de validación de sesiones cerradas.
+        $this->item($operacion, 'operacion', 'sesiones', 'flight', 4, ruta: 'panel.sesiones.validacion.index', codigoPermiso: 'operaciones.sesion.validar');
         $this->item($operacion, 'operacion', 'pausas', 'pause_circle', 5);
         $this->item($operacion, 'operacion', 'mezclas', 'science', 6);
         $this->item($operacion, 'operacion', 'evidencias', 'photo_library', 7);

@@ -32,6 +32,14 @@ use Carbon\CarbonImmutable;
  * `uuid_cliente` del EVENTO de cierre, distinto del de apertura — mecanismo
  * de idempotencia documentado en runs/13.md.
  *
+ * `validado_por`/`fecha_validacion` (HU-14, tarea 14): quién y cuándo
+ * aprobó la sesión — únicas columnas nuevas que escribe la transición
+ * `cerrado → validado`. `anulada_en`: marca no-de-negocio de que esta sesión
+ * fue RECHAZADA (ver `App\Dominios\Operaciones\Infraestructura\Eloquent\SesionRechazo`,
+ * runs/14.md) — deliberadamente NO es un `estado`: la invariante 2 de
+ * CLAUDE.md prohíbe sobrescribir lo ya registrado, así que un rechazo nunca
+ * pisa `estado`/`motivo_cierre`/`hectareas_declaradas`/etc. de esta fila.
+ *
  * @property int $id
  * @property string $uuid_cliente
  * @property int $trabajo_id
@@ -44,6 +52,9 @@ use Carbon\CarbonImmutable;
  * @property CarbonImmutable|null $fin
  * @property string|null $motivo_cierre
  * @property string|null $cierre_uuid_cliente
+ * @property int|null $validado_por
+ * @property CarbonImmutable|null $fecha_validacion
+ * @property CarbonImmutable|null $anulada_en
  */
 class Sesion extends ModeloDominio
 {
@@ -65,6 +76,9 @@ class Sesion extends ModeloDominio
         'fin',
         'motivo_cierre',
         'cierre_uuid_cliente',
+        'validado_por',
+        'fecha_validacion',
+        'anulada_en',
     ];
 
     /** @return array<string, string> */
@@ -76,6 +90,8 @@ class Sesion extends ModeloDominio
             'estado' => EstadoSesion::class,
             'inicio' => 'immutable_datetime',
             'fin' => 'immutable_datetime',
+            'fecha_validacion' => 'immutable_datetime',
+            'anulada_en' => 'immutable_datetime',
         ];
     }
 }

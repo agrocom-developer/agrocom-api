@@ -3,6 +3,7 @@
 namespace App\Dominios\Operaciones\Aplicacion\MaquinaEstados;
 
 use App\Dominios\Operaciones\Dominio\EstadoSesion;
+use App\Dominios\Operaciones\Dominio\Eventos\SesionValidada;
 use App\Dominios\Operaciones\Dominio\Excepciones\TransicionSesionNoPermitida;
 use App\Dominios\Operaciones\Dominio\MaquinaEstados\TransicionesSesion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
@@ -28,6 +29,11 @@ use Carbon\CarbonImmutable;
  * pisa el valor de la apertura (que en el caso normal llega en `'0'`, porque
  * el piloto no sabe cuánto va a cubrir antes de volar) con lo realmente
  * cubierto.
+ *
+ * `validar()` (HU-14, tarea 14) es la contraparte de `cerrar()`: mismo
+ * patrón de guarda vía {@see TransicionesSesion}, pero además idempotente
+ * (ver su docblock) y dispara `SesionValidada` — el evento de dominio que
+ * HU-16 escuchará para generar el devengo.
  */
 final class MaquinaEstadosSesion
 {
@@ -57,6 +63,47 @@ final class MaquinaEstadosSesion
         $sesion->motivo_cierre = $motivoCierre;
         $sesion->hectareas_declaradas = $hectareasDeclaradas;
         $sesion->save();
+
+        return $sesion;
+    }
+
+    /**
+     * `validar()` (HU-14, tarea 14): aprueba una sesión `cerrado` desde el
+     * panel. La policy "validador ≠ piloto de esa sesión" (invariante 4) NO
+     * vive acá — esta clase es solo la que escribe `estado` (invariante 7);
+     * la autorización vive en `Aplicacion/ValidarSesion.php`, mismo criterio
+     * que `EscrituraSincronizacionEloquent::operarioPuedeCerrarTrabajo()`
+     * vive fuera de `MaquinaEstadosTrabajo::cerrar()`.
+     *
+     * Idempotente (invariante 3): si `$sesion` YA está `validado`, no vuelve
+     * a tocar la fila ni a disparar `SesionValidada` — un reintento del
+     * mismo click no debe anunciar la validación dos veces. Cualquier OTRO
+     * estado de origen (`abierto`, o `cerrado` con la sesión ya anulada por
+     * un rechazo — ver `Aplicacion/ValidarSesion.php`, que es quien filtra
+     * ese caso) sigue el camino normal de {@see TransicionesSesion} y lanza
+     * {@see TransicionSesionNoPermitida} si no está permitido.
+     *
+     * @throws TransicionSesionNoPermitida si `$sesion` no está `cerrado` ni `validado`.
+     */
+    public function validar(Sesion $sesion, int $validadorPersonaId): Sesion
+    {
+        if ($sesion->estado === EstadoSesion::Validado) {
+            return $sesion;
+        }
+
+        $desde = $sesion->estado;
+        $hasta = EstadoSesion::Validado;
+
+        if (! TransicionesSesion::permitida($desde, $hasta)) {
+            throw TransicionSesionNoPermitida::entre($desde, $hasta);
+        }
+
+        $sesion->estado = $hasta;
+        $sesion->validado_por = $validadorPersonaId;
+        $sesion->fecha_validacion = CarbonImmutable::now();
+        $sesion->save();
+
+        event(new SesionValidada($sesion->id));
 
         return $sesion;
     }

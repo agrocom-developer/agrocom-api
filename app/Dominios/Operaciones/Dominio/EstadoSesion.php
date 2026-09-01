@@ -9,9 +9,18 @@ namespace App\Dominios\Operaciones\Dominio;
  * `Dominio/MaquinaEstados/TransicionesSesion.php`; la única clase que escribe
  * este valor es `Aplicacion/MaquinaEstados/MaquinaEstadosSesion.php`
  * (invariante 7 de CLAUDE.md).
+ *
+ * `Validado` (HU-14, tarea 14): el jefe de campo aprueba una sesión
+ * `cerrado` desde el panel — dispara el evento de dominio `SesionValidada`
+ * (invariante 3). El RECHAZO de una sesión, en cambio, NO es un estado: por
+ * la invariante 2 ("nunca sobrescribe un registro validado... la corrección
+ * es un registro nuevo"), una sesión rechazada se queda en `Cerrado` para
+ * siempre — se marca `anulada_en` (columna aparte, no `estado`) y la decisión
+ * en sí vive como fila nueva en `ope_sesion_rechazos`. Ver runs/14.md.
  */
 enum EstadoSesion: string
 {
     case Abierto = 'abierto';
     case Cerrado = 'cerrado';
+    case Validado = 'validado';
 }
