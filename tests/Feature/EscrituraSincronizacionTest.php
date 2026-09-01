@@ -200,3 +200,123 @@ test('AperturaSesion::intentarDesdeArreglo devuelve null ante un campo requerido
         // falta secuencia, piloto_id, inicio
     ]))->toBeNull();
 });
+
+/*
+ * Tarea 12, hallazgo 1: `hectareas_declaradas` es el único campo que no se
+ * validaba — un arreglo se castea a la cadena literal "Array", y un negativo
+ * solo lo frenaba el CHECK de Postgres (ausente en SQLite).
+ */
+
+test('AperturaTrabajo::intentarDesdeArreglo devuelve null con hectareas_declaradas no numérica', function () {
+    expect(AperturaTrabajo::intentarDesdeArreglo([
+        'uuid_cliente' => 'uuid-trabajo-ha-invalida',
+        'orden_id' => 1,
+        'lote_id' => 1,
+        'nro_aplicacion' => 1,
+        'hectareas_declaradas' => ['no', 'numerico'],
+        'inicio' => '2026-09-01T10:00:00-04:00',
+    ]))->toBeNull();
+});
+
+test('AperturaTrabajo::intentarDesdeArreglo devuelve null con hectareas_declaradas negativa', function () {
+    expect(AperturaTrabajo::intentarDesdeArreglo([
+        'uuid_cliente' => 'uuid-trabajo-ha-negativa',
+        'orden_id' => 1,
+        'lote_id' => 1,
+        'nro_aplicacion' => 1,
+        'hectareas_declaradas' => '-1.00',
+        'inicio' => '2026-09-01T10:00:00-04:00',
+    ]))->toBeNull();
+});
+
+test('AperturaTrabajo::intentarDesdeArreglo acepta hectareas_declaradas numérica y la conserva como string', function () {
+    $datos = AperturaTrabajo::intentarDesdeArreglo([
+        'uuid_cliente' => 'uuid-trabajo-ha-valida',
+        'orden_id' => 1,
+        'lote_id' => 1,
+        'nro_aplicacion' => 1,
+        'hectareas_declaradas' => 12.5,
+        'inicio' => '2026-09-01T10:00:00-04:00',
+    ]);
+
+    expect($datos)->not->toBeNull()
+        ->and($datos->hectareasDeclaradas)->toBe('12.5');
+});
+
+test('AperturaSesion::intentarDesdeArreglo devuelve null con hectareas_declaradas no numérica', function () {
+    expect(AperturaSesion::intentarDesdeArreglo([
+        'uuid_cliente' => 'uuid-sesion-ha-invalida',
+        'trabajo_uuid_cliente' => 'uuid-trabajo',
+        'secuencia' => 1,
+        'piloto_id' => 1,
+        'hectareas_declaradas' => ['no', 'numerico'],
+        'inicio' => '2026-09-01T10:05:00-04:00',
+    ]))->toBeNull();
+});
+
+test('AperturaSesion::intentarDesdeArreglo devuelve null con hectareas_declaradas negativa', function () {
+    expect(AperturaSesion::intentarDesdeArreglo([
+        'uuid_cliente' => 'uuid-sesion-ha-negativa',
+        'trabajo_uuid_cliente' => 'uuid-trabajo',
+        'secuencia' => 1,
+        'piloto_id' => 1,
+        'hectareas_declaradas' => '-3',
+        'inicio' => '2026-09-01T10:05:00-04:00',
+    ]))->toBeNull();
+});
+
+/*
+ * Tarea 12, hallazgo 2: el contrato de escritura no verificaba que
+ * `orden_id`/`lote_id` formaran un par legítimo — solo que la FK existiera.
+ */
+
+test('abrirTrabajo con un lote_id que no es el de la orden declarada se rechaza sin persistir la fila', function () {
+    $orden = ordenVigenteParaEscritura();
+    $campoId = Lote::query()->findOrFail($orden->lote_id)->campo_id;
+
+    $otroLote = Lote::create([
+        'campo_id' => $campoId,
+        'codigo' => 'L-OTRO',
+        'hectareas' => '30.00',
+    ]);
+
+    $contrato = app(EscrituraSincronizacion::class);
+
+    $datos = AperturaTrabajo::intentarDesdeArreglo([
+        'uuid_cliente' => 'uuid-trabajo-lote-ajeno',
+        'orden_id' => $orden->id,
+        'lote_id' => $otroLote->id,
+        'nro_aplicacion' => 1,
+        'inicio' => '2026-09-01T10:00:00-04:00',
+    ]);
+
+    $resultado = $contrato->abrirTrabajo($datos);
+
+    expect($resultado->estado)->toBe('rechazado')
+        ->and($resultado->motivo)->not->toBeNull();
+
+    expect(Trabajo::query()->where('uuid_cliente', 'uuid-trabajo-lote-ajeno')->exists())->toBeFalse();
+});
+
+test('abrirTrabajo con una orden no vigente se rechaza sin persistir la fila', function () {
+    $orden = ordenVigenteParaEscritura();
+    $orden->estado = EstadoOrdenAplicacion::Consumida;
+    $orden->save();
+
+    $contrato = app(EscrituraSincronizacion::class);
+
+    $datos = AperturaTrabajo::intentarDesdeArreglo([
+        'uuid_cliente' => 'uuid-trabajo-orden-no-vigente',
+        'orden_id' => $orden->id,
+        'lote_id' => $orden->lote_id,
+        'nro_aplicacion' => 1,
+        'inicio' => '2026-09-01T10:00:00-04:00',
+    ]);
+
+    $resultado = $contrato->abrirTrabajo($datos);
+
+    expect($resultado->estado)->toBe('rechazado')
+        ->and($resultado->motivo)->not->toBeNull();
+
+    expect(Trabajo::query()->where('uuid_cliente', 'uuid-trabajo-orden-no-vigente')->exists())->toBeFalse();
+});

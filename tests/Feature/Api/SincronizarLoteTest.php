@@ -184,3 +184,129 @@ it('una sesión que referencia un trabajo inexistente se rechaza sin romper el r
 it('exige que el cuerpo traiga el arreglo registros', function () {
     $this->postJson('/api/sync', [])->assertStatus(422);
 });
+
+/*
+ * Tarea 12, hallazgo 1: `hectareas_declaradas` es el único campo que
+ * `AperturaTrabajo`/`AperturaSesion::intentarDesdeArreglo()` no validaba.
+ */
+
+it('un trabajo con hectareas_declaradas no numérica se rechaza sin bloquear el resto del lote', function () {
+    $orden = ordenDemoVigente();
+    $piloto = pilotoDemo();
+
+    $respuesta = $this->postJson('/api/sync', [
+        'registros' => [
+            registroTrabajo('uuid-ha-invalida', $orden, ['hectareas_declaradas' => ['no', 'es', 'un', 'numero']]),
+            registroTrabajo('uuid-t6', $orden),
+            registroSesion('uuid-s6', 'uuid-t6', $piloto->id),
+        ],
+    ])->assertOk();
+
+    expect($respuesta->json('resultados.0.estado'))->toBe('rechazado')
+        ->and($respuesta->json('resultados.0.motivo'))->not->toBeNull()
+        ->and($respuesta->json('resultados.1.estado'))->toBe('aplicado')
+        ->and($respuesta->json('resultados.2.estado'))->toBe('aplicado');
+
+    expect(Trabajo::query()->where('uuid_cliente', 'uuid-ha-invalida')->exists())->toBeFalse();
+});
+
+it('un trabajo con hectareas_declaradas negativa se rechaza', function () {
+    $orden = ordenDemoVigente();
+
+    $respuesta = $this->postJson('/api/sync', [
+        'registros' => [
+            registroTrabajo('uuid-ha-negativa', $orden, ['hectareas_declaradas' => '-5.00']),
+        ],
+    ])->assertOk();
+
+    expect($respuesta->json('resultados.0.estado'))->toBe('rechazado')
+        ->and($respuesta->json('resultados.0.motivo'))->not->toBeNull();
+
+    expect(Trabajo::query()->where('uuid_cliente', 'uuid-ha-negativa')->exists())->toBeFalse();
+});
+
+it('una sesión con hectareas_declaradas negativa se rechaza', function () {
+    $orden = ordenDemoVigente();
+    $piloto = pilotoDemo();
+
+    $respuesta = $this->postJson('/api/sync', [
+        'registros' => [
+            registroTrabajo('uuid-t8', $orden),
+            registroSesion('uuid-s8', 'uuid-t8', $piloto->id, ['hectareas_declaradas' => '-1']),
+        ],
+    ])->assertOk();
+
+    expect($respuesta->json('resultados.1.estado'))->toBe('rechazado')
+        ->and($respuesta->json('resultados.1.motivo'))->not->toBeNull();
+
+    expect(Sesion::query()->where('uuid_cliente', 'uuid-s8')->exists())->toBeFalse();
+});
+
+/*
+ * Tarea 12, hallazgo 2: `POST /api/sync` no verificaba que los ids del
+ * payload correspondieran al operario del token.
+ */
+
+it('un trabajo cuyo lote_id no corresponde a la orden declarada se rechaza sin crear la fila', function () {
+    $orden = ordenDemoVigente();
+    $otroLoteId = Lote::query()->where('codigo', 'L-02')->value('id');
+
+    $respuesta = $this->postJson('/api/sync', [
+        'registros' => [
+            registroTrabajo('uuid-lote-ajeno', $orden, ['lote_id' => $otroLoteId]),
+        ],
+    ])->assertOk();
+
+    expect($respuesta->json('resultados.0.estado'))->toBe('rechazado')
+        ->and($respuesta->json('resultados.0.motivo'))->not->toBeNull();
+
+    expect(Trabajo::query()->where('uuid_cliente', 'uuid-lote-ajeno')->exists())->toBeFalse();
+});
+
+it('una sesión cuyo piloto_id es de otra persona ajena al operario del token se rechaza sin crear la fila', function () {
+    $orden = ordenDemoVigente();
+
+    $miPersona = PerPersona::query()->create([
+        'nombre' => 'Operario Autenticado',
+        'rol' => RolOperativoPersona::Piloto,
+        'activo' => true,
+    ]);
+    $this->actingAs(SecUser::factory()->create(['persona_id' => $miPersona->id]), 'sanctum');
+
+    $otroPiloto = pilotoDemo();
+
+    $respuesta = $this->postJson('/api/sync', [
+        'registros' => [
+            registroTrabajo('uuid-t7', $orden),
+            registroSesion('uuid-s7', 'uuid-t7', $otroPiloto->id),
+        ],
+    ])->assertOk();
+
+    expect($respuesta->json('resultados.0.estado'))->toBe('aplicado')
+        ->and($respuesta->json('resultados.1.estado'))->toBe('rechazado')
+        ->and($respuesta->json('resultados.1.motivo'))->not->toBeNull();
+
+    expect(Sesion::query()->where('uuid_cliente', 'uuid-s7')->exists())->toBeFalse();
+});
+
+it('una sesión cuyo piloto_id es el del operario del token se aplica igual', function () {
+    $orden = ordenDemoVigente();
+
+    $miPersona = PerPersona::query()->create([
+        'nombre' => 'Operario Autenticado',
+        'rol' => RolOperativoPersona::Piloto,
+        'activo' => true,
+    ]);
+    $this->actingAs(SecUser::factory()->create(['persona_id' => $miPersona->id]), 'sanctum');
+
+    $respuesta = $this->postJson('/api/sync', [
+        'registros' => [
+            registroTrabajo('uuid-t9', $orden),
+            registroSesion('uuid-s9', 'uuid-t9', $miPersona->id),
+        ],
+    ])->assertOk();
+
+    expect($respuesta->json('resultados.1.estado'))->toBe('aplicado');
+
+    expect(Sesion::query()->where('uuid_cliente', 'uuid-s9')->exists())->toBeTrue();
+});
