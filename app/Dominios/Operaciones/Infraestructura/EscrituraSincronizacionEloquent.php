@@ -8,6 +8,8 @@ use App\Dominios\Operaciones\Contratos\AperturaSesion;
 use App\Dominios\Operaciones\Contratos\AperturaTrabajo;
 use App\Dominios\Operaciones\Contratos\EscrituraSincronizacion;
 use App\Dominios\Operaciones\Contratos\ResultadoSincronizacion;
+use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -41,8 +43,27 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
         private readonly MaquinaEstadosSesion $maquinaSesion,
     ) {}
 
+    /**
+     * Antes de aplicar (tarea 12, hallazgo 2), verifica que `orden_id` y
+     * `lote_id` formen un par legítimo: la orden debe existir, estar
+     * `Vigente`, y su `lote_id` debe coincidir con el declarado. La espec
+     * (§4.3: "el trabajo no lleva piloto propio — un lote puede tener varios
+     * pilotos y drones por relevo, falla o logística") descarta que exista
+     * una noción de "lote del operario"; lo único verificable con lo que hay
+     * en el repo es que el par orden/lote sea consistente con el catálogo
+     * vigente que cualquier operario legítimo puede operar — un `lote_id`
+     * que no es el de esa orden (o una orden ya consumida/vencida/emitida
+     * sin vigencia) no es algo que el operario pueda tocar, aunque ambos ids
+     * existan físicamente y la FK los acepte.
+     */
     public function abrirTrabajo(AperturaTrabajo $datos): ResultadoSincronizacion
     {
+        $orden = OrdenAplicacion::query()->find($datos->ordenId);
+
+        if ($orden === null || $orden->estado !== EstadoOrdenAplicacion::Vigente || (int) $orden->lote_id !== $datos->loteId) {
+            return ResultadoSincronizacion::rechazado('la orden y el lote declarados no forman un par vigente');
+        }
+
         try {
             DB::transaction(function () use ($datos): void {
                 $this->maquinaTrabajo->abrir([
