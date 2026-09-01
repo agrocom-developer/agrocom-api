@@ -6,10 +6,17 @@ use App\Dominios\Operaciones\Aplicacion\MaquinaEstados\MaquinaEstadosSesion;
 use App\Dominios\Operaciones\Aplicacion\MaquinaEstados\MaquinaEstadosTrabajo;
 use App\Dominios\Operaciones\Contratos\AperturaSesion;
 use App\Dominios\Operaciones\Contratos\AperturaTrabajo;
+use App\Dominios\Operaciones\Contratos\CierreSesion;
+use App\Dominios\Operaciones\Contratos\CierreTrabajo;
 use App\Dominios\Operaciones\Contratos\EscrituraSincronizacion;
 use App\Dominios\Operaciones\Contratos\ResultadoSincronizacion;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
+use App\Dominios\Operaciones\Dominio\EstadoSesion;
+use App\Dominios\Operaciones\Dominio\EstadoTrabajo;
+use App\Dominios\Operaciones\Dominio\Excepciones\TransicionSesionNoPermitida;
+use App\Dominios\Operaciones\Dominio\Excepciones\TransicionTrabajoNoPermitida;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -126,5 +133,126 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
         }
 
         return ResultadoSincronizacion::rechazado('no se pudo aplicar el registro: referencia o dato inválido');
+    }
+
+    /**
+     * Cierre de trabajo (HU-05, tarea 13): MUTA una fila existente en vez de
+     * crear una nueva, así que la idempotencia no se apoya en el `UNIQUE` de
+     * `abrirTrabajo()` (ese protege la fila de APERTURA, no el evento de
+     * cierre). Mecanismo, documentado en runs/13.md: se busca el trabajo por
+     * `uuid_cliente`, se bloquea la fila (`lockForUpdate`, mismo patrón que
+     * `MaquinaEstadosVersionApk::autorizar()`) y:
+     *
+     *   - si ya está `cerrado` con el MISMO `cierre_uuid_cliente` del evento
+     *     entrante → `duplicado` (reintento exacto, no se toca nada);
+     *   - si ya está `cerrado` con OTRO `cierre_uuid_cliente` (o cerrado por
+     *     otra vía) → `rechazado` (la máquina de estados no permite
+     *     `cerrado → cerrado`, invariante 7);
+     *   - si está `abierto` → se aplica el cierre.
+     *
+     * El lock evita la condición de carrera de decidir "duplicado vs. aplicar"
+     * fuera de una transacción: dos reintentos concurrentes del mismo evento
+     * verían ambos `abierto` y ambos aplicarían el cierre por su cuenta.
+     *
+     * Pertenencia (tarea 12, mismo criterio extendido al cierre): un trabajo
+     * no tiene piloto propio (espec §4.3), así que "es del operario" se
+     * resuelve igual que en la apertura de trabajo — por participación, no
+     * por dueño. Si el trabajo ya tiene sesiones, el operario debe tener al
+     * menos una propia; si todavía no tiene ninguna, cualquier operario
+     * legítimo puede cerrarlo (mismo criterio que abrir: "un lote puede
+     * tener varios pilotos y drones").
+     */
+    public function cerrarTrabajo(CierreTrabajo $datos, ?int $operarioPersonaId): ResultadoSincronizacion
+    {
+        $trabajoId = Trabajo::query()->where('uuid_cliente', $datos->trabajoUuidCliente)->value('id');
+
+        if ($trabajoId === null) {
+            return ResultadoSincronizacion::rechazado('el trabajo referenciado no existe');
+        }
+
+        try {
+            return DB::transaction(function () use ($trabajoId, $datos, $operarioPersonaId): ResultadoSincronizacion {
+                /** @var Trabajo $trabajo */
+                $trabajo = Trabajo::query()->whereKey($trabajoId)->lockForUpdate()->firstOrFail();
+
+                if ($trabajo->estado === EstadoTrabajo::Cerrado) {
+                    return $trabajo->cierre_uuid_cliente === $datos->uuidCliente
+                        ? ResultadoSincronizacion::duplicado()
+                        : ResultadoSincronizacion::rechazado('el trabajo ya está cerrado');
+                }
+
+                if ($operarioPersonaId !== null && ! $this->operarioPuedeCerrarTrabajo($trabajo->id, $operarioPersonaId)) {
+                    return ResultadoSincronizacion::rechazado('el operario no participó en este trabajo');
+                }
+
+                $this->maquinaTrabajo->cerrar($trabajo, $datos->uuidCliente, $datos->fin);
+
+                return ResultadoSincronizacion::aplicado();
+            });
+        } catch (QueryException) {
+            return ResultadoSincronizacion::rechazado('no se pudo cerrar el trabajo: referencia o dato inválido');
+        } catch (TransicionTrabajoNoPermitida) {
+            return ResultadoSincronizacion::rechazado('el trabajo ya está cerrado');
+        }
+    }
+
+    /**
+     * Cierre de sesión (HU-05, tarea 13): mismo mecanismo de idempotencia que
+     * `cerrarTrabajo()` (lock + comparar `cierre_uuid_cliente` antes de
+     * decidir). `motivo_cierre` ya viene validado contra el catálogo por
+     * `CierreSesion::intentarDesdeArreglo()`.
+     *
+     * Pertenencia (tarea 12, mismo criterio que `abrirSesion()`): la sesión
+     * SÍ tiene `piloto_id` propio, así que se compara directo contra el
+     * operario del token — a diferencia de `abrirSesion()`, donde
+     * `SincronizarLote` compara antes de invocar el contrato porque el DTO de
+     * apertura ya trae `piloto_id`, acá el cierre no lo trae (solo referencia
+     * la sesión por `uuid_cliente`): resolverlo exige leer la fila
+     * persistida, así que la verificación vive en esta implementación, no en
+     * `SincronizarLote`.
+     */
+    public function cerrarSesion(CierreSesion $datos, ?int $operarioPersonaId): ResultadoSincronizacion
+    {
+        $sesionId = Sesion::query()->where('uuid_cliente', $datos->sesionUuidCliente)->value('id');
+
+        if ($sesionId === null) {
+            return ResultadoSincronizacion::rechazado('la sesión referenciada no existe');
+        }
+
+        try {
+            return DB::transaction(function () use ($sesionId, $datos, $operarioPersonaId): ResultadoSincronizacion {
+                /** @var Sesion $sesion */
+                $sesion = Sesion::query()->whereKey($sesionId)->lockForUpdate()->firstOrFail();
+
+                if ($sesion->estado === EstadoSesion::Cerrado) {
+                    return $sesion->cierre_uuid_cliente === $datos->uuidCliente
+                        ? ResultadoSincronizacion::duplicado()
+                        : ResultadoSincronizacion::rechazado('la sesión ya está cerrada');
+                }
+
+                if ($operarioPersonaId !== null && (int) $sesion->piloto_id !== $operarioPersonaId) {
+                    return ResultadoSincronizacion::rechazado('el piloto de la sesión no corresponde al operario autenticado');
+                }
+
+                $this->maquinaSesion->cerrar($sesion, $datos->uuidCliente, $datos->fin, $datos->motivoCierre);
+
+                return ResultadoSincronizacion::aplicado();
+            });
+        } catch (QueryException) {
+            return ResultadoSincronizacion::rechazado('no se pudo cerrar la sesión: referencia o dato inválido');
+        } catch (TransicionSesionNoPermitida) {
+            return ResultadoSincronizacion::rechazado('la sesión ya está cerrada');
+        }
+    }
+
+    private function operarioPuedeCerrarTrabajo(int $trabajoId, int $personaId): bool
+    {
+        $tieneSesiones = Sesion::query()->where('trabajo_id', $trabajoId)->exists();
+
+        if (! $tieneSesiones) {
+            return true;
+        }
+
+        return Sesion::query()->where('trabajo_id', $trabajoId)->where('piloto_id', $personaId)->exists();
     }
 }

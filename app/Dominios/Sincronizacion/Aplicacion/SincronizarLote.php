@@ -4,18 +4,22 @@ namespace App\Dominios\Sincronizacion\Aplicacion;
 
 use App\Dominios\Operaciones\Contratos\AperturaSesion;
 use App\Dominios\Operaciones\Contratos\AperturaTrabajo;
+use App\Dominios\Operaciones\Contratos\CierreSesion;
+use App\Dominios\Operaciones\Contratos\CierreTrabajo;
 use App\Dominios\Operaciones\Contratos\EscrituraSincronizacion;
 use App\Dominios\Operaciones\Contratos\ResultadoSincronizacion;
 
 /**
- * Caso de uso de `POST /api/sync` (espec §2.1, puntos 3 a 5; TE-05, tarea
- * 09). Agrupa el lote por tipo de entidad y lo aplica siempre en el mismo
- * orden causal fijo —`trabajo` antes que `sesion`—, sin importar el orden en
- * que llegó el arreglo del cliente: así, cuando le toca el turno a `sesion`,
- * el `trabajo` que referencia por `uuid_cliente` (si vino en el mismo lote)
- * ya quedó persistido. Es el diseño que evita construir lógica de reintento
- * entre pushes para el caso "en desorden" (ver el prompt de la tarea 09,
- * "Diseño que evita el problema difícil").
+ * Caso de uso de `POST /api/sync` (espec §2.1, puntos 3 a 5; TE-05/HU-05,
+ * tareas 09 y 13). Agrupa el lote por tipo de entidad y lo aplica siempre en
+ * el mismo orden causal fijo —`trabajo`, `sesion`, `cierre_trabajo`,
+ * `cierre_sesion`—, sin importar el orden en que llegó el arreglo del
+ * cliente: así, cuando le toca el turno a `sesion`, el `trabajo` que
+ * referencia por `uuid_cliente` (si vino en el mismo lote) ya quedó
+ * persistido, y lo mismo para un cierre que llegara en el mismo lote que su
+ * apertura. Es el diseño que evita construir lógica de reintento entre
+ * pushes para el caso "en desorden" (ver el prompt de la tarea 09, "Diseño
+ * que evita el problema difícil").
  *
  * Solo conoce el contrato de `Operaciones` ({@see EscrituraSincronizacion}) —
  * nunca sus modelos Eloquent (ADR 0003, regla 2). El orden de la respuesta
@@ -24,8 +28,12 @@ use App\Dominios\Operaciones\Contratos\ResultadoSincronizacion;
  */
 final class SincronizarLote
 {
-    /** Orden causal fijo (espec §2.1, punto 3): trabajo, luego sesión. */
-    private const array ORDEN_CAUSAL = ['trabajo', 'sesion'];
+    /**
+     * Orden causal fijo (espec §2.1, punto 3, extendido por la tarea 13):
+     * apertura antes que su propio cierre, para el caso —raro pero posible—
+     * de que ambos lleguen en el mismo lote.
+     */
+    private const array ORDEN_CAUSAL = ['trabajo', 'sesion', 'cierre_trabajo', 'cierre_sesion'];
 
     public function __construct(
         private readonly EscrituraSincronizacion $operaciones,
@@ -77,9 +85,13 @@ final class SincronizarLote
     /** @param  array<string, mixed>  $registro */
     private function aplicar(string $tipo, array $registro, ?int $operarioPersonaId): ResultadoSincronizacion
     {
-        return $tipo === 'trabajo'
-            ? $this->aplicarTrabajo($registro)
-            : $this->aplicarSesion($registro, $operarioPersonaId);
+        return match ($tipo) {
+            'trabajo' => $this->aplicarTrabajo($registro),
+            'sesion' => $this->aplicarSesion($registro, $operarioPersonaId),
+            'cierre_trabajo' => $this->aplicarCierreTrabajo($registro, $operarioPersonaId),
+            'cierre_sesion' => $this->aplicarCierreSesion($registro, $operarioPersonaId),
+            default => ResultadoSincronizacion::rechazado('tipo de registro desconocido o dato mal formado'),
+        };
     }
 
     /** @param  array<string, mixed>  $registro */
@@ -118,6 +130,35 @@ final class SincronizarLote
         }
 
         return $this->operaciones->abrirSesion($datos);
+    }
+
+    /**
+     * @param  array<string, mixed>  $registro
+     *
+     * A diferencia de `aplicarSesion()`, la verificación de pertenencia NO
+     * vive acá: el registro de cierre no trae el dato de persona a comparar
+     * (solo referencia la fila por `uuid_cliente`), así que resolverla exige
+     * leer la fila persistida — responsabilidad de
+     * `EscrituraSincronizacion::cerrarTrabajo()/cerrarSesion()`, no de este
+     * caso de uso (ver runs/13.md).
+     */
+    private function aplicarCierreTrabajo(array $registro, ?int $operarioPersonaId): ResultadoSincronizacion
+    {
+        $datos = CierreTrabajo::intentarDesdeArreglo($registro);
+
+        return $datos === null
+            ? ResultadoSincronizacion::rechazado('cierre de trabajo con datos incompletos o inválidos')
+            : $this->operaciones->cerrarTrabajo($datos, $operarioPersonaId);
+    }
+
+    /** @param  array<string, mixed>  $registro */
+    private function aplicarCierreSesion(array $registro, ?int $operarioPersonaId): ResultadoSincronizacion
+    {
+        $datos = CierreSesion::intentarDesdeArreglo($registro);
+
+        return $datos === null
+            ? ResultadoSincronizacion::rechazado('cierre de sesión con datos incompletos o inválidos')
+            : $this->operaciones->cerrarSesion($datos, $operarioPersonaId);
     }
 
     /**
