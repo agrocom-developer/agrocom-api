@@ -45,7 +45,7 @@ exista el módulo `Mezclas`).
 | 07 | Regresión visual del panel con Playwright | `npx playwright test` = 0 con capturas de referencia versionadas | `playwright.config.*`, `tests/Visual/**`, `package.json` | no | 3 | **hecha** |
 | 08 | TE-06 (parcial) — pull de catálogo con cursor: órdenes, lotes y personas | `./bin/verify` = 0 | `app/Dominios/Sincronizacion/**`, `Contratos/` de Operaciones/Comercial/Personal, rutas de API, tests de feature | no | 3 | **hecha** (PR #40) |
 | 09 | TE-05 — `POST /api/sync` idempotente | `./bin/verify` = 0, con test de replay (mismo lote 10 veces, en orden y en desorden → base idéntica) | `app/Dominios/Sincronizacion/**`, migraciones, tests | **sí** | 5 | **implementada, sin mergear** — `runs/09.estado`=OK, veredicto APROBADO, pero el PR #46 sigue **en borrador** esperando revisión humana línea por línea (`CLAUDE.md`, "qué no delegar"). Mientras no se mergee, ninguna tarea nueva puede usar `ope_trabajos`/`ope_sesiones`: `bin/ciclo` crea toda rama desde `develop` al día, y esas tablas solo existen en `feature/sync-idempotente` |
-| 10 | HU-20 — `GET /api/version` y autorización de versiones del APK | `./bin/verify` = 0 | módulo nuevo `Distribucion` (`dis_`), `sec_action`/seed de permisos, rutas de API, pantalla del panel, tests | no | 3 | encolada |
+| 10 | HU-20 — `GET /api/version` y autorización de versiones del APK, sin hospedar el binario (vive en `agrocom-field`, ver regla de exclusión abajo) | `./bin/verify` = 0 | módulo nuevo `Distribucion` (`dis_`), `sec_action`/seed de permisos, rutas de API, pantalla del panel, tests | no | 3 | **hecha** (tarea 11 corrigió el alcance: la columna pasó de `ruta_apk`/disco `r2` a `url_apk`, la URL del release en `agrocom-field`) |
 
 ### Fuera del ciclo automático
 
@@ -53,6 +53,20 @@ Estas HU y TE del plan de sprints **no califican** y la sesión de planificació
 las saltea sin detenerse — están anotadas acá para que no las redescubra en cada
 vuelta. Saltearlas no las cancela: siguen en `plan_sprints.md` y las hace una
 persona cuando corresponda.
+
+**La app no entra al ciclo automático.** `agrocom-field`
+(`https://github.com/agrocom-developer/agrocom-field.git`, creado el
+25/8/2026) **ya existe** y es un proyecto **Flutter**. Todo lo que sea de la
+app queda fuera de este ciclo, sin excepción y sin importar en qué sprint
+aparezca: el build del APK, su binario y su publicación, el bloqueo por
+versión mínima del lado cliente, la UI del piloto, el outbox offline (TE-04)
+y cualquier código Dart/Flutter. `agrocom-api` aporta solo el lado servidor:
+endpoints, panel web y permisos. Si una HU mezcla ambas cosas, entra al ciclo
+**únicamente** su parte de servidor, y el prompt debe decir explícitamente
+qué queda del lado de la app. Es regla permanente, no acotada a una tarea:
+la tarea 10 (HU-20) la incumplió al asumir que `agrocom-field` "no existe
+todavía" y terminó hospedando el binario del `.apk` en este repo; la tarea 11
+lo corrigió.
 
 | Id | Por qué no califica |
 |---|---|
