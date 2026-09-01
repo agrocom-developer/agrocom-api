@@ -22,7 +22,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * @property int $id
  * @property string $version
  * @property int $version_code
- * @property string $ruta_apk
+ * @property string $url_apk
  * @property EstadoVersionApk $estado
  */
 class VersionApk extends ModeloDominio
@@ -38,7 +38,7 @@ class VersionApk extends ModeloDominio
     protected $fillable = [
         'version',
         'version_code',
-        'ruta_apk',
+        'url_apk',
         'estado',
     ];
 

@@ -16,7 +16,7 @@ it('crea dis_versiones_apk con soft delete y columnas de auditoría', function (
         ->and(Schema::hasColumns('dis_versiones_apk', [
             'version',
             'version_code',
-            'ruta_apk',
+            'url_apk',
             'estado',
             'deleted_at',
             'created_by',

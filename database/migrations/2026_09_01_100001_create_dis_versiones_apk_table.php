@@ -7,9 +7,10 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * Módulo Distribucion (ADR 0011, extensión 1/9/2026) — versiones del APK
- * (HU-20). `ruta_apk` guarda la clave dentro del disco `r2` (ADR 0009,
- * extensión 1/9/2026: `distribucion/apk/{version}.apk`), nunca una URL: la
- * URL de descarga se firma recién al servir.
+ * (HU-20). El binario del `.apk` vive en `agrocom-field`, publicado como
+ * release de GitHub — este repo no lo hospeda. `url_apk` guarda la URL
+ * absoluta de ese release; `agrocom-api` solo es la autoridad sobre qué
+ * versión está autorizada.
  *
  * Solo puede haber una versión `autorizada` a la vez (invariante de negocio,
  * `runs/10-diseno.md`) — respaldado en la base con un índice único parcial,
@@ -25,7 +26,7 @@ return new class extends Migration
             $table->id();
             $table->string('version', 20);
             $table->unsignedInteger('version_code');
-            $table->string('ruta_apk');
+            $table->string('url_apk');
             $table->string('estado', 20)->default('pendiente');
 
             $table->unsignedBigInteger('created_by')->nullable();
