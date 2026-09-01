@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Sincronizacion\Infraestructura\Http\Controllers\Api;
 
+use App\Dominios\Seguridad\Contratos\IdentidadOperarioToken;
 use App\Dominios\Sincronizacion\Aplicacion\SincronizarLote;
 use App\Dominios\Sincronizacion\Infraestructura\Http\Requests\SincronizarLoteRequest;
 use Illuminate\Http\JsonResponse;
@@ -107,8 +108,11 @@ final class SyncController
             new OA\Response(response: 422, description: 'Falta `registros`, o no es un arreglo.'),
         ],
     )]
-    public function store(SincronizarLoteRequest $request, SincronizarLote $sincronizarLote): JsonResponse
-    {
+    public function store(
+        SincronizarLoteRequest $request,
+        SincronizarLote $sincronizarLote,
+        IdentidadOperarioToken $identidadOperario,
+    ): JsonResponse {
         /** @var array<string, mixed> $datos */
         $datos = $request->validated();
 
@@ -116,7 +120,7 @@ final class SyncController
         $registros = is_array($datos['registros']) ? $datos['registros'] : [];
 
         return response()->json([
-            'resultados' => $sincronizarLote->ejecutar($registros),
+            'resultados' => $sincronizarLote->ejecutar($registros, $identidadOperario->personaId($request)),
         ]);
     }
 }

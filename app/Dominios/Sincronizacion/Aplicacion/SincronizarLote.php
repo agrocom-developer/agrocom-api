@@ -33,9 +33,20 @@ final class SincronizarLote
 
     /**
      * @param  list<mixed>  $registros
+     * @param  int|null  $operarioPersonaId  Persona de `Personal` dueña del
+     *                                       token que firma el request
+     *                                       (`Seguridad\Contratos\IdentidadOperarioToken`),
+     *                                       o `null` si esa cuenta no tiene
+     *                                       persona asociada. Se usa para
+     *                                       rechazar una `sesion` cuyo
+     *                                       `piloto_id` declarado no es el
+     *                                       propio operario (tarea 12,
+     *                                       hallazgo 2) — un `null` no
+     *                                       rechaza nada porque no hay con
+     *                                       qué comparar.
      * @return list<array<string, mixed>>
      */
-    public function ejecutar(array $registros): array
+    public function ejecutar(array $registros, ?int $operarioPersonaId): array
     {
         /** @var array<int, array<string, mixed>|null> $resultados */
         $resultados = array_fill(0, count($registros), null);
@@ -46,7 +57,7 @@ final class SincronizarLote
                     continue;
                 }
 
-                $resultados[$indice] = $this->filaResultado($registro, $this->aplicar($tipo, $registro));
+                $resultados[$indice] = $this->filaResultado($registro, $this->aplicar($tipo, $registro, $operarioPersonaId));
             }
         }
 
@@ -64,11 +75,11 @@ final class SincronizarLote
     }
 
     /** @param  array<string, mixed>  $registro */
-    private function aplicar(string $tipo, array $registro): ResultadoSincronizacion
+    private function aplicar(string $tipo, array $registro, ?int $operarioPersonaId): ResultadoSincronizacion
     {
         return $tipo === 'trabajo'
             ? $this->aplicarTrabajo($registro)
-            : $this->aplicarSesion($registro);
+            : $this->aplicarSesion($registro, $operarioPersonaId);
     }
 
     /** @param  array<string, mixed>  $registro */
@@ -81,14 +92,32 @@ final class SincronizarLote
             : $this->operaciones->abrirTrabajo($datos);
     }
 
-    /** @param  array<string, mixed>  $registro */
-    private function aplicarSesion(array $registro): ResultadoSincronizacion
+    /**
+     * @param  array<string, mixed>  $registro
+     *
+     * La verificación de pertenencia de `piloto_id` vive acá, antes de
+     * invocar el contrato de escritura, y no en
+     * `EscrituraSincronizacion::abrirSesion()`: esa firma la ejercita
+     * directamente `tests/Feature/EscrituraSincronizacionTest.php` (congelado,
+     * PR #46) sin pasarle el operario, y agregarle un parámetro —aunque fuera
+     * opcional— dejaría un modo "sin verificar" alcanzable por cualquier
+     * consumidor que lo omita por descuido. Acá, en cambio, es imposible
+     * invocar `SincronizarLote::ejecutar()` sin decidir explícitamente el
+     * operario (tarea 12, hallazgo 2).
+     */
+    private function aplicarSesion(array $registro, ?int $operarioPersonaId): ResultadoSincronizacion
     {
         $datos = AperturaSesion::intentarDesdeArreglo($registro);
 
-        return $datos === null
-            ? ResultadoSincronizacion::rechazado('sesión con datos incompletos o inválidos')
-            : $this->operaciones->abrirSesion($datos);
+        if ($datos === null) {
+            return ResultadoSincronizacion::rechazado('sesión con datos incompletos o inválidos');
+        }
+
+        if ($operarioPersonaId !== null && $datos->pilotoId !== $operarioPersonaId) {
+            return ResultadoSincronizacion::rechazado('el piloto declarado no corresponde al operario autenticado');
+        }
+
+        return $this->operaciones->abrirSesion($datos);
     }
 
     /**
