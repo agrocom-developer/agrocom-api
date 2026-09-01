@@ -80,7 +80,7 @@
 .ag-trabajos__sesiones-head,
 .ag-trabajos__sesiones-fila {
     display: grid;
-    grid-template-columns: 1fr 1.4fr 1fr 1fr;
+    grid-template-columns: 1fr 1.4fr 0.8fr 1fr 1fr;
     gap: var(--ag-space-3);
     align-items: center;
     padding: var(--ag-space-2) var(--ag-space-3);

@@ -3,6 +3,8 @@
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
 use App\Dominios\Personal\Dominio\RolOperativoPersona;
 use App\Dominios\Personal\Infraestructura\Eloquent\PerPersona;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
@@ -46,7 +48,6 @@ it('abre, cierra y el jefe ve el trabajo cerrado en el panel', function () {
             'orden_id' => $orden->id,
             'lote_id' => $orden->lote_id,
             'nro_aplicacion' => $orden->nro_aplicacion,
-            'hectareas_declaradas' => '18.40',
             'inicio' => '2026-09-01T08:00:00-04:00',
         ],
         [
@@ -55,13 +56,18 @@ it('abre, cierra y el jefe ve el trabajo cerrado en el panel', function () {
             'trabajo_uuid_cliente' => 'uuid-e2e-trabajo',
             'secuencia' => 1,
             'piloto_id' => $piloto->id,
-            'hectareas_declaradas' => '18.40',
             'inicio' => '2026-09-01T08:05:00-04:00',
         ],
     ]])->assertOk()->assertJsonPath('resultados.0.estado', 'aplicado')->assertJsonPath('resultados.1.estado', 'aplicado');
 
-    // 2. El piloto la cierra con hectáreas (esta tarea) — sesión primero,
-    // trabajo después, mismo lote.
+    // Antes de cerrar, ninguna sesión declaró todavía cuánto cubrió — el
+    // piloto no lo sabe antes de volar (espec §5).
+    expect(Trabajo::query()->where('uuid_cliente', 'uuid-e2e-trabajo')->firstOrFail()->hectareas_declaradas)->toBe('0.00');
+
+    // 2. El piloto la cierra con hectáreas (esta tarea): la sesión declara
+    // cuánto cubrió realmente al cerrar, no en la apertura (hallazgo del
+    // veredicto de la tarea 13) — sesión primero, trabajo después, mismo
+    // lote.
     $cierre = $this->postJson('/api/sync', ['registros' => [
         [
             'tipo' => 'cierre_sesion',
@@ -69,6 +75,7 @@ it('abre, cierra y el jefe ve el trabajo cerrado en el panel', function () {
             'sesion_uuid_cliente' => 'uuid-e2e-sesion',
             'fin' => '2026-09-01T09:30:00-04:00',
             'motivo_cierre' => 'completado',
+            'hectareas_declaradas' => '18.40',
         ],
         [
             'tipo' => 'cierre_trabajo',
@@ -81,6 +88,11 @@ it('abre, cierra y el jefe ve el trabajo cerrado en el panel', function () {
     expect($cierre->json('resultados.0.estado'))->toBe('aplicado')
         ->and($cierre->json('resultados.1.estado'))->toBe('aplicado');
 
+    // El cierre de la sesión deja al trabajo con la suma de sus sesiones
+    // (espec §4.3: "hectareas_declaradas [de trabajo] — suma de sesiones").
+    expect(Sesion::query()->where('uuid_cliente', 'uuid-e2e-sesion')->firstOrFail()->hectareas_declaradas)->toBe('18.40')
+        ->and(Trabajo::query()->where('uuid_cliente', 'uuid-e2e-trabajo')->firstOrFail()->hectareas_declaradas)->toBe('18.40');
+
     // Reintento del mismo cierre (p. ej. la app de campo reenvía la cola
     // offline sin haber visto la respuesta): sigue siendo idempotente.
     $reintento = $this->postJson('/api/sync', ['registros' => [
@@ -90,6 +102,7 @@ it('abre, cierra y el jefe ve el trabajo cerrado en el panel', function () {
             'sesion_uuid_cliente' => 'uuid-e2e-sesion',
             'fin' => '2026-09-01T09:30:00-04:00',
             'motivo_cierre' => 'completado',
+            'hectareas_declaradas' => '18.40',
         ],
     ]])->assertOk();
     expect($reintento->json('resultados.0.estado'))->toBe('duplicado');
@@ -108,5 +121,6 @@ it('abre, cierra y el jefe ve el trabajo cerrado en el panel', function () {
     $this->get('/panel/trabajos')
         ->assertOk()
         ->assertSee(__('operaciones.trabajos.estado.cerrado'))
-        ->assertSee(__('operaciones.trabajos.motivo_cierre.completado'));
+        ->assertSee(__('operaciones.trabajos.motivo_cierre.completado'))
+        ->assertSee('18.40');
 });

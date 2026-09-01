@@ -70,6 +70,7 @@
                                     <div class="ag-trabajos__sesiones-head" role="row">
                                         <span role="columnheader">{{ __('operaciones.trabajos.col_piloto') }}</span>
                                         <span role="columnheader">{{ __('operaciones.trabajos.col_estado') }}</span>
+                                        <span role="columnheader">{{ __('operaciones.trabajos.col_hectareas') }}</span>
                                         <span role="columnheader">{{ __('operaciones.trabajos.col_inicio') }}</span>
                                         <span role="columnheader">{{ __('operaciones.trabajos.col_fin') }}</span>
                                     </div>
@@ -90,6 +91,7 @@
                                                 @endif
                                             </span>
 
+                                            <span role="cell">{{ $sesion->hectareas_declaradas }}</span>
                                             <span role="cell">{{ $sesion->inicio->format('d/m/Y H:i') }}</span>
                                             <span role="cell">{{ $sesion->fin?->format('d/m/Y H:i') ?? __('operaciones.trabajos.sin_fin') }}</span>
                                         </div>
