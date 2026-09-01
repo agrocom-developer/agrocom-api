@@ -52,6 +52,10 @@ return [
         'titulo' => 'Trabajos',
         'subtitulo' => 'Trabajos sincronizados desde la app de campo, con sus sesiones.',
         'vacio' => 'Todavía no llegó ningún trabajo sincronizado.',
+        // HU-15 (tarea 15): sin resultados por los filtros aplicados —
+        // distinto de "vacio" (no hay NADA todavía), para no confundir al
+        // jefe con un tablero que en realidad tiene datos.
+        'filtro_vacio' => 'Ningún trabajo coincide con estos filtros.',
         'col_trabajo' => 'Trabajo',
         'col_estado' => 'Estado',
         'col_hectareas' => 'Hectáreas declaradas',
@@ -59,16 +63,48 @@ return [
         'col_fin' => 'Fin',
         'col_sesiones' => 'Sesiones',
         'col_piloto' => 'Piloto',
+        'col_detalle' => 'Detalle',
+        'ver_detalle' => 'Ver detalle',
         'sesiones_ver' => 'Ver sesiones (:cantidad)',
         'sesiones_vacio' => 'Sin sesiones todavía.',
         'sesion_piloto' => 'Piloto #:id',
         'sin_fin' => '—',
+        // HU-15 (tarea 15): filtros del tablero — estado de TABLERO
+        // (Trabajo::estadoTablero(), no la columna cruda), lote y orden de
+        // aplicación. Las opciones de lote/orden solo listan lo que
+        // realmente aparece entre los trabajos existentes (sin catálogo
+        // completo de Comercial, ADR 0003 regla 3).
+        'filtro_estado' => 'Estado',
+        'filtro_lote' => 'Lote',
+        'filtro_orden' => 'Orden de aplicación',
+        'filtro_todos' => 'Todos',
+        'filtro_lote_opcion' => 'Lote #:id',
+        'filtro_orden_opcion' => 'Orden #:id (aplicación :aplicacion)',
+        'filtrar' => 'Filtrar',
+        'limpiar_filtros' => 'Limpiar filtros',
+        'paginacion_aria' => 'Paginación de trabajos',
+        'paginacion_anterior' => 'Anterior',
+        'paginacion_siguiente' => 'Siguiente',
+        'paginacion_info' => 'Página :actual de :total',
+        // Detalle de un trabajo (HU-15, tarea 15): panel.trabajos.show.
+        'volver' => 'Volver al tablero',
+        'detalle_titulo' => 'Trabajo #:id',
+        'detalle_sesiones_titulo' => 'Sesiones',
+        'detalle_evidencias_titulo' => 'Evidencias',
+        // TE-07/HU-08/HU-09 (compresión, fotos, captura del RC) son sprint 3
+        // y no están implementadas: la sección convive con eso vacío sin
+        // simular datos que no existen.
+        'detalle_evidencias_vacio' => 'Todavía no hay evidencias registradas para este trabajo.',
+        'sesion_rechazada' => 'Rechazada',
+        'sesion_motivo_rechazo' => 'Motivo del rechazo: :motivo',
         'estado' => [
             'abierto' => 'Abierto',
             'cerrado' => 'Cerrado',
             // HU-14 (tarea 14): la sesión validada sigue apareciendo en esta
             // sub-tabla de "Operación › Trabajos" (HU-05) — necesita su
-            // propia etiqueta para no quedar como clave cruda.
+            // propia etiqueta para no quedar como clave cruda. Desde HU-15
+            // (tarea 15), estas mismas tres claves también rotulan el
+            // estado de TABLERO del trabajo (Trabajo::estadoTablero()).
             'validado' => 'Validado',
         ],
         // Catálogo espec §4.3.

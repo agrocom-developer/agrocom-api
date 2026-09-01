@@ -99,12 +99,15 @@ Route::middleware('auth:interno')->group(function () {
         Route::post('/panel/versiones-apk/{version}/autorizar', [VersionesApkController::class, 'autorizar'])
             ->name('panel.versiones-apk.autorizar');
 
-        // HU-05 (tarea 13): listado mínimo de trabajos/sesiones cerrados.
-        // Permiso `operaciones.trabajo.ver` verificado DENTRO del
-        // controlador contra el ROL ACTIVO, mismo criterio que las rutas de
-        // arriba.
+        // HU-05 (tarea 13; extendida en HU-15, tarea 15): tablero de
+        // trabajos/sesiones con filtros y detalle. Permiso
+        // `operaciones.trabajo.ver` verificado DENTRO del controlador
+        // contra el ROL ACTIVO, mismo criterio que las rutas de arriba.
         Route::get('/panel/trabajos', [TrabajosController::class, 'index'])
             ->name('panel.trabajos.index');
+
+        Route::get('/panel/trabajos/{trabajo}', [TrabajosController::class, 'show'])
+            ->name('panel.trabajos.show');
 
         // HU-14 (tarea 14): cola de validación de sesiones cerradas.
         // Permiso `operaciones.sesion.validar` verificado DENTRO del

@@ -4,8 +4,11 @@ namespace App\Dominios\Operaciones\Infraestructura\Eloquent;
 
 use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
 use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
+use App\Dominios\Operaciones\Dominio\EstadoSesion;
+use App\Dominios\Operaciones\Dominio\EstadoTableroTrabajo;
 use App\Dominios\Operaciones\Dominio\EstadoTrabajo;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
@@ -75,5 +78,51 @@ class Trabajo extends ModeloDominio
     public function sesiones(): HasMany
     {
         return $this->hasMany(Sesion::class, 'trabajo_id');
+    }
+
+    /**
+     * Estado de tablero (HU-15): "abierto" mientras el trabajo sigue en
+     * curso; "cerrado" cuando terminó pero queda alguna sesión vigente (no
+     * rechazada) sin aprobar, o no tiene ninguna sesión vigente todavía;
+     * "validado" solo cuando TODAS sus sesiones vigentes ya pasaron por
+     * HU-14. Requiere `sesiones` cargada (`with('sesiones')`) — no dispara
+     * una consulta nueva por trabajo.
+     */
+    public function estadoTablero(): EstadoTableroTrabajo
+    {
+        if ($this->estado === EstadoTrabajo::Abierto) {
+            return EstadoTableroTrabajo::Abierto;
+        }
+
+        $sesionesVigentes = $this->sesiones->whereNull('anulada_en');
+
+        if ($sesionesVigentes->isNotEmpty() && $sesionesVigentes->every(fn (Sesion $sesion): bool => $sesion->estado === EstadoSesion::Validado)) {
+            return EstadoTableroTrabajo::Validado;
+        }
+
+        return EstadoTableroTrabajo::Cerrado;
+    }
+
+    /**
+     * Versión SQL de {@see self::estadoTablero()}, para filtrar el listado
+     * paginado sin traer todo a PHP (`Aplicacion/ListarTrabajos.php`,
+     * HU-15). Misma regla, expresada con `whereHas`/`whereDoesntHave` sobre
+     * `sesiones`.
+     *
+     * @param  Builder<Trabajo>  $query
+     * @return Builder<Trabajo>
+     */
+    public function scopeConEstadoTablero(Builder $query, EstadoTableroTrabajo $estado): Builder
+    {
+        return match ($estado) {
+            EstadoTableroTrabajo::Abierto => $query->where('estado', EstadoTrabajo::Abierto),
+            EstadoTableroTrabajo::Validado => $query->where('estado', EstadoTrabajo::Cerrado)
+                ->whereHas('sesiones', fn (Builder $sesiones) => $sesiones->whereNull('anulada_en'))
+                ->whereDoesntHave('sesiones', fn (Builder $sesiones) => $sesiones->whereNull('anulada_en')->where('estado', '!=', EstadoSesion::Validado)),
+            EstadoTableroTrabajo::Cerrado => $query->where('estado', EstadoTrabajo::Cerrado)
+                ->where(fn (Builder $subconsulta) => $subconsulta
+                    ->whereDoesntHave('sesiones', fn (Builder $sesiones) => $sesiones->whereNull('anulada_en'))
+                    ->orWhereHas('sesiones', fn (Builder $sesiones) => $sesiones->whereNull('anulada_en')->where('estado', '!=', EstadoSesion::Validado))),
+        };
     }
 }
