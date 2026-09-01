@@ -65,13 +65,22 @@ presión, y las tres vacían la compuerta de contenido.
 
 Saberlo importa para no confiar de más en un verde:
 
-- **No hay tests de navegador.** Playwright está en `devDependencies` pero no hay
-  `playwright.config` ni suite E2E. La verificación visual del panel sigue siendo
-  manual — ver el skill [panel-design-ui].
-- **No hay regresión visual.** Un cambio de CSS puede romper el tema oscuro y
-  dejar la cascada en verde.
-- **Invariantes 2, 3, 7 y 9 de CLAUDE.md no tienen gate automático** (no
-  sobrescribir validados, devengo solo al validar, transiciones por servicio de
-  estados, bitácora antes/después). Se cumplen por revisión, no por exit code.
-  Sí hay gate para la 8 (soft delete, vía `ModeloDominio`) y para las fronteras
-  modulares (`tests/Unit/ArquitecturaModulosTest.php`).
+- **La regresión visual no corre dentro de `bin/verify`.** Desde la tarea 07
+  existe `npx playwright test` (`playwright.config.ts`, `tests/Visual/**`,
+  3 vistas × claro/oscuro, capturas de referencia versionadas), pero corre en
+  el host, nunca dentro del contenedor `app` — la imagen no tiene Node ni
+  navegadores. Un verde de `bin/verify` no implica haber corrido Playwright;
+  correlo aparte antes de cerrar un cambio visual. Ver el skill
+  [panel-design-ui].
+- **Invariantes 2 y 3 de CLAUDE.md no tienen gate automático todavía** (no
+  sobrescribir un registro validado, devengo solo al validar una sesión):
+  vigilan tablas que aún no existen (`sesion`, `devengo`, la máquina de
+  estados operativos), así que su gate se escribe recién cuando ese dominio
+  se implemente — antes, una aduana sobre algo inexistente pasaría siempre y
+  simularía una cobertura que no hay.
+  Las invariantes 7 (transiciones por el servicio de estados) y 9 (bitácora
+  antes/después) **sí tienen gate** desde las tareas 04 y 06:
+  `tests/Unit/TransicionesEstadoTest.php` y el gate de bitácora en
+  `app/Dominios/Compartido/` (trait/observer, ADR 0007). También hay gate
+  para la 8 (soft delete, vía `ModeloDominio`) y para las fronteras modulares
+  (`tests/Unit/ArquitecturaModulosTest.php`).

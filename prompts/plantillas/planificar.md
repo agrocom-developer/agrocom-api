@@ -56,12 +56,26 @@ línea, exactamente este formato:
 ```
 
 - `critica=si` para lo de la lista de arriba (PR en borrador).
-- `turno-noche=0` **solo** si la tarea consiste en escribir tests, ADRs o
-  configuración de `.claude/`: con `1` esos archivos están congelados, que es
-  lo que impide que un agente edite el criterio que lo evalúa. Si la tarea es
-  implementar código, va en `1` siempre. El valor lo hereda también la sesión
-  de corrección, así que una tarea cuyo entregable es un test necesita `0` para
-  poder corregirlo.
+- `turno-noche=1` **siempre**. Lo que cambia por tarea es `descongela=`, con
+  las zonas que esa tarea necesita escribir, separadas por coma:
+
+  | Zona | Abre | Cuándo corresponde |
+  |---|---|---|
+  | `tests` | `tests/**` | La tarea escribe tests — casi todas las que implementan algo con su cobertura |
+  | `decisiones` | `docs/decisiones/**` | Solo para **ampliar** lo que un ADR dejó explícitamente abierto, nunca para revisar lo que decidió |
+  | `claude` | `.claude/**` | La tarea cambia un skill, un agente o un hook |
+  | `github` | `.github/**` | La tarea toca el CI |
+
+  Sin `descongela`, esas zonas están congeladas: es lo que impide que una sesión
+  edite el criterio que la evalúa. Pedí solo lo que la tarea necesita — una que
+  escribe un test no tiene por qué poder reescribir un ADR. `CLAUDE.md` no se
+  abre con ninguna zona: las invariantes son del usuario.
+
+  El valor lo heredan también las sesiones de corrección, así que una tarea cuyo
+  entregable es un test necesita `descongela=tests` para poder corregirlo.
+
+  (`turno-noche=0` sigue existiendo y apaga el congelamiento entero. No lo uses:
+  está para depurar el ciclo a mano.)
 - `modelo=` solo si la tarea justifica salirse del modelo por fase que ya usa
   el ciclo. No lo pongas por costumbre.
 

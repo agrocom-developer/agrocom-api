@@ -1,4 +1,4 @@
-<!-- ciclo: critica=no turno-noche=1 -->
+<!-- ciclo: critica=no turno-noche=1 descongela=tests -->
 # Tarea 08 — TE-06: pull de catálogo con cursor (órdenes, lotes, personas)
 
 Sesión nueva y aislada. Cargá los skills `verificacion`, `dominio-backend` y
