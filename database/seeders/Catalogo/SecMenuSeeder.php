@@ -107,6 +107,9 @@ class SecMenuSeeder extends Seeder
         // Usuarios.
         $this->item($seguridad, 'seguridad', 'dispositivos', 'smartphone', 2, ruta: 'panel.dispositivos.index', codigoPermiso: 'seguridad.dispositivo.ver');
         $this->item($seguridad, 'seguridad', 'organizacion', 'apartment', 3, ruta: 'panel.organizacion.index');
+        // HU-20: sin módulo raíz propio en la espec §4 (runs/10-diseno.md) —
+        // entra bajo Seguridad, mismo criterio que Organización.
+        $this->item($seguridad, 'seguridad', 'versiones_apk', 'system_update', 4, ruta: 'panel.versiones-apk.index', codigoPermiso: 'distribucion.version.autorizar');
     }
 
     private function modulo(string $clave, string $icono, int $orden): SecMenu

@@ -1,5 +1,6 @@
 <?php
 
+use App\Dominios\Distribucion\Infraestructura\Http\Controllers\Web\VersionesApkController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\DashboardController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\DispositivosController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\OrganizacionController;
@@ -82,5 +83,18 @@ Route::middleware('auth:interno')->group(function () {
         // persistencia real, para demostración de visión multi-tenant futura.
         Route::get('/panel/organizacion', [OrganizacionController::class, 'index'])
             ->name('panel.organizacion.index');
+
+        // HU-20: autorizar versiones del APK. Un único permiso
+        // (`distribucion.version.autorizar`) gatea listar, subir y autorizar
+        // — verificado DENTRO del controlador contra el ROL ACTIVO, mismo
+        // criterio que usuarios y dispositivos.
+        Route::get('/panel/versiones-apk', [VersionesApkController::class, 'index'])
+            ->name('panel.versiones-apk.index');
+
+        Route::post('/panel/versiones-apk', [VersionesApkController::class, 'store'])
+            ->name('panel.versiones-apk.subir');
+
+        Route::post('/panel/versiones-apk/{version}/autorizar', [VersionesApkController::class, 'autorizar'])
+            ->name('panel.versiones-apk.autorizar');
     });
 });
