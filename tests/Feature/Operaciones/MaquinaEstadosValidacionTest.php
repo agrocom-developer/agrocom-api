@@ -69,7 +69,7 @@ function trabajoAbiertoParaValidacion(): Trabajo
 
 function sesionParaValidacion(Trabajo $trabajo, EstadoSesion $estado = EstadoSesion::Cerrado): Sesion
 {
-    $piloto = PerPersona::create(['nombre' => 'Piloto de validación', 'rol' => RolOperativoPersona::Piloto, 'activo' => true]);
+    $piloto = PerPersona::create(['nombre' => 'Piloto de validación', 'rol' => RolOperativoPersona::Piloto, 'tarifa_ha' => '150.00', 'activo' => true]);
 
     return Sesion::create([
         'uuid_cliente' => 'uuid-sesion-validacion-'.uniqid(),

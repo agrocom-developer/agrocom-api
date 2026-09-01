@@ -8,6 +8,7 @@ use App\Dominios\Operaciones\Dominio\Excepciones\TransicionSesionNoPermitida;
 use App\Dominios\Operaciones\Dominio\MaquinaEstados\TransicionesSesion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Única clase que crea/muta el `estado` de `sesion` (invariante 7 de
@@ -83,6 +84,20 @@ final class MaquinaEstadosSesion
      * ese caso) sigue el camino normal de {@see TransicionesSesion} y lanza
      * {@see TransicionSesionNoPermitida} si no está permitido.
      *
+     * La mutación y el disparo del evento van dentro de una transacción
+     * (HU-16, tarea 16): el oyente real de `SesionValidada`
+     * (`Finanzas\Aplicacion\GenerarDevengosSesion`) corre síncrono, dentro de
+     * ese `event()`, y puede lanzar
+     * `Finanzas\Dominio\Excepciones\PersonaSinTarifaHa` si el piloto o su
+     * auxiliar no tienen tarifa configurada. Sin la transacción, esa
+     * excepción dejaría la sesión ya guardada como `validado` pero sin su
+     * devengo — exactamente el estado a medias que la invariante 6 de
+     * CLAUDE.md prohíbe. Con ella, la validación entera se revierte: la
+     * sesión sigue `cerrado`, y quien la validó puede reintentar una vez
+     * completada la tarifa. Esta clase no importa nada de `Finanzas` (no
+     * hace falta: no atrapa la excepción, solo se asegura de que su efecto
+     * sea atómico).
+     *
      * @throws TransicionSesionNoPermitida si `$sesion` no está `cerrado` ni `validado`.
      */
     public function validar(Sesion $sesion, int $validadorPersonaId): Sesion
@@ -98,12 +113,14 @@ final class MaquinaEstadosSesion
             throw TransicionSesionNoPermitida::entre($desde, $hasta);
         }
 
-        $sesion->estado = $hasta;
-        $sesion->validado_por = $validadorPersonaId;
-        $sesion->fecha_validacion = CarbonImmutable::now();
-        $sesion->save();
+        DB::transaction(function () use ($sesion, $validadorPersonaId, $hasta): void {
+            $sesion->estado = $hasta;
+            $sesion->validado_por = $validadorPersonaId;
+            $sesion->fecha_validacion = CarbonImmutable::now();
+            $sesion->save();
 
-        event(new SesionValidada($sesion->id));
+            event(new SesionValidada($sesion->id));
+        });
 
         return $sesion;
     }
