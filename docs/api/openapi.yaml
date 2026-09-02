@@ -36,6 +36,77 @@ paths:
                         $ref: '#/components/schemas/VersionApk'
                     nullable: true
                 type: object
+  /api/evidencias:
+    post:
+      tags:
+        - Operaciones
+      summary: 'Sube una evidencia (multipart/form-data)'
+      description: 'Sube un archivo de evidencia (captura de RC, foto de campo, foto de incidencia, comprobante o firma de acta) y responde `aplicado`, `duplicado` (reintento del mismo `uuid_cliente`, se trata como éxito) o `rechazado` con motivo — mismo vocabulario que `POST /api/sync`, aunque este endpoint vive aparte porque su "sobre" lleva un binario. El servidor calcula el hash SHA-256 del contenido recibido; no se acepta un hash declarado por el cliente. La compresión a <300 KB y la cola de reintentos son responsabilidad de la app de campo (TE-07 lado app, repo `agrocom-field`) — este endpoint no las repite.'
+      operationId: subirEvidencia
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              required:
+                - uuid_cliente
+                - tipo
+                - fecha
+                - archivo
+              properties:
+                uuid_cliente:
+                  type: string
+                  example: a1b2c3d4-0000-4000-8000-000000000010
+                tipo:
+                  type: string
+                  example: imagen_campo
+                  enum:
+                    - captura_rc
+                    - imagen_campo
+                    - foto_incidencia
+                    - comprobante
+                    - firma_acta
+                fecha:
+                  type: string
+                  format: date-time
+                  example: '2026-09-01T10:00:00-04:00'
+                archivo:
+                  type: string
+                  format: binary
+              type: object
+      responses:
+        200:
+          description: 'Resultado de aplicar el registro.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - uuid_cliente
+                  - estado
+                properties:
+                  uuid_cliente:
+                    type: string
+                    example: a1b2c3d4-0000-4000-8000-000000000010
+                    nullable: true
+                  estado:
+                    type: string
+                    example: aplicado
+                    enum:
+                      - aplicado
+                      - duplicado
+                      - rechazado
+                  motivo:
+                    description: 'Presente solo cuando `estado` es `rechazado`.'
+                    type: string
+                    example: 'archivo ausente o vacío'
+                type: object
+        401:
+          description: 'Token ausente, revocado o ya sin rol válido.'
+        422:
+          description: 'El archivo supera el tope de tamaño de plataforma (20 MB).'
+      security:
+        -
+          tokenDispositivo: []
   /api/ordenes:
     get:
       tags:
