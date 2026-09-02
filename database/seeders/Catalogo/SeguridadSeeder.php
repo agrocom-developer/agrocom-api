@@ -69,6 +69,13 @@ class SeguridadSeeder extends Seeder
         // (`ope_actas.firmante`), no como actor `sec_user`.
         'operaciones.acta.generar' => 'Generar el acta de conformidad de un trabajo cerrado y validado',
         'operaciones.acta.firmar' => 'Registrar la firma del agrónomo sobre un acta pendiente',
+        // HU-18 (tarea 25): reporte técnico por lote. Espec §3, línea 89
+        // ("Ver reportes técnicos"): jefe de campo, encargado y dueño desde
+        // el panel interno; el agrónomo también figura en esa fila, pero
+        // solo "desde el portal" — que todavía no existe (Sprint 12, ver
+        // runs/25.md) — así que ningún rol de `sec_*` lo representa hoy.
+        // Piloto/auxiliar quedan afuera: no están en esa fila de la espec.
+        'operaciones.reporte.ver' => 'Ver y descargar el reporte técnico de un trabajo',
         // HU-19 (tarea 26): bandeja de alertas por excepción. Separados a
         // propósito, mismo criterio que dispositivo.ver/.revocar: mirar la
         // bandeja y marcar una alerta como resuelta no son la misma
@@ -107,6 +114,8 @@ class SeguridadSeeder extends Seeder
         // trabajo.ver/sesion.validar, que sí comparte).
         'operaciones.alerta.ver',
         'operaciones.alerta.atender',
+        // HU-18 (tarea 25): espec línea 89, "Ver reportes técnicos".
+        'operaciones.reporte.ver',
     ];
 
     /**
@@ -123,6 +132,8 @@ class SeguridadSeeder extends Seeder
         // mismo criterio que el piloto (ver PERMISOS, arriba).
         'operaciones.acta.generar',
         'operaciones.acta.firmar',
+        // HU-18 (tarea 25): espec línea 89, "Ver reportes técnicos".
+        'operaciones.reporte.ver',
     ];
 
     public function run(): void

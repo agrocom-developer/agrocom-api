@@ -116,6 +116,14 @@ Route::middleware('auth:interno')->group(function () {
         Route::get('/panel/trabajos/{trabajo}/acta/pdf', [TrabajosController::class, 'actaPdf'])
             ->name('panel.trabajos.acta-pdf');
 
+        // HU-18 (tarea 25): descarga del reporte técnico desde el panel —
+        // solo lectura, permiso propio `operaciones.reporte.ver` (espec §3
+        // línea 89: jefe de campo/encargado/dueño, no piloto/auxiliar; ver
+        // runs/25.md). El reporte se genera solo al firmar el acta
+        // (`GenerarReporteTecnico`); esta ruta nunca lo genera.
+        Route::get('/panel/trabajos/{trabajo}/reporte/pdf', [TrabajosController::class, 'reporteTecnicoPdf'])
+            ->name('panel.trabajos.reporte-pdf');
+
         // HU-14 (tarea 14): cola de validación de sesiones cerradas.
         // Permiso `operaciones.sesion.validar` verificado DENTRO del
         // controlador contra el ROL ACTIVO, mismo criterio que las rutas de

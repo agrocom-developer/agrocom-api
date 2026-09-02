@@ -105,6 +105,12 @@ return [
         ],
         'acta_firmante' => 'Firmado por',
         'acta_descargar_pdf' => 'Descargar PDF',
+        // Reporte técnico (HU-18, tarea 25): solo lectura desde el panel —
+        // se genera solo al firmar el acta (mismo criterio que la sección
+        // de acta, arriba).
+        'detalle_reporte_titulo' => 'Reporte técnico',
+        'detalle_reporte_vacio' => 'Todavía no se generó el reporte técnico de este trabajo.',
+        'reporte_descargar_pdf' => 'Descargar PDF',
         'sesion_rechazada' => 'Rechazada',
         'sesion_motivo_rechazo' => 'Motivo del rechazo: :motivo',
         'estado' => [
