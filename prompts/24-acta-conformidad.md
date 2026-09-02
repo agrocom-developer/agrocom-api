@@ -16,6 +16,20 @@ tarea no queda bloqueada por eso.
 delegar" de `CLAUDE.md`, "el servicio de estados") y agrega un tipo de
 recurso nuevo consumido por el panel. El PR se abre en borrador.
 
+## Nota de esta planificación (2/9/2026): este prompt se recuperó, no es nuevo
+
+Lo escribió la planificación tras la tarea 21, junto con los prompts 22 y 23,
+en un solo commit (`f2db767`) que quedó atrapado en la rama
+`feature/incidencias-sesion` (PR #59, crítica, todavía en borrador sin
+mergear — ver `docs/gestion/cola_tareas.md`, sección "El bug de la 24", para
+el porqué exacto). Cuando el ciclo llegó a esta tarea no encontró el archivo
+en `develop` y disparó una planificación nueva, que lo recuperó de git
+(`git show f2db767:prompts/24-acta-conformidad.md`) tal cual estaba. Se
+verificó de nuevo contra el estado actual del código (`EstadoTrabajo` sigue
+con dos valores, `TipoEvidencia::FirmaActa` ya existe, `trabajos/show.blade.php`
+ya existe) antes de restaurarlo: sigue siendo válido, no hizo falta cambiar
+nada del contenido de abajo.
+
 ## Qué es de este repo y qué no
 
 "Firma en pantalla" es una UI de `agrocom-field` (Flutter, piloto en el RC) —

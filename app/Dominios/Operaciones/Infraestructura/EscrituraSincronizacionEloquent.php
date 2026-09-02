@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Operaciones\Infraestructura;
 
+use App\Dominios\Operaciones\Aplicacion\GenerarAlertaExcepcion;
 use App\Dominios\Operaciones\Aplicacion\MaquinaEstados\MaquinaEstadosSesion;
 use App\Dominios\Operaciones\Aplicacion\MaquinaEstados\MaquinaEstadosTrabajo;
 use App\Dominios\Operaciones\Contratos\AperturaSesion;
@@ -11,6 +12,7 @@ use App\Dominios\Operaciones\Contratos\CierreTrabajo;
 use App\Dominios\Operaciones\Contratos\EscrituraSincronizacion;
 use App\Dominios\Operaciones\Contratos\RegistroCondiciones;
 use App\Dominios\Operaciones\Contratos\RegistroIncidencia;
+use App\Dominios\Operaciones\Contratos\RegistroRecarga;
 use App\Dominios\Operaciones\Contratos\RegistroRecepcionCaldo;
 use App\Dominios\Operaciones\Contratos\ResultadoSincronizacion;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
@@ -23,6 +25,7 @@ use App\Dominios\Operaciones\Infraestructura\Eloquent\Condiciones;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Evidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Incidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\Recarga;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\RecepcionCaldo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
@@ -56,6 +59,7 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
     public function __construct(
         private readonly MaquinaEstadosTrabajo $maquinaTrabajo,
         private readonly MaquinaEstadosSesion $maquinaSesion,
+        private readonly GenerarAlertaExcepcion $alertas,
     ) {}
 
     /**
@@ -161,7 +165,7 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
 
         try {
             DB::transaction(function () use ($datos, $sesion, $dentroDeRango): void {
-                Condiciones::query()->create([
+                $condiciones = Condiciones::query()->create([
                     'uuid_cliente' => $datos->uuidCliente,
                     'trabajo_id' => $sesion->trabajo_id,
                     'sesion_id' => $sesion->id,
@@ -173,6 +177,12 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
                     'observacion_agronomo' => $datos->observacionAgronomo,
                     'firma_observacion' => $datos->firmaObservacion,
                 ]);
+
+                // HU-19 (tarea 26): "condiciones forzadas" — autorizado solo
+                // por observación del agrónomo, nunca por rango (ver arriba).
+                if (! $dentroDeRango) {
+                    $this->alertas->porCondicionesForzadas($condiciones);
+                }
             });
         } catch (QueryException $excepcion) {
             return $this->resultadoDesdeExcepcion($excepcion, 'ope_condiciones');
@@ -281,6 +291,57 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
             });
         } catch (QueryException $excepcion) {
             return $this->resultadoDesdeExcepcion($excepcion, 'ope_recepciones_caldo');
+        }
+
+        return ResultadoSincronizacion::aplicado();
+    }
+
+    /**
+     * Recarga del dron (HU-13, tarea 23): crea una fila nueva, mismo
+     * mecanismo de idempotencia que `registrarCondiciones()`/
+     * `registrarRecepcionCaldo()` — el `UNIQUE` parcial de `uuid_cliente`
+     * resuelve el reintento, nunca un `SELECT` previo. La sesión se resuelve
+     * por `uuid_cliente` (puede haber llegado en el mismo lote:
+     * `SincronizarLote::ORDEN_CAUSAL` aplica siempre `sesion` antes que
+     * `recarga`).
+     *
+     * `alerta_temperatura` se calcula una sola vez, al momento del hecho
+     * (`RegistroRecarga::alertaTemperatura()`) — nunca rechaza el registro,
+     * solo lo marca (CA de HU-13: "alerta", no "bloqueo").
+     */
+    public function registrarRecarga(RegistroRecarga $datos): ResultadoSincronizacion
+    {
+        $sesion = Sesion::query()->where('uuid_cliente', $datos->sesionUuidCliente)->first();
+
+        if ($sesion === null) {
+            return ResultadoSincronizacion::rechazado('la sesión referenciada no existe todavía');
+        }
+
+        try {
+            DB::transaction(function () use ($datos, $sesion): void {
+                $recarga = Recarga::query()->create([
+                    'uuid_cliente' => $datos->uuidCliente,
+                    'sesion_id' => $sesion->id,
+                    'secuencia' => $datos->secuencia,
+                    'litros_caldo' => $datos->litrosCaldo,
+                    'bateria_saliente_id' => $datos->bateriaSalienteId,
+                    'temperatura_bateria_c' => $datos->temperaturaBateriaC,
+                    'alerta_temperatura' => $datos->alertaTemperatura(),
+                    'motivo_retraso_caldo' => $datos->motivoRetrasoCaldo,
+                    'hora_retraso' => $datos->horaRetraso,
+                    'litros_combustible_generador' => $datos->litrosCombustibleGenerador,
+                    'hora' => $datos->hora,
+                ]);
+
+                // HU-19 (tarea 26): "batería caliente" y, si corresponde,
+                // "dron sospechoso" — nunca bloquean el registro, solo
+                // alimentan la bandeja.
+                if ($recarga->alerta_temperatura) {
+                    $this->alertas->porBateriaCaliente($recarga, $sesion);
+                }
+            });
+        } catch (QueryException $excepcion) {
+            return $this->resultadoDesdeExcepcion($excepcion, 'ope_recargas');
         }
 
         return ResultadoSincronizacion::aplicado();
@@ -532,6 +593,12 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
         $trabajo = Trabajo::query()->whereKey($trabajoId)->lockForUpdate()->firstOrFail();
         $trabajo->hectareas_declaradas = $this->sumaHectareasSesiones($trabajoId);
         $trabajo->save();
+
+        // HU-19 (tarea 26): "suma excedida" — único punto donde la suma de
+        // hectáreas de las sesiones de un trabajo puede cambiar, así que es
+        // el único punto donde vale la pena recalcular la cobertura (ver
+        // docblock de `GenerarAlertaExcepcion::porSumaExcedidaSiCorresponde()`).
+        $this->alertas->porSumaExcedidaSiCorresponde($trabajo);
     }
 
     private function sumaHectareasSesiones(int $trabajoId): string

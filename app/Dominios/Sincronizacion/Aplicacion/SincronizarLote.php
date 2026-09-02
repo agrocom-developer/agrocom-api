@@ -9,6 +9,7 @@ use App\Dominios\Operaciones\Contratos\CierreTrabajo;
 use App\Dominios\Operaciones\Contratos\EscrituraSincronizacion;
 use App\Dominios\Operaciones\Contratos\RegistroCondiciones;
 use App\Dominios\Operaciones\Contratos\RegistroIncidencia;
+use App\Dominios\Operaciones\Contratos\RegistroRecarga;
 use App\Dominios\Operaciones\Contratos\RegistroRecepcionCaldo;
 use App\Dominios\Operaciones\Contratos\ResultadoSincronizacion;
 
@@ -33,7 +34,7 @@ final class SincronizarLote
 {
     /**
      * Orden causal fijo (espec §2.1, punto 3, extendido por las tareas 13, 17,
-     * 18 y 22): apertura antes que su propio cierre, y `condiciones` e
+     * 18, 22 y 23): apertura antes que su propio cierre, y `condiciones` e
      * `incidencia` justo después de `sesion` —ambas la referencian por
      * `uuid_cliente`—, para el caso —raro pero posible— de que lleguen en el
      * mismo lote que la apertura (un piloto que registra una incidencia al
@@ -42,9 +43,11 @@ final class SincronizarLote
      * `recepcion_caldo` (tarea 18) solo depende de `trabajo` —no de
      * `sesion`— así que va justo después: el cliente puede entregar el
      * caldo en el mismo lote en que se abre el trabajo, antes de que exista
-     * ninguna sesión todavía.
+     * ninguna sesión todavía. `recarga` (tarea 23) depende solo de `sesion`,
+     * igual que `condiciones` — el orden relativo entre esas dos no importa,
+     * ninguna referencia a la otra.
      */
-    private const array ORDEN_CAUSAL = ['trabajo', 'recepcion_caldo', 'sesion', 'condiciones', 'incidencia', 'cierre_trabajo', 'cierre_sesion'];
+    private const array ORDEN_CAUSAL = ['trabajo', 'recepcion_caldo', 'sesion', 'condiciones', 'incidencia', 'recarga', 'cierre_trabajo', 'cierre_sesion'];
 
     public function __construct(
         private readonly EscrituraSincronizacion $operaciones,
@@ -102,6 +105,7 @@ final class SincronizarLote
             'sesion' => $this->aplicarSesion($registro, $operarioPersonaId),
             'condiciones' => $this->aplicarCondiciones($registro),
             'incidencia' => $this->aplicarIncidencia($registro),
+            'recarga' => $this->aplicarRecarga($registro),
             'cierre_trabajo' => $this->aplicarCierreTrabajo($registro, $operarioPersonaId),
             'cierre_sesion' => $this->aplicarCierreSesion($registro, $operarioPersonaId),
             default => ResultadoSincronizacion::rechazado('tipo de registro desconocido o dato mal formado'),
@@ -192,6 +196,22 @@ final class SincronizarLote
         return $datos === null
             ? ResultadoSincronizacion::rechazado('incidencia con datos incompletos o inválidos')
             : $this->operaciones->registrarIncidencia($datos);
+    }
+
+    /**
+     * @param  array<string, mixed>  $registro
+     *
+     * Sin verificación de pertenencia (mismo criterio que
+     * `aplicarCondiciones()`/`aplicarRecepcionCaldo()`): la espec no define
+     * una noción de "dueño" para este registro.
+     */
+    private function aplicarRecarga(array $registro): ResultadoSincronizacion
+    {
+        $datos = RegistroRecarga::intentarDesdeArreglo($registro);
+
+        return $datos === null
+            ? ResultadoSincronizacion::rechazado('recarga con datos incompletos o inválidos')
+            : $this->operaciones->registrarRecarga($datos);
     }
 
     /**

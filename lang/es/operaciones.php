@@ -95,6 +95,22 @@ return [
         // y no están implementadas: la sección convive con eso vacío sin
         // simular datos que no existen.
         'detalle_evidencias_vacio' => 'Todavía no hay evidencias registradas para este trabajo.',
+        // Acta de conformidad (HU-17, tarea 24): solo lectura desde el
+        // panel — generar/firmar es de `agrocom-field` (piloto/jefe).
+        'detalle_acta_titulo' => 'Acta de conformidad',
+        'detalle_acta_vacio' => 'Todavía no se generó el acta de este trabajo.',
+        'acta_estado' => [
+            'pendiente' => 'Pendiente de firma',
+            'firmada' => 'Firmada',
+        ],
+        'acta_firmante' => 'Firmado por',
+        'acta_descargar_pdf' => 'Descargar PDF',
+        // Reporte técnico (HU-18, tarea 25): solo lectura desde el panel —
+        // se genera solo al firmar el acta (mismo criterio que la sección
+        // de acta, arriba).
+        'detalle_reporte_titulo' => 'Reporte técnico',
+        'detalle_reporte_vacio' => 'Todavía no se generó el reporte técnico de este trabajo.',
+        'reporte_descargar_pdf' => 'Descargar PDF',
         'sesion_rechazada' => 'Rechazada',
         'sesion_motivo_rechazo' => 'Motivo del rechazo: :motivo',
         'estado' => [
@@ -141,6 +157,45 @@ return [
         'propia' => 'Sos el piloto de esta sesión: no podés validarla ni rechazarla.',
         'validada' => 'Sesión validada correctamente.',
         'rechazada' => 'Sesión rechazada: se registró la corrección con el motivo indicado.',
+    ],
+
+    // Pantalla de panel "Reportes › Alertas" (HU-19, tarea 26): bandeja de
+    // alertas por excepción del encargado de operaciones.
+    'alertas' => [
+        'titulo' => 'Alertas por excepción',
+        'subtitulo' => 'Solo lo anómalo: batería caliente, dron sospechoso, condiciones forzadas y suma excedida.',
+        'vacio' => 'No hay alertas registradas todavía.',
+        'filtro_vacio' => 'Ninguna alerta coincide con estos filtros.',
+        'col_tipo' => 'Tipo',
+        'col_mensaje' => 'Detalle',
+        'col_trabajo' => 'Trabajo',
+        'col_estado' => 'Estado',
+        'col_fecha' => 'Generada',
+        'col_atendida' => 'Atendida',
+        'col_accion' => 'Acción',
+        'sin_trabajo' => '—',
+        'atender' => 'Marcar como atendida',
+        'atendida' => 'Alerta marcada como atendida.',
+        'atendida_por' => 'Atendida por persona #:id el :fecha',
+        'filtro_estado' => 'Estado',
+        'filtro_tipo' => 'Tipo',
+        'filtro_todos' => 'Todos',
+        'filtrar' => 'Filtrar',
+        'limpiar_filtros' => 'Limpiar filtros',
+        'paginacion_aria' => 'Paginación de alertas',
+        'paginacion_anterior' => 'Anterior',
+        'paginacion_siguiente' => 'Siguiente',
+        'paginacion_info' => 'Página :actual de :total',
+        'tipo' => [
+            'bateria_caliente' => 'Batería caliente',
+            'dron_sospechoso' => 'Dron sospechoso',
+            'condiciones_forzadas' => 'Condiciones forzadas',
+            'suma_excedida' => 'Suma excedida',
+        ],
+        'estado' => [
+            'pendiente' => 'Pendiente',
+            'atendida' => 'Atendida',
+        ],
     ],
 
 ];

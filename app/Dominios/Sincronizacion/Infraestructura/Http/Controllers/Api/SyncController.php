@@ -15,8 +15,10 @@ use OpenApi\Attributes as OA;
 #[OA\Tag(
     name: 'Sincronizacion',
     description: 'Push de escritura offline de la app de campo (espec §2.1, puntos 3 a 5; TE-05). '
-        .'Recorte de alcance de la tarea 09: solo `trabajo` y `sesion` — `mezcla`, `recarga` '
-        .'y `acta` llegan con sus propias tareas (ver docs/gestion/cola_tareas.md).',
+        .'Recorte de alcance de la tarea 09: solo `trabajo` y `sesion` — `incidencia` (tarea 22) y '
+        .'`recarga` (tarea 23) se sumaron después como tipos de registro de este mismo endpoint; '
+        .'`mezcla` no aplica (CR-01: Agrocom no prepara la mezcla) y `acta` tiene sus propios '
+        .'endpoints (`ActaController`), fuera de este push (ver docs/gestion/cola_tareas.md).',
 )]
 #[OA\Schema(
     schema: 'RegistroSync',
@@ -30,10 +32,13 @@ use OpenApi\Attributes as OA;
         .'nunca su composición (espec §7.1: sin producto, dosis ni fórmula). `incidencia` (HU-08, tarea '
         .'22) registra un evento puntual de la sesión (caldo/ESC/batería/mecánica/clima/otro) con foto '
         .'SIEMPRE obligatoria, referenciada por `uuid_cliente` a una evidencia ya subida por '
-        .'`POST /api/evidencias` con `tipo: foto_incidencia`.',
+        .'`POST /api/evidencias` con `tipo: foto_incidencia`. `recarga` (HU-13, tarea 23) registra cada '
+        .'ciclo de cambio de batería/recarga de caldo durante el vuelo — temperatura de batería > 50°C '
+        .'se persiste con `alerta_temperatura = true` sin rechazar el registro; sin `mezcla_id` (CR-01: '
+        .'Agrocom no prepara la mezcla).',
     required: ['tipo', 'uuid_cliente'],
     properties: [
-        new OA\Property(property: 'tipo', type: 'string', enum: ['trabajo', 'recepcion_caldo', 'sesion', 'condiciones', 'incidencia', 'cierre_trabajo', 'cierre_sesion'], example: 'trabajo'),
+        new OA\Property(property: 'tipo', type: 'string', enum: ['trabajo', 'recepcion_caldo', 'sesion', 'condiciones', 'incidencia', 'recarga', 'cierre_trabajo', 'cierre_sesion'], example: 'trabajo'),
         new OA\Property(property: 'uuid_cliente', type: 'string', example: 'a1b2c3d4-0000-4000-8000-000000000001'),
         new OA\Property(property: 'orden_id', description: '`trabajo`: id de servidor de la orden (del pull de catálogo).', type: 'integer', example: 1),
         new OA\Property(property: 'lote_id', description: '`trabajo`: id de servidor del lote (del pull de catálogo).', type: 'integer', example: 3),
@@ -51,7 +56,7 @@ use OpenApi\Attributes as OA;
             type: 'string',
             example: 'a1b2c3d4-0000-4000-8000-000000000002',
         ),
-        new OA\Property(property: 'secuencia', description: '`sesion`.', type: 'integer', example: 1),
+        new OA\Property(property: 'secuencia', description: '`sesion`: orden de apertura. `recarga`: orden de la recarga dentro de la sesión.', type: 'integer', example: 1),
         new OA\Property(property: 'piloto_id', description: '`sesion`: id de servidor de la persona (del pull de catálogo).', type: 'integer', example: 5),
         new OA\Property(property: 'auxiliar_id', description: '`sesion`, opcional.', type: 'integer', nullable: true, example: null),
         new OA\Property(property: 'dron_id', description: '`sesion`, opcional (HU-07): id de servidor del dron (catálogo mínimo de `Operaciones`, sin pull de catálogo propio todavía).', type: 'integer', nullable: true, example: null),
@@ -61,7 +66,7 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'fin', type: 'string', format: 'date-time', nullable: true, description: 'Requerido en `cierre_trabajo`/`cierre_sesion`.', example: null),
         new OA\Property(property: 'litros', description: '`recepcion_caldo`: litros entregados por el cliente. DECIMAL como string (invariante 6).', type: 'string', nullable: true, example: null),
         new OA\Property(property: 'entregado_por', description: '`recepcion_caldo`: quién, del lado del cliente, entregó el caldo (espec §7.2).', type: 'string', nullable: true, example: null),
-        new OA\Property(property: 'hora', description: '`recepcion_caldo`: cuándo se entregó. `incidencia`: cuándo ocurrió.', type: 'string', format: 'date-time', nullable: true, example: null),
+        new OA\Property(property: 'hora', description: '`recepcion_caldo`: cuándo se entregó. `incidencia`: cuándo ocurrió. `recarga`: cuándo ocurrió el ciclo de cambio de batería/recarga de caldo.', type: 'string', format: 'date-time', nullable: true, example: null),
         new OA\Property(property: 'litros_consumidos', description: '`cierre_sesion`, opcional: litros de caldo efectivamente rociados en la sesión (espec §7.2). DECIMAL como string.', type: 'string', nullable: true, example: null),
         new OA\Property(property: 'litros_sobrante', description: '`cierre_trabajo`, opcional: litros que quedaron sin aplicar al cerrar el trabajo (espec §7.2). DECIMAL como string.', type: 'string', nullable: true, example: null),
         new OA\Property(
@@ -114,6 +119,19 @@ use OpenApi\Attributes as OA;
             nullable: true,
             example: null,
         ),
+        new OA\Property(property: 'litros_caldo', description: '`recarga`: litros de caldo cargados en ese ciclo. DECIMAL como string (invariante 6).', type: 'string', nullable: true, example: null),
+        new OA\Property(property: 'bateria_saliente_id', description: '`recarga`: identificador de la batería que se retira (texto libre, sin catálogo de baterías en el esquema).', type: 'string', nullable: true, example: null),
+        new OA\Property(property: 'temperatura_bateria_c', description: '`recarga`: temperatura medida de la batería saliente. > 50°C persiste con `alerta_temperatura = true`, sin rechazar el registro.', type: 'string', nullable: true, example: null),
+        new OA\Property(
+            property: 'motivo_retraso_caldo',
+            description: '`recarga`, opcional: motivo del retraso o rechazo por calidad del caldo — solo se completa si hubo retraso, no en cada recarga.',
+            type: 'string',
+            enum: ['filtro_tapado', 'grumos', 'decantacion', 'espuma', 'color_olor_anormal'],
+            nullable: true,
+            example: null,
+        ),
+        new OA\Property(property: 'hora_retraso', description: '`recarga`, opcional: cuándo ocurrió el retraso/rechazo por caldo.', type: 'string', format: 'date-time', nullable: true, example: null),
+        new OA\Property(property: 'litros_combustible_generador', description: '`recarga`, opcional: litros de combustible cargados al generador en ese ciclo. Informativo, sin costeo (Fase 3). DECIMAL como string.', type: 'string', nullable: true, example: null),
     ],
     type: 'object',
 )]

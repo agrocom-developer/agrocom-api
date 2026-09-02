@@ -98,7 +98,10 @@ class SecMenuSeeder extends Seeder
         // Reportes (cap. 9 y 10)
         $this->item($reportes, 'reportes', 'tecnicos', 'summarize', 1);
         $this->item($reportes, 'reportes', 'comerciales', 'insert_chart', 2);
-        $this->item($reportes, 'reportes', 'alertas', 'notifications_active', 3);
+        // HU-19 (tarea 26): bandeja de alertas por excepción — activa el
+        // ítem que ya estaba sembrado como "botón sin link" (ver docblock de
+        // `item()`).
+        $this->item($reportes, 'reportes', 'alertas', 'notifications_active', 3, ruta: 'panel.alertas.index', codigoPermiso: 'operaciones.alerta.ver');
 
         // Seguridad (§4.6 + cap. 14) — las dos pantallas existentes; si la
         // migración de arriba ya las convirtió, el firstOrCreate las

@@ -7,6 +7,8 @@ use App\Dominios\Operaciones\Dominio\EstadoTableroTrabajo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 /**
@@ -25,6 +27,9 @@ use Illuminate\View\View;
 final class TrabajosController
 {
     private const PERMISO = 'operaciones.trabajo.ver';
+
+    /** HU-18 (tarea 25): gatea solo el botón/ruta del reporte técnico, no toda la pantalla — ver runs/25.md. */
+    private const PERMISO_REPORTE = 'operaciones.reporte.ver';
 
     public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
 
@@ -56,7 +61,41 @@ final class TrabajosController
 
         return view('operaciones::pages.trabajos.show', [
             ...$this->autorizacion->cascara($request),
-            'trabajo' => $trabajo->load(['sesiones.rechazo']),
+            'trabajo' => $trabajo->load(['sesiones.rechazo', 'acta', 'reporteTecnico']),
+            'puedeVerReporte' => $this->autorizacion->tienePermiso($request, self::PERMISO_REPORTE),
         ]);
+    }
+
+    /**
+     * `GET /panel/trabajos/{trabajo}/acta/pdf` (HU-17, tarea 24): solo
+     * lectura, mismo permiso que `show()` — generar/firmar el acta es de
+     * `agrocom-field` (`ActaController`, API), no del panel.
+     */
+    public function actaPdf(Request $request, Trabajo $trabajo): Response
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO), 403);
+
+        $acta = $trabajo->acta;
+
+        abort_if($acta === null || $acta->pdf_path === null || ! Storage::disk('r2')->exists($acta->pdf_path), 404);
+
+        return response(Storage::disk('r2')->get($acta->pdf_path), 200, ['Content-Type' => 'application/pdf']);
+    }
+
+    /**
+     * `GET /panel/trabajos/{trabajo}/reporte/pdf` (HU-18, tarea 25): solo
+     * lectura, permiso propio `operaciones.reporte.ver` — el reporte se
+     * genera solo al firmar el acta (`GenerarReporteTecnico`, enganchado en
+     * `FirmarActa`); esta ruta nunca lo genera.
+     */
+    public function reporteTecnicoPdf(Request $request, Trabajo $trabajo): Response
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_REPORTE), 403);
+
+        $reporte = $trabajo->reporteTecnico;
+
+        abort_if($reporte === null || $reporte->pdf_path === null || ! Storage::disk('r2')->exists($reporte->pdf_path), 404);
+
+        return response(Storage::disk('r2')->get($reporte->pdf_path), 200, ['Content-Type' => 'application/pdf']);
     }
 }

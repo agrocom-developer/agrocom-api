@@ -51,6 +51,13 @@ namespace App\Dominios\Operaciones\Contratos;
  * referencia inexistente" es la evidencia obligatoria: existe, es de tipo
  * `foto_incidencia`, y no fue usada ya por otra incidencia (mismo criterio
  * que la imagen de campo de `cerrarTrabajo()`).
+ *
+ * `registrarRecarga()` (HU-13, tarea 23) crea una fila nueva, mismo
+ * mecanismo de idempotencia que `registrarCondiciones()`/
+ * `registrarRecepcionCaldo()`. Sin `$operarioPersonaId`, mismo motivo que
+ * esos dos: la espec no define dueño para este registro. A diferencia de
+ * `registrarCondiciones()`, nunca rechaza por la medición en sí (temperatura
+ * de batería alta): persiste una alerta calculada, no bloquea el registro.
  */
 interface EscrituraSincronizacion
 {
@@ -67,4 +74,6 @@ interface EscrituraSincronizacion
     public function registrarRecepcionCaldo(RegistroRecepcionCaldo $datos): ResultadoSincronizacion;
 
     public function registrarIncidencia(RegistroIncidencia $datos): ResultadoSincronizacion;
+
+    public function registrarRecarga(RegistroRecarga $datos): ResultadoSincronizacion;
 }

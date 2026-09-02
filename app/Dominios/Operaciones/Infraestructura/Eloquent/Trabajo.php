@@ -12,6 +12,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * Trabajo (espec §4.3, tabla ope_trabajos; TE-05). Nace en la app de campo
@@ -111,6 +112,31 @@ class Trabajo extends ModeloDominio
     public function recepcionesCaldo(): HasMany
     {
         return $this->hasMany(RecepcionCaldo::class, 'trabajo_id');
+    }
+
+    /** @return HasOne<Acta, $this> */
+    public function acta(): HasOne
+    {
+        return $this->hasOne(Acta::class, 'trabajo_id');
+    }
+
+    /**
+     * Condiciones de vuelo registradas al iniciar cada sesión (HU-06, tarea
+     * 17): `trabajo_id` está denormalizado en `ope_condiciones` justo para
+     * poder leerlas por trabajo sin pasar por `sesiones` (ver docblock de
+     * `Condiciones`). Puede haber más de una fila — una por sesión.
+     *
+     * @return HasMany<Condiciones, $this>
+     */
+    public function condiciones(): HasMany
+    {
+        return $this->hasMany(Condiciones::class, 'trabajo_id');
+    }
+
+    /** @return HasOne<ReporteTecnico, $this> */
+    public function reporteTecnico(): HasOne
+    {
+        return $this->hasOne(ReporteTecnico::class, 'trabajo_id');
     }
 
     /**
