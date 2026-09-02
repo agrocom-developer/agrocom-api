@@ -1,0 +1,54 @@
+/*
+ * Molecule: summary-card (resources/views/components/molecules/summary-card.blade.php)
+ * Misma superficie de tarjeta que `form-section` (surface-card/border-card/
+ * radius-lg) — lista etiqueta→valor en `<dl>` semántico + acción al pie.
+ */
+
+.ag-summary-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-4);
+    background-color: var(--ag-color-surface-card);
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-lg);
+    padding: var(--ag-space-5);
+}
+
+.ag-summary-card__head {
+    margin-bottom: 0;
+}
+
+.ag-summary-card__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-3);
+    margin: 0;
+}
+
+.ag-summary-card__row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--ag-space-3);
+}
+
+.ag-summary-card__label {
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-summary-card__value {
+    margin: 0;
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+    color: var(--ag-color-text);
+    text-align: right;
+}
+
+.ag-summary-card__value--mono {
+    font-family: var(--ag-font-family-mono);
+}
+
+.ag-summary-card__action {
+    margin-top: var(--ag-space-1);
+}

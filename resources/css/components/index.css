@@ -25,6 +25,9 @@
 @import './apex-chart.css';
 @import './lote-card.css';
 @import './captura-rc-card.css';
+@import './summary-card.css';
+@import './progress-meter.css';
+@import './file-field.css';
 
 /* Organisms (quinta vuelta — layout de tres niveles) */
 @import './collapsible-menu-group.css';
@@ -35,6 +38,10 @@
 @import './topbar.css';
 @import './tabs.css';
 @import './mapa-operativo.css';
+
+/* Organisms (tarea 31 — arquetipo formulario) */
+@import './page-header.css';
+@import './form-actions-bar.css';
 
 /* Templates */
 @import './panel-layout.css';

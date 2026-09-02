@@ -229,18 +229,37 @@ return [
         'sin_uso' => 'Todavía sin uso',
     ],
 
-    // Mockup de "Registro de la compañía" (GET /panel/organizacion, vista previa de SaaS multi-tenant)
+    // Mockup de "Registro de la compañía" (GET /panel/organizacion, vista previa de SaaS
+    // multi-tenant) — reconstruida sobre el arquetipo formulario (tarea 31, ver
+    // docs/diseno/guia_pantalla_panel.md §6.3).
     'organizacion' => [
         'titulo' => 'Registro de la compañía',
-        'subtitulo' => 'Gestión centralizada de tu organización y configuración de suscripción. Esta es una vista previa — sin guardado funcional en esta versión.',
+        'subtitulo' => 'Gestión centralizada de tu organización y configuración de suscripción.',
+        'alerta_vista_previa' => 'Vista previa. Los cambios no se persisten todavía.',
+        'accion_descartar' => 'Descartar',
+        'estado_sin_cambios' => 'Sin cambios pendientes',
+
+        'tabs_aria' => 'Secciones de organización',
+        'tab_organizacion' => 'Organización',
+        'tab_usuarios_roles' => 'Usuarios y roles',
+        'tab_facturacion' => 'Facturación',
+        'tab_proximamente' => 'Próximamente.',
+
+        'campos_contador' => ':cantidad campos',
+
         'seccion_datos_empresa' => 'Datos de empresa',
         'campo_nombre' => 'Nombre de empresa',
         'campo_rubro' => 'Rubro',
         'campo_logo' => 'Logo de empresa',
+        'campo_logo_reemplazar' => 'Reemplazar',
+        'campo_logo_quitar' => 'Quitar',
+        'campo_logo_ayuda' => 'PNG o SVG, fondo transparente recomendado.',
+
         'seccion_contacto' => 'Datos de contacto',
         'campo_email' => 'Correo electrónico',
         'campo_telefono' => 'Teléfono',
         'campo_direccion' => 'Dirección',
+
         'seccion_plan' => 'Plan de suscripción',
         'plan_group_label' => 'Elige tu plan de suscripción',
         'plan_basico_nombre' => 'Básico',
@@ -263,13 +282,38 @@ return [
         'plan_enterprise_feat_5' => 'Personalización avanzada',
         'plan_destacado' => 'Más elegido',
         'plan_period' => '/mes',
+
         'seccion_funcionalidades' => 'Funcionalidades',
         'switch_multi_sucursal' => 'Habilitar multi-sucursal',
         'switch_multi_sucursal_help' => 'Permite gestionar múltiples sucursales desde una sola cuenta.',
-        'vista_previa_nota' => 'Mockup visual — sin guardado real en esta versión',
+
+        'aside_progreso_titulo' => 'Perfil completo',
+        'aside_progreso_resumen' => ':completos de :total campos',
+        'aside_progreso_item_nombre' => 'Nombre',
+        'aside_progreso_item_rubro' => 'Rubro',
+        'aside_progreso_item_logo' => 'Logo',
+        'aside_progreso_item_contacto' => 'Contacto',
+        'aside_progreso_item_domicilio_fiscal' => 'Domicilio fiscal',
+        'aside_progreso_item_datos_bancarios' => 'Datos bancarios',
+
+        'aside_suscripcion_titulo' => 'Suscripción',
+        'aside_suscripcion_plan' => 'Plan',
+        'aside_suscripcion_plan_valor' => 'Operación Pro',
+        'aside_suscripcion_estado' => 'Estado',
+        'aside_suscripcion_estado_valor' => 'Vigente',
+        'aside_suscripcion_renueva' => 'Renueva',
+        'aside_suscripcion_dispositivos' => 'Dispositivos',
+        'aside_suscripcion_accion' => 'Ver facturación',
+
+        'mock_nombre_empresa' => 'Agrocom SRL',
         'mock_rubro' => 'Fumigación aérea con drones',
-        'mock_logo_desc' => 'Logo de Agrocom SRL — transparente y listo para usar',
+        'mock_logo_nombre' => 'logo-agrocom-srl.png',
+        'mock_logo_peso' => '240 KB',
+        'mock_email' => 'contacto@agrocom.com.ar',
+        'mock_telefono' => '+54 9 3815 55-4433',
         'mock_direccion' => 'Av. Simonó 1150, San Miguel de Tucumán, Argentina',
+        'mock_renueva_fecha' => '01/10/2026',
+        'mock_dispositivos_valor' => '6 / 10',
     ],
 
 ];
