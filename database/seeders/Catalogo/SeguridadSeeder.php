@@ -69,6 +69,12 @@ class SeguridadSeeder extends Seeder
         // (`ope_actas.firmante`), no como actor `sec_user`.
         'operaciones.acta.generar' => 'Generar el acta de conformidad de un trabajo cerrado y validado',
         'operaciones.acta.firmar' => 'Registrar la firma del agrónomo sobre un acta pendiente',
+        // HU-19 (tarea 26): bandeja de alertas por excepción. Separados a
+        // propósito, mismo criterio que dispositivo.ver/.revocar: mirar la
+        // bandeja y marcar una alerta como resuelta no son la misma
+        // responsabilidad.
+        'operaciones.alerta.ver' => 'Ver la bandeja de alertas por excepción',
+        'operaciones.alerta.atender' => 'Marcar una alerta por excepción como atendida',
     ];
 
     /** @var list<string> Piloto: solo lo que ejecuta desde `agrocom-field` — HU-17, tarea 24. */
@@ -95,6 +101,12 @@ class SeguridadSeeder extends Seeder
         // HU-14: administra la operación diaria, así que también puede
         // destrabar la cola de validación — mismo criterio que trabajo.ver.
         'operaciones.sesion.validar',
+        // HU-19 (tarea 26): "Como encargado, quiero recibir solo alertas por
+        // excepción" — la bandeja es suya. jefe_campo no la recibe: la
+        // espec no le asigna esta responsabilidad (a diferencia de
+        // trabajo.ver/sesion.validar, que sí comparte).
+        'operaciones.alerta.ver',
+        'operaciones.alerta.atender',
     ];
 
     /**

@@ -57,45 +57,87 @@ exista el módulo `Mezclas`).
 | 19 | TE-07 (parte servidor) — endpoint de recepción de evidencias (`ope_evidencias`), idempotente, con hash SHA-256. Requisito previo de HU-08 y HU-09, que la referencian | `./bin/verify` = 0, con test de idempotencia y de tipo/hash inválido | `Operaciones/**` (decisión de módulo a cargo de la tarea), migración, tests | **sí** | 4 | **hecha** (PR #56, mergeado 1/9/2026) |
 | 20 | HU-07 — relevo de piloto y cambio de dron: `hectarea_inicial_acumulada`, catálogo mínimo de `dron`, trabajo `parcial`/`observado`, tolerancia de solape configurable | `./bin/verify` = 0, con test de suma de sesiones dentro y fuera de tolerancia | `Operaciones/**`, migraciones, `Sincronizacion/Aplicacion/**`, tests | **sí** | 5 | **hecha** (PR #57, mergeado 1/9/2026) |
 | 21 | HU-09 — cierre de lote: imagen del campo obligatoria para cerrar un trabajo, reutiliza `observado` de la tarea 20 | `./bin/verify` = 0, con test de rechazo sin evidencia y de cierre válido | `Operaciones/Contratos/CierreTrabajo.php`, `EscrituraSincronizacionEloquent`, tests | **sí** | 3 | **hecha** (PR #58, mergeado 2/9/2026; hallazgo informativo sin acción: la HU-09 completa —"captura del RC e imagen del campo"— queda cerrada solo en su mitad de imagen del campo, falta `sesiones.captura_rc_id` si se decide ampliar) |
-| 22 | HU-08 — incidencias con foto (caldo/ESC/batería/mecánica/clima), ligadas a la sesión, nuevo tipo de registro del motor de sync | `./bin/verify` = 0, con test de rechazo sin evidencia y de registro válido | `Operaciones/Contratos/**`, `Operaciones/Dominio/**`, `EscrituraSincronizacionEloquent`, `Sincronizacion/Aplicacion/**`, migración `ope_incidencias`, tests | **sí** | 3 | **verificada y APROBADA** (implementación y revisión crítica interna en verde, `runs/22.veredicto`); **PR #59 sigue en borrador esperando revisión humana** — ver `runs/revision-pendiente.txt` y la nota "El bug de la 24" más abajo |
+| 22 | HU-08 — incidencias con foto (caldo/ESC/batería/mecánica/clima), ligadas a la sesión, nuevo tipo de registro del motor de sync | `./bin/verify` = 0, con test de rechazo sin evidencia y de registro válido | `Operaciones/Contratos/**`, `Operaciones/Dominio/**`, `EscrituraSincronizacionEloquent`, `Sincronizacion/Aplicacion/**`, migración `ope_incidencias`, tests | **sí** | 3 | **verificada y APROBADA** (implementación y revisión crítica interna en verde, `runs/22.veredicto`); **PR #59 sigue en borrador esperando revisión humana** — ver `runs/revision-pendiente.txt` y "El bug de la 24" más abajo |
 | 23 | HU-13 — recargas del dron: batería, temperatura (alerta > 50 °C), litros de caldo por sesión, combustible del generador, motivo/hora de retraso por caldo | `./bin/verify` = 0, con test de alerta de temperatura y de recarga válida | `Operaciones/Contratos/**`, `EscrituraSincronizacionEloquent`, `Sincronizacion/Aplicacion/**`, migración `ope_recargas`, tests | **sí** | 4 | **hecha** (PR #61, mergeado 1/9/2026; su prompt tuvo que recuperarse a mano del historial de git a mitad de tarea — ver "El bug de la 24" abajo) |
-| 24 | HU-17 — acta por lote: PDF con hectáreas conformadas, firma del agrónomo referenciada como evidencia (`firma_acta`), máquina de estados `pendiente → firmada` | `./bin/verify` = 0, con test de guarda (no genera sobre trabajo abierto) y de firma válida | `Operaciones/**`, migración `ope_actas`, `sec_action`/permisos, pantalla mínima del panel, tests | **sí** | 5 | encolada (prompt recuperado el 2/9/2026 — se había perdido, ver "El bug de la 24" abajo) |
-| 25 | HU-18 — reporte técnico por lote: PDF automático al firmar el acta de la tarea 24 (imagen del campo, horas de inicio/fin, condiciones, litros de caldo/ha, incidencias con evidencia, detalle de sesiones con relevo/cambio de dron), sin contenido de mezcla/dosis (CR-01: no existe ese dato) | `./bin/verify` = 0, con test de generación automática al firmar el acta y de rechazo si el trabajo todavía no está conformado | `Operaciones/**`, migración `ope_reportes_tecnicos`, `sec_action`/permisos, pantalla mínima del panel, tests | no | 4 | encolada |
-| 26 | HU-19 — bandeja de alertas por excepción (batería caliente, dron sospechoso, condiciones forzadas, suma excedida/`observado`), recortada a lo que ya tiene datos reales — el resto de la lista de la espec depende de mezcla/anticipos/rendiciones, módulos que todavía no existen | `./bin/verify` = 0, con test de generación de cada alerta cubierta y de la transición `pendiente → atendida` | `Operaciones/**`, migración `ope_alertas`, `sec_action`/permisos, pantalla mínima del panel, tests | no | 4 | encolada |
+| 24 | HU-17 — acta por lote: PDF con hectáreas conformadas, firma del agrónomo referenciada como evidencia (`firma_acta`), máquina de estados `pendiente → firmada` | `./bin/verify` = 0, con test de guarda (no genera sobre trabajo abierto) y de firma válida | `Operaciones/**`, migración `ope_actas`, `sec_action`/permisos, pantalla mínima del panel, tests | **sí** | 5 | **verificada y APROBADA** (implementación y revisión crítica interna en verde, `runs/24.veredicto`, "APROBADO CON OBSERVACIONES"); **PR #62 sigue en borrador esperando revisión humana** — misma situación que la 22. Bloquea a la 25 (ver fila siguiente) |
+| 25 | HU-18 — reporte técnico por lote: PDF automático al firmar el acta de la tarea 24 (imagen del campo, horas de inicio/fin, condiciones, litros de caldo/ha, incidencias con evidencia, detalle de sesiones con relevo/cambio de dron), sin contenido de mezcla/dosis (CR-01: no existe ese dato) | `./bin/verify` = 0, con test de generación automática al firmar el acta y de rechazo si el trabajo todavía no está conformado | `Operaciones/**`, migración `ope_reportes_tecnicos`, `sec_action`/permisos, pantalla mínima del panel, tests | no | 4 | **BLOQUEADA** (`runs/25.md`) — no hay `Acta` en `develop` (el PR #62 de la tarea 24 sigue en borrador), y sin acta firmada no hay "conformado" sobre qué generar el reporte. Pregunta para el usuario: **¿corresponde sacar el PR #62 de borrador y mergearlo?** Ver la nota sobre la política de PRs críticos, abajo |
+| 26 | HU-19 — bandeja de alertas por excepción (batería caliente, dron sospechoso, condiciones forzadas, suma excedida/`observado`), recortada a lo que ya tiene datos reales — el resto de la lista de la espec depende de mezcla/anticipos/rendiciones, módulos que todavía no existen | `./bin/verify` = 0, con test de generación de cada alerta cubierta y de la transición `pendiente → atendida` | `Operaciones/**`, migración `ope_alertas`, `sec_action`/permisos, pantalla mínima del panel, tests | no | 4 | **hecha** (PR #63, abierto 2/9/2026 contra `develop`, auto-merge pendiente de CI en verde; no crítica, se revisa por diff y test en el PR, no antes de integrarse). Bandeja en `/panel/alertas`, no `/api/alertas` como nombraba el prompt: `routes/api.php` es exclusivo de las apps de campo por ADR 0008 — ver `runs/26.md` |
 
-### El bug de la 24 — por qué su prompt tuvo que recuperarse
+### El bug de la 24 — ya pasó dos veces, sigue sin arreglarse
 
 `bin/ciclo` (`preparar_rama()`) commitea el prompt de la tarea que arranca con
 `git add -- "${PLANIFICACION[@]}"`, un glob (`prompts/[0-9][0-9]-*.md`) que
 agarra **todo** lo que esté sin commitear en `prompts/`, no solo el archivo de
-la tarea que arranca. La planificación tras la tarea 21 escribió de una vez los
-prompts 22, 23 y 24 (regla de "escribí de a varias"), sin commitearlos (regla
-de "no commitees" — viajan como primer commit de la rama que los va a usar).
-Como los tres quedaron sin commitear a la vez, el glob los barrió juntos en el
-primer commit de la PRIMERA rama que arrancó (`feature/incidencias-sesion`,
-tarea 22, commit `f2db767`) — no solo el prompt 22.
+la tarea que arranca. Cada vez que una planificación escribe varios prompts de
+una sola vez (la regla de "escribí de a varias") sin commitearlos (la regla de
+"no commitees" — viajan como primer commit de la rama que los va a usar), el
+glob los barre juntos en el primer commit de la PRIMERA rama que arranca de
+las varias — no solo el prompt de esa tarea.
 
-La tarea 22 es crítica (motor de sync): su PR (#59) se abrió en borrador y
-sigue ahí, sin mergear a `develop`. Los prompts 23 y 24, atrapados en esa misma
-rama sin mergear, dejaron de estar disponibles en `develop` para las tareas
-siguientes. La tarea 23 lo notó sola: su etapa 1 falló (`SIN-ESTADO`, cero
-commits) porque no encontró `prompts/23-recargas-dron.md`; su etapa 2 lo
-recuperó a mano con `git show f2db767:prompts/23-recargas-dron.md` y lo dejó
-documentado en su propio commit. Nadie hizo lo mismo por la tarea 24 —no era su
-trabajo—, así que cuando el ciclo llegó a ella no encontró el prompt, y en vez
-de fallar en seco disparó una planificación nueva (esta). Se recuperó igual,
-con el mismo `git show`, en esta vuelta.
+**Primera vez:** la planificación tras la tarea 21 escribió los prompts 22, 23
+y 24 sin commitear. El glob los barrió juntos en el commit `f2db767` de
+`feature/incidencias-sesion` (tarea 22, crítica). Su PR (#59) quedó en
+borrador sin mergear, y con él, los prompts 23 y 24 dejaron de estar
+disponibles en `develop`. La tarea 23 lo notó sola (etapa 1 falló en seco,
+`SIN-ESTADO`) y se rescató con `git show f2db767:prompts/23-recargas-dron.md`.
+Nadie rescató la 24 —no era su trabajo— así que el ciclo, al no encontrar su
+prompt, disparó una planificación nueva en vez de fallar en seco.
 
-**Va a volver a pasar.** Esta misma vuelta escribe los prompts 24 (recuperado),
-25 y 26 sin commitear, y la 24 también es crítica — si su PR queda en borrador
-como el de la 22, los prompts 25 y 26 quedan atrapados con ella. La próxima
-planificación (o la implementación de la 25/26, si hace falta) sabe cómo
-rescatarlos: `git log --all --oneline -- prompts/NN-slug.md` encuentra el
-commit que los tiene, aunque esté en una rama sin mergear. La corrección de
-raíz —que `preparar_rama()` solo agregue `prompts/${id}-*.md`, no el glob
-completo— es un cambio de una línea en `bin/ciclo`, pero no es una HU del plan
-de sprints: no entra en esta cola, queda anotado acá para quien lo quiera
-arreglar directamente.
+**Segunda vez, inmediatamente después:** esa misma planificación (tras
+recuperar la 24) escribió los prompts 24 (recuperado), 25 y 26 sin commitear,
+sabiendo que iba a volver a pasar (quedó anotado en la versión anterior de
+esta sección). Pasó exactamente así: el glob los barrió juntos en el commit
+`99ffd2e` de `feature/acta-conformidad` (tarea 24, también crítica). Su PR
+(#62) también quedó en borrador sin mergear. La tarea 25 rescató su propio
+prompt (`git show 99ffd2e:prompts/25-reporte-tecnico.md`, commiteado como
+`3d036aa`) pero quedó `BLOQUEADA` de todos modos —no por falta de prompt, sino
+porque su contenido depende de que exista `Acta`, y `Acta` sigue sin llegar a
+`develop`—. El prompt 26 quedó atrapado en el mismo commit `99ffd2e` sin que
+nadie lo rescatara, hasta esta planificación.
+
+**El patrón que emerge**: el bug no solo pierde prompts (eso ya se sabe
+rescatar, `git log --all --oneline -- prompts/NN-slug.md` encuentra el commit
+aunque esté en una rama sin mergear); combinado con que las tareas 22 y 24
+—las dos primeras ramas que arrancaron después de escribir varios prompts a
+la vez— son ambas críticas y ninguna de sus dos PRs se mergeó, el bug
+**encadena bloqueos**: cada prompt perdido depende de que una rama crítica en
+borrador se mergee para volver a `develop`. La corrección de raíz —que
+`preparar_rama()` solo agregue `prompts/${id}-*.md`, no el glob completo— es
+un cambio de una línea en `bin/ciclo`. Ya lleva dos vueltas sin aplicarse
+porque no es una HU del plan de sprints y ninguna sesión de planificación
+implementa código. Alguien con acceso directo al repo debería aplicarlo antes
+de la próxima vez que la cola escriba 3 prompts seguidos — la próxima
+ocurrencia ya no tiene por qué ser inofensiva si la rama que se lleva los
+prompts ajenos termina `RECHAZADA` o se descarta.
+
+### La política de PRs críticos en borrador — contradicción sin resolver
+
+`CLAUDE.md` dice, explícitamente, que la revisión de lo crítico **es
+posterior a la integración, no previa**: el PR se mergea a `develop` y la
+revisión línea por línea se anota en `runs/revision-pendiente.txt` para
+hacerse después — y da como razón un incidente ya vivido (el PR #46 quedó en
+borrador y bloqueó doce HU hasta que el ciclo se quedó sin trabajo).
+`automatizacion_desarrollo.md` §5 documenta lo contrario como comportamiento
+querido: "las tareas críticas se implementan pero no se integran solas...
+su PR se abre en borrador, que es precisamente el caso que `auto-merge.yml`
+deja pasar de largo".
+
+En la práctica, de las once tareas críticas cerradas hasta ahora, nueve
+mergearon solas (09, 12, 13, 14, 16, 17, 18, 19, 20, 21 — el `runs/
+revision-pendiente.txt` las lista igual, revisión pendiente pero ya
+integradas) y dos quedaron trabadas en borrador sin mergear (22, 24) — ambas,
+no por casualidad, las dos primeras ramas que arrancaron justo después de que
+una planificación escribiera varios prompts de una sola vez (ver "El bug de
+la 24" arriba). No investigué por qué el mecanismo de auto-merge trató estas
+dos distinto de las otras nueve — puede ser simplemente que a estas dos
+todavía no las miró una persona para sacarlas de borrador a mano, mientras que
+las nueve anteriores sí. Sea cual sea la causa mecánica, hay dos documentos
+que dicen cosas opuestas sobre qué **debería** pasar, y eso es lo que hay que
+resolver — no algo que esta planificación pueda decidir sola. Quedó como la
+pregunta bloqueante de la tarea 25 (`runs/25.md`): si la respuesta es "sí,
+sacalo de borrador y mergealo" (que es lo que dice `CLAUDE.md`), probablemente
+haya que revisar también el PR #59 (tarea 22) con el mismo criterio, y ajustar
+`automatizacion_desarrollo.md` §5 para que deje de documentar lo contrario.
 
 ### Fuera del ciclo automático
 
@@ -142,9 +184,11 @@ pantallas de panel, tareas 14/15) → **HU-16** (devengo, tarea 16) → **HU-06*
 (condiciones de vuelo, tarea 17) → **HU-10** (recepción de caldo, tarea 18)
 → **TE-07 parte servidor** (evidencias, tarea 19) → **HU-07** (relevo de
 piloto, tarea 20) → **HU-09** (cierre de lote con evidencia, tarea 21) → **HU-08**
-(incidencias, tarea 22) → **HU-13** (recargas del dron, tarea 23) — las
-catorce ya cerradas. Sigue: **HU-17** (acta con firma, tarea 24) → **HU-18**
-(reporte técnico, tarea 25) → **HU-19** (alertas por excepción, tarea 26).
+(incidencias, tarea 22) → **HU-13** (recargas del dron, tarea 23) → **HU-17**
+(acta con firma, tarea 24) — las quince ya implementadas y verificadas
+(algunas mergeadas, otras en borrador esperando revisión, ver la tabla
+arriba). Sigue: **HU-18** (reporte técnico, tarea 25, **BLOQUEADA**) y
+**HU-19** (alertas por excepción, tarea 26, sin bloqueo).
 
 La regla que decide es la del punto 1 de
 [automatizacion_desarrollo.md](automatizacion_desarrollo.md): una tarea avanza
@@ -206,7 +250,10 @@ del turno desatendido a todo el frontend.
 `CLAUDE.md` que no se delega sin revisión línea por línea. Que el ciclo lo
 implemente y lo deje en un PR en borrador con su test de replay en verde es
 útil: el trabajo mecánico queda hecho y la revisión humana empieza sobre algo
-que ya pasa la cascada. Que se mergee solo, no.
+que ya pasa la cascada. Que se mergee solo, no. (Este PR en particular sí
+terminó mergeándose después de la revisión humana — ver fila 09. La
+contradicción entre este párrafo y lo que pasó con las tareas 22/24 está
+anotada en "La política de PRs críticos en borrador" más arriba.)
 
 **08 recorta el alcance de TE-06.** `plan_sprints.md` describe TE-06 como el
 pull de cinco catálogos (órdenes, recetas, productos, lotes, personas), pero
@@ -272,7 +319,22 @@ de la tarea 17, suma excedida/`observado` de la tarea 20): el resto de la lista
 —hectáreas incoherentes y desvío de mezcla (CR-01, no hay dosis que comparar),
 anticipo al límite y rendición pendiente (`anticipos`/`rendiciones` no
 existen)— queda para cuando esos dominios existan, mismo criterio que la
-sección "Condicionadas" de arriba. Ninguna de las tres (24/25/26) tiene una
-dependencia de código real entre sí que no sea la ya descrita, así que si una
-queda `BLOQUEADA` o `INCOMPLETA` no debería frenar a la siguiente — la próxima
-planificación lo confirma si pasa.
+sección "Condicionadas" de arriba.
+
+**Confirmado en esta vuelta: la 25 quedó `BLOQUEADA`, la 26 no.** Tal como
+anticipó la nota de arriba ("si una queda BLOQUEADA o INCOMPLETA no debería
+frenar a la siguiente"), la 25 se trabó exactamente por lo previsto (sin
+`Acta` en `develop`, no hay "conformado" sobre qué generar el reporte) y la 26
+no depende de ese mismo bloqueo — su prompt, perdido por la segunda vuelta del
+"bug de la 24", se recuperó sin cambios y sigue siendo la siguiente tarea
+válida. Esta planificación no escribió tareas nuevas más allá de la 26: su
+prompt ya estaba completo y bien pensado (escrito por la planificación
+anterior), así que corresponde usarlo tal cual en vez de reescribirlo —
+la próxima planificación (al cerrar la 26) retoma la cola desde cero, y ahí
+sí corresponde escribir 3 tareas nuevas de una sola vez. Con la 25 bloqueada y
+la 26 siendo la última fila de Sprint 5 que no depende de TE-08 (sigue sin
+datos de beta), esa próxima planificación va a tener que decidir entre volver
+sobre la 25 (si el usuario ya resolvió la pregunta bloqueante) o abrir Sprint 6
+— cuyas filas, adelanto, probablemente no califiquen ninguna todavía (ensayo
+en campo, producción, datos maestros reales), así que es razonable que esa
+vuelta termine cerca de `runs/DETENER` en vez de con tareas nuevas.

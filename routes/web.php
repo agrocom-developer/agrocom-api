@@ -1,6 +1,7 @@
 <?php
 
 use App\Dominios\Distribucion\Infraestructura\Http\Controllers\Web\VersionesApkController;
+use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\AlertasController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\TrabajosController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\ValidacionSesionesController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\DashboardController;
@@ -128,5 +129,16 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::post('/panel/sesiones/{sesion}/rechazar', [ValidacionSesionesController::class, 'rechazar'])
             ->name('panel.sesiones.validacion.rechazar');
+
+        // HU-19 (tarea 26): bandeja de alertas por excepción. Permiso
+        // `operaciones.alerta.ver` gatea la pantalla,
+        // `operaciones.alerta.atender` gatea la acción — ambos verificados
+        // DENTRO del controlador contra el ROL ACTIVO, mismo criterio que
+        // las rutas de arriba.
+        Route::get('/panel/alertas', [AlertasController::class, 'index'])
+            ->name('panel.alertas.index');
+
+        Route::post('/panel/alertas/{alerta}/atender', [AlertasController::class, 'atender'])
+            ->name('panel.alertas.atender');
     });
 });
