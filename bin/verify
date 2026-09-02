@@ -57,6 +57,14 @@ if [ -z "$FALLO" ] && [ "$CON_ASSETS" = "1" ]; then
     etapa "Compilación de assets (Vite, en el host)" npm run build || true
 fi
 
+# Regresión visual (Playwright, en el host — el contenedor `app` no trae Node
+# ni navegadores). Compuerta desconectada desde la tarea 07 hasta la 31: el
+# arnés (tests/Visual/) existía pero nadie lo corría. Snapshots `-darwin`:
+# fuera de CI a propósito, ver tests/Visual/organizacion.spec.ts.
+if [ -z "$FALLO" ] && [ "$CON_ASSETS" = "1" ]; then
+    etapa "Regresión visual (Playwright, en el host)" npx playwright test || true
+fi
+
 echo
 if [ -n "$FALLO" ]; then
     printf '\033[31m✗ La cascada falló en: %s\033[0m\n' "$FALLO"

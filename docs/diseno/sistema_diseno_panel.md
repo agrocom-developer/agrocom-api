@@ -117,7 +117,7 @@ Consecuencia de diseño explícita: **el relleno sólido de marca (botones) es c
 | Atom | `switch` | `resources/views/components/atoms/switch.blade.php` | Implementado (2026-08-28) |
 | Molecule | `stat-card` | `resources/views/components/molecules/stat-card.blade.php` | Implementado (2026-08-28) |
 | Molecule | `plan-card` | `resources/views/components/molecules/plan-card.blade.php` | Implementado (2026-08-28) |
-| Molecule | `form-section` | `resources/views/components/molecules/form-section.blade.php` | Implementado (2026-08-28) |
+| Molecule | `form-section` | `resources/views/components/molecules/form-section.blade.php` | Implementado (2026-08-28); **evolucionado** de `<fieldset>` desnudo a tarjeta con header `section-head` + grid de dos columnas (2/9/2026, tarea 31 — ver §14) |
 | Molecule | `role-card` | `resources/views/components/molecules/role-card.blade.php` | Implementado (2026-08-28, quinta vuelta) |
 | Molecule | `section-head` | `resources/views/components/molecules/section-head.blade.php` | Implementado (2026-08-28, sexta vuelta parte 2) |
 | Molecule | `donut-chart` | — | **Retirado** (28/8/2026, auditoría visual externa obs. #5/#6 — ver §10.5). Reemplazado por `distribution-bar`, mismo prop shape. |
@@ -132,6 +132,12 @@ Consecuencia de diseño explícita: **el relleno sólido de marca (botones) es c
 | Organism | `module-drawer` | `resources/views/components/organisms/module-drawer.blade.php` | Implementado (28/8/2026, quinta vuelta — offcanvas de módulos en móvil, §7.2). Faltaba en esta tabla; se agrega el 2/9/2026. |
 | Organism | `mobile-topbar` | `resources/views/components/organisms/mobile-topbar.blade.php` | Implementado (28/8/2026, quinta vuelta — header oscuro <768px, §7.2). Faltaba en esta tabla; se agrega el 2/9/2026. |
 | Template | `panel-shell` | `resources/views/components/templates/panel-shell.blade.php` | Implementado (28/8/2026, quinta vuelta — cáscara `<html>` compartida por todas las páginas del panel, con el tema persistido del usuario). Faltaba en esta tabla; se agrega el 2/9/2026. |
+| Organism | `page-header` | `resources/views/components/organisms/page-header.blade.php` | Implementado (2/9/2026, tarea 31 — arquetipo formulario, ver §14) |
+| Molecule | `tabs` | `resources/views/components/molecules/tabs.blade.php` | Implementado (2/9/2026, tarea 31 — el CSS ya existía desde el rediseño del dashboard, faltaba el componente) |
+| Organism | `form-actions-bar` | `resources/views/components/organisms/form-actions-bar.blade.php` | Implementado (2/9/2026, tarea 31) |
+| Molecule | `summary-card` | `resources/views/components/molecules/summary-card.blade.php` | Implementado (2/9/2026, tarea 31) |
+| Molecule | `progress-meter` | `resources/views/components/molecules/progress-meter.blade.php` | Implementado (2/9/2026, tarea 31) |
+| Molecule | `file-field` | `resources/views/components/molecules/file-field.blade.php` | Implementado (2/9/2026, tarea 31 — antes markup suelto en `organizacion.css`) |
 
 Por qué solo los átomos estaban implementados en el pase anterior: era el límite de alcance fijado para la primera entrega de HU-02 (tokens + piezas de más bajo nivel, sin lógica de negocio). Este pase (27/8/2026) implementa el resto del catálogo, a pedido explícito de HU-02 (el usuario vio un prototipo interactivo aparte y pidió la construcción real). Decisiones de composición que no estaban 100% cerradas en la especificación de §4 y se resolvieron acá:
 
@@ -1030,3 +1036,72 @@ Resto de la auditoría (ADR 0003, ADR 0009, ADR 0013, seguridad de los
 popups de Leaflet vía `createElement`/`textContent` — nunca `innerHTML`—,
 Atomic Design, CSS/i18n huérfanos, patrón de template) sin hallazgos.
 `pint`/`phpstan`/`pest` (159/159) pasan limpio tras las dos correcciones.
+
+## 14. Tarea 31 (2/9/2026) — el arquetipo formulario y la compuerta visual
+
+TE (sin HU propia): quedan 25 pantallas de Sprint 7 en adelante y el catálogo
+no tenía con qué construir un formulario — `form-section` era un `<fieldset>`
+sin chrome ni grid, y faltaban seis piezas más. Especificación completa en
+`docs/diseno/guia_pantalla_panel.md` §6.3/§7 (referencia de composición: el
+canvas de Claude Design "Registro de la compañía", estructura y medidas
+traducidas a tokens, nunca su paleta/fuentes propias).
+
+**Siete piezas del catálogo:**
+
+- **`form-section` evolucionado**: de `<fieldset>`+`<legend>` a tarjeta
+  (`--ag-color-surface-card`/`-border-card`/`--ag-radius-lg`) con
+  `section-head` como header y `grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr))`
+  para el cuerpo. Utilidad nueva `.ag-form-section__field--full`
+  (`grid-column: 1 / -1`) para el campo que necesita el ancho completo.
+- **`page-header`** (organism): h1 + bajada + slot `actions`. No migra
+  `ag-dash__header` del dashboard todavía (fuera de alcance de esta tarea).
+- **`tabs`** (molecule): extrae el nav que el dashboard ya armaba a mano con
+  `data-bs-toggle`; el CSS (`tabs.css`) no cambió, solo se agregó el
+  componente. El `tab-content`/`tab-pane` sigue siendo de cada página.
+- **`form-actions-bar`** (organism): barra pegajosa al pie (`position: sticky`,
+  no `absolute` — no repite el bug de §4.1) con estado de guardado en texto
+  y slot `actions`, mismas acciones que `page-header`.
+- **`summary-card`** / **`progress-meter`** (molecule): ambas componen
+  `section-head` como header — mismo criterio ya aceptado para
+  `form-section` (§6.3 lo pide explícito: "un header separado por borde que
+  es exactamente `molecules/section-head`"), aunque en sentido estricto
+  eso excede la regla general de §2 de la guía de pantalla ("molecule: sin
+  orquestar otras moléculas"). `progress-meter` recibe el porcentaje ya
+  calculado (nunca calcula una regla de negocio) y lo pasa a la barra por
+  una custom property (`--ag-progress-meter-percent`) — no es una medida de
+  diseño hardcodeada, es un dato en runtime, mismo criterio que
+  `distribution-bar`.
+- **`file-field`** (molecule): reemplaza el markup suelto que tenía
+  `organizacion.css` para el preview del logo (`.ag-organizacion__logo-preview*`,
+  retirado). Preview vía slot (no decide qué es: ícono, imagen, `atoms/logo`).
+
+**Bug de LSP encontrado al montar `organizacion`**: `atoms/input` NO fusiona
+`$attributes` en su `<div>` raíz (solo en el `<input>` interno) — pasarle
+`class="ag-form-section__field--full"` al componente no mueve esa clase al
+hijo directo del grid, que es el `<div class="ag-input">`. Se resolvió
+envolviendo ese campo puntual (`contacto_direccion`) en un `<div>` propio en
+la página en vez de tocar `atoms/input` (blast radius: ese átomo lo consume
+todo el panel; arreglarlo es una tarea aparte, no de esta TE). Los demás
+casos de ancho completo (`file-field`, el `radiogroup` de planes) sí
+fusionan `$attributes` en su raíz y no necesitaron el envoltorio.
+
+**`/panel/organizacion` reconstruida** sobre las siete piezas: layout de dos
+columnas (`ag-organizacion__main` flexible + `ag-organizacion__aside`
+pegajoso, `flex: 1 1 19rem; max-width: 20rem`, literal de §6.3 regla 4),
+tabs "Organización / Usuarios y roles / Facturación" (solo la primera tiene
+contenido — las otras dos son un placeholder de una línea, "Próximamente",
+no una pantalla nueva). `organizacion.css` quedó sin un solo `px`/hex
+inventado (antes: `max-width: 600px`, `60px` del preview, `minmax(250px, …)`)
+— lo que sobrevive son medidas en `rem` sueltas propias de esta página
+(igual criterio que `login-form`'s `max-width: 380px`, ya documentado en
+§3: los anchos de layout puntuales no se tokenizan) y los breakpoints
+`1199.98px`/`767.98px` de la escala.
+
+**La compuerta visual, conectada**: `tests/Visual/` existía desde la tarea
+07 (Playwright + specs de `login`/`seleccionar-rol`/`dashboard`) pero
+`bin/verify` no la corría — se agregó `tests/Visual/organizacion.spec.ts`
+(mismo patrón que los tres specs existentes: login real, `esperarFuentes`
+antes de capturar) y una tercera etapa a `bin/verify` (`npx playwright test`).
+Deliberadamente fuera de CI (`.github/workflows/` no se tocó): los
+snapshots son `-darwin`, y el runner Linux de CI daría falsos rojos por
+diferencia de plataforma, no por regresión real.
