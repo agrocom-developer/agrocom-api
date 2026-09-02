@@ -8,6 +8,7 @@ use App\Dominios\Operaciones\Contratos\CierreSesion;
 use App\Dominios\Operaciones\Contratos\CierreTrabajo;
 use App\Dominios\Operaciones\Contratos\EscrituraSincronizacion;
 use App\Dominios\Operaciones\Contratos\RegistroCondiciones;
+use App\Dominios\Operaciones\Contratos\RegistroRecepcionCaldo;
 use App\Dominios\Operaciones\Contratos\ResultadoSincronizacion;
 
 /**
@@ -30,13 +31,17 @@ use App\Dominios\Operaciones\Contratos\ResultadoSincronizacion;
 final class SincronizarLote
 {
     /**
-     * Orden causal fijo (espec §2.1, punto 3, extendido por las tareas 13 y
-     * 17): apertura antes que su propio cierre, y `condiciones` justo después
-     * de `sesion` —la referencia por `uuid_cliente`—, para el caso —raro pero
-     * posible— de que ambos lleguen en el mismo lote (un piloto que registra
-     * las condiciones al mismo tiempo que abre la sesión).
+     * Orden causal fijo (espec §2.1, punto 3, extendido por las tareas 13, 17
+     * y 18): apertura antes que su propio cierre, y `condiciones` justo
+     * después de `sesion` —la referencia por `uuid_cliente`—, para el caso
+     * —raro pero posible— de que ambos lleguen en el mismo lote (un piloto
+     * que registra las condiciones al mismo tiempo que abre la sesión).
+     * `recepcion_caldo` (tarea 18) solo depende de `trabajo` —no de
+     * `sesion`— así que va justo después: el cliente puede entregar el
+     * caldo en el mismo lote en que se abre el trabajo, antes de que exista
+     * ninguna sesión todavía.
      */
-    private const array ORDEN_CAUSAL = ['trabajo', 'sesion', 'condiciones', 'cierre_trabajo', 'cierre_sesion'];
+    private const array ORDEN_CAUSAL = ['trabajo', 'recepcion_caldo', 'sesion', 'condiciones', 'cierre_trabajo', 'cierre_sesion'];
 
     public function __construct(
         private readonly EscrituraSincronizacion $operaciones,
@@ -90,12 +95,29 @@ final class SincronizarLote
     {
         return match ($tipo) {
             'trabajo' => $this->aplicarTrabajo($registro),
+            'recepcion_caldo' => $this->aplicarRecepcionCaldo($registro),
             'sesion' => $this->aplicarSesion($registro, $operarioPersonaId),
             'condiciones' => $this->aplicarCondiciones($registro),
             'cierre_trabajo' => $this->aplicarCierreTrabajo($registro, $operarioPersonaId),
             'cierre_sesion' => $this->aplicarCierreSesion($registro, $operarioPersonaId),
             default => ResultadoSincronizacion::rechazado('tipo de registro desconocido o dato mal formado'),
         };
+    }
+
+    /**
+     * @param  array<string, mixed>  $registro
+     *
+     * Sin verificación de pertenencia (mismo criterio que
+     * `aplicarCondiciones()`): la espec no define una noción de "dueño" para
+     * este registro.
+     */
+    private function aplicarRecepcionCaldo(array $registro): ResultadoSincronizacion
+    {
+        $datos = RegistroRecepcionCaldo::intentarDesdeArreglo($registro);
+
+        return $datos === null
+            ? ResultadoSincronizacion::rechazado('recepción de caldo con datos incompletos o inválidos')
+            : $this->operaciones->registrarRecepcionCaldo($datos);
     }
 
     /** @param  array<string, mixed>  $registro */

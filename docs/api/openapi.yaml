@@ -929,7 +929,7 @@ components:
       type: object
     RegistroSync:
       title: 'Registro de entrada del lote de sync'
-      description: 'Un elemento del arreglo `registros`. La forma exacta de los campos depende de `tipo`; un registro con datos incompletos o inválidos se responde `rechazado` sin frenar el resto del lote — nunca un 422 para el lote completo. `cierre_trabajo`/`cierre_sesion` (HU-05) MUTAN una fila existente en vez de crear una nueva: `uuid_cliente` identifica el EVENTO de cierre — distinto del `uuid_cliente` de apertura del trabajo/sesión que referencian.'
+      description: 'Un elemento del arreglo `registros`. La forma exacta de los campos depende de `tipo`; un registro con datos incompletos o inválidos se responde `rechazado` sin frenar el resto del lote — nunca un 422 para el lote completo. `cierre_trabajo`/`cierre_sesion` (HU-05) MUTAN una fila existente en vez de crear una nueva: `uuid_cliente` identifica el EVENTO de cierre — distinto del `uuid_cliente` de apertura del trabajo/sesión que referencian. `recepcion_caldo` (HU-10 redefinida por CR-01, tarea 18) registra volumen de caldo entregado por el cliente — nunca su composición (espec §7.1: sin producto, dosis ni fórmula).'
       required:
         - tipo
         - uuid_cliente
@@ -940,6 +940,7 @@ components:
           example: trabajo
           enum:
             - trabajo
+            - recepcion_caldo
             - sesion
             - condiciones
             - cierre_trabajo
@@ -992,6 +993,32 @@ components:
           description: 'Requerido en `cierre_trabajo`/`cierre_sesion`.'
           type: string
           format: date-time
+          example: null
+          nullable: true
+        litros:
+          description: '`recepcion_caldo`: litros entregados por el cliente. DECIMAL como string (invariante 6).'
+          type: string
+          example: null
+          nullable: true
+        entregado_por:
+          description: '`recepcion_caldo`: quién, del lado del cliente, entregó el caldo (espec §7.2).'
+          type: string
+          example: null
+          nullable: true
+        hora:
+          description: '`recepcion_caldo`: cuándo se entregó.'
+          type: string
+          format: date-time
+          example: null
+          nullable: true
+        litros_consumidos:
+          description: '`cierre_sesion`, opcional: litros de caldo efectivamente rociados en la sesión (espec §7.2). DECIMAL como string.'
+          type: string
+          example: null
+          nullable: true
+        litros_sobrante:
+          description: '`cierre_trabajo`, opcional: litros que quedaron sin aplicar al cerrar el trabajo (espec §7.2). DECIMAL como string.'
+          type: string
           example: null
           nullable: true
         motivo_cierre:

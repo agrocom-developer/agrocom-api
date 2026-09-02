@@ -29,6 +29,13 @@ namespace App\Dominios\Operaciones\Contratos;
  * de cada sesión del trabajo. `EscrituraSincronizacionEloquent` recalcula la
  * suma tanto al cerrar cada sesión como al cerrar el propio trabajo (por si
  * el trabajo se cierra antes de que se cierren todas sus sesiones).
+ *
+ * `$litrosSobrante` (espec §7.2, HU-10 redefinida por CR-01, tarea 18): a
+ * diferencia de `hectareas_declaradas` de este mismo DTO, NO es un campo
+ * derivado — es "cuánto quedó sin aplicar al cerrar", una medición directa
+ * que nadie más puede calcular por el cliente. OPCIONAL igual que
+ * `CierreSesion::$litrosConsumidos` y por el mismo motivo: la espec no lo
+ * fija como condición de la transición `trabajo → cerrado`.
  */
 final readonly class CierreTrabajo
 {
@@ -36,6 +43,7 @@ final readonly class CierreTrabajo
         public string $uuidCliente,
         public string $trabajoUuidCliente,
         public string $fin,
+        public ?string $litrosSobrante,
     ) {}
 
     /** @param  array<string, mixed>  $datos */
@@ -44,6 +52,7 @@ final readonly class CierreTrabajo
         if (! self::esStringNoVacio($datos['uuid_cliente'] ?? null)
             || ! self::esStringNoVacio($datos['trabajo_uuid_cliente'] ?? null)
             || ! self::esStringNoVacio($datos['fin'] ?? null)
+            || ! self::esNumeroNoNegativoOAusente($datos['litros_sobrante'] ?? null)
         ) {
             return null;
         }
@@ -52,11 +61,26 @@ final readonly class CierreTrabajo
             uuidCliente: (string) $datos['uuid_cliente'],
             trabajoUuidCliente: (string) $datos['trabajo_uuid_cliente'],
             fin: (string) $datos['fin'],
+            litrosSobrante: isset($datos['litros_sobrante']) ? (string) $datos['litros_sobrante'] : null,
         );
     }
 
     private static function esStringNoVacio(mixed $valor): bool
     {
         return is_string($valor) && $valor !== '';
+    }
+
+    /** Forma de un `DECIMAL` no negativo (invariante 6), ausente cuenta como válido. */
+    private static function esNumeroNoNegativoOAusente(mixed $valor): bool
+    {
+        if ($valor === null) {
+            return true;
+        }
+
+        if (is_int($valor) || is_float($valor)) {
+            return $valor >= 0;
+        }
+
+        return is_string($valor) && $valor !== '' && is_numeric($valor) && (float) $valor >= 0;
     }
 }
