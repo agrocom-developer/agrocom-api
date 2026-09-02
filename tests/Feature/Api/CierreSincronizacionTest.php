@@ -4,6 +4,8 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Dominio\EstadoSesion;
 use App\Dominios\Operaciones\Dominio\EstadoTrabajo;
+use App\Dominios\Operaciones\Dominio\TipoEvidencia;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\Evidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
@@ -77,14 +79,36 @@ function registroSesionParaCierre(string $uuidCliente, string $trabajoUuidClient
     ];
 }
 
+/**
+ * Crea una evidencia `imagen_campo` (HU-09, tarea 21: "sin captura no
+ * cierra") y devuelve su `uuid_cliente`, listo para pasar a
+ * `registroCierreTrabajo()` — mismo criterio que `pilotoParaCierre()`, un
+ * helper que persiste el fixture que el registro de sync va a referenciar.
+ */
+function evidenciaImagenCampoParaCierre(string $sufijo): string
+{
+    $uuidCliente = "uuid-evidencia-{$sufijo}";
+
+    Evidencia::query()->create([
+        'uuid_cliente' => $uuidCliente,
+        'tipo' => TipoEvidencia::ImagenCampo,
+        'archivo_url' => "evidencias/imagen_campo/2026/09/{$uuidCliente}.jpg",
+        'hash' => hash('sha256', $uuidCliente),
+        'fecha' => '2026-09-01T09:00:00-04:00',
+    ]);
+
+    return $uuidCliente;
+}
+
 /** @return array<string, mixed> */
-function registroCierreTrabajo(string $uuidCliente, string $trabajoUuidCliente, string $fin = '2026-09-01T12:00:00-04:00'): array
+function registroCierreTrabajo(string $uuidCliente, string $trabajoUuidCliente, string $evidenciaImagenCampoUuidCliente, string $fin = '2026-09-01T12:00:00-04:00'): array
 {
     return [
         'tipo' => 'cierre_trabajo',
         'uuid_cliente' => $uuidCliente,
         'trabajo_uuid_cliente' => $trabajoUuidCliente,
         'fin' => $fin,
+        'evidencia_imagen_campo_uuid_cliente' => $evidenciaImagenCampoUuidCliente,
     ];
 }
 
@@ -113,7 +137,7 @@ it('cierra un trabajo abierto y lo deja cerrado, con fin seteado', function () {
     ]])->assertOk();
 
     $respuesta = $this->postJson('/api/sync', ['registros' => [
-        registroCierreTrabajo('uuid-cierre-t1', 'uuid-t1'),
+        registroCierreTrabajo('uuid-cierre-t1', 'uuid-t1', evidenciaImagenCampoParaCierre('t1')),
     ]])->assertOk();
 
     expect($respuesta->json('resultados.0'))->toBe([
@@ -191,7 +215,7 @@ it('un cierre_trabajo y un cierre_sesion pueden llegar en el mismo lote que su p
         registroTrabajoParaCierre('uuid-t3'),
         registroSesionParaCierre('uuid-s3', 'uuid-t3', $piloto->id),
         registroCierreSesion('uuid-cierre-s3', 'uuid-s3'),
-        registroCierreTrabajo('uuid-cierre-t3', 'uuid-t3'),
+        registroCierreTrabajo('uuid-cierre-t3', 'uuid-t3', evidenciaImagenCampoParaCierre('t3')),
     ]])->assertOk();
 
     foreach ($respuesta->json('resultados') as $resultado) {
@@ -213,7 +237,7 @@ it('reintentar el mismo cierre de trabajo responde duplicado sin romper ni recer
         registroSesionParaCierre('uuid-s4', 'uuid-t4', $piloto->id),
     ]])->assertOk();
 
-    $cierre = ['registros' => [registroCierreTrabajo('uuid-cierre-t4', 'uuid-t4')]];
+    $cierre = ['registros' => [registroCierreTrabajo('uuid-cierre-t4', 'uuid-t4', evidenciaImagenCampoParaCierre('t4'))]];
     $this->postJson('/api/sync', $cierre)->assertOk();
     $segunda = $this->postJson('/api/sync', $cierre)->assertOk();
 
@@ -245,7 +269,7 @@ it('el mismo lote de cierre aplicado 10 veces deja un estado final idéntico', f
 
     $cierre = ['registros' => [
         registroCierreSesion('uuid-cierre-s-replay', 'uuid-s-replay'),
-        registroCierreTrabajo('uuid-cierre-t-replay', 'uuid-t-replay'),
+        registroCierreTrabajo('uuid-cierre-t-replay', 'uuid-t-replay', evidenciaImagenCampoParaCierre('replay')),
     ]];
 
     foreach (range(1, 10) as $intento) {
@@ -274,10 +298,11 @@ it('cerrar un trabajo ya cerrado con un evento de cierre DISTINTO se rechaza', f
         registroTrabajoParaCierre('uuid-t6'),
         registroSesionParaCierre('uuid-s6', 'uuid-t6', $piloto->id),
     ]])->assertOk();
-    $this->postJson('/api/sync', ['registros' => [registroCierreTrabajo('uuid-cierre-t6-a', 'uuid-t6')]])->assertOk();
+    $evidencia = evidenciaImagenCampoParaCierre('t6');
+    $this->postJson('/api/sync', ['registros' => [registroCierreTrabajo('uuid-cierre-t6-a', 'uuid-t6', $evidencia)]])->assertOk();
 
     $respuesta = $this->postJson('/api/sync', ['registros' => [
-        registroCierreTrabajo('uuid-cierre-t6-b', 'uuid-t6', '2026-09-01T15:00:00-04:00'),
+        registroCierreTrabajo('uuid-cierre-t6-b', 'uuid-t6', $evidencia, '2026-09-01T15:00:00-04:00'),
     ]])->assertOk();
 
     expect($respuesta->json('resultados.0.estado'))->toBe('rechazado')
@@ -315,7 +340,7 @@ it('reabrir (mismo uuid_cliente de apertura) un trabajo ya cerrado responde dupl
         registroTrabajoParaCierre('uuid-t8'),
         registroSesionParaCierre('uuid-s8', 'uuid-t8', $piloto->id),
     ]])->assertOk();
-    $this->postJson('/api/sync', ['registros' => [registroCierreTrabajo('uuid-cierre-t8', 'uuid-t8')]])->assertOk();
+    $this->postJson('/api/sync', ['registros' => [registroCierreTrabajo('uuid-cierre-t8', 'uuid-t8', evidenciaImagenCampoParaCierre('t8'))]])->assertOk();
 
     $respuesta = $this->postJson('/api/sync', ['registros' => [registroTrabajoParaCierre('uuid-t8')]])->assertOk();
 
@@ -325,7 +350,7 @@ it('reabrir (mismo uuid_cliente de apertura) un trabajo ya cerrado responde dupl
 
 it('un cierre_trabajo que referencia un trabajo inexistente se rechaza sin romper el resto del lote', function () {
     $respuesta = $this->postJson('/api/sync', ['registros' => [
-        registroCierreTrabajo('uuid-cierre-fantasma', 'uuid-trabajo-que-no-existe'),
+        registroCierreTrabajo('uuid-cierre-fantasma', 'uuid-trabajo-que-no-existe', evidenciaImagenCampoParaCierre('fantasma')),
         registroTrabajoParaCierre('uuid-t9'),
     ]])->assertOk();
 
@@ -412,7 +437,7 @@ it('un trabajo cuyas sesiones son todas de otro operario no puede cerrarlo', fun
     $this->actingAs(SecUser::factory()->create(['persona_id' => $miPersona->id]), 'sanctum');
 
     $respuesta = $this->postJson('/api/sync', ['registros' => [
-        registroCierreTrabajo('uuid-cierre-t14', 'uuid-t14'),
+        registroCierreTrabajo('uuid-cierre-t14', 'uuid-t14', evidenciaImagenCampoParaCierre('t14')),
     ]])->assertOk();
 
     expect($respuesta->json('resultados.0.estado'))->toBe('rechazado')
@@ -430,7 +455,7 @@ it('un trabajo con una sesión propia del operario sí puede cerrarlo', function
     ]])->assertOk();
 
     $respuesta = $this->postJson('/api/sync', ['registros' => [
-        registroCierreTrabajo('uuid-cierre-t15', 'uuid-t15'),
+        registroCierreTrabajo('uuid-cierre-t15', 'uuid-t15', evidenciaImagenCampoParaCierre('t15')),
     ]])->assertOk();
 
     expect($respuesta->json('resultados.0.estado'))->toBe('aplicado');
@@ -443,7 +468,7 @@ it('un trabajo TODAVÍA sin sesiones puede cerrarlo cualquier operario legítimo
     $this->actingAs(SecUser::factory()->create(['persona_id' => $miPersona->id]), 'sanctum');
 
     $respuesta = $this->postJson('/api/sync', ['registros' => [
-        registroCierreTrabajo('uuid-cierre-t16', 'uuid-t16'),
+        registroCierreTrabajo('uuid-cierre-t16', 'uuid-t16', evidenciaImagenCampoParaCierre('t16')),
     ]])->assertOk();
 
     expect($respuesta->json('resultados.0.estado'))->toBe('aplicado');
