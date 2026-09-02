@@ -143,4 +143,43 @@ return [
         'rechazada' => 'Sesión rechazada: se registró la corrección con el motivo indicado.',
     ],
 
+    // Pantalla de panel "Reportes › Alertas" (HU-19, tarea 26): bandeja de
+    // alertas por excepción del encargado de operaciones.
+    'alertas' => [
+        'titulo' => 'Alertas por excepción',
+        'subtitulo' => 'Solo lo anómalo: batería caliente, dron sospechoso, condiciones forzadas y suma excedida.',
+        'vacio' => 'No hay alertas registradas todavía.',
+        'filtro_vacio' => 'Ninguna alerta coincide con estos filtros.',
+        'col_tipo' => 'Tipo',
+        'col_mensaje' => 'Detalle',
+        'col_trabajo' => 'Trabajo',
+        'col_estado' => 'Estado',
+        'col_fecha' => 'Generada',
+        'col_atendida' => 'Atendida',
+        'col_accion' => 'Acción',
+        'sin_trabajo' => '—',
+        'atender' => 'Marcar como atendida',
+        'atendida' => 'Alerta marcada como atendida.',
+        'atendida_por' => 'Atendida por persona #:id el :fecha',
+        'filtro_estado' => 'Estado',
+        'filtro_tipo' => 'Tipo',
+        'filtro_todos' => 'Todos',
+        'filtrar' => 'Filtrar',
+        'limpiar_filtros' => 'Limpiar filtros',
+        'paginacion_aria' => 'Paginación de alertas',
+        'paginacion_anterior' => 'Anterior',
+        'paginacion_siguiente' => 'Siguiente',
+        'paginacion_info' => 'Página :actual de :total',
+        'tipo' => [
+            'bateria_caliente' => 'Batería caliente',
+            'dron_sospechoso' => 'Dron sospechoso',
+            'condiciones_forzadas' => 'Condiciones forzadas',
+            'suma_excedida' => 'Suma excedida',
+        ],
+        'estado' => [
+            'pendiente' => 'Pendiente',
+            'atendida' => 'Atendida',
+        ],
+    ],
+
 ];
