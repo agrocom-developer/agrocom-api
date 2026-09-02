@@ -154,6 +154,20 @@
             @endif
         @endif
 
+        @if ($puedeVerReporte)
+            <x-molecules.section-head :title="__('operaciones.trabajos.detalle_reporte_titulo')" class="ag-trabajo-detalle__seccion" />
+
+            @if ($trabajo->reporteTecnico === null || $trabajo->reporteTecnico->pdf_path === null)
+                <x-molecules.alert-strip variant="info" icon="summarize" class="ag-trabajos__aviso">
+                    {{ __('operaciones.trabajos.detalle_reporte_vacio') }}
+                </x-molecules.alert-strip>
+            @else
+                <x-atoms.button href="{{ route('panel.trabajos.reporte-pdf', $trabajo) }}" variant="outline" size="sm" icon="picture_as_pdf">
+                    {{ __('operaciones.trabajos.reporte_descargar_pdf') }}
+                </x-atoms.button>
+            @endif
+        @endif
+
         <x-molecules.section-head :title="__('operaciones.trabajos.detalle_evidencias_titulo')" class="ag-trabajo-detalle__seccion" />
 
         <x-molecules.alert-strip variant="info" icon="photo_library" class="ag-trabajos__aviso">

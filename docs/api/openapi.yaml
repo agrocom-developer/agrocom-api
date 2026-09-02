@@ -391,6 +391,35 @@ paths:
       security:
         -
           tokenDispositivo: []
+  '/api/reportes/lote/{id}':
+    get:
+      tags:
+        - Operaciones
+      summary: 'Descarga el reporte técnico de un trabajo'
+      description: 'Descarga el reporte técnico de un trabajo, ya generado por la firma de su acta de conformidad (HU-17/HU-18) — nunca lo regenera. `404` si el trabajo no existe o todavía no tiene reporte (acta sin firmar).'
+      operationId: descargarReporteTecnico
+      parameters:
+        -
+          name: id
+          in: path
+          description: 'id del trabajo (`trabajo_id`).'
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: 'Contenido binario del PDF.'
+          content:
+            application/pdf: []
+        401:
+          description: 'Token ausente, revocado o ya sin rol válido.'
+        403:
+          description: 'El token no tiene el permiso operaciones.reporte.ver.'
+        404:
+          description: 'El trabajo no existe, o todavía no tiene reporte técnico generado.'
+      security:
+        -
+          tokenDispositivo: []
   /api/dispositivos:
     get:
       tags:
@@ -1409,7 +1438,7 @@ tags:
     description: 'Versionado y distribución del APK de agrocom-field (HU-20).'
   -
     name: Operaciones
-    description: 'Órdenes de aplicación y, más adelante, trabajos y sesiones de vuelo (espec §5).'
+    description: 'Trabajos, sesiones, condiciones, recepción de caldo, evidencias, actas y reportes técnicos.'
   -
     name: Seguridad
     description: 'Sesión de la app de campo por token de dispositivo (espec §4.6, HU-03).'
