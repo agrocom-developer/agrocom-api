@@ -15,6 +15,13 @@ namespace App\Dominios\Operaciones\Contratos;
  * `intentarDesdeArreglo()` construye, devuelve `null` en vez de lanzar ante
  * un dato faltante o mal tipado — el registro se rechaza sin frenar el resto
  * del lote.
+ *
+ * `$dronId`/`$hectareaInicialAcumulada` (HU-07, tarea 20): ambos OPCIONALES,
+ * mismo patrón que `$auxiliarId`/`$hectareasDeclaradas` — un `null`/ausente
+ * no rechaza el registro. Ver docblock de la migración
+ * `2026_09_01_100014_add_dron_y_hectarea_inicial_a_ope_sesiones_table.php`
+ * y runs/20.md para el porqué de dejarlos opcionales en vez de obligatorios
+ * como `$pilotoId`.
  */
 final readonly class AperturaSesion
 {
@@ -24,7 +31,9 @@ final readonly class AperturaSesion
         public int $secuencia,
         public int $pilotoId,
         public ?int $auxiliarId,
+        public ?int $dronId,
         public string $hectareasDeclaradas,
+        public ?string $hectareaInicialAcumulada,
         public string $inicio,
         public ?string $fin,
     ) {}
@@ -37,7 +46,9 @@ final readonly class AperturaSesion
             || ! self::esEntero($datos['secuencia'] ?? null)
             || ! self::esEntero($datos['piloto_id'] ?? null)
             || ! self::esEnteroOAusente($datos['auxiliar_id'] ?? null)
+            || ! self::esEnteroOAusente($datos['dron_id'] ?? null)
             || ! self::esNumeroNoNegativoOAusente($datos['hectareas_declaradas'] ?? null)
+            || ! self::esNumeroNoNegativoOAusente($datos['hectarea_inicial_acumulada'] ?? null)
             || ! self::esStringNoVacio($datos['inicio'] ?? null)
             || ! self::esStringOAusente($datos['fin'] ?? null)
         ) {
@@ -50,7 +61,9 @@ final readonly class AperturaSesion
             secuencia: (int) $datos['secuencia'],
             pilotoId: (int) $datos['piloto_id'],
             auxiliarId: isset($datos['auxiliar_id']) ? (int) $datos['auxiliar_id'] : null,
+            dronId: isset($datos['dron_id']) ? (int) $datos['dron_id'] : null,
             hectareasDeclaradas: isset($datos['hectareas_declaradas']) ? (string) $datos['hectareas_declaradas'] : '0',
+            hectareaInicialAcumulada: isset($datos['hectarea_inicial_acumulada']) ? (string) $datos['hectarea_inicial_acumulada'] : null,
             inicio: (string) $datos['inicio'],
             fin: isset($datos['fin']) ? (string) $datos['fin'] : null,
         );

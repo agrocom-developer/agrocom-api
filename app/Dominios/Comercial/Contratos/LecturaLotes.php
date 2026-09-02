@@ -20,4 +20,12 @@ interface LecturaLotes
      * @return list<LoteCatalogo>
      */
     public function listarModificadosDesde(?string $cursorActualizadoEn, ?int $cursorId, int $limite): array;
+
+    /**
+     * Un lote puntual por id (HU-07, tarea 20: `Operaciones` necesita las
+     * hectáreas del lote para calcular la cobertura de un trabajo —
+     * `Aplicacion/CalcularCoberturaTrabajo.php`). `null` si no existe o está
+     * borrado (soft delete).
+     */
+    public function obtenerPorId(int $id): ?LoteCatalogo;
 }

@@ -37,15 +37,27 @@ final class LecturaLotesEloquent implements LecturaLotes
             ->orderBy('id')
             ->limit($limite)
             ->get()
-            ->map(fn (Lote $lote): LoteCatalogo => new LoteCatalogo(
-                id: $lote->id,
-                campoId: $lote->campo_id,
-                codigo: $lote->codigo,
-                hectareas: $lote->hectareas,
-                geometria: $lote->geometria,
-                restricciones: $lote->restricciones,
-                updatedAt: $lote->updated_at->toIso8601String(),
-            ))
+            ->map(fn (Lote $lote): LoteCatalogo => self::aCatalogo($lote))
             ->all();
+    }
+
+    public function obtenerPorId(int $id): ?LoteCatalogo
+    {
+        $lote = Lote::query()->find($id);
+
+        return $lote === null ? null : self::aCatalogo($lote);
+    }
+
+    private static function aCatalogo(Lote $lote): LoteCatalogo
+    {
+        return new LoteCatalogo(
+            id: $lote->id,
+            campoId: $lote->campo_id,
+            codigo: $lote->codigo,
+            hectareas: $lote->hectareas,
+            geometria: $lote->geometria,
+            restricciones: $lote->restricciones,
+            updatedAt: $lote->updated_at->toIso8601String(),
+        );
     }
 }

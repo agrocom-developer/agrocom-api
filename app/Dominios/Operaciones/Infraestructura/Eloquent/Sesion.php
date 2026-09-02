@@ -46,13 +46,24 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * CLAUDE.md prohíbe sobrescribir lo ya registrado, así que un rechazo nunca
  * pisa `estado`/`motivo_cierre`/`hectareas_declaradas`/etc. de esta fila.
  *
+ * `dron_id`/`hectarea_inicial_acumulada` (HU-07, tarea 20): relevo de piloto
+ * y cambio de dron. `dron_id` referencia `ope_drones` (catálogo mínimo,
+ * mismo módulo — ver `Dron`) por FK + entero plano, NULLABLE (a diferencia
+ * de `piloto_id`, ver runs/20.md). `hectarea_inicial_acumulada`: el
+ * acumulado de DJI al momento de abrir esta sesión (control de doble
+ * conteo, espec §5) — dato de trazabilidad; el servidor no recalcula
+ * `hectareas_declaradas` a partir de él, esa diferencia ya la trae calculada
+ * el dispositivo en `CierreSesion::$hectareasDeclaradas`.
+ *
  * @property int $id
  * @property string $uuid_cliente
  * @property int $trabajo_id
  * @property int $secuencia
  * @property int $piloto_id
  * @property int|null $auxiliar_id
+ * @property int|null $dron_id
  * @property string $hectareas_declaradas
+ * @property string|null $hectarea_inicial_acumulada
  * @property EstadoSesion $estado
  * @property CarbonImmutable $inicio
  * @property CarbonImmutable|null $fin
@@ -77,7 +88,9 @@ class Sesion extends ModeloDominio
         'secuencia',
         'piloto_id',
         'auxiliar_id',
+        'dron_id',
         'hectareas_declaradas',
+        'hectarea_inicial_acumulada',
         'estado',
         'inicio',
         'fin',
@@ -95,6 +108,7 @@ class Sesion extends ModeloDominio
         return [
             'secuencia' => 'integer',
             'hectareas_declaradas' => 'decimal:2',
+            'hectarea_inicial_acumulada' => 'decimal:2',
             'estado' => EstadoSesion::class,
             'inicio' => 'immutable_datetime',
             'fin' => 'immutable_datetime',
