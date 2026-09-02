@@ -154,12 +154,26 @@ Tres cosas que hacen que el bucle no sea un lazo suelto:
   convenció de que está bien. La verificación corre en sesión aparte y con
   `AGROCOM_TURNO_NOCHE=1`, así que no puede "arreglar" el test que la evalúa.
   Si rechaza, hay hasta dos vueltas de corrección antes de rendirse.
-- **Las tareas críticas se implementan pero no se integran solas.** Lo que está
-  en la lista de "qué no delegar sin revisión línea por línea" de `CLAUDE.md`
-  se marca `critica=si` en el prompt: su PR se abre **en borrador**, que es
-  precisamente el caso que `auto-merge.yml` deja pasar de largo. El trabajo
-  mecánico queda hecho y la revisión humana empieza sobre algo que ya pasa la
-  cascada.
+- **Las tareas críticas se integran como cualquier otra, y se revisan después.**
+  Lo que está en la lista de "qué no delegar sin revisión línea por línea" de
+  `CLAUDE.md` se marca `critica=si` en el prompt. Eso hace dos cosas: le pone
+  la sesión de verificación independiente (las no críticas ya no la pagan) y
+  anota el PR en `runs/revision-pendiente.txt`, que es la lista que una persona
+  revisa **sobre `develop`**, con el cambio ya adentro.
+
+  **Ninguna sesión abre su PR en borrador por ser crítica.** Retenerlos fue la
+  política hasta el 1/9/2026 y salió cara: el PR #46 (motor de sync) quedó
+  esperando revisión y, como toda rama nueva sale de `develop`, bloqueó doce HU
+  de los sprints 2 a 5 hasta que el ciclo se quedó sin trabajo y se detuvo solo.
+  Un cambio crítico sin revisar es un riesgo acotado y visible; una rama que no
+  entra bloquea todo lo que viene detrás.
+
+  Este párrafo decía lo contrario hasta el 2/9/2026, y las sesiones de
+  implementación lo leyeron y abrieron sus PR en borrador por su cuenta —
+  `fase_pr` los encontraba ya creados y no los tocaba. Así quedaron retenidos
+  los PR #59 (HU-08) y #62 (HU-17) en el turno de esa noche, y con ellos la
+  tarea 25, que esperaba el acta. Si cambiás la política del borrador, cambiala
+  también acá: `bin/ciclo` y `CLAUDE.md` no alcanzan.
 - **El estado no vive en la conversación.** Vive en git y en `runs/`. Por eso
   el ciclo se puede matar en cualquier punto y retomar leyendo un archivo — que
   es exactamente lo que faltó la primera vez que se cerró la ventana en medio
