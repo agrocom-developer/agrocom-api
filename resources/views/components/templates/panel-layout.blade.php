@@ -69,10 +69,41 @@
         return \Illuminate\Support\Facades\Route::has($ruta) ? route($ruta) : $ruta;
     };
 
+    // Un ítem de sec_menu solo registra la ruta de SU LISTADO ("panel.clientes.index"),
+    // nunca la de sus sub-pantallas (crear/editar/show/...) — sembrarlas todas
+    // sería repetir el árbol por cada acción. Sin esto, cualquier pantalla que
+    // no sea literalmente ese listado (p. ej. `panel.clientes.create`) no
+    // igualaba ninguna ruta de sec_menu y el riel caía al primer módulo de la
+    // lista por descarte — "Operación" quedaba resaltado por casualidad de
+    // posición, no porque la pantalla fuera suya (bug real: tarea 33, HU-22,
+    // se veía "Operación" al crear un Cliente). Un ítem "panel.<recurso>.<accion>"
+    // (3+ segmentos) también se considera activo si la ruta actual comparte
+    // el prefijo "panel.<recurso>." — "panel.dashboard" (2 segmentos, sin
+    // sub-pantallas) sigue exigiendo match exacto.
+    $itemEsActivo = function (?string $ruta) use ($rutaActual): bool {
+        if ($ruta === null || $rutaActual === null) {
+            return false;
+        }
+
+        if ($ruta === $rutaActual) {
+            return true;
+        }
+
+        $segmentos = explode('.', $ruta);
+
+        if (count($segmentos) < 3) {
+            return false;
+        }
+
+        $prefijo = implode('.', array_slice($segmentos, 0, -1));
+
+        return str_starts_with($rutaActual, "{$prefijo}.");
+    };
+
     // Normalización: módulos (raíces) con sus ítems, href resuelto, activo
     // por comparación con la ruta actual, badge de demo por clave de label.
-    $modulos = collect($menu)->map(function ($mod) use ($rutaActual, $resolverHref, $menuBadges) {
-        $items = collect(data_get($mod, 'hijos', []))->map(function ($item) use ($rutaActual, $resolverHref, $menuBadges) {
+    $modulos = collect($menu)->map(function ($mod) use ($itemEsActivo, $resolverHref, $menuBadges) {
+        $items = collect(data_get($mod, 'hijos', []))->map(function ($item) use ($itemEsActivo, $resolverHref, $menuBadges) {
             $ruta = data_get($item, 'ruta');
             $label = data_get($item, 'label');
 
@@ -80,7 +111,7 @@
                 'label' => $label,
                 'icono' => data_get($item, 'icono'),
                 'href' => $resolverHref($ruta),
-                'active' => $ruta !== null && $ruta === $rutaActual,
+                'active' => $itemEsActivo($ruta),
                 // OJO: acceso directo al array, NUNCA data_get() acá — $label
                 // ya es en sí mismo la clave completa (p. ej.
                 // "menu.operacion.items.programacion") y data_get()
