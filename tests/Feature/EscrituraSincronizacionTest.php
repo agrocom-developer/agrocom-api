@@ -11,12 +11,14 @@ use App\Dominios\Operaciones\Contratos\CierreSesion;
 use App\Dominios\Operaciones\Contratos\CierreTrabajo;
 use App\Dominios\Operaciones\Contratos\EscrituraSincronizacion;
 use App\Dominios\Operaciones\Contratos\RegistroCondiciones;
+use App\Dominios\Operaciones\Contratos\RegistroRecarga;
 use App\Dominios\Operaciones\Contratos\RegistroRecepcionCaldo;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Dominio\TipoEvidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Condiciones;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Evidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\Recarga;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\RecepcionCaldo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
@@ -889,4 +891,154 @@ test('Trabajo::cuadreCaldo marca cuadra en false cuando recibido no coincide con
         ->and($cuadre['consumido'])->toBe('0.00')
         ->and($cuadre['sobrante'])->toBe('15.00')
         ->and($cuadre['cuadra'])->toBeFalse();
+});
+
+/*
+ * HU-13, tarea 23: recargas del dron (batería, temperatura, litros y motivo
+ * de retraso por caldo). DTO y caso de uso (`registrarRecarga()`), sin pasar
+ * por HTTP — eso lo cubre `tests/Feature/Api/RecargaSincronizacionTest.php`.
+ */
+
+/** Abre trabajo + sesión vía el propio contrato, para referenciar por `uuid_cliente` en los tests de abajo. */
+function sesionAbiertaParaRecarga(string $id): Sesion
+{
+    $orden = ordenVigenteParaEscritura();
+    $piloto = pilotoParaEscritura();
+    $contrato = app(EscrituraSincronizacion::class);
+
+    $contrato->abrirTrabajo(AperturaTrabajo::intentarDesdeArreglo([
+        'uuid_cliente' => "uuid-trabajo-recarga-{$id}",
+        'orden_id' => $orden->id,
+        'lote_id' => $orden->lote_id,
+        'nro_aplicacion' => 1,
+        'inicio' => '2026-09-01T10:00:00-04:00',
+    ]));
+
+    $contrato->abrirSesion(AperturaSesion::intentarDesdeArreglo([
+        'uuid_cliente' => "uuid-sesion-recarga-{$id}",
+        'trabajo_uuid_cliente' => "uuid-trabajo-recarga-{$id}",
+        'secuencia' => 1,
+        'piloto_id' => $piloto->id,
+        'inicio' => '2026-09-01T10:05:00-04:00',
+    ]));
+
+    return Sesion::query()->where('uuid_cliente', "uuid-sesion-recarga-{$id}")->firstOrFail();
+}
+
+/** @return array<string, mixed> */
+function registroRecargaArreglo(array $sobrescribir = []): array
+{
+    return array_merge([
+        'uuid_cliente' => 'uuid-recarga-default',
+        'sesion_uuid_cliente' => 'uuid-sesion-recarga-default',
+        'secuencia' => 1,
+        'litros_caldo' => '30.00',
+        'bateria_saliente_id' => 'BAT-01',
+        'temperatura_bateria_c' => '35.00',
+        'hora' => '2026-09-01T10:15:00-04:00',
+    ], $sobrescribir);
+}
+
+test('RegistroRecarga::intentarDesdeArreglo devuelve null ante un campo requerido faltante', function () {
+    expect(RegistroRecarga::intentarDesdeArreglo([
+        'uuid_cliente' => 'uuid-incompleto',
+        'sesion_uuid_cliente' => 'uuid-sesion',
+        // falta secuencia, litros_caldo, bateria_saliente_id, temperatura_bateria_c, hora
+    ]))->toBeNull();
+});
+
+test('RegistroRecarga::intentarDesdeArreglo devuelve null con litros_caldo negativo', function () {
+    expect(RegistroRecarga::intentarDesdeArreglo(registroRecargaArreglo(['litros_caldo' => '-5'])))->toBeNull();
+});
+
+test('RegistroRecarga::intentarDesdeArreglo devuelve null con secuencia no entera', function () {
+    expect(RegistroRecarga::intentarDesdeArreglo(registroRecargaArreglo(['secuencia' => 'no-numerico'])))->toBeNull();
+});
+
+test('RegistroRecarga::intentarDesdeArreglo devuelve null con temperatura_bateria_c no numérica', function () {
+    expect(RegistroRecarga::intentarDesdeArreglo(registroRecargaArreglo(['temperatura_bateria_c' => ['no', 'numerico']])))->toBeNull();
+});
+
+test('RegistroRecarga::intentarDesdeArreglo acepta temperatura_bateria_c negativa (mismo criterio que RegistroCondiciones::$temperaturaC)', function () {
+    $datos = RegistroRecarga::intentarDesdeArreglo(registroRecargaArreglo(['temperatura_bateria_c' => '-2.50']));
+
+    expect($datos)->not->toBeNull()
+        ->and($datos->temperaturaBateriaC)->toBe('-2.50')
+        ->and($datos->alertaTemperatura())->toBeFalse();
+});
+
+test('RegistroRecarga::intentarDesdeArreglo devuelve null con motivo_retraso_caldo fuera de catálogo', function () {
+    expect(RegistroRecarga::intentarDesdeArreglo(registroRecargaArreglo(['motivo_retraso_caldo' => 'ninguno'])))->toBeNull();
+});
+
+test('RegistroRecarga::intentarDesdeArreglo con motivo_retraso_caldo ausente deja el campo en null', function () {
+    $datos = RegistroRecarga::intentarDesdeArreglo(registroRecargaArreglo());
+
+    expect($datos)->not->toBeNull()
+        ->and($datos->motivoRetrasoCaldo)->toBeNull()
+        ->and($datos->horaRetraso)->toBeNull()
+        ->and($datos->litrosCombustibleGenerador)->toBeNull();
+});
+
+test('RegistroRecarga::alertaTemperatura es false justo en el límite (50.00) y true apenas por encima', function () {
+    $enElLimite = RegistroRecarga::intentarDesdeArreglo(registroRecargaArreglo(['temperatura_bateria_c' => '50.00']));
+    $porEncima = RegistroRecarga::intentarDesdeArreglo(registroRecargaArreglo(['temperatura_bateria_c' => '50.01']));
+
+    expect($enElLimite->alertaTemperatura())->toBeFalse()
+        ->and($porEncima->alertaTemperatura())->toBeTrue();
+});
+
+test('registrarRecarga con datos válidos aplica y persiste los campos contra la sesión correcta', function () {
+    $sesion = sesionAbiertaParaRecarga('a');
+    $contrato = app(EscrituraSincronizacion::class);
+
+    $datos = RegistroRecarga::intentarDesdeArreglo(registroRecargaArreglo([
+        'uuid_cliente' => 'uuid-recarga-a',
+        'sesion_uuid_cliente' => $sesion->uuid_cliente,
+        'litros_combustible_generador' => '4.00',
+    ]));
+
+    $resultado = $contrato->registrarRecarga($datos);
+
+    expect($resultado->estado)->toBe('aplicado');
+
+    $recarga = Recarga::query()->where('uuid_cliente', 'uuid-recarga-a')->firstOrFail();
+    expect($recarga->sesion_id)->toBe($sesion->id)
+        ->and($recarga->litros_caldo)->toBe('30.00')
+        ->and($recarga->bateria_saliente_id)->toBe('BAT-01')
+        ->and($recarga->litros_combustible_generador)->toBe('4.00')
+        ->and($recarga->alerta_temperatura)->toBeFalse();
+});
+
+test('registrarRecarga con el mismo uuid_cliente responde duplicado sin crear una fila nueva', function () {
+    $sesion = sesionAbiertaParaRecarga('b');
+    $contrato = app(EscrituraSincronizacion::class);
+
+    $datos = RegistroRecarga::intentarDesdeArreglo(registroRecargaArreglo([
+        'uuid_cliente' => 'uuid-recarga-b',
+        'sesion_uuid_cliente' => $sesion->uuid_cliente,
+    ]));
+
+    expect($contrato->registrarRecarga($datos)->estado)->toBe('aplicado');
+
+    $resultado = $contrato->registrarRecarga($datos);
+
+    expect($resultado->estado)->toBe('duplicado')
+        ->and(Recarga::query()->where('uuid_cliente', 'uuid-recarga-b')->count())->toBe(1);
+});
+
+test('registrarRecarga con una sesion_uuid_cliente que no existe se rechaza sin romper nada', function () {
+    $contrato = app(EscrituraSincronizacion::class);
+
+    $datos = RegistroRecarga::intentarDesdeArreglo(registroRecargaArreglo([
+        'uuid_cliente' => 'uuid-recarga-huerfana',
+        'sesion_uuid_cliente' => 'uuid-sesion-que-no-existe',
+    ]));
+
+    $resultado = $contrato->registrarRecarga($datos);
+
+    expect($resultado->estado)->toBe('rechazado')
+        ->and($resultado->motivo)->not->toBeNull();
+
+    expect(Recarga::query()->where('uuid_cliente', 'uuid-recarga-huerfana')->exists())->toBeFalse();
 });
