@@ -15,7 +15,19 @@
     font-family: var(--ag-font-family-base);
 }
 
+/* `position: relative` NO es decorativo: es la mitad que le faltaba a la
+   técnica visually-hidden de `.ag-switch__input`. Sin un ancestro
+   posicionado, el bloque contenedor de ese `position: absolute` es el
+   bloque contenedor inicial (el viewport), no esta etiqueta — y entonces
+   el `overflow` de `.ag-panel__content` NO lo recorta: el input queda
+   colgado a la altura que le tocaba en el flujo, estira
+   `documentElement.scrollHeight` y hace scrollear la VENTANA por encima
+   del layout de altura fija (`.ag-panel`, 100dvh). Efecto visible: en
+   /panel/organizacion el panel entero se iba hacia arriba y quedaba media
+   pantalla en blanco (886px de desborde con viewport de 900). Mismo par
+   que ya aplica `.ag-plan-card` con `.ag-plan-card__input`. */
 .ag-switch__control {
+    position: relative;
     display: inline-flex;
     align-items: center;
     gap: var(--ag-space-3);
