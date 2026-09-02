@@ -1005,7 +1005,7 @@ components:
       type: object
     RegistroSync:
       title: 'Registro de entrada del lote de sync'
-      description: 'Un elemento del arreglo `registros`. La forma exacta de los campos depende de `tipo`; un registro con datos incompletos o inválidos se responde `rechazado` sin frenar el resto del lote — nunca un 422 para el lote completo. `cierre_trabajo`/`cierre_sesion` (HU-05) MUTAN una fila existente en vez de crear una nueva: `uuid_cliente` identifica el EVENTO de cierre — distinto del `uuid_cliente` de apertura del trabajo/sesión que referencian. `recepcion_caldo` (HU-10 redefinida por CR-01, tarea 18) registra volumen de caldo entregado por el cliente — nunca su composición (espec §7.1: sin producto, dosis ni fórmula).'
+      description: 'Un elemento del arreglo `registros`. La forma exacta de los campos depende de `tipo`; un registro con datos incompletos o inválidos se responde `rechazado` sin frenar el resto del lote — nunca un 422 para el lote completo. `cierre_trabajo`/`cierre_sesion` (HU-05) MUTAN una fila existente en vez de crear una nueva: `uuid_cliente` identifica el EVENTO de cierre — distinto del `uuid_cliente` de apertura del trabajo/sesión que referencian. `recepcion_caldo` (HU-10 redefinida por CR-01, tarea 18) registra volumen de caldo entregado por el cliente — nunca su composición (espec §7.1: sin producto, dosis ni fórmula). `incidencia` (HU-08, tarea 22) registra un evento puntual de la sesión (caldo/ESC/batería/mecánica/clima/otro) con foto SIEMPRE obligatoria, referenciada por `uuid_cliente` a una evidencia ya subida por `POST /api/evidencias` con `tipo: foto_incidencia`.'
       required:
         - tipo
         - uuid_cliente
@@ -1019,6 +1019,7 @@ components:
             - recepcion_caldo
             - sesion
             - condiciones
+            - incidencia
             - cierre_trabajo
             - cierre_sesion
         uuid_cliente:
@@ -1041,7 +1042,7 @@ components:
           type: string
           example: a1b2c3d4-0000-4000-8000-000000000001
         sesion_uuid_cliente:
-          description: '`cierre_sesion`: `uuid_cliente` de apertura de la sesión a cerrar.'
+          description: '`cierre_sesion`/`condiciones`/`incidencia`: `uuid_cliente` de apertura de la sesión referenciada.'
           type: string
           example: a1b2c3d4-0000-4000-8000-000000000002
         secuencia:
@@ -1092,7 +1093,7 @@ components:
           example: null
           nullable: true
         hora:
-          description: '`recepcion_caldo`: cuándo se entregó.'
+          description: '`recepcion_caldo`: cuándo se entregó. `incidencia`: cuándo ocurrió.'
           type: string
           format: date-time
           example: null
@@ -1126,7 +1127,7 @@ components:
             - fin_jornada
             - otro
         momento:
-          description: '`condiciones`: alcance de la tarea 17, solo `inicio_sesion` — `incidencia` es HU-08.'
+          description: '`condiciones`: solo `inicio_sesion` — condiciones climáticas capturadas EN el momento de una incidencia es un concepto distinto del registro `incidencia` en sí (que vive en su propia tabla), fuera de alcance de este catálogo.'
           type: string
           example: null
           nullable: true
@@ -1151,6 +1152,28 @@ components:
           nullable: true
         firma_observacion:
           description: '`condiciones`: sin evidencia real todavía (TE-07), texto plano.'
+          type: string
+          example: null
+          nullable: true
+        tipo_incidencia:
+          description: '`incidencia`: catálogo espec §4.3. Campo separado de `tipo` (que en este objeto es el tipo de REGISTRO del lote) para evitar que ambos colisionen en la misma key.'
+          type: string
+          example: null
+          nullable: true
+          enum:
+            - caldo
+            - esc
+            - bateria
+            - mecanica
+            - clima
+            - otro
+        descripcion:
+          description: '`incidencia`, opcional: texto libre.'
+          type: string
+          example: null
+          nullable: true
+        evidencia_foto_uuid_cliente:
+          description: '`incidencia`: REQUERIDO — `uuid_cliente` de una evidencia ya subida por `POST /api/evidencias` con `tipo: foto_incidencia`. Sin ella, referenciando una evidencia inexistente, de otro tipo, o ya usada por otra incidencia, el registro se rechaza (HU-08: "con foto").'
           type: string
           example: null
           nullable: true
@@ -1200,4 +1223,4 @@ tags:
     description: 'Sesión de la app de campo por token de dispositivo (espec §4.6, HU-03).'
   -
     name: Sincronizacion
-    description: 'Push de escritura offline de la app de campo (espec §2.1, puntos 3 a 5; TE-05). Recorte de alcance de la tarea 09: solo `trabajo` y `sesion` — `mezcla`, `recarga`, `incidencia` y `acta` llegan con sus propias tareas (ver docs/gestion/cola_tareas.md).'
+    description: 'Push de escritura offline de la app de campo (espec §2.1, puntos 3 a 5; TE-05). Recorte de alcance de la tarea 09: solo `trabajo` y `sesion` — `mezcla`, `recarga` y `acta` llegan con sus propias tareas (ver docs/gestion/cola_tareas.md).'
