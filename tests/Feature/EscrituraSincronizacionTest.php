@@ -7,11 +7,15 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
 use App\Dominios\Operaciones\Contratos\AperturaSesion;
 use App\Dominios\Operaciones\Contratos\AperturaTrabajo;
+use App\Dominios\Operaciones\Contratos\CierreSesion;
+use App\Dominios\Operaciones\Contratos\CierreTrabajo;
 use App\Dominios\Operaciones\Contratos\EscrituraSincronizacion;
 use App\Dominios\Operaciones\Contratos\RegistroCondiciones;
+use App\Dominios\Operaciones\Contratos\RegistroRecepcionCaldo;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Condiciones;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\RecepcionCaldo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
 use App\Dominios\Personal\Dominio\RolOperativoPersona;
@@ -517,4 +521,335 @@ test('registrarCondiciones con una sesion_uuid_cliente que no existe se rechaza 
         ->and($resultado->motivo)->not->toBeNull();
 
     expect(Condiciones::query()->where('uuid_cliente', 'uuid-condiciones-huerfana')->exists())->toBeFalse();
+});
+
+/*
+ * ── Recepción de caldo (espec §7.2, HU-10 redefinida por CR-01, tarea 18) ──
+ */
+
+/** Abre solo un trabajo vía el propio contrato (recepción no depende de sesión). */
+function trabajoAbiertoParaRecepcion(string $id): Trabajo
+{
+    $orden = ordenVigenteParaEscritura();
+    $contrato = app(EscrituraSincronizacion::class);
+
+    $contrato->abrirTrabajo(AperturaTrabajo::intentarDesdeArreglo([
+        'uuid_cliente' => "uuid-trabajo-recepcion-{$id}",
+        'orden_id' => $orden->id,
+        'lote_id' => $orden->lote_id,
+        'nro_aplicacion' => 1,
+        'inicio' => '2026-09-01T10:00:00-04:00',
+    ]));
+
+    return Trabajo::query()->where('uuid_cliente', "uuid-trabajo-recepcion-{$id}")->firstOrFail();
+}
+
+/** @return array<string, mixed> */
+function registroRecepcionArreglo(array $sobrescribir = []): array
+{
+    return array_merge([
+        'uuid_cliente' => 'uuid-recepcion-default',
+        'trabajo_uuid_cliente' => 'uuid-trabajo-recepcion-default',
+        'litros' => '200.00',
+        'entregado_por' => 'Ing. Agr. del cliente',
+        'hora' => '2026-09-01T09:00:00-04:00',
+    ], $sobrescribir);
+}
+
+test('RegistroRecepcionCaldo::intentarDesdeArreglo devuelve null ante un campo requerido faltante', function () {
+    expect(RegistroRecepcionCaldo::intentarDesdeArreglo([
+        'uuid_cliente' => 'uuid-incompleto',
+        'trabajo_uuid_cliente' => 'uuid-trabajo',
+        // falta litros, entregado_por, hora
+    ]))->toBeNull();
+});
+
+test('RegistroRecepcionCaldo::intentarDesdeArreglo devuelve null con litros negativo', function () {
+    expect(RegistroRecepcionCaldo::intentarDesdeArreglo(registroRecepcionArreglo(['litros' => '-5'])))->toBeNull();
+});
+
+test('RegistroRecepcionCaldo::intentarDesdeArreglo devuelve null con litros no numérico', function () {
+    expect(RegistroRecepcionCaldo::intentarDesdeArreglo(registroRecepcionArreglo(['litros' => 'no-numerico'])))->toBeNull();
+});
+
+test('RegistroRecepcionCaldo::intentarDesdeArreglo devuelve null con entregado_por vacío', function () {
+    expect(RegistroRecepcionCaldo::intentarDesdeArreglo(registroRecepcionArreglo(['entregado_por' => ''])))->toBeNull();
+});
+
+test('registrarRecepcionCaldo con datos válidos aplica y persiste litros/entregado_por/hora contra el trabajo correcto', function () {
+    $trabajo = trabajoAbiertoParaRecepcion('a');
+    $contrato = app(EscrituraSincronizacion::class);
+
+    $datos = RegistroRecepcionCaldo::intentarDesdeArreglo(registroRecepcionArreglo([
+        'uuid_cliente' => 'uuid-recepcion-a',
+        'trabajo_uuid_cliente' => $trabajo->uuid_cliente,
+    ]));
+
+    $resultado = $contrato->registrarRecepcionCaldo($datos);
+
+    expect($resultado->estado)->toBe('aplicado');
+
+    $recepcion = RecepcionCaldo::query()->where('uuid_cliente', 'uuid-recepcion-a')->firstOrFail();
+    expect($recepcion->trabajo_id)->toBe($trabajo->id)
+        ->and($recepcion->litros)->toBe('200.00')
+        ->and($recepcion->entregado_por)->toBe('Ing. Agr. del cliente');
+});
+
+test('registrarRecepcionCaldo permite VARIOS eventos para el mismo trabajo', function () {
+    $trabajo = trabajoAbiertoParaRecepcion('b');
+    $contrato = app(EscrituraSincronizacion::class);
+
+    $contrato->registrarRecepcionCaldo(RegistroRecepcionCaldo::intentarDesdeArreglo(registroRecepcionArreglo([
+        'uuid_cliente' => 'uuid-recepcion-b1',
+        'trabajo_uuid_cliente' => $trabajo->uuid_cliente,
+        'litros' => '120.00',
+    ])));
+    $contrato->registrarRecepcionCaldo(RegistroRecepcionCaldo::intentarDesdeArreglo(registroRecepcionArreglo([
+        'uuid_cliente' => 'uuid-recepcion-b2',
+        'trabajo_uuid_cliente' => $trabajo->uuid_cliente,
+        'litros' => '80.00',
+    ])));
+
+    // El total formateado (`200.00` exacto) se verifica vía `cuadreCaldo()`
+    // más abajo, no sumando la columna cruda acá: `sum()` de la query
+    // builder devuelve el valor tal cual lo entrega el driver — sin
+    // decimales de más cuando el total cae en un entero exacto (`200`, no
+    // `200.00`) — y normalizar eso es responsabilidad de `cuadreCaldo()`,
+    // no de este test.
+    expect($trabajo->refresh()->cuadreCaldo()['recibido'])->toBe('200.00');
+});
+
+test('registrarRecepcionCaldo con el mismo uuid_cliente responde duplicado sin crear una fila nueva', function () {
+    $trabajo = trabajoAbiertoParaRecepcion('c');
+    $contrato = app(EscrituraSincronizacion::class);
+
+    $datos = RegistroRecepcionCaldo::intentarDesdeArreglo(registroRecepcionArreglo([
+        'uuid_cliente' => 'uuid-recepcion-c',
+        'trabajo_uuid_cliente' => $trabajo->uuid_cliente,
+    ]));
+
+    expect($contrato->registrarRecepcionCaldo($datos)->estado)->toBe('aplicado');
+
+    $resultado = $contrato->registrarRecepcionCaldo($datos);
+
+    expect($resultado->estado)->toBe('duplicado')
+        ->and(RecepcionCaldo::query()->where('uuid_cliente', 'uuid-recepcion-c')->count())->toBe(1);
+});
+
+test('registrarRecepcionCaldo con un trabajo_uuid_cliente que no existe se rechaza sin romper nada', function () {
+    $contrato = app(EscrituraSincronizacion::class);
+
+    $datos = RegistroRecepcionCaldo::intentarDesdeArreglo(registroRecepcionArreglo([
+        'uuid_cliente' => 'uuid-recepcion-huerfana',
+        'trabajo_uuid_cliente' => 'uuid-trabajo-que-no-existe',
+    ]));
+
+    $resultado = $contrato->registrarRecepcionCaldo($datos);
+
+    expect($resultado->estado)->toBe('rechazado')
+        ->and($resultado->motivo)->not->toBeNull();
+
+    expect(RecepcionCaldo::query()->where('uuid_cliente', 'uuid-recepcion-huerfana')->exists())->toBeFalse();
+});
+
+/*
+ * ── litros_consumidos (CierreSesion) y litros_sobrante (CierreTrabajo) ──
+ */
+
+test('CierreSesion::intentarDesdeArreglo acepta litros_consumidos ausente (null) sin rechazar el registro', function () {
+    $datos = CierreSesion::intentarDesdeArreglo([
+        'uuid_cliente' => 'uuid-cierre-sin-litros',
+        'sesion_uuid_cliente' => 'uuid-sesion',
+        'fin' => '2026-09-01T12:00:00-04:00',
+        'motivo_cierre' => 'completado',
+        'hectareas_declaradas' => '10.00',
+    ]);
+
+    expect($datos)->not->toBeNull()
+        ->and($datos->litrosConsumidos)->toBeNull();
+});
+
+test('CierreSesion::intentarDesdeArreglo devuelve null con litros_consumidos negativo (el resto del registro no la salva)', function () {
+    expect(CierreSesion::intentarDesdeArreglo([
+        'uuid_cliente' => 'uuid-cierre-litros-invalidos',
+        'sesion_uuid_cliente' => 'uuid-sesion',
+        'fin' => '2026-09-01T12:00:00-04:00',
+        'motivo_cierre' => 'completado',
+        'hectareas_declaradas' => '10.00',
+        'litros_consumidos' => '-3',
+    ]))->toBeNull();
+});
+
+test('CierreTrabajo::intentarDesdeArreglo acepta litros_sobrante ausente (null) sin rechazar el registro', function () {
+    $datos = CierreTrabajo::intentarDesdeArreglo([
+        'uuid_cliente' => 'uuid-cierre-trabajo-sin-litros',
+        'trabajo_uuid_cliente' => 'uuid-trabajo',
+        'fin' => '2026-09-01T12:00:00-04:00',
+    ]);
+
+    expect($datos)->not->toBeNull()
+        ->and($datos->litrosSobrante)->toBeNull();
+});
+
+test('CierreTrabajo::intentarDesdeArreglo devuelve null con litros_sobrante no numérico', function () {
+    expect(CierreTrabajo::intentarDesdeArreglo([
+        'uuid_cliente' => 'uuid-cierre-trabajo-litros-invalidos',
+        'trabajo_uuid_cliente' => 'uuid-trabajo',
+        'fin' => '2026-09-01T12:00:00-04:00',
+        'litros_sobrante' => 'no-numerico',
+    ]))->toBeNull();
+});
+
+test('cerrarSesion persiste litros_consumidos cuando el registro lo trae, y lo deja null cuando no', function () {
+    $sesionCon = sesionAbiertaParaCondiciones('litros-con');
+    $sesionSin = sesionAbiertaParaCondiciones('litros-sin');
+    $contrato = app(EscrituraSincronizacion::class);
+
+    $contrato->cerrarSesion(CierreSesion::intentarDesdeArreglo([
+        'uuid_cliente' => 'uuid-cierre-con-litros',
+        'sesion_uuid_cliente' => $sesionCon->uuid_cliente,
+        'fin' => '2026-09-01T12:00:00-04:00',
+        'motivo_cierre' => 'completado',
+        'hectareas_declaradas' => '10.00',
+        'litros_consumidos' => '95.50',
+    ]), null);
+
+    $contrato->cerrarSesion(CierreSesion::intentarDesdeArreglo([
+        'uuid_cliente' => 'uuid-cierre-sin-litros-2',
+        'sesion_uuid_cliente' => $sesionSin->uuid_cliente,
+        'fin' => '2026-09-01T12:00:00-04:00',
+        'motivo_cierre' => 'falla_equipo',
+        'hectareas_declaradas' => '0.00',
+    ]), null);
+
+    expect($sesionCon->refresh()->litros_consumidos)->toBe('95.50')
+        ->and($sesionSin->refresh()->litros_consumidos)->toBeNull();
+});
+
+test('cerrarTrabajo persiste litros_sobrante cuando el registro lo trae, y lo deja null cuando no', function () {
+    $trabajoCon = trabajoAbiertoParaRecepcion('sobrante-con');
+    $trabajoSin = trabajoAbiertoParaRecepcion('sobrante-sin');
+    $contrato = app(EscrituraSincronizacion::class);
+
+    $contrato->cerrarTrabajo(CierreTrabajo::intentarDesdeArreglo([
+        'uuid_cliente' => 'uuid-cierre-trabajo-con-sobrante',
+        'trabajo_uuid_cliente' => $trabajoCon->uuid_cliente,
+        'fin' => '2026-09-01T12:00:00-04:00',
+        'litros_sobrante' => '15.00',
+    ]), null);
+
+    $contrato->cerrarTrabajo(CierreTrabajo::intentarDesdeArreglo([
+        'uuid_cliente' => 'uuid-cierre-trabajo-sin-sobrante',
+        'trabajo_uuid_cliente' => $trabajoSin->uuid_cliente,
+        'fin' => '2026-09-01T12:00:00-04:00',
+    ]), null);
+
+    expect($trabajoCon->refresh()->litros_sobrante)->toBe('15.00')
+        ->and($trabajoSin->refresh()->litros_sobrante)->toBeNull();
+});
+
+/*
+ * ── Cuadre (espec §7.3, criterio de aceptación 4 de la tarea 18):
+ *    recibido == consumido + sobrante, recalculado desde los registros de
+ *    origen (invariante 6) ──
+ */
+
+test('Trabajo::cuadreCaldo recalcula recibido/consumido/sobrante exacto y cuadra cuando coinciden', function () {
+    $orden = ordenVigenteParaEscritura();
+    $piloto = pilotoParaEscritura();
+    $contrato = app(EscrituraSincronizacion::class);
+
+    $contrato->abrirTrabajo(AperturaTrabajo::intentarDesdeArreglo([
+        'uuid_cliente' => 'uuid-trabajo-cuadre',
+        'orden_id' => $orden->id,
+        'lote_id' => $orden->lote_id,
+        'nro_aplicacion' => 1,
+        'inicio' => '2026-09-01T08:00:00-04:00',
+    ]));
+
+    // Dos entregas de caldo: 120 + 80 = 200 recibidos.
+    $contrato->registrarRecepcionCaldo(RegistroRecepcionCaldo::intentarDesdeArreglo(registroRecepcionArreglo([
+        'uuid_cliente' => 'uuid-recepcion-cuadre-1',
+        'trabajo_uuid_cliente' => 'uuid-trabajo-cuadre',
+        'litros' => '120.00',
+    ])));
+    $contrato->registrarRecepcionCaldo(RegistroRecepcionCaldo::intentarDesdeArreglo(registroRecepcionArreglo([
+        'uuid_cliente' => 'uuid-recepcion-cuadre-2',
+        'trabajo_uuid_cliente' => 'uuid-trabajo-cuadre',
+        'litros' => '80.00',
+    ])));
+
+    // Dos sesiones: 130.50 + 54.50 = 185.00 consumidos.
+    $contrato->abrirSesion(AperturaSesion::intentarDesdeArreglo([
+        'uuid_cliente' => 'uuid-sesion-cuadre-1',
+        'trabajo_uuid_cliente' => 'uuid-trabajo-cuadre',
+        'secuencia' => 1,
+        'piloto_id' => $piloto->id,
+        'inicio' => '2026-09-01T08:10:00-04:00',
+    ]));
+    $contrato->abrirSesion(AperturaSesion::intentarDesdeArreglo([
+        'uuid_cliente' => 'uuid-sesion-cuadre-2',
+        'trabajo_uuid_cliente' => 'uuid-trabajo-cuadre',
+        'secuencia' => 2,
+        'piloto_id' => $piloto->id,
+        'inicio' => '2026-09-01T09:00:00-04:00',
+    ]));
+    $contrato->cerrarSesion(CierreSesion::intentarDesdeArreglo([
+        'uuid_cliente' => 'uuid-cierre-sesion-cuadre-1',
+        'sesion_uuid_cliente' => 'uuid-sesion-cuadre-1',
+        'fin' => '2026-09-01T08:55:00-04:00',
+        'motivo_cierre' => 'completado',
+        'hectareas_declaradas' => '12.00',
+        'litros_consumidos' => '130.50',
+    ]), null);
+    $contrato->cerrarSesion(CierreSesion::intentarDesdeArreglo([
+        'uuid_cliente' => 'uuid-cierre-sesion-cuadre-2',
+        'sesion_uuid_cliente' => 'uuid-sesion-cuadre-2',
+        'fin' => '2026-09-01T09:45:00-04:00',
+        'motivo_cierre' => 'completado',
+        'hectareas_declaradas' => '8.00',
+        'litros_consumidos' => '54.50',
+    ]), null);
+
+    // Sobrante declarado al cerrar el trabajo: 200 - 185 = 15.
+    $contrato->cerrarTrabajo(CierreTrabajo::intentarDesdeArreglo([
+        'uuid_cliente' => 'uuid-cierre-trabajo-cuadre',
+        'trabajo_uuid_cliente' => 'uuid-trabajo-cuadre',
+        'fin' => '2026-09-01T10:00:00-04:00',
+        'litros_sobrante' => '15.00',
+    ]), null);
+
+    $trabajo = Trabajo::query()->where('uuid_cliente', 'uuid-trabajo-cuadre')->firstOrFail();
+    $cuadre = $trabajo->cuadreCaldo();
+
+    expect($cuadre['recibido'])->toBe('200.00')
+        ->and($cuadre['consumido'])->toBe('185.00')
+        ->and($cuadre['sobrante'])->toBe('15.00')
+        ->and($cuadre['cuadra'])->toBeTrue();
+});
+
+test('Trabajo::cuadreCaldo marca cuadra en false cuando recibido no coincide con consumido + sobrante', function () {
+    $trabajo = trabajoAbiertoParaRecepcion('descuadrado');
+    $contrato = app(EscrituraSincronizacion::class);
+
+    $contrato->registrarRecepcionCaldo(RegistroRecepcionCaldo::intentarDesdeArreglo(registroRecepcionArreglo([
+        'uuid_cliente' => 'uuid-recepcion-descuadrada',
+        'trabajo_uuid_cliente' => $trabajo->uuid_cliente,
+        'litros' => '200.00',
+    ])));
+
+    $contrato->cerrarTrabajo(CierreTrabajo::intentarDesdeArreglo([
+        'uuid_cliente' => 'uuid-cierre-trabajo-descuadrado',
+        'trabajo_uuid_cliente' => $trabajo->uuid_cliente,
+        'fin' => '2026-09-01T12:00:00-04:00',
+        'litros_sobrante' => '15.00',
+    ]), null);
+
+    // Sin sesiones (consumido = 0): recibido 200 != sobrante 15 + consumido 0.
+    $cuadre = $trabajo->refresh()->cuadreCaldo();
+
+    expect($cuadre['recibido'])->toBe('200.00')
+        ->and($cuadre['consumido'])->toBe('0.00')
+        ->and($cuadre['sobrante'])->toBe('15.00')
+        ->and($cuadre['cuadra'])->toBeFalse();
 });

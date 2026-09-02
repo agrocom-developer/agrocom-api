@@ -7,6 +7,7 @@ use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
 use App\Dominios\Operaciones\Dominio\EstadoSesion;
 use App\Dominios\Operaciones\Dominio\EstadoTableroTrabajo;
 use App\Dominios\Operaciones\Dominio\EstadoTrabajo;
+use Brick\Math\BigDecimal;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -86,6 +87,54 @@ class Trabajo extends ModeloDominio
     public function sesiones(): HasMany
     {
         return $this->hasMany(Sesion::class, 'trabajo_id');
+    }
+
+    /** @return HasMany<RecepcionCaldo, $this> */
+    public function recepcionesCaldo(): HasMany
+    {
+        return $this->hasMany(RecepcionCaldo::class, 'trabajo_id');
+    }
+
+    /**
+     * Cuadre de caldo (espec §7.3, criterio de aceptación 4 de la tarea 18):
+     * `recibido` (suma de `ope_recepciones_caldo.litros` de este trabajo),
+     * `consumido` (suma de `ope_sesiones.litros_consumidos` de sus sesiones,
+     * `NULL` cuenta como cero vía `SUM`) y `sobrante` (`litros_sobrante` de
+     * este trabajo, cero si no se declaró). Los tres se recalculan desde los
+     * registros de origen en cada llamada — nunca un total cacheado
+     * (invariante 6 de CLAUDE.md: "todo monto derivado debe poder
+     * recalcularse... y cuadrar exacto").
+     *
+     * `sum()` sin filas devuelve el entero `0` (no `'0.00'`) — se normaliza
+     * con `BigDecimal::toScale(2, ...)` para que los tres campos tengan
+     * siempre el mismo formato de `DECIMAL`, se hayan sumado filas o no.
+     * `cuadra` compara con `Brick\Math\BigDecimal` (no `float`), mismo
+     * criterio que `Finanzas\Aplicacion\GenerarDevengosSesion::calcularMonto()`.
+     *
+     * No bloquea ni valida nada (a propósito, ver el prompt de la tarea 18):
+     * el desvío se alerta recién en HU-19 (bandeja de alertas, sprint 5) —
+     * acá el dato solo tiene que quedar consultable y ser exacto.
+     *
+     * @return array{recibido: string, consumido: string, sobrante: string, cuadra: bool}
+     */
+    public function cuadreCaldo(): array
+    {
+        // `(string)` antes de `BigDecimal::of()`: `sum()` puede devolver un
+        // entero `0` (sin filas) o, según el driver, un número que
+        // `BigDecimal::of()` no acepta directo (su firma es
+        // `BigNumber|int|string`, sin `float`) — mismo motivo por el que el
+        // resto del código castea toda suma de `DECIMAL` a string antes de
+        // usarla (ver `EscrituraSincronizacionEloquent::sumaHectareasSesiones()`).
+        $recibido = BigDecimal::of((string) $this->recepcionesCaldo()->sum('litros'))->toScale(2);
+        $consumido = BigDecimal::of((string) $this->sesiones()->sum('litros_consumidos'))->toScale(2);
+        $sobrante = BigDecimal::of($this->litros_sobrante ?? 0)->toScale(2);
+
+        return [
+            'recibido' => (string) $recibido,
+            'consumido' => (string) $consumido,
+            'sobrante' => (string) $sobrante,
+            'cuadra' => $recibido->isEqualTo($consumido->plus($sobrante)),
+        ];
     }
 
     /**
