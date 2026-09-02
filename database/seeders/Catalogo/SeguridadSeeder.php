@@ -90,6 +90,15 @@ class SeguridadSeeder extends Seeder
         'comercial.cliente.crear' => 'Dar de alta un cliente con sus contactos',
         'comercial.cliente.editar' => 'Editar los datos y contactos de un cliente',
         'comercial.cliente.eliminar' => 'Dar de baja (lógica) un cliente',
+        // HU-23 (tarea 34): administración de contratos con sus ventanas de
+        // aplicación. `cambiar_estado` separado de `.editar`, mismo criterio
+        // que `usuario.bloquear` separado de `usuario.editar`: pasar un
+        // contrato de `vigente` a `cancelado` no es la misma responsabilidad
+        // que corregir un dato.
+        'comercial.contrato.ver' => 'Ver el listado y detalle de contratos',
+        'comercial.contrato.crear' => 'Dar de alta un contrato con sus ventanas de aplicación',
+        'comercial.contrato.editar' => 'Editar los datos y ventanas de un contrato',
+        'comercial.contrato.cambiar_estado' => 'Cambiar el estado de un contrato (vigente, finalizado, cancelado)',
     ];
 
     /** @var list<string> Piloto: solo lo que ejecuta desde `agrocom-field` — HU-17, tarea 24. */
@@ -131,6 +140,13 @@ class SeguridadSeeder extends Seeder
         'comercial.cliente.crear',
         'comercial.cliente.editar',
         'comercial.cliente.eliminar',
+        // HU-23 (tarea 34): "Como encargado, quiero administrar contratos
+        // con sus ventanas de aplicación" — la HU lo dice literal, mismo
+        // criterio que clientes arriba.
+        'comercial.contrato.ver',
+        'comercial.contrato.crear',
+        'comercial.contrato.editar',
+        'comercial.contrato.cambiar_estado',
     ];
 
     /**

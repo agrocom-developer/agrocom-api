@@ -75,4 +75,86 @@ return [
         ],
     ],
 
+    // HU-23 (tarea 34): administración de contratos con sus ventanas de
+    // aplicación. Segundo ABM del panel — molde de la tarea 33 (clientes)
+    // con una máquina de estados encima.
+    'contratos' => [
+        'creado' => 'El contrato se dio de alta correctamente, en estado borrador.',
+        'actualizado' => 'Los datos del contrato se actualizaron correctamente.',
+        'estado_cambiado' => 'El estado del contrato se actualizó correctamente.',
+
+        // Listado
+        'titulo' => 'Contratos',
+        'subtitulo' => 'Administración de contratos con sus ventanas de aplicación y tarifa.',
+        'nuevo' => 'Nuevo contrato',
+        'filtro_busqueda' => 'Buscar',
+        'filtro_busqueda_placeholder' => 'Razón social del cliente',
+        'filtrar' => 'Buscar',
+        'limpiar_filtro' => 'Limpiar búsqueda',
+        'vacio' => 'Todavía no se dio de alta ningún contrato.',
+        'filtro_vacio' => 'Ningún contrato coincide con la búsqueda.',
+        'col_cliente' => 'Cliente',
+        'col_hectareas' => 'Hectáreas',
+        'col_monto_total' => 'Monto total',
+        'col_vigencia' => 'Vigencia',
+        'col_estado' => 'Estado',
+        'editar' => 'Editar',
+        'vigencia_con_fin' => ':inicio – :fin',
+        'vigencia_sin_fin' => 'Desde :inicio',
+        'paginacion_aria' => 'Paginación de contratos',
+        'paginacion_anterior' => 'Anterior',
+        'paginacion_siguiente' => 'Siguiente',
+        'paginacion_info' => 'Página :actual de :total',
+
+        // Cambio de estado (listado)
+        'accion_activar' => 'Activar',
+        'accion_finalizar' => 'Finalizar',
+        'accion_cancelar' => 'Cancelar',
+        'confirmar_activar' => '¿Pasar este contrato a vigente?',
+        'confirmar_finalizar' => '¿Dar este contrato por finalizado?',
+        'confirmar_cancelar' => '¿Cancelar este contrato? La baja no se puede deshacer desde el panel.',
+
+        // Formulario (create/edit)
+        'titulo_crear' => 'Nuevo contrato',
+        'titulo_editar' => 'Editar contrato',
+        'subtitulo_form' => 'El contrato se guarda junto con sus ventanas de aplicación en una sola operación.',
+        'seccion_datos' => 'Datos del contrato',
+        'campos_contador' => ':cantidad campos',
+        'campo_cliente' => 'Cliente',
+        'campo_cliente_placeholder' => 'Seleccioná un cliente',
+        'campo_hectareas_contratadas' => 'Hectáreas contratadas',
+        'campo_aplicaciones_previstas' => 'Aplicaciones previstas',
+        'campo_precio_ha' => 'Precio por hectárea (Bs)',
+        'campo_monto_total_ayuda' => 'Se calcula automáticamente: hectáreas × aplicaciones × precio por hectárea.',
+        'campo_adelanto_monto' => 'Adelanto (monto)',
+        'campo_adelanto_pct' => 'Adelanto (%)',
+        'campo_fecha_inicio' => 'Fecha de inicio',
+        'campo_fecha_fin' => 'Fecha de fin',
+        'campo_fecha_fin_ayuda' => 'Opcional. Si no se define, el contrato queda abierto.',
+
+        'seccion_clima' => 'Parámetros de vuelo',
+        'seccion_clima_ayuda' => 'Opcionales. En blanco, rige el valor por defecto del sistema.',
+        'campo_viento_max_kmh' => 'Viento máximo (km/h)',
+        'campo_temperatura_max_c' => 'Temperatura máxima (°C)',
+        'campo_humedad_min_pct' => 'Humedad mínima (%)',
+        'campo_humedad_max_pct' => 'Humedad máxima (%)',
+        'campo_velocidad_max_kmh' => 'Velocidad máxima de vuelo (km/h)',
+        'campo_umbral_reporte_avance_ha' => 'Umbral de reporte de avance (ha)',
+
+        'seccion_ventanas' => 'Ventanas de aplicación',
+        'ventana_agregar' => 'Agregar ventana',
+        'ventana_quitar' => 'Quitar',
+        'ventana_hora_inicio' => 'Desde',
+        'ventana_hora_fin' => 'Hasta',
+        'estado_form' => 'Los cambios se guardan al confirmar.',
+
+        // Errores de validación
+        'error_cliente_requerido' => 'Seleccioná un cliente.',
+        'error_cliente_invalido' => 'El cliente seleccionado no es válido.',
+        'error_ventanas_minimo' => 'Agregá al menos una ventana de aplicación.',
+        'error_ventana_ajena' => 'Una de las ventanas enviadas no pertenece a este contrato.',
+        'error_ventana_horas' => 'La hora de fin tiene que ser posterior a la hora de inicio.',
+        'error_humedad_rango' => 'La humedad mínima no puede ser mayor que la máxima.',
+    ],
+
 ];
