@@ -82,6 +82,14 @@ class SeguridadSeeder extends Seeder
         // responsabilidad.
         'operaciones.alerta.ver' => 'Ver la bandeja de alertas por excepción',
         'operaciones.alerta.atender' => 'Marcar una alerta por excepción como atendida',
+        // HU-22 (tarea 33): alta y mantenimiento de clientes con sus
+        // contactos. Grano fino (ver/crear/editar/eliminar separados, mismo
+        // criterio que seguridad.usuario.*): permite que un rol futuro de
+        // solo lectura exista sin tocar este catálogo.
+        'comercial.cliente.ver' => 'Ver el listado y detalle de clientes',
+        'comercial.cliente.crear' => 'Dar de alta un cliente con sus contactos',
+        'comercial.cliente.editar' => 'Editar los datos y contactos de un cliente',
+        'comercial.cliente.eliminar' => 'Dar de baja (lógica) un cliente',
     ];
 
     /** @var list<string> Piloto: solo lo que ejecuta desde `agrocom-field` — HU-17, tarea 24. */
@@ -116,6 +124,13 @@ class SeguridadSeeder extends Seeder
         'operaciones.alerta.atender',
         // HU-18 (tarea 25): espec línea 89, "Ver reportes técnicos".
         'operaciones.reporte.ver',
+        // HU-22 (tarea 33): "Como encargado, quiero dar de alta y mantener
+        // clientes" — la HU lo dice literal, así que el rol encargado se
+        // lleva el grano completo.
+        'comercial.cliente.ver',
+        'comercial.cliente.crear',
+        'comercial.cliente.editar',
+        'comercial.cliente.eliminar',
     ];
 
     /**

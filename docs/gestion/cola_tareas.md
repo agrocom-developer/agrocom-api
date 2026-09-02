@@ -1,6 +1,7 @@
 # Cola de tareas automatizables
 
-**Última actualización: 2/9/2026 (tarea 31).** Este es el backlog que el ciclo de
+**Última actualización: 2/9/2026 (planificación tras el corte de la 32).**
+Este es el backlog que el ciclo de
 `bin/ciclo` consume solo — el punto 3 de
 [automatizacion_desarrollo.md](automatizacion_desarrollo.md). No reemplaza a
 `plan_sprints.md`: ahí están las HU y TE con su alcance de negocio; acá está lo
@@ -63,11 +64,14 @@ exista el módulo `Mezclas`).
 | 25 | HU-18 — reporte técnico por lote: PDF automático al firmar el acta de la tarea 24 (imagen del campo, horas de inicio/fin, condiciones, litros de caldo/ha, incidencias con evidencia, detalle de sesiones con relevo/cambio de dron), sin contenido de mezcla/dosis (CR-01: no existe ese dato) | `./bin/verify` = 0, con test de generación automática al firmar el acta y de rechazo si el trabajo todavía no está conformado | `Operaciones/**`, migración `ope_reportes_tecnicos`, `sec_action`/permisos, pantalla mínima del panel, tests | no | 4 | **hecha** (PR #67, mergeado 2/9/2026; retomada tras destrabarse el PR #62/HU-17. Quedó con las incidencias vacías a propósito —HU-08 todavía no estaba integrada— ver `runs/25.md`; cerrado por la tarea 28) |
 | 26 | HU-19 — bandeja de alertas por excepción (batería caliente, dron sospechoso, condiciones forzadas, suma excedida/`observado`), recortada a lo que ya tiene datos reales — el resto de la lista de la espec depende de mezcla/anticipos/rendiciones, módulos que todavía no existen | `./bin/verify` = 0, con test de generación de cada alerta cubierta y de la transición `pendiente → atendida` | `Operaciones/**`, migración `ope_alertas`, `sec_action`/permisos, pantalla mínima del panel, tests | no | 4 | **hecha y mergeada** (PR #64, mergeado 2/9/2026 a `develop`; no crítica, se revisó por diff y test en el PR). Bandeja en `/panel/alertas`, no `/api/alertas` como nombraba el prompt: `routes/api.php` es exclusivo de las apps de campo por ADR 0008 — ver `runs/26.md` |
 | 27 | Reconciliar `feature/incidencias-sesion` (HU-08, PR #59) con `develop` — quedó atrás tras el rescate de los PR #62/#64, con conflictos reales en el motor de sync (8 archivos) | `./bin/verify` = 0 sobre la rama ya mergeada, con test de convivencia de los 8 tipos de registro del motor de sync | motor de sync (`Sincronizacion/**`, `Operaciones/Contratos/**`), `docs/api/openapi.yaml`, tests | **sí** | 4 | **hecha** (PR #59 integrado 2/9/2026, `runs/27-veredicto.md` sin hallazgos) |
-| 28 | Cerrar el hueco de incidencias en el reporte técnico: `ArmarContenidoReporteTecnico` quedó con `'incidencias' => []` fijo (tarea 25) porque HU-08 no estaba integrada a `develop` todavía; ya lo está desde la tarea 27 | `./bin/verify` = 0, con test de que una incidencia real (con su evidencia) aparece en el contenido armado del reporte | `Operaciones/Infraestructura/Eloquent/{Sesion,Incidencia}.php`, `Operaciones/Aplicacion/ArmarContenidoReporteTecnico.php`, vista PDF del reporte técnico, tests | no | 2 | pendiente |
-| 29 | Bug de timezone en `MaquinaEstadosTrabajo`/`MaquinaEstadosSesion` (`abrir()`/`cerrar()`): `CarbonImmutable::parse()` sin `->utc()` sobre columnas `dateTime` sin tz corre el instante real por el offset del cliente — mismo patrón ya corregido una vez en `MaquinaEstadosActa::firmar()`. Señalado dos veces sin corregirse (`runs/24.md`, `runs/25.md`, ambas pidiendo tarea propia) | `./bin/verify` = 0, con test de round-trip (guardar `inicio`/`fin` con offset no-UTC vía `/api/sync`, releer, instante correcto contra UTC) | `Operaciones/Aplicacion/MaquinaEstados/{MaquinaEstadosTrabajo,MaquinaEstadosSesion}.php`, tests | **sí** | 3 | pendiente |
-| 30 | FK real de `created_by`/`updated_by` a `sec_user.id` en las ~30 tablas de dominio que hoy son `unsignedBigInteger` sueltas sin `->constrained()` — retrofit que HU-01 dejó explícitamente para "un solo pase futuro que agregue la FK a todas las tablas de una vez" (`docs/gestion/estado_proyecto.md`, "Otros gaps señalados") | `./bin/verify` = 0, con test de que insertar un `created_by` con id de `sec_user` inexistente lanza `QueryException` | una migración nueva de `alter table` (sin tocar el tipo de columna existente), tests | no | 2 | pendiente |
-| 31 | TE — el arquetipo formulario del panel (`form-section` evolucionado, `page-header`, `tabs`, `form-actions-bar`, `summary-card`, `progress-meter`, `file-field`) y la compuerta visual: `bin/verify` no corría `tests/Visual/` desde que existe (tarea 07) | `./bin/verify` = 0 con la etapa de Playwright adentro y en verde; diff vacío del checklist de `guia_pantalla_panel.md` §8 sobre el catálogo | `resources/views/components/**`, `resources/css/components/**`, `resources/css/pages/organizacion.css`, `Seguridad/Infraestructura/Http/Views/pages/organizacion/**`, `lang/es/seguridad.php`, `docs/diseno/sistema_diseno_panel.md`, `tests/Visual/**`, `bin/verify` | no | 4 | **hecha** — `/panel/organizacion` reconstruida como caso de prueba, `tests/Visual/organizacion.spec.ts` nuevo, `npx playwright test` sumado a `bin/verify` (fuera de `.github/workflows/`, snapshots `-darwin`, ver el spec) |
-| 32 | `atoms/input` no fusiona `$attributes` en su `<div>` raíz — solo en el `<input>` interno (`resources/views/components/atoms/input.blade.php:48,71`). Rompe LSP: cualquier composición que necesite una clase/atributo en el contenedor (p. ej. `grid-column: 1 / -1` de un campo ancho) no puede pasarla al componente y necesita un `<div>` envolvente puntual en la página, como quedó en `organizacion/index.blade.php` (hallazgo de la tarea 31, documentado en `sistema_diseno_panel.md` §14, no corregido a propósito por blast radius: lo consume todo el panel) | `./bin/verify` = 0, con las páginas que hoy envuelven `atoms/input` a mano (`organizacion/index.blade.php`) usando la clase directo en el componente | `resources/views/components/atoms/input.blade.php`, páginas que lo consumen | no | 2 | pendiente |
+| 28 | Cerrar el hueco de incidencias en el reporte técnico: `ArmarContenidoReporteTecnico` quedó con `'incidencias' => []` fijo (tarea 25) porque HU-08 no estaba integrada a `develop` todavía; ya lo está desde la tarea 27 | `./bin/verify` = 0, con test de que una incidencia real (con su evidencia) aparece en el contenido armado del reporte | `Operaciones/Infraestructura/Eloquent/{Sesion,Incidencia}.php`, `Operaciones/Aplicacion/ArmarContenidoReporteTecnico.php`, vista PDF del reporte técnico, tests | no | 2 | **hecha** (PR #69, mergeado 2/9/2026) |
+| 29 | Bug de timezone en `MaquinaEstadosTrabajo`/`MaquinaEstadosSesion` (`abrir()`/`cerrar()`): `CarbonImmutable::parse()` sin `->utc()` sobre columnas `dateTime` sin tz corre el instante real por el offset del cliente — mismo patrón ya corregido una vez en `MaquinaEstadosActa::firmar()`. Señalado dos veces sin corregirse (`runs/24.md`, `runs/25.md`, ambas pidiendo tarea propia) | `./bin/verify` = 0, con test de round-trip (guardar `inicio`/`fin` con offset no-UTC vía `/api/sync`, releer, instante correcto contra UTC) | `Operaciones/Aplicacion/MaquinaEstados/{MaquinaEstadosTrabajo,MaquinaEstadosSesion}.php`, tests | **sí** | 3 | **hecha** (PR #71, mergeado 2/9/2026) |
+| 30 | FK real de `created_by`/`updated_by` a `sec_user.id` en las ~30 tablas de dominio que hoy son `unsignedBigInteger` sueltas sin `->constrained()` — retrofit que HU-01 dejó explícitamente para "un solo pase futuro que agregue la FK a todas las tablas de una vez" (`docs/gestion/estado_proyecto.md`, "Otros gaps señalados") | `./bin/verify` = 0, con test de que insertar un `created_by` con id de `sec_user` inexistente lanza `QueryException` | una migración nueva de `alter table` (sin tocar el tipo de columna existente), tests | no | 2 | **hecha** (PR #75, mergeado 2/9/2026; 31 tablas + fix de reconstrucción de índices parciales en SQLite, ver `runs/30.md`) |
+| 31 | TE — el arquetipo formulario del panel (`form-section` evolucionado, `page-header`, `tabs`, `form-actions-bar`, `summary-card`, `progress-meter`, `file-field`) y la compuerta visual: `bin/verify` no corría `tests/Visual/` desde que existe (tarea 07) | `./bin/verify` = 0 con la etapa de Playwright adentro y en verde; diff vacío del checklist de `guia_pantalla_panel.md` §8 sobre el catálogo | `resources/views/components/**`, `resources/css/components/**`, `resources/css/pages/organizacion.css`, `Seguridad/Infraestructura/Http/Views/pages/organizacion/**`, `lang/es/seguridad.php`, `docs/diseno/sistema_diseno_panel.md`, `tests/Visual/**`, `bin/verify` | no | 4 | **hecha** (PR #74, mergeado 2/9/2026) — `/panel/organizacion` reconstruida como caso de prueba, `tests/Visual/organizacion.spec.ts` nuevo, `npx playwright test` sumado a `bin/verify` (fuera de `.github/workflows/`, snapshots `-darwin`, ver el spec) |
+| 32 | `atoms/input` no fusiona `$attributes` en su `<div>` raíz — solo en el `<input>` interno (`resources/views/components/atoms/input.blade.php:48,71`). Rompe LSP: cualquier composición que necesite una clase/atributo en el contenedor (p. ej. `grid-column: 1 / -1` de un campo ancho) no puede pasarla al componente y necesita un `<div>` envolvente puntual en la página, como quedó en `organizacion/index.blade.php` (hallazgo de la tarea 31, documentado en `sistema_diseno_panel.md` §14, no corregido a propósito por blast radius: lo consume todo el panel) | `./bin/verify` = 0, con las páginas que hoy envuelven `atoms/input` a mano (`organizacion/index.blade.php`) usando la clase directo en el componente | `resources/views/components/atoms/input.blade.php`, páginas que lo consumen | no | 2 | **incompleta** — se agotaron las 2 etapas sin cerrar la HU (PR #76 en borrador, `runs/32.estado` = `INCOMPLETA`). El fix quedó escrito pero sin commitear, mezclado en el working tree de `develop` (bloqueaba el arranque de la tarea 33); se rescató a `git stash` sin verificar —`bin/verify` no llegó a terminar— al planificar la 35. Recuperarlo: `git stash list` en el working tree compartido. Decisión del usuario: retomarla desde ahí o cerrar el PR |
+| 33 | HU-22 — clientes: ABM sobre `com_clientes` y `com_cliente_contactos`, el primer ABM real del panel (mismo patrón para el resto de Sprint 7) | `./bin/verify` = 0, con test de bitácora en alta/edición/baja, soft delete y NIT único entre clientes activos | módulo nuevo `Comercial/Aplicacion/` e `Infraestructura/Http/`, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/comercial.php`, tests | no | 4 | pendiente |
+| 34 | HU-23 — contratos: ABM sobre `com_contratos` y `com_contrato_ventanas`, con máquina de estados propia (`borrador/vigente/finalizado/cancelado`, invariante 7) y `monto_total` recalculado, nunca editable a mano (invariante 6) | `./bin/verify` = 0, con test de transición de estados válida/inválida, de ventana solapada rechazada y de `monto_total` exacto | `Comercial/Aplicacion/`, `Comercial/Infraestructura/Http/`, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/comercial.php`, tests | no | 5 | pendiente |
+| 35 | HU-24 — campos y lotes: ABM sobre `com_campos` y `com_lotes`, con geometría opcional del lote (GeoJSON en `jsonb`, sin PostGIS — ADR 0001) | `./bin/verify` = 0, con test de `hectareas > 0`, de geometría inválida rechazada, y de que un lote con órdenes/trabajos asociados no se puede eliminar sin avisar | `Comercial/Aplicacion/`, `Comercial/Infraestructura/Http/`, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/comercial.php`, tests | no | 4 | pendiente |
 
 ### El bug de la 24 — ya pasó dos veces, sigue sin arreglarse
 
@@ -164,31 +168,50 @@ lo corrigió.
 | Reunión de cierre de la especificación | Es de negocio. `analisis_clasificacion.md` §7 tiene la agenda |
 
 **Sprint 1 a 5 están enteros en lo que es automatizable de este repo.** El
-plan de sprints tiene seis; los cinco primeros ya no tienen ninguna HU/TE
-pendiente que califique — lo único que queda de ellos es TE-02 (spike de
-hardware) y TE-08 (necesita datos de beta), ambas en la tabla de arriba.
-Sprint 6 entero tampoco califica (ensayo de campo, producción, datos
-maestros reales, cierre prematuro). Las tareas 28 a 30 no son filas nuevas de
-`plan_sprints.md` — son deuda técnica concreta, documentada explícitamente por
-tareas anteriores, con criterio de aceptación ejecutable. Ver "Por qué ese
-orden" abajo.
+plan de sprints tiene seis originalmente (ahora doce, ver más abajo); los
+cinco primeros ya no tienen ninguna HU/TE pendiente que califique — lo único
+que queda de ellos es TE-02 (spike de hardware) y TE-08 (necesita datos de
+beta), ambas en la tabla de arriba. Sprint 6 entero tampoco califica (ensayo
+de campo, producción, datos maestros reales, cierre prematuro). Las tareas 28
+a 30 no son filas nuevas de `plan_sprints.md` — son deuda técnica concreta,
+documentada explícitamente por tareas anteriores, con criterio de aceptación
+ejecutable. Ver "Por qué ese orden" abajo.
 
-### La 31 destraba Sprint 7 — mecánico, no un descubrimiento por hacer
+### Sprint 7 — de "destrabado" a "en marcha"
 
-Con el arquetipo formulario en `develop` (tarea 31: `page-header`, `tabs`,
-`form-section` evolucionado, `progress-meter`, `summary-card`, `file-field`,
-`form-actions-bar`, todos documentados en `sistema_diseno_panel.md` §3/§14 y
-`guia_pantalla_panel.md` §6.3), Sprint 7 entero puede entrar al ciclo
-automático: HU-22 (clientes), HU-23 (contratos), HU-24 (campos y lotes),
-HU-25 (órdenes), HU-26 (personas y bases), HU-27 (drones) y HU-45 (usuarios)
-son la misma pantalla ABM con otros campos, compuesta sobre las siete piezas
-del catálogo — sin diseño nuevo que inventar. Cada una suma, además del
-criterio de negocio de su HU, un spec visual propio en `tests/Visual/` (mismo
-patrón que `organizacion.spec.ts`) para que la pantalla número 7 se vea como
-la número 1 sin revisión a ojo. Todavía no están como filas de esta tabla —
-falta que la próxima sesión de planificación les escriba el criterio de
-aceptación ejecutable de cada una (qué campos, qué validación, qué permiso de
-`sec_action`) a partir de `plan_sprints.md` y la especificación funcional.
+`plan_sprints.md` se amplió a doce sprints (PR #70, 2/9/2026): el plan ahora
+cubre el sistema entero, no solo la ruta crítica de los primeros seis. Sprint
+7 ("Catálogos: el panel se vuelve operable") es el primero de esa ampliación
+que califica para el ciclo automático — sus siete historias (HU-22 a HU-27,
+HU-45) son ABM sobre tablas que ya existen, migradas y auditadas desde TE-03 y
+los sprints 2-5: sin modelo de datos nuevo, es la capa de pantalla que
+faltaba.
+
+Con el arquetipo formulario en `develop` (tarea 31), Sprint 7 es mecánico:
+HU-22 (clientes, tarea 33), HU-23 (contratos, tarea 34), HU-24 (campos y
+lotes, tarea 35), HU-25 (órdenes), HU-26 (personas y bases), HU-27 (drones) y
+HU-45 (usuarios — cierra la parte de HU-01 que quedó sin hacer). Cada una es
+una HU entera con su PR, compuesta sobre las siete piezas del catálogo, y cada
+una suma su spec visual propio en `tests/Visual/` (mismo patrón que
+`organizacion.spec.ts`) para que la pantalla número 7 se vea como la número 1
+sin revisión a ojo.
+
+**El bug de LSP de `atoms/input` (tarea 32) NO se resolvió** — se agotaron sus
+etapas sin cerrar la HU y quedó incompleta (ver la fila 32 arriba). La tarea
+33 ya no asume que está resuelto: si al ejecutarse `atoms/input.blade.php`
+sigue sin fusionar `$attributes` en su raíz, repite el envoltorio manual de la
+tarea 31 en vez de tocar el átomo. Las tareas 34 en adelante deberían hacer lo
+mismo si algún campo ancho lo necesita — no asuman la 32 resuelta solo porque
+está antes en la cola.
+
+Se escribieron los prompts de 33, 34 y 35 en esta vuelta (regla de "las
+próximas 3"; la 32 ya estaba escrita de la vuelta anterior, solo se
+actualizó su estado). **HU-25, HU-26, HU-27 y HU-45 siguen sin fila ni
+prompt** — la próxima planificación, al cerrar la 35, les escribe el criterio
+de aceptación ejecutable de cada una a partir de `plan_sprints.md` §165-181 y
+la especificación funcional, siguiendo el mismo patrón que estableció la 33
+(primer ABM real del panel — controller + Form Request + Blade, sin Livewire,
+permisos separados por acción, namespace de vista por módulo).
 
 ### Condicionadas — todavía no tienen sobre qué correr
 
@@ -252,7 +275,28 @@ automático sobre el motor de sync.
   ejecutable y no depende de nada más — es razonable sacarla de la lista de
   gaps sueltos.
 
-Ninguna de las tres agota Sprint 6 ni resuelve TE-02/TE-08 — la próxima
-planificación, al cerrar la 30, va a tener que volver a repasar si algo nuevo
-quedó documentado como pendiente en el camino, y si no, cerrar con
-`runs/DETENER` explicando que Sprint 6 sigue sin nada automatizable.
+**32 → 33 → 34 → 35 se pensó en ese orden, pero la 32 se cayó en la
+práctica — queda igual, sin reordenar.** La idea original: `atoms/input` (32)
+tenía que fusionar `$attributes` antes de que las siete pantallas de Sprint 7
+empezaran a repetir el envoltorio manual que documentó la tarea 31 — chica (2
+etapas), sin dependencias, así que iba primera. En la ejecución real se agotó
+sin cerrar (ver la fila 32). No se la reordena ni se reintenta desde acá —es
+la que quedó marcada para el usuario, no una decisión de esta planificación—,
+y las tareas 33 en adelante ya no dependen de que esté resuelta: cada una
+revisa en el momento si `atoms/input` fusiona `$attributes` y usa el
+envoltorio manual si no. Clientes (33) sigue antes que contratos (34) porque
+`com_contratos.cliente_id` es una FK real a `com_clientes`: aunque los tests
+de 34 puedan crear su propio cliente por factory sin que exista la pantalla de
+alta, tiene sentido que el patrón de ABM completo (el primero real del panel)
+se establezca una vez en la HU más simple de las dos, y que contratos —con
+máquina de estados, 13 `CHECK` y montos derivados— lo reutilice en vez de
+inventarlo en paralelo. Campos y lotes (35) sigue a contratos por el mismo
+criterio de progresión de complejidad, no por una dependencia real de datos:
+`com_campos.cliente_id` es FK a `com_clientes` (33), no a `com_contratos`
+(34), así que 35 podría en principio ir antes que 34 — pero repite el patrón
+de ABM simple una vez más (sin máquina de estados) antes de las HU con más
+lógica propia (HU-25, con máquina de estados sobre órdenes; HU-26, con la
+guarda de que cambiar tarifa no altere devengos ya generados), que conviene
+dejar para cuando el patrón esté más asentado. HU-25 a HU-27 y HU-45 quedan
+para la próxima vuelta de planificación, sin fila propia todavía (ver "Sprint
+7 — de destrabado a en marcha" arriba).
