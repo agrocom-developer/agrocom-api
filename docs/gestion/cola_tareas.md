@@ -61,7 +61,7 @@ exista el módulo `Mezclas`).
 | 23 | HU-13 — recargas del dron: batería, temperatura (alerta > 50 °C), litros de caldo por sesión, combustible del generador, motivo/hora de retraso por caldo | `./bin/verify` = 0, con test de alerta de temperatura y de recarga válida | `Operaciones/Contratos/**`, `EscrituraSincronizacionEloquent`, `Sincronizacion/Aplicacion/**`, migración `ope_recargas`, tests | **sí** | 4 | **hecha** (PR #61, mergeado 1/9/2026; su prompt tuvo que recuperarse a mano del historial de git a mitad de tarea — ver "El bug de la 24" abajo) |
 | 24 | HU-17 — acta por lote: PDF con hectáreas conformadas, firma del agrónomo referenciada como evidencia (`firma_acta`), máquina de estados `pendiente → firmada` | `./bin/verify` = 0, con test de guarda (no genera sobre trabajo abierto) y de firma válida | `Operaciones/**`, migración `ope_actas`, `sec_action`/permisos, pantalla mínima del panel, tests | **sí** | 5 | **verificada y APROBADA** (implementación y revisión crítica interna en verde, `runs/24.veredicto`, "APROBADO CON OBSERVACIONES"); **PR #62 sigue en borrador esperando revisión humana** — misma situación que la 22. Bloquea a la 25 (ver fila siguiente) |
 | 25 | HU-18 — reporte técnico por lote: PDF automático al firmar el acta de la tarea 24 (imagen del campo, horas de inicio/fin, condiciones, litros de caldo/ha, incidencias con evidencia, detalle de sesiones con relevo/cambio de dron), sin contenido de mezcla/dosis (CR-01: no existe ese dato) | `./bin/verify` = 0, con test de generación automática al firmar el acta y de rechazo si el trabajo todavía no está conformado | `Operaciones/**`, migración `ope_reportes_tecnicos`, `sec_action`/permisos, pantalla mínima del panel, tests | no | 4 | **BLOQUEADA** (`runs/25.md`) — no hay `Acta` en `develop` (el PR #62 de la tarea 24 sigue en borrador), y sin acta firmada no hay "conformado" sobre qué generar el reporte. Pregunta para el usuario: **¿corresponde sacar el PR #62 de borrador y mergearlo?** Ver la nota sobre la política de PRs críticos, abajo |
-| 26 | HU-19 — bandeja de alertas por excepción (batería caliente, dron sospechoso, condiciones forzadas, suma excedida/`observado`), recortada a lo que ya tiene datos reales — el resto de la lista de la espec depende de mezcla/anticipos/rendiciones, módulos que todavía no existen | `./bin/verify` = 0, con test de generación de cada alerta cubierta y de la transición `pendiente → atendida` | `Operaciones/**`, migración `ope_alertas`, `sec_action`/permisos, pantalla mínima del panel, tests | no | 4 | **hecha** (PR #63, abierto 2/9/2026 contra `develop`, auto-merge pendiente de CI en verde; no crítica, se revisa por diff y test en el PR, no antes de integrarse). Bandeja en `/panel/alertas`, no `/api/alertas` como nombraba el prompt: `routes/api.php` es exclusivo de las apps de campo por ADR 0008 — ver `runs/26.md` |
+| 26 | HU-19 — bandeja de alertas por excepción (batería caliente, dron sospechoso, condiciones forzadas, suma excedida/`observado`), recortada a lo que ya tiene datos reales — el resto de la lista de la espec depende de mezcla/anticipos/rendiciones, módulos que todavía no existen | `./bin/verify` = 0, con test de generación de cada alerta cubierta y de la transición `pendiente → atendida` | `Operaciones/**`, migración `ope_alertas`, `sec_action`/permisos, pantalla mínima del panel, tests | no | 4 | **hecha y mergeada** (PR #64, mergeado 2/9/2026 a `develop`; no crítica, se revisó por diff y test en el PR). Bandeja en `/panel/alertas`, no `/api/alertas` como nombraba el prompt: `routes/api.php` es exclusivo de las apps de campo por ADR 0008 — ver `runs/26.md` |
 
 ### El bug de la 24 — ya pasó dos veces, sigue sin arreglarse
 
@@ -338,3 +338,20 @@ sobre la 25 (si el usuario ya resolvió la pregunta bloqueante) o abrir Sprint 6
 — cuyas filas, adelanto, probablemente no califiquen ninguna todavía (ensayo
 en campo, producción, datos maestros reales), así que es razonable que esa
 vuelta termine cerca de `runs/DETENER` en vez de con tareas nuevas.
+
+**La 26 cerró `OK` (PR #64 mergeado) y la vuelta terminó en `runs/DETENER`.**
+Esa parada fue correcta en su momento y quedó resuelta la mañana del 2/9: los
+PR #62 (tarea 24, HU-17/acta) y #59 (tarea 22, HU-08/incidencias) estaban
+retenidos en borrador por la política vieja que seguía documentada en
+`automatizacion_desarrollo.md` §5 — no por una decisión de nadie. Se corrigió
+ese documento (PR #65), el #62 se reconcilió con `develop` y se integró, y el
+#59 quedó como tarea 27 porque sus conflictos tocan el motor de sync en cinco
+archivos y merecen pasar por la verificación independiente. `Acta` ya existe
+en `develop`, así que la 25 dejó de estar `BLOQUEADA`. Repasé el resto de Sprint 5 y
+todo Sprint 6 fila por fila contra `plan_sprints.md`: TE-08 sigue sin datos
+de beta real; TE-09/HU-21 necesitan el ensayo de campo con operarios reales;
+TE-10/TE-11 dependen de decisiones de infraestructura y datos maestros reales
+que no están tomadas; TE-12 sigue prematuro mientras Sprint 6 esté casi
+entero sin hacer. Ninguna fila pendiente de los seis sprints tiene hoy un
+criterio ejecutable sin adivinar una decisión ajena — ver `runs/DETENER` y
+`runs/27-plan.md` para el detalle completo de esta vuelta.
