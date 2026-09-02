@@ -41,7 +41,7 @@ paths:
       tags:
         - Operaciones
       summary: 'Sube una evidencia (multipart/form-data)'
-      description: 'Sube un archivo de evidencia (captura de RC, foto de campo, foto de incidencia, comprobante o firma de acta) y responde `aplicado`, `duplicado` (reintento del mismo `uuid_cliente`, se trata como éxito) o `rechazado` con motivo — mismo vocabulario que `POST /api/sync`, aunque este endpoint vive aparte porque su "sobre" lleva un binario. El servidor calcula el hash SHA-256 del contenido recibido; no se acepta un hash declarado por el cliente. La compresión a <300 KB y la cola de reintentos son responsabilidad de la app de campo (TE-07 lado app, repo `agrocom-field`) — este endpoint no las repite.'
+      description: 'Sube un archivo de evidencia (captura de RC, foto de campo, foto de incidencia, comprobante o firma de acta) y responde `aplicado`, `duplicado` (reintento del mismo `uuid_cliente`, se trata como éxito) o `rechazado` con motivo — mismo vocabulario que `POST /api/sync`, aunque este endpoint vive aparte porque su "sobre" lleva un binario. El servidor SIEMPRE recalcula el hash SHA-256 sobre el contenido recibido (es el que queda persistido); si el dispositivo declara `hash_dispositivo` (calculado al capturar, ADR 0009), se compara contra ese cálculo y se rechaza si no coincide — detecta corrupción en tránsito, sin confiar ciegamente en el valor declarado. La compresión a <300 KB y la cola de reintentos son responsabilidad de la app de campo (TE-07 lado app, repo `agrocom-field`) — este endpoint no las repite.'
       operationId: subirEvidencia
       requestBody:
         required: true
@@ -70,6 +70,11 @@ paths:
                   type: string
                   format: date-time
                   example: '2026-09-01T10:00:00-04:00'
+                hash_dispositivo:
+                  description: 'SHA-256 calculado en el dispositivo al capturar (ADR 0009), opcional — si se declara, debe coincidir con el hash recalculado por el servidor.'
+                  type: string
+                  example: null
+                  nullable: true
                 archivo:
                   type: string
                   format: binary

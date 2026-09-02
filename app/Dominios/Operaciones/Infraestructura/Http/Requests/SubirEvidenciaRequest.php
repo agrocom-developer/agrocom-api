@@ -36,6 +36,7 @@ final class SubirEvidenciaRequest extends FormRequest
             'uuid_cliente' => ['sometimes'],
             'tipo' => ['sometimes'],
             'fecha' => ['sometimes'],
+            'hash_dispositivo' => ['sometimes'],
             'archivo' => ['sometimes', 'max:20480'],
         ];
     }

@@ -43,7 +43,9 @@ it('una subida nueva persiste el archivo en el disco r2 y la fila en la base', f
     $evidencia = Evidencia::query()->where('uuid_cliente', 'uuid-ev-1')->firstOrFail();
 
     expect($evidencia->tipo->value)->toBe('imagen_campo')
-        ->and($evidencia->hash)->toBe(hash('sha256', 'contenido-de-prueba-1'));
+        ->and($evidencia->hash)->toBe(hash('sha256', 'contenido-de-prueba-1'))
+        // Ruta ADR 0009: evidencias/{tipo}/{yyyy}/{mm}/{uuid_cliente}-{id}.{ext}
+        ->and($evidencia->archivo_url)->toBe("evidencias/imagen_campo/2026/09/uuid-ev-1-{$evidencia->id}.jpg");
 
     Storage::disk('r2')->assertExists($evidencia->archivo_url);
     expect(Storage::disk('r2')->get($evidencia->archivo_url))->toBe('contenido-de-prueba-1');
@@ -130,3 +132,67 @@ it('el hash persistido coincide con el contenido subido para cada tipo del catá
     expect($evidencia->hash)->toBe(hash('sha256', $contenido))
         ->and(Storage::disk('r2')->get($evidencia->archivo_url))->toBe($contenido);
 })->with(['captura_rc', 'imagen_campo', 'foto_incidencia', 'comprobante', 'firma_acta']);
+
+it('un hash_dispositivo que coincide con el contenido recibido aplica normalmente', function () {
+    $contenido = 'contenido-con-hash-verificado';
+    $archivo = UploadedFile::fake()->createWithContent('campo.jpg', $contenido);
+
+    $respuesta = $this->post('/api/evidencias', [
+        ...camposEvidencia('uuid-ev-6', ['hash_dispositivo' => hash('sha256', $contenido)]),
+        'archivo' => $archivo,
+    ])->assertOk();
+
+    expect($respuesta->json('estado'))->toBe('aplicado');
+
+    $evidencia = Evidencia::query()->where('uuid_cliente', 'uuid-ev-6')->firstOrFail();
+    expect($evidencia->hash)->toBe(hash('sha256', $contenido));
+});
+
+it('un hash_dispositivo que NO coincide con el contenido recibido se rechaza sin persistir fila ni archivo', function () {
+    $archivo = UploadedFile::fake()->createWithContent('campo.jpg', 'contenido-real');
+
+    $respuesta = $this->post('/api/evidencias', [
+        ...camposEvidencia('uuid-ev-7', ['hash_dispositivo' => hash('sha256', 'otro-contenido-distinto')]),
+        'archivo' => $archivo,
+    ])->assertOk();
+
+    expect($respuesta->json())->toBe([
+        'uuid_cliente' => 'uuid-ev-7',
+        'estado' => 'rechazado',
+        'motivo' => 'el hash declarado no coincide con el contenido recibido',
+    ]);
+
+    expect(Evidencia::query()->where('uuid_cliente', 'uuid-ev-7')->exists())->toBeFalse()
+        ->and(Storage::disk('r2')->allFiles())->toBeEmpty();
+});
+
+it('un uuid_cliente con una barra se rechaza sin persistir fila ni archivo', function () {
+    $archivo = UploadedFile::fake()->createWithContent('campo.jpg', 'contenido-uuid-con-barra');
+
+    $respuesta = $this->post('/api/evidencias', [
+        ...camposEvidencia('uuid/con-barra'),
+        'archivo' => $archivo,
+    ])->assertOk();
+
+    expect($respuesta->json('estado'))->toBe('rechazado')
+        ->and(Evidencia::query()->where('uuid_cliente', 'uuid/con-barra')->exists())->toBeFalse()
+        ->and(Storage::disk('r2')->allFiles())->toBeEmpty();
+});
+
+it('una fecha inválida se rechaza sin persistir fila ni archivo', function () {
+    $archivo = UploadedFile::fake()->createWithContent('campo.jpg', 'contenido-fecha-invalida');
+
+    $respuesta = $this->post('/api/evidencias', [
+        ...camposEvidencia('uuid-ev-8', ['fecha' => 'no-es-una-fecha']),
+        'archivo' => $archivo,
+    ])->assertOk();
+
+    expect($respuesta->json())->toBe([
+        'uuid_cliente' => 'uuid-ev-8',
+        'estado' => 'rechazado',
+        'motivo' => 'fecha inválida',
+    ]);
+
+    expect(Evidencia::query()->where('uuid_cliente', 'uuid-ev-8')->exists())->toBeFalse()
+        ->and(Storage::disk('r2')->allFiles())->toBeEmpty();
+});

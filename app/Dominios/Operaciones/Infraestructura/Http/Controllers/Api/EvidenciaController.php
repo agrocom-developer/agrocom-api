@@ -33,9 +33,12 @@ final class EvidenciaController
             .'comprobante o firma de acta) y responde `aplicado`, `duplicado` (reintento del mismo '
             .'`uuid_cliente`, se trata como éxito) o `rechazado` con motivo — mismo vocabulario que '
             .'`POST /api/sync`, aunque este endpoint vive aparte porque su "sobre" lleva un binario. '
-            .'El servidor calcula el hash SHA-256 del contenido recibido; no se acepta un hash declarado '
-            .'por el cliente. La compresión a <300 KB y la cola de reintentos son responsabilidad de la '
-            .'app de campo (TE-07 lado app, repo `agrocom-field`) — este endpoint no las repite.',
+            .'El servidor SIEMPRE recalcula el hash SHA-256 sobre el contenido recibido (es el que queda '
+            .'persistido); si el dispositivo declara `hash_dispositivo` (calculado al capturar, ADR 0009), '
+            .'se compara contra ese cálculo y se rechaza si no coincide — detecta corrupción en tránsito, '
+            .'sin confiar ciegamente en el valor declarado. La compresión a <300 KB y la cola de reintentos '
+            .'son responsabilidad de la app de campo (TE-07 lado app, repo `agrocom-field`) — este endpoint '
+            .'no las repite.',
         summary: 'Sube una evidencia (multipart/form-data)',
         security: [['tokenDispositivo' => []]],
         tags: ['Operaciones'],
@@ -49,6 +52,7 @@ final class EvidenciaController
                         new OA\Property(property: 'uuid_cliente', type: 'string', example: 'a1b2c3d4-0000-4000-8000-000000000010'),
                         new OA\Property(property: 'tipo', type: 'string', enum: ['captura_rc', 'imagen_campo', 'foto_incidencia', 'comprobante', 'firma_acta'], example: 'imagen_campo'),
                         new OA\Property(property: 'fecha', type: 'string', format: 'date-time', example: '2026-09-01T10:00:00-04:00'),
+                        new OA\Property(property: 'hash_dispositivo', description: 'SHA-256 calculado en el dispositivo al capturar (ADR 0009), opcional — si se declara, debe coincidir con el hash recalculado por el servidor.', type: 'string', nullable: true, example: null),
                         new OA\Property(property: 'archivo', type: 'string', format: 'binary'),
                     ],
                     type: 'object',
@@ -77,7 +81,7 @@ final class EvidenciaController
     {
         $uuidCliente = is_string($request->input('uuid_cliente')) ? $request->input('uuid_cliente') : null;
 
-        $datos = RegistroEvidencia::intentarDesdeArreglo($request->only(['uuid_cliente', 'tipo', 'fecha']));
+        $datos = RegistroEvidencia::intentarDesdeArreglo($request->only(['uuid_cliente', 'tipo', 'fecha', 'hash_dispositivo']));
 
         if ($datos === null) {
             return $this->respuesta($uuidCliente, ResultadoSincronizacion::rechazado('evidencia con datos incompletos o inválidos'));
