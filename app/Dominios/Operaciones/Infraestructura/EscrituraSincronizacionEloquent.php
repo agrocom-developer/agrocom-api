@@ -10,6 +10,7 @@ use App\Dominios\Operaciones\Contratos\CierreSesion;
 use App\Dominios\Operaciones\Contratos\CierreTrabajo;
 use App\Dominios\Operaciones\Contratos\EscrituraSincronizacion;
 use App\Dominios\Operaciones\Contratos\RegistroCondiciones;
+use App\Dominios\Operaciones\Contratos\RegistroRecarga;
 use App\Dominios\Operaciones\Contratos\RegistroRecepcionCaldo;
 use App\Dominios\Operaciones\Contratos\ResultadoSincronizacion;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
@@ -21,6 +22,7 @@ use App\Dominios\Operaciones\Dominio\TipoEvidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Condiciones;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Evidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\Recarga;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\RecepcionCaldo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
@@ -208,6 +210,50 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
             });
         } catch (QueryException $excepcion) {
             return $this->resultadoDesdeExcepcion($excepcion, 'ope_recepciones_caldo');
+        }
+
+        return ResultadoSincronizacion::aplicado();
+    }
+
+    /**
+     * Recarga del dron (HU-13, tarea 23): crea una fila nueva, mismo
+     * mecanismo de idempotencia que `registrarCondiciones()`/
+     * `registrarRecepcionCaldo()` — el `UNIQUE` parcial de `uuid_cliente`
+     * resuelve el reintento, nunca un `SELECT` previo. La sesión se resuelve
+     * por `uuid_cliente` (puede haber llegado en el mismo lote:
+     * `SincronizarLote::ORDEN_CAUSAL` aplica siempre `sesion` antes que
+     * `recarga`).
+     *
+     * `alerta_temperatura` se calcula una sola vez, al momento del hecho
+     * (`RegistroRecarga::alertaTemperatura()`) — nunca rechaza el registro,
+     * solo lo marca (CA de HU-13: "alerta", no "bloqueo").
+     */
+    public function registrarRecarga(RegistroRecarga $datos): ResultadoSincronizacion
+    {
+        $sesionId = Sesion::query()->where('uuid_cliente', $datos->sesionUuidCliente)->value('id');
+
+        if ($sesionId === null) {
+            return ResultadoSincronizacion::rechazado('la sesión referenciada no existe todavía');
+        }
+
+        try {
+            DB::transaction(function () use ($datos, $sesionId): void {
+                Recarga::query()->create([
+                    'uuid_cliente' => $datos->uuidCliente,
+                    'sesion_id' => $sesionId,
+                    'secuencia' => $datos->secuencia,
+                    'litros_caldo' => $datos->litrosCaldo,
+                    'bateria_saliente_id' => $datos->bateriaSalienteId,
+                    'temperatura_bateria_c' => $datos->temperaturaBateriaC,
+                    'alerta_temperatura' => $datos->alertaTemperatura(),
+                    'motivo_retraso_caldo' => $datos->motivoRetrasoCaldo,
+                    'hora_retraso' => $datos->horaRetraso,
+                    'litros_combustible_generador' => $datos->litrosCombustibleGenerador,
+                    'hora' => $datos->hora,
+                ]);
+            });
+        } catch (QueryException $excepcion) {
+            return $this->resultadoDesdeExcepcion($excepcion, 'ope_recargas');
         }
 
         return ResultadoSincronizacion::aplicado();

@@ -41,6 +41,13 @@ namespace App\Dominios\Operaciones\Contratos;
  * — viajan como campos opcionales de `CierreSesion`/`CierreTrabajo` (ver esos
  * DTOs y runs/18.md, "decisión de esquema"), así que `cerrarSesion()`/
  * `cerrarTrabajo()` ya los cubren sin ampliar esta interfaz.
+ *
+ * `registrarRecarga()` (HU-13, tarea 23) crea una fila nueva, mismo
+ * mecanismo de idempotencia que `registrarCondiciones()`/
+ * `registrarRecepcionCaldo()`. Sin `$operarioPersonaId`, mismo motivo que
+ * esos dos: la espec no define dueño para este registro. A diferencia de
+ * `registrarCondiciones()`, nunca rechaza por la medición en sí (temperatura
+ * de batería alta): persiste una alerta calculada, no bloquea el registro.
  */
 interface EscrituraSincronizacion
 {
@@ -55,4 +62,6 @@ interface EscrituraSincronizacion
     public function registrarCondiciones(RegistroCondiciones $datos): ResultadoSincronizacion;
 
     public function registrarRecepcionCaldo(RegistroRecepcionCaldo $datos): ResultadoSincronizacion;
+
+    public function registrarRecarga(RegistroRecarga $datos): ResultadoSincronizacion;
 }

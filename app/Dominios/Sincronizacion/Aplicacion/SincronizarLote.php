@@ -8,6 +8,7 @@ use App\Dominios\Operaciones\Contratos\CierreSesion;
 use App\Dominios\Operaciones\Contratos\CierreTrabajo;
 use App\Dominios\Operaciones\Contratos\EscrituraSincronizacion;
 use App\Dominios\Operaciones\Contratos\RegistroCondiciones;
+use App\Dominios\Operaciones\Contratos\RegistroRecarga;
 use App\Dominios\Operaciones\Contratos\RegistroRecepcionCaldo;
 use App\Dominios\Operaciones\Contratos\ResultadoSincronizacion;
 
@@ -39,9 +40,11 @@ final class SincronizarLote
      * `recepcion_caldo` (tarea 18) solo depende de `trabajo` —no de
      * `sesion`— así que va justo después: el cliente puede entregar el
      * caldo en el mismo lote en que se abre el trabajo, antes de que exista
-     * ninguna sesión todavía.
+     * ninguna sesión todavía. `recarga` (tarea 23) depende solo de `sesion`,
+     * igual que `condiciones` — el orden relativo entre esas dos no importa,
+     * ninguna referencia a la otra.
      */
-    private const array ORDEN_CAUSAL = ['trabajo', 'recepcion_caldo', 'sesion', 'condiciones', 'cierre_trabajo', 'cierre_sesion'];
+    private const array ORDEN_CAUSAL = ['trabajo', 'recepcion_caldo', 'sesion', 'condiciones', 'recarga', 'cierre_trabajo', 'cierre_sesion'];
 
     public function __construct(
         private readonly EscrituraSincronizacion $operaciones,
@@ -98,6 +101,7 @@ final class SincronizarLote
             'recepcion_caldo' => $this->aplicarRecepcionCaldo($registro),
             'sesion' => $this->aplicarSesion($registro, $operarioPersonaId),
             'condiciones' => $this->aplicarCondiciones($registro),
+            'recarga' => $this->aplicarRecarga($registro),
             'cierre_trabajo' => $this->aplicarCierreTrabajo($registro, $operarioPersonaId),
             'cierre_sesion' => $this->aplicarCierreSesion($registro, $operarioPersonaId),
             default => ResultadoSincronizacion::rechazado('tipo de registro desconocido o dato mal formado'),
@@ -172,6 +176,22 @@ final class SincronizarLote
         return $datos === null
             ? ResultadoSincronizacion::rechazado('condiciones con datos incompletos o inválidos')
             : $this->operaciones->registrarCondiciones($datos);
+    }
+
+    /**
+     * @param  array<string, mixed>  $registro
+     *
+     * Sin verificación de pertenencia (mismo criterio que
+     * `aplicarCondiciones()`/`aplicarRecepcionCaldo()`): la espec no define
+     * una noción de "dueño" para este registro.
+     */
+    private function aplicarRecarga(array $registro): ResultadoSincronizacion
+    {
+        $datos = RegistroRecarga::intentarDesdeArreglo($registro);
+
+        return $datos === null
+            ? ResultadoSincronizacion::rechazado('recarga con datos incompletos o inválidos')
+            : $this->operaciones->registrarRecarga($datos);
     }
 
     /**
