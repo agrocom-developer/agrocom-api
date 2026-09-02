@@ -2,6 +2,8 @@
 
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
+use App\Dominios\Operaciones\Dominio\TipoEvidencia;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\Evidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
@@ -25,6 +27,22 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
  */
 
 uses(RefreshDatabase::class);
+
+/** Evidencia `imagen_campo` (HU-09, tarea 21: "sin captura no cierra"), requisito de `cierre_trabajo`. */
+function evidenciaImagenCampoParaFlujo(string $id): string
+{
+    $uuidCliente = "uuid-evidencia-{$id}";
+
+    Evidencia::query()->create([
+        'uuid_cliente' => $uuidCliente,
+        'tipo' => TipoEvidencia::ImagenCampo,
+        'archivo_url' => "evidencias/imagen_campo/2026/09/{$uuidCliente}.jpg",
+        'hash' => hash('sha256', $uuidCliente),
+        'fecha' => '2026-09-01T09:00:00-04:00',
+    ]);
+
+    return $uuidCliente;
+}
 
 it('abre, cierra y el jefe ve el trabajo cerrado en el panel', function () {
     $this->seed(CatalogoSeeder::class);
@@ -82,6 +100,7 @@ it('abre, cierra y el jefe ve el trabajo cerrado en el panel', function () {
             'uuid_cliente' => 'uuid-e2e-cierre-trabajo',
             'trabajo_uuid_cliente' => 'uuid-e2e-trabajo',
             'fin' => '2026-09-01T09:30:00-04:00',
+            'evidencia_imagen_campo_uuid_cliente' => evidenciaImagenCampoParaFlujo('e2e'),
         ],
     ]])->assertOk();
 

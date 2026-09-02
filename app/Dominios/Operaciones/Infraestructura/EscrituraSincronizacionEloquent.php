@@ -17,7 +17,9 @@ use App\Dominios\Operaciones\Dominio\EstadoSesion;
 use App\Dominios\Operaciones\Dominio\EstadoTrabajo;
 use App\Dominios\Operaciones\Dominio\Excepciones\TransicionSesionNoPermitida;
 use App\Dominios\Operaciones\Dominio\Excepciones\TransicionTrabajoNoPermitida;
+use App\Dominios\Operaciones\Dominio\TipoEvidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Condiciones;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\Evidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\RecepcionCaldo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
@@ -254,6 +256,24 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
      * menos una propia; si todavía no tiene ninguna, cualquier operario
      * legítimo puede cerrarlo (mismo criterio que abrir: "un lote puede
      * tener varios pilotos y drones").
+     *
+     * Evidencia obligatoria (espec §9/§10, HU-09, tarea 21): "sin captura no
+     * cierra" — se busca la evidencia por el `uuid_cliente` que trae
+     * `CierreTrabajo::$evidenciaImagenCampoUuidCliente`; si no existe o no es
+     * de tipo `imagen_campo`, el cierre se rechaza sin frenar el resto del
+     * lote (mismo patrón `rechazado` que el resto de este método) — nunca un
+     * 422 del lote completo. La validación va DESPUÉS de resolver
+     * "duplicado"/pertenencia: un reintento del mismo evento de cierre ya
+     * aplicado no vuelve a evaluarla.
+     *
+     * También se rechaza si esa MISMA evidencia ya cerró otro trabajo
+     * (hallazgo de la revisión crítica): sin esto, una sola foto podría
+     * "demostrar" dos lotes distintos, contra el propósito literal de la HU.
+     * El chequeo acá da un mensaje de rechazo claro; el índice único parcial
+     * `ope_trabajos_imagen_campo_evidencia_id_unico` (migración 100015) es la
+     * garantía real contra la condición de carrera de dos trabajos DISTINTOS
+     * cerrándose a la vez con la misma evidencia — el `lockForUpdate()` de
+     * este método solo serializa cierres del MISMO trabajo.
      */
     public function cerrarTrabajo(CierreTrabajo $datos, ?int $operarioPersonaId): ResultadoSincronizacion
     {
@@ -277,6 +297,25 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
                 if ($operarioPersonaId !== null && ! $this->operarioPuedeCerrarTrabajo($trabajo->id, $operarioPersonaId)) {
                     return ResultadoSincronizacion::rechazado('el operario no participó en este trabajo');
                 }
+
+                $evidenciaImagenCampo = Evidencia::query()
+                    ->where('uuid_cliente', $datos->evidenciaImagenCampoUuidCliente)
+                    ->first();
+
+                if ($evidenciaImagenCampo === null || $evidenciaImagenCampo->tipo !== TipoEvidencia::ImagenCampo) {
+                    return ResultadoSincronizacion::rechazado('falta la imagen del campo: evidencia inexistente o de tipo distinto');
+                }
+
+                $yaUsadaPorOtroTrabajo = Trabajo::query()
+                    ->where('imagen_campo_evidencia_id', $evidenciaImagenCampo->id)
+                    ->whereKeyNot($trabajo->id)
+                    ->exists();
+
+                if ($yaUsadaPorOtroTrabajo) {
+                    return ResultadoSincronizacion::rechazado('la imagen del campo ya fue usada para cerrar otro trabajo');
+                }
+
+                $trabajo->imagen_campo_evidencia_id = $evidenciaImagenCampo->id;
 
                 // `hectareas_declaradas` del trabajo es un campo DERIVADO
                 // (espec §4.3: "suma de sesiones"), no un dato que traiga

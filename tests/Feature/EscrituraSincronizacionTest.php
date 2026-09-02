@@ -13,7 +13,9 @@ use App\Dominios\Operaciones\Contratos\EscrituraSincronizacion;
 use App\Dominios\Operaciones\Contratos\RegistroCondiciones;
 use App\Dominios\Operaciones\Contratos\RegistroRecepcionCaldo;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
+use App\Dominios\Operaciones\Dominio\TipoEvidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Condiciones;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\Evidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\RecepcionCaldo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
@@ -68,6 +70,27 @@ function ordenVigenteParaEscritura(): OrdenAplicacion
 function pilotoParaEscritura(): PerPersona
 {
     return PerPersona::create(['nombre' => 'Piloto de prueba', 'rol' => RolOperativoPersona::Piloto, 'activo' => true]);
+}
+
+/**
+ * Evidencia `imagen_campo` (HU-09, tarea 21: "sin captura no cierra"),
+ * requisito de `cerrarTrabajo()` — mismo criterio que
+ * `evidenciaImagenCampoParaCierre()` de `CierreSincronizacionTest.php`, con
+ * nombre propio para no chocar con la declaración global de Pest.
+ */
+function evidenciaImagenCampoParaEscritura(string $id): string
+{
+    $uuidCliente = "uuid-evidencia-{$id}";
+
+    Evidencia::query()->create([
+        'uuid_cliente' => $uuidCliente,
+        'tipo' => TipoEvidencia::ImagenCampo,
+        'archivo_url' => "evidencias/imagen_campo/2026/09/{$uuidCliente}.jpg",
+        'hash' => hash('sha256', $uuidCliente),
+        'fecha' => '2026-09-01T09:00:00-04:00',
+    ]);
+
+    return $uuidCliente;
 }
 
 test('abrirTrabajo con datos válidos aplica y persiste la fila', function () {
@@ -685,6 +708,7 @@ test('CierreTrabajo::intentarDesdeArreglo acepta litros_sobrante ausente (null) 
         'uuid_cliente' => 'uuid-cierre-trabajo-sin-litros',
         'trabajo_uuid_cliente' => 'uuid-trabajo',
         'fin' => '2026-09-01T12:00:00-04:00',
+        'evidencia_imagen_campo_uuid_cliente' => 'uuid-evidencia-cualquiera',
     ]);
 
     expect($datos)->not->toBeNull()
@@ -697,6 +721,15 @@ test('CierreTrabajo::intentarDesdeArreglo devuelve null con litros_sobrante no n
         'trabajo_uuid_cliente' => 'uuid-trabajo',
         'fin' => '2026-09-01T12:00:00-04:00',
         'litros_sobrante' => 'no-numerico',
+        'evidencia_imagen_campo_uuid_cliente' => 'uuid-evidencia-cualquiera',
+    ]))->toBeNull();
+});
+
+test('CierreTrabajo::intentarDesdeArreglo devuelve null sin evidencia_imagen_campo_uuid_cliente (HU-09: sin captura no cierra)', function () {
+    expect(CierreTrabajo::intentarDesdeArreglo([
+        'uuid_cliente' => 'uuid-cierre-trabajo-sin-evidencia',
+        'trabajo_uuid_cliente' => 'uuid-trabajo',
+        'fin' => '2026-09-01T12:00:00-04:00',
     ]))->toBeNull();
 });
 
@@ -736,12 +769,14 @@ test('cerrarTrabajo persiste litros_sobrante cuando el registro lo trae, y lo de
         'trabajo_uuid_cliente' => $trabajoCon->uuid_cliente,
         'fin' => '2026-09-01T12:00:00-04:00',
         'litros_sobrante' => '15.00',
+        'evidencia_imagen_campo_uuid_cliente' => evidenciaImagenCampoParaEscritura('sobrante-con'),
     ]), null);
 
     $contrato->cerrarTrabajo(CierreTrabajo::intentarDesdeArreglo([
         'uuid_cliente' => 'uuid-cierre-trabajo-sin-sobrante',
         'trabajo_uuid_cliente' => $trabajoSin->uuid_cliente,
         'fin' => '2026-09-01T12:00:00-04:00',
+        'evidencia_imagen_campo_uuid_cliente' => evidenciaImagenCampoParaEscritura('sobrante-sin'),
     ]), null);
 
     expect($trabajoCon->refresh()->litros_sobrante)->toBe('15.00')
@@ -817,6 +852,7 @@ test('Trabajo::cuadreCaldo recalcula recibido/consumido/sobrante exacto y cuadra
         'trabajo_uuid_cliente' => 'uuid-trabajo-cuadre',
         'fin' => '2026-09-01T10:00:00-04:00',
         'litros_sobrante' => '15.00',
+        'evidencia_imagen_campo_uuid_cliente' => evidenciaImagenCampoParaEscritura('cuadre'),
     ]), null);
 
     $trabajo = Trabajo::query()->where('uuid_cliente', 'uuid-trabajo-cuadre')->firstOrFail();
@@ -843,6 +879,7 @@ test('Trabajo::cuadreCaldo marca cuadra en false cuando recibido no coincide con
         'trabajo_uuid_cliente' => $trabajo->uuid_cliente,
         'fin' => '2026-09-01T12:00:00-04:00',
         'litros_sobrante' => '15.00',
+        'evidencia_imagen_campo_uuid_cliente' => evidenciaImagenCampoParaEscritura('descuadrado'),
     ]), null);
 
     // Sin sesiones (consumido = 0): recibido 200 != sobrante 15 + consumido 0.

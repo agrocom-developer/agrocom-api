@@ -2,6 +2,8 @@
 
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
+use App\Dominios\Operaciones\Dominio\TipoEvidencia;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\Evidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\RecepcionCaldo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
@@ -100,6 +102,22 @@ function registroCierreSesionConLitros(string $uuidCliente, string $sesionUuidCl
     ];
 }
 
+/** Evidencia `imagen_campo` (HU-09, tarea 21: "sin captura no cierra"), requisito de `cierre_trabajo`. */
+function evidenciaImagenCampoParaRecepcion(string $id): string
+{
+    $uuidCliente = "uuid-evidencia-{$id}";
+
+    Evidencia::query()->create([
+        'uuid_cliente' => $uuidCliente,
+        'tipo' => TipoEvidencia::ImagenCampo,
+        'archivo_url' => "evidencias/imagen_campo/2026/09/{$uuidCliente}.jpg",
+        'hash' => hash('sha256', $uuidCliente),
+        'fecha' => '2026-09-01T09:00:00-04:00',
+    ]);
+
+    return $uuidCliente;
+}
+
 /** @return array<string, mixed> */
 function registroCierreTrabajoConSobrante(string $uuidCliente, string $trabajoUuidCliente, string $litrosSobrante, string $fin = '2026-09-01T10:00:00-04:00'): array
 {
@@ -109,6 +127,7 @@ function registroCierreTrabajoConSobrante(string $uuidCliente, string $trabajoUu
         'trabajo_uuid_cliente' => $trabajoUuidCliente,
         'fin' => $fin,
         'litros_sobrante' => $litrosSobrante,
+        'evidencia_imagen_campo_uuid_cliente' => evidenciaImagenCampoParaRecepcion($uuidCliente),
     ];
 }
 
