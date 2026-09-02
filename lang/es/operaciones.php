@@ -198,4 +198,47 @@ return [
         ],
     ],
 
+    // Pantalla de panel "Operación › Drones" (HU-27, tarea 36): ABM de la
+    // flota de drones, con su modelo (texto libre) y capacidad de carga en
+    // litros (30/50/60, CHECK de base de datos). Mismo molde que
+    // `comercial.campos`/`comercial.clientes`, sin sub-entidad.
+    'drones' => [
+        'titulo' => 'Drones',
+        'subtitulo' => 'Flota de drones registrada, con su modelo y volumen de carga.',
+        'nuevo' => 'Nuevo dron',
+        'filtro_busqueda' => 'Buscar',
+        'filtro_busqueda_placeholder' => 'Identificador o modelo…',
+        'filtrar' => 'Filtrar',
+        'limpiar_filtro' => 'Limpiar filtro',
+        'vacio' => 'Todavía no hay drones registrados.',
+        'filtro_vacio' => 'Ningún dron coincide con esta búsqueda.',
+        'col_identificador' => 'Identificador',
+        'col_modelo' => 'Modelo',
+        'col_capacidad' => 'Capacidad de carga',
+        'sin_modelo' => '—',
+        'sin_capacidad' => '—',
+        'capacidad_valor' => ':cantidad L',
+        'editar' => 'Editar',
+        'eliminar_accion' => 'Eliminar',
+        'confirmar_baja' => '¿Confirmás la baja de este dron?',
+        'paginacion_aria' => 'Paginación de drones',
+        'paginacion_anterior' => 'Anterior',
+        'paginacion_siguiente' => 'Siguiente',
+        'paginacion_info' => 'Página :actual de :total',
+        'titulo_crear' => 'Nuevo dron',
+        'titulo_editar' => 'Editar dron',
+        'subtitulo_form' => 'Identificador, modelo y capacidad de carga del dron.',
+        'seccion_datos' => 'Datos del dron',
+        'campos_contador' => ':cantidad campos',
+        'campo_identificador' => 'Identificador',
+        'campo_modelo' => 'Modelo',
+        'campo_modelo_ayuda' => 'Texto libre, ej.: DJI Agras T30.',
+        'campo_capacidad' => 'Capacidad de carga (L)',
+        'campo_capacidad_ayuda' => 'Valores permitidos: 30, 50 o 60 litros.',
+        'estado_form' => 'Los cambios se guardan al confirmar.',
+        'creado' => 'Dron creado correctamente.',
+        'actualizado' => 'Dron actualizado correctamente.',
+        'eliminado' => 'Dron dado de baja correctamente.',
+    ],
+
 ];

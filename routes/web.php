@@ -5,6 +5,7 @@ use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ClientesControll
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ContratosController;
 use App\Dominios\Distribucion\Infraestructura\Http\Controllers\Web\VersionesApkController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\AlertasController;
+use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\DronesController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\TrabajosController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\ValidacionSesionesController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\DashboardController;
@@ -224,5 +225,30 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::delete('/panel/campos/{campo}', [CamposController::class, 'destroy'])
             ->name('panel.campos.destroy');
+
+        // HU-27 (tarea 36): administración de la flota de drones con su
+        // modelo y capacidad de carga. Sin sub-entidad (a diferencia de
+        // `clientes`/`campos`): un dron no tiene contactos ni lotes. Cuatro
+        // permisos de grano fino
+        // (`operaciones.dron.ver`/`.crear`/`.editar`/`.eliminar`)
+        // verificados DENTRO del controlador contra el ROL ACTIVO, mismo
+        // criterio que `clientes`/`campos` arriba.
+        Route::get('/panel/drones', [DronesController::class, 'index'])
+            ->name('panel.drones.index');
+
+        Route::get('/panel/drones/crear', [DronesController::class, 'create'])
+            ->name('panel.drones.create');
+
+        Route::post('/panel/drones', [DronesController::class, 'store'])
+            ->name('panel.drones.store');
+
+        Route::get('/panel/drones/{dron}/editar', [DronesController::class, 'edit'])
+            ->name('panel.drones.edit');
+
+        Route::put('/panel/drones/{dron}', [DronesController::class, 'update'])
+            ->name('panel.drones.update');
+
+        Route::delete('/panel/drones/{dron}', [DronesController::class, 'destroy'])
+            ->name('panel.drones.destroy');
     });
 });

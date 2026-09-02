@@ -84,7 +84,10 @@ class SecMenuSeeder extends Seeder
         $this->item($comercial, 'comercial', 'reportes_cliente', 'picture_as_pdf', 4);
 
         // Recursos (§4.2)
-        $this->item($recursos, 'recursos', 'drones', 'airplanemode_active', 1);
+        // HU-27 (tarea 36): administración de la flota de drones — activa
+        // el ítem que ya estaba sembrado como "botón sin link" (ver
+        // docblock de `item()`).
+        $this->item($recursos, 'recursos', 'drones', 'airplanemode_active', 1, ruta: 'panel.drones.index', codigoPermiso: 'operaciones.dron.ver');
         $this->item($recursos, 'recursos', 'baterias', 'battery_charging_full', 2);
         $this->item($recursos, 'recursos', 'vehiculos', 'local_shipping', 3);
         $this->item($recursos, 'recursos', 'bases', 'home_work', 4);

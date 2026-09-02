@@ -71,7 +71,10 @@ exista el módulo `Mezclas`).
 | 32 | `atoms/input` no fusiona `$attributes` en su `<div>` raíz — solo en el `<input>` interno (`resources/views/components/atoms/input.blade.php:48,71`). Rompe LSP: cualquier composición que necesite una clase/atributo en el contenedor (p. ej. `grid-column: 1 / -1` de un campo ancho) no puede pasarla al componente y necesita un `<div>` envolvente puntual en la página, como quedó en `organizacion/index.blade.php` (hallazgo de la tarea 31, documentado en `sistema_diseno_panel.md` §14, no corregido a propósito por blast radius: lo consume todo el panel) | `./bin/verify` = 0, con las páginas que hoy envuelven `atoms/input` a mano (`organizacion/index.blade.php`) usando la clase directo en el componente | `resources/views/components/atoms/input.blade.php`, páginas que lo consumen | no | 2 | **incompleta** — se agotaron las 2 etapas sin cerrar la HU (PR #76 en borrador, `runs/32.estado` = `INCOMPLETA`). El fix quedó escrito pero sin commitear, mezclado en el working tree de `develop` (bloqueaba el arranque de la tarea 33); se rescató a `git stash` sin verificar —`bin/verify` no llegó a terminar— al planificar la 35. Recuperarlo: `git stash list` en el working tree compartido. Decisión del usuario: retomarla desde ahí o cerrar el PR |
 | 33 | HU-22 — clientes: ABM sobre `com_clientes` y `com_cliente_contactos`, el primer ABM real del panel (mismo patrón para el resto de Sprint 7) | `./bin/verify` = 0, con test de bitácora en alta/edición/baja, soft delete y NIT único entre clientes activos | módulo nuevo `Comercial/Aplicacion/` e `Infraestructura/Http/`, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/comercial.php`, tests | no | 4 | pendiente |
 | 34 | HU-23 — contratos: ABM sobre `com_contratos` y `com_contrato_ventanas`, con máquina de estados propia (`borrador/vigente/finalizado/cancelado`, invariante 7) y `monto_total` recalculado, nunca editable a mano (invariante 6) | `./bin/verify` = 0, con test de transición de estados válida/inválida, de ventana solapada rechazada y de `monto_total` exacto | `Comercial/Aplicacion/`, `Comercial/Infraestructura/Http/`, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/comercial.php`, tests | no | 5 | pendiente |
-| 35 | HU-24 — campos y lotes: ABM sobre `com_campos` y `com_lotes`, con geometría opcional del lote (GeoJSON en `jsonb`, sin PostGIS — ADR 0001) | `./bin/verify` = 0, con test de `hectareas > 0`, de geometría inválida rechazada, y de que un lote con órdenes/trabajos asociados no se puede eliminar sin avisar | `Comercial/Aplicacion/`, `Comercial/Infraestructura/Http/`, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/comercial.php`, tests | no | 4 | pendiente |
+| 35 | HU-24 — campos y lotes: ABM sobre `com_campos` y `com_lotes`, con geometría opcional del lote (GeoJSON en `jsonb`, sin PostGIS — ADR 0001) | `./bin/verify` = 0, con test de `hectareas > 0`, de geometría inválida rechazada, y de que un lote con órdenes/trabajos asociados no se puede eliminar sin avisar | `Comercial/Aplicacion/`, `Comercial/Infraestructura/Http/`, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/comercial.php`, tests | no | 4 | **hecha** (PR #80/#81, mergeados 2/9/2026) |
+| 36 | HU-27 — drones: ABM sobre `ope_drones`, con `modelo`/`capacidad_l` nuevos por ALTER (30/50/60 L) — la migración de la tarea 23 los dejó fuera a propósito | `./bin/verify` = 0, con test de `capacidad_l` fuera de {30,50,60} rechazada y de `identificador` duplicado como error de validación | `Operaciones/Aplicacion/`, `Operaciones/Infraestructura/Http/`, migración ALTER de `ope_drones`, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/operaciones.php`, tests | no | 3 | pendiente |
+| 37 | HU-26 — personas y bases: ABM sobre `per_personas` y `per_bases`, dos pantallas independientes; módulo `Personal` sin `Aplicacion/`/`Http/` todavía, se arma desde cero | `./bin/verify` = 0, con test de que editar `tarifa_ha` de una persona no altera un `DevengoPersonal` ya generado (el devengo ya congela su propia copia, confirmado en `Finanzas/Aplicacion/GenerarDevengosSesion.php`) | `Personal/**`, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/personal.php` (nuevo), tests | no | 4 | pendiente |
+| 38 | HU-25 — órdenes de aplicación: ABM sobre `ope_ordenes_aplicacion` con su primera máquina de estados real (`emitida → vigente`, `TransicionesOrden`/`MaquinaEstadosOrden` nuevos, mismo patrón que `MaquinaEstadosContrato`); una orden `vigente` ya aparece sola en `GET /api/sync/catalogo`, sin tocar el motor de sync | `./bin/verify` = 0, con test de la transición válida/inválida y de que dos órdenes `vigente` para el mismo lote chocan contra el índice parcial como error de validación | `Operaciones/Dominio/MaquinaEstados/`, `Operaciones/Aplicacion/MaquinaEstados/`, `Operaciones/Aplicacion/` (casos de uso de órdenes), `Operaciones/Infraestructura/Http/`, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/operaciones.php`, tests | no | 5 | pendiente |
 
 ### El bug de la 24 — ya pasó dos veces, sigue sin arreglarse
 
@@ -204,14 +207,26 @@ tarea 31 en vez de tocar el átomo. Las tareas 34 en adelante deberían hacer lo
 mismo si algún campo ancho lo necesita — no asuman la 32 resuelta solo porque
 está antes en la cola.
 
-Se escribieron los prompts de 33, 34 y 35 en esta vuelta (regla de "las
-próximas 3"; la 32 ya estaba escrita de la vuelta anterior, solo se
-actualizó su estado). **HU-25, HU-26, HU-27 y HU-45 siguen sin fila ni
-prompt** — la próxima planificación, al cerrar la 35, les escribe el criterio
-de aceptación ejecutable de cada una a partir de `plan_sprints.md` §165-181 y
-la especificación funcional, siguiendo el mismo patrón que estableció la 33
-(primer ABM real del panel — controller + Form Request + Blade, sin Livewire,
-permisos separados por acción, namespace de vista por módulo).
+Se escribieron los prompts de 33, 34 y 35 en la vuelta anterior (regla de
+"las próximas 3"; la 32 ya estaba escrita de la vuelta de antes, solo se
+actualizó su estado). Las tres se cerraron: 33 (PR #77), 34 (PR #78/#79), 35
+(PR #80/#81), todas mergeadas 2/9/2026.
+
+**36, 37 y 38 cubren HU-27, HU-26 y HU-25** — en ese orden por progresión de
+complejidad, mismo criterio que 33→34→35: drones (36) es el ABM más simple
+del sprint (sin máquina de estados, sin guarda cruzada); personas y bases
+(37) arma el módulo `Personal` desde cero (no tenía `Aplicacion/`/`Http/`
+todavía) pero tampoco tiene máquina de estados; órdenes (38) es la primera
+del sprint con una máquina de estados propia (`emitida → vigente`), así que
+va última, cuando el patrón ABM ya está asentado tres veces. **HU-45 (usuarios
+— cierra HU-01) queda deliberadamente sin fila todavía**: toca `sec_user`/
+`sec_user_role` (seguridad de acceso, no solo un catálogo de negocio), no
+tiene hoy ningún patrón de password/primer login en el código, y su alcance
+("el encargado no puede crear un usuario dueño", "cambiar roles no invalida
+la sesión activa") tiene más superficie de decisión que un ABM de catálogo —
+mejor planificarla con el contexto fresco de cómo salieron 36-38, no en la
+misma tanda. La próxima planificación, al cerrar la 38, le escribe su fila y
+su prompt.
 
 ### Condicionadas — todavía no tienen sobre qué correr
 
@@ -300,3 +315,15 @@ guarda de que cambiar tarifa no altere devengos ya generados), que conviene
 dejar para cuando el patrón esté más asentado. HU-25 a HU-27 y HU-45 quedan
 para la próxima vuelta de planificación, sin fila propia todavía (ver "Sprint
 7 — de destrabado a en marcha" arriba).
+
+**36 → 37 → 38 siguen exactamente el mismo criterio de progresión que 33 →
+34 → 35, una vez que esas tres se integraron.** Drones (36) no tiene ninguna
+dependencia de datos con personas/bases (37) ni con órdenes (38) — el orden
+es de complejidad, no de FK: drones es un ABM de una sola tabla sin máquina
+de estados; personas y bases arman el módulo `Personal` desde cero (hoy solo
+tiene lecturas) pero siguen sin máquina de estados; órdenes es la primera HU
+de Sprint 7 con una máquina de estados propia (`emitida → vigente`), así que
+conviene que sea la última de esta tanda, con el patrón ABM ya asentado tres
+veces por 33-35 y sin máquina de estados dos veces más por 36-37. HU-45
+(usuarios) queda fuera de esta tanda a propósito — ver "Sprint 7" arriba.
+
