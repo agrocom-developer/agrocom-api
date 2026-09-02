@@ -33,10 +33,24 @@ use Illuminate\Support\Facades\DB;
  * evidencia (hallazgo de la revisión crítica de esta tarea) — cada
  * transacción bloquea su propia fila de `Acta`, así que ambas pueden pasar
  * el chequeo `$yaUsadaPorOtraActa` antes de que la otra confirme.
+ *
+ * `$generarReporte` (HU-18, tarea 25): sin evento de dominio `ActaFirmada`
+ * que enganchar (la tarea 24 no lo dejó — `MaquinaEstadosActa::firmar()` solo
+ * muta y guarda, verificado en el código, no asumido), este caso de uso es
+ * el único punto donde la transición `pendiente → firmada` ocurre de
+ * verdad — así que es también el único lugar correcto para disparar la
+ * generación automática del reporte técnico, dentro de la MISMA transacción
+ * (ver runs/25.md). Se llama solo en la rama que transiciona de verdad,
+ * nunca en el reintento idempotente de arriba (`return $actaLock;`) ni en el
+ * `catch` de conflicto concurrente: en esos dos casos el reporte ya lo generó
+ * la firma que ganó la carrera.
  */
 final class FirmarActa
 {
-    public function __construct(private readonly MaquinaEstadosActa $maquina) {}
+    public function __construct(
+        private readonly MaquinaEstadosActa $maquina,
+        private readonly GenerarReporteTecnico $generarReporte,
+    ) {}
 
     /**
      * @throws FirmaActaNoDisponible si la evidencia no sirve, o el acta ya está firmada con otra.
@@ -71,7 +85,10 @@ final class FirmarActa
                     throw FirmaActaNoDisponible::porEvidenciaYaUsada($evidencia->id);
                 }
 
-                return $this->maquina->firmar($actaLock, $evidencia->id, $firmante, $fechaFirma);
+                $actaFirmada = $this->maquina->firmar($actaLock, $evidencia->id, $firmante, $fechaFirma);
+                $this->generarReporte->ejecutar($actaFirmada->trabajo);
+
+                return $actaFirmada;
             });
         } catch (QueryException) {
             // El `lockForUpdate()` de arriba serializa reintentos sobre la

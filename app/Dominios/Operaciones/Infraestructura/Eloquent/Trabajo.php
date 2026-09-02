@@ -121,6 +121,25 @@ class Trabajo extends ModeloDominio
     }
 
     /**
+     * Condiciones de vuelo registradas al iniciar cada sesión (HU-06, tarea
+     * 17): `trabajo_id` está denormalizado en `ope_condiciones` justo para
+     * poder leerlas por trabajo sin pasar por `sesiones` (ver docblock de
+     * `Condiciones`). Puede haber más de una fila — una por sesión.
+     *
+     * @return HasMany<Condiciones, $this>
+     */
+    public function condiciones(): HasMany
+    {
+        return $this->hasMany(Condiciones::class, 'trabajo_id');
+    }
+
+    /** @return HasOne<ReporteTecnico, $this> */
+    public function reporteTecnico(): HasOne
+    {
+        return $this->hasOne(ReporteTecnico::class, 'trabajo_id');
+    }
+
+    /**
      * Cuadre de caldo (espec §7.3, criterio de aceptación 4 de la tarea 18):
      * `recibido` (suma de `ope_recepciones_caldo.litros` de este trabajo),
      * `consumido` (suma de `ope_sesiones.litros_consumidos` de sus sesiones,
