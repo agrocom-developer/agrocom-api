@@ -5,6 +5,7 @@ namespace App\Dominios\Operaciones\Aplicacion;
 use App\Dominios\Comercial\Contratos\LecturaLotes;
 use App\Dominios\Operaciones\Dominio\EstadoCoberturaTrabajo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Condiciones;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\Incidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
 use Brick\Math\BigDecimal;
@@ -56,7 +57,7 @@ final class ArmarContenidoReporteTecnico
      */
     public function ejecutar(Trabajo $trabajo): array
     {
-        $trabajo->loadMissing(['sesiones', 'imagenCampoEvidencia', 'acta', 'condiciones']);
+        $trabajo->loadMissing(['sesiones.incidencias.evidenciaFoto', 'imagenCampoEvidencia', 'acta', 'condiciones']);
 
         /** @var Collection<int, Sesion> $sesionesVigentes */
         $sesionesVigentes = $trabajo->sesiones->whereNull('anulada_en')->sortBy('secuencia')->values();
@@ -84,10 +85,17 @@ final class ArmarContenidoReporteTecnico
                 ])
                 ->all(),
             'superficie_no_aplicada' => $this->superficieNoAplicada($trabajo, $cobertura, $sesionesVigentes),
-            // HU-08 (tarea 22, incidencias con evidencia): complemento de la
-            // espec §9, todavía sin datos — su PR (#59) no está integrado a
-            // `develop` (ver runs/25.md). Lista vacía, no una que finja datos.
-            'incidencias' => [],
+            // HU-08 (tarea 22, incidencias con evidencia): cuelgan de la
+            // SESIÓN, no del trabajo directo — se recolectan de
+            // `$sesionesVigentes`, no de una relación `Trabajo::incidencias()`
+            // (no existe, y no hace falta crearla).
+            'incidencias' => $sesionesVigentes
+                ->flatMap(fn (Sesion $sesion): Collection => $sesion->incidencias)
+                ->map(fn (Incidencia $incidencia): array => [
+                    'tipo' => $incidencia->tipo->value,
+                    'evidencia_url' => $incidencia->evidenciaFoto?->archivo_url,
+                ])
+                ->all(),
             'sesiones_detalle' => $sesionesVigentes->count() > 1
                 ? $sesionesVigentes
                     ->map(fn (Sesion $sesion): array => [

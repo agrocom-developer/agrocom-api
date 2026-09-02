@@ -6,6 +6,7 @@ use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
 use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
 use App\Dominios\Operaciones\Dominio\EstadoSesion;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
@@ -129,5 +130,18 @@ class Sesion extends ModeloDominio
     public function rechazo(): HasOne
     {
         return $this->hasOne(SesionRechazo::class, 'anula_a_id');
+    }
+
+    /**
+     * Incidencias registradas durante esta sesión (HU-08, tarea 22): a
+     * diferencia de `Condiciones` (denormaliza `trabajo_id`), `Incidencia`
+     * solo referencia `sesion_id` — se recolectan por sesión, no por trabajo
+     * directo (ver `ArmarContenidoReporteTecnico`).
+     *
+     * @return HasMany<Incidencia, $this>
+     */
+    public function incidencias(): HasMany
+    {
+        return $this->hasMany(Incidencia::class, 'sesion_id');
     }
 }
