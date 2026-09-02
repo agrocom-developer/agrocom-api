@@ -1,6 +1,7 @@
 <?php
 
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ClientesController;
+use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ContratosController;
 use App\Dominios\Distribucion\Infraestructura\Http\Controllers\Web\VersionesApkController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\AlertasController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\TrabajosController;
@@ -172,5 +173,30 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::delete('/panel/clientes/{cliente}', [ClientesController::class, 'destroy'])
             ->name('panel.clientes.destroy');
+
+        // HU-23 (tarea 34): administración de contratos con sus ventanas de
+        // aplicación. Sin `.destroy`: la baja es una transición de estado
+        // (`cambiarEstado` hacia `cancelado`), no un soft delete fuera de la
+        // máquina de estados (invariante 7). Cuatro permisos de grano fino
+        // (`comercial.contrato.ver`/`.crear`/`.editar`/`.cambiar_estado`)
+        // verificados DENTRO del controlador contra el ROL ACTIVO, mismo
+        // criterio que `clientes` arriba.
+        Route::get('/panel/contratos', [ContratosController::class, 'index'])
+            ->name('panel.contratos.index');
+
+        Route::get('/panel/contratos/crear', [ContratosController::class, 'create'])
+            ->name('panel.contratos.create');
+
+        Route::post('/panel/contratos', [ContratosController::class, 'store'])
+            ->name('panel.contratos.store');
+
+        Route::get('/panel/contratos/{contrato}/editar', [ContratosController::class, 'edit'])
+            ->name('panel.contratos.edit');
+
+        Route::put('/panel/contratos/{contrato}', [ContratosController::class, 'update'])
+            ->name('panel.contratos.update');
+
+        Route::post('/panel/contratos/{contrato}/estado', [ContratosController::class, 'cambiarEstado'])
+            ->name('panel.contratos.cambiar-estado');
     });
 });
