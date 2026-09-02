@@ -1,5 +1,6 @@
 <?php
 
+use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\CamposController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ClientesController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ContratosController;
 use App\Dominios\Distribucion\Infraestructura\Http\Controllers\Web\VersionesApkController;
@@ -198,5 +199,30 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::post('/panel/contratos/{contrato}/estado', [ContratosController::class, 'cambiarEstado'])
             ->name('panel.contratos.cambiar-estado');
+
+        // HU-24 (tarea 35): administración de campos con sus lotes. Un campo
+        // se crea/edita con sus lotes en la misma operación (mismo criterio
+        // que `clientes` arriba con sus contactos) — no hay ABM separado de
+        // lotes ni rutas propias para ellos. Cuatro permisos de grano fino
+        // (`comercial.campo.ver`/`.crear`/`.editar`/`.eliminar`) verificados
+        // DENTRO del controlador contra el ROL ACTIVO, mismo criterio que
+        // `clientes`/`contratos` arriba.
+        Route::get('/panel/campos', [CamposController::class, 'index'])
+            ->name('panel.campos.index');
+
+        Route::get('/panel/campos/crear', [CamposController::class, 'create'])
+            ->name('panel.campos.create');
+
+        Route::post('/panel/campos', [CamposController::class, 'store'])
+            ->name('panel.campos.store');
+
+        Route::get('/panel/campos/{campo}/editar', [CamposController::class, 'edit'])
+            ->name('panel.campos.edit');
+
+        Route::put('/panel/campos/{campo}', [CamposController::class, 'update'])
+            ->name('panel.campos.update');
+
+        Route::delete('/panel/campos/{campo}', [CamposController::class, 'destroy'])
+            ->name('panel.campos.destroy');
     });
 });

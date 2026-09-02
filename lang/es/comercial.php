@@ -157,4 +157,63 @@ return [
         'error_humedad_rango' => 'La humedad mínima no puede ser mayor que la máxima.',
     ],
 
+    // HU-24 (tarea 35): administración de campos con sus lotes. Tercer ABM
+    // del panel — mismo molde que clientes (tarea 33): un campo se
+    // crea/edita con sus lotes en la misma operación, sin pantalla propia
+    // para lotes.
+    'campos' => [
+        'creado' => 'El campo se dio de alta correctamente.',
+        'actualizado' => 'Los datos del campo se actualizaron correctamente.',
+        'eliminado' => 'El campo se dio de baja correctamente.',
+
+        // Listado
+        'titulo' => 'Campos',
+        'subtitulo' => 'Administración de campos y sus lotes.',
+        'nuevo' => 'Nuevo campo',
+        'filtro_busqueda' => 'Buscar',
+        'filtro_busqueda_placeholder' => 'Nombre del campo o cliente',
+        'filtrar' => 'Buscar',
+        'limpiar_filtro' => 'Limpiar búsqueda',
+        'vacio' => 'Todavía no se dio de alta ningún campo.',
+        'filtro_vacio' => 'Ningún campo coincide con la búsqueda.',
+        'col_nombre' => 'Campo',
+        'col_cliente' => 'Cliente',
+        'col_lotes' => 'Lotes',
+        'col_hectareas' => 'Hectáreas',
+        'lotes_cantidad' => ':cantidad lotes',
+        'hectareas_valor' => ':cantidad ha',
+        'editar' => 'Editar',
+        'eliminar_accion' => 'Eliminar',
+        'confirmar_baja' => '¿Dar de baja este campo? Sus lotes no se ven afectados.',
+        'paginacion_aria' => 'Paginación de campos',
+        'paginacion_anterior' => 'Anterior',
+        'paginacion_siguiente' => 'Siguiente',
+        'paginacion_info' => 'Página :actual de :total',
+
+        // Formulario (create/edit)
+        'titulo_crear' => 'Nuevo campo',
+        'titulo_editar' => 'Editar campo',
+        'subtitulo_form' => 'El campo se guarda junto con sus lotes en una sola operación.',
+        'seccion_datos' => 'Datos del campo',
+        'campos_contador' => ':cantidad campos',
+        'campo_cliente' => 'Cliente',
+        'campo_cliente_placeholder' => 'Seleccioná un cliente',
+        'campo_nombre' => 'Nombre',
+        'campo_ubicacion' => 'Ubicación',
+        'seccion_lotes' => 'Lotes',
+        'lote_agregar' => 'Agregar lote',
+        'lote_quitar' => 'Quitar',
+        'lote_codigo' => 'Código',
+        'lote_hectareas' => 'Hectáreas',
+        'lote_geometria' => 'Geometría (GeoJSON)',
+        'lote_geometria_placeholder' => '{"type": "Polygon", "coordinates": [[[lng, lat], ...]]}',
+        'lote_geometria_ayuda' => 'Opcional. Polígono en formato GeoJSON, se guarda y se dibuja tal cual — no se valida contra el estándar completo.',
+        'lote_restricciones' => 'Restricciones',
+        'lote_restricciones_placeholder' => 'Cables, viviendas, colmenas, vecinos sensibles',
+        'estado_form' => 'Los cambios se guardan al confirmar.',
+
+        // Errores de validación
+        'error_geometria_invalida' => 'La geometría tiene que ser un JSON con "type": "Polygon" y "coordinates" como arreglo.',
+    ],
+
 ];

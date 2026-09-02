@@ -76,7 +76,11 @@ class SecMenuSeeder extends Seeder
         // HU-23 (tarea 34): administración de contratos — activa el ítem que
         // ya estaba sembrado como "botón sin link" (ver docblock de `item()`).
         $this->item($comercial, 'comercial', 'contratos', 'description', 2, ruta: 'panel.contratos.index', codigoPermiso: 'comercial.contrato.ver');
-        $this->item($comercial, 'comercial', 'campos', 'map', 3);
+        // HU-24 (tarea 35): administración de campos y sus lotes — activa
+        // el ítem que ya estaba sembrado como "botón sin link" (ver
+        // docblock de `item()`). Sin ítem propio para "lotes": se
+        // gestionan dentro del formulario del campo.
+        $this->item($comercial, 'comercial', 'campos', 'map', 3, ruta: 'panel.campos.index', codigoPermiso: 'comercial.campo.ver');
         $this->item($comercial, 'comercial', 'reportes_cliente', 'picture_as_pdf', 4);
 
         // Recursos (§4.2)
