@@ -36,6 +36,16 @@ namespace App\Dominios\Operaciones\Contratos;
  * que nadie más puede calcular por el cliente. OPCIONAL igual que
  * `CierreSesion::$litrosConsumidos` y por el mismo motivo: la espec no lo
  * fija como condición de la transición `trabajo → cerrado`.
+ *
+ * `$evidenciaImagenCampoUuidCliente` (espec §9/§10, HU-09, tarea 21): mismo
+ * tratamiento que `$litrosSobrante` — un dato que nadie más puede
+ * reconstruir por el cliente — pero, a diferencia de ese campo, OBLIGATORIO:
+ * "sin captura no cierra" (CA literal de la HU) SÍ es condición de la
+ * transición `trabajo → cerrado`. Referencia por `uuid_cliente` a una
+ * evidencia ya subida por `POST /api/evidencias` (tarea 19) — este DTO no
+ * valida que exista ni que sea de tipo `imagen_campo`, eso exige leer la
+ * base (ver `EscrituraSincronizacionEloquent::cerrarTrabajo()`); acá solo se
+ * exige la forma "string no vacío", mismo criterio que `trabajoUuidCliente`.
  */
 final readonly class CierreTrabajo
 {
@@ -44,6 +54,7 @@ final readonly class CierreTrabajo
         public string $trabajoUuidCliente,
         public string $fin,
         public ?string $litrosSobrante,
+        public string $evidenciaImagenCampoUuidCliente,
     ) {}
 
     /** @param  array<string, mixed>  $datos */
@@ -53,6 +64,7 @@ final readonly class CierreTrabajo
             || ! self::esStringNoVacio($datos['trabajo_uuid_cliente'] ?? null)
             || ! self::esStringNoVacio($datos['fin'] ?? null)
             || ! self::esNumeroNoNegativoOAusente($datos['litros_sobrante'] ?? null)
+            || ! self::esStringNoVacio($datos['evidencia_imagen_campo_uuid_cliente'] ?? null)
         ) {
             return null;
         }
@@ -62,6 +74,7 @@ final readonly class CierreTrabajo
             trabajoUuidCliente: (string) $datos['trabajo_uuid_cliente'],
             fin: (string) $datos['fin'],
             litrosSobrante: isset($datos['litros_sobrante']) ? (string) $datos['litros_sobrante'] : null,
+            evidenciaImagenCampoUuidCliente: (string) $datos['evidencia_imagen_campo_uuid_cliente'],
         );
     }
 

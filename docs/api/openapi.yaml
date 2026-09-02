@@ -1107,6 +1107,11 @@ components:
           type: string
           example: null
           nullable: true
+        evidencia_imagen_campo_uuid_cliente:
+          description: '`cierre_trabajo`: REQUERIDO — `uuid_cliente` de una evidencia ya subida por `POST /api/evidencias` con `tipo: imagen_campo` (espec §9/§10, HU-09). Sin ella, referenciando una evidencia inexistente o de otro tipo, el cierre se rechaza ("sin captura no cierra").'
+          type: string
+          example: null
+          nullable: true
         motivo_cierre:
           description: '`cierre_sesion`: catálogo espec §4.3.'
           type: string

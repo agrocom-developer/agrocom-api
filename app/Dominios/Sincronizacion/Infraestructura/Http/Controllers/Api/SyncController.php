@@ -51,7 +51,9 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'secuencia', description: '`sesion`.', type: 'integer', example: 1),
         new OA\Property(property: 'piloto_id', description: '`sesion`: id de servidor de la persona (del pull de catálogo).', type: 'integer', example: 5),
         new OA\Property(property: 'auxiliar_id', description: '`sesion`, opcional.', type: 'integer', nullable: true, example: null),
+        new OA\Property(property: 'dron_id', description: '`sesion`, opcional (HU-07): id de servidor del dron (catálogo mínimo de `Operaciones`, sin pull de catálogo propio todavía).', type: 'integer', nullable: true, example: null),
         new OA\Property(property: 'hectareas_declaradas', description: 'DECIMAL como string (invariante 6). `0` si se omite.', type: 'string', example: '0'),
+        new OA\Property(property: 'hectarea_inicial_acumulada', description: '`sesion`, opcional (HU-07): acumulado de DJI al abrir la sesión, control de doble conteo (espec §5). DECIMAL como string.', type: 'string', nullable: true, example: null),
         new OA\Property(property: 'inicio', type: 'string', format: 'date-time', example: '2026-09-01T10:00:00-04:00'),
         new OA\Property(property: 'fin', type: 'string', format: 'date-time', nullable: true, description: 'Requerido en `cierre_trabajo`/`cierre_sesion`.', example: null),
         new OA\Property(property: 'litros', description: '`recepcion_caldo`: litros entregados por el cliente. DECIMAL como string (invariante 6).', type: 'string', nullable: true, example: null),
@@ -59,6 +61,13 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'hora', description: '`recepcion_caldo`: cuándo se entregó.', type: 'string', format: 'date-time', nullable: true, example: null),
         new OA\Property(property: 'litros_consumidos', description: '`cierre_sesion`, opcional: litros de caldo efectivamente rociados en la sesión (espec §7.2). DECIMAL como string.', type: 'string', nullable: true, example: null),
         new OA\Property(property: 'litros_sobrante', description: '`cierre_trabajo`, opcional: litros que quedaron sin aplicar al cerrar el trabajo (espec §7.2). DECIMAL como string.', type: 'string', nullable: true, example: null),
+        new OA\Property(
+            property: 'evidencia_imagen_campo_uuid_cliente',
+            description: '`cierre_trabajo`: REQUERIDO — `uuid_cliente` de una evidencia ya subida por `POST /api/evidencias` con `tipo: imagen_campo` (espec §9/§10, HU-09). Sin ella, referenciando una evidencia inexistente o de otro tipo, el cierre se rechaza ("sin captura no cierra").',
+            type: 'string',
+            nullable: true,
+            example: null,
+        ),
         new OA\Property(
             property: 'motivo_cierre',
             description: '`cierre_sesion`: catálogo espec §4.3.',

@@ -10,6 +10,7 @@ use App\Dominios\Operaciones\Dominio\EstadoTrabajo;
 use Brick\Math\BigDecimal;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
@@ -37,6 +38,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * Junto con `recepcionesCaldo()` y `Sesion::$litros_consumidos`, alimenta
  * {@see self::cuadreCaldo()}.
  *
+ * `imagen_campo_evidencia_id` (espec §9/§10, HU-09, tarea 21): FK a
+ * `ope_evidencias.id`, completada al cerrar el trabajo — sin ella, el cierre
+ * se rechaza (ver `EscrituraSincronizacionEloquent::cerrarTrabajo()`). A
+ * diferencia de `orden_id`/`lote_id` (otro módulo, FK plano sin relación
+ * Eloquent, ADR 0003 regla 3), `Evidencia` vive en el mismo módulo
+ * `Operaciones`, así que sí tiene relación Eloquent normal
+ * ({@see self::imagenCampoEvidencia()}).
+ *
  * @property int $id
  * @property string $uuid_cliente
  * @property int $orden_id
@@ -48,6 +57,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property CarbonImmutable|null $fin
  * @property string|null $cierre_uuid_cliente
  * @property string|null $litros_sobrante
+ * @property int|null $imagen_campo_evidencia_id
  */
 class Trabajo extends ModeloDominio
 {
@@ -68,6 +78,7 @@ class Trabajo extends ModeloDominio
         'fin',
         'cierre_uuid_cliente',
         'litros_sobrante',
+        'imagen_campo_evidencia_id',
     ];
 
     /** @return array<string, string> */
@@ -80,6 +91,7 @@ class Trabajo extends ModeloDominio
             'inicio' => 'immutable_datetime',
             'fin' => 'immutable_datetime',
             'litros_sobrante' => 'decimal:2',
+            'imagen_campo_evidencia_id' => 'integer',
         ];
     }
 
@@ -87,6 +99,12 @@ class Trabajo extends ModeloDominio
     public function sesiones(): HasMany
     {
         return $this->hasMany(Sesion::class, 'trabajo_id');
+    }
+
+    /** @return BelongsTo<Evidencia, $this> */
+    public function imagenCampoEvidencia(): BelongsTo
+    {
+        return $this->belongsTo(Evidencia::class, 'imagen_campo_evidencia_id');
     }
 
     /** @return HasMany<RecepcionCaldo, $this> */
