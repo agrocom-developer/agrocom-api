@@ -121,6 +121,39 @@
             </div>
         @endif
 
+        <x-molecules.section-head :title="__('operaciones.trabajos.detalle_acta_titulo')" class="ag-trabajo-detalle__seccion" />
+
+        @if ($trabajo->acta === null)
+            <x-molecules.alert-strip variant="info" icon="description" class="ag-trabajos__aviso">
+                {{ __('operaciones.trabajos.detalle_acta_vacio') }}
+            </x-molecules.alert-strip>
+        @else
+            <div class="ag-trabajo-detalle__resumen">
+                <span class="ag-trabajo-detalle__campo">
+                    <strong>{{ __('operaciones.trabajos.col_estado') }}</strong>
+                    <x-atoms.badge :variant="$trabajo->acta->estado->value === 'firmada' ? 'success' : 'warning'">
+                        {{ __("operaciones.trabajos.acta_estado.{$trabajo->acta->estado->value}") }}
+                    </x-atoms.badge>
+                </span>
+                <span class="ag-trabajo-detalle__campo">
+                    <strong>{{ __('operaciones.trabajos.col_hectareas') }}</strong>
+                    {{ $trabajo->acta->hectareas_conformadas }}
+                </span>
+                @if ($trabajo->acta->estado->value === 'firmada')
+                    <span class="ag-trabajo-detalle__campo">
+                        <strong>{{ __('operaciones.trabajos.acta_firmante') }}</strong>
+                        {{ $trabajo->acta->firmante }}
+                    </span>
+                @endif
+            </div>
+
+            @if ($trabajo->acta->pdf_path !== null)
+                <x-atoms.button href="{{ route('panel.trabajos.acta-pdf', $trabajo) }}" variant="outline" size="sm" icon="picture_as_pdf">
+                    {{ __('operaciones.trabajos.acta_descargar_pdf') }}
+                </x-atoms.button>
+            @endif
+        @endif
+
         <x-molecules.section-head :title="__('operaciones.trabajos.detalle_evidencias_titulo')" class="ag-trabajo-detalle__seccion" />
 
         <x-molecules.alert-strip variant="info" icon="photo_library" class="ag-trabajos__aviso">

@@ -7,6 +7,8 @@ use App\Dominios\Operaciones\Dominio\EstadoTableroTrabajo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 /**
@@ -56,7 +58,23 @@ final class TrabajosController
 
         return view('operaciones::pages.trabajos.show', [
             ...$this->autorizacion->cascara($request),
-            'trabajo' => $trabajo->load(['sesiones.rechazo']),
+            'trabajo' => $trabajo->load(['sesiones.rechazo', 'acta']),
         ]);
+    }
+
+    /**
+     * `GET /panel/trabajos/{trabajo}/acta/pdf` (HU-17, tarea 24): solo
+     * lectura, mismo permiso que `show()` — generar/firmar el acta es de
+     * `agrocom-field` (`ActaController`, API), no del panel.
+     */
+    public function actaPdf(Request $request, Trabajo $trabajo): Response
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO), 403);
+
+        $acta = $trabajo->acta;
+
+        abort_if($acta === null || $acta->pdf_path === null || ! Storage::disk('r2')->exists($acta->pdf_path), 404);
+
+        return response(Storage::disk('r2')->get($acta->pdf_path), 200, ['Content-Type' => 'application/pdf']);
     }
 }

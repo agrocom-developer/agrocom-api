@@ -95,6 +95,16 @@ return [
         // y no están implementadas: la sección convive con eso vacío sin
         // simular datos que no existen.
         'detalle_evidencias_vacio' => 'Todavía no hay evidencias registradas para este trabajo.',
+        // Acta de conformidad (HU-17, tarea 24): solo lectura desde el
+        // panel — generar/firmar es de `agrocom-field` (piloto/jefe).
+        'detalle_acta_titulo' => 'Acta de conformidad',
+        'detalle_acta_vacio' => 'Todavía no se generó el acta de este trabajo.',
+        'acta_estado' => [
+            'pendiente' => 'Pendiente de firma',
+            'firmada' => 'Firmada',
+        ],
+        'acta_firmante' => 'Firmado por',
+        'acta_descargar_pdf' => 'Descargar PDF',
         'sesion_rechazada' => 'Rechazada',
         'sesion_motivo_rechazo' => 'Motivo del rechazo: :motivo',
         'estado' => [
