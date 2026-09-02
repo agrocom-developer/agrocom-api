@@ -33,6 +33,11 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * `uuid_cliente` del EVENTO de cierre, distinto del de apertura — mecanismo
  * de idempotencia documentado en runs/13.md.
  *
+ * `litros_consumidos` (espec §7.2, HU-10 redefinida por CR-01, tarea 18):
+ * declarado al cerrar la sesión, opcional (`null` si el cierre no lo trae —
+ * ver `Contratos/CierreSesion`). Junto con `Trabajo::$litros_sobrante` y
+ * `RecepcionCaldo::$litros`, alimenta `Trabajo::cuadreCaldo()`.
+ *
  * `validado_por`/`fecha_validacion` (HU-14, tarea 14): quién y cuándo
  * aprobó la sesión — únicas columnas nuevas que escribe la transición
  * `cerrado → validado`. `anulada_en`: marca no-de-negocio de que esta sesión
@@ -56,6 +61,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property int|null $validado_por
  * @property CarbonImmutable|null $fecha_validacion
  * @property CarbonImmutable|null $anulada_en
+ * @property string|null $litros_consumidos
  */
 class Sesion extends ModeloDominio
 {
@@ -80,6 +86,7 @@ class Sesion extends ModeloDominio
         'validado_por',
         'fecha_validacion',
         'anulada_en',
+        'litros_consumidos',
     ];
 
     /** @return array<string, string> */
@@ -93,6 +100,7 @@ class Sesion extends ModeloDominio
             'fin' => 'immutable_datetime',
             'fecha_validacion' => 'immutable_datetime',
             'anulada_en' => 'immutable_datetime',
+            'litros_consumidos' => 'decimal:2',
         ];
     }
 

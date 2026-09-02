@@ -31,6 +31,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * cierre, distinto del de apertura — mecanismo de idempotencia de una
  * mutación sobre fila existente, documentado en runs/13.md.
  *
+ * `litros_sobrante` (espec §7.2, HU-10 redefinida por CR-01, tarea 18):
+ * declarado al cerrar el trabajo, opcional (ver `Contratos/CierreTrabajo`).
+ * Junto con `recepcionesCaldo()` y `Sesion::$litros_consumidos`, alimenta
+ * {@see self::cuadreCaldo()}.
+ *
  * @property int $id
  * @property string $uuid_cliente
  * @property int $orden_id
@@ -41,6 +46,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property CarbonImmutable $inicio
  * @property CarbonImmutable|null $fin
  * @property string|null $cierre_uuid_cliente
+ * @property string|null $litros_sobrante
  */
 class Trabajo extends ModeloDominio
 {
@@ -60,6 +66,7 @@ class Trabajo extends ModeloDominio
         'inicio',
         'fin',
         'cierre_uuid_cliente',
+        'litros_sobrante',
     ];
 
     /** @return array<string, string> */
@@ -71,6 +78,7 @@ class Trabajo extends ModeloDominio
             'estado' => EstadoTrabajo::class,
             'inicio' => 'immutable_datetime',
             'fin' => 'immutable_datetime',
+            'litros_sobrante' => 'decimal:2',
         ];
     }
 

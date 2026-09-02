@@ -23,6 +23,15 @@ namespace App\Dominios\Operaciones\Contratos;
  * hectáreas se rechaza completo, mismo criterio que `motivo_cierre` fuera de
  * catálogo — no queda una sesión "cerrada" con el dato central de la
  * transición sin declarar.
+ *
+ * `$litrosConsumidos` (espec §7.2, HU-10 redefinida por CR-01, tarea 18): a
+ * diferencia de `$hectareasDeclaradas`, es OPCIONAL — `null` si el registro
+ * no lo trae. La espec no lo fija como condición de la transición `sesión →
+ * cerrada` (a diferencia de las hectáreas), y una sesión puede cerrarse sin
+ * haber rociado nada (p. ej. `falla_equipo` antes de empezar). Si el campo
+ * SÍ viene pero es inválido (no numérico, negativo), el registro completo se
+ * rechaza igual que con cualquier otro campo mal formado — no se persiste a
+ * medias.
  */
 final readonly class CierreSesion
 {
@@ -38,6 +47,7 @@ final readonly class CierreSesion
         public string $fin,
         public string $motivoCierre,
         public string $hectareasDeclaradas,
+        public ?string $litrosConsumidos,
     ) {}
 
     /** @param  array<string, mixed>  $datos */
@@ -49,6 +59,7 @@ final readonly class CierreSesion
             || ! is_string($datos['motivo_cierre'] ?? null)
             || ! in_array($datos['motivo_cierre'], self::MOTIVOS, true)
             || ! self::esNumeroNoNegativo($datos['hectareas_declaradas'] ?? null)
+            || ! self::esNumeroNoNegativoOAusente($datos['litros_consumidos'] ?? null)
         ) {
             return null;
         }
@@ -59,12 +70,35 @@ final readonly class CierreSesion
             fin: (string) $datos['fin'],
             motivoCierre: (string) $datos['motivo_cierre'],
             hectareasDeclaradas: (string) $datos['hectareas_declaradas'],
+            litrosConsumidos: isset($datos['litros_consumidos']) ? (string) $datos['litros_consumidos'] : null,
         );
     }
 
     private static function esStringNoVacio(mixed $valor): bool
     {
         return is_string($valor) && $valor !== '';
+    }
+
+    /**
+     * Forma de un `DECIMAL` no negativo (invariante 6 de CLAUDE.md), ausente
+     * cuenta como válido (mismo criterio que
+     * `AperturaTrabajo::esNumeroNoNegativoOAusente()`, salvo que acá la
+     * ausencia se traduce a `null`, no a `'0'` — `AperturaTrabajo` completa
+     * con `'0'` porque `hectareas_declaradas` de la apertura SIEMPRE tiene un
+     * valor por defecto; `litros_consumidos` de un cierre, en cambio, `null`
+     * significa "no se declaró", un estado distinto de "se declaró cero").
+     */
+    private static function esNumeroNoNegativoOAusente(mixed $valor): bool
+    {
+        if ($valor === null) {
+            return true;
+        }
+
+        if (is_int($valor) || is_float($valor)) {
+            return $valor >= 0;
+        }
+
+        return is_string($valor) && $valor !== '' && is_numeric($valor) && (float) $valor >= 0;
     }
 
     /**
