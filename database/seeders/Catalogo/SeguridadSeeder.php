@@ -108,6 +108,13 @@ class SeguridadSeeder extends Seeder
         'comercial.campo.crear' => 'Dar de alta un campo con sus lotes',
         'comercial.campo.editar' => 'Editar los datos y lotes de un campo',
         'comercial.campo.eliminar' => 'Dar de baja (lógica) un campo',
+        // HU-27 (tarea 36): administración de la flota de drones con su
+        // modelo y capacidad de carga. Grano fino, mismo criterio que
+        // `comercial.campo.*`.
+        'operaciones.dron.ver' => 'Ver el listado de drones',
+        'operaciones.dron.crear' => 'Dar de alta un dron',
+        'operaciones.dron.editar' => 'Editar los datos de un dron',
+        'operaciones.dron.eliminar' => 'Dar de baja (lógica) un dron',
     ];
 
     /** @var list<string> Piloto: solo lo que ejecuta desde `agrocom-field` — HU-17, tarea 24. */
@@ -163,6 +170,13 @@ class SeguridadSeeder extends Seeder
         'comercial.campo.crear',
         'comercial.campo.editar',
         'comercial.campo.eliminar',
+        // HU-27 (tarea 36): "Como encargado, quiero administrar la flota de
+        // drones" — la HU lo dice literal, mismo criterio que clientes,
+        // contratos y campos arriba.
+        'operaciones.dron.ver',
+        'operaciones.dron.crear',
+        'operaciones.dron.editar',
+        'operaciones.dron.eliminar',
     ];
 
     /**
