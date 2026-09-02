@@ -69,7 +69,10 @@ class SecMenuSeeder extends Seeder
         $this->item($operacion, 'operacion', 'evidencias', 'photo_library', 7);
 
         // Comercial (§4.1 + cap. 9)
-        $this->item($comercial, 'comercial', 'clientes', 'contact_page', 1);
+        // HU-22 (tarea 33): alta y mantenimiento de clientes — activa el
+        // ítem que ya estaba sembrado como "botón sin link" (ver docblock
+        // de `item()`).
+        $this->item($comercial, 'comercial', 'clientes', 'contact_page', 1, ruta: 'panel.clientes.index', codigoPermiso: 'comercial.cliente.ver');
         $this->item($comercial, 'comercial', 'contratos', 'description', 2);
         $this->item($comercial, 'comercial', 'campos', 'map', 3);
         $this->item($comercial, 'comercial', 'reportes_cliente', 'picture_as_pdf', 4);

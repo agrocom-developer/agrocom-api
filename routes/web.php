@@ -1,5 +1,6 @@
 <?php
 
+use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ClientesController;
 use App\Dominios\Distribucion\Infraestructura\Http\Controllers\Web\VersionesApkController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\AlertasController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\TrabajosController;
@@ -148,5 +149,28 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::post('/panel/alertas/{alerta}/atender', [AlertasController::class, 'atender'])
             ->name('panel.alertas.atender');
+
+        // HU-22 (tarea 33): alta y mantenimiento de clientes con sus
+        // contactos — primer ABM completo del panel. Cuatro permisos de
+        // grano fino (`comercial.cliente.ver`/`.crear`/`.editar`/`.eliminar`)
+        // verificados DENTRO del controlador contra el ROL ACTIVO, mismo
+        // criterio que las rutas de arriba.
+        Route::get('/panel/clientes', [ClientesController::class, 'index'])
+            ->name('panel.clientes.index');
+
+        Route::get('/panel/clientes/crear', [ClientesController::class, 'create'])
+            ->name('panel.clientes.create');
+
+        Route::post('/panel/clientes', [ClientesController::class, 'store'])
+            ->name('panel.clientes.store');
+
+        Route::get('/panel/clientes/{cliente}/editar', [ClientesController::class, 'edit'])
+            ->name('panel.clientes.edit');
+
+        Route::put('/panel/clientes/{cliente}', [ClientesController::class, 'update'])
+            ->name('panel.clientes.update');
+
+        Route::delete('/panel/clientes/{cliente}', [ClientesController::class, 'destroy'])
+            ->name('panel.clientes.destroy');
     });
 });
