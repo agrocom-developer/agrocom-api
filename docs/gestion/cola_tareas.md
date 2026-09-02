@@ -51,9 +51,12 @@ exista el módulo `Mezclas`).
 | 13 | HU-05 — cierre real de trabajo y sesión (`abierto → cerrado`), motor de sync extendido, visible en una pantalla mínima del panel | `./bin/verify` = 0, con test de cierre idempotente y de rechazo de transición inválida | `Operaciones/**`, `Sincronizacion/Aplicacion/**`, migraciones, `Seguridad/**` (pantalla panel), tests | **sí** | 4 | **hecha** (PR #50, mergeado 1/9/2026) |
 | 14 | HU-14 — cola de validación de sesiones: transición `cerrado → validado` con evento `SesionValidada`, policy validador≠piloto, mecanismo de corrección para el rechazo (primera implementación de la invariante 2) | `./bin/verify` = 0, con test de policy y de que el rechazo nunca hace `UPDATE` sobre la fila original | `Operaciones/**`, migraciones, `Seguridad/**`, tests | **sí** | 4 | **hecha** (PR #51, mergeado 1/9/2026) |
 | 15 | HU-15 — tablero de trabajos por estado con filtros y detalle con sesiones (y evidencias, hoy vacío) | `./bin/verify` = 0, con test de filtro por estado y de detalle | `Operaciones/**` (pantalla panel), tests | no | 3 | **hecha** (PR #52, mergeado 1/9/2026) |
-| 16 | HU-16 — devengo automático del piloto y su auxiliar al validar una sesión (`SesionValidada` → listener real, módulo `Finanzas` nuevo) | `./bin/verify` = 0, con test de idempotencia (`UNIQUE sesion_id+persona_id`), de exactitud decimal y de que `cerrar()` nunca genera devengo | módulo nuevo `Finanzas` (`fin_`), `ALTER per_personas` (`tarifa_ha`), `Personal/Contratos/**`, `Operaciones/Contratos/**`, tests | **sí** | 4 | encolada |
-| 17 | HU-06 — condiciones al iniciar sesión (viento/temperatura/humedad), autoriza / autoriza con observación / rechaza, vía el motor de sync | `./bin/verify` = 0, con test de cada rango y de rechazo sin observación | `Operaciones/**`, `Sincronizacion/Aplicacion/**`, migración `ope_condiciones`, tests | **sí** | 4 | encolada |
-| 18 | HU-10 (redefinida por CR-01) — recepción de caldo: litros recibidos por trabajo, consumidos por sesión, sobrante al cierre, cuadre recalculable | `./bin/verify` = 0, con test de cuadre (recibido = consumido + sobrante) e idempotencia | `Operaciones/**` o módulo nuevo `Mezclas` (decisión de la propia tarea), `Sincronizacion/Aplicacion/**`, tests | **sí** | 4 | encolada |
+| 16 | HU-16 — devengo automático del piloto y su auxiliar al validar una sesión (`SesionValidada` → listener real, módulo `Finanzas` nuevo) | `./bin/verify` = 0, con test de idempotencia (`UNIQUE sesion_id+persona_id`), de exactitud decimal y de que `cerrar()` nunca genera devengo | módulo nuevo `Finanzas` (`fin_`), `ALTER per_personas` (`tarifa_ha`), `Personal/Contratos/**`, `Operaciones/Contratos/**`, tests | **sí** | 4 | **hecha** (PR #53, mergeado 1/9/2026) |
+| 17 | HU-06 — condiciones al iniciar sesión (viento/temperatura/humedad), autoriza / autoriza con observación / rechaza, vía el motor de sync | `./bin/verify` = 0, con test de cada rango y de rechazo sin observación | `Operaciones/**`, `Sincronizacion/Aplicacion/**`, migración `ope_condiciones`, tests | **sí** | 4 | **hecha** (PR #54, mergeado 1/9/2026) |
+| 18 | HU-10 (redefinida por CR-01) — recepción de caldo: litros recibidos por trabajo, consumidos por sesión, sobrante al cierre, cuadre recalculable | `./bin/verify` = 0, con test de cuadre (recibido = consumido + sobrante) e idempotencia | `Operaciones/**` o módulo nuevo `Mezclas` (decisión de la propia tarea), `Sincronizacion/Aplicacion/**`, tests | **sí** | 4 | **hecha** (PR #55, mergeado 1/9/2026) |
+| 19 | TE-07 (parte servidor) — endpoint de recepción de evidencias (`ope_evidencias`), idempotente, con hash SHA-256. Requisito previo de HU-08 y HU-09, que la referencian | `./bin/verify` = 0, con test de idempotencia y de tipo/hash inválido | `Operaciones/**` (decisión de módulo a cargo de la tarea), migración, tests | **sí** | 4 | encolada |
+| 20 | HU-07 — relevo de piloto y cambio de dron: `hectarea_inicial_acumulada`, catálogo mínimo de `dron`, trabajo `parcial`/`observado`, tolerancia de solape configurable | `./bin/verify` = 0, con test de suma de sesiones dentro y fuera de tolerancia | `Operaciones/**`, migraciones, `Sincronizacion/Aplicacion/**`, tests | **sí** | 5 | encolada |
+| 21 | HU-09 — cierre de lote: imagen del campo obligatoria para cerrar un trabajo, reutiliza `observado` de la tarea 20 | `./bin/verify` = 0, con test de rechazo sin evidencia y de cierre válido | `Operaciones/Contratos/CierreTrabajo.php`, `EscrituraSincronizacionEloquent`, tests | **sí** | 3 | encolada |
 
 ### Fuera del ciclo automático
 
@@ -81,9 +84,11 @@ lo corrigió.
 | TE-01 (resto) | Staging sigue diferido (ADR 0010, el servidor no está definido). El repo `agrocom-field` ya existe pero es Flutter — fuera de este ciclo por la regla permanente de arriba, no porque no exista |
 | TE-02 | Spike de hardware: necesita el RC Agras en mano. Su entregable es un informe, no un exit code |
 | TE-04 | Base local drift + outbox: vive en `agrocom-field`, otro repo |
+| HU-04 (parte app) | "Lista y detalle offline" es UI de `agrocom-field`, fuera de este ciclo. Su parte de servidor ("sin orden vigente no se puede abrir trabajo") **ya está cubierta**: fue uno de los hallazgos de la tarea 12 (`EscrituraSincronizacionEloquent::abrirTrabajo()` rechaza si la orden no existe, no está vigente, o el `lote_id` no coincide) — no necesita tarea propia |
+| HU-08 | Incidencias con foto (caldo/ESC/batería/mecánica/clima). Depende de la tarea 19 (evidencias) para tener dónde referenciar la foto — todavía sin planificar, sigue en la cola conceptual detrás de la 21 |
 | HU-11, HU-12 | **Fuera de alcance desde el 1/9/2026** (CR-01 cerrada): Agrocom no prepara la mezcla ni dosifica. No están pendientes — están eliminadas del plan |
-| TE-02 | Spike de hardware: necesita el RC Agras en mano. Su entregable es un informe, no un exit code |
-| TE-07 (parte app) | Compresión y cola de subida viven en `agrocom-field`; el endpoint que recibe la evidencia sí califica |
+| HU-13 | Recargas del dron (batería, temperatura, retraso por caldo). Comparte "litros" con HU-10 pero es tarea aparte — sigue en la cola conceptual, detrás de HU-08 |
+| TE-07 (parte app) | Compresión y cola de subida viven en `agrocom-field`; el endpoint que recibe la evidencia (la parte que sí califica) es la tarea 19 |
 | TE-08 | Endurecimiento del sync con datos de las betas: no hay datos de beta real todavía, depende de que exista staging con tráfico |
 | TE-09, HU-21 | Ensayo general en campo con operarios reales y sus correcciones de adopción |
 | TE-10, TE-11 | Producción (VPS, HTTPS, respaldos, Sentry) y carga de datos maestros reales: dependen de infraestructura y de datos que no están |
@@ -96,10 +101,11 @@ HU-19 vuelven a calificar todas. Y CR-01 se cerró: HU-10 y HU-13 quedan
 redefinidas sobre volumen de caldo, HU-11 y HU-12 desaparecen. El orden
 seguido desde entonces: **12** (hallazgos del sync) → **HU-05** (esqueleto
 vertical del lado servidor, tarea 13) → **HU-14** y **HU-15** (las dos
-pantallas de panel, tareas 14/15) — las cinco ya cerradas. Sigue: **HU-16**
-(devengo al validar, crítica, tarea 16) → **HU-06** (condiciones de vuelo,
-crítica, tarea 17) → **HU-10** (recepción de caldo redefinida, crítica, tarea
-18).
+pantallas de panel, tareas 14/15) → **HU-16** (devengo, tarea 16) → **HU-06**
+(condiciones de vuelo, tarea 17) → **HU-10** (recepción de caldo, tarea 18)
+— las nueve ya cerradas. Sigue: **TE-07 parte servidor** (evidencias,
+crítica, tarea 19) → **HU-07** (relevo de piloto y cambio de dron, crítica,
+tarea 20) → **HU-09** (cierre de lote con evidencia, crítica, tarea 21).
 
 La regla que decide es la del punto 1 de
 [automatizacion_desarrollo.md](automatizacion_desarrollo.md): una tarea avanza
@@ -183,12 +189,19 @@ ver `runs/DETENER` y `runs/11-plan.md`. El PR #46 se mergeó horas después
 (tarea 09) y CR-01 se cerró el mismo día: los seis sprints volvieron a
 calificar, y el ciclo retomó con la 12.
 
-**16 → 17 → 18 siguen el orden literal de "acá en adelante" fijado arriba.**
-Las tres son críticas y las tres tocan el motor de sync o el servicio de
-estados (Finanzas necesita el evento `SesionValidada` que ya dispara la
-máquina de estados de sesión; condiciones y caldo se suman como tipos nuevos
-al mismo `SincronizarLote` que extendieron las tareas 09/12/13). Ninguna
-depende de la otra dos — se podrían reordenar sin romper nada — pero HU-16
-va primero porque cierra la invariante 3 (la única de las once sin gate
-todavía) y su tabla de devengos no depende de ningún dato que HU-06/HU-10
-todavía no produzcan.
+**16 → 17 → 18 siguieron el orden literal de "acá en adelante" fijado por la
+tarea 12**, saltando por delante HU-04/07/08/09/TE-07 (Sprint 2/3, todavía sin
+cerrar) sin dejarlo anotado explícitamente en su momento — un hueco real del
+trazado, no una exclusión deliberada. Esta planificación (tras la tarea 18) lo
+reconcilia: **HU-04 (parte servidor) ya estaba cubierta** desde la tarea 12
+(ver la tabla de arriba), así que no hacía falta tarea propia. Lo que sí
+seguía genuinamente sin hacer — HU-07, HU-08, HU-09, TE-07 (parte servidor) —
+se retoma ahora, en el orden que impone la dependencia real, no el orden de
+fila de `plan_sprints.md`: **TE-07 primero** (tarea 19) porque HU-07 y HU-09
+necesitan poder referenciar una evidencia ya subida (`captura_rc`/`imagen_campo`)
+antes de poder exigirla; **HU-07 después** (tarea 20) porque es donde vive de
+forma más natural la validación de suma de hectáreas contra tolerancia
+(espec §5, línea 206) que **HU-09 reutiliza** (tarea 21) en vez de
+reimplementar. **HU-08** (incidencias) queda fuera de este lote de tres —
+depende solo de la 19, podría ir en cualquier lugar después de ella — y se
+retoma en la próxima ronda de planificación.

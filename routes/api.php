@@ -1,6 +1,7 @@
 <?php
 
 use App\Dominios\Distribucion\Infraestructura\Http\Controllers\Api\VersionController;
+use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Api\EvidenciaController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Api\OrdenAplicacionController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api\DispositivoController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api\SesionCampoController;
@@ -67,4 +68,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // offline. TE-05 (tarea 09): solo trabajo y sesion; ver "Recorte de
     // alcance" en el prompt de la tarea para mezcla/recarga/incidencia/acta.
     Route::post('/sync', [SyncController::class, 'store'])->name('api.sync.store');
+
+    // Espec §2.1 punto 7: cola separada de evidencias — fuera del "sobre"
+    // JSON de /api/sync a propósito (lleva un binario). TE-07 parte servidor
+    // (tarea 19).
+    Route::post('/evidencias', [EvidenciaController::class, 'store'])->name('api.evidencias.store');
 });
