@@ -647,7 +647,18 @@ vuelta() {
     # cola se queda sin fila siguiente y el bucle se detendría por falta de
     # trabajo, que es justo lo que no se quiere. Que una HU se haya trabado no
     # dice nada sobre la que sigue.
-    fase_planificar "$id" || return 1
+    # Que la planificación falle o pida detener NO convierte en fallida a una
+    # tarea que sí se integró: son dos cosas distintas, y confundirlas infla el
+    # contador de "seguidas sin integrar" que corta el bucle. Pasó el 2/9/2026 a
+    # la 01:30 — la tarea 26 entró por el PR #64, la planificación siguiente
+    # pidió parada, y el ciclo la contó como el tercer fallo seguido y se cortó
+    # anunciando "algo sistemático está fallando". No fallaba nada: se había
+    # quedado sin trabajo, que es otra cosa y ya tiene su propia salida.
+    if ! fase_planificar "$id"; then
+        detencion_pedida && return 2
+        [ "$salida" -eq 0 ] && return 0
+        return 1
+    fi
     return "$salida"
 }
 
