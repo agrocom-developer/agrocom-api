@@ -59,12 +59,28 @@ class SeguridadSeeder extends Seeder
         // validador≠piloto (invariante 4) rige la fila puntual, no la
         // visibilidad de la pantalla.
         'operaciones.sesion.validar' => 'Validar o rechazar sesiones cerradas desde el panel',
+        // HU-17 (tarea 24): acta de conformidad por lote. La espec (§3) le da
+        // "Generar y presentar acta" a piloto/jefe de campo y "Firmar acta"
+        // al agrónomo — pero el agrónomo no tiene cuenta en `sec_*` (no hay
+        // rol/portal para él todavía, ver runs/24.md): quien ejecuta el
+        // registro de la firma en `agrocom-field` es el piloto o el jefe, en
+        // presencia del agrónomo, así que ambos permisos se asignan a los
+        // mismos dos roles — el FIRMANTE real queda como dato
+        // (`ope_actas.firmante`), no como actor `sec_user`.
+        'operaciones.acta.generar' => 'Generar el acta de conformidad de un trabajo cerrado y validado',
+        'operaciones.acta.firmar' => 'Registrar la firma del agrónomo sobre un acta pendiente',
         // HU-19 (tarea 26): bandeja de alertas por excepción. Separados a
         // propósito, mismo criterio que dispositivo.ver/.revocar: mirar la
         // bandeja y marcar una alerta como resuelta no son la misma
         // responsabilidad.
         'operaciones.alerta.ver' => 'Ver la bandeja de alertas por excepción',
         'operaciones.alerta.atender' => 'Marcar una alerta por excepción como atendida',
+    ];
+
+    /** @var list<string> Piloto: solo lo que ejecuta desde `agrocom-field` — HU-17, tarea 24. */
+    private const PERMISOS_PILOTO = [
+        'operaciones.acta.generar',
+        'operaciones.acta.firmar',
     ];
 
     /** @var list<string> Todo, salvo asignar_rol_dueno (diseño §2). */
@@ -103,6 +119,10 @@ class SeguridadSeeder extends Seeder
     private const PERMISOS_JEFE_CAMPO = [
         'operaciones.trabajo.ver',
         'operaciones.sesion.validar',
+        // HU-17 (tarea 24): jefe de campo también genera y firma el acta —
+        // mismo criterio que el piloto (ver PERMISOS, arriba).
+        'operaciones.acta.generar',
+        'operaciones.acta.firmar',
     ];
 
     public function run(): void
@@ -124,6 +144,10 @@ class SeguridadSeeder extends Seeder
             $permisos->only(self::PERMISOS_ENCARGADO_OPERACIONES)->values()->all(),
         );
 
+        // piloto (HU-17, tarea 24): primeros permisos que tiene — ejecuta
+        // desde `agrocom-field`, sin acceso al panel (diseño §2 no cambia).
+        $this->asignar($roles['piloto'], $permisos->only(self::PERMISOS_PILOTO)->values()->all());
+
         // jefe_campo: solo lo suyo (diseño §2) — antes ninguno, ahora ver
         // trabajos/sesiones (HU-05, tarea 13).
         $this->asignar(
@@ -131,7 +155,8 @@ class SeguridadSeeder extends Seeder
             $permisos->only(self::PERMISOS_JEFE_CAMPO)->values()->all(),
         );
 
-        // piloto, auxiliar: sin permisos de seguridad ni de panel (diseño §2).
+        // auxiliar: sin permisos de seguridad ni de panel (diseño §2) — a
+        // diferencia del piloto (arriba), no genera ni firma actas.
     }
 
     private function rol(string $name, string $description): SecRole

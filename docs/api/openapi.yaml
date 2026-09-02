@@ -36,6 +36,183 @@ paths:
                         $ref: '#/components/schemas/VersionApk'
                     nullable: true
                 type: object
+  '/api/trabajos/{uuid_cliente}/acta':
+    post:
+      tags:
+        - Operaciones
+      summary: 'Genera el acta de conformidad de un trabajo'
+      description: 'Genera el acta de conformidad de un trabajo `cerrado` con todas sus sesiones vigentes `validado` (espec §4.3/§17). Idempotente por trabajo, no por `uuid_cliente`: un segundo pedido sobre un trabajo que ya tiene acta devuelve la MISMA fila y el MISMO PDF, sin regenerar nada. `estado: rechazado` cuando el trabajo no cumple las condiciones — nunca 422 de negocio.'
+      operationId: generarActaTrabajo
+      parameters:
+        -
+          name: uuid_cliente
+          in: path
+          description: 'uuid_cliente del trabajo (el que trajo su apertura).'
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - uuid_cliente
+              properties:
+                uuid_cliente:
+                  description: 'uuid_cliente generado por el dispositivo para el ACTA (no el del trabajo).'
+                  type: string
+                  example: a1b2c3d4-0000-4000-8000-000000000020
+              type: object
+      responses:
+        200:
+          description: 'Acta generada, ya existente, o rechazo con motivo.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - estado
+                properties:
+                  id:
+                    type: integer
+                    nullable: true
+                  uuid_cliente:
+                    type: string
+                    nullable: true
+                  trabajo_id:
+                    type: integer
+                    nullable: true
+                  estado:
+                    type: string
+                    enum:
+                      - pendiente
+                      - firmada
+                      - rechazado
+                  hectareas_conformadas:
+                    type: string
+                    nullable: true
+                  pdf_url:
+                    type: string
+                    nullable: true
+                  motivo:
+                    description: 'Presente solo cuando `estado` es `rechazado`.'
+                    type: string
+                    nullable: true
+                type: object
+        401:
+          description: 'Token ausente, revocado o ya sin rol válido.'
+        403:
+          description: 'El token no tiene el permiso operaciones.acta.generar.'
+        404:
+          description: 'El trabajo referenciado no existe.'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/actas/{uuid_cliente}/firmar':
+    post:
+      tags:
+        - Operaciones
+      summary: 'Firma un acta de conformidad'
+      description: 'Registra la firma del agrónomo sobre un acta `pendiente`, referenciando una evidencia ya subida por `POST /api/evidencias` (tipo `firma_acta`). Reintento con la MISMA evidencia sobre un acta ya `firmada` es idempotente; con OTRA evidencia se rechaza.'
+      operationId: firmarActa
+      parameters:
+        -
+          name: uuid_cliente
+          in: path
+          description: 'uuid_cliente del acta (el que devolvió su generación).'
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - evidencia_firma_uuid_cliente
+                - firmante
+                - fecha_firma
+              properties:
+                evidencia_firma_uuid_cliente:
+                  type: string
+                  example: a1b2c3d4-0000-4000-8000-000000000030
+                firmante:
+                  description: 'Nombre del agrónomo — texto libre.'
+                  type: string
+                  example: 'Ing. Marcela Vargas'
+                fecha_firma:
+                  type: string
+                  format: date-time
+                  example: '2026-09-02T16:30:00-04:00'
+              type: object
+      responses:
+        200:
+          description: 'Acta firmada (o ya firmada con la misma evidencia), o rechazo con motivo.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - estado
+                properties:
+                  id:
+                    type: integer
+                    nullable: true
+                  uuid_cliente:
+                    type: string
+                    nullable: true
+                  estado:
+                    type: string
+                    enum:
+                      - pendiente
+                      - firmada
+                      - rechazado
+                  firmante:
+                    type: string
+                    nullable: true
+                  fecha_firma:
+                    type: string
+                    nullable: true
+                  motivo:
+                    description: 'Presente solo cuando `estado` es `rechazado`.'
+                    type: string
+                    nullable: true
+                type: object
+        401:
+          description: 'Token ausente, revocado o ya sin rol válido.'
+        403:
+          description: 'El token no tiene el permiso operaciones.acta.firmar.'
+        404:
+          description: 'El acta referenciada no existe.'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/actas/{uuid_cliente}/pdf':
+    get:
+      tags:
+        - Operaciones
+      summary: 'Descarga el PDF de un acta'
+      description: 'Descarga el PDF del acta, ya generado por `POST /api/trabajos/{uuid_cliente}/acta` — nunca lo regenera. Cualquier token de dispositivo válido puede descargarlo (misma exposición que el resto de la API de campo); no exige `operaciones.acta.generar`/`firmar`, que son de mutación.'
+      operationId: descargarActaPdf
+      parameters:
+        -
+          name: uuid_cliente
+          in: path
+          description: 'uuid_cliente del acta.'
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: 'Contenido binario del PDF.'
+          content:
+            application/pdf: []
+        401:
+          description: 'Token ausente, revocado o ya sin rol válido.'
+        404:
+          description: 'El acta no existe o todavía no tiene PDF generado.'
+      security:
+        -
+          tokenDispositivo: []
   /api/evidencias:
     post:
       tags:

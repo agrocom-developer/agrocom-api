@@ -20,4 +20,13 @@ final class IdentidadOperarioTokenSanctum implements IdentidadOperarioToken
 
         return $usuario?->persona_id;
     }
+
+    /** Fail-closed: sin `SecUser` autenticado, ningún permiso se concede. */
+    public function tienePermiso(Request $request, string $codigo): bool
+    {
+        /** @var SecUser|null $usuario */
+        $usuario = $request->user();
+
+        return $usuario?->tienePermiso($codigo) ?? false;
+    }
 }

@@ -8,6 +8,7 @@ use App\Dominios\Seguridad\Aplicacion\AsignarRolesUsuario;
 use App\Dominios\Seguridad\Aplicacion\EmitirTokenDispositivo;
 use App\Dominios\Seguridad\Dominio\Excepciones\EmisionDirectaDeTokenNoPermitida;
 use App\Dominios\Seguridad\Dominio\TipoUsuario;
+use App\Dominios\Seguridad\Infraestructura\Http\IdentidadOperarioTokenSanctum;
 use Database\Factories\SecUserFactory;
 use DateTimeInterface;
 use Illuminate\Auth\Authenticatable;
@@ -234,10 +235,14 @@ class SecUser extends ModeloDominio implements AuthenticatableContract
     /**
      * Unión de permisos de TODOS los roles vivos del usuario, sin importar
      * cuál esté activo en la sesión actual. Correcto únicamente para
-     * llamadores sin contexto de sesión de panel — hoy, exclusivamente
-     * {@see AsignarRolesUsuario}, que su
-     * propio docblock declara "no depende de `Auth::id()`" (ADR 0004,
-     * extensión 27/8/2026, punto 5).
+     * llamadores sin contexto de sesión de panel — hoy, {@see AsignarRolesUsuario}
+     * (que su propio docblock declara "no depende de `Auth::id()`", ADR
+     * 0004, extensión 27/8/2026, punto 5) y, desde HU-17 (tarea 24),
+     * {@see IdentidadOperarioTokenSanctum::tienePermiso()}
+     * para la API de campo: un token Sanctum por dispositivo no tiene "rol
+     * activo de sesión" (ese concepto es de la cookie del panel, ADR 0004
+     * extensión 27/8/2026 punto 6), así que la unión es la única evaluación
+     * posible ahí, no un atajo.
      *
      * Cualquier llamador con una sesión de panel autenticada (controlador,
      * middleware, componente Livewire) NUNCA debe usar este método para

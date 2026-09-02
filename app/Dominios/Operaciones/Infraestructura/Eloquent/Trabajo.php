@@ -12,6 +12,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * Trabajo (espec §4.3, tabla ope_trabajos; TE-05). Nace en la app de campo
@@ -111,6 +112,12 @@ class Trabajo extends ModeloDominio
     public function recepcionesCaldo(): HasMany
     {
         return $this->hasMany(RecepcionCaldo::class, 'trabajo_id');
+    }
+
+    /** @return HasOne<Acta, $this> */
+    public function acta(): HasOne
+    {
+        return $this->hasOne(Acta::class, 'trabajo_id');
     }
 
     /**

@@ -1,6 +1,7 @@
 <?php
 
 use App\Dominios\Distribucion\Infraestructura\Http\Controllers\Api\VersionController;
+use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Api\ActaController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Api\EvidenciaController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Api\OrdenAplicacionController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api\DispositivoController;
@@ -73,4 +74,12 @@ Route::middleware('auth:sanctum')->group(function () {
     // JSON de /api/sync a propósito (lleva un binario). TE-07 parte servidor
     // (tarea 19).
     Route::post('/evidencias', [EvidenciaController::class, 'store'])->name('api.evidencias.store');
+
+    // Espec §4.3/§314-315, reinterpretados sobre `uuid_cliente` en vez de
+    // `id` (HU-17, tarea 24; ver runs/24.md): acta de conformidad por lote.
+    // Primeros endpoints de esta API que además del token exigen un permiso
+    // `sec_permission` puntual (`operaciones.acta.generar`/`.firmar`).
+    Route::post('/trabajos/{trabajo:uuid_cliente}/acta', [ActaController::class, 'generar'])->name('api.actas.generar');
+    Route::post('/actas/{acta:uuid_cliente}/firmar', [ActaController::class, 'firmar'])->name('api.actas.firmar');
+    Route::get('/actas/{acta:uuid_cliente}/pdf', [ActaController::class, 'pdf'])->name('api.actas.pdf');
 });

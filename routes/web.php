@@ -110,6 +110,12 @@ Route::middleware('auth:interno')->group(function () {
         Route::get('/panel/trabajos/{trabajo}', [TrabajosController::class, 'show'])
             ->name('panel.trabajos.show');
 
+        // HU-17 (tarea 24): descarga del PDF del acta desde el panel — solo
+        // lectura, mismo permiso `operaciones.trabajo.ver` que el detalle
+        // (generar/firmar el acta es de `agrocom-field`, no del panel).
+        Route::get('/panel/trabajos/{trabajo}/acta/pdf', [TrabajosController::class, 'actaPdf'])
+            ->name('panel.trabajos.acta-pdf');
+
         // HU-14 (tarea 14): cola de validación de sesiones cerradas.
         // Permiso `operaciones.sesion.validar` verificado DENTRO del
         // controlador contra el ROL ACTIVO, mismo criterio que las rutas de
