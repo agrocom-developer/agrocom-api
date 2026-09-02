@@ -138,7 +138,7 @@
             @endforeach
         </table>
     @else
-        <p>Sin datos disponibles todavía (módulo de incidencias en integración).</p>
+        <p>Sin incidencias registradas.</p>
     @endif
 
     @if (count($datos['sesiones_detalle']) > 0)
