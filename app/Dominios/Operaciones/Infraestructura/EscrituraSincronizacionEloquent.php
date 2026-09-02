@@ -10,6 +10,7 @@ use App\Dominios\Operaciones\Contratos\CierreSesion;
 use App\Dominios\Operaciones\Contratos\CierreTrabajo;
 use App\Dominios\Operaciones\Contratos\EscrituraSincronizacion;
 use App\Dominios\Operaciones\Contratos\RegistroCondiciones;
+use App\Dominios\Operaciones\Contratos\RegistroIncidencia;
 use App\Dominios\Operaciones\Contratos\RegistroRecepcionCaldo;
 use App\Dominios\Operaciones\Contratos\ResultadoSincronizacion;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
@@ -20,6 +21,7 @@ use App\Dominios\Operaciones\Dominio\Excepciones\TransicionTrabajoNoPermitida;
 use App\Dominios\Operaciones\Dominio\TipoEvidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Condiciones;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Evidencia;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\Incidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\RecepcionCaldo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
@@ -174,6 +176,68 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
             });
         } catch (QueryException $excepcion) {
             return $this->resultadoDesdeExcepcion($excepcion, 'ope_condiciones');
+        }
+
+        return ResultadoSincronizacion::aplicado();
+    }
+
+    /**
+     * Incidencia de sesión (espec §4.3, HU-08, tarea 22): crea una fila
+     * nueva, mismo mecanismo de idempotencia que `registrarCondiciones()` —
+     * el `UNIQUE` parcial de `uuid_cliente` resuelve el reintento, nunca un
+     * `SELECT` previo.
+     *
+     * Evidencia obligatoria ("con foto" en el título de la HU): se busca por
+     * el `uuid_cliente` que trae `RegistroIncidencia::$evidenciaFotoUuidCliente`;
+     * si no existe o no es de tipo `foto_incidencia`, se rechaza — mismo
+     * patrón que la imagen de campo de `cerrarTrabajo()`. También se rechaza
+     * si esa MISMA evidencia ya respalda otra incidencia (mismo criterio que
+     * la imagen de campo): el chequeo excluye el propio `uuid_cliente` del
+     * registro entrante para que un REINTENTO del mismo evento (que
+     * referencia su propia fila ya creada) no se confunda con una foto
+     * ajena — ese caso se resuelve más abajo como `duplicado`, vía la
+     * violación del `UNIQUE` de `uuid_cliente`. El chequeo acá da un mensaje
+     * de rechazo claro; el índice único parcial
+     * `ope_incidencias_evidencia_foto_id_unico` es la garantía real contra la
+     * condición de carrera de dos incidencias DISTINTAS registrándose a la
+     * vez con la misma evidencia.
+     */
+    public function registrarIncidencia(RegistroIncidencia $datos): ResultadoSincronizacion
+    {
+        $sesion = Sesion::query()->where('uuid_cliente', $datos->sesionUuidCliente)->first();
+
+        if ($sesion === null) {
+            return ResultadoSincronizacion::rechazado('la sesión referenciada no existe todavía');
+        }
+
+        $evidenciaFoto = Evidencia::query()->where('uuid_cliente', $datos->evidenciaFotoUuidCliente)->first();
+
+        if ($evidenciaFoto === null || $evidenciaFoto->tipo !== TipoEvidencia::FotoIncidencia) {
+            return ResultadoSincronizacion::rechazado('falta la foto de la incidencia: evidencia inexistente o de tipo distinto');
+        }
+
+        $yaUsadaPorOtraIncidencia = Incidencia::query()
+            ->where('evidencia_foto_id', $evidenciaFoto->id)
+            ->where('uuid_cliente', '!=', $datos->uuidCliente)
+            ->exists();
+
+        if ($yaUsadaPorOtraIncidencia) {
+            return ResultadoSincronizacion::rechazado('la foto ya fue usada para respaldar otra incidencia');
+        }
+
+        try {
+            DB::transaction(function () use ($datos, $sesion, $evidenciaFoto): void {
+                Incidencia::query()->create([
+                    'uuid_cliente' => $datos->uuidCliente,
+                    'sesion_id' => $sesion->id,
+                    'tipo' => $datos->tipo,
+                    'descripcion' => $datos->descripcion,
+                    'hora' => $datos->hora,
+                    'evidencia_foto_id' => $evidenciaFoto->id,
+                ]);
+            });
+        } catch (QueryException $excepcion) {
+            return $this->resultadoDesdeExcepcion($excepcion, 'ope_incidencias');
         }
 
         return ResultadoSincronizacion::aplicado();
