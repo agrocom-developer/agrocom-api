@@ -36,7 +36,7 @@ return new class extends Migration
             $table->id();
             $table->string('uuid_cliente', 36);
             $table->foreignId('sesion_id')->constrained('ope_sesiones')->restrictOnDelete();
-            $table->unsignedInteger('secuencia');
+            $table->unsignedSmallInteger('secuencia');
             $table->decimal('litros_caldo', 10, 2);
             $table->string('bateria_saliente_id');
             $table->decimal('temperatura_bateria_c', 5, 2);
@@ -69,6 +69,8 @@ return new class extends Migration
         if (DB::getDriverName() === 'pgsql') {
             DB::statement(<<<SQL
                 ALTER TABLE {$prefijo}ope_recargas
+                ADD CONSTRAINT {$prefijo}ope_recargas_secuencia_chk
+                    CHECK (secuencia >= 1),
                 ADD CONSTRAINT {$prefijo}ope_recargas_litros_caldo_chk
                     CHECK (litros_caldo >= 0),
                 ADD CONSTRAINT {$prefijo}ope_recargas_combustible_chk
