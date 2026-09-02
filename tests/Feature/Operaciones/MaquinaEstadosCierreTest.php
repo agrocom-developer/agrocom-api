@@ -85,7 +85,9 @@ test('MaquinaEstadosTrabajo::cerrar() deja el trabajo cerrado, con fin y cierre_
 
     expect($cerrado->estado)->toBe(EstadoTrabajo::Cerrado)
         ->and($cerrado->cierre_uuid_cliente)->toBe('uuid-cierre-evento-1')
-        ->and($cerrado->fin?->toIso8601String())->toContain('2026-09-01T12:00:00');
+        // `->timestamp` (instante real), no un match de string sobre la hora
+        // local: la tarea 29 normaliza `fin` a UTC antes de persistir.
+        ->and($cerrado->fin?->timestamp)->toBe(strtotime('2026-09-01T12:00:00-04:00'));
 
     expect(Trabajo::query()->findOrFail($trabajo->id)->estado)->toBe(EstadoTrabajo::Cerrado);
 });
@@ -108,7 +110,7 @@ test('MaquinaEstadosSesion::cerrar() deja la sesión cerrada, con fin, motivo_ci
         ->and($cerrada->cierre_uuid_cliente)->toBe('uuid-cierre-sesion-1')
         ->and($cerrada->motivo_cierre)->toBe('completado')
         ->and($cerrada->hectareas_declaradas)->toBe('18.40')
-        ->and($cerrada->fin?->toIso8601String())->toContain('2026-09-01T12:00:00');
+        ->and($cerrada->fin?->timestamp)->toBe(strtotime('2026-09-01T12:00:00-04:00'));
 
     $recargada = Sesion::query()->findOrFail($sesion->id);
     expect($recargada->estado)->toBe(EstadoSesion::Cerrado)
