@@ -4,6 +4,7 @@ namespace App\Dominios\Comercial\Infraestructura\Eloquent;
 
 use App\Dominios\Comercial\Dominio\EstadoContrato;
 use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
+use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -14,8 +15,17 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * defecto del sistema; el contrato solo los modula.
  *
  * Dinero y hectáreas en DECIMAL — el cast `decimal:2` entrega string, nunca
- * float (invariante 6). Las transiciones de `estado` pasarán por el servicio
- * de dominio de la máquina de estados cuando exista (invariante 7).
+ * float (invariante 6). Las transiciones de `estado` pasan por
+ * `Aplicacion/MaquinaEstados/MaquinaEstadosContrato` (invariante 7, HU-23,
+ * tarea 34).
+ *
+ * `RegistraBitacora` (invariante 9, HU-23): el esquema no lo marca como
+ * catálogo de rol/permiso (no lo exige el gate automático de
+ * `tests/Unit/BitacoraAuditoriaTest.php`), pero es "dinero" y "estados
+ * operativos" — las otras dos categorías que el ADR 0007 nombra — y esta es
+ * la tarea que instrumenta su máquina de estados, así que se adopta igual
+ * (mismo criterio que {@see Cliente}
+ * en Finanzas/`DevengoPersonal`).
  *
  * @property int $id
  * @property int $cliente_id
@@ -37,6 +47,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Contrato extends ModeloDominio
 {
+    use RegistraBitacora;
+
     protected $table = 'com_contratos';
 
     /** @var list<string> */
