@@ -35,6 +35,14 @@ Mostrar la Beta App Piloto a los pilotos al fin del sprint 3 —y no al final—
 | TE-02 | **Spike RC Agras**: instalar APK propio, leer screenshot de DJI desde galería, confirmar versión Android/minSdk, permisos | Informe corto con lo que anda y lo que no; decisión app-en-RC vs app-en-celular | 1,5 d |
 | TE-03 | Migraciones del núcleo comercial (clientes, contratos, campos, lotes, órdenes) con soft delete y columnas de auditoría (ADR 0007) + seeds de datos reales del contrato | Órdenes consultables por API con filtros; ningún modelo permite `DELETE` físico | 1,5 d |
 | HU-01 | Como **encargado**, quiero crear usuarios con uno o más roles y un único login, base y enlace a persona operativa, para que cada quien entre con lo suyo | `sec_*` ajustado (permission abstracto, `sec_user_role`, `persona_id`); el encargado no puede crear usuarios dueño; un usuario nunca tiene dos logins | 2,0 d |
+
+> **HU-01 está a medias, y se venía contando como cerrada.** La auditoría del
+> panel en navegador del 2/9/2026 lo dejó a la vista: `UsuariosController` solo
+> expone `index` y `/panel/usuarios` no tiene un solo formulario. El modelo de
+> datos (`sec_user`, `sec_user_role`, `persona_id`) y el listado están; **el
+> alta, la edición y la asignación de roles desde el panel, no**. Hoy un usuario
+> nuevo solo se crea por seeder. Se cierra en HU-45 (Sprint 7), estimada en 1,5 d
+> de los 2,0 originales.
 | HU-02 | Como **usuario del panel**, quiero iniciar sesión eligiendo con qué rol entro (si tengo más de uno) y ver el menú AdminLTE armado según los permisos de ese rol activo, con mi tema de color preferido, y poder cambiar de rol activo sin volver a loguearme | Menú renderizado desde `sec_menu`/`sec_permission` según el **rol activo** (no unión de roles, CLAUDE.md invariante 10); selector de rol al login si el usuario tiene más de uno asignado; cambio de rol activo en caliente, misma sesión; botones ocultos sin permiso; preferencia de tema persistida por usuario, ningún color hardcodeado (ADR 0002) | 1,5 d |
 | HU-03 | Como **piloto o auxiliar**, quiero iniciar sesión en la app con token propio del dispositivo, para operar sin volver a loguearme | Token Sanctum por dispositivo, revocable desde el panel; sesión persistente offline | 1,0 d |
 
@@ -135,7 +143,155 @@ Mostrar la Beta App Piloto a los pilotos al fin del sprint 3 —y no al final—
 
 ## Después de la v1.0 (con la campaña andando)
 
-El mismo marco continúa con sprints de mantenimiento + una fase por sprint, en orden de urgencia de plata: **Sprint 7–8: Fase 4** (devengos→anticipos→planilla→facturación — la gente cobra a fin de mes); **Sprint 9: Fase 3** (gastos, rendiciones, combustible — se migra de la planilla transitoria); **Sprint 10–11: Fases 5–6** (inventario y mantenimiento); **Sprint 12: Fases 7–8** (portal del cliente, dashboard de ganancia y alertas completas). Durante campaña la capacidad real por sprint baja (soporte + campo): planificar 5–6 días ideales, no 8–9.
+Hasta el 2/9/2026 estas fases vivían en un solo párrafo, sin historias, sin
+criterios de aceptación y sin estimación. Eso tuvo dos consecuencias: el ciclo
+automatizado no podía tomarlas —una tarea solo entra si su criterio es un
+comando que devuelve 0 o 1— y, sobre todo, **el avance del proyecto se venía
+midiendo contra un plan que cubría poco más de la mitad del sistema**. El panel
+tiene 33 ítems de menú y solo 8 llevan a una pantalla; los otros 25 no estaban
+escritos en ninguna parte como trabajo pendiente.
+
+Quedan desglosadas abajo. El orden es el que ya estaba decidido —por urgencia
+de plata— con una sola corrección: el Sprint 7 pasa a ser el de catálogos,
+porque **TE-11 (carga de datos maestros reales, Sprint 6) no se puede hacer sin
+pantallas donde cargarlos**. Hoy esa carga solo es posible por seeder o SQL a
+mano, que no es algo que se le pida a un encargado.
+
+Durante campaña la capacidad real por sprint baja (soporte + campo): planificar
+5–6 días ideales, no 8–9.
+
+---
+
+## Sprint 7 — Catálogos: el panel se vuelve operable
+
+*Objetivo: que un encargado pueda cargar y mantener los datos maestros sin tocar la base. Es el prerrequisito real de TE-11.*
+
+Todas estas historias son ABM sobre tablas **que ya existen, migradas y auditadas** desde TE-03 y los sprints 2–5. No hay modelo de datos nuevo: es la capa de pantalla que faltó.
+
+| ID | Historia / tarea | CA esenciales | Est. |
+|---|---|---|---|
+| HU-22 | Como **encargado**, quiero dar de alta y mantener clientes con sus contactos, para no depender de que alguien toque la base | ABM sobre `com_clientes` y `com_cliente_contactos`; soft delete; test de bitácora en alta, edición y baja | 1,0 d |
+| HU-23 | Como **encargado**, quiero administrar contratos con sus ventanas de aplicación y tarifa, para que las órdenes cuelguen de un contrato vigente | ABM sobre `com_contratos` y `com_contrato_ventanas`; no permite ventana fuera del rango del contrato; tarifa en `DECIMAL` | 1,5 d |
+| HU-24 | Como **encargado**, quiero administrar campos y sus lotes con superficie y geometría, para que el piloto vea el lote correcto | ABM sobre `com_campos` y `com_lotes`; superficie en `DECIMAL`; geometría opcional validada | 1,5 d |
+| HU-25 | Como **encargado**, quiero crear y seguir las órdenes de aplicación desde el panel, para que el piloto las reciba en el pull de catálogo | ABM sobre `ope_ordenes_aplicacion` con su máquina de estados; una orden nueva aparece en `GET /api/sync/catalogo` | 1,5 d |
+| HU-26 | Como **encargado**, quiero administrar personas y bases, con su rol operativo y tarifa, para que los devengos salgan con el dato correcto | ABM sobre `per_personas` y `per_bases`; tarifa en `DECIMAL`; test de que cambiar la tarifa no altera devengos ya generados | 1,5 d |
+| HU-27 | Como **encargado**, quiero administrar la flota de drones con su modelo y volumen de carga, para planificar recargas | ABM sobre `ope_drones`; volumen real por modelo (30/50/60 L) | 1,0 d |
+| HU-45 | Como **encargado**, quiero dar de alta usuarios y asignarles roles desde el panel, para no depender de un seeder — **cierra la parte de HU-01 que quedó sin hacer** | Alta, edición y baja sobre `sec_user` + `sec_user_role`; el encargado no puede crear un usuario dueño; un usuario nunca tiene dos logins; cambiar roles no invalida la sesión activa | 1,5 d |
+
+**Total: 9,5 d · 7 pantallas nuevas + gestión de usuarios operable · Entrega: el panel deja de necesitar SQL a mano**
+
+---
+
+## Sprint 8 — Fase 4a: la gente cobra a fin de mes
+
+*Objetivo: que la planilla salga del sistema y no de una hoja de cálculo.*
+
+| ID | Historia / tarea | CA esenciales | Est. |
+|---|---|---|---|
+| HU-28 | Como **piloto o auxiliar**, quiero ver mis devengos por período, para saber qué voy a cobrar antes de que cierre el mes | Pantalla sobre `fin_devengos_personal` filtrada por persona y período; un operario ve solo lo suyo (test de acceso cruzado → 404) | 1,0 d |
+| HU-29 | Como **encargado**, quiero registrar anticipos validando el tope, para no adelantar más de lo devengado | Tope 3.000 Bs/mes y 70 % del devengado; el rechazo dice cuánto es el máximo disponible | 1,5 d |
+| HU-30 | Como **dueño**, quiero generar la planilla del período desde los devengos y aprobarla, para pagar con un respaldo que cuadre | Planilla en borrador desde devengos + anticipos; solo el dueño aprueba; recibo individual en PDF; el total cuadra exacto contra los devengos de origen | 3,0 d |
+
+**Total: 5,5 d · 2 pantallas · Entrega: primer pago con planilla del sistema**
+
+---
+
+## Sprint 9 — Fase 4b: cobrarle al cliente
+
+*Objetivo: cerrar el circuito del dinero que entra, no solo el que sale.*
+
+| ID | Historia / tarea | CA esenciales | Est. |
+|---|---|---|---|
+| HU-31 | Como **encargado**, quiero emitir la factura de un trabajo desde su acta conformada, para cobrar sobre hectáreas ya firmadas | Factura solo desde acta en estado `firmada`; monto = hectáreas conformadas × tarifa del contrato; no permite facturar dos veces el mismo trabajo | 2,0 d |
+| HU-32 | Como **dueño**, quiero un reporte comercial de avance por cliente, contrato y campaña, para saber cuánto queda por aplicar y por cobrar | Hectáreas contratadas vs. aplicadas vs. facturadas por contrato; exportable | 1,5 d |
+
+**Total: 3,5 d · 2 pantallas**
+
+---
+
+## Sprint 10 — Fase 3: gastos y rendiciones
+
+*Objetivo: que el costo real de una campaña sea consultable, no reconstruible.*
+
+| ID | Historia / tarea | CA esenciales | Est. |
+|---|---|---|---|
+| HU-33 | Como **encargado**, quiero cargar gastos con su categoría y comprobante, para que la campaña tenga costo real | ABM de gastos con evidencia adjunta; categorías de catálogo; imputable a trabajo, base o general | 1,5 d |
+| HU-34 | Como **jefe de campo**, quiero rendir lo que gasté en campo y que el encargado lo apruebe, para reponer el fondo | Rendición con detalle e ítems; estados `abierta → presentada → aprobada`; el aprobador nunca es quien rinde | 2,0 d |
+| HU-35 | Como **encargado**, quiero registrar el combustible del generador y de los vehículos, para imputarlo a la campaña | Carga por base y fecha; litros y monto en `DECIMAL`; consultable por período | 1,0 d |
+
+**Total: 4,5 d · 3 pantallas**
+
+---
+
+## Sprint 11 — Fases 5–6: inventario y mantenimiento
+
+*Objetivo: que el equipo no se rompa por sorpresa y que los repuestos no falten en plena campaña.*
+
+Es el bloque más caro: módulos nuevos (`man_*`, `inv_*`) con su propio modelo de datos, no pantallas sobre tablas existentes.
+
+| ID | Historia / tarea | CA esenciales | Est. |
+|---|---|---|---|
+| HU-36 | Como **encargado**, quiero llevar stock de repuestos por base con alerta de mínimo, para reponer antes de quedarme sin | Movimientos de compra, salida, ajuste y traslado; el stock nunca queda negativo; alerta al cruzar el mínimo | 2,5 d |
+| HU-37 | Como **encargado**, quiero abrir órdenes de mantenimiento y cerrarlas consumiendo repuestos, para que el costo quede imputado | Cierre descuenta stock y genera el gasto asociado en una transacción; no cierra sin repuestos disponibles | 2,5 d |
+| HU-38 | Como **encargado**, quiero planes de mantenimiento preventivo por horas de vuelo, para que el sistema me avise antes de la falla | Plan por modelo de dron; alerta cuando el acumulado de horas cruza el umbral | 2,0 d |
+| HU-39 | Como **encargado**, quiero seguir las baterías con sus ciclos y estado, para retirarlas antes de que fallen en vuelo | ABM con ciclos acumulados; alerta por ciclos o por temperatura registrada en recargas | 1,5 d |
+| HU-40 | Como **encargado**, quiero administrar los vehículos con su asignación a base | ABM con asignación y estado | 1,0 d |
+
+**Total: 9,5 d · 6 pantallas**
+
+---
+
+## Sprint 12 — Fases 7–8: lo que ve el cliente y lo que falta ver
+
+*Objetivo: cerrar la visibilidad, adentro y afuera.*
+
+| ID | Historia / tarea | CA esenciales | Est. |
+|---|---|---|---|
+| HU-41 | Como **cliente**, quiero entrar al portal y ver solo mis reportes, actas y avance, para verificar sin llamar a nadie | Todo consultado desde el `contrato` del usuario autenticado (invariante 5); test obligatorio: cliente A pide recurso de cliente B → 404 | 2,5 d |
+| HU-42 | Como **jefe de campo**, quiero ver la galería de evidencias de un trabajo, para revisar sin abrir la base | Pantalla sobre `ope_evidencias` agrupada por trabajo y sesión; miniaturas y descarga | 1,0 d |
+| HU-43 | Como **encargado**, quiero listar y descargar los reportes técnicos generados, para reenviarlos al agrónomo | Pantalla sobre `ope_reportes_tecnicos` con filtro por cliente y período | 1,0 d |
+| HU-44 | Como **jefe de campo**, quiero registrar las pausas con su causa atribuible (DS-01), para saber qué tiempo se pierde y por qué | Pausa ligada a sesión con causa de catálogo; agregado por causa en el tablero | 1,5 d |
+| TE-13 | Quitar del menú el ítem `Operación › Mezclas`: no existe más por CR-01 | El ítem desaparece de `SecMenuSeeder` y del árbol sembrado; ningún test lo referencia | 0,5 d |
+| TE-14 | Reemplazar los badges de demostración del sidebar por contadores reales | Los números del menú (`Órdenes 12`, `Devengos 18.490`, `Sesiones 6`…) salen hoy de `DatosDemoPanel`: son inventados. Cada badge consulta su módulo o desaparece; ningún número del panel sin origen en la base | 1,0 d |
+
+**Total: 7,5 d · 4 pantallas**
+
+---
+
+## Alcance total del sistema
+
+| Bloque | Días | Pantallas de menú | Estado |
+|---|---|---|---|
+| Sprints 1–6 (ruta crítica) | 47,5 d | 8 | 32,7 d hechos · 13,5 d pendientes, ninguno de software · 1,3 d de HU-01 sin hacer |
+| Sprints 7–12 (resto del panel) | 40,0 d | 24 | sin empezar |
+| **Proyecto completo** | **87,5 d** | **32** | **32,7 d hechos = 37 %** |
+
+### Tres métricas, tres preguntas distintas
+
+Medido el 2/9/2026 con una auditoría del panel en navegador (Playwright, login
+real como Dueño), no contando archivos:
+
+| Métrica | Valor | Qué responde |
+|---|---|---|
+| **Esfuerzo** | **37 %** — 32,7 de 87,5 días-hombre | Cuánto trabajo se hizo |
+| **Superficie del panel** | **25 %** — 8 de 32 ítems del menú llevan a una pantalla | Qué ve quien abre el sistema |
+| **Panel operable** | **9 %** — 3 de 32 pantallas permiten hacer algo | Qué puede *usar* quien abre el sistema |
+
+Esa tercera fila es la incómoda y hay que decirla: de las 8 pantallas que
+existen, solo tres aceptan escritura — validación de sesiones (validar y
+rechazar), organización (guardar) y versiones del APK (subir y autorizar). Las
+otras cinco —dashboard, trabajos, usuarios, dispositivos, alertas— son de
+lectura. **La gestión de usuarios no existe** (ver la nota de HU-01, Sprint 1).
+
+La brecha entre esfuerzo y superficie no es un error de medición: la ruta
+crítica era mayormente backend —sync offline idempotente, máquina de estados,
+devengos, auditoría, seguridad multirol— y entregó 8 pantallas. Los sprints 7
+a 12 invierten la proporción: 40 días de trabajo que producen las 24 pantallas
+restantes y vuelven operables las que ya están.
+
+**El Sprint 7 es el de mejor retorno visible: con 9,5 días, el panel pasa de 8
+a 15 pantallas y la gestión de usuarios empieza a funcionar — de 25 % a 47 % de
+superficie.** Por eso va primero, por delante incluso del bloque de dinero.
 
 ## Reglas del marco (versión para un equipo de una persona)
 
