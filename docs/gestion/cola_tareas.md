@@ -1,6 +1,6 @@
 # Cola de tareas automatizables
 
-**Última actualización: 1/9/2026.** Este es el backlog que el ciclo de
+**Última actualización: 2/9/2026.** Este es el backlog que el ciclo de
 `bin/ciclo` consume solo — el punto 3 de
 [automatizacion_desarrollo.md](automatizacion_desarrollo.md). No reemplaza a
 `plan_sprints.md`: ahí están las HU y TE con su alcance de negocio; acá está lo
@@ -54,9 +54,48 @@ exista el módulo `Mezclas`).
 | 16 | HU-16 — devengo automático del piloto y su auxiliar al validar una sesión (`SesionValidada` → listener real, módulo `Finanzas` nuevo) | `./bin/verify` = 0, con test de idempotencia (`UNIQUE sesion_id+persona_id`), de exactitud decimal y de que `cerrar()` nunca genera devengo | módulo nuevo `Finanzas` (`fin_`), `ALTER per_personas` (`tarifa_ha`), `Personal/Contratos/**`, `Operaciones/Contratos/**`, tests | **sí** | 4 | **hecha** (PR #53, mergeado 1/9/2026) |
 | 17 | HU-06 — condiciones al iniciar sesión (viento/temperatura/humedad), autoriza / autoriza con observación / rechaza, vía el motor de sync | `./bin/verify` = 0, con test de cada rango y de rechazo sin observación | `Operaciones/**`, `Sincronizacion/Aplicacion/**`, migración `ope_condiciones`, tests | **sí** | 4 | **hecha** (PR #54, mergeado 1/9/2026) |
 | 18 | HU-10 (redefinida por CR-01) — recepción de caldo: litros recibidos por trabajo, consumidos por sesión, sobrante al cierre, cuadre recalculable | `./bin/verify` = 0, con test de cuadre (recibido = consumido + sobrante) e idempotencia | `Operaciones/**` o módulo nuevo `Mezclas` (decisión de la propia tarea), `Sincronizacion/Aplicacion/**`, tests | **sí** | 4 | **hecha** (PR #55, mergeado 1/9/2026) |
-| 19 | TE-07 (parte servidor) — endpoint de recepción de evidencias (`ope_evidencias`), idempotente, con hash SHA-256. Requisito previo de HU-08 y HU-09, que la referencian | `./bin/verify` = 0, con test de idempotencia y de tipo/hash inválido | `Operaciones/**` (decisión de módulo a cargo de la tarea), migración, tests | **sí** | 4 | encolada |
-| 20 | HU-07 — relevo de piloto y cambio de dron: `hectarea_inicial_acumulada`, catálogo mínimo de `dron`, trabajo `parcial`/`observado`, tolerancia de solape configurable | `./bin/verify` = 0, con test de suma de sesiones dentro y fuera de tolerancia | `Operaciones/**`, migraciones, `Sincronizacion/Aplicacion/**`, tests | **sí** | 5 | encolada |
-| 21 | HU-09 — cierre de lote: imagen del campo obligatoria para cerrar un trabajo, reutiliza `observado` de la tarea 20 | `./bin/verify` = 0, con test de rechazo sin evidencia y de cierre válido | `Operaciones/Contratos/CierreTrabajo.php`, `EscrituraSincronizacionEloquent`, tests | **sí** | 3 | encolada |
+| 19 | TE-07 (parte servidor) — endpoint de recepción de evidencias (`ope_evidencias`), idempotente, con hash SHA-256. Requisito previo de HU-08 y HU-09, que la referencian | `./bin/verify` = 0, con test de idempotencia y de tipo/hash inválido | `Operaciones/**` (decisión de módulo a cargo de la tarea), migración, tests | **sí** | 4 | **hecha** (PR #56, mergeado 1/9/2026) |
+| 20 | HU-07 — relevo de piloto y cambio de dron: `hectarea_inicial_acumulada`, catálogo mínimo de `dron`, trabajo `parcial`/`observado`, tolerancia de solape configurable | `./bin/verify` = 0, con test de suma de sesiones dentro y fuera de tolerancia | `Operaciones/**`, migraciones, `Sincronizacion/Aplicacion/**`, tests | **sí** | 5 | **hecha** (PR #57, mergeado 1/9/2026) |
+| 21 | HU-09 — cierre de lote: imagen del campo obligatoria para cerrar un trabajo, reutiliza `observado` de la tarea 20 | `./bin/verify` = 0, con test de rechazo sin evidencia y de cierre válido | `Operaciones/Contratos/CierreTrabajo.php`, `EscrituraSincronizacionEloquent`, tests | **sí** | 3 | **hecha** (PR #58, mergeado 2/9/2026; hallazgo informativo sin acción: la HU-09 completa —"captura del RC e imagen del campo"— queda cerrada solo en su mitad de imagen del campo, falta `sesiones.captura_rc_id` si se decide ampliar) |
+| 22 | HU-08 — incidencias con foto (caldo/ESC/batería/mecánica/clima), ligadas a la sesión, nuevo tipo de registro del motor de sync | `./bin/verify` = 0, con test de rechazo sin evidencia y de registro válido | `Operaciones/Contratos/**`, `Operaciones/Dominio/**`, `EscrituraSincronizacionEloquent`, `Sincronizacion/Aplicacion/**`, migración `ope_incidencias`, tests | **sí** | 3 | **verificada y APROBADA** (implementación y revisión crítica interna en verde, `runs/22.veredicto`); **PR #59 sigue en borrador esperando revisión humana** — ver `runs/revision-pendiente.txt` y la nota "El bug de la 24" más abajo |
+| 23 | HU-13 — recargas del dron: batería, temperatura (alerta > 50 °C), litros de caldo por sesión, combustible del generador, motivo/hora de retraso por caldo | `./bin/verify` = 0, con test de alerta de temperatura y de recarga válida | `Operaciones/Contratos/**`, `EscrituraSincronizacionEloquent`, `Sincronizacion/Aplicacion/**`, migración `ope_recargas`, tests | **sí** | 4 | **hecha** (PR #61, mergeado 1/9/2026; su prompt tuvo que recuperarse a mano del historial de git a mitad de tarea — ver "El bug de la 24" abajo) |
+| 24 | HU-17 — acta por lote: PDF con hectáreas conformadas, firma del agrónomo referenciada como evidencia (`firma_acta`), máquina de estados `pendiente → firmada` | `./bin/verify` = 0, con test de guarda (no genera sobre trabajo abierto) y de firma válida | `Operaciones/**`, migración `ope_actas`, `sec_action`/permisos, pantalla mínima del panel, tests | **sí** | 5 | encolada (prompt recuperado el 2/9/2026 — se había perdido, ver "El bug de la 24" abajo) |
+| 25 | HU-18 — reporte técnico por lote: PDF automático al firmar el acta de la tarea 24 (imagen del campo, horas de inicio/fin, condiciones, litros de caldo/ha, incidencias con evidencia, detalle de sesiones con relevo/cambio de dron), sin contenido de mezcla/dosis (CR-01: no existe ese dato) | `./bin/verify` = 0, con test de generación automática al firmar el acta y de rechazo si el trabajo todavía no está conformado | `Operaciones/**`, migración `ope_reportes_tecnicos`, `sec_action`/permisos, pantalla mínima del panel, tests | no | 4 | encolada |
+| 26 | HU-19 — bandeja de alertas por excepción (batería caliente, dron sospechoso, condiciones forzadas, suma excedida/`observado`), recortada a lo que ya tiene datos reales — el resto de la lista de la espec depende de mezcla/anticipos/rendiciones, módulos que todavía no existen | `./bin/verify` = 0, con test de generación de cada alerta cubierta y de la transición `pendiente → atendida` | `Operaciones/**`, migración `ope_alertas`, `sec_action`/permisos, pantalla mínima del panel, tests | no | 4 | encolada |
+
+### El bug de la 24 — por qué su prompt tuvo que recuperarse
+
+`bin/ciclo` (`preparar_rama()`) commitea el prompt de la tarea que arranca con
+`git add -- "${PLANIFICACION[@]}"`, un glob (`prompts/[0-9][0-9]-*.md`) que
+agarra **todo** lo que esté sin commitear en `prompts/`, no solo el archivo de
+la tarea que arranca. La planificación tras la tarea 21 escribió de una vez los
+prompts 22, 23 y 24 (regla de "escribí de a varias"), sin commitearlos (regla
+de "no commitees" — viajan como primer commit de la rama que los va a usar).
+Como los tres quedaron sin commitear a la vez, el glob los barrió juntos en el
+primer commit de la PRIMERA rama que arrancó (`feature/incidencias-sesion`,
+tarea 22, commit `f2db767`) — no solo el prompt 22.
+
+La tarea 22 es crítica (motor de sync): su PR (#59) se abrió en borrador y
+sigue ahí, sin mergear a `develop`. Los prompts 23 y 24, atrapados en esa misma
+rama sin mergear, dejaron de estar disponibles en `develop` para las tareas
+siguientes. La tarea 23 lo notó sola: su etapa 1 falló (`SIN-ESTADO`, cero
+commits) porque no encontró `prompts/23-recargas-dron.md`; su etapa 2 lo
+recuperó a mano con `git show f2db767:prompts/23-recargas-dron.md` y lo dejó
+documentado en su propio commit. Nadie hizo lo mismo por la tarea 24 —no era su
+trabajo—, así que cuando el ciclo llegó a ella no encontró el prompt, y en vez
+de fallar en seco disparó una planificación nueva (esta). Se recuperó igual,
+con el mismo `git show`, en esta vuelta.
+
+**Va a volver a pasar.** Esta misma vuelta escribe los prompts 24 (recuperado),
+25 y 26 sin commitear, y la 24 también es crítica — si su PR queda en borrador
+como el de la 22, los prompts 25 y 26 quedan atrapados con ella. La próxima
+planificación (o la implementación de la 25/26, si hace falta) sabe cómo
+rescatarlos: `git log --all --oneline -- prompts/NN-slug.md` encuentra el
+commit que los tiene, aunque esté en una rama sin mergear. La corrección de
+raíz —que `preparar_rama()` solo agregue `prompts/${id}-*.md`, no el glob
+completo— es un cambio de una línea en `bin/ciclo`, pero no es una HU del plan
+de sprints: no entra en esta cola, queda anotado acá para quien lo quiera
+arreglar directamente.
 
 ### Fuera del ciclo automático
 
@@ -85,9 +124,7 @@ lo corrigió.
 | TE-02 | Spike de hardware: necesita el RC Agras en mano. Su entregable es un informe, no un exit code |
 | TE-04 | Base local drift + outbox: vive en `agrocom-field`, otro repo |
 | HU-04 (parte app) | "Lista y detalle offline" es UI de `agrocom-field`, fuera de este ciclo. Su parte de servidor ("sin orden vigente no se puede abrir trabajo") **ya está cubierta**: fue uno de los hallazgos de la tarea 12 (`EscrituraSincronizacionEloquent::abrirTrabajo()` rechaza si la orden no existe, no está vigente, o el `lote_id` no coincide) — no necesita tarea propia |
-| HU-08 | Incidencias con foto (caldo/ESC/batería/mecánica/clima). Depende de la tarea 19 (evidencias) para tener dónde referenciar la foto — todavía sin planificar, sigue en la cola conceptual detrás de la 21 |
 | HU-11, HU-12 | **Fuera de alcance desde el 1/9/2026** (CR-01 cerrada): Agrocom no prepara la mezcla ni dosifica. No están pendientes — están eliminadas del plan |
-| HU-13 | Recargas del dron (batería, temperatura, retraso por caldo). Comparte "litros" con HU-10 pero es tarea aparte — sigue en la cola conceptual, detrás de HU-08 |
 | TE-07 (parte app) | Compresión y cola de subida viven en `agrocom-field`; el endpoint que recibe la evidencia (la parte que sí califica) es la tarea 19 |
 | TE-08 | Endurecimiento del sync con datos de las betas: no hay datos de beta real todavía, depende de que exista staging con tráfico |
 | TE-09, HU-21 | Ensayo general en campo con operarios reales y sus correcciones de adopción |
@@ -103,9 +140,11 @@ seguido desde entonces: **12** (hallazgos del sync) → **HU-05** (esqueleto
 vertical del lado servidor, tarea 13) → **HU-14** y **HU-15** (las dos
 pantallas de panel, tareas 14/15) → **HU-16** (devengo, tarea 16) → **HU-06**
 (condiciones de vuelo, tarea 17) → **HU-10** (recepción de caldo, tarea 18)
-— las nueve ya cerradas. Sigue: **TE-07 parte servidor** (evidencias,
-crítica, tarea 19) → **HU-07** (relevo de piloto y cambio de dron, crítica,
-tarea 20) → **HU-09** (cierre de lote con evidencia, crítica, tarea 21).
+→ **TE-07 parte servidor** (evidencias, tarea 19) → **HU-07** (relevo de
+piloto, tarea 20) → **HU-09** (cierre de lote con evidencia, tarea 21) → **HU-08**
+(incidencias, tarea 22) → **HU-13** (recargas del dron, tarea 23) — las
+catorce ya cerradas. Sigue: **HU-17** (acta con firma, tarea 24) → **HU-18**
+(reporte técnico, tarea 25) → **HU-19** (alertas por excepción, tarea 26).
 
 La regla que decide es la del punto 1 de
 [automatizacion_desarrollo.md](automatizacion_desarrollo.md): una tarea avanza
@@ -130,6 +169,12 @@ columna por columna que solo `anulada_en` cambia). La invariante 3 sigue
 esperando — su gate (que `cerrar()` nunca genere un devengo) se escribe en
 la tarea 16, junto con el dominio de `Finanzas` que hace que haya algo que
 guardar.
+
+Del mismo tipo: las alertas de la tarea 26 que dependen de `mezcla`
+(desvío ±5%, hectáreas incoherentes por dosis) o de `anticipos`/`rendiciones`
+(fuera de alcance por CR-01 las primeras, todavía sin construir las segundas)
+no tienen sobre qué correr — su gate se escribe cuando esos dominios existan,
+no antes.
 
 ## Por qué ese orden
 
@@ -192,16 +237,42 @@ calificar, y el ciclo retomó con la 12.
 **16 → 17 → 18 siguieron el orden literal de "acá en adelante" fijado por la
 tarea 12**, saltando por delante HU-04/07/08/09/TE-07 (Sprint 2/3, todavía sin
 cerrar) sin dejarlo anotado explícitamente en su momento — un hueco real del
-trazado, no una exclusión deliberada. Esta planificación (tras la tarea 18) lo
-reconcilia: **HU-04 (parte servidor) ya estaba cubierta** desde la tarea 12
-(ver la tabla de arriba), así que no hacía falta tarea propia. Lo que sí
-seguía genuinamente sin hacer — HU-07, HU-08, HU-09, TE-07 (parte servidor) —
-se retoma ahora, en el orden que impone la dependencia real, no el orden de
-fila de `plan_sprints.md`: **TE-07 primero** (tarea 19) porque HU-07 y HU-09
-necesitan poder referenciar una evidencia ya subida (`captura_rc`/`imagen_campo`)
-antes de poder exigirla; **HU-07 después** (tarea 20) porque es donde vive de
-forma más natural la validación de suma de hectáreas contra tolerancia
-(espec §5, línea 206) que **HU-09 reutiliza** (tarea 21) en vez de
-reimplementar. **HU-08** (incidencias) queda fuera de este lote de tres —
-depende solo de la 19, podría ir en cualquier lugar después de ella — y se
-retoma en la próxima ronda de planificación.
+trazado, no una exclusión deliberada. La planificación tras la tarea 18 lo
+reconcilió: **HU-04 (parte servidor) ya estaba cubierta** desde la tarea 12,
+así que no hacía falta tarea propia. Lo que sí seguía genuinamente sin hacer —
+HU-07, HU-08, HU-09, TE-07 (parte servidor) — se retomó en el orden que impone
+la dependencia real, no el orden de fila de `plan_sprints.md`: **TE-07
+primero** (tarea 19) porque HU-07 y HU-09 necesitan poder referenciar una
+evidencia ya subida (`captura_rc`/`imagen_campo`) antes de poder exigirla;
+**HU-07 después** (tarea 20) porque es donde vive de forma más natural la
+validación de suma de hectáreas contra tolerancia (espec §5, línea 206) que
+**HU-09 reutiliza** (tarea 21) en vez de reimplementar.
+
+**22 → 23 → 24 cierran lo que quedó pendiente de los sprints 3, 4 y 5, en ese
+orden.** **HU-08** (tarea 22) es lo único que le faltaba al sprint 3: depende
+solo de la tarea 19 (evidencias), ya integrada, y reusa el tipo `foto_incidencia`
+que esa tarea dejó listo sin usar — no hay motivo para seguir postergándola.
+**HU-13** (tarea 23) es lo único que le falta al sprint 4 (HU-11/12
+desaparecieron por CR-01, el resto ya está hecho): sin dependencia real de la
+22, pero sigue el orden del plan porque no hay ninguna razón para adelantarla.
+**HU-17** (tarea 24) abre el sprint 5: de sus filas, HU-16 y HU-20 ya están
+hechas y TE-08 sigue sin datos de beta para calificar, así que HU-17 es la
+primera pendiente.
+
+**25 → 26 siguen encadenadas a la 24 por dato, no por código.** **HU-18**
+(tarea 25) es lo que la propia espec (§9) ata a la firma del acta: "PDF
+automático al conformar el lote" — necesita que la tarea 24 exista para tener
+qué disparar, y arma el resto del contenido leyendo lo que las tareas 17/18/20/
+21/22/23 ya dejaron persistido (condiciones, recepción de caldo, sesiones con
+relevo, incidencias, recargas) — sin nada de mezcla/dosis, fuera de alcance por
+CR-01. **HU-19** (tarea 26) no depende de código de ninguna de las dos, pero se
+recorta a los cuatro tipos de alerta de la espec §10 que ya tienen datos reales
+detrás (batería caliente y dron sospechoso de la tarea 23, condiciones forzadas
+de la tarea 17, suma excedida/`observado` de la tarea 20): el resto de la lista
+—hectáreas incoherentes y desvío de mezcla (CR-01, no hay dosis que comparar),
+anticipo al límite y rendición pendiente (`anticipos`/`rendiciones` no
+existen)— queda para cuando esos dominios existan, mismo criterio que la
+sección "Condicionadas" de arriba. Ninguna de las tres (24/25/26) tiene una
+dependencia de código real entre sí que no sea la ya descrita, así que si una
+queda `BLOQUEADA` o `INCOMPLETA` no debería frenar a la siguiente — la próxima
+planificación lo confirma si pasa.
