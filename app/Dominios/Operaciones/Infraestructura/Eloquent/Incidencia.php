@@ -5,6 +5,7 @@ namespace App\Dominios\Operaciones\Infraestructura\Eloquent;
 use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
 use App\Dominios\Operaciones\Dominio\TipoIncidencia;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Incidencia de sesión (espec §4.3, tabla `incidencias`; HU-08, tarea 22).
@@ -45,5 +46,17 @@ class Incidencia extends ModeloDominio
             'tipo' => TipoIncidencia::class,
             'hora' => 'immutable_datetime',
         ];
+    }
+
+    /**
+     * Evidencia fotográfica obligatoria (HU-08, tarea 22): `foto_incidencia`
+     * viene resuelta y validada por `EscrituraSincronizacionEloquent::registrarIncidencia()`,
+     * mismo patrón que `Trabajo::imagenCampoEvidencia()`.
+     *
+     * @return BelongsTo<Evidencia, $this>
+     */
+    public function evidenciaFoto(): BelongsTo
+    {
+        return $this->belongsTo(Evidencia::class, 'evidencia_foto_id');
     }
 }

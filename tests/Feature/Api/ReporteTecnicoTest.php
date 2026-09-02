@@ -10,9 +10,11 @@ use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Dominio\EstadoSesion;
 use App\Dominios\Operaciones\Dominio\EstadoTrabajo;
 use App\Dominios\Operaciones\Dominio\TipoEvidencia;
+use App\Dominios\Operaciones\Dominio\TipoIncidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Acta;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Dron;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Evidencia;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\Incidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\ReporteTecnico;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
@@ -380,4 +382,45 @@ it('la unicidad de trabajo_id no depende de un constraint específico de Postgre
 
     expect(fn () => ReporteTecnico::create(['trabajo_id' => $trabajo->id, 'generado_en' => now()]))
         ->toThrow(QueryException::class);
+});
+
+/*
+ * ── Caso 9: incidencias de sesión (tarea 28 — cierra el hueco que dejó HU-18) ──
+ */
+
+it('el contenido del reporte incluye las incidencias de las sesiones vigentes, con tipo y evidencia', function () {
+    $trabajo = trabajoParaReporte('incidencia', EstadoTrabajo::Cerrado, '18.50', '18.50');
+    $sesion = sesionParaReporte($trabajo, 'incidencia', EstadoSesion::Validado, '18.50', 'completado', '2026-09-01T08:00:00-04:00', '2026-09-01T11:00:00-04:00');
+
+    $evidenciaUuid = 'uuid-evidencia-incidencia-reporte';
+    $evidencia = Evidencia::create([
+        'uuid_cliente' => $evidenciaUuid,
+        'tipo' => TipoEvidencia::FotoIncidencia,
+        'archivo_url' => "evidencias/foto_incidencia/2026/09/{$evidenciaUuid}.jpg",
+        'hash' => hash('sha256', $evidenciaUuid),
+        'fecha' => '2026-09-01T09:00:00-04:00',
+    ]);
+
+    Incidencia::create([
+        'uuid_cliente' => 'uuid-incidencia-reporte',
+        'sesion_id' => $sesion->id,
+        'tipo' => TipoIncidencia::Clima,
+        'hora' => '2026-09-01T09:30:00-04:00',
+        'evidencia_foto_id' => $evidencia->id,
+    ]);
+
+    $datos = app(ArmarContenidoReporteTecnico::class)->ejecutar($trabajo->fresh());
+
+    expect($datos['incidencias'])->toBe([
+        ['tipo' => 'clima', 'evidencia_url' => $evidencia->archivo_url],
+    ]);
+});
+
+it('sin incidencias registradas, la lista del reporte sigue vacía', function () {
+    $trabajo = trabajoListoParaReporte('sin-incidencias');
+    conformarTrabajoParaReporte($trabajo, usuarioConPermisoReporte(), 'sin-incidencias');
+
+    $datos = app(ArmarContenidoReporteTecnico::class)->ejecutar($trabajo->fresh());
+
+    expect($datos['incidencias'])->toBe([]);
 });

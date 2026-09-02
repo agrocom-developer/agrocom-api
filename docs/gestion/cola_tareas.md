@@ -57,11 +57,15 @@ exista el módulo `Mezclas`).
 | 19 | TE-07 (parte servidor) — endpoint de recepción de evidencias (`ope_evidencias`), idempotente, con hash SHA-256. Requisito previo de HU-08 y HU-09, que la referencian | `./bin/verify` = 0, con test de idempotencia y de tipo/hash inválido | `Operaciones/**` (decisión de módulo a cargo de la tarea), migración, tests | **sí** | 4 | **hecha** (PR #56, mergeado 1/9/2026) |
 | 20 | HU-07 — relevo de piloto y cambio de dron: `hectarea_inicial_acumulada`, catálogo mínimo de `dron`, trabajo `parcial`/`observado`, tolerancia de solape configurable | `./bin/verify` = 0, con test de suma de sesiones dentro y fuera de tolerancia | `Operaciones/**`, migraciones, `Sincronizacion/Aplicacion/**`, tests | **sí** | 5 | **hecha** (PR #57, mergeado 1/9/2026) |
 | 21 | HU-09 — cierre de lote: imagen del campo obligatoria para cerrar un trabajo, reutiliza `observado` de la tarea 20 | `./bin/verify` = 0, con test de rechazo sin evidencia y de cierre válido | `Operaciones/Contratos/CierreTrabajo.php`, `EscrituraSincronizacionEloquent`, tests | **sí** | 3 | **hecha** (PR #58, mergeado 2/9/2026; hallazgo informativo sin acción: la HU-09 completa —"captura del RC e imagen del campo"— queda cerrada solo en su mitad de imagen del campo, falta `sesiones.captura_rc_id` si se decide ampliar) |
-| 22 | HU-08 — incidencias con foto (caldo/ESC/batería/mecánica/clima), ligadas a la sesión, nuevo tipo de registro del motor de sync | `./bin/verify` = 0, con test de rechazo sin evidencia y de registro válido | `Operaciones/Contratos/**`, `Operaciones/Dominio/**`, `EscrituraSincronizacionEloquent`, `Sincronizacion/Aplicacion/**`, migración `ope_incidencias`, tests | **sí** | 3 | **verificada y APROBADA** (implementación y revisión crítica interna en verde, `runs/22.veredicto`); **PR #59 sigue en borrador esperando revisión humana** — ver `runs/revision-pendiente.txt` y "El bug de la 24" más abajo |
+| 22 | HU-08 — incidencias con foto (caldo/ESC/batería/mecánica/clima), ligadas a la sesión, nuevo tipo de registro del motor de sync | `./bin/verify` = 0, con test de rechazo sin evidencia y de registro válido | `Operaciones/Contratos/**`, `Operaciones/Dominio/**`, `EscrituraSincronizacionEloquent`, `Sincronizacion/Aplicacion/**`, migración `ope_incidencias`, tests | **sí** | 3 | **hecha** (PR #59, mergeado 2/9/2026 por la tarea 27 — quedó atrás del resto de `develop` y necesitó reconciliación con conflictos reales en el motor de sync) |
 | 23 | HU-13 — recargas del dron: batería, temperatura (alerta > 50 °C), litros de caldo por sesión, combustible del generador, motivo/hora de retraso por caldo | `./bin/verify` = 0, con test de alerta de temperatura y de recarga válida | `Operaciones/Contratos/**`, `EscrituraSincronizacionEloquent`, `Sincronizacion/Aplicacion/**`, migración `ope_recargas`, tests | **sí** | 4 | **hecha** (PR #61, mergeado 1/9/2026; su prompt tuvo que recuperarse a mano del historial de git a mitad de tarea — ver "El bug de la 24" abajo) |
-| 24 | HU-17 — acta por lote: PDF con hectáreas conformadas, firma del agrónomo referenciada como evidencia (`firma_acta`), máquina de estados `pendiente → firmada` | `./bin/verify` = 0, con test de guarda (no genera sobre trabajo abierto) y de firma válida | `Operaciones/**`, migración `ope_actas`, `sec_action`/permisos, pantalla mínima del panel, tests | **sí** | 5 | **verificada y APROBADA** (implementación y revisión crítica interna en verde, `runs/24.veredicto`, "APROBADO CON OBSERVACIONES"); **PR #62 sigue en borrador esperando revisión humana** — misma situación que la 22. Bloquea a la 25 (ver fila siguiente) |
-| 25 | HU-18 — reporte técnico por lote: PDF automático al firmar el acta de la tarea 24 (imagen del campo, horas de inicio/fin, condiciones, litros de caldo/ha, incidencias con evidencia, detalle de sesiones con relevo/cambio de dron), sin contenido de mezcla/dosis (CR-01: no existe ese dato) | `./bin/verify` = 0, con test de generación automática al firmar el acta y de rechazo si el trabajo todavía no está conformado | `Operaciones/**`, migración `ope_reportes_tecnicos`, `sec_action`/permisos, pantalla mínima del panel, tests | no | 4 | **BLOQUEADA** (`runs/25.md`) — no hay `Acta` en `develop` (el PR #62 de la tarea 24 sigue en borrador), y sin acta firmada no hay "conformado" sobre qué generar el reporte. Pregunta para el usuario: **¿corresponde sacar el PR #62 de borrador y mergearlo?** Ver la nota sobre la política de PRs críticos, abajo |
+| 24 | HU-17 — acta por lote: PDF con hectáreas conformadas, firma del agrónomo referenciada como evidencia (`firma_acta`), máquina de estados `pendiente → firmada` | `./bin/verify` = 0, con test de guarda (no genera sobre trabajo abierto) y de firma válida | `Operaciones/**`, migración `ope_actas`, `sec_action`/permisos, pantalla mínima del panel, tests | **sí** | 5 | **hecha** (PR #62, mergeado 2/9/2026; quedó en borrador por la política vieja del documento, corregida en la tarea de la 65/66) |
+| 25 | HU-18 — reporte técnico por lote: PDF automático al firmar el acta de la tarea 24 (imagen del campo, horas de inicio/fin, condiciones, litros de caldo/ha, incidencias con evidencia, detalle de sesiones con relevo/cambio de dron), sin contenido de mezcla/dosis (CR-01: no existe ese dato) | `./bin/verify` = 0, con test de generación automática al firmar el acta y de rechazo si el trabajo todavía no está conformado | `Operaciones/**`, migración `ope_reportes_tecnicos`, `sec_action`/permisos, pantalla mínima del panel, tests | no | 4 | **hecha** (PR #67, mergeado 2/9/2026; retomada tras destrabarse el PR #62/HU-17. Quedó con las incidencias vacías a propósito —HU-08 todavía no estaba integrada— ver `runs/25.md`; cerrado por la tarea 28) |
 | 26 | HU-19 — bandeja de alertas por excepción (batería caliente, dron sospechoso, condiciones forzadas, suma excedida/`observado`), recortada a lo que ya tiene datos reales — el resto de la lista de la espec depende de mezcla/anticipos/rendiciones, módulos que todavía no existen | `./bin/verify` = 0, con test de generación de cada alerta cubierta y de la transición `pendiente → atendida` | `Operaciones/**`, migración `ope_alertas`, `sec_action`/permisos, pantalla mínima del panel, tests | no | 4 | **hecha y mergeada** (PR #64, mergeado 2/9/2026 a `develop`; no crítica, se revisó por diff y test en el PR). Bandeja en `/panel/alertas`, no `/api/alertas` como nombraba el prompt: `routes/api.php` es exclusivo de las apps de campo por ADR 0008 — ver `runs/26.md` |
+| 27 | Reconciliar `feature/incidencias-sesion` (HU-08, PR #59) con `develop` — quedó atrás tras el rescate de los PR #62/#64, con conflictos reales en el motor de sync (8 archivos) | `./bin/verify` = 0 sobre la rama ya mergeada, con test de convivencia de los 8 tipos de registro del motor de sync | motor de sync (`Sincronizacion/**`, `Operaciones/Contratos/**`), `docs/api/openapi.yaml`, tests | **sí** | 4 | **hecha** (PR #59 integrado 2/9/2026, `runs/27-veredicto.md` sin hallazgos) |
+| 28 | Cerrar el hueco de incidencias en el reporte técnico: `ArmarContenidoReporteTecnico` quedó con `'incidencias' => []` fijo (tarea 25) porque HU-08 no estaba integrada a `develop` todavía; ya lo está desde la tarea 27 | `./bin/verify` = 0, con test de que una incidencia real (con su evidencia) aparece en el contenido armado del reporte | `Operaciones/Infraestructura/Eloquent/{Sesion,Incidencia}.php`, `Operaciones/Aplicacion/ArmarContenidoReporteTecnico.php`, vista PDF del reporte técnico, tests | no | 2 | pendiente |
+| 29 | Bug de timezone en `MaquinaEstadosTrabajo`/`MaquinaEstadosSesion` (`abrir()`/`cerrar()`): `CarbonImmutable::parse()` sin `->utc()` sobre columnas `dateTime` sin tz corre el instante real por el offset del cliente — mismo patrón ya corregido una vez en `MaquinaEstadosActa::firmar()`. Señalado dos veces sin corregirse (`runs/24.md`, `runs/25.md`, ambas pidiendo tarea propia) | `./bin/verify` = 0, con test de round-trip (guardar `inicio`/`fin` con offset no-UTC vía `/api/sync`, releer, instante correcto contra UTC) | `Operaciones/Aplicacion/MaquinaEstados/{MaquinaEstadosTrabajo,MaquinaEstadosSesion}.php`, tests | **sí** | 3 | pendiente |
+| 30 | FK real de `created_by`/`updated_by` a `sec_user.id` en las ~30 tablas de dominio que hoy son `unsignedBigInteger` sueltas sin `->constrained()` — retrofit que HU-01 dejó explícitamente para "un solo pase futuro que agregue la FK a todas las tablas de una vez" (`docs/gestion/estado_proyecto.md`, "Otros gaps señalados") | `./bin/verify` = 0, con test de que insertar un `created_by` con id de `sec_user` inexistente lanza `QueryException` | una migración nueva de `alter table` (sin tocar el tipo de columna existente), tests | no | 2 | pendiente |
 
 ### El bug de la 24 — ya pasó dos veces, sigue sin arreglarse
 
@@ -93,51 +97,34 @@ prompt (`git show 99ffd2e:prompts/25-reporte-tecnico.md`, commiteado como
 `3d036aa`) pero quedó `BLOQUEADA` de todos modos —no por falta de prompt, sino
 porque su contenido depende de que exista `Acta`, y `Acta` sigue sin llegar a
 `develop`—. El prompt 26 quedó atrapado en el mismo commit `99ffd2e` sin que
-nadie lo rescatara, hasta esta planificación.
+nadie lo rescatara, hasta la planificación que siguió a la tarea 21.
 
 **El patrón que emerge**: el bug no solo pierde prompts (eso ya se sabe
 rescatar, `git log --all --oneline -- prompts/NN-slug.md` encuentra el commit
 aunque esté en una rama sin mergear); combinado con que las tareas 22 y 24
 —las dos primeras ramas que arrancaron después de escribir varios prompts a
-la vez— son ambas críticas y ninguna de sus dos PRs se mergeó, el bug
-**encadena bloqueos**: cada prompt perdido depende de que una rama crítica en
-borrador se mergee para volver a `develop`. La corrección de raíz —que
+la vez— son ambas críticas y ninguna de sus dos PRs se mergeó de entrada, el
+bug **encadena bloqueos**: cada prompt perdido depende de que una rama crítica
+en borrador se mergee para volver a `develop`. La corrección de raíz —que
 `preparar_rama()` solo agregue `prompts/${id}-*.md`, no el glob completo— es
-un cambio de una línea en `bin/ciclo`. Ya lleva dos vueltas sin aplicarse
-porque no es una HU del plan de sprints y ninguna sesión de planificación
-implementa código. Alguien con acceso directo al repo debería aplicarlo antes
-de la próxima vez que la cola escriba 3 prompts seguidos — la próxima
-ocurrencia ya no tiene por qué ser inofensiva si la rama que se lleva los
-prompts ajenos termina `RECHAZADA` o se descarta.
+un cambio de una línea en `bin/ciclo`. Sigue sin aplicarse porque no es una HU
+del plan de sprints y ninguna sesión de planificación implementa código.
+Alguien con acceso directo al repo debería aplicarlo — no es una tarea para
+encolar en el ciclo automático: modificar el propio script que orquesta el
+ciclo, desde una sesión que corre dentro de ese mismo ciclo, es el tipo de
+cambio que conviene hacer a mano y una sola vez, no delegarlo.
 
-### La política de PRs críticos en borrador — contradicción sin resolver
+### La política de PRs críticos en borrador — resuelta
 
 `CLAUDE.md` dice, explícitamente, que la revisión de lo crítico **es
 posterior a la integración, no previa**: el PR se mergea a `develop` y la
 revisión línea por línea se anota en `runs/revision-pendiente.txt` para
-hacerse después — y da como razón un incidente ya vivido (el PR #46 quedó en
-borrador y bloqueó doce HU hasta que el ciclo se quedó sin trabajo).
-`automatizacion_desarrollo.md` §5 documenta lo contrario como comportamiento
-querido: "las tareas críticas se implementan pero no se integran solas...
-su PR se abre en borrador, que es precisamente el caso que `auto-merge.yml`
-deja pasar de largo".
-
-En la práctica, de las once tareas críticas cerradas hasta ahora, nueve
-mergearon solas (09, 12, 13, 14, 16, 17, 18, 19, 20, 21 — el `runs/
-revision-pendiente.txt` las lista igual, revisión pendiente pero ya
-integradas) y dos quedaron trabadas en borrador sin mergear (22, 24) — ambas,
-no por casualidad, las dos primeras ramas que arrancaron justo después de que
-una planificación escribiera varios prompts de una sola vez (ver "El bug de
-la 24" arriba). No investigué por qué el mecanismo de auto-merge trató estas
-dos distinto de las otras nueve — puede ser simplemente que a estas dos
-todavía no las miró una persona para sacarlas de borrador a mano, mientras que
-las nueve anteriores sí. Sea cual sea la causa mecánica, hay dos documentos
-que dicen cosas opuestas sobre qué **debería** pasar, y eso es lo que hay que
-resolver — no algo que esta planificación pueda decidir sola. Quedó como la
-pregunta bloqueante de la tarea 25 (`runs/25.md`): si la respuesta es "sí,
-sacalo de borrador y mergealo" (que es lo que dice `CLAUDE.md`), probablemente
-haya que revisar también el PR #59 (tarea 22) con el mismo criterio, y ajustar
-`automatizacion_desarrollo.md` §5 para que deje de documentar lo contrario.
+hacerse después. `automatizacion_desarrollo.md` §5 decía lo contrario hasta el
+2/9/2026 — se corrigió ese mismo día (PR #65) para que ambos documentos digan
+lo mismo. Los dos PR que habían quedado retenidos por la versión vieja (#59 de
+la tarea 22/HU-08, #62 de la tarea 24/HU-17) ya están integrados: el #62 se
+reconcilió directo, el #59 necesitó la tarea 27 porque sus conflictos tocaban
+el motor de sync en 8 archivos.
 
 ### Fuera del ciclo automático
 
@@ -174,51 +161,27 @@ lo corrigió.
 | TE-12 | Cierre de ruta crítica (matriz de permisos, seeds de producción, tag v1.0): prematuro mientras el grueso del plan siga sin hacer |
 | Reunión de cierre de la especificación | Es de negocio. `analisis_clasificacion.md` §7 tiene la agenda |
 
-**Los dos bloqueos que detuvieron el ciclo el 1/9/2026 están levantados.** El
-PR #46 se integró a `develop`: `ope_trabajos`/`ope_sesiones` existen y HU-04 a
-HU-19 vuelven a calificar todas. Y CR-01 se cerró: HU-10 y HU-13 quedan
-redefinidas sobre volumen de caldo, HU-11 y HU-12 desaparecen. El orden
-seguido desde entonces: **12** (hallazgos del sync) → **HU-05** (esqueleto
-vertical del lado servidor, tarea 13) → **HU-14** y **HU-15** (las dos
-pantallas de panel, tareas 14/15) → **HU-16** (devengo, tarea 16) → **HU-06**
-(condiciones de vuelo, tarea 17) → **HU-10** (recepción de caldo, tarea 18)
-→ **TE-07 parte servidor** (evidencias, tarea 19) → **HU-07** (relevo de
-piloto, tarea 20) → **HU-09** (cierre de lote con evidencia, tarea 21) → **HU-08**
-(incidencias, tarea 22) → **HU-13** (recargas del dron, tarea 23) → **HU-17**
-(acta con firma, tarea 24) — las quince ya implementadas y verificadas
-(algunas mergeadas, otras en borrador esperando revisión, ver la tabla
-arriba). Sigue: **HU-18** (reporte técnico, tarea 25, **BLOQUEADA**) y
-**HU-19** (alertas por excepción, tarea 26, sin bloqueo).
-
-La regla que decide es la del punto 1 de
-[automatizacion_desarrollo.md](automatizacion_desarrollo.md): una tarea avanza
-sin supervisión solo si su criterio de aceptación es un comando que devuelve 0 o
-1. Lo de otro repo no lo toca este ciclo, y punto.
-
-Muchas de estas tienen **una parte que sí califica**: de HU-04, los endpoints y
-sus tests; de HU-05, el lado servidor del flujo. Cuando sea el caso, la tarea se
-escribe sobre esa parte y se dice explícitamente qué queda del lado de la app.
+**Sprint 1 a 5 están enteros en lo que es automatizable de este repo.** El
+plan de sprints tiene seis; los cinco primeros ya no tienen ninguna HU/TE
+pendiente que califique — lo único que queda de ellos es TE-02 (spike de
+hardware) y TE-08 (necesita datos de beta), ambas en la tabla de arriba.
+Sprint 6 entero tampoco califica (ensayo de campo, producción, datos
+maestros reales, cierre prematuro). Las tareas 28 a 30 no son filas nuevas de
+`plan_sprints.md` — son deuda técnica concreta, documentada explícitamente por
+tareas anteriores, con criterio de aceptación ejecutable. Ver "Por qué ese
+orden" abajo.
 
 ### Condicionadas — todavía no tienen sobre qué correr
 
 Las invariantes 2 (nunca se sobrescribe un registro validado) y 3 (el devengo
-se genera solo al validar) vigilan tablas que aún no existen: `sesion`,
-`devengo`, la máquina de estados operativos. Su gate se escribe **en la misma
-tarea que cree ese dominio**, no antes: un test de aduana sobre un dominio
-inexistente pasa siempre y da una sensación de cobertura que no existe.
+se genera solo al validar) vigilan tablas que aún no existían al escribirlas;
+ambas ya tienen su gate (tareas 14 y 16, ver "Por qué ese orden" en versiones
+anteriores de este documento).
 
-La invariante 2 ya tiene su gate: la tarea 14 lo escribió junto con el
-mecanismo de corrección del rechazo (`RechazoSesionTest.php`, compara
-columna por columna que solo `anulada_en` cambia). La invariante 3 sigue
-esperando — su gate (que `cerrar()` nunca genere un devengo) se escribe en
-la tarea 16, junto con el dominio de `Finanzas` que hace que haya algo que
-guardar.
-
-Del mismo tipo: las alertas de la tarea 26 que dependen de `mezcla`
-(desvío ±5%, hectáreas incoherentes por dosis) o de `anticipos`/`rendiciones`
-(fuera de alcance por CR-01 las primeras, todavía sin construir las segundas)
-no tienen sobre qué correr — su gate se escribe cuando esos dominios existan,
-no antes.
+Las alertas de la tarea 26 que dependen de `mezcla` (desvío ±5%, hectáreas
+incoherentes por dosis) o de `anticipos`/`rendiciones` (fuera de alcance por
+CR-01 las primeras, todavía sin construir las segundas) no tienen sobre qué
+correr — su gate se escribe cuando esos dominios existan, no antes.
 
 ## Por qué ese orden
 
@@ -235,123 +198,42 @@ ciclo asume que significa — y el ciclo mergea solo con ese verde. Es deuda que
 hay que saldar **antes** de tocar devengos, planilla o máquina de estados, no
 después.
 
-La 04 es una aduana estática, del mismo tipo que `ArquitecturaModulosTest` y
-`TokensColorTest`: puesta antes que el código, falla la primera vez que alguien
-la cruce; puesta después, ya hay que salir a buscar qué se coló. La 06 sí es
-implementación: el ADR 0007 decidió la bitácora como trait/observer de
-plataforma y todavía no existe — solo está `RegistraAutoria`, que cubre autoría
-por fila pero no el antes/después de cada mutación.
+**09 al final y con revisión posterior.** El motor de sync es lo primero de la
+lista de `CLAUDE.md` que no se delega sin revisión línea por línea. Se integra
+como cualquier otra tarea crítica, y queda anotado en
+`runs/revision-pendiente.txt` para que una persona lo revise sobre `develop`
+ya integrado — ver "La política de PRs críticos en borrador" arriba.
 
-**07 antes que cualquier tarea de panel.** Sin capturas de referencia, ningún
-cambio visual puede cerrarse sin que una persona mire la pantalla — y eso saca
-del turno desatendido a todo el frontend.
+**22 → 23 → 24 → 25 → 26 cerraron lo que quedaba de los sprints 3, 4 y 5.**
+Detalle completo del orden y las dependencias reales en el historial de git de
+este documento (`git log -p -- docs/gestion/cola_tareas.md`).
 
-**09 al final y en borrador.** El motor de sync es lo primero de la lista de
-`CLAUDE.md` que no se delega sin revisión línea por línea. Que el ciclo lo
-implemente y lo deje en un PR en borrador con su test de replay en verde es
-útil: el trabajo mecánico queda hecho y la revisión humana empieza sobre algo
-que ya pasa la cascada. Que se mergee solo, no. (Este PR en particular sí
-terminó mergeándose después de la revisión humana — ver fila 09. La
-contradicción entre este párrafo y lo que pasó con las tareas 22/24 está
-anotada en "La política de PRs críticos en borrador" más arriba.)
+**27 reconcilió lo que el "bug de la 24" dejó atrás.** El PR #59 (HU-08,
+tarea 22) quedó en una rama vieja mientras `develop` avanzaba con HU-13,
+HU-17, HU-18 y HU-19 por encima — reconciliarlo a mano, con test de
+convivencia de los 8 tipos de registro, era más seguro que confiar en un merge
+automático sobre el motor de sync.
 
-**08 recorta el alcance de TE-06.** `plan_sprints.md` describe TE-06 como el
-pull de cinco catálogos (órdenes, recetas, productos, lotes, personas), pero
-`receta` y `producto` no tienen migración ni módulo dueño: `Mezclas`
-(prefijo `mez_`) está reservado en el ADR 0011 desde que se fijaron los
-prefijos, pero la carpeta nunca se creó — no le toca el turno hasta el
-sprint 4 (HU-10 en adelante). Meter la creación de `Mezclas` en la misma
-tarea que el endpoint de pull duplicaría el tamaño de la sesión y mezclaría
-modelo de datos nuevo con un endpoint de sync. La 08 cubre las tres entidades
-que sí existen (órdenes, lotes, personas) — suficiente para lo que HU-04
-necesita — y deja anotado que el pull se extiende cuando `Mezclas` exista.
+**28 → 29 → 30, en ese orden, por urgencia real, no por tamaño.**
 
-**10 salta a Sprint 5 porque casi todo Sprint 2/3/4 quedó bloqueado a la vez.**
-No es un cambio de estrategia: es que el PR #46 (crítico, en borrador) y CR-01
-(decisión de negocio sin tomar) bloquean, entre los dos, prácticamente todo lo
-que sigue en orden — ver la tabla "Fuera del ciclo automático" arriba, filas
-HU-04 a HU-19. HU-20 no depende de ninguno de los dos. En cuanto el PR #46 se
-mergee (revisión humana) o CR-01 se resuelva, la próxima planificación vuelve
-al orden normal del plan — no hace falta reordenar nada a mano, las filas
-bloqueadas se reevalúan solas en la próxima vuelta.
+- **28** es la continuación más directa de lo que la 27 acaba de cerrar: HU-18
+  (tarea 25) dejó las incidencias del reporte técnico vacías a propósito,
+  documentando que HU-08 todavía no estaba integrada. Ya lo está. Dejar ese
+  hueco abierto un ciclo más, con la dependencia ya resuelta, no tiene motivo.
+- **29** es un bug real, no cosmético: `MaquinaEstadosTrabajo`/`MaquinaEstadosSesion`
+  guardan `inicio`/`fin` mal en cualquier país con offset distinto de UTC —
+  Bolivia es UTC-4, así que probablemente todo cierre real en producción lo
+  dispara. Dos tareas distintas (24 y 25) lo encontraron y pidieron
+  explícitamente que se convirtiera en tarea propia; cuanto más tarde se
+  corrija, más código nuevo puede heredar el mismo patrón sin `->utc()`. Va
+  crítica porque toca el servicio de estados.
+- **30** es la de menos urgencia de las tres: integridad de esquema sin
+  impacto funcional hoy (nada depende de que la FK exista todavía), documentada
+  como gap desde HU-01. No hay apuro, pero tiene criterio de aceptación
+  ejecutable y no depende de nada más — es razonable sacarla de la lista de
+  gaps sueltos.
 
-**Detenida el 1/9/2026 tras la tarea 11, y retomada el mismo día.** HU-20
-(10/11) era la última fila que no dependía de ninguno de los dos bloqueos —
-ver `runs/DETENER` y `runs/11-plan.md`. El PR #46 se mergeó horas después
-(tarea 09) y CR-01 se cerró el mismo día: los seis sprints volvieron a
-calificar, y el ciclo retomó con la 12.
-
-**16 → 17 → 18 siguieron el orden literal de "acá en adelante" fijado por la
-tarea 12**, saltando por delante HU-04/07/08/09/TE-07 (Sprint 2/3, todavía sin
-cerrar) sin dejarlo anotado explícitamente en su momento — un hueco real del
-trazado, no una exclusión deliberada. La planificación tras la tarea 18 lo
-reconcilió: **HU-04 (parte servidor) ya estaba cubierta** desde la tarea 12,
-así que no hacía falta tarea propia. Lo que sí seguía genuinamente sin hacer —
-HU-07, HU-08, HU-09, TE-07 (parte servidor) — se retomó en el orden que impone
-la dependencia real, no el orden de fila de `plan_sprints.md`: **TE-07
-primero** (tarea 19) porque HU-07 y HU-09 necesitan poder referenciar una
-evidencia ya subida (`captura_rc`/`imagen_campo`) antes de poder exigirla;
-**HU-07 después** (tarea 20) porque es donde vive de forma más natural la
-validación de suma de hectáreas contra tolerancia (espec §5, línea 206) que
-**HU-09 reutiliza** (tarea 21) en vez de reimplementar.
-
-**22 → 23 → 24 cierran lo que quedó pendiente de los sprints 3, 4 y 5, en ese
-orden.** **HU-08** (tarea 22) es lo único que le faltaba al sprint 3: depende
-solo de la tarea 19 (evidencias), ya integrada, y reusa el tipo `foto_incidencia`
-que esa tarea dejó listo sin usar — no hay motivo para seguir postergándola.
-**HU-13** (tarea 23) es lo único que le falta al sprint 4 (HU-11/12
-desaparecieron por CR-01, el resto ya está hecho): sin dependencia real de la
-22, pero sigue el orden del plan porque no hay ninguna razón para adelantarla.
-**HU-17** (tarea 24) abre el sprint 5: de sus filas, HU-16 y HU-20 ya están
-hechas y TE-08 sigue sin datos de beta para calificar, así que HU-17 es la
-primera pendiente.
-
-**25 → 26 siguen encadenadas a la 24 por dato, no por código.** **HU-18**
-(tarea 25) es lo que la propia espec (§9) ata a la firma del acta: "PDF
-automático al conformar el lote" — necesita que la tarea 24 exista para tener
-qué disparar, y arma el resto del contenido leyendo lo que las tareas 17/18/20/
-21/22/23 ya dejaron persistido (condiciones, recepción de caldo, sesiones con
-relevo, incidencias, recargas) — sin nada de mezcla/dosis, fuera de alcance por
-CR-01. **HU-19** (tarea 26) no depende de código de ninguna de las dos, pero se
-recorta a los cuatro tipos de alerta de la espec §10 que ya tienen datos reales
-detrás (batería caliente y dron sospechoso de la tarea 23, condiciones forzadas
-de la tarea 17, suma excedida/`observado` de la tarea 20): el resto de la lista
-—hectáreas incoherentes y desvío de mezcla (CR-01, no hay dosis que comparar),
-anticipo al límite y rendición pendiente (`anticipos`/`rendiciones` no
-existen)— queda para cuando esos dominios existan, mismo criterio que la
-sección "Condicionadas" de arriba.
-
-**Confirmado en esta vuelta: la 25 quedó `BLOQUEADA`, la 26 no.** Tal como
-anticipó la nota de arriba ("si una queda BLOQUEADA o INCOMPLETA no debería
-frenar a la siguiente"), la 25 se trabó exactamente por lo previsto (sin
-`Acta` en `develop`, no hay "conformado" sobre qué generar el reporte) y la 26
-no depende de ese mismo bloqueo — su prompt, perdido por la segunda vuelta del
-"bug de la 24", se recuperó sin cambios y sigue siendo la siguiente tarea
-válida. Esta planificación no escribió tareas nuevas más allá de la 26: su
-prompt ya estaba completo y bien pensado (escrito por la planificación
-anterior), así que corresponde usarlo tal cual en vez de reescribirlo —
-la próxima planificación (al cerrar la 26) retoma la cola desde cero, y ahí
-sí corresponde escribir 3 tareas nuevas de una sola vez. Con la 25 bloqueada y
-la 26 siendo la última fila de Sprint 5 que no depende de TE-08 (sigue sin
-datos de beta), esa próxima planificación va a tener que decidir entre volver
-sobre la 25 (si el usuario ya resolvió la pregunta bloqueante) o abrir Sprint 6
-— cuyas filas, adelanto, probablemente no califiquen ninguna todavía (ensayo
-en campo, producción, datos maestros reales), así que es razonable que esa
-vuelta termine cerca de `runs/DETENER` en vez de con tareas nuevas.
-
-**La 26 cerró `OK` (PR #64 mergeado) y la vuelta terminó en `runs/DETENER`.**
-Esa parada fue correcta en su momento y quedó resuelta la mañana del 2/9: los
-PR #62 (tarea 24, HU-17/acta) y #59 (tarea 22, HU-08/incidencias) estaban
-retenidos en borrador por la política vieja que seguía documentada en
-`automatizacion_desarrollo.md` §5 — no por una decisión de nadie. Se corrigió
-ese documento (PR #65), el #62 se reconcilió con `develop` y se integró, y el
-#59 quedó como tarea 27 porque sus conflictos tocan el motor de sync en cinco
-archivos y merecen pasar por la verificación independiente. `Acta` ya existe
-en `develop`, así que la 25 dejó de estar `BLOQUEADA`. Repasé el resto de Sprint 5 y
-todo Sprint 6 fila por fila contra `plan_sprints.md`: TE-08 sigue sin datos
-de beta real; TE-09/HU-21 necesitan el ensayo de campo con operarios reales;
-TE-10/TE-11 dependen de decisiones de infraestructura y datos maestros reales
-que no están tomadas; TE-12 sigue prematuro mientras Sprint 6 esté casi
-entero sin hacer. Ninguna fila pendiente de los seis sprints tiene hoy un
-criterio ejecutable sin adivinar una decisión ajena — ver `runs/DETENER` y
-`runs/27-plan.md` para el detalle completo de esta vuelta.
+Ninguna de las tres agota Sprint 6 ni resuelve TE-02/TE-08 — la próxima
+planificación, al cerrar la 30, va a tener que volver a repasar si algo nuevo
+quedó documentado como pendiente en el camino, y si no, cerrar con
+`runs/DETENER` explicando que Sprint 6 sigue sin nada automatizable.
