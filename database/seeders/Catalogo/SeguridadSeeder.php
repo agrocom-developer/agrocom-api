@@ -59,6 +59,12 @@ class SeguridadSeeder extends Seeder
         // validador≠piloto (invariante 4) rige la fila puntual, no la
         // visibilidad de la pantalla.
         'operaciones.sesion.validar' => 'Validar o rechazar sesiones cerradas desde el panel',
+        // HU-19 (tarea 26): bandeja de alertas por excepción. Separados a
+        // propósito, mismo criterio que dispositivo.ver/.revocar: mirar la
+        // bandeja y marcar una alerta como resuelta no son la misma
+        // responsabilidad.
+        'operaciones.alerta.ver' => 'Ver la bandeja de alertas por excepción',
+        'operaciones.alerta.atender' => 'Marcar una alerta por excepción como atendida',
     ];
 
     /** @var list<string> Todo, salvo asignar_rol_dueno (diseño §2). */
@@ -79,6 +85,12 @@ class SeguridadSeeder extends Seeder
         // HU-14: administra la operación diaria, así que también puede
         // destrabar la cola de validación — mismo criterio que trabajo.ver.
         'operaciones.sesion.validar',
+        // HU-19 (tarea 26): "Como encargado, quiero recibir solo alertas por
+        // excepción" — la bandeja es suya. jefe_campo no la recibe: la
+        // espec no le asigna esta responsabilidad (a diferencia de
+        // trabajo.ver/sesion.validar, que sí comparte).
+        'operaciones.alerta.ver',
+        'operaciones.alerta.atender',
     ];
 
     /**
