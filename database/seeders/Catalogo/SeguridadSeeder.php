@@ -99,6 +99,15 @@ class SeguridadSeeder extends Seeder
         'comercial.contrato.crear' => 'Dar de alta un contrato con sus ventanas de aplicación',
         'comercial.contrato.editar' => 'Editar los datos y ventanas de un contrato',
         'comercial.contrato.cambiar_estado' => 'Cambiar el estado de un contrato (vigente, finalizado, cancelado)',
+        // HU-24 (tarea 35): administración de campos con sus lotes. Grano
+        // fino, mismo criterio que `comercial.cliente.*`; sin
+        // `comercial.lote.*` propio — los lotes se gestionan dentro del
+        // formulario del campo, mismo criterio que los contactos del
+        // cliente.
+        'comercial.campo.ver' => 'Ver el listado y detalle de campos con sus lotes',
+        'comercial.campo.crear' => 'Dar de alta un campo con sus lotes',
+        'comercial.campo.editar' => 'Editar los datos y lotes de un campo',
+        'comercial.campo.eliminar' => 'Dar de baja (lógica) un campo',
     ];
 
     /** @var list<string> Piloto: solo lo que ejecuta desde `agrocom-field` — HU-17, tarea 24. */
@@ -147,6 +156,13 @@ class SeguridadSeeder extends Seeder
         'comercial.contrato.crear',
         'comercial.contrato.editar',
         'comercial.contrato.cambiar_estado',
+        // HU-24 (tarea 35): "Como encargado, quiero administrar campos y sus
+        // lotes" — la HU lo dice literal, mismo criterio que clientes y
+        // contratos arriba.
+        'comercial.campo.ver',
+        'comercial.campo.crear',
+        'comercial.campo.editar',
+        'comercial.campo.eliminar',
     ];
 
     /**

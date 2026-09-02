@@ -3,12 +3,15 @@
 namespace App\Dominios\Comercial\Infraestructura\Eloquent;
 
 use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
+use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Lote del campo (espec §4.1, tabla com_lotes). Hectáreas en DECIMAL — las
  * hectáreas son dinero (invariante 6); la geometría es GeoJSON en JSONB, se
  * guarda y se dibuja, no se consulta espacialmente (sin PostGIS en v1).
+ *
+ * `RegistraBitacora` (HU-24, tarea 35): mismo criterio que {@see Campo}.
  *
  * @property int $id
  * @property int $campo_id
@@ -19,6 +22,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class Lote extends ModeloDominio
 {
+    use RegistraBitacora;
+
     protected $table = 'com_lotes';
 
     /** @var list<string> */
