@@ -25,10 +25,12 @@ use OpenApi\Attributes as OA;
         .'un registro con datos incompletos o inválidos se responde `rechazado` sin frenar el resto del '
         .'lote — nunca un 422 para el lote completo. `cierre_trabajo`/`cierre_sesion` (HU-05) MUTAN una '
         .'fila existente en vez de crear una nueva: `uuid_cliente` identifica el EVENTO de cierre — '
-        .'distinto del `uuid_cliente` de apertura del trabajo/sesión que referencian.',
+        .'distinto del `uuid_cliente` de apertura del trabajo/sesión que referencian. `recepcion_caldo` '
+        .'(HU-10 redefinida por CR-01, tarea 18) registra volumen de caldo entregado por el cliente — '
+        .'nunca su composición (espec §7.1: sin producto, dosis ni fórmula).',
     required: ['tipo', 'uuid_cliente'],
     properties: [
-        new OA\Property(property: 'tipo', type: 'string', enum: ['trabajo', 'sesion', 'condiciones', 'cierre_trabajo', 'cierre_sesion'], example: 'trabajo'),
+        new OA\Property(property: 'tipo', type: 'string', enum: ['trabajo', 'recepcion_caldo', 'sesion', 'condiciones', 'cierre_trabajo', 'cierre_sesion'], example: 'trabajo'),
         new OA\Property(property: 'uuid_cliente', type: 'string', example: 'a1b2c3d4-0000-4000-8000-000000000001'),
         new OA\Property(property: 'orden_id', description: '`trabajo`: id de servidor de la orden (del pull de catálogo).', type: 'integer', example: 1),
         new OA\Property(property: 'lote_id', description: '`trabajo`: id de servidor del lote (del pull de catálogo).', type: 'integer', example: 3),
@@ -52,6 +54,11 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'hectareas_declaradas', description: 'DECIMAL como string (invariante 6). `0` si se omite.', type: 'string', example: '0'),
         new OA\Property(property: 'inicio', type: 'string', format: 'date-time', example: '2026-09-01T10:00:00-04:00'),
         new OA\Property(property: 'fin', type: 'string', format: 'date-time', nullable: true, description: 'Requerido en `cierre_trabajo`/`cierre_sesion`.', example: null),
+        new OA\Property(property: 'litros', description: '`recepcion_caldo`: litros entregados por el cliente. DECIMAL como string (invariante 6).', type: 'string', nullable: true, example: null),
+        new OA\Property(property: 'entregado_por', description: '`recepcion_caldo`: quién, del lado del cliente, entregó el caldo (espec §7.2).', type: 'string', nullable: true, example: null),
+        new OA\Property(property: 'hora', description: '`recepcion_caldo`: cuándo se entregó.', type: 'string', format: 'date-time', nullable: true, example: null),
+        new OA\Property(property: 'litros_consumidos', description: '`cierre_sesion`, opcional: litros de caldo efectivamente rociados en la sesión (espec §7.2). DECIMAL como string.', type: 'string', nullable: true, example: null),
+        new OA\Property(property: 'litros_sobrante', description: '`cierre_trabajo`, opcional: litros que quedaron sin aplicar al cerrar el trabajo (espec §7.2). DECIMAL como string.', type: 'string', nullable: true, example: null),
         new OA\Property(
             property: 'motivo_cierre',
             description: '`cierre_sesion`: catálogo espec §4.3.',

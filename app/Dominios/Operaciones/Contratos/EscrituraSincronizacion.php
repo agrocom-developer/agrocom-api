@@ -32,6 +32,15 @@ namespace App\Dominios\Operaciones\Contratos;
  * pertenencia para este registro (piloto y jefe de campo pueden registrar
  * condiciones por igual, ver §2 tabla de acciones por rol), así que no hay
  * nada que verificar acá — mismo criterio que `abrirTrabajo()`.
+ *
+ * `registrarRecepcionCaldo()` (espec §7.2, HU-10 redefinida por CR-01, tarea
+ * 18) crea una fila nueva, mismo mecanismo de idempotencia que
+ * `abrirTrabajo()`/`registrarCondiciones()`. Sin `$operarioPersonaId`, mismo
+ * motivo que `registrarCondiciones()`: la espec no define dueño para este
+ * registro. `litros_consumidos`/`litros_sobrante` NO tienen un método propio
+ * — viajan como campos opcionales de `CierreSesion`/`CierreTrabajo` (ver esos
+ * DTOs y runs/18.md, "decisión de esquema"), así que `cerrarSesion()`/
+ * `cerrarTrabajo()` ya los cubren sin ampliar esta interfaz.
  */
 interface EscrituraSincronizacion
 {
@@ -44,4 +53,6 @@ interface EscrituraSincronizacion
     public function cerrarSesion(CierreSesion $datos, ?int $operarioPersonaId): ResultadoSincronizacion;
 
     public function registrarCondiciones(RegistroCondiciones $datos): ResultadoSincronizacion;
+
+    public function registrarRecepcionCaldo(RegistroRecepcionCaldo $datos): ResultadoSincronizacion;
 }

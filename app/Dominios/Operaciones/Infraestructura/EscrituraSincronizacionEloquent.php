@@ -10,6 +10,7 @@ use App\Dominios\Operaciones\Contratos\CierreSesion;
 use App\Dominios\Operaciones\Contratos\CierreTrabajo;
 use App\Dominios\Operaciones\Contratos\EscrituraSincronizacion;
 use App\Dominios\Operaciones\Contratos\RegistroCondiciones;
+use App\Dominios\Operaciones\Contratos\RegistroRecepcionCaldo;
 use App\Dominios\Operaciones\Contratos\ResultadoSincronizacion;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Dominio\EstadoSesion;
@@ -18,6 +19,7 @@ use App\Dominios\Operaciones\Dominio\Excepciones\TransicionSesionNoPermitida;
 use App\Dominios\Operaciones\Dominio\Excepciones\TransicionTrabajoNoPermitida;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Condiciones;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\RecepcionCaldo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
 use Illuminate\Database\QueryException;
@@ -174,6 +176,40 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
     }
 
     /**
+     * Recepción de caldo (espec §7.2, HU-10 redefinida por CR-01, tarea 18):
+     * crea una fila nueva, mismo mecanismo de idempotencia que
+     * `abrirTrabajo()`/`registrarCondiciones()` — el `UNIQUE` parcial de
+     * `uuid_cliente` resuelve el reintento, nunca un `SELECT` previo. El
+     * trabajo se resuelve por `uuid_cliente` (puede haber llegado en el mismo
+     * lote: `SincronizarLote::ORDEN_CAUSAL` aplica siempre `trabajo` antes
+     * que `recepcion_caldo`).
+     */
+    public function registrarRecepcionCaldo(RegistroRecepcionCaldo $datos): ResultadoSincronizacion
+    {
+        $trabajoId = Trabajo::query()->where('uuid_cliente', $datos->trabajoUuidCliente)->value('id');
+
+        if ($trabajoId === null) {
+            return ResultadoSincronizacion::rechazado('el trabajo referenciado no existe todavía');
+        }
+
+        try {
+            DB::transaction(function () use ($datos, $trabajoId): void {
+                RecepcionCaldo::query()->create([
+                    'uuid_cliente' => $datos->uuidCliente,
+                    'trabajo_id' => $trabajoId,
+                    'litros' => $datos->litros,
+                    'entregado_por' => $datos->entregadoPor,
+                    'hora' => $datos->hora,
+                ]);
+            });
+        } catch (QueryException $excepcion) {
+            return $this->resultadoDesdeExcepcion($excepcion, 'ope_recepciones_caldo');
+        }
+
+        return ResultadoSincronizacion::aplicado();
+    }
+
+    /**
      * Mismo criterio que `AsignarRolesUsuario::relanzarComoDuplicado()`: el
      * formato del mensaje de la violación difiere por driver (Postgres nombra
      * el índice; SQLite, el motor de los tests, nombra tabla.columna) — se
@@ -247,6 +283,13 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
                 // cierra antes de que se hayan cerrado todas sus sesiones.
                 $trabajo->hectareas_declaradas = $this->sumaHectareasSesiones($trabajo->id);
 
+                // `litros_sobrante` (espec §7.2, tarea 18): a diferencia de
+                // las hectáreas, NO es derivado — se asigna directo antes de
+                // `cerrar()`, mismo patrón, para que quede en el mismo
+                // `save()` de la transición. `null` si el registro no lo trae
+                // (campo opcional, ver `Contratos/CierreTrabajo`).
+                $trabajo->litros_sobrante = $datos->litrosSobrante;
+
                 $this->maquinaTrabajo->cerrar($trabajo, $datos->uuidCliente, $datos->fin);
 
                 return ResultadoSincronizacion::aplicado();
@@ -301,6 +344,13 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
                 if ($operarioPersonaId !== null && (int) $sesion->piloto_id !== $operarioPersonaId) {
                     return ResultadoSincronizacion::rechazado('el piloto de la sesión no corresponde al operario autenticado');
                 }
+
+                // `litros_consumidos` (espec §7.2, tarea 18): igual que
+                // `litros_sobrante` en `cerrarTrabajo()`, se asigna directo
+                // antes de `cerrar()` para que quede en el mismo `save()` de
+                // la transición. `null` si el registro no lo trae (campo
+                // opcional, ver `Contratos/CierreSesion`).
+                $sesion->litros_consumidos = $datos->litrosConsumidos;
 
                 $this->maquinaSesion->cerrar($sesion, $datos->uuidCliente, $datos->fin, $datos->motivoCierre, $datos->hectareasDeclaradas);
 
