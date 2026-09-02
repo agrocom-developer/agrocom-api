@@ -201,6 +201,15 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
      * `ope_incidencias_evidencia_foto_id_unico` es la garantía real contra la
      * condición de carrera de dos incidencias DISTINTAS registrándose a la
      * vez con la misma evidencia.
+     *
+     * `ope_incidencias` es la primera tabla de este módulo con DOS índices
+     * únicos parciales que un mismo `INSERT` puede violar a la vez
+     * (`uuid_cliente` y `evidencia_foto_id`): un reintento EXACTO del mismo
+     * evento repite ambos valores, y el motor de base no garantiza cuál de
+     * los dos constraints reporta primero (hallazgo empírico: SQLite, el
+     * motor de los tests, reporta acá el de `evidencia_foto_id` primero). Por
+     * eso el catch usa {@see resultadoIncidenciaDesdeExcepcion()} en vez del
+     * genérico {@see resultadoDesdeExcepcion()}.
      */
     public function registrarIncidencia(RegistroIncidencia $datos): ResultadoSincronizacion
     {
@@ -237,7 +246,7 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
                 ]);
             });
         } catch (QueryException $excepcion) {
-            return $this->resultadoDesdeExcepcion($excepcion, 'ope_incidencias');
+            return $this->resultadoIncidenciaDesdeExcepcion($excepcion, $datos->uuidCliente);
         }
 
         return ResultadoSincronizacion::aplicado();
@@ -288,6 +297,35 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
         $mensaje = $excepcion->getMessage();
 
         if (str_contains($mensaje, "{$tabla}_uuid_cliente_unico") || str_contains($mensaje, "{$tabla}.uuid_cliente")) {
+            return ResultadoSincronizacion::duplicado();
+        }
+
+        return ResultadoSincronizacion::rechazado('no se pudo aplicar el registro: referencia o dato inválido');
+    }
+
+    /**
+     * Variante de {@see resultadoDesdeExcepcion()} para `ope_incidencias`
+     * (HU-08, tarea 22): esa tabla tiene DOS índices únicos parciales
+     * (`uuid_cliente` y `evidencia_foto_id`) que un mismo `INSERT` puede
+     * violar simultáneamente en un reintento EXACTO —el registro repite
+     * ambos valores— y el motor de base no garantiza cuál de los dos se
+     * reporta en el mensaje de la excepción (hallazgo empírico: SQLite
+     * reporta acá `evidencia_foto_id` primero, no `uuid_cliente`). Si el
+     * mensaje no matchea el patrón de `uuid_cliente` pero YA EXISTE una fila
+     * con ese mismo `uuid_cliente` (imposible salvo por ese reintento: nadie
+     * más pudo haberla creado con ese valor), es igual `duplicado` — el
+     * `SELECT` acá es diagnóstico DESPUÉS de una violación real de la base,
+     * no el mecanismo primario de detectarla.
+     */
+    private function resultadoIncidenciaDesdeExcepcion(QueryException $excepcion, string $uuidCliente): ResultadoSincronizacion
+    {
+        $mensaje = $excepcion->getMessage();
+
+        if (str_contains($mensaje, 'ope_incidencias_uuid_cliente_unico') || str_contains($mensaje, 'ope_incidencias.uuid_cliente')) {
+            return ResultadoSincronizacion::duplicado();
+        }
+
+        if (Incidencia::query()->where('uuid_cliente', $uuidCliente)->exists()) {
             return ResultadoSincronizacion::duplicado();
         }
 

@@ -28,6 +28,17 @@ use App\Dominios\Operaciones\Dominio\TipoIncidencia;
  * usada por otra incidencia lo valida
  * `EscrituraSincronizacionEloquent::registrarIncidencia()`, que sí puede leer
  * la base.
+ *
+ * Decisión propia (no estaba en la espec ni en el prompt): la propiedad PHP
+ * se llama `$tipo`, fiel al nombre de columna de la espec (§4.3), pero el
+ * campo del JSON de entrada es `tipo_incidencia`, NO `tipo` — a diferencia de
+ * `RegistroCondiciones::$momento`/`CierreSesion::$motivoCierre`, que no
+ * colisionan con nada, `tipo` YA es la key que `SincronizarLote::ejecutar()`
+ * usa como "sobre" para decidir el TIPO DE REGISTRO del lote (`'incidencia'`
+ * en este caso). Un mismo objeto JSON no puede traer dos keys `tipo` con
+ * significados distintos — el parser se quedaría con el último valor y
+ * rompería el enrutamiento por tipo de registro. `tipo_incidencia` evita la
+ * colisión sin tocar el mecanismo de enrutamiento existente.
  */
 final readonly class RegistroIncidencia
 {
@@ -45,8 +56,8 @@ final readonly class RegistroIncidencia
     {
         if (! self::esStringNoVacio($datos['uuid_cliente'] ?? null)
             || ! self::esStringNoVacio($datos['sesion_uuid_cliente'] ?? null)
-            || ! is_string($datos['tipo'] ?? null)
-            || TipoIncidencia::tryFrom($datos['tipo']) === null
+            || ! is_string($datos['tipo_incidencia'] ?? null)
+            || TipoIncidencia::tryFrom($datos['tipo_incidencia']) === null
             || ! self::esStringOAusente($datos['descripcion'] ?? null)
             || ! self::esStringNoVacio($datos['hora'] ?? null)
             || ! self::esStringNoVacio($datos['evidencia_foto_uuid_cliente'] ?? null)
@@ -57,7 +68,7 @@ final readonly class RegistroIncidencia
         return new self(
             uuidCliente: (string) $datos['uuid_cliente'],
             sesionUuidCliente: (string) $datos['sesion_uuid_cliente'],
-            tipo: (string) $datos['tipo'],
+            tipo: (string) $datos['tipo_incidencia'],
             descripcion: self::esStringNoVacio($datos['descripcion'] ?? null) ? (string) $datos['descripcion'] : null,
             hora: (string) $datos['hora'],
             evidenciaFotoUuidCliente: (string) $datos['evidencia_foto_uuid_cliente'],
