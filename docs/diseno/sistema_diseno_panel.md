@@ -4,6 +4,8 @@
 
 Este documento es el catálogo vigente de tokens y componentes de presentación del panel. No es un ADR (no fija arquitectura, ADR 0002 ya lo hizo) — es el inventario vivo de qué existe, en qué nivel de Atomic Design, y qué falta. Se actualiza cada vez que `design-ui` agrega o cambia un token o un componente.
 
+> **Tampoco es la receta para construir una pantalla.** Está escrito como bitácora ("quinta vuelta", "novena vuelta") y sirve para buscar el VALOR exacto de algo o entender por qué se decidió así. Si lo que vas a hacer es armar una pantalla nueva —dónde va cada archivo, con qué se compone un tablero / un listado / un formulario, qué verificar antes de cerrar— eso está en **`docs/diseno/guia_pantalla_panel.md`**.
+
 ## 1. Tokens CSS
 
 Ubicación: `resources/css/tokens/`. Import único desde `resources/css/app.css` vía `resources/css/tokens/index.css`.
@@ -102,12 +104,12 @@ Consecuencia de diseño explícita: **el relleno sólido de marca (botones) es c
 | Atom | `logo` | `resources/views/components/atoms/logo.blade.php` | Implementado |
 | Atom | `input` | `resources/views/components/atoms/input.blade.php` | Implementado |
 | Atom | `button` | `resources/views/components/atoms/button.blade.php` | Implementado |
-| Molecule | `role-selector-item` | `resources/views/components/molecules/role-selector-item.blade.php` | Implementado |
+| Molecule | `role-selector-item` | — | **Renombrado** a `role-card` (28/8/2026, quinta vuelta). El archivo con este nombre ya no existe. |
 | Molecule | `theme-toggle` | `resources/views/components/molecules/theme-toggle.blade.php` | Implementado |
 | Molecule | `menu-item` | `resources/views/components/molecules/menu-item.blade.php` | Implementado |
 | Organism | `collapsible-menu-group` | `resources/views/components/organisms/collapsible-menu-group.blade.php` | Implementado |
 | Organism | `login-form` | `resources/views/components/organisms/login-form.blade.php` | Implementado |
-| Organism | `sidebar-nav` | `resources/views/components/organisms/sidebar-nav.blade.php` | Implementado |
+| Organism | `sidebar-nav` | — | **Renombrado** a `module-sidebar` (28/8/2026, quinta vuelta: el sidebar plano pasó a ser el nivel 2 del layout de tres niveles). El archivo con este nombre ya no existe. |
 | Organism | `topbar` | `resources/views/components/organisms/topbar.blade.php` | Implementado |
 | Template | `panel-layout` | `resources/views/components/templates/panel-layout.blade.php` | Implementado |
 | Template | `auth-layout` | `resources/views/components/templates/auth-layout.blade.php` | Implementado |
@@ -118,12 +120,18 @@ Consecuencia de diseño explícita: **el relleno sólido de marca (botones) es c
 | Molecule | `form-section` | `resources/views/components/molecules/form-section.blade.php` | Implementado (2026-08-28) |
 | Molecule | `role-card` | `resources/views/components/molecules/role-card.blade.php` | Implementado (2026-08-28, quinta vuelta) |
 | Molecule | `section-head` | `resources/views/components/molecules/section-head.blade.php` | Implementado (2026-08-28, sexta vuelta parte 2) |
-| Molecule | `donut-chart` | `resources/views/components/molecules/donut-chart.blade.php` | **Retirado** (28/8/2026, auditoría visual externa obs. #5/#6 — ver §10.5). Reemplazado por `distribution-bar`, mismo prop shape. |
+| Molecule | `donut-chart` | — | **Retirado** (28/8/2026, auditoría visual externa obs. #5/#6 — ver §10.5). Reemplazado por `distribution-bar`, mismo prop shape. |
 | Molecule | `distribution-bar` | `resources/views/components/molecules/distribution-bar.blade.php` | Implementado (2026-08-28, auditoría visual externa obs. #5/#6) |
 | Molecule | `apex-chart` | `resources/views/components/molecules/apex-chart.blade.php` | Implementado (29/8/2026, novena vuelta — ver §13) |
 | Molecule | `lote-resumen-card` | `resources/views/components/molecules/lote-resumen-card.blade.php` | Implementado (29/8/2026, novena vuelta) |
 | Molecule | `captura-rc-card` | `resources/views/components/molecules/captura-rc-card.blade.php` | Implementado (29/8/2026, novena vuelta) |
 | Organism | `mapa-operativo` | `resources/views/components/organisms/mapa-operativo.blade.php` | Implementado (29/8/2026, novena vuelta — ver §13) |
+| Molecule | `alert-strip` | `resources/views/components/molecules/alert-strip.blade.php` | Implementado (28/8/2026, sexta vuelta parte 2 — ver §10.3). Faltaba en esta tabla; se agrega en la sincronización del 2/9/2026. |
+| Organism | `module-rail` | `resources/views/components/organisms/module-rail.blade.php` | Implementado (28/8/2026, quinta vuelta — nivel 1 del layout, §7.1). Faltaba en esta tabla; se agrega el 2/9/2026. |
+| Organism | `module-sidebar` | `resources/views/components/organisms/module-sidebar.blade.php` | Implementado (28/8/2026, quinta vuelta — nivel 2 del layout, §7.1; sucesor de `sidebar-nav`). Faltaba en esta tabla; se agrega el 2/9/2026. |
+| Organism | `module-drawer` | `resources/views/components/organisms/module-drawer.blade.php` | Implementado (28/8/2026, quinta vuelta — offcanvas de módulos en móvil, §7.2). Faltaba en esta tabla; se agrega el 2/9/2026. |
+| Organism | `mobile-topbar` | `resources/views/components/organisms/mobile-topbar.blade.php` | Implementado (28/8/2026, quinta vuelta — header oscuro <768px, §7.2). Faltaba en esta tabla; se agrega el 2/9/2026. |
+| Template | `panel-shell` | `resources/views/components/templates/panel-shell.blade.php` | Implementado (28/8/2026, quinta vuelta — cáscara `<html>` compartida por todas las páginas del panel, con el tema persistido del usuario). Faltaba en esta tabla; se agrega el 2/9/2026. |
 
 Por qué solo los átomos estaban implementados en el pase anterior: era el límite de alcance fijado para la primera entrega de HU-02 (tokens + piezas de más bajo nivel, sin lógica de negocio). Este pase (27/8/2026) implementa el resto del catálogo, a pedido explícito de HU-02 (el usuario vio un prototipo interactivo aparte y pidió la construcción real). Decisiones de composición que no estaban 100% cerradas en la especificación de §4 y se resolvieron acá:
 

@@ -9,6 +9,7 @@ Este skill es un mapa de dónde vive el sistema de diseño y qué reglas ya est�
 
 ## Dónde está cada cosa
 
+- **Receta para construir una pantalla nueva**: `docs/diseno/guia_pantalla_panel.md`. Empezá por acá si vas a armar una pantalla — dónde va cada archivo, anatomía de los tres arquetipos (tablero / listado / formulario), traducción de un mockup a tokens y el checklist de cierre. Los otros dos documentos de `docs/diseno/` son de consulta, no de receta.
 - **Tokens CSS**: `resources/css/tokens/`. Dos capas: `primitives/` (hex, nunca usados directo por componentes) y `semantic/theme-light.css` / `theme-dark.css` (lo que de verdad referencian los componentes, vía `--ag-color-*`, `--ag-space-*`, `--ag-radius-*`, etc.). El tema activo se resuelve reasignando estos tokens con `[data-bs-theme="light"|"dark"]` en `<html>` — nunca duplicando una regla de componente por tema.
 - **Catálogo vigente de tokens y componentes**: `docs/diseno/sistema_diseno_panel.md`. Es la fuente de verdad de VALORES concretos (qué token existe, qué componente está implementado, en qué archivo). Se actualiza cada vez que cambia el catálogo.
 - **Checklist genérico de gobernanza**: `docs/diseno/diseno-laravel.md`. Es un checklist de proceso (Atomic Design, cero hardcode, patrón template+content) — **nunca** la fuente de valores concretos de ejemplo que trae ese archivo.
