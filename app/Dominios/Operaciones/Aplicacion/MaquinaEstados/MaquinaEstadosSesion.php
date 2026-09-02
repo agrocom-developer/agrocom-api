@@ -43,6 +43,9 @@ final class MaquinaEstadosSesion
      */
     public function abrir(array $atributos): Sesion
     {
+        $atributos['inicio'] = self::normalizarUtc($atributos['inicio'] ?? null);
+        $atributos['fin'] = self::normalizarUtc($atributos['fin'] ?? null);
+
         return Sesion::create([...$atributos, 'estado' => EstadoSesion::Abierto]);
     }
 
@@ -60,7 +63,7 @@ final class MaquinaEstadosSesion
 
         $sesion->estado = $hasta;
         $sesion->cierre_uuid_cliente = $cierreUuidCliente;
-        $sesion->fin = CarbonImmutable::parse($fin);
+        $sesion->fin = self::normalizarUtc($fin);
         $sesion->motivo_cierre = $motivoCierre;
         $sesion->hectareas_declaradas = $hectareasDeclaradas;
         $sesion->save();
@@ -123,5 +126,20 @@ final class MaquinaEstadosSesion
         });
 
         return $sesion;
+    }
+
+    /**
+     * `CarbonImmutable::parse()` conserva el offset original del string
+     * entrante (p. ej. `-04:00`) como huso horario del objeto, no lo
+     * normaliza — y `ope_sesiones.inicio`/`fin` son `dateTime` sin tz. Sin
+     * este `->utc()`, `format()` escribiría la hora LOCAL literal
+     * ("16:30:00") y una relectura posterior la interpretaría como UTC,
+     * corriendo el instante real por el valor del offset. Mismo mecanismo
+     * (y mismo fix) que `MaquinaEstadosActa::firmar()` ya aplica a
+     * `fecha_firma` (runs/24.md).
+     */
+    private static function normalizarUtc(string|\DateTimeInterface|null $valor): ?CarbonImmutable
+    {
+        return $valor === null ? null : CarbonImmutable::parse($valor)->utc();
     }
 }

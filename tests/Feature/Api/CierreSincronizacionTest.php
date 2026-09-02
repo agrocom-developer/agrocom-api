@@ -147,7 +147,11 @@ it('cierra un trabajo abierto y lo deja cerrado, con fin seteado', function () {
     $trabajo = Trabajo::query()->where('uuid_cliente', 'uuid-t1')->firstOrFail();
     expect($trabajo->estado)->toBe(EstadoTrabajo::Cerrado)
         ->and($trabajo->cierre_uuid_cliente)->toBe('uuid-cierre-t1')
-        ->and($trabajo->fin?->toIso8601String())->toContain('2026-09-01T12:00:00');
+        // `->timestamp` (instante real), no un match de string sobre la hora
+        // local: la tarea 29 normaliza `inicio`/`fin` a UTC antes de
+        // persistir (ver `MaquinaEstadosTrabajo::normalizarUtc()`), mismo
+        // criterio que ya usa `ActaConformidadTest.php` para `fecha_firma`.
+        ->and($trabajo->fin?->timestamp)->toBe(strtotime('2026-09-01T12:00:00-04:00'));
 });
 
 it('cierra una sesión abierta y la deja cerrada, con fin, motivo_cierre y hectareas_declaradas persistidos', function () {
@@ -168,7 +172,7 @@ it('cierra una sesión abierta y la deja cerrada, con fin, motivo_cierre y hecta
         ->and($sesion->cierre_uuid_cliente)->toBe('uuid-cierre-s2')
         ->and($sesion->motivo_cierre)->toBe('relevo_piloto')
         ->and($sesion->hectareas_declaradas)->toBe('9.75')
-        ->and($sesion->fin?->toIso8601String())->toContain('2026-09-01T12:00:00');
+        ->and($sesion->fin?->timestamp)->toBe(strtotime('2026-09-01T12:00:00-04:00'));
 });
 
 it('cerrar una sesión sin hectareas_declaradas se rechaza', function () {
@@ -311,7 +315,7 @@ it('cerrar un trabajo ya cerrado con un evento de cierre DISTINTO se rechaza', f
     // El fin queda el del PRIMER cierre, no el del segundo intento rechazado.
     $trabajo = Trabajo::query()->where('uuid_cliente', 'uuid-t6')->firstOrFail();
     expect($trabajo->cierre_uuid_cliente)->toBe('uuid-cierre-t6-a')
-        ->and($trabajo->fin?->toIso8601String())->toContain('2026-09-01T12:00:00');
+        ->and($trabajo->fin?->timestamp)->toBe(strtotime('2026-09-01T12:00:00-04:00'));
 });
 
 it('cerrar una sesión ya cerrada con un evento de cierre DISTINTO se rechaza', function () {
@@ -472,4 +476,42 @@ it('un trabajo TODAVÍA sin sesiones puede cerrarlo cualquier operario legítimo
     ]])->assertOk();
 
     expect($respuesta->json('resultados.0.estado'))->toBe('aplicado');
+});
+
+/*
+ * ── Criterio de aceptación 5 (tarea 29): `inicio`/`fin` persisten como el
+ *    INSTANTE UTC real, no la hora local literal ──
+ *
+ * `ope_trabajos.inicio`/`fin` y `ope_sesiones.inicio`/`fin` son `dateTime`
+ * sin timezone (ver `MaquinaEstadosTrabajo::normalizarUtc()`). Un string con
+ * offset -04:00 (Bolivia) que entra por `POST /api/sync` tiene que guardarse
+ * como su equivalente UTC — round-trip completo (guardado + `->fresh()`),
+ * no solo el objeto en memoria antes de guardar.
+ */
+
+it('inicio/fin con offset -04:00 persisten como el instante UTC real, no la hora local literal', function () {
+    $piloto = pilotoParaCierre('Piloto de timezone');
+
+    $this->postJson('/api/sync', ['registros' => [
+        registroTrabajoParaCierre('uuid-t-tz'),
+        registroSesionParaCierre('uuid-s-tz', 'uuid-t-tz', $piloto->id),
+    ]])->assertOk();
+
+    $this->postJson('/api/sync', ['registros' => [
+        registroCierreSesion('uuid-cierre-s-tz', 'uuid-s-tz'),
+        registroCierreTrabajo('uuid-cierre-t-tz', 'uuid-t-tz', evidenciaImagenCampoParaCierre('tz')),
+    ]])->assertOk();
+
+    $trabajo = Trabajo::query()->where('uuid_cliente', 'uuid-t-tz')->firstOrFail()->fresh();
+    $sesion = Sesion::query()->where('uuid_cliente', 'uuid-s-tz')->firstOrFail()->fresh();
+
+    // `registroTrabajoParaCierre()`: inicio '2026-09-01T10:00:00-04:00' == '2026-09-01T14:00:00Z'.
+    expect($trabajo->inicio?->timestamp)->toBe(strtotime('2026-09-01T10:00:00-04:00'))
+        ->and($trabajo->inicio?->timestamp)->toBe(strtotime('2026-09-01T14:00:00Z'))
+        // `registroCierreTrabajo()`/`registroCierreSesion()`: fin por defecto
+        // '2026-09-01T12:00:00-04:00' == '2026-09-01T16:00:00Z'.
+        ->and($trabajo->fin?->timestamp)->toBe(strtotime('2026-09-01T16:00:00Z'))
+        // `registroSesionParaCierre()`: inicio '2026-09-01T10:05:00-04:00' == '2026-09-01T14:05:00Z'.
+        ->and($sesion->inicio?->timestamp)->toBe(strtotime('2026-09-01T14:05:00Z'))
+        ->and($sesion->fin?->timestamp)->toBe(strtotime('2026-09-01T16:00:00Z'));
 });
