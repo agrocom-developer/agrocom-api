@@ -11,12 +11,15 @@ use App\Dominios\Operaciones\Contratos\CierreSesion;
 use App\Dominios\Operaciones\Contratos\CierreTrabajo;
 use App\Dominios\Operaciones\Contratos\EscrituraSincronizacion;
 use App\Dominios\Operaciones\Contratos\RegistroCondiciones;
+use App\Dominios\Operaciones\Contratos\RegistroIncidencia;
 use App\Dominios\Operaciones\Contratos\RegistroRecarga;
 use App\Dominios\Operaciones\Contratos\RegistroRecepcionCaldo;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Dominio\TipoEvidencia;
+use App\Dominios\Operaciones\Dominio\TipoIncidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Condiciones;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Evidencia;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\Incidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Recarga;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\RecepcionCaldo;
@@ -891,6 +894,113 @@ test('Trabajo::cuadreCaldo marca cuadra en false cuando recibido no coincide con
         ->and($cuadre['consumido'])->toBe('0.00')
         ->and($cuadre['sobrante'])->toBe('15.00')
         ->and($cuadre['cuadra'])->toBeFalse();
+});
+
+/*
+ * ── Incidencias de sesión (espec §4.3, HU-08, tarea 22) ──
+ */
+
+/** Evidencia `foto_incidencia`, distinta de `evidenciaImagenCampoParaEscritura()` (esa es `imagen_campo`). */
+function evidenciaFotoIncidenciaParaEscritura(string $id): string
+{
+    $uuidCliente = "uuid-evidencia-incidencia-{$id}";
+
+    Evidencia::query()->create([
+        'uuid_cliente' => $uuidCliente,
+        'tipo' => TipoEvidencia::FotoIncidencia,
+        'archivo_url' => "evidencias/foto_incidencia/2026/09/{$uuidCliente}.jpg",
+        'hash' => hash('sha256', $uuidCliente),
+        'fecha' => '2026-09-01T09:00:00-04:00',
+    ]);
+
+    return $uuidCliente;
+}
+
+/**
+ * El campo del catálogo de incidencia es `tipo_incidencia`, no `tipo` (ver
+ * docblock de `Contratos/RegistroIncidencia`: `tipo` ya es la key que usa el
+ * "sobre" del lote de `POST /api/sync` para el tipo de registro).
+ *
+ * @return array<string, mixed>
+ */
+function registroIncidenciaArreglo(array $sobrescribir = []): array
+{
+    return array_merge([
+        'uuid_cliente' => 'uuid-incidencia-default',
+        'sesion_uuid_cliente' => 'uuid-sesion-cond-default',
+        'tipo_incidencia' => 'mecanica',
+        'hora' => '2026-09-01T10:20:00-04:00',
+        'evidencia_foto_uuid_cliente' => 'uuid-evidencia-incidencia-default',
+    ], $sobrescribir);
+}
+
+test('RegistroIncidencia::intentarDesdeArreglo devuelve null ante un campo requerido faltante', function () {
+    expect(RegistroIncidencia::intentarDesdeArreglo([
+        'uuid_cliente' => 'uuid-incompleto',
+        'sesion_uuid_cliente' => 'uuid-sesion',
+        // falta tipo_incidencia, hora, evidencia_foto_uuid_cliente
+    ]))->toBeNull();
+});
+
+test('RegistroIncidencia::intentarDesdeArreglo devuelve null con tipo_incidencia fuera de catálogo', function () {
+    expect(RegistroIncidencia::intentarDesdeArreglo(registroIncidenciaArreglo(['tipo_incidencia' => 'ovni'])))->toBeNull();
+});
+
+test('RegistroIncidencia::intentarDesdeArreglo devuelve null con tipo_incidencia no string', function () {
+    expect(RegistroIncidencia::intentarDesdeArreglo(registroIncidenciaArreglo(['tipo_incidencia' => 5])))->toBeNull();
+});
+
+test('RegistroIncidencia::intentarDesdeArreglo devuelve null sin evidencia_foto_uuid_cliente (HU-08: incidencia siempre con foto)', function () {
+    expect(RegistroIncidencia::intentarDesdeArreglo([
+        'uuid_cliente' => 'uuid-incidencia-sin-evidencia',
+        'sesion_uuid_cliente' => 'uuid-sesion',
+        'tipo_incidencia' => 'clima',
+        'hora' => '2026-09-01T10:20:00-04:00',
+    ]))->toBeNull();
+});
+
+test('RegistroIncidencia::intentarDesdeArreglo devuelve null con evidencia_foto_uuid_cliente vacío', function () {
+    expect(RegistroIncidencia::intentarDesdeArreglo(registroIncidenciaArreglo(['evidencia_foto_uuid_cliente' => ''])))->toBeNull();
+});
+
+test('RegistroIncidencia::intentarDesdeArreglo acepta descripcion ausente (null) sin rechazar el registro', function () {
+    $datos = RegistroIncidencia::intentarDesdeArreglo(registroIncidenciaArreglo());
+
+    expect($datos)->not->toBeNull()
+        ->and($datos->descripcion)->toBeNull()
+        ->and($datos->tipo)->toBe('mecanica');
+});
+
+test('RegistroIncidencia::intentarDesdeArreglo acepta descripcion presente', function () {
+    $datos = RegistroIncidencia::intentarDesdeArreglo(registroIncidenciaArreglo([
+        'descripcion' => 'aterrizaje forzoso por falla de motor',
+    ]));
+
+    expect($datos)->not->toBeNull()
+        ->and($datos->descripcion)->toBe('aterrizaje forzoso por falla de motor');
+});
+
+test('registrarIncidencia con datos válidos aplica y persiste sesion_id/evidencia_foto_id correctos', function () {
+    $sesion = sesionAbiertaParaCondiciones('incidencia-a');
+    $evidenciaUuid = evidenciaFotoIncidenciaParaEscritura('a');
+    $contrato = app(EscrituraSincronizacion::class);
+
+    $datos = RegistroIncidencia::intentarDesdeArreglo(registroIncidenciaArreglo([
+        'uuid_cliente' => 'uuid-incidencia-a',
+        'sesion_uuid_cliente' => $sesion->uuid_cliente,
+        'evidencia_foto_uuid_cliente' => $evidenciaUuid,
+    ]));
+
+    $resultado = $contrato->registrarIncidencia($datos);
+
+    expect($resultado->estado)->toBe('aplicado');
+
+    $incidencia = Incidencia::query()->where('uuid_cliente', 'uuid-incidencia-a')->firstOrFail();
+    $evidencia = Evidencia::query()->where('uuid_cliente', $evidenciaUuid)->firstOrFail();
+
+    expect($incidencia->sesion_id)->toBe($sesion->id)
+        ->and($incidencia->evidencia_foto_id)->toBe($evidencia->id)
+        ->and($incidencia->tipo)->toBe(TipoIncidencia::Mecanica);
 });
 
 /*

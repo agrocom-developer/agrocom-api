@@ -15,8 +15,10 @@ use OpenApi\Attributes as OA;
 #[OA\Tag(
     name: 'Sincronizacion',
     description: 'Push de escritura offline de la app de campo (espec §2.1, puntos 3 a 5; TE-05). '
-        .'Recorte de alcance de la tarea 09: solo `trabajo` y `sesion` — `mezcla`, `incidencia` y '
-        .'`acta` llegan con sus propias tareas (ver docs/gestion/cola_tareas.md).',
+        .'Recorte de alcance de la tarea 09: solo `trabajo` y `sesion` — `incidencia` (tarea 22) y '
+        .'`recarga` (tarea 23) se sumaron después como tipos de registro de este mismo endpoint; '
+        .'`mezcla` no aplica (CR-01: Agrocom no prepara la mezcla) y `acta` tiene sus propios '
+        .'endpoints (`ActaController`), fuera de este push (ver docs/gestion/cola_tareas.md).',
 )]
 #[OA\Schema(
     schema: 'RegistroSync',
@@ -27,13 +29,16 @@ use OpenApi\Attributes as OA;
         .'fila existente en vez de crear una nueva: `uuid_cliente` identifica el EVENTO de cierre — '
         .'distinto del `uuid_cliente` de apertura del trabajo/sesión que referencian. `recepcion_caldo` '
         .'(HU-10 redefinida por CR-01, tarea 18) registra volumen de caldo entregado por el cliente — '
-        .'nunca su composición (espec §7.1: sin producto, dosis ni fórmula). `recarga` (HU-13, tarea 23) '
-        .'registra cada ciclo de cambio de batería/recarga de caldo durante el vuelo — temperatura de '
-        .'batería > 50°C se persiste con `alerta_temperatura = true` sin rechazar el registro; sin '
-        .'`mezcla_id` (CR-01: Agrocom no prepara la mezcla).',
+        .'nunca su composición (espec §7.1: sin producto, dosis ni fórmula). `incidencia` (HU-08, tarea '
+        .'22) registra un evento puntual de la sesión (caldo/ESC/batería/mecánica/clima/otro) con foto '
+        .'SIEMPRE obligatoria, referenciada por `uuid_cliente` a una evidencia ya subida por '
+        .'`POST /api/evidencias` con `tipo: foto_incidencia`. `recarga` (HU-13, tarea 23) registra cada '
+        .'ciclo de cambio de batería/recarga de caldo durante el vuelo — temperatura de batería > 50°C '
+        .'se persiste con `alerta_temperatura = true` sin rechazar el registro; sin `mezcla_id` (CR-01: '
+        .'Agrocom no prepara la mezcla).',
     required: ['tipo', 'uuid_cliente'],
     properties: [
-        new OA\Property(property: 'tipo', type: 'string', enum: ['trabajo', 'recepcion_caldo', 'sesion', 'condiciones', 'recarga', 'cierre_trabajo', 'cierre_sesion'], example: 'trabajo'),
+        new OA\Property(property: 'tipo', type: 'string', enum: ['trabajo', 'recepcion_caldo', 'sesion', 'condiciones', 'incidencia', 'recarga', 'cierre_trabajo', 'cierre_sesion'], example: 'trabajo'),
         new OA\Property(property: 'uuid_cliente', type: 'string', example: 'a1b2c3d4-0000-4000-8000-000000000001'),
         new OA\Property(property: 'orden_id', description: '`trabajo`: id de servidor de la orden (del pull de catálogo).', type: 'integer', example: 1),
         new OA\Property(property: 'lote_id', description: '`trabajo`: id de servidor del lote (del pull de catálogo).', type: 'integer', example: 3),
@@ -47,7 +52,7 @@ use OpenApi\Attributes as OA;
         ),
         new OA\Property(
             property: 'sesion_uuid_cliente',
-            description: '`cierre_sesion`: `uuid_cliente` de apertura de la sesión a cerrar.',
+            description: '`cierre_sesion`/`condiciones`/`incidencia`: `uuid_cliente` de apertura de la sesión referenciada.',
             type: 'string',
             example: 'a1b2c3d4-0000-4000-8000-000000000002',
         ),
@@ -61,7 +66,7 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'fin', type: 'string', format: 'date-time', nullable: true, description: 'Requerido en `cierre_trabajo`/`cierre_sesion`.', example: null),
         new OA\Property(property: 'litros', description: '`recepcion_caldo`: litros entregados por el cliente. DECIMAL como string (invariante 6).', type: 'string', nullable: true, example: null),
         new OA\Property(property: 'entregado_por', description: '`recepcion_caldo`: quién, del lado del cliente, entregó el caldo (espec §7.2).', type: 'string', nullable: true, example: null),
-        new OA\Property(property: 'hora', description: '`recepcion_caldo`: cuándo se entregó. `recarga`: cuándo ocurrió el ciclo de cambio de batería/recarga de caldo.', type: 'string', format: 'date-time', nullable: true, example: null),
+        new OA\Property(property: 'hora', description: '`recepcion_caldo`: cuándo se entregó. `incidencia`: cuándo ocurrió. `recarga`: cuándo ocurrió el ciclo de cambio de batería/recarga de caldo.', type: 'string', format: 'date-time', nullable: true, example: null),
         new OA\Property(property: 'litros_consumidos', description: '`cierre_sesion`, opcional: litros de caldo efectivamente rociados en la sesión (espec §7.2). DECIMAL como string.', type: 'string', nullable: true, example: null),
         new OA\Property(property: 'litros_sobrante', description: '`cierre_trabajo`, opcional: litros que quedaron sin aplicar al cerrar el trabajo (espec §7.2). DECIMAL como string.', type: 'string', nullable: true, example: null),
         new OA\Property(
@@ -81,7 +86,7 @@ use OpenApi\Attributes as OA;
         ),
         new OA\Property(
             property: 'momento',
-            description: '`condiciones`: alcance de la tarea 17, solo `inicio_sesion` — `incidencia` es HU-08.',
+            description: '`condiciones`: solo `inicio_sesion` — condiciones climáticas capturadas EN el momento de una incidencia es un concepto distinto del registro `incidencia` en sí (que vive en su propia tabla), fuera de alcance de este catálogo.',
             type: 'string',
             enum: ['inicio_sesion'],
             nullable: true,
@@ -98,6 +103,22 @@ use OpenApi\Attributes as OA;
             example: null,
         ),
         new OA\Property(property: 'firma_observacion', description: '`condiciones`: sin evidencia real todavía (TE-07), texto plano.', type: 'string', nullable: true, example: null),
+        new OA\Property(
+            property: 'tipo_incidencia',
+            description: '`incidencia`: catálogo espec §4.3. Campo separado de `tipo` (que en este objeto es el tipo de REGISTRO del lote) para evitar que ambos colisionen en la misma key.',
+            type: 'string',
+            enum: ['caldo', 'esc', 'bateria', 'mecanica', 'clima', 'otro'],
+            nullable: true,
+            example: null,
+        ),
+        new OA\Property(property: 'descripcion', description: '`incidencia`, opcional: texto libre.', type: 'string', nullable: true, example: null),
+        new OA\Property(
+            property: 'evidencia_foto_uuid_cliente',
+            description: '`incidencia`: REQUERIDO — `uuid_cliente` de una evidencia ya subida por `POST /api/evidencias` con `tipo: foto_incidencia`. Sin ella, referenciando una evidencia inexistente, de otro tipo, o ya usada por otra incidencia, el registro se rechaza (HU-08: "con foto").',
+            type: 'string',
+            nullable: true,
+            example: null,
+        ),
         new OA\Property(property: 'litros_caldo', description: '`recarga`: litros de caldo cargados en ese ciclo. DECIMAL como string (invariante 6).', type: 'string', nullable: true, example: null),
         new OA\Property(property: 'bateria_saliente_id', description: '`recarga`: identificador de la batería que se retira (texto libre, sin catálogo de baterías en el esquema).', type: 'string', nullable: true, example: null),
         new OA\Property(property: 'temperatura_bateria_c', description: '`recarga`: temperatura medida de la batería saliente. > 50°C persiste con `alerta_temperatura = true`, sin rechazar el registro.', type: 'string', nullable: true, example: null),

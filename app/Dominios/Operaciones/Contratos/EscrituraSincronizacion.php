@@ -42,6 +42,16 @@ namespace App\Dominios\Operaciones\Contratos;
  * DTOs y runs/18.md, "decisión de esquema"), así que `cerrarSesion()`/
  * `cerrarTrabajo()` ya los cubren sin ampliar esta interfaz.
  *
+ * `registrarIncidencia()` (espec §4.3, HU-08, tarea 22) crea una fila nueva,
+ * mismo mecanismo de idempotencia. Sin `$operarioPersonaId`, mismo motivo que
+ * `registrarCondiciones()`: la espec no define dueño para este registro
+ * (piloto, auxiliar y jefe de campo pueden registrarlas por igual). A
+ * diferencia de `registrarCondiciones()`, no hay ninguna regla de rango que
+ * evalúe ANTES del `INSERT` — la única condición adicional a "dato inválido o
+ * referencia inexistente" es la evidencia obligatoria: existe, es de tipo
+ * `foto_incidencia`, y no fue usada ya por otra incidencia (mismo criterio
+ * que la imagen de campo de `cerrarTrabajo()`).
+ *
  * `registrarRecarga()` (HU-13, tarea 23) crea una fila nueva, mismo
  * mecanismo de idempotencia que `registrarCondiciones()`/
  * `registrarRecepcionCaldo()`. Sin `$operarioPersonaId`, mismo motivo que
@@ -62,6 +72,8 @@ interface EscrituraSincronizacion
     public function registrarCondiciones(RegistroCondiciones $datos): ResultadoSincronizacion;
 
     public function registrarRecepcionCaldo(RegistroRecepcionCaldo $datos): ResultadoSincronizacion;
+
+    public function registrarIncidencia(RegistroIncidencia $datos): ResultadoSincronizacion;
 
     public function registrarRecarga(RegistroRecarga $datos): ResultadoSincronizacion;
 }
