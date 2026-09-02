@@ -1057,10 +1057,20 @@ components:
           type: integer
           example: null
           nullable: true
+        dron_id:
+          description: '`sesion`, opcional (HU-07): id de servidor del dron (catálogo mínimo de `Operaciones`, sin pull de catálogo propio todavía).'
+          type: integer
+          example: null
+          nullable: true
         hectareas_declaradas:
           description: 'DECIMAL como string (invariante 6). `0` si se omite.'
           type: string
           example: '0'
+        hectarea_inicial_acumulada:
+          description: '`sesion`, opcional (HU-07): acumulado de DJI al abrir la sesión, control de doble conteo (espec §5). DECIMAL como string.'
+          type: string
+          example: null
+          nullable: true
         inicio:
           type: string
           format: date-time

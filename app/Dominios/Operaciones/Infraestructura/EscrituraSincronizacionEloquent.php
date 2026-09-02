@@ -110,7 +110,9 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
                     'secuencia' => $datos->secuencia,
                     'piloto_id' => $datos->pilotoId,
                     'auxiliar_id' => $datos->auxiliarId,
+                    'dron_id' => $datos->dronId,
                     'hectareas_declaradas' => $datos->hectareasDeclaradas,
+                    'hectarea_inicial_acumulada' => $datos->hectareaInicialAcumulada,
                     'inicio' => $datos->inicio,
                     'fin' => $datos->fin,
                 ]);
