@@ -59,8 +59,8 @@ fi
 
 # Regresión visual (Playwright, en el host — el contenedor `app` no trae Node
 # ni navegadores). Compuerta desconectada desde la tarea 07 hasta la 31: el
-# arnés (tests/Visual/) existía pero nadie lo corría. Snapshots `-darwin`:
-# fuera de CI a propósito, ver tests/Visual/organizacion.spec.ts.
+# arnés (tests/Visual/) existía pero nadie lo corría. Snapshots `-win32`
+# (el desarrollo se hace en Windows desde el 3/9/2026): fuera de CI a propósito.
 if [ -z "$FALLO" ] && [ "$CON_ASSETS" = "1" ]; then
     etapa "Regresión visual (Playwright, en el host)" npx playwright test || true
 fi

@@ -1103,5 +1103,6 @@ inventado (antes: `max-width: 600px`, `60px` del preview, `minmax(250px, …)`)
 (mismo patrón que los tres specs existentes: login real, `esperarFuentes`
 antes de capturar) y una tercera etapa a `bin/verify` (`npx playwright test`).
 Deliberadamente fuera de CI (`.github/workflows/` no se tocó): los
-snapshots son `-darwin`, y el runner Linux de CI daría falsos rojos por
-diferencia de plataforma, no por regresión real.
+snapshots llevan sufijo de plataforma (`-darwin` hasta el 3/9/2026, `-win32`
+desde que el desarrollo pasó a Windows), y el runner Linux de CI daría falsos
+rojos por diferencia de plataforma, no por regresión real.
