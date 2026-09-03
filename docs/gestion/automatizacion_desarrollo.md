@@ -189,15 +189,18 @@ Tres cosas que hacen que el bucle no sea un lazo suelto:
   ciclo se cortó con la cola llena. Un working tree sucio que NO es del ciclo
   sigue cortando el bucle (es trabajo humano en curso), pero con ese motivo
   explícito y sin contar como tarea trabada.
-- **Las sesiones pueden esperar a `bin/verify`.** En la máquina Windows la
-  etapa de Playwright tarda ~20 min, más que el tope de una llamada Bash, así
-  que la sesión lo lanza en segundo plano. Las sesiones de implementación y
-  corrección tienen `Monitor` y `TaskOutput` para esperarlo, y el texto de cada
-  etapa les dice que nunca terminen con `bin/verify` corriendo ni sin escribir
-  `runs/NN.estado`. Antes de eso, la sesión pedía `Monitor`, se le negaba, y
-  cerraba con "sigo cuando termine", que en modo headless es terminar sin
-  estado: tres veces seguidas y la tarea se agotaba sola. El tope de tareas
-  seguidas sin integrar se ajusta con `AGROCOM_TAREAS_TRABADAS` (por defecto 3).
+- **Las sesiones esperan a `bin/verify` con llamadas Bash cortas, no con
+  notificaciones.** En la máquina Windows la etapa de Playwright tarda ~20 min,
+  más que el tope de 10 min de una llamada Bash, así que la sesión lo lanza en
+  segundo plano. Y una sesión headless que pasa 10 minutos sin llamar a una
+  herramienta se cierra sola: el 3/9/2026 dos etapas seguidas dejaron un
+  `Monitor`, programaron un `ScheduleWakeup` a 20 min, escribieron "espero la
+  notificación" y a los 10 minutos exactos el ciclo las vio terminar sin
+  estado. Por eso `Monitor` y `ScheduleWakeup` van en `--disallowedTools`, y
+  el pie que cada etapa recibe da la receta que sí funciona: `nohup
+  ./bin/verify` una vez, y después `timeout 540 tail --pid=... -f /dev/null`
+  en llamadas sucesivas hasta que el log termine. El tope de tareas seguidas
+  sin integrar se ajusta con `AGROCOM_TAREAS_TRABADAS` (por defecto 3).
 
 **Un modelo por fase.** El trabajo que decide algo —implementar, verificar,
 corregir hallazgos, elegir la próxima tarea— corre en el modelo mediano; el
