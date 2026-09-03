@@ -5,6 +5,7 @@ namespace App\Dominios\Operaciones\Infraestructura;
 use App\Dominios\Operaciones\Contratos\EscrituraSincronizacion;
 use App\Dominios\Operaciones\Contratos\LecturaActaConformada;
 use App\Dominios\Operaciones\Contratos\LecturaAlertasTemperaturaBateria;
+use App\Dominios\Operaciones\Contratos\LecturaHorasVueloPorModelo;
 use App\Dominios\Operaciones\Contratos\LecturaOrdenesVigentes;
 use App\Dominios\Operaciones\Contratos\LecturaSesionValidada;
 use Illuminate\Support\Facades\View;
@@ -29,6 +30,7 @@ final class OperacionesServiceProvider extends ServiceProvider
         $this->app->bind(LecturaSesionValidada::class, LecturaSesionValidadaEloquent::class);
         $this->app->bind(LecturaActaConformada::class, LecturaActaConformadaEloquent::class);
         $this->app->bind(LecturaAlertasTemperaturaBateria::class, LecturaAlertasTemperaturaBateriaEloquent::class);
+        $this->app->bind(LecturaHorasVueloPorModelo::class, LecturaHorasVueloPorModeloEloquent::class);
     }
 
     public function boot(): void

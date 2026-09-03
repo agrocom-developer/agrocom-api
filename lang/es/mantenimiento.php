@@ -213,4 +213,44 @@ return [
         'ya_cerrada' => 'Esta orden ya está cerrada.',
     ],
 
+    // Pantalla de panel "Mantenimiento › Planes" (HU-38, tarea 54): ABM de
+    // planes de mantenimiento preventivo por horas de vuelo de dron, con la
+    // alerta calculada por fila (ver ListarPlanesMantenimiento). Mismo
+    // molde de claves que 'vehiculos'/'baterias' arriba, sin filtros (la
+    // lista completa de planes suele ser corta) ni columna de estado (no es
+    // una máquina de estados).
+    'planes' => [
+        'titulo' => 'Planes de mantenimiento',
+        'subtitulo' => 'Planes de mantenimiento preventivo por horas de vuelo, con la alerta activada cuando algún dron del modelo cruza el umbral.',
+        'nuevo' => 'Nuevo plan',
+        'vacio' => 'Todavía no hay planes de mantenimiento registrados.',
+        'col_modelo' => 'Modelo',
+        'col_tarea' => 'Tarea',
+        'col_horas_umbral' => 'Umbral (horas)',
+        'col_alerta' => 'Alerta',
+        'sin_alerta' => '—',
+        'alerta_activa' => 'Alerta',
+        'alerta_titulo' => 'Algún dron de este modelo alcanzó o superó el umbral de horas de vuelo.',
+        'editar' => 'Editar',
+        'eliminar_accion' => 'Eliminar',
+        'confirmar_baja' => '¿Confirmás la baja de este plan de mantenimiento?',
+        'paginacion_aria' => 'Paginación de planes de mantenimiento',
+        'paginacion_anterior' => 'Anterior',
+        'paginacion_siguiente' => 'Siguiente',
+        'paginacion_info' => 'Página :actual de :total',
+        'titulo_crear' => 'Nuevo plan de mantenimiento',
+        'titulo_editar' => 'Editar plan de mantenimiento',
+        'subtitulo_form' => 'Modelo de dron, tarea preventiva y umbral de horas de vuelo.',
+        'seccion_datos' => 'Datos del plan',
+        'campos_contador' => ':cantidad campos',
+        'campo_modelo' => 'Modelo de dron',
+        'campo_modelo_ayuda' => 'Texto libre: se compara contra el modelo cargado en cada dron.',
+        'campo_tarea' => 'Tarea preventiva',
+        'campo_horas_umbral' => 'Umbral de horas de vuelo',
+        'estado_form' => 'Los cambios se guardan al confirmar.',
+        'creado' => 'Plan de mantenimiento creado correctamente.',
+        'actualizado' => 'Plan de mantenimiento actualizado correctamente.',
+        'eliminado' => 'Plan de mantenimiento dado de baja correctamente.',
+    ],
+
 ];

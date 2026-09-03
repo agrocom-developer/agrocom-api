@@ -241,6 +241,14 @@ class SeguridadSeeder extends Seeder
         'mantenimiento.orden.crear' => 'Abrir una orden de mantenimiento',
         'mantenimiento.orden.editar' => 'Editar los datos de una orden de mantenimiento',
         'mantenimiento.orden.cerrar' => 'Cerrar una orden de mantenimiento consumiendo repuestos',
+        // HU-38 (tarea 54): "como encargado, quiero planes de mantenimiento
+        // preventivo por horas de vuelo, para que el sistema me avise antes
+        // de la falla" — cierra Sprint 11. Grano fino, mismo criterio que
+        // `mantenimiento.vehiculo.*`/`mantenimiento.bateria.*`.
+        'mantenimiento.plan.ver' => 'Ver el listado de planes de mantenimiento preventivo',
+        'mantenimiento.plan.crear' => 'Dar de alta un plan de mantenimiento preventivo',
+        'mantenimiento.plan.editar' => 'Editar los datos de un plan de mantenimiento preventivo',
+        'mantenimiento.plan.eliminar' => 'Dar de baja (lógica) un plan de mantenimiento preventivo',
     ];
 
     /**
@@ -413,6 +421,13 @@ class SeguridadSeeder extends Seeder
         'mantenimiento.orden.crear',
         'mantenimiento.orden.editar',
         'mantenimiento.orden.cerrar',
+        // HU-38 (tarea 54): "como encargado, quiero planes de mantenimiento
+        // preventivo por horas de vuelo" — la HU lo dice literal, mismo
+        // criterio que el resto de este rol arriba.
+        'mantenimiento.plan.ver',
+        'mantenimiento.plan.crear',
+        'mantenimiento.plan.editar',
+        'mantenimiento.plan.eliminar',
     ];
 
     /**
