@@ -110,15 +110,14 @@
                                         disabled
                                     />
 
-                                    <div class="ag-form-section__field--full">
-                                        <x-atoms.input
-                                            type="text"
-                                            name="contacto_direccion"
-                                            label="{{ __('seguridad.organizacion.campo_direccion') }}"
-                                            value="{{ __('seguridad.organizacion.mock_direccion') }}"
-                                            disabled
-                                        />
-                                    </div>
+                                    <x-atoms.input
+                                        class="ag-form-section__field--full"
+                                        type="text"
+                                        name="contacto_direccion"
+                                        label="{{ __('seguridad.organizacion.campo_direccion') }}"
+                                        value="{{ __('seguridad.organizacion.mock_direccion') }}"
+                                        disabled
+                                    />
                                 </x-molecules.form-section>
 
                                 <x-molecules.form-section :title="__('seguridad.organizacion.seccion_plan')">
