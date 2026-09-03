@@ -113,7 +113,10 @@ class SecMenuSeeder extends Seeder
         // estados (abierta → cerrada) — activa el ítem que ya estaba
         // sembrado como "botón sin link" (ver docblock de `item()`).
         $this->item($mantenimiento, 'mantenimiento', 'ordenes', 'build', 1, ruta: 'panel.ordenes-mantenimiento.index', codigoPermiso: 'mantenimiento.orden.ver');
-        $this->item($mantenimiento, 'mantenimiento', 'planes', 'checklist', 2);
+        // HU-38 (tarea 54): planes de mantenimiento preventivo por horas de
+        // vuelo — activa el ítem que ya estaba sembrado como "botón sin
+        // link" (ver docblock de `item()`).
+        $this->item($mantenimiento, 'mantenimiento', 'planes', 'checklist', 2, ruta: 'panel.planes-mantenimiento.index', codigoPermiso: 'mantenimiento.plan.ver');
         // HU-36 (tarea 52): catálogo de repuestos con stock por base y
         // alerta de mínimo — activa los dos ítems que ya estaban sembrados
         // como "botón sin link" (ver docblock de `item()`). El backend vive

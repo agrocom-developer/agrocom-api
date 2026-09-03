@@ -16,6 +16,7 @@ use App\Dominios\Inventario\Infraestructura\Http\Controllers\Web\RepuestosContro
 use App\Dominios\Inventario\Infraestructura\Http\Controllers\Web\StockController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\BateriasController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\OrdenesMantenimientoController;
+use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\PlanesMantenimientoController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\VehiculosController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\AlertasController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\DronesController;
@@ -473,6 +474,33 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::post('/panel/ordenes-mantenimiento/{orden}/cerrar', [OrdenesMantenimientoController::class, 'cerrar'])
             ->name('panel.ordenes-mantenimiento.cerrar');
+
+        // HU-38 (tarea 54): "como encargado, quiero planes de mantenimiento
+        // preventivo por horas de vuelo, para que el sistema me avise antes
+        // de la falla" — cierra Sprint 11. Cuatro permisos de grano fino
+        // (`mantenimiento.plan.ver`/`.crear`/`.editar`/`.eliminar`),
+        // verificados DENTRO del controlador contra el ROL ACTIVO, mismo
+        // criterio que el resto del panel. Nombre de ruta
+        // `planes-mantenimiento` (no `planes`, a secas) por el mismo motivo
+        // que `ordenes-mantenimiento` arriba: evitar cualquier ambigüedad de
+        // nombre entre módulos, aunque hoy no exista colisión real.
+        Route::get('/panel/planes-mantenimiento', [PlanesMantenimientoController::class, 'index'])
+            ->name('panel.planes-mantenimiento.index');
+
+        Route::get('/panel/planes-mantenimiento/crear', [PlanesMantenimientoController::class, 'create'])
+            ->name('panel.planes-mantenimiento.create');
+
+        Route::post('/panel/planes-mantenimiento', [PlanesMantenimientoController::class, 'store'])
+            ->name('panel.planes-mantenimiento.store');
+
+        Route::get('/panel/planes-mantenimiento/{plan}/editar', [PlanesMantenimientoController::class, 'edit'])
+            ->name('panel.planes-mantenimiento.edit');
+
+        Route::put('/panel/planes-mantenimiento/{plan}', [PlanesMantenimientoController::class, 'update'])
+            ->name('panel.planes-mantenimiento.update');
+
+        Route::delete('/panel/planes-mantenimiento/{plan}', [PlanesMantenimientoController::class, 'destroy'])
+            ->name('panel.planes-mantenimiento.destroy');
 
         // HU-28 (tarea 40): "como piloto o auxiliar, quiero ver mis devengos
         // por período" — primer permiso de panel para esos dos roles
