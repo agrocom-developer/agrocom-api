@@ -37,7 +37,10 @@ final class LecturaHorasVueloPorModeloEloquent implements LecturaHorasVueloPorMo
             ->get(['dron_id', 'inicio', 'fin'])
             ->each(function (Sesion $sesion) use (&$horasPorDron): void {
                 $dronId = (int) $sesion->dron_id;
-                $horas = $sesion->fin->diffInSeconds($sesion->inicio) / 3600;
+                // abs(): esta versión de Carbon devuelve diffInSeconds() con
+                // signo (negativo cuando el receptor es posterior al
+                // argumento), y una sesión cerrada siempre tiene fin > inicio.
+                $horas = abs($sesion->fin->diffInSeconds($sesion->inicio)) / 3600;
 
                 $horasPorDron[$dronId] = ($horasPorDron[$dronId] ?? 0.0) + $horas;
             });
