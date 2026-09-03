@@ -23,5 +23,8 @@ class CatalogoSeeder extends Seeder
         // Depende de sec_permission ya sembrado por SeguridadSeeder (arriba):
         // gatea el ítem "Usuarios" con seguridad.usuario.ver.
         $this->call(SecMenuSeeder::class);
+        // HU-33 (tarea 47): catálogo de rubros/subrubros de gasto — sin
+        // dependencia de los dos anteriores, cualquier orden relativo sirve.
+        $this->call(FinanzasRubrosSeeder::class);
     }
 }

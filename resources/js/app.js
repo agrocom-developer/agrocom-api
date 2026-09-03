@@ -10,6 +10,7 @@ import './pages/login.js';
 import './pages/clientes-form.js';
 import './pages/contratos-form.js';
 import './pages/campos-form.js';
+import './pages/gastos-form.js';
 
 // Bootstrap components are now available globally via window
 window.bootstrap = bootstrap;

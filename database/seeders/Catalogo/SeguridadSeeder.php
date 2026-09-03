@@ -172,6 +172,13 @@ class SeguridadSeeder extends Seeder
         // NO entra en PERMISOS_ENCARGADO_OPERACIONES (ver más abajo):
         // exclusivo del dueño, mismo criterio que `finanzas.planilla.aprobar`.
         'comercial.reporte.ver' => 'Ver el reporte comercial de avance por contrato (exclusivo del dueño)',
+        // HU-33 (tarea 47): "como encargado, quiero cargar gastos con su
+        // categoría y comprobante, para que la campaña tenga costo real" —
+        // abre Sprint 10. Grano fino sin `.editar`: un gasto, una vez
+        // cargado, es inmutable salvo baja (ver `Aplicacion/CrearGasto`).
+        'finanzas.gasto.ver' => 'Ver el listado de gastos de campaña',
+        'finanzas.gasto.crear' => 'Cargar un gasto con su categoría y comprobante',
+        'finanzas.gasto.eliminar' => 'Dar de baja (lógica) un gasto registrado por error',
     ];
 
     /**
@@ -287,6 +294,13 @@ class SeguridadSeeder extends Seeder
         // y anticipos arriba.
         'comercial.factura.ver',
         'comercial.factura.crear',
+        // HU-33 (tarea 47): "como encargado, quiero cargar gastos con su
+        // categoría y comprobante" — la HU lo dice literal, mismo criterio
+        // que clientes, contratos, campos, drones, bases, personas,
+        // anticipos y facturas arriba.
+        'finanzas.gasto.ver',
+        'finanzas.gasto.crear',
+        'finanzas.gasto.eliminar',
     ];
 
     /**
