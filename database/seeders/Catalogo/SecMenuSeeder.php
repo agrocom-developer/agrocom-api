@@ -113,7 +113,10 @@ class SecMenuSeeder extends Seeder
         // por período" — activa el ítem que ya estaba sembrado como "botón
         // sin link" (ver docblock de `item()`).
         $this->item($financiero, 'financiero', 'devengos', 'request_quote', 4, ruta: 'panel.devengos.index', codigoPermiso: 'finanzas.devengo.ver');
-        $this->item($financiero, 'financiero', 'planilla', 'event_note', 5);
+        // HU-30 (tarea 44): "como dueño, quiero generar la planilla del
+        // período desde los devengos y aprobarla" — activa el ítem que ya
+        // estaba sembrado como "botón sin link" (ver docblock de `item()`).
+        $this->item($financiero, 'financiero', 'planilla', 'event_note', 5, ruta: 'panel.planillas.index', codigoPermiso: 'finanzas.planilla.ver');
         $this->item($financiero, 'financiero', 'facturas', 'receipt', 6);
         // HU-29 (tarea 41): "como encargado, quiero registrar anticipos
         // validando el tope" — a diferencia de los demás ítems de este
