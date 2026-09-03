@@ -137,12 +137,35 @@ class SeguridadSeeder extends Seeder
         'personal.persona.crear' => 'Dar de alta una persona operativa',
         'personal.persona.editar' => 'Editar los datos de una persona operativa',
         'personal.persona.eliminar' => 'Dar de baja (lógica) una persona operativa',
+        // HU-28 (tarea 40): "como piloto o auxiliar, quiero ver mis devengos
+        // por período" — primer permiso de panel para piloto y auxiliar, que
+        // hasta esta tarea no tenían ninguno (piloto: solo
+        // PERMISOS_PILOTO/acta.*; auxiliar: ninguno). Un único permiso de
+        // lectura, con el scoping por PERSONA (no por rol) resuelto dentro de
+        // DevengosController.
+        'finanzas.devengo.ver' => 'Ver los propios devengos por período',
     ];
 
-    /** @var list<string> Piloto: solo lo que ejecuta desde `agrocom-field` — HU-17, tarea 24. */
+    /**
+     * Piloto: lo que ejecuta desde `agrocom-field` (HU-17, tarea 24) más su
+     * primer permiso de panel (HU-28, tarea 40) — ver sus propios devengos.
+     *
+     * @var list<string>
+     */
     private const PERMISOS_PILOTO = [
         'operaciones.acta.generar',
         'operaciones.acta.firmar',
+        'finanzas.devengo.ver',
+    ];
+
+    /**
+     * Auxiliar: hasta HU-28 (tarea 40) no tenía ningún permiso de panel — ver
+     * sus propios devengos es el primero.
+     *
+     * @var list<string>
+     */
+    private const PERMISOS_AUXILIAR = [
+        'finanzas.devengo.ver',
     ];
 
     /** @var list<string> Todo, salvo asignar_rol_dueno (diseño §2). */
@@ -268,8 +291,13 @@ class SeguridadSeeder extends Seeder
             $permisos->only(self::PERMISOS_JEFE_CAMPO)->values()->all(),
         );
 
-        // auxiliar: sin permisos de seguridad ni de panel (diseño §2) — a
-        // diferencia del piloto (arriba), no genera ni firma actas.
+        // auxiliar: sin permisos de seguridad (diseño §2) — a diferencia del
+        // piloto (arriba), no genera ni firma actas. HU-28 (tarea 40) le da
+        // su primer permiso de panel: ver sus propios devengos.
+        $this->asignar(
+            $roles['auxiliar'],
+            $permisos->only(self::PERMISOS_AUXILIAR)->values()->all(),
+        );
     }
 
     private function rol(string $name, string $description): SecRole

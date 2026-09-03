@@ -5,6 +5,7 @@ namespace App\Dominios\Finanzas\Infraestructura;
 use App\Dominios\Finanzas\Aplicacion\GenerarDevengosSesion;
 use App\Dominios\Operaciones\Dominio\Eventos\SesionValidada;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -14,6 +15,10 @@ use Illuminate\Support\ServiceProvider;
  * `TokenAuthenticated`: un closure resuelto por el contenedor, no una clase
  * de listener registrada por convención — no hace falta más ceremonia para
  * un solo oyente.
+ *
+ * `boot()` también registra el namespace de vista `finanzas::` (HU-28, tarea
+ * 40 — primer `Http/` del módulo): mismo patrón que
+ * `PersonalServiceProvider`/`OperacionesServiceProvider`.
  *
  * `Finanzas` no necesita `register()`: no expone contrato propio todavía, y
  * los contratos que consume (`LecturaSesionValidada` de Operaciones,
@@ -26,5 +31,7 @@ final class FinanzasServiceProvider extends ServiceProvider
         Event::listen(function (SesionValidada $evento): void {
             app(GenerarDevengosSesion::class)->ejecutar($evento->sesionId);
         });
+
+        View::addNamespace('finanzas', app_path('Dominios/Finanzas/Infraestructura/Http/Views'));
     }
 }
