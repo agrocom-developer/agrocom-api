@@ -215,6 +215,22 @@ class SeguridadSeeder extends Seeder
         'mantenimiento.bateria.crear' => 'Dar de alta una batería',
         'mantenimiento.bateria.editar' => 'Editar los datos de una batería, incluidos sus ciclos acumulados',
         'mantenimiento.bateria.eliminar' => 'Dar de baja (lógica) una batería',
+        // HU-36 (tarea 52): "como encargado, quiero llevar stock de
+        // repuestos por base con alerta de mínimo, para reponer antes de
+        // quedarme sin" — cierra Sprint 11 y abre el módulo `Inventario`
+        // (ADR 0011, extensión 3/9/2026, punto 15), separado de
+        // `Mantenimiento`. Catálogo de repuestos: grano fino, mismo criterio
+        // que `mantenimiento.bateria.*`.
+        'inventario.repuesto.ver' => 'Ver el catálogo de repuestos',
+        'inventario.repuesto.crear' => 'Dar de alta un repuesto',
+        'inventario.repuesto.editar' => 'Editar los datos de un repuesto',
+        'inventario.repuesto.eliminar' => 'Dar de baja (lógica) un repuesto',
+        // Stock por base y sus movimientos (compra/salida/ajuste/traslado).
+        // Sin `.editar`/`.eliminar`: un movimiento, una vez registrado, es un
+        // asiento inmutable (ver `RegistrarMovimientoStock`), mismo criterio
+        // que `finanzas.gasto.*` sin `.editar`.
+        'inventario.movimiento.ver' => 'Ver el stock por base y sus movimientos',
+        'inventario.movimiento.crear' => 'Registrar un movimiento de stock (compra, salida, ajuste o traslado)',
     ];
 
     /**
@@ -369,6 +385,17 @@ class SeguridadSeeder extends Seeder
         'mantenimiento.bateria.crear',
         'mantenimiento.bateria.editar',
         'mantenimiento.bateria.eliminar',
+        // HU-36 (tarea 52): "como encargado, quiero llevar stock de
+        // repuestos por base con alerta de mínimo" — la HU lo dice literal,
+        // mismo criterio que clientes, contratos, campos, drones, bases,
+        // personas, anticipos, facturas, gastos, combustible, vehículos y
+        // baterías arriba.
+        'inventario.repuesto.ver',
+        'inventario.repuesto.crear',
+        'inventario.repuesto.editar',
+        'inventario.repuesto.eliminar',
+        'inventario.movimiento.ver',
+        'inventario.movimiento.crear',
     ];
 
     /**

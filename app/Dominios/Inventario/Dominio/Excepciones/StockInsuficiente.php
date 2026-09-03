@@ -1,0 +1,23 @@
+<?php
+
+namespace App\Dominios\Inventario\Dominio\Excepciones;
+
+use RuntimeException;
+
+/**
+ * Guarda de dominio de "el stock nunca queda negativo" (CA esencial de
+ * HU-36, tarea 52). `RegistrarMovimientoStock` la lanza ANTES de restar,
+ * dentro de la transacción con `lockForUpdate()` — es el camino feliz de la
+ * validación; el `CHECK (cantidad >= 0)` de `inv_stock` es el backstop, no
+ * el mecanismo primario. El controlador la traduce a 422, nunca a un 500 de
+ * `QueryException` por violación de CHECK.
+ */
+final class StockInsuficiente extends RuntimeException
+{
+    public static function paraMovimiento(string $codigoRepuesto, int $baseId, string $disponible, string $solicitada): self
+    {
+        return new self(
+            "Stock insuficiente de '{$codigoRepuesto}' en la base #{$baseId}: disponible {$disponible}, solicitado {$solicitada}.",
+        );
+    }
+}

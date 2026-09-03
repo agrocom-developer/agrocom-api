@@ -12,6 +12,8 @@ use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\DevengosControlle
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\GastosController;
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\PlanillasController;
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\RendicionesController;
+use App\Dominios\Inventario\Infraestructura\Http\Controllers\Web\RepuestosController;
+use App\Dominios\Inventario\Infraestructura\Http\Controllers\Web\StockController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\BateriasController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\VehiculosController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\AlertasController;
@@ -407,6 +409,45 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::delete('/panel/baterias/{bateria}', [BateriasController::class, 'destroy'])
             ->name('panel.baterias.destroy');
+
+        // HU-36 (tarea 52): catálogo de repuestos con stock por base y
+        // alerta de mínimo. Módulo nuevo `Inventario` (ADR 0011, extensión
+        // 3/9/2026, punto 15) — no comparte tablas con `Mantenimiento`.
+        // Cuatro permisos de grano fino
+        // (`inventario.repuesto.ver`/`.crear`/`.editar`/`.eliminar`) para el
+        // catálogo, verificados DENTRO del controlador contra el ROL ACTIVO,
+        // mismo criterio que el resto del panel.
+        Route::get('/panel/repuestos', [RepuestosController::class, 'index'])
+            ->name('panel.repuestos.index');
+
+        Route::get('/panel/repuestos/crear', [RepuestosController::class, 'create'])
+            ->name('panel.repuestos.create');
+
+        Route::post('/panel/repuestos', [RepuestosController::class, 'store'])
+            ->name('panel.repuestos.store');
+
+        Route::get('/panel/repuestos/{repuesto}/editar', [RepuestosController::class, 'edit'])
+            ->name('panel.repuestos.edit');
+
+        Route::put('/panel/repuestos/{repuesto}', [RepuestosController::class, 'update'])
+            ->name('panel.repuestos.update');
+
+        Route::delete('/panel/repuestos/{repuesto}', [RepuestosController::class, 'destroy'])
+            ->name('panel.repuestos.destroy');
+
+        // Stock agregado por (repuesto, base) y alta de movimientos
+        // (compra/salida/ajuste/traslado). Sin edit/destroy: `inv_stock` es
+        // un agregado derivado, toda mutación pasa por
+        // `RegistrarMovimientoStock`. Dos permisos de grano fino
+        // (`inventario.movimiento.ver`/`.crear`).
+        Route::get('/panel/stock', [StockController::class, 'index'])
+            ->name('panel.stock.index');
+
+        Route::get('/panel/stock/movimientos/crear', [StockController::class, 'create'])
+            ->name('panel.stock.movimientos.create');
+
+        Route::post('/panel/stock/movimientos', [StockController::class, 'store'])
+            ->name('panel.stock.movimientos.store');
 
         // HU-28 (tarea 40): "como piloto o auxiliar, quiero ver mis devengos
         // por período" — primer permiso de panel para esos dos roles

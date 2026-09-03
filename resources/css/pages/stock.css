@@ -1,0 +1,99 @@
+/*
+ * Pages: stock/index, stock/create
+ * (app/Dominios/Inventario/Infraestructura/Http/Views/pages/stock/) —
+ * HU-36, tarea 52: stock agregado por (repuesto, base) y alta de
+ * movimientos. CSS propio de ESTAS páginas (ver convención en
+ * resources/css/pages/index.css) — mismo patrón que repuestos.css/baterias.css.
+ *
+ * El wrapper `.ag-stock`/`.ag-stock-form` sigue el mismo patrón que
+ * `.ag-repuestos`/`.ag-repuestos-form`: flex en columna con un único `gap`
+ * en vez de `margin-top` repetido en cada hijo. Todo color y medida por
+ * token (CLAUDE.md invariante 11).
+ */
+
+.ag-stock,
+.ag-stock-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+/* Listado (index) */
+
+.ag-stock__filtros {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ag-space-4);
+    align-items: flex-end;
+}
+
+.ag-stock__filtros .ag-input {
+    min-width: 14rem;
+}
+
+.ag-stock__filtros-acciones {
+    display: flex;
+    gap: var(--ag-space-2);
+}
+
+.ag-stock__tabla {
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+    overflow: hidden;
+}
+
+.ag-stock__head,
+.ag-stock__fila {
+    display: grid;
+    grid-template-columns: 2fr 1fr 0.7fr 0.7fr 1fr;
+    gap: var(--ag-space-4);
+    align-items: center;
+    padding: var(--ag-space-3) var(--ag-space-4);
+}
+
+.ag-stock__head {
+    background-color: var(--ag-color-bg-table-head);
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ag-stock__fila {
+    border-top: 1px solid var(--ag-color-border-row);
+    color: var(--ag-color-text);
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-stock__fila:hover {
+    background-color: var(--ag-color-bg-row-hover);
+}
+
+.ag-stock__codigo {
+    font-weight: var(--ag-font-weight-medium);
+}
+
+.ag-stock__paginacion {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ag-space-4);
+}
+
+.ag-stock__paginacion-info {
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-sm);
+}
+
+@media (max-width: 992px) {
+    .ag-stock__head {
+        display: none;
+    }
+
+    .ag-stock__fila {
+        grid-template-columns: 1fr;
+        gap: var(--ag-space-1);
+    }
+}
