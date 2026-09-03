@@ -111,7 +111,11 @@ class SecMenuSeeder extends Seeder
         // como "botón sin link" (ver docblock de `item()`).
         $this->item($financiero, 'financiero', 'gastos', 'receipt_long', 1, ruta: 'panel.gastos.index', codigoPermiso: 'finanzas.gasto.ver');
         $this->item($financiero, 'financiero', 'combustible', 'local_gas_station', 2);
-        $this->item($financiero, 'financiero', 'rendiciones', 'fact_check', 3);
+        // HU-34 (tarea 48): "como jefe de campo, quiero rendir los gastos que
+        // hice en campo; el encargado los aprueba para reponer el fondo" —
+        // activa el ítem que ya estaba sembrado como "botón sin link" (ver
+        // docblock de `item()`). Icono y orden se mantienen tal cual estaban.
+        $this->item($financiero, 'financiero', 'rendiciones', 'fact_check', 3, ruta: 'panel.rendiciones.index', codigoPermiso: 'finanzas.rendicion.ver');
         // HU-28 (tarea 40): "como piloto o auxiliar, quiero ver mis devengos
         // por período" — activa el ítem que ya estaba sembrado como "botón
         // sin link" (ver docblock de `item()`).

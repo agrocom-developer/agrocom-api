@@ -10,6 +10,7 @@ use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\AnticiposControll
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\DevengosController;
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\GastosController;
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\PlanillasController;
+use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\RendicionesController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\AlertasController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\DronesController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\OrdenesController;
@@ -427,6 +428,37 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::get('/panel/planillas/{planilla}/detalles/{detalle}/recibo', [PlanillasController::class, 'recibo'])
             ->name('panel.planillas.recibo');
+
+        // HU-34 (tarea 48): "como jefe de campo, quiero rendir los gastos que
+        // hice en campo; el encargado los aprueba para reponer el fondo" —
+        // máquina de estados propia (abierta → presentada → aprobada), a
+        // diferencia de `AnticiposController`. Cuatro permisos de grano fino
+        // (`finanzas.rendicion.ver`/`.crear`/`.presentar`/`.aprobar`),
+        // verificados DENTRO del controlador contra el ROL ACTIVO, mismo
+        // criterio que las rutas de arriba. El aprobador nunca puede ser el
+        // mismo jefe de campo que rindió (invariante 4 de CLAUDE.md,
+        // `PoliticaAprobacionRendicion`) — eso lo resuelve el caso de uso,
+        // no el permiso.
+        Route::get('/panel/rendiciones', [RendicionesController::class, 'index'])
+            ->name('panel.rendiciones.index');
+
+        Route::get('/panel/rendiciones/crear', [RendicionesController::class, 'create'])
+            ->name('panel.rendiciones.create');
+
+        Route::post('/panel/rendiciones', [RendicionesController::class, 'store'])
+            ->name('panel.rendiciones.store');
+
+        Route::get('/panel/rendiciones/{rendicion}', [RendicionesController::class, 'show'])
+            ->name('panel.rendiciones.show');
+
+        Route::post('/panel/rendiciones/{rendicion}/gastos/{gasto}', [RendicionesController::class, 'asociarGasto'])
+            ->name('panel.rendiciones.asociar_gasto');
+
+        Route::post('/panel/rendiciones/{rendicion}/presentar', [RendicionesController::class, 'presentar'])
+            ->name('panel.rendiciones.presentar');
+
+        Route::post('/panel/rendiciones/{rendicion}/aprobar', [RendicionesController::class, 'aprobar'])
+            ->name('panel.rendiciones.aprobar');
 
         // HU-31 (tarea 45): "como encargado, quiero emitir la factura de un
         // trabajo desde su acta conformada, para cobrar sobre hectáreas ya
