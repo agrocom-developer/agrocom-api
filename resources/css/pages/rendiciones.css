@@ -1,0 +1,218 @@
+/*
+ * Pages: rendiciones/index, rendiciones/create, rendiciones/show
+ * (app/Dominios/Finanzas/Infraestructura/Http/Views/pages/rendiciones/) —
+ * HU-34, tarea 48: rendiciones de campo presentadas y aprobadas. Mismo molde
+ * de grid que gastos.css/planilla.css. Todo color y medida por token
+ * (CLAUDE.md invariante 11).
+ */
+
+.ag-rendiciones {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+/* Listado (index) */
+
+.ag-rendiciones__filtros {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ag-space-4);
+    align-items: flex-end;
+}
+
+.ag-rendiciones__filtros .ag-input {
+    min-width: 14rem;
+}
+
+.ag-rendiciones__filtros-acciones {
+    display: flex;
+    gap: var(--ag-space-2);
+}
+
+.ag-rendiciones__tabla {
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+    overflow: hidden;
+}
+
+.ag-rendiciones__head,
+.ag-rendiciones__fila {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr 1.2fr 1fr 1fr auto;
+    gap: var(--ag-space-4);
+    align-items: center;
+    padding: var(--ag-space-3) var(--ag-space-4);
+}
+
+.ag-rendiciones__head {
+    background-color: var(--ag-color-bg-table-head);
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ag-rendiciones__fila {
+    border-top: 1px solid var(--ag-color-border-row);
+    color: var(--ag-color-text);
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-rendiciones__fila:hover {
+    background-color: var(--ag-color-bg-row-hover);
+}
+
+.ag-rendiciones__cifra {
+    font-family: var(--ag-font-family-mono);
+}
+
+.ag-rendiciones__acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--ag-space-2);
+}
+
+.ag-rendiciones__paginacion {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ag-space-4);
+}
+
+.ag-rendiciones__paginacion-info {
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-sm);
+}
+
+@media (max-width: 992px) {
+    .ag-rendiciones__head {
+        display: none;
+    }
+
+    .ag-rendiciones__fila {
+        grid-template-columns: 1fr;
+        gap: var(--ag-space-1);
+    }
+
+    .ag-rendiciones__acciones {
+        justify-content: flex-start;
+        margin-top: var(--ag-space-2);
+    }
+}
+
+/* Formulario (create) */
+
+.ag-rendiciones-form-page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+.ag-rendiciones-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+/* Detalle (show) */
+
+.ag-rendicion-detalle {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+.ag-rendicion-detalle__resumen {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ag-space-4) var(--ag-space-6);
+    padding: var(--ag-space-4);
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+}
+
+.ag-rendicion-detalle__campo {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-1);
+    color: var(--ag-color-text);
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-rendicion-detalle__seccion {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-3);
+}
+
+.ag-rendicion-detalle__titulo {
+    margin: 0;
+    font-size: var(--ag-font-size-lg);
+    font-weight: var(--ag-font-weight-medium);
+    color: var(--ag-color-text);
+}
+
+.ag-rendicion-detalle__tabla {
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+    overflow: hidden;
+}
+
+.ag-rendicion-detalle__head,
+.ag-rendicion-detalle__fila {
+    display: grid;
+    grid-template-columns: 1fr 1.3fr 1fr auto;
+    gap: var(--ag-space-4);
+    align-items: center;
+    padding: var(--ag-space-3) var(--ag-space-4);
+}
+
+.ag-rendicion-detalle__head {
+    background-color: var(--ag-color-bg-table-head);
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ag-rendicion-detalle__fila {
+    border-top: 1px solid var(--ag-color-border-row);
+    color: var(--ag-color-text);
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-rendicion-detalle__fila:hover {
+    background-color: var(--ag-color-bg-row-hover);
+}
+
+.ag-rendicion-detalle__cifra {
+    font-family: var(--ag-font-family-mono);
+}
+
+.ag-rendicion-detalle__acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--ag-space-2);
+}
+
+@media (max-width: 992px) {
+    .ag-rendicion-detalle__head {
+        display: none;
+    }
+
+    .ag-rendicion-detalle__fila {
+        grid-template-columns: 1fr;
+        gap: var(--ag-space-1);
+    }
+
+    .ag-rendicion-detalle__acciones {
+        justify-content: flex-start;
+        margin-top: var(--ag-space-2);
+    }
+}
