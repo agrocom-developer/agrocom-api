@@ -27,7 +27,13 @@ final class SesionController
     {
         $credenciales = $request->validated();
 
-        if (! Auth::guard('interno')->attempt($credenciales)) {
+        // `state` como condición extra de `Auth::attempt()`: el
+        // EloquentUserProvider agrega un `where` por cada clave de
+        // `$credentials` distinta de `password`, así que esto rechaza una
+        // cuenta bloqueada (`seguridad.usuario.bloquear`, HU-45) con el
+        // mismo mensaje genérico que una credencial incorrecta — nunca
+        // revela si la cuenta existe pero está bloqueada.
+        if (! Auth::guard('interno')->attempt([...$credenciales, 'state' => true])) {
             throw ValidationException::withMessages([
                 'username' => ['Las credenciales no coinciden con ningún registro.'],
             ]);
