@@ -27,6 +27,9 @@ use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
  * @property int $ciclos_acumulados
  * @property string $estado
  * @property int|null $base_id
+ * @property bool $alerta atributo NO persistido, calculado y asignado por
+ *                        `ListarBaterias` — ausente fuera de ese caso de uso.
+ * @property string|null $alerta_motivo atributo NO persistido, ídem `alerta`.
  */
 class Bateria extends ModeloDominio
 {
