@@ -1075,15 +1075,17 @@ traducidas a tokens, nunca su paleta/fuentes propias).
   `organizacion.css` para el preview del logo (`.ag-organizacion__logo-preview*`,
   retirado). Preview vía slot (no decide qué es: ícono, imagen, `atoms/logo`).
 
-**Bug de LSP encontrado al montar `organizacion`**: `atoms/input` NO fusiona
+**Bug de LSP encontrado al montar `organizacion`**: `atoms/input` NO fusionaba
 `$attributes` en su `<div>` raíz (solo en el `<input>` interno) — pasarle
-`class="ag-form-section__field--full"` al componente no mueve esa clase al
-hijo directo del grid, que es el `<div class="ag-input">`. Se resolvió
-envolviendo ese campo puntual (`contacto_direccion`) en un `<div>` propio en
-la página en vez de tocar `atoms/input` (blast radius: ese átomo lo consume
-todo el panel; arreglarlo es una tarea aparte, no de esta TE). Los demás
+`class="ag-form-section__field--full"` al componente no movía esa clase al
+hijo directo del grid, que es el `<div class="ag-input">`. Se resolvió al
+vuelo envolviendo ese campo puntual (`contacto_direccion`) en un `<div>`
+propio en la página en vez de tocar `atoms/input` (blast radius: ese átomo lo
+consume todo el panel; arreglarlo quedó anotado como tarea aparte). Los demás
 casos de ancho completo (`file-field`, el `radiogroup` de planes) sí
-fusionan `$attributes` en su raíz y no necesitaron el envoltorio.
+fusionaban `$attributes` en su raíz y no necesitaron el envoltorio.
+**Resuelto en la tarea 32 (§15)**: el envoltorio en `organizacion` ya no
+existe.
 
 **`/panel/organizacion` reconstruida** sobre las siete piezas: layout de dos
 columnas (`ag-organizacion__main` flexible + `ag-organizacion__aside`
@@ -1106,3 +1108,35 @@ Deliberadamente fuera de CI (`.github/workflows/` no se tocó): los
 snapshots llevan sufijo de plataforma (`-darwin` hasta el 3/9/2026, `-win32`
 desde que el desarrollo pasó a Windows), y el runner Linux de CI daría falsos
 rojos por diferencia de plataforma, no por regresión real.
+
+## 15. Tarea 32 (3/9/2026) — `atoms/input` fusiona `$attributes` en su raíz
+
+Arregla el bug de LSP que dejó anotado la tarea 31 (§14). `atoms/input` tiene
+estructura dual: `<div class="ag-input">` raíz envolvente + `<input>` control
+real — no un único elemento raíz, que es el caso simple que ya resolvían
+`file-field` y el resto del catálogo. Ningún componente existente tenía este
+problema resuelto para copiarlo.
+
+**La solución parte el `$attributes` bag en dos**, no lo fusiona entero en
+ningún lado:
+
+- El `<div>` raíz fusiona **solo la `class`** de layout
+  (`$attributes->class([...])->only('class')`) — así una utilidad como
+  `ag-form-section__field--full` llega al hijo del grid que la necesita.
+- El `<input>` recibe **el resto del bag salvo `class`**
+  (`$attributes->except('class')`) más su clase fija `ag-input__field` como
+  literal — así `disabled`, `data-*`, `aria-*`, `wire:model`, etc. le siguen
+  llegando al control real (varios formularios del panel, incluido
+  `organizacion`, pasan `disabled` a campos de solo lectura) sin duplicar ni
+  ensuciar la clase fija con la de layout.
+
+`organizacion/index.blade.php` ya no envuelve `contacto_direccion` en un
+`<div>` propio: la clase va directo en `<x-atoms.input class="ag-form-section__field--full" ...>`,
+mismo patrón que ya usaba `file-field`.
+
+**`atoms/switch` queda con el mismo bug latente, sin tocar** (raíz
+`<div class="ag-switch">` sin `$attributes`, el `<input type="checkbox">`
+interno sí lo recibe): ningún consumidor de hoy le pasa una clase de layout
+al componente, a diferencia de `atoms/input` que ya tenía un caso de uso real
+bloqueado. Mismo criterio de blast radius que la tarea 31: se arregla cuando
+aparezca la necesidad real.

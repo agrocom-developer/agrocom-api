@@ -21,6 +21,16 @@
       (`resources/css/components/input.css`), no un componente aparte —
       así el resto del panel sigue usando "boxed" sin que este átomo se
       bifurque en dos archivos.
+
+    LSP (`$attributes`, ver docs/diseno/guia_pantalla_panel.md §3): este átomo
+    tiene raíz envolvente (`<div class="ag-input">`) + control real
+    (`<input>`), no un único elemento raíz. Se resolvió partiendo el bag en
+    dos: el `<div>` raíz solo fusiona la `class` de layout (`->only('class')`)
+    — así una utilidad como `ag-form-section__field--full` llega al hijo del
+    grid que la necesita. El `<input>` recibe el resto del bag salvo `class`
+    (`->except('class')`) — así `disabled`, `data-*`, `aria-*`, `wire:model`,
+    etc. le siguen llegando al control real como antes, y la clase fija
+    `ag-input__field` no se duplica ni se ensucia con la clase de layout.
 --}}
 @props([
     'type' => 'text',
@@ -42,10 +52,9 @@
     $helpId = $help ? "{$inputId}-help" : null;
     $errorId = $error ? "{$inputId}-error" : null;
     $describedBy = trim(($helpId ?? '').' '.($errorId ?? ''));
-    $variantClass = $variant === 'line' ? 'ag-input--line' : '';
 @endphp
 
-<div class="{{ trim('ag-input '.$variantClass) }}">
+<div {{ $attributes->class(['ag-input', 'ag-input--line' => $variant === 'line'])->only('class') }}>
     @if ($label)
         <label for="{{ $inputId }}" class="ag-input__label">
             {{ $label }}
@@ -68,7 +77,8 @@
             @if ($placeholder) placeholder="{{ $placeholder }}" @endif
             @if ($required) required @endif
             @if ($describedBy !== '') aria-describedby="{{ $describedBy }}" @endif
-            {{ $attributes->class(['ag-input__field']) }}
+            class="ag-input__field"
+            {{ $attributes->except('class') }}
         >
 
         @if ($isPassword)
