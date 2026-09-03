@@ -1,9 +1,10 @@
 # Cola de tareas automatizables
 
-**Última actualización: 3/9/2026 (planificación tras el cierre de la 48,
-HU-34/rendiciones — PR #95. Se agregaron la 49 (HU-35/combustible, cierra
-Sprint 10), la 50 (HU-40/vehículos, abre Sprint 11 y crea el módulo
-`Mantenimiento`) y la 51 (HU-39/baterías, depende de la 50)).**
+**Última actualización: 3/9/2026 (planificación tras el cierre de la 51,
+HU-39/baterías — PR #98. Se agregaron la 52 (HU-36/inventario de
+repuestos, crea el módulo `Inventario`), la 53 (HU-37/órdenes de
+mantenimiento, depende de la 52) y la 54 (HU-38/planes preventivos,
+cierra Sprint 11)).**
 Este es el backlog que el ciclo de
 `bin/ciclo` consume solo — el punto 3 de
 [automatizacion_desarrollo.md](automatizacion_desarrollo.md). No reemplaza a
@@ -91,7 +92,10 @@ exista el módulo `Mezclas`).
 | 48 | HU-34 — rendiciones: `fin_rendiciones` + `ALTER fin_gastos` (agrega `rendicion_id`), máquina de estados propia (`abierta → presentada → aprobada`), guarda "el aprobador nunca es quien rinde" a nivel de persona (invariante 4, mismo patrón que `PoliticaValidacionSesion`). Depende de que la 47 esté integrada | `./bin/verify` = 0, con test de la guarda de persona (aprobador ≠ `jefe_campo_id`), de transición inválida rechazada, y de `monto` exacto = suma de gastos asociados | `Finanzas/**` (incluida la migración `ALTER` de `fin_gastos`), migraciones nuevas, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/finanzas.php`, tests | no | 4 | **hecha** (PR #95, mergeado 3/9/2026) |
 | 49 | HU-35 — combustible del generador y vehículos: `fin_combustibles` nueva, carga por base y fecha, litros y monto en `DECIMAL`, sin depender de `ope_recargas` (informativo, sin costeo) ni de un módulo `Vehiculo` que todavía no existe. Cierra Sprint 10 | `./bin/verify` = 0, con test de `destino` fuera de enum rechazado y de filtro por período | `Finanzas/**`, migración nueva, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/finanzas.php`, tests | no | 3 | pendiente |
 | 50 | HU-40 — vehículos de la flota: ABM con asignación a base y estado, primera tarea en crear el módulo nuevo `Mantenimiento` (`man_`, reparto fijado con el agente `arquitectura` y transcrito como extensión del ADR 0011). Abre Sprint 11 | `./bin/verify` = 0, con test de `identificador` duplicado como 422 | módulo nuevo `Mantenimiento`, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/mantenimiento.php`, `docs/decisiones/0011-convencion-prefijos-tabla.md` (solo el punto nuevo del mapeo), tests | no | 3 | pendiente |
-| 51 | HU-39 — baterías con ciclos y estado: ABM sobre `man_baterias` con alerta por ciclos acumulados o por temperatura ya registrada en `ope_recargas` (correlación por texto contra `bateria_saliente_id`, vía contrato de lectura nuevo — sin convertirlo a FK real). Depende de que la 50 haya creado `Mantenimiento` | `./bin/verify` = 0, con test de alerta por ciclos y de alerta por temperatura de una recarga real | `Mantenimiento/**`, `Operaciones/Contratos/**` y su implementación (el contrato de lectura nuevo), migración nueva, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/mantenimiento.php`, tests | no | 4 | pendiente |
+| 51 | HU-39 — baterías con ciclos y estado: ABM sobre `man_baterias` con alerta por ciclos acumulados o por temperatura ya registrada en `ope_recargas` (correlación por texto contra `bateria_saliente_id`, vía contrato de lectura nuevo — sin convertirlo a FK real). Depende de que la 50 haya creado `Mantenimiento` | `./bin/verify` = 0, con test de alerta por ciclos y de alerta por temperatura de una recarga real | `Mantenimiento/**`, `Operaciones/Contratos/**` y su implementación (el contrato de lectura nuevo), migración nueva, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/mantenimiento.php`, tests | no | 4 | **hecha** (PR #98, mergeado 3/9/2026) |
+| 52 | HU-36 — inventario de repuestos: módulo nuevo `Inventario` (`inv_`) con `inv_repuestos`/`inv_stock`/`inv_movimientos` (compra/salida/ajuste/traslado), guarda de stock nunca negativo y alerta por punto de reposición por base | `./bin/verify` = 0, con test de cada tipo de movimiento y de salida/traslado rechazado cuando dejaría el stock negativo | módulo nuevo `Inventario`, migraciones nuevas, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/inventario.php`, tests | no | 4 | pendiente |
+| 53 | HU-37 — órdenes de mantenimiento: `man_ordenes_mantenimiento` con máquina de estados real (`abierta → cerrada`, guarda de repuestos disponibles), primer contrato de escritura cross-módulo del proyecto hacia `Inventario` (consumir stock) y hacia `Finanzas` (generar el gasto, reusando `CrearGasto`), todo en una transacción. Depende de que la 52 esté integrada | `./bin/verify` = 0, con test de cierre exitoso (stock y gasto exactos) y de cierre sin stock suficiente rechazado sin dejar nada a medias | `Mantenimiento/**`, `Inventario/Contratos/**`+`Infraestructura/**`, `Finanzas/Contratos/**`+`Infraestructura/**`, migración nueva, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/mantenimiento.php`, tests | no | 5 | pendiente |
+| 54 | HU-38 — planes de mantenimiento preventivo por horas de vuelo: `man_planes_mantenimiento` por modelo de dron (correlación por texto, sin FK), horas acumuladas derivadas de `ope_sesiones` (suma `fin - inicio` en PHP) vía contrato de lectura nuevo, alerta calculada al leer | `./bin/verify` = 0, con test de alerta activada al cruzar el umbral y de plan sin drones de ese modelo sin alerta | `Mantenimiento/**`, `Operaciones/Contratos/**`+`Infraestructura/**`, migración nueva, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/mantenimiento.php`, tests | no | 4 | pendiente |
 
 ### El bug de la 24 — ya pasó dos veces, sigue sin arreglarse
 
@@ -452,3 +456,28 @@ el "bloque más caro" del sprint, con dependencias reales entre sí, y
 conviene decidirlas con el módulo `Mantenimiento` ya en `develop` para
 probar contra código real en vez de a ciegas — mismo criterio que HU-32
 esperó a que `com_facturas` estuviera integrada.
+
+**52 → 53 → 54 cierran Sprint 11, ya con `Mantenimiento` en `develop` para
+investigar contra código real en vez de a ciegas.** Repuestos (52) crea el
+módulo `Inventario` (reservado desde la extensión del ADR 0011 escrita por
+la tarea 50, sin volver a consultar arquitectura: el reparto ya estaba
+decidido) y va primero porque órdenes de mantenimiento (53) tiene una
+dependencia de dato real sobre él — no hay stock que consumir sin que
+`inv_stock`/`inv_movimientos` existan. Órdenes (53) resultó ser la más
+grande de las tres (5 etapas, contra 3-4 del resto de Sprint 11): es la
+primera vez que un módulo escribe en `fin_gastos` desde afuera de
+`Finanzas` (contrato de escritura nuevo, no solo de lectura como todos los
+anteriores) y la primera vez que una sola transacción de negocio cruza
+tres módulos (`Mantenimiento` → `Inventario` → `Finanzas`). Se investigó
+`CrearGasto` y `FinanzasRubrosSeeder` antes de escribir el prompt para
+confirmar que el rubro "Mantenimiento de equipos"/"Repuestos" ya está
+sembrado desde la tarea 47 — la tarea 53 lo reusa, no lo reinventa. Planes
+preventivos (54) cierra el sprint sin depender de la 53 (no necesita que
+exista una orden para calcular la alerta): la pregunta que
+`cola_tareas.md` dejaba abierta ("¿de dónde salen las horas de vuelo
+acumuladas?") ya tiene respuesta con el código real de `ope_sesiones` a
+la vista — `dron_id`/`inicio`/`fin` existen desde las tareas 09 y 20, así
+que las horas de vuelo se derivan sumando sesiones cerradas por dron, sin
+agregar una columna nueva que se desincronizaría del dato real. Queda
+después de la 53 solo por seguir el orden literal de `plan_sprints.md`,
+no por una dependencia real.
