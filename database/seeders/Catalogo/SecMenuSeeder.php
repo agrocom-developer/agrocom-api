@@ -110,7 +110,11 @@ class SecMenuSeeder extends Seeder
         // categoría y comprobante" — activa el ítem que ya estaba sembrado
         // como "botón sin link" (ver docblock de `item()`).
         $this->item($financiero, 'financiero', 'gastos', 'receipt_long', 1, ruta: 'panel.gastos.index', codigoPermiso: 'finanzas.gasto.ver');
-        $this->item($financiero, 'financiero', 'combustible', 'local_gas_station', 2);
+        // HU-35 (tarea 49): "como encargado, quiero registrar el
+        // combustible del generador y de los vehículos, para imputarlo a la
+        // campaña" — activa el ítem que ya estaba sembrado como "botón sin
+        // link" (ver docblock de `item()`).
+        $this->item($financiero, 'financiero', 'combustible', 'local_gas_station', 2, ruta: 'panel.combustible.index', codigoPermiso: 'finanzas.combustible.ver');
         // HU-34 (tarea 48): "como jefe de campo, quiero rendir los gastos que
         // hice en campo; el encargado los aprueba para reponer el fondo" —
         // activa el ítem que ya estaba sembrado como "botón sin link" (ver

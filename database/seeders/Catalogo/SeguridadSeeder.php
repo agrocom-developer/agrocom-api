@@ -192,6 +192,14 @@ class SeguridadSeeder extends Seeder
         'finanzas.rendicion.crear' => 'Crear una rendición de campo y asociarle gastos',
         'finanzas.rendicion.presentar' => 'Presentar una rendición de campo para su aprobación',
         'finanzas.rendicion.aprobar' => 'Aprobar una rendición de campo presentada, para reponer el fondo',
+        // HU-35 (tarea 49): "como encargado, quiero registrar el
+        // combustible del generador y de los vehículos, para imputarlo a la
+        // campaña" — cierra Sprint 10. Grano fino sin `.editar`: una carga,
+        // una vez cargada, es inmutable salvo baja (ver
+        // `Aplicacion/CrearCombustible`), mismo criterio que gasto/anticipo.
+        'finanzas.combustible.ver' => 'Ver el listado de cargas de combustible',
+        'finanzas.combustible.crear' => 'Cargar combustible del generador o de un vehículo',
+        'finanzas.combustible.eliminar' => 'Dar de baja (lógica) una carga de combustible registrada por error',
     ];
 
     /**
@@ -323,6 +331,13 @@ class SeguridadSeeder extends Seeder
         'finanzas.rendicion.crear',
         'finanzas.rendicion.presentar',
         'finanzas.rendicion.aprobar',
+        // HU-35 (tarea 49): "como encargado, quiero registrar el
+        // combustible del generador y de los vehículos" — la HU lo dice
+        // literal, mismo criterio que clientes, contratos, campos, drones,
+        // bases, personas, anticipos, facturas y gastos arriba.
+        'finanzas.combustible.ver',
+        'finanzas.combustible.crear',
+        'finanzas.combustible.eliminar',
     ];
 
     /**
