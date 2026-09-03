@@ -1,7 +1,8 @@
 # Cola de tareas automatizables
 
-**Última actualización: 2/9/2026 (planificación tras el cierre de la 38,
-HU-25 — Sprint 7 completo salvo HU-45, que esta vuelta agrega como tarea 39).**
+**Última actualización: 2/9/2026 (planificación tras el agotamiento de la 40,
+HU-28 — el trabajo quedó sin commitear, rescatado a `git stash` y retomado
+como tarea 42; la 41 no se toca, solo espera a que la 42 se integre).**
 Este es el backlog que el ciclo de
 `bin/ciclo` consume solo — el punto 3 de
 [automatizacion_desarrollo.md](automatizacion_desarrollo.md). No reemplaza a
@@ -77,8 +78,9 @@ exista el módulo `Mezclas`).
 | 37 | HU-26 — personas y bases: ABM sobre `per_personas` y `per_bases`, dos pantallas independientes; módulo `Personal` sin `Aplicacion/`/`Http/` todavía, se arma desde cero | `./bin/verify` = 0, con test de que editar `tarifa_ha` de una persona no altera un `DevengoPersonal` ya generado (el devengo ya congela su propia copia, confirmado en `Finanzas/Aplicacion/GenerarDevengosSesion.php`) | `Personal/**`, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/personal.php` (nuevo), tests | no | 4 | **hecha** (PR #83/#84, mergeados 2/9/2026) |
 | 38 | HU-25 — órdenes de aplicación: ABM sobre `ope_ordenes_aplicacion` con su primera máquina de estados real (`emitida → vigente`, `TransicionesOrden`/`MaquinaEstadosOrden` nuevos, mismo patrón que `MaquinaEstadosContrato`); una orden `vigente` ya aparece sola en `GET /api/sync/catalogo`, sin tocar el motor de sync | `./bin/verify` = 0, con test de la transición válida/inválida y de que dos órdenes `vigente` para el mismo lote chocan contra el índice parcial como error de validación | `Operaciones/Dominio/MaquinaEstados/`, `Operaciones/Aplicacion/MaquinaEstados/`, `Operaciones/Aplicacion/` (casos de uso de órdenes), `Operaciones/Infraestructura/Http/`, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/operaciones.php`, tests | no | 5 | **hecha** (PR #85, mergeado 2/9/2026; el ciclo la marcó `AGOTADA` en `runs/38.estado` porque las 3 sesiones seguidas de implementación se quedaron sin turnos esperando la notificación de un `bin/verify` en segundo plano — pero el merge ya se había completado segundos antes de que se declarara el agotamiento, confirmado con `gh pr view 85` y el diff vacío entre la rama y `develop`. Cierra Sprint 7 salvo HU-45, que esta vuelta agrega como tarea 39) |
 | 39 | HU-45 — usuarios: alta, edición y baja de `sec_user`/`sec_user_role` desde el panel, cierra la parte de HU-01 que quedó sin hacer. Reusa `AsignarRolesUsuario` (ya implementado en HU-01, con la guarda anti-rol-dueño); falta solo la capa HTTP, la baja y el toggle de bloqueo | `./bin/verify` = 0, con test de la guarda de rol dueño vía HTTP, de `username` duplicado, y de que cambiar roles no invalida la sesión activa | `Seguridad/Aplicacion/EliminarUsuario.php` (nuevo), `Seguridad/Infraestructura/Http/**`, `routes/web.php`, tests | no | 3 | pendiente |
-| 40 | HU-28 — devengos por período: pantalla de solo lectura sobre `fin_devengos_personal`, primera del módulo `Finanzas`; primer acceso al panel para piloto/auxiliar (hoy sin ningún permiso de panel) | `./bin/verify` = 0, con test de acceso cruzado → 404 y de filtro por período | `Finanzas/**`, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/finanzas.php` (nuevo), tests | no | 3 | pendiente |
-| 41 | HU-29 — anticipos: tabla nueva `fin_anticipos`, tope de 3.000 Bs/mes y 70 % del devengado calculado con `BigDecimal`, rechazo con el disponible exacto | `./bin/verify` = 0, con test de cada tope por separado y de acumulación de dos anticipos en el mismo mes | `Finanzas/**`, migración nueva, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/finanzas.php`, tests | no | 4 | pendiente |
+| 40 | HU-28 — devengos por período: pantalla de solo lectura sobre `fin_devengos_personal`, primera del módulo `Finanzas`; primer acceso al panel para piloto/auxiliar (hoy sin ningún permiso de panel) | `./bin/verify` = 0, con test de acceso cruzado → 404 y de filtro por período | `Finanzas/**`, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/finanzas.php` (nuevo), tests | no | 3 | **agotada** — 3 sesiones seguidas sin declarar estado (`runs/40.estado` = `AGOTADA`), nunca commitearon: `runs/40.log` muestra que esperaron la notificación de un `bin/verify` en segundo plano con `Monitor` (denegado) en vez de commitear primero, mismo patrón de la tarea 38. El trabajo (controller, caso de uso, 8 tests, spec visual, fixture) quedó completo en apariencia pero sin commitear, mezclado en el working tree de `develop` (bloqueaba el arranque de la 41); rescatado a `git stash` sin verificar de punta a punta al planificar la 42. Recuperarlo: `git stash list` (`stash@{0}`, no confundir con el `stash@{1}` de la tarea 32) — la tarea 42 lo retoma |
+| 41 | HU-29 — anticipos: tabla nueva `fin_anticipos`, tope de 3.000 Bs/mes y 70 % del devengado calculado con `BigDecimal`, rechazo con el disponible exacto | `./bin/verify` = 0, con test de cada tope por separado y de acumulación de dos anticipos en el mismo mes | `Finanzas/**`, migración nueva, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/finanzas.php`, tests | no | 4 | pendiente — espera a que la 42 (retomar devengos) esté integrada; su prompt no cambió |
+| 42 | Retomar y cerrar HU-28 (continuación de la 40): recuperar el `git stash` con el trabajo casi completo, completar lo que falte contra el mismo criterio de aceptación, commitear y verificar de punta a punta | `./bin/verify` = 0, con test de acceso cruzado → 404 y de filtro por período (igual que la 40) | `Finanzas/**`, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/finanzas.php`, `resources/css/pages/devengos.css`, tests | no | 2 | pendiente |
 
 ### El bug de la 24 — ya pasó dos veces, sigue sin arreglarse
 
@@ -337,3 +339,15 @@ suma dos veces en ramas paralelas con alto riesgo de que difieran. HU-30
 (planilla), la tercera de Sprint 8, no se escribe todavía: consume
 `fin_anticipos`, y su diseño concreto conviene decidirlo con esa tabla ya
 integrada en `develop`, no adivinada.
+
+**42 se intercala entre 40 y 41, no se agrega al final.** La tarea 40 se
+agotó sin commitear (ver fila 40): el trabajo quedó rescatado en `git
+stash`, no integrado. La dependencia real de HU-29 sobre "el devengado del
+período" (ver el párrafo de arriba) sigue sin resolverse mientras HU-28 no
+esté en `develop` — dejar `41` como la próxima tarea de la cola tal cual
+estaba habría hecho que el ciclo intentara anticipos sin que devengos
+exista. `42` retoma exactamente el trabajo rescatado (no lo reescribe desde
+cero) y va antes de `41` en `runs/cola.txt`, aunque su número sea más alto:
+el archivo ya no era estrictamente numérico (compará con `31` antes que
+`30`), así que insertarla ahí no rompe nada. `41` no se tocó — su prompt
+sigue siendo válido una vez que `42` cierre HU-28.
