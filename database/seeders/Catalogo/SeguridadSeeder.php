@@ -160,6 +160,13 @@ class SeguridadSeeder extends Seeder
         'finanzas.planilla.ver' => 'Ver el listado y detalle de planillas del período',
         'finanzas.planilla.generar' => 'Generar la planilla de un período desde sus devengos y anticipos',
         'finanzas.planilla.aprobar' => 'Aprobar una planilla en borrador (exclusivo del dueño)',
+        // HU-31 (tarea 45): "como encargado, quiero emitir la factura de un
+        // trabajo desde su acta conformada, para cobrar sobre hectáreas ya
+        // firmadas" — abre Sprint 9. Grano fino sin `.editar` ni
+        // `.eliminar`: una factura, una vez emitida, es un snapshot
+        // inmutable (ver `Comercial/Aplicacion/EmitirFactura`).
+        'comercial.factura.ver' => 'Ver el listado de facturas emitidas',
+        'comercial.factura.crear' => 'Emitir la factura de un trabajo desde su acta conformada',
     ];
 
     /**
@@ -269,6 +276,12 @@ class SeguridadSeeder extends Seeder
         // el comentario en PERMISOS de arriba).
         'finanzas.planilla.ver',
         'finanzas.planilla.generar',
+        // HU-31 (tarea 45): "como encargado, quiero emitir la factura de un
+        // trabajo desde su acta conformada" — la HU lo dice literal, mismo
+        // criterio que clientes, contratos, campos, drones, bases, personas
+        // y anticipos arriba.
+        'comercial.factura.ver',
+        'comercial.factura.crear',
     ];
 
     /**

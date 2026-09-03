@@ -3,6 +3,7 @@
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\CamposController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ClientesController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ContratosController;
+use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\FacturasController;
 use App\Dominios\Distribucion\Infraestructura\Http\Controllers\Web\VersionesApkController;
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\AnticiposController;
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\DevengosController;
@@ -403,5 +404,21 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::get('/panel/planillas/{planilla}/detalles/{detalle}/recibo', [PlanillasController::class, 'recibo'])
             ->name('panel.planillas.recibo');
+
+        // HU-31 (tarea 45): "como encargado, quiero emitir la factura de un
+        // trabajo desde su acta conformada, para cobrar sobre hectáreas ya
+        // firmadas" — abre Sprint 9. Dos permisos de grano fino
+        // (`comercial.factura.ver`/`.crear`), verificados DENTRO del
+        // controlador contra el ROL ACTIVO, mismo criterio que las rutas de
+        // arriba. Sin edición ni baja: una factura emitida es un snapshot
+        // inmutable.
+        Route::get('/panel/facturas', [FacturasController::class, 'index'])
+            ->name('panel.facturas.index');
+
+        Route::get('/panel/facturas/crear', [FacturasController::class, 'create'])
+            ->name('panel.facturas.create');
+
+        Route::post('/panel/facturas', [FacturasController::class, 'store'])
+            ->name('panel.facturas.store');
     });
 });

@@ -216,4 +216,44 @@ return [
         'error_geometria_invalida' => 'La geometría tiene que ser un JSON con "type": "Polygon" y "coordinates" como arreglo.',
     ],
 
+    // HU-31 (tarea 45): "como encargado, quiero emitir la factura de un
+    // trabajo desde su acta conformada, para cobrar sobre hectáreas ya
+    // firmadas" — abre Sprint 9. Sin edición ni baja: una factura emitida es
+    // un snapshot inmutable (ver `Aplicacion/EmitirFactura`).
+    'facturas' => [
+        'creada' => 'La factura se emitió correctamente.',
+
+        // Listado
+        'titulo' => 'Facturas',
+        'subtitulo' => 'Facturas emitidas desde actas de conformidad ya firmadas.',
+        'nueva' => 'Emitir factura',
+        'vacio' => 'Todavía no se emitió ninguna factura.',
+        'col_cliente' => 'Cliente',
+        'col_acta' => 'Acta',
+        'col_hectareas' => 'Hectáreas facturadas',
+        'col_precio_ha' => 'Precio/ha',
+        'col_monto' => 'Monto',
+        'col_fecha_emision' => 'Fecha de emisión',
+        'acta_valor' => 'Acta #:id',
+        'monto_valor' => 'Bs :monto',
+        'precio_ha_valor' => 'Bs :monto',
+        'paginacion_aria' => 'Paginación de facturas',
+        'paginacion_anterior' => 'Anterior',
+        'paginacion_siguiente' => 'Siguiente',
+        'paginacion_info' => 'Página :actual de :total',
+
+        // Formulario (create)
+        'titulo_crear' => 'Emitir factura',
+        'subtitulo_form' => 'El monto se calcula automáticamente: hectáreas conformadas del acta × precio por hectárea del contrato.',
+        'seccion_datos' => 'Datos de la factura',
+        'campos_contador' => ':cantidad campo',
+        'campo_acta' => 'Acta conformada',
+        'campo_acta_placeholder' => 'Seleccioná un acta firmada',
+        'campo_acta_opcion' => ':cliente — Acta #:id (:hectareas ha)',
+        'sin_actas_disponibles' => 'No hay actas firmadas pendientes de facturar.',
+        'estado_form' => 'El monto se calcula al confirmar.',
+        'error_acta_requerida' => 'Seleccioná un acta conformada.',
+        'error_acta_invalida' => 'El acta seleccionada no está disponible para facturar.',
+    ],
+
 ];
