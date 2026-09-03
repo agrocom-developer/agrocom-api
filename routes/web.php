@@ -4,6 +4,7 @@ use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\CamposController
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ClientesController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ContratosController;
 use App\Dominios\Distribucion\Infraestructura\Http\Controllers\Web\VersionesApkController;
+use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\AnticiposController;
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\DevengosController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\AlertasController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\DronesController;
@@ -361,5 +362,23 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::get('/panel/devengos/{persona}', [DevengosController::class, 'show'])
             ->name('panel.devengos.show');
+
+        // HU-29 (tarea 41): "como encargado, quiero registrar anticipos
+        // validando el tope, para no adelantar más de lo devengado" — ABM
+        // acotado (sin edición ni máquina de estados), gateado por tres
+        // permisos de grano fino (`finanzas.anticipo.ver`/`.crear`/
+        // `.eliminar`), verificados DENTRO del controlador contra el ROL
+        // ACTIVO, mismo criterio que las rutas de arriba.
+        Route::get('/panel/anticipos', [AnticiposController::class, 'index'])
+            ->name('panel.anticipos.index');
+
+        Route::get('/panel/anticipos/crear', [AnticiposController::class, 'create'])
+            ->name('panel.anticipos.create');
+
+        Route::post('/panel/anticipos', [AnticiposController::class, 'store'])
+            ->name('panel.anticipos.store');
+
+        Route::delete('/panel/anticipos/{anticipo}', [AnticiposController::class, 'destroy'])
+            ->name('panel.anticipos.destroy');
     });
 });

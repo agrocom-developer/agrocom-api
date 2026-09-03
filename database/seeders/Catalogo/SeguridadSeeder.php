@@ -144,6 +144,13 @@ class SeguridadSeeder extends Seeder
         // lectura, con el scoping por PERSONA (no por rol) resuelto dentro de
         // DevengosController.
         'finanzas.devengo.ver' => 'Ver los propios devengos por período',
+        // HU-29 (tarea 41): "como encargado, quiero registrar anticipos
+        // validando el tope, para no adelantar más de lo devengado". Grano
+        // fino sin `.editar`: un anticipo, una vez creado, es inmutable
+        // salvo baja (ver `Aplicacion/RegistrarAnticipo`).
+        'finanzas.anticipo.ver' => 'Ver el listado de anticipos',
+        'finanzas.anticipo.crear' => 'Registrar un anticipo, validado contra el tope del mes',
+        'finanzas.anticipo.eliminar' => 'Dar de baja (lógica) un anticipo registrado por error',
     ];
 
     /**
@@ -241,6 +248,12 @@ class SeguridadSeeder extends Seeder
         'personal.persona.crear',
         'personal.persona.editar',
         'personal.persona.eliminar',
+        // HU-29 (tarea 41): "como encargado, quiero registrar anticipos
+        // validando el tope" — la HU lo dice literal, mismo criterio que
+        // clientes, contratos, campos, drones, bases y personas arriba.
+        'finanzas.anticipo.ver',
+        'finanzas.anticipo.crear',
+        'finanzas.anticipo.eliminar',
     ];
 
     /**
