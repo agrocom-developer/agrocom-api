@@ -80,6 +80,44 @@
  * explícito. Si solo se vigilara `->estado =`, quien viera fallar el gate no
  * tendría que cambiar de carpeta para pasar: le alcanzaría con cambiar de
  * sintaxis, sin que el diff lo delate. Las tres se vigilan juntas.
+ *
+ * ── Segunda excepción: estado DESCRIPTIVO sin máquina, no gobernado (HU-40,
+ *    tarea 50) ───────────────────────────────────────────────────────────
+ *
+ * Hasta la tarea 50, toda columna literalmente llamada `estado`/`*_estado` en
+ * `app/` correspondía a una máquina gobernada (Contrato, OrdenAplicacion,
+ * Sesion, Trabajo, Acta, Alerta, VersionApk) — la invariante 7 aplicaba sin
+ * matices. `man_vehiculos.estado` (`activo`/`taller`/`de_baja`) es el primer
+ * caso real de lo contrario: un campo descriptivo libre, sin tabla de
+ * transiciones ni guarda de dominio — cualquier valor puede pasar a cualquier
+ * otro. La invariante 7 ("toda TRANSICIÓN de estado pasa por el servicio de
+ * la máquina") no aplica por definición cuando no hay transición gobernada
+ * que vigilar, no por excepción a la regla.
+ *
+ * La opción descartada fue meter un wrapper vacío en
+ * `Aplicacion/MaquinaEstados/` solo para que el patrón de carpeta lo
+ * blanqueara: eso contradice la instrucción explícita del prompt de la tarea
+ * ("no construyas una máquina de estados para esto") y diluye lo que esa
+ * carpeta significa para quien la lea después (hoy es sinónimo de "máquina
+ * real, con guardas, de las que CLAUDE.md marca como no delegable sin
+ * revisión línea por línea"). En su lugar, la excepción es una lista de
+ * RUTAS EXACTAS de archivo (`RUTAS_ESTADO_DESCRIPTIVO_SIN_MAQUINA`, abajo),
+ * angosta a propósito: cada entrada nueva es, igual que mover código a
+ * `MaquinaEstados/`, una línea visible en el diff — no una vía silenciosa. No
+ * es un patrón de nombre ni una heurística por reflection (este test es un
+ * escáner de texto, no un analizador semántico): quien agregue una entrada
+ * nueva certifica a mano, leyendo el caso de uso, que de verdad no hay
+ * transición gobernada detrás.
+ *
+ * Zona gris para HU-37/38 (planes/órdenes de mantenimiento) y HU-39
+ * (baterías): antes de sumar una ruta nueva a esa lista hay que clasificar el
+ * campo contra el mismo criterio — un `estado` de orden de mantenimiento
+ * (abierta → cerrada, con costo asociado) probablemente SÍ sea gobernado, a
+ * diferencia de `man_vehiculos.estado`. Esta clasificación quedó anotada para
+ * revisión posterior en `runs/revision-pendiente.txt` (mismo patrón que
+ * CLAUDE.md fija para "el servicio de estados": revisión posterior a la
+ * integración, no un PR retenido esperándola — ver la sección "Qué no
+ * delegar sin revisión línea por línea" de CLAUDE.md).
  */
 
 $raizProyecto = dirname(__DIR__, 2);
@@ -125,16 +163,40 @@ const PATRON_ESCRITURA_MASIVA = '/(?:->|::)\s*(?:forceCreate|createOrFirst|creat
 /** Clave de estado dentro del arreglo de una escritura masiva. */
 const PATRON_CLAVE_ESTADO = '/([\'"])'.NOMBRE_ESTADO_DOMINIO.'\1\s*=>/';
 
-/** La única excepción: el servicio de máquina de estados del módulo dueño. */
+/** La primera excepción: el servicio de máquina de estados del módulo dueño. */
 const PATRON_SERVICIO_ESTADOS = '~^app/Dominios/[^/]+/Aplicacion/MaquinaEstados/~';
 
 /**
- * ¿Esta ruta es el servicio de máquina de estados de algún módulo? Es el único
- * lugar donde la invariante 7 admite que se escriba un estado.
+ * ¿Esta ruta es el servicio de máquina de estados de algún módulo? Es el
+ * primer lugar donde la invariante 7 admite que se escriba un estado.
  */
 function estadosEsServicioDeEstados(string $rutaRelativa): bool
 {
     return preg_match(PATRON_SERVICIO_ESTADOS, $rutaRelativa) === 1;
+}
+
+/**
+ * La segunda excepción (HU-40, tarea 50): rutas exactas donde `estado` es un
+ * campo descriptivo libre, sin tabla de transiciones ni guarda de dominio —
+ * ver el bloque "Segunda excepción" en el docblock de arriba. Lista angosta
+ * a propósito, no un patrón de nombre: cada entrada certifica a mano que ese
+ * caso de uso concreto no gobierna ninguna transición.
+ *
+ * @var list<string>
+ */
+const RUTAS_ESTADO_DESCRIPTIVO_SIN_MAQUINA = [
+    'app/Dominios/Mantenimiento/Aplicacion/CrearVehiculo.php',
+    'app/Dominios/Mantenimiento/Aplicacion/ActualizarVehiculo.php',
+];
+
+/**
+ * ¿Esta ruta es una de las excepciones angostas de estado descriptivo sin
+ * máquina? Es el segundo (y último) lugar donde la invariante 7 admite que
+ * se escriba un estado.
+ */
+function estadosEsExcepcionDescriptiva(string $rutaRelativa): bool
+{
+    return in_array($rutaRelativa, RUTAS_ESTADO_DESCRIPTIVO_SIN_MAQUINA, true);
 }
 
 /**
@@ -412,7 +474,7 @@ function estadosArchivosVigilados(string $raizProyecto): array
 
         $relativa = substr($ruta, strlen($raizProyecto) + 1);
 
-        if (estadosEsServicioDeEstados($relativa)) {
+        if (estadosEsServicioDeEstados($relativa) || estadosEsExcepcionDescriptiva($relativa)) {
             continue;
         }
 
@@ -448,6 +510,16 @@ test('ninguna asignación de estado fuera del servicio de máquina de estados (C
     }
 
     expect($sueltas)->toBe([], "Una transición se le pide al servicio de máquina de estados del módulo (app/Dominios/<Modulo>/Aplicacion/MaquinaEstados/), que consulta la tabla de transiciones permitidas y sus guardas antes de escribir. Si ese servicio todavía no existe para la entidad, se crea ahí — no se asigna el estado a mano.\n".implode("\n", $sueltas));
+});
+
+test('la excepción de estado descriptivo es angosta: rige solo para las rutas exactas listadas', function () {
+    expect(estadosEsExcepcionDescriptiva('app/Dominios/Mantenimiento/Aplicacion/CrearVehiculo.php'))->toBeTrue()
+        ->and(estadosEsExcepcionDescriptiva('app/Dominios/Mantenimiento/Aplicacion/ActualizarVehiculo.php'))->toBeTrue()
+        // Ni el resto del módulo Mantenimiento, ni un archivo parecido, quedan
+        // habilitados por estar "cerca": la lista es de rutas exactas.
+        ->and(estadosEsExcepcionDescriptiva('app/Dominios/Mantenimiento/Aplicacion/EliminarVehiculo.php'))->toBeFalse()
+        ->and(estadosEsExcepcionDescriptiva('app/Dominios/Mantenimiento/Infraestructura/Http/Controllers/Web/VehiculosController.php'))->toBeFalse()
+        ->and(estadosEsExcepcionDescriptiva('app/Dominios/Operaciones/Aplicacion/CrearVehiculo.php'))->toBeFalse();
 });
 
 test('la única excepción es el servicio de máquina de estados del módulo', function () {
