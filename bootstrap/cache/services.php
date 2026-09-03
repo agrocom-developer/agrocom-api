@@ -43,6 +43,7 @@
     39 => 'App\\Dominios\\Personal\\Infraestructura\\PersonalServiceProvider',
     40 => 'App\\Dominios\\Distribucion\\Infraestructura\\DistribucionServiceProvider',
     41 => 'App\\Dominios\\Finanzas\\Infraestructura\\FinanzasServiceProvider',
+    42 => 'App\\Dominios\\Mantenimiento\\Infraestructura\\MantenimientoServiceProvider',
   ),
   'eager' => 
   array (
@@ -73,6 +74,7 @@
     24 => 'App\\Dominios\\Personal\\Infraestructura\\PersonalServiceProvider',
     25 => 'App\\Dominios\\Distribucion\\Infraestructura\\DistribucionServiceProvider',
     26 => 'App\\Dominios\\Finanzas\\Infraestructura\\FinanzasServiceProvider',
+    27 => 'App\\Dominios\\Mantenimiento\\Infraestructura\\MantenimientoServiceProvider',
   ),
   'deferred' => 
   array (

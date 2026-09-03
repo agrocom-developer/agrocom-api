@@ -12,6 +12,7 @@ use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\DevengosControlle
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\GastosController;
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\PlanillasController;
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\RendicionesController;
+use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\VehiculosController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\AlertasController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\DronesController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\OrdenesController;
@@ -355,6 +356,31 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::delete('/panel/personas/{persona}', [PersonasController::class, 'destroy'])
             ->name('panel.personas.destroy');
+
+        // HU-40 (tarea 50): administración de la flota de vehículos, con su
+        // asignación a base y estado. Primer ABM del módulo `Mantenimiento`
+        // (ADR 0011, extensión 3/9/2026). Sin sub-entidad, mismo molde que
+        // `drones` arriba. Cuatro permisos de grano fino
+        // (`mantenimiento.vehiculo.ver`/`.crear`/`.editar`/`.eliminar`)
+        // verificados DENTRO del controlador contra el ROL ACTIVO, mismo
+        // criterio que `clientes`/`campos`/`drones`/`bases`/`personas` arriba.
+        Route::get('/panel/vehiculos', [VehiculosController::class, 'index'])
+            ->name('panel.vehiculos.index');
+
+        Route::get('/panel/vehiculos/crear', [VehiculosController::class, 'create'])
+            ->name('panel.vehiculos.create');
+
+        Route::post('/panel/vehiculos', [VehiculosController::class, 'store'])
+            ->name('panel.vehiculos.store');
+
+        Route::get('/panel/vehiculos/{vehiculo}/editar', [VehiculosController::class, 'edit'])
+            ->name('panel.vehiculos.edit');
+
+        Route::put('/panel/vehiculos/{vehiculo}', [VehiculosController::class, 'update'])
+            ->name('panel.vehiculos.update');
+
+        Route::delete('/panel/vehiculos/{vehiculo}', [VehiculosController::class, 'destroy'])
+            ->name('panel.vehiculos.destroy');
 
         // HU-28 (tarea 40): "como piloto o auxiliar, quiero ver mis devengos
         // por período" — primer permiso de panel para esos dos roles
