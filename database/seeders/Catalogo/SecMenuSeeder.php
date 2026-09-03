@@ -111,8 +111,16 @@ class SecMenuSeeder extends Seeder
         // Mantenimiento e inventario (§4.5)
         $this->item($mantenimiento, 'mantenimiento', 'ordenes', 'build', 1);
         $this->item($mantenimiento, 'mantenimiento', 'planes', 'checklist', 2);
-        $this->item($mantenimiento, 'mantenimiento', 'repuestos', 'construction', 3);
-        $this->item($mantenimiento, 'mantenimiento', 'stock', 'warehouse', 4);
+        // HU-36 (tarea 52): catálogo de repuestos con stock por base y
+        // alerta de mínimo — activa los dos ítems que ya estaban sembrados
+        // como "botón sin link" (ver docblock de `item()`). El backend vive
+        // en el módulo nuevo `Inventario` (`inv_*`) aunque el ítem quede
+        // agrupado bajo "Mantenimiento" en el sidebar: esa agrupación es
+        // solo layout (ADR 0011, extensión 3/9/2026, punto 15), no una
+        // frontera de módulo — mismo criterio que `vehiculos`/`baterias`
+        // bajo "Recursos" arriba.
+        $this->item($mantenimiento, 'mantenimiento', 'repuestos', 'construction', 3, ruta: 'panel.repuestos.index', codigoPermiso: 'inventario.repuesto.ver');
+        $this->item($mantenimiento, 'mantenimiento', 'stock', 'warehouse', 4, ruta: 'panel.stock.index', codigoPermiso: 'inventario.movimiento.ver');
 
         // Financiero (§4.4 + cap. 11)
         // HU-33 (tarea 47): "como encargado, quiero cargar gastos con su
