@@ -117,7 +117,10 @@ class SecMenuSeeder extends Seeder
         // período desde los devengos y aprobarla" — activa el ítem que ya
         // estaba sembrado como "botón sin link" (ver docblock de `item()`).
         $this->item($financiero, 'financiero', 'planilla', 'event_note', 5, ruta: 'panel.planillas.index', codigoPermiso: 'finanzas.planilla.ver');
-        $this->item($financiero, 'financiero', 'facturas', 'receipt', 6);
+        // HU-31 (tarea 45): "como encargado, quiero emitir la factura de un
+        // trabajo desde su acta conformada" — activa el ítem que ya estaba
+        // sembrado como "botón sin link" (ver docblock de `item()`).
+        $this->item($financiero, 'financiero', 'facturas', 'receipt', 6, ruta: 'panel.facturas.index', codigoPermiso: 'comercial.factura.ver');
         // HU-29 (tarea 41): "como encargado, quiero registrar anticipos
         // validando el tope" — a diferencia de los demás ítems de este
         // grupo, no había ítem "anticipos" sembrado como "botón sin link":

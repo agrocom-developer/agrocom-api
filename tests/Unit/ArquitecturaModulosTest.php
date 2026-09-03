@@ -53,8 +53,17 @@ foreach ($modulos as $modulo) {
     }
 }
 
-// Dirección de dependencia entre módulos concretos: Comercial es aguas arriba
-// de Operaciones y no puede saber nada de él — ni modelos, ni contratos, nada.
-arch('Comercial no usa nada de Operaciones (ADR 0003, regla 2)')
+// Dirección de dependencia entre módulos concretos (revisión 3/9/2026, ADR
+// 0003): Comercial no conoce la lógica interna de Operaciones (Aplicacion,
+// Dominio, Infraestructura — sus modelos Eloquent ya están cubiertos arriba
+// por la regla genérica), pero sí puede leer su Contratos/, el mismo cruce
+// síncrono sancionado por ADR 0003 regla 2 que ya usan Sincronizacion y
+// Finanzas para leer Operaciones (HU-31, tarea 45: `Comercial\Aplicacion\EmitirFactura`
+// consume `Operaciones\Contratos\LecturaActaConformada`).
+arch('Comercial no usa la lógica interna de Operaciones, solo su Contratos/ (ADR 0003, regla 2)')
     ->expect('App\Dominios\Comercial')
-    ->not->toUse('App\Dominios\Operaciones');
+    ->not->toUse([
+        'App\Dominios\Operaciones\Aplicacion',
+        'App\Dominios\Operaciones\Dominio',
+        'App\Dominios\Operaciones\Infraestructura',
+    ]);
