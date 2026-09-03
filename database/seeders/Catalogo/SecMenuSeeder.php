@@ -90,8 +90,12 @@ class SecMenuSeeder extends Seeder
         $this->item($recursos, 'recursos', 'drones', 'airplanemode_active', 1, ruta: 'panel.drones.index', codigoPermiso: 'operaciones.dron.ver');
         $this->item($recursos, 'recursos', 'baterias', 'battery_charging_full', 2);
         $this->item($recursos, 'recursos', 'vehiculos', 'local_shipping', 3);
-        $this->item($recursos, 'recursos', 'bases', 'home_work', 4);
-        $this->item($recursos, 'recursos', 'personas', 'badge', 5);
+
+        // HU-26 (tarea 37): administración de personas y bases — activa los
+        // dos ítems que ya estaban sembrados como "botón sin link" (ver
+        // docblock de `item()`).
+        $this->item($recursos, 'recursos', 'bases', 'home_work', 4, ruta: 'panel.bases.index', codigoPermiso: 'personal.base.ver');
+        $this->item($recursos, 'recursos', 'personas', 'badge', 5, ruta: 'panel.personas.index', codigoPermiso: 'personal.persona.ver');
 
         // Mantenimiento e inventario (§4.5)
         $this->item($mantenimiento, 'mantenimiento', 'ordenes', 'build', 1);

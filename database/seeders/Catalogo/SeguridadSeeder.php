@@ -115,6 +115,18 @@ class SeguridadSeeder extends Seeder
         'operaciones.dron.crear' => 'Dar de alta un dron',
         'operaciones.dron.editar' => 'Editar los datos de un dron',
         'operaciones.dron.eliminar' => 'Dar de baja (lógica) un dron',
+        // HU-26 (tarea 37): administración de personas y bases, con su rol
+        // operativo y tarifa. Dos recursos, cada uno con su grano fino
+        // (ver/crear/editar/eliminar) — mismo criterio que
+        // `comercial.campo.*`/`operaciones.dron.*`.
+        'personal.base.ver' => 'Ver el listado de bases',
+        'personal.base.crear' => 'Dar de alta una base',
+        'personal.base.editar' => 'Editar los datos de una base',
+        'personal.base.eliminar' => 'Dar de baja (lógica) una base',
+        'personal.persona.ver' => 'Ver el listado de personas',
+        'personal.persona.crear' => 'Dar de alta una persona operativa',
+        'personal.persona.editar' => 'Editar los datos de una persona operativa',
+        'personal.persona.eliminar' => 'Dar de baja (lógica) una persona operativa',
     ];
 
     /** @var list<string> Piloto: solo lo que ejecuta desde `agrocom-field` — HU-17, tarea 24. */
@@ -177,6 +189,17 @@ class SeguridadSeeder extends Seeder
         'operaciones.dron.crear',
         'operaciones.dron.editar',
         'operaciones.dron.eliminar',
+        // HU-26 (tarea 37): "Como encargado, quiero administrar personas y
+        // bases" — la HU lo dice literal, mismo criterio que clientes,
+        // contratos, campos y drones arriba.
+        'personal.base.ver',
+        'personal.base.crear',
+        'personal.base.editar',
+        'personal.base.eliminar',
+        'personal.persona.ver',
+        'personal.persona.crear',
+        'personal.persona.editar',
+        'personal.persona.eliminar',
     ];
 
     /**

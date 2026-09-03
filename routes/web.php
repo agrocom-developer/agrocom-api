@@ -8,6 +8,8 @@ use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\AlertasControl
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\DronesController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\TrabajosController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\ValidacionSesionesController;
+use App\Dominios\Personal\Infraestructura\Http\Controllers\Web\BasesController;
+use App\Dominios\Personal\Infraestructura\Http\Controllers\Web\PersonasController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\DashboardController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\DispositivosController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\OrganizacionController;
@@ -250,5 +252,49 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::delete('/panel/drones/{dron}', [DronesController::class, 'destroy'])
             ->name('panel.drones.destroy');
+
+        // HU-26 (tarea 37): administración de bases y personas operativas,
+        // dos ABMs INDEPENDIENTES (una base es catálogo simple; una persona
+        // la referencia por `base_id`, FK nullable, pero cada una tiene su
+        // propia pantalla). Sin sub-entidad en ninguna de las dos. Cuatro
+        // permisos de grano fino por recurso
+        // (`personal.base.*`/`personal.persona.*`) verificados DENTRO del
+        // controlador contra el ROL ACTIVO, mismo criterio que
+        // `clientes`/`campos`/`drones` arriba.
+        Route::get('/panel/bases', [BasesController::class, 'index'])
+            ->name('panel.bases.index');
+
+        Route::get('/panel/bases/crear', [BasesController::class, 'create'])
+            ->name('panel.bases.create');
+
+        Route::post('/panel/bases', [BasesController::class, 'store'])
+            ->name('panel.bases.store');
+
+        Route::get('/panel/bases/{base}/editar', [BasesController::class, 'edit'])
+            ->name('panel.bases.edit');
+
+        Route::put('/panel/bases/{base}', [BasesController::class, 'update'])
+            ->name('panel.bases.update');
+
+        Route::delete('/panel/bases/{base}', [BasesController::class, 'destroy'])
+            ->name('panel.bases.destroy');
+
+        Route::get('/panel/personas', [PersonasController::class, 'index'])
+            ->name('panel.personas.index');
+
+        Route::get('/panel/personas/crear', [PersonasController::class, 'create'])
+            ->name('panel.personas.create');
+
+        Route::post('/panel/personas', [PersonasController::class, 'store'])
+            ->name('panel.personas.store');
+
+        Route::get('/panel/personas/{persona}/editar', [PersonasController::class, 'edit'])
+            ->name('panel.personas.edit');
+
+        Route::put('/panel/personas/{persona}', [PersonasController::class, 'update'])
+            ->name('panel.personas.update');
+
+        Route::delete('/panel/personas/{persona}', [PersonasController::class, 'destroy'])
+            ->name('panel.personas.destroy');
     });
 });
