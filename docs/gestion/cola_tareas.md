@@ -1,9 +1,11 @@
 # Cola de tareas automatizables
 
-**Última actualización: 2/9/2026 (planificación tras el agotamiento de la 41,
-HU-29 — mismo patrón que la 40: 3 sesiones seguidas sin commitear, trabajo
-rescatado a `git stash` y retomado como tarea 43. Se agregaron además la 44,
-HU-30/planilla, crítica, y la 45, HU-31/facturas, que abre Sprint 9).**
+**Última actualización: 3/9/2026 (planificación tras el cierre de la 45,
+HU-31/facturas — PR #91, y confirmación de que la 39, HU-45/usuarios, ya
+estaba integrada desde el 3/9/2026 aunque la tabla no lo reflejaba. Se
+agregaron la 46 (HU-32/reporte comercial, cierra Sprint 9), la 47
+(HU-33/gastos, abre Sprint 10) y la 48 (HU-34/rendiciones, depende de la
+47)).**
 Este es el backlog que el ciclo de
 `bin/ciclo` consume solo — el punto 3 de
 [automatizacion_desarrollo.md](automatizacion_desarrollo.md). No reemplaza a
@@ -78,14 +80,17 @@ exista el módulo `Mezclas`).
 | 36 | HU-27 — drones: ABM sobre `ope_drones`, con `modelo`/`capacidad_l` nuevos por ALTER (30/50/60 L) — la migración de la tarea 23 los dejó fuera a propósito | `./bin/verify` = 0, con test de `capacidad_l` fuera de {30,50,60} rechazada y de `identificador` duplicado como error de validación | `Operaciones/Aplicacion/`, `Operaciones/Infraestructura/Http/`, migración ALTER de `ope_drones`, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/operaciones.php`, tests | no | 3 | **hecha** (PR #82, mergeado 2/9/2026) |
 | 37 | HU-26 — personas y bases: ABM sobre `per_personas` y `per_bases`, dos pantallas independientes; módulo `Personal` sin `Aplicacion/`/`Http/` todavía, se arma desde cero | `./bin/verify` = 0, con test de que editar `tarifa_ha` de una persona no altera un `DevengoPersonal` ya generado (el devengo ya congela su propia copia, confirmado en `Finanzas/Aplicacion/GenerarDevengosSesion.php`) | `Personal/**`, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/personal.php` (nuevo), tests | no | 4 | **hecha** (PR #83/#84, mergeados 2/9/2026) |
 | 38 | HU-25 — órdenes de aplicación: ABM sobre `ope_ordenes_aplicacion` con su primera máquina de estados real (`emitida → vigente`, `TransicionesOrden`/`MaquinaEstadosOrden` nuevos, mismo patrón que `MaquinaEstadosContrato`); una orden `vigente` ya aparece sola en `GET /api/sync/catalogo`, sin tocar el motor de sync | `./bin/verify` = 0, con test de la transición válida/inválida y de que dos órdenes `vigente` para el mismo lote chocan contra el índice parcial como error de validación | `Operaciones/Dominio/MaquinaEstados/`, `Operaciones/Aplicacion/MaquinaEstados/`, `Operaciones/Aplicacion/` (casos de uso de órdenes), `Operaciones/Infraestructura/Http/`, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/operaciones.php`, tests | no | 5 | **hecha** (PR #85, mergeado 2/9/2026; el ciclo la marcó `AGOTADA` en `runs/38.estado` porque las 3 sesiones seguidas de implementación se quedaron sin turnos esperando la notificación de un `bin/verify` en segundo plano — pero el merge ya se había completado segundos antes de que se declarara el agotamiento, confirmado con `gh pr view 85` y el diff vacío entre la rama y `develop`. Cierra Sprint 7 salvo HU-45, que esta vuelta agrega como tarea 39) |
-| 39 | HU-45 — usuarios: alta, edición y baja de `sec_user`/`sec_user_role` desde el panel, cierra la parte de HU-01 que quedó sin hacer. Reusa `AsignarRolesUsuario` (ya implementado en HU-01, con la guarda anti-rol-dueño); falta solo la capa HTTP, la baja y el toggle de bloqueo | `./bin/verify` = 0, con test de la guarda de rol dueño vía HTTP, de `username` duplicado, y de que cambiar roles no invalida la sesión activa | `Seguridad/Aplicacion/EliminarUsuario.php` (nuevo), `Seguridad/Infraestructura/Http/**`, `routes/web.php`, tests | no | 3 | pendiente |
+| 39 | HU-45 — usuarios: alta, edición y baja de `sec_user`/`sec_user_role` desde el panel, cierra la parte de HU-01 que quedó sin hacer. Reusa `AsignarRolesUsuario` (ya implementado en HU-01, con la guarda anti-rol-dueño); falta solo la capa HTTP, la baja y el toggle de bloqueo | `./bin/verify` = 0, con test de la guarda de rol dueño vía HTTP, de `username` duplicado, y de que cambiar roles no invalida la sesión activa | `Seguridad/Aplicacion/EliminarUsuario.php` (nuevo), `Seguridad/Infraestructura/Http/**`, `routes/web.php`, tests | no | 3 | **hecha** (PR #86/#87, mergeados 3/9/2026) |
 | 40 | HU-28 — devengos por período: pantalla de solo lectura sobre `fin_devengos_personal`, primera del módulo `Finanzas`; primer acceso al panel para piloto/auxiliar (hoy sin ningún permiso de panel) | `./bin/verify` = 0, con test de acceso cruzado → 404 y de filtro por período | `Finanzas/**`, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/finanzas.php` (nuevo), tests | no | 3 | **agotada** — 3 sesiones seguidas sin declarar estado (`runs/40.estado` = `AGOTADA`), nunca commitearon: `runs/40.log` muestra que esperaron la notificación de un `bin/verify` en segundo plano con `Monitor` (denegado) en vez de commitear primero, mismo patrón de la tarea 38. El trabajo (controller, caso de uso, 8 tests, spec visual, fixture) quedó completo en apariencia pero sin commitear, mezclado en el working tree de `develop` (bloqueaba el arranque de la 41); rescatado a `git stash` sin verificar de punta a punta al planificar la 42. Recuperarlo: `git stash list` (`stash@{0}`, no confundir con el `stash@{1}` de la tarea 32) — la tarea 42 lo retoma |
 | 41 | HU-29 — anticipos: tabla nueva `fin_anticipos`, tope de 3.000 Bs/mes y 70 % del devengado calculado con `BigDecimal`, rechazo con el disponible exacto | `./bin/verify` = 0, con test de cada tope por separado y de acumulación de dos anticipos en el mismo mes | `Finanzas/**`, migración nueva, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/finanzas.php`, tests | no | 4 | **agotada** — mismo patrón que la 40: 3 sesiones seguidas sin declarar estado (`runs/41.estado` = `AGOTADA`), nunca commitearon: lanzaron `bin/verify` en segundo plano y esperaron su notificación en vez de commitear primero. El trabajo (migración, modelo, 4 casos de uso, controller, 2 vistas, 9 tests, spec visual con sus 4 capturas) quedó completo en apariencia pero sin commitear, mezclado en el working tree de `develop`; rescatado a `git stash` al planificar la siguiente tanda. Recuperarlo: `git stash list` (`stash@{0}`, no confundir con el `stash@{1}` de la tarea 32) — la tarea 43 lo retoma |
-| 42 | Retomar y cerrar HU-28 (continuación de la 40): recuperar el `git stash` con el trabajo casi completo, completar lo que falte contra el mismo criterio de aceptación, commitear y verificar de punta a punta | `./bin/verify` = 0, con test de acceso cruzado → 404 y de filtro por período (igual que la 40) | `Finanzas/**`, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/finanzas.php`, `resources/css/pages/devengos.css`, tests | no | 2 | pendiente |
+| 42 | Retomar y cerrar HU-28 (continuación de la 40): recuperar el `git stash` con el trabajo casi completo, completar lo que falte contra el mismo criterio de aceptación, commitear y verificar de punta a punta | `./bin/verify` = 0, con test de acceso cruzado → 404 y de filtro por período (igual que la 40) | `Finanzas/**`, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/finanzas.php`, `resources/css/pages/devengos.css`, tests | no | 2 | **hecha** (PR #88, mergeado 3/9/2026) |
 
-| 43 | Retomar y cerrar HU-29 (continuación de la 41): recuperar el `git stash` con el trabajo casi completo, completar lo que falte contra el mismo criterio de aceptación, commitear y verificar de punta a punta | `./bin/verify` = 0, con test de cada tope por separado y de acumulación de dos anticipos en el mismo mes (igual que la 41) | `Finanzas/**`, migración nueva, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/finanzas.php`, `resources/css/pages/anticipos.css`, tests | no | 3 | pendiente |
-| 44 | HU-30 — planilla del período: dos tablas nuevas (`fin_planillas`, `fin_planilla_detalles`), máquina de estados `borrador → aprobada` (solo `dueno`), recibo individual en PDF, total exacto contra los devengos de origen | `./bin/verify` = 0, con test de cuadre exacto contra `fin_devengos_personal`, de idempotencia por período y de que solo `dueno` aprueba | `Finanzas/**`, migraciones nuevas, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/finanzas.php`, tests | **sí** | 5 | pendiente — espera a que la 43 (anticipos) esté integrada: resta anticipos del período, que todavía no existe en `develop` |
-| 45 | HU-31 — facturar un trabajo desde su acta conformada: nueva tabla `com_facturas` en `Comercial`, cruza a `Operaciones` (acta/trabajo/orden/contrato) por un contrato de lectura nuevo (`LecturaActaConformada`, mismo patrón que `LecturaSesionValidada`), monto = hectáreas conformadas × precio_ha del contrato | `./bin/verify` = 0, con test de rechazo desde acta sin firmar, de que no se factura dos veces la misma acta, y de monto exacto | `Comercial/**`, `Operaciones/Contratos/**` (contrato de lectura nuevo), `Operaciones/Infraestructura/` (su implementación), migración nueva, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/comercial.php`, tests | no | 4 | pendiente |
+| 43 | Retomar y cerrar HU-29 (continuación de la 41): recuperar el `git stash` con el trabajo casi completo, completar lo que falte contra el mismo criterio de aceptación, commitear y verificar de punta a punta | `./bin/verify` = 0, con test de cada tope por separado y de acumulación de dos anticipos en el mismo mes (igual que la 41) | `Finanzas/**`, migración nueva, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/finanzas.php`, `resources/css/pages/anticipos.css`, tests | no | 3 | **hecha** (PR #89, mergeado 3/9/2026) |
+| 44 | HU-30 — planilla del período: dos tablas nuevas (`fin_planillas`, `fin_planilla_detalles`), máquina de estados `borrador → aprobada` (solo `dueno`), recibo individual en PDF, total exacto contra los devengos de origen | `./bin/verify` = 0, con test de cuadre exacto contra `fin_devengos_personal`, de idempotencia por período y de que solo `dueno` aprueba | `Finanzas/**`, migraciones nuevas, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/finanzas.php`, tests | **sí** | 5 | **hecha** (PR #90, mergeado 3/9/2026) |
+| 45 | HU-31 — facturar un trabajo desde su acta conformada: nueva tabla `com_facturas` en `Comercial`, cruza a `Operaciones` (acta/trabajo/orden/contrato) por un contrato de lectura nuevo (`LecturaActaConformada`, mismo patrón que `LecturaSesionValidada`), monto = hectáreas conformadas × precio_ha del contrato | `./bin/verify` = 0, con test de rechazo desde acta sin firmar, de que no se factura dos veces la misma acta, y de monto exacto | `Comercial/**`, `Operaciones/Contratos/**` (contrato de lectura nuevo), `Operaciones/Infraestructura/` (su implementación), migración nueva, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/comercial.php`, tests | no | 4 | **hecha** (PR #91, mergeado 3/9/2026). Queda pendiente, sin acción de esta cola: pegar a mano la sección "Revisión" redactada por el agente `arquitectura` al final de `docs/decisiones/0003-arquitectura-modular-clean-por-feature.md` — ver `runs/45.md`, requiere `descongela=decisiones` o el gesto manual del usuario |
+| 46 | HU-32 — reporte comercial de avance: hectáreas contratadas vs. aplicadas vs. facturadas por contrato, agregando `LecturaActaConformada::listarFirmadas()` (ya existe desde la 45) contra `Contrato` y `Factura`, propios de `Comercial`; exportable a CSV. Cierra Sprint 9 | `./bin/verify` = 0, con test de agregación exacta por contrato y de exportación CSV con el filtro aplicado | `Comercial/**`, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/comercial.php`, tests | no | 3 | pendiente |
+| 47 | HU-33 — gastos: módulo `Finanzas` nuevo con `fin_rubros`/`fin_subrubros` (catálogo semillado) y `fin_gastos` (imputable a trabajo, base o general), primera subida de comprobante humana desde el panel (`Storage::disk('r2')`, hash SHA-256, sin reusar `ope_evidencias`). Abre Sprint 10 | `./bin/verify` = 0, con test de `monto` exacto (`cantidad × precio_unitario`), de los tres casos de imputación, y de comprobante con hash | `Finanzas/**`, migraciones nuevas, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/finanzas.php`, tests | no | 5 | pendiente |
+| 48 | HU-34 — rendiciones: `fin_rendiciones` + `ALTER fin_gastos` (agrega `rendicion_id`), máquina de estados propia (`abierta → presentada → aprobada`), guarda "el aprobador nunca es quien rinde" a nivel de persona (invariante 4, mismo patrón que `PoliticaValidacionSesion`). Depende de que la 47 esté integrada | `./bin/verify` = 0, con test de la guarda de persona (aprobador ≠ `jefe_campo_id`), de transición inválida rechazada, y de `monto` exacto = suma de gastos asociados | `Finanzas/**` (incluida la migración `ALTER` de `fin_gastos`), migraciones nuevas, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/finanzas.php`, tests | no | 4 | pendiente |
 
 ### El bug de la 24 — ya pasó dos veces, sigue sin arreglarse
 
@@ -205,26 +210,33 @@ Con el arquetipo formulario en `develop` (tarea 31), Sprint 7 fue mecánico:
 HU-22 (clientes, tarea 33), HU-23 (contratos, tarea 34), HU-24 (campos y
 lotes, tarea 35), HU-27 (drones, tarea 36), HU-26 (personas y bases, tarea
 37) y HU-25 (órdenes, tarea 38) ya están integradas — todas con su PR y su
-spec visual propio en `tests/Visual/`. **HU-45 (usuarios) es la única que
-quedó para esta vuelta** (tarea 39): a diferencia de las otras seis, toca
+spec visual propio en `tests/Visual/`. HU-45 (usuarios, tarea 39) cerró el
+sprint (PR #86/#87, 3/9/2026): a diferencia de las otras seis, toca
 `sec_user`/`sec_user_role` (seguridad de acceso) en vez de un catálogo de
 negocio puro, y su lógica de dominio pesada ya existía desde HU-01
-(`AsignarRolesUsuario`) — falta solo la capa HTTP encima, que es lo que cubre
-la tarea 39.
+(`AsignarRolesUsuario`) — faltaba solo la capa HTTP encima.
 
 **El bug de LSP de `atoms/input` (tarea 32) sigue sin resolverse** — se
 agotaron sus etapas sin cerrar la HU y quedó incompleta (ver la fila 32
-arriba). Ninguna tarea de Sprint 7 asumió que estaba resuelta: cada una
-revisó en el momento si `atoms/input` fusiona `$attributes` y usó el
-envoltorio manual si no. La tarea 39 debería hacer lo mismo si algún campo
-ancho lo necesita.
+arriba). Ninguna tarea de Sprint 7 en adelante asumió que estaba resuelta:
+cada una revisó en el momento si `atoms/input` fusiona `$attributes` y usó el
+envoltorio manual si no. Sigue siendo así para toda tarea nueva que use
+campos anchos.
 
-**Con Sprint 7 cerrado (salvo la 39), la cola pasa a Sprint 8** ("la gente
-cobra a fin de mes"): HU-28 (devengos por período, tarea 40) y HU-29
-(anticipos con tope, tarea 41). HU-30 (planilla), la tercera y más grande de
-Sprint 8, queda para la próxima vuelta de planificación — depende de cómo
-termine saliendo `fin_anticipos` en la tarea 41 (ver la nota al final del
-prompt de la tarea 41).
+### Sprint 8 — cerrado
+
+Con Sprint 7 cerrado, la cola pasó a Sprint 8 ("la gente cobra a fin de
+mes"): HU-28 (devengos, tareas 40/42), HU-29 (anticipos, tareas 41/43) y
+HU-30 (planilla, tarea 44) — las tres integradas al 3/9/2026. Las tareas 40 y
+41 se agotaron sin commitear (mismo patrón: 3 sesiones seguidas lanzando
+`bin/verify` en segundo plano sin commitear antes) y sus tareas de retoma
+(42, 43) rescataron el trabajo de `git stash` y lo cerraron.
+
+### Sprint 9 — cerrado
+
+HU-31 (facturas, tarea 45, PR #91) y HU-32 (reporte comercial de avance,
+tarea 46) cierran Sprint 9 ("cobrarle al cliente"). La 46 reusa
+`LecturaActaConformada` tal cual la dejó la 45, sin tocarla.
 
 ### Condicionadas — todavía no tienen sobre qué correr
 
@@ -234,12 +246,13 @@ ambas ya tienen su gate (tareas 14 y 16, ver "Por qué ese orden" en versiones
 anteriores de este documento).
 
 Las alertas de la tarea 26 que dependen de `mezcla` (desvío ±5%, hectáreas
-incoherentes por dosis) o de `anticipos`/`rendiciones` (fuera de alcance por
-CR-01 las primeras, todavía sin construir las segundas) no tienen sobre qué
-correr — su gate se escribe cuando esos dominios existan, no antes. La tarea
-41 crea `fin_anticipos`: cuando se integre, esa condición de la tarea 26 deja
-de estar bloqueada y una futura tarea puede escribir el gate de "anticipo
-excede lo devengado" como alerta, si el negocio lo pide.
+incoherentes por dosis) o de `anticipos`/`rendiciones` no tienen sobre qué
+correr todavía para la parte de `mezcla` (fuera de alcance por CR-01). La
+parte de `anticipos` ya dejó de estar bloqueada desde la tarea 43
+(`fin_anticipos` integrada); la de `rendiciones` deja de estarlo cuando la 48
+se integre. Ninguna tarea de esta tanda escribe ese gate de alertas — queda
+para cuando el negocio lo pida explícitamente, no es parte del CA esencial de
+HU-33/HU-34.
 
 ## Por qué ese orden
 
@@ -331,7 +344,7 @@ dato: `sec_user.persona_id` ya podía apuntar a cualquier persona sembrada por
 seeder) sino porque su alcance de decisión —qué permisos exactos separar,
 cómo dar la contraseña inicial sin infraestructura de correo— se prefería
 planificar con el patrón ABM de 33-38 ya asentado, no en la misma tanda que
-esas seis. Con las seis integradas, esta vuelta pudo investigar el código
+esas seis. Con las seis integradas, esa vuelta pudo investigar el código
 real (`AsignarRolesUsuario` ya resuelve la parte más delicada desde HU-01) y
 escribir un prompt que no reinventa esa lógica.
 
@@ -341,50 +354,66 @@ real, no solo de lectura del plan: el tope de HU-29 se calcula sobre "el
 devengado del período" de una persona, la misma suma que HU-28 necesita para
 listar. Hacer 41 sin que 40 esté integrada hubiera significado escribir esa
 suma dos veces en ramas paralelas con alto riesgo de que difieran. HU-30
-(planilla), la tercera de Sprint 8, no se escribe todavía: consume
-`fin_anticipos`, y su diseño concreto conviene decidirlo con esa tabla ya
-integrada en `develop`, no adivinada.
+(planilla), la tercera de Sprint 8, no se escribió hasta que `fin_anticipos`
+estuvo integrada.
 
 **42 se intercala entre 40 y 41, no se agrega al final.** La tarea 40 se
 agotó sin commitear (ver fila 40): el trabajo quedó rescatado en `git
 stash`, no integrado. La dependencia real de HU-29 sobre "el devengado del
-período" (ver el párrafo de arriba) sigue sin resolverse mientras HU-28 no
-esté en `develop` — dejar `41` como la próxima tarea de la cola tal cual
+período" (ver el párrafo de arriba) seguía sin resolverse mientras HU-28 no
+estuviera en `develop` — dejar `41` como la próxima tarea de la cola tal cual
 estaba habría hecho que el ciclo intentara anticipos sin que devengos
-exista. `42` retoma exactamente el trabajo rescatado (no lo reescribe desde
-cero) y va antes de `41` en `runs/cola.txt`, aunque su número sea más alto:
+exista. `42` retomó exactamente el trabajo rescatado (no lo reescribió desde
+cero) y fue antes de `41` en `runs/cola.txt`, aunque su número sea más alto:
 el archivo ya no era estrictamente numérico (compará con `31` antes que
-`30`), así que insertarla ahí no rompe nada. `41` no se tocó — su prompt
-sigue siendo válido una vez que `42` cierre HU-28.
+`30`), así que insertarla ahí no rompió nada. `41` no se tocó — su prompt
+siguió siendo válido una vez que `42` cerró HU-28.
 
-**43 repite exactamente el mecanismo de la 42, sobre la 41.** Misma causa
+**43 repitió exactamente el mecanismo de la 42, sobre la 41.** Misma causa
 (3 sesiones seguidas lanzando `bin/verify` en segundo plano sin commitear
 antes, ver `runs/41-plan.md`), mismo remedio: `git stash` del trabajo casi
-completo, tarea nueva que lo retoma con la advertencia explícita de commitear
-antes de esperar un `bin/verify` largo. Va al final de `runs/cola.txt` (no
-hay ninguna tarea después de la 41 todavía en curso que deba esperarla) en
-vez de intercalada como la 42, porque no hay ningún `43`/`44` ya escritos que
-dependan de que esto se resuelva antes — la 44 (planilla) sí depende de que
-HU-29 esté integrada, pero eso ya lo resuelve el orden natural de la cola
-(43 antes que 44), sin necesidad de reordenar nada.
+completo, tarea nueva que lo retomó con la advertencia explícita de commitear
+antes de esperar un `bin/verify` largo.
 
-**44 (planilla) cierra Sprint 8, sigue el orden literal del plan y depende
+**44 (planilla) cerró Sprint 8, siguió el orden literal del plan y dependía
 de datos reales, no solo de orden de lectura.** HU-30 resta anticipos del
-devengado del período — sin `fin_anticipos` integrada (tarea 43) no hay
-qué restar. Va `critica=si` porque `CLAUDE.md` nombra literal "los listeners
+devengado del período — sin `fin_anticipos` integrada (tarea 43) no había
+qué restar. Fue `critica=si` porque `CLAUDE.md` nombra literal "los listeners
 que generan dinero (devengos, planilla)" en la lista de lo que no se delega
-sin revisión línea por línea: es la primera tarea de esta tanda que entra en
-esa categoría desde la 16 (HU-16, devengos).
+sin revisión línea por línea.
 
-**45 (facturas) abre Sprint 9 en cuanto Sprint 8 queda completo.** No
-depende de dato de las tareas 43/44 — factura contra el acta conformada
+**45 (facturas) abrió Sprint 9 en cuanto Sprint 8 quedó completo.** No
+dependía de dato de las tareas 43/44 — factura contra el acta conformada
 (`ope_actas`, ya integrada desde la tarea 24/27) y el contrato
 (`com_contratos`, tarea 34), ninguna de las dos tocada por anticipos ni
-planilla — así que podría en principio ir antes. Se ordenó después de todos
-modos porque Sprint 8 (dinero que sale) estaba a mitad de camino cuando se
-escribió esta tanda y conviene cerrarlo antes de abrir el siguiente sprint,
-mismo criterio de progresión ya usado entre sprints anteriores. HU-32
-(reporte comercial de avance, siguiente HU de Sprint 9) queda sin escribir:
-depende de cómo la 45 termine exponiendo "hectáreas facturadas por
-contrato", conviene decidirlo con `com_facturas` ya integrada en vez de
-adivinarlo.
+planilla. Se ordenó después de todos modos porque Sprint 8 (dinero que sale)
+estaba a mitad de camino cuando se escribió esa tanda y convenía cerrarlo
+antes de abrir el siguiente sprint.
+
+**46 (reporte comercial) cierra Sprint 9 apenas la 45 está integrada.**
+Depende exclusivamente de que `LecturaActaConformada` y `com_facturas` (tarea
+45, PR #91) existan en `develop` — ambas ya están. No hay ninguna otra
+dependencia de dato: `Contrato.hectareas_contratadas` es una columna que
+existe desde HU-23 (tarea 34). Se escribe recién ahora, no antes, porque
+diseñar su agregación "a ciegas" (sin `com_facturas` real para probar contra
+ella) hubiera sido adivinar la forma del dato en vez de leerla.
+
+**47 (gastos) abre Sprint 10 apenas Sprint 9 cierra, sin depender de nada de
+Sprint 9.** HU-33 no toca `Comercial` ni `Operaciones` más que por una FK
+plana a `ope_trabajos.id` — podría en principio haberse escrito en paralelo a
+la 45/46. Se ordenó después de todos modos por el mismo criterio de
+progresión ya usado entre sprints anteriores: cerrar el sprint en curso antes
+de abrir el siguiente. Es la primera tarea que crea un catálogo semillado
+(`fin_rubros`/`fin_subrubros`) y la primera subida de archivo humana desde el
+panel (a diferencia de `ope_evidencias`, que es del motor de sync) — por eso
+va con 5 etapas, una más que el resto de los ABM de Finanzas.
+
+**48 (rendiciones) sigue a gastos por una dependencia de dato real, no de
+orden de lectura.** El CA esencial de HU-34 ("rendición con detalle e
+ítems") necesita que existan gastos reales para asociarles una rendición, y
+la migración agrega `rendicion_id` a `fin_gastos` por `ALTER` — no puede
+escribirse antes de que la tabla exista. HU-35 (combustible), la tercera de
+Sprint 10, queda sin escribir todavía: es la más chica de las tres (1,0 d) y
+su forma concreta (carga por base y fecha, sin depender de gastos ni
+rendiciones) conviene decidirla en la próxima vuelta de planificación, no
+adivinada ahora junto con las otras dos.

@@ -256,4 +256,32 @@ return [
         'error_acta_invalida' => 'El acta seleccionada no está disponible para facturar.',
     ],
 
+    // HU-32 (tarea 46): "como dueño, quiero un reporte comercial de avance
+    // por cliente, contrato y campaña, para saber cuánto queda por aplicar
+    // y por cobrar" — cierra Sprint 9. Solo lectura, exportable a CSV.
+    'reportes_comerciales' => [
+        'titulo' => 'Avance comercial',
+        'subtitulo' => 'Hectáreas contratadas, aplicadas y facturadas por contrato.',
+        'exportar' => 'Exportar CSV',
+        'vacio' => 'Todavía no hay contratos para mostrar.',
+        'filtro_vacio' => 'Ningún contrato coincide con el filtro.',
+
+        'filtro_cliente' => 'Cliente',
+        'filtro_contrato' => 'Contrato',
+        'filtro_todos' => 'Todos',
+        'filtro_contrato_opcion' => 'Contrato #:id — :cliente',
+        'filtrar' => 'Filtrar',
+        'limpiar_filtros' => 'Limpiar filtros',
+
+        'col_cliente' => 'Cliente',
+        'col_contrato' => 'Contrato',
+        'col_hectareas_contratadas' => 'Ha. contratadas',
+        'col_hectareas_aplicadas' => 'Ha. aplicadas',
+        'col_hectareas_facturadas' => 'Ha. facturadas',
+        'col_monto_facturado' => 'Monto facturado',
+        'contrato_valor' => 'Contrato #:id',
+        'hectareas_valor' => ':cantidad ha',
+        'monto_valor' => 'Bs :monto',
+    ],
+
 ];

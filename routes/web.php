@@ -4,6 +4,7 @@ use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\CamposController
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ClientesController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ContratosController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\FacturasController;
+use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ReportesComercialesController;
 use App\Dominios\Distribucion\Infraestructura\Http\Controllers\Web\VersionesApkController;
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\AnticiposController;
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\DevengosController;
@@ -420,5 +421,19 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::post('/panel/facturas', [FacturasController::class, 'store'])
             ->name('panel.facturas.store');
+
+        // HU-32 (tarea 46): "como dueño, quiero un reporte comercial de
+        // avance por cliente, contrato y campaña, para saber cuánto queda
+        // por aplicar y por cobrar" — cierra Sprint 9. Un único permiso
+        // (`comercial.reporte.ver`), exclusivo del dueño (no entra en
+        // `PERMISOS_ENCARGADO_OPERACIONES`, mismo criterio que
+        // `finanzas.planilla.aprobar`), verificado DENTRO del controlador
+        // contra el ROL ACTIVO. `exportar` reusa el mismo permiso y respeta
+        // el filtro activo — CSV nativo, sin librería de Excel.
+        Route::get('/panel/reportes/comercial', [ReportesComercialesController::class, 'index'])
+            ->name('panel.reportes.comercial.index');
+
+        Route::get('/panel/reportes/comercial/exportar', [ReportesComercialesController::class, 'exportar'])
+            ->name('panel.reportes.comercial.exportar');
     });
 });
