@@ -208,6 +208,13 @@ class SeguridadSeeder extends Seeder
         'mantenimiento.vehiculo.crear' => 'Dar de alta un vehículo',
         'mantenimiento.vehiculo.editar' => 'Editar los datos de un vehículo',
         'mantenimiento.vehiculo.eliminar' => 'Dar de baja (lógica) un vehículo',
+        // HU-39 (tarea 51): "como encargado, quiero seguir las baterías con
+        // sus ciclos y estado, para retirarlas antes de que fallen en
+        // vuelo". Grano fino, mismo criterio que `mantenimiento.vehiculo.*`.
+        'mantenimiento.bateria.ver' => 'Ver el listado de baterías',
+        'mantenimiento.bateria.crear' => 'Dar de alta una batería',
+        'mantenimiento.bateria.editar' => 'Editar los datos de una batería, incluidos sus ciclos acumulados',
+        'mantenimiento.bateria.eliminar' => 'Dar de baja (lógica) una batería',
     ];
 
     /**
@@ -354,6 +361,14 @@ class SeguridadSeeder extends Seeder
         'mantenimiento.vehiculo.crear',
         'mantenimiento.vehiculo.editar',
         'mantenimiento.vehiculo.eliminar',
+        // HU-39 (tarea 51): "como encargado, quiero seguir las baterías con
+        // sus ciclos y estado" — la HU lo dice literal, mismo criterio que
+        // clientes, contratos, campos, drones, bases, personas, anticipos,
+        // facturas, gastos, combustible y vehículos arriba.
+        'mantenimiento.bateria.ver',
+        'mantenimiento.bateria.crear',
+        'mantenimiento.bateria.editar',
+        'mantenimiento.bateria.eliminar',
     ];
 
     /**

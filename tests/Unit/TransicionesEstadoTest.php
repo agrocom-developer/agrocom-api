@@ -187,6 +187,11 @@ function estadosEsServicioDeEstados(string $rutaRelativa): bool
 const RUTAS_ESTADO_DESCRIPTIVO_SIN_MAQUINA = [
     'app/Dominios/Mantenimiento/Aplicacion/CrearVehiculo.php',
     'app/Dominios/Mantenimiento/Aplicacion/ActualizarVehiculo.php',
+    // HU-39, tarea 51: mismo criterio que Vehiculo arriba — `man_baterias.estado`
+    // es descriptivo (`activa`/`retirada`), sin tabla de transiciones ni guarda
+    // de dominio (ver docblock de la migración y `EstadoBateria`).
+    'app/Dominios/Mantenimiento/Aplicacion/CrearBateria.php',
+    'app/Dominios/Mantenimiento/Aplicacion/ActualizarBateria.php',
 ];
 
 /**
