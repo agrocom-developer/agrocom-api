@@ -1,0 +1,115 @@
+/*
+ * Pages: personas/index, personas/create, personas/edit
+ * (app/Dominios/Personal/Infraestructura/Http/Views/pages/personas/) —
+ * HU-26, tarea 37: administración de personas operativas. CSS propio de
+ * ESTAS páginas (ver convención en resources/css/pages/index.css) — mismo
+ * patrón que bases.css (misma tarea), con dos columnas más (rol, base) y
+ * un estado. Sin sub-entidad repetible.
+ *
+ * El wrapper `.ag-personas`/`.ag-personas-form` sigue el mismo patrón que
+ * `.ag-bases`/`.ag-bases-form`: flex en columna con un único `gap` en vez
+ * de `margin-top` repetido en cada hijo. Todo color y medida por token
+ * (CLAUDE.md invariante 11).
+ */
+
+.ag-personas,
+.ag-personas-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+/* Listado (index) */
+
+.ag-personas__filtros {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ag-space-4);
+    align-items: flex-end;
+}
+
+.ag-personas__filtros .ag-input {
+    min-width: 16rem;
+}
+
+.ag-personas__filtros-acciones {
+    display: flex;
+    gap: var(--ag-space-2);
+}
+
+.ag-personas__tabla {
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+    overflow: hidden;
+}
+
+.ag-personas__head,
+.ag-personas__fila {
+    display: grid;
+    grid-template-columns: 1.6fr 1.2fr 1.2fr 1fr 1fr auto;
+    gap: var(--ag-space-4);
+    align-items: center;
+    padding: var(--ag-space-3) var(--ag-space-4);
+}
+
+.ag-personas__head {
+    background-color: var(--ag-color-bg-table-head);
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ag-personas__fila {
+    border-top: 1px solid var(--ag-color-border-row);
+    color: var(--ag-color-text);
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-personas__fila:hover {
+    background-color: var(--ag-color-bg-row-hover);
+}
+
+.ag-personas__nombre {
+    font-weight: var(--ag-font-weight-medium);
+}
+
+.ag-personas__tarifa {
+    font-family: var(--ag-font-family-mono);
+}
+
+.ag-personas__acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--ag-space-2);
+}
+
+.ag-personas__paginacion {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ag-space-4);
+}
+
+.ag-personas__paginacion-info {
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-sm);
+}
+
+@media (max-width: 992px) {
+    .ag-personas__head {
+        display: none;
+    }
+
+    .ag-personas__fila {
+        grid-template-columns: 1fr;
+        gap: var(--ag-space-1);
+    }
+
+    .ag-personas__acciones {
+        justify-content: flex-start;
+        margin-top: var(--ag-space-2);
+    }
+}

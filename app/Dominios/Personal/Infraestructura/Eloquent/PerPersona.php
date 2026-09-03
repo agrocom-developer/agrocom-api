@@ -3,6 +3,7 @@
 namespace App\Dominios\Personal\Infraestructura\Eloquent;
 
 use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
+use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
 use App\Dominios\Personal\Dominio\RolOperativoPersona;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -23,6 +24,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * legítimo — lo que está prohibido es cruzar hacia modelos Eloquent de
  * OTRO módulo (p. ej. Seguridad), nunca las relaciones intra-módulo.
  *
+ * `RegistraBitacora` (HU-26, tarea 37): mismo criterio que {@see PerBase} —
+ * el alta, edición y baja de una persona es una mutación de negocio con
+ * autor y momento auditables. No altera cómo `Finanzas/GenerarDevengosSesion`
+ * congela `tarifa_ha` en el devengo: ese caso de uso copia el valor al
+ * generarse, nunca lo relee de esta tabla después.
+ *
  * @property int $id
  * @property string $nombre
  * @property RolOperativoPersona $rol
@@ -32,6 +39,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class PerPersona extends ModeloDominio
 {
+    use RegistraBitacora;
+
     protected $table = 'per_personas';
 
     /** @var list<string> */
