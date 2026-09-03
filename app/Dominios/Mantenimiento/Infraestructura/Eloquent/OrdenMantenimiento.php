@@ -5,10 +5,11 @@ namespace App\Dominios\Mantenimiento\Infraestructura\Eloquent;
 use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
 use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
 use App\Dominios\Mantenimiento\Dominio\EstadoOrdenMantenimiento;
+use Illuminate\Support\Carbon;
 
 /**
  * Orden de mantenimiento de un equipo (HU-37, tarea 53). Ver docblock de
- * `database/migrations/2026_09_03_200003_create_man_ordenes_mantenimiento_table.php`
+ * `database/migrations/2026_09_03_300004_create_man_ordenes_mantenimiento_table.php`
  * para el detalle de columnas y constraints.
  *
  * `equipo_id` es un entero plano — sin `belongsTo`: apunta a `ope_drones.id`
@@ -34,8 +35,8 @@ use App\Dominios\Mantenimiento\Dominio\EstadoOrdenMantenimiento;
  * @property string $tipo
  * @property string $descripcion
  * @property EstadoOrdenMantenimiento $estado
- * @property \Illuminate\Support\Carbon $fecha_apertura
- * @property \Illuminate\Support\Carbon|null $fecha_cierre
+ * @property Carbon $fecha_apertura
+ * @property Carbon|null $fecha_cierre
  * @property int|null $gasto_id
  */
 class OrdenMantenimiento extends ModeloDominio

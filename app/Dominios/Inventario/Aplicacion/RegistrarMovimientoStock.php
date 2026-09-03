@@ -33,6 +33,12 @@ use LogicException;
  * (por `base_id` ascendente, conocido de antemano) para no dejar abierta la
  * puerta a un deadlock entre dos traslados cruzados concurrentes
  * (base A → B a la vez que B → A).
+ *
+ * `costo_unitario` del movimiento se guarda también en una `Salida` (HU-37,
+ * tarea 53), no solo en una `Compra`: es el "último costo conocido" vigente
+ * en `Repuesto` al momento de consumir, para que quien registró el
+ * movimiento (p. ej. `EscrituraConsumoStock` de una orden de mantenimiento)
+ * pueda calcular el costo total aplicado sin volver a leer `Repuesto`.
  */
 final class RegistrarMovimientoStock
 {
@@ -61,7 +67,11 @@ final class RegistrarMovimientoStock
                 'tipo' => $tipo->value,
                 'cantidad' => (string) $magnitud,
                 'sentido' => $tipo === TipoMovimientoInventario::Ajuste ? $sentido?->value : null,
-                'costo_unitario' => $tipo === TipoMovimientoInventario::Compra ? $costoUnitario : null,
+                'costo_unitario' => match ($tipo) {
+                    TipoMovimientoInventario::Compra => $costoUnitario,
+                    TipoMovimientoInventario::Salida => $repuesto->costo_unitario,
+                    default => null,
+                },
                 'motivo' => $motivo,
                 'orden_mantenimiento_id' => $ordenMantenimientoId,
             ]);

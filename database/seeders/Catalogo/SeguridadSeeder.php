@@ -231,6 +231,16 @@ class SeguridadSeeder extends Seeder
         // que `finanzas.gasto.*` sin `.editar`.
         'inventario.movimiento.ver' => 'Ver el stock por base y sus movimientos',
         'inventario.movimiento.crear' => 'Registrar un movimiento de stock (compra, salida, ajuste o traslado)',
+        // HU-37 (tarea 53): "como encargado, quiero abrir órdenes de
+        // mantenimiento y cerrarlas consumiendo repuestos, para que el costo
+        // quede imputado". Grano fino, mismo criterio que
+        // `mantenimiento.vehiculo.*`; `.cerrar` aparte de `.editar` porque el
+        // cierre no es una edición libre — dispara la máquina de estados que
+        // consume stock y genera el gasto (invariante 7 de CLAUDE.md).
+        'mantenimiento.orden.ver' => 'Ver el listado de órdenes de mantenimiento',
+        'mantenimiento.orden.crear' => 'Abrir una orden de mantenimiento',
+        'mantenimiento.orden.editar' => 'Editar los datos de una orden de mantenimiento',
+        'mantenimiento.orden.cerrar' => 'Cerrar una orden de mantenimiento consumiendo repuestos',
     ];
 
     /**
@@ -396,6 +406,13 @@ class SeguridadSeeder extends Seeder
         'inventario.repuesto.eliminar',
         'inventario.movimiento.ver',
         'inventario.movimiento.crear',
+        // HU-37 (tarea 53): "como encargado, quiero abrir órdenes de
+        // mantenimiento y cerrarlas consumiendo repuestos" — la HU lo dice
+        // literal, mismo criterio que el resto de este rol arriba.
+        'mantenimiento.orden.ver',
+        'mantenimiento.orden.crear',
+        'mantenimiento.orden.editar',
+        'mantenimiento.orden.cerrar',
     ];
 
     /**

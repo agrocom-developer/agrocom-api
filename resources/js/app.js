@@ -12,6 +12,7 @@ import './pages/contratos-form.js';
 import './pages/campos-form.js';
 import './pages/gastos-form.js';
 import './pages/stock-movimiento-form.js';
+import './pages/ordenes-mantenimiento-form.js';
 
 // Bootstrap components are now available globally via window
 window.bootstrap = bootstrap;
