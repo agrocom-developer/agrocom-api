@@ -106,7 +106,10 @@ class SecMenuSeeder extends Seeder
         $this->item($mantenimiento, 'mantenimiento', 'stock', 'warehouse', 4);
 
         // Financiero (§4.4 + cap. 11)
-        $this->item($financiero, 'financiero', 'gastos', 'receipt_long', 1);
+        // HU-33 (tarea 47): "como encargado, quiero cargar gastos con su
+        // categoría y comprobante" — activa el ítem que ya estaba sembrado
+        // como "botón sin link" (ver docblock de `item()`).
+        $this->item($financiero, 'financiero', 'gastos', 'receipt_long', 1, ruta: 'panel.gastos.index', codigoPermiso: 'finanzas.gasto.ver');
         $this->item($financiero, 'financiero', 'combustible', 'local_gas_station', 2);
         $this->item($financiero, 'financiero', 'rendiciones', 'fact_check', 3);
         // HU-28 (tarea 40): "como piloto o auxiliar, quiero ver mis devengos

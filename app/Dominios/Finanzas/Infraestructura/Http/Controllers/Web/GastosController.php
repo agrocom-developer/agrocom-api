@@ -1,0 +1,203 @@
+<?php
+
+namespace App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web;
+
+use App\Dominios\Finanzas\Aplicacion\CrearGasto;
+use App\Dominios\Finanzas\Aplicacion\EliminarGasto;
+use App\Dominios\Finanzas\Aplicacion\ListarGastos;
+use App\Dominios\Finanzas\Infraestructura\Eloquent\Gasto;
+use App\Dominios\Finanzas\Infraestructura\Eloquent\Rubro;
+use App\Dominios\Finanzas\Infraestructura\Http\Requests\CrearGastoRequest;
+use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\View\View;
+
+/**
+ * `GET/POST/DELETE /panel/gastos*` (HU-33, tarea 47): "como encargado,
+ * quiero cargar gastos con su categoría y comprobante, para que la campaña
+ * tenga costo real". Mismo molde que `AnticiposController` — ABM acotado sin
+ * edición: alta, listado y baja lógica.
+ *
+ * Tres permisos de grano fino (`finanzas.gasto.ver`/`.crear`/`.eliminar`),
+ * verificados DENTRO del controlador contra el ROL ACTIVO vía
+ * {@see AutorizacionPanelWeb} — mismo criterio que el resto del panel.
+ * Ninguna regla de negocio acá: el cálculo de `monto` y el guardado del
+ * comprobante los hace `Aplicacion/CrearGasto`.
+ *
+ * Los selects de `base_id`/`trabajo_id` se arman con `DB::table` directo
+ * (ADR 0003 regla 3, mismo criterio que
+ * `AnticiposController::personasDisponibles()`), sin importar los modelos
+ * Eloquent de `Personal`/`Operaciones`. `rubro`/`subrubro` sí usan el modelo
+ * Eloquent: son del propio módulo `Finanzas`.
+ */
+final class GastosController
+{
+    private const PERMISO_VER = 'finanzas.gasto.ver';
+
+    private const PERMISO_CREAR = 'finanzas.gasto.crear';
+
+    private const PERMISO_ELIMINAR = 'finanzas.gasto.eliminar';
+
+    public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
+
+    public function index(Request $request, ListarGastos $listarGastos): View
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
+
+        $rubroId = $request->integer('rubro_id') ?: null;
+        $baseId = $request->integer('base_id') ?: null;
+        $trabajoId = $request->integer('trabajo_id') ?: null;
+        $periodo = $request->string('periodo')->toString();
+
+        $gastos = $listarGastos->ejecutar($rubroId, $baseId, $trabajoId, $periodo !== '' ? $periodo : null);
+        $rubrosDisponibles = $this->rubrosDisponibles();
+        $basesDisponibles = $this->basesDisponibles();
+
+        return view('finanzas::pages.gastos.index', [
+            ...$this->autorizacion->cascara($request),
+            'gastos' => $gastos,
+            'etiquetasRubro' => $rubrosDisponibles->all(),
+            'etiquetasBase' => $basesDisponibles->all(),
+            'etiquetasTrabajo' => $this->etiquetasTrabajo($gastos->pluck('trabajo_id')->filter()->map(fn ($id) => (int) $id)->unique()->values()->all()),
+            'rubrosDisponibles' => $rubrosDisponibles,
+            'basesDisponibles' => $basesDisponibles,
+            'filtros' => ['rubro_id' => $rubroId, 'base_id' => $baseId, 'trabajo_id' => $trabajoId, 'periodo' => $periodo],
+            'puedeEliminar' => $this->autorizacion->tienePermiso($request, self::PERMISO_ELIMINAR),
+        ]);
+    }
+
+    public function create(Request $request): View
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_CREAR), 403);
+
+        return view('finanzas::pages.gastos.create', [
+            ...$this->autorizacion->cascara($request),
+            'rubrosConSubrubros' => Rubro::query()->with('subrubros')->orderBy('nombre')->get(),
+            'basesDisponibles' => $this->basesDisponibles(),
+            'trabajosDisponibles' => $this->trabajosDisponibles(),
+        ]);
+    }
+
+    public function store(CrearGastoRequest $request, CrearGasto $crearGasto): RedirectResponse
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_CREAR), 403);
+
+        $datos = $request->validated();
+
+        $crearGasto->ejecutar(
+            (string) $datos['fecha'],
+            (int) $datos['rubro_id'],
+            isset($datos['subrubro_id']) ? (int) $datos['subrubro_id'] : null,
+            (string) $datos['cantidad'],
+            (string) $datos['precio_unitario'],
+            isset($datos['base_id']) ? (int) $datos['base_id'] : null,
+            isset($datos['trabajo_id']) ? (int) $datos['trabajo_id'] : null,
+            $request->file('comprobante'),
+        );
+
+        return redirect()
+            ->route('panel.gastos.index')
+            ->with('estado', __('finanzas.gastos.creado'));
+    }
+
+    public function destroy(Request $request, Gasto $gasto, EliminarGasto $eliminarGasto): RedirectResponse
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_ELIMINAR), 403);
+
+        $eliminarGasto->ejecutar($gasto);
+
+        return redirect()
+            ->route('panel.gastos.index')
+            ->with('estado', __('finanzas.gastos.eliminado'));
+    }
+
+    /**
+     * Sirve el comprobante desde el disco `r2` (privado, ADR 0009) — mismo
+     * patrón que `PlanillasController::recibo()`, gateado por el mismo
+     * permiso de lectura que el listado.
+     */
+    public function comprobante(Request $request, Gasto $gasto): Response
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
+
+        abort_if($gasto->comprobante_url === null || ! Storage::disk('r2')->exists($gasto->comprobante_url), 404);
+
+        return response(Storage::disk('r2')->get($gasto->comprobante_url), 200, [
+            'Content-Type' => Storage::disk('r2')->mimeType($gasto->comprobante_url) ?: 'application/octet-stream',
+        ]);
+    }
+
+    /** @return Collection<int, string> */
+    private function rubrosDisponibles(): Collection
+    {
+        return Rubro::query()
+            ->orderBy('nombre')
+            ->pluck('nombre', 'id')
+            ->mapWithKeys(fn (string $nombre, int|string $id): array => [(int) $id => $nombre]);
+    }
+
+    /** @return Collection<int, string> */
+    private function basesDisponibles(): Collection
+    {
+        return DB::table('per_bases')
+            ->whereNull('deleted_at')
+            ->orderBy('nombre')
+            ->pluck('nombre', 'id')
+            ->mapWithKeys(fn (string $nombre, int|string $id): array => [(int) $id => $nombre]);
+    }
+
+    /**
+     * Últimos 100 trabajos, mismo criterio de acotar el select que un ABM
+     * chico sin buscador todavía — el CA esencial es poder imputar a un
+     * trabajo, no navegar el historial completo desde este formulario.
+     *
+     * @return Collection<int, string>
+     */
+    private function trabajosDisponibles(): Collection
+    {
+        return DB::table('ope_trabajos')
+            ->whereNull('deleted_at')
+            ->orderByDesc('id')
+            ->limit(100)
+            ->get(['id', 'lote_id', 'nro_aplicacion'])
+            ->mapWithKeys(fn (object $trabajo): array => [
+                (int) $trabajo->id => __('finanzas.gastos.trabajo_etiqueta', [
+                    'id' => $trabajo->id,
+                    'lote' => $trabajo->lote_id,
+                    'aplicacion' => $trabajo->nro_aplicacion,
+                ]),
+            ]);
+    }
+
+    /**
+     * Etiquetas legibles de trabajo acotadas a la página actual del listado,
+     * mismo criterio de lectura directa que `basesDisponibles()` —
+     * `AnticiposController::etiquetasPersona()` es el molde.
+     *
+     * @param  list<int>  $ids
+     * @return array<int, string>
+     */
+    private function etiquetasTrabajo(array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        return DB::table('ope_trabajos')
+            ->whereIn('id', $ids)
+            ->get(['id', 'lote_id', 'nro_aplicacion'])
+            ->mapWithKeys(fn (object $trabajo): array => [
+                (int) $trabajo->id => __('finanzas.gastos.trabajo_etiqueta', [
+                    'id' => $trabajo->id,
+                    'lote' => $trabajo->lote_id,
+                    'aplicacion' => $trabajo->nro_aplicacion,
+                ]),
+            ])
+            ->all();
+    }
+}

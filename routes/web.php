@@ -8,6 +8,7 @@ use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ReportesComercia
 use App\Dominios\Distribucion\Infraestructura\Http\Controllers\Web\VersionesApkController;
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\AnticiposController;
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\DevengosController;
+use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\GastosController;
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\PlanillasController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\AlertasController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\DronesController;
@@ -383,6 +384,27 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::delete('/panel/anticipos/{anticipo}', [AnticiposController::class, 'destroy'])
             ->name('panel.anticipos.destroy');
+
+        // HU-33 (tarea 47): "como encargado, quiero cargar gastos con su
+        // categoría y comprobante, para que la campaña tenga costo real" —
+        // ABM acotado (sin edición), gateado por tres permisos de grano fino
+        // (`finanzas.gasto.ver`/`.crear`/`.eliminar`), verificados DENTRO
+        // del controlador contra el ROL ACTIVO, mismo criterio que las
+        // rutas de arriba.
+        Route::get('/panel/gastos', [GastosController::class, 'index'])
+            ->name('panel.gastos.index');
+
+        Route::get('/panel/gastos/crear', [GastosController::class, 'create'])
+            ->name('panel.gastos.create');
+
+        Route::post('/panel/gastos', [GastosController::class, 'store'])
+            ->name('panel.gastos.store');
+
+        Route::delete('/panel/gastos/{gasto}', [GastosController::class, 'destroy'])
+            ->name('panel.gastos.destroy');
+
+        Route::get('/panel/gastos/{gasto}/comprobante', [GastosController::class, 'comprobante'])
+            ->name('panel.gastos.comprobante');
 
         // HU-30 (tarea 44): "como dueño, quiero generar la planilla del
         // período desde los devengos y aprobarla, para pagar con un respaldo
