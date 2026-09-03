@@ -90,28 +90,46 @@ MODELO_PESADO=${AGROCOM_MODELO_PESADO:-sonnet}
 MODELO_LIVIANO=${AGROCOM_MODELO_LIVIANO:-haiku}
 
 # --- Herramientas de las sesiones que editan código -------------------
-# `Monitor` y `TaskOutput` están a propósito. En la máquina Windows,
+# Sin `Monitor` ni `ScheduleWakeup`, y a propósito. En la máquina Windows,
 # `bin/verify` tarda ~20 min (Playwright sobre NTFS), más que el tope de 10 min
-# de una llamada Bash, así que la sesión lo lanza en segundo plano y necesita
-# algo con qué esperarlo. Sin esto, la sesión pedía `Monitor`, se le negaba, y
-# cerraba el turno con "sigo cuando termine" — que en modo headless es terminar
-# sin declarar estado. Así se agotó la tarea 54 el 3/9/2026: tres sesiones
-# seguidas, la última de 94 segundos, y un `bin/verify` huérfano que siguió
-# corriendo 25 minutos después de muerto el ciclo.
-HERRAMIENTAS_IMPL="Read Edit Write Glob Grep Bash Monitor TaskOutput"
+# de una llamada Bash, así que la sesión lo lanza en segundo plano y tiene que
+# esperarlo de alguna forma. Lo que NO funciona es esperar "a que la avisen":
+# una sesión headless que pasa 10 minutos sin llamar a una herramienta se
+# cierra sola. La tarde del 3/9/2026 lo mostró dos veces seguidas: la sesión
+# dejaba un Monitor, programaba un ScheduleWakeup a 20 min, escribía "espero la
+# notificación", y a los 10 minutos exactos el ciclo la veía terminar sin
+# estado (17:07:32 → 17:17:37; 17:18:52 → 17:28:54). Lo que sí funciona es
+# esperar con llamadas Bash sucesivas de menos de 10 minutos — cada una es
+# actividad — y eso es lo que el pie de abajo le indica.
+HERRAMIENTAS_IMPL="Read Edit Write Glob Grep Bash"
+HERRAMIENTAS_PROHIBIDAS="Monitor ScheduleWakeup"
 
 # Se le agrega al final del texto de toda sesión que corre `bin/verify`. NN se
 # reemplaza por el id de la tarea (ver `pie_verify`).
 PIE_VERIFY='---
 ## Sobre `./bin/verify` en esta máquina
 
-Tarda alrededor de 20 minutos (la etapa de Playwright), más que el tope de una
-llamada Bash. Corrélo en segundo plano y esperalo con `Monitor` (o leé su
-salida con `TaskOutput`) hasta que termine, y no lances un segundo `bin/verify`
-mientras hay uno corriendo. **Nunca termines la sesión con `bin/verify`
-todavía corriendo ni sin haber escrito `runs/NN.estado`**: si no podés
-esperar, escribí `PARCIAL` y dejá anotado en `runs/NN.md` que falta correrlo.
-Una sesión que termina sin estado cuenta como fallida, no como "sigo después".'
+Tarda alrededor de 20 minutos (la etapa de Playwright), más que el tope de 10
+minutos de una llamada Bash. Y esta sesión es headless: **si pasan 10 minutos
+sin que llames a una herramienta, la sesión se cierra sola**, sin que hayas
+escrito el estado. Por eso no existen acá `Monitor` ni `ScheduleWakeup`, y
+"espero la notificación" no es una opción: quedás parado y te cortan.
+
+La receta que funciona:
+
+    nohup ./bin/verify > runs/NN-verify.log 2>&1 &   # una sola vez
+    echo $! > runs/NN-verify.pid
+    timeout 540 tail --pid=$(cat runs/NN-verify.pid) -f /dev/null; tail -5 runs/NN-verify.log
+
+Repetí esa última línea, una llamada Bash cada vez, hasta que el log termine en
+`✓ Cascada completa` o `✗ La cascada falló`. Entre una y otra podés seguir
+trabajando en otra cosa, pero sin dejar pasar 10 minutos sin llamar a nada.
+Nunca lances un segundo `bin/verify` mientras hay uno corriendo.
+
+**Nunca termines la sesión con `bin/verify` corriendo ni sin haber escrito
+`runs/NN.estado`**: si no llegás, escribí `PARCIAL` y dejá en `runs/NN.md` qué
+falta. Una sesión que termina sin estado cuenta como fallida, no como "sigo
+después".'
 pie_verify() { printf '%s' "$PIE_VERIFY" | sed "s/NN/$1/g"; }
 
 # --- Salida ----------------------------------------------------------
@@ -178,6 +196,7 @@ sesion() {
         --model "$modelo" \
         --permission-mode dontAsk \
         --allowedTools "$herramientas" \
+        --disallowedTools "$HERRAMIENTAS_PROHIBIDAS" \
         --output-format json > "$salida" 2>&1
 }
 
