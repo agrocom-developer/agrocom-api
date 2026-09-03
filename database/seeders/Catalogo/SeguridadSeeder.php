@@ -167,6 +167,11 @@ class SeguridadSeeder extends Seeder
         // inmutable (ver `Comercial/Aplicacion/EmitirFactura`).
         'comercial.factura.ver' => 'Ver el listado de facturas emitidas',
         'comercial.factura.crear' => 'Emitir la factura de un trabajo desde su acta conformada',
+        // HU-32 (tarea 46): "como dueño, quiero un reporte comercial de
+        // avance por cliente, contrato y campaña" — la HU lo dice literal.
+        // NO entra en PERMISOS_ENCARGADO_OPERACIONES (ver más abajo):
+        // exclusivo del dueño, mismo criterio que `finanzas.planilla.aprobar`.
+        'comercial.reporte.ver' => 'Ver el reporte comercial de avance por contrato (exclusivo del dueño)',
     ];
 
     /**

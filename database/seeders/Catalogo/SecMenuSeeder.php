@@ -130,7 +130,10 @@ class SecMenuSeeder extends Seeder
 
         // Reportes (cap. 9 y 10)
         $this->item($reportes, 'reportes', 'tecnicos', 'summarize', 1);
-        $this->item($reportes, 'reportes', 'comerciales', 'insert_chart', 2);
+        // HU-32 (tarea 46): "como dueño, quiero un reporte comercial de
+        // avance por cliente, contrato y campaña" — activa el ítem que ya
+        // estaba sembrado como "botón sin link" (ver docblock de `item()`).
+        $this->item($reportes, 'reportes', 'comerciales', 'insert_chart', 2, ruta: 'panel.reportes.comercial.index', codigoPermiso: 'comercial.reporte.ver');
         // HU-19 (tarea 26): bandeja de alertas por excepción — activa el
         // ítem que ya estaba sembrado como "botón sin link" (ver docblock de
         // `item()`).
