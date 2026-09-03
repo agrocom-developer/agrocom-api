@@ -20,7 +20,13 @@ use Illuminate\Support\Carbon;
  * Inmutable salvo baja (misma decisión que `Anticipo`, documentada en
  * `Aplicacion/CrearGasto`): un gasto cargado no se edita — si está mal, se da
  * de baja y se recarga. Evita que el monto de un gasto cambie por debajo de
- * una rendición en curso una vez que exista `fin_rendiciones` (HU-34).
+ * una rendición en curso (HU-34, tarea 48).
+ *
+ * `rendicion_id` (HU-34, tarea 48, `ALTER TABLE`): a diferencia de
+ * `base_id`/`trabajo_id`, `Rendicion` SÍ es del mismo módulo (Finanzas), así
+ * que acá el `belongsTo` es legítimo — lo prohibido por ADR 0003 regla 2 es
+ * cruzar hacia modelos Eloquent de OTRO módulo, nunca las relaciones
+ * intra-módulo.
  *
  * `RegistraBitacora` (invariante 9 de CLAUDE.md): es dinero, mismo criterio
  * que `Anticipo`/`DevengoPersonal`.
@@ -34,6 +40,7 @@ use Illuminate\Support\Carbon;
  * @property string $monto
  * @property int|null $base_id
  * @property int|null $trabajo_id
+ * @property int|null $rendicion_id
  * @property string|null $comprobante_url
  * @property string|null $comprobante_hash
  */
@@ -53,6 +60,7 @@ class Gasto extends ModeloDominio
         'monto',
         'base_id',
         'trabajo_id',
+        'rendicion_id',
         'comprobante_url',
         'comprobante_hash',
     ];
@@ -78,5 +86,11 @@ class Gasto extends ModeloDominio
     public function subrubro(): BelongsTo
     {
         return $this->belongsTo(Subrubro::class, 'subrubro_id');
+    }
+
+    /** @return BelongsTo<Rendicion, $this> */
+    public function rendicion(): BelongsTo
+    {
+        return $this->belongsTo(Rendicion::class, 'rendicion_id');
     }
 }

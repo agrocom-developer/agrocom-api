@@ -179,6 +179,19 @@ class SeguridadSeeder extends Seeder
         'finanzas.gasto.ver' => 'Ver el listado de gastos de campaña',
         'finanzas.gasto.crear' => 'Cargar un gasto con su categoría y comprobante',
         'finanzas.gasto.eliminar' => 'Dar de baja (lógica) un gasto registrado por error',
+        // HU-34 (tarea 48): "como jefe de campo, quiero rendir los gastos que
+        // hice en campo; el encargado los aprueba para reponer el fondo".
+        // Grano fino con máquina de estados propia (abierta → presentada →
+        // aprobada, a diferencia de gasto/anticipo arriba, sin ninguna).
+        // `.aprobar` SÍ entra en PERMISOS_ENCARGADO_OPERACIONES (ver más
+        // abajo) — a diferencia de `finanzas.planilla.aprobar`, que es
+        // exclusivo del dueño: acá la guarda real de que el aprobador nunca
+        // sea quien rindió ya la resuelve `PoliticaAprobacionRendicion`/la
+        // máquina de estados por PERSONA, no el permiso.
+        'finanzas.rendicion.ver' => 'Ver el listado y detalle de rendiciones de campo',
+        'finanzas.rendicion.crear' => 'Crear una rendición de campo y asociarle gastos',
+        'finanzas.rendicion.presentar' => 'Presentar una rendición de campo para su aprobación',
+        'finanzas.rendicion.aprobar' => 'Aprobar una rendición de campo presentada, para reponer el fondo',
     ];
 
     /**
@@ -301,6 +314,15 @@ class SeguridadSeeder extends Seeder
         'finanzas.gasto.ver',
         'finanzas.gasto.crear',
         'finanzas.gasto.eliminar',
+        // HU-34 (tarea 48): "como jefe de campo, quiero rendir los gastos que
+        // hice en campo; el encargado los aprueba para reponer el fondo" —
+        // la HU lo dice literal, incluido `.aprobar`: a diferencia de
+        // `finanzas.planilla.aprobar` (exclusivo del dueño), acá el
+        // encargado SÍ aprueba (ver el comentario en PERMISOS de arriba).
+        'finanzas.rendicion.ver',
+        'finanzas.rendicion.crear',
+        'finanzas.rendicion.presentar',
+        'finanzas.rendicion.aprobar',
     ];
 
     /**
