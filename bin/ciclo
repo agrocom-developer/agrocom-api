@@ -61,7 +61,7 @@ PID=runs/ciclo.pid
 
 ETAPAS_IMPL=5        # sesiones encadenadas sobre la misma rama para terminar una HU
 FALLOS_IMPL=3        # sesiones SEGUIDAS sin estado declarado antes de rendirse
-TAREAS_TRABADAS=3    # tareas SEGUIDAS sin integrarse antes de parar el bucle entero
+TAREAS_TRABADAS=${AGROCOM_TAREAS_TRABADAS:-3}   # tareas SEGUIDAS sin integrarse antes de parar el bucle entero
 INTENTOS_ARREGLO=2   # vueltas de corrección tras un veredicto RECHAZADO o un CI en rojo
 ESPERA_CI=2700       # 45 min: tope para que CI termine y el auto-merge integre
 SONDEO_CI=30
@@ -88,6 +88,31 @@ PLANIFICACION=('prompts/[0-9][0-9]-*.md' 'docs/gestion/cola_tareas.md')
 # tarea crítica que convenga correr con más criterio, por ejemplo.
 MODELO_PESADO=${AGROCOM_MODELO_PESADO:-sonnet}
 MODELO_LIVIANO=${AGROCOM_MODELO_LIVIANO:-haiku}
+
+# --- Herramientas de las sesiones que editan código -------------------
+# `Monitor` y `TaskOutput` están a propósito. En la máquina Windows,
+# `bin/verify` tarda ~20 min (Playwright sobre NTFS), más que el tope de 10 min
+# de una llamada Bash, así que la sesión lo lanza en segundo plano y necesita
+# algo con qué esperarlo. Sin esto, la sesión pedía `Monitor`, se le negaba, y
+# cerraba el turno con "sigo cuando termine" — que en modo headless es terminar
+# sin declarar estado. Así se agotó la tarea 54 el 3/9/2026: tres sesiones
+# seguidas, la última de 94 segundos, y un `bin/verify` huérfano que siguió
+# corriendo 25 minutos después de muerto el ciclo.
+HERRAMIENTAS_IMPL="Read Edit Write Glob Grep Bash Monitor TaskOutput"
+
+# Se le agrega al final del texto de toda sesión que corre `bin/verify`. NN se
+# reemplaza por el id de la tarea (ver `pie_verify`).
+PIE_VERIFY='---
+## Sobre `./bin/verify` en esta máquina
+
+Tarda alrededor de 20 minutos (la etapa de Playwright), más que el tope de una
+llamada Bash. Corrélo en segundo plano y esperalo con `Monitor` (o leé su
+salida con `TaskOutput`) hasta que termine, y no lances un segundo `bin/verify`
+mientras hay uno corriendo. **Nunca termines la sesión con `bin/verify`
+todavía corriendo ni sin haber escrito `runs/NN.estado`**: si no podés
+esperar, escribí `PARCIAL` y dejá anotado en `runs/NN.md` que falta correrlo.
+Una sesión que termina sin estado cuenta como fallida, no como "sigo después".'
+pie_verify() { printf '%s' "$PIE_VERIFY" | sed "s/NN/$1/g"; }
 
 # --- Salida ----------------------------------------------------------
 # Con --fondo, nohup ya redirige stdout a la bitácora: duplicar con tee dejaría
@@ -185,6 +210,31 @@ volver_a_develop() {
     return 0
 }
 
+# --- Avance sin commitear --------------------------------------------
+# Una sesión que se cortó a mitad de camino (terminó sin estado, se agotó, la
+# mataron) deja archivos sin commitear en la rama de la tarea. Si se dejan ahí,
+# la tarea siguiente no puede arrancar —`preparar_rama` ve un working tree sucio
+# y aborta— y la planificación tampoco puede volver a develop. Así se
+# encadenaron tres fallos el 3/9/2026: la 54 agotada dejó cuatro archivos
+# sueltos, la 32 abortó dos veces sin correr una sola sesión, y el ciclo se
+# cortó con la cola llena. El trabajo es de la rama en la que está: se commitea
+# ahí, y la vuelta que la retome lo encuentra en git como cualquier otra etapa.
+# Lo que escribió la planificación (PLANIFICACION) queda afuera: viaja en la
+# rama de la tarea que encola, no en esta.
+guardar_avance() {
+    local id="$1" rama
+    rama=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+    case "$rama" in develop|master|"") return 0 ;; esac
+    [ -z "$(sucio_ajeno)" ] && return 0
+    git add -A >/dev/null 2>&1
+    git reset -q -- "${PLANIFICACION[@]}" >/dev/null 2>&1 || true
+    if git commit -q -m "guarda el avance sin cerrar de la tarea $id" \
+        -m "Lo dejó sin commitear una sesión que terminó antes de cerrar la etapa. Lo commitea el ciclo para que la rama quede limpia: la etapa siguiente lo retoma desde acá y la tarea que sigue puede arrancar."; then
+        ok "avance sin commitear de la tarea $id guardado en $rama"
+    fi
+    return 0
+}
+
 # --- Base limpia ------------------------------------------------------
 # Deja al ciclo parado en la rama de la tarea, nacida de un develop al día, con
 # el prompt de esta misma tarea ya commiteado adentro.
@@ -223,6 +273,7 @@ preparar_rama() {
 # --- Fase 1: implementar ---------------------------------------------
 # Códigos: 0 la HU quedó completa · 1 se rindió · 2 BLOQUEADA (decisión humana)
 #          3 avanzó pero se le acabaron las etapas sin cerrarla
+#          4 no pudo ni arrancar (working tree sucio ajeno, develop inalcanzable)
 #
 # Una HU del plan de sprints no entra en una sesión, y partirla en tareas para
 # que entre es lo que llenaba el historial de PRs de un commit. Así que la fase
@@ -241,7 +292,7 @@ fase_implementar() {
     etapas=$(meta "$archivo" "etapas" "$ETAPAS_IMPL")
     rama=$(rama_de "$archivo" "$id")
 
-    preparar_rama "$id" "$rama" || return 1
+    preparar_rama "$id" "$rama" || return 4
 
     sesiones=0
     fallos=0
@@ -250,7 +301,9 @@ fase_implementar() {
         marcar "$id implementar · etapa $sesiones/$etapas en $rama"
         rm -f "runs/$id.estado"
 
-        texto=$(cat "$archivo")
+        texto="$(cat "$archivo")
+
+$(pie_verify "$id")"
         if [ "$sesiones" -gt 1 ]; then
             texto="$texto
 
@@ -283,7 +336,7 @@ en \`runs/$id.estado\` una sola palabra:
 No toques los tests para que pasen."
         fi
 
-        sesion "$texto" "runs/$id.log" "Read Edit Write Glob Grep Bash" "$noche" "$modelo" "$zonas"
+        sesion "$texto" "runs/$id.log" "$HERRAMIENTAS_IMPL" "$noche" "$modelo" "$zonas"
         estado=$(leer_estado "$id")
         hechos=$(git rev-list --count develop.."$rama" 2>/dev/null || echo 0)
         log "sesión terminada · estado declarado: $estado · $hechos commit(s) en $rama"
@@ -380,8 +433,10 @@ Commiteá en grupos por función — un commit por pieza coherente, con mensaje 
 español, imperativo, explicando el porqué. Corré ./bin/verify y no cierres
 hasta que devuelva 0.
 
-Escribí runs/$id.md agregando qué corregiste." \
-            "runs/$id-corregir-$intento.log" "Read Edit Write Glob Grep Bash" "$noche" "$MODELO_PESADO" "$zonas"
+Escribí runs/$id.md agregando qué corregiste.
+
+$(pie_verify "$id")" \
+            "runs/$id-corregir-$intento.log" "$HERRAMIENTAS_IMPL" "$noche" "$MODELO_PESADO" "$zonas"
     done
 
     malo "Tarea $id sigue RECHAZADA tras $INTENTOS_ARREGLO correcciones"
@@ -405,6 +460,7 @@ fase_pr() {
     fi
 
     marcar "$id abrir PR desde $rama"
+    guardar_avance "$id"
     git push --quiet -u origin "$rama" 2>&1 | tail -2 | eco
 
     numero=$(gh pr list --head "$rama" --json number -q '.[0].number' 2>/dev/null)
@@ -538,8 +594,10 @@ arreglo (mensaje en español, imperativo, explicando qué rompía). Después
 pusheá a la misma rama: el auto-merge reintenta solo cuando CI queda verde.
 
 No toques los tests para que pasen. Si el test tiene razón y el código está
-mal, el que se corrige es el código." \
-            "runs/$id-ci-$intento.log" "Read Edit Write Glob Grep Bash" "$noche" "$MODELO_LIVIANO" "$zonas"
+mal, el que se corrige es el código.
+
+$(pie_verify "$id")" \
+            "runs/$id-ci-$intento.log" "$HERRAMIENTAS_IMPL" "$noche" "$MODELO_LIVIANO" "$zonas"
     done
 
     malo "Tarea $id: CI sigue en rojo tras $INTENTOS_ARREGLO intentos"
@@ -565,7 +623,9 @@ fase_planificar() {
     marcar "$id planificar la tarea siguiente"
     # De vuelta a develop con lo recién integrado: el prompt que se escriba acá
     # tiene que decidirse mirando el estado real del repo, no el de la rama que
-    # acaba de mergearse.
+    # acaba de mergearse. Antes, lo que una corrección haya dejado sin commitear
+    # se guarda en la rama: si no, el checkout falla y la vuelta se pierde.
+    guardar_avance "$id"
     volver_a_develop || { malo "No pude pararme en un develop al día"; return 1; }
 
     texto=$(sed "s/{{ID}}/$id/g" "$plantilla")
@@ -591,7 +651,8 @@ fase_planificar() {
 }
 
 # --- Una vuelta completa ----------------------------------------------
-# Códigos: 0 integrada · 1 no llegó a integrarse · 2 parada pedida.
+# Códigos: 0 integrada · 1 no llegó a integrarse · 2 parada pedida
+#          3 no pudo arrancar: es el entorno, no la tarea — el bucle se corta.
 #
 # Que una tarea trabada NO corte el bucle es deliberado. El usuario mira el
 # proyecto en paralelo y prefiere que el ciclo siga avanzando por el backlog
@@ -604,6 +665,7 @@ vuelta() {
     fase "Tarea $id — $(basename "$(prompt_de "$id")" 2>/dev/null || echo 'sin prompt')"
 
     fase_implementar "$id"; r=$?
+    guardar_avance "$id"
     case "$r" in
         0)
             abortar_si_detenido && return 2
@@ -636,6 +698,12 @@ vuelta() {
                 aviso "Tarea $id entregada incompleta en el PR #$(cat "runs/$id.pr" 2>/dev/null) — decidís vos si se sigue o se cierra"
             fi
             ;;
+        4)
+            # No se pudo ni arrancar. Eso no dice nada de la tarea —es el
+            # entorno— y planificar fallaría por lo mismo. Se corta el bucle
+            # con el motivo claro, sin inflar el contador de tareas trabadas:
+            # el 3/9/2026 la 32 se contó dos veces así, en el mismo segundo.
+            return 3 ;;
         *)
             salida=1
             ;;
@@ -766,6 +834,8 @@ while :; do
             trabadas=0 ;;
         2)
             aviso "Ciclo detenido en medio de la tarea $id"; break ;;
+        3)
+            malo "Ciclo detenido: la tarea $id no pudo arrancar. No es la tarea, es el entorno — working tree sucio ajeno al ciclo o develop inalcanzable. Mirá runs/ciclo.log, limpiá y relanzá."; break ;;
         *)
             trabadas=$((trabadas + 1))
             malo "La tarea $id no llegó a integrarse ($trabadas seguida(s)). Queda marcada en runs/$id.estado; sigo con la próxima."
