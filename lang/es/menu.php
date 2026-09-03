@@ -72,7 +72,7 @@ return [
 
     'financiero' => [
         'label' => 'Financiero',
-        'descripcion' => 'Gastos, combustible, devengos, planilla y facturación.',
+        'descripcion' => 'Gastos, combustible, devengos, anticipos, planilla y facturación.',
         'items' => [
             'gastos' => 'Gastos',
             'combustible' => 'Combustible',
@@ -80,6 +80,7 @@ return [
             'devengos' => 'Devengos',
             'planilla' => 'Planilla de pagos',
             'facturas' => 'Facturas y cobranzas',
+            'anticipos' => 'Anticipos',
         ],
     ],
 

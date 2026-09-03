@@ -115,6 +115,12 @@ class SecMenuSeeder extends Seeder
         $this->item($financiero, 'financiero', 'devengos', 'request_quote', 4, ruta: 'panel.devengos.index', codigoPermiso: 'finanzas.devengo.ver');
         $this->item($financiero, 'financiero', 'planilla', 'event_note', 5);
         $this->item($financiero, 'financiero', 'facturas', 'receipt', 6);
+        // HU-29 (tarea 41): "como encargado, quiero registrar anticipos
+        // validando el tope" — a diferencia de los demás ítems de este
+        // grupo, no había ítem "anticipos" sembrado como "botón sin link":
+        // esta tarea lo crea y lo activa en el mismo paso. Orden 7 (al
+        // final del grupo) para no reordenar los ítems ya sembrados.
+        $this->item($financiero, 'financiero', 'anticipos', 'payments', 7, ruta: 'panel.anticipos.index', codigoPermiso: 'finanzas.anticipo.ver');
 
         // Reportes (cap. 9 y 10)
         $this->item($reportes, 'reportes', 'tecnicos', 'summarize', 1);
