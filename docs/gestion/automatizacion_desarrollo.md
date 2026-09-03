@@ -180,6 +180,24 @@ Tres cosas que hacen que el bucle no sea un lazo suelto:
   de una tarea. Con `--fondo` corre bajo `nohup`: cerrar la terminal ya no lo
   mata. `bin/ciclo --estado` muestra además en qué rama está parado y si hay
   una planificación escrita esperando a que su tarea la commitee.
+- **El ciclo nunca deja la rama sucia.** Si una sesión termina sin cerrar la
+  etapa (sin estado, agotada, matada), lo que dejó sin commitear se commitea en
+  la rama de la tarea (`guardar_avance`) antes de seguir. Sin eso, la tarea
+  siguiente no puede arrancar y la planificación no puede volver a `develop`:
+  así se encadenaron tres fallos el 3/9/2026 —la 54 agotada dejó cuatro
+  archivos sueltos, la 32 abortó dos veces sin correr una sola sesión— y el
+  ciclo se cortó con la cola llena. Un working tree sucio que NO es del ciclo
+  sigue cortando el bucle (es trabajo humano en curso), pero con ese motivo
+  explícito y sin contar como tarea trabada.
+- **Las sesiones pueden esperar a `bin/verify`.** En la máquina Windows la
+  etapa de Playwright tarda ~20 min, más que el tope de una llamada Bash, así
+  que la sesión lo lanza en segundo plano. Las sesiones de implementación y
+  corrección tienen `Monitor` y `TaskOutput` para esperarlo, y el texto de cada
+  etapa les dice que nunca terminen con `bin/verify` corriendo ni sin escribir
+  `runs/NN.estado`. Antes de eso, la sesión pedía `Monitor`, se le negaba, y
+  cerraba con "sigo cuando termine", que en modo headless es terminar sin
+  estado: tres veces seguidas y la tarea se agotaba sola. El tope de tareas
+  seguidas sin integrar se ajusta con `AGROCOM_TAREAS_TRABADAS` (por defecto 3).
 
 **Un modelo por fase.** El trabajo que decide algo —implementar, verificar,
 corregir hallazgos, elegir la próxima tarea— corre en el modelo mediano; el
