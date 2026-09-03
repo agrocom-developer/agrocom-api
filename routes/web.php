@@ -73,11 +73,32 @@ Route::middleware('auth:interno')->group(function () {
         Route::get('/panel/dashboard', [DashboardController::class, 'index'])
             ->name('panel.dashboard');
 
-        // Permiso `seguridad.usuario.ver` verificado dentro del controlador
-        // (contra el ROL ACTIVO, no la unión) — no hay middleware de permiso
+        // HU-45 (tarea 39): ABM de usuarios internos con sus roles. Permisos
+        // `seguridad.usuario.*` verificados DENTRO del controlador (contra
+        // el ROL ACTIVO, no la unión) — no hay middleware de permiso
         // genérico todavía, así que se resuelve ahí (ver UsuariosController).
         Route::get('/panel/usuarios', [UsuariosController::class, 'index'])
             ->name('panel.usuarios.index');
+
+        Route::get('/panel/usuarios/crear', [UsuariosController::class, 'create'])
+            ->name('panel.usuarios.create');
+
+        Route::post('/panel/usuarios', [UsuariosController::class, 'store'])
+            ->name('panel.usuarios.store');
+
+        Route::get('/panel/usuarios/{usuario}/editar', [UsuariosController::class, 'edit'])
+            ->name('panel.usuarios.edit');
+
+        Route::put('/panel/usuarios/{usuario}', [UsuariosController::class, 'update'])
+            ->name('panel.usuarios.update');
+
+        Route::delete('/panel/usuarios/{usuario}', [UsuariosController::class, 'destroy'])
+            ->name('panel.usuarios.destroy');
+
+        // Toggle de `sec_user.state` (permiso `seguridad.usuario.bloquear`):
+        // bloquear NO es una baja, sigue vivo — ver AlternarBloqueoUsuario.
+        Route::post('/panel/usuarios/{usuario}/bloqueo', [UsuariosController::class, 'alternarBloqueo'])
+            ->name('panel.usuarios.bloqueo');
 
         // Revocación de sesiones de la app de campo (HU-03). Los permisos
         // `seguridad.dispositivo.ver`/`.revocar` se verifican DENTRO del

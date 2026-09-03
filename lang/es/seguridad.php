@@ -206,9 +206,62 @@ return [
         'multimedia_ver' => 'Ver',
     ],
 
+    // HU-45 (tarea 39): alta y mantenimiento de usuarios internos del panel,
+    // con sus roles. `persona_id` es opcional — mismo criterio de select
+    // nativo que `base_id` en personal.personas. El selector de roles es un
+    // `<select multiple>` nativo (sin átomo de selección múltiple en el
+    // catálogo, mismo criterio que el select simple).
     'usuarios' => [
+        'creado' => 'El usuario se dio de alta correctamente.',
+        'actualizado' => 'Los datos del usuario se actualizaron correctamente.',
+        'eliminado' => 'El usuario se dio de baja correctamente.',
+        'bloqueo_actualizado' => 'El estado de acceso del usuario se actualizó correctamente.',
+
+        // Listado
         'titulo' => 'Usuarios',
-        'proximamente' => 'Próximamente: gestión de usuarios.',
+        'subtitulo' => 'Cuentas internas del panel, con sus roles asignados.',
+        'nueva' => 'Nuevo usuario',
+        'filtro_busqueda' => 'Buscar',
+        'filtro_busqueda_placeholder' => 'Nombre o usuario…',
+        'filtrar' => 'Filtrar',
+        'limpiar_filtro' => 'Limpiar filtro',
+        'vacio' => 'Todavía no hay usuarios registrados.',
+        'filtro_vacio' => 'Ningún usuario coincide con esta búsqueda.',
+        'col_nombre' => 'Nombre',
+        'col_username' => 'Usuario',
+        'col_roles' => 'Roles',
+        'col_persona' => 'Persona',
+        'col_estado' => 'Estado',
+        'sin_roles' => 'Sin roles asignados',
+        'sin_persona' => 'Sin persona asociada',
+        'estado_activo' => 'Activo',
+        'estado_bloqueado' => 'Bloqueado',
+        'editar' => 'Editar',
+        'bloquear' => 'Bloquear',
+        'desbloquear' => 'Desbloquear',
+        'eliminar_accion' => 'Eliminar',
+        'confirmar_baja' => '¿Confirmás la baja de este usuario?',
+        'paginacion_aria' => 'Paginación de usuarios',
+        'paginacion_anterior' => 'Anterior',
+        'paginacion_siguiente' => 'Siguiente',
+        'paginacion_info' => 'Página :actual de :total',
+
+        // Formulario
+        'titulo_crear' => 'Nuevo usuario',
+        'titulo_editar' => 'Editar usuario',
+        'subtitulo_form' => 'Datos de acceso, persona asociada y roles del usuario.',
+        'seccion_datos' => 'Datos del usuario',
+        'campos_contador' => ':cantidad campos',
+        'campo_name' => 'Nombre completo',
+        'campo_username' => 'Usuario',
+        'campo_password' => 'Contraseña',
+        'campo_password_ayuda_alta' => 'La asigna quien da de alta la cuenta — no hay recuperación por correo todavía.',
+        'campo_password_ayuda_edicion' => 'Dejalo vacío para conservar la contraseña actual.',
+        'campo_persona' => 'Persona asociada',
+        'campo_persona_placeholder' => 'Sin persona asociada',
+        'campo_roles' => 'Roles',
+        'campo_roles_ayuda' => 'Seleccioná uno o más roles. Se reemplaza el conjunto completo al guardar.',
+        'estado_form' => 'Los cambios se guardan al confirmar.',
     ],
 
     // Revocación de sesiones de la app de campo (HU-03). El nombre del rol
