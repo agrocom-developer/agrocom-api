@@ -73,4 +73,50 @@ return [
         'consulta_resultado' => 'Disponible para :persona este mes: Bs :monto',
     ],
 
+    // HU-30 (tarea 44): "como dueño, quiero generar la planilla del período
+    // desde los devengos y aprobarla, para pagar con un respaldo que
+    // cuadre" — cierra el Sprint 8. Dos estados (borrador/aprobada), sin
+    // edición ni baja.
+    'planillas' => [
+        'titulo' => 'Planilla',
+        'subtitulo' => 'Planilla del período, generada desde los devengos y anticipos de cada persona.',
+        'generada' => 'Planilla generada correctamente.',
+        'aprobada' => 'Planilla aprobada: se generó el recibo de cada persona.',
+        'vacio' => 'Todavía no se generó ninguna planilla.',
+        'col_periodo' => 'Período',
+        'col_estado' => 'Estado',
+        'col_total' => 'Total',
+        'monto_valor' => 'Bs :monto',
+        'estado' => [
+            'borrador' => 'Borrador',
+            'aprobada' => 'Aprobada',
+        ],
+        'ver_accion' => 'Ver',
+        'paginacion_aria' => 'Paginación de planillas',
+        'paginacion_anterior' => 'Anterior',
+        'paginacion_siguiente' => 'Siguiente',
+        'paginacion_info' => 'Página :actual de :total',
+
+        'generar_titulo' => 'Generar planilla',
+        'generar_ayuda' => 'Elegí el mes calendario: se arma un borrador con un renglón por cada persona con devengos en ese período.',
+        'campo_periodo' => 'Período',
+        'generar_boton' => 'Generar',
+
+        'volver' => 'Volver a planillas',
+        'detalle_titulo' => 'Planilla :periodo',
+        'detalle_total' => 'Total de la planilla',
+        'detalle_aprobacion' => 'Aprobación',
+        'detalle_aprobada_por' => 'Aprobada por :usuario el :fecha',
+        'aprobar_accion' => 'Aprobar planilla',
+        'confirmar_aprobar' => '¿Aprobar esta planilla? Se va a generar el recibo en PDF de cada persona y no se puede deshacer.',
+        'detalle_vacio' => 'Esta planilla no tiene renglones: ninguna persona tuvo devengos en el período.',
+        'col_persona' => 'Persona',
+        'col_devengado' => 'Devengado',
+        'col_anticipos' => 'Anticipos',
+        'col_neto' => 'Neto',
+        'col_recibo' => 'Recibo',
+        'ver_recibo' => 'Ver recibo',
+        'recibo_pendiente' => 'Se genera al aprobar',
+    ],
+
 ];
