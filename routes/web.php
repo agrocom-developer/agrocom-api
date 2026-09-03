@@ -4,6 +4,7 @@ use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\CamposController
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ClientesController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ContratosController;
 use App\Dominios\Distribucion\Infraestructura\Http\Controllers\Web\VersionesApkController;
+use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\DevengosController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\AlertasController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\DronesController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\OrdenesController;
@@ -347,5 +348,18 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::delete('/panel/personas/{persona}', [PersonasController::class, 'destroy'])
             ->name('panel.personas.destroy');
+
+        // HU-28 (tarea 40): "como piloto o auxiliar, quiero ver mis devengos
+        // por período" — primer permiso de panel para esos dos roles
+        // (`finanzas.devengo.ver`), verificado DENTRO del controlador contra
+        // el ROL ACTIVO, mismo criterio que las rutas de arriba. `index`
+        // redirige a `show` con la persona del usuario autenticado; `show`
+        // hace 404 ante cualquier `persona_id` que no sea la propia,
+        // acceso cruzado incluido — no solo sin permiso.
+        Route::get('/panel/devengos', [DevengosController::class, 'index'])
+            ->name('panel.devengos.index');
+
+        Route::get('/panel/devengos/{persona}', [DevengosController::class, 'show'])
+            ->name('panel.devengos.show');
     });
 });
