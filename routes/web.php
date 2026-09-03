@@ -7,6 +7,7 @@ use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\FacturasControll
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ReportesComercialesController;
 use App\Dominios\Distribucion\Infraestructura\Http\Controllers\Web\VersionesApkController;
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\AnticiposController;
+use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\CombustibleController;
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\DevengosController;
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\GastosController;
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\PlanillasController;
@@ -459,6 +460,26 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::post('/panel/rendiciones/{rendicion}/aprobar', [RendicionesController::class, 'aprobar'])
             ->name('panel.rendiciones.aprobar');
+
+        // HU-35 (tarea 49): "como encargado, quiero registrar el
+        // combustible del generador y de los vehículos, para imputarlo a la
+        // campaña" — cierra Sprint 10. ABM acotado (sin edición), gateado
+        // por tres permisos de grano fino (`finanzas.combustible.ver`/
+        // `.crear`/`.eliminar`), verificados DENTRO del controlador contra
+        // el ROL ACTIVO, mismo criterio que las rutas de arriba. Entidad
+        // independiente de `ope_recargas.litros_combustible_generador` —
+        // ver el docblock de la migración.
+        Route::get('/panel/combustible', [CombustibleController::class, 'index'])
+            ->name('panel.combustible.index');
+
+        Route::get('/panel/combustible/crear', [CombustibleController::class, 'create'])
+            ->name('panel.combustible.create');
+
+        Route::post('/panel/combustible', [CombustibleController::class, 'store'])
+            ->name('panel.combustible.store');
+
+        Route::delete('/panel/combustible/{combustible}', [CombustibleController::class, 'destroy'])
+            ->name('panel.combustible.destroy');
 
         // HU-31 (tarea 45): "como encargado, quiero emitir la factura de un
         // trabajo desde su acta conformada, para cobrar sobre hectáreas ya

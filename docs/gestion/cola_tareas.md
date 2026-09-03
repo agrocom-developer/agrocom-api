@@ -1,11 +1,9 @@
 # Cola de tareas automatizables
 
-**Última actualización: 3/9/2026 (planificación tras el cierre de la 45,
-HU-31/facturas — PR #91, y confirmación de que la 39, HU-45/usuarios, ya
-estaba integrada desde el 3/9/2026 aunque la tabla no lo reflejaba. Se
-agregaron la 46 (HU-32/reporte comercial, cierra Sprint 9), la 47
-(HU-33/gastos, abre Sprint 10) y la 48 (HU-34/rendiciones, depende de la
-47)).**
+**Última actualización: 3/9/2026 (planificación tras el cierre de la 48,
+HU-34/rendiciones — PR #95. Se agregaron la 49 (HU-35/combustible, cierra
+Sprint 10), la 50 (HU-40/vehículos, abre Sprint 11 y crea el módulo
+`Mantenimiento`) y la 51 (HU-39/baterías, depende de la 50)).**
 Este es el backlog que el ciclo de
 `bin/ciclo` consume solo — el punto 3 de
 [automatizacion_desarrollo.md](automatizacion_desarrollo.md). No reemplaza a
@@ -90,7 +88,10 @@ exista el módulo `Mezclas`).
 | 45 | HU-31 — facturar un trabajo desde su acta conformada: nueva tabla `com_facturas` en `Comercial`, cruza a `Operaciones` (acta/trabajo/orden/contrato) por un contrato de lectura nuevo (`LecturaActaConformada`, mismo patrón que `LecturaSesionValidada`), monto = hectáreas conformadas × precio_ha del contrato | `./bin/verify` = 0, con test de rechazo desde acta sin firmar, de que no se factura dos veces la misma acta, y de monto exacto | `Comercial/**`, `Operaciones/Contratos/**` (contrato de lectura nuevo), `Operaciones/Infraestructura/` (su implementación), migración nueva, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/comercial.php`, tests | no | 4 | **hecha** (PR #91, mergeado 3/9/2026). Queda pendiente, sin acción de esta cola: pegar a mano la sección "Revisión" redactada por el agente `arquitectura` al final de `docs/decisiones/0003-arquitectura-modular-clean-por-feature.md` — ver `runs/45.md`, requiere `descongela=decisiones` o el gesto manual del usuario |
 | 46 | HU-32 — reporte comercial de avance: hectáreas contratadas vs. aplicadas vs. facturadas por contrato, agregando `LecturaActaConformada::listarFirmadas()` (ya existe desde la 45) contra `Contrato` y `Factura`, propios de `Comercial`; exportable a CSV. Cierra Sprint 9 | `./bin/verify` = 0, con test de agregación exacta por contrato y de exportación CSV con el filtro aplicado | `Comercial/**`, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/comercial.php`, tests | no | 3 | pendiente |
 | 47 | HU-33 — gastos: módulo `Finanzas` nuevo con `fin_rubros`/`fin_subrubros` (catálogo semillado) y `fin_gastos` (imputable a trabajo, base o general), primera subida de comprobante humana desde el panel (`Storage::disk('r2')`, hash SHA-256, sin reusar `ope_evidencias`). Abre Sprint 10 | `./bin/verify` = 0, con test de `monto` exacto (`cantidad × precio_unitario`), de los tres casos de imputación, y de comprobante con hash | `Finanzas/**`, migraciones nuevas, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/finanzas.php`, tests | no | 5 | pendiente |
-| 48 | HU-34 — rendiciones: `fin_rendiciones` + `ALTER fin_gastos` (agrega `rendicion_id`), máquina de estados propia (`abierta → presentada → aprobada`), guarda "el aprobador nunca es quien rinde" a nivel de persona (invariante 4, mismo patrón que `PoliticaValidacionSesion`). Depende de que la 47 esté integrada | `./bin/verify` = 0, con test de la guarda de persona (aprobador ≠ `jefe_campo_id`), de transición inválida rechazada, y de `monto` exacto = suma de gastos asociados | `Finanzas/**` (incluida la migración `ALTER` de `fin_gastos`), migraciones nuevas, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/finanzas.php`, tests | no | 4 | pendiente |
+| 48 | HU-34 — rendiciones: `fin_rendiciones` + `ALTER fin_gastos` (agrega `rendicion_id`), máquina de estados propia (`abierta → presentada → aprobada`), guarda "el aprobador nunca es quien rinde" a nivel de persona (invariante 4, mismo patrón que `PoliticaValidacionSesion`). Depende de que la 47 esté integrada | `./bin/verify` = 0, con test de la guarda de persona (aprobador ≠ `jefe_campo_id`), de transición inválida rechazada, y de `monto` exacto = suma de gastos asociados | `Finanzas/**` (incluida la migración `ALTER` de `fin_gastos`), migraciones nuevas, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/finanzas.php`, tests | no | 4 | **hecha** (PR #95, mergeado 3/9/2026) |
+| 49 | HU-35 — combustible del generador y vehículos: `fin_combustibles` nueva, carga por base y fecha, litros y monto en `DECIMAL`, sin depender de `ope_recargas` (informativo, sin costeo) ni de un módulo `Vehiculo` que todavía no existe. Cierra Sprint 10 | `./bin/verify` = 0, con test de `destino` fuera de enum rechazado y de filtro por período | `Finanzas/**`, migración nueva, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/finanzas.php`, tests | no | 3 | pendiente |
+| 50 | HU-40 — vehículos de la flota: ABM con asignación a base y estado, primera tarea en crear el módulo nuevo `Mantenimiento` (`man_`, reparto fijado con el agente `arquitectura` y transcrito como extensión del ADR 0011). Abre Sprint 11 | `./bin/verify` = 0, con test de `identificador` duplicado como 422 | módulo nuevo `Mantenimiento`, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/mantenimiento.php`, `docs/decisiones/0011-convencion-prefijos-tabla.md` (solo el punto nuevo del mapeo), tests | no | 3 | pendiente |
+| 51 | HU-39 — baterías con ciclos y estado: ABM sobre `man_baterias` con alerta por ciclos acumulados o por temperatura ya registrada en `ope_recargas` (correlación por texto contra `bateria_saliente_id`, vía contrato de lectura nuevo — sin convertirlo a FK real). Depende de que la 50 haya creado `Mantenimiento` | `./bin/verify` = 0, con test de alerta por ciclos y de alerta por temperatura de una recarga real | `Mantenimiento/**`, `Operaciones/Contratos/**` y su implementación (el contrato de lectura nuevo), migración nueva, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/mantenimiento.php`, tests | no | 4 | pendiente |
 
 ### El bug de la 24 — ya pasó dos veces, sigue sin arreglarse
 
@@ -247,12 +248,11 @@ anteriores de este documento).
 
 Las alertas de la tarea 26 que dependen de `mezcla` (desvío ±5%, hectáreas
 incoherentes por dosis) o de `anticipos`/`rendiciones` no tienen sobre qué
-correr todavía para la parte de `mezcla` (fuera de alcance por CR-01). La
-parte de `anticipos` ya dejó de estar bloqueada desde la tarea 43
-(`fin_anticipos` integrada); la de `rendiciones` deja de estarlo cuando la 48
-se integre. Ninguna tarea de esta tanda escribe ese gate de alertas — queda
+correr todavía para la parte de `mezcla` (fuera de alcance por CR-01). Las
+partes de `anticipos` (tarea 43) y `rendiciones` (tarea 48, PR #95) ya están
+integradas. Ninguna tarea de esta tanda escribe ese gate de alertas — queda
 para cuando el negocio lo pida explícitamente, no es parte del CA esencial de
-HU-33/HU-34.
+HU-33/HU-34/HU-35.
 
 ## Por qué ese orden
 
@@ -417,3 +417,38 @@ Sprint 10, queda sin escribir todavía: es la más chica de las tres (1,0 d) y
 su forma concreta (carga por base y fecha, sin depender de gastos ni
 rendiciones) conviene decidirla en la próxima vuelta de planificación, no
 adivinada ahora junto con las otras dos.
+
+**49 (combustible) cierra Sprint 10 sin depender de la 47 ni de la 48.**
+`fin_combustibles` no lee ni escribe `fin_gastos`/`fin_rendiciones` — es
+independiente, se ordenó al final del sprint solo para cerrarlo antes de
+abrir el siguiente, mismo criterio ya usado en 45→46 y 47→48. Se investigó
+el código real de `ope_recargas` antes de escribir el prompt para confirmar
+que su columna de combustible del generador es "informativa, sin costeo" y
+no se cruza con esta HU — evita el error de intentar reusarla o de
+inventar un vínculo que la especificación sugiere (`cargas_combustible.
+gasto_id`) pero que el CA esencial de `plan_sprints.md` no pide.
+
+**50 → 51 abren Sprint 11 con las dos HU más chicas y sin dependencia de
+`HU-36`/`HU-37`, que quedan para la próxima vuelta.** Sprint 11 tiene 5
+historias con una decisión de arquitectura real sin resolver: dónde viven
+`Bateria` y `Vehiculo` (`docs/decisiones/0011-convencion-prefijos-tabla.md`
+punto 3 los reserva para módulos `Mantenimiento`/`Inventario` que no
+existen). Se consultó al agente `arquitectura` antes de escribir los
+prompts en vez de adivinar: la recomendación fue crear **dos** módulos
+nuevos, no cinco tablas sueltas — `Mantenimiento` (`man_`) para vehículos,
+baterías, generadores y los planes/órdenes de mantenimiento (equipos con
+desgaste que disparan alerta por umbral); `Inventario` (`inv_`) exclusivo
+de HU-36 (repuestos, stock, movimientos). `Dron` no se mueve de
+`Operaciones` — ese precedente ya está integrado. Vehículos (50) va primero
+por ser la más simple de las cinco (1,0 d, sin cruce con otro módulo) y es
+la que deja escrita la extensión al ADR 0011 que las siguientes necesitan.
+Baterías (51) sigue porque su alerta por temperatura lee `ope_recargas`
+(tarea 23) por un contrato de lectura nuevo, cruce que conviene escribir
+una sola vez con el módulo `Mantenimiento` ya creado. HU-36 (repuestos,
+2,5 d), HU-37 (mantenimiento que consume stock, depende de HU-36) y HU-38
+(planes preventivos, cuya forma depende de si `ope_drones` necesita sumar
+horas de vuelo acumuladas — dato que hoy no existe) quedan sin prompt: son
+el "bloque más caro" del sprint, con dependencias reales entre sí, y
+conviene decidirlas con el módulo `Mantenimiento` ya en `develop` para
+probar contra código real en vez de a ciegas — mismo criterio que HU-32
+esperó a que `com_facturas` estuviera integrada.
