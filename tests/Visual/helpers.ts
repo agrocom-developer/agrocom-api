@@ -70,6 +70,13 @@ export async function asegurarTema(page: Page, tema: 'light' | 'dark'): Promise<
         (esperado) => document.documentElement.getAttribute('data-bs-theme') === esperado,
         tema,
     );
+
+    // El click dispara :focus-visible en el botón (aro de foco) — sin este
+    // blur, la captura queda atada a si el test necesitó tocar el toggle o
+    // no (que a su vez depende de un `fetch` fire-and-forget de una corrida
+    // anterior terminando a tiempo), y por eso `rendiciones-show` salía
+    // intermitente en la suite completa aunque en aislamiento siempre pasaba.
+    await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
 }
 
 /** Fuentes @fontsource cargadas antes de capturar — si no, el primer render usa la fuente de sistema y la captura es inestable entre corridas. */
