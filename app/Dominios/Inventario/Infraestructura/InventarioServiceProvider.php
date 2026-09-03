@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Inventario\Infraestructura;
 
+use App\Dominios\Inventario\Contratos\EscrituraConsumoStock;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -11,10 +12,10 @@ use Illuminate\Support\ServiceProvider;
  * `MantenimientoServiceProvider`: cada módulo registra su propio provider
  * para lo que el contenedor no resuelve por convención.
  *
- * `register()` queda vacío a propósito: esta tarea no define ningún contrato
- * de lectura hacia otro módulo, ni lo consume — `Inventario` solo referencia
- * `per_bases` por id plano (ADR 0003 regla 3). Se completa cuando haga falta
- * un contrato real (ver `PersonalServiceProvider` para el patrón de binding).
+ * `register()` bindea {@see EscrituraConsumoStock} (HU-37, tarea 53): primer
+ * contrato de ESCRITURA cross-módulo de `Inventario`, consumido por
+ * `Mantenimiento` para descontar stock al cerrar una orden — mismo patrón de
+ * binding que `PersonalServiceProvider`.
  *
  * `boot()` registra el namespace de vista `inventario::` (mismo patrón que
  * `mantenimiento::`/`operaciones::`): las páginas Blade del módulo viven bajo
@@ -22,7 +23,10 @@ use Illuminate\Support\ServiceProvider;
  */
 final class InventarioServiceProvider extends ServiceProvider
 {
-    public function register(): void {}
+    public function register(): void
+    {
+        $this->app->bind(EscrituraConsumoStock::class, EscrituraConsumoStockEloquent::class);
+    }
 
     public function boot(): void
     {

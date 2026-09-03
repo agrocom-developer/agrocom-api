@@ -15,6 +15,7 @@ use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\RendicionesContro
 use App\Dominios\Inventario\Infraestructura\Http\Controllers\Web\RepuestosController;
 use App\Dominios\Inventario\Infraestructura\Http\Controllers\Web\StockController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\BateriasController;
+use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\OrdenesMantenimientoController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\VehiculosController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\AlertasController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\DronesController;
@@ -448,6 +449,30 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::post('/panel/stock/movimientos', [StockController::class, 'store'])
             ->name('panel.stock.movimientos.store');
+
+        // HU-37 (tarea 53): "como encargado, quiero abrir órdenes de
+        // mantenimiento y cerrarlas consumiendo repuestos, para que el costo
+        // quede imputado". Sin `update`/`destroy` de negocio libre: `edit` es
+        // la pantalla de detalle desde la que se dispara `cerrar`, el único
+        // cambio de `estado` posible (invariante 7 de CLAUDE.md). Tres
+        // permisos de grano fino
+        // (`mantenimiento.orden.ver`/`.crear`/`.cerrar`), verificados DENTRO
+        // del controlador contra el ROL ACTIVO, mismo criterio que el resto
+        // del panel.
+        Route::get('/panel/ordenes-mantenimiento', [OrdenesMantenimientoController::class, 'index'])
+            ->name('panel.ordenes-mantenimiento.index');
+
+        Route::get('/panel/ordenes-mantenimiento/crear', [OrdenesMantenimientoController::class, 'create'])
+            ->name('panel.ordenes-mantenimiento.create');
+
+        Route::post('/panel/ordenes-mantenimiento', [OrdenesMantenimientoController::class, 'store'])
+            ->name('panel.ordenes-mantenimiento.store');
+
+        Route::get('/panel/ordenes-mantenimiento/{orden}/editar', [OrdenesMantenimientoController::class, 'edit'])
+            ->name('panel.ordenes-mantenimiento.edit');
+
+        Route::post('/panel/ordenes-mantenimiento/{orden}/cerrar', [OrdenesMantenimientoController::class, 'cerrar'])
+            ->name('panel.ordenes-mantenimiento.cerrar');
 
         // HU-28 (tarea 40): "como piloto o auxiliar, quiero ver mis devengos
         // por período" — primer permiso de panel para esos dos roles

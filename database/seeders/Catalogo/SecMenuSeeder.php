@@ -109,7 +109,10 @@ class SecMenuSeeder extends Seeder
         $this->item($recursos, 'recursos', 'personas', 'badge', 5, ruta: 'panel.personas.index', codigoPermiso: 'personal.persona.ver');
 
         // Mantenimiento e inventario (§4.5)
-        $this->item($mantenimiento, 'mantenimiento', 'ordenes', 'build', 1);
+        // HU-37 (tarea 53): órdenes de mantenimiento con su propia máquina de
+        // estados (abierta → cerrada) — activa el ítem que ya estaba
+        // sembrado como "botón sin link" (ver docblock de `item()`).
+        $this->item($mantenimiento, 'mantenimiento', 'ordenes', 'build', 1, ruta: 'panel.ordenes-mantenimiento.index', codigoPermiso: 'mantenimiento.orden.ver');
         $this->item($mantenimiento, 'mantenimiento', 'planes', 'checklist', 2);
         // HU-36 (tarea 52): catálogo de repuestos con stock por base y
         // alerta de mínimo — activa los dos ítems que ya estaban sembrados
