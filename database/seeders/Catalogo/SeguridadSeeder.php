@@ -115,6 +115,16 @@ class SeguridadSeeder extends Seeder
         'operaciones.dron.crear' => 'Dar de alta un dron',
         'operaciones.dron.editar' => 'Editar los datos de un dron',
         'operaciones.dron.eliminar' => 'Dar de baja (lógica) un dron',
+        // HU-25 (tarea 38): órdenes de aplicación con su propia máquina de
+        // estados. `.activar` separado de `.editar`, mismo criterio que
+        // `comercial.contrato.cambiar_estado` separado de `.editar`: pasar
+        // una orden de `emitida` a `vigente` no es la misma responsabilidad
+        // que corregir un dato.
+        'operaciones.orden.ver' => 'Ver el listado de órdenes de aplicación',
+        'operaciones.orden.crear' => 'Dar de alta una orden de aplicación',
+        'operaciones.orden.editar' => 'Editar los datos de una orden de aplicación',
+        'operaciones.orden.activar' => 'Activar una orden de aplicación (emitida → vigente)',
+        'operaciones.orden.eliminar' => 'Dar de baja (lógica) una orden de aplicación',
         // HU-26 (tarea 37): administración de personas y bases, con su rol
         // operativo y tarifa. Dos recursos, cada uno con su grano fino
         // (ver/crear/editar/eliminar) — mismo criterio que
@@ -189,6 +199,14 @@ class SeguridadSeeder extends Seeder
         'operaciones.dron.crear',
         'operaciones.dron.editar',
         'operaciones.dron.eliminar',
+        // HU-25 (tarea 38): "Como encargado, quiero crear y seguir las
+        // órdenes de aplicación desde el panel" — la HU lo dice literal,
+        // mismo criterio que clientes, contratos, campos y drones arriba.
+        'operaciones.orden.ver',
+        'operaciones.orden.crear',
+        'operaciones.orden.editar',
+        'operaciones.orden.activar',
+        'operaciones.orden.eliminar',
         // HU-26 (tarea 37): "Como encargado, quiero administrar personas y
         // bases" — la HU lo dice literal, mismo criterio que clientes,
         // contratos, campos y drones arriba.

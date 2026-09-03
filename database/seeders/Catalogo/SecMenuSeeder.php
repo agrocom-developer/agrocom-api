@@ -58,7 +58,9 @@ class SecMenuSeeder extends Seeder
 
         // Operación (§4.3)
         $this->item($operacion, 'operacion', 'programacion', 'event_available', 1, ruta: 'panel.dashboard');
-        $this->item($operacion, 'operacion', 'ordenes', 'assignment', 2);
+        // HU-25 (tarea 38): órdenes de aplicación con su propia máquina de
+        // estados (emitida → vigente).
+        $this->item($operacion, 'operacion', 'ordenes', 'assignment', 2, ruta: 'panel.ordenes.index', codigoPermiso: 'operaciones.orden.ver');
         // HU-05 (tarea 13): listado mínimo de trabajos/sesiones — el jefe ve
         // qué se cerró. Detalle con evidencias y filtros llegan con HU-15.
         $this->item($operacion, 'operacion', 'trabajos', 'fact_check', 3, ruta: 'panel.trabajos.index', codigoPermiso: 'operaciones.trabajo.ver');

@@ -6,6 +6,7 @@ use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ContratosControl
 use App\Dominios\Distribucion\Infraestructura\Http\Controllers\Web\VersionesApkController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\AlertasController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\DronesController;
+use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\OrdenesController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\TrabajosController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\ValidacionSesionesController;
 use App\Dominios\Personal\Infraestructura\Http\Controllers\Web\BasesController;
@@ -252,6 +253,35 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::delete('/panel/drones/{dron}', [DronesController::class, 'destroy'])
             ->name('panel.drones.destroy');
+
+        // HU-25 (tarea 38): órdenes de aplicación con su propia máquina de
+        // estados (`emitida → vigente`). `activar` separada de `update`
+        // (invariante 7): cambiar el estado no es la misma responsabilidad
+        // que corregir un dato, mismo criterio que
+        // `panel.contratos.cambiar-estado`. Cinco permisos de grano fino
+        // (`operaciones.orden.ver`/`.crear`/`.editar`/`.activar`/`.eliminar`)
+        // verificados DENTRO del controlador contra el ROL ACTIVO, mismo
+        // criterio que `clientes`/`contratos`/`campos`/`drones` arriba.
+        Route::get('/panel/ordenes', [OrdenesController::class, 'index'])
+            ->name('panel.ordenes.index');
+
+        Route::get('/panel/ordenes/crear', [OrdenesController::class, 'create'])
+            ->name('panel.ordenes.create');
+
+        Route::post('/panel/ordenes', [OrdenesController::class, 'store'])
+            ->name('panel.ordenes.store');
+
+        Route::get('/panel/ordenes/{orden}/editar', [OrdenesController::class, 'edit'])
+            ->name('panel.ordenes.edit');
+
+        Route::put('/panel/ordenes/{orden}', [OrdenesController::class, 'update'])
+            ->name('panel.ordenes.update');
+
+        Route::post('/panel/ordenes/{orden}/activar', [OrdenesController::class, 'activar'])
+            ->name('panel.ordenes.activar');
+
+        Route::delete('/panel/ordenes/{orden}', [OrdenesController::class, 'destroy'])
+            ->name('panel.ordenes.destroy');
 
         // HU-26 (tarea 37): administración de bases y personas operativas,
         // dos ABMs INDEPENDIENTES (una base es catálogo simple; una persona

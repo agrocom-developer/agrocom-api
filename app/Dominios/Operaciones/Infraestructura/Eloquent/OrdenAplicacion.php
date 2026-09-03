@@ -3,6 +3,7 @@
 namespace App\Dominios\Operaciones\Infraestructura\Eloquent;
 
 use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
+use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use Carbon\CarbonImmutable;
 
@@ -17,9 +18,17 @@ use Carbon\CarbonImmutable;
  *
  * Los límites por orden en NULL heredan del contrato o del parámetro por
  * defecto del sistema (RF-60). Las transiciones de `estado` (emitida →
- * vigente → consumida | vencida) pasarán por el servicio de dominio de la
- * máquina de estados cuando se implemente (invariante 7) — este modelo no
- * ofrece atajos para mutarlas.
+ * vigente → consumida | vencida) pasan por
+ * `Aplicacion/MaquinaEstados/MaquinaEstadosOrden` (invariante 7, HU-25, tarea
+ * 38) — este modelo no ofrece atajos para mutarlas.
+ *
+ * `RegistraBitacora` (invariante 9, HU-25): el esquema no lo marca como
+ * catálogo de rol/permiso (no lo exige el gate automático de
+ * `tests/Unit/BitacoraAuditoriaTest.php`, que deja `estado` fuera de su
+ * regla a propósito), pero el alta, edición y baja de una orden es una
+ * mutación de negocio con autor y momento auditables, y el criterio de
+ * aceptación de esta HU lo pide explícito — mismo criterio que {@see
+ * \App\Dominios\Comercial\Infraestructura\Eloquent\Contrato}.
  *
  * @property int $id
  * @property int $contrato_id
@@ -41,6 +50,8 @@ use Carbon\CarbonImmutable;
  */
 class OrdenAplicacion extends ModeloDominio
 {
+    use RegistraBitacora;
+
     /** Prefijo de módulo en el nombre físico (ADR 0011); el global lo pone la conexión. */
     protected $table = 'ope_ordenes_aplicacion';
 
