@@ -3,6 +3,7 @@ import { type Page } from '@playwright/test';
 export const USUARIO_DEMO = 'camila.rojas';
 export const PASSWORD_DEMO = 'password';
 export const NOMBRE_ROL_DUENO = 'Dueño';
+export const NOMBRE_ROL_PILOTO = 'Piloto de dron';
 
 /**
  * Login real (no bypass de sesión): username + password contra el guard
@@ -30,6 +31,19 @@ export async function iniciarSesion(page: Page): Promise<void> {
  */
 export async function elegirRolDueno(page: Page): Promise<void> {
     await page.locator(`[data-ag-role-nombre="${NOMBRE_ROL_DUENO}"]`).click();
+    await Promise.all([
+        page.waitForURL('**/panel/dashboard'),
+        page.click('[data-ag-role-continuar]'),
+    ]);
+}
+
+/**
+ * Mismo mecanismo que `elegirRolDueno`, con el rol "Piloto de dron" — HU-28
+ * (tarea 40): `devengos.spec.ts` necesita el rol scoped por persona, no el
+ * de máximo permiso.
+ */
+export async function elegirRolPiloto(page: Page): Promise<void> {
+    await page.locator(`[data-ag-role-nombre="${NOMBRE_ROL_PILOTO}"]`).click();
     await Promise.all([
         page.waitForURL('**/panel/dashboard'),
         page.click('[data-ag-role-continuar]'),
