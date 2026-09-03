@@ -91,7 +91,13 @@ class SecMenuSeeder extends Seeder
         // docblock de `item()`).
         $this->item($recursos, 'recursos', 'drones', 'airplanemode_active', 1, ruta: 'panel.drones.index', codigoPermiso: 'operaciones.dron.ver');
         $this->item($recursos, 'recursos', 'baterias', 'battery_charging_full', 2);
-        $this->item($recursos, 'recursos', 'vehiculos', 'local_shipping', 3);
+        // HU-40 (tarea 50): administración de la flota de vehículos — activa
+        // el ítem que ya estaba sembrado como "botón sin link" (ver
+        // docblock de `item()`). El backend vive en `Mantenimiento`
+        // (`man_vehiculos`) aunque el ítem quede agrupado bajo "Recursos" en
+        // el sidebar: esa agrupación es solo layout (ADR 0011, extensión
+        // 26/8/2026, punto 3), no una frontera de módulo.
+        $this->item($recursos, 'recursos', 'vehiculos', 'local_shipping', 3, ruta: 'panel.vehiculos.index', codigoPermiso: 'mantenimiento.vehiculo.ver');
 
         // HU-26 (tarea 37): administración de personas y bases — activa los
         // dos ítems que ya estaban sembrados como "botón sin link" (ver

@@ -200,6 +200,14 @@ class SeguridadSeeder extends Seeder
         'finanzas.combustible.ver' => 'Ver el listado de cargas de combustible',
         'finanzas.combustible.crear' => 'Cargar combustible del generador o de un vehículo',
         'finanzas.combustible.eliminar' => 'Dar de baja (lógica) una carga de combustible registrada por error',
+        // HU-40 (tarea 50): "como encargado, quiero administrar los
+        // vehículos con su asignación a base" — abre Sprint 11 y el módulo
+        // `Mantenimiento` (ADR 0011, extensión 3/9/2026). Grano fino, mismo
+        // criterio que `operaciones.dron.*`.
+        'mantenimiento.vehiculo.ver' => 'Ver el listado de vehículos',
+        'mantenimiento.vehiculo.crear' => 'Dar de alta un vehículo',
+        'mantenimiento.vehiculo.editar' => 'Editar los datos de un vehículo',
+        'mantenimiento.vehiculo.eliminar' => 'Dar de baja (lógica) un vehículo',
     ];
 
     /**
@@ -338,6 +346,14 @@ class SeguridadSeeder extends Seeder
         'finanzas.combustible.ver',
         'finanzas.combustible.crear',
         'finanzas.combustible.eliminar',
+        // HU-40 (tarea 50): "como encargado, quiero administrar los
+        // vehículos con su asignación a base" — la HU lo dice literal, mismo
+        // criterio que clientes, contratos, campos, drones, bases, personas,
+        // anticipos, facturas, gastos y combustible arriba.
+        'mantenimiento.vehiculo.ver',
+        'mantenimiento.vehiculo.crear',
+        'mantenimiento.vehiculo.editar',
+        'mantenimiento.vehiculo.eliminar',
     ];
 
     /**
