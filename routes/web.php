@@ -12,6 +12,7 @@ use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\DevengosControlle
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\GastosController;
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\PlanillasController;
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\RendicionesController;
+use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\BateriasController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\VehiculosController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\AlertasController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\DronesController;
@@ -381,6 +382,31 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::delete('/panel/vehiculos/{vehiculo}', [VehiculosController::class, 'destroy'])
             ->name('panel.vehiculos.destroy');
+
+        // HU-39 (tarea 51): catálogo de baterías con sus ciclos acumulados y
+        // estado, para retirarlas antes de que fallen en vuelo. Segundo ABM
+        // de `Mantenimiento`, mismo molde que `vehiculos` arriba. Cuatro
+        // permisos de grano fino
+        // (`mantenimiento.bateria.ver`/`.crear`/`.editar`/`.eliminar`)
+        // verificados DENTRO del controlador contra el ROL ACTIVO, mismo
+        // criterio que el resto del panel.
+        Route::get('/panel/baterias', [BateriasController::class, 'index'])
+            ->name('panel.baterias.index');
+
+        Route::get('/panel/baterias/crear', [BateriasController::class, 'create'])
+            ->name('panel.baterias.create');
+
+        Route::post('/panel/baterias', [BateriasController::class, 'store'])
+            ->name('panel.baterias.store');
+
+        Route::get('/panel/baterias/{bateria}/editar', [BateriasController::class, 'edit'])
+            ->name('panel.baterias.edit');
+
+        Route::put('/panel/baterias/{bateria}', [BateriasController::class, 'update'])
+            ->name('panel.baterias.update');
+
+        Route::delete('/panel/baterias/{bateria}', [BateriasController::class, 'destroy'])
+            ->name('panel.baterias.destroy');
 
         // HU-28 (tarea 40): "como piloto o auxiliar, quiero ver mis devengos
         // por período" — primer permiso de panel para esos dos roles

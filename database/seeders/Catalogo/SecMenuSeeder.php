@@ -90,7 +90,10 @@ class SecMenuSeeder extends Seeder
         // el ítem que ya estaba sembrado como "botón sin link" (ver
         // docblock de `item()`).
         $this->item($recursos, 'recursos', 'drones', 'airplanemode_active', 1, ruta: 'panel.drones.index', codigoPermiso: 'operaciones.dron.ver');
-        $this->item($recursos, 'recursos', 'baterias', 'battery_charging_full', 2);
+        // HU-39 (tarea 51): seguimiento de baterías con ciclos y estado —
+        // activa el ítem que ya estaba sembrado como "botón sin link" (ver
+        // docblock de `item()`).
+        $this->item($recursos, 'recursos', 'baterias', 'battery_charging_full', 2, ruta: 'panel.baterias.index', codigoPermiso: 'mantenimiento.bateria.ver');
         // HU-40 (tarea 50): administración de la flota de vehículos — activa
         // el ítem que ya estaba sembrado como "botón sin link" (ver
         // docblock de `item()`). El backend vive en `Mantenimiento`
