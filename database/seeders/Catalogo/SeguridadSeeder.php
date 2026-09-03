@@ -151,6 +151,15 @@ class SeguridadSeeder extends Seeder
         'finanzas.anticipo.ver' => 'Ver el listado de anticipos',
         'finanzas.anticipo.crear' => 'Registrar un anticipo, validado contra el tope del mes',
         'finanzas.anticipo.eliminar' => 'Dar de baja (lógica) un anticipo registrado por error',
+        // HU-30 (tarea 44): "como dueño, quiero generar la planilla del
+        // período desde los devengos y aprobarla, para pagar con un
+        // respaldo que cuadre" — cierra el Sprint 8. `.aprobar` NO entra en
+        // PERMISOS_ENCARGADO_OPERACIONES (ver más abajo): el dueño lo recibe
+        // solo por ser "todos los permisos del catálogo, sin excepción"
+        // (diseño §2), ningún otro rol lo tiene.
+        'finanzas.planilla.ver' => 'Ver el listado y detalle de planillas del período',
+        'finanzas.planilla.generar' => 'Generar la planilla de un período desde sus devengos y anticipos',
+        'finanzas.planilla.aprobar' => 'Aprobar una planilla en borrador (exclusivo del dueño)',
     ];
 
     /**
@@ -254,6 +263,12 @@ class SeguridadSeeder extends Seeder
         'finanzas.anticipo.ver',
         'finanzas.anticipo.crear',
         'finanzas.anticipo.eliminar',
+        // HU-30 (tarea 44): "como dueño, quiero generar la planilla..." — el
+        // encargado genera y consulta, pero NO aprueba: `.aprobar` queda
+        // fuera de esta lista a propósito (exclusivo del rol `dueno`, ver
+        // el comentario en PERMISOS de arriba).
+        'finanzas.planilla.ver',
+        'finanzas.planilla.generar',
     ];
 
     /**

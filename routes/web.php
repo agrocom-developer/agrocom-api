@@ -6,6 +6,7 @@ use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ContratosControl
 use App\Dominios\Distribucion\Infraestructura\Http\Controllers\Web\VersionesApkController;
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\AnticiposController;
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\DevengosController;
+use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\PlanillasController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\AlertasController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\DronesController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\OrdenesController;
@@ -380,5 +381,27 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::delete('/panel/anticipos/{anticipo}', [AnticiposController::class, 'destroy'])
             ->name('panel.anticipos.destroy');
+
+        // HU-30 (tarea 44): "como dueño, quiero generar la planilla del
+        // período desde los devengos y aprobarla, para pagar con un respaldo
+        // que cuadre" — cierra el Sprint 8. Tres permisos de grano fino
+        // (`finanzas.planilla.ver`/`.generar`/`.aprobar`), verificados
+        // DENTRO del controlador contra el ROL ACTIVO, mismo criterio que
+        // las rutas de arriba. `.aprobar` es exclusivo del rol `dueno`
+        // (`SeguridadSeeder`).
+        Route::get('/panel/planillas', [PlanillasController::class, 'index'])
+            ->name('panel.planillas.index');
+
+        Route::get('/panel/planillas/{planilla}', [PlanillasController::class, 'show'])
+            ->name('panel.planillas.show');
+
+        Route::post('/panel/planillas', [PlanillasController::class, 'store'])
+            ->name('panel.planillas.store');
+
+        Route::post('/panel/planillas/{planilla}/aprobar', [PlanillasController::class, 'aprobar'])
+            ->name('panel.planillas.aprobar');
+
+        Route::get('/panel/planillas/{planilla}/detalles/{detalle}/recibo', [PlanillasController::class, 'recibo'])
+            ->name('panel.planillas.recibo');
     });
 });
