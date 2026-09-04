@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { test, expect } from '@playwright/test';
-import { asegurarTema, elegirRolDueno, esperarFuentes, iniciarSesion } from './helpers';
+import { asegurarTema, elegirRolDueno, esperarFuentes, fijarFechasDeHoy, iniciarSesion } from './helpers';
 
 /**
  * GET /panel/combustible y GET /panel/combustible/crear, con "Dueño" como
@@ -59,6 +59,7 @@ test.describe('combustible', () => {
 
         test('claro', async ({ page }) => {
             await asegurarTema(page, 'light');
+            await fijarFechasDeHoy(page);
             await esperarFuentes(page);
 
             await expect(page).toHaveScreenshot('combustible-create-light.png', {
@@ -69,6 +70,7 @@ test.describe('combustible', () => {
 
         test('oscuro', async ({ page }) => {
             await asegurarTema(page, 'dark');
+            await fijarFechasDeHoy(page);
             await esperarFuentes(page);
 
             await expect(page).toHaveScreenshot('combustible-create-dark.png', {
