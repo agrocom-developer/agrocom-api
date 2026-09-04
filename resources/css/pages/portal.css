@@ -1,0 +1,78 @@
+/*
+ * Pages: portal/avance, portal/actas, portal/reportes
+ * (app/Dominios/Portal/Infraestructura/Http/Views/pages/) — HU-41, tarea 55.
+ * Tres pantallas de solo lectura, arquetipo Tablero (avance, stat-cards) y
+ * Listado (actas/reportes, mismo molde de grid que
+ * pages/reportes-comerciales.css). Todo color y medida por token (CLAUDE.md
+ * invariante 11).
+ */
+
+.ag-portal-avance,
+.ag-portal-actas,
+.ag-portal-reportes {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+.ag-portal-avance__cards {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--ag-space-4);
+}
+
+@media (max-width: 767.98px) {
+    .ag-portal-avance__cards {
+        grid-template-columns: 1fr;
+    }
+}
+
+.ag-portal-lista {
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+    overflow: hidden;
+}
+
+.ag-portal-lista__head,
+.ag-portal-lista__fila {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: var(--ag-space-4);
+    align-items: center;
+    padding: var(--ag-space-3) var(--ag-space-4);
+}
+
+.ag-portal-lista__head {
+    background-color: var(--ag-color-bg-table-head);
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ag-portal-lista__fila {
+    border-top: 1px solid var(--ag-color-border-row);
+    color: var(--ag-color-text);
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-portal-lista__fila:hover {
+    background-color: var(--ag-color-bg-row-hover);
+}
+
+.ag-portal-lista__cifra {
+    font-family: var(--ag-font-family-mono);
+}
+
+@media (max-width: 767.98px) {
+    .ag-portal-lista__head {
+        display: none;
+    }
+
+    .ag-portal-lista__fila {
+        grid-template-columns: 1fr;
+        gap: var(--ag-space-1);
+    }
+}

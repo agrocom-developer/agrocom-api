@@ -138,6 +138,7 @@ Consecuencia de diseño explícita: **el relleno sólido de marca (botones) es c
 | Molecule | `summary-card` | `resources/views/components/molecules/summary-card.blade.php` | Implementado (2/9/2026, tarea 31) |
 | Molecule | `progress-meter` | `resources/views/components/molecules/progress-meter.blade.php` | Implementado (2/9/2026, tarea 31) |
 | Molecule | `file-field` | `resources/views/components/molecules/file-field.blade.php` | Implementado (2/9/2026, tarea 31 — antes markup suelto en `organizacion.css`) |
+| Template | `portal-layout` | `resources/views/components/templates/portal-layout.blade.php` | Implementado (3/9/2026, tarea 55 — cáscara del portal del cliente, header de una fila con 3 links fijos en vez del layout de tres niveles de `panel-layout`, ver §4.10). Faltaba en esta tabla; se agrega en la corrección de la tarea 55. |
 
 Por qué solo los átomos estaban implementados en el pase anterior: era el límite de alcance fijado para la primera entrega de HU-02 (tokens + piezas de más bajo nivel, sin lógica de negocio). Este pase (27/8/2026) implementa el resto del catálogo, a pedido explícito de HU-02 (el usuario vio un prototipo interactivo aparte y pidió la construcción real). Decisiones de composición que no estaban 100% cerradas en la especificación de §4 y se resolvieron acá:
 
@@ -278,6 +279,15 @@ Justificación de nivel: orquesta múltiples `menu-item` (molecules) bajo un hea
 
 - Composición: `logo` + tarjeta centrada + slot de contenido (usado tanto por la pantalla de login como por la de selección de rol, que comparten esta misma cáscara visual sin sidebar).
 - Es el layout que ADR 0002 llama "layout de autenticación".
+
+### 4.10. `portal-layout` — **template** (3/9/2026, tarea 55)
+
+Justificación de nivel: análogo a `panel-layout` (orquesta `logo`, `theme-toggle` y el botón de cerrar sesión bajo una cáscara común), pero deliberadamente NO es `panel-layout` con un menú vacío — una cuenta de portal no tiene `sec_user_role` ni `sec_menu` que resolver, así que el layout de tres niveles (riel de módulos + sidebar) no aplica.
+
+- Composición: header de una sola fila (`logo` + 3 links de navegación fijos, hardcodeados en el template porque no salen de `sec_menu` — avance/actas/reportes — + `theme-toggle` + botón de cerrar sesión reutilizando `data-ag-logout`/`resources/js/organisms/topbar.js`) + `<main>` (slot) + footer de copyright.
+- Props: `userName` (nullable, de `AutorizacionPortalCliente::cascara()`), `vistaActual`.
+- Persistencia de tema: recibe `temaUrl` desde `panel-shell` (ver §3, fila `panel-shell`) apuntando a `portal.preferencias.tema` en vez de `panel.preferencias.tema` — mismo `theme-toggle`, distinto guard.
+- Es el layout que ADR 0002 punto 6 llama "reutiliza el mismo layout con un guard de autenticación separado, sin acceso a los menús internos".
 
 ## 5. Idioma (ADR 0013)
 

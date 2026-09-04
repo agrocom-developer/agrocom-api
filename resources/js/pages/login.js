@@ -1,17 +1,22 @@
 /**
  * Login handler — intercepta el submit del login-form y lo convierte en un
- * fetch POST a /login (JSON). Maneja la respuesta:
+ * fetch POST (JSON) a la URL de `form.action`. Sirve tanto al login del
+ * panel interno (/login) como al del portal del cliente (/portal/login,
+ * HU-41) — el mismo organism `login-form` se reutiliza para los dos (ADR
+ * 0002 punto 6), así que este handler no asume guard. Maneja la respuesta:
  * - Si hay error de validación (422), muestra el mensaje de error en la UI.
- * - Si requiere selección de rol, redirige a /panel/seleccionar-rol.
- * - Si no, redirige a /panel/dashboard.
- *
- * El formulario vive en login-form.blade.php con `action="{{ route('login') }}"`
- * — aquí solo interceptamos el submit para convertirlo en AJAX.
+ * - Si requiere selección de rol (solo el panel interno lo responde),
+ *   redirige a /panel/seleccionar-rol.
+ * - Si no, redirige a `data-ag-login-redirect` del contenedor
+ *   ([data-ag-login-form]), o a /panel/dashboard si no se especificó (el
+ *   default histórico, para no romper la página de login del panel).
  */
 
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.querySelector('[data-ag-login-form] form');
     if (!form) return;
+
+    const redirectPorDefecto = document.querySelector('[data-ag-login-form]')?.dataset.agLoginRedirect || '/panel/dashboard';
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -62,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (data.requiere_seleccion_rol) {
                     window.location.href = '/panel/seleccionar-rol';
                 } else {
-                    window.location.href = '/panel/dashboard';
+                    window.location.href = redirectPorDefecto;
                 }
             }
         } catch (error) {

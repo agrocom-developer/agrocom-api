@@ -4,6 +4,8 @@ export const USUARIO_DEMO = 'camila.rojas';
 export const PASSWORD_DEMO = 'password';
 export const NOMBRE_ROL_DUENO = 'Dueño';
 export const NOMBRE_ROL_PILOTO = 'Piloto de dron';
+export const USUARIO_PORTAL_DEMO = 'cliente.visual.portal';
+export const PASSWORD_PORTAL_DEMO = 'Secreta123';
 
 /**
  * Login real (no bypass de sesión): username + password contra el guard
@@ -82,6 +84,24 @@ export async function asegurarTema(page: Page, tema: 'light' | 'dark'): Promise<
 /** Fuentes @fontsource cargadas antes de capturar — si no, el primer render usa la fuente de sistema y la captura es inestable entre corridas. */
 export async function esperarFuentes(page: Page): Promise<void> {
     await page.evaluate(() => document.fonts.ready);
+}
+
+/**
+ * Login real al portal del cliente (no bypass de sesión): username + password
+ * contra el guard `cliente`, igual que un cliente de verdad. Redirige a
+ * /portal/avance tras login exitoso (no requiere selección de rol — las
+ * cuentas de portal no tienen roles).
+ */
+export async function iniciarSesionPortal(page: Page, username = USUARIO_PORTAL_DEMO, password = PASSWORD_PORTAL_DEMO): Promise<void> {
+    await page.goto('/portal/login');
+    await page.fill('input[name="username"]', username);
+    await page.fill('input[name="password"]', password);
+
+    // Espera a que el fetch POST termine y el JavaScript redirija a /portal/avance
+    await Promise.all([
+        page.waitForNavigation({ waitUntil: 'networkidle' }),
+        page.click('.ag-login-form__form button[type="submit"]'),
+    ]);
 }
 
 /**

@@ -31,9 +31,9 @@ final class OperacionesServiceProvider extends ServiceProvider
         $this->app->bind(EscrituraSincronizacion::class, EscrituraSincronizacionEloquent::class);
         $this->app->bind(LecturaSesionValidada::class, LecturaSesionValidadaEloquent::class);
         $this->app->bind(LecturaActaConformada::class, LecturaActaConformadaEloquent::class);
+        $this->app->bind(LecturaReporteTecnico::class, LecturaReporteTecnicoEloquent::class);
         $this->app->bind(LecturaAlertasTemperaturaBateria::class, LecturaAlertasTemperaturaBateriaEloquent::class);
         $this->app->bind(LecturaHorasVueloPorModelo::class, LecturaHorasVueloPorModeloEloquent::class);
-        $this->app->bind(LecturaReporteTecnico::class, LecturaReporteTecnicoEloquent::class);
         $this->app->bind(LecturaContadoresPanel::class, LecturaContadoresPanelEloquent::class);
     }
 

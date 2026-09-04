@@ -35,9 +35,10 @@ return [
             'provider' => 'usuarios_internos',
         ],
 
-        // Portal del cliente (ADR — scoping por contrato, invariante 5 de
-        // CLAUDE.md). Sin consumidores todavía; declarado para no dejar dos
-        // sistemas de auth en paralelo cuando llegue esa HU.
+        // Portal del cliente (ADR 0002 punto 6, ADR 0004 — scoping por
+        // contrato, invariante 5 de CLAUDE.md). Consumido desde HU-41
+        // (tarea 55): SesionPortalController + rutas /portal/* en
+        // routes/web.php.
         'cliente' => [
             'driver' => 'session',
             'provider' => 'usuarios_cliente',

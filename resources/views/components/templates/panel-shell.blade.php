@@ -17,12 +17,19 @@
       vuelta, 29/8/2026: ya no existe "sistema" ni el atributo
       `data-ag-theme-preference` que distinguía preferencia de tema
       resuelto — ver theme-toggle.js).
+    - temaUrl (nullable string, default `route('panel.preferencias.tema')`):
+      URL de persistencia del tema (HU-41, tarea 55) — el portal del cliente
+      reusa este mismo shell (ADR 0002 punto 6) pero persiste contra
+      `route('portal.preferencias.tema')`, guard `cliente`; se pasa
+      explícito en vez de inferir el guard acá porque este template no sabe
+      de sesiones.
 
     Slot (default): el cuerpo completo de la página.
 --}}
 @props([
     'title' => null,
     'tema' => 'light',
+    'temaUrl' => null,
 ])
 
 <!DOCTYPE html>
@@ -32,8 +39,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     {{-- URL de persistencia del tema: presente solo en páginas autenticadas
-         del panel — theme-toggle.js postea acá al cambiar de tema. --}}
-    <meta name="ag-preferencias-tema-url" content="{{ route('panel.preferencias.tema') }}">
+         del panel/portal — theme-toggle.js postea acá al cambiar de tema. --}}
+    <meta name="ag-preferencias-tema-url" content="{{ $temaUrl ?? route('panel.preferencias.tema') }}">
     <title>{{ config('app.name', 'Agrocom') }}{{ $title ? ' — '.$title : '' }}</title>
 
     @vite('resources/css/app.css')
