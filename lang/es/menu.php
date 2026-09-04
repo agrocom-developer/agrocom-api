@@ -24,14 +24,13 @@ return [
 
     'operacion' => [
         'label' => 'Operación',
-        'descripcion' => 'Órdenes, trabajos, sesiones y mezclas de cada jornada de vuelo.',
+        'descripcion' => 'Órdenes, trabajos, sesiones y evidencias de cada jornada de vuelo.',
         'items' => [
             'programacion' => 'Programación',
             'ordenes' => 'Órdenes de aplicación',
             'trabajos' => 'Trabajos',
             'sesiones' => 'Sesiones',
             'pausas' => 'Pausas',
-            'mezclas' => 'Mezclas',
             'evidencias' => 'Evidencias',
         ],
     ],

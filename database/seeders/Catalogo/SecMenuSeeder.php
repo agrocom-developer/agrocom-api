@@ -41,6 +41,19 @@ class SecMenuSeeder extends Seeder
 {
     public function run(): void
     {
+        // TE-13 (tarea 59): CR-01 cerró HU-11/HU-12 — Agrocom no prepara la
+        // mezcla ni dosifica, el dato no existe. El ítem quedó sembrado como
+        // placeholder antes de que CR-01 se cerrara; una base ya sembrada no
+        // lo pierde solo con sacar la línea de abajo (`Seeder::run()` nunca
+        // hace `DELETE` de lo que ya no siembra), así que se borra acá.
+        // `delete()` (soft, invariante 8) y no físico: `ModeloDominio`
+        // bloquea `forceDelete()` (ADR 0007) y un DELETE crudo por fuera de
+        // Eloquent está prohibido (ADR 0012) — mismo criterio que el resto
+        // de `sec_*`. El ítem es hoja sin `ruta`: nada referencia su id.
+        SecMenu::query()
+            ->where('label', 'menu.operacion.items.mezclas')
+            ->delete();
+
         $operacion = $this->modulo('operacion', 'flight_takeoff', 1);
         $comercial = $this->modulo('comercial', 'handshake', 2);
         $recursos = $this->modulo('recursos', 'precision_manufacturing', 3);
@@ -69,7 +82,9 @@ class SecMenuSeeder extends Seeder
         // HU-44 (tarea 58): pausas con causa atribuible (DS-01) — activa el
         // ítem que ya estaba sembrado como "botón sin link".
         $this->item($operacion, 'operacion', 'pausas', 'pause_circle', 5, ruta: 'panel.pausas.index', codigoPermiso: 'operaciones.pausa.ver');
-        $this->item($operacion, 'operacion', 'mezclas', 'science', 6);
+        // Orden 6 (mezclas) queda vacante a propósito: CR-01 lo retiró
+        // (TE-13, tarea 59) — no se renumera evidencias para no tocar un
+        // ítem que esta tarea no pidió mover.
         $this->item($operacion, 'operacion', 'evidencias', 'photo_library', 7);
 
         // Comercial (§4.1 + cap. 9)
