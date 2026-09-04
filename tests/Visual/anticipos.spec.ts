@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { test, expect } from '@playwright/test';
-import { asegurarTema, elegirRolDueno, esperarFuentes, iniciarSesion } from './helpers';
+import { asegurarTema, elegirRolDueno, esperarFuentes, fijarFechasDeHoy, iniciarSesion } from './helpers';
 
 /**
  * GET /panel/anticipos y GET /panel/anticipos/crear, con "Dueño" como rol
@@ -59,6 +59,7 @@ test.describe('anticipos', () => {
 
         test('claro', async ({ page }) => {
             await asegurarTema(page, 'light');
+            await fijarFechasDeHoy(page);
             await esperarFuentes(page);
 
             await expect(page).toHaveScreenshot('anticipos-create-light.png', {
@@ -69,6 +70,7 @@ test.describe('anticipos', () => {
 
         test('oscuro', async ({ page }) => {
             await asegurarTema(page, 'dark');
+            await fijarFechasDeHoy(page);
             await esperarFuentes(page);
 
             await expect(page).toHaveScreenshot('anticipos-create-dark.png', {
