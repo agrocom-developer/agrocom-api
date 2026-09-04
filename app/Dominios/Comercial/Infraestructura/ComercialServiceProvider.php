@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Comercial\Infraestructura;
 
+use App\Dominios\Comercial\Contratos\LecturaContrato;
 use App\Dominios\Comercial\Contratos\LecturaLotes;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -21,6 +22,7 @@ final class ComercialServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(LecturaLotes::class, LecturaLotesEloquent::class);
+        $this->app->bind(LecturaContrato::class, LecturaContratoEloquent::class);
     }
 
     public function boot(): void
