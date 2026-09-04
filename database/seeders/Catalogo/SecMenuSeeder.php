@@ -163,7 +163,12 @@ class SecMenuSeeder extends Seeder
         $this->item($financiero, 'financiero', 'anticipos', 'payments', 7, ruta: 'panel.anticipos.index', codigoPermiso: 'finanzas.anticipo.ver');
 
         // Reportes (cap. 9 y 10)
-        $this->item($reportes, 'reportes', 'tecnicos', 'summarize', 1);
+        // HU-43 (tarea 57): "como encargado, quiero listar y descargar los
+        // reportes técnicos generados, para reenviarlos al agrónomo" —
+        // activa el ítem que ya estaba sembrado como "botón sin link" (ver
+        // docblock de `item()`). Mismo permiso `operaciones.reporte.ver` que
+        // ya gatea la descarga individual (misma acción de negocio).
+        $this->item($reportes, 'reportes', 'tecnicos', 'summarize', 1, ruta: 'panel.reportes.tecnicos.index', codigoPermiso: 'operaciones.reporte.ver');
         // HU-32 (tarea 46): "como dueño, quiero un reporte comercial de
         // avance por cliente, contrato y campaña" — activa el ítem que ya
         // estaba sembrado como "botón sin link" (ver docblock de `item()`).

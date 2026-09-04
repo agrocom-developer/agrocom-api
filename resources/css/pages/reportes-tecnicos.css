@@ -1,0 +1,78 @@
+/*
+ * Page: reportes-tecnicos/index
+ * (app/Dominios/Operaciones/Infraestructura/Http/Views/pages/reportes-tecnicos/)
+ * — HU-43, tarea 57: listado de reportes técnicos con filtro por cliente y
+ * período. Mismo molde de grid que reportes-comerciales.css, con cuatro
+ * columnas (trabajo, cliente, generado, descarga) y sin acciones de
+ * mutación: pantalla de solo lectura. Todo color y medida por token
+ * (CLAUDE.md invariante 11).
+ */
+
+.ag-reportes-tecnicos {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+.ag-reportes-tecnicos__filtros {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--ag-space-4);
+}
+
+.ag-reportes-tecnicos__filtros-acciones {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+}
+
+.ag-reportes-tecnicos__tabla {
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+    overflow: hidden;
+}
+
+.ag-reportes-tecnicos__head,
+.ag-reportes-tecnicos__fila {
+    display: grid;
+    grid-template-columns: 1.4fr 1.2fr 1fr 1fr;
+    gap: var(--ag-space-4);
+    align-items: center;
+    padding: var(--ag-space-3) var(--ag-space-4);
+}
+
+.ag-reportes-tecnicos__head {
+    background-color: var(--ag-color-bg-table-head);
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ag-reportes-tecnicos__fila {
+    border-top: 1px solid var(--ag-color-border-row);
+    color: var(--ag-color-text);
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-reportes-tecnicos__fila:hover {
+    background-color: var(--ag-color-bg-row-hover);
+}
+
+.ag-reportes-tecnicos__trabajo {
+    font-weight: var(--ag-font-weight-medium);
+}
+
+@media (max-width: 992px) {
+    .ag-reportes-tecnicos__head {
+        display: none;
+    }
+
+    .ag-reportes-tecnicos__fila {
+        grid-template-columns: 1fr;
+        gap: var(--ag-space-1);
+    }
+}

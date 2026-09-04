@@ -337,4 +337,26 @@ return [
         'eliminada' => 'Orden de aplicación dada de baja correctamente.',
     ],
 
+    // Pantalla de panel "Reportes › Técnicos" (HU-43, tarea 57):
+    // panel.reportes.tecnicos.index. Solo lectura — filtra y enlaza a la
+    // descarga individual ya existente (panel.trabajos.reporte-pdf).
+    'reportes_tecnicos' => [
+        'titulo' => 'Reportes técnicos',
+        'subtitulo' => 'Reportes técnicos generados por lote, para reenviar al agrónomo.',
+        'filtro_cliente' => 'Cliente',
+        'filtro_cliente_placeholder' => 'Todos los clientes',
+        'filtro_desde' => 'Desde',
+        'filtro_hasta' => 'Hasta',
+        'filtrar' => 'Filtrar',
+        'limpiar_filtro' => 'Limpiar filtros',
+        'vacio' => 'Todavía no se generó ningún reporte técnico.',
+        'filtro_vacio' => 'Ningún reporte coincide con estos filtros.',
+        'col_trabajo' => 'Trabajo',
+        'col_cliente' => 'Cliente',
+        'col_generado' => 'Generado',
+        'col_descarga' => 'Descarga',
+        'trabajo_lote' => 'Lote :lote — aplicación :aplicacion',
+        'descargar_pdf' => 'Descargar PDF',
+    ],
+
 ];
