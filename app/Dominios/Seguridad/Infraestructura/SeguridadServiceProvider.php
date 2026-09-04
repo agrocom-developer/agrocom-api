@@ -3,10 +3,12 @@
 namespace App\Dominios\Seguridad\Infraestructura;
 
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
+use App\Dominios\Seguridad\Contratos\AutorizacionPortalCliente;
 use App\Dominios\Seguridad\Contratos\IdentidadOperarioToken;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecTokenDispositivo;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUsuarioInterno;
 use App\Dominios\Seguridad\Infraestructura\Http\AutorizacionPanelWebSesion;
+use App\Dominios\Seguridad\Infraestructura\Http\AutorizacionPortalClienteSesion;
 use App\Dominios\Seguridad\Infraestructura\Http\IdentidadOperarioTokenSanctum;
 use App\Dominios\Seguridad\Infraestructura\Http\Middleware\ResolverRolActivo;
 use App\Dominios\Seguridad\Infraestructura\Http\Presentacion\PermisoVista;
@@ -49,6 +51,11 @@ final class SeguridadServiceProvider extends ServiceProvider
         // controlador web de OTRO módulo (p. ej. Distribucion, HU-20) nunca
         // importa `SecUser` — pide el permiso/la cáscara por acá.
         $this->app->bind(AutorizacionPanelWeb::class, AutorizacionPanelWebSesion::class);
+
+        // Misma frontera, para el portal del cliente (HU-41, tarea 55):
+        // `Portal` necesita el `contrato_id` de la sesión sin importar
+        // `SecUser`/`SecUsuarioCliente`.
+        $this->app->bind(AutorizacionPortalCliente::class, AutorizacionPortalClienteSesion::class);
 
         // Misma frontera, para la API de campo (tarea 12): `Sincronizacion`
         // necesita saber qué persona de `Personal` firma el token sin

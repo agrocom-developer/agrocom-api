@@ -46,6 +46,27 @@ final class LecturaActaConformadaEloquent implements LecturaActaConformada
             ->all();
     }
 
+    /**
+     * La consulta nace del contrato, nunca de "todas las actas con un
+     * `where` después" (invariante 5 de CLAUDE.md, aplicada acá aunque el
+     * consumidor sea interno del servidor): primero se resuelven los
+     * `trabajo_id` que cuelgan de una orden de ESE contrato, recién ahí se
+     * filtran las actas firmadas de esos trabajos.
+     */
+    public function listarFirmadasPorContrato(int $contratoId): array
+    {
+        $ordenIds = OrdenAplicacion::query()->where('contrato_id', $contratoId)->pluck('id');
+        $trabajoIds = Trabajo::query()->whereIn('orden_id', $ordenIds)->pluck('id');
+
+        return Acta::query()
+            ->whereIn('trabajo_id', $trabajoIds)
+            ->where('estado', EstadoActa::Firmada)
+            ->orderByDesc('fecha_firma')
+            ->get()
+            ->map($this->mapear(...))
+            ->all();
+    }
+
     private function mapear(Acta $acta): DatosActaConformada
     {
         $trabajo = Trabajo::query()->findOrFail($acta->trabajo_id);
@@ -56,6 +77,7 @@ final class LecturaActaConformadaEloquent implements LecturaActaConformada
             contratoId: $orden->contrato_id,
             hectareasConformadas: $acta->hectareas_conformadas,
             firmada: $acta->estado === EstadoActa::Firmada,
+            pdfPath: $acta->pdf_path,
         );
     }
 }

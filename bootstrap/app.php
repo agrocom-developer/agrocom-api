@@ -23,6 +23,19 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'rol.activo' => ResolverRolActivo::class,
         ]);
+
+        // HU-41 (tarea 55): sin esto, `Authenticate::redirectTo()` manda
+        // SIEMPRE a `route('login')` (el login del panel interno) sin
+        // importar qué guard rechazó el request — un guest golpeando
+        // `/portal/*` terminaría en el login equivocado. Ambas rutas
+        // (`login.form`/`portal.login.form`) comparten URI con su POST
+        // homónimo (`login`/`portal.login`), así que esto no cambia el
+        // destino del panel interno, solo agrega el del portal.
+        $middleware->redirectGuestsTo(
+            fn (Request $request): string => $request->is('portal/*')
+                ? route('portal.login.form')
+                : route('login.form'),
+        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

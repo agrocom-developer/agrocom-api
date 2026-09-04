@@ -25,12 +25,17 @@ use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\TrabajosContro
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\ValidacionSesionesController;
 use App\Dominios\Personal\Infraestructura\Http\Controllers\Web\BasesController;
 use App\Dominios\Personal\Infraestructura\Http\Controllers\Web\PersonasController;
+use App\Dominios\Portal\Infraestructura\Http\Controllers\Web\ActasPortalController;
+use App\Dominios\Portal\Infraestructura\Http\Controllers\Web\AvancePortalController;
+use App\Dominios\Portal\Infraestructura\Http\Controllers\Web\ReportesPortalController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\DashboardController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\DispositivosController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\OrganizacionController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\PreferenciasController;
+use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\PreferenciasPortalController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\RolActivoController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\SesionController;
+use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\SesionPortalController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\UsuariosController;
 use Illuminate\Support\Facades\Route;
 
@@ -59,6 +64,15 @@ Route::get('/login', function () {
 })->name('login.form');
 
 Route::post('/login', [SesionController::class, 'store'])->name('login');
+
+// HU-41 (tarea 55): portal del cliente, guard `cliente` (ADR 0002 punto 6,
+// ADR 0004). Sin selección de rol: una cuenta de portal no tiene
+// `sec_user_role` — ver SesionPortalController.
+Route::get('/portal/login', function () {
+    return view('seguridad::pages.portal-login');
+})->name('portal.login.form');
+
+Route::post('/portal/login', [SesionPortalController::class, 'store'])->name('portal.login');
 
 Route::middleware('auth:interno')->group(function () {
     Route::post('/logout', [SesionController::class, 'destroy'])->name('logout');
@@ -657,4 +671,25 @@ Route::middleware('auth:interno')->group(function () {
         Route::get('/panel/reportes/comercial/exportar', [ReportesComercialesController::class, 'exportar'])
             ->name('panel.reportes.comercial.exportar');
     });
+});
+
+// HU-41 (tarea 55): portal del cliente — avance, actas firmadas y reportes
+// técnicos, SIEMPRE resueltos desde el `contrato_id` de la sesión de portal
+// (invariante 5 de CLAUDE.md), nunca desde un id de ruta sin verificar. Sin
+// `sec_permission`: el único gate es el guard `cliente` + el contrato
+// resuelto por AutorizacionPortalCliente, verificado DENTRO de cada
+// controlador (mismo patrón que el panel interno).
+Route::middleware('auth:cliente')->group(function () {
+    Route::post('/portal/logout', [SesionPortalController::class, 'destroy'])->name('portal.logout');
+
+    Route::post('/portal/preferencias/tema', [PreferenciasPortalController::class, 'actualizarTema'])
+        ->name('portal.preferencias.tema');
+
+    Route::get('/portal/avance', [AvancePortalController::class, 'index'])->name('portal.avance.index');
+
+    Route::get('/portal/actas', [ActasPortalController::class, 'index'])->name('portal.actas.index');
+    Route::get('/portal/actas/{acta}/pdf', [ActasPortalController::class, 'pdf'])->name('portal.actas.pdf');
+
+    Route::get('/portal/reportes', [ReportesPortalController::class, 'index'])->name('portal.reportes.index');
+    Route::get('/portal/reportes/{reporte}/pdf', [ReportesPortalController::class, 'pdf'])->name('portal.reportes.pdf');
 });

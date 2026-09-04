@@ -33,11 +33,18 @@ document.addEventListener('DOMContentLoaded', function () {
         return; // Esta página no tiene el botón de logout
     }
 
+    // Defaults preservan el comportamiento histórico del panel interno; el
+    // portal del cliente (HU-41, tarea 55) reusa este mismo botón/script con
+    // `data-ag-logout-url="/portal/logout"` y `data-ag-logout-redirect="/portal/login"`
+    // (guard `cliente`, sin selector de rol al volver a loguearse).
+    const logoutUrl = logoutButton.dataset.agLogoutUrl || '/logout';
+    const redirectUrl = logoutButton.dataset.agLogoutRedirect || '/login';
+
     logoutButton.addEventListener('click', async function (e) {
         e.preventDefault();
 
         try {
-            const response = await fetch('/logout', {
+            const response = await fetch(logoutUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -46,8 +53,7 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
             if (response.ok) {
-                // Logout exitoso — redirigir a /login
-                window.location.href = '/login';
+                window.location.href = redirectUrl;
             } else {
                 console.error('Logout failed:', response.status);
                 // En caso de error, mantener en la página actual

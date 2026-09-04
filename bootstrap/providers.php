@@ -7,6 +7,7 @@ use App\Dominios\Inventario\Infraestructura\InventarioServiceProvider;
 use App\Dominios\Mantenimiento\Infraestructura\MantenimientoServiceProvider;
 use App\Dominios\Operaciones\Infraestructura\OperacionesServiceProvider;
 use App\Dominios\Personal\Infraestructura\PersonalServiceProvider;
+use App\Dominios\Portal\Infraestructura\PortalServiceProvider;
 use App\Dominios\Seguridad\Infraestructura\SeguridadServiceProvider;
 use App\Providers\AppServiceProvider;
 
@@ -20,4 +21,5 @@ return [
     FinanzasServiceProvider::class,
     MantenimientoServiceProvider::class,
     InventarioServiceProvider::class,
+    PortalServiceProvider::class,
 ];
