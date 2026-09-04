@@ -83,6 +83,44 @@ Cargá las skills `seguridad-roles`, `dominio-backend`, `panel-design-ui` y
    alguien quitó a mano. Documentá ese contrato en el docblock del seeder y
    cubrilo con test.
 
+## Cómo tiene que sentirse (pedido explícito del usuario, 4/9/2026)
+
+El usuario va a evaluar esta tarea mirando la pantalla, no el código: "que
+sea intuitiva". Concretamente, y todo con `panel-design-ui`:
+
+- **Nunca un slug a la vista.** `finanzas.devengo.ver` se muestra como
+  "Ver devengos" bajo el grupo "Finanzas"; el código técnico va en un
+  `title`/tooltip o en texto secundario, nunca como etiqueta principal.
+  Cada permiso del seeder tiene su nombre legible en `lang/es/seguridad.php`
+  (`permiso.{codigo}`); si falta la clave, el test falla, no se muestra el
+  slug.
+- **La matriz se lee de un vistazo.** Un bloque por módulo (Seguridad,
+  Operaciones, Comercial, ...) con encabezado que dice "7 de 12" y un
+  control "todo el módulo" que marca/desmarca el bloque entero; dentro,
+  una fila por permiso con verbo primero ("Ver", "Crear", "Validar",
+  "Anular") y la entidad después. Bloques colapsables, expandidos por
+  defecto los que tienen algo marcado.
+- **Ver vs. hacer, separados.** En la ficha del rol, primero "Qué ve"
+  (vista previa del menú, como un sidebar en miniatura con los mismos
+  íconos del panel) y después "Qué puede hacer" (la matriz). Un cambio en
+  la matriz que altera el menú se refleja en la vista previa sin recargar
+  (Livewire o un recálculo al guardar; alcanza con que al guardar la
+  vista previa ya esté actualizada).
+- **Buscador dentro de la matriz** que filtra filas por nombre legible o
+  código, para roles con 89 permisos.
+- **Sin guardado a medias.** Un único botón "Guardar cambios" que aparece
+  solo cuando hay diferencias, con contador ("3 cambios"), y confirmación
+  previa si se está quitando algún permiso `seguridad.*`. Tras guardar,
+  toast de éxito y la matriz muestra el estado nuevo.
+- **Errores en lenguaje de negocio.** "No podés quitar este permiso: es el
+  último rol que puede administrar permisos", nunca un 422 pelado ni
+  nombres de columna.
+- **En el selector de rol** (`/panel/seleccionar-rol`), cada tarjeta lista
+  los módulos que habilita con sus íconos, en una línea, como "Operaciones
+  · Finanzas · Personal", para que un usuario multirol elija sin adivinar.
+- **Accesible por teclado** y con los tokens del tema claro/oscuro; ningún
+  color hardcodeado (invariante 11).
+
 ## Qué NO hacer
 
 - No crees una pantalla para inventar permisos nuevos: el catálogo de

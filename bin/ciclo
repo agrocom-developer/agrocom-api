@@ -221,11 +221,30 @@ sucio_ajeno() {
         head -5
 }
 
+# Los archivos de planificación (prompts encolados, cola_tareas) pueden estar
+# sin commitear al volver: los deja la planificación, o el usuario retoca un
+# prompt encolado mientras corre la tarea anterior. `git checkout` se niega a
+# cambiar de rama si develop no tiene esa versión del archivo — así se cortó el
+# ciclo el 4/9/2026 con la cola llena: el prompt de la 64, editado a mano
+# durante la 62, tumbó el arranque de la 63. Se los lleva en un stash y se los
+# devuelve una vez parado en develop; solo si no vuelven a aplicar se aborta.
 volver_a_develop() {
-    git checkout develop --quiet 2>/dev/null || return 1
+    local guardado=0
+    if [ -n "$(git status --porcelain -- "${PLANIFICACION[@]}")" ]; then
+        git stash push --quiet --include-untracked -m "ciclo: planificación sin commitear" \
+            -- "${PLANIFICACION[@]}" >/dev/null 2>&1 && guardado=1
+    fi
+    if ! git checkout develop --quiet 2>/dev/null; then
+        [ "$guardado" = 1 ] && git stash pop --quiet >/dev/null 2>&1
+        return 1
+    fi
     git fetch --quiet origin develop 2>/dev/null
     git merge --quiet --ff-only origin/develop 2>/dev/null ||
         aviso "develop local no pudo adelantarse a origin/develop — la rama nace de una base vieja"
+    if [ "$guardado" = 1 ] && ! git stash pop --quiet >/dev/null 2>&1; then
+        malo "La planificación sin commitear no volvió a aplicar sobre develop (quedó en git stash)"
+        return 1
+    fi
     return 0
 }
 
