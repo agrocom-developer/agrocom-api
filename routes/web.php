@@ -166,6 +166,16 @@ Route::middleware('auth:interno')->group(function () {
         Route::get('/panel/trabajos/{trabajo}/reporte/pdf', [TrabajosController::class, 'reporteTecnicoPdf'])
             ->name('panel.trabajos.reporte-pdf');
 
+        // HU-42 (tarea 56): galería de evidencias de un trabajo — solo
+        // lectura, mismo permiso `operaciones.trabajo.ver` que el detalle.
+        // El streaming del archivo real vive en una ruta propia porque no
+        // cuelga de un `{trabajo}` (la evidencia puede venir de una sesión).
+        Route::get('/panel/trabajos/{trabajo}/evidencias', [TrabajosController::class, 'evidencias'])
+            ->name('panel.trabajos.evidencias');
+
+        Route::get('/panel/evidencias/{evidencia}/archivo', [TrabajosController::class, 'evidenciaArchivo'])
+            ->name('panel.evidencias.archivo');
+
         // HU-14 (tarea 14): cola de validación de sesiones cerradas.
         // Permiso `operaciones.sesion.validar` verificado DENTRO del
         // controlador contra el ROL ACTIVO, mismo criterio que las rutas de

@@ -133,6 +133,31 @@ return [
             'fin_jornada' => 'Fin de jornada',
             'otro' => 'Otro',
         ],
+        // Galería de evidencias (HU-42, tarea 56): panel.trabajos.evidencias.
+        // Agrupa las tres evidencias que existen hoy para un trabajo — no hay
+        // `captura_rc` a nivel de sesión (recorte de otra tarea, fuera de
+        // alcance de esta pantalla).
+        'volver_al_detalle' => 'Volver al detalle',
+        'evidencias_titulo' => 'Evidencias del trabajo #:id',
+        'evidencias_ver_galeria' => 'Ver galería de evidencias',
+        'evidencias_descargar' => 'Descargar',
+        'evidencias_imagen_campo_titulo' => 'Imagen de campo',
+        'evidencias_imagen_campo_vacio' => 'Todavía no se registró la imagen de campo de este trabajo.',
+        'evidencias_firma_acta_titulo' => 'Firma del acta',
+        'evidencias_firma_acta_vacio' => 'Todavía no se firmó el acta de este trabajo.',
+        'evidencias_incidencias_titulo' => 'Incidencias con foto',
+        'evidencias_incidencias_vacio' => 'Ninguna sesión de este trabajo registró una incidencia con foto.',
+        'evidencias_sesion_titulo' => 'Sesión #:secuencia',
+        // Catálogo de TipoIncidencia (espec §4.3, tabla `incidencias`; HU-08,
+        // tarea 22) — sin traducir todavía en ningún otro lado del panel.
+        'incidencia_tipo' => [
+            'caldo' => 'Caldo',
+            'esc' => 'ESC',
+            'bateria' => 'Batería',
+            'mecanica' => 'Mecánica',
+            'clima' => 'Clima',
+            'otro' => 'Otro',
+        ],
     ],
 
     // Pantalla de panel "Operación › Sesiones" (HU-14, tarea 14): cola de
