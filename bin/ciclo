@@ -416,7 +416,7 @@ leer_veredicto() {
         tr -d '[:space:]' < "runs/$id.veredicto"
         return 0
     fi
-    palabra=$(head -20 "runs/$id-veredicto.md" 2>/dev/null | grep -oE 'b(APROBADO|RECHAZADO)b' | head -1)
+    palabra=$(head -20 "runs/$id-veredicto.md" 2>/dev/null | grep -owE 'APROBADO|RECHAZADO' | head -1)
     printf '%s' "${palabra:-SIN-VEREDICTO}"
 }
 
