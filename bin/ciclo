@@ -404,6 +404,22 @@ No toques los tests para que pasen."
 # propio archivo, y la vuelta se agotaba sola. Pasó en la tarea 04. La garantía
 # que importa no se pierde: quien juzga sigue siendo el verificador, que no
 # puede tocar nada.
+# El verificador tiene que dejar dos archivos: runs/NN.veredicto (una palabra)
+# y runs/NN-veredicto.md (el detalle). En la tarea 55 dos de tres vueltas
+# escribieron solo el detalle, y el ciclo contó "SIN-VEREDICTO" como rechazo
+# sin leer lo que el verificador sí había dicho. Si falta la palabra, se
+# busca en el encabezado del detalle: APROBADO o RECHAZADO en sus primeras
+# líneas. Si tampoco está ahí, sigue siendo SIN-VEREDICTO.
+leer_veredicto() {
+    local id="$1" palabra
+    if [ -f "runs/$id.veredicto" ]; then
+        tr -d '[:space:]' < "runs/$id.veredicto"
+        return 0
+    fi
+    palabra=$(head -20 "runs/$id-veredicto.md" 2>/dev/null | grep -owE 'APROBADO|RECHAZADO' | head -1)
+    printf '%s' "${palabra:-SIN-VEREDICTO}"
+}
+
 fase_verificar() {
     local id="$1" intento veredicto texto archivo noche zonas
     local plantilla=prompts/plantillas/verificar.md
@@ -428,7 +444,7 @@ fase_verificar() {
         texto=$(sed "s/{{ID}}/$id/g" "$plantilla")
         sesion "$texto" "runs/$id-verificar.log" "Read Glob Grep Bash Write" 1 "$MODELO_PESADO" ""
 
-        veredicto=$(tr -d '[:space:]' < "runs/$id.veredicto" 2>/dev/null || echo "SIN-VEREDICTO")
+        veredicto=$(leer_veredicto "$id")
         log "veredicto: $veredicto"
         [ "$veredicto" = "APROBADO" ] && { ok "Tarea $id aprobada por el verificador"; return 0; }
 
