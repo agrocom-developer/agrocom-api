@@ -92,9 +92,20 @@ test.describe('rendiciones', () => {
             // Navega a la lista de rendiciones y accede al primer detalle
             // (el fixture carga al menos una rendición)
             await page.goto('/panel/rendiciones');
-            // Espera la tabla y haz clic en el primer botón "Ver"
+            // Espera la tabla y haz clic en el primer botón "Ver". El click
+            // dispara una navegación de documento completo (no hay SPA) —
+            // sin esperarla explícitamente (mismo patrón que iniciarSesion/
+            // elegirRolDueno en helpers.ts), el test podía seguir antes de
+            // que el CSS de la página de detalle terminara de aplicarse: la
+            // captura salía con el topbar sin estilar/corrido, de forma no
+            // determinística (~1 de cada 4 corridas). Confirmado con
+            // mediciones de layout (getBoundingClientRect de .ag-topbar)
+            // fuera de Playwright, ver runs/61.md.
             await page.waitForSelector('[role="table"]');
-            await page.click('a:has-text("Ver")');
+            await Promise.all([
+                page.waitForURL('**/panel/rendiciones/*'),
+                page.click('a:has-text("Ver")'),
+            ]);
         });
 
         test('claro', async ({ page }) => {

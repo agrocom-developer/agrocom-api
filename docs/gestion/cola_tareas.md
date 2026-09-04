@@ -1,14 +1,14 @@
 # Cola de tareas automatizables
 
-**Última actualización: 4/9/2026 (planificación tras el cierre de la 56,
-HU-42/galería de evidencias — PR #107). Se restauró el prompt de la 57
-(HU-43/listado de reportes técnicos), perdido en la rama sin mergear de la 55
-— ver "El bug de la 24" — y se agregaron la 58 (HU-44/pausas con causa
-atribuible), la 59 (TE-13/quitar `Operación › Mezclas` del menú) y la 60
-(TE-14/badges reales del sidebar): las tres HU/TE que quedan de Sprint 12,
-el último del plan. De paso se corrigieron siete filas de esta tabla (46,
-47, 49, 50, 52, 53, 54) que seguían marcadas `pendiente` pese a tener PR
-mergeado — el git log es la fuente real, este documento se había desfasado.)**
+**Última actualización: 4/9/2026 (planificación tras el cierre de la 60,
+TE-14/badges reales del sidebar — PR #111). Con la 60, Sprint 12 y el plan
+de doce sprints cierran completos, salvo la 55 (HU-41/portal del cliente),
+rechazada dos veces y marcada para revisión humana. Se agregó la 61,
+deuda técnica de Playwright sin fila propia en `plan_sprints.md` — ver
+"Por qué ese orden" al final. De paso se corrigieron siete filas de esta
+tabla (46, 47, 49, 50, 52, 53, 54) que seguían marcadas `pendiente` pese a
+tener PR mergeado — el git log es la fuente real, este documento se había
+desfasado.)**
 Este es el backlog que el ciclo de
 `bin/ciclo` consume solo — el punto 3 de
 [automatizacion_desarrollo.md](automatizacion_desarrollo.md). No reemplaza a
@@ -102,10 +102,11 @@ exista el módulo `Mezclas`).
 | 54 | HU-38 — planes de mantenimiento preventivo por horas de vuelo: `man_planes_mantenimiento` por modelo de dron (correlación por texto, sin FK), horas acumuladas derivadas de `ope_sesiones` (suma `fin - inicio` en PHP) vía contrato de lectura nuevo, alerta calculada al leer | `./bin/verify` = 0, con test de alerta activada al cruzar el umbral y de plan sin drones de ese modelo sin alerta | `Mantenimiento/**`, `Operaciones/Contratos/**`+`Infraestructura/**`, migración nueva, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/mantenimiento.php`, tests | no | 4 | **hecha** (PR #104, mergeado 3/9/2026) |
 | 55 | HU-41 — portal del cliente: entra y ve solo sus reportes/actas/avance, todo consultado desde el `contrato` del usuario autenticado (invariante 5); test obligatorio de cliente A pidiendo recurso de cliente B → 404. Abre Sprint 12 | `./bin/verify` = 0, con el test de scoping cruzado (404) | módulo nuevo o extensión de `Comercial`/`Seguridad` para el rol cliente, `routes/web.php` o `routes/portal.php`, `SeguridadSeeder`, `SecMenuSeeder`, tests | **sí** | 4 | **RECHAZADA dos veces** — PR #106 en borrador, sin integrar. `runs/55.md`/`runs/55-veredicto.md` tienen el detalle; queda marcada para revisión humana (`runs/revision-pendiente.txt`), ninguna tarea posterior debe reintentarla ni tocar esa rama |
 | 56 | HU-42 — galería de evidencias de un trabajo: pantalla sobre `ope_evidencias` agrupada por trabajo y sesión, con miniaturas y descarga | `./bin/verify` = 0, con Playwright | `Operaciones/**` (pantalla panel), `routes/web.php`, tests | no | 2 | **hecha** (PR #107, mergeado 4/9/2026) |
-| 57 | HU-43 — listado de reportes técnicos: pantalla sobre `ope_reportes_tecnicos` con filtro por cliente y período, reusando la descarga individual ya existente | `./bin/verify` = 0, con Playwright | `Operaciones/**` (contrato de lectura, caso de uso, controlador, vista), `Comercial/Contratos/**` (contrato de lectura inverso hacia el nombre del cliente), `routes/web.php`, `SecMenuSeeder` (solo activar el placeholder), tests | no | 3 | escrita — su prompt se perdió en la rama sin mergear de la 55 y se restauró de `git show 3463b52:prompts/57-listado-reportes-tecnicos.md` sin reescribirlo, ver "El bug de la 24" |
-| 58 | HU-44 — pausas con causa atribuible (DS-01): pausa ligada a sesión con causa de catálogo, agregado por causa en un tablero propio | `./bin/verify` = 0, con test de agregación exacta por causa y de causa fuera de catálogo rechazada | `Operaciones/**` (migración `ope_pausas`, caso de uso, controlador, vista), `SeguridadSeeder`, `SecMenuSeeder` (solo activar el placeholder `pausas`), tests | no | 4 | escrita |
-| 59 | TE-13 — quitar del menú el ítem `Operación › Mezclas`: no existe más por CR-01 | `./bin/verify` = 0, con test de que `sec_menu` no tiene ninguna fila `menu.operacion.items.mezclas` | `SecMenuSeeder.php`, `lang/es/menu.php`, tests | no | 2 | escrita |
-| 60 | TE-14 — reemplazar los badges de demostración del sidebar (`DatosDemoPanel::badgesMenu()`) por contadores reales o quitarlos si no hay fuente real; depende de que la 57 y la 58 estén integradas | `./bin/verify` = 0, con test de que cada badge que queda cambia con su dato de origen y de que los que no tienen fuente real no aparecen | `Seguridad/Infraestructura/Http/Demo/DatosDemoPanel.php` (solo `badgesMenu()`), `CascaraPanel.php`, `DashboardController.php`, contratos de lectura nuevos en `Operaciones`/`Inventario`/`Finanzas`, tests | no | 3 | escrita |
+| 57 | HU-43 — listado de reportes técnicos: pantalla sobre `ope_reportes_tecnicos` con filtro por cliente y período, reusando la descarga individual ya existente | `./bin/verify` = 0, con Playwright | `Operaciones/**` (contrato de lectura, caso de uso, controlador, vista), `Comercial/Contratos/**` (contrato de lectura inverso hacia el nombre del cliente), `routes/web.php`, `SecMenuSeeder` (solo activar el placeholder), tests | no | 3 | **hecha** (PR #108, mergeado 4/9/2026) |
+| 58 | HU-44 — pausas con causa atribuible (DS-01): pausa ligada a sesión con causa de catálogo, agregado por causa en un tablero propio | `./bin/verify` = 0, con test de agregación exacta por causa y de causa fuera de catálogo rechazada | `Operaciones/**` (migración `ope_pausas`, caso de uso, controlador, vista), `SeguridadSeeder`, `SecMenuSeeder` (solo activar el placeholder `pausas`), tests | no | 4 | **hecha** (PR #109, mergeado 4/9/2026) |
+| 59 | TE-13 — quitar del menú el ítem `Operación › Mezclas`: no existe más por CR-01 | `./bin/verify` = 0, con test de que `sec_menu` no tiene ninguna fila `menu.operacion.items.mezclas` | `SecMenuSeeder.php`, `lang/es/menu.php`, tests | no | 2 | **hecha** (PR #110, mergeado 4/9/2026) |
+| 60 | TE-14 — reemplazar los badges de demostración del sidebar (`DatosDemoPanel::badgesMenu()`) por contadores reales o quitarlos si no hay fuente real; depende de que la 57 y la 58 estén integradas | `./bin/verify` = 0, con test de que cada badge que queda cambia con su dato de origen y de que los que no tienen fuente real no aparecen | `Seguridad/Infraestructura/Http/Demo/DatosDemoPanel.php` (solo `badgesMenu()`), `CascaraPanel.php`, `DashboardController.php`, contratos de lectura nuevos en `Operaciones`/`Inventario`/`Finanzas`, tests | no | 3 | **hecha** (PR #111, mergeado 4/9/2026) — cierra Sprint 12 y el plan de doce sprints completo (salvo la 55) |
+| 61 | Deuda técnica (no es fila de `plan_sprints.md`, mismo criterio que 28-30): eliminar el no determinismo de `rendiciones.spec.ts → show` (claro u oscuro, alterna cuál falla) — el único rojo de Playwright que sigue sin explicación tras la 60, que regeneró los ~100 snapshots que tapaban el resto del drift preexistente | `npx playwright test tests/Visual/rendiciones.spec.ts --grep show --repeat-each=5` = 0, y `./bin/verify` = 0 sin ningún otro snapshot movido | `tests/Visual/rendiciones.spec.ts`, `resources/css/components/{topbar,panel-layout}.css` (si la causa es de layout compartido), `playwright.config.ts` (si hace falta, sin agregar `retries`) | no | 2 | escrita |
 
 ### El bug de la 24 — ya pasó dos veces, sigue sin arreglarse
 
@@ -538,3 +539,44 @@ encontrar más filas que agregar de un sprint nuevo, debe revisar primero si
 alguna de las líneas de "Fuera del ciclo automático" cambió de condición
 (por ejemplo, si ya hay datos de beta para TE-08) antes de considerar
 `runs/DETENER`.
+
+**61 se escribe porque ninguna línea de "Fuera del ciclo automático" cambió
+de condición, pero apareció una deuda técnica nueva con criterio ejecutable
+propio.** Con Sprint 12 cerrado (60), se revisó la tabla de arriba entera
+antes de considerar `runs/DETENER`: TE-01 (resto) y TE-08 siguen sin
+staging real (ADR 0010 sigue con el alcance de servidor abierto), TE-02
+sigue necesitando el RC en mano, TE-04/TE-07 (parte app) siguen en
+`agrocom-field`, TE-09/HU-21/TE-10/TE-11/TE-12 siguen atados a ensayo de
+campo y producción real, y la reunión de cierre sigue siendo de negocio —
+nada de eso calificó. Se evaluó también si TE-12 (matriz de permisos con
+test por celda) podía recortarse como se hizo con TE-14/HU-09/HU-20 en
+tareas anteriores, y se descartó: la matriz de `especificacion_funcional_
+tecnica.md` §3 todavía tiene filas de mezcla (fuera de alcance por CR-01,
+sin reconciliar porque la especificación no se toca hasta la reunión de
+cierre) y una fila de portal del cliente que depende de la 55, rechazada y
+marcada para no reintentarse — escribir esa tarea hubiera significado
+inventar un recorte de alcance no pedido por nadie, no ejecutar una
+decisión ya tomada.
+
+Revisando en cambio `runs/*.md` de las últimas diez tareas apareció un
+patrón real: diez sesiones seguidas (32, 53 a 60) documentaron "rojo
+preexistente" de Playwright sin tocarlo, siempre con el mismo argumento
+correcto (el gate real de CI no corre Playwright, así que no bloqueaba
+ningún merge) pero sin que nadie lo arreglara — igual que las invariantes 7
+y 9 antes de las tareas 04 y 06, o el gap de FK antes de la 30. La tarea 60
+regeneró de un saque los ~100 snapshots que tapaban la mayor parte de ese
+rojo (drift de fuentes/antialiasing del entorno). Queda un solo caso que
+**no** es drift de fuentes — `rendiciones show`, no determinístico,
+reproducido con y sin los cambios de la 60 — y con eso aislado, tiene
+criterio de aceptación ejecutable propio (determinismo en corridas
+repetidas) sin depender de ninguna decisión pendiente. Mismo criterio que
+28-30: no es fila de `plan_sprints.md`, pero es deuda concreta, documentada
+por varias tareas, con exit code verificable.
+
+**Detrás de la 61 no queda ninguna fila más escrita.** Si se integra sin
+sorpresas, la próxima planificación vuelve a estar en la misma situación
+que esta (Sprint 12 cerrado, nada nuevo calificable) y debe repetir la
+misma revisión de "Fuera del ciclo automático" antes de escribir
+`runs/DETENER` — no se prepararon tareas 62/63 a ciegas porque, a
+diferencia de una HU con corte de dominio conocido, no hay una segunda
+pieza de deuda técnica identificada todavía con la misma certeza que la 61.
