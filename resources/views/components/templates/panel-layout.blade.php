@@ -141,7 +141,12 @@
 
     $tieneVariosRoles = count($roles) > 1;
     $cambiarRolHref = $tieneVariosRoles ? route('panel.rol-activo.selector', ['cambiar' => 1]) : null;
-    $configuracionHref = \Illuminate\Support\Facades\Route::has('panel.organizacion.index') ? route('panel.organizacion.index') : null;
+    // Tarea 62 (fuga 2): el engranaje ya no se ofrece a un rol sin
+    // `seguridad.organizacion.ver` — antes era un atajo visible para
+    // cualquiera hacia una pantalla que hoy exige ese permiso.
+    $configuracionHref = \Illuminate\Support\Facades\Route::has('panel.organizacion.index') && \App\Dominios\Seguridad\Infraestructura\Http\Presentacion\PermisoVista::puede('seguridad.organizacion.ver')
+        ? route('panel.organizacion.index')
+        : null;
     $drawerId = 'ag-module-drawer';
 @endphp
 

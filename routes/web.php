@@ -30,6 +30,7 @@ use App\Dominios\Personal\Infraestructura\Http\Controllers\Web\PersonasControlle
 use App\Dominios\Portal\Infraestructura\Http\Controllers\Web\ActasPortalController;
 use App\Dominios\Portal\Infraestructura\Http\Controllers\Web\AvancePortalController;
 use App\Dominios\Portal\Infraestructura\Http\Controllers\Web\ReportesPortalController;
+use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\DashboardController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\DispositivosController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\OrganizacionController;
@@ -39,6 +40,7 @@ use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\RolActivoControl
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\SesionController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\SesionPortalController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\UsuariosController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -57,8 +59,16 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return redirect()->route(auth('interno')->check() ? 'panel.dashboard' : 'login.form');
+Route::get('/', function (AutorizacionPanelWeb $autorizacion, Request $request) {
+    if (! auth('interno')->check()) {
+        return redirect()->route('login.form');
+    }
+
+    // Primer ítem visible del menú del rol activo (tarea 62, fuga 2): un
+    // usuario ya logueado que revisita "/" (favorito, refresh) no puede
+    // rebotar a un `panel.dashboard` fijo si su rol activo no tiene ese
+    // permiso — mismo destino que ya resuelven login y cambio de rol.
+    return redirect()->to($autorizacion->primerDestinoVisible($request));
 });
 
 Route::get('/login', function () {

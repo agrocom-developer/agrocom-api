@@ -2,22 +2,25 @@
 
 namespace App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use App\Dominios\Seguridad\Infraestructura\Http\Demo\DatosDemoCapturasRc;
 use App\Dominios\Seguridad\Infraestructura\Http\Demo\DatosDemoMapaOperativo;
 use App\Dominios\Seguridad\Infraestructura\Http\Demo\DatosDemoPanel;
 use App\Dominios\Seguridad\Infraestructura\Http\Middleware\ResolverRolActivo;
 use App\Dominios\Seguridad\Infraestructura\Http\Presentacion\CascaraPanel;
-use Database\Seeders\Catalogo\SecMenuSeeder;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**
  * `GET /panel/dashboard` (`panel.dashboard`): página de aterrizaje del panel
  * tras el login — el "Operación de hoy", panel visual/estadístico con
- * pestañas Resumen / Mapa / Resumen por lote / Multimedia. Sin permiso
- * propio: visible para cualquier usuario autenticado con rol activo
- * resuelto (`sec_menu` la siembra sin `permission_id`, {@see SecMenuSeeder}).
+ * pestañas Resumen / Mapa / Resumen por lote / Multimedia. Gateada por
+ * `seguridad.dashboard.ver` (tarea 62, fuga 2: antes era visible para
+ * cualquier usuario autenticado con rol activo resuelto, sin permiso propio
+ * — un `auxiliar` veía el tablero completo). Un rol sin este permiso nunca
+ * aterriza acá tras el login: {@see AutorizacionPanelWeb::primerDestinoVisible()}
+ * resuelve el primer ítem de menú que sí puede ver.
  *
  * Middleware `auth:interno` + `rol.activo`: para cuando este controlador se
  * ejecuta, `session('sec_rol_activo_id')` ya es un rol vivo válido de este
@@ -32,13 +35,18 @@ use Illuminate\View\View;
  */
 final class DashboardController
 {
+    private const PERMISO_VER = 'seguridad.dashboard.ver';
+
     public function index(
         Request $request,
+        AutorizacionPanelWeb $autorizacion,
         CascaraPanel $cascara,
         DatosDemoPanel $demo,
         DatosDemoMapaOperativo $demoMapa,
         DatosDemoCapturasRc $demoCapturas,
     ): View {
+        abort_unless($autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
+
         /** @var SecUser $usuario */
         $usuario = $request->user('interno');
         $idRolActivo = (int) $request->session()->get('sec_rol_activo_id');

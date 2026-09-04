@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use App\Dominios\Seguridad\Infraestructura\Http\Presentacion\CascaraPanel;
 use Illuminate\Http\Request;
@@ -20,8 +21,9 @@ use Illuminate\View\View;
  * sería una mutación fantasma sin persistencia real y sin bitácora (rompe el invariante 9
  * de `CLAUDE.md`). Los botones "Guardar"/"Descartar" están deshabilitados.
  *
- * Autorización: visible sin permiso propio (mismo patrón que "Inicio"), para cualquier
- * usuario autenticado del panel. El ítem de menú vive en `sec_menu` con `permission_id = null`
+ * Autorización: gateada por `seguridad.organizacion.ver` (tarea 62, fuga 2: antes era
+ * visible sin permiso propio para cualquier usuario autenticado — un `auxiliar` veía la
+ * ficha completa de la compañía). El ítem de menú en `sec_menu` lleva ahora ese permiso
  * ({@see Database\Seeders\Catalogo\SecMenuSeeder}).
  *
  * Middleware `auth:interno` + `rol.activo`: para cuando este controlador se ejecuta,
@@ -42,8 +44,12 @@ use Illuminate\View\View;
  */
 final class OrganizacionController
 {
-    public function index(Request $request, CascaraPanel $cascara): View
+    private const PERMISO_VER = 'seguridad.organizacion.ver';
+
+    public function index(Request $request, AutorizacionPanelWeb $autorizacion, CascaraPanel $cascara): View
     {
+        abort_unless($autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
+
         /** @var SecUser $usuario */
         $usuario = $request->user('interno');
         $idRolActivo = (int) $request->session()->get('sec_rol_activo_id');

@@ -71,13 +71,15 @@ final class CascaraPanel
      * único que pinta el badge en el sidebar (compacto); `texto` es la frase
      * completa del tooltip.
      *
-     * Tres ítems de la maqueta original quedan sin badge porque ningún
+     * Dos ítems de la maqueta original quedan sin badge porque ningún
      * módulo tiene un dato real detrás (ver `docs/gestion/plan_sprints.md`
      * Sprint 12 §255): `operacion.items.programacion` (no existe el
-     * concepto de sesión programada), `comercial.items.reportes_cliente`
-     * (portal del cliente sin integrar, HU-41) y `recursos.items.drones`
-     * (`ope_drones` no registra estado de taller). `panel-layout.blade.php`
-     * ya tolera la ausencia de una clave (`$menuBadges[$label] ?? null`).
+     * concepto de sesión programada) y `recursos.items.drones` (`ope_drones`
+     * no registra estado de taller). `comercial.items.reportes_cliente`
+     * (el tercero de esa lista) se retiró del catálogo en la tarea 62 (fuga
+     * 3, `SecMenuSeeder`) — nunca llegó a tener pantalla propia.
+     * `panel-layout.blade.php` ya tolera la ausencia de una clave
+     * (`$menuBadges[$label] ?? null`).
      *
      * @return array<string, array{numero: string, texto: string}>
      */

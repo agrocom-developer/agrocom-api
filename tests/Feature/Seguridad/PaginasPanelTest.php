@@ -1,5 +1,7 @@
 <?php
 
+use App\Dominios\Personal\Dominio\RolOperativoPersona;
+use App\Dominios\Personal\Infraestructura\Eloquent\PerPersona;
 use App\Dominios\Seguridad\Aplicacion\ItemMenu;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
@@ -54,7 +56,7 @@ it('el selector de rol responde 200 con la lista de roles vivos cuando hay 2+', 
     expect(session('sec_rol_activo_id'))->toBeNull();
 });
 
-it('el selector de rol con un único rol vivo lo fija solo y redirige al dashboard', function () {
+it('el selector de rol con un único rol vivo lo fija solo y redirige al primer ítem visible de su menú', function () {
     $usuario = SecUser::factory()->create();
     $idPiloto = panelAsignarRol($usuario, 'piloto');
 
@@ -62,8 +64,23 @@ it('el selector de rol con un único rol vivo lo fija solo y redirige al dashboa
 
     $respuesta = $this->get(route('panel.rol-activo.selector'));
 
-    $respuesta->assertRedirect(route('panel.dashboard'));
+    // Piloto no tiene seguridad.dashboard.ver (tarea 62, fuga 2): su único
+    // ítem visible es Financiero > Devengos (finanzas.devengo.ver), nunca el
+    // dashboard.
+    $respuesta->assertRedirect(route('panel.devengos.index'));
     expect(session('sec_rol_activo_id'))->toBe($idPiloto);
+});
+
+it('el selector de rol con un único rol vivo que sí tiene dashboard.ver redirige al dashboard', function () {
+    $usuario = SecUser::factory()->create();
+    $idJefeCampo = panelAsignarRol($usuario, 'jefe_campo');
+
+    $this->actingAs($usuario, 'interno');
+
+    $respuesta = $this->get(route('panel.rol-activo.selector'));
+
+    $respuesta->assertRedirect(route('panel.dashboard'));
+    expect(session('sec_rol_activo_id'))->toBe($idJefeCampo);
 });
 
 it('el selector de rol sin ningún rol vivo responde 200 con la lista vacía, sin redirigir', function () {
@@ -102,15 +119,53 @@ it('el dashboard responde 200 con el árbol de menú del rol activo de la sesió
         ->assertViewHas('menu', fn (array $menu): bool => $menu !== [] && $menu[0] instanceof ItemMenu);
 });
 
-it('la página de organización responde 200 para cualquier rol activo (sin permiso propio)', function () {
+it('la página de organización responde 200 para un rol activo con seguridad.organizacion.ver', function () {
     $usuario = SecUser::factory()->create();
-    $idPiloto = panelAsignarRol($usuario, 'piloto');
+    $idDueno = panelAsignarRol($usuario, 'dueno');
 
-    $this->actingAs($usuario, 'interno')->withSession(['sec_rol_activo_id' => $idPiloto]);
+    $this->actingAs($usuario, 'interno')->withSession(['sec_rol_activo_id' => $idDueno]);
 
     $this->get(route('panel.organizacion.index'))
         ->assertOk()
         ->assertViewIs('seguridad::pages.organizacion.index');
+});
+
+// --- Tarea 62 (fuga 2): dashboard y organización dejaron de ser visibles
+// para cualquier rol activo sin permiso propio ------------------------------
+
+it('un auxiliar (sin dashboard.ver ni organizacion.ver) recibe 403 en ambas pantallas y aterriza en una que sí puede ver tras elegir rol', function () {
+    $persona = PerPersona::query()->create([
+        'nombre' => 'Auxiliar Fuga 2',
+        'rol' => RolOperativoPersona::Auxiliar,
+        'activo' => true,
+    ]);
+    $usuario = SecUser::factory()->create([
+        'username' => 'auxiliar.fuga2',
+        'password' => 'Secreta123',
+        'persona_id' => $persona->id,
+    ]);
+    panelAsignarRol($usuario, 'auxiliar');
+
+    $this->actingAs($usuario, 'interno')->withSession(['sec_rol_activo_id' => (int) SecRole::query()->where('name', 'auxiliar')->value('id')]);
+
+    $this->get(route('panel.dashboard'))->assertForbidden();
+    $this->get(route('panel.organizacion.index'))->assertForbidden();
+
+    // El flujo completo login → selección de rol (único rol vivo, se fija
+    // solo) termina en una pantalla 200 que el auxiliar sí puede ver — nunca
+    // un 403 de aterrizaje.
+    $this->post('/logout');
+    $login = $this->postJson('/login', ['username' => 'auxiliar.fuga2', 'password' => 'Secreta123'])
+        ->assertOk()
+        ->assertJson(['requiere_seleccion_rol' => false]);
+
+    $destino = $login->json('destino');
+    expect($destino)->not->toBeNull();
+
+    // `panel.devengos.index` (el primer ítem visible del auxiliar) redirige
+    // a `.show/{persona}` — se sigue el redirect hasta el 200 final, nunca un
+    // 403 en el camino.
+    $this->followingRedirects()->get($destino)->assertOk();
 });
 
 it('el dashboard sin rol activo resoluble no deja pasar (409 vía middleware rol.activo)', function () {

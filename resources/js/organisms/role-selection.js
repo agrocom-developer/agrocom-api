@@ -10,8 +10,11 @@
  *   (plantilla con placeholder __ROL__, ya traducida — este JS no inventa
  *   copy).
  * - Confirmar postea a POST /panel/rol-activo con `id_role` + `recordar`
- *   (checkbox "Entrar siempre con este rol") y navega al dashboard con la
- *   URL que el servidor pasó por data-attribute (nunca hardcodeada acá).
+ *   (checkbox "Entrar siempre con este rol") y navega a la URL que el
+ *   servidor devuelve en `destino` (primer ítem visible del menú del rol
+ *   recién elegido, tarea 62 — nunca un `/panel/dashboard` fijo: un rol sin
+ *   permiso de dashboard aterrizaría en un 403). El `data-url-dashboard` del
+ *   contenedor queda solo como respaldo si la respuesta no trajera `destino`.
  *
  * Patrón: vanilla + data-attributes, cero framework — mismo criterio que
  * organisms/topbar.js.
@@ -99,7 +102,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (respuesta.ok) {
-                window.location.href = raiz.getAttribute('data-url-dashboard');
+                const datos = await respuesta.json();
+                window.location.href = datos.destino || raiz.getAttribute('data-url-dashboard');
                 return;
             }
 

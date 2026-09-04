@@ -5,7 +5,6 @@ namespace App\Dominios\Seguridad\Aplicacion;
 use App\Dominios\Seguridad\Dominio\Excepciones\PermisoDenegado;
 use App\Dominios\Seguridad\Dominio\Excepciones\UsuarioDuplicado;
 use App\Dominios\Seguridad\Dominio\TipoUsuario;
-use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUserRole;
 use Illuminate\Database\QueryException;
@@ -31,8 +30,6 @@ final class AsignarRolesUsuario
 
     private const PERMISO_ROL_DUENO = 'seguridad.usuario.asignar_rol_dueno';
 
-    private const ROL_DUENO = 'dueno';
-
     /**
      * @param  SecUser  $actor  Quién ejecuta la acción: define tanto el permiso
      *                          exigido para entrar como la autoría de las filas
@@ -48,11 +45,23 @@ final class AsignarRolesUsuario
      *                              actuales se revocan (soft delete) y los
      *                              nuevos se asignan, así "editar" nunca deja
      *                              un rol huérfano por omisión.
+     * @param  int|null  $idRolActivo  Rol activo de la sesión del actor
+     *                                 (`session('sec_rol_activo_id')`), sin
+     *                                 default: quien invoca desde el panel
+     *                                 SIEMPRE lo pasa (evaluación por
+     *                                 `tienePermisoEnRol()`, nunca la unión);
+     *                                 `null` es la elección explícita de un
+     *                                 llamador legítimamente sin sesión
+     *                                 (seeders, comandos, tests directos del
+     *                                 caso de uso), que cae en
+     *                                 `tienePermiso()` (unión) a propósito —
+     *                                 nunca un valor por omisión que nadie
+     *                                 pidió.
      *
      * @throws PermisoDenegado si al actor le falta el permiso de entrada
-     *                         (`crear`/`editar`) o, cuando el rol `dueno`
-     *                         cambia de estado en el payload, el permiso
-     *                         `asignar_rol_dueno`.
+     *                         (`crear`/`editar`) o, cuando algún rol del
+     *                         payload que cambia de estado lleva asignado el
+     *                         permiso `asignar_rol_dueno`, ese mismo permiso.
      * @throws UsuarioDuplicado si el `username` o la `persona_id` ya
      *                          pertenecen a otra cuenta viva.
      */
@@ -66,6 +75,7 @@ final class AsignarRolesUsuario
         ?int $personaId,
         ?int $contratoId,
         array $roleIds,
+        ?int $idRolActivo,
     ): SecUser {
         $esAlta = $usuarioId === null;
 
@@ -76,7 +86,7 @@ final class AsignarRolesUsuario
         /** @var list<int> $roleIds */
         $roleIds = array_values(array_unique(array_map('intval', $roleIds)));
 
-        $this->verificarPermisoDeEntrada($actor, $esAlta);
+        $this->verificarPermisoDeEntrada($actor, $idRolActivo, $esAlta);
 
         return DB::transaction(function () use (
             $actor,
@@ -88,6 +98,7 @@ final class AsignarRolesUsuario
             $personaId,
             $contratoId,
             $roleIds,
+            $idRolActivo,
             $esAlta,
         ): SecUser {
             $usuario = $esAlta
@@ -96,7 +107,7 @@ final class AsignarRolesUsuario
 
             $rolesActuales = $esAlta ? [] : $usuario->idsDeRoles();
 
-            $this->verificarGuardaRolDueno($actor, $rolesActuales, $roleIds);
+            $this->verificarGuardaRolDueno($actor, $idRolActivo, $rolesActuales, $roleIds);
 
             $usuario->name = $name;
             $usuario->username = $username;
@@ -125,37 +136,77 @@ final class AsignarRolesUsuario
         });
     }
 
-    private function verificarPermisoDeEntrada(SecUser $actor, bool $esAlta): void
+    private function verificarPermisoDeEntrada(SecUser $actor, ?int $idRolActivo, bool $esAlta): void
     {
         $codigo = $esAlta ? self::PERMISO_CREAR : self::PERMISO_EDITAR;
 
-        if (! $actor->tienePermiso($codigo)) {
+        if (! $this->actorTienePermiso($actor, $idRolActivo, $codigo)) {
             throw PermisoDenegado::porFaltaDePermiso($codigo);
         }
     }
 
     /**
+     * Guarda genérica por permiso de rol, no por nombre de rol: cualquier rol
+     * del payload que cambie de estado (se asigna o se quita) y que a su vez
+     * tenga otorgado `asignar_rol_dueno` en el catálogo (`sec_role_permission`)
+     * exige que el actor también tenga ese permiso — evaluado en su rol
+     * activo si lo hay, nunca por el nombre literal `dueno` (el rol que hoy
+     * lo tiene podría renombrarse, o el permiso otorgarse a otro rol nuevo,
+     * sin que esta guarda deje de aplicar).
+     *
      * @param  list<int>  $rolesActuales
      * @param  list<int>  $rolesDeseados
      */
-    private function verificarGuardaRolDueno(SecUser $actor, array $rolesActuales, array $rolesDeseados): void
+    private function verificarGuardaRolDueno(SecUser $actor, ?int $idRolActivo, array $rolesActuales, array $rolesDeseados): void
     {
-        $idRolDueno = SecRole::query()->where('name', self::ROL_DUENO)->value('id');
+        $rolesAfectados = array_values(array_unique(array_merge(
+            array_diff($rolesDeseados, $rolesActuales),
+            array_diff($rolesActuales, $rolesDeseados),
+        )));
 
-        if ($idRolDueno === null) {
-            // Catálogo sin sembrar todavía: nada que resguardar (no debería
-            // pasar fuera de un entorno mal seedeado).
+        if ($rolesAfectados === [] || $this->rolesConPermiso($rolesAfectados, self::PERMISO_ROL_DUENO) === []) {
             return;
         }
 
-        $idRolDueno = (int) $idRolDueno;
-
-        $seAsigna = in_array($idRolDueno, array_diff($rolesDeseados, $rolesActuales), true);
-        $seQuita = in_array($idRolDueno, array_diff($rolesActuales, $rolesDeseados), true);
-
-        if (($seAsigna || $seQuita) && ! $actor->tienePermiso(self::PERMISO_ROL_DUENO)) {
+        if (! $this->actorTienePermiso($actor, $idRolActivo, self::PERMISO_ROL_DUENO)) {
             throw PermisoDenegado::porFaltaDePermiso(self::PERMISO_ROL_DUENO);
         }
+    }
+
+    /**
+     * Único punto de evaluación de permiso de este caso de uso: con rol
+     * activo, SIEMPRE `tienePermisoEnRol()`; sin él (llamador legítimamente
+     * sin sesión), la unión de `tienePermiso()` — nunca al revés por default
+     * (ADR 0004, extensión 27/8/2026, punto 5).
+     */
+    private function actorTienePermiso(SecUser $actor, ?int $idRolActivo, string $codigo): bool
+    {
+        return $idRolActivo !== null
+            ? $actor->tienePermisoEnRol($codigo, $idRolActivo)
+            : $actor->tienePermiso($codigo);
+    }
+
+    /**
+     * @param  list<int>  $idsRol
+     * @return list<int> subconjunto de `$idsRol` que tiene otorgado
+     *                   `$codigoPermiso` en el catálogo, vivo en ambos
+     *                   extremos del pivote (`sec_role_permission`,
+     *                   `sec_permission.state`).
+     */
+    private function rolesConPermiso(array $idsRol, string $codigoPermiso): array
+    {
+        return DB::table('sec_role_permission')
+            ->join('sec_permission', 'sec_permission.id', '=', 'sec_role_permission.id_permission')
+            ->whereIn('sec_role_permission.id_role', $idsRol)
+            ->whereNull('sec_role_permission.deleted_at')
+            ->whereNull('sec_permission.deleted_at')
+            ->where('sec_permission.code', $codigoPermiso)
+            ->where('sec_permission.state', true)
+            ->pluck('sec_role_permission.id_role')
+            ->map(static fn (int|string $id): int => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
     }
 
     /**

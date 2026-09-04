@@ -3,6 +3,7 @@
 namespace App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web;
 
 use App\Dominios\Seguridad\Aplicacion\IniciarSesionPanel;
+use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use App\Dominios\Seguridad\Infraestructura\Http\Requests\IniciarSesionRequest;
@@ -23,7 +24,7 @@ use Illuminate\Validation\ValidationException;
  */
 final class SesionController
 {
-    public function store(IniciarSesionRequest $request, IniciarSesionPanel $iniciarSesion): JsonResponse
+    public function store(IniciarSesionRequest $request, AutorizacionPanelWeb $autorizacion, IniciarSesionPanel $iniciarSesion): JsonResponse
     {
         $credenciales = $request->validated();
 
@@ -54,6 +55,12 @@ final class SesionController
                 'name' => $rol->name,
                 'description' => $rol->description,
             ])->values(),
+            // Primer ítem visible del menú del rol activo (tarea 62, fuga 2):
+            // solo tiene sentido cuando el rol activo ya quedó fijado en esta
+            // misma request (rol único o preferido vivo, `IniciarSesionPanel`
+            // arriba) — con 2+ roles sin preferido, `login.js` va al selector
+            // y este valor no se usa.
+            'destino' => $resultado->requiereSeleccion ? null : $autorizacion->primerDestinoVisible($request),
         ]);
     }
 

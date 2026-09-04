@@ -34,10 +34,11 @@ use Illuminate\View\View;
  * (`seguridad.usuario.ver`/`.crear`/`.editar`/`.eliminar`/`.bloquear`/
  * `.asignar_rol_dueno`), verificados DENTRO del controlador contra el ROL
  * ACTIVO vía {@see AutorizacionPanelWeb} — mismo criterio que el resto del
- * panel. `asignar_rol_dueno` no gatea ninguna acción HTTP propia: solo
- * decide si el selector de roles ofrece la opción "dueño" (la guarda real
- * vive en `AsignarRolesUsuario`, evaluada contra la unión de roles del
- * actor, no el rol activo — diseño ya vigente de HU-01).
+ * panel. `asignar_rol_dueno` no tiene una acción HTTP propia, pero sí gatea
+ * `store`/`update` cuando el payload toca un rol que a su vez tiene ese
+ * permiso otorgado (tarea 62: antes solo filtraba el `<select>`, cosmético —
+ * un `PUT` armado a mano con ese id en `roles[]` lo aceptaba igual si el
+ * actor lo tenía en CUALQUIER rol asignado, no en el activo).
  *
  * `type` nunca se expone al formulario: se fija a `TipoUsuario::Interno` acá
  * mismo. `Cliente` es del portal (HU-41), otro flujo de alta.
@@ -93,6 +94,9 @@ final class UsuariosController
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_CREAR), 403);
 
         $datos = $request->validated();
+        $rolesDeseados = array_map('intval', $datos['roles'] ?? []);
+
+        $this->abortarSiFaltaPermisoRolDueno($request, [], $rolesDeseados);
 
         try {
             $asignarRoles->ejecutar(
@@ -104,7 +108,8 @@ final class UsuariosController
                 type: TipoUsuario::Interno,
                 personaId: $this->enteroONull($datos['persona_id'] ?? null),
                 contratoId: null,
-                roleIds: array_map('intval', $datos['roles'] ?? []),
+                roleIds: $rolesDeseados,
+                idRolActivo: $this->rolActivoId($request),
             );
         } catch (UsuarioDuplicado|PermisoDenegado $excepcion) {
             return redirect()->back()->withErrors(['estado' => $excepcion->getMessage()]);
@@ -133,6 +138,9 @@ final class UsuariosController
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
 
         $datos = $request->validated();
+        $rolesDeseados = array_map('intval', $datos['roles'] ?? []);
+
+        $this->abortarSiFaltaPermisoRolDueno($request, $usuario->idsDeRoles(), $rolesDeseados);
 
         try {
             $asignarRoles->ejecutar(
@@ -144,7 +152,8 @@ final class UsuariosController
                 type: $usuario->type,
                 personaId: $this->enteroONull($datos['persona_id'] ?? null),
                 contratoId: $usuario->contrato_id,
-                roleIds: array_map('intval', $datos['roles'] ?? []),
+                roleIds: $rolesDeseados,
+                idRolActivo: $this->rolActivoId($request),
             );
         } catch (UsuarioDuplicado|PermisoDenegado $excepcion) {
             return redirect()->back()->withErrors(['estado' => $excepcion->getMessage()]);
@@ -189,6 +198,18 @@ final class UsuariosController
             ->with('estado', __('seguridad.usuarios.bloqueo_actualizado'));
     }
 
+    /**
+     * Rol activo de la sesión del actor (`session('sec_rol_activo_id')`), a
+     * pasar explícito a {@see AsignarRolesUsuario} — mismo dato que ya lee
+     * `AutorizacionPanelWebSesion` para evaluar permisos del panel contra el
+     * ROL ACTIVO, nunca la unión de roles del actor (invariante 10 de
+     * CLAUDE.md).
+     */
+    private function rolActivoId(Request $request): int
+    {
+        return (int) $request->session()->get('sec_rol_activo_id');
+    }
+
     private function enteroONull(mixed $valor): ?int
     {
         return $valor === null || $valor === '' ? null : (int) $valor;
@@ -200,10 +221,14 @@ final class UsuariosController
     }
 
     /**
-     * Catálogo completo de roles, salvo `dueno` cuando el actor autenticado
-     * no tiene `asignar_rol_dueno`: es solo para no ofrecer en el `<select>`
-     * una opción que el submit va a rechazar — la guarda real sigue en
-     * `AsignarRolesUsuario`.
+     * Catálogo completo de roles, salvo los que a su vez tienen otorgado
+     * `asignar_rol_dueno` en el catálogo cuando el actor autenticado no tiene
+     * ese permiso en su rol activo: es solo para no ofrecer en el `<select>`
+     * una opción que el submit va a rechazar — la guarda real de la acción
+     * HTTP es {@see self::abortarSiFaltaPermisoRolDueno()}. Por permiso del
+     * rol, no por el nombre `dueno`: el rol que hoy lo tiene podría
+     * renombrarse, o el permiso otorgarse a otro rol nuevo, sin que este
+     * filtro deje de aplicar.
      *
      * @return Collection<int, SecRole>
      */
@@ -212,10 +237,62 @@ final class UsuariosController
         $roles = SecRole::query()->orderBy('name')->get();
 
         if (! $this->autorizacion->tienePermiso($request, self::PERMISO_ROL_DUENO)) {
-            $roles = $roles->reject(fn (SecRole $rol) => $rol->name === 'dueno')->values();
+            $idsRolesRestringidos = $this->idsRolesQueExigenPermisoDueno();
+
+            $roles = $roles->reject(fn (SecRole $rol) => in_array($rol->id, $idsRolesRestringidos, true))->values();
         }
 
         return $roles;
+    }
+
+    /**
+     * Guarda real de `asignar_rol_dueno` a nivel de acción HTTP (antes de
+     * esta tarea, el permiso solo filtraba el `<select>` en
+     * {@see self::rolesDisponibles()} — cosmético, no bloqueaba nada: un
+     * `PUT` armado a mano con el id de un rol restringido en `roles[]`
+     * pasaba igual). Se evalúa ANTES de invocar `AsignarRolesUsuario`, con el
+     * mismo criterio 403 que el resto de los permisos de este controlador,
+     * para que la respuesta HTTP sea consistente entre los seis permisos de
+     * grano fino — la guarda interna de `AsignarRolesUsuario` (evaluada
+     * contra el mismo rol activo) queda como defensa en profundidad para
+     * quien invoque el caso de uso sin pasar por acá.
+     *
+     * Por permiso del rol afectado, no por el nombre `dueno`: solo aborta si
+     * el conjunto de roles que cambia de estado (se asigna o se quita)
+     * incluye alguno que tenga otorgado `asignar_rol_dueno`.
+     *
+     * @param  list<int>  $rolesActuales
+     * @param  list<int>  $rolesDeseados
+     */
+    private function abortarSiFaltaPermisoRolDueno(Request $request, array $rolesActuales, array $rolesDeseados): void
+    {
+        $rolesAfectados = array_merge(
+            array_diff($rolesDeseados, $rolesActuales),
+            array_diff($rolesActuales, $rolesDeseados),
+        );
+
+        if (array_intersect($rolesAfectados, $this->idsRolesQueExigenPermisoDueno()) === []) {
+            return;
+        }
+
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_ROL_DUENO), 403);
+    }
+
+    /**
+     * @return list<int> IDs de rol con `asignar_rol_dueno` otorgado y vivo en
+     *                   el catálogo (`sec_role_permission`/`sec_permission`).
+     */
+    private function idsRolesQueExigenPermisoDueno(): array
+    {
+        return DB::table('sec_role_permission')
+            ->join('sec_permission', 'sec_permission.id', '=', 'sec_role_permission.id_permission')
+            ->whereNull('sec_role_permission.deleted_at')
+            ->whereNull('sec_permission.deleted_at')
+            ->where('sec_permission.code', self::PERMISO_ROL_DUENO)
+            ->where('sec_permission.state', true)
+            ->pluck('sec_role_permission.id_role')
+            ->map(fn ($id) => (int) $id)
+            ->all();
     }
 
     /**
