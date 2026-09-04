@@ -34,30 +34,6 @@ final class DatosDemoPanel
     }
 
     /**
-     * Contadores de pendientes de los ítems del menú (badge ámbar del nivel
-     * 3), indexados por la clave `label` de `sec_menu`. `numero` es lo único
-     * que pinta el badge en el sidebar (compacto); `texto` es la frase
-     * completa que se lee en el tooltip — mismo criterio que tendrá el dato
-     * real cuando exista el caso de uso (un contador + su descripción, no un
-     * string ya formateado para la UI).
-     *
-     * @return array<string, array{numero: string, texto: string}>
-     */
-    public function badgesMenu(): array
-    {
-        return [
-            'menu.operacion.items.programacion' => ['numero' => '3', 'texto' => 'Hoy · 3'],
-            'menu.operacion.items.ordenes' => ['numero' => '12', 'texto' => '12 vigentes'],
-            'menu.operacion.items.sesiones' => ['numero' => '6', 'texto' => '6 sin validar'],
-            'menu.operacion.items.pausas' => ['numero' => '4', 'texto' => '4 sin causa'],
-            'menu.comercial.items.reportes_cliente' => ['numero' => '2', 'texto' => '2 por enviar'],
-            'menu.recursos.items.drones' => ['numero' => '1', 'texto' => '1 en taller'],
-            'menu.mantenimiento.items.stock' => ['numero' => '2', 'texto' => '2 bajo mínimo'],
-            'menu.financiero.items.devengos' => ['numero' => '18.490', 'texto' => 'Bs 18.490'],
-        ];
-    }
-
-    /**
      * Notificaciones de la campana (título/hora son datos de demo, no copy).
      *
      * @return list<array{icon: string, title: string, time: string, unread: bool}>

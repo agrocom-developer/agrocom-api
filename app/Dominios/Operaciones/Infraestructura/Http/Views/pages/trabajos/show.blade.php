@@ -173,5 +173,9 @@
         <x-molecules.alert-strip variant="info" icon="photo_library" class="ag-trabajos__aviso">
             {{ __('operaciones.trabajos.detalle_evidencias_vacio') }}
         </x-molecules.alert-strip>
+
+        <x-atoms.button href="{{ route('panel.trabajos.evidencias', $trabajo) }}" variant="outline" size="sm" icon="photo_library">
+            {{ __('operaciones.trabajos.evidencias_ver_galeria') }}
+        </x-atoms.button>
     </x-templates.panel-layout>
 </x-templates.panel-shell>

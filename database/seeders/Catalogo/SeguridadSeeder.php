@@ -125,6 +125,12 @@ class SeguridadSeeder extends Seeder
         'operaciones.orden.editar' => 'Editar los datos de una orden de aplicación',
         'operaciones.orden.activar' => 'Activar una orden de aplicación (emitida → vigente)',
         'operaciones.orden.eliminar' => 'Dar de baja (lógica) una orden de aplicación',
+        // HU-44 (tarea 58): pausas de sesión con causa atribuible (DS-01).
+        // Grano fino (ver/registrar), mismo criterio que `operaciones.alerta.*`:
+        // ver el tablero agregado y cargar una pausa no son la misma
+        // responsabilidad.
+        'operaciones.pausa.ver' => 'Ver el listado de pausas y su agregado por causa',
+        'operaciones.pausa.registrar' => 'Registrar una pausa de sesión con su causa',
         // HU-26 (tarea 37): administración de personas y bases, con su rol
         // operativo y tarifa. Dos recursos, cada uno con su grano fino
         // (ver/crear/editar/eliminar) — mismo criterio que
@@ -335,6 +341,12 @@ class SeguridadSeeder extends Seeder
         'operaciones.orden.editar',
         'operaciones.orden.activar',
         'operaciones.orden.eliminar',
+        // HU-44 (tarea 58): "jefe de campo, quiero registrar las pausas con
+        // su causa atribuible" — el jefe de campo es dueño de la HU, pero el
+        // encargado administra la operación diaria (mismo criterio que
+        // trabajo.ver/sesion.validar arriba) así que comparte el grano.
+        'operaciones.pausa.ver',
+        'operaciones.pausa.registrar',
         // HU-26 (tarea 37): "Como encargado, quiero administrar personas y
         // bases" — la HU lo dice literal, mismo criterio que clientes,
         // contratos, campos y drones arriba.
@@ -446,6 +458,11 @@ class SeguridadSeeder extends Seeder
         'operaciones.acta.firmar',
         // HU-18 (tarea 25): espec línea 89, "Ver reportes técnicos".
         'operaciones.reporte.ver',
+        // HU-44 (tarea 58): "como jefe de campo, quiero registrar las
+        // pausas con su causa atribuible" — la HU lo dice literal, dueño de
+        // esta responsabilidad.
+        'operaciones.pausa.ver',
+        'operaciones.pausa.registrar',
     ];
 
     public function run(): void

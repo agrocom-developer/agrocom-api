@@ -5,6 +5,7 @@ namespace App\Dominios\Operaciones\Infraestructura;
 use App\Dominios\Operaciones\Contratos\EscrituraSincronizacion;
 use App\Dominios\Operaciones\Contratos\LecturaActaConformada;
 use App\Dominios\Operaciones\Contratos\LecturaAlertasTemperaturaBateria;
+use App\Dominios\Operaciones\Contratos\LecturaContadoresPanel;
 use App\Dominios\Operaciones\Contratos\LecturaHorasVueloPorModelo;
 use App\Dominios\Operaciones\Contratos\LecturaOrdenesVigentes;
 use App\Dominios\Operaciones\Contratos\LecturaReporteTecnico;
@@ -33,6 +34,7 @@ final class OperacionesServiceProvider extends ServiceProvider
         $this->app->bind(LecturaReporteTecnico::class, LecturaReporteTecnicoEloquent::class);
         $this->app->bind(LecturaAlertasTemperaturaBateria::class, LecturaAlertasTemperaturaBateriaEloquent::class);
         $this->app->bind(LecturaHorasVueloPorModelo::class, LecturaHorasVueloPorModeloEloquent::class);
+        $this->app->bind(LecturaContadoresPanel::class, LecturaContadoresPanelEloquent::class);
     }
 
     public function boot(): void

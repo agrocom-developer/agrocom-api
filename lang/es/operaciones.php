@@ -133,6 +133,31 @@ return [
             'fin_jornada' => 'Fin de jornada',
             'otro' => 'Otro',
         ],
+        // Galería de evidencias (HU-42, tarea 56): panel.trabajos.evidencias.
+        // Agrupa las tres evidencias que existen hoy para un trabajo — no hay
+        // `captura_rc` a nivel de sesión (recorte de otra tarea, fuera de
+        // alcance de esta pantalla).
+        'volver_al_detalle' => 'Volver al detalle',
+        'evidencias_titulo' => 'Evidencias del trabajo #:id',
+        'evidencias_ver_galeria' => 'Ver galería de evidencias',
+        'evidencias_descargar' => 'Descargar',
+        'evidencias_imagen_campo_titulo' => 'Imagen de campo',
+        'evidencias_imagen_campo_vacio' => 'Todavía no se registró la imagen de campo de este trabajo.',
+        'evidencias_firma_acta_titulo' => 'Firma del acta',
+        'evidencias_firma_acta_vacio' => 'Todavía no se firmó el acta de este trabajo.',
+        'evidencias_incidencias_titulo' => 'Incidencias con foto',
+        'evidencias_incidencias_vacio' => 'Ninguna sesión de este trabajo registró una incidencia con foto.',
+        'evidencias_sesion_titulo' => 'Sesión #:secuencia',
+        // Catálogo de TipoIncidencia (espec §4.3, tabla `incidencias`; HU-08,
+        // tarea 22) — sin traducir todavía en ningún otro lado del panel.
+        'incidencia_tipo' => [
+            'caldo' => 'Caldo',
+            'esc' => 'ESC',
+            'bateria' => 'Batería',
+            'mecanica' => 'Mecánica',
+            'clima' => 'Clima',
+            'otro' => 'Otro',
+        ],
     ],
 
     // Pantalla de panel "Operación › Sesiones" (HU-14, tarea 14): cola de
@@ -157,6 +182,58 @@ return [
         'propia' => 'Sos el piloto de esta sesión: no podés validarla ni rechazarla.',
         'validada' => 'Sesión validada correctamente.',
         'rechazada' => 'Sesión rechazada: se registró la corrección con el motivo indicado.',
+    ],
+
+    // Pantalla de panel "Operación › Pausas" (HU-44, tarea 58): pausas de
+    // sesión con causa atribuible (DS-01) y su agregado por causa.
+    'pausas' => [
+        'titulo' => 'Pausas',
+        'subtitulo' => 'Tiempo perdido en pausas de sesión, con su causa atribuible.',
+        'nuevo' => 'Nueva pausa',
+        'creada' => 'Pausa registrada correctamente.',
+        'filtro_periodo' => 'Período',
+        'filtrar' => 'Filtrar',
+        'limpiar_filtro' => 'Limpiar filtro',
+        'vacio' => 'No hay pausas registradas.',
+        'filtro_vacio' => 'No hay pausas que coincidan con el filtro.',
+        'tablero_titulo' => 'Total por causa',
+        'tablero_total' => 'Total del período',
+        'col_sesion' => 'Sesión',
+        'col_causa' => 'Causa',
+        'col_inicio' => 'Inicio',
+        'col_fin' => 'Fin',
+        'col_duracion' => 'Duración',
+        'duracion_valor' => ':horas h :minutos min',
+        'sesion_etiqueta' => 'Sesión #:id (trabajo #:trabajo, secuencia :secuencia)',
+        'paginacion_aria' => 'Paginación de pausas',
+        'paginacion_anterior' => 'Anterior',
+        'paginacion_siguiente' => 'Siguiente',
+        'paginacion_info' => 'Página :actual de :total',
+
+        'titulo_crear' => 'Nueva pausa',
+        'subtitulo_form' => 'Registrá una pausa de sesión con su causa atribuible.',
+        'seccion_datos' => 'Datos de la pausa',
+        'campos_contador' => ':cantidad campos',
+        'campo_sesion' => 'Sesión',
+        'campo_sesion_placeholder' => 'Elegí una sesión…',
+        'campo_causa' => 'Causa',
+        'campo_causa_placeholder' => 'Elegí una causa…',
+        'campo_inicio' => 'Inicio',
+        'campo_fin' => 'Fin',
+        'estado_form' => 'Sin guardar',
+
+        'error_sesion_requerida' => 'Elegí la sesión en la que ocurrió la pausa.',
+        'error_sesion_invalida' => 'La sesión elegida no existe.',
+        'error_causa_requerida' => 'Elegí la causa de la pausa.',
+        'error_causa_invalida' => 'Esa causa no es válida.',
+
+        'causa' => [
+            'clima' => 'Clima fuera de rango',
+            'imprevisto_del_cliente' => 'Imprevisto del cliente (insumos que no llegan)',
+            'cambio_lote_cliente' => 'Cambio de lote ordenado por el cliente',
+            'falla_equipo' => 'Falla de equipo',
+            'logistica' => 'Logística y traslados',
+        ],
     ],
 
     // Pantalla de panel "Reportes › Alertas" (HU-19, tarea 26): bandeja de
@@ -310,6 +387,28 @@ return [
         'actualizada' => 'Orden de aplicación actualizada correctamente.',
         'activada' => 'Orden de aplicación activada correctamente.',
         'eliminada' => 'Orden de aplicación dada de baja correctamente.',
+    ],
+
+    // Pantalla de panel "Reportes › Técnicos" (HU-43, tarea 57):
+    // panel.reportes.tecnicos.index. Solo lectura — filtra y enlaza a la
+    // descarga individual ya existente (panel.trabajos.reporte-pdf).
+    'reportes_tecnicos' => [
+        'titulo' => 'Reportes técnicos',
+        'subtitulo' => 'Reportes técnicos generados por lote, para reenviar al agrónomo.',
+        'filtro_cliente' => 'Cliente',
+        'filtro_cliente_placeholder' => 'Todos los clientes',
+        'filtro_desde' => 'Desde',
+        'filtro_hasta' => 'Hasta',
+        'filtrar' => 'Filtrar',
+        'limpiar_filtro' => 'Limpiar filtros',
+        'vacio' => 'Todavía no se generó ningún reporte técnico.',
+        'filtro_vacio' => 'Ningún reporte coincide con estos filtros.',
+        'col_trabajo' => 'Trabajo',
+        'col_cliente' => 'Cliente',
+        'col_generado' => 'Generado',
+        'col_descarga' => 'Descarga',
+        'trabajo_lote' => 'Lote :lote — aplicación :aplicacion',
+        'descargar_pdf' => 'Descargar PDF',
     ],
 
 ];

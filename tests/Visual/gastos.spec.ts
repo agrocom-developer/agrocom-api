@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { test, expect } from '@playwright/test';
-import { asegurarTema, elegirRolDueno, esperarFuentes, iniciarSesion } from './helpers';
+import { asegurarTema, elegirRolDueno, esperarFuentes, fijarFechasDeHoy, iniciarSesion } from './helpers';
 
 /**
  * GET /panel/gastos y GET /panel/gastos/crear, con "Dueño" como rol activo
@@ -13,10 +13,6 @@ import { asegurarTema, elegirRolDueno, esperarFuentes, iniciarSesion } from './h
  * arquetipo Formulario (`create`, con el `<select>` de subrubro filtrado en
  * cliente). Sin gráficos ni animación propia — mismo criterio que
  * `anticipos.spec.ts`.
- *
- * `create` enmascara `#fecha`: el campo defaultea a `now()->toDateString()`
- * (`pages/gastos/create.blade.php`), así que sin máscara el snapshot queda
- * atado al día calendario en que se generó (hallazgo de tarea 55).
  */
 test.beforeAll(() => {
     execFileSync(
@@ -64,21 +60,23 @@ test.describe('gastos', () => {
 
         test('claro', async ({ page }) => {
             await asegurarTema(page, 'light');
+            await fijarFechasDeHoy(page);
             await esperarFuentes(page);
 
             await expect(page).toHaveScreenshot('gastos-create-light.png', {
                 fullPage: true,
-                mask: [page.locator('.ag-panel__footer span').first(), page.locator('#fecha')],
+                mask: [page.locator('.ag-panel__footer span').first()],
             });
         });
 
         test('oscuro', async ({ page }) => {
             await asegurarTema(page, 'dark');
+            await fijarFechasDeHoy(page);
             await esperarFuentes(page);
 
             await expect(page).toHaveScreenshot('gastos-create-dark.png', {
                 fullPage: true,
-                mask: [page.locator('.ag-panel__footer span').first(), page.locator('#fecha')],
+                mask: [page.locator('.ag-panel__footer span').first()],
             });
         });
     });

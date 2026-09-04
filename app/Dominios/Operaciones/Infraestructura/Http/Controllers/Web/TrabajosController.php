@@ -4,6 +4,7 @@ namespace App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web;
 
 use App\Dominios\Operaciones\Aplicacion\ListarTrabajos;
 use App\Dominios\Operaciones\Dominio\EstadoTableroTrabajo;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\Evidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\Request;
@@ -97,5 +98,40 @@ final class TrabajosController
         abort_if($reporte === null || $reporte->pdf_path === null || ! Storage::disk('r2')->exists($reporte->pdf_path), 404);
 
         return response(Storage::disk('r2')->get($reporte->pdf_path), 200, ['Content-Type' => 'application/pdf']);
+    }
+
+    /**
+     * `GET /panel/trabajos/{trabajo}/evidencias` (HU-42, tarea 56): galería
+     * de evidencias de un trabajo — imagen de campo, firma del acta y fotos
+     * de incidencia por sesión (todas las evidencias que existen hoy para un
+     * trabajo). Mismo permiso que `show()`: es una sub-pantalla del detalle,
+     * no un recurso con permiso propio.
+     */
+    public function evidencias(Request $request, Trabajo $trabajo): View
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO), 403);
+
+        return view('operaciones::pages.trabajos.evidencias', [
+            ...$this->autorizacion->cascara($request),
+            'trabajo' => $trabajo->load(['imagenCampoEvidencia', 'acta.evidenciaFirma', 'sesiones.incidencias.evidenciaFoto']),
+        ]);
+    }
+
+    /**
+     * `GET /panel/evidencias/{evidencia}/archivo`: streaming del archivo real
+     * desde el disco `r2` — mismo patrón que `actaPdf`/`reporteTecnicoPdf`,
+     * `archivo_url` nunca se expone directo (es una ruta privada del disco,
+     * no una URL pública). Quien llega a la galería ya pasó `self::PERMISO`,
+     * pero se reverifica acá por si alguien pega la URL directo.
+     */
+    public function evidenciaArchivo(Request $request, Evidencia $evidencia): Response
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO), 403);
+
+        abort_unless(Storage::disk('r2')->exists($evidencia->archivo_url), 404);
+
+        return response(Storage::disk('r2')->get($evidencia->archivo_url), 200, [
+            'Content-Type' => Storage::disk('r2')->mimeType($evidencia->archivo_url) ?: 'application/octet-stream',
+        ]);
     }
 }

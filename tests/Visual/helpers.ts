@@ -103,3 +103,33 @@ export async function iniciarSesionPortal(page: Page, username = USUARIO_PORTAL_
         page.click('.ag-login-form__form button[type="submit"]'),
     ]);
 }
+
+/**
+ * Fecha con la que se capturan los formularios cuyo `<input type="date">`
+ * llega del servidor rellenado con "hoy" (`old('fecha', now()->toDateString())`
+ * en los `create` de anticipos, combustible, gastos y rendiciones). Es la
+ * misma fecha que usan los fixtures de `tests/Visual/fixtures/`.
+ */
+export const FECHA_FIJA = '2026-09-18';
+
+/**
+ * Reemplaza por `FECHA_FIJA` el valor de todo `<input type="date">` que ya
+ * venga con valor. Sin esto, la captura de esos formularios queda atada al
+ * día calendario en que se generó la referencia y se desactualiza sola al
+ * día siguiente (pasó con las cuatro `*-create` de Finanzas).
+ *
+ * No sirve `page.clock`: el valor lo pone PHP en el servidor, no el
+ * navegador. Tampoco un `mask`: taparía el widget entero y dejaría de
+ * verificarse cómo se renderiza con un valor cargado. Se asigna por DOM (no
+ * `fill`) para no dejar foco ni `:focus-visible` en el campo. Los inputs
+ * vacíos se dejan como están: su placeholder no depende del día.
+ */
+export async function fijarFechasDeHoy(page: Page): Promise<void> {
+    await page.evaluate((fecha) => {
+        document.querySelectorAll<HTMLInputElement>('input[type="date"]').forEach((input) => {
+            if (input.value !== '') {
+                input.value = fecha;
+            }
+        });
+    }, FECHA_FIJA);
+}

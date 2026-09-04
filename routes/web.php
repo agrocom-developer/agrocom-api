@@ -21,6 +21,8 @@ use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\VehiculosCon
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\AlertasController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\DronesController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\OrdenesController;
+use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\PausasController;
+use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\ReportesTecnicosController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\TrabajosController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\ValidacionSesionesController;
 use App\Dominios\Personal\Infraestructura\Http\Controllers\Web\BasesController;
@@ -180,6 +182,16 @@ Route::middleware('auth:interno')->group(function () {
         Route::get('/panel/trabajos/{trabajo}/reporte/pdf', [TrabajosController::class, 'reporteTecnicoPdf'])
             ->name('panel.trabajos.reporte-pdf');
 
+        // HU-42 (tarea 56): galería de evidencias de un trabajo — solo
+        // lectura, mismo permiso `operaciones.trabajo.ver` que el detalle.
+        // El streaming del archivo real vive en una ruta propia porque no
+        // cuelga de un `{trabajo}` (la evidencia puede venir de una sesión).
+        Route::get('/panel/trabajos/{trabajo}/evidencias', [TrabajosController::class, 'evidencias'])
+            ->name('panel.trabajos.evidencias');
+
+        Route::get('/panel/evidencias/{evidencia}/archivo', [TrabajosController::class, 'evidenciaArchivo'])
+            ->name('panel.evidencias.archivo');
+
         // HU-14 (tarea 14): cola de validación de sesiones cerradas.
         // Permiso `operaciones.sesion.validar` verificado DENTRO del
         // controlador contra el ROL ACTIVO, mismo criterio que las rutas de
@@ -193,6 +205,19 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::post('/panel/sesiones/{sesion}/rechazar', [ValidacionSesionesController::class, 'rechazar'])
             ->name('panel.sesiones.validacion.rechazar');
+
+        // HU-44 (tarea 58): pausas de sesión con causa atribuible (DS-01).
+        // Permisos `operaciones.pausa.ver`/`.registrar` verificados DENTRO
+        // del controlador contra el ROL ACTIVO, mismo criterio que las
+        // rutas de arriba.
+        Route::get('/panel/pausas', [PausasController::class, 'index'])
+            ->name('panel.pausas.index');
+
+        Route::get('/panel/pausas/crear', [PausasController::class, 'create'])
+            ->name('panel.pausas.create');
+
+        Route::post('/panel/pausas', [PausasController::class, 'store'])
+            ->name('panel.pausas.store');
 
         // HU-19 (tarea 26): bandeja de alertas por excepción. Permiso
         // `operaciones.alerta.ver` gatea la pantalla,
@@ -670,6 +695,14 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::get('/panel/reportes/comercial/exportar', [ReportesComercialesController::class, 'exportar'])
             ->name('panel.reportes.comercial.exportar');
+
+        // HU-43 (tarea 57): "como encargado, quiero listar y descargar los
+        // reportes técnicos generados, para reenviarlos al agrónomo" — cierra
+        // Sprint 12. Reusa el permiso `operaciones.reporte.ver` que ya gatea
+        // la descarga individual (`panel.trabajos.reporte-pdf`), misma acción
+        // de negocio. Filtrable por cliente y por período de generación.
+        Route::get('/panel/reportes/tecnicos', [ReportesTecnicosController::class, 'index'])
+            ->name('panel.reportes.tecnicos.index');
     });
 });
 

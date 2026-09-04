@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { test, expect } from '@playwright/test';
-import { asegurarTema, elegirRolDueno, esperarFuentes, iniciarSesion } from './helpers';
+import { asegurarTema, elegirRolDueno, esperarFuentes, fijarFechasDeHoy, iniciarSesion } from './helpers';
 
 /**
  * GET /panel/rendiciones (index), GET /panel/rendiciones/crear (create), y
@@ -19,10 +19,6 @@ import { asegurarTema, elegirRolDueno, esperarFuentes, iniciarSesion } from './h
  * (cargada por el fixture) porque es el más interesante: muestra el chip de
  * estado, la tabla de gastos asociados, y el botón "Aprobar" habilitado.
  * El fixture asegura idempotencia y no toca datos de otras pantallas.
- *
- * `create` enmascara `#fecha`: el campo defaultea a `now()->toDateString()`
- * (`pages/rendiciones/create.blade.php`), así que sin máscara el snapshot
- * queda atado al día calendario en que se generó (hallazgo de tarea 55).
  */
 test.beforeAll(() => {
     execFileSync(
@@ -70,21 +66,23 @@ test.describe('rendiciones', () => {
 
         test('claro', async ({ page }) => {
             await asegurarTema(page, 'light');
+            await fijarFechasDeHoy(page);
             await esperarFuentes(page);
 
             await expect(page).toHaveScreenshot('rendiciones-create-light.png', {
                 fullPage: true,
-                mask: [page.locator('.ag-panel__footer span').first(), page.locator('#fecha')],
+                mask: [page.locator('.ag-panel__footer span').first()],
             });
         });
 
         test('oscuro', async ({ page }) => {
             await asegurarTema(page, 'dark');
+            await fijarFechasDeHoy(page);
             await esperarFuentes(page);
 
             await expect(page).toHaveScreenshot('rendiciones-create-dark.png', {
                 fullPage: true,
-                mask: [page.locator('.ag-panel__footer span').first(), page.locator('#fecha')],
+                mask: [page.locator('.ag-panel__footer span').first()],
             });
         });
     });
@@ -96,9 +94,20 @@ test.describe('rendiciones', () => {
             // Navega a la lista de rendiciones y accede al primer detalle
             // (el fixture carga al menos una rendición)
             await page.goto('/panel/rendiciones');
-            // Espera la tabla y haz clic en el primer botón "Ver"
+            // Espera la tabla y haz clic en el primer botón "Ver". El click
+            // dispara una navegación de documento completo (no hay SPA) —
+            // sin esperarla explícitamente (mismo patrón que iniciarSesion/
+            // elegirRolDueno en helpers.ts), el test podía seguir antes de
+            // que el CSS de la página de detalle terminara de aplicarse: la
+            // captura salía con el topbar sin estilar/corrido, de forma no
+            // determinística (~1 de cada 4 corridas). Confirmado con
+            // mediciones de layout (getBoundingClientRect de .ag-topbar)
+            // fuera de Playwright, ver runs/61.md.
             await page.waitForSelector('[role="table"]');
-            await page.click('a:has-text("Ver")');
+            await Promise.all([
+                page.waitForURL('**/panel/rendiciones/*'),
+                page.click('a:has-text("Ver")'),
+            ]);
         });
 
         test('claro', async ({ page }) => {

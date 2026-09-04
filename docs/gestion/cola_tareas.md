@@ -1,10 +1,14 @@
 # Cola de tareas automatizables
 
-**Última actualización: 3/9/2026 (planificación tras el cierre de la 54,
-HU-38/planes preventivos — PR #104, que cerró Sprint 11 — y de la 32, bug
-de LSP de `atoms/input` — PR #105, retomada y cerrada. Se agregaron la 55
-(HU-41/portal del cliente, abre Sprint 12, crítica), la 56 (HU-42/galería
-de evidencias) y la 57 (HU-43/listado de reportes técnicos)).**
+**Última actualización: 4/9/2026 (planificación tras el cierre de la 60,
+TE-14/badges reales del sidebar — PR #111). Con la 60, Sprint 12 y el plan
+de doce sprints cierran completos, salvo la 55 (HU-41/portal del cliente),
+rechazada dos veces y marcada para revisión humana. Se agregó la 61,
+deuda técnica de Playwright sin fila propia en `plan_sprints.md` — ver
+"Por qué ese orden" al final. De paso se corrigieron siete filas de esta
+tabla (46, 47, 49, 50, 52, 53, 54) que seguían marcadas `pendiente` pese a
+tener PR mergeado — el git log es la fuente real, este documento se había
+desfasado.)**
 Este es el backlog que el ciclo de
 `bin/ciclo` consume solo — el punto 3 de
 [automatizacion_desarrollo.md](automatizacion_desarrollo.md). No reemplaza a
@@ -72,7 +76,7 @@ exista el módulo `Mezclas`).
 | 29 | Bug de timezone en `MaquinaEstadosTrabajo`/`MaquinaEstadosSesion` (`abrir()`/`cerrar()`): `CarbonImmutable::parse()` sin `->utc()` sobre columnas `dateTime` sin tz corre el instante real por el offset del cliente — mismo patrón ya corregido una vez en `MaquinaEstadosActa::firmar()`. Señalado dos veces sin corregirse (`runs/24.md`, `runs/25.md`, ambas pidiendo tarea propia) | `./bin/verify` = 0, con test de round-trip (guardar `inicio`/`fin` con offset no-UTC vía `/api/sync`, releer, instante correcto contra UTC) | `Operaciones/Aplicacion/MaquinaEstados/{MaquinaEstadosTrabajo,MaquinaEstadosSesion}.php`, tests | **sí** | 3 | **hecha** (PR #71, mergeado 2/9/2026) |
 | 30 | FK real de `created_by`/`updated_by` a `sec_user.id` en las ~30 tablas de dominio que hoy son `unsignedBigInteger` sueltas sin `->constrained()` — retrofit que HU-01 dejó explícitamente para "un solo pase futuro que agregue la FK a todas las tablas de una vez" (`docs/gestion/estado_proyecto.md`, "Otros gaps señalados") | `./bin/verify` = 0, con test de que insertar un `created_by` con id de `sec_user` inexistente lanza `QueryException` | una migración nueva de `alter table` (sin tocar el tipo de columna existente), tests | no | 2 | **hecha** (PR #75, mergeado 2/9/2026; 31 tablas + fix de reconstrucción de índices parciales en SQLite, ver `runs/30.md`) |
 | 31 | TE — el arquetipo formulario del panel (`form-section` evolucionado, `page-header`, `tabs`, `form-actions-bar`, `summary-card`, `progress-meter`, `file-field`) y la compuerta visual: `bin/verify` no corría `tests/Visual/` desde que existe (tarea 07) | `./bin/verify` = 0 con la etapa de Playwright adentro y en verde; diff vacío del checklist de `guia_pantalla_panel.md` §8 sobre el catálogo | `resources/views/components/**`, `resources/css/components/**`, `resources/css/pages/organizacion.css`, `Seguridad/Infraestructura/Http/Views/pages/organizacion/**`, `lang/es/seguridad.php`, `docs/diseno/sistema_diseno_panel.md`, `tests/Visual/**`, `bin/verify` | no | 4 | **hecha** (PR #74, mergeado 2/9/2026) — `/panel/organizacion` reconstruida como caso de prueba, `tests/Visual/organizacion.spec.ts` nuevo, `npx playwright test` sumado a `bin/verify` (fuera de `.github/workflows/`, snapshots `-darwin`, ver el spec) |
-| 32 | `atoms/input` no fusiona `$attributes` en su `<div>` raíz — solo en el `<input>` interno (`resources/views/components/atoms/input.blade.php:48,71`). Rompe LSP: cualquier composición que necesite una clase/atributo en el contenedor (p. ej. `grid-column: 1 / -1` de un campo ancho) no puede pasarla al componente y necesita un `<div>` envolvente puntual en la página, como quedó en `organizacion/index.blade.php` (hallazgo de la tarea 31, documentado en `sistema_diseno_panel.md` §14, no corregido a propósito por blast radius: lo consume todo el panel) | `./bin/verify` = 0, con las páginas que hoy envuelven `atoms/input` a mano (`organizacion/index.blade.php`) usando la clase directo en el componente | `resources/views/components/atoms/input.blade.php`, páginas que lo consumen | no | 2 | **hecha** (retomada y cerrada por PR #105, mergeado 3/9/2026, tras haberse agotado incompleta la primera vez — ver `runs/32.md`: el fix partió `$attributes` en `->only('class')` para el `<div>` raíz y `->except('class')` para el `<input>` interno, en vez de vaciar el bag del input del todo como decía el prompt original — eso habría roto `disabled`, que hoy llega al `<input>` vía passthrough en los 5 campos de solo lectura de `organizacion` y no está declarado como `@props`) |
+| 32 | `atoms/input` no fusiona `$attributes` en su `<div>` raíz — solo en el `<input>` interno (`resources/views/components/atoms/input.blade.php:48,71`). Rompe LSP: cualquier composición que necesite una clase/atributo en el contenedor (p. ej. `grid-column: 1 / -1` de un campo ancho) no puede pasarla al componente y necesita un `<div>` envolvente puntual en la página, como quedó en `organizacion/index.blade.php` (hallazgo de la tarea 31, documentado en `sistema_diseno_panel.md` §14, no corregido a propósito por blast radius: lo consume todo el panel) | `./bin/verify` = 0, con las páginas que hoy envuelven `atoms/input` a mano (`organizacion/index.blade.php`) usando la clase directo en el componente | `resources/views/components/atoms/input.blade.php`, páginas que lo consumen | no | 2 | **incompleta** — se agotaron las 2 etapas sin cerrar la HU (PR #76 en borrador, `runs/32.estado` = `INCOMPLETA`). El fix quedó escrito pero sin commitear, mezclado en el working tree de `develop` (bloqueaba el arranque de la tarea 33); se rescató a `git stash` sin verificar —`bin/verify` no llegó a terminar— al planificar la 35. Recuperarlo: `git stash list` en el working tree compartido. Decisión del usuario: retomarla desde ahí o cerrar el PR |
 | 33 | HU-22 — clientes: ABM sobre `com_clientes` y `com_cliente_contactos`, el primer ABM real del panel (mismo patrón para el resto de Sprint 7) | `./bin/verify` = 0, con test de bitácora en alta/edición/baja, soft delete y NIT único entre clientes activos | módulo nuevo `Comercial/Aplicacion/` e `Infraestructura/Http/`, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/comercial.php`, tests | no | 4 | **hecha** (PR #77, mergeado 2/9/2026) |
 | 34 | HU-23 — contratos: ABM sobre `com_contratos` y `com_contrato_ventanas`, con máquina de estados propia (`borrador/vigente/finalizado/cancelado`, invariante 7) y `monto_total` recalculado, nunca editable a mano (invariante 6) | `./bin/verify` = 0, con test de transición de estados válida/inválida, de ventana solapada rechazada y de `monto_total` exacto | `Comercial/Aplicacion/`, `Comercial/Infraestructura/Http/`, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/comercial.php`, tests | no | 5 | **hecha** (PR #78/#79, mergeados 2/9/2026) |
 | 35 | HU-24 — campos y lotes: ABM sobre `com_campos` y `com_lotes`, con geometría opcional del lote (GeoJSON en `jsonb`, sin PostGIS — ADR 0001) | `./bin/verify` = 0, con test de `hectareas > 0`, de geometría inválida rechazada, y de que un lote con órdenes/trabajos asociados no se puede eliminar sin avisar | `Comercial/Aplicacion/`, `Comercial/Infraestructura/Http/`, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/comercial.php`, tests | no | 4 | **hecha** (PR #80/#81, mergeados 2/9/2026) |
@@ -83,21 +87,26 @@ exista el módulo `Mezclas`).
 | 40 | HU-28 — devengos por período: pantalla de solo lectura sobre `fin_devengos_personal`, primera del módulo `Finanzas`; primer acceso al panel para piloto/auxiliar (hoy sin ningún permiso de panel) | `./bin/verify` = 0, con test de acceso cruzado → 404 y de filtro por período | `Finanzas/**`, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/finanzas.php` (nuevo), tests | no | 3 | **agotada** — 3 sesiones seguidas sin declarar estado (`runs/40.estado` = `AGOTADA`), nunca commitearon: `runs/40.log` muestra que esperaron la notificación de un `bin/verify` en segundo plano con `Monitor` (denegado) en vez de commitear primero, mismo patrón de la tarea 38. El trabajo (controller, caso de uso, 8 tests, spec visual, fixture) quedó completo en apariencia pero sin commitear, mezclado en el working tree de `develop` (bloqueaba el arranque de la 41); rescatado a `git stash` sin verificar de punta a punta al planificar la 42. Recuperarlo: `git stash list` (`stash@{0}`, no confundir con el `stash@{1}` de la tarea 32) — la tarea 42 lo retoma |
 | 41 | HU-29 — anticipos: tabla nueva `fin_anticipos`, tope de 3.000 Bs/mes y 70 % del devengado calculado con `BigDecimal`, rechazo con el disponible exacto | `./bin/verify` = 0, con test de cada tope por separado y de acumulación de dos anticipos en el mismo mes | `Finanzas/**`, migración nueva, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/finanzas.php`, tests | no | 4 | **agotada** — mismo patrón que la 40: 3 sesiones seguidas sin declarar estado (`runs/41.estado` = `AGOTADA`), nunca commitearon: lanzaron `bin/verify` en segundo plano y esperaron su notificación en vez de commitear primero. El trabajo (migración, modelo, 4 casos de uso, controller, 2 vistas, 9 tests, spec visual con sus 4 capturas) quedó completo en apariencia pero sin commitear, mezclado en el working tree de `develop`; rescatado a `git stash` al planificar la siguiente tanda. Recuperarlo: `git stash list` (`stash@{0}`, no confundir con el `stash@{1}` de la tarea 32) — la tarea 43 lo retoma |
 | 42 | Retomar y cerrar HU-28 (continuación de la 40): recuperar el `git stash` con el trabajo casi completo, completar lo que falte contra el mismo criterio de aceptación, commitear y verificar de punta a punta | `./bin/verify` = 0, con test de acceso cruzado → 404 y de filtro por período (igual que la 40) | `Finanzas/**`, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/finanzas.php`, `resources/css/pages/devengos.css`, tests | no | 2 | **hecha** (PR #88, mergeado 3/9/2026) |
+
 | 43 | Retomar y cerrar HU-29 (continuación de la 41): recuperar el `git stash` con el trabajo casi completo, completar lo que falte contra el mismo criterio de aceptación, commitear y verificar de punta a punta | `./bin/verify` = 0, con test de cada tope por separado y de acumulación de dos anticipos en el mismo mes (igual que la 41) | `Finanzas/**`, migración nueva, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/finanzas.php`, `resources/css/pages/anticipos.css`, tests | no | 3 | **hecha** (PR #89, mergeado 3/9/2026) |
 | 44 | HU-30 — planilla del período: dos tablas nuevas (`fin_planillas`, `fin_planilla_detalles`), máquina de estados `borrador → aprobada` (solo `dueno`), recibo individual en PDF, total exacto contra los devengos de origen | `./bin/verify` = 0, con test de cuadre exacto contra `fin_devengos_personal`, de idempotencia por período y de que solo `dueno` aprueba | `Finanzas/**`, migraciones nuevas, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/finanzas.php`, tests | **sí** | 5 | **hecha** (PR #90, mergeado 3/9/2026) |
 | 45 | HU-31 — facturar un trabajo desde su acta conformada: nueva tabla `com_facturas` en `Comercial`, cruza a `Operaciones` (acta/trabajo/orden/contrato) por un contrato de lectura nuevo (`LecturaActaConformada`, mismo patrón que `LecturaSesionValidada`), monto = hectáreas conformadas × precio_ha del contrato | `./bin/verify` = 0, con test de rechazo desde acta sin firmar, de que no se factura dos veces la misma acta, y de monto exacto | `Comercial/**`, `Operaciones/Contratos/**` (contrato de lectura nuevo), `Operaciones/Infraestructura/` (su implementación), migración nueva, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/comercial.php`, tests | no | 4 | **hecha** (PR #91, mergeado 3/9/2026). Queda pendiente, sin acción de esta cola: pegar a mano la sección "Revisión" redactada por el agente `arquitectura` al final de `docs/decisiones/0003-arquitectura-modular-clean-por-feature.md` — ver `runs/45.md`, requiere `descongela=decisiones` o el gesto manual del usuario |
-| 46 | HU-32 — reporte comercial de avance: hectáreas contratadas vs. aplicadas vs. facturadas por contrato, agregando `LecturaActaConformada::listarFirmadas()` (ya existe desde la 45) contra `Contrato` y `Factura`, propios de `Comercial`; exportable a CSV. Cierra Sprint 9 | `./bin/verify` = 0, con test de agregación exacta por contrato y de exportación CSV con el filtro aplicado | `Comercial/**`, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/comercial.php`, tests | no | 3 | **hecha** (PR #92/#93, mergeados 3/9/2026) |
+| 46 | HU-32 — reporte comercial de avance: hectáreas contratadas vs. aplicadas vs. facturadas por contrato, agregando `LecturaActaConformada::listarFirmadas()` (ya existe desde la 45) contra `Contrato` y `Factura`, propios de `Comercial`; exportable a CSV. Cierra Sprint 9 | `./bin/verify` = 0, con test de agregación exacta por contrato y de exportación CSV con el filtro aplicado | `Comercial/**`, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/comercial.php`, tests | no | 3 | **hecha** (PR #92, mergeado 3/9/2026) |
 | 47 | HU-33 — gastos: módulo `Finanzas` nuevo con `fin_rubros`/`fin_subrubros` (catálogo semillado) y `fin_gastos` (imputable a trabajo, base o general), primera subida de comprobante humana desde el panel (`Storage::disk('r2')`, hash SHA-256, sin reusar `ope_evidencias`). Abre Sprint 10 | `./bin/verify` = 0, con test de `monto` exacto (`cantidad × precio_unitario`), de los tres casos de imputación, y de comprobante con hash | `Finanzas/**`, migraciones nuevas, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/finanzas.php`, tests | no | 5 | **hecha** (PR #94, mergeado 3/9/2026) |
 | 48 | HU-34 — rendiciones: `fin_rendiciones` + `ALTER fin_gastos` (agrega `rendicion_id`), máquina de estados propia (`abierta → presentada → aprobada`), guarda "el aprobador nunca es quien rinde" a nivel de persona (invariante 4, mismo patrón que `PoliticaValidacionSesion`). Depende de que la 47 esté integrada | `./bin/verify` = 0, con test de la guarda de persona (aprobador ≠ `jefe_campo_id`), de transición inválida rechazada, y de `monto` exacto = suma de gastos asociados | `Finanzas/**` (incluida la migración `ALTER` de `fin_gastos`), migraciones nuevas, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/finanzas.php`, tests | no | 4 | **hecha** (PR #95, mergeado 3/9/2026) |
-| 49 | HU-35 — combustible del generador y vehículos: `fin_combustibles` nueva, carga por base y fecha, litros y monto en `DECIMAL`, sin depender de `ope_recargas` (informativo, sin costeo) ni de un módulo `Vehiculo` que todavía no existe. Cierra Sprint 10 | `./bin/verify` = 0, con test de `destino` fuera de enum rechazado y de filtro por período | `Finanzas/**`, migración nueva, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/finanzas.php`, tests | no | 3 | **hecha** (PR #96, mergeado 3/9/2026; cierra Sprint 10) |
-| 50 | HU-40 — vehículos de la flota: ABM con asignación a base y estado, primera tarea en crear el módulo nuevo `Mantenimiento` (`man_`, reparto fijado con el agente `arquitectura` y transcrito como extensión del ADR 0011). Abre Sprint 11 | `./bin/verify` = 0, con test de `identificador` duplicado como 422 | módulo nuevo `Mantenimiento`, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/mantenimiento.php`, `docs/decisiones/0011-convencion-prefijos-tabla.md` (solo el punto nuevo del mapeo), tests | no | 3 | **hecha** (PR #97, mergeado 3/9/2026; abre Sprint 11, crea el módulo `Mantenimiento`) |
+| 49 | HU-35 — combustible del generador y vehículos: `fin_combustibles` nueva, carga por base y fecha, litros y monto en `DECIMAL`, sin depender de `ope_recargas` (informativo, sin costeo) ni de un módulo `Vehiculo` que todavía no existe. Cierra Sprint 10 | `./bin/verify` = 0, con test de `destino` fuera de enum rechazado y de filtro por período | `Finanzas/**`, migración nueva, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/finanzas.php`, tests | no | 3 | **hecha** (PR #96, mergeado 3/9/2026) |
+| 50 | HU-40 — vehículos de la flota: ABM con asignación a base y estado, primera tarea en crear el módulo nuevo `Mantenimiento` (`man_`, reparto fijado con el agente `arquitectura` y transcrito como extensión del ADR 0011). Abre Sprint 11 | `./bin/verify` = 0, con test de `identificador` duplicado como 422 | módulo nuevo `Mantenimiento`, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/mantenimiento.php`, `docs/decisiones/0011-convencion-prefijos-tabla.md` (solo el punto nuevo del mapeo), tests | no | 3 | **hecha** (PR #97, mergeado 3/9/2026) |
 | 51 | HU-39 — baterías con ciclos y estado: ABM sobre `man_baterias` con alerta por ciclos acumulados o por temperatura ya registrada en `ope_recargas` (correlación por texto contra `bateria_saliente_id`, vía contrato de lectura nuevo — sin convertirlo a FK real). Depende de que la 50 haya creado `Mantenimiento` | `./bin/verify` = 0, con test de alerta por ciclos y de alerta por temperatura de una recarga real | `Mantenimiento/**`, `Operaciones/Contratos/**` y su implementación (el contrato de lectura nuevo), migración nueva, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/mantenimiento.php`, tests | no | 4 | **hecha** (PR #98, mergeado 3/9/2026) |
-| 52 | HU-36 — inventario de repuestos: módulo nuevo `Inventario` (`inv_`) con `inv_repuestos`/`inv_stock`/`inv_movimientos` (compra/salida/ajuste/traslado), guarda de stock nunca negativo y alerta por punto de reposición por base | `./bin/verify` = 0, con test de cada tipo de movimiento y de salida/traslado rechazado cuando dejaría el stock negativo | módulo nuevo `Inventario`, migraciones nuevas, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/inventario.php`, tests | no | 4 | **hecha** (PR #99, mergeado 3/9/2026; crea el módulo `Inventario`) |
+| 52 | HU-36 — inventario de repuestos: módulo nuevo `Inventario` (`inv_`) con `inv_repuestos`/`inv_stock`/`inv_movimientos` (compra/salida/ajuste/traslado), guarda de stock nunca negativo y alerta por punto de reposición por base | `./bin/verify` = 0, con test de cada tipo de movimiento y de salida/traslado rechazado cuando dejaría el stock negativo | módulo nuevo `Inventario`, migraciones nuevas, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/inventario.php`, tests | no | 4 | **hecha** (PR #99, mergeado 3/9/2026) |
 | 53 | HU-37 — órdenes de mantenimiento: `man_ordenes_mantenimiento` con máquina de estados real (`abierta → cerrada`, guarda de repuestos disponibles), primer contrato de escritura cross-módulo del proyecto hacia `Inventario` (consumir stock) y hacia `Finanzas` (generar el gasto, reusando `CrearGasto`), todo en una transacción. Depende de que la 52 esté integrada | `./bin/verify` = 0, con test de cierre exitoso (stock y gasto exactos) y de cierre sin stock suficiente rechazado sin dejar nada a medias | `Mantenimiento/**`, `Inventario/Contratos/**`+`Infraestructura/**`, `Finanzas/Contratos/**`+`Infraestructura/**`, migración nueva, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/mantenimiento.php`, tests | no | 5 | **hecha** (PR #101, mergeado 3/9/2026) |
-| 54 | HU-38 — planes de mantenimiento preventivo por horas de vuelo: `man_planes_mantenimiento` por modelo de dron (correlación por texto, sin FK), horas acumuladas derivadas de `ope_sesiones` (suma `fin - inicio` en PHP) vía contrato de lectura nuevo, alerta calculada al leer | `./bin/verify` = 0, con test de alerta activada al cruzar el umbral y de plan sin drones de ese modelo sin alerta | `Mantenimiento/**`, `Operaciones/Contratos/**`+`Infraestructura/**`, migración nueva, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/mantenimiento.php`, tests | no | 4 | **hecha** (PR #104, mergeado 3/9/2026; cierra Sprint 11) |
-| 55 | HU-41 — portal del cliente: guard `cliente` (ya declarado desde HU-01, sin consumidores hasta ahora) con login propio, tres pantallas de solo lectura (avance, actas firmadas, reportes técnicos) resueltas siempre desde el `contrato_id` del usuario autenticado. Abre Sprint 12 | `./bin/verify` = 0, con test de cliente A pidiendo un recurso de cliente B → 404 en cada endpoint nuevo (invariante 5) | `Seguridad/**` (login/contrato del portal), módulo nuevo `Portal/**`, `Operaciones/Contratos/**`+implementación, `routes/web.php`, `lang/es/portal.php`, `docs/decisiones/0012-lecturas-complejas-vistas-sql-eloquent.md` (solo una nota en Consecuencias), tests | **sí** | 4 | pendiente |
-| 56 | HU-42 — galería de evidencias de un trabajo: pantalla sobre `ope_evidencias` agrupada por trabajo (imagen de campo), acta (firma) y sesión (incidencias con foto), con streaming del archivo real desde el disco `r2` | `./bin/verify` = 0, con test de agrupación por trabajo/sesión y de que la descarga sirve el archivo real, no la ruta cruda | `Operaciones/Infraestructura/Http/Controllers/Web/TrabajosController.php` (o un controlador nuevo), `routes/web.php`, vistas de `trabajos`, tests | no | 2 | pendiente |
-| 57 | HU-43 — listado de reportes técnicos: activa el ítem `reportes › tecnicos` ya sembrado como placeholder en `SecMenuSeeder`, filtro por cliente (contrato de lectura nuevo en sentido `Comercial → Operaciones`, primero en ese sentido) y período | `./bin/verify` = 0, con test de filtro por cliente y por período, reusando la descarga de PDF ya existente | `Operaciones/**` (contrato de lectura, caso de uso, controlador, vista), `Comercial/Contratos/**`+implementación, `routes/web.php`, `SecMenuSeeder` (solo activar el placeholder), `lang/es/operaciones.php`, tests | no | 3 | pendiente |
+| 54 | HU-38 — planes de mantenimiento preventivo por horas de vuelo: `man_planes_mantenimiento` por modelo de dron (correlación por texto, sin FK), horas acumuladas derivadas de `ope_sesiones` (suma `fin - inicio` en PHP) vía contrato de lectura nuevo, alerta calculada al leer | `./bin/verify` = 0, con test de alerta activada al cruzar el umbral y de plan sin drones de ese modelo sin alerta | `Mantenimiento/**`, `Operaciones/Contratos/**`+`Infraestructura/**`, migración nueva, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/mantenimiento.php`, tests | no | 4 | **hecha** (PR #104, mergeado 3/9/2026) |
+| 55 | HU-41 — portal del cliente: entra y ve solo sus reportes/actas/avance, todo consultado desde el `contrato` del usuario autenticado (invariante 5); test obligatorio de cliente A pidiendo recurso de cliente B → 404. Abre Sprint 12 | `./bin/verify` = 0, con el test de scoping cruzado (404) | módulo nuevo o extensión de `Comercial`/`Seguridad` para el rol cliente, `routes/web.php` o `routes/portal.php`, `SeguridadSeeder`, `SecMenuSeeder`, tests | **sí** | 4 | **integrada a mano el 4/9/2026** — el ciclo la rechazó dos veces (PR #106 en borrador) por el único hallazgo bloqueante de `runs/55-veredicto.md`: 17 capturas de Playwright ajenas a la HU (drift de fecha y orden de fixtures), resueltas de raíz en el PR #113. El scoping, los 404 cruzados y el login del guard `cliente` estaban aprobados. Se mergeó `develop` en la rama (unificando `LecturaReporteTecnico` con la tarea 57: `listarTodos()` + `listarPorContrato()`), se regeneraron las capturas afectadas por el fixture del portal y se marcó el PR listo |
+| 56 | HU-42 — galería de evidencias de un trabajo: pantalla sobre `ope_evidencias` agrupada por trabajo y sesión, con miniaturas y descarga | `./bin/verify` = 0, con Playwright | `Operaciones/**` (pantalla panel), `routes/web.php`, tests | no | 2 | **hecha** (PR #107, mergeado 4/9/2026) |
+| 57 | HU-43 — listado de reportes técnicos: pantalla sobre `ope_reportes_tecnicos` con filtro por cliente y período, reusando la descarga individual ya existente | `./bin/verify` = 0, con Playwright | `Operaciones/**` (contrato de lectura, caso de uso, controlador, vista), `Comercial/Contratos/**` (contrato de lectura inverso hacia el nombre del cliente), `routes/web.php`, `SecMenuSeeder` (solo activar el placeholder), tests | no | 3 | **hecha** (PR #108, mergeado 4/9/2026) |
+| 58 | HU-44 — pausas con causa atribuible (DS-01): pausa ligada a sesión con causa de catálogo, agregado por causa en un tablero propio | `./bin/verify` = 0, con test de agregación exacta por causa y de causa fuera de catálogo rechazada | `Operaciones/**` (migración `ope_pausas`, caso de uso, controlador, vista), `SeguridadSeeder`, `SecMenuSeeder` (solo activar el placeholder `pausas`), tests | no | 4 | **hecha** (PR #109, mergeado 4/9/2026) |
+| 59 | TE-13 — quitar del menú el ítem `Operación › Mezclas`: no existe más por CR-01 | `./bin/verify` = 0, con test de que `sec_menu` no tiene ninguna fila `menu.operacion.items.mezclas` | `SecMenuSeeder.php`, `lang/es/menu.php`, tests | no | 2 | **hecha** (PR #110, mergeado 4/9/2026) |
+| 60 | TE-14 — reemplazar los badges de demostración del sidebar (`DatosDemoPanel::badgesMenu()`) por contadores reales o quitarlos si no hay fuente real; depende de que la 57 y la 58 estén integradas | `./bin/verify` = 0, con test de que cada badge que queda cambia con su dato de origen y de que los que no tienen fuente real no aparecen | `Seguridad/Infraestructura/Http/Demo/DatosDemoPanel.php` (solo `badgesMenu()`), `CascaraPanel.php`, `DashboardController.php`, contratos de lectura nuevos en `Operaciones`/`Inventario`/`Finanzas`, tests | no | 3 | **hecha** (PR #111, mergeado 4/9/2026) — cierra Sprint 12 y el plan de doce sprints completo (salvo la 55) |
+| 61 | Deuda técnica (no es fila de `plan_sprints.md`, mismo criterio que 28-30): eliminar el no determinismo de `rendiciones.spec.ts → show` (claro u oscuro, alterna cuál falla) — el único rojo de Playwright que sigue sin explicación tras la 60, que regeneró los ~100 snapshots que tapaban el resto del drift preexistente | `npx playwright test tests/Visual/rendiciones.spec.ts --grep show --repeat-each=5` = 0, y `./bin/verify` = 0 sin ningún otro snapshot movido | `tests/Visual/rendiciones.spec.ts`, `resources/css/components/{topbar,panel-layout}.css` (si la causa es de layout compartido), `playwright.config.ts` (si hace falta, sin agregar `retries`) | no | 2 | escrita |
 
 ### El bug de la 24 — ya pasó dos veces, sigue sin arreglarse
 
@@ -191,7 +200,6 @@ lo corrigió.
 | TE-09, HU-21 | Ensayo general en campo con operarios reales y sus correcciones de adopción |
 | TE-10, TE-11 | Producción (VPS, HTTPS, respaldos, Sentry) y carga de datos maestros reales: dependen de infraestructura y de datos que no están |
 | TE-12 | Cierre de ruta crítica (matriz de permisos, seeds de producción, tag v1.0): prematuro mientras el grueso del plan siga sin hacer |
-| TE-13, TE-14 | Sprint 12: quitar el ítem de menú de mezclas y reemplazar badges demo por contadores reales. No descartadas — quedan detrás de HU-41/42/43 en la cola, ver "Sprint 12 — en curso" abajo |
 | Reunión de cierre de la especificación | Es de negocio. `analisis_clasificacion.md` §7 tiene la agenda |
 
 **Sprint 1 a 5 están enteros en lo que es automatizable de este repo.** El
@@ -224,13 +232,12 @@ sprint (PR #86/#87, 3/9/2026): a diferencia de las otras seis, toca
 negocio puro, y su lógica de dominio pesada ya existía desde HU-01
 (`AsignarRolesUsuario`) — faltaba solo la capa HTTP encima.
 
-**El bug de LSP de `atoms/input` (tarea 32) quedó resuelto recién el
-3/9/2026, retomado desde cero (PR #105) después de agotarse incompleto la
-primera vez.** Todas las tareas de Sprint 7 en adelante hasta la 54
-asumieron que NO estaba resuelto y revisaron en el momento si `atoms/input`
-fusiona `$attributes`, usando el envoltorio manual si no — ver el detalle en
-la fila 32 de la tabla. A partir de la tarea 55 en adelante ya no hace falta
-ese chequeo: `atoms/input` fusiona `class` en su `<div>` raíz.
+**El bug de LSP de `atoms/input` (tarea 32) sigue sin resolverse** — se
+agotaron sus etapas sin cerrar la HU y quedó incompleta (ver la fila 32
+arriba). Ninguna tarea de Sprint 7 en adelante asumió que estaba resuelta:
+cada una revisó en el momento si `atoms/input` fusiona `$attributes` y usó el
+envoltorio manual si no. Sigue siendo así para toda tarea nueva que use
+campos anchos.
 
 ### Sprint 8 — cerrado
 
@@ -246,55 +253,6 @@ HU-30 (planilla, tarea 44) — las tres integradas al 3/9/2026. Las tareas 40 y
 HU-31 (facturas, tarea 45, PR #91) y HU-32 (reporte comercial de avance,
 tarea 46) cierran Sprint 9 ("cobrarle al cliente"). La 46 reusa
 `LecturaActaConformada` tal cual la dejó la 45, sin tocarla.
-
-### Sprint 10 — cerrado
-
-HU-33 (gastos, tarea 47, PR #94), HU-34 (rendiciones, tarea 48, PR #95) y
-HU-35 (combustible, tarea 49, PR #96) cierran Sprint 10 ("gastos y
-rendiciones"), integradas el 3/9/2026 en ese orden por la dependencia real de
-HU-34 sobre `fin_gastos` (ver "Por qué ese orden" abajo).
-
-### Sprint 11 — cerrado
-
-Sprint 11 ("inventario y mantenimiento") se decidió con el agente
-`arquitectura` antes de escribir sus prompts: dos módulos nuevos,
-`Mantenimiento` (`man_`, vehículos/baterías/generadores/planes/órdenes) e
-`Inventario` (`inv_`, exclusivo de repuestos). Vehículos (tarea 50, PR #97)
-abrió el sprint por ser la HU más simple y la que deja escrita la extensión
-al ADR 0011; baterías (tarea 51, PR #98) la siguió por su cruce de lectura
-con `ope_recargas`. Con `Mantenimiento` ya en `develop`, repuestos (tarea 52,
-PR #99, crea `Inventario`), órdenes de mantenimiento (tarea 53, PR #101 —
-primer contrato de escritura cross-módulo del proyecto, `Mantenimiento` →
-`Inventario` → `Finanzas` en una transacción) y planes preventivos (tarea 54,
-PR #104) cerraron el sprint el 3/9/2026.
-
-### Sprint 12 — en curso
-
-Sprint 12 ("lo que ve el cliente y lo que falta ver") tiene seis filas en
-`plan_sprints.md` (§244): HU-41 (portal), HU-42 (galería de evidencias),
-HU-43 (listado de reportes técnicos), HU-44 (pausas con causa atribuible,
-DS-01), TE-13 (quitar el ítem de menú de mezclas) y TE-14 (badges reales en
-vez de datos demo). Esta vuelta escribe las primeras tres (tareas 55, 56,
-57); HU-44, TE-13 y TE-14 quedan para la próxima planificación — HU-44 tiene
-decisión de negocio ya tomada (DS-01, `analisis_classificacion.md` línea 52:
-"Entra en v1: entidad `pausas` con causa atribuible"), así que califica, pero
-no se escribió en esta tanda para no forzar una cuarta tarea por sesión
-sin necesidad real (ver la regla de "de a 3" del prompt de planificación).
-
-HU-41 va primera del sprint pese a ser la más grande (2,5 d, crítica) porque
-es la única que introduce infraestructura nueva (el guard `cliente`, sin
-consumidores desde HU-01) que ninguna otra HU de este sprint necesita —no hay
-dependencia real entre 41/42/43, cada una toca datos y pantallas distintas
-(portal vs. panel interno), así que el orden entre ellas es arbitrario y se
-mantuvo el orden literal del plan. Se consultó al agente `arquitectura` antes
-de escribir el prompt de la 55 (mismo criterio que la tarea 50): la pregunta
-concreta era si HU-41 debía introducir el patrón `vw_*` de ADR 0012 (nunca
-usado todavía) o seguir el precedente liviano de `ObtenerAvanceComercial`
-(HU-32, agregación en PHP sobre contratos de lectura). La recomendación fue
-la segunda opción, señalando que ADR 0012 lista esa alternativa como
-descartada sin que HU-32 lo haya enmendado — la tarea 55 deja escrita esa
-nota en el ADR (punto 6 de su prompt), en vez de introducir vistas SQL sin
-necesidad real de volumen.
 
 ### Condicionadas — todavía no tienen sobre qué correr
 
@@ -366,26 +324,24 @@ práctica — queda igual, sin reordenar.** La idea original: `atoms/input` (32)
 tenía que fusionar `$attributes` antes de que las siete pantallas de Sprint 7
 empezaran a repetir el envoltorio manual que documentó la tarea 31 — chica (2
 etapas), sin dependencias, así que iba primera. En la ejecución real se agotó
-sin cerrar la primera vez (ver la fila 32) y recién se retomó y cerró al
-planificar esta tanda, con PR #105. No se la reordenó ni se reintentó antes
-—quedó marcada para el usuario, no era una decisión de planificación
-retomarla antes—, y las tareas 33 a 54 ya no dependieron de que estuviera
-resuelta: cada una revisó en el momento si `atoms/input` fusiona
-`$attributes` y usó el envoltorio manual si no. Clientes (33) sigue antes que
-contratos (34) porque `com_contratos.cliente_id` es una FK real a
-`com_clientes`: aunque los tests de 34 puedan crear su propio cliente por
-factory sin que exista la pantalla de alta, tiene sentido que el patrón de
-ABM completo (el primero real del panel) se establezca una vez en la HU más
-simple de las dos, y que contratos —con máquina de estados, 13 `CHECK` y
-montos derivados— lo reutilice en vez de inventarlo en paralelo. Campos y
-lotes (35) sigue a contratos por el mismo criterio de progresión de
-complejidad, no por una dependencia real de datos: `com_campos.cliente_id` es
-FK a `com_clientes` (33), no a `com_contratos` (34), así que 35 podría en
-principio ir antes que 34 — pero repite el patrón de ABM simple una vez más
-(sin máquina de estados) antes de las HU con más lógica propia (HU-25, con
-máquina de estados sobre órdenes; HU-26, con la guarda de que cambiar tarifa
-no altere devengos ya generados), que conviene dejar para cuando el patrón
-esté más asentado.
+sin cerrar (ver la fila 32). No se la reordena ni se reintenta desde acá —es
+la que quedó marcada para el usuario, no una decisión de esta planificación—,
+y las tareas 33 en adelante ya no dependen de que esté resuelta: cada una
+revisa en el momento si `atoms/input` fusiona `$attributes` y usa el
+envoltorio manual si no. Clientes (33) sigue antes que contratos (34) porque
+`com_contratos.cliente_id` es una FK real a `com_clientes`: aunque los tests
+de 34 puedan crear su propio cliente por factory sin que exista la pantalla de
+alta, tiene sentido que el patrón de ABM completo (el primero real del panel)
+se establezca una vez en la HU más simple de las dos, y que contratos —con
+máquina de estados, 13 `CHECK` y montos derivados— lo reutilice en vez de
+inventarlo en paralelo. Campos y lotes (35) sigue a contratos por el mismo
+criterio de progresión de complejidad, no por una dependencia real de datos:
+`com_campos.cliente_id` es FK a `com_clientes` (33), no a `com_contratos`
+(34), así que 35 podría en principio ir antes que 34 — pero repite el patrón
+de ABM simple una vez más (sin máquina de estados) antes de las HU con más
+lógica propia (HU-25, con máquina de estados sobre órdenes; HU-26, con la
+guarda de que cambiar tarifa no altere devengos ya generados), que conviene
+dejar para cuando el patrón esté más asentado.
 
 **36 → 37 → 38 siguieron exactamente el mismo criterio de progresión que 33 →
 34 → 35.** Drones (36) no tenía ninguna dependencia de datos con
@@ -472,12 +428,12 @@ orden de lectura.** El CA esencial de HU-34 ("rendición con detalle e
 ítems") necesita que existan gastos reales para asociarles una rendición, y
 la migración agrega `rendicion_id` a `fin_gastos` por `ALTER` — no puede
 escribirse antes de que la tabla exista. HU-35 (combustible), la tercera de
-Sprint 10, quedó sin escribir todavía en esa vuelta: era la más chica de las
-tres (1,0 d) y su forma concreta (carga por base y fecha, sin depender de
-gastos ni rendiciones) convino decidirla en la vuelta siguiente, no adivinada
-junto con las otras dos.
+Sprint 10, queda sin escribir todavía: es la más chica de las tres (1,0 d) y
+su forma concreta (carga por base y fecha, sin depender de gastos ni
+rendiciones) conviene decidirla en la próxima vuelta de planificación, no
+adivinada ahora junto con las otras dos.
 
-**49 (combustible) cerró Sprint 10 sin depender de la 47 ni de la 48.**
+**49 (combustible) cierra Sprint 10 sin depender de la 47 ni de la 48.**
 `fin_combustibles` no lee ni escribe `fin_gastos`/`fin_rendiciones` — es
 independiente, se ordenó al final del sprint solo para cerrarlo antes de
 abrir el siguiente, mismo criterio ya usado en 45→46 y 47→48. Se investigó
@@ -487,57 +443,140 @@ no se cruza con esta HU — evita el error de intentar reusarla o de
 inventar un vínculo que la especificación sugiere (`cargas_combustible.
 gasto_id`) pero que el CA esencial de `plan_sprints.md` no pide.
 
-**50 → 51 abrieron Sprint 11 con las dos HU más chicas y sin dependencia de
-`HU-36`/`HU-37`, que quedaron para la vuelta siguiente.** Sprint 11 tenía 5
+**50 → 51 abren Sprint 11 con las dos HU más chicas y sin dependencia de
+`HU-36`/`HU-37`, que quedan para la próxima vuelta.** Sprint 11 tiene 5
 historias con una decisión de arquitectura real sin resolver: dónde viven
 `Bateria` y `Vehiculo` (`docs/decisiones/0011-convencion-prefijos-tabla.md`
 punto 3 los reserva para módulos `Mantenimiento`/`Inventario` que no
-existían). Se consultó al agente `arquitectura` antes de escribir los
+existen). Se consultó al agente `arquitectura` antes de escribir los
 prompts en vez de adivinar: la recomendación fue crear **dos** módulos
 nuevos, no cinco tablas sueltas — `Mantenimiento` (`man_`) para vehículos,
 baterías, generadores y los planes/órdenes de mantenimiento (equipos con
 desgaste que disparan alerta por umbral); `Inventario` (`inv_`) exclusivo
 de HU-36 (repuestos, stock, movimientos). `Dron` no se mueve de
-`Operaciones` — ese precedente ya está integrado. Vehículos (50) fue primero
-por ser la más simple de las cinco (1,0 d, sin cruce con otro módulo) y
-dejó escrita la extensión al ADR 0011 que las siguientes necesitaban.
-Baterías (51) siguió porque su alerta por temperatura lee `ope_recargas`
-(tarea 23) por un contrato de lectura nuevo, cruce que convenía escribir
+`Operaciones` — ese precedente ya está integrado. Vehículos (50) va primero
+por ser la más simple de las cinco (1,0 d, sin cruce con otro módulo) y es
+la que deja escrita la extensión al ADR 0011 que las siguientes necesitan.
+Baterías (51) sigue porque su alerta por temperatura lee `ope_recargas`
+(tarea 23) por un contrato de lectura nuevo, cruce que conviene escribir
 una sola vez con el módulo `Mantenimiento` ya creado. HU-36 (repuestos,
 2,5 d), HU-37 (mantenimiento que consume stock, depende de HU-36) y HU-38
-(planes preventivos, cuya forma dependía de si `ope_drones` necesitaba sumar
-horas de vuelo acumuladas — dato que entonces no existía) quedaron sin
-prompt: eran el "bloque más caro" del sprint, con dependencias reales entre
-sí, y convenía decidirlas con el módulo `Mantenimiento` ya en `develop` para
+(planes preventivos, cuya forma depende de si `ope_drones` necesita sumar
+horas de vuelo acumuladas — dato que hoy no existe) quedan sin prompt: son
+el "bloque más caro" del sprint, con dependencias reales entre sí, y
+conviene decidirlas con el módulo `Mantenimiento` ya en `develop` para
 probar contra código real en vez de a ciegas — mismo criterio que HU-32
 esperó a que `com_facturas` estuviera integrada.
 
-**52 → 53 → 54 cerraron Sprint 11, ya con `Mantenimiento` en `develop` para
-investigar contra código real en vez de a ciegas.** Repuestos (52) creó el
+**52 → 53 → 54 cierran Sprint 11, ya con `Mantenimiento` en `develop` para
+investigar contra código real en vez de a ciegas.** Repuestos (52) crea el
 módulo `Inventario` (reservado desde la extensión del ADR 0011 escrita por
 la tarea 50, sin volver a consultar arquitectura: el reparto ya estaba
-decidido) y fue primero porque órdenes de mantenimiento (53) tenía una
+decidido) y va primero porque órdenes de mantenimiento (53) tiene una
 dependencia de dato real sobre él — no hay stock que consumir sin que
 `inv_stock`/`inv_movimientos` existan. Órdenes (53) resultó ser la más
-grande de las tres (5 etapas, contra 3-4 del resto de Sprint 11): fue la
+grande de las tres (5 etapas, contra 3-4 del resto de Sprint 11): es la
 primera vez que un módulo escribe en `fin_gastos` desde afuera de
 `Finanzas` (contrato de escritura nuevo, no solo de lectura como todos los
 anteriores) y la primera vez que una sola transacción de negocio cruza
 tres módulos (`Mantenimiento` → `Inventario` → `Finanzas`). Se investigó
 `CrearGasto` y `FinanzasRubrosSeeder` antes de escribir el prompt para
-confirmar que el rubro "Mantenimiento de equipos"/"Repuestos" ya estaba
-sembrado desde la tarea 47 — la tarea 53 lo reusó, no lo reinventó. Planes
-preventivos (54) cerró el sprint sin depender de la 53 (no necesitaba que
-existiera una orden para calcular la alerta): la pregunta que
+confirmar que el rubro "Mantenimiento de equipos"/"Repuestos" ya está
+sembrado desde la tarea 47 — la tarea 53 lo reusa, no lo reinventa. Planes
+preventivos (54) cierra el sprint sin depender de la 53 (no necesita que
+exista una orden para calcular la alerta): la pregunta que
 `cola_tareas.md` dejaba abierta ("¿de dónde salen las horas de vuelo
-acumuladas?") ya tenía respuesta con el código real de `ope_sesiones` a
+acumuladas?") ya tiene respuesta con el código real de `ope_sesiones` a
 la vista — `dron_id`/`inicio`/`fin` existen desde las tareas 09 y 20, así
 que las horas de vuelo se derivan sumando sesiones cerradas por dron, sin
-agregar una columna nueva que se desincronizaría del dato real. Quedó
+agregar una columna nueva que se desincronizaría del dato real. Queda
 después de la 53 solo por seguir el orden literal de `plan_sprints.md`,
 no por una dependencia real.
 
-**55 → 56 → 57 abren Sprint 12 en el orden literal del plan, sin dependencia
-real entre ellas.** Ver "Sprint 12 — en curso" arriba para el detalle de por
-qué HU-41 (55) fue primera y qué se consultó a `arquitectura` antes de
-escribirla.
+**55 → 56 → 57 → 58 → 59 → 60 abren y cierran Sprint 12, el último del
+plan.** El orden literal del plan (HU-41, HU-42, HU-43, HU-44, TE-13, TE-14)
+no tenía ninguna dependencia de dato entre sí — cada pantalla lee un módulo
+distinto (`Comercial`/portal, `ope_evidencias`, `ope_reportes_tecnicos`,
+`ope_pausas` nueva) — así que se respetó tal cual. La 55 (portal del
+cliente) es la única `critica=si` de todo Sprint 12 (toca el scoping del
+portal, invariante 5, de la lista de `CLAUDE.md`) y la única que no cerró:
+quedó **rechazada dos veces** y su PR (#106) sigue en borrador — ver
+`runs/55.md`, `runs/55-veredicto.md`. No bloqueó lo que vino detrás porque
+ninguna otra HU de Sprint 12 depende de sus datos, pero sí se llevó puesto el
+prompt de la 57 (escrito en la misma tanda de planificación, viajando sin
+commitear en la rama de la 55 — el mismo mecanismo de "El bug de la 24" de
+más arriba, aplicado esta vez a una rama que no era crítica por sí misma
+pero terminó estancada por el rechazo). La 56 (galería de evidencias) sí se
+integró (PR #107) porque arrancó en su propia rama después de que la 55 ya
+había quedado resuelta (rechazada y en borrador), no antes.
+
+**57 se restaura, no se reescribe.** Su contenido ya estaba pensado con
+cuidado (nombra el contrato de lectura inverso `Comercial → Operaciones` que
+hace falta, cita el ítem de menú placeholder correcto) — perderlo por un bug
+de infraestructura del ciclo no es motivo para redecidir su alcance.
+`git show 3463b52:prompts/57-listado-reportes-tecnicos.md` lo recuperó
+íntegro.
+
+**58 → 59 → 60 completan Sprint 12 sin dependencias de dato entre sí, salvo
+la 60.** HU-44 (pausas, 58) y TE-13 (quitar Mezclas del menú, 59) son
+independientes — se ordenaron en el orden literal del plan, no por
+necesidad. TE-14 (badges reales, 60) sí depende de datos reales: dos de sus
+ocho badges (`pausas`, y transitivamente el criterio "cada badge consulta su
+módulo o desaparece") necesitan que la 58 exista, así que va última. De los
+ocho badges de `DatosDemoPanel::badgesMenu()`, solo cinco tienen hoy una
+fuente real identificada (órdenes vigentes, sesiones sin validar, pausas de
+la 58, stock bajo mínimo, devengos del período); los otros tres
+(`programacion`, `reportes_cliente`, `drones` en taller) no tienen dato real
+detrás y su prompt instruye explícitamente a quitarlos en vez de inventar
+una columna nueva — `reportes_cliente` en particular no se resuelve
+integrando la 55: esa tarea quedó marcada para revisión humana y no se
+reintenta desde acá.
+
+**Con la 60, Sprint 12 cierra el plan de doce sprints completo** (salvo la
+55, marcada para el usuario). No queda ninguna HU/TE adicional en
+`plan_sprints.md` después de Sprint 12 — la próxima planificación, al no
+encontrar más filas que agregar de un sprint nuevo, debe revisar primero si
+alguna de las líneas de "Fuera del ciclo automático" cambió de condición
+(por ejemplo, si ya hay datos de beta para TE-08) antes de considerar
+`runs/DETENER`.
+
+**61 se escribe porque ninguna línea de "Fuera del ciclo automático" cambió
+de condición, pero apareció una deuda técnica nueva con criterio ejecutable
+propio.** Con Sprint 12 cerrado (60), se revisó la tabla de arriba entera
+antes de considerar `runs/DETENER`: TE-01 (resto) y TE-08 siguen sin
+staging real (ADR 0010 sigue con el alcance de servidor abierto), TE-02
+sigue necesitando el RC en mano, TE-04/TE-07 (parte app) siguen en
+`agrocom-field`, TE-09/HU-21/TE-10/TE-11/TE-12 siguen atados a ensayo de
+campo y producción real, y la reunión de cierre sigue siendo de negocio —
+nada de eso calificó. Se evaluó también si TE-12 (matriz de permisos con
+test por celda) podía recortarse como se hizo con TE-14/HU-09/HU-20 en
+tareas anteriores, y se descartó: la matriz de `especificacion_funcional_
+tecnica.md` §3 todavía tiene filas de mezcla (fuera de alcance por CR-01,
+sin reconciliar porque la especificación no se toca hasta la reunión de
+cierre) y una fila de portal del cliente que depende de la 55, rechazada y
+marcada para no reintentarse — escribir esa tarea hubiera significado
+inventar un recorte de alcance no pedido por nadie, no ejecutar una
+decisión ya tomada.
+
+Revisando en cambio `runs/*.md` de las últimas diez tareas apareció un
+patrón real: diez sesiones seguidas (32, 53 a 60) documentaron "rojo
+preexistente" de Playwright sin tocarlo, siempre con el mismo argumento
+correcto (el gate real de CI no corre Playwright, así que no bloqueaba
+ningún merge) pero sin que nadie lo arreglara — igual que las invariantes 7
+y 9 antes de las tareas 04 y 06, o el gap de FK antes de la 30. La tarea 60
+regeneró de un saque los ~100 snapshots que tapaban la mayor parte de ese
+rojo (drift de fuentes/antialiasing del entorno). Queda un solo caso que
+**no** es drift de fuentes — `rendiciones show`, no determinístico,
+reproducido con y sin los cambios de la 60 — y con eso aislado, tiene
+criterio de aceptación ejecutable propio (determinismo en corridas
+repetidas) sin depender de ninguna decisión pendiente. Mismo criterio que
+28-30: no es fila de `plan_sprints.md`, pero es deuda concreta, documentada
+por varias tareas, con exit code verificable.
+
+**Detrás de la 61 no queda ninguna fila más escrita.** Si se integra sin
+sorpresas, la próxima planificación vuelve a estar en la misma situación
+que esta (Sprint 12 cerrado, nada nuevo calificable) y debe repetir la
+misma revisión de "Fuera del ciclo automático" antes de escribir
+`runs/DETENER` — no se prepararon tareas 62/63 a ciegas porque, a
+diferencia de una HU con corte de dominio conocido, no hay una segunda
+pieza de deuda técnica identificada todavía con la misma certeza que la 61.
