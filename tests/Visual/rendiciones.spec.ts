@@ -19,6 +19,10 @@ import { asegurarTema, elegirRolDueno, esperarFuentes, iniciarSesion } from './h
  * (cargada por el fixture) porque es el más interesante: muestra el chip de
  * estado, la tabla de gastos asociados, y el botón "Aprobar" habilitado.
  * El fixture asegura idempotencia y no toca datos de otras pantallas.
+ *
+ * `create` enmascara `#fecha`: el campo defaultea a `now()->toDateString()`
+ * (`pages/rendiciones/create.blade.php`), así que sin máscara el snapshot
+ * queda atado al día calendario en que se generó (hallazgo de tarea 55).
  */
 test.beforeAll(() => {
     execFileSync(
@@ -70,7 +74,7 @@ test.describe('rendiciones', () => {
 
             await expect(page).toHaveScreenshot('rendiciones-create-light.png', {
                 fullPage: true,
-                mask: [page.locator('.ag-panel__footer span').first()],
+                mask: [page.locator('.ag-panel__footer span').first(), page.locator('#fecha')],
             });
         });
 
@@ -80,7 +84,7 @@ test.describe('rendiciones', () => {
 
             await expect(page).toHaveScreenshot('rendiciones-create-dark.png', {
                 fullPage: true,
-                mask: [page.locator('.ag-panel__footer span').first()],
+                mask: [page.locator('.ag-panel__footer span').first(), page.locator('#fecha')],
             });
         });
     });

@@ -12,6 +12,10 @@ import { asegurarTema, elegirRolDueno, esperarFuentes, iniciarSesion } from './h
  * cargadas por `fixtures/combustible-demo.php`, una de cada destino) y el
  * arquetipo Formulario (`create`). Sin gráficos ni animación propia —
  * mismo criterio que `gastos.spec.ts`.
+ *
+ * `create` enmascara `#fecha`: el campo defaultea a `now()->toDateString()`
+ * (`pages/combustible/create.blade.php`), así que sin máscara el snapshot
+ * queda atado al día calendario en que se generó (hallazgo de tarea 55).
  */
 test.beforeAll(() => {
     execFileSync(
@@ -63,7 +67,7 @@ test.describe('combustible', () => {
 
             await expect(page).toHaveScreenshot('combustible-create-light.png', {
                 fullPage: true,
-                mask: [page.locator('.ag-panel__footer span').first()],
+                mask: [page.locator('.ag-panel__footer span').first(), page.locator('#fecha')],
             });
         });
 
@@ -73,7 +77,7 @@ test.describe('combustible', () => {
 
             await expect(page).toHaveScreenshot('combustible-create-dark.png', {
                 fullPage: true,
-                mask: [page.locator('.ag-panel__footer span').first()],
+                mask: [page.locator('.ag-panel__footer span').first(), page.locator('#fecha')],
             });
         });
     });

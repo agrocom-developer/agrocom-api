@@ -25,7 +25,8 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
-use App\Dominios\Operaciones\Dominio\EstadoActa;
+use App\Dominios\Operaciones\Aplicacion\FirmarActa;
+use App\Dominios\Operaciones\Aplicacion\GenerarActaTrabajo;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Dominio\EstadoSesion;
 use App\Dominios\Operaciones\Dominio\EstadoTrabajo;
@@ -33,7 +34,6 @@ use App\Dominios\Operaciones\Dominio\TipoEvidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Acta;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Evidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
-use App\Dominios\Operaciones\Infraestructura\Eloquent\ReporteTecnico;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
 use App\Dominios\Personal\Dominio\RolOperativoPersona;
@@ -122,15 +122,16 @@ if (! $actaExistente) {
         'motivo_cierre' => 'completado',
     ]);
 
-    // Crea el acta (en estado inicial, se firmaremos después)
-    $acta = Acta::create([
-        'uuid_cliente' => 'a-'.Str::random(33),
-        'trabajo_id' => $trabajo->id,
-        'hectareas_conformadas' => '5.00',
-        'estado' => EstadoActa::Pendiente,
-    ]);
+    // Genera el acta y la firma por el flujo real (mismo camino que
+    // `POST /api/trabajos/{uuid}/acta` + `POST /api/actas/{uuid}/firmar`):
+    // es lo único que fija `Acta.pdf_path` y dispara `GenerarReporteTecnico`
+    // (que a su vez fija `ReporteTecnico.pdf_path`) — saltarse ambos flujos,
+    // como hacía la versión anterior de este fixture con `Acta::create()` +
+    // `update()` manual, dejaba las dos pantallas de descarga sin el botón
+    // que muestran casi siempre en producción (mismo criterio que
+    // `devengos-demo.php` con `ValidarSesion`, invariante 3 de CLAUDE.md).
+    $acta = app(GenerarActaTrabajo::class)->ejecutar($trabajo, 'a-'.Str::random(33));
 
-    // Crea la evidencia de firma
     $evidenciaUuid = 'f-'.Str::random(33);
     $evidencia = Evidencia::create([
         'uuid_cliente' => $evidenciaUuid,
@@ -140,22 +141,7 @@ if (! $actaExistente) {
         'fecha' => '2026-09-02T10:00:00-04:00',
     ]);
 
-    // Firma el acta (solo inserta los datos, sin hacer validaciones de máquina de estados)
-    $acta->update([
-        'estado' => EstadoActa::Firmada,
-        'fecha_firma' => '2026-09-02T16:00:00-04:00',
-        'firmante' => 'Ing. Agrónoma Visual',
-        'evidencia_firma_id' => $evidencia->id,
-    ]);
-
-    // Crea el reporte técnico (generado automáticamente al firmar)
-    ReporteTecnico::firstOrCreate(
-        ['trabajo_id' => $trabajo->id],
-        [
-            'uuid_cliente' => 'r-'.Str::random(33),
-            'generado_en' => now(),
-        ],
-    );
+    app(FirmarActa::class)->ejecutar($acta, $evidenciaUuid, 'Ing. Agrónoma Visual', '2026-09-02T16:00:00-04:00');
 }
 
 // Crea o reutiliza la cuenta de portal (updateOrCreate para asegurar contraseña correcta)

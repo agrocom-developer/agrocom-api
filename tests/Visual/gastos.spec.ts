@@ -13,6 +13,10 @@ import { asegurarTema, elegirRolDueno, esperarFuentes, iniciarSesion } from './h
  * arquetipo Formulario (`create`, con el `<select>` de subrubro filtrado en
  * cliente). Sin gráficos ni animación propia — mismo criterio que
  * `anticipos.spec.ts`.
+ *
+ * `create` enmascara `#fecha`: el campo defaultea a `now()->toDateString()`
+ * (`pages/gastos/create.blade.php`), así que sin máscara el snapshot queda
+ * atado al día calendario en que se generó (hallazgo de tarea 55).
  */
 test.beforeAll(() => {
     execFileSync(
@@ -64,7 +68,7 @@ test.describe('gastos', () => {
 
             await expect(page).toHaveScreenshot('gastos-create-light.png', {
                 fullPage: true,
-                mask: [page.locator('.ag-panel__footer span').first()],
+                mask: [page.locator('.ag-panel__footer span').first(), page.locator('#fecha')],
             });
         });
 
@@ -74,7 +78,7 @@ test.describe('gastos', () => {
 
             await expect(page).toHaveScreenshot('gastos-create-dark.png', {
                 fullPage: true,
-                mask: [page.locator('.ag-panel__footer span').first()],
+                mask: [page.locator('.ag-panel__footer span').first(), page.locator('#fecha')],
             });
         });
     });
