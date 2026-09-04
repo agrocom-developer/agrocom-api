@@ -93,7 +93,7 @@ $actaExistente = Acta::whereHas('trabajo', fn ($q) => $q->where('orden_id', $ord
     ->whereNotNull('fecha_firma')
     ->exists();
 
-if (!$actaExistente) {
+if (! $actaExistente) {
     // Crea el trabajo
     $trabajo = Trabajo::create([
         'uuid_cliente' => 't-'.Str::random(33),
