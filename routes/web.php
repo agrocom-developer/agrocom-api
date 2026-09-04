@@ -21,6 +21,7 @@ use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\VehiculosCon
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\AlertasController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\DronesController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\OrdenesController;
+use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\ReportesTecnicosController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\TrabajosController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\ValidacionSesionesController;
 use App\Dominios\Personal\Infraestructura\Http\Controllers\Web\BasesController;
@@ -666,5 +667,13 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::get('/panel/reportes/comercial/exportar', [ReportesComercialesController::class, 'exportar'])
             ->name('panel.reportes.comercial.exportar');
+
+        // HU-43 (tarea 57): "como encargado, quiero listar y descargar los
+        // reportes técnicos generados, para reenviarlos al agrónomo" — cierra
+        // Sprint 12. Reusa el permiso `operaciones.reporte.ver` que ya gatea
+        // la descarga individual (`panel.trabajos.reporte-pdf`), misma acción
+        // de negocio. Filtrable por cliente y por período de generación.
+        Route::get('/panel/reportes/tecnicos', [ReportesTecnicosController::class, 'index'])
+            ->name('panel.reportes.tecnicos.index');
     });
 });
