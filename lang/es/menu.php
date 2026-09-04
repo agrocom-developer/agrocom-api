@@ -24,25 +24,23 @@ return [
 
     'operacion' => [
         'label' => 'Operación',
-        'descripcion' => 'Órdenes, trabajos, sesiones y evidencias de cada jornada de vuelo.',
+        'descripcion' => 'Órdenes, trabajos, sesiones y pausas de cada jornada de vuelo.',
         'items' => [
             'programacion' => 'Programación',
             'ordenes' => 'Órdenes de aplicación',
             'trabajos' => 'Trabajos',
             'sesiones' => 'Sesiones',
             'pausas' => 'Pausas',
-            'evidencias' => 'Evidencias',
         ],
     ],
 
     'comercial' => [
         'label' => 'Comercial',
-        'descripcion' => 'Clientes, contratos, campos y reportes al cliente.',
+        'descripcion' => 'Clientes, contratos y campos.',
         'items' => [
             'clientes' => 'Clientes',
             'contratos' => 'Contratos',
             'campos' => 'Campos y lotes',
-            'reportes_cliente' => 'Reportes al cliente',
         ],
     ],
 

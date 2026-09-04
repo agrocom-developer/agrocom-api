@@ -26,12 +26,15 @@ use Illuminate\Database\Seeder;
  * tres pantallas que YA existen quedan en el árbol (pedido del 28/8/2026 —
  * nada se retira del menú):
  * - Operación › Programación → `panel.dashboard` (el viejo ítem "Inicio",
- *   migrado — es la misma pantalla, el "Operación de hoy").
+ *   migrado — es la misma pantalla, el "Operación de hoy"), gateado por
+ *   `seguridad.dashboard.ver` desde la tarea 62 (fuga 2: antes sin permiso,
+ *   visible para cualquier rol).
  * - Seguridad › Usuarios → `panel.usuarios.index`, gateado por
  *   `seguridad.usuario.ver` (el permiso de listado — los de mutación rigen
  *   acciones DENTRO de la pantalla, no la visibilidad del ítem).
- * - Seguridad › Organización → `panel.organizacion.index` (sin permiso,
- *   igual que antes; el engranaje del riel también la abre como atajo).
+ * - Seguridad › Organización → `panel.organizacion.index`, gateado por
+ *   `seguridad.organizacion.ver` desde la tarea 62 (ídem — el engranaje del
+ *   riel también la abre como atajo, condicionado al mismo permiso).
  *
  * Idempotente: primero MIGRA las filas del catálogo plano anterior a su
  * nueva identidad (mismo id, label/padre nuevos — así ediciones manuales y
@@ -54,6 +57,26 @@ class SecMenuSeeder extends Seeder
             ->where('label', 'menu.operacion.items.mezclas')
             ->delete();
 
+        // Tarea 62 (fuga 3): estos dos ítems se sembraron sin `ruta` ni
+        // `permission_id` como placeholders y nunca llegaron a tener pantalla
+        // propia — `operacion.evidencias` porque la galería de evidencias
+        // (HU-42, tarea 56) terminó como sub-vista de un trabajo puntual
+        // (`GET /panel/trabajos/{trabajo}/evidencias`, gateada por
+        // `operaciones.trabajo.ver`, no un ítem de nivel 2 propio) y
+        // `comercial.reportes_cliente` porque era para el portal del cliente
+        // (HU-41) y quedó sin pantalla en el panel (`prompts/60-badges-menu-reales.md`
+        // ya lo daba de baja). Por la regla de grupos de
+        // `ObtenerMenuPorRolActivo`, un ítem sin permiso hacía visible a
+        // "Operación"/"Comercial" completos para cualquier rol — mismo
+        // criterio de borrado que `operacion.mezclas` arriba (soft delete
+        // explícito de catálogo, `Seeder::run()` nunca lo hace solo).
+        SecMenu::query()
+            ->where('label', 'menu.operacion.items.evidencias')
+            ->delete();
+        SecMenu::query()
+            ->where('label', 'menu.comercial.items.reportes_cliente')
+            ->delete();
+
         $operacion = $this->modulo('operacion', 'flight_takeoff', 1);
         $comercial = $this->modulo('comercial', 'handshake', 2);
         $recursos = $this->modulo('recursos', 'precision_manufacturing', 3);
@@ -70,7 +93,7 @@ class SecMenuSeeder extends Seeder
         $this->migrar('seguridad.menu.organizacion', 'menu.seguridad.items.organizacion', $seguridad, 'apartment', 3);
 
         // Operación (§4.3)
-        $this->item($operacion, 'operacion', 'programacion', 'event_available', 1, ruta: 'panel.dashboard');
+        $this->item($operacion, 'operacion', 'programacion', 'event_available', 1, ruta: 'panel.dashboard', codigoPermiso: 'seguridad.dashboard.ver');
         // HU-25 (tarea 38): órdenes de aplicación con su propia máquina de
         // estados (emitida → vigente).
         $this->item($operacion, 'operacion', 'ordenes', 'assignment', 2, ruta: 'panel.ordenes.index', codigoPermiso: 'operaciones.orden.ver');
@@ -82,10 +105,11 @@ class SecMenuSeeder extends Seeder
         // HU-44 (tarea 58): pausas con causa atribuible (DS-01) — activa el
         // ítem que ya estaba sembrado como "botón sin link".
         $this->item($operacion, 'operacion', 'pausas', 'pause_circle', 5, ruta: 'panel.pausas.index', codigoPermiso: 'operaciones.pausa.ver');
-        // Orden 6 (mezclas) queda vacante a propósito: CR-01 lo retiró
-        // (TE-13, tarea 59) — no se renumera evidencias para no tocar un
-        // ítem que esta tarea no pidió mover.
-        $this->item($operacion, 'operacion', 'evidencias', 'photo_library', 7);
+        // Orden 6 (mezclas) y 7 (evidencias) quedan vacantes a propósito:
+        // mezclas lo retiró CR-01 (TE-13, tarea 59); evidencias se retira acá
+        // (tarea 62, fuga 3 — ver el borrado de catálogo al inicio de
+        // `run()`) — no se renumeran los ítems que siguen para no tocar algo
+        // que esta tarea no pidió mover.
 
         // Comercial (§4.1 + cap. 9)
         // HU-22 (tarea 33): alta y mantenimiento de clientes — activa el
@@ -100,7 +124,9 @@ class SecMenuSeeder extends Seeder
         // docblock de `item()`). Sin ítem propio para "lotes": se
         // gestionan dentro del formulario del campo.
         $this->item($comercial, 'comercial', 'campos', 'map', 3, ruta: 'panel.campos.index', codigoPermiso: 'comercial.campo.ver');
-        $this->item($comercial, 'comercial', 'reportes_cliente', 'picture_as_pdf', 4);
+        // Orden 4 (reportes_cliente) queda vacante a propósito: se retira acá
+        // (tarea 62, fuga 3 — ver el borrado de catálogo al inicio de
+        // `run()`).
 
         // Recursos (§4.2)
         // HU-27 (tarea 36): administración de la flota de drones — activa
@@ -204,7 +230,7 @@ class SecMenuSeeder extends Seeder
         // la pantalla, no la visibilidad del ítem — mismo criterio que
         // Usuarios.
         $this->item($seguridad, 'seguridad', 'dispositivos', 'smartphone', 2, ruta: 'panel.dispositivos.index', codigoPermiso: 'seguridad.dispositivo.ver');
-        $this->item($seguridad, 'seguridad', 'organizacion', 'apartment', 3, ruta: 'panel.organizacion.index');
+        $this->item($seguridad, 'seguridad', 'organizacion', 'apartment', 3, ruta: 'panel.organizacion.index', codigoPermiso: 'seguridad.organizacion.ver');
         // HU-20: sin módulo raíz propio en la espec §4 (runs/10-diseno.md) —
         // entra bajo Seguridad, mismo criterio que Organización.
         $this->item($seguridad, 'seguridad', 'versiones_apk', 'system_update', 4, ruta: 'panel.versiones-apk.index', codigoPermiso: 'distribucion.version.autorizar');
