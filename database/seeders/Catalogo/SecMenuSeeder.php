@@ -66,7 +66,9 @@ class SecMenuSeeder extends Seeder
         $this->item($operacion, 'operacion', 'trabajos', 'fact_check', 3, ruta: 'panel.trabajos.index', codigoPermiso: 'operaciones.trabajo.ver');
         // HU-14 (tarea 14): cola de validación de sesiones cerradas.
         $this->item($operacion, 'operacion', 'sesiones', 'flight', 4, ruta: 'panel.sesiones.validacion.index', codigoPermiso: 'operaciones.sesion.validar');
-        $this->item($operacion, 'operacion', 'pausas', 'pause_circle', 5);
+        // HU-44 (tarea 58): pausas con causa atribuible (DS-01) — activa el
+        // ítem que ya estaba sembrado como "botón sin link".
+        $this->item($operacion, 'operacion', 'pausas', 'pause_circle', 5, ruta: 'panel.pausas.index', codigoPermiso: 'operaciones.pausa.ver');
         $this->item($operacion, 'operacion', 'mezclas', 'science', 6);
         $this->item($operacion, 'operacion', 'evidencias', 'photo_library', 7);
 

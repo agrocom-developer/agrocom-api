@@ -21,6 +21,7 @@ use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\VehiculosCon
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\AlertasController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\DronesController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\OrdenesController;
+use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\PausasController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\ReportesTecnicosController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\TrabajosController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\ValidacionSesionesController;
@@ -190,6 +191,19 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::post('/panel/sesiones/{sesion}/rechazar', [ValidacionSesionesController::class, 'rechazar'])
             ->name('panel.sesiones.validacion.rechazar');
+
+        // HU-44 (tarea 58): pausas de sesión con causa atribuible (DS-01).
+        // Permisos `operaciones.pausa.ver`/`.registrar` verificados DENTRO
+        // del controlador contra el ROL ACTIVO, mismo criterio que las
+        // rutas de arriba.
+        Route::get('/panel/pausas', [PausasController::class, 'index'])
+            ->name('panel.pausas.index');
+
+        Route::get('/panel/pausas/crear', [PausasController::class, 'create'])
+            ->name('panel.pausas.create');
+
+        Route::post('/panel/pausas', [PausasController::class, 'store'])
+            ->name('panel.pausas.store');
 
         // HU-19 (tarea 26): bandeja de alertas por excepción. Permiso
         // `operaciones.alerta.ver` gatea la pantalla,
