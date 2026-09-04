@@ -103,20 +103,19 @@ it('la edición reasigna roles (agrega uno, revoca otro) y actualiza name y pers
         ->and($usuario->idsDeRoles())->toBe([$idAuxiliar]);
 });
 
-it('un encargado sin asignar_rol_dueno no puede crear un usuario con rol dueño: error legible, nunca 500', function () {
+it('un encargado sin asignar_rol_dueno no puede crear un usuario con rol dueño: 403, nunca 500', function () {
     [$encargado, $idRol] = usuarioConRolParaUsuarios('encargado', 'encargado_operaciones');
     entrarAlPanelParaUsuarios($encargado, $idRol);
 
     $idDueno = (int) SecRole::query()->where('name', 'dueno')->value('id');
 
     $this->post(route('panel.usuarios.store'), payloadUsuario(['roles' => [$idDueno]]))
-        ->assertRedirect()
-        ->assertSessionHasErrors('estado');
+        ->assertForbidden();
 
     expect(SecUser::query()->where('username', 'nuevo.usuario')->exists())->toBeFalse();
 });
 
-it('un encargado sin asignar_rol_dueno tampoco puede lograrlo editando después: error legible, nunca 500', function () {
+it('un encargado sin asignar_rol_dueno tampoco puede lograrlo editando después: 403, nunca 500', function () {
     [$encargado, $idRol] = usuarioConRolParaUsuarios('encargado', 'encargado_operaciones');
     entrarAlPanelParaUsuarios($encargado, $idRol);
 
@@ -127,10 +126,35 @@ it('un encargado sin asignar_rol_dueno tampoco puede lograrlo editando después:
     $usuario = SecUser::query()->where('username', 'nuevo.usuario')->sole();
 
     $this->put(route('panel.usuarios.update', $usuario), payloadUsuario(['roles' => [$idDueno]]))
-        ->assertRedirect()
-        ->assertSessionHasErrors('estado');
+        ->assertForbidden();
 
     expect($usuario->fresh()?->idsDeRoles())->not->toContain($idDueno);
+});
+
+it('un actor con dueño+encargado, activo como encargado, no puede asignar el rol dueño aunque lo tenga en el otro rol (tarea 62, fuga 1)', function () {
+    // La fuga: `AsignarRolesUsuario` evaluaba `asignar_rol_dueno` con
+    // `tienePermiso()` (unión de TODOS los roles del actor), así que un
+    // actor con `dueno` asignado colaba el cambio aunque estuviera operando
+    // activamente como `encargado_operaciones` (que no tiene ese permiso).
+    [$multirol, $idEncargado] = usuarioConRolParaUsuarios('jefe.multirol', 'encargado_operaciones');
+    $idDueno = (int) SecRole::query()->where('name', 'dueno')->value('id');
+    $pivote = new SecUserRole(['id_user' => $multirol->id, 'id_role' => $idDueno]);
+    $pivote->created_by = $multirol->id;
+    $pivote->updated_by = $multirol->id;
+    $pivote->save();
+
+    [$objetivo, $idPiloto] = usuarioConRolParaUsuarios('usuario.objetivo', 'piloto');
+
+    entrarAlPanelParaUsuarios($multirol, $idEncargado);
+
+    $this->put(route('panel.usuarios.update', $objetivo), payloadUsuario([
+        'name' => $objetivo->name,
+        'username' => $objetivo->username,
+        'password' => '',
+        'roles' => [$idDueno],
+    ]))->assertForbidden();
+
+    expect($objetivo->fresh()?->idsDeRoles())->toBe([$idPiloto]);
 });
 
 it('da de baja un usuario por soft delete: no aparece en el índice y un segundo intento da 404', function () {

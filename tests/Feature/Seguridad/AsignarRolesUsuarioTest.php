@@ -67,6 +67,7 @@ it('crea un usuario con múltiples roles', function () {
         personaId: null,
         contratoId: null,
         roleIds: [segIdDeRol('piloto'), segIdDeRol('auxiliar')],
+        idRolActivo: null,
     );
 
     expect($usuario->exists)->toBeTrue()
@@ -88,6 +89,7 @@ it('un encargado de operaciones sin el permiso de asignar_rol_dueno no puede cre
         personaId: null,
         contratoId: null,
         roleIds: [segIdDeRol('dueno')],
+        idRolActivo: null,
     ))->toThrow(PermisoDenegado::class);
 
     expect(SecUser::query()->where('username', 'nuevo.dueno')->exists())->toBeFalse();
@@ -106,6 +108,7 @@ it('un encargado sin el permiso tampoco puede lograrlo asignando el rol dueño a
         personaId: null,
         contratoId: null,
         roleIds: [segIdDeRol('piloto')],
+        idRolActivo: null,
     );
 
     expect(fn () => $this->caso->ejecutar(
@@ -118,6 +121,7 @@ it('un encargado sin el permiso tampoco puede lograrlo asignando el rol dueño a
         personaId: null,
         contratoId: null,
         roleIds: [segIdDeRol('piloto'), segIdDeRol('dueno')],
+        idRolActivo: null,
     ))->toThrow(PermisoDenegado::class);
 
     // La edición fallida no debe haber dejado el rol dueño asignado.
@@ -138,6 +142,7 @@ it('un actor con el permiso asignar_rol_dueno sí puede crear un usuario dueño'
         personaId: null,
         contratoId: null,
         roleIds: [segIdDeRol('dueno')],
+        idRolActivo: null,
     );
 
     expect(
@@ -158,6 +163,7 @@ it('un actor con el permiso asignar_rol_dueno también puede quitar el rol dueñ
         personaId: null,
         contratoId: null,
         roleIds: [segIdDeRol('dueno')],
+        idRolActivo: null,
     );
 
     $this->caso->ejecutar(
@@ -170,6 +176,7 @@ it('un actor con el permiso asignar_rol_dueno también puede quitar el rol dueñ
         personaId: null,
         contratoId: null,
         roleIds: [segIdDeRol('piloto')],
+        idRolActivo: null,
     );
 
     expect(
@@ -196,6 +203,7 @@ it('rechaza dos altas con la misma persona_id', function () {
         personaId: $persona->id,
         contratoId: null,
         roleIds: [segIdDeRol('piloto')],
+        idRolActivo: null,
     );
 
     expect(fn () => $this->caso->ejecutar(
@@ -208,6 +216,7 @@ it('rechaza dos altas con la misma persona_id', function () {
         personaId: $persona->id,
         contratoId: null,
         roleIds: [segIdDeRol('piloto')],
+        idRolActivo: null,
     ))->toThrow(UsuarioDuplicado::class);
 });
 
@@ -224,6 +233,7 @@ it('rechaza el mismo username en dos altas vivas, pero lo libera tras la baja de
         personaId: null,
         contratoId: null,
         roleIds: [segIdDeRol('piloto')],
+        idRolActivo: null,
     );
 
     expect(fn () => $this->caso->ejecutar(
@@ -236,6 +246,7 @@ it('rechaza el mismo username en dos altas vivas, pero lo libera tras la baja de
         personaId: null,
         contratoId: null,
         roleIds: [segIdDeRol('piloto')],
+        idRolActivo: null,
     ))->toThrow(UsuarioDuplicado::class);
 
     $primero->delete();
@@ -250,6 +261,7 @@ it('rechaza el mismo username en dos altas vivas, pero lo libera tras la baja de
         personaId: null,
         contratoId: null,
         roleIds: [segIdDeRol('piloto')],
+        idRolActivo: null,
     );
 
     expect($segundo->exists)->toBeTrue()
@@ -270,6 +282,7 @@ it('revocar un rol al editar es soft delete de sec_user_role, no DELETE físico'
         personaId: null,
         contratoId: null,
         roleIds: [segIdDeRol('piloto'), segIdDeRol('auxiliar')],
+        idRolActivo: null,
     );
 
     $pivotePiloto = SecUserRole::query()
@@ -287,6 +300,7 @@ it('revocar un rol al editar es soft delete de sec_user_role, no DELETE físico'
         personaId: null,
         contratoId: null,
         roleIds: [segIdDeRol('auxiliar')],
+        idRolActivo: null,
     );
 
     expect(SecUserRole::query()->whereKey($pivotePiloto->id)->exists())->toBeFalse()
