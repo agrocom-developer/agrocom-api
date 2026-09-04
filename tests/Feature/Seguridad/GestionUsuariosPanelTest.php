@@ -238,9 +238,14 @@ it('reasignar los roles de un usuario logueado no invalida su sesión activa: el
     $idJefeCampo = (int) SecRole::query()->where('name', 'jefe_campo')->value('id');
 
     [$usuarioA] = usuarioConRolParaUsuarios('usuario.a', 'piloto');
+    $persona = PerPersona::query()->create(['nombre' => 'Persona Usuario A', 'rol' => RolOperativoPersona::Piloto, 'activo' => true]);
+    $usuarioA->persona_id = $persona->id;
+    $usuarioA->save();
 
     entrarAlPanelParaUsuarios($usuarioA, $idPiloto);
-    $this->get(route('panel.dashboard'))->assertOk();
+    // Piloto no tiene seguridad.dashboard.ver (tarea 62, fuga 2): su única
+    // pantalla propia es Financiero > Devengos, la propia (`persona_id`).
+    $this->get(route('panel.devengos.show', $persona->id))->assertOk();
 
     // El encargado reasigna el conjunto completo de roles de A: pierde
     // "piloto" (su rol activo de sesión) y gana "jefe_campo" — mismo caso de

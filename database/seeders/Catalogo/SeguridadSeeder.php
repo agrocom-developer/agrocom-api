@@ -39,6 +39,15 @@ class SeguridadSeeder extends Seeder
         'seguridad.usuario.bloquear' => 'Bloquear/desbloquear (toggle de state, no es baja)',
         'seguridad.usuario.eliminar' => 'Baja lógica (soft delete)',
         'seguridad.usuario.asignar_rol_dueno' => 'Asignar o quitar el rol dueño a cualquier usuario',
+        // Tarea 62 (fuga 2): dashboard y organización eran visibles para
+        // cualquier rol activo sin ningún permiso que lo gatee — un
+        // `auxiliar` (un único permiso en todo el catálogo,
+        // `finanzas.devengo.ver`) veía el tablero completo y la ficha de la
+        // compañía. `dueno` los recibe igual que todo el catálogo (sin
+        // excepción, diseño §2); `encargado_operaciones` y `jefe_campo` los
+        // reciben explícitos abajo; `piloto`/`auxiliar` quedan afuera.
+        'seguridad.dashboard.ver' => 'Ver el tablero "Operación de hoy" (dashboard)',
+        'seguridad.organizacion.ver' => 'Ver el registro de la compañía (Organización)',
         // HU-03: ver y revocar sesiones de la app de campo. Separados a
         // propósito — mirar quién tiene sesión abierta y dejar a alguien
         // afuera en medio de una jornada de vuelo no son la misma
@@ -286,6 +295,10 @@ class SeguridadSeeder extends Seeder
         'seguridad.usuario.editar',
         'seguridad.usuario.bloquear',
         'seguridad.usuario.eliminar',
+        // Tarea 62 (fuga 2): administra la operación diaria, aterriza en el
+        // dashboard tras elegir rol y necesita la ficha de la compañía.
+        'seguridad.dashboard.ver',
+        'seguridad.organizacion.ver',
         // Es quien administra la operación diaria: si un piloto pierde el
         // teléfono en campo, tiene que poder cortarle el acceso sin
         // escalar al dueño (HU-03).
@@ -452,6 +465,10 @@ class SeguridadSeeder extends Seeder
     private const PERMISOS_JEFE_CAMPO = [
         'operaciones.trabajo.ver',
         'operaciones.sesion.validar',
+        // Tarea 62 (fuga 2): coordina la cuadrilla, aterriza en el dashboard
+        // tras elegir rol y necesita la ficha de la compañía.
+        'seguridad.dashboard.ver',
+        'seguridad.organizacion.ver',
         // HU-17 (tarea 24): jefe de campo también genera y firma el acta —
         // mismo criterio que el piloto (ver PERMISOS, arriba).
         'operaciones.acta.generar',

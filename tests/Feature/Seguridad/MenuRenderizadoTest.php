@@ -1,5 +1,7 @@
 <?php
 
+use App\Dominios\Personal\Dominio\RolOperativoPersona;
+use App\Dominios\Personal\Infraestructura\Eloquent\PerPersona;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUserRole;
@@ -39,6 +41,22 @@ function menuRenderAsignarRol(SecUser $usuario, string $nombre): int
     return $idRol;
 }
 
+/**
+ * `panel.devengos.index` (GET, sin id) SIEMPRE redirige a `.show` con la
+ * persona del usuario autenticado — no sirve para leer HTML con `assertOk()`
+ * directo. Piloto solo puede llegar a un 200 propio si tiene `persona_id`.
+ */
+function menuRenderPilotoConPersona(): SecUser
+{
+    $persona = PerPersona::query()->create([
+        'nombre' => 'Piloto menu render',
+        'rol' => RolOperativoPersona::Piloto,
+        'activo' => true,
+    ]);
+
+    return SecUser::factory()->create(['persona_id' => $persona->id]);
+}
+
 it('el HTML del panel incluye el link de un ítem cuyo permiso tiene el rol activo', function () {
     $usuario = SecUser::factory()->create();
     $idDueno = menuRenderAsignarRol($usuario, 'dueno'); // seguridad.usuario.ver
@@ -51,20 +69,25 @@ it('el HTML del panel incluye el link de un ítem cuyo permiso tiene el rol acti
 });
 
 it('el HTML del panel NO incluye el link de un ítem cuyo permiso le falta al rol activo', function () {
-    $usuario = SecUser::factory()->create();
-    $idPiloto = menuRenderAsignarRol($usuario, 'piloto'); // sin permisos de seguridad
+    $usuario = menuRenderPilotoConPersona();
+    $idPiloto = menuRenderAsignarRol($usuario, 'piloto'); // sin permisos de seguridad ni de dashboard/organización (tarea 62)
 
     $this->actingAs($usuario, 'interno')->withSession(['sec_rol_activo_id' => $idPiloto]);
 
-    $this->get(route('panel.dashboard'))
+    // Piloto no tiene seguridad.dashboard.ver: su única pantalla propia es
+    // Financiero > Devengos (finanzas.devengo.ver) — la usamos para leer el
+    // HTML del panel en vez del dashboard, que le devolvería 403.
+    $this->get(route('panel.devengos.show', $usuario->persona_id))
         ->assertOk()
-        // La pantalla de organización no lleva permiso: sigue visible.
-        ->assertSee(route('panel.organizacion.index'))
+        // Organización ahora exige seguridad.organizacion.ver: piloto no lo
+        // tiene, así que también deja de verla (antes era la excepción "sin
+        // permiso, siempre visible" — tarea 62, fuga 2).
+        ->assertDontSee(route('panel.organizacion.index'))
         ->assertDontSee(route('panel.usuarios.index'));
 });
 
 it('el mismo usuario ve el link con un rol activo y deja de verlo con el otro, sin volver a loguearse', function () {
-    $usuario = SecUser::factory()->create();
+    $usuario = menuRenderPilotoConPersona();
     $idPiloto = menuRenderAsignarRol($usuario, 'piloto');
     $idDueno = menuRenderAsignarRol($usuario, 'dueno');
 
@@ -74,7 +97,10 @@ it('el mismo usuario ve el link con un rol activo y deja de verlo con el otro, s
     // Cambio de rol activo en caliente, misma sesión.
     $this->postJson(route('panel.rol-activo.actualizar'), ['id_role' => $idPiloto])->assertOk();
 
-    $this->get(route('panel.dashboard'))
+    // Piloto no llega al dashboard (tarea 62, fuga 2): se verifica el mismo
+    // efecto ("deja de ver el link de usuarios") desde una pantalla que sí
+    // puede visitar.
+    $this->get(route('panel.devengos.show', $usuario->persona_id))
         ->assertOk()
         ->assertDontSee(route('panel.usuarios.index'));
 });

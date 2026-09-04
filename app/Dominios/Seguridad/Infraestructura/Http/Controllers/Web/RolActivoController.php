@@ -6,6 +6,7 @@ use App\Dominios\Seguridad\Aplicacion\ElegirRolActivo;
 use App\Dominios\Seguridad\Aplicacion\IniciarSesionPanel;
 use App\Dominios\Seguridad\Aplicacion\ListarRolesDisponibles;
 use App\Dominios\Seguridad\Aplicacion\RecordarRolPreferido;
+use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use App\Dominios\Seguridad\Dominio\TemaPreferencia;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
@@ -59,6 +60,7 @@ final class RolActivoController
      */
     public function create(
         Request $request,
+        AutorizacionPanelWeb $autorizacion,
         ListarRolesDisponibles $listarRolesDisponibles,
         ElegirRolActivo $elegirRolActivo,
     ): View|RedirectResponse {
@@ -70,7 +72,7 @@ final class RolActivoController
         if ($roles->count() === 1) {
             $elegirRolActivo->ejecutar($usuario, $roles->first()->id);
 
-            return redirect()->route('panel.dashboard');
+            return redirect()->to($autorizacion->primerDestinoVisible($request));
         }
 
         $preferencia = SecUserPreferencia::query()->where('user_id', $usuario->id)->first();
@@ -84,7 +86,7 @@ final class RolActivoController
         if ($preferidoVivo && ! $esCambioExplicito) {
             $elegirRolActivo->ejecutar($usuario, (int) $idPreferido);
 
-            return redirect()->route('panel.dashboard');
+            return redirect()->to($autorizacion->primerDestinoVisible($request));
         }
 
         $idUltimo = $preferencia?->ultimo_rol_id;
@@ -109,6 +111,12 @@ final class RolActivoController
             'usuarioUsername' => $usuario->username,
             'tema' => ($preferencia->tema ?? TemaPreferencia::Claro)->atributoBootstrap(),
             'accionActualizar' => route('panel.rol-activo.actualizar'),
+            // Nombre histórico de la variable de vista (`urlDashboard`, ver
+            // `seleccionar-rol.blade.php`): queda como valor de respaldo del
+            // atributo `data-url-dashboard` — `role-selection.js` ya no lo usa
+            // en el camino feliz (usa `destino` de la respuesta JSON del POST,
+            // que sí conoce el rol recién elegido; acá con 2+ roles sin
+            // elegir todavía no hay uno que resolver, tarea 62 fuga 2).
             'urlDashboard' => route('panel.dashboard'),
         ]);
     }
@@ -127,6 +135,7 @@ final class RolActivoController
      */
     public function update(
         ActualizarRolActivoRequest $request,
+        AutorizacionPanelWeb $autorizacion,
         ElegirRolActivo $elegirRolActivo,
         RecordarRolPreferido $recordarRolPreferido,
     ): JsonResponse {
@@ -149,6 +158,13 @@ final class RolActivoController
         return response()->json([
             'rol_activo_id' => $rol->id,
             'rol_activo_nombre' => $rol->name,
+            // Primer ítem visible del menú de ESTE rol recién activado
+            // (tarea 62, fuga 2) — `ElegirRolActivo::ejecutar()` ya fijó
+            // `session('sec_rol_activo_id')` arriba, así que se resuelve
+            // sobre el rol correcto, no el que estaba activo al entrar a
+            // este request. `role-selection.js` navega acá, nunca a un
+            // `panel.dashboard` fijo.
+            'destino' => $autorizacion->primerDestinoVisible($request),
         ]);
     }
 }

@@ -30,4 +30,14 @@ interface AutorizacionPanelWeb
      * mirando la pantalla.
      */
     public function personaId(Request $request): ?int;
+
+    /**
+     * URL de aterrizaje tras el login o un cambio de rol activo: el primer
+     * ítem visible del árbol de menú del rol activo de la sesión, recorrido
+     * en el mismo orden en que lo pinta el sidebar (tarea 62, fuga 2). Nunca
+     * un destino fijo (`panel.dashboard`): un rol sin `seguridad.dashboard.ver`
+     * (p. ej. `piloto`/`auxiliar`) tiene que aterrizar en la primera pantalla
+     * que sí puede ver, no en un 403.
+     */
+    public function primerDestinoVisible(Request $request): string;
 }

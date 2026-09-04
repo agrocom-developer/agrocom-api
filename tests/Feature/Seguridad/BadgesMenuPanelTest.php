@@ -67,9 +67,18 @@ function entrarAlPanelParaBadgesPanel(SecUser $usuario, int $idRolActivo): void
         ->withSession(['sec_rol_activo_id' => $idRolActivo]);
 }
 
-function menuBadgesDelDashboard(): array
+/**
+ * `menuBadges` viaja en la cáscara de CUALQUIER página del panel
+ * (`CascaraPanel::para()`), no solo el dashboard — necesario desde la tarea
+ * 62 (fuga 2), que gatea el dashboard con `seguridad.dashboard.ver` y un
+ * `piloto` no lo tiene: sus tests pasan `panel.devengos.show` + su propia
+ * persona en vez del default.
+ *
+ * @param  array<string|int, mixed>  $parametrosRuta
+ */
+function menuBadgesDelDashboard(string $ruta = 'panel.dashboard', array $parametrosRuta = []): array
 {
-    $respuesta = test()->get(route('panel.dashboard'))->assertOk();
+    $respuesta = test()->get(route($ruta, $parametrosRuta))->assertOk();
 
     return $respuesta->viewData('menuBadges');
 }
@@ -211,7 +220,9 @@ it('el badge de devengos muestra lo propio del usuario y cambia cuando se genera
     [$usuario, $idRol] = usuarioConRolParaBadgesPanel('piloto.badges.devengos', 'piloto', $piloto->id);
     entrarAlPanelParaBadgesPanel($usuario, $idRol);
 
-    expect(menuBadgesDelDashboard()['menu.financiero.items.devengos']['numero'])->toBe('0');
+    // Piloto no tiene seguridad.dashboard.ver (tarea 62, fuga 2): su única
+    // pantalla propia es Financiero > Devengos, la suya (`persona_id`).
+    expect(menuBadgesDelDashboard('panel.devengos.show', [$piloto->id])['menu.financiero.items.devengos']['numero'])->toBe('0');
 
     $trabajo = trabajoParaBadgesPanel('devengo-uno');
     $sesion = Sesion::create([
@@ -228,7 +239,7 @@ it('el badge de devengos muestra lo propio del usuario y cambia cuando se genera
     ]);
     (new ValidarSesion(new MaquinaEstadosSesion))->ejecutar($sesion, $jefe->id);
 
-    expect(menuBadgesDelDashboard()['menu.financiero.items.devengos']['numero'])->toBe('1.000');
+    expect(menuBadgesDelDashboard('panel.devengos.show', [$piloto->id])['menu.financiero.items.devengos']['numero'])->toBe('1.000');
 });
 
 it('un usuario de panel sin persona operativa no tiene badge de devengos', function () {

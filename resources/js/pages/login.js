@@ -7,9 +7,12 @@
  * - Si hay error de validación (422), muestra el mensaje de error en la UI.
  * - Si requiere selección de rol (solo el panel interno lo responde),
  *   redirige a /panel/seleccionar-rol.
- * - Si no, redirige a `data-ag-login-redirect` del contenedor
- *   ([data-ag-login-form]), o a /panel/dashboard si no se especificó (el
- *   default histórico, para no romper la página de login del panel).
+ * - Si no, redirige a `data.destino` (primer ítem visible del menú del rol
+ *   activo recién fijado, tarea 62 — nunca un `/panel/dashboard` fijo: un rol
+ *   sin ese permiso aterrizaría en un 403); a falta de `destino` (el portal
+ *   del cliente no lo responde), cae a `data-ag-login-redirect` del
+ *   contenedor ([data-ag-login-form]) o a /panel/dashboard (el default
+ *   histórico, para no romper la página de login del panel).
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -67,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (data.requiere_seleccion_rol) {
                     window.location.href = '/panel/seleccionar-rol';
                 } else {
-                    window.location.href = redirectPorDefecto;
+                    window.location.href = data.destino || redirectPorDefecto;
                 }
             }
         } catch (error) {
