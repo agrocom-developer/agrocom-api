@@ -4,6 +4,7 @@ namespace App\Dominios\Finanzas\Infraestructura;
 
 use App\Dominios\Finanzas\Aplicacion\GenerarDevengosSesion;
 use App\Dominios\Finanzas\Contratos\EscrituraGastoMantenimiento;
+use App\Dominios\Finanzas\Contratos\LecturaContadoresPanel;
 use App\Dominios\Operaciones\Dominio\Eventos\SesionValidada;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\View;
@@ -30,6 +31,7 @@ final class FinanzasServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(EscrituraGastoMantenimiento::class, EscrituraGastoMantenimientoEloquent::class);
+        $this->app->bind(LecturaContadoresPanel::class, LecturaContadoresPanelEloquent::class);
     }
 
     public function boot(): void

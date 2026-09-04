@@ -2,6 +2,9 @@
 
 namespace App\Dominios\Seguridad\Infraestructura\Http\Presentacion;
 
+use App\Dominios\Finanzas\Contratos\LecturaContadoresPanel as LecturaContadoresPanelFinanzas;
+use App\Dominios\Inventario\Contratos\LecturaContadoresPanel as LecturaContadoresPanelInventario;
+use App\Dominios\Operaciones\Contratos\LecturaContadoresPanel as LecturaContadoresPanelOperaciones;
 use App\Dominios\Seguridad\Aplicacion\ListarRolesDisponibles;
 use App\Dominios\Seguridad\Aplicacion\ObtenerMenuPorRolActivo;
 use App\Dominios\Seguridad\Dominio\TemaPreferencia;
@@ -14,8 +17,9 @@ use App\Dominios\Seguridad\Infraestructura\Http\Demo\DatosDemoPanel;
  * esperan, resueltos una sola vez para cualquier página del panel (dashboard,
  * usuarios, organización): árbol de menú del ROL ACTIVO (nunca la unión —
  * CLAUDE.md invariante 10), roles disponibles, rol activo legible, tema
- * persistido y el chrome de demo (campaña, período, badges, notificaciones —
- * MOCK, ver {@see DatosDemoPanel}).
+ * persistido, el chrome de demo (campaña, período, notificaciones — MOCK,
+ * ver {@see DatosDemoPanel}) y los badges del menú (TE-14, tarea 60 —
+ * contadores reales de cada módulo dueño, ver {@see menuBadges()}).
  *
  * Existe para que cada controlador de página no re-arme (ni desincronice)
  * esta misma docena de props — los controladores siguen siendo adaptadores
@@ -27,6 +31,9 @@ final class CascaraPanel
         private readonly ObtenerMenuPorRolActivo $obtenerMenu,
         private readonly ListarRolesDisponibles $listarRolesDisponibles,
         private readonly DatosDemoPanel $demo,
+        private readonly LecturaContadoresPanelOperaciones $contadoresOperaciones,
+        private readonly LecturaContadoresPanelInventario $contadoresInventario,
+        private readonly LecturaContadoresPanelFinanzas $contadoresFinanzas,
     ) {}
 
     /**
@@ -50,10 +57,67 @@ final class CascaraPanel
             'userName' => $usuario->name,
             'tema' => $tema,
             'notifications' => $this->demo->notificaciones(),
-            'menuBadges' => $this->demo->badgesMenu(),
+            'menuBadges' => $this->menuBadges($usuario),
             'campana' => $chrome['campana'],
             'periodo' => $chrome['periodo'],
             'version' => $chrome['version'],
         ];
+    }
+
+    /**
+     * Contadores reales de pendientes de los ítems del menú (badge ámbar del
+     * nivel 3), indexados por la clave `label` de `sec_menu` (TE-14, tarea
+     * 60 — reemplaza al mock `DatosDemoPanel::badgesMenu()`). `numero` es lo
+     * único que pinta el badge en el sidebar (compacto); `texto` es la frase
+     * completa del tooltip.
+     *
+     * Tres ítems de la maqueta original quedan sin badge porque ningún
+     * módulo tiene un dato real detrás (ver `docs/gestion/plan_sprints.md`
+     * Sprint 12 §255): `operacion.items.programacion` (no existe el
+     * concepto de sesión programada), `comercial.items.reportes_cliente`
+     * (portal del cliente sin integrar, HU-41) y `recursos.items.drones`
+     * (`ope_drones` no registra estado de taller). `panel-layout.blade.php`
+     * ya tolera la ausencia de una clave (`$menuBadges[$label] ?? null`).
+     *
+     * @return array<string, array{numero: string, texto: string}>
+     */
+    private function menuBadges(SecUser $usuario): array
+    {
+        $badges = [];
+
+        $ordenesVigentes = $this->contadoresOperaciones->ordenesVigentes();
+        $badges['menu.operacion.items.ordenes'] = [
+            'numero' => (string) $ordenesVigentes,
+            'texto' => "{$ordenesVigentes} vigentes",
+        ];
+
+        $sesionesPendientes = $this->contadoresOperaciones->sesionesPendientesValidacion();
+        $badges['menu.operacion.items.sesiones'] = [
+            'numero' => (string) $sesionesPendientes,
+            'texto' => "{$sesionesPendientes} sin validar",
+        ];
+
+        $pausas = $this->contadoresOperaciones->pausasDelMes();
+        $badges['menu.operacion.items.pausas'] = [
+            'numero' => (string) $pausas['cantidad'],
+            'texto' => "{$pausas['cantidad']} este mes",
+        ];
+
+        $stockBajoMinimo = $this->contadoresInventario->stockBajoMinimo();
+        $badges['menu.mantenimiento.items.stock'] = [
+            'numero' => (string) $stockBajoMinimo,
+            'texto' => "{$stockBajoMinimo} bajo mínimo",
+        ];
+
+        if ($usuario->persona_id !== null) {
+            $devengado = $this->contadoresFinanzas->devengadoDelMes($usuario->persona_id);
+            $devengadoFormateado = number_format((float) $devengado, 0, ',', '.');
+            $badges['menu.financiero.items.devengos'] = [
+                'numero' => $devengadoFormateado,
+                'texto' => "Bs {$devengadoFormateado}",
+            ];
+        }
+
+        return $badges;
     }
 }
