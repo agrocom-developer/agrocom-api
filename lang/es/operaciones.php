@@ -184,6 +184,58 @@ return [
         'rechazada' => 'Sesión rechazada: se registró la corrección con el motivo indicado.',
     ],
 
+    // Pantalla de panel "Operación › Pausas" (HU-44, tarea 58): pausas de
+    // sesión con causa atribuible (DS-01) y su agregado por causa.
+    'pausas' => [
+        'titulo' => 'Pausas',
+        'subtitulo' => 'Tiempo perdido en pausas de sesión, con su causa atribuible.',
+        'nuevo' => 'Nueva pausa',
+        'creada' => 'Pausa registrada correctamente.',
+        'filtro_periodo' => 'Período',
+        'filtrar' => 'Filtrar',
+        'limpiar_filtro' => 'Limpiar filtro',
+        'vacio' => 'No hay pausas registradas.',
+        'filtro_vacio' => 'No hay pausas que coincidan con el filtro.',
+        'tablero_titulo' => 'Total por causa',
+        'tablero_total' => 'Total del período',
+        'col_sesion' => 'Sesión',
+        'col_causa' => 'Causa',
+        'col_inicio' => 'Inicio',
+        'col_fin' => 'Fin',
+        'col_duracion' => 'Duración',
+        'duracion_valor' => ':horas h :minutos min',
+        'sesion_etiqueta' => 'Sesión #:id (trabajo #:trabajo, secuencia :secuencia)',
+        'paginacion_aria' => 'Paginación de pausas',
+        'paginacion_anterior' => 'Anterior',
+        'paginacion_siguiente' => 'Siguiente',
+        'paginacion_info' => 'Página :actual de :total',
+
+        'titulo_crear' => 'Nueva pausa',
+        'subtitulo_form' => 'Registrá una pausa de sesión con su causa atribuible.',
+        'seccion_datos' => 'Datos de la pausa',
+        'campos_contador' => ':cantidad campos',
+        'campo_sesion' => 'Sesión',
+        'campo_sesion_placeholder' => 'Elegí una sesión…',
+        'campo_causa' => 'Causa',
+        'campo_causa_placeholder' => 'Elegí una causa…',
+        'campo_inicio' => 'Inicio',
+        'campo_fin' => 'Fin',
+        'estado_form' => 'Sin guardar',
+
+        'error_sesion_requerida' => 'Elegí la sesión en la que ocurrió la pausa.',
+        'error_sesion_invalida' => 'La sesión elegida no existe.',
+        'error_causa_requerida' => 'Elegí la causa de la pausa.',
+        'error_causa_invalida' => 'Esa causa no es válida.',
+
+        'causa' => [
+            'clima' => 'Clima fuera de rango',
+            'imprevisto_del_cliente' => 'Imprevisto del cliente (insumos que no llegan)',
+            'cambio_lote_cliente' => 'Cambio de lote ordenado por el cliente',
+            'falla_equipo' => 'Falla de equipo',
+            'logistica' => 'Logística y traslados',
+        ],
+    ],
+
     // Pantalla de panel "Reportes › Alertas" (HU-19, tarea 26): bandeja de
     // alertas por excepción del encargado de operaciones.
     'alertas' => [
