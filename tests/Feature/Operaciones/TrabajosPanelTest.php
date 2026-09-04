@@ -5,9 +5,15 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
+use App\Dominios\Operaciones\Dominio\EstadoActa;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Dominio\EstadoSesion;
 use App\Dominios\Operaciones\Dominio\EstadoTrabajo;
+use App\Dominios\Operaciones\Dominio\TipoEvidencia;
+use App\Dominios\Operaciones\Dominio\TipoIncidencia;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\Acta;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\Evidencia;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\Incidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\SesionRechazo;
@@ -22,6 +28,7 @@ use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUserRole;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUsuarioInterno;
 use Database\Seeders\Catalogo\CatalogoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /*
@@ -404,4 +411,142 @@ it('sin el permiso operaciones.trabajo.ver, el detalle de un trabajo responde 40
     entrarAlPanelParaTrabajos($piloto, $idRol);
 
     $this->get("/panel/trabajos/{$trabajo->id}")->assertForbidden();
+});
+
+/*
+ * HU-42 (tarea 56): galería de evidencias de un trabajo — imagen de campo,
+ * firma del acta e incidencias con foto por sesión. Mismo permiso que el
+ * detalle (`operaciones.trabajo.ver`); el streaming del archivo real hace
+ * pruebas contra el disco `r2` (fake), nunca contra `archivo_url` expuesto.
+ */
+function evidenciaDemo(TipoEvidencia $tipo, string $contenido = 'contenido-evidencia-panel'): Evidencia
+{
+    $ruta = 'evidencias/'.Str::uuid().'.jpg';
+    Storage::disk('r2')->put($ruta, $contenido);
+
+    return Evidencia::create([
+        'uuid_cliente' => (string) Str::uuid(),
+        'tipo' => $tipo,
+        'archivo_url' => $ruta,
+        'hash' => hash('sha256', $contenido),
+        'fecha' => now(),
+    ]);
+}
+
+it('la galería muestra la imagen de campo, la firma del acta y las incidencias con foto', function () {
+    Storage::fake('r2');
+
+    $trabajo = crearTrabajo(['estado' => EstadoTrabajo::Cerrado], [['estado' => EstadoSesion::Cerrado]]);
+    $sesion = $trabajo->sesiones()->sole();
+
+    $imagenCampo = evidenciaDemo(TipoEvidencia::ImagenCampo);
+    $trabajo->update(['imagen_campo_evidencia_id' => $imagenCampo->id]);
+
+    $firma = evidenciaDemo(TipoEvidencia::FirmaActa);
+    Acta::create([
+        'uuid_cliente' => (string) Str::uuid(),
+        'trabajo_id' => $trabajo->id,
+        'hectareas_conformadas' => '12.00',
+        'estado' => EstadoActa::Firmada,
+        'evidencia_firma_id' => $firma->id,
+        'firmante' => 'Agrónomo demo',
+        'fecha_firma' => now(),
+    ]);
+
+    $fotoIncidencia = evidenciaDemo(TipoEvidencia::FotoIncidencia);
+    Incidencia::create([
+        'uuid_cliente' => (string) Str::uuid(),
+        'sesion_id' => $sesion->id,
+        'tipo' => TipoIncidencia::Mecanica,
+        'descripcion' => 'Falla de motor',
+        'hora' => now(),
+        'evidencia_foto_id' => $fotoIncidencia->id,
+    ]);
+
+    [$jefe, $idRol] = usuarioConRolParaTrabajos('jefe.evidencias', 'jefe_campo');
+    entrarAlPanelParaTrabajos($jefe, $idRol);
+
+    $this->get("/panel/trabajos/{$trabajo->id}/evidencias")
+        ->assertOk()
+        ->assertSee(__('operaciones.trabajos.evidencias_imagen_campo_titulo'))
+        ->assertSee(__('operaciones.trabajos.evidencias_firma_acta_titulo'))
+        ->assertSee(__('operaciones.trabajos.incidencia_tipo.mecanica'))
+        ->assertSee(route('panel.evidencias.archivo', $imagenCampo))
+        ->assertSee(route('panel.evidencias.archivo', $firma))
+        ->assertSee(route('panel.evidencias.archivo', $fotoIncidencia));
+});
+
+it('sin ninguna evidencia, la galería muestra las tres secciones vacías sin romper', function () {
+    $trabajo = crearTrabajo(['estado' => EstadoTrabajo::Cerrado], [['estado' => EstadoSesion::Cerrado]]);
+
+    [$jefe, $idRol] = usuarioConRolParaTrabajos('jefe.evidencias.vacio', 'jefe_campo');
+    entrarAlPanelParaTrabajos($jefe, $idRol);
+
+    $this->get("/panel/trabajos/{$trabajo->id}/evidencias")
+        ->assertOk()
+        ->assertSee(__('operaciones.trabajos.evidencias_imagen_campo_vacio'))
+        ->assertSee(__('operaciones.trabajos.evidencias_firma_acta_vacio'))
+        ->assertSee(__('operaciones.trabajos.evidencias_incidencias_vacio'));
+});
+
+it('sin el permiso operaciones.trabajo.ver, la galería de evidencias responde 403', function () {
+    $trabajo = crearTrabajo(['estado' => EstadoTrabajo::Cerrado], [['estado' => EstadoSesion::Cerrado]]);
+
+    [$piloto, $idRol] = usuarioConRolParaTrabajos('piloto.evidencias.403', 'piloto');
+    entrarAlPanelParaTrabajos($piloto, $idRol);
+
+    $this->get("/panel/trabajos/{$trabajo->id}/evidencias")->assertForbidden();
+});
+
+it('el detalle de un trabajo linkea a la galería de evidencias', function () {
+    $trabajo = crearTrabajo(['estado' => EstadoTrabajo::Cerrado], [['estado' => EstadoSesion::Cerrado]]);
+
+    [$jefe, $idRol] = usuarioConRolParaTrabajos('jefe.link.evidencias', 'jefe_campo');
+    entrarAlPanelParaTrabajos($jefe, $idRol);
+
+    $this->get("/panel/trabajos/{$trabajo->id}")
+        ->assertOk()
+        ->assertSee(route('panel.trabajos.evidencias', $trabajo));
+});
+
+it('el streaming del archivo de una evidencia responde con su contenido real', function () {
+    Storage::fake('r2');
+
+    $trabajo = crearTrabajo(['estado' => EstadoTrabajo::Cerrado], [['estado' => EstadoSesion::Cerrado]]);
+    $evidencia = evidenciaDemo(TipoEvidencia::ImagenCampo, 'bytes-de-la-foto');
+
+    [$jefe, $idRol] = usuarioConRolParaTrabajos('jefe.archivo.evidencia', 'jefe_campo');
+    entrarAlPanelParaTrabajos($jefe, $idRol);
+
+    $this->get(route('panel.evidencias.archivo', $evidencia))
+        ->assertOk()
+        ->assertSee('bytes-de-la-foto', false);
+});
+
+it('el streaming de una evidencia sin archivo en disco responde 404', function () {
+    Storage::fake('r2');
+
+    $evidencia = Evidencia::create([
+        'uuid_cliente' => (string) Str::uuid(),
+        'tipo' => TipoEvidencia::ImagenCampo,
+        'archivo_url' => 'evidencias/inexistente.jpg',
+        'hash' => hash('sha256', 'nada'),
+        'fecha' => now(),
+    ]);
+
+    [$jefe, $idRol] = usuarioConRolParaTrabajos('jefe.archivo.404', 'jefe_campo');
+    entrarAlPanelParaTrabajos($jefe, $idRol);
+
+    $this->get(route('panel.evidencias.archivo', $evidencia))->assertNotFound();
+});
+
+it('sin el permiso operaciones.trabajo.ver, el streaming del archivo responde 403', function () {
+    Storage::fake('r2');
+
+    $evidencia = evidenciaDemo(TipoEvidencia::ImagenCampo);
+
+    [$piloto, $idRol] = usuarioConRolParaTrabajos('piloto.archivo.403', 'piloto');
+    entrarAlPanelParaTrabajos($piloto, $idRol);
+
+    $this->get(route('panel.evidencias.archivo', $evidencia))->assertForbidden();
 });
