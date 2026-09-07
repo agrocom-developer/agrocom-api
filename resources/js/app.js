@@ -39,4 +39,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.querySelector('[data-ag-map]')) {
         import('./organisms/dashboard-map.js');
     }
+
+    // Editor del perímetro de un lote (formulario de campos): Leaflet más el
+    // plugin de dibujo, que no entra en ninguna otra pantalla.
+    if (document.querySelector('[data-ag-lote-mapa]')) {
+        import('./organisms/lote-mapa-editor.js');
+    }
 });
