@@ -1,8 +1,10 @@
 /*
  * Organism: page-header (resources/views/components/organisms/page-header.blade.php)
- * h1 + bajada + acciones a la derecha. Título en `--ag-font-family-display`
- * (misma familia que los headlines de auth-layout, §7 de la guía de
- * pantalla: "38px título" → `--ag-font-size-2xl` con la display).
+ * h1 + bajada + acciones a la derecha. Título con la receta canónica de
+ * título de pantalla (`--ag-title-page-*`), la misma que usa el dashboard:
+ * antes esta cabecera resolvía 2rem en peso bold y el dashboard 2,125rem en
+ * regular, así que dos pantallas del mismo panel parecían usar tipografías
+ * distintas aunque compartieran familia.
  */
 
 .ag-page-header {
@@ -23,8 +25,10 @@
 .ag-page-header__title {
     margin: 0;
     font-family: var(--ag-font-family-display);
-    font-size: var(--ag-font-size-2xl);
-    font-weight: var(--ag-font-weight-bold);
+    font-optical-sizing: auto;
+    font-size: var(--ag-title-page-size);
+    font-weight: var(--ag-title-page-weight);
+    line-height: var(--ag-title-page-line-height);
     color: var(--ag-color-text);
 }
 
