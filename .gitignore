@@ -34,3 +34,9 @@ runs/
 /test-results/
 /playwright-report/
 /blob-report/
+
+# Canvas de diseño: los `.dc.html` + canvas.json son la fuente; el `.html`
+# sembrado es el artefacto publicable (~2,5 MB, el editor viene horneado
+# adentro) y se regenera con el helper de la skill `design`.
+/docs/diseno/canvas/*.html
+!/docs/diseno/canvas/*.dc.html
