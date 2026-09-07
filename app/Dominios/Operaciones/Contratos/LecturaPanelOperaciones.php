@@ -1,0 +1,108 @@
+<?php
+
+namespace App\Dominios\Operaciones\Contratos;
+
+use App\Dominios\Operaciones\Aplicacion\AgregarPausasPorCausa;
+
+/**
+ * Frontera de lectura de Operaciones hacia el dashboard del panel (ADR 0003,
+ * regla 2; tarea 67). Hermano de {@see LecturaContadoresPanel}, que resuelve
+ * los badges del menú: esto resuelve el CONTENIDO de las secciones.
+ *
+ * Todo lo que devuelve son DTOs primitivos o arrays de escalares — `Seguridad`
+ * nunca ve `Sesion`, `Trabajo`, `Evidencia` ni `Alerta`. Las hectáreas viajan
+ * como string decimal (invariante 6).
+ */
+interface LecturaPanelOperaciones
+{
+    /**
+     * Sesiones más recientes por fecha de inicio descendente. `$pilotoId`
+     * acota a las de una persona (dashboard del piloto y del auxiliar);
+     * `null` trae las de toda la operación.
+     *
+     * @return list<SesionPanel>
+     */
+    public function sesionesRecientes(int $limite, ?int $pilotoId = null): array;
+
+    /**
+     * Sesiones pendientes de validar (`cerrado`, sin anular), las más viejas
+     * primero: son las que le queman la cola al jefe de campo.
+     *
+     * @return list<SesionPanel>
+     */
+    public function colaValidacion(int $limite): array;
+
+    /**
+     * Conteo de sesiones por estado, para el donut de distribución. Devuelve
+     * SIEMPRE los tres estados del catálogo, incluidos los que están en cero
+     * — mismo criterio que {@see AgregarPausasPorCausa}.
+     *
+     * @return list<array{estado: string, tono: string, valor: int}>
+     */
+    public function distribucionPorEstado(?int $pilotoId = null): array;
+
+    /**
+     * Hectáreas validadas por día de los últimos `$dias` días, incluidos los
+     * días sin vuelo (en `'0.00'`), en orden cronológico: el área del
+     * gráfico no puede saltarse un día o la curva miente.
+     *
+     * @return list<array{fecha: string, hectareas: string}>
+     */
+    public function hectareasPorDia(int $dias, ?int $pilotoId = null): array;
+
+    /**
+     * Avance operativo por lote, indexado por `loteId` — el consumidor lo
+     * cruza con los lotes de `Comercial` (que es quien conoce el nombre y la
+     * geometría) sin que este módulo tenga que leer `com_lotes`.
+     *
+     * @return array<int, ResumenLotePanel>
+     */
+    public function resumenPorLote(): array;
+
+    /**
+     * Últimas sesiones que dejaron alguna evidencia gráfica, con esas
+     * evidencias adjuntas — la galería multimedia agrupa POR SESIÓN, no una
+     * grilla suelta de archivos: una captura de RC sin la sesión que la
+     * produjo no dice nada.
+     *
+     * Solo evidencia gráfica de la sesión: la captura del control remoto y
+     * las fotos de incidencia. La firma del acta queda fuera (es del
+     * trabajo, no de la sesión, y es un documento legal — no material de
+     * galería).
+     *
+     * @return list<array{sesion: SesionPanel, capturas: list<EvidenciaPanel>}>
+     */
+    public function sesionesConCapturas(int $limite): array;
+
+    /**
+     * Alertas por excepción más recientes (HU-19), pendientes primero.
+     *
+     * @return list<AlertaPanel>
+     */
+    public function alertasRecientes(int $limite): array;
+
+    /**
+     * Minutos de pausa agregados por causa del mes en curso, con TODAS las
+     * causas del catálogo aunque estén en cero.
+     *
+     * @return array{total_minutos: int, por_causa: array<string, int>}
+     */
+    public function pausasPorCausaDelMes(): array;
+
+    /**
+     * Drones que la persona operó en el mes en curso, del más usado al
+     * menos: "de qué equipos respondo" resuelto desde las sesiones, que es
+     * el único registro que liga persona y dron.
+     *
+     * @return list<EquipoPersonaPanel>
+     */
+    public function equiposDePersonaDelMes(int $personaId): array;
+
+    /**
+     * Totales del mes en curso de una persona: cuántas sesiones voló y
+     * cuántas hectáreas suman. Es el encabezado del dashboard del piloto.
+     *
+     * @return array{sesiones: int, hectareas: string, sesionesValidadas: int}
+     */
+    public function totalesDelMesPorPersona(int $personaId): array;
+}

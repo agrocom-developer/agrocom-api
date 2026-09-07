@@ -8,6 +8,7 @@ use App\Dominios\Operaciones\Contratos\LecturaAlertasTemperaturaBateria;
 use App\Dominios\Operaciones\Contratos\LecturaContadoresPanel;
 use App\Dominios\Operaciones\Contratos\LecturaHorasVueloPorModelo;
 use App\Dominios\Operaciones\Contratos\LecturaOrdenesVigentes;
+use App\Dominios\Operaciones\Contratos\LecturaPanelOperaciones;
 use App\Dominios\Operaciones\Contratos\LecturaReporteTecnico;
 use App\Dominios\Operaciones\Contratos\LecturaSesionValidada;
 use Illuminate\Support\Facades\View;
@@ -35,6 +36,7 @@ final class OperacionesServiceProvider extends ServiceProvider
         $this->app->bind(LecturaAlertasTemperaturaBateria::class, LecturaAlertasTemperaturaBateriaEloquent::class);
         $this->app->bind(LecturaHorasVueloPorModelo::class, LecturaHorasVueloPorModeloEloquent::class);
         $this->app->bind(LecturaContadoresPanel::class, LecturaContadoresPanelEloquent::class);
+        $this->app->bind(LecturaPanelOperaciones::class, LecturaPanelOperacionesEloquent::class);
     }
 
     public function boot(): void

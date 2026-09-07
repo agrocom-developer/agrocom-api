@@ -4,6 +4,7 @@ namespace App\Dominios\Inventario\Infraestructura;
 
 use App\Dominios\Inventario\Contratos\EscrituraConsumoStock;
 use App\Dominios\Inventario\Contratos\LecturaContadoresPanel;
+use App\Dominios\Inventario\Contratos\LecturaPanelInventario;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -28,6 +29,7 @@ final class InventarioServiceProvider extends ServiceProvider
     {
         $this->app->bind(EscrituraConsumoStock::class, EscrituraConsumoStockEloquent::class);
         $this->app->bind(LecturaContadoresPanel::class, LecturaContadoresPanelEloquent::class);
+        $this->app->bind(LecturaPanelInventario::class, LecturaPanelInventarioEloquent::class);
     }
 
     public function boot(): void

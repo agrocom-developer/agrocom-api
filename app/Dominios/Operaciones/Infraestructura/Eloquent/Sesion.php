@@ -167,4 +167,29 @@ class Sesion extends ModeloDominio
     {
         return $this->belongsTo(Evidencia::class, 'captura_rc_id');
     }
+
+    /**
+     * El trabajo al que pertenece esta sesión — inversa de
+     * {@see Trabajo::sesiones()}. `belongsTo` intra-módulo: `Trabajo` también
+     * es de `Operaciones` (ADR 0003, regla 3 — la prohibición de relaciones
+     * Eloquent es para las que CRUZAN módulos, y `lote_id` del trabajo sigue
+     * siendo un entero pelado hacia `Comercial`).
+     *
+     * @return BelongsTo<Trabajo, $this>
+     */
+    public function trabajo(): BelongsTo
+    {
+        return $this->belongsTo(Trabajo::class, 'trabajo_id');
+    }
+
+    /**
+     * El dron con el que se voló esta sesión (HU-07, tarea 20). Nullable: el
+     * relevo de piloto puede cambiarlo y una sesión vieja puede no tenerlo.
+     *
+     * @return BelongsTo<Dron, $this>
+     */
+    public function dron(): BelongsTo
+    {
+        return $this->belongsTo(Dron::class, 'dron_id');
+    }
 }
