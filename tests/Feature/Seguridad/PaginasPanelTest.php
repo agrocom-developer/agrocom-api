@@ -75,16 +75,19 @@ it('el selector de rol con un único rol vivo lo fija solo y redirige al primer 
 
     $respuesta = $this->get(route('panel.rol-activo.selector'));
 
-    // Piloto no tiene seguridad.dashboard.ver (tarea 62, fuga 2): su único
-    // ítem visible es Financiero > Devengos (finanzas.devengo.ver), nunca el
-    // dashboard.
-    $respuesta->assertRedirect(route('panel.devengos.index'));
+    // Desde la tarea 67 el piloto SÍ tiene `seguridad.dashboard.ver`: el
+    // dashboard se compone por rol y el suyo son sus sesiones, sus equipos y
+    // su liquidación. Así que su primer ítem visible pasó a ser Operación >
+    // Tablero, y ahí aterriza — no en Devengos.
+    $respuesta->assertRedirect(route('panel.dashboard'));
     expect(session('sec_rol_activo_id'))->toBe($idPiloto);
 });
 
 it('el selector de rol con un único rol vivo SIN persona no ofrece «Devengos» y cae al dashboard', function () {
-    // Mismo rol, mismo permiso, sin persona: el ítem se oculta en vez de
-    // llevar a un 404 (ver `sec_menu.requiere_persona`).
+    // Mismo rol, mismo permiso, sin persona: el ítem de Devengos se oculta en
+    // vez de llevar a un 404 (ver `sec_menu.requiere_persona`). El dashboard
+    // sí aparece —no exige persona para entrar— y su contenido queda sin las
+    // secciones «mías», que sí la exigen.
     $usuario = SecUser::factory()->create(['persona_id' => null]);
     $idPiloto = panelAsignarRol($usuario, 'piloto');
 
@@ -155,10 +158,11 @@ it('la página de organización responde 200 para un rol activo con seguridad.or
         ->assertViewIs('seguridad::pages.organizacion.index');
 });
 
-// --- Tarea 62 (fuga 2): dashboard y organización dejaron de ser visibles
-// para cualquier rol activo sin permiso propio ------------------------------
+// --- Tarea 62 (fuga 2), revisada por la tarea 67: la organización sigue
+// gateada; el dashboard pasó a componerse por rol, con cada sección detrás
+// del permiso de su propia pantalla --------------------------------------
 
-it('un auxiliar (sin dashboard.ver ni organizacion.ver) recibe 403 en ambas pantallas y aterriza en una que sí puede ver tras elegir rol', function () {
+it('un auxiliar sigue sin ver Organización, y su dashboard trae solo las secciones suyas', function () {
     $persona = PerPersona::query()->create([
         'nombre' => 'Auxiliar Fuga 2',
         'rol' => RolOperativoPersona::Auxiliar,
@@ -173,12 +177,27 @@ it('un auxiliar (sin dashboard.ver ni organizacion.ver) recibe 403 en ambas pant
 
     $this->actingAs($usuario, 'interno')->withSession(['sec_rol_activo_id' => (int) SecRole::query()->where('name', 'auxiliar')->value('id')]);
 
-    $this->get(route('panel.dashboard'))->assertForbidden();
+    // `seguridad.organizacion.ver` sigue fuera de su catálogo: lo que la tarea
+    // 62 cerró para la ficha de la compañía no se reabrió.
     $this->get(route('panel.organizacion.index'))->assertForbidden();
 
+    // El dashboard sí, desde la tarea 67 — pero lo que le llega son solo las
+    // secciones acotadas a su persona. Ninguna sección de la operación global
+    // (mapa, cola de validación, stock, clientes) entra sin su permiso, que es
+    // lo que la fuga 2 castigaba de verdad.
+    $respuesta = $this->get(route('panel.dashboard'))->assertOk();
+
+    $visibles = $respuesta->viewData('visibles');
+
+    expect($visibles)->not->toContain('mapa')
+        ->not->toContain('cola_validacion')
+        ->not->toContain('stock')
+        ->not->toContain('avance_clientes')
+        ->not->toContain('alertas')
+        ->not->toContain('distribucion_sesiones');
+
     // El flujo completo login → selección de rol (único rol vivo, se fija
-    // solo) termina en una pantalla 200 que el auxiliar sí puede ver — nunca
-    // un 403 de aterrizaje.
+    // solo) termina en una pantalla 200 — nunca un 403 de aterrizaje.
     $this->post('/logout');
     $login = $this->postJson('/login', ['username' => 'auxiliar.fuga2', 'password' => 'Secreta123'])
         ->assertOk()
@@ -187,9 +206,6 @@ it('un auxiliar (sin dashboard.ver ni organizacion.ver) recibe 403 en ambas pant
     $destino = $login->json('destino');
     expect($destino)->not->toBeNull();
 
-    // `panel.devengos.index` (el primer ítem visible del auxiliar) redirige
-    // a `.show/{persona}` — se sigue el redirect hasta el 200 final, nunca un
-    // 403 en el camino.
     $this->followingRedirects()->get($destino)->assertOk();
 });
 

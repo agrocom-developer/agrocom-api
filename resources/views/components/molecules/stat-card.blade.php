@@ -9,7 +9,7 @@
     y una línea de pie con ícono y tono semántico (éxito/aviso/muted).
 
     Sin lógica de negocio: no calcula ni formatea nada — el llamador pasa
-    todo ya formateado (DatosDemoPanel mientras los módulos reales no
+    todo ya formateado por el llamador (los casos de uso de cada módulo, no
     existan).
 
     Props:

@@ -4,7 +4,7 @@ namespace App\Dominios\Operaciones\Dominio;
 
 /**
  * Catálogo cerrado de causas de pausa (HU-44, tarea 58; DS-01 +
- * `DatosDemoPanel::pausas()`). Sin máquina de estados: es una clasificación
+ * la maqueta del dashboard). Sin máquina de estados: es una clasificación
  * fija, no algo que transicione — mismo criterio que {@see TipoIncidencia}.
  *
  * `ImprevistoDelCliente`: mención textual de DS-01 ("insumos del cliente que

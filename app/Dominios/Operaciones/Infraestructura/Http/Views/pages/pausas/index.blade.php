@@ -4,7 +4,7 @@
     arquetipo Listado, §6.2 de docs/diseno/guia_pantalla_panel.md — cabecera
     → tablero agregado → filtro de período → tabla → paginación. Mismo
     molde que gastos/index.blade.php, con el agregado por causa como CA
-    propio de esta HU (mismo shape que la maqueta `DatosDemoPanel::pausas()`,
+    propio de esta HU (mismo shape que la maqueta del dashboard,
     ahora con datos reales — adaptado a tabla en vez de barras, más robusto
     frente a un total variable de causas y minutos que las barras fijas del
     dashboard).
