@@ -14,7 +14,11 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name', 'Agrocom') }} — Ingreso</title>
 
-    @vite('resources/css/app.css')
+    {{-- `transicion-vista.css`: mitad SALIENTE del salto login → selección de rol
+         (resources/js/pages/login.js redirige con `window.location.href`). Las dos
+         páginas del salto tienen que declarar `@view-transition`; ninguna otra
+         pantalla lo hace — ver resources/css/transicion-vista.css. --}}
+    @vite(['resources/css/app.css', 'resources/css/transicion-vista.css'])
 </head>
 <body>
     <x-templates.auth-layout>

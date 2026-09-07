@@ -10,6 +10,27 @@
     font-weight: normal;
     font-style: normal;
     line-height: 1;
+    /* Caja reservada de 1em de ancho — el avance de TODOS los glifos de la
+       fuente es exactamente 1em (960/960 unidades, verificado sobre
+       `material-symbols-rounded.woff2`), así que fijarlo no recorta nada.
+
+       Existe por la ventana de carga: la fuente de íconos declara
+       `font-display: block`, y hasta que aplica, el navegador maqueta este
+       <span> con la LIGADURA como texto corriente ("calendar_month",
+       "assignment") en la fuente de respaldo — invisible, pero midiendo
+       decenas de px cada una. Ese ancho fantasma empujaba el `min-content`
+       de `module-sidebar` por encima de su `flex: 0 0 252px` (medido sobre
+       captura: 252 → 307 → 252 px), y en CADA navegación del panel el
+       contenido entero saltaba a la derecha y volvía al aplicarse la
+       fuente. Con el ancho fijo el texto de respaldo deja de participar del
+       layout.
+
+       Sin `overflow: hidden` a propósito: el ink del glifo va de -0,095em a
+       1,002em sobre la línea base y recortarlo comería el borde inferior de
+       cada ícono. No hace falta — durante el período de bloqueo el texto de
+       respaldo no se PINTA, solo medía. */
+    display: inline-block;
+    width: 1em;
     letter-spacing: normal;
     text-transform: none;
     white-space: nowrap;

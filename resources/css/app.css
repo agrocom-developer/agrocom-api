@@ -34,22 +34,8 @@
 @import './components/index.css';
 @import './pages/index.css';
 
-/* Transición nativa entre navegaciones same-origin de documento completo
-   (p. ej. login → seleccionar-rol vía `window.location.href`,
-   resources/js/pages/login.js) — fundido cruzado dado por el navegador
-   entre el snapshot de la página saliente y la entrante, sin JS ni
-   `body.classList` a mano. Declarada acá (no por página) porque ambas
-   páginas del flujo cargan este mismo app.css compilado, y el criterio del
-   sistema es no reasignar nada por pantalla que ya sea global. Degrada sin
-   romper nada en navegadores sin soporte (mejora progresiva). */
-@view-transition {
-    navigation: auto;
-}
-
-@media (prefers-reduced-motion: reduce) {
-    ::view-transition-group(*),
-    ::view-transition-old(*),
-    ::view-transition-new(*) {
-        animation-duration: 0.01ms !important;
-    }
-}
+/* La transición nativa entre navegaciones (`@view-transition`) NO vive acá:
+   es una regla de documento, no se puede acotar por selector, y en este
+   bundle —que cargan todas las pantallas— se aplicaba también a cada clic
+   del menú del panel. Vive en `resources/css/transicion-vista.css`, que
+   cargan solo las pantallas del flujo de autenticación que la pidieron. */
