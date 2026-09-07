@@ -26,6 +26,9 @@ use Illuminate\Database\Seeder;
  *    generan los devengos), actas y reportes técnicos.
  * 4. `FinanzasDemoSeeder` — lo que se deriva de todo eso: gastos, rendiciones,
  *    combustible, anticipos, la planilla del período y las facturas.
+ * 5. `DashboardDemoSeeder` — actividad de los últimos días, RELATIVA A HOY,
+ *    para que el dashboard no aparezca vacío. Va al final porque se apoya en
+ *    la orden, el lote y las personas que sembraron los anteriores.
  *
  * Todos idempotentes: correr `db:seed` dos veces no duplica nada.
  */
@@ -38,5 +41,6 @@ class DemostracionSeeder extends Seeder
         $this->call(FlotaDemoSeeder::class);
         $this->call(OperacionDemoSeeder::class);
         $this->call(FinanzasDemoSeeder::class);
+        $this->call(DashboardDemoSeeder::class);
     }
 }

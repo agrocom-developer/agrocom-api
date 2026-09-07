@@ -1,6 +1,5 @@
 <?php
 
-use App\Dominios\Seguridad\Infraestructura\Http\Demo\DatosDemoCapturasRc;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -18,7 +17,7 @@ use Illuminate\Support\Facades\Schema;
  * agrega y cierra el recorte: la galería de evidencias del trabajo (HU-42) y
  * el PDF del reporte técnico (HU-18) pasan a mostrar la captura de RC de cada
  * sesión, que hasta ahora solo vivía como mock en el tab "Multimedia" del
- * dashboard ({@see DatosDemoCapturasRc}).
+ * dashboard.
  *
  * Nullable, igual que `dron_id` (misma razón: las sesiones ya sembradas no la
  * tienen, y una sesión abierta todavía no llegó a su captura de cierre — el

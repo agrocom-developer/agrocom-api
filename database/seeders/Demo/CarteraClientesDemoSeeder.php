@@ -13,7 +13,6 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
 use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
-use App\Dominios\Seguridad\Infraestructura\Http\Demo\DatosDemoCapturasRc;
 use Illuminate\Database\Seeder;
 
 /**
@@ -22,7 +21,7 @@ use Illuminate\Database\Seeder;
  * que no se toca).
  *
  * Los nombres no son decorativos: San Marcos, El Carmen y Santa Rosa son los
- * campos que ya aparecían en {@see DatosDemoCapturasRc},
+ * campos que ya aparecían en la maqueta del dashboard,
  * el relato con el que se agruparon las 21 capturas reales del control remoto.
  * Sembrarlos con esa identidad es lo que permite que `OperacionDemoSeeder`
  * convierta ese relato en filas de verdad —trabajos y sesiones sobre estos
