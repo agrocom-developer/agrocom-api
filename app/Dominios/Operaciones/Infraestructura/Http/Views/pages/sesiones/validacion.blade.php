@@ -34,8 +34,10 @@
         :periodo="$periodo"
         :version="$version"
     >
-        <h1>{{ __('operaciones.sesiones_validacion.titulo') }}</h1>
-        <p class="ag-sesiones-validacion__intro">{{ __('operaciones.sesiones_validacion.subtitulo') }}</p>
+        <x-organisms.page-header
+            :title="__('operaciones.sesiones_validacion.titulo')"
+            :subtitle="__('operaciones.sesiones_validacion.subtitulo')"
+        />
 
         @if (session('estado'))
             <x-molecules.alert-strip variant="success" icon="check_circle" class="ag-sesiones-validacion__aviso">

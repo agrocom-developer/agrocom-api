@@ -29,8 +29,10 @@
         :periodo="$periodo"
         :version="$version"
     >
-        <h1>{{ __('distribucion.versiones.titulo') }}</h1>
-        <p class="ag-versiones-apk__intro">{{ __('distribucion.versiones.subtitulo') }}</p>
+        <x-organisms.page-header
+            :title="__('distribucion.versiones.titulo')"
+            :subtitle="__('distribucion.versiones.subtitulo')"
+        />
 
         @if (session('estado'))
             <x-molecules.alert-strip variant="success" icon="check_circle" class="ag-versiones-apk__aviso">

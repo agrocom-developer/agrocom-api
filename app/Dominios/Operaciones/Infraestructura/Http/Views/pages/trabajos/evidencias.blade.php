@@ -46,7 +46,7 @@
             {{ __('operaciones.trabajos.volver_al_detalle') }}
         </x-atoms.button>
 
-        <h1>{{ __('operaciones.trabajos.evidencias_titulo', ['id' => $trabajo->id]) }}</h1>
+        <x-organisms.page-header :title="__('operaciones.trabajos.evidencias_titulo', ['id' => $trabajo->id])" />
 
         <x-molecules.section-head :title="__('operaciones.trabajos.evidencias_imagen_campo_titulo')" class="ag-trabajo-detalle__seccion" />
 

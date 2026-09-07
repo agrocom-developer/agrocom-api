@@ -4,12 +4,6 @@
  * Todo color y medida por token (CLAUDE.md invariante 11).
  */
 
-.ag-sesiones-validacion__intro {
-    color: var(--ag-color-text-muted);
-    margin-top: var(--ag-space-2);
-    max-width: 50rem;
-}
-
 .ag-sesiones-validacion__aviso {
     margin-top: var(--ag-space-4);
 }

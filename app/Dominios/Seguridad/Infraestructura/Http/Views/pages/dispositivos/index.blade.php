@@ -29,8 +29,10 @@
         :periodo="$periodo"
         :version="$version"
     >
-        <h1>{{ __('seguridad.dispositivos.titulo') }}</h1>
-        <p class="ag-dispositivos__intro">{{ __('seguridad.dispositivos.subtitulo') }}</p>
+        <x-organisms.page-header
+            :title="__('seguridad.dispositivos.titulo')"
+            :subtitle="__('seguridad.dispositivos.subtitulo')"
+        />
 
         @if (session('estado'))
             <x-molecules.alert-strip variant="success" icon="check_circle" class="ag-dispositivos__aviso">

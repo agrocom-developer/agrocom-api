@@ -38,7 +38,7 @@
             {{ __('operaciones.trabajos.volver') }}
         </x-atoms.button>
 
-        <h1>{{ __('operaciones.trabajos.detalle_titulo', ['id' => $trabajo->id]) }}</h1>
+        <x-organisms.page-header :title="__('operaciones.trabajos.detalle_titulo', ['id' => $trabajo->id])" />
 
         <div class="ag-trabajo-detalle__resumen">
             <span class="ag-trabajo-detalle__campo">
