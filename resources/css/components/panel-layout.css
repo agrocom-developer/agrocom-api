@@ -36,12 +36,17 @@
 
 /* Pie en mono (maqueta 5b: "AGROCOM SRL · 2026" + versión) — presente en
    todos los breakpoints, fijo bajo el contenido scrolleable. */
+/* `min-height` por token y no alto implícito del padding: el pie de
+   organisms/module-sidebar está pegado a este, y sus dos `border-top` tienen
+   que caer en la misma línea horizontal (ver module-sidebar.css). */
 .ag-panel__footer {
     flex: 0 0 auto;
+    min-height: var(--ag-size-footer-height);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: var(--ag-space-3) calc(var(--ag-space-5) + var(--ag-space-1));
+    padding-block: 0;
+    padding-inline: calc(var(--ag-space-5) + var(--ag-space-1));
     border-top: 1px solid var(--ag-color-border);
     background: var(--ag-color-bg-chrome);
     font-family: var(--ag-font-family-mono);
@@ -127,7 +132,7 @@
     }
 
     .ag-panel__footer {
-        padding: var(--ag-space-3) var(--ag-space-4);
+        padding-inline: var(--ag-space-4);
     }
 }
 
@@ -138,6 +143,6 @@
     }
 
     .ag-panel__footer {
-        padding: var(--ag-space-3) var(--ag-space-4);
+        padding-inline: var(--ag-space-4);
     }
 }

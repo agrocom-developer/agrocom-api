@@ -24,23 +24,32 @@
     flex-basis: 72px;
 }
 
-/* min-height igual a .ag-topbar (topbar.css, 62px) — comparten la misma
-   línea divisoria horizontal con el header de nivel superior. Antes la
-   altura salía del padding-block + contenido, así que al colapsar (donde
-   solo queda el botón toggle) el border-bottom quedaba a otra altura que
-   la del topbar — "escalón" visible entre ambas líneas. */
+/* La cabecera tiene DOS alturas, a propósito:
+   - Expandida lleva el nombre del módulo (23px de display) MÁS su línea de
+     descripción, que puede ocupar dos renglones. Forzarla a los 62px del
+     topbar dejaba ese contenido apretado contra ambos bordes, sin aire
+     arriba ni abajo — el título llegaba a tocar el borde superior.
+   - Colapsada solo queda el botón de toggle, y ahí sí tiene que medir
+     EXACTAMENTE lo mismo que .ag-topbar: las dos líneas divisorias siguen
+     horizontalmente y cualquier diferencia se lee como un escalón.
+   El `padding-block` va solo en la expandida; en la colapsada el
+   `min-height` fijo con `align-items:center` ya centra el botón. */
 .ag-module-sidebar__header {
     flex: 0 0 auto;
-    min-height: 62px;
+    min-height: calc(var(--ag-size-topbar-height) + var(--ag-space-5));
     display: flex;
     align-items: center;
     gap: var(--ag-space-2);
+    padding-block: var(--ag-space-3);
     padding-inline: var(--ag-space-4);
     border-bottom: 1px solid var(--ag-color-border-row);
+    transition: min-height 220ms var(--ag-ease-drawer);
 }
 
 .ag-module-sidebar.is-collapsed .ag-module-sidebar__header {
+    min-height: var(--ag-size-topbar-height);
     justify-content: center;
+    padding-block: 0;
     padding-inline: var(--ag-space-3);
 }
 
@@ -131,17 +140,37 @@
     display: none;
 }
 
+/* Misma altura que .ag-panel__footer (panel-layout.css): los dos pies están
+   uno al lado del otro al fondo de la pantalla, así que sus border-top
+   tienen que caer en la MISMA línea horizontal. Antes la altura de este
+   salía del padding + el alto del link, que es mayor que el del texto mono
+   del footer del layout, y la línea del sidebar quedaba unos píxeles más
+   arriba que la del contenido. */
 .ag-module-sidebar__footer {
     flex: 0 0 auto;
-    padding: var(--ag-space-3) var(--ag-space-4);
+    min-height: var(--ag-size-footer-height);
+    display: flex;
+    align-items: center;
+    padding-block: 0;
+    padding-inline: var(--ag-space-4);
     border-top: 1px solid var(--ag-color-border-row);
+}
+
+.ag-module-sidebar.is-collapsed .ag-module-sidebar__footer {
+    padding-inline: var(--ag-space-3);
+    justify-content: center;
 }
 
 .ag-module-sidebar.is-collapsed .ag-module-sidebar__role-link {
     justify-content: center;
+    width: 100%;
 }
 
-.ag-module-sidebar.is-collapsed .ag-module-sidebar__role-link span {
+/* Se oculta SOLO la etiqueta, por su clase. La regla anterior era
+   `... __role-link span { display: none }`, y como atoms/icon renderiza un
+   <span>, escondía también el ícono: colapsado, "Cambiar de rol"
+   desaparecía por completo y el pie quedaba como una franja vacía. */
+.ag-module-sidebar.is-collapsed .ag-module-sidebar__role-label {
     display: none;
 }
 

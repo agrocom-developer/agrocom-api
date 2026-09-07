@@ -8,6 +8,10 @@
     visible solo ≥1200px (en tablet los ítems pasan a la banda de píldoras
     de panel-layout; en móvil, al drawer).
 
+    Colapsado queda solo la columna de íconos: la cabecera baja a la altura
+    exacta del topbar (comparten línea divisoria) y "Cambiar de rol" conserva
+    su ícono con tooltip — se oculta la etiqueta, nunca el ícono.
+
     El collapse/expand es JS propio (resources/js/organisms/module-sidebar.js,
     mismo patrón de delegación de eventos que theme-toggle.js): togglea
     `.is-collapsed` en `.ag-module-sidebar` y persiste el estado en
@@ -66,9 +70,20 @@
 
         @if ($cambiarRolHref)
             <div class="ag-module-sidebar__footer">
-                <a href="{{ $cambiarRolHref }}" class="ag-module-sidebar__role-link">
+                {{-- El tooltip es lo único que queda al colapsar: ahí se
+                     oculta `__role-label` y solo sobrevive el ícono, igual
+                     que en molecules/menu-item. Va siempre presente (no
+                     condicionado al estado colapsado, que es cliente-side)
+                     y Bootstrap lo inicializa globalmente en app.js. --}}
+                <a
+                    href="{{ $cambiarRolHref }}"
+                    class="ag-module-sidebar__role-link"
+                    data-bs-toggle="tooltip"
+                    data-bs-placement="right"
+                    data-bs-title="{{ __('seguridad.rol.switch_trigger') }}"
+                >
                     <x-atoms.icon name="swap_horiz" size="sm" />
-                    <span>{{ __('seguridad.rol.switch_trigger') }}</span>
+                    <span class="ag-module-sidebar__role-label">{{ __('seguridad.rol.switch_trigger') }}</span>
                 </a>
             </div>
         @endif
