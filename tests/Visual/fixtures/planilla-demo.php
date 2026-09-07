@@ -13,7 +13,7 @@
  * sin las otras — por eso este archivo repite (no importa) el mismo bloque
  * "generar el devengo del mes si no existe" que ya tienen esas dos.
  *
- * Se aprueba con `camila.rojas` mismo: `PanelDemoSeeder` ya le asigna el rol
+ * Se aprueba con `carlos.ferrufino` mismo: `PersonalDemoSeeder` ya le asigna el rol
  * `dueno` entre sus tres roles demo, así que no hace falta un segundo
  * usuario solo para aprobar.
  *
@@ -62,7 +62,7 @@ $jefe = PerPersona::firstOrCreate(
     ['rol' => RolOperativoPersona::JefeCampo, 'activo' => true],
 );
 
-$usuario = SecUser::where('username', 'camila.rojas')->firstOrFail();
+$usuario = SecUser::where('username', 'carlos.ferrufino')->firstOrFail();
 if ($usuario->persona_id !== $piloto->id) {
     $usuario->persona_id = $piloto->id;
     $usuario->save();

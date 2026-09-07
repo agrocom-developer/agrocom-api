@@ -14,8 +14,6 @@ use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
 use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraAutoria;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
-use App\Dominios\Seguridad\Dominio\TipoUsuario;
-use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use Illuminate\Database\Seeder;
 
 /**
@@ -31,7 +29,13 @@ use Illuminate\Database\Seeder;
  * Escribe por los modelos Eloquent de cada módulo (regla dura del ADR 0012).
  * La autoría va explícita: en seeders no hay usuario autenticado, así que
  * {@see RegistraAutoria} dejaría `created_by`/`updated_by` en NULL — acá se
- * asignan al usuario demo.
+ * asignan a la cuenta de {@see PersonalDemoSeeder}, que corre antes.
+ *
+ * Ese autor era hasta ahora un `SecUser` llamado `demo`, creado acá mismo y
+ * en ningún otro lado: una cuenta sin persona, sin roles y sin nadie detrás,
+ * que existía solo para firmar estas filas. Se retiró junto con `admin`
+ * (nunca sembrado, creado a mano en alguna base local) — las cuentas de la
+ * demo son ahora personas de la cuadrilla, con su rol y su tarifa.
  */
 class NucleoComercialSeeder extends Seeder
 {
@@ -44,11 +48,7 @@ class NucleoComercialSeeder extends Seeder
             return;
         }
 
-        $usuarioDemo = SecUser::query()->firstOrCreate(
-            ['username' => 'demo'],
-            ['name' => 'Usuario Demo', 'password' => 'password', 'type' => TipoUsuario::Interno],
-        );
-        $autorId = $usuarioDemo->id;
+        $autorId = PersonalDemoSeeder::autorId();
 
         $cliente = $this->crear(new Cliente([
             'razon_social' => 'Agropecuaria San Jorge S.R.L.',

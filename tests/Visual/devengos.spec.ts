@@ -4,11 +4,11 @@ import { asegurarTema, elegirRolPiloto, esperarFuentes, iniciarSesion } from './
 
 /**
  * GET /panel/devengos (redirige a /panel/devengos/{persona}), con "Piloto de
- * dron" como rol activo de `camila.rojas` (HU-28, tarea 40) — primera
+ * dron" como rol activo de `carlos.ferrufino` (HU-28, tarea 40) — primera
  * pantalla del panel scoped por PERSONA, no por rol/permiso, así que no se
  * puede entrar con "Dueño" como el resto de la suite: hace falta un usuario
  * con `persona_id` real. `fixtures/devengos-demo.php` asocia esa persona a
- * `camila.rojas` (en vez de crear un `SecUser` nuevo — evita romper
+ * `carlos.ferrufino` (en vez de crear un `SecUser` nuevo — evita romper
  * `usuarios.spec.ts`) y genera un devengo real del mes (vía `ValidarSesion`,
  * la única vía de la app que genera uno), reusando el cliente/campo/lote/
  * contrato/orden de `NucleoComercialSeeder` (evita romper `clientes`/

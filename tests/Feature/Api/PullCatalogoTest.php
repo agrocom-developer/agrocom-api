@@ -13,8 +13,11 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 /*
  * GET /api/sync/catalogo (espec §2.1, punto 6; TE-06 parcial — ver
  * runs/08-diseno.md) — pull de catálogo con cursor para la app de campo.
- * La demo siembra una orden vigente (lote L-01) y tres lotes (L-01, L-02,
- * L-03); cada test agrega lo que necesita encima de ese punto de partida.
+ * La demo siembra una orden vigente (lote L-01), tres lotes (L-01, L-02,
+ * L-03) y la cuadrilla de `PersonalDemoSeeder`; cada test agrega lo que
+ * necesita encima de ese punto de partida. Las aserciones sobre personas van
+ * contra `PerPersona::count()` y no contra un número escrito a mano: lo que
+ * este endpoint promete es traer TODAS, no traer siete.
  *
  * Igual que /api/ordenes (HU-03), corre detrás de auth:sanctum — se
  * autentica con el guard directamente porque lo que se prueba es el
@@ -62,8 +65,8 @@ it('con desde vacío trae todo lo vigente de las tres secciones (primera sincron
 
     expect($respuesta->json('ordenes'))->toHaveCount(1)
         ->and($respuesta->json('lotes'))->toHaveCount(3)
-        ->and($respuesta->json('personas'))->toHaveCount(1)
-        ->and($respuesta->json('personas.0.id'))->toBe($persona->id)
+        ->and($respuesta->json('personas'))->toHaveCount(PerPersona::query()->count())
+        ->and(collect($respuesta->json('personas'))->pluck('id'))->toContain($persona->id)
         ->and($respuesta->json('cursor'))->toBeString()
         ->and($respuesta->json('cursor'))->not->toBe('');
 });
@@ -165,7 +168,7 @@ it('excluye del siguiente pull una persona borrada lógicamente después de habe
     $persona = crearPersonaDemo();
 
     $primero = $this->getJson('/api/sync/catalogo')->assertOk();
-    expect(collect($primero->json('personas'))->pluck('id')->all())->toBe([$persona->id]);
+    expect(collect($primero->json('personas'))->pluck('id')->all())->toContain($persona->id);
 
     $this->travel(2)->seconds();
 

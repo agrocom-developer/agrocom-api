@@ -10,7 +10,7 @@
  *
  * Reutiliza clientes/campos/lotes de `NucleoComercialSeeder` si es posible
  * (ve la nota en `devengos-demo.php` sobre por qué). Como el portal no
- * necesita del mismo cliente que `camila.rojas` (cada cliente es su propio
+ * necesita del mismo cliente que `carlos.ferrufino` (cada cliente es su propio
  * portal), crea un contrato nuevo dentro de un cliente nuevo. La tabla de
  * clientes en el listado de panel interno sí gana una fila nueva, pero ese
  * listado está fuera del scope de esta suite — solo las pantallas del panel

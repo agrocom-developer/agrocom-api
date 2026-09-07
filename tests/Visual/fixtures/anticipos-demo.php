@@ -64,7 +64,7 @@ $jefe = PerPersona::firstOrCreate(
     ['rol' => RolOperativoPersona::JefeCampo, 'activo' => true],
 );
 
-$usuario = SecUser::where('username', 'camila.rojas')->firstOrFail();
+$usuario = SecUser::where('username', 'carlos.ferrufino')->firstOrFail();
 if ($usuario->persona_id !== $piloto->id) {
     $usuario->persona_id = $piloto->id;
     $usuario->save();

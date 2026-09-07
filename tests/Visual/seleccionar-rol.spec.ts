@@ -3,7 +3,7 @@ import { asegurarTema, esperarFuentes, iniciarSesion } from './helpers';
 
 /**
  * GET /panel/seleccionar-rol, tras loguear con el usuario demo multirol
- * (`camila.rojas`, tres roles — Demo\PanelDemoSeeder). Con 2+ roles vivos y
+ * (`carlos.ferrufino`, cuatro roles — Demo\PersonalDemoSeeder). Con 2+ roles vivos y
  * sin preferencia fijada, el selector siempre se muestra (RolActivoController
  * ::create()).
  */

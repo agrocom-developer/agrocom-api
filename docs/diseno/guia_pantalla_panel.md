@@ -283,7 +283,7 @@ Y el aviso que ya cobró dos veces: un canvas es un mockup, no la implementació
 - [ ] Se ve bien en los tres breakpoints: ≥1200, 768–1199, <768.
 
 **Verificación visual** (obligatoria, el cálculo en papel no alcanza)
-- [ ] Vista en navegador real, **en tema claro y en tema oscuro**, logueado con `camila.rojas` / `password`.
+- [ ] Vista en navegador real, **en tema claro y en tema oscuro**, logueado con `carlos.ferrufino` / `password`.
 - [ ] Contraste AA (4.5:1) verificado en las combinaciones nuevas, y anotado en `sistema_diseno_panel.md` §1.3 si el par no estaba.
 - [ ] `bin/verify` en verde (ver skill `verificacion`).
 

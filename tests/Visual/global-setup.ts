@@ -13,7 +13,7 @@ import { fileURLToPath } from 'node:url';
  * Ambos pasos son idempotentes por diseño:
  * - `docker compose up -d` no reinicia lo que ya está corriendo.
  * - `migrate --seed --force` es seguro de repetir: los seeders de demo
- *   (CatalogoSeeder, Demo\DemoSeeder → PanelDemoSeeder) son `firstOrCreate`.
+ *   (CatalogoSeeder, Demo\DemostracionSeeder) son idempotentes.
  *
  * Nunca `migrate:fresh`/`migrate:refresh`/`db:wipe`: además de estar
  * bloqueados por el guardarraíl (.claude/hooks/guardarrail-bash.sh),
