@@ -167,7 +167,7 @@ class OperacionDemoSeeder extends Seeder
      * @var array<string, array{TipoIncidencia, string, string, string}>
      */
     private const INCIDENCIAS = [
-        'S-03' => [TipoIncidencia::Caldo, 'El caldo llegó 40 minutos tarde: el tanque quedó vacío entre la segunda y la tercera recarga.', '2026-08-07 10:04:00', 'rc_10.jpeg'],
+        'S-03' => [TipoIncidencia::Caldo, 'Filtro de la bomba tapado en la segunda recarga: 40 minutos parados hasta limpiarlo y volver a cargar.', '2026-08-07 10:04:00', 'rc_10.jpeg'],
         'S-08' => [TipoIncidencia::Mecanica, 'Aviso de sobretemperatura del ESC del brazo 3. Se aborta el vuelo y se cierra la sesión.', '2026-08-22 10:39:00', 'rc_04.jpeg'],
     ];
 
@@ -435,7 +435,11 @@ class OperacionDemoSeeder extends Seeder
                 'bateria_saliente_id' => $bateria,
                 'temperatura_bateria_c' => $caliente ? '68.50' : '42.00',
                 'alerta_temperatura' => $caliente,
-                'motivo_retraso_caldo' => $clave === 'S-03' && $indice === 1 ? 'El tractor con el caldo llegó tarde al cabecero.' : null,
+                // Código del catálogo cerrado de `ope_recargas_motivo_retraso_chk`
+                // (filtro_tapado / grumos / decantacion / espuma /
+                // color_olor_anormal), no una frase libre: la columna
+                // describe QUÉ problema del caldo causó el retraso.
+                'motivo_retraso_caldo' => $clave === 'S-03' && $indice === 1 ? 'filtro_tapado' : null,
                 'hora_retraso' => $clave === 'S-03' && $indice === 1 ? $inicio : null,
                 'litros_combustible_generador' => '4.00',
                 'hora' => $inicio,
