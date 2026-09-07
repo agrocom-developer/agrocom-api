@@ -1,0 +1,428 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif; background: #fefaf2; color: #24331c; }
+    a { color: #e8720c; } a:hover { color: #a85408; }
+    .sw { appearance: none; -webkit-appearance: none; margin: 0; }
+  </style>
+</helmet>
+
+<div style="display: flex; width: 1440px; height: 1280px; background: #fefaf2; overflow: hidden;">
+
+  <!-- Riel de módulos (74px, igual que organisms/module-rail) -->
+  <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; width: 74px; flex-shrink: 0; padding: 14px 0; background: #0f3d1a;">
+    <div style="display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 9px; background: #1e7a34; margin-bottom: 10px;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e8f4d9" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M12 8c3-3 7-3 9-1-2 3-6 4-9 1z"/><path d="M12 14c-3-3-7-3-9-1 2 3 6 4 9 1z"/></svg>
+    </div>
+    <sc-for list="{{rail}}" as="r" hint-placeholder-count="7">
+      <div style="display: flex; align-items: center; justify-content: center; width: 46px; height: 40px; border-radius: 9px; background: {{r.fondo}};">
+        <div style="width: 20px; height: 20px; border-radius: 5px; background: {{r.tinta}}; opacity: {{r.op}};"></div>
+      </div>
+    </sc-for>
+  </div>
+
+  <!-- Sidebar del módulo Seguridad (252px, igual que organisms/module-sidebar) -->
+  <div style="display: flex; flex-direction: column; width: 252px; flex-shrink: 0; background: #fbfaf6; border-right: 1px solid #e2dbc7;">
+    <div style="padding: 16px 16px 14px; border-bottom: 1px solid #e2dbc7;">
+      <div style="font-family: 'IBM Plex Sans Condensed', sans-serif; font-weight: 700; font-size: 20px; line-height: 1.1; color: #24331c;">Seguridad</div>
+      <div style="font-size: 12px; line-height: 1.35; color: #6a6f5e; margin-top: 4px;">Usuarios, roles y organización del sistema.</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px; padding: 12px 10px;">
+      <sc-for list="{{navSeguridad}}" as="n" hint-placeholder-count="5">
+        <div style="display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 9px; font-size: 13.5px; font-weight: {{n.peso}}; color: {{n.color}}; background: {{n.fondo}};">
+          <div style="width: 18px; height: 18px; border-radius: 4px; background: currentColor; opacity: .55; flex-shrink: 0;"></div>
+          <span>{{n.label}}</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <!-- Columna principal -->
+  <div style="display: flex; flex-direction: column; flex-grow: 1; min-width: 0;">
+
+    <!-- Topbar 62px -->
+    <div style="display: flex; align-items: center; gap: 16px; height: 62px; flex-shrink: 0; padding: 0 22px; background: #fbfaf6; border-bottom: 1px solid #e2dbc7;">
+      <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #6a6f5e;">
+        <span>Seguridad</span>
+        <span style="color: #a8a08a;">›</span>
+        <a href="#" style="color: #6a6f5e; text-decoration: none;">Roles</a>
+        <span style="color: #a8a08a;">›</span>
+        <span style="color: #24331c; font-weight: 600;">{{rol.nombre}}</span>
+      </div>
+      <div style="flex-grow: 1;"></div>
+      <div style="display: flex; align-items: center; gap: 8px; padding: 5px 12px; border-radius: 999px; background: #e8f4d9; border: 1px solid #c6e86a;">
+        <div style="width: 7px; height: 7px; border-radius: 999px; background: #55a03a;"></div>
+        <span style="font-size: 12px; font-weight: 600; color: #245b24;">Campaña 2026-B</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div style="display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 999px; background: #1e7a34; color: #ffffff; font-size: 12px; font-weight: 600;">CF</div>
+        <div style="line-height: 1.15;">
+          <div style="font-size: 13px; font-weight: 600; color: #24331c;">Carlos Ferrufino</div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: .08em; color: #6a6f5e;">DUEÑO</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contenido -->
+    <div style="display: flex; flex-direction: column; flex-grow: 1; min-height: 0; padding: 24px 26px 0;">
+
+      <!-- Cabecera de pantalla -->
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+        <div style="display: flex; flex-direction: column; gap: 8px; min-width: 0;">
+          <h1 style="margin: 0; font-family: 'IBM Plex Sans Condensed', sans-serif; font-weight: 400; font-size: 34px; line-height: 1.05; color: #24331c;">Permisos de {{rol.nombre}}</h1>
+          <p style="margin: 0; max-width: 50rem; font-size: 14px; color: #6a6f5e;">Lo que este rol ve en el menú y lo que puede hacer dentro de cada pantalla. El menú no se edita aparte: se enciende al dar el permiso de la pantalla.</p>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0;">
+          <div style="display: flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 999px; background: #f1eee4; border: 1px solid #e2dbc7;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5f6553" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M16 19a4 4 0 0 0-8 0"/><circle cx="12" cy="10" r="3"/><circle cx="12" cy="12" r="9"/></svg>
+            <span style="font-size: 12.5px; font-weight: 600; color: #5f6553;">{{rol.usuarios}}</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 999px; background: #e0ecd8; border: 1px solid #cfe3bf;">
+            <span style="font-size: 12.5px; font-weight: 600; color: #245b24;">Activo</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dos columnas -->
+      <div style="display: flex; gap: 24px; align-items: flex-start; margin-top: 22px;">
+
+        <!-- Vista previa del sidebar -->
+        <div style="display: flex; flex-direction: column; width: 320px; flex-shrink: 0; border: 1px solid #e2dbc7; border-radius: 8px; background: #fbfaf6; overflow: hidden;">
+          <div style="display: flex; align-items: center; gap: 9px; padding: 12px 14px; border-bottom: 1px solid #e2dbc7;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6a6f5e" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span style="font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: #6a6f5e;">Lo que verá este rol</span>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 2px; padding: 10px 8px;">
+            <sc-for list="{{preview}}" as="m" hint-placeholder-count="7">
+              <div>
+                <div style="display: flex; align-items: center; gap: 9px; padding: 7px 10px 4px;">
+                  <div style="width: 15px; height: 15px; border-radius: 4px; background: {{m.tinta}};"></div>
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .07em; text-transform: uppercase; color: {{m.tinta}};">{{m.nombre}}</span>
+                  <div style="flex-grow: 1;"></div>
+                  <span style="font-size: 10.5px; color: #a8a08a;">{{m.conteo}}</span>
+                </div>
+                <sc-for list="{{m.items}}" as="i" hint-placeholder-count="4">
+                  <div style="display: flex; align-items: center; gap: 10px; padding: 5px 10px 5px 22px; border-radius: 7px; background: {{i.fondo}};">
+                    <div style="width: 5px; height: 5px; border-radius: 999px; background: {{i.punto}}; flex-shrink: 0;"></div>
+                    <span style="font-size: 12.5px; font-weight: {{i.peso}}; color: {{i.color}};">{{i.label}}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="padding: 11px 14px; border-top: 1px solid #e2dbc7; background: #f6f2e6;">
+            <div style="font-size: 12px; line-height: 1.45; color: #6a6f5e;">Un módulo entero desaparece del riel cuando ninguna de sus pantallas está encendida.</div>
+          </div>
+        </div>
+
+        <!-- Editor -->
+        <div style="display: flex; flex-direction: column; gap: 14px; flex-grow: 1; min-width: 0; padding-bottom: 96px;">
+          <sc-for list="{{modulos}}" as="mod" hint-placeholder-count="7">
+            <div style="border: 1px solid #e2dbc7; border-radius: 8px; background: #fbfaf6; overflow: hidden;">
+
+              <div style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #f6f2e6; border-bottom: 1px solid #e2dbc7;">
+                <div style="width: 18px; height: 18px; border-radius: 5px; background: #4e5544;"></div>
+                <span style="font-family: 'IBM Plex Sans Condensed', sans-serif; font-weight: 700; font-size: 16px; color: #24331c;">{{mod.nombre}}</span>
+                <span style="font-size: 12px; color: #6a6f5e;">{{mod.resumen}}</span>
+                <div style="flex-grow: 1;"></div>
+                <div onClick="{{mod.todo}}" style="font-size: 12px; font-weight: 600; color: #1e7a34; cursor: pointer; padding: 4px 8px; border-radius: 6px;">{{mod.accionMasiva}}</div>
+              </div>
+
+              <div style="display: flex; flex-direction: column;">
+                <sc-for list="{{mod.pantallas}}" as="p" hint-placeholder-count="4">
+                  <div style="padding: 11px 16px; border-top: 1px solid #f1eee4; background: {{p.fondoFila}};">
+
+                    <div style="display: flex; align-items: center; gap: 13px;">
+                      <div onClick="{{p.toggle}}" style="position: relative; width: 40px; height: 23px; border-radius: 999px; background: {{p.pista}}; cursor: {{p.cursor}}; flex-shrink: 0; border: 1px solid {{p.pistaBorde}};">
+                        <div style="position: absolute; top: 2px; left: {{p.perillaX}}; width: 17px; height: 17px; border-radius: 999px; background: #ffffff; box-shadow: 0 1px 2px rgba(36,51,28,.28);"></div>
+                      </div>
+
+                      <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0; flex-grow: 1;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                          <span style="font-size: 13.5px; font-weight: 600; color: {{p.color}};">{{p.nombre}}</span>
+                          <sc-if value="{{p.bloqueada}}" hint-placeholder-val="{{true}}">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#a85408" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+                          </sc-if>
+                        </div>
+                        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #a8a08a;">{{p.codigo}}</span>
+                      </div>
+
+                      <span style="font-size: 11.5px; color: #a8a08a; flex-shrink: 0;">{{p.conteoAcciones}}</span>
+                    </div>
+
+                    <sc-if value="{{p.tieneAcciones}}" hint-placeholder-val="{{true}}">
+                      <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; margin-left: 53px;">
+                        <sc-for list="{{p.acciones}}" as="a" hint-placeholder-count="4">
+                          <div onClick="{{a.toggle}}" style="display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; cursor: pointer; background: {{a.fondo}}; border: 1px solid {{a.borde}};">
+                            <div style="width: 5px; height: 5px; border-radius: 999px; background: {{a.punto}};"></div>
+                            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 500; color: {{a.color}};">{{a.accion}}</span>
+                          </div>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+
+                    <sc-if value="{{p.avisoHuerfano}}" hint-placeholder-val="{{true}}">
+                      <div style="display: flex; align-items: flex-start; gap: 9px; margin-top: 10px; margin-left: 53px; padding: 9px 12px; border-radius: 6px; background: #fdedd3; border-left: 3px solid #ef8c18;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#a85408" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 1px;"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+                        <span style="font-size: 12.5px; line-height: 1.45; color: #743906;">{{p.avisoTexto}}</span>
+                      </div>
+                    </sc-if>
+
+                    <sc-if value="{{p.bloqueada}}" hint-placeholder-val="{{true}}">
+                      <div style="display: flex; align-items: flex-start; gap: 9px; margin-top: 10px; margin-left: 53px; padding: 9px 12px; border-radius: 6px; background: #f1eee4; border-left: 3px solid #a8a08a;">
+                        <span style="font-size: 12.5px; line-height: 1.45; color: #5f6553;">{{p.motivoBloqueo}}</span>
+                      </div>
+                    </sc-if>
+
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <!-- Barra de acciones fija -->
+    <div style="display: flex; align-items: center; gap: 16px; height: 68px; flex-shrink: 0; padding: 0 26px; background: #fbfaf6; border-top: 1px solid #e2dbc7;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div style="width: 8px; height: 8px; border-radius: 999px; background: {{estado.punto}};"></div>
+        <span style="font-size: 13.5px; font-weight: 500; color: {{estado.color}};">{{estado.texto}}</span>
+      </div>
+      <div style="flex-grow: 1;"></div>
+      <div onClick="{{descartar}}" style="display: flex; align-items: center; height: 40px; padding: 0 18px; border-radius: 8px; border: 1px solid #e2dbc7; background: transparent; font-size: 13.5px; font-weight: 600; color: #4e5544; cursor: pointer;">Descartar</div>
+      <div onClick="{{guardar}}" style="display: flex; align-items: center; height: 40px; padding: 0 20px; border-radius: 8px; background: {{estado.botonFondo}}; font-size: 13.5px; font-weight: 600; color: #ffffff; cursor: pointer;">Guardar cambios</div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"rolInicial":{"editor":"enum","options":["jefe_campo","piloto","encargado_operaciones"],"default":"jefe_campo","section":"Datos"},"$preview":{"width":1440,"height":1280}}'>
+class Component extends DCLogic {
+
+  // Árbol real del panel: 7 módulos, 30 pantallas, cada una con el permiso
+  // que la gatea en sec_menu y las acciones que viven dentro de ella.
+  catalogo() {
+    return [
+      { nombre: 'Operación', tinta: '#1e7a34', pantallas: [
+        { nombre: 'Programación', codigo: 'seguridad.dashboard.ver', acciones: [] },
+        { nombre: 'Órdenes de aplicación', codigo: 'operaciones.orden.ver', acciones: ['crear', 'editar', 'activar', 'eliminar'] },
+        { nombre: 'Trabajos', codigo: 'operaciones.trabajo.ver', acciones: ['acta.generar', 'acta.firmar', 'reporte.ver'] },
+        { nombre: 'Sesiones', codigo: 'operaciones.sesion.validar', acciones: [] },
+        { nombre: 'Pausas', codigo: 'operaciones.pausa.ver', acciones: ['registrar'] },
+      ]},
+      { nombre: 'Comercial', tinta: '#4e5544', pantallas: [
+        { nombre: 'Clientes', codigo: 'comercial.cliente.ver', acciones: ['crear', 'editar', 'eliminar'] },
+        { nombre: 'Contratos', codigo: 'comercial.contrato.ver', acciones: ['crear', 'editar', 'cambiar_estado'] },
+        { nombre: 'Campos y lotes', codigo: 'comercial.campo.ver', acciones: ['crear', 'editar', 'eliminar'] },
+      ]},
+      { nombre: 'Recursos', tinta: '#4e5544', pantallas: [
+        { nombre: 'Drones', codigo: 'operaciones.dron.ver', acciones: ['crear', 'editar', 'eliminar'] },
+        { nombre: 'Baterías', codigo: 'mantenimiento.bateria.ver', acciones: ['crear', 'editar', 'eliminar'] },
+        { nombre: 'Vehículos', codigo: 'mantenimiento.vehiculo.ver', acciones: ['crear', 'editar', 'eliminar'] },
+        { nombre: 'Bases', codigo: 'personal.base.ver', acciones: ['crear', 'editar', 'eliminar'] },
+        { nombre: 'Personas', codigo: 'personal.persona.ver', acciones: ['crear', 'editar', 'eliminar'] },
+      ]},
+      { nombre: 'Mantenimiento', tinta: '#4e5544', pantallas: [
+        { nombre: 'Órdenes de trabajo', codigo: 'mantenimiento.orden.ver', acciones: ['crear', 'editar', 'cerrar'] },
+        { nombre: 'Planes', codigo: 'mantenimiento.plan.ver', acciones: ['crear', 'editar', 'eliminar'] },
+        { nombre: 'Repuestos', codigo: 'inventario.repuesto.ver', acciones: ['crear', 'editar', 'eliminar'] },
+        { nombre: 'Stock', codigo: 'inventario.movimiento.ver', acciones: ['registrar'] },
+      ]},
+      { nombre: 'Financiero', tinta: '#4e5544', pantallas: [
+        { nombre: 'Gastos', codigo: 'finanzas.gasto.ver', acciones: ['registrar', 'eliminar'] },
+        { nombre: 'Combustible', codigo: 'finanzas.combustible.ver', acciones: ['registrar', 'eliminar'] },
+        { nombre: 'Rendiciones', codigo: 'finanzas.rendicion.ver', acciones: ['crear', 'presentar', 'aprobar'] },
+        { nombre: 'Devengos', codigo: 'finanzas.devengo.ver', acciones: [] },
+        { nombre: 'Planilla', codigo: 'finanzas.planilla.ver', acciones: ['generar', 'aprobar'] },
+        { nombre: 'Facturas', codigo: 'comercial.factura.ver', acciones: ['emitir'] },
+        { nombre: 'Anticipos', codigo: 'finanzas.anticipo.ver', acciones: ['registrar', 'eliminar'] },
+      ]},
+      { nombre: 'Reportes', tinta: '#4e5544', pantallas: [
+        { nombre: 'Reportes técnicos', codigo: 'operaciones.reporte.ver', acciones: [] },
+        { nombre: 'Reportes comerciales', codigo: 'comercial.reporte.ver', acciones: ['exportar'] },
+        { nombre: 'Alertas', codigo: 'operaciones.alerta.ver', acciones: ['atender'] },
+      ]},
+      { nombre: 'Seguridad', tinta: '#4e5544', pantallas: [
+        { nombre: 'Usuarios', codigo: 'seguridad.usuario.ver', acciones: ['crear', 'editar', 'eliminar', 'bloquear', 'asignar_rol_dueno'] },
+        { nombre: 'Dispositivos', codigo: 'seguridad.dispositivo.ver', acciones: ['revocar'] },
+        { nombre: 'Organización', codigo: 'seguridad.organizacion.ver', acciones: [] },
+        { nombre: 'Versiones del APK', codigo: 'distribucion.version.autorizar', acciones: [] },
+      ]},
+    ];
+  }
+
+  // Punto de partida por rol, tomado del catálogo sembrado real.
+  otorgadosDe(rol) {
+    if (rol === 'piloto') {
+      return ['operaciones.trabajo.ver:acta.generar', 'operaciones.trabajo.ver:acta.firmar', 'finanzas.devengo.ver'];
+    }
+    if (rol === 'encargado_operaciones') {
+      const todo = [];
+      this.catalogo().forEach((m) => m.pantallas.forEach((p) => {
+        if (p.codigo === 'distribucion.version.autorizar') return;
+        todo.push(p.codigo);
+        p.acciones.forEach((a) => { if (a !== 'asignar_rol_dueno') todo.push(p.codigo + ':' + a); });
+      }));
+      return todo;
+    }
+    return [
+      'seguridad.dashboard.ver',
+      'operaciones.orden.ver',
+      'operaciones.trabajo.ver', 'operaciones.trabajo.ver:acta.generar', 'operaciones.trabajo.ver:acta.firmar',
+      'operaciones.sesion.validar',
+      'operaciones.pausa.ver', 'operaciones.pausa.ver:registrar',
+      'finanzas.devengo.ver',
+      'seguridad.organizacion.ver',
+    ];
+  }
+
+  // La única pantalla que este rol sostiene sola en el sistema: se pinta con
+  // candado, porque quitársela dejaría el permiso sin ningún rol que lo tenga.
+  bloqueadas() { return ['operaciones.sesion.validar']; }
+
+  metaRol(rol) {
+    const m = {
+      jefe_campo: { nombre: 'Jefe de campo', usuarios: '2 usuarios' },
+      piloto: { nombre: 'Piloto de dron', usuarios: '4 usuarios' },
+      encargado_operaciones: { nombre: 'Encargado de operaciones', usuarios: '1 usuario' },
+    };
+    return m[rol] || m.jefe_campo;
+  }
+
+  estadoActual() {
+    const rol = this.state && this.state.rol ? this.state.rol : (this.props.rolInicial ?? 'jefe_campo');
+    const base = this.otorgadosDe(rol);
+    const dados = this.state && this.state.dados ? this.state.dados : base;
+    return { rol, base, dados };
+  }
+
+  alternar(clave) {
+    const { rol, dados } = this.estadoActual();
+    if (this.bloqueadas().indexOf(clave) !== -1) return;
+    const hay = dados.indexOf(clave) !== -1;
+    this.setState({ rol, dados: hay ? dados.filter((c) => c !== clave) : dados.concat([clave]) });
+  }
+
+  renderVals() {
+    const { rol, base, dados } = this.estadoActual();
+    const tiene = (c) => dados.indexOf(c) !== -1;
+    const bloqueada = (c) => this.bloqueadas().indexOf(c) !== -1;
+    const cat = this.catalogo();
+
+    const modulos = cat.map((m) => {
+      const encendidas = m.pantallas.filter((p) => tiene(p.codigo)).length;
+      return {
+        nombre: m.nombre,
+        resumen: encendidas + ' de ' + m.pantallas.length + ' pantallas',
+        accionMasiva: encendidas === m.pantallas.length ? 'Quitar todo' : 'Dar todo',
+        todo: () => {
+          const objetivo = encendidas !== m.pantallas.length;
+          let d = dados.slice();
+          m.pantallas.forEach((p) => {
+            if (bloqueada(p.codigo)) return;
+            const esta = d.indexOf(p.codigo) !== -1;
+            if (objetivo && !esta) d.push(p.codigo);
+            if (!objetivo && esta) d = d.filter((c) => c !== p.codigo);
+          });
+          this.setState({ rol, dados: d });
+        },
+        pantallas: m.pantallas.map((p) => {
+          const on = tiene(p.codigo);
+          const lock = bloqueada(p.codigo);
+          const activas = p.acciones.filter((a) => tiene(p.codigo + ':' + a));
+          return {
+            nombre: p.nombre,
+            codigo: p.codigo,
+            color: on ? '#24331c' : '#6a6f5e',
+            fondoFila: on ? '#fbfaf6' : '#faf8f2',
+            pista: on ? '#1e7a34' : '#e2dbc7',
+            pistaBorde: on ? '#1e7a34' : '#dfd8c4',
+            perillaX: on ? '20px' : '2px',
+            cursor: lock ? 'not-allowed' : 'pointer',
+            bloqueada: lock,
+            motivoBloqueo: lock ? 'Es el único rol activo con este permiso. Dáselo antes a otro rol: nadie puede conceder un permiso que no tiene, así que un permiso huérfano no se recupera desde el panel.' : '',
+            toggle: lock ? (() => {}) : (() => this.alternar(p.codigo)),
+            tieneAcciones: p.acciones.length > 0,
+            conteoAcciones: p.acciones.length === 0 ? 'sin acciones' : activas.length + '/' + p.acciones.length + ' acciones',
+            avisoHuerfano: !on && activas.length > 0,
+            avisoTexto: activas.length > 0 ? 'Hay ' + activas.length + ' ' + (activas.length === 1 ? 'acción activa' : 'acciones activas') + ' sobre una pantalla que este rol no ve. No hacen nada hasta que enciendas ' + p.codigo + '.' : '',
+            acciones: p.acciones.map((a) => {
+              const activa = tiene(p.codigo + ':' + a);
+              return {
+                accion: a,
+                fondo: activa ? (on ? '#e0ecd8' : '#fdedd3') : '#f6f2e6',
+                borde: activa ? (on ? '#cfe3bf' : '#f8d9a8') : '#e2dbc7',
+                punto: activa ? (on ? '#55a03a' : '#ef8c18') : '#ced4da',
+                color: activa ? (on ? '#245b24' : '#743906') : '#6a6f5e',
+                toggle: () => this.alternar(p.codigo + ':' + a),
+              };
+            }),
+          };
+        }),
+      };
+    });
+
+    const preview = cat.map((m) => {
+      const items = m.pantallas.map((p) => {
+        const on = tiene(p.codigo);
+        return {
+          label: p.nombre,
+          color: on ? '#24331c' : '#c9c2ae',
+          peso: on ? 600 : 400,
+          punto: on ? '#55a03a' : '#e2dbc7',
+          fondo: on ? '#f6f2e6' : 'transparent',
+        };
+      });
+      const vis = m.pantallas.filter((p) => tiene(p.codigo)).length;
+      return {
+        nombre: m.nombre,
+        tinta: vis > 0 ? '#4e5544' : '#c9c2ae',
+        conteo: vis > 0 ? vis + '/' + m.pantallas.length : 'oculto',
+        items,
+      };
+    });
+
+    const rail = cat.map((m) => {
+      const vis = m.pantallas.some((p) => tiene(p.codigo));
+      return { fondo: vis ? '#1b5527' : 'transparent', tinta: '#e8f4d9', op: vis ? '.9' : '.25' };
+    });
+
+    const navSeguridad = [
+      { label: 'Usuarios', color: '#6a6f5e', peso: 500, fondo: 'transparent' },
+      { label: 'Roles y permisos', color: '#245b24', peso: 700, fondo: '#e8f4d9' },
+      { label: 'Dispositivos', color: '#6a6f5e', peso: 500, fondo: 'transparent' },
+      { label: 'Organización', color: '#6a6f5e', peso: 500, fondo: 'transparent' },
+      { label: 'Versiones del APK', color: '#6a6f5e', peso: 500, fondo: 'transparent' },
+    ];
+
+    const cambios = base.filter((c) => dados.indexOf(c) === -1).length + dados.filter((c) => base.indexOf(c) === -1).length;
+
+    return {
+      rol: this.metaRol(rol),
+      modulos, preview, rail, navSeguridad,
+      estado: {
+        texto: cambios === 0 ? 'Sin cambios pendientes' : cambios + (cambios === 1 ? ' cambio sin guardar' : ' cambios sin guardar'),
+        color: cambios === 0 ? '#6a6f5e' : '#743906',
+        punto: cambios === 0 ? '#ced4da' : '#ef8c18',
+        botonFondo: cambios === 0 ? '#a8bfa4' : '#1e7a34',
+      },
+      descartar: () => this.setState({ rol, dados: base.slice() }),
+      guardar: () => this.setState({ rol, dados: dados.slice() }),
+    };
+  }
+}
+</script>
+</body>
+</html>

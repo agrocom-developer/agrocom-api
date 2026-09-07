@@ -39,6 +39,20 @@ class SeguridadSeeder extends Seeder
         'seguridad.usuario.bloquear' => 'Bloquear/desbloquear (toggle de state, no es baja)',
         'seguridad.usuario.eliminar' => 'Baja lógica (soft delete)',
         'seguridad.usuario.asignar_rol_dueno' => 'Asignar o quitar el rol dueño a cualquier usuario',
+        // Administración del catálogo de roles y de la matriz rol↔permiso.
+        // Era lo último del modelo `sec_*` sin pantalla: roles, permisos y
+        // sus asignaciones solo se tocaban editando este archivo. Los cinco
+        // van SOLO a `dueno` (ver más abajo): quien puede editar la matriz
+        // puede concederse cualquier permiso del sistema, así que no es una
+        // responsabilidad delegable al encargado de operaciones — que sí
+        // tiene el alta de usuarios. `asignar_permiso` es la LLAVE: las
+        // guardas de AsignarPermisosRol impiden que el sistema se quede sin
+        // ningún rol vivo que la tenga.
+        'seguridad.rol.ver' => 'Ver el catálogo de roles y qué permisos tiene cada uno',
+        'seguridad.rol.crear' => 'Crear un rol nuevo (nace sin permisos)',
+        'seguridad.rol.editar' => 'Editar nombre, descripción y estado de un rol',
+        'seguridad.rol.eliminar' => 'Dar de baja un rol sin usuarios asignados',
+        'seguridad.rol.asignar_permiso' => 'Otorgar y quitar permisos a un rol',
         // Tarea 62 (fuga 2): dashboard y organización eran visibles para
         // cualquier rol activo sin ningún permiso que lo gatee — un
         // `auxiliar` (un único permiso en todo el catálogo,

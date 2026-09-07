@@ -1,0 +1,135 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif; background: #fefaf2; color: #24331c; }
+    a { color: #e8720c; } a:hover { color: #a85408; }
+  </style>
+</helmet>
+
+<div style="display: flex; flex-direction: column; gap: 22px; width: 860px; height: 1030px; padding: 30px 32px; background: #fefaf2; box-sizing: border-box;">
+
+  <div style="display: flex; flex-direction: column; gap: 6px;">
+    <h1 style="margin: 0; font-family: 'IBM Plex Sans Condensed', sans-serif; font-weight: 700; font-size: 26px; line-height: 1.05; color: #24331c;">Los cuatro estados de una fila</h1>
+    <p style="margin: 0; font-size: 13.5px; line-height: 1.5; color: #6a6f5e;">Detalle a tamaño real de la fila del editor. Cada estado dice en su propio texto por qué está así — ningún error se descubre recién al guardar.</p>
+  </div>
+
+  <sc-for list="{{estados}}" as="e" hint-placeholder-count="4">
+    <div style="display: flex; flex-direction: column; gap: 9px;">
+      <div style="display: flex; align-items: baseline; gap: 9px;">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: .09em; text-transform: uppercase; color: {{e.rotuloColor}};">{{e.rotulo}}</span>
+        <span style="font-size: 12.5px; color: #6a6f5e;">{{e.nota}}</span>
+      </div>
+
+      <div style="border: 1px solid #e2dbc7; border-radius: 8px; background: #fbfaf6; overflow: hidden;">
+        <div style="padding: 12px 16px; background: {{e.fondoFila}};">
+
+          <div style="display: flex; align-items: center; gap: 13px;">
+            <div style="position: relative; width: 40px; height: 23px; border-radius: 999px; background: {{e.pista}}; border: 1px solid {{e.pistaBorde}}; flex-shrink: 0;">
+              <div style="position: absolute; top: 2px; left: {{e.perillaX}}; width: 17px; height: 17px; border-radius: 999px; background: #ffffff; box-shadow: 0 1px 2px rgba(36,51,28,.28);"></div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0; flex-grow: 1;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 13.5px; font-weight: 600; color: {{e.color}};">{{e.pantalla}}</span>
+                <sc-if value="{{e.candado}}" hint-placeholder-val="{{true}}">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#a85408" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+                </sc-if>
+              </div>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #a8a08a;">{{e.codigo}}</span>
+            </div>
+
+            <span style="font-size: 11.5px; color: #a8a08a; flex-shrink: 0;">{{e.conteo}}</span>
+          </div>
+
+          <sc-if value="{{e.hayChips}}" hint-placeholder-val="{{true}}">
+            <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; margin-left: 53px;">
+              <sc-for list="{{e.chips}}" as="c" hint-placeholder-count="4">
+                <div style="display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: {{c.fondo}}; border: 1px solid {{c.borde}};">
+                  <div style="width: 5px; height: 5px; border-radius: 999px; background: {{c.punto}};"></div>
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 500; color: {{c.color}};">{{c.label}}</span>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{e.hayAviso}}" hint-placeholder-val="{{true}}">
+            <div style="display: flex; align-items: flex-start; gap: 9px; margin-top: 10px; margin-left: 53px; padding: 9px 12px; border-radius: 6px; background: {{e.avisoFondo}}; border-left: 3px solid {{e.avisoBarra}};">
+              <sc-if value="{{e.avisoIcono}}" hint-placeholder-val="{{true}}">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#a85408" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 1px;"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+              </sc-if>
+              <span style="font-size: 12.5px; line-height: 1.45; color: {{e.avisoColor}};">{{e.aviso}}</span>
+            </div>
+          </sc-if>
+
+        </div>
+      </div>
+    </div>
+  </sc-for>
+
+  <div style="display: flex; align-items: flex-start; gap: 11px; padding: 14px 16px; border-radius: 8px; background: #f1eee4; border: 1px solid #e2dbc7;">
+    <span style="font-size: 12.5px; line-height: 1.55; color: #5f6553;">El chip ámbar del tercer estado es deliberado: no es un error del usuario, es una combinación válida en la base que no sirve para nada. Se ve distinta del verde para que se note sin bloquear el guardado — quien la deje así puede tener un motivo (dejar la acción lista para cuando encienda la pantalla).</span>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{"width":860,"height":1030}}'>
+class Component extends DCLogic {
+  chip(label, tono) {
+    const t = {
+      on: { fondo: '#e0ecd8', borde: '#cfe3bf', punto: '#55a03a', color: '#245b24' },
+      off: { fondo: '#f6f2e6', borde: '#e2dbc7', punto: '#ced4da', color: '#6a6f5e' },
+      huerfano: { fondo: '#fdedd3', borde: '#f8d9a8', punto: '#ef8c18', color: '#743906' },
+    };
+    return { label, ...t[tono] };
+  }
+
+  renderVals() {
+    return {
+      estados: [
+        {
+          rotulo: 'Encendida', rotuloColor: '#245b24', nota: 'el rol ve la pantalla y puede hacer dos de sus cuatro acciones',
+          pantalla: 'Órdenes de aplicación', codigo: 'operaciones.orden.ver', conteo: '2/4 acciones',
+          color: '#24331c', fondoFila: '#fbfaf6', pista: '#1e7a34', pistaBorde: '#1e7a34', perillaX: '20px',
+          candado: false, hayChips: true, hayAviso: false, avisoIcono: false,
+          chips: [this.chip('crear', 'on'), this.chip('editar', 'on'), this.chip('activar', 'off'), this.chip('eliminar', 'off')],
+        },
+        {
+          rotulo: 'Apagada', rotuloColor: '#6a6f5e', nota: 'el ítem no aparece en el sidebar de este rol',
+          pantalla: 'Planilla', codigo: 'finanzas.planilla.ver', conteo: '0/2 acciones',
+          color: '#6a6f5e', fondoFila: '#faf8f2', pista: '#e2dbc7', pistaBorde: '#dfd8c4', perillaX: '2px',
+          candado: false, hayChips: true, hayAviso: false, avisoIcono: false,
+          chips: [this.chip('generar', 'off'), this.chip('aprobar', 'off')],
+        },
+        {
+          rotulo: 'Acción huérfana', rotuloColor: '#a85408', nota: 'permitido, pero no hace nada — la pantalla está apagada',
+          pantalla: 'Rendiciones', codigo: 'finanzas.rendicion.ver', conteo: '1/3 acciones',
+          color: '#6a6f5e', fondoFila: '#faf8f2', pista: '#e2dbc7', pistaBorde: '#dfd8c4', perillaX: '2px',
+          candado: false, hayChips: true, hayAviso: true, avisoIcono: true,
+          avisoFondo: '#fdedd3', avisoBarra: '#ef8c18', avisoColor: '#743906',
+          aviso: 'Hay 1 acción activa sobre una pantalla que este rol no ve. No hace nada hasta que enciendas finanzas.rendicion.ver.',
+          chips: [this.chip('crear', 'off'), this.chip('presentar', 'off'), this.chip('aprobar', 'huerfano')],
+        },
+        {
+          rotulo: 'Bloqueada', rotuloColor: '#5f6553', nota: 'último rol activo que sostiene este permiso',
+          pantalla: 'Sesiones', codigo: 'operaciones.sesion.validar', conteo: 'sin acciones',
+          color: '#24331c', fondoFila: '#fbfaf6', pista: '#a8bfa4', pistaBorde: '#9db699', perillaX: '20px',
+          candado: true, hayChips: false, hayAviso: true, avisoIcono: false,
+          avisoFondo: '#f1eee4', avisoBarra: '#a8a08a', avisoColor: '#5f6553',
+          aviso: 'Es el único rol activo con este permiso. Dáselo antes a otro rol: nadie puede conceder un permiso que no tiene, así que un permiso huérfano no se recupera desde el panel.',
+          chips: [],
+        },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

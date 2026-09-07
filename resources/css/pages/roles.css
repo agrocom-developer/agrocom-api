@@ -1,0 +1,583 @@
+/*
+ * Pages: roles/index, roles/create, roles/edit y roles/permisos
+ * (app/Dominios/Seguridad/Infraestructura/Http/Views/pages/roles/).
+ * Administración del catálogo de roles y de la matriz rol↔permiso.
+ * Todo color y medida por token (CLAUDE.md invariante 11).
+ */
+
+/* ---------------------------------------------------------------- listado */
+
+.ag-roles__aviso {
+    margin-top: var(--ag-space-4);
+}
+
+.ag-roles__tabla {
+    margin-top: var(--ag-space-5);
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+    overflow: hidden;
+}
+
+/* La columna del rol lleva tres líneas (nombre, slug, descripción), así que
+   pesa más que las tres métricas juntas. */
+.ag-roles__head,
+.ag-roles__fila {
+    display: grid;
+    grid-template-columns: 2.4fr 1fr 1fr 0.9fr 0.9fr 1.6fr;
+    gap: var(--ag-space-4);
+    align-items: center;
+    padding: var(--ag-space-3) var(--ag-space-5);
+}
+
+.ag-roles__head {
+    background: var(--ag-color-bg-table-head);
+    border-bottom: 1px solid var(--ag-color-border);
+    font-family: var(--ag-font-family-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-roles__fila {
+    border-bottom: 1px solid var(--ag-color-border-row);
+    padding-block: var(--ag-space-4);
+}
+
+.ag-roles__fila:last-child {
+    border-bottom: 0;
+}
+
+.ag-roles__identidad {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-1);
+    min-width: 0;
+}
+
+.ag-roles__nombre {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-color-text);
+}
+
+.ag-roles__slug {
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-faint);
+}
+
+.ag-roles__descripcion {
+    font-size: var(--ag-font-size-sm);
+    line-height: var(--ag-line-height-base);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-roles__metrica {
+    display: flex;
+    align-items: baseline;
+    gap: var(--ag-space-2);
+}
+
+/* Cifra en la familia de interfaz con `tabular-nums`, no en mono: §8 regla 7
+   del sistema de diseño (el mono abre demasiado el tracking de una cifra). */
+.ag-roles__cifra {
+    font-size: var(--ag-font-size-xl);
+    font-variant-numeric: tabular-nums;
+    color: var(--ag-color-text);
+}
+
+.ag-roles__denominador {
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-faint);
+}
+
+.ag-roles__acciones {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--ag-space-2);
+    flex-wrap: wrap;
+}
+
+/* ------------------------------------------------------------- formulario */
+
+.ag-rol-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+.ag-rol-form__aviso {
+    margin: 0;
+}
+
+/* ------------------------------------------------------- matriz de permisos */
+
+.ag-permisos {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-4);
+}
+
+.ag-permisos__aviso {
+    margin: 0;
+}
+
+.ag-permisos__layout {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--ag-space-5);
+    margin-top: var(--ag-space-2);
+}
+
+/* Vista previa: pegada arriba mientras se recorre el editor — es lo que se
+   está mirando al togglear, seguirla con scroll la volvería inútil. */
+.ag-permisos__preview {
+    position: sticky;
+    top: var(--ag-space-2);
+    flex: 0 0 20rem;
+    /* Alto atado al viewport, no a un `max-height` fijo en el cuerpo: la
+       barra de acciones flota `sticky` sobre los últimos ~75px del área de
+       contenido, y una tarjeta de alto fijo termina metiéndose debajo en
+       cuanto la ventana es más baja que la maqueta. Las 20rem que se
+       descuentan son el chrome del panel (topbar + pie) más la cabecera de
+       pantalla y la barra flotante — verificado que la tarjeta cierra por
+       encima del borde superior de la barra, no debajo. */
+    max-height: calc(100dvh - 22rem);
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+    overflow: hidden;
+}
+
+.ag-permisos__preview-head {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-3) var(--ag-space-4);
+    border-bottom: 1px solid var(--ag-color-border);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-bold);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-permisos__preview-cuerpo {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-3) var(--ag-space-2);
+    /* `min-height: 0` es el paso que hace scrollear a un hijo flex — sin él
+       nunca encoge y el scroll interno no aparece (mismo caso que
+       `.ag-panel__content`). */
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.ag-permisos__preview-modulo-head {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-2) var(--ag-space-3) var(--ag-space-1);
+}
+
+.ag-permisos__preview-modulo-nombre {
+    font-family: var(--ag-font-family-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-permisos__preview-modulo-conteo {
+    margin-left: auto;
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-faint);
+}
+
+/* Un módulo sin ninguna pantalla encendida desaparece del riel del panel
+   real; acá se atenúa entero en vez de ocultarse, para que se vea QUÉ es lo
+   que el rol no va a tener. */
+.ag-permisos__preview-modulo.is-oculto {
+    opacity: 0.55;
+}
+
+.ag-permisos__preview-item {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-1) var(--ag-space-3) var(--ag-space-1) var(--ag-space-6);
+    border-radius: 7px;
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text-faint);
+    transition: background-color var(--ag-transition-fast), color var(--ag-transition-fast);
+}
+
+.ag-permisos__preview-item.is-visible {
+    background: var(--ag-color-bg-row-hover);
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-color-text);
+}
+
+.ag-permisos__preview-punto {
+    width: 5px;
+    height: 5px;
+    border-radius: var(--ag-radius-pill);
+    background: var(--ag-color-border-strong);
+    flex-shrink: 0;
+}
+
+.ag-permisos__preview-item.is-visible .ag-permisos__preview-punto {
+    background: var(--ag-color-success);
+}
+
+.ag-permisos__preview-pie {
+    margin: 0;
+    padding: var(--ag-space-3) var(--ag-space-4);
+    border-top: 1px solid var(--ag-color-border);
+    background: var(--ag-color-bg-table-head);
+    font-size: var(--ag-font-size-xs);
+    line-height: var(--ag-line-height-base);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-permisos__editor {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-4);
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.ag-permisos__modulo {
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+    overflow: hidden;
+}
+
+.ag-permisos__modulo-head {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-3) var(--ag-space-4);
+    background: var(--ag-color-bg-table-head);
+    border-bottom: 1px solid var(--ag-color-border);
+}
+
+.ag-permisos__modulo-nombre {
+    margin: 0;
+    font-family: var(--ag-font-family-display);
+    font-weight: var(--ag-font-weight-bold);
+    font-size: var(--ag-font-size-lg);
+    color: var(--ag-color-text);
+}
+
+.ag-permisos__modulo-resumen {
+    margin-left: auto;
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-permisos__pantalla {
+    padding: var(--ag-space-3) var(--ag-space-4);
+    border-top: 1px solid var(--ag-color-border-row);
+    background: var(--ag-color-bg-table-head);
+    transition: background-color var(--ag-transition-fast);
+}
+
+.ag-permisos__pantalla:first-of-type {
+    border-top: 0;
+}
+
+.ag-permisos__pantalla.is-activa {
+    background: transparent;
+}
+
+.ag-permisos__pantalla-fila {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+}
+
+/* El switch es un <input type="checkbox"> real dentro de un <label>: se envía
+   con el formulario, funciona con teclado y lectores de pantalla, y el estado
+   visual sale de `:checked` sin JS — mismo criterio que atoms/switch, que no
+   se reutiliza acá porque este necesita el código del permiso y el candado
+   dentro del propio label. */
+.ag-permisos__switch {
+    /* Ancla del <input> visualmente oculto de abajo. Sin esto su
+       `position: absolute` resuelve contra el bloque contenedor inicial —
+       el documento— y su posición estática, que en esta pantalla cae a
+       ~3800px de scroll, estira el <body> entero: `.ag-panel` fija
+       `height: 100dvh; overflow: hidden`, así que el resultado es que el
+       pie del panel se va de la pantalla y la página scrollea por fuera de
+       su contenedor. Medido: documento de 3751px sobre un viewport de 900. */
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+    flex: 1 1 auto;
+    min-width: 0;
+    cursor: pointer;
+}
+
+.ag-permisos__switch-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+}
+
+.ag-permisos__switch-pista {
+    position: relative;
+    width: 40px;
+    height: 23px;
+    flex-shrink: 0;
+    border: 1px solid var(--ag-color-border-strong);
+    border-radius: var(--ag-radius-pill);
+    background: var(--ag-color-border);
+    transition: background-color var(--ag-transition-fast), border-color var(--ag-transition-fast);
+}
+
+.ag-permisos__switch-perilla {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 17px;
+    height: 17px;
+    border-radius: var(--ag-radius-pill);
+    background: var(--ag-color-surface-card);
+    box-shadow: var(--ag-shadow-sm);
+    transition: transform var(--ag-transition-fast);
+}
+
+.ag-permisos__switch-input:checked + .ag-permisos__switch-pista {
+    background: var(--ag-color-primary);
+    border-color: var(--ag-color-primary);
+}
+
+.ag-permisos__switch-input:checked + .ag-permisos__switch-pista .ag-permisos__switch-perilla {
+    transform: translateX(17px);
+}
+
+.ag-permisos__switch-input:focus-visible + .ag-permisos__switch-pista {
+    outline: 2px solid var(--ag-color-focus-ring);
+    outline-offset: 2px;
+}
+
+.ag-permisos__switch-input:disabled + .ag-permisos__switch-pista {
+    opacity: 0.6;
+}
+
+.ag-permisos__switch:has(.ag-permisos__switch-input:disabled) {
+    cursor: not-allowed;
+}
+
+.ag-permisos__pantalla-texto {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.ag-permisos__pantalla-nombre {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-permisos__pantalla.is-activa .ag-permisos__pantalla-nombre {
+    color: var(--ag-color-text);
+}
+
+.ag-permisos__pantalla-nombre .ag-icon {
+    color: var(--ag-color-warning-strong);
+}
+
+.ag-permisos__codigo {
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-faint);
+}
+
+.ag-permisos__pantalla-conteo {
+    flex-shrink: 0;
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-faint);
+}
+
+/* Alineadas con el texto de la pantalla (ancho del switch + su gap), para que
+   se lean como dependientes de ella y no como una lista aparte. */
+.ag-permisos__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ag-space-2);
+    margin-top: var(--ag-space-2);
+    margin-left: calc(40px + var(--ag-space-3));
+}
+
+.ag-permisos__chip {
+    /* Misma ancla que `.ag-permisos__switch`, por el mismo motivo. */
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-1) var(--ag-space-3);
+    border: 1px solid var(--ag-color-border);
+    border-radius: var(--ag-radius-pill);
+    background: var(--ag-color-neutral-subtle);
+    cursor: pointer;
+    transition:
+        background-color var(--ag-transition-fast),
+        border-color var(--ag-transition-fast),
+        color var(--ag-transition-fast);
+}
+
+.ag-permisos__chip-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+}
+
+.ag-permisos__chip-punto {
+    width: 5px;
+    height: 5px;
+    border-radius: var(--ag-radius-pill);
+    background: var(--ag-color-border-strong);
+    flex-shrink: 0;
+}
+
+.ag-permisos__chip-texto {
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-medium);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-permisos__chip:has(.ag-permisos__chip-input:checked) {
+    background: var(--ag-color-success-subtle);
+    border-color: var(--ag-color-success-border);
+}
+
+.ag-permisos__chip:has(.ag-permisos__chip-input:checked) .ag-permisos__chip-punto {
+    background: var(--ag-color-success);
+}
+
+.ag-permisos__chip:has(.ag-permisos__chip-input:checked) .ag-permisos__chip-texto {
+    color: var(--ag-color-success-strong);
+}
+
+/* Acción encendida sobre una pantalla apagada: el chip pasa a ámbar. No es un
+   error (la combinación es válida y se guarda), es un "esto no hace nada
+   todavía" — por eso se distingue del verde en vez de bloquearse. */
+.ag-permisos__pantalla:not(.is-activa) .ag-permisos__chip:has(.ag-permisos__chip-input:checked) {
+    background: var(--ag-color-warning-subtle);
+    border-color: var(--ag-color-warning-border);
+}
+
+.ag-permisos__pantalla:not(.is-activa) .ag-permisos__chip:has(.ag-permisos__chip-input:checked) .ag-permisos__chip-punto {
+    background: var(--ag-color-warning);
+}
+
+.ag-permisos__pantalla:not(.is-activa) .ag-permisos__chip:has(.ag-permisos__chip-input:checked) .ag-permisos__chip-texto {
+    color: var(--ag-color-warning-strong);
+}
+
+.ag-permisos__chip-input:focus-visible ~ .ag-permisos__chip-texto {
+    outline: 2px solid var(--ag-color-focus-ring);
+    outline-offset: 2px;
+}
+
+.ag-permisos__chip.is-trabada {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.ag-permisos__huerfana,
+.ag-permisos__motivo {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--ag-space-2);
+    margin: var(--ag-space-3) 0 0 calc(40px + var(--ag-space-3));
+    padding: var(--ag-space-2) var(--ag-space-3);
+    border-radius: var(--ag-radius-sm);
+    font-size: var(--ag-font-size-xs);
+    line-height: var(--ag-line-height-base);
+}
+
+.ag-permisos__huerfana {
+    background: var(--ag-color-warning-subtle);
+    border-left: 3px solid var(--ag-color-warning);
+    color: var(--ag-color-warning-strong);
+}
+
+.ag-permisos__motivo {
+    background: var(--ag-color-neutral-subtle);
+    border-left: 3px solid var(--ag-color-border-strong);
+    color: var(--ag-color-neutral-strong);
+}
+
+/* La barra de acciones cambia de tono cuando hay algo pendiente: es lo único
+   que distingue "ya guardaste" de "todavía no". */
+.ag-permisos .ag-form-actions-bar.is-sucio .ag-form-actions-bar__status {
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-color-warning-strong);
+}
+
+@media (max-width: 1199.98px) {
+    .ag-permisos__layout {
+        flex-direction: column;
+    }
+
+    .ag-permisos__preview {
+        position: static;
+        flex: 1 1 auto;
+        width: 100%;
+    }
+
+    .ag-permisos__preview {
+        max-height: none;
+    }
+
+    .ag-permisos__preview-cuerpo {
+        max-height: 28rem;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .ag-roles__head {
+        display: none;
+    }
+
+    .ag-roles__fila {
+        grid-template-columns: 1fr;
+        gap: var(--ag-space-2);
+    }
+
+    .ag-roles__acciones {
+        justify-content: flex-start;
+    }
+}

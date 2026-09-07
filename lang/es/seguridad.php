@@ -72,6 +72,76 @@ return [
     // traduce vocabulario de dominio (ADR 0013 punto 3): el slug sigue
     // viajando intacto, y un rol sin metadata degrada al `name`/
     // `description` crudos de la base (ver PresentadorRol).
+    /*
+     * Pantalla de administración de roles y de la matriz rol↔permiso. Es
+     * distinta de `rol` (abajo), que es la metadata de PRESENTACIÓN del
+     * selector de rol: acá se administra el catálogo, allá se elige con cuál
+     * operar.
+     */
+    'roles' => [
+        'titulo' => 'Roles y permisos',
+        'subtitulo' => 'Qué pantallas ve cada rol y qué puede hacer dentro de ellas. Los roles se asignan a las cuentas desde Usuarios.',
+        'nuevo' => 'Nuevo rol',
+        'col_rol' => 'Rol',
+        'col_pantallas' => 'Pantallas',
+        'col_acciones' => 'Acciones',
+        'col_usuarios' => 'Usuarios',
+        'col_estado' => 'Estado',
+        'estado_activo' => 'Activo',
+        'estado_inactivo' => 'Inactivo',
+        'sin_usuarios' => 'nadie',
+        'de_total' => 'de :total',
+        'editar' => 'Editar',
+        'permisos' => 'Permisos',
+        'eliminar' => 'Dar de baja',
+        'eliminar_confirmar' => '¿Dar de baja el rol :rol? Sus permisos se dan de baja con él.',
+        'badge_rol_activo' => 'Tu rol',
+        'vacio' => 'Todavía no hay ningún rol en el catálogo.',
+        'catalogo_fijo' => 'El catálogo de :total permisos no se edita desde acá: cada código está escrito en el código del servidor, que es quien lo exige. Lo que se administra es qué rol tiene cuáles.',
+
+        'creado' => 'Rol creado. Ahora dale sus permisos.',
+        'actualizado' => 'Rol actualizado.',
+        'eliminado' => 'Rol dado de baja.',
+        'permisos_guardados' => 'Permisos actualizados.',
+
+        'crear_titulo' => 'Nuevo rol',
+        'crear_subtitulo' => 'Nace sin ningún permiso. Los permisos se dan después, en su propia pantalla.',
+        'editar_titulo' => 'Editar :rol',
+        'editar_subtitulo' => 'Nombre, descripción y estado. Los permisos se administran aparte.',
+        'seccion_identidad' => 'Identidad del rol',
+        'campo_nombre' => 'Nombre interno',
+        'campo_nombre_ayuda' => 'Minúsculas, dígitos y guion bajo, hasta 30 caracteres. Es la identidad del rol en la base y no se libera si el rol se da de baja: el catálogo de roles es del sistema.',
+        'campo_descripcion' => 'Descripción',
+        'campo_descripcion_ayuda' => 'Una línea que explique qué hace este rol. Hasta 150 caracteres.',
+        'campo_activo' => 'Activo',
+        'campo_activo_ayuda' => 'Un rol inactivo no se puede elegir al iniciar sesión ni cuenta como portador de sus permisos. Quien lo tenga asignado deja de poder entrar con él en el request siguiente.',
+        'campo_activo_bloqueado' => 'No podés desactivar el rol con el que estás operando.',
+        'guardar_y_permisos' => 'Crear y dar permisos',
+        'cancelar' => 'Cancelar',
+        'error_nombre_formato' => 'El nombre interno va en minúsculas, dígitos y guion bajo, y empieza con letra (por ejemplo: supervisor_taller).',
+        'error_nombre_duplicado' => 'Ya existe un rol con ese nombre. Un rol dado de baja tampoco libera el suyo.',
+
+        'permisos_titulo' => 'Permisos de :rol',
+        'permisos_subtitulo' => 'Lo que este rol ve en el menú y lo que puede hacer dentro de cada pantalla. El menú no se edita aparte: se enciende al dar el permiso de la pantalla.',
+        'permisos_preview_titulo' => 'Lo que verá este rol',
+        'permisos_preview_pie' => 'Un módulo entero desaparece del riel cuando ninguna de sus pantallas está encendida.',
+        'permisos_preview_oculto' => 'oculto',
+        'permisos_modulo_resumen' => ':encendidas de :total pantallas',
+        'permisos_sin_acciones' => 'sin acciones',
+        'permisos_conteo_acciones' => ':activas/:total acciones',
+        'permisos_bloqueado' => 'Es el único rol activo con este permiso. Dáselo antes a otro rol: nadie puede conceder un permiso que no tiene, así que un permiso huérfano no se recupera desde el panel.',
+        'permisos_no_concedible' => 'No podés conceder ni retirar un permiso que tu propio rol activo no tiene.',
+        'permisos_sueltos_titulo' => 'Acciones sin pantalla en el panel',
+        'permisos_sueltos_ayuda' => 'Se ejercen desde la app de campo, no desde el panel, así que no encienden ningún ítem del menú.',
+        'permisos_guardar' => 'Guardar cambios',
+        'permisos_descartar' => 'Descartar',
+        'permisos_volver' => 'Volver a roles',
+        'permisos_sin_cambios' => 'Sin cambios pendientes',
+        'permisos_con_cambios' => ':cantidad cambio sin guardar|:cantidad cambios sin guardar',
+        'permisos_huerfana' => 'Hay :cantidad acción activa sobre una pantalla que este rol no ve. No hace nada hasta que enciendas :codigo.|Hay :cantidad acciones activas sobre una pantalla que este rol no ve. No hacen nada hasta que enciendas :codigo.',
+        'permisos_aviso_rol_propio' => 'Estás editando el rol con el que iniciaste sesión. Los permisos de ver y administrar roles quedan bloqueados: soltarlos te dejaría fuera de esta pantalla en el próximo clic.',
+    ],
+
     'rol' => [
         'foto_headline' => 'Un solo usuario, varias responsabilidades.',
         'foto_subheadline' => 'El rol define qué módulos ves y qué podés aprobar durante esta sesión.',
