@@ -96,6 +96,7 @@ return [
         'descripcion' => 'Usuarios, roles y organización del sistema.',
         'items' => [
             'usuarios' => 'Usuarios',
+            'roles' => 'Roles y permisos',
             'dispositivos' => 'Dispositivos',
             'organizacion' => 'Organización',
             // HU-20: sin módulo raíz propio en la espec §4 — entra acá, mismo

@@ -230,15 +230,23 @@ class SecMenuSeeder extends Seeder
         // migración de arriba ya las convirtió, el firstOrCreate las
         // encuentra y no duplica.
         $this->item($seguridad, 'seguridad', 'usuarios', 'group', 1, ruta: 'panel.usuarios.index', codigoPermiso: 'seguridad.usuario.ver');
+        // Administración del catálogo de roles y de la matriz rol↔permiso.
+        // Va pegado a Usuarios porque son las dos mitades de la misma
+        // pregunta ("quién es" / "qué puede"), y eso empuja un lugar a los
+        // tres ítems de abajo — ver la nota de `orden` en `item()`. Gateado
+        // por `seguridad.rol.ver`; los otros cuatro permisos rigen botones
+        // dentro de la pantalla, no la visibilidad del ítem (mismo criterio
+        // que Usuarios y Dispositivos).
+        $this->item($seguridad, 'seguridad', 'roles', 'shield_person', 2, ruta: 'panel.roles.index', codigoPermiso: 'seguridad.rol.ver');
         // HU-03: revocación de sesiones de la app de campo. Gateado por el
         // permiso de LISTADO (`ver`); el de revocar rige el botón dentro de
         // la pantalla, no la visibilidad del ítem — mismo criterio que
         // Usuarios.
-        $this->item($seguridad, 'seguridad', 'dispositivos', 'smartphone', 2, ruta: 'panel.dispositivos.index', codigoPermiso: 'seguridad.dispositivo.ver');
-        $this->item($seguridad, 'seguridad', 'organizacion', 'apartment', 3, ruta: 'panel.organizacion.index', codigoPermiso: 'seguridad.organizacion.ver');
+        $this->item($seguridad, 'seguridad', 'dispositivos', 'smartphone', 3, ruta: 'panel.dispositivos.index', codigoPermiso: 'seguridad.dispositivo.ver');
+        $this->item($seguridad, 'seguridad', 'organizacion', 'apartment', 4, ruta: 'panel.organizacion.index', codigoPermiso: 'seguridad.organizacion.ver');
         // HU-20: sin módulo raíz propio en la espec §4 (runs/10-diseno.md) —
         // entra bajo Seguridad, mismo criterio que Organización.
-        $this->item($seguridad, 'seguridad', 'versiones_apk', 'system_update', 4, ruta: 'panel.versiones-apk.index', codigoPermiso: 'distribucion.version.autorizar');
+        $this->item($seguridad, 'seguridad', 'versiones_apk', 'system_update', 5, ruta: 'panel.versiones-apk.index', codigoPermiso: 'distribucion.version.autorizar');
     }
 
     private function modulo(string $clave, string $icono, int $orden): SecMenu
@@ -316,17 +324,26 @@ class SecMenuSeeder extends Seeder
 
         $activaRuta = $fila->ruta === null && $ruta !== null;
         $activaPermiso = $fila->permission_id === null && $permissionId !== null;
-        // A diferencia de `ruta`/`permission_id`, esta bandera SÍ se
-        // sincroniza siempre: no es un placeholder que el catálogo va
-        // completando, es una propiedad de la pantalla que el seeder define
-        // — una base ya sembrada tiene que recibir el cambio sin que haya
-        // que truncar `sec_menu` (los datos demo no se borran).
+        // A diferencia de `ruta`/`permission_id`, estas dos SÍ se sincronizan
+        // siempre: no son placeholders que el catálogo va completando, son
+        // propiedades de la pantalla que el seeder define — una base ya
+        // sembrada tiene que recibir el cambio sin que haya que truncar
+        // `sec_menu` (los datos demo no se borran).
+        //
+        // `orden` se sumó a esa regla al insertar "Roles y permisos" en medio
+        // del grupo Seguridad: sin sincronizarlo, un ítem nuevo solo podía ir
+        // al final de su grupo, porque los ya sembrados conservaban su número
+        // para siempre. Este seeder es la única fuente del orden del menú (no
+        // hay pantalla que lo reordene), así que pisarlo es correcto y no
+        // descarta ninguna edición de nadie.
         $ajustaRequisito = $fila->requiere_persona !== $requierePersona;
+        $ajustaOrden = $fila->orden !== $orden;
 
-        if ($activaRuta || $activaPermiso || $ajustaRequisito) {
+        if ($activaRuta || $activaPermiso || $ajustaRequisito || $ajustaOrden) {
             $fila->ruta ??= $ruta;
             $fila->permission_id ??= $permissionId;
             $fila->requiere_persona = $requierePersona;
+            $fila->orden = $orden;
             $fila->save();
         }
 
