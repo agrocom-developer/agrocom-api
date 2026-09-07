@@ -3,15 +3,17 @@
  * Imagery) del tab "Mapa" del dashboard. Cargado vía import() dinámico
  * desde app.js, solo cuando la página tiene un `[data-ag-map]`.
  *
- * Colores de polígonos/puntos SIEMPRE resueltos desde tokens
+ * Colores de polígonos SIEMPRE resueltos desde tokens
  * (shared/color-tokens.js) — nunca hex acá (CLAUDE.md invariante 11). El
  * chrome nativo de Leaflet (zoom, atribución) queda con su estilo propio de
  * librería, sin re-tokenizar.
  *
  * Los popups se arman con `createElement`/`textContent`, nunca `innerHTML`:
- * las properties de cada feature son datos crudos del mock
- * (DatosDemoMapaOperativo), pero el día que sean datos reales (nombre de
- * cliente, piloto) no deben poder inyectar HTML.
+ * las properties de cada feature son datos REALES editables desde el panel
+ * (razón social del cliente, código de lote) y no deben poder inyectar HTML.
+ *
+ * La capa de puntos de sesión se retiró en la tarea 67 junto con el mock que
+ * la alimentaba: el esquema no guarda la posición de una sesión.
  */
 
 import 'leaflet/dist/leaflet.css';
@@ -34,26 +36,22 @@ function popupLote(props) {
 
     const titulo = document.createElement('strong');
     titulo.textContent = props.nombre;
-    contenedor.append(titulo, document.createElement('br'), document.createTextNode(`${props.cliente} · ${props.hectareas}`));
 
-    return contenedor;
-}
+    const cliente = document.createElement('div');
+    cliente.textContent = props.cliente;
 
-function popupSesion(props) {
-    const contenedor = document.createElement('div');
+    const cifras = document.createElement('div');
+    cifras.textContent = `${props.hectareasAplicadas} / ${props.hectareas} ha · ${props.sesiones} sesiones`;
 
-    const hora = document.createElement('strong');
-    hora.textContent = props.hora;
-    contenedor.append(hora, document.createTextNode(` · ${props.piloto}`), document.createElement('br'), document.createTextNode(`${props.dron} · ${props.ha}`));
+    contenedor.append(titulo, cliente, cifras);
 
     return contenedor;
 }
 
 function inicializar(el) {
     const centro = JSON.parse(el.dataset.agMapCentro);
-    const zoom = Number(el.dataset.agMapZoom) || 13;
+    const zoom = Number(el.dataset.agMapZoom) || 12;
     const lotes = JSON.parse(el.dataset.agMapLotes);
-    const sesiones = JSON.parse(el.dataset.agMapSesiones);
 
     const mapa = L.map(el).setView([centro.lat, centro.lng], zoom);
 
@@ -72,23 +70,19 @@ function inicializar(el) {
         onEachFeature: (feature, layer) => layer.bindPopup(popupLote(feature.properties)),
     }).addTo(mapa);
 
-    const capaSesiones = L.geoJSON(sesiones, {
-        pointToLayer: (feature, latlng) => L.circleMarker(latlng, {
-            radius: 8,
-            color: leerColorToken('--ag-color-gray-0'),
-            weight: 2,
-            fillColor: colorDeTono(feature.properties.tono),
-            fillOpacity: 0.95,
-        }),
-        onEachFeature: (feature, layer) => layer.bindPopup(popupSesion(feature.properties)),
-    }).addTo(mapa);
+    // Encuadra los lotes reales en vez de confiar solo en el zoom fijo: las
+    // geometrías se cargan a mano y su extensión varía por cliente.
+    const limites = capaLotes.getBounds();
+
+    if (limites.isValid()) {
+        mapa.fitBounds(limites, { padding: [24, 24], maxZoom: 15 });
+    }
 
     window.addEventListener('agrocom:theme-changed', () => {
         capaLotes.eachLayer((layer) => layer.setStyle({
             color: colorDeTono(layer.feature.properties.tono),
             fillColor: colorDeTono(layer.feature.properties.tono),
         }));
-        capaSesiones.eachLayer((layer) => layer.setStyle({ fillColor: colorDeTono(layer.feature.properties.tono) }));
     });
 
     // El pane "Mapa" no es el tab activo por defecto — Bootstrap lo deja en
@@ -96,7 +90,13 @@ function inicializar(el) {
     // contenedor de tamaño cero renderiza mal. Recalcular al mostrarse.
     document
         .querySelector('[data-bs-target="#ag-tab-mapa"]')
-        ?.addEventListener('shown.bs.tab', () => mapa.invalidateSize(), { once: true });
+        ?.addEventListener('shown.bs.tab', () => {
+            mapa.invalidateSize();
+
+            if (limites.isValid()) {
+                mapa.fitBounds(limites, { padding: [24, 24], maxZoom: 15 });
+            }
+        }, { once: true });
 }
 
 // Import()ado dinámicamente DESDE un handler de DOMContentLoaded (app.js) —

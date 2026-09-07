@@ -189,91 +189,89 @@ return [
     // Dashboard "Operación de hoy" (quinta vuelta — maquetas 4a/5a/5b):
     // copy fijo de pantalla; los DATOS (cifras, sesiones, causas) viajan por
     // DatosDemoPanel, nunca por acá.
+    // Copy del dashboard. Desde la tarea 67 todo dato viene de la base: acá
+    // solo vive el texto fijo de pantalla. Las claves de la maqueta que ya no
+    // tienen sección (ventana volable, alerta de RC fija, avance de meta,
+    // vistas de carrusel/tabla de multimedia) se retiraron con ella.
     'dashboard' => [
         'titulo' => 'Operación de hoy',
         'bajada' => ':fecha · lo que falta cerrar antes del corte de planilla.',
-        'exportar' => 'Exportar',
-        'programar_sesion' => 'Programar sesión',
+        'viendo_como' => 'Viendo como :rol',
         'tabs_aria' => 'Vistas del dashboard',
         'tab_resumen' => 'Resumen',
         'tab_mapa' => 'Mapa',
         'tab_resumen_lote' => 'Resumen por lote',
         'tab_multimedia' => 'Multimedia',
-        'ventana_titulo' => 'Ventana volable :horario.',
-        'ventana_accion' => 'Revisar autorización',
-        'programacion_titulo' => 'Programación de hoy',
         'ver_todas' => 'Ver todas',
-        'hoy' => 'Hoy',
-        'col_hora' => 'Hora',
+
+        // Estado vacío de la página entera: el rol entra al dashboard pero no
+        // tiene ninguna sección habilitada, o ninguna con datos todavía.
+        'vacio_titulo' => 'Todavía no hay nada que mostrar acá',
+        'vacio_detalle' => 'Tu rol activo no tiene secciones habilitadas en el tablero, o aún no se registró actividad. Usá el menú lateral para ir a tus pantallas.',
+
+        // Columnas compartidas por la tabla de sesiones (cola de validación y
+        // "mis sesiones" usan el mismo parcial).
+        'col_hora' => 'Fecha',
         'col_lote' => 'Lote',
         'col_piloto' => 'Piloto',
         'col_dron' => 'Dron',
+        'col_vuelo' => 'Vuelo',
         'col_ha' => 'Ha',
         'col_estado' => 'Estado',
-        'pausas_titulo' => 'Pausas por causa',
-        'stock_titulo' => 'Stock bajo mínimo',
-        'stock_accion' => 'Generar pedido',
-        'rc_alerta' => ':cantidad sesiones cerradas sin captura del RC.',
-        'rc_detalle' => 'Ninguna sesión se valida ni devenga sin evidencia adjunta.',
-        'rc_resolver' => 'Resolver',
 
-        // Sectorización (sexta vuelta parte 2 — Fases 3/4): títulos de
-        // section-head, nunca los rótulos genéricos de ui.php porque son
-        // copy de ESTA pantalla, no del catálogo de componentes.
-        'seccion_distribucion' => 'Distribución de sesiones',
-        'distribucion_centro' => 'sesiones',
+        'alertas_ver' => 'Ver alertas',
 
-        // Fase 4 (novena vuelta) — gráficos ApexCharts del tab Resumen.
+        'cola_validacion_titulo' => 'Sesiones esperando validación',
+
+        'mis_sesiones_titulo' => 'Mis últimas sesiones',
+        'mis_sesiones_mes' => 'Sesiones del mes',
+        'mis_sesiones_validadas' => 'Validadas',
+        'mis_hectareas_mes' => 'Hectáreas del mes',
+
+        'mis_equipos_titulo' => 'Mis equipos este mes',
+        'equipos_col_sesiones' => 'Sesiones',
+        'equipos_col_ultimo' => 'Último vuelo',
+
+        'liquidacion_titulo' => 'Mi liquidación · :periodo',
+        'liquidacion_total' => 'Bs :monto',
+        'liquidacion_devengado' => 'Devengado',
+        'liquidacion_anticipos' => 'Anticipos',
+        'liquidacion_saldo' => 'Saldo',
+        'liquidacion_anticipos_detalle' => 'Anticipos del período',
+        'liquidacion_col_fecha' => 'Fecha',
+        'liquidacion_col_tarifa' => 'Tarifa/ha',
+        'liquidacion_col_monto' => 'Monto',
+
         'seccion_sesiones_estado' => 'Sesiones por estado',
         'seccion_hectareas_periodo' => 'Hectáreas aplicadas por día',
-        'seccion_avance_meta' => 'Avance de meta del mes',
-        'avance_meta_label' => 'Cumplido',
-        'avance_meta_pie' => ':valor ha de :meta ha planificadas',
 
-        // Fase 5 (novena vuelta) — detalle de clientes del tab Resumen:
-        // actividad reciente + estado de contrato combinados.
-        'seccion_clientes' => 'Clientes',
+        'seccion_clientes' => 'Avance por contrato',
         'clientes_col_cliente' => 'Cliente',
-        'clientes_col_actividad' => 'Actividad del período',
-        'clientes_col_ultima_sesion' => 'Última sesión',
-        'clientes_col_contrato' => 'Contrato',
         'clientes_col_ejecucion' => 'Ejecución',
-        'clientes_col_vence' => 'Vence en',
-        'clientes_actividad' => ':sesiones sesiones · :ha',
-        'clientes_vencido' => 'Venció',
-        'clientes_vence_en' => ':dias días',
+        'clientes_col_aplicadas' => 'Aplicadas',
+        'clientes_col_contratadas' => 'Contratadas',
 
-        // Fase 6 (novena vuelta) — tab Mapa.
-        'mapa_lotes_titulo' => 'Lotes en el mapa',
-        'mapa_hectareas_titulo' => 'Hectáreas en el mapa',
-        'mapa_sesiones_titulo' => 'Sesiones georreferenciadas',
+        'pausas_titulo' => 'Pausas por causa',
+        'pausas_minutos' => ':minutos min',
+
+        'stock_titulo' => 'Stock bajo mínimo',
+        'stock_nivel' => ':cantidad / :minimo',
+        'stock_accion' => 'Ver inventario',
+
+        // Vocabulario compartido por la leyenda del mapa y los badges del
+        // resumen por lote: son los mismos estados operativos.
         'mapa_leyenda_en_vuelo' => 'En vuelo',
-        'mapa_leyenda_atencion' => 'Necesita atención',
-        'mapa_leyenda_programado' => 'Programado',
+        'mapa_leyenda_atencion' => 'Pendiente de validar',
+        'mapa_leyenda_programado' => 'Sin sesiones',
         'mapa_leyenda_completado' => 'Completado',
 
-        // Fase 7 (novena vuelta) — tab Resumen por lote.
-        'seccion_resumen_lote' => 'Cuadros por lote',
-        'lote_col_completadas' => 'Completadas',
+        'seccion_resumen_lote' => 'Avance por lote',
+        'lote_col_completadas' => 'Aplicadas',
         'lote_col_pendientes' => 'Pendientes',
         'lote_col_total' => 'Total',
-        'lote_col_litros' => 'Pesticida',
+        'lote_col_litros' => 'Litros',
         'lote_col_litros_ha' => 'L/ha',
-        'lote_col_tiempo' => 'Tiempo de vuelo',
-
-        // Fase 8 (novena vuelta) — tab Multimedia.
-        'multimedia_vistas_aria' => 'Formato de las capturas',
-        'multimedia_vista_galeria' => 'Galería',
-        'multimedia_vista_carrusel' => 'Carrusel',
-        'multimedia_vista_tabla' => 'Tabla',
-        'multimedia_anterior' => 'Anterior',
-        'multimedia_siguiente' => 'Siguiente',
-        'multimedia_col_fecha' => 'Fecha',
-        'multimedia_col_sesion' => 'Sesión',
-        'multimedia_col_piloto' => 'Piloto',
-        'multimedia_col_lote' => 'Lote',
-        'multimedia_col_descripcion' => 'Descripción',
-        'multimedia_ver' => 'Ver',
+        'lote_col_tiempo' => 'Vuelo',
     ],
 
     // HU-45 (tarea 39): alta y mantenimiento de usuarios internos del panel,
