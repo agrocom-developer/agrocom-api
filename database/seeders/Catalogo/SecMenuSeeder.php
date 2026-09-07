@@ -93,7 +93,16 @@ class SecMenuSeeder extends Seeder
         $this->migrar('seguridad.menu.organizacion', 'menu.seguridad.items.organizacion', $seguridad, 'apartment', 3);
 
         // Operación (§4.3)
-        $this->item($operacion, 'operacion', 'programacion', 'event_available', 1, ruta: 'panel.dashboard', codigoPermiso: 'seguridad.dashboard.ver');
+        //
+        // El ítem del dashboard se llamaba "Programación" desde la maqueta,
+        // cuando el tablero mostraba una agenda de sesiones programadas —
+        // concepto que no existe en ninguna tabla. Desde la tarea 67 el
+        // dashboard se compone por rol (un piloto ve sus sesiones y su
+        // liquidación; un dueño, la operación entera), así que el nombre
+        // honesto es "Tablero". Misma fila, mismo permiso: solo cambia la
+        // etiqueta.
+        $this->renombrar($operacion, 'menu.operacion.items.programacion', 'menu.operacion.items.tablero');
+        $this->item($operacion, 'operacion', 'tablero', 'dashboard', 1, ruta: 'panel.dashboard', codigoPermiso: 'seguridad.dashboard.ver');
         // HU-25 (tarea 38): órdenes de aplicación con su propia máquina de
         // estados (emitida → vigente).
         $this->item($operacion, 'operacion', 'ordenes', 'assignment', 2, ruta: 'panel.ordenes.index', codigoPermiso: 'operaciones.orden.ver');
@@ -268,6 +277,20 @@ class SecMenuSeeder extends Seeder
      * nuevo — misma fila (id estable, bitácora intacta), identidad nueva.
      * `ruta`/`permission_id` no se tocan: ya apuntaban a la pantalla real.
      */
+    /**
+     * Renombra la etiqueta de un ítem YA COLGADO de su módulo, conservando la
+     * fila (y por lo tanto su id, su permiso y su lugar en el orden).
+     * Distinto de {@see migrar()}, que además mueve una raíz suelta bajo su
+     * módulo: acá el ítem ya está en su sitio y solo cambia cómo se llama.
+     */
+    private function renombrar(SecMenu $padre, string $labelViejo, string $labelNuevo): void
+    {
+        SecMenu::query()
+            ->where('padre_id', $padre->id)
+            ->where('label', $labelViejo)
+            ->update(['label' => $labelNuevo]);
+    }
+
     private function migrar(string $labelViejo, string $labelNuevo, SecMenu $padre, string $icono, int $orden): void
     {
         $fila = SecMenu::query()

@@ -26,7 +26,7 @@ return [
         'label' => 'Operación',
         'descripcion' => 'Órdenes, trabajos, sesiones y pausas de cada jornada de vuelo.',
         'items' => [
-            'programacion' => 'Programación',
+            'tablero' => 'Tablero',
             'ordenes' => 'Órdenes de aplicación',
             'trabajos' => 'Trabajos',
             'sesiones' => 'Sesiones',
