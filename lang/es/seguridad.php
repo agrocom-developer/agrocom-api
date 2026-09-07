@@ -294,7 +294,6 @@ return [
 
         'tabs_aria' => 'Secciones de organización',
         'tab_organizacion' => 'Organización',
-        'tab_usuarios_roles' => 'Usuarios y roles',
         'tab_facturacion' => 'Facturación',
         'tab_proximamente' => 'Próximamente.',
 

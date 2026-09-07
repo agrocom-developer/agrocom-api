@@ -71,7 +71,6 @@ final class OrganizacionController
         return [
             'tabs' => [
                 ['id' => 'ag-tab-organizacion', 'label' => __('seguridad.organizacion.tab_organizacion'), 'active' => true],
-                ['id' => 'ag-tab-usuarios-roles', 'label' => __('seguridad.organizacion.tab_usuarios_roles')],
                 ['id' => 'ag-tab-facturacion', 'label' => __('seguridad.organizacion.tab_facturacion')],
             ],
             'progreso' => [
