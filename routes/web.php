@@ -37,6 +37,7 @@ use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\OrganizacionCont
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\PreferenciasController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\PreferenciasPortalController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\RolActivoController;
+use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\RolesController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\SesionController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\SesionPortalController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\UsuariosController;
@@ -139,6 +140,40 @@ Route::middleware('auth:interno')->group(function () {
         // bloquear NO es una baja, sigue vivo — ver AlternarBloqueoUsuario.
         Route::post('/panel/usuarios/{usuario}/bloqueo', [UsuariosController::class, 'alternarBloqueo'])
             ->name('panel.usuarios.bloqueo');
+
+        // Administración del catálogo de roles y de la matriz rol↔permiso.
+        // Es lo último del modelo `sec_*` que solo existía como seeder: los
+        // cinco permisos `seguridad.rol.*` se siembran únicamente para
+        // `dueno`, porque quien edita la matriz puede concederse cualquier
+        // permiso del sistema. Verificados DENTRO del controlador contra el
+        // ROL ACTIVO, igual que usuarios y dispositivos.
+        Route::get('/panel/roles', [RolesController::class, 'index'])
+            ->name('panel.roles.index');
+
+        Route::get('/panel/roles/crear', [RolesController::class, 'create'])
+            ->name('panel.roles.create');
+
+        Route::post('/panel/roles', [RolesController::class, 'store'])
+            ->name('panel.roles.store');
+
+        Route::get('/panel/roles/{rol}/editar', [RolesController::class, 'edit'])
+            ->name('panel.roles.edit');
+
+        Route::put('/panel/roles/{rol}', [RolesController::class, 'update'])
+            ->name('panel.roles.update');
+
+        Route::delete('/panel/roles/{rol}', [RolesController::class, 'destroy'])
+            ->name('panel.roles.destroy');
+
+        // La matriz vive en su propia URL y no como pestaña del formulario:
+        // son dos operaciones con permisos distintos (`editar` cambia el
+        // nombre; `asignar_permiso` reparte poder) y mezclarlas en un submit
+        // obligaría a exigir los dos para cualquiera de las dos.
+        Route::get('/panel/roles/{rol}/permisos', [RolesController::class, 'editarPermisos'])
+            ->name('panel.roles.permisos.edit');
+
+        Route::put('/panel/roles/{rol}/permisos', [RolesController::class, 'actualizarPermisos'])
+            ->name('panel.roles.permisos.update');
 
         // Revocación de sesiones de la app de campo (HU-03). Los permisos
         // `seguridad.dispositivo.ver`/`.revocar` se verifican DENTRO del
