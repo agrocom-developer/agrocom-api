@@ -223,10 +223,16 @@ return [
 
         'cola_validacion_titulo' => 'Sesiones esperando validación',
 
+        // Encabezado del bloque personal. Sin él, en el tablero de un dueño
+        // estas cifras se confunden con las de la operación entera.
+        'mi_actividad' => 'Mi actividad',
         'mis_sesiones_titulo' => 'Mis últimas sesiones',
-        'mis_sesiones_mes' => 'Sesiones del mes',
-        'mis_sesiones_validadas' => 'Validadas',
-        'mis_hectareas_mes' => 'Hectáreas del mes',
+        'mis_sesiones_mes' => 'Mis sesiones del mes',
+        'mis_sesiones_validadas' => 'Mías validadas',
+        // "Validadas" y no "del mes" a secas: solo la hectárea validada cuenta
+        // como trabajo hecho, y es la que se paga. Con el rótulo genérico, un
+        // 0,00 junto a sesiones cerradas parecía un error de cálculo.
+        'mis_hectareas_mes' => 'Mis hectáreas validadas',
 
         'mis_equipos_titulo' => 'Mis equipos este mes',
         'equipos_col_sesiones' => 'Sesiones',
@@ -260,10 +266,15 @@ return [
 
         // Vocabulario compartido por la leyenda del mapa y los badges del
         // resumen por lote: son los mismos estados operativos.
+        //
+        // El tono verde dice "ninguna sesión pendiente de validar", NO "lote
+        // terminado": un lote con el 7 % aplicado y todas sus sesiones
+        // validadas cae acá. Decía "Completado" y contradecía la barra de
+        // avance de su propia tarjeta.
         'mapa_leyenda_en_vuelo' => 'En vuelo',
         'mapa_leyenda_atencion' => 'Pendiente de validar',
         'mapa_leyenda_programado' => 'Sin sesiones',
-        'mapa_leyenda_completado' => 'Completado',
+        'mapa_leyenda_completado' => 'Al día',
 
         'seccion_resumen_lote' => 'Avance por lote',
         'lote_col_completadas' => 'Aplicadas',

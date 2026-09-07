@@ -310,6 +310,13 @@
     grid-template-columns: 1fr 1fr;
 }
 
+/* Bloque personal: separado del resto por una línea, para que no se lea como
+   una sección más de la operación. */
+.ag-dash__mi-actividad {
+    padding-top: var(--ag-space-4);
+    border-top: 1px solid var(--ag-color-border);
+}
+
 /* Estado vacío del tablero completo: el rol entró pero no tiene secciones. */
 .ag-dash__vacio {
     display: flex;

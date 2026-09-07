@@ -13,10 +13,6 @@
         @include('seguridad::pages.dashboard._seccion-alertas', ['alertas' => $secciones['alertas']])
     @endisset
 
-    @isset($secciones['mis_sesiones'])
-        @include('seguridad::pages.dashboard._seccion-mis-totales', ['totales' => $secciones['mis_sesiones']['totales']])
-    @endisset
-
     @isset($secciones['cola_validacion'])
         @include('seguridad::pages.dashboard._seccion-cola-validacion', ['sesiones' => $secciones['cola_validacion']])
     @endisset
@@ -37,18 +33,6 @@
         @include('seguridad::pages.dashboard._seccion-avance-clientes', ['avances' => $secciones['avance_clientes']])
     @endisset
 
-    @isset($secciones['mis_sesiones'])
-        @include('seguridad::pages.dashboard._seccion-mis-sesiones', ['sesiones' => $secciones['mis_sesiones']['sesiones']])
-    @endisset
-
-    @isset($secciones['mis_equipos'])
-        @include('seguridad::pages.dashboard._seccion-mis-equipos', ['equipos' => $secciones['mis_equipos']])
-    @endisset
-
-    @isset($secciones['mi_liquidacion'])
-        @include('seguridad::pages.dashboard._seccion-mi-liquidacion', ['liquidacion' => $secciones['mi_liquidacion']])
-    @endisset
-
     @if (isset($secciones['pausas']) || isset($secciones['stock']))
         <div class="ag-dash__grid ag-dash__grid--par">
             @isset($secciones['pausas'])
@@ -59,5 +43,13 @@
                 @include('seguridad::pages.dashboard._seccion-stock', ['stock' => $secciones['stock']])
             @endisset
         </div>
+    @endif
+
+    {{-- Bloque personal, SIEMPRE al final y bajo su propio encabezado.
+         Suelto arriba, un "0 sesiones del mes" del dueño —que no vuela— se
+         leía como si la operación entera estuviera parada. Para un piloto,
+         que no tiene ninguna sección global, este bloque queda arriba solo. --}}
+    @if (isset($secciones['mis_sesiones']) || isset($secciones['mis_equipos']) || isset($secciones['mi_liquidacion']))
+        @include('seguridad::pages.dashboard._grupo-mi-actividad', ['secciones' => $secciones])
     @endif
 </div>
