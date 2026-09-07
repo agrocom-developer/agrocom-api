@@ -1,7 +1,7 @@
 /*
  * Molecule: distribution-bar (resources/views/components/molecules/distribution-bar.blade.php)
  * Auditoría visual externa, obs. #5 y #6 — reemplaza a donut-chart
- * (retirado): mismo dato (DatosDemoPanel::distribucionSesiones()),
+ * (retirado): mismo dato (sesiones por estado),
  * presentación nueva. KPI + barra horizontal 100% apilada, leyenda en
  * grilla de 4 columnas (dot/label/valor/%) — la leyenda es un <ul> grid de
  * 4 columnas con cada <li> en `display: contents` para que sus 4 hijos

@@ -121,18 +121,44 @@ it('siembra las 21 capturas del control remoto como evidencias con archivo real'
     }
 });
 
-it('cierra cada sesión con su propia captura de RC y la valida con alguien que no es su piloto', function () {
-    $sesiones = Sesion::query()->get();
+it('cierra cada sesión del relato de capturas con su propia captura de RC y la valida con alguien que no es su piloto', function () {
+    // Las diez sesiones de `OperacionDemoSeeder`: el relato de las capturas
+    // reales del control remoto, con fechas fijas de agosto. `DashboardDemoSeeder`
+    // agrega actividad reciente que NO participa de ese relato (no tiene
+    // captura propia), y por eso el filtro es por captura y no "todas".
+    $sesiones = Sesion::query()->whereNotNull('captura_rc_id')->get();
 
     expect($sesiones)->toHaveCount(10);
 
     foreach ($sesiones as $sesion) {
         expect($sesion->estado)->toBe(EstadoSesion::Validado)
-            ->and($sesion->captura_rc_id)->not->toBeNull("la sesión #{$sesion->id} se cerró sin captura de RC")
             ->and($sesion->capturaRc?->tipo)->toBe(TipoEvidencia::CapturaRc)
             // Invariante 4, a nivel de PERSONA y no de rol.
             ->and($sesion->validado_por)->not->toBe($sesion->piloto_id);
     }
+});
+
+it('deja sesiones esperando validación, que es lo que llena la cola del jefe de campo', function () {
+    // `DashboardDemoSeeder` (tarea 67): sin ninguna sesión en `cerrado` la cola
+    // de validación y el badge del menú salen en cero, y el dashboard del jefe
+    // de campo se queda sin su sección principal.
+    $pendientes = Sesion::query()->where('estado', EstadoSesion::Cerrado)->whereNull('anulada_en')->get();
+
+    expect($pendientes)->not->toBeEmpty();
+
+    foreach ($pendientes as $sesion) {
+        expect($sesion->validado_por)->toBeNull()
+            ->and($sesion->fecha_validacion)->toBeNull();
+    }
+});
+
+it('siembra actividad de los últimos días para que el dashboard no abra vacío', function () {
+    // El dashboard mira ventanas móviles (hectáreas por día de los últimos 14,
+    // pausas del mes). Contra el relato de agosto solo, esas secciones se
+    // retiran por falta de datos desde septiembre en adelante.
+    $recientes = Sesion::query()->where('inicio', '>=', now()->subDays(14)->startOfDay())->count();
+
+    expect($recientes)->toBeGreaterThan(0);
 });
 
 it('genera los devengos desde las sesiones validadas y cuadran exacto', function () {
@@ -147,8 +173,10 @@ it('genera los devengos desde las sesiones validadas y cuadran exacto', function
             ->toBeTrue("el devengo #{$devengo->id} no cuadra desde hectáreas × tarifa");
     }
 
-    // Un devengo por cada persona que voló o asistió cada sesión validada.
-    $esperados = Sesion::query()->get()
+    // Un devengo por cada persona que voló o asistió cada sesión VALIDADA:
+    // el devengo se genera al validar, nunca al cerrar (invariante 3), así que
+    // las sesiones que quedan en la cola no aportan ninguno.
+    $esperados = Sesion::query()->where('estado', EstadoSesion::Validado)->get()
         ->sum(fn (Sesion $sesion): int => $sesion->auxiliar_id === null ? 1 : 2);
 
     expect($devengos)->toHaveCount($esperados);

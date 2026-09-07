@@ -35,7 +35,7 @@
     - notifications (list, default []): ver organisms/topbar.
     - menuBadges (array<string, array{numero: string, texto: string}>,
       default []): contadores de pendientes por clave `label` de sec_menu
-      (demo — DatosDemoPanel). `numero` es lo que pinta el badge; `texto`,
+      (contadores reales por módulo). `numero` es lo que pinta el badge; `texto`,
       la frase completa que se resuelve como tooltip en menu-item.
     - campana / periodo / version (nullable string): chips del header y pie.
     - vistaActual (nullable string): segundo tramo del breadcrumb

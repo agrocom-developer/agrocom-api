@@ -28,7 +28,6 @@ use App\Dominios\Operaciones\Infraestructura\Eloquent\RecepcionCaldo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
 use App\Dominios\Personal\Infraestructura\Eloquent\PerPersona;
-use App\Dominios\Seguridad\Infraestructura\Http\Demo\DatosDemoCapturasRc;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
 use Illuminate\Database\Seeder;
@@ -43,7 +42,7 @@ use Illuminate\Support\Facades\Storage;
  *
  * Esas 21 fotos ya estaban en el repo, pero solo como PRESENTACIÓN: el tab
  * "Multimedia" del dashboard las pinta desde
- * {@see DatosDemoCapturasRc},
+ * la maqueta del dashboard,
  * un mock con identidad de piloto, lote y fecha inventadas, sin una sola fila
  * detrás. Acá ese relato se vuelve datos: cada una de las 10 "sesiones de
  * vuelo" del mock existe como `ope_sesiones` de verdad, sobre los lotes que

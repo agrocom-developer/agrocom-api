@@ -41,16 +41,21 @@ export async function elegirRolDueno(page: Page): Promise<void> {
 
 /**
  * Mismo mecanismo que `elegirRolDueno`, con el rol "Piloto de dron" — HU-28
- * (tarea 40): `devengos.spec.ts` necesita el rol scoped por persona, no el
- * de máximo permiso. Espera `/panel/devengos*`, no `/panel/dashboard`: desde
- * la tarea 62 (fuga 2) el dashboard exige `seguridad.dashboard.ver`, que
- * piloto no tiene — su primer ítem visible de menú (adonde el servidor
- * redirige tras elegir rol) es Financiero > Devengos.
+ * (tarea 40): `devengos.spec.ts` necesita el rol scoped por persona, no el de
+ * máximo permiso.
+ *
+ * Espera `/panel/**` y no una ruta concreta: adónde aterriza el piloto es el
+ * primer ítem visible de su menú, y eso cambió dos veces. Hasta la tarea 62
+ * era el dashboard; entre la 62 y la 67, Financiero > Devengos (el piloto no
+ * tenía `seguridad.dashboard.ver`); desde la 67 vuelve a ser el tablero, que
+ * ahora se compone por rol y para él son sus sesiones, sus equipos y su
+ * liquidación. El helper no debería volver a romperse por esto: quien
+ * necesita una pantalla puntual navega a ella.
  */
 export async function elegirRolPiloto(page: Page): Promise<void> {
     await page.locator(`[data-ag-role-nombre="${NOMBRE_ROL_PILOTO}"]`).click();
     await Promise.all([
-        page.waitForURL('**/panel/devengos**'),
+        page.waitForURL('**/panel/**'),
         page.click('[data-ag-role-continuar]'),
     ]);
 }

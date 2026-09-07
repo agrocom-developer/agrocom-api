@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Schema;
  * `EscrituraSincronizacionEloquent` (mismo criterio que `fin_gastos`,
  * cargado a mano desde el panel).
  *
- * `causa`: catálogo cerrado (DS-01 + maqueta `DatosDemoPanel::pausas()`),
+ * `causa`: catálogo cerrado (DS-01 + maqueta del dashboard),
  * `CHECK` en Postgres — mismo patrón que `tipo` en `ope_incidencias`. Incluye
  * `imprevisto_del_cliente` (mención textual de DS-01: "insumos del cliente
  * que no llegan").

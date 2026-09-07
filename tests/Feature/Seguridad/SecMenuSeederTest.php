@@ -114,7 +114,7 @@ it('ningún ítem de sec_menu con ruta queda sin permission_id', function () {
     expect($huerfanos)->toBeEmpty();
 });
 
-it('el menú de piloto no contiene los módulos Operación, Comercial ni Seguridad', function () {
+it('el menú de piloto no contiene los módulos Comercial ni Seguridad, y de Operación solo su tablero', function () {
     $this->seed(SecMenuSeeder::class);
 
     $usuario = SecUser::factory()->create();
@@ -128,7 +128,16 @@ it('el menú de piloto no contiene los módulos Operación, Comercial ni Segurid
     $arbol = app(ObtenerMenuPorRolActivo::class)->ejecutar($usuario, $idPiloto);
     $etiquetasModulo = collect($arbol)->map(fn ($item) => $item->label)->all();
 
-    expect($etiquetasModulo)->not->toContain('menu.operacion.label')
-        ->not->toContain('menu.comercial.label')
+    expect($etiquetasModulo)->not->toContain('menu.comercial.label')
         ->not->toContain('menu.seguridad.label');
+
+    // Desde la tarea 67 el piloto tiene `seguridad.dashboard.ver`, así que
+    // Operación aparece — con UN solo ítem, su tablero. Ni órdenes, ni
+    // trabajos, ni la cola de validación: esos siguen exigiendo permisos que
+    // no tiene.
+    $operacion = collect($arbol)->firstWhere('label', 'menu.operacion.label');
+
+    expect($operacion)->not->toBeNull();
+    expect(collect($operacion->hijos)->map(fn ($item) => $item->label)->all())
+        ->toBe(['menu.operacion.items.tablero']);
 });

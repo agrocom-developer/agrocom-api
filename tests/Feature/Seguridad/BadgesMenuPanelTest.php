@@ -30,7 +30,7 @@ use Illuminate\Support\Carbon;
 
 /*
  * TE-14 (tarea 60): los badges del menú lateral dejan de ser el mock
- * `DatosDemoPanel::badgesMenu()` y pasan a contadores reales por módulo,
+ * la maqueta del sidebar y pasan a contadores reales por módulo,
  * compuestos en `CascaraPanel::menuBadges()`. Cubre: los tres ítems sin dato
  * real (programación, reportes al cliente, drones en taller) no aparecen; y
  * cada badge que queda cambia cuando cambia su dato de origen — nunca un
@@ -147,7 +147,7 @@ it('los tres badges sin dato real no aparecen en el menú', function () {
 
     $badges = menuBadgesDelDashboard();
 
-    expect($badges)->not->toHaveKey('menu.operacion.items.programacion')
+    expect($badges)->not->toHaveKey('menu.operacion.items.tablero')
         ->not->toHaveKey('menu.comercial.items.reportes_cliente')
         ->not->toHaveKey('menu.recursos.items.drones');
 });

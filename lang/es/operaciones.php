@@ -26,28 +26,36 @@ return [
     // "Sin evidencia" es la condición de captura_rc faltante que bloquea la
     // validación. Consumidos por los chips de estado vía DatosDemoPanel.
     'sesion' => [
+        // Los TRES estados reales de `ope_sesiones.estado` (enum
+        // `Dominio\EstadoSesion`). Hasta la tarea 67 esta lista decía
+        // "Validada / Sin evidencia / En vuelo / Programada": era el
+        // vocabulario del mock del dashboard, que no existía en la base y no
+        // coincidía con ningún estado que la máquina de estados pudiera
+        // producir. Se reemplaza por el catálogo real — la clave que se pide
+        // acá es siempre `EstadoSesion::value`.
         'estado' => [
-            'validada' => 'Validada',
-            'sin_evidencia' => 'Sin evidencia',
-            'en_vuelo' => 'En vuelo',
-            'programada' => 'Programada',
+            'abierto' => 'Abierta',
+            'cerrado' => 'Cerrada',
+            'validado' => 'Validada',
         ],
+    ],
 
-        // Estado de captura del RC (Fase 6 — columna RC del tab Sesiones):
-        // "no_aplica" es una sesión que todavía no voló (en vuelo/programada),
-        // no una tercera variante de "sin_evidencia" — evita que una sesión
-        // futura se lea como una falla ya ocurrida.
-        'rc_estado' => [
-            'capturado' => 'Capturada',
-            'sin_evidencia' => 'Falta',
-            'no_aplica' => '—',
+    // Tipos de `ope_evidencias.tipo` (enum `Dominio\TipoEvidencia`), para la
+    // galería multimedia del dashboard y donde haga falta nombrar el tipo.
+    'evidencias' => [
+        'tipo' => [
+            'captura_rc' => 'Captura del control remoto',
+            'imagen_campo' => 'Imagen del campo',
+            'foto_incidencia' => 'Foto de incidencia',
+            'comprobante' => 'Comprobante',
+            'firma_acta' => 'Firma del acta',
         ],
     ],
 
     // Pantalla de panel "Operación › Trabajos" (HU-05, tarea 13): listado
     // mínimo, sin filtros ni detalle de evidencias (eso es HU-15). Vocabulario
-    // real del ciclo de vida — no confundir con `sesion.estado` de arriba
-    // (el mock del dashboard demo).
+    // real del ciclo de vida del TRABAJO — `sesion.estado` de arriba es el
+    // de la sesión, que tiene tres valores y no dos.
     'trabajos' => [
         'titulo' => 'Trabajos',
         'subtitulo' => 'Trabajos sincronizados desde la app de campo, con sus sesiones.',

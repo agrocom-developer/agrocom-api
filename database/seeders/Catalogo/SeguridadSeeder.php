@@ -59,7 +59,14 @@ class SeguridadSeeder extends Seeder
         // `finanzas.devengo.ver`) veía el tablero completo y la ficha de la
         // compañía. `dueno` los recibe igual que todo el catálogo (sin
         // excepción, diseño §2); `encargado_operaciones` y `jefe_campo` los
-        // reciben explícitos abajo; `piloto`/`auxiliar` quedan afuera.
+        // reciben explícitos abajo.
+        //
+        // `seguridad.dashboard.ver` volvió a piloto/auxiliar en la tarea 67,
+        // y no contradice aquella corrección: lo que la fuga 2 castigaba era
+        // que vieran el TABLERO COMPLETO sin permiso. Desde la 67 el
+        // dashboard se compone por sección y cada una exige el permiso de su
+        // propia pantalla, así que este permiso ya no abre la operación
+        // entera — solo la puerta. `seguridad.organizacion.ver` sigue afuera.
         'seguridad.dashboard.ver' => 'Ver el tablero "Operación de hoy" (dashboard)',
         'seguridad.organizacion.ver' => 'Ver el registro de la compañía (Organización)',
         // HU-03: ver y revocar sesiones de la app de campo. Separados a
@@ -290,6 +297,12 @@ class SeguridadSeeder extends Seeder
         'operaciones.acta.generar',
         'operaciones.acta.firmar',
         'finanzas.devengo.ver',
+        // Tarea 67: el dashboard dejó de ser un tablero único de gerencia y
+        // pasó a componerse por rol. Para el piloto son DOS secciones —sus
+        // sesiones y su liquidación del mes—, ambas acotadas a su
+        // `persona_id`, no a la operación entera. Sin este permiso aterrizaba
+        // en la primera pantalla suelta que el menú le dejara ver.
+        'seguridad.dashboard.ver',
     ];
 
     /**
@@ -300,6 +313,9 @@ class SeguridadSeeder extends Seeder
      */
     private const PERMISOS_AUXILIAR = [
         'finanzas.devengo.ver',
+        // Tarea 67, mismo motivo que el piloto: ve sus propias sesiones (como
+        // auxiliar de ellas) y su liquidación, nada de la operación global.
+        'seguridad.dashboard.ver',
     ];
 
     /** @var list<string> Todo, salvo asignar_rol_dueno (diseño §2). */
@@ -515,8 +531,8 @@ class SeguridadSeeder extends Seeder
             $permisos->only(self::PERMISOS_ENCARGADO_OPERACIONES)->values()->all(),
         );
 
-        // piloto (HU-17, tarea 24): primeros permisos que tiene — ejecuta
-        // desde `agrocom-field`, sin acceso al panel (diseño §2 no cambia).
+        // piloto (HU-17, tarea 24): ejecuta desde `agrocom-field`; en el
+        // panel solo ve lo suyo (devengos y, desde la tarea 67, su tablero).
         $this->asignar($roles['piloto'], $permisos->only(self::PERMISOS_PILOTO)->values()->all());
 
         // jefe_campo: solo lo suyo (diseño §2) — antes ninguno, ahora ver
@@ -526,9 +542,9 @@ class SeguridadSeeder extends Seeder
             $permisos->only(self::PERMISOS_JEFE_CAMPO)->values()->all(),
         );
 
-        // auxiliar: sin permisos de seguridad (diseño §2) — a diferencia del
-        // piloto (arriba), no genera ni firma actas. HU-28 (tarea 40) le da
-        // su primer permiso de panel: ver sus propios devengos.
+        // auxiliar: a diferencia del piloto (arriba), no genera ni firma
+        // actas. HU-28 (tarea 40) le dio su primer permiso de panel —ver sus
+        // propios devengos— y la tarea 67 su tablero, acotado a su persona.
         $this->asignar(
             $roles['auxiliar'],
             $permisos->only(self::PERMISOS_AUXILIAR)->values()->all(),

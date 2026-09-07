@@ -9,7 +9,7 @@ use Illuminate\Support\Carbon;
 /**
  * Caso de uso: agregado de minutos de pausa por causa, filtrable por período
  * (HU-44, tarea 58; CA: "agregado por causa en el tablero" — el "tablero" de
- * esta HU, mismo shape que la maqueta `DatosDemoPanel::pausas()`, ahora con
+ * esta HU, mismo shape que la maqueta del dashboard, ahora con
  * datos reales).
  *
  * `SUM(duracion_minutos)` directo en SQL, no un `diffInMinutes` por fila en

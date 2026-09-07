@@ -1,137 +1,17 @@
 /*
- * Tab "Multimedia" del dashboard (Fase 8) — 3 subvistas de las mismas
- * capturas RC (galería/carrusel/tabla), alternadas con el mismo mecanismo
- * `tab` nativo de Bootstrap que ya usan los tabs de nivel 3 (data-api,
- * sin librería nueva), solo con un skin de píldora en vez del subrayado.
+ * Tab "Multimedia" del dashboard: galería de las últimas sesiones con su
+ * evidencia gráfica (cada tarjeta es `molecules/captura-rc-card`, con su
+ * propio CSS en components/captura-rc-card.css).
+ *
+ * Hasta la tarea 67 este archivo también vestía dos subvistas más —carrusel
+ * y tabla— que mostraban exactamente las mismas capturas de otras dos
+ * formas. Las tres se alimentaban del mismo mock; con datos reales, tres
+ * representaciones del mismo listado son tres cosas que mantener sin que
+ * ninguna aporte algo que las otras no. Quedó la galería.
  */
-
-.ag-multimedia-toggle {
-    display: flex;
-    gap: var(--ag-space-2);
-    flex-wrap: wrap;
-}
-
-.ag-multimedia-toggle__btn {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--ag-space-2);
-    padding: var(--ag-space-2) var(--ag-space-3);
-    border-radius: var(--ag-radius-pill);
-    border: 1px solid var(--ag-color-border);
-    background: var(--ag-color-bg-chrome);
-    color: var(--ag-color-text-muted);
-    font-family: var(--ag-font-family-base);
-    font-size: var(--ag-font-size-xs);
-    cursor: pointer;
-    transition:
-        background-color var(--ag-transition-fast),
-        border-color var(--ag-transition-fast),
-        color var(--ag-transition-fast);
-}
-
-.ag-multimedia-toggle__btn:hover {
-    background: var(--ag-color-bg-row-hover);
-}
-
-.ag-multimedia-toggle__btn.active {
-    background: var(--ag-color-primary-subtle);
-    border-color: var(--ag-color-primary-border-subtle);
-    color: var(--ag-color-success-strong);
-    font-weight: var(--ag-font-weight-bold);
-}
-
-/* ---------- Galería ---------- */
 
 .ag-multimedia-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: var(--ag-space-4);
-}
-
-/* ---------- Carrusel ---------- */
-
-.ag-multimedia-carousel {
-    background: var(--ag-color-surface-card);
-    border: 1px solid var(--ag-color-border-card);
-    border-radius: 12px;
-    overflow: hidden;
-}
-
-.ag-multimedia-carousel__imagenes {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: var(--ag-space-2);
-    padding: var(--ag-space-5);
-    background: var(--ag-color-bg-table-head);
-    min-height: 320px;
-}
-
-.ag-multimedia-carousel__imagen {
-    max-height: 320px;
-    max-width: 100%;
-    object-fit: contain;
-    border-radius: var(--ag-radius-sm);
-}
-
-/* Caption propio (no .carousel-caption de Bootstrap): esa clase asume una
-   foto de fondo full-bleed con overlay claro — acá el fondo ya es la
-   superficie de tarjeta, así que va estático debajo, con tokens. */
-.ag-multimedia-carousel__caption {
-    padding: var(--ag-space-3) var(--ag-space-4);
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    color: var(--ag-color-text);
-}
-
-.ag-multimedia-carousel__caption span {
-    font-size: var(--ag-font-size-xs);
-    color: var(--ag-color-text-muted);
-}
-
-.ag-multimedia-carousel .carousel-indicators {
-    position: static;
-    margin: var(--ag-space-2) 0 0;
-    padding: 0 var(--ag-space-4) var(--ag-space-3);
-}
-
-.ag-multimedia-carousel .carousel-indicators [data-bs-target] {
-    background-color: var(--ag-color-text-faint);
-}
-
-.ag-multimedia-carousel .carousel-indicators .active {
-    background-color: var(--ag-color-primary);
-}
-
-.ag-multimedia-carousel .carousel-control-prev,
-.ag-multimedia-carousel .carousel-control-next {
-    width: 3rem;
-}
-
-/* ---------- Tabla ---------- */
-
-.ag-table--multimedia .ag-table__head,
-.ag-table--multimedia .ag-table__row {
-    grid-template-columns: 56px 70px 70px 1fr 1.4fr 1.8fr 70px;
-    min-width: 820px;
-}
-
-.ag-table__thumb {
-    width: 40px;
-    height: 30px;
-    object-fit: cover;
-    border-radius: var(--ag-radius-sm);
-    display: block;
-}
-
-@media (max-width: 767.98px) {
-    .ag-multimedia-carousel__imagenes {
-        min-height: 220px;
-        padding: var(--ag-space-3);
-    }
-
-    .ag-multimedia-carousel__imagen {
-        max-height: 220px;
-    }
 }

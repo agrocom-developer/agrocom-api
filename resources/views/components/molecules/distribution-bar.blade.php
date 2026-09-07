@@ -1,7 +1,7 @@
 {{--
     Molecule: distribution-bar (auditoría visual externa, obs. #5 y #6 —
     reemplaza a donut-chart, retirado). Mismo prop shape que donut-chart:
-    100% cambio de presentación, DatosDemoPanel::distribucionSesiones() no
+    100% cambio de presentación, la fuente del dato no
     cambia. KPI grande (el total) a la izquierda + barra horizontal 100%
     apilada a la derecha, leyenda en grilla de 4 columnas debajo — sin el
     hueco de ancho que dejaba el donut con leyenda al costado, y sin el

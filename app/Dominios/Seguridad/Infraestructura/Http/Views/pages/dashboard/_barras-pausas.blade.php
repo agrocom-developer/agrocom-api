@@ -4,7 +4,8 @@
     barra con el ancho de la maqueta y su tono de estado (no-texto, 3:1).
 
     Espera:
-    - $causas (list): DatosDemoPanel::pausas()['causas'].
+    - $causas (list<{causa, horas, pct, tono}>): ya resueltas por
+      `_seccion-pausas`, que traduce la causa y calcula el porcentaje.
     - $grande (bool, opcional): barras de 9px (pestaña Pausas) en vez de 6px.
 --}}
 @php($grande = $grande ?? false)

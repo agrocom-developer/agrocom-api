@@ -171,6 +171,17 @@
     color: var(--ag-color-text);
 }
 
+/* Encabezado de un bloque DENTRO de una tarjeta que ya tiene título (p. ej.
+   "Anticipos del período" bajo "Mi liquidación"). */
+.ag-card__subtitle {
+    margin: 0 0 var(--ag-space-2);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
 .ag-dash__link {
     border: none;
     background: none;
@@ -200,45 +211,125 @@
 .ag-table__head,
 .ag-table__row {
     display: grid;
-    grid-template-columns: 64px 1.6fr 1fr 1fr 70px 110px;
+    grid-template-columns: 84px 1.6fr 1fr 90px 70px 70px 110px;
     align-items: center;
     column-gap: var(--ag-space-2);
     padding: var(--ag-space-3) var(--ag-space-4);
 }
 
-/* Fase 5 — tabla de detalle de clientes: 6 columnas propias, más anchas que
-   la grilla de sesiones (nombre de cliente + barra de ejecución). Sin
-   variante de tablet/móvil (ver _detalle-clientes.blade.php): en vez de
-   ocultarse bajo el breakpoint de .ag-table, mantiene su grilla fija y
-   scrollea horizontal dentro de .ag-table-scroll. */
+/* Avance por contrato: nombre + barra de ejecución + dos columnas de
+   hectáreas. Cuatro columnas desde la tarea 67 — la tabla de seis de la
+   maqueta traía "actividad", "última sesión" y "vence", que no tenían
+   fuente. A diferencia de .ag-table genérica NO se oculta bajo 1200: mantiene
+   su grilla y scrollea horizontal (ver la regla del breakpoint). */
 .ag-table--clientes .ag-table__head,
 .ag-table--clientes .ag-table__row {
-    grid-template-columns: 1.8fr 1fr 100px 110px 180px 90px;
-    min-width: 780px;
+    grid-template-columns: 1.8fr 1.2fr 110px 120px;
+    min-width: 620px;
 }
 
-.ag-table-scroll {
-    overflow-x: auto;
+/* Liquidación del mes (tablero de piloto/auxiliar): fecha + tres columnas
+   numéricas alineadas a la derecha. */
+.ag-table--liquidacion .ag-table__head,
+.ag-table--liquidacion .ag-table__row {
+    grid-template-columns: 1fr 90px 110px 120px;
 }
 
-.ag-dash__clientes-ejecucion {
+/* Equipos operados por la persona en el mes. */
+.ag-table--equipos .ag-table__head,
+.ag-table--equipos .ag-table__row {
+    grid-template-columns: 1.4fr 90px 80px 90px 120px;
+}
+
+/* Segunda línea dentro de una celda: el campo bajo el lote, el modelo bajo
+   el identificador del dron. Contexto, no una columna más. */
+.ag-table__sub {
+    display: block;
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+    font-weight: var(--ag-font-weight-regular);
+}
+
+/* ---------- Liquidación del mes (tablero de piloto/auxiliar) ---------- */
+
+.ag-liquidacion__resumen {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-4);
+    border-bottom: 1px solid var(--ag-color-border);
+}
+
+.ag-liquidacion__cifra dt {
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ag-liquidacion__cifra dd {
+    margin: 0;
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-lg);
+    color: var(--ag-color-text);
+}
+
+.ag-liquidacion__cifra--saldo dd {
+    color: var(--ag-color-success-strong);
+    font-weight: var(--ag-font-weight-bold);
+}
+
+.ag-liquidacion__anticipos {
+    padding: var(--ag-space-4);
+    border-top: 1px solid var(--ag-color-border);
+}
+
+.ag-liquidacion__anticipo {
+    display: grid;
+    grid-template-columns: 100px 1fr 120px;
+    gap: var(--ag-space-2);
+    align-items: center;
+    padding: var(--ag-space-2) 0;
+}
+
+/* Barra de ejecución de un contrato, dentro de su celda. */
+.ag-dash__avance {
     display: flex;
     align-items: center;
     gap: var(--ag-space-2);
 }
 
-.ag-dash__clientes-track {
+.ag-dash__avance .ag-bars__track {
     flex: 1;
     min-width: 48px;
 }
 
-.ag-dash__clientes-vencido {
-    color: var(--ag-color-text-faint);
+/* Par de tarjetas de igual peso (pausas + stock): a diferencia de
+   .ag-dash__grid (2fr/1fr, tabla + aside) acá ninguna manda. */
+.ag-dash__grid--par {
+    grid-template-columns: 1fr 1fr;
 }
 
-.ag-dash__clientes-por-vencer {
-    color: var(--ag-color-warning-strong);
-    font-weight: var(--ag-font-weight-bold);
+/* Bloque personal: separado del resto por una línea, para que no se lea como
+   una sección más de la operación. */
+.ag-dash__mi-actividad {
+    padding-top: var(--ag-space-4);
+    border-top: 1px solid var(--ag-color-border);
+}
+
+/* Estado vacío del tablero completo: el rol entró pero no tiene secciones. */
+.ag-dash__vacio {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-6) var(--ag-space-4);
+    text-align: center;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-table-scroll {
+    overflow-x: auto;
 }
 
 .ag-table__dot {
@@ -554,13 +645,6 @@
 
 .ag-dash__hoy {
     display: none;
-}
-
-.ag-dash__hoy-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: var(--ag-space-2);
 }
 
 /* ---------- Tablet (maqueta 5a) ---------- */
