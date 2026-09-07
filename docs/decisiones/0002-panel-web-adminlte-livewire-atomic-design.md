@@ -41,6 +41,20 @@ El punto 4 ubica la preferencia de tema en "el modelo de usuario del módulo `Id
 
 Nota aparte, fuera del alcance de esta corrección: "tema claro/oscuro" (preferencia de usuario, este punto 4) es un eje distinto de "identidad de marca" (logo y paleta corporativa de Agrocom, los valores concretos detrás de los tokens del punto 2) — hoy la marca es única y fija (una sola empresa), y esta extensión no la convierte en dato de usuario ni de organización. Si en el futuro el panel se ofrece como SaaS multi-tenant (cada empresa cliente de Agrocom con su propio logo/paleta), es deseable que esos valores de marca ya estén resueltos desde un único punto (config o tabla de un solo registro) y no dispersos como literales en varios archivos CSS/Blade — así el día de mañana alcanza con parametrizar ese punto único, sin rediseñar el theming de HU-02. No es una decisión que corresponda tomar ni implementar ahora (no hay tenant, no hay tabla de organizaciones); queda anotado para cuando exista una necesidad real de multi-tenant.
 
+### Extensión (7/9/2026) — el catálogo de inputs es del panel, no del navegador
+
+El punto 1 de este ADR dice "Material Design para inputs, cards e iconografía", pero hasta hoy solo existió el átomo `input`. El resultado, medido el 7/9/2026: **70 `<select>` crudos, 11 `type="date"` y 7 `type="checkbox"`** repartidos por las vistas, cada uno con su placeholder copiado a mano. El campo de fecha caía al selector nativo del navegador — distinto en cada navegador y sistema operativo, ajeno a los tokens del panel, y en varios de ellos ignorando el idioma `es`. Es lo que el dueño describió como *"mi input date para las fechas quedó muy antigua y obsoleta"*.
+
+Esto no cambia la decisión, la completa: **todo control de formulario del panel es un átomo del catálogo** — `select` (con búsqueda y navegación por teclado), `date`, `checkbox`, `checkbox-group`, `radio-group` y `textarea`, con el mismo contrato de props que `input` (strings ya traducidos por el llamador, `icon` de Material Symbols, manejo partido de `$attributes`). Ningún control nativo suelto en una vista.
+
+Sobre librerías de terceros para resolverlos: **permitidas si se ganan el lugar**, con tres condiciones que no son negociables porque protegen decisiones ya tomadas de este mismo ADR:
+
+1. Entran por `package.json` + Vite, nunca por CDN.
+2. Cargan diferido, como ya hace Leaflet en `resources/js/app.js` — el peso de una librería de mapas o de calendario no se paga en pantallas que no la usan.
+3. **No traen su propio tema de colores.** Los colores salen de los tokens del panel, sin excepción (invariante 11 de `CLAUDE.md`): es lo que sostiene el theming por usuario del punto 4, y una librería que pinta con su paleta lo rompe en tema oscuro.
+
+Si una librería no cumple las tres, se escribe propio y queda anotado en el PR qué se evaluó y por qué se descartó.
+
 ## Alternativas descartadas
 
 - **Filament 4**: 5–6 días más rápido, pero el desarrollador nunca lo usó y su convención de navegación por código no encaja con `sec_menu` dinámico desde BD sin ir contra su patrón.

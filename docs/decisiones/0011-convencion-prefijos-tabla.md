@@ -28,6 +28,7 @@ Doble nivel, estilo WordPress:
    | Vistas de solo lectura | `vw_` (ver ADR 0012) |
    | Compartido (tablas transversales de plataforma) | `plt_` (asignado en la extensión 31/8/2026, tarea 06 — ver `plt_bitacoras`, ADR 0007) |
    | Distribucion | `dis_` (asignado en la extensión 1/9/2026, tarea 10 — ver `dis_versiones_apk`, HU-20) |
+   | Campania | `cpn_` (asignado el 7/9/2026 — ver `cpn_campanias`, ADR 0015: la campaña es un eje transversal con estados y guardas propias, no cabe ni en `Comercial` ni en `Compartido`. **No `cmp_`**: el punto 11 de este mismo ADR ya lo descartó por parecerse a `com_` a simple vista, y el argumento vale igual acá) |
 
    Reportes y Portal no tienen prefijo propio porque no escriben tablas: son módulos de solo lectura (`docs/especificacion/insumos_modelo_datos.md`, sección 1) y sus lecturas van por vistas `vw_*`.
 

@@ -8,6 +8,23 @@ Referencia rápida de vocabulario — de negocio y técnico — para que cualqui
 
 | Término | Definición | Referencia |
 |---|---|---|
+| **Campaña** | Ciclo productivo completo (`2025-2026`), el equivalente agronómico de la "gestión" contable: todo lo que se imputa y se cierra vive dentro de una. El panel opera bajo una **campaña activa** por sesión, igual que el rol activo. Se escribe `campania` en código — `campana` es el ícono de notificaciones | especificación §4.0, §5; ADR 0015 |
+| **Hacienda / Propiedad** | Sinónimos de negocio de **campo** (`com_campos`): el predio del cliente. Un cliente tiene varias propiedades, cada una con varios lotes. En el panel el rótulo es "Propiedades"; el nombre de tabla no cambia | especificación §4.1 |
+| **Personal** | Rótulo del menú para las personas operativas (`per_personas`). El personal es **móvil**: puede trabajar en propiedades, campañas, equipos y lotes distintos — si falta gente, se acopla la disponible | ADR 0015 |
+| **Día completo** | Contrato sin ninguna ventana horaria cargada: se aplica a cualquier hora. Es el valor por defecto, y las horas desde/hasta nunca son obligatorias | especificación §4.1; ADR 0015 |
+| **Estadía** | Registro de entrada y salida de un equipo de trabajo en una hacienda; dice cuántos días efectivos estuvo cada cuadrilla en cada propiedad | especificación §4.3 |
+| **Equipo de trabajo** | La cuadrilla: el piloto y su auxiliar — **no** dónde están trabajando. Lleva además su equipamiento asignado (dron, vehículo, generador), y es la unidad a la que se imputa el gasto que no pertenece a ningún trabajo concreto. No confundir con `equipos` de la especificación §4.5, que es la vista unificada de maquinaria | especificación §4.2; ADR 0015 |
+| **Gestión** | Como la usa el dueño, sinónimo de **campaña**: el período que se abre, se imputa y se cierra. El sistema la nombra "campaña"; "gestión" queda como la palabra contable equivalente | ADR 0015 |
+| **Campaña activa** | La campaña bajo la que opera la sesión del panel, elegida igual que el rol activo y visible en el chip del header. **Filtra, no autoriza**: cambiarla no da acceso a nada nuevo | ADR 0015 |
+| **Cuadrilla** | Lo mismo que **equipo de trabajo**, en la forma en que lo dice el equipo en campo | ADR 0015 |
+| **Equipamiento asignado** | Los recursos (dron, vehículo, generador) que tiene asignado un equipo de trabajo, con vigencia. Es lo que permite saber qué unidad consumió el combustible que se imputó al equipo | especificación §4.2 |
+| **Generador** | Grupo electrógeno del campamento; alimenta la carga rápida de baterías y consume combustible propio, imputable al equipo que lo tiene asignado | especificación §4.2, §4.4 |
+| **Parámetros de vuelo** | Altura, velocidad y ancho de pasada acordados para volar. Hoy se pactan a voz entre piloto y agrónomo; el contrato fija los del cliente y la orden puede afinarlos | especificación §4.1, §4.3 |
+| **Barbecho / presiembra** | Momento previo a sembrar, cuando se aplica para limpiar el terreno; es el `tipo_aplicacion = siembra` | especificación §4.3 |
+| **Desecante** | Aplicación previa a la cosecha que seca el cultivo para poder cosecharlo parejo; es el `tipo_aplicacion = cosecha` | especificación §4.3 |
+| **A aplicar** | Hectáreas pactadas menos hectáreas aplicadas: lo que falta cumplir de un contrato. Es la columna que totaliza el informe de avance | especificación §9.1 |
+| **Cultivo** | Qué se sembró en un lote en una campaña (soya, maíz, girasol…). Es dimensión de la dupla lote-campaña, no atributo del lote: el lote no "es" de soya, se siembra de soya esta campaña | especificación §4.1 |
+| **Tipo de aplicación** | Momento del ciclo en que se fumiga: `siembra` (barbecho o presiembra), `desarrollo` (el grueso de las 6-8 aplicaciones) o `cosecha` (desecante previo a cosechar) | especificación §4.3 |
 | **Lote** | Superficie física dentro de un campo, con hectáreas y geometría propias, unidad sobre la que se aplica una orden | `docs/especificacion/...` §4.1 |
 | **Trabajo** | Un lote en una aplicación concreta; agrupa una o más sesiones hasta cubrir sus hectáreas | especificación §4.3 |
 | **Sesión** | Unidad de trabajo continua de un piloto con un dron dentro de un trabajo; se abre, se ejecuta, se cierra y se valida | especificación §4.3, §5 |
@@ -67,6 +84,9 @@ Jerga real del equipo, registrada al procesar las respuestas del banco de pregun
 
 | Término | Definición | Referencia |
 |---|---|---|
+| **`campania` vs. `campana`** | **`campania` (con `i`) es el ciclo productivo; `campana` es el ícono de notificaciones.** No son variantes de lo mismo y ya convivieron a una letra de distancia en `CascaraPanel`. Si vas a escribir `campana`, es porque estás tocando notificaciones | ADR 0015 |
+| **Configuración del sistema** | `/panel/configuracion`: llaves y tokens con que el sistema funciona (mapas, correo, integraciones), cifrados en reposo y nunca devueltos al navegador. **Distinta** de `/panel/organizacion`, que son los datos de la empresa | ADR 0016 |
+| **`campania_id`** | Solo en las tablas donde se **imputa** algo que hay que cerrar por período (contratos, gastos, combustible, equipos, lote-campaña, estadías). Las demás la heredan por su contrato — duplicarla haría representable "trabajo de la campaña A en contrato de la campaña B" | ADR 0015 |
 | **`uuid_cliente`** | Identificador único generado en el dispositivo de campo antes de sincronizar; garantiza idempotencia | especificación §2.1 |
 | **Outbox** | Patrón de cola local (`cola_sync`) donde toda escritura offline se encola antes de sincronizar | especificación §2.1 |
 | **Idempotencia** | Propiedad de que reintentar la misma operación no cambia el resultado; se logra con `UNIQUE (uuid_cliente)` en base, no en el código | ADR 0001, especificación §2.1 |
