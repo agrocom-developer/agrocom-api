@@ -1,14 +1,29 @@
 # Cola de tareas automatizables
 
-**Última actualización: 4/9/2026 (planificación tras el cierre de la 60,
-TE-14/badges reales del sidebar — PR #111). Con la 60, Sprint 12 y el plan
-de doce sprints cierran completos, salvo la 55 (HU-41/portal del cliente),
-rechazada dos veces y marcada para revisión humana. Se agregó la 61,
-deuda técnica de Playwright sin fila propia en `plan_sprints.md` — ver
-"Por qué ese orden" al final. De paso se corrigieron siete filas de esta
-tabla (46, 47, 49, 50, 52, 53, 54) que seguían marcadas `pendiente` pese a
-tener PR mergeado — el git log es la fuente real, este documento se había
-desfasado.)**
+**Última actualización: 7/9/2026 (Sprint 13 planificado — tareas 69 a 75).**
+El dueño trajo un lote de ajustes de negocio el 7/9/2026 (mensajes de WhatsApp
+y la referencia al informe de contratos de producción de synagro). Se
+consolidaron en el **ADR 0015**, en la especificación (§4.0, §4.1, §4.2, §4.3,
+§4.4, §5, §9.1) y en el **Sprint 13** de `plan_sprints.md`, y de ahí salen las
+siete filas nuevas (69 a 75).
+
+Ese mismo día llegó una **segunda tanda**, esta mirando el panel andando:
+inputs de fecha y desplegables obsoletos, propiedades y lotes mezclados en un
+solo menú, "Personas" que debía decir "Personal", repuestos por casillas,
+la pestaña de Facturación vacía, el mapa sin pantalla completa, y una
+configuración del sistema donde poner llaves y tokens. Son las filas 76 a 80,
+en el **Sprint 14**. El orden de ejecución cruza las dos tandas — ver "Por qué
+ese orden" al final.
+
+Con esto la cola vuelve a tener trabajo escrito: la planificación anterior había
+llegado a "detrás de la 61 no queda ninguna fila más" y el ciclo se detuvo solo
+— ver `runs/DETENER`.
+
+Dos de los ajustes ya estaban resueltos en el modelo y **no generaron tarea**:
+"un cliente varios campos" y "un campo puede tener varios lotes" ya son
+`com_clientes → com_campos → com_lotes`, y el alta de campo pide `lotes[]` con
+mínimo uno. Se verificó antes de escribir nada.
+
 Este es el backlog que el ciclo de
 `bin/ciclo` consume solo — el punto 3 de
 [automatizacion_desarrollo.md](automatizacion_desarrollo.md). No reemplaza a
@@ -108,11 +123,24 @@ exista el módulo `Mezclas`).
 | 60 | TE-14 — reemplazar los badges de demostración del sidebar (`DatosDemoPanel::badgesMenu()`) por contadores reales o quitarlos si no hay fuente real; depende de que la 57 y la 58 estén integradas | `./bin/verify` = 0, con test de que cada badge que queda cambia con su dato de origen y de que los que no tienen fuente real no aparecen | `Seguridad/Infraestructura/Http/Demo/DatosDemoPanel.php` (solo `badgesMenu()`), `CascaraPanel.php`, `DashboardController.php`, contratos de lectura nuevos en `Operaciones`/`Inventario`/`Finanzas`, tests | no | 3 | **hecha** (PR #111, mergeado 4/9/2026) — cierra Sprint 12 y el plan de doce sprints completo (salvo la 55) |
 | 61 | Deuda técnica (no es fila de `plan_sprints.md`, mismo criterio que 28-30): eliminar el no determinismo de `rendiciones.spec.ts → show` (claro u oscuro, alterna cuál falla) — el único rojo de Playwright que sigue sin explicación tras la 60, que regeneró los ~100 snapshots que tapaban el resto del drift preexistente | `npx playwright test tests/Visual/rendiciones.spec.ts --grep show --repeat-each=5` = 0, y `./bin/verify` = 0 sin ningún otro snapshot movido | `tests/Visual/rendiciones.spec.ts`, `resources/css/components/{topbar,panel-layout}.css` (si la causa es de layout compartido), `playwright.config.ts` (si hace falta, sin agregar `retries`) | no | 2 | escrita |
 | 62 | Seguridad (auditoría del 4/9/2026, hallazgos P1): cerrar las tres fugas del modelo de permisos por rol activo — `AsignarRolesUsuario` evalúa por unión de roles en vez del rol activo (invariante 10), dashboard y organización sin permiso, ítems de `sec_menu` sin ruta ni permiso que abren Operación/Comercial/Seguridad a todo rol | `./bin/verify` = 0, con test de que un encargado con rol dueño asignado pero no activo recibe 403 al otorgar dueño, y de que `auxiliar` no ve dashboard ni organización y aterriza en un 200 | `app/Dominios/Seguridad/**`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/`, engranaje del riel, `tests/**` | **sí** | 3 | escrita |
-| 63 | Bitácora visible en el panel: pantalla `/panel/bitacora` (quién hizo qué y cuándo) con filtros y diff antes/después, instante guardado en UTC + `zona_horaria` IANA del actor, mostrado en la zona de quien mira con horario de verano/invierno (pedido del usuario el 4/9/2026) | `./bin/verify` = 0, con test de conversión IANA (Madrid julio +2 / enero +1) y test de que la bitácora del portal deja `user_id` del cliente | `app/Dominios/Compartido/**`, `app/Dominios/Seguridad/**`, preferencias del portal, migraciones nuevas, seeders de catálogo, `resources/`, `tests/**` | no | 3 | escrita |
+| 63 | Bitácora visible en el panel: pantalla `/panel/bitacora` (quién hizo qué y cuándo) con filtros y diff antes/después, instante guardado en UTC + `zona_horaria` IANA del actor, mostrado en la zona de quien mira con horario de verano/invierno (pedido del usuario el 4/9/2026, **repedido el 7/9/2026**; nunca corrió, ver actualización dentro del propio prompt) | `./bin/verify` = 0, con test de conversión IANA (Madrid julio +2 / enero +1) y test de que la bitácora del portal deja `user_id` del cliente | `app/Dominios/Compartido/**`, `app/Dominios/Seguridad/**`, preferencias del portal, migraciones nuevas, seeders de catálogo, `resources/`, `tests/**` | no | 3 | escrita |
 | 64 | Roles y permisos administrables desde el panel: listado y ficha de rol con matriz de permisos editable, vista previa del menú por rol (mismo cálculo que el sidebar), alta/edición/bloqueo de roles, ficha del usuario multirol y tarjetas del selector de rol con los módulos habilitados; el seeder no pisa cambios manuales | `./bin/verify` = 0, con test de que quitar un permiso por la matriz da 403 en el request siguiente sin re-login, y de que nadie puede dejar sin `seguridad.rol.asignar_permisos` al último rol que lo tiene | `app/Dominios/Seguridad/**`, `SeguridadSeeder`, `SecMenuSeeder`, migraciones nuevas, `lang/`, `resources/`, `tests/**` | **sí** | 4 | escrita |
 | 65 | Cuentas del portal desde el panel (tipo `cliente` con cliente → contrato, sin roles, permiso `seguridad.usuario.portal`) y `PortalDemoSeeder` con dos clientes (San Jorge y La Esperanza) con acta y reporte por el flujo real y un usuario cada uno, más guion de prueba manual de que B no ve lo de A (cierra lo que la 55 dejó sin datos) | `./bin/verify` = 0, con test de 404 cruzado entre las dos cuentas demo y `migrate --seed` idempotente | `app/Dominios/Seguridad/**` (usuarios), `database/seeders/Demo/**`, `SeguridadSeeder`, `lang/`, `resources/`, `docs/gestion/estado_proyecto.md`, `tests/**` | **sí** | 3 | escrita |
 | 66 | Correo en la cuenta (`sec_user.email`, precargado desde persona/contacto del cliente), perfil propio con cambio de contraseña (panel y portal) y recuperación por correo con formulario real + CSRF, brokers por guard, `password_reset_tokens`, notificación en español y Mailpit habilitado en el compose; amplía el ADR 0004 | `./bin/verify` = 0, con test de 419 sin CSRF, respuesta idéntica exista o no el email, token de un guard inútil en el otro | `app/Dominios/Seguridad/**`, `app/Dominios/Portal/**`, `config/auth.php`, `.env.example`, `docker-compose.yml`, migraciones nuevas, seeders demo, `lang/`, `resources/`, `routes/web.php`, ADR 0004 (ampliar), `tests/**` | no | 5 | escrita |
 | 67 | Dashboard sin maqueta: cada sección lee de la base por un contrato de lectura del módulo dueño, las secciones sin fuente real se retiran, las tres clases `DatosDemo*` desaparecen, `@puede` por sección, y `DashboardDemoSeeder` siembra por el flujo real lo necesario para verlo poblado | `./bin/verify` = 0, `grep -rn DatosDemo app/ resources/ tests/` vacío, y test de que validar una sesión cambia el dashboard en el request siguiente | `app/Dominios/Seguridad/**` (dashboard), `*/Contratos/**` + implementaciones, `database/seeders/Demo/**`, `resources/`, `lang/`, `tests/**` | no | 5 | escrita |
+| 68 | HU-40 — avance del contrato en el portal del cliente (fila preexistente, sin cambios) | `./bin/verify` = 0 | `app/Dominios/Portal/**`, `lang/`, `resources/`, `tests/**` | no | 3 | escrita |
+| 69 | HU-46 — la campaña como eje del sistema: módulo `Campania` + `cpn_campanias` con máquina de estados `planificada → abierta → cerrada`, campaña activa por sesión (espejo del rol activo) con su chip real en el header, `campania_id` en contratos y gastos con migración de datos, y el renombre `campana → campaniaActiva` que saca de encima la colisión con la campana de notificaciones | `./bin/verify` = 0, con test de que cambiar la campaña activa cambia el listado sin re-login y sin tocar permisos, test de `cerrada → abierta` rechazada, y test de migración que no deja `campania_id` nulo | `app/Dominios/Campania/**` (nuevo), `app/Dominios/Seguridad/**`, `Comercial/**` y `Finanzas/**` (solo la columna, la guarda y el filtro), migraciones, seeders, `resources/views/components/organisms/**`, `lang/`, `tests/**` | **sí** | 4 | escrita |
+| 70 | HU-47 — altura de vuelo en el contrato, ventana horaria opcional (cero ventanas = todo el día, y cae la guarda de activación) y `tipo_aplicacion` (siembra / desarrollo / cosecha) en la orden | `./bin/verify` = 0, con test de que un contrato sin ventanas pasa a `vigente` y de que dos ventanas solapadas se siguen rechazando | `app/Dominios/Comercial/**`, `app/Dominios/Operaciones/**` (orden), migraciones, `lang/`, `tests/**` | no | 2 | escrita |
+| 71 | HU-48 — cultivo por lote y campaña: catálogo `com_cultivos` y `com_lote_campania` con `UNIQUE (lote_id, campania_id)`, cargado desde la ficha del campo | `./bin/verify` = 0, con test de que el mismo lote lleva soya en una campaña y maíz en otra sin conflicto, y de que las hectáreas sembradas no superan las del lote | `app/Dominios/Comercial/**`, `Seguridad/**` (solo seeders de permiso y menú), migraciones, seeders, `lang/`, `tests/**` | no | 3 | escrita |
+| 72 | HU-49 — equipos de trabajo con vigencia: `per_equipos_trabajo` + `per_equipo_integrantes` + `per_equipo_recursos`, más `man_generadores` (sin ella no hay generador que asignar), con validador de solapamiento y ficha que responde quién lo integraba a una fecha | `./bin/verify` = 0, con test de que una persona no entra en dos equipos con vigencias que se pisan, y de que la ficha al 14/3 devuelve la formación de ese día y no la de hoy | `app/Dominios/Personal/**`, `app/Dominios/Mantenimiento/**` (solo generadores), `Seguridad/**` (seeders), migraciones, seeders, `lang/`, `tests/**` | no | 4 | escrita |
+| 73 | HU-50 — gasto y combustible imputados al equipo de trabajo y a la unidad que lo consumió: `equipo_trabajo_id` en `fin_gastos` y `fin_combustibles`, y el `destino` de texto reemplazado por recurso concreto elegible solo entre el equipamiento del equipo a esa fecha | `./bin/verify` = 0, con test de que un recurso ajeno al equipo se rechaza, test de que el total por equipo cuadra exacto (strings decimales, sin `SUM()` de SQL) y test de migración del `destino` viejo | `app/Dominios/Finanzas/**`, migraciones, seeders demo, `lang/finanzas.php`, `tests/**` | **sí** | 3 | escrita |
+| 74 | HU-51 — entrada y salida del equipo en cada hacienda: `ope_estadias_hacienda` con `uuid_cliente`, dos tipos nuevos en el motor de sync (`estadia_entrada` / `estadia_salida`) y pantalla de consulta con días efectivos por equipo y propiedad | `./bin/verify` = 0, con test de replay (mismo lote 10 veces, en orden y en desorden → una sola fila), test de que un segundo ingreso con estadía abierta se rechaza sin frenar el resto del lote, y test de que el reintento devuelve `duplicado` | `app/Dominios/Operaciones/**`, `app/Dominios/Sincronizacion/**`, `Seguridad/**` (seeders), migraciones, seeders demo, `routes/`, `lang/`, `tests/**` | **sí** | 3 | escrita |
+| 75 | HU-52 — informe de avance de contratos por cultivo y por cliente (molde del informe de synagro, con hectáreas donde ellos ponen kilos): selectores obligatorios, pantalla de filtros, chips removibles, dos pestañas, barra por cinco tramos con token propio cada uno y totalizador de "a aplicar" | `./bin/verify` = 0, con test de que el avance coincide exacto con `ObtenerAvanceComercial`, test de que sin cliente o sin cultivo no genera, y `grep` de color hardcodeado vacío en lo nuevo | `app/Dominios/Comercial/**`, `resources/views/components/**`, `resources/css/**`, `lang/comercial.php`, `routes/web.php`, `tests/**` | no | 4 | escrita |
+| 76 | HU-53 — el sistema de inputs del panel: átomos `select` (con búsqueda y teclado), `date` (calendario propio en español), `checkbox`, `checkbox-group`, `radio-group` y `textarea`, con el contrato de props de `input`, y migradas las 88 apariciones crudas (70 `<select>`, 11 `type="date"`, 7 `type="checkbox"`) | `./bin/verify` = 0, `grep -rn "<select"` y `grep -rn 'type="date"'` sobre vistas sin resultados fuera de los propios átomos, test de que el `select` se opera solo con teclado, y `grep` de color hardcodeado vacío en los CSS nuevos | `resources/views/components/**`, `resources/css/**`, `resources/js/**`, `package.json`, `vite.config.js`, vistas de todos los módulos (solo el marcado), `docs/diseno/sistema_diseno_panel.md`, `tests/**` | no | 5 | escrita |
+| 77 | HU-54 — Propiedades y Lotes como ítems de menú separados, con listado y ficha de lote propios (filtro por cliente y propiedad, búsqueda por código, perímetro), y `Personas` → `Personal` | `./bin/verify` = 0, con test de que el alta de propiedad con sus lotes sigue igual, test de 403 sin `comercial.lote.ver`, y test de que re-sembrar el menú no pisa permisos quitados a mano | `app/Dominios/Comercial/**`, `Personal/**` (rótulos y rutas), `Seguridad/**` (solo seeders), migraciones, `lang/`, `routes/web.php`, `resources/`, `tests/**` | no | 3 | escrita |
+| 78 | HU-55 — configuración del sistema separada de la empresa: `/panel/configuracion` por sectores (mapas, correo, integraciones) con valores cifrados en reposo, nunca devueltos al navegador y excluidos del diff de la bitácora, resolución en cascada con `.env` de respaldo; más la pestaña de Facturación de la empresa que hoy dice "Próximamente" | `./bin/verify` = 0, con test de que el HTML no contiene el secreto en claro, test de que la bitácora registra el cambio sin el valor, test de que guardar vacío no borra lo configurado, y test de 403 para quien no es dueño | `app/Dominios/Compartido/**`, `Seguridad/**` (organización, permisos, menú), migraciones, seeders, `lang/`, `routes/web.php`, `resources/`, `tests/**` | **sí** | 4 | escrita |
+| 79 | HU-56 — editor de perímetro a pantalla completa, con barra de acciones propia en Material Symbols, superficie en hectáreas mientras se dibuja, y proveedor de mapa configurable (Google Maps con llave, Leaflet + Esri sin ella) | `./bin/verify` = 0, con test de que sin llave el camino actual funciona intacto, test de que el GeoJSON guardado es idéntico con un proveedor o el otro, y test de que la llave no aparece en el HTML cuando el proveedor es Leaflet | `resources/js/**`, `resources/css/**`, `resources/views/components/**`, `Comercial/**` (vista del editor), `Compartido/Contratos/**`, `package.json`, `lang/`, `tests/**` | no | 3 | escrita |
+| 80 | HU-57 — repuestos por casillas en la orden de mantenimiento: lista con búsqueda por código y descripción, cantidad y disponibilidad a la vista, resumen de lo elegido, base elegida una vez por orden; el payload no cambia | `./bin/verify` = 0, con test de que el formulario nuevo produce el mismo payload y el mismo resultado que el viejo, y regresión de HU-37 (cerrar descuenta stock y genera el gasto en una transacción) | `app/Dominios/Mantenimiento/**` (vistas y controlador), `resources/`, `lang/mantenimiento.php`, `tests/**` | no | 2 | escrita |
 
 ### El bug de la 24 — ya pasó dos veces, sigue sin arreglarse
 
@@ -579,7 +607,48 @@ repetidas) sin depender de ninguna decisión pendiente. Mismo criterio que
 28-30: no es fila de `plan_sprints.md`, pero es deuda concreta, documentada
 por varias tareas, con exit code verificable.
 
-**Detrás de la 61 no queda ninguna fila más escrita.** Si se integra sin
+### Por qué ese orden en las tareas 69 a 80 (7/9/2026)
+
+**El orden de ejecución no es el orden de los números**, porque las dos tandas
+del 7/9 se cruzan. Es este:
+
+```
+69 → 76 → 77 → 70 → 71 → 72 → 73 → 74 → 78 → 63 → 79 → 80 → 75
+```
+
+La **63** (bitácora visible en el panel) ya estaba escrita desde el 4/9 y nunca
+corrió — `runs/63.estado` no existe. El motor de bitácora sí está hecho (PR #34
+y #35); lo que falta es la pantalla. El dueño la pidió de nuevo el 7/9, así que
+vuelve a la cola en vez de escribirse un prompt duplicado, con una actualización
+que cubre lo que cambió desde entonces.
+
+- **69 (campaña) primero y sola**: las demás le cuelgan por `campania_id`, y su
+  migración de datos toca `com_contratos` y `fin_gastos` — cuanto más tarde
+  entre, más filas hay que migrar.
+- **76 (sistema de inputs) segunda, antes que cualquier pantalla nueva.** Las
+  tareas 70 a 75 construyen formularios; si nacen con los `<select>` crudos y el
+  `type="date"` nativo, hay que migrarlos después uno por uno. Es la diferencia
+  entre hacerlo una vez y hacerlo dos.
+- **77 (propiedades y lotes) antes que 71**: el cultivo se carga por lote y
+  campaña, y sin pantalla propia de lote ese dato solo se toca entrando por la
+  propiedad.
+- **72 (equipos) antes que 73 y 74**: no se le imputa un gasto ni se le registra
+  una estadía a un equipo que no existe.
+- **78 (configuración) antes que 79**: sin dónde guardar la llave, el mapa no
+  puede cambiar de proveedor.
+- **63 (bitácora en el panel) después de 78**: la 78 deja los secretos excluidos
+  del diff antes/después, y la 63 es la pantalla donde esa exclusión se ve o se
+  filtra. Al revés, la pantalla nacería mostrando llaves en claro.
+- **80 (repuestos por casillas) después de 76**: consume el `checkbox-group` del
+  catálogo, no construye uno propio.
+- **75 (informe) al final**: necesita campaña (69) y cultivo (71).
+
+Cuatro son críticas por la lista de `CLAUDE.md`: la 69 y la 73 tocan dinero, la
+74 toca el motor de sync, y la 78 guarda secretos. Las cuatro se integran igual
+y se revisan después, anotadas en `runs/revision-pendiente.txt` — no se retiene
+el PR.
+
+**La nota de la planificación anterior quedó saldada.** Si se integra sin
 sorpresas, la próxima planificación vuelve a estar en la misma situación
 que esta (Sprint 12 cerrado, nada nuevo calificable) y debe repetir la
 misma revisión de "Fuera del ciclo automático" antes de escribir

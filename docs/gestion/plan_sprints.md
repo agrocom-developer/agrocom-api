@@ -258,6 +258,48 @@ Es el bloque más caro: módulos nuevos (`man_*`, `inv_*`) con su propio modelo 
 
 ---
 
+## Sprint 13 — La campaña, los equipos y el cultivo
+
+*Objetivo: darle al sistema el eje temporal y la unidad de imputación que el negocio siempre tuvo y el modelo no. Nace de los ajustes del dueño del 7/9/2026; el porqué de cada decisión está en el ADR 0015.*
+
+| ID | Historia / tarea | CA esenciales | Est. |
+|---|---|---|---|
+| HU-46 | Como **dueño**, quiero que todo el sistema opere dentro de una campaña (`2025-2026`) y poder cambiar de campaña activa como cambio de rol, para cerrar un ciclo y compararlo con el siguiente | Módulo `Campania` + `cpn_campanias` con máquina de estados `planificada → abierta → cerrada`; campaña activa en sesión, chip real en el header, cambio sin re-login; `campania_id` en contratos y gastos; nada se imputa a una campaña cerrada; migración de datos que crea `2025-2026` y le asigna lo existente | 3,0 d |
+| HU-47 | Como **encargado**, quiero fijar la altura de vuelo en el contrato, dejar la ventana horaria en "todo el día" y decir si la aplicación es de siembra o de cosecha, para que la orden salga con lo que el cliente acordó | `altura_vuelo_m` en `com_contratos`; ventanas dejan de ser obligatorias (cero ventanas = todo el día, sin booleano) y se cae la guarda de activación por falta de ventanas; `tipo_aplicacion` (siembra / desarrollo / cosecha) en la orden | 1,5 d |
+| HU-48 | Como **encargado**, quiero registrar qué cultivo se sembró en cada lote en cada campaña, para agrupar el avance por cultivo | Catálogo `com_cultivos` + `com_lote_campania` con `UNIQUE (lote_id, campania_id)`; carga desde la ficha del campo; cambiar de campaña no pisa el cultivo de la anterior | 2,0 d |
+| HU-49 | Como **encargado**, quiero armar los equipos de trabajo con su piloto, su auxiliar y el equipamiento asignado, para saber quién y con qué opera cada cuadrilla | `per_equipos_trabajo` + `per_equipo_integrantes` + `per_equipo_recursos` con vigencia (`desde`/`hasta`); `man_generadores` (sin ella no hay generador que asignar); una persona no puede estar en dos equipos el mismo día; la ficha responde "quiénes lo integraban el 14 de marzo" | 3,0 d |
+| HU-50 | Como **encargado**, quiero imputar el gasto y el combustible al equipo de trabajo y a la unidad que lo consumió, para tener costo real sin inventar a qué trabajo cargarlo | `equipo_trabajo_id` en `fin_gastos` y `fin_combustibles`; el combustible pasa de `destino` (texto) a recurso concreto, elegible solo entre el equipamiento asignado a ese equipo; agregado de gasto por equipo y por campaña | 2,0 d |
+| HU-51 | Como **piloto o auxiliar**, quiero registrar la entrada y la salida del equipo en cada hacienda, para que quede cuántos días estuvimos en cada propiedad | `ope_estadias_hacienda` con `uuid_cliente`, entrando por `POST /api/sync` (idempotente, invariante 1); un equipo no puede tener dos estadías abiertas; pantalla de consulta por campaña y equipo | 2,5 d |
+| HU-52 | Como **dueño**, quiero un informe de avance de contratos por cultivo y por cliente, para ver de un vistazo cuánto falta aplicar | Selectores obligatorios de cliente y cultivo; pantalla de filtros con campaña (por defecto la activa), chips removibles, pestañas "Por cultivo"/"Por cliente", barra por tramos de color con token propio cada uno (invariante 11), totalizador de "a aplicar", estado vacío | 3,0 d |
+
+**Total: 17,0 d · 5 pantallas nuevas**
+
+**Orden y dependencias.** HU-46 va primera y sola: las otras seis le cuelgan (`campania_id`). Después HU-47 (independiente, la más barata) y HU-48 en paralelo lógico; HU-49 antes que HU-50 (no se imputa a un equipo que no existe) y antes que HU-51 (la estadía es de un equipo); HU-52 al final, porque necesita campaña (46) y cultivo (48).
+
+**HU-51 toca el motor de sync**, así que entra en la lista de "qué no delegar sin revisión línea por línea" de `CLAUDE.md` — con la revisión posterior a la integración, anotada en `runs/revision-pendiente.txt`, no reteniendo el PR.
+
+---
+
+## Sprint 14 — El panel se ve y se usa como debe
+
+*Objetivo: la interfaz deja de arrastrar controles nativos y marcado copiado. Nace de la segunda tanda de ajustes del dueño del 7/9/2026, mirando el panel andando.*
+
+| ID | Historia / tarea | CA esenciales | Est. |
+|---|---|---|---|
+| HU-53 | Como **usuario del panel**, quiero campos de fecha, desplegables y casillas que se vean y se usen como el resto del sistema, para no pelearme con controles del navegador | Átomos `select` (con búsqueda y teclado), `date` (calendario propio en español), `checkbox`, `checkbox-group`, `radio-group` y `textarea`, con el contrato de props de `input`; migradas las 88 apariciones crudas del panel (70 `<select>`, 11 `type="date"`, 7 `type="checkbox"`); ningún color hardcodeado, claro y oscuro | 4,0 d |
+| HU-54 | Como **encargado**, quiero Propiedades y Lotes como pantallas separadas, y que el menú diga "Personal", para encontrar un lote sin abrir la propiedad entera | Dos ítems de menú donde había "Campos y lotes"; listado y ficha de lote con filtro y búsqueda; el alta de propiedad con sus lotes sigue funcionando; `Personas` → `Personal` con ruta, permiso y rótulos | 2,5 d |
+| HU-55 | Como **dueño**, quiero una configuración del sistema separada de los datos de la empresa, para cargar las llaves de mapas, correo y otros tokens; y quiero la pestaña de Facturación que hoy dice "Próximamente" | `/panel/configuracion` por sectores, solo para el dueño, con valores cifrados en reposo, nunca devueltos al navegador, y excluidos del diff de la bitácora; resolución en cascada con `.env` como respaldo; datos fiscales de la empresa en `/panel/organizacion` | 3,0 d |
+| HU-56 | Como **encargado**, quiero dibujar el perímetro del lote a pantalla completa y con acciones claras, para marcar los puntos con precisión | Pantalla completa con salida por `Escape` conservando el trabajo; barra de acciones propia con Material Symbols en español; superficie en hectáreas mientras se dibuja; proveedor configurable (Google Maps con llave, Leaflet + Esri sin ella) sin cambiar el GeoJSON guardado | 3,0 d |
+| HU-57 | Como **encargado**, quiero elegir los repuestos de una orden por casillas y no por desplegables, para cargar seis repuestos sin abrir doce selects | Lista con casillas, búsqueda por código y descripción, cantidad y disponibilidad a la vista, resumen de lo elegido, base elegida una vez por orden; el payload y el cierre de orden no cambian | 1,5 d |
+
+**Total: 14,0 d · 3 pantallas nuevas + el catálogo de inputs**
+
+**HU-55 es crítica**: guarda secretos. Una llave en un log, en la bitácora, en un snapshot o en el HTML es un incidente, no un bug de interfaz.
+
+**HU-53 va temprano, antes que el grueso del Sprint 13**: todas las pantallas de campaña, cultivo, equipos y gastos construyen formularios, y no tiene sentido que nazcan con los inputs viejos para migrarlos después. El orden real de ejecución está en `docs/gestion/cola_tareas.md`, no en el número de sprint.
+
+---
+
 ## Alcance total del sistema
 
 | Bloque | Días | Pantallas de menú | Estado |

@@ -106,12 +106,21 @@ Reglas de identidad y acceso (ver ADR 0004 para el modelo completo):
 
 ## 4. Modelo de datos
 
+### 4.0 Campaña (`cpn_*`) — el eje de todo lo demás
+
+- `campanias` — id, código (`2025-2026`), nombre, fecha_inicio, fecha_fin, estado (planificada / abierta / cerrada). *Es el equivalente productivo de la "gestión" contable: todo lo que se imputa, se cierra y se compara vive dentro de una campaña. El panel opera bajo una **campaña activa** por sesión, elegida igual que el rol activo y visible en el chip del header; cambiarla no requiere volver a loguearse y **filtra, no autoriza**. Nada se imputa a una campaña `cerrada`. Ver ADR 0015.*
+
+Llevan `campania_id` propio solo las entidades donde se imputa algo que hay que poder cerrar por período: `contratos`, `gastos`, `cargas_combustible`, `equipos_trabajo`, `lote_campania` y `estadias_hacienda`. Las demás (`ordenes_aplicacion`, `trabajos`, `sesiones`, `actas`, `facturas`) la heredan por su contrato — nunca duplican la columna.
+
 ### 4.1 Comercial
 
 - `clientes` — id, razón social, nit, contacto dueño, contacto agrónomo
-- `contratos` — id, cliente_id, hectáreas_contratadas, aplicaciones_previstas, precio_ha, monto_total, adelanto_monto, adelanto_pct, fecha_inicio, fecha_fin, estado
-- `campos` — id, cliente_id, nombre, ubicación
+- `contratos` — id, campania_id, cliente_id, hectáreas_contratadas, aplicaciones_previstas, precio_ha, monto_total, adelanto_monto, adelanto_pct, fecha_inicio, fecha_fin, estado, + parámetros de vuelo y límites de condiciones (altura_vuelo_m, velocidad_max_kmh, viento_max_kmh, temperatura_max_c, humedad_min_pct, humedad_max_pct, umbral_reporte_avance_ha; NULL = rige el valor por defecto del sistema)
+- `contrato_ventanas` — id, contrato_id, hora_inicio, hora_fin. *N por contrato y **opcionales**: sin ninguna ventana cargada, el contrato aplica a cualquier hora ("todo el día"). No hay booleano de "todo el día" — la ausencia de filas es el dato (ADR 0015).*
+- `campos` — id, cliente_id, nombre, ubicación. *Un cliente tiene varios campos (haciendas); cada campo tiene varios lotes.*
 - `lotes` — id, campo_id, código, hectáreas, geometría (GeoJSON), restricciones (texto: cables, viviendas, colmenas, vecinos sensibles)
+- `cultivos` — id, nombre (soya, maíz, girasol, trigo, sorgo…), activo. *Catálogo.*
+- `lote_campania` — id, lote_id, campania_id, cultivo_id, hectareas_sembradas, fecha_siembra, fecha_cosecha_estimada. *Qué se sembró en cada lote en cada campaña — un cultivo por lote y campaña. El lote no "es" de soya: se siembra de soya esta campaña y de maíz la siguiente. Es la dimensión que agrupa el informe de avance de contratos (§9.1).*
 
 ### 4.2 Recursos
 
@@ -120,10 +129,14 @@ Reglas de identidad y acceso (ver ADR 0004 para el modelo completo):
 - `vehiculos` — id, tipo, placa, base_id, gasolina o diésel
 - `bases` — id, nombre, ubicación
 - `personas` — id, nombre, rol, tarifa_ha (piloto/auxiliar), sueldo_mensual (jefe/encargado), base_id, activo
+- `generadores` — id, identificador, modelo, base_id, estado, horas_uso
+- `equipos_trabajo` — id, campania_id, código (`E1`), nombre, base_id, estado. *La cuadrilla: **el piloto y su auxiliar, no dónde están trabajando**. Es la unidad a la que se imputa el gasto que no pertenece a ningún trabajo en particular (combustible, viáticos, mantenimiento de la camioneta).*
+- `equipo_integrantes` — id, equipo_trabajo_id, persona_id, rol_equipo (piloto / auxiliar), desde, hasta. *Con vigencia: un gasto de marzo queda atribuido a quienes integraban el equipo en marzo, no a la formación de hoy.*
+- `equipo_recursos` — id, equipo_trabajo_id, recurso_tipo (dron / vehiculo / generador), recurso_id, desde, hasta. *El equipamiento asignado al equipo. Es lo que permite saber **qué** vehículo o generador consumió el combustible que se imputó al equipo.*
 
 ### 4.3 Operación
 
-- `ordenes_aplicacion` — id, contrato_id, lote_id, nro_aplicacion, litros_ha, humedad_minima, observaciones, emitida_por (agrónomo), fecha_emision, estado
+- `ordenes_aplicacion` — id, contrato_id, lote_id, nro_aplicacion, tipo_aplicacion (siembra / desarrollo / cosecha), litros_ha, humedad_minima, parámetros de vuelo acordados (altura_vuelo_m, velocidad_vuelo_kmh, ancho_pasada_m), observaciones, emitida_por (agrónomo), fecha_emision, estado. *`tipo_aplicacion` dice en qué momento del ciclo se fumiga: `siembra` (barbecho o presiembra), `desarrollo` (el grueso de las 6-8 aplicaciones, desde el desarrollo vegetativo) y `cosecha` (desecante previo a cosechar). Cambia qué se espera de la aplicación y cómo se agrupa el informe de avance.*
 - `recetas_mezcla` — id, orden_id, volumen_referencia_l, agitacion_requerida, ph_objetivo, observaciones
 - `receta_items` — id, receta_id, secuencia, producto_id, tipo (fitosanitario / coadyuvante / antiespumante / antideriva / corrector_ph / aceite / fertilizante_foliar), dosis_valor, dosis_unidad (ml/ha, g/ha, ml/100L, %v/v), pre_disolucion_requerida (bool), nota. *La receta la define el agrónomo, con su orden de incorporación; Agrocom la ejecuta y la documenta, no la modifica.*
 - `productos` — id, nombre_comercial, ingrediente_activo, formulación (WG / WP / SC / SL / EC / EW / OD / adyuvante), unidad, densidad, proveedor
@@ -137,13 +150,14 @@ Reglas de identidad y acceso (ver ADR 0004 para el modelo completo):
 - `incidencias` — id, sesion_id, tipo (enum: caldo / esc / bateria / mecanica / clima / otro), descripcion, hora, evidencia_id
 - `evidencias` — id, tipo (captura_rc / imagen_campo / foto_incidencia / comprobante / firma_acta), archivo_url, hash, subido_por, fecha, uuid_cliente
 - `actas` — id, trabajo_id, hectareas_conformadas, firmante (agrónomo), fecha_firma, evidencia_firma_id, observaciones, estado
+- `estadias_hacienda` — id, uuid_cliente, campania_id, equipo_trabajo_id, campo_id, entrada, salida, vehiculo_id, observacion. *Entrada y salida del equipo en cada hacienda. Nace en la app de campo (lleva `uuid_cliente` y viaja por `POST /api/sync`, §2.1) porque la registra el equipo al llegar y al irse, no la oficina. Responde cuántos días efectivos estuvo cada cuadrilla en cada propiedad — el dato que hoy falta para justificar el gasto imputado al equipo. Un equipo no puede tener dos estadías abiertas a la vez; `salida` nula = estadía en curso, sin columna de estado que pueda contradecirla.*
 
 ### 4.4 Financiero
 
 - `rubros` — id, nombre (los 8 del presupuesto + Indirectos), presupuesto_bs_ha
 - `subrubros` — id, rubro_id, nombre, tipo_imputacion (directo_dron / directo_vehiculo / compartido)
-- `gastos` — id, fecha, rubro_id, subrubro_id, cantidad, precio_unitario, monto, base_id, dron_id, vehiculo_id, medio_pago, evidencia_id, rendicion_id, cargado_por, tiene_comprobante (bool)
-- `cargas_combustible` — id, fecha, litros, destino (generador / camioneta), dron_id, vehiculo_id, registrado_por, gasto_id. *El auxiliar registra litros; el encargado carga precio; se vinculan después — separa desvío de precio de mercado de desvío de consumo real.*
+- `gastos` — id, campania_id, fecha, rubro_id, subrubro_id, cantidad, precio_unitario, monto, equipo_trabajo_id, base_id, trabajo_id, medio_pago, evidencia_id, rendicion_id, cargado_por, tiene_comprobante (bool). *`equipo_trabajo_id` es la imputación principal del gasto de campo: la mayor parte no pertenece a ningún trabajo concreto (no se sabe a qué lote cargarle la carga de combustible) y la base no alcanza porque varias cuadrillas la comparten.*
+- `cargas_combustible` — id, campania_id, fecha, litros, monto, equipo_trabajo_id, recurso_tipo (dron / vehiculo / generador), recurso_id, base_id, registrado_por, gasto_id. *Se imputa al equipo, y el recurso concreto dice qué unidad consumió — el equipo tiene su equipamiento asignado (§4.2, `equipo_recursos`), así que la lista de destinos posibles sale de ahí y no del catálogo entero.* *El auxiliar registra litros; el encargado carga precio; se vinculan después — separa desvío de precio de mercado de desvío de consumo real.*
 - `rendiciones` — id, base_id, jefe_campo_id, fecha, monto, descripcion, evidencia_id, estado (pendiente / procesada / rechazada), gasto_id
 - `fondos_caja` — id, base_id, responsable_id, monto_asignado, monto_rendido, saldo, fecha_apertura, fecha_cierre
 - `devengos_personal` — id, persona_id, sesion_id, hectareas, tarifa_ha, monto, fecha. *Se calcula por sesión, no por lote — si dos pilotos trabajaron el mismo lote, cada uno cobra exactamente sus hectáreas. Se genera automáticamente al validar un trabajo, nunca al cerrarlo.*
@@ -171,6 +185,12 @@ Ver el modelo completo en ADR 0004 (`docs/decisiones/0004-modelo-seguridad-sec-m
 ---
 
 ## 5. Máquinas de estado
+
+**Campaña:**
+```
+planificada ──► abierta ──► cerrada
+```
+*Sin vuelta atrás desde `cerrada`: reabrir una campaña cerrada es el agujero por donde entran las imputaciones retroactivas que descuadran un cierre ya presentado. Nada se imputa a una campaña cerrada — lo verifica cada módulo dueño al crear, no un trigger.*
 
 **Sesión:**
 ```
@@ -345,6 +365,19 @@ Dos reportes, dos destinatarios.
 
 Generación: PDF automático al conformar el lote (técnico) y al cerrar la aplicación (comercial), sin intervención manual.
 
+## 9.1 Informe de avance de contratos (interno)
+
+Consulta interna del dueño y del encargado: cuánto de lo contratado ya se aplicó, agrupado por cultivo y por cliente. No es un reporte del portal — el cliente ve el suyo, acotado a su contrato (§13).
+
+- **Entrada obligatoria**: al menos un cliente y al menos un cultivo, ambos de selección múltiple y sin valor por defecto. Sin las dos cosas no se habilita ni la pantalla de filtros ni la generación; el selector que falta muestra su propio mensaje de error.
+- **Filtros** (pantalla aparte, no editables desde los chips): campaña (múltiple, por defecto la campaña activa de la sesión), rango de fechas, estado del contrato, saldo (`a aplicar` / `cumplido` / `pendiente`), e incluir contratos deshabilitados (apagado por defecto). Los filtros aplicados se ven como chips en la pantalla principal; quitar un chip regenera el informe sin ese filtro.
+- **Dos agrupaciones**, en pestañas: *Por cultivo* (por defecto) y *Por cliente* — esta última anida cliente dentro de cultivo, en tarjetas colapsadas, una abierta a la vez.
+- **Columnas por contrato**: contrato, hectáreas pactadas, hectáreas aplicadas y **a aplicar** (pactadas − aplicadas), con totalizador de esta última al pie de cada grupo. Lista ordenada por vencimiento más cercano.
+- **Barra de avance** con el porcentaje de cumplimiento (aplicadas ÷ pactadas), por tramos de color: 0-33 %, 34-66 %, 67-99 %, 100 % y más de 100 % — cinco tramos, cada uno con su token de color, ninguno hardcodeado (invariante 11).
+- **Estado vacío** hasta generar la primera consulta, y también cuando la consulta no devuelve nada.
+
+La forma de la pantalla sigue el molde del informe de contratos de producción de `synagroweb.com/manual/contrato-de-produccion/`, con hectáreas donde ese sistema pone kilos de grano. Agrocom vende servicio de aplicación, no compra grano: de ahí se toma la interacción, no el modelo (ADR 0015).
+
 ---
 
 ## 10. Alertas por excepción
@@ -414,6 +447,9 @@ Dos reglas que aplican a **todo** el sistema, no solo a usuarios — detalladas 
 
 - **Borrado lógico (soft delete) por defecto** en todo modelo de dominio. Ningún recurso (cliente, producto, dron, persona, orden…) se elimina físicamente; queda marcado como eliminado y deja de listarse por defecto, pero se conserva para no romper referencias históricas y para auditoría.
 - **Bitácora de auditoría transversal**: toda creación, modificación, borrado lógico y cambio de estado relevante registra quién (actor autenticado), cuándo, sobre qué entidad, qué acción, y — donde aplique — los valores antes/después. No se limita a validaciones, planillas, gastos y movimientos de stock: es un mecanismo de plataforma (trait/observer), no una tarea que cada módulo implemente por separado.
+- **Excepción única al "valores antes/después": los secretos de configuración.** Las llaves y tokens de `/panel/configuracion` registran el cambio (quién, cuándo, qué clave) pero **nunca su valor**, ni el viejo ni el nuevo — si no, la bitácora sería el lugar más fácil del sistema para leer todas las llaves en claro. Ver ADR 0016.
+
+**Configuración del sistema vs. datos de la empresa** — son dos pantallas distintas y no se mezclan: `/panel/organizacion` guarda quién es la empresa (identidad y datos de facturación); `/panel/configuracion` guarda con qué parámetros funciona la herramienta (llaves de mapas, correo, integraciones), cifrados en reposo, con `.env` como respaldo y sin volver nunca al navegador (ADR 0016).
 
 ---
 
