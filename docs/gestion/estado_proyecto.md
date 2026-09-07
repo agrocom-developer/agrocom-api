@@ -21,6 +21,27 @@ Al empezar una iteración nueva: leé este documento completo primero (es corto)
 
 ## Fase actual
 
+> **Nota del 7/9/2026 — el resto de este documento está desfasado.** La tabla de
+> abajo quedó en el sprint 2; el estado real es Sprint 12 cerrado (PRs hasta el
+> #122) y **Sprint 13 recién planificado**: el dueño trajo un lote de ajustes de
+> negocio (campaña como eje, equipos de trabajo con su equipamiento, cultivo por
+> lote y campaña, altura de vuelo en el contrato, ventana "todo el día",
+> aplicación de siembra o cosecha, entrada y salida de haciendas, e informe de
+> avance por cultivo y cliente). Consolidados en el **ADR 0015**, en la
+> especificación (§4.0 a §4.4, §5 y §9.1) y en el **Sprint 13**, tareas 69 a 75.
+>
+> Ese mismo día llegó una segunda tanda, mirando el panel andando: inputs de
+> fecha y desplegables obsoletos, propiedades y lotes mezclados en un menú,
+> "Personas" que debía decir "Personal", repuestos por casillas, la pestaña de
+> Facturación vacía, mapa sin pantalla completa, y una configuración del sistema
+> para llaves y tokens. Consolidada en el **ADR 0016**, la extensión del **ADR
+> 0002** y el **Sprint 14**, tareas 76 a 80.
+>
+> El orden de ejecución cruza las dos tandas y está en
+> `docs/gestion/cola_tareas.md` ("Por qué ese orden"), no en el número de
+> sprint. Para retomar el hilo, leé eso, no la tabla de abajo.
+
+
 **Sprint 1 cerrado en lo que es de este repo; sprint 2 en curso (1/9/2026).**
 
 | Id | Qué | Estado |
