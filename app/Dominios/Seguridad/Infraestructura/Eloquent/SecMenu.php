@@ -26,6 +26,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int|null $padre_id
  * @property int $orden
  * @property int|null $permission_id
+ * @property bool $requiere_persona el ítem exige que el usuario tenga persona vinculada, no solo el permiso
  */
 class SecMenu extends ModeloDominio
 {
@@ -40,6 +41,7 @@ class SecMenu extends ModeloDominio
         'padre_id',
         'orden',
         'permission_id',
+        'requiere_persona',
     ];
 
     /** @return array<string, string> */
@@ -49,6 +51,7 @@ class SecMenu extends ModeloDominio
             'padre_id' => 'integer',
             'orden' => 'integer',
             'permission_id' => 'integer',
+            'requiere_persona' => 'boolean',
         ];
     }
 

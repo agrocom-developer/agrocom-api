@@ -57,7 +57,18 @@ it('el selector de rol responde 200 con la lista de roles vivos cuando hay 2+', 
 });
 
 it('el selector de rol con un único rol vivo lo fija solo y redirige al primer ítem visible de su menú', function () {
-    $usuario = SecUser::factory()->create();
+    // Con persona vinculada: «Devengos» lleva `requiere_persona` en el
+    // catálogo del menú, porque la pantalla resuelve por PERSONA y no por rol
+    // (ver ObtenerMenuPorRolActivo). Un piloto de verdad siempre tiene una —
+    // es lo que lo hace piloto.
+    $persona = new PerPersona([
+        'nombre' => 'Piloto con persona vinculada',
+        'rol' => RolOperativoPersona::Piloto,
+        'activo' => true,
+    ]);
+    $persona->save();
+
+    $usuario = SecUser::factory()->create(['persona_id' => $persona->id]);
     $idPiloto = panelAsignarRol($usuario, 'piloto');
 
     $this->actingAs($usuario, 'interno');
@@ -68,6 +79,20 @@ it('el selector de rol con un único rol vivo lo fija solo y redirige al primer 
     // ítem visible es Financiero > Devengos (finanzas.devengo.ver), nunca el
     // dashboard.
     $respuesta->assertRedirect(route('panel.devengos.index'));
+    expect(session('sec_rol_activo_id'))->toBe($idPiloto);
+});
+
+it('el selector de rol con un único rol vivo SIN persona no ofrece «Devengos» y cae al dashboard', function () {
+    // Mismo rol, mismo permiso, sin persona: el ítem se oculta en vez de
+    // llevar a un 404 (ver `sec_menu.requiere_persona`).
+    $usuario = SecUser::factory()->create(['persona_id' => null]);
+    $idPiloto = panelAsignarRol($usuario, 'piloto');
+
+    $this->actingAs($usuario, 'interno');
+
+    $this->get(route('panel.rol-activo.selector'))
+        ->assertRedirect(route('panel.dashboard'));
+
     expect(session('sec_rol_activo_id'))->toBe($idPiloto);
 });
 
