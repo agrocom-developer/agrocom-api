@@ -54,7 +54,7 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <form method="GET" action="{{ route('panel.personas.index') }}" class="ag-personas__filtros">
+            <form method="GET" action="{{ route('panel.personas.index') }}" class="ag-filtros ag-personas__filtros">
                 <div class="ag-input">
                     <label for="filtro-q" class="ag-input__label">{{ __('personal.personas.filtro_busqueda') }}</label>
                     <div class="ag-input__control">
@@ -69,7 +69,7 @@
                     </div>
                 </div>
 
-                <div class="ag-personas__filtros-acciones">
+                <div class="ag-filtros__acciones ag-personas__filtros-acciones">
                     {{-- outline, no primary: "Nueva persona" ya es el único
                          botón sólido del pliegue (§5 de la guía de pantalla). --}}
                     <x-atoms.button type="submit" variant="outline" size="md" icon="search">

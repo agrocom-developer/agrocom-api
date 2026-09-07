@@ -15,21 +15,11 @@
 
 /* Listado (index) */
 
-.ag-gastos__filtros {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--ag-space-4);
-    align-items: flex-end;
-}
 
 .ag-gastos__filtros .ag-input {
     min-width: 14rem;
 }
 
-.ag-gastos__filtros-acciones {
-    display: flex;
-    gap: var(--ag-space-2);
-}
 
 .ag-gastos__tabla {
     border: 1px solid var(--ag-color-border-card);

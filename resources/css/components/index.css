@@ -28,6 +28,7 @@
 @import './summary-card.css';
 @import './progress-meter.css';
 @import './file-field.css';
+@import './filter-bar.css';
 
 /* Organisms (quinta vuelta — layout de tres niveles) */
 @import './collapsible-menu-group.css';

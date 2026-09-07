@@ -53,7 +53,7 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <form method="GET" action="{{ route('panel.clientes.index') }}" class="ag-clientes__filtros">
+            <form method="GET" action="{{ route('panel.clientes.index') }}" class="ag-filtros ag-clientes__filtros">
                 <div class="ag-input">
                     <label for="filtro-q" class="ag-input__label">{{ __('comercial.clientes.filtro_busqueda') }}</label>
                     <div class="ag-input__control">
@@ -68,7 +68,7 @@
                     </div>
                 </div>
 
-                <div class="ag-clientes__filtros-acciones">
+                <div class="ag-filtros__acciones ag-clientes__filtros-acciones">
                     {{-- outline, no primary: "Nuevo cliente" ya es el único botón
                          sólido del pliegue (§5 de la guía de pantalla). --}}
                     <x-atoms.button type="submit" variant="outline" size="md" icon="search">

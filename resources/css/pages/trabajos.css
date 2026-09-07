@@ -36,10 +36,6 @@
     min-width: 12rem;
 }
 
-.ag-trabajos__filtros-acciones {
-    display: flex;
-    gap: var(--ag-space-2);
-}
 
 .ag-trabajos__head,
 .ag-trabajos__fila {

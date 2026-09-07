@@ -22,21 +22,11 @@
 
 /* Listado (index) */
 
-.ag-baterias__filtros {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--ag-space-4);
-    align-items: flex-end;
-}
 
 .ag-baterias__filtros .ag-input {
     min-width: 14rem;
 }
 
-.ag-baterias__filtros-acciones {
-    display: flex;
-    gap: var(--ag-space-2);
-}
 
 .ag-baterias__tabla {
     border: 1px solid var(--ag-color-border-card);

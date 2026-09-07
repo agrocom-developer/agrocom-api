@@ -54,7 +54,7 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <form method="GET" action="{{ route('panel.campos.index') }}" class="ag-campos__filtros">
+            <form method="GET" action="{{ route('panel.campos.index') }}" class="ag-filtros ag-campos__filtros">
                 <div class="ag-input">
                     <label for="filtro-q" class="ag-input__label">{{ __('comercial.campos.filtro_busqueda') }}</label>
                     <div class="ag-input__control">
@@ -69,7 +69,7 @@
                     </div>
                 </div>
 
-                <div class="ag-campos__filtros-acciones">
+                <div class="ag-filtros__acciones ag-campos__filtros-acciones">
                     {{-- outline, no primary: "Nuevo campo" ya es el único botón
                          sólido del pliegue (§5 de la guía de pantalla). --}}
                     <x-atoms.button type="submit" variant="outline" size="md" icon="search">

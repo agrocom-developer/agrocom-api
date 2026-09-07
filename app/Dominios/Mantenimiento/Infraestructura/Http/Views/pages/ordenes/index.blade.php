@@ -69,7 +69,7 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <form method="GET" action="{{ route('panel.ordenes-mantenimiento.index') }}" class="ag-ordenes-mantenimiento__filtros">
+            <form method="GET" action="{{ route('panel.ordenes-mantenimiento.index') }}" class="ag-filtros ag-ordenes-mantenimiento__filtros">
                 <div class="ag-input">
                     <label for="filtro-estado" class="ag-input__label">{{ __('mantenimiento.ordenes.filtro_estado') }}</label>
                     <div class="ag-input__control">
@@ -93,7 +93,7 @@
                     </div>
                 </div>
 
-                <div class="ag-ordenes-mantenimiento__filtros-acciones">
+                <div class="ag-filtros__acciones ag-ordenes-mantenimiento__filtros-acciones">
                     <x-atoms.button type="submit" variant="outline" size="md" icon="search">
                         {{ __('mantenimiento.ordenes.filtrar') }}
                     </x-atoms.button>

@@ -16,10 +16,6 @@
 }
 
 .ag-alertas__filtros {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--ag-space-4);
-    align-items: flex-end;
     margin-top: var(--ag-space-4);
 }
 
@@ -27,10 +23,6 @@
     min-width: 12rem;
 }
 
-.ag-alertas__filtros-acciones {
-    display: flex;
-    gap: var(--ag-space-2);
-}
 
 .ag-alertas__tabla {
     margin-top: var(--ag-space-5);

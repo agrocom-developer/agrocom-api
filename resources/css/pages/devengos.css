@@ -12,12 +12,6 @@
     gap: var(--ag-space-5);
 }
 
-.ag-devengos__filtros {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--ag-space-4);
-    align-items: flex-end;
-}
 
 .ag-devengos__filtros .ag-input {
     min-width: 12rem;

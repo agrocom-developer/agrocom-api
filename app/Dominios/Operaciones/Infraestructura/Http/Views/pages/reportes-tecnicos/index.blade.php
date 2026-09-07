@@ -48,7 +48,7 @@
 
             @php $hayFiltrosActivos = $filtros['cliente_id'] !== null || $filtros['desde'] !== null || $filtros['hasta'] !== null; @endphp
 
-            <form method="GET" action="{{ route('panel.reportes.tecnicos.index') }}" class="ag-reportes-tecnicos__filtros">
+            <form method="GET" action="{{ route('panel.reportes.tecnicos.index') }}" class="ag-filtros ag-reportes-tecnicos__filtros">
                 <div class="ag-input">
                     <label for="filtro-cliente" class="ag-input__label">{{ __('operaciones.reportes_tecnicos.filtro_cliente') }}</label>
                     <div class="ag-input__control">
@@ -77,7 +77,7 @@
                     </div>
                 </div>
 
-                <div class="ag-reportes-tecnicos__filtros-acciones">
+                <div class="ag-filtros__acciones ag-reportes-tecnicos__filtros-acciones">
                     <x-atoms.button type="submit" variant="primary" size="md" icon="filter_alt">
                         {{ __('operaciones.reportes_tecnicos.filtrar') }}
                     </x-atoms.button>

@@ -53,7 +53,7 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <form method="GET" action="{{ route('panel.bases.index') }}" class="ag-bases__filtros">
+            <form method="GET" action="{{ route('panel.bases.index') }}" class="ag-filtros ag-bases__filtros">
                 <div class="ag-input">
                     <label for="filtro-q" class="ag-input__label">{{ __('personal.bases.filtro_busqueda') }}</label>
                     <div class="ag-input__control">
@@ -68,7 +68,7 @@
                     </div>
                 </div>
 
-                <div class="ag-bases__filtros-acciones">
+                <div class="ag-filtros__acciones ag-bases__filtros-acciones">
                     {{-- outline, no primary: "Nueva base" ya es el único botón
                          sólido del pliegue (§5 de la guía de pantalla). --}}
                     <x-atoms.button type="submit" variant="outline" size="md" icon="search">

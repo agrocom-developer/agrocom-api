@@ -21,21 +21,11 @@
 
 /* Listado (index) */
 
-.ag-personas__filtros {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--ag-space-4);
-    align-items: flex-end;
-}
 
 .ag-personas__filtros .ag-input {
     min-width: 16rem;
 }
 
-.ag-personas__filtros-acciones {
-    display: flex;
-    gap: var(--ag-space-2);
-}
 
 .ag-personas__tabla {
     border: 1px solid var(--ag-color-border-card);

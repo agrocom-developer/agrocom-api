@@ -43,7 +43,7 @@
 
         @php $hayFiltrosActivos = $filtros['estado'] !== null || $filtros['lote_id'] !== null || $filtros['orden_id'] !== null; @endphp
 
-        <form method="GET" action="{{ route('panel.trabajos.index') }}" class="ag-trabajos__filtros">
+        <form method="GET" action="{{ route('panel.trabajos.index') }}" class="ag-filtros ag-trabajos__filtros">
             <div class="ag-input">
                 <label for="filtro-estado" class="ag-input__label">{{ __('operaciones.trabajos.filtro_estado') }}</label>
                 <div class="ag-input__control">
@@ -84,7 +84,7 @@
                 </div>
             </div>
 
-            <div class="ag-trabajos__filtros-acciones">
+            <div class="ag-filtros__acciones ag-trabajos__filtros-acciones">
                 <x-atoms.button type="submit" variant="primary" size="md" icon="filter_alt">
                     {{ __('operaciones.trabajos.filtrar') }}
                 </x-atoms.button>

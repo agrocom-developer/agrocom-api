@@ -22,21 +22,11 @@
 
 /* Listado (index) */
 
-.ag-ordenes__filtros {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--ag-space-4);
-    align-items: flex-end;
-}
 
 .ag-ordenes__filtros .ag-input {
     min-width: 16rem;
 }
 
-.ag-ordenes__filtros-acciones {
-    display: flex;
-    gap: var(--ag-space-2);
-}
 
 .ag-ordenes__tabla {
     border: 1px solid var(--ag-color-border-card);

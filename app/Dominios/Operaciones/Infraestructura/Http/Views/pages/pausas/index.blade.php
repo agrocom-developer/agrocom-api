@@ -82,7 +82,7 @@
                 </div>
             </div>
 
-            <form method="GET" action="{{ route('panel.pausas.index') }}" class="ag-pausas__filtros">
+            <form method="GET" action="{{ route('panel.pausas.index') }}" class="ag-filtros ag-pausas__filtros">
                 <div class="ag-input">
                     <label for="filtro-periodo" class="ag-input__label">{{ __('operaciones.pausas.filtro_periodo') }}</label>
                     <div class="ag-input__control">
@@ -96,7 +96,7 @@
                     </div>
                 </div>
 
-                <div class="ag-pausas__filtros-acciones">
+                <div class="ag-filtros__acciones ag-pausas__filtros-acciones">
                     <x-atoms.button type="submit" variant="outline" size="md" icon="search">
                         {{ __('operaciones.pausas.filtrar') }}
                     </x-atoms.button>

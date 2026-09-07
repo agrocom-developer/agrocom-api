@@ -61,7 +61,7 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <form method="GET" action="{{ route('panel.gastos.index') }}" class="ag-gastos__filtros">
+            <form method="GET" action="{{ route('panel.gastos.index') }}" class="ag-filtros ag-gastos__filtros">
                 <div class="ag-input">
                     <label for="filtro-rubro" class="ag-input__label">{{ __('finanzas.gastos.filtro_rubro') }}</label>
                     <div class="ag-input__control">
@@ -99,7 +99,7 @@
                     </div>
                 </div>
 
-                <div class="ag-gastos__filtros-acciones">
+                <div class="ag-filtros__acciones ag-gastos__filtros-acciones">
                     <x-atoms.button type="submit" variant="outline" size="md" icon="search">
                         {{ __('finanzas.gastos.filtrar') }}
                     </x-atoms.button>
