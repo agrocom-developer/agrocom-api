@@ -23,7 +23,11 @@
       tema ("light"|"dark"), accionActualizar (URL POST),
       urlDashboard (URL destino tras elegir).
 --}}
-<x-templates.panel-shell :title="__('seguridad.rol.seleccion_titulo')" :tema="$tema">
+{{-- `transicion-de-vista`: mitad ENTRANTE del salto login → selección de rol.
+     Es la única pantalla del panel que declara `@view-transition` (la saliente
+     lo hace en su propio <head>, pages/login.blade.php) — el resto del panel
+     navega sin transición a propósito, ver resources/css/transicion-vista.css. --}}
+<x-templates.panel-shell :title="__('seguridad.rol.seleccion_titulo')" :tema="$tema" :transicion-de-vista="true">
     <x-templates.auth-layout
         :headline="__('seguridad.rol.foto_headline')"
         :subheadline="__('seguridad.rol.foto_subheadline')"

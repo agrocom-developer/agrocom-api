@@ -13,6 +13,12 @@
     Datos esperados (ver OrganizacionController::index()): la cáscara completa de
     CascaraPanel (menu/roles/…/tema/campana/periodo/version) + tabs/progreso/suscripcion/logoArchivo.
 
+    NO tiene pestaña de "Usuarios y roles": usuarios internos y la asignación de
+    sus roles ya son una pantalla REAL y propia — Seguridad › Usuarios
+    (`panel.usuarios.index`, HU-45), con la columna de roles en chips y el alta/baja
+    de asignaciones. Duplicar esa gestión adentro de un mockup de organización
+    dejaba dos puertas a lo mismo, y la de acá no mostraba nada.
+
     Este es un mockup de PRESENTACIÓN sin guardado funcional. Los botones "Guardar"/
     "Descartar" están deshabilitados, y el estado de la barra de acciones dice
     "Sin cambios pendientes" (nada es editable).
@@ -210,10 +216,6 @@
                             </aside>
                         </div>
                     </form>
-                </div>
-
-                <div class="tab-pane fade" id="ag-tab-usuarios-roles" role="tabpanel" tabindex="0">
-                    <p class="ag-organizacion__proximamente">{{ __('seguridad.organizacion.tab_proximamente') }}</p>
                 </div>
 
                 <div class="tab-pane fade" id="ag-tab-facturacion" role="tabpanel" tabindex="0">

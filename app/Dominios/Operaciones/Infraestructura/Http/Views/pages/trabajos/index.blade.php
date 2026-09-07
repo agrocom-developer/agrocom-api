@@ -38,8 +38,10 @@
         :periodo="$periodo"
         :version="$version"
     >
-        <h1>{{ __('operaciones.trabajos.titulo') }}</h1>
-        <p class="ag-trabajos__intro">{{ __('operaciones.trabajos.subtitulo') }}</p>
+        <x-organisms.page-header
+            :title="__('operaciones.trabajos.titulo')"
+            :subtitle="__('operaciones.trabajos.subtitulo')"
+        />
 
         @php $hayFiltrosActivos = $filtros['estado'] !== null || $filtros['lote_id'] !== null || $filtros['orden_id'] !== null; @endphp
 

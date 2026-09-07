@@ -24,12 +24,23 @@
       explícito en vez de inferir el guard acá porque este template no sabe
       de sesiones.
 
+    - transicionDeVista (bool, default false): incluye
+      `resources/css/transicion-vista.css`, la hoja que declara
+      `@view-transition`. Es opt-in y no parte del bundle porque esa regla
+      es de DOCUMENTO (no se acota por selector): en `app.css` aplicaba a
+      toda navegación same-origin, incluido cada clic del menú del panel —
+      donde el fundido sostenía en pantalla el estado a medio cargar de la
+      página entrante. Hoy la pide solo `pages/seleccionar-rol.blade.php`,
+      la mitad entrante del salto login → selección de rol (la saliente,
+      `pages/login.blade.php`, arma su propio <head> y la incluye ahí).
+
     Slot (default): el cuerpo completo de la página.
 --}}
 @props([
     'title' => null,
     'tema' => 'light',
     'temaUrl' => null,
+    'transicionDeVista' => false,
 ])
 
 <!DOCTYPE html>
@@ -43,7 +54,9 @@
     <meta name="ag-preferencias-tema-url" content="{{ $temaUrl ?? route('panel.preferencias.tema') }}">
     <title>{{ config('app.name', 'Agrocom') }}{{ $title ? ' — '.$title : '' }}</title>
 
-    @vite('resources/css/app.css')
+    @vite($transicionDeVista
+        ? ['resources/css/app.css', 'resources/css/transicion-vista.css']
+        : 'resources/css/app.css')
     @livewireStyles
 </head>
 <body>

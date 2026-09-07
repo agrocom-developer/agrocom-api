@@ -5,12 +5,6 @@
  * (CLAUDE.md invariante 11).
  */
 
-.ag-alertas__intro {
-    color: var(--ag-color-text-muted);
-    margin-top: var(--ag-space-2);
-    max-width: 50rem;
-}
-
 .ag-alertas__aviso {
     margin-top: var(--ag-space-4);
 }

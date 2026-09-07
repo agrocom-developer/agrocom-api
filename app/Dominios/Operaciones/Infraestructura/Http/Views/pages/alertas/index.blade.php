@@ -34,8 +34,10 @@
         :periodo="$periodo"
         :version="$version"
     >
-        <h1>{{ __('operaciones.alertas.titulo') }}</h1>
-        <p class="ag-alertas__intro">{{ __('operaciones.alertas.subtitulo') }}</p>
+        <x-organisms.page-header
+            :title="__('operaciones.alertas.titulo')"
+            :subtitle="__('operaciones.alertas.subtitulo')"
+        />
 
         @if (session('estado'))
             <x-molecules.alert-strip variant="success" icon="check_circle" class="ag-alertas__aviso">
