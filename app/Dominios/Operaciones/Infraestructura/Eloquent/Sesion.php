@@ -6,6 +6,7 @@ use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
 use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
 use App\Dominios\Operaciones\Dominio\EstadoSesion;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
@@ -22,7 +23,10 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  *
  * Recorte de alcance de la tarea 09: sin `dron_id` (ADR 0011 punto 3, tabla
  * `drones` inexistente) ni `captura_rc_id` (evidencias, TE-07). Sin
- * `validado_por`/`fecha_validacion` (HU-14).
+ * `validado_por`/`fecha_validacion` (HU-14). Los tres se agregaron
+ * después: `dron_id` en la tarea 20, `captura_rc_id` en
+ * `2026_09_07_100001_add_captura_rc_id_a_ope_sesiones_table.php` (espec
+ * §4.3: la sesión «se cierra con su propia captura de RC»).
  *
  * Las transiciones de `estado` (abierto → cerrado) pasan por
  * `Aplicacion/MaquinaEstados/MaquinaEstadosSesion.php` (invariante 7); este
@@ -63,6 +67,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property int $piloto_id
  * @property int|null $auxiliar_id
  * @property int|null $dron_id
+ * @property int|null $captura_rc_id
  * @property string $hectareas_declaradas
  * @property string|null $hectarea_inicial_acumulada
  * @property EstadoSesion $estado
@@ -90,6 +95,7 @@ class Sesion extends ModeloDominio
         'piloto_id',
         'auxiliar_id',
         'dron_id',
+        'captura_rc_id',
         'hectareas_declaradas',
         'hectarea_inicial_acumulada',
         'estado',
@@ -143,5 +149,22 @@ class Sesion extends ModeloDominio
     public function incidencias(): HasMany
     {
         return $this->hasMany(Incidencia::class, 'sesion_id');
+    }
+
+    /**
+     * Captura de la pantalla del control remoto con la que el piloto cierra
+     * esta sesión (espec §4.3): la evidencia de rendimiento del vuelo
+     * —hectáreas aplicadas, tiempo de vuelo, litros consumidos— que sostiene
+     * lo declarado en `hectareas_declaradas`.
+     *
+     * `belongsTo` intra-módulo: `Evidencia` también es de `Operaciones` (ADR
+     * 0011, extensión 26/8/2026, punto 5). Nullable: una sesión abierta
+     * todavía no llegó a su captura de cierre.
+     *
+     * @return BelongsTo<Evidencia, $this>
+     */
+    public function capturaRc(): BelongsTo
+    {
+        return $this->belongsTo(Evidencia::class, 'captura_rc_id');
     }
 }

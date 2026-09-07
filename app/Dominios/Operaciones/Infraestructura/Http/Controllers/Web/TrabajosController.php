@@ -102,8 +102,9 @@ final class TrabajosController
 
     /**
      * `GET /panel/trabajos/{trabajo}/evidencias` (HU-42, tarea 56): galería
-     * de evidencias de un trabajo — imagen de campo, firma del acta y fotos
-     * de incidencia por sesión (todas las evidencias que existen hoy para un
+     * de evidencias de un trabajo — imagen de campo, captura del control
+     * remoto de cada sesión, firma del acta y fotos
+     * de incidencia por sesión (todas las evidencias que existen para un
      * trabajo). Mismo permiso que `show()`: es una sub-pantalla del detalle,
      * no un recurso con permiso propio.
      */
@@ -113,7 +114,7 @@ final class TrabajosController
 
         return view('operaciones::pages.trabajos.evidencias', [
             ...$this->autorizacion->cascara($request),
-            'trabajo' => $trabajo->load(['imagenCampoEvidencia', 'acta.evidenciaFirma', 'sesiones.incidencias.evidenciaFoto']),
+            'trabajo' => $trabajo->load(['imagenCampoEvidencia', 'acta.evidenciaFirma', 'sesiones.capturaRc', 'sesiones.incidencias.evidenciaFoto']),
         ]);
     }
 
