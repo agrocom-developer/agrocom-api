@@ -3,7 +3,7 @@ import { asegurarTema, elegirRolDueno, esperarFuentes, iniciarSesion } from './h
 
 /**
  * GET /panel/dashboard, con "Dueño" como rol activo (uno de los tres roles
- * vivos de camila.rojas — cualquiera sirve para esta pasada, se elige este
+ * vivos de carlos.ferrufino — cualquiera sirve para esta pasada, se elige este
  * por ser el de mayor alcance).
  *
  * Zona genuinamente dinámica de esta vista: los 3 gráficos ApexCharts

@@ -1,15 +1,22 @@
 {{--
     Page: trabajos/evidencias (GET /panel/trabajos/{trabajo}/evidencias, panel.trabajos.evidencias)
     Galería de evidencias de un trabajo (HU-42, tarea 56): imagen de campo,
-    firma del acta y fotos de incidencia por sesión — TODAS las evidencias
-    que existen hoy para un trabajo (`ope_evidencias`), agrupadas para
-    revisar sin abrir la base. Sin `captura_rc` a nivel de sesión (recorte
-    de otra tarea, fuera de alcance).
+    capturas del control remoto por sesión, firma del acta y fotos de
+    incidencia — TODAS las evidencias que existen para un trabajo
+    (`ope_evidencias`), agrupadas para revisar sin abrir la base.
+
+    La sección de capturas de RC estaba pendiente desde HU-42 («sin
+    `captura_rc` a nivel de sesión, recorte de otra tarea»): faltaba el punto
+    de enganche en el esquema. Existe desde
+    `2026_09_07_100001_add_captura_rc_id_a_ope_sesiones_table.php`, que
+    agregó `ope_sesiones.captura_rc_id` tal como lo pedía la espec §4.3 («la
+    sesión se cierra con su propia captura de RC»).
 
     Datos esperados (ver TrabajosController::evidencias()): la cáscara de
     CascaraPanel, más:
-    - $trabajo (Trabajo, con `imagenCampoEvidencia`, `acta.evidenciaFirma` y
-      `sesiones.incidencias.evidenciaFoto` precargadas).
+    - $trabajo (Trabajo, con `imagenCampoEvidencia`, `acta.evidenciaFirma`,
+      `sesiones.capturaRc` y `sesiones.incidencias.evidenciaFoto`
+      precargadas).
 
     Solo lectura, gateada por `operaciones.trabajo.ver` — mismo permiso que
     el detalle del trabajo, verificado server-side en el controlador.
@@ -62,6 +69,39 @@
                         {{ __('operaciones.trabajos.evidencias_descargar') }}
                     </x-atoms.button>
                 </div>
+            </div>
+        @endif
+
+        <x-molecules.section-head :title="__('operaciones.trabajos.evidencias_capturas_rc_titulo')" class="ag-trabajo-detalle__seccion" />
+
+        @if ($trabajo->sesiones->every(fn ($sesion) => $sesion->capturaRc === null))
+            <x-molecules.alert-strip variant="info" icon="screenshot_monitor" class="ag-trabajos__aviso">
+                {{ __('operaciones.trabajos.evidencias_capturas_rc_vacio') }}
+            </x-molecules.alert-strip>
+        @else
+            <div class="ag-galeria-evidencias__grid">
+                @foreach ($trabajo->sesiones as $sesion)
+                    @continue ($sesion->capturaRc === null)
+
+                    <div class="ag-galeria-evidencias__item">
+                        <a href="{{ route('panel.evidencias.archivo', $sesion->capturaRc) }}" target="_blank" rel="noopener">
+                            <img
+                                src="{{ route('panel.evidencias.archivo', $sesion->capturaRc) }}"
+                                alt="{{ __('operaciones.trabajos.evidencias_capturas_rc_alt', ['secuencia' => $sesion->secuencia]) }}"
+                                class="ag-galeria-evidencias__miniatura"
+                                loading="lazy"
+                            >
+                        </a>
+                        <span class="ag-galeria-evidencias__etiqueta">
+                            {{ __('operaciones.trabajos.evidencias_sesion_titulo', ['secuencia' => $sesion->secuencia]) }}
+                            &middot;
+                            {{ __('operaciones.trabajos.evidencias_capturas_rc_hectareas', ['hectareas' => $sesion->hectareas_declaradas]) }}
+                        </span>
+                        <x-atoms.button href="{{ route('panel.evidencias.archivo', $sesion->capturaRc) }}" variant="outline" size="sm" icon="download">
+                            {{ __('operaciones.trabajos.evidencias_descargar') }}
+                        </x-atoms.button>
+                    </div>
+                @endforeach
             </div>
         @endif
 

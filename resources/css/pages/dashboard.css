@@ -31,13 +31,15 @@
     gap: var(--ag-space-1);
 }
 
+/* Misma receta que `organisms/page-header` — el h1 de una pantalla se ve
+   igual en todo el panel (tokens `--ag-title-page-*`). */
 .ag-dash__title {
     margin: 0;
     font-family: var(--ag-font-family-display);
     font-optical-sizing: auto;
-    font-weight: var(--ag-font-weight-regular);
-    font-size: 2.125rem;
-    line-height: 1.05;
+    font-weight: var(--ag-title-page-weight);
+    font-size: var(--ag-title-page-size);
+    line-height: var(--ag-title-page-line-height);
     color: var(--ag-color-text);
 }
 

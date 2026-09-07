@@ -58,7 +58,7 @@ El cálculo de contraste en papel no alcanza — hay que ver el resultado real e
 Procedimiento usado en la sesión del 28/8/2026 (login + selección de rol):
 
 1. Levantar el panel local (`php artisan serve` o el server ya corriendo en `localhost:8000`).
-2. Loguear con el usuario demo multirol: `camila.rojas` / `password` (seeded por `Demo/PanelDemoSeeder`). **Los datos demo de la base del compose no se borran nunca** — ver el skill [verificacion].
+2. Loguear con el usuario demo multirol: `carlos.ferrufino` / `password` (seeded por `Demo/PersonalDemoSeeder`; es el dueño real, con los cuatro roles que contestó en las encuestas de campo). **Los datos demo de la base del compose no se borran nunca** — ver el skill [verificacion].
 3. Correr un script Playwright headless con el binario ya instalado como dependencia del repo (no hace falta `npm install -g` ni un nuevo `package.json`):
    ```
    NODE_PATH=<repo>/node_modules node <script>.js

@@ -15,21 +15,11 @@
 
 /* Listado (index) */
 
-.ag-combustible__filtros {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--ag-space-4);
-    align-items: flex-end;
-}
 
 .ag-combustible__filtros .ag-input {
     min-width: 12rem;
 }
 
-.ag-combustible__filtros-acciones {
-    display: flex;
-    gap: var(--ag-space-2);
-}
 
 .ag-combustible__tabla {
     border: 1px solid var(--ag-color-border-card);

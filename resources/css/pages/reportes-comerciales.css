@@ -14,12 +14,6 @@
     gap: var(--ag-space-5);
 }
 
-.ag-reportes-comerciales__filtros {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    gap: var(--ag-space-4);
-}
 
 .ag-reportes-comerciales__filtros-acciones {
     display: flex;

@@ -55,7 +55,7 @@
 
             @php $hayFiltrosActivos = $filtros['cliente_id'] !== null || $filtros['contrato_id'] !== null; @endphp
 
-            <form method="GET" action="{{ route('panel.reportes.comercial.index') }}" class="ag-reportes-comerciales__filtros">
+            <form method="GET" action="{{ route('panel.reportes.comercial.index') }}" class="ag-filtros ag-reportes-comerciales__filtros">
                 <div class="ag-input">
                     <label for="filtro-cliente" class="ag-input__label">{{ __('comercial.reportes_comerciales.filtro_cliente') }}</label>
                     <div class="ag-input__control">
@@ -84,7 +84,7 @@
                     </div>
                 </div>
 
-                <div class="ag-reportes-comerciales__filtros-acciones">
+                <div class="ag-filtros__acciones ag-reportes-comerciales__filtros-acciones">
                     <x-atoms.button type="submit" variant="primary" size="md" icon="filter_alt">
                         {{ __('comercial.reportes_comerciales.filtrar') }}
                     </x-atoms.button>

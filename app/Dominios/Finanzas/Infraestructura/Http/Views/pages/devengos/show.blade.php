@@ -44,7 +44,7 @@
                 :subtitle="__('finanzas.devengos.subtitulo')"
             />
 
-            <form method="GET" action="{{ route('panel.devengos.show', $personaId) }}" class="ag-devengos__filtros">
+            <form method="GET" action="{{ route('panel.devengos.show', $personaId) }}" class="ag-filtros ag-devengos__filtros">
                 <div class="ag-input">
                     <label for="filtro-periodo" class="ag-input__label">{{ __('finanzas.devengos.filtro_periodo') }}</label>
                     <div class="ag-input__control">

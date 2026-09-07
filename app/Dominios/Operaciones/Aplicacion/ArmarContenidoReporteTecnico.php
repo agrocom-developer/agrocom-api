@@ -50,6 +50,7 @@ final class ArmarContenidoReporteTecnico
      *     resumen: array{hectareas_declaradas: string, litros_por_hectarea: string|null, cobertura: string|null},
      *     condiciones: list<array{sesion_id: int, viento_kmh: string, temperatura_c: string, humedad_pct: string, resultado: string}>,
      *     superficie_no_aplicada: array{hectareas: string, motivo: string|null}|null,
+     *     capturas_rc: list<array{secuencia: int, hectareas_declaradas: string, evidencia_url: string}>,
      *     incidencias: list<array{tipo: string, evidencia_url: string}>,
      *     sesiones_detalle: list<array{sesion_id: int, piloto_id: int, dron_id: int|null, hectareas_declaradas: string, motivo_cierre: string|null}>,
      *     nota_mezcla: string,
@@ -57,7 +58,7 @@ final class ArmarContenidoReporteTecnico
      */
     public function ejecutar(Trabajo $trabajo): array
     {
-        $trabajo->loadMissing(['sesiones.incidencias.evidenciaFoto', 'imagenCampoEvidencia', 'acta', 'condiciones']);
+        $trabajo->loadMissing(['sesiones.incidencias.evidenciaFoto', 'sesiones.capturaRc', 'imagenCampoEvidencia', 'acta', 'condiciones']);
 
         /** @var Collection<int, Sesion> $sesionesVigentes */
         $sesionesVigentes = $trabajo->sesiones->whereNull('anulada_en')->sortBy('secuencia')->values();
@@ -85,6 +86,22 @@ final class ArmarContenidoReporteTecnico
                 ])
                 ->all(),
             'superficie_no_aplicada' => $this->superficieNoAplicada($trabajo, $cobertura, $sesionesVigentes),
+            // Espec §4.3: cada sesión «se cierra con su propia captura de
+            // RC» — la foto de la pantalla del control remoto con las
+            // hectáreas, el tiempo de vuelo y los litros que el piloto
+            // declaró. Es la evidencia que sostiene el número facturado, así
+            // que va en el reporte que ve el cliente. Solo las sesiones que
+            // efectivamente la tienen (`captura_rc_id` es nullable: una
+            // sesión abierta todavía no llegó a su cierre).
+            'capturas_rc' => $sesionesVigentes
+                ->filter(fn (Sesion $sesion): bool => $sesion->capturaRc !== null)
+                ->map(fn (Sesion $sesion): array => [
+                    'secuencia' => $sesion->secuencia,
+                    'hectareas_declaradas' => (string) $sesion->hectareas_declaradas,
+                    'evidencia_url' => (string) $sesion->capturaRc?->archivo_url,
+                ])
+                ->values()
+                ->all(),
             // HU-08 (tarea 22, incidencias con evidencia): cuelgan de la
             // SESIÓN, no del trabajo directo — se recolectan de
             // `$sesionesVigentes`, no de una relación `Trabajo::incidencias()`

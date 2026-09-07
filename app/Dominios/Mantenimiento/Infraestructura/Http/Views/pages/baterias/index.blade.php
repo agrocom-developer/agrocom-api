@@ -70,7 +70,7 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <form method="GET" action="{{ route('panel.baterias.index') }}" class="ag-baterias__filtros">
+            <form method="GET" action="{{ route('panel.baterias.index') }}" class="ag-filtros ag-baterias__filtros">
                 <div class="ag-input">
                     <label for="filtro-q" class="ag-input__label">{{ __('mantenimiento.baterias.filtro_busqueda') }}</label>
                     <div class="ag-input__control">
@@ -109,7 +109,7 @@
                     </div>
                 </div>
 
-                <div class="ag-baterias__filtros-acciones">
+                <div class="ag-filtros__acciones ag-baterias__filtros-acciones">
                     {{-- outline, no primary: "Nueva batería" ya es el único
                          botón sólido del pliegue (§5 de la guía de pantalla). --}}
                     <x-atoms.button type="submit" variant="outline" size="md" icon="search">

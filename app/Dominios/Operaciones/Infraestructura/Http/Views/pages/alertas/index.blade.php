@@ -45,7 +45,7 @@
 
         @php $hayFiltrosActivos = $filtros['estado'] !== null || $filtros['tipo'] !== null; @endphp
 
-        <form method="GET" action="{{ route('panel.alertas.index') }}" class="ag-alertas__filtros">
+        <form method="GET" action="{{ route('panel.alertas.index') }}" class="ag-filtros ag-alertas__filtros">
             <div class="ag-input">
                 <label for="filtro-estado" class="ag-input__label">{{ __('operaciones.alertas.filtro_estado') }}</label>
                 <div class="ag-input__control">
@@ -70,7 +70,7 @@
                 </div>
             </div>
 
-            <div class="ag-alertas__filtros-acciones">
+            <div class="ag-filtros__acciones ag-alertas__filtros-acciones">
                 <x-atoms.button type="submit" variant="primary" size="md" icon="filter_alt">
                     {{ __('operaciones.alertas.filtrar') }}
                 </x-atoms.button>

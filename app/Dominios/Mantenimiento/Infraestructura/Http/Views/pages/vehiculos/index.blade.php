@@ -68,7 +68,7 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <form method="GET" action="{{ route('panel.vehiculos.index') }}" class="ag-vehiculos__filtros">
+            <form method="GET" action="{{ route('panel.vehiculos.index') }}" class="ag-filtros ag-vehiculos__filtros">
                 <div class="ag-input">
                     <label for="filtro-q" class="ag-input__label">{{ __('mantenimiento.vehiculos.filtro_busqueda') }}</label>
                     <div class="ag-input__control">
@@ -107,7 +107,7 @@
                     </div>
                 </div>
 
-                <div class="ag-vehiculos__filtros-acciones">
+                <div class="ag-filtros__acciones ag-vehiculos__filtros-acciones">
                     {{-- outline, no primary: "Nuevo vehículo" ya es el único
                          botón sólido del pliegue (§5 de la guía de pantalla). --}}
                     <x-atoms.button type="submit" variant="outline" size="md" icon="search">

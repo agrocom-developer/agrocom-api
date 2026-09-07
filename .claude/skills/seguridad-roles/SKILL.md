@@ -66,7 +66,7 @@ El seeder `SeguridadSeeder` carga el catálogo base (5 roles, 6 permisos).
 | Menú por rol activo | `Aplicacion/ObtenerMenuPorRolActivo`, `SecMenu` |
 | Asignar roles a un usuario | `Aplicacion/AsignarRolesUsuario` |
 | Tema e idioma por usuario | `Aplicacion/ActualizarPreferenciaUsuario`, `SecUserPreferencia` |
-| Usuario demo multirol | `camila.rojas` / `password` (seeder `Demo/PanelDemoSeeder`) |
+| Usuario demo multirol | `carlos.ferrufino` / `password` (seeder `Demo/PersonalDemoSeeder`) |
 
 Excepciones de dominio disponibles: `RolNoAsignado`, `PermisoDenegado`,
 `UsuarioDuplicado`, `IdiomaNoSoportado`.

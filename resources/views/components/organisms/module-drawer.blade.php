@@ -63,7 +63,7 @@
         <div class="ag-drawer__footer">
             <a href="{{ $cambiarRolHref }}" class="ag-module-sidebar__role-link">
                 <x-atoms.icon name="swap_horiz" size="sm" />
-                <span>{{ __('seguridad.rol.switch_trigger') }}</span>
+                <span class="ag-module-sidebar__role-label">{{ __('seguridad.rol.switch_trigger') }}</span>
             </a>
         </div>
     @endif

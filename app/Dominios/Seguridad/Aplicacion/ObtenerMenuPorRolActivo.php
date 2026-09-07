@@ -43,6 +43,24 @@ use Illuminate\Support\Collection;
  * una de las dos condiciones se cumple. Es el criterio más común en
  * AdminLTE (nunca un grupo colapsable vacío), con la excepción explícita de
  * un grupo que además es, él mismo, una acción permitida.
+ *
+ * ### `requiere_persona`: cuando el permiso alcanza pero el sujeto falta
+ *
+ * El permiso responde «¿este rol puede ver esta clase de cosa?». Las
+ * pantallas de «lo mío» hacen además una segunda pregunta, sobre el usuario
+ * y no sobre su rol: «¿de quién?». `GET /panel/devengos` (HU-28) redirige a
+ * los devengos de la persona del usuario autenticado y hace `abort(404)` si
+ * ese usuario no tiene `persona_id` — cosa perfectamente posible, porque
+ * vincular una cuenta a una persona es opcional en el ABM de usuarios
+ * (HU-45). Sin este chequeo, un usuario interno sin persona con el permiso
+ * `finanzas.devengo.ver` (lo tienen `piloto`, `auxiliar` y `dueno`) ve
+ * «Devengos» en el sidebar y recibe un 404 al hacer clic.
+ *
+ * Un ítem con `requiere_persona` sigue siendo un ítem gobernado por su
+ * permiso: la bandera solo agrega una condición, nunca reemplaza ni relaja
+ * la del permiso. Y ocultar el ítem NO es autorizar: `DevengosController`
+ * mantiene su propio `abort_if`, porque un ítem oculto no protege una URL
+ * tipeada a mano (invariante 2 del modelo de seguridad).
  */
 final class ObtenerMenuPorRolActivo
 {
@@ -83,7 +101,8 @@ final class ObtenerMenuPorRolActivo
         $hijosEnCatalogo = $item->hijos;
         $hijosVisibles = $this->nodosVisibles($hijosEnCatalogo, $usuario, $idRolActivo);
 
-        $cumplePermisoPropio = $this->cumplePermiso($item, $usuario, $idRolActivo);
+        $cumplePermisoPropio = $this->cumplePermiso($item, $usuario, $idRolActivo)
+            && $this->cumpleRequisitoPersona($item, $usuario);
 
         $esVisible = $hijosEnCatalogo->isEmpty()
             // Hoja: la regla simple de la migración (permiso nulo o cumplido).
@@ -105,6 +124,23 @@ final class ObtenerMenuPorRolActivo
             hijos: $hijosVisibles,
             descripcion: $item->descripcion,
         );
+    }
+
+    /**
+     * Segunda condición, independiente del rol activo: un ítem marcado
+     * `requiere_persona` en el catálogo solo es visible para un usuario con
+     * `persona_id`. Ver la sección homónima del docblock de la clase.
+     *
+     * Un ítem sin la bandera —la enorme mayoría— pasa siempre: la regla no
+     * cambia nada para el resto del menú.
+     */
+    private function cumpleRequisitoPersona(SecMenu $item, SecUser $usuario): bool
+    {
+        if (! $item->requiere_persona) {
+            return true;
+        }
+
+        return $usuario->persona_id !== null;
     }
 
     private function cumplePermiso(SecMenu $item, SecUser $usuario, int $idRolActivo): bool

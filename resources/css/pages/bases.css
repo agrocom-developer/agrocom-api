@@ -20,21 +20,11 @@
 
 /* Listado (index) */
 
-.ag-bases__filtros {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--ag-space-4);
-    align-items: flex-end;
-}
 
 .ag-bases__filtros .ag-input {
     min-width: 16rem;
 }
 
-.ag-bases__filtros-acciones {
-    display: flex;
-    gap: var(--ag-space-2);
-}
 
 .ag-bases__tabla {
     border: 1px solid var(--ag-color-border-card);

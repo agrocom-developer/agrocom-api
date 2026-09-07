@@ -1,6 +1,6 @@
 import { type Page } from '@playwright/test';
 
-export const USUARIO_DEMO = 'camila.rojas';
+export const USUARIO_DEMO = 'carlos.ferrufino';
 export const PASSWORD_DEMO = 'password';
 export const NOMBRE_ROL_DUENO = 'Dueño';
 export const NOMBRE_ROL_PILOTO = 'Piloto de dron';

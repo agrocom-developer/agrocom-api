@@ -26,6 +26,9 @@
         th, td { border: 1px solid gray; padding: 6px 8px; text-align: left; }
         th { background-color: whitesmoke; width: 40%; }
         img.campo { max-width: 100%; margin-top: 8px; }
+        .captura { width: 48%; display: inline-block; vertical-align: top; margin: 8px 1% 0 0; }
+        .captura img { width: 100%; border: 1px solid gray; }
+        .captura span { display: block; color: dimgray; font-size: 11px; margin-top: 2px; }
     </style>
 </head>
 <body>
@@ -33,8 +36,11 @@
     <p class="subtitulo">Lote #{{ $trabajo->lote_id }} — Orden #{{ $trabajo->orden_id }} (aplicación {{ $trabajo->nro_aplicacion }})</p>
 
     <h2>Imagen del campo</h2>
-    @if ($datos['imagen_campo_url'] !== null)
-        <img class="campo" src="{{ $datos['imagen_campo_url'] }}" alt="Imagen del campo">
+    {{-- `archivo_url` es una clave del bucket, no una URL: dompdf no puede
+         resolverla. Se incrustan los bytes. Ver EvidenciaIncrustada. --}}
+    @php($imagenCampo = \App\Dominios\Operaciones\Infraestructura\Http\Presentacion\EvidenciaIncrustada::dataUri($datos['imagen_campo_url']))
+    @if ($imagenCampo !== null)
+        <img class="campo" src="{{ $imagenCampo }}" alt="Imagen del campo">
     @else
         <p>Sin imagen del campo registrada.</p>
     @endif
@@ -121,6 +127,25 @@
                 <td>{{ $datos['superficie_no_aplicada']['motivo'] ?? '—' }}</td>
             </tr>
         </table>
+    @endif
+
+    <h2>Capturas del control remoto</h2>
+    {{-- Espec §4.3: cada sesión se cierra con su captura de RC. Es la
+         evidencia de rendimiento del vuelo —hectáreas, tiempo, litros— que
+         sostiene el número que se factura, así que va en el reporte que
+         recibe el cliente. --}}
+    @if (count($datos['capturas_rc']) > 0)
+        @foreach ($datos['capturas_rc'] as $captura)
+            @php($imagenCaptura = \App\Dominios\Operaciones\Infraestructura\Http\Presentacion\EvidenciaIncrustada::dataUri($captura['evidencia_url']))
+            <div class="captura">
+                @if ($imagenCaptura !== null)
+                    <img src="{{ $imagenCaptura }}" alt="Captura del control remoto de la sesión {{ $captura['secuencia'] }}">
+                @endif
+                <span>Sesión {{ $captura['secuencia'] }} — {{ $captura['hectareas_declaradas'] }} ha</span>
+            </div>
+        @endforeach
+    @else
+        <p>Ninguna sesión de este trabajo registró su captura del control remoto.</p>
     @endif
 
     <h2>Incidencias</h2>

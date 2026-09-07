@@ -10,7 +10,7 @@
  * (`ValidarSesion`, nunca un `DevengoPersonal::create()` directo — es lo
  * único que genera un devengo en la app real).
  *
- * Reusa `camila.rojas` (rol `piloto` ya asignado por `PanelDemoSeeder`) en
+ * Reusa `carlos.ferrufino` (rol `piloto` ya asignado por `PersonalDemoSeeder`) en
  * vez de crear un `SecUser` nuevo, y reusa el cliente/campo/lote/contrato/
  * orden de `NucleoComercialSeeder` (Agropecuaria San Jorge, lote L-01) en
  * vez de crear entidades comerciales nuevas: cualquier fila nueva en esas
@@ -19,7 +19,7 @@
  * `per_personas` gana dos filas nuevas (la persona de Camila como piloto, y
  * un jefe para validar) — inevitable: no hay ninguna persona operativa
  * sembrada por los seeders demo existentes, y hace falta una para asociar a
- * `camila.rojas` y otra, distinta, para validar su sesión (invariante 4 de
+ * `carlos.ferrufino` y otra, distinta, para validar su sesión (invariante 4 de
  * CLAUDE.md: validador ≠ piloto de esa sesión). `personas.spec.ts` actualizó
  * sus snapshots para reflejarlas.
  *
@@ -73,7 +73,7 @@ $jefe = PerPersona::firstOrCreate(
     ['rol' => RolOperativoPersona::JefeCampo, 'activo' => true],
 );
 
-$usuario = SecUser::where('username', 'camila.rojas')->firstOrFail();
+$usuario = SecUser::where('username', 'carlos.ferrufino')->firstOrFail();
 if ($usuario->persona_id !== $piloto->id) {
     $usuario->persona_id = $piloto->id;
     $usuario->save();

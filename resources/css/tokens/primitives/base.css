@@ -102,6 +102,30 @@
     --ag-font-weight-medium: 500;
     --ag-font-weight-bold: 700;
 
+    /* Título de PANTALLA — la receta única del h1 de cualquier vista del
+       panel. Existe como token porque hasta ahora cada pantalla la escribía
+       por su cuenta y se desincronizaron: el dashboard resolvía su título
+       en 2,125rem con peso regular y `page-header` (todas las demás vistas)
+       en 2rem con peso bold. Misma familia, dos pesos distintos — y a
+       simple vista parecían dos tipografías. El valor canónico es el del
+       dashboard, que es el que el usuario aprobó. */
+    --ag-title-page-size: 2.125rem;
+    --ag-title-page-weight: var(--ag-font-weight-regular);
+    --ag-title-page-line-height: 1.05;
+
+    /* Alturas de las bandas fijas del chrome (header arriba, footer abajo).
+       Son tokens y no números sueltos porque hay tres componentes que
+       tienen que coincidir exactamente en la misma línea horizontal:
+       `topbar` con la cabecera de `module-sidebar` cuando está colapsado, y
+       el pie de `module-sidebar` con el footer del layout. */
+    --ag-size-topbar-height: 62px;
+    --ag-size-footer-height: 42px;
+
+    /* Alto del campo de molecules/input — lo que un botón puesto a su lado
+       en una barra de filtros tiene que igualar para que la fila se lea
+       como una sola tira de controles. */
+    --ag-size-control-height: 48px;
+
     /* Radios — Material favorece esquinas más redondeadas que el default de Bootstrap */
     --ag-radius-sm: 0.25rem;
     --ag-radius-md: 0.5rem;

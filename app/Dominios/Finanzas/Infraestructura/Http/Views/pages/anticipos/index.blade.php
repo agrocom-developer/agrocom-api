@@ -60,7 +60,7 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <form method="GET" action="{{ route('panel.anticipos.index') }}" class="ag-anticipos__filtros">
+            <form method="GET" action="{{ route('panel.anticipos.index') }}" class="ag-filtros ag-anticipos__filtros">
                 <div class="ag-input">
                     <label for="filtro-persona" class="ag-input__label">{{ __('finanzas.anticipos.filtro_persona') }}</label>
                     <div class="ag-input__control">
@@ -86,7 +86,7 @@
                     </div>
                 </div>
 
-                <div class="ag-anticipos__filtros-acciones">
+                <div class="ag-filtros__acciones ag-anticipos__filtros-acciones">
                     <x-atoms.button type="submit" variant="outline" size="md" icon="search">
                         {{ __('finanzas.anticipos.filtrar') }}
                     </x-atoms.button>

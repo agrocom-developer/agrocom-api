@@ -189,7 +189,12 @@ class SecMenuSeeder extends Seeder
         // HU-28 (tarea 40): "como piloto o auxiliar, quiero ver mis devengos
         // por período" — activa el ítem que ya estaba sembrado como "botón
         // sin link" (ver docblock de `item()`).
-        $this->item($financiero, 'financiero', 'devengos', 'request_quote', 4, ruta: 'panel.devengos.index', codigoPermiso: 'finanzas.devengo.ver');
+        // `requierePersona`: el permiso lo tienen `piloto`, `auxiliar` y
+        // `dueno`, pero la pantalla es de «lo mío» — resuelve por PERSONA, no
+        // por rol, y hace 404 si el usuario no tiene una vinculada. Único
+        // ítem del catálogo con la bandera; ver el docblock de
+        // `ObtenerMenuPorRolActivo`, sección `requiere_persona`.
+        $this->item($financiero, 'financiero', 'devengos', 'request_quote', 4, ruta: 'panel.devengos.index', codigoPermiso: 'finanzas.devengo.ver', requierePersona: true);
         // HU-30 (tarea 44): "como dueño, quiero generar la planilla del
         // período desde los devengos y aprobarla" — activa el ítem que ya
         // estaba sembrado como "botón sin link" (ver docblock de `item()`).
@@ -292,6 +297,7 @@ class SecMenuSeeder extends Seeder
         int $orden,
         ?string $ruta = null,
         ?string $codigoPermiso = null,
+        bool $requierePersona = false,
     ): SecMenu {
         $permissionId = $codigoPermiso === null
             ? null
@@ -304,15 +310,23 @@ class SecMenuSeeder extends Seeder
                 'ruta' => $ruta,
                 'orden' => $orden,
                 'permission_id' => $permissionId,
+                'requiere_persona' => $requierePersona,
             ],
         );
 
         $activaRuta = $fila->ruta === null && $ruta !== null;
         $activaPermiso = $fila->permission_id === null && $permissionId !== null;
+        // A diferencia de `ruta`/`permission_id`, esta bandera SÍ se
+        // sincroniza siempre: no es un placeholder que el catálogo va
+        // completando, es una propiedad de la pantalla que el seeder define
+        // — una base ya sembrada tiene que recibir el cambio sin que haya
+        // que truncar `sec_menu` (los datos demo no se borran).
+        $ajustaRequisito = $fila->requiere_persona !== $requierePersona;
 
-        if ($activaRuta || $activaPermiso) {
+        if ($activaRuta || $activaPermiso || $ajustaRequisito) {
             $fila->ruta ??= $ruta;
             $fila->permission_id ??= $permissionId;
+            $fila->requiere_persona = $requierePersona;
             $fila->save();
         }
 
