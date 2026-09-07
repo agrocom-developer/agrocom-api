@@ -9,6 +9,10 @@
  *
  * Guard de presencia en el DOM (mismo criterio que `login.js`): en cualquier
  * página sin `[data-ag-campos-form]` este módulo no hace nada.
+ *
+ * El perímetro de cada lote lo dibuja `organisms/lote-mapa-editor.js` sobre un
+ * mapa satelital; acá solo se emite `agrocom:lote-agregado` cuando se clona una
+ * fila, para que ese módulo instancie el mapa de la fila nueva.
  */
 document.addEventListener('DOMContentLoaded', () => {
     const formulario = document.querySelector('[data-ag-campos-form]');
@@ -33,6 +37,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const fila = envoltorio.firstElementChild;
         if (fila) {
             lista.appendChild(fila);
+
+            // El editor de mapa del lote (organisms/lote-mapa-editor.js) se
+            // carga por import() dinámico y no observa el DOM: se le avisa de
+            // la fila nueva para que instancie su Leaflet. Se emite siempre,
+            // aunque el chunk todavía no haya cargado — en ese caso el editor
+            // recorre el DOM al inicializarse y la encuentra igual.
+            document.dispatchEvent(new CustomEvent('agrocom:lote-agregado', { detail: { fila } }));
         }
     });
 

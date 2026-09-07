@@ -160,6 +160,49 @@ it('acepta una geometria GeoJSON Polygon minima', function () {
     expect($lote->geometria)->toBe(['type' => 'Polygon', 'coordinates' => [[[-63.1, -17.7], [-63.1, -17.8], [-63.05, -17.8], [-63.1, -17.7]]]]);
 });
 
+it('el formulario ofrece el editor de mapa, no un textarea de GeoJSON', function () {
+    // El perímetro se dibuja sobre imagen satelital desde la tarea 68. El
+    // valor sigue viajando en un input con el MISMO nombre —`lotes[0][geometria]`—
+    // así que el Form Request y todos los tests de arriba no cambian: lo que
+    // cambia es cómo se produce ese string.
+    //
+    // Este test es la aduana de ese contrato: si alguien vuelve al textarea o
+    // le cambia el nombre al input, el editor deja de escribir donde el
+    // servidor lee y la geometría se pierde en silencio.
+    $cliente = clienteDeCamposDePrueba();
+    [$encargado, $idRol] = usuarioConRolParaCampos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaCampos($encargado, $idRol);
+
+    $respuesta = $this->get(route('panel.campos.create'))->assertOk();
+
+    $respuesta->assertSee('data-ag-lote-mapa', escape: false)
+        ->assertSee('name="lotes[0][geometria]"', escape: false)
+        ->assertSee('type="hidden"', escape: false)
+        ->assertDontSee('<textarea name="lotes[0][geometria]"', escape: false);
+});
+
+it('conserva la geometria dibujada al reabrir el formulario de edicion', function () {
+    // El editor lee el perímetro guardado desde el `value` del input oculto:
+    // si el formulario de edición no lo emite, cada guardado posterior borra
+    // el polígono que ya estaba.
+    $cliente = clienteDeCamposDePrueba();
+    [$encargado, $idRol] = usuarioConRolParaCampos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaCampos($encargado, $idRol);
+
+    $geometria = json_encode(['type' => 'Polygon', 'coordinates' => [[[-63.1, -17.7], [-63.1, -17.8], [-63.05, -17.8], [-63.1, -17.7]]]]);
+
+    $this->post(route('panel.campos.store'), payloadCampo($cliente->id, [
+        'lotes' => [['codigo' => 'L-01', 'hectareas' => '10', 'geometria' => $geometria]],
+    ]));
+
+    $campo = Campo::query()->sole();
+
+    $this->get(route('panel.campos.edit', $campo))
+        ->assertOk()
+        ->assertSee('data-ag-lote-geometria', escape: false)
+        ->assertSee('-63.1', escape: false);
+});
+
 it('registra en bitacora el alta, la edicion y la baja de un campo', function () {
     $cliente = clienteDeCamposDePrueba();
     [$encargado, $idRol] = usuarioConRolParaCampos('encargado', 'encargado_operaciones');

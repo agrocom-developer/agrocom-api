@@ -128,9 +128,52 @@
     border-top: none;
 }
 
-.ag-campos-form__geometria {
+/* ---------- Editor del perímetro del lote ---------- */
+
+/* Reemplaza al textarea de GeoJSON (tarea 68). El alto es fijo y generoso: un
+   mapa de 150px obliga a hacer zoom para distinguir el borde de un lote de la
+   sombra de un monte, que es justo lo que hay que distinguir. */
+.ag-lote-mapa {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-2);
+}
+
+.ag-lote-mapa__lienzo {
+    height: 340px;
+    border-radius: var(--ag-radius-md);
+    border: 1px solid var(--ag-color-border);
+    overflow: hidden;
+    z-index: 0;
+}
+
+.ag-lote-mapa__pie {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--ag-space-3);
+    flex-wrap: wrap;
+}
+
+.ag-lote-mapa__ayuda {
+    margin: 0;
+    flex: 1 1 260px;
+}
+
+.ag-lote-mapa__medida {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
     font-family: var(--ag-font-family-mono);
-    resize: vertical;
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+}
+
+/* Los controles de Geoman traen su propio CSS de librería (igual que el
+   chrome de zoom de Leaflet). Solo se corrige lo que choca con el panel: la
+   sombra dura y el radio, que en oscuro se ven como un parche pegado. */
+.ag-lote-mapa .leaflet-pm-toolbar .leaflet-buttons-control-button {
+    border-radius: var(--ag-radius-sm);
 }
 
 .ag-campos-form__lote-pie {

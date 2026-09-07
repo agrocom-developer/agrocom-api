@@ -13,9 +13,15 @@
     - $lote (array{id?: int, codigo?: string, hectareas?: string,
       geometria?: string, restricciones?: string}): vacío en una fila nueva.
 
-    `geometria` es un `<textarea>` de GeoJSON crudo (sin librería de mapas —
-    prompt de la tarea): el usuario pega el JSON, el Form Request valida la
-    forma mínima (`type`/`coordinates`).
+    `geometria` se dibuja sobre un MAPA SATELITAL (Leaflet + Geoman): el
+    perímetro de un lote se reconoce mirando la imagen, no tipeando pares de
+    coordenadas. Antes era un `<textarea>` donde había que pegar el GeoJSON a
+    mano — un editor de mapa es lo que la tarea 68 vino a reemplazar.
+
+    El valor sigue viajando como el MISMO string JSON en un `<input hidden>`,
+    así que el Form Request no cambia: valida la forma mínima
+    (`type`/`coordinates`) igual que antes, y una geometría cargada por otra
+    vía sigue siendo válida.
 --}}
 <div class="ag-campos-form__lote" data-ag-lote-fila>
     @if (! empty($lote['id']))
@@ -40,20 +46,36 @@
         required
     />
 
-    <div class="ag-input ag-form-section__field--full">
-        <label for="lotes-{{ $indice }}-geometria" class="ag-input__label">
-            {{ __('comercial.campos.lote_geometria') }}
-        </label>
-        <div class="ag-input__control">
-            <textarea
-                name="lotes[{{ $indice }}][geometria]"
-                id="lotes-{{ $indice }}-geometria"
-                class="ag-input__field ag-campos-form__geometria"
-                rows="3"
-                placeholder="{{ __('comercial.campos.lote_geometria_placeholder') }}"
-            >{{ $lote['geometria'] ?? '' }}</textarea>
+    <div class="ag-input ag-form-section__field--full ag-lote-mapa" data-ag-lote-mapa>
+        <span class="ag-input__label">{{ __('comercial.campos.lote_geometria') }}</span>
+
+        {{-- El valor real. Lo escribe el editor; queda en el DOM aunque el
+             mapa no llegue a cargar, así que una geometría ya guardada nunca
+             se pierde por un fallo del JS. --}}
+        <input
+            type="hidden"
+            name="lotes[{{ $indice }}][geometria]"
+            id="lotes-{{ $indice }}-geometria"
+            value="{{ $lote['geometria'] ?? '' }}"
+            data-ag-lote-geometria
+        >
+
+        <div class="ag-lote-mapa__lienzo" data-ag-lote-mapa-lienzo></div>
+
+        <div class="ag-lote-mapa__pie">
+            <p class="ag-input__help ag-lote-mapa__ayuda">{{ __('comercial.campos.lote_geometria_ayuda') }}</p>
+
+            <div class="ag-lote-mapa__medida" data-ag-lote-medida hidden>
+                <span data-ag-lote-medida-texto></span>
+                {{-- Botón y no autocompletado: `hectareas` es la superficie
+                     CONTRATADA, que puede no coincidir con el polígono
+                     dibujado, y es la base de lo que se factura (invariante
+                     6). La decisión de copiarla es de quien carga el campo. --}}
+                <x-atoms.button type="button" variant="text" size="sm" data-ag-lote-usar-superficie>
+                    {{ __('comercial.campos.lote_usar_superficie') }}
+                </x-atoms.button>
+            </div>
         </div>
-        <p class="ag-input__help">{{ __('comercial.campos.lote_geometria_ayuda') }}</p>
     </div>
 
     <div class="ag-input ag-form-section__field--full">
