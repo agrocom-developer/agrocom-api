@@ -11,10 +11,12 @@
       espacio sobrante): breadcrumb "Módulo › Vista" · buscador global (alto
       36px, `flex:0 1 480px; min-width:220px; max-width:480px`, atajo ⌘K).
     - DERECHA (`.ag-topbar__right`, ancho fijo, `margin-left:auto` para
-      anclarse al extremo): usuario (con el ROL ACTIVO visible bajo el
-      nombre) · toggle de tema (segmented, molecule theme-toggle) · campana
-      con badge · selector de período · chip de campaña activa — en ESE
-      orden exacto, pedido explícito.
+      anclarse al extremo): toggle de tema (segmented, molecule
+      theme-toggle) · campana con badge · selector de período · chip de
+      campaña activa · usuario, con el ROL ACTIVO bajo el nombre — el
+      usuario va ÚLTIMO (pedido del 7/9/2026): el avatar es el ancla visual
+      del extremo derecho del header, y tenerlo al principio del bloque lo
+      dejaba flotando en el medio, con los controles a su derecha.
     Todo salvo el buscador lleva `flex:0 0 auto; white-space:nowrap` — ver
     topbar.css. En tablet (<1200) el header se compacta: breadcrumb, campaña
     y período se ocultan (maqueta 5a). En móvil (<768) este header entero se
@@ -81,50 +83,6 @@
     </div>
 
     <div class="ag-topbar__right">
-        @if ($userName)
-            <div class="dropdown ag-topbar__user-menu">
-                <button
-                    type="button"
-                    class="ag-topbar__user"
-                    data-bs-toggle="dropdown"
-                    aria-expanded="false"
-                    aria-label="{{ $userName }}"
-                >
-                    <span class="ag-topbar__avatar" aria-hidden="true">{{ $iniciales ?: '?' }}</span>
-                    <span class="ag-topbar__user-id">
-                        <span class="ag-topbar__user-name">{{ $userName }}</span>
-                        @if ($activeRoleLabel)
-                            <span class="ag-topbar__user-role">
-                                <span class="visually-hidden">{{ __('seguridad.rol.badge_activo') }}:</span>
-                                {{ $activeRoleLabel }}
-                            </span>
-                        @endif
-                    </span>
-                </button>
-
-                <ul class="dropdown-menu dropdown-menu-end ag-user-menu">
-                    @if ($cambiarRolHref)
-                        <li>
-                            <a href="{{ $cambiarRolHref }}" class="dropdown-item ag-user-menu__item">
-                                <x-atoms.icon name="swap_horiz" size="sm" class="ag-user-menu__icon" />
-                                {{ __('seguridad.rol.switch_trigger') }}
-                            </a>
-                        </li>
-                    @endif
-                    <li>
-                        <button
-                            type="button"
-                            class="dropdown-item ag-user-menu__item ag-user-menu__logout"
-                            data-ag-logout
-                        >
-                            <x-atoms.icon name="logout" size="sm" class="ag-user-menu__icon" />
-                            {{ __('ui.topbar.logout') }}
-                        </button>
-                    </li>
-                </ul>
-            </div>
-        @endif
-
         <x-molecules.theme-toggle />
 
         <div class="dropdown ag-topbar__notifications">
@@ -180,6 +138,50 @@
                 <span class="ag-topbar__campaign-dot" aria-hidden="true"></span>
                 {{ $campana }}
             </span>
+        @endif
+
+        @if ($userName)
+            <div class="dropdown ag-topbar__user-menu">
+                <button
+                    type="button"
+                    class="ag-topbar__user"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                    aria-label="{{ $userName }}"
+                >
+                    <span class="ag-topbar__avatar" aria-hidden="true">{{ $iniciales ?: '?' }}</span>
+                    <span class="ag-topbar__user-id">
+                        <span class="ag-topbar__user-name">{{ $userName }}</span>
+                        @if ($activeRoleLabel)
+                            <span class="ag-topbar__user-role">
+                                <span class="visually-hidden">{{ __('seguridad.rol.badge_activo') }}:</span>
+                                {{ $activeRoleLabel }}
+                            </span>
+                        @endif
+                    </span>
+                </button>
+
+                <ul class="dropdown-menu dropdown-menu-end ag-user-menu">
+                    @if ($cambiarRolHref)
+                        <li>
+                            <a href="{{ $cambiarRolHref }}" class="dropdown-item ag-user-menu__item">
+                                <x-atoms.icon name="swap_horiz" size="sm" class="ag-user-menu__icon" />
+                                {{ __('seguridad.rol.switch_trigger') }}
+                            </a>
+                        </li>
+                    @endif
+                    <li>
+                        <button
+                            type="button"
+                            class="dropdown-item ag-user-menu__item ag-user-menu__logout"
+                            data-ag-logout
+                        >
+                            <x-atoms.icon name="logout" size="sm" class="ag-user-menu__icon" />
+                            {{ __('ui.topbar.logout') }}
+                        </button>
+                    </li>
+                </ul>
+            </div>
         @endif
     </div>
 </header>
