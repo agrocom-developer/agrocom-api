@@ -17,6 +17,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Versión desplegada
+    |--------------------------------------------------------------------------
+    |
+    | Se muestra en el pie del panel. Es un dato de despliegue, no de negocio:
+    | sin `APP_VERSION` definida el pie no muestra nada (tarea 67 — antes lo
+    | devolvía la maqueta con un "V1.0" fijo).
+    |
+    */
+
+    'version' => env('APP_VERSION'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
     |

@@ -2,11 +2,9 @@
 
 namespace App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Seguridad\Aplicacion\ArmarDashboard;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
-use App\Dominios\Seguridad\Infraestructura\Http\Demo\DatosDemoCapturasRc;
-use App\Dominios\Seguridad\Infraestructura\Http\Demo\DatosDemoMapaOperativo;
-use App\Dominios\Seguridad\Infraestructura\Http\Demo\DatosDemoPanel;
 use App\Dominios\Seguridad\Infraestructura\Http\Middleware\ResolverRolActivo;
 use App\Dominios\Seguridad\Infraestructura\Http\Presentacion\CascaraPanel;
 use Illuminate\Http\Request;
@@ -14,24 +12,18 @@ use Illuminate\View\View;
 
 /**
  * `GET /panel/dashboard` (`panel.dashboard`): página de aterrizaje del panel
- * tras el login — el "Operación de hoy", panel visual/estadístico con
- * pestañas Resumen / Mapa / Resumen por lote / Multimedia. Gateada por
- * `seguridad.dashboard.ver` (tarea 62, fuga 2: antes era visible para
- * cualquier usuario autenticado con rol activo resuelto, sin permiso propio
- * — un `auxiliar` veía el tablero completo). Un rol sin este permiso nunca
- * aterriza acá tras el login: {@see AutorizacionPanelWeb::primerDestinoVisible()}
- * resuelve el primer ítem de menú que sí puede ver.
+ * tras el login. Gateada por `seguridad.dashboard.ver` (tarea 62, fuga 2).
  *
  * Middleware `auth:interno` + `rol.activo`: para cuando este controlador se
  * ejecuta, `session('sec_rol_activo_id')` ya es un rol vivo válido de este
  * usuario ({@see ResolverRolActivo} lo garantiza) — acá no se vuelve a
  * revalidar esa pertenencia.
  *
- * Adaptador delgado (ADR 0008): la cáscara (menú del rol activo, roles,
- * tema, chrome) la resuelve {@see CascaraPanel}; el contenido del dashboard
- * es íntegramente DEMO ({@see DatosDemoPanel} — sesiones, pausas, stock,
- * ventana volable), a reemplazar por los casos de uso reales de cada módulo
- * cuando existan.
+ * Adaptador delgado (ADR 0008): la cáscara la resuelve {@see CascaraPanel} y
+ * el contenido {@see ArmarDashboard}. Desde la tarea 67 no queda ningún dato
+ * de maqueta: cada sección la sirve el módulo dueño por su contrato de
+ * lectura, y qué secciones aparecen lo decide el ROL ACTIVO — un piloto y un
+ * dueño abren la misma ruta y ven tableros distintos.
  */
 final class DashboardController
 {
@@ -41,9 +33,7 @@ final class DashboardController
         Request $request,
         AutorizacionPanelWeb $autorizacion,
         CascaraPanel $cascara,
-        DatosDemoPanel $demo,
-        DatosDemoMapaOperativo $demoMapa,
-        DatosDemoCapturasRc $demoCapturas,
+        ArmarDashboard $armarDashboard,
     ): View {
         abort_unless($autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
@@ -53,21 +43,7 @@ final class DashboardController
 
         return view('seguridad::pages.dashboard', [
             ...$cascara->para($usuario, $idRolActivo),
-            'fechaBajada' => $demo->fechaBajada(),
-            'ventana' => $demo->ventanaVolable(),
-            'distribucion' => $demo->distribucionSesiones(),
-            'hectareasPorDia' => $demo->hectareasPorDia(),
-            'avanceMeta' => $demo->avanceMeta(),
-            'detalleClientes' => $demo->detalleClientes(),
-            'mapaLotes' => $demoMapa->lotes(),
-            'mapaSesiones' => $demoMapa->sesionesGeo(),
-            'resumenMapa' => $demoMapa->resumenMapa(),
-            'resumenPorLote' => $demoMapa->resumenPorLote(),
-            'capturasRc' => $demoCapturas->sesiones(),
-            'sesiones' => $demo->sesiones(),
-            'pausas' => $demo->pausas(),
-            'stock' => $demo->stockBajoMinimo(),
-            'alertaRc' => $demo->alertaRc(),
+            ...$armarDashboard->ejecutar($usuario, $idRolActivo),
         ]);
     }
 }

@@ -4,22 +4,28 @@ namespace App\Dominios\Seguridad\Infraestructura\Http\Presentacion;
 
 use App\Dominios\Finanzas\Contratos\LecturaContadoresPanel as LecturaContadoresPanelFinanzas;
 use App\Dominios\Inventario\Contratos\LecturaContadoresPanel as LecturaContadoresPanelInventario;
+use App\Dominios\Operaciones\Contratos\AlertaPanel;
 use App\Dominios\Operaciones\Contratos\LecturaContadoresPanel as LecturaContadoresPanelOperaciones;
+use App\Dominios\Operaciones\Contratos\LecturaPanelOperaciones;
 use App\Dominios\Seguridad\Aplicacion\ListarRolesDisponibles;
 use App\Dominios\Seguridad\Aplicacion\ObtenerMenuPorRolActivo;
 use App\Dominios\Seguridad\Dominio\TemaPreferencia;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUserPreferencia;
-use App\Dominios\Seguridad\Infraestructura\Http\Demo\DatosDemoPanel;
+use Illuminate\Support\Carbon;
 
 /**
  * Datos de cáscara que `templates/panel-layout` + `templates/panel-shell`
  * esperan, resueltos una sola vez para cualquier página del panel (dashboard,
  * usuarios, organización): árbol de menú del ROL ACTIVO (nunca la unión —
  * CLAUDE.md invariante 10), roles disponibles, rol activo legible, tema
- * persistido, el chrome de demo (campaña, período, notificaciones — MOCK,
- * ver {@see DatosDemoPanel}) y los badges del menú (TE-14, tarea 60 —
+ * persistido, el chrome del header y los badges del menú (TE-14, tarea 60 —
  * contadores reales de cada módulo dueño, ver {@see menuBadges()}).
+ *
+ * Desde la tarea 67 no queda nada de maqueta acá: las notificaciones de la
+ * campana son las alertas por excepción reales (HU-19), el período sale de
+ * la fecha y la versión del pie de `config('app.version')`. El chip de
+ * campaña se retiró — no hay tabla de campañas que lo respalde.
  *
  * Existe para que cada controlador de página no re-arme (ni desincronice)
  * esta misma docena de props — los controladores siguen siendo adaptadores
@@ -27,11 +33,13 @@ use App\Dominios\Seguridad\Infraestructura\Http\Demo\DatosDemoPanel;
  */
 final class CascaraPanel
 {
+    private const ALERTAS_CAMPANA = 5;
+
     public function __construct(
         private readonly ObtenerMenuPorRolActivo $obtenerMenu,
         private readonly ListarRolesDisponibles $listarRolesDisponibles,
-        private readonly DatosDemoPanel $demo,
         private readonly LecturaContadoresPanelOperaciones $contadoresOperaciones,
+        private readonly LecturaPanelOperaciones $panelOperaciones,
         private readonly LecturaContadoresPanelInventario $contadoresInventario,
         private readonly LecturaContadoresPanelFinanzas $contadoresFinanzas,
     ) {}
@@ -47,8 +55,6 @@ final class CascaraPanel
         $preferencia = SecUserPreferencia::query()->where('user_id', $usuario->id)->first();
         $tema = ($preferencia->tema ?? TemaPreferencia::Claro)->atributoBootstrap();
 
-        $chrome = $this->demo->chrome();
-
         return [
             'menu' => $this->obtenerMenu->ejecutar($usuario, $idRolActivo),
             'roles' => $roles,
@@ -56,18 +62,21 @@ final class CascaraPanel
             'activeRoleLabel' => $rolActivo !== null ? PresentadorRol::nombreLegible($rolActivo) : null,
             'userName' => $usuario->name,
             'tema' => $tema,
-            'notifications' => $this->demo->notificaciones(),
+            'notifications' => $this->notificaciones($usuario, $idRolActivo),
             'menuBadges' => $this->menuBadges($usuario),
-            'campana' => $chrome['campana'],
-            'periodo' => $chrome['periodo'],
-            'version' => $chrome['version'],
+            // `campana` se retiró en la tarea 67: el mock decía "Campaña
+            // 2026-B" y el dominio no tiene el concepto de campaña en
+            // ninguna tabla. El chip del header ya tolera `null`.
+            'campana' => null,
+            'periodo' => $this->periodoEnCurso(),
+            'version' => config('app.version'),
         ];
     }
 
     /**
      * Contadores reales de pendientes de los ítems del menú (badge ámbar del
      * nivel 3), indexados por la clave `label` de `sec_menu` (TE-14, tarea
-     * 60 — reemplaza al mock `DatosDemoPanel::badgesMenu()`). `numero` es lo
+     * 60 — contadores reales, no maqueta). `numero` es lo
      * único que pinta el badge en el sidebar (compacto); `texto` es la frase
      * completa del tooltip.
      *
@@ -121,5 +130,37 @@ final class CascaraPanel
         }
 
         return $badges;
+    }
+
+    /**
+     * Campana del header: las alertas por excepción reales (HU-19), no los
+     * tres avisos inventados que devolvía la maqueta. Gateadas
+     * por `operaciones.alerta.ver` contra el ROL ACTIVO: un rol que no puede
+     * entrar a `/panel/alertas` tampoco las lee por la campana.
+     *
+     * @return list<array{icon: string, title: string, time: string, unread: bool}>
+     */
+    private function notificaciones(SecUser $usuario, int $idRolActivo): array
+    {
+        if (! $usuario->tienePermisoEnRol('operaciones.alerta.ver', $idRolActivo)) {
+            return [];
+        }
+
+        return array_map(fn (AlertaPanel $alerta) => [
+            'icon' => 'warning',
+            'title' => $alerta->mensaje,
+            'time' => Carbon::parse($alerta->creadaEn)->diffForHumans(),
+            'unread' => $alerta->pendiente,
+        ], $this->panelOperaciones->alertasRecientes(self::ALERTAS_CAMPANA));
+    }
+
+    /**
+     * Período del selector del header: el mes calendario en curso, derivado
+     * de la fecha. La maqueta devolvía "Agosto 2026" fijo, que a la semana
+     * siguiente ya mentía.
+     */
+    private function periodoEnCurso(): string
+    {
+        return Carbon::now()->locale(app()->getLocale())->isoFormat('MMMM YYYY');
     }
 }
