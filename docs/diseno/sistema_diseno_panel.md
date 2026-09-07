@@ -457,9 +457,11 @@ de rol" del sidebar/menú de usuario, con `?cambiar=1`).
 
 ## 8. Reglas fijas de pulido UI (sexta vuelta, 28/8/2026)
 
-Seis reglas derivadas de la sesión de login + `seleccionar-rol` del
-28/8/2026, para aplicar por defecto en cualquier componente nuevo del
-catálogo en vez de redescubrirlas por prueba y error en cada pantalla.
+Reglas derivadas de la sesión de login + `seleccionar-rol` del 28/8/2026 y
+de las vueltas siguientes, para aplicar por defecto en cualquier componente
+nuevo del catálogo en vez de redescubrirlas por prueba y error en cada
+pantalla. La lista crece: cada vez que una regla se descubre mirando una
+pantalla ya hecha, se anota acá.
 
 1. **Tipografía display: `font-weight` siempre explícito.**
    `.ag-login-form__title` no lo declaraba (heredaba el 500 de Bootstrap
@@ -469,6 +471,17 @@ catálogo en vez de redescubrirlas por prueba y error en cada pantalla.
    `--ag-font-weight-bold` explícito en ambos. Regla: todo consumidor de
    `--ag-font-family-display` declara `font-weight` con el token, nunca
    depende del peso por defecto de Bootstrap para headings.
+
+   **Corolario (7/9/2026), el que faltaba escribir:** un `<h1>` SUELTO no
+   consume la display en absoluto — se queda con el `font-family` base y el
+   peso 500 de Reboot, y al lado de una pantalla con `page-header` se lee
+   como otra tipografía. Siete pantallas habían quedado así (trabajos,
+   detalle y evidencias de trabajo, validación de sesiones, alertas,
+   versiones del APK, dispositivos). Regla: el título de una pantalla del
+   panel se declara con `<x-organisms.page-header :title="…" />`; un `<h1>`
+   propio solo si lleva clase con la receta `--ag-title-page-*` (el caso del
+   dashboard y de las dos pantallas de `auth-layout`). Con compuerta
+   automática en `tests/Unit/PulidoNavegacionPanelTest.php`.
 2. **Color de "estado seleccionado" vs. contenido informativo repetido —
    mismo eje, nunca ámbar para lo segundo.** En `role-card`, se probó
    ámbar de marca en los chips de permisos (dos intentos, incluyendo
@@ -490,10 +503,24 @@ catálogo en vez de redescubrirlas por prueba y error en cada pantalla.
 5. **Hover de una acción secundaria en texto plano (sin botón/fondo por
    defecto) necesita fondo sutil + transición**, no solo cambio de color
    de texto.
-6. **Transición nativa entre navegaciones del mismo flujo**:
+6. ~~**Transición nativa entre navegaciones del mismo flujo**:
    `@view-transition { navigation: auto; }` declarado una sola vez en
-   `app.css` (transversal, no por template), con el bloque
-   `prefers-reduced-motion` correspondiente sobre `::view-transition-*`.
+   `app.css` (transversal, no por template).~~ **CORREGIDA (7/9/2026,
+   grabación de pantalla del usuario navegando el menú).** "Transversal"
+   fue el error: `@view-transition` es una regla de DOCUMENTO y no se acota
+   por selector, así que en el bundle que cargan todas las pantallas
+   aplicaba a TODA navegación same-origin — cada clic del menú del panel,
+   que no es "el mismo flujo" y nunca la pidió. Ahí el fundido sostenía
+   ~250 ms en pantalla el estado a medio cargar de la página entrante, y
+   volvía bien visible el salto de layout de los íconos (regla 10 de abajo).
+   Regla vigente: la declaración vive en `resources/css/transicion-vista.css`,
+   una entrada de Vite aparte que incluyen solo las dos páginas del salto
+   login → selección de rol (`pages/login.blade.php` y la prop
+   `transicion-de-vista` de `templates/panel-shell`). El bloque
+   `prefers-reduced-motion` sobre `::view-transition-*` viaja con ella.
+   Cuando una regla es de documento, "declararla una sola vez" y
+   "declararla para todos" son la misma cosa — hay que elegir a quién se le
+   carga, no dónde se escribe.
 7. ~~**Cifra grande de KPI: mono, nunca la display.**~~ **SUPERADA — ver §10
    (auditoría visual externa, obs. #7).** El mono abría demasiado el
    tracking de una cifra de varios dígitos ("Bs 18.490"). Regla vigente:
@@ -516,6 +543,22 @@ catálogo en vez de redescubrirlas por prueba y error en cada pantalla.
    esta vuelta; se fija acá para que todo consumidor nuevo de
    `.ag-card__title` lo herede sin tener que redescubrirlo por prueba y
    error.
+10. **Todo ícono de fuente reserva su caja (7/9/2026).** `atoms/icon` fija
+    `width: 1em` + `display: inline-block`. Material Symbols declara
+    `font-display: block`: hasta que la fuente aplica, el navegador maqueta
+    el `<span>` con la LIGADURA como texto corriente ("calendar_month",
+    "assignment") en la fuente de respaldo — invisible, pero midiendo
+    decenas de px cada una. Ese ancho fantasma empujaba el `min-content` de
+    `module-sidebar` por encima de su `flex: 0 0 252px` (medido sobre la
+    grabación: 252 → 307 → 252 px), y en CADA navegación del panel los
+    ítems del menú "nacían" corridos a la derecha y saltaban a la izquierda
+    al cargar la fuente. 1em es el avance EXACTO de todos los glifos de la
+    fuente (960/960 unidades), así que reservarlo no recorta ninguno; y
+    nada de `overflow: hidden`, porque el ink del glifo va de -0,095em a
+    1,002em sobre la línea base y se comería el borde inferior. Regla: un
+    ícono por ligadura sin caja reservada es un salto de layout garantizado
+    en cada carga, no un detalle de la primera. Con compuerta automática en
+    `tests/Unit/PulidoNavegacionPanelTest.php`.
 
 ## 9. Sexta vuelta — parte 2 (28/8/2026): rediseño del dashboard
 
