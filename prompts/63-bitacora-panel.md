@@ -79,6 +79,26 @@ Cargá las skills `dominio-backend`, `modelo-datos`, `panel-design-ui`,
    `zona_horaria`; y que una mutación desde el portal (guard `cliente`) deja
    el `user_id` del cliente, no null.
 
+### Actualización del 7/9/2026 — qué cambió desde que se escribió este prompt
+
+Este prompt quedó escrito y nunca corrió (`runs/63.estado` no existe). Sigue
+vigente tal cual, con dos cosas que aparecieron después y hay que respetar:
+
+6. **Los secretos de configuración NO se muestran en el diff.** La tarea 78
+   crea `/panel/configuracion` (llaves de mapas, correo, tokens) y deja esos
+   campos **excluidos** del `antes`/`despues` del observer — es una excepción
+   declarada a la invariante 9, registrada en el ADR 0016 y en la
+   especificación §14.1. Esta pantalla es donde esa exclusión se ve o se
+   filtra: la fila tiene que mostrar quién cambió qué clave y cuándo, y
+   **nunca el valor**. Si la 78 todavía no entró cuando corras esta tarea, la
+   pantalla igual debe estar preparada para no renderizar un campo marcado
+   como excluido, en vez de asumir que todo `antes`/`despues` es mostrable.
+7. **Las entidades nuevas entran solas.** Campaña, equipos de trabajo,
+   integrantes, recursos, cultivo, lote-campaña y estadías (tareas 69 a 75)
+   extienden `ModeloDominio`, así que ya registran bitácora sin que esta
+   tarea haga nada. Lo único que necesitan es su **nombre legible** en
+   `lang/` para el filtro por entidad — sumalos ahí, no los omitas.
+
 ## Qué NO hacer
 
 - No cambies `config/app.php → timezone`: UTC en el servidor es la base de
@@ -91,6 +111,8 @@ Cargá las skills `dominio-backend`, `modelo-datos`, `panel-design-ui`,
 - No agregues una segunda forma de registrar bitácora "manual" para la
   pantalla: si algo no queda registrado, es un bug del trait, y lo arreglás
   ahí.
+- **No muestres el valor de un secreto de configuración**, ni siquiera
+  truncado, ni "solo para el dueño". Si está en el DOM, está filtrado.
 
 ## Cómo repartir las etapas
 
