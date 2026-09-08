@@ -46,45 +46,52 @@
         @php $hayFiltrosActivos = $filtros['estado'] !== null || $filtros['lote_id'] !== null || $filtros['orden_id'] !== null; @endphp
 
         <form method="GET" action="{{ route('panel.trabajos.index') }}" class="ag-filtros ag-trabajos__filtros">
-            <div class="ag-input">
-                <label for="filtro-estado" class="ag-input__label">{{ __('operaciones.trabajos.filtro_estado') }}</label>
-                <div class="ag-input__control">
-                    <select name="estado" id="filtro-estado" class="ag-input__field">
-                        <option value="">{{ __('operaciones.trabajos.filtro_todos') }}</option>
-                        <option value="abierto" @selected($filtros['estado'] === 'abierto')>{{ __('operaciones.trabajos.estado.abierto') }}</option>
-                        <option value="cerrado" @selected($filtros['estado'] === 'cerrado')>{{ __('operaciones.trabajos.estado.cerrado') }}</option>
-                        <option value="validado" @selected($filtros['estado'] === 'validado')>{{ __('operaciones.trabajos.estado.validado') }}</option>
-                    </select>
-                </div>
-            </div>
+            @php
+                $opcionesEstado = [
+                    'abierto' => __('operaciones.trabajos.estado.abierto'),
+                    'cerrado' => __('operaciones.trabajos.estado.cerrado'),
+                    'validado' => __('operaciones.trabajos.estado.validado'),
+                ];
+            @endphp
 
-            <div class="ag-input">
-                <label for="filtro-lote" class="ag-input__label">{{ __('operaciones.trabajos.filtro_lote') }}</label>
-                <div class="ag-input__control">
-                    <select name="lote_id" id="filtro-lote" class="ag-input__field">
-                        <option value="">{{ __('operaciones.trabajos.filtro_todos') }}</option>
-                        @foreach ($lotesDisponibles as $loteId)
-                            <option value="{{ $loteId }}" @selected($filtros['lote_id'] === $loteId)>
-                                {{ __('operaciones.trabajos.filtro_lote_opcion', ['id' => $loteId]) }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-            </div>
+            <x-atoms.select
+                name="estado"
+                id="filtro-estado"
+                label="{{ __('operaciones.trabajos.filtro_estado') }}"
+                :options="$opcionesEstado"
+                :value="$filtros['estado']"
+                :placeholder="__('operaciones.trabajos.filtro_todos')"
+            />
 
-            <div class="ag-input">
-                <label for="filtro-orden" class="ag-input__label">{{ __('operaciones.trabajos.filtro_orden') }}</label>
-                <div class="ag-input__control">
-                    <select name="orden_id" id="filtro-orden" class="ag-input__field">
-                        <option value="">{{ __('operaciones.trabajos.filtro_todos') }}</option>
-                        @foreach ($ordenesDisponibles as $orden)
-                            <option value="{{ $orden->orden_id }}" @selected($filtros['orden_id'] === $orden->orden_id)>
-                                {{ __('operaciones.trabajos.filtro_orden_opcion', ['id' => $orden->orden_id, 'aplicacion' => $orden->nro_aplicacion]) }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-            </div>
+            @php
+                $opcionesLote = collect($lotesDisponibles)->mapWithKeys(fn ($loteId) => [
+                    $loteId => __('operaciones.trabajos.filtro_lote_opcion', ['id' => $loteId])
+                ])->all();
+            @endphp
+
+            <x-atoms.select
+                name="lote_id"
+                id="filtro-lote"
+                label="{{ __('operaciones.trabajos.filtro_lote') }}"
+                :options="$opcionesLote"
+                :value="$filtros['lote_id']"
+                :placeholder="__('operaciones.trabajos.filtro_todos')"
+            />
+
+            @php
+                $opcionesOrden = collect($ordenesDisponibles)->mapWithKeys(fn ($orden) => [
+                    $orden->orden_id => __('operaciones.trabajos.filtro_orden_opcion', ['id' => $orden->orden_id, 'aplicacion' => $orden->nro_aplicacion])
+                ])->all();
+            @endphp
+
+            <x-atoms.select
+                name="orden_id"
+                id="filtro-orden"
+                label="{{ __('operaciones.trabajos.filtro_orden') }}"
+                :options="$opcionesOrden"
+                :value="$filtros['orden_id']"
+                :placeholder="__('operaciones.trabajos.filtro_todos')"
+            />
 
             <div class="ag-filtros__acciones ag-trabajos__filtros-acciones">
                 <x-atoms.button type="submit" variant="primary" size="md" icon="filter_alt">

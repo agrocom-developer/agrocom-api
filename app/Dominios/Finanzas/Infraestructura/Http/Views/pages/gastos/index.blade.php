@@ -62,29 +62,23 @@
             @endif
 
             <form method="GET" action="{{ route('panel.gastos.index') }}" class="ag-filtros ag-gastos__filtros">
-                <div class="ag-input">
-                    <label for="filtro-rubro" class="ag-input__label">{{ __('finanzas.gastos.filtro_rubro') }}</label>
-                    <div class="ag-input__control">
-                        <select name="rubro_id" id="filtro-rubro" class="ag-input__field">
-                            <option value="">{{ __('finanzas.gastos.filtro_rubro_placeholder') }}</option>
-                            @foreach ($rubrosDisponibles as $id => $nombre)
-                                <option value="{{ $id }}" @selected((string) $filtros['rubro_id'] === (string) $id)>{{ $nombre }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
+                <x-atoms.select
+                    name="rubro_id"
+                    id="filtro-rubro"
+                    label="{{ __('finanzas.gastos.filtro_rubro') }}"
+                    :options="$rubrosDisponibles"
+                    :value="(string) $filtros['rubro_id']"
+                    placeholder="{{ __('finanzas.gastos.filtro_rubro_placeholder') }}"
+                />
 
-                <div class="ag-input">
-                    <label for="filtro-base" class="ag-input__label">{{ __('finanzas.gastos.filtro_base') }}</label>
-                    <div class="ag-input__control">
-                        <select name="base_id" id="filtro-base" class="ag-input__field">
-                            <option value="">{{ __('finanzas.gastos.filtro_base_placeholder') }}</option>
-                            @foreach ($basesDisponibles as $id => $nombre)
-                                <option value="{{ $id }}" @selected((string) $filtros['base_id'] === (string) $id)>{{ $nombre }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
+                <x-atoms.select
+                    name="base_id"
+                    id="filtro-base"
+                    label="{{ __('finanzas.gastos.filtro_base') }}"
+                    :options="$basesDisponibles"
+                    :value="(string) $filtros['base_id']"
+                    placeholder="{{ __('finanzas.gastos.filtro_base_placeholder') }}"
+                />
 
                 <div class="ag-input">
                     <label for="filtro-periodo" class="ag-input__label">{{ __('finanzas.gastos.filtro_periodo') }}</label>

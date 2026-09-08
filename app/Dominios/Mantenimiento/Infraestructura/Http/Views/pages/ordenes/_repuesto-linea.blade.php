@@ -16,29 +16,25 @@
     - $basesDisponibles (Collection<int, string>): id => nombre.
 --}}
 <div class="ag-ordenes-mantenimiento-form__repuesto" data-ag-repuesto-fila>
-    <div class="ag-input">
-        <label for="repuesto_id_{{ $indice }}" class="ag-input__label">{{ __('mantenimiento.ordenes.campo_repuesto') }}</label>
-        <div class="ag-input__control">
-            <select name="repuestos[{{ $indice }}][repuesto_id]" id="repuesto_id_{{ $indice }}" class="ag-input__field" required>
-                <option value="" disabled @selected(empty($linea['repuesto_id']))>{{ __('mantenimiento.ordenes.campo_repuesto_placeholder') }}</option>
-                @foreach ($repuestosDisponibles as $id => $etiqueta)
-                    <option value="{{ $id }}" @selected(isset($linea['repuesto_id']) && (string) $linea['repuesto_id'] === (string) $id)>{{ $etiqueta }}</option>
-                @endforeach
-            </select>
-        </div>
-    </div>
+    <x-atoms.select
+        name="repuestos[{{ $indice }}][repuesto_id]"
+        id="repuesto_id_{{ $indice }}"
+        label="{{ __('mantenimiento.ordenes.campo_repuesto') }}"
+        :options="$repuestosDisponibles"
+        :value="$linea['repuesto_id'] ?? null"
+        placeholder="{{ __('mantenimiento.ordenes.campo_repuesto_placeholder') }}"
+        required
+    />
 
-    <div class="ag-input">
-        <label for="base_id_{{ $indice }}" class="ag-input__label">{{ __('mantenimiento.ordenes.campo_base') }}</label>
-        <div class="ag-input__control">
-            <select name="repuestos[{{ $indice }}][base_id]" id="base_id_{{ $indice }}" class="ag-input__field" required>
-                <option value="" disabled @selected(empty($linea['base_id']))>{{ __('mantenimiento.ordenes.campo_base_placeholder') }}</option>
-                @foreach ($basesDisponibles as $id => $nombreBase)
-                    <option value="{{ $id }}" @selected(isset($linea['base_id']) && (string) $linea['base_id'] === (string) $id)>{{ $nombreBase }}</option>
-                @endforeach
-            </select>
-        </div>
-    </div>
+    <x-atoms.select
+        name="repuestos[{{ $indice }}][base_id]"
+        id="base_id_{{ $indice }}"
+        label="{{ __('mantenimiento.ordenes.campo_base') }}"
+        :options="$basesDisponibles"
+        :value="$linea['base_id'] ?? null"
+        placeholder="{{ __('mantenimiento.ordenes.campo_base_placeholder') }}"
+        required
+    />
 
     <x-atoms.input
         type="number"

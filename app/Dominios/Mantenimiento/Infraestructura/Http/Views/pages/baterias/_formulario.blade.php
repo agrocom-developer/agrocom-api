@@ -75,39 +75,30 @@
             error="{{ $errors->first('ciclos_acumulados') }}"
         />
 
-        <div class="ag-input">
-            <label for="base_id" class="ag-input__label">{{ __('mantenimiento.baterias.campo_base') }}</label>
-            <div class="ag-input__control {{ $errors->has('base_id') ? 'ag-input__control--error' : '' }}">
-                <select name="base_id" id="base_id" class="ag-input__field">
-                    <option value="">{{ __('mantenimiento.baterias.campo_base_placeholder') }}</option>
-                    @foreach ($basesDisponibles as $id => $nombreBase)
-                        <option value="{{ $id }}" @selected((string) $baseId === (string) $id)>{{ $nombreBase }}</option>
-                    @endforeach
-                </select>
-            </div>
-            @if ($errors->has('base_id'))
-                <p class="ag-input__error" role="alert">{{ $errors->first('base_id') }}</p>
-            @endif
-        </div>
+        <x-atoms.select
+            name="base_id"
+            id="base_id"
+            label="{{ __('mantenimiento.baterias.campo_base') }}"
+            :options="$basesDisponibles"
+            :value="$baseId"
+            placeholder="{{ __('mantenimiento.baterias.campo_base_placeholder') }}"
+            error="{{ $errors->first('base_id') }}"
+        />
 
-        <div class="ag-input">
-            <label for="estado" class="ag-input__label">
-                {{ __('mantenimiento.baterias.campo_estado') }}
-                <span class="ag-input__required" aria-hidden="true">*</span>
-            </label>
-            <div class="ag-input__control {{ $errors->has('estado') ? 'ag-input__control--error' : '' }}">
-                <select name="estado" id="estado" class="ag-input__field" required>
-                    @foreach ($estados as $opcionEstado)
-                        <option value="{{ $opcionEstado->value }}" @selected($estado === $opcionEstado->value)>
-                            {{ __('mantenimiento.estado_bateria.'.$opcionEstado->value) }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-            @if ($errors->has('estado'))
-                <p class="ag-input__error" role="alert">{{ $errors->first('estado') }}</p>
-            @endif
-        </div>
+        @php
+            $opcionesEstado = collect($estados)->mapWithKeys(fn ($opcion) => [
+                $opcion->value => __('mantenimiento.estado_bateria.'.$opcion->value)
+            ])->all();
+        @endphp
+        <x-atoms.select
+            name="estado"
+            id="estado"
+            label="{{ __('mantenimiento.baterias.campo_estado') }}"
+            :options="$opcionesEstado"
+            :value="$estado"
+            required
+            error="{{ $errors->first('estado') }}"
+        />
     </x-molecules.form-section>
 
     <x-organisms.form-actions-bar :status="__('mantenimiento.baterias.estado_form')">

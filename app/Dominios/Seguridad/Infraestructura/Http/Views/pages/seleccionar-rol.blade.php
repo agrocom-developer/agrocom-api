@@ -85,15 +85,12 @@
                     @endforeach
                 </div>
 
-                <label class="ag-role-select__remember">
-                    <input
-                        type="checkbox"
-                        class="ag-role-select__checkbox"
-                        data-ag-role-recordar
-                        @checked($recordarInicial)
-                    >
-                    {{ __('seguridad.rol.recordar') }}
-                </label>
+                <x-atoms.checkbox
+                    name="recordar"
+                    label="{{ __('seguridad.rol.recordar') }}"
+                    :checked="$recordarInicial"
+                    data-ag-role-recordar
+                />
 
                 <p
                     class="ag-role-select__error"

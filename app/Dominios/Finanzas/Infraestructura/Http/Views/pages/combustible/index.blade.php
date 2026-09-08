@@ -58,31 +58,28 @@
             @endif
 
             <form method="GET" action="{{ route('panel.combustible.index') }}" class="ag-filtros ag-combustible__filtros">
-                <div class="ag-input">
-                    <label for="filtro-base" class="ag-input__label">{{ __('finanzas.combustible.filtro_base') }}</label>
-                    <div class="ag-input__control">
-                        <select name="base_id" id="filtro-base" class="ag-input__field">
-                            <option value="">{{ __('finanzas.combustible.filtro_base_placeholder') }}</option>
-                            @foreach ($basesDisponibles as $id => $nombre)
-                                <option value="{{ $id }}" @selected((string) $filtros['base_id'] === (string) $id)>{{ $nombre }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
+                <x-atoms.select
+                    name="base_id"
+                    id="filtro-base"
+                    label="{{ __('finanzas.combustible.filtro_base') }}"
+                    :options="$basesDisponibles"
+                    :value="(string) $filtros['base_id']"
+                    placeholder="{{ __('finanzas.combustible.filtro_base_placeholder') }}"
+                />
 
-                <div class="ag-input">
-                    <label for="filtro-desde" class="ag-input__label">{{ __('finanzas.combustible.filtro_desde') }}</label>
-                    <div class="ag-input__control">
-                        <input type="date" name="desde" id="filtro-desde" class="ag-input__field" value="{{ $filtros['desde'] }}">
-                    </div>
-                </div>
+                <x-atoms.date
+                    name="desde"
+                    id="filtro-desde"
+                    label="{{ __('finanzas.combustible.filtro_desde') }}"
+                    value="{{ $filtros['desde'] }}"
+                />
 
-                <div class="ag-input">
-                    <label for="filtro-hasta" class="ag-input__label">{{ __('finanzas.combustible.filtro_hasta') }}</label>
-                    <div class="ag-input__control">
-                        <input type="date" name="hasta" id="filtro-hasta" class="ag-input__field" value="{{ $filtros['hasta'] }}">
-                    </div>
-                </div>
+                <x-atoms.date
+                    name="hasta"
+                    id="filtro-hasta"
+                    label="{{ __('finanzas.combustible.filtro_hasta') }}"
+                    value="{{ $filtros['hasta'] }}"
+                />
 
                 <div class="ag-filtros__acciones ag-combustible__filtros-acciones">
                     <x-atoms.button type="submit" variant="outline" size="md" icon="search">

@@ -56,23 +56,16 @@
         :title="__('campania.campanias.seccion_datos')"
         :count="__('campania.campanias.campos_contador', ['cantidad' => 5])"
     >
-        <div class="ag-input">
-            <label for="cliente_id" class="ag-input__label">
-                {{ __('campania.campanias.campo_cliente') }}
-                <span class="ag-input__required" aria-hidden="true">*</span>
-            </label>
-            <div class="ag-input__control {{ $errors->has('cliente_id') ? 'ag-input__control--error' : '' }}">
-                <select name="cliente_id" id="cliente_id" class="ag-input__field" required>
-                    <option value="">{{ __('campania.campanias.campo_cliente_placeholder') }}</option>
-                    @foreach ($clientesDisponibles as $id => $razonSocial)
-                        <option value="{{ $id }}" @selected((string) $clienteId === (string) $id)>{{ $razonSocial }}</option>
-                    @endforeach
-                </select>
-            </div>
-            @if ($errors->has('cliente_id'))
-                <p class="ag-input__error" role="alert">{{ $errors->first('cliente_id') }}</p>
-            @endif
-        </div>
+        <x-atoms.select
+            name="cliente_id"
+            id="cliente_id"
+            label="{{ __('campania.campanias.campo_cliente') }}"
+            placeholder="{{ __('campania.campanias.campo_cliente_placeholder') }}"
+            :options="$clientesDisponibles"
+            value="{{ $clienteId }}"
+            required
+            error="{{ $errors->first('cliente_id') }}"
+        />
 
         <x-atoms.input
             type="text"
@@ -92,8 +85,7 @@
             error="{{ $errors->first('nombre') }}"
         />
 
-        <x-atoms.input
-            type="date"
+        <x-atoms.date
             name="fecha_inicio"
             label="{{ __('campania.campanias.campo_fecha_inicio') }}"
             value="{{ $fechaInicio }}"
@@ -101,8 +93,7 @@
             error="{{ $errors->first('fecha_inicio') }}"
         />
 
-        <x-atoms.input
-            type="date"
+        <x-atoms.date
             name="fecha_fin"
             label="{{ __('campania.campanias.campo_fecha_fin') }}"
             value="{{ $fechaFin }}"

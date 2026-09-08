@@ -83,17 +83,14 @@
                     </div>
                 </div>
 
-                <div class="ag-input">
-                    <label for="filtro-cliente" class="ag-input__label">{{ __('campania.campanias.filtro_cliente') }}</label>
-                    <div class="ag-input__control">
-                        <select name="cliente_id" id="filtro-cliente" class="ag-input__field">
-                            <option value="">{{ __('campania.campanias.filtro_cliente_placeholder') }}</option>
-                            @foreach ($clientesDisponibles as $id => $razonSocial)
-                                <option value="{{ $id }}" @selected((string) $filtros['cliente_id'] === (string) $id)>{{ $razonSocial }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
+                <x-atoms.select
+                    name="cliente_id"
+                    id="filtro-cliente"
+                    label="{{ __('campania.campanias.filtro_cliente') }}"
+                    placeholder="{{ __('campania.campanias.filtro_cliente_placeholder') }}"
+                    :options="$clientesDisponibles"
+                    value="{{ $filtros['cliente_id'] }}"
+                />
 
                 <div class="ag-filtros__acciones ag-campanias__filtros-acciones">
                     <x-atoms.button type="submit" variant="outline" size="md" icon="search">

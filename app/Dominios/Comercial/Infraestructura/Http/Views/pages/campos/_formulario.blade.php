@@ -62,23 +62,16 @@
         :title="__('comercial.campos.seccion_datos')"
         :count="__('comercial.campos.campos_contador', ['cantidad' => 3])"
     >
-        <div class="ag-input">
-            <label for="cliente_id" class="ag-input__label">
-                {{ __('comercial.campos.campo_cliente') }}
-                <span class="ag-input__required" aria-hidden="true">*</span>
-            </label>
-            <div class="ag-input__control {{ $errors->has('cliente_id') ? 'ag-input__control--error' : '' }}">
-                <select name="cliente_id" id="cliente_id" class="ag-input__field" required>
-                    <option value="">{{ __('comercial.campos.campo_cliente_placeholder') }}</option>
-                    @foreach ($clientesDisponibles as $id => $razonSocial)
-                        <option value="{{ $id }}" @selected((string) $clienteId === (string) $id)>{{ $razonSocial }}</option>
-                    @endforeach
-                </select>
-            </div>
-            @if ($errors->has('cliente_id'))
-                <p class="ag-input__error" role="alert">{{ $errors->first('cliente_id') }}</p>
-            @endif
-        </div>
+        <x-atoms.select
+            name="cliente_id"
+            id="cliente_id"
+            label="{{ __('comercial.campos.campo_cliente') }}"
+            :options="$clientesDisponibles"
+            :value="$clienteId"
+            placeholder="{{ __('comercial.campos.campo_cliente_placeholder') }}"
+            required
+            error="{{ $errors->first('cliente_id') }}"
+        />
 
         <x-atoms.input
             type="text"

@@ -1,11 +1,9 @@
 {{--
     Partial: formulario de usuario, compartido por create.blade.php y
     edit.blade.php (HU-45, tarea 39) — arquetipo Formulario, §6.3 de
-    docs/diseno/guia_pantalla_panel.md. Sin sub-entidad repetible: un select
-    nativo de persona + un `<select multiple>` nativo de roles (no hay átomo
-    de selección múltiple en el catálogo — mismo criterio de select nativo
-    que `cliente_id` en campos/_formulario.blade.php) + tres campos planos
-    (name, username, password).
+    docs/diseno/guia_pantalla_panel.md. Sin sub-entidad repetible: `x-atoms.select`
+    de persona + `x-atoms.checkbox-group` de roles (selección múltiple, tarea
+    76/HU-53) + tres campos planos (name, username, password).
 
     Espera:
     - $usuario (SecUser|null): null en alta; el modelo en edición.
@@ -29,6 +27,9 @@
     $username = old('username', $usuario?->username ?? '');
     $personaId = old('persona_id', $usuario?->persona_id ?? '');
     $rolesSeleccionados = array_map('strval', old('roles', $rolesAsignados ?? []));
+    $opcionesRoles = $rolesDisponibles->mapWithKeys(fn ($rol) => [
+        $rol->id => \App\Dominios\Seguridad\Infraestructura\Http\Presentacion\PresentadorRol::nombreLegible($rol),
+    ]);
 @endphp
 
 <form method="POST" action="{{ $accion }}" class="ag-usuarios-form" novalidate data-ag-usuarios-form>
@@ -82,37 +83,26 @@
             error="{{ $errors->first('password') }}"
         />
 
-        <div class="ag-input">
-            <label for="persona_id" class="ag-input__label">{{ __('seguridad.usuarios.campo_persona') }}</label>
-            <div class="ag-input__control {{ $errors->has('persona_id') ? 'ag-input__control--error' : '' }}">
-                <select name="persona_id" id="persona_id" class="ag-input__field">
-                    <option value="">{{ __('seguridad.usuarios.campo_persona_placeholder') }}</option>
-                    @foreach ($personasDisponibles as $id => $nombrePersona)
-                        <option value="{{ $id }}" @selected((string) $personaId === (string) $id)>{{ $nombrePersona }}</option>
-                    @endforeach
-                </select>
-            </div>
-            @if ($errors->has('persona_id'))
-                <p class="ag-input__error" role="alert">{{ $errors->first('persona_id') }}</p>
-            @endif
-        </div>
+        <x-atoms.select
+            name="persona_id"
+            id="persona_id"
+            label="{{ __('seguridad.usuarios.campo_persona') }}"
+            :options="$personasDisponibles"
+            :value="$personaId"
+            placeholder="{{ __('seguridad.usuarios.campo_persona_placeholder') }}"
+            error="{{ $errors->first('persona_id') }}"
+        />
 
-        <div class="ag-input ag-form-section__field--full">
-            <label for="roles" class="ag-input__label">{{ __('seguridad.usuarios.campo_roles') }}</label>
-            <div class="ag-input__control {{ $errors->has('roles') ? 'ag-input__control--error' : '' }}">
-                <select name="roles[]" id="roles" class="ag-input__field" multiple size="5" aria-describedby="roles-help">
-                    @foreach ($rolesDisponibles as $rol)
-                        <option value="{{ $rol->id }}" @selected(in_array((string) $rol->id, $rolesSeleccionados, true))>
-                            {{ \App\Dominios\Seguridad\Infraestructura\Http\Presentacion\PresentadorRol::nombreLegible($rol) }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-            <p id="roles-help" class="ag-input__help">{{ __('seguridad.usuarios.campo_roles_ayuda') }}</p>
-            @if ($errors->has('roles'))
-                <p class="ag-input__error" role="alert">{{ $errors->first('roles') }}</p>
-            @endif
-        </div>
+        <x-atoms.checkbox-group
+            name="roles"
+            id="roles"
+            label="{{ __('seguridad.usuarios.campo_roles') }}"
+            :options="$opcionesRoles"
+            :value="$rolesSeleccionados"
+            help="{{ __('seguridad.usuarios.campo_roles_ayuda') }}"
+            error="{{ $errors->first('roles') }}"
+            class="ag-form-section__field--full"
+        />
     </x-molecules.form-section>
 
     <x-organisms.form-actions-bar :status="__('seguridad.usuarios.estado_form')">

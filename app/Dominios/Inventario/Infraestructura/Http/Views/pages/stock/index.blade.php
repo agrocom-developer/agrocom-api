@@ -80,17 +80,14 @@
                     </div>
                 </div>
 
-                <div class="ag-input">
-                    <label for="filtro-base" class="ag-input__label">{{ __('inventario.stock.filtro_base') }}</label>
-                    <div class="ag-input__control">
-                        <select name="base_id" id="filtro-base" class="ag-input__field">
-                            <option value="">{{ __('inventario.stock.filtro_todos') }}</option>
-                            @foreach ($basesDisponibles as $id => $nombreBase)
-                                <option value="{{ $id }}" @selected($filtros['base_id'] === $id)>{{ $nombreBase }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
+                <x-atoms.select
+                    name="base_id"
+                    id="filtro-base"
+                    :label="__('inventario.stock.filtro_base')"
+                    :options="$basesDisponibles"
+                    :value="$filtros['base_id']"
+                    :placeholder="__('inventario.stock.filtro_todos')"
+                />
 
                 <div class="ag-filtros__acciones ag-stock__filtros-acciones">
                     <x-atoms.button type="submit" variant="outline" size="md" icon="search">

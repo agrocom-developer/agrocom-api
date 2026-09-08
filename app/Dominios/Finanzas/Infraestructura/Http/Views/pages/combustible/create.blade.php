@@ -62,8 +62,7 @@
                     :title="__('finanzas.combustible.seccion_datos')"
                     :count="__('finanzas.combustible.campos_contador', ['cantidad' => 6])"
                 >
-                    <x-atoms.input
-                        type="date"
+                    <x-atoms.date
                         name="fecha"
                         label="{{ __('finanzas.combustible.campo_fecha') }}"
                         value="{{ $fecha }}"
@@ -71,40 +70,27 @@
                         error="{{ $errors->first('fecha') }}"
                     />
 
-                    <div class="ag-input">
-                        <label for="base_id" class="ag-input__label">
-                            {{ __('finanzas.combustible.campo_base') }}
-                            <span class="ag-input__required" aria-hidden="true">*</span>
-                        </label>
-                        <div class="ag-input__control {{ $errors->has('base_id') ? 'ag-input__control--error' : '' }}">
-                            <select name="base_id" id="base_id" class="ag-input__field" required>
-                                <option value="">{{ __('finanzas.combustible.campo_base_placeholder') }}</option>
-                                @foreach ($basesDisponibles as $id => $nombre)
-                                    <option value="{{ $id }}" @selected((string) $baseId === (string) $id)>{{ $nombre }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        @if ($errors->has('base_id'))
-                            <p class="ag-input__error" role="alert">{{ $errors->first('base_id') }}</p>
-                        @endif
-                    </div>
+                    <x-atoms.select
+                        name="base_id"
+                        id="base_id"
+                        label="{{ __('finanzas.combustible.campo_base') }}"
+                        :options="$basesDisponibles"
+                        :value="(string) $baseId"
+                        placeholder="{{ __('finanzas.combustible.campo_base_placeholder') }}"
+                        :error="$errors->first('base_id')"
+                        required
+                    />
 
-                    <div class="ag-input">
-                        <label for="destino" class="ag-input__label">
-                            {{ __('finanzas.combustible.campo_destino') }}
-                            <span class="ag-input__required" aria-hidden="true">*</span>
-                        </label>
-                        <div class="ag-input__control {{ $errors->has('destino') ? 'ag-input__control--error' : '' }}">
-                            <select name="destino" id="destino" class="ag-input__field" required>
-                                <option value="">{{ __('finanzas.combustible.campo_destino_placeholder') }}</option>
-                                <option value="generador" @selected($destino === 'generador')>{{ __('finanzas.combustible.destino.generador') }}</option>
-                                <option value="vehiculo" @selected($destino === 'vehiculo')>{{ __('finanzas.combustible.destino.vehiculo') }}</option>
-                            </select>
-                        </div>
-                        @if ($errors->has('destino'))
-                            <p class="ag-input__error" role="alert">{{ $errors->first('destino') }}</p>
-                        @endif
-                    </div>
+                    <x-atoms.select
+                        name="destino"
+                        id="destino"
+                        label="{{ __('finanzas.combustible.campo_destino') }}"
+                        :options="collect(['generador' => __('finanzas.combustible.destino.generador'), 'vehiculo' => __('finanzas.combustible.destino.vehiculo')])"
+                        value="{{ $destino }}"
+                        placeholder="{{ __('finanzas.combustible.campo_destino_placeholder') }}"
+                        :error="$errors->first('destino')"
+                        required
+                    />
 
                     <x-atoms.input
                         type="number"

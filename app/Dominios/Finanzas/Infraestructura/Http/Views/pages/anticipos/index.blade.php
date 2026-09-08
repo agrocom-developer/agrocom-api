@@ -61,17 +61,14 @@
             @endif
 
             <form method="GET" action="{{ route('panel.anticipos.index') }}" class="ag-filtros ag-anticipos__filtros">
-                <div class="ag-input">
-                    <label for="filtro-persona" class="ag-input__label">{{ __('finanzas.anticipos.filtro_persona') }}</label>
-                    <div class="ag-input__control">
-                        <select name="persona_id" id="filtro-persona" class="ag-input__field">
-                            <option value="">{{ __('finanzas.anticipos.filtro_persona_placeholder') }}</option>
-                            @foreach ($personasDisponibles as $id => $nombre)
-                                <option value="{{ $id }}" @selected((string) $filtros['persona_id'] === (string) $id)>{{ $nombre }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
+                <x-atoms.select
+                    name="persona_id"
+                    id="filtro-persona"
+                    label="{{ __('finanzas.anticipos.filtro_persona') }}"
+                    :options="$personasDisponibles"
+                    :value="(string) $filtros['persona_id']"
+                    placeholder="{{ __('finanzas.anticipos.filtro_persona_placeholder') }}"
+                />
 
                 <div class="ag-input">
                     <label for="filtro-periodo" class="ag-input__label">{{ __('finanzas.anticipos.filtro_periodo') }}</label>
