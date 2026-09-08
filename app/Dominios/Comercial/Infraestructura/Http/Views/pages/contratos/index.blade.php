@@ -7,8 +7,10 @@
 
     Datos esperados (ver ContratosController::index()): la cáscara de
     CascaraPanel, más:
-    - $contratos (LengthAwarePaginator<Contrato>, con `cliente` precargada):
-      fecha de inicio descendente.
+    - $contratos (LengthAwarePaginator<Contrato>, con `cliente` y `ventanas`
+      precargadas): fecha de inicio descendente. La columna "Ventanas"
+      muestra "Día completo" (HU-47, tarea 70) cuando la relación viene
+      vacía — cero ventanas ya significa eso, sin booleano propio.
     - $campaniasDisponibles (Collection<int, string>): id => "código —
       cliente", para el <select> del filtro por campaña (ADR 0015 punto 1).
     - $filtros (array{q: string, campania_id: int|null}): filtros aplicados,
@@ -115,6 +117,7 @@
                         <span role="columnheader">{{ __('comercial.contratos.col_hectareas') }}</span>
                         <span role="columnheader">{{ __('comercial.contratos.col_monto_total') }}</span>
                         <span role="columnheader">{{ __('comercial.contratos.col_vigencia') }}</span>
+                        <span role="columnheader">{{ __('comercial.contratos.col_ventanas') }}</span>
                         <span role="columnheader">{{ __('comercial.contratos.col_estado') }}</span>
                         <span role="columnheader" aria-hidden="true"></span>
                     </div>
@@ -140,6 +143,20 @@
                                     {{ __('comercial.contratos.vigencia_sin_fin', ['inicio' => $contrato->fecha_inicio->format('d/m/Y')]) }}
                                 @endif
                             </span>
+                            <span role="cell">
+                                @if ($contrato->ventanas->isEmpty())
+                                    <x-atoms.badge variant="neutral">
+                                        {{ __('comercial.contratos.ventana_dia_completo') }}
+                                    </x-atoms.badge>
+                                @else
+                                    @foreach ($contrato->ventanas as $ventana)
+                                        <div class="ag-contratos__mono">
+                                            {{ __('comercial.contratos.ventana_rango', ['inicio' => substr((string) $ventana->hora_inicio, 0, 5), 'fin' => substr((string) $ventana->hora_fin, 0, 5)]) }}
+                                        </div>
+                                    @endforeach
+                                @endif
+                            </span>
+
                             <span role="cell">
                                 <x-atoms.badge :variant="$variantePorEstado[$estadoValor]">
                                     {{ __('comercial.contrato.estado.'.$estadoValor) }}

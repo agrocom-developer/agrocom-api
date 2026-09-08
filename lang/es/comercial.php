@@ -100,6 +100,7 @@ return [
         'col_hectareas' => 'Hectáreas',
         'col_monto_total' => 'Monto total',
         'col_vigencia' => 'Vigencia',
+        'col_ventanas' => 'Ventanas',
         'col_estado' => 'Estado',
         'editar' => 'Editar',
         'vigencia_con_fin' => ':inicio – :fin',
@@ -146,12 +147,21 @@ return [
         'campo_humedad_max_pct' => 'Humedad máxima (%)',
         'campo_velocidad_max_kmh' => 'Velocidad máxima de vuelo (km/h)',
         'campo_umbral_reporte_avance_ha' => 'Umbral de reporte de avance (ha)',
+        'campo_altura_vuelo_m' => 'Altura de vuelo (m)',
 
+        // Ventanas de aplicación (HU-47, tarea 70): "Día completo" convive con
+        // las filas cargadas, nunca un booleano en la base (ADR 0015 punto 5)
+        // — el interruptor es puramente de presentación, arranca encendido
+        // sin ventanas cargadas y las filas se muestran/ocultan según su
+        // estado (resources/js/pages/contratos-form.js).
         'seccion_ventanas' => 'Ventanas de aplicación',
+        'ventana_dia_completo' => 'Día completo',
+        'ventana_dia_completo_ayuda' => 'Sin restricción de horario. Apagalo para cargar franjas horarias.',
         'ventana_agregar' => 'Agregar ventana',
         'ventana_quitar' => 'Quitar',
         'ventana_hora_inicio' => 'Desde',
         'ventana_hora_fin' => 'Hasta',
+        'ventana_rango' => ':inicio – :fin',
         'estado_form' => 'Los cambios se guardan al confirmar.',
 
         // Errores de validación
@@ -159,8 +169,8 @@ return [
         'error_cliente_invalido' => 'El cliente seleccionado no es válido.',
         'error_campania_requerida' => 'Seleccioná la campaña del contrato.',
         'error_campania_invalida' => 'La campaña seleccionada no es válida.',
-        'error_ventanas_minimo' => 'Agregá al menos una ventana de aplicación.',
         'error_ventana_ajena' => 'Una de las ventanas enviadas no pertenece a este contrato.',
+        'error_ventana_incompleta' => 'Completá la hora de inicio y la hora de fin de la ventana.',
         'error_ventana_horas' => 'La hora de fin tiene que ser posterior a la hora de inicio.',
         'error_humedad_rango' => 'La humedad mínima no puede ser mayor que la máxima.',
     ],

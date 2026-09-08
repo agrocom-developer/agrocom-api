@@ -29,6 +29,16 @@
 
     Tras un error de validación, `old()` pisa los valores del modelo/vacíos
     — mismo criterio en alta y en edición.
+
+    "Día completo" (HU-47, tarea 70) NO es un campo que se envíe ni se
+    guarde: es un interruptor puramente de presentación
+    (`resources/js/pages/contratos-form.js`) que muestra/oculta la lista de
+    filas de `ventanas[]` — cero ventanas en la base YA significa "día
+    completo" (ADR 0015 punto 5), así que no hace falta un booleano extra
+    que pudiera contradecir a las filas cargadas. Arranca encendido cuando no
+    hay ninguna fila cargada (alta nueva, o edición de un contrato sin
+    ventanas) y apagado cuando sí la hay — se deriva de `$ventanasIniciales`,
+    nunca de un valor propio.
 --}}
 @php
     $esEdicion = $contrato !== null;
@@ -45,8 +55,11 @@
             'hora_inicio' => substr((string) $ventana->hora_inicio, 0, 5),
             'hora_fin' => substr((string) $ventana->hora_fin, 0, 5),
         ])->all()
-        : [[]];
+        : [];
     $ventanasIniciales = old('ventanas', $ventanasPorDefecto);
+    $hayVentanasCargadas = collect($ventanasIniciales)->contains(
+        fn ($ventana) => ($ventana['hora_inicio'] ?? '') !== '' || ($ventana['hora_fin'] ?? '') !== '',
+    );
 @endphp
 
 <form method="POST" action="{{ $accion }}" class="ag-contratos-form" novalidate data-ag-contratos-form>
@@ -171,7 +184,7 @@
 
     <x-molecules.form-section
         :title="__('comercial.contratos.seccion_clima')"
-        :count="__('comercial.contratos.campos_contador', ['cantidad' => 6])"
+        :count="__('comercial.contratos.campos_contador', ['cantidad' => 7])"
     >
         <div class="ag-form-section__field--full ag-contratos-form__ayuda">
             {{ __('comercial.contratos.seccion_clima_ayuda') }}
@@ -237,10 +250,30 @@
             step="0.01"
             error="{{ $errors->first('umbral_reporte_avance_ha') }}"
         />
+
+        <x-atoms.input
+            type="number"
+            name="altura_vuelo_m"
+            label="{{ __('comercial.contratos.campo_altura_vuelo_m') }}"
+            value="{{ $valor('altura_vuelo_m') }}"
+            min="0.01"
+            step="0.01"
+            error="{{ $errors->first('altura_vuelo_m') }}"
+        />
     </x-molecules.form-section>
 
     <x-molecules.form-section :title="__('comercial.contratos.seccion_ventanas')">
-        <div class="ag-form-section__field--full ag-contratos-form__ventanas" data-ag-ventanas>
+        <div class="ag-form-section__field--full">
+            <x-atoms.switch
+                name="dia_completo"
+                label="{{ __('comercial.contratos.ventana_dia_completo') }}"
+                help="{{ __('comercial.contratos.ventana_dia_completo_ayuda') }}"
+                :checked="! $hayVentanasCargadas"
+                data-ag-dia-completo
+            />
+        </div>
+
+        <div class="ag-form-section__field--full ag-contratos-form__ventanas" data-ag-ventanas @if (! $hayVentanasCargadas) hidden @endif>
             @if ($errors->has('ventanas'))
                 <p class="ag-input__error" role="alert">{{ $errors->first('ventanas') }}</p>
             @endif
