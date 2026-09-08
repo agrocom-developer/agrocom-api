@@ -254,6 +254,14 @@ class SeguridadSeeder extends Seeder
         'mantenimiento.vehiculo.crear' => 'Dar de alta un vehículo',
         'mantenimiento.vehiculo.editar' => 'Editar los datos de un vehículo',
         'mantenimiento.vehiculo.eliminar' => 'Dar de baja (lógica) un vehículo',
+        // Tarea 72 (HU-49, ADR 0015 punto 3): catálogo de generadores, ABM
+        // mínimo — no es una HU propia, es la tabla que hace falta para
+        // poder asignar un generador como equipamiento de un equipo de
+        // trabajo. Grano fino, mismo criterio que `mantenimiento.vehiculo.*`.
+        'mantenimiento.generador.ver' => 'Ver el listado de generadores',
+        'mantenimiento.generador.crear' => 'Dar de alta un generador',
+        'mantenimiento.generador.editar' => 'Editar los datos de un generador',
+        'mantenimiento.generador.eliminar' => 'Dar de baja (lógica) un generador',
         // HU-39 (tarea 51): "como encargado, quiero seguir las baterías con
         // sus ciclos y estado, para retirarlas antes de que fallen en
         // vuelo". Grano fino, mismo criterio que `mantenimiento.vehiculo.*`.
@@ -481,6 +489,12 @@ class SeguridadSeeder extends Seeder
         'mantenimiento.vehiculo.crear',
         'mantenimiento.vehiculo.editar',
         'mantenimiento.vehiculo.eliminar',
+        // Tarea 72 (HU-49, ADR 0015 punto 3): catálogo de generadores — mismo
+        // criterio que vehículos arriba.
+        'mantenimiento.generador.ver',
+        'mantenimiento.generador.crear',
+        'mantenimiento.generador.editar',
+        'mantenimiento.generador.eliminar',
         // HU-39 (tarea 51): "como encargado, quiero seguir las baterías con
         // sus ciclos y estado" — la HU lo dice literal, mismo criterio que
         // clientes, contratos, campos, drones, bases, personas, anticipos,

@@ -162,6 +162,15 @@ class SecMenuSeeder extends Seeder
         // 26/8/2026, punto 3), no una frontera de módulo.
         $this->item($recursos, 'recursos', 'vehiculos', 'local_shipping', 3, ruta: 'panel.vehiculos.index', codigoPermiso: 'mantenimiento.vehiculo.ver');
 
+        // Tarea 72 (HU-49, ADR 0015 punto 3): catálogo de generadores. ABM
+        // mínimo nuevo, sin placeholder previo — a diferencia de
+        // drones/baterías/vehículos arriba (que activan un ítem ya sembrado
+        // como "botón sin link"), acá se siembra completo desde el vamos. El
+        // backend vive en `Mantenimiento` (`man_generadores`) aunque el ítem
+        // quede agrupado bajo "Recursos": misma agrupación de layout que
+        // `vehiculos` (ADR 0011, extensión 26/8/2026, punto 3).
+        $this->item($recursos, 'recursos', 'generadores', 'bolt', 6, ruta: 'panel.generadores.index', codigoPermiso: 'mantenimiento.generador.ver');
+
         // HU-26 (tarea 37): administración de personas y bases — activa los
         // dos ítems que ya estaban sembrados como "botón sin link" (ver
         // docblock de `item()`).

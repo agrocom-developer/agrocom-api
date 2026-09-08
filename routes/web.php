@@ -17,6 +17,7 @@ use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\RendicionesContro
 use App\Dominios\Inventario\Infraestructura\Http\Controllers\Web\RepuestosController;
 use App\Dominios\Inventario\Infraestructura\Http\Controllers\Web\StockController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\BateriasController;
+use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\GeneradoresController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\OrdenesMantenimientoController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\PlanesMantenimientoController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\VehiculosController;
@@ -548,6 +549,31 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::delete('/panel/baterias/{bateria}', [BateriasController::class, 'destroy'])
             ->name('panel.baterias.destroy');
+
+        // Tarea 72 (HU-49, ADR 0015 punto 3): catálogo de generadores, ABM
+        // mínimo — no es una HU propia, es la tabla que hace falta para
+        // poder asignar un generador como equipamiento de un equipo de
+        // trabajo. Mismo molde que `vehiculos`/`baterias` arriba. Cuatro
+        // permisos de grano fino
+        // (`mantenimiento.generador.ver`/`.crear`/`.editar`/`.eliminar`)
+        // verificados DENTRO del controlador contra el ROL ACTIVO.
+        Route::get('/panel/generadores', [GeneradoresController::class, 'index'])
+            ->name('panel.generadores.index');
+
+        Route::get('/panel/generadores/crear', [GeneradoresController::class, 'create'])
+            ->name('panel.generadores.create');
+
+        Route::post('/panel/generadores', [GeneradoresController::class, 'store'])
+            ->name('panel.generadores.store');
+
+        Route::get('/panel/generadores/{generador}/editar', [GeneradoresController::class, 'edit'])
+            ->name('panel.generadores.edit');
+
+        Route::put('/panel/generadores/{generador}', [GeneradoresController::class, 'update'])
+            ->name('panel.generadores.update');
+
+        Route::delete('/panel/generadores/{generador}', [GeneradoresController::class, 'destroy'])
+            ->name('panel.generadores.destroy');
 
         // HU-36 (tarea 52): catálogo de repuestos con stock por base y
         // alerta de mínimo. Módulo nuevo `Inventario` (ADR 0011, extensión
