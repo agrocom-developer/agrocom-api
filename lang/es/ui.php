@@ -21,6 +21,15 @@ return [
         'hide_password' => 'Ocultar contraseña',
     ],
 
+    // Chrome del combobox atoms/select (tarea 76, HU-53): microcopy propia
+    // del control, no del formulario que lo usa (ADR 0013) — mismo criterio
+    // que 'input' de arriba.
+    'select' => [
+        'search_placeholder' => 'Buscar…',
+        'no_results' => 'Sin resultados',
+        'clear' => 'Limpiar selección',
+    ],
+
     'theme' => [
         'light' => 'Tema claro',
         'dark' => 'Tema oscuro',
