@@ -44,6 +44,34 @@ ejecuta dentro del contenedor. Es la misma cascada que corre `laravel-tests` en
 Ya no hay botón humano. El PR se mergea con squash en cuanto `laravel-tests` queda
 verde. Ver el skill `flujo-git-pr` y `docs/decisiones/0006-gitflow-simplificado.md`.
 
+**El squash tiene una consecuencia que hay que tener presente.** Los commits de
+la rama desaparecen dentro de uno solo, así que una rama que siga viva después
+de que su PR se mergeó ya no tiene correspondencia con `develop`: cualquier PR
+nuevo desde esa misma rama nace en conflicto. Y GitHub no dispara ningún
+workflow sobre un PR que no puede fusionar, con lo cual **CI no queda en rojo:
+no existe**. Es un fallo mudo, y el ciclo lo trataba como "CI todavía
+pendiente".
+
+Pasó el 8/9/2026 con la tarea 69: la sesión abrió el PR #128 por su cuenta,
+`auto-merge` lo integró con squash, y el PR #129 que abrió después el ciclo
+—con las correcciones del verificador— quedó trabado sin un solo check. De
+paso, esa rama había salido de `develop` antes del PR #127 y mergearla habría
+borrado `prompts/81-ficha-desempeno.md` entero.
+
+Ahora hay dos compuertas:
+
+- **Antes de abrir el PR** (`poner_al_dia_con_develop`), la rama se rebasa
+  sobre `develop` si quedó atrás. El rebase limpio se hace solo; el que choca
+  deja una alerta y una rama `respaldo/*`.
+- **Durante la espera de CI**, un PR sin un solo check se mira por su merge
+  ref, no por sus checks: si está en conflicto se corta en el acto, y si a los
+  tres minutos sigue sin checks se corta también. Los dos casos escriben en
+  `runs/alertas.log` además de la bitácora.
+
+El tope de espera bajó de 45 a 15 minutos. CI mide 200-277 s en las últimas
+veinte corridas; 45 min no era holgura, era la ventana en la que un fallo mudo
+podía esconderse.
+
 ### 3. Los guardarraíles: hooks `PreToolUse`
 
 `.claude/settings.json` registra dos hooks que corren **antes** de cada herramienta
@@ -102,7 +130,7 @@ Cinco fases por tarea, cada una en su **propia sesión** con contexto limpio:
 | implementar | Encadena hasta `etapas=` sesiones sobre la misma rama hasta cerrar la HU; cada una commitea agrupado por función y corre la cascada | `runs/NN.estado`, `runs/NN.md` |
 | verificar | Sesión independiente, con los tests congelados, que decide si se puede integrar | `runs/NN.veredicto` |
 | PR | Abre el PR con el título y cuerpo que dejó la tarea | `runs/NN.pr` |
-| esperar CI | Sondea hasta que `auto-merge` integra, o corrige si queda en rojo | bitácora |
+| esperar CI | Sondea hasta que `auto-merge` integra; corrige si queda en rojo y corta rápido si el PR está en conflicto o si CI no arrancó | bitácora, `runs/alertas.log` |
 | planificar | Elige la próxima tarea del backlog y escribe su prompt | `prompts/NN+1-*.md`, `runs/cola.txt` |
 
 **Una tarea = una HU o TE completa = un PR.** La primera versión del ciclo hacía
