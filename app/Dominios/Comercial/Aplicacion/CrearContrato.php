@@ -2,8 +2,9 @@
 
 namespace App\Dominios\Comercial\Aplicacion;
 
-use App\Dominios\Campania\Dominio\Excepciones\CampaniaCerradaNoAdmiteImputaciones;
+use App\Dominios\Campania\Contratos\LecturaCampania;
 use App\Dominios\Comercial\Aplicacion\MaquinaEstados\MaquinaEstadosContrato;
+use App\Dominios\Comercial\Dominio\Excepciones\CampaniaCerrada;
 use App\Dominios\Comercial\Dominio\Excepciones\CampaniaDeOtroCliente;
 use App\Dominios\Comercial\Dominio\Excepciones\VentanasContratoSolapadas;
 use App\Dominios\Comercial\Dominio\ValidadorSolapamientoVentanas;
@@ -21,15 +22,19 @@ use Illuminate\Support\Facades\DB;
  * {@see MaquinaEstadosContrato::crear()}, nunca esta clase directamente
  * (invariante 7).
  *
- * Guarda central de HU-46 (ADR 0015 punto 1, corregido el 8/9/2026): la
- * campaña elegida tiene que ser del MISMO cliente que el contrato, y no
- * puede estar `cerrada`. Se lee `cpn_campanias` con `DB::table` (ADR 0003
- * regla 3, mismo criterio que `GastosController::basesDisponibles()`), sin
- * importar el modelo Eloquent `Campania` de otro módulo.
+ * Guarda central de HU-46 (ADR 0015 punto 1, corregido el 8/9/2026, y
+ * corrección de arquitectura del 8/9/2026): la campaña elegida tiene que ser
+ * del MISMO cliente que el contrato, y no puede estar `cerrada`. Se lee vía
+ * {@see LecturaCampania} (ADR 0003 regla 2, frontera de `Campania`) — no con
+ * `DB::table` directo, porque "está cerrada" es lógica de negocio de
+ * `Campania`, no una lectura plana por FK.
  */
 final class CrearContrato
 {
-    public function __construct(private readonly MaquinaEstadosContrato $maquinaEstados) {}
+    public function __construct(
+        private readonly MaquinaEstadosContrato $maquinaEstados,
+        private readonly LecturaCampania $lecturaCampania,
+    ) {}
 
     /**
      * @param  array<string, mixed>  $datosContrato  sin `estado` ni `monto_total`: los fija esta clase.
@@ -37,7 +42,7 @@ final class CrearContrato
      *
      * @throws VentanasContratoSolapadas si dos ventanas del alta se solapan entre sí.
      * @throws CampaniaDeOtroCliente si la campaña elegida no es del cliente del contrato.
-     * @throws CampaniaCerradaNoAdmiteImputaciones si la campaña elegida está `cerrada`.
+     * @throws CampaniaCerrada si la campaña elegida está `cerrada`.
      */
     public function ejecutar(array $datosContrato, array $ventanas): Contrato
     {
@@ -70,22 +75,22 @@ final class CrearContrato
 
     /**
      * @throws CampaniaDeOtroCliente si la campaña elegida no es del cliente del contrato.
-     * @throws CampaniaCerradaNoAdmiteImputaciones si la campaña elegida está `cerrada`.
+     * @throws CampaniaCerrada si la campaña elegida está `cerrada`.
      */
     private function verificarCampania(int $clienteId, int $campaniaId): void
     {
-        $campania = DB::table('cpn_campanias')->where('id', $campaniaId)->first();
+        $campania = $this->lecturaCampania->obtener($campaniaId);
 
         if ($campania === null) {
             return;
         }
 
-        if ((int) $campania->cliente_id !== $clienteId) {
+        if ($campania->clienteId !== $clienteId) {
             throw CampaniaDeOtroCliente::paraCampania($campania->codigo);
         }
 
-        if ($campania->estado === 'cerrada') {
-            throw CampaniaCerradaNoAdmiteImputaciones::paraCampania($campania->codigo);
+        if ($campania->cerrada) {
+            throw CampaniaCerrada::paraCampania($campania->codigo);
         }
     }
 

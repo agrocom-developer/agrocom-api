@@ -2,10 +2,10 @@
 
 namespace App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web;
 
-use App\Dominios\Campania\Dominio\Excepciones\CampaniaCerradaNoAdmiteImputaciones;
 use App\Dominios\Finanzas\Aplicacion\CrearGasto;
 use App\Dominios\Finanzas\Aplicacion\EliminarGasto;
 use App\Dominios\Finanzas\Aplicacion\ListarGastos;
+use App\Dominios\Finanzas\Dominio\Excepciones\CampaniaCerrada;
 use App\Dominios\Finanzas\Infraestructura\Eloquent\Gasto;
 use App\Dominios\Finanzas\Infraestructura\Eloquent\Rubro;
 use App\Dominios\Finanzas\Infraestructura\Http\Requests\CrearGastoRequest;
@@ -103,7 +103,7 @@ final class GastosController
                 isset($datos['campania_id']) ? (int) $datos['campania_id'] : null,
                 $request->file('comprobante'),
             );
-        } catch (CampaniaCerradaNoAdmiteImputaciones $excepcion) {
+        } catch (CampaniaCerrada $excepcion) {
             return redirect()
                 ->route('panel.gastos.create')
                 ->withInput()

@@ -2,13 +2,13 @@
 
 namespace App\Dominios\Finanzas\Aplicacion;
 
-use App\Dominios\Campania\Dominio\Excepciones\CampaniaCerradaNoAdmiteImputaciones;
+use App\Dominios\Campania\Contratos\LecturaCampania;
+use App\Dominios\Finanzas\Dominio\Excepciones\CampaniaCerrada;
 use App\Dominios\Finanzas\Infraestructura\Eloquent\Gasto;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -36,11 +36,14 @@ use Illuminate\Support\Facades\Storage;
  * `campaniaId` (ADR 0015 punto 6, tarea 69) es OPCIONAL — vacío es gasto
  * interno que no pertenece a ninguna campaña — y, si viene, no puede
  * apuntar a una campaña `cerrada` (misma guarda que
- * `Comercial\Aplicacion\CrearContrato`, leyendo `cpn_campanias` con
- * `DB::table`, ADR 0003 regla 3).
+ * `Comercial\Aplicacion\CrearContrato`, leyendo vía
+ * `Campania\Contratos\LecturaCampania`, ADR 0003 regla 2 — corrección de
+ * arquitectura del 8/9/2026).
  */
 final class CrearGasto
 {
+    public function __construct(private readonly LecturaCampania $lecturaCampania) {}
+
     public function ejecutar(
         string $fecha,
         int $rubroId,
@@ -77,17 +80,17 @@ final class CrearGasto
         return $gasto->refresh();
     }
 
-    /** @throws CampaniaCerradaNoAdmiteImputaciones si la campaña elegida está `cerrada`. */
+    /** @throws CampaniaCerrada si la campaña elegida está `cerrada`. */
     private function verificarCampania(?int $campaniaId): void
     {
         if ($campaniaId === null) {
             return;
         }
 
-        $campania = DB::table('cpn_campanias')->where('id', $campaniaId)->first();
+        $campania = $this->lecturaCampania->obtener($campaniaId);
 
-        if ($campania !== null && $campania->estado === 'cerrada') {
-            throw CampaniaCerradaNoAdmiteImputaciones::paraCampania($campania->codigo);
+        if ($campania !== null && $campania->cerrada) {
+            throw CampaniaCerrada::paraCampania($campania->codigo);
         }
     }
 
