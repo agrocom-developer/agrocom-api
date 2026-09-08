@@ -130,14 +130,24 @@ class SeguridadSeeder extends Seeder
         'comercial.contrato.editar' => 'Editar los datos y ventanas de un contrato',
         'comercial.contrato.cambiar_estado' => 'Cambiar el estado de un contrato (vigente, finalizado, cancelado)',
         // HU-24 (tarea 35): administración de campos con sus lotes. Grano
-        // fino, mismo criterio que `comercial.cliente.*`; sin
-        // `comercial.lote.*` propio — los lotes se gestionan dentro del
-        // formulario del campo, mismo criterio que los contactos del
-        // cliente.
+        // fino, mismo criterio que `comercial.cliente.*`. Hasta la tarea 77
+        // los lotes no tenían permiso propio (solo se tocaban dentro del
+        // formulario del campo); `comercial.lote.*` abajo abre la entrada
+        // directa por lote, sin reemplazar esta.
         'comercial.campo.ver' => 'Ver el listado y detalle de campos con sus lotes',
         'comercial.campo.crear' => 'Dar de alta un campo con sus lotes',
         'comercial.campo.editar' => 'Editar los datos y lotes de un campo',
         'comercial.campo.eliminar' => 'Dar de baja (lógica) un campo',
+        // HU-54 (tarea 77): pantalla propia de lotes — listado con filtro
+        // por cliente/propiedad y ficha con alta, edición y baja lógica de
+        // un lote suelto. Grano fino, mismo criterio que `comercial.campo.*`;
+        // el alta de una propiedad con sus lotes en la misma transacción
+        // sigue siendo un único caso de uso (`CrearCampo`), llamado desde
+        // cualquiera de los dos formularios.
+        'comercial.lote.ver' => 'Ver el listado y detalle de lotes',
+        'comercial.lote.crear' => 'Dar de alta un lote suelto',
+        'comercial.lote.editar' => 'Editar los datos y el perímetro de un lote',
+        'comercial.lote.eliminar' => 'Dar de baja (lógica) un lote sin historial asociado',
         // HU-27 (tarea 36): administración de la flota de drones con su
         // modelo y capacidad de carga. Grano fino, mismo criterio que
         // `comercial.campo.*`.
@@ -384,6 +394,12 @@ class SeguridadSeeder extends Seeder
         'comercial.campo.crear',
         'comercial.campo.editar',
         'comercial.campo.eliminar',
+        // HU-54 (tarea 77): administra también la entrada directa por
+        // lote — mismo criterio que campos arriba.
+        'comercial.lote.ver',
+        'comercial.lote.crear',
+        'comercial.lote.editar',
+        'comercial.lote.eliminar',
         // HU-27 (tarea 36): "Como encargado, quiero administrar la flota de
         // drones" — la HU lo dice literal, mismo criterio que clientes,
         // contratos y campos arriba.
@@ -588,16 +604,27 @@ class SeguridadSeeder extends Seeder
         );
     }
 
-    /** @param list<SecPermission> $permisos */
+    /**
+     * `withTrashed()`, no `query()`: una fila soft-deleteada (un dueño quitó
+     * el permiso desde el panel, vía `AsignarPermisosRol`) YA EXISTE para
+     * este par rol/permiso. Contar solo las vivas volvería a insertar el
+     * otorgamiento en cada corrida —el mismo hueco que la tarea 64 pidió
+     * cerrar ("no pisa en cada corrida lo que un dueño cambió")— porque el
+     * índice único es parcial (`WHERE deleted_at IS NULL`) y no impide una
+     * fila nueva. Sembrar es "otorgar si nunca se otorgó", nunca "reponer lo
+     * que alguien quitó a propósito".
+     *
+     * @param  list<SecPermission>  $permisos
+     */
     private function asignar(SecRole $rol, array $permisos): void
     {
         foreach ($permisos as $permiso) {
-            $yaAsignado = SecRolePermission::query()
+            $yaExiste = SecRolePermission::withTrashed()
                 ->where('id_role', $rol->id)
                 ->where('id_permission', $permiso->id)
                 ->exists();
 
-            if ($yaAsignado) {
+            if ($yaExiste) {
                 continue;
             }
 
