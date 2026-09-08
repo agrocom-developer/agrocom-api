@@ -15,7 +15,11 @@
     - $campaniasDisponibles (Collection<int, object{id,codigo,cliente_id}>):
       TODAS las campañas activas, con su cliente — `contratos-form.js` (ADR
       0015 punto 1) filtra en cliente cuáles mostrar según el cliente
-      elegido, mismo patrón que rubro/subrubro en `gastos-form.js`.
+      elegido, mismo patrón que rubro/subrubro en `gastos-form.js`. El mapa
+      campaña→cliente viaja como `data-mapa-cliente-campania` (JSON) en el
+      propio `<select>` de campaña (tarea 76: `x-atoms.select` arma un
+      combobox encima del nativo y no soporta atributos por `<option>`, así
+      que el mapeo no puede ir en cada opción como antes).
 
     `estado` y `monto_total` NUNCA son campos de este formulario: el primero
     lo cambia `panel.contratos.cambiar-estado` (otra pantalla, otra
@@ -34,6 +38,7 @@
     $campaniaId = old('campania_id', $contrato?->campania_id ?? '');
     $fechaInicio = old('fecha_inicio', $contrato?->fecha_inicio?->toDateString() ?? '');
     $fechaFin = old('fecha_fin', $contrato?->fecha_fin?->toDateString() ?? '');
+    $mapaClienteCampania = $campaniasDisponibles->pluck('cliente_id', 'id');
     $ventanasPorDefecto = $esEdicion
         ? $contrato->ventanas->map(fn ($ventana) => [
             'id' => $ventana->id,
@@ -68,46 +73,29 @@
         :title="__('comercial.contratos.seccion_datos')"
         :count="__('comercial.contratos.campos_contador', ['cantidad' => 9])"
     >
-        <div class="ag-input">
-            <label for="cliente_id" class="ag-input__label">
-                {{ __('comercial.contratos.campo_cliente') }}
-                <span class="ag-input__required" aria-hidden="true">*</span>
-            </label>
-            <div class="ag-input__control {{ $errors->has('cliente_id') ? 'ag-input__control--error' : '' }}">
-                <select name="cliente_id" id="cliente_id" class="ag-input__field" required data-ag-contrato-cliente>
-                    <option value="">{{ __('comercial.contratos.campo_cliente_placeholder') }}</option>
-                    @foreach ($clientesDisponibles as $id => $razonSocial)
-                        <option value="{{ $id }}" @selected((string) $clienteId === (string) $id)>{{ $razonSocial }}</option>
-                    @endforeach
-                </select>
-            </div>
-            @if ($errors->has('cliente_id'))
-                <p class="ag-input__error" role="alert">{{ $errors->first('cliente_id') }}</p>
-            @endif
-        </div>
+        <x-atoms.select
+            name="cliente_id"
+            label="{{ __('comercial.contratos.campo_cliente') }}"
+            placeholder="{{ __('comercial.contratos.campo_cliente_placeholder') }}"
+            :options="$clientesDisponibles"
+            value="{{ $clienteId }}"
+            required
+            error="{{ $errors->first('cliente_id') }}"
+            data-ag-contrato-cliente
+        />
 
-        <div class="ag-input">
-            <label for="campania_id" class="ag-input__label">
-                {{ __('comercial.contratos.campo_campania') }}
-                <span class="ag-input__required" aria-hidden="true">*</span>
-            </label>
-            <div class="ag-input__control {{ $errors->has('campania_id') ? 'ag-input__control--error' : '' }}">
-                <select name="campania_id" id="campania_id" class="ag-input__field" required data-ag-contrato-campania>
-                    <option value="">{{ __('comercial.contratos.campo_campania_placeholder') }}</option>
-                    @foreach ($campaniasDisponibles as $campania)
-                        <option
-                            value="{{ $campania->id }}"
-                            data-cliente-id="{{ $campania->cliente_id }}"
-                            @selected((string) $campaniaId === (string) $campania->id)
-                        >{{ $campania->codigo }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <p class="ag-input__help">{{ __('comercial.contratos.campo_campania_ayuda') }}</p>
-            @if ($errors->has('campania_id'))
-                <p class="ag-input__error" role="alert">{{ $errors->first('campania_id') }}</p>
-            @endif
-        </div>
+        <x-atoms.select
+            name="campania_id"
+            label="{{ __('comercial.contratos.campo_campania') }}"
+            placeholder="{{ __('comercial.contratos.campo_campania_placeholder') }}"
+            :options="$campaniasDisponibles->pluck('codigo', 'id')"
+            value="{{ $campaniaId }}"
+            required
+            help="{{ __('comercial.contratos.campo_campania_ayuda') }}"
+            error="{{ $errors->first('campania_id') }}"
+            data-ag-contrato-campania
+            data-mapa-cliente-campania="{{ $mapaClienteCampania->toJson() }}"
+        />
 
         <x-atoms.input
             type="number"
@@ -164,8 +152,7 @@
             error="{{ $errors->first('adelanto_pct') }}"
         />
 
-        <x-atoms.input
-            type="date"
+        <x-atoms.date
             name="fecha_inicio"
             label="{{ __('comercial.contratos.campo_fecha_inicio') }}"
             value="{{ $fechaInicio }}"
@@ -173,8 +160,7 @@
             error="{{ $errors->first('fecha_inicio') }}"
         />
 
-        <x-atoms.input
-            type="date"
+        <x-atoms.date
             name="fecha_fin"
             label="{{ __('comercial.contratos.campo_fecha_fin') }}"
             value="{{ $fechaFin }}"
