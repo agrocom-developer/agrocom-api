@@ -2,13 +2,13 @@
 
 namespace App\Dominios\Comercial\Infraestructura\Http\Controllers\Web;
 
-use App\Dominios\Campania\Dominio\Excepciones\CampaniaCerradaNoAdmiteImputaciones;
 use App\Dominios\Comercial\Aplicacion\ActualizarContrato;
 use App\Dominios\Comercial\Aplicacion\CambiarEstadoContrato;
 use App\Dominios\Comercial\Aplicacion\CrearContrato;
 use App\Dominios\Comercial\Aplicacion\ListarContratos;
 use App\Dominios\Comercial\Dominio\EstadoContrato;
 use App\Dominios\Comercial\Dominio\Excepciones\ActivacionContratoNoDisponible;
+use App\Dominios\Comercial\Dominio\Excepciones\CampaniaCerrada;
 use App\Dominios\Comercial\Dominio\Excepciones\CampaniaDeOtroCliente;
 use App\Dominios\Comercial\Dominio\Excepciones\TransicionContratoNoPermitida;
 use App\Dominios\Comercial\Dominio\Excepciones\VentanasContratoSolapadas;
@@ -104,7 +104,7 @@ final class ContratosController
                 ->route('panel.contratos.create')
                 ->withInput()
                 ->withErrors(['ventanas' => $excepcion->getMessage()]);
-        } catch (CampaniaDeOtroCliente|CampaniaCerradaNoAdmiteImputaciones $excepcion) {
+        } catch (CampaniaDeOtroCliente|CampaniaCerrada $excepcion) {
             return redirect()
                 ->route('panel.contratos.create')
                 ->withInput()
@@ -149,7 +149,7 @@ final class ContratosController
                 ->route('panel.contratos.edit', $contrato)
                 ->withInput()
                 ->withErrors(['ventanas' => $excepcion->getMessage()]);
-        } catch (CampaniaDeOtroCliente|CampaniaCerradaNoAdmiteImputaciones $excepcion) {
+        } catch (CampaniaDeOtroCliente|CampaniaCerrada $excepcion) {
             return redirect()
                 ->route('panel.contratos.edit', $contrato)
                 ->withInput()

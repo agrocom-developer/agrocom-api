@@ -2,7 +2,8 @@
 
 namespace App\Dominios\Comercial\Aplicacion;
 
-use App\Dominios\Campania\Dominio\Excepciones\CampaniaCerradaNoAdmiteImputaciones;
+use App\Dominios\Campania\Contratos\LecturaCampania;
+use App\Dominios\Comercial\Dominio\Excepciones\CampaniaCerrada;
 use App\Dominios\Comercial\Dominio\Excepciones\CampaniaDeOtroCliente;
 use App\Dominios\Comercial\Dominio\Excepciones\VentanasContratoSolapadas;
 use App\Dominios\Comercial\Dominio\ValidadorSolapamientoVentanas;
@@ -28,19 +29,21 @@ use Illuminate\Support\Facades\DB;
  * `Aplicacion/CambiarEstadoContrato`.
  *
  * Misma guarda de campaña que `CrearContrato` (ADR 0015 punto 1, corregido
- * el 8/9/2026): la campaña elegida tiene que ser del mismo cliente y no
- * puede estar `cerrada` — ver ese docblock para el criterio de lectura vía
- * `DB::table`.
+ * el 8/9/2026, y corrección de arquitectura del 8/9/2026): la campaña
+ * elegida tiene que ser del mismo cliente y no puede estar `cerrada` — ver
+ * ese docblock para el criterio de lectura vía `LecturaCampania`.
  */
 final class ActualizarContrato
 {
+    public function __construct(private readonly LecturaCampania $lecturaCampania) {}
+
     /**
      * @param  array<string, mixed>  $datosContrato  sin `estado` ni `monto_total`: este último lo recalcula esta clase.
      * @param  list<array{id: int|null, hora_inicio: string, hora_fin: string}>  $ventanas  set completo y definitivo
      *
      * @throws VentanasContratoSolapadas si dos ventanas del set final se solapan entre sí.
      * @throws CampaniaDeOtroCliente si la campaña elegida no es del cliente del contrato.
-     * @throws CampaniaCerradaNoAdmiteImputaciones si la campaña elegida está `cerrada`.
+     * @throws CampaniaCerrada si la campaña elegida está `cerrada`.
      */
     public function ejecutar(Contrato $contrato, array $datosContrato, array $ventanas): Contrato
     {
@@ -108,22 +111,22 @@ final class ActualizarContrato
 
     /**
      * @throws CampaniaDeOtroCliente si la campaña elegida no es del cliente del contrato.
-     * @throws CampaniaCerradaNoAdmiteImputaciones si la campaña elegida está `cerrada`.
+     * @throws CampaniaCerrada si la campaña elegida está `cerrada`.
      */
     private function verificarCampania(int $clienteId, int $campaniaId): void
     {
-        $campania = DB::table('cpn_campanias')->where('id', $campaniaId)->first();
+        $campania = $this->lecturaCampania->obtener($campaniaId);
 
         if ($campania === null) {
             return;
         }
 
-        if ((int) $campania->cliente_id !== $clienteId) {
+        if ($campania->clienteId !== $clienteId) {
             throw CampaniaDeOtroCliente::paraCampania($campania->codigo);
         }
 
-        if ($campania->estado === 'cerrada') {
-            throw CampaniaCerradaNoAdmiteImputaciones::paraCampania($campania->codigo);
+        if ($campania->cerrada) {
+            throw CampaniaCerrada::paraCampania($campania->codigo);
         }
     }
 
