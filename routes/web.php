@@ -8,6 +8,7 @@ use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\CultivosControll
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\FacturasController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\LotesController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ReportesComercialesController;
+use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\SiembraController;
 use App\Dominios\Distribucion\Infraestructura\Http\Controllers\Web\VersionesApkController;
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\AnticiposController;
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\CombustibleController;
@@ -424,6 +425,17 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::delete('/panel/cultivos/{cultivo}', [CultivosController::class, 'destroy'])
             ->name('panel.cultivos.destroy');
+
+        // HU-48 (tarea 71, etapa 3, ADR 0015 punto 4): qué se sembró en cada
+        // lote del campo, por campaña. Entra desde la ficha del campo, no
+        // desde `cultivos` (catálogo) ni desde `lotes` (estructura) — reusa
+        // el permiso `comercial.campo.editar`: no es un ABM propio, es parte
+        // de mantener los datos de ESE campo.
+        Route::get('/panel/campos/{campo}/siembra', [SiembraController::class, 'mostrar'])
+            ->name('panel.campos.siembra');
+
+        Route::post('/panel/campos/{campo}/siembra', [SiembraController::class, 'guardar'])
+            ->name('panel.campos.siembra.guardar');
 
         // HU-27 (tarea 36): administración de la flota de drones con su
         // modelo y capacidad de carga. Sin sub-entidad (a diferencia de
