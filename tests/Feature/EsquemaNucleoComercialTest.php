@@ -16,6 +16,7 @@ dataset('tablas del núcleo comercial', [
     'com_campos',
     'com_lotes',
     'com_cultivos',
+    'com_lote_campania',
     'ope_ordenes_aplicacion',
 ]);
 
