@@ -2,6 +2,8 @@
 
 namespace App\Dominios\Comercial\Aplicacion;
 
+use App\Dominios\Campania\Dominio\Excepciones\CampaniaCerradaNoAdmiteImputaciones;
+use App\Dominios\Comercial\Dominio\Excepciones\CampaniaDeOtroCliente;
 use App\Dominios\Comercial\Dominio\Excepciones\VentanasContratoSolapadas;
 use App\Dominios\Comercial\Dominio\ValidadorSolapamientoVentanas;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
@@ -24,6 +26,11 @@ use Illuminate\Support\Facades\DB;
  * `estado` nunca viaja en `$datosContrato` (invariante 7): esta clase no lo
  * toca — el cambio de estado es responsabilidad exclusiva de
  * `Aplicacion/CambiarEstadoContrato`.
+ *
+ * Misma guarda de campaña que `CrearContrato` (ADR 0015 punto 1, corregido
+ * el 8/9/2026): la campaña elegida tiene que ser del mismo cliente y no
+ * puede estar `cerrada` — ver ese docblock para el criterio de lectura vía
+ * `DB::table`.
  */
 final class ActualizarContrato
 {
@@ -32,9 +39,13 @@ final class ActualizarContrato
      * @param  list<array{id: int|null, hora_inicio: string, hora_fin: string}>  $ventanas  set completo y definitivo
      *
      * @throws VentanasContratoSolapadas si dos ventanas del set final se solapan entre sí.
+     * @throws CampaniaDeOtroCliente si la campaña elegida no es del cliente del contrato.
+     * @throws CampaniaCerradaNoAdmiteImputaciones si la campaña elegida está `cerrada`.
      */
     public function ejecutar(Contrato $contrato, array $datosContrato, array $ventanas): Contrato
     {
+        $this->verificarCampania((int) $datosContrato['cliente_id'], (int) $datosContrato['campania_id']);
+
         $solapamiento = ValidadorSolapamientoVentanas::primerSolapamiento($ventanas);
 
         if ($solapamiento !== null) {
@@ -92,6 +103,27 @@ final class ActualizarContrato
 
             $ventana->fill($datos);
             $ventana->save();
+        }
+    }
+
+    /**
+     * @throws CampaniaDeOtroCliente si la campaña elegida no es del cliente del contrato.
+     * @throws CampaniaCerradaNoAdmiteImputaciones si la campaña elegida está `cerrada`.
+     */
+    private function verificarCampania(int $clienteId, int $campaniaId): void
+    {
+        $campania = DB::table('cpn_campanias')->where('id', $campaniaId)->first();
+
+        if ($campania === null) {
+            return;
+        }
+
+        if ((int) $campania->cliente_id !== $clienteId) {
+            throw CampaniaDeOtroCliente::paraCampania($campania->codigo);
+        }
+
+        if ($campania->estado === 'cerrada') {
+            throw CampaniaCerradaNoAdmiteImputaciones::paraCampania($campania->codigo);
         }
     }
 

@@ -2,6 +2,8 @@
 
 namespace Database\Seeders\Demo;
 
+use App\Dominios\Campania\Dominio\EstadoCampania;
+use App\Dominios\Campania\Infraestructura\Eloquent\Campania;
 use App\Dominios\Comercial\Dominio\EstadoContrato;
 use App\Dominios\Comercial\Dominio\TipoContactoCliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
@@ -17,9 +19,10 @@ use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use Illuminate\Database\Seeder;
 
 /**
- * Demo del núcleo comercial: un cliente con contrato vigente, campo, lotes y
- * una orden de aplicación vigente — lo mínimo para que el flujo transaccional
- * (orden → trabajo → sesión → validación → devengo) tenga dónde arrancar.
+ * Demo del núcleo comercial: un cliente con su campaña `2025-2026` (`abierta`,
+ * ADR 0015 punto 1), contrato vigente, campo, lotes y una orden de aplicación
+ * vigente — lo mínimo para que el flujo transaccional (orden → trabajo →
+ * sesión → validación → devengo) tenga dónde arrancar.
  *
  * Los números son los del escenario base del contrato residente
  * (docs/negocio/ventana_al_negocio.md §1–2): 4.000 ha × 7 aplicaciones
@@ -55,6 +58,16 @@ class NucleoComercialSeeder extends Seeder
             'nit' => self::NIT_DEMO,
         ]), $autorId);
 
+        // Campaña del cliente (ADR 0015 punto 1, tarea 69): `com_contratos.campania_id`
+        // es NOT NULL, así que todo contrato demo necesita la suya.
+        $campania = $this->crear(new Campania([
+            'cliente_id' => $cliente->id,
+            'codigo' => '2025-2026',
+            'fecha_inicio' => '2025-07-01',
+            'fecha_fin' => '2026-06-30',
+            'estado' => EstadoCampania::Abierta,
+        ]), $autorId);
+
         $this->crear(new ClienteContacto([
             'cliente_id' => $cliente->id,
             'tipo' => TipoContactoCliente::Dueno,
@@ -86,6 +99,7 @@ class NucleoComercialSeeder extends Seeder
         // El monto_total cuadra exacto desde sus factores (invariante 6).
         $contrato = $this->crear(new Contrato([
             'cliente_id' => $cliente->id,
+            'campania_id' => $campania->id,
             'hectareas_contratadas' => '4000.00',
             'aplicaciones_previstas' => 7,
             'precio_ha' => '65.00',

@@ -13,9 +13,12 @@ use Illuminate\Support\Carbon;
  * campaña tenga costo real". Lo crea únicamente
  * `Finanzas/Aplicacion/CrearGasto.php`.
  *
- * `base_id`/`trabajo_id` referencian `per_bases`/`ope_trabajos` solo por FK +
- * entero plano (ADR 0003 regla 3) — sin `belongsTo` cross-módulo, mismo
- * criterio que `Anticipo::persona_id`.
+ * `base_id`/`trabajo_id`/`campania_id` referencian `per_bases`/`ope_trabajos`/
+ * `cpn_campanias` solo por FK + entero plano (ADR 0003 regla 3) — sin
+ * `belongsTo` cross-módulo, mismo criterio que `Anticipo::persona_id`.
+ * `campania_id` (ADR 0015 punto 6, tarea 69): en qué campaña del cliente se
+ * CONSUMIÓ el gasto — atribución de costo, nunca de cobro; el cliente no
+ * paga combustible, paga por hectárea aplicada.
  *
  * Inmutable salvo baja (misma decisión que `Anticipo`, documentada en
  * `Aplicacion/CrearGasto`): un gasto cargado no se edita — si está mal, se da
@@ -40,6 +43,7 @@ use Illuminate\Support\Carbon;
  * @property string $monto
  * @property int|null $base_id
  * @property int|null $trabajo_id
+ * @property int|null $campania_id
  * @property int|null $rendicion_id
  * @property string|null $comprobante_url
  * @property string|null $comprobante_hash
@@ -60,6 +64,7 @@ class Gasto extends ModeloDominio
         'monto',
         'base_id',
         'trabajo_id',
+        'campania_id',
         'rendicion_id',
         'comprobante_url',
         'comprobante_hash',

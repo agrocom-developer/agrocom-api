@@ -27,6 +27,7 @@ final class ActualizarContratoRequest extends FormRequest
 
         return [
             'cliente_id' => ['required', 'integer', Rule::exists('com_clientes', 'id')->whereNull('deleted_at')],
+            'campania_id' => ['required', 'integer', Rule::exists('cpn_campanias', 'id')->whereNull('deleted_at')],
             'hectareas_contratadas' => ['required', 'numeric', 'gt:0'],
             'aplicaciones_previstas' => ['required', 'integer', 'min:1'],
             'precio_ha' => ['required', 'numeric', 'min:0'],
@@ -71,6 +72,8 @@ final class ActualizarContratoRequest extends FormRequest
         return [
             'cliente_id.required' => __('comercial.contratos.error_cliente_requerido'),
             'cliente_id.exists' => __('comercial.contratos.error_cliente_invalido'),
+            'campania_id.required' => __('comercial.contratos.error_campania_requerida'),
+            'campania_id.exists' => __('comercial.contratos.error_campania_invalida'),
             'ventanas.required' => __('comercial.contratos.error_ventanas_minimo'),
             'ventanas.min' => __('comercial.contratos.error_ventanas_minimo'),
             'ventanas.*.id.exists' => __('comercial.contratos.error_ventana_ajena'),

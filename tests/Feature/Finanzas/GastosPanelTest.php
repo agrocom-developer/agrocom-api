@@ -1,5 +1,6 @@
 <?php
 
+use App\Dominios\Campania\Infraestructura\Eloquent\Campania;
 use App\Dominios\Comercial\Dominio\EstadoContrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
@@ -267,6 +268,55 @@ it('da de baja un gasto por soft delete: no lo borra físicamente ni aparece en 
     $this->get(route('panel.gastos.index'))
         ->assertOk()
         ->assertSee(__('finanzas.gastos.vacio'));
+});
+
+it('guarda un gasto sin campania_id: es un gasto interno que no pertenece a ninguna campaña', function () {
+    $rubro = rubroParaGastos();
+    encargadoEntraAlPanelParaGastos();
+
+    $this->post(route('panel.gastos.store'), payloadGasto($rubro->id))
+        ->assertRedirect(route('panel.gastos.index'));
+
+    $gasto = Gasto::query()->sole();
+    expect($gasto->campania_id)->toBeNull();
+});
+
+it('registra un gasto atribuido a la campaña donde se consumió', function () {
+    $rubro = rubroParaGastos();
+    $cliente = Cliente::create(['razon_social' => 'Cliente de gastos '.uniqid()]);
+    $campania = Campania::query()->create([
+        'cliente_id' => $cliente->id,
+        'codigo' => '2025-2026',
+        'fecha_inicio' => '2025-07-01',
+        'fecha_fin' => '2026-06-30',
+        'estado' => 'abierta',
+    ]);
+    encargadoEntraAlPanelParaGastos();
+
+    $this->post(route('panel.gastos.store'), payloadGasto($rubro->id, ['campania_id' => $campania->id]))
+        ->assertRedirect(route('panel.gastos.index'));
+
+    $gasto = Gasto::query()->sole();
+    expect($gasto->campania_id)->toBe($campania->id);
+});
+
+it('rechaza un gasto contra una campaña cerrada', function () {
+    $rubro = rubroParaGastos();
+    $cliente = Cliente::create(['razon_social' => 'Cliente de gastos '.uniqid()]);
+    $campaniaCerrada = Campania::query()->create([
+        'cliente_id' => $cliente->id,
+        'codigo' => '2024-2025',
+        'fecha_inicio' => '2024-07-01',
+        'fecha_fin' => '2025-06-30',
+        'estado' => 'cerrada',
+    ]);
+    encargadoEntraAlPanelParaGastos();
+
+    $this->post(route('panel.gastos.store'), payloadGasto($rubro->id, ['campania_id' => $campaniaCerrada->id]))
+        ->assertRedirect(route('panel.gastos.create'))
+        ->assertSessionHasErrors('campania_id');
+
+    expect(Gasto::query()->count())->toBe(0);
 });
 
 it('publica el ítem de menú de gastos gateado por finanzas.gasto.ver', function () {

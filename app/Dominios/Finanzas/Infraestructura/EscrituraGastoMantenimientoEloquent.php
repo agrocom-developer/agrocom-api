@@ -17,8 +17,10 @@ use App\Dominios\Finanzas\Infraestructura\Eloquent\Subrubro;
  * Rubro/subrubro se resuelven por nombre contra el catálogo sembrado por
  * `FinanzasRubrosSeeder` (tarea 47) — no crea rubros nuevos; si no existen,
  * `firstOrFail()` deja ver el problema de seed en vez de fallar en silencio.
- * `base_id`/`trabajo_id` van `null`: `man_ordenes_mantenimiento` no tiene
- * columna de base propia en el alcance de esta HU.
+ * `base_id`/`trabajo_id`/`campaniaId` van `null`: `man_ordenes_mantenimiento`
+ * no tiene columna de base propia en el alcance de esta HU, y el
+ * mantenimiento de un vehículo es justamente el ejemplo de gasto interno
+ * puro que no se atribuye a ninguna campaña (ADR 0015 punto 6).
  */
 final class EscrituraGastoMantenimientoEloquent implements EscrituraGastoMantenimiento
 {
@@ -44,6 +46,7 @@ final class EscrituraGastoMantenimientoEloquent implements EscrituraGastoManteni
             precioUnitario: $montoTotal,
             baseId: null,
             trabajoId: null,
+            campaniaId: null,
             comprobante: null,
         );
 

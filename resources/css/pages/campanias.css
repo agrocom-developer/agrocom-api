@@ -1,0 +1,103 @@
+/*
+ * Pages: campanias/index, campanias/create, campanias/edit
+ * (app/Dominios/Campania/Infraestructura/Http/Views/pages/campanias/) — ADR
+ * 0015 punto 1, tarea 69: administración de campañas. CSS propio de ESTAS
+ * páginas (ver convención en resources/css/pages/index.css) — mismo patrón
+ * que bases.css, sin sub-entidad repetible.
+ *
+ * El wrapper `.ag-campanias`/`.ag-campanias-form` sigue el mismo patrón que
+ * `.ag-bases`/`.ag-bases-form`: flex en columna con un único `gap` en vez de
+ * `margin-top` repetido en cada hijo. Todo color y medida por token
+ * (CLAUDE.md invariante 11).
+ */
+
+.ag-campanias,
+.ag-campanias-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+/* Listado (index) */
+
+.ag-campanias__filtros .ag-input {
+    min-width: 16rem;
+}
+
+.ag-campanias__tabla {
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+    overflow: hidden;
+}
+
+.ag-campanias__head,
+.ag-campanias__fila {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr 1.5fr 1fr auto;
+    gap: var(--ag-space-4);
+    align-items: center;
+    padding: var(--ag-space-3) var(--ag-space-4);
+}
+
+.ag-campanias__head {
+    background-color: var(--ag-color-bg-table-head);
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ag-campanias__fila {
+    border-top: 1px solid var(--ag-color-border-row);
+    color: var(--ag-color-text);
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-campanias__fila:hover {
+    background-color: var(--ag-color-bg-row-hover);
+}
+
+.ag-campanias__codigo {
+    font-weight: var(--ag-font-weight-medium);
+}
+
+.ag-campanias__mono {
+    font-family: var(--ag-font-family-mono);
+}
+
+.ag-campanias__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--ag-space-2);
+}
+
+.ag-campanias__paginacion {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ag-space-4);
+}
+
+.ag-campanias__paginacion-info {
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-sm);
+}
+
+@media (max-width: 992px) {
+    .ag-campanias__head {
+        display: none;
+    }
+
+    .ag-campanias__fila {
+        grid-template-columns: 1fr;
+        gap: var(--ag-space-1);
+    }
+
+    .ag-campanias__acciones {
+        justify-content: flex-start;
+        margin-top: var(--ag-space-2);
+    }
+}

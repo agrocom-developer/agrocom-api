@@ -9,8 +9,10 @@
     CascaraPanel, más:
     - $contratos (LengthAwarePaginator<Contrato>, con `cliente` precargada):
       fecha de inicio descendente.
-    - $filtros (array{q: string}): búsqueda aplicada, para dejar el campo
-      con el valor tras el submit.
+    - $campaniasDisponibles (Collection<int, string>): id => "código —
+      cliente", para el <select> del filtro por campaña (ADR 0015 punto 1).
+    - $filtros (array{q: string, campania_id: int|null}): filtros aplicados,
+      para dejar los campos con el valor tras el submit.
 
     Gateada por `comercial.contrato.ver`, verificado server-side en el
     controlador. El botón "Nuevo contrato" y las acciones de cambio de
@@ -34,7 +36,7 @@
         :user-name="$userName"
         :notifications="$notifications"
         :menu-badges="$menuBadges"
-        :campana="$campana"
+        :campaniaActiva="$campaniaActiva"
         :periodo="$periodo"
         :version="$version"
         :vista-actual="__('comercial.contratos.titulo')"
@@ -80,12 +82,24 @@
                     </div>
                 </div>
 
+                <div class="ag-input">
+                    <label for="filtro-campania" class="ag-input__label">{{ __('comercial.contratos.filtro_campania') }}</label>
+                    <div class="ag-input__control">
+                        <select name="campania_id" id="filtro-campania" class="ag-input__field">
+                            <option value="">{{ __('comercial.contratos.filtro_campania_placeholder') }}</option>
+                            @foreach ($campaniasDisponibles as $id => $etiqueta)
+                                <option value="{{ $id }}" @selected((string) $filtros['campania_id'] === (string) $id)>{{ $etiqueta }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
                 <div class="ag-filtros__acciones ag-contratos__filtros-acciones">
                     <x-atoms.button type="submit" variant="outline" size="md" icon="search">
                         {{ __('comercial.contratos.filtrar') }}
                     </x-atoms.button>
 
-                    @if ($filtros['q'] !== '')
+                    @if ($filtros['q'] !== '' || $filtros['campania_id'] !== null)
                         <x-atoms.button href="{{ route('panel.contratos.index') }}" variant="text" size="md">
                             {{ __('comercial.contratos.limpiar_filtro') }}
                         </x-atoms.button>
@@ -95,7 +109,7 @@
 
             @if ($contratos->isEmpty())
                 <x-molecules.alert-strip variant="info" icon="description" class="ag-contratos__aviso">
-                    {{ __($filtros['q'] !== '' ? 'comercial.contratos.filtro_vacio' : 'comercial.contratos.vacio') }}
+                    {{ __(($filtros['q'] !== '' || $filtros['campania_id'] !== null) ? 'comercial.contratos.filtro_vacio' : 'comercial.contratos.vacio') }}
                 </x-molecules.alert-strip>
             @else
                 <div class="ag-contratos__tabla" role="table">

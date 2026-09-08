@@ -2,11 +2,13 @@
 
 namespace App\Dominios\Finanzas\Aplicacion;
 
+use App\Dominios\Campania\Dominio\Excepciones\CampaniaCerradaNoAdmiteImputaciones;
 use App\Dominios\Finanzas\Infraestructura\Eloquent\Gasto;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -30,6 +32,12 @@ use Illuminate\Support\Facades\Storage;
  * gasto ya asociado a una rendición (HU-34, `fin_rendiciones`, todavía sin
  * columna `rendicion_id`) cambie de monto por debajo de una rendición en
  * curso.
+ *
+ * `campaniaId` (ADR 0015 punto 6, tarea 69) es OPCIONAL — vacío es gasto
+ * interno que no pertenece a ninguna campaña — y, si viene, no puede
+ * apuntar a una campaña `cerrada` (misma guarda que
+ * `Comercial\Aplicacion\CrearContrato`, leyendo `cpn_campanias` con
+ * `DB::table`, ADR 0003 regla 3).
  */
 final class CrearGasto
 {
@@ -41,8 +49,11 @@ final class CrearGasto
         string $precioUnitario,
         ?int $baseId,
         ?int $trabajoId,
+        ?int $campaniaId,
         ?UploadedFile $comprobante,
     ): Gasto {
+        $this->verificarCampania($campaniaId);
+
         $monto = (string) BigDecimal::of($cantidad)
             ->multipliedBy($precioUnitario)
             ->toScale(2, RoundingMode::HalfUp);
@@ -56,6 +67,7 @@ final class CrearGasto
             'monto' => $monto,
             'base_id' => $baseId,
             'trabajo_id' => $trabajoId,
+            'campania_id' => $campaniaId,
         ]);
 
         if ($comprobante !== null) {
@@ -63,6 +75,20 @@ final class CrearGasto
         }
 
         return $gasto->refresh();
+    }
+
+    /** @throws CampaniaCerradaNoAdmiteImputaciones si la campaña elegida está `cerrada`. */
+    private function verificarCampania(?int $campaniaId): void
+    {
+        if ($campaniaId === null) {
+            return;
+        }
+
+        $campania = DB::table('cpn_campanias')->where('id', $campaniaId)->first();
+
+        if ($campania !== null && $campania->estado === 'cerrada') {
+            throw CampaniaCerradaNoAdmiteImputaciones::paraCampania($campania->codigo);
+        }
     }
 
     private function guardarComprobante(Gasto $gasto, UploadedFile $comprobante): void

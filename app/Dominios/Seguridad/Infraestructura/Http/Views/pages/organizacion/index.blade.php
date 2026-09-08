@@ -11,7 +11,7 @@
     docs/diseno/guia_pantalla_panel.md §6.3.
 
     Datos esperados (ver OrganizacionController::index()): la cáscara completa de
-    CascaraPanel (menu/roles/…/tema/campana/periodo/version) + tabs/progreso/suscripcion/logoArchivo.
+    CascaraPanel (menu/roles/…/tema/campaniaActiva/periodo/version) + tabs/progreso/suscripcion/logoArchivo.
 
     NO tiene pestaña de "Usuarios y roles": usuarios internos y la asignación de
     sus roles ya son una pantalla REAL y propia — Seguridad › Usuarios
@@ -32,7 +32,7 @@
         :user-name="$userName"
         :notifications="$notifications"
         :menu-badges="$menuBadges"
-        :campana="$campana"
+        :campaniaActiva="$campaniaActiva"
         :periodo="$periodo"
         :version="$version"
         :vista-actual="__('seguridad.organizacion.titulo')"

@@ -62,7 +62,10 @@ return [
         'buscador_placeholder' => 'Buscar lote, orden, piloto o dron',
         'buscador_aria' => 'Buscador global',
         'atajo_buscador' => '⌘K',
-        'campana_activa' => 'Campaña activa',
+        // Renombrada de `campana_activa` (ADR 0015 punto 2, tarea 69):
+        // `campana`, a secas, quedó reservada para el ícono de notificaciones
+        // de acá abajo — nunca más el chip de campaña.
+        'campania_activa' => 'Campaña activa',
         'periodo' => 'Período',
     ],
     'drawer' => [

@@ -12,8 +12,10 @@
       el <select> de rubro y la lista completa de subrubros con
       `data-rubro-id`, que `resources/js/pages/gastos-form.js` filtra en
       cliente según el rubro elegido.
-    - $basesDisponibles / $trabajosDisponibles (Collection<int, string>):
-      id => etiqueta, para los <select> opcionales de imputación.
+    - $basesDisponibles / $trabajosDisponibles / $campaniasDisponibles
+      (Collection<int, string>): id => etiqueta, para los <select> opcionales
+      de imputación. `$campaniasDisponibles` ya viene filtrada a campañas no
+      `cerrada` (ADR 0015 punto 6) — ver GastosController::campaniasNoCerradas().
 
     `enctype="multipart/form-data"`: primera subida de archivo humana desde
     el panel (a diferencia de `ope_evidencias`, que sube la app de campo) —
@@ -34,6 +36,7 @@
     $precioUnitario = old('precio_unitario', '');
     $baseId = old('base_id', '');
     $trabajoId = old('trabajo_id', '');
+    $campaniaId = old('campania_id', '');
 @endphp
 
 <x-templates.panel-shell :title="__('finanzas.gastos.titulo_crear')" :tema="$tema">
@@ -45,7 +48,7 @@
         :user-name="$userName"
         :notifications="$notifications"
         :menu-badges="$menuBadges"
-        :campana="$campana"
+        :campaniaActiva="$campaniaActiva"
         :periodo="$periodo"
         :version="$version"
         :vista-actual="__('finanzas.gastos.titulo_crear')"
@@ -77,7 +80,7 @@
 
                 <x-molecules.form-section
                     :title="__('finanzas.gastos.seccion_datos')"
-                    :count="__('finanzas.gastos.campos_contador', ['cantidad' => 8])"
+                    :count="__('finanzas.gastos.campos_contador', ['cantidad' => 9])"
                 >
                     <x-atoms.input
                         type="date"
@@ -176,6 +179,22 @@
                         </div>
                         @if ($errors->has('trabajo_id'))
                             <p class="ag-input__error" role="alert">{{ $errors->first('trabajo_id') }}</p>
+                        @endif
+                    </div>
+
+                    <div class="ag-input">
+                        <label for="campania_id" class="ag-input__label">{{ __('finanzas.gastos.campo_campania') }}</label>
+                        <div class="ag-input__control {{ $errors->has('campania_id') ? 'ag-input__control--error' : '' }}">
+                            <select name="campania_id" id="campania_id" class="ag-input__field">
+                                <option value="">{{ __('finanzas.gastos.campo_campania_placeholder') }}</option>
+                                @foreach ($campaniasDisponibles as $id => $etiqueta)
+                                    <option value="{{ $id }}" @selected((string) $campaniaId === (string) $id)>{{ $etiqueta }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <p class="ag-input__help">{{ __('finanzas.gastos.campo_campania_ayuda') }}</p>
+                        @if ($errors->has('campania_id'))
+                            <p class="ag-input__error" role="alert">{{ $errors->first('campania_id') }}</p>
                         @endif
                     </div>
 
