@@ -88,18 +88,20 @@ Un lote no "es" de soya: se siembra de soya *esta* campaña y de maíz la siguie
 
 Se descartó agregar un booleano `ventana_todo_el_dia`: convive con las filas de ventanas y hace representable un estado contradictorio (booleano en `true` *y* dos ventanas cargadas), que ningún `CHECK` puede impedir porque cruza dos tablas. La ausencia de filas no puede contradecirse a sí misma.
 
-### 6. El gasto se registra contra el equipo, y se repercute a la campaña del cliente donde se consumió (8/9/2026)
+### 6. El gasto se registra contra el equipo y se **atribuye** a la campaña donde se consumió — no se le factura al cliente (8/9/2026)
 
-`fin_gastos` y `fin_combustibles` se imputan **al equipo de trabajo** — eso no cambió, es el punto 3 y es lo que resuelve el gasto que no pertenece a ningún trabajo. Lo que se agrega es el otro lado: a quién se le **cobra**.
+`fin_gastos` y `fin_combustibles` se imputan **al equipo de trabajo** — eso es el punto 3 y es lo que resuelve el gasto que no pertenece a ningún trabajo. Lo que se agrega es la dimensión analítica: **en qué campaña se consumió**.
 
-El dueño lo puso en términos de negocio: *"al equipo se le asigna el gasto y se le factura a todos los clientes donde trabaje; si se carga 2 veces gasolina pero en la última cargada sobra y se va a otro cliente, al cliente se le cobra como nueva cargada a pesar de que sea sobras — es un negocio, hay que ser rentable"*.
+**El cliente no paga combustible.** Paga **por hectárea aplicada**, al precio firmado en su contrato. El combustible, la comida de la cuadrilla y los viáticos son logística de Agrocom y no aparecen como línea en ninguna factura. El dueño lo puso así el 8/9/2026: *"de qué gana el cliente que le digamos que hoy pagamos la gasolina más cara que ayer, que se firmó el contrato (…) el cliente va a pagar solo por el servicio por hectárea (…) es como los gastos operativos de comida para los trabajadores"*.
 
-De ahí salen dos reglas:
+De ahí, tres reglas:
 
-- **La carga es la unidad, y no se prorratea.** Una carga de combustible se repercute entera a una sola campaña: la del cliente donde se cargó. La sobra que después se consume en otro cliente se le cobra a ese otro como carga nueva. No hay reparto proporcional entre clientes, ni cálculo de remanente — modelar eso sería inventar una contabilidad que el negocio no lleva, y encima una que le haría perder plata.
-- **`campania_id` es nullable en las dos tablas.** El gasto interno (mantenimiento de la camioneta en el taller, un repuesto de galpón) no se le repercute a nadie y queda sin campaña. Obligarlo forzaría a elegir un cliente cualquiera, que es exactamente cómo se ensucia un dato.
+- **`campania_id` en gasto y combustible es atribución de costo, no de cobro.** Responde "cuánto me costó atender la campaña de este cliente" para poder compararlo con lo facturado por hectárea. Ninguna lectura del portal del cliente lo muestra, y ninguna factura lo usa.
+- **El detalle fino se quiere, y sale de las columnas que ya existen.** *"Se figura de cuánto y a cómo se usó gasolina en esa campaña de este cliente, por lote, campo y propiedad — para esas cosas sí es el detalle"*: se arma con `trabajo_id` (que lleva a lote → campo → cliente) cuando el gasto pertenece a un trabajo, y con las estadías del equipo (§ punto 3) cuando es de cuadrilla. No hace falta duplicar `campo_id` ni `lote_id` en las tablas de gasto.
+- **La carga es la unidad y no se prorratea.** Una carga de combustible se atribuye entera a la campaña donde se cargó; si sobra y esa sobra se consume en el cliente siguiente, no se recalcula ni se reparte. Repartir supondría medir el remanente en cada traslado, que es una contabilidad que nadie lleva y que no cambiaría ninguna factura, porque el cliente igual paga por hectárea.
+- **`campania_id` es nullable en las dos tablas.** El gasto interno puro (mantenimiento de la camioneta en el taller, un repuesto de galpón) no se atribuye a ninguna campaña.
 
-**Consecuencia sobre el cierre de Agrocom:** como el gasto ya no cuelga de una campaña propia, el corte para mirar los costos de la empresa es **la fecha**, no la campaña. La campaña sirve para el cierre *del cliente* (qué se le aplicó, qué se le cobró) y para el informe de avance por cultivo; el costo interno se lee por período y por equipo.
+**Consecuencia sobre el cierre de Agrocom:** el corte para mirar los costos de la empresa es **la fecha** y el **equipo**; la campaña agrega el "para qué cliente fue". La rentabilidad por campaña se lee como *facturado por hectárea vs. costo atribuido*, que es justamente lo que hoy no se puede calcular.
 
 ## Consecuencias
 
@@ -139,7 +141,7 @@ No es un matiz. Cambia tres cosas:
 
 1. `cpn_campanias` gana `cliente_id` y su unicidad pasa a ser por cliente.
 2. Se cae la campaña activa por sesión, su middleware y el chip del header.
-3. `campania_id` sale de `per_equipos_trabajo` y pasa a ser nullable en `fin_gastos` / `fin_combustibles`, donde ahora significa "a quién se le repercute" y no "de qué período es".
+3. `campania_id` sale de `per_equipos_trabajo` y pasa a ser nullable en `fin_gastos` / `fin_combustibles`, donde ahora significa "en qué campaña se consumió" —atribución de costo, no de cobro— y no "de qué período es".
 
 Lo que **no** cambió, y por eso el resto del ADR sigue en pie: el equipo de trabajo con vigencia como unidad de imputación (punto 3), el cultivo por lote y campaña (punto 4), la escritura `campania` vs. `campana` (punto 2) y las ventanas horarias opcionales (punto 5).
 

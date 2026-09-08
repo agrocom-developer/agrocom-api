@@ -90,10 +90,10 @@ inventes un chip nuevo ni la elimines de las 82 vistas.
    esta tarea: sin ella el modelo permite facturarle a un cliente el ciclo de
    otro.
 7. **`campania_id` nullable en `fin_gastos`**, con el significado del punto 6
-   del ADR: a qué campaña de cliente se le **repercute** el gasto, no de qué
-   período es. Vacío = gasto interno que no se le cobra a nadie. En el
-   formulario de gasto, el selector es opcional y se filtra por campañas no
-   cerradas.
+   del ADR: **en qué campaña se consumió** el gasto — atribución de costo, no
+   de cobro. Al cliente no se le factura el gasto: paga por hectárea aplicada.
+   Vacío = gasto interno que no pertenece a ninguna campaña. En el formulario,
+   el selector es opcional y se filtra por campañas no cerradas.
 8. **Guarda de campaña cerrada**: `CrearContrato` y `CrearGasto` rechazan
    imputar a una campaña `cerrada`.
 9. **Filtro por campaña** en el listado de contratos, dentro del cliente. No
@@ -113,8 +113,8 @@ inventes un chip nuevo ni la elimines de las 82 vistas.
   ubica la campaña.
 - No toques `fin_combustibles` (es la 73), `per_*`, `ope_*` ni el motor de sync.
 - No reintroduzcas campaña activa, chip del header, ni un booleano `es_actual`.
-- No prorratees gastos entre campañas: la carga se cobra entera a una sola
-  (ADR 0015 punto 6).
+- No prorratees gastos entre campañas: la carga se atribuye entera a una sola
+  (ADR 0015 punto 6). Y no expongas costo ni gasto en el portal del cliente.
 
 ## Cómo repartir las etapas
 
