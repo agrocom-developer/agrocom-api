@@ -63,8 +63,21 @@ ETAPAS_IMPL=5        # sesiones encadenadas sobre la misma rama para terminar un
 FALLOS_IMPL=3        # sesiones SEGUIDAS sin estado declarado antes de rendirse
 TAREAS_TRABADAS=${AGROCOM_TAREAS_TRABADAS:-3}   # tareas SEGUIDAS sin integrarse antes de parar el bucle entero
 INTENTOS_ARREGLO=2   # vueltas de corrección tras un veredicto RECHAZADO o un CI en rojo
-ESPERA_CI=2700       # 45 min: tope para que CI termine y el auto-merge integre
-SONDEO_CI=30
+
+# CI real: 200-277 s en las últimas veinte corridas (setup 48 s, Larastan 16 s,
+# Pint 17 s, Pest ~160 s). El tope estaba en 2700 s —diez veces el peor caso— y
+# eso no era holgura sino ceguera: el 8/9/2026 el PR #129 quedó en conflicto,
+# GitHub nunca calculó el merge ref, CI no arrancó jamás y el ciclo se iba a
+# comer los 45 min enteros antes de enterarse. 900 s son tres veces el peor CI
+# medido: alcanza para un runner encolado, no para perder una noche.
+ESPERA_CI=${AGROCOM_ESPERA_CI:-900}
+SONDEO_CI=20
+
+# Un PR sin un solo check pasados estos segundos no está lento: no va a tener
+# CI nunca. Es lo que pasa cuando la rama quedó en conflicto —sin merge ref no
+# hay workflow— y es indistinguible de "todos los checks pendientes" si solo se
+# miran los checks. Se corta acá en vez de esperar el tope entero.
+SIN_CHECKS_MAX=180
 
 # Lo único que puede estar sin commitear al arrancar una tarea: lo que dejó
 # escrito la sesión de planificación de la vuelta anterior. Los globs los
@@ -140,6 +153,14 @@ log()   { printf '\033[90m%s\033[0m %s\n' "$(date +%H:%M:%S)" "$1" | eco; }
 ok()    { printf '\033[32m  ✓ %s\033[0m\n' "$1" | eco; }
 malo()  { printf '\033[31m  ✗ %s\033[0m\n' "$1" | eco; }
 aviso() { printf '\033[33m  ⊘ %s\033[0m\n' "$1" | eco; }
+
+# Un aviso que además sale de la bitácora corrida. Lo que queda enterrado en un
+# log de decenas de miles de líneas no sirve para tomar medidas a la mañana:
+# runs/alertas.log junta solo lo que salió mal y no se resolvió solo.
+alerta() {
+    printf '\033[31m  ‼ %s\033[0m\n' "$1" | eco
+    printf '%s  %s\n' "$(date '+%d/%m %H:%M')" "$1" >> runs/alertas.log
+}
 fase()  { printf '\n\033[1m── %s ──\033[0m\n' "$1" | eco; }
 
 marcar() { printf '%s\n' "$1" > runs/ciclo.estado; log "$1"; }
@@ -498,6 +519,33 @@ $(pie_verify "$id")" \
     return 1
 }
 
+# --- La rama sale al PR al día con develop -----------------------------
+# Una rama atrasada no solo arriesga un conflicto: si el PR se abre igual,
+# mergearla revierte lo que entró mientras tanto. El 8/9/2026 la rama de la
+# tarea 69 iba a borrar prompts/81-ficha-desempeno.md entero y 17 líneas de
+# cola_tareas.md, que habían entrado por el PR #127 mientras ella seguía viva.
+#
+# El rebase que sale limpio se hace acá y listo. El que choca necesita criterio
+# —casi siempre es un PR anterior de la misma rama mergeado con squash— y eso
+# no se resuelve a ciegas en bash: se avisa, el PR se abre igual, y fase_ci lo
+# detecta por el merge ref en menos de tres minutos y le pone una sesión.
+poner_al_dia_con_develop() {
+    local id="$1" rama="$2"
+    git fetch -q origin develop 2>/dev/null || true
+    git merge-base --is-ancestor origin/develop HEAD 2>/dev/null && return 0
+
+    log "  la rama está atrasada respecto de develop: rebase antes de abrir el PR"
+    git branch -f "respaldo/$(printf '%s' "$rama" | tr / -)-$(date +%H%M)" HEAD 2>/dev/null || true
+    if git rebase origin/develop >/dev/null 2>&1; then
+        forzar_push="si"
+        ok "rama al día con develop ($(git rev-list --count origin/develop..HEAD) commit(s) propios)"
+    else
+        git rebase --abort >/dev/null 2>&1 || true
+        alerta "Tarea $id · la rama $rama no rebasa limpio sobre develop: el PR nace en conflicto y lo va a rehacer una sesión"
+    fi
+    return 0
+}
+
 # --- Fase 3: abrir el PR ----------------------------------------------
 # El título y el cuerpo los escribe la sesión (sabe qué hizo); el ciclo decide
 # si va en borrador, porque eso depende de si la tarea es crítica y esa es una
@@ -515,7 +563,14 @@ fase_pr() {
 
     marcar "$id abrir PR desde $rama"
     guardar_avance "$id"
-    git push --quiet -u origin "$rama" 2>&1 | tail -2 | eco
+
+    local forzar_push="no"
+    poner_al_dia_con_develop "$id" "$rama"
+    if [ "$forzar_push" = "si" ]; then
+        git push --quiet --force-with-lease -u origin "$rama" 2>&1 | tail -2 | eco
+    else
+        git push --quiet -u origin "$rama" 2>&1 | tail -2 | eco
+    fi
 
     numero=$(gh pr list --head "$rama" --json number -q '.[0].number' 2>/dev/null)
     if [ -n "$numero" ]; then
@@ -523,7 +578,11 @@ fase_pr() {
     else
         local titulo cuerpo
         if [ -f "runs/$id.pr.md" ]; then
-            titulo=$(head -1 "runs/$id.pr.md")
+            # La sesión escribe el .pr.md en markdown, así que la primera
+            # línea viene como encabezado. Sin sacarle el '#' el PR nace
+            # titulado "# Tarea 69 — PR", que es como nació el #129.
+            titulo=$(head -1 "runs/$id.pr.md" | sed 's/^#\{1,6\}[[:space:]]*//')
+            [ -z "$titulo" ] && titulo="Tarea $id"
             cuerpo=$(tail -n +2 "runs/$id.pr.md")
         else
             titulo="Tarea $id"
@@ -574,8 +633,11 @@ fase_pr() {
 # --- Fase 4: esperar a CI ---------------------------------------------
 # Devuelve: 0 integrado · 1 CI en rojo · 2 PR cerrado sin merge
 #           3 borrador verde (crítica, esperando a una persona) · 4 se agotó la espera
+#           5 PR en conflicto: no hay merge ref, CI no va a arrancar nunca
+#           6 sin un solo check tras SIN_CHECKS_MAX: CI no arrancó
 esperar_ci() {
-    local numero="$1" limite=$((SECONDS + ESPERA_CI)) estado borrador fallidos pendientes previo salto
+    local numero="$1" id="${2:-?}" limite=$((SECONDS + ESPERA_CI)) arranque=$SECONDS
+    local estado borrador fallidos pendientes total fusion previo salto ultimo=0
     while :; do
         estado=$(gh pr view "$numero" --json state -q .state 2>/dev/null || echo "")
         case "$estado" in
@@ -586,10 +648,31 @@ esperar_ci() {
         fallidos=$(gh pr checks "$numero" --json state -q '[.[] | select(.state == "FAILURE" or .state == "TIMED_OUT" or .state == "CANCELLED")] | length' 2>/dev/null || echo 0)
         [ "${fallidos:-0}" -gt 0 ] && return 1
 
+        # "Ningún check" y "todos los checks pendientes" son estados distintos y
+        # antes se confundían: `gh pr checks` sin checks devuelve error, el
+        # `|| echo 1` lo leía como "uno pendiente" y la espera no terminaba
+        # nunca sola. Un PR en conflicto no dispara workflow, así que ese caso
+        # se reconoce por el merge ref, no por los checks.
+        total=$(gh pr checks "$numero" --json state -q 'length' 2>/dev/null || echo 0)
+        if [ "${total:-0}" -eq 0 ]; then
+            fusion=$(gh pr view "$numero" --json mergeStateStatus -q .mergeStateStatus 2>/dev/null || echo "")
+            [ "$fusion" = "DIRTY" ] && return 5
+            [ $((SECONDS - arranque)) -ge "$SIN_CHECKS_MAX" ] && return 6
+        fi
+
         pendientes=$(gh pr checks "$numero" --json state -q '[.[] | select(.state == "PENDING" or .state == "QUEUED" or .state == "IN_PROGRESS")] | length' 2>/dev/null || echo 1)
         borrador=$(gh pr view "$numero" --json isDraft -q .isDraft 2>/dev/null || echo false)
         if [ "${pendientes:-1}" -eq 0 ] && [ "$borrador" = "true" ]; then
             return 3
+        fi
+
+        # La espera deja rastro: el estado se reescribe en cada sondeo y la
+        # bitácora recibe una línea cada dos minutos. Callarse durante toda la
+        # espera fue justo lo que impidió ver que el PR #129 estaba trabado.
+        printf '%s\n' "$id esperando CI del PR #$numero · $((SECONDS - arranque))s de ${ESPERA_CI}s · ${total} check(s), ${pendientes} pendiente(s)" > runs/ciclo.estado
+        if [ $((SECONDS - ultimo)) -ge 120 ]; then
+            log "  PR #$numero · $((SECONDS - arranque))s de ${ESPERA_CI}s · ${total} check(s), ${pendientes} pendiente(s)"
+            ultimo=$SECONDS
         fi
 
         # El límite se evalúa DESPUÉS de consultar, nunca antes: si se evalúa
@@ -622,12 +705,54 @@ fase_ci() {
 
     for intento in $(seq 0 "$INTENTOS_ARREGLO"); do
         marcar "$id esperando CI del PR #$numero"
-        esperar_ci "$numero"
+        esperar_ci "$numero" "$id"
         case $? in
             0) ok "PR #$numero integrado en develop"; return 0 ;;
             2) malo "PR #$numero cerrado sin mergear — alguien lo cerró a mano"; return 1 ;;
             3) aviso "PR #$numero en verde y en borrador: la HU quedó sin cerrar, la revisa una persona"; return 0 ;;
             4) malo "Se agotaron los $((ESPERA_CI / 60)) min de espera de CI"; return 1 ;;
+            6) alerta "Tarea $id · PR #$numero sin un solo check tras $((SIN_CHECKS_MAX / 60)) min: CI no arrancó. Miralo a mano."
+               return 1 ;;
+            5) alerta "Tarea $id · PR #$numero en conflicto con develop: sin merge ref no hay workflow, CI no va a arrancar nunca"
+               [ "$intento" -eq "$INTENTOS_ARREGLO" ] && break
+               abortar_si_detenido && return 2
+               marcar "$id rehacer la rama sobre develop (vuelta $((intento + 1)))"
+               sesion "El PR #$numero del repo agrocom-api está en conflicto con develop. GitHub no
+puede calcular el merge ref, así que CI no arrancó y no va a arrancar solo.
+Estás parado en su rama.
+
+Commits de la rama que develop no tiene:
+
+$(git log --oneline origin/develop..HEAD 2>/dev/null)
+
+Delta de contenido contra develop:
+
+$(git diff --stat origin/develop HEAD 2>/dev/null)
+
+La causa habitual es que un PR anterior de esta misma rama se mergeó con
+squash: los commits originales quedaron sin correspondencia con develop y
+cualquier rebase choca.
+
+Rehacé la rama sobre origin/develop dejando SOLO los commits cuyo contenido
+develop todavía no tiene:
+
+  git branch respaldo/\$(git rev-parse --abbrev-ref HEAD | tr / -)-\$(date +%H%M)
+  git switch --detach origin/develop
+  git cherry-pick <cada commit que falte, en orden>
+  git branch -f <la rama> HEAD && git switch <la rama>
+  git push --force-with-lease origin <la rama>
+
+Antes de pushear confirmá con 'git diff --stat origin/develop HEAD' que el
+delta es exactamente lo que agrega esta tarea. Si aparecen archivos que la
+tarea no tocó, la rama está por revertir el trabajo de otro PR — eso no se
+pushea, se saca del rebase primero.
+
+No borres la rama de respaldo y no uses 'git reset --hard': hay un hook que lo
+bloquea.
+
+$(pie_verify "$id")" \
+                   "runs/$id-conflicto-$intento.log" "$HERRAMIENTAS_IMPL" "$noche" "$MODELO_LIVIANO" "$zonas"
+               continue ;;
         esac
 
         malo "CI en rojo en el PR #$numero"

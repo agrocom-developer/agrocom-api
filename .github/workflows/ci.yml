@@ -40,6 +40,13 @@ jobs:
       - name: Crear .env
         run: cp .env.example .env
 
+      - name: Caché de Composer
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/composer/files
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
       - name: Instalar dependencias
         run: composer install --no-interaction --prefer-dist
 
@@ -55,31 +62,33 @@ jobs:
       - name: Compilar assets (Vite)
         run: npm run build
 
+      # El result cache de PHPStan sirve entre corridas: solo reanaliza los
+      # archivos que cambiaron. Se cachea su directorio por defecto
+      # (sys_get_temp_dir()/phpstan) en vez de reubicarlo: `--tmp-dir` no
+      # existe como opción de CLI y `tmpDir` solo se fija en phpstan.neon, que
+      # no se toca para acelerar una compuerta. La clave lleva el SHA para que
+      # cada corrida escriba la suya y restore-keys recupere la más reciente.
+      - name: Caché de Larastan
+        uses: actions/cache@v4
+        with:
+          path: /tmp/phpstan
+          key: larastan-${{ github.sha }}
+          restore-keys: larastan-
+
       - name: Análisis estático (Larastan)
         run: composer larastan --no-interaction || vendor/bin/phpstan analyse
 
       - name: Estilo de código (Pint)
         run: vendor/bin/pint --test
 
-      - name: Tests (Pest)
-        run: vendor/bin/pest
-        env:
-          DB_CONNECTION: pgsql
-          DB_HOST: 127.0.0.1
-          DB_DATABASE: agrocom_test
-          DB_USERNAME: postgres
-          DB_PASSWORD: postgres
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_DB: agrocom_test
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+      # Las 1001 pruebas siguen corriendo TODAS en cada CI: lo que cambia es
+      # que se reparten entre los núcleos del runner en vez de ir en fila.
+      # Bajar la cobertura para ganar minutos no es una opción — de noche la
+      # suite es el único revisor despierto.
+      #
+      # Sin servicio de Postgres, y no es un olvido: tests/bootstrap.php fija
+      # sqlite en memoria en $_ENV/$_SERVER antes de que arranque Laravel, así
+      # que el contenedor de Postgres y las credenciales que había acá no los
+      # leía nadie. Eran 25 s de "Initialize containers" por corrida.
+      - name: Tests (Pest, en paralelo)
+        run: php artisan test --parallel
