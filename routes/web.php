@@ -4,6 +4,7 @@ use App\Dominios\Campania\Infraestructura\Http\Controllers\Web\CampaniasControll
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\CamposController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ClientesController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ContratosController;
+use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\CultivosController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\FacturasController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\LotesController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ReportesComercialesController;
@@ -400,6 +401,29 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::delete('/panel/lotes/{lote}', [LotesController::class, 'destroy'])
             ->name('panel.lotes.destroy');
+
+        // HU-48 (tarea 71, ADR 0015 punto 4): catálogo de cultivos, sin
+        // sub-entidad. Cuatro permisos de grano fino
+        // (`comercial.cultivo.ver`/`.crear`/`.editar`/`.eliminar`)
+        // verificados DENTRO del controlador contra el ROL ACTIVO, mismo
+        // criterio que `campos`/`lotes` arriba.
+        Route::get('/panel/cultivos', [CultivosController::class, 'index'])
+            ->name('panel.cultivos.index');
+
+        Route::get('/panel/cultivos/crear', [CultivosController::class, 'create'])
+            ->name('panel.cultivos.create');
+
+        Route::post('/panel/cultivos', [CultivosController::class, 'store'])
+            ->name('panel.cultivos.store');
+
+        Route::get('/panel/cultivos/{cultivo}/editar', [CultivosController::class, 'edit'])
+            ->name('panel.cultivos.edit');
+
+        Route::put('/panel/cultivos/{cultivo}', [CultivosController::class, 'update'])
+            ->name('panel.cultivos.update');
+
+        Route::delete('/panel/cultivos/{cultivo}', [CultivosController::class, 'destroy'])
+            ->name('panel.cultivos.destroy');
 
         // HU-27 (tarea 36): administración de la flota de drones con su
         // modelo y capacidad de carga. Sin sub-entidad (a diferencia de

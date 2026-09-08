@@ -15,6 +15,7 @@ dataset('tablas del núcleo comercial', [
     'com_contrato_ventanas',
     'com_campos',
     'com_lotes',
+    'com_cultivos',
     'ope_ordenes_aplicacion',
 ]);
 
