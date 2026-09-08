@@ -81,13 +81,19 @@ presión, y las tres vacían la compuerta de contenido.
 
 Saberlo importa para no confiar de más en un verde:
 
-- **La regresión visual no corre dentro de `bin/verify`.** Desde la tarea 07
-  existe `npx playwright test` (`playwright.config.ts`, `tests/Visual/**`,
-  3 vistas × claro/oscuro, capturas de referencia versionadas), pero corre en
-  el host, nunca dentro del contenedor `app` — la imagen no tiene Node ni
-  navegadores. Un verde de `bin/verify` no implica haber corrido Playwright;
-  correlo aparte antes de cerrar un cambio visual. Ver el skill
-  [panel-design-ui].
+- **La regresión visual solo corre si hay capturas de tu plataforma.** Desde
+  la tarea 07 existe `npx playwright test` (`playwright.config.ts`,
+  `tests/Visual/**`, capturas de referencia versionadas), y `bin/verify` lo
+  encadena como última etapa en el host — nunca dentro del contenedor `app`,
+  que no tiene Node ni navegadores. Pero el nombre de cada captura lleva el
+  sufijo de plataforma que le pone Playwright (`-win32`, `-darwin`,
+  `-linux`) y en el árbol solo están las `-win32`. Corriendo en macOS o
+  Linux la etapa se saltea con un `⊘` que lo dice: ahí un verde de
+  `bin/verify` no implica haber corrido Playwright, y **no se arregla
+  generando capturas nuevas para que deje de saltearse** — una referencia
+  que nadie miró no es una referencia. Si el cambio es visual, correlo
+  aparte, o generá y revisá las capturas de tu plataforma con
+  `--update-snapshots`. Ver el skill [panel-design-ui].
 - **Invariantes 2 y 3 de CLAUDE.md no tienen gate automático todavía** (no
   sobrescribir un registro validado, devengo solo al validar una sesión):
   vigilan tablas que aún no existen (`sesion`, `devengo`, la máquina de
