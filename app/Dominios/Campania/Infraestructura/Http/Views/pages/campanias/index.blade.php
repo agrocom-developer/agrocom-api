@@ -8,8 +8,12 @@
     Datos esperados (ver CampaniasController::index()): la cáscara de
     CascaraPanel, más:
     - $campanias (LengthAwarePaginator<Campania>): fecha de inicio descendente.
-    - $filtros (array{q: string}): búsqueda aplicada, para dejar el campo
-      con el valor tras el submit.
+    - $clientesDisponibles (Collection<int, string>): id => razón social,
+      para el <select> del filtro por cliente.
+    - $etiquetasCliente (array<int, string>): id => razón social, acotado a
+      los clientes de la página actual — evita un N+1 al pintar la tabla.
+    - $filtros (array{q: string, cliente_id: int|null}): filtros aplicados,
+      para dejar los campos con el valor tras el submit.
 
     Gateada por `campania.campania.ver`, verificado server-side en el
     controlador. El botón "Nueva campaña" y las acciones de cambio de estado
@@ -79,12 +83,24 @@
                     </div>
                 </div>
 
+                <div class="ag-input">
+                    <label for="filtro-cliente" class="ag-input__label">{{ __('campania.campanias.filtro_cliente') }}</label>
+                    <div class="ag-input__control">
+                        <select name="cliente_id" id="filtro-cliente" class="ag-input__field">
+                            <option value="">{{ __('campania.campanias.filtro_cliente_placeholder') }}</option>
+                            @foreach ($clientesDisponibles as $id => $razonSocial)
+                                <option value="{{ $id }}" @selected((string) $filtros['cliente_id'] === (string) $id)>{{ $razonSocial }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
                 <div class="ag-filtros__acciones ag-campanias__filtros-acciones">
                     <x-atoms.button type="submit" variant="outline" size="md" icon="search">
                         {{ __('campania.campanias.filtrar') }}
                     </x-atoms.button>
 
-                    @if ($filtros['q'] !== '')
+                    @if ($filtros['q'] !== '' || $filtros['cliente_id'] !== null)
                         <x-atoms.button href="{{ route('panel.campanias.index') }}" variant="text" size="md">
                             {{ __('campania.campanias.limpiar_filtro') }}
                         </x-atoms.button>
@@ -94,11 +110,12 @@
 
             @if ($campanias->isEmpty())
                 <x-molecules.alert-strip variant="info" icon="calendar_month" class="ag-campanias__aviso">
-                    {{ __($filtros['q'] !== '' ? 'campania.campanias.filtro_vacio' : 'campania.campanias.vacio') }}
+                    {{ __(($filtros['q'] !== '' || $filtros['cliente_id'] !== null) ? 'campania.campanias.filtro_vacio' : 'campania.campanias.vacio') }}
                 </x-molecules.alert-strip>
             @else
                 <div class="ag-campanias__tabla" role="table">
                     <div class="ag-campanias__head" role="row">
+                        <span role="columnheader">{{ __('campania.campanias.col_cliente') }}</span>
                         <span role="columnheader">{{ __('campania.campanias.col_codigo') }}</span>
                         <span role="columnheader">{{ __('campania.campanias.col_nombre') }}</span>
                         <span role="columnheader">{{ __('campania.campanias.col_vigencia') }}</span>
@@ -116,6 +133,7 @@
                             $estadoValor = $campania->estado->value;
                         @endphp
                         <div class="ag-campanias__fila" role="row">
+                            <span role="cell">{{ $etiquetasCliente[$campania->cliente_id] ?? '—' }}</span>
                             <span role="cell" class="ag-campanias__codigo">{{ $campania->codigo }}</span>
                             <span role="cell">{{ $campania->nombre ?? '—' }}</span>
                             <span role="cell" class="ag-campanias__mono">

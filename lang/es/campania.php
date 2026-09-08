@@ -27,14 +27,17 @@ return [
 
         // Listado
         'titulo' => 'Campañas',
-        'subtitulo' => 'La campaña es el eje temporal del sistema: contratos y gastos se imputan a una.',
+        'subtitulo' => 'La campaña es del cliente: contratos y gastos se imputan a la suya.',
         'nueva' => 'Nueva campaña',
         'filtro_busqueda' => 'Buscar',
         'filtro_busqueda_placeholder' => 'Código o nombre',
+        'filtro_cliente' => 'Cliente',
+        'filtro_cliente_placeholder' => 'Todos los clientes',
         'filtrar' => 'Buscar',
         'limpiar_filtro' => 'Limpiar búsqueda',
         'vacio' => 'Todavía no se dio de alta ninguna campaña.',
         'filtro_vacio' => 'Ninguna campaña coincide con la búsqueda.',
+        'col_cliente' => 'Cliente',
         'col_codigo' => 'Código',
         'col_nombre' => 'Nombre',
         'col_vigencia' => 'Vigencia',
@@ -58,6 +61,8 @@ return [
         'subtitulo_form' => 'El código identifica la campaña en reportes y filtros (por ejemplo, 2025-2026).',
         'seccion_datos' => 'Datos de la campaña',
         'campos_contador' => ':cantidad campos',
+        'campo_cliente' => 'Cliente',
+        'campo_cliente_placeholder' => 'Seleccioná un cliente',
         'campo_codigo' => 'Código',
         'campo_nombre' => 'Nombre',
         'campo_fecha_inicio' => 'Fecha de inicio',
@@ -65,6 +70,8 @@ return [
         'estado_form' => 'Los cambios se guardan al confirmar.',
 
         // Errores de validación
+        'error_cliente_requerido' => 'Seleccioná el cliente de la campaña.',
+        'error_cliente_invalido' => 'El cliente seleccionado no es válido.',
         'error_codigo_requerido' => 'Ingresá un código para la campaña.',
         'error_fechas_rango' => 'La fecha de fin tiene que ser igual o posterior a la de inicio.',
     ],

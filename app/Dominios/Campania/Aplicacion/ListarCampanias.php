@@ -7,15 +7,16 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 /**
  * Caso de uso: listado de campañas con búsqueda opcional por código o nombre
- * (ADR 0015 punto 1, tarea 69). Solo lectura — mismo patrón de paginación que
- * `ListarBases`. Orden por `fecha_inicio` descendente: la campaña más
- * reciente encabeza el listado, mismo criterio de "lo último primero" que
- * `ListarGastos` con `fecha`.
+ * y filtro opcional por cliente (ADR 0015 punto 1, tarea 69: la campaña es
+ * del cliente). Solo lectura — mismo patrón de paginación que `ListarBases`.
+ * Orden por `fecha_inicio` descendente: la campaña más reciente encabeza el
+ * listado, mismo criterio de "lo último primero" que `ListarGastos` con
+ * `fecha`.
  */
 final class ListarCampanias
 {
     /** @return LengthAwarePaginator<int, Campania> */
-    public function ejecutar(?string $busqueda = null, int $porPagina = 15): LengthAwarePaginator
+    public function ejecutar(?string $busqueda = null, ?int $clienteId = null, int $porPagina = 15): LengthAwarePaginator
     {
         return Campania::query()
             ->when(
@@ -24,6 +25,10 @@ final class ListarCampanias
                     $sub->where('codigo', 'like', "%{$busqueda}%")
                         ->orWhere('nombre', 'like', "%{$busqueda}%");
                 }),
+            )
+            ->when(
+                $clienteId !== null,
+                fn ($consulta) => $consulta->where('cliente_id', $clienteId),
             )
             ->orderByDesc('fecha_inicio')
             ->paginate($porPagina)

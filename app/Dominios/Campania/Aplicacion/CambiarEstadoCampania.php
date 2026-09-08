@@ -4,7 +4,6 @@ namespace App\Dominios\Campania\Aplicacion;
 
 use App\Dominios\Campania\Aplicacion\MaquinaEstados\MaquinaEstadosCampania;
 use App\Dominios\Campania\Dominio\EstadoCampania;
-use App\Dominios\Campania\Dominio\Excepciones\CampaniaSolapada;
 use App\Dominios\Campania\Dominio\Excepciones\TransicionCampaniaNoPermitida;
 use App\Dominios\Campania\Infraestructura\Eloquent\Campania;
 
@@ -20,10 +19,7 @@ final class CambiarEstadoCampania
 {
     public function __construct(private readonly MaquinaEstadosCampania $maquinaEstados) {}
 
-    /**
-     * @throws TransicionCampaniaNoPermitida si la transición no está permitida.
-     * @throws CampaniaSolapada si `$hacia` es `abierta` y el rango se solapa con otra.
-     */
+    /** @throws TransicionCampaniaNoPermitida si la transición no está permitida. */
     public function ejecutar(Campania $campania, EstadoCampania $hacia): Campania
     {
         return $this->maquinaEstados->cambiarA($campania, $hacia);

@@ -3,21 +3,20 @@
 namespace App\Dominios\Campania\Aplicacion\MaquinaEstados;
 
 use App\Dominios\Campania\Dominio\EstadoCampania;
-use App\Dominios\Campania\Dominio\Excepciones\CampaniaSolapada;
 use App\Dominios\Campania\Dominio\Excepciones\TransicionCampaniaNoPermitida;
 use App\Dominios\Campania\Dominio\MaquinaEstados\TransicionesCampania;
-use App\Dominios\Campania\Dominio\ValidadorSolapamientoCampanias;
 use App\Dominios\Campania\Infraestructura\Eloquent\Campania;
 
 /**
  * Única clase que crea/muta el `estado` de `campania` (invariante 7 de
  * CLAUDE.md), mismo criterio que `MaquinaEstadosContrato`.
  *
- * La guarda de `abrir()` (no solaparse con otra campaña `abierta`) es de
- * DATOS de la propia campaña, no de quién ejecuta la acción — por eso vive
- * acá, mismo criterio que `MaquinaEstadosContrato::activar()` con las
- * ventanas horarias. "Solo el dueño cierra una campaña" (ADR 0015, tarea 69)
- * es autorización y se resuelve con el permiso
+ * `abrir()` no lleva guarda de datos (corregido el 8/9/2026, ADR 0015 punto
+ * 1): la campaña es del cliente, hay tantas abiertas como clientes en
+ * campaña y sus rangos se pisan por definición (uno cosechando mientras otro
+ * siembra), y hasta dentro de un mismo cliente se permiten varias abiertas a
+ * la vez (soya de verano, maíz de invierno). "Solo el dueño cierra una
+ * campaña" (ADR 0015, tarea 69) es autorización y se resuelve con el permiso
  * `campania.campania.cambiar_estado` en `SeguridadSeeder`, no con una guarda
  * acá.
  */
@@ -35,34 +34,10 @@ final class MaquinaEstadosCampania
      * `planificada → abierta` (ADR 0015 punto 1).
      *
      * @throws TransicionCampaniaNoPermitida si `$campania` no está `planificada`.
-     * @throws CampaniaSolapada si el rango de fechas se solapa con otra campaña `abierta`.
      */
     public function abrir(Campania $campania): Campania
     {
-        $desde = $campania->estado;
-        $hasta = EstadoCampania::Abierta;
-
-        if (! TransicionesCampania::permitida($desde, $hasta)) {
-            throw TransicionCampaniaNoPermitida::entre($desde, $hasta);
-        }
-
-        $otraSolapada = Campania::query()
-            ->where('estado', EstadoCampania::Abierta->value)
-            ->where('id', '!=', $campania->id)
-            ->get(['id', 'codigo', 'fecha_inicio', 'fecha_fin'])
-            ->first(fn (Campania $otra): bool => ValidadorSolapamientoCampanias::seSolapaConAlguna(
-                ['fecha_inicio' => $campania->fecha_inicio->toDateString(), 'fecha_fin' => $campania->fecha_fin->toDateString()],
-                [['fecha_inicio' => $otra->fecha_inicio->toDateString(), 'fecha_fin' => $otra->fecha_fin->toDateString()]],
-            ));
-
-        if ($otraSolapada !== null) {
-            throw CampaniaSolapada::con($otraSolapada->codigo);
-        }
-
-        $campania->estado = $hasta;
-        $campania->save();
-
-        return $campania;
+        return $this->transicionar($campania, EstadoCampania::Abierta);
     }
 
     /**
@@ -84,7 +59,6 @@ final class MaquinaEstadosCampania
      * cae al camino genérico y siempre rechaza.
      *
      * @throws TransicionCampaniaNoPermitida si la transición no está en la tabla.
-     * @throws CampaniaSolapada si el destino es `abierta` y el rango se solapa.
      */
     public function cambiarA(Campania $campania, EstadoCampania $hacia): Campania
     {

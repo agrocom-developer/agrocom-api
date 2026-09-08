@@ -13,10 +13,11 @@
     - DERECHA (`.ag-topbar__right`, ancho fijo, `margin-left:auto` para
       anclarse al extremo): toggle de tema (segmented, molecule
       theme-toggle) · campana con badge · selector de período · chip de
-      campaña activa · usuario, con el ROL ACTIVO bajo el nombre — el
-      usuario va ÚLTIMO (pedido del 7/9/2026): el avatar es el ancla visual
-      del extremo derecho del header, y tenerlo al principio del bloque lo
-      dejaba flotando en el medio, con los controles a su derecha.
+      campaña (apagado, ver prop `campaniaActiva` abajo) · usuario, con el
+      ROL ACTIVO bajo el nombre — el usuario va ÚLTIMO (pedido del
+      7/9/2026): el avatar es el ancla visual del extremo derecho del
+      header, y tenerlo al principio del bloque lo dejaba flotando en el
+      medio, con los controles a su derecha.
     Todo salvo el buscador lleva `flex:0 0 auto; white-space:nowrap` — ver
     topbar.css. En tablet (<1200) el header se compacta: breadcrumb, campaña
     y período se ocultan (maqueta 5a). En móvil (<768) este header entero se
@@ -29,11 +30,14 @@
 
     Props:
     - moduloLabel / vistaActual (nullable string): breadcrumb, ya traducidos.
-    - campaniaActiva (nullable string): código de la campaña activa de la
-      sesión (ADR 0015 punto 1, tarea 69) — real, resuelta por
-      `ResolverCampaniaActiva`; `null` si ninguna campaña calza (el chip no
-      se pinta). `campana`, a secas, quedó libre para el ícono de
-      notificaciones de acá abajo — nunca más el chip.
+    - campaniaActiva (nullable string): SIEMPRE `null` (ADR 0015 punto 1,
+      corregido el 8/9/2026): la campaña es del cliente, no de Agrocom, y
+      con decenas abiertas a la vez no hay una sola "activa" de sesión — se
+      elige dentro del cliente o del contrato, nunca acá. El chip no se
+      pinta; la prop se conserva (renombrada desde `campana`) para no volver
+      a tocar las 82 vistas si algún día vuelve a tener con qué llenarse.
+      `campana`, a secas, quedó libre para el ícono de notificaciones de acá
+      abajo — nunca más el chip.
     - periodo (nullable string): texto del selector de período (demo).
     - notifications (list, default []): `{icon, title, time, unread}` ya
       resueltos por el llamador. Lista vacía = estado vacío del popover.

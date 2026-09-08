@@ -18,12 +18,13 @@ final class CrearCampania
 
     /**
      * @throws CampaniaDuplicada si el código ya pertenece a otra campaña activa
-     *                           (índice parcial `cpn_campanias_codigo_unico`).
+     *                           del mismo cliente (índice parcial `cpn_campanias_cliente_codigo_unico`).
      */
-    public function ejecutar(string $codigo, ?string $nombre, string $fechaInicio, string $fechaFin): Campania
+    public function ejecutar(int $clienteId, string $codigo, ?string $nombre, string $fechaInicio, string $fechaFin): Campania
     {
         try {
             return $this->maquinaEstados->crear([
+                'cliente_id' => $clienteId,
                 'codigo' => $codigo,
                 'nombre' => $nombre,
                 'fecha_inicio' => $fechaInicio,
@@ -42,7 +43,7 @@ final class CrearCampania
     {
         $mensaje = $excepcion->getMessage();
 
-        if (str_contains($mensaje, 'cpn_campanias_codigo_unico') || str_contains($mensaje, 'cpn_campanias.codigo')) {
+        if (str_contains($mensaje, 'cpn_campanias_cliente_codigo_unico') || str_contains($mensaje, 'cpn_campanias.codigo')) {
             throw CampaniaDuplicada::porCodigo($codigo);
         }
 

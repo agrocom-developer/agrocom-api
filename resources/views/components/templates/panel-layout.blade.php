@@ -38,8 +38,10 @@
       (contadores reales por módulo). `numero` es lo que pinta el badge; `texto`,
       la frase completa que se resuelve como tooltip en menu-item.
     - campaniaActiva / periodo / version (nullable string): chips del header
-      y pie. `campaniaActiva` es el código de la campaña activa de la sesión
-      (ADR 0015 punto 1); `campana`, a secas, quedó libre para el ícono de
+      y pie. `campaniaActiva` SIEMPRE es `null` (ADR 0015 punto 1, corregido
+      el 8/9/2026): la campaña es del cliente, no hay una sola "activa" de
+      sesión con decenas abiertas a la vez — se elige dentro del cliente o
+      del contrato. `campana`, a secas, quedó libre para el ícono de
       notificaciones (nunca más el chip de campaña).
     - vistaActual (nullable string): segundo tramo del breadcrumb
       ("Módulo › Vista"), ya traducido por la página. Default: el label del

@@ -8,11 +8,14 @@ use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
 use Carbon\CarbonImmutable;
 
 /**
- * Campaña productiva (ADR 0015 punto 1, tabla `cpn_campanias`): el eje
- * transversal del que cuelgan `com_contratos.campania_id` y
- * `fin_gastos.campania_id`. Las transiciones de `estado` pasan por
- * `Aplicacion/MaquinaEstados/MaquinaEstadosCampania` (invariante 7 de
- * CLAUDE.md).
+ * Campaña **del cliente** (ADR 0015 punto 1, corregido el 8/9/2026, tabla
+ * `cpn_campanias`): el eje transversal del que cuelgan
+ * `com_contratos.campania_id` y `fin_gastos.campania_id`. Las transiciones de
+ * `estado` pasan por `Aplicacion/MaquinaEstados/MaquinaEstadosCampania`
+ * (invariante 7 de CLAUDE.md).
+ *
+ * `cliente_id` es FK real + entero plano (ADR 0003 regla 3): sin `belongsTo`
+ * hacia `Comercial\Infraestructura\Eloquent\Cliente`, que es de otro módulo.
  *
  * `RegistraBitacora` (invariante 9): el esquema no la marca como catálogo de
  * rol/permiso (no lo exige el gate automático de
@@ -21,6 +24,7 @@ use Carbon\CarbonImmutable;
  * \App\Dominios\Comercial\Infraestructura\Eloquent\Contrato}.
  *
  * @property int $id
+ * @property int $cliente_id
  * @property string $codigo
  * @property string|null $nombre
  * @property CarbonImmutable $fecha_inicio
@@ -35,6 +39,7 @@ class Campania extends ModeloDominio
 
     /** @var list<string> */
     protected $fillable = [
+        'cliente_id',
         'codigo',
         'nombre',
         'fecha_inicio',

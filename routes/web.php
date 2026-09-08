@@ -1,6 +1,5 @@
 <?php
 
-use App\Dominios\Campania\Infraestructura\Http\Controllers\Web\CampaniaActivaController;
 use App\Dominios\Campania\Infraestructura\Http\Controllers\Web\CampaniasController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\CamposController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ClientesController;
@@ -100,13 +99,6 @@ Route::middleware('auth:interno')->group(function () {
     // para resolverlo.
     Route::post('/panel/rol-activo', [RolActivoController::class, 'update'])
         ->name('panel.rol-activo.actualizar');
-
-    // ADR 0015 punto 1 (tarea 69): cambio de campaña activa sin volver a
-    // loguearse, espejo de la ruta de arriba. Sin `rol.activo`/`campania.activa`
-    // por el mismo motivo que esa: no depende de que ninguno de los dos ya
-    // esté resuelto.
-    Route::post('/panel/campania-activa', [CampaniaActivaController::class, 'update'])
-        ->name('panel.campania-activa.actualizar');
 
     // Selector de rol (GET): misma vía de escape que la ruta de arriba,
     // deliberadamente sin `rol.activo` — ver RolActivoController::create().

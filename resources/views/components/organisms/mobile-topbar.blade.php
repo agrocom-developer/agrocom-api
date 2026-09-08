@@ -13,8 +13,9 @@
     - moduloIcono / moduloLabel / vistaActual: módulo activo (ya
       normalizado/traducido por panel-layout).
     - activeRoleLabel (nullable string): nombre legible del rol activo.
-    - campaniaActiva (nullable string): código de la campaña activa de la
-      sesión (ADR 0015 punto 1, tarea 69) — real, `null` si ninguna calza.
+    - campaniaActiva (nullable string): SIEMPRE `null` (ADR 0015 punto 1,
+      corregido el 8/9/2026) — la campaña es del cliente, sin una "activa"
+      de sesión que mostrar acá.
     - notifications (list): solo para el contador de la campana.
     - userName (nullable string): para las iniciales del avatar.
     - drawerId: id del offcanvas de módulos que abre la hamburguesa.

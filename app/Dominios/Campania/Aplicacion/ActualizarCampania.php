@@ -17,11 +17,12 @@ final class ActualizarCampania
 {
     /**
      * @throws CampaniaDuplicada si el código ya pertenece a otra campaña activa
-     *                           (índice parcial `cpn_campanias_codigo_unico`).
+     *                           del mismo cliente (índice parcial `cpn_campanias_cliente_codigo_unico`).
      */
-    public function ejecutar(Campania $campania, string $codigo, ?string $nombre, string $fechaInicio, string $fechaFin): Campania
+    public function ejecutar(Campania $campania, int $clienteId, string $codigo, ?string $nombre, string $fechaInicio, string $fechaFin): Campania
     {
         $campania->fill([
+            'cliente_id' => $clienteId,
             'codigo' => $codigo,
             'nombre' => $nombre,
             'fecha_inicio' => $fechaInicio,
@@ -45,7 +46,7 @@ final class ActualizarCampania
     {
         $mensaje = $excepcion->getMessage();
 
-        if (str_contains($mensaje, 'cpn_campanias_codigo_unico') || str_contains($mensaje, 'cpn_campanias.codigo')) {
+        if (str_contains($mensaje, 'cpn_campanias_cliente_codigo_unico') || str_contains($mensaje, 'cpn_campanias.codigo')) {
             throw CampaniaDuplicada::porCodigo($codigo);
         }
 

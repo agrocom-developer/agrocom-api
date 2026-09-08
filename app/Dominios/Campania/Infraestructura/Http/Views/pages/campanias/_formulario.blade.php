@@ -2,11 +2,14 @@
     Partial: formulario de campaña, compartido por create.blade.php y
     edit.blade.php (ADR 0015 punto 1, tarea 69) — arquetipo Formulario, §6.3
     de docs/diseno/guia_pantalla_panel.md. Mismo patrón que
-    `personal/bases/_formulario.blade.php`: sin sub-entidad repetible ni
-    selects, cuatro campos planos.
+    `personal/bases/_formulario.blade.php`, con el selector de cliente que
+    agrega la corrección del 8/9/2026: la campaña es del cliente.
 
     Espera:
     - $campania (Campania|null): null en alta; el modelo en edición.
+    - $clientesDisponibles (Collection<int, string>): id => razón social
+      (ver CampaniasController::clientesDisponibles()) — la vista no conoce
+      el modelo Cliente (cross-módulo, ADR 0003 regla 3).
 
     `estado` NUNCA es un campo de este formulario: lo cambia
     `panel.campanias.cambiar-estado` (otra pantalla, otra responsabilidad —
@@ -22,6 +25,7 @@
 @php
     $esEdicion = $campania !== null;
     $accion = $esEdicion ? route('panel.campanias.update', $campania) : route('panel.campanias.store');
+    $clienteId = old('cliente_id', $campania?->cliente_id ?? '');
     $codigo = old('codigo', $campania?->codigo ?? '');
     $nombre = old('nombre', $campania?->nombre ?? '');
     $fechaInicio = old('fecha_inicio', $campania?->fecha_inicio?->toDateString() ?? '');
@@ -50,8 +54,26 @@
 
     <x-molecules.form-section
         :title="__('campania.campanias.seccion_datos')"
-        :count="__('campania.campanias.campos_contador', ['cantidad' => 4])"
+        :count="__('campania.campanias.campos_contador', ['cantidad' => 5])"
     >
+        <div class="ag-input">
+            <label for="cliente_id" class="ag-input__label">
+                {{ __('campania.campanias.campo_cliente') }}
+                <span class="ag-input__required" aria-hidden="true">*</span>
+            </label>
+            <div class="ag-input__control {{ $errors->has('cliente_id') ? 'ag-input__control--error' : '' }}">
+                <select name="cliente_id" id="cliente_id" class="ag-input__field" required>
+                    <option value="">{{ __('campania.campanias.campo_cliente_placeholder') }}</option>
+                    @foreach ($clientesDisponibles as $id => $razonSocial)
+                        <option value="{{ $id }}" @selected((string) $clienteId === (string) $id)>{{ $razonSocial }}</option>
+                    @endforeach
+                </select>
+            </div>
+            @if ($errors->has('cliente_id'))
+                <p class="ag-input__error" role="alert">{{ $errors->first('cliente_id') }}</p>
+            @endif
+        </div>
+
         <x-atoms.input
             type="text"
             name="codigo"

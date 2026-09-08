@@ -25,7 +25,9 @@ use Illuminate\Support\Carbon;
  * Desde la tarea 67 no queda nada de maqueta acá: las notificaciones de la
  * campana son las alertas por excepción reales (HU-19), el período sale de
  * la fecha y la versión del pie de `config('app.version')`. El chip de
- * campaña se retiró — no hay tabla de campañas que lo respalde.
+ * campaña se retiró — no hay campaña activa de sesión (ADR 0015: la campaña
+ * es del cliente, se elige dentro del cliente o del contrato, nunca es un
+ * contexto ambiente de la sesión).
  *
  * Existe para que cada controlador de página no re-arme (ni desincronice)
  * esta misma docena de props — los controladores siguen siendo adaptadores
@@ -33,7 +35,7 @@ use Illuminate\Support\Carbon;
  */
 final class CascaraPanel
 {
-    private const ALERTAS_CAMPANA = 5;
+    private const ALERTAS_NOTIFICACION = 5;
 
     public function __construct(
         private readonly ObtenerMenuPorRolActivo $obtenerMenu,
@@ -64,10 +66,15 @@ final class CascaraPanel
             'tema' => $tema,
             'notifications' => $this->notificaciones($usuario, $idRolActivo),
             'menuBadges' => $this->menuBadges($usuario),
-            // `campana` se retiró en la tarea 67: el mock decía "Campaña
-            // 2026-B" y el dominio no tiene el concepto de campaña en
-            // ninguna tabla. El chip del header ya tolera `null`.
-            'campana' => null,
+            // `campana` (chip) se retiró en la tarea 67: el mock decía
+            // "Campaña 2026-B" y el dominio no tenía el concepto. Ahora sí
+            // existe (`cpn_campanias`, ADR 0015), pero es del CLIENTE y no
+            // hay una sola "activa" de sesión: hay tantas abiertas como
+            // clientes en campaña. Sigue sin chip que pintar — el chip del
+            // header queda apagado, solo se renombró `campana` →
+            // `campaniaActiva` (ADR 0015 punto 2) para no colisionar con la
+            // campana de notificaciones.
+            'campaniaActiva' => null,
             'periodo' => $this->periodoEnCurso(),
             'version' => config('app.version'),
         ];
@@ -151,7 +158,7 @@ final class CascaraPanel
             'title' => $alerta->mensaje,
             'time' => Carbon::parse($alerta->creadaEn)->diffForHumans(),
             'unread' => $alerta->pendiente,
-        ], $this->panelOperaciones->alertasRecientes(self::ALERTAS_CAMPANA));
+        ], $this->panelOperaciones->alertasRecientes(self::ALERTAS_NOTIFICACION));
     }
 
     /**
