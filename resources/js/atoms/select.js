@@ -378,6 +378,21 @@ function inicializar(root) {
     nativo.tabIndex = -1;
     trigger.hidden = false;
     actualizarValorMostrado();
+
+    // Selects dependientes (p. ej. campaña según cliente en contratos-form.js,
+    // subrubro según rubro en gastos-form.js) filtran el nativo marcando
+    // `<option>` disabled/hidden desde afuera. `opciones` es una foto tomada
+    // acá arriba: sin este observer, esa foto queda vieja y el combobox
+    // mostraría opciones que el formulario ya descartó.
+    const observador = new MutationObserver(() => {
+        leerOpciones();
+        actualizarValorMostrado();
+        if (abierto) {
+            filtrar();
+            pintarListbox();
+        }
+    });
+    observador.observe(nativo, { childList: true, subtree: true, attributes: true, attributeFilter: ['disabled', 'hidden'] });
 }
 
 document.addEventListener('DOMContentLoaded', () => {

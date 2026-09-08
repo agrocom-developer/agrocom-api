@@ -64,6 +64,12 @@
 ])
 
 @php
+    // $options llega como array plano o Collection según el llamador (varios
+    // pasan directo una Collection Eloquent `id => etiqueta`, p. ej.
+    // $clientesDisponibles) — se normaliza acá una sola vez porque
+    // array_key_exists() exige un array real, a diferencia de count()/foreach,
+    // que aceptan cualquier Traversable/Countable.
+    $options = $options instanceof \Illuminate\Support\Collection ? $options->all() : $options;
     $selectId = $id ?? $name;
     $helpId = $help ? "{$selectId}-help" : null;
     $errorId = $error ? "{$selectId}-error" : null;

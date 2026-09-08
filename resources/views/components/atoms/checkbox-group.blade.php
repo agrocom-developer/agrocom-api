@@ -70,7 +70,10 @@
     $describedBy = trim(($helpId ?? '').' '.($errorId ?? ''));
     $listId = "{$groupId}-list";
     $esBuscable = count($options) > 8;
-    $valoresMarcados = array_map('strval', $value);
+    // $value puede llegar como Collection (p. ej. ->pluck('id') de una
+    // relación) — array_map() exige un array real, mismo ajuste que
+    // atoms/select con $options.
+    $valoresMarcados = array_map('strval', $value instanceof \Illuminate\Support\Collection ? $value->all() : $value);
 @endphp
 
 <fieldset
