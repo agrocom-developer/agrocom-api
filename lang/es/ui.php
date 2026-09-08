@@ -50,6 +50,14 @@ return [
         'elegir_fecha' => 'Elegir fecha',
     ],
 
+    // Chrome de la búsqueda de atoms/checkbox-group (tarea 76, HU-53), etapa
+    // 3: mismo criterio que 'select' de arriba — microcopy propia del
+    // filtro, no del formulario que lo usa (ADR 0013).
+    'checkbox_group' => [
+        'search_placeholder' => 'Buscar…',
+        'no_results' => 'Sin resultados',
+    ],
+
     'theme' => [
         'light' => 'Tema claro',
         'dark' => 'Tema oscuro',
