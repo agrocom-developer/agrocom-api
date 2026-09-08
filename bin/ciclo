@@ -783,7 +783,7 @@ fase_pr() {
 #           6 sin un solo check tras SIN_CHECKS_MAX: CI no arrancó
 esperar_ci() {
     local numero="$1" id="${2:-?}" limite=$((SECONDS + ESPERA_CI)) arranque=$SECONDS
-    local estado borrador fallidos pendientes total fusion previo salto ultimo=0
+    local estado borrador fallidos pendientes total fusion previo salto ultimo=0 sin_checks=0
     while :; do
         estado=$(gh pr view "$numero" --json state -q .state 2>/dev/null || echo "")
         case "$estado" in
@@ -799,11 +799,25 @@ esperar_ci() {
         # `|| echo 1` lo leía como "uno pendiente" y la espera no terminaba
         # nunca sola. Un PR en conflicto no dispara workflow, así que ese caso
         # se reconoce por el merge ref, no por los checks.
-        total=$(gh pr checks "$numero" --json state -q 'length' 2>/dev/null || echo 0)
-        if [ "${total:-0}" -eq 0 ]; then
-            fusion=$(gh pr view "$numero" --json mergeStateStatus -q .mergeStateStatus 2>/dev/null || echo "")
-            [ "$fusion" = "DIRTY" ] && return 5
-            [ $((SECONDS - arranque)) -ge "$SIN_CHECKS_MAX" ] && return 6
+        # Un `gh` que falla no es información: es un hipo de red o de la API, y
+        # leerlo como "este PR no tiene checks" —lo que hacía el `|| echo 0`—
+        # alcanzaba para abandonar un PR sano. El 8/9/2026 el ciclo dio por
+        # muerto el PR #136 de la tarea 71 cuatro segundos DESPUÉS de que se
+        # integrara: un sondeo con error justo pasados los 3 minutos, y la
+        # tarea quedó contada como no integrada teniendo su trabajo en develop.
+        # Ahora hacen falta tres sondeos buenos y seguidos sin un solo check
+        # para creerlo; un error no cuenta ni para un lado ni para el otro.
+        if total=$(gh pr checks "$numero" --json state -q 'length' 2>/dev/null); then
+            if [ "${total:-0}" -eq 0 ]; then
+                sin_checks=$((sin_checks + 1))
+                fusion=$(gh pr view "$numero" --json mergeStateStatus -q .mergeStateStatus 2>/dev/null || echo "")
+                [ "$fusion" = "DIRTY" ] && return 5
+                [ "$sin_checks" -ge 3 ] && [ $((SECONDS - arranque)) -ge "$SIN_CHECKS_MAX" ] && return 6
+            else
+                sin_checks=0
+            fi
+        else
+            total=""
         fi
 
         pendientes=$(gh pr checks "$numero" --json state -q '[.[] | select(.state == "PENDING" or .state == "QUEUED" or .state == "IN_PROGRESS")] | length' 2>/dev/null || echo 1)
@@ -815,9 +829,9 @@ esperar_ci() {
         # La espera deja rastro: el estado se reescribe en cada sondeo y la
         # bitácora recibe una línea cada dos minutos. Callarse durante toda la
         # espera fue justo lo que impidió ver que el PR #129 estaba trabado.
-        printf '%s\n' "$id esperando CI del PR #$numero · $((SECONDS - arranque))s de ${ESPERA_CI}s · ${total} check(s), ${pendientes} pendiente(s)" > runs/ciclo.estado
+        printf '%s\n' "$id esperando CI del PR #$numero · $((SECONDS - arranque))s de ${ESPERA_CI}s · ${total:-?} check(s), ${pendientes} pendiente(s)" > runs/ciclo.estado
         if [ $((SECONDS - ultimo)) -ge 120 ]; then
-            log "  PR #$numero · $((SECONDS - arranque))s de ${ESPERA_CI}s · ${total} check(s), ${pendientes} pendiente(s)"
+            log "  PR #$numero · $((SECONDS - arranque))s de ${ESPERA_CI}s · ${total:-?} check(s), ${pendientes} pendiente(s)"
             ultimo=$SECONDS
         fi
 
