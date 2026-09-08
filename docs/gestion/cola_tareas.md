@@ -141,6 +141,7 @@ exista el módulo `Mezclas`).
 | 78 | HU-55 — configuración del sistema separada de la empresa: `/panel/configuracion` por sectores (mapas, correo, integraciones) con valores cifrados en reposo, nunca devueltos al navegador y excluidos del diff de la bitácora, resolución en cascada con `.env` de respaldo; más la pestaña de Facturación de la empresa que hoy dice "Próximamente" | `./bin/verify` = 0, con test de que el HTML no contiene el secreto en claro, test de que la bitácora registra el cambio sin el valor, test de que guardar vacío no borra lo configurado, y test de 403 para quien no es dueño | `app/Dominios/Compartido/**`, `Seguridad/**` (organización, permisos, menú), migraciones, seeders, `lang/`, `routes/web.php`, `resources/`, `tests/**` | **sí** | 4 | escrita |
 | 79 | HU-56 — editor de perímetro a pantalla completa, con barra de acciones propia en Material Symbols, superficie en hectáreas mientras se dibuja, y proveedor de mapa configurable (Google Maps con llave, Leaflet + Esri sin ella) | `./bin/verify` = 0, con test de que sin llave el camino actual funciona intacto, test de que el GeoJSON guardado es idéntico con un proveedor o el otro, y test de que la llave no aparece en el HTML cuando el proveedor es Leaflet | `resources/js/**`, `resources/css/**`, `resources/views/components/**`, `Comercial/**` (vista del editor), `Compartido/Contratos/**`, `package.json`, `lang/`, `tests/**` | no | 3 | escrita |
 | 80 | HU-57 — repuestos por casillas en la orden de mantenimiento: lista con búsqueda por código y descripción, cantidad y disponibilidad a la vista, resumen de lo elegido, base elegida una vez por orden; el payload no cambia | `./bin/verify` = 0, con test de que el formulario nuevo produce el mismo payload y el mismo resultado que el viejo, y regresión de HU-37 (cerrar descuenta stock y genera el gasto en una transacción) | `app/Dominios/Mantenimiento/**` (vistas y controlador), `resources/`, `lang/mantenimiento.php`, `tests/**` | no | 2 | escrita |
+| 81 | HU-58 — ficha de desempeño de una persona: qué aplicó (lote, campo, cliente, campaña), cuándo, con qué dron y cuántas hectáreas, más sus sesiones rechazadas con motivo y sus incidencias, por contrato de lectura de `Operaciones` sin que `Personal` toque tablas `ope_*` | `./bin/verify` = 0, con test de que una sesión rechazada no suma hectáreas y de que la campaña mostrada es la del contrato de esa orden | `Operaciones/**` (contrato de lectura), `Personal/**` (pantalla), `Comercial/**` (solo extender lectura), `Seguridad/**` (permiso), `lang/`, `routes/web.php`, `tests/**` | no | 3 | escrita |
 
 ### El bug de la 24 — ya pasó dos veces, sigue sin arreglarse
 
@@ -659,3 +660,19 @@ misma revisión de "Fuera del ciclo automático" antes de escribir
 `runs/DETENER` — no se prepararon tareas 62/63 a ciegas porque, a
 diferencia de una HU con corte de dominio conocido, no hay una segunda
 pieza de deuda técnica identificada todavía con la misma certeza que la 61.
+
+### La 81, agregada el 8/9/2026
+
+Sale de una pregunta del dueño al leer la corrección del ADR 0015: *"si el
+equipo de trabajo y las estadías ya no llevan campaña, ¿cómo sabemos qué equipo
+está trabajando dónde?"*, con el caso de uso escrito — *"en el caso de que la
+aplicación no funcionara y queremos buscar culpables, para tomar decisiones a
+futuro de no volver a contratarlo"*.
+
+La respuesta al modelo es que **sí se sabe, y por FKs reales**: sesión → trabajo
+→ orden → contrato → campaña, y sesión → trabajo → lote → campo → cliente. No
+hacía falta agregar ninguna columna. Lo que faltaba era la **pantalla**: hoy el
+nombre del piloto sólo aparece en el reporte técnico de un lote.
+
+Va **al final de la cola** y no antes: no bloquea a nadie, y necesita que la 69
+esté integrada para poder mostrar la campaña de cada aplicación.
