@@ -1,5 +1,6 @@
 <?php
 
+use App\Dominios\Campania\Infraestructura\CampaniaServiceProvider;
 use App\Dominios\Comercial\Infraestructura\ComercialServiceProvider;
 use App\Dominios\Distribucion\Infraestructura\DistribucionServiceProvider;
 use App\Dominios\Finanzas\Infraestructura\FinanzasServiceProvider;
@@ -22,4 +23,5 @@ return [
     MantenimientoServiceProvider::class,
     InventarioServiceProvider::class,
     PortalServiceProvider::class,
+    CampaniaServiceProvider::class,
 ];

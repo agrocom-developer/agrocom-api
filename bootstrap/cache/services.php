@@ -46,6 +46,7 @@
     42 => 'App\\Dominios\\Mantenimiento\\Infraestructura\\MantenimientoServiceProvider',
     43 => 'App\\Dominios\\Inventario\\Infraestructura\\InventarioServiceProvider',
     44 => 'App\\Dominios\\Portal\\Infraestructura\\PortalServiceProvider',
+    45 => 'App\\Dominios\\Campania\\Infraestructura\\CampaniaServiceProvider',
   ),
   'eager' => 
   array (
@@ -79,6 +80,7 @@
     27 => 'App\\Dominios\\Mantenimiento\\Infraestructura\\MantenimientoServiceProvider',
     28 => 'App\\Dominios\\Inventario\\Infraestructura\\InventarioServiceProvider',
     29 => 'App\\Dominios\\Portal\\Infraestructura\\PortalServiceProvider',
+    30 => 'App\\Dominios\\Campania\\Infraestructura\\CampaniaServiceProvider',
   ),
   'deferred' => 
   array (
