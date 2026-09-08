@@ -7,6 +7,13 @@
  * índice libre. No hay reindexado al quitar una fila: PHP arma igual el
  * array de `ventanas` aunque los índices numéricos queden con huecos.
  *
+ * El interruptor "Día completo" (HU-47, tarea 70) es puro DOM, sin campo
+ * propio que viaje al servidor (ADR 0015 punto 5 — no hay
+ * `ventana_todo_el_dia` en la base, cero filas ya significa "día completo"):
+ * encenderlo oculta la sección Y VACÍA la lista (nada de `ventanas[]` se
+ * manda); apagarlo la muestra y, si está vacía, agrega una fila para no
+ * dejar al usuario con el botón "Agregar ventana" como único camino.
+ *
  * Filtra el `<select>` de campaña según el cliente elegido (ADR 0015 punto
  * 1, tarea 69): el contrato es con un cliente y para una campaña SUYA, mismo
  * patrón que rubro/subrubro en `gastos-form.js`. Es presentación, no
@@ -57,12 +64,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const lista = formulario.querySelector('[data-ag-ventanas-lista]');
     const plantilla = formulario.querySelector('[data-ag-ventana-template]');
     const botonAgregar = formulario.querySelector('[data-ag-ventanas-agregar]');
+    const interruptorDiaCompleto = formulario.querySelector('[data-ag-dia-completo]');
 
     if (!contenedor || !lista || !plantilla || !botonAgregar) return;
 
     let proximoIndice = lista.querySelectorAll('[data-ag-ventana-fila]').length;
 
-    botonAgregar.addEventListener('click', () => {
+    const agregarFila = () => {
         const html = plantilla.innerHTML.replaceAll('__INDICE__', String(proximoIndice));
         proximoIndice += 1;
 
@@ -73,7 +81,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (fila) {
             lista.appendChild(fila);
         }
-    });
+    };
+
+    botonAgregar.addEventListener('click', agregarFila);
 
     contenedor.addEventListener('click', (evento) => {
         const botonQuitar = evento.target.closest('[data-ag-ventana-quitar]');
@@ -81,4 +91,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         botonQuitar.closest('[data-ag-ventana-fila]')?.remove();
     });
+
+    if (interruptorDiaCompleto) {
+        interruptorDiaCompleto.addEventListener('change', () => {
+            if (interruptorDiaCompleto.checked) {
+                lista.replaceChildren();
+                contenedor.hidden = true;
+            } else {
+                contenedor.hidden = false;
+                if (lista.querySelectorAll('[data-ag-ventana-fila]').length === 0) {
+                    agregarFila();
+                }
+            }
+        });
+    }
 });

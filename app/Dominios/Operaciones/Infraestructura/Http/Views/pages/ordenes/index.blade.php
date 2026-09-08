@@ -15,8 +15,8 @@
       consulta Comercial (ADR 0003 regla 3, ninguna relación Eloquent desde
       OrdenAplicacion). Un id sin etiqueta (contrato/lote borrado después)
       cae al `#id` crudo.
-    - $filtros (array{estado: ?string}): filtro aplicado, para dejar el
-      select con el valor tras el submit.
+    - $filtros (array{estado: ?string, tipo_aplicacion: ?string}): filtros
+      aplicados, para dejar los selects con el valor tras el submit.
     - $puedeActivar (bool): si el rol activo tiene `operaciones.orden.activar`
       — sin él, la fila no ofrece el botón (el servidor revalida igual en
       OrdenesController::activar()).
@@ -95,12 +95,26 @@
                     :placeholder="__('operaciones.ordenes.filtro_todos')"
                 />
 
+                @php
+                    $opcionesTipoAplicacion = collect(\App\Dominios\Operaciones\Dominio\TipoAplicacion::cases())
+                        ->mapWithKeys(fn ($caso) => [$caso->value => __('operaciones.tipo_aplicacion.'.$caso->value)]);
+                @endphp
+
+                <x-atoms.select
+                    name="tipo_aplicacion"
+                    id="filtro-tipo-aplicacion"
+                    label="{{ __('operaciones.ordenes.filtro_tipo_aplicacion') }}"
+                    :options="$opcionesTipoAplicacion"
+                    :value="$filtros['tipo_aplicacion']"
+                    :placeholder="__('operaciones.ordenes.filtro_todos')"
+                />
+
                 <div class="ag-filtros__acciones ag-ordenes__filtros-acciones">
                     <x-atoms.button type="submit" variant="outline" size="md" icon="search">
                         {{ __('operaciones.ordenes.filtrar') }}
                     </x-atoms.button>
 
-                    @if ($filtros['estado'] !== null)
+                    @if ($filtros['estado'] !== null || $filtros['tipo_aplicacion'] !== null)
                         <x-atoms.button href="{{ route('panel.ordenes.index') }}" variant="text" size="md">
                             {{ __('operaciones.ordenes.limpiar_filtros') }}
                         </x-atoms.button>
@@ -110,7 +124,7 @@
 
             @if ($ordenes->isEmpty())
                 <x-molecules.alert-strip variant="info" icon="assignment" class="ag-ordenes__aviso">
-                    {{ __($filtros['estado'] !== null ? 'operaciones.ordenes.filtro_vacio' : 'operaciones.ordenes.vacio') }}
+                    {{ __(($filtros['estado'] !== null || $filtros['tipo_aplicacion'] !== null) ? 'operaciones.ordenes.filtro_vacio' : 'operaciones.ordenes.vacio') }}
                 </x-molecules.alert-strip>
             @else
                 <div class="ag-ordenes__tabla" role="table">
@@ -118,6 +132,7 @@
                         <span role="columnheader">{{ __('operaciones.ordenes.col_contrato') }}</span>
                         <span role="columnheader">{{ __('operaciones.ordenes.col_lote') }}</span>
                         <span role="columnheader">{{ __('operaciones.ordenes.col_aplicacion') }}</span>
+                        <span role="columnheader">{{ __('operaciones.ordenes.col_tipo_aplicacion') }}</span>
                         <span role="columnheader">{{ __('operaciones.ordenes.col_litros_ha') }}</span>
                         <span role="columnheader">{{ __('operaciones.ordenes.col_fecha_emision') }}</span>
                         <span role="columnheader">{{ __('operaciones.ordenes.col_estado') }}</span>
@@ -130,6 +145,7 @@
                             <span role="cell">{{ $etiquetasContrato[$orden->contrato_id] ?? "#{$orden->contrato_id}" }}</span>
                             <span role="cell">{{ $etiquetasLote[$orden->lote_id] ?? "#{$orden->lote_id}" }}</span>
                             <span role="cell" class="ag-ordenes__mono">{{ $orden->nro_aplicacion }}</span>
+                            <span role="cell">{{ __('operaciones.tipo_aplicacion.'.$orden->tipo_aplicacion->value) }}</span>
                             <span role="cell" class="ag-ordenes__mono">{{ number_format((float) $orden->litros_ha, 2, ',', '.') }}</span>
                             <span role="cell" class="ag-ordenes__mono">{{ $orden->fecha_emision->format('d/m/Y') }}</span>
                             <span role="cell">

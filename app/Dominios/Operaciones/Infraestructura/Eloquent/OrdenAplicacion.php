@@ -5,6 +5,7 @@ namespace App\Dominios\Operaciones\Infraestructura\Eloquent;
 use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
 use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
+use App\Dominios\Operaciones\Dominio\TipoAplicacion;
 use Carbon\CarbonImmutable;
 
 /**
@@ -34,6 +35,7 @@ use Carbon\CarbonImmutable;
  * @property int $contrato_id
  * @property int $lote_id
  * @property int $nro_aplicacion
+ * @property TipoAplicacion $tipo_aplicacion
  * @property string $litros_ha
  * @property string|null $humedad_min_pct
  * @property string|null $viento_max_kmh
@@ -60,6 +62,7 @@ class OrdenAplicacion extends ModeloDominio
         'contrato_id',
         'lote_id',
         'nro_aplicacion',
+        'tipo_aplicacion',
         'litros_ha',
         'humedad_min_pct',
         'viento_max_kmh',
@@ -80,6 +83,7 @@ class OrdenAplicacion extends ModeloDominio
     {
         return [
             'nro_aplicacion' => 'integer',
+            'tipo_aplicacion' => TipoAplicacion::class,
             'litros_ha' => 'decimal:2',
             'humedad_min_pct' => 'decimal:2',
             'viento_max_kmh' => 'decimal:2',

@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Operaciones\Infraestructura\Http\Requests;
 
+use App\Dominios\Operaciones\Dominio\TipoAplicacion;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -28,6 +29,11 @@ use Illuminate\Validation\Rule;
  * realidad el criterio de aceptación de HU-23 sobre el propio contrato, no
  * una regla de esta pantalla — un contrato `borrador` puede necesitar
  * órdenes cargadas de antemano para activarse con todo listo.
+ *
+ * `tipo_aplicacion` (HU-47, tarea 70) es `required` en el formulario del
+ * panel — a diferencia de la columna, que trae `DEFAULT 'desarrollo'` para
+ * cualquier alta que no pase por acá (p. ej. un `OrdenAplicacion::create()`
+ * directo) — porque acá el usuario elige a propósito, no por omisión.
  */
 final class CrearOrdenRequest extends FormRequest
 {
@@ -38,6 +44,7 @@ final class CrearOrdenRequest extends FormRequest
             'contrato_id' => ['required', 'integer', Rule::exists('com_contratos', 'id')->whereNull('deleted_at')],
             'lote_id' => ['required', 'integer', Rule::exists('com_lotes', 'id')->whereNull('deleted_at')],
             'nro_aplicacion' => ['required', 'integer', 'min:1'],
+            'tipo_aplicacion' => ['required', Rule::enum(TipoAplicacion::class)],
             'litros_ha' => ['required', 'numeric', 'gt:0'],
             'humedad_min_pct' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'humedad_max_pct' => ['nullable', 'numeric', 'min:0', 'max:100'],

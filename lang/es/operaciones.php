@@ -20,6 +20,15 @@ return [
         'vencida' => 'Vencida',
     ],
 
+    // Momento del ciclo del cultivo en que se aplica (HU-47, tarea 70; enum
+    // `Dominio\TipoAplicacion`). Mismo criterio que `estado` de arriba:
+    // vocabulario compartido por el formulario, el listado y su filtro.
+    'tipo_aplicacion' => [
+        'siembra' => 'Siembra',
+        'desarrollo' => 'Desarrollo',
+        'cosecha' => 'Cosecha',
+    ],
+
     // Estados de sesión del dashboard demo (quinta vuelta — maquetas
     // 4a/5a/5b). "Validada"/"En vuelo"/"Programada" son vocabulario del
     // ciclo de vida real de `sesiones` (especificación §4.3/§5);
@@ -339,6 +348,7 @@ return [
         'subtitulo' => 'Órdenes emitidas por contrato y lote, con sus límites y parámetros de vuelo.',
         'nueva' => 'Nueva orden',
         'filtro_estado' => 'Estado',
+        'filtro_tipo_aplicacion' => 'Tipo de aplicación',
         'filtro_todos' => 'Todos',
         'filtrar' => 'Filtrar',
         'limpiar_filtros' => 'Limpiar filtros',
@@ -347,6 +357,7 @@ return [
         'col_contrato' => 'Contrato',
         'col_lote' => 'Lote',
         'col_aplicacion' => 'Aplicación',
+        'col_tipo_aplicacion' => 'Tipo',
         'col_litros_ha' => 'Litros/ha',
         'col_fecha_emision' => 'Emisión',
         'col_estado' => 'Estado',
@@ -374,6 +385,7 @@ return [
         'campo_lote_placeholder' => 'Seleccioná un lote…',
         'campo_lote_opcion' => ':campo — Lote :codigo',
         'campo_nro_aplicacion' => 'Número de aplicación',
+        'campo_tipo_aplicacion' => 'Tipo de aplicación',
         'campo_litros_ha' => 'Litros por hectárea',
         'campo_fecha_emision' => 'Fecha de emisión',
         'campo_contacto' => 'Emitida por (contacto)',

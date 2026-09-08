@@ -13,6 +13,12 @@
       reemplaza por el próximo número al clonar.
     - $ventana (array{id?: int, hora_inicio?: string, hora_fin?: string}):
       vacío en una fila nueva.
+
+    Ninguna de las dos horas lleva `required` (HU-47, tarea 70): una fila
+    solo existe si el usuario la cargó a propósito (con "Día completo"
+    apagado) — el Request valida `required_with` mutuo entre las dos, así que
+    completar una sin la otra sigue siendo un error, solo que no bloquea el
+    envío del formulario con el interruptor encendido y ninguna fila visible.
 --}}
 <div class="ag-contratos-form__ventana" data-ag-ventana-fila>
     @if (! empty($ventana['id']))
@@ -24,7 +30,6 @@
         name="ventanas[{{ $indice }}][hora_inicio]"
         label="{{ __('comercial.contratos.ventana_hora_inicio') }}"
         value="{{ $ventana['hora_inicio'] ?? '' }}"
-        required
     />
 
     <x-atoms.input
@@ -32,7 +37,6 @@
         name="ventanas[{{ $indice }}][hora_fin]"
         label="{{ __('comercial.contratos.ventana_hora_fin') }}"
         value="{{ $ventana['hora_fin'] ?? '' }}"
-        required
     />
 
     <div class="ag-contratos-form__ventana-pie">

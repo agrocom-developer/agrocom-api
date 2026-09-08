@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Operaciones\Infraestructura\Http\Requests;
 
+use App\Dominios\Operaciones\Dominio\TipoAplicacion;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -23,6 +24,7 @@ final class ActualizarOrdenRequest extends FormRequest
             'contrato_id' => ['required', 'integer', Rule::exists('com_contratos', 'id')->whereNull('deleted_at')],
             'lote_id' => ['required', 'integer', Rule::exists('com_lotes', 'id')->whereNull('deleted_at')],
             'nro_aplicacion' => ['required', 'integer', 'min:1'],
+            'tipo_aplicacion' => ['required', Rule::enum(TipoAplicacion::class)],
             'litros_ha' => ['required', 'numeric', 'gt:0'],
             'humedad_min_pct' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'humedad_max_pct' => ['nullable', 'numeric', 'min:0', 'max:100'],

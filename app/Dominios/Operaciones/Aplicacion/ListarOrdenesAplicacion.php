@@ -3,6 +3,7 @@
 namespace App\Dominios\Operaciones\Aplicacion;
 
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
+use App\Dominios\Operaciones\Dominio\TipoAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -30,6 +31,7 @@ final class ListarOrdenesAplicacion
         ?int $loteId = null,
         ?int $contratoId = null,
         ?int $nroAplicacion = null,
+        ?TipoAplicacion $tipoAplicacion = null,
         bool $soloVigentes = false,
         int $porPagina = 15,
     ): LengthAwarePaginator {
@@ -39,6 +41,7 @@ final class ListarOrdenesAplicacion
             ->when($loteId !== null, fn ($consulta) => $consulta->where('lote_id', $loteId))
             ->when($contratoId !== null, fn ($consulta) => $consulta->where('contrato_id', $contratoId))
             ->when($nroAplicacion !== null, fn ($consulta) => $consulta->where('nro_aplicacion', $nroAplicacion))
+            ->when($tipoAplicacion !== null, fn ($consulta) => $consulta->where('tipo_aplicacion', $tipoAplicacion))
             ->orderByDesc('fecha_emision')
             ->orderByDesc('id')
             ->paginate($porPagina);
