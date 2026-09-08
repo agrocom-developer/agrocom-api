@@ -1,0 +1,46 @@
+<?php
+
+namespace App\Dominios\Comercial\Aplicacion;
+
+use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Pagination\LengthAwarePaginator;
+
+/**
+ * Caso de uso: listado de lotes con filtro por cliente, por propiedad
+ * (campo) y búsqueda por código (tarea 77, HU-54, etapa 2). Mismo patrón de
+ * paginación que `ListarCampos`.
+ *
+ * El código de un lote es único por CAMPO, no globalmente (índice parcial
+ * `com_lotes_codigo_unico`): la búsqueda por código puede traer varios lotes
+ * de distintas propiedades con el mismo código, mismo criterio que
+ * `ListarCampos` con el nombre.
+ */
+final class ListarLotes
+{
+    /** @return LengthAwarePaginator<int, Lote> */
+    public function ejecutar(
+        ?int $clienteId = null,
+        ?int $campoId = null,
+        ?string $busqueda = null,
+        int $porPagina = 15,
+    ): LengthAwarePaginator {
+        return Lote::query()
+            ->with('campo.cliente')
+            ->when(
+                $campoId !== null,
+                fn (Builder $consulta) => $consulta->where('campo_id', $campoId),
+            )
+            ->when(
+                $clienteId !== null,
+                fn (Builder $consulta) => $consulta->whereHas('campo', fn (Builder $campo) => $campo->where('cliente_id', $clienteId)),
+            )
+            ->when(
+                $busqueda !== null && $busqueda !== '',
+                fn (Builder $consulta) => $consulta->where('codigo', 'like', "%{$busqueda}%"),
+            )
+            ->orderBy('codigo')
+            ->paginate($porPagina)
+            ->withQueryString();
+    }
+}

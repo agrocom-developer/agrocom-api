@@ -1,0 +1,332 @@
+<?php
+
+use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
+use App\Dominios\Compartido\Dominio\AccionBitacora;
+use App\Dominios\Compartido\Infraestructura\Eloquent\Bitacora;
+use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
+use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
+use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUserRole;
+use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUsuarioInterno;
+use Database\Seeders\Catalogo\CatalogoSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+
+/*
+ * Tarea 77 (HU-54, etapa 2): ficha propia de un lote — listado con filtro
+ * por cliente/propiedad y búsqueda por código, alta, edición y baja lógica
+ * de un lote suelto. Mismo caso de uso de guardado que `CamposController`
+ * (ver `GuardadoLote`/`VerificadorHistorialLote`), así que estos tests no
+ * repiten los de `GestionCamposPanelTest` sobre geometría/duplicados — solo
+ * lo específico de la ficha propia: filtro, alta/edición sin pasar por el
+ * campo, reasignación de propiedad y el 403 por URL.
+ */
+
+uses(RefreshDatabase::class);
+
+beforeEach(function () {
+    $this->seed(CatalogoSeeder::class);
+});
+
+function usuarioConRolParaLotes(string $username, string $rol): array
+{
+    $usuario = SecUser::factory()->create(['username' => $username, 'password' => 'Secreta123']);
+    $idRol = (int) SecRole::query()->where('name', $rol)->value('id');
+
+    $pivote = new SecUserRole(['id_user' => $usuario->id, 'id_role' => $idRol]);
+    $pivote->created_by = $usuario->id;
+    $pivote->updated_by = $usuario->id;
+    $pivote->save();
+
+    return [$usuario, $idRol];
+}
+
+/** Entra al panel con un rol activo fijado, como haría el login. */
+function entrarAlPanelParaLotes(SecUser $usuario, int $idRolActivo): void
+{
+    test()->actingAs(SecUsuarioInterno::query()->findOrFail($usuario->id), 'interno')
+        ->withSession(['sec_rol_activo_id' => $idRolActivo]);
+}
+
+function propiedadDeLotesDePrueba(?Cliente $cliente = null, string $nombre = 'Campo Norte'): Campo
+{
+    $cliente ??= Cliente::query()->create(['razon_social' => 'Agropecuaria del Valle S.R.L.']);
+
+    return Campo::query()->create(['cliente_id' => $cliente->id, 'nombre' => $nombre]);
+}
+
+/** Payload mínimo válido de alta/edición de un lote suelto. */
+function payloadLote(int $campoId, array $overrides = []): array
+{
+    return array_merge([
+        'campo_id' => $campoId,
+        'codigo' => 'L-01',
+        'hectareas' => '15.50',
+    ], $overrides);
+}
+
+function crearOrdenAplicacionParaLoteDePrueba(Lote $lote): void
+{
+    $contrato = Contrato::query()->create([
+        'cliente_id' => $lote->campo->cliente_id,
+        'hectareas_contratadas' => '10.00',
+        'aplicaciones_previstas' => 1,
+        'precio_ha' => '100.00',
+        'monto_total' => '1000.00',
+        'fecha_inicio' => now()->toDateString(),
+        'estado' => 'borrador',
+    ]);
+
+    DB::table('ope_ordenes_aplicacion')->insert([
+        'contrato_id' => $contrato->id,
+        'lote_id' => $lote->id,
+        'nro_aplicacion' => 1,
+        'litros_ha' => '20.00',
+        'fecha_emision' => now()->toDateString(),
+        'estado' => 'emitida',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+}
+
+it('da de alta un lote suelto desde su propia ficha', function () {
+    $campo = propiedadDeLotesDePrueba();
+    [$encargado, $idRol] = usuarioConRolParaLotes('encargado', 'encargado_operaciones');
+    entrarAlPanelParaLotes($encargado, $idRol);
+
+    $this->post(route('panel.lotes.store'), payloadLote($campo->id))
+        ->assertRedirect(route('panel.lotes.index'));
+
+    $lote = Lote::query()->where('codigo', 'L-01')->sole();
+
+    expect($lote->campo_id)->toBe($campo->id)
+        ->and((string) $lote->hectareas)->toBe('15.50');
+});
+
+it('rechaza un lote con hectareas menores o iguales a cero', function () {
+    $campo = propiedadDeLotesDePrueba();
+    [$encargado, $idRol] = usuarioConRolParaLotes('encargado', 'encargado_operaciones');
+    entrarAlPanelParaLotes($encargado, $idRol);
+
+    $this->post(route('panel.lotes.store'), payloadLote($campo->id, ['hectareas' => '0']))
+        ->assertSessionHasErrors('hectareas');
+
+    expect(Lote::query()->count())->toBe(0);
+});
+
+it('el codigo de lote duplicado en la misma propiedad es un error de validacion, no un QueryException', function () {
+    $campo = propiedadDeLotesDePrueba();
+    [$encargado, $idRol] = usuarioConRolParaLotes('encargado', 'encargado_operaciones');
+    entrarAlPanelParaLotes($encargado, $idRol);
+
+    $this->post(route('panel.lotes.store'), payloadLote($campo->id));
+
+    $this->post(route('panel.lotes.store'), payloadLote($campo->id))
+        ->assertSessionHasErrors('codigo');
+
+    expect(Lote::query()->count())->toBe(1);
+});
+
+it('el mismo codigo se permite en dos propiedades distintas', function () {
+    $campoA = propiedadDeLotesDePrueba(nombre: 'Campo Norte');
+    $campoB = propiedadDeLotesDePrueba(nombre: 'Campo Sur');
+    [$encargado, $idRol] = usuarioConRolParaLotes('encargado', 'encargado_operaciones');
+    entrarAlPanelParaLotes($encargado, $idRol);
+
+    $this->post(route('panel.lotes.store'), payloadLote($campoA->id))
+        ->assertRedirect(route('panel.lotes.index'));
+    $this->post(route('panel.lotes.store'), payloadLote($campoB->id))
+        ->assertRedirect(route('panel.lotes.index'));
+
+    expect(Lote::query()->where('codigo', 'L-01')->count())->toBe(2);
+});
+
+it('edita un lote suelto, incluida la reasignacion de propiedad', function () {
+    $campoOrigen = propiedadDeLotesDePrueba(nombre: 'Campo Norte');
+    $campoDestino = propiedadDeLotesDePrueba(cliente: $campoOrigen->cliente, nombre: 'Campo Sur');
+    [$encargado, $idRol] = usuarioConRolParaLotes('encargado', 'encargado_operaciones');
+    entrarAlPanelParaLotes($encargado, $idRol);
+
+    $this->post(route('panel.lotes.store'), payloadLote($campoOrigen->id));
+    $lote = Lote::query()->sole();
+
+    $this->put(route('panel.lotes.update', $lote), payloadLote($campoDestino->id, [
+        'codigo' => 'L-02',
+        'hectareas' => '20.00',
+    ]))->assertRedirect(route('panel.lotes.index'));
+
+    $lote->refresh();
+    expect($lote->campo_id)->toBe($campoDestino->id)
+        ->and($lote->codigo)->toBe('L-02')
+        ->and((string) $lote->hectareas)->toBe('20.00');
+});
+
+it('acepta una geometria GeoJSON Polygon minima y la conserva al reabrir la edicion', function () {
+    $campo = propiedadDeLotesDePrueba();
+    [$encargado, $idRol] = usuarioConRolParaLotes('encargado', 'encargado_operaciones');
+    entrarAlPanelParaLotes($encargado, $idRol);
+
+    $geometria = json_encode(['type' => 'Polygon', 'coordinates' => [[[-63.1, -17.7], [-63.1, -17.8], [-63.05, -17.8], [-63.1, -17.7]]]]);
+
+    $this->post(route('panel.lotes.store'), payloadLote($campo->id, ['geometria' => $geometria]))
+        ->assertRedirect(route('panel.lotes.index'));
+
+    $lote = Lote::query()->sole();
+    expect($lote->geometria)->toBe(['type' => 'Polygon', 'coordinates' => [[[-63.1, -17.7], [-63.1, -17.8], [-63.05, -17.8], [-63.1, -17.7]]]]);
+
+    $this->get(route('panel.lotes.edit', $lote))
+        ->assertOk()
+        ->assertSee('data-ag-lote-geometria', escape: false)
+        ->assertSee('-63.1', escape: false);
+});
+
+it('rechaza una geometria mal formada', function () {
+    $campo = propiedadDeLotesDePrueba();
+    [$encargado, $idRol] = usuarioConRolParaLotes('encargado', 'encargado_operaciones');
+    entrarAlPanelParaLotes($encargado, $idRol);
+
+    $this->post(route('panel.lotes.store'), payloadLote($campo->id, ['geometria' => 'no es json']))
+        ->assertSessionHasErrors('geometria');
+
+    expect(Lote::query()->count())->toBe(0);
+});
+
+it('registra en bitacora el alta, la edicion y la baja de un lote', function () {
+    $campo = propiedadDeLotesDePrueba();
+    [$encargado, $idRol] = usuarioConRolParaLotes('encargado', 'encargado_operaciones');
+    entrarAlPanelParaLotes($encargado, $idRol);
+
+    $this->post(route('panel.lotes.store'), payloadLote($campo->id));
+    $lote = Lote::query()->sole();
+
+    $filaCreado = Bitacora::query()
+        ->where('tabla', 'com_lotes')
+        ->where('registro_id', $lote->id)
+        ->where('accion', AccionBitacora::Creado)
+        ->sole();
+
+    expect($filaCreado->user_id)->toBe($encargado->id)
+        ->and($filaCreado->despues['codigo'])->toBe('L-01');
+
+    $this->put(route('panel.lotes.update', $lote), payloadLote($campo->id, ['codigo' => 'L-01-B']))
+        ->assertRedirect(route('panel.lotes.index'));
+
+    Bitacora::query()
+        ->where('tabla', 'com_lotes')
+        ->where('registro_id', $lote->id)
+        ->where('accion', AccionBitacora::Actualizado)
+        ->sole();
+
+    $this->delete(route('panel.lotes.destroy', $lote))
+        ->assertRedirect(route('panel.lotes.index'));
+
+    Bitacora::query()
+        ->where('tabla', 'com_lotes')
+        ->where('registro_id', $lote->id)
+        ->where('accion', AccionBitacora::Eliminado)
+        ->sole();
+});
+
+it('da de baja un lote por soft delete: no aparece en el indice y un segundo intento da 404', function () {
+    $campo = propiedadDeLotesDePrueba();
+    [$encargado, $idRol] = usuarioConRolParaLotes('encargado', 'encargado_operaciones');
+    entrarAlPanelParaLotes($encargado, $idRol);
+
+    $this->post(route('panel.lotes.store'), payloadLote($campo->id));
+    $lote = Lote::query()->sole();
+
+    $this->delete(route('panel.lotes.destroy', $lote))
+        ->assertRedirect(route('panel.lotes.index'));
+
+    $borrado = Lote::withTrashed()->findOrFail($lote->id);
+    expect($borrado->trashed())->toBeTrue();
+
+    $this->get(route('panel.lotes.index'))
+        ->assertOk()
+        ->assertDontSee('L-01');
+
+    $this->delete(route('panel.lotes.destroy', $lote))->assertNotFound();
+});
+
+it('rechaza dar de baja un lote con una orden de aplicacion asociada', function () {
+    $campo = propiedadDeLotesDePrueba();
+    [$encargado, $idRol] = usuarioConRolParaLotes('encargado', 'encargado_operaciones');
+    entrarAlPanelParaLotes($encargado, $idRol);
+
+    $this->post(route('panel.lotes.store'), payloadLote($campo->id));
+    $lote = Lote::query()->sole();
+
+    crearOrdenAplicacionParaLoteDePrueba($lote);
+
+    $this->delete(route('panel.lotes.destroy', $lote))
+        ->assertRedirect(route('panel.lotes.index'))
+        ->assertSessionHasErrors('lote');
+
+    expect($lote->fresh()?->trashed())->toBeFalse();
+});
+
+it('filtra el listado por cliente, por propiedad y por codigo', function () {
+    $clienteA = Cliente::query()->create(['razon_social' => 'Agropecuaria del Valle S.R.L.']);
+    $clienteB = Cliente::query()->create(['razon_social' => 'Estancia Los Robles S.A.']);
+    $campoA = propiedadDeLotesDePrueba($clienteA, 'Campo Norte');
+    $campoB = propiedadDeLotesDePrueba($clienteB, 'Campo Sur');
+
+    Lote::query()->create(['campo_id' => $campoA->id, 'codigo' => 'A-01', 'hectareas' => '10']);
+    Lote::query()->create(['campo_id' => $campoB->id, 'codigo' => 'B-01', 'hectareas' => '20']);
+
+    [$encargado, $idRol] = usuarioConRolParaLotes('encargado', 'encargado_operaciones');
+    entrarAlPanelParaLotes($encargado, $idRol);
+
+    $this->get(route('panel.lotes.index', ['cliente_id' => $clienteA->id]))
+        ->assertOk()
+        ->assertSee('A-01', escape: false)
+        ->assertDontSee('B-01', escape: false);
+
+    $this->get(route('panel.lotes.index', ['campo_id' => $campoB->id]))
+        ->assertOk()
+        ->assertSee('B-01', escape: false)
+        ->assertDontSee('A-01', escape: false);
+
+    $this->get(route('panel.lotes.index', ['q' => 'A-01']))
+        ->assertOk()
+        ->assertSee('A-01', escape: false)
+        ->assertDontSee('B-01', escape: false);
+});
+
+it('un rol sin el permiso recibe 403 en todas las acciones, incluida la entrada directa por URL', function () {
+    $campo = propiedadDeLotesDePrueba();
+    [$piloto, $idRol] = usuarioConRolParaLotes('piloto.curioso', 'piloto');
+    entrarAlPanelParaLotes($piloto, $idRol);
+
+    $lote = Lote::query()->create(['campo_id' => $campo->id, 'codigo' => 'L-01', 'hectareas' => '10']);
+
+    $this->get(route('panel.lotes.index'))->assertForbidden();
+    $this->get(route('panel.lotes.create'))->assertForbidden();
+    $this->post(route('panel.lotes.store'), payloadLote($campo->id, ['codigo' => 'L-02']))->assertForbidden();
+    $this->get(route('panel.lotes.edit', $lote))->assertForbidden();
+    $this->put(route('panel.lotes.update', $lote), payloadLote($campo->id))->assertForbidden();
+    $this->delete(route('panel.lotes.destroy', $lote))->assertForbidden();
+
+    expect(Lote::query()->count())->toBe(1)
+        ->and($lote->fresh()?->trashed())->toBeFalse();
+});
+
+it('no deja actuar a quien tiene el permiso de lote en otro rol pero no en el activo', function () {
+    $campo = propiedadDeLotesDePrueba();
+    [$multirol, $idEncargado] = usuarioConRolParaLotes('jefe.multirol', 'encargado_operaciones');
+    $idPiloto = (int) SecRole::query()->where('name', 'piloto')->value('id');
+    $pivote = new SecUserRole(['id_user' => $multirol->id, 'id_role' => $idPiloto]);
+    $pivote->created_by = $multirol->id;
+    $pivote->updated_by = $multirol->id;
+    $pivote->save();
+
+    entrarAlPanelParaLotes($multirol, $idPiloto);
+    $this->post(route('panel.lotes.store'), payloadLote($campo->id))->assertForbidden();
+    expect(Lote::query()->count())->toBe(0);
+
+    entrarAlPanelParaLotes($multirol, $idEncargado);
+    $this->post(route('panel.lotes.store'), payloadLote($campo->id))->assertRedirect();
+    expect(Lote::query()->count())->toBe(1);
+});

@@ -2,6 +2,8 @@
 
 namespace App\Dominios\Comercial\Aplicacion;
 
+use App\Dominios\Comercial\Aplicacion\Lote\GuardadoLote;
+use App\Dominios\Comercial\Aplicacion\Lote\VerificadorHistorialLote;
 use App\Dominios\Comercial\Dominio\Excepciones\CampoDuplicado;
 use App\Dominios\Comercial\Dominio\Excepciones\LoteConHistorialAsociado;
 use App\Dominios\Comercial\Dominio\Excepciones\LoteDuplicado;
@@ -31,13 +33,15 @@ use Illuminate\Support\Facades\DB;
  * DELETE físico que esta capa nunca ejecuta, así que sin esta regla nada
  * más lo impediría.
  *
- * El chequeo se hace vía `DB::table(...)->exists()`, no con los modelos
- * Eloquent `Trabajo`/`OrdenAplicacion` de `Operaciones`: ADR 0003 prohíbe
- * relaciones Eloquent cruzadas entre módulos, y esta tarea no tiene alcance
- * para crear un contrato formal en `Operaciones/Contratos/` (ver
- * "Puede tocar" del prompt de la tarea 35 — no incluye ese módulo). Es una
- * lectura de solo existencia, sin escritura ni acoplamiento de código; si el
- * chequeo creciera en complejidad, la siguiente tarea que sí pueda tocar
+ * El chequeo de historial vive en {@see VerificadorHistorialLote} (extraído
+ * en la tarea 77 para que `EliminarLote`, la baja de un lote suelto, lo reuse
+ * sin duplicarlo): vía `DB::table(...)->exists()`, no con los modelos
+ * Eloquent `Trabajo`/`OrdenAplicacion` de `Operaciones` — ADR 0003 prohíbe
+ * relaciones Eloquent cruzadas entre módulos, y ninguna de las dos tareas
+ * tiene alcance para crear un contrato formal en `Operaciones/Contratos/`
+ * (fuera de "Puede tocar" de ambos prompts). Es una lectura de solo
+ * existencia, sin escritura ni acoplamiento de código; si el chequeo
+ * creciera en complejidad, la siguiente tarea que sí pueda tocar
  * `Operaciones` debería promoverlo a un contrato propio.
  */
 final class ActualizarCampo
@@ -86,7 +90,7 @@ final class ActualizarCampo
         // solo tiene historial asociado, la transacción entera se aborta sin
         // dejar cambios parciales (ni el campo, ni los demás lotes).
         foreach ($aEliminar as $lote) {
-            if ($this->tieneHistorialAsociado($lote)) {
+            if (VerificadorHistorialLote::tiene($lote)) {
                 throw LoteConHistorialAsociado::paraLote($lote->codigo);
             }
         }
@@ -110,32 +114,8 @@ final class ActualizarCampo
                 ? $campo->lotes()->whereKey($id)->firstOrFail()
                 : new Lote(['campo_id' => $campo->id]);
 
-            $lote->fill($datos);
-
-            try {
-                $lote->save();
-            } catch (QueryException $excepcion) {
-                $this->relanzarLoteComoDuplicado($excepcion, $datos['codigo']);
-            }
+            GuardadoLote::guardar($lote, $datos);
         }
-    }
-
-    /** @see self por qué esto no usa los modelos Eloquent de `Operaciones`. */
-    private function tieneHistorialAsociado(Lote $lote): bool
-    {
-        $tieneOrdenes = DB::table('ope_ordenes_aplicacion')
-            ->where('lote_id', $lote->id)
-            ->whereNull('deleted_at')
-            ->exists();
-
-        if ($tieneOrdenes) {
-            return true;
-        }
-
-        return DB::table('ope_trabajos')
-            ->where('lote_id', $lote->id)
-            ->whereNull('deleted_at')
-            ->exists();
     }
 
     /**
@@ -148,21 +128,6 @@ final class ActualizarCampo
 
         if (str_contains($mensaje, 'com_campos_nombre_unico') || str_contains($mensaje, 'com_campos.nombre')) {
             throw CampoDuplicado::porNombre($nombre);
-        }
-
-        throw $excepcion;
-    }
-
-    /**
-     * @throws LoteDuplicado si la violación corresponde al código.
-     * @throws QueryException si la violación no es la contemplada.
-     */
-    private function relanzarLoteComoDuplicado(QueryException $excepcion, string $codigo): never
-    {
-        $mensaje = $excepcion->getMessage();
-
-        if (str_contains($mensaje, 'com_lotes_codigo_unico') || str_contains($mensaje, 'com_lotes.codigo')) {
-            throw LoteDuplicado::porCodigo($codigo);
         }
 
         throw $excepcion;

@@ -236,9 +236,9 @@ it('no deja actuar a quien tiene el permiso en otro rol pero no en el activo', f
     expect(PerPersona::query()->count())->toBe(1);
 });
 
-it('publica el ítem de menú de personas gateado por personal.persona.ver', function () {
+it('publica el ítem de menú de personal gateado por personal.persona.ver', function () {
     $itemMenu = SecMenu::query()
-        ->where('label', 'menu.recursos.items.personas')
+        ->where('label', 'menu.recursos.items.personal')
         ->sole();
 
     $idPermiso = (int) SecPermission::query()

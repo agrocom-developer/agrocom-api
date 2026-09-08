@@ -27,11 +27,13 @@ use Illuminate\View\View;
  *
  * Cuatro permisos de grano fino
  * (`comercial.campo.ver`/`.crear`/`.editar`/`.eliminar`), verificados DENTRO
- * del controlador contra el ROL ACTIVO vía {@see AutorizacionPanelWeb} — sin
- * `comercial.lote.*` propio: los lotes se gestionan dentro del formulario
- * del campo, mismo criterio que los contactos de `ClientesController`.
- * Ninguna regla de negocio acá: los casos de uso de `Aplicacion/` hacen el
- * trabajo, incluido el upsert de campo+lotes en una sola transacción.
+ * del controlador contra el ROL ACTIVO vía {@see AutorizacionPanelWeb}. El
+ * alta de un campo sigue trayendo sus lotes en la misma transacción
+ * (`CrearCampo`/`ActualizarCampo`) — eso no cambió con la tarea 77; lo que
+ * se agregó es poder entrar por el lote también, vía `comercial.lote.*` y
+ * `LotesController`, sin quitarle nada a este camino. Ninguna regla de
+ * negocio acá: los casos de uso de `Aplicacion/` hacen el trabajo, incluido
+ * el upsert de campo+lotes en una sola transacción.
  */
 final class CamposController
 {

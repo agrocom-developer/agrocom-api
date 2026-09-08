@@ -130,12 +130,20 @@ class SecMenuSeeder extends Seeder
         $this->item($comercial, 'comercial', 'contratos', 'description', 2, ruta: 'panel.contratos.index', codigoPermiso: 'comercial.contrato.ver');
         // HU-24 (tarea 35): administración de campos y sus lotes — activa
         // el ítem que ya estaba sembrado como "botón sin link" (ver
-        // docblock de `item()`). Sin ítem propio para "lotes": se
-        // gestionan dentro del formulario del campo.
-        $this->item($comercial, 'comercial', 'campos', 'map', 3, ruta: 'panel.campos.index', codigoPermiso: 'comercial.campo.ver');
-        // Orden 4 (reportes_cliente) queda vacante a propósito: se retira acá
-        // (tarea 62, fuga 3 — ver el borrado de catálogo al inicio de
-        // `run()`).
+        // docblock de `item()`).
+        //
+        // Tarea 77 (HU-54, pedido del dueño 7/9/2026): "Campos y lotes" se
+        // separa en dos ítems. `renombrar()` conserva la fila y su id (la
+        // propiedad sigue siendo la misma pantalla, mismo permiso); "Lotes"
+        // es un ítem nuevo (etapa 1 lo sembró como "botón sin link" — la
+        // pantalla llegó recién en la etapa 2, que es la que agrega
+        // `ruta: 'panel.lotes.index'` acá; `item()` activa la ruta de una
+        // instalación que ya tenía el ítem sembrado sin necesitar una
+        // migración de datos nueva, ver su docblock). Ocupa el orden 4,
+        // vacante desde que `reportes_cliente` se retiró (tarea 62, fuga 3).
+        $this->renombrar($comercial, 'menu.comercial.items.campos', 'menu.comercial.items.propiedades');
+        $this->item($comercial, 'comercial', 'propiedades', 'map', 3, ruta: 'panel.campos.index', codigoPermiso: 'comercial.campo.ver');
+        $this->item($comercial, 'comercial', 'lotes', 'grid_view', 4, ruta: 'panel.lotes.index', codigoPermiso: 'comercial.lote.ver');
 
         // Recursos (§4.2)
         // HU-27 (tarea 36): administración de la flota de drones — activa
@@ -158,7 +166,12 @@ class SecMenuSeeder extends Seeder
         // dos ítems que ya estaban sembrados como "botón sin link" (ver
         // docblock de `item()`).
         $this->item($recursos, 'recursos', 'bases', 'home_work', 4, ruta: 'panel.bases.index', codigoPermiso: 'personal.base.ver');
-        $this->item($recursos, 'recursos', 'personas', 'badge', 5, ruta: 'panel.personas.index', codigoPermiso: 'personal.persona.ver');
+        // Tarea 77 (HU-54, pedido del dueño 7/9/2026): "Personas" era el
+        // nombre de la tabla filtrándose a la interfaz — el módulo es
+        // Personal. `renombrar()` conserva la fila, su id, su ruta y su
+        // permiso; solo cambia la etiqueta.
+        $this->renombrar($recursos, 'menu.recursos.items.personas', 'menu.recursos.items.personal');
+        $this->item($recursos, 'recursos', 'personal', 'badge', 5, ruta: 'panel.personas.index', codigoPermiso: 'personal.persona.ver');
 
         // Mantenimiento e inventario (§4.5)
         // HU-37 (tarea 53): órdenes de mantenimiento con su propia máquina de

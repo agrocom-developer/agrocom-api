@@ -13,6 +13,7 @@ import './pages/login.js';
 import './pages/clientes-form.js';
 import './pages/contratos-form.js';
 import './pages/campos-form.js';
+import './pages/lotes-form.js';
 import './pages/gastos-form.js';
 import './pages/stock-movimiento-form.js';
 import './pages/ordenes-mantenimiento-form.js';

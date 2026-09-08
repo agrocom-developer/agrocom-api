@@ -7,7 +7,8 @@ use RuntimeException;
 /**
  * HU-24 (tarea 35): decisión de negocio de esta tarea, no una regla que ya
  * estuviera escrita en la especificación — ver el docblock de
- * `Aplicacion/ActualizarCampo::tieneHistorialAsociado()` para el porqué.
+ * `Aplicacion/ActualizarCampo` y de
+ * `Aplicacion/Lote/VerificadorHistorialLote` para el porqué.
  *
  * Un lote que ya tiene órdenes de aplicación u trabajos ejecutados en
  * `Operaciones` no se puede quitar del formulario del campo: el soft delete

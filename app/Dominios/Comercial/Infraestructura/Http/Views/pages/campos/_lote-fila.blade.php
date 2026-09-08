@@ -9,28 +9,46 @@
     Espera:
     - $indice (int|string): posición dentro del array `lotes[]` — en la
       plantilla clonable viene el placeholder literal `__INDICE__`, que el JS
-      reemplaza por el próximo número al clonar.
+      reemplaza por el próximo número al clonar. No hace falta si se pasa
+      `$prefijo` explícito (ver abajo).
     - $lote (array{id?: int, codigo?: string, hectareas?: string,
       geometria?: string, restricciones?: string}): vacío en una fila nueva.
+    - $prefijo (string, opcional): prefijo de los `name` de los campos —
+      por defecto `lotes[{indice}]` (el caso de siempre: fila dentro del
+      array del formulario de propiedad). La ficha de un lote suelto
+      (`pages/lotes/_formulario.blade.php`, tarea 77) pasa `lote` a secas,
+      así que sus campos viajan como `lote[codigo]`, `lote[hectareas]`, etc.
+      — el mismo partial, sin envolver un único lote en un array de uno.
+    - $mostrarQuitar (bool, opcional): `true` por defecto. La ficha de un
+      lote suelto no tiene botón "Quitar" — la baja de ESE lote es la acción
+      "Eliminar" de su propia página, no "sacarlo de esta lista".
 
     `geometria` se dibuja sobre un MAPA SATELITAL (Leaflet + Geoman): el
     perímetro de un lote se reconoce mirando la imagen, no tipeando pares de
     coordenadas. Antes era un `<textarea>` donde había que pegar el GeoJSON a
     mano — un editor de mapa es lo que la tarea 68 vino a reemplazar.
+    `organisms/lote-mapa-editor.js` inicializa TODO `[data-ag-lote-mapa]` que
+    encuentre en la página al cargar, así que funciona igual en el array de
+    la propiedad y en la ficha suelta del lote sin JS adicional.
 
     El valor sigue viajando como el MISMO string JSON en un `<input hidden>`,
     así que el Form Request no cambia: valida la forma mínima
     (`type`/`coordinates`) igual que antes, y una geometría cargada por otra
     vía sigue siendo válida.
 --}}
+@php
+    $prefijo ??= "lotes[{$indice}]";
+    $idBase = str_replace(['[', ']'], ['-', ''], $prefijo);
+    $mostrarQuitar ??= true;
+@endphp
 <div class="ag-campos-form__lote" data-ag-lote-fila>
     @if (! empty($lote['id']))
-        <input type="hidden" name="lotes[{{ $indice }}][id]" value="{{ $lote['id'] }}">
+        <input type="hidden" name="{{ $prefijo }}[id]" value="{{ $lote['id'] }}">
     @endif
 
     <x-atoms.input
         type="text"
-        name="lotes[{{ $indice }}][codigo]"
+        name="{{ $prefijo }}[codigo]"
         label="{{ __('comercial.campos.lote_codigo') }}"
         value="{{ $lote['codigo'] ?? '' }}"
         required
@@ -38,7 +56,7 @@
 
     <x-atoms.input
         type="number"
-        name="lotes[{{ $indice }}][hectareas]"
+        name="{{ $prefijo }}[hectareas]"
         label="{{ __('comercial.campos.lote_hectareas') }}"
         value="{{ $lote['hectareas'] ?? '' }}"
         min="0.01"
@@ -54,8 +72,8 @@
              se pierde por un fallo del JS. --}}
         <input
             type="hidden"
-            name="lotes[{{ $indice }}][geometria]"
-            id="lotes-{{ $indice }}-geometria"
+            name="{{ $prefijo }}[geometria]"
+            id="{{ $idBase }}-geometria"
             value="{{ $lote['geometria'] ?? '' }}"
             data-ag-lote-geometria
         >
@@ -79,17 +97,19 @@
     </div>
 
     <x-atoms.textarea
-        name="lotes[{{ $indice }}][restricciones]"
-        id="lotes-{{ $indice }}-restricciones"
+        name="{{ $prefijo }}[restricciones]"
+        id="{{ $idBase }}-restricciones"
         label="{{ __('comercial.campos.lote_restricciones') }}"
         value="{{ $lote['restricciones'] ?? '' }}"
         placeholder="{{ __('comercial.campos.lote_restricciones_placeholder') }}"
         rows="2"
     />
 
-    <div class="ag-form-section__field--full ag-campos-form__lote-pie">
-        <x-atoms.button type="button" variant="text" size="sm" icon="delete" data-ag-lote-quitar>
-            {{ __('comercial.campos.lote_quitar') }}
-        </x-atoms.button>
-    </div>
+    @if ($mostrarQuitar)
+        <div class="ag-form-section__field--full ag-campos-form__lote-pie">
+            <x-atoms.button type="button" variant="text" size="sm" icon="delete" data-ag-lote-quitar>
+                {{ __('comercial.campos.lote_quitar') }}
+            </x-atoms.button>
+        </div>
+    @endif
 </div>

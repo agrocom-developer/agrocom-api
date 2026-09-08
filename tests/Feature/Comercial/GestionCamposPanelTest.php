@@ -367,9 +367,9 @@ it('no deja actuar a quien tiene el permiso en otro rol pero no en el activo', f
     expect(Campo::query()->count())->toBe(1);
 });
 
-it('publica el item de menu de campos gateado por comercial.campo.ver', function () {
+it('publica el item de menu de propiedades gateado por comercial.campo.ver', function () {
     $itemMenu = SecMenu::query()
-        ->where('label', 'menu.comercial.items.campos')
+        ->where('label', 'menu.comercial.items.propiedades')
         ->sole();
 
     $idPermiso = (int) SecPermission::query()

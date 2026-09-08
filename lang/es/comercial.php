@@ -224,6 +224,62 @@ return [
         'error_geometria_invalida' => 'La geometría tiene que ser un JSON con "type": "Polygon" y "coordinates" como arreglo.',
     ],
 
+    // Tarea 77 (HU-54, etapa 2): ficha propia de un lote — antes solo se
+    // podía tocar entrando por su propiedad (`campos`, arriba). Mismo molde
+    // de listado/formulario que el resto del panel; los rótulos
+    // `lote_codigo`/`lote_hectareas`/`lote_geometria*`/`lote_restricciones*`
+    // del bloque `campos` de arriba se reusan tal cual (mismo copy, misma
+    // fila `_lote-fila.blade.php` compartida por las dos pantallas).
+    'lotes' => [
+        'creado' => 'El lote se dio de alta correctamente.',
+        'actualizado' => 'Los datos del lote se actualizaron correctamente.',
+        'eliminado' => 'El lote se dio de baja correctamente.',
+
+        // Listado
+        'titulo' => 'Lotes',
+        'subtitulo' => 'Listado y ficha de lotes, con su perímetro en el mapa.',
+        'nuevo' => 'Nuevo lote',
+        'filtro_busqueda' => 'Buscar',
+        'filtro_busqueda_placeholder' => 'Código del lote',
+        'filtro_cliente' => 'Cliente',
+        'filtro_propiedad' => 'Propiedad',
+        'filtro_todos' => 'Todas',
+        'filtrar' => 'Buscar',
+        'limpiar_filtro' => 'Limpiar filtros',
+        'vacio' => 'Todavía no se dio de alta ningún lote.',
+        'filtro_vacio' => 'Ningún lote coincide con el filtro.',
+        'col_codigo' => 'Código',
+        'col_propiedad' => 'Propiedad',
+        'col_cliente' => 'Cliente',
+        'col_hectareas' => 'Hectáreas',
+        'hectareas_valor' => ':cantidad ha',
+        'editar' => 'Editar',
+        'eliminar_accion' => 'Eliminar',
+        'confirmar_baja' => '¿Dar de baja este lote?',
+        'paginacion_aria' => 'Paginación de lotes',
+        'paginacion_anterior' => 'Anterior',
+        'paginacion_siguiente' => 'Siguiente',
+        'paginacion_info' => 'Página :actual de :total',
+
+        // Formulario (create/edit)
+        'titulo_crear' => 'Nuevo lote',
+        'titulo_editar' => 'Editar lote',
+        'subtitulo_form' => 'Alta o edición de un lote suelto, con su perímetro en el mapa.',
+        'seccion_datos' => 'Propiedad',
+        'campos_contador' => ':cantidad campos',
+        'campo_cliente' => 'Cliente',
+        'campo_cliente_placeholder' => 'Todos los clientes',
+        'campo_cliente_ayuda' => 'Filtra las propiedades de abajo. No se guarda: la propiedad ya define el cliente del lote.',
+        'campo_propiedad' => 'Propiedad',
+        'campo_propiedad_placeholder' => 'Seleccioná una propiedad',
+        'campo_propiedad_opcion' => ':nombre — :cliente',
+        'seccion_lote' => 'Datos del lote',
+        'estado_form' => 'Los cambios se guardan al confirmar.',
+
+        // Errores de validación
+        'error_geometria_invalida' => 'La geometría tiene que ser un JSON con "type": "Polygon" y "coordinates" como arreglo.',
+    ],
+
     // HU-31 (tarea 45): "como encargado, quiero emitir la factura de un
     // trabajo desde su acta conformada, para cobrar sobre hectáreas ya
     // firmadas" — abre Sprint 9. Sin edición ni baja: una factura emitida es

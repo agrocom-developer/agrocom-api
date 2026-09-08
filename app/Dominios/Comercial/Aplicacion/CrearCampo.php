@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Comercial\Aplicacion;
 
+use App\Dominios\Comercial\Aplicacion\Lote\GuardadoLote;
 use App\Dominios\Comercial\Dominio\Excepciones\CampoDuplicado;
 use App\Dominios\Comercial\Dominio\Excepciones\LoteDuplicado;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
@@ -39,11 +40,7 @@ final class CrearCampo
             }
 
             foreach ($lotes as $datos) {
-                try {
-                    $campo->lotes()->create($datos);
-                } catch (QueryException $excepcion) {
-                    $this->relanzarLoteComoDuplicado($excepcion, $datos['codigo']);
-                }
+                GuardadoLote::guardar($campo->lotes()->make(), $datos);
             }
 
             return $campo->refresh();
@@ -60,21 +57,6 @@ final class CrearCampo
 
         if (str_contains($mensaje, 'com_campos_nombre_unico') || str_contains($mensaje, 'com_campos.nombre')) {
             throw CampoDuplicado::porNombre($nombre);
-        }
-
-        throw $excepcion;
-    }
-
-    /**
-     * @throws LoteDuplicado si la violación corresponde al código.
-     * @throws QueryException si la violación no es la contemplada.
-     */
-    private function relanzarLoteComoDuplicado(QueryException $excepcion, string $codigo): never
-    {
-        $mensaje = $excepcion->getMessage();
-
-        if (str_contains($mensaje, 'com_lotes_codigo_unico') || str_contains($mensaje, 'com_lotes.codigo')) {
-            throw LoteDuplicado::porCodigo($codigo);
         }
 
         throw $excepcion;
