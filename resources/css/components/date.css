@@ -1,0 +1,305 @@
+/*
+ * Átomo: date (resources/views/components/atoms/date.blade.php)
+ * Misma base visual que `atoms/input`/`atoms/select` (caja "outlined"
+ * Material, mismos tokens de borde/foco/error) — `.ag-date__control` reusa
+ * a propósito el lenguaje de `.ag-input__control`/`.ag-select__control`.
+ *
+ * Tres capas dentro de `.ag-date`: el `<input type="date">` nativo (siempre
+ * presente, real), el `.ag-date__trigger` que arma resources/js/atoms/date.js
+ * sobre el control, y el `.ag-date__dialog` (calendario) que ese mismo
+ * script abre como popover. Sin JS solo existe la primera.
+ */
+
+.ag-date {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-1);
+    margin-bottom: var(--ag-space-4);
+    font-family: var(--ag-font-family-base);
+}
+
+.ag-date__label {
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+    color: var(--ag-color-text);
+}
+
+.ag-date__required {
+    color: var(--ag-color-danger);
+    margin-inline-start: var(--ag-space-1);
+}
+
+.ag-date__control {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background-color: var(--ag-color-bg-elevated);
+    border: 1px solid var(--ag-color-border-strong);
+    border-radius: var(--ag-radius-md);
+    transition:
+        border-color var(--ag-transition-fast),
+        box-shadow var(--ag-transition-fast);
+}
+
+.ag-date__control:focus-within {
+    border-color: var(--ag-color-primary);
+    box-shadow: 0 0 0 3px var(--ag-color-primary-subtle);
+}
+
+.ag-date__control--error {
+    border-color: var(--ag-color-danger);
+}
+
+.ag-date__control--error:focus-within {
+    box-shadow: 0 0 0 3px var(--ag-color-danger-subtle);
+}
+
+.ag-date__icon {
+    margin-inline-start: var(--ag-space-3);
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-base);
+}
+
+/* El <input type="date"> nativo: control real mientras JS no cargó. */
+.ag-date__native {
+    flex: 1;
+    width: 100%;
+    border: none;
+    background: transparent;
+    color: var(--ag-color-text);
+    font-size: var(--ag-font-size-base);
+    font-family: inherit;
+    padding: var(--ag-space-3) var(--ag-space-4);
+    outline: none;
+}
+
+.ag-date__native:disabled {
+    color: var(--ag-color-text-muted);
+    cursor: not-allowed;
+}
+
+/* Una vez que date.js arma el disparador, el nativo sigue en el DOM (es lo
+   que de verdad se envía con el formulario) pero deja de verse — mismo
+   truco que `.ag-select__native--enhanced`, sin `display:none`/
+   `visibility:hidden` para no romper foco programático ni el envío. */
+.ag-date__native--enhanced {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.ag-date__trigger {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: var(--ag-space-2);
+    width: 100%;
+    padding: var(--ag-space-3) var(--ag-space-4);
+    background: none;
+    border: none;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
+    outline: none;
+}
+
+.ag-date__trigger:disabled {
+    cursor: not-allowed;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-date__value {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--ag-color-text);
+    font-size: var(--ag-font-size-base);
+}
+
+.ag-date__value--placeholder {
+    color: var(--ag-color-text-muted);
+}
+
+.ag-date__icon-trigger {
+    flex-shrink: 0;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-date__clear {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-inline-end: var(--ag-space-2);
+    background: none;
+    border: none;
+    color: var(--ag-color-text-muted);
+    padding: var(--ag-space-1);
+    cursor: pointer;
+    border-radius: var(--ag-radius-pill);
+}
+
+.ag-date__clear:hover {
+    color: var(--ag-color-primary);
+    background-color: var(--ag-color-primary-subtle);
+}
+
+/* Diálogo: mismo criterio de popover que `.ag-select__listbox` (z-index
+   local, alcanza porque solo compite con contenido hermano de un formulario,
+   no con un overlay global), pero con ancho propio (no `inset-inline: 0`)
+   porque una grilla de 7 columnas necesita más espacio que el campo. */
+.ag-date__dialog {
+    position: absolute;
+    inset-block-start: calc(100% + var(--ag-space-1));
+    inset-inline-start: 0;
+    z-index: 20;
+    width: 18rem;
+    padding: var(--ag-space-3);
+    background-color: var(--ag-color-bg-elevated);
+    border: 1px solid var(--ag-color-border-strong);
+    border-radius: var(--ag-radius-md);
+    box-shadow: var(--ag-shadow-lg);
+}
+
+.ag-date__dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--ag-space-2);
+}
+
+.ag-date__nav {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: var(--ag-color-text-muted);
+    padding: var(--ag-space-1);
+    border-radius: var(--ag-radius-pill);
+    cursor: pointer;
+}
+
+.ag-date__nav:hover {
+    color: var(--ag-color-primary);
+    background-color: var(--ag-color-primary-subtle);
+}
+
+.ag-date__heading {
+    margin: 0;
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+    color: var(--ag-color-text);
+    text-transform: capitalize;
+}
+
+.ag-date__grid {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.ag-date__grid th {
+    padding-block-end: var(--ag-space-1);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-medium);
+    color: var(--ag-color-text-muted);
+    text-align: center;
+}
+
+.ag-date__grid td {
+    padding: 1px;
+    text-align: center;
+}
+
+.ag-date__day {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    margin: 0 auto;
+    background: none;
+    border: none;
+    border-radius: var(--ag-radius-pill);
+    color: var(--ag-color-text);
+    font-size: var(--ag-font-size-sm);
+    cursor: pointer;
+}
+
+.ag-date__day:hover {
+    background-color: var(--ag-color-primary-subtle);
+    color: var(--ag-color-primary);
+}
+
+.ag-date__day:focus-visible {
+    outline: 2px solid var(--ag-color-focus-ring);
+    outline-offset: 1px;
+}
+
+.ag-date__day--hoy {
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-color-primary);
+}
+
+.ag-date__day--seleccionado {
+    background-color: var(--ag-color-primary);
+    color: var(--ag-color-primary-contrast);
+}
+
+.ag-date__day--seleccionado:hover {
+    background-color: var(--ag-color-primary-hover);
+    color: var(--ag-color-primary-contrast);
+}
+
+.ag-date__day:disabled {
+    color: var(--ag-color-text-faint);
+    cursor: not-allowed;
+}
+
+.ag-date__day:disabled:hover {
+    background: none;
+}
+
+.ag-date__dialog-footer {
+    display: flex;
+    justify-content: center;
+    margin-top: var(--ag-space-2);
+    padding-top: var(--ag-space-2);
+    border-top: 1px solid var(--ag-color-border);
+}
+
+.ag-date__today {
+    background: none;
+    border: none;
+    color: var(--ag-color-primary);
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+    padding: var(--ag-space-1) var(--ag-space-3);
+    border-radius: var(--ag-radius-md);
+    cursor: pointer;
+}
+
+.ag-date__today:hover {
+    background-color: var(--ag-color-primary-subtle);
+}
+
+.ag-date__today:disabled {
+    color: var(--ag-color-text-faint);
+    cursor: not-allowed;
+}
+
+.ag-date__help {
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+    margin: 0;
+}
+
+.ag-date__error {
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-danger);
+    margin: 0;
+}

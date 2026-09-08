@@ -30,6 +30,26 @@ return [
         'clear' => 'Limpiar selección',
     ],
 
+    // Chrome del calendario atoms/date (tarea 76, HU-53), etapa 2: nombres
+    // de mes/día y microcopy de navegación — no son texto de negocio, son
+    // el vocabulario del propio calendario (mismo criterio que 'select' de
+    // arriba). 'dias_cortos'/'dias_completos' arrancan en lunes (invariante
+    // de la tarea: semana empezando lunes) — date.js nunca reordena estos
+    // arreglos, calcula el índice de columna directo desde la fecha.
+    'date' => [
+        'meses' => [
+            'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+            'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+        ],
+        'dias_cortos' => ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+        'dias_completos' => ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'],
+        'mes_anterior' => 'Mes anterior',
+        'mes_siguiente' => 'Mes siguiente',
+        'hoy' => 'Hoy',
+        'limpiar' => 'Limpiar fecha',
+        'elegir_fecha' => 'Elegir fecha',
+    ],
+
     'theme' => [
         'light' => 'Tema claro',
         'dark' => 'Tema oscuro',
