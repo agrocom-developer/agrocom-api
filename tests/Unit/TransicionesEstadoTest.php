@@ -192,6 +192,12 @@ const RUTAS_ESTADO_DESCRIPTIVO_SIN_MAQUINA = [
     // de dominio (ver docblock de la migración y `EstadoBateria`).
     'app/Dominios/Mantenimiento/Aplicacion/CrearBateria.php',
     'app/Dominios/Mantenimiento/Aplicacion/ActualizarBateria.php',
+    // Tarea 72 (HU-49, ADR 0015 punto 3): mismo criterio que Vehiculo/Bateria
+    // arriba — `man_generadores.estado` es descriptivo
+    // (`activo`/`taller`/`de_baja`), sin tabla de transiciones ni guarda de
+    // dominio (ver docblock de la migración y `EstadoGenerador`).
+    'app/Dominios/Mantenimiento/Aplicacion/CrearGenerador.php',
+    'app/Dominios/Mantenimiento/Aplicacion/ActualizarGenerador.php',
 ];
 
 /**
