@@ -40,19 +40,26 @@ return [
         'items' => [
             'clientes' => 'Clientes',
             'contratos' => 'Contratos',
-            'campos' => 'Campos y lotes',
+            // Tarea 77 (HU-54): "Campos y lotes" era un solo ítem — el
+            // pedido del dueño (7/9/2026) separa la propiedad de sus lotes,
+            // cada uno con su propia pantalla. "Propiedad" es el rótulo de
+            // negocio para lo que la tabla sigue llamando `com_campos`.
+            'propiedades' => 'Propiedades',
+            'lotes' => 'Lotes',
         ],
     ],
 
     'recursos' => [
         'label' => 'Recursos',
-        'descripcion' => 'Drones, baterías, vehículos, bases y personas.',
+        'descripcion' => 'Drones, baterías, vehículos, bases y personal.',
         'items' => [
             'drones' => 'Drones',
             'baterias' => 'Baterías',
             'vehiculos' => 'Vehículos',
             'bases' => 'Bases',
-            'personas' => 'Personas',
+            // Tarea 77 (HU-54): pedido del dueño (7/9/2026), "Personas" era
+            // el nombre de la tabla filtrándose a la interfaz.
+            'personal' => 'Personal',
         ],
     ],
 
