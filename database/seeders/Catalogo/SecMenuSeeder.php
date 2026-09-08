@@ -135,13 +135,15 @@ class SecMenuSeeder extends Seeder
         // Tarea 77 (HU-54, pedido del dueño 7/9/2026): "Campos y lotes" se
         // separa en dos ítems. `renombrar()` conserva la fila y su id (la
         // propiedad sigue siendo la misma pantalla, mismo permiso); "Lotes"
-        // es un ítem nuevo, todavía sin pantalla propia (ruta null, "botón
-        // sin link", mismo criterio que el resto del catálogo) — llega en
-        // la etapa 2 de esta tarea. Ocupa el orden 4, vacante desde que
-        // `reportes_cliente` se retiró (tarea 62, fuga 3).
+        // es un ítem nuevo (etapa 1 lo sembró como "botón sin link" — la
+        // pantalla llegó recién en la etapa 2, que es la que agrega
+        // `ruta: 'panel.lotes.index'` acá; `item()` activa la ruta de una
+        // instalación que ya tenía el ítem sembrado sin necesitar una
+        // migración de datos nueva, ver su docblock). Ocupa el orden 4,
+        // vacante desde que `reportes_cliente` se retiró (tarea 62, fuga 3).
         $this->renombrar($comercial, 'menu.comercial.items.campos', 'menu.comercial.items.propiedades');
         $this->item($comercial, 'comercial', 'propiedades', 'map', 3, ruta: 'panel.campos.index', codigoPermiso: 'comercial.campo.ver');
-        $this->item($comercial, 'comercial', 'lotes', 'grid_view', 4, ruta: null, codigoPermiso: 'comercial.lote.ver');
+        $this->item($comercial, 'comercial', 'lotes', 'grid_view', 4, ruta: 'panel.lotes.index', codigoPermiso: 'comercial.lote.ver');
 
         // Recursos (§4.2)
         // HU-27 (tarea 36): administración de la flota de drones — activa

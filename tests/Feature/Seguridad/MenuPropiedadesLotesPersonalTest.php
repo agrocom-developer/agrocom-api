@@ -14,10 +14,12 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 /*
  * Tarea 77 (HU-54, pedido del dueño 7/9/2026): "Campos y lotes" se separa en
  * dos ítems de menú (Propiedades / Lotes) y "Personas" se renombra a
- * "Personal". Etapa 1: solo menú, permisos y migración — la pantalla de
- * lotes (ruta propia) llega en la etapa 2, así que acá "Lotes" sigue siendo
- * un "botón sin link" (mismo criterio que cualquier ítem del catálogo sin
- * pantalla todavía, ver el docblock de `SecMenuSeeder::item()`).
+ * "Personal". La etapa 1 sembró "Lotes" como "botón sin link" (sin pantalla
+ * todavía, mismo criterio que cualquier ítem del catálogo sin ruta, ver el
+ * docblock de `SecMenuSeeder::item()`); la etapa 2 agrega la ficha propia de
+ * lote y con ella la ruta `panel.lotes.index` — `item()` la activa sola en
+ * cualquier instalación que ya tuviera el ítem sembrado, sin migración de
+ * datos nueva.
  */
 
 uses(RefreshDatabase::class);
@@ -47,7 +49,7 @@ function rutaMigracionMenuPropiedadesLotes(): string
     return database_path('migrations/2026_09_08_200001_dividir_menu_propiedades_lotes_y_renombrar_personal.php');
 }
 
-it('el seeder separa "campos" en "propiedades" (misma fila) y "lotes" (item nuevo, sin ruta todavia)', function () {
+it('el seeder separa "campos" en "propiedades" (misma fila) y "lotes" (item nuevo, con su propia ruta)', function () {
     $this->seed(SeguridadSeeder::class);
     $vieja = crearArbolMenuComercialLegado();
 
@@ -63,7 +65,7 @@ it('el seeder separa "campos" en "propiedades" (misma fila) y "lotes" (item nuev
     $idPermisoLote = (int) SecPermission::query()->where('code', 'comercial.lote.ver')->value('id');
 
     expect($lotes->padre_id)->toBe($propiedades->padre_id)
-        ->and($lotes->ruta)->toBeNull()
+        ->and($lotes->ruta)->toBe('panel.lotes.index')
         ->and($lotes->permission_id)->toBe($idPermisoLote);
 });
 

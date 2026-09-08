@@ -5,6 +5,7 @@ use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\CamposController
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ClientesController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ContratosController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\FacturasController;
+use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\LotesController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ReportesComercialesController;
 use App\Dominios\Distribucion\Infraestructura\Http\Controllers\Web\VersionesApkController;
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\AnticiposController;
@@ -350,10 +351,10 @@ Route::middleware('auth:interno')->group(function () {
         Route::post('/panel/contratos/{contrato}/estado', [ContratosController::class, 'cambiarEstado'])
             ->name('panel.contratos.cambiar-estado');
 
-        // HU-24 (tarea 35): administración de campos con sus lotes. Un campo
-        // se crea/edita con sus lotes en la misma operación (mismo criterio
-        // que `clientes` arriba con sus contactos) — no hay ABM separado de
-        // lotes ni rutas propias para ellos. Cuatro permisos de grano fino
+        // HU-24 (tarea 35): administración de campos (propiedades) con sus
+        // lotes. Un campo se crea/edita con sus lotes en la misma operación
+        // (mismo criterio que `clientes` arriba con sus contactos) — eso NO
+        // cambió con la tarea 77. Cuatro permisos de grano fino
         // (`comercial.campo.ver`/`.crear`/`.editar`/`.eliminar`) verificados
         // DENTRO del controlador contra el ROL ACTIVO, mismo criterio que
         // `clientes`/`contratos` arriba.
@@ -374,6 +375,31 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::delete('/panel/campos/{campo}', [CamposController::class, 'destroy'])
             ->name('panel.campos.destroy');
+
+        // Tarea 77 (HU-54, etapa 2): ficha propia de un lote — antes solo se
+        // podía tocar entrando por su propiedad. Cuatro permisos de grano
+        // fino (`comercial.lote.ver`/`.crear`/`.editar`/`.eliminar`,
+        // sembrados en la etapa 1 de esta misma tarea) verificados DENTRO
+        // del controlador contra el ROL ACTIVO, mismo criterio que
+        // `campos` arriba. El caso de uso de guardado es el mismo que usa
+        // `CamposController` (ver docblock de `LotesController`).
+        Route::get('/panel/lotes', [LotesController::class, 'index'])
+            ->name('panel.lotes.index');
+
+        Route::get('/panel/lotes/crear', [LotesController::class, 'create'])
+            ->name('panel.lotes.create');
+
+        Route::post('/panel/lotes', [LotesController::class, 'store'])
+            ->name('panel.lotes.store');
+
+        Route::get('/panel/lotes/{lote}/editar', [LotesController::class, 'edit'])
+            ->name('panel.lotes.edit');
+
+        Route::put('/panel/lotes/{lote}', [LotesController::class, 'update'])
+            ->name('panel.lotes.update');
+
+        Route::delete('/panel/lotes/{lote}', [LotesController::class, 'destroy'])
+            ->name('panel.lotes.destroy');
 
         // HU-27 (tarea 36): administración de la flota de drones con su
         // modelo y capacidad de carga. Sin sub-entidad (a diferencia de
