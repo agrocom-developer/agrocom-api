@@ -16,6 +16,16 @@ soya *esta* campaña y de maíz la siguiente. Ponerlo como columna de `com_lotes
 obliga a pisar el dato cada campaña y borra la historia — la razón está en el
 **ADR 0015 punto 4**, leelo antes de empezar.
 
+**Hecho confirmado por el usuario (8/9/2026): la campaña es por todo el campo,
+no por cultivo.** Cubre la propiedad entera —todos sus lotes, con lo que se
+haya sembrado en cada uno— y nunca se abre una campaña "de soya" y otra "de
+maíz" sobre el mismo campo. Ratifica el punto 4 del ADR: el cultivo es una
+dimensión del lote *dentro* de la campaña, jamás el criterio que la parte. Las
+dos campañas del mismo año agronómico que menciona el ADR son **por temporada**
+("campaña de verano 2025-2026"), que es como el negocio ya las nombra. Si al
+implementar aparece el caso de dos cultivos en el mismo lote y la misma
+campaña, no lo resuelvas inventando esquema: dejalo anotado en `runs/71.md`.
+
 Depende de la tarea 69 (necesita `cpn_campanias`).
 
 ## Lo que ya existe

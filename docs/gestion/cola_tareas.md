@@ -648,6 +648,12 @@ que cubre lo que cambió desde entonces.
   catálogo, no construye uno propio.
 - **75 (informe) al final**: necesita campaña (69) y cultivo (71).
 
+**Hecho de negocio confirmado por el usuario el 8/9/2026: la campaña es por
+todo el campo, no por cultivo.** Cubre la propiedad entera, con todos sus lotes
+y lo que se haya sembrado en cada uno; el cultivo es una dimensión del lote
+dentro de la campaña (tarea 71) y el informe de la 75 agrupa por cultivo, pero
+ninguna de las dos abre campañas por cultivo. Ratifica el punto 4 del ADR 0015.
+
 Cuatro son críticas por la lista de `CLAUDE.md`: la 69 y la 73 tocan dinero, la
 74 toca el motor de sync, y la 78 guarda secretos. Las cuatro se integran igual
 y se revisan después, anotadas en `runs/revision-pendiente.txt` — no se retiene
