@@ -9,9 +9,11 @@
     Datos esperados (ver GastosController::create()): la cáscara de
     CascaraPanel, más:
     - $rubrosConSubrubros (Collection<Rubro> con `subrubros` cargado): arma
-      el <select> de rubro y la lista completa de subrubros con
-      `data-rubro-id`, que `resources/js/pages/gastos-form.js` filtra en
-      cliente según el rubro elegido.
+      el <select> de rubro y la lista completa de subrubros, que
+      `resources/js/pages/gastos-form.js` filtra en cliente según el rubro
+      elegido usando el mapa subrubro→rubro que viaja como
+      `data-mapa-rubro-subrubro` (JSON) en el propio `<select>` de subrubro
+      (tarea 76: `x-atoms.select` no soporta atributos por `<option>`).
     - $basesDisponibles / $trabajosDisponibles / $campaniasDisponibles
       (Collection<int, string>): id => etiqueta, para los <select> opcionales
       de imputación. `$campaniasDisponibles` ya viene filtrada a campañas no
@@ -37,6 +39,9 @@
     $baseId = old('base_id', '');
     $trabajoId = old('trabajo_id', '');
     $campaniaId = old('campania_id', '');
+    $subrubrosDisponibles = $rubrosConSubrubros->flatMap->subrubros;
+    $subrubrosOpciones = $subrubrosDisponibles->pluck('nombre', 'id');
+    $mapaRubroSubrubro = $subrubrosDisponibles->mapWithKeys(fn ($subrubro) => [$subrubro->id => $subrubro->rubro_id]);
 @endphp
 
 <x-templates.panel-shell :title="__('finanzas.gastos.titulo_crear')" :tema="$tema">
@@ -82,8 +87,7 @@
                     :title="__('finanzas.gastos.seccion_datos')"
                     :count="__('finanzas.gastos.campos_contador', ['cantidad' => 9])"
                 >
-                    <x-atoms.input
-                        type="date"
+                    <x-atoms.date
                         name="fecha"
                         label="{{ __('finanzas.gastos.campo_fecha') }}"
                         value="{{ $fecha }}"
@@ -91,44 +95,27 @@
                         error="{{ $errors->first('fecha') }}"
                     />
 
-                    <div class="ag-input">
-                        <label for="rubro_id" class="ag-input__label">
-                            {{ __('finanzas.gastos.campo_rubro') }}
-                            <span class="ag-input__required" aria-hidden="true">*</span>
-                        </label>
-                        <div class="ag-input__control {{ $errors->has('rubro_id') ? 'ag-input__control--error' : '' }}">
-                            <select name="rubro_id" id="rubro_id" class="ag-input__field" required data-ag-gasto-rubro>
-                                <option value="">{{ __('finanzas.gastos.campo_rubro_placeholder') }}</option>
-                                @foreach ($rubrosConSubrubros as $rubro)
-                                    <option value="{{ $rubro->id }}" @selected((string) $rubroId === (string) $rubro->id)>{{ $rubro->nombre }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        @if ($errors->has('rubro_id'))
-                            <p class="ag-input__error" role="alert">{{ $errors->first('rubro_id') }}</p>
-                        @endif
-                    </div>
+                    <x-atoms.select
+                        name="rubro_id"
+                        label="{{ __('finanzas.gastos.campo_rubro') }}"
+                        placeholder="{{ __('finanzas.gastos.campo_rubro_placeholder') }}"
+                        :options="$rubrosConSubrubros->pluck('nombre', 'id')"
+                        value="{{ $rubroId }}"
+                        required
+                        error="{{ $errors->first('rubro_id') }}"
+                        data-ag-gasto-rubro
+                    />
 
-                    <div class="ag-input">
-                        <label for="subrubro_id" class="ag-input__label">{{ __('finanzas.gastos.campo_subrubro') }}</label>
-                        <div class="ag-input__control {{ $errors->has('subrubro_id') ? 'ag-input__control--error' : '' }}">
-                            <select name="subrubro_id" id="subrubro_id" class="ag-input__field" data-ag-gasto-subrubro>
-                                <option value="">{{ __('finanzas.gastos.campo_subrubro_placeholder') }}</option>
-                                @foreach ($rubrosConSubrubros as $rubro)
-                                    @foreach ($rubro->subrubros as $subrubro)
-                                        <option
-                                            value="{{ $subrubro->id }}"
-                                            data-rubro-id="{{ $rubro->id }}"
-                                            @selected((string) $subrubroId === (string) $subrubro->id)
-                                        >{{ $subrubro->nombre }}</option>
-                                    @endforeach
-                                @endforeach
-                            </select>
-                        </div>
-                        @if ($errors->has('subrubro_id'))
-                            <p class="ag-input__error" role="alert">{{ $errors->first('subrubro_id') }}</p>
-                        @endif
-                    </div>
+                    <x-atoms.select
+                        name="subrubro_id"
+                        label="{{ __('finanzas.gastos.campo_subrubro') }}"
+                        placeholder="{{ __('finanzas.gastos.campo_subrubro_placeholder') }}"
+                        :options="$subrubrosOpciones"
+                        value="{{ $subrubroId }}"
+                        error="{{ $errors->first('subrubro_id') }}"
+                        data-ag-gasto-subrubro
+                        data-mapa-rubro-subrubro="{{ $mapaRubroSubrubro->toJson() }}"
+                    />
 
                     <x-atoms.input
                         type="number"
@@ -152,51 +139,33 @@
                         error="{{ $errors->first('precio_unitario') }}"
                     />
 
-                    <div class="ag-input">
-                        <label for="base_id" class="ag-input__label">{{ __('finanzas.gastos.campo_base') }}</label>
-                        <div class="ag-input__control {{ $errors->has('base_id') ? 'ag-input__control--error' : '' }}">
-                            <select name="base_id" id="base_id" class="ag-input__field">
-                                <option value="">{{ __('finanzas.gastos.campo_base_placeholder') }}</option>
-                                @foreach ($basesDisponibles as $id => $nombre)
-                                    <option value="{{ $id }}" @selected((string) $baseId === (string) $id)>{{ $nombre }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        @if ($errors->has('base_id'))
-                            <p class="ag-input__error" role="alert">{{ $errors->first('base_id') }}</p>
-                        @endif
-                    </div>
+                    <x-atoms.select
+                        name="base_id"
+                        label="{{ __('finanzas.gastos.campo_base') }}"
+                        placeholder="{{ __('finanzas.gastos.campo_base_placeholder') }}"
+                        :options="$basesDisponibles"
+                        value="{{ $baseId }}"
+                        error="{{ $errors->first('base_id') }}"
+                    />
 
-                    <div class="ag-input">
-                        <label for="trabajo_id" class="ag-input__label">{{ __('finanzas.gastos.campo_trabajo') }}</label>
-                        <div class="ag-input__control {{ $errors->has('trabajo_id') ? 'ag-input__control--error' : '' }}">
-                            <select name="trabajo_id" id="trabajo_id" class="ag-input__field">
-                                <option value="">{{ __('finanzas.gastos.campo_trabajo_placeholder') }}</option>
-                                @foreach ($trabajosDisponibles as $id => $etiqueta)
-                                    <option value="{{ $id }}" @selected((string) $trabajoId === (string) $id)>{{ $etiqueta }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        @if ($errors->has('trabajo_id'))
-                            <p class="ag-input__error" role="alert">{{ $errors->first('trabajo_id') }}</p>
-                        @endif
-                    </div>
+                    <x-atoms.select
+                        name="trabajo_id"
+                        label="{{ __('finanzas.gastos.campo_trabajo') }}"
+                        placeholder="{{ __('finanzas.gastos.campo_trabajo_placeholder') }}"
+                        :options="$trabajosDisponibles"
+                        value="{{ $trabajoId }}"
+                        error="{{ $errors->first('trabajo_id') }}"
+                    />
 
-                    <div class="ag-input">
-                        <label for="campania_id" class="ag-input__label">{{ __('finanzas.gastos.campo_campania') }}</label>
-                        <div class="ag-input__control {{ $errors->has('campania_id') ? 'ag-input__control--error' : '' }}">
-                            <select name="campania_id" id="campania_id" class="ag-input__field">
-                                <option value="">{{ __('finanzas.gastos.campo_campania_placeholder') }}</option>
-                                @foreach ($campaniasDisponibles as $id => $etiqueta)
-                                    <option value="{{ $id }}" @selected((string) $campaniaId === (string) $id)>{{ $etiqueta }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <p class="ag-input__help">{{ __('finanzas.gastos.campo_campania_ayuda') }}</p>
-                        @if ($errors->has('campania_id'))
-                            <p class="ag-input__error" role="alert">{{ $errors->first('campania_id') }}</p>
-                        @endif
-                    </div>
+                    <x-atoms.select
+                        name="campania_id"
+                        label="{{ __('finanzas.gastos.campo_campania') }}"
+                        placeholder="{{ __('finanzas.gastos.campo_campania_placeholder') }}"
+                        :options="$campaniasDisponibles"
+                        value="{{ $campaniaId }}"
+                        help="{{ __('finanzas.gastos.campo_campania_ayuda') }}"
+                        error="{{ $errors->first('campania_id') }}"
+                    />
 
                     <div class="ag-form-section__field--full">
                         <x-atoms.input

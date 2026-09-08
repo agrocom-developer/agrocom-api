@@ -24,14 +24,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectCampania = formulario.querySelector('[data-ag-contrato-campania]');
 
     if (selectCliente && selectCampania) {
-        const opciones = Array.from(selectCampania.querySelectorAll('option[data-cliente-id]'));
+        // El mapa campaña→cliente viaja en el propio <select> (tarea 76,
+        // `x-atoms.select`), no por <option> como antes: el combobox que arma
+        // atoms/select.js reemplaza al nativo visualmente y no soporta
+        // atributos por opción.
+        const mapaClienteCampania = JSON.parse(selectCampania.dataset.mapaClienteCampania || '{}');
+        const opciones = Array.from(selectCampania.querySelectorAll('option')).filter((opcion) => opcion.value !== '');
 
         const aplicarFiltro = () => {
             const clienteId = selectCliente.value;
             let valorSigueVisible = false;
 
             opciones.forEach((opcion) => {
-                const visible = opcion.dataset.clienteId === clienteId;
+                const visible = String(mapaClienteCampania[opcion.value]) === clienteId;
                 opcion.hidden = !visible;
                 opcion.disabled = !visible;
                 if (visible && opcion.value === selectCampania.value) {

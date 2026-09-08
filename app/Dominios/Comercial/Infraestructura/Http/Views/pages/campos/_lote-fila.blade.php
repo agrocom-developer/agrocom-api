@@ -78,20 +78,14 @@
         </div>
     </div>
 
-    <div class="ag-input ag-form-section__field--full">
-        <label for="lotes-{{ $indice }}-restricciones" class="ag-input__label">
-            {{ __('comercial.campos.lote_restricciones') }}
-        </label>
-        <div class="ag-input__control">
-            <textarea
-                name="lotes[{{ $indice }}][restricciones]"
-                id="lotes-{{ $indice }}-restricciones"
-                class="ag-input__field"
-                rows="2"
-                placeholder="{{ __('comercial.campos.lote_restricciones_placeholder') }}"
-            >{{ $lote['restricciones'] ?? '' }}</textarea>
-        </div>
-    </div>
+    <x-atoms.textarea
+        name="lotes[{{ $indice }}][restricciones]"
+        id="lotes-{{ $indice }}-restricciones"
+        label="{{ __('comercial.campos.lote_restricciones') }}"
+        value="{{ $lote['restricciones'] ?? '' }}"
+        placeholder="{{ __('comercial.campos.lote_restricciones_placeholder') }}"
+        rows="2"
+    />
 
     <div class="ag-form-section__field--full ag-campos-form__lote-pie">
         <x-atoms.button type="button" variant="text" size="sm" icon="delete" data-ag-lote-quitar>

@@ -62,17 +62,14 @@
                         <p class="ag-anticipos-consulta__ayuda">{{ __('finanzas.anticipos.consulta_ayuda') }}</p>
                     </div>
 
-                    <div class="ag-input">
-                        <label for="consulta-persona" class="ag-input__label">{{ __('finanzas.anticipos.campo_persona') }}</label>
-                        <div class="ag-input__control">
-                            <select name="persona_id" id="consulta-persona" class="ag-input__field">
-                                <option value="">{{ __('finanzas.anticipos.campo_persona_placeholder') }}</option>
-                                @foreach ($personasDisponibles as $id => $nombre)
-                                    <option value="{{ $id }}" @selected($consultaDisponible !== null && $consultaDisponible['personaId'] === $id)>{{ $nombre }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
+                    <x-atoms.select
+                        name="persona_id"
+                        id="consulta-persona"
+                        label="{{ __('finanzas.anticipos.campo_persona') }}"
+                        :options="$personasDisponibles"
+                        :value="$consultaDisponible !== null ? (string) $consultaDisponible['personaId'] : ''"
+                        placeholder="{{ __('finanzas.anticipos.campo_persona_placeholder') }}"
+                    />
 
                     <x-atoms.button type="submit" variant="outline" size="md" icon="search">
                         {{ __('finanzas.anticipos.consulta_boton') }}
@@ -113,23 +110,16 @@
                     :title="__('finanzas.anticipos.seccion_datos')"
                     :count="__('finanzas.anticipos.campos_contador', ['cantidad' => 4])"
                 >
-                    <div class="ag-input">
-                        <label for="persona_id" class="ag-input__label">
-                            {{ __('finanzas.anticipos.campo_persona') }}
-                            <span class="ag-input__required" aria-hidden="true">*</span>
-                        </label>
-                        <div class="ag-input__control {{ $errors->has('persona_id') ? 'ag-input__control--error' : '' }}">
-                            <select name="persona_id" id="persona_id" class="ag-input__field" required>
-                                <option value="">{{ __('finanzas.anticipos.campo_persona_placeholder') }}</option>
-                                @foreach ($personasDisponibles as $id => $nombre)
-                                    <option value="{{ $id }}" @selected((string) $personaId === (string) $id)>{{ $nombre }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        @if ($errors->has('persona_id'))
-                            <p class="ag-input__error" role="alert">{{ $errors->first('persona_id') }}</p>
-                        @endif
-                    </div>
+                    <x-atoms.select
+                        name="persona_id"
+                        id="persona_id"
+                        label="{{ __('finanzas.anticipos.campo_persona') }}"
+                        :options="$personasDisponibles"
+                        :value="(string) $personaId"
+                        placeholder="{{ __('finanzas.anticipos.campo_persona_placeholder') }}"
+                        :error="$errors->first('persona_id')"
+                        required
+                    />
 
                     <x-atoms.input
                         type="number"
@@ -142,8 +132,7 @@
                         error="{{ $errors->first('monto') }}"
                     />
 
-                    <x-atoms.input
-                        type="date"
+                    <x-atoms.date
                         name="fecha"
                         label="{{ __('finanzas.anticipos.campo_fecha') }}"
                         value="{{ $fecha }}"

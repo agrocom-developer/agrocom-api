@@ -64,40 +64,32 @@
             error="{{ $errors->first('nombre') }}"
         />
 
-        <div class="ag-input">
-            <label for="rol" class="ag-input__label">
-                {{ __('personal.personas.campo_rol') }}
-                <span class="ag-input__required" aria-hidden="true">*</span>
-            </label>
-            <div class="ag-input__control {{ $errors->has('rol') ? 'ag-input__control--error' : '' }}">
-                <select name="rol" id="rol" class="ag-input__field" required>
-                    <option value="">{{ __('personal.personas.campo_rol_placeholder') }}</option>
-                    @foreach ($roles as $opcionRol)
-                        <option value="{{ $opcionRol->value }}" @selected($rol === $opcionRol->value)>
-                            {{ __('personal.roles.'.$opcionRol->value) }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-            @if ($errors->has('rol'))
-                <p class="ag-input__error" role="alert">{{ $errors->first('rol') }}</p>
-            @endif
-        </div>
+        @php
+            $opcionesRol = collect($roles)->mapWithKeys(
+                fn ($opcionRol) => [$opcionRol->value => __('personal.roles.'.$opcionRol->value)]
+            );
+        @endphp
 
-        <div class="ag-input">
-            <label for="base_id" class="ag-input__label">{{ __('personal.personas.campo_base') }}</label>
-            <div class="ag-input__control {{ $errors->has('base_id') ? 'ag-input__control--error' : '' }}">
-                <select name="base_id" id="base_id" class="ag-input__field">
-                    <option value="">{{ __('personal.personas.campo_base_placeholder') }}</option>
-                    @foreach ($basesDisponibles as $id => $nombreBase)
-                        <option value="{{ $id }}" @selected((string) $baseId === (string) $id)>{{ $nombreBase }}</option>
-                    @endforeach
-                </select>
-            </div>
-            @if ($errors->has('base_id'))
-                <p class="ag-input__error" role="alert">{{ $errors->first('base_id') }}</p>
-            @endif
-        </div>
+        <x-atoms.select
+            name="rol"
+            id="rol"
+            label="{{ __('personal.personas.campo_rol') }}"
+            :options="$opcionesRol"
+            :value="$rol"
+            placeholder="{{ __('personal.personas.campo_rol_placeholder') }}"
+            error="{{ $errors->first('rol') }}"
+            required
+        />
+
+        <x-atoms.select
+            name="base_id"
+            id="base_id"
+            label="{{ __('personal.personas.campo_base') }}"
+            :options="$basesDisponibles"
+            :value="$baseId"
+            placeholder="{{ __('personal.personas.campo_base_placeholder') }}"
+            error="{{ $errors->first('base_id') }}"
+        />
 
         <x-atoms.input
             type="number"

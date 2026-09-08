@@ -61,41 +61,27 @@
         :title="__('operaciones.ordenes.seccion_datos')"
         :count="__('operaciones.ordenes.campos_contador', ['cantidad' => 7])"
     >
-        <div class="ag-input">
-            <label for="contrato_id" class="ag-input__label">
-                {{ __('operaciones.ordenes.campo_contrato') }}
-                <span class="ag-input__required" aria-hidden="true">*</span>
-            </label>
-            <div class="ag-input__control {{ $errors->has('contrato_id') ? 'ag-input__control--error' : '' }}">
-                <select name="contrato_id" id="contrato_id" class="ag-input__field" required>
-                    <option value="">{{ __('operaciones.ordenes.campo_contrato_placeholder') }}</option>
-                    @foreach ($contratosDisponibles as $id => $etiqueta)
-                        <option value="{{ $id }}" @selected((string) $contratoId === (string) $id)>{{ $etiqueta }}</option>
-                    @endforeach
-                </select>
-            </div>
-            @if ($errors->has('contrato_id'))
-                <p class="ag-input__error" role="alert">{{ $errors->first('contrato_id') }}</p>
-            @endif
-        </div>
+        <x-atoms.select
+            name="contrato_id"
+            id="contrato_id"
+            label="{{ __('operaciones.ordenes.campo_contrato') }}"
+            :options="$contratosDisponibles"
+            :value="$contratoId"
+            :placeholder="__('operaciones.ordenes.campo_contrato_placeholder')"
+            required
+            :error="$errors->first('contrato_id')"
+        />
 
-        <div class="ag-input">
-            <label for="lote_id" class="ag-input__label">
-                {{ __('operaciones.ordenes.campo_lote') }}
-                <span class="ag-input__required" aria-hidden="true">*</span>
-            </label>
-            <div class="ag-input__control {{ $errors->has('lote_id') ? 'ag-input__control--error' : '' }}">
-                <select name="lote_id" id="lote_id" class="ag-input__field" required>
-                    <option value="">{{ __('operaciones.ordenes.campo_lote_placeholder') }}</option>
-                    @foreach ($lotesDisponibles as $id => $etiqueta)
-                        <option value="{{ $id }}" @selected((string) $loteId === (string) $id)>{{ $etiqueta }}</option>
-                    @endforeach
-                </select>
-            </div>
-            @if ($errors->has('lote_id'))
-                <p class="ag-input__error" role="alert">{{ $errors->first('lote_id') }}</p>
-            @endif
-        </div>
+        <x-atoms.select
+            name="lote_id"
+            id="lote_id"
+            label="{{ __('operaciones.ordenes.campo_lote') }}"
+            :options="$lotesDisponibles"
+            :value="$loteId"
+            :placeholder="__('operaciones.ordenes.campo_lote_placeholder')"
+            required
+            :error="$errors->first('lote_id')"
+        />
 
         <x-atoms.input
             type="number"
@@ -119,29 +105,23 @@
             error="{{ $errors->first('litros_ha') }}"
         />
 
-        <x-atoms.input
-            type="date"
+        <x-atoms.date
             name="fecha_emision"
             label="{{ __('operaciones.ordenes.campo_fecha_emision') }}"
             value="{{ $fechaEmision }}"
             required
-            error="{{ $errors->first('fecha_emision') }}"
+            :error="$errors->first('fecha_emision')"
         />
 
-        <div class="ag-input">
-            <label for="emitida_por_contacto_id" class="ag-input__label">{{ __('operaciones.ordenes.campo_contacto') }}</label>
-            <div class="ag-input__control {{ $errors->has('emitida_por_contacto_id') ? 'ag-input__control--error' : '' }}">
-                <select name="emitida_por_contacto_id" id="emitida_por_contacto_id" class="ag-input__field">
-                    <option value="">{{ __('operaciones.ordenes.campo_contacto_placeholder') }}</option>
-                    @foreach ($contactosDisponibles as $id => $etiqueta)
-                        <option value="{{ $id }}" @selected((string) $contactoId === (string) $id)>{{ $etiqueta }}</option>
-                    @endforeach
-                </select>
-            </div>
-            @if ($errors->has('emitida_por_contacto_id'))
-                <p class="ag-input__error" role="alert">{{ $errors->first('emitida_por_contacto_id') }}</p>
-            @endif
-        </div>
+        <x-atoms.select
+            name="emitida_por_contacto_id"
+            id="emitida_por_contacto_id"
+            label="{{ __('operaciones.ordenes.campo_contacto') }}"
+            :options="$contactosDisponibles"
+            :value="$contactoId"
+            :placeholder="__('operaciones.ordenes.campo_contacto_placeholder')"
+            :error="$errors->first('emitida_por_contacto_id')"
+        />
 
         <div class="ag-form-section__field--full">
             <x-atoms.input

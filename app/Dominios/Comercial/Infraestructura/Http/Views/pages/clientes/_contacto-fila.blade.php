@@ -22,22 +22,20 @@
         <input type="hidden" name="contactos[{{ $indice }}][id]" value="{{ $contacto['id'] }}">
     @endif
 
-    <div class="ag-input">
-        <label for="contactos-{{ $indice }}-tipo" class="ag-input__label">
-            {{ __('comercial.clientes.contacto_tipo') }}
-            <span class="ag-input__required" aria-hidden="true">*</span>
-        </label>
-        <div class="ag-input__control">
-            <select name="contactos[{{ $indice }}][tipo]" id="contactos-{{ $indice }}-tipo" class="ag-input__field" required>
-                <option value="">{{ __('comercial.clientes.contacto_tipo_placeholder') }}</option>
-                @foreach ($tiposContacto as $tipo)
-                    <option value="{{ $tipo->value }}" @selected(($contacto['tipo'] ?? null) === $tipo->value)>
-                        {{ __('comercial.clientes.contacto_tipo_opcion.'.$tipo->value) }}
-                    </option>
-                @endforeach
-            </select>
-        </div>
-    </div>
+    @php
+        $tiposOptions = collect($tiposContacto)->mapWithKeys(fn ($tipo) => [
+            $tipo->value => __('comercial.clientes.contacto_tipo_opcion.'.$tipo->value)
+        ]);
+    @endphp
+    <x-atoms.select
+        name="contactos[{{ $indice }}][tipo]"
+        id="contactos-{{ $indice }}-tipo"
+        label="{{ __('comercial.clientes.contacto_tipo') }}"
+        :options="$tiposOptions"
+        :value="$contacto['tipo'] ?? null"
+        placeholder="{{ __('comercial.clientes.contacto_tipo_placeholder') }}"
+        required
+    />
 
     <x-atoms.input
         type="text"

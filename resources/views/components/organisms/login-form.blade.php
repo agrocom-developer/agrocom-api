@@ -129,17 +129,10 @@
             />
 
             <div class="ag-login-form__actions">
-                <div class="ag-login-form__checkbox-group">
-                    <input
-                        type="checkbox"
-                        name="remember"
-                        id="remember"
-                        class="ag-login-form__checkbox"
-                    >
-                    <label for="remember" class="ag-login-form__checkbox-label">
-                        {{ __('seguridad.login.recordarme') }}
-                    </label>
-                </div>
+                <x-atoms.checkbox
+                    name="remember"
+                    label="{{ __('seguridad.login.recordarme') }}"
+                />
 
                 <button
                     type="button"

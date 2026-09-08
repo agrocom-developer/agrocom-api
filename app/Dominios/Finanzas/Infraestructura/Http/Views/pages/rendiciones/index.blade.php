@@ -58,29 +58,23 @@
             @endif
 
             <form method="GET" action="{{ route('panel.rendiciones.index') }}" class="ag-filtros ag-rendiciones__filtros">
-                <div class="ag-input">
-                    <label for="filtro-base" class="ag-input__label">{{ __('finanzas.rendiciones.filtro_base') }}</label>
-                    <div class="ag-input__control">
-                        <select name="base_id" id="filtro-base" class="ag-input__field">
-                            <option value="">{{ __('finanzas.rendiciones.filtro_base_placeholder') }}</option>
-                            @foreach ($basesDisponibles as $id => $nombre)
-                                <option value="{{ $id }}" @selected((string) $filtros['base_id'] === (string) $id)>{{ $nombre }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
+                <x-atoms.select
+                    name="base_id"
+                    id="filtro-base"
+                    label="{{ __('finanzas.rendiciones.filtro_base') }}"
+                    :options="$basesDisponibles"
+                    :value="(string) $filtros['base_id']"
+                    placeholder="{{ __('finanzas.rendiciones.filtro_base_placeholder') }}"
+                />
 
-                <div class="ag-input">
-                    <label for="filtro-estado" class="ag-input__label">{{ __('finanzas.rendiciones.filtro_estado') }}</label>
-                    <div class="ag-input__control">
-                        <select name="estado" id="filtro-estado" class="ag-input__field">
-                            <option value="">{{ __('finanzas.rendiciones.filtro_estado_placeholder') }}</option>
-                            <option value="abierta" @selected($filtros['estado'] === 'abierta')>{{ __('finanzas.rendiciones.estado.abierta') }}</option>
-                            <option value="presentada" @selected($filtros['estado'] === 'presentada')>{{ __('finanzas.rendiciones.estado.presentada') }}</option>
-                            <option value="aprobada" @selected($filtros['estado'] === 'aprobada')>{{ __('finanzas.rendiciones.estado.aprobada') }}</option>
-                        </select>
-                    </div>
-                </div>
+                <x-atoms.select
+                    name="estado"
+                    id="filtro-estado"
+                    label="{{ __('finanzas.rendiciones.filtro_estado') }}"
+                    :options="collect(['abierta' => __('finanzas.rendiciones.estado.abierta'), 'presentada' => __('finanzas.rendiciones.estado.presentada'), 'aprobada' => __('finanzas.rendiciones.estado.aprobada')])"
+                    value="{{ $filtros['estado'] }}"
+                    placeholder="{{ __('finanzas.rendiciones.filtro_estado_placeholder') }}"
+                />
 
                 <div class="ag-filtros__acciones ag-rendiciones__filtros-acciones">
                     <x-atoms.button type="submit" variant="outline" size="md" icon="search">

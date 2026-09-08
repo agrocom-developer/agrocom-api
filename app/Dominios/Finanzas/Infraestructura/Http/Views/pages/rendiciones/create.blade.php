@@ -62,44 +62,29 @@
                     :title="__('finanzas.rendiciones.seccion_datos')"
                     :count="__('finanzas.rendiciones.campos_contador', ['cantidad' => 4])"
                 >
-                    <div class="ag-input">
-                        <label for="base_id" class="ag-input__label">
-                            {{ __('finanzas.rendiciones.campo_base') }}
-                            <span class="ag-input__required" aria-hidden="true">*</span>
-                        </label>
-                        <div class="ag-input__control {{ $errors->has('base_id') ? 'ag-input__control--error' : '' }}">
-                            <select name="base_id" id="base_id" class="ag-input__field" required>
-                                <option value="">{{ __('finanzas.rendiciones.campo_base_placeholder') }}</option>
-                                @foreach ($basesDisponibles as $id => $nombre)
-                                    <option value="{{ $id }}" @selected((string) $baseId === (string) $id)>{{ $nombre }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        @if ($errors->has('base_id'))
-                            <p class="ag-input__error" role="alert">{{ $errors->first('base_id') }}</p>
-                        @endif
-                    </div>
+                    <x-atoms.select
+                        name="base_id"
+                        id="base_id"
+                        label="{{ __('finanzas.rendiciones.campo_base') }}"
+                        :options="$basesDisponibles"
+                        :value="(string) $baseId"
+                        placeholder="{{ __('finanzas.rendiciones.campo_base_placeholder') }}"
+                        :error="$errors->first('base_id')"
+                        required
+                    />
 
-                    <div class="ag-input">
-                        <label for="jefe_campo_id" class="ag-input__label">
-                            {{ __('finanzas.rendiciones.campo_jefe_campo') }}
-                            <span class="ag-input__required" aria-hidden="true">*</span>
-                        </label>
-                        <div class="ag-input__control {{ $errors->has('jefe_campo_id') ? 'ag-input__control--error' : '' }}">
-                            <select name="jefe_campo_id" id="jefe_campo_id" class="ag-input__field" required>
-                                <option value="">{{ __('finanzas.rendiciones.campo_jefe_campo_placeholder') }}</option>
-                                @foreach ($personasDisponibles as $id => $nombre)
-                                    <option value="{{ $id }}" @selected((string) $jefeId === (string) $id)>{{ $nombre }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        @if ($errors->has('jefe_campo_id'))
-                            <p class="ag-input__error" role="alert">{{ $errors->first('jefe_campo_id') }}</p>
-                        @endif
-                    </div>
+                    <x-atoms.select
+                        name="jefe_campo_id"
+                        id="jefe_campo_id"
+                        label="{{ __('finanzas.rendiciones.campo_jefe_campo') }}"
+                        :options="$personasDisponibles"
+                        :value="(string) $jefeId"
+                        placeholder="{{ __('finanzas.rendiciones.campo_jefe_campo_placeholder') }}"
+                        :error="$errors->first('jefe_campo_id')"
+                        required
+                    />
 
-                    <x-atoms.input
-                        type="date"
+                    <x-atoms.date
                         name="fecha"
                         label="{{ __('finanzas.rendiciones.campo_fecha') }}"
                         value="{{ $fecha }}"
@@ -108,8 +93,7 @@
                     />
 
                     <div class="ag-form-section__field--full">
-                        <x-atoms.input
-                            type="textarea"
+                        <x-atoms.textarea
                             name="descripcion"
                             label="{{ __('finanzas.rendiciones.campo_descripcion') }}"
                             value="{{ $descripcion }}"

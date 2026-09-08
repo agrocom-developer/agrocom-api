@@ -68,41 +68,34 @@
                     :title="__('operaciones.pausas.seccion_datos')"
                     :count="__('operaciones.pausas.campos_contador', ['cantidad' => 4])"
                 >
-                    <div class="ag-input">
-                        <label for="sesion_id" class="ag-input__label">
-                            {{ __('operaciones.pausas.campo_sesion') }}
-                            <span class="ag-input__required" aria-hidden="true">*</span>
-                        </label>
-                        <div class="ag-input__control {{ $errors->has('sesion_id') ? 'ag-input__control--error' : '' }}">
-                            <select name="sesion_id" id="sesion_id" class="ag-input__field" required>
-                                <option value="">{{ __('operaciones.pausas.campo_sesion_placeholder') }}</option>
-                                @foreach ($sesionesDisponibles as $id => $etiqueta)
-                                    <option value="{{ $id }}" @selected((string) $sesionId === (string) $id)>{{ $etiqueta }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        @if ($errors->has('sesion_id'))
-                            <p class="ag-input__error" role="alert">{{ $errors->first('sesion_id') }}</p>
-                        @endif
-                    </div>
+                    <x-atoms.select
+                        name="sesion_id"
+                        id="sesion_id"
+                        label="{{ __('operaciones.pausas.campo_sesion') }}"
+                        :options="$sesionesDisponibles"
+                        :value="$sesionId"
+                        :placeholder="__('operaciones.pausas.campo_sesion_placeholder')"
+                        required
+                        :error="$errors->first('sesion_id')"
+                    />
 
-                    <div class="ag-input">
-                        <label for="causa" class="ag-input__label">
-                            {{ __('operaciones.pausas.campo_causa') }}
-                            <span class="ag-input__required" aria-hidden="true">*</span>
-                        </label>
-                        <div class="ag-input__control {{ $errors->has('causa') ? 'ag-input__control--error' : '' }}">
-                            <select name="causa" id="causa" class="ag-input__field" required>
-                                <option value="">{{ __('operaciones.pausas.campo_causa_placeholder') }}</option>
-                                @foreach (\App\Dominios\Operaciones\Dominio\CausaPausa::cases() as $opcion)
-                                    <option value="{{ $opcion->value }}" @selected($causa === $opcion->value)>{{ __('operaciones.pausas.causa.'.$opcion->value) }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        @if ($errors->has('causa'))
-                            <p class="ag-input__error" role="alert">{{ $errors->first('causa') }}</p>
-                        @endif
-                    </div>
+                    @php
+                        $opcionesCausa = collect(\App\Dominios\Operaciones\Dominio\CausaPausa::cases())
+                            ->mapWithKeys(fn ($opcion) => [
+                                $opcion->value => __('operaciones.pausas.causa.'.$opcion->value)
+                            ])->all();
+                    @endphp
+
+                    <x-atoms.select
+                        name="causa"
+                        id="causa"
+                        label="{{ __('operaciones.pausas.campo_causa') }}"
+                        :options="$opcionesCausa"
+                        :value="$causa"
+                        :placeholder="__('operaciones.pausas.campo_causa_placeholder')"
+                        required
+                        :error="$errors->first('causa')"
+                    />
 
                     <x-atoms.input
                         type="datetime-local"

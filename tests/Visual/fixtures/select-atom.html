@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<!--
+    Arnés estático del átomo `select` (tarea 76 / HU-53), para probar
+    resources/js/atoms/select.js con teclado real sin pasar por Docker,
+    login ni una ruta del panel — el script es JS puro sin imports (mismo
+    criterio que atoms/input.js), así que corre directo con
+    `<script type="module" src="...">` sobre este HTML suelto.
+
+    El marcado de abajo es un espejo A MANO del contrato de DOM que arma
+    resources/views/components/atoms/select.blade.php antes de que el JS
+    corra (clases + `data-*` que select.js lee): no es el output real de
+    Blade. Si el contrato del átomo cambia (nombres de clase, atributos
+    `data-ag-select-*`), este archivo hay que actualizarlo a mano — ver
+    tests/Visual/select-atom.spec.ts, que es quien de verdad ejerce el
+    contrato de teclado/ARIA.
+-->
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <title>select — arnés de accesibilidad</title>
+</head>
+<body>
+
+    <!-- Select A: 4 opciones (NO buscable) — cubre type-ahead por prefijo. -->
+    <div class="ag-select" data-testid="select-rol" data-ag-select data-ag-select-buscable="0"
+         data-label-search="Buscar…" data-label-no-results="Sin resultados"
+         data-label-clear="Limpiar selección" data-label-placeholder="Elegí un rol">
+        <label for="rol-select" class="ag-select__label" id="rol-select-label">Rol</label>
+        <div class="ag-select__control">
+            <select name="rol" id="rol-select" class="ag-select__native">
+                <option value="" selected disabled hidden>Elegí un rol</option>
+                <option value="administrador">Administrador</option>
+                <option value="piloto">Piloto</option>
+                <option value="jefe_campo">Jefe de campo</option>
+                <option value="cliente">Cliente</option>
+            </select>
+            <div class="ag-select__trigger" data-ag-select-trigger role="combobox" tabindex="0"
+                 aria-haspopup="listbox" aria-expanded="false" aria-controls="rol-select-listbox"
+                 aria-labelledby="rol-select-label" hidden>
+                <span class="ag-select__value" data-ag-select-value></span>
+                <button type="button" class="ag-select__clear" data-ag-select-clear tabindex="-1" aria-hidden="true" hidden>
+                    <span class="material-symbols-rounded ag-icon ag-icon--sm" aria-hidden="true">close</span>
+                </button>
+                <span class="material-symbols-rounded ag-icon ag-icon--sm ag-select__arrow" aria-hidden="true">arrow_drop_down</span>
+            </div>
+        </div>
+        <ul class="ag-select__listbox" id="rol-select-listbox" role="listbox" data-ag-select-listbox aria-label="Rol" hidden></ul>
+    </div>
+
+    <!-- Select B: 10 opciones (buscable) — cubre el filtro dentro del desplegable. -->
+    <div class="ag-select" data-testid="select-lote" data-ag-select data-ag-select-buscable="1"
+         data-label-search="Buscar…" data-label-no-results="Sin resultados"
+         data-label-clear="Limpiar selección" data-label-placeholder="Elegí un lote">
+        <label for="lote-select" class="ag-select__label" id="lote-select-label">Lote</label>
+        <div class="ag-select__control">
+            <select name="lote_id" id="lote-select" class="ag-select__native">
+                <option value="lote-1">Lote 1</option>
+                <option value="lote-2">Lote 2</option>
+                <option value="lote-3" selected>Lote 3</option>
+                <option value="lote-4">Lote 4</option>
+                <option value="lote-5">Lote 5</option>
+                <option value="lote-6">Lote 6</option>
+                <option value="lote-7">Lote 7</option>
+                <option value="lote-8">Lote 8</option>
+                <option value="lote-9">Lote 9</option>
+                <option value="lote-10">Lote 10</option>
+            </select>
+            <div class="ag-select__trigger" data-ag-select-trigger role="combobox" tabindex="0"
+                 aria-haspopup="listbox" aria-expanded="false" aria-controls="lote-select-listbox"
+                 aria-labelledby="lote-select-label" hidden>
+                <span class="ag-select__value" data-ag-select-value></span>
+                <button type="button" class="ag-select__clear" data-ag-select-clear tabindex="-1" aria-hidden="true" hidden>
+                    <span class="material-symbols-rounded ag-icon ag-icon--sm" aria-hidden="true">close</span>
+                </button>
+                <span class="material-symbols-rounded ag-icon ag-icon--sm ag-select__arrow" aria-hidden="true">arrow_drop_down</span>
+            </div>
+        </div>
+        <ul class="ag-select__listbox" id="lote-select-listbox" role="listbox" data-ag-select-listbox aria-label="Lote" hidden></ul>
+    </div>
+
+    <script>
+        // Testigo de que select.js sigue disparando `change` sobre el
+        // <select> nativo al seleccionar — es lo que mantiene funcionando
+        // cualquier wire:model/listener atado al `name` original.
+        window.__cambios = [];
+        document.addEventListener('change', (evento) => {
+            if (evento.target.matches('.ag-select__native')) {
+                window.__cambios.push({ id: evento.target.id, valor: evento.target.value });
+            }
+        });
+    </script>
+    <!-- Sin type="module": Chromium bloquea el fetch de módulos ES sobre
+         file:// (solo soporta orígenes http/https para ese fetch interno).
+         select.js no usa import/export, así que corre igual como script
+         clásico — es justamente la ventaja de no tener dependencias. -->
+    <script src="../../../resources/js/atoms/select.js"></script>
+</body>
+</html>

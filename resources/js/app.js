@@ -1,5 +1,8 @@
 import * as bootstrap from 'bootstrap';
 import './atoms/input.js';
+import './atoms/select.js';
+import './atoms/date.js';
+import './atoms/checkbox-group.js';
 import './molecules/theme-toggle.js';
 import './organisms/login-form.js';
 import './organisms/topbar.js';

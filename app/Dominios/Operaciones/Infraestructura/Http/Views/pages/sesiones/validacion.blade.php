@@ -103,23 +103,15 @@
 
                                 <form method="POST" action="{{ route('panel.sesiones.validacion.rechazar', $sesion) }}" class="ag-sesiones-validacion__rechazo">
                                     @csrf
-                                    <div class="ag-input">
-                                        <label for="motivo-{{ $sesion->id }}" class="ag-input__label">
-                                            {{ __('operaciones.sesiones_validacion.motivo_label') }}
-                                            <span class="ag-input__required" aria-hidden="true">*</span>
-                                        </label>
-                                        <div class="ag-input__control">
-                                            <textarea
-                                                id="motivo-{{ $sesion->id }}"
-                                                name="motivo"
-                                                class="ag-input__field"
-                                                rows="2"
-                                                required
-                                                maxlength="500"
-                                                placeholder="{{ __('operaciones.sesiones_validacion.motivo_placeholder') }}"
-                                            ></textarea>
-                                        </div>
-                                    </div>
+                                    <x-atoms.textarea
+                                        id="motivo-{{ $sesion->id }}"
+                                        name="motivo"
+                                        label="{{ __('operaciones.sesiones_validacion.motivo_label') }}"
+                                        :placeholder="__('operaciones.sesiones_validacion.motivo_placeholder')"
+                                        rows="2"
+                                        required
+                                        maxlength="500"
+                                    />
                                     <x-atoms.button type="submit" variant="danger-outline" size="sm" icon="cancel">
                                         {{ __('operaciones.sesiones_validacion.rechazar') }}
                                     </x-atoms.button>

@@ -58,75 +58,50 @@
         :title="__('inventario.stock.seccion_datos')"
         :count="__('inventario.stock.campos_contador', ['cantidad' => 8])"
     >
-        <div class="ag-input">
-            <label for="tipo" class="ag-input__label">
-                {{ __('inventario.stock.campo_tipo') }}
-                <span class="ag-input__required" aria-hidden="true">*</span>
-            </label>
-            <div class="ag-input__control {{ $errors->has('tipo') ? 'ag-input__control--error' : '' }}">
-                <select name="tipo" id="tipo" class="ag-input__field" required data-ag-movimiento-tipo>
-                    <option value="" disabled @selected($tipo === '')>{{ __('inventario.stock.campo_tipo') }}</option>
-                    @foreach ($tipos as $opcionTipo)
-                        <option value="{{ $opcionTipo->value }}" @selected($tipo === $opcionTipo->value)>
-                            {{ __('inventario.tipo_movimiento.'.$opcionTipo->value) }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-            @if ($errors->has('tipo'))
-                <p class="ag-input__error" role="alert">{{ $errors->first('tipo') }}</p>
-            @endif
-        </div>
+        <x-atoms.select
+            name="tipo"
+            id="tipo"
+            :label="__('inventario.stock.campo_tipo')"
+            :options="collect($tipos)->mapWithKeys(fn($t) => [$t->value => __('inventario.tipo_movimiento.'.$t->value)])"
+            :value="$tipo"
+            :placeholder="__('inventario.stock.campo_tipo')"
+            :error="$errors->first('tipo')"
+            required
+            data-ag-movimiento-tipo
+        />
 
-        <div class="ag-input">
-            <label for="repuesto_id" class="ag-input__label">
-                {{ __('inventario.stock.campo_repuesto') }}
-                <span class="ag-input__required" aria-hidden="true">*</span>
-            </label>
-            <div class="ag-input__control {{ $errors->has('repuesto_id') ? 'ag-input__control--error' : '' }}">
-                <select name="repuesto_id" id="repuesto_id" class="ag-input__field" required>
-                    <option value="" disabled @selected($repuestoId === '')>{{ __('inventario.stock.campo_repuesto_placeholder') }}</option>
-                    @foreach ($repuestosDisponibles as $id => $etiqueta)
-                        <option value="{{ $id }}" @selected((string) $repuestoId === (string) $id)>{{ $etiqueta }}</option>
-                    @endforeach
-                </select>
-            </div>
-            @if ($errors->has('repuesto_id'))
-                <p class="ag-input__error" role="alert">{{ $errors->first('repuesto_id') }}</p>
-            @endif
-        </div>
+        <x-atoms.select
+            name="repuesto_id"
+            id="repuesto_id"
+            :label="__('inventario.stock.campo_repuesto')"
+            :options="$repuestosDisponibles"
+            :value="$repuestoId"
+            :placeholder="__('inventario.stock.campo_repuesto_placeholder')"
+            :error="$errors->first('repuesto_id')"
+            required
+        />
 
-        <div class="ag-input">
-            <label for="base_id" class="ag-input__label">
-                {{ __('inventario.stock.campo_base') }}
-                <span class="ag-input__required" aria-hidden="true">*</span>
-            </label>
-            <div class="ag-input__control {{ $errors->has('base_id') ? 'ag-input__control--error' : '' }}">
-                <select name="base_id" id="base_id" class="ag-input__field" required>
-                    <option value="" disabled @selected($baseId === '')>{{ __('inventario.stock.campo_base_placeholder') }}</option>
-                    @foreach ($basesDisponibles as $id => $nombreBase)
-                        <option value="{{ $id }}" @selected((string) $baseId === (string) $id)>{{ $nombreBase }}</option>
-                    @endforeach
-                </select>
-            </div>
-            @if ($errors->has('base_id'))
-                <p class="ag-input__error" role="alert">{{ $errors->first('base_id') }}</p>
-            @endif
-        </div>
+        <x-atoms.select
+            name="base_id"
+            id="base_id"
+            :label="__('inventario.stock.campo_base')"
+            :options="$basesDisponibles"
+            :value="$baseId"
+            :placeholder="__('inventario.stock.campo_base_placeholder')"
+            :error="$errors->first('base_id')"
+            required
+        />
 
-        <div class="ag-input" data-ag-movimiento-campo="traslado">
-            <label for="base_destino_id" class="ag-input__label">{{ __('inventario.stock.campo_base_destino') }}</label>
-            <div class="ag-input__control {{ $errors->has('base_destino_id') ? 'ag-input__control--error' : '' }}">
-                <select name="base_destino_id" id="base_destino_id" class="ag-input__field">
-                    <option value="" @selected($baseDestinoId === '')>{{ __('inventario.stock.campo_base_destino_placeholder') }}</option>
-                    @foreach ($basesDisponibles as $id => $nombreBase)
-                        <option value="{{ $id }}" @selected((string) $baseDestinoId === (string) $id)>{{ $nombreBase }}</option>
-                    @endforeach
-                </select>
-            </div>
-            @if ($errors->has('base_destino_id'))
-                <p class="ag-input__error" role="alert">{{ $errors->first('base_destino_id') }}</p>
-            @endif
+        <div data-ag-movimiento-campo="traslado">
+            <x-atoms.select
+                name="base_destino_id"
+                id="base_destino_id"
+                :label="__('inventario.stock.campo_base_destino')"
+                :options="$basesDisponibles"
+                :value="$baseDestinoId"
+                :placeholder="__('inventario.stock.campo_base_destino_placeholder')"
+                :error="$errors->first('base_destino_id')"
+            />
         </div>
 
         <x-atoms.input
@@ -140,21 +115,16 @@
             error="{{ $errors->first('cantidad') }}"
         />
 
-        <div class="ag-input" data-ag-movimiento-campo="ajuste">
-            <label for="sentido" class="ag-input__label">{{ __('inventario.stock.campo_sentido') }}</label>
-            <div class="ag-input__control {{ $errors->has('sentido') ? 'ag-input__control--error' : '' }}">
-                <select name="sentido" id="sentido" class="ag-input__field">
-                    <option value="" @selected($sentido === '')>{{ __('inventario.stock.campo_sentido') }}</option>
-                    @foreach ($sentidos as $opcionSentido)
-                        <option value="{{ $opcionSentido->value }}" @selected($sentido === $opcionSentido->value)>
-                            {{ __('inventario.sentido_ajuste.'.$opcionSentido->value) }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-            @if ($errors->has('sentido'))
-                <p class="ag-input__error" role="alert">{{ $errors->first('sentido') }}</p>
-            @endif
+        <div data-ag-movimiento-campo="ajuste">
+            <x-atoms.select
+                name="sentido"
+                id="sentido"
+                :label="__('inventario.stock.campo_sentido')"
+                :options="collect($sentidos)->mapWithKeys(fn($s) => [$s->value => __('inventario.sentido_ajuste.'.$s->value)])"
+                :value="$sentido"
+                :placeholder="__('inventario.stock.campo_sentido')"
+                :error="$errors->first('sentido')"
+            />
         </div>
 
         <div data-ag-movimiento-campo="compra">

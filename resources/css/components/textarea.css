@@ -1,0 +1,85 @@
+/*
+ * Átomo: textarea (resources/views/components/atoms/textarea.blade.php)
+ * Misma caja "outlined" Material que `atoms/input`/`atoms/select`
+ * (`.ag-textarea__control` reusa el mismo lenguaje visual que
+ * `.ag-input__control`), sin ícono de prefijo ni toggle: un control
+ * multilínea no tiene una sola línea de base para alinear un ícono al
+ * costado, y no aplica ningún toggle de contraseña.
+ */
+
+.ag-textarea {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-1);
+    margin-bottom: var(--ag-space-4);
+    font-family: var(--ag-font-family-base);
+}
+
+.ag-textarea__label {
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+    color: var(--ag-color-text);
+}
+
+.ag-textarea__required {
+    color: var(--ag-color-danger);
+    margin-inline-start: var(--ag-space-1);
+}
+
+.ag-textarea__control {
+    display: flex;
+    background-color: var(--ag-color-bg-elevated);
+    border: 1px solid var(--ag-color-border-strong);
+    border-radius: var(--ag-radius-md);
+    transition:
+        border-color var(--ag-transition-fast),
+        box-shadow var(--ag-transition-fast);
+}
+
+.ag-textarea__control:focus-within {
+    border-color: var(--ag-color-primary);
+    box-shadow: 0 0 0 3px var(--ag-color-primary-subtle);
+}
+
+.ag-textarea__control--error {
+    border-color: var(--ag-color-danger);
+}
+
+.ag-textarea__control--error:focus-within {
+    box-shadow: 0 0 0 3px var(--ag-color-danger-subtle);
+}
+
+.ag-textarea__field {
+    flex: 1;
+    width: 100%;
+    border: none;
+    background: transparent;
+    color: var(--ag-color-text);
+    font-size: var(--ag-font-size-base);
+    font-family: inherit;
+    padding: var(--ag-space-3) var(--ag-space-4);
+    outline: none;
+    resize: vertical;
+}
+
+.ag-textarea__field::placeholder {
+    color: var(--ag-color-text-muted);
+}
+
+.ag-textarea__field:disabled {
+    color: var(--ag-color-text-muted);
+    cursor: not-allowed;
+    resize: none;
+}
+
+.ag-textarea__help {
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+    margin: 0;
+}
+
+.ag-textarea__error {
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-danger);
+    margin: 0;
+}

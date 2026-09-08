@@ -63,25 +63,21 @@
                         :count="__('comercial.facturas.campos_contador', ['cantidad' => 1])"
                     >
                         <div class="ag-form-section__field--full">
-                            <div class="ag-input">
-                                <label for="acta_id" class="ag-input__label">
-                                    {{ __('comercial.facturas.campo_acta') }}
-                                    <span class="ag-input__required" aria-hidden="true">*</span>
-                                </label>
-                                <div class="ag-input__control {{ $errors->has('acta_id') ? 'ag-input__control--error' : '' }}">
-                                    <select name="acta_id" id="acta_id" class="ag-input__field" required>
-                                        <option value="">{{ __('comercial.facturas.campo_acta_placeholder') }}</option>
-                                        @foreach ($actasDisponibles as $acta)
-                                            <option value="{{ $acta['actaId'] }}" @selected((string) $actaId === (string) $acta['actaId'])>
-                                                {{ __('comercial.facturas.campo_acta_opcion', ['cliente' => $acta['clienteNombre'], 'id' => $acta['actaId'], 'hectareas' => number_format((float) $acta['hectareasConformadas'], 2, ',', '.')]) }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                @if ($errors->has('acta_id'))
-                                    <p class="ag-input__error" role="alert">{{ $errors->first('acta_id') }}</p>
-                                @endif
-                            </div>
+                            @php
+                                $actasOptions = collect($actasDisponibles)->mapWithKeys(fn ($acta) => [
+                                    $acta['actaId'] => __('comercial.facturas.campo_acta_opcion', ['cliente' => $acta['clienteNombre'], 'id' => $acta['actaId'], 'hectareas' => number_format((float) $acta['hectareasConformadas'], 2, ',', '.')])
+                                ]);
+                            @endphp
+                            <x-atoms.select
+                                name="acta_id"
+                                id="acta_id"
+                                label="{{ __('comercial.facturas.campo_acta') }}"
+                                :options="$actasOptions"
+                                :value="$actaId"
+                                placeholder="{{ __('comercial.facturas.campo_acta_placeholder') }}"
+                                required
+                                error="{{ $errors->first('acta_id') }}"
+                            />
                         </div>
                     </x-molecules.form-section>
 

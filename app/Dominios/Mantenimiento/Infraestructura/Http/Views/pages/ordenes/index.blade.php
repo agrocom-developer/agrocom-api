@@ -70,28 +70,34 @@
             @endif
 
             <form method="GET" action="{{ route('panel.ordenes-mantenimiento.index') }}" class="ag-filtros ag-ordenes-mantenimiento__filtros">
-                <div class="ag-input">
-                    <label for="filtro-estado" class="ag-input__label">{{ __('mantenimiento.ordenes.filtro_estado') }}</label>
-                    <div class="ag-input__control">
-                        <select name="estado" id="filtro-estado" class="ag-input__field">
-                            <option value="">{{ __('mantenimiento.ordenes.filtro_todos') }}</option>
-                            @foreach ($variantePorEstado as $valor => $variante)
-                                <option value="{{ $valor }}" @selected($filtros['estado'] === $valor)>{{ __('mantenimiento.estado_orden.'.$valor) }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
+                @php
+                    $opcionesEstado = collect($variantePorEstado)->mapWithKeys(fn ($_, $valor) => [
+                        $valor => __('mantenimiento.estado_orden.'.$valor)
+                    ])->all();
+                @endphp
+                <x-atoms.select
+                    name="estado"
+                    id="filtro-estado"
+                    label="{{ __('mantenimiento.ordenes.filtro_estado') }}"
+                    :options="$opcionesEstado"
+                    :value="$filtros['estado']"
+                    placeholder="{{ __('mantenimiento.ordenes.filtro_todos') }}"
+                />
 
-                <div class="ag-input">
-                    <label for="filtro-equipo-tipo" class="ag-input__label">{{ __('mantenimiento.ordenes.filtro_equipo_tipo') }}</label>
-                    <div class="ag-input__control">
-                        <select name="equipo_tipo" id="filtro-equipo-tipo" class="ag-input__field">
-                            <option value="">{{ __('mantenimiento.ordenes.filtro_todos') }}</option>
-                            <option value="dron" @selected($filtros['equipo_tipo'] === 'dron')>{{ __('mantenimiento.equipo_tipo.dron') }}</option>
-                            <option value="vehiculo" @selected($filtros['equipo_tipo'] === 'vehiculo')>{{ __('mantenimiento.equipo_tipo.vehiculo') }}</option>
-                        </select>
-                    </div>
-                </div>
+                @php
+                    $opcionesEquipoTipo = [
+                        'dron' => __('mantenimiento.equipo_tipo.dron'),
+                        'vehiculo' => __('mantenimiento.equipo_tipo.vehiculo'),
+                    ];
+                @endphp
+                <x-atoms.select
+                    name="equipo_tipo"
+                    id="filtro-equipo-tipo"
+                    label="{{ __('mantenimiento.ordenes.filtro_equipo_tipo') }}"
+                    :options="$opcionesEquipoTipo"
+                    :value="$filtros['equipo_tipo']"
+                    placeholder="{{ __('mantenimiento.ordenes.filtro_todos') }}"
+                />
 
                 <div class="ag-filtros__acciones ag-ordenes-mantenimiento__filtros-acciones">
                     <x-atoms.button type="submit" variant="outline" size="md" icon="search">

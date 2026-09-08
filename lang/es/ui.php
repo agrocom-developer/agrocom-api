@@ -21,6 +21,43 @@ return [
         'hide_password' => 'Ocultar contraseña',
     ],
 
+    // Chrome del combobox atoms/select (tarea 76, HU-53): microcopy propia
+    // del control, no del formulario que lo usa (ADR 0013) — mismo criterio
+    // que 'input' de arriba.
+    'select' => [
+        'search_placeholder' => 'Buscar…',
+        'no_results' => 'Sin resultados',
+        'clear' => 'Limpiar selección',
+    ],
+
+    // Chrome del calendario atoms/date (tarea 76, HU-53), etapa 2: nombres
+    // de mes/día y microcopy de navegación — no son texto de negocio, son
+    // el vocabulario del propio calendario (mismo criterio que 'select' de
+    // arriba). 'dias_cortos'/'dias_completos' arrancan en lunes (invariante
+    // de la tarea: semana empezando lunes) — date.js nunca reordena estos
+    // arreglos, calcula el índice de columna directo desde la fecha.
+    'date' => [
+        'meses' => [
+            'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+            'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+        ],
+        'dias_cortos' => ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+        'dias_completos' => ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'],
+        'mes_anterior' => 'Mes anterior',
+        'mes_siguiente' => 'Mes siguiente',
+        'hoy' => 'Hoy',
+        'limpiar' => 'Limpiar fecha',
+        'elegir_fecha' => 'Elegir fecha',
+    ],
+
+    // Chrome de la búsqueda de atoms/checkbox-group (tarea 76, HU-53), etapa
+    // 3: mismo criterio que 'select' de arriba — microcopy propia del
+    // filtro, no del formulario que lo usa (ADR 0013).
+    'checkbox_group' => [
+        'search_placeholder' => 'Buscar…',
+        'no_results' => 'Sin resultados',
+    ],
+
     'theme' => [
         'light' => 'Tema claro',
         'dark' => 'Tema oscuro',

@@ -80,17 +80,20 @@
             @endif
 
             <form method="GET" action="{{ route('panel.ordenes.index') }}" class="ag-filtros ag-ordenes__filtros">
-                <div class="ag-input">
-                    <label for="filtro-estado" class="ag-input__label">{{ __('operaciones.ordenes.filtro_estado') }}</label>
-                    <div class="ag-input__control">
-                        <select name="estado" id="filtro-estado" class="ag-input__field">
-                            <option value="">{{ __('operaciones.ordenes.filtro_todos') }}</option>
-                            @foreach ($variantePorEstado as $valor => $variante)
-                                <option value="{{ $valor }}" @selected($filtros['estado'] === $valor)>{{ __('operaciones.estado.'.$valor) }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
+                @php
+                    $opcionesEstado = collect($variantePorEstado)->mapWithKeys(fn ($variante, $valor) => [
+                        $valor => __('operaciones.estado.'.$valor)
+                    ])->all();
+                @endphp
+
+                <x-atoms.select
+                    name="estado"
+                    id="filtro-estado"
+                    label="{{ __('operaciones.ordenes.filtro_estado') }}"
+                    :options="$opcionesEstado"
+                    :value="$filtros['estado']"
+                    :placeholder="__('operaciones.ordenes.filtro_todos')"
+                />
 
                 <div class="ag-filtros__acciones ag-ordenes__filtros-acciones">
                     <x-atoms.button type="submit" variant="outline" size="md" icon="search">

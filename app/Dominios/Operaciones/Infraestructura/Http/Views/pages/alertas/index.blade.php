@@ -48,29 +48,39 @@
         @php $hayFiltrosActivos = $filtros['estado'] !== null || $filtros['tipo'] !== null; @endphp
 
         <form method="GET" action="{{ route('panel.alertas.index') }}" class="ag-filtros ag-alertas__filtros">
-            <div class="ag-input">
-                <label for="filtro-estado" class="ag-input__label">{{ __('operaciones.alertas.filtro_estado') }}</label>
-                <div class="ag-input__control">
-                    <select name="estado" id="filtro-estado" class="ag-input__field">
-                        <option value="">{{ __('operaciones.alertas.filtro_todos') }}</option>
-                        <option value="pendiente" @selected($filtros['estado'] === 'pendiente')>{{ __('operaciones.alertas.estado.pendiente') }}</option>
-                        <option value="atendida" @selected($filtros['estado'] === 'atendida')>{{ __('operaciones.alertas.estado.atendida') }}</option>
-                    </select>
-                </div>
-            </div>
+            @php
+                $opcionesEstado = [
+                    'pendiente' => __('operaciones.alertas.estado.pendiente'),
+                    'atendida' => __('operaciones.alertas.estado.atendida'),
+                ];
+            @endphp
 
-            <div class="ag-input">
-                <label for="filtro-tipo" class="ag-input__label">{{ __('operaciones.alertas.filtro_tipo') }}</label>
-                <div class="ag-input__control">
-                    <select name="tipo" id="filtro-tipo" class="ag-input__field">
-                        <option value="">{{ __('operaciones.alertas.filtro_todos') }}</option>
-                        <option value="bateria_caliente" @selected($filtros['tipo'] === 'bateria_caliente')>{{ __('operaciones.alertas.tipo.bateria_caliente') }}</option>
-                        <option value="dron_sospechoso" @selected($filtros['tipo'] === 'dron_sospechoso')>{{ __('operaciones.alertas.tipo.dron_sospechoso') }}</option>
-                        <option value="condiciones_forzadas" @selected($filtros['tipo'] === 'condiciones_forzadas')>{{ __('operaciones.alertas.tipo.condiciones_forzadas') }}</option>
-                        <option value="suma_excedida" @selected($filtros['tipo'] === 'suma_excedida')>{{ __('operaciones.alertas.tipo.suma_excedida') }}</option>
-                    </select>
-                </div>
-            </div>
+            <x-atoms.select
+                name="estado"
+                id="filtro-estado"
+                label="{{ __('operaciones.alertas.filtro_estado') }}"
+                :options="$opcionesEstado"
+                :value="$filtros['estado']"
+                :placeholder="__('operaciones.alertas.filtro_todos')"
+            />
+
+            @php
+                $opcionesTipo = [
+                    'bateria_caliente' => __('operaciones.alertas.tipo.bateria_caliente'),
+                    'dron_sospechoso' => __('operaciones.alertas.tipo.dron_sospechoso'),
+                    'condiciones_forzadas' => __('operaciones.alertas.tipo.condiciones_forzadas'),
+                    'suma_excedida' => __('operaciones.alertas.tipo.suma_excedida'),
+                ];
+            @endphp
+
+            <x-atoms.select
+                name="tipo"
+                id="filtro-tipo"
+                label="{{ __('operaciones.alertas.filtro_tipo') }}"
+                :options="$opcionesTipo"
+                :value="$filtros['tipo']"
+                :placeholder="__('operaciones.alertas.filtro_todos')"
+            />
 
             <div class="ag-filtros__acciones ag-alertas__filtros-acciones">
                 <x-atoms.button type="submit" variant="primary" size="md" icon="filter_alt">

@@ -49,33 +49,28 @@
             @php $hayFiltrosActivos = $filtros['cliente_id'] !== null || $filtros['desde'] !== null || $filtros['hasta'] !== null; @endphp
 
             <form method="GET" action="{{ route('panel.reportes.tecnicos.index') }}" class="ag-filtros ag-reportes-tecnicos__filtros">
-                <div class="ag-input">
-                    <label for="filtro-cliente" class="ag-input__label">{{ __('operaciones.reportes_tecnicos.filtro_cliente') }}</label>
-                    <div class="ag-input__control">
-                        <select name="cliente_id" id="filtro-cliente" class="ag-input__field">
-                            <option value="">{{ __('operaciones.reportes_tecnicos.filtro_cliente_placeholder') }}</option>
-                            @foreach ($clientesDisponibles as $clienteId => $clienteNombre)
-                                <option value="{{ $clienteId }}" @selected((string) $filtros['cliente_id'] === (string) $clienteId)>
-                                    {{ $clienteNombre }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
+                <x-atoms.select
+                    name="cliente_id"
+                    id="filtro-cliente"
+                    label="{{ __('operaciones.reportes_tecnicos.filtro_cliente') }}"
+                    :options="$clientesDisponibles"
+                    :value="$filtros['cliente_id']"
+                    :placeholder="__('operaciones.reportes_tecnicos.filtro_cliente_placeholder')"
+                />
 
-                <div class="ag-input">
-                    <label for="filtro-desde" class="ag-input__label">{{ __('operaciones.reportes_tecnicos.filtro_desde') }}</label>
-                    <div class="ag-input__control">
-                        <input type="date" name="desde" id="filtro-desde" class="ag-input__field" value="{{ $filtros['desde'] }}">
-                    </div>
-                </div>
+                <x-atoms.date
+                    name="desde"
+                    id="filtro-desde"
+                    label="{{ __('operaciones.reportes_tecnicos.filtro_desde') }}"
+                    :value="$filtros['desde']"
+                />
 
-                <div class="ag-input">
-                    <label for="filtro-hasta" class="ag-input__label">{{ __('operaciones.reportes_tecnicos.filtro_hasta') }}</label>
-                    <div class="ag-input__control">
-                        <input type="date" name="hasta" id="filtro-hasta" class="ag-input__field" value="{{ $filtros['hasta'] }}">
-                    </div>
-                </div>
+                <x-atoms.date
+                    name="hasta"
+                    id="filtro-hasta"
+                    label="{{ __('operaciones.reportes_tecnicos.filtro_hasta') }}"
+                    :value="$filtros['hasta']"
+                />
 
                 <div class="ag-filtros__acciones ag-reportes-tecnicos__filtros-acciones">
                     <x-atoms.button type="submit" variant="primary" size="md" icon="filter_alt">

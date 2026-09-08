@@ -56,33 +56,33 @@
             @php $hayFiltrosActivos = $filtros['cliente_id'] !== null || $filtros['contrato_id'] !== null; @endphp
 
             <form method="GET" action="{{ route('panel.reportes.comercial.index') }}" class="ag-filtros ag-reportes-comerciales__filtros">
-                <div class="ag-input">
-                    <label for="filtro-cliente" class="ag-input__label">{{ __('comercial.reportes_comerciales.filtro_cliente') }}</label>
-                    <div class="ag-input__control">
-                        <select name="cliente_id" id="filtro-cliente" class="ag-input__field">
-                            <option value="">{{ __('comercial.reportes_comerciales.filtro_todos') }}</option>
-                            @foreach ($clientesDisponibles as $cliente)
-                                <option value="{{ $cliente->id }}" @selected($filtros['cliente_id'] === $cliente->id)>
-                                    {{ $cliente->razon_social }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
+                @php
+                    $clientesOptions = $clientesDisponibles->mapWithKeys(fn ($cliente) => [
+                        $cliente->id => $cliente->razon_social
+                    ]);
+                @endphp
+                <x-atoms.select
+                    name="cliente_id"
+                    id="filtro-cliente"
+                    label="{{ __('comercial.reportes_comerciales.filtro_cliente') }}"
+                    :options="$clientesOptions"
+                    :value="$filtros['cliente_id']"
+                    placeholder="{{ __('comercial.reportes_comerciales.filtro_todos') }}"
+                />
 
-                <div class="ag-input">
-                    <label for="filtro-contrato" class="ag-input__label">{{ __('comercial.reportes_comerciales.filtro_contrato') }}</label>
-                    <div class="ag-input__control">
-                        <select name="contrato_id" id="filtro-contrato" class="ag-input__field">
-                            <option value="">{{ __('comercial.reportes_comerciales.filtro_todos') }}</option>
-                            @foreach ($contratosDisponibles as $contrato)
-                                <option value="{{ $contrato->id }}" @selected($filtros['contrato_id'] === $contrato->id)>
-                                    {{ __('comercial.reportes_comerciales.filtro_contrato_opcion', ['id' => $contrato->id, 'cliente' => $contrato->cliente->razon_social]) }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
+                @php
+                    $contratosOptions = $contratosDisponibles->mapWithKeys(fn ($contrato) => [
+                        $contrato->id => __('comercial.reportes_comerciales.filtro_contrato_opcion', ['id' => $contrato->id, 'cliente' => $contrato->cliente->razon_social])
+                    ]);
+                @endphp
+                <x-atoms.select
+                    name="contrato_id"
+                    id="filtro-contrato"
+                    label="{{ __('comercial.reportes_comerciales.filtro_contrato') }}"
+                    :options="$contratosOptions"
+                    :value="$filtros['contrato_id']"
+                    placeholder="{{ __('comercial.reportes_comerciales.filtro_todos') }}"
+                />
 
                 <div class="ag-filtros__acciones ag-reportes-comerciales__filtros-acciones">
                     <x-atoms.button type="submit" variant="primary" size="md" icon="filter_alt">

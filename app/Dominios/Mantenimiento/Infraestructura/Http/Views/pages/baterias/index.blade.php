@@ -85,29 +85,28 @@
                     </div>
                 </div>
 
-                <div class="ag-input">
-                    <label for="filtro-base" class="ag-input__label">{{ __('mantenimiento.baterias.filtro_base') }}</label>
-                    <div class="ag-input__control">
-                        <select name="base_id" id="filtro-base" class="ag-input__field">
-                            <option value="">{{ __('mantenimiento.baterias.filtro_todos') }}</option>
-                            @foreach ($basesDisponibles as $id => $nombreBase)
-                                <option value="{{ $id }}" @selected($filtros['base_id'] === $id)>{{ $nombreBase }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
+                <x-atoms.select
+                    name="base_id"
+                    id="filtro-base"
+                    label="{{ __('mantenimiento.baterias.filtro_base') }}"
+                    :options="$basesDisponibles"
+                    :value="$filtros['base_id']"
+                    placeholder="{{ __('mantenimiento.baterias.filtro_todos') }}"
+                />
 
-                <div class="ag-input">
-                    <label for="filtro-estado" class="ag-input__label">{{ __('mantenimiento.baterias.filtro_estado') }}</label>
-                    <div class="ag-input__control">
-                        <select name="estado" id="filtro-estado" class="ag-input__field">
-                            <option value="">{{ __('mantenimiento.baterias.filtro_todos') }}</option>
-                            @foreach ($variantePorEstado as $valor => $variante)
-                                <option value="{{ $valor }}" @selected($filtros['estado'] === $valor)>{{ __('mantenimiento.estado_bateria.'.$valor) }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
+                @php
+                    $opcionesEstado = collect($variantePorEstado)->mapWithKeys(fn ($_, $valor) => [
+                        $valor => __('mantenimiento.estado_bateria.'.$valor)
+                    ])->all();
+                @endphp
+                <x-atoms.select
+                    name="estado"
+                    id="filtro-estado"
+                    label="{{ __('mantenimiento.baterias.filtro_estado') }}"
+                    :options="$opcionesEstado"
+                    :value="$filtros['estado']"
+                    placeholder="{{ __('mantenimiento.baterias.filtro_todos') }}"
+                />
 
                 <div class="ag-filtros__acciones ag-baterias__filtros-acciones">
                     {{-- outline, no primary: "Nueva batería" ya es el único

@@ -17,14 +17,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectSubrubro = formulario.querySelector('[data-ag-gasto-subrubro]');
     if (!selectRubro || !selectSubrubro) return;
 
-    const opciones = Array.from(selectSubrubro.querySelectorAll('option[data-rubro-id]'));
+    // El mapa subrubro→rubro viaja en el propio <select> (tarea 76,
+    // `x-atoms.select`), no por <option> como antes: el combobox que arma
+    // atoms/select.js reemplaza al nativo visualmente y no soporta
+    // atributos por opción.
+    const mapaRubroSubrubro = JSON.parse(selectSubrubro.dataset.mapaRubroSubrubro || '{}');
+    const opciones = Array.from(selectSubrubro.querySelectorAll('option')).filter((opcion) => opcion.value !== '');
 
     const aplicarFiltro = () => {
         const rubroId = selectRubro.value;
         let valorSigueVisible = false;
 
         opciones.forEach((opcion) => {
-            const visible = opcion.dataset.rubroId === rubroId;
+            const visible = String(mapaRubroSubrubro[opcion.value]) === rubroId;
             opcion.hidden = !visible;
             opcion.disabled = !visible;
             if (visible && opcion.value === selectSubrubro.value) {

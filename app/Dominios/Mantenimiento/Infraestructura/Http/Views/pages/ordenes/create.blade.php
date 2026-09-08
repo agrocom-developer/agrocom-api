@@ -56,66 +56,61 @@
                 :title="__('mantenimiento.ordenes.seccion_datos')"
                 :count="__('mantenimiento.ordenes.campos_contador', ['cantidad' => 4])"
             >
-                <div class="ag-input">
-                    <label for="equipo_tipo" class="ag-input__label">
-                        {{ __('mantenimiento.ordenes.campo_equipo_tipo') }}
-                        <span class="ag-input__required" aria-hidden="true">*</span>
-                    </label>
-                    <div class="ag-input__control {{ $errors->has('equipo_tipo') ? 'ag-input__control--error' : '' }}">
-                        <select name="equipo_tipo" id="equipo_tipo" class="ag-input__field" required data-ag-orden-equipo-tipo>
-                            <option value="" disabled @selected($equipoTipo === '')>{{ __('mantenimiento.ordenes.campo_equipo_tipo_placeholder') }}</option>
-                            <option value="dron" @selected($equipoTipo === 'dron')>{{ __('mantenimiento.equipo_tipo.dron') }}</option>
-                            <option value="vehiculo" @selected($equipoTipo === 'vehiculo')>{{ __('mantenimiento.equipo_tipo.vehiculo') }}</option>
-                        </select>
-                    </div>
-                    @if ($errors->has('equipo_tipo'))
-                        <p class="ag-input__error" role="alert">{{ $errors->first('equipo_tipo') }}</p>
-                    @endif
+                @php
+                    $opcionesEquipoTipo = [
+                        'dron' => __('mantenimiento.equipo_tipo.dron'),
+                        'vehiculo' => __('mantenimiento.equipo_tipo.vehiculo'),
+                    ];
+                    $opcionesTipo = [
+                        'preventivo' => __('mantenimiento.tipo_orden.preventivo'),
+                        'correctivo' => __('mantenimiento.tipo_orden.correctivo'),
+                    ];
+                @endphp
+                <x-atoms.select
+                    name="equipo_tipo"
+                    id="equipo_tipo"
+                    label="{{ __('mantenimiento.ordenes.campo_equipo_tipo') }}"
+                    :options="$opcionesEquipoTipo"
+                    :value="$equipoTipo"
+                    placeholder="{{ __('mantenimiento.ordenes.campo_equipo_tipo_placeholder') }}"
+                    required
+                    error="{{ $errors->first('equipo_tipo') }}"
+                    data-ag-orden-equipo-tipo
+                />
+
+                <div data-ag-orden-campo="dron">
+                    <x-atoms.select
+                        name="equipo_id"
+                        id="equipo_id_dron"
+                        label="{{ __('mantenimiento.ordenes.campo_equipo_dron') }}"
+                        :options="$dronesDisponibles"
+                        :value="$equipoTipo === 'dron' ? $equipoId : ''"
+                        placeholder="{{ __('mantenimiento.ordenes.campo_equipo_dron_placeholder') }}"
+                    />
                 </div>
 
-                <div class="ag-input" data-ag-orden-campo="dron">
-                    <label for="equipo_id_dron" class="ag-input__label">{{ __('mantenimiento.ordenes.campo_equipo_dron') }}</label>
-                    <div class="ag-input__control {{ $errors->has('equipo_id') ? 'ag-input__control--error' : '' }}">
-                        <select name="equipo_id" id="equipo_id_dron" class="ag-input__field">
-                            <option value="" @selected($equipoId === '')>{{ __('mantenimiento.ordenes.campo_equipo_dron_placeholder') }}</option>
-                            @foreach ($dronesDisponibles as $id => $identificador)
-                                <option value="{{ $id }}" @selected($equipoTipo === 'dron' && (string) $equipoId === (string) $id)>{{ $identificador }}</option>
-                            @endforeach
-                        </select>
-                    </div>
+                <div data-ag-orden-campo="vehiculo">
+                    <x-atoms.select
+                        name="equipo_id"
+                        id="equipo_id_vehiculo"
+                        label="{{ __('mantenimiento.ordenes.campo_equipo_vehiculo') }}"
+                        :options="$vehiculosDisponibles"
+                        :value="$equipoTipo === 'vehiculo' ? $equipoId : ''"
+                        placeholder="{{ __('mantenimiento.ordenes.campo_equipo_vehiculo_placeholder') }}"
+                        error="{{ $errors->first('equipo_id') }}"
+                    />
                 </div>
 
-                <div class="ag-input" data-ag-orden-campo="vehiculo">
-                    <label for="equipo_id_vehiculo" class="ag-input__label">{{ __('mantenimiento.ordenes.campo_equipo_vehiculo') }}</label>
-                    <div class="ag-input__control {{ $errors->has('equipo_id') ? 'ag-input__control--error' : '' }}">
-                        <select name="equipo_id" id="equipo_id_vehiculo" class="ag-input__field">
-                            <option value="" @selected($equipoId === '')>{{ __('mantenimiento.ordenes.campo_equipo_vehiculo_placeholder') }}</option>
-                            @foreach ($vehiculosDisponibles as $id => $identificador)
-                                <option value="{{ $id }}" @selected($equipoTipo === 'vehiculo' && (string) $equipoId === (string) $id)>{{ $identificador }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    @if ($errors->has('equipo_id'))
-                        <p class="ag-input__error" role="alert">{{ $errors->first('equipo_id') }}</p>
-                    @endif
-                </div>
-
-                <div class="ag-input">
-                    <label for="tipo" class="ag-input__label">
-                        {{ __('mantenimiento.ordenes.campo_tipo') }}
-                        <span class="ag-input__required" aria-hidden="true">*</span>
-                    </label>
-                    <div class="ag-input__control {{ $errors->has('tipo') ? 'ag-input__control--error' : '' }}">
-                        <select name="tipo" id="tipo" class="ag-input__field" required>
-                            <option value="" disabled @selected($tipo === '')>{{ __('mantenimiento.ordenes.campo_tipo_placeholder') }}</option>
-                            <option value="preventivo" @selected($tipo === 'preventivo')>{{ __('mantenimiento.tipo_orden.preventivo') }}</option>
-                            <option value="correctivo" @selected($tipo === 'correctivo')>{{ __('mantenimiento.tipo_orden.correctivo') }}</option>
-                        </select>
-                    </div>
-                    @if ($errors->has('tipo'))
-                        <p class="ag-input__error" role="alert">{{ $errors->first('tipo') }}</p>
-                    @endif
-                </div>
+                <x-atoms.select
+                    name="tipo"
+                    id="tipo"
+                    label="{{ __('mantenimiento.ordenes.campo_tipo') }}"
+                    :options="$opcionesTipo"
+                    :value="$tipo"
+                    placeholder="{{ __('mantenimiento.ordenes.campo_tipo_placeholder') }}"
+                    required
+                    error="{{ $errors->first('tipo') }}"
+                />
 
                 <x-atoms.input
                     type="text"
