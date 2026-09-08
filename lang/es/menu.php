@@ -103,6 +103,10 @@ return [
             // criterio que "Organización" (pantalla de administración
             // transversal, ver runs/10-diseno.md).
             'versiones_apk' => 'Versiones del APK',
+            // HU-46 (tarea 69, ADR 0015 punto 1): la campaña como eje
+            // transversal, configuración de toda la operación — mismo
+            // criterio que "Organización" arriba.
+            'campanias' => 'Campañas',
         ],
     ],
 

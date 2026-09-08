@@ -1,5 +1,6 @@
 <?php
 
+use App\Dominios\Campania\Infraestructura\Http\Controllers\Web\CampaniasController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\CamposController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ClientesController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ContratosController;
@@ -202,6 +203,32 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::post('/panel/versiones-apk/{version}/autorizar', [VersionesApkController::class, 'autorizar'])
             ->name('panel.versiones-apk.autorizar');
+
+        // ADR 0015 punto 1 (tarea 69): alta y mantenimiento de campañas. Sin
+        // `.destroy`: la baja es una transición de estado hacia `cerrada`, no
+        // un soft delete fuera de la máquina de estados (invariante 7).
+        // Cuatro permisos de grano fino
+        // (`campania.campania.ver`/`.crear`/`.editar`/`.cambiar_estado`)
+        // verificados DENTRO del controlador contra el ROL ACTIVO — mismo
+        // criterio que `contratos` arriba. `.cambiar_estado` es exclusivo del
+        // rol `dueno`: "solo el dueño cierra una campaña".
+        Route::get('/panel/campanias', [CampaniasController::class, 'index'])
+            ->name('panel.campanias.index');
+
+        Route::get('/panel/campanias/crear', [CampaniasController::class, 'create'])
+            ->name('panel.campanias.create');
+
+        Route::post('/panel/campanias', [CampaniasController::class, 'store'])
+            ->name('panel.campanias.store');
+
+        Route::get('/panel/campanias/{campania}/editar', [CampaniasController::class, 'edit'])
+            ->name('panel.campanias.edit');
+
+        Route::put('/panel/campanias/{campania}', [CampaniasController::class, 'update'])
+            ->name('panel.campanias.update');
+
+        Route::post('/panel/campanias/{campania}/estado', [CampaniasController::class, 'cambiarEstado'])
+            ->name('panel.campanias.cambiar-estado');
 
         // HU-05 (tarea 13; extendida en HU-15, tarea 15): tablero de
         // trabajos/sesiones con filtros y detalle. Permiso

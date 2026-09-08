@@ -256,6 +256,12 @@ class SecMenuSeeder extends Seeder
         // HU-20: sin módulo raíz propio en la espec §4 (runs/10-diseno.md) —
         // entra bajo Seguridad, mismo criterio que Organización.
         $this->item($seguridad, 'seguridad', 'versiones_apk', 'system_update', 5, ruta: 'panel.versiones-apk.index', codigoPermiso: 'distribucion.version.autorizar');
+        // HU-46 (tarea 69, ADR 0015 punto 1): la campaña como eje transversal
+        // del sistema. Entra bajo Seguridad, no bajo Comercial (de donde nace
+        // la idea): es configuración de toda la operación — gastos y
+        // combustible se imputan a campaña sin pasar por ningún contrato—,
+        // mismo criterio que Organización arriba.
+        $this->item($seguridad, 'seguridad', 'campanias', 'calendar_month', 6, ruta: 'panel.campanias.index', codigoPermiso: 'campania.campania.ver');
     }
 
     private function modulo(string $clave, string $icono, int $orden): SecMenu

@@ -285,6 +285,21 @@ class SeguridadSeeder extends Seeder
         'mantenimiento.plan.crear' => 'Dar de alta un plan de mantenimiento preventivo',
         'mantenimiento.plan.editar' => 'Editar los datos de un plan de mantenimiento preventivo',
         'mantenimiento.plan.eliminar' => 'Dar de baja (lógica) un plan de mantenimiento preventivo',
+        // HU-46 (tarea 69, ADR 0015 punto 1): la campaña como eje transversal
+        // del sistema. Grano fino, mismo criterio que `comercial.contrato.*`
+        // — `.cambiar_estado` separado de `.editar`. A diferencia de
+        // `comercial.contrato.cambiar_estado` (compartido con
+        // `encargado_operaciones`), `.cambiar_estado` NO entra en
+        // PERMISOS_ENCARGADO_OPERACIONES (ver más abajo): "solo el dueño
+        // cierra una campaña" (pedido explícito del 7/9/2026) — con una
+        // única apertura/cierre por campaña al año no hay costo operativo en
+        // concentrarla en el dueño, a diferencia de `.ver`/`.crear`/`.editar`,
+        // que sí comparte con el encargado (arma la campaña, el dueño decide
+        // cuándo abrirla y cerrarla).
+        'campania.campania.ver' => 'Ver el listado de campañas',
+        'campania.campania.crear' => 'Dar de alta una campaña',
+        'campania.campania.editar' => 'Editar los datos de una campaña',
+        'campania.campania.cambiar_estado' => 'Cambiar el estado de una campaña (abrir, cerrar) — exclusivo del dueño',
     ];
 
     /**
@@ -483,6 +498,12 @@ class SeguridadSeeder extends Seeder
         'mantenimiento.plan.crear',
         'mantenimiento.plan.editar',
         'mantenimiento.plan.eliminar',
+        // HU-46 (tarea 69, ADR 0015 punto 1): arma la campaña (código,
+        // nombre, fechas) — sin `.cambiar_estado`, exclusivo del dueño (ver
+        // el comentario en PERMISOS de arriba).
+        'campania.campania.ver',
+        'campania.campania.crear',
+        'campania.campania.editar',
     ];
 
     /**
