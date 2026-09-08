@@ -91,13 +91,13 @@ final class ContratosController
         $datos = $request->validated();
 
         /** @var list<array<string, mixed>> $ventanasCrudas */
-        $ventanasCrudas = $datos['ventanas'];
+        $ventanasCrudas = $datos['ventanas'] ?? [];
         unset($datos['ventanas']);
 
         try {
             $crearContrato->ejecutar(
                 $this->normalizarDatosContrato($datos),
-                array_map($this->normalizarVentanaNueva(...), $ventanasCrudas),
+                array_map($this->normalizarVentanaNueva(...), $this->filasVentanaCompletas($ventanasCrudas)),
             );
         } catch (VentanasContratoSolapadas $excepcion) {
             return redirect()
@@ -135,14 +135,14 @@ final class ContratosController
         $datos = $request->validated();
 
         /** @var list<array<string, mixed>> $ventanasCrudas */
-        $ventanasCrudas = $datos['ventanas'];
+        $ventanasCrudas = $datos['ventanas'] ?? [];
         unset($datos['ventanas']);
 
         try {
             $actualizarContrato->ejecutar(
                 $contrato,
                 $this->normalizarDatosContrato($datos),
-                array_map($this->normalizarVentanaExistente(...), $ventanasCrudas),
+                array_map($this->normalizarVentanaExistente(...), $this->filasVentanaCompletas($ventanasCrudas)),
             );
         } catch (VentanasContratoSolapadas $excepcion) {
             return redirect()
@@ -239,7 +239,28 @@ final class ContratosController
             'humedad_max_pct' => $this->cadenaONull($datos['humedad_max_pct'] ?? null),
             'velocidad_max_kmh' => $this->cadenaONull($datos['velocidad_max_kmh'] ?? null),
             'umbral_reporte_avance_ha' => $this->cadenaONull($datos['umbral_reporte_avance_ha'] ?? null),
+            'altura_vuelo_m' => $this->cadenaONull($datos['altura_vuelo_m'] ?? null),
         ];
+    }
+
+    /**
+     * Descarta las filas totalmente vacías (HU-47, tarea 70): con "Día
+     * completo" encendido el formulario no manda ninguna, pero un envío
+     * manual o una plantilla clonada sin completar podría traer una fila sin
+     * `hora_inicio` ni `hora_fin` — ninguna de las dos es obligatoria por sí
+     * sola (`required_with` mutuo en el Request), así que acá se filtra antes
+     * de llegar al caso de uso: `com_contrato_ventanas.hora_inicio`/`hora_fin`
+     * son `NOT NULL`, y una fila vacía no es una ventana, es la ausencia de una.
+     *
+     * @param  list<array<string, mixed>>  $ventanasCrudas
+     * @return list<array<string, mixed>>
+     */
+    private function filasVentanaCompletas(array $ventanasCrudas): array
+    {
+        return array_values(array_filter(
+            $ventanasCrudas,
+            fn (array $ventana): bool => ($ventana['hora_inicio'] ?? '') !== '' && ($ventana['hora_fin'] ?? '') !== '',
+        ));
     }
 
     /**

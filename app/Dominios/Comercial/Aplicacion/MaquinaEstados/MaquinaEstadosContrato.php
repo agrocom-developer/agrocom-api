@@ -16,10 +16,9 @@ use Carbon\CarbonImmutable;
  * Las guardas de AUTORIZACIÓN ("¿quién puede cambiar este estado?") no viven
  * acá — igual que `MaquinaEstadosSesion::validar()` no decide "validador ≠
  * piloto" (eso es `Aplicacion/ValidarSesion`). La guarda de `activar()` sí
- * vive acá porque es de DATOS del propio contrato (¿tiene ventanas
- * cargadas?, ¿su fecha de inicio ya pasó?), no de quién ejecuta la acción: no
- * hay ningún otro caso de uso que necesite evaluarla antes de invocar la
- * transición.
+ * vive acá porque es de DATOS del propio contrato (¿su fecha de inicio ya
+ * pasó?), no de quién ejecuta la acción: no hay ningún otro caso de uso que
+ * necesite evaluarla antes de invocar la transición.
  */
 final class MaquinaEstadosContrato
 {
@@ -32,21 +31,22 @@ final class MaquinaEstadosContrato
     }
 
     /**
-     * `borrador → vigente` (HU-23, tarea 34). Dos guardas de negocio —
+     * `borrador → vigente` (HU-23, tarea 34). Una guarda de negocio —
      * decisión razonable a falta de una regla más específica en la
      * especificación funcional, documentada acá porque es donde se aplica:
      *
-     * - **Al menos una ventana horaria cargada**: un contrato vigente sin
-     *   ventanas no tiene cuándo aplicar — el criterio de aceptación del
-     *   plan de sprints ("no permite ventana fuera del rango del contrato")
-     *   presupone que existe al menos una.
      * - **`fecha_inicio` no en el pasado**: vigenciar retroactivamente un
      *   contrato cuya vigencia ya debería haber empezado no tiene sentido de
      *   negocio — lo razonable es corregir la fecha antes de activar, no
      *   activar tarde.
      *
+     * Hasta la tarea 70 (HU-47) había una segunda guarda ("al menos una
+     * ventana horaria cargada"): se retiró por pedido explícito del dueño
+     * del 7/9/2026 — cero ventanas es un contrato válido de "día completo",
+     * no un contrato incompleto.
+     *
      * @throws TransicionContratoNoPermitida si `$contrato` no está `borrador`.
-     * @throws ActivacionContratoNoDisponible si falta alguna de las dos guardas.
+     * @throws ActivacionContratoNoDisponible si `fecha_inicio` ya pasó.
      */
     public function activar(Contrato $contrato): Contrato
     {
@@ -55,10 +55,6 @@ final class MaquinaEstadosContrato
 
         if (! TransicionesContrato::permitida($desde, $hasta)) {
             throw TransicionContratoNoPermitida::entre($desde, $hasta);
-        }
-
-        if ($contrato->ventanas()->count() === 0) {
-            throw ActivacionContratoNoDisponible::porFaltaDeVentanas($contrato->id);
         }
 
         if ($contrato->fecha_inicio->startOfDay()->lt(CarbonImmutable::today())) {

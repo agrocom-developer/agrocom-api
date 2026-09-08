@@ -9,7 +9,8 @@ use Illuminate\Validation\Rule;
 
 /**
  * `PUT /panel/contratos/{contrato}` (HU-23, tarea 34). Mismo criterio que
- * `CrearContratoRequest` para los 13 rangos de `CHECK`, ver su docblock.
+ * `CrearContratoRequest` para los rangos de `CHECK` y para que `ventanas` sea
+ * opcional (HU-47, tarea 70) — ver su docblock.
  *
  * `ventanas.*.id`, cuando viene, tiene que pertenecer AL PROPIO contrato que
  * se está editando — nunca a otro (mismo espíritu que
@@ -41,7 +42,8 @@ final class ActualizarContratoRequest extends FormRequest
             'humedad_max_pct' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'velocidad_max_kmh' => ['nullable', 'numeric', 'gt:0'],
             'umbral_reporte_avance_ha' => ['nullable', 'numeric', 'gt:0'],
-            'ventanas' => ['required', 'array', 'min:1'],
+            'altura_vuelo_m' => ['nullable', 'numeric', 'gt:0'],
+            'ventanas' => ['nullable', 'array'],
             'ventanas.*.id' => [
                 'nullable',
                 'integer',
@@ -49,8 +51,8 @@ final class ActualizarContratoRequest extends FormRequest
                     ->where('contrato_id', $contratoId)
                     ->whereNull('deleted_at'),
             ],
-            'ventanas.*.hora_inicio' => ['required', 'date_format:H:i'],
-            'ventanas.*.hora_fin' => ['required', 'date_format:H:i', 'after:ventanas.*.hora_inicio'],
+            'ventanas.*.hora_inicio' => ['nullable', 'required_with:ventanas.*.hora_fin', 'date_format:H:i'],
+            'ventanas.*.hora_fin' => ['nullable', 'required_with:ventanas.*.hora_inicio', 'date_format:H:i', 'after:ventanas.*.hora_inicio'],
         ];
     }
 
@@ -74,9 +76,9 @@ final class ActualizarContratoRequest extends FormRequest
             'cliente_id.exists' => __('comercial.contratos.error_cliente_invalido'),
             'campania_id.required' => __('comercial.contratos.error_campania_requerida'),
             'campania_id.exists' => __('comercial.contratos.error_campania_invalida'),
-            'ventanas.required' => __('comercial.contratos.error_ventanas_minimo'),
-            'ventanas.min' => __('comercial.contratos.error_ventanas_minimo'),
             'ventanas.*.id.exists' => __('comercial.contratos.error_ventana_ajena'),
+            'ventanas.*.hora_inicio.required_with' => __('comercial.contratos.error_ventana_incompleta'),
+            'ventanas.*.hora_fin.required_with' => __('comercial.contratos.error_ventana_incompleta'),
             'ventanas.*.hora_fin.after' => __('comercial.contratos.error_ventana_horas'),
         ];
     }
