@@ -27,7 +27,9 @@ Depende de la tarea 69 (necesita `cpn_campanias`).
   `Views/pages/campos/_formulario.blade.php` + `_lote-fila.blade.php` — es el
   molde de "N filas hijas en un formulario", reusalo.
 - `Comercial/Aplicacion/{Crear,Actualizar,Eliminar}Campo.php` y su controlador.
-- `cpn_campanias` y la campaña activa de sesión (tarea 69).
+- `cpn_campanias` con su `cliente_id` (tarea 69). **No hay campaña activa de
+  sesión**: la campaña se elige dentro del cliente (ADR 0015 punto 1,
+  corregido el 8/9/2026).
 
 ## Qué hacer
 
@@ -43,17 +45,23 @@ Depende de la tarea 69 (necesita `cpn_campanias`).
    `fecha_cosecha_estimada` (nullable), + auditoría y soft delete.
    - `UNIQUE (lote_id, campania_id)` **parcial** (`WHERE deleted_at IS NULL`):
      un cultivo por lote y campaña. El caso de dos ciclos en el mismo año
-     agronómico se modela como **dos campañas**, no como dos cultivos (ADR 0015
-     punto 4) — no lo resuelvas acá.
+     agronómico se modela como **dos campañas del mismo cliente**, abiertas a la
+     vez, no como dos cultivos (ADR 0015 punto 4) — no lo resuelvas acá.
+   - Guarda de consistencia: el lote tiene que pertenecer a un campo del
+     **mismo cliente** que la campaña. Con la campaña colgando del cliente, esto
+     es representable y hay que impedirlo.
    - `CHECK (hectareas_sembradas > 0)` y `CHECK (fecha_cosecha_estimada IS NULL
      OR fecha_siembra IS NULL OR fecha_cosecha_estimada >= fecha_siembra)`,
      solo en pgsql.
    - Guarda de aplicación: `hectareas_sembradas` no puede superar las
      `hectareas` del lote. Va en el caso de uso, con `Brick\Math\BigDecimal`
      (invariante 6, y `bcmath` no está instalado en este entorno).
-4. **La siembra se carga desde la ficha del campo**, en la campaña activa: por
-   cada lote, cultivo + hectáreas sembradas + fechas. Cambiar la campaña activa
-   muestra la siembra de esa campaña y **no pisa** la de la anterior.
+4. **La siembra se carga desde la ficha del campo**, con un selector de
+   campaña arriba: las campañas del **cliente dueño de ese campo**, no todas.
+   Por cada lote, cultivo + hectáreas sembradas + fechas. Cambiar de campaña en
+   el selector muestra la siembra de esa campaña y **no pisa** la de la
+   anterior. Si el cliente no tiene ninguna campaña, la ficha lo dice y ofrece
+   crearla, en vez de mostrar un formulario que no puede guardar.
 5. **Contrato de lectura** `Comercial/Contratos/LecturaCultivoLote` (interfaz +
    DTO primitivo, ADR 0003 regla 2) para que la tarea 75 pueda agrupar por
    cultivo sin tocar los modelos Eloquent de `Comercial`.

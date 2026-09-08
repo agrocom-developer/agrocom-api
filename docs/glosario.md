@@ -8,7 +8,7 @@ Referencia rápida de vocabulario — de negocio y técnico — para que cualqui
 
 | Término | Definición | Referencia |
 |---|---|---|
-| **Campaña** | Ciclo productivo completo (`2025-2026`), el equivalente agronómico de la "gestión" contable: todo lo que se imputa y se cierra vive dentro de una. El panel opera bajo una **campaña activa** por sesión, igual que el rol activo. Se escribe `campania` en código — `campana` es el ícono de notificaciones | especificación §4.0, §5; ADR 0015 |
+| **Campaña** | Ciclo productivo de **un cliente** (`2025-2026`): Agrocom no corre campañas propias, aplica dentro de la del cliente. Única por `(cliente_id, código)`, varias abiertas a la vez y solapadas — un cliente cosechando mientras otro siembra. **No hay campaña activa de sesión**: se elige dentro del cliente o del contrato (corrección del 8/9/2026). Se escribe `campania` en código — `campana` es el ícono de notificaciones | especificación §4.0, §5; ADR 0015 |
 | **Hacienda / Propiedad** | Sinónimos de negocio de **campo** (`com_campos`): el predio del cliente. Un cliente tiene varias propiedades, cada una con varios lotes. En el panel el rótulo es "Propiedades"; el nombre de tabla no cambia | especificación §4.1 |
 | **Personal** | Rótulo del menú para las personas operativas (`per_personas`). El personal es **móvil**: puede trabajar en propiedades, campañas, equipos y lotes distintos — si falta gente, se acopla la disponible | ADR 0015 |
 | **Día completo** | Contrato sin ninguna ventana horaria cargada: se aplica a cualquier hora. Es el valor por defecto, y las horas desde/hasta nunca son obligatorias | especificación §4.1; ADR 0015 |
@@ -86,7 +86,7 @@ Jerga real del equipo, registrada al procesar las respuestas del banco de pregun
 |---|---|---|
 | **`campania` vs. `campana`** | **`campania` (con `i`) es el ciclo productivo; `campana` es el ícono de notificaciones.** No son variantes de lo mismo y ya convivieron a una letra de distancia en `CascaraPanel`. Si vas a escribir `campana`, es porque estás tocando notificaciones | ADR 0015 |
 | **Configuración del sistema** | `/panel/configuracion`: llaves y tokens con que el sistema funciona (mapas, correo, integraciones), cifrados en reposo y nunca devueltos al navegador. **Distinta** de `/panel/organizacion`, que son los datos de la empresa | ADR 0016 |
-| **`campania_id`** | Solo en las tablas donde se **imputa** algo que hay que cerrar por período (contratos, gastos, combustible, equipos, lote-campaña, estadías). Las demás la heredan por su contrato — duplicarla haría representable "trabajo de la campaña A en contrato de la campaña B" | ADR 0015 |
+| **`campania_id`** | Obligatorio donde alguien elige la campaña explícitamente: `contratos` (de la campaña de su propio cliente) y `lote_campania`. **Nullable** en `gastos` y `cargas_combustible`, donde significa en qué campaña se **consumió** — atribución de costo interno, nunca un cargo al cliente, que paga por hectárea. No lo llevan órdenes, trabajos, sesiones, actas ni facturas (lo heredan por contrato), ni `equipos_trabajo` ni `estadias_hacienda` | ADR 0015 |
 | **`uuid_cliente`** | Identificador único generado en el dispositivo de campo antes de sincronizar; garantiza idempotencia | especificación §2.1 |
 | **Outbox** | Patrón de cola local (`cola_sync`) donde toda escritura offline se encola antes de sincronizar | especificación §2.1 |
 | **Idempotencia** | Propiedad de que reintentar la misma operación no cambia el resultado; se logra con `UNIQUE (uuid_cliente)` en base, no en el código | ADR 0001, especificación §2.1 |

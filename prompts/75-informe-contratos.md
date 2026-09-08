@@ -48,8 +48,10 @@ Depende de las tareas 69 (campaña) y 71 (cultivo).
    muestra su mensaje de error debajo. Estado vacío ilustrado hasta la primera
    consulta, y también cuando la consulta no devuelve nada.
 2. **Pantalla de filtros** aparte (no editables desde los chips):
-   - Campaña (múltiple, **por defecto la campaña activa de la sesión**,
-     obligatoria).
+   - Cliente (obligatorio) y, dentro de él, campaña (múltiple, obligatoria).
+     **No hay campaña activa de sesión**: la campaña es del cliente, así que la
+     lista de campañas se carga recién cuando hay cliente elegido (ADR 0015
+     punto 1, corregido el 8/9/2026).
    - Rango de fechas (desde / hasta), estado del contrato, saldo
      (`a aplicar` / `cumplido` / `pendiente`), e "incluir contratos
      deshabilitados" apagado por defecto.

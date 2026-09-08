@@ -16,8 +16,9 @@ mostrar en el tablero, no para imputar: no se le carga un gasto a una
 derivación, no tiene equipamiento, y no existe antes de la primera sesión —
 justo cuando se arma el equipo.
 
-Diseño completo en **ADR 0015 punto 3**. Depende de la tarea 69
-(`campania_id`). Habilita la 73 (gastos) y la 74 (estadías).
+Diseño completo en **ADR 0015 punto 3**. Habilita la 73 (gastos) y la 74
+(estadías). **No depende de la 69**: el equipo es de Agrocom y no lleva
+`campania_id` (corrección del 8/9/2026).
 
 ## Lo que ya existe
 
@@ -37,10 +38,14 @@ Diseño completo en **ADR 0015 punto 3**. Depende de la tarea 69
    mínimo y permisos. **No es HU propia y no debe crecer**: es una tabla de
    catálogo cuyo único consumidor hoy es la asignación al equipo, y sin ella no
    hay generador que asignar (así está justificado en el ADR 0015).
-2. **`per_equipos_trabajo`**: `campania_id` (FK plana a `cpn_campanias`),
-   `codigo` (string 20), `nombre` (nullable), `base_id` (FK a `per_bases`),
-   `estado` (`activo`/`inactivo`, default `activo`), + auditoría y soft delete.
-   Índice único parcial `(campania_id, codigo)` entre filas activas.
+2. **`per_equipos_trabajo`**: `codigo` (string 20), `nombre` (nullable),
+   `base_id` (FK a `per_bases`), `estado` (`activo`/`inactivo`, default
+   `activo`), `desde`, `hasta` (nullable = vigente), + auditoría y soft delete.
+   Índice único parcial sobre `codigo` entre filas activas.
+   **Sin `campania_id`** (ADR 0015 punto 3, corregido el 8/9/2026): la campaña
+   es del cliente y el equipo trabaja para varios en la misma semana. Atarlo a
+   una campaña obligaría a duplicar la cuadrilla por cliente, y el gasto de la
+   camioneta no sabría a cuál de esas copias imputarse.
    **`per_equipos_trabajo`, no `per_equipos`**: la especificación §4.5 reserva
    `equipos` para la vista unificada de maquinaria.
 3. **`per_equipo_integrantes`**: `equipo_trabajo_id`, `persona_id` (FK a
@@ -68,7 +73,7 @@ Diseño completo en **ADR 0015 punto 3**. Depende de la tarea 69
    - Lo único que sí se rechaza es duplicar **la misma** persona o **el mismo**
      recurso dentro **del mismo** equipo con vigencias que se pisan: eso no es
      flexibilidad, es la misma fila dos veces.
-6. **ABM de equipos** en el panel: listado por campaña activa, alta, edición,
+6. **ABM de equipos** en el panel: listado con filtro por estado y por base, alta, edición,
    y una ficha que muestre integrantes y recursos **vigentes a una fecha**
    (selector de fecha, default hoy) — la ficha tiene que poder responder
    "quiénes lo integraban el 14 de marzo". Permisos
