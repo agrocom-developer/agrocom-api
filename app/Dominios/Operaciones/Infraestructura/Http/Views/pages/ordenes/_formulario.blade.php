@@ -35,6 +35,9 @@
     $loteId = old('lote_id', $orden?->lote_id ?? '');
     $contactoId = old('emitida_por_contacto_id', $orden?->emitida_por_contacto_id ?? '');
     $fechaEmision = old('fecha_emision', $orden?->fecha_emision?->toDateString() ?? '');
+    $tipoAplicacion = old('tipo_aplicacion', $orden?->tipo_aplicacion?->value ?? \App\Dominios\Operaciones\Dominio\TipoAplicacion::Desarrollo->value);
+    $opcionesTipoAplicacion = collect(\App\Dominios\Operaciones\Dominio\TipoAplicacion::cases())
+        ->mapWithKeys(fn ($caso) => [$caso->value => __('operaciones.tipo_aplicacion.'.$caso->value)]);
 @endphp
 
 <form method="POST" action="{{ $accion }}" class="ag-ordenes-form" novalidate data-ag-ordenes-form>
@@ -59,7 +62,7 @@
 
     <x-molecules.form-section
         :title="__('operaciones.ordenes.seccion_datos')"
-        :count="__('operaciones.ordenes.campos_contador', ['cantidad' => 7])"
+        :count="__('operaciones.ordenes.campos_contador', ['cantidad' => 8])"
     >
         <x-atoms.select
             name="contrato_id"
@@ -92,6 +95,16 @@
             step="1"
             required
             error="{{ $errors->first('nro_aplicacion') }}"
+        />
+
+        <x-atoms.select
+            name="tipo_aplicacion"
+            id="tipo_aplicacion"
+            label="{{ __('operaciones.ordenes.campo_tipo_aplicacion') }}"
+            :options="$opcionesTipoAplicacion"
+            :value="$tipoAplicacion"
+            required
+            :error="$errors->first('tipo_aplicacion')"
         />
 
         <x-atoms.input

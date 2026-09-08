@@ -38,7 +38,7 @@
 .ag-ordenes__head,
 .ag-ordenes__fila {
     display: grid;
-    grid-template-columns: 1.6fr 1.6fr 0.8fr 0.8fr 1fr 1fr auto;
+    grid-template-columns: 1.6fr 1.6fr 0.8fr 1fr 0.8fr 1fr 1fr auto;
     gap: var(--ag-space-4);
     align-items: center;
     padding: var(--ag-space-3) var(--ag-space-4);
