@@ -26,7 +26,8 @@ Lo que hay hoy no alcanza:
 **Es crítica**: toca dinero. Revisión posterior a la integración, anotada en
 `runs/revision-pendiente.txt` — el PR no se retiene.
 
-Depende de las tareas 69 (`campania_id`) y 72 (equipos y su equipamiento).
+Depende de las tareas 69 (`campania_id` en `fin_gastos`) y 72 (equipos y su
+equipamiento).
 
 ## Lo que ya existe
 
@@ -50,8 +51,15 @@ Depende de las tareas 69 (`campania_id`) y 72 (equipos y su equipamiento).
    `base_id`). Nullable porque el gasto general sigue existiendo — pero el
    formulario lo ofrece primero, antes que base y trabajo.
 2. **`fin_combustibles` pasa a imputar al equipo y al recurso concreto**:
-   - `campania_id` (FK plana, obligatoria), `equipo_trabajo_id` (FK plana,
-     obligatoria — el combustible siempre lo consume una cuadrilla).
+   - `equipo_trabajo_id` (FK plana, **obligatoria** — el combustible siempre lo
+     consume una cuadrilla) y `campania_id` (FK plana, **nullable**).
+   - `campania_id` acá no es el período: es **a qué campaña de cliente se le
+     repercute** esa carga (ADR 0015 punto 6, 8/9/2026). El dueño lo puso así:
+     *"si se carga 2 veces gasolina pero en la última cargada sobra y se va a
+     otro cliente, al cliente se le cobra como nueva cargada a pesar de que sea
+     sobras"*. **La carga es la unidad y no se prorratea**: se le cobra entera a
+     una sola campaña. No calcules remanentes ni repartos proporcionales entre
+     clientes. Vacío = consumo interno que no se le cobra a nadie.
    - `recurso_tipo` (`CHECK IN ('dron','vehiculo','generador')`) y `recurso_id`,
      ambos obligatorios, reemplazando a `destino`. Migrá el dato existente:
      `destino = 'generador'` → `recurso_tipo = 'generador'`,
@@ -68,8 +76,10 @@ Depende de las tareas 69 (`campania_id`) y 72 (equipos y su equipamiento).
    vista — es la regla que hace confiable la imputación.
 4. **Guarda de campaña cerrada** en `CrearGasto` y `CrearCombustible`, igual
    que la que dejó la tarea 69 para el gasto.
-5. **Agregado por equipo y por campaña**: en el listado de gastos, filtro por
-   equipo y por campaña activa, y un total por equipo. Sumas con
+5. **Agregado por equipo y por período**: en el listado de gastos, filtro por
+   equipo, por rango de fechas y por campaña (opcional, dentro de un cliente),
+   y un total por equipo. El corte del costo interno de Agrocom es la **fecha**,
+   no la campaña — la campaña es del cliente (ADR 0015 punto 6). Sumas con
    `BigDecimal` en PHP, **nunca con `SUM()` de SQL** — en SQLite (motor de los
    tests) la agregación pasa por REAL/float y violaría la invariante 6. Ese es
    el mismo criterio que ya documenta `ObtenerAvanceComercial`.

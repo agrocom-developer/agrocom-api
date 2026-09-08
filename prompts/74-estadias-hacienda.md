@@ -19,7 +19,8 @@ la base, `duplicado` ante reintento (invariante 1 de `CLAUDE.md`).
 anotada en `runs/revision-pendiente.txt` — el PR **no** se retiene en borrador.
 La razón está escrita en `CLAUDE.md`: retener el PR #46 bloqueó doce HU.
 
-Depende de las tareas 69 (`campania_id`) y 72 (equipos).
+Depende de la tarea 72 (equipos). **No de la 69**: la estadía no lleva
+`campania_id` (corrección del 8/9/2026).
 
 ## Lo que ya existe
 
@@ -39,8 +40,8 @@ Depende de las tareas 69 (`campania_id`) y 72 (equipos).
 
 ## Qué hacer
 
-1. **`ope_estadias_hacienda`**: `uuid_cliente` (string 36), `campania_id` (FK
-   plana), `equipo_trabajo_id` (FK plana a `per_equipos_trabajo`), `campo_id`
+1. **`ope_estadias_hacienda`**: `uuid_cliente` (string 36),
+   `equipo_trabajo_id` (FK plana a `per_equipos_trabajo`), `campo_id`
    (FK a `com_campos`), `entrada` (dateTime), `salida` (dateTime nullable),
    `vehiculo_id` (FK plana nullable a `man_vehiculos`), `observacion` (text
    nullable), + auditoría y soft delete.
@@ -66,9 +67,12 @@ Depende de las tareas 69 (`campania_id`) y 72 (equipos).
      con motivo.
    - Reintento del mismo `uuid_cliente` → `duplicado`, que el cliente trata
      como éxito.
-   - La campaña sale de la campaña abierta a la fecha de entrada; si no hay
-     ninguna abierta, `rechazado`.
-4. **Pantalla de consulta** en el panel: estadías por campaña activa, con
+   - **Sin campaña.** La estadía no la lleva: el campo dice de qué cliente es y
+     la fecha de entrada ubica el ciclo. El piloto no elige campañas desde el
+     celular, y con varias abiertas por cliente (ADR 0015 punto 1) deducir una
+     sola sería inventar un dato. No agregues la columna ni la deduzcas al
+     sincronizar.
+4. **Pantalla de consulta** en el panel: estadías por rango de fechas, con
    filtro por equipo y por campo, y el total de días efectivos por equipo y por
    propiedad. Solo lectura — la estadía se carga desde la app, no desde el
    panel. Permiso `operaciones.estadia.ver` + ítem de menú.
