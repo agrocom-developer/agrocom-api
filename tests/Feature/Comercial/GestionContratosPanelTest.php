@@ -14,6 +14,7 @@ use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUserRole;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUsuarioInterno;
 use Database\Seeders\Catalogo\CatalogoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 
 /*
@@ -116,15 +117,14 @@ it('una ventana que se solapa con otra del mismo contrato es un error de validac
     expect(Contrato::query()->where('cliente_id', $cliente->id)->exists())->toBeFalse();
 });
 
-it('la transición borrador a vigente sin ninguna ventana cargada es rechazada por la guarda', function () {
+it('la transición borrador a vigente sin ninguna ventana cargada pasa sin error (HU-47: día completo)', function () {
     [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
     entrarAlPanelParaContratos($encargado, $idRol);
     $cliente = clienteParaContratos();
 
     // Contrato armado directo (fuera del flujo HTTP) sin ventanas: el alta
-    // por panel siempre exige al menos una (`ventanas.min:1`), así que esta
-    // guarda solo se ejercita con un contrato que llegó a `borrador` por
-    // otro camino.
+    // por panel ya no exige ninguna desde la tarea 70 — cero ventanas es
+    // "día completo", un contrato válido, no uno incompleto.
     $contrato = new Contrato([
         'cliente_id' => $cliente->id,
         'hectareas_contratadas' => '100.00',
@@ -138,9 +138,108 @@ it('la transición borrador a vigente sin ninguna ventana cargada es rechazada p
 
     $this->post(route('panel.contratos.cambiar-estado', $contrato), ['estado' => 'vigente'])
         ->assertRedirect(route('panel.contratos.index'))
-        ->assertSessionHasErrors('estado');
+        ->assertSessionDoesntHaveErrors();
 
-    expect($contrato->fresh()->estado)->toBe(EstadoContrato::Borrador);
+    expect($contrato->fresh()->estado)->toBe(EstadoContrato::Vigente);
+});
+
+it('da de alta un contrato sin tocar el interruptor de ventanas: día completo, ningún campo de hora es obligatorio', function () {
+    [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaContratos($encargado, $idRol);
+    $cliente = clienteParaContratos();
+    $campania = campaniaParaContratos($cliente->id);
+
+    // Sin la clave `ventanas` en absoluto: el interruptor "Día completo"
+    // arranca encendido y el formulario ni la manda (etapa 2, tarea 70).
+    $payload = Arr::except(payloadContrato($cliente->id, $campania->id), ['ventanas']);
+
+    $this->post(route('panel.contratos.store'), $payload)
+        ->assertRedirect(route('panel.contratos.index'));
+
+    $contrato = Contrato::query()->where('cliente_id', $cliente->id)->sole();
+
+    expect($contrato->ventanas()->count())->toBe(0);
+});
+
+it('una fila de ventana con una sola hora cargada es un error de validación, no persiste', function () {
+    [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaContratos($encargado, $idRol);
+    $cliente = clienteParaContratos();
+    $campania = campaniaParaContratos($cliente->id);
+
+    $this->post(route('panel.contratos.store'), payloadContrato($cliente->id, $campania->id, [
+        'ventanas' => [
+            ['hora_inicio' => '06:00', 'hora_fin' => ''],
+        ],
+    ]))->assertSessionHasErrors('ventanas.0.hora_fin');
+
+    expect(Contrato::query()->where('cliente_id', $cliente->id)->exists())->toBeFalse();
+});
+
+it('altura_vuelo_m cero o negativa es un error de validación, no persiste', function (string $valor) {
+    [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaContratos($encargado, $idRol);
+    $cliente = clienteParaContratos();
+    $campania = campaniaParaContratos($cliente->id);
+
+    $this->post(route('panel.contratos.store'), payloadContrato($cliente->id, $campania->id, [
+        'altura_vuelo_m' => $valor,
+    ]))->assertSessionHasErrors('altura_vuelo_m');
+
+    expect(Contrato::query()->where('cliente_id', $cliente->id)->exists())->toBeFalse();
+})->with(['0', '-1']);
+
+it('guarda la altura de vuelo del contrato cuando se informa', function () {
+    [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaContratos($encargado, $idRol);
+    $cliente = clienteParaContratos();
+    $campania = campaniaParaContratos($cliente->id);
+
+    $this->post(route('panel.contratos.store'), payloadContrato($cliente->id, $campania->id, [
+        'altura_vuelo_m' => '3.50',
+    ]))->assertRedirect(route('panel.contratos.index'));
+
+    $contrato = Contrato::query()->where('cliente_id', $cliente->id)->sole();
+
+    expect($contrato->altura_vuelo_m)->toBe('3.50');
+});
+
+it('el formulario de alta muestra el interruptor "Día completo"', function () {
+    [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaContratos($encargado, $idRol);
+
+    $this->get(route('panel.contratos.create'))
+        ->assertOk()
+        ->assertSee(__('comercial.contratos.ventana_dia_completo'));
+});
+
+it('el listado muestra "Día completo" para un contrato sin ventanas cargadas', function () {
+    [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaContratos($encargado, $idRol);
+    $cliente = clienteParaContratos();
+    $campania = campaniaParaContratos($cliente->id);
+
+    $payload = Arr::except(payloadContrato($cliente->id, $campania->id), ['ventanas']);
+    $this->post(route('panel.contratos.store'), $payload);
+
+    $this->get(route('panel.contratos.index'))
+        ->assertOk()
+        ->assertSee(__('comercial.contratos.ventana_dia_completo'));
+});
+
+it('la ficha de edición de un contrato con ventanas cargadas las muestra, con el interruptor apagado', function () {
+    [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaContratos($encargado, $idRol);
+    $cliente = clienteParaContratos();
+    $campania = campaniaParaContratos($cliente->id);
+
+    $this->post(route('panel.contratos.store'), payloadContrato($cliente->id, $campania->id));
+    $contrato = Contrato::query()->where('cliente_id', $cliente->id)->sole();
+
+    $this->get(route('panel.contratos.edit', $contrato))
+        ->assertOk()
+        ->assertSee('06:00')
+        ->assertSee('16:00');
 });
 
 it('una transición inválida es rechazada por la máquina de estados y no llega a persistir', function () {

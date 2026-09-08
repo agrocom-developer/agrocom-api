@@ -8,6 +8,7 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
 use App\Dominios\Compartido\Dominio\AccionBitacora;
 use App\Dominios\Compartido\Infraestructura\Eloquent\Bitacora;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
+use App\Dominios\Operaciones\Dominio\TipoAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecMenu;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecPermission;
@@ -103,6 +104,7 @@ function payloadOrden(int $contratoId, int $loteId, array $overrides = []): arra
         'contrato_id' => $contratoId,
         'lote_id' => $loteId,
         'nro_aplicacion' => 1,
+        'tipo_aplicacion' => 'desarrollo',
         'litros_ha' => '15.00',
         'fecha_emision' => Carbon::today()->toDateString(),
     ], $overrides);
@@ -122,6 +124,34 @@ it('da de alta una orden que persiste en estado emitida', function () {
 
     expect($orden->estado)->toBe(EstadoOrdenAplicacion::Emitida)
         ->and($orden->lote_id)->toBe($lote->id);
+});
+
+it('el formulario de alta muestra el campo tipo de aplicación, preseleccionado en desarrollo', function () {
+    [$encargado, $idRol] = usuarioConRolParaOrdenes('encargado', 'encargado_operaciones');
+    entrarAlPanelParaOrdenes($encargado, $idRol);
+
+    $this->get(route('panel.ordenes.create'))
+        ->assertOk()
+        ->assertSee(__('operaciones.ordenes.campo_tipo_aplicacion'))
+        ->assertSee(__('operaciones.tipo_aplicacion.desarrollo'));
+});
+
+it('el listado muestra el tipo de aplicación de cada orden y admite filtrarlo', function () {
+    [$encargado, $idRol] = usuarioConRolParaOrdenes('encargado', 'encargado_operaciones');
+    entrarAlPanelParaOrdenes($encargado, $idRol);
+    $cliente = clienteParaOrdenes();
+    $contrato = contratoParaOrdenes($cliente->id);
+    $lote = loteParaOrdenes(campoParaOrdenes($cliente->id));
+
+    $this->post(route('panel.ordenes.store'), payloadOrden($contrato->id, $lote->id, ['tipo_aplicacion' => 'cosecha']));
+
+    $this->get(route('panel.ordenes.index'))
+        ->assertOk()
+        ->assertSee(__('operaciones.tipo_aplicacion.cosecha'));
+
+    $this->get(route('panel.ordenes.index', ['tipo_aplicacion' => 'siembra']))
+        ->assertOk()
+        ->assertSee(__('operaciones.ordenes.filtro_vacio'));
 });
 
 it('activar una orden emitida la pasa a vigente', function () {
@@ -201,6 +231,51 @@ it('la orden queda visible en el catálogo de sync una vez vigente, no antes', f
 
     $segundoPull = $this->actingAs($dispositivo, 'sanctum')->getJson('/api/sync/catalogo')->assertOk();
     expect(collect($segundoPull->json('ordenes'))->pluck('id')->all())->toContain($orden->id);
+});
+
+it('da de alta una orden de siembra o de cosecha, no solo de desarrollo', function (string $tipo) {
+    [$encargado, $idRol] = usuarioConRolParaOrdenes('encargado', 'encargado_operaciones');
+    entrarAlPanelParaOrdenes($encargado, $idRol);
+    $cliente = clienteParaOrdenes();
+    $contrato = contratoParaOrdenes($cliente->id);
+    $lote = loteParaOrdenes(campoParaOrdenes($cliente->id));
+
+    $this->post(route('panel.ordenes.store'), payloadOrden($contrato->id, $lote->id, ['tipo_aplicacion' => $tipo]))
+        ->assertRedirect(route('panel.ordenes.index'));
+
+    $orden = OrdenAplicacion::query()->where('contrato_id', $contrato->id)->sole();
+
+    expect($orden->tipo_aplicacion)->toBe(TipoAplicacion::from($tipo));
+})->with(['siembra', 'cosecha']);
+
+it('un tipo_aplicacion fuera del enum es un error de validación, no persiste', function () {
+    [$encargado, $idRol] = usuarioConRolParaOrdenes('encargado', 'encargado_operaciones');
+    entrarAlPanelParaOrdenes($encargado, $idRol);
+    $cliente = clienteParaOrdenes();
+    $contrato = contratoParaOrdenes($cliente->id);
+    $lote = loteParaOrdenes(campoParaOrdenes($cliente->id));
+
+    $this->post(route('panel.ordenes.store'), payloadOrden($contrato->id, $lote->id, ['tipo_aplicacion' => 'floracion']))
+        ->assertSessionHasErrors('tipo_aplicacion');
+
+    expect(OrdenAplicacion::query()->count())->toBe(0);
+});
+
+it('una orden creada sin tipo_aplicacion (fuera del formulario del panel) queda en desarrollo', function () {
+    $cliente = clienteParaOrdenes();
+    $contrato = contratoParaOrdenes($cliente->id);
+    $lote = loteParaOrdenes(campoParaOrdenes($cliente->id));
+
+    $orden = OrdenAplicacion::query()->create([
+        'contrato_id' => $contrato->id,
+        'lote_id' => $lote->id,
+        'nro_aplicacion' => 1,
+        'litros_ha' => '15.00',
+        'fecha_emision' => Carbon::today()->toDateString(),
+        'estado' => EstadoOrdenAplicacion::Emitida,
+    ]);
+
+    expect($orden->fresh()->tipo_aplicacion)->toBe(TipoAplicacion::Desarrollo);
 });
 
 it('litros_ha menor o igual a cero es un error de validación, no persiste', function () {

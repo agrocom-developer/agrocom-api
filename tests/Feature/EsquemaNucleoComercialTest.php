@@ -29,6 +29,62 @@ it('crea la tabla con soft delete y columnas de auditoría', function (string $t
         ]))->toBeTrue();
 })->with('tablas del núcleo comercial');
 
+it('com_contratos tiene la altura de vuelo pactada por contrato (HU-47, tarea 70)', function () {
+    expect(Schema::hasColumn('com_contratos', 'altura_vuelo_m'))->toBeTrue();
+});
+
+it('ope_ordenes_aplicacion tiene el tipo de aplicación, con desarrollo como default (HU-47, tarea 70)', function () {
+    expect(Schema::hasColumn('ope_ordenes_aplicacion', 'tipo_aplicacion'))->toBeTrue();
+
+    $clienteId = DB::table('com_clientes')->insertGetId([
+        'razon_social' => 'Cliente de prueba tipo_aplicacion',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $campoId = DB::table('com_campos')->insertGetId([
+        'cliente_id' => $clienteId,
+        'nombre' => 'Campo de prueba tipo_aplicacion',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $loteId = DB::table('com_lotes')->insertGetId([
+        'campo_id' => $campoId,
+        'codigo' => 'L-TIPO',
+        'hectareas' => '10.00',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $contratoId = DB::table('com_contratos')->insertGetId([
+        'cliente_id' => $clienteId,
+        'hectareas_contratadas' => '10.00',
+        'aplicaciones_previstas' => 1,
+        'precio_ha' => '10.00',
+        'monto_total' => '100.00',
+        'fecha_inicio' => '2026-09-01',
+        'estado' => 'borrador',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    // Sin `tipo_aplicacion` en el insert: rige el DEFAULT de la migración
+    // (columna con `->default('desarrollo')`, aplicado también en SQLite).
+    $ordenId = DB::table('ope_ordenes_aplicacion')->insertGetId([
+        'contrato_id' => $contratoId,
+        'lote_id' => $loteId,
+        'nro_aplicacion' => 1,
+        'litros_ha' => '10.00',
+        'fecha_emision' => '2026-09-01',
+        'estado' => 'emitida',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    expect(DB::table('ope_ordenes_aplicacion')->where('id', $ordenId)->value('tipo_aplicacion'))->toBe('desarrollo');
+});
+
 it('el seeder demo deja una orden de aplicación vigente consultable', function () {
     $this->seed(DemoSeeder::class);
 
