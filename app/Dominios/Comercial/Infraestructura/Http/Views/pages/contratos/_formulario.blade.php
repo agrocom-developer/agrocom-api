@@ -12,6 +12,10 @@
     - $clientesDisponibles (Collection<int, string>): id => razón social,
       clientes activos (ver ContratosController::clientesActivos()) — la
       vista no conoce el modelo Cliente.
+    - $campaniasDisponibles (Collection<int, object{id,codigo,cliente_id}>):
+      TODAS las campañas activas, con su cliente — `contratos-form.js` (ADR
+      0015 punto 1) filtra en cliente cuáles mostrar según el cliente
+      elegido, mismo patrón que rubro/subrubro en `gastos-form.js`.
 
     `estado` y `monto_total` NUNCA son campos de este formulario: el primero
     lo cambia `panel.contratos.cambiar-estado` (otra pantalla, otra
@@ -27,6 +31,7 @@
     $accion = $esEdicion ? route('panel.contratos.update', $contrato) : route('panel.contratos.store');
     $valor = fn (string $campo, mixed $porDefecto = '') => old($campo, $contrato?->{$campo} ?? $porDefecto);
     $clienteId = old('cliente_id', $contrato?->cliente_id ?? '');
+    $campaniaId = old('campania_id', $contrato?->campania_id ?? '');
     $fechaInicio = old('fecha_inicio', $contrato?->fecha_inicio?->toDateString() ?? '');
     $fechaFin = old('fecha_fin', $contrato?->fecha_fin?->toDateString() ?? '');
     $ventanasPorDefecto = $esEdicion
@@ -61,7 +66,7 @@
 
     <x-molecules.form-section
         :title="__('comercial.contratos.seccion_datos')"
-        :count="__('comercial.contratos.campos_contador', ['cantidad' => 8])"
+        :count="__('comercial.contratos.campos_contador', ['cantidad' => 9])"
     >
         <div class="ag-input">
             <label for="cliente_id" class="ag-input__label">
@@ -69,7 +74,7 @@
                 <span class="ag-input__required" aria-hidden="true">*</span>
             </label>
             <div class="ag-input__control {{ $errors->has('cliente_id') ? 'ag-input__control--error' : '' }}">
-                <select name="cliente_id" id="cliente_id" class="ag-input__field" required>
+                <select name="cliente_id" id="cliente_id" class="ag-input__field" required data-ag-contrato-cliente>
                     <option value="">{{ __('comercial.contratos.campo_cliente_placeholder') }}</option>
                     @foreach ($clientesDisponibles as $id => $razonSocial)
                         <option value="{{ $id }}" @selected((string) $clienteId === (string) $id)>{{ $razonSocial }}</option>
@@ -78,6 +83,29 @@
             </div>
             @if ($errors->has('cliente_id'))
                 <p class="ag-input__error" role="alert">{{ $errors->first('cliente_id') }}</p>
+            @endif
+        </div>
+
+        <div class="ag-input">
+            <label for="campania_id" class="ag-input__label">
+                {{ __('comercial.contratos.campo_campania') }}
+                <span class="ag-input__required" aria-hidden="true">*</span>
+            </label>
+            <div class="ag-input__control {{ $errors->has('campania_id') ? 'ag-input__control--error' : '' }}">
+                <select name="campania_id" id="campania_id" class="ag-input__field" required data-ag-contrato-campania>
+                    <option value="">{{ __('comercial.contratos.campo_campania_placeholder') }}</option>
+                    @foreach ($campaniasDisponibles as $campania)
+                        <option
+                            value="{{ $campania->id }}"
+                            data-cliente-id="{{ $campania->cliente_id }}"
+                            @selected((string) $campaniaId === (string) $campania->id)
+                        >{{ $campania->codigo }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <p class="ag-input__help">{{ __('comercial.contratos.campo_campania_ayuda') }}</p>
+            @if ($errors->has('campania_id'))
+                <p class="ag-input__error" role="alert">{{ $errors->first('campania_id') }}</p>
             @endif
         </div>
 

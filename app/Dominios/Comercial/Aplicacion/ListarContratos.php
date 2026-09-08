@@ -7,14 +7,15 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 /**
  * Caso de uso: listado de contratos con búsqueda opcional por razón social
- * del cliente (HU-23, tarea 34). Solo lectura — mismo patrón de paginación
- * que `ListarClientes`. `cliente` viene precargada para que la vista pinte
+ * del cliente y filtro opcional por campaña (ADR 0015 punto 1, tarea 69,
+ * HU-23 tarea 34). Solo lectura — mismo patrón de paginación que
+ * `ListarClientes`. `cliente` viene precargada para que la vista pinte
  * la razón social sin una consulta N+1.
  */
 final class ListarContratos
 {
     /** @return LengthAwarePaginator<int, Contrato> */
-    public function ejecutar(?string $busqueda = null, int $porPagina = 15): LengthAwarePaginator
+    public function ejecutar(?string $busqueda = null, ?int $campaniaId = null, int $porPagina = 15): LengthAwarePaginator
     {
         return Contrato::query()
             ->with('cliente')
@@ -24,6 +25,10 @@ final class ListarContratos
                     'cliente',
                     fn ($sub) => $sub->where('razon_social', 'like', "%{$busqueda}%"),
                 ),
+            )
+            ->when(
+                $campaniaId !== null,
+                fn ($consulta) => $consulta->where('campania_id', $campaniaId),
             )
             ->orderByDesc('fecha_inicio')
             ->paginate($porPagina)

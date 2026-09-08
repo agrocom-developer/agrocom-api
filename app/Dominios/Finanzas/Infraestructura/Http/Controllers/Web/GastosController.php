@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Campania\Dominio\Excepciones\CampaniaCerradaNoAdmiteImputaciones;
 use App\Dominios\Finanzas\Aplicacion\CrearGasto;
 use App\Dominios\Finanzas\Aplicacion\EliminarGasto;
 use App\Dominios\Finanzas\Aplicacion\ListarGastos;
@@ -80,6 +81,7 @@ final class GastosController
             'rubrosConSubrubros' => Rubro::query()->with('subrubros')->orderBy('nombre')->get(),
             'basesDisponibles' => $this->basesDisponibles(),
             'trabajosDisponibles' => $this->trabajosDisponibles(),
+            'campaniasDisponibles' => $this->campaniasNoCerradas(),
         ]);
     }
 
@@ -89,16 +91,24 @@ final class GastosController
 
         $datos = $request->validated();
 
-        $crearGasto->ejecutar(
-            (string) $datos['fecha'],
-            (int) $datos['rubro_id'],
-            isset($datos['subrubro_id']) ? (int) $datos['subrubro_id'] : null,
-            (string) $datos['cantidad'],
-            (string) $datos['precio_unitario'],
-            isset($datos['base_id']) ? (int) $datos['base_id'] : null,
-            isset($datos['trabajo_id']) ? (int) $datos['trabajo_id'] : null,
-            $request->file('comprobante'),
-        );
+        try {
+            $crearGasto->ejecutar(
+                (string) $datos['fecha'],
+                (int) $datos['rubro_id'],
+                isset($datos['subrubro_id']) ? (int) $datos['subrubro_id'] : null,
+                (string) $datos['cantidad'],
+                (string) $datos['precio_unitario'],
+                isset($datos['base_id']) ? (int) $datos['base_id'] : null,
+                isset($datos['trabajo_id']) ? (int) $datos['trabajo_id'] : null,
+                isset($datos['campania_id']) ? (int) $datos['campania_id'] : null,
+                $request->file('comprobante'),
+            );
+        } catch (CampaniaCerradaNoAdmiteImputaciones $excepcion) {
+            return redirect()
+                ->route('panel.gastos.create')
+                ->withInput()
+                ->withErrors(['campania_id' => $excepcion->getMessage()]);
+        }
 
         return redirect()
             ->route('panel.gastos.index')
@@ -149,6 +159,27 @@ final class GastosController
             ->orderBy('nombre')
             ->pluck('nombre', 'id')
             ->mapWithKeys(fn (string $nombre, int|string $id): array => [(int) $id => $nombre]);
+    }
+
+    /**
+     * Campañas no cerradas (ADR 0015 punto 6, tarea 69): el selector es
+     * opcional y se filtra por campañas no `cerrada` — imputar a una
+     * cerrada lo rechaza igual `Aplicacion/CrearGasto`, esto es solo para no
+     * ofrecerla en el formulario. `DB::table` directo (ADR 0003 regla 3):
+     * `Campania` es de otro módulo.
+     *
+     * @return Collection<int, non-falsy-string>
+     */
+    private function campaniasNoCerradas(): Collection
+    {
+        return DB::table('cpn_campanias')
+            ->join('com_clientes', 'com_clientes.id', '=', 'cpn_campanias.cliente_id')
+            ->whereNull('cpn_campanias.deleted_at')
+            ->where('cpn_campanias.estado', '!=', 'cerrada')
+            ->orderBy('com_clientes.razon_social')
+            ->orderBy('cpn_campanias.codigo')
+            ->get(['cpn_campanias.id', 'cpn_campanias.codigo', 'com_clientes.razon_social'])
+            ->mapWithKeys(fn (object $fila): array => [(int) $fila->id => sprintf('%s — %s', $fila->codigo, $fila->razon_social)]);
     }
 
     /**

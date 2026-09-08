@@ -30,6 +30,11 @@ use Illuminate\Validation\Rule;
  * elegido): el CA esencial es "categorías de catálogo", no una guarda de
  * consistencia rubro↔subrubro — el `<select>` de la vista ya filtra por
  * rubro en JS, así que un descalce solo puede venir de un POST manual.
+ *
+ * `campania_id` (ADR 0015 punto 6, tarea 69) es OPCIONAL — vacío es gasto
+ * interno que no pertenece a ninguna campaña. Solo valida que exista entre
+ * filas activas: que no esté `cerrada` es una guarda de negocio y vive en
+ * `Aplicacion/CrearGasto`, mismo criterio que `campania_id` en contratos.
  */
 final class CrearGastoRequest extends FormRequest
 {
@@ -44,6 +49,7 @@ final class CrearGastoRequest extends FormRequest
             'precio_unitario' => ['required', 'numeric', 'gt:0'],
             'base_id' => ['nullable', 'integer', Rule::exists('per_bases', 'id')->whereNull('deleted_at')],
             'trabajo_id' => ['nullable', 'integer', Rule::exists('ope_trabajos', 'id')->whereNull('deleted_at')],
+            'campania_id' => ['nullable', 'integer', Rule::exists('cpn_campanias', 'id')->whereNull('deleted_at')],
             'comprobante' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:10240'],
         ];
     }

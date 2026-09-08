@@ -2,6 +2,8 @@
 
 namespace Database\Seeders\Demo;
 
+use App\Dominios\Campania\Dominio\EstadoCampania;
+use App\Dominios\Campania\Infraestructura\Eloquent\Campania;
 use App\Dominios\Comercial\Dominio\EstadoContrato;
 use App\Dominios\Comercial\Dominio\TipoContactoCliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
@@ -37,6 +39,10 @@ use Illuminate\Database\Seeder;
  *
  * Idempotente: si el primer cliente ya existe, no hace nada (mismo criterio
  * que `NucleoComercialSeeder`).
+ *
+ * Cada cliente nace con su propia campaña `2025-2026` (`abierta`, ADR 0015
+ * punto 1): `com_contratos.campania_id` es NOT NULL, y la campaña es del
+ * cliente, no de Agrocom — cada uno la suya, aunque el código se repita.
  */
 class CarteraClientesDemoSeeder extends Seeder
 {
@@ -66,6 +72,8 @@ class CarteraClientesDemoSeeder extends Seeder
             'nit' => self::NIT_CENTINELA,
         ]), $autorId);
 
+        $campania = $this->campaniaDelCliente($cliente->id, $autorId);
+
         $agronomo = $this->contactos($cliente->id, $autorId, [
             [TipoContactoCliente::Dueno, 'Marcos Áñez Vaca', '+591 70100001', 'manez@sanmarcos.example', null],
             [TipoContactoCliente::Agronomo, 'Ing. Agr. Lorena Suárez', '+591 70100002', 'lsuarez@sanmarcos.example', 'Emite las órdenes y firma las actas.'],
@@ -73,6 +81,7 @@ class CarteraClientesDemoSeeder extends Seeder
 
         $contrato = $this->crear(new Contrato([
             'cliente_id' => $cliente->id,
+            'campania_id' => $campania->id,
             'hectareas_contratadas' => '1200.00',
             'aplicaciones_previstas' => 4,
             'precio_ha' => '70.00',
@@ -126,6 +135,8 @@ class CarteraClientesDemoSeeder extends Seeder
             'nit' => '1099751028',
         ]), $autorId);
 
+        $campania = $this->campaniaDelCliente($cliente->id, $autorId);
+
         $agronomo = $this->contactos($cliente->id, $autorId, [
             [TipoContactoCliente::Dueno, 'Fernando Roca Melgar', '+591 70200001', 'froca@elcarmen.example', null],
             [TipoContactoCliente::Agronomo, 'Ing. Agr. Daniel Terceros', '+591 70200002', 'dterceros@elcarmen.example', 'Define dosis y ventana de aplicación.'],
@@ -134,6 +145,7 @@ class CarteraClientesDemoSeeder extends Seeder
 
         $contrato = $this->crear(new Contrato([
             'cliente_id' => $cliente->id,
+            'campania_id' => $campania->id,
             'hectareas_contratadas' => '2500.00',
             'aplicaciones_previstas' => 5,
             'precio_ha' => '62.00',
@@ -203,6 +215,8 @@ class CarteraClientesDemoSeeder extends Seeder
             'nit' => '1071482039',
         ]), $autorId);
 
+        $campania = $this->campaniaDelCliente($cliente->id, $autorId);
+
         $agronomo = $this->contactos($cliente->id, $autorId, [
             [TipoContactoCliente::Dueno, 'Rosa Melgar de Áñez', '+591 70300001', 'rmelgar@santarosa.example', 'Autoriza personalmente cada aplicación.'],
             [TipoContactoCliente::Agronomo, 'Ing. Agr. Pablo Cuéllar', '+591 70300002', 'pcuellar@santarosa.example', null],
@@ -210,6 +224,7 @@ class CarteraClientesDemoSeeder extends Seeder
 
         $contrato = $this->crear(new Contrato([
             'cliente_id' => $cliente->id,
+            'campania_id' => $campania->id,
             'hectareas_contratadas' => '800.00',
             'aplicaciones_previstas' => 3,
             'precio_ha' => '75.00',
@@ -251,6 +266,23 @@ class CarteraClientesDemoSeeder extends Seeder
             'velocidad_vuelo_kmh' => '13.00',
             'ancho_pasada_m' => '5.00',
         ]);
+    }
+
+    /**
+     * Campaña `2025-2026` del cliente (ADR 0015 punto 1), ya `abierta`: sin
+     * ella no se le puede crear el contrato demo. Único por
+     * `(cliente_id, codigo)`, así que el código repetido entre los tres
+     * clientes de este seeder no colisiona.
+     */
+    private function campaniaDelCliente(int $clienteId, int $autorId): Campania
+    {
+        return $this->crear(new Campania([
+            'cliente_id' => $clienteId,
+            'codigo' => '2025-2026',
+            'fecha_inicio' => '2025-07-01',
+            'fecha_fin' => '2026-06-30',
+            'estado' => EstadoCampania::Abierta,
+        ]), $autorId);
     }
 
     /**

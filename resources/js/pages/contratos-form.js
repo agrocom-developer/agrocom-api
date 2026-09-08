@@ -7,12 +7,46 @@
  * índice libre. No hay reindexado al quitar una fila: PHP arma igual el
  * array de `ventanas` aunque los índices numéricos queden con huecos.
  *
+ * Filtra el `<select>` de campaña según el cliente elegido (ADR 0015 punto
+ * 1, tarea 69): el contrato es con un cliente y para una campaña SUYA, mismo
+ * patrón que rubro/subrubro en `gastos-form.js`. Es presentación, no
+ * validación — el servidor (`Aplicacion/CrearContrato`) rechaza igual una
+ * campaña de otro cliente ante un POST manual.
+ *
  * Guard de presencia en el DOM (mismo criterio que `login.js`): en cualquier
  * página sin `[data-ag-contratos-form]` este módulo no hace nada.
  */
 document.addEventListener('DOMContentLoaded', () => {
     const formulario = document.querySelector('[data-ag-contratos-form]');
     if (!formulario) return;
+
+    const selectCliente = formulario.querySelector('[data-ag-contrato-cliente]');
+    const selectCampania = formulario.querySelector('[data-ag-contrato-campania]');
+
+    if (selectCliente && selectCampania) {
+        const opciones = Array.from(selectCampania.querySelectorAll('option[data-cliente-id]'));
+
+        const aplicarFiltro = () => {
+            const clienteId = selectCliente.value;
+            let valorSigueVisible = false;
+
+            opciones.forEach((opcion) => {
+                const visible = opcion.dataset.clienteId === clienteId;
+                opcion.hidden = !visible;
+                opcion.disabled = !visible;
+                if (visible && opcion.value === selectCampania.value) {
+                    valorSigueVisible = true;
+                }
+            });
+
+            if (!valorSigueVisible) {
+                selectCampania.value = '';
+            }
+        };
+
+        selectCliente.addEventListener('change', aplicarFiltro);
+        aplicarFiltro();
+    }
 
     const contenedor = formulario.querySelector('[data-ag-ventanas]');
     const lista = formulario.querySelector('[data-ag-ventanas-lista]');

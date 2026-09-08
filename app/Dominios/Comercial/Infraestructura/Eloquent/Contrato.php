@@ -29,6 +29,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  *
  * @property int $id
  * @property int $cliente_id
+ * @property int $campania_id
  * @property string $hectareas_contratadas
  * @property int $aplicaciones_previstas
  * @property string $precio_ha
@@ -54,6 +55,7 @@ class Contrato extends ModeloDominio
     /** @var list<string> */
     protected $fillable = [
         'cliente_id',
+        'campania_id',
         'hectareas_contratadas',
         'aplicaciones_previstas',
         'precio_ha',

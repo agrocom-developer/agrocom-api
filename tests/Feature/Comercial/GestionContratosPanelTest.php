@@ -1,5 +1,6 @@
 <?php
 
+use App\Dominios\Campania\Infraestructura\Eloquent\Campania;
 use App\Dominios\Comercial\Dominio\EstadoContrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
@@ -54,11 +55,24 @@ function clienteParaContratos(): Cliente
     return Cliente::query()->create(['razon_social' => 'Agropecuaria del Valle S.R.L.', 'nit' => '999888777']);
 }
 
+/** Campaña `abierta` del cliente (ADR 0015 punto 1): el contrato la exige. */
+function campaniaParaContratos(int $clienteId): Campania
+{
+    return Campania::query()->create([
+        'cliente_id' => $clienteId,
+        'codigo' => '2025-2026',
+        'fecha_inicio' => '2025-07-01',
+        'fecha_fin' => '2026-06-30',
+        'estado' => 'abierta',
+    ]);
+}
+
 /** Payload mínimo válido de alta/edición: dos ventanas que no se solapan. */
-function payloadContrato(int $clienteId, array $overrides = []): array
+function payloadContrato(int $clienteId, int $campaniaId, array $overrides = []): array
 {
     return array_merge([
         'cliente_id' => $clienteId,
+        'campania_id' => $campaniaId,
         'hectareas_contratadas' => '100.00',
         'aplicaciones_previstas' => 3,
         'precio_ha' => '50.00',
@@ -74,8 +88,9 @@ it('da de alta un contrato con dos ventanas que no se solapan, con monto_total c
     [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
     entrarAlPanelParaContratos($encargado, $idRol);
     $cliente = clienteParaContratos();
+    $campania = campaniaParaContratos($cliente->id);
 
-    $this->post(route('panel.contratos.store'), payloadContrato($cliente->id))
+    $this->post(route('panel.contratos.store'), payloadContrato($cliente->id, $campania->id))
         ->assertRedirect(route('panel.contratos.index'));
 
     $contrato = Contrato::query()->where('cliente_id', $cliente->id)->sole();
@@ -89,8 +104,9 @@ it('una ventana que se solapa con otra del mismo contrato es un error de validac
     [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
     entrarAlPanelParaContratos($encargado, $idRol);
     $cliente = clienteParaContratos();
+    $campania = campaniaParaContratos($cliente->id);
 
-    $this->post(route('panel.contratos.store'), payloadContrato($cliente->id, [
+    $this->post(route('panel.contratos.store'), payloadContrato($cliente->id, $campania->id, [
         'ventanas' => [
             ['hora_inicio' => '06:00', 'hora_fin' => '10:00'],
             ['hora_inicio' => '08:00', 'hora_fin' => '12:00'],
@@ -154,8 +170,9 @@ it('registra en bitácora el alta y el cambio de estado de un contrato', functio
     [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
     entrarAlPanelParaContratos($encargado, $idRol);
     $cliente = clienteParaContratos();
+    $campania = campaniaParaContratos($cliente->id);
 
-    $this->post(route('panel.contratos.store'), payloadContrato($cliente->id));
+    $this->post(route('panel.contratos.store'), payloadContrato($cliente->id, $campania->id));
 
     $contrato = Contrato::query()->sole();
 
@@ -184,9 +201,11 @@ it('un rol sin el permiso recibe 403 en todas las acciones', function () {
     [$piloto, $idRol] = usuarioConRolParaContratos('piloto.curioso', 'piloto');
     entrarAlPanelParaContratos($piloto, $idRol);
     $cliente = clienteParaContratos();
+    $campania = campaniaParaContratos($cliente->id);
 
     $contrato = new Contrato([
         'cliente_id' => $cliente->id,
+        'campania_id' => $campania->id,
         'hectareas_contratadas' => '100.00',
         'aplicaciones_previstas' => 3,
         'precio_ha' => '50.00',
@@ -198,13 +217,46 @@ it('un rol sin el permiso recibe 403 en todas las acciones', function () {
 
     $this->get(route('panel.contratos.index'))->assertForbidden();
     $this->get(route('panel.contratos.create'))->assertForbidden();
-    $this->post(route('panel.contratos.store'), payloadContrato($cliente->id))->assertForbidden();
+    $this->post(route('panel.contratos.store'), payloadContrato($cliente->id, $campania->id))->assertForbidden();
     $this->get(route('panel.contratos.edit', $contrato))->assertForbidden();
-    $this->put(route('panel.contratos.update', $contrato), payloadContrato($cliente->id))->assertForbidden();
+    $this->put(route('panel.contratos.update', $contrato), payloadContrato($cliente->id, $campania->id))->assertForbidden();
     $this->post(route('panel.contratos.cambiar-estado', $contrato), ['estado' => 'vigente'])->assertForbidden();
 
     expect(Contrato::query()->count())->toBe(1)
         ->and($contrato->fresh()->estado)->toBe(EstadoContrato::Borrador);
+});
+
+it('rechaza crear un contrato con una campaña de otro cliente', function () {
+    [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaContratos($encargado, $idRol);
+    $cliente = clienteParaContratos();
+    $otroCliente = Cliente::query()->create(['razon_social' => 'Agrícola San Marcos S.R.L.', 'nit' => '111222333']);
+    $campaniaAjena = campaniaParaContratos($otroCliente->id);
+
+    $this->post(route('panel.contratos.store'), payloadContrato($cliente->id, $campaniaAjena->id))
+        ->assertRedirect(route('panel.contratos.create'))
+        ->assertSessionHasErrors('campania_id');
+
+    expect(Contrato::query()->where('cliente_id', $cliente->id)->exists())->toBeFalse();
+});
+
+it('rechaza crear un contrato contra una campaña cerrada', function () {
+    [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaContratos($encargado, $idRol);
+    $cliente = clienteParaContratos();
+    $campaniaCerrada = Campania::query()->create([
+        'cliente_id' => $cliente->id,
+        'codigo' => '2024-2025',
+        'fecha_inicio' => '2024-07-01',
+        'fecha_fin' => '2025-06-30',
+        'estado' => 'cerrada',
+    ]);
+
+    $this->post(route('panel.contratos.store'), payloadContrato($cliente->id, $campaniaCerrada->id))
+        ->assertRedirect(route('panel.contratos.create'))
+        ->assertSessionHasErrors('campania_id');
+
+    expect(Contrato::query()->where('cliente_id', $cliente->id)->exists())->toBeFalse();
 });
 
 it('publica el ítem de menú de contratos gateado por comercial.contrato.ver', function () {
