@@ -74,6 +74,18 @@ INTENTOS_ARREGLO=2   # vueltas de corrección tras un veredicto RECHAZADO o un C
 ESPERA_CI=${AGROCOM_ESPERA_CI:-900}
 SONDEO_CI=20
 
+# Una caída de red mata la sesión headless antes de que llegue a escribir
+# runs/NN.estado: el modelo no falló, se quedó sin API. El 8/9/2026 un corte de
+# DNS se llevó dos etapas seguidas de la tarea 77 —27 minutos, cero commits— y
+# las dejó contadas como fallo 1/3 y 2/3, a una sesión de marcar AGOTADA una
+# tarea que no tenía nada malo. Ahora el corte se reconoce, no se cuenta, y el
+# ciclo espera a que la red vuelva en vez de quemar los tres intentos contra un
+# cable desconectado.
+SONDA_RED=${AGROCOM_SONDA_RED:-https://api.anthropic.com/}
+ESPERA_RED=${AGROCOM_ESPERA_RED:-1800}   # cuánto espera a que vuelva antes de darse por vencido
+SONDEO_RED=30
+CORTES_RED_MAX=5     # cortes en la misma tarea antes de admitir que el problema es el entorno
+
 # Un PR sin un solo check pasados estos segundos no está lento: no va a tener
 # CI nunca. Es lo que pasa cuando la rama quedó en conflicto —sin merge ref no
 # hay workflow— y es indistinguible de "todos los checks pendientes" si solo se
@@ -207,19 +219,58 @@ necesita_humano() {
     case "$1" in BLOQUEADA|RECHAZADA|AGOTADA|INCOMPLETA) return 0 ;; *) return 1 ;; esac
 }
 
+# --- Red -------------------------------------------------------------
+# ¿Responde la API? Sin `-f`: un 401 o un 404 también son "hay red".
+red_ok() { curl -s -m 10 -o /dev/null "$SONDA_RED"; }
+
+# La sesión murió sin declarar estado: ¿fue la red o fue el modelo? Solo cuenta
+# como corte de red si además salió por la mala —una sesión que terminó bien y
+# encima menciona ECONNREFUSED en su reporte no es un corte— o si murió sin
+# alcanzar a escribir el JSON y la API sigue muda.
+corte_de_red() {
+    local salida="$1" rc="$2"
+    [ "$rc" = 0 ] && return 1
+    grep -qiE "ENOTFOUND|EAI_AGAIN|ECONNRESET|ECONNREFUSED|ETIMEDOUT|socket hang up|fetch failed|reach the API server|Connection error" "$salida" 2>/dev/null && return 0
+    [ -s "$salida" ] || { red_ok || return 0; }
+    return 1
+}
+
+esperar_red() {
+    local esperado=0
+    red_ok && return 0
+    aviso "La API no responde: espero hasta $((ESPERA_RED / 60)) min a que vuelva la red"
+    while [ "$esperado" -lt "$ESPERA_RED" ]; do
+        sleep "$SONDEO_RED"
+        esperado=$((esperado + SONDEO_RED))
+        red_ok && { log "  red de vuelta tras ${esperado}s"; return 0; }
+    done
+    return 1
+}
+
+# 0 = la sesión terminó por su cuenta · 1 = la cortó la red y ya volvió ·
+# 2 = la cortó la red y la red sigue caída. Lo lee quien llamó a sesion().
+SESION_CORTE_RED=0
+
 # --- Sesión de Claude Code -------------------------------------------
 # Nunca --bare: ese modo exige ANTHROPIC_API_KEY y saltea los hooks, es decir,
 # correría sin los guardarraíles de .claude/ — la única barrera que queda de pie
 # cuando no hay nadie mirando.
 sesion() {
-    local texto="$1" salida="$2" herramientas="${3:-Read Edit Write Glob Grep Bash}" noche="${4:-0}" modelo="${5:-$MODELO_PESADO}" zonas="${6:-}"
+    local texto="$1" salida="$2" herramientas="${3:-Read Edit Write Glob Grep Bash}" noche="${4:-0}" modelo="${5:-$MODELO_PESADO}" zonas="${6:-}" rc=0
+    SESION_CORTE_RED=0
     log "  modelo: $modelo${zonas:+ · descongela: $zonas}"
     AGROCOM_TURNO_NOCHE="$noche" AGROCOM_DESCONGELA="$zonas" claude -p "$texto" \
         --model "$modelo" \
         --permission-mode dontAsk \
         --allowedTools "$herramientas" \
         --disallowedTools "$HERRAMIENTAS_PROHIBIDAS" \
-        --output-format json > "$salida" 2>&1
+        --output-format json > "$salida" 2>&1 || rc=$?
+    if corte_de_red "$salida" "$rc"; then
+        aviso "La sesión se cortó por la red, no por la tarea"
+        SESION_CORTE_RED=1
+        esperar_red || SESION_CORTE_RED=2
+    fi
+    return "$rc"
 }
 
 # --- Rama de la tarea -------------------------------------------------
@@ -341,7 +392,7 @@ preparar_rama() {
 # suma sus commits, y declara `PARCIAL` mientras la historia siga abierta. El PR
 # se abre recién al `OK`.
 fase_implementar() {
-    local id="$1" archivo rama estado texto sesiones fallos hechos
+    local id="$1" archivo rama estado texto sesiones fallos cortes hechos
     archivo=$(prompt_de "$id") || true
     [ -z "$archivo" ] && { malo "No existe prompt para la tarea $id"; return 1; }
 
@@ -356,6 +407,7 @@ fase_implementar() {
 
     sesiones=0
     fallos=0
+    cortes=0
     while [ "$sesiones" -lt "$etapas" ]; do
         sesiones=$((sesiones + 1))
         marcar "$id implementar · etapa $sesiones/$etapas en $rama"
@@ -414,6 +466,21 @@ No toques los tests para que pasen."
                 abortar_si_detenido && return 2
                 ;;
             *)
+                if [ "$SESION_CORTE_RED" != 0 ]; then
+                    if [ "$SESION_CORTE_RED" = 2 ]; then
+                        alerta "La API sigue sin responder tras $((ESPERA_RED / 60)) min: la tarea $id no avanza por el entorno, no por ella"
+                        return 4
+                    fi
+                    cortes=$((cortes + 1))
+                    if [ "$cortes" -ge "$CORTES_RED_MAX" ]; then
+                        alerta "La red cortó $cortes sesiones de la tarea $id: así no avanza"
+                        return 4
+                    fi
+                    aviso "Etapa $sesiones cortada por la red ($cortes/$CORTES_RED_MAX) — no cuenta como fallo, la repito"
+                    sesiones=$((sesiones - 1))
+                    abortar_si_detenido && return 2
+                    continue
+                fi
                 fallos=$((fallos + 1))
                 malo "Sin estado declarado (quedó en '$estado') — fallo $fallos/$FALLOS_IMPL"
                 if [ "$fallos" -ge "$FALLOS_IMPL" ]; then
