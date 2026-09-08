@@ -139,6 +139,12 @@ Consecuencia de diseño explícita: **el relleno sólido de marca (botones) es c
 | Molecule | `progress-meter` | `resources/views/components/molecules/progress-meter.blade.php` | Implementado (2/9/2026, tarea 31) |
 | Molecule | `file-field` | `resources/views/components/molecules/file-field.blade.php` | Implementado (2/9/2026, tarea 31 — antes markup suelto en `organizacion.css`) |
 | Template | `portal-layout` | `resources/views/components/templates/portal-layout.blade.php` | Implementado (3/9/2026, tarea 55 — cáscara del portal del cliente, header de una fila con 3 links fijos en vez del layout de tres niveles de `panel-layout`, ver §4.10). Faltaba en esta tabla; se agrega en la corrección de la tarea 55. |
+| Atom | `select` | `resources/views/components/atoms/select.blade.php` | Implementado (8/9/2026, tarea 76 — ver §16) |
+| Atom | `date` | `resources/views/components/atoms/date.blade.php` | Implementado (8/9/2026, tarea 76 — ver §16) |
+| Atom | `checkbox` | `resources/views/components/atoms/checkbox.blade.php` | Implementado (8/9/2026, tarea 76 — ver §16) |
+| Atom | `checkbox-group` | `resources/views/components/atoms/checkbox-group.blade.php` | Implementado (8/9/2026, tarea 76 — ver §16) |
+| Atom | `radio-group` | `resources/views/components/atoms/radio-group.blade.php` | Implementado (8/9/2026, tarea 76 — ver §16) |
+| Atom | `textarea` | `resources/views/components/atoms/textarea.blade.php` | Implementado (8/9/2026, tarea 76 — ver §16) |
 
 Por qué solo los átomos estaban implementados en el pase anterior: era el límite de alcance fijado para la primera entrega de HU-02 (tokens + piezas de más bajo nivel, sin lógica de negocio). Este pase (27/8/2026) implementa el resto del catálogo, a pedido explícito de HU-02 (el usuario vio un prototipo interactivo aparte y pidió la construcción real). Decisiones de composición que no estaban 100% cerradas en la especificación de §4 y se resolvieron acá:
 
@@ -1193,3 +1199,119 @@ interno sí lo recibe): ningún consumidor de hoy le pasa una clase de layout
 al componente, a diferencia de `atoms/input` que ya tenía un caso de uso real
 bloqueado. Mismo criterio de blast radius que la tarea 31: se arregla cuando
 aparezca la necesidad real.
+
+## 16. Tarea 76 (8/9/2026, HU-53) — el sistema de inputs: `select`, `date`, `checkbox`, `checkbox-group`, `radio-group`, `textarea`
+
+Seis átomos nuevos, mismo contrato partido de `$attributes` que ya fijó la
+tarea 32 (§15) para `atoms/input`: la raíz solo fusiona `class`
+(`->only('class')`), el/los control(es) real(es) reciben el resto
+(`->except('class')`) — así `data-*`/`wire:model`/`aria-*` le siguen llegando
+al control nativo, no a un `<div>` decorativo. Cierra el diagnóstico de la
+tarea (11 `type="date"`, 70 `<select>`, 7 `type="checkbox"` crudos en el
+panel) y migra las 88+ apariciones reales encontradas.
+
+### 16.1. Qué átomo usar para cada caso
+
+| Necesito... | Átomo | Por qué no otro |
+|---|---|---|
+| Un texto/número/fecha-hora/contraseña/archivo de una línea | `atoms/input` | Sin cambios en esta tarea. |
+| Un texto de varias líneas | `atoms/textarea` | Mismo contrato que `input`, sin `type`/`icon`/toggle de password (no aplican a multilínea), con `rows` en su lugar. |
+| Elegir UNA fecha | `atoms/date` | Nunca el `<input type="date">` nativo (diagnóstico de la tarea: se ve distinto por navegador/SO, ignora `es`). Reemplaza también a `<x-atoms.input type="date">`, que era el patrón real en la mayoría de los formularios (no HTML crudo). |
+| Elegir UNA opción de una lista (con o sin búsqueda) | `atoms/select` | Combobox propio con label/placeholder/ícono/error/help y `options` como `valor => etiqueta` ya traducida. Con más de 8 opciones agrega búsqueda por texto automáticamente — no es un prop, es `count($options) > 8`. |
+| Prender/apagar UNA opción booleana suelta (ítem de lista, "aceptar términos") | `atoms/checkbox` | Casilla cuadrada con check de Material Symbols. Distinta de `atoms/switch` (pastilla con thumb, pensada para "prender/apagar una preferencia", no para "marcar un ítem" — criterio ya fijado en la sexta vuelta, §8). |
+| Elegir VARIAS opciones de una lista (con o sin búsqueda) | `atoms/checkbox-group` | Selección múltiple con `name[]`, cada opción es un `<input type="checkbox">` real (teclado gratis del navegador). Con más de 8 opciones agrega el mismo filtro de texto que `select`. Reemplaza tanto varios `type="checkbox"` sueltos con el mismo `name[]` como un `<select multiple>` nativo (ver ejemplo de `usuarios/_formulario.blade.php` abajo). |
+| Elegir UNA opción entre pocas, todas visibles a la vez (sin necesidad de desplegable) | `atoms/radio-group` | `<input type="radio">` reales agrupados por `name`, sin JS propio (el navegador ya mueve el foco con las flechas). Poco usado hoy en el panel — existe para cuando aparezca el caso, no se forzó ningún `select` a convertirse en esto. |
+
+### 16.2. Ejemplos de uso
+
+```blade
+{{-- select: opciones id => etiqueta, ya traducidas por el llamador --}}
+<x-atoms.select
+    name="cliente_id"
+    label="{{ __('comercial.contratos.campo_cliente') }}"
+    placeholder="{{ __('comercial.contratos.campo_cliente_placeholder') }}"
+    :options="$clientesDisponibles"
+    value="{{ $clienteId }}"
+    required
+    error="{{ $errors->first('cliente_id') }}"
+/>
+
+{{-- date: value/min/max siempre en ISO (YYYY-MM-DD), igual que type="date" --}}
+<x-atoms.date
+    name="fecha_inicio"
+    label="{{ __('comercial.contratos.campo_fecha_inicio') }}"
+    value="{{ $fechaInicio }}"
+    required
+    error="{{ $errors->first('fecha_inicio') }}"
+/>
+
+{{-- checkbox: casilla booleana suelta, value default "1" --}}
+<x-atoms.checkbox name="remember" label="{{ __('seguridad.login.recordarme') }}" />
+
+{{-- checkbox-group: selección múltiple, se envía como roles[] --}}
+<x-atoms.checkbox-group
+    name="roles"
+    label="{{ __('seguridad.usuarios.campo_roles') }}"
+    :options="$opcionesRoles"
+    :value="$rolesSeleccionados"
+    help="{{ __('seguridad.usuarios.campo_roles_ayuda') }}"
+    error="{{ $errors->first('roles') }}"
+/>
+```
+
+### 16.3. Selects dependientes (cliente→campaña, rubro→subrubro): el mapeo ya no va por `<option data-*>`
+
+Dos pantallas (`contratos/_formulario.blade.php`, `gastos/create.blade.php`)
+ya filtraban un `<select>` según el valor elegido en otro (`contratos-form.js`,
+`gastos-form.js`, patrón preexistente a esta tarea). Antes el mapeo hijo→padre
+viajaba como un atributo `data-*` en cada `<option>` del `<select>` hijo. Con
+`atoms/select`, el `<select>` nativo deja de ser el único elemento visible —
+`resources/js/atoms/select.js` arma un combobox al lado y no sabe leer
+atributos por opción. Solución, sin tocar el contrato del átomo: el mapeo
+completo viaja como UN atributo JSON en el propio `<select>` (p. ej.
+`data-mapa-cliente-campania="{{ $mapa->toJson() }}"`, reenviado al nativo por
+el LSP de `$attributes->except('class')`), y el script dependiente lo lee una
+vez (`JSON.parse(...)`) en vez de iterar `option[data-cliente-id]`. El resto
+del algoritmo (ocultar/deshabilitar `<option>`, limpiar el valor si deja de
+ser visible) no cambió.
+
+Ese cambio de mecanismo dejó una foto vieja en el combobox: `select.js` lee
+las opciones del nativo UNA sola vez, al inicializar. Un filtro externo que
+después marca `<option>` como `disabled`/`hidden` (el caso de arriba) no se
+reflejaba en la lista ya pintada. Se agregó un `MutationObserver` sobre el
+`<select>` nativo (`attributeFilter: ['disabled', 'hidden']` + `childList`)
+que re-lee las opciones y repinta si el combobox está abierto — genérico,
+sirve para cualquier select dependiente futuro, no solo para los dos casos de
+hoy.
+
+### 16.4. Dos excepciones deliberadas, no migradas
+
+- **`app/Dominios/Seguridad/Infraestructura/Http/Views/pages/roles/permisos.blade.php`**:
+  sus `type="checkbox"` son parte de una matriz de permisos con chips/switches
+  propios (`ag-permisos__chip`, `ag-permisos__switch`), no casillas sueltas —
+  convertirlas a `atoms/checkbox` habría sido un rediseño visual de esa
+  pantalla, fuera del alcance de esta tarea (que el prompt marca
+  explícitamente: "Fuera de alcance: ... permisos ..."). El grep de
+  aceptación de `type="checkbox"` los sigue mostrando; es esperado.
+- **`resources/views/components/atoms/switch.blade.php`**: su
+  `<input type="checkbox">` interno es la implementación del átomo `switch`
+  en sí (existe desde la sexta vuelta, §8), no marcado crudo del panel —
+  mismo criterio que dejar `resources/views/components/atoms/select.blade.php`
+  fuera del grep de `<select>`.
+
+`type="month"` (dos filtros de listado, `anticipos/index.blade.php` y
+`gastos/index.blade.php`) tampoco se tocó: es un tipo de input distinto a
+`date` (selector de año-mes, no de día), fuera del diagnóstico de la tarea
+(11 `type="date"`) y sin átomo propio en el catálogo — queda para cuando
+haga falta un `atoms/month` real.
+
+### 16.5. `usuarios/_formulario.blade.php` — el único `<select multiple>` del panel, migrado a `checkbox-group`
+
+No estaba en el conteo original de 88 (un `<select multiple>` no matchea
+`<select` seguido de un atributo simple en el grep del diagnóstico, y de
+hecho el propio docblock del archivo decía "no hay átomo de selección
+múltiple en el catálogo" — cierto cuando se escribió, en la tarea 39, antes
+de que existiera `checkbox-group`). Es exactamente el caso de uso para el que
+se dimensionó `checkbox-group` (elegir varios roles de una lista): se migró
+igual, aunque no estuviera en la lista original, porque dejarlo habría sido
+el único `<select>` real sobreviviente en todo el panel.
