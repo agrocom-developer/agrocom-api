@@ -10,6 +10,7 @@
 #   bin/ciclo --estado         # en qué fase de qué tarea está
 #   bin/ciclo --planificar 08  # planifica lo que sigue a la 08, si esa vuelta se cortó
 #   bin/ciclo --vueltas 2      # tope de tareas en esta corrida (por defecto, hasta que se detenga)
+#   bin/ciclo --reconciliar    # corrige los runs/*.estado que git desmiente (--simular para ver nomás)
 #
 # `bin/iteracion` corre una cola FIJA de prompts escritos a mano. Esto corre
 # una cola que se extiende sola: cuando una tarea queda integrada, una sesión
@@ -803,6 +804,124 @@ siguiente_id() {
     return 1
 }
 
+# --- Reconciliación con git --------------------------------------------
+# `runs/NN.estado` guarda lo que DECLARÓ la sesión, no lo que terminó pasando
+# con la tarea. Las dos cosas se separan seguido: una tarea queda AGOTADA
+# porque su sesión se cortó sin escribir el estado, y media hora después se
+# integra igual — por un reintento, por una tarea "retomar" que la continúa
+# (40→42, 41→43), o a mano. El archivo queda mintiendo, `--estado` la sigue
+# listando como trabada y `necesita_humano` la saltearía si volviera a una
+# cola. El 8/9/2026 había cinco así, todas integradas desde el 3/9.
+#
+# La fuente de verdad es el PR mergeado. Se lo busca por dos caminos y se
+# corrige solo cuando alguno da:
+#
+#   1. un PR mergeado cuya rama es la `rama=` del prompt de la tarea;
+#   2. un commit en develop cuyo ASUNTO nombra la tarea — el squash-merge deja
+#      ahí el título del PR con su `(#NN)`.
+#
+# El asunto y no el mensaje entero: el cuerpo del prompt de la 42 explica que
+# continúa a la 40, y buscar en todo el texto le adjudicaría a la 40 el PR de
+# la 42. Que en ese caso puntual el número acierte es casualidad, no criterio.
+#
+# Sin evidencia no toca nada: una tarea trabada de verdad tiene que seguir
+# viéndose trabada. `BLOQUEADA` tampoco se toca — no es un desfase, es una
+# pregunta esperando respuesta, y contestarla no es trabajo de un script.
+BASE_RECONCILIA=develop
+
+es_desfasable() {
+    case "$1" in AGOTADA|INCOMPLETA|RECHAZADA|SIN-ESTADO) return 0 ;; *) return 1 ;; esac
+}
+
+# Imprime "<pr>|<de dónde salió>" si encuentra que la tarea sí se integró.
+evidencia_integracion() {
+    local id="$1" archivo rama pr linea
+    archivo=$(prompt_de "$id")
+    if [ -n "$archivo" ]; then
+        rama=$(meta "$archivo" "rama" "")
+        if [ -n "$rama" ]; then
+            pr=$(gh pr list --state merged --head "$rama" --json number --jq '.[0].number // empty' 2>/dev/null)
+            if [ -n "$pr" ]; then
+                printf '%s|rama %s' "$pr" "$rama"
+                return 0
+            fi
+        fi
+    fi
+    linea=$(git log "$BASE_RECONCILIA" --format='%h %s' -400 2>/dev/null | grep -iE "tarea $id([^0-9]|$)" | head -1)
+    if [ -n "$linea" ]; then
+        pr=$(printf '%s' "$linea" | sed -nE 's/.*\(#([0-9]+)\).*/\1/p')
+        if [ -n "$pr" ]; then
+            printf '%s|commit %s' "$pr" "${linea%% *}"
+            return 0
+        fi
+    fi
+    return 1
+}
+
+reconciliar() {
+    local simular=0
+    [ "${1:-}" = "--simular" ] && simular=1
+
+    git fetch --quiet origin develop 2>/dev/null && BASE_RECONCILIA=origin/develop
+
+    # El id que el ciclo está corriendo AHORA queda afuera: su estado está en
+    # blanco porque la sesión todavía no lo escribió, no porque nadie lo haya
+    # actualizado. Esto se puede correr con el ciclo vivo, y esa es la idea.
+    local encurso; encurso=$(sed -nE 's/^([0-9]+) .*/\1/p' runs/ciclo.estado 2>/dev/null | head -1)
+
+    local ids id estado ev pr por corregidas=0 sin_evidencia="" tocadas=""
+    ids=$( { ls runs/[0-9][0-9].estado 2>/dev/null | sed -E 's|runs/([0-9]+)\.estado|\1|'
+             grep -vE '^[[:space:]]*(#|$)' "$COLA" 2>/dev/null | tr -d '[:space:]'
+           } | sort -un )
+
+    fase "Reconciliación de runs/*.estado con git$([ "$simular" = 1 ] && printf ' (simulada)')"
+    log "base: $BASE_RECONCILIA${encurso:+ · en curso, sin tocar: $encurso}"
+
+    for id in $ids; do
+        [ -n "$id" ] || continue
+        [ "$id" = "$encurso" ] && continue
+        estado=$(leer_estado "$id")
+        es_desfasable "$estado" || continue
+
+        if ev=$(evidencia_integracion "$id"); then
+            pr="${ev%%|*}"; por="${ev#*|}"
+            if [ "$simular" = 1 ]; then
+                ok "$id: $estado → CERRADA (PR #$pr, por $por) — simulado, no escribí nada"
+            else
+                printf 'CERRADA\n' > "runs/$id.estado"
+                printf '%s\n' "$pr" > "runs/$id.pr"
+                ok "$id: $estado → CERRADA (PR #$pr, por $por)"
+            fi
+            tocadas="$tocadas| $id | $estado | CERRADA | PR #$pr, por $por |
+"
+            corregidas=$((corregidas + 1))
+        else
+            [ "$estado" = "SIN-ESTADO" ] && continue   # todavía no corrió: no es un desfase
+            sin_evidencia="$sin_evidencia $id:$estado"
+        fi
+    done
+
+    [ -n "$sin_evidencia" ] && aviso "Sigue(n) trabada(s) de verdad, sin PR que las respalde:$sin_evidencia"
+    [ "$corregidas" -eq 0 ] && { ok "Nada que corregir: los estados coinciden con git"; return 0; }
+
+    if [ "$simular" = 1 ]; then
+        log "$corregidas tarea(s) se corregirían. Sin --simular se aplican."
+        return 0
+    fi
+
+    # El rastro importa tanto como la corrección: sin esto, mañana parece que
+    # alguien editó estados a mano y no queda contra qué chequearlo.
+    local informe="runs/reconciliacion-$(date +%F).md"
+    {
+        printf '\n## Corrida %s\n\n' "$(date '+%d/%m/%Y %H:%M')"
+        printf 'Base: `%s`\n\n' "$BASE_RECONCILIA"
+        printf '| Id | Decía | Ahora | Evidencia |\n|---|---|---|---|\n'
+        printf '%s' "$tocadas"
+        [ -n "$sin_evidencia" ] && printf '\nSin evidencia, quedaron como estaban:%s\n' "$sin_evidencia"
+    } >> "$informe"
+    ok "$corregidas tarea(s) corregida(s) · rastro en $informe"
+}
+
 # --- Modos de invocación -----------------------------------------------
 case "${1:-}" in
     --detener)
@@ -813,6 +932,10 @@ case "${1:-}" in
         exit 0 ;;
     --reanudar)
         rm -f "$DETENER"; printf 'Bandera de parada levantada. Podés arrancar con bin/ciclo.\n'; exit 0 ;;
+    --reconciliar)
+        shift
+        reconciliar "${1:-}"
+        exit $? ;;
     --planificar)
         shift
         [ -z "${1:-}" ] && { printf 'Uso: bin/ciclo --planificar <id de la tarea que cerró>\n'; exit 1; }
@@ -840,6 +963,7 @@ case "${1:-}" in
             esac
         done
         printf 'Trabadas    : %s\n' "${trabadas:-ninguna}"
+        [ -n "$trabadas" ] && printf '              (si alguna se integró por otra vía, bin/ciclo --reconciliar lo detecta)\n'
         if [ -f "$PID" ] && kill -0 "$(cat "$PID")" 2>/dev/null; then
             printf 'Proceso     : vivo (PID %s)\n' "$(cat "$PID")"
         else
@@ -913,4 +1037,18 @@ while read -r id; do
     printf '  %-4s %-12s %s\n' "$id" "$(leer_estado "$id")" \
         "$([ -f "runs/$id.pr" ] && echo "PR #$(cat "runs/$id.pr")")"
 done < "$COLA" 2>/dev/null
+
+# Lo trabado se cierra seguido por otra vía —un reintento, una tarea "retomar",
+# trabajo a mano— y el archivo de estado no se entera. No se reconcilia solo a
+# propósito: cambiar un estado sin que nadie mire es justo lo que haría que una
+# tarea sin hacer pase por hecha. Acá se avisa; decidir es del usuario.
+trabadas_al_cierre=""
+for e in runs/[0-9][0-9].estado; do
+    [ -f "$e" ] || continue
+    case "$(tr -d '[:space:]' < "$e")" in
+        AGOTADA|INCOMPLETA|RECHAZADA) trabadas_al_cierre="$trabadas_al_cierre $(basename "$e" .estado)" ;;
+    esac
+done
+[ -n "$trabadas_al_cierre" ] && aviso "Quedan trabadas:$trabadas_al_cierre — si alguna se integró igual, bin/ciclo --reconciliar lo detecta y corrige runs/*.estado"
+
 marcar "ciclo terminado"
