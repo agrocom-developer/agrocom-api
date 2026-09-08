@@ -45,6 +45,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $humedad_max_pct
  * @property string|null $velocidad_max_kmh
  * @property string|null $umbral_reporte_avance_ha
+ * @property string|null $altura_vuelo_m
  */
 class Contrato extends ModeloDominio
 {
@@ -71,6 +72,7 @@ class Contrato extends ModeloDominio
         'humedad_max_pct',
         'velocidad_max_kmh',
         'umbral_reporte_avance_ha',
+        'altura_vuelo_m',
     ];
 
     /** @return array<string, string> */
@@ -92,6 +94,7 @@ class Contrato extends ModeloDominio
             'humedad_max_pct' => 'decimal:2',
             'velocidad_max_kmh' => 'decimal:2',
             'umbral_reporte_avance_ha' => 'decimal:2',
+            'altura_vuelo_m' => 'decimal:2',
         ];
     }
 
