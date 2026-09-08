@@ -121,6 +121,7 @@ bin/ciclo --fondo        # arranca desprendido de la terminal
 bin/ciclo --estado       # en qué fase de qué tarea está
 bin/ciclo --detener      # parada ordenada: termina la fase en curso y no toma otra tarea
 bin/ciclo --reanudar     # levanta la bandera de parada
+bin/ciclo --reconciliar  # corrige los runs/*.estado que git desmiente (--simular para verlo sin aplicar)
 ```
 
 Cinco fases por tarea, cada una en su **propia sesión** con contexto limpio:
@@ -163,6 +164,20 @@ Tres piezas más que hacen que eso funcione sin supervisión:
   detiene es una parada pedida, que se acabe la cola, o tres tareas seguidas sin
   integrar, que ya no es una tarea difícil sino algo sistemático.
   `bin/ciclo --estado` lista lo trabado.
+
+  **Lo trabado se cierra seguido por otra vía y el archivo no se entera.** Una
+  tarea queda `AGOTADA` porque su sesión se cortó sin declarar estado, y media
+  hora después se integra igual: por un reintento, por una tarea "retomar" que
+  la continúa (40→42, 41→43) o a mano. `runs/NN.estado` guarda lo que declaró
+  la sesión, no lo que terminó pasando, así que sigue diciendo `AGOTADA` para
+  siempre — el 8/9/2026 había cinco así, todas integradas desde el 3/9.
+  `bin/ciclo --reconciliar` compara contra la única fuente de verdad, el PR
+  mergeado (por la rama del prompt, o por el commit en `develop` que nombra la
+  tarea), corrige las que puede probar y deja el rastro en
+  `runs/reconciliacion-<fecha>.md`. Sin evidencia no toca nada, y `BLOQUEADA`
+  nunca: eso no es un desfase, es una pregunta esperando respuesta. **No corre
+  solo** — cambiar un estado sin que nadie mire es justo lo que haría que una
+  tarea sin hacer pase por hecha; el ciclo se limita a avisar al cerrar.
 
   Es lo que permite dejarlo corriendo mientras se mira el proyecto en paralelo:
   el ciclo va a chocar seguido con tareas que no le corresponden —el spike del
