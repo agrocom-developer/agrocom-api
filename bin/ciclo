@@ -84,7 +84,17 @@ SONDEO_CI=20
 SONDA_RED=${AGROCOM_SONDA_RED:-https://api.anthropic.com/}
 ESPERA_RED=${AGROCOM_ESPERA_RED:-1800}   # cuánto espera a que vuelva antes de darse por vencido
 SONDEO_RED=30
-CORTES_RED_MAX=5     # cortes en la misma tarea antes de admitir que el problema es el entorno
+CORTES_MAX=5         # cortes de entorno en la misma tarea antes de admitir que el problema es el entorno
+
+# El otro corte que no es culpa de la tarea: el límite de uso de la cuenta. El
+# 8/9/2026 se agotó a las 16:02 y el ciclo se comió las tareas 71, 72 y 73 en
+# veinte segundos —nueve sesiones que morían en dos segundos con
+# `api_error_status: 429`, tres tareas AGOTADAS, el bucle detenido— cuando lo
+# único que había que hacer era esperar a las 17:20. La hora de reposición
+# viene en el propio mensaje ("resets 5:20pm"): el ciclo la lee y duerme hasta
+# entonces.
+LIMITE_MAX=${AGROCOM_LIMITE_MAX:-21600}   # tope de espera: 6 h. Más que eso ya no es una ventana de uso
+SONDEO_LIMITE=600                          # cada cuánto reintenta si no pudo leer la hora de reposición
 
 # Un PR sin un solo check pasados estos segundos no está lento: no va a tener
 # CI nunca. Es lo que pasa cuando la rama quedó en conflicto —sin merge ref no
@@ -235,6 +245,66 @@ corte_de_red() {
     return 1
 }
 
+# ¿Murió porque se agotó el límite de uso de la cuenta? Pide las dos cosas
+# —que la corrida sea un error y que el motivo sea el 429— para no confundirse
+# con una sesión que terminó bien y encima habla de rate limits en su reporte.
+limite_de_uso() {
+    local salida="$1"
+    grep -q '"is_error":true' "$salida" 2>/dev/null || return 1
+    grep -qE '"api_error_status":429|hit your (session|usage) limit|usage limit reached' "$salida" 2>/dev/null
+}
+
+# "You've hit your session limit · resets 5:20pm (America/La_Paz)" → cuántos
+# segundos faltan para esa hora, con un minuto de margen. Vacío si no hay hora
+# legible: ahí el ciclo sondea en vez de dormir a ciegas.
+segundos_hasta_reset() {
+    local salida="$1" hora objetivo ahora
+    hora=$(grep -oE 'resets [0-9]{1,2}(:[0-9]{2})?[[:space:]]*[apAP][mM]' "$salida" 2>/dev/null |
+        head -1 | sed 's/^resets //; s/[[:space:]]//g' | tr '[:lower:]' '[:upper:]')
+    [ -z "$hora" ] && return 1
+    case "$hora" in *:*) ;; *) hora=$(printf '%s' "$hora" | sed -E 's/^([0-9]{1,2})/\1:00/') ;; esac
+    objetivo=$(date -j -f "%I:%M%p" "$hora" "+%s" 2>/dev/null) || return 1
+    ahora=$(date +%s)
+    [ "$objetivo" -le "$ahora" ] && objetivo=$((objetivo + 86400))
+    printf '%s' $((objetivo - ahora + 60))
+}
+
+# Dormir mirando el freno de mano: un `bin/ciclo --detener` durante una espera
+# larga tiene que valer, no quedar encolado horas.
+dormir() {
+    local total="$1" esperado=0
+    while [ "$esperado" -lt "$total" ]; do
+        detencion_pedida && return 1
+        sleep 60
+        esperado=$((esperado + 60))
+    done
+    return 0
+}
+
+# ¿Ya se repuso el límite? Una pregunta mínima al modelo más barato: si sigue
+# agotado devuelve 429 sin consumir nada.
+limite_repuesto() {
+    ! claude -p 'ok' --model "$MODELO_LIVIANO" --output-format json 2>&1 |
+        grep -qE '"api_error_status":429|hit your (session|usage) limit'
+}
+
+esperar_limite() {
+    local salida="$1" falta esperado=0
+    falta=$(segundos_hasta_reset "$salida") || falta=""
+    if [ -n "$falta" ] && [ "$falta" -le "$LIMITE_MAX" ]; then
+        aviso "Límite de uso agotado: el ciclo duerme $((falta / 60)) min, hasta que se reponga"
+        dormir "$falta" || return 1
+        return 0
+    fi
+    aviso "Límite de uso agotado y sin hora de reposición legible: sondeo cada $((SONDEO_LIMITE / 60)) min"
+    while [ "$esperado" -lt "$LIMITE_MAX" ]; do
+        dormir "$SONDEO_LIMITE" || return 1
+        esperado=$((esperado + SONDEO_LIMITE))
+        limite_repuesto && { log "  límite repuesto tras $((esperado / 60)) min"; return 0; }
+    done
+    return 1
+}
+
 esperar_red() {
     local esperado=0
     red_ok && return 0
@@ -247,9 +317,11 @@ esperar_red() {
     return 1
 }
 
-# 0 = la sesión terminó por su cuenta · 1 = la cortó la red y ya volvió ·
-# 2 = la cortó la red y la red sigue caída. Lo lee quien llamó a sesion().
-SESION_CORTE_RED=0
+# 0 = la sesión terminó por su cuenta · 1 = la cortó el entorno y ya se
+# resolvió · 2 = la cortó el entorno y sigue cortado. Lo lee quien llamó a
+# sesion(); el motivo es para el mensaje.
+SESION_CORTE=0
+SESION_CORTE_MOTIVO=""
 
 # --- Sesión de Claude Code -------------------------------------------
 # Nunca --bare: ese modo exige ANTHROPIC_API_KEY y saltea los hooks, es decir,
@@ -257,7 +329,8 @@ SESION_CORTE_RED=0
 # cuando no hay nadie mirando.
 sesion() {
     local texto="$1" salida="$2" herramientas="${3:-Read Edit Write Glob Grep Bash}" noche="${4:-0}" modelo="${5:-$MODELO_PESADO}" zonas="${6:-}" rc=0
-    SESION_CORTE_RED=0
+    SESION_CORTE=0
+    SESION_CORTE_MOTIVO=""
     log "  modelo: $modelo${zonas:+ · descongela: $zonas}"
     AGROCOM_TURNO_NOCHE="$noche" AGROCOM_DESCONGELA="$zonas" claude -p "$texto" \
         --model "$modelo" \
@@ -267,8 +340,12 @@ sesion() {
         --output-format json > "$salida" 2>&1 || rc=$?
     if corte_de_red "$salida" "$rc"; then
         aviso "La sesión se cortó por la red, no por la tarea"
-        SESION_CORTE_RED=1
-        esperar_red || SESION_CORTE_RED=2
+        SESION_CORTE=1; SESION_CORTE_MOTIVO="la red"
+        esperar_red || SESION_CORTE=2
+    elif limite_de_uso "$salida"; then
+        aviso "La sesión se cortó por el límite de uso, no por la tarea"
+        SESION_CORTE=1; SESION_CORTE_MOTIVO="el límite de uso"
+        esperar_limite "$salida" || SESION_CORTE=2
     fi
     return "$rc"
 }
@@ -466,17 +543,18 @@ No toques los tests para que pasen."
                 abortar_si_detenido && return 2
                 ;;
             *)
-                if [ "$SESION_CORTE_RED" != 0 ]; then
-                    if [ "$SESION_CORTE_RED" = 2 ]; then
-                        alerta "La API sigue sin responder tras $((ESPERA_RED / 60)) min: la tarea $id no avanza por el entorno, no por ella"
+                if [ "$SESION_CORTE" != 0 ]; then
+                    if [ "$SESION_CORTE" = 2 ]; then
+                        detencion_pedida && return 2
+                        alerta "$SESION_CORTE_MOTIVO no se repuso a tiempo: la tarea $id no avanza por el entorno, no por ella"
                         return 4
                     fi
                     cortes=$((cortes + 1))
-                    if [ "$cortes" -ge "$CORTES_RED_MAX" ]; then
-                        alerta "La red cortó $cortes sesiones de la tarea $id: así no avanza"
+                    if [ "$cortes" -ge "$CORTES_MAX" ]; then
+                        alerta "$SESION_CORTE_MOTIVO cortó $cortes sesiones de la tarea $id: así no avanza"
                         return 4
                     fi
-                    aviso "Etapa $sesiones cortada por la red ($cortes/$CORTES_RED_MAX) — no cuenta como fallo, la repito"
+                    aviso "Etapa $sesiones cortada por $SESION_CORTE_MOTIVO ($cortes/$CORTES_MAX) — no cuenta como fallo, la repito"
                     sesiones=$((sesiones - 1))
                     abortar_si_detenido && return 2
                     continue
