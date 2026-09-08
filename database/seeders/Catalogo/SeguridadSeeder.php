@@ -148,6 +148,15 @@ class SeguridadSeeder extends Seeder
         'comercial.lote.crear' => 'Dar de alta un lote suelto',
         'comercial.lote.editar' => 'Editar los datos y el perímetro de un lote',
         'comercial.lote.eliminar' => 'Dar de baja (lógica) un lote sin historial asociado',
+        // HU-48 (tarea 71, ADR 0015 punto 4): catálogo de cultivos — el
+        // cultivo no es columna de `com_lotes`, es un catálogo simple que se
+        // vincula a un lote solo dentro de una campaña (etapa 2 de esta
+        // tarea). Grano fino, mismo criterio que `comercial.campo.*`/
+        // `comercial.lote.*`.
+        'comercial.cultivo.ver' => 'Ver el catálogo de cultivos',
+        'comercial.cultivo.crear' => 'Dar de alta un cultivo',
+        'comercial.cultivo.editar' => 'Editar los datos de un cultivo',
+        'comercial.cultivo.eliminar' => 'Dar de baja (lógica) un cultivo',
         // HU-27 (tarea 36): administración de la flota de drones con su
         // modelo y capacidad de carga. Grano fino, mismo criterio que
         // `comercial.campo.*`.
@@ -400,6 +409,12 @@ class SeguridadSeeder extends Seeder
         'comercial.lote.crear',
         'comercial.lote.editar',
         'comercial.lote.eliminar',
+        // HU-48 (tarea 71): administra también el catálogo de cultivos —
+        // mismo criterio que campos y lotes arriba.
+        'comercial.cultivo.ver',
+        'comercial.cultivo.crear',
+        'comercial.cultivo.editar',
+        'comercial.cultivo.eliminar',
         // HU-27 (tarea 36): "Como encargado, quiero administrar la flota de
         // drones" — la HU lo dice literal, mismo criterio que clientes,
         // contratos y campos arriba.

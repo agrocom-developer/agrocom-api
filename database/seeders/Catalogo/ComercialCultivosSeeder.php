@@ -1,0 +1,35 @@
+<?php
+
+namespace Database\Seeders\Catalogo;
+
+use App\Dominios\Comercial\Infraestructura\Eloquent\Cultivo;
+use Illuminate\Database\Seeder;
+
+/**
+ * Catálogo de cultivos de la zona (HU-48, tarea 71, ADR 0015 punto 4):
+ * soya, maíz, girasol, trigo, sorgo, chía, frejol.
+ *
+ * Corre en todos los entornos, producción incluida — mismo criterio que
+ * `FinanzasRubrosSeeder`. `created_by`/`updated_by` NULL: dato de catálogo,
+ * sin autor humano. Idempotente vía `firstOrCreate` por nombre.
+ */
+class ComercialCultivosSeeder extends Seeder
+{
+    /** @var list<string> */
+    private const CULTIVOS = [
+        'Soya',
+        'Maíz',
+        'Girasol',
+        'Trigo',
+        'Sorgo',
+        'Chía',
+        'Frejol',
+    ];
+
+    public function run(): void
+    {
+        foreach (self::CULTIVOS as $nombre) {
+            Cultivo::query()->firstOrCreate(['nombre' => $nombre], ['activo' => true]);
+        }
+    }
+}

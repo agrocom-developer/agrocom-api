@@ -200,6 +200,7 @@ return [
         'col_hectareas' => 'Hectáreas',
         'lotes_cantidad' => ':cantidad lotes',
         'hectareas_valor' => ':cantidad ha',
+        'siembra' => 'Siembra',
         'editar' => 'Editar',
         'eliminar_accion' => 'Eliminar',
         'confirmar_baja' => '¿Dar de baja este campo? Sus lotes no se ven afectados.',
@@ -288,6 +289,75 @@ return [
 
         // Errores de validación
         'error_geometria_invalida' => 'La geometría tiene que ser un JSON con "type": "Polygon" y "coordinates" como arreglo.',
+    ],
+
+    // HU-48 (tarea 71, ADR 0015 punto 4): catálogo de cultivos. Cuarto ABM
+    // simple del panel — mismo molde que `lotes`/`bases`, sin sub-entidad.
+    'cultivos' => [
+        'creado' => 'El cultivo se dio de alta correctamente.',
+        'actualizado' => 'Los datos del cultivo se actualizaron correctamente.',
+        'eliminado' => 'El cultivo se dio de baja correctamente.',
+
+        // Listado
+        'titulo' => 'Cultivos',
+        'subtitulo' => 'Catálogo de cultivos disponibles para la siembra por lote y campaña.',
+        'nuevo' => 'Nuevo cultivo',
+        'filtro_busqueda' => 'Buscar',
+        'filtro_busqueda_placeholder' => 'Nombre del cultivo',
+        'filtrar' => 'Buscar',
+        'limpiar_filtro' => 'Limpiar búsqueda',
+        'vacio' => 'Todavía no se dio de alta ningún cultivo.',
+        'filtro_vacio' => 'Ningún cultivo coincide con la búsqueda.',
+        'col_nombre' => 'Cultivo',
+        'col_estado' => 'Estado',
+        'estado_activo' => 'Activo',
+        'estado_inactivo' => 'Inactivo',
+        'editar' => 'Editar',
+        'eliminar_accion' => 'Eliminar',
+        'confirmar_baja' => '¿Dar de baja este cultivo? Las siembras que ya lo tienen cargado no se ven afectadas.',
+        'paginacion_aria' => 'Paginación de cultivos',
+        'paginacion_anterior' => 'Anterior',
+        'paginacion_siguiente' => 'Siguiente',
+        'paginacion_info' => 'Página :actual de :total',
+
+        // Formulario (create/edit)
+        'titulo_crear' => 'Nuevo cultivo',
+        'titulo_editar' => 'Editar cultivo',
+        'subtitulo_form' => 'Catálogo simple: nombre y disponibilidad.',
+        'seccion_datos' => 'Datos del cultivo',
+        'campos_contador' => ':cantidad campos',
+        'campo_nombre' => 'Nombre',
+        'campo_activo' => 'Activo',
+        'campo_activo_ayuda' => 'Un cultivo inactivo deja de ofrecerse para nuevas siembras, sin afectar las ya cargadas.',
+        'estado_form' => 'Los cambios se guardan al confirmar.',
+    ],
+
+    // HU-48 (tarea 71, etapa 3, ADR 0015 punto 4): qué se sembró en cada
+    // lote del campo, por campaña. Se entra desde la ficha del campo
+    // (`campos`, arriba) — sin listado ni ABM propio, es un formulario por
+    // campo + campaña elegida.
+    'siembra' => [
+        'guardado' => 'La siembra se guardó correctamente.',
+
+        'titulo' => 'Siembra — :campo',
+        'subtitulo' => 'Qué se sembró en cada lote de este campo, por campaña.',
+        'volver' => 'Volver a campos',
+
+        'sin_campanias' => 'Este cliente todavía no tiene ninguna campaña cargada.',
+        'crear_campania' => 'Crear una campaña',
+
+        'campo_campania' => 'Campaña',
+        'ver' => 'Ver',
+
+        'seccion_lotes' => 'Lotes',
+        'lotes_contador' => ':cantidad lotes',
+        'lote_hectareas_valor' => ':cantidad ha',
+        'campo_cultivo' => 'Cultivo',
+        'campo_cultivo_placeholder' => 'Sin sembrar esta campaña',
+        'campo_hectareas_sembradas' => 'Hectáreas sembradas',
+        'campo_fecha_siembra' => 'Fecha de siembra',
+        'campo_fecha_cosecha_estimada' => 'Cosecha estimada',
+        'estado_form' => 'Los cambios se guardan al confirmar.',
     ],
 
     // HU-31 (tarea 45): "como encargado, quiero emitir la factura de un
