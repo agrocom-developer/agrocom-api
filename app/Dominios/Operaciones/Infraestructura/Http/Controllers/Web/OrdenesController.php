@@ -12,6 +12,7 @@ use App\Dominios\Operaciones\Dominio\Excepciones\OrdenNoEditable;
 use App\Dominios\Operaciones\Dominio\Excepciones\OrdenVigenteDuplicadaEnLote;
 use App\Dominios\Operaciones\Dominio\Excepciones\OrdenVigenteNoEliminable;
 use App\Dominios\Operaciones\Dominio\Excepciones\TransicionOrdenNoPermitida;
+use App\Dominios\Operaciones\Dominio\TipoAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Http\Requests\ActualizarOrdenRequest;
 use App\Dominios\Operaciones\Infraestructura\Http\Requests\CrearOrdenRequest;
@@ -64,14 +65,17 @@ final class OrdenesController
         $estadoQuery = $request->string('estado')->toString();
         $estado = $estadoQuery !== '' ? EstadoOrdenAplicacion::tryFrom($estadoQuery) : null;
 
-        $ordenes = $listarOrdenes->ejecutar(estado: $estado);
+        $tipoAplicacionQuery = $request->string('tipo_aplicacion')->toString();
+        $tipoAplicacion = $tipoAplicacionQuery !== '' ? TipoAplicacion::tryFrom($tipoAplicacionQuery) : null;
+
+        $ordenes = $listarOrdenes->ejecutar(estado: $estado, tipoAplicacion: $tipoAplicacion);
 
         return view('operaciones::pages.ordenes.index', [
             ...$this->autorizacion->cascara($request),
             'ordenes' => $ordenes,
             'etiquetasContrato' => $this->etiquetasContrato($ordenes->pluck('contrato_id')->map(fn ($id) => (int) $id)->unique()->values()->all()),
             'etiquetasLote' => $this->etiquetasLote($ordenes->pluck('lote_id')->map(fn ($id) => (int) $id)->unique()->values()->all()),
-            'filtros' => ['estado' => $estado?->value],
+            'filtros' => ['estado' => $estado?->value, 'tipo_aplicacion' => $tipoAplicacion?->value],
             'puedeActivar' => $this->autorizacion->tienePermiso($request, self::PERMISO_ACTIVAR),
         ]);
     }
@@ -173,6 +177,7 @@ final class OrdenesController
             'contrato_id' => (int) $datos['contrato_id'],
             'lote_id' => (int) $datos['lote_id'],
             'nro_aplicacion' => (int) $datos['nro_aplicacion'],
+            'tipo_aplicacion' => TipoAplicacion::from((string) $datos['tipo_aplicacion']),
             'litros_ha' => (string) $datos['litros_ha'],
             'humedad_min_pct' => $this->cadenaONull($datos['humedad_min_pct'] ?? null),
             'humedad_max_pct' => $this->cadenaONull($datos['humedad_max_pct'] ?? null),
