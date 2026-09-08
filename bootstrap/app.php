@@ -1,5 +1,6 @@
 <?php
 
+use App\Dominios\Campania\Infraestructura\Http\Middleware\ResolverCampaniaActiva;
 use App\Dominios\Seguridad\Infraestructura\Http\Middleware\ResolverRolActivo;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -22,6 +23,11 @@ return Application::configure(basePath: dirname(__DIR__))
         // agreguen después de `auth:interno` sin depender del FQCN.
         $middleware->alias([
             'rol.activo' => ResolverRolActivo::class,
+            // ADR 0015 punto 1 (tarea 69): resuelve/revalida la campaña
+            // activa de la sesión del panel, espejo de 'rol.activo' — pero
+            // sin bloquear el request nunca (la campaña activa filtra, no
+            // autoriza).
+            'campania.activa' => ResolverCampaniaActiva::class,
         ]);
 
         // HU-41 (tarea 55): sin esto, `Authenticate::redirectTo()` manda

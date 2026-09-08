@@ -18,7 +18,7 @@
         :user-name="$userName"
         :notifications="$notifications"
         :menu-badges="$menuBadges"
-        :campana="$campana"
+        :campaniaActiva="$campaniaActiva"
         :periodo="$periodo"
         :version="$version"
         :vista-actual="__('seguridad.roles.crear_titulo')"

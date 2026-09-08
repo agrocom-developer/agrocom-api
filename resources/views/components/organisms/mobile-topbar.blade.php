@@ -13,7 +13,8 @@
     - moduloIcono / moduloLabel / vistaActual: módulo activo (ya
       normalizado/traducido por panel-layout).
     - activeRoleLabel (nullable string): nombre legible del rol activo.
-    - campana (nullable string): nombre de la campaña (demo).
+    - campaniaActiva (nullable string): código de la campaña activa de la
+      sesión (ADR 0015 punto 1, tarea 69) — real, `null` si ninguna calza.
     - notifications (list): solo para el contador de la campana.
     - userName (nullable string): para las iniciales del avatar.
     - drawerId: id del offcanvas de módulos que abre la hamburguesa.
@@ -23,7 +24,7 @@
     'moduloLabel' => null,
     'vistaActual' => null,
     'activeRoleLabel' => null,
-    'campana' => null,
+    'campaniaActiva' => null,
     'notifications' => [],
     'userName' => null,
     'drawerId' => 'ag-module-drawer',
@@ -36,7 +37,7 @@
         ->take(2)
         ->implode('');
     $notificacionesSinLeer = collect($notifications)->filter(fn ($n) => (bool) data_get($n, 'unread', false))->count();
-    $rolCampana = collect([$activeRoleLabel, $campana])->filter()->implode(' · ');
+    $rolCampana = collect([$activeRoleLabel, $campaniaActiva])->filter()->implode(' · ');
 @endphp
 
 <div class="ag-mobile-topbar">

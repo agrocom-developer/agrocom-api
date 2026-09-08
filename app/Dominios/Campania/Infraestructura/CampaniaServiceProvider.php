@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Campania\Infraestructura;
 
+use App\Dominios\Campania\Contratos\CampaniaActivaSesion;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -15,7 +16,10 @@ use Illuminate\Support\ServiceProvider;
  */
 final class CampaniaServiceProvider extends ServiceProvider
 {
-    public function register(): void {}
+    public function register(): void
+    {
+        $this->app->bind(CampaniaActivaSesion::class, CampaniaActivaSesionEloquent::class);
+    }
 
     public function boot(): void
     {

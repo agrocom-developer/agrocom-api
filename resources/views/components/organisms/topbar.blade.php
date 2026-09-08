@@ -29,7 +29,11 @@
 
     Props:
     - moduloLabel / vistaActual (nullable string): breadcrumb, ya traducidos.
-    - campana (nullable string): texto del chip de campaña activa (demo).
+    - campaniaActiva (nullable string): código de la campaña activa de la
+      sesión (ADR 0015 punto 1, tarea 69) — real, resuelta por
+      `ResolverCampaniaActiva`; `null` si ninguna campaña calza (el chip no
+      se pinta). `campana`, a secas, quedó libre para el ícono de
+      notificaciones de acá abajo — nunca más el chip.
     - periodo (nullable string): texto del selector de período (demo).
     - notifications (list, default []): `{icon, title, time, unread}` ya
       resueltos por el llamador. Lista vacía = estado vacío del popover.
@@ -41,7 +45,7 @@
 @props([
     'moduloLabel' => null,
     'vistaActual' => null,
-    'campana' => null,
+    'campaniaActiva' => null,
     'periodo' => null,
     'notifications' => [],
     'activeRoleLabel' => null,
@@ -133,10 +137,10 @@
             </button>
         @endif
 
-        @if ($campana)
-            <span class="ag-topbar__campaign" title="{{ __('ui.header.campana_activa') }}">
+        @if ($campaniaActiva)
+            <span class="ag-topbar__campaign" title="{{ __('ui.header.campania_activa') }}">
                 <span class="ag-topbar__campaign-dot" aria-hidden="true"></span>
-                {{ $campana }}
+                {{ $campaniaActiva }}
             </span>
         @endif
 

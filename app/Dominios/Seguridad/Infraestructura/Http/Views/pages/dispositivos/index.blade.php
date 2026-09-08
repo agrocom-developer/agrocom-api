@@ -5,7 +5,7 @@
     equipo, con qué rol, y el botón para dejarlo afuera.
 
     Datos esperados (ver DispositivosController::index()): la cáscara de
-    CascaraPanel (menu/roles/…/tema/campana/periodo/version), más:
+    CascaraPanel (menu/roles/…/tema/campaniaActiva/periodo/version), más:
     - $dispositivos (Collection<SecTokenDispositivo>): sesiones vivas.
 
     El botón de revocar se gatea con la directiva `@puede` del módulo, que
@@ -25,7 +25,7 @@
         :user-name="$userName"
         :notifications="$notifications"
         :menu-badges="$menuBadges"
-        :campana="$campana"
+        :campaniaActiva="$campaniaActiva"
         :periodo="$periodo"
         :version="$version"
     >
