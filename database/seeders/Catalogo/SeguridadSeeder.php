@@ -180,6 +180,11 @@ class SeguridadSeeder extends Seeder
         // responsabilidad.
         'operaciones.pausa.ver' => 'Ver el listado de pausas y su agregado por causa',
         'operaciones.pausa.registrar' => 'Registrar una pausa de sesión con su causa',
+        // HU-51 (tarea 74): entrada y salida del equipo en cada hacienda,
+        // cargada desde la app de campo. Un único permiso de solo lectura —
+        // el panel nunca abre ni cierra una estadía (ver "Qué NO hacer" del
+        // prompt de la tarea).
+        'operaciones.estadia.ver' => 'Ver el listado de estadías del equipo en cada hacienda',
         // HU-26 (tarea 37): administración de personas y bases, con su rol
         // operativo y tarifa. Dos recursos, cada uno con su grano fino
         // (ver/crear/editar/eliminar) — mismo criterio que
@@ -452,6 +457,10 @@ class SeguridadSeeder extends Seeder
         // trabajo.ver/sesion.validar arriba) así que comparte el grano.
         'operaciones.pausa.ver',
         'operaciones.pausa.registrar',
+        // HU-51 (tarea 74): administra la operación diaria, así que también
+        // puede ver dónde y cuántos días estuvo cada equipo — mismo criterio
+        // que trabajo.ver/pausa.ver arriba.
+        'operaciones.estadia.ver',
         // HU-26 (tarea 37): "Como encargado, quiero administrar personas y
         // bases" — la HU lo dice literal, mismo criterio que clientes,
         // contratos, campos y drones arriba.
@@ -590,6 +599,10 @@ class SeguridadSeeder extends Seeder
         // esta responsabilidad.
         'operaciones.pausa.ver',
         'operaciones.pausa.registrar',
+        // HU-51 (tarea 74): coordina la cuadrilla, así que necesita ver
+        // dónde y cuántos días estuvo el equipo — mismo criterio que
+        // trabajo.ver/pausa.ver arriba.
+        'operaciones.estadia.ver',
     ];
 
     public function run(): void

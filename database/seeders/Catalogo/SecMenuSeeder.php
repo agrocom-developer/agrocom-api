@@ -114,11 +114,15 @@ class SecMenuSeeder extends Seeder
         // HU-44 (tarea 58): pausas con causa atribuible (DS-01) — activa el
         // ítem que ya estaba sembrado como "botón sin link".
         $this->item($operacion, 'operacion', 'pausas', 'pause_circle', 5, ruta: 'panel.pausas.index', codigoPermiso: 'operaciones.pausa.ver');
-        // Orden 6 (mezclas) y 7 (evidencias) quedan vacantes a propósito:
-        // mezclas lo retiró CR-01 (TE-13, tarea 59); evidencias se retira acá
+        // HU-51 (tarea 74): entrada y salida del equipo en cada hacienda.
+        // Ocupa el orden 6, vacante desde que mezclas se retiró (CR-01,
+        // TE-13, tarea 59) — ítem nuevo desde el vamos, sin placeholder
+        // previo (mismo criterio que `equipos_trabajo`/`generadores`).
+        $this->item($operacion, 'operacion', 'estadias', 'holiday_village', 6, ruta: 'panel.estadias.index', codigoPermiso: 'operaciones.estadia.ver');
+        // Orden 7 (evidencias) queda vacante a propósito: se retiró acá
         // (tarea 62, fuga 3 — ver el borrado de catálogo al inicio de
-        // `run()`) — no se renumeran los ítems que siguen para no tocar algo
-        // que esta tarea no pidió mover.
+        // `run()`) — no se renumera el ítem que sigue para no tocar algo que
+        // esta tarea no pidió mover.
 
         // Comercial (§4.1 + cap. 9)
         // HU-22 (tarea 33): alta y mantenimiento de clientes — activa el
