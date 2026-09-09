@@ -5,6 +5,9 @@ use App\Dominios\Operaciones\Dominio\EstadoSesion;
 use App\Dominios\Operaciones\Dominio\TipoEvidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Evidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
+use App\Dominios\Personal\Infraestructura\Eloquent\EquipoIntegrante;
+use App\Dominios\Personal\Infraestructura\Eloquent\EquipoRecurso;
+use App\Dominios\Personal\Infraestructura\Eloquent\EquipoTrabajo;
 use App\Dominios\Seguridad\Aplicacion\ObtenerMenuPorRolActivo;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecMenu;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
@@ -193,8 +196,12 @@ it('deja datos en cada pantalla del panel que hoy abría vacía', function (stri
     'ope_reportes_tecnicos',
     'man_baterias',
     'man_vehiculos',
+    'man_generadores',
     'man_planes_mantenimiento',
     'man_ordenes_mantenimiento',
+    'per_equipos_trabajo',
+    'per_equipo_integrantes',
+    'per_equipo_recursos',
     'inv_repuestos',
     'inv_stock',
     'inv_movimientos',
@@ -214,6 +221,9 @@ it('es idempotente: resembrar no duplica nada', function () {
         'evidencias' => Evidencia::query()->count(),
         'sesiones' => Sesion::query()->count(),
         'devengos' => DevengoPersonal::query()->count(),
+        'equipos' => EquipoTrabajo::query()->count(),
+        'integrantes' => EquipoIntegrante::query()->count(),
+        'recursos' => EquipoRecurso::query()->count(),
     ];
 
     $this->seed(CatalogoSeeder::class);
@@ -224,5 +234,22 @@ it('es idempotente: resembrar no duplica nada', function () {
         'evidencias' => Evidencia::query()->count(),
         'sesiones' => Sesion::query()->count(),
         'devengos' => DevengoPersonal::query()->count(),
+        'equipos' => EquipoTrabajo::query()->count(),
+        'integrantes' => EquipoIntegrante::query()->count(),
+        'recursos' => EquipoRecurso::query()->count(),
     ])->toBe($antes);
+});
+
+it('siembra dos equipos de trabajo con piloto, auxiliar y equipamiento', function () {
+    $equipos = EquipoTrabajo::query()->with(['integrantes', 'recursos'])->get();
+
+    expect($equipos)->toHaveCount(2);
+
+    foreach ($equipos as $equipo) {
+        $roles = $equipo->integrantes->pluck('rol_equipo')->map(fn ($rol) => $rol->value)->all();
+        $tipos = $equipo->recursos->pluck('recurso_tipo')->map(fn ($tipo) => $tipo->value)->all();
+
+        expect($roles)->toContain('piloto')->toContain('auxiliar')
+            ->and($tipos)->toContain('dron')->toContain('vehiculo')->toContain('generador');
+    }
 });

@@ -19,6 +19,27 @@ return [
         'dueno' => 'Dueño',
     ],
 
+    // Estado descriptivo de un equipo de trabajo (EstadoEquipoTrabajo, tarea
+    // 72) — campo libre, sin máquina de estados (ver docblock del enum).
+    'estado' => [
+        'activo' => 'Activo',
+        'inactivo' => 'Inactivo',
+    ],
+
+    // Rol de una persona DENTRO de un equipo de trabajo (RolEquipo, tarea 72).
+    'rol_equipo' => [
+        'piloto' => 'Piloto',
+        'auxiliar' => 'Auxiliar',
+    ],
+
+    // Tipo de recurso asignable a un equipo de trabajo (RecursoTipoEquipo,
+    // tarea 72).
+    'recurso_tipo' => [
+        'dron' => 'Dron',
+        'vehiculo' => 'Vehículo',
+        'generador' => 'Generador',
+    ],
+
     // HU-26 (tarea 37): alta y mantenimiento de bases operativas. Catálogo
     // simple, sin sub-entidad — mismo molde que operaciones.drones.
     'bases' => [
@@ -110,6 +131,86 @@ return [
         'campo_activo' => 'Persona activa',
         'campo_activo_ayuda' => 'Una persona inactiva no puede asignarse a sesiones nuevas.',
         'estado_form' => 'Los cambios se guardan al confirmar.',
+    ],
+
+    // Tarea 72 (HU-49, ADR 0015 punto 3): equipos de trabajo — el piloto y
+    // su auxiliar, con el equipamiento asignado. Sin campaña (el equipo es
+    // de Agrocom, trabaja para varias a la vez) — la vigencia es la del
+    // equipo y la de cada integrante/recurso, no un período de campaña.
+    'equipos_trabajo' => [
+        'creado' => 'El equipo de trabajo se dio de alta correctamente.',
+        'actualizado' => 'Los datos del equipo de trabajo se actualizaron correctamente.',
+        'eliminado' => 'El equipo de trabajo se dio de baja correctamente.',
+        'integrante_asignado' => 'El integrante se asignó correctamente.',
+        'integrante_finalizado' => 'Se finalizó la vigencia del integrante.',
+        'recurso_asignado' => 'El recurso se asignó correctamente.',
+        'recurso_finalizado' => 'Se finalizó la vigencia del recurso.',
+        'aviso_solapamiento' => 'Ya está vigente en otro equipo en fechas que se superponen: :equipos. Se guardó igual — la operación real presta gente y equipamiento entre cuadrillas.',
+
+        // Listado
+        'titulo' => 'Equipos de trabajo',
+        'subtitulo' => 'Cuadrillas de Agrocom, con su base, vigencia y estado.',
+        'nuevo' => 'Nuevo equipo',
+        'filtro_busqueda' => 'Buscar',
+        'filtro_busqueda_placeholder' => 'Código o nombre…',
+        'filtro_base' => 'Base',
+        'filtro_estado' => 'Estado',
+        'filtro_todos' => 'Todos',
+        'filtrar' => 'Filtrar',
+        'limpiar_filtro' => 'Limpiar filtro',
+        'vacio' => 'Todavía no hay equipos de trabajo registrados.',
+        'filtro_vacio' => 'Ningún equipo coincide con esta búsqueda.',
+        'col_codigo' => 'Código',
+        'col_nombre' => 'Nombre',
+        'col_base' => 'Base',
+        'col_vigencia' => 'Vigencia',
+        'col_estado' => 'Estado',
+        'sin_nombre' => '—',
+        'vigente' => 'vigente',
+        'ver' => 'Ver ficha',
+        'editar' => 'Editar',
+        'eliminar_accion' => 'Eliminar',
+        'confirmar_baja' => '¿Confirmás la baja de este equipo de trabajo?',
+        'paginacion_aria' => 'Paginación de equipos de trabajo',
+        'paginacion_anterior' => 'Anterior',
+        'paginacion_siguiente' => 'Siguiente',
+        'paginacion_info' => 'Página :actual de :total',
+
+        // Formulario
+        'titulo_crear' => 'Nuevo equipo de trabajo',
+        'titulo_editar' => 'Editar equipo de trabajo',
+        'subtitulo_form' => 'Código, base y vigencia del equipo.',
+        'seccion_datos' => 'Datos del equipo',
+        'campos_contador' => ':cantidad campos',
+        'campo_codigo' => 'Código',
+        'campo_nombre' => 'Nombre',
+        'campo_base' => 'Base',
+        'campo_base_placeholder' => 'Seleccioná una base',
+        'campo_estado' => 'Estado',
+        'campo_desde' => 'Vigente desde',
+        'campo_hasta' => 'Vigente hasta',
+        'campo_hasta_ayuda' => 'Dejalo vacío si el equipo sigue vigente.',
+        'estado_form' => 'Los cambios se guardan al confirmar.',
+
+        // Ficha
+        'ficha_titulo' => 'Equipo :codigo',
+        'ficha_subtitulo' => 'Integrantes y recursos vigentes a la fecha elegida.',
+        'ficha_volver' => 'Volver al listado',
+        'ficha_campo_base' => 'Base',
+        'ficha_campo_vigencia' => 'Vigencia del equipo',
+        'ficha_selector_fecha' => 'Ver vigencia al',
+        'ficha_consultar' => 'Consultar',
+        'ficha_seccion_integrantes' => 'Integrantes',
+        'ficha_integrantes_vacio' => 'Nadie integraba este equipo en la fecha elegida.',
+        'ficha_finalizar' => 'Finalizar vigencia',
+        'ficha_asignar_integrante' => 'Asignar integrante',
+        'ficha_campo_persona' => 'Persona',
+        'ficha_campo_persona_placeholder' => 'Seleccioná una persona',
+        'ficha_campo_rol' => 'Rol en el equipo',
+        'ficha_seccion_recursos' => 'Recursos asignados',
+        'ficha_recursos_vacio' => 'Este equipo no tenía recursos asignados en la fecha elegida.',
+        'ficha_asignar_recurso' => 'Asignar recurso',
+        'ficha_campo_recurso_placeholder' => 'Seleccioná un recurso',
     ],
 
 ];

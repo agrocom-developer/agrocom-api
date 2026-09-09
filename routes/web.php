@@ -19,6 +19,7 @@ use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\RendicionesContro
 use App\Dominios\Inventario\Infraestructura\Http\Controllers\Web\RepuestosController;
 use App\Dominios\Inventario\Infraestructura\Http\Controllers\Web\StockController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\BateriasController;
+use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\GeneradoresController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\OrdenesMantenimientoController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\PlanesMantenimientoController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\VehiculosController;
@@ -30,6 +31,7 @@ use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\ReportesTecnic
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\TrabajosController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\ValidacionSesionesController;
 use App\Dominios\Personal\Infraestructura\Http\Controllers\Web\BasesController;
+use App\Dominios\Personal\Infraestructura\Http\Controllers\Web\EquiposTrabajoController;
 use App\Dominios\Personal\Infraestructura\Http\Controllers\Web\PersonasController;
 use App\Dominios\Portal\Infraestructura\Http\Controllers\Web\ActasPortalController;
 use App\Dominios\Portal\Infraestructura\Http\Controllers\Web\AvancePortalController;
@@ -584,6 +586,72 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::delete('/panel/baterias/{bateria}', [BateriasController::class, 'destroy'])
             ->name('panel.baterias.destroy');
+
+        // Tarea 72 (HU-49, ADR 0015 punto 3): catálogo de generadores, ABM
+        // mínimo — no es una HU propia, es la tabla que hace falta para
+        // poder asignar un generador como equipamiento de un equipo de
+        // trabajo. Mismo molde que `vehiculos`/`baterias` arriba. Cuatro
+        // permisos de grano fino
+        // (`mantenimiento.generador.ver`/`.crear`/`.editar`/`.eliminar`)
+        // verificados DENTRO del controlador contra el ROL ACTIVO.
+        Route::get('/panel/generadores', [GeneradoresController::class, 'index'])
+            ->name('panel.generadores.index');
+
+        Route::get('/panel/generadores/crear', [GeneradoresController::class, 'create'])
+            ->name('panel.generadores.create');
+
+        Route::post('/panel/generadores', [GeneradoresController::class, 'store'])
+            ->name('panel.generadores.store');
+
+        Route::get('/panel/generadores/{generador}/editar', [GeneradoresController::class, 'edit'])
+            ->name('panel.generadores.edit');
+
+        Route::put('/panel/generadores/{generador}', [GeneradoresController::class, 'update'])
+            ->name('panel.generadores.update');
+
+        Route::delete('/panel/generadores/{generador}', [GeneradoresController::class, 'destroy'])
+            ->name('panel.generadores.destroy');
+
+        // Tarea 72 (HU-49, ADR 0015 punto 3): equipos de trabajo — el piloto
+        // y su auxiliar, con el equipamiento asignado, cada uno con su
+        // propia vigencia. Cuatro permisos de grano fino
+        // (`personal.equipo_trabajo.ver`/`.crear`/`.editar`/`.eliminar`)
+        // verificados DENTRO del controlador contra el ROL ACTIVO. La ficha
+        // (`show`) y las rutas de integrantes/recursos exigen `.editar` para
+        // mutar — asignar o finalizar una vigencia es mantener el equipo,
+        // no un permiso aparte.
+        Route::get('/panel/equipos-trabajo', [EquiposTrabajoController::class, 'index'])
+            ->name('panel.equipos-trabajo.index');
+
+        Route::get('/panel/equipos-trabajo/crear', [EquiposTrabajoController::class, 'create'])
+            ->name('panel.equipos-trabajo.create');
+
+        Route::post('/panel/equipos-trabajo', [EquiposTrabajoController::class, 'store'])
+            ->name('panel.equipos-trabajo.store');
+
+        Route::get('/panel/equipos-trabajo/{equipoTrabajo}', [EquiposTrabajoController::class, 'show'])
+            ->name('panel.equipos-trabajo.show');
+
+        Route::get('/panel/equipos-trabajo/{equipoTrabajo}/editar', [EquiposTrabajoController::class, 'edit'])
+            ->name('panel.equipos-trabajo.edit');
+
+        Route::put('/panel/equipos-trabajo/{equipoTrabajo}', [EquiposTrabajoController::class, 'update'])
+            ->name('panel.equipos-trabajo.update');
+
+        Route::delete('/panel/equipos-trabajo/{equipoTrabajo}', [EquiposTrabajoController::class, 'destroy'])
+            ->name('panel.equipos-trabajo.destroy');
+
+        Route::post('/panel/equipos-trabajo/{equipoTrabajo}/integrantes', [EquiposTrabajoController::class, 'asignarIntegrante'])
+            ->name('panel.equipos-trabajo.integrantes.store');
+
+        Route::delete('/panel/equipos-trabajo/{equipoTrabajo}/integrantes/{integrante}', [EquiposTrabajoController::class, 'desasignarIntegrante'])
+            ->name('panel.equipos-trabajo.integrantes.destroy');
+
+        Route::post('/panel/equipos-trabajo/{equipoTrabajo}/recursos', [EquiposTrabajoController::class, 'asignarRecurso'])
+            ->name('panel.equipos-trabajo.recursos.store');
+
+        Route::delete('/panel/equipos-trabajo/{equipoTrabajo}/recursos/{recurso}', [EquiposTrabajoController::class, 'desasignarRecurso'])
+            ->name('panel.equipos-trabajo.recursos.destroy');
 
         // HU-36 (tarea 52): catálogo de repuestos con stock por base y
         // alerta de mínimo. Módulo nuevo `Inventario` (ADR 0011, extensión

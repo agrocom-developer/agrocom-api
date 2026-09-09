@@ -21,12 +21,15 @@ use Illuminate\Database\Seeder;
  *    Carmen, Santa Rosa), que son los campos del relato de las capturas de RC.
  * 2. `FlotaDemoSeeder` — drones, baterías, vehículos, repuestos y stock, más
  *    su mantenimiento. Las sesiones necesitan un dron al que colgarse.
- * 3. `OperacionDemoSeeder` — las 21 capturas reales del control remoto como
+ * 3. `EquiposTrabajoDemoSeeder` — dos cuadrillas (piloto, auxiliar, dron,
+ *    vehículo y generador), tarea 72/HU-49. Va después de `FlotaDemoSeeder`
+ *    porque necesita drones y vehículos ya sembrados a los que asignar.
+ * 4. `OperacionDemoSeeder` — las 21 capturas reales del control remoto como
  *    evidencias, y sobre ellas los trabajos, sesiones, validaciones (que
  *    generan los devengos), actas y reportes técnicos.
- * 4. `FinanzasDemoSeeder` — lo que se deriva de todo eso: gastos, rendiciones,
+ * 5. `FinanzasDemoSeeder` — lo que se deriva de todo eso: gastos, rendiciones,
  *    combustible, anticipos, la planilla del período y las facturas.
- * 5. `DashboardDemoSeeder` — actividad de los últimos días, RELATIVA A HOY,
+ * 6. `DashboardDemoSeeder` — actividad de los últimos días, RELATIVA A HOY,
  *    para que el dashboard no aparezca vacío. Va al final porque se apoya en
  *    la orden, el lote y las personas que sembraron los anteriores.
  *
@@ -39,6 +42,7 @@ class DemostracionSeeder extends Seeder
         $this->call(DemoSeeder::class);
         $this->call(CarteraClientesDemoSeeder::class);
         $this->call(FlotaDemoSeeder::class);
+        $this->call(EquiposTrabajoDemoSeeder::class);
         $this->call(OperacionDemoSeeder::class);
         $this->call(FinanzasDemoSeeder::class);
         $this->call(DashboardDemoSeeder::class);
