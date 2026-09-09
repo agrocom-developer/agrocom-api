@@ -51,7 +51,7 @@ return [
 
     'recursos' => [
         'label' => 'Recursos',
-        'descripcion' => 'Drones, baterías, vehículos, generadores, bases y personal.',
+        'descripcion' => 'Drones, baterías, vehículos, generadores, bases, personal y equipos de trabajo.',
         'items' => [
             'drones' => 'Drones',
             'baterias' => 'Baterías',
@@ -62,6 +62,9 @@ return [
             // Tarea 77 (HU-54): pedido del dueño (7/9/2026), "Personas" era
             // el nombre de la tabla filtrándose a la interfaz.
             'personal' => 'Personal',
+            // Tarea 72 (HU-49, ADR 0015 punto 3): equipos de trabajo — el
+            // piloto y su auxiliar, con el equipamiento asignado.
+            'equipos_trabajo' => 'Equipos de trabajo',
         ],
     ],
 

@@ -171,6 +171,14 @@ class SecMenuSeeder extends Seeder
         // `vehiculos` (ADR 0011, extensión 26/8/2026, punto 3).
         $this->item($recursos, 'recursos', 'generadores', 'bolt', 6, ruta: 'panel.generadores.index', codigoPermiso: 'mantenimiento.generador.ver');
 
+        // Tarea 72 (HU-49, ADR 0015 punto 3): equipos de trabajo — el piloto
+        // y su auxiliar, con el equipamiento asignado. ABM mínimo nuevo, sin
+        // placeholder previo, mismo criterio que `generadores` arriba. El
+        // backend vive en `Personal` (`per_equipos_trabajo`) aunque el ítem
+        // quede agrupado bajo "Recursos": misma agrupación de layout que
+        // `bases`/`personal` abajo (ADR 0011, extensión 26/8/2026, punto 3).
+        $this->item($recursos, 'recursos', 'equipos_trabajo', 'groups', 7, ruta: 'panel.equipos-trabajo.index', codigoPermiso: 'personal.equipo_trabajo.ver');
+
         // HU-26 (tarea 37): administración de personas y bases — activa los
         // dos ítems que ya estaban sembrados como "botón sin link" (ver
         // docblock de `item()`).

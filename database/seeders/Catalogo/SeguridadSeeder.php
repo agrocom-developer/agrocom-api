@@ -183,6 +183,14 @@ class SeguridadSeeder extends Seeder
         'personal.persona.crear' => 'Dar de alta una persona operativa',
         'personal.persona.editar' => 'Editar los datos de una persona operativa',
         'personal.persona.eliminar' => 'Dar de baja (lógica) una persona operativa',
+        // Tarea 72 (HU-49, ADR 0015 punto 3): equipos de trabajo — el piloto
+        // y su auxiliar, con el equipamiento asignado. `.editar` cubre
+        // también asignar/finalizar integrantes y recursos desde la ficha:
+        // no es un permiso aparte, es parte de mantener el equipo.
+        'personal.equipo_trabajo.ver' => 'Ver el listado y la ficha de equipos de trabajo',
+        'personal.equipo_trabajo.crear' => 'Dar de alta un equipo de trabajo',
+        'personal.equipo_trabajo.editar' => 'Editar un equipo de trabajo y asignar o finalizar sus integrantes y recursos',
+        'personal.equipo_trabajo.eliminar' => 'Dar de baja (lógica) un equipo de trabajo',
         // HU-28 (tarea 40): "como piloto o auxiliar, quiero ver mis devengos
         // por período" — primer permiso de panel para piloto y auxiliar, que
         // hasta esta tarea no tenían ninguno (piloto: solo
@@ -440,6 +448,12 @@ class SeguridadSeeder extends Seeder
         'personal.persona.crear',
         'personal.persona.editar',
         'personal.persona.eliminar',
+        // Tarea 72 (HU-49, ADR 0015 punto 3): equipos de trabajo — mismo
+        // criterio que personas/bases arriba.
+        'personal.equipo_trabajo.ver',
+        'personal.equipo_trabajo.crear',
+        'personal.equipo_trabajo.editar',
+        'personal.equipo_trabajo.eliminar',
         // HU-29 (tarea 41): "como encargado, quiero registrar anticipos
         // validando el tope" — la HU lo dice literal, mismo criterio que
         // clientes, contratos, campos, drones, bases y personas arriba.
