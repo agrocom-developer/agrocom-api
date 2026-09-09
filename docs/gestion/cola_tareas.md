@@ -1,7 +1,15 @@
 # Cola de tareas automatizables
 
-**Última actualización: 9/9/2026 (Sprint 13 y Sprint 14 cerrados; tareas 82 a
-84 planificadas).** Con la tarea 81 (HU-58, PR #153) integrada, las filas 61 a
+**Última actualización: 9/9/2026 (plan agotado; el ciclo queda detenido a la
+espera de trabajo nuevo).** Las tareas 82 a 84 las escribió la propia sesión de
+planificación al quedarse sin HU/TE, y eso estuvo mal: el ciclo ejecuta el plan
+del usuario, no se da trabajo a sí mismo. Se corrigió
+`prompts/plantillas/planificar.md` —agotado el plan, la deuda que aparezca se
+anota en "Deuda técnica detectada" y se escribe `runs/DETENER`— y las tres se
+cerraron juntas, por decisión del usuario, en un PR único en vez de tres.
+
+**Qué decía esta entrada cuando la escribió el ciclo (9/9/2026, tareas 82 a 84
+planificadas):** Con la tarea 81 (HU-58, PR #153) integrada, las filas 61 a
 81 quedaron marcadas `hecha` en la tabla de abajo — no se habían vuelto a tocar
 desde que se escribieron, así que decían `escrita` pese a estar todas
 mergeadas (confirmado con `runs/*.estado` = `OK` y `gh pr list --state
@@ -156,9 +164,9 @@ exista el módulo `Mezclas`).
 | 79 | HU-56 — editor de perímetro a pantalla completa, con barra de acciones propia en Material Symbols, superficie en hectáreas mientras se dibuja, y proveedor de mapa configurable (Google Maps con llave, Leaflet + Esri sin ella) | `./bin/verify` = 0, con test de que sin llave el camino actual funciona intacto, test de que el GeoJSON guardado es idéntico con un proveedor o el otro, y test de que la llave no aparece en el HTML cuando el proveedor es Leaflet | `resources/js/**`, `resources/css/**`, `resources/views/components/**`, `Comercial/**` (vista del editor), `Compartido/Contratos/**`, `package.json`, `lang/`, `tests/**` | no | 3 | **hecha** (PR #146, mergeado 9/9/2026) |
 | 80 | HU-57 — repuestos por casillas en la orden de mantenimiento: lista con búsqueda por código y descripción, cantidad y disponibilidad a la vista, resumen de lo elegido, base elegida una vez por orden; el payload no cambia | `./bin/verify` = 0, con test de que el formulario nuevo produce el mismo payload y el mismo resultado que el viejo, y regresión de HU-37 (cerrar descuenta stock y genera el gasto en una transacción) | `app/Dominios/Mantenimiento/**` (vistas y controlador), `resources/`, `lang/mantenimiento.php`, `tests/**` | no | 2 | **hecha** (PR #147, mergeado 9/9/2026) |
 | 81 | HU-58 — ficha de desempeño de una persona: qué aplicó (lote, campo, cliente, campaña), cuándo, con qué dron y cuántas hectáreas, más sus sesiones rechazadas con motivo y sus incidencias, por contrato de lectura de `Operaciones` sin que `Personal` toque tablas `ope_*` | `./bin/verify` = 0, con test de que una sesión rechazada no suma hectáreas y de que la campaña mostrada es la del contrato de esa orden | `Operaciones/**` (contrato de lectura), `Personal/**` (pantalla), `Comercial/**` (solo extender lectura), `Seguridad/**` (permiso), `lang/`, `routes/web.php`, `tests/**` | no | 3 | **hecha** (PR #153, mergeado 9/9/2026 — HU-58 completa) |
-| 82 | Deuda técnica (no es fila de `plan_sprints.md`, mismo criterio que 28-30/61): `tests/Unit/ArquitecturaModulosTest.php` no prohíbe genéricamente que un módulo importe la capa `Dominio/` de otro — solo cubre `Infraestructura/Eloquent` y `Aplicacion/` ajenas. Hallazgo de la tarea 69 (`runs/69.md`): `Mantenimiento` ya importa `Inventario\Dominio\Excepciones\StockInsuficiente` directo, en vez de por `Inventario/Contratos/` | `./bin/verify` = 0, con un test de arquitectura que falla si CUALQUIER módulo importa la capa `Dominio/` de otro (mismo patrón que la regla de `Aplicacion/` ajena ya existente) | `tests/Unit/ArquitecturaModulosTest.php`, `app/Dominios/Inventario/Dominio/Excepciones/StockInsuficiente.php` (mover a `Contratos/Excepciones/`), `app/Dominios/Inventario/Contratos/EscrituraConsumoStock.php`, `app/Dominios/Inventario/Aplicacion/RegistrarMovimientoStock.php`, `app/Dominios/Inventario/Infraestructura/Http/Controllers/Web/StockController.php`, `app/Dominios/Mantenimiento/Aplicacion/MaquinaEstados/MaquinaEstadosOrdenMantenimiento.php` | no | 2 | escrita |
-| 83 | Deuda de documentación (no es fila de `plan_sprints.md`): pegar en `docs/decisiones/0003-arquitectura-modular-clean-por-feature.md` la sección "Revisión (3/9/2026) — Comercial lee Operaciones vía `Contratos/`" que el agente `arquitectura` dejó redactada en la tarea 45 (`runs/45.md`, texto exacto incluido) y que quedó sin pegar porque esa tarea no tenía `descongela=decisiones`. La regla que describe YA está aplicada en `tests/Unit/ArquitecturaModulosTest.php` desde el PR #91 — es solo la constancia escrita, no una decisión nueva | `./bin/verify` = 0, y `grep -q "Comercial lee Operaciones vía" docs/decisiones/0003-arquitectura-modular-clean-por-feature.md` | `docs/decisiones/0003-arquitectura-modular-clean-por-feature.md` | no | 1 | escrita |
-| 84 | Deuda técnica (no es fila de `plan_sprints.md`, mismo criterio que 61): `database/factories/VersionApkFactory.php` genera `version` con `fake()->numberBetween(0,20)` dos veces sin `unique()` (solo `version_code` lo tiene) contra una columna con índice único parcial (`dis_versiones_apk_version_unico`) — colisión intermitente ya observada y documentada como flake por la tarea 71 (`runs/71.md`, `MaquinaEstadosVersionApkTest`) | `./bin/verify` = 0, con un test nuevo que crea 200+ `VersionApk::factory()` en un solo test sin colisión de `version`, corrido 5 veces seguidas sin fallar | `database/factories/VersionApkFactory.php`, `tests/Feature/Distribucion/**` | no | 1 | escrita |
+| 82 | Deuda técnica (no es fila de `plan_sprints.md`, mismo criterio que 28-30/61): `tests/Unit/ArquitecturaModulosTest.php` no prohíbe genéricamente que un módulo importe la capa `Dominio/` de otro — solo cubre `Infraestructura/Eloquent` y `Aplicacion/` ajenas. Hallazgo de la tarea 69 (`runs/69.md`): `Mantenimiento` ya importa `Inventario\Dominio\Excepciones\StockInsuficiente` directo, en vez de por `Inventario/Contratos/` | `./bin/verify` = 0, con un test de arquitectura que falla si CUALQUIER módulo importa la capa `Dominio/` de otro (mismo patrón que la regla de `Aplicacion/` ajena ya existente) | `tests/Unit/ArquitecturaModulosTest.php`, `app/Dominios/Inventario/Dominio/Excepciones/StockInsuficiente.php` (mover a `Contratos/Excepciones/`), `app/Dominios/Inventario/Contratos/EscrituraConsumoStock.php`, `app/Dominios/Inventario/Aplicacion/RegistrarMovimientoStock.php`, `app/Dominios/Inventario/Infraestructura/Http/Controllers/Web/StockController.php`, `app/Dominios/Mantenimiento/Aplicacion/MaquinaEstados/MaquinaEstadosOrdenMantenimiento.php` | no | 2 | **hecha** (9/9/2026, en el PR único de cierre de deuda técnica) |
+| 83 | Deuda de documentación (no es fila de `plan_sprints.md`): pegar en `docs/decisiones/0003-arquitectura-modular-clean-por-feature.md` la sección "Revisión (3/9/2026) — Comercial lee Operaciones vía `Contratos/`" que el agente `arquitectura` dejó redactada en la tarea 45 (`runs/45.md`, texto exacto incluido) y que quedó sin pegar porque esa tarea no tenía `descongela=decisiones`. La regla que describe YA está aplicada en `tests/Unit/ArquitecturaModulosTest.php` desde el PR #91 — es solo la constancia escrita, no una decisión nueva | `./bin/verify` = 0, y `grep -q "Comercial lee Operaciones vía" docs/decisiones/0003-arquitectura-modular-clean-por-feature.md` | `docs/decisiones/0003-arquitectura-modular-clean-por-feature.md` | no | 1 | **hecha** (9/9/2026, en el PR único de cierre de deuda técnica) |
+| 84 | Deuda técnica (no es fila de `plan_sprints.md`, mismo criterio que 61): `database/factories/VersionApkFactory.php` genera `version` con `fake()->numberBetween(0,20)` dos veces sin `unique()` (solo `version_code` lo tiene) contra una columna con índice único parcial (`dis_versiones_apk_version_unico`) — colisión intermitente ya observada y documentada como flake por la tarea 71 (`runs/71.md`, `MaquinaEstadosVersionApkTest`) | `./bin/verify` = 0, con un test nuevo que crea 200+ `VersionApk::factory()` en un solo test sin colisión de `version`, corrido 5 veces seguidas sin fallar | `database/factories/VersionApkFactory.php`, `tests/Feature/Distribucion/**` | no | 1 | **hecha** (9/9/2026, en el PR único de cierre de deuda técnica) |
 
 ### El bug de la 24 — ya pasó dos veces, sigue sin arreglarse
 
@@ -218,6 +226,20 @@ lo mismo. Los dos PR que habían quedado retenidos por la versión vieja (#59 de
 la tarea 22/HU-08, #62 de la tarea 24/HU-17) ya están integrados: el #62 se
 reconcilió directo, el #59 necesitó la tarea 27 porque sus conflictos tocaban
 el motor de sync en 8 archivos.
+
+### Deuda técnica detectada
+
+Hallazgos reales que una tarea encontró de paso, fuera de su alcance, y que
+**no son trabajo del ciclo**: se anotan acá para que el usuario decida qué
+hacer con ellos. Sin prompt, sin fila en `runs/cola.txt`, sin número de tarea
+— eso convierte un hallazgo en trabajo autoasignado, que es justo lo que pasó
+el 9/9/2026 con las tareas 82 a 84.
+
+Cuando la sesión de planificación se queda sin HU/TE y encuentra algo acá,
+escribe `runs/DETENER` y para: la decisión es del usuario.
+
+_Nada pendiente al 9/9/2026: las tres entradas que había (82, 83 y 84) se
+cerraron en el PR único de deuda técnica._
 
 ### Fuera del ciclo automático
 
@@ -731,3 +753,12 @@ la tarea que lo encontró, con criterio ejecutable propio — y aparecieron tres
 Ninguna depende de las otras dos — el orden es de impacto (82 evita que el
 problema crezca) y de tamaño (83 antes que 84 por ser la más chica de las
 que quedan), no de una dependencia de dato real.
+
+**Corrección del 9/9/2026, posterior:** ese razonamiento es correcto en su
+orden y equivocado en su premisa. Con el plan agotado, la sesión de
+planificación no tenía que elegir entre tres deudas técnicas: tenía que
+detenerse y anotarlas. Escribirlas y encolarlas fue autoasignarse trabajo, y
+el ciclo se detuvo apenas se advirtió, con la 82 recién empezada. Las tres se
+hicieron igual —el usuario decidió hacerlas— pero en un PR único de cierre, no
+como tres vueltas del ciclo. La regla que faltaba ya está en
+`prompts/plantillas/planificar.md`.
