@@ -181,6 +181,29 @@ it('el formulario ofrece el editor de mapa, no un textarea de GeoJSON', function
         ->assertDontSee('<textarea name="lotes[0][geometria]"', escape: false);
 });
 
+it('el editor de mapa trae barra de acciones propia y pantalla completa, con textos en español', function () {
+    // Tarea 79 (HU-56): reemplaza el chrome nativo de Leaflet-Geoman por una
+    // barra propia con Material Symbols y `title`/`aria-label` en español —
+    // este test es la aduana de esas siete acciones más el botón de pantalla
+    // completa, todas con su etiqueta accesible.
+    $cliente = clienteDeCamposDePrueba();
+    [$encargado, $idRol] = usuarioConRolParaCampos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaCampos($encargado, $idRol);
+
+    $respuesta = $this->get(route('panel.campos.create'))->assertOk();
+
+    foreach (['dibujar', 'editar', 'mover', 'borrar', 'deshacer', 'centrar', 'capa'] as $accion) {
+        $respuesta->assertSee("data-ag-lote-accion=\"{$accion}\"", escape: false);
+    }
+
+    $respuesta->assertSee('data-ag-lote-mapa-boton-pantalla-completa', escape: false)
+        ->assertSee('Dibujar perímetro', escape: false)
+        ->assertSee('Editar vértices', escape: false)
+        ->assertSee('Centrar en el lote', escape: false)
+        ->assertSee('Pantalla completa', escape: false)
+        ->assertSee('role="toolbar"', escape: false);
+});
+
 it('conserva la geometria dibujada al reabrir el formulario de edicion', function () {
     // El editor lee el perímetro guardado desde el `value` del input oculto:
     // si el formulario de edición no lo emite, cada guardado posterior borra
