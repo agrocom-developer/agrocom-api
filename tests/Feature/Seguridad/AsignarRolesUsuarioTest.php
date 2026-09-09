@@ -61,6 +61,7 @@ it('crea un usuario con múltiples roles', function () {
         actor: $duenio,
         usuarioId: null,
         username: 'jperez',
+        email: null,
         password: 'Secreta123',
         name: 'Juan Pérez',
         type: TipoUsuario::Interno,
@@ -83,6 +84,7 @@ it('un encargado de operaciones sin el permiso de asignar_rol_dueno no puede cre
         actor: $encargado,
         usuarioId: null,
         username: 'nuevo.dueno',
+        email: null,
         password: 'Secreta123',
         name: 'Aspirante a Dueño',
         type: TipoUsuario::Interno,
@@ -102,6 +104,7 @@ it('un encargado sin el permiso tampoco puede lograrlo asignando el rol dueño a
         actor: $encargado,
         usuarioId: null,
         username: 'futuro.piloto',
+        email: null,
         password: 'Secreta123',
         name: 'Futuro Piloto',
         type: TipoUsuario::Interno,
@@ -115,6 +118,7 @@ it('un encargado sin el permiso tampoco puede lograrlo asignando el rol dueño a
         actor: $encargado,
         usuarioId: $usuario->id,
         username: $usuario->username,
+        email: null,
         password: null,
         name: $usuario->name,
         type: TipoUsuario::Interno,
@@ -136,6 +140,7 @@ it('un actor con el permiso asignar_rol_dueno sí puede crear un usuario dueño'
         actor: $duenio,
         usuarioId: null,
         username: 'segundo.dueno',
+        email: null,
         password: 'Secreta123',
         name: 'Segundo Dueño',
         type: TipoUsuario::Interno,
@@ -157,6 +162,7 @@ it('un actor con el permiso asignar_rol_dueno también puede quitar el rol dueñ
         actor: $duenio,
         usuarioId: null,
         username: 'ex.dueno',
+        email: null,
         password: 'Secreta123',
         name: 'Ex Dueño',
         type: TipoUsuario::Interno,
@@ -170,6 +176,7 @@ it('un actor con el permiso asignar_rol_dueno también puede quitar el rol dueñ
         actor: $duenio,
         usuarioId: $usuario->id,
         username: $usuario->username,
+        email: null,
         password: null,
         name: $usuario->name,
         type: TipoUsuario::Interno,
@@ -182,6 +189,57 @@ it('un actor con el permiso asignar_rol_dueno también puede quitar el rol dueñ
     expect(
         SecUserRole::query()->where('id_user', $usuario->id)->where('id_role', segIdDeRol('dueno'))->exists(),
     )->toBeFalse();
+});
+
+it('rechaza el mismo email en dos altas vivas, pero lo libera tras la baja de la cuenta anterior', function () {
+    $duenio = segCrearActorConRoles(['dueno']);
+
+    $primero = $this->caso->ejecutar(
+        actor: $duenio,
+        usuarioId: null,
+        username: 'con.email.uno',
+        email: 'compartido@agrocom.example',
+        password: 'Secreta123',
+        name: 'Con Email Uno',
+        type: TipoUsuario::Interno,
+        personaId: null,
+        contratoId: null,
+        roleIds: [segIdDeRol('piloto')],
+        idRolActivo: null,
+    );
+
+    expect(fn () => $this->caso->ejecutar(
+        actor: $duenio,
+        usuarioId: null,
+        username: 'con.email.dos',
+        email: 'compartido@agrocom.example',
+        password: 'Secreta123',
+        name: 'Con Email Dos',
+        type: TipoUsuario::Interno,
+        personaId: null,
+        contratoId: null,
+        roleIds: [segIdDeRol('piloto')],
+        idRolActivo: null,
+    ))->toThrow(UsuarioDuplicado::class);
+
+    $primero->delete();
+
+    $segundo = $this->caso->ejecutar(
+        actor: $duenio,
+        usuarioId: null,
+        username: 'con.email.dos',
+        email: 'compartido@agrocom.example',
+        password: 'Secreta123',
+        name: 'Con Email Dos',
+        type: TipoUsuario::Interno,
+        personaId: null,
+        contratoId: null,
+        roleIds: [segIdDeRol('piloto')],
+        idRolActivo: null,
+    );
+
+    expect($segundo->exists)->toBeTrue()
+        ->and($segundo->email)->toBe('compartido@agrocom.example');
 });
 
 it('rechaza dos altas con la misma persona_id', function () {
@@ -197,6 +255,7 @@ it('rechaza dos altas con la misma persona_id', function () {
         actor: $duenio,
         usuarioId: null,
         username: 'piloto.uno',
+        email: null,
         password: 'Secreta123',
         name: 'Piloto Uno',
         type: TipoUsuario::Interno,
@@ -210,6 +269,7 @@ it('rechaza dos altas con la misma persona_id', function () {
         actor: $duenio,
         usuarioId: null,
         username: 'piloto.dos',
+        email: null,
         password: 'Secreta123',
         name: 'Piloto Dos',
         type: TipoUsuario::Interno,
@@ -227,6 +287,7 @@ it('rechaza el mismo username en dos altas vivas, pero lo libera tras la baja de
         actor: $duenio,
         usuarioId: null,
         username: 'repetido',
+        email: null,
         password: 'Secreta123',
         name: 'Primero',
         type: TipoUsuario::Interno,
@@ -240,6 +301,7 @@ it('rechaza el mismo username en dos altas vivas, pero lo libera tras la baja de
         actor: $duenio,
         usuarioId: null,
         username: 'repetido',
+        email: null,
         password: 'Secreta123',
         name: 'Segundo',
         type: TipoUsuario::Interno,
@@ -255,6 +317,7 @@ it('rechaza el mismo username en dos altas vivas, pero lo libera tras la baja de
         actor: $duenio,
         usuarioId: null,
         username: 'repetido',
+        email: null,
         password: 'Secreta123',
         name: 'Segundo',
         type: TipoUsuario::Interno,
@@ -276,6 +339,7 @@ it('revocar un rol al editar es soft delete de sec_user_role, no DELETE físico'
         actor: $duenio,
         usuarioId: null,
         username: 'con.dos.roles',
+        email: null,
         password: 'Secreta123',
         name: 'Con Dos Roles',
         type: TipoUsuario::Interno,
@@ -294,6 +358,7 @@ it('revocar un rol al editar es soft delete de sec_user_role, no DELETE físico'
         actor: $duenio,
         usuarioId: $usuario->id,
         username: $usuario->username,
+        email: null,
         password: null,
         name: $usuario->name,
         type: TipoUsuario::Interno,

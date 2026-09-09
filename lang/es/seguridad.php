@@ -342,6 +342,8 @@ return [
         'campos_contador' => ':cantidad campos',
         'campo_name' => 'Nombre completo',
         'campo_username' => 'Usuario',
+        'campo_email' => 'Correo electrónico',
+        'campo_email_ayuda' => 'Opcional. Correo de la cuenta — no el de la persona ni el del cliente.',
         'campo_password' => 'Contraseña',
         'campo_password_ayuda_alta' => 'La asigna quien da de alta la cuenta — no hay recuperación por correo todavía.',
         'campo_password_ayuda_edicion' => 'Dejalo vacío para conservar la contraseña actual.',

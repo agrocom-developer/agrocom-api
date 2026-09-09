@@ -266,6 +266,21 @@ it('un PUT a mano con roles sobre una cuenta de portal da 422, nunca los asigna'
     expect($usuario->fresh()?->idsDeRoles())->toBe([]);
 });
 
+it('da de alta una cuenta de portal con email y lo guarda (tarea 66)', function () {
+    [$encargado, $idRol] = usuarioConRolParaAbmPortal('encargado.portal', 'encargado_operaciones');
+    entrarAlPanelParaAbmPortal($encargado, $idRol);
+
+    $contrato = contratoVigenteParaAbm('con-email');
+
+    $this->post(route('panel.usuarios.store'), payloadCuentaPortal([
+        'contrato_id' => $contrato->id,
+        'email' => 'cliente@agrocom.example',
+    ]))->assertRedirect(route('panel.usuarios.index'));
+
+    $usuario = SecUser::query()->where('username', 'cliente.nuevo.abm')->sole();
+    expect($usuario->email)->toBe('cliente@agrocom.example');
+});
+
 it('el listado filtra por tipo (?tipo=cliente / ?tipo=interno)', function () {
     [$encargado, $idRol] = usuarioConRolParaAbmPortal('encargado.portal', 'encargado_operaciones');
     entrarAlPanelParaAbmPortal($encargado, $idRol);

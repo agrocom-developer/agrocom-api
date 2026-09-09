@@ -23,4 +23,9 @@ final class UsuarioDuplicado extends RuntimeException
     {
         return new self("La persona #{$personaId} ya tiene una cuenta activa — una persona operativa, una sola cuenta.");
     }
+
+    public static function porEmail(string $email): self
+    {
+        return new self("Ya existe una cuenta activa con el correo '{$email}'.");
+    }
 }

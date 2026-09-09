@@ -216,6 +216,44 @@ it('rechaza un username duplicado entre cuentas vivas con un error de validació
     expect(SecUser::query()->where('username', 'repetido')->count())->toBe(1);
 });
 
+it('da de alta un usuario con email y lo guarda', function () {
+    [$encargado, $idRol] = usuarioConRolParaUsuarios('encargado', 'encargado_operaciones');
+    entrarAlPanelParaUsuarios($encargado, $idRol);
+
+    $this->post(route('panel.usuarios.store'), payloadUsuario(['email' => 'nuevo@agrocom.example']))
+        ->assertRedirect(route('panel.usuarios.index'));
+
+    $usuario = SecUser::query()->where('username', 'nuevo.usuario')->sole();
+    expect($usuario->email)->toBe('nuevo@agrocom.example');
+});
+
+it('rechaza un email duplicado entre cuentas vivas (422), pero una cuenta borrada libera el email', function () {
+    [$encargado, $idRol] = usuarioConRolParaUsuarios('encargado', 'encargado_operaciones');
+    entrarAlPanelParaUsuarios($encargado, $idRol);
+
+    $this->post(route('panel.usuarios.store'), payloadUsuario([
+        'username' => 'con.email.uno',
+        'email' => 'repetido@agrocom.example',
+    ]))->assertRedirect(route('panel.usuarios.index'));
+
+    $this->post(route('panel.usuarios.store'), payloadUsuario([
+        'username' => 'con.email.dos',
+        'email' => 'repetido@agrocom.example',
+    ]))->assertSessionHasErrors('email');
+
+    expect(SecUser::query()->where('username', 'con.email.dos')->exists())->toBeFalse();
+
+    $primero = SecUser::query()->where('username', 'con.email.uno')->sole();
+    $this->delete(route('panel.usuarios.destroy', $primero))->assertRedirect(route('panel.usuarios.index'));
+
+    $this->post(route('panel.usuarios.store'), payloadUsuario([
+        'username' => 'con.email.dos',
+        'email' => 'repetido@agrocom.example',
+    ]))->assertRedirect(route('panel.usuarios.index'));
+
+    expect(SecUser::query()->where('username', 'con.email.dos')->exists())->toBeTrue();
+});
+
 it('el toggle de bloqueo no borra al usuario, y el login rechaza la cuenta bloqueada', function () {
     [$encargado, $idRol] = usuarioConRolParaUsuarios('encargado', 'encargado_operaciones');
     entrarAlPanelParaUsuarios($encargado, $idRol);

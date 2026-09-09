@@ -5,8 +5,10 @@ namespace Database\Seeders\Demo;
 use App\Dominios\Campania\Dominio\EstadoCampania;
 use App\Dominios\Campania\Infraestructura\Eloquent\Campania;
 use App\Dominios\Comercial\Dominio\EstadoContrato;
+use App\Dominios\Comercial\Dominio\TipoContactoCliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
+use App\Dominios\Comercial\Infraestructura\Eloquent\ClienteContacto;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
 use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
@@ -29,6 +31,7 @@ use App\Dominios\Personal\Infraestructura\Eloquent\PerPersona;
 use App\Dominios\Seguridad\Dominio\TipoUsuario;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -94,7 +97,7 @@ class PortalDemoSeeder extends Seeder
             $contratoSanJorge = Contrato::query()->where('cliente_id', $sanJorge->id)->first();
 
             if ($contratoSanJorge !== null) {
-                $this->cuentaPortal(self::USERNAME_SANJORGE, 'Portal Agropecuaria San Jorge', $contratoSanJorge->id);
+                $this->cuentaPortal(self::USERNAME_SANJORGE, 'Portal Agropecuaria San Jorge', $contratoSanJorge->id, $this->emailContactoPreferido($sanJorge->id));
                 $this->flujoOperativo('sanjorge', $contratoSanJorge, $autorId);
             }
         }
@@ -103,7 +106,7 @@ class PortalDemoSeeder extends Seeder
         $contratoEsperanza = Contrato::query()->where('cliente_id', $esperanza->id)->first();
 
         if ($contratoEsperanza !== null) {
-            $this->cuentaPortal(self::USERNAME_ESPERANZA, 'Portal Estancia La Esperanza', $contratoEsperanza->id);
+            $this->cuentaPortal(self::USERNAME_ESPERANZA, 'Portal Estancia La Esperanza', $contratoEsperanza->id, $this->emailContactoPreferido($esperanza->id));
             $this->flujoOperativo('esperanza', $contratoEsperanza, $autorId);
         }
     }
@@ -118,6 +121,11 @@ class PortalDemoSeeder extends Seeder
         $existente = Cliente::query()->where('nit', self::NIT_ESPERANZA)->first();
 
         if ($existente !== null) {
+            // Backfill idempotente (tarea 66): un cliente sembrado antes de
+            // esta tarea no tiene contacto dueño — completarlo acá, nunca
+            // pisando uno que ya exista.
+            $this->contactoDuenoEsperanza($existente, $autorId);
+
             return $existente;
         }
 
@@ -125,6 +133,8 @@ class PortalDemoSeeder extends Seeder
             'razon_social' => 'Estancia La Esperanza S.A.',
             'nit' => self::NIT_ESPERANZA,
         ]), $autorId);
+
+        $this->contactoDuenoEsperanza($cliente, $autorId);
 
         $campania = $this->crear(new Campania([
             'cliente_id' => $cliente->id,
@@ -181,18 +191,69 @@ class PortalDemoSeeder extends Seeder
         return $cliente;
     }
 
-    private function cuentaPortal(string $username, string $nombre, int $contratoId): void
+    private function cuentaPortal(string $username, string $nombre, int $contratoId, ?string $email): void
     {
-        SecUser::query()->firstOrCreate(
+        $usuario = SecUser::query()->firstOrCreate(
             ['username' => $username],
             [
                 'name' => $nombre,
+                'email' => $email,
                 'password' => self::PASSWORD_DEMO,
                 'type' => TipoUsuario::Cliente,
                 'contrato_id' => $contratoId,
                 'state' => true,
             ],
         );
+
+        // Backfill idempotente (tarea 66): una cuenta sembrada antes de esta
+        // tarea puede existir sin correo — completarla nunca pisa uno que ya
+        // se haya puesto a mano.
+        if ($usuario->email === null && $email !== null) {
+            $usuario->email = $email;
+            $usuario->save();
+        }
+    }
+
+    /**
+     * Contacto `dueno` de "Estancia La Esperanza", fuente del correo
+     * sugerido de su cuenta de portal (tarea 66). `firstOrCreate` por
+     * cliente+tipo: nunca duplica el contacto en una vuelta posterior del
+     * seeder.
+     */
+    private function contactoDuenoEsperanza(Cliente $cliente, int $autorId): void
+    {
+        $existente = ClienteContacto::query()
+            ->where('cliente_id', $cliente->id)
+            ->where('tipo', TipoContactoCliente::Dueno)
+            ->first();
+
+        if ($existente !== null) {
+            return;
+        }
+
+        $this->crear(new ClienteContacto([
+            'cliente_id' => $cliente->id,
+            'tipo' => TipoContactoCliente::Dueno,
+            'nombre' => 'María Fernanda Áñez',
+            'telefono' => '+591 70000010',
+            'email' => 'manez@laesperanza.example',
+            'observaciones' => null,
+        ]), $autorId);
+    }
+
+    /**
+     * Mismo criterio que `UsuariosController::emailPorCliente()`: el
+     * contacto `dueno` si tiene correo, si no el primero con correo.
+     */
+    private function emailContactoPreferido(int $clienteId): ?string
+    {
+        return DB::table('com_cliente_contactos')
+            ->where('cliente_id', $clienteId)
+            ->whereNull('deleted_at')
+            ->whereNotNull('email')
+            ->orderByRaw("case when tipo = 'dueno' then 0 else 1 end")
+            ->orderBy('id')
+            ->value('email');
     }
 
     /**

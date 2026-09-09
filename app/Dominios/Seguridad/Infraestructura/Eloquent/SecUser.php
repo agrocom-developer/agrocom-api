@@ -50,6 +50,7 @@ use Laravel\Sanctum\HasApiTokens;
  * @property int $id
  * @property string $name
  * @property string $username
+ * @property string|null $email
  * @property string $password
  * @property TipoUsuario $type
  * @property int|null $persona_id
@@ -89,6 +90,7 @@ class SecUser extends ModeloDominio implements AuthenticatableContract
     protected $fillable = [
         'name',
         'username',
+        'email',
         'password',
         'type',
         'persona_id',
