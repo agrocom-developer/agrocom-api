@@ -198,6 +198,9 @@ return [
         'rechazar' => 'Rechazar',
         'motivo_label' => 'Motivo del rechazo',
         'motivo_placeholder' => 'Por qué se rechaza esta sesión…',
+        // El campo vive en la tarjeta junto a los dos botones: la ayuda
+        // aclara que solo lo pide "Rechazar", no "Validar".
+        'motivo_ayuda' => 'Obligatorio solo para rechazar.',
         // Invariante 4: el piloto de la sesión no puede decidir sobre su
         // propio vuelo, ni para aprobar ni para rechazar.
         'propia' => 'Sos el piloto de esta sesión: no podés validarla ni rechazarla.',
