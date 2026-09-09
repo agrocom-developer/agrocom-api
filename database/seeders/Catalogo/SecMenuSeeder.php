@@ -308,6 +308,11 @@ class SecMenuSeeder extends Seeder
         // otro rol recibe (ver `SeguridadSeeder`), así que el ítem solo es
         // visible para `dueno`.
         $this->item($seguridad, 'seguridad', 'configuracion', 'tune', 7, ruta: 'panel.configuracion.index', codigoPermiso: 'seguridad.configuracion.ver');
+        // Tarea 63 (invariante 9 de CLAUDE.md): bitácora de auditoría — quién
+        // hizo qué, cuándo y en qué zona horaria. Gateado por
+        // `seguridad.bitacora.ver` (dueño y encargado de operaciones, ver
+        // `SeguridadSeeder`).
+        $this->item($seguridad, 'seguridad', 'bitacora', 'history', 8, ruta: 'panel.bitacora.index', codigoPermiso: 'seguridad.bitacora.ver');
     }
 
     private function modulo(string $clave, string $icono, int $orden): SecMenu

@@ -90,6 +90,13 @@ class SeguridadSeeder extends Seeder
         // recibe (asignación "todos los permisos, sin excepción" de más abajo).
         'seguridad.configuracion.ver' => 'Ver la configuración del sistema (llaves y tokens)',
         'seguridad.configuracion.editar' => 'Editar la configuración del sistema (llaves y tokens)',
+        // Tarea 63 (invariante 9 de CLAUDE.md): pantalla de bitácora de
+        // auditoría — quién hizo qué, cuándo y en qué zona horaria. Solo
+        // `dueno` y `encargado_operaciones` (mismo criterio que
+        // `seguridad.usuario.*`: administran la operación diaria); ningún
+        // otro rol lo recibe. Sin `.editar`: es de solo lectura por
+        // definición (ADR 0007) — no hay una acción de mutación que gatear.
+        'seguridad.bitacora.ver' => 'Ver la bitácora de auditoría (quién hizo qué, cuándo y en qué zona horaria)',
         // HU-03: ver y revocar sesiones de la app de campo. Separados a
         // propósito — mirar quién tiene sesión abierta y dejar a alguien
         // afuera en medio de una jornada de vuelo no son la misma
@@ -412,6 +419,9 @@ class SeguridadSeeder extends Seeder
         // factura — mismo criterio que el resto de este rol (ve Y administra
         // la operación diaria, a diferencia de jefe_campo que solo ve).
         'seguridad.organizacion.editar',
+        // Tarea 63: administra la operación diaria, así que también puede
+        // auditar quién hizo qué — mismo criterio que `seguridad.usuario.*`.
+        'seguridad.bitacora.ver',
         // Es quien administra la operación diaria: si un piloto pierde el
         // teléfono en campo, tiene que poder cortarle el acceso sin
         // escalar al dueño (HU-03).

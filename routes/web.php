@@ -38,6 +38,7 @@ use App\Dominios\Portal\Infraestructura\Http\Controllers\Web\ActasPortalControll
 use App\Dominios\Portal\Infraestructura\Http\Controllers\Web\AvancePortalController;
 use App\Dominios\Portal\Infraestructura\Http\Controllers\Web\ReportesPortalController;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
+use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\BitacoraController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\ConfiguracionController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\DashboardController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\DispositivosController;
@@ -219,6 +220,14 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::delete('/panel/roles/{rol}', [RolesController::class, 'destroy'])
             ->name('panel.roles.destroy');
+
+        // Tarea 63 (invariante 9 de CLAUDE.md): pantalla de bitácora de
+        // auditoría, solo lectura — sin POST/PUT/DELETE, es un libro de
+        // solo-inserción que escribe únicamente `BitacoraObserver` (ADR
+        // 0007). Permiso `seguridad.bitacora.ver` verificado DENTRO del
+        // controlador contra el ROL ACTIVO, mismo criterio que el resto.
+        Route::get('/panel/bitacora', [BitacoraController::class, 'index'])
+            ->name('panel.bitacora.index');
 
         // La matriz vive en su propia URL y no como pestaña del formulario:
         // son dos operaciones con permisos distintos (`editar` cambia el
