@@ -3,6 +3,7 @@
 namespace App\Dominios\Campania\Infraestructura;
 
 use App\Dominios\Campania\Contratos\LecturaCampania;
+use App\Dominios\Campania\Infraestructura\Busqueda\BusquedaCampanias;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -20,6 +21,11 @@ final class CampaniaServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(LecturaCampania::class, LecturaCampaniaEloquent::class);
+
+        // Buscador global (`busqueda.proveedores`): el agregador de Seguridad
+        // no conoce estas clases, las recibe por tag. Sumar una entidad al
+        // buscador es escribir su proveedor y taggearlo acá.
+        $this->app->tag(BusquedaCampanias::class, 'busqueda.proveedores');
     }
 
     public function boot(): void

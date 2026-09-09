@@ -33,10 +33,11 @@
       resources/js/molecules/timezone-badge.js) y se muestra, de lectura,
       como badge en el PIE del layout — no es un control.
 
-    Queda el buscador (demo visual, sin backend todavía), la campana con las
-    notificaciones que pasa el llamador y el menú de usuario, con "Cambiar
-    de rol" (link a la pantalla de selección, `?cambiar=1`) y "Cerrar
-    sesión" (data-ag-logout → organisms/topbar.js).
+    Queda el buscador —que desde el 9/9/2026 sí busca: es un `<form GET>` a
+    `panel.buscar`, ver `pages/busqueda`—, la campana con las notificaciones
+    que pasa el llamador y el menú de usuario, con "Cambiar de rol" (link a la
+    pantalla de selección, `?cambiar=1`) y "Cerrar sesión" (data-ag-logout →
+    organisms/topbar.js).
 
     Props:
     - moduloLabel / vistaActual (nullable string): breadcrumb, ya traducidos.
@@ -77,16 +78,28 @@
             </div>
         @endif
 
-        <label class="ag-topbar__search">
+        {{-- `<form>` y no un `<label>` suelto: se envía con Enter, sin JS.
+             El atajo ⌘K solo enfoca el campo (organisms/topbar.js) — no es
+             lo que dispara la búsqueda. --}}
+        <form
+            method="GET"
+            action="{{ route('panel.buscar') }}"
+            class="ag-topbar__search"
+            role="search"
+        >
             <x-atoms.icon name="search" size="sm" class="ag-topbar__search-icon" />
             <input
                 type="search"
+                name="q"
+                value="{{ request()->routeIs('panel.buscar') ? request()->string('q') : '' }}"
                 class="ag-topbar__search-input"
                 placeholder="{{ __('ui.header.buscador_placeholder') }}"
                 aria-label="{{ __('ui.header.buscador_aria') }}"
+                autocomplete="off"
+                data-ag-buscador
             >
             <kbd class="ag-topbar__search-kbd" aria-hidden="true">{{ __('ui.header.atajo_buscador') }}</kbd>
-        </label>
+        </form>
     </div>
 
     <div class="ag-topbar__right">

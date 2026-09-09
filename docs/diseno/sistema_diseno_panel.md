@@ -1444,3 +1444,66 @@ Ahora:
 **Regla que queda:** lo que el navegador puede responder solo no se le
 pregunta al usuario. Si además conviene mostrarlo, va como badge de lectura
 en el pie, nunca como control en el header.
+
+## 19. Buscador global (9/9/2026) — el input del header deja de ser maqueta
+
+Pedido del dueño, después de sacarle al header lo que no servía (§18):
+*"habilitar el input search del header y crear una página de resultados (…)
+que no solo busque una sola palabra, si ingresa palabras múltiples como sea el
+nombre de una estancia buscar todo completo o una palabra ubicada en medio de
+una oración, una búsqueda más inteligente"*.
+
+### 19.1. El campo del header
+
+Pasa de `<label>` decorativo a `<form method="GET">` contra `panel.buscar`. Se
+envía con Enter y **sin JavaScript**: el atajo ⌘K solo enfoca el campo
+(`organisms/topbar.js`), no es lo que dispara la búsqueda. El `<kbd>` que
+anunciaba el atajo desde la quinta vuelta ahora hace lo que decía.
+
+### 19.2. La pantalla: bloques, no una tabla
+
+`/panel/buscar` no es el arquetipo Listado de §6.2 de la guía de pantallas.
+Son tarjetas, una por entidad con coincidencias, en `repeat(auto-fill,
+minmax(22rem, 1fr))`: con una sola coincidencia el resultado no queda perdido
+en una columna de 1200 px, y con ocho bloques no hay scroll horizontal.
+
+Cada bloque muestra hasta cinco filas y, si hay más, un enlace **"ver todos"**
+al listado de ese módulo con la búsqueda ya aplicada. El buscador no
+reimplementa esas pantallas: ellas ya saben filtrar, paginar y gatear por
+permiso.
+
+Tres estados vacíos distintos, y son distintos a propósito: no escribió nada
+(explica dónde busca), escribió solo letras sueltas (pide un poco más), y
+buscó pero no hubo coincidencias (sugiere acortar).
+
+### 19.3. Qué encuentra, y con qué reglas
+
+Trece entidades, todas las que tienen un nombre o un identificador propio:
+clientes, personas, propiedades, drones, lotes, campañas, cultivos, equipos de
+trabajo, bases, baterías, vehículos, generadores y repuestos.
+
+El motor parte la consulta en palabras y exige **todas**, cada una en
+**cualquier posición** y **sin importar acentos ni mayúsculas**. "peranza"
+encuentra "Esperanza"; "san jorge" y "jorge san" dan lo mismo; "agricola"
+encuentra "Agrícola".
+
+**Por qué no full-text de Postgres:** `tsvector` indexa palabras enteras, así
+que "peranza" no encontraría nada — justo el caso pedido.
+
+**Limitación conocida:** la puntuación cuenta como texto. "esperanza sa" no
+encuentra "Estancia La Esperanza S.A.", porque el dato dice "S.A." y no "sa".
+Escribir "esperanza" alcanza.
+
+### 19.4. Regla que queda: un resultado es tan sensible como su pantalla
+
+El buscador **no tiene permiso propio**. Cada bloque se gatea con el permiso
+de la entidad que muestra, evaluado contra el **rol activo** (CLAUDE.md
+invariante 10). Un piloto escribe el nombre de un cliente y no le aparece
+ningún cliente. Un permiso "buscar" separado solo habría creado una forma de
+tener el buscador prendido y vacío, o de creer que gatea algo que en realidad
+gatean los proveedores.
+
+Sumar una entidad al buscador es escribir un proveedor de ~40 líneas
+(`Infraestructura/Busqueda/` del módulo) y taggearlo en su `ServiceProvider`.
+Ni el agregador ni la pantalla se tocan.
+
