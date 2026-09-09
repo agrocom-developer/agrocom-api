@@ -30,7 +30,10 @@ final class SesionPortalController
         // `state` como condición extra, mismo criterio que SesionController:
         // rechaza una cuenta bloqueada con el mismo mensaje genérico que una
         // credencial incorrecta.
-        if (! Auth::guard('cliente')->attempt([...$credenciales, 'state' => true])) {
+        // "Recordarme", mismo criterio que SesionController: la casilla del
+        // login-form (compartido con el panel, ADR 0002 punto 6) pasa a ser
+        // la cookie `remember_cliente_*` de Laravel.
+        if (! Auth::guard('cliente')->attempt([...$credenciales, 'state' => true], $request->boolean('remember'))) {
             throw ValidationException::withMessages([
                 'username' => ['Las credenciales no coinciden con ningún registro.'],
             ]);

@@ -6,6 +6,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name', 'Agrocom') }}</title>
 
+    <x-atoms.tema-inicial />
+
     @vite('resources/css/app.css')
     @livewireStyles
 </head>

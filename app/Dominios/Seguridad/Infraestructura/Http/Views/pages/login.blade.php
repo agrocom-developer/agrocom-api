@@ -14,6 +14,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name', 'Agrocom') }} — Ingreso</title>
 
+    <x-atoms.tema-inicial />
+
     {{-- `transicion-vista.css`: mitad SALIENTE del salto login → selección de rol
          (resources/js/pages/login.js redirige con `window.location.href`). Las dos
          páginas del salto tienen que declarar `@view-transition`; ninguna otra

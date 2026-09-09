@@ -5,6 +5,10 @@
 // `<meta name="ag-preferencias-tema-url">`) y despacha
 // `agrocom:theme-changed`.
 //
+// Quién aplica el tema AL CARGAR no es este archivo sino el script inline
+// del `<head>` (`atoms/tema-inicial`), que corre antes del primer pintado.
+// Acá solo se maneja el click y la sincronización de abajo.
+//
 // Octava vuelta (29/8/2026): se retira "sistema" (auditoría visual externa
 // obs. #9 lo había agregado como tercer estado) por pedido explícito del
 // usuario — el enum del backend siempre fue Claro|Oscuro únicamente, así
@@ -76,16 +80,29 @@ document.addEventListener('click', (event) => {
     window.dispatchEvent(new CustomEvent('agrocom:theme-changed', { detail: { theme: siguiente } }));
 });
 
+/**
+ * Novena vuelta del tema (9/9/2026): acá ya NO se aplica el tema guardado.
+ * Eso ahora pasa antes del primer pintado, en el script inline del `<head>`
+ * (`atoms/tema-inicial`) — aplicarlo en `DOMContentLoaded` era exactamente
+ * la causa del parpadeo: la página se pintaba entera con el tema del
+ * servidor y recién después saltaba al del navegador.
+ *
+ * Lo que queda por hacer acá es cerrar la divergencia que ese parpadeo
+ * delataba. Si el navegador venía con un tema distinto al que sirvió el
+ * servidor, se persiste el del navegador: es el caso de quien usó el toggle
+ * en la pantalla de login, donde todavía no hay sesión contra la cual
+ * guardar nada. Sin este cierre el servidor seguiría sirviendo el tema viejo
+ * en cada request — invisible gracias al script del head, pero listo para
+ * volver a parpadear ante cualquier demora del JS.
+ *
+ * En una página sin sesión no hay meta con la URL de persistencia, así que
+ * `persistirTema` solo refresca `localStorage` y no postea nada.
+ */
 document.addEventListener('DOMContentLoaded', () => {
-    let guardado = null;
+    const temaDelServidor = document.documentElement.getAttribute('data-ag-tema-servidor');
+    const temaDelNavegador = temaActual();
 
-    try {
-        guardado = localStorage.getItem(CLAVE_LOCALSTORAGE);
-    } catch {
-        // Almacenamiento no disponible — se queda con lo que trajo el servidor.
-    }
-
-    if ((guardado === CLARO || guardado === OSCURO) && guardado !== temaActual()) {
-        aplicarTema(guardado);
+    if (temaDelServidor !== null && temaDelServidor !== temaDelNavegador) {
+        persistirTema(temaDelNavegador);
     }
 });

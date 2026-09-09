@@ -20,8 +20,7 @@ use Illuminate\Validation\ValidationException;
  * {@see IniciarSesionPanel}, no acá.
  *
  * Autenticación por `username` + password contra el guard `interno`, nunca
- * por correo (memoria del proyecto). Sin broker de "olvidé mi contraseña"
- * (config/auth.php ya lo declara `null`).
+ * por correo (memoria del proyecto).
  */
 final class SesionController
 {
@@ -35,7 +34,11 @@ final class SesionController
         // cuenta bloqueada (`seguridad.usuario.bloquear`, HU-45) con el
         // mismo mensaje genérico que una credencial incorrecta — nunca
         // revela si la cuenta existe pero está bloqueada.
-        if (! Auth::guard('interno')->attempt([...$credenciales, 'state' => true])) {
+        // "Recordarme": segundo argumento de `attempt()`, la cookie
+        // `remember_web_*` de Laravel — sobrevive al cierre del navegador,
+        // mientras que la sesión sola muere con él. Requiere
+        // `sec_user.remember_token` (migración 2026_09_09_130001).
+        if (! Auth::guard('interno')->attempt([...$credenciales, 'state' => true], $request->boolean('remember'))) {
             throw ValidationException::withMessages([
                 'username' => ['Las credenciales no coinciden con ningún registro.'],
             ]);

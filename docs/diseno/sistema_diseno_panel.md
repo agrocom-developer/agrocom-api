@@ -132,6 +132,7 @@ Consecuencia de diseño explícita: **el relleno sólido de marca (botones) es c
 | Organism | `module-sidebar` | `resources/views/components/organisms/module-sidebar.blade.php` | Implementado (28/8/2026, quinta vuelta — nivel 2 del layout, §7.1; sucesor de `sidebar-nav`). Faltaba en esta tabla; se agrega el 2/9/2026. |
 | Organism | `module-drawer` | `resources/views/components/organisms/module-drawer.blade.php` | Implementado (28/8/2026, quinta vuelta — offcanvas de módulos en móvil, §7.2). Faltaba en esta tabla; se agrega el 2/9/2026. |
 | Organism | `mobile-topbar` | `resources/views/components/organisms/mobile-topbar.blade.php` | Implementado (28/8/2026, quinta vuelta — header oscuro <768px, §7.2). Faltaba en esta tabla; se agrega el 2/9/2026. |
+| Atom | `tema-inicial` | `resources/views/components/atoms/tema-inicial.blade.php` | Implementado (9/9/2026 — script inline anti-parpadeo del `<head>`, ver §20). No dibuja nada: es el único componente sin salida visual del catálogo. |
 | Template | `panel-shell` | `resources/views/components/templates/panel-shell.blade.php` | Implementado (28/8/2026, quinta vuelta — cáscara `<html>` compartida por todas las páginas del panel, con el tema persistido del usuario). Faltaba en esta tabla; se agrega el 2/9/2026. |
 | Organism | `page-header` | `resources/views/components/organisms/page-header.blade.php` | Implementado (2/9/2026, tarea 31 — arquetipo formulario, ver §14) |
 | Molecule | `tabs` | `resources/views/components/molecules/tabs.blade.php` | Implementado (2/9/2026, tarea 31 — el CSS ya existía desde el rediseño del dashboard, faltaba el componente) |
@@ -1507,3 +1508,42 @@ Sumar una entidad al buscador es escribir un proveedor de ~40 líneas
 (`Infraestructura/Busqueda/` del módulo) y taggearlo en su `ServiceProvider`.
 Ni el agregador ni la pantalla se tocan.
 
+
+## 20. El parpadeo de tema (9/9/2026) — `atoms/tema-inicial`
+
+Bug reportado en video: al entrar al panel con el tema oscuro, cada pantalla
+se pintaba primero en claro y saltaba a oscuro de golpe. Medido sobre la
+grabación (frames a 60 fps): **~130 ms de página clara** en cada navegación, y
+~400 ms en la pantalla de selección de rol.
+
+**Causa.** El tema tenía dos fuentes y se resolvían en momentos distintos. El
+servidor sirve `data-bs-theme` desde `sec_user_preferencia.tema` (correcto), y
+`molecules/theme-toggle.js` corregía ese valor con el de `localStorage` en
+`DOMContentLoaded` — o sea, después del primer pintado. Mientras las dos
+fuentes coincidieran no se notaba; divergen apenas alguien toca el toggle en
+la pantalla de **login**, donde no hay sesión contra la cual persistir nada, y
+a partir de ahí divergen para siempre: el JS aplicaba el tema del navegador
+pero nunca lo guardaba, así que el servidor seguía sirviendo el otro en cada
+request.
+
+**Arreglo, en dos mitades.**
+
+1. `atoms/tema-inicial` — un `<script>` inline en el `<head>`, antes del CSS,
+   que aplica el tema de `localStorage`. Es el único script inline del
+   sistema y tiene que serlo: todo lo que entra por `@vite` se carga como
+   `type="module"`, diferido por definición, y nunca llega antes del primer
+   pintado. Va en `templates/panel-shell` y en las tres páginas públicas que
+   arman su propio `<html>` (login, portal-login, restablecer).
+2. `theme-toggle.js` deja de aplicar el tema al cargar y, en su lugar,
+   **cierra la divergencia**: si el tema del navegador no es el que sirvió el
+   servidor (anotado en `data-ag-tema-servidor` por el script de arriba),
+   lo persiste. Así el tema elegido en la pantalla de login se guarda solo
+   con entrar, y a la siguiente request el servidor ya sirve el correcto.
+
+Sin la mitad 2, el script del head escondería el síntoma dejando la
+desincronización intacta.
+
+**Regla que queda:** una página nueva que arme su propio `<html>` (en vez de
+usar `panel-shell`) lleva `<x-atoms.tema-inicial />` en el `<head>`. Cubierto
+por test en `tests/Feature/Seguridad/PantallaLoginTest.php` y
+`TemaPersistidoPanelTest.php`.

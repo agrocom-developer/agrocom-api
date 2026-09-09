@@ -12,10 +12,13 @@
     - title (nullable string): sufijo del <title>, ya traducido.
     - tema ("light"|"dark", default "light"): valor inicial de
       `data-bs-theme`, resuelto por el controlador desde la preferencia
-      (`sec_user_preferencia.tema`). Si el navegador tiene un tema distinto
-      guardado en localStorage, theme-toggle.js lo aplica al cargar (octava
-      vuelta, 29/8/2026: ya no existe "sistema" ni el atributo
-      `data-ag-theme-preference` que distinguía preferencia de tema
+      (`sec_user_preferencia.tema`). Si el navegador tiene otro tema guardado
+      en localStorage, lo aplica el script inline `atoms/tema-inicial` de
+      acá arriba — antes del primer pintado, no en `DOMContentLoaded`, que
+      era exactamente el parpadeo de claro a oscuro que reportó el usuario el
+      9/9/2026. `theme-toggle.js` se queda solo con el click y con persistir
+      la divergencia (octava vuelta, 29/8/2026: ya no existe "sistema" ni el
+      atributo `data-ag-theme-preference` que distinguía preferencia de tema
       resuelto — ver theme-toggle.js).
     - temaUrl (nullable string, default `route('panel.preferencias.tema')`):
       URL de persistencia del tema (HU-41, tarea 55) — el portal del cliente
@@ -58,6 +61,10 @@
          el navegador no es la que tiene guardada el usuario. --}}
     <meta name="ag-preferencias-zona-horaria-url" content="{{ $zonaHorariaUrl ?? route('panel.preferencias.zona-horaria') }}">
     <title>{{ config('app.name', 'Agrocom') }}{{ $title ? ' — '.$title : '' }}</title>
+
+    {{-- Antes de `@vite`: fija `data-bs-theme` desde el navegador sin esperar
+         al primer pintado (ver el componente). --}}
+    <x-atoms.tema-inicial />
 
     @vite($transicionDeVista
         ? ['resources/css/app.css', 'resources/css/transicion-vista.css']

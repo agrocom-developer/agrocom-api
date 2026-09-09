@@ -35,10 +35,11 @@ use Laravel\Sanctum\HasApiTokens;
  *
  * Implementa `Authenticatable` directo (no extiende
  * `Illuminate\Foundation\Auth\User`) porque ya extiende `ModeloDominio` —
- * PHP no permite herencia múltiple de clases. `sec_user` no tiene columna
- * `remember_token`; `getRememberTokenName()` devuelve cadena vacía para que
- * el guard de sesión nunca intente leerla/escribirla (soporte de "recordar
- * sesión" fuera de alcance).
+ * PHP no permite herencia múltiple de clases. La sesión persistente
+ * ("Recordarme" del login) usa el `remember_token` estándar del trait
+ * `Authenticatable`: la columna existe desde la migración
+ * `2026_09_09_130001` y ya no se anula `getRememberTokenName()` — hacerlo
+ * dejaba la casilla del login como decoración.
  *
  * Los roles se navegan vía `HasMany` hacia `SecUserRole` (no `belongsToMany`
  * con `->using()`): el pivote es un modelo Eloquent propio auditado
@@ -126,6 +127,7 @@ class SecUser extends ModeloDominio implements AuthenticatableContract, CanReset
     /** @var list<string> */
     protected $hidden = [
         'password',
+        'remember_token',
     ];
 
     /** @return array<string, string> */
@@ -138,11 +140,6 @@ class SecUser extends ModeloDominio implements AuthenticatableContract, CanReset
             'state' => 'boolean',
             'password' => 'hashed',
         ];
-    }
-
-    public function getRememberTokenName(): string
-    {
-        return '';
     }
 
     /**
