@@ -566,6 +566,23 @@ pantalla ya hecha, se anota acá.
     en cada carga, no un detalle de la primera. Con compuerta automática en
     `tests/Unit/PulidoNavegacionPanelTest.php`.
 
+11. **Un campo en una fila de controles va sin su margen de apilado
+    (8/9/2026).** `.ag-input`, `.ag-select`, `.ag-textarea`, `.ag-date`,
+    `.ag-switch` y `.ag-checkbox` declaran `margin-bottom: var(--ag-space-4)`
+    porque su caso normal es un formulario apilado. En una barra de filtros
+    —o en cualquier fila con `align-items: flex-end` y un botón— ese margen
+    es un borde fantasma: el botón se alinea contra él y queda 16px por
+    debajo del campo. `components/filter-bar.css` lo anulaba nombrando solo
+    `.ag-input`, así que cuando la tarea 76 migró los 70 selects del panel al
+    átomo `atoms/select` (raíz `.ag-select`, otra clase) el bug volvió entero
+    en las 29 pantallas con filtros; y como cada `pages/*.css` fijaba su
+    `min-width` nombrando también `.ag-input`, los desplegables quedaron
+    además más angostos que su propia etiqueta. Regla: la fila anula el
+    margen de TODOS los átomos de campo y les fija el mismo `min-width`, no
+    del que hoy se use. Con compuerta automática en
+    `tests/Unit/PulidoNavegacionPanelTest.php`, que descubre sola qué átomos
+    llevan margen de raíz.
+
 ## 9. Sexta vuelta — parte 2 (28/8/2026): rediseño del dashboard
 
 Ejecuta `docs/gestion/plan_dashboard_rediseno.md` — Anexo A y fases 1 a 7 de

@@ -26,6 +26,12 @@ Documentadas completas en `docs/diseno/sistema_diseno_panel.md` §8. Resumen:
 4. Un chip/contenedor sobre un fondo ya tintado necesita borde propio — el `-subtle` solo no alcanza cuando la superficie base ya tiene color.
 5. Hover de una acción secundaria en texto plano necesita fondo sutil + transición, no solo cambio de color de texto.
 6. Transición nativa entre navegaciones del mismo flujo: `@view-transition { navigation: auto; }` una sola vez en `app.css`, con `prefers-reduced-motion` sobre `::view-transition-*`.
+7. En una fila de controles (barra de filtros, formulario horizontal) los
+   átomos de campo van con `margin-bottom: 0` y todos con el mismo
+   `min-width` — nombrando a los seis (`.ag-input`, `.ag-select`,
+   `.ag-textarea`, `.ag-date`, `.ag-switch`, `.ag-checkbox`), no solo al
+   que la pantalla use hoy. El margen de apilado alinea el botón contra un
+   borde fantasma 16px más abajo.
 
 ## Explorar diseño antes de implementarlo
 
