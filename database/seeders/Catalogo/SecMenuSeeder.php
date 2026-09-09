@@ -145,6 +145,12 @@ class SecMenuSeeder extends Seeder
         $this->item($comercial, 'comercial', 'propiedades', 'map', 3, ruta: 'panel.campos.index', codigoPermiso: 'comercial.campo.ver');
         $this->item($comercial, 'comercial', 'lotes', 'grid_view', 4, ruta: 'panel.lotes.index', codigoPermiso: 'comercial.lote.ver');
 
+        // HU-48 (tarea 71, ADR 0015 punto 4): catálogo de cultivos. Orden 5,
+        // primer ítem nuevo del grupo desde que se abrió (ítem creado directo
+        // con ruta y permiso, no "botón sin link": el catálogo no formaba
+        // parte de la siembra original de `sec_menu`, ver docblock de `item()`).
+        $this->item($comercial, 'comercial', 'cultivos', 'grass', 5, ruta: 'panel.cultivos.index', codigoPermiso: 'comercial.cultivo.ver');
+
         // Recursos (§4.2)
         // HU-27 (tarea 36): administración de la flota de drones — activa
         // el ítem que ya estaba sembrado como "botón sin link" (ver

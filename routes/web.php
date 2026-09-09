@@ -4,9 +4,11 @@ use App\Dominios\Campania\Infraestructura\Http\Controllers\Web\CampaniasControll
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\CamposController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ClientesController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ContratosController;
+use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\CultivosController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\FacturasController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\LotesController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ReportesComercialesController;
+use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\SiembraController;
 use App\Dominios\Distribucion\Infraestructura\Http\Controllers\Web\VersionesApkController;
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\AnticiposController;
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\CombustibleController;
@@ -402,6 +404,40 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::delete('/panel/lotes/{lote}', [LotesController::class, 'destroy'])
             ->name('panel.lotes.destroy');
+
+        // HU-48 (tarea 71, ADR 0015 punto 4): catálogo de cultivos, sin
+        // sub-entidad. Cuatro permisos de grano fino
+        // (`comercial.cultivo.ver`/`.crear`/`.editar`/`.eliminar`)
+        // verificados DENTRO del controlador contra el ROL ACTIVO, mismo
+        // criterio que `campos`/`lotes` arriba.
+        Route::get('/panel/cultivos', [CultivosController::class, 'index'])
+            ->name('panel.cultivos.index');
+
+        Route::get('/panel/cultivos/crear', [CultivosController::class, 'create'])
+            ->name('panel.cultivos.create');
+
+        Route::post('/panel/cultivos', [CultivosController::class, 'store'])
+            ->name('panel.cultivos.store');
+
+        Route::get('/panel/cultivos/{cultivo}/editar', [CultivosController::class, 'edit'])
+            ->name('panel.cultivos.edit');
+
+        Route::put('/panel/cultivos/{cultivo}', [CultivosController::class, 'update'])
+            ->name('panel.cultivos.update');
+
+        Route::delete('/panel/cultivos/{cultivo}', [CultivosController::class, 'destroy'])
+            ->name('panel.cultivos.destroy');
+
+        // HU-48 (tarea 71, etapa 3, ADR 0015 punto 4): qué se sembró en cada
+        // lote del campo, por campaña. Entra desde la ficha del campo, no
+        // desde `cultivos` (catálogo) ni desde `lotes` (estructura) — reusa
+        // el permiso `comercial.campo.editar`: no es un ABM propio, es parte
+        // de mantener los datos de ESE campo.
+        Route::get('/panel/campos/{campo}/siembra', [SiembraController::class, 'mostrar'])
+            ->name('panel.campos.siembra');
+
+        Route::post('/panel/campos/{campo}/siembra', [SiembraController::class, 'guardar'])
+            ->name('panel.campos.siembra.guardar');
 
         // HU-27 (tarea 36): administración de la flota de drones con su
         // modelo y capacidad de carga. Sin sub-entidad (a diferencia de

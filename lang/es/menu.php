@@ -46,6 +46,8 @@ return [
             // negocio para lo que la tabla sigue llamando `com_campos`.
             'propiedades' => 'Propiedades',
             'lotes' => 'Lotes',
+            // HU-48 (tarea 71, ADR 0015 punto 4): catálogo de cultivos.
+            'cultivos' => 'Cultivos',
         ],
     ],
 

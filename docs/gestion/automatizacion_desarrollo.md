@@ -281,6 +281,36 @@ qué historia se descarta no es una decisión que deba tomar un bucle desatendid
 El momento natural es después de un tramo largo de avance, cuando la lista ya
 creció.
 
+### 7. La persistencia: `bin/ciclo-servicio`
+
+`bin/ciclo --fondo` sobrevive a cerrar la terminal —lo hace `nohup`—, pero no a
+que la Mac se reinicie. El 8/9/2026 se vio de las dos formas en el mismo día:
+una actualización de VS Code se llevó puesta la corrida que colgaba de su
+terminal, y nadie se enteró hasta que alguien fue a mirar. Lo que se pierde en un
+reinicio no es una sesión, es el turno entero, y en silencio: no queda ni un
+proceso al que preguntarle qué pasó.
+
+`bin/ciclo-servicio --instalar` lo deja como LaunchAgent (`com.agrocom.ciclo`),
+que arranca solo al iniciar sesión. Tres decisiones que importan:
+
+- **La copia que ejecuta launchd vive fuera del repo** (`~/.local/bin/agrocom-ciclo`).
+  Si el servicio apuntara al script dentro del árbol, dejaría de existir cada
+  vez que el ciclo se parara en una rama anterior a ese commit —el estado normal
+  mientras trabaja una tarea— y el arranque fallaría sin motivo visible.
+- **No arranca un segundo ciclo sobre el mismo árbol de trabajo.** Si
+  `runs/ciclo.pid` apunta a un proceso vivo, sale sin hacer nada. Dos ciclos
+  compartiendo working tree se pisan los `git checkout` mutuamente.
+- **El freno de mano sobrevive al reinicio.** Con `runs/DETENER` puesto no
+  arranca, y sale con 0 — el plist solo relanza cuando la salida *no* es 0, así
+  que una parada pedida no se convierte en un bucle de arranques cada cinco
+  minutos.
+
+Lo que **no** cubre, y conviene saberlo: un LaunchAgent de usuario carga al
+iniciar sesión, no al encender la máquina, así que un reinicio que quede en la
+pantalla de login no lo levanta; y si la Mac se duerme, nadie corre nada hasta
+que despierte. Para un turno noche real, la sesión iniciada y el equipo sin
+suspensión son parte del arreglo.
+
 ## Lo que falta para un turno desatendido
 
 En orden de dependencia:
