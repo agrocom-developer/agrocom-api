@@ -47,6 +47,13 @@ COPY --from=assets-builder /var/www/html/public/build ./public/build
 # (declarado en composer.json), no hace falta invocarlo aparte.
 RUN composer dump-autoload --optimize
 
+# COPY deja todo con dueño root, pero PHP-FPM corre como www-data (el pool
+# por defecto de la imagen php:8.3-fpm) — sin esto, cualquier request da 500
+# porque Laravel no puede escribir storage/logs, las vistas compiladas ni el
+# cache de bootstrap. Pasó en el primer deploy real: log de acceso lleno de
+# 500 y storage/logs/laravel.log ni siquiera llegaba a crearse.
+RUN chown -R www-data:www-data storage bootstrap/cache
+
 # Configuración de Nginx como reverse proxy de PHP-FPM.
 COPY docker/nginx.conf /etc/nginx/sites-available/default
 
