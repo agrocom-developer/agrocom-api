@@ -27,11 +27,12 @@ use Illuminate\Support\Carbon;
  * de cobro (ADR 0015 punto 6); vacío = consumo interno.
  *
  * `recurso_tipo` (`dron`/`vehiculo`/`generador`) + `recurso_id` reemplazan a
- * `destino`: polimórfico SIN FK, mismo criterio que
- * `Personal\Infraestructura\Eloquent\EquipoRecurso` — el destino de
- * `recurso_id` cruza `ope_drones`/`man_vehiculos`/`man_generadores`, de otros
- * módulos. `Aplicacion/CrearCombustible` verifica que el recurso estuviera
- * asignado al equipo elegido en la fecha de la carga antes de guardar.
+ * la columna genérica que traía la tarea 49: polimórfico SIN FK, mismo
+ * criterio que `Personal\Infraestructura\Eloquent\EquipoRecurso` —
+ * `recurso_id` apunta según el tipo a `ope_drones`/`man_vehiculos`/
+ * `man_generadores`, de otros módulos. `Aplicacion/CrearCombustible`
+ * verifica que el recurso estuviera asignado al equipo elegido en la fecha
+ * de la carga antes de guardar.
  *
  * Inmutable salvo baja (mismo criterio que `Gasto`/`Anticipo`): sin caso de
  * uso de edición — si está mal, se da de baja (`EliminarCombustible`) y se
