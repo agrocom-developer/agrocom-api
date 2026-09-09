@@ -39,6 +39,12 @@ class SeguridadSeeder extends Seeder
         'seguridad.usuario.bloquear' => 'Bloquear/desbloquear (toggle de state, no es baja)',
         'seguridad.usuario.eliminar' => 'Baja lógica (soft delete)',
         'seguridad.usuario.asignar_rol_dueno' => 'Asignar o quitar el rol dueño a cualquier usuario',
+        // Tarea 65 (HU-41): crear/editar cuentas de portal es más sensible
+        // que administrar cuentas internas (define qué contrato ve un
+        // cliente) — exige este permiso ADEMÁS de crear/editar, restringido
+        // a dueño y encargado_operaciones (ver PERMISOS_ENCARGADO_OPERACIONES
+        // más abajo; dueño lo recibe con el resto del catálogo).
+        'seguridad.usuario.portal' => 'Crear/editar cuentas de portal del cliente (además de crear/editar)',
         // Administración del catálogo de roles y de la matriz rol↔permiso.
         // Era lo último del modelo `sec_*` sin pantalla: roles, permisos y
         // sus asignaciones solo se tocaban editando este archivo. Los cinco
@@ -395,6 +401,9 @@ class SeguridadSeeder extends Seeder
         'seguridad.usuario.editar',
         'seguridad.usuario.bloquear',
         'seguridad.usuario.eliminar',
+        // Tarea 65 (HU-41): el encargado de operaciones es quien prueba y
+        // mantiene las cuentas de portal en el día a día.
+        'seguridad.usuario.portal',
         // Tarea 62 (fuga 2): administra la operación diaria, aterriza en el
         // dashboard tras elegir rol y necesita la ficha de la compañía.
         'seguridad.dashboard.ver',
