@@ -30,6 +30,10 @@
         <x-organisms.login-form
             :action="route('portal.login')"
             :csrf="csrf_token()"
+            :recuperar-action="route('portal.recuperar.store')"
+            :recuperar-email-value="old('email')"
+            :recuperar-email-error="$errors->first('email')"
+            :recuperar-estado="session('estado')"
             data-ag-login-form
             data-ag-login-redirect="/portal/avance"
         />

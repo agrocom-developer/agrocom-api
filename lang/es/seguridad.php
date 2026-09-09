@@ -60,10 +60,38 @@ return [
 
     'recuperar' => [
         'titulo' => 'Recuperar acceso',
-        'subtitulo' => 'Ingresá tu correo electrónico. El administrador recibe la solicitud y te entrega una clave temporal.',
+        'subtitulo' => 'Ingresá tu correo electrónico y te enviamos un enlace para elegir una contraseña nueva.',
         'campo_email' => 'Correo electrónico',
         'boton_enviar' => 'Enviar solicitud',
         'volver' => 'Volver al ingreso',
+        // Misma respuesta exista o no la cuenta, esté bloqueada o no
+        // (invariante de negocio de esta tarea: nunca revelar qué correos
+        // existen) — se muestra tal cual en el propio panel "Recuperar
+        // acceso" del login, nunca como redirect a otra pantalla.
+        'estado_generico' => 'Si el correo existe en el sistema, vas a recibir un enlace para restablecer tu contraseña.',
+
+        // Correo enviado por RestablecerContrasena (Notification).
+        'correo_asunto' => 'Restablecé tu contraseña — Agrocom',
+        'correo_saludo' => 'Hola, :nombre.',
+        'correo_cuerpo' => 'Recibimos un pedido para restablecer la contraseña de tu cuenta. Si fuiste vos, hacé clic en el botón de abajo para elegir una nueva.',
+        'correo_boton' => 'Restablecer contraseña',
+        'correo_expiracion' => 'Este enlace vence en 60 minutos.',
+        'correo_ignorar' => 'Si no pediste este cambio, podés ignorar este correo — tu contraseña actual sigue funcionando.',
+        'correo_despedida' => 'Saludos, Agrocom.',
+    ],
+
+    // Pantalla de "elegir contraseña nueva" (tarea 66), llegada desde el
+    // enlace del correo de recuperar acceso — panel y portal comparten
+    // este mismo copy.
+    'restablecer' => [
+        'titulo' => 'Elegir contraseña nueva',
+        'subtitulo' => 'Vas a poder ingresar con esta contraseña apenas la confirmes.',
+        'campo_email' => 'Correo electrónico',
+        'campo_password' => 'Contraseña nueva',
+        'campo_password_confirmacion' => 'Confirmar contraseña nueva',
+        'boton_confirmar' => 'Confirmar',
+        'actualizada' => 'Tu contraseña se actualizó. Ya podés ingresar con la nueva.',
+        'token_invalido' => 'Este enlace ya no es válido — pedí uno nuevo desde "Recuperar acceso".',
     ],
 
     // Pantalla de selección de rol (quinta vuelta, maqueta 5c) y cambio de
@@ -345,7 +373,7 @@ return [
         'campo_email' => 'Correo electrónico',
         'campo_email_ayuda' => 'Opcional. Correo de la cuenta — no el de la persona ni el del cliente.',
         'campo_password' => 'Contraseña',
-        'campo_password_ayuda_alta' => 'La asigna quien da de alta la cuenta — no hay recuperación por correo todavía.',
+        'campo_password_ayuda_alta' => 'La asigna quien da de alta la cuenta. Con un correo cargado, la persona puede después recuperarla sola desde "Recuperar acceso".',
         'campo_password_ayuda_edicion' => 'Dejalo vacío para conservar la contraseña actual.',
         'campo_persona' => 'Persona asociada',
         'campo_persona_placeholder' => 'Sin persona asociada',

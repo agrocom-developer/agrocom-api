@@ -46,6 +46,10 @@ use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\PerfilController
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\PerfilPortalController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\PreferenciasController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\PreferenciasPortalController;
+use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\RecuperarContrasenaController;
+use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\RecuperarContrasenaPortalController;
+use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\RestablecerContrasenaController;
+use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\RestablecerContrasenaPortalController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\RolActivoController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\RolesController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\SesionController;
@@ -96,6 +100,32 @@ Route::get('/portal/login', function () {
 })->name('portal.login.form');
 
 Route::post('/portal/login', [SesionPortalController::class, 'store'])->name('portal.login');
+
+// Recuperación de contraseña por correo (tarea 66; ADR 0004, ampliación
+// 9/9/2026) — públicas, sin guard: quien las usa todavía no tiene sesión.
+// `throttle:6,1` por IP, además del throttle por email que ya aplica el
+// broker (`config('auth.passwords.*.throttle')`, 60 s).
+Route::post('/recuperar', [RecuperarContrasenaController::class, 'store'])
+    ->middleware('throttle:6,1')
+    ->name('recuperar.store');
+
+Route::get('/restablecer/{token}', [RestablecerContrasenaController::class, 'create'])
+    ->name('restablecer.form');
+
+Route::post('/restablecer', [RestablecerContrasenaController::class, 'store'])
+    ->middleware('throttle:6,1')
+    ->name('restablecer.store');
+
+Route::post('/portal/recuperar', [RecuperarContrasenaPortalController::class, 'store'])
+    ->middleware('throttle:6,1')
+    ->name('portal.recuperar.store');
+
+Route::get('/portal/restablecer/{token}', [RestablecerContrasenaPortalController::class, 'create'])
+    ->name('portal.restablecer.form');
+
+Route::post('/portal/restablecer', [RestablecerContrasenaPortalController::class, 'store'])
+    ->middleware('throttle:6,1')
+    ->name('portal.restablecer.store');
 
 Route::middleware('auth:interno')->group(function () {
     Route::post('/logout', [SesionController::class, 'destroy'])->name('logout');

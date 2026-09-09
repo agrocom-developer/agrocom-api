@@ -12,10 +12,13 @@ use App\Dominios\Seguridad\Infraestructura\Http\IdentidadOperarioTokenSanctum;
 use Database\Factories\SecUserFactory;
 use DateTimeInterface;
 use Illuminate\Auth\Authenticatable;
+use Illuminate\Auth\Passwords\CanResetPassword;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
+use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
 /**
@@ -57,9 +60,24 @@ use Laravel\Sanctum\HasApiTokens;
  * @property int|null $contrato_id
  * @property bool $state
  */
-class SecUser extends ModeloDominio implements AuthenticatableContract
+class SecUser extends ModeloDominio implements AuthenticatableContract, CanResetPasswordContract
 {
     use Authenticatable;
+
+    /**
+     * Reset de contraseña por correo (tarea 66, ADR 0004 ampliación
+     * 9/9/2026): `getEmailForPasswordReset()` (default del trait) ya lee
+     * `$this->email`, que es exactamente la columna de este modelo — sin
+     * override. `sendPasswordResetNotification()` SÍ se sobrescribe, pero
+     * en cada subtipo (`SecUsuarioInterno`/`SecUsuarioCliente`, no acá):
+     * el link de restablecimiento apunta a una URL distinta por guard
+     * (`/restablecer` vs `/portal/restablecer`), y `Password::broker($guard)`
+     * resuelve el usuario siempre a través del subtipo correspondiente
+     * (`usuarios_internos`/`usuarios_cliente`, `config/auth.php`), así que
+     * cada subtipo conoce su propia URL sin que este padre tenga que
+     * bifurcar por `type`.
+     */
+    use CanResetPassword;
 
     /**
      * Trait de Sanctum, obligatorio y no decorativo: `Guard::supportsTokens()`
@@ -73,6 +91,13 @@ class SecUser extends ModeloDominio implements AuthenticatableContract
 
     /** @use HasFactory<SecUserFactory> */
     use HasFactory;
+
+    /**
+     * Requerido por `CanResetPassword::sendPasswordResetNotification()`
+     * (llama a `$this->notify()`) y por la notificación misma, que este
+     * modelo dispara sobre sí — sin este trait, `notify()` no existe.
+     */
+    use Notifiable;
 
     /**
      * Bitácora de auditoría transversal (ADR 0007, invariante 9 de

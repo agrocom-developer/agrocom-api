@@ -25,6 +25,10 @@
         <x-organisms.login-form
             :action="route('login')"
             :csrf="csrf_token()"
+            :recuperar-action="route('recuperar.store')"
+            :recuperar-email-value="old('email')"
+            :recuperar-email-error="$errors->first('email')"
+            :recuperar-estado="session('estado')"
             data-ag-login-form
         />
     </x-templates.auth-layout>
