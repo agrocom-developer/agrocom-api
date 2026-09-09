@@ -1,0 +1,76 @@
+/*
+ * Pantalla completa de un contenedor de mapa (tarea 79): reglas compartidas
+ * por el editor de perímetro del lote (`pages/campos.css`) y el mapa
+ * operativo del tablero (`mapa-operativo.css`) — misma mecánica en los dos,
+ * alternada por `shared/mapa-pantalla-completa.js`.
+ *
+ * Lo nativo (`:fullscreen`) no necesita más CSS que el tamaño: el navegador
+ * ya hace que el elemento cubra la ventana entera. El respaldo
+ * (`.ag-mapa--pantalla-completa-respaldo`, cuando el navegador niega la
+ * Fullscreen API) simula lo mismo a mano. El tamaño del LIENZO interno
+ * queda a cargo de cada componente (alturas base distintas).
+ */
+.ag-mapa-marco {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-2);
+}
+
+.ag-mapa-marco:fullscreen,
+.ag-mapa-marco.ag-mapa--pantalla-completa-respaldo {
+    position: fixed;
+    inset: 0;
+    z-index: 1040;
+    padding: var(--ag-space-3);
+    background-color: var(--ag-color-surface-card);
+    overflow: auto;
+}
+
+.ag-mapa-barra {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--ag-space-1);
+    padding: var(--ag-space-1);
+    border: 1px solid var(--ag-color-border);
+    border-radius: var(--ag-radius-sm);
+    background-color: var(--ag-color-surface-card);
+}
+
+.ag-mapa-accion {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    border: none;
+    border-radius: var(--ag-radius-sm);
+    background-color: transparent;
+    color: var(--ag-color-text-muted);
+    cursor: pointer;
+}
+
+.ag-mapa-accion:hover {
+    background-color: var(--ag-color-bg-row-hover);
+    color: var(--ag-color-text);
+}
+
+.ag-mapa-accion:focus-visible {
+    outline: 2px solid var(--ag-color-accent);
+    outline-offset: 2px;
+}
+
+.ag-mapa-accion[aria-pressed="true"] {
+    background-color: var(--ag-color-primary-subtle);
+    color: var(--ag-color-primary);
+}
+
+.ag-mapa-accion:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.ag-mapa-accion--pantalla-completa {
+    margin-inline-start: auto;
+}

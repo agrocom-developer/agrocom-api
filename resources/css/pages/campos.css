@@ -141,12 +141,6 @@
     gap: var(--ag-space-2);
 }
 
-.ag-lote-mapa__marco {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-2);
-}
-
 .ag-lote-mapa__lienzo {
     height: 340px;
     border-radius: var(--ag-radius-md);
@@ -155,74 +149,13 @@
     z-index: 0;
 }
 
-/* Barra de acciones propia (tarea 79): reemplaza el chrome nativo de
-   Leaflet-Geoman (íconos ajenos al panel, en inglés) por botones con
-   Material Symbols y `title`/`aria-label` en español. El botón de pantalla
-   completa se separa a la derecha (`margin-inline-start: auto` en su
-   variante) — es una acción distinta de las de dibujo. */
-.ag-lote-mapa__barra {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--ag-space-1);
-    padding: var(--ag-space-1);
-    border: 1px solid var(--ag-color-border);
-    border-radius: var(--ag-radius-sm);
-    background-color: var(--ag-color-surface-card);
-}
-
-.ag-lote-mapa__accion {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.25rem;
-    height: 2.25rem;
-    padding: 0;
-    border: none;
-    border-radius: var(--ag-radius-sm);
-    background-color: transparent;
-    color: var(--ag-color-text-muted);
-    cursor: pointer;
-}
-
-.ag-lote-mapa__accion:hover {
-    background-color: var(--ag-color-bg-row-hover);
-    color: var(--ag-color-text);
-}
-
-.ag-lote-mapa__accion:focus-visible {
-    outline: 2px solid var(--ag-color-accent);
-    outline-offset: 2px;
-}
-
-.ag-lote-mapa__accion[aria-pressed="true"] {
-    background-color: var(--ag-color-primary-subtle);
-    color: var(--ag-color-primary);
-}
-
-.ag-lote-mapa__accion:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-}
-
-.ag-lote-mapa__accion--pantalla-completa {
-    margin-inline-start: auto;
-}
-
-/* Pantalla completa: la nativa (`:fullscreen`) ya cubre toda la ventana sola,
-   sin CSS propio más que el tamaño del lienzo. El respaldo (navegador que
-   niega el pedido) simula lo mismo con un contenedor fijo. */
-.ag-lote-mapa__marco:fullscreen,
-.ag-lote-mapa__marco.ag-mapa--pantalla-completa-respaldo {
-    position: fixed;
-    inset: 0;
-    z-index: 1040;
-    padding: var(--ag-space-3);
-    background-color: var(--ag-color-surface-card);
-}
-
-.ag-lote-mapa__marco:fullscreen .ag-lote-mapa__lienzo,
-.ag-lote-mapa__marco.ag-mapa--pantalla-completa-respaldo .ag-lote-mapa__lienzo {
+/* El marco (`.ag-mapa-marco`) y la barra de acciones (`.ag-mapa-barra`/
+   `.ag-mapa-accion`) son compartidos con el mapa operativo del tablero —
+   ver `components/mapa-pantalla-completa.css`. Acá solo el tamaño del
+   LIENZO propio de este editor cuando el marco pasa a pantalla completa
+   (nativa o de respaldo). */
+.ag-mapa-marco:fullscreen .ag-lote-mapa__lienzo,
+.ag-mapa-marco.ag-mapa--pantalla-completa-respaldo .ag-lote-mapa__lienzo {
     flex: 1 1 auto;
     height: auto;
 }

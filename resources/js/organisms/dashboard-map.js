@@ -14,11 +14,17 @@
  *
  * La capa de puntos de sesión se retiró en la tarea 67 junto con el mock que
  * la alimentaba: el esquema no guarda la posición de una sesión.
+ *
+ * Tarea 79 (HU-56): pantalla completa de verdad, mismo mecanismo
+ * (`shared/mapa-pantalla-completa.js`) que `lote-mapa-editor.js` — este mapa
+ * es de solo lectura (no dibuja ni edita), así que no necesita la barra de
+ * siete acciones del editor, solo expandirse para verlo mejor.
  */
 
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { leerColorToken } from '../shared/color-tokens.js';
+import { activarPantallaCompleta } from '../shared/mapa-pantalla-completa.js';
 
 const TOKEN_POR_TONO = {
     success: '--ag-color-success',
@@ -97,6 +103,20 @@ function inicializar(el) {
                 mapa.fitBounds(limites, { padding: [24, 24], maxZoom: 15 });
             }
         }, { once: true });
+
+    const marco = el.closest('[data-ag-mapa-marco]');
+    const botonPantallaCompleta = marco?.querySelector('[data-ag-mapa-boton-pantalla-completa]');
+
+    if (marco && botonPantallaCompleta) {
+        activarPantallaCompleta({
+            contenedor: marco,
+            alRedimensionar: () => mapa.invalidateSize(),
+            boton: botonPantallaCompleta,
+            iconoBoton: marco.querySelector('[data-ag-mapa-icono-pantalla-completa]'),
+            etiquetaEntrar: botonPantallaCompleta.dataset.agMapaEntrar,
+            etiquetaSalir: botonPantallaCompleta.dataset.agMapaSalir,
+        });
+    }
 }
 
 // Import()ado dinámicamente DESDE un handler de DOMContentLoaded (app.js) —

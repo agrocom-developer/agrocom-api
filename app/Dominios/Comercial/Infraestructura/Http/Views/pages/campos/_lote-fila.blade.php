@@ -100,16 +100,16 @@
              fijo al 100% si el navegador la niega) actúa sobre ESTE marco:
              lienzo + barra + medida viajan juntos, así la superficie sigue
              visible mientras se dibuja a pantalla completa (tarea 79). --}}
-        <div class="ag-lote-mapa__marco" data-ag-lote-mapa-marco>
+        <div class="ag-mapa-marco" data-ag-lote-mapa-marco>
             <div
-                class="ag-lote-mapa__barra"
+                class="ag-mapa-barra"
                 role="toolbar"
                 aria-label="{{ __('comercial.campos.lote_mapa_barra_aria') }}"
                 data-ag-lote-mapa-barra
             >
                 <button
                     type="button"
-                    class="ag-lote-mapa__accion"
+                    class="ag-mapa-accion"
                     data-ag-lote-accion="dibujar"
                     title="{{ __('comercial.campos.lote_mapa_dibujar') }}"
                     aria-label="{{ __('comercial.campos.lote_mapa_dibujar') }}"
@@ -119,7 +119,7 @@
                 </button>
                 <button
                     type="button"
-                    class="ag-lote-mapa__accion"
+                    class="ag-mapa-accion"
                     data-ag-lote-accion="editar"
                     title="{{ __('comercial.campos.lote_mapa_editar_vertices') }}"
                     aria-label="{{ __('comercial.campos.lote_mapa_editar_vertices') }}"
@@ -129,7 +129,7 @@
                 </button>
                 <button
                     type="button"
-                    class="ag-lote-mapa__accion"
+                    class="ag-mapa-accion"
                     data-ag-lote-accion="mover"
                     title="{{ __('comercial.campos.lote_mapa_mover') }}"
                     aria-label="{{ __('comercial.campos.lote_mapa_mover') }}"
@@ -139,7 +139,7 @@
                 </button>
                 <button
                     type="button"
-                    class="ag-lote-mapa__accion"
+                    class="ag-mapa-accion"
                     data-ag-lote-accion="borrar"
                     title="{{ __('comercial.campos.lote_mapa_borrar') }}"
                     aria-label="{{ __('comercial.campos.lote_mapa_borrar') }}"
@@ -149,7 +149,7 @@
                 </button>
                 <button
                     type="button"
-                    class="ag-lote-mapa__accion"
+                    class="ag-mapa-accion"
                     data-ag-lote-accion="deshacer"
                     title="{{ __('comercial.campos.lote_mapa_deshacer') }}"
                     aria-label="{{ __('comercial.campos.lote_mapa_deshacer') }}"
@@ -159,7 +159,7 @@
                 </button>
                 <button
                     type="button"
-                    class="ag-lote-mapa__accion"
+                    class="ag-mapa-accion"
                     data-ag-lote-accion="centrar"
                     title="{{ __('comercial.campos.lote_mapa_centrar') }}"
                     aria-label="{{ __('comercial.campos.lote_mapa_centrar') }}"
@@ -168,7 +168,7 @@
                 </button>
                 <button
                     type="button"
-                    class="ag-lote-mapa__accion"
+                    class="ag-mapa-accion"
                     data-ag-lote-accion="capa"
                     title="{{ __('comercial.campos.lote_mapa_capa_calles') }}"
                     aria-label="{{ __('comercial.campos.lote_mapa_capa_calles') }}"
@@ -180,7 +180,7 @@
                 </button>
                 <button
                     type="button"
-                    class="ag-lote-mapa__accion ag-lote-mapa__accion--pantalla-completa"
+                    class="ag-mapa-accion ag-mapa-accion--pantalla-completa"
                     data-ag-lote-mapa-boton-pantalla-completa
                     title="{{ __('comercial.campos.lote_mapa_pantalla_completa') }}"
                     aria-label="{{ __('comercial.campos.lote_mapa_pantalla_completa') }}"
