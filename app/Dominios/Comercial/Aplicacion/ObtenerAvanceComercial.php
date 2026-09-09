@@ -50,6 +50,28 @@ final class ObtenerAvanceComercial
             ->orderBy('id')
             ->get();
 
+        return $this->paraContratos($contratos);
+    }
+
+    /**
+     * Misma cuenta que {@see ejecutar()}, sobre un conjunto de contratos ya
+     * resuelto por el llamador (HU-52, tarea 75: el informe de avance de
+     * contratos arma su propio filtro de cliente/campaña/estado y no puede
+     * expresarlo con los dos `?int` de `ejecutar()`) — para que el informe no
+     * repita la suma de actas y facturas con una segunda fórmula.
+     *
+     * @param  Collection<int, Contrato>  $contratos  requiere `cliente:id,razon_social` precargada.
+     * @return list<array{
+     *     contratoId: int,
+     *     clienteNombre: string,
+     *     hectareasContratadas: string,
+     *     hectareasAplicadas: string,
+     *     hectareasFacturadas: string,
+     *     montoFacturado: string,
+     * }>
+     */
+    public function paraContratos(Collection $contratos): array
+    {
         if ($contratos->isEmpty()) {
             return [];
         }
