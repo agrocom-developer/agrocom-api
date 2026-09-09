@@ -62,6 +62,7 @@ final class EstadiasHaciendaController
         ]);
     }
 
+    /** @return Collection<int, string> */
     private function equiposDisponibles(): Collection
     {
         return DB::table('per_equipos_trabajo')
@@ -73,6 +74,7 @@ final class EstadiasHaciendaController
             ]);
     }
 
+    /** @return Collection<int, string> */
     private function camposDisponibles(): Collection
     {
         return DB::table('com_campos')
@@ -82,6 +84,7 @@ final class EstadiasHaciendaController
             ->mapWithKeys(fn (string $nombre, int|string $id): array => [(int) $id => $nombre]);
     }
 
+    /** @return Collection<int, string> */
     private function vehiculosDisponibles(): Collection
     {
         return DB::table('man_vehiculos')
