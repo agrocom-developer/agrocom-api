@@ -43,10 +43,17 @@ function entrarAlPanelParaUsuarios(SecUser $usuario, int $idRolActivo): void
         ->withSession(['sec_rol_activo_id' => $idRolActivo]);
 }
 
-/** Payload mínimo válido de alta/edición. */
+/**
+ * Payload mínimo válido de alta/edición de una cuenta INTERNA. `type` es
+ * obligatorio desde la tarea 65 (HU-41: el mismo formulario también da de
+ * alta cuentas de portal) — en `update()` el controlador lo ignora del
+ * payload (lo fija `ActualizarUsuarioRequest` desde el usuario ya
+ * persistido), así que mandarlo siempre acá no rompe la edición.
+ */
 function payloadUsuario(array $overrides = []): array
 {
     return array_merge([
+        'type' => 'interno',
         'name' => 'Nuevo Usuario',
         'username' => 'nuevo.usuario',
         'password' => 'Secreta123',
