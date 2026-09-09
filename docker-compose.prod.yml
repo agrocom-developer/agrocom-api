@@ -1,0 +1,96 @@
+# Ambiente de producción beta: contenedor 119 en Proxmox
+# (docs/decisiones/0017-despliegue-proxmox-lxc-self-hosted-runner.md)
+#
+# Levanta servicios `app` (Laravel + PHP-FPM + Nginx) y `db` (PostgreSQL 16).
+# Sin Mailpit (correo real vía SMTP, configurado por .env).
+# Variables de entorno se cargan desde .env en el servidor, nunca hardcodeadas.
+#
+# Uso en el contenedor 119:
+#   docker compose -f docker-compose.prod.yml up -d --build
+#   docker compose -f docker-compose.prod.yml logs -f app
+#
+# --- Checklist de setup manual (una sola vez, en la consola del contenedor 119) ---
+#
+# 1. Instalar Docker Engine + plugin de Compose: https://docs.docker.com/engine/install/
+#    (seguir la guía oficial de la distro del contenedor; no hay comandos fijos acá
+#    porque se desactualizan con las versiones de Docker).
+#
+# 2. Instalar y registrar el runner self-hosted de GitHub Actions contra este
+#    repositorio: Settings → Actions → Runners → New self-hosted runner en GitHub
+#    (con la cuenta admin `agrocom-developer`), y seguir los pasos que esa pantalla
+#    genera para el contenedor. Correrlo como servicio (`./svc.sh install && ./svc.sh start`)
+#    para que sobreviva a un reinicio del contenedor.
+#
+# 3. Crear el .env real de producción en `$HOME/agrocom-api.env` (fuera de
+#    cualquier checkout de git — `.github/workflows/deploy.yml` lo copia a `.env`
+#    en cada corrida, porque `actions/checkout` limpia el workspace):
+#      cp .env.example "$HOME/agrocom-api.env"
+#      # editar ahí: DB_PASSWORD real, APP_KEY (php artisan key:generate --show
+#      # en cualquier entorno con el mismo Laravel para generarla), MAIL_* con
+#      # el SMTP real, APP_URL con la IP pública del contenedor, APP_DEBUG=false.
+#
+# 4. Primer deploy: pushear un tag `vX.Y.Z` (ver ADR 0017 §4) para disparar
+#    `.github/workflows/deploy.yml`.
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: agrocom-api
+    ports:
+      - "80:80"
+    working_dir: /var/www/html
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: 5432
+      # El resto de variables (DB_DATABASE, DB_USERNAME, etc.) se cargan del .env
+      # del servidor, nunca se pegan aquí.
+    env_file:
+      - .env
+    volumes:
+      # storage/ (logs, sesiones, uploads en disco) sobrevive a un rebuild de la
+      # imagen vía volumen nombrado — un bind-mount a una ruta del host acá no
+      # tiene sentido porque el código vive DENTRO de la imagen, no montado.
+      - agrocom-storage-prod:/var/www/html/storage
+    restart: unless-stopped
+    # Laravel expone /up de fábrica (bootstrap/app.php) — no existe un
+    # endpoint /api/version en este repo (ese es de agrocom-field).
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/up"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  db:
+    image: postgres:16
+    container_name: agrocom-db
+    environment:
+      POSTGRES_DB: agrocom
+      POSTGRES_USER: agrocom
+      POSTGRES_PASSWORD: agrocom
+      # Se sobrescribe desde .env en producción (ver abajo).
+    env_file:
+      - .env
+    # Sin publicar el puerto al host: el contenedor 119 tiene IP pública, y
+    # publicar 5432 expondría Postgres a Internet. `app` llega a `db` por la
+    # red interna de compose (nombre de servicio), no necesita el mapeo.
+    volumes:
+      - agrocom-db-prod:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agrocom"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  agrocom-db-prod:
+    driver: local
+  agrocom-storage-prod:
+    driver: local
