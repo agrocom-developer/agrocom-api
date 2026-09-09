@@ -6,6 +6,7 @@ use App\Dominios\Comercial\Aplicacion\ActualizarCampo;
 use App\Dominios\Comercial\Aplicacion\CrearCampo;
 use App\Dominios\Comercial\Aplicacion\EliminarCampo;
 use App\Dominios\Comercial\Aplicacion\ListarCampos;
+use App\Dominios\Comercial\Aplicacion\ResolverProveedorMapa;
 use App\Dominios\Comercial\Dominio\Excepciones\CampoDuplicado;
 use App\Dominios\Comercial\Dominio\Excepciones\LoteConHistorialAsociado;
 use App\Dominios\Comercial\Dominio\Excepciones\LoteDuplicado;
@@ -45,7 +46,10 @@ final class CamposController
 
     private const PERMISO_ELIMINAR = 'comercial.campo.eliminar';
 
-    public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
+    public function __construct(
+        private readonly AutorizacionPanelWeb $autorizacion,
+        private readonly ResolverProveedorMapa $resolverProveedorMapa,
+    ) {}
 
     public function index(Request $request, ListarCampos $listarCampos): View
     {
@@ -67,6 +71,7 @@ final class CamposController
         return view('comercial::pages.campos.create', [
             ...$this->autorizacion->cascara($request),
             'clientesDisponibles' => $this->clientesActivos(),
+            'proveedorMapa' => $this->resolverProveedorMapa->ejecutar(),
         ]);
     }
 
@@ -111,6 +116,7 @@ final class CamposController
             ...$this->autorizacion->cascara($request),
             'campo' => $campo->load('lotes'),
             'clientesDisponibles' => $this->clientesActivos(),
+            'proveedorMapa' => $this->resolverProveedorMapa->ejecutar(),
         ]);
     }
 

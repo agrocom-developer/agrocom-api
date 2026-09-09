@@ -7,6 +7,7 @@ use App\Dominios\Comercial\Aplicacion\CrearLote;
 use App\Dominios\Comercial\Aplicacion\EliminarLote;
 use App\Dominios\Comercial\Aplicacion\ListarLotes;
 use App\Dominios\Comercial\Aplicacion\Lote\GuardadoLote;
+use App\Dominios\Comercial\Aplicacion\ResolverProveedorMapa;
 use App\Dominios\Comercial\Dominio\Excepciones\LoteConHistorialAsociado;
 use App\Dominios\Comercial\Dominio\Excepciones\LoteDuplicado;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
@@ -44,7 +45,10 @@ final class LotesController
 
     private const PERMISO_ELIMINAR = 'comercial.lote.eliminar';
 
-    public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
+    public function __construct(
+        private readonly AutorizacionPanelWeb $autorizacion,
+        private readonly ResolverProveedorMapa $resolverProveedorMapa,
+    ) {}
 
     public function index(Request $request, ListarLotes $listarLotes): View
     {
@@ -71,6 +75,7 @@ final class LotesController
             ...$this->autorizacion->cascara($request),
             'clientesDisponibles' => $this->clientesActivos(),
             'propiedadesDisponibles' => $this->propiedadesActivas(),
+            'proveedorMapa' => $this->resolverProveedorMapa->ejecutar(),
         ]);
     }
 
@@ -103,6 +108,7 @@ final class LotesController
             'lote' => $lote->load('campo'),
             'clientesDisponibles' => $this->clientesActivos(),
             'propiedadesDisponibles' => $this->propiedadesActivas(),
+            'proveedorMapa' => $this->resolverProveedorMapa->ejecutar(),
         ]);
     }
 

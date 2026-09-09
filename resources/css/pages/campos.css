@@ -149,6 +149,17 @@
     z-index: 0;
 }
 
+/* El marco (`.ag-mapa-marco`) y la barra de acciones (`.ag-mapa-barra`/
+   `.ag-mapa-accion`) son compartidos con el mapa operativo del tablero —
+   ver `components/mapa-pantalla-completa.css`. Acá solo el tamaño del
+   LIENZO propio de este editor cuando el marco pasa a pantalla completa
+   (nativa o de respaldo). */
+.ag-mapa-marco:fullscreen .ag-lote-mapa__lienzo,
+.ag-mapa-marco.ag-mapa--pantalla-completa-respaldo .ag-lote-mapa__lienzo {
+    flex: 1 1 auto;
+    height: auto;
+}
+
 .ag-lote-mapa__pie {
     display: flex;
     align-items: baseline;
@@ -169,13 +180,6 @@
     font-family: var(--ag-font-family-mono);
     font-size: var(--ag-font-size-xs);
     color: var(--ag-color-text-muted);
-}
-
-/* Los controles de Geoman traen su propio CSS de librería (igual que el
-   chrome de zoom de Leaflet). Solo se corrige lo que choca con el panel: la
-   sombra dura y el radio, que en oscuro se ven como un parche pegado. */
-.ag-lote-mapa .leaflet-pm-toolbar .leaflet-buttons-control-button {
-    border-radius: var(--ag-radius-sm);
 }
 
 .ag-campos-form__lote-pie {

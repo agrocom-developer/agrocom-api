@@ -6,6 +6,7 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
 use App\Dominios\Compartido\Dominio\AccionBitacora;
 use App\Dominios\Compartido\Infraestructura\Eloquent\Bitacora;
+use App\Dominios\Compartido\Infraestructura\Eloquent\Configuracion;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecMenu;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecPermission;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
@@ -179,6 +180,85 @@ it('el formulario ofrece el editor de mapa, no un textarea de GeoJSON', function
         ->assertSee('name="lotes[0][geometria]"', escape: false)
         ->assertSee('type="hidden"', escape: false)
         ->assertDontSee('<textarea name="lotes[0][geometria]"', escape: false);
+});
+
+it('el editor de mapa trae barra de acciones propia y pantalla completa, con textos en español', function () {
+    // Tarea 79 (HU-56): reemplaza el chrome nativo de Leaflet-Geoman por una
+    // barra propia con Material Symbols y `title`/`aria-label` en español —
+    // este test es la aduana de esas siete acciones más el botón de pantalla
+    // completa, todas con su etiqueta accesible.
+    $cliente = clienteDeCamposDePrueba();
+    [$encargado, $idRol] = usuarioConRolParaCampos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaCampos($encargado, $idRol);
+
+    $respuesta = $this->get(route('panel.campos.create'))->assertOk();
+
+    foreach (['dibujar', 'editar', 'mover', 'borrar', 'deshacer', 'centrar', 'capa'] as $accion) {
+        $respuesta->assertSee("data-ag-lote-accion=\"{$accion}\"", escape: false);
+    }
+
+    $respuesta->assertSee('data-ag-lote-mapa-boton-pantalla-completa', escape: false)
+        ->assertSee('Dibujar perímetro', escape: false)
+        ->assertSee('Editar vértices', escape: false)
+        ->assertSee('Centrar en el lote', escape: false)
+        ->assertSee('Pantalla completa', escape: false)
+        ->assertSee('role="toolbar"', escape: false);
+});
+
+it('sin llave de google configurada, el editor usa leaflet y la llave no aparece en el HTML', function () {
+    // Tarea 79: aunque nunca se hubiera configurado una llave, esta es la
+    // aduana explícita del criterio de aceptación — un secreto que no está
+    // no puede "aparecer" por accidente en ningún render futuro de esta vista.
+    $cliente = clienteDeCamposDePrueba();
+    [$encargado, $idRol] = usuarioConRolParaCampos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaCampos($encargado, $idRol);
+
+    $respuesta = $this->get(route('panel.campos.create'))->assertOk();
+
+    $respuesta->assertSee('data-ag-lote-mapa-proveedor="leaflet"', escape: false)
+        ->assertDontSee('data-ag-lote-mapa-google-key', escape: false);
+});
+
+it('con llave de google configurada, el editor pasa a google con la llave', function () {
+    Configuracion::query()->create([
+        'clave' => 'mapas.google_maps_api_key',
+        'valor' => 'AIzaSyD-prueba-0000',
+        'grupo' => 'mapas',
+        'es_secreto' => true,
+    ]);
+
+    $cliente = clienteDeCamposDePrueba();
+    [$encargado, $idRol] = usuarioConRolParaCampos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaCampos($encargado, $idRol);
+
+    $respuesta = $this->get(route('panel.campos.create'))->assertOk();
+
+    $respuesta->assertSee('data-ag-lote-mapa-proveedor="google"', escape: false)
+        ->assertSee('data-ag-lote-mapa-google-key="AIzaSyD-prueba-0000"', escape: false);
+});
+
+it('con llave configurada pero proveedor_preferido=leaflet, la llave sigue sin aparecer en el HTML', function () {
+    Configuracion::query()->create([
+        'clave' => 'mapas.google_maps_api_key',
+        'valor' => 'AIzaSyD-prueba-0000',
+        'grupo' => 'mapas',
+        'es_secreto' => true,
+    ]);
+    Configuracion::query()->create([
+        'clave' => 'mapas.proveedor_preferido',
+        'valor' => 'leaflet',
+        'grupo' => 'mapas',
+        'es_secreto' => false,
+    ]);
+
+    $cliente = clienteDeCamposDePrueba();
+    [$encargado, $idRol] = usuarioConRolParaCampos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaCampos($encargado, $idRol);
+
+    $respuesta = $this->get(route('panel.campos.create'))->assertOk();
+
+    $respuesta->assertSee('data-ag-lote-mapa-proveedor="leaflet"', escape: false)
+        ->assertDontSee('AIzaSyD-prueba-0000', escape: false);
 });
 
 it('conserva la geometria dibujada al reabrir el formulario de edicion', function () {

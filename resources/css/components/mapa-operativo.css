@@ -22,6 +22,15 @@
     background: var(--ag-color-bg-table-head);
 }
 
+/* Pantalla completa (tarea 79): el marco (`.ag-mapa-marco`) es compartido
+   con el editor de perímetro del lote — ver `mapa-pantalla-completa.css`.
+   Acá solo el tamaño del lienzo propio de ESTE componente. */
+.ag-mapa-marco:fullscreen .ag-mapa-operativo__lienzo,
+.ag-mapa-marco.ag-mapa--pantalla-completa-respaldo .ag-mapa-operativo__lienzo {
+    flex: 1 1 auto;
+    height: auto;
+}
+
 .ag-mapa-operativo__leyenda {
     display: flex;
     flex-wrap: wrap;

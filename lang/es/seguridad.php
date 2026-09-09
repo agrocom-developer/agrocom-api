@@ -276,6 +276,12 @@ return [
         'mapa_leyenda_programado' => 'Sin sesiones',
         'mapa_leyenda_completado' => 'Al día',
 
+        // Pantalla completa del mapa operativo (tarea 79): mismo mecanismo
+        // que el editor de perímetro del lote, solo el botón de expandir —
+        // este mapa es de solo lectura.
+        'mapa_pantalla_completa' => 'Pantalla completa',
+        'mapa_salir_pantalla_completa' => 'Salir de pantalla completa',
+
         'seccion_resumen_lote' => 'Avance por lote',
         'lote_col_completadas' => 'Aplicadas',
         'lote_col_pendientes' => 'Pendientes',
