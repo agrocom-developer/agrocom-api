@@ -65,3 +65,25 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 });
+
+// Atajo ⌘K / Ctrl+K: enfoca el buscador del header (9/9/2026, cuando el
+// buscador dejó de ser maqueta). El `<kbd>` del campo viene anunciando el
+// atajo desde la quinta vuelta del diseño y hasta ahora no hacía nada.
+//
+// Solo ENFOCA — no busca: buscar lo hace el submit del form (Enter), así que
+// esto sigue andando aunque el JS falle en cargar.
+document.addEventListener('keydown', (event) => {
+    if (event.key?.toLowerCase() !== 'k' || !(event.metaKey || event.ctrlKey)) {
+        return;
+    }
+
+    const buscador = document.querySelector('[data-ag-buscador]');
+
+    if (!buscador) {
+        return; // pantalla sin header de panel (login, portal)
+    }
+
+    event.preventDefault();
+    buscador.focus();
+    buscador.select();
+});

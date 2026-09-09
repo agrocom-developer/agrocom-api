@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Seguridad\Infraestructura;
 
+use App\Dominios\Seguridad\Aplicacion\BuscarEnElPanel;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use App\Dominios\Seguridad\Contratos\AutorizacionPortalCliente;
 use App\Dominios\Seguridad\Contratos\IdentidadOperarioToken;
@@ -61,6 +62,16 @@ final class SeguridadServiceProvider extends ServiceProvider
         // necesita saber qué persona de `Personal` firma el token sin
         // importar `SecUser`.
         $this->app->bind(IdentidadOperarioToken::class, IdentidadOperarioTokenSanctum::class);
+
+        // Buscador global: el agregador recibe TODOS los proveedores que cada
+        // módulo taggeó, sin conocer ninguno (ADR 0003, regla 2 — acá el
+        // contrato viaja al revés: Seguridad no importa Comercial, es Comercial
+        // el que se ofrece). Si un módulo no taggea nada, sus entidades
+        // simplemente no aparecen en la búsqueda.
+        $this->app->singleton(
+            BuscarEnElPanel::class,
+            static fn ($app): BuscarEnElPanel => new BuscarEnElPanel($app->tagged('busqueda.proveedores')),
+        );
     }
 
     public function boot(): void

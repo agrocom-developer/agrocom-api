@@ -39,6 +39,7 @@ use App\Dominios\Portal\Infraestructura\Http\Controllers\Web\AvancePortalControl
 use App\Dominios\Portal\Infraestructura\Http\Controllers\Web\ReportesPortalController;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\BitacoraController;
+use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\BusquedaController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\ConfiguracionController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\DashboardController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\DispositivosController;
@@ -228,6 +229,14 @@ Route::middleware('auth:interno')->group(function () {
         // controlador contra el ROL ACTIVO, mismo criterio que el resto.
         Route::get('/panel/bitacora', [BitacoraController::class, 'index'])
             ->name('panel.bitacora.index');
+
+        // Buscador global del header (9/9/2026). SIN permiso propio: buscar no
+        // es una capacidad que se conceda — lo que se concede es ver cada
+        // cosa, y eso lo decide `BuscarEnElPanel` bloque por bloque contra el
+        // rol activo. Un rol sin `comercial.cliente.ver` escribe en el
+        // buscador y no le aparece ningún cliente.
+        Route::get('/panel/buscar', [BusquedaController::class, 'index'])
+            ->name('panel.buscar');
 
         // La matriz vive en su propia URL y no como pestaña del formulario:
         // son dos operaciones con permisos distintos (`editar` cambia el

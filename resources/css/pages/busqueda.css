@@ -1,0 +1,137 @@
+/*
+ * Page: busqueda/index (app/Dominios/Seguridad/.../pages/busqueda/) — el
+ * buscador global del header, 9/9/2026.
+ *
+ * No es el listado de una entidad sino varios bloques a la vez, así que en vez
+ * de una tabla en grid hay tarjetas que se acomodan solas al ancho: con una
+ * sola coincidencia el resultado no queda perdido en una columna de 1200px, y
+ * con ocho bloques no hay que hacer scroll horizontal. Todo color y medida por
+ * token (CLAUDE.md invariante 11).
+ */
+
+.ag-busqueda {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+.ag-busqueda__ayuda {
+    display: block;
+    margin-top: var(--ag-space-1);
+}
+
+.ag-busqueda__resumen {
+    margin: 0;
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-busqueda__bloques {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));
+    gap: var(--ag-space-4);
+    align-items: start;
+}
+
+.ag-busqueda__bloque {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+    overflow: hidden;
+}
+
+.ag-busqueda__bloque-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-3) var(--ag-space-4);
+    background-color: var(--ag-color-bg-table-head);
+}
+
+.ag-busqueda__bloque-titulo {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    margin: 0;
+    color: var(--ag-color-text);
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-bold);
+}
+
+/* Cuántas coincidencias tiene el bloque, no cuántas se ven: por eso va al
+   lado del rótulo y no al final de la lista. */
+.ag-busqueda__bloque-total {
+    color: var(--ag-color-text-muted);
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-xs);
+}
+
+.ag-busqueda__filas {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ag-busqueda__fila {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ag-space-3);
+    border-top: 1px solid var(--ag-color-border-row);
+    padding-inline-end: var(--ag-space-4);
+}
+
+/* El área clicable ocupa toda la fila, no solo el texto del título: una
+   lista de resultados se recorre con el mouse encima, no apuntando. */
+.ag-busqueda__enlace {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--ag-space-3) var(--ag-space-4);
+    color: inherit;
+    text-decoration: none;
+}
+
+a.ag-busqueda__enlace:hover {
+    background-color: var(--ag-color-bg-row-hover);
+}
+
+a.ag-busqueda__enlace:focus-visible {
+    outline: 2px solid var(--ag-color-focus-ring);
+    outline-offset: -2px;
+}
+
+.ag-busqueda__titulo {
+    color: var(--ag-color-text);
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+    overflow-wrap: anywhere;
+}
+
+.ag-busqueda__detalle {
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-xs);
+    overflow-wrap: anywhere;
+}
+
+.ag-busqueda__ver-todos {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ag-space-1);
+    border-top: 1px solid var(--ag-color-border-row);
+    padding: var(--ag-space-3);
+    color: var(--ag-color-primary);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-medium);
+    text-decoration: none;
+}
+
+.ag-busqueda__ver-todos:hover {
+    background-color: var(--ag-color-bg-row-hover);
+}

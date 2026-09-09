@@ -2,6 +2,9 @@
 
 namespace App\Dominios\Mantenimiento\Infraestructura;
 
+use App\Dominios\Mantenimiento\Infraestructura\Busqueda\BusquedaBaterias;
+use App\Dominios\Mantenimiento\Infraestructura\Busqueda\BusquedaGeneradores;
+use App\Dominios\Mantenimiento\Infraestructura\Busqueda\BusquedaVehiculos;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -22,7 +25,15 @@ use Illuminate\Support\ServiceProvider;
  */
 final class MantenimientoServiceProvider extends ServiceProvider
 {
-    public function register(): void {}
+    public function register(): void
+    {
+        // Buscador global (`busqueda.proveedores`): el agregador de Seguridad
+        // no conoce estas clases, las recibe por tag. Sumar una entidad al
+        // buscador es escribir su proveedor y taggearlo acá.
+        $this->app->tag(BusquedaBaterias::class, 'busqueda.proveedores');
+        $this->app->tag(BusquedaVehiculos::class, 'busqueda.proveedores');
+        $this->app->tag(BusquedaGeneradores::class, 'busqueda.proveedores');
+    }
 
     public function boot(): void
     {
