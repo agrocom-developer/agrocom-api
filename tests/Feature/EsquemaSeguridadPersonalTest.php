@@ -59,3 +59,17 @@ it('crea sec_token_dispositivo con FK real al usuario y al rol, sin columnas pol
 it('no crea la tabla personal_access_tokens de Sanctum', function () {
     expect(Schema::hasTable('personal_access_tokens'))->toBeFalse();
 });
+
+/*
+ * Tarea 66 — ADR 0004, ampliación 9/9/2026: el correo vive en la CUENTA
+ * (`sec_user.email`), no en `per_personas` (no tiene) ni se lee solo de
+ * `com_cliente_contactos` (varios contactos por cliente). Nullable: no toda
+ * cuenta declara correo. La unicidad entre cuentas vivas (índice parcial,
+ * igual patrón que `username`) se prueba por comportamiento en
+ * AsignarRolesUsuarioTest/GestionUsuariosPanelTest, no por introspección de
+ * esquema — SQLite no expone el `WHERE` de un índice parcial vía `Schema`.
+ */
+it('agrega email nullable a sec_user', function () {
+    expect(Schema::hasColumn('sec_user', 'email'))->toBeTrue()
+        ->and(Schema::getColumnType('sec_user', 'email'))->toBe('varchar');
+});

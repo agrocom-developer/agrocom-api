@@ -41,6 +41,13 @@ final class ActualizarUsuarioRequest extends FormRequest
                 'max:60',
                 Rule::unique('sec_user', 'username')->whereNull('deleted_at')->ignore($this->route('usuario')),
             ],
+            'email' => [
+                'nullable',
+                'string',
+                'email',
+                'max:150',
+                Rule::unique('sec_user', 'email')->whereNull('deleted_at')->ignore($this->route('usuario')),
+            ],
             'password' => ['nullable', 'string', 'min:8'],
             'persona_id' => [
                 'prohibited_if:type,cliente',
@@ -68,6 +75,7 @@ final class ActualizarUsuarioRequest extends FormRequest
     {
         return [
             'username.unique' => 'Ya existe una cuenta activa con ese username.',
+            'email.unique' => 'Ya existe una cuenta activa con ese correo.',
             'persona_id.exists' => 'La persona seleccionada no es válida.',
             'persona_id.prohibited_if' => 'Una cuenta de portal no tiene persona asociada.',
             'contrato_id.required_if' => 'Elegí el contrato de la cuenta de portal.',

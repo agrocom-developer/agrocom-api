@@ -55,7 +55,10 @@
 
         <div class="ag-portal__actions">
             @if ($userName)
-                <span class="ag-portal__user">{{ $userName }}</span>
+                <a href="{{ route('portal.perfil.edit') }}" class="ag-portal__user" title="{{ __('seguridad.perfil.menu_item') }}">
+                    <x-atoms.icon name="person" size="sm" />
+                    {{ $userName }}
+                </a>
             @endif
 
             <x-molecules.theme-toggle />

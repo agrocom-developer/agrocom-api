@@ -3,6 +3,7 @@
 namespace App\Dominios\Seguridad\Infraestructura\Eloquent;
 
 use App\Dominios\Seguridad\Dominio\TipoUsuario;
+use App\Dominios\Seguridad\Infraestructura\Notificaciones\RestablecerContrasena;
 
 /**
  * Modelo de autenticación del guard `interno` (`config/auth.php`): panel y
@@ -25,5 +26,19 @@ class SecUsuarioInterno extends SecUser
         static::addGlobalScope('tipo_interno', function ($consulta): void {
             $consulta->where('type', TipoUsuario::Interno->value);
         });
+    }
+
+    /**
+     * `Password::broker('interno')` (provider `usuarios_internos`, que
+     * instancia ESTA clase) resuelve el usuario y llama a este método —
+     * override de {@see SecUser} (que usa `CanResetPassword` tal cual, sin
+     * saber a qué guard pertenece el destinatario) para que el link apunte
+     * a la pantalla del PANEL, nunca a la del portal.
+     */
+    public function sendPasswordResetNotification(#[\SensitiveParameter] $token): void
+    {
+        $url = route('restablecer.form', ['token' => $token, 'email' => $this->email]);
+
+        $this->notify(new RestablecerContrasena($url));
     }
 }

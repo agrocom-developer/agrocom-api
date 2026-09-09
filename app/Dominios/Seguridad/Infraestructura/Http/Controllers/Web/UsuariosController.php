@@ -101,6 +101,7 @@ final class UsuariosController
             'puedeCrearPortal' => $this->autorizacion->tienePermiso($request, self::PERMISO_PORTAL),
             'clientesDisponibles' => $this->clientesDisponibles(),
             'contratosVigentesDisponibles' => $this->contratosVigentesDisponibles(),
+            'emailPorCliente' => $this->emailPorCliente(),
         ]);
     }
 
@@ -121,6 +122,7 @@ final class UsuariosController
                     name: (string) $datos['name'],
                     contratoId: (int) $datos['contrato_id'],
                     idRolActivo: $this->rolActivoId($request),
+                    email: $this->cadenaONull($datos['email'] ?? null),
                 );
             } catch (UsuarioDuplicado|PermisoDenegado|ContratoNoDisponibleParaPortal $excepcion) {
                 return redirect()->back()->withErrors(['estado' => $excepcion->getMessage()]);
@@ -142,6 +144,7 @@ final class UsuariosController
                 actor: $request->user('interno'),
                 usuarioId: null,
                 username: (string) $datos['username'],
+                email: $this->cadenaONull($datos['email'] ?? null),
                 password: (string) $datos['password'],
                 name: (string) $datos['name'],
                 type: TipoUsuario::Interno,
@@ -171,6 +174,7 @@ final class UsuariosController
             'personasDisponibles' => $this->personasDisponibles($usuario->id),
             'clientesDisponibles' => $this->clientesDisponibles(),
             'contratosVigentesDisponibles' => $this->contratosVigentesDisponibles(),
+            'emailPorCliente' => $this->emailPorCliente(),
         ]);
     }
 
@@ -192,6 +196,7 @@ final class UsuariosController
                     name: (string) $datos['name'],
                     contratoId: (int) $datos['contrato_id'],
                     idRolActivo: $this->rolActivoId($request),
+                    email: $this->cadenaONull($datos['email'] ?? null),
                 );
             } catch (UsuarioDuplicado|PermisoDenegado|ContratoNoDisponibleParaPortal $excepcion) {
                 return redirect()->back()->withErrors(['estado' => $excepcion->getMessage()]);
@@ -211,6 +216,7 @@ final class UsuariosController
                 actor: $request->user('interno'),
                 usuarioId: $usuario->id,
                 username: (string) $datos['username'],
+                email: $this->cadenaONull($datos['email'] ?? null),
                 password: $this->cadenaONull($datos['password'] ?? null),
                 name: (string) $datos['name'],
                 type: $usuario->type,
@@ -472,5 +478,29 @@ final class UsuariosController
             ->where('c.estado', 'vigente')
             ->orderBy('cl.razon_social')
             ->get(['c.id', 'c.cliente_id', 'cl.razon_social', 'c.hectareas_contratadas']);
+    }
+
+    /**
+     * Correo sugerido por cliente, para precargar el campo `email` del
+     * camino portal (tarea 66, ampliación ADR 0004 9/9/2026): el contacto
+     * `dueno` si tiene correo, si no el primero con correo. Solo filtra el
+     * valor inicial del campo — el administrador siempre puede escribir
+     * otro, y el submit no vuelve a leer esta lista. Lectura directa
+     * (`Comercial` es otro módulo, ADR 0003 regla 3), mismo criterio que
+     * {@see self::clientesDisponibles()}.
+     *
+     * @return array<int, string> cliente_id => email
+     */
+    private function emailPorCliente(): array
+    {
+        return DB::table('com_cliente_contactos')
+            ->whereNull('deleted_at')
+            ->whereNotNull('email')
+            ->orderByRaw("case when tipo = 'dueno' then 0 else 1 end")
+            ->orderBy('id')
+            ->get(['cliente_id', 'email'])
+            ->groupBy('cliente_id')
+            ->map(fn (Collection $contactos) => $contactos->first()->email)
+            ->all();
     }
 }

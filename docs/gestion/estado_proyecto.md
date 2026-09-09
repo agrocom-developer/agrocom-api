@@ -111,6 +111,17 @@ persona: una cuenta de portal solo tiene contrato.
 
 Guion de prueba manual paso a paso: [prueba_portal.md](prueba_portal.md).
 
+**Correo de la cuenta (tarea 66, ADR 0004 ampliación 9/9/2026):** todas las
+cuentas internas de la tabla de arriba tienen `<username>@agrocom.example`
+(p. ej. `carlos.ferrufino@agrocom.example`); las de portal, el correo del
+contacto real de su cliente (`cliente.sanjorge` → `jantelo@sanjorge.example`,
+`cliente.esperanza` → `manez@laesperanza.example`). Los correos que salgan
+del entorno local (`docker compose up`, `MAIL_MAILER=smtp` en
+`.env.example`) se leen en Mailpit: **http://localhost:8025** — nunca salen
+a una casilla real. `/panel/perfil` y `/portal/perfil` (autoservicio) y
+"Recuperar acceso"/`/restablecer` (por correo) ya son flujos reales, no
+maqueta.
+
 ## Ramas y remoto (estado real, no solo local)
 
 - `master`: en GitHub, sin cambios desde el commit inicial. `develop` nunca se

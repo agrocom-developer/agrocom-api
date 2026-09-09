@@ -14,29 +14,38 @@
     los nombres de campo correctos (`username`/`password`, los que espera
     IniciarSesionRequest) para que ese wiring no tenga que inventar nada.
 
-    Tab "Recuperar acceso": panel presentacional SIN form (es fuera de alcance
-    de esta tarea, el backend no existe todavía), solo input de correo
-    electrónico y botón "Enviar solicitud" de tipo `button`. Link "Volver al
-    ingreso" cambia de tab. El selector
+    Tab "Recuperar acceso" (tarea 66): `<form method="POST">` real con
+    `@csrf`, a `$recuperarAction` — POST clásico con redirect (a diferencia
+    del panel de ingreso, que responde JSON vía fetch): no hay JS que
+    intercepte este submit, así que una recarga completa de página es el
+    comportamiento esperado. El selector
     `document.querySelector('[data-ag-login-form] form')` de
-    resources/js/pages/login.js sigue resolviendo a UN ÚNICO form (el de
-    login) porque no hay `<form>` en este panel — el input+botón de este
-    panel se envuelven en un `<div class="ag-login-form__form">` (NO un
-    `<form>`: es la misma clase que usa el `<form>` de ingreso, reutilizada
-    solo por su CSS de alineación/ancho/gap, cuarta vuelta — antes este panel
-    no tenía ningún wrapper con `text-align: left`, por eso el label del
-    input quedaba centrado por el `text-align: center` heredado del panel).
+    resources/js/pages/login.js sigue resolviendo al form de INGRESO nada
+    más porque ese selector toma el primero que encuentra en el DOM (orden
+    de aparición) — el de ingreso sigue siendo el primero.
+
+    El tab arranca en "recuperar" (server-side, sin esperar al JS) cuando
+    hay `recuperarEstado` (mensaje de éxito) o `recuperarEmailError` (falló
+    la validación de forma del email) — así una respuesta tras el POST
+    aparece en el mismo panel que la originó, nunca de vuelta en "ingreso".
 
     Props:
-    - action (requerido): URL del POST.
+    - action (requerido): URL del POST de ingreso.
     - method (default "POST").
-    - csrf (nullable): si se pasa, agrega el input oculto `_token`.
+    - csrf (nullable): si se pasa, agrega el input oculto `_token` en AMBOS
+      forms (ingreso y recuperar comparten el mismo token de la página).
     - usernameValue (nullable): valor a repoblar tras un submit fallido.
     - usernameError / passwordError (nullable): error específico de ese
       campo, ya traducido por el llamador.
     - submitting (bool, default false): estado visual del botón (spinner +
       disabled, vía el átomo `button`) — quien conecte el fetch/Livewire
       decide cuándo vale true.
+    - recuperarAction (requerido): URL del POST de recuperación.
+    - recuperarEmailValue (nullable): valor a repoblar tras un submit fallido.
+    - recuperarEmailError (nullable): error de validación de forma del email.
+    - recuperarEstado (nullable): mensaje genérico ya traducido por el
+      llamador ("si el correo existe, vas a recibir un enlace") — el mismo
+      texto exista o no la cuenta, para no revelar qué correos existen.
 
     Slot (default): mensaje de error GENERAL (credenciales inválidas), ya
     traducido por el llamador. Vacío = no se renderiza.
@@ -53,17 +62,25 @@
     'usernameError' => null,
     'passwordError' => null,
     'submitting' => false,
+    'recuperarAction',
+    'recuperarEmailValue' => null,
+    'recuperarEmailError' => null,
+    'recuperarEstado' => null,
 ])
 
-<div {{ $attributes->class(['ag-login-form']) }}>
+@php
+    $arrancaEnRecuperar = $recuperarEstado !== null || $recuperarEmailError !== null;
+@endphp
+
+<div {{ $attributes->class(['ag-login-form']) }} @if ($arrancaEnRecuperar) data-ag-login-tab-inicial="recuperar" @endif>
     {{-- Tabs --}}
     <div role="tablist" class="ag-login-form__tabs" aria-label="{{ __('seguridad.login.tabs_aria_label') }}">
         <button
             role="tab"
             id="tab-ingreso"
             aria-controls="panel-ingreso"
-            aria-selected="true"
-            tabindex="0"
+            aria-selected="{{ $arrancaEnRecuperar ? 'false' : 'true' }}"
+            tabindex="{{ $arrancaEnRecuperar ? '-1' : '0' }}"
             class="ag-login-form__tab"
         >
             {{ __('seguridad.login.tab_ingreso') }}
@@ -72,8 +89,8 @@
             role="tab"
             id="tab-recuperar"
             aria-controls="panel-recuperar"
-            aria-selected="false"
-            tabindex="-1"
+            aria-selected="{{ $arrancaEnRecuperar ? 'true' : 'false' }}"
+            tabindex="{{ $arrancaEnRecuperar ? '0' : '-1' }}"
             class="ag-login-form__tab"
         >
             {{ __('seguridad.login.tab_recuperar') }}
@@ -87,6 +104,7 @@
         aria-labelledby="tab-ingreso"
         data-ag-login-panel="ingreso"
         class="ag-login-form__panel"
+        @if ($arrancaEnRecuperar) hidden @endif
     >
         <div class="ag-login-form__header">
             <h1 class="ag-login-form__title">{{ __('seguridad.login.titulo') }}</h1>
@@ -164,26 +182,39 @@
         aria-labelledby="tab-recuperar"
         data-ag-login-panel="recuperar"
         class="ag-login-form__panel"
-        hidden
+        @unless ($arrancaEnRecuperar) hidden @endunless
     >
         <div class="ag-login-form__header">
             <h1 class="ag-login-form__title">{{ __('seguridad.recuperar.titulo') }}</h1>
             <p class="ag-login-form__subtitle">{{ __('seguridad.recuperar.subtitulo') }}</p>
         </div>
 
-        <div class="ag-login-form__form">
+        @if ($recuperarEstado)
+            <div class="ag-login-form__error" role="status">
+                <x-atoms.icon name="check_circle" size="sm" />
+                <span>{{ $recuperarEstado }}</span>
+            </div>
+        @endif
+
+        <form class="ag-login-form__form" method="POST" action="{{ $recuperarAction }}">
+            @if ($csrf)
+                <input type="hidden" name="_token" value="{{ $csrf }}">
+            @endif
+
             <x-atoms.input
                 variant="line"
                 type="email"
-                name="email_recuperar"
+                name="email"
                 :label="__('seguridad.recuperar.campo_email')"
                 icon="mail"
                 autocomplete="email"
+                :value="$recuperarEmailValue"
+                :error="$recuperarEmailError"
                 :required="true"
             />
 
             <x-atoms.button
-                type="button"
+                type="submit"
                 variant="accent"
                 size="lg"
                 :block="true"
@@ -192,7 +223,7 @@
             >
                 {{ __('seguridad.recuperar.boton_enviar') }}
             </x-atoms.button>
-        </div>
+        </form>
 
         <button
             type="button"

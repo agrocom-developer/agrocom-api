@@ -115,3 +115,13 @@ it('cliente.sanjorge y cliente.esperanza ven datos distintos, y el PDF de un act
     $this->get(route('portal.actas.pdf', $actaEsperanza->id))->assertOk();
     $this->get(route('portal.actas.pdf', $actaSanJorge->id))->assertNotFound();
 });
+
+it('cada cuenta de portal recibe el email del contacto dueño de su cliente (tarea 66)', function () {
+    sembrarPortalDemo();
+
+    $sanJorge = SecUser::query()->where('username', 'cliente.sanjorge')->sole();
+    $esperanza = SecUser::query()->where('username', 'cliente.esperanza')->sole();
+
+    expect($sanJorge->email)->toBe('jantelo@sanjorge.example')
+        ->and($esperanza->email)->toBe('manez@laesperanza.example');
+});

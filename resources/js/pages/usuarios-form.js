@@ -12,6 +12,12 @@
  * 2) Filtra el `<select>` de contrato según el cliente elegido, mismo
  *    patrón que propiedad→cliente en `lotes-form.js`: el cliente es solo un
  *    FILTRO, no viaja como columna propia de `sec_user`.
+ * 3) Precarga el campo `email` con el correo sugerido del cliente elegido
+ *    (tarea 66) — SOLO si el campo está vacío o todavía tiene el último
+ *    valor sugerido (así un cliente sin correo, o un admin que ya escribió
+ *    el suyo, nunca se pisan). El administrador puede sobreescribirlo
+ *    siempre; el servidor valida el `email` igual sin importar de dónde
+ *    salió.
  *
  * Guard de presencia en el DOM (mismo criterio que `login.js`): en cualquier
  * página sin `[data-ag-usuarios-form]` este módulo no hace nada.
@@ -75,4 +81,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     selectCliente.addEventListener('change', aplicarFiltroContrato);
     aplicarFiltroContrato();
+
+    const campoEmail = formulario.querySelector('[data-ag-usuario-email]');
+    if (!campoEmail) return;
+
+    const mapaClienteEmail = JSON.parse(campoEmail.dataset.mapaClienteEmail || '{}');
+    let ultimoSugerido = '';
+
+    const sugerirEmail = () => {
+        if (campoEmail.value !== '' && campoEmail.value !== ultimoSugerido) return;
+
+        const sugerido = mapaClienteEmail[selectCliente.value] || '';
+        campoEmail.value = sugerido;
+        ultimoSugerido = sugerido;
+    };
+
+    selectCliente.addEventListener('change', sugerirEmail);
 });

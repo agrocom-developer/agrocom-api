@@ -57,13 +57,16 @@ final class CrearCuentaPortal
      *                                 elección explícita de un llamador sin
      *                                 sesión (seeders, tests directos), que
      *                                 cae en `tienePermiso()` (unión).
+     * @param  string|null  $email  Correo de la cuenta (tarea 66, ampliación
+     *                              ADR 0004 9/9/2026) — de la cuenta, no del
+     *                              contacto comercial. `null` = sin correo.
      *
      * @throws PermisoDenegado si al actor le falta `crear`/`editar` o
      *                         `seguridad.usuario.portal`.
      * @throws ContratoNoDisponibleParaPortal si el contrato no existe, está
      *                                        borrado o no está vigente.
-     * @throws UsuarioDuplicado si el `username` ya pertenece a otra cuenta
-     *                          viva.
+     * @throws UsuarioDuplicado si el `username` o el `email` ya pertenecen a
+     *                          otra cuenta viva.
      */
     public function ejecutar(
         SecUser $actor,
@@ -73,19 +76,21 @@ final class CrearCuentaPortal
         string $name,
         int $contratoId,
         ?int $idRolActivo,
+        ?string $email = null,
     ): SecUser {
         $esAlta = $usuarioId === null;
 
         $this->verificarPermisos($actor, $idRolActivo, $esAlta);
         $this->verificarContratoVigente($contratoId);
 
-        return DB::transaction(function () use ($actor, $usuarioId, $username, $password, $name, $contratoId, $esAlta): SecUser {
+        return DB::transaction(function () use ($actor, $usuarioId, $username, $email, $password, $name, $contratoId, $esAlta): SecUser {
             $usuario = $esAlta
                 ? new SecUser
                 : SecUser::query()->where('type', TipoUsuario::Cliente)->findOrFail($usuarioId);
 
             $usuario->name = $name;
             $usuario->username = $username;
+            $usuario->email = $email;
             $usuario->type = TipoUsuario::Cliente;
             $usuario->persona_id = null;
             $usuario->contrato_id = $contratoId;
@@ -102,7 +107,7 @@ final class CrearCuentaPortal
             try {
                 $usuario->save();
             } catch (QueryException $excepcion) {
-                $this->relanzarComoDuplicado($excepcion, $username);
+                $this->relanzarComoDuplicado($excepcion, $username, $email);
             }
 
             return $usuario->refresh();
@@ -145,18 +150,25 @@ final class CrearCuentaPortal
 
     /**
      * Mismo criterio que `AsignarRolesUsuario::relanzarComoDuplicado()`: una
-     * cuenta de portal no tiene `persona_id`, así que el único índice único
-     * que puede violar es el de `username`.
+     * cuenta de portal no tiene `persona_id`, así que los únicos índices
+     * únicos que puede violar son los de `username` y `email`.
      *
-     * @throws UsuarioDuplicado si la violación corresponde a `username`.
-     * @throws QueryException si la violación no es esa.
+     * @throws UsuarioDuplicado si la violación corresponde a `username` o a
+     *                          `email`.
+     * @throws QueryException si la violación no es una de esas.
      */
-    private function relanzarComoDuplicado(QueryException $excepcion, string $username): never
+    private function relanzarComoDuplicado(QueryException $excepcion, string $username, ?string $email): never
     {
         $mensaje = $excepcion->getMessage();
 
         if (str_contains($mensaje, 'sec_user_username_unico') || str_contains($mensaje, 'sec_user.username')) {
             throw UsuarioDuplicado::porUsername($username);
+        }
+
+        if ($email !== null
+            && (str_contains($mensaje, 'sec_user_email_unico') || str_contains($mensaje, 'sec_user.email'))
+        ) {
+            throw UsuarioDuplicado::porEmail($email);
         }
 
         throw $excepcion;

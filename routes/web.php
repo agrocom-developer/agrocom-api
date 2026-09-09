@@ -42,8 +42,14 @@ use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\ConfiguracionCon
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\DashboardController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\DispositivosController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\OrganizacionController;
+use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\PerfilController;
+use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\PerfilPortalController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\PreferenciasController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\PreferenciasPortalController;
+use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\RecuperarContrasenaController;
+use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\RecuperarContrasenaPortalController;
+use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\RestablecerContrasenaController;
+use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\RestablecerContrasenaPortalController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\RolActivoController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\RolesController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\SesionController;
@@ -95,6 +101,32 @@ Route::get('/portal/login', function () {
 
 Route::post('/portal/login', [SesionPortalController::class, 'store'])->name('portal.login');
 
+// Recuperación de contraseña por correo (tarea 66; ADR 0004, ampliación
+// 9/9/2026) — públicas, sin guard: quien las usa todavía no tiene sesión.
+// `throttle:6,1` por IP, además del throttle por email que ya aplica el
+// broker (`config('auth.passwords.*.throttle')`, 60 s).
+Route::post('/recuperar', [RecuperarContrasenaController::class, 'store'])
+    ->middleware('throttle:6,1')
+    ->name('recuperar.store');
+
+Route::get('/restablecer/{token}', [RestablecerContrasenaController::class, 'create'])
+    ->name('restablecer.form');
+
+Route::post('/restablecer', [RestablecerContrasenaController::class, 'store'])
+    ->middleware('throttle:6,1')
+    ->name('restablecer.store');
+
+Route::post('/portal/recuperar', [RecuperarContrasenaPortalController::class, 'store'])
+    ->middleware('throttle:6,1')
+    ->name('portal.recuperar.store');
+
+Route::get('/portal/restablecer/{token}', [RestablecerContrasenaPortalController::class, 'create'])
+    ->name('portal.restablecer.form');
+
+Route::post('/portal/restablecer', [RestablecerContrasenaPortalController::class, 'store'])
+    ->middleware('throttle:6,1')
+    ->name('portal.restablecer.store');
+
 Route::middleware('auth:interno')->group(function () {
     Route::post('/logout', [SesionController::class, 'destroy'])->name('logout');
 
@@ -121,6 +153,15 @@ Route::middleware('auth:interno')->group(function () {
     Route::middleware('rol.activo')->group(function () {
         Route::get('/panel/dashboard', [DashboardController::class, 'index'])
             ->name('panel.dashboard');
+
+        // Perfil propio (tarea 66): cualquier rol activo, sin permiso de
+        // grano fino — el sujeto es siempre quien está logueado, nunca un
+        // `{usuario}` de ruta (eso es UsuariosController, cuentas AJENAS).
+        Route::get('/panel/perfil', [PerfilController::class, 'edit'])
+            ->name('panel.perfil.edit');
+
+        Route::put('/panel/perfil', [PerfilController::class, 'update'])
+            ->name('panel.perfil.update');
 
         // HU-45 (tarea 39): ABM de usuarios internos con sus roles. Permisos
         // `seguridad.usuario.*` verificados DENTRO del controlador (contra
@@ -941,6 +982,14 @@ Route::middleware('auth:cliente')->group(function () {
 
     Route::post('/portal/preferencias/tema', [PreferenciasPortalController::class, 'actualizarTema'])
         ->name('portal.preferencias.tema');
+
+    // Perfil propio (tarea 66): mismo mecanismo que `/panel/perfil`, para el
+    // guard `cliente` — ver PerfilPortalController.
+    Route::get('/portal/perfil', [PerfilPortalController::class, 'edit'])
+        ->name('portal.perfil.edit');
+
+    Route::put('/portal/perfil', [PerfilPortalController::class, 'update'])
+        ->name('portal.perfil.update');
 
     Route::get('/portal/avance', [AvancePortalController::class, 'index'])->name('portal.avance.index');
 

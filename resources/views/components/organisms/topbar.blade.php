@@ -170,6 +170,12 @@
                 </button>
 
                 <ul class="dropdown-menu dropdown-menu-end ag-user-menu">
+                    <li>
+                        <a href="{{ route('panel.perfil.edit') }}" class="dropdown-item ag-user-menu__item">
+                            <x-atoms.icon name="person" size="sm" class="ag-user-menu__icon" />
+                            {{ __('seguridad.perfil.menu_item') }}
+                        </a>
+                    </li>
                     @if ($cambiarRolHref)
                         <li>
                             <a href="{{ $cambiarRolHref }}" class="dropdown-item ag-user-menu__item">

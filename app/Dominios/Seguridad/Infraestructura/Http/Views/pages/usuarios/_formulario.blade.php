@@ -26,6 +26,12 @@
     - $puedeCrearPortal (bool): solo en alta — si falta, la opción `cliente`
       ni aparece en el `<select>` de tipo (la guarda real sigue siendo
       `seguridad.usuario.portal` en el controlador/caso de uso).
+    - $emailPorCliente (array<int, string>): id de cliente => correo
+      sugerido (tarea 66) — SOLO precarga el campo `email` cuando se elige
+      un cliente en el camino portal, vía `usuarios-form.js`; no viaja como
+      columna propia (mismo criterio que $clientesDisponibles). No hay
+      precarga equivalente para el camino interno: `per_personas` no tiene
+      correo ni teléfono (decisión de la tarea 66).
 
     Tras un error de validación, `old()` pisa los valores del modelo/vacíos
     — mismo criterio en alta y en edición. `password` NUNCA se repuebla con
@@ -36,6 +42,7 @@
     $accion = $esEdicion ? route('panel.usuarios.update', $usuario) : route('panel.usuarios.store');
     $name = old('name', $usuario?->name ?? '');
     $username = old('username', $usuario?->username ?? '');
+    $email = old('email', $usuario?->email ?? '');
     $personaId = old('persona_id', $usuario?->persona_id ?? '');
     $rolesSeleccionados = array_map('strval', old('roles', $rolesAsignados ?? []));
     $opcionesRoles = $rolesDisponibles->mapWithKeys(fn ($rol) => [
@@ -94,6 +101,17 @@
             value="{{ $username }}"
             required
             error="{{ $errors->first('username') }}"
+        />
+
+        <x-atoms.input
+            type="email"
+            name="email"
+            label="{{ __('seguridad.usuarios.campo_email') }}"
+            value="{{ $email }}"
+            help="{{ __('seguridad.usuarios.campo_email_ayuda') }}"
+            error="{{ $errors->first('email') }}"
+            data-ag-usuario-email
+            data-mapa-cliente-email="{{ json_encode($emailPorCliente ?? []) }}"
         />
 
         <x-atoms.input

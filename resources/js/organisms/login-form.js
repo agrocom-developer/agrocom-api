@@ -53,6 +53,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
+     * Tarea 66: tras un POST a /recuperar (éxito o error de forma), el
+     * servidor re-renderiza la página con `data-ag-login-tab-inicial` en la
+     * raíz — sin esto, la respuesta aparecería en el tab "ingreso" pese a
+     * que el servidor ya la dejó visible ahí mismo (los `aria-selected`/
+     * `hidden` iniciales del Blade ya son correctos; esto solo sincroniza
+     * el estado JS de tabs/roving-tabindex con lo que el HTML ya muestra).
+     */
+    const tabInicial = document.querySelector('.ag-login-form')?.dataset.agLoginTabInicial;
+    if (tabInicial) {
+        activarTab(tabInicial);
+    }
+
+    /**
      * Click en un tab: activa ese tab y le da foco.
      */
     tabs.forEach((tab) => {

@@ -136,6 +136,7 @@ class PersonalDemoSeeder extends Seeder
                 ['username' => $username],
                 [
                     'name' => $nombre,
+                    'email' => "{$username}@agrocom.example",
                     'password' => self::PASSWORD_DEMO,
                     'type' => TipoUsuario::Interno,
                     'persona_id' => $persona->id,
@@ -148,6 +149,14 @@ class PersonalDemoSeeder extends Seeder
             // vínculo ya hecho a mano.
             if ($usuario->persona_id === null) {
                 $usuario->persona_id = $persona->id;
+                $usuario->save();
+            }
+
+            // Mismo criterio: una cuenta sembrada antes de la tarea 66 (correo
+            // de la cuenta) puede existir sin email — completarla es
+            // idempotente y nunca pisa un correo ya puesto a mano.
+            if ($usuario->email === null) {
+                $usuario->email = "{$username}@agrocom.example";
                 $usuario->save();
             }
 

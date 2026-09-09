@@ -33,3 +33,36 @@ test.describe('login', () => {
         });
     });
 });
+
+/**
+ * Pestaña "Recuperar acceso" (tarea 66): desde el 4/9/2026 es un `<form>`
+ * real (antes, un `<div>` sin backend). Mismo layout que el tab de ingreso,
+ * cambiando de pestaña con el link `data-ag-login-switch-tab="recuperar"`
+ * en vez de recargar la página.
+ */
+test.describe('login — recuperar acceso', () => {
+    test.beforeEach(async ({ page }) => {
+        await page.goto('/login');
+        await page.click('[data-ag-login-switch-tab="recuperar"]');
+    });
+
+    test('claro', async ({ page }) => {
+        await asegurarTema(page, 'light');
+        await esperarFuentes(page);
+
+        await expect(page).toHaveScreenshot('login-recuperar-light.png', {
+            fullPage: true,
+            mask: [page.locator('.ag-auth-layout__footer span').first()],
+        });
+    });
+
+    test('oscuro', async ({ page }) => {
+        await asegurarTema(page, 'dark');
+        await esperarFuentes(page);
+
+        await expect(page).toHaveScreenshot('login-recuperar-dark.png', {
+            fullPage: true,
+            mask: [page.locator('.ag-auth-layout__footer span').first()],
+        });
+    });
+});

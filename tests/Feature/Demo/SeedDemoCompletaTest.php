@@ -53,6 +53,18 @@ it('retira las cuentas genéricas demo y admin', function () {
     expect(SecUser::query()->whereIn('username', ['demo', 'admin'])->exists())->toBeFalse();
 });
 
+it('deja toda cuenta interna con un email @agrocom.example (tarea 66)', function () {
+    $sinEmail = SecUser::query()
+        ->where('type', 'interno')
+        ->where(function ($consulta) {
+            $consulta->whereNull('email')->orWhere('email', 'not like', '%@agrocom.example');
+        })
+        ->pluck('username')
+        ->all();
+
+    expect($sinEmail)->toBe([]);
+});
+
 it('deja toda cuenta interna con al menos un rol asignado', function () {
     $usuarios = SecUser::query()->where('type', 'interno')->get();
 

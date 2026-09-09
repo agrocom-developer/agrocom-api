@@ -10,9 +10,11 @@ use Illuminate\Support\Facades\Schema;
  * columnas de auditoría (ADR 0007 aplica a modelos de dominio, no a esto).
  *
  * Reemplaza al `create_users_table` del esqueleto de Laravel (HU-01, diseño
- * `modulos-roles` §6): `users` y `password_reset_tokens` se eliminan sin
- * reemplazo — el login es username/password (`sec_user`, sin correo) y no
- * hay flujo de recuperación de contraseña por email en este proyecto.
+ * `modulos-roles` §6): `users` se elimina sin reemplazo — el login sigue
+ * siendo username/password (`sec_user`). `password_reset_tokens` también se
+ * eliminó acá, pero SÍ vuelve más adelante: tarea 66 (ADR 0004, ampliación
+ * 9/9/2026) agrega `sec_user.email` y un flujo real de recuperación por
+ * correo — ver `2026_09_09_100005_create_password_reset_tokens_table`.
  *
  * `sessions.user_id` nunca tuvo FK real en el esqueleto de Laravel (es un
  * `unsignedBigInteger` nullable indexado, sin `constrained()`) — sigue sin

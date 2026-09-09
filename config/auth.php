@@ -14,9 +14,10 @@ use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUsuarioInterno;
 | `type` (ver SecUsuarioInterno/SecUsuarioCliente) para que ninguno de los
 | dos autentique jamás una cuenta que no le corresponde.
 |
-| Sin broker de reset de contraseña por correo: el login es username +
-| password (memoria del proyecto), no hay flujo de "olvidé mi contraseña"
-| por email en este sistema.
+| Login por username + password (memoria del proyecto) — el email nunca es
+| credencial de ingreso. Sí hay recuperación de contraseña por correo desde
+| la tarea 66 (ADR 0004, ampliación 9/9/2026): dos brokers, uno por guard,
+| ver `passwords` más abajo.
 |
 */
 
@@ -24,7 +25,7 @@ return [
 
     'defaults' => [
         'guard' => env('AUTH_GUARD', 'interno'),
-        'passwords' => null,
+        'passwords' => 'interno',
     ],
 
     'guards' => [
@@ -69,5 +70,25 @@ return [
     ],
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
+
+    // Tarea 66 (ADR 0004, ampliación 9/9/2026): un broker por guard, misma
+    // tabla física para los dos (ver docblock de la migración
+    // `create_password_reset_tokens_table`). 60 min de expiración, 60 s de
+    // throttle por email (además del `throttle` de ruta por IP).
+    'passwords' => [
+        'interno' => [
+            'provider' => 'usuarios_internos',
+            'table' => 'password_reset_tokens',
+            'expire' => 60,
+            'throttle' => 60,
+        ],
+
+        'cliente' => [
+            'provider' => 'usuarios_cliente',
+            'table' => 'password_reset_tokens',
+            'expire' => 60,
+            'throttle' => 60,
+        ],
+    ],
 
 ];
