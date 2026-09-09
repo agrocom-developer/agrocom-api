@@ -21,6 +21,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const redirectPorDefecto = document.querySelector('[data-ag-login-form]')?.dataset.agLoginRedirect || '/panel/dashboard';
 
+    // Detectar y fijar la zona horaria del navegador en el input oculto
+    const zonaHorariaInput = form.querySelector('input[name="zona_horaria"]');
+    if (zonaHorariaInput) {
+        try {
+            zonaHorariaInput.value = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+        } catch {
+            // Navegador sin soporte de Intl — el campo queda vacío, el backend lo tolera
+        }
+    }
+
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -52,6 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({
                     username: usernameInput.value,
                     password: passwordInput.value,
+                    zona_horaria: zonaHorariaInput?.value || null,
                 }),
             });
 

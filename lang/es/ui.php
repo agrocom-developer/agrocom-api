@@ -64,6 +64,10 @@ return [
         'toggle' => 'Cambiar tema',
     ],
 
+    'timezone' => [
+        'placeholder' => 'Zona horaria',
+    ],
+
     'action' => [
         'save' => 'Guardar',
         'cancel' => 'Cancelar',

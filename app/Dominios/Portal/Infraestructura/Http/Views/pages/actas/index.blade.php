@@ -9,8 +9,8 @@
       LecturaActaConformada::listarFirmadasPorContrato() — esta vista no
       filtra nada, solo presenta.
 --}}
-<x-templates.panel-shell :title="__('portal.actas.titulo')" :tema="$tema" :tema-url="route('portal.preferencias.tema')">
-    <x-templates.portal-layout :user-name="$userName">
+<x-templates.panel-shell :title="__('portal.actas.titulo')" :tema="$tema" :tema-url="route('portal.preferencias.tema')" :zona-horaria-url="route('portal.preferencias.zona-horaria')">
+    <x-templates.portal-layout :user-name="$userName" :zona-horaria="$zonaHoraria ?? null">
         <div class="ag-portal-actas">
             <x-organisms.page-header
                 :title="__('portal.actas.titulo')"

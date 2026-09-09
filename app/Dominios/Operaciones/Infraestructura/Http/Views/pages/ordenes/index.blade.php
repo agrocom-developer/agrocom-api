@@ -46,6 +46,7 @@
         :rol-activo-id="$rolActivoId"
         :active-role-label="$activeRoleLabel"
         :user-name="$userName"
+        :zona-horaria="$zonaHoraria ?? null"
         :notifications="$notifications"
         :menu-badges="$menuBadges"
         :campaniaActiva="$campaniaActiva"

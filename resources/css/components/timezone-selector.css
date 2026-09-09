@@ -1,0 +1,42 @@
+/*
+ * Molecule: timezone-selector (tarea 63 — bitácora + zona horaria del usuario)
+ * Wrapper del átomo `select` en el topbar: ajusta el ancho y la altura para
+ * que quepa junto a otros controles de ícono sin desaparecer ni descolgar.
+ *
+ * El átomo `select` arma su propio combobox mejorado cuando carga
+ * resources/js/atoms/select.js, pero también existe como `<select>` nativo
+ * de fallback (progressive enhancement) si JS no cargó. Este wrapper aplica
+ * estilos mínimos para que ambas formas se vean aceptables en el topbar.
+ */
+
+.ag-timezone-selector {
+    display: inline-block;
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+/* El select nativo (fallback sin JS): altura de botón 2.25rem para alinearse
+   con los botones de ícono de topbar (theme-toggle, logout). */
+.ag-timezone-selector .ag-select {
+    width: auto;
+    max-width: 200px;
+}
+
+/* Ocultar el label si existe (no debería haber en este contexto, pero JS del
+   select lo crea internamente) — queremos solo el control visual. */
+.ag-timezone-selector .ag-select__label {
+    display: none;
+}
+
+/* El select nativo mejorado por JS tiene un trigger (combobox visual) que debe
+   caber en 44px de altura aprox. (compatible con botones del topbar). */
+.ag-timezone-selector .ag-select__trigger {
+    min-height: 2.25rem;
+    font-size: var(--ag-font-size-sm);
+}
+
+/* El listbox desplegado (opciones) mantendrá el ancho del selector para que
+   no se vea abruptamente diferente al cerrar. */
+.ag-timezone-selector .ag-select__listbox {
+    min-width: 150px;
+}

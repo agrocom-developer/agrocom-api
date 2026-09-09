@@ -55,6 +55,7 @@
     'activeRoleLabel' => null,
     'userName' => null,
     'cambiarRolHref' => null,
+    'zonaHoraria' => null,
 ])
 
 @php
@@ -92,6 +93,7 @@
 
     <div class="ag-topbar__right">
         <x-molecules.theme-toggle />
+        <x-molecules.timezone-selector :value="$zonaHoraria ?? null" />
 
         <div class="dropdown ag-topbar__notifications">
             <button

@@ -123,6 +123,8 @@
                 <input type="hidden" name="_token" value="{{ $csrf }}">
             @endif
 
+            <input type="hidden" name="zona_horaria" data-ag-zona-horaria value="">
+
             <x-atoms.input
                 variant="line"
                 type="text"
