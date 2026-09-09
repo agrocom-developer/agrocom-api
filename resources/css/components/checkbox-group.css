@@ -90,6 +90,21 @@
     margin: 0;
 }
 
+/* `extraPorOpcion` (tarea 80): contenido opaco para el átomo, oculto hasta
+   que la casilla hermana se marca — pura CSS (`:has()`, ya usado más abajo
+   para el estado disabled), sin esperar a que cargue ningún JS. El
+   llamador es quien deshabilita/habilita los campos reales de adentro
+   (para que no viajen en el POST estando ocultos), no este átomo. */
+.ag-checkbox-group__option-extra {
+    display: none;
+    padding-inline-start: calc(1.25rem + var(--ag-space-3));
+}
+
+.ag-checkbox-group__item:has(.ag-checkbox-group__input:checked) .ag-checkbox-group__option-extra {
+    display: block;
+    margin-block-start: var(--ag-space-2);
+}
+
 /* Mismo bug documentado en switch.css/checkbox.css: sin `position: relative`
    acá, el `position: absolute` de `.ag-checkbox-group__input` toma el
    viewport como bloque contenedor y desborda el layout. */

@@ -111,6 +111,26 @@ test('disabled se propaga a todas las casillas', function () {
     expect(substr_count($html, 'disabled'))->toBe(3);
 });
 
+test('extraPorOpcion inyecta HTML dentro del li de esa opción, y solo de esa', function () {
+    $html = Blade::render(
+        '<x-atoms.checkbox-group name="repuestos" :options="$opciones" :extra-por-opcion="$extra" />',
+        ['opciones' => REPUESTOS_CORTOS, 'extra' => ['boquilla' => '<span data-marca-cantidad>cantidad</span>']]
+    );
+
+    expect($html)
+        ->toContain('data-marca-cantidad')
+        ->and(substr_count($html, 'data-ag-checkbox-group-option-extra'))->toBe(1);
+});
+
+test('sin extraPorOpcion no agrega ningún option-extra (compatibilidad con los consumidores existentes)', function () {
+    $html = Blade::render(
+        '<x-atoms.checkbox-group name="repuestos" :options="$opciones" />',
+        ['opciones' => REPUESTOS_CORTOS]
+    );
+
+    expect($html)->not->toContain('data-ag-checkbox-group-option-extra');
+});
+
 test('$attributes: la class extra va a la raíz (fieldset), el resto (wire:model) a cada casilla', function () {
     $html = Blade::render(
         '<x-atoms.checkbox-group name="repuestos" :options="$opciones" class="ag-form-section__field--full" wire:model="repuestosSeleccionados" />',
