@@ -1,0 +1,86 @@
+/*
+ * Molecule: progress-meter (resources/views/components/molecules/progress-meter.blade.php)
+ * Misma superficie de tarjeta que `form-section`/`summary-card`. El
+ * porcentaje de la barra llega por la custom property
+ * `--ag-progress-meter-percent` (dato en runtime, no una medida de diseño:
+ * no viola CLAUDE.md invariante 11, igual criterio que el `width` calculado
+ * de `distribution-bar`).
+ */
+
+.ag-progress-meter {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-3);
+    background-color: var(--ag-color-surface-card);
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-lg);
+    padding: var(--ag-space-5);
+}
+
+.ag-progress-meter__head {
+    margin-bottom: 0;
+}
+
+.ag-progress-meter__stat {
+    display: flex;
+    align-items: baseline;
+    gap: var(--ag-space-2);
+}
+
+.ag-progress-meter__percent {
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-xl);
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-color-text);
+}
+
+.ag-progress-meter__summary {
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-progress-meter__bar {
+    height: var(--ag-space-2);
+    border-radius: var(--ag-radius-pill);
+    background-color: var(--ag-color-neutral-subtle);
+    overflow: hidden;
+}
+
+.ag-progress-meter__bar-fill {
+    height: 100%;
+    border-radius: var(--ag-radius-pill);
+    background-color: var(--ag-color-primary);
+    width: calc(var(--ag-progress-meter-percent) * 1%);
+    transition: width var(--ag-transition-base);
+}
+
+.ag-progress-meter__checklist {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ag-space-1) var(--ag-space-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ag-progress-meter__check-item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ag-space-1);
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-progress-meter__check-item.is-complete {
+    color: var(--ag-color-success-strong);
+}
+
+.ag-progress-meter__check-item.is-pending {
+    color: var(--ag-color-warning-strong);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ag-progress-meter__bar-fill {
+        transition-duration: 0.01ms;
+    }
+}

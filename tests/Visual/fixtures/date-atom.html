@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<!--
+    Arnés estático del átomo `date` (tarea 76 / HU-53, etapa 2), para probar
+    resources/js/atoms/date.js con teclado real sin pasar por Docker, login
+    ni una ruta del panel — el script es JS puro sin imports (mismo criterio
+    que atoms/input.js y atoms/select.js), así que corre directo con
+    `<script src="...">` clásico sobre este HTML suelto.
+
+    El marcado de abajo es un espejo A MANO del contrato de DOM que arma
+    resources/views/components/atoms/date.blade.php antes de que el JS
+    corra (clases + `data-*` que date.js lee): no es el output real de
+    Blade. Si el contrato del átomo cambia, este archivo hay que
+    actualizarlo a mano — ver tests/Visual/date-atom.spec.ts, que es quien
+    de verdad ejerce el contrato de teclado/ARIA.
+
+    Fechas fijas a propósito (nunca "hoy"): los tests de teclado dependen de
+    en qué columna de la semana cae cada día, así que usan valores
+    preseleccionados y aritmética de calendario conocida, no la fecha real
+    del día en que corre la suite.
+-->
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <title>date — arnés de accesibilidad</title>
+</head>
+<body>
+
+    <!-- Date A: sin min/max, valor inicial 2026-09-15 (martes) — cubre el
+         flujo general de navegación/selección/escape/tab-trap. -->
+    <div class="ag-date" data-testid="date-inicio" data-ag-date
+         data-label-meses="Enero,Febrero,Marzo,Abril,Mayo,Junio,Julio,Agosto,Septiembre,Octubre,Noviembre,Diciembre"
+         data-label-dias="Lun,Mar,Mié,Jue,Vie,Sáb,Dom"
+         data-label-dias-completos="lunes,martes,miércoles,jueves,viernes,sábado,domingo"
+         data-label-placeholder="Elegí una fecha">
+        <label for="fecha-inicio" class="ag-date__label" id="fecha-inicio-label">Fecha de inicio</label>
+        <div class="ag-date__control">
+            <input type="date" name="fecha_inicio" id="fecha-inicio" class="ag-date__native" value="2026-09-15">
+            <button type="button" class="ag-date__trigger" data-ag-date-trigger
+                    aria-haspopup="dialog" aria-expanded="false" aria-controls="fecha-inicio-dialog"
+                    aria-labelledby="fecha-inicio-label" hidden>
+                <span class="ag-date__value" data-ag-date-value></span>
+                <span class="material-symbols-rounded ag-icon ag-icon--sm ag-date__icon-trigger" aria-hidden="true">calendar_month</span>
+            </button>
+            <button type="button" class="ag-date__clear" data-ag-date-clear tabindex="-1" aria-hidden="true" aria-label="Limpiar fecha" hidden>
+                <span class="material-symbols-rounded ag-icon ag-icon--sm" aria-hidden="true">close</span>
+            </button>
+        </div>
+        <div class="ag-date__dialog" id="fecha-inicio-dialog" role="dialog" aria-modal="true" aria-label="Fecha de inicio" data-ag-date-dialog hidden>
+            <div class="ag-date__dialog-header">
+                <button type="button" class="ag-date__nav" data-ag-date-prev-month aria-label="Mes anterior">
+                    <span class="material-symbols-rounded ag-icon ag-icon--sm" aria-hidden="true">chevron_left</span>
+                </button>
+                <p class="ag-date__heading" data-ag-date-heading aria-live="polite"></p>
+                <button type="button" class="ag-date__nav" data-ag-date-next-month aria-label="Mes siguiente">
+                    <span class="material-symbols-rounded ag-icon ag-icon--sm" aria-hidden="true">chevron_right</span>
+                </button>
+            </div>
+            <table class="ag-date__grid" role="grid" data-ag-date-grid></table>
+            <div class="ag-date__dialog-footer">
+                <button type="button" class="ag-date__today" data-ag-date-today>Hoy</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Date B: rango 2026-09-08..2026-09-16, valor inicial 2026-09-10 —
+         cubre celdas deshabilitadas fuera de rango y el clamp de navegación
+         en los bordes. -->
+    <div class="ag-date" data-testid="date-rango" data-ag-date
+         data-label-meses="Enero,Febrero,Marzo,Abril,Mayo,Junio,Julio,Agosto,Septiembre,Octubre,Noviembre,Diciembre"
+         data-label-dias="Lun,Mar,Mié,Jue,Vie,Sáb,Dom"
+         data-label-dias-completos="lunes,martes,miércoles,jueves,viernes,sábado,domingo"
+         data-label-placeholder="Elegí una fecha">
+        <label for="fecha-rango" class="ag-date__label" id="fecha-rango-label">Fecha con rango</label>
+        <div class="ag-date__control">
+            <input type="date" name="fecha_rango" id="fecha-rango" class="ag-date__native" value="2026-09-10" min="2026-09-08" max="2026-09-16">
+            <button type="button" class="ag-date__trigger" data-ag-date-trigger
+                    aria-haspopup="dialog" aria-expanded="false" aria-controls="fecha-rango-dialog"
+                    aria-labelledby="fecha-rango-label" hidden>
+                <span class="ag-date__value" data-ag-date-value></span>
+                <span class="material-symbols-rounded ag-icon ag-icon--sm ag-date__icon-trigger" aria-hidden="true">calendar_month</span>
+            </button>
+            <button type="button" class="ag-date__clear" data-ag-date-clear tabindex="-1" aria-hidden="true" aria-label="Limpiar fecha" hidden>
+                <span class="material-symbols-rounded ag-icon ag-icon--sm" aria-hidden="true">close</span>
+            </button>
+        </div>
+        <div class="ag-date__dialog" id="fecha-rango-dialog" role="dialog" aria-modal="true" aria-label="Fecha con rango" data-ag-date-dialog hidden>
+            <div class="ag-date__dialog-header">
+                <button type="button" class="ag-date__nav" data-ag-date-prev-month aria-label="Mes anterior">
+                    <span class="material-symbols-rounded ag-icon ag-icon--sm" aria-hidden="true">chevron_left</span>
+                </button>
+                <p class="ag-date__heading" data-ag-date-heading aria-live="polite"></p>
+                <button type="button" class="ag-date__nav" data-ag-date-next-month aria-label="Mes siguiente">
+                    <span class="material-symbols-rounded ag-icon ag-icon--sm" aria-hidden="true">chevron_right</span>
+                </button>
+            </div>
+            <table class="ag-date__grid" role="grid" data-ag-date-grid></table>
+            <div class="ag-date__dialog-footer">
+                <button type="button" class="ag-date__today" data-ag-date-today>Hoy</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Testigo de que date.js sigue disparando `change` sobre el
+        // <input type="date"> nativo al seleccionar — es lo que mantiene
+        // funcionando cualquier wire:model/listener atado al `name` original.
+        window.__cambios = [];
+        document.addEventListener('change', (evento) => {
+            if (evento.target.matches('.ag-date__native')) {
+                window.__cambios.push({ id: evento.target.id, valor: evento.target.value });
+            }
+        });
+    </script>
+    <!-- Sin type="module": Chromium bloquea el fetch de módulos ES sobre
+         file:// (solo soporta orígenes http/https para ese fetch interno).
+         date.js no usa import/export, así que corre igual como script
+         clásico. -->
+    <script src="../../../resources/js/atoms/date.js"></script>
+</body>
+</html>

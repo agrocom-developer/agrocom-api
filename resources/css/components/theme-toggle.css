@@ -1,0 +1,115 @@
+/*
+ * Molecule: theme-toggle (resources/views/components/molecules/theme-toggle.blade.php)
+ * Octava vuelta (29/8/2026): de segmented control de 3 celdas con pastilla
+ * contenedora propia a un solo botón-ícono binario (claro/oscuro), mismo
+ * lenguaje visual que `.ag-topbar__icon-btn` (topbar.css) — transparente en
+ * reposo, wash sutil de marca en hover/foco. El contenedor anterior
+ * (`background: var(--ag-color-bg)`) dependía de compartir superficie con
+ * el chrome que lo rodea; dejó de ser así en la séptima vuelta (tema
+ * oscuro) y el contenedor pasó a verse como un parche de color aparte — se
+ * retira en vez de perseguir el tono correcto.
+ *
+ * El control ya no distingue "preferencia" de "tema resuelto" (eso solo
+ * hacía falta para "sistema", retirado en esta misma vuelta) — `[data-bs-theme]`
+ * es la única fuente de verdad, tanto para los tokens de color como para
+ * qué ícono se muestra acá: el de la PRÓXIMA preferencia (a la que pasa al
+ * presionar), no la actual. Los dos `<x-atoms.icon>` quedan siempre en el
+ * DOM; esta hoja decide cuál se ve. Todas las instancias de la página
+ * (topbar + auth-layout) leen el mismo atributo global, así que quedan
+ * sincronizadas sin JS de sincronización.
+ */
+
+.ag-theme-toggle {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ag-space-2);
+    width: 2.25rem;
+    height: 2.25rem;
+    border: none;
+    padding: 0;
+    font: inherit;
+    border-radius: var(--ag-radius-pill);
+    background: transparent;
+    color: var(--ag-color-text-muted);
+    cursor: pointer;
+    transition:
+        background-color var(--ag-transition-fast),
+        color var(--ag-transition-fast),
+        transform var(--ag-transition-fast);
+}
+
+/* Mismo trío hover/active/focus-visible que .ag-topbar__icon-btn — acción
+   secundaria en ícono suelto, wash de marca en vez de un fondo permanente.
+   Pedido explícito (29/8/2026): a diferencia de .ag-topbar__icon-btn (que
+   siempre usa primary/verde), ESTE control cambia de acento según el tema
+   — verde (primary) en claro, ámbar (accent) en oscuro. Solo el hover/active
+   de este ícono puntual, no una regla general de §8. */
+.ag-theme-toggle:hover {
+    background: var(--ag-color-primary-subtle);
+    color: var(--ag-color-primary-emphasis);
+}
+
+.ag-theme-toggle:active {
+    background: var(--ag-color-primary-subtle);
+    color: var(--ag-color-primary-emphasis);
+    transform: scale(0.92);
+}
+
+[data-bs-theme='dark'] .ag-theme-toggle:hover {
+    background: var(--ag-color-accent-subtle);
+    color: var(--ag-color-accent-emphasis);
+}
+
+[data-bs-theme='dark'] .ag-theme-toggle:active {
+    background: var(--ag-color-accent-subtle);
+    color: var(--ag-color-accent-emphasis);
+}
+
+.ag-theme-toggle:focus-visible {
+    outline: 2px solid var(--ag-color-focus-ring);
+    outline-offset: 2px;
+}
+
+.ag-theme-toggle__icon {
+    display: none;
+    font-size: var(--ag-font-size-lg);
+}
+
+/* Ícono de la PRÓXIMA preferencia (a la que pasa al presionar), no la
+   actual — el botón se lee como una acción, no como un indicador de
+   estado. */
+[data-bs-theme='light'] .ag-theme-toggle__icon--to-dark,
+[data-bs-theme='dark'] .ag-theme-toggle__icon--to-light {
+    display: inline-flex;
+}
+
+/* Mismo criterio que el ícono: el texto (prop showLabel) anuncia la
+   PRÓXIMA preferencia, no la actual. Sin uso hoy en el código (ningún
+   consumidor pasa showLabel), se mantiene por si un contexto futuro lo
+   necesita. */
+.ag-theme-toggle__label {
+    display: inline-grid;
+    font-size: var(--ag-font-size-sm);
+    color: inherit;
+    white-space: nowrap;
+}
+
+.ag-theme-toggle__label-text {
+    grid-area: 1 / 1;
+    opacity: 0;
+    transition: opacity var(--ag-transition-fast);
+}
+
+[data-bs-theme='light'] .ag-theme-toggle__label-text--to-dark,
+[data-bs-theme='dark'] .ag-theme-toggle__label-text--to-light {
+    opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ag-theme-toggle,
+    .ag-theme-toggle__label-text {
+        transition-duration: 0.01ms !important;
+    }
+}

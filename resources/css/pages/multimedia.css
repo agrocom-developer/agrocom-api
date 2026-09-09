@@ -1,0 +1,17 @@
+/*
+ * Tab "Multimedia" del dashboard: galería de las últimas sesiones con su
+ * evidencia gráfica (cada tarjeta es `molecules/captura-rc-card`, con su
+ * propio CSS en components/captura-rc-card.css).
+ *
+ * Hasta la tarea 67 este archivo también vestía dos subvistas más —carrusel
+ * y tabla— que mostraban exactamente las mismas capturas de otras dos
+ * formas. Las tres se alimentaban del mismo mock; con datos reales, tres
+ * representaciones del mismo listado son tres cosas que mantener sin que
+ * ninguna aporte algo que las otras no. Quedó la galería.
+ */
+
+.ag-multimedia-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--ag-space-4);
+}

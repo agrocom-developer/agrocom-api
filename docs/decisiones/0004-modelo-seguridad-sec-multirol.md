@@ -1,0 +1,117 @@
+# ADR 0004 — Modelo de seguridad `sec_*`: permiso abstracto + multi-rol
+
+**Estado:** Aceptada · **Reemplaza:** el modelo `sec_*` de rol único de la spec v1.0 legacy. **Fuente:** `docs/legacy/decisiones_arquitectura_v2.md`, sección 5.
+
+## Contexto
+
+El modelo original (`action`, `module`, `menu`, `menu_action`, `role`, `permit`, `user`) es un RBAC clásico orientado a menús: el permiso depende de que exista un menú (`rol → permit → menu_action → menú → módulo`). Eso tiene dos problemas en este proyecto:
+
+- **La app Flutter no tiene menús.** El piloto que cierra una sesión por API necesita autorización que en el modelo original no existe, porque no hay `sec_menu` para el RC — obligaría a inventar "menús fantasma".
+- **Reglas que dependen del dato no caben en una tabla de permisos**: "el validador no puede ser el piloto de *esa* sesión", "el jefe solo saca stock de *su* base", "el portal solo ve *su* contrato". Ningún RBAC de pantallas expresa "¿puede validar ESTA sesión?", solo "¿puede validar sesiones?".
+
+Además, la especificación funcional exige que un usuario tenga más de un rol asignado a la vez (el jefe de campo también es piloto) — el modelo original solo admite `sec_user.id_role` único. (Qué conjunto de esos roles gobierna los permisos en un momento dado — unión completa vs. un único rol elegido por sesión — es una decisión de evaluación en tiempo de ejecución, no de esquema; la extensión "Rol activo por sesión" de más abajo corrige en ese punto la redacción original de este párrafo, que hablaba de "permisos por unión de roles".)
+
+## Decisión
+
+Inversión de dependencia: el permiso pasa a ser un concepto abstracto con código (`operaciones.sesion.validar`, `finanzas.gasto.crear`), y el menú lo referencia — no lo define.
+
+```
+sec_action            (id, name, description, icon, state)
+sec_module            (id, name, path, id_module_parent, orden, state)
+sec_menu              (id, id_module, name, path, icon, orden, state)
+sec_permission        (id, code UNIQUE, description, id_module)      ← fuente de verdad del permiso
+sec_menu_action       (id, id_menu, id_action, id_permission FK)     ← referencia, ya no define
+sec_role              (id, name, description, state)
+sec_role_permission   (id_role, id_permission)                        ← reemplaza a sec_permit
+sec_user              (id, name, login, password[255, hashed], language, type,
+                        persona_id FK NULL, contrato_id FK NULL,
+                        profile_pic_url, initial_path, state)
+sec_user_role         (id_user, id_role)                              ← multi-rol
+sec_permission_log    (id, id_user, id_permission|id_role, accion, autor, fecha)
++ personal_access_tokens (Sanctum, token por dispositivo)
++ Policies por agregado (Sesion, Trabajo, Planilla, Stock, Usuario…) para las reglas por-registro
+```
+
+`sec_user_role` sigue siendo la fuente de verdad de qué roles tiene asignados un usuario — eso no cambia. Qué permisos aplican en un momento dado depende además de cuál de esos roles está **activo** en la sesión: no es la unión de todos los roles asignados (ver la extensión "Rol activo por sesión" más abajo, que corrige en ese punto la redacción original de este ADR).
+
+Dos capas de autorización, cada una responde una pregunta distinta:
+- **`sec_*` responde "¿puede en general?"** — el permiso abstracto gobierna por igual el botón del panel, el endpoint de la API y (a futuro) la pantalla del RC.
+- **Policies de Laravel responden "¿puede sobre este registro?"** — p. ej. `SesionPolicy::validar($usuario, $sesion)` verifica el permiso y que `$usuario->persona_id !== $sesion->piloto_id`.
+
+`sec_user.persona_id` (FK nullable) enlaza el login con la persona operativa (`personas`, quien vuela y cobra por hectárea) — sin este enlace no se puede aplicar "nadie valida su propio trabajo a nivel de persona" ni calcular devengos desde el usuario autenticado. Los usuarios del portal del cliente usan `contrato_id` en su lugar. `sec_user.type` (`interno`/`cliente`) separa los dos guards de autenticación.
+
+### Extensión (27/8/2026) — Rol activo por sesión, para HU-02
+
+**Contexto de la extensión:** con HU-01 ya commiteado (`feature/usuarios-multirol`, commits `ac5bd53`, `e34512f`, `54b5cbe`, `c551182`), el usuario definió que el sistema no evalúa permisos por la unión de todos los roles asignados a un usuario, sino por un único **rol activo** elegido en cada sesión. Un usuario puede seguir teniendo varios roles en `sec_user_role` — eso no cambia, sigue siendo la razón de ser de esa tabla — pero en un momento dado opera bajo uno solo. Esto corrige la redacción original de este ADR (arriba, "con permisos por unión de roles") y ya está reflejado en el invariante 10 de `CLAUDE.md` y en el CA de HU-02 de `docs/gestion/plan_sprints.md`. **HU-01 no implementa nada de esto**: entregó el catálogo (`sec_role`, `sec_permission`, `sec_role_permission`) y las asignaciones (`sec_user_role`), sin login ni sesión de por medio — el concepto de "rol activo" nace recién con el login, que es HU-02. Esta sección deja el diseño resuelto para que HU-02 no tenga que inventarlo sobre la marcha.
+
+1. **Qué es.** El rol activo es la elección, vigente para una sesión de panel dada, de cuál de los roles vivos de `sec_user_role` gobierna los permisos efectivos de esa sesión. No es un atributo del usuario — `sec_user` no gana ninguna columna nueva —, es estado de la sesión, tan transitorio como "qué usuario está logueado" ya lo es hoy vía el guard `interno` (`config/auth.php`).
+
+2. **Dónde vive: sesión del panel, no columna en `sec_user`.** El panel web usa el guard `interno` con `'driver' => 'session'` (`config/auth.php`, ya en el repo desde HU-01) sobre `SESSION_DRIVER=database` (`config/session.php`, tabla `sessions` ya migrada). El rol activo se guarda como una clave más en ese mismo array de sesión de Laravel — p. ej. `session('sec_rol_activo_id')`, un entero que referencia `sec_role.id` — resuelta y **revalidada contra `sec_user_role` en cada request autenticado**, no leída a ciegas. Se guarda solo el `id`, no el nombre ni el objeto rol completo: si el rol se renombra o se desactiva en el catálogo entre dos requests, la sesión no queda con una copia obsoleta — cada uso resuelve contra `sec_role`/`sec_role_permission` en el momento.
+
+   Se descarta deliberadamente una columna `sec_user.rol_activo_id`: `sec_user` es la fila de la cuenta, compartida entre todas las sesiones concurrentes de ese login (dos pestañas, dos navegadores); el rol activo es una elección de contexto de request, no un atributo de la cuenta. Una columna en `sec_user` acoplaría sesiones entre sí (cambiar el rol activo en una pestaña cambiaría silenciosamente el de otra) — el mismo patrón que ADR 0011 (punto 5) ya evita para `persona_id`/`contrato_id`: el estado vive donde corresponde, no donde es cómodo escribir.
+
+   Mecanismo de resolución/revalidación: un middleware bajo `Seguridad/Infraestructura/Http/` (nombre exacto a criterio de quien implemente HU-02, p. ej. `ResolverRolActivo`) corre después de `auth:interno` en cada request del panel y:
+   - lee `session('sec_rol_activo_id')`;
+   - si no hay valor (recién logueado, o sesión vieja de antes de esta feature) o el valor ya no está entre los roles vivos del usuario (`sec_user_role.deleted_at IS NULL` para ese `id_user`+`id_role`, `sec_role.state = true`) — el caso "se lo revocaron a mitad de sesión" —, redirige al selector de rol (punto 3) en vez de dejar pasar el request con un permiso ya inválido;
+   - si en ese momento el usuario tiene un único rol vivo, se lo salta y lo fija automáticamente (mismo criterio que en el login).
+
+   Se revalida contra la base en cada request (un `exists()` indexado por `(id_user, id_role)`, del mismo tamaño que el que ya hace `SecUser::tienePermiso()`) en vez de confiar en el valor de sesión sin chequeo — para que una revocación de rol a mitad de sesión tenga efecto en el siguiente request, no recién cuando el usuario intente cambiar de rol manualmente. Cachear esa revalidación es una optimización a evaluar si el volumen de requests lo justifica más adelante (con invalidación explícita al revocar un rol, no por TTL) — prematuro para el volumen actual.
+
+3. **Cómo se elige al login.** Después de autenticar credenciales (`username` + password, guard `interno`):
+   - **Un solo rol vivo asignado** → sin selector: ese rol se fija como activo automáticamente y el login continúa directo al panel.
+   - **Más de un rol vivo asignado** → pantalla de selección (lista los roles del usuario por nombre); el usuario elige uno, ese `id_role` se escribe en `session('sec_rol_activo_id')`, y recién ahí continúa al panel. No hay panel sin rol activo resuelto.
+   - **Cero roles vivos asignados** → cuenta sin ningún rol (no debería ocurrir con el catálogo bien mantenido, pero es alcanzable si le revocan a alguien el último rol en medio de una sesión); no hay panel que mostrar — la pantalla/mensaje exacto es criterio de HU-02, pero el criterio de seguridad es: sin rol activo, cero permisos, nunca un fallback a "permitir todo" ni a la unión.
+
+4. **Cómo cambia sin volver a loguearse.** Una acción autenticada (p. ej. `POST` a una ruta como `/panel/rol-activo` — el nombre exacto es criterio de HU-02) que recibe el `id_role` deseado y:
+   - lo revalida contra los roles **vivos** del usuario autenticado en ese momento (mismo chequeo del punto 2 — nunca confía en que el `<select>` del panel solo ofrecía roles legítimos: el servidor vuelve a verificar aunque el valor venga de una UI propia, porque un request se puede fabricar a mano);
+   - si es válido, sobrescribe `session('sec_rol_activo_id')` con el nuevo valor — nada más. No hay nuevo login, no hay reingreso de contraseña, no hace falta regenerar el ID de sesión de Laravel ni el token CSRF: no se cruza ningún límite de autenticación (sigue siendo el mismo `sec_user.id` ya autenticado), solo se re-elige entre permisos a los que ese usuario ya está legítimamente habilitado — no es una elevación de privilegio de la que haya que defenderse con fijación de sesión;
+   - si no es válido (el usuario intenta activar un rol que nunca tuvo o que le revocaron), se rechaza (403/422) y el rol activo previo se mantiene sin cambios;
+   - tras el cambio, el menú/permisos que ve el panel se recalculan con el nuevo rol activo — esto ya es responsabilidad del panel/frontend, no de `sec_*`; acá solo se define el contrato de qué rol queda activo.
+
+5. **Nota técnica para HU-02 — `SecUser::tienePermiso()` necesita una variante consciente del rol activo.** Hoy (`app/Dominios/Seguridad/Infraestructura/Eloquent/SecUser.php`) evalúa la unión de todos los roles vivos del usuario, sin parámetro de rol. Eso sigue siendo correcto para su único llamador actual, `AsignarRolesUsuario::ejecutar()` (`app/Dominios/Seguridad/Aplicacion/AsignarRolesUsuario.php`), un caso de uso administrativo invocado sin contexto HTTP/sesión (su propio docblock lo dice: "no depende de `Auth::id()`") — no hay rol activo que respetar ahí porque no hay sesión. Esto no es un bug de HU-01.
+
+   Pero en cuanto HU-02 exponga ese mismo caso de uso (o cualquier otro que llame a `tienePermiso()`) detrás de un controlador del panel con `$actor = Auth::user()`, ese `$actor` sí tiene una sesión con rol activo — y si el controlador (o el caso de uso, sin cambios) sigue llamando a `tienePermiso($codigo)` a secas, el gate vuelve a evaluar por unión por descuido, exactamente lo que esta decisión prohíbe: alguien con rol `dueno` asignado pero operando activamente como `piloto` podría crear/editar usuarios solo porque *en algún rol* tiene el permiso, no porque lo tenga en el rol bajo el que está actuando ahora.
+
+   Dos formas de resolverlo — HU-02 elige, esto no se implementa acá:
+   - **(a)** Agregar un parámetro, `tienePermiso(string $codigo, ?int $idRolActivo = null)`: si se pasa, restringe el join a ese único `id_role`; si no, conserva el comportamiento de unión actual (retrocompatible con `AsignarRolesUsuario`). Riesgo: un default `null` que cae en unión es un "fail-open" fácil de heredar por olvido en un call site nuevo con sesión.
+   - **(b)** Un método separado, p. ej. `tienePermisoEnRol(string $codigo, int $idRol)`, sin default — cualquier código con sesión está forzado a pasar el rol explícitamente, y `tienePermiso()` queda reservado para los casos administrativos sin sesión (como hoy). Más verboso, pero sin el fail-open de (a).
+
+   Cualquiera sea la elección, todo call site que se dispare desde un request autenticado del panel (login, menú y, en particular, la re-exposición de `AsignarRolesUsuario` detrás de un controlador de HU-02) debe pasar el rol activo explícitamente; ninguno debe heredar la unión por default.
+
+6. **Fuera de alcance de esta extensión — app de campo y portal del cliente.** El guard `interno` de sesión (panel) y el token Sanctum por dispositivo de HU-03 (`agrocom-field`) son mecanismos distintos: Sanctum es un bearer token sin fila en `sessions`, así que "rol activo en sesión de Laravel" no aplica ahí tal cual. Confirmo el criterio planteado: para el panel, la sesión de cookie es el único lugar razonable — es la misma capa que ya resuelve "quién soy en este request" (`Auth::user()`), y que "con qué rol actúo en este request" viva ahí mantiene ambas preguntas simétricas, sin tabla nueva.
+
+   Para HU-03 (app de campo) el problema probablemente ni se presenta en la misma forma: `per_personas.rol` (ADR 0011, punto 6) ya es una clasificación operativa única por persona, así que un `sec_user` de campo con más de un rol asignado (jefe de campo que también es piloto) sigue siendo la excepción, no la regla. Si HU-03 llega a necesitar un equivalente a "rol activo" para un token (ese jefe-piloto abriendo la app en modo "piloto" para una sesión de vuelo puntual), el mecanismo natural no sería una sesión de Laravel sino las `abilities` del propio token de Sanctum (columna `personal_access_tokens.abilities`, ya parte del esquema de Sanctum), fijadas al emitir el token — no una revalidación por request contra `sec_user_role` como en el panel, porque el token ya es de por sí un artefacto de vida corta y revocable individualmente (invariante 5 de `CLAUDE.md`). Queda como nota abierta para cuando se diseñe HU-03, no como decisión tomada acá: esta extensión resuelve rol activo para el panel (HU-02) únicamente.
+
+### Extensión (9/9/2026) — correo de la cuenta y recuperación de contraseña, para la tarea 66
+
+**Contexto de la extensión:** hasta acá el login era username + password sin ningún dato de contacto (`config/auth.php` lo decía explícito: "sin broker de reset por correo"), decisión que el usuario pidió revertir el 4/9/2026 — la pestaña "Recuperar acceso" del login era un `<div>` sin `<form>` que no posteaba a nada, y nadie podía cambiar su propia contraseña sin pasar por un administrador. Esta extensión agrega correo y recuperación sin tocar nada de lo que ya decidió este ADR (multi-rol, rol activo por sesión, scoping del portal).
+
+1. **El correo vive en `sec_user.email`, no en `per_personas` ni en `com_cliente_contactos`.** El reset de contraseña es un atributo de la CUENTA, no de la persona operativa ni del contacto comercial: una persona puede no tener cuenta (`persona_id` es nullable desde HU-01) y un cliente tiene varios contactos con email (`com_cliente_contactos`, varios `tipo` por cliente) — ninguna de las dos tablas identifica sin ambigüedad "el correo con el que esta cuenta entra al sistema". Nullable (no toda cuenta declara uno) y único entre cuentas vivas por índice parcial, mismo patrón que `sec_user.username`.
+
+   Las tablas vinculadas se usan solo para PRECARGAR el campo al dar de alta una cuenta, nunca como fuente de verdad: al crear una cuenta de portal, se sugiere el correo del contacto `dueno` (o el primero con correo) de `com_cliente_contactos` del cliente del contrato elegido — el administrador siempre puede escribir otro, y el valor que queda es el de `sec_user.email`. No hay precarga equivalente para una cuenta interna: `per_personas` no tiene columna de correo ni de teléfono (espec §4.2, decisión ya vigente antes de esta tarea), así que no hay de dónde sugerirlo hasta que ese dato exista en algún lado.
+
+2. **Perfil propio (`/panel/perfil`, `/portal/perfil`) es autoservicio, sin permiso de grano fino.** El sujeto de la operación es siempre el propio usuario autenticado — nunca un `{usuario}` de ruta como en el ABM de `UsuariosController` (que administra cuentas AJENAS) — así que no hay guarda de `seguridad.usuario.*` que evaluar: cualquier rol activo puede entrar a su propio perfil. El cambio de contraseña exige la ACTUAL (verificada con `Hash::check`), nunca se acepta a partir de solo tener sesión abierta.
+
+3. **Cambiar la contraseña propia cierra las sesiones de otros dispositivos — pero no vía `AuthenticateSession`.** El mecanismo estándar de Laravel (`Auth::guard($guard)->logoutOtherDevices()` + middleware `AuthenticateSession`) no sirve tal cual en un sistema de DOS guards de sesión: ese middleware siempre compara contra el guard **por defecto** (`AUTH_GUARD=interno`), así que cablearlo de forma global dejaría sin cobertura real al guard `cliente` del portal — sería un no-op silencioso ahí, indistinguible de estar funcionando. En su lugar, el caso de uso `CerrarOtrasSesiones` (`Seguridad/Aplicacion/`) borra directo la fila de `sessions` (driver `database`, el que usa este proyecto) de cualquier sesión que loguee a ESE usuario bajo ESE guard, decodificando el payload y comparando contra `SessionGuard::getName()` (que ya incluye el nombre del guard: `login_<guard>_<sha1>`) — nunca contra `sessions.user_id`, que el framework completa siempre desde el guard por defecto y por eso queda en NULL en toda sesión de portal. `Auth::guard($guard)->logoutOtherDevices()` se invoca de todos modos, por si en el futuro se cablea `AuthenticateSession` para `interno` específicamente — hoy es un complemento sin efecto observable, no la defensa real.
+
+   Se aplica igual al cambio de contraseña desde el perfil propio y al restablecimiento por token (ambos caminos comparten `CerrarOtrasSesiones`): un dispositivo con sesión abierta deja de servir apenas la contraseña cambia, sin importar por cuál de los dos caminos.
+
+4. **Recuperación por correo: dos brokers (`interno`/`cliente`), una sola tabla física `password_reset_tokens`.** No hace falta separar la tabla por broker para que un token no cruce de guard: `sec_user.email` es único entre cuentas VIVAS sin importar `type` (punto 1), así que un mismo correo nunca puede pertenecer a la vez a una cuenta interna y a una de portal. Cada broker resuelve el usuario contra su propio provider (`usuarios_internos`/`usuarios_cliente`, ya scoped por `type` desde HU-01) — un token emitido por el broker `interno` simplemente no encuentra usuario al redimirse contra el broker `cliente`, sin necesidad de una columna de guard en la tabla de tokens.
+
+   La respuesta de `POST /recuperar` es SIEMPRE la misma (exista o no la cuenta, esté bloqueada o no) — invariante de negocio explícita de esta tarea, no un detalle de implementación: revelar qué correos existen en el sistema es una fuga de información sobre quién trabaja en o es cliente de Agrocom. Las credenciales que arma cada broker incluyen `state: true` (mismo mecanismo que ya usa `SesionController` para el login): `EloquentUserProvider::retrieveByCredentials()` agrega un `WHERE` por cada clave que no sea `password`, así que una cuenta bloqueada queda fuera de la búsqueda con el mismo resultado (`INVALID_USER`) que un correo inexistente — ninguna rama de código necesita distinguir los dos casos para responder igual.
+
+5. **El correo sale por `Notification`, nunca por `Mail::raw` desde un controlador.** `SecUser` implementa `CanResetPassword` (trait + `Notifiable`), pero `sendPasswordResetNotification()` se sobrescribe en cada SUBTIPO (`SecUsuarioInterno`/`SecUsuarioCliente`), no en `SecUser`: el link de restablecimiento apunta a una URL distinta por guard (`/restablecer` vs. `/portal/restablecer`), y como `Password::broker($guard)` resuelve el usuario siempre a través del subtipo correspondiente, cada uno arma su propia URL sin que el padre tenga que bifurcar por `type`. La notificación en sí (`RestablecerContrasena`) es agnóstica de guard: recibe la URL ya armada.
+
+## Alternativas descartadas
+
+- **Mantener `sec_user.id_role` único**: incompatible con el requisito explícito de multi-rol de la especificación funcional.
+- **`spatie/laravel-permission`**: ya implementa roles + permisos + pivotes + caché y podría reemplazar media tabla de este esquema. Se descarta por preferencia de mantener el esquema `sec_*` propio, reutilizable entre proyectos de Agrocom — con la condición de implementar caché de permisos por usuario (memoria/Redis-de-array), porque la resolución rol→permiso corre en cada request.
+- **Columna `sec_user.rol_activo_id`** (extensión rol activo, 27/8/2026): descartada — acoplaría sesiones concurrentes del mismo login entre sí (cambiar de rol en una pestaña cambiaría el de otra); el rol activo es estado de sesión, no un atributo de la cuenta (ver punto 2 de la extensión).
+- **Cachear el permiso efectivo completo en sesión**, en vez de revalidar el rol activo contra `sec_user_role` en cada request (extensión rol activo, 27/8/2026): descartada por ahora — complica la invalidación cuando cambian los permisos de un rol en caliente (`sec_role_permission`) sin que el usuario cambie de rol activo; se prefiere una consulta indexada barata por request, con cache formal diferido a cuando el volumen lo justifique.
+
+## Consecuencias
+
+- El mismo permiso gobierna panel web, API de campo y portal del cliente — sin duplicar reglas de autorización por superficie.
+- El panel web (ADR 0002) renderiza el menú desde `sec_menu`/`sec_permission` filtrado por los permisos del **rol activo** de la sesión — nunca por la unión de todos los roles del usuario (ver extensión "Rol activo por sesión", HU-02); ningún componente de navegación se define fuera de estas tablas.
+- Ajustes menores heredados: `password` a 255 con hash Argon2id/bcrypt; `profile_pic` pasa a `profile_pic_url` (el archivo va al bucket de evidencias); `sec_menu_action.id_menu`/`id_action` corregidos a Integer FK (eran erratas del documento original); `sec_action` ya admite acciones no-CRUD (`validar`, `aprobar`, `firmar`, `anular`, `autorizar_version`).
+- **Rol activo por sesión (HU-02, ver extensión 27/8/2026)**: los permisos efectivos del panel son los del rol activo de la sesión, nunca la unión de roles del usuario — corrige la redacción original de este ADR y ya está reflejado en el invariante 10 de `CLAUDE.md`. HU-01 no implementa nada de esto (no hay sesión); HU-02 sí, y necesita además una variante de `SecUser::tienePermiso()` consciente del rol activo (nota técnica de la extensión, punto 5) antes de exponer login/menú, o de reusar `AsignarRolesUsuario` detrás de un controlador HTTP.

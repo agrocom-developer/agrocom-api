@@ -1,0 +1,60 @@
+/*
+ * Átomo: badge (resources/views/components/atoms/badge.blade.php)
+ * Chip/pill de estado (quinta vuelta — los chips de la tabla de sesiones de
+ * las maquetas 4a/5a/5b). Cada variante usa el par fondo `-subtle` + texto
+ * `-strong` de su estado — nunca el token crudo como texto: los `-strong`
+ * están calibrados para pasar AA 4.5:1 sobre su propio tenue en ambos temas
+ * (verificación en sistema_diseno_panel.md §1.3).
+ */
+
+.ag-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ag-space-1);
+    padding: var(--ag-space-1) var(--ag-space-3);
+    border-radius: var(--ag-radius-pill);
+    font-family: var(--ag-font-family-base);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-bold);
+    line-height: 1.5;
+    white-space: nowrap;
+}
+
+.ag-badge__icon {
+    flex-shrink: 0;
+}
+
+.ag-badge__label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ag-badge--neutral {
+    background-color: var(--ag-color-neutral-subtle);
+    color: var(--ag-color-neutral-strong);
+}
+
+.ag-badge--success {
+    background-color: var(--ag-color-success-subtle);
+    color: var(--ag-color-success-strong);
+}
+
+.ag-badge--danger {
+    background-color: var(--ag-color-danger-subtle);
+    color: var(--ag-color-danger-strong);
+}
+
+.ag-badge--warning {
+    background-color: var(--ag-color-warning-subtle);
+    color: var(--ag-color-warning-strong);
+}
+
+.ag-badge--info {
+    background-color: var(--ag-color-info-subtle);
+    color: var(--ag-color-info-strong);
+}
+
+.ag-badge--accent {
+    background-color: var(--ag-color-accent-subtle);
+    color: var(--ag-color-accent-link);
+}

@@ -1,0 +1,92 @@
+/*
+ * Molecule: file-field (resources/views/components/molecules/file-field.blade.php)
+ * Marco tipo input (borde + fondo elevado, radio md, igual criterio que
+ * `atoms/input`) con preview cuadrado + metadatos + acciones.
+ */
+
+.ag-file-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-2);
+}
+
+.ag-file-field__label {
+    margin: 0;
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+    color: var(--ag-color-text);
+}
+
+.ag-file-field__control {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-3);
+    border: 1px solid var(--ag-color-border);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-bg-elevated);
+}
+
+.ag-file-field__preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: var(--ag-space-8);
+    height: var(--ag-space-8);
+    border-radius: var(--ag-radius-md);
+    overflow: hidden;
+    background-color: var(--ag-color-surface-card);
+}
+
+.ag-file-field__preview :where(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.ag-file-field__meta {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-1);
+    min-width: 0;
+    flex: 1;
+}
+
+.ag-file-field__name {
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ag-file-field__size {
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-file-field__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    flex-shrink: 0;
+}
+
+.ag-file-field__help {
+    margin: 0;
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+}
+
+@media (max-width: 767.98px) {
+    .ag-file-field__control {
+        flex-wrap: wrap;
+    }
+
+    .ag-file-field__actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}

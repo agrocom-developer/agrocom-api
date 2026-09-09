@@ -1,0 +1,58 @@
+/*
+ * Organism: page-header (resources/views/components/organisms/page-header.blade.php)
+ * h1 + bajada + acciones a la derecha. Título con la receta canónica de
+ * título de pantalla (`--ag-title-page-*`), la misma que usa el dashboard:
+ * antes esta cabecera resolvía 2rem en peso bold y el dashboard 2,125rem en
+ * regular, así que dos pantallas del mismo panel parecían usar tipografías
+ * distintas aunque compartieran familia.
+ */
+
+.ag-page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--ag-space-4);
+    flex-wrap: wrap;
+}
+
+.ag-page-header__heading {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-2);
+    min-width: 0;
+}
+
+.ag-page-header__title {
+    margin: 0;
+    font-family: var(--ag-font-family-display);
+    font-optical-sizing: auto;
+    font-size: var(--ag-title-page-size);
+    font-weight: var(--ag-title-page-weight);
+    line-height: var(--ag-title-page-line-height);
+    color: var(--ag-color-text);
+}
+
+.ag-page-header__subtitle {
+    margin: 0;
+    color: var(--ag-color-text-muted);
+    max-width: 50rem;
+}
+
+.ag-page-header__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 767.98px) {
+    .ag-page-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .ag-page-header__actions {
+        justify-content: flex-end;
+    }
+}

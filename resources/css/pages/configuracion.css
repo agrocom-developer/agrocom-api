@@ -1,0 +1,49 @@
+/*
+ * Page: configuracion/index (app/Dominios/Seguridad/Infraestructura/Http/Views/pages/configuracion/index.blade.php)
+ * CSS propio de ESTA página (ver convención en resources/css/pages/index.css).
+ * Igual que organizacion.css: las tarjetas, el header, los tabs, la barra de
+ * acciones y el badge de estado ya son catálogo — acá solo el layout propio
+ * del campo secreto (input + estado debajo) y el estado vacío de un sector
+ * sin claves todavía (Integraciones).
+ */
+
+.ag-configuracion {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+.ag-configuracion__panes {
+    display: flex;
+    flex-direction: column;
+}
+
+.ag-configuracion__vacio {
+    color: var(--ag-color-text-muted);
+}
+
+.ag-configuracion__campo-secreto {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-2);
+}
+
+.ag-configuracion__estado {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--ag-space-3);
+}
+
+.ag-configuracion__ultimos4 {
+    color: var(--ag-color-text-muted);
+    font-family: var(--ag-font-family-mono);
+}
+
+.ag-configuracion__borrar {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ag-space-1);
+    color: var(--ag-color-text-muted);
+    cursor: pointer;
+}

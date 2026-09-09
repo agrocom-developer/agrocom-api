@@ -1,0 +1,75 @@
+/*
+ * Page: organizacion/index (app/Dominios/Seguridad/Infraestructura/Http/Views/pages/organizacion/index.blade.php)
+ * CSS propio de ESTA página (ver convención en resources/css/pages/index.css).
+ * Reconstruida sobre el arquetipo formulario (tarea 31): las tarjetas, el
+ * header, los tabs, la barra de acciones y el campo de archivo ya son
+ * catálogo (`molecules/form-section`, `organisms/page-header`,
+ * `molecules/tabs`, `organisms/form-actions-bar`, `molecules/file-field`,
+ * `molecules/progress-meter`, `molecules/summary-card`) — acá solo queda el
+ * layout de DOS columnas específico de esta pantalla (main + aside
+ * pegajoso) y el grid de `plan-card`.
+ */
+
+.ag-organizacion {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+.ag-organizacion__panes {
+    display: flex;
+    flex-direction: column;
+}
+
+.ag-organizacion__proximamente {
+    color: var(--ag-color-text-muted);
+}
+
+.ag-organizacion__layout {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--ag-space-5);
+}
+
+.ag-organizacion__main {
+    flex: 1 1 32rem;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+/* Columna lateral pegajosa (§6.3 regla 4 de la guía de pantalla): lo que no
+   se edita (progreso de completitud, resumen del plan) queda visible
+   mientras el usuario scrollea el formulario. `position: sticky` respecto
+   al único contenedor con scroll de la pantalla (.ag-panel__content) — no
+   sufre el bug de §4.1 (eso es exclusivo de `position: absolute`). */
+.ag-organizacion__aside {
+    flex: 1 1 19rem;
+    max-width: 20rem;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+    position: sticky;
+    top: var(--ag-space-4);
+}
+
+.ag-organizacion__plan-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: var(--ag-space-4);
+}
+
+/* Tablet/móvil (breakpoint 1200 de la escala, §7.2 del sistema de diseño):
+   el aside pegajoso deja de tener sentido en una columna angosta, se apila
+   debajo del formulario. */
+@media (max-width: 1199.98px) {
+    .ag-organizacion__layout {
+        flex-direction: column;
+    }
+
+    .ag-organizacion__aside {
+        max-width: none;
+        position: static;
+    }
+}

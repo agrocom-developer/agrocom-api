@@ -1,0 +1,30 @@
+<?php
+
+namespace App\Dominios\Comercial\Aplicacion;
+
+use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
+use Illuminate\Pagination\LengthAwarePaginator;
+
+/**
+ * Caso de uso: listado de clientes con búsqueda opcional (HU-22, tarea 33).
+ * Solo lectura — mismo patrón de paginación que `ListarTrabajos`.
+ */
+final class ListarClientes
+{
+    /** @return LengthAwarePaginator<int, Cliente> */
+    public function ejecutar(?string $busqueda = null, int $porPagina = 15): LengthAwarePaginator
+    {
+        return Cliente::query()
+            ->withCount('contactos')
+            ->when(
+                $busqueda !== null && $busqueda !== '',
+                fn ($consulta) => $consulta->where(function ($sub) use ($busqueda): void {
+                    $sub->where('razon_social', 'like', "%{$busqueda}%")
+                        ->orWhere('nit', 'like', "%{$busqueda}%");
+                }),
+            )
+            ->orderBy('razon_social')
+            ->paginate($porPagina)
+            ->withQueryString();
+    }
+}

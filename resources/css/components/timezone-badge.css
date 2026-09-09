@@ -1,0 +1,35 @@
+/*
+ * Molecule: timezone-badge (tarea 63; reemplaza a timezone-selector el
+ * 9/9/2026, cuando el selector de zona horaria salió del topbar).
+ *
+ * Dato de lectura en el pie del panel y del portal, no un control: hereda la
+ * tipografía mono chica del footer y solo agrega el ícono y el gap. Sin
+ * :hover, sin cursor propio, sin borde — nada que invite a clickearlo.
+ */
+
+.ag-timezone-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ag-space-1);
+    white-space: nowrap;
+    color: var(--ag-color-text-muted);
+}
+
+/* El ícono llega como `ag-icon--sm` (1rem), pensado para controles de 36px;
+   al lado del texto de 0.625rem del pie se veía como un botón. Bajado a
+   --ag-font-size-xs para que pese igual que la línea que acompaña. */
+.ag-timezone-badge .ag-timezone-badge__icon {
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-faint);
+}
+
+/* Vacío mientras el JS todavía no resolvió la zona del navegador (primer
+   render de un usuario sin preferencia guardada): sin texto, el ícono solo
+   quedaría colgado sin explicación. */
+.ag-timezone-badge__value:empty {
+    display: none;
+}
+
+.ag-timezone-badge:has(.ag-timezone-badge__value:empty) {
+    display: none;
+}

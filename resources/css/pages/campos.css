@@ -1,0 +1,188 @@
+/*
+ * Pages: campos/index, campos/create, campos/edit
+ * (app/Dominios/Comercial/Infraestructura/Http/Views/pages/campos/) — HU-24,
+ * tarea 35: administración de campos con sus lotes. CSS propio de ESTAS
+ * páginas (ver convención en resources/css/pages/index.css) — mismo patrón
+ * que clientes.css (tarea 33).
+ *
+ * El wrapper `.ag-campos`/`.ag-campos-form` sigue el mismo patrón que
+ * `.ag-clientes`/`.ag-clientes-form`: flex en columna con un único `gap` en
+ * vez de `margin-top` repetido en cada hijo. Las tarjetas de formulario
+ * (`molecules/form-section`), la cabecera (`organisms/page-header`) y la
+ * barra de acciones (`organisms/form-actions-bar`) ya traen su propio chrome
+ * — acá solo el layout específico de estas pantallas. Todo color y medida
+ * por token (CLAUDE.md invariante 11).
+ */
+
+.ag-campos,
+.ag-campos-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+/* Listado (index) */
+
+
+.ag-campos__filtros .ag-input,
+.ag-campos__filtros .ag-select,
+.ag-campos__filtros .ag-date {
+    min-width: 16rem;
+}
+
+
+.ag-campos__tabla {
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+    overflow: hidden;
+}
+
+.ag-campos__head,
+.ag-campos__fila {
+    display: grid;
+    grid-template-columns: 2fr 1.5fr 1fr 1fr auto;
+    gap: var(--ag-space-4);
+    align-items: center;
+    padding: var(--ag-space-3) var(--ag-space-4);
+}
+
+.ag-campos__head {
+    background-color: var(--ag-color-bg-table-head);
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ag-campos__fila {
+    border-top: 1px solid var(--ag-color-border-row);
+    color: var(--ag-color-text);
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-campos__fila:hover {
+    background-color: var(--ag-color-bg-row-hover);
+}
+
+.ag-campos__nombre {
+    font-weight: var(--ag-font-weight-medium);
+}
+
+.ag-campos__hectareas {
+    font-family: var(--ag-font-family-mono);
+}
+
+.ag-campos__acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--ag-space-2);
+}
+
+.ag-campos__paginacion {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ag-space-4);
+}
+
+.ag-campos__paginacion-info {
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-sm);
+}
+
+@media (max-width: 992px) {
+    .ag-campos__head {
+        display: none;
+    }
+
+    .ag-campos__fila {
+        grid-template-columns: 1fr;
+        gap: var(--ag-space-1);
+    }
+
+    .ag-campos__acciones {
+        justify-content: flex-start;
+        margin-top: var(--ag-space-2);
+    }
+}
+
+/* Formulario (create/edit): lotes repetibles */
+
+.ag-campos-form__lotes {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-4);
+}
+
+.ag-campos-form__lote {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+    gap: var(--ag-space-4);
+    padding-top: var(--ag-space-4);
+    border-top: 1px solid var(--ag-color-border-row);
+}
+
+/* La primera fila no necesita separador: no hay nada arriba de qué separarla. */
+[data-ag-lotes-lista] > .ag-campos-form__lote:first-child {
+    padding-top: 0;
+    border-top: none;
+}
+
+/* ---------- Editor del perímetro del lote ---------- */
+
+/* Reemplaza al textarea de GeoJSON (tarea 68). El alto es fijo y generoso: un
+   mapa de 150px obliga a hacer zoom para distinguir el borde de un lote de la
+   sombra de un monte, que es justo lo que hay que distinguir. */
+.ag-lote-mapa {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-2);
+}
+
+.ag-lote-mapa__lienzo {
+    height: 340px;
+    border-radius: var(--ag-radius-md);
+    border: 1px solid var(--ag-color-border);
+    overflow: hidden;
+    z-index: 0;
+}
+
+/* El marco (`.ag-mapa-marco`) y la barra de acciones (`.ag-mapa-barra`/
+   `.ag-mapa-accion`) son compartidos con el mapa operativo del tablero —
+   ver `components/mapa-pantalla-completa.css`. Acá solo el tamaño del
+   LIENZO propio de este editor cuando el marco pasa a pantalla completa
+   (nativa o de respaldo). */
+.ag-mapa-marco:fullscreen .ag-lote-mapa__lienzo,
+.ag-mapa-marco.ag-mapa--pantalla-completa-respaldo .ag-lote-mapa__lienzo {
+    flex: 1 1 auto;
+    height: auto;
+}
+
+.ag-lote-mapa__pie {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--ag-space-3);
+    flex-wrap: wrap;
+}
+
+.ag-lote-mapa__ayuda {
+    margin: 0;
+    flex: 1 1 260px;
+}
+
+.ag-lote-mapa__medida {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-campos-form__lote-pie {
+    display: flex;
+    justify-content: flex-end;
+}

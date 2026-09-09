@@ -1,0 +1,138 @@
+<?php
+
+namespace App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web;
+
+use App\Dominios\Operaciones\Aplicacion\ListarTrabajos;
+use App\Dominios\Operaciones\Dominio\EstadoTableroTrabajo;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\Evidencia;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
+use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\View\View;
+
+/**
+ * `GET /panel/trabajos` (HU-05, tarea 13; extendida en HU-15, tarea 15):
+ * tablero de Operaciones — trabajos con filtros por estado de tablero, lote
+ * y orden de aplicación, paginado. `GET /panel/trabajos/{trabajo}`: detalle
+ * de un trabajo con sus sesiones. Ambas de solo lectura — no mutan estado
+ * ni dinero, y no tocan la cola de validación de la tarea 14 (pantalla
+ * distinta, aunque lea las mismas tablas).
+ *
+ * Mismo patrón que `VersionesApkController` (HU-20): un único permiso
+ * (`operaciones.trabajo.ver`) gatea toda la pantalla, verificado DENTRO del
+ * controlador contra el ROL ACTIVO vía {@see AutorizacionPanelWeb} — nunca
+ * `SecUser`/`CascaraPanel` directos (ADR 0003, regla 2).
+ */
+final class TrabajosController
+{
+    private const PERMISO = 'operaciones.trabajo.ver';
+
+    /** HU-18 (tarea 25): gatea solo el botón/ruta del reporte técnico, no toda la pantalla — ver runs/25.md. */
+    private const PERMISO_REPORTE = 'operaciones.reporte.ver';
+
+    public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
+
+    public function index(Request $request, ListarTrabajos $listarTrabajos): View
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO), 403);
+
+        $estadoQuery = $request->string('estado')->toString();
+        $estado = $estadoQuery !== '' ? EstadoTableroTrabajo::tryFrom($estadoQuery) : null;
+        $loteId = $request->filled('lote_id') ? $request->integer('lote_id') : null;
+        $ordenId = $request->filled('orden_id') ? $request->integer('orden_id') : null;
+
+        return view('operaciones::pages.trabajos.index', [
+            ...$this->autorizacion->cascara($request),
+            'trabajos' => $listarTrabajos->ejecutar($estado, $loteId, $ordenId),
+            'filtros' => [
+                'estado' => $estado?->value,
+                'lote_id' => $loteId,
+                'orden_id' => $ordenId,
+            ],
+            'lotesDisponibles' => Trabajo::query()->select('lote_id')->distinct()->orderBy('lote_id')->pluck('lote_id'),
+            'ordenesDisponibles' => Trabajo::query()->select('orden_id', 'nro_aplicacion')->distinct()->orderBy('orden_id')->get(),
+        ]);
+    }
+
+    public function show(Request $request, Trabajo $trabajo): View
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO), 403);
+
+        return view('operaciones::pages.trabajos.show', [
+            ...$this->autorizacion->cascara($request),
+            'trabajo' => $trabajo->load(['sesiones.rechazo', 'acta', 'reporteTecnico']),
+            'puedeVerReporte' => $this->autorizacion->tienePermiso($request, self::PERMISO_REPORTE),
+        ]);
+    }
+
+    /**
+     * `GET /panel/trabajos/{trabajo}/acta/pdf` (HU-17, tarea 24): solo
+     * lectura, mismo permiso que `show()` — generar/firmar el acta es de
+     * `agrocom-field` (`ActaController`, API), no del panel.
+     */
+    public function actaPdf(Request $request, Trabajo $trabajo): Response
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO), 403);
+
+        $acta = $trabajo->acta;
+
+        abort_if($acta === null || $acta->pdf_path === null || ! Storage::disk('r2')->exists($acta->pdf_path), 404);
+
+        return response(Storage::disk('r2')->get($acta->pdf_path), 200, ['Content-Type' => 'application/pdf']);
+    }
+
+    /**
+     * `GET /panel/trabajos/{trabajo}/reporte/pdf` (HU-18, tarea 25): solo
+     * lectura, permiso propio `operaciones.reporte.ver` — el reporte se
+     * genera solo al firmar el acta (`GenerarReporteTecnico`, enganchado en
+     * `FirmarActa`); esta ruta nunca lo genera.
+     */
+    public function reporteTecnicoPdf(Request $request, Trabajo $trabajo): Response
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_REPORTE), 403);
+
+        $reporte = $trabajo->reporteTecnico;
+
+        abort_if($reporte === null || $reporte->pdf_path === null || ! Storage::disk('r2')->exists($reporte->pdf_path), 404);
+
+        return response(Storage::disk('r2')->get($reporte->pdf_path), 200, ['Content-Type' => 'application/pdf']);
+    }
+
+    /**
+     * `GET /panel/trabajos/{trabajo}/evidencias` (HU-42, tarea 56): galería
+     * de evidencias de un trabajo — imagen de campo, captura del control
+     * remoto de cada sesión, firma del acta y fotos
+     * de incidencia por sesión (todas las evidencias que existen para un
+     * trabajo). Mismo permiso que `show()`: es una sub-pantalla del detalle,
+     * no un recurso con permiso propio.
+     */
+    public function evidencias(Request $request, Trabajo $trabajo): View
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO), 403);
+
+        return view('operaciones::pages.trabajos.evidencias', [
+            ...$this->autorizacion->cascara($request),
+            'trabajo' => $trabajo->load(['imagenCampoEvidencia', 'acta.evidenciaFirma', 'sesiones.capturaRc', 'sesiones.incidencias.evidenciaFoto']),
+        ]);
+    }
+
+    /**
+     * `GET /panel/evidencias/{evidencia}/archivo`: streaming del archivo real
+     * desde el disco `r2` — mismo patrón que `actaPdf`/`reporteTecnicoPdf`,
+     * `archivo_url` nunca se expone directo (es una ruta privada del disco,
+     * no una URL pública). Quien llega a la galería ya pasó `self::PERMISO`,
+     * pero se reverifica acá por si alguien pega la URL directo.
+     */
+    public function evidenciaArchivo(Request $request, Evidencia $evidencia): Response
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO), 403);
+
+        abort_unless(Storage::disk('r2')->exists($evidencia->archivo_url), 404);
+
+        return response(Storage::disk('r2')->get($evidencia->archivo_url), 200, [
+            'Content-Type' => Storage::disk('r2')->mimeType($evidencia->archivo_url) ?: 'application/octet-stream',
+        ]);
+    }
+}

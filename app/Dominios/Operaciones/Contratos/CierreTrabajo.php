@@ -1,0 +1,99 @@
+<?php
+
+namespace App\Dominios\Operaciones\Contratos;
+
+/**
+ * DTO primitivo de entrada del contrato de escritura de `Operaciones` (ADR
+ * 0003, regla 2; HU-05, tarea 13): la forma de un registro `cierre_trabajo`
+ * en el lote de `POST /api/sync`.
+ *
+ * `$uuidCliente` identifica el EVENTO de cierre — distinto de
+ * `$trabajoUuidCliente`, que referencia el trabajo a cerrar por el
+ * `uuid_cliente` que ya trajo su apertura. Son dos UUID porque el cierre es
+ * una mutación sobre una fila existente, no una fila nueva: la idempotencia
+ * de un reintento se apoya en `$uuidCliente` (ver
+ * `EscrituraSincronizacionEloquent::cerrarTrabajo()` y runs/13.md), no en el
+ * `UNIQUE` de apertura, que protege una fila distinta.
+ *
+ * Mismo criterio que `AperturaTrabajo`: constructor privado, solo
+ * `intentarDesdeArreglo()` construye, devuelve `null` ante un dato faltante
+ * o mal tipado — el registro se rechaza sin frenar el resto del lote.
+ *
+ * A propósito, este DTO NO lleva un campo de hectáreas (hallazgo del
+ * veredicto de la tarea 13): la espec (§4.3) define
+ * `trabajos.hectareas_declaradas` como "suma de sesiones" — un campo
+ * DERIVADO, no un dato que el cliente declare en el cierre. Aceptar acá un
+ * valor de hectáreas arbitrario violaría la invariante 6 de CLAUDE.md ("todo
+ * monto derivado debe poder recalcularse desde los registros de origen y
+ * cuadrar exacto"): la fuente de verdad es `CierreSesion::$hectareasDeclaradas`
+ * de cada sesión del trabajo. `EscrituraSincronizacionEloquent` recalcula la
+ * suma tanto al cerrar cada sesión como al cerrar el propio trabajo (por si
+ * el trabajo se cierra antes de que se cierren todas sus sesiones).
+ *
+ * `$litrosSobrante` (espec §7.2, HU-10 redefinida por CR-01, tarea 18): a
+ * diferencia de `hectareas_declaradas` de este mismo DTO, NO es un campo
+ * derivado — es "cuánto quedó sin aplicar al cerrar", una medición directa
+ * que nadie más puede calcular por el cliente. OPCIONAL igual que
+ * `CierreSesion::$litrosConsumidos` y por el mismo motivo: la espec no lo
+ * fija como condición de la transición `trabajo → cerrado`.
+ *
+ * `$evidenciaImagenCampoUuidCliente` (espec §9/§10, HU-09, tarea 21): mismo
+ * tratamiento que `$litrosSobrante` — un dato que nadie más puede
+ * reconstruir por el cliente — pero, a diferencia de ese campo, OBLIGATORIO:
+ * "sin captura no cierra" (CA literal de la HU) SÍ es condición de la
+ * transición `trabajo → cerrado`. Referencia por `uuid_cliente` a una
+ * evidencia ya subida por `POST /api/evidencias` (tarea 19) — este DTO no
+ * valida que exista ni que sea de tipo `imagen_campo`, eso exige leer la
+ * base (ver `EscrituraSincronizacionEloquent::cerrarTrabajo()`); acá solo se
+ * exige la forma "string no vacío", mismo criterio que `trabajoUuidCliente`.
+ */
+final readonly class CierreTrabajo
+{
+    private function __construct(
+        public string $uuidCliente,
+        public string $trabajoUuidCliente,
+        public string $fin,
+        public ?string $litrosSobrante,
+        public string $evidenciaImagenCampoUuidCliente,
+    ) {}
+
+    /** @param  array<string, mixed>  $datos */
+    public static function intentarDesdeArreglo(array $datos): ?self
+    {
+        if (! self::esStringNoVacio($datos['uuid_cliente'] ?? null)
+            || ! self::esStringNoVacio($datos['trabajo_uuid_cliente'] ?? null)
+            || ! self::esStringNoVacio($datos['fin'] ?? null)
+            || ! self::esNumeroNoNegativoOAusente($datos['litros_sobrante'] ?? null)
+            || ! self::esStringNoVacio($datos['evidencia_imagen_campo_uuid_cliente'] ?? null)
+        ) {
+            return null;
+        }
+
+        return new self(
+            uuidCliente: (string) $datos['uuid_cliente'],
+            trabajoUuidCliente: (string) $datos['trabajo_uuid_cliente'],
+            fin: (string) $datos['fin'],
+            litrosSobrante: isset($datos['litros_sobrante']) ? (string) $datos['litros_sobrante'] : null,
+            evidenciaImagenCampoUuidCliente: (string) $datos['evidencia_imagen_campo_uuid_cliente'],
+        );
+    }
+
+    private static function esStringNoVacio(mixed $valor): bool
+    {
+        return is_string($valor) && $valor !== '';
+    }
+
+    /** Forma de un `DECIMAL` no negativo (invariante 6), ausente cuenta como válido. */
+    private static function esNumeroNoNegativoOAusente(mixed $valor): bool
+    {
+        if ($valor === null) {
+            return true;
+        }
+
+        if (is_int($valor) || is_float($valor)) {
+            return $valor >= 0;
+        }
+
+        return is_string($valor) && $valor !== '' && is_numeric($valor) && (float) $valor >= 0;
+    }
+}

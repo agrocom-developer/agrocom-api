@@ -1,0 +1,107 @@
+/*
+ * Organism: module-rail (resources/views/components/organisms/module-rail.blade.php)
+ * Nivel 1 del layout (quinta vuelta, maqueta 4a): riel de módulos de 74px
+ * (64px en tablet, oculto en móvil), superficie oliva oscura EN AMBOS temas
+ * (tokens --ag-color-bg-rail*, constantes — chrome de marca). Botones-ícono
+ * de 46px con radio 12; el activo lleva fondo elevado (olive-900) y lima
+ * claro (green-200) — contrastes verificados en sistema_diseno_panel.md §1.3.
+ */
+
+.ag-rail {
+    flex: 0 0 74px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-4) 0;
+    background: var(--ag-color-bg-rail);
+}
+
+.ag-rail__logo {
+    display: block;
+    width: 2.375rem;
+    height: 2.375rem;
+    margin-bottom: var(--ag-space-3);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+/* `contain`, nunca `cover`: public/logo.png trae el wordmark bajo el
+   isotipo — recortarlo deja letras cortadas. */
+.ag-rail__logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.ag-rail__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--ag-space-2);
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: none;
+}
+
+.ag-rail__btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.875rem;
+    height: 2.875rem;
+    border: none;
+    border-radius: 12px;
+    background: transparent;
+    color: var(--ag-color-text-rail);
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+        background-color var(--ag-transition-fast),
+        color var(--ag-transition-fast);
+}
+
+.ag-rail__btn:hover {
+    background: var(--ag-color-bg-rail-active);
+    color: var(--ag-color-text-rail-active);
+    opacity: 1;
+}
+
+.ag-rail__btn.is-active {
+    background: var(--ag-color-bg-rail-active);
+    color: var(--ag-color-text-rail-active);
+}
+
+.ag-rail__btn:focus-visible {
+    outline: 2px solid var(--ag-color-text-rail-active);
+    outline-offset: 2px;
+}
+
+.ag-rail__config {
+    flex: 0 0 auto;
+}
+
+/* Tablet (maqueta 5a): riel reducido. */
+@media (min-width: 768px) and (max-width: 1199.98px) {
+    .ag-rail {
+        flex-basis: 64px;
+        padding: var(--ag-space-3) 0;
+    }
+
+    .ag-rail__logo {
+        width: 2.125rem;
+        height: 2.125rem;
+        border-radius: 9px;
+    }
+}
+
+/* Móvil (maqueta 5b): sin riel — los módulos viven en module-drawer. */
+@media (max-width: 767.98px) {
+    .ag-rail {
+        display: none;
+    }
+}

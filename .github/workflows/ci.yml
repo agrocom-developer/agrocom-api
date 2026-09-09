@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, master]
+  push:
+    branches: [develop, master]
+
+jobs:
+  detect-laravel:
+    name: detect-laravel
+    runs-on: ubuntu-latest
+    outputs:
+      exists: ${{ steps.check.outputs.exists }}
+    steps:
+      - uses: actions/checkout@v5
+      - id: check
+        run: |
+          if [ -f composer.json ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  laravel-tests:
+    name: laravel-tests
+    needs: detect-laravel
+    if: needs.detect-laravel.outputs.exists == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pgsql, pdo_pgsql
+          coverage: none
+
+      - name: Crear .env
+        run: cp .env.example .env
+
+      - name: Caché de Composer
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/composer/files
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Instalar dependencias
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Instalar dependencias de Node
+        run: npm ci
+
+      - name: Compilar assets (Vite)
+        run: npm run build
+
+      # El result cache de PHPStan sirve entre corridas: solo reanaliza los
+      # archivos que cambiaron. Se cachea su directorio por defecto
+      # (sys_get_temp_dir()/phpstan) en vez de reubicarlo: `--tmp-dir` no
+      # existe como opción de CLI y `tmpDir` solo se fija en phpstan.neon, que
+      # no se toca para acelerar una compuerta. La clave lleva el SHA para que
+      # cada corrida escriba la suya y restore-keys recupere la más reciente.
+      - name: Caché de Larastan
+        uses: actions/cache@v4
+        with:
+          path: /tmp/phpstan
+          key: larastan-${{ github.sha }}
+          restore-keys: larastan-
+
+      - name: Análisis estático (Larastan)
+        run: composer larastan --no-interaction || vendor/bin/phpstan analyse
+
+      - name: Estilo de código (Pint)
+        run: vendor/bin/pint --test
+
+      # Las 1001 pruebas siguen corriendo TODAS en cada CI: lo que cambia es
+      # que se reparten entre los núcleos del runner en vez de ir en fila.
+      # Bajar la cobertura para ganar minutos no es una opción — de noche la
+      # suite es el único revisor despierto.
+      #
+      # Sin servicio de Postgres, y no es un olvido: tests/bootstrap.php fija
+      # sqlite en memoria en $_ENV/$_SERVER antes de que arranque Laravel, así
+      # que el contenedor de Postgres y las credenciales que había acá no los
+      # leía nadie. Eran 25 s de "Initialize containers" por corrida.
+      - name: Tests (Pest, en paralelo)
+        run: php artisan test --parallel

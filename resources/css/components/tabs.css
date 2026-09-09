@@ -1,0 +1,50 @@
+/*
+ * Skin de pestañas de contenido — NIVEL 3 del layout (quinta vuelta,
+ * maquetas 4a/5b): fila de tabs con subrayado ámbar de 2px en la activa,
+ * sobre una línea base del color de borde. El mecanismo es el `tab` NATIVO
+ * de Bootstrap 5.3 (`data-bs-toggle="tab"`, JS ya cargado) — acá solo el
+ * skin; el markup lo arma cada página (nav + tab-content).
+ */
+
+.ag-tabs {
+    display: flex;
+    gap: var(--ag-space-5);
+    border-bottom: 1px solid var(--ag-color-border);
+}
+
+.ag-tabs__tab {
+    padding: 0 0 var(--ag-space-2);
+    border: none;
+    border-bottom: 2px solid transparent;
+    /* Compensa el borde para que el subrayado pise la línea base. */
+    margin-bottom: -1px;
+    background: none;
+    font-family: var(--ag-font-family-base);
+    font-size: 0.84375rem;
+    font-weight: var(--ag-font-weight-medium);
+    color: var(--ag-color-text-muted);
+    cursor: pointer;
+    transition: color var(--ag-transition-fast);
+}
+
+.ag-tabs__tab:hover {
+    color: var(--ag-color-text);
+}
+
+.ag-tabs__tab.active {
+    color: var(--ag-color-text);
+    font-weight: var(--ag-font-weight-bold);
+    border-bottom-color: var(--ag-color-accent);
+}
+
+.ag-tabs__tab:focus-visible {
+    outline: 2px solid var(--ag-color-focus-ring);
+    outline-offset: 2px;
+}
+
+/* Móvil (maqueta 5b): fila más apretada. */
+@media (max-width: 767.98px) {
+    .ag-tabs {
+        gap: var(--ag-space-4);
+    }
+}

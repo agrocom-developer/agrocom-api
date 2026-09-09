@@ -1,0 +1,104 @@
+/*
+ * Pages: baterias/index, baterias/create, baterias/edit
+ * (app/Dominios/Mantenimiento/Infraestructura/Http/Views/pages/baterias/) —
+ * HU-39, tarea 51: catálogo de baterías con ciclos y estado. CSS propio de
+ * ESTAS páginas (ver convención en resources/css/pages/index.css) — mismo
+ * patrón que vehiculos.css (tarea 50): una batería no tiene sub-entidad
+ * repetible, así que el formulario no necesita CSS propio más allá del
+ * layout compartido con el listado.
+ *
+ * El wrapper `.ag-baterias`/`.ag-baterias-form` sigue el mismo patrón que
+ * `.ag-vehiculos`/`.ag-vehiculos-form`: flex en columna con un único `gap`
+ * en vez de `margin-top` repetido en cada hijo. Todo color y medida por
+ * token (CLAUDE.md invariante 11).
+ */
+
+.ag-baterias,
+.ag-baterias-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+/* Listado (index) */
+
+
+.ag-baterias__filtros .ag-input,
+.ag-baterias__filtros .ag-select,
+.ag-baterias__filtros .ag-date {
+    min-width: 14rem;
+}
+
+
+.ag-baterias__tabla {
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+    overflow: hidden;
+}
+
+.ag-baterias__head,
+.ag-baterias__fila {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 0.7fr 0.9fr 0.9fr auto;
+    gap: var(--ag-space-4);
+    align-items: center;
+    padding: var(--ag-space-3) var(--ag-space-4);
+}
+
+.ag-baterias__head {
+    background-color: var(--ag-color-bg-table-head);
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ag-baterias__fila {
+    border-top: 1px solid var(--ag-color-border-row);
+    color: var(--ag-color-text);
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-baterias__fila:hover {
+    background-color: var(--ag-color-bg-row-hover);
+}
+
+.ag-baterias__identificador {
+    font-weight: var(--ag-font-weight-medium);
+}
+
+.ag-baterias__acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--ag-space-2);
+}
+
+.ag-baterias__paginacion {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ag-space-4);
+}
+
+.ag-baterias__paginacion-info {
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-sm);
+}
+
+@media (max-width: 992px) {
+    .ag-baterias__head {
+        display: none;
+    }
+
+    .ag-baterias__fila {
+        grid-template-columns: 1fr;
+        gap: var(--ag-space-1);
+    }
+
+    .ag-baterias__acciones {
+        justify-content: flex-start;
+        margin-top: var(--ag-space-2);
+    }
+}

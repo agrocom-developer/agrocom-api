@@ -1,0 +1,78 @@
+/*
+ * Barra de filtros de un listado (`.ag-filtros`).
+ *
+ * La segunda banda del arquetipo "listado" de
+ * `docs/diseno/guia_pantalla_panel.md`: cabecera → FILTROS → tabla →
+ * paginación. Veintitrés pantallas la usan y hasta ahora cada una repetía
+ * las mismas tres reglas en su propio `pages/*.css` bajo un nombre BEM
+ * distinto (`.ag-clientes__filtros`, `.ag-usuarios__filtros`, …) — same
+ * layout, veintitrés fuentes de verdad.
+ *
+ * ### El bug de alineación que motivó extraerla
+ *
+ * `molecules/input` lleva `margin-bottom` porque su caso normal es un
+ * formulario apilado, donde ese margen es la separación entre campos. En una
+ * barra de filtros el input NO está apilado: está al lado de un botón, y ese
+ * margen empuja el borde inferior del contenedor flex 16px por debajo del
+ * campo visible. Con `align-items: flex-end` —que es lo correcto para que el
+ * botón acompañe al campo y no a su etiqueta— el botón se alineaba contra
+ * ese borde fantasma y quedaba 16px más abajo que el input, en las
+ * veintitrés pantallas a la vez.
+ *
+ * La corrección es anular el margen acá: dentro de una barra de filtros el
+ * input no separa de nada, el `gap` del contenedor ya hace ese trabajo.
+ *
+ * ### Por qué la regla nombra a los seis átomos y no solo a `.ag-input`
+ *
+ * El margen de apilado no es del input: lo llevan todos los átomos de campo
+ * (`.ag-input`, `.ag-select`, `.ag-textarea`, `.ag-date`, `.ag-switch`,
+ * `.ag-checkbox`), cada uno en su propio archivo. Cuando se escribió esta
+ * barra el único campo que aparecía en un filtro era un `<select>` crudo con
+ * la clase `.ag-input__field`, así que anular `.ag-input` alcanzaba. La
+ * tarea 76 migró esos 70 selects al átomo `atoms/select`, que envuelve en
+ * `.ag-select` — otro nombre, otro margen, y el bug de los 16px volvió tal
+ * cual en toda pantalla con un filtro desplegable. Por eso la regla lista
+ * los seis: cualquier campo dentro de la barra alinea por su propia caja.
+ */
+
+.ag-filtros {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--ag-space-4);
+}
+
+/* Ver el docblock: sin esto el botón cae 16px por debajo del campo. */
+.ag-filtros .ag-input,
+.ag-filtros .ag-select,
+.ag-filtros .ag-textarea,
+.ag-filtros .ag-date,
+.ag-filtros .ag-switch,
+.ag-filtros .ag-checkbox {
+    margin-bottom: 0;
+}
+
+.ag-filtros__acciones {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+}
+
+/* Los botones de la barra igualan el alto del campo que acompañan
+   (`--ag-size-control-height`). Sin esto un botón `md` mide 42px contra los
+   48px del input y la fila se lee como dos controles de distinto tamaño,
+   aun con sus bordes inferiores ya alineados. */
+.ag-filtros__acciones .ag-button {
+    min-height: var(--ag-size-control-height);
+}
+
+@media (max-width: 767.98px) {
+    .ag-filtros {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .ag-filtros__acciones .ag-button {
+        flex: 1;
+    }
+}

@@ -1,0 +1,11 @@
+.git
+.github
+docs
+.claude
+node_modules
+vendor
+storage/*.key
+.env
+.env.*
+!.env.example
+*.log

@@ -1,0 +1,145 @@
+/*
+ * Átomo: button (resources/views/components/atoms/button.blade.php)
+ * Base: forma/pill y elevación Material; el layout que lo rodea (grupos de
+ * botones, espaciado entre acciones de un formulario) usa utilidades de
+ * Bootstrap (`d-flex`, `gap-*`, etc.) en el componente que lo consuma, no acá.
+ */
+
+.ag-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ag-space-2);
+    font-family: var(--ag-font-family-base);
+    font-weight: var(--ag-font-weight-medium);
+    border-radius: var(--ag-radius-pill);
+    border: 1px solid transparent;
+    cursor: pointer;
+    text-decoration: none;
+    transition:
+        background-color var(--ag-transition-fast),
+        box-shadow var(--ag-transition-fast),
+        color var(--ag-transition-fast);
+    box-shadow: var(--ag-shadow-sm);
+}
+
+.ag-button:focus-visible {
+    outline: 2px solid var(--ag-color-focus-ring);
+    outline-offset: 2px;
+}
+
+.ag-button:disabled,
+.ag-button[aria-busy='true'] {
+    opacity: 0.65;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* Tamaños */
+.ag-button--sm {
+    padding: var(--ag-space-1) var(--ag-space-3);
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-button--md {
+    padding: var(--ag-space-2) var(--ag-space-4);
+    font-size: var(--ag-font-size-base);
+}
+
+.ag-button--lg {
+    padding: var(--ag-space-3) var(--ag-space-5);
+    font-size: var(--ag-font-size-lg);
+}
+
+.ag-button--block {
+    display: flex;
+    width: 100%;
+}
+
+/* Variantes */
+.ag-button--primary {
+    background-color: var(--ag-color-primary);
+    color: var(--ag-color-primary-contrast);
+}
+
+.ag-button--primary:hover {
+    background-color: var(--ag-color-primary-hover);
+}
+
+.ag-button--accent {
+    background-color: var(--ag-color-accent);
+    color: var(--ag-color-accent-contrast-fill);
+}
+
+.ag-button--accent:hover {
+    background-color: var(--ag-color-accent-hover);
+}
+
+.ag-button--outline {
+    background-color: transparent;
+    color: var(--ag-color-primary-emphasis);
+    border-color: var(--ag-color-border-strong);
+    box-shadow: none;
+}
+
+.ag-button--outline:hover {
+    background-color: var(--ag-color-primary-subtle);
+}
+
+.ag-button--text {
+    background-color: transparent;
+    color: var(--ag-color-primary-emphasis);
+    box-shadow: none;
+    padding-inline: var(--ag-space-2);
+}
+
+.ag-button--text:hover {
+    background-color: var(--ag-color-primary-subtle);
+}
+
+.ag-button--danger {
+    /* Relleno sólido constante entre temas (mismo criterio que
+       --ag-color-accent-contrast-fill), NO --ag-color-danger directo:
+       --ag-color-danger en oscuro es #ea868f, calibrado para TEXTO sobre
+       superficie oscura (chip), no para relleno sólido de botón — blanco
+       sobre ese rosa claro se leía "deshabilitado" (auditoría visual
+       externa). --ag-color-danger-contrast-fill reutiliza --ag-color-red-600
+       (el mismo valor que ya usa --ag-color-danger en tema claro), AA 5.1:1
+       con texto blanco. */
+    background-color: var(--ag-color-danger-contrast-fill);
+    color: var(--ag-color-gray-0);
+}
+
+.ag-button--danger:hover {
+    filter: brightness(0.9);
+}
+
+/* Auditoría visual externa, obs. #4: dentro de una franja de alerta, un
+   botón sólido compite con el único CTA sólido que debe quedar visible
+   sobre el pliegue ("Programar sesión"). Mismo criterio que --outline
+   (transparente + borde + hover con -subtle), con el tono de danger. */
+.ag-button--danger-outline {
+    background-color: transparent;
+    color: var(--ag-color-danger-strong);
+    border-color: var(--ag-color-danger-border);
+    box-shadow: none;
+}
+
+.ag-button--danger-outline:hover {
+    background-color: var(--ag-color-danger-subtle);
+}
+
+.ag-button__spinner {
+    width: 1em;
+    height: 1em;
+    border: 2px solid currentcolor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: ag-button-spin 0.6s linear infinite;
+}
+
+@keyframes ag-button-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

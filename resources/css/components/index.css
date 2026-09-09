@@ -1,0 +1,59 @@
+/*
+ * Estilos del catálogo Atomic Design (resources/views/components/). Cada
+ * archivo consume exclusivamente tokens semánticos de `../tokens/` — ningún
+ * valor hexadecimal ni px suelto vive acá (CLAUDE.md invariante 11).
+ */
+
+/* Atoms */
+@import './icon.css';
+@import './logo.css';
+@import './input.css';
+@import './select.css';
+@import './date.css';
+@import './button.css';
+@import './badge.css';
+@import './switch.css';
+@import './checkbox.css';
+@import './radio-group.css';
+@import './checkbox-group.css';
+@import './textarea.css';
+
+/* Molecules */
+@import './theme-toggle.css';
+@import './timezone-badge.css';
+@import './menu-item.css';
+@import './stat-card.css';
+@import './plan-card.css';
+@import './form-section.css';
+@import './alert-strip.css';
+@import './role-card.css';
+@import './section-head.css';
+@import './distribution-bar.css';
+@import './apex-chart.css';
+@import './lote-card.css';
+@import './captura-rc-card.css';
+@import './summary-card.css';
+@import './progress-meter.css';
+@import './tiered-progress-bar.css';
+@import './file-field.css';
+@import './filter-bar.css';
+
+/* Organisms (quinta vuelta — layout de tres niveles) */
+@import './collapsible-menu-group.css';
+@import './login-form.css';
+@import './module-rail.css';
+@import './module-sidebar.css';
+@import './module-drawer.css';
+@import './topbar.css';
+@import './tabs.css';
+@import './mapa-pantalla-completa.css';
+@import './mapa-operativo.css';
+
+/* Organisms (tarea 31 — arquetipo formulario) */
+@import './page-header.css';
+@import './form-actions-bar.css';
+
+/* Templates */
+@import './panel-layout.css';
+@import './auth-layout.css';
+@import './portal-layout.css';

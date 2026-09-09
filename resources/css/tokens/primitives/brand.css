@@ -1,0 +1,103 @@
+/*
+ * Tokens de marca (capa 1 — primitivos de marca)
+ * ------------------------------------------------
+ * Únicos valores literales (hex) de todo el sistema de diseño derivados del
+ * logo oficial de Agrocom (`public/logo.png`):
+ *   - Verde: degradado de la letra "A" del isotipo, de lima a bosque.
+ *   - Ámbar: degradado del ícono de señal (wifi) sobre la "A".
+ *
+ * Por qué este archivo existe separado de `base.css` y de `semantic/`:
+ * hoy el sistema es de una sola marca (Agrocom). Si en el futuro el panel
+ * se ofrece como SaaS multi-tenant (cada cliente con su propio logo/colores
+ * corporativos), el único archivo que un tenant nuevo necesitaría reemplazar
+ * u override-ar es este — ninguna otra capa (semantic/theme-*, componentes,
+ * Blade) cambia, porque nada fuera de acá referencia estos valores por su
+ * hex: todo pasa por los tokens semánticos de `semantic/`. Esto NO implementa
+ * multi-tenant (no hay tabla, no hay selector de marca, no hay resolución
+ * por tenant) — es únicamente el criterio de organización del archivo para
+ * que esa puerta quede abierta sin costo adicional hoy.
+ */
+
+:root {
+    /* Rampa verde — degradado del isotipo, de #8CC63F (lima) a #1E7A34 (bosque).
+       green-200 (quinta vuelta): lima claro del riel de módulos (ícono/texto
+       activo sobre la superficie oliva oscura), un escalón por encima del
+       lima del logo. */
+    --ag-color-green-100: #e8f4d9;
+    --ag-color-green-200: #c6e86a;
+    --ag-color-green-300: #8cc63f;
+    /* green-400 (auditoría visual externa, obs. #1): paso intermedio 300→500
+       (65% green-300 / 35% green-500), menos saturado que el lima puro del
+       logo. Existe para que el tema oscuro deje de usar green-300 crudo como
+       texto/ícono de marca — en tema claro la identidad "verde de marca" es
+       green-700 (bosque); en oscuro usar green-300 (lima muy saturado)
+       leía como una marca distinta. AA verificado contra las superficies
+       oscuras: 5.2:1 sobre --ag-color-surface-card, 5.86:1 sobre
+       --ag-color-bg-chrome (cálculo en sistema_diseno_panel.md §1.3). */
+    --ag-color-green-400: #79b93d;
+    --ag-color-green-500: #55a03a;
+    --ag-color-green-700: #1e7a34;
+    --ag-color-green-900: #0f3d1a;
+
+    /* Rampa ámbar — degradado del ícono de señal, de #F5A623 a #E8720C */
+    --ag-color-amber-100: #fdedd3;
+    --ag-color-amber-300: #f5a623;
+    --ag-color-amber-500: #ef8c18;
+    --ag-color-amber-700: #e8720c;
+    /* Escalón intermedio 700→900 (rediseño login, HU-02 tercera vuelta):
+       existe específicamente para dar un ámbar oscurecido usable como TEXTO
+       sobre superficie clara. Ámbar-700 falla AA como texto (~3.1:1 con
+       blanco — ver sistema_diseno_panel.md §1.3, ya documentado para el
+       botón de acento); ámbar-900 sí pasa contraste pero es demasiado
+       oscuro/marrón para leerse como "ámbar" (pierde la identidad del
+       color de acento como enlace). --ag-color-amber-800 es el punto medio
+       entre ambos: oscuro suficiente para servir de texto de enlace,
+       todavía reconociblemente ámbar. Consumido por
+       --ag-color-accent-link en tokens/semantic/theme-light.css. */
+    --ag-color-amber-800: #a85408;
+    --ag-color-amber-900: #743906;
+
+    /*
+     * Rampas neutras cálidas del panel (quinta vuelta — rediseño de layout
+     * sobre las maquetas aprobadas 4a/5a/5b/5c del mockup de panel admin).
+     * No salen del logo sino del lenguaje visual aprobado (ocres del panel,
+     * verdes oliva del riel/fotografía) — viven acá y no en base.css porque
+     * SÍ son identidad de marca del panel: un tenant hipotético las
+     * reemplazaría junto con las rampas verde/ámbar (ver nota de cabecera),
+     * mientras que los grises fríos de base.css quedan como infraestructura
+     * agnóstica (hoy usados por el tema oscuro como base de mezcla).
+     *
+     * ARENA — superficies y bordes claros (fondo de panel, tarjetas,
+     * cabecera de tabla, inputs del chrome, pistas de barras). De más clara
+     * a más oscura; el paso 700 es el "piedra" de la barra de pausas sin
+     * causa asignada.
+     */
+    --ag-color-sand-50: #fbfaf6;
+    --ag-color-sand-100: #f6f2e6;
+    --ag-color-sand-150: #f3f0e7;
+    --ag-color-sand-200: #f1eee4;
+    --ag-color-sand-300: #ede7d7;
+    --ag-color-sand-400: #e7e1cf;
+    --ag-color-sand-500: #e2dbc7;
+    --ag-color-sand-600: #dfd8c4;
+    --ag-color-sand-700: #a8a08a;
+
+    /*
+     * OLIVA — escala de texto/íconos sobre superficies arena (150-600) y
+     * superficies oscuras del riel/header móvil (900-1000). Reemplaza a los
+     * grises fríos como neutro de texto del panel en tema claro.
+     * Contrastes verificados en sistema_diseno_panel.md §1.3: como texto
+     * sobre arena solo se usan 500 en adelante (olive-300/400 son
+     * decorativos o placeholders grandes, nunca texto normal AA).
+     */
+    --ag-color-olive-150: #c9d3be;
+    --ag-color-olive-300: #8a8f7b;
+    --ag-color-olive-400: #7c8270;
+    --ag-color-olive-500: #6a6f5e;
+    --ag-color-olive-600: #5f6553;
+    --ag-color-olive-700: #4e5544;
+    --ag-color-olive-800: #3e4536;
+    --ag-color-olive-900: #2c3a22;
+    --ag-color-olive-950: #24331c;
+    --ag-color-olive-1000: #1b2116;
+}

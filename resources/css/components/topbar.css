@@ -1,0 +1,582 @@
+/*
+ * Organism: topbar (resources/views/components/organisms/topbar.blade.php)
+ * Header del layout de tres niveles (quinta vuelta, maqueta 4a): 62px de
+ * alto fijo con overflow hidden; el buscador es el ÚNICO hijo que cede
+ * espacio (flex:1 1 300px, min 220 / max 400) — todo lo demás va
+ * flex:0 0 auto + nowrap, exactamente la receta anti-desborde de la
+ * consigna. En tablet (maqueta 5a) se compacta a 58px ocultando breadcrumb,
+ * campaña y período; en móvil (<768) se oculta entero (lo reemplaza
+ * organisms/mobile-topbar, al final de este archivo).
+ *
+ * También viven acá los skins compartidos de popover (notificaciones, menú
+ * de usuario) — dropdowns nativos de Bootstrap con animación propia.
+ */
+
+.ag-topbar {
+    height: 62px;
+    flex: 0 0 62px;
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+    padding: 0 var(--ag-space-5);
+    overflow: hidden;
+    background: var(--ag-color-bg-chrome);
+    border-bottom: 1px solid var(--ag-color-border);
+}
+
+/* Dos bloques explícitos (sexta vuelta parte 2) — antes el header dependía
+   solo del flex:1 del buscador para empujar todo lo demás a la derecha.
+   Auditoría visual externa, obs. #6: ese flex:1 en __left se estiraba de
+   más y dejaba un vacío entre el buscador y el bloque derecho — ahora
+   __left solo ocupa lo que su contenido necesita y __right se ancla al
+   extremo con margin-left: auto. */
+.ag-topbar__left {
+    flex: 0 0 auto;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+    overflow: hidden;
+}
+
+.ag-topbar__right {
+    flex: 0 0 auto;
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+}
+
+.ag-topbar__breadcrumb {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-1);
+    white-space: nowrap;
+    font-size: 0.78rem;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-topbar__breadcrumb-sep {
+    font-size: 0.9375rem;
+}
+
+.ag-topbar__breadcrumb-current {
+    color: var(--ag-color-text);
+    font-weight: var(--ag-font-weight-bold);
+}
+
+/* Buscador global. Auditoría visual externa, obs. #6: ya no crece dentro de
+   __left (que dejó de recibir espacio sobrante de .ag-topbar) — flex-basis
+   sube a 480px (antes 300, con max-width 400 que dependía del grow para
+   alcanzarlo) para no quedar angosto ahora que su ancho es prácticamente
+   fijo; sigue pudiendo encoger bajo presión real de espacio. */
+.ag-topbar__search {
+    flex: 0 1 480px;
+    min-width: 220px;
+    max-width: 480px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    padding: 0 var(--ag-space-3);
+    background: var(--ag-color-bg-input-chrome);
+    border: 1px solid var(--ag-color-border);
+    border-radius: 9px;
+    cursor: text;
+}
+
+.ag-topbar__search:focus-within {
+    outline: 2px solid var(--ag-color-focus-ring);
+    outline-offset: 1px;
+}
+
+.ag-topbar__search-icon {
+    flex: 0 0 auto;
+    color: var(--ag-color-text-faint);
+}
+
+.ag-topbar__search-input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    font-family: var(--ag-font-family-base);
+    font-size: 0.8125rem;
+    color: var(--ag-color-text);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.ag-topbar__search-input::placeholder {
+    color: var(--ag-color-text-muted);
+}
+
+.ag-topbar__search-input:focus {
+    outline: none;
+}
+
+.ag-topbar__search-kbd {
+    flex: 0 0 auto;
+    font-family: var(--ag-font-family-mono);
+    font-size: 0.656rem;
+    color: var(--ag-color-text-muted);
+    border: 1px solid var(--ag-color-border-strong);
+    border-radius: 5px;
+    padding: 1px 5px;
+    background: transparent;
+}
+
+/* Campana. */
+.ag-topbar__notifications {
+    flex: 0 0 auto;
+}
+
+.ag-topbar__icon-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: none;
+    border-radius: var(--ag-radius-pill);
+    background: transparent;
+    color: var(--ag-color-text-muted);
+    cursor: pointer;
+    transition:
+        background-color var(--ag-transition-fast),
+        color var(--ag-transition-fast),
+        box-shadow var(--ag-transition-fast),
+        transform var(--ag-transition-fast);
+}
+
+.ag-topbar__icon-btn:hover {
+    background: var(--ag-color-primary-subtle);
+    color: var(--ag-color-primary-emphasis);
+}
+
+.ag-topbar__icon-btn:active {
+    background: var(--ag-color-primary-subtle);
+    color: var(--ag-color-primary-emphasis);
+    transform: scale(0.92);
+}
+
+/* Popover realmente ABIERTO (mismo trigger de bootstrap.Dropdown que pinta
+   aria-expanded) — pedido explícito del usuario (28/8/2026): el estado
+   "hover" y el estado "abierto" se veían idénticos, sin forma de notar a
+   simple vista que el popover seguía desplegado. Suma un anillo interior
+   propio encima del fondo/color de :hover para diferenciarlos. */
+.ag-topbar__icon-btn[aria-expanded='true'] {
+    background: var(--ag-color-primary-subtle);
+    color: var(--ag-color-primary-emphasis);
+    box-shadow: inset 0 0 0 1.5px var(--ag-color-primary-border-subtle);
+}
+
+.ag-topbar__notifications-count {
+    position: absolute;
+    top: 1px;
+    right: 0;
+    min-width: 15px;
+    height: 15px;
+    padding: 0 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--ag-radius-pill);
+    background: var(--ag-color-danger);
+    color: var(--ag-color-gray-0);
+    font-size: 0.59rem;
+    font-weight: var(--ag-font-weight-bold);
+}
+
+/* Bloque de usuario: avatar + nombre + rol activo (mono ámbar, uppercase). */
+.ag-topbar__user-menu {
+    flex: 0 0 auto;
+    padding-left: var(--ag-space-3);
+    border-left: 1px solid var(--ag-color-border);
+}
+
+.ag-topbar__user {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    white-space: nowrap;
+    border: none;
+    background: transparent;
+    padding: var(--ag-space-1);
+    border-radius: var(--ag-radius-md);
+    cursor: pointer;
+    font-family: var(--ag-font-family-base);
+    text-align: left;
+    transition:
+        background-color var(--ag-transition-fast),
+        box-shadow var(--ag-transition-fast),
+        transform var(--ag-transition-fast);
+}
+
+.ag-topbar__user:hover {
+    background: var(--ag-color-bg-row-hover);
+}
+
+.ag-topbar__user:active {
+    background: var(--ag-color-primary-subtle);
+    transform: scale(0.98);
+}
+
+/* Ídem .ag-topbar__icon-btn[aria-expanded='true'] — el menú de usuario
+   realmente abierto necesita distinguirse del simple :hover. */
+.ag-topbar__user[aria-expanded='true'] {
+    background: var(--ag-color-primary-subtle);
+    box-shadow: inset 0 0 0 1.5px var(--ag-color-primary-border-subtle);
+}
+
+.ag-topbar__avatar {
+    width: 1.9375rem;
+    height: 1.9375rem;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--ag-color-primary);
+    color: var(--ag-color-primary-contrast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-bold);
+}
+
+.ag-topbar__user-id {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+}
+
+.ag-topbar__user-name {
+    font-size: 0.78rem;
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-color-text);
+    white-space: nowrap;
+}
+
+.ag-topbar__user-role {
+    font-family: var(--ag-font-family-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ag-color-accent-link);
+}
+
+/*
+ * Popovers (dropdown-menu de Bootstrap con skin propio). `display: block`
+ * con `!important` es deliberado: pisa el `display: none` por defecto de
+ * Bootstrap para animar con opacity/transform/visibility — misma técnica
+ * que el propio Bootstrap usa con `.show`.
+ */
+.ag-notifications-popover,
+.ag-user-menu {
+    display: block !important;
+    background: var(--ag-color-bg-elevated);
+    border: 1px solid var(--ag-color-border);
+    border-radius: var(--ag-radius-lg);
+    box-shadow: var(--ag-shadow-lg);
+    margin-top: var(--ag-space-2) !important;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: scale(0.95);
+    transform-origin: top right;
+    transition:
+        opacity 180ms var(--ag-ease-emphasized),
+        transform 180ms var(--ag-ease-emphasized),
+        visibility 0s linear 180ms;
+}
+
+.ag-notifications-popover.show,
+.ag-user-menu.show {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: scale(1);
+    transition:
+        opacity 180ms var(--ag-ease-emphasized),
+        transform 180ms var(--ag-ease-emphasized),
+        visibility 0s linear 0s;
+}
+
+.ag-notifications-popover {
+    width: 20rem;
+    max-width: calc(100vw - var(--ag-space-6));
+    padding: var(--ag-space-4);
+}
+
+.ag-popover__title {
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+    color: var(--ag-color-text-muted);
+    margin: 0 0 var(--ag-space-3);
+}
+
+.ag-notifications-popover__empty {
+    margin: 0;
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-notification-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-1);
+}
+
+.ag-notification-item {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-2) var(--ag-space-3);
+    border-radius: var(--ag-radius-md);
+}
+
+.ag-notification-item.is-unread {
+    background: var(--ag-color-primary-subtle);
+}
+
+.ag-notification-item__icon {
+    flex-shrink: 0;
+    color: var(--ag-color-primary-emphasis);
+}
+
+.ag-notification-item__body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.ag-notification-item__title {
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text);
+}
+
+.ag-notification-item__time {
+    font-family: var(--ag-font-family-mono);
+    font-size: 0.6875rem;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-notification-item__dot {
+    flex-shrink: 0;
+    align-self: center;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: var(--ag-radius-pill);
+    background: var(--ag-color-accent);
+}
+
+.ag-user-menu {
+    min-width: 12rem;
+    padding: var(--ag-space-2);
+}
+
+.ag-user-menu__item {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    border-radius: var(--ag-radius-md);
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text);
+    padding: var(--ag-space-2) var(--ag-space-3);
+}
+
+.ag-user-menu__item:hover {
+    background: var(--ag-color-primary-subtle);
+    color: var(--ag-color-text);
+    opacity: 1;
+}
+
+.ag-user-menu__icon {
+    color: var(--ag-color-text-muted);
+}
+
+.ag-user-menu__logout:hover .ag-user-menu__icon {
+    color: var(--ag-color-danger);
+}
+
+/* Tablet (maqueta 5a): header compacto de 58px — buscador + campana + tema
+   + usuario. */
+@media (min-width: 768px) and (max-width: 1199.98px) {
+    .ag-topbar {
+        height: 58px;
+        flex-basis: 58px;
+        padding: 0 var(--ag-space-4);
+    }
+
+    .ag-topbar__breadcrumb {
+        display: none;
+    }
+
+    .ag-topbar__search {
+        max-width: none;
+    }
+}
+
+/* Móvil: el header estándar desaparece — manda mobile-topbar. */
+@media (max-width: 767.98px) {
+    .ag-topbar {
+        display: none;
+    }
+}
+
+/*
+ * Organism: mobile-topbar (maqueta 5b) — header oscuro del móvil, con los
+ * tokens constantes del riel, + banda de breadcrumb clara debajo. Oculto
+ * fuera de <768px. Objetivos táctiles ≥44px (consigna).
+ */
+.ag-mobile-topbar {
+    display: none;
+    flex: 0 0 auto;
+    flex-direction: column;
+}
+
+.ag-mobile-topbar__bar {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-3) var(--ag-space-4);
+    background: var(--ag-color-bg-rail);
+}
+
+.ag-mobile-topbar__menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    margin-left: calc(var(--ag-space-2) * -1);
+    border: none;
+    border-radius: var(--ag-radius-pill);
+    background: transparent;
+    color: var(--ag-color-olive-150);
+    cursor: pointer;
+}
+
+/* `contain` — mismo motivo que .ag-rail__logo (wordmark bajo el isotipo). */
+.ag-mobile-topbar__logo {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 9px;
+    object-fit: contain;
+}
+
+.ag-mobile-topbar__id {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.3;
+}
+
+.ag-mobile-topbar__app {
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-color-olive-150);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ag-mobile-topbar__meta {
+    font-family: var(--ag-font-family-mono);
+    font-size: 0.59rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ag-color-text-rail-active);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ag-mobile-topbar__bell {
+    position: relative;
+    display: flex;
+    color: var(--ag-color-olive-150);
+}
+
+.ag-mobile-topbar__bell-count {
+    position: absolute;
+    top: -3px;
+    right: -4px;
+    min-width: 15px;
+    height: 15px;
+    padding: 0 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--ag-radius-pill);
+    background: var(--ag-color-red-600);
+    color: var(--ag-color-gray-0);
+    font-size: 0.59rem;
+    font-weight: var(--ag-font-weight-bold);
+}
+
+.ag-mobile-topbar__avatar {
+    width: 1.875rem;
+    height: 1.875rem;
+    border-radius: var(--ag-radius-pill);
+    background: var(--ag-color-bg-rail-active);
+    color: var(--ag-color-text-rail-active);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-bold);
+}
+
+.ag-mobile-topbar__crumb {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-2) var(--ag-space-4);
+    background: var(--ag-color-bg-chrome);
+    border-bottom: 1px solid var(--ag-color-border);
+    font-size: 0.78rem;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-mobile-topbar__crumb-icon {
+    color: var(--ag-color-primary-emphasis);
+}
+
+.ag-mobile-topbar__crumb-current {
+    color: var(--ag-color-text);
+    font-weight: var(--ag-font-weight-bold);
+}
+
+.ag-mobile-topbar__crumb-spacer {
+    flex: 1;
+}
+
+.ag-mobile-topbar__crumb-search {
+    color: var(--ag-color-text-faint);
+}
+
+@media (max-width: 767.98px) {
+    .ag-mobile-topbar {
+        display: flex;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ag-notifications-popover,
+    .ag-user-menu {
+        transition-duration: 0.01ms !important;
+    }
+
+    .ag-topbar__user:active,
+    .ag-topbar__icon-btn:active {
+        transform: none;
+    }
+}

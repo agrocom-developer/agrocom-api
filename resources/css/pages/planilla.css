@@ -1,0 +1,217 @@
+/*
+ * Pages: planillas/index, planillas/show
+ * (app/Dominios/Finanzas/Infraestructura/Http/Views/pages/planillas/) —
+ * HU-30, tarea 44: planilla del período generada desde devengos y
+ * anticipos. Mismo molde de grid que anticipos.css/devengos.css (listado) y
+ * trabajos.css (resumen de detalle). Todo color y medida por token
+ * (CLAUDE.md invariante 11).
+ */
+
+.ag-planillas {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+/* Listado (index) */
+
+.ag-planillas__generar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--ag-space-4);
+    padding: var(--ag-space-4);
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+}
+
+.ag-planillas__generar-texto {
+    flex: 1 1 16rem;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-1);
+}
+
+.ag-planillas__generar-titulo {
+    font-weight: var(--ag-font-weight-medium);
+    color: var(--ag-color-text);
+    margin: 0;
+}
+
+.ag-planillas__generar-ayuda {
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text-muted);
+    margin: 0;
+}
+
+/* Fila de controles en línea, no formulario apilado: el margen inferior
+   del átomo empujaría el botón por debajo del campo (mismo motivo que
+   documenta components/filter-bar.css). */
+.ag-planillas__generar .ag-input,
+.ag-planillas__generar .ag-select,
+.ag-planillas__generar .ag-date {
+    min-width: 12rem;
+    margin-bottom: 0;
+}
+
+.ag-planillas__tabla {
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+    overflow: hidden;
+}
+
+.ag-planillas__head,
+.ag-planillas__fila {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: var(--ag-space-4);
+    align-items: center;
+    padding: var(--ag-space-3) var(--ag-space-4);
+}
+
+.ag-planillas__head {
+    background-color: var(--ag-color-bg-table-head);
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ag-planillas__fila {
+    border-top: 1px solid var(--ag-color-border-row);
+    color: var(--ag-color-text);
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-planillas__fila:hover {
+    background-color: var(--ag-color-bg-row-hover);
+}
+
+.ag-planillas__periodo {
+    font-weight: var(--ag-font-weight-medium);
+}
+
+.ag-planillas__cifra {
+    font-family: var(--ag-font-family-mono);
+}
+
+.ag-planillas__acciones {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.ag-planillas__paginacion {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ag-space-4);
+}
+
+.ag-planillas__paginacion-info {
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-sm);
+}
+
+@media (max-width: 992px) {
+    .ag-planillas__head {
+        display: none;
+    }
+
+    .ag-planillas__fila {
+        grid-template-columns: 1fr;
+        gap: var(--ag-space-1);
+    }
+
+    .ag-planillas__acciones {
+        justify-content: flex-start;
+        margin-top: var(--ag-space-2);
+    }
+}
+
+/* Detalle (show) */
+
+.ag-planilla-detalle {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+.ag-planilla-detalle__resumen {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ag-space-4) var(--ag-space-6);
+    padding: var(--ag-space-4);
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+}
+
+.ag-planilla-detalle__campo {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-1);
+    color: var(--ag-color-text);
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-planilla-detalle__tabla {
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+    overflow: hidden;
+}
+
+.ag-planilla-detalle__head,
+.ag-planilla-detalle__fila {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr 1fr 1fr auto;
+    gap: var(--ag-space-4);
+    align-items: center;
+    padding: var(--ag-space-3) var(--ag-space-4);
+}
+
+.ag-planilla-detalle__head {
+    background-color: var(--ag-color-bg-table-head);
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ag-planilla-detalle__fila {
+    border-top: 1px solid var(--ag-color-border-row);
+    color: var(--ag-color-text);
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-planilla-detalle__fila:hover {
+    background-color: var(--ag-color-bg-row-hover);
+}
+
+.ag-planilla-detalle__persona {
+    font-weight: var(--ag-font-weight-medium);
+}
+
+.ag-planilla-detalle__cifra {
+    font-family: var(--ag-font-family-mono);
+}
+
+.ag-planilla-detalle__recibo-pendiente {
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-xs);
+}
+
+@media (max-width: 992px) {
+    .ag-planilla-detalle__head {
+        display: none;
+    }
+
+    .ag-planilla-detalle__fila {
+        grid-template-columns: 1fr;
+        gap: var(--ag-space-1);
+    }
+}

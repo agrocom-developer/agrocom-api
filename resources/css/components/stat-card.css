@@ -1,0 +1,180 @@
+/*
+ * Molecule: stat-card (resources/views/components/molecules/stat-card.blade.php)
+ * Tarjeta KPI del rediseño (quinta vuelta, maquetas 4a/5a/5b; sexta vuelta
+ * parte 2: cifra en mono, ver .ag-stat-card__value más abajo — nunca la
+ * display, que es la fuente del titular de la página). Superficie de
+ * tarjeta con borde propio, rótulo uppercase + ícono en contenedor con
+ * estado (sexta vuelta parte 2). El grid responsivo lo arma la página
+ * (4 col escritorio / 2×2 tablet-móvil).
+ */
+
+.ag-stat-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-4);
+    background: var(--ag-color-surface-card);
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: 12px;
+    min-width: 0;
+    overflow: hidden;
+    transition:
+        transform var(--ag-transition-fast),
+        box-shadow var(--ag-transition-fast);
+}
+
+.ag-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--ag-shadow-md);
+}
+
+.ag-stat-card__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ag-space-2);
+}
+
+.ag-stat-card__label {
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ag-color-text-muted);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Contenedor del ícono (sexta vuelta parte 2, §2.2): por defecto neutro —
+   se colorea vía `data-state` en .ag-stat-card, ver abajo. */
+.ag-stat-card__icon-box {
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: var(--ag-radius-md);
+    background: var(--ag-color-neutral-subtle);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-stat-card__icon {
+    flex-shrink: 0;
+}
+
+/* Tono del contenedor del ícono por estado. */
+.ag-stat-card[data-state='success'] .ag-stat-card__icon-box {
+    background: var(--ag-color-success-subtle);
+    color: var(--ag-color-success-strong);
+}
+
+.ag-stat-card[data-state='warning'] .ag-stat-card__icon-box {
+    background: var(--ag-color-warning-subtle);
+    color: var(--ag-color-warning-strong);
+}
+
+.ag-stat-card[data-state='danger'] .ag-stat-card__icon-box {
+    background: var(--ag-color-danger-subtle);
+    color: var(--ag-color-danger-strong);
+}
+
+.ag-stat-card[data-state='info'] .ag-stat-card__icon-box {
+    background: var(--ag-color-info-subtle);
+    color: var(--ag-color-info-strong);
+}
+
+/* Barra izquierda de atención: SOLO warning/danger (estados que requieren
+   acción) — success/info quedan sin barra, mismo criterio que el original
+   de referencia. */
+.ag-stat-card[data-state='warning']::before,
+.ag-stat-card[data-state='danger']::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+}
+
+.ag-stat-card[data-state='warning']::before {
+    background: var(--ag-color-warning);
+}
+
+.ag-stat-card[data-state='danger']::before {
+    background: var(--ag-color-danger);
+}
+
+/* Sans + tabular-nums (auditoría visual externa, obs. #7 — supera la regla
+   §8.7 anterior, "mono, nunca la display", documentado como tal en
+   sistema_diseno_panel.md): la versión mono (IBM Plex Mono) abría demasiado
+   el tracking de una cifra grande ("Bs 18.490" se leía espaciada/floja). La
+   sans (IBM Plex Base) + font-variant-numeric: tabular-nums da dígitos de
+   ancho fijo (se siguen alineando en columna, mismo motivo original de usar
+   mono) sin el tracking abierto — y sigue sin ser la display (IBM Plex Sans
+   Condensed): el titular de la página sigue siendo el único texto en esa
+   fuente. */
+.ag-stat-card__value {
+    margin: 0;
+    font-family: var(--ag-font-family-base);
+    font-variant-numeric: tabular-nums;
+    font-weight: var(--ag-font-weight-bold);
+    letter-spacing: -0.02em;
+    font-size: 1.875rem;
+    line-height: 1;
+    color: var(--ag-color-text);
+}
+
+.ag-stat-card__value-suffix {
+    font-size: 1.0625rem;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-stat-card__foot {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-1);
+    font-size: var(--ag-font-size-xs);
+}
+
+.ag-stat-card__foot-icon {
+    font-size: 0.9375rem;
+}
+
+.ag-stat-card__foot--success {
+    color: var(--ag-color-success-strong);
+}
+
+.ag-stat-card__foot--warning {
+    color: var(--ag-color-warning-strong);
+}
+
+.ag-stat-card__foot--muted {
+    color: var(--ag-color-text-muted);
+}
+
+/* Protagonista del móvil (maqueta 5b): cifra 2.5rem. */
+.ag-stat-card--hero {
+    padding: var(--ag-space-4);
+    gap: var(--ag-space-2);
+}
+
+.ag-stat-card--hero .ag-stat-card__value {
+    font-size: 2.5rem;
+}
+
+.ag-stat-card--hero .ag-stat-card__foot {
+    font-size: var(--ag-font-size-xs);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ag-stat-card {
+        transition-duration: 0.01ms;
+    }
+
+    .ag-stat-card:hover {
+        transform: none;
+    }
+}

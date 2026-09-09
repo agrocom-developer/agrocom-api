@@ -1,0 +1,51 @@
+# Entorno de desarrollo LOCAL únicamente (docs/decisiones/0010-entorno-local-docker-compose.md).
+# Uso típico: docker compose up -d  →  API en http://localhost:8000,
+# Mailpit en http://localhost:8025. La suite completa como en CI:
+# docker compose run --rm app sh -c "vendor/bin/pint --test && composer larastan && vendor/bin/pest"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/var/www/html
+    ports:
+      - "8000:8000"
+    working_dir: /var/www/html
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: agrocom
+      DB_USERNAME: agrocom
+      DB_PASSWORD: agrocom
+    command: sh -c "if [ ! -d vendor ]; then composer install --no-interaction; fi && php artisan serve --host=0.0.0.0 --port=8000"
+
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: agrocom
+      POSTGRES_USER: agrocom
+      POSTGRES_PASSWORD: agrocom
+    ports:
+      - "5432:5432"
+    volumes:
+      - agrocom-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agrocom"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mail:
+    image: axllent/mailpit
+    ports:
+      - "8025:8025" # UI web
+      - "1025:1025" # SMTP
+
+volumes:
+  agrocom-db-data:

@@ -1,0 +1,115 @@
+/*
+ * Pages: gastos/index, gastos/create
+ * (app/Dominios/Finanzas/Infraestructura/Http/Views/pages/gastos/) —
+ * HU-33, tarea 47: gastos con categoría y comprobante. Mismo molde de grid
+ * que anticipos.css, con seis columnas en el listado (fecha, rubro,
+ * imputación, monto, comprobante, acciones). Todo color y medida por token
+ * (CLAUDE.md invariante 11).
+ */
+
+.ag-gastos {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+/* Listado (index) */
+
+
+.ag-gastos__filtros .ag-input,
+.ag-gastos__filtros .ag-select,
+.ag-gastos__filtros .ag-date {
+    min-width: 14rem;
+}
+
+
+.ag-gastos__tabla {
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+    overflow: hidden;
+}
+
+.ag-gastos__head,
+.ag-gastos__fila {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr 1.4fr 1fr 1fr auto;
+    gap: var(--ag-space-4);
+    align-items: center;
+    padding: var(--ag-space-3) var(--ag-space-4);
+}
+
+.ag-gastos__head {
+    background-color: var(--ag-color-bg-table-head);
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ag-gastos__fila {
+    border-top: 1px solid var(--ag-color-border-row);
+    color: var(--ag-color-text);
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-gastos__fila:hover {
+    background-color: var(--ag-color-bg-row-hover);
+}
+
+.ag-gastos__cifra {
+    font-family: var(--ag-font-family-mono);
+}
+
+.ag-gastos__sin-comprobante {
+    color: var(--ag-color-text-muted);
+}
+
+.ag-gastos__acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--ag-space-2);
+}
+
+.ag-gastos__paginacion {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ag-space-4);
+}
+
+.ag-gastos__paginacion-info {
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-sm);
+}
+
+@media (max-width: 992px) {
+    .ag-gastos__head {
+        display: none;
+    }
+
+    .ag-gastos__fila {
+        grid-template-columns: 1fr;
+        gap: var(--ag-space-1);
+    }
+
+    .ag-gastos__acciones {
+        justify-content: flex-start;
+        margin-top: var(--ag-space-2);
+    }
+}
+
+/* Formulario (create) */
+
+.ag-gastos-form-page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+.ag-gastos-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}

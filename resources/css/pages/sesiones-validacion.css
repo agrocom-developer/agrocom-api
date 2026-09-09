@@ -1,0 +1,73 @@
+/*
+ * Page: sesiones/validacion (app/Dominios/Operaciones/Infraestructura/Http/Views/pages/sesiones/validacion.blade.php)
+ * CSS propio de ESTA página (ver convención en resources/css/pages/index.css).
+ * Todo color y medida por token (CLAUDE.md invariante 11).
+ */
+
+.ag-sesiones-validacion__aviso {
+    margin-top: var(--ag-space-4);
+}
+
+.ag-sesiones-validacion__lista {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-4);
+    margin-top: var(--ag-space-5);
+}
+
+.ag-sesiones-validacion__tarjeta {
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+    padding: var(--ag-space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-3);
+}
+
+.ag-sesiones-validacion__datos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ag-space-2) var(--ag-space-5);
+    color: var(--ag-color-text);
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-sesiones-validacion__campo strong {
+    color: var(--ag-color-text-muted);
+    font-weight: var(--ag-font-weight-medium);
+    margin-right: var(--ag-space-1);
+}
+
+/* El pie de la tarjeta se lee de arriba abajo: primero el motivo (ancho
+   completo), después la fila de acciones. Antes era una sola fila
+   —[Validar] [motivo] [Rechazar]— donde el campo separaba las dos acciones
+   y "Validar" quedaba alineado contra el borde inferior de un textarea con
+   el que no tiene nada que ver. */
+.ag-sesiones-validacion__acciones {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-3);
+    border-top: 1px solid var(--ag-color-border-row);
+    padding-top: var(--ag-space-3);
+}
+
+/* El textarea ya no separa de nada: el `gap` de la columna hace ese
+   trabajo (mismo criterio que components/filter-bar.css). */
+.ag-sesiones-validacion__rechazo .ag-textarea {
+    margin-bottom: 0;
+}
+
+/* Misma anatomía que `organisms/form-actions-bar`: acciones juntas, a la
+   derecha, la sólida al final. */
+.ag-sesiones-validacion__botones {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--ag-space-3);
+}
+
+.ag-sesiones-validacion__bloqueo {
+    margin: 0;
+}

@@ -1,0 +1,18 @@
+/*
+ * Molecule: apex-chart (resources/views/components/molecules/apex-chart.blade.php)
+ * El SVG interno lo pinta ApexCharts en JS con colores ya resueltos de
+ * tokens (shared/color-tokens.js) — acá solo el contenedor y el estado
+ * previo a que el chunk diferido cargue.
+ */
+
+.ag-apex-chart {
+    width: 100%;
+    min-width: 0;
+}
+
+/* Antes de que resources/js/organisms/dashboard-charts.js renderice
+   (import() dinámico): evita un salto de layout mientras carga el chunk. */
+.ag-apex-chart:empty {
+    border-radius: var(--ag-radius-md);
+    background: var(--ag-color-bg-table-head);
+}

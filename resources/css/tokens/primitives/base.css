@@ -1,0 +1,156 @@
+/*
+ * Tokens base (capa 1 — primitivos no ligados a marca)
+ * ------------------------------------------------------
+ * Escala neutra (grises), colores de estado universales (rojo/amarillo/azul,
+ * ninguno viene del logo porque la marca no define un color de error) y las
+ * escalas de espaciado/tipografía/radio/elevación. A diferencia de
+ * `brand.css`, esto es infraestructura de diseño tenant-agnóstica: incluso
+ * en un futuro hipotético multi-tenant (ver nota en `brand.css`), estos
+ * valores no tendrían por qué cambiar por cliente.
+ */
+
+:root {
+    /* Escala neutra — texto, superficies, bordes */
+    --ag-color-gray-0: #ffffff;
+    --ag-color-gray-50: #f8f9fa;
+    --ag-color-gray-100: #f1f3f5;
+    --ag-color-gray-200: #e9ecef;
+    --ag-color-gray-300: #dee2e6;
+    --ag-color-gray-400: #ced4da;
+    --ag-color-gray-500: #adb5bd;
+    --ag-color-gray-600: #6c757d;
+    --ag-color-gray-700: #495057;
+    --ag-color-gray-800: #343a40;
+    --ag-color-gray-850: #1e1e1e;
+    --ag-color-gray-900: #212529;
+    --ag-color-gray-950: #121212;
+    --ag-color-gray-1000: #000000;
+
+    /* Estados universales — no derivados de la marca (Agrocom no define un rojo) */
+    --ag-color-red-500: #dc3545;
+    --ag-color-red-100: #f8d7da;
+    --ag-color-yellow-500: #ffc107;
+    --ag-color-yellow-100: #fff3cd;
+    --ag-color-blue-500: #0d6efd;
+    --ag-color-blue-100: #cfe2ff;
+
+    /* Extensión del rediseño del panel (quinta vuelta, maquetas 4a/5a/5b/5c):
+       el lenguaje aprobado usa un rojo ÓXIDO cálido para peligro (no el
+       carmín Bootstrap de red-500, que queda frío junto a los ocres) y un
+       azul acero oscurecido como texto "info" apto AA sobre su tenue
+       (blue-500 baja de 4.5:1 sobre blue-50/blue-100). Siguen siendo estados
+       universales no derivados del logo — por eso viven acá y no en
+       brand.css. */
+    --ag-color-red-50: #fbede9;
+    --ag-color-red-200: #f1d6ce;
+    --ag-color-red-600: #c0442e;
+    --ag-color-red-900: #6b2b20;
+    --ag-color-blue-50: #e4edf8;
+    --ag-color-blue-700: #1d5fa8;
+
+    /* Espaciado — escala de 8px, compatible con los spacers de Bootstrap y la grilla de 8dp de Material */
+    --ag-space-1: 0.25rem;
+    --ag-space-2: 0.5rem;
+    --ag-space-3: 0.75rem;
+    --ag-space-4: 1rem;
+    --ag-space-5: 1.5rem;
+    --ag-space-6: 2rem;
+    --ag-space-8: 3rem;
+
+    /* Tipografía — IBM Plex Sans/Mono (elección deliberada, no el default de
+       Material: ver catálogo §2 para la justificación). Plex Mono es para
+       cifras tabulares (hectáreas, montos, códigos de sesión), no de uso general. */
+    --ag-font-family-base: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+    --ag-font-family-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+    /* Tipografía de titulares: ADICIONAL a --ag-font-family-base, nunca la
+       reemplaza — para headlines/títulos de página/cifras de KPI.
+
+       Séptima vuelta (28/8/2026): se retira Fraunces (serif editorial, LA
+       fuente display desde la quinta vuelta) — feedback externo directo
+       sobre captura real: "se nota que el sistema está generado con IA,
+       como si fuera Times New Roman" (irónico: el fallback de este mismo
+       token terminaba en 'Times New Roman', serif). Un serif display en un
+       panel operativo de campo (hectáreas, sesiones, planilla) lee como
+       plantilla genérica, no como identidad propia. Se verificó deere.com
+       como referencia del rubro: usa un sans grotesco propio (JD Sans Pro,
+       fallback `"Helvetica Neue", Helvetica, Arial`) SIEMPRE bold/condensado
+       en titulares, nunca serif — mismo criterio que ya regía para el color
+       de superficies (ver theme-dark.css §bg-auth): la identidad se expresa
+       en peso/acento, no en un recurso tipográfico ajeno al resto del
+       sistema.
+
+       'IBM Plex Sans Condensed' (`@fontsource/ibm-plex-sans-condensed`,
+       pesos 400/500/600/700 importados en app.css) es la nueva fuente
+       display: misma familia tipográfica que el texto de interfaz (Plex
+       Sans), diferenciada por condensación + peso en vez de por una
+       tipografía distinta — evita el efecto "tres fuentes sin relación" y
+       resuelve más angosta que Fraunces (útil en KPIs/títulos de contenedor
+       angosto, lo opuesto al problema que tenía Fraunces en la tercera
+       vuelta del login). Tres familias, una por contexto: Plex Sans
+       Condensed títulos/cifras protagonistas, Plex Sans interfaz/subtítulos,
+       Plex Mono datos/metadatos. */
+    --ag-font-family-display: 'IBM Plex Sans Condensed', 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+    --ag-font-size-xs: 0.75rem;
+    --ag-font-size-sm: 0.875rem;
+    --ag-font-size-base: 1rem;
+    --ag-font-size-lg: 1.125rem;
+    --ag-font-size-xl: 1.5rem;
+    --ag-font-size-2xl: 2rem;
+    --ag-line-height-tight: 1.25;
+    --ag-line-height-base: 1.5;
+    --ag-font-weight-regular: 400;
+    --ag-font-weight-medium: 500;
+    --ag-font-weight-bold: 700;
+
+    /* Título de PANTALLA — la receta única del h1 de cualquier vista del
+       panel. Existe como token porque hasta ahora cada pantalla la escribía
+       por su cuenta y se desincronizaron: el dashboard resolvía su título
+       en 2,125rem con peso regular y `page-header` (todas las demás vistas)
+       en 2rem con peso bold. Misma familia, dos pesos distintos — y a
+       simple vista parecían dos tipografías. El valor canónico es el del
+       dashboard, que es el que el usuario aprobó. */
+    --ag-title-page-size: 2.125rem;
+    --ag-title-page-weight: var(--ag-font-weight-regular);
+    --ag-title-page-line-height: 1.05;
+
+    /* Alturas de las bandas fijas del chrome (header arriba, footer abajo).
+       Son tokens y no números sueltos porque hay tres componentes que
+       tienen que coincidir exactamente en la misma línea horizontal:
+       `topbar` con la cabecera de `module-sidebar` cuando está colapsado, y
+       el pie de `module-sidebar` con el footer del layout. */
+    --ag-size-topbar-height: 62px;
+    --ag-size-footer-height: 42px;
+
+    /* Alto del campo de molecules/input — lo que un botón puesto a su lado
+       en una barra de filtros tiene que igualar para que la fila se lea
+       como una sola tira de controles. */
+    --ag-size-control-height: 48px;
+
+    /* Radios — Material favorece esquinas más redondeadas que el default de Bootstrap */
+    --ag-radius-sm: 0.25rem;
+    --ag-radius-md: 0.5rem;
+    --ag-radius-lg: 1rem;
+    --ag-radius-pill: 999px;
+
+    /* Elevación (vocabulario Material) */
+    --ag-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.08);
+    --ag-shadow-md: 0 2px 8px rgba(0, 0, 0, 0.12);
+    --ag-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.16);
+
+    /* Transiciones */
+    --ag-transition-fast: 150ms ease-in-out;
+    --ag-transition-base: 250ms ease-in-out;
+
+    /* Curvas de easing propias (HU-02), solo la curva — la duración se
+       compone en cada sitio de uso (`Nms var(--ag-ease-*)`), a diferencia de
+       --ag-transition-fast/base que empaquetan duración+curva. Existen para
+       que las animaciones de entrada/expansión de moléculas/organismos usen
+       una curva deliberada en vez del `ease`/`ease-in-out` genérico:
+       - `--ag-ease-emphasized`: entradas con "decelerate" marcado (stagger
+         del menú, popover de cambio de rol, tarjeta de auth-layout).
+       - `--ag-ease-drawer`: deslizamiento de paneles tipo cajón (sidebar
+         offcanvas en mobile — sobreescribe `--bs-offcanvas-transition` de
+         Bootstrap, nunca reemplaza el mecanismo, solo su curva). */
+    --ag-ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
+    --ag-ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+}

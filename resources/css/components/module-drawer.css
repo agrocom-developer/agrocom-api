@@ -1,0 +1,77 @@
+/*
+ * Organism: module-drawer (resources/views/components/organisms/module-drawer.blade.php)
+ * Drawer de módulos del móvil (quinta vuelta, maqueta 5b): offcanvas NATIVO
+ * de Bootstrap 5.3 con los módulos como grupos colapsables
+ * (collapsible-menu-group) — acá solo el skin. Solo tiene sentido <768px,
+ * pero no se esconde por CSS en desktop: el único disparador (hamburguesa
+ * de mobile-topbar) ya vive detrás de ese breakpoint.
+ */
+
+.ag-drawer {
+    --bs-offcanvas-transition: transform 320ms var(--ag-ease-drawer);
+    --bs-offcanvas-width: 18rem;
+    background-color: var(--ag-color-bg-chrome);
+    display: flex;
+    flex-direction: column;
+}
+
+.ag-drawer__header {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-4);
+    border-bottom: 1px solid var(--ag-color-border);
+    min-height: 3.5rem;
+}
+
+.ag-drawer__brand {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    flex: 1;
+    min-width: 0;
+}
+
+.ag-drawer__brand-name {
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-color-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ag-drawer__close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    flex-shrink: 0;
+    border: none;
+    border-radius: var(--ag-radius-pill);
+    background: transparent;
+    color: var(--ag-color-text-muted);
+    cursor: pointer;
+}
+
+.ag-drawer__close:hover {
+    background: var(--ag-color-primary-subtle);
+    color: var(--ag-color-primary-emphasis);
+}
+
+.ag-drawer__nav {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--ag-space-3) var(--ag-space-2);
+}
+
+.ag-drawer__footer {
+    flex: 0 0 auto;
+    padding: var(--ag-space-3) var(--ag-space-4);
+    border-top: 1px solid var(--ag-color-border-row);
+}

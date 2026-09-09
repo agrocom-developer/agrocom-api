@@ -1,0 +1,41 @@
+/*
+ * Sistema de diseño del panel (ADR 0002, docs/diseno/sistema_diseno_panel.md).
+ * AdminLTE (Bootstrap 5.3) + Material Design Symbols + IBM Plex fonts.
+ * Los tokens de abajo son custom properties CSS puras, agnósticas del framework.
+ */
+
+/* Fuentes auto-hospedadas vía npm */
+@import '@fontsource/ibm-plex-sans/400.css';
+@import '@fontsource/ibm-plex-sans/500.css';
+@import '@fontsource/ibm-plex-sans/600.css';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/600.css';
+/* Titulares en IBM Plex Sans Condensed (séptima vuelta, 28/8/2026): la
+   fuente display del sistema — headlines/cifras del login y del panel. Se
+   retira Fraunces (serif, "se ve genérico/IA/Times New Roman" — feedback
+   externo directo sobre captura real) a favor de un sans condensado bold,
+   en la línea de referencias industriales del rubro (deere.com usa un sans
+   grotesco propio, JD Sans Pro, siempre bold/condensado en titulares, nunca
+   serif). Al ser de la MISMA familia que el texto de interfaz (Plex Sans),
+   el titular se diferencia por peso/condensación, no por una tipografía
+   ajena — ver --ag-font-family-display en tokens/primitives/base.css. */
+@import '@fontsource/ibm-plex-sans-condensed/400.css';
+@import '@fontsource/ibm-plex-sans-condensed/500.css';
+@import '@fontsource/ibm-plex-sans-condensed/600.css';
+@import '@fontsource/ibm-plex-sans-condensed/700.css';
+/* Rounded, no Outlined: iconografía de las maquetas aprobadas (quinta vuelta). */
+@import 'material-symbols/rounded.css';
+
+/* Bootstrap 5.3 base (versión compilada CSS) */
+@import 'bootstrap/dist/css/bootstrap.css';
+
+/* Tokens y componentes propios (ganan especificidad sobre Bootstrap) */
+@import './tokens/index.css';
+@import './components/index.css';
+@import './pages/index.css';
+
+/* La transición nativa entre navegaciones (`@view-transition`) NO vive acá:
+   es una regla de documento, no se puede acotar por selector, y en este
+   bundle —que cargan todas las pantallas— se aplicaba también a cada clic
+   del menú del panel. Vive en `resources/css/transicion-vista.css`, que
+   cargan solo las pantallas del flujo de autenticación que la pidieron. */

@@ -1,0 +1,104 @@
+/*
+ * Pages: repuestos/index, repuestos/create, repuestos/edit
+ * (app/Dominios/Inventario/Infraestructura/Http/Views/pages/repuestos/) —
+ * HU-36, tarea 52: catálogo de repuestos. CSS propio de ESTAS páginas (ver
+ * convención en resources/css/pages/index.css) — mismo patrón que
+ * baterias.css: un repuesto no tiene sub-entidad repetible, así que el
+ * formulario no necesita CSS propio más allá del layout compartido con el
+ * listado.
+ *
+ * El wrapper `.ag-repuestos`/`.ag-repuestos-form` sigue el mismo patrón que
+ * `.ag-baterias`/`.ag-baterias-form`: flex en columna con un único `gap` en
+ * vez de `margin-top` repetido en cada hijo. Todo color y medida por token
+ * (CLAUDE.md invariante 11).
+ */
+
+.ag-repuestos,
+.ag-repuestos-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+/* Listado (index) */
+
+
+.ag-repuestos__filtros .ag-input,
+.ag-repuestos__filtros .ag-select,
+.ag-repuestos__filtros .ag-date {
+    min-width: 14rem;
+}
+
+
+.ag-repuestos__tabla {
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+    overflow: hidden;
+}
+
+.ag-repuestos__head,
+.ag-repuestos__fila {
+    display: grid;
+    grid-template-columns: 1fr 2fr 0.8fr 1fr auto;
+    gap: var(--ag-space-4);
+    align-items: center;
+    padding: var(--ag-space-3) var(--ag-space-4);
+}
+
+.ag-repuestos__head {
+    background-color: var(--ag-color-bg-table-head);
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ag-repuestos__fila {
+    border-top: 1px solid var(--ag-color-border-row);
+    color: var(--ag-color-text);
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-repuestos__fila:hover {
+    background-color: var(--ag-color-bg-row-hover);
+}
+
+.ag-repuestos__codigo {
+    font-weight: var(--ag-font-weight-medium);
+}
+
+.ag-repuestos__acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--ag-space-2);
+}
+
+.ag-repuestos__paginacion {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ag-space-4);
+}
+
+.ag-repuestos__paginacion-info {
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-sm);
+}
+
+@media (max-width: 992px) {
+    .ag-repuestos__head {
+        display: none;
+    }
+
+    .ag-repuestos__fila {
+        grid-template-columns: 1fr;
+        gap: var(--ag-space-1);
+    }
+
+    .ag-repuestos__acciones {
+        justify-content: flex-start;
+        margin-top: var(--ag-space-2);
+    }
+}

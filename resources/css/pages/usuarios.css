@@ -1,0 +1,112 @@
+/*
+ * Page: usuarios/index
+ * (app/Dominios/Seguridad/Infraestructura/Http/Views/pages/usuarios/) —
+ * HU-45, tarea 39: administración de usuarios internos. CSS propio de ESTA
+ * página (ver convención en resources/css/pages/index.css) — mismo patrón
+ * que personas.css, con una columna de roles (chips) en vez de rol/base.
+ *
+ * El wrapper `.ag-usuarios`/`.ag-usuarios-form` sigue el mismo patrón que
+ * `.ag-personas`/`.ag-personas-form`: flex en columna con un único `gap` en
+ * vez de `margin-top` repetido en cada hijo. Todo color y medida por token
+ * (CLAUDE.md invariante 11).
+ */
+
+.ag-usuarios,
+.ag-usuarios-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+/* Listado (index) */
+
+
+.ag-usuarios__filtros .ag-input,
+.ag-usuarios__filtros .ag-select,
+.ag-usuarios__filtros .ag-date {
+    min-width: 16rem;
+}
+
+
+.ag-usuarios__tabla {
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+    overflow: hidden;
+}
+
+.ag-usuarios__head,
+.ag-usuarios__fila {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr 0.9fr 1.6fr 1.1fr 0.8fr auto;
+    gap: var(--ag-space-4);
+    align-items: center;
+    padding: var(--ag-space-3) var(--ag-space-4);
+}
+
+.ag-usuarios__head {
+    background-color: var(--ag-color-bg-table-head);
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ag-usuarios__fila {
+    border-top: 1px solid var(--ag-color-border-row);
+    color: var(--ag-color-text);
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-usuarios__fila:hover {
+    background-color: var(--ag-color-bg-row-hover);
+}
+
+.ag-usuarios__nombre {
+    font-weight: var(--ag-font-weight-medium);
+}
+
+.ag-usuarios__username {
+    font-family: var(--ag-font-family-mono);
+}
+
+.ag-usuarios__roles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ag-space-1);
+}
+
+.ag-usuarios__acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--ag-space-2);
+}
+
+.ag-usuarios__paginacion {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ag-space-4);
+}
+
+.ag-usuarios__paginacion-info {
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-sm);
+}
+
+@media (max-width: 992px) {
+    .ag-usuarios__head {
+        display: none;
+    }
+
+    .ag-usuarios__fila {
+        grid-template-columns: 1fr;
+        gap: var(--ag-space-1);
+    }
+
+    .ag-usuarios__acciones {
+        justify-content: flex-start;
+        margin-top: var(--ag-space-2);
+    }
+}

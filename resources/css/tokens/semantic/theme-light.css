@@ -1,0 +1,300 @@
+/*
+ * Tokens semánticos (capa 2) — tema claro
+ * -----------------------------------------
+ * Ningún valor literal (hex) acá: todo resuelve sobre los primitivos de
+ * `../primitives/brand.css` y `../primitives/base.css`. Los componentes
+ * (atoms/molecules/organisms) SOLO referencian los tokens de esta capa
+ * (`--ag-color-*` semánticos), nunca los de `primitives/` directamente —
+ * así el cambio de tema es reasignar valores acá, sin tocar ninguna regla
+ * de componente (CLAUDE.md invariante 11).
+ *
+ * `[data-bs-theme]` es el atributo nativo de Bootstrap 5.3 para color modes;
+ * lo reutilizamos en vez de inventar uno propio para que los componentes
+ * Bootstrap/AdminLTE de estructura hereden el tema sin overrides adicionales.
+ */
+
+:root,
+[data-bs-theme='light'] {
+    /* Superficie — retinte cálido (quinta vuelta, maquetas aprobadas
+       4a/5a/5b/5c): el panel completo pasa de grises fríos a la rampa arena
+       de brand.css. El FONDO del contenido es EL MISMO crema del login
+       (--ag-color-bg-auth, definido más abajo en este archivo — pedido
+       explícito del 28/8/2026: el bg de temas claro/oscuro definido en el
+       login se mantiene en el dashboard y todo el layout del panel; el
+       resto de componentes sí sigue los colores de la maqueta).
+       bg-elevated/bg-chrome comparten el arena más claro (tarjetas y chrome
+       de header/sidebar son la misma superficie en las maquetas). */
+    --ag-color-bg: var(--ag-color-bg-auth);
+    --ag-color-bg-elevated: var(--ag-color-sand-50);
+    --ag-color-bg-chrome: var(--ag-color-sand-50);
+    --ag-color-overlay: rgba(0, 0, 0, 0.5);
+
+    /* Texto — escala oliva sobre arena (quinta vuelta). text-muted usa
+       olive-500, NO olive-400: es el escalón más claro que pasa AA 4.5:1
+       contra sand-50 (~5.0:1) y sand-150 (~4.6:1) — ver §1.3. olive-400
+       queda en --ag-color-text-faint, solo decorativo. */
+    --ag-color-text: var(--ag-color-olive-950);
+    --ag-color-text-muted: var(--ag-color-olive-500);
+    --ag-color-text-faint: var(--ag-color-olive-400);
+    --ag-color-text-inverse: var(--ag-color-gray-0);
+
+    /* Bordes */
+    --ag-color-border: var(--ag-color-sand-500);
+    --ag-color-border-strong: var(--ag-color-sand-600);
+
+    /* Marca — primario (verde). Fondo sólido de botones/CTA: constante entre
+       temas (identidad de marca), verificado AA (~5.4:1) con texto blanco. */
+    --ag-color-primary: var(--ag-color-green-700);
+    --ag-color-primary-hover: var(--ag-color-green-900);
+    --ag-color-primary-contrast: var(--ag-color-gray-0);
+    --ag-color-primary-emphasis: var(--ag-color-green-700);
+    --ag-color-primary-subtle: var(--ag-color-green-100);
+
+    /* Fondo del ítem de menú/píldora ACTIVO del sidebar (nivel 2) — séptima
+       vuelta (28/8/2026, ver theme-dark.css): token propio en vez de
+       reutilizar --ag-color-primary-subtle directamente, para que ambos
+       temas expongan el mismo NOMBRE de token aunque en oscuro deba ser un
+       sólido en vez de una mezcla. Acá el valor es idéntico al de
+       --ag-color-primary-subtle (green-100, ya sólido) — sin cambio visual
+       en claro. */
+    --ag-color-bg-nav-active: var(--ag-color-green-100);
+
+    /* Marca — acento (ámbar). Texto oscuro sobre acento, no blanco: el ámbar
+       de marca (#E8720C) da ~3.1:1 con blanco (falla AA texto normal) y
+       ~5:1 con gris-900 (pasa AA). `--ag-color-accent-contrast` es el que
+       usan las superficies TINTADAS/sutiles de acento (`--ag-color-accent-subtle`
+       — badge de rol en topbar.css, badge de menu-item.css): ahí gris-900
+       es correcto porque el fondo es un ámbar muy claro (casi blanco), no el
+       relleno sólido. */
+    --ag-color-accent: var(--ag-color-amber-700);
+    --ag-color-accent-hover: var(--ag-color-amber-900);
+    --ag-color-accent-contrast: var(--ag-color-gray-900);
+    --ag-color-accent-emphasis: var(--ag-color-amber-700);
+    --ag-color-accent-subtle: var(--ag-color-amber-100);
+
+    /* Texto sobre el RELLENO SÓLIDO de acento (botón `variant="accent"` —
+       hoy solo "Enviar solicitud" del tab de recuperar acceso). Deliberadamente
+       DISTINTO de `--ag-color-accent-contrast`: gris-900 puro ahí se lee muy
+       duro/negro sobre el naranja vivo del relleno (pedido explícito del
+       usuario de suavizarlo). Ámbar-100 (el mismo tono cálido y claro que ya
+       usa `--ag-color-accent-subtle` como fondo) funciona igual de bien como
+       TEXTO acá: da ~5.1:1 contra `--ag-color-accent` (ámbar-700), pasa AA
+       con margen, y se ve como un blanco cálido en vez de un blanco clínico
+       o un negro duro. */
+    --ag-color-accent-contrast-fill: var(--ag-color-amber-100);
+
+    /* Neutro para superficies "sin estado" (atoms/badge variante "neutral",
+       chips de filtro inactivos) — arena un peldaño más oscuro que la
+       tarjeta. `-strong` es su par de texto AA (chip "Programada"). */
+    --ag-color-neutral-subtle: var(--ag-color-sand-200);
+    --ag-color-neutral-strong: var(--ag-color-olive-600);
+
+    /* Estados (quinta vuelta): el aviso pasa del amarillo Bootstrap al ÁMBAR
+       de marca (lenguaje aprobado — "Sin evidencia", franja de ventana
+       volable) y el peligro al rojo óxido cálido (base.css). Cada estado
+       expone el trío `-subtle` (fondo tenue) / crudo (ícono, dot, relleno) /
+       `-strong` (TEXTO apto AA 4.5:1 sobre su propio `-subtle`, verificado
+       en §1.3 en ambos temas — los chips de estado usan siempre el par
+       subtle+strong, nunca el crudo como texto). */
+    /* success (auditoría visual externa, obs. #2): antes era literalmente
+       igual a primary en los tres tonos (green-700 crudo, green-100 subtle)
+       — un chip "Validada" competía visualmente con el botón "Programar
+       sesión". Ahora usa el escalón green-500 (ni el primitivo de primary
+       ni el de success-strong), sin reutilizar green-700 en ningún punto de
+       la cadena. success-strong ya no deriva de green-700+green-900 sino de
+       green-500+green-900 — AA verificado: 6.61:1 contra el nuevo
+       success-subtle (antes 7.08:1 contra green-100, margen equivalente). */
+    --ag-color-success: var(--ag-color-green-500);
+    --ag-color-success-subtle: color-mix(in srgb, var(--ag-color-green-500) 16%, var(--ag-color-sand-50) 84%);
+    --ag-color-success-strong: color-mix(in srgb, var(--ag-color-green-500) 30%, var(--ag-color-green-900) 70%);
+    --ag-color-success-border: color-mix(in srgb, var(--ag-color-green-500) 30%, var(--ag-color-sand-50) 70%);
+    --ag-color-danger: var(--ag-color-red-600);
+    --ag-color-danger-subtle: var(--ag-color-red-50);
+    --ag-color-danger-strong: var(--ag-color-red-900);
+    --ag-color-danger-border: var(--ag-color-red-200);
+    /* Relleno sólido de botón "danger", constante entre temas (mismo
+       criterio que --ag-color-accent-contrast-fill) — ver button.css. Mismo
+       valor que --ag-color-danger en este tema, a propósito. */
+    --ag-color-danger-contrast-fill: var(--ag-color-red-600);
+    --ag-color-warning: var(--ag-color-amber-500);
+    --ag-color-warning-subtle: var(--ag-color-amber-100);
+    --ag-color-warning-strong: var(--ag-color-amber-800);
+    --ag-color-warning-border: color-mix(in srgb, var(--ag-color-amber-500) 30%, var(--ag-color-sand-50) 70%);
+    --ag-color-info: var(--ag-color-blue-500);
+    --ag-color-info-subtle: var(--ag-color-blue-50);
+    --ag-color-info-strong: var(--ag-color-blue-700);
+    --ag-color-info-border: color-mix(in srgb, var(--ag-color-blue-500) 30%, var(--ag-color-sand-50) 70%);
+
+    /* Foco (accesibilidad) */
+    --ag-color-focus-ring: var(--ag-color-blue-500);
+
+    /* Layout de tres niveles (quinta vuelta, maqueta 4a) — nivel 1: riel de
+       módulos. Superficie oliva OSCURA EN AMBOS TEMAS (mismo criterio de
+       constancia que --ag-color-scrim*): el riel es chrome de marca, no
+       sigue al tema. Contrastes sobre olive-1000/olive-900 en §1.3. */
+    --ag-color-bg-rail: var(--ag-color-olive-1000);
+    --ag-color-bg-rail-active: var(--ag-color-olive-900);
+    --ag-color-text-rail: var(--ag-color-olive-300);
+    --ag-color-text-rail-active: var(--ag-color-green-200);
+
+    /* Tarjetas y tablas del panel (quinta vuelta). La tarjeta tiene borde
+       propio más suave que --ag-color-border (que queda para el chrome);
+       la cabecera de tabla y el borde de fila son todavía más tenues. */
+    --ag-color-surface-card: var(--ag-color-sand-50);
+    --ag-color-border-card: var(--ag-color-sand-400);
+    --ag-color-bg-table-head: var(--ag-color-sand-100);
+    --ag-color-border-row: color-mix(in srgb, var(--ag-color-sand-300) 65%, var(--ag-color-sand-50) 35%);
+    --ag-color-bg-row-hover: var(--ag-color-sand-100);
+
+    /* Inputs/píldoras del chrome (buscador del header, chips de filtro
+       inactivos) — arena de relleno, ni blanco ni el fondo del panel. */
+    --ag-color-bg-input-chrome: var(--ag-color-sand-200);
+
+    /* Borde tenue verde (chip de campaña, píldora de filtro activa, tarjeta
+       de rol seleccionada usa --ag-color-primary directo). */
+    --ag-color-primary-border-subtle: color-mix(in srgb, var(--ag-color-green-500) 30%, var(--ag-color-sand-50) 70%);
+
+    /* Borde tenue ámbar (badge de pendientes de menu-item) — mismo criterio
+       que --ag-color-primary-border-subtle: sistema_diseno_panel.md §8
+       regla 3/4, un chip sobre una superficie de chrome ya tintada necesita
+       borde propio del mismo tono que su texto para no leerse plano. */
+    --ag-color-accent-border-subtle: color-mix(in srgb, var(--ag-color-amber-500) 30%, var(--ag-color-sand-50) 70%);
+
+    /* Barras de progreso de "Pausas por causa": pista + el "piedra" de la
+       barra sin causa asignada (las demás barras reutilizan accent /
+       info-strong / danger / text-faint — no-texto, exigencia 3:1). */
+    --ag-color-track: var(--ag-color-sand-300);
+    --ag-color-bar-unassigned: var(--ag-color-sand-700);
+
+    /* Tramos de la barra de avance del informe de contratos (HU-52, tarea
+       75, espec §9.1, invariante 11 — ningún color hardcodeado): un token
+       por tramo, cada uno alias de un estado semántico ya verificado AA en
+       este tema, para no inventar una rampa de color nueva. El quinto tramo
+       (más de 100%, se puede aplicar de más) usa primary-emphasis en vez de
+       reciclar success: a simple vista tiene que leerse distinto de
+       "cumplido exacto", no como el mismo verde un poco más oscuro —
+       primary-emphasis y no primary a secas por consistencia con el token
+       de tema oscuro (ver theme-dark.css), donde primary crudo sí falla
+       contraste contra el track. */
+    --ag-color-avance-bajo: var(--ag-color-danger);
+    --ag-color-avance-medio: var(--ag-color-warning);
+    --ag-color-avance-alto: var(--ag-color-info);
+    --ag-color-avance-cumplido: var(--ag-color-success);
+    --ag-color-avance-excedido: var(--ag-color-primary-emphasis);
+
+    /* Overlay/texto sobre foto de marca (auth-layout, HU-02) — DELIBERADAMENTE
+       constantes entre temas, mismo criterio que --ag-color-primary(-contrast):
+       la fotografía (drone-hero.jpg) no reasigna por tema, así que el scrim y
+       el texto que van encima tampoco pueden hacerlo. Nunca usar
+       --ag-color-text-inverse acá: en tema oscuro resuelve a gris-900 (casi
+       negro), invisible sobre una foto ya oscurecida por el scrim. Ver
+       verificación de contraste en sistema_diseno_panel.md §1.3. */
+    --ag-color-scrim-strong: rgba(0, 0, 0, 0.82);
+    --ag-color-scrim: rgba(0, 0, 0, 0.68);
+    --ag-color-text-on-scrim: var(--ag-color-gray-0);
+
+    /* Superficie de auth-layout (HU-02, rediseño login, tercera vuelta;
+       retocado en la cuarta vuelta) — tokens EXCLUSIVOS del panel de
+       formulario, deliberadamente separados de --ag-color-bg/-bg-elevated:
+       esta vuelta quita la tarjeta blanca elevada de las anteriores y pinta
+       el panel completo con un tono propio, a propósito distinto del gris
+       neutro que usa el resto del panel. Si el panel reasignara
+       --ag-color-bg-elevated en cambio, cualquier otra tarjeta genérica del
+       sistema (que sí usa ese token) heredaría sin querer el tinte — de ahí
+       un token nuevo, no una reasignación del existente.
+
+       Cuarta vuelta (ajuste puntual, mismo criterio de color-mix() sobre
+       primitivos, ningún hex nuevo): el usuario pidió "más blanco crema"
+       manteniendo el guiño anaranjado — se bajó el peso de
+       --ag-color-amber-100 (45%→30%) y se cambió la base de mezcla de
+       --ag-color-gray-50 a --ag-color-gray-0 (blanco puro), para que el
+       resultado se lea "crema" en vez de "ocre pastel"/"gris tibio". El
+       contraste de texto MEJORA con este cambio (el fondo es más luminoso
+       que antes) — ver tabla actualizada en sistema_diseno_panel.md §1.3.
+
+       Quinta vuelta: este tono dejó de ser exclusivo del panel de login —
+       por pedido explícito (28/8/2026) también es el FONDO del contenido de
+       todo el panel admin (--ag-color-bg lo referencia arriba). La
+       advertencia original de "no reasignar --ag-color-bg-elevated" sigue
+       vigente: las tarjetas usan su propio --ag-color-surface-card. */
+    --ag-color-bg-auth: color-mix(in srgb, var(--ag-color-amber-100) 30%, var(--ag-color-gray-0) 70%);
+
+    /* Texto muted EXCLUSIVO de superficies montadas sobre --ag-color-bg-auth
+       (labels uppercase, subtítulos, pie mono del formulario de login).
+       --ag-color-text-muted (gris-600) ya está al límite de AA (~4.7:1)
+       contra blanco puro — ver §1.3 — y contra el tono tintado de
+       --ag-color-bg-auth el ratio cae por debajo de 4.5:1 (verificado:
+       ~4.3:1 con el tono anterior, falla). La corrección NO es oscurecer el
+       token global --ag-color-text-muted (afectaría todo el panel, que hoy
+       sí pasa AA sobre blanco/gris-50 sin margen para perder) sino declarar
+       esta variante propia de la superficie auth: gris-700 (más oscuro que
+       el gris-600 de --ag-color-text-muted) da ~7.9:1 contra el
+       --ag-color-bg-auth claro reajustado en la cuarta vuelta (era ~7.5:1
+       con el tono anterior, más oscuro — AAA en ambos casos). */
+    --ag-color-text-muted-auth: var(--ag-color-gray-700);
+
+    /* Ámbar seguro como TEXTO de enlace ("¿Olvidaste tu contraseña?" del
+       login). Distinto de --ag-color-accent-emphasis: ese token resuelve a
+       ámbar-700 en claro y ya está documentado como no apto para texto
+       (~3.1:1 con blanco, fila de arriba en §1.3) — sobre el nuevo
+       --ag-color-bg-auth (más claro que blanco) seguiría fallando. Usa el
+       primitivo --ag-color-amber-800 (ver primitives/brand.css) en vez de
+       -900 para no perder la identidad de "ámbar" como marrón oscuro.
+       Verificado ~5.2:1 contra --ag-color-bg-auth claro reajustado en la
+       cuarta vuelta (era ~4.9:1 con el tono anterior — pasa AA en ambos
+       casos, con más margen ahora por ser el fondo más claro).
+       El link verde ("Volver al ingreso", estado de recuperación) NO
+       necesita un token equivalente: reutiliza --ag-color-primary-emphasis
+       (verde-700 en claro), ~5.2:1 contra este mismo fondo (era ~4.9:1) —
+       pasa AA sin declarar nada nuevo. Tampoco hace falta token para el
+       subrayado ámbar del tab activo (decorativo, no-texto): reutiliza
+       --ag-color-accent directamente, porque el contraste no-texto exigido
+       es 3:1, que --ag-color-accent ya cumple de sobra contra
+       --ag-color-bg-auth. */
+    --ag-color-accent-link: var(--ag-color-amber-800);
+
+    /* Editorial de auth-layout: wordmark bicromía "COM" + chip de ícono,
+       constantes entre temas (igual que --ag-color-scrim*), porque la foto
+       no cambia por tema — así el branding tipográfico y el ícono quedan con
+       identidad visual fija. */
+    --ag-color-wordmark-accent: var(--ag-color-amber-300);
+    --ag-color-chip-icon: var(--ag-color-green-300);
+
+    /* Borde y texto translúcidos del chip/subheadline montados sobre la foto
+       (CLAUDE.md invariante 11: ningún color hardcodeado en un componente —
+       estos dos NO pueden vivir como rgba() sueltos en auth-layout.css).
+       Mismo criterio "constante entre temas" que el resto de este bloque:
+       blanco es blanco encima de la foto en los dos temas, la opacidad no
+       depende de [data-bs-theme]. */
+    --ag-color-chip-border: rgba(255, 255, 255, 0.22);
+    --ag-color-chip-text: rgba(255, 255, 255, 0.86);
+    --ag-color-text-on-scrim-muted: rgba(255, 255, 255, 0.8);
+
+    /* Elevación de una tarjeta SELECCIONADA (hoy: role-card en el selector de
+       rol, maqueta 5c) — halo del verde bosque de marca. Vive en el tema y no
+       en primitives/base.css junto a --ag-shadow-sm/-md/-lg porque es la única
+       sombra teñida del sistema: las tres genéricas son negro neutro y no
+       necesitan reasignar por tema, esta sí. Antes era un rgba() suelto dentro
+       de role-card.css, que es exactamente lo que prohíbe la invariante 11 de
+       CLAUDE.md; el color resultante es idéntico (green-700 = #1e7a34 al 14%). */
+    --ag-shadow-selected: 0 4px 14px color-mix(in srgb, var(--ag-color-green-700) 14%, transparent);
+
+    /* Bootstrap 5 hereda la marca reasignando sus propias variables nativas
+       — así `.btn-primary`, `.alert-success`, el sidebar de AdminLTE, etc.
+       no necesitan overrides por componente ni por tema. */
+    /* Fuente de interfaz explícita (quinta vuelta): sin esto, el body cae
+       al stack del sistema de Bootstrap — los subtítulos/textos de interfaz
+       deben ser SIEMPRE IBM Plex Sans (tres familias, una por contexto). */
+    --bs-body-font-family: var(--ag-font-family-base);
+    --bs-body-bg: var(--ag-color-bg);
+    --bs-body-color: var(--ag-color-text);
+    --bs-border-color: var(--ag-color-border);
+    --bs-primary: var(--ag-color-primary);
+    --bs-primary-rgb: 30, 122, 52;
+    --bs-secondary: var(--ag-color-accent);
+    --bs-secondary-rgb: 232, 114, 12;
+    --bs-success: var(--ag-color-success);
+    --bs-danger: var(--ag-color-danger);
+    --bs-warning: var(--ag-color-warning);
+    --bs-info: var(--ag-color-info);
+}

@@ -1,0 +1,29 @@
+/*
+ * Átomo: logo (resources/views/components/atoms/logo.blade.php)
+ * Un único `<img>` (`public/logo.png`, PNG con canal alfa) — ya no hay
+ * bifurcación por `[data-bs-theme]`: la limitación que motivaba dos archivos
+ * (JPEG con fondo sólido horneado blanco/dark, sin transparencia) ya no
+ * existe, así que tampoco hace falta el CSS que alternaba `display: none`
+ * entre una imagen y otra.
+ */
+
+.ag-logo {
+    display: inline-flex;
+}
+
+.ag-logo__image {
+    height: var(--ag-logo-height, 2.5rem);
+    width: auto;
+}
+
+.ag-logo--sm {
+    --ag-logo-height: 1.75rem;
+}
+
+.ag-logo--md {
+    --ag-logo-height: 2.5rem;
+}
+
+.ag-logo--lg {
+    --ag-logo-height: 4rem;
+}

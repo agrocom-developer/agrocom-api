@@ -1,0 +1,159 @@
+/*
+ * Template: portal-layout (resources/views/components/templates/portal-layout.blade.php)
+ * Header simple de una fila (marca + nav de 3 links fijos + tema + cerrar
+ * sesión) — nunca el layout de tres niveles de `panel-layout.css`: acá no
+ * hay riel de módulos ni sidebar que dibujar (una cuenta de portal no tiene
+ * `sec_menu`).
+ */
+
+.ag-portal {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+    width: 100%;
+    background: var(--ag-color-bg);
+}
+
+.ag-portal__header {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-5);
+    padding: 0 var(--ag-space-5);
+    height: 62px;
+    background: var(--ag-color-bg-chrome);
+    border-bottom: 1px solid var(--ag-color-border);
+}
+
+.ag-portal__brand {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+}
+
+.ag-portal__brand-label {
+    font-family: var(--ag-font-family-display);
+    font-optical-sizing: auto;
+    font-weight: var(--ag-font-weight-regular);
+    font-size: var(--ag-font-size-base);
+    color: var(--ag-color-text);
+    white-space: nowrap;
+}
+
+.ag-portal__nav {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+}
+
+.ag-portal__nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-2) var(--ag-space-3);
+    border-radius: var(--ag-radius-md);
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+    color: var(--ag-color-text-muted);
+    text-decoration: none;
+    white-space: nowrap;
+    transition:
+        background-color var(--ag-transition-fast),
+        color var(--ag-transition-fast);
+}
+
+.ag-portal__nav-link:hover {
+    background: var(--ag-color-bg-row-hover);
+    color: var(--ag-color-text);
+}
+
+.ag-portal__nav-link.is-active {
+    background: var(--ag-color-primary-subtle);
+    color: var(--ag-color-primary-emphasis);
+}
+
+.ag-portal__actions {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+}
+
+.ag-portal__user {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-2) var(--ag-space-3);
+    border-radius: var(--ag-radius-md);
+    font-size: 0.78rem;
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-color-text);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background-color var(--ag-transition-fast);
+}
+
+.ag-portal__user:hover {
+    background: var(--ag-color-neutral-subtle);
+    color: var(--ag-color-text);
+}
+
+.ag-portal__logout {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    border: none;
+    background: transparent;
+    padding: var(--ag-space-2) var(--ag-space-3);
+    border-radius: var(--ag-radius-md);
+    cursor: pointer;
+    font-family: var(--ag-font-family-base);
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text-muted);
+    transition:
+        background-color var(--ag-transition-fast),
+        color var(--ag-transition-fast);
+}
+
+.ag-portal__logout:hover {
+    background: var(--ag-color-danger-subtle);
+    color: var(--ag-color-danger);
+}
+
+.ag-portal__content {
+    flex: 1;
+    padding: var(--ag-space-5) calc(var(--ag-space-5) + var(--ag-space-1));
+}
+
+.ag-portal__footer {
+    flex: 0 0 auto;
+    /* Dos bloques desde el 9/9/2026: copyright y, a la derecha, la zona
+       horaria de lectura que antes era un selector en el header. */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-3) calc(var(--ag-space-5) + var(--ag-space-1));
+    border-top: 1px solid var(--ag-color-border);
+    background: var(--ag-color-bg-chrome);
+    font-family: var(--ag-font-family-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.08em;
+    color: var(--ag-color-text-muted);
+}
+
+@media (max-width: 767.98px) {
+    .ag-portal__header {
+        flex-wrap: wrap;
+        height: auto;
+        padding: var(--ag-space-3) var(--ag-space-4);
+    }
+
+    .ag-portal__nav {
+        order: 3;
+        flex-basis: 100%;
+        overflow-x: auto;
+    }
+}

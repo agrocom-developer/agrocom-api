@@ -1,0 +1,39 @@
+/*
+ * Molecule: section-head (resources/views/components/molecules/section-head.blade.php)
+ * Título de sector (sexta vuelta parte 2): barra de 4px + rótulo uppercase
+ * chico + contador mono opcional. Traducido de docs/ganadosoft-dashboard.html
+ * §2.1 — la paleta original se descarta, solo se toma la anatomía.
+ */
+
+.ag-section-head {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    margin-bottom: var(--ag-space-3);
+}
+
+.ag-section-head__bar {
+    width: 4px;
+    height: 16px;
+    border-radius: 3px;
+    background: var(--ag-color-primary);
+    flex-shrink: 0;
+}
+
+.ag-section-head__title {
+    margin: 0;
+    font-family: var(--ag-font-family-base);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-bold);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-section-head__count {
+    margin-left: auto;
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-faint);
+    white-space: nowrap;
+}

@@ -1,0 +1,219 @@
+/*
+ * Átomo: input (resources/views/components/atoms/input.blade.php)
+ * Base: campo de texto Material (contenedor "outlined", radio de borde
+ * mayor al default de Bootstrap) montado sobre utilidades de layout propias;
+ * el `<input>` nativo no lleva ninguna clase de Bootstrap para no heredar
+ * su estética de formulario, que es la que ADR 0002 pide reemplazar.
+ *
+ * Dos variantes, un solo Blade (prop `variant`, ver el componente): las
+ * reglas de arriba son la variante por defecto ("boxed" — caja con borde,
+ * radio, fondo propios); más abajo, `.ag-input--line` pisa lo necesario
+ * para la variante "line" (línea editorial, rediseño de login HU-02
+ * tercera vuelta) sin duplicar ninguna regla compartida (label, help,
+ * error, toggle de password quedan iguales salvo lo que `.ag-input--line`
+ * override-ea explícitamente).
+ */
+
+.ag-input {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-1);
+    margin-bottom: var(--ag-space-4);
+    font-family: var(--ag-font-family-base);
+}
+
+.ag-input__label {
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+    color: var(--ag-color-text);
+}
+
+.ag-input__required {
+    color: var(--ag-color-danger);
+    margin-inline-start: var(--ag-space-1);
+}
+
+.ag-input__control {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background-color: var(--ag-color-bg-elevated);
+    border: 1px solid var(--ag-color-border-strong);
+    border-radius: var(--ag-radius-md);
+    transition:
+        border-color var(--ag-transition-fast),
+        box-shadow var(--ag-transition-fast);
+}
+
+.ag-input__control:focus-within {
+    border-color: var(--ag-color-primary);
+    box-shadow: 0 0 0 3px var(--ag-color-primary-subtle);
+}
+
+/* Campo de LECTURA (`readonly`): el dato se muestra y se puede copiar, pero
+   no se edita acá. Tiene que verse distinto de un campo editable o miente
+   —el usuario tipea y no pasa nada—, y distinto de un `disabled`, que además
+   no se puede enfocar ni leer con lector de pantalla. Primer uso: el nombre
+   en `/panel/perfil`, que desde el 9/9/2026 lo cambia Seguridad › Usuarios.
+   El `:has()` va sobre el control para teñir la caja entera, no solo el
+   texto. */
+.ag-input__control:has(.ag-input__field[readonly]) {
+    background-color: var(--ag-color-bg-chrome);
+    border-style: dashed;
+}
+
+.ag-input__control:has(.ag-input__field[readonly]):focus-within {
+    border-color: var(--ag-color-border-strong);
+    box-shadow: none;
+}
+
+.ag-input__field[readonly] {
+    color: var(--ag-color-text-muted);
+    cursor: default;
+}
+
+.ag-input__control--error {
+    border-color: var(--ag-color-danger);
+}
+
+.ag-input__control--error:focus-within {
+    box-shadow: 0 0 0 3px var(--ag-color-danger-subtle);
+}
+
+.ag-input__icon {
+    margin-inline-start: var(--ag-space-3);
+    color: var(--ag-color-text-muted);
+    /* Un poco más grande que el tamaño que ya aplica `size="sm"` del átomo
+       `icon` (--ag-font-size-sm, 0.875rem, vía `.ag-icon--sm`) — override
+       LOCAL a este componente, nunca se toca `--ag-icon--sm`/`.ag-icon--sm`
+       en icon.css (lo usan sidebar/topbar/menú/botones en todo el panel).
+       `--ag-font-size-base` (1rem) ya es un token existente, no un valor
+       nuevo (cuarta vuelta, pedido puntual). Misma especificidad que
+       `.ag-icon--sm` (una clase); gana por orden de import (input.css se
+       importa después de icon.css en components/index.css). */
+    font-size: var(--ag-font-size-base);
+}
+
+.ag-input__field {
+    flex: 1;
+    width: 100%;
+    border: none;
+    background: transparent;
+    color: var(--ag-color-text);
+    font-size: var(--ag-font-size-base);
+    font-family: inherit;
+    padding: var(--ag-space-3) var(--ag-space-4);
+    outline: none;
+}
+
+.ag-input__field::placeholder {
+    color: var(--ag-color-text-muted);
+}
+
+/* Oculta los controles nativos que algunos navegadores (Chrome/Edge/Safari)
+   inyectan automáticamente en `<input type="password">` (el "ojo" de
+   revelar contraseña, el botón de limpiar de Edge) — sin esto se veían DOS
+   glifos de ojo superpuestos: el nativo del navegador y `.ag-input__toggle`
+   (nuestro control custom, que sigue siendo el único visible/funcional
+   después de este fix). Bug real reportado por el usuario, cuarta vuelta. */
+.ag-input__field[type='password']::-ms-reveal,
+.ag-input__field[type='password']::-ms-clear {
+    display: none;
+}
+
+.ag-input__field::-webkit-textfield-decoration-container {
+    visibility: hidden;
+}
+
+.ag-input__toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: var(--ag-color-text-muted);
+    padding: var(--ag-space-2);
+    margin-inline-end: var(--ag-space-2);
+    cursor: pointer;
+    border-radius: var(--ag-radius-pill);
+}
+
+.ag-input__toggle:hover {
+    color: var(--ag-color-primary);
+    background-color: var(--ag-color-primary-subtle);
+}
+
+.ag-input__toggle:focus-visible {
+    outline: 2px solid var(--ag-color-focus-ring);
+    outline-offset: 2px;
+}
+
+/* Mismo criterio que `.ag-input__icon` de arriba: ícono del botón
+   mostrar/ocultar contraseña un poco más grande que el `size="sm"` por
+   defecto, override local sin tocar `.ag-icon--sm` global. */
+.ag-input__toggle .ag-icon {
+    font-size: var(--ag-font-size-base);
+}
+
+.ag-input__help {
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+    margin: 0;
+}
+
+.ag-input__error {
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-danger);
+    margin: 0;
+}
+
+/*
+ * Variante "line" (`ag-input--line`, prop `variant="line"` del átomo,
+ * rediseño de login HU-02 tercera vuelta): input de línea editorial, sin
+ * caja — solo `border-bottom`. Mismo marcado que la variante "boxed" de
+ * arriba (mismo Blade, sin duplicar), solo se pisan las reglas visuales del
+ * contenedor/campo/label con selectores descendientes de `.ag-input--line`.
+ * El color muted específico de la superficie de auth (--ag-color-text-muted-auth)
+ * es intencionalmente responsabilidad de quien consuma este átomo (el
+ * organism/template de login), no de esta clase: este átomo es compartido
+ * por todo el panel y no conoce "auth" como concepto.
+ */
+.ag-input--line .ag-input__control {
+    border: none;
+    background: transparent;
+    border-radius: 0;
+    border-bottom: 1.5px solid var(--ag-color-border-strong);
+    padding-bottom: var(--ag-space-2);
+}
+
+.ag-input--line .ag-input__control:focus-within {
+    border-bottom-color: var(--ag-color-primary);
+    border-bottom-width: 2px;
+    /* Mismo criterio de foco visible que la variante boxed (que usa
+       box-shadow alrededor de toda la caja), adaptado a línea: un
+       box-shadow sutil solo debajo del control, para no perder la señal de
+       foco por accesibilidad aunque acá no haya una caja completa que
+       resaltar. */
+    box-shadow: 0 1px 0 0 var(--ag-color-primary-subtle);
+}
+
+.ag-input--line .ag-input__control--error {
+    border-bottom-color: var(--ag-color-danger);
+}
+
+.ag-input--line .ag-input__label {
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.ag-input--line .ag-input__field {
+    padding: 0;
+    font-size: 1rem;
+}
+
+.ag-input--line .ag-input__icon {
+    margin-inline-start: 0;
+    margin-inline-end: var(--ag-space-2);
+}

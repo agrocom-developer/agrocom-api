@@ -1,0 +1,161 @@
+/*
+ * Pages: anticipos/index, anticipos/create
+ * (app/Dominios/Finanzas/Infraestructura/Http/Views/pages/anticipos/) —
+ * HU-29, tarea 41: anticipos con tope validado. Mismo molde de grid que
+ * bases.css/devengos.css, con cinco columnas en el listado (persona, fecha,
+ * monto, motivo, acciones) y la caja de "consultar disponible" propia de la
+ * pantalla de alta. Todo color y medida por token (CLAUDE.md invariante 11).
+ */
+
+.ag-anticipos {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+/* Listado (index) */
+
+
+.ag-anticipos__filtros .ag-input,
+.ag-anticipos__filtros .ag-select,
+.ag-anticipos__filtros .ag-date {
+    min-width: 14rem;
+}
+
+
+.ag-anticipos__tabla {
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+    overflow: hidden;
+}
+
+.ag-anticipos__head,
+.ag-anticipos__fila {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr 1fr 1.6fr auto;
+    gap: var(--ag-space-4);
+    align-items: center;
+    padding: var(--ag-space-3) var(--ag-space-4);
+}
+
+.ag-anticipos__head {
+    background-color: var(--ag-color-bg-table-head);
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ag-anticipos__fila {
+    border-top: 1px solid var(--ag-color-border-row);
+    color: var(--ag-color-text);
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-anticipos__fila:hover {
+    background-color: var(--ag-color-bg-row-hover);
+}
+
+.ag-anticipos__persona {
+    font-weight: var(--ag-font-weight-medium);
+}
+
+.ag-anticipos__cifra {
+    font-family: var(--ag-font-family-mono);
+}
+
+.ag-anticipos__acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--ag-space-2);
+}
+
+.ag-anticipos__paginacion {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ag-space-4);
+}
+
+.ag-anticipos__paginacion-info {
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-sm);
+}
+
+@media (max-width: 992px) {
+    .ag-anticipos__head {
+        display: none;
+    }
+
+    .ag-anticipos__fila {
+        grid-template-columns: 1fr;
+        gap: var(--ag-space-1);
+    }
+
+    .ag-anticipos__acciones {
+        justify-content: flex-start;
+        margin-top: var(--ag-space-2);
+    }
+}
+
+/* Formulario (create) */
+
+.ag-anticipos-form-page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+.ag-anticipos-form-page__consulta {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-3);
+}
+
+.ag-anticipos-consulta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--ag-space-4);
+    padding: var(--ag-space-4);
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+}
+
+.ag-anticipos-consulta__texto {
+    flex: 1 1 16rem;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-1);
+}
+
+.ag-anticipos-consulta__titulo {
+    font-weight: var(--ag-font-weight-medium);
+    color: var(--ag-color-text);
+    margin: 0;
+}
+
+.ag-anticipos-consulta__ayuda {
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text-muted);
+    margin: 0;
+}
+
+/* Fila de controles en línea, no formulario apilado: el margen inferior
+   del átomo empujaría el botón por debajo del campo (mismo motivo que
+   documenta components/filter-bar.css). */
+.ag-anticipos-consulta .ag-input,
+.ag-anticipos-consulta .ag-select,
+.ag-anticipos-consulta .ag-date {
+    min-width: 16rem;
+    margin-bottom: 0;
+}
+
+.ag-anticipos-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}

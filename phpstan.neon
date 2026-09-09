@@ -1,0 +1,13 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    paths:
+        - app
+
+    level: 6
+
+    # Corrección de tipos de una dependencia, no un baseline: ver el
+    # encabezado del propio stub para el porqué.
+    stubFiles:
+        - phpstan/sanctum-modelo-token.stub

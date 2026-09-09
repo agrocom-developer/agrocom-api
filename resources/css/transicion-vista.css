@@ -1,0 +1,36 @@
+/*
+ * Transición nativa entre navegaciones de documento completo — hoja APARTE
+ * del bundle principal, cargada solo por las pantallas que la quieren.
+ *
+ * Sirve al único salto que la pidió: login → selección de rol
+ * (`window.location.href` en resources/js/pages/login.js). Un fundido
+ * cruzado dado por el navegador entre el snapshot de la página saliente y
+ * la entrante, sin JS ni `body.classList` a mano.
+ *
+ * `@view-transition` es una regla de DOCUMENTO: no se puede acotar por
+ * selector, así que mientras vivió en `app.css` (el bundle que cargan todas
+ * las pantallas) aplicaba a TODA navegación same-origin — incluido cada
+ * clic del menú del panel, que no es "el mismo flujo" y no la pidió nunca.
+ * Ahí el fundido sostenía ~250 ms en pantalla el estado a medio cargar de
+ * la página entrante, y volvía bien visible el salto de layout de los
+ * íconos (ver el comentario de `components/icon.css`). Acotarla a las
+ * pantallas de autenticación es lo que la deja donde se quería.
+ *
+ * Las dos páginas del salto tienen que declararla: la que sale y la que
+ * entra. Hoy la incluyen `pages/login.blade.php` y, vía la prop
+ * `transicion-de-vista` de `templates/panel-shell`, `pages/seleccionar-rol.blade.php`.
+ *
+ * Degrada sin romper nada en navegadores sin soporte (mejora progresiva).
+ */
+
+@view-transition {
+    navigation: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    ::view-transition-group(*),
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+        animation-duration: 0.01ms !important;
+    }
+}

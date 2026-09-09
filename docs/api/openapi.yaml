@@ -1,0 +1,1509 @@
+openapi: 3.0.0
+info:
+  title: 'Agrocom API'
+  description: 'API del Sistema de Gestión de Operaciones de Fumigación de Agrocom SRL. Sirve a las apps de campo (`agrocom-field`) y al portal del cliente; el spec generado desde el código es el contrato de la API (ADR 0014). Dinero y hectáreas viajan como string decimal, nunca como número de punto flotante.'
+  version: 0.1.0
+servers:
+  -
+    url: /
+    description: 'Servidor actual — la URL base la define el entorno (local, staging, producción).'
+paths:
+  /api/version:
+    get:
+      tags:
+        - Distribucion
+      summary: 'Versión mínima y vigente del APK'
+      description: 'Versión mínima aceptada y versión vigente del APK, con la URL de su release en agrocom-field (GitHub Releases) — el binario no se hospeda en este servidor. Sin autenticación: la app todavía no tiene ningún token emitido cuando la consulta. Con la invariante de negocio "una sola versión autorizada a la vez" (HU-20), hoy `minima` y `vigente` son la misma versión — el contrato ya distingue ambas claves para el día que una historia futura las separe.'
+      operationId: obtenerVersionVigente
+      responses:
+        200:
+          description: 'Ambas claves son `null` si el dueño todavía no autorizó ninguna versión.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - minima
+                  - vigente
+                properties:
+                  minima:
+                    oneOf:
+                      -
+                        $ref: '#/components/schemas/VersionApk'
+                    nullable: true
+                  vigente:
+                    oneOf:
+                      -
+                        $ref: '#/components/schemas/VersionApk'
+                    nullable: true
+                type: object
+  '/api/trabajos/{uuid_cliente}/acta':
+    post:
+      tags:
+        - Operaciones
+      summary: 'Genera el acta de conformidad de un trabajo'
+      description: 'Genera el acta de conformidad de un trabajo `cerrado` con todas sus sesiones vigentes `validado` (espec §4.3/§17). Idempotente por trabajo, no por `uuid_cliente`: un segundo pedido sobre un trabajo que ya tiene acta devuelve la MISMA fila y el MISMO PDF, sin regenerar nada. `estado: rechazado` cuando el trabajo no cumple las condiciones — nunca 422 de negocio.'
+      operationId: generarActaTrabajo
+      parameters:
+        -
+          name: uuid_cliente
+          in: path
+          description: 'uuid_cliente del trabajo (el que trajo su apertura).'
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - uuid_cliente
+              properties:
+                uuid_cliente:
+                  description: 'uuid_cliente generado por el dispositivo para el ACTA (no el del trabajo).'
+                  type: string
+                  example: a1b2c3d4-0000-4000-8000-000000000020
+              type: object
+      responses:
+        200:
+          description: 'Acta generada, ya existente, o rechazo con motivo.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - estado
+                properties:
+                  id:
+                    type: integer
+                    nullable: true
+                  uuid_cliente:
+                    type: string
+                    nullable: true
+                  trabajo_id:
+                    type: integer
+                    nullable: true
+                  estado:
+                    type: string
+                    enum:
+                      - pendiente
+                      - firmada
+                      - rechazado
+                  hectareas_conformadas:
+                    type: string
+                    nullable: true
+                  pdf_url:
+                    type: string
+                    nullable: true
+                  motivo:
+                    description: 'Presente solo cuando `estado` es `rechazado`.'
+                    type: string
+                    nullable: true
+                type: object
+        401:
+          description: 'Token ausente, revocado o ya sin rol válido.'
+        403:
+          description: 'El token no tiene el permiso operaciones.acta.generar.'
+        404:
+          description: 'El trabajo referenciado no existe.'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/actas/{uuid_cliente}/firmar':
+    post:
+      tags:
+        - Operaciones
+      summary: 'Firma un acta de conformidad'
+      description: 'Registra la firma del agrónomo sobre un acta `pendiente`, referenciando una evidencia ya subida por `POST /api/evidencias` (tipo `firma_acta`). Reintento con la MISMA evidencia sobre un acta ya `firmada` es idempotente; con OTRA evidencia se rechaza.'
+      operationId: firmarActa
+      parameters:
+        -
+          name: uuid_cliente
+          in: path
+          description: 'uuid_cliente del acta (el que devolvió su generación).'
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - evidencia_firma_uuid_cliente
+                - firmante
+                - fecha_firma
+              properties:
+                evidencia_firma_uuid_cliente:
+                  type: string
+                  example: a1b2c3d4-0000-4000-8000-000000000030
+                firmante:
+                  description: 'Nombre del agrónomo — texto libre.'
+                  type: string
+                  example: 'Ing. Marcela Vargas'
+                fecha_firma:
+                  type: string
+                  format: date-time
+                  example: '2026-09-02T16:30:00-04:00'
+              type: object
+      responses:
+        200:
+          description: 'Acta firmada (o ya firmada con la misma evidencia), o rechazo con motivo.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - estado
+                properties:
+                  id:
+                    type: integer
+                    nullable: true
+                  uuid_cliente:
+                    type: string
+                    nullable: true
+                  estado:
+                    type: string
+                    enum:
+                      - pendiente
+                      - firmada
+                      - rechazado
+                  firmante:
+                    type: string
+                    nullable: true
+                  fecha_firma:
+                    type: string
+                    nullable: true
+                  motivo:
+                    description: 'Presente solo cuando `estado` es `rechazado`.'
+                    type: string
+                    nullable: true
+                type: object
+        401:
+          description: 'Token ausente, revocado o ya sin rol válido.'
+        403:
+          description: 'El token no tiene el permiso operaciones.acta.firmar.'
+        404:
+          description: 'El acta referenciada no existe.'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/actas/{uuid_cliente}/pdf':
+    get:
+      tags:
+        - Operaciones
+      summary: 'Descarga el PDF de un acta'
+      description: 'Descarga el PDF del acta, ya generado por `POST /api/trabajos/{uuid_cliente}/acta` — nunca lo regenera. Cualquier token de dispositivo válido puede descargarlo (misma exposición que el resto de la API de campo); no exige `operaciones.acta.generar`/`firmar`, que son de mutación.'
+      operationId: descargarActaPdf
+      parameters:
+        -
+          name: uuid_cliente
+          in: path
+          description: 'uuid_cliente del acta.'
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: 'Contenido binario del PDF.'
+          content:
+            application/pdf: []
+        401:
+          description: 'Token ausente, revocado o ya sin rol válido.'
+        404:
+          description: 'El acta no existe o todavía no tiene PDF generado.'
+      security:
+        -
+          tokenDispositivo: []
+  /api/evidencias:
+    post:
+      tags:
+        - Operaciones
+      summary: 'Sube una evidencia (multipart/form-data)'
+      description: 'Sube un archivo de evidencia (captura de RC, foto de campo, foto de incidencia, comprobante o firma de acta) y responde `aplicado`, `duplicado` (reintento del mismo `uuid_cliente`, se trata como éxito) o `rechazado` con motivo — mismo vocabulario que `POST /api/sync`, aunque este endpoint vive aparte porque su "sobre" lleva un binario. El servidor SIEMPRE recalcula el hash SHA-256 sobre el contenido recibido (es el que queda persistido); si el dispositivo declara `hash_dispositivo` (calculado al capturar, ADR 0009), se compara contra ese cálculo y se rechaza si no coincide — detecta corrupción en tránsito, sin confiar ciegamente en el valor declarado. La compresión a <300 KB y la cola de reintentos son responsabilidad de la app de campo (TE-07 lado app, repo `agrocom-field`) — este endpoint no las repite.'
+      operationId: subirEvidencia
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              required:
+                - uuid_cliente
+                - tipo
+                - fecha
+                - archivo
+              properties:
+                uuid_cliente:
+                  type: string
+                  example: a1b2c3d4-0000-4000-8000-000000000010
+                tipo:
+                  type: string
+                  example: imagen_campo
+                  enum:
+                    - captura_rc
+                    - imagen_campo
+                    - foto_incidencia
+                    - comprobante
+                    - firma_acta
+                fecha:
+                  type: string
+                  format: date-time
+                  example: '2026-09-01T10:00:00-04:00'
+                hash_dispositivo:
+                  description: 'SHA-256 calculado en el dispositivo al capturar (ADR 0009), opcional — si se declara, debe coincidir con el hash recalculado por el servidor.'
+                  type: string
+                  example: null
+                  nullable: true
+                archivo:
+                  type: string
+                  format: binary
+              type: object
+      responses:
+        200:
+          description: 'Resultado de aplicar el registro.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - uuid_cliente
+                  - estado
+                properties:
+                  uuid_cliente:
+                    type: string
+                    example: a1b2c3d4-0000-4000-8000-000000000010
+                    nullable: true
+                  estado:
+                    type: string
+                    example: aplicado
+                    enum:
+                      - aplicado
+                      - duplicado
+                      - rechazado
+                  motivo:
+                    description: 'Presente solo cuando `estado` es `rechazado`.'
+                    type: string
+                    example: 'archivo ausente o vacío'
+                type: object
+        401:
+          description: 'Token ausente, revocado o ya sin rol válido.'
+        422:
+          description: 'El archivo supera el tope de tamaño de plataforma (20 MB).'
+      security:
+        -
+          tokenDispositivo: []
+  /api/ordenes:
+    get:
+      tags:
+        - Operaciones
+      summary: 'Lista las órdenes de aplicación con filtros'
+      description: 'Listado paginado de órdenes de aplicación para la app de campo (espec §8). Exige el token del dispositivo desde HU-03: dejó de ser público. Todos los filtros se combinan por AND; si `vigentes` y `estado` se contradicen, el resultado es vacío — no hay prevalencia silenciosa entre filtros. Las órdenes borradas lógicamente nunca aparecen.'
+      operationId: listarOrdenes
+      parameters:
+        -
+          name: estado
+          in: query
+          description: 'Filtra por estado de la orden.'
+          required: false
+          schema:
+            type: string
+            enum:
+              - emitida
+              - vigente
+              - consumida
+              - vencida
+        -
+          name: lote_id
+          in: query
+          description: 'Filtra por lote (ID del módulo Comercial).'
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+        -
+          name: contrato_id
+          in: query
+          description: 'Filtra por contrato (ID del módulo Comercial).'
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+        -
+          name: nro_aplicacion
+          in: query
+          description: 'Filtra por número de aplicación dentro del contrato (1..n).'
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+        -
+          name: vigentes
+          in: query
+          description: 'Con valor verdadero devuelve solo las órdenes vigentes (atajo para la app del piloto; equivale a `estado=vigente`).'
+          required: false
+          schema:
+            type: boolean
+            default: false
+        -
+          name: per_page
+          in: query
+          description: 'Registros por página.'
+          required: false
+          schema:
+            type: integer
+            default: 15
+            maximum: 100
+            minimum: 1
+        -
+          name: page
+          in: query
+          description: 'Número de página.'
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+      responses:
+        200:
+          description: 'Listado paginado de órdenes, ordenado por fecha de emisión descendente.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - data
+                  - links
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OrdenAplicacion'
+                  links:
+                    $ref: '#/components/schemas/PaginacionLinks'
+                  meta:
+                    $ref: '#/components/schemas/PaginacionMeta'
+                type: object
+        401:
+          description: 'Token ausente, revocado o ya sin rol válido.'
+        422:
+          description: 'Algún filtro no pasó la validación (estado desconocido, per_page fuera de 1..100, etc.).'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/reportes/lote/{id}':
+    get:
+      tags:
+        - Operaciones
+      summary: 'Descarga el reporte técnico de un trabajo'
+      description: 'Descarga el reporte técnico de un trabajo, ya generado por la firma de su acta de conformidad (HU-17/HU-18) — nunca lo regenera. `404` si el trabajo no existe o todavía no tiene reporte (acta sin firmar).'
+      operationId: descargarReporteTecnico
+      parameters:
+        -
+          name: id
+          in: path
+          description: 'id del trabajo (`trabajo_id`).'
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: 'Contenido binario del PDF.'
+          content:
+            application/pdf: []
+        401:
+          description: 'Token ausente, revocado o ya sin rol válido.'
+        403:
+          description: 'El token no tiene el permiso operaciones.reporte.ver.'
+        404:
+          description: 'El trabajo no existe, o todavía no tiene reporte técnico generado.'
+      security:
+        -
+          tokenDispositivo: []
+  /api/dispositivos:
+    get:
+      tags:
+        - Seguridad
+      summary: 'Lista los dispositivos del operario autenticado'
+      description: 'Dispositivos donde el operario autenticado tiene sesión abierta. Solo los suyos: no existe forma de listar los de otro usuario desde la app de campo.'
+      operationId: listarDispositivosPropios
+      responses:
+        200:
+          description: 'Dispositivos con sesión viva, el usado más recientemente primero.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Dispositivo'
+                type: object
+        401:
+          description: 'Token ausente, revocado o ya sin rol válido.'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/dispositivos/{id}':
+    get:
+      tags:
+        - Seguridad
+      summary: 'Muestra un dispositivo del operario autenticado'
+      description: 'Un dispositivo del operario autenticado. Un id que no le pertenece devuelve 404 y no 403: un 403 confirmaría que ese dispositivo existe.'
+      operationId: verDispositivoPropio
+      parameters:
+        -
+          name: id
+          in: path
+          description: 'Identificador del dispositivo.'
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        200:
+          description: 'El dispositivo pedido.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Dispositivo'
+                type: object
+        401:
+          description: 'Token ausente, revocado o ya sin rol válido.'
+        404:
+          description: 'No existe, o es de otro usuario — indistinguibles a propósito.'
+      security:
+        -
+          tokenDispositivo: []
+  /api/auth/token:
+    post:
+      tags:
+        - Seguridad
+      summary: 'Emite el token de un dispositivo de campo'
+      description: 'Autentica al operario y emite el token con el que ese dispositivo opera sin volver a loguearse. El token no caduca por tiempo (sesión persistente offline): deja de valer cuando se lo revoca desde el panel. Reintentar desde el mismo `uuid_dispositivo` revoca el token anterior y emite uno nuevo — nunca acumula credenciales vivas. El valor en claro se devuelve UNA sola vez.'
+      operationId: emitirTokenDispositivo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - username
+                - password
+                - uuid_dispositivo
+              properties:
+                username:
+                  description: 'Login del operario (nunca un correo).'
+                  type: string
+                  example: camila.rojas
+                password:
+                  type: string
+                  format: password
+                  example: password
+                uuid_dispositivo:
+                  description: 'UUID generado en el dispositivo.'
+                  type: string
+                  format: uuid
+                  example: 6f1d0a2e-1f34-4c9f-9a8b-2b7c1d5e0f31
+                nombre_dispositivo:
+                  description: 'Nombre legible del equipo, para que el panel sepa cuál revoca.'
+                  type: string
+                  example: 'Moto G84 — piloto 2'
+                  nullable: true
+                role_id:
+                  description: 'Rol con el que se quiere operar. Opcional si el usuario tiene un único rol vivo.'
+                  type: integer
+                  example: 1
+                  nullable: true
+              type: object
+      responses:
+        201:
+          description: 'Token emitido. `token` es el único momento en que la credencial existe en claro.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - token
+                  - token_type
+                  - usuario
+                  - rol
+                  - dispositivo
+                properties:
+                  token:
+                    description: 'Credencial completa, para el header `Authorization: Bearer`.'
+                    type: string
+                    example: 12|aB3cD4...
+                  token_type:
+                    type: string
+                    example: Bearer
+                  usuario:
+                    $ref: '#/components/schemas/UsuarioCampo'
+                  rol:
+                    $ref: '#/components/schemas/RolActivo'
+                  dispositivo:
+                    $ref: '#/components/schemas/Dispositivo'
+                type: object
+        403:
+          description: 'El `role_id` pedido no está entre los roles vivos del usuario.'
+        409:
+          description: 'El usuario tiene más de un rol vivo (o ninguno) y no indicó `role_id`: hay que elegir con cuál entra. Mismo contrato que el 409 del panel.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - message
+                  - roles
+                properties:
+                  message:
+                    type: string
+                  roles:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RolActivo'
+                type: object
+        422:
+          description: 'Credenciales incorrectas, cuenta deshabilitada, o payload inválido.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+    delete:
+      tags:
+        - Seguridad
+      summary: 'Cierra la sesión del dispositivo actual'
+      description: 'Cierra la sesión de ESTE dispositivo revocando el token con el que se hizo el request. Un dispositivo nunca puede cerrar la sesión de otro: para eso está la pantalla de revocación del panel.'
+      operationId: cerrarSesionCampo
+      responses:
+        204:
+          description: 'Sesión cerrada; el token deja de valer de inmediato.'
+        401:
+          description: 'Token ausente o ya revocado.'
+      security:
+        -
+          tokenDispositivo: []
+  /api/auth/sesion:
+    get:
+      tags:
+        - Seguridad
+      summary: 'Datos de la sesión del dispositivo'
+      description: 'Quién es el operario, con qué rol opera y desde qué dispositivo. La app la consulta al reconectarse para saber si su token sigue vigente: un token revocado, una cuenta deshabilitada o un rol que le sacaron devuelven 401 acá.'
+      operationId: verSesionCampo
+      responses:
+        200:
+          description: 'Sesión vigente.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - usuario
+                  - rol
+                  - dispositivo
+                properties:
+                  usuario:
+                    $ref: '#/components/schemas/UsuarioCampo'
+                  rol:
+                    $ref: '#/components/schemas/RolActivo'
+                  dispositivo:
+                    $ref: '#/components/schemas/Dispositivo'
+                type: object
+        401:
+          description: 'Token ausente, revocado o ya sin rol válido.'
+      security:
+        -
+          tokenDispositivo: []
+  /api/sync/catalogo:
+    get:
+      tags:
+        - Sincronizacion
+      summary: 'Pull de catálogo con cursor (órdenes, lotes, personas)'
+      description: 'Baja el catálogo de órdenes vigentes, lotes y personas modificados desde la posición del cursor recibido, con paginación por cursor (`updated_at`, `id`) — nunca por número de página, para no perder ni repetir registros entre pulls. `desde` vacío o ausente trae todo lo vigente (primera sincronización). Un `desde` no decodificable se trata igual que vacío, nunca como error de validación.'
+      operationId: obtenerCatalogoSincronizacion
+      parameters:
+        -
+          name: desde
+          in: query
+          description: 'Cursor opaco devuelto por el pull anterior. Ausente o vacío en la primera sincronización.'
+          required: false
+          schema:
+            type: string
+      responses:
+        200:
+          description: 'Catálogo modificado desde el cursor, y el cursor de continuación para el próximo pull.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - ordenes
+                  - lotes
+                  - personas
+                  - cursor
+                properties:
+                  ordenes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OrdenCatalogo'
+                  lotes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LoteCatalogo'
+                  personas:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PersonaCatalogo'
+                  cursor:
+                    description: 'Cursor opaco a reenviar tal cual en `desde` en el próximo pull.'
+                    type: string
+                type: object
+        401:
+          description: 'Token ausente, revocado o ya sin rol válido.'
+      security:
+        -
+          tokenDispositivo: []
+  /api/sync:
+    post:
+      tags:
+        - Sincronizacion
+      summary: 'Push de sincronización en lote (trabajo, sesión)'
+      description: 'Push en lote de la cola offline (espec §2.1). Cada registro se procesa en su propia transacción —nunca el lote completo en una— y se responde con uno de tres estados: `aplicado`, `duplicado` (reintento del mismo `uuid_cliente` ya aplicado, se trata como éxito) o `rechazado` con motivo. El servidor agrupa por tipo y aplica siempre en el orden `trabajo`, `sesion`, `cierre_trabajo`, `cierre_sesion`, sin importar el orden del arreglo recibido, así que un registro puede referenciar otro del mismo lote aunque venga antes en el arreglo.'
+      operationId: sincronizarLote
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - registros
+              properties:
+                registros:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/RegistroSync'
+              type: object
+      responses:
+        200:
+          description: 'Resultado por registro, en el mismo orden del arreglo de entrada.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - resultados
+                properties:
+                  resultados:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ResultadoSync'
+                type: object
+        401:
+          description: 'Token ausente, revocado o ya sin rol válido.'
+        422:
+          description: 'Falta `registros`, o no es un arreglo.'
+      security:
+        -
+          tokenDispositivo: []
+components:
+  schemas:
+    PaginacionLinks:
+      title: 'Links de paginación'
+      description: 'Links de navegación de la respuesta paginada estándar de Laravel.'
+      required:
+        - first
+        - last
+        - prev
+        - next
+      properties:
+        first:
+          description: 'URL de la primera página.'
+          type: string
+          example: 'http://localhost:8000/api/ordenes?page=1'
+        last:
+          description: 'URL de la última página.'
+          type: string
+          example: 'http://localhost:8000/api/ordenes?page=3'
+        prev:
+          description: 'URL de la página anterior; null en la primera.'
+          type: string
+          example: null
+          nullable: true
+        next:
+          description: 'URL de la página siguiente; null en la última.'
+          type: string
+          example: 'http://localhost:8000/api/ordenes?page=2'
+          nullable: true
+      type: object
+    PaginacionMeta:
+      title: 'Metadatos de paginación'
+      description: 'Metadatos de la respuesta paginada estándar de Laravel.'
+      required:
+        - current_page
+        - from
+        - last_page
+        - links
+        - path
+        - per_page
+        - to
+        - total
+      properties:
+        current_page:
+          description: 'Página actual.'
+          type: integer
+          example: 1
+        from:
+          description: 'Posición del primer registro de la página; null si está vacía.'
+          type: integer
+          example: 1
+          nullable: true
+        last_page:
+          description: 'Última página disponible.'
+          type: integer
+          example: 3
+        links:
+          description: 'Elementos del paginador para renderizar la navegación.'
+          type: array
+          items:
+            required:
+              - url
+              - label
+              - page
+              - active
+            properties:
+              url:
+                type: string
+                example: 'http://localhost:8000/api/ordenes?page=1'
+                nullable: true
+              label:
+                type: string
+                example: '1'
+              page:
+                type: integer
+                example: 1
+                nullable: true
+              active:
+                type: boolean
+                example: true
+            type: object
+        path:
+          description: 'URL base del listado, sin query string.'
+          type: string
+          example: 'http://localhost:8000/api/ordenes'
+          nullable: true
+        per_page:
+          description: 'Registros por página.'
+          type: integer
+          example: 15
+        to:
+          description: 'Posición del último registro de la página; null si está vacía.'
+          type: integer
+          example: 15
+          nullable: true
+        total:
+          description: 'Total de registros que matchean los filtros.'
+          type: integer
+          example: 42
+      type: object
+    ErrorValidacion:
+      title: 'Error de validación'
+      description: 'Respuesta 422 estándar de Laravel: un mensaje general y los mensajes por campo.'
+      required:
+        - message
+        - errors
+      properties:
+        message:
+          description: 'Mensaje general del primer error.'
+          type: string
+          example: 'El valor seleccionado para estado no es válido.'
+        errors:
+          description: 'Mensajes de validación agrupados por campo.'
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+      type: object
+    VersionApk:
+      title: 'Versión del APK'
+      description: 'Versión autorizada del APK de agrocom-field, con la URL de su release (HU-20).'
+      required:
+        - version
+        - version_code
+        - url_descarga
+      properties:
+        version:
+          description: 'Versión SemVer.'
+          type: string
+          example: 1.4.2
+        version_code:
+          description: 'Código de versión de Android.'
+          type: integer
+          example: 14002
+        url_descarga:
+          description: 'URL del release del `.apk` publicado en agrocom-field (GitHub Releases).'
+          type: string
+          format: uri
+      type: object
+    OrdenAplicacion:
+      title: 'Orden de aplicación'
+      description: 'Orden de aplicación emitida por el cliente para un lote (espec §4.3). Los valores DECIMAL (dosis, límites climáticos y de vuelo) viajan como string. Los límites en null heredan del contrato o del parámetro por defecto del sistema (RF-60).'
+      required:
+        - id
+        - contrato_id
+        - lote_id
+        - nro_aplicacion
+        - litros_ha
+        - humedad_min_pct
+        - viento_max_kmh
+        - temperatura_max_c
+        - humedad_max_pct
+        - velocidad_max_kmh
+        - altura_vuelo_m
+        - velocidad_vuelo_kmh
+        - ancho_pasada_m
+        - observaciones
+        - emitida_por_contacto_id
+        - fecha_emision
+        - estado
+        - created_at
+        - updated_at
+      properties:
+        id:
+          description: 'Identificador de la orden.'
+          type: integer
+          example: 1
+        contrato_id:
+          description: 'Contrato al que pertenece la orden (módulo Comercial, solo ID).'
+          type: integer
+          example: 1
+        lote_id:
+          description: 'Lote sobre el que se aplica (módulo Comercial, solo ID).'
+          type: integer
+          example: 3
+        nro_aplicacion:
+          description: 'Número de aplicación dentro del contrato (1..n).'
+          type: integer
+          example: 1
+        litros_ha:
+          description: 'Dosis en litros por hectárea. DECIMAL como string.'
+          type: string
+          example: '10.00'
+        humedad_min_pct:
+          description: 'Humedad relativa mínima para aplicar (%). DECIMAL como string; null hereda.'
+          type: string
+          example: '60.00'
+          nullable: true
+        viento_max_kmh:
+          description: 'Viento máximo para aplicar (km/h). DECIMAL como string; null hereda.'
+          type: string
+          example: '15.00'
+          nullable: true
+        temperatura_max_c:
+          description: 'Temperatura máxima para aplicar (°C). DECIMAL como string; null hereda.'
+          type: string
+          example: '32.00'
+          nullable: true
+        humedad_max_pct:
+          description: 'Humedad relativa máxima para aplicar (%). DECIMAL como string; null hereda.'
+          type: string
+          example: '90.00'
+          nullable: true
+        velocidad_max_kmh:
+          description: 'Velocidad máxima del equipo (km/h). DECIMAL como string; null hereda.'
+          type: string
+          example: '25.00'
+          nullable: true
+        altura_vuelo_m:
+          description: 'Altura de vuelo indicada (m). DECIMAL como string; null hereda.'
+          type: string
+          example: '3.00'
+          nullable: true
+        velocidad_vuelo_kmh:
+          description: 'Velocidad de vuelo indicada (km/h). DECIMAL como string; null hereda.'
+          type: string
+          example: '18.00'
+          nullable: true
+        ancho_pasada_m:
+          description: 'Ancho de pasada indicado (m). DECIMAL como string; null hereda.'
+          type: string
+          example: '7.00'
+          nullable: true
+        observaciones:
+          description: 'Observaciones libres del emisor.'
+          type: string
+          example: 'Aplicar en horas de la mañana.'
+          nullable: true
+        emitida_por_contacto_id:
+          description: 'Contacto del cliente que emitió la orden (módulo Comercial, solo ID).'
+          type: integer
+          example: 2
+          nullable: true
+        fecha_emision:
+          description: 'Fecha de emisión de la orden.'
+          type: string
+          format: date
+          example: '2026-08-26'
+        estado:
+          description: 'Estado de la orden (espec §5: emitida → vigente → consumida | vencida).'
+          type: string
+          enum:
+            - emitida
+            - vigente
+            - consumida
+            - vencida
+        created_at:
+          type: string
+          format: date-time
+          example: '2026-08-26T12:00:00+00:00'
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+          example: '2026-08-26T12:00:00+00:00'
+          nullable: true
+      type: object
+    Dispositivo:
+      title: 'Dispositivo con sesión'
+      description: 'Dispositivo de campo con una sesión viva (HU-03). El token en sí nunca se devuelve.'
+      required:
+        - id
+        - uuid_dispositivo
+        - nombre_dispositivo
+        - rol
+        - last_used_at
+        - created_at
+      properties:
+        id:
+          description: 'Identificador del token de dispositivo.'
+          type: integer
+          example: 1
+        uuid_dispositivo:
+          description: 'UUID generado por el dispositivo.'
+          type: string
+          format: uuid
+          example: 6f1d0a2e-1f34-4c9f-9a8b-2b7c1d5e0f31
+        nombre_dispositivo:
+          description: 'Nombre legible informado por la app.'
+          type: string
+          example: 'Moto G84 — piloto 2'
+          nullable: true
+        rol:
+          $ref: '#/components/schemas/RolActivo'
+        last_used_at:
+          description: 'Último request autenticado con este token.'
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          description: 'Cuándo se emitió el token.'
+          type: string
+          format: date-time
+      type: object
+    RolActivo:
+      title: Rol
+      description: 'Rol bajo el que opera una sesión de la app de campo.'
+      required:
+        - id
+        - name
+        - description
+      properties:
+        id:
+          description: "Rol tal como lo ve la app de campo. Es el rol ÚNICO bajo el que opera la\nsesión —del token o del selector—, nunca una lista de permisos efectivos\n(invariante 10 de CLAUDE.md): los permisos se resuelven en el servidor\ncontra la base en cada request, no se le entregan a la app para que decida\nsola."
+          type: integer
+          example: 1
+        name:
+          description: 'Nombre interno del rol.'
+          type: string
+          example: piloto
+        description:
+          description: 'Descripción legible del rol.'
+          type: string
+          example: 'Piloto de dron: ejecuta sesiones de vuelo en campo.'
+          nullable: true
+      type: object
+    UsuarioCampo:
+      title: 'Usuario de campo'
+      description: 'Cuenta con la que opera la app de campo.'
+      required:
+        - id
+        - name
+        - username
+        - persona_id
+      properties:
+        id:
+          description: "Identidad del operario tal como la necesita la app de campo: lo justo para\nsaludarlo y para saber a qué persona operativa corresponde.\n\n`persona_id` viaja como ID pelado (ADR 0003, regla 3): el detalle de la\npersona pertenece al módulo `Personal` y la app lo resuelve desde su\ncatálogo sincronizado, no anidado acá."
+          type: integer
+          example: 7
+        name:
+          description: 'Nombre para mostrar.'
+          type: string
+          example: 'Camila Rojas'
+        username:
+          description: 'Identificador de login (nunca un correo).'
+          type: string
+          example: camila.rojas
+        persona_id:
+          description: 'Persona operativa enlazada (módulo Personal, solo ID).'
+          type: integer
+          example: 3
+          nullable: true
+      type: object
+    OrdenCatalogo:
+      title: 'Orden de aplicación (catálogo)'
+      description: 'Orden vigente para el pull de catálogo (espec §4.3). Los DECIMAL viajan como string (invariante 6).'
+      required:
+        - id
+        - contrato_id
+        - lote_id
+        - nro_aplicacion
+        - litros_ha
+        - humedad_min_pct
+        - viento_max_kmh
+        - temperatura_max_c
+        - humedad_max_pct
+        - velocidad_max_kmh
+        - altura_vuelo_m
+        - velocidad_vuelo_kmh
+        - ancho_pasada_m
+        - observaciones
+        - emitida_por_contacto_id
+        - fecha_emision
+        - estado
+        - updated_at
+      properties:
+        id:
+          description: "Adaptador delgado (ADR 0008): valida la query string, invoca el caso de\nuso y devuelve la respuesta — ninguna regla de negocio vive acá."
+          type: integer
+          example: 1
+        contrato_id:
+          type: integer
+          example: 1
+        lote_id:
+          type: integer
+          example: 3
+        nro_aplicacion:
+          type: integer
+          example: 1
+        litros_ha:
+          type: string
+          example: '10.00'
+        humedad_min_pct:
+          type: string
+          example: '60.00'
+          nullable: true
+        viento_max_kmh:
+          type: string
+          example: '15.00'
+          nullable: true
+        temperatura_max_c:
+          type: string
+          example: '32.00'
+          nullable: true
+        humedad_max_pct:
+          type: string
+          example: '90.00'
+          nullable: true
+        velocidad_max_kmh:
+          type: string
+          example: '25.00'
+          nullable: true
+        altura_vuelo_m:
+          type: string
+          example: '3.00'
+          nullable: true
+        velocidad_vuelo_kmh:
+          type: string
+          example: '18.00'
+          nullable: true
+        ancho_pasada_m:
+          type: string
+          example: '7.00'
+          nullable: true
+        observaciones:
+          type: string
+          example: 'Aplicar en horas de la mañana.'
+          nullable: true
+        emitida_por_contacto_id:
+          type: integer
+          example: 2
+          nullable: true
+        fecha_emision:
+          type: string
+          format: date
+          example: '2026-08-26'
+        estado:
+          type: string
+          example: vigente
+        updated_at:
+          type: string
+          format: date-time
+          example: '2026-08-26T12:00:00+00:00'
+      type: object
+    LoteCatalogo:
+      title: 'Lote (catálogo)'
+      description: 'Lote vigente (no borrado) para el pull de catálogo (espec §4.1). `hectareas` es DECIMAL como string (invariante 6).'
+      required:
+        - id
+        - campo_id
+        - codigo
+        - hectareas
+        - geometria
+        - restricciones
+        - updated_at
+      properties:
+        id:
+          type: integer
+          example: 3
+        campo_id:
+          type: integer
+          example: 1
+        codigo:
+          type: string
+          example: L-01
+        hectareas:
+          type: string
+          example: '120.50'
+        geometria:
+          description: 'GeoJSON del lote, o null si no está cargado.'
+          type: object
+          nullable: true
+        restricciones:
+          type: string
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+          example: '2026-08-26T12:00:00+00:00'
+      type: object
+    PersonaCatalogo:
+      title: 'Persona operativa (catálogo)'
+      description: 'Persona vigente (no borrada) para el pull de catálogo (espec §4.2).'
+      required:
+        - id
+        - nombre
+        - rol
+        - base_id
+        - activo
+        - updated_at
+      properties:
+        id:
+          type: integer
+          example: 5
+        nombre:
+          type: string
+          example: 'Piloto Uno'
+        rol:
+          type: string
+          example: piloto
+        base_id:
+          type: integer
+          example: 1
+          nullable: true
+        activo:
+          type: boolean
+          example: true
+        updated_at:
+          type: string
+          format: date-time
+          example: '2026-08-26T12:00:00+00:00'
+      type: object
+    RegistroSync:
+      title: 'Registro de entrada del lote de sync'
+      description: 'Un elemento del arreglo `registros`. La forma exacta de los campos depende de `tipo`; un registro con datos incompletos o inválidos se responde `rechazado` sin frenar el resto del lote — nunca un 422 para el lote completo. `cierre_trabajo`/`cierre_sesion` (HU-05) MUTAN una fila existente en vez de crear una nueva: `uuid_cliente` identifica el EVENTO de cierre — distinto del `uuid_cliente` de apertura del trabajo/sesión que referencian. `recepcion_caldo` (HU-10 redefinida por CR-01, tarea 18) registra volumen de caldo entregado por el cliente — nunca su composición (espec §7.1: sin producto, dosis ni fórmula). `incidencia` (HU-08, tarea 22) registra un evento puntual de la sesión (caldo/ESC/batería/mecánica/clima/otro) con foto SIEMPRE obligatoria, referenciada por `uuid_cliente` a una evidencia ya subida por `POST /api/evidencias` con `tipo: foto_incidencia`. `recarga` (HU-13, tarea 23) registra cada ciclo de cambio de batería/recarga de caldo durante el vuelo — temperatura de batería > 50°C se persiste con `alerta_temperatura = true` sin rechazar el registro; sin `mezcla_id` (CR-01: Agrocom no prepara la mezcla). `estadia_entrada`/`estadia_salida` (HU-51, tarea 74) registran cuándo un equipo de trabajo llega y se va de una hacienda — sin `campania_id` (la estadía es del campo, no de una campaña) y sin verificación de pertenencia a una persona (es del equipo). `estadia_salida` referencia la estadía por el `uuid_cliente` de su `estadia_entrada`, igual criterio que `cierre_trabajo`/`cierre_sesion`.'
+      required:
+        - tipo
+        - uuid_cliente
+      properties:
+        tipo:
+          description: "Adaptador delgado (ADR 0008): valida el sobre del lote, invoca el caso de\nuso y devuelve la respuesta — ninguna regla de negocio vive acá."
+          type: string
+          example: trabajo
+          enum:
+            - trabajo
+            - recepcion_caldo
+            - sesion
+            - condiciones
+            - incidencia
+            - recarga
+            - cierre_trabajo
+            - cierre_sesion
+            - estadia_entrada
+            - estadia_salida
+        uuid_cliente:
+          type: string
+          example: a1b2c3d4-0000-4000-8000-000000000001
+        orden_id:
+          description: '`trabajo`: id de servidor de la orden (del pull de catálogo).'
+          type: integer
+          example: 1
+        lote_id:
+          description: '`trabajo`: id de servidor del lote (del pull de catálogo).'
+          type: integer
+          example: 3
+        nro_aplicacion:
+          description: '`trabajo`.'
+          type: integer
+          example: 1
+        trabajo_uuid_cliente:
+          description: '`sesion`/`cierre_trabajo`: `uuid_cliente` de apertura del trabajo — nunca el id de servidor, que puede no existir todavía si el trabajo llegó en este mismo lote.'
+          type: string
+          example: a1b2c3d4-0000-4000-8000-000000000001
+        sesion_uuid_cliente:
+          description: '`cierre_sesion`/`condiciones`/`incidencia`: `uuid_cliente` de apertura de la sesión referenciada.'
+          type: string
+          example: a1b2c3d4-0000-4000-8000-000000000002
+        secuencia:
+          description: '`sesion`: orden de apertura. `recarga`: orden de la recarga dentro de la sesión.'
+          type: integer
+          example: 1
+        piloto_id:
+          description: '`sesion`: id de servidor de la persona (del pull de catálogo).'
+          type: integer
+          example: 5
+        auxiliar_id:
+          description: '`sesion`, opcional.'
+          type: integer
+          example: null
+          nullable: true
+        dron_id:
+          description: '`sesion`, opcional (HU-07): id de servidor del dron (catálogo mínimo de `Operaciones`, sin pull de catálogo propio todavía).'
+          type: integer
+          example: null
+          nullable: true
+        hectareas_declaradas:
+          description: 'DECIMAL como string (invariante 6). `0` si se omite.'
+          type: string
+          example: '0'
+        hectarea_inicial_acumulada:
+          description: '`sesion`, opcional (HU-07): acumulado de DJI al abrir la sesión, control de doble conteo (espec §5). DECIMAL como string.'
+          type: string
+          example: null
+          nullable: true
+        inicio:
+          type: string
+          format: date-time
+          example: '2026-09-01T10:00:00-04:00'
+        fin:
+          description: 'Requerido en `cierre_trabajo`/`cierre_sesion`.'
+          type: string
+          format: date-time
+          example: null
+          nullable: true
+        litros:
+          description: '`recepcion_caldo`: litros entregados por el cliente. DECIMAL como string (invariante 6).'
+          type: string
+          example: null
+          nullable: true
+        entregado_por:
+          description: '`recepcion_caldo`: quién, del lado del cliente, entregó el caldo (espec §7.2).'
+          type: string
+          example: null
+          nullable: true
+        hora:
+          description: '`recepcion_caldo`: cuándo se entregó. `incidencia`: cuándo ocurrió. `recarga`: cuándo ocurrió el ciclo de cambio de batería/recarga de caldo.'
+          type: string
+          format: date-time
+          example: null
+          nullable: true
+        litros_consumidos:
+          description: '`cierre_sesion`, opcional: litros de caldo efectivamente rociados en la sesión (espec §7.2). DECIMAL como string.'
+          type: string
+          example: null
+          nullable: true
+        litros_sobrante:
+          description: '`cierre_trabajo`, opcional: litros que quedaron sin aplicar al cerrar el trabajo (espec §7.2). DECIMAL como string.'
+          type: string
+          example: null
+          nullable: true
+        evidencia_imagen_campo_uuid_cliente:
+          description: '`cierre_trabajo`: REQUERIDO — `uuid_cliente` de una evidencia ya subida por `POST /api/evidencias` con `tipo: imagen_campo` (espec §9/§10, HU-09). Sin ella, referenciando una evidencia inexistente o de otro tipo, el cierre se rechaza ("sin captura no cierra").'
+          type: string
+          example: null
+          nullable: true
+        motivo_cierre:
+          description: '`cierre_sesion`: catálogo espec §4.3.'
+          type: string
+          example: null
+          nullable: true
+          enum:
+            - completado
+            - relevo_piloto
+            - cambio_dron
+            - falla_equipo
+            - clima
+            - fin_jornada
+            - otro
+        momento:
+          description: '`condiciones`: solo `inicio_sesion` — condiciones climáticas capturadas EN el momento de una incidencia es un concepto distinto del registro `incidencia` en sí (que vive en su propia tabla), fuera de alcance de este catálogo.'
+          type: string
+          example: null
+          nullable: true
+          enum:
+            - inicio_sesion
+        viento_kmh:
+          description: '`condiciones`.'
+          type: string
+          example: '12.50'
+        temperatura_c:
+          description: '`condiciones`.'
+          type: string
+          example: '24.00'
+        humedad_pct:
+          description: '`condiciones`.'
+          type: string
+          example: '65.00'
+        observacion_agronomo:
+          description: '`condiciones`: obligatoria junto con `firma_observacion` cuando alguna medición cae fuera de rango (viento > 17 km/h, temperatura > 30°C o humedad > 90%) — sin ambas, el registro se rechaza.'
+          type: string
+          example: null
+          nullable: true
+        firma_observacion:
+          description: '`condiciones`: sin evidencia real todavía (TE-07), texto plano.'
+          type: string
+          example: null
+          nullable: true
+        tipo_incidencia:
+          description: '`incidencia`: catálogo espec §4.3. Campo separado de `tipo` (que en este objeto es el tipo de REGISTRO del lote) para evitar que ambos colisionen en la misma key.'
+          type: string
+          example: null
+          nullable: true
+          enum:
+            - caldo
+            - esc
+            - bateria
+            - mecanica
+            - clima
+            - otro
+        descripcion:
+          description: '`incidencia`, opcional: texto libre.'
+          type: string
+          example: null
+          nullable: true
+        evidencia_foto_uuid_cliente:
+          description: '`incidencia`: REQUERIDO — `uuid_cliente` de una evidencia ya subida por `POST /api/evidencias` con `tipo: foto_incidencia`. Sin ella, referenciando una evidencia inexistente, de otro tipo, o ya usada por otra incidencia, el registro se rechaza (HU-08: "con foto").'
+          type: string
+          example: null
+          nullable: true
+        litros_caldo:
+          description: '`recarga`: litros de caldo cargados en ese ciclo. DECIMAL como string (invariante 6).'
+          type: string
+          example: null
+          nullable: true
+        bateria_saliente_id:
+          description: '`recarga`: identificador de la batería que se retira (texto libre, sin catálogo de baterías en el esquema).'
+          type: string
+          example: null
+          nullable: true
+        temperatura_bateria_c:
+          description: '`recarga`: temperatura medida de la batería saliente. > 50°C persiste con `alerta_temperatura = true`, sin rechazar el registro.'
+          type: string
+          example: null
+          nullable: true
+        motivo_retraso_caldo:
+          description: '`recarga`, opcional: motivo del retraso o rechazo por calidad del caldo — solo se completa si hubo retraso, no en cada recarga.'
+          type: string
+          example: null
+          nullable: true
+          enum:
+            - filtro_tapado
+            - grumos
+            - decantacion
+            - espuma
+            - color_olor_anormal
+        hora_retraso:
+          description: '`recarga`, opcional: cuándo ocurrió el retraso/rechazo por caldo.'
+          type: string
+          format: date-time
+          example: null
+          nullable: true
+        litros_combustible_generador:
+          description: '`recarga`, opcional: litros de combustible cargados al generador en ese ciclo. Informativo, sin costeo (Fase 3). DECIMAL como string.'
+          type: string
+          example: null
+          nullable: true
+        equipo_trabajo_id:
+          description: '`estadia_entrada`: id de servidor del equipo de trabajo (del pull de catálogo).'
+          type: integer
+          example: null
+          nullable: true
+        campo_id:
+          description: '`estadia_entrada`: id de servidor del campo (del pull de catálogo).'
+          type: integer
+          example: null
+          nullable: true
+        entrada:
+          description: '`estadia_entrada`: cuándo llegó el equipo.'
+          type: string
+          format: date-time
+          example: null
+          nullable: true
+        vehiculo_id:
+          description: '`estadia_entrada`, opcional: id de servidor del vehículo declarado.'
+          type: integer
+          example: null
+          nullable: true
+        observacion:
+          description: '`estadia_entrada`, opcional: texto libre.'
+          type: string
+          example: null
+          nullable: true
+        estadia_uuid_cliente:
+          description: '`estadia_salida`: `uuid_cliente` de apertura de la estadía (el `estadia_entrada` que se cierra) — nunca el id de servidor, que puede no existir todavía si la entrada llegó en este mismo lote.'
+          type: string
+          example: null
+          nullable: true
+        salida:
+          description: '`estadia_salida`: cuándo se fue el equipo. Anterior o igual a la `entrada` de la estadía rechaza el registro.'
+          type: string
+          format: date-time
+          example: null
+          nullable: true
+      type: object
+    ResultadoSync:
+      title: 'Resultado de aplicar un registro del lote'
+      description: 'Uno por registro de entrada, en el mismo orden (espec §2.1, punto 3).'
+      required:
+        - uuid_cliente
+        - tipo
+        - estado
+      properties:
+        uuid_cliente:
+          type: string
+          example: a1b2c3d4-0000-4000-8000-000000000001
+          nullable: true
+        tipo:
+          type: string
+          example: trabajo
+          nullable: true
+        estado:
+          type: string
+          example: aplicado
+          enum:
+            - aplicado
+            - duplicado
+            - rechazado
+        motivo:
+          description: 'Presente solo cuando `estado` es `rechazado`.'
+          type: string
+          example: 'el trabajo referenciado no existe todavía'
+      type: object
+  securitySchemes:
+    tokenDispositivo:
+      type: http
+      description: 'Token por dispositivo emitido por `POST /api/auth/token` (HU-03). Se envía como `Authorization: Bearer {token}`. No caduca por tiempo: vale hasta que se lo revoque desde el panel, o hasta que la cuenta o el rol con el que se emitió dejen de estar vigentes.'
+      scheme: bearer
+tags:
+  -
+    name: Distribucion
+    description: 'Versionado y distribución del APK de agrocom-field (HU-20).'
+  -
+    name: Operaciones
+    description: 'Trabajos, sesiones, condiciones, recepción de caldo, evidencias, actas y reportes técnicos.'
+  -
+    name: Seguridad
+    description: 'Sesión de la app de campo por token de dispositivo (espec §4.6, HU-03).'
+  -
+    name: Sincronizacion
+    description: 'Push de escritura offline de la app de campo (espec §2.1, puntos 3 a 5; TE-05). Recorte de alcance de la tarea 09: solo `trabajo` y `sesion` — `incidencia` (tarea 22) y `recarga` (tarea 23) se sumaron después como tipos de registro de este mismo endpoint; `mezcla` no aplica (CR-01: Agrocom no prepara la mezcla) y `acta` tiene sus propios endpoints (`ActaController`), fuera de este push (ver docs/gestion/cola_tareas.md).'

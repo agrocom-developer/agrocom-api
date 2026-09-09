@@ -1,0 +1,54 @@
+/*
+ * CSS específico de páginas (app/Dominios/{Modulo}/Infraestructura/Http/Views/pages/).
+ * Distinto de ../components/: esto NO es catálogo Atomic Design (no lo
+ * mantiene `design-ui`, no es reutilizable entre pantallas) — es el layout
+ * propio de una página concreta que ya no entra en un `style=""` inline
+ * razonable. Mismo criterio de "cero color/tamaño hardcodeado, todo por
+ * token de ../tokens/" que el resto del sistema (CLAUDE.md invariante 11).
+ */
+
+@import './dashboard.css';
+@import './multimedia.css';
+@import './organizacion.css';
+@import './seleccionar-rol.css';
+@import './dispositivos.css';
+@import './versiones-apk.css';
+@import './trabajos.css';
+@import './estadias.css';
+@import './sesiones-validacion.css';
+@import './alertas.css';
+@import './clientes.css';
+@import './contratos.css';
+@import './campos.css';
+@import './lotes.css';
+@import './drones.css';
+@import './ordenes.css';
+@import './bases.css';
+@import './personas.css';
+@import './usuarios.css';
+@import './bitacora.css';
+@import './devengos.css';
+@import './anticipos.css';
+@import './planilla.css';
+@import './gastos.css';
+@import './combustible.css';
+@import './rendiciones.css';
+@import './facturas.css';
+@import './reportes-comerciales.css';
+@import './vehiculos.css';
+@import './baterias.css';
+@import './generadores.css';
+@import './repuestos.css';
+@import './stock.css';
+@import './ordenes-mantenimiento.css';
+@import './planes.css';
+@import './portal.css';
+@import './reportes-tecnicos.css';
+@import './pausas.css';
+@import './roles.css';
+@import './campanias.css';
+@import './cultivos.css';
+@import './siembra.css';
+@import './equipos-trabajo.css';
+@import './configuracion.css';
+@import './busqueda.css';

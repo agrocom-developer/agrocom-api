@@ -1,0 +1,706 @@
+/*
+ * Page: dashboard "Operación de hoy"
+ * (app/Dominios/Seguridad/Infraestructura/Http/Views/pages/dashboard.blade.php)
+ * Quinta vuelta — maquetas 4a (escritorio ≥1200), 5a (tablet 768–1199) y 5b
+ * (móvil <768). Mismo criterio del resto de pages/: cero color/tamaño
+ * hardcodeado, todo por token (CLAUDE.md invariante 11).
+ *
+ * Conmutación responsiva de la programación del día:
+ * - `.ag-table` (grilla de columnas) solo ≥1200.
+ * - `.ag-session-list` (dos líneas por fila) solo 768–1199.
+ * - `.ag-session-cards` (fichas) y los bloques `--movil` solo <768.
+ */
+
+.ag-dash {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-4);
+}
+
+.ag-dash__header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--ag-space-4);
+    flex-wrap: wrap;
+}
+
+.ag-dash__heading {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-1);
+}
+
+/* Misma receta que `organisms/page-header` — el h1 de una pantalla se ve
+   igual en todo el panel (tokens `--ag-title-page-*`). */
+.ag-dash__title {
+    margin: 0;
+    font-family: var(--ag-font-family-display);
+    font-optical-sizing: auto;
+    font-weight: var(--ag-title-page-weight);
+    font-size: var(--ag-title-page-size);
+    line-height: var(--ag-title-page-line-height);
+    color: var(--ag-color-text);
+}
+
+.ag-dash__subtitle {
+    margin: 0;
+    font-size: 0.84375rem;
+    color: var(--ag-color-text-muted);
+}
+
+/* Auditoría visual externa, obs. #3: la ventana volable dejó de ser un
+   segundo alert-strip de igual peso que el aviso de RC — ahora es una tira
+   compacta junto al subtítulo, mismo tono warning sin la anatomía completa
+   de franja/banner. */
+.ag-dash__subtitle-row {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+    flex-wrap: wrap;
+}
+
+.ag-dash__ventana-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-1) var(--ag-space-3);
+    border-radius: var(--ag-radius-pill);
+    background: var(--ag-color-warning-subtle);
+    border: 1px solid var(--ag-color-warning-border);
+    color: var(--ag-color-warning-strong);
+    font-size: var(--ag-font-size-xs);
+    white-space: nowrap;
+}
+
+.ag-dash__ventana-chip .ag-icon {
+    color: var(--ag-color-warning-strong);
+}
+
+.ag-dash__ventana-chip .ag-dash__link {
+    color: var(--ag-color-warning-strong);
+    text-decoration: underline;
+}
+
+.ag-dash__actions {
+    display: flex;
+    gap: var(--ag-space-2);
+}
+
+.ag-dash__panes {
+    min-width: 0;
+}
+
+.ag-dash__stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-4);
+    padding-top: var(--ag-space-1);
+}
+
+/* ---------- Cuadros por lote (Fase 7) ---------- */
+
+.ag-dash__lotes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: var(--ag-space-4);
+}
+
+/* ---------- Grilla de 3 tarjetas (gráficos en Resumen, cuadros
+   informativos en Mapa) ---------- */
+
+.ag-dash__cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--ag-space-4);
+}
+
+/* ---------- Grilla principal 2fr / 1fr (auditoría visual externa, obs. #6:
+   antes 1.55fr/1fr, más cerca del 8/4 de 12 columnas pedido) ---------- */
+
+.ag-dash__grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--ag-space-4);
+    align-items: start;
+}
+
+.ag-dash__aside {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-4);
+    min-width: 0;
+}
+
+/* ---------- Tarjeta genérica de esta página ---------- */
+
+.ag-card {
+    background: var(--ag-color-surface-card);
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: 12px;
+    overflow: hidden;
+    min-width: 0;
+}
+
+.ag-card--padded {
+    padding: var(--ag-space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-3);
+}
+
+.ag-card__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-4);
+    border-bottom: 1px solid var(--ag-color-border-row);
+}
+
+.ag-card--padded .ag-card__head,
+.ag-card__head--flush {
+    padding: 0;
+    border-bottom: none;
+}
+
+.ag-card__title {
+    margin: 0;
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-color-text);
+}
+
+/* Encabezado de un bloque DENTRO de una tarjeta que ya tiene título (p. ej.
+   "Anticipos del período" bajo "Mi liquidación"). */
+.ag-card__subtitle {
+    margin: 0 0 var(--ag-space-2);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ag-dash__link {
+    border: none;
+    background: none;
+    padding: 0;
+    font-family: var(--ag-font-family-base);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-color-accent-link);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.ag-dash__mono-note {
+    font-family: var(--ag-font-family-mono);
+    font-size: 0.656rem;
+    color: var(--ag-color-text-muted);
+    white-space: nowrap;
+}
+
+/* ---------- Tabla de sesiones (escritorio) ---------- */
+
+.ag-table {
+    display: block;
+    min-width: 0;
+}
+
+.ag-table__head,
+.ag-table__row {
+    display: grid;
+    grid-template-columns: 84px 1.6fr 1fr 90px 70px 70px 110px;
+    align-items: center;
+    column-gap: var(--ag-space-2);
+    padding: var(--ag-space-3) var(--ag-space-4);
+}
+
+/* Avance por contrato: nombre + barra de ejecución + dos columnas de
+   hectáreas. Cuatro columnas desde la tarea 67 — la tabla de seis de la
+   maqueta traía "actividad", "última sesión" y "vence", que no tenían
+   fuente. A diferencia de .ag-table genérica NO se oculta bajo 1200: mantiene
+   su grilla y scrollea horizontal (ver la regla del breakpoint). */
+.ag-table--clientes .ag-table__head,
+.ag-table--clientes .ag-table__row {
+    grid-template-columns: 1.8fr 1.2fr 110px 120px;
+    min-width: 620px;
+}
+
+/* Liquidación del mes (tablero de piloto/auxiliar): fecha + tres columnas
+   numéricas alineadas a la derecha. */
+.ag-table--liquidacion .ag-table__head,
+.ag-table--liquidacion .ag-table__row {
+    grid-template-columns: 1fr 90px 110px 120px;
+}
+
+/* Equipos operados por la persona en el mes. */
+.ag-table--equipos .ag-table__head,
+.ag-table--equipos .ag-table__row {
+    grid-template-columns: 1.4fr 90px 80px 90px 120px;
+}
+
+/* Segunda línea dentro de una celda: el campo bajo el lote, el modelo bajo
+   el identificador del dron. Contexto, no una columna más. */
+.ag-table__sub {
+    display: block;
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+    font-weight: var(--ag-font-weight-regular);
+}
+
+/* ---------- Liquidación del mes (tablero de piloto/auxiliar) ---------- */
+
+.ag-liquidacion__resumen {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-4);
+    border-bottom: 1px solid var(--ag-color-border);
+}
+
+.ag-liquidacion__cifra dt {
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ag-liquidacion__cifra dd {
+    margin: 0;
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-lg);
+    color: var(--ag-color-text);
+}
+
+.ag-liquidacion__cifra--saldo dd {
+    color: var(--ag-color-success-strong);
+    font-weight: var(--ag-font-weight-bold);
+}
+
+.ag-liquidacion__anticipos {
+    padding: var(--ag-space-4);
+    border-top: 1px solid var(--ag-color-border);
+}
+
+.ag-liquidacion__anticipo {
+    display: grid;
+    grid-template-columns: 100px 1fr 120px;
+    gap: var(--ag-space-2);
+    align-items: center;
+    padding: var(--ag-space-2) 0;
+}
+
+/* Barra de ejecución de un contrato, dentro de su celda. */
+.ag-dash__avance {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+}
+
+.ag-dash__avance .ag-bars__track {
+    flex: 1;
+    min-width: 48px;
+}
+
+/* Par de tarjetas de igual peso (pausas + stock): a diferencia de
+   .ag-dash__grid (2fr/1fr, tabla + aside) acá ninguna manda. */
+.ag-dash__grid--par {
+    grid-template-columns: 1fr 1fr;
+}
+
+/* Bloque personal: separado del resto por una línea, para que no se lea como
+   una sección más de la operación. */
+.ag-dash__mi-actividad {
+    padding-top: var(--ag-space-4);
+    border-top: 1px solid var(--ag-color-border);
+}
+
+/* Estado vacío del tablero completo: el rol entró pero no tiene secciones. */
+.ag-dash__vacio {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-6) var(--ag-space-4);
+    text-align: center;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-table-scroll {
+    overflow-x: auto;
+}
+
+.ag-table__dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: var(--ag-radius-pill);
+    margin-right: var(--ag-space-2);
+}
+
+.ag-table__dot--info {
+    background: var(--ag-color-info-strong);
+}
+
+.ag-table__dot--neutral {
+    background: var(--ag-color-text-faint);
+}
+
+/* Auditoría visual externa, obs. #9: el estado de la tabla de sesiones
+   (escritorio) pasa de badge relleno a punto + texto plano — la columna
+   Estado ya no compite visualmente con el resto de chips reales de la
+   página; atoms/badge sigue igual para sus otros usos (KPI, alertas, RC). */
+.ag-table__dot--success {
+    background: var(--ag-color-success-strong);
+}
+
+.ag-table__dot--warning {
+    background: var(--ag-color-warning-strong);
+}
+
+.ag-table__estado {
+    display: inline-flex;
+    align-items: center;
+    color: var(--ag-color-text);
+}
+
+/* Auditoría visual externa, obs. #9: la columna HA (cifra) alineaba a la
+   izquierda como el resto de columnas de texto — las cifras se leen/comparan
+   mejor alineadas a la derecha. */
+.ag-table__ha {
+    text-align: right;
+}
+
+.ag-table__head {
+    padding-top: var(--ag-space-2);
+    padding-bottom: var(--ag-space-2);
+    background: var(--ag-color-bg-table-head);
+    border-bottom: 1px solid var(--ag-color-border-row);
+    font-family: var(--ag-font-family-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-table__row {
+    border-bottom: 1px solid var(--ag-color-border-row);
+    font-size: 0.8125rem;
+    color: var(--ag-color-text);
+    transition: background-color var(--ag-transition-fast);
+}
+
+/* Una línea por fila (maqueta 4a): las celdas truncan con elipsis en vez de
+   envolver — en la tarjeta angosta del Resumen "Lote 12 — San Marcos" o
+   "T100 · AG-09" partían en dos líneas. */
+.ag-table__row > span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ag-table__row:last-child {
+    border-bottom: none;
+}
+
+.ag-table__row:hover {
+    background: var(--ag-color-bg-row-hover);
+}
+
+.ag-table__mono {
+    font-family: var(--ag-font-family-mono);
+    font-size: 0.71875rem;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-table__strong {
+    font-weight: var(--ag-font-weight-medium);
+    color: var(--ag-color-text);
+}
+
+/* ---------- Lista de dos líneas (tablet, maqueta 5a) ---------- */
+
+.ag-session-list {
+    display: none;
+}
+
+.ag-session-list__row {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-3) var(--ag-space-4);
+    border-bottom: 1px solid var(--ag-color-border-row);
+}
+
+.ag-session-list__row:last-child {
+    border-bottom: none;
+}
+
+.ag-session-list__hora {
+    flex: 0 0 auto;
+    width: 44px;
+    font-family: var(--ag-font-family-mono);
+    font-size: 0.71875rem;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-session-list__body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ag-session-list__lote {
+    font-size: 0.8125rem;
+    font-weight: var(--ag-font-weight-medium);
+    color: var(--ag-color-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ag-session-list__meta {
+    font-size: 0.71875rem;
+    color: var(--ag-color-text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ---------- Fichas (móvil, maqueta 5b) ---------- */
+
+.ag-session-cards {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-2);
+}
+
+.ag-session-cards__card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-3) var(--ag-space-4);
+    background: var(--ag-color-surface-card);
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: 12px;
+}
+
+.ag-session-cards__head {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+}
+
+.ag-session-cards__hora {
+    font-family: var(--ag-font-family-mono);
+    font-size: 0.71875rem;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-session-cards__lote {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.84375rem;
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-color-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ag-session-cards__meta {
+    display: flex;
+    gap: var(--ag-space-3);
+    font-size: 0.71875rem;
+    color: var(--ag-color-text-muted);
+}
+
+/* ---------- Barras de pausas ---------- */
+
+.ag-bars {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-3);
+}
+
+.ag-bars__item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-1);
+}
+
+.ag-bars__meta {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--ag-space-3);
+    font-size: 0.78rem;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-bars__horas {
+    font-family: var(--ag-font-family-mono);
+    white-space: nowrap;
+}
+
+.ag-bars__track {
+    height: 6px;
+    border-radius: var(--ag-radius-pill);
+    background: var(--ag-color-track);
+    overflow: hidden;
+}
+
+.ag-bars__fill {
+    height: 100%;
+    border-radius: var(--ag-radius-pill);
+}
+
+/* Tonos de barra: no-texto (3:1), verificados contra la pista en §1.3. */
+.ag-bars__fill--accent {
+    background: var(--ag-color-accent);
+}
+
+.ag-bars__fill--info {
+    background: var(--ag-color-info-strong);
+}
+
+.ag-bars__fill--danger {
+    background: var(--ag-color-danger);
+}
+
+.ag-bars__fill--neutral {
+    background: var(--ag-color-text-faint);
+}
+
+.ag-bars__fill--unassigned {
+    background: var(--ag-color-bar-unassigned);
+}
+
+/* Fase 5 — barra de ejecución de contrato (% ha ejecutadas vs. contratadas):
+   siempre el mismo tono de progreso, independiente del estado del contrato
+   (ese ya lo comunica el badge de al lado). */
+.ag-bars__fill--primary {
+    background: var(--ag-color-primary);
+}
+
+.ag-bars--lg .ag-bars__track {
+    height: 9px;
+}
+
+.ag-bars--lg .ag-bars__meta {
+    font-size: 0.8125rem;
+}
+
+/* ---------- Stock bajo mínimo ---------- */
+
+.ag-dash__stock {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-2);
+}
+
+.ag-dash__stock-title {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+}
+
+.ag-dash__stock-icon {
+    color: var(--ag-color-danger);
+}
+
+.ag-dash__stock-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ag-space-3);
+    font-size: 0.78rem;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-dash__stock-nivel {
+    font-family: var(--ag-font-family-mono);
+    font-size: 0.71875rem;
+    font-weight: var(--ag-font-weight-bold);
+    white-space: nowrap;
+}
+
+.ag-dash__stock-nivel--danger {
+    color: var(--ag-color-danger);
+}
+
+.ag-dash__stock-nivel--accent {
+    color: var(--ag-color-warning-strong);
+}
+
+.ag-dash__stock-accion {
+    align-self: flex-start;
+}
+
+/* ---------- Bloque "Hoy" (solo móvil) ---------- */
+
+.ag-dash__hoy {
+    display: none;
+}
+
+/* ---------- Tablet (maqueta 5a) ---------- */
+
+@media (max-width: 1199.98px) {
+    .ag-dash__cards-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .ag-dash__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .ag-table {
+        display: none;
+    }
+
+    /* Excepción: la tabla de clientes no tiene variante de tablet, se
+       mantiene con scroll horizontal (ver .ag-table-scroll arriba). */
+    .ag-table.ag-table--clientes {
+        display: block;
+    }
+
+    .ag-session-list {
+        display: block;
+    }
+
+    .ag-dash__title {
+        font-size: 1.75rem;
+    }
+}
+
+/* ---------- Móvil (maqueta 5b) ---------- */
+
+@media (max-width: 767.98px) {
+    /* El título vive en la banda de breadcrumb; las acciones desaparecen. */
+    .ag-dash__header {
+        display: none;
+    }
+
+    .ag-dash__cards-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .ag-dash__grid,
+    .ag-session-list {
+        display: none;
+    }
+
+    .ag-dash__hoy {
+        display: block;
+    }
+
+    /* La franja pierde el botón y el detalle largo (maqueta 5b). */
+    .ag-alert-strip__action,
+    .ag-dash__rc-detalle {
+        display: none;
+    }
+}

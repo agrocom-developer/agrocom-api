@@ -1,0 +1,139 @@
+/*
+ * Pages: contratos/index, contratos/create, contratos/edit
+ * (app/Dominios/Comercial/Infraestructura/Http/Views/pages/contratos/) —
+ * HU-23, tarea 34: segundo ABM del panel, mismo molde que clientes.css
+ * (tarea 33) con una columna más en la tabla (estado) y acciones de cambio
+ * de estado en vez de eliminar.
+ *
+ * El wrapper `.ag-contratos`/`.ag-contratos-form` sigue el mismo patrón que
+ * `.ag-clientes`/`.ag-clientes-form`: flex en columna con un único `gap` en
+ * vez de `margin-top` repetido en cada hijo. Todo color y medida por token
+ * (CLAUDE.md invariante 11).
+ */
+
+.ag-contratos,
+.ag-contratos-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+/* Listado (index) */
+
+
+.ag-contratos__filtros .ag-input,
+.ag-contratos__filtros .ag-select,
+.ag-contratos__filtros .ag-date {
+    min-width: 16rem;
+}
+
+
+.ag-contratos__tabla {
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+    overflow: hidden;
+}
+
+.ag-contratos__head,
+.ag-contratos__fila {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1.4fr 1.4fr 1fr auto;
+    gap: var(--ag-space-4);
+    align-items: center;
+    padding: var(--ag-space-3) var(--ag-space-4);
+}
+
+.ag-contratos__head {
+    background-color: var(--ag-color-bg-table-head);
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ag-contratos__fila {
+    border-top: 1px solid var(--ag-color-border-row);
+    color: var(--ag-color-text);
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-contratos__fila:hover {
+    background-color: var(--ag-color-bg-row-hover);
+}
+
+.ag-contratos__cliente {
+    font-weight: var(--ag-font-weight-medium);
+}
+
+.ag-contratos__mono {
+    font-family: var(--ag-font-family-mono);
+}
+
+.ag-contratos__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--ag-space-2);
+}
+
+.ag-contratos__paginacion {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ag-space-4);
+}
+
+.ag-contratos__paginacion-info {
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-sm);
+}
+
+@media (max-width: 992px) {
+    .ag-contratos__head {
+        display: none;
+    }
+
+    .ag-contratos__fila {
+        grid-template-columns: 1fr;
+        gap: var(--ag-space-1);
+    }
+
+    .ag-contratos__acciones {
+        justify-content: flex-start;
+        margin-top: var(--ag-space-2);
+    }
+}
+
+/* Formulario (create/edit) */
+
+.ag-contratos-form__ayuda {
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-contratos-form__ventanas {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-4);
+}
+
+.ag-contratos-form__ventana {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+    gap: var(--ag-space-4);
+    padding-top: var(--ag-space-4);
+    border-top: 1px solid var(--ag-color-border-row);
+}
+
+/* La primera fila no necesita separador: no hay nada arriba de qué separarla. */
+[data-ag-ventanas-lista] > .ag-contratos-form__ventana:first-child {
+    padding-top: 0;
+    border-top: none;
+}
+
+.ag-contratos-form__ventana-pie {
+    display: flex;
+    align-items: flex-end;
+}

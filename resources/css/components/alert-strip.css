@@ -1,0 +1,108 @@
+/*
+ * Molecule: alert-strip (resources/views/components/molecules/alert-strip.blade.php)
+ * Franja de aviso del dashboard (quinta vuelta, maquetas 4a/5a/5b; sexta
+ * vuelta parte 2; auditoría visual externa, obs. #3 — superó la regla §8.8
+ * anterior, documentado como tal en sistema_diseno_panel.md): las 4
+ * variantes semánticas del catálogo (warning|danger|success|info) comparten
+ * la MISMA anatomía — superficie plana `-subtle` + borde izquierdo 3px +
+ * esquinas 0/10/10/0 — solo cambia el token de color. Antes usaba un
+ * degradado diagonal que mezclaba un `-subtle` semitransparente con un
+ * color opaco: en tema oscuro se veía como un artefacto de render (un filo
+ * duro donde el gradiente cortaba), no un degradado limpio. El texto fuerte
+ * va en <strong> dentro del slot — el par tenue/fuerte de cada variante
+ * está verificado AA en sistema_diseno_panel.md §1.3.
+ */
+
+.ag-alert-strip {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-3) var(--ag-space-4);
+    font-size: 0.84375rem;
+    border-radius: 0 10px 10px 0;
+    border-left: 3px solid;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-alert-strip__icon {
+    flex-shrink: 0;
+}
+
+/* flex:0 1 auto (no 1 1 auto) + max-width, auditoría visual externa obs.
+   #3: antes el body crecía para llenar todo el ancho disponible, dejando el
+   botón de acción pegado al borde derecho en monitores anchos — lejos del
+   texto que lo motiva. Ahora el body ocupa solo lo que su contenido (hasta
+   75ch) necesita y el botón queda inmediatamente después, sin perder el
+   fondo de franja completa (--ag-color-{variante}-subtle sigue pintando
+   el 100% del ancho del contenedor, que es block-level). */
+.ag-alert-strip__body {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 75ch;
+    line-height: 1.45;
+}
+
+.ag-alert-strip__action {
+    flex-shrink: 0;
+}
+
+/* Ámbar (ventana volable, nota de pausas) — es el warning del catálogo,
+   antes se llamaba "accent" (nombre de marca, no de estado). */
+.ag-alert-strip--warning {
+    background: var(--ag-color-warning-subtle);
+    border-left-color: var(--ag-color-warning);
+}
+
+.ag-alert-strip--warning .ag-alert-strip__icon {
+    color: var(--ag-color-warning-strong);
+}
+
+.ag-alert-strip--warning strong {
+    color: var(--ag-color-warning-strong);
+    font-weight: var(--ag-font-weight-bold);
+}
+
+/* Rojo óxido (sesiones sin captura del RC). */
+.ag-alert-strip--danger {
+    background: var(--ag-color-danger-subtle);
+    border-left-color: var(--ag-color-danger);
+}
+
+.ag-alert-strip--danger .ag-alert-strip__icon {
+    color: var(--ag-color-danger);
+}
+
+.ag-alert-strip--danger strong {
+    color: var(--ag-color-danger-strong);
+    font-weight: var(--ag-font-weight-bold);
+}
+
+/* Verde (confirmaciones — p. ej. corte de planilla cerrado sin pendientes). */
+.ag-alert-strip--success {
+    background: var(--ag-color-success-subtle);
+    border-left-color: var(--ag-color-success);
+}
+
+.ag-alert-strip--success .ag-alert-strip__icon {
+    color: var(--ag-color-success-strong);
+}
+
+.ag-alert-strip--success strong {
+    color: var(--ag-color-success-strong);
+    font-weight: var(--ag-font-weight-bold);
+}
+
+/* Azul (avisos informativos sin urgencia — p. ej. cambios de campaña/período). */
+.ag-alert-strip--info {
+    background: var(--ag-color-info-subtle);
+    border-left-color: var(--ag-color-info);
+}
+
+.ag-alert-strip--info .ag-alert-strip__icon {
+    color: var(--ag-color-info-strong);
+}
+
+.ag-alert-strip--info strong {
+    color: var(--ag-color-info-strong);
+    font-weight: var(--ag-font-weight-bold);
+}

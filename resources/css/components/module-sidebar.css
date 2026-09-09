@@ -1,0 +1,213 @@
+/*
+ * Organism: module-sidebar (resources/views/components/organisms/module-sidebar.blade.php)
+ * Nivel 2 del layout (quinta vuelta, maqueta 4a): sidebar de ítems del
+ * módulo activo — 252px, superficie clara con borde derecho, cabecera con
+ * nombre en serif 23px + descripción, lista de menu-item, pie "Cambiar de
+ * rol". Visible solo ≥1200px (tablet usa la banda de píldoras; móvil, el
+ * drawer).
+ */
+
+.ag-module-sidebar {
+    flex: 0 0 252px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: var(--ag-color-bg-chrome);
+    border-right: 1px solid var(--ag-color-border);
+    transition: flex-basis 220ms var(--ag-ease-drawer);
+}
+
+/* Colapsado (sexta vuelta parte 2): icon-rail angosto — mismo criterio de
+   ancho que organisms/module-rail (nivel 1), pero es un componente propio
+   (nivel 2, ítems del módulo activo, no los módulos del riel). */
+.ag-module-sidebar.is-collapsed {
+    flex-basis: 72px;
+}
+
+/* La cabecera tiene DOS alturas, a propósito:
+   - Expandida lleva el nombre del módulo (23px de display) MÁS su línea de
+     descripción, que puede ocupar dos renglones. Forzarla a los 62px del
+     topbar dejaba ese contenido apretado contra ambos bordes, sin aire
+     arriba ni abajo — el título llegaba a tocar el borde superior.
+   - Colapsada solo queda el botón de toggle, y ahí sí tiene que medir
+     EXACTAMENTE lo mismo que .ag-topbar: las dos líneas divisorias siguen
+     horizontalmente y cualquier diferencia se lee como un escalón.
+   El `padding-block` va solo en la expandida; en la colapsada el
+   `min-height` fijo con `align-items:center` ya centra el botón. */
+.ag-module-sidebar__header {
+    flex: 0 0 auto;
+    min-height: calc(var(--ag-size-topbar-height) + var(--ag-space-5));
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    padding-block: var(--ag-space-3);
+    padding-inline: var(--ag-space-4);
+    border-bottom: 1px solid var(--ag-color-border-row);
+    transition: min-height 220ms var(--ag-ease-drawer);
+}
+
+.ag-module-sidebar.is-collapsed .ag-module-sidebar__header {
+    min-height: var(--ag-size-topbar-height);
+    justify-content: center;
+    padding-block: 0;
+    padding-inline: var(--ag-space-3);
+}
+
+.ag-module-sidebar__toggle {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: var(--ag-radius-sm);
+    background: transparent;
+    color: var(--ag-color-text-muted);
+    cursor: pointer;
+    transition:
+        background-color var(--ag-transition-fast),
+        color var(--ag-transition-fast);
+}
+
+.ag-module-sidebar__toggle:hover {
+    background: var(--ag-color-bg-row-hover);
+    color: var(--ag-color-text);
+}
+
+.ag-module-sidebar__toggle:focus-visible {
+    outline: 2px solid var(--ag-color-focus-ring);
+    outline-offset: 2px;
+}
+
+.ag-module-sidebar__heading {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-1);
+    min-width: 0;
+}
+
+.ag-module-sidebar.is-collapsed .ag-module-sidebar__heading {
+    display: none;
+}
+
+.ag-module-sidebar__title {
+    margin: 0;
+    font-family: var(--ag-font-family-display);
+    font-optical-sizing: auto;
+    font-weight: var(--ag-font-weight-regular);
+    font-size: 1.375rem;
+    line-height: 1.1;
+    color: var(--ag-color-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* -webkit-line-clamp (auditoría visual externa, obs. #9): sin tope, una
+   descripción larga hacía crecer el bloque de cabecera en varias líneas. */
+.ag-module-sidebar__desc {
+    margin: 0;
+    font-size: var(--ag-font-size-xs);
+    line-height: 1.45;
+    color: var(--ag-color-text-muted);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.ag-module-sidebar__nav {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--ag-space-3);
+}
+
+/* Colapsado: ítems centrados, solo ícono (label/badge ocultos — mismo
+   criterio ya usado en este componente para el breakpoint <1200px de más
+   abajo: ocultar por completo en vez de truncar). */
+.ag-module-sidebar.is-collapsed .ag-menu-item {
+    justify-content: center;
+    padding-inline: 0;
+}
+
+.ag-module-sidebar.is-collapsed .ag-menu-item__label,
+.ag-module-sidebar.is-collapsed .ag-menu-item__badge {
+    display: none;
+}
+
+/* Misma altura que .ag-panel__footer (panel-layout.css): los dos pies están
+   uno al lado del otro al fondo de la pantalla, así que sus border-top
+   tienen que caer en la MISMA línea horizontal. Antes la altura de este
+   salía del padding + el alto del link, que es mayor que el del texto mono
+   del footer del layout, y la línea del sidebar quedaba unos píxeles más
+   arriba que la del contenido. */
+.ag-module-sidebar__footer {
+    flex: 0 0 auto;
+    min-height: var(--ag-size-footer-height);
+    display: flex;
+    align-items: center;
+    padding-block: 0;
+    padding-inline: var(--ag-space-4);
+    border-top: 1px solid var(--ag-color-border-row);
+}
+
+.ag-module-sidebar.is-collapsed .ag-module-sidebar__footer {
+    padding-inline: var(--ag-space-3);
+    justify-content: center;
+}
+
+.ag-module-sidebar.is-collapsed .ag-module-sidebar__role-link {
+    justify-content: center;
+    width: 100%;
+}
+
+/* Se oculta SOLO la etiqueta, por su clase. La regla anterior era
+   `... __role-link span { display: none }`, y como atoms/icon renderiza un
+   <span>, escondía también el ícono: colapsado, "Cambiar de rol"
+   desaparecía por completo y el pie quedaba como una franja vacía. */
+.ag-module-sidebar.is-collapsed .ag-module-sidebar__role-label {
+    display: none;
+}
+
+/* Compartido con el pie de organisms/module-drawer (mismo skin). */
+.ag-module-sidebar__role-link {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-sm);
+    text-decoration: none;
+    transition: color var(--ag-transition-fast);
+}
+
+.ag-module-sidebar__role-link .ag-icon {
+    color: var(--ag-color-primary-emphasis);
+}
+
+.ag-module-sidebar__role-link:hover {
+    color: var(--ag-color-text);
+    opacity: 1;
+}
+
+.ag-module-sidebar__role-link:focus-visible {
+    outline: 2px solid var(--ag-color-focus-ring);
+    outline-offset: 2px;
+    border-radius: var(--ag-radius-sm);
+}
+
+@media (max-width: 1199.98px) {
+    .ag-module-sidebar {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ag-module-sidebar {
+        transition-duration: 0.01ms;
+    }
+}

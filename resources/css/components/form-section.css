@@ -1,0 +1,32 @@
+/*
+ * Molecule: form-section (resources/views/components/molecules/form-section.blade.php)
+ * Evolución (tarea 31): de `<fieldset>` sin chrome a tarjeta de formulario —
+ * superficie + borde + radio de la escala, header `section-head` separado
+ * por borde, grid de dos columnas para el contenido.
+ */
+
+.ag-form-section {
+    background-color: var(--ag-color-surface-card);
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-lg);
+    padding: var(--ag-space-5);
+}
+
+.ag-form-section__head {
+    padding-bottom: var(--ag-space-4);
+    margin-bottom: var(--ag-space-4);
+    border-bottom: 1px solid var(--ag-color-border);
+}
+
+.ag-form-section__body {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: var(--ag-space-4);
+    align-items: start;
+}
+
+/* Utilidad: un campo que necesita el ancho completo de la tarjeta (una
+   dirección, un textarea, un file-field) la aplica en la página. */
+.ag-form-section__field--full {
+    grid-column: 1 / -1;
+}

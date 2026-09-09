@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+#
+# Cascada de verificación de agrocom-api — la "compuerta".
+#
+# Devuelve exit 0 solo si TODO pasa. Es el único criterio de aceptación
+# que un cambio necesita cumplir para poder commitearse sin revisión
+# humana previa (ver docs/gestion/automatizacion_desarrollo.md).
+#
+# El grueso corre DENTRO del contenedor `app` (PHP 8.3, igual que CI —
+# el PHP del host puede ser otra versión). Los assets se compilan en el
+# host porque la imagen no trae Node.
+#
+#   bin/verify                # cascada completa
+#   bin/verify --sin-assets   # solo PHP (más rápido, para iterar)
+#
+set -uo pipefail
+
+cd "$(dirname "$0")/.." || exit 1
+
+CON_ASSETS=1
+[ "${1:-}" = "--sin-assets" ] && CON_ASSETS=0
+
+# --- Dónde corre PHP -------------------------------------------------
+# Preferencia: contenedor ya levantado > contenedor efímero > host.
+if docker compose ps --services --filter status=running 2>/dev/null | grep -qx app; then
+    ENTORNO="contenedor app (en ejecución)"
+    php_en() { docker compose exec -T app "$@"; }
+elif docker info >/dev/null 2>&1; then
+    ENTORNO="contenedor app (efímero)"
+    php_en() { docker compose run --rm -T app "$@"; }
+else
+    ENTORNO="host (Docker no disponible — la versión de PHP puede no coincidir con CI)"
+    php_en() { "$@"; }
+fi
+
+FALLO=""
+
+etapa() {
+    local nombre="$1"; shift
+    printf '\n\033[1m▸ %s\033[0m\n' "$nombre"
+    if "$@"; then
+        printf '\033[32m  ✓ %s\033[0m\n' "$nombre"
+    else
+        printf '\033[31m  ✗ %s\033[0m\n' "$nombre"
+        FALLO="$nombre"
+        return 1
+    fi
+}
+
+printf '\033[1mVerificación de agrocom-api\033[0m — PHP: %s\n' "$ENTORNO"
+
+# Pint, Larastan y Pest en un solo paso: `composer verify` ya los encadena
+# y se detiene en el primero que falle.
+etapa "Estilo, análisis estático y tests (composer verify)" php_en composer verify || true
+
+if [ -z "$FALLO" ] && [ "$CON_ASSETS" = "1" ]; then
+    etapa "Compilación de assets (Vite, en el host)" npm run build || true
+fi
+
+# Regresión visual (Playwright, en el host — el contenedor `app` no trae Node
+# ni navegadores). Compuerta desconectada desde la tarea 07 hasta la 31: el
+# arnés (tests/Visual/) existía pero nadie lo corría. Snapshots `-win32`
+# (el desarrollo se hace en Windows desde el 3/9/2026): fuera de CI a propósito.
+#
+# El sufijo de plataforma lo pone Playwright, no nosotros: la misma vista se
+# compara contra `-win32`, `-darwin` o `-linux` según dónde corra. En el árbol
+# solo hay `-win32`, así que en otra máquina la etapa no falla por un cambio de
+# código: falla porque la imagen de referencia no existe — y la primera corrida
+# la escribiría con lo que haya en pantalla, dejando un centenar de PNG "de
+# referencia" que nadie miró, que es peor que no tener la etapa. Por eso, si no
+# hay ni un snapshot de esta plataforma, se saltea diciéndolo. Vuelve sola en
+# cuanto alguien genere y revise los de la suya.
+case "$(uname -s)" in
+    Darwin) PLATAFORMA=darwin ;;
+    Linux)  PLATAFORMA=linux ;;
+    *)      PLATAFORMA=win32 ;;
+esac
+
+if [ -z "$FALLO" ] && [ "$CON_ASSETS" = "1" ]; then
+    if find tests/Visual -name "*-$PLATAFORMA.png" -print -quit 2>/dev/null | grep -q .; then
+        etapa "Regresión visual (Playwright, en el host)" npx playwright test || true
+    else
+        printf '\n\033[1m▸ Regresión visual (Playwright, en el host)\033[0m\n'
+        printf '\033[33m  ⊘ Salteada: no hay capturas de referencia -%s en tests/Visual/\033[0m\n' "$PLATAFORMA"
+        printf '    Las versionadas son -win32. Para tenerla en esta máquina:\n'
+        printf '    npx playwright test --update-snapshots, revisá las imágenes y commiteálas.\n'
+    fi
+fi
+
+echo
+if [ -n "$FALLO" ]; then
+    printf '\033[31m✗ La cascada falló en: %s\033[0m\n' "$FALLO"
+    printf '  El cambio NO está listo para commitear.\n'
+    exit 1
+fi
+
+printf '\033[32m✓ Cascada completa en verde.\033[0m\n'
+exit 0
