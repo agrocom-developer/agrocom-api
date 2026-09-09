@@ -43,10 +43,17 @@ function entrarAlPanelParaUsuarios(SecUser $usuario, int $idRolActivo): void
         ->withSession(['sec_rol_activo_id' => $idRolActivo]);
 }
 
-/** Payload mínimo válido de alta/edición. */
+/**
+ * Payload mínimo válido de alta/edición de una cuenta INTERNA. `type` es
+ * obligatorio desde la tarea 65 (HU-41: el mismo formulario también da de
+ * alta cuentas de portal) — en `update()` el controlador lo ignora del
+ * payload (lo fija `ActualizarUsuarioRequest` desde el usuario ya
+ * persistido), así que mandarlo siempre acá no rompe la edición.
+ */
 function payloadUsuario(array $overrides = []): array
 {
     return array_merge([
+        'type' => 'interno',
         'name' => 'Nuevo Usuario',
         'username' => 'nuevo.usuario',
         'password' => 'Secreta123',
@@ -54,6 +61,23 @@ function payloadUsuario(array $overrides = []): array
         'roles' => [],
     ], $overrides);
 }
+
+it('el formulario de alta de una cuenta interna renderiza (regresión: partial compartido con el camino portal)', function () {
+    [$encargado, $idRol] = usuarioConRolParaUsuarios('encargado', 'encargado_operaciones');
+    entrarAlPanelParaUsuarios($encargado, $idRol);
+
+    $this->get(route('panel.usuarios.create'))->assertOk();
+});
+
+it('el formulario de edición de una cuenta interna renderiza (regresión: partial compartido con el camino portal)', function () {
+    [$encargado, $idRol] = usuarioConRolParaUsuarios('encargado', 'encargado_operaciones');
+    entrarAlPanelParaUsuarios($encargado, $idRol);
+
+    $this->post(route('panel.usuarios.store'), payloadUsuario());
+    $usuario = SecUser::query()->where('username', 'nuevo.usuario')->sole();
+
+    $this->get(route('panel.usuarios.edit', $usuario))->assertOk();
+});
 
 it('da de alta un usuario con roles asignados y el login real funciona con esos datos', function () {
     [$encargado, $idRol] = usuarioConRolParaUsuarios('encargado', 'encargado_operaciones');

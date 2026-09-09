@@ -104,7 +104,11 @@ it('oculta Devengos del menú cuando el usuario no tiene persona vinculada', fun
 it('siembra las 21 capturas del control remoto como evidencias con archivo real', function () {
     $evidencias = Evidencia::query()->get();
 
-    expect($evidencias)->toHaveCount(21);
+    // 21 capturas de OperacionDemoSeeder + 2 evidencias de firma de acta de
+    // PortalDemoSeeder (tarea 65, HU-41: cliente.sanjorge y
+    // cliente.esperanza) — este test verifica TODA evidencia sembrada por
+    // DemostracionSeeder, no solo el relato de las capturas de RC.
+    expect($evidencias)->toHaveCount(23);
 
     foreach ($evidencias as $evidencia) {
         expect(Storage::disk('r2')->exists($evidencia->archivo_url))

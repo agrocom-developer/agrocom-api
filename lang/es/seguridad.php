@@ -314,11 +314,14 @@ return [
         'filtro_vacio' => 'Ningún usuario coincide con esta búsqueda.',
         'col_nombre' => 'Nombre',
         'col_username' => 'Usuario',
+        'col_tipo' => 'Tipo',
         'col_roles' => 'Roles',
         'col_persona' => 'Persona',
         'col_estado' => 'Estado',
         'sin_roles' => 'Sin roles asignados',
         'sin_persona' => 'Sin persona asociada',
+        'filtro_tipo' => 'Tipo de cuenta',
+        'filtro_tipo_todos' => 'Todos',
         'estado_activo' => 'Activo',
         'estado_bloqueado' => 'Bloqueado',
         'editar' => 'Editar',
@@ -347,6 +350,22 @@ return [
         'campo_roles' => 'Roles',
         'campo_roles_ayuda' => 'Seleccioná uno o más roles. Se reemplaza el conjunto completo al guardar.',
         'estado_form' => 'Los cambios se guardan al confirmar.',
+
+        // Tipo de cuenta (tarea 65, HU-41): interna (con roles) o de portal
+        // (con contrato). Solo se elige en el alta — ver docblock del
+        // partial del formulario.
+        'campo_tipo' => 'Tipo de cuenta',
+        'campo_tipo_ayuda_edicion' => 'No se puede cambiar: una cuenta no muta de interna a cliente ni al revés.',
+        'tipo_interno' => 'Interna',
+        'tipo_cliente' => 'Cliente (portal)',
+        'seccion_interno' => 'Persona y roles',
+        'seccion_portal' => 'Contrato del portal',
+        'campo_cliente' => 'Cliente',
+        'campo_cliente_placeholder' => 'Elegí un cliente',
+        'campo_cliente_ayuda' => 'Filtra el contrato de abajo — no se guarda como dato propio de la cuenta.',
+        'campo_contrato' => 'Contrato',
+        'campo_contrato_placeholder' => 'Elegí un contrato vigente',
+        'campo_contrato_opcion' => ':cliente — :hectareas ha',
     ],
 
     // Revocación de sesiones de la app de campo (HU-03). El nombre del rol

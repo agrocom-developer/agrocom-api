@@ -4,9 +4,11 @@ namespace App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web;
 
 use App\Dominios\Seguridad\Aplicacion\AlternarBloqueoUsuario;
 use App\Dominios\Seguridad\Aplicacion\AsignarRolesUsuario;
+use App\Dominios\Seguridad\Aplicacion\CrearCuentaPortal;
 use App\Dominios\Seguridad\Aplicacion\EliminarUsuario;
 use App\Dominios\Seguridad\Aplicacion\ListarUsuarios;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
+use App\Dominios\Seguridad\Dominio\Excepciones\ContratoNoDisponibleParaPortal;
 use App\Dominios\Seguridad\Dominio\Excepciones\PermisoDenegado;
 use App\Dominios\Seguridad\Dominio\Excepciones\UsuarioDuplicado;
 use App\Dominios\Seguridad\Dominio\TipoUsuario;
@@ -23,25 +25,31 @@ use Illuminate\View\View;
 
 /**
  * `GET/POST/PUT/DELETE /panel/usuarios*` (HU-45, tarea 39): alta y
- * mantenimiento de cuentas internas del panel, con sus roles. Mismo molde
- * que `PersonasController`/`OrdenesController` — el controlador queda
- * delgado y sin reglas de negocio; `store`/`update` invocan
- * {@see AsignarRolesUsuario} (HU-01), que ya cubre alta y edición con la
- * misma guarda de permisos (crear/editar y, cuando corresponde, el rol
- * `dueno`). Nunca reimplementa esa lógica.
+ * mantenimiento de cuentas del panel — internas (con roles) Y de portal
+ * (con contrato, tarea 65, HU-41), un solo ABM. Mismo molde que
+ * `PersonasController`/`OrdenesController` — el controlador queda delgado y
+ * sin reglas de negocio: `store`/`update` bifurcan por `type` ANTES de
+ * cualquier guarda de negocio y cada camino invoca su propio caso de uso —
+ * {@see AsignarRolesUsuario} (HU-01) para `interno`, {@see CrearCuentaPortal}
+ * (tarea 65) para `cliente` — sin que ninguno de los dos reimplemente la
+ * guarda del otro (roles/`asignar_rol_dueno` es solo del camino interno;
+ * contrato vigente/`seguridad.usuario.portal` es solo del camino portal).
  *
- * Seis permisos de grano fino
+ * Siete permisos de grano fino
  * (`seguridad.usuario.ver`/`.crear`/`.editar`/`.eliminar`/`.bloquear`/
- * `.asignar_rol_dueno`), verificados DENTRO del controlador contra el ROL
- * ACTIVO vía {@see AutorizacionPanelWeb} — mismo criterio que el resto del
- * panel. `asignar_rol_dueno` no tiene una acción HTTP propia, pero sí gatea
- * `store`/`update` cuando el payload toca un rol que a su vez tiene ese
- * permiso otorgado (tarea 62: antes solo filtraba el `<select>`, cosmético —
- * un `PUT` armado a mano con ese id en `roles[]` lo aceptaba igual si el
- * actor lo tenía en CUALQUIER rol asignado, no en el activo).
+ * `.asignar_rol_dueno`/`.portal`), verificados DENTRO del controlador contra
+ * el ROL ACTIVO vía {@see AutorizacionPanelWeb} — mismo criterio que el
+ * resto del panel. `asignar_rol_dueno` no tiene una acción HTTP propia, pero
+ * sí gatea `store`/`update` cuando el payload toca un rol que a su vez tiene
+ * ese permiso otorgado (tarea 62: antes solo filtraba el `<select>`,
+ * cosmético — un `PUT` armado a mano con ese id en `roles[]` lo aceptaba
+ * igual si el actor lo tenía en CUALQUIER rol asignado, no en el activo).
+ * `seguridad.usuario.portal` es análogo para el camino `cliente`: se exige
+ * ADEMÁS de `crear`/`editar`, nunca en su lugar.
  *
- * `type` nunca se expone al formulario: se fija a `TipoUsuario::Interno` acá
- * mismo. `Cliente` es del portal (HU-41), otro flujo de alta.
+ * `type` se acepta del formulario SOLO en alta (`CrearUsuarioRequest`); en
+ * edición no se acepta ni se lee del payload — una cuenta no muta de interna
+ * a cliente ni al revés, es otra cuenta (ver `ActualizarUsuarioRequest`).
  */
 final class UsuariosController
 {
@@ -57,6 +65,8 @@ final class UsuariosController
 
     private const PERMISO_ROL_DUENO = 'seguridad.usuario.asignar_rol_dueno';
 
+    private const PERMISO_PORTAL = 'seguridad.usuario.portal';
+
     public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
 
     public function index(Request $request, ListarUsuarios $listarUsuarios): View
@@ -64,7 +74,9 @@ final class UsuariosController
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
         $busqueda = $request->string('q')->toString();
-        $usuarios = $listarUsuarios->ejecutar($busqueda !== '' ? $busqueda : null);
+        $tipoFiltro = $request->string('tipo')->toString();
+        $tipo = TipoUsuario::tryFrom($tipoFiltro);
+        $usuarios = $listarUsuarios->ejecutar($busqueda !== '' ? $busqueda : null, $tipo);
 
         $idsUsuario = $usuarios->pluck('id')->map(fn ($id) => (int) $id)->all();
         $idsPersona = $usuarios->pluck('persona_id')->filter()->map(fn ($id) => (int) $id)->unique()->values()->all();
@@ -74,7 +86,7 @@ final class UsuariosController
             'usuarios' => $usuarios,
             'rolesPorUsuario' => $this->rolesPorUsuario($idsUsuario),
             'etiquetasPersona' => $this->etiquetasPersona($idsPersona),
-            'filtros' => ['q' => $busqueda],
+            'filtros' => ['q' => $busqueda, 'tipo' => $tipo->value ?? ''],
         ]);
     }
 
@@ -86,14 +98,41 @@ final class UsuariosController
             ...$this->autorizacion->cascara($request),
             'rolesDisponibles' => $this->rolesDisponibles($request),
             'personasDisponibles' => $this->personasDisponibles(null),
+            'puedeCrearPortal' => $this->autorizacion->tienePermiso($request, self::PERMISO_PORTAL),
+            'clientesDisponibles' => $this->clientesDisponibles(),
+            'contratosVigentesDisponibles' => $this->contratosVigentesDisponibles(),
         ]);
     }
 
-    public function store(CrearUsuarioRequest $request, AsignarRolesUsuario $asignarRoles): RedirectResponse
+    public function store(CrearUsuarioRequest $request, AsignarRolesUsuario $asignarRoles, CrearCuentaPortal $crearCuentaPortal): RedirectResponse
     {
+        $datos = $request->validated();
+
+        if ((string) $datos['type'] === TipoUsuario::Cliente->value) {
+            abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_CREAR), 403);
+            abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_PORTAL), 403);
+
+            try {
+                $crearCuentaPortal->ejecutar(
+                    actor: $request->user('interno'),
+                    usuarioId: null,
+                    username: (string) $datos['username'],
+                    password: (string) $datos['password'],
+                    name: (string) $datos['name'],
+                    contratoId: (int) $datos['contrato_id'],
+                    idRolActivo: $this->rolActivoId($request),
+                );
+            } catch (UsuarioDuplicado|PermisoDenegado|ContratoNoDisponibleParaPortal $excepcion) {
+                return redirect()->back()->withErrors(['estado' => $excepcion->getMessage()]);
+            }
+
+            return redirect()
+                ->route('panel.usuarios.index')
+                ->with('estado', __('seguridad.usuarios.creado'));
+        }
+
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_CREAR), 403);
 
-        $datos = $request->validated();
         $rolesDeseados = array_map('intval', $datos['roles'] ?? []);
 
         $this->abortarSiFaltaPermisoRolDueno($request, [], $rolesDeseados);
@@ -130,14 +169,39 @@ final class UsuariosController
             'rolesAsignados' => $usuario->idsDeRoles(),
             'rolesDisponibles' => $this->rolesDisponibles($request),
             'personasDisponibles' => $this->personasDisponibles($usuario->id),
+            'clientesDisponibles' => $this->clientesDisponibles(),
+            'contratosVigentesDisponibles' => $this->contratosVigentesDisponibles(),
         ]);
     }
 
-    public function update(ActualizarUsuarioRequest $request, SecUser $usuario, AsignarRolesUsuario $asignarRoles): RedirectResponse
+    public function update(ActualizarUsuarioRequest $request, SecUser $usuario, AsignarRolesUsuario $asignarRoles, CrearCuentaPortal $crearCuentaPortal): RedirectResponse
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
 
         $datos = $request->validated();
+
+        if ($usuario->type === TipoUsuario::Cliente) {
+            abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_PORTAL), 403);
+
+            try {
+                $crearCuentaPortal->ejecutar(
+                    actor: $request->user('interno'),
+                    usuarioId: $usuario->id,
+                    username: (string) $datos['username'],
+                    password: $this->cadenaONull($datos['password'] ?? null),
+                    name: (string) $datos['name'],
+                    contratoId: (int) $datos['contrato_id'],
+                    idRolActivo: $this->rolActivoId($request),
+                );
+            } catch (UsuarioDuplicado|PermisoDenegado|ContratoNoDisponibleParaPortal $excepcion) {
+                return redirect()->back()->withErrors(['estado' => $excepcion->getMessage()]);
+            }
+
+            return redirect()
+                ->route('panel.usuarios.index')
+                ->with('estado', __('seguridad.usuarios.actualizado'));
+        }
+
         $rolesDeseados = array_map('intval', $datos['roles'] ?? []);
 
         $this->abortarSiFaltaPermisoRolDueno($request, $usuario->idsDeRoles(), $rolesDeseados);
@@ -368,5 +432,45 @@ final class UsuariosController
         $clave = "seguridad.rol.meta.{$slug}.nombre";
 
         return Lang::has($clave) ? __($clave) : $slug;
+    }
+
+    /**
+     * Clientes vivos, para el select que solo FILTRA al de contrato (tarea
+     * 65): igual criterio que `cliente_id` en `lotes/_formulario.blade.php`
+     * — ninguna cuenta guarda esto, se resuelve del lado del cliente vía
+     * `usuarios-form.js`. Lectura directa (`Comercial` es otro módulo, ADR
+     * 0003 regla 3), mismo criterio que {@see self::personasDisponibles()}.
+     *
+     * @return Collection<int, string>
+     */
+    private function clientesDisponibles(): Collection
+    {
+        return DB::table('com_clientes')
+            ->whereNull('deleted_at')
+            ->orderBy('razon_social')
+            ->pluck('razon_social', 'id');
+    }
+
+    /**
+     * Contratos vigentes con su cliente, para el select dependiente
+     * cliente→contrato del camino portal (tarea 65). Solo `estado =
+     * 'vigente'` (valor de
+     * `App\Dominios\Comercial\Dominio\EstadoContrato::Vigente`, leído como
+     * dato — nunca se importa el enum de otro módulo, ADR 0003 regla 3):
+     * `CrearCuentaPortal`/`*UsuarioRequest` exigen lo mismo, así que no
+     * tiene sentido ofrecer en el `<select>` un contrato que el submit
+     * rechazaría.
+     *
+     * @return Collection<int, \stdClass> cada fila con `id`, `cliente_id`,
+     *                                    `razon_social`, `hectareas_contratadas`.
+     */
+    private function contratosVigentesDisponibles(): Collection
+    {
+        return DB::table('com_contratos as c')
+            ->join('com_clientes as cl', 'cl.id', '=', 'c.cliente_id')
+            ->whereNull('c.deleted_at')
+            ->where('c.estado', 'vigente')
+            ->orderBy('cl.razon_social')
+            ->get(['c.id', 'c.cliente_id', 'cl.razon_social', 'c.hectareas_contratadas']);
     }
 }

@@ -17,19 +17,29 @@ use Illuminate\Database\Seeder;
  *
  * El orden es una cadena de dependencias, no una preferencia:
  *
- * 1. `CarteraClientesDemoSeeder` — los otros tres clientes (San Marcos, El
+ * 1. `PortalDemoSeeder` (tarea 65, HU-41) — dos cuentas de portal
+ *    (`cliente.sanjorge`, sobre el contrato que ya sembró `DemoSeeder`;
+ *    `cliente.esperanza`, cliente nuevo propio de esta tarea), cada una con
+ *    su sesión validada, acta firmada y reporte técnico. Va PRIMERO por el
+ *    mismo motivo que el resto no vive en `DemoSeeder`: agrega un cliente,
+ *    un contrato y una orden vigente más — «una orden vigente», «un lote»
+ *    deja de ser cierto apenas se suma. Los otros clientes de esta cadena
+ *    (Cartera/Operación) no tocan San Jorge ni Esperanza, así que el orden
+ *    respecto de ellos no importa; se puso primero por afinidad temática
+ *    con `DemoSeeder`.
+ * 2. `CarteraClientesDemoSeeder` — los otros tres clientes (San Marcos, El
  *    Carmen, Santa Rosa), que son los campos del relato de las capturas de RC.
- * 2. `FlotaDemoSeeder` — drones, baterías, vehículos, repuestos y stock, más
+ * 3. `FlotaDemoSeeder` — drones, baterías, vehículos, repuestos y stock, más
  *    su mantenimiento. Las sesiones necesitan un dron al que colgarse.
- * 3. `EquiposTrabajoDemoSeeder` — dos cuadrillas (piloto, auxiliar, dron,
+ * 4. `EquiposTrabajoDemoSeeder` — dos cuadrillas (piloto, auxiliar, dron,
  *    vehículo y generador), tarea 72/HU-49. Va después de `FlotaDemoSeeder`
  *    porque necesita drones y vehículos ya sembrados a los que asignar.
- * 4. `OperacionDemoSeeder` — las 21 capturas reales del control remoto como
+ * 5. `OperacionDemoSeeder` — las 21 capturas reales del control remoto como
  *    evidencias, y sobre ellas los trabajos, sesiones, validaciones (que
  *    generan los devengos), actas y reportes técnicos.
- * 5. `FinanzasDemoSeeder` — lo que se deriva de todo eso: gastos, rendiciones,
+ * 6. `FinanzasDemoSeeder` — lo que se deriva de todo eso: gastos, rendiciones,
  *    combustible, anticipos, la planilla del período y las facturas.
- * 6. `DashboardDemoSeeder` — actividad de los últimos días, RELATIVA A HOY,
+ * 7. `DashboardDemoSeeder` — actividad de los últimos días, RELATIVA A HOY,
  *    para que el dashboard no aparezca vacío. Va al final porque se apoya en
  *    la orden, el lote y las personas que sembraron los anteriores.
  *
@@ -40,6 +50,7 @@ class DemostracionSeeder extends Seeder
     public function run(): void
     {
         $this->call(DemoSeeder::class);
+        $this->call(PortalDemoSeeder::class);
         $this->call(CarteraClientesDemoSeeder::class);
         $this->call(FlotaDemoSeeder::class);
         $this->call(EquiposTrabajoDemoSeeder::class);
