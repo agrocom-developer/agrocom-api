@@ -22,6 +22,7 @@ use Illuminate\Support\Carbon;
  * @property AccionBitacora $accion
  * @property array<string, mixed>|null $antes
  * @property array<string, mixed>|null $despues
+ * @property string|null $zona_horaria
  * @property Carbon $created_at
  */
 class Bitacora extends Model
@@ -38,6 +39,7 @@ class Bitacora extends Model
         'accion',
         'antes',
         'despues',
+        'zona_horaria',
     ];
 
     /** @return array<string, string> */

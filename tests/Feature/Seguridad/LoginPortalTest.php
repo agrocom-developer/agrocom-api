@@ -5,6 +5,7 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Seguridad\Dominio\TipoUsuario;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
+use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUserPreferencia;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUsuarioCliente;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUsuarioInterno;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -48,6 +49,28 @@ it('inicia sesión de portal por username y contrato, sin pedir selección de ro
     $respuesta->assertOk()->assertJsonMissing(['requiere_seleccion_rol']);
 
     $this->assertAuthenticatedAs(SecUsuarioCliente::query()->findOrFail($usuario->id), 'cliente');
+});
+
+/*
+ * Tarea 63 — la zona horaria se fija igual desde el portal: la preferencia
+ * es la misma tabla satélite de sec_user para ambos guards.
+ */
+it('fija la zona horaria declarada por el navegador en el primer login del portal', function () {
+    $contrato = contratoParaLoginPortal();
+    $usuario = SecUser::factory()->create([
+        'username' => 'cliente.portal',
+        'password' => 'Secreta123',
+        'type' => TipoUsuario::Cliente,
+        'contrato_id' => $contrato->id,
+    ]);
+
+    $this->postJson('/portal/login', [
+        'username' => 'cliente.portal',
+        'password' => 'Secreta123',
+        'zona_horaria' => 'America/Asuncion',
+    ])->assertOk();
+
+    expect(SecUserPreferencia::query()->where('user_id', $usuario->id)->value('zona_horaria'))->toBe('America/Asuncion');
 });
 
 it('rechaza credenciales inválidas con 422 y no autentica', function () {

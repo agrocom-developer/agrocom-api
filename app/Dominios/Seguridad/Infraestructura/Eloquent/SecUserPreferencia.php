@@ -29,6 +29,7 @@ use App\Dominios\Seguridad\Dominio\TemaPreferencia;
  * @property int $user_id
  * @property TemaPreferencia $tema
  * @property string $idioma
+ * @property string|null $zona_horaria
  * @property int|null $rol_preferido_id
  * @property int|null $ultimo_rol_id
  */
@@ -41,6 +42,7 @@ class SecUserPreferencia extends ModeloDominio
         'user_id',
         'tema',
         'idioma',
+        'zona_horaria',
         'rol_preferido_id',
         'ultimo_rol_id',
     ];

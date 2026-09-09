@@ -150,6 +150,12 @@ Route::middleware('auth:interno')->group(function () {
     Route::post('/panel/preferencias/tema', [PreferenciasController::class, 'actualizarTema'])
         ->name('panel.preferencias.tema');
 
+    // Zona horaria IANA del usuario (tarea 63), mismo criterio sin
+    // `rol.activo` que el tema de arriba: cambia desde el mismo lugar del
+    // topbar y también en la pantalla de selección de rol.
+    Route::post('/panel/preferencias/zona-horaria', [PreferenciasController::class, 'actualizarZonaHoraria'])
+        ->name('panel.preferencias.zona-horaria');
+
     Route::middleware('rol.activo')->group(function () {
         Route::get('/panel/dashboard', [DashboardController::class, 'index'])
             ->name('panel.dashboard');
@@ -990,6 +996,9 @@ Route::middleware('auth:cliente')->group(function () {
 
     Route::put('/portal/perfil', [PerfilPortalController::class, 'update'])
         ->name('portal.perfil.update');
+
+    Route::post('/portal/preferencias/zona-horaria', [PreferenciasPortalController::class, 'actualizarZonaHoraria'])
+        ->name('portal.preferencias.zona-horaria');
 
     Route::get('/portal/avance', [AvancePortalController::class, 'index'])->name('portal.avance.index');
 

@@ -3,6 +3,7 @@
 use App\Dominios\Seguridad\Dominio\TipoUsuario;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
+use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUserPreferencia;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUserRole;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUsuarioInterno;
 use Database\Seeders\Catalogo\SeguridadSeeder;
@@ -84,6 +85,49 @@ it('exige username y password', function () {
     $this->postJson('/login', [])
         ->assertStatus(422)
         ->assertJsonValidationErrors(['username', 'password']);
+});
+
+/*
+ * Tarea 63 — el login fija la zona horaria IANA que declara el navegador
+ * (campo oculto `zona_horaria`), SOLO la primera vez.
+ */
+it('fija la zona horaria declarada por el navegador en el primer login', function () {
+    $usuario = SecUser::factory()->create(['username' => 'jperez', 'password' => 'Secreta123']);
+    loginAsignarRol($usuario, 'piloto');
+
+    $this->postJson('/login', [
+        'username' => 'jperez',
+        'password' => 'Secreta123',
+        'zona_horaria' => 'America/La_Paz',
+    ])->assertOk();
+
+    expect(SecUserPreferencia::query()->where('user_id', $usuario->id)->value('zona_horaria'))->toBe('America/La_Paz');
+});
+
+it('no pisa una zona horaria ya elegida en un login posterior', function () {
+    $usuario = SecUser::factory()->create(['username' => 'jperez', 'password' => 'Secreta123']);
+    loginAsignarRol($usuario, 'piloto');
+    SecUserPreferencia::query()->create(['user_id' => $usuario->id, 'zona_horaria' => 'Europe/Madrid']);
+
+    $this->postJson('/login', [
+        'username' => 'jperez',
+        'password' => 'Secreta123',
+        'zona_horaria' => 'America/La_Paz',
+    ])->assertOk();
+
+    expect(SecUserPreferencia::query()->where('user_id', $usuario->id)->value('zona_horaria'))->toBe('Europe/Madrid');
+});
+
+it('el login funciona igual sin campo de zona horaria (navegador sin soporte de Intl)', function () {
+    $usuario = SecUser::factory()->create(['username' => 'jperez', 'password' => 'Secreta123']);
+    loginAsignarRol($usuario, 'piloto');
+
+    // La fila de preferencia igual puede existir (ElegirRolActivo registra
+    // `ultimo_rol_id` con un solo rol asignado) — lo que importa acá es que
+    // `zona_horaria` nunca se inventa un valor sin dato del navegador.
+    $this->postJson('/login', ['username' => 'jperez', 'password' => 'Secreta123'])->assertOk();
+
+    expect(SecUserPreferencia::query()->where('user_id', $usuario->id)->value('zona_horaria'))->toBeNull();
 });
 
 it('no autentica cuentas de tipo cliente contra el guard interno', function () {

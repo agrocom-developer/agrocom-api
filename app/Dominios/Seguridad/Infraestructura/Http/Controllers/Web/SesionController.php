@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Seguridad\Aplicacion\FijarZonaHorariaUsuario;
 use App\Dominios\Seguridad\Aplicacion\IniciarSesionPanel;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
@@ -24,9 +25,9 @@ use Illuminate\Validation\ValidationException;
  */
 final class SesionController
 {
-    public function store(IniciarSesionRequest $request, AutorizacionPanelWeb $autorizacion, IniciarSesionPanel $iniciarSesion): JsonResponse
+    public function store(IniciarSesionRequest $request, AutorizacionPanelWeb $autorizacion, IniciarSesionPanel $iniciarSesion, FijarZonaHorariaUsuario $fijarZonaHoraria): JsonResponse
     {
-        $credenciales = $request->validated();
+        $credenciales = $request->safe()->only(['username', 'password']);
 
         // `state` como condición extra de `Auth::attempt()`: el
         // EloquentUserProvider agrega un `where` por cada clave de
@@ -44,6 +45,8 @@ final class SesionController
 
         /** @var SecUser $usuario */
         $usuario = Auth::guard('interno')->user();
+
+        $fijarZonaHoraria->ejecutarSiVacia($usuario, $request->string('zona_horaria')->toString() ?: null);
 
         $resultado = $iniciarSesion->ejecutar($usuario);
 
