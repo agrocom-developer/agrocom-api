@@ -82,7 +82,7 @@
             "@php artisan config:clear --ansi",
             "vendor/bin/pint --test",
             "vendor/bin/phpstan analyse --memory-limit=512M",
-            "vendor/bin/pest"
+            "vendor/bin/pest --parallel"
         ],
         "larastan": "phpstan analyse --memory-limit=512M",
         "openapi": [
