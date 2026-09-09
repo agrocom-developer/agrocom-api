@@ -23,7 +23,9 @@
 /* Listado (index) */
 
 
-.ag-vehiculos__filtros .ag-input {
+.ag-vehiculos__filtros .ag-input,
+.ag-vehiculos__filtros .ag-select,
+.ag-vehiculos__filtros .ag-date {
     min-width: 14rem;
 }
 

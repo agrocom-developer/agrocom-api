@@ -13,7 +13,9 @@
     margin-top: var(--ag-space-4);
 }
 
-.ag-alertas__filtros .ag-input {
+.ag-alertas__filtros .ag-input,
+.ag-alertas__filtros .ag-select,
+.ag-alertas__filtros .ag-date {
     min-width: 12rem;
 }
 

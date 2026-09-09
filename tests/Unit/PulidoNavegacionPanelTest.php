@@ -1,11 +1,12 @@
 <?php
 
 /*
- * Tres reglas del sistema de diseño del panel que hasta ahora dependían de
- * que quien escribiera la pantalla se acordara. Las tres se rompieron a la
- * vez y solo se vieron en una grabación de pantalla del usuario navegando el
- * menú (7/9/2026) — ninguna hacía fallar un test, ninguna hacía fallar la
- * cascada, y las tres afeaban cada navegación del panel:
+ * Cuatro reglas del sistema de diseño del panel que hasta ahora dependían de
+ * que quien escribiera la pantalla se acordara. Las tres primeras se
+ * rompieron a la vez y solo se vieron en una grabación de pantalla del
+ * usuario navegando el menú (7/9/2026) — ninguna hacía fallar un test,
+ * ninguna hacía fallar la cascada, y las tres afeaban cada navegación del
+ * panel:
  *
  * 1. Título de pantalla sin la receta común: un `<h1>` suelto hereda el peso
  *    por defecto de Bootstrap y se lee como OTRA tipografía al lado de las
@@ -19,6 +20,15 @@
  *    ("calendar_month") en la fuente de respaldo. Ese ancho fantasma empujaba
  *    el `min-content` de `module-sidebar` por encima de su `flex: 0 0 252px`
  *    y el panel entero saltaba a la derecha y volvía en cada navegación.
+ * 4. Campo en una fila de controles con su margen de apilado puesto: la
+ *    barra de filtros anulaba el de `.ag-input` por nombre, así que cuando
+ *    la tarea 76 migró los 70 selects del panel al átomo `atoms/select`
+ *    —otra clase de raíz, `.ag-select`— el botón "Filtrar" volvió a caer
+ *    16px por debajo del campo en las 29 pantallas con filtros a la vez
+ *    (reportado con captura por el usuario el 8/9/2026). Esta cuarta
+ *    compuerta se descubre sola: cualquier átomo de campo nuevo que declare
+ *    `margin-bottom` en su regla raíz tiene que estar anulado en
+ *    `components/filter-bar.css` o el test falla.
  */
 
 $raizProyecto = dirname(__DIR__, 2);
@@ -146,4 +156,41 @@ test('el átomo icon reserva su caja para que la ligadura no mueva el layout', f
     expect($iconCss)
         ->toContain('width: 1em')
         ->toContain('display: inline-block');
+});
+
+test('la barra de filtros anula el margen de apilado de todo átomo de campo', function () use ($raizProyecto) {
+    $barraFiltros = file_get_contents($raizProyecto.'/resources/css/components/filter-bar.css');
+    $sinCubrir = [];
+
+    foreach (glob($raizProyecto.'/resources/views/components/atoms/*.blade.php') ?: [] as $blade) {
+        $hoja = $raizProyecto.'/resources/css/components/'.basename($blade, '.blade.php').'.css';
+
+        if (! is_file($hoja)) {
+            continue;
+        }
+
+        $contenido = file_get_contents($hoja);
+
+        if ($contenido === false) {
+            continue;
+        }
+
+        // Solo las reglas RAÍZ del átomo (`.ag-select { … }`), nunca un
+        // elemento BEM (`.ag-select__listbox`): el margen que importa es el
+        // que separa un campo del siguiente en un formulario apilado, y es
+        // el que sobra cuando el campo está en línea con un botón.
+        preg_match_all('~^\.(ag-[a-z-]+) \{([^}]*)\}~m', $contenido, $reglas, PREG_SET_ORDER);
+
+        foreach ($reglas as $regla) {
+            if (! str_contains($regla[2], 'margin-bottom')) {
+                continue;
+            }
+
+            if (! str_contains($barraFiltros, ".ag-filtros .{$regla[1]},") && ! str_contains($barraFiltros, ".ag-filtros .{$regla[1]} {")) {
+                $sinCubrir[] = $regla[1];
+            }
+        }
+    }
+
+    expect($sinCubrir)->toBe([], 'Estos átomos de campo llevan margen de apilado y `components/filter-bar.css` no lo anula: dentro de una barra de filtros van a empujar el botón por debajo del campo. Sumalos a la regla de `margin-bottom: 0`.');
 });

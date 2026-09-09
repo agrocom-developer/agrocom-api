@@ -21,6 +21,18 @@
  *
  * La corrección es anular el margen acá: dentro de una barra de filtros el
  * input no separa de nada, el `gap` del contenedor ya hace ese trabajo.
+ *
+ * ### Por qué la regla nombra a los seis átomos y no solo a `.ag-input`
+ *
+ * El margen de apilado no es del input: lo llevan todos los átomos de campo
+ * (`.ag-input`, `.ag-select`, `.ag-textarea`, `.ag-date`, `.ag-switch`,
+ * `.ag-checkbox`), cada uno en su propio archivo. Cuando se escribió esta
+ * barra el único campo que aparecía en un filtro era un `<select>` crudo con
+ * la clase `.ag-input__field`, así que anular `.ag-input` alcanzaba. La
+ * tarea 76 migró esos 70 selects al átomo `atoms/select`, que envuelve en
+ * `.ag-select` — otro nombre, otro margen, y el bug de los 16px volvió tal
+ * cual en toda pantalla con un filtro desplegable. Por eso la regla lista
+ * los seis: cualquier campo dentro de la barra alinea por su propia caja.
  */
 
 .ag-filtros {
@@ -31,7 +43,12 @@
 }
 
 /* Ver el docblock: sin esto el botón cae 16px por debajo del campo. */
-.ag-filtros .ag-input {
+.ag-filtros .ag-input,
+.ag-filtros .ag-select,
+.ag-filtros .ag-textarea,
+.ag-filtros .ag-date,
+.ag-filtros .ag-switch,
+.ag-filtros .ag-checkbox {
     margin-bottom: 0;
 }
 

@@ -13,7 +13,9 @@
 }
 
 
-.ag-devengos__filtros .ag-input {
+.ag-devengos__filtros .ag-input,
+.ag-devengos__filtros .ag-select,
+.ag-devengos__filtros .ag-date {
     min-width: 12rem;
 }
 

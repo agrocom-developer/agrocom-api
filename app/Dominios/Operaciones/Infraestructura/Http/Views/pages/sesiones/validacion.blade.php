@@ -93,29 +93,54 @@
                                 {{ __('operaciones.sesiones_validacion.propia') }}
                             </x-molecules.alert-strip>
                         @else
+                            {{-- El motivo es un campo de ancho completo y las dos
+                                 acciones van juntas en una sola fila al pie, como
+                                 en `organisms/form-actions-bar` (secundaria
+                                 primero, sólida al final). HTML no permite anidar
+                                 formularios, así que el botón de rechazo vive
+                                 fuera del suyo y se le asocia por `form=` — el
+                                 atributo estándar de HTML para esto. Efecto
+                                 lateral buscado: "Validar" no dispara la
+                                 validación del `required` del motivo, porque son
+                                 dos formularios distintos. --}}
                             <div class="ag-sesiones-validacion__acciones">
-                                <form method="POST" action="{{ route('panel.sesiones.validacion.validar', $sesion) }}">
-                                    @csrf
-                                    <x-atoms.button type="submit" variant="primary" size="sm" icon="check_circle">
-                                        {{ __('operaciones.sesiones_validacion.validar') }}
-                                    </x-atoms.button>
-                                </form>
-
-                                <form method="POST" action="{{ route('panel.sesiones.validacion.rechazar', $sesion) }}" class="ag-sesiones-validacion__rechazo">
+                                <form
+                                    id="rechazo-{{ $sesion->id }}"
+                                    method="POST"
+                                    action="{{ route('panel.sesiones.validacion.rechazar', $sesion) }}"
+                                    class="ag-sesiones-validacion__rechazo"
+                                >
                                     @csrf
                                     <x-atoms.textarea
                                         id="motivo-{{ $sesion->id }}"
                                         name="motivo"
                                         label="{{ __('operaciones.sesiones_validacion.motivo_label') }}"
                                         :placeholder="__('operaciones.sesiones_validacion.motivo_placeholder')"
+                                        :help="__('operaciones.sesiones_validacion.motivo_ayuda')"
                                         rows="2"
                                         required
                                         maxlength="500"
                                     />
-                                    <x-atoms.button type="submit" variant="danger-outline" size="sm" icon="cancel">
+                                </form>
+
+                                <div class="ag-sesiones-validacion__botones">
+                                    <x-atoms.button
+                                        type="submit"
+                                        form="rechazo-{{ $sesion->id }}"
+                                        variant="danger-outline"
+                                        size="sm"
+                                        icon="cancel"
+                                    >
                                         {{ __('operaciones.sesiones_validacion.rechazar') }}
                                     </x-atoms.button>
-                                </form>
+
+                                    <form method="POST" action="{{ route('panel.sesiones.validacion.validar', $sesion) }}">
+                                        @csrf
+                                        <x-atoms.button type="submit" variant="primary" size="sm" icon="check_circle">
+                                            {{ __('operaciones.sesiones_validacion.validar') }}
+                                        </x-atoms.button>
+                                    </form>
+                                </div>
                             </div>
                         @endif
                     </article>

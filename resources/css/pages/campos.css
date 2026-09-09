@@ -24,7 +24,9 @@
 /* Listado (index) */
 
 
-.ag-campos__filtros .ag-input {
+.ag-campos__filtros .ag-input,
+.ag-campos__filtros .ag-select,
+.ag-campos__filtros .ag-date {
     min-width: 16rem;
 }
 

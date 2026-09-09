@@ -16,7 +16,9 @@
 /* Listado (index) */
 
 
-.ag-combustible__filtros .ag-input {
+.ag-combustible__filtros .ag-input,
+.ag-combustible__filtros .ag-select,
+.ag-combustible__filtros .ag-date {
     min-width: 12rem;
 }
 

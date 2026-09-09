@@ -21,7 +21,9 @@
 /* Listado (index) */
 
 
-.ag-contratos__filtros .ag-input {
+.ag-contratos__filtros .ag-input,
+.ag-contratos__filtros .ag-select,
+.ag-contratos__filtros .ag-date {
     min-width: 16rem;
 }
 
