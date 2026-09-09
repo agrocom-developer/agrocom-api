@@ -28,6 +28,10 @@
 #      # editar ahí: DB_PASSWORD real, APP_KEY (php artisan key:generate --show
 #      # en cualquier entorno con el mismo Laravel para generarla), MAIL_* con
 #      # el SMTP real, APP_URL con la IP pública del contenedor, APP_DEBUG=false.
+#      # Agregar también POSTGRES_DB/POSTGRES_USER/POSTGRES_PASSWORD (no están
+#      # en .env.example porque en desarrollo local van hardcodeados en
+#      # docker-compose.yml) con los MISMOS valores que DB_DATABASE/DB_USERNAME/
+#      # DB_PASSWORD — Postgres lee el prefijo POSTGRES_*, Laravel lee DB_*.
 #
 # 4. Primer deploy: pushear un tag `vX.Y.Z` (ver ADR 0017 §4) para disparar
 #    `.github/workflows/deploy.yml`.
@@ -70,11 +74,10 @@ services:
   db:
     image: postgres:16
     container_name: agrocom-db
-    environment:
-      POSTGRES_DB: agrocom
-      POSTGRES_USER: agrocom
-      POSTGRES_PASSWORD: agrocom
-      # Se sobrescribe desde .env en producción (ver abajo).
+    # Sin `environment:` acá a propósito: en Docker Compose `environment:`
+    # tiene prioridad sobre `env_file:`, así que un valor hardcodeado acá
+    # pisaría cualquier contraseña real puesta en el .env del servidor.
+    # POSTGRES_DB/USER/PASSWORD tienen que venir exclusivamente de ahí.
     env_file:
       - .env
     # Sin publicar el puerto al host: el contenedor 119 tiene IP pública, y
