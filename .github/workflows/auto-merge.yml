@@ -46,6 +46,7 @@ jobs:
           REPO: ${{ github.repository }}
           SHA: ${{ github.event.pull_request.head.sha }}
           HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
         run: |
           set -o pipefail
           # Solo este — nunca "todos los checks del PR", porque este
@@ -110,8 +111,22 @@ jobs:
               case "$HEAD_REF" in
                 develop|master) DELETE_FLAG="" ;;
               esac
+
+              # Un release develop→master con squash pierde la relación de
+              # ancestro entre las dos ramas: el commit resultante en master
+              # no desciende de los commits de develop, solo tiene el mismo
+              # contenido. El próximo release develop→master ve entonces dos
+              # historias divergentes desde el commit inicial y termina en
+              # conflicto aunque el contenido final sea idéntico — pasó de
+              # verdad en el primer release de este proyecto. Un merge commit
+              # real preserva esa cadena, así que solo hacia master se evita
+              # el squash.
+              MERGE_STRATEGY="--squash"
+              if [ "$BASE_REF" = "master" ]; then
+                MERGE_STRATEGY="--merge"
+              fi
               # shellcheck disable=SC2086
-              gh pr merge --squash $DELETE_FLAG "$PR_URL"
+              gh pr merge $MERGE_STRATEGY $DELETE_FLAG "$PR_URL"
               exit 0
             fi
 
