@@ -62,6 +62,23 @@ function payloadUsuario(array $overrides = []): array
     ], $overrides);
 }
 
+it('el formulario de alta de una cuenta interna renderiza (regresión: partial compartido con el camino portal)', function () {
+    [$encargado, $idRol] = usuarioConRolParaUsuarios('encargado', 'encargado_operaciones');
+    entrarAlPanelParaUsuarios($encargado, $idRol);
+
+    $this->get(route('panel.usuarios.create'))->assertOk();
+});
+
+it('el formulario de edición de una cuenta interna renderiza (regresión: partial compartido con el camino portal)', function () {
+    [$encargado, $idRol] = usuarioConRolParaUsuarios('encargado', 'encargado_operaciones');
+    entrarAlPanelParaUsuarios($encargado, $idRol);
+
+    $this->post(route('panel.usuarios.store'), payloadUsuario());
+    $usuario = SecUser::query()->where('username', 'nuevo.usuario')->sole();
+
+    $this->get(route('panel.usuarios.edit', $usuario))->assertOk();
+});
+
 it('da de alta un usuario con roles asignados y el login real funciona con esos datos', function () {
     [$encargado, $idRol] = usuarioConRolParaUsuarios('encargado', 'encargado_operaciones');
     entrarAlPanelParaUsuarios($encargado, $idRol);

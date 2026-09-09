@@ -100,6 +100,24 @@ function payloadCuentaPortal(array $overrides = []): array
     ], $overrides);
 }
 
+it('el formulario de alta renderiza mostrando la opción cliente cuando el actor tiene seguridad.usuario.portal', function () {
+    [$encargado, $idRol] = usuarioConRolParaAbmPortal('encargado.portal', 'encargado_operaciones');
+    entrarAlPanelParaAbmPortal($encargado, $idRol);
+
+    $this->get(route('panel.usuarios.create'))->assertOk();
+});
+
+it('el formulario de edición de una cuenta de portal renderiza', function () {
+    [$encargado, $idRol] = usuarioConRolParaAbmPortal('encargado.portal', 'encargado_operaciones');
+    entrarAlPanelParaAbmPortal($encargado, $idRol);
+
+    $contrato = contratoVigenteParaAbm('form-edicion');
+    $this->post(route('panel.usuarios.store'), payloadCuentaPortal(['contrato_id' => $contrato->id]));
+    $usuario = SecUser::query()->where('username', 'cliente.nuevo.abm')->sole();
+
+    $this->get(route('panel.usuarios.edit', $usuario))->assertOk();
+});
+
 it('crea una cuenta de portal sin persona ni roles, y esa cuenta entra por /portal/login de verdad', function () {
     [$encargado, $idRol] = usuarioConRolParaAbmPortal('encargado.portal', 'encargado_operaciones');
     entrarAlPanelParaAbmPortal($encargado, $idRol);
