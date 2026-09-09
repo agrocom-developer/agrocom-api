@@ -1,5 +1,18 @@
+import { execFileSync } from 'node:child_process';
 import { test, expect, type Page } from '@playwright/test';
 import { elegirRolDueno, iniciarSesion } from './helpers';
+
+const SOPORTE_CONFIGURACION_GOOGLE = '/var/www/html/tests/Visual/soporte/mapa-google-configuracion.php';
+
+function configurarLlaveGoogleDePrueba(llave: string | null): void {
+    const args = ['compose', 'exec', '-T', 'app', 'php', SOPORTE_CONFIGURACION_GOOGLE];
+
+    if (llave !== null) {
+        args.push(llave);
+    }
+
+    execFileSync('docker', args, { stdio: 'inherit' });
+}
 
 /**
  * Tarea 79 (HU-56): editor de perímetro del lote — pantalla completa, barra
@@ -167,5 +180,62 @@ test.describe('editor de perímetro del lote', () => {
         await expect(boton).toHaveAttribute('aria-pressed', 'false');
         await expect(marco).not.toHaveClass(/ag-mapa--pantalla-completa-respaldo/);
         expect(await input.inputValue()).toBe(valorAntes);
+    });
+});
+
+/**
+ * Etapa 2 (tarea 79): proveedor de mapa configurable. La llave de Google
+ * Maps se crea/borra a mano con `soporte/mapa-google-configuracion.php` —
+ * A PROPÓSITO no vive en `tests/Visual/fixtures/`, que `global-setup.ts`
+ * corre para TODA la suite: dejarla puesta cambiaría el proveedor de
+ * `campos.spec.ts`/`lotes.spec.ts`, cuyas capturas de referencia son con
+ * Leaflet. Se borra en `afterAll` pase o no el test.
+ *
+ * No hay una llave de Google real disponible en este entorno de desarrollo
+ * (ni sería correcto usar una real acá): lo que SÍ se puede probar sin ella
+ * es exactamente el camino que la tarea pide cubrir — que el SDK falle al
+ * cargar no deja el formulario sin mapa. El camino "SDK carga bien y
+ * dibuja con Google" no se pudo ejercitar en esta sesión por lo mismo (sin
+ * llave real no hay forma honesta de probarlo contra los servidores de
+ * Google) — queda pendiente para cuando el dueño cargue una llave de verdad
+ * en `/panel/configuracion` de un entorno con salida a internet.
+ */
+test.describe('proveedor de mapa: caída del SDK de Google', () => {
+    test.use({ viewport: { width: 1280, height: 2000 } });
+
+    test.beforeAll(() => configurarLlaveGoogleDePrueba('AIzaSyD-prueba-de-caida-0000'));
+    test.afterAll(() => configurarLlaveGoogleDePrueba(null));
+
+    test('si el SDK de Google no carga, el editor cae a Leaflet y sigue permitiendo dibujar', async ({ page }) => {
+        // Bloquea el script del SDK — misma superficie que un adblocker, un
+        // firewall corporativo, o una llave que Google rechaza en runtime.
+        await page.route('**maps.googleapis.com/**', (route) => route.abort());
+
+        await iniciarSesion(page);
+        await elegirRolDueno(page);
+        await page.goto('/panel/campos/crear');
+
+        // El HTML SÍ pide Google (es lo que se está probando que falle):
+        await expect(page.locator('[data-ag-lote-mapa]').first()).toHaveAttribute('data-ag-lote-mapa-proveedor', 'google');
+
+        // Pero el mapa que efectivamente carga es Leaflet — la caída del
+        // `<script>` del SDK dispara el `.catch()` del cargador.
+        await page.locator('.leaflet-container').first().waitFor();
+
+        const lienzo = page.locator('[data-ag-lote-mapa-lienzo]').first();
+        const caja = (await lienzo.boundingBox())!;
+        const cx = caja.x + caja.width / 2;
+        const cy = caja.y + caja.height / 2;
+
+        await page.locator('[data-ag-lote-accion="dibujar"]').first().click();
+        await page.mouse.click(cx - 70, cy - 50);
+        await page.mouse.click(cx + 70, cy - 50);
+        await page.mouse.click(cx + 70, cy + 50);
+        await page.mouse.click(cx - 70, cy + 50);
+        await page.mouse.click(cx - 70, cy - 50);
+
+        const geometria = JSON.parse(await page.locator('[data-ag-lote-geometria]').first().inputValue());
+        expect(geometria.type).toBe('Polygon');
+        expect(geometria.coordinates[0].length).toBeGreaterThanOrEqual(4);
     });
 });
