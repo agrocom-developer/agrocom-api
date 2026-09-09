@@ -14,6 +14,7 @@ use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Dominio\EstadoTrabajo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
+use App\Dominios\Personal\Infraestructura\Eloquent\EquipoTrabajo;
 use App\Dominios\Personal\Infraestructura\Eloquent\PerBase;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecMenu;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecPermission;
@@ -76,6 +77,18 @@ function rubroParaGastos(): Rubro
 function baseParaGastos(): PerBase
 {
     return PerBase::create(['nombre' => 'Base de gastos '.uniqid()]);
+}
+
+function equipoParaGastos(): EquipoTrabajo
+{
+    $base = baseParaGastos();
+
+    return EquipoTrabajo::create([
+        'codigo' => 'EQ-GAS-'.uniqid(),
+        'base_id' => $base->id,
+        'estado' => 'activo',
+        'desde' => '2026-01-01',
+    ]);
 }
 
 function trabajoParaGastos(): Trabajo
@@ -317,6 +330,48 @@ it('rechaza un gasto contra una campaña cerrada', function () {
         ->assertSessionHasErrors('campania_id');
 
     expect(Gasto::query()->count())->toBe(0);
+});
+
+it('registra un gasto imputado a un equipo de trabajo (tarea 73, HU-50)', function () {
+    $rubro = rubroParaGastos();
+    $equipo = equipoParaGastos();
+    encargadoEntraAlPanelParaGastos();
+
+    $this->post(route('panel.gastos.store'), payloadGasto($rubro->id, ['equipo_trabajo_id' => $equipo->id]))
+        ->assertRedirect(route('panel.gastos.index'));
+
+    expect(Gasto::query()->sole()->equipo_trabajo_id)->toBe($equipo->id);
+});
+
+it('filtra el listado por equipo y muestra el total exacto de ese equipo, en decimales de string', function () {
+    // 0.10 + 0.20 en float da 0.30000000000000004 — acá tiene que dar
+    // "0.30" exacto (BigDecimal, invariante 6 de CLAUDE.md).
+    $rubro = rubroParaGastos();
+    $equipoUno = equipoParaGastos();
+    $equipoDos = equipoParaGastos();
+    encargadoEntraAlPanelParaGastos();
+
+    $this->post(route('panel.gastos.store'), payloadGasto($rubro->id, [
+        'equipo_trabajo_id' => $equipoUno->id,
+        'cantidad' => '1',
+        'precio_unitario' => '0.10',
+    ]));
+    $this->post(route('panel.gastos.store'), payloadGasto($rubro->id, [
+        'equipo_trabajo_id' => $equipoUno->id,
+        'cantidad' => '1',
+        'precio_unitario' => '0.20',
+    ]));
+    $this->post(route('panel.gastos.store'), payloadGasto($rubro->id, [
+        'equipo_trabajo_id' => $equipoDos->id,
+        'cantidad' => '1',
+        'precio_unitario' => '999.99',
+    ]));
+
+    $respuesta = $this->get(route('panel.gastos.index', ['equipo_trabajo_id' => $equipoUno->id]));
+    $respuesta->assertOk();
+
+    expect($respuesta->viewData('gastos')->total())->toBe(2)
+        ->and($respuesta->viewData('total'))->toBe('0.30');
 });
 
 it('publica el ítem de menú de gastos gateado por finanzas.gasto.ver', function () {
