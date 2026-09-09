@@ -56,6 +56,19 @@ pendiente de `plan_sprints.md`, en el orden del sprint. Agregá su fila a
 sprint en curso ya está hecha, seguí con la primera del sprint siguiente. El
 plan tiene seis; el ciclo los recorre en orden sin detenerse entre uno y otro.
 
+### El trabajo sale del plan, nunca de tu criterio
+
+La fuente del alcance es `plan_sprints.md`. Una fila que no salga de una HU o
+una TE del plan **no la escribís vos**, por obvia que parezca la mejora: deuda
+técnica que encontraste leyendo los `runs/*.md`, un refactor que ordenaría el
+árbol, un flake de tests. El ciclo ejecuta el plan del usuario; no se da
+trabajo a sí mismo.
+
+Que la cola tenga filas de deuda técnica (28-30, 61, 82-84) no es precedente
+para escribir más: esas las decidió el usuario. El 9/9/2026 una sesión de
+planificación se topó con el plan agotado y, en vez de detenerse, se escribió
+tres tareas de deuda técnica y las encoló — de ahí sale esta regla.
+
 Una tarea entra en el ciclo automático solo si cumple estas tres condiciones:
 
 - **Su criterio de aceptación es un comando con exit code.** Si el criterio es
@@ -78,8 +91,9 @@ automático" de `cola_tareas.md` —con cuál de las tres condiciones incumple, 
 una línea— y seguí bajando hasta la primera que sí califique. Esa es la que
 escribís.
 
-Detener el ciclo (ver más abajo) es el último recurso: solo si **ninguna** de las
-pendientes de los seis sprints califica.
+Detener el ciclo (ver más abajo) es la salida cuando ya no hay de dónde sacar
+trabajo: porque ninguna de las pendientes califica, o porque no queda ninguna
+pendiente.
 
 Las tareas de la lista "qué no delegar sin revisión línea por línea" de
 `CLAUDE.md` — motor de sync, servicio de estados, listeners que generan dinero,
@@ -195,16 +209,29 @@ prompt de la última.
 - Marcá en `docs/gestion/cola_tareas.md` lo que se cerró y agregá la fila nueva
   si no estaba, con la HU/TE que cubre.
 
-## Si NINGUNA tarea de los seis sprints califica
+## Si se agotaron las HU/TE, o ninguna califica
 
-Recién ahí escribí `runs/DETENER` con el motivo en una línea y, debajo, la
+Dos casos, misma salida:
+
+- **No queda ninguna HU/TE pendiente** en los seis sprints. El plan se
+  terminó: es el final esperado del ciclo, no una falla.
+- **Ninguna de las pendientes califica** por las tres condiciones de arriba.
+
+En los dos: escribí `runs/DETENER` con el motivo en una línea y, debajo, la
 pregunta concreta que el usuario tiene que responder para que el ciclo pueda
-seguir. Eso detiene el bucle de forma ordenada — es una respuesta válida, no una
-falla.
+seguir. Eso detiene el bucle de forma ordenada — es una respuesta válida, no
+una falla.
 
-No lo uses porque la primera pendiente no calificaba, ni porque la tarea anterior
-se trabó: para lo primero, salteá y anotá; lo segundo no dice nada sobre la que
-sigue, y el ciclo va a tomar la próxima igual.
+Si además encontraste deuda técnica leyendo los `runs/*.md` —un hallazgo real,
+fuera del alcance de la tarea que lo encontró—, **anotala como pendiente** en
+la sección "Deuda técnica detectada" de `cola_tareas.md`: qué es, dónde, y qué
+tarea la encontró. Sin prompt, sin fila en `runs/cola.txt`, sin número de
+tarea. Es material para que el usuario decida qué hacer con ello, no trabajo
+que el ciclo se autoasigna para no quedarse quieto.
+
+No uses `DETENER` porque la primera pendiente no calificaba, ni porque la tarea
+anterior se trabó: para lo primero, salteá y anotá; lo segundo no dice nada
+sobre la que sigue, y el ciclo va a tomar la próxima igual.
 
 ## No commitees
 
