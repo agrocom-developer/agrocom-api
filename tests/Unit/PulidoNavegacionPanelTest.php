@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Cuatro reglas del sistema de diseño del panel que hasta ahora dependían de
+ * Cinco reglas del sistema de diseño del panel que hasta ahora dependían de
  * que quien escribiera la pantalla se acordara. Las tres primeras se
  * rompieron a la vez y solo se vieron en una grabación de pantalla del
  * usuario navegando el menú (7/9/2026) — ninguna hacía fallar un test,
@@ -29,6 +29,13 @@
  *    compuerta se descubre sola: cualquier átomo de campo nuevo que declare
  *    `margin-bottom` en su regla raíz tiene que estar anulado en
  *    `components/filter-bar.css` o el test falla.
+ * 5. Listado con menos columnas declaradas que celdas por fila: CSS Grid no
+ *    avisa, ABRE UNA FILA IMPLÍCITA. En `campanias/index` las acciones
+ *    ("Editar", "Cerrar") caían así debajo del nombre del cliente, en la
+ *    primera columna y con la fila al doble de alto — reportado con captura
+ *    por el dueño el 9/9/2026, con la pantalla mergeada y en verde desde la
+ *    tarea 69. Ningún test lo veía: el HTML era correcto, el desajuste
+ *    estaba entre el Blade y su hoja.
  */
 
 $raizProyecto = dirname(__DIR__, 2);
@@ -193,4 +200,63 @@ test('la barra de filtros anula el margen de apilado de todo átomo de campo', f
     }
 
     expect($sinCubrir)->toBe([], 'Estos átomos de campo llevan margen de apilado y `components/filter-bar.css` no lo anula: dentro de una barra de filtros van a empujar el botón por debajo del campo. Sumalos a la regla de `margin-bottom: 0`.');
+});
+
+test('cada listado declara tantas columnas de grid como celdas tiene su encabezado', function () use ($raizProyecto) {
+    // Columnas declaradas por hoja de página. Se saltean las plantillas
+    // calculadas (`repeat()`/`minmax()`): son galerías de tarjetas que se
+    // acomodan solas al ancho, no tablas con una celda por columna.
+    $columnasPorPagina = [];
+
+    foreach (glob($raizProyecto.'/resources/css/pages/*.css') ?: [] as $hoja) {
+        $contenido = file_get_contents($hoja);
+
+        if ($contenido === false || preg_match('/grid-template-columns:\s*([^;]+);/', $contenido, $coincidencia) !== 1) {
+            continue;
+        }
+
+        $declaracion = trim($coincidencia[1]);
+
+        if (str_contains($declaracion, 'repeat') || str_contains($declaracion, 'minmax')) {
+            continue;
+        }
+
+        $columnasPorPagina[basename($hoja, '.css')] = [count(preg_split('/\s+/', $declaracion) ?: []), $declaracion];
+    }
+
+    $desajustes = [];
+
+    foreach (pantallasBladeDelPanel($raizProyecto) as $relativa) {
+        $contenido = file_get_contents($raizProyecto.'/'.$relativa);
+
+        if ($contenido === false) {
+            continue;
+        }
+
+        preg_match_all('~class="[^"]*ag-([a-z0-9-]+)__head"[^>]*>(.*?)</div>~s', $contenido, $encabezados, PREG_SET_ORDER);
+
+        foreach ($encabezados as $encabezado) {
+            [$clave, $cuerpo] = [$encabezado[1], $encabezado[2]];
+
+            if (! isset($columnasPorPagina[$clave])) {
+                continue;
+            }
+
+            [$columnas, $declaracion] = $columnasPorPagina[$clave];
+            $celdas = substr_count($cuerpo, 'role="columnheader"');
+
+            if ($celdas !== $columnas) {
+                $desajustes[] = sprintf(
+                    '%s: el encabezado tiene %d celdas y pages/%s.css declara %d columnas (%s)',
+                    $relativa,
+                    $celdas,
+                    $clave,
+                    $columnas,
+                    $declaracion,
+                );
+            }
+        }
+    }
+
+    expect($desajustes)->toBe([], "Un listado con menos columnas que celdas no falla: CSS Grid abre una fila implícita y las últimas celdas —casi siempre las ACCIONES— caen debajo de la primera columna.\n".implode("\n", $desajustes));
 });
