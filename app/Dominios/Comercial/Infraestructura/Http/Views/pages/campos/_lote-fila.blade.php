@@ -23,13 +23,15 @@
       lote suelto no tiene botón "Quitar" — la baja de ESE lote es la acción
       "Eliminar" de su propia página, no "sacarlo de esta lista".
 
-    `geometria` se dibuja sobre un MAPA SATELITAL (Leaflet + Geoman): el
-    perímetro de un lote se reconoce mirando la imagen, no tipeando pares de
-    coordenadas. Antes era un `<textarea>` donde había que pegar el GeoJSON a
-    mano — un editor de mapa es lo que la tarea 68 vino a reemplazar.
-    `organisms/lote-mapa-editor.js` inicializa TODO `[data-ag-lote-mapa]` que
-    encuentre en la página al cargar, así que funciona igual en el array de
-    la propiedad y en la ficha suelta del lote sin JS adicional.
+    `geometria` se dibuja sobre un MAPA SATELITAL: el perímetro de un lote se
+    reconoce mirando la imagen, no tipeando pares de coordenadas. Antes era
+    un `<textarea>` donde había que pegar el GeoJSON a mano — un editor de
+    mapa es lo que la tarea 68 vino a reemplazar. Leaflet + Esri + Geoman por
+    defecto; Google Maps cuando hay llave configurada (tarea 79, ver
+    `$proveedorMapa` más abajo) — el mismo GeoJSON sale de cualquiera de los
+    dos. `organisms/lote-mapa-editor.js` inicializa TODO `[data-ag-lote-mapa]`
+    que encuentre en la página al cargar, así que funciona igual en el array
+    de la propiedad y en la ficha suelta del lote sin JS adicional.
 
     El valor sigue viajando como el MISMO string JSON en un `<input hidden>`,
     así que el Form Request no cambia: valida la forma mínima
