@@ -25,6 +25,19 @@
     `personal.persona.ver`: es información sensible sobre una persona, no la
     ve cualquiera con acceso al listado.
 
+    Estado vacío: dos casos distintos, NO la misma pieza.
+    - $sinDatosEnRango (la persona no tiene ninguna sesión/rechazo en TODO
+      el rango de fechas — clientesDisponibles sale sin aplicar el filtro de
+      cliente/campaña, ver ObtenerDesempenioPersona::opcionesDeFiltro):
+      reemplaza totales + las tres secciones por un bloque único e ilustrado
+      (ícono grande + título + detalle, `.ag-persona-desempeno__vacio`),
+      mismo criterio que `seguridad::pages.dashboard._sin-secciones`.
+    - Una sección puntual sin resultados PARA EL FILTRO elegido (p. ej. hay
+      sesiones pero ninguna del cliente filtrado): sigue siendo
+      `molecules/alert-strip`, mismo criterio que
+      `comercial::pages.reportes-comerciales.index` ("sin resultados
+      coincidentes").
+
     Estilos en resources/css/pages/personas.css — cero color hardcodeado
     (CLAUDE.md invariante 11).
 --}}
@@ -96,6 +109,26 @@
                 </div>
             </form>
 
+            @if ($sinDatosEnRango)
+                {{--
+                    Estado vacío ilustrado (etapa 3, tarea 81): la persona no
+                    tiene NINGUNA sesión ni rechazo en todo el rango de
+                    fechas — clientesDisponibles/campaniasDisponibles salen
+                    de las mismas filas (ver ObtenerDesempenioPersona::
+                    opcionesDeFiltro) sin aplicar el filtro de cliente/
+                    campaña, así que si está vacío las tres secciones de
+                    abajo también lo estarían. Un único bloque en vez de tres
+                    alert-strip repitiendo "no hay nada" — mismo criterio que
+                    `seguridad::pages.dashboard._sin-secciones` (tarjeta +
+                    ícono grande + título + detalle), único precedente real
+                    de "estado vacío" prominente en el panel.
+                --}}
+                <div class="ag-persona-desempeno__vacio">
+                    <x-atoms.icon name="flight_takeoff" size="lg" />
+                    <h2 class="ag-persona-desempeno__vacio-titulo">{{ __('personal.desempenio.vacio_titulo') }}</h2>
+                    <p class="ag-persona-desempeno__vacio-detalle">{{ __('personal.desempenio.vacio_detalle') }}</p>
+                </div>
+            @else
             <section class="ag-persona-desempeno__totales">
                 <x-molecules.stat-card
                     :label="__('personal.desempenio.total_hectareas')"
@@ -125,8 +158,8 @@
                 <h2>{{ __('personal.desempenio.seccion_sesiones') }}</h2>
 
                 @if (count($resultado->sesiones) === 0)
-                    <x-molecules.alert-strip variant="info" icon="flight_takeoff">
-                        {{ __($sinDatosEnRango ? 'personal.desempenio.sesiones_vacio_sin_datos' : 'personal.desempenio.sesiones_vacio') }}
+                    <x-molecules.alert-strip variant="info" icon="search_off">
+                        {{ __('personal.desempenio.sesiones_vacio') }}
                     </x-molecules.alert-strip>
                 @else
                     <div class="ag-persona-desempeno__tabla" role="table">
@@ -217,6 +250,7 @@
                     </div>
                 @endif
             </div>
+            @endif
         </div>
     </x-templates.panel-layout>
 </x-templates.panel-shell>

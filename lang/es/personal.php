@@ -243,9 +243,15 @@ return [
         'total_sesiones_rechazadas' => 'Sesiones rechazadas',
         'total_incidencias' => 'Incidencias',
 
+        // Estado vacío ilustrado (etapa 3, tarea 81): la persona no tiene
+        // NINGUNA sesión ni rechazo en todo el rango — ver comentario de
+        // cabecera de desempeno.blade.php. Distinto de 'sesiones_vacio' de
+        // abajo, que es "hay datos pero este filtro puntual no trae nada".
+        'vacio_titulo' => 'Sin actividad registrada',
+        'vacio_detalle' => 'Esta persona no tiene sesiones en el rango elegido. Probá ampliar las fechas, o volvé cuando haya volado su primera aplicación.',
+
         'seccion_sesiones' => 'Sesiones',
         'sesiones_vacio' => 'No hay sesiones de esta persona con estos filtros.',
-        'sesiones_vacio_sin_datos' => 'Esta persona no registra sesiones en los últimos 12 meses.',
         'col_fecha' => 'Fecha',
         'col_rol' => 'Rol',
         'col_cliente' => 'Cliente',

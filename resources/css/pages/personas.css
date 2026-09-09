@@ -212,6 +212,38 @@
     margin: 0;
 }
 
+/*
+ * Estado vacío ilustrado (etapa 3, tarea 81): la persona no tiene ninguna
+ * sesión ni rechazo en todo el rango de fechas. Mismo molde que
+ * `.ag-dash__vacio` (dashboard.css) — tarjeta propia en vez de reusar
+ * `.ag-card`, que es local a esa página y no un componente compartido.
+ */
+.ag-persona-desempeno__vacio {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-6) var(--ag-space-4);
+    text-align: center;
+    color: var(--ag-color-text-muted);
+    background-color: var(--ag-color-surface-card);
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-lg);
+}
+
+.ag-persona-desempeno__vacio-titulo {
+    margin: 0;
+    color: var(--ag-color-text);
+    font-size: var(--ag-font-size-lg);
+    font-weight: var(--ag-font-weight-bold);
+}
+
+.ag-persona-desempeno__vacio-detalle {
+    margin: 0;
+    max-width: 32rem;
+    font-size: var(--ag-font-size-sm);
+}
+
 @media (max-width: 992px) {
     .ag-persona-desempeno__head {
         display: none;
