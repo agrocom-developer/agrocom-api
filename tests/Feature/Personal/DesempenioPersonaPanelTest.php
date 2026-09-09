@@ -276,3 +276,25 @@ it('la campaña que se muestra es la del contrato de esa orden, aunque el client
     $respuesta->assertSee('2025-2026')
         ->assertDontSee('2025-Verano');
 });
+
+it('una persona sin sesiones en el rango ve el estado vacío ilustrado, sin totales ni secciones', function () {
+    [$encargado, $idRol] = usuarioConRolParaDesempenio('encargado', 'encargado_operaciones');
+    entrarAlPanelParaDesempenio($encargado, $idRol);
+
+    $piloto = PerPersona::query()->create(['nombre' => 'Piloto Sin Vuelos', 'rol' => RolOperativoPersona::Piloto, 'activo' => true]);
+
+    $respuesta = $this->get(route('panel.personas.desempenio', [
+        'persona' => $piloto,
+        'desde' => '2026-01-01',
+        'hasta' => '2026-12-31',
+    ]))->assertOk();
+
+    // 'Sesiones' a secas no sirve para assertDontSee: también es la etiqueta
+    // de un ítem de menú de Operaciones en el sidebar. La clase BEM de la
+    // sección sí es exclusiva de esta pantalla.
+    $respuesta->assertSee(__('personal.desempenio.vacio_titulo'))
+        ->assertSee(__('personal.desempenio.vacio_detalle'))
+        ->assertDontSee(__('personal.desempenio.total_hectareas'))
+        ->assertDontSee('ag-persona-desempeno__totales')
+        ->assertDontSee('ag-persona-desempeno__tabla');
+});
