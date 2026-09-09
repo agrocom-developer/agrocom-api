@@ -69,7 +69,12 @@
 ])
 
 @php
-    $arrancaEnRecuperar = $recuperarEstado !== null || $recuperarEmailError !== null;
+    // `filled()`, no `!== null`: quien llama pasa `$errors->first('email')`,
+    // que devuelve CADENA VACÍA cuando no hay error de validación — nunca
+    // `null`. Con la comparación estricta contra `null`, todo GET /login
+    // arrancaba en el tab "recuperar acceso" aunque nadie hubiera pedido
+    // recuperar nada.
+    $arrancaEnRecuperar = filled($recuperarEstado) || filled($recuperarEmailError);
 @endphp
 
 <div {{ $attributes->class(['ag-login-form']) }} @if ($arrancaEnRecuperar) data-ag-login-tab-inicial="recuperar" @endif>
