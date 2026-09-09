@@ -7,11 +7,12 @@ import { asegurarTema, elegirRolDueno, esperarFuentes, fijarFechasDeHoy, iniciar
  * rol activo (tiene el catálogo completo de permisos, incluidos los tres
  * `finanzas.combustible.*` de esta HU).
  *
- * HU-35 (tarea 49): ABM acotado de combustible del generador y de
- * vehículos — cubre el arquetipo Listado (`index`, con dos cargas reales
- * cargadas por `fixtures/combustible-demo.php`, una de cada destino) y el
- * arquetipo Formulario (`create`). Sin gráficos ni animación propia —
- * mismo criterio que `gastos.spec.ts`.
+ * HU-35 (tarea 49; reescrito por la tarea 73, HU-50): ABM acotado de
+ * combustible, imputado al equipo de trabajo y al recurso concreto (dron,
+ * vehículo o generador) — cubre el arquetipo Listado (`index`, con dos
+ * cargas reales cargadas por `fixtures/combustible-demo.php`, una de cada
+ * tipo de recurso) y el arquetipo Formulario (`create`). Sin gráficos ni
+ * animación propia — mismo criterio que `gastos.spec.ts`.
  */
 test.beforeAll(() => {
     execFileSync(
