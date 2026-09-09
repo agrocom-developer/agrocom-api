@@ -13,10 +13,17 @@
     - $etiquetasTrabajo (array<int, string>): trabajo_id => etiqueta legible,
       solo de los trabajos presentes en la página actual (evita un JOIN en
       el listado — mismo criterio que AnticiposController::etiquetasPersona()).
-    - $rubrosDisponibles / $basesDisponibles (Collection<int, string>): para
-      los <select> de filtro.
-    - $filtros (array{rubro_id, base_id, trabajo_id, periodo}): valores
-      aplicados, para dejar los campos con el valor tras el submit.
+    - $rubrosDisponibles / $basesDisponibles / $equiposDisponibles /
+      $campaniasDisponibles (Collection<int, string>): para los <select> de
+      filtro. `$campaniasDisponibles` (tarea 73) NO se filtra por estado
+      (a diferencia de la del formulario de alta): una campaña `cerrada`
+      sigue teniendo historial de gastos que filtrar.
+    - $filtros (array{rubro_id, base_id, trabajo_id, equipo_trabajo_id,
+      campania_id, periodo}): valores aplicados, para dejar los campos con
+      el valor tras el submit.
+    - $total (string|null): suma (`Brick\Math\BigDecimal`, nunca `SUM()` de
+      SQL) de los gastos filtrados — solo se calcula/muestra cuando hay un
+      equipo elegido (tarea 73, punto 5: "un total por equipo").
     - $puedeEliminar (bool): gatea el botón "Eliminar" por fila.
 
     Gateada por `finanzas.gasto.ver`, verificado server-side en el
@@ -72,12 +79,30 @@
                 />
 
                 <x-atoms.select
+                    name="equipo_trabajo_id"
+                    id="filtro-equipo"
+                    label="{{ __('finanzas.gastos.filtro_equipo') }}"
+                    :options="$equiposDisponibles"
+                    :value="(string) $filtros['equipo_trabajo_id']"
+                    placeholder="{{ __('finanzas.gastos.filtro_equipo_placeholder') }}"
+                />
+
+                <x-atoms.select
                     name="base_id"
                     id="filtro-base"
                     label="{{ __('finanzas.gastos.filtro_base') }}"
                     :options="$basesDisponibles"
                     :value="(string) $filtros['base_id']"
                     placeholder="{{ __('finanzas.gastos.filtro_base_placeholder') }}"
+                />
+
+                <x-atoms.select
+                    name="campania_id"
+                    id="filtro-campania"
+                    label="{{ __('finanzas.gastos.filtro_campania') }}"
+                    :options="$campaniasDisponibles"
+                    :value="(string) $filtros['campania_id']"
+                    placeholder="{{ __('finanzas.gastos.filtro_campania_placeholder') }}"
                 />
 
                 <div class="ag-input">
@@ -98,7 +123,7 @@
                         {{ __('finanzas.gastos.filtrar') }}
                     </x-atoms.button>
 
-                    @if ($filtros['rubro_id'] !== null || $filtros['base_id'] !== null || $filtros['periodo'] !== '')
+                    @if ($filtros['rubro_id'] !== null || $filtros['base_id'] !== null || $filtros['trabajo_id'] !== null || $filtros['equipo_trabajo_id'] !== null || $filtros['campania_id'] !== null || $filtros['periodo'] !== '')
                         <x-atoms.button href="{{ route('panel.gastos.index') }}" variant="text" size="md">
                             {{ __('finanzas.gastos.limpiar_filtro') }}
                         </x-atoms.button>
@@ -106,9 +131,15 @@
                 </div>
             </form>
 
+            @if ($total !== null)
+                <x-molecules.alert-strip variant="info" icon="functions" class="ag-gastos__aviso">
+                    {{ __('finanzas.gastos.total_equipo', ['monto' => $total]) }}
+                </x-molecules.alert-strip>
+            @endif
+
             @if ($gastos->isEmpty())
                 <x-molecules.alert-strip variant="info" icon="receipt_long" class="ag-gastos__aviso">
-                    {{ __(($filtros['rubro_id'] !== null || $filtros['base_id'] !== null || $filtros['periodo'] !== '') ? 'finanzas.gastos.filtro_vacio' : 'finanzas.gastos.vacio') }}
+                    {{ __(($filtros['rubro_id'] !== null || $filtros['base_id'] !== null || $filtros['trabajo_id'] !== null || $filtros['equipo_trabajo_id'] !== null || $filtros['campania_id'] !== null || $filtros['periodo'] !== '') ? 'finanzas.gastos.filtro_vacio' : 'finanzas.gastos.vacio') }}
                 </x-molecules.alert-strip>
             @else
                 <div class="ag-gastos__tabla" role="table">
@@ -126,7 +157,9 @@
                             <span role="cell" class="ag-gastos__cifra">{{ $gasto->fecha->format('d/m/Y') }}</span>
                             <span role="cell">{{ $etiquetasRubro[$gasto->rubro_id] ?? "#{$gasto->rubro_id}" }}</span>
                             <span role="cell">
-                                @if ($gasto->trabajo_id !== null)
+                                @if ($gasto->equipo_trabajo_id !== null)
+                                    {{ __('finanzas.gastos.imputacion_equipo', ['equipo' => $etiquetasEquipo[$gasto->equipo_trabajo_id] ?? "#{$gasto->equipo_trabajo_id}"]) }}
+                                @elseif ($gasto->trabajo_id !== null)
                                     {{ $etiquetasTrabajo[$gasto->trabajo_id] ?? __('finanzas.gastos.imputacion_trabajo', ['id' => $gasto->trabajo_id]) }}
                                 @elseif ($gasto->base_id !== null)
                                     {{ __('finanzas.gastos.imputacion_base', ['base' => $etiquetasBase[$gasto->base_id] ?? "#{$gasto->base_id}"]) }}

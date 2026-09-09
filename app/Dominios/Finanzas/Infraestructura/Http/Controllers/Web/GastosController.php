@@ -53,21 +53,38 @@ final class GastosController
         $rubroId = $request->integer('rubro_id') ?: null;
         $baseId = $request->integer('base_id') ?: null;
         $trabajoId = $request->integer('trabajo_id') ?: null;
+        $equipoTrabajoId = $request->integer('equipo_trabajo_id') ?: null;
+        $campaniaId = $request->integer('campania_id') ?: null;
         $periodo = $request->string('periodo')->toString();
+        $periodoFiltro = $periodo !== '' ? $periodo : null;
 
-        $gastos = $listarGastos->ejecutar($rubroId, $baseId, $trabajoId, $periodo !== '' ? $periodo : null);
+        $gastos = $listarGastos->ejecutar($rubroId, $baseId, $trabajoId, $periodoFiltro, $equipoTrabajoId, $campaniaId);
         $rubrosDisponibles = $this->rubrosDisponibles();
         $basesDisponibles = $this->basesDisponibles();
+        $equiposDisponibles = $this->equiposDisponibles();
 
         return view('finanzas::pages.gastos.index', [
             ...$this->autorizacion->cascara($request),
             'gastos' => $gastos,
             'etiquetasRubro' => $rubrosDisponibles->all(),
             'etiquetasBase' => $basesDisponibles->all(),
+            'etiquetasEquipo' => $equiposDisponibles->all(),
             'etiquetasTrabajo' => $this->etiquetasTrabajo($gastos->pluck('trabajo_id')->filter()->map(fn ($id) => (int) $id)->unique()->values()->all()),
             'rubrosDisponibles' => $rubrosDisponibles,
             'basesDisponibles' => $basesDisponibles,
-            'filtros' => ['rubro_id' => $rubroId, 'base_id' => $baseId, 'trabajo_id' => $trabajoId, 'periodo' => $periodo],
+            'equiposDisponibles' => $equiposDisponibles,
+            'campaniasDisponibles' => $this->todasLasCampanias(),
+            'filtros' => [
+                'rubro_id' => $rubroId,
+                'base_id' => $baseId,
+                'trabajo_id' => $trabajoId,
+                'equipo_trabajo_id' => $equipoTrabajoId,
+                'campania_id' => $campaniaId,
+                'periodo' => $periodo,
+            ],
+            'total' => $equipoTrabajoId !== null
+                ? $listarGastos->total($rubroId, $baseId, $trabajoId, $periodoFiltro, $equipoTrabajoId, $campaniaId)
+                : null,
             'puedeEliminar' => $this->autorizacion->tienePermiso($request, self::PERMISO_ELIMINAR),
         ]);
     }
@@ -79,6 +96,7 @@ final class GastosController
         return view('finanzas::pages.gastos.create', [
             ...$this->autorizacion->cascara($request),
             'rubrosConSubrubros' => Rubro::query()->with('subrubros')->orderBy('nombre')->get(),
+            'equiposDisponibles' => $this->equiposDisponibles(),
             'basesDisponibles' => $this->basesDisponibles(),
             'trabajosDisponibles' => $this->trabajosDisponibles(),
             'campaniasDisponibles' => $this->campaniasNoCerradas(),
@@ -93,15 +111,16 @@ final class GastosController
 
         try {
             $crearGasto->ejecutar(
-                (string) $datos['fecha'],
-                (int) $datos['rubro_id'],
-                isset($datos['subrubro_id']) ? (int) $datos['subrubro_id'] : null,
-                (string) $datos['cantidad'],
-                (string) $datos['precio_unitario'],
-                isset($datos['base_id']) ? (int) $datos['base_id'] : null,
-                isset($datos['trabajo_id']) ? (int) $datos['trabajo_id'] : null,
-                isset($datos['campania_id']) ? (int) $datos['campania_id'] : null,
-                $request->file('comprobante'),
+                fecha: (string) $datos['fecha'],
+                rubroId: (int) $datos['rubro_id'],
+                subrubroId: isset($datos['subrubro_id']) ? (int) $datos['subrubro_id'] : null,
+                cantidad: (string) $datos['cantidad'],
+                precioUnitario: (string) $datos['precio_unitario'],
+                baseId: isset($datos['base_id']) ? (int) $datos['base_id'] : null,
+                trabajoId: isset($datos['trabajo_id']) ? (int) $datos['trabajo_id'] : null,
+                campaniaId: isset($datos['campania_id']) ? (int) $datos['campania_id'] : null,
+                comprobante: $request->file('comprobante'),
+                equipoTrabajoId: isset($datos['equipo_trabajo_id']) ? (int) $datos['equipo_trabajo_id'] : null,
             );
         } catch (CampaniaCerrada $excepcion) {
             return redirect()
@@ -162,6 +181,24 @@ final class GastosController
     }
 
     /**
+     * Equipos de trabajo (tarea 73, HU-50): camino PRINCIPAL de imputación,
+     * el formulario lo ofrece antes que base/trabajo. `DB::table` directo
+     * (ADR 0003 regla 3): `Personal` es de otro módulo.
+     *
+     * @return Collection<int, string>
+     */
+    private function equiposDisponibles(): Collection
+    {
+        return DB::table('per_equipos_trabajo')
+            ->whereNull('deleted_at')
+            ->orderBy('codigo')
+            ->get(['id', 'codigo', 'nombre'])
+            ->mapWithKeys(fn (object $equipo): array => [
+                (int) $equipo->id => $equipo->nombre !== null ? "{$equipo->codigo} — {$equipo->nombre}" : $equipo->codigo,
+            ]);
+    }
+
+    /**
      * Campañas no cerradas (ADR 0015 punto 6, tarea 69): el selector es
      * opcional y se filtra por campañas no `cerrada` — imputar a una
      * cerrada lo rechaza igual `Aplicacion/CrearGasto`, esto es solo para no
@@ -176,6 +213,26 @@ final class GastosController
             ->join('com_clientes', 'com_clientes.id', '=', 'cpn_campanias.cliente_id')
             ->whereNull('cpn_campanias.deleted_at')
             ->where('cpn_campanias.estado', '!=', 'cerrada')
+            ->orderBy('com_clientes.razon_social')
+            ->orderBy('cpn_campanias.codigo')
+            ->get(['cpn_campanias.id', 'cpn_campanias.codigo', 'com_clientes.razon_social'])
+            ->mapWithKeys(fn (object $fila): array => [(int) $fila->id => sprintf('%s — %s', $fila->codigo, $fila->razon_social)]);
+    }
+
+    /**
+     * TODAS las campañas (activas), sin filtrar por estado (tarea 73, punto
+     * 5: "por campaña, opcional, dentro de un cliente") — a diferencia de
+     * `campaniasNoCerradas()` (solo para el formulario de alta), acá el
+     * filtro del LISTADO tiene que poder encontrar gastos de una campaña ya
+     * `cerrada`: cerrarla no borra su historial de costo.
+     *
+     * @return Collection<int, non-falsy-string>
+     */
+    private function todasLasCampanias(): Collection
+    {
+        return DB::table('cpn_campanias')
+            ->join('com_clientes', 'com_clientes.id', '=', 'cpn_campanias.cliente_id')
+            ->whereNull('cpn_campanias.deleted_at')
             ->orderBy('com_clientes.razon_social')
             ->orderBy('cpn_campanias.codigo')
             ->get(['cpn_campanias.id', 'cpn_campanias.codigo', 'com_clientes.razon_social'])

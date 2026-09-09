@@ -14,10 +14,12 @@
       elegido usando el mapa subrubro→rubro que viaja como
       `data-mapa-rubro-subrubro` (JSON) en el propio `<select>` de subrubro
       (tarea 76: `x-atoms.select` no soporta atributos por `<option>`).
-    - $basesDisponibles / $trabajosDisponibles / $campaniasDisponibles
-      (Collection<int, string>): id => etiqueta, para los <select> opcionales
-      de imputación. `$campaniasDisponibles` ya viene filtrada a campañas no
-      `cerrada` (ADR 0015 punto 6) — ver GastosController::campaniasNoCerradas().
+    - $equiposDisponibles / $basesDisponibles / $trabajosDisponibles /
+      $campaniasDisponibles (Collection<int, string>): id => etiqueta, para
+      los <select> opcionales de imputación. `$equiposDisponibles` (tarea 73,
+      HU-50) se ofrece PRIMERO — es el camino principal de imputación.
+      `$campaniasDisponibles` ya viene filtrada a campañas no `cerrada` (ADR
+      0015 punto 6) — ver GastosController::campaniasNoCerradas().
 
     `enctype="multipart/form-data"`: primera subida de archivo humana desde
     el panel (a diferencia de `ope_evidencias`, que sube la app de campo) —
@@ -36,6 +38,7 @@
     $subrubroId = old('subrubro_id', '');
     $cantidad = old('cantidad', '');
     $precioUnitario = old('precio_unitario', '');
+    $equipoTrabajoId = old('equipo_trabajo_id', '');
     $baseId = old('base_id', '');
     $trabajoId = old('trabajo_id', '');
     $campaniaId = old('campania_id', '');
@@ -85,7 +88,7 @@
 
                 <x-molecules.form-section
                     :title="__('finanzas.gastos.seccion_datos')"
-                    :count="__('finanzas.gastos.campos_contador', ['cantidad' => 9])"
+                    :count="__('finanzas.gastos.campos_contador', ['cantidad' => 10])"
                 >
                     <x-atoms.date
                         name="fecha"
@@ -137,6 +140,15 @@
                         step="0.01"
                         required
                         error="{{ $errors->first('precio_unitario') }}"
+                    />
+
+                    <x-atoms.select
+                        name="equipo_trabajo_id"
+                        label="{{ __('finanzas.gastos.campo_equipo') }}"
+                        placeholder="{{ __('finanzas.gastos.campo_equipo_placeholder') }}"
+                        :options="$equiposDisponibles"
+                        value="{{ $equipoTrabajoId }}"
+                        error="{{ $errors->first('equipo_trabajo_id') }}"
                     />
 
                     <x-atoms.select
