@@ -69,6 +69,21 @@ class SeguridadSeeder extends Seeder
         // entera — solo la puerta. `seguridad.organizacion.ver` sigue afuera.
         'seguridad.dashboard.ver' => 'Ver el tablero "Operación de hoy" (dashboard)',
         'seguridad.organizacion.ver' => 'Ver el registro de la compañía (Organización)',
+        // Tarea 78 (HU-55): guardar la pestaña Facturación (datos fiscales:
+        // razón social, NIT, domicilio, actividad económica, leyenda al pie).
+        // Separado de `.ver` — mismo criterio grano fino que el resto del
+        // catálogo — porque administrar los datos con que se factura es una
+        // responsabilidad distinta de solo ver la ficha de la compañía.
+        'seguridad.organizacion.editar' => 'Editar los datos fiscales de la empresa (pestaña Facturación)',
+        // Tarea 78 (HU-55): pantalla `/panel/configuracion` — llaves y tokens
+        // de infraestructura (mapas, correo, integraciones). Exclusivo del
+        // dueño (pedido explícito): a diferencia de `seguridad.organizacion.*`,
+        // que el encargado también administra, estos son secretos con los que
+        // el sistema funciona, no datos operativos del día a día. Ninguna otra
+        // lista PERMISOS_* de abajo los referencia, así que solo `dueno` los
+        // recibe (asignación "todos los permisos, sin excepción" de más abajo).
+        'seguridad.configuracion.ver' => 'Ver la configuración del sistema (llaves y tokens)',
+        'seguridad.configuracion.editar' => 'Editar la configuración del sistema (llaves y tokens)',
         // HU-03: ver y revocar sesiones de la app de campo. Separados a
         // propósito — mirar quién tiene sesión abierta y dejar a alguien
         // afuera en medio de una jornada de vuelo no son la misma
@@ -384,6 +399,10 @@ class SeguridadSeeder extends Seeder
         // dashboard tras elegir rol y necesita la ficha de la compañía.
         'seguridad.dashboard.ver',
         'seguridad.organizacion.ver',
+        // Tarea 78 (HU-55): administra también los datos fiscales con que se
+        // factura — mismo criterio que el resto de este rol (ve Y administra
+        // la operación diaria, a diferencia de jefe_campo que solo ve).
+        'seguridad.organizacion.editar',
         // Es quien administra la operación diaria: si un piloto pierde el
         // teléfono en campo, tiene que poder cortarle el acceso sin
         // escalar al dueño (HU-03).

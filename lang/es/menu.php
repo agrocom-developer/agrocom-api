@@ -122,6 +122,9 @@ return [
             // transversal, configuración de toda la operación — mismo
             // criterio que "Organización" arriba.
             'campanias' => 'Campañas',
+            // Tarea 78 (HU-55): llaves y tokens de infraestructura, separado
+            // de "Organización" (datos de la empresa). Exclusivo del dueño.
+            'configuracion' => 'Configuración del sistema',
         ],
     ],
 

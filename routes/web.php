@@ -38,6 +38,7 @@ use App\Dominios\Portal\Infraestructura\Http\Controllers\Web\ActasPortalControll
 use App\Dominios\Portal\Infraestructura\Http\Controllers\Web\AvancePortalController;
 use App\Dominios\Portal\Infraestructura\Http\Controllers\Web\ReportesPortalController;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
+use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\ConfiguracionController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\DashboardController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\DispositivosController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\OrganizacionController;
@@ -194,8 +195,24 @@ Route::middleware('auth:interno')->group(function () {
 
         // Mockup visual de "Registro de la compañía" — GET/solo-lectura, sin
         // persistencia real, para demostración de visión multi-tenant futura.
+        // La pestaña "Facturación" (tarea 78, HU-55) es la excepción real: sus
+        // datos fiscales sí persisten, vía el POST de abajo.
         Route::get('/panel/organizacion', [OrganizacionController::class, 'index'])
             ->name('panel.organizacion.index');
+
+        Route::post('/panel/organizacion/facturacion', [OrganizacionController::class, 'actualizarFacturacion'])
+            ->name('panel.organizacion.facturacion.actualizar');
+
+        // Tarea 78 (HU-55): configuración del sistema (llaves y tokens),
+        // exclusiva del dueño — separada de "Organización" de arriba (datos
+        // de la empresa). `{grupo}` restringido a los tres sectores del
+        // catálogo (`config/configuracion.php`): fuera de esa lista, 404.
+        Route::get('/panel/configuracion', [ConfiguracionController::class, 'index'])
+            ->name('panel.configuracion.index');
+
+        Route::post('/panel/configuracion/{grupo}', [ConfiguracionController::class, 'actualizar'])
+            ->where('grupo', 'mapas|correo|integraciones')
+            ->name('panel.configuracion.actualizar');
 
         // HU-20: autorizar versiones del APK. Un único permiso
         // (`distribucion.version.autorizar`) gatea listar, subir y autorizar
