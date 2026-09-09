@@ -4,6 +4,7 @@ use App\Dominios\Compartido\Dominio\Excepciones\BorradoFisicoNoPermitido;
 use App\Dominios\Personal\Dominio\RolOperativoPersona;
 use App\Dominios\Personal\Infraestructura\Eloquent\PerBase;
 use App\Dominios\Personal\Infraestructura\Eloquent\PerPersona;
+use App\Dominios\Seguridad\Infraestructura\Eloquent\SecDatosFiscales;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecMenu;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecPermission;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
@@ -16,7 +17,10 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 /*
  * ADR 0007 / invariante 8 — mismo criterio que
  * tests/Feature/Modelos/BorradoLogicoTest.php (núcleo comercial), acá para
- * los modelos nuevos de HU-01: Personal y Seguridad.
+ * los modelos nuevos de HU-01: Personal y Seguridad. `SecDatosFiscales`
+ * (tarea 78, HU-55) se suma acá: ya queda protegido por la regla
+ * arquitectónica genérica de extender `ModeloDominio`, pero ningún test
+ * ejercitaba `delete()`/`forceDelete()` sobre él hasta ahora.
  */
 
 uses(RefreshDatabase::class);
@@ -44,6 +48,13 @@ beforeEach(function () {
         'ruta' => null,
         'orden' => 1,
     ]);
+
+    SecDatosFiscales::query()->create([
+        'razon_social_fiscal' => 'Agrocom S.R.L.',
+        'nit' => '123456789',
+        'domicilio_fiscal' => 'Av. Demo 123',
+        'actividad_economica' => 'Fumigación aérea',
+    ]);
 });
 
 dataset('modelos de dominio de Personal y Seguridad', [
@@ -55,6 +66,7 @@ dataset('modelos de dominio de Personal y Seguridad', [
     'SecUserRole' => [SecUserRole::class],
     'SecRolePermission' => [SecRolePermission::class],
     'SecMenu' => [SecMenu::class],
+    'SecDatosFiscales' => [SecDatosFiscales::class],
 ]);
 
 it('delete() hace borrado lógico y saca el registro de los listados por defecto', function (string $clase) {
