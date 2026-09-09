@@ -298,3 +298,54 @@ it('un id de reporte inexistente recibe 404', function () {
 
     $this->get(route('portal.reportes.pdf', 999999))->assertNotFound();
 });
+
+// --- Cuenta de portal sin contrato (tarea 68, revisión PR #106, P2) -------
+
+it('una cuenta de portal sin contrato asociado recibe 404 en avance, actas y reportes', function () {
+    $usuario = SecUser::factory()->create([
+        'username' => 'cliente.sin.contrato',
+        'password' => 'Secreta123',
+        'type' => TipoUsuario::Cliente,
+        'contrato_id' => null,
+    ]);
+
+    entrarAlPortal($usuario);
+
+    $this->get(route('portal.avance.index'))->assertNotFound();
+    $this->get(route('portal.actas.index'))->assertNotFound();
+    $this->get(route('portal.reportes.index'))->assertNotFound();
+});
+
+// --- Guard del portal, por endpoint (tarea 68, revisión PR #106, P3) ------
+//
+// PortalClienteTest ya cubre guest/interno para portal.avance.index (arriba,
+// mismo criterio, sin tocar). Estos dos `it` parametrizados replican ese
+// mismo criterio (redirect a portal.login.form) para los cinco endpoints
+// restantes del bloque `auth:cliente` de routes/web.php — el middleware es
+// común a todo el grupo, pero CLAUDE.md pide un test por endpoint.
+
+dataset('endpoints del portal protegidos por auth:cliente', [
+    'actas.index' => ['portal.actas.index', 'get', []],
+    'actas.pdf' => ['portal.actas.pdf', 'get', [1]],
+    'reportes.index' => ['portal.reportes.index', 'get', []],
+    'reportes.pdf' => ['portal.reportes.pdf', 'get', [1]],
+    'preferencias.tema' => ['portal.preferencias.tema', 'post', []],
+]);
+
+it('exige sesión de portal (guest)', function (string $ruta, string $metodo, array $parametros) {
+    $uri = route($ruta, $parametros);
+
+    $respuesta = $metodo === 'post' ? $this->post($uri) : $this->get($uri);
+
+    $respuesta->assertRedirect(route('portal.login.form'));
+})->with('endpoints del portal protegidos por auth:cliente');
+
+it('una sesión del panel interno no puede usarlo', function (string $ruta, string $metodo, array $parametros) {
+    $usuario = SecUser::factory()->create(['type' => TipoUsuario::Interno]);
+    $sesion = $this->actingAs(SecUsuarioInterno::query()->findOrFail($usuario->id), 'interno');
+
+    $uri = route($ruta, $parametros);
+    $respuesta = $metodo === 'post' ? $sesion->post($uri) : $sesion->get($uri);
+
+    $respuesta->assertRedirect(route('portal.login.form'));
+})->with('endpoints del portal protegidos por auth:cliente');
