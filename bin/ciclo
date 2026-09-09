@@ -992,13 +992,15 @@ fase_planificar() {
 # --- Una vuelta completa ----------------------------------------------
 # Códigos: 0 integrada · 1 no llegó a integrarse · 2 parada pedida
 #          3 no pudo arrancar: es el entorno, no la tarea — el bucle se corta.
+#          4 BLOQUEADA: espera una decisión humana — no cuenta como fallo.
 #
 # Que una tarea trabada NO corte el bucle es deliberado. El usuario mira el
 # proyecto en paralelo y prefiere que el ciclo siga avanzando por el backlog
 # antes que quedarse esperándolo despierto. Lo trabado queda marcado en
 # `runs/NN.estado` —`siguiente_id` no lo vuelve a tomar— y, si tenía trabajo
 # hecho, en un PR en borrador que el auto-merge no toca. Lo único que corta el
-# bucle es una parada pedida, o TAREAS_TRABADAS seguidas sin integrar.
+# bucle es una parada pedida, o TAREAS_TRABADAS seguidas sin integrar — y una
+# tarea BLOQUEADA no es ninguna de las dos: se saltea sin tocar el contador.
 vuelta() {
     local id="$1" r salida=0
     fase "Tarea $id — $(basename "$(prompt_de "$id")" 2>/dev/null || echo 'sin prompt')"
@@ -1027,8 +1029,17 @@ vuelta() {
             ;;
         2)
             # BLOQUEADA, o parada pedida en medio de las etapas.
-            detencion_pedida || malo "Tarea $id necesita una decisión del usuario — mirá runs/$id.md"
-            salida=1
+            #
+            # Sale con 4, no con 1: una tarea que espera una decisión tuya no es
+            # un fallo del ciclo, y contarla como tal fue lo que apagó la noche
+            # del 8/9/2026. La 72 quedó incompleta con su PR en conflicto, la 73
+            # —que depende de ella— se declaró BLOQUEADA con el motivo bien
+            # escrito, y esa segunda tarea, que era la MISMA causa, empujó el
+            # contador al tope y detuvo el bucle entero con doce HU por delante.
+            # El bloqueo se avisa y se saltea; lo que sigue en la cola no tiene
+            # por qué depender de lo mismo.
+            detencion_pedida || { malo "Tarea $id necesita una decisión del usuario — mirá runs/$id.md"; salida=4; }
+            [ "$salida" -eq 4 ] || salida=1
             ;;
         3)
             # Se acabaron las etapas con la HU sin cerrar: se entrega lo hecho.
@@ -1064,7 +1075,7 @@ vuelta() {
     if ! fase_planificar "$id"; then
         detencion_pedida && return 2
         [ "$salida" -eq 0 ] && return 0
-        return 1
+        return "$salida"
     fi
     return "$salida"
 }
@@ -1298,6 +1309,12 @@ while :; do
             aviso "Ciclo detenido en medio de la tarea $id"; break ;;
         3)
             malo "Ciclo detenido: la tarea $id no pudo arrancar. No es la tarea, es el entorno — working tree sucio ajeno al ciclo o develop inalcanzable. Mirá runs/ciclo.log, limpiá y relanzá."; break ;;
+        4)
+            # Bloqueada: no toca el contador, ni para sumar ni para reiniciar.
+            # No se integró, así que no es un éxito que perdone fallos previos;
+            # tampoco es evidencia de que algo esté roto, así que no acerca la
+            # parada. Queda anotada y el bucle sigue con la próxima.
+            aviso "Tarea $id bloqueada: espera una decisión tuya en runs/$id.md. No es un fallo del ciclo — sigo con la próxima." ;;
         *)
             trabadas=$((trabadas + 1))
             malo "La tarea $id no llegó a integrarse ($trabadas seguida(s)). Queda marcada en runs/$id.estado; sigo con la próxima."
