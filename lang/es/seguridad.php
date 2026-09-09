@@ -484,4 +484,24 @@ return [
         'mock_dispositivos_valor' => '6 / 10',
     ],
 
+    // Perfil propio (tarea 66): autoservicio de nombre/correo/contraseña,
+    // compartido por `/panel/perfil` (guard interno) y `/portal/perfil`
+    // (guard cliente) — un solo copy para las dos pantallas, mismo formulario.
+    'perfil' => [
+        'menu_item' => 'Mi perfil',
+        'titulo' => 'Mi perfil',
+        'subtitulo' => 'Tus datos de acceso — nombre, correo y contraseña.',
+        'actualizado' => 'Tus datos se actualizaron correctamente.',
+        'seccion_datos' => 'Datos de la cuenta',
+        'campo_name' => 'Nombre completo',
+        'campo_email' => 'Correo electrónico',
+        'seccion_password' => 'Cambiar contraseña',
+        'seccion_password_ayuda' => 'Dejá estos tres campos vacíos si no querés cambiarla.',
+        'campo_password_actual' => 'Contraseña actual',
+        'campo_password_nueva' => 'Contraseña nueva',
+        'campo_password_nueva_ayuda' => 'Mínimo 8 caracteres. Cambiarla cierra tu sesión en otros dispositivos.',
+        'campo_password_confirmacion' => 'Confirmar contraseña nueva',
+        'estado_form' => 'Los cambios se guardan al confirmar.',
+    ],
+
 ];

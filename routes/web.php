@@ -42,6 +42,8 @@ use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\ConfiguracionCon
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\DashboardController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\DispositivosController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\OrganizacionController;
+use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\PerfilController;
+use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\PerfilPortalController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\PreferenciasController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\PreferenciasPortalController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\RolActivoController;
@@ -121,6 +123,15 @@ Route::middleware('auth:interno')->group(function () {
     Route::middleware('rol.activo')->group(function () {
         Route::get('/panel/dashboard', [DashboardController::class, 'index'])
             ->name('panel.dashboard');
+
+        // Perfil propio (tarea 66): cualquier rol activo, sin permiso de
+        // grano fino — el sujeto es siempre quien está logueado, nunca un
+        // `{usuario}` de ruta (eso es UsuariosController, cuentas AJENAS).
+        Route::get('/panel/perfil', [PerfilController::class, 'edit'])
+            ->name('panel.perfil.edit');
+
+        Route::put('/panel/perfil', [PerfilController::class, 'update'])
+            ->name('panel.perfil.update');
 
         // HU-45 (tarea 39): ABM de usuarios internos con sus roles. Permisos
         // `seguridad.usuario.*` verificados DENTRO del controlador (contra
@@ -941,6 +952,14 @@ Route::middleware('auth:cliente')->group(function () {
 
     Route::post('/portal/preferencias/tema', [PreferenciasPortalController::class, 'actualizarTema'])
         ->name('portal.preferencias.tema');
+
+    // Perfil propio (tarea 66): mismo mecanismo que `/panel/perfil`, para el
+    // guard `cliente` — ver PerfilPortalController.
+    Route::get('/portal/perfil', [PerfilPortalController::class, 'edit'])
+        ->name('portal.perfil.edit');
+
+    Route::put('/portal/perfil', [PerfilPortalController::class, 'update'])
+        ->name('portal.perfil.update');
 
     Route::get('/portal/avance', [AvancePortalController::class, 'index'])->name('portal.avance.index');
 
