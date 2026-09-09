@@ -5,7 +5,7 @@
     equipo, con qué rol, y el botón para dejarlo afuera.
 
     Datos esperados (ver DispositivosController::index()): la cáscara de
-    CascaraPanel (menu/roles/…/tema/campaniaActiva/periodo/version), más:
+    CascaraPanel (menu/roles/…/tema/zonaHoraria/version), más:
     - $dispositivos (Collection<SecTokenDispositivo>): sesiones vivas.
 
     El botón de revocar se gatea con la directiva `@puede` del módulo, que
@@ -26,8 +26,6 @@
         :zona-horaria="$zonaHoraria ?? null"
         :notifications="$notifications"
         :menu-badges="$menuBadges"
-        :campaniaActiva="$campaniaActiva"
-        :periodo="$periodo"
         :version="$version"
     >
         <x-organisms.page-header

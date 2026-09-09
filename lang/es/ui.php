@@ -65,7 +65,7 @@ return [
     ],
 
     'timezone' => [
-        'placeholder' => 'Zona horaria',
+        'badge_title' => 'Zona horaria',
     ],
 
     'action' => [
@@ -92,9 +92,8 @@ return [
 
     // Chrome del layout de tres niveles (quinta vuelta — organisms/module-rail,
     // organisms/module-sidebar, organisms/topbar): riel de módulos, buscador
-    // global, chips del header y drawer móvil. Genérico del catálogo — el
-    // CONTENIDO (nombre de campaña, período, badges) lo pasa quien arma la
-    // página.
+    // global y drawer móvil. Genérico del catálogo — el CONTENIDO (badges,
+    // breadcrumb) lo pasa quien arma la página.
     'rail' => [
         'aria' => 'Módulos',
         'configuracion' => 'Configuración',
@@ -103,11 +102,6 @@ return [
         'buscador_placeholder' => 'Buscar lote, orden, piloto o dron',
         'buscador_aria' => 'Buscador global',
         'atajo_buscador' => '⌘K',
-        // Renombrada de `campana_activa` (ADR 0015 punto 2, tarea 69):
-        // `campana`, a secas, quedó reservada para el ícono de notificaciones
-        // de acá abajo — nunca más el chip de campaña.
-        'campania_activa' => 'Campaña activa',
-        'periodo' => 'Período',
     ],
     'drawer' => [
         'abrir' => 'Abrir módulos',

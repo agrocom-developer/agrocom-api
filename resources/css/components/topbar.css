@@ -128,77 +128,6 @@
     background: transparent;
 }
 
-/* Chip de campaña activa. */
-.ag-topbar__campaign {
-    flex: 0 0 auto;
-    display: inline-flex;
-    align-items: center;
-    gap: var(--ag-space-2);
-    white-space: nowrap;
-    padding: var(--ag-space-1) var(--ag-space-3);
-    background: var(--ag-color-success-subtle);
-    border: 1px solid var(--ag-color-primary-border-subtle);
-    border-radius: var(--ag-radius-pill);
-    font-size: var(--ag-font-size-xs);
-    font-weight: var(--ag-font-weight-bold);
-    color: var(--ag-color-success-strong);
-}
-
-.ag-topbar__campaign-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: var(--ag-radius-pill);
-    background: var(--ag-color-primary);
-}
-
-/* Selector de período. Pedido explícito del usuario (28/8/2026): no daba
-   ningún indicio visual de haber sido presionado — a diferencia del resto
-   de controles del header, ni siquiera tenía :hover propio. Mismo lenguaje
-   de "presionado" que .ag-topbar__icon-btn/__user más abajo, aunque hoy no
-   abre un dropdown real (fuera de alcance de este ajuste, ver
-   docs/diseno/sistema_diseno_panel.md §10). */
-.ag-topbar__period {
-    flex: 0 0 auto;
-    height: 36px;
-    display: inline-flex;
-    align-items: center;
-    gap: var(--ag-space-2);
-    white-space: nowrap;
-    padding: 0 var(--ag-space-3);
-    background: var(--ag-color-bg-chrome);
-    border: 1px solid var(--ag-color-border);
-    border-radius: 9px;
-    font-family: var(--ag-font-family-base);
-    font-size: 0.78rem;
-    color: var(--ag-color-text-muted);
-    cursor: pointer;
-    transition:
-        background-color var(--ag-transition-fast),
-        border-color var(--ag-transition-fast),
-        transform var(--ag-transition-fast);
-}
-
-.ag-topbar__period:hover {
-    background: var(--ag-color-bg-row-hover);
-    border-color: var(--ag-color-border-strong);
-}
-
-.ag-topbar__period:active {
-    background: var(--ag-color-primary-subtle);
-    border-color: var(--ag-color-primary-border-subtle);
-    transform: scale(0.97);
-}
-
-.ag-topbar__period:focus-visible {
-    outline: 2px solid var(--ag-color-focus-ring);
-    outline-offset: 2px;
-}
-
-.ag-topbar__period .ag-icon,
-.ag-topbar__period-chevron {
-    color: var(--ag-color-text-faint);
-}
-
 /* Campana. */
 .ag-topbar__notifications {
     flex: 0 0 auto;
@@ -485,9 +414,7 @@
         padding: 0 var(--ag-space-4);
     }
 
-    .ag-topbar__breadcrumb,
-    .ag-topbar__campaign,
-    .ag-topbar__period {
+    .ag-topbar__breadcrumb {
         display: none;
     }
 
@@ -649,8 +576,7 @@
     }
 
     .ag-topbar__user:active,
-    .ag-topbar__icon-btn:active,
-    .ag-topbar__period:active {
+    .ag-topbar__icon-btn:active {
         transform: none;
     }
 }

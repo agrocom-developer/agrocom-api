@@ -31,8 +31,6 @@
         :zona-horaria="$zonaHoraria ?? null"
         :notifications="$notifications"
         :menu-badges="$menuBadges"
-        :campaniaActiva="$campaniaActiva"
-        :periodo="$periodo"
         :version="$version"
     >
         <x-atoms.button href="{{ route('panel.trabajos.index') }}" variant="text" size="sm" icon="arrow_back">

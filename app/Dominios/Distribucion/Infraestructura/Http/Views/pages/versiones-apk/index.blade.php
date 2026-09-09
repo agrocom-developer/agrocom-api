@@ -26,8 +26,6 @@
         :zona-horaria="$zonaHoraria ?? null"
         :notifications="$notifications"
         :menu-badges="$menuBadges"
-        :campaniaActiva="$campaniaActiva"
-        :periodo="$periodo"
         :version="$version"
     >
         <x-organisms.page-header

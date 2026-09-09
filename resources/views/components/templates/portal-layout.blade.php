@@ -63,7 +63,6 @@
             @endif
 
             <x-molecules.theme-toggle />
-            <x-molecules.timezone-selector :value="$zonaHoraria ?? null" />
 
             <button
                 type="button"
@@ -82,7 +81,12 @@
         {{ $slot }}
     </main>
 
+    {{-- La zona horaria bajó del header al pie el 9/9/2026 (mismo cambio
+         que en el panel): es un dato de lectura, no algo que el cliente
+         elija — el navegador la informa y molecules/timezone-badge la
+         persiste solo. --}}
     <footer class="ag-portal__footer">
         <span>{{ __('ui.footer.copyright', ['year' => date('Y')]) }}</span>
+        <x-molecules.timezone-badge :value="$zonaHoraria ?? null" />
     </footer>
 </div>

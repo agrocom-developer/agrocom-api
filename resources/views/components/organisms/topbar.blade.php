@@ -12,33 +12,34 @@
       36px, `flex:0 1 480px; min-width:220px; max-width:480px`, atajo ⌘K).
     - DERECHA (`.ag-topbar__right`, ancho fijo, `margin-left:auto` para
       anclarse al extremo): toggle de tema (segmented, molecule
-      theme-toggle) · campana con badge · selector de período · chip de
-      campaña (apagado, ver prop `campaniaActiva` abajo) · usuario, con el
-      ROL ACTIVO bajo el nombre — el usuario va ÚLTIMO (pedido del
-      7/9/2026): el avatar es el ancla visual del extremo derecho del
-      header, y tenerlo al principio del bloque lo dejaba flotando en el
-      medio, con los controles a su derecha.
+      theme-toggle) · campana con badge · usuario, con el ROL ACTIVO bajo el
+      nombre — el usuario va ÚLTIMO (pedido del 7/9/2026): el avatar es el
+      ancla visual del extremo derecho del header, y tenerlo al principio
+      del bloque lo dejaba flotando en el medio, con los controles a su
+      derecha.
     Todo salvo el buscador lleva `flex:0 0 auto; white-space:nowrap` — ver
-    topbar.css. En tablet (<1200) el header se compacta: breadcrumb, campaña
-    y período se ocultan (maqueta 5a). En móvil (<768) este header entero se
-    reemplaza por organisms/mobile-topbar.
+    topbar.css. En tablet (<1200) el header se compacta: el breadcrumb se
+    oculta (maqueta 5a). En móvil (<768) este header entero se reemplaza por
+    organisms/mobile-topbar.
 
-    El buscador y el selector de período son demo visual (sin backend
-    todavía); la campana muestra las notificaciones que pasa el llamador; el
-    menú de usuario tiene "Cambiar de rol" (link a la pantalla de selección,
-    `?cambiar=1`) y "Cerrar sesión" (data-ag-logout → organisms/topbar.js).
+    El header NO lleva contexto de negocio (pedido del dueño, 9/9/2026,
+    mirando el panel andando). Cayeron tres cosas que estaban de más:
+    - el chip de CAMPAÑA, que ya venía apagado (ADR 0015 punto 1: la campaña
+      es del cliente, no hay una "activa" de sesión);
+    - el selector de PERÍODO ("septiembre 2026"), que se leía como si fuera
+      esa campaña y encima no filtraba nada — era demo visual sin backend;
+    - el selector de ZONA HORARIA, que pedía elegir a mano un dato que el
+      navegador ya informa solo. La zona se detecta y se persiste sola (ver
+      resources/js/molecules/timezone-badge.js) y se muestra, de lectura,
+      como badge en el PIE del layout — no es un control.
+
+    Queda el buscador (demo visual, sin backend todavía), la campana con las
+    notificaciones que pasa el llamador y el menú de usuario, con "Cambiar
+    de rol" (link a la pantalla de selección, `?cambiar=1`) y "Cerrar
+    sesión" (data-ag-logout → organisms/topbar.js).
 
     Props:
     - moduloLabel / vistaActual (nullable string): breadcrumb, ya traducidos.
-    - campaniaActiva (nullable string): SIEMPRE `null` (ADR 0015 punto 1,
-      corregido el 8/9/2026): la campaña es del cliente, no de Agrocom, y
-      con decenas abiertas a la vez no hay una sola "activa" de sesión — se
-      elige dentro del cliente o del contrato, nunca acá. El chip no se
-      pinta; la prop se conserva (renombrada desde `campana`) para no volver
-      a tocar las 82 vistas si algún día vuelve a tener con qué llenarse.
-      `campana`, a secas, quedó libre para el ícono de notificaciones de acá
-      abajo — nunca más el chip.
-    - periodo (nullable string): texto del selector de período (demo).
     - notifications (list, default []): `{icon, title, time, unread}` ya
       resueltos por el llamador. Lista vacía = estado vacío del popover.
     - activeRoleLabel (nullable string): nombre LEGIBLE del rol activo
@@ -49,13 +50,10 @@
 @props([
     'moduloLabel' => null,
     'vistaActual' => null,
-    'campaniaActiva' => null,
-    'periodo' => null,
     'notifications' => [],
     'activeRoleLabel' => null,
     'userName' => null,
     'cambiarRolHref' => null,
-    'zonaHoraria' => null,
 ])
 
 @php
@@ -93,7 +91,6 @@
 
     <div class="ag-topbar__right">
         <x-molecules.theme-toggle />
-        <x-molecules.timezone-selector :value="$zonaHoraria ?? null" />
 
         <div class="dropdown ag-topbar__notifications">
             <button
@@ -134,21 +131,6 @@
                 @endif
             </div>
         </div>
-
-        @if ($periodo)
-            <button type="button" class="ag-topbar__period" title="{{ __('ui.header.periodo') }}">
-                <x-atoms.icon name="calendar_month" size="sm" />
-                {{ $periodo }}
-                <x-atoms.icon name="expand_more" size="sm" class="ag-topbar__period-chevron" />
-            </button>
-        @endif
-
-        @if ($campaniaActiva)
-            <span class="ag-topbar__campaign" title="{{ __('ui.header.campania_activa') }}">
-                <span class="ag-topbar__campaign-dot" aria-hidden="true"></span>
-                {{ $campaniaActiva }}
-            </span>
-        @endif
 
         @if ($userName)
             <div class="dropdown ag-topbar__user-menu">

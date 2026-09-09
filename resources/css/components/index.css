@@ -20,7 +20,7 @@
 
 /* Molecules */
 @import './theme-toggle.css';
-@import './timezone-selector.css';
+@import './timezone-badge.css';
 @import './menu-item.css';
 @import './stat-card.css';
 @import './plan-card.css';
