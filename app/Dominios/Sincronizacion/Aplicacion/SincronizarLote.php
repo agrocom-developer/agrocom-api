@@ -2,8 +2,10 @@
 
 namespace App\Dominios\Sincronizacion\Aplicacion;
 
+use App\Dominios\Operaciones\Contratos\AperturaEstadiaHacienda;
 use App\Dominios\Operaciones\Contratos\AperturaSesion;
 use App\Dominios\Operaciones\Contratos\AperturaTrabajo;
+use App\Dominios\Operaciones\Contratos\CierreEstadiaHacienda;
 use App\Dominios\Operaciones\Contratos\CierreSesion;
 use App\Dominios\Operaciones\Contratos\CierreTrabajo;
 use App\Dominios\Operaciones\Contratos\EscrituraSincronizacion;
@@ -45,9 +47,11 @@ final class SincronizarLote
      * caldo en el mismo lote en que se abre el trabajo, antes de que exista
      * ninguna sesión todavía. `recarga` (tarea 23) depende solo de `sesion`,
      * igual que `condiciones` — el orden relativo entre esas dos no importa,
-     * ninguna referencia a la otra.
+     * ninguna referencia a la otra. `estadia_entrada`/`estadia_salida` (HU-51,
+     * tarea 74) van al final: no son prerrequisito causal de nada — la
+     * estadía del equipo en la hacienda es independiente de trabajo/sesión.
      */
-    private const array ORDEN_CAUSAL = ['trabajo', 'recepcion_caldo', 'sesion', 'condiciones', 'incidencia', 'recarga', 'cierre_trabajo', 'cierre_sesion'];
+    private const array ORDEN_CAUSAL = ['trabajo', 'recepcion_caldo', 'sesion', 'condiciones', 'incidencia', 'recarga', 'cierre_trabajo', 'cierre_sesion', 'estadia_entrada', 'estadia_salida'];
 
     public function __construct(
         private readonly EscrituraSincronizacion $operaciones,
@@ -108,6 +112,8 @@ final class SincronizarLote
             'recarga' => $this->aplicarRecarga($registro),
             'cierre_trabajo' => $this->aplicarCierreTrabajo($registro, $operarioPersonaId),
             'cierre_sesion' => $this->aplicarCierreSesion($registro, $operarioPersonaId),
+            'estadia_entrada' => $this->aplicarEstadiaEntrada($registro),
+            'estadia_salida' => $this->aplicarEstadiaSalida($registro),
             default => ResultadoSincronizacion::rechazado('tipo de registro desconocido o dato mal formado'),
         };
     }
@@ -241,6 +247,37 @@ final class SincronizarLote
         return $datos === null
             ? ResultadoSincronizacion::rechazado('cierre de sesión con datos incompletos o inválidos')
             : $this->operaciones->cerrarSesion($datos, $operarioPersonaId);
+    }
+
+    /**
+     * @param  array<string, mixed>  $registro
+     *
+     * Sin verificación de pertenencia (ver docblock de
+     * `EscrituraSincronizacion::abrirEstadia()`): la estadía es del equipo,
+     * no de una persona — no hay nada que comparar contra el operario del
+     * token.
+     */
+    private function aplicarEstadiaEntrada(array $registro): ResultadoSincronizacion
+    {
+        $datos = AperturaEstadiaHacienda::intentarDesdeArreglo($registro);
+
+        return $datos === null
+            ? ResultadoSincronizacion::rechazado('estadía con datos incompletos o inválidos')
+            : $this->operaciones->abrirEstadia($datos);
+    }
+
+    /**
+     * @param  array<string, mixed>  $registro
+     *
+     * Sin verificación de pertenencia, mismo motivo que `aplicarEstadiaEntrada()`.
+     */
+    private function aplicarEstadiaSalida(array $registro): ResultadoSincronizacion
+    {
+        $datos = CierreEstadiaHacienda::intentarDesdeArreglo($registro);
+
+        return $datos === null
+            ? ResultadoSincronizacion::rechazado('cierre de estadía con datos incompletos o inválidos')
+            : $this->operaciones->cerrarEstadia($datos);
     }
 
     /**

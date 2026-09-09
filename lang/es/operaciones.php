@@ -438,4 +438,39 @@ return [
         'descargar_pdf' => 'Descargar PDF',
     ],
 
+    // Pantalla de panel "Operación › Estadías en hacienda" (HU-51, tarea 74):
+    // consulta de estadías del equipo en cada hacienda — entrada/salida del
+    // equipo cargada desde la app de campo vía POST /api/sync, con filtro por
+    // rango de fechas, equipo de trabajo y campo. Totales de días efectivos
+    // por equipo y por propiedad. Solo lectura.
+    'estadias' => [
+        'titulo' => 'Estadías en hacienda',
+        'subtitulo' => 'Entrada y salida del equipo de trabajo en cada propiedad, con sus tiempos efectivos.',
+        'vacio' => 'Todavía no hay estadías registradas.',
+        'filtro_vacio' => 'Ninguna estadía coincide con estos filtros.',
+        'filtro_desde' => 'Desde',
+        'filtro_placeholder_desde' => 'Fecha de inicio…',
+        'filtro_hasta' => 'Hasta',
+        'filtro_placeholder_hasta' => 'Fecha de fin…',
+        'filtro_equipo' => 'Equipo de trabajo',
+        'filtro_campo' => 'Propiedad',
+        'filtro_todos' => 'Todos',
+        'filtrar' => 'Filtrar',
+        'limpiar_filtros' => 'Limpiar filtros',
+        'col_equipo' => 'Equipo',
+        'col_campo' => 'Propiedad',
+        'col_vehiculo' => 'Vehículo',
+        'col_entrada' => 'Entrada',
+        'col_salida' => 'Salida',
+        'en_curso' => 'En curso',
+        'sin_vehiculo' => '—',
+        'totales_equipo' => 'Días efectivos por equipo',
+        'totales_campo' => 'Días efectivos por propiedad',
+        'dias' => 'días',
+        'paginacion_aria' => 'Paginación de estadías',
+        'paginacion_anterior' => 'Anterior',
+        'paginacion_siguiente' => 'Siguiente',
+        'paginacion_info' => 'Página :actual de :total',
+    ],
+
 ];

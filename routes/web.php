@@ -25,6 +25,7 @@ use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\PlanesManten
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\VehiculosController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\AlertasController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\DronesController;
+use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\EstadiasHaciendaController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\OrdenesController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\PausasController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\ReportesTecnicosController;
@@ -295,6 +296,13 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::post('/panel/pausas', [PausasController::class, 'store'])
             ->name('panel.pausas.store');
+
+        // HU-51 (tarea 74): estadías del equipo en cada hacienda, solo
+        // lectura — se cargan desde la app de campo, nunca desde el panel.
+        // Permiso `operaciones.estadia.ver` verificado DENTRO del
+        // controlador, mismo criterio que las rutas de arriba.
+        Route::get('/panel/estadias', [EstadiasHaciendaController::class, 'index'])
+            ->name('panel.estadias.index');
 
         // HU-19 (tarea 26): bandeja de alertas por excepción. Permiso
         // `operaciones.alerta.ver` gatea la pantalla,

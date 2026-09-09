@@ -5,8 +5,10 @@ namespace App\Dominios\Operaciones\Infraestructura;
 use App\Dominios\Operaciones\Aplicacion\GenerarAlertaExcepcion;
 use App\Dominios\Operaciones\Aplicacion\MaquinaEstados\MaquinaEstadosSesion;
 use App\Dominios\Operaciones\Aplicacion\MaquinaEstados\MaquinaEstadosTrabajo;
+use App\Dominios\Operaciones\Contratos\AperturaEstadiaHacienda;
 use App\Dominios\Operaciones\Contratos\AperturaSesion;
 use App\Dominios\Operaciones\Contratos\AperturaTrabajo;
+use App\Dominios\Operaciones\Contratos\CierreEstadiaHacienda;
 use App\Dominios\Operaciones\Contratos\CierreSesion;
 use App\Dominios\Operaciones\Contratos\CierreTrabajo;
 use App\Dominios\Operaciones\Contratos\EscrituraSincronizacion;
@@ -22,6 +24,7 @@ use App\Dominios\Operaciones\Dominio\Excepciones\TransicionSesionNoPermitida;
 use App\Dominios\Operaciones\Dominio\Excepciones\TransicionTrabajoNoPermitida;
 use App\Dominios\Operaciones\Dominio\TipoEvidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Condiciones;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\EstadiaHacienda;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Evidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Incidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
@@ -29,6 +32,7 @@ use App\Dominios\Operaciones\Infraestructura\Eloquent\Recarga;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\RecepcionCaldo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
@@ -604,5 +608,126 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
     private function sumaHectareasSesiones(int $trabajoId): string
     {
         return (string) Sesion::query()->where('trabajo_id', $trabajoId)->sum('hectareas_declaradas');
+    }
+
+    /**
+     * Estadía del equipo en una hacienda (HU-51, tarea 74): crea una fila
+     * nueva, mismo mecanismo de idempotencia que `abrirTrabajo()` — el
+     * `UNIQUE` parcial de `uuid_cliente` resuelve el reintento, nunca un
+     * `SELECT` previo. Un segundo `UNIQUE` parcial (`equipo_trabajo_id` con
+     * `salida IS NULL`) rechaza un `estadia_entrada` si el equipo ya tiene
+     * una estadía abierta — sin verificarlo antes, mismo criterio que el
+     * resto del contrato.
+     */
+    public function abrirEstadia(AperturaEstadiaHacienda $datos): ResultadoSincronizacion
+    {
+        try {
+            DB::transaction(function () use ($datos): void {
+                EstadiaHacienda::query()->create([
+                    'uuid_cliente' => $datos->uuidCliente,
+                    'equipo_trabajo_id' => $datos->equipoTrabajoId,
+                    'campo_id' => $datos->campoId,
+                    'entrada' => self::normalizarUtc($datos->entrada),
+                    'vehiculo_id' => $datos->vehiculoId,
+                    'observacion' => $datos->observacion,
+                ]);
+            });
+        } catch (QueryException $excepcion) {
+            return $this->resultadoAperturaEstadiaDesdeExcepcion($excepcion, $datos->uuidCliente);
+        }
+
+        return ResultadoSincronizacion::aplicado();
+    }
+
+    /**
+     * Cierre de estadía (HU-51, tarea 74): MUTA una fila existente, mismo
+     * mecanismo de idempotencia que `cerrarTrabajo()`/`cerrarSesion()` (lock +
+     * comparar `cierre_uuid_cliente` antes de decidir). `entrada`/`salida`
+     * inválidas (salida anterior o igual a la entrada) se rechazan acá, antes
+     * del `save()` — el `CHECK` de la migración es solo una red de seguridad
+     * adicional para pgsql, no el mecanismo primario (no existe en SQLite,
+     * el motor de los tests).
+     */
+    public function cerrarEstadia(CierreEstadiaHacienda $datos): ResultadoSincronizacion
+    {
+        $estadiaId = EstadiaHacienda::query()->where('uuid_cliente', $datos->estadiaUuidCliente)->value('id');
+
+        if ($estadiaId === null) {
+            return ResultadoSincronizacion::rechazado('la estadía referenciada no existe');
+        }
+
+        try {
+            return DB::transaction(function () use ($estadiaId, $datos): ResultadoSincronizacion {
+                /** @var EstadiaHacienda $estadia */
+                $estadia = EstadiaHacienda::query()->whereKey($estadiaId)->lockForUpdate()->firstOrFail();
+
+                if ($estadia->salida !== null) {
+                    return $estadia->cierre_uuid_cliente === $datos->uuidCliente
+                        ? ResultadoSincronizacion::duplicado()
+                        : ResultadoSincronizacion::rechazado('la estadía ya está cerrada');
+                }
+
+                $salida = self::normalizarUtc($datos->salida);
+
+                if ($salida->lessThanOrEqualTo($estadia->entrada)) {
+                    return ResultadoSincronizacion::rechazado('la salida no puede ser anterior o igual a la entrada');
+                }
+
+                $estadia->salida = $salida;
+                $estadia->cierre_uuid_cliente = $datos->uuidCliente;
+                $estadia->save();
+
+                return ResultadoSincronizacion::aplicado();
+            });
+        } catch (QueryException) {
+            return ResultadoSincronizacion::rechazado('no se pudo cerrar la estadía: referencia o dato inválido');
+        }
+    }
+
+    /**
+     * `CarbonImmutable::parse()` conserva el offset original del string
+     * entrante (p. ej. `-04:00`) como huso horario del objeto, no lo
+     * normaliza — y `ope_estadias_hacienda.entrada`/`salida` son `dateTime`
+     * sin tz. Sin este `->utc()`, `format()` escribiría la hora LOCAL literal
+     * y una relectura posterior la interpretaría como UTC, corriendo el
+     * instante real por el valor del offset. Mismo mecanismo (y mismo fix)
+     * que `MaquinaEstadosTrabajo::normalizarUtc()`/`MaquinaEstadosActa::firmar()`
+     * (runs/24.md) — acá vive en esta clase y no en una máquina de estados
+     * porque `ope_estadias_hacienda` no tiene una (ver docblock de la
+     * migración).
+     */
+    private static function normalizarUtc(string $valor): CarbonImmutable
+    {
+        return CarbonImmutable::parse($valor)->utc();
+    }
+
+    /**
+     * Variante de {@see resultadoDesdeExcepcion()} para `ope_estadias_hacienda`
+     * (HU-51, tarea 74): esa tabla también tiene DOS índices únicos parciales
+     * que un mismo `INSERT` puede violar a la vez —un reintento EXACTO del
+     * mismo evento de entrada repite `uuid_cliente` Y dispara el de
+     * `equipo_trabajo_id` (la fila original, si no se cerró, sigue con
+     * `salida IS NULL`)— mismo criterio que
+     * {@see resultadoIncidenciaDesdeExcepcion()}: si el mensaje no matchea el
+     * patrón de `uuid_cliente` pero YA EXISTE una fila con ese valor, es igual
+     * `duplicado`.
+     */
+    private function resultadoAperturaEstadiaDesdeExcepcion(QueryException $excepcion, string $uuidCliente): ResultadoSincronizacion
+    {
+        $mensaje = $excepcion->getMessage();
+
+        if (str_contains($mensaje, 'ope_estadias_hacienda_uuid_cliente_unico') || str_contains($mensaje, 'ope_estadias_hacienda.uuid_cliente')) {
+            return ResultadoSincronizacion::duplicado();
+        }
+
+        if (EstadiaHacienda::query()->where('uuid_cliente', $uuidCliente)->exists()) {
+            return ResultadoSincronizacion::duplicado();
+        }
+
+        if (str_contains($mensaje, 'ope_estadias_hacienda_equipo_abierta_unico') || str_contains($mensaje, 'ope_estadias_hacienda.equipo_trabajo_id')) {
+            return ResultadoSincronizacion::rechazado('el equipo ya tiene una estadía abierta');
+        }
+
+        return ResultadoSincronizacion::rechazado('no se pudo aplicar el registro: referencia o dato inválido');
     }
 }

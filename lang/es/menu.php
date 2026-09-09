@@ -31,6 +31,7 @@ return [
             'trabajos' => 'Trabajos',
             'sesiones' => 'Sesiones',
             'pausas' => 'Pausas',
+            'estadias' => 'Estadías en hacienda',
         ],
     ],
 
