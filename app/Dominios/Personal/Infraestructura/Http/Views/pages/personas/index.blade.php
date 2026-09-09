@@ -115,6 +115,12 @@
                             </span>
 
                             <span role="cell" class="ag-personas__acciones">
+                                @puede('personal.persona.desempenio')
+                                    <x-atoms.button href="{{ route('panel.personas.desempenio', $persona) }}" variant="outline" size="sm" icon="insights">
+                                        {{ __('personal.personas.desempenio.ver') }}
+                                    </x-atoms.button>
+                                @endpuede
+
                                 @puede('personal.persona.editar')
                                     <x-atoms.button href="{{ route('panel.personas.edit', $persona) }}" variant="outline" size="sm" icon="edit">
                                         {{ __('personal.personas.editar') }}

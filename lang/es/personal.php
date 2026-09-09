@@ -115,6 +115,13 @@ return [
         'paginacion_siguiente' => 'Siguiente',
         'paginacion_info' => 'Página :actual de :total',
 
+        // HU-58 (tarea 81): enlace desde la fila del listado a la ficha de
+        // desempeño — gateado por `personal.persona.desempenio`, permiso
+        // aparte de `.ver` (información sensible sobre la persona).
+        'desempenio' => [
+            'ver' => 'Ver desempeño',
+        ],
+
         // Formulario
         'titulo_crear' => 'Nueva persona',
         'titulo_editar' => 'Editar persona',
@@ -211,6 +218,74 @@ return [
         'ficha_recursos_vacio' => 'Este equipo no tenía recursos asignados en la fecha elegida.',
         'ficha_asignar_recurso' => 'Asignar recurso',
         'ficha_campo_recurso_placeholder' => 'Seleccioná un recurso',
+    ],
+
+    // Ficha de desempeño de una persona (HU-58, tarea 81): "¿qué hizo esta
+    // persona esta campaña?" — hechos verificables por SESIÓN (nunca por
+    // equipo de trabajo, ADR 0015 punto 3), sin puntaje ni ranking. Arquetipo
+    // Detalle, mismo molde de filtros por GET que `equipos_trabajo.ficha_*`.
+    'desempenio' => [
+        'titulo' => 'Desempeño de :nombre',
+        'subtitulo' => 'Sesiones, rechazos e incidencias de la persona en el rango elegido — hechos, no un puntaje.',
+        'volver' => 'Volver a personas',
+
+        'filtro_desde' => 'Desde',
+        'filtro_hasta' => 'Hasta',
+        'filtro_cliente' => 'Cliente',
+        'filtro_cliente_placeholder' => 'Todos los clientes',
+        'filtro_campania' => 'Campaña',
+        'filtro_campania_placeholder' => 'Todas las campañas',
+        'filtrar' => 'Filtrar',
+        'limpiar_filtro' => 'Limpiar filtros',
+
+        'total_hectareas' => 'Hectáreas aplicadas',
+        'total_sesiones_validadas' => 'Sesiones validadas',
+        'total_sesiones_rechazadas' => 'Sesiones rechazadas',
+        'total_incidencias' => 'Incidencias',
+
+        'seccion_sesiones' => 'Sesiones',
+        'sesiones_vacio' => 'No hay sesiones de esta persona con estos filtros.',
+        'sesiones_vacio_sin_datos' => 'Esta persona no registra sesiones en los últimos 12 meses.',
+        'col_fecha' => 'Fecha',
+        'col_rol' => 'Rol',
+        'col_cliente' => 'Cliente',
+        'col_campania' => 'Campaña',
+        'col_lote' => 'Lote',
+        'col_hectareas' => 'Hectáreas',
+        'col_estado' => 'Estado',
+        'sin_campania' => '—',
+
+        'seccion_rechazos' => 'Sesiones rechazadas',
+        'rechazos_vacio' => 'Ninguna sesión rechazada con estos filtros.',
+        'col_motivo' => 'Motivo',
+        'col_rechazado_por' => 'Rechazado por',
+
+        'seccion_incidencias' => 'Incidencias',
+        'incidencias_vacio' => 'Sin incidencias registradas con estos filtros.',
+        'col_tipo' => 'Tipo',
+        'col_descripcion' => 'Descripción',
+        'sin_descripcion' => '—',
+
+        // Catálogo de EstadoSesion (Operaciones\Dominio\EstadoSesion) — copia
+        // deliberada de `operaciones.estado`: esta pantalla es de `Personal`
+        // y su lang file es su propio vocabulario (ADR 0013), no un import
+        // cruzado del lang de otro módulo.
+        'estado_sesion' => [
+            'abierto' => 'Abierto',
+            'cerrado' => 'Cerrado',
+            'validado' => 'Validado',
+        ],
+
+        // Catálogo de TipoIncidencia (Operaciones\Dominio\TipoIncidencia) —
+        // misma razón de copia que `estado_sesion` arriba.
+        'incidencia_tipo' => [
+            'caldo' => 'Caldo',
+            'esc' => 'ESC',
+            'bateria' => 'Batería',
+            'mecanica' => 'Mecánica',
+            'clima' => 'Clima',
+            'otro' => 'Otro',
+        ],
     ],
 
 ];

@@ -22,6 +22,7 @@ import './pages/stock-movimiento-form.js';
 import './pages/ordenes-mantenimiento-form.js';
 import './pages/roles-permisos.js';
 import './pages/reportes-comerciales.js';
+import './pages/personas-desempeno.js';
 
 // Bootstrap components are now available globally via window
 window.bootstrap = bootstrap;
