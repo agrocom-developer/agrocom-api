@@ -132,6 +132,14 @@
     overflow-wrap: break-word;
 }
 
+/* Nombre de columna (identificador corto, p. ej. "description"): nunca se
+   parte a mitad de palabra — solo los valores antes/después, que pueden ser
+   largos, necesitan el break-word de arriba. */
+.ag-bitacora__diff td:first-child {
+    white-space: nowrap;
+    max-width: none;
+}
+
 .ag-bitacora__diff tbody tr:hover {
     background-color: var(--ag-color-bg-row-hover);
 }
