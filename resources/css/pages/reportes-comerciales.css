@@ -172,8 +172,15 @@
     border-top: 2px solid var(--ag-color-border-card);
 }
 
-/* Accordion: contenedor y header */
+/* Accordion: contenedor y header. Reasigna las custom properties que
+   Bootstrap usa para el estado expandido/foco (--bs-accordion-active-*,
+   --bs-accordion-btn-focus-box-shadow) — sin esto el header expandido queda
+   con el azul de fábrica de Bootstrap, que no es un token del panel y no
+   reasigna por tema (invariante 11). */
 .ag-reportes-comerciales__accordion {
+    --bs-accordion-active-bg: var(--ag-color-primary-subtle);
+    --bs-accordion-active-color: var(--ag-color-text);
+    --bs-accordion-btn-focus-box-shadow: 0 0 0 0.2rem var(--ag-color-primary-border-subtle);
     border: 1px solid var(--ag-color-border-card);
     border-radius: var(--ag-radius-md);
     overflow: hidden;

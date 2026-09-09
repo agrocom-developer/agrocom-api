@@ -113,7 +113,11 @@ final class ReportesComercialesController
      * Campañas de los clientes ya elegidos (ADR 0015: la campaña es del
      * cliente, no hay campaña global) — `DB::table` directo sobre
      * `cpn_campanias`, mismo criterio que `ContratosController::campaniasParaFormulario()`
-     * (ADR 0003 regla 3, `Campania` es de otro módulo).
+     * (ADR 0003 regla 3, `Campania` es de otro módulo). Trae `razon_social`
+     * (join, mismo criterio que `campaniasParaFiltro()` de ese controlador):
+     * con más de un cliente elegido, dos campañas del mismo `codigo`
+     * "2025-2026" (una por cliente, nace así de la migración de la tarea 69)
+     * son indistinguibles en la lista sin el nombre del cliente al lado.
      *
      * @param  list<int>  $clienteIds
      * @return Collection<int, \stdClass>
@@ -125,10 +129,12 @@ final class ReportesComercialesController
         }
 
         return DB::table('cpn_campanias')
-            ->whereIn('cliente_id', $clienteIds)
-            ->whereNull('deleted_at')
-            ->orderBy('codigo')
-            ->get(['id', 'codigo', 'cliente_id']);
+            ->join('com_clientes', 'com_clientes.id', '=', 'cpn_campanias.cliente_id')
+            ->whereIn('cpn_campanias.cliente_id', $clienteIds)
+            ->whereNull('cpn_campanias.deleted_at')
+            ->orderBy('com_clientes.razon_social')
+            ->orderBy('cpn_campanias.codigo')
+            ->get(['cpn_campanias.id', 'cpn_campanias.codigo', 'cpn_campanias.cliente_id', 'com_clientes.razon_social']);
     }
 
     /**

@@ -23,7 +23,7 @@
     - incluirDeshabilitados (bool)
     - clientesDisponibles (Collection<Cliente>)
     - cultivosDisponibles (Collection<Cultivo>)
-    - campaniasDisponibles (Collection<stdClass{id,codigo,cliente_id}>)
+    - campaniasDisponibles (Collection<stdClass{id,codigo,cliente_id,razon_social}>)
     - estadosDisponibles (list<EstadoContrato>)
     - saldosDisponibles (list<SaldoContrato>)
 
@@ -423,7 +423,7 @@
                                 name="campania_ids"
                                 id="filtros-campanias"
                                 :label="__('comercial.reportes_comerciales.filtros.campania')"
-                                :options="$campaniasDisponibles->mapWithKeys(fn($c) => [$c->id => $c->codigo])"
+                                :options="$campaniasDisponibles->mapWithKeys(fn($c) => [$c->id => __('comercial.reportes_comerciales.filtros.campania_opcion', ['codigo' => $c->codigo, 'cliente' => $c->razon_social])])"
                                 :value="$campaniaIds"
                             />
                         @elseif (empty($clienteIds))
