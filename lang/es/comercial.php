@@ -227,6 +227,23 @@ return [
         'lote_geometria' => 'Perímetro del lote',
         'lote_geometria_ayuda' => 'Opcional. Dibujá el contorno del lote sobre la imagen satelital con la herramienta de polígono. Se guarda como GeoJSON y es lo que colorea el mapa del tablero.',
         'lote_usar_superficie' => 'Usar como hectáreas',
+        'lote_mapa_barra_aria' => 'Acciones del mapa',
+        'lote_mapa_dibujar' => 'Dibujar perímetro',
+        'lote_mapa_editar_vertices' => 'Editar vértices',
+        'lote_mapa_mover' => 'Mover',
+        'lote_mapa_borrar' => 'Borrar',
+        'lote_mapa_deshacer' => 'Deshacer',
+        'lote_mapa_centrar' => 'Centrar en el lote',
+        'lote_mapa_capa_satelite' => 'Ver capa satelital',
+        'lote_mapa_capa_calles' => 'Ver capa de calles',
+        'lote_mapa_pantalla_completa' => 'Pantalla completa',
+        'lote_mapa_salir_pantalla_completa' => 'Salir de pantalla completa',
+        // Plantillas con placeholders `:dibujadas`/`:declaradas`: el JS del
+        // editor (organisms/lote-mapa-editor.js) los reemplaza por los
+        // números ya calculados en el navegador — nunca arma la frase él
+        // mismo (ADR 0013, el JS no sabe de idiomas).
+        'lote_mapa_medida' => ':dibujadas ha dibujadas',
+        'lote_mapa_medida_declaradas' => ':dibujadas ha dibujadas de :declaradas ha declaradas',
         'lote_restricciones' => 'Restricciones',
         'lote_restricciones_placeholder' => 'Cables, viviendas, colmenas, vecinos sensibles',
         'estado_form' => 'Los cambios se guardan al confirmar.',

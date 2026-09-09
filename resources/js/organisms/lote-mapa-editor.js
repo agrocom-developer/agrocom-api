@@ -3,10 +3,6 @@
  * satelital (Leaflet + Esri World Imagery + Leaflet-Geoman), en el formulario
  * de campos.
  *
- * Reemplaza al `<textarea>` donde había que pegar el GeoJSON a mano: el
- * perímetro de un lote se reconoce mirando la imagen del campo, no tipeando
- * pares de coordenadas.
- *
  * Contrato con el servidor SIN CAMBIOS: el valor sigue viajando como el mismo
  * string JSON (`{type: 'Polygon', coordinates: [[[lng, lat], ...]]}`) en el
  * input oculto que el Form Request ya validaba. Este módulo solo cambia cómo
@@ -14,6 +10,14 @@
  *
  * Cargado por `import()` dinámico desde app.js, solo cuando la página tiene un
  * `[data-ag-lote-mapa]` — Leaflet pesa, y no entra en el resto del panel.
+ *
+ * Tarea 79 (HU-56): reemplaza el chrome nativo de Leaflet-Geoman (íconos
+ * ajenos al panel, en inglés) por una barra de acciones propia con Material
+ * Symbols y texto en español, agrega pantalla completa de verdad
+ * (`shared/mapa-pantalla-completa.js`) y superficie en vivo mientras se
+ * dibuja. Geoman se sigue usando por su motor de edición de vértices
+ * (`enableGlobalEditMode`, `enableDraw`, etc.) — lo que cambia es quién
+ * dibuja los botones, no quién dibuja el polígono.
  *
  * Colores desde tokens (shared/color-tokens.js), nunca hex acá: CLAUDE.md
  * invariante 11, y el editor se abre en ambos temas.
@@ -24,12 +28,21 @@ import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css';
 import L from 'leaflet';
 import '@geoman-io/leaflet-geoman-free';
 import { leerColorToken } from '../shared/color-tokens.js';
+import { activarPantallaCompleta } from '../shared/mapa-pantalla-completa.js';
 
 /** Centro por defecto: la zona donde opera Agrocom (Santa Cruz). Solo se usa
  *  cuando el lote todavía no tiene perímetro y no hay ninguno cerca. */
 const CENTRO_POR_DEFECTO = { lat: -17.34, lng: -62.85 };
 const ZOOM_SIN_GEOMETRIA = 13;
 const ZOOM_MAXIMO_AL_ENCUADRAR = 17;
+
+/** Historial de deshacer: alcanza con unos pocos pasos — no es un editor de
+ *  vectores, es el perímetro de UN lote. */
+const LIMITE_HISTORIAL = 20;
+
+const ATRIBUCION_ESRI = 'Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics';
+const URL_CAPA_SATELITE = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+const URL_CAPA_CALLES = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}';
 
 /**
  * Contorno en ÁMBAR y relleno en verde de marca. El ámbar es el acento
@@ -49,7 +62,8 @@ function estiloPoligono() {
 }
 
 /**
- * Superficie geodésica de un anillo `[[lng, lat], ...]`, en metros cuadrados.
+ * Superficie geodésica de un anillo `[[lng, lat], ...]` YA CERRADO (primer y
+ * último punto iguales), en metros cuadrados.
  *
  * Fórmula del exceso esférico (la misma que usa Turf): sobre lotes de decenas
  * de hectáreas, calcular el área como si el polígono fuera plano se equivoca
@@ -72,14 +86,28 @@ function superficieEnMetros(anillo) {
     return Math.abs((total * RADIO_TIERRA * RADIO_TIERRA) / 2);
 }
 
-function hectareasDe(geometria) {
-    const anillo = geometria?.coordinates?.[0];
-
-    if (!Array.isArray(anillo) || anillo.length < 4) {
+/** Hectáreas de un anillo ABIERTO (sin repetir el primer punto al final). */
+function hectareasDeAnillo(anillo) {
+    if (!Array.isArray(anillo) || anillo.length < 3) {
         return null;
     }
 
-    return superficieEnMetros(anillo) / 10000;
+    const cerrado = [...anillo, anillo[0]];
+
+    return superficieEnMetros(cerrado) / 10000;
+}
+
+/** El anillo de un GeoJSON `Polygon` ya viene CERRADO (primer punto repetido
+ *  al final) — se abre antes de pasarlo a `hectareasDeAnillo`, que cierra el
+ *  suyo propio. */
+function hectareasDe(geometria) {
+    const anillo = geometria?.coordinates?.[0];
+
+    return Array.isArray(anillo) ? hectareasDeAnillo(anillo.slice(0, -1)) : null;
+}
+
+function formatearHectareas(valor) {
+    return valor.toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 /** Lee el valor del input oculto, tolerando JSON inválido cargado a mano. */
@@ -98,13 +126,14 @@ function leerGeometria(input) {
 }
 
 function inicializar(contenedor) {
+    const marco = contenedor.querySelector('[data-ag-lote-mapa-marco]');
     const lienzo = contenedor.querySelector('[data-ag-lote-mapa-lienzo]');
     const input = contenedor.querySelector('[data-ag-lote-geometria]');
     const medida = contenedor.querySelector('[data-ag-lote-medida]');
     const medidaTexto = contenedor.querySelector('[data-ag-lote-medida-texto]');
     const botonUsar = contenedor.querySelector('[data-ag-lote-usar-superficie]');
 
-    if (!lienzo || !input || contenedor.dataset.agLoteMapaListo === '1') {
+    if (!marco || !lienzo || !input || contenedor.dataset.agLoteMapaListo === '1') {
         return;
     }
 
@@ -114,20 +143,50 @@ function inicializar(contenedor) {
 
     const mapa = L.map(lienzo).setView([CENTRO_POR_DEFECTO.lat, CENTRO_POR_DEFECTO.lng], ZOOM_SIN_GEOMETRIA);
 
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics',
-        maxZoom: 19,
-    }).addTo(mapa);
+    let esSatelital = true;
+    let capaBase = L.tileLayer(URL_CAPA_SATELITE, { attribution: ATRIBUCION_ESRI, maxZoom: 19 }).addTo(mapa);
 
     const capa = L.featureGroup().addTo(mapa);
 
-    /** Escribe el input oculto y refresca la superficie mostrada. */
+    /** Hectáreas declaradas del lote (input hermano), para comparar contra
+     *  lo dibujado — nunca se copian solas (invariante 6: lo contratado no
+     *  lo pisa un polígono). */
+    const leerHectareasDeclaradas = () => {
+        const campo = contenedor.closest('[data-ag-lote-fila]')?.querySelector('input[name$="[hectareas]"]');
+        const valor = campo ? Number.parseFloat(campo.value) : NaN;
+
+        return Number.isFinite(valor) && valor > 0 ? valor : null;
+    };
+
+    /** Muestra (o esconde) la superficie. Compara contra lo declarado cuando
+     *  ese campo ya tiene un valor. */
+    const mostrarMedida = (hectareas) => {
+        if (hectareas === null || !medida || !medidaTexto) {
+            medida?.setAttribute('hidden', '');
+
+            return;
+        }
+
+        const declaradas = leerHectareasDeclaradas();
+        const plantilla = declaradas
+            ? medida.dataset.agLoteMapaMedidaPlantillaDeclarada
+            : medida.dataset.agLoteMapaMedidaPlantilla;
+
+        medidaTexto.textContent = plantilla
+            .replace(':dibujadas', formatearHectareas(hectareas))
+            .replace(':declaradas', declaradas ? formatearHectareas(declaradas) : '');
+
+        medida.removeAttribute('hidden');
+        medida.dataset.agLoteHectareas = hectareas.toFixed(2);
+    };
+
+    /** Vuelca la capa dibujada al input oculto y refresca la superficie. */
     const sincronizar = () => {
         const capas = capa.getLayers();
 
         if (capas.length === 0) {
             input.value = '';
-            medida?.setAttribute('hidden', '');
+            mostrarMedida(null);
 
             return;
         }
@@ -138,19 +197,69 @@ function inicializar(contenedor) {
         const geometria = capas[capas.length - 1].toGeoJSON().geometry;
 
         input.value = JSON.stringify(geometria);
+        mostrarMedida(hectareasDe(geometria));
+    };
 
-        const hectareas = hectareasDe(geometria);
+    // ---------- Deshacer ----------
 
-        if (hectareas === null || !medida || !medidaTexto) {
+    const historial = [];
+    const botonDeshacer = contenedor.querySelector('[data-ag-lote-accion="deshacer"]');
+
+    const actualizarBotonDeshacer = () => {
+        if (botonDeshacer) {
+            botonDeshacer.disabled = historial.length === 0;
+        }
+    };
+
+    /** Guarda el valor ANTERIOR a un cambio, para poder volver a él. Se llama
+     *  antes de aplicar el cambio, nunca después. */
+    const registrarHistorial = () => {
+        historial.push(input.value);
+
+        if (historial.length > LIMITE_HISTORIAL) {
+            historial.shift();
+        }
+
+        actualizarBotonDeshacer();
+    };
+
+    const aplicarGeometria = (valorJson) => {
+        capa.clearLayers();
+        input.value = valorJson ?? '';
+
+        const geometria = leerGeometria(input);
+
+        if (geometria) {
+            L.geoJSON(geometria, { style: estiloPoligono }).eachLayer((capaGuardada) => capa.addLayer(capaGuardada));
+        }
+
+        mostrarMedida(geometria ? hectareasDe(geometria) : null);
+    };
+
+    botonDeshacer?.addEventListener('click', () => {
+        if (historial.length === 0) {
             return;
         }
 
-        medidaTexto.textContent = `${hectareas.toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ha dibujadas`;
-        medida.removeAttribute('hidden');
-        medida.dataset.agLoteHectareas = hectareas.toFixed(2);
+        aplicarGeometria(historial.pop());
+        actualizarBotonDeshacer();
+    });
+
+    const confirmarEdicion = () => {
+        registrarHistorial();
+        sincronizar();
     };
 
-    // Perímetro ya guardado: se dibuja y el mapa encuadra sobre él.
+    // Registrado ANTES de cargar el perímetro guardado: así el polígono ya
+    // existente también queda con sus vértices editables/arrastrables, no
+    // solo los que se dibujan en esta misma carga de página.
+    capa.on('layeradd', ({ layer }) => {
+        layer.on?.('pm:edit', confirmarEdicion);
+        layer.on?.('pm:dragend', confirmarEdicion);
+    });
+
+    // Perímetro ya guardado: se dibuja y el mapa encuadra sobre él (sin
+    // pasar por el historial — no hay nada previo a lo que "deshacer" acá).
     const guardada = leerGeometria(input);
 
     if (guardada) {
@@ -159,52 +268,48 @@ function inicializar(contenedor) {
         sincronizar();
     }
 
-    // El español que ya trae Geoman, sin diccionario propio: pasarle uno
-    // parcial REEMPLAZA el del idioma entero, y los botones se quedaban sin
-    // `title` — una barra de cinco íconos sin tooltip no se entiende.
+    // El español que ya trae Geoman, sin diccionario propio: los mensajes de
+    // ayuda que Geoman muestra junto al cursor durante el dibujo (no el
+    // chrome de botones, que ya no se usa) siguen en español.
     mapa.pm.setLang('es');
-
-    // Solo polígono: un lote no es una línea ni un círculo, y cada control de
-    // más es una forma de guardar una geometría que el resto del sistema no
-    // sabe dibujar.
-    mapa.pm.addControls({
-        position: 'topright',
-        drawPolygon: true,
-        editMode: true,
-        removalMode: true,
-        drawMarker: false,
-        drawCircle: false,
-        drawCircleMarker: false,
-        drawPolyline: false,
-        drawRectangle: true,
-        drawText: false,
-        cutPolygon: false,
-        rotateMode: false,
-        dragMode: true,
-    });
-
     mapa.pm.setPathOptions(estiloPoligono());
 
     mapa.on('pm:create', ({ layer }) => {
+        registrarHistorial();
+
         // Uno solo: el nuevo reemplaza al anterior.
         capa.clearLayers();
         mapa.removeLayer(layer);
         capa.addLayer(layer);
 
-        layer.on('pm:edit', sincronizar);
-        layer.on('pm:dragend', sincronizar);
-
         sincronizar();
     });
 
     mapa.on('pm:remove', () => {
+        registrarHistorial();
         capa.clearLayers();
         sincronizar();
     });
 
-    capa.on('layeradd', ({ layer }) => {
-        layer.on?.('pm:edit', sincronizar);
-        layer.on?.('pm:dragend', sincronizar);
+    // Superficie EN VIVO mientras se dibuja, antes de cerrar el polígono —
+    // la ayuda de precisión que pide la tarea 79: se compara contra lo
+    // declarado sin esperar a terminar el trazo. Geoman emite `pm:vertexadded`
+    // sobre su capa interna de trabajo, no sobre el mapa (no hay forma pública
+    // de escucharlo desde afuera) — se junta el trazo en curso escuchando el
+    // `click` nativo del mapa mientras el modo dibujar está activo, que es la
+    // misma fuente de la que Geoman toma cada vértice.
+    let puntosEnCurso = [];
+
+    mapa.on('click', ({ latlng }) => {
+        if (!mapa.pm.globalDrawModeEnabled()) {
+            return;
+        }
+
+        puntosEnCurso.push([latlng.lng, latlng.lat]);
+
+        if (puntosEnCurso.length >= 3) {
+            mostrarMedida(hectareasDeAnillo(puntosEnCurso));
+        }
     });
 
     botonUsar?.addEventListener('click', () => {
@@ -218,6 +323,152 @@ function inicializar(contenedor) {
             campoHectareas.dispatchEvent(new Event('input', { bubbles: true }));
         }
     });
+
+    // ---------- Barra de acciones ----------
+
+    const botonDibujar = contenedor.querySelector('[data-ag-lote-accion="dibujar"]');
+    const botonEditar = contenedor.querySelector('[data-ag-lote-accion="editar"]');
+    const botonMover = contenedor.querySelector('[data-ag-lote-accion="mover"]');
+    const botonBorrar = contenedor.querySelector('[data-ag-lote-accion="borrar"]');
+    const botonCentrar = contenedor.querySelector('[data-ag-lote-accion="centrar"]');
+    const botonCapa = contenedor.querySelector('[data-ag-lote-accion="capa"]');
+
+    /** Apaga los cuatro modos de Geoman antes de prender uno — son
+     *  mutuamente excluyentes desde la barra, aunque la librería en sí
+     *  permitiría combinarlos. */
+    const apagarModos = () => {
+        if (mapa.pm.globalDrawModeEnabled()) {
+            mapa.pm.disableDraw();
+        }
+
+        if (mapa.pm.globalEditModeEnabled()) {
+            mapa.pm.disableGlobalEditMode();
+        }
+
+        if (mapa.pm.globalDragModeEnabled()) {
+            mapa.pm.toggleGlobalDragMode();
+        }
+
+        if (mapa.pm.globalRemovalModeEnabled()) {
+            mapa.pm.toggleGlobalRemovalMode();
+        }
+    };
+
+    const sincronizarEstadoBarra = () => {
+        botonDibujar?.setAttribute('aria-pressed', String(mapa.pm.globalDrawModeEnabled()));
+        botonEditar?.setAttribute('aria-pressed', String(mapa.pm.globalEditModeEnabled()));
+        botonMover?.setAttribute('aria-pressed', String(mapa.pm.globalDragModeEnabled()));
+        botonBorrar?.setAttribute('aria-pressed', String(mapa.pm.globalRemovalModeEnabled()));
+    };
+
+    ['pm:globaleditmodetoggled', 'pm:globaldragmodetoggled', 'pm:globalremovalmodetoggled']
+        .forEach((evento) => mapa.on(evento, sincronizarEstadoBarra));
+
+    mapa.on('pm:globaldrawmodetoggled', ({ enabled }) => {
+        sincronizarEstadoBarra();
+
+        if (enabled) {
+            puntosEnCurso = [];
+        } else {
+            // Se salió del modo dibujar sin terminar el trazo (Escape,
+            // volver a clickear "Dibujar"): la medida en vivo vuelve a
+            // reflejar lo que hay REALMENTE guardado, no el trazo cancelado.
+            sincronizar();
+        }
+    });
+
+    sincronizarEstadoBarra();
+
+    botonDibujar?.addEventListener('click', () => {
+        if (mapa.pm.globalDrawModeEnabled()) {
+            mapa.pm.disableDraw();
+
+            return;
+        }
+
+        apagarModos();
+        mapa.pm.enableDraw('Polygon');
+    });
+
+    botonEditar?.addEventListener('click', () => {
+        const activar = !mapa.pm.globalEditModeEnabled();
+        apagarModos();
+
+        if (activar) {
+            mapa.pm.enableGlobalEditMode();
+        }
+    });
+
+    botonMover?.addEventListener('click', () => {
+        const activo = mapa.pm.globalDragModeEnabled();
+        apagarModos();
+
+        if (!activo) {
+            mapa.pm.toggleGlobalDragMode();
+        }
+    });
+
+    botonBorrar?.addEventListener('click', () => {
+        const activo = mapa.pm.globalRemovalModeEnabled();
+        apagarModos();
+
+        if (!activo) {
+            mapa.pm.toggleGlobalRemovalMode();
+        }
+    });
+
+    botonCentrar?.addEventListener('click', () => {
+        const capas = capa.getLayers();
+
+        if (capas.length > 0) {
+            mapa.fitBounds(capa.getBounds(), { padding: [16, 16], maxZoom: ZOOM_MAXIMO_AL_ENCUADRAR });
+        } else {
+            mapa.setView([CENTRO_POR_DEFECTO.lat, CENTRO_POR_DEFECTO.lng], ZOOM_SIN_GEOMETRIA);
+        }
+    });
+
+    if (botonCapa) {
+        const etiquetaVerCalles = botonCapa.dataset.agLoteMapaCapaCalles;
+        const etiquetaVerSatelite = botonCapa.dataset.agLoteMapaCapaSatelite;
+
+        const actualizarBotonCapa = () => {
+            const etiqueta = esSatelital ? etiquetaVerCalles : etiquetaVerSatelite;
+
+            botonCapa.title = etiqueta;
+            botonCapa.setAttribute('aria-label', etiqueta);
+            botonCapa.setAttribute('aria-pressed', String(!esSatelital));
+        };
+
+        botonCapa.addEventListener('click', () => {
+            esSatelital = !esSatelital;
+            mapa.removeLayer(capaBase);
+            capaBase = L.tileLayer(esSatelital ? URL_CAPA_SATELITE : URL_CAPA_CALLES, {
+                attribution: ATRIBUCION_ESRI,
+                maxZoom: 19,
+            }).addTo(mapa);
+            capaBase.bringToBack();
+
+            actualizarBotonCapa();
+        });
+
+        actualizarBotonCapa();
+    }
+
+    // ---------- Pantalla completa ----------
+
+    const botonPantallaCompleta = contenedor.querySelector('[data-ag-lote-mapa-boton-pantalla-completa]');
+    const iconoPantallaCompleta = contenedor.querySelector('[data-ag-lote-mapa-icono-pantalla-completa]');
+
+    if (botonPantallaCompleta) {
+        activarPantallaCompleta({
+            contenedor: marco,
+            mapa,
+            boton: botonPantallaCompleta,
+            iconoBoton: iconoPantallaCompleta,
+            etiquetaEntrar: botonPantallaCompleta.dataset.agLoteMapaEntrar,
+            etiquetaSalir: botonPantallaCompleta.dataset.agLoteMapaSalir,
+        });
+    }
 
     // El repintado al cambiar de tema: los tokens de color se resuelven al
     // inicializar, así que hay que releerlos.
