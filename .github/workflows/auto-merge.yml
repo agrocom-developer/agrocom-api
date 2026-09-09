@@ -45,6 +45,7 @@ jobs:
           PR_URL: ${{ github.event.pull_request.html_url }}
           REPO: ${{ github.repository }}
           SHA: ${{ github.event.pull_request.head.sha }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
         run: |
           set -o pipefail
           # Solo este — nunca "todos los checks del PR", porque este
@@ -99,7 +100,18 @@ jobs:
               # una rama vieja no se distingue de una viva mirando el grafo: sin
               # esto la lista crece hasta que nadie sabe qué está integrado. La
               # referencia queda en el PR y GitHub la restaura con un clic.
-              gh pr merge --squash --delete-branch "$PR_URL"
+              #
+              # Excepción: si la cabecera del PR es develop o master (un
+              # release develop→master, o cualquier PR contra una rama propia
+              # de esas dos), NO se borra — son ramas permanentes de GitFlow,
+              # no descartables. Pasó de verdad: un PR develop→master estuvo a
+              # punto de dejar el repo sin develop.
+              DELETE_FLAG="--delete-branch"
+              case "$HEAD_REF" in
+                develop|master) DELETE_FLAG="" ;;
+              esac
+              # shellcheck disable=SC2086
+              gh pr merge --squash $DELETE_FLAG "$PR_URL"
               exit 0
             fi
 
