@@ -35,10 +35,14 @@ use OpenApi\Attributes as OA;
         .'`POST /api/evidencias` con `tipo: foto_incidencia`. `recarga` (HU-13, tarea 23) registra cada '
         .'ciclo de cambio de batería/recarga de caldo durante el vuelo — temperatura de batería > 50°C '
         .'se persiste con `alerta_temperatura = true` sin rechazar el registro; sin `mezcla_id` (CR-01: '
-        .'Agrocom no prepara la mezcla).',
+        .'Agrocom no prepara la mezcla). `estadia_entrada`/`estadia_salida` (HU-51, tarea 74) registran '
+        .'cuándo un equipo de trabajo llega y se va de una hacienda — sin `campania_id` (la estadía es '
+        .'del campo, no de una campaña) y sin verificación de pertenencia a una persona (es del equipo). '
+        .'`estadia_salida` referencia la estadía por el `uuid_cliente` de su `estadia_entrada`, igual '
+        .'criterio que `cierre_trabajo`/`cierre_sesion`.',
     required: ['tipo', 'uuid_cliente'],
     properties: [
-        new OA\Property(property: 'tipo', type: 'string', enum: ['trabajo', 'recepcion_caldo', 'sesion', 'condiciones', 'incidencia', 'recarga', 'cierre_trabajo', 'cierre_sesion'], example: 'trabajo'),
+        new OA\Property(property: 'tipo', type: 'string', enum: ['trabajo', 'recepcion_caldo', 'sesion', 'condiciones', 'incidencia', 'recarga', 'cierre_trabajo', 'cierre_sesion', 'estadia_entrada', 'estadia_salida'], example: 'trabajo'),
         new OA\Property(property: 'uuid_cliente', type: 'string', example: 'a1b2c3d4-0000-4000-8000-000000000001'),
         new OA\Property(property: 'orden_id', description: '`trabajo`: id de servidor de la orden (del pull de catálogo).', type: 'integer', example: 1),
         new OA\Property(property: 'lote_id', description: '`trabajo`: id de servidor del lote (del pull de catálogo).', type: 'integer', example: 3),
@@ -132,6 +136,19 @@ use OpenApi\Attributes as OA;
         ),
         new OA\Property(property: 'hora_retraso', description: '`recarga`, opcional: cuándo ocurrió el retraso/rechazo por caldo.', type: 'string', format: 'date-time', nullable: true, example: null),
         new OA\Property(property: 'litros_combustible_generador', description: '`recarga`, opcional: litros de combustible cargados al generador en ese ciclo. Informativo, sin costeo (Fase 3). DECIMAL como string.', type: 'string', nullable: true, example: null),
+        new OA\Property(property: 'equipo_trabajo_id', description: '`estadia_entrada`: id de servidor del equipo de trabajo (del pull de catálogo).', type: 'integer', nullable: true, example: null),
+        new OA\Property(property: 'campo_id', description: '`estadia_entrada`: id de servidor del campo (del pull de catálogo).', type: 'integer', nullable: true, example: null),
+        new OA\Property(property: 'entrada', description: '`estadia_entrada`: cuándo llegó el equipo.', type: 'string', format: 'date-time', nullable: true, example: null),
+        new OA\Property(property: 'vehiculo_id', description: '`estadia_entrada`, opcional: id de servidor del vehículo declarado.', type: 'integer', nullable: true, example: null),
+        new OA\Property(property: 'observacion', description: '`estadia_entrada`, opcional: texto libre.', type: 'string', nullable: true, example: null),
+        new OA\Property(
+            property: 'estadia_uuid_cliente',
+            description: '`estadia_salida`: `uuid_cliente` de apertura de la estadía (el `estadia_entrada` que se cierra) — nunca el id de servidor, que puede no existir todavía si la entrada llegó en este mismo lote.',
+            type: 'string',
+            nullable: true,
+            example: null,
+        ),
+        new OA\Property(property: 'salida', description: '`estadia_salida`: cuándo se fue el equipo. Anterior o igual a la `entrada` de la estadía rechaza el registro.', type: 'string', format: 'date-time', nullable: true, example: null),
     ],
     type: 'object',
 )]
