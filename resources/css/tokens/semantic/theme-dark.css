@@ -193,6 +193,19 @@
     --ag-color-track: color-mix(in srgb, white 4%, var(--ag-color-gray-900) 96%);
     --ag-color-bar-unassigned: var(--ag-color-gray-600);
 
+    /* Tramos de la barra de avance del informe de contratos (HU-52, tarea
+       75) — mismo criterio que theme-light.css: alias de un estado
+       semántico ya resuelto para este tema, nunca un hex nuevo. */
+    --ag-color-avance-bajo: var(--ag-color-danger);
+    --ag-color-avance-medio: var(--ag-color-warning);
+    --ag-color-avance-alto: var(--ag-color-info);
+    --ag-color-avance-cumplido: var(--ag-color-success);
+    /* primary-emphasis, no primary: green-700 crudo sobre el track oscuro
+       ronda 2:1 (mismo problema que texto/ícono sobre chrome negro, ya
+       documentado arriba en --ag-color-primary-emphasis) — insuficiente
+       para un tramo que tiene que distinguirse a simple vista de "cumplido". */
+    --ag-color-avance-excedido: var(--ag-color-primary-emphasis);
+
     /* Mismo valor que theme-light.css, a propósito — ver el comentario de
        ese archivo. La foto no cambia entre temas, así que su overlay/texto
        tampoco. */

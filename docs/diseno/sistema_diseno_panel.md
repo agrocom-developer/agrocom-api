@@ -69,6 +69,7 @@ Consecuencia de diseño explícita: **el relleno sólido de marca (botones) es c
 | `--ag-color-primary(-hover|-contrast|-emphasis|-subtle)` | Verde de marca — botones, foco, estado activo |
 | `--ag-color-accent(-hover|-contrast|-emphasis|-subtle)` | Ámbar de marca — CTA secundario, resaltados |
 | `--ag-color-success|danger|warning|info(-subtle)` | Estados de formulario/alertas |
+| `--ag-color-avance-bajo|medio|alto|cumplido|excedido` (nuevo, 9/9/2026, tarea 75) | Los 5 tramos de `molecules/tiered-progress-bar` (0-33/34-66/67-99/100/>100%, informe de avance de contratos HU-52). Alias de success/danger/warning/info/primary-emphasis — no rampa de color nueva. `excedido` usa `primary-emphasis` y no `primary` a secas: green-700 crudo sobre el track oscuro del tema oscuro ronda 2:1, insuficiente (mismo motivo que `--ag-color-primary-emphasis`, ver fila de abajo) |
 | `--ag-color-neutral-subtle` (nuevo, mockup de dashboard 2026-08-28) | Gris "sin estado" para `atoms/badge`/`molecules/stat-card` variante "neutral" — un peldaño más marcado que `--ag-color-bg`/`-bg-elevated` (gray-200 claro / gray-800 oscuro) para que el pill/chip se distinga de la superficie sin necesitar tinte de color |
 | `--ag-color-focus-ring` | Contorno de foco de teclado (accesibilidad) |
 | `--ag-space-1`…`--ag-space-8` | Espaciado, escala de 8px |
@@ -145,6 +146,7 @@ Consecuencia de diseño explícita: **el relleno sólido de marca (botones) es c
 | Atom | `checkbox-group` | `resources/views/components/atoms/checkbox-group.blade.php` | Implementado (8/9/2026, tarea 76 — ver §16) |
 | Atom | `radio-group` | `resources/views/components/atoms/radio-group.blade.php` | Implementado (8/9/2026, tarea 76 — ver §16) |
 | Atom | `textarea` | `resources/views/components/atoms/textarea.blade.php` | Implementado (8/9/2026, tarea 76 — ver §16) |
+| Molecule | `tiered-progress-bar` | `resources/views/components/molecules/tiered-progress-bar.blade.php` | Implementado (9/9/2026, tarea 75 — informe de avance de contratos, HU-52). Barra de un solo relleno con color por tramo (5 tokens `--ag-color-avance-*`, ver §1.4) en vez del relleno fijo `--ag-color-primary` de `progress-meter` — se necesitaba distinguir 0-33/34-66/67-99/100/>100% a simple vista. `percent`/`tramo` ya resueltos por el llamador (`TramoAvance::desde()`), `tramo` viaja como string (`->value`), nunca el enum: el catálogo no importa clases de `App\Dominios\*` |
 
 Por qué solo los átomos estaban implementados en el pase anterior: era el límite de alcance fijado para la primera entrega de HU-02 (tokens + piezas de más bajo nivel, sin lógica de negocio). Este pase (27/8/2026) implementa el resto del catálogo, a pedido explícito de HU-02 (el usuario vio un prototipo interactivo aparte y pidió la construcción real). Decisiones de composición que no estaban 100% cerradas en la especificación de §4 y se resolvieron acá:
 

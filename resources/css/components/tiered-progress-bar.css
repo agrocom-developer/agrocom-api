@@ -1,0 +1,70 @@
+/*
+ * Molecule: tiered-progress-bar (resources/views/components/molecules/tiered-progress-bar.blade.php)
+ * Barra de avance del informe de contratos (HU-52, tarea 75), con color por
+ * tramo — cinco tokens `--ag-color-avance-*` de tokens/semantic/theme-*.css
+ * (invariante 11: ninguno hardcodeado acá).
+ */
+
+.ag-tiered-progress-bar {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-1);
+}
+
+.ag-tiered-progress-bar__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--ag-space-2);
+}
+
+.ag-tiered-progress-bar__label {
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+    color: var(--ag-color-text);
+}
+
+.ag-tiered-progress-bar__percent {
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-tiered-progress-bar__track {
+    height: var(--ag-space-2);
+    border-radius: var(--ag-radius-pill);
+    background-color: var(--ag-color-neutral-subtle);
+    overflow: hidden;
+}
+
+.ag-tiered-progress-bar__fill {
+    height: 100%;
+    border-radius: var(--ag-radius-pill);
+    transition: width var(--ag-transition-base);
+}
+
+.ag-tiered-progress-bar__fill--0-33 {
+    background-color: var(--ag-color-avance-bajo);
+}
+
+.ag-tiered-progress-bar__fill--34-66 {
+    background-color: var(--ag-color-avance-medio);
+}
+
+.ag-tiered-progress-bar__fill--67-99 {
+    background-color: var(--ag-color-avance-alto);
+}
+
+.ag-tiered-progress-bar__fill--100 {
+    background-color: var(--ag-color-avance-cumplido);
+}
+
+.ag-tiered-progress-bar__fill--mas-100 {
+    background-color: var(--ag-color-avance-excedido);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ag-tiered-progress-bar__fill {
+        transition-duration: 0.01ms;
+    }
+}
