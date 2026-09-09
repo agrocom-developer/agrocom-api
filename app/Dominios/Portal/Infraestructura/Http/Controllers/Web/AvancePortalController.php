@@ -2,7 +2,7 @@
 
 namespace App\Dominios\Portal\Infraestructura\Http\Controllers\Web;
 
-use App\Dominios\Comercial\Aplicacion\ObtenerAvanceComercial;
+use App\Dominios\Comercial\Contratos\LecturaAvanceComercial;
 use App\Dominios\Seguridad\Contratos\AutorizacionPortalCliente;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -15,24 +15,25 @@ use Illuminate\View\View;
  * `contratoId` se resuelve ACÁ, desde la sesión de portal vía
  * {@see AutorizacionPortalCliente} (invariante 5 de CLAUDE.md), nunca de un
  * parámetro de ruta: esta pantalla no tiene id en la URL a propósito, es
- * siempre "mi avance". Reusa `ObtenerAvanceComercial` tal cual (HU-32, tarea
- * 46) — sin tocar su lógica, solo pasándole el filtro que ya acepta.
+ * siempre "mi avance". Consume {@see LecturaAvanceComercial} (Comercial,
+ * `Contratos/`, tarea 68) en vez de `Aplicacion\ObtenerAvanceComercial`
+ * directo — `Portal` no importa clases de `Aplicacion/` ajenas (ADR 0003,
+ * regla 2); la fórmula del avance no se toca, solo el camino para llegar a
+ * ella.
  */
 final class AvancePortalController
 {
     public function __construct(private readonly AutorizacionPortalCliente $autorizacion) {}
 
-    public function index(Request $request, ObtenerAvanceComercial $obtenerAvance): View
+    public function index(Request $request, LecturaAvanceComercial $lecturaAvance): View
     {
         $contratoId = $this->autorizacion->contratoId($request);
 
         abort_if($contratoId === null, 404);
 
-        $avance = $obtenerAvance->ejecutar(contratoId: $contratoId);
-
         return view('portal::pages.avance.index', [
             ...$this->autorizacion->cascara($request),
-            'avance' => $avance[0] ?? null,
+            'avance' => $lecturaAvance->porContrato($contratoId),
         ]);
     }
 }
