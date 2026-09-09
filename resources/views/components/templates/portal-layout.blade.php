@@ -21,6 +21,7 @@
 @props([
     'userName' => null,
     'vistaActual' => null,
+    'zonaHoraria' => null,
 ])
 
 @php
@@ -62,6 +63,7 @@
             @endif
 
             <x-molecules.theme-toggle />
+            <x-molecules.timezone-selector :value="$zonaHoraria ?? null" />
 
             <button
                 type="button"

@@ -73,3 +73,14 @@ it('agrega email nullable a sec_user', function () {
     expect(Schema::hasColumn('sec_user', 'email'))->toBeTrue()
         ->and(Schema::getColumnType('sec_user', 'email'))->toBe('varchar');
 });
+
+/*
+ * Tarea 63 — instante absoluto (`created_at`, ya UTC) + zona IANA del actor
+ * (`zona_horaria`), nullable en ambas tablas: lo ya escrito antes de esta
+ * migración no se reescribe, y una mutación sin actor con preferencia
+ * resuelta (seeders, comandos) tampoco la inventa.
+ */
+it('agrega zona_horaria (IANA, nullable) a sec_user_preferencia y a plt_bitacoras', function () {
+    expect(Schema::hasColumn('sec_user_preferencia', 'zona_horaria'))->toBeTrue()
+        ->and(Schema::hasColumn('plt_bitacoras', 'zona_horaria'))->toBeTrue();
+});

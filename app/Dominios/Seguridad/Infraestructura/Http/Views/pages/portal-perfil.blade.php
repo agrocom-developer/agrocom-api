@@ -9,8 +9,8 @@
     Datos esperados (ver PerfilPortalController::edit()): $userName, $tema
     (AutorizacionPortalCliente::cascara()) más $usuario (SecUser).
 --}}
-<x-templates.panel-shell :title="__('seguridad.perfil.titulo')" :tema="$tema" :tema-url="route('portal.preferencias.tema')">
-    <x-templates.portal-layout :user-name="$userName">
+<x-templates.panel-shell :title="__('seguridad.perfil.titulo')" :tema="$tema" :tema-url="route('portal.preferencias.tema')" :zona-horaria-url="route('portal.preferencias.zona-horaria')">
+    <x-templates.portal-layout :user-name="$userName" :zona-horaria="$zonaHoraria ?? null">
         @php
             $name = old('name', $usuario->name);
             $email = old('email', $usuario->email ?? '');

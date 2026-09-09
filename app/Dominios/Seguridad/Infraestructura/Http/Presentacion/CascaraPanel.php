@@ -64,6 +64,10 @@ final class CascaraPanel
             'activeRoleLabel' => $rolActivo !== null ? PresentadorRol::nombreLegible($rolActivo) : null,
             'userName' => $usuario->name,
             'tema' => $tema,
+            // Tarea 63: zona horaria IANA elegida (login o selector) — nunca
+            // se inventa un default acá, `null` es "el navegador todavía no
+            // la fijó", el selector del topbar la muestra vacía.
+            'zonaHoraria' => $preferencia->zona_horaria ?? null,
             'notifications' => $this->notificaciones($usuario, $idRolActivo),
             'menuBadges' => $this->menuBadges($usuario),
             // `campana` (chip) se retiró en la tarea 67: el mock decía

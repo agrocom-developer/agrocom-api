@@ -532,4 +532,100 @@ return [
         'estado_form' => 'Los cambios se guardan al confirmar.',
     ],
 
+    // Tarea 63 (invariante 9 de CLAUDE.md): pantalla `/panel/bitacora`.
+    // `entidades` mapea nombre FÍSICO de tabla → nombre legible: es el
+    // catálogo que consultan `ListarBitacora`/`BitacoraController` para el
+    // filtro por entidad y la columna de la tabla — cubre toda tabla que hoy
+    // lleva `RegistraBitacora` (ver `tests/Unit/BitacoraAuditoriaTest.php` y
+    // los modelos con `use RegistraBitacora;`). Una tabla nueva que sume el
+    // trait entra acá cuando se construya su pantalla, no antes: hasta
+    // entonces el filtro cae al nombre físico (`Lang::has()` con fallback,
+    // ver `ListarBitacora::nombreLegibleTabla()`), nunca a un error.
+    'bitacora' => [
+        'titulo' => 'Bitácora',
+        'subtitulo' => 'Quién hizo qué, cuándo y en qué zona horaria.',
+
+        'columna_instante' => 'Instante',
+        'columna_usuario' => 'Usuario',
+        'columna_entidad' => 'Entidad',
+        'columna_accion' => 'Acción',
+        'columna_detalle' => 'Detalle',
+
+        'actor_sistema' => 'Sistema',
+        'registrado_en' => 'registrado en :zona',
+        'ver_detalle' => 'Ver detalle',
+        'ocultar_detalle' => 'Ocultar detalle',
+        'diff_campo' => 'Campo',
+        'diff_antes' => 'Antes',
+        'diff_despues' => 'Después',
+        'diff_sin_datos' => 'Sin datos antes/después para esta fila.',
+        'sin_resultados' => 'No hay movimientos con estos filtros.',
+
+        'filtro_usuario' => 'Usuario',
+        'filtro_usuario_todos' => 'Todos',
+        'filtro_entidad' => 'Entidad',
+        'filtro_entidad_todas' => 'Todas',
+        'filtro_accion' => 'Acción',
+        'filtro_accion_todas' => 'Todas',
+        'filtro_desde' => 'Desde',
+        'filtro_hasta' => 'Hasta',
+        'filtro_registro_id' => 'ID de registro',
+        'filtro_limpiar' => 'Limpiar filtros',
+        'filtro_aplicar' => 'Filtrar',
+
+        'acciones' => [
+            'creado' => 'Creado',
+            'actualizado' => 'Actualizado',
+            'eliminado' => 'Eliminado',
+        ],
+
+        'entidades' => [
+            'com_campos' => 'Campos',
+            'com_cliente_contactos' => 'Contactos de cliente',
+            'com_clientes' => 'Clientes',
+            'com_contrato_ventanas' => 'Ventanas de contrato',
+            'com_contratos' => 'Contratos',
+            'com_cultivos' => 'Cultivos',
+            'com_facturas' => 'Facturas',
+            'com_lote_campania' => 'Lote en campaña',
+            'com_lotes' => 'Lotes',
+            'cpn_campanias' => 'Campañas',
+            'dis_versiones_apk' => 'Versiones de la app de campo',
+            'fin_anticipos' => 'Anticipos',
+            'fin_combustibles' => 'Cargas de combustible',
+            'fin_devengos_personal' => 'Devengos',
+            'fin_gastos' => 'Gastos',
+            'fin_planilla_detalles' => 'Detalles de planilla',
+            'fin_planillas' => 'Planillas',
+            'fin_rendiciones' => 'Rendiciones',
+            'inv_movimientos' => 'Movimientos de stock',
+            'inv_repuestos' => 'Repuestos',
+            'man_baterias' => 'Baterías',
+            'man_generadores' => 'Generadores',
+            'man_ordenes_mantenimiento' => 'Órdenes de mantenimiento',
+            'man_planes_mantenimiento' => 'Planes de mantenimiento',
+            'man_vehiculos' => 'Vehículos',
+            'ope_actas' => 'Actas de conformidad',
+            'ope_alertas' => 'Alertas',
+            'ope_drones' => 'Drones',
+            'ope_estadias_hacienda' => 'Estadías en hacienda',
+            'ope_ordenes_aplicacion' => 'Órdenes de aplicación',
+            'ope_sesion_rechazos' => 'Rechazos de sesión',
+            'ope_sesiones' => 'Sesiones',
+            'ope_trabajos' => 'Trabajos',
+            'per_bases' => 'Bases',
+            'per_equipo_integrantes' => 'Integrantes de equipo',
+            'per_equipo_recursos' => 'Recursos de equipo',
+            'per_equipos_trabajo' => 'Equipos de trabajo',
+            'per_personas' => 'Personas',
+            'plt_configuraciones' => 'Configuración del sistema',
+            'sec_datos_fiscales' => 'Datos fiscales',
+            'sec_permission' => 'Permisos',
+            'sec_role' => 'Roles',
+            'sec_role_permission' => 'Asignación de permisos a rol',
+            'sec_user' => 'Usuarios',
+            'sec_user_role' => 'Asignación de roles a usuario',
+        ],
+    ],
+
 ];

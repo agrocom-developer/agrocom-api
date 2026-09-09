@@ -14,8 +14,8 @@
       ObtenerAvanceComercial), así que esto no es el estado "vacío" normal
       del portal recién estrenado.
 --}}
-<x-templates.panel-shell :title="__('portal.avance.titulo')" :tema="$tema" :tema-url="route('portal.preferencias.tema')">
-    <x-templates.portal-layout :user-name="$userName">
+<x-templates.panel-shell :title="__('portal.avance.titulo')" :tema="$tema" :tema-url="route('portal.preferencias.tema')" :zona-horaria-url="route('portal.preferencias.zona-horaria')">
+    <x-templates.portal-layout :user-name="$userName" :zona-horaria="$zonaHoraria ?? null">
         <div class="ag-portal-avance">
             <x-organisms.page-header
                 :title="__('portal.avance.titulo')"

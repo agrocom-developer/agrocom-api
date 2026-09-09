@@ -2,6 +2,8 @@
 
 namespace App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Seguridad\Aplicacion\FijarZonaHorariaUsuario;
+use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use App\Dominios\Seguridad\Infraestructura\Http\Requests\IniciarSesionRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,9 +23,9 @@ use Illuminate\Validation\ValidationException;
  */
 final class SesionPortalController
 {
-    public function store(IniciarSesionRequest $request): JsonResponse
+    public function store(IniciarSesionRequest $request, FijarZonaHorariaUsuario $fijarZonaHoraria): JsonResponse
     {
-        $credenciales = $request->validated();
+        $credenciales = $request->safe()->only(['username', 'password']);
 
         // `state` como condición extra, mismo criterio que SesionController:
         // rechaza una cuenta bloqueada con el mismo mensaje genérico que una
@@ -35,6 +37,11 @@ final class SesionPortalController
         }
 
         $request->session()->regenerate();
+
+        /** @var SecUser $usuario */
+        $usuario = Auth::guard('cliente')->user();
+
+        $fijarZonaHoraria->ejecutarSiVacia($usuario, $request->string('zona_horaria')->toString() ?: null);
 
         return response()->json(['message' => 'Sesión iniciada.']);
     }

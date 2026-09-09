@@ -8,6 +8,7 @@ use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUserPreferencia;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 /**
  * `POST /panel/preferencias/tema` (`panel.preferencias.tema`): persiste el
@@ -47,6 +48,37 @@ final class PreferenciasController
 
         return response()->json([
             'tema' => $preferencia->tema->atributoBootstrap(),
+        ]);
+    }
+
+    /**
+     * `POST /panel/preferencias/zona-horaria` (`panel.preferencias.zona-horaria`,
+     * tarea 63): cambio explícito desde el selector del topbar — a diferencia
+     * del fijado automático del login (`FijarZonaHorariaUsuario`), este SIEMPRE
+     * pisa lo que hubiera. `Rule::in()` contra la base IANA de PHP rechaza con
+     * 422 cualquier valor que no sea un identificador real, antes de llegar al
+     * caso de uso.
+     */
+    public function actualizarZonaHoraria(Request $request, ActualizarPreferenciaUsuario $actualizar): JsonResponse
+    {
+        $validado = $request->validate([
+            'zona_horaria' => ['required', 'string', Rule::in(\DateTimeZone::listIdentifiers())],
+        ]);
+
+        /** @var SecUser $usuario */
+        $usuario = $request->user('interno');
+
+        $preferenciaActual = SecUserPreferencia::query()->where('user_id', $usuario->id)->first();
+
+        $preferencia = $actualizar->ejecutar(
+            $usuario,
+            $preferenciaActual->tema ?? TemaPreferencia::Claro,
+            $preferenciaActual->idioma ?? 'es',
+            $validado['zona_horaria'],
+        );
+
+        return response()->json([
+            'zona_horaria' => $preferencia->zona_horaria,
         ]);
     }
 }

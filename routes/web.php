@@ -38,6 +38,7 @@ use App\Dominios\Portal\Infraestructura\Http\Controllers\Web\ActasPortalControll
 use App\Dominios\Portal\Infraestructura\Http\Controllers\Web\AvancePortalController;
 use App\Dominios\Portal\Infraestructura\Http\Controllers\Web\ReportesPortalController;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
+use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\BitacoraController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\ConfiguracionController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\DashboardController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\DispositivosController;
@@ -150,6 +151,12 @@ Route::middleware('auth:interno')->group(function () {
     Route::post('/panel/preferencias/tema', [PreferenciasController::class, 'actualizarTema'])
         ->name('panel.preferencias.tema');
 
+    // Zona horaria IANA del usuario (tarea 63), mismo criterio sin
+    // `rol.activo` que el tema de arriba: cambia desde el mismo lugar del
+    // topbar y también en la pantalla de selección de rol.
+    Route::post('/panel/preferencias/zona-horaria', [PreferenciasController::class, 'actualizarZonaHoraria'])
+        ->name('panel.preferencias.zona-horaria');
+
     Route::middleware('rol.activo')->group(function () {
         Route::get('/panel/dashboard', [DashboardController::class, 'index'])
             ->name('panel.dashboard');
@@ -213,6 +220,14 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::delete('/panel/roles/{rol}', [RolesController::class, 'destroy'])
             ->name('panel.roles.destroy');
+
+        // Tarea 63 (invariante 9 de CLAUDE.md): pantalla de bitácora de
+        // auditoría, solo lectura — sin POST/PUT/DELETE, es un libro de
+        // solo-inserción que escribe únicamente `BitacoraObserver` (ADR
+        // 0007). Permiso `seguridad.bitacora.ver` verificado DENTRO del
+        // controlador contra el ROL ACTIVO, mismo criterio que el resto.
+        Route::get('/panel/bitacora', [BitacoraController::class, 'index'])
+            ->name('panel.bitacora.index');
 
         // La matriz vive en su propia URL y no como pestaña del formulario:
         // son dos operaciones con permisos distintos (`editar` cambia el
@@ -990,6 +1005,9 @@ Route::middleware('auth:cliente')->group(function () {
 
     Route::put('/portal/perfil', [PerfilPortalController::class, 'update'])
         ->name('portal.perfil.update');
+
+    Route::post('/portal/preferencias/zona-horaria', [PreferenciasPortalController::class, 'actualizarZonaHoraria'])
+        ->name('portal.preferencias.zona-horaria');
 
     Route::get('/portal/avance', [AvancePortalController::class, 'index'])->name('portal.avance.index');
 

@@ -2,8 +2,11 @@
 
 use App\Dominios\Compartido\Dominio\AccionBitacora;
 use App\Dominios\Compartido\Infraestructura\Eloquent\Bitacora;
+use App\Dominios\Seguridad\Dominio\TipoUsuario;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
+use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUserPreferencia;
+use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUsuarioCliente;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 /*
@@ -119,4 +122,64 @@ it('sin usuario autenticado el actor queda en null, para seeders y comandos', fu
 
     expect($fila)->not->toBeNull()
         ->and($fila->user_id)->toBeNull();
+});
+
+/*
+ * Tarea 63 — el actor puede estar autenticado en CUALQUIER guard, no solo
+ * `interno` (el guard por defecto que mira `Auth::id()` a secas). Antes de
+ * esta tarea una mutación hecha por una cuenta de portal (guard `cliente`,
+ * p. ej. su propia preferencia) quedaba con `user_id` NULL aunque hubiera un
+ * actor real — ver `BitacoraObserver::actorId()`.
+ */
+it('registra el actor de una mutación hecha desde el guard cliente (portal), no solo interno', function () {
+    $actor = SecUser::factory()->create(['type' => TipoUsuario::Cliente]);
+    $this->actingAs(SecUsuarioCliente::query()->findOrFail($actor->id), 'cliente');
+
+    $rol = SecRole::query()->create([
+        'name' => 'auditor_cliente',
+        'description' => 'Rol de prueba',
+        'state' => true,
+    ]);
+
+    $fila = bitacoraDe('sec_role', $rol->id, AccionBitacora::Creado);
+
+    expect($fila)->not->toBeNull()
+        ->and($fila->user_id)->toBe($actor->id);
+});
+
+/*
+ * Tarea 63 — "el mismo instante en cualquier lugar del mundo": junto al
+ * `created_at` (siempre UTC), la fila guarda en qué zona IANA estaba el
+ * actor. Se lee de su preferencia en el momento de la mutación — nunca se
+ * inventa una si no la tiene fijada.
+ */
+it('registra la zona horaria IANA del actor en el momento de la mutación', function () {
+    $actor = SecUser::factory()->create();
+    SecUserPreferencia::query()->create(['user_id' => $actor->id, 'zona_horaria' => 'America/La_Paz']);
+    $this->actingAs($actor, 'interno');
+
+    $rol = SecRole::query()->create([
+        'name' => 'auditor_con_zona',
+        'description' => 'Rol de prueba',
+        'state' => true,
+    ]);
+
+    $fila = bitacoraDe('sec_role', $rol->id, AccionBitacora::Creado);
+
+    expect($fila->zona_horaria)->toBe('America/La_Paz');
+});
+
+it('deja la zona horaria en null cuando el actor no tiene preferencia fijada', function () {
+    $actor = SecUser::factory()->create();
+    $this->actingAs($actor, 'interno');
+
+    $rol = SecRole::query()->create([
+        'name' => 'auditor_sin_zona',
+        'description' => 'Rol de prueba',
+        'state' => true,
+    ]);
+
+    $fila = bitacoraDe('sec_role', $rol->id, AccionBitacora::Creado);
+
+    expect($fila->zona_horaria)->toBeNull();
 });

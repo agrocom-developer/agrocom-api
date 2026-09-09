@@ -4,6 +4,7 @@ import './atoms/select.js';
 import './atoms/date.js';
 import './atoms/checkbox-group.js';
 import './molecules/theme-toggle.js';
+import './molecules/timezone-selector.js';
 import './organisms/login-form.js';
 import './organisms/topbar.js';
 import './organisms/role-selection.js';

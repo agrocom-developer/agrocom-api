@@ -125,6 +125,9 @@ return [
             // Tarea 78 (HU-55): llaves y tokens de infraestructura, separado
             // de "Organización" (datos de la empresa). Exclusivo del dueño.
             'configuracion' => 'Configuración del sistema',
+            // Tarea 63 (invariante 9 de CLAUDE.md): quién hizo qué, cuándo y
+            // en qué zona horaria.
+            'bitacora' => 'Bitácora',
         ],
     ],
 

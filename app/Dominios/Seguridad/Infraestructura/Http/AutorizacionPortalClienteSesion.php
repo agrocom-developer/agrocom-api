@@ -31,15 +31,18 @@ final class AutorizacionPortalClienteSesion implements AutorizacionPortalCliente
         $usuario = $request->user('cliente');
 
         $tema = TemaPreferencia::Claro;
+        $zonaHoraria = null;
 
         if ($usuario !== null) {
             $preferencia = SecUserPreferencia::query()->where('user_id', $usuario->id)->first();
             $tema = $preferencia->tema ?? TemaPreferencia::Claro;
+            $zonaHoraria = $preferencia->zona_horaria ?? null;
         }
 
         return [
             'userName' => $usuario?->name,
             'tema' => $tema->atributoBootstrap(),
+            'zonaHoraria' => $zonaHoraria,
         ];
     }
 }

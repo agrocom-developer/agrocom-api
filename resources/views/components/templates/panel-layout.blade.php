@@ -61,6 +61,7 @@
     'periodo' => null,
     'version' => null,
     'vistaActual' => null,
+    'zonaHoraria' => null,
 ])
 
 @php
@@ -176,6 +177,7 @@
             :active-role-label="$activeRoleLabel"
             :user-name="$userName"
             :cambiar-rol-href="$cambiarRolHref"
+            :zona-horaria="$zonaHoraria"
         />
 
         <x-organisms.mobile-topbar

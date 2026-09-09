@@ -40,6 +40,7 @@
     'title' => null,
     'tema' => 'light',
     'temaUrl' => null,
+    'zonaHorariaUrl' => null,
     'transicionDeVista' => false,
 ])
 
@@ -52,6 +53,9 @@
     {{-- URL de persistencia del tema: presente solo en páginas autenticadas
          del panel/portal — theme-toggle.js postea acá al cambiar de tema. --}}
     <meta name="ag-preferencias-tema-url" content="{{ $temaUrl ?? route('panel.preferencias.tema') }}">
+    {{-- URL de persistencia de la zona horaria: presente solo en páginas autenticadas
+         del panel/portal — timezone-selector.js postea acá al cambiar la zona horaria. --}}
+    <meta name="ag-preferencias-zona-horaria-url" content="{{ $zonaHorariaUrl ?? route('panel.preferencias.zona-horaria') }}">
     <title>{{ config('app.name', 'Agrocom') }}{{ $title ? ' — '.$title : '' }}</title>
 
     @vite($transicionDeVista

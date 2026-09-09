@@ -6,6 +6,7 @@ use App\Dominios\Compartido\Dominio\AccionBitacora;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Observer de plataforma que materializa la bitácora del ADR 0007
@@ -124,15 +125,54 @@ final class BitacoraObserver
      */
     private function registrar(Model $modelo, AccionBitacora $accion, ?array $antes, ?array $despues): void
     {
-        $actorId = Auth::id();
+        $actorId = $this->actorId();
 
         Bitacora::query()->create([
-            'user_id' => $actorId !== null ? (int) $actorId : null,
+            'user_id' => $actorId,
             'tabla' => $modelo->getTable(),
             'registro_id' => (int) $modelo->getKey(),
             'accion' => $accion,
             'antes' => $antes === [] ? null : $antes,
             'despues' => $despues === [] ? null : $despues,
+            'zona_horaria' => $actorId !== null ? $this->zonaHorariaDeActor($actorId) : null,
         ]);
+    }
+
+    /**
+     * `Auth::id()` a secas solo mira el guard POR DEFECTO
+     * (`config('auth.defaults.guard')`, hoy `interno`) — una mutación hecha
+     * por una cuenta de portal autenticada en el guard `cliente` (p. ej. su
+     * propia preferencia) quedaba con `user_id` NULL aunque hubiera un actor
+     * real. Recorre todos los guards declarados en `config('auth.guards')`
+     * (agnóstico de sus nombres: son configuración de la app, no vocabulario
+     * de un módulo) y devuelve el primero con sesión viva — en la práctica,
+     * a lo sumo uno de `interno`/`cliente` está autenticado en el mismo
+     * request, y `sanctum` (API de campo) cubre el resto.
+     */
+    private function actorId(): ?int
+    {
+        foreach (array_keys((array) config('auth.guards')) as $guard) {
+            $id = Auth::guard($guard)->id();
+
+            if ($id !== null) {
+                return (int) $id;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Zona horaria IANA del actor en el momento de la mutación (tarea 63):
+     * lectura directa a `sec_user_preferencia` (mismo criterio que
+     * `UsuariosController::personasDisponibles()` cruzando a `per_personas`
+     * — consulta plana, no relación Eloquent, así `Compartido` no importa
+     * ningún modelo de `Seguridad`, ADR 0003 regla 3). `null` si el actor
+     * nunca fijó preferencia (seeders, comandos, o un token de dispositivo
+     * sin ese dato) — nunca se inventa una zona.
+     */
+    private function zonaHorariaDeActor(int $actorId): ?string
+    {
+        return DB::table('sec_user_preferencia')->where('user_id', $actorId)->value('zona_horaria');
     }
 }
