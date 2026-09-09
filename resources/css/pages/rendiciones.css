@@ -15,7 +15,9 @@
 /* Listado (index) */
 
 
-.ag-rendiciones__filtros .ag-input {
+.ag-rendiciones__filtros .ag-input,
+.ag-rendiciones__filtros .ag-select,
+.ag-rendiciones__filtros .ag-date {
     min-width: 14rem;
 }
 

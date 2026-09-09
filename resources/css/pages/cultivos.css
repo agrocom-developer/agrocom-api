@@ -20,7 +20,9 @@
 
 /* Listado (index) */
 
-.ag-cultivos__filtros .ag-input {
+.ag-cultivos__filtros .ag-input,
+.ag-cultivos__filtros .ag-select,
+.ag-cultivos__filtros .ag-date {
     min-width: 16rem;
 }
 

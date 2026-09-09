@@ -23,7 +23,9 @@
 /* Listado (index) */
 
 
-.ag-clientes__filtros .ag-input {
+.ag-clientes__filtros .ag-input,
+.ag-clientes__filtros .ag-select,
+.ag-clientes__filtros .ag-date {
     min-width: 16rem;
 }
 

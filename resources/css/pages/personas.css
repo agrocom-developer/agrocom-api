@@ -22,7 +22,9 @@
 /* Listado (index) */
 
 
-.ag-personas__filtros .ag-input {
+.ag-personas__filtros .ag-input,
+.ag-personas__filtros .ag-select,
+.ag-personas__filtros .ag-date {
     min-width: 16rem;
 }
 

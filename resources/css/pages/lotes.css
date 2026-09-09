@@ -21,7 +21,9 @@
 
 /* Listado (index) */
 
-.ag-lotes__filtros .ag-input {
+.ag-lotes__filtros .ag-input,
+.ag-lotes__filtros .ag-select,
+.ag-lotes__filtros .ag-date {
     min-width: 14rem;
 }
 

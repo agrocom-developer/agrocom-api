@@ -20,7 +20,9 @@
 
 /* Listado (index) */
 
-.ag-campanias__filtros .ag-input {
+.ag-campanias__filtros .ag-input,
+.ag-campanias__filtros .ag-select,
+.ag-campanias__filtros .ag-date {
     min-width: 16rem;
 }
 

@@ -21,7 +21,9 @@
 /* Listado (index) */
 
 
-.ag-bases__filtros .ag-input {
+.ag-bases__filtros .ag-input,
+.ag-bases__filtros .ag-select,
+.ag-bases__filtros .ag-date {
     min-width: 16rem;
 }
 

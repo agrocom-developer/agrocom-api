@@ -23,7 +23,9 @@
 /* Listado (index) */
 
 
-.ag-drones__filtros .ag-input {
+.ag-drones__filtros .ag-input,
+.ag-drones__filtros .ag-select,
+.ag-drones__filtros .ag-date {
     min-width: 16rem;
 }
 

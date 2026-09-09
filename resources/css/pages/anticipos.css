@@ -16,7 +16,9 @@
 /* Listado (index) */
 
 
-.ag-anticipos__filtros .ag-input {
+.ag-anticipos__filtros .ag-input,
+.ag-anticipos__filtros .ag-select,
+.ag-anticipos__filtros .ag-date {
     min-width: 14rem;
 }
 
@@ -142,8 +144,14 @@
     margin: 0;
 }
 
-.ag-anticipos-consulta .ag-input {
+/* Fila de controles en línea, no formulario apilado: el margen inferior
+   del átomo empujaría el botón por debajo del campo (mismo motivo que
+   documenta components/filter-bar.css). */
+.ag-anticipos-consulta .ag-input,
+.ag-anticipos-consulta .ag-select,
+.ag-anticipos-consulta .ag-date {
     min-width: 16rem;
+    margin-bottom: 0;
 }
 
 .ag-anticipos-form {

@@ -44,7 +44,9 @@
 /* Listado (index) */
 
 
-.ag-pausas__filtros .ag-input {
+.ag-pausas__filtros .ag-input,
+.ag-pausas__filtros .ag-select,
+.ag-pausas__filtros .ag-date {
     min-width: 14rem;
 }
 
