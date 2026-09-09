@@ -46,7 +46,9 @@ final class PerfilController
                 usuario: $usuario,
                 guard: 'interno',
                 idSesionActual: $request->session()->getId(),
-                name: (string) $datos['name'],
+                // Siempre `null`: el nombre no es autoservicio en el panel
+                // (ver ActualizarPerfilRequest). El portal sí lo manda.
+                name: null,
                 email: $this->cadenaONull($datos['email'] ?? null),
                 passwordActual: $this->cadenaONull($datos['password_actual'] ?? null),
                 passwordNueva: $this->cadenaONull($datos['password'] ?? null),

@@ -34,7 +34,11 @@
 --}}
 @props([
     'type' => 'text',
-    'name',
+    // `name` puede ir en null para un campo de LECTURA (`readonly`), que
+    // muestra un dato pero no lo manda en el POST — el nombre en
+    // `/panel/perfil` es el primer caso. Sin `name` hay que pasar `id`:
+    // el `for` del label sale de ahí, y un label sin destino no es un label.
+    'name' => null,
     'id' => null,
     'label' => null,
     'value' => null,
@@ -71,7 +75,7 @@
 
         <input
             type="{{ $type }}"
-            name="{{ $name }}"
+            @if ($name !== null) name="{{ $name }}" @endif
             id="{{ $inputId }}"
             value="{{ $value }}"
             @if ($placeholder) placeholder="{{ $placeholder }}" @endif

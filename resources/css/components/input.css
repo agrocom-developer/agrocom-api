@@ -50,6 +50,28 @@
     box-shadow: 0 0 0 3px var(--ag-color-primary-subtle);
 }
 
+/* Campo de LECTURA (`readonly`): el dato se muestra y se puede copiar, pero
+   no se edita acá. Tiene que verse distinto de un campo editable o miente
+   —el usuario tipea y no pasa nada—, y distinto de un `disabled`, que además
+   no se puede enfocar ni leer con lector de pantalla. Primer uso: el nombre
+   en `/panel/perfil`, que desde el 9/9/2026 lo cambia Seguridad › Usuarios.
+   El `:has()` va sobre el control para teñir la caja entera, no solo el
+   texto. */
+.ag-input__control:has(.ag-input__field[readonly]) {
+    background-color: var(--ag-color-bg-chrome);
+    border-style: dashed;
+}
+
+.ag-input__control:has(.ag-input__field[readonly]):focus-within {
+    border-color: var(--ag-color-border-strong);
+    box-shadow: none;
+}
+
+.ag-input__field[readonly] {
+    color: var(--ag-color-text-muted);
+    cursor: default;
+}
+
 .ag-input__control--error {
     border-color: var(--ag-color-danger);
 }

@@ -10,6 +10,13 @@ use Illuminate\Validation\Rule;
  * cambio de contraseña es opcional — si no viene `password`, `password_actual`
  * tampoco se exige (la guarda real de que sí matchee el hash vigente es
  * `ActualizarPerfilPropio`, no esta clase: acá solo se valida forma).
+ *
+ * `name` NO figura acá a propósito (9/9/2026): un `name` que llegue en el
+ * POST se descarta con el resto de lo no declarado, porque el controlador
+ * usa `validated()`. Es la mitad server-side de que el nombre sea de lectura
+ * en la pantalla — el campo deshabilitado del formulario no defiende nada por
+ * sí solo. Quién sí puede cambiarlo: Seguridad › Usuarios
+ * ({@see ActualizarUsuarioRequest}), donde queda en bitácora con autor.
  */
 final class ActualizarPerfilRequest extends FormRequest
 {
@@ -17,7 +24,6 @@ final class ActualizarPerfilRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:150'],
             'email' => [
                 'nullable',
                 'string',

@@ -54,19 +54,47 @@ it('el formulario de perfil renderiza para cualquier usuario logueado, sin permi
     $this->get(route('panel.perfil.edit'))->assertOk();
 });
 
-it('actualiza nombre y email sin tocar la contraseña', function () {
+it('actualiza el email sin tocar la contraseña', function () {
     [$usuario, $idRol] = usuarioConRolParaPerfil('con.datos', 'piloto');
     entrarAlPanelParaPerfil($usuario, $idRol);
 
     $this->put(route('panel.perfil.update'), [
-        'name' => 'Nombre Editado',
         'email' => 'editado@agrocom.example',
     ])->assertRedirect(route('panel.perfil.edit'));
 
     $usuario->refresh();
-    expect($usuario->name)->toBe('Nombre Editado')
-        ->and($usuario->email)->toBe('editado@agrocom.example')
+    expect($usuario->email)->toBe('editado@agrocom.example')
         ->and(Hash::check('Secreta123', $usuario->password))->toBeTrue();
+});
+
+// El nombre del actor lo resuelve `ListarBitacora` por join contra el valor
+// VIGENTE de `sec_user`, así que renombrarse reescribía la autoría de toda la
+// historia. Desde el 9/9/2026 lo cambia un administrador desde Seguridad ›
+// Usuarios. El `readonly` de la pantalla no defiende nada por sí solo: lo que
+// vale es que el POST directo tampoco pueda.
+it('ignora el nombre aunque venga en el POST', function () {
+    [$usuario, $idRol] = usuarioConRolParaPerfil('con.nombre.fijo', 'piloto', ['name' => 'Nombre Original']);
+    entrarAlPanelParaPerfil($usuario, $idRol);
+
+    $this->put(route('panel.perfil.update'), [
+        'name' => 'Nombre Colado Por POST',
+        'email' => 'sigue@agrocom.example',
+    ])->assertRedirect(route('panel.perfil.edit'));
+
+    $usuario->refresh();
+    expect($usuario->name)->toBe('Nombre Original')
+        ->and($usuario->email)->toBe('sigue@agrocom.example');
+});
+
+it('no ofrece el nombre como campo editable en la pantalla', function () {
+    [$usuario, $idRol] = usuarioConRolParaPerfil('mira.su.perfil', 'piloto', ['name' => 'Nombre Original']);
+    entrarAlPanelParaPerfil($usuario, $idRol);
+
+    $respuesta = $this->get(route('panel.perfil.edit'));
+
+    $respuesta->assertOk()
+        ->assertSee('Nombre Original')
+        ->assertDontSee('name="name"', false);
 });
 
 it('rechaza un email ya usado por otra cuenta viva', function () {
@@ -75,7 +103,6 @@ it('rechaza un email ya usado por otra cuenta viva', function () {
     entrarAlPanelParaPerfil($usuario, $idRol);
 
     $this->put(route('panel.perfil.update'), [
-        'name' => $usuario->name,
         'email' => 'ocupado@agrocom.example',
     ])->assertSessionHasErrors('email');
 
@@ -87,7 +114,6 @@ it('la contraseña actual incorrecta da 422 y no cambia nada', function () {
     entrarAlPanelParaPerfil($usuario, $idRol);
 
     $this->putJson(route('panel.perfil.update'), [
-        'name' => $usuario->name,
         'password_actual' => 'incorrecta',
         'password' => 'NuevaSecreta123',
         'password_confirmation' => 'NuevaSecreta123',
@@ -103,7 +129,6 @@ it('la contraseña actual correcta cambia la contraseña: el login viejo falla y
     entrarAlPanelParaPerfil($usuario, $idRol);
 
     $this->put(route('panel.perfil.update'), [
-        'name' => $usuario->name,
         'password_actual' => 'Secreta123',
         'password' => 'NuevaSecreta123',
         'password_confirmation' => 'NuevaSecreta123',
@@ -138,7 +163,6 @@ it('cambiar la contraseña cierra las sesiones de otros dispositivos, sin tocar 
     entrarAlPanelParaPerfil($usuario, $idRol);
 
     $this->put(route('panel.perfil.update'), [
-        'name' => $usuario->name,
         'password_actual' => 'Secreta123',
         'password' => 'NuevaSecreta123',
         'password_confirmation' => 'NuevaSecreta123',
@@ -166,7 +190,7 @@ it('no cierra sesiones de otro usuario ni de nadie si no se pidió cambio de con
     entrarAlPanelParaPerfil($usuario, $idRol);
 
     $this->put(route('panel.perfil.update'), [
-        'name' => 'Solo cambio el nombre',
+        'email' => 'sigue.igual@agrocom.example',
     ])->assertRedirect(route('panel.perfil.edit'));
 
     expect(DB::table('sessions')->where('id', $idSesionOtroUsuario)->exists())->toBeTrue();
@@ -177,7 +201,6 @@ it('la bitácora del cambio de contraseña no guarda ningún hash', function () 
     entrarAlPanelParaPerfil($usuario, $idRol);
 
     $this->put(route('panel.perfil.update'), [
-        'name' => $usuario->name,
         'password_actual' => 'Secreta123',
         'password' => 'NuevaSecreta123',
         'password_confirmation' => 'NuevaSecreta123',
