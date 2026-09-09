@@ -225,6 +225,11 @@ class SeguridadSeeder extends Seeder
         'personal.persona.crear' => 'Dar de alta una persona operativa',
         'personal.persona.editar' => 'Editar los datos de una persona operativa',
         'personal.persona.eliminar' => 'Dar de baja (lógica) una persona operativa',
+        // HU-58 (tarea 81): "¿qué hizo esta persona esta campaña?" — hechos
+        // verificables (sesiones, rechazos, incidencias), nunca un puntaje.
+        // Información sensible sobre una persona: permiso propio, separado
+        // de `.ver` (que solo lista datos de alta, no desempeño operativo).
+        'personal.persona.desempenio' => 'Ver la ficha de desempeño de una persona (sesiones, rechazos e incidencias)',
         // Tarea 72 (HU-49, ADR 0015 punto 3): equipos de trabajo — el piloto
         // y su auxiliar, con el equipamiento asignado. `.editar` cubre
         // también asignar/finalizar integrantes y recursos desde la ficha:
@@ -510,6 +515,9 @@ class SeguridadSeeder extends Seeder
         'personal.persona.crear',
         'personal.persona.editar',
         'personal.persona.eliminar',
+        // HU-58 (tarea 81): administra la operación diaria y decide a quién
+        // volver a contratar — mismo criterio que el resto de este rol.
+        'personal.persona.desempenio',
         // Tarea 72 (HU-49, ADR 0015 punto 3): equipos de trabajo — mismo
         // criterio que personas/bases arriba.
         'personal.equipo_trabajo.ver',
