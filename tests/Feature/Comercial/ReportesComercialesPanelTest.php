@@ -1,11 +1,11 @@
 <?php
 
-use App\Dominios\Comercial\Aplicacion\EmitirFactura;
-use App\Dominios\Comercial\Aplicacion\ObtenerAvanceComercial;
+use App\Dominios\Comercial\Aplicacion\ObtenerInformeAvanceContratos;
 use App\Dominios\Comercial\Dominio\EstadoContrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Cultivo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Dominio\EstadoSesion;
@@ -29,18 +29,17 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 
 /*
- * HU-32 (tarea 46): "como dueño, quiero un reporte comercial de avance por
- * cliente, contrato y campaña, para saber cuánto queda por aplicar y por
- * cobrar" (espec Sprint 9 §206) — cierra Sprint 9. Por contrato: hectáreas
- * contratadas (columna propia), aplicadas (suma de actas FIRMADAS, estén o
- * no facturadas) y facturadas + monto (com_facturas). Exportable a CSV.
+ * HU-52 (tarea 75): "como dueño, quiero un informe de avance de contratos,
+ * por cultivo y por cliente" — reemplaza HU-32 (tarea 46). Entrada obligatoria
+ * de cliente y cultivo, filtros avanzados en offcanvas, chips de filtros
+ * aplicados, dos pestañas de visualización, barras de avance por tramo de
+ * color (espec §9.1).
  *
- * Las actas se generan y firman vía las rutas reales de `/api` (guard
- * `sanctum`, rol `piloto`), mismo criterio que `FacturasPanelTest` — no se
- * inserta el estado `firmada` a mano por Eloquent. Las acciones del panel
- * (`/panel/reportes/comercial*`) se ejercitan por separado, con guard
- * `interno`. `comercial.reporte.ver` es exclusivo del dueño (no entra en
- * PERMISOS_ENCARGADO_OPERACIONES de SeguridadSeeder).
+ * Los datos de avance se sacan del caso de uso backend
+ * `ObtenerInformeAvanceContratos` (no se prueban acá, viven en
+ * `InformeAvanceContratosTest.php`). La vista se ejercita por HTTP contra
+ * el controlador `ReportesComercialesController`, sin burlar la
+ * autenticación.
  */
 
 uses(RefreshDatabase::class);
@@ -50,28 +49,84 @@ beforeEach(function () {
     Storage::fake('r2');
 });
 
-function clienteParaAvance(string $sufijo): Cliente
+// Helpers para construir datos de prueba
+
+function clientePantalla(string $sufijo): Cliente
 {
-    return Cliente::create(['razon_social' => "Cliente avance {$sufijo}"]);
+    return Cliente::create(['razon_social' => "Cliente informe {$sufijo}"]);
 }
 
-function contratoParaAvance(string $sufijo, string $hectareasContratadas, string $precioHa, ?int $clienteId = null): Contrato
+function campaniaPantalla(Cliente $cliente, string $sufijo): object
+{
+    $campania = DB::table('cpn_campanias')->insertGetId([
+        'cliente_id' => $cliente->id,
+        'codigo' => "CAM-{$sufijo}",
+        'nombre' => "Campaña {$sufijo}",
+        'fecha_inicio' => '2026-09-01',
+        'fecha_fin' => '2026-12-31',
+        'estado' => 'abierta',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    return (object) [
+        'id' => $campania,
+        'codigo' => "CAM-{$sufijo}",
+        'cliente_id' => $cliente->id,
+    ];
+}
+
+function cultivoPantalla(string $sufijo): Cultivo
+{
+    return Cultivo::create(['nombre' => "Cultivo {$sufijo}", 'activo' => true]);
+}
+
+function contratoPantalla(string $sufijo, Cliente $cliente, object $campania, string $hectareasContratadas = '100.00'): Contrato
 {
     return Contrato::create([
-        'cliente_id' => $clienteId ?? clienteParaAvance($sufijo)->id,
+        'cliente_id' => $cliente->id,
+        'campania_id' => $campania->id,
         'hectareas_contratadas' => $hectareasContratadas,
         'aplicaciones_previstas' => 1,
-        'precio_ha' => $precioHa,
+        'precio_ha' => '25.00',
         'monto_total' => '0.00',
         'fecha_inicio' => '2026-09-01',
+        'fecha_fin' => '2026-12-15',
         'estado' => EstadoContrato::Vigente,
     ]);
 }
 
-function ordenParaAvance(Contrato $contrato, string $sufijo): OrdenAplicacion
+function siembraPantalla(Contrato $contrato, Cultivo $cultivo): void
 {
-    $campo = Campo::create(['cliente_id' => $contrato->cliente_id, 'nombre' => "Campo avance {$sufijo}"]);
-    $lote = Lote::create(['campo_id' => $campo->id, 'codigo' => "L-AVANCE-{$sufijo}", 'hectareas' => '50.00']);
+    $campo = Campo::create(['cliente_id' => $contrato->cliente_id, 'nombre' => "Campo siembra {$contrato->id}"]);
+    $lote = Lote::create(['campo_id' => $campo->id, 'codigo' => "L-{$contrato->id}", 'hectareas' => '100.00']);
+
+    DB::table('com_lote_campania')->insert([
+        'lote_id' => $lote->id,
+        'campania_id' => $contrato->campania_id,
+        'cultivo_id' => $cultivo->id,
+        'hectareas_sembradas' => '100.00',
+        'fecha_siembra' => '2026-09-01',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+}
+
+function ordenSiembraPantalla(Contrato $contrato, Cultivo $cultivo, string $sufijo, string $hectareas = '50.00'): OrdenAplicacion
+{
+    $campo = Campo::create(['cliente_id' => $contrato->cliente_id, 'nombre' => "Campo orden {$sufijo}"]);
+    $lote = Lote::create(['campo_id' => $campo->id, 'codigo' => "L-ORD-{$sufijo}", 'hectareas' => $hectareas]);
+
+    // Registra la siembra del lote en esta campaña
+    DB::table('com_lote_campania')->insert([
+        'lote_id' => $lote->id,
+        'campania_id' => $contrato->campania_id,
+        'cultivo_id' => $cultivo->id,
+        'hectareas_sembradas' => $hectareas,
+        'fecha_siembra' => '2026-09-01',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
 
     return OrdenAplicacion::create([
         'contrato_id' => $contrato->id,
@@ -83,24 +138,11 @@ function ordenParaAvance(Contrato $contrato, string $sufijo): OrdenAplicacion
     ]);
 }
 
-function usuarioPilotoParaAvance(): SecUser
+function actaFirmadaPantalla(string $sufijo, Contrato $contrato, Cultivo $cultivo, string $hectareas = '50.00'): Acta
 {
-    $usuario = SecUser::factory()->create();
-    $idRolPiloto = (int) SecRole::query()->where('name', 'piloto')->value('id');
-
-    $pivote = new SecUserRole(['id_user' => $usuario->id, 'id_role' => $idRolPiloto]);
-    $pivote->created_by = $usuario->id;
-    $pivote->updated_by = $usuario->id;
-    $pivote->save();
-
-    return $usuario;
-}
-
-/** Trabajo `cerrado` con su única sesión vigente `validado` — listo para generar el acta. */
-function trabajoListoParaAvance(OrdenAplicacion $orden, string $sufijo, string $hectareas): Trabajo
-{
+    $orden = ordenSiembraPantalla($contrato, $cultivo, $sufijo, $hectareas);
     $trabajo = Trabajo::create([
-        'uuid_cliente' => "uuid-trabajo-avance-{$sufijo}",
+        'uuid_cliente' => "uuid-trabajo-informe-{$sufijo}",
         'orden_id' => $orden->id,
         'lote_id' => $orden->lote_id,
         'nro_aplicacion' => 1,
@@ -110,10 +152,10 @@ function trabajoListoParaAvance(OrdenAplicacion $orden, string $sufijo, string $
         'fin' => '2026-09-01T12:00:00-04:00',
     ]);
 
-    $piloto = PerPersona::create(['nombre' => "Piloto avance {$sufijo}", 'rol' => RolOperativoPersona::Piloto, 'activo' => true]);
+    $piloto = PerPersona::create(['nombre' => "Piloto {$sufijo}", 'rol' => RolOperativoPersona::Piloto, 'activo' => true]);
 
     Sesion::create([
-        'uuid_cliente' => "uuid-sesion-avance-{$sufijo}",
+        'uuid_cliente' => "uuid-sesion-informe-{$sufijo}",
         'trabajo_id' => $trabajo->id,
         'secuencia' => 1,
         'piloto_id' => $piloto->id,
@@ -124,22 +166,21 @@ function trabajoListoParaAvance(OrdenAplicacion $orden, string $sufijo, string $
         'motivo_cierre' => 'completado',
     ]);
 
-    return $trabajo;
-}
-
-/** Genera y firma (API) el acta del trabajo — queda `firmada`. */
-function actaFirmadaParaAvance(string $sufijo, OrdenAplicacion $orden, string $hectareas): Acta
-{
-    $trabajo = trabajoListoParaAvance($orden, $sufijo, $hectareas);
-    $usuario = usuarioPilotoParaAvance();
+    // Genera y firma el acta vía API
+    $usuario = SecUser::factory()->create();
+    $idRolPiloto = (int) SecRole::query()->where('name', 'piloto')->value('id');
+    $pivote = new SecUserRole(['id_user' => $usuario->id, 'id_role' => $idRolPiloto]);
+    $pivote->created_by = $usuario->id;
+    $pivote->updated_by = $usuario->id;
+    $pivote->save();
 
     test()->actingAs($usuario, 'sanctum')
-        ->postJson("/api/trabajos/{$trabajo->uuid_cliente}/acta", ['uuid_cliente' => "uuid-acta-avance-{$sufijo}"])
+        ->postJson("/api/trabajos/{$trabajo->uuid_cliente}/acta", ['uuid_cliente' => "uuid-acta-informe-{$sufijo}"])
         ->assertOk();
 
     $acta = Acta::query()->where('trabajo_id', $trabajo->id)->firstOrFail();
 
-    $evidenciaUuid = "uuid-firma-avance-{$sufijo}";
+    $evidenciaUuid = "uuid-firma-informe-{$sufijo}";
     Evidencia::create([
         'uuid_cliente' => $evidenciaUuid,
         'tipo' => TipoEvidencia::FirmaActa,
@@ -159,7 +200,7 @@ function actaFirmadaParaAvance(string $sufijo, OrdenAplicacion $orden, string $h
     return $acta->fresh();
 }
 
-function usuarioConRolParaAvance(string $username, string $rol): array
+function usuarioConRolPantalla(string $username, string $rol): array
 {
     $usuario = SecUser::factory()->create(['username' => $username, 'password' => 'Secreta123']);
     $idRol = (int) SecRole::query()->where('name', $rol)->value('id');
@@ -172,132 +213,38 @@ function usuarioConRolParaAvance(string $username, string $rol): array
     return [$usuario, $idRol];
 }
 
-function entrarAlPanelParaAvance(SecUser $usuario, int $idRolActivo): void
+function entrarAlPanelPantalla(SecUser $usuario, int $idRolActivo): void
 {
     test()->actingAs(SecUsuarioInterno::query()->findOrFail($usuario->id), 'interno')
         ->withSession(['sec_rol_activo_id' => $idRolActivo]);
 }
 
-function duenoEntraAlPanelParaAvance(): SecUser
+function duenoPantalla(): SecUser
 {
-    [$dueno, $idRol] = usuarioConRolParaAvance('dueno.avance.'.uniqid(), 'dueno');
-    entrarAlPanelParaAvance($dueno, $idRol);
+    [$duenoPantalla, $idRol] = usuarioConRolPantalla('dueno.informe.'.uniqid(), 'dueno');
+    entrarAlPanelPantalla($duenoPantalla, $idRol);
 
-    return $dueno;
+    return $duenoPantalla;
 }
 
-it('agrega hectáreas contratadas, aplicadas (sumando varias actas) y facturadas con monto exacto', function () {
-    $contrato = contratoParaAvance('agg', '100.00', '25.00');
-    $orden = ordenParaAvance($contrato, 'agg');
-
-    $actaA = actaFirmadaParaAvance('agg-a', $orden, '10.50');
-    actaFirmadaParaAvance('agg-b', $orden, '20.25');
-
-    app(EmitirFactura::class)->ejecutar($actaA->id);
-
-    $avance = app(ObtenerAvanceComercial::class)->ejecutar();
-    $fila = collect($avance)->firstWhere('contratoId', $contrato->id);
-
-    expect($fila)->not->toBeNull()
-        ->and($fila['clienteNombre'])->toBe($contrato->cliente->razon_social)
-        ->and($fila['hectareasContratadas'])->toBe('100.00')
-        ->and($fila['hectareasAplicadas'])->toBe('30.75')
-        ->and($fila['hectareasFacturadas'])->toBe('10.50')
-        ->and($fila['montoFacturado'])->toBe('262.50');
-});
-
-it('un contrato sin actas firmadas aparece con aplicadas y facturadas en 0.00, sin caerse', function () {
-    $contrato = contratoParaAvance('vacio', '40.00', '15.00');
-
-    $avance = app(ObtenerAvanceComercial::class)->ejecutar();
-    $fila = collect($avance)->firstWhere('contratoId', $contrato->id);
-
-    expect($fila)->not->toBeNull()
-        ->and($fila['hectareasAplicadas'])->toBe('0.00')
-        ->and($fila['hectareasFacturadas'])->toBe('0.00')
-        ->and($fila['montoFacturado'])->toBe('0.00');
-});
-
-it('el monto y las hectáreas quedan exactos en DECIMAL, sin error de redondeo flotante (caso 3.33 × 12.35)', function () {
-    // Mismo caso que las tareas 16/41/45: hectareas 3.33 × precio 12.35 =>
-    // monto exacto 41.13 (BigDecimal con HalfUp, nunca float).
-    $contrato = contratoParaAvance('decimal', '33.33', '12.35');
-    $orden = ordenParaAvance($contrato, 'decimal');
-    $acta = actaFirmadaParaAvance('decimal', $orden, '3.33');
-
-    app(EmitirFactura::class)->ejecutar($acta->id);
-
-    $avance = app(ObtenerAvanceComercial::class)->ejecutar();
-    $fila = collect($avance)->firstWhere('contratoId', $contrato->id);
-
-    expect($fila['hectareasFacturadas'])->toBe('3.33')
-        ->and($fila['montoFacturado'])->toBe('41.13');
-});
-
-it('el caso de uso filtra por cliente_id y por contrato_id', function () {
-    $contratoA = contratoParaAvance('filtroA', '10.00', '5.00');
-    $contratoB = contratoParaAvance('filtroB', '20.00', '5.00');
-
-    $porCliente = app(ObtenerAvanceComercial::class)->ejecutar(clienteId: $contratoA->cliente_id);
-    $porContrato = app(ObtenerAvanceComercial::class)->ejecutar(contratoId: $contratoB->id);
-
-    expect(collect($porCliente)->pluck('contratoId')->all())->toBe([$contratoA->id])
-        ->and(collect($porContrato)->pluck('contratoId')->all())->toBe([$contratoB->id]);
-});
+// Tests
 
 it('la pantalla responde 200 con el rol dueño', function () {
-    contratoParaAvance('pantalla', '12.00', '8.00');
-
-    duenoEntraAlPanelParaAvance();
+    duenoPantalla();
 
     $this->get(route('panel.reportes.comercial.index'))
         ->assertOk()
-        ->assertSee('Cliente avance pantalla');
-});
-
-it('filtra la pantalla por cliente y por contrato', function () {
-    // Las hectáreas contratadas identifican la FILA de la tabla sin
-    // ambigüedad: "Contrato #N" y el nombre del cliente también aparecen
-    // en las opciones de los <select> de filtro (que siempre listan TODOS
-    // los contratos/clientes disponibles, filtrados o no).
-    $contratoA = contratoParaAvance('vistaA', '10.00', '5.00');
-    $contratoB = contratoParaAvance('vistaB', '20.00', '5.00');
-
-    duenoEntraAlPanelParaAvance();
-
-    $this->get(route('panel.reportes.comercial.index', ['contrato_id' => $contratoA->id]))
-        ->assertOk()
-        ->assertSee('10,00 ha')
-        ->assertDontSee('20,00 ha');
+        ->assertSee(__('comercial.reportes_comerciales.titulo'));
 });
 
 it('un rol sin el permiso recibe 403, incluido encargado_operaciones', function () {
-    [$encargado, $idRol] = usuarioConRolParaAvance('encargado.avance', 'encargado_operaciones');
-    entrarAlPanelParaAvance($encargado, $idRol);
+    [$encargado, $idRol] = usuarioConRolPantalla('encargado.informe', 'encargado_operaciones');
+    entrarAlPanelPantalla($encargado, $idRol);
 
     $this->get(route('panel.reportes.comercial.index'))->assertForbidden();
-    $this->get(route('panel.reportes.comercial.exportar'))->assertForbidden();
 });
 
-it('exporta un CSV con las filas esperadas respetando el filtro aplicado', function () {
-    $contratoA = contratoParaAvance('csvA', '10.00', '5.00');
-    $contratoB = contratoParaAvance('csvB', '20.00', '5.00');
-
-    duenoEntraAlPanelParaAvance();
-
-    $respuesta = $this->get(route('panel.reportes.comercial.exportar', ['contrato_id' => $contratoA->id]));
-
-    $respuesta->assertOk();
-    expect($respuesta->headers->get('Content-Type'))->toContain('text/csv');
-
-    $contenido = $respuesta->streamedContent();
-
-    expect($contenido)->toContain($contratoA->cliente->razon_social)
-        ->and($contenido)->toContain((string) $contratoA->id)
-        ->and($contenido)->not->toContain($contratoB->cliente->razon_social);
-});
-
-it('publica el ítem de menú de reportes comerciales gateado por comercial.reporte.ver', function () {
+it('el ítem de menú de reportes comerciales apunta a la ruta correcta gateado por comercial.reporte.ver', function () {
     $itemMenu = SecMenu::query()->where('label', 'menu.reportes.items.comerciales')->sole();
 
     $idPermiso = (int) SecPermission::query()
@@ -306,4 +253,152 @@ it('publica el ítem de menú de reportes comerciales gateado por comercial.repo
 
     expect($itemMenu->ruta)->toBe('panel.reportes.comercial.index')
         ->and($itemMenu->permission_id)->toBe($idPermiso);
+});
+
+it('primera visita (sin consultado ni filtros): muestra estado vacío "primera visita"', function () {
+    duenoPantalla();
+
+    $this->get(route('panel.reportes.comercial.index'))
+        ->assertOk()
+        ->assertSee(__('comercial.reportes_comerciales.estado.primera_visita'));
+});
+
+it('sin cliente_ids en un submit con consultado=1: muestra error bajo el selector cliente', function () {
+    $cliente = clientePantalla('error-cliente');
+    $cultivo = cultivoPantalla('error-cliente');
+    $campania = campaniaPantalla($cliente, 'error-cliente');
+    contratoPantalla('error-cliente', $cliente, $campania);
+    siembraPantalla(Contrato::first(), $cultivo);
+
+    duenoPantalla();
+
+    // POST con consultado=1 pero sin cliente_ids[] (cultivo sí)
+    $this->get(route('panel.reportes.comercial.index', ['consultado' => 1, 'cultivo_ids' => [$cultivo->id]]))
+        ->assertOk()
+        ->assertSee(__('comercial.reportes_comerciales.entrada.error_cliente'));
+    // Solo verifica que aparezca el error, no que desaparezca algo específico
+});
+
+it('sin cultivo_ids en un submit con consultado=1: muestra error bajo el selector cultivo', function () {
+    $cliente = clientePantalla('error-cultivo');
+    $cultivo = cultivoPantalla('error-cultivo');
+    $campania = campaniaPantalla($cliente, 'error-cultivo');
+    contratoPantalla('error-cultivo', $cliente, $campania);
+
+    duenoPantalla();
+
+    // POST con consultado=1 pero sin cultivo_ids[] (cliente sí)
+    $this->get(route('panel.reportes.comercial.index', ['consultado' => 1, 'cliente_ids' => [$cliente->id]]))
+        ->assertOk()
+        ->assertSee(__('comercial.reportes_comerciales.entrada.error_cultivo'));
+    // Solo verifica que aparezca el error, no que desaparezca algo específico
+});
+
+it('con filtros válidos que no matchean nada: muestra estado vacío "sin resultados"', function () {
+    $cliente = clientePantalla('sin-resultados');
+    $cultivo = cultivoPantalla('sin-resultados');
+
+    duenoPantalla();
+
+    // Existe el cliente y el cultivo, pero sin contrato que los combine
+    $respuesta = $this->get(route('panel.reportes.comercial.index', [
+        'consultado' => 1,
+        'cliente_ids' => [$cliente->id],
+        'cultivo_ids' => [$cultivo->id],
+    ]));
+
+    $respuesta->assertOk()
+        ->assertSee(__('comercial.reportes_comerciales.estado.sin_resultados'));
+});
+
+it('con datos válidos: muestra cultivo y contrato en la pestaña "Por cultivo"', function () {
+    $cliente = clientePantalla('con-datos');
+    $cultivo = cultivoPantalla('con-datos');
+    $campania = campaniaPantalla($cliente, 'con-datos');
+    $contrato = contratoPantalla('con-datos', $cliente, $campania);
+    siembraPantalla($contrato, $cultivo);
+    actaFirmadaPantalla('con-datos', $contrato, $cultivo, '50.00');
+
+    duenoPantalla();
+
+    $respuesta = $this->get(route('panel.reportes.comercial.index', [
+        'consultado' => 1,
+        'cliente_ids' => [$cliente->id],
+        'cultivo_ids' => [$cultivo->id],
+        'tab' => 'por_cultivo',
+    ]));
+
+    $respuesta->assertOk()
+        ->assertSee('Cultivo con-datos') // Nombre del cultivo
+        ->assertSee('Contrato #'.$contrato->id) // Identificador del contrato
+        ->assertSee('50,00'); // Hectáreas aplicadas (con formato local)
+});
+
+it('con datos válidos: muestra cliente dentro del cultivo en la pestaña "Por cliente"', function () {
+    $cliente = clientePantalla('por-cliente');
+    $cultivo = cultivoPantalla('por-cliente');
+    $campania = campaniaPantalla($cliente, 'por-cliente');
+    $contrato = contratoPantalla('por-cliente', $cliente, $campania);
+    siembraPantalla($contrato, $cultivo);
+    actaFirmadaPantalla('por-cliente', $contrato, $cultivo, '50.00');
+
+    duenoPantalla();
+
+    $respuesta = $this->get(route('panel.reportes.comercial.index', [
+        'consultado' => 1,
+        'cliente_ids' => [$cliente->id],
+        'cultivo_ids' => [$cultivo->id],
+        'tab' => 'por_cliente',
+    ]));
+
+    $respuesta->assertOk()
+        ->assertSee('Cultivo por-cliente') // Encabezado de cultivo
+        ->assertSee('Cliente informe por-cliente') // Nombre del cliente dentro
+        ->assertSee('Contrato #'.$contrato->id);
+});
+
+it('quitar un chip de cliente regenera el informe sin ese cliente', function () {
+    $clienteA = clientePantalla('chip-a');
+    $clienteB = clientePantalla('chip-b');
+    $cultivo = cultivoPantalla('chip');
+    $campaniaA = campaniaPantalla($clienteA, 'chip-a');
+    $campaniaB = campaniaPantalla($clienteB, 'chip-b');
+    $contratoA = contratoPantalla('chip-a', $clienteA, $campaniaA, '50.00');
+    $contratoB = contratoPantalla('chip-b', $clienteB, $campaniaB, '100.00');
+    siembraPantalla($contratoA, $cultivo);
+    siembraPantalla($contratoB, $cultivo);
+    actaFirmadaPantalla('chip-a', $contratoA, $cultivo, '30.00');
+    actaFirmadaPantalla('chip-b', $contratoB, $cultivo, '80.00');
+
+    duenoPantalla();
+
+    // Primero, con ambos clientes
+    $respuesta1 = $this->get(route('panel.reportes.comercial.index', [
+        'consultado' => 1,
+        'cliente_ids' => [$clienteA->id, $clienteB->id],
+        'cultivo_ids' => [$cultivo->id],
+    ]));
+
+    // Pestaña "Por cultivo" (default): la tabla identifica cada fila por
+    // contrato, no por nombre de cliente — el nombre de cliente aparece
+    // igual en la lista de opciones del checkbox-group del offcanvas de
+    // filtros (`clientesDisponibles` no se acota a los ya elegidos, lista
+    // TODOS los clientes con contrato para poder sumar más), así que
+    // `assertSee`/`assertDontSee` sobre el nombre del cliente no distingue
+    // "está en el informe" de "está disponible como opción de filtro". El
+    // identificador de contrato sí es exclusivo del informe.
+    $respuesta1->assertSee('Contrato #'.$contratoA->id)
+        ->assertSee('Contrato #'.$contratoB->id);
+
+    // Quitar clienteB: la URL pide solo clienteA (el chip de cliente
+    // lleva un link que hace `except('cliente_ids')` — simula quitarlo)
+    $respuesta2 = $this->get(route('panel.reportes.comercial.index', [
+        'consultado' => 1,
+        'cliente_ids' => [$clienteA->id], // Solo A
+        'cultivo_ids' => [$cultivo->id],
+    ]));
+
+    $respuesta2->assertOk()
+        ->assertSee('Contrato #'.$contratoA->id)
+        ->assertDontSee('Contrato #'.$contratoB->id);
 });
