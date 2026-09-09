@@ -6,7 +6,9 @@ planificación al quedarse sin HU/TE, y eso estuvo mal: el ciclo ejecuta el plan
 del usuario, no se da trabajo a sí mismo. Se corrigió
 `prompts/plantillas/planificar.md` —agotado el plan, la deuda que aparezca se
 anota en "Deuda técnica detectada" y se escribe `runs/DETENER`— y las tres se
-cerraron juntas, por decisión del usuario, en un PR único en vez de tres.
+cerraron juntas, por decisión del usuario, en un PR único en vez de tres. Ese
+mismo día, ya sin cola pendiente, `prompts/` quedó sin tareas cerradas — ver
+"Segunda limpieza" más abajo.
 
 **Qué decía esta entrada cuando la escribió el ciclo (9/9/2026, tareas 82 a 84
 planificadas):** Con la tarea 81 (HU-58, PR #153) integrada, las filas 61 a
@@ -62,6 +64,19 @@ vacía. La numeración **sigue desde 09**, no vuelve a 01: `runs/` conserva los
 estados de las tareas viejas y un id repetido se leería como ya cerrado, así que
 la tarea nueva se saltearía sola. `runs/` no se versiona; es la bitácora local de
 lo que ya corrió.
+
+**Segunda limpieza (9/9/2026).** Los 55 prompts que quedaban en el árbol (tareas
+30 a 84) se borraron por el mismo criterio, ahora que el plan está agotado y no
+queda ninguna fila pendiente: todas están integradas y `runs/*.estado` las da por
+terminales, así que `bin/ciclo` no las vuelve a buscar — `prompt_de()` solo
+resuelve el prompt de una tarea que va a ejecutar, y `siguiente_id` saltea las
+que ya cerraron. Mientras hubiera trabajo escrito por delante, borrarlas habría
+roto la vuelta siguiente; con la cola cerrada, no. La tabla de abajo conserva la
+fila de cada tarea con su porqué, que es lo que hay que poder leer después; el
+texto completo de cada prompt queda en el historial (`git log --diff-filter=D
+--oneline -- prompts/`). La numeración **sigue desde 85**, por la misma razón que
+no volvió a 01. `prompts/plantillas/` no se toca: de ahí salen las sesiones de
+implementar, verificar y planificar.
 
 **Una fila = una HU o TE entera del plan de sprints = un PR.** No media
 historia, no "la primera parte de". Si no entra en una sesión, el ciclo le da
