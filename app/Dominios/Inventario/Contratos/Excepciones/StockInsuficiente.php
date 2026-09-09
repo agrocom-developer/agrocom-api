@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Dominios\Inventario\Dominio\Excepciones;
+namespace App\Dominios\Inventario\Contratos\Excepciones;
 
 use RuntimeException;
 
@@ -11,6 +11,10 @@ use RuntimeException;
  * validación; el `CHECK (cantidad >= 0)` de `inv_stock` es el backstop, no
  * el mecanismo primario. El controlador la traduce a 422, nunca a un 500 de
  * `QueryException` por violación de CHECK.
+ *
+ * Vive en `Contratos/` (tarea 82) porque ya es parte de la frontera pública
+ * de `Inventario`: el contrato `EscrituraConsumoStock::consumir()` la declara
+ * como su `@throws` para quien lo invoque desde otro módulo (`Mantenimiento`).
  */
 final class StockInsuficiente extends RuntimeException
 {

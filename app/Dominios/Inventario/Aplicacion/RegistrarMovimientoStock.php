@@ -2,7 +2,7 @@
 
 namespace App\Dominios\Inventario\Aplicacion;
 
-use App\Dominios\Inventario\Dominio\Excepciones\StockInsuficiente;
+use App\Dominios\Inventario\Contratos\Excepciones\StockInsuficiente;
 use App\Dominios\Inventario\Dominio\SentidoAjusteInventario;
 use App\Dominios\Inventario\Dominio\TipoMovimientoInventario;
 use App\Dominios\Inventario\Infraestructura\Eloquent\MovimientoStock;

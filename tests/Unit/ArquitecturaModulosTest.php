@@ -74,6 +74,17 @@ foreach ($modulos as $modulo) {
             ->not->toUse($aplicacionAjena)
             ->ignoring($ignorar);
     }
+
+    $dominioAjeno = array_map(
+        fn (string $otro): string => "App\\Dominios\\{$otro}\\Dominio",
+        array_values(array_filter($modulos, fn (string $otro): bool => $otro !== $modulo)),
+    );
+
+    if ($dominioAjeno !== []) {
+        arch("{$modulo} no importa Dominio de otros módulos, solo su Contratos/ o eventos de dominio (ADR 0003, regla 2)")
+            ->expect("App\\Dominios\\{$modulo}")
+            ->not->toUse($dominioAjeno);
+    }
 }
 
 // Dirección de dependencia entre módulos concretos (revisión 3/9/2026, ADR

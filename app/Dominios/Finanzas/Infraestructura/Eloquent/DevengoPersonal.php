@@ -12,7 +12,7 @@ use Illuminate\Support\Carbon;
  * lote... se genera automáticamente al validar un trabajo, nunca al
  * cerrarlo" (invariante 3 de CLAUDE.md). Lo crea únicamente
  * `Finanzas/Aplicacion/GenerarDevengosSesion.php`, en respuesta al evento
- * `App\Dominios\Operaciones\Dominio\Eventos\SesionValidada`.
+ * `App\Dominios\Operaciones\Contratos\Eventos\SesionValidada`.
  *
  * `sesion_id`/`persona_id` referencian `ope_sesiones`/`per_personas` solo por
  * FK + entero plano (ADR 0003, regla 3) — sin `belongsTo` cross-módulo.

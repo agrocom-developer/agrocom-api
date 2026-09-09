@@ -2,7 +2,7 @@
 
 namespace App\Dominios\Inventario\Contratos;
 
-use App\Dominios\Inventario\Dominio\Excepciones\StockInsuficiente;
+use App\Dominios\Inventario\Contratos\Excepciones\StockInsuficiente;
 
 /**
  * Contrato de escritura de `Inventario` para el cierre de una orden de

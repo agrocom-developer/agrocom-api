@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Dominios\Operaciones\Dominio\Eventos;
+namespace App\Dominios\Operaciones\Contratos\Eventos;
 
 /**
  * Evento de dominio (ADR 0003, regla 2: "entre módulos se viaja por
@@ -8,6 +8,11 @@ namespace App\Dominios\Operaciones\Dominio\Eventos;
  * devengos"). DTO primitivo, nunca un modelo Eloquent, para que el módulo
  * que lo escuche (Finanzas, HU-16) no dependa de `Operaciones` más allá de
  * este `sesionId`.
+ *
+ * Vive en `Contratos/` (tarea 82), no en `Dominio/`: un evento que otro
+ * módulo escucha es, por definición, la frontera pública del módulo emisor —
+ * mismo criterio de ubicación que `DatosSesionValidada` en este mismo
+ * `Contratos/`.
  *
  * Quien lo dispara es `Aplicacion/MaquinaEstados/MaquinaEstadosSesion::validar()`,
  * después de persistir la transición `cerrado → validado` — nunca antes,
