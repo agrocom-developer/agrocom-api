@@ -909,19 +909,16 @@ Route::middleware('auth:interno')->group(function () {
         Route::post('/panel/facturas', [FacturasController::class, 'store'])
             ->name('panel.facturas.store');
 
-        // HU-32 (tarea 46): "como dueño, quiero un reporte comercial de
-        // avance por cliente, contrato y campaña, para saber cuánto queda
-        // por aplicar y por cobrar" — cierra Sprint 9. Un único permiso
-        // (`comercial.reporte.ver`), exclusivo del dueño (no entra en
-        // `PERMISOS_ENCARGADO_OPERACIONES`, mismo criterio que
-        // `finanzas.planilla.aprobar`), verificado DENTRO del controlador
-        // contra el ROL ACTIVO. `exportar` reusa el mismo permiso y respeta
-        // el filtro activo — CSV nativo, sin librería de Excel.
+        // HU-52 (tarea 75, espec §9.1): informe de avance de contratos, por
+        // cultivo y por cliente — reemplaza en la misma ruta a la pantalla
+        // plana de HU-32 (tarea 46). Un único permiso (`comercial.reporte.ver`),
+        // exclusivo del dueño (no entra en `PERMISOS_ENCARGADO_OPERACIONES`,
+        // mismo criterio que `finanzas.planilla.aprobar`), verificado DENTRO
+        // del controlador contra el ROL ACTIVO. Sin `exportar`: el CSV plano
+        // de HU-32 no tiene una forma razonable para un informe agrupado en
+        // dos niveles — fuera de alcance de esta tarea.
         Route::get('/panel/reportes/comercial', [ReportesComercialesController::class, 'index'])
             ->name('panel.reportes.comercial.index');
-
-        Route::get('/panel/reportes/comercial/exportar', [ReportesComercialesController::class, 'exportar'])
-            ->name('panel.reportes.comercial.exportar');
 
         // HU-43 (tarea 57): "como encargado, quiero listar y descargar los
         // reportes técnicos generados, para reenviarlos al agrónomo" — cierra

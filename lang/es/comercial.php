@@ -417,32 +417,87 @@ return [
         'error_acta_invalida' => 'El acta seleccionada no está disponible para facturar.',
     ],
 
-    // HU-32 (tarea 46): "como dueño, quiero un reporte comercial de avance
-    // por cliente, contrato y campaña, para saber cuánto queda por aplicar
-    // y por cobrar" — cierra Sprint 9. Solo lectura, exportable a CSV.
+    // HU-32 (tarea 46, reemplazado por HU-52 tarea 75): "como dueño, quiero
+    // un reporte comercial de avance por cliente, contrato y campaña, para
+    // saber cuánto queda por aplicar y por cobrar" — cierra Sprint 9. Solo
+    // lectura, sin exportar en v1 (HU-52 amplía con agrupación y filtros).
+    // Las claves 'col_' y 'contrato_valor' de HU-32 se reusan en HU-52
+    // para la tabla, en la pestaña de resultados.
     'reportes_comerciales' => [
-        'titulo' => 'Avance comercial',
-        'subtitulo' => 'Hectáreas contratadas, aplicadas y facturadas por contrato.',
-        'exportar' => 'Exportar CSV',
-        'vacio' => 'Todavía no hay contratos para mostrar.',
-        'filtro_vacio' => 'Ningún contrato coincide con el filtro.',
+        'titulo' => 'Informe de avance de contratos',
+        'subtitulo' => 'Hectáreas contratadas, aplicadas y pendientes, agrupadas por cultivo y cliente.',
 
-        'filtro_cliente' => 'Cliente',
-        'filtro_contrato' => 'Contrato',
-        'filtro_todos' => 'Todos',
-        'filtro_contrato_opcion' => 'Contrato #:id — :cliente',
-        'filtrar' => 'Filtrar',
-        'limpiar_filtros' => 'Limpiar filtros',
+        // Entrada (pantalla inicial, con formulario de selección obligatoria)
+        'entrada' => [
+            'cliente' => 'Clientes',
+            'cultivo' => 'Cultivos',
+            'filtros' => 'Filtros',
+            'generar' => 'Generar informe',
+            'error_cliente' => 'Seleccioná al menos un cliente.',
+            'error_cultivo' => 'Seleccioná al menos un cultivo.',
+        ],
 
-        'col_cliente' => 'Cliente',
-        'col_contrato' => 'Contrato',
-        'col_hectareas_contratadas' => 'Ha. contratadas',
-        'col_hectareas_aplicadas' => 'Ha. aplicadas',
-        'col_hectareas_facturadas' => 'Ha. facturadas',
-        'col_monto_facturado' => 'Monto facturado',
-        'contrato_valor' => 'Contrato #:id',
-        'hectareas_valor' => ':cantidad ha',
-        'monto_valor' => 'Bs :monto',
+        // Estados vacíos
+        'estado' => [
+            'primera_visita' => 'Seleccioná clientes y cultivos para generar el informe.',
+            'sin_resultados' => 'Ningún contrato coincide con el filtro aplicado.',
+        ],
+
+        // Chips de filtros (carrusel horizontal)
+        'chips' => [
+            'cliente' => 'Cliente (:cantidad)',
+            'cultivo' => 'Cultivo (:cantidad)',
+            'campania' => 'Campaña (:cantidad)',
+            'rango_fechas' => ':desde – :hasta',
+            'fecha_desde' => 'Desde :fecha',
+            'fecha_hasta' => 'Hasta :fecha',
+            'estado' => 'Estado: :estado',
+            'saldo' => 'Saldo: :saldo',
+            'incluir_deshabilitados' => 'Incluye deshabilitados',
+            'filtros' => 'Filtros',
+        ],
+
+        // Filtros (offcanvas)
+        'filtros' => [
+            'titulo' => 'Filtros avanzados',
+            'cliente' => 'Clientes',
+            'cultivo' => 'Cultivos',
+            'campania' => 'Campañas',
+            'campania_opcion' => ':codigo — :cliente',
+            'campania_sin_cliente' => 'Seleccioná clientes para filtrar campañas.',
+            'fecha_desde' => 'Desde (fecha)',
+            'fecha_hasta' => 'Hasta (fecha)',
+            'estado' => 'Estado del contrato',
+            'saldo' => 'Saldo',
+            'incluir_deshabilitados' => 'Incluir contratos deshabilitados',
+            'seleccionar' => 'Seleccionar',
+            'aplicar' => 'Aplicar',
+            'cancelar' => 'Cancelar',
+            'limpiar' => 'Limpiar a valores por defecto',
+        ],
+
+        // Pestañas
+        'tabs' => [
+            'por_cultivo' => 'Por cultivo',
+            'por_cliente' => 'Por cliente',
+        ],
+
+        // Tabla de contratos (reutiliza algunas claves de HU-32)
+        'tabla' => [
+            'contrato' => 'Contrato',
+            'hectareas_contratadas' => 'Ha. pactadas',
+            'hectareas_aplicadas' => 'Ha. aplicadas',
+            'hectareas_a_aplicar' => 'A aplicar',
+            'contrato_valor' => 'Contrato #:id',
+            'total' => 'Total',
+        ],
+    ],
+
+    // Enumeraciones: saldo del contrato (reutilizable, agregado en HU-52)
+    'saldo' => [
+        'pendiente' => 'Pendiente',
+        'a_aplicar' => 'A aplicar',
+        'cumplido' => 'Cumplido',
     ],
 
 ];

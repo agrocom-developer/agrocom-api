@@ -1,8 +1,9 @@
 <?php
 
 /**
- * Fixture de datos para tests/Visual/reporte-avance-comercial.spec.ts (HU-32,
- * tarea 46). Reusa el cliente/lote/orden/contrato de `NucleoComercialSeeder`
+ * Fixture de datos para tests/Visual/reporte-avance-comercial.spec.ts
+ * (HU-32, tarea 46 — pantalla reemplazada por HU-52, tarea 75: informe de
+ * avance por cultivo y por cliente, misma ruta). Reusa el cliente/lote/orden/contrato de `NucleoComercialSeeder`
  * (Agropecuaria San Jorge, lote L-01, 4000.00 ha contratadas, Bs 65.00/ha) en
  * vez de crear un cliente/contrato nuevo, mismo criterio que
  * `facturas-demo.php`/`devengos-demo.php`: una fila nueva en
@@ -36,7 +37,10 @@
  * Idempotente: el acta nace con un `uuid_cliente` fijo; si ya existe, se
  * reusa en vez de generar de nuevo.
  */
+use App\Dominios\Comercial\Aplicacion\GuardarSiembraCampania;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Cultivo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
 use App\Dominios\Operaciones\Aplicacion\FirmarActa;
 use App\Dominios\Operaciones\Aplicacion\GenerarActaTrabajo;
@@ -68,6 +72,19 @@ $lote = Lote::whereHas('campo', fn ($consulta) => $consulta->where('cliente_id',
     ->where('codigo', 'L-01')
     ->firstOrFail();
 $orden = OrdenAplicacion::where('lote_id', $lote->id)->where('nro_aplicacion', 1)->firstOrFail();
+
+// HU-52 (tarea 75): el informe nuevo agrupa por cultivo — sin una siembra
+// (`com_lote_campania`) el contrato de este fixture no cae en ningún grupo.
+// Vía el caso de uso real (no un insert crudo), idempotente por diseño.
+$campania = Contrato::findOrFail($orden->contrato_id)->campania_id;
+$campo = $lote->campo()->with('lotes')->firstOrFail();
+$cultivo = Cultivo::where('nombre', 'Maíz')->firstOrFail();
+
+if (! DB::table('com_lote_campania')->where('lote_id', $lote->id)->where('campania_id', $campania)->whereNull('deleted_at')->exists()) {
+    app(GuardarSiembraCampania::class)->ejecutar($campo, $campania, [
+        ['lote_id' => $lote->id, 'cultivo_id' => $cultivo->id, 'hectareas_sembradas' => $lote->hectareas, 'fecha_siembra' => null, 'fecha_cosecha_estimada' => null],
+    ]);
+}
 
 // Mismo piloto que ya crea `facturas-demo.php` — converge a la misma fila
 // vía `firstOrCreate`, nunca una `PerPersona` nueva (rompería `personas/index`).

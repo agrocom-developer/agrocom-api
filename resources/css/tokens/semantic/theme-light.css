@@ -166,6 +166,22 @@
     --ag-color-track: var(--ag-color-sand-300);
     --ag-color-bar-unassigned: var(--ag-color-sand-700);
 
+    /* Tramos de la barra de avance del informe de contratos (HU-52, tarea
+       75, espec §9.1, invariante 11 — ningún color hardcodeado): un token
+       por tramo, cada uno alias de un estado semántico ya verificado AA en
+       este tema, para no inventar una rampa de color nueva. El quinto tramo
+       (más de 100%, se puede aplicar de más) usa primary-emphasis en vez de
+       reciclar success: a simple vista tiene que leerse distinto de
+       "cumplido exacto", no como el mismo verde un poco más oscuro —
+       primary-emphasis y no primary a secas por consistencia con el token
+       de tema oscuro (ver theme-dark.css), donde primary crudo sí falla
+       contraste contra el track. */
+    --ag-color-avance-bajo: var(--ag-color-danger);
+    --ag-color-avance-medio: var(--ag-color-warning);
+    --ag-color-avance-alto: var(--ag-color-info);
+    --ag-color-avance-cumplido: var(--ag-color-success);
+    --ag-color-avance-excedido: var(--ag-color-primary-emphasis);
+
     /* Overlay/texto sobre foto de marca (auth-layout, HU-02) — DELIBERADAMENTE
        constantes entre temas, mismo criterio que --ag-color-primary(-contrast):
        la fotografía (drone-hero.jpg) no reasigna por tema, así que el scrim y

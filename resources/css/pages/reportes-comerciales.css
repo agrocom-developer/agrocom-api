@@ -1,11 +1,11 @@
 /*
  * Page: reportes-comerciales/index
  * (app/Dominios/Comercial/Infraestructura/Http/Views/pages/reportes-comerciales/)
- * — HU-32, tarea 46: reporte comercial de avance por contrato. Mismo molde
- * de grid que facturas.css/trabajos.css, con seis columnas (cliente,
- * contrato, hectáreas contratadas/aplicadas/facturadas, monto facturado) y
- * sin columna de acciones: pantalla de solo lectura. Todo color y medida
- * por token (CLAUDE.md invariante 11).
+ * — HU-52, tarea 75: informe de avance de contratos agrupado por cultivo y
+ * por cliente, con filtros avanzados en offcanvas y chips aplicados en
+ * carrusel horizontal. Reemplaza a HU-32 (tarea 46). Estructura: entrada
+ * (checkbox-group + botones) → resultados (chips + pestañas + tablas).
+ * Todo color y medida por token (CLAUDE.md invariante 11).
  */
 
 .ag-reportes-comerciales {
@@ -14,63 +14,287 @@
     gap: var(--ag-space-5);
 }
 
-
-.ag-reportes-comerciales__filtros-acciones {
+/* Pantalla de entrada: checkbox-group y botones */
+.ag-reportes-comerciales__entrada {
     display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+.ag-reportes-comerciales__selectores {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+    gap: var(--ag-space-5);
+}
+
+.ag-reportes-comerciales__acciones-entrada {
+    display: flex;
+    gap: var(--ag-space-3);
     align-items: center;
+}
+
+.ag-reportes-comerciales__acciones-entrada button,
+.ag-reportes-comerciales__acciones-entrada a {
+    flex-shrink: 0;
+}
+
+/* Estado vacío (primera visita o sin resultados) */
+.ag-reportes-comerciales__estado-vacio {
+    margin: var(--ag-space-4) 0;
+}
+
+/* Chips de filtros: carrusel horizontal */
+.ag-reportes-comerciales__chips {
+    display: flex;
+    gap: var(--ag-space-3);
+    overflow-x: auto;
+    padding: var(--ag-space-2) 0;
+    align-items: center;
+    flex-wrap: nowrap;
+}
+
+.ag-reportes-comerciales__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    flex-shrink: 0;
+    text-decoration: none;
+    color: inherit;
+    transition: opacity var(--ag-transition-base);
+}
+
+.ag-reportes-comerciales__chip:hover {
+    opacity: 0.8;
+}
+
+.ag-reportes-comerciales__chip .ag-icon {
+    flex-shrink: 0;
+}
+
+.ag-reportes-comerciales__filtros-boton {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-2) var(--ag-space-3);
+    border: 1px solid var(--ag-color-border);
+    border-radius: var(--ag-radius-md);
+    background: transparent;
+    color: var(--ag-color-text);
+    font-size: var(--ag-font-size-sm);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background-color var(--ag-transition-base);
+}
+
+.ag-reportes-comerciales__filtros-boton:hover {
+    background-color: var(--ag-color-bg-elevated);
+}
+
+/* Pestañas */
+.ag-reportes-comerciales__tabs {
+    margin-top: var(--ag-space-4);
+}
+
+/* Grupos de cultivo (contenedor principal de cada cultivo) */
+.ag-reportes-comerciales__grupo-cultivo {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-4);
+    margin-bottom: var(--ag-space-6);
+}
+
+.ag-reportes-comerciales__encabezado-grupo {
+    display: flex;
+    flex-direction: column;
     gap: var(--ag-space-3);
 }
 
+.ag-reportes-comerciales__nombre-cultivo {
+    font-size: var(--ag-font-size-lg);
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-color-text);
+    margin: 0;
+}
+
+/* Barra de avance compacta en el accordion */
+.ag-reportes-comerciales__barra-compacta {
+    flex: 1;
+}
+
+/* Tabla HTML: estilos comunes */
 .ag-reportes-comerciales__tabla {
+    width: 100%;
+    border-collapse: collapse;
     border: 1px solid var(--ag-color-border-card);
     border-radius: var(--ag-radius-md);
-    background-color: var(--ag-color-surface-card);
     overflow: hidden;
+    background-color: var(--ag-color-surface-card);
 }
 
-.ag-reportes-comerciales__head,
-.ag-reportes-comerciales__fila {
-    display: grid;
-    grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr 1fr;
-    gap: var(--ag-space-4);
-    align-items: center;
-    padding: var(--ag-space-3) var(--ag-space-4);
-}
-
-.ag-reportes-comerciales__head {
+.ag-reportes-comerciales__tabla thead {
     background-color: var(--ag-color-bg-table-head);
-    color: var(--ag-color-text-muted);
+}
+
+.ag-reportes-comerciales__tabla th {
+    padding: var(--ag-space-3) var(--ag-space-4);
+    text-align: left;
     font-size: var(--ag-font-size-xs);
     font-weight: var(--ag-font-weight-medium);
+    color: var(--ag-color-text-muted);
     text-transform: uppercase;
     letter-spacing: 0.04em;
 }
 
-.ag-reportes-comerciales__fila {
-    border-top: 1px solid var(--ag-color-border-row);
-    color: var(--ag-color-text);
+.ag-reportes-comerciales__tabla td {
+    padding: var(--ag-space-3) var(--ag-space-4);
     font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text);
+    border-top: 1px solid var(--ag-color-border-row);
 }
 
-.ag-reportes-comerciales__fila:hover {
+.ag-reportes-comerciales__tabla tbody tr:hover {
     background-color: var(--ag-color-bg-row-hover);
 }
 
-.ag-reportes-comerciales__cliente {
-    font-weight: var(--ag-font-weight-medium);
-}
-
-.ag-reportes-comerciales__cifra {
+/* Alineación a derecha para números */
+.ag-reportes-comerciales__celda-numero {
+    text-align: right;
     font-family: var(--ag-font-family-mono);
 }
 
-@media (max-width: 992px) {
-    .ag-reportes-comerciales__head {
-        display: none;
+/* Fila de totales */
+.ag-reportes-comerciales__fila-totales {
+    background-color: var(--ag-color-bg-elevated);
+    font-weight: var(--ag-font-weight-bold);
+}
+
+.ag-reportes-comerciales__fila-totales td {
+    border-top: 2px solid var(--ag-color-border-card);
+}
+
+/* Accordion: contenedor y header. Reasigna las custom properties que
+   Bootstrap usa para el estado expandido/foco (--bs-accordion-active-*,
+   --bs-accordion-btn-focus-box-shadow) — sin esto el header expandido queda
+   con el azul de fábrica de Bootstrap, que no es un token del panel y no
+   reasigna por tema (invariante 11). */
+.ag-reportes-comerciales__accordion {
+    --bs-accordion-active-bg: var(--ag-color-primary-subtle);
+    --bs-accordion-active-color: var(--ag-color-text);
+    --bs-accordion-btn-focus-box-shadow: 0 0 0 0.2rem var(--ag-color-primary-border-subtle);
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+    overflow: hidden;
+}
+
+.ag-reportes-comerciales__accordion .accordion-item {
+    border: none;
+    background: transparent;
+}
+
+.ag-reportes-comerciales__accordion .accordion-item:first-child {
+    border-top: none;
+}
+
+.ag-reportes-comerciales__accordion .accordion-header button {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--ag-space-3);
+    align-items: center;
+    padding: var(--ag-space-3) var(--ag-space-4) !important;
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+}
+
+.ag-reportes-comerciales__accordion .accordion-body {
+    padding: var(--ag-space-4);
+    background-color: var(--ag-color-bg-elevated);
+}
+
+/* Offcanvas: formulario de filtros */
+.ag-reportes-comerciales__form-filtros {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+.ag-reportes-comerciales__filtro-deshabilitado {
+    padding: var(--ag-space-4);
+    background-color: var(--ag-color-bg-elevated);
+    border-radius: var(--ag-radius-md);
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-reportes-comerciales__filtro-deshabilitado p {
+    margin: 0;
+}
+
+.ag-reportes-comerciales__filtros-acciones-offcanvas {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-3);
+    margin-top: var(--ag-space-4);
+    border-top: 1px solid var(--ag-color-border-card);
+    padding-top: var(--ag-space-4);
+}
+
+/* Responsive: tablet (768–1199px) */
+@media (max-width: 1199px) {
+    .ag-reportes-comerciales__selectores {
+        grid-template-columns: 1fr;
     }
 
-    .ag-reportes-comerciales__fila {
-        grid-template-columns: 1fr;
-        gap: var(--ag-space-1);
+    .ag-reportes-comerciales__acciones-entrada {
+        flex-direction: column;
+    }
+
+    .ag-reportes-comerciales__acciones-entrada button,
+    .ag-reportes-comerciales__acciones-entrada a {
+        width: 100%;
     }
 }
+
+/* Responsive: móvil (<768px) */
+@media (max-width: 767px) {
+    .ag-reportes-comerciales__selectores {
+        grid-template-columns: 1fr;
+    }
+
+    .ag-reportes-comerciales__acciones-entrada {
+        flex-direction: column;
+    }
+
+    .ag-reportes-comerciales__acciones-entrada button,
+    .ag-reportes-comerciales__acciones-entrada a {
+        width: 100%;
+    }
+
+    .ag-reportes-comerciales__chips {
+        /* Carrusel horizontal sin wrap en móvil también */
+    }
+
+    .ag-reportes-comerciales__tabla {
+        font-size: var(--ag-font-size-xs);
+    }
+
+    .ag-reportes-comerciales__tabla th,
+    .ag-reportes-comerciales__tabla td {
+        padding: var(--ag-space-2) var(--ag-space-3);
+    }
+
+    .ag-reportes-comerciales__accordion .accordion-header button {
+        padding: var(--ag-space-2) var(--ag-space-3) !important;
+        font-size: var(--ag-font-size-xs);
+    }
+
+    .ag-reportes-comerciales__accordion .accordion-body {
+        padding: var(--ag-space-3);
+    }
+
+    .ag-reportes-comerciales__nombre-cultivo {
+        font-size: var(--ag-font-size-base);
+    }
+}
+
+/* Sin scroll vertical en la página: el contenido está dentro de .ag-panel__content */
+/* que ya maneja el scroll (guia_pantalla_panel.md §4.1) */
