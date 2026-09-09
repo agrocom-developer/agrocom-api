@@ -16,6 +16,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // ADR 0017: en producción beta, el proxy del Proxmox (contenedor 119)
+        // termina HTTPS y reenvía en HTTP plano al contenedor de la app. Sin
+        // esto, Laravel ve todo el tráfico como inseguro y genera URLs/redirects
+        // con http:// aunque el cliente haya entrado por https://. Confiar en
+        // '*' es razonable acá porque hay un único punto de entrada controlado
+        // (ese proxy), no una cadena de proxies arbitraria de Internet.
+        $middleware->trustProxies(at: '*');
+
         // ADR 0004, extensión 27/8/2026: resuelve/revalida el rol activo de
         // la sesión del panel. Alias disponible para que las rutas del panel
         // (fuera de alcance de HU-02 backend, a cargo de `frontend`) lo
