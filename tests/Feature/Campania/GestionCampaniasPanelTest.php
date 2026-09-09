@@ -360,7 +360,7 @@ it('el listado ofrece "Abrir" a una planificada y "Cerrar" a una abierta, solo a
 
 it('publica el ítem de menú de campañas gateado por campania.campania.ver', function () {
     $itemMenu = SecMenu::query()
-        ->where('label', 'menu.seguridad.items.campanias')
+        ->where('label', 'menu.comercial.items.campanias')
         ->sole();
 
     $idPermiso = (int) SecPermission::query()
@@ -369,4 +369,20 @@ it('publica el ítem de menú de campañas gateado por campania.campania.ver', f
 
     expect($itemMenu->ruta)->toBe('panel.campanias.index')
         ->and($itemMenu->permission_id)->toBe($idPermiso);
+});
+
+// La campaña es del cliente, no de Agrocom (ADR 0015 punto 1, corregido el
+// 8/9/2026). El ítem había nacido bajo Seguridad leyéndola como configuración
+// de la operación propia; el 9/9 se movió a Comercial. Se fija acá para que no
+// vuelva sola: es la única compuerta que separa "información del cliente" de
+// "configuración de la casa" en el menú.
+it('cuelga el ítem de campañas de Comercial y no de Seguridad', function () {
+    $comercial = SecMenu::query()->where('label', 'menu.comercial.label')->sole();
+
+    $itemMenu = SecMenu::query()
+        ->where('label', 'menu.comercial.items.campanias')
+        ->sole();
+
+    expect($itemMenu->padre_id)->toBe($comercial->id)
+        ->and(SecMenu::query()->where('label', 'menu.seguridad.items.campanias')->exists())->toBeFalse();
 });

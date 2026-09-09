@@ -37,18 +37,14 @@ return [
 
     'comercial' => [
         'label' => 'Comercial',
-        'descripcion' => 'Clientes, contratos y campos.',
+        'descripcion' => 'Clientes, contratos, propiedades, lotes, cultivos y campañas.',
         'items' => [
             'clientes' => 'Clientes',
             'contratos' => 'Contratos',
-            // Tarea 77 (HU-54): "Campos y lotes" era un solo ítem — el
-            // pedido del dueño (7/9/2026) separa la propiedad de sus lotes,
-            // cada uno con su propia pantalla. "Propiedad" es el rótulo de
-            // negocio para lo que la tabla sigue llamando `com_campos`.
             'propiedades' => 'Propiedades',
             'lotes' => 'Lotes',
-            // HU-48 (tarea 71, ADR 0015 punto 4): catálogo de cultivos.
             'cultivos' => 'Cultivos',
+            'campanias' => 'Campañas',
         ],
     ],
 
@@ -59,14 +55,9 @@ return [
             'drones' => 'Drones',
             'baterias' => 'Baterías',
             'vehiculos' => 'Vehículos',
-            // Tarea 72 (HU-49, ADR 0015 punto 3): catálogo de generadores.
             'generadores' => 'Generadores',
             'bases' => 'Bases',
-            // Tarea 77 (HU-54): pedido del dueño (7/9/2026), "Personas" era
-            // el nombre de la tabla filtrándose a la interfaz.
             'personal' => 'Personal',
-            // Tarea 72 (HU-49, ADR 0015 punto 3): equipos de trabajo — el
-            // piloto y su auxiliar, con el equipamiento asignado.
             'equipos_trabajo' => 'Equipos de trabajo',
         ],
     ],
@@ -114,19 +105,8 @@ return [
             'roles' => 'Roles y permisos',
             'dispositivos' => 'Dispositivos',
             'organizacion' => 'Organización',
-            // HU-20: sin módulo raíz propio en la espec §4 — entra acá, mismo
-            // criterio que "Organización" (pantalla de administración
-            // transversal, ver runs/10-diseno.md).
             'versiones_apk' => 'Versiones del APK',
-            // HU-46 (tarea 69, ADR 0015 punto 1): la campaña como eje
-            // transversal, configuración de toda la operación — mismo
-            // criterio que "Organización" arriba.
-            'campanias' => 'Campañas',
-            // Tarea 78 (HU-55): llaves y tokens de infraestructura, separado
-            // de "Organización" (datos de la empresa). Exclusivo del dueño.
             'configuracion' => 'Configuración del sistema',
-            // Tarea 63 (invariante 9 de CLAUDE.md): quién hizo qué, cuándo y
-            // en qué zona horaria.
             'bitacora' => 'Bitácora',
         ],
     ],

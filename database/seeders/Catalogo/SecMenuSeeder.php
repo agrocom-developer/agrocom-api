@@ -155,6 +155,24 @@ class SecMenuSeeder extends Seeder
         // parte de la siembra original de `sec_menu`, ver docblock de `item()`).
         $this->item($comercial, 'comercial', 'cultivos', 'grass', 5, ruta: 'panel.cultivos.index', codigoPermiso: 'comercial.cultivo.ver');
 
+        // HU-46 (tarea 69, ADR 0015 punto 1) — reubicado el 9/9/2026 por
+        // pedido del dueño, mirando el panel andando. El ítem había nacido
+        // bajo Seguridad leyendo la campaña como "configuración de toda la
+        // operación", y eso contradice el propio ADR corregido el 8/9: la
+        // campaña es del **cliente**. Agrocom es una empresa de servicio —
+        // *"si fuera por nosotros daríamos servicio todo el año, no tuviéramos
+        // que abrir campaña propia"*—: el cliente habilita su campaña, con sus
+        // tiempos de riego y siembra, y recién ahí entra la fumigación. Es
+        // información de cada cliente, así que va con Clientes, Contratos y
+        // Propiedades, no con la configuración de la casa.
+        //
+        // El permiso no cambia (`campania.campania.ver`, módulo `Campania`):
+        // esto es agrupación de layout, no una frontera de módulo — mismo caso
+        // que `vehiculos`, que vive en `Mantenimiento` y se muestra bajo
+        // Recursos (ADR 0011, extensión del 26/8/2026, punto 3).
+        $this->mover('menu.seguridad.items.campanias', 'menu.comercial.items.campanias', $comercial, 6);
+        $this->item($comercial, 'comercial', 'campanias', 'calendar_month', 6, ruta: 'panel.campanias.index', codigoPermiso: 'campania.campania.ver');
+
         // Recursos (§4.2)
         // HU-27 (tarea 36): administración de la flota de drones — activa
         // el ítem que ya estaba sembrado como "botón sin link" (ver
@@ -296,12 +314,10 @@ class SecMenuSeeder extends Seeder
         // HU-20: sin módulo raíz propio en la espec §4 (runs/10-diseno.md) —
         // entra bajo Seguridad, mismo criterio que Organización.
         $this->item($seguridad, 'seguridad', 'versiones_apk', 'system_update', 5, ruta: 'panel.versiones-apk.index', codigoPermiso: 'distribucion.version.autorizar');
-        // HU-46 (tarea 69, ADR 0015 punto 1): la campaña como eje transversal
-        // del sistema. Entra bajo Seguridad, no bajo Comercial (de donde nace
-        // la idea): es configuración de toda la operación — gastos y
-        // combustible se imputan a campaña sin pasar por ningún contrato—,
-        // mismo criterio que Organización arriba.
-        $this->item($seguridad, 'seguridad', 'campanias', 'calendar_month', 6, ruta: 'panel.campanias.index', codigoPermiso: 'campania.campania.ver');
+        // Orden 6 queda vacante a propósito: lo ocupaba "Campañas", que el
+        // 9/9/2026 se movió a Comercial —la campaña es del cliente, ver el
+        // comentario allá—. No se renumeran los ítems que siguen, mismo
+        // criterio que las otras vacantes del menú.
         // Tarea 78 (HU-55): llaves y tokens de infraestructura, exclusivo del
         // dueño — separado a propósito de "Organización" arriba (datos de la
         // empresa). Gateado por `seguridad.configuracion.ver`, que ningún
@@ -346,6 +362,34 @@ class SecMenuSeeder extends Seeder
             ->where('padre_id', $padre->id)
             ->where('label', $labelViejo)
             ->update(['label' => $labelNuevo]);
+    }
+
+    /**
+     * Mueve un ítem YA COLGADO de un módulo a otro, conservando la fila —su
+     * id, su ruta, su permiso y su bitácora— y renombrando la etiqueta al
+     * namespace del módulo nuevo. Distinto de {@see migrar()}, que sube una
+     * raíz suelta (`padre_id` nulo) del catálogo plano viejo: acá el ítem ya
+     * cuelga de un módulo y lo que cambia es de cuál.
+     *
+     * Busca por el label viejo sin filtrar por padre y sale sin hacer nada si
+     * no lo encuentra: en una base ya movida —o recién sembrada— el `item()`
+     * que sigue la resuelve por el label nuevo, así que correr el seeder dos
+     * veces no duplica el ítem ni deja el viejo colgando. Se guarda con
+     * `save()`, no con un `update()` masivo, para que la mutación pase por el
+     * observer de bitácora (invariante 9).
+     */
+    private function mover(string $labelViejo, string $labelNuevo, SecMenu $padre, int $orden): void
+    {
+        $fila = SecMenu::query()->where('label', $labelViejo)->first();
+
+        if ($fila === null) {
+            return;
+        }
+
+        $fila->label = $labelNuevo;
+        $fila->padre_id = $padre->id;
+        $fila->orden = $orden;
+        $fila->save();
     }
 
     private function migrar(string $labelViejo, string $labelNuevo, SecMenu $padre, string $icono, int $orden): void
