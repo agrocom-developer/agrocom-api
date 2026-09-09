@@ -6,13 +6,13 @@
 
     Datos esperados (ver AvancePortalController::index()): $userName, $tema
     (cáscara mínima de AutorizacionPortalCliente::cascara()) más:
-    - $avance (array{contratoId, clienteNombre, hectareasContratadas,
-      hectareasAplicadas, hectareasFacturadas, montoFacturado}|null): ya
-      agregado por ObtenerAvanceComercial (Comercial, HU-32), esta vista no
-      calcula nada. `null` solo si el contrato ni siquiera existe más
-      (borrado lógico) — un contrato sin actas/facturas todavía sigue
-      devolviendo la fila con ceros (ver ObtenerAvanceComercial), así que
-      esto no es el estado "vacío" normal del portal recién estrenado.
+    - $avance (?DatosAvanceComercial, Comercial\Contratos, tarea 68): ya
+      agregado por ObtenerAvanceComercial (Comercial, HU-32) vía
+      LecturaAvanceComercial, esta vista no calcula nada. `null` solo si el
+      contrato ni siquiera existe más (borrado lógico) — un contrato sin
+      actas/facturas todavía sigue devolviendo la fila con ceros (ver
+      ObtenerAvanceComercial), así que esto no es el estado "vacío" normal
+      del portal recién estrenado.
 --}}
 <x-templates.panel-shell :title="__('portal.avance.titulo')" :tema="$tema" :tema-url="route('portal.preferencias.tema')">
     <x-templates.portal-layout :user-name="$userName">
@@ -31,19 +31,19 @@
                     <x-molecules.stat-card
                         :label="__('portal.avance.card_contratadas')"
                         icon="landscape"
-                        :value="__('portal.avance.hectareas_valor', ['cantidad' => number_format((float) $avance['hectareasContratadas'], 2, ',', '.')])"
+                        :value="__('portal.avance.hectareas_valor', ['cantidad' => number_format((float) $avance->hectareasContratadas, 2, ',', '.')])"
                     />
 
                     <x-molecules.stat-card
                         :label="__('portal.avance.card_aplicadas')"
                         icon="flight_takeoff"
-                        :value="__('portal.avance.hectareas_valor', ['cantidad' => number_format((float) $avance['hectareasAplicadas'], 2, ',', '.')])"
+                        :value="__('portal.avance.hectareas_valor', ['cantidad' => number_format((float) $avance->hectareasAplicadas, 2, ',', '.')])"
                     />
 
                     <x-molecules.stat-card
                         :label="__('portal.avance.card_facturado')"
                         icon="receipt_long"
-                        :value="__('portal.avance.monto_valor', ['monto' => number_format((float) $avance['montoFacturado'], 2, ',', '.')])"
+                        :value="__('portal.avance.monto_valor', ['monto' => number_format((float) $avance->montoFacturado, 2, ',', '.')])"
                     />
                 </div>
             @endif

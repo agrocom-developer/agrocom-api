@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Comercial\Infraestructura;
 
+use App\Dominios\Comercial\Contratos\LecturaAvanceComercial;
 use App\Dominios\Comercial\Contratos\LecturaContrato;
 use App\Dominios\Comercial\Contratos\LecturaCultivoLote;
 use App\Dominios\Comercial\Contratos\LecturaLotes;
@@ -27,6 +28,7 @@ final class ComercialServiceProvider extends ServiceProvider
         $this->app->bind(LecturaContrato::class, LecturaContratoEloquent::class);
         $this->app->bind(LecturaPanelComercial::class, LecturaPanelComercialEloquent::class);
         $this->app->bind(LecturaCultivoLote::class, LecturaCultivoLoteEloquent::class);
+        $this->app->bind(LecturaAvanceComercial::class, LecturaAvanceComercialEloquent::class);
     }
 
     public function boot(): void
