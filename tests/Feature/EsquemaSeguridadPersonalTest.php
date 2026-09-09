@@ -84,3 +84,14 @@ it('agrega zona_horaria (IANA, nullable) a sec_user_preferencia y a plt_bitacora
     expect(Schema::hasColumn('sec_user_preferencia', 'zona_horaria'))->toBeTrue()
         ->and(Schema::hasColumn('plt_bitacoras', 'zona_horaria'))->toBeTrue();
 });
+
+/*
+ * 9/9/2026 — "Recordarme" del login: hasta esta migración la casilla existía
+ * en la pantalla pero `sec_user` no tenía dónde guardar el token de sesión
+ * persistente, así que marcarla no hacía nada. Nullable: solo se escribe
+ * cuando alguien la marca.
+ */
+it('agrega remember_token nullable a sec_user', function () {
+    expect(Schema::hasColumn('sec_user', 'remember_token'))->toBeTrue()
+        ->and(Schema::getColumnType('sec_user', 'remember_token'))->toBe('varchar');
+});

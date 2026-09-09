@@ -8,6 +8,7 @@ use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUserRole;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUsuarioInterno;
 use Database\Seeders\Catalogo\SeguridadSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 
 /*
  * HU-02 — POST /login: autenticación del panel por `username` + password
@@ -141,4 +142,54 @@ it('no autentica cuentas de tipo cliente contra el guard interno', function () {
 
     $respuesta->assertStatus(422);
     $this->assertGuest('interno');
+});
+
+/*
+ * "Recordarme" (9/9/2026). La casilla estaba en la pantalla desde HU-02 pero
+ * no llegaba a ningún lado: el fetch de `pages/login.js` no la mandaba, el
+ * controlador no la leía y `SecUser::getRememberTokenName()` devolvía cadena
+ * vacía para que el guard ni buscara la columna — que tampoco existía.
+ *
+ * Lo que se verifica es el efecto real de marcarla: la cookie de "recaller"
+ * de Laravel (la que sobrevive al cierre del navegador; la de sesión no) y
+ * el token en la fila del usuario, que es contra lo que esa cookie se valida
+ * en la próxima visita.
+ */
+it('recuerda la sesión cuando el login llega con remember', function () {
+    $usuario = SecUser::factory()->create(['username' => 'jperez', 'password' => 'Secreta123']);
+    loginAsignarRol($usuario, 'piloto');
+
+    $respuesta = $this->postJson('/login', [
+        'username' => 'jperez',
+        'password' => 'Secreta123',
+        'remember' => true,
+    ]);
+
+    $respuesta->assertOk()->assertCookie(Auth::guard('interno')->getRecallerName());
+
+    expect(SecUser::query()->findOrFail($usuario->id)->remember_token)->not->toBeNull();
+});
+
+it('no recuerda la sesión cuando la casilla no viene marcada', function () {
+    $usuario = SecUser::factory()->create(['username' => 'jperez', 'password' => 'Secreta123']);
+    loginAsignarRol($usuario, 'piloto');
+
+    $respuesta = $this->postJson('/login', [
+        'username' => 'jperez',
+        'password' => 'Secreta123',
+        'remember' => false,
+    ]);
+
+    $respuesta->assertOk()->assertCookieMissing(Auth::guard('interno')->getRecallerName());
+
+    expect(SecUser::query()->findOrFail($usuario->id)->remember_token)->toBeNull();
+});
+
+it('el login funciona igual sin el campo remember (submit sin la casilla)', function () {
+    $usuario = SecUser::factory()->create(['username' => 'jperez', 'password' => 'Secreta123']);
+    loginAsignarRol($usuario, 'piloto');
+
+    $this->postJson('/login', ['username' => 'jperez', 'password' => 'Secreta123'])
+        ->assertOk()
+        ->assertCookieMissing(Auth::guard('interno')->getRecallerName());
 });

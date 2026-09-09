@@ -13,6 +13,17 @@
  *   del cliente no lo responde), cae a `data-ag-login-redirect` del
  *   contenedor ([data-ag-login-form]) o a /panel/dashboard (el default
  *   histórico, para no romper la página de login del panel).
+ *
+ * Dos cosas que el fetch tiene que hacer a mano porque no son un submit
+ * clásico (9/9/2026):
+ * - Mandar la casilla "Recordarme" (`remember`) en el cuerpo: el backend la
+ *   traduce a la cookie de sesión persistente de Laravel.
+ * - Ofrecerle las credenciales al gestor de contraseñas del navegador
+ *   (`navigator.credentials.store`). Con `preventDefault()` + `fetch` no hay
+ *   submit que Chrome/Edge puedan observar, así que sin esto nunca aparece
+ *   el "¿Guardar contraseña?" y el autocompletado del navegador queda vacío
+ *   para siempre. La API es de Chromium (Safari/Firefox no la exponen): todo
+ *   va detrás de un guard y su fallo nunca bloquea el ingreso.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -36,6 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const usernameInput = form.querySelector('input[name="username"]');
         const passwordInput = form.querySelector('input[name="password"]');
+        const rememberInput = form.querySelector('input[name="remember"]');
         const submitBtn = form.querySelector('button[type="submit"]');
         const errorContainer = document.querySelector('[data-ag-login-form] .ag-login-form__error');
 
@@ -63,6 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     username: usernameInput.value,
                     password: passwordInput.value,
                     zona_horaria: zonaHorariaInput?.value || null,
+                    remember: rememberInput?.checked ?? false,
                 }),
             });
 
@@ -78,6 +91,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } else {
                 // Login exitoso
+                await ofrecerCredencialAlNavegador(usernameInput.value, passwordInput.value);
+
                 if (data.requiere_seleccion_rol) {
                     window.location.href = '/panel/seleccionar-rol';
                 } else {
@@ -94,6 +109,31 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
+
+    /**
+     * Le ofrece al gestor de contraseñas del navegador las credenciales que
+     * acaban de funcionar, para que aparezca el "¿Guardar contraseña?" y el
+     * autocompletado tenga algo que ofrecer la próxima vez. Se espera antes
+     * de redirigir: si la navegación arranca primero, el navegador descarta
+     * el pedido.
+     *
+     * Silencioso por diseño — sin la API (Safari, Firefox), con el usuario
+     * negándose, o en un contexto no seguro, el login ya está hecho y no hay
+     * nada que reportar.
+     */
+    async function ofrecerCredencialAlNavegador(username, password) {
+        if (typeof window.PasswordCredential !== 'function' || !navigator.credentials) {
+            return;
+        }
+
+        try {
+            await navigator.credentials.store(
+                new window.PasswordCredential({ id: username, password, name: username })
+            );
+        } catch {
+            // El gestor de contraseñas es un extra: nunca bloquea el ingreso.
+        }
+    }
 
     /**
      * Muestra un mensaje de error en el slot `ag-login-form__error`.

@@ -14,6 +14,10 @@ use Illuminate\Foundation\Http\FormRequest;
  * login-form. Sin regla de IANA acá a propósito — el login nunca falla por
  * esto; quien valida y descarta un valor no reconocido es
  * `FijarZonaHorariaUsuario`, después de autenticar.
+ *
+ * `remember` (opcional): la casilla "Recordarme" del login-form. `boolean`
+ * acepta tanto el `true`/`false` del JSON que manda `pages/login.js` como el
+ * `"1"` de un submit clásico de formulario; ausente equivale a no marcada.
  */
 class IniciarSesionRequest extends FormRequest
 {
@@ -29,6 +33,7 @@ class IniciarSesionRequest extends FormRequest
             'username' => ['required', 'string'],
             'password' => ['required', 'string'],
             'zona_horaria' => ['nullable', 'string'],
+            'remember' => ['nullable', 'boolean'],
         ];
     }
 }
