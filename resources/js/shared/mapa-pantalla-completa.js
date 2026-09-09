@@ -10,8 +10,10 @@
  * solo cambia qué hay adentro del contenedor.
  *
  * El llamador conserva el polígono/zoom en curso porque este módulo nunca
- * recrea el mapa: solo cambia el tamaño de su contenedor y llama a
- * `invalidateSize()`, que Leaflet resuelve manteniendo el centro geográfico.
+ * recrea el mapa: solo cambia el tamaño de su contenedor y avisa por
+ * `alRedimensionar`, para que cada proveedor recalcule su tamaño a su manera
+ * (Leaflet: `invalidateSize()`; Google Maps: `google.maps.event.trigger(mapa,
+ * 'resize')`) manteniendo el centro geográfico.
  */
 
 const CLASE_RESPALDO = 'ag-mapa--pantalla-completa-respaldo';
@@ -19,7 +21,7 @@ const CLASE_RESPALDO = 'ag-mapa--pantalla-completa-respaldo';
 /**
  * @param {object} opciones
  * @param {HTMLElement} opciones.contenedor - elemento que pasa a pantalla completa.
- * @param {import('leaflet').Map} opciones.mapa - instancia Leaflet dentro del contenedor.
+ * @param {() => void} opciones.alRedimensionar - recalcula el tamaño del mapa (propio de cada proveedor).
  * @param {HTMLElement} opciones.boton - botón que alterna el estado.
  * @param {HTMLElement|null} [opciones.iconoBoton] - ícono Material Symbols dentro de `boton`, si se quiere alternar el glifo.
  * @param {string} opciones.etiquetaEntrar - texto de `title`/`aria-label` cuando la acción ES entrar.
@@ -28,7 +30,7 @@ const CLASE_RESPALDO = 'ag-mapa--pantalla-completa-respaldo';
  */
 export function activarPantallaCompleta({
     contenedor,
-    mapa,
+    alRedimensionar,
     boton,
     iconoBoton = null,
     etiquetaEntrar,
@@ -49,8 +51,8 @@ export function activarPantallaCompleta({
         }
 
         // El contenedor recién cambió de tamaño (CSS de pantalla completa o
-        // fullscreenchange del navegador): Leaflet no lo nota solo.
-        requestAnimationFrame(() => mapa.invalidateSize());
+        // fullscreenchange del navegador): ningún proveedor lo nota solo.
+        requestAnimationFrame(alRedimensionar);
 
         alCambiar?.(activo);
     };

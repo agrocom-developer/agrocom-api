@@ -41,6 +41,17 @@
     $idBase = str_replace(['[', ']'], ['-', ''], $prefijo);
     $mostrarQuitar ??= true;
 @endphp
+{{--
+    $proveedorMapa (array{proveedor: 'google'|'leaflet', googleMapsApiKey: ?string}):
+    resuelto por ResolverProveedorMapa (Comercial/Aplicacion), que a su vez
+    consulta LecturaConfiguracion (Compartido, tarea 78). SIEMPRE llega desde
+    afuera vía el scope compartido de @include — CamposController y
+    LotesController lo agregan a `create`/`edit`. La llave solo se imprime
+    cuando el proveedor elegido es Google: es lo que evita que
+    `google_maps_api_key` viaje al HTML de un formulario que va a usar
+    Leaflet igual (tarea 79).
+--}}
+@php $esGoogle = ($proveedorMapa['proveedor'] ?? 'leaflet') === 'google'; @endphp
 <div class="ag-campos-form__lote" data-ag-lote-fila>
     @if (! empty($lote['id']))
         <input type="hidden" name="{{ $prefijo }}[id]" value="{{ $lote['id'] }}">
@@ -64,7 +75,14 @@
         required
     />
 
-    <div class="ag-input ag-form-section__field--full ag-lote-mapa" data-ag-lote-mapa>
+    <div
+        class="ag-input ag-form-section__field--full ag-lote-mapa"
+        data-ag-lote-mapa
+        data-ag-lote-mapa-proveedor="{{ $esGoogle ? 'google' : 'leaflet' }}"
+        @if ($esGoogle)
+            data-ag-lote-mapa-google-key="{{ $proveedorMapa['googleMapsApiKey'] }}"
+        @endif
+    >
         <span class="ag-input__label">{{ __('comercial.campos.lote_geometria') }}</span>
 
         {{-- El valor real. Lo escribe el editor; queda en el DOM aunque el
