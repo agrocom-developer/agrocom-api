@@ -302,6 +302,12 @@ class SecMenuSeeder extends Seeder
         // combustible se imputan a campaña sin pasar por ningún contrato—,
         // mismo criterio que Organización arriba.
         $this->item($seguridad, 'seguridad', 'campanias', 'calendar_month', 6, ruta: 'panel.campanias.index', codigoPermiso: 'campania.campania.ver');
+        // Tarea 78 (HU-55): llaves y tokens de infraestructura, exclusivo del
+        // dueño — separado a propósito de "Organización" arriba (datos de la
+        // empresa). Gateado por `seguridad.configuracion.ver`, que ningún
+        // otro rol recibe (ver `SeguridadSeeder`), así que el ítem solo es
+        // visible para `dueno`.
+        $this->item($seguridad, 'seguridad', 'configuracion', 'tune', 7, ruta: 'panel.configuracion.index', codigoPermiso: 'seguridad.configuracion.ver');
     }
 
     private function modulo(string $clave, string $icono, int $orden): SecMenu

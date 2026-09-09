@@ -374,9 +374,19 @@ return [
         'tabs_aria' => 'Secciones de organización',
         'tab_organizacion' => 'Organización',
         'tab_facturacion' => 'Facturación',
-        'tab_proximamente' => 'Próximamente.',
 
         'campos_contador' => ':cantidad campos',
+
+        // Pestaña Facturación (tarea 78, HU-55): datos fiscales REALES, no mock.
+        'seccion_facturacion' => 'Datos fiscales',
+        'campo_razon_social_fiscal' => 'Razón social fiscal',
+        'campo_nit' => 'NIT',
+        'campo_domicilio_fiscal' => 'Domicilio fiscal',
+        'campo_actividad_economica' => 'Actividad económica',
+        'campo_leyenda_pie' => 'Leyenda al pie de la factura',
+        'campo_leyenda_pie_ayuda' => 'Texto legal o comercial que se imprime al pie del documento de factura.',
+        'facturacion_estado' => 'Se usa al emitir el PDF de factura cuando ese punto de consumo exista.',
+        'facturacion_guardada' => 'Datos fiscales actualizados.',
 
         'seccion_datos_empresa' => 'Datos de empresa',
         'campo_nombre' => 'Nombre de empresa',
