@@ -39,6 +39,16 @@
       grupo de checkboxes — si la pantalla lo exige, se valida en el
       backend (regla `required` de Laravel sobre el array), este átomo solo
       expone `aria-required` a nivel de grupo.
+    - extraPorOpcion (array, default []): `valor => HTML ya armado` (string,
+      típicamente `view(...)->render()` del llamador), inyectado dentro del
+      `<li>` de esa opción, después de la etiqueta. Pensado para un control
+      asociado a la opción marcada (p. ej. la cantidad de la tarea 80,
+      repuestos por casillas) — el átomo no sabe qué es ese contenido ni
+      cuándo mostrarse/ocultarse: mostrarlo (CSS `:has(:checked)` o JS del
+      llamador) y habilitar sus campos (`disabled` cuando la casilla está
+      sin marcar, para que no viajen en el POST) es responsabilidad de quien
+      lo pasa, no de este átomo. Sigue "sin lógica de negocio": es una bolsa
+      de HTML opaca, indexada por el mismo valor que ya usa `options`.
 
     Búsqueda automática: con más de 8 opciones aparece el filtro de texto
     (substring, sin distinguir mayúsculas ni tildes) dentro del propio
@@ -61,6 +71,7 @@
     'help' => null,
     'required' => false,
     'disabled' => false,
+    'extraPorOpcion' => [],
 ])
 
 @php
@@ -136,6 +147,12 @@
 
                     <span class="ag-checkbox-group__option-label">{{ $optLabel }}</span>
                 </label>
+
+                @if (isset($extraPorOpcion[$optValue]))
+                    <div class="ag-checkbox-group__option-extra" data-ag-checkbox-group-option-extra>
+                        {!! $extraPorOpcion[$optValue] !!}
+                    </div>
+                @endif
             </li>
         @endforeach
     </ul>

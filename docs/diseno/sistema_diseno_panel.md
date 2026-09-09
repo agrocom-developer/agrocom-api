@@ -1332,3 +1332,48 @@ de que existiera `checkbox-group`). Es exactamente el caso de uso para el que
 se dimensionó `checkbox-group` (elegir varios roles de una lista): se migró
 igual, aunque no estuviera en la lista original, porque dejarlo habría sido
 el único `<select>` real sobreviviente en todo el panel.
+
+## 17. Tarea 80 (9/9/2026, HU-57) — `checkbox-group` gana `extraPorOpcion`: contenido por opción
+
+El pedido del dueño sobre `/panel/ordenes-mantenimiento/{id}/editar` ("otro
+modelo de selección por casillas y no tanto de select en los repuestos") no
+alcanzaba con `checkbox-group` tal como quedó en la tarea 76: elegir varios
+repuestos es lo que ya resolvía, pero cada uno necesita ADEMÁS su propio
+campo de cantidad al lado, visible solo cuando esa casilla está marcada — el
+átomo no tenía forma de inyectar nada dentro del `<li>` de una opción
+puntual.
+
+En vez de un componente nuevo para la pantalla (explícitamente prohibido por
+el prompt de la tarea), se extendió el átomo con un prop genérico:
+
+```blade
+<x-atoms.checkbox-group
+    name="repuestos_marcados"
+    :options="$repuestosDisponibles"
+    :extra-por-opcion="$extraPorRepuesto"
+/>
+```
+
+`extraPorOpcion` es `valor => HTML ya armado` (típicamente
+`view(...)->render()` del llamador) — el átomo lo inyecta después de la
+etiqueta de esa opción, dentro de su `<li>`, sin saber qué es ni cuándo debe
+mostrarse. Sigue "sin lógica de negocio": es una bolsa de HTML opaca,
+indexada por el mismo valor que ya usa `options`. Quien la pasa es
+responsable de:
+
+- **Mostrarla**: pura CSS, `.ag-checkbox-group__item:has(.ag-checkbox-group__input:checked)
+  .ag-checkbox-group__option-extra { display: block; }` — no hace falta JS
+  para el reveal en sí, es instantáneo incluso si el JS de la página no
+  cargó todavía.
+- **Que sus campos no viajen en el POST estando ocultos**: eso sí es JS
+  (`disabled` en el `change` de la casilla hermana) — a diferencia del
+  reveal visual, esto no tiene equivalente en CSS puro.
+
+Consumidor: el selector de repuestos por casillas de `ordenes/edit.blade.php`
+(ver `_repuesto-campos.blade.php` y `resources/js/pages/
+ordenes-mantenimiento-form.js`) — cantidad, disponibilidad de stock y un
+override de base opcional por línea, todo colgando de la misma casilla.
+Ningún consumidor existente de `checkbox-group` (roles de
+`usuarios/_formulario.blade.php`, §16.5) pasa `extraPorOpcion`, así que su
+`isset()` siempre da falso para ellos: comportamiento idéntico al de antes
+de esta tarea.
