@@ -135,7 +135,7 @@
     <x-molecules.form-section
         :title="__('seguridad.usuarios.seccion_interno')"
         data-ag-usuario-seccion-interno
-        @if ($esCliente) hidden @endif
+        :hidden="$esCliente"
     >
         <x-atoms.select
             name="persona_id"
@@ -164,7 +164,7 @@
     <x-molecules.form-section
         :title="__('seguridad.usuarios.seccion_portal')"
         data-ag-usuario-seccion-cliente
-        @if (! $esCliente) hidden @endif
+        :hidden="! $esCliente"
     >
         <x-atoms.select
             name="cliente_id"
