@@ -21,6 +21,7 @@ dataset('tablas de Personal y Seguridad', [
     'sec_role_permission',
     'sec_user_preferencia',
     'sec_token_dispositivo',
+    'sec_datos_fiscales',
 ]);
 
 it('crea la tabla con soft delete y columnas de auditoría', function (string $tabla) {

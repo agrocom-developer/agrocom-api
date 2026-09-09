@@ -1,8 +1,17 @@
 {{--
     Page: organizacion/index (GET /panel/organizacion, panel.organizacion.index)
-    Mockup visual de "Registro de la compañía" — vista previa de una pantalla de
-    gestión de organización multi-tenant futura (SIN implementación real de tenancy,
-    sin tabla, sin persistencia). Prellenada con datos realistas para demostración.
+    Pestaña "Organización": mockup visual de "Registro de la compañía" — vista previa
+    de una pantalla de gestión de organización multi-tenant futura (SIN implementación
+    real de tenancy, sin tabla, sin persistencia). Prellenada con datos realistas para
+    demostración. Botones "Guardar"/"Descartar" deshabilitados, estado fijo "Sin cambios
+    pendientes" (nada de esta pestaña es editable).
+
+    Pestaña "Facturación" (tarea 78, HU-55): REAL. Formulario propio, con su propio botón
+    "Guardar", que persiste en `sec_datos_fiscales` vía
+    `OrganizacionController::actualizarFacturacion()`. Gateada por
+    `seguridad.organizacion.editar` ($puedeEditarFacturacion) — sin ese permiso, los
+    campos se muestran deshabilitados y sin barra de acciones, mismo criterio que el
+    resto del panel (ver vs. editar).
 
     Reconstruida sobre el arquetipo formulario (tarea 31): es el caso de prueba de
     `organisms/page-header`, `molecules/tabs`, `molecules/form-section` evolucionado
@@ -11,17 +20,14 @@
     docs/diseno/guia_pantalla_panel.md §6.3.
 
     Datos esperados (ver OrganizacionController::index()): la cáscara completa de
-    CascaraPanel (menu/roles/…/tema/campaniaActiva/periodo/version) + tabs/progreso/suscripcion/logoArchivo.
+    CascaraPanel (menu/roles/…/tema/campaniaActiva/periodo/version) + tabs/progreso/
+    suscripcion/logoArchivo/tabActiva/datosFiscales/puedeEditarFacturacion.
 
     NO tiene pestaña de "Usuarios y roles": usuarios internos y la asignación de
     sus roles ya son una pantalla REAL y propia — Seguridad › Usuarios
     (`panel.usuarios.index`, HU-45), con la columna de roles en chips y el alta/baja
     de asignaciones. Duplicar esa gestión adentro de un mockup de organización
     dejaba dos puertas a lo mismo, y la de acá no mostraba nada.
-
-    Este es un mockup de PRESENTACIÓN sin guardado funcional. Los botones "Guardar"/
-    "Descartar" están deshabilitados, y el estado de la barra de acciones dice
-    "Sin cambios pendientes" (nada es editable).
 --}}
 <x-templates.panel-shell :title="__('seguridad.organizacion.titulo')" :tema="$tema">
     <x-templates.panel-layout
@@ -52,14 +58,22 @@
                 </x-slot:actions>
             </x-organisms.page-header>
 
-            <x-molecules.alert-strip variant="info" icon="visibility">
-                {{ __('seguridad.organizacion.alerta_vista_previa') }}
-            </x-molecules.alert-strip>
+            @if ($tabActiva === 'organizacion')
+                <x-molecules.alert-strip variant="info" icon="visibility">
+                    {{ __('seguridad.organizacion.alerta_vista_previa') }}
+                </x-molecules.alert-strip>
+            @endif
+
+            @if (session('estado'))
+                <x-molecules.alert-strip variant="success" icon="check_circle">
+                    {{ session('estado') }}
+                </x-molecules.alert-strip>
+            @endif
 
             <x-molecules.tabs :items="$tabs" :aria-label="__('seguridad.organizacion.tabs_aria')" />
 
             <div class="tab-content ag-organizacion__panes">
-                <div class="tab-pane fade show active" id="ag-tab-organizacion" role="tabpanel" tabindex="0">
+                <div class="tab-pane fade {{ $tabActiva === 'organizacion' ? 'show active' : '' }}" id="ag-tab-organizacion" role="tabpanel" tabindex="0">
                     <form class="ag-organizacion__form" onsubmit="return false">
                         <div class="ag-organizacion__layout">
                             <div class="ag-organizacion__main">
@@ -218,8 +232,79 @@
                     </form>
                 </div>
 
-                <div class="tab-pane fade" id="ag-tab-facturacion" role="tabpanel" tabindex="0">
-                    <p class="ag-organizacion__proximamente">{{ __('seguridad.organizacion.tab_proximamente') }}</p>
+                <div class="tab-pane fade {{ $tabActiva === 'facturacion' ? 'show active' : '' }}" id="ag-tab-facturacion" role="tabpanel" tabindex="0">
+                    <form
+                        class="ag-organizacion__form"
+                        method="POST"
+                        action="{{ route('panel.organizacion.facturacion.actualizar') }}"
+                    >
+                        @csrf
+                        <x-molecules.form-section
+                            :title="__('seguridad.organizacion.seccion_facturacion')"
+                            :count="__('seguridad.organizacion.campos_contador', ['cantidad' => 5])"
+                        >
+                            <x-atoms.input
+                                type="text"
+                                name="razon_social_fiscal"
+                                label="{{ __('seguridad.organizacion.campo_razon_social_fiscal') }}"
+                                value="{{ old('razon_social_fiscal', $datosFiscales?->razon_social_fiscal) }}"
+                                error="{{ $errors->first('razon_social_fiscal') }}"
+                                required
+                                :disabled="! $puedeEditarFacturacion"
+                            />
+
+                            <x-atoms.input
+                                type="text"
+                                name="nit"
+                                label="{{ __('seguridad.organizacion.campo_nit') }}"
+                                value="{{ old('nit', $datosFiscales?->nit) }}"
+                                error="{{ $errors->first('nit') }}"
+                                required
+                                :disabled="! $puedeEditarFacturacion"
+                            />
+
+                            <x-atoms.input
+                                class="ag-form-section__field--full"
+                                type="text"
+                                name="domicilio_fiscal"
+                                label="{{ __('seguridad.organizacion.campo_domicilio_fiscal') }}"
+                                value="{{ old('domicilio_fiscal', $datosFiscales?->domicilio_fiscal) }}"
+                                error="{{ $errors->first('domicilio_fiscal') }}"
+                                required
+                                :disabled="! $puedeEditarFacturacion"
+                            />
+
+                            <x-atoms.input
+                                class="ag-form-section__field--full"
+                                type="text"
+                                name="actividad_economica"
+                                label="{{ __('seguridad.organizacion.campo_actividad_economica') }}"
+                                value="{{ old('actividad_economica', $datosFiscales?->actividad_economica) }}"
+                                error="{{ $errors->first('actividad_economica') }}"
+                                required
+                                :disabled="! $puedeEditarFacturacion"
+                            />
+
+                            <x-atoms.textarea
+                                class="ag-form-section__field--full"
+                                name="leyenda_pie"
+                                label="{{ __('seguridad.organizacion.campo_leyenda_pie') }}"
+                                value="{{ old('leyenda_pie', $datosFiscales?->leyenda_pie) }}"
+                                help="{{ __('seguridad.organizacion.campo_leyenda_pie_ayuda') }}"
+                                :disabled="! $puedeEditarFacturacion"
+                            />
+                        </x-molecules.form-section>
+
+                        @if ($puedeEditarFacturacion)
+                            <x-organisms.form-actions-bar :status="__('seguridad.organizacion.facturacion_estado')">
+                                <x-slot:actions>
+                                    <x-atoms.button type="submit" variant="primary">
+                                        {{ __('ui.action.save') }}
+                                    </x-atoms.button>
+                                </x-slot:actions>
+                            </x-organisms.form-actions-bar>
+                        @endif
+                    </form>
                 </div>
             </div>
 
