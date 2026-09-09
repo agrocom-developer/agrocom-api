@@ -35,6 +35,11 @@ use Illuminate\Validation\Rule;
  * interno que no pertenece a ninguna campaña. Solo valida que exista entre
  * filas activas: que no esté `cerrada` es una guarda de negocio y vive en
  * `Aplicacion/CrearGasto`, mismo criterio que `campania_id` en contratos.
+ *
+ * `equipo_trabajo_id` (tarea 73, HU-50) es OPCIONAL, mismo criterio de
+ * "solo valida que exista" que `base_id`/`trabajo_id`/`campania_id` — es el
+ * camino PRINCIPAL de imputación (el formulario lo ofrece primero), sin
+ * guarda de negocio adicional.
  */
 final class CrearGastoRequest extends FormRequest
 {
@@ -47,6 +52,7 @@ final class CrearGastoRequest extends FormRequest
             'subrubro_id' => ['nullable', 'integer', Rule::exists('fin_subrubros', 'id')->whereNull('deleted_at')],
             'cantidad' => ['required', 'numeric', 'gt:0'],
             'precio_unitario' => ['required', 'numeric', 'gt:0'],
+            'equipo_trabajo_id' => ['nullable', 'integer', Rule::exists('per_equipos_trabajo', 'id')->whereNull('deleted_at')],
             'base_id' => ['nullable', 'integer', Rule::exists('per_bases', 'id')->whereNull('deleted_at')],
             'trabajo_id' => ['nullable', 'integer', Rule::exists('ope_trabajos', 'id')->whereNull('deleted_at')],
             'campania_id' => ['nullable', 'integer', Rule::exists('cpn_campanias', 'id')->whereNull('deleted_at')],

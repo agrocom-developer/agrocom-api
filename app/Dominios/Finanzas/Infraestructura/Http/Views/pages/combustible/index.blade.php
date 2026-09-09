@@ -10,9 +10,20 @@
     CascaraPanel, más:
     - $combustibles (LengthAwarePaginator<Combustible>): fecha descendente.
     - $etiquetasBase (array<int, string>): id => nombre.
-    - $basesDisponibles (Collection<int, string>): para el <select> de filtro.
-    - $filtros (array{base_id, desde, hasta}): valores aplicados, para dejar
-      los campos con el valor tras el submit.
+    - $etiquetasRecurso (array<string, string>): clave compuesta
+      `"{tipo}:{id}"` => etiqueta, acotada a la página actual (tarea 73,
+      mismo criterio que `GastosController::etiquetasTrabajo()`).
+    - $basesDisponibles / $equiposDisponibles / $campaniasDisponibles
+      (Collection<int, string>): para los <select> de filtro.
+      `$campaniasDisponibles` NO se filtra por estado (a diferencia de la
+      del formulario de alta): una campaña `cerrada` sigue teniendo
+      historial de combustible que filtrar.
+    - $filtros (array{base_id, desde, hasta, equipo_trabajo_id,
+      campania_id}): valores aplicados, para dejar los campos con el valor
+      tras el submit.
+    - $total (string|null): suma (`Brick\Math\BigDecimal`, nunca `SUM()` de
+      SQL) del combustible filtrado — solo se calcula/muestra cuando hay un
+      equipo elegido (tarea 73, punto 5: "un total por equipo").
     - $puedeEliminar (bool): gatea el botón "Eliminar" por fila.
 
     Gateada por `finanzas.combustible.ver`, verificado server-side en el
@@ -67,6 +78,24 @@
                     placeholder="{{ __('finanzas.combustible.filtro_base_placeholder') }}"
                 />
 
+                <x-atoms.select
+                    name="equipo_trabajo_id"
+                    id="filtro-equipo"
+                    label="{{ __('finanzas.combustible.filtro_equipo') }}"
+                    :options="$equiposDisponibles"
+                    :value="(string) $filtros['equipo_trabajo_id']"
+                    placeholder="{{ __('finanzas.combustible.filtro_equipo_placeholder') }}"
+                />
+
+                <x-atoms.select
+                    name="campania_id"
+                    id="filtro-campania"
+                    label="{{ __('finanzas.combustible.filtro_campania') }}"
+                    :options="$campaniasDisponibles"
+                    :value="(string) $filtros['campania_id']"
+                    placeholder="{{ __('finanzas.combustible.filtro_campania_placeholder') }}"
+                />
+
                 <x-atoms.date
                     name="desde"
                     id="filtro-desde"
@@ -86,7 +115,7 @@
                         {{ __('finanzas.combustible.filtrar') }}
                     </x-atoms.button>
 
-                    @if ($filtros['base_id'] !== null || $filtros['desde'] !== '' || $filtros['hasta'] !== '')
+                    @if ($filtros['base_id'] !== null || $filtros['desde'] !== '' || $filtros['hasta'] !== '' || $filtros['equipo_trabajo_id'] !== null || $filtros['campania_id'] !== null)
                         <x-atoms.button href="{{ route('panel.combustible.index') }}" variant="text" size="md">
                             {{ __('finanzas.combustible.limpiar_filtro') }}
                         </x-atoms.button>
@@ -94,16 +123,22 @@
                 </div>
             </form>
 
+            @if ($total !== null)
+                <x-molecules.alert-strip variant="info" icon="functions" class="ag-combustible__aviso">
+                    {{ __('finanzas.combustible.total_equipo', ['monto' => $total]) }}
+                </x-molecules.alert-strip>
+            @endif
+
             @if ($combustibles->isEmpty())
                 <x-molecules.alert-strip variant="info" icon="local_gas_station" class="ag-combustible__aviso">
-                    {{ __(($filtros['base_id'] !== null || $filtros['desde'] !== '' || $filtros['hasta'] !== '') ? 'finanzas.combustible.filtro_vacio' : 'finanzas.combustible.vacio') }}
+                    {{ __(($filtros['base_id'] !== null || $filtros['desde'] !== '' || $filtros['hasta'] !== '' || $filtros['equipo_trabajo_id'] !== null || $filtros['campania_id'] !== null) ? 'finanzas.combustible.filtro_vacio' : 'finanzas.combustible.vacio') }}
                 </x-molecules.alert-strip>
             @else
                 <div class="ag-combustible__tabla" role="table">
                     <div class="ag-combustible__head" role="row">
                         <span role="columnheader">{{ __('finanzas.combustible.col_fecha') }}</span>
                         <span role="columnheader">{{ __('finanzas.combustible.col_base') }}</span>
-                        <span role="columnheader">{{ __('finanzas.combustible.col_destino') }}</span>
+                        <span role="columnheader">{{ __('finanzas.combustible.col_recurso') }}</span>
                         <span role="columnheader">{{ __('finanzas.combustible.col_litros') }}</span>
                         <span role="columnheader">{{ __('finanzas.combustible.col_monto') }}</span>
                         <span role="columnheader" aria-hidden="true"></span>
@@ -113,7 +148,7 @@
                         <div class="ag-combustible__fila" role="row">
                             <span role="cell" class="ag-combustible__cifra">{{ $combustible->fecha->format('d/m/Y') }}</span>
                             <span role="cell">{{ $etiquetasBase[$combustible->base_id] ?? "#{$combustible->base_id}" }}</span>
-                            <span role="cell">{{ __('finanzas.combustible.destino.'.$combustible->destino) }}</span>
+                            <span role="cell">{{ $etiquetasRecurso["{$combustible->recurso_tipo}:{$combustible->recurso_id}"] ?? "{$combustible->recurso_tipo} #{$combustible->recurso_id}" }}</span>
                             <span role="cell" class="ag-combustible__cifra">{{ __('finanzas.combustible.litros_valor', ['litros' => $combustible->litros]) }}</span>
                             <span role="cell" class="ag-combustible__cifra">{{ __('finanzas.combustible.monto_valor', ['monto' => $combustible->monto]) }}</span>
 

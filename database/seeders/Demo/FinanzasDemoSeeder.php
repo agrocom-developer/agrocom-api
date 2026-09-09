@@ -14,8 +14,11 @@ use App\Dominios\Finanzas\Infraestructura\Eloquent\Gasto;
 use App\Dominios\Finanzas\Infraestructura\Eloquent\Rendicion;
 use App\Dominios\Finanzas\Infraestructura\Eloquent\Rubro;
 use App\Dominios\Finanzas\Infraestructura\Eloquent\Subrubro;
+use App\Dominios\Mantenimiento\Infraestructura\Eloquent\Generador;
+use App\Dominios\Mantenimiento\Infraestructura\Eloquent\Vehiculo;
 use App\Dominios\Operaciones\Dominio\EstadoActa;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Acta;
+use App\Dominios\Personal\Infraestructura\Eloquent\EquipoTrabajo;
 use App\Dominios\Personal\Infraestructura\Eloquent\PerBase;
 use App\Dominios\Personal\Infraestructura\Eloquent\PerPersona;
 use Brick\Math\BigDecimal;
@@ -84,24 +87,49 @@ class FinanzasDemoSeeder extends Seeder
         $this->facturas($autorId);
     }
 
+    /**
+     * Imputada al equipo y al recurso concreto que la consumió (tarea 73,
+     * HU-50): cada fila usa el equipo/generador/vehículo que
+     * `EquiposTrabajoDemoSeeder` ya sembró para esa misma base — EQ-01 con
+     * GEN-01 en Cuatro Cañadas, EQ-02 con GEN-02/CAM-03 en Pailón —, así que
+     * la imputación es real, no inventada. Sin `EquiposTrabajoDemoSeeder`
+     * (por ejemplo, un test que llama a esta clase suelta) no hay equipo ni
+     * recurso al que atribuirle nada, y la carga se saltea entera.
+     */
     private function combustible(int $cuatroCanadas, int $pailon, int $autorId): void
     {
+        $equipos = EquipoTrabajo::query()->pluck('id', 'codigo')->all();
+        $generadores = Generador::query()->pluck('id', 'identificador')->all();
+        $vehiculos = Vehiculo::query()->pluck('id', 'identificador')->all();
+
+        if ($equipos === [] || $generadores === [] || $vehiculos === []) {
+            return;
+        }
+
         // Diésel del generador que alimenta las cargadoras de batería en
-        // campo, y gasolina de los vehículos: los dos destinos del catálogo.
+        // campo, y gasolina de los vehículos: los dos recursos del catálogo.
         $catalogo = [
-            ['2026-08-01', $cuatroCanadas, 'generador', '40.00', '148.00', 'Diésel para el generador en el cabecero del L-12.'],
-            ['2026-08-04', $pailon, 'generador', '55.00', '203.50', 'Diésel para la jornada en El Carmen L-03.'],
-            ['2026-08-07', $pailon, 'vehiculo', '60.00', '222.00', 'Carga de CAM-03 antes de la salida a El Carmen.'],
-            ['2026-08-13', $cuatroCanadas, 'generador', '48.00', '177.60', 'Diésel para la jornada larga en San Marcos.'],
-            ['2026-08-19', $pailon, 'vehiculo', '58.00', '214.60', 'Carga de CAM-03, viaje a El Carmen L-08.'],
-            ['2026-08-22', $cuatroCanadas, 'generador', '22.00', '81.40', 'Diésel del generador; jornada corta por falla del AG-09.'],
+            ['2026-08-01', $cuatroCanadas, 'EQ-01', 'generador', 'GEN-01', '40.00', '148.00', 'Diésel para el generador en el cabecero del L-12.'],
+            ['2026-08-04', $pailon, 'EQ-02', 'generador', 'GEN-02', '55.00', '203.50', 'Diésel para la jornada en El Carmen L-03.'],
+            ['2026-08-07', $pailon, 'EQ-02', 'vehiculo', 'CAM-03', '60.00', '222.00', 'Carga de CAM-03 antes de la salida a El Carmen.'],
+            ['2026-08-13', $cuatroCanadas, 'EQ-01', 'generador', 'GEN-01', '48.00', '177.60', 'Diésel para la jornada larga en San Marcos.'],
+            ['2026-08-19', $pailon, 'EQ-02', 'vehiculo', 'CAM-03', '58.00', '214.60', 'Carga de CAM-03, viaje a El Carmen L-08.'],
+            ['2026-08-22', $cuatroCanadas, 'EQ-01', 'generador', 'GEN-01', '22.00', '81.40', 'Diésel del generador; jornada corta por falla del AG-09.'],
         ];
 
-        foreach ($catalogo as [$fecha, $baseId, $destino, $litros, $monto, $descripcion]) {
+        foreach ($catalogo as [$fecha, $baseId, $codigoEquipo, $recursoTipo, $identificadorRecurso, $litros, $monto, $descripcion]) {
+            $recursoId = $recursoTipo === 'generador' ? ($generadores[$identificadorRecurso] ?? null) : ($vehiculos[$identificadorRecurso] ?? null);
+
+            if (($equipos[$codigoEquipo] ?? null) === null || $recursoId === null) {
+                continue;
+            }
+
             $this->crear(new Combustible([
                 'fecha' => $fecha,
                 'base_id' => $baseId,
-                'destino' => $destino,
+                'equipo_trabajo_id' => $equipos[$codigoEquipo],
+                'recurso_tipo' => $recursoTipo,
+                'recurso_id' => $recursoId,
                 'litros' => $litros,
                 'monto' => $monto,
                 'descripcion' => $descripcion,

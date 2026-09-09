@@ -39,6 +39,12 @@ use Illuminate\Support\Facades\Storage;
  * `Comercial\Aplicacion\CrearContrato`, leyendo vía
  * `Campania\Contratos\LecturaCampania`, ADR 0003 regla 2 — corrección de
  * arquitectura del 8/9/2026).
+ *
+ * `equipoTrabajoId` (tarea 73, HU-50) es OPCIONAL — el gasto general (sin
+ * trabajo, sin base, sin equipo) sigue existiendo — FK plana a
+ * `per_equipos_trabajo` (ADR 0003 regla 3), sin guarda adicional de negocio:
+ * a diferencia del recurso de `CrearCombustible`, acá no hay "recurso que
+ * tiene que pertenecer al equipo a esa fecha" que validar.
  */
 final class CrearGasto
 {
@@ -54,6 +60,7 @@ final class CrearGasto
         ?int $trabajoId,
         ?int $campaniaId,
         ?UploadedFile $comprobante,
+        ?int $equipoTrabajoId = null,
     ): Gasto {
         $this->verificarCampania($campaniaId);
 
@@ -71,6 +78,7 @@ final class CrearGasto
             'base_id' => $baseId,
             'trabajo_id' => $trabajoId,
             'campania_id' => $campaniaId,
+            'equipo_trabajo_id' => $equipoTrabajoId,
         ]);
 
         if ($comprobante !== null) {
