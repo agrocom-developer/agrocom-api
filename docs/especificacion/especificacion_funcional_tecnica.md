@@ -343,7 +343,7 @@ POST   /api/mantenimiento/ordenes     Abrir orden de mantenimiento
 POST   /api/mantenimiento/{id}/cerrar Cierra, consume repuestos y genera gasto
 GET    /api/repuestos?base=&bajo_min= Stock y alertas de reposición
 POST   /api/stock/movimientos         Compra, salida, ajuste, traslado
-GET    /api/portal/reportes           Portal cliente (solo su contrato)
+       /portal/*                      Portal cliente: sesión Blade, guard `cliente` (solo su contrato; no es JSON — ADR 0002 punto 6)
 POST   /api/usuarios                  Alta de usuario, roles y base
 GET    /api/reportes/lote/{id}        Reporte técnico
 GET    /api/reportes/aplicacion/{n}   Reporte comercial
