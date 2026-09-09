@@ -155,6 +155,15 @@ Reglas fijas:
 - **El título es `h1` y hay exactamente uno.** Los rótulos de sector son `h2` vía `molecules/section-head`.
 - **Cero texto literal en Blade** — todo por `__('modulo.pantalla.clave')` (ADR 0013).
 
+### 5.1. Estado vacío: dos casos distintos, dos piezas distintas
+
+No es una sola pieza con variantes — son dos situaciones distintas que se leen distinto:
+
+- **La sección tiene datos en general, pero el filtro elegido no trae nada** (p. ej. "sin sesiones de este cliente" habiendo sesiones de otros). Sigue siendo `molecules/alert-strip variant="info"` con ícono, en línea con el resto del contenido — precedente: `comercial::pages.reportes-comerciales.index` ("sin resultados coincidentes"), `personal::pages.personas.desempeno` (sección "Sesiones" filtrada).
+- **La pantalla (o un bloque completo suyo) no tiene NADA que mostrar**, más allá de cualquier filtro — p. ej. un rol recién creado sin permisos, o una persona sin ninguna sesión registrada. Ahí no alcanza un alert-strip: es una tarjeta centrada con ícono grande (`atoms/icon size="lg"`), título (`h2`) y una línea de detalle que explica qué hace falta para que deje de estar vacío. Precedente: `seguridad::pages.dashboard._sin-secciones`, `personal::pages.personas.desempeno` (bloque `.ag-persona-desempeno__vacio`, cuando `$sinDatosEnRango`).
+
+Esta segunda pieza **todavía no es del catálogo** — cada página la arma con su propia clase BEM (`.ag-dash__vacio`, `.ag-persona-desempeno__vacio`), sin `.ag-card` compartida porque esa clase hoy es local a `dashboard.css`. Si una tercera pantalla necesita este patrón, ya son tres repeticiones: se lo pedís a `design-ui` como `molecules/empty-state` (ícono + título + detalle + slot de acción opcional) en vez de copiar la clase una cuarta vez.
+
 ---
 
 ## 6. Los tres arquetipos
