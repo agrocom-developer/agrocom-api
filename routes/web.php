@@ -618,6 +618,14 @@ Route::middleware('auth:interno')->group(function () {
         Route::delete('/panel/personas/{persona}', [PersonasController::class, 'destroy'])
             ->name('panel.personas.destroy');
 
+        // HU-58 (tarea 81): "¿qué hizo esta persona esta campaña?" — ficha
+        // de desempeño por sesión (nunca por equipo de trabajo, ADR 0015
+        // punto 3). Permiso propio `personal.persona.desempenio`, más fino
+        // que `.ver`: es información sensible que no ve cualquiera con
+        // acceso al listado de personas.
+        Route::get('/panel/personas/{persona}/desempeno', [PersonasController::class, 'desempenio'])
+            ->name('panel.personas.desempenio');
+
         // HU-40 (tarea 50): administración de la flota de vehículos, con su
         // asignación a base y estado. Primer ABM del módulo `Mantenimiento`
         // (ADR 0011, extensión 3/9/2026). Sin sub-entidad, mismo molde que

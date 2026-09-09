@@ -6,6 +6,7 @@ use App\Dominios\Personal\Aplicacion\ActualizarPersona;
 use App\Dominios\Personal\Aplicacion\CrearPersona;
 use App\Dominios\Personal\Aplicacion\EliminarPersona;
 use App\Dominios\Personal\Aplicacion\ListarPersonas;
+use App\Dominios\Personal\Aplicacion\ObtenerDesempenioPersona;
 use App\Dominios\Personal\Dominio\RolOperativoPersona;
 use App\Dominios\Personal\Infraestructura\Eloquent\PerBase;
 use App\Dominios\Personal\Infraestructura\Eloquent\PerPersona;
@@ -41,6 +42,8 @@ final class PersonasController
     private const PERMISO_EDITAR = 'personal.persona.editar';
 
     private const PERMISO_ELIMINAR = 'personal.persona.eliminar';
+
+    private const PERMISO_DESEMPENIO = 'personal.persona.desempenio';
 
     public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
 
@@ -128,6 +131,41 @@ final class PersonasController
         return redirect()
             ->route('panel.personas.index')
             ->with('estado', __('personal.personas.eliminado'));
+    }
+
+    /**
+     * Ficha de desempeño (HU-58, tarea 81): "¿qué hizo esta persona esta
+     * campaña?", por sesión y no por equipo de trabajo (ADR 0015 punto 3).
+     * Filtros por `GET` con querystring, mismo criterio que
+     * `EquiposTrabajoController::show()` — rango de fechas (default los
+     * últimos 12 meses) y cliente/campaña, esta última dependiente del
+     * cliente elegido (JS, presentación — el caso de uso ya filtra en
+     * PHP sin importar lo que el navegador haya mostrado u ocultado).
+     */
+    public function desempenio(Request $request, PerPersona $persona, ObtenerDesempenioPersona $obtenerDesempenio): View
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_DESEMPENIO), 403);
+
+        $hastaQuery = $request->string('hasta')->toString();
+        $hasta = $hastaQuery !== '' ? $hastaQuery : now()->toDateString();
+
+        $desdeQuery = $request->string('desde')->toString();
+        $desde = $desdeQuery !== '' ? $desdeQuery : now()->subMonths(12)->toDateString();
+
+        $clienteQuery = $request->string('cliente_id')->toString();
+        $clienteId = $clienteQuery !== '' ? (int) $clienteQuery : null;
+
+        $campaniaQuery = $request->string('campania_id')->toString();
+        $campaniaId = $campaniaQuery !== '' ? (int) $campaniaQuery : null;
+
+        $resultado = $obtenerDesempenio->ejecutar($persona->id, $desde, $hasta, $clienteId, $campaniaId);
+
+        return view('personal::pages.personas.desempeno', [
+            ...$this->autorizacion->cascara($request),
+            'persona' => $persona,
+            'resultado' => $resultado,
+            'filtros' => ['desde' => $desde, 'hasta' => $hasta, 'cliente_id' => $clienteId, 'campania_id' => $campaniaId],
+        ]);
     }
 
     /** @return Collection<int, string> */

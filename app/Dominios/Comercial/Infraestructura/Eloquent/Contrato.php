@@ -27,9 +27,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * (mismo criterio que {@see Cliente}
  * en Finanzas/`DevengoPersonal`).
  *
+ * `campania_id` (ADR 0015 punto 1): obligatorio de negocio, pero el tipo PHP
+ * queda `int|null` porque el `NOT NULL` de la migración solo se aplica en
+ * `pgsql` (`ALTER COLUMN` sin `doctrine/dbal` no es posible en SQLite vía
+ * Blueprint) — en los tests (SQLite) la columna admite `null`.
+ *
  * @property int $id
  * @property int $cliente_id
- * @property int $campania_id
+ * @property int|null $campania_id
  * @property string $hectareas_contratadas
  * @property int $aplicaciones_previstas
  * @property string $precio_ha
