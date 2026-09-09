@@ -116,6 +116,7 @@ final class OrdenesMantenimientoController
             'etiquetaEquipo' => $this->etiquetaEquipo($orden->equipo_tipo, $orden->equipo_id),
             'repuestosDisponibles' => $this->repuestosDisponibles(),
             'basesDisponibles' => $this->basesDisponibles(),
+            'stockPorRepuesto' => $this->stockPorRepuesto(),
             'puedeCerrar' => $this->autorizacion->tienePermiso($request, self::PERMISO_CERRAR),
         ]);
     }
@@ -127,12 +128,17 @@ final class OrdenesMantenimientoController
         /** @var list<array{repuesto_id: mixed, base_id: mixed, cantidad: mixed}> $repuestos */
         $repuestos = $request->validated('repuestos');
 
+        // El formulario nuevo (HU-57, tarea 80) manda `repuestos` keyed por
+        // repuesto_id, no 0..n-1 (así el selector por casillas no necesita
+        // reindexar nada en el cliente) — se reindexa acá antes de tocar la
+        // máquina de estados, que sigue esperando `list<array{...}>`.
         $lineas = collect($repuestos)
             ->map(fn (array $linea): array => [
                 'repuesto_id' => (int) $linea['repuesto_id'],
                 'base_id' => (int) $linea['base_id'],
                 'cantidad' => (string) $linea['cantidad'],
             ])
+            ->values()
             ->all();
 
         try {
@@ -191,6 +197,26 @@ final class OrdenesMantenimientoController
             ->whereNull('deleted_at')
             ->orderBy('nombre')
             ->pluck('nombre', 'id');
+    }
+
+    /**
+     * Disponibilidad por repuesto y base, solo para pintarla en el selector
+     * por casillas del cierre (HU-57, tarea 80) — presentación, no la guarda
+     * real: esa sigue viviendo en `EscrituraConsumoStock` dentro de la
+     * transacción de `MaquinaEstadosOrdenMantenimiento::cerrar()`. Lectura
+     * directa de `inv_stock` (ADR 0003 regla 3, mismo criterio que
+     * `repuestosDisponibles()`/`basesDisponibles()` arriba).
+     *
+     * @return array<int, array<int, string>> repuesto_id => [base_id => cantidad]
+     */
+    private function stockPorRepuesto(): array
+    {
+        return DB::table('inv_stock')
+            ->select('repuesto_id', 'base_id', 'cantidad')
+            ->get()
+            ->groupBy('repuesto_id')
+            ->map(fn (Collection $filas): array => $filas->pluck('cantidad', 'base_id')->map(fn ($cantidad): string => (string) $cantidad)->all())
+            ->all();
     }
 
     private function etiquetaEquipo(string $equipoTipo, int $equipoId): string

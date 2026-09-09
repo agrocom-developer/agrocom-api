@@ -16,9 +16,26 @@
       controlador (`DB::table(...)` — OrdenMantenimiento no tiene relación
       Eloquent hacia Dron/Vehiculo).
     - $repuestosDisponibles / $basesDisponibles (Collection<int, string>):
-      opciones de los selects del formulario de cierre.
+      opciones del selector de repuestos y de la base de la orden.
+    - $stockPorRepuesto (array<int, array<int, string>>): `repuesto_id =>
+      [base_id => cantidad]`, solo para pintar la disponibilidad en el
+      cliente (HU-57, tarea 80) — el servidor revalida igual en
+      `MaquinaEstadosOrdenMantenimiento::cerrar()`.
     - $puedeCerrar (bool): gatea el formulario de cierre (presentación, no
       autorización — el servidor revalida en el controlador).
+
+    Selector de repuestos por casillas (HU-57, tarea 80, reemplaza la fila
+    repetible de dos selects de la tarea 53): cada repuesto del catálogo ya
+    tiene su bloque de campos (`_repuesto-campos.blade.php`) inyectado vía
+    `extraPorOpcion` de `x-atoms.checkbox-group` — deshabilitado hasta que se
+    marca la casilla, así que no hace falta "agregar/quitar línea".
+    `resources/js/pages/ordenes-mantenimiento-form.js` habilita esos campos,
+    sincroniza `base_id` con la base global salvo override por línea, calcula
+    la disponibilidad/aviso de stock (presentación — la guarda real sigue en
+    el servidor) y arma el resumen siempre visible. El nombre final de cada
+    campo no cambia: `repuestos[N][repuesto_id|base_id|cantidad]`, con N el
+    id del propio repuesto (array asociativo — el controlador lo reindexa a
+    lista antes de pasarlo a la máquina de estados, que no se toca).
 
     El formulario de cierre solo se pinta si la orden está `Abierta` Y
     `$puedeCerrar` — una orden `Cerrada` no vuelve a mostrarlo (no hay
@@ -33,7 +50,29 @@
     hardcodeado (CLAUDE.md invariante 11).
 --}}
 @php
-    $repuestosIniciales = old('repuestos', [[]]);
+    // old('repuestos') llega keyed por repuesto_id (mismo esquema que envía
+    // el formulario nuevo) — se arma un mapa repuesto_id => línea para
+    // repintar cantidad/override de base tras un error de validación.
+    $lineasOld = collect(old('repuestos', []))
+        ->filter(fn ($linea) => is_array($linea) && ! empty($linea['repuesto_id'] ?? null))
+        ->mapWithKeys(fn (array $linea) => [(int) $linea['repuesto_id'] => [
+            'base_id' => $linea['base_id'] ?? null,
+            'cantidad' => $linea['cantidad'] ?? null,
+        ]]);
+    $baseGlobalId = old('base_global') ?? $lineasOld->first()['base_id'] ?? null;
+    $repuestosMarcados = $lineasOld->keys()->all();
+    $extraPorRepuesto = $repuestosDisponibles->keys()
+        ->mapWithKeys(fn ($id) => [
+            $id => view('mantenimiento::pages.ordenes._repuesto-campos', [
+                'repuestoId' => $id,
+                'marcado' => in_array($id, $repuestosMarcados, true),
+                'basesDisponibles' => $basesDisponibles,
+                'baseGlobalId' => $baseGlobalId,
+                'cantidadInicial' => $lineasOld[$id]['cantidad'] ?? null,
+                'baseInicialLinea' => $lineasOld[$id]['base_id'] ?? null,
+            ])->render(),
+        ])
+        ->all();
 @endphp
 <x-templates.panel-shell :title="__('mantenimiento.ordenes.titulo_detalle')" :tema="$tema">
     <x-templates.panel-layout
@@ -120,35 +159,50 @@
                             {{ __('mantenimiento.ordenes.seccion_cierre_ayuda') }}
                         </p>
 
-                        <div class="ag-form-section__field--full ag-orden-mantenimiento-detalle__repuestos" data-ag-repuestos>
-                            <div data-ag-repuestos-lista>
-                                @foreach ($repuestosIniciales as $indice => $linea)
-                                    @include('mantenimiento::pages.ordenes._repuesto-linea', [
-                                        'indice' => $indice,
-                                        'linea' => $linea,
-                                        'repuestosDisponibles' => $repuestosDisponibles,
-                                        'basesDisponibles' => $basesDisponibles,
-                                    ])
-                                @endforeach
-                            </div>
+                        <div
+                            class="ag-form-section__field--full ag-orden-mantenimiento-detalle__repuestos"
+                            data-ag-repuestos
+                            data-stock-por-repuesto="{{ json_encode($stockPorRepuesto) }}"
+                            data-plantilla-disponible="{{ __('mantenimiento.ordenes.repuesto_disponible', ['cantidad' => '__CANTIDAD__']) }}"
+                            data-plantilla-aviso="{{ __('mantenimiento.ordenes.repuesto_aviso_stock', ['disponible' => '__DISPONIBLE__']) }}"
+                            data-texto-sin-base="{{ __('mantenimiento.ordenes.repuesto_sin_base') }}"
+                        >
+                            <x-atoms.select
+                                name="base_global"
+                                id="orden_base_global"
+                                label="{{ __('mantenimiento.ordenes.campo_base_orden') }}"
+                                help="{{ __('mantenimiento.ordenes.campo_base_orden_ayuda') }}"
+                                :options="$basesDisponibles"
+                                :value="$baseGlobalId"
+                                placeholder="{{ __('mantenimiento.ordenes.campo_base_orden_placeholder') }}"
+                                data-ag-orden-base-global
+                            />
 
-                            <x-atoms.button type="button" variant="outline" icon="add" data-ag-repuestos-agregar>
-                                {{ __('mantenimiento.ordenes.repuesto_agregar') }}
-                            </x-atoms.button>
+                            {{-- Sin data-ag-* propio acá: el LSP de checkbox-group
+                                 reenvía cualquier atributo fuera de `class` a CADA
+                                 `<input>` del grupo, no al `<fieldset>` — el JS
+                                 engancha directo por `name="repuestos_marcados[]"`. --}}
+                            <x-atoms.checkbox-group
+                                name="repuestos_marcados"
+                                label="{{ __('mantenimiento.ordenes.campo_repuestos') }}"
+                                :options="$repuestosDisponibles"
+                                :value="$repuestosMarcados"
+                                :extra-por-opcion="$extraPorRepuesto"
+                            />
 
-                            {{-- Plantilla clonable (JS vanilla,
-                                 resources/js/pages/ordenes-mantenimiento-form.js): el
-                                 índice literal se reemplaza por el próximo número al
-                                 clonar. Un <template> nunca se renderiza ni se envía
-                                 con el form. --}}
-                            <template data-ag-repuestos-template>
-                                @include('mantenimiento::pages.ordenes._repuesto-linea', [
-                                    'indice' => '__INDICE__',
-                                    'linea' => [],
-                                    'repuestosDisponibles' => $repuestosDisponibles,
-                                    'basesDisponibles' => $basesDisponibles,
-                                ])
-                            </template>
+                            <aside
+                                class="ag-repuestos-resumen"
+                                data-ag-repuestos-resumen
+                                data-plantilla-contador="{{ __('mantenimiento.ordenes.resumen_contador', ['cantidad' => '__CANTIDAD__']) }}"
+                                aria-live="polite"
+                            >
+                                <p class="ag-repuestos-resumen__titulo">{{ __('mantenimiento.ordenes.resumen_titulo') }}</p>
+                                <p class="ag-repuestos-resumen__contador" data-ag-repuestos-resumen-contador hidden></p>
+                                <p class="ag-repuestos-resumen__vacio" data-ag-repuestos-resumen-vacio>
+                                    {{ __('mantenimiento.ordenes.resumen_vacio') }}
+                                </p>
+                                <ul class="ag-repuestos-resumen__lista" data-ag-repuestos-resumen-lista></ul>
+                            </aside>
                         </div>
                     </x-molecules.form-section>
 

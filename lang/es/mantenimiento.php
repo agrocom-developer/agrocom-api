@@ -247,14 +247,24 @@ return [
 
         'seccion_cierre' => 'Cerrar orden',
         'seccion_cierre_ayuda' => 'El cierre descuenta el stock de cada repuesto y genera el gasto correspondiente. Si el stock de algún repuesto no alcanza, la orden no se cierra y no se descuenta ni se imputa nada.',
-        'repuesto_agregar' => 'Agregar repuesto',
-        'repuesto_quitar' => 'Quitar',
-        'campo_repuesto' => 'Repuesto',
-        'campo_repuesto_placeholder' => 'Seleccioná un repuesto',
         'campo_base' => 'Base',
         'campo_base_placeholder' => 'Seleccioná una base',
         'campo_cantidad' => 'Cantidad',
         'boton_cerrar' => 'Cerrar orden',
+
+        // Selector por casillas de repuestos (HU-57, tarea 80): reemplaza la
+        // fila repetible de dos selects + cantidad de la tarea 53.
+        'campo_repuestos' => 'Repuestos',
+        'campo_base_orden' => 'Base de la orden',
+        'campo_base_orden_placeholder' => 'Elegí una base para ver la disponibilidad',
+        'campo_base_orden_ayuda' => 'Se aplica a todos los repuestos elegidos. Podés cambiarla para uno en particular.',
+        'repuesto_sin_base' => 'Elegí una base para ver la disponibilidad.',
+        'repuesto_disponible' => 'Disponible en esta base: :cantidad',
+        'repuesto_cambiar_base' => 'Cambiar base para este repuesto',
+        'repuesto_aviso_stock' => 'La cantidad supera el stock disponible (:disponible).',
+        'resumen_titulo' => 'Repuestos elegidos',
+        'resumen_vacio' => 'Todavía no elegiste ningún repuesto.',
+        'resumen_contador' => ':cantidad repuestos elegidos',
         'confirmar_cierre' => '¿Confirmás el cierre de esta orden? Esta acción descuenta stock y genera un gasto.',
         'cerrada' => 'Orden de mantenimiento cerrada correctamente.',
         'ya_cerrada' => 'Esta orden ya está cerrada.',
