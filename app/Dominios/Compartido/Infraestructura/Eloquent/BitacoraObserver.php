@@ -24,7 +24,11 @@ final class BitacoraObserver
     /**
      * Nunca entran a `antes`/`despues`: una bitácora que copia un hash de
      * contraseña o un token convierte la auditoría en un segundo lugar del
-     * que robarlo.
+     * que robarlo. Nombres GENÉRICOS de columna, válidos en cualquier tabla —
+     * para una columna sensible con un nombre de negocio (p. ej. `valor` en
+     * `plt_configuraciones`, que en otra tabla podría ser dinero u
+     * hectáreas legítimos de auditar) el modelo la declara él mismo, ver
+     * {@see self::columnasSensibles()}.
      *
      * @var list<string>
      */
@@ -46,7 +50,7 @@ final class BitacoraObserver
 
     public function created(Model $modelo): void
     {
-        $this->registrar($modelo, AccionBitacora::Creado, null, $this->limpiar($modelo->getAttributes()));
+        $this->registrar($modelo, AccionBitacora::Creado, null, $this->limpiar($modelo, $modelo->getAttributes()));
     }
 
     /**
@@ -67,8 +71,9 @@ final class BitacoraObserver
             return;
         }
 
-        $cambios = Arr::except($cambiosReales, self::COLUMNAS_SENSIBLES);
-        $antes = Arr::except(Arr::only($modelo->getOriginal(), array_keys($cambiosReales)), self::COLUMNAS_SENSIBLES);
+        $sensibles = $this->columnasSensibles($modelo);
+        $cambios = Arr::except($cambiosReales, $sensibles);
+        $antes = Arr::except(Arr::only($modelo->getOriginal(), array_keys($cambiosReales)), $sensibles);
 
         $this->registrar($modelo, AccionBitacora::Actualizado, $antes, $cambios);
     }
@@ -93,9 +98,24 @@ final class BitacoraObserver
      * @param  array<string, mixed>  $atributos
      * @return array<string, mixed>
      */
-    private function limpiar(array $atributos): array
+    private function limpiar(Model $modelo, array $atributos): array
     {
-        return Arr::except($atributos, [...self::COLUMNAS_SENSIBLES, ...self::COLUMNAS_DE_PLATAFORMA]);
+        return Arr::except($atributos, [...$this->columnasSensibles($modelo), ...self::COLUMNAS_DE_PLATAFORMA]);
+    }
+
+    /**
+     * Columnas genéricas de {@see self::COLUMNAS_SENSIBLES} más las que el
+     * propio modelo declara sensibles para SU tabla (método opcional,
+     * `method_exists` con el mismo criterio que `getDeletedAtColumn()` en
+     * {@see self::deleted()} — la mayoría de los modelos no lo necesitan).
+     *
+     * @return list<string>
+     */
+    private function columnasSensibles(Model $modelo): array
+    {
+        $propias = method_exists($modelo, 'columnasSensiblesBitacora') ? $modelo->columnasSensiblesBitacora() : [];
+
+        return [...self::COLUMNAS_SENSIBLES, ...$propias];
     }
 
     /**

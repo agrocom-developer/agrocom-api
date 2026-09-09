@@ -2,6 +2,7 @@
 
 use App\Dominios\Campania\Infraestructura\CampaniaServiceProvider;
 use App\Dominios\Comercial\Infraestructura\ComercialServiceProvider;
+use App\Dominios\Compartido\Infraestructura\CompartidoServiceProvider;
 use App\Dominios\Distribucion\Infraestructura\DistribucionServiceProvider;
 use App\Dominios\Finanzas\Infraestructura\FinanzasServiceProvider;
 use App\Dominios\Inventario\Infraestructura\InventarioServiceProvider;
@@ -14,6 +15,7 @@ use App\Providers\AppServiceProvider;
 
 return [
     AppServiceProvider::class,
+    CompartidoServiceProvider::class,
     SeguridadServiceProvider::class,
     ComercialServiceProvider::class,
     OperacionesServiceProvider::class,
