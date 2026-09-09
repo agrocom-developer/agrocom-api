@@ -6,12 +6,14 @@
     con una columna de roles (chips) y persona asociada en vez de rol/base.
 
     Datos esperados (ver UsuariosController::index()):
-    - $usuarios (LengthAwarePaginator<SecUser>): nombre ascendente.
+    - $usuarios (LengthAwarePaginator<SecUser>): nombre ascendente, internas
+      Y de portal (tarea 65, HU-41: ya no filtra por tipo a secas).
     - $rolesPorUsuario (array<int, list<string>>): nombres legibles de rol
-      por id de usuario.
+      por id de usuario (vacío para una cuenta de portal: nunca tiene rol).
     - $etiquetasPersona (array<int, string>): nombre de persona por
       persona_id.
-    - $filtros (array{q: string}): búsqueda aplicada.
+    - $filtros (array{q: string, tipo: string}): búsqueda y tipo aplicados
+      (`tipo` es `''`/`interno`/`cliente`).
 
     Gateada por `seguridad.usuario.ver`. Los botones "Nuevo usuario"/
     "Editar"/bloqueo/"Eliminar" se ocultan con `@puede` (presentación, no
@@ -75,12 +77,24 @@
                     </div>
                 </div>
 
+                <x-atoms.select
+                    name="tipo"
+                    id="filtro-tipo"
+                    label="{{ __('seguridad.usuarios.filtro_tipo') }}"
+                    :options="[
+                        'interno' => __('seguridad.usuarios.tipo_interno'),
+                        'cliente' => __('seguridad.usuarios.tipo_cliente'),
+                    ]"
+                    :value="$filtros['tipo']"
+                    placeholder="{{ __('seguridad.usuarios.filtro_tipo_todos') }}"
+                />
+
                 <div class="ag-filtros__acciones ag-usuarios__filtros-acciones">
                     <x-atoms.button type="submit" variant="outline" size="md" icon="search">
                         {{ __('seguridad.usuarios.filtrar') }}
                     </x-atoms.button>
 
-                    @if ($filtros['q'] !== '')
+                    @if ($filtros['q'] !== '' || $filtros['tipo'] !== '')
                         <x-atoms.button href="{{ route('panel.usuarios.index') }}" variant="text" size="md">
                             {{ __('seguridad.usuarios.limpiar_filtro') }}
                         </x-atoms.button>
@@ -97,6 +111,7 @@
                     <div class="ag-usuarios__head" role="row">
                         <span role="columnheader">{{ __('seguridad.usuarios.col_nombre') }}</span>
                         <span role="columnheader">{{ __('seguridad.usuarios.col_username') }}</span>
+                        <span role="columnheader">{{ __('seguridad.usuarios.col_tipo') }}</span>
                         <span role="columnheader">{{ __('seguridad.usuarios.col_roles') }}</span>
                         <span role="columnheader">{{ __('seguridad.usuarios.col_persona') }}</span>
                         <span role="columnheader">{{ __('seguridad.usuarios.col_estado') }}</span>
@@ -107,6 +122,11 @@
                         <div class="ag-usuarios__fila" role="row">
                             <span role="cell" class="ag-usuarios__nombre">{{ $usuario->name }}</span>
                             <span role="cell" class="ag-usuarios__username">{{ $usuario->username }}</span>
+                            <span role="cell">
+                                <x-atoms.badge variant="neutral">
+                                    {{ __($usuario->type->value === 'cliente' ? 'seguridad.usuarios.tipo_cliente' : 'seguridad.usuarios.tipo_interno') }}
+                                </x-atoms.badge>
+                            </span>
                             <span role="cell" class="ag-usuarios__roles">
                                 @forelse (($rolesPorUsuario[$usuario->id] ?? []) as $nombreRol)
                                     <x-atoms.badge variant="neutral">{{ $nombreRol }}</x-atoms.badge>

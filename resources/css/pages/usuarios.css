@@ -38,7 +38,7 @@
 .ag-usuarios__head,
 .ag-usuarios__fila {
     display: grid;
-    grid-template-columns: 1.3fr 1fr 1.6fr 1.1fr 0.8fr auto;
+    grid-template-columns: 1.3fr 1fr 0.9fr 1.6fr 1.1fr 0.8fr auto;
     gap: var(--ag-space-4);
     align-items: center;
     padding: var(--ag-space-3) var(--ag-space-4);
