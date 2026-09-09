@@ -67,6 +67,39 @@ it('retira el ítem de menú de mezclas si ya estaba sembrado de una vuelta ante
         ->and($vieja->fresh()?->trashed())->toBeTrue();
 });
 
+/*
+ * Reubicación del 9/9/2026: "Campañas" nació bajo Seguridad, leída como
+ * configuración de la operación propia, y la campaña es del cliente (ADR 0015
+ * punto 1). En una base ya sembrada —la de desarrollo tiene datos demo que no
+ * se borran— el ítem tiene que MOVERSE conservando su fila, no duplicarse:
+ * `sec_menu` es el árbol que ve todo el panel, y dos "Campañas" en dos módulos
+ * distintos es peor que la ubicación equivocada.
+ */
+it('mueve el ítem de campañas de Seguridad a Comercial si ya estaba sembrado, sin duplicarlo', function () {
+    $this->seed(SecMenuSeeder::class);
+
+    $comercial = SecMenu::query()->where('label', 'menu.comercial.label')->sole();
+    $seguridad = SecMenu::query()->where('label', 'menu.seguridad.label')->sole();
+
+    // Vuelve a dejar la base como estaba antes de la reubicación.
+    $item = SecMenu::query()->where('label', 'menu.comercial.items.campanias')->sole();
+    $item->label = 'menu.seguridad.items.campanias';
+    $item->padre_id = $seguridad->id;
+    $item->orden = 6;
+    $item->save();
+
+    $idOriginal = $item->id;
+
+    $this->seed(SecMenuSeeder::class);
+
+    $movido = SecMenu::query()->where('label', 'menu.comercial.items.campanias')->sole();
+
+    expect($movido->id)->toBe($idOriginal)
+        ->and($movido->padre_id)->toBe($comercial->id)
+        ->and($movido->ruta)->toBe('panel.campanias.index')
+        ->and(SecMenu::query()->where('label', 'menu.seguridad.items.campanias')->exists())->toBeFalse();
+});
+
 it('no siembra los ítems de evidencias ni reportes_cliente en una base limpia', function () {
     $this->seed(SecMenuSeeder::class);
 
