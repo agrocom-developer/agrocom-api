@@ -20,7 +20,7 @@
     docs/diseno/guia_pantalla_panel.md §6.3.
 
     Datos esperados (ver OrganizacionController::index()): la cáscara completa de
-    CascaraPanel (menu/roles/…/tema/campaniaActiva/periodo/version) + tabs/progreso/
+    CascaraPanel (menu/roles/…/tema/zonaHoraria/version) + tabs/progreso/
     suscripcion/logoArchivo/tabActiva/datosFiscales/puedeEditarFacturacion.
 
     NO tiene pestaña de "Usuarios y roles": usuarios internos y la asignación de
@@ -39,8 +39,6 @@
         :zona-horaria="$zonaHoraria ?? null"
         :notifications="$notifications"
         :menu-badges="$menuBadges"
-        :campaniaActiva="$campaniaActiva"
-        :periodo="$periodo"
         :version="$version"
         :vista-actual="__('seguridad.organizacion.titulo')"
     >

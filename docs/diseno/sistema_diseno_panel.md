@@ -867,7 +867,7 @@ distinguen la tarjeta del fondo con margen claro en la captura. No se tocó
   solo refuerzo visual, no funcionalidad nueva) pero suma `:hover`/`:active`/
   `:focus-visible` con el mismo lenguaje. El chip de campaña
   (`.ag-topbar__campaign`) se dejó como estaba — es informativo, no un
-  control clicable.
+  control clicable. **Los dos dejaron de existir el 9/9/2026 — ver §18.**
 
 ### 10.10. Regla nueva en §8
 
@@ -1379,3 +1379,68 @@ Ningún consumidor existente de `checkbox-group` (roles de
 `usuarios/_formulario.blade.php`, §16.5) pasa `extraPorOpcion`, así que su
 `isset()` siempre da falso para ellos: comportamiento idéntico al de antes
 de esta tarea.
+
+## 18. Décima vuelta (9/9/2026) — el header se queda sin contexto de negocio
+
+Feedback directo del dueño sobre el panel andando, sobre captura del header:
+
+> *"en el header hay un select que dice la zona horaria, eso se supone que
+> lo captura internamente no que podamos ver o elegir la zona horaria (…)
+> asimismo la campaña que dice septiembre 2026 quítalo del header, como eso
+> no nos pertenece"*.
+
+Salen tres cosas del bloque derecho de `organisms/topbar`. Queda el buscador,
+el `theme-toggle`, la campana y el menú de usuario — solo herramientas de la
+sesión, ningún dato del negocio.
+
+### 18.1. El selector de período (`.ag-topbar__period`)
+
+Es el que se veía como "septiembre 2026". Nunca fue la campaña: era el mes
+calendario en curso (`CascaraPanel::periodoEnCurso()`), demo visual sin
+backend — no filtraba ninguna pantalla. Pero con un ícono de calendario y el
+nombre de un mes al lado del avatar, se leía exactamente como el contexto de
+campaña que el ADR 0015 ya había decidido que no existe. Un control que no
+hace nada y que además miente sobre lo que representa no tiene defensa: se
+va entero (blade, CSS, `ui.header.periodo` y el método que lo calculaba).
+
+### 18.2. El chip de campaña (`.ag-topbar__campaign`)
+
+Venía apagado desde la tarea 67 (`campaniaActiva` era `null` fijo por ADR
+0015 punto 1: la campaña es del cliente, y con decenas abiertas a la vez no
+hay una "activa" de sesión). La prop se había conservado "para no volver a
+tocar las 82 vistas si algún día vuelve a tener con qué llenarse". Nunca
+volvió a tener con qué: llegó a hoy en `null` y ya no eran 82 vistas sino
+95, y el hueco que dejaba en el header es justo el que ocupó el período
+para pasar por ella. Se va el chip y se va la prop de toda la cadena
+(`CascaraPanel` → `panel-layout` → `topbar`/`mobile-topbar` → las 95 vistas).
+
+**Regla que queda:** una prop de chrome que nace en `null` fijo no se
+conserva "por si acaso" — el costo de reintroducirla el día que tenga con
+qué llenarse es un `sed`, y mientras tanto ocupa lugar en el header y en la
+cabeza de quien lee el layout.
+
+### 18.3. La zona horaria: de `select` en el header a badge en el pie
+
+Era un `<select>` con las ~400 zonas IANA (`molecules/timezone-selector`)
+pegado al `theme-toggle`. Dos problemas, y el dueño nombró los dos: pedía
+**elegir** un dato que el navegador ya informa
+(`Intl.DateTimeFormat().resolvedOptions().timeZone` — el login lo venía
+mandando desde el vamos), y al hacerlo lo ponía al nivel de una decisión,
+en el borde superior derecho, que es el lugar más caro de la pantalla.
+
+Ahora:
+
+- **Se captura sola.** `molecules/timezone-badge.js` compara, al cargar, la
+  zona del navegador contra la guardada y persiste la diferencia por el
+  mismo endpoint que usaba el select. Cubre lo que el login no cubría: la
+  sesión vieja sin preferencia, y el usuario que entra desde otra máquina o
+  desde otro huso.
+- **Se muestra, no se toca.** `molecules/timezone-badge` es un badge de
+  lectura en el pie de `panel-layout` y `portal-layout`, con la tipografía
+  mono chica del footer. El dato sigue a la vista porque hace falta: si la
+  bitácora dice "hoy 14:32", conviene poder ver desde qué huso se está
+  leyendo esa hora. Pero como dato, no como control.
+
+**Regla que queda:** lo que el navegador puede responder solo no se le
+pregunta al usuario. Si además conviene mostrarlo, va como badge de lectura
+en el pie, nunca como control en el header.

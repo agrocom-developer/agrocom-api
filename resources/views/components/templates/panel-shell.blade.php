@@ -54,7 +54,8 @@
          del panel/portal — theme-toggle.js postea acá al cambiar de tema. --}}
     <meta name="ag-preferencias-tema-url" content="{{ $temaUrl ?? route('panel.preferencias.tema') }}">
     {{-- URL de persistencia de la zona horaria: presente solo en páginas autenticadas
-         del panel/portal — timezone-selector.js postea acá al cambiar la zona horaria. --}}
+         del panel/portal — timezone-badge.js postea acá cuando la zona que informa
+         el navegador no es la que tiene guardada el usuario. --}}
     <meta name="ag-preferencias-zona-horaria-url" content="{{ $zonaHorariaUrl ?? route('panel.preferencias.zona-horaria') }}">
     <title>{{ config('app.name', 'Agrocom') }}{{ $title ? ' — '.$title : '' }}</title>
 

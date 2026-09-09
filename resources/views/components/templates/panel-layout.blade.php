@@ -37,15 +37,21 @@
       default []): contadores de pendientes por clave `label` de sec_menu
       (contadores reales por módulo). `numero` es lo que pinta el badge; `texto`,
       la frase completa que se resuelve como tooltip en menu-item.
-    - campaniaActiva / periodo / version (nullable string): chips del header
-      y pie. `campaniaActiva` SIEMPRE es `null` (ADR 0015 punto 1, corregido
-      el 8/9/2026): la campaña es del cliente, no hay una sola "activa" de
-      sesión con decenas abiertas a la vez — se elige dentro del cliente o
-      del contrato. `campana`, a secas, quedó libre para el ícono de
-      notificaciones (nunca más el chip de campaña).
+    - version (nullable string): versión de la app, en el pie.
+    - zonaHoraria (nullable string): zona IANA persistida del usuario, badge
+      de LECTURA en el pie (molecules/timezone-badge). `null` = todavía no
+      hay ninguna guardada; el JS de la molécula la detecta del navegador y
+      la persiste sola.
     - vistaActual (nullable string): segundo tramo del breadcrumb
       ("Módulo › Vista"), ya traducido por la página. Default: el label del
       ítem activo.
+
+    El header quedó sin contexto de negocio el 9/9/2026 (pedido del dueño,
+    mirando el panel andando): se fueron el chip de campaña — que ya venía
+    apagado por ADR 0015 punto 1, la campaña es del cliente —, el selector
+    de período ("septiembre 2026", demo sin backend que se leía como si
+    fuera esa campaña) y el selector de zona horaria, que ahora es este
+    badge del pie. Ver organisms/topbar.
 
     Slot (default): contenido de la página, dentro de <main>.
 --}}
@@ -57,8 +63,6 @@
     'userName' => null,
     'notifications' => [],
     'menuBadges' => [],
-    'campaniaActiva' => null,
-    'periodo' => null,
     'version' => null,
     'vistaActual' => null,
     'zonaHoraria' => null,
@@ -171,13 +175,10 @@
         <x-organisms.topbar
             :modulo-label="$moduloActivo !== null ? __($moduloActivo['label']) : null"
             :vista-actual="$vistaActual"
-            :campaniaActiva="$campaniaActiva"
-            :periodo="$periodo"
             :notifications="$notifications"
             :active-role-label="$activeRoleLabel"
             :user-name="$userName"
             :cambiar-rol-href="$cambiarRolHref"
-            :zona-horaria="$zonaHoraria"
         />
 
         <x-organisms.mobile-topbar
@@ -185,7 +186,6 @@
             :modulo-label="$moduloActivo !== null ? __($moduloActivo['label']) : null"
             :vista-actual="$vistaActual"
             :active-role-label="$activeRoleLabel"
-            :campaniaActiva="$campaniaActiva"
             :notifications="$notifications"
             :user-name="$userName"
             :drawer-id="$drawerId"
@@ -228,11 +228,18 @@
             {{ $slot }}
         </main>
 
+        {{-- El pie es de datos, no de acciones: copyright a la izquierda y, a
+             la derecha, la zona horaria bajo la que se están leyendo las
+             fechas (badge de lectura, ver molecules/timezone-badge) junto a
+             la versión. --}}
         <footer class="ag-panel__footer">
             <span>{{ __('ui.footer.copyright', ['year' => date('Y')]) }}</span>
-            @if ($version)
-                <span>{{ $version }}</span>
-            @endif
+            <span class="ag-panel__footer-meta">
+                <x-molecules.timezone-badge :value="$zonaHoraria" />
+                @if ($version)
+                    <span>{{ $version }}</span>
+                @endif
+            </span>
         </footer>
     </div>
 

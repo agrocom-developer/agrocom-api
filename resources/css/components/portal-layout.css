@@ -129,6 +129,12 @@
 
 .ag-portal__footer {
     flex: 0 0 auto;
+    /* Dos bloques desde el 9/9/2026: copyright y, a la derecha, la zona
+       horaria de lectura que antes era un selector en el header. */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ag-space-3);
     padding: var(--ag-space-3) calc(var(--ag-space-5) + var(--ag-space-1));
     border-top: 1px solid var(--ag-color-border);
     background: var(--ag-color-bg-chrome);

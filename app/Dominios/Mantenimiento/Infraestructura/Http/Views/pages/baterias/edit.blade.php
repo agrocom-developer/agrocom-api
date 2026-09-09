@@ -20,8 +20,6 @@
         :zona-horaria="$zonaHoraria ?? null"
         :notifications="$notifications"
         :menu-badges="$menuBadges"
-        :campaniaActiva="$campaniaActiva"
-        :periodo="$periodo"
         :version="$version"
         :vista-actual="__('mantenimiento.baterias.titulo_editar')"
     >

@@ -55,6 +55,16 @@
     color: var(--ag-color-text-muted);
 }
 
+/* Bloque derecho del pie: zona horaria (molecules/timezone-badge) + versión.
+   Van juntos en un solo hijo para que el `justify-content: space-between`
+   del pie siga siendo de dos bloques — con tres hijos sueltos, la zona
+   quedaba centrada en el medio del ancho, lejos de ambos extremos. */
+.ag-panel__footer-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+}
+
 /*
  * Banda de módulo (SOLO tablet 768–1199.98, maqueta 5a): nombre del módulo
  * en serif + ítems como fila de píldoras horizontales. Cada píldora es

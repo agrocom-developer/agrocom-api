@@ -12,10 +12,10 @@
     Props:
     - moduloIcono / moduloLabel / vistaActual: módulo activo (ya
       normalizado/traducido por panel-layout).
-    - activeRoleLabel (nullable string): nombre legible del rol activo.
-    - campaniaActiva (nullable string): SIEMPRE `null` (ADR 0015 punto 1,
-      corregido el 8/9/2026) — la campaña es del cliente, sin una "activa"
-      de sesión que mostrar acá.
+    - activeRoleLabel (nullable string): nombre legible del rol activo, única
+      línea de meta bajo el breadcrumb desde que cayó el chip de campaña
+      (9/9/2026): venía en `null` fijo por ADR 0015 punto 1 — la campaña es
+      del cliente, no hay una "activa" de sesión que mostrar acá.
     - notifications (list): solo para el contador de la campana.
     - userName (nullable string): para las iniciales del avatar.
     - drawerId: id del offcanvas de módulos que abre la hamburguesa.
@@ -25,7 +25,6 @@
     'moduloLabel' => null,
     'vistaActual' => null,
     'activeRoleLabel' => null,
-    'campaniaActiva' => null,
     'notifications' => [],
     'userName' => null,
     'drawerId' => 'ag-module-drawer',
@@ -38,7 +37,7 @@
         ->take(2)
         ->implode('');
     $notificacionesSinLeer = collect($notifications)->filter(fn ($n) => (bool) data_get($n, 'unread', false))->count();
-    $rolCampana = collect([$activeRoleLabel, $campaniaActiva])->filter()->implode(' · ');
+    $meta = trim((string) $activeRoleLabel);
 @endphp
 
 <div class="ag-mobile-topbar">
@@ -58,8 +57,8 @@
 
         <div class="ag-mobile-topbar__id">
             <span class="ag-mobile-topbar__app">{{ __('ui.logo.alt') }}</span>
-            @if ($rolCampana !== '')
-                <span class="ag-mobile-topbar__meta">{{ $rolCampana }}</span>
+            @if ($meta !== '')
+                <span class="ag-mobile-topbar__meta">{{ $meta }}</span>
             @endif
         </div>
 

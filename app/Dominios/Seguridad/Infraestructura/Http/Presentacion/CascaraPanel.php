@@ -23,11 +23,14 @@ use Illuminate\Support\Carbon;
  * contadores reales de cada módulo dueño, ver {@see menuBadges()}).
  *
  * Desde la tarea 67 no queda nada de maqueta acá: las notificaciones de la
- * campana son las alertas por excepción reales (HU-19), el período sale de
- * la fecha y la versión del pie de `config('app.version')`. El chip de
- * campaña se retiró — no hay campaña activa de sesión (ADR 0015: la campaña
- * es del cliente, se elige dentro del cliente o del contrato, nunca es un
- * contexto ambiente de la sesión).
+ * campana son las alertas por excepción reales (HU-19) y la versión del pie
+ * sale de `config('app.version')`.
+ *
+ * El 9/9/2026 el header se quedó además sin contexto de negocio, mirando el
+ * panel andando: cayeron el chip de campaña (ADR 0015 — la campaña es del
+ * cliente, se elige dentro del cliente o del contrato, nunca es un contexto
+ * ambiente de la sesión) y el selector de período, que mostraba el mes en
+ * curso sin filtrar nada y se leía justamente como si fuera esa campaña.
  *
  * Existe para que cada controlador de página no re-arme (ni desincronice)
  * esta misma docena de props — los controladores siguen siendo adaptadores
@@ -64,22 +67,14 @@ final class CascaraPanel
             'activeRoleLabel' => $rolActivo !== null ? PresentadorRol::nombreLegible($rolActivo) : null,
             'userName' => $usuario->name,
             'tema' => $tema,
-            // Tarea 63: zona horaria IANA elegida (login o selector) — nunca
-            // se inventa un default acá, `null` es "el navegador todavía no
-            // la fijó", el selector del topbar la muestra vacía.
+            // Tarea 63: zona horaria IANA que informó el navegador (en el
+            // login o, si la sesión venía sin ella, apenas carga el panel).
+            // Nunca se inventa un default acá: `null` es "todavía no la
+            // fijó", y el badge del pie nace vacío hasta que el JS la
+            // detecta y la persiste (molecules/timezone-badge).
             'zonaHoraria' => $preferencia->zona_horaria ?? null,
             'notifications' => $this->notificaciones($usuario, $idRolActivo),
             'menuBadges' => $this->menuBadges($usuario),
-            // `campana` (chip) se retiró en la tarea 67: el mock decía
-            // "Campaña 2026-B" y el dominio no tenía el concepto. Ahora sí
-            // existe (`cpn_campanias`, ADR 0015), pero es del CLIENTE y no
-            // hay una sola "activa" de sesión: hay tantas abiertas como
-            // clientes en campaña. Sigue sin chip que pintar — el chip del
-            // header queda apagado, solo se renombró `campana` →
-            // `campaniaActiva` (ADR 0015 punto 2) para no colisionar con la
-            // campana de notificaciones.
-            'campaniaActiva' => null,
-            'periodo' => $this->periodoEnCurso(),
             'version' => config('app.version'),
         ];
     }
@@ -163,15 +158,5 @@ final class CascaraPanel
             'time' => Carbon::parse($alerta->creadaEn)->diffForHumans(),
             'unread' => $alerta->pendiente,
         ], $this->panelOperaciones->alertasRecientes(self::ALERTAS_NOTIFICACION));
-    }
-
-    /**
-     * Período del selector del header: el mes calendario en curso, derivado
-     * de la fecha. La maqueta devolvía "Agosto 2026" fijo, que a la semana
-     * siguiente ya mentía.
-     */
-    private function periodoEnCurso(): string
-    {
-        return Carbon::now()->locale(app()->getLocale())->isoFormat('MMMM YYYY');
     }
 }
