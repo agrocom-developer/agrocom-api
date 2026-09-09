@@ -518,10 +518,11 @@ return [
     'perfil' => [
         'menu_item' => 'Mi perfil',
         'titulo' => 'Mi perfil',
-        'subtitulo' => 'Tus datos de acceso — nombre, correo y contraseña.',
+        'subtitulo' => 'Tus datos de acceso — correo y contraseña.',
         'actualizado' => 'Tus datos se actualizaron correctamente.',
         'seccion_datos' => 'Datos de la cuenta',
         'campo_name' => 'Nombre completo',
+        'campo_name_ayuda' => 'Tu nombre queda en la bitácora de todo lo que hacés, así que lo cambia un administrador desde Seguridad › Usuarios.',
         'campo_email' => 'Correo electrónico',
         'seccion_password' => 'Cambiar contraseña',
         'seccion_password_ayuda' => 'Dejá estos tres campos vacíos si no querés cambiarla.',

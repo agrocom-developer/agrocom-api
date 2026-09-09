@@ -10,9 +10,20 @@ use Illuminate\Support\Facades\Hash;
 
 /**
  * Caso de uso único de autoservicio (tarea 66): un usuario administra su
- * propio nombre, correo y contraseña — nunca los de otro, así que, igual
- * que {@see ActualizarPreferenciaUsuario}, `$usuario` es a la vez actor y
+ * propio correo y contraseña — nunca los de otro, así que, igual que
+ * {@see ActualizarPreferenciaUsuario}, `$usuario` es a la vez actor y
  * sujeto y no hace falta ninguna guarda de permiso.
+ *
+ * `$name` es OPCIONAL y `null` significa "no lo toques". Desde el 9/9/2026 el
+ * panel siempre pasa `null`: el nombre de una cuenta interna dejó de ser
+ * autoservicio y lo cambia un administrador desde Seguridad › Usuarios
+ * ({@see ActualizarUsuario}). El motivo es que `plt_bitacoras` guarda solo
+ * `user_id` y resuelve el nombre del actor por join contra el valor VIGENTE
+ * ({@see ListarBitacora}), así que renombrarse reescribía la autoría de toda
+ * la historia: una entrada de hace seis meses pasaba a decir quién es hoy esa
+ * persona, no quién era cuando hizo la mutación. El portal del cliente sigue
+ * mandándolo — ahí el nombre es el del contacto de la cuenta, no aparece como
+ * actor en la bitácora del panel.
  *
  * Cambiar la contraseña exige la ACTUAL (verificada con `Hash::check`, nunca
  * confiando en la sesión sola) y cierra las demás sesiones del usuario —
@@ -32,7 +43,7 @@ final class ActualizarPerfilPropio
         SecUser $usuario,
         string $guard,
         string $idSesionActual,
-        string $name,
+        ?string $name,
         ?string $email,
         ?string $passwordActual,
         ?string $passwordNueva,
@@ -43,7 +54,10 @@ final class ActualizarPerfilPropio
             throw ContrasenaActualIncorrecta::porIntento();
         }
 
-        $usuario->name = $name;
+        if ($name !== null) {
+            $usuario->name = $name;
+        }
+
         $usuario->email = $email;
 
         if ($passwordNueva !== null) {

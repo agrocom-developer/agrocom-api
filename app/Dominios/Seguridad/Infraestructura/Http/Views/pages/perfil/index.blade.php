@@ -1,10 +1,18 @@
 {{--
     Page: perfil/index (GET/PUT /panel/perfil, panel.perfil.edit/update)
-    Tarea 66: autoservicio del guard `interno` — nombre, correo y cambio de
-    contraseña propio (contraseña actual + nueva + confirmación). Un solo
-    `<form>`, sin selector de tipo ni de roles (a diferencia de
+    Tarea 66: autoservicio del guard `interno` — correo y cambio de contraseña
+    propio (contraseña actual + nueva + confirmación). Un solo `<form>`, sin
+    selector de tipo ni de roles (a diferencia de
     `usuarios/_formulario.blade.php`, que administra cuentas AJENAS): el
     sujeto es siempre quien está logueado.
+
+    El NOMBRE se muestra pero no se edita (9/9/2026, decisión del dueño): la
+    bitácora guarda solo `user_id` y resuelve el nombre del actor por join
+    contra el valor vigente, así que renombrarse reescribía la autoría de
+    toda la historia. Lo cambia un administrador desde Seguridad › Usuarios,
+    donde el cambio queda auditado con autor. El `readonly` de acá es la
+    mitad visible; la server-side es que `ActualizarPerfilRequest` ya no
+    declara `name` y el controlador usa `validated()`.
 
     `password_actual`/`password`/`password_confirmation` NUNCA se repueblan
     con `old()` — igual criterio que el resto del panel con contraseñas.
@@ -23,7 +31,6 @@
         :vista-actual="__('seguridad.perfil.titulo')"
     >
         @php
-            $name = old('name', $usuario->name);
             $email = old('email', $usuario->email ?? '');
         @endphp
 
@@ -49,13 +56,18 @@
             @endif
 
             <x-molecules.form-section :title="__('seguridad.perfil.seccion_datos')">
+                {{-- Sin `name`: no viaja en el POST y no hay nada que
+                     `old()` tenga que repoblar, así que el `id` va explícito
+                     (de ahí sale el `for` del label). `readonly` y no
+                     `disabled` para que siga siendo enfocable, copiable y
+                     legible por un lector de pantalla. --}}
                 <x-atoms.input
                     type="text"
-                    name="name"
+                    id="perfil-nombre"
                     label="{{ __('seguridad.perfil.campo_name') }}"
-                    value="{{ $name }}"
-                    required
-                    error="{{ $errors->first('name') }}"
+                    value="{{ $usuario->name }}"
+                    help="{{ __('seguridad.perfil.campo_name_ayuda') }}"
+                    readonly
                 />
 
                 <x-atoms.input
