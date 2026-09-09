@@ -1,0 +1,76 @@
+name: Deploy a Producción Beta
+
+# Dispara al pushear un tag SemVer prefijado por 'v', sin sufijo de prerelease.
+# Ej. v1.0.0, v1.0.1 — explícitamente NO v1.0.0-beta.1.
+# (docs/decisiones/0017-despliegue-proxmox-lxc-self-hosted-runner.md, §4)
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  deploy:
+    name: deploy-produccion-beta
+    # Corre en el runner self-hosted registrado en el contenedor 119.
+    # El runner hace polling saliente hacia GitHub (no expone puertos de entrada).
+    runs-on: [self-hosted]
+    environment: produccion-beta
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # Checkout del tag exacto que disparó el workflow.
+          ref: ${{ github.ref }}
+
+      - name: Info del despliegue
+        run: |
+          echo "Tag: ${{ github.ref_name }}"
+          echo "SHA: ${{ github.sha }}"
+          echo "Timestamp: $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+
+      # Docker y Docker Compose ya deben estar instalados en el contenedor 119.
+      # Setup manual: https://docs.docker.com/engine/install/ (paso de precondición,
+      # no parte de este workflow).
+
+      - name: Traer el .env real de producción
+        run: |
+          # actions/checkout limpia el workspace (git clean) en cada corrida, así
+          # que el .env real NO puede vivir dentro del checkout o se perdería en
+          # el próximo deploy. Vive en $HOME del runner, fuera de cualquier git.
+          if [ ! -f "$HOME/agrocom-api.env" ]; then
+            echo "Falta $HOME/agrocom-api.env en el contenedor 119 — ver checklist de setup en docker-compose.prod.yml"
+            exit 1
+          fi
+          cp "$HOME/agrocom-api.env" .env
+
+      - name: Levantar contenedores (app + db)
+        run: |
+          docker compose -f docker-compose.prod.yml up -d --build
+
+      - name: Ejecutar migraciones
+        run: |
+          docker compose -f docker-compose.prod.yml exec -T app php artisan migrate --force
+
+      - name: Esperar readiness del servicio
+        run: |
+          # Laravel expone /up de fábrica (bootstrap/app.php) como healthcheck.
+          # Si el contenedor ya tiene su propio healthcheck, Docker lo verifica
+          # aparte; esto es un sanity check adicional desde afuera del contenedor.
+          max_attempts=30
+          for i in $(seq 1 $max_attempts); do
+            if curl -sf http://localhost/up > /dev/null 2>&1; then
+              echo "Endpoint /up respondiendo ✓"
+              exit 0
+            fi
+            echo "Intento $i/$max_attempts: esperando que la app esté lista..."
+            sleep 1
+          done
+          echo "Timeout: la app no respondió a /up en 30 segundos"
+          exit 1
+
+      - name: Log de los contenedores
+        if: failure()
+        run: |
+          echo "=== Logs del servicio app ==="
+          docker compose -f docker-compose.prod.yml logs app || true
+          echo "=== Logs del servicio db ==="
+          docker compose -f docker-compose.prod.yml logs db || true

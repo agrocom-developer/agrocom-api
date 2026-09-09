@@ -1,0 +1,60 @@
+# Imagen de producción: Laravel en PHP-FPM + Nginx
+# (docs/decisiones/0017-despliegue-proxmox-lxc-self-hosted-runner.md)
+#
+# PHP-FPM atiende en puerto 9000 (socket interno); Nginx proxy inverso expone puerto 80.
+# Ambos procesos se controlan por supervisord dentro del mismo contenedor,
+# reutilizando el patrón de ADR 0010 (servicios `app` y `db` en compose).
+#
+# Multi-stage: primero compilar assets con Node (ephemeral), luego imagen final con PHP-FPM + Nginx.
+
+FROM node:22-alpine AS assets-builder
+WORKDIR /var/www/html
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+FROM php:8.3-fpm
+RUN apt-get update && apt-get install -y \
+        libpq-dev \
+        libzip-dev \
+        unzip \
+        git \
+        curl \
+        nginx \
+        supervisor \
+    && docker-php-ext-install pdo pdo_pgsql zip \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+WORKDIR /var/www/html
+
+# Solo composer.json/lock primero: cambiar código de la app no debería
+# invalidar la capa de dependencias, que es la más lenta de reconstruir.
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-interaction --prefer-dist --no-scripts --no-autoloader
+
+# Copiar código de la aplicación (no bind-mount como en desarrollo).
+COPY . .
+
+# Copiar assets compilados del stage anterior.
+COPY --from=assets-builder /var/www/html/public/build ./public/build
+
+# Recién con el código completo se puede generar el autoloader optimizado.
+# `--no-scripts` de arriba solo salteó esto hasta tener el código de la app;
+# `dump-autoload` dispara igual el script `post-autoload-dump` de Laravel
+# (declarado en composer.json), no hace falta invocarlo aparte.
+RUN composer dump-autoload --optimize
+
+# Configuración de Nginx como reverse proxy de PHP-FPM.
+COPY docker/nginx.conf /etc/nginx/sites-available/default
+
+# Configuración de supervisord para controlar PHP-FPM y Nginx.
+COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# PHP-FPM escucha en 9000 (default); Nginx en 80 proxea hacia FPM.
+EXPOSE 80
+
+# supervisord corre en foreground para que Docker capture logs en stdout.
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
