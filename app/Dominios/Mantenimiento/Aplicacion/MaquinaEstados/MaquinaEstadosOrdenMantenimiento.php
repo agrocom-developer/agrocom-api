@@ -4,7 +4,7 @@ namespace App\Dominios\Mantenimiento\Aplicacion\MaquinaEstados;
 
 use App\Dominios\Finanzas\Contratos\EscrituraGastoMantenimiento;
 use App\Dominios\Inventario\Contratos\EscrituraConsumoStock;
-use App\Dominios\Inventario\Dominio\Excepciones\StockInsuficiente;
+use App\Dominios\Inventario\Contratos\Excepciones\StockInsuficiente;
 use App\Dominios\Mantenimiento\Dominio\EstadoOrdenMantenimiento;
 use App\Dominios\Mantenimiento\Dominio\Excepciones\RepuestosInsuficientes;
 use App\Dominios\Mantenimiento\Dominio\Excepciones\TransicionOrdenMantenimientoNoPermitida;

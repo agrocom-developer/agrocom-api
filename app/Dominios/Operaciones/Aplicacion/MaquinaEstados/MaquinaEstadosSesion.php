@@ -2,8 +2,8 @@
 
 namespace App\Dominios\Operaciones\Aplicacion\MaquinaEstados;
 
+use App\Dominios\Operaciones\Contratos\Eventos\SesionValidada;
 use App\Dominios\Operaciones\Dominio\EstadoSesion;
-use App\Dominios\Operaciones\Dominio\Eventos\SesionValidada;
 use App\Dominios\Operaciones\Dominio\Excepciones\TransicionSesionNoPermitida;
 use App\Dominios\Operaciones\Dominio\MaquinaEstados\TransicionesSesion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;

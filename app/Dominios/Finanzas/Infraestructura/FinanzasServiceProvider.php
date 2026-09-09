@@ -6,7 +6,7 @@ use App\Dominios\Finanzas\Aplicacion\GenerarDevengosSesion;
 use App\Dominios\Finanzas\Contratos\EscrituraGastoMantenimiento;
 use App\Dominios\Finanzas\Contratos\LecturaContadoresPanel;
 use App\Dominios\Finanzas\Contratos\LecturaPanelFinanzas;
-use App\Dominios\Operaciones\Dominio\Eventos\SesionValidada;
+use App\Dominios\Operaciones\Contratos\Eventos\SesionValidada;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
