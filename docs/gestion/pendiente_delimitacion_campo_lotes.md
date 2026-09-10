@@ -1,10 +1,13 @@
-# Pendiente: "Propiedad" con más de un campo físico, y delimitar el campo antes de marcar sus lotes
+# RESUELTO: "Propiedad" con más de un campo físico, y delimitar el campo antes de marcar sus lotes
 
 **2026-09-10.** Surgió revisando el bug de guardado del editor de mapa de
-lotes (rama `fix/edicion-lotes`) — no es parte de ese fix, queda anotado acá
-para abrirlo en una rama propia una vez que ese PR esté mergeado a `develop`.
-Ya se investigó contra el modelo de datos real y contra la especificación —
-lo que sigue es lo confirmado, no una hipótesis a verificar después.
+lotes (rama `fix/edicion-lotes`) — no es parte de ese fix, quedó anotado acá
+hasta resolver la decisión de modelado. **Resuelto el mismo día en
+[ADR 0018](../decisiones/0018-propiedad-nivel-terreno-y-alcance-contrato.md)**,
+a favor de la entidad `Propiedad` nueva (punto 1 de las ideas de abajo) —
+implementación en curso en `feature/terreno-propiedad` y las ramas cortas que
+la siguen. El resto de este documento queda como el registro de la
+investigación que llevó a esa decisión, no como pendiente activo.
 
 ## El problema, como lo planteó el dueño
 
@@ -113,10 +116,24 @@ solo que ninguna validación cruza eso contra la campaña).
    agtech especializado. Evaluar costo/precisión real antes de
    comprometerse, y solo si el punto 3 no alcanza.
 
-## Próximo paso
+## Próximo paso (resuelto)
 
-No se toca nada de esto en `fix/edicion-lotes`. Cuando ese PR esté mergeado
-a `develop`, abrir una rama nueva y corta para esto. Primer paso de esa
-rama: la decisión de modelado del punto 1 (¿entidad `Propiedad` nueva o
-agrupador liviano sobre `Campo`?) — recién con eso resuelto tiene sentido
-tocar migraciones o el editor de mapa.
+La decisión de modelado del punto 1 quedó tomada en ADR 0018: entidad
+`Propiedad` nueva, no agrupador liviano. La implementación sigue la
+secuencia de ramas cortas del plan de esa fecha:
+
+1. `feature/terreno-propiedad` — este ADR + especificación + glosario (esta rama).
+2. `feature/terreno-migraciones` — `com_propiedades` nueva, `com_campos` con
+   `propiedad_id` + `geometria` (el punto 2 de las ideas de arriba: delimitar
+   el campo primero), squash del resto de `database/migrations/`.
+3. `feature/terreno-backend` — modelos, casos de uso, guardas de negocio,
+   fixtures de test y seeders demo actualizados a la jerarquía nueva.
+4. `feature/terreno-panel` — pantalla Propiedades, cascada de 3 niveles en
+   los formularios, geometría de Campo en el editor de mapa (el perímetro
+   del campo como capa de referencia en el mapa de cada lote, que es el
+   pedido original de este documento).
+
+El punto 3 (división automática en franjas) y el punto 4 (detección por
+imagen satelital) de las ideas de arriba siguen sin abordarse — quedan como
+mejora futura sobre la geometría de `Campo` que entra en el paso 2, no como
+parte de esta primera vuelta.
