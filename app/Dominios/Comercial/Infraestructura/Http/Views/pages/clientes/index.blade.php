@@ -103,7 +103,7 @@
 
                             <span role="cell" class="ag-clientes__acciones">
                                 @puede('comercial.cliente.editar')
-                                    <x-atoms.button href="{{ route('panel.clientes.edit', $cliente) }}" variant="outline" size="sm" icon="edit">
+                                    <x-atoms.button href="{{ route('panel.clientes.edit', $cliente) }}" variant="warning-outline" size="sm" icon="edit">
                                         {{ __('comercial.clientes.editar') }}
                                     </x-atoms.button>
                                 @endpuede

@@ -22,6 +22,17 @@
     box-shadow: var(--ag-shadow-md);
 }
 
+/* En un formulario de edición (`resources/js/shared/barra-acciones-dirty.js`
+   la oculta hasta que algo cambie: ese formulario dobla de pantalla "ver" —
+   no hay una vista de solo lectura separada — así que mostrar los botones de
+   guardar/cancelar mientras nada se tocó no tiene sentido. Necesita más
+   especificidad que `.ag-form-actions-bar` (que ya fija `display: flex`)
+   para ganarle en la cascada. Sin JS la barra queda visible siempre —
+   mejora progresiva, mismo criterio que `roles-permisos.js`. */
+.ag-form-actions-bar[hidden] {
+    display: none;
+}
+
 .ag-form-actions-bar__status {
     margin: 0;
     font-size: var(--ag-font-size-sm);

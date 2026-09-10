@@ -4,6 +4,7 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Compartido\Dominio\AccionBitacora;
 use App\Dominios\Compartido\Infraestructura\Eloquent\Bitacora;
 use App\Dominios\Compartido\Infraestructura\Eloquent\Configuracion;
@@ -54,16 +55,25 @@ function entrarAlPanelParaCampos(SecUser $usuario, int $idRolActivo): void
 
 function clienteDeCamposDePrueba(string $razonSocial = 'Agropecuaria del Valle S.R.L.'): Cliente
 {
-    return Cliente::query()->create(['razon_social' => $razonSocial]);
+    return Cliente::query()->create(['razon_social' => $razonSocial, 'tipo_persona' => 'juridica']);
 }
 
-/** Payload mínimo válido de alta/edición: cliente + nombre + un lote. */
-function payloadCampo(int $clienteId, array $overrides = []): array
+/** Propiedad de prueba del cliente (ADR 0018): el campo ahora cuelga de una propiedad, no directo del cliente. */
+function propiedadDeCamposDePrueba(Cliente $cliente, string $nombre = 'Propiedad Norte'): Propiedad
+{
+    return Propiedad::query()->create([
+        'cliente_id' => $cliente->id,
+        'nombre' => $nombre,
+        'ubicacion' => 'Km 12, ruta a Montero',
+    ]);
+}
+
+/** Payload mínimo válido de alta/edición: propiedad + nombre + un lote. */
+function payloadCampo(int $propiedadId, array $overrides = []): array
 {
     return array_merge([
-        'cliente_id' => $clienteId,
+        'propiedad_id' => $propiedadId,
         'nombre' => 'Campo Norte',
-        'ubicacion' => 'Km 12, ruta a Montero',
         'lotes' => [
             ['codigo' => 'L-01', 'hectareas' => '15.50'],
         ],
@@ -74,7 +84,7 @@ function payloadCampo(int $clienteId, array $overrides = []): array
 function crearOrdenAplicacionParaLote(Lote $lote): void
 {
     $contrato = Contrato::query()->create([
-        'cliente_id' => $lote->campo->cliente_id,
+        'cliente_id' => $lote->campo->propiedad->cliente_id,
         'hectareas_contratadas' => '10.00',
         'aplicaciones_previstas' => 1,
         'precio_ha' => '100.00',
@@ -97,15 +107,17 @@ function crearOrdenAplicacionParaLote(Lote $lote): void
 
 it('da de alta un campo con al menos un lote', function () {
     $cliente = clienteDeCamposDePrueba();
+    $propiedad = propiedadDeCamposDePrueba($cliente);
     [$encargado, $idRol] = usuarioConRolParaCampos('encargado', 'encargado_operaciones');
     entrarAlPanelParaCampos($encargado, $idRol);
 
-    $this->post(route('panel.campos.store'), payloadCampo($cliente->id))
+    $this->post(route('panel.campos.store'), payloadCampo($propiedad->id))
         ->assertRedirect(route('panel.campos.index'));
 
     $campo = Campo::query()->where('nombre', 'Campo Norte')->sole();
 
-    expect($campo->cliente_id)->toBe($cliente->id)
+    expect($campo->propiedad_id)->toBe($propiedad->id)
+        ->and($campo->propiedad->cliente_id)->toBe($cliente->id)
         ->and($campo->lotes()->count())->toBe(1)
         ->and($campo->lotes()->first()->codigo)->toBe('L-01')
         ->and((string) $campo->lotes()->first()->hectareas)->toBe('15.50');
@@ -113,10 +125,11 @@ it('da de alta un campo con al menos un lote', function () {
 
 it('rechaza un lote con hectareas menores o iguales a cero', function () {
     $cliente = clienteDeCamposDePrueba();
+    $propiedad = propiedadDeCamposDePrueba($cliente);
     [$encargado, $idRol] = usuarioConRolParaCampos('encargado', 'encargado_operaciones');
     entrarAlPanelParaCampos($encargado, $idRol);
 
-    $this->post(route('panel.campos.store'), payloadCampo($cliente->id, [
+    $this->post(route('panel.campos.store'), payloadCampo($propiedad->id, [
         'lotes' => [['codigo' => 'L-01', 'hectareas' => '0']],
     ]))->assertSessionHasErrors('lotes.0.hectareas');
 
@@ -125,20 +138,21 @@ it('rechaza un lote con hectareas menores o iguales a cero', function () {
 
 it('rechaza una geometria mal formada y acepta la geometria ausente', function () {
     $cliente = clienteDeCamposDePrueba();
+    $propiedad = propiedadDeCamposDePrueba($cliente);
     [$encargado, $idRol] = usuarioConRolParaCampos('encargado', 'encargado_operaciones');
     entrarAlPanelParaCampos($encargado, $idRol);
 
-    $this->post(route('panel.campos.store'), payloadCampo($cliente->id, [
+    $this->post(route('panel.campos.store'), payloadCampo($propiedad->id, [
         'lotes' => [['codigo' => 'L-01', 'hectareas' => '10', 'geometria' => 'no es json']],
     ]))->assertSessionHasErrors('lotes.0.geometria');
 
-    $this->post(route('panel.campos.store'), payloadCampo($cliente->id, [
+    $this->post(route('panel.campos.store'), payloadCampo($propiedad->id, [
         'lotes' => [['codigo' => 'L-01', 'hectareas' => '10', 'geometria' => json_encode(['type' => 'Point'])]],
     ]))->assertSessionHasErrors('lotes.0.geometria');
 
     expect(Campo::query()->count())->toBe(0);
 
-    $this->post(route('panel.campos.store'), payloadCampo($cliente->id, [
+    $this->post(route('panel.campos.store'), payloadCampo($propiedad->id, [
         'lotes' => [['codigo' => 'L-01', 'hectareas' => '10', 'geometria' => null]],
     ]))->assertRedirect(route('panel.campos.index'));
 
@@ -148,12 +162,13 @@ it('rechaza una geometria mal formada y acepta la geometria ausente', function (
 
 it('acepta una geometria GeoJSON Polygon minima', function () {
     $cliente = clienteDeCamposDePrueba();
+    $propiedad = propiedadDeCamposDePrueba($cliente);
     [$encargado, $idRol] = usuarioConRolParaCampos('encargado', 'encargado_operaciones');
     entrarAlPanelParaCampos($encargado, $idRol);
 
     $geometria = json_encode(['type' => 'Polygon', 'coordinates' => [[[-63.1, -17.7], [-63.1, -17.8], [-63.05, -17.8], [-63.1, -17.7]]]]);
 
-    $this->post(route('panel.campos.store'), payloadCampo($cliente->id, [
+    $this->post(route('panel.campos.store'), payloadCampo($propiedad->id, [
         'lotes' => [['codigo' => 'L-01', 'hectareas' => '10', 'geometria' => $geometria]],
     ]))->assertRedirect(route('panel.campos.index'));
 
@@ -171,6 +186,7 @@ it('el formulario ofrece el editor de mapa, no un textarea de GeoJSON', function
     // le cambia el nombre al input, el editor deja de escribir donde el
     // servidor lee y la geometría se pierde en silencio.
     $cliente = clienteDeCamposDePrueba();
+    $propiedad = propiedadDeCamposDePrueba($cliente);
     [$encargado, $idRol] = usuarioConRolParaCampos('encargado', 'encargado_operaciones');
     entrarAlPanelParaCampos($encargado, $idRol);
 
@@ -188,6 +204,7 @@ it('el editor de mapa trae barra de acciones propia y pantalla completa, con tex
     // este test es la aduana de esas siete acciones más el botón de pantalla
     // completa, todas con su etiqueta accesible.
     $cliente = clienteDeCamposDePrueba();
+    $propiedad = propiedadDeCamposDePrueba($cliente);
     [$encargado, $idRol] = usuarioConRolParaCampos('encargado', 'encargado_operaciones');
     entrarAlPanelParaCampos($encargado, $idRol);
 
@@ -210,6 +227,7 @@ it('sin llave de google configurada, el editor usa leaflet y la llave no aparece
     // aduana explícita del criterio de aceptación — un secreto que no está
     // no puede "aparecer" por accidente en ningún render futuro de esta vista.
     $cliente = clienteDeCamposDePrueba();
+    $propiedad = propiedadDeCamposDePrueba($cliente);
     [$encargado, $idRol] = usuarioConRolParaCampos('encargado', 'encargado_operaciones');
     entrarAlPanelParaCampos($encargado, $idRol);
 
@@ -228,6 +246,7 @@ it('con llave de google configurada, el editor pasa a google con la llave', func
     ]);
 
     $cliente = clienteDeCamposDePrueba();
+    $propiedad = propiedadDeCamposDePrueba($cliente);
     [$encargado, $idRol] = usuarioConRolParaCampos('encargado', 'encargado_operaciones');
     entrarAlPanelParaCampos($encargado, $idRol);
 
@@ -252,6 +271,7 @@ it('con llave configurada pero proveedor_preferido=leaflet, la llave sigue sin a
     ]);
 
     $cliente = clienteDeCamposDePrueba();
+    $propiedad = propiedadDeCamposDePrueba($cliente);
     [$encargado, $idRol] = usuarioConRolParaCampos('encargado', 'encargado_operaciones');
     entrarAlPanelParaCampos($encargado, $idRol);
 
@@ -266,12 +286,13 @@ it('conserva la geometria dibujada al reabrir el formulario de edicion', functio
     // si el formulario de edición no lo emite, cada guardado posterior borra
     // el polígono que ya estaba.
     $cliente = clienteDeCamposDePrueba();
+    $propiedad = propiedadDeCamposDePrueba($cliente);
     [$encargado, $idRol] = usuarioConRolParaCampos('encargado', 'encargado_operaciones');
     entrarAlPanelParaCampos($encargado, $idRol);
 
     $geometria = json_encode(['type' => 'Polygon', 'coordinates' => [[[-63.1, -17.7], [-63.1, -17.8], [-63.05, -17.8], [-63.1, -17.7]]]]);
 
-    $this->post(route('panel.campos.store'), payloadCampo($cliente->id, [
+    $this->post(route('panel.campos.store'), payloadCampo($propiedad->id, [
         'lotes' => [['codigo' => 'L-01', 'hectareas' => '10', 'geometria' => $geometria]],
     ]));
 
@@ -285,10 +306,11 @@ it('conserva la geometria dibujada al reabrir el formulario de edicion', functio
 
 it('registra en bitacora el alta, la edicion y la baja de un campo', function () {
     $cliente = clienteDeCamposDePrueba();
+    $propiedad = propiedadDeCamposDePrueba($cliente);
     [$encargado, $idRol] = usuarioConRolParaCampos('encargado', 'encargado_operaciones');
     entrarAlPanelParaCampos($encargado, $idRol);
 
-    $this->post(route('panel.campos.store'), payloadCampo($cliente->id));
+    $this->post(route('panel.campos.store'), payloadCampo($propiedad->id));
 
     $campo = Campo::query()->sole();
 
@@ -305,7 +327,7 @@ it('registra en bitacora el alta, la edicion y la baja de un campo', function ()
 
     $this->put(
         route('panel.campos.update', $campo),
-        payloadCampo($cliente->id, [
+        payloadCampo($propiedad->id, [
             'nombre' => 'Campo Norte (renombrado)',
             'lotes' => [['id' => $lote->id, 'codigo' => 'L-01', 'hectareas' => '15.50']],
         ]),
@@ -331,10 +353,11 @@ it('registra en bitacora el alta, la edicion y la baja de un campo', function ()
 
 it('da de baja un campo por soft delete: no aparece en el indice y un segundo intento da 404', function () {
     $cliente = clienteDeCamposDePrueba();
+    $propiedad = propiedadDeCamposDePrueba($cliente);
     [$encargado, $idRol] = usuarioConRolParaCampos('encargado', 'encargado_operaciones');
     entrarAlPanelParaCampos($encargado, $idRol);
 
-    $this->post(route('panel.campos.store'), payloadCampo($cliente->id));
+    $this->post(route('panel.campos.store'), payloadCampo($propiedad->id));
     $campo = Campo::query()->sole();
 
     $this->delete(route('panel.campos.destroy', $campo))
@@ -354,10 +377,11 @@ it('da de baja un campo por soft delete: no aparece en el indice y un segundo in
 
 it('rechaza quitar del formulario un lote con una orden de aplicacion asociada', function () {
     $cliente = clienteDeCamposDePrueba();
+    $propiedad = propiedadDeCamposDePrueba($cliente);
     [$encargado, $idRol] = usuarioConRolParaCampos('encargado', 'encargado_operaciones');
     entrarAlPanelParaCampos($encargado, $idRol);
 
-    $this->post(route('panel.campos.store'), payloadCampo($cliente->id));
+    $this->post(route('panel.campos.store'), payloadCampo($propiedad->id));
     $campo = Campo::query()->sole();
     $lote = $campo->lotes()->sole();
 
@@ -367,7 +391,7 @@ it('rechaza quitar del formulario un lote con una orden de aplicacion asociada',
     // pedir que se elimine — decisión de esta tarea: se rechaza entero.
     $this->put(
         route('panel.campos.update', $campo),
-        payloadCampo($cliente->id, [
+        payloadCampo($propiedad->id, [
             'nombre' => 'Campo Norte',
             'lotes' => [['codigo' => 'L-02', 'hectareas' => '5']],
         ]),
@@ -380,12 +404,13 @@ it('rechaza quitar del formulario un lote con una orden de aplicacion asociada',
 
 it('el nombre de campo duplicado para el mismo cliente es un error de validacion, no un QueryException', function () {
     $cliente = clienteDeCamposDePrueba();
+    $propiedad = propiedadDeCamposDePrueba($cliente);
     [$encargado, $idRol] = usuarioConRolParaCampos('encargado', 'encargado_operaciones');
     entrarAlPanelParaCampos($encargado, $idRol);
 
-    $this->post(route('panel.campos.store'), payloadCampo($cliente->id));
+    $this->post(route('panel.campos.store'), payloadCampo($propiedad->id));
 
-    $this->post(route('panel.campos.store'), payloadCampo($cliente->id, [
+    $this->post(route('panel.campos.store'), payloadCampo($propiedad->id, [
         'lotes' => [['codigo' => 'L-99', 'hectareas' => '3']],
     ]))->assertSessionHasErrors('nombre');
 
@@ -394,10 +419,11 @@ it('el nombre de campo duplicado para el mismo cliente es un error de validacion
 
 it('el codigo de lote duplicado para el mismo campo es un error de validacion, no un QueryException', function () {
     $cliente = clienteDeCamposDePrueba();
+    $propiedad = propiedadDeCamposDePrueba($cliente);
     [$encargado, $idRol] = usuarioConRolParaCampos('encargado', 'encargado_operaciones');
     entrarAlPanelParaCampos($encargado, $idRol);
 
-    $this->post(route('panel.campos.store'), payloadCampo($cliente->id, [
+    $this->post(route('panel.campos.store'), payloadCampo($propiedad->id, [
         'lotes' => [
             ['codigo' => 'L-01', 'hectareas' => '10'],
             ['codigo' => 'L-01', 'hectareas' => '5'],
@@ -409,16 +435,17 @@ it('el codigo de lote duplicado para el mismo campo es un error de validacion, n
 
 it('un rol sin el permiso recibe 403 en todas las acciones', function () {
     $cliente = clienteDeCamposDePrueba();
+    $propiedad = propiedadDeCamposDePrueba($cliente);
     [$piloto, $idRol] = usuarioConRolParaCampos('piloto.curioso', 'piloto');
     entrarAlPanelParaCampos($piloto, $idRol);
 
-    $campo = Campo::query()->create(['cliente_id' => $cliente->id, 'nombre' => 'Campo Existente']);
+    $campo = Campo::query()->create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo Existente']);
 
     $this->get(route('panel.campos.index'))->assertForbidden();
     $this->get(route('panel.campos.create'))->assertForbidden();
-    $this->post(route('panel.campos.store'), payloadCampo($cliente->id))->assertForbidden();
+    $this->post(route('panel.campos.store'), payloadCampo($propiedad->id))->assertForbidden();
     $this->get(route('panel.campos.edit', $campo))->assertForbidden();
-    $this->put(route('panel.campos.update', $campo), payloadCampo($cliente->id))->assertForbidden();
+    $this->put(route('panel.campos.update', $campo), payloadCampo($propiedad->id))->assertForbidden();
     $this->delete(route('panel.campos.destroy', $campo))->assertForbidden();
 
     expect(Campo::query()->count())->toBe(1)
@@ -430,6 +457,7 @@ it('no deja actuar a quien tiene el permiso en otro rol pero no en el activo', f
     // piloto, así que NO puede dar de alta — los permisos efectivos son los
     // del rol activo, jamás la unión.
     $cliente = clienteDeCamposDePrueba();
+    $propiedad = propiedadDeCamposDePrueba($cliente);
     [$multirol, $idEncargado] = usuarioConRolParaCampos('jefe.multirol', 'encargado_operaciones');
     $idPiloto = (int) SecRole::query()->where('name', 'piloto')->value('id');
     $pivote = new SecUserRole(['id_user' => $multirol->id, 'id_role' => $idPiloto]);
@@ -438,18 +466,22 @@ it('no deja actuar a quien tiene el permiso en otro rol pero no en el activo', f
     $pivote->save();
 
     entrarAlPanelParaCampos($multirol, $idPiloto);
-    $this->post(route('panel.campos.store'), payloadCampo($cliente->id))->assertForbidden();
+    $this->post(route('panel.campos.store'), payloadCampo($propiedad->id))->assertForbidden();
     expect(Campo::query()->count())->toBe(0);
 
     // Con el rol activo correcto, la misma cuenta sí puede.
     entrarAlPanelParaCampos($multirol, $idEncargado);
-    $this->post(route('panel.campos.store'), payloadCampo($cliente->id))->assertRedirect();
+    $this->post(route('panel.campos.store'), payloadCampo($propiedad->id))->assertRedirect();
     expect(Campo::query()->count())->toBe(1);
 });
 
-it('publica el item de menu de propiedades gateado por comercial.campo.ver', function () {
+it('publica el item de menu de campos gateado por comercial.campo.ver', function () {
+    // ADR 0018: "Propiedades" pasó a ser el ítem de la entidad nueva
+    // (`comercial.propiedad.ver`, ver `GestionPropiedadesPanelTest`); este
+    // ítem, que sigue apuntando a `panel.campos.index`, se llama de nuevo
+    // "Campos".
     $itemMenu = SecMenu::query()
-        ->where('label', 'menu.comercial.items.propiedades')
+        ->where('label', 'menu.comercial.items.campos')
         ->sole();
 
     $idPermiso = (int) SecPermission::query()

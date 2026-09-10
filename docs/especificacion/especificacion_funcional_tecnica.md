@@ -114,10 +114,12 @@ Llevan `campania_id` propio solo las entidades donde alguien la **elige explíci
 
 ### 4.1 Comercial
 
-- `clientes` — id, razón social, nit, contacto dueño, contacto agrónomo
+- `clientes` — id, razón social, nit, tipo_persona (física / jurídica), contacto dueño, contacto agrónomo. *El dueño, cuando el cliente es una sociedad, se registra como contacto tipo `dueno` — no como cliente propio (ADR 0018).*
 - `contratos` — id, campania_id, cliente_id, hectáreas_contratadas, aplicaciones_previstas, precio_ha, monto_total, adelanto_monto, adelanto_pct, fecha_inicio, fecha_fin, estado, + parámetros de vuelo y límites de condiciones (altura_vuelo_m, velocidad_max_kmh, viento_max_kmh, temperatura_max_c, humedad_min_pct, humedad_max_pct, umbral_reporte_avance_ha; NULL = rige el valor por defecto del sistema)
 - `contrato_ventanas` — id, contrato_id, hora_inicio, hora_fin. *N por contrato y **opcionales**: sin ninguna ventana cargada, el contrato aplica a cualquier hora ("todo el día"). No hay booleano de "todo el día" — la ausencia de filas es el dato (ADR 0015).*
-- `campos` — id, cliente_id, nombre, ubicación. *Un cliente tiene varios campos (haciendas); cada campo tiene varios lotes.*
+- `contrato_alcances` — id, contrato_id, propiedad_id, campo_id (nullable), hectareas. *Qué terreno cubre el contrato: una propiedad entera (`campo_id` nulo), un campo específico, o una mezcla de varias propiedades — N filas por contrato, y la suma no puede superar `hectareas_contratadas` (ADR 0018).*
+- `propiedades` — id, cliente_id, nombre, ubicación (departamento, provincia, municipio o pueblo — ej. Cuatro Cañadas, Roboré, San Matías). *Un cliente tiene varias propiedades — el nivel de negocio ("Gamelera"), no necesariamente un único predio físico delimitado.*
+- `campos` — id, propiedad_id, nombre, geometría (GeoJSON, perímetro de referencia). *Una propiedad tiene uno o más campos físicos (ej. dos mitades separadas por una carretera, cada una con su propia campaña); cada campo tiene varios lotes (ADR 0018).*
 - `lotes` — id, campo_id, código, hectáreas, geometría (GeoJSON), restricciones (texto: cables, viviendas, colmenas, vecinos sensibles)
 - `cultivos` — id, nombre (soya, maíz, girasol, trigo, sorgo…), activo. *Catálogo.*
 - `lote_campania` — id, lote_id, campania_id, cultivo_id, hectareas_sembradas, fecha_siembra, fecha_cosecha_estimada. *Qué se sembró en cada lote en cada campaña — un cultivo por lote y campaña. El lote no "es" de soya: se siembra de soya esta campaña y de maíz la siguiente. Es la dimensión que agrupa el informe de avance de contratos (§9.1).*
@@ -484,7 +486,7 @@ El calendario concreto (sprints, historias de usuario, betas) vive en `docs/gest
 ## 16. Supuestos a confirmar
 
 - La app de campo corre en el RC del Agras (Android), con control de actualizaciones por red (`GET /api/version`, sin Firebase/FCM — polling, no push).
-- Un solo cliente contratante en v1, pero el modelo admite varios contratos y campos.
+- Un solo cliente contratante en v1, pero el modelo admite varios contratos, propiedades y campos.
 - La planilla es una liquidación interna de pagos, no un documento laboral normado. Sin aportes ni retenciones.
 - Sueldos del jefe de campo y del encargado de operaciones: se cargan como parámetro, sin impacto en el diseño.
 - Tolerancia de solape entre sesiones: parámetro configurable, a definir con la experiencia de campo.

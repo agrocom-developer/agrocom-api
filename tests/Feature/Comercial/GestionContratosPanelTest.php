@@ -53,7 +53,7 @@ function entrarAlPanelParaContratos(SecUser $usuario, int $idRolActivo): void
 
 function clienteParaContratos(): Cliente
 {
-    return Cliente::query()->create(['razon_social' => 'Agropecuaria del Valle S.R.L.', 'nit' => '999888777']);
+    return Cliente::query()->create(['razon_social' => 'Agropecuaria del Valle S.R.L.', 'nit' => '999888777', 'tipo_persona' => 'juridica']);
 }
 
 /** Campaña `abierta` del cliente (ADR 0015 punto 1): el contrato la exige. */
@@ -329,7 +329,7 @@ it('rechaza crear un contrato con una campaña de otro cliente', function () {
     [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
     entrarAlPanelParaContratos($encargado, $idRol);
     $cliente = clienteParaContratos();
-    $otroCliente = Cliente::query()->create(['razon_social' => 'Agrícola San Marcos S.R.L.', 'nit' => '111222333']);
+    $otroCliente = Cliente::query()->create(['razon_social' => 'Agrícola San Marcos S.R.L.', 'nit' => '111222333', 'tipo_persona' => 'juridica']);
     $campaniaAjena = campaniaParaContratos($otroCliente->id);
 
     $this->post(route('panel.contratos.store'), payloadContrato($cliente->id, $campaniaAjena->id))

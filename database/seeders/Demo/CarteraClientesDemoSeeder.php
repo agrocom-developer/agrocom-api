@@ -12,6 +12,7 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\ClienteContacto;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\ContratoVentana;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
@@ -70,6 +71,7 @@ class CarteraClientesDemoSeeder extends Seeder
         $cliente = $this->crear(new Cliente([
             'razon_social' => 'Agrícola San Marcos S.R.L.',
             'nit' => self::NIT_CENTINELA,
+            'tipo_persona' => 'juridica',
         ]), $autorId);
 
         $campania = $this->campaniaDelCliente($cliente->id, $autorId);
@@ -101,10 +103,15 @@ class CarteraClientesDemoSeeder extends Seeder
 
         $this->ventanas($contrato->id, $autorId, [['05:30', '10:00'], ['16:30', '19:30']]);
 
-        $campo = $this->crear(new Campo([
+        $propiedad = $this->crear(new Propiedad([
             'cliente_id' => $cliente->id,
-            'nombre' => 'San Marcos — Cuatro Cañadas',
+            'nombre' => 'San Marcos',
             'ubicacion' => 'Km 28 camino a Cuatro Cañadas, Santa Cruz, Bolivia',
+        ]), $autorId);
+
+        $campo = $this->crear(new Campo([
+            'propiedad_id' => $propiedad->id,
+            'nombre' => 'San Marcos — Cuatro Cañadas',
         ]), $autorId);
 
         $lote = $this->crear(new Lote([
@@ -133,6 +140,7 @@ class CarteraClientesDemoSeeder extends Seeder
         $cliente = $this->crear(new Cliente([
             'razon_social' => 'Sociedad Agrícola El Carmen S.A.',
             'nit' => '1099751028',
+            'tipo_persona' => 'juridica',
         ]), $autorId);
 
         $campania = $this->campaniaDelCliente($cliente->id, $autorId);
@@ -165,10 +173,15 @@ class CarteraClientesDemoSeeder extends Seeder
 
         $this->ventanas($contrato->id, $autorId, [['06:00', '10:30'], ['16:00', '20:00']]);
 
-        $campo = $this->crear(new Campo([
+        $propiedad = $this->crear(new Propiedad([
             'cliente_id' => $cliente->id,
-            'nombre' => 'El Carmen — Pailón',
+            'nombre' => 'El Carmen',
             'ubicacion' => 'Km 9 camino a Pailón Norte, Santa Cruz, Bolivia',
+        ]), $autorId);
+
+        $campo = $this->crear(new Campo([
+            'propiedad_id' => $propiedad->id,
+            'nombre' => 'El Carmen — Pailón',
         ]), $autorId);
 
         $loteTres = $this->crear(new Lote([
@@ -213,6 +226,7 @@ class CarteraClientesDemoSeeder extends Seeder
         $cliente = $this->crear(new Cliente([
             'razon_social' => 'Estancia Santa Rosa S.R.L.',
             'nit' => '1071482039',
+            'tipo_persona' => 'juridica',
         ]), $autorId);
 
         $campania = $this->campaniaDelCliente($cliente->id, $autorId);
@@ -244,10 +258,15 @@ class CarteraClientesDemoSeeder extends Seeder
 
         $this->ventanas($contrato->id, $autorId, [['06:30', '09:30']]);
 
-        $campo = $this->crear(new Campo([
+        $propiedad = $this->crear(new Propiedad([
             'cliente_id' => $cliente->id,
-            'nombre' => 'Santa Rosa — Okinawa',
+            'nombre' => 'Santa Rosa',
             'ubicacion' => 'Colonia Okinawa 1, Santa Cruz, Bolivia',
+        ]), $autorId);
+
+        $campo = $this->crear(new Campo([
+            'propiedad_id' => $propiedad->id,
+            'nombre' => 'Santa Rosa — Okinawa',
         ]), $autorId);
 
         $lote = $this->crear(new Lote([

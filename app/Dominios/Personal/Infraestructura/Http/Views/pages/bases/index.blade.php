@@ -101,7 +101,7 @@
 
                             <span role="cell" class="ag-bases__acciones">
                                 @puede('personal.base.editar')
-                                    <x-atoms.button href="{{ route('panel.bases.edit', $base) }}" variant="outline" size="sm" icon="edit">
+                                    <x-atoms.button href="{{ route('panel.bases.edit', $base) }}" variant="warning-outline" size="sm" icon="edit">
                                         {{ __('personal.bases.editar') }}
                                     </x-atoms.button>
                                 @endpuede

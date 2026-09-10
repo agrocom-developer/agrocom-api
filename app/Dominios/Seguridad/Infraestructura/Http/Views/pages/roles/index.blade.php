@@ -111,7 +111,7 @@
 
                             <span role="cell" class="ag-roles__acciones">
                                 @puede('seguridad.rol.editar')
-                                    <x-atoms.button href="{{ route('panel.roles.edit', $fila['rol']) }}" variant="outline" size="sm" icon="edit">
+                                    <x-atoms.button href="{{ route('panel.roles.edit', $fila['rol']) }}" variant="warning-outline" size="sm" icon="edit">
                                         {{ __('seguridad.roles.editar') }}
                                     </x-atoms.button>
                                 @endpuede

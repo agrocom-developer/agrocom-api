@@ -2,6 +2,7 @@
 
 use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\EstadiaHacienda;
 use App\Dominios\Personal\Infraestructura\Eloquent\EquipoTrabajo;
 use App\Dominios\Personal\Infraestructura\Eloquent\PerBase;
@@ -38,9 +39,11 @@ function equipoTrabajoParaReplayEstadia(): EquipoTrabajo
 
 function campoParaReplayEstadia(): Campo
 {
-    $cliente = Cliente::query()->create(['razon_social' => 'Cliente Replay']);
+    $cliente = Cliente::query()->create(['razon_social' => 'Cliente Replay', 'tipo_persona' => 'juridica']);
 
-    return Campo::query()->create(['cliente_id' => $cliente->id, 'nombre' => 'Campo Replay']);
+    $propiedad = Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
+
+    return Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo Replay']);
 }
 
 it('el mismo lote de estadia_entrada/estadia_salida aplicado 10 veces, en orden y en desorden, deja un estado final idéntico', function () {

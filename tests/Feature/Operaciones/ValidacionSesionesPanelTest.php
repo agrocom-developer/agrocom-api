@@ -5,6 +5,7 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Operaciones\Aplicacion\RechazarSesion;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Dominio\EstadoSesion;
@@ -63,8 +64,9 @@ function entrarAlPanelParaValidacion(SecUser $usuario, int $idRolActivo): void
 
 function trabajoParaValidacionPanel(): Trabajo
 {
-    $cliente = Cliente::create(['razon_social' => 'Cliente panel validación']);
-    $campo = Campo::create(['cliente_id' => $cliente->id, 'nombre' => 'Campo panel validación']);
+    $cliente = Cliente::create(['razon_social' => 'Cliente panel validación', 'tipo_persona' => 'juridica']);
+    $propiedad = Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
+    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo panel validación']);
     $lote = Lote::create(['campo_id' => $campo->id, 'codigo' => 'L-PANELVAL', 'hectareas' => '40.00']);
     $contrato = Contrato::create([
         'cliente_id' => $cliente->id,

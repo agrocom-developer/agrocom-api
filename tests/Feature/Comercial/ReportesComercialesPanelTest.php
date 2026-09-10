@@ -7,6 +7,7 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cultivo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Dominio\EstadoSesion;
 use App\Dominios\Operaciones\Dominio\EstadoTrabajo;
@@ -53,7 +54,7 @@ beforeEach(function () {
 
 function clientePantalla(string $sufijo): Cliente
 {
-    return Cliente::create(['razon_social' => "Cliente informe {$sufijo}"]);
+    return Cliente::create(['razon_social' => "Cliente informe {$sufijo}", 'tipo_persona' => 'juridica']);
 }
 
 function campaniaPantalla(Cliente $cliente, string $sufijo): object
@@ -98,7 +99,8 @@ function contratoPantalla(string $sufijo, Cliente $cliente, object $campania, st
 
 function siembraPantalla(Contrato $contrato, Cultivo $cultivo): void
 {
-    $campo = Campo::create(['cliente_id' => $contrato->cliente_id, 'nombre' => "Campo siembra {$contrato->id}"]);
+    $propiedad = Propiedad::create(['cliente_id' => $contrato->cliente_id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
+    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => "Campo siembra {$contrato->id}"]);
     $lote = Lote::create(['campo_id' => $campo->id, 'codigo' => "L-{$contrato->id}", 'hectareas' => '100.00']);
 
     DB::table('com_lote_campania')->insert([
@@ -114,7 +116,8 @@ function siembraPantalla(Contrato $contrato, Cultivo $cultivo): void
 
 function ordenSiembraPantalla(Contrato $contrato, Cultivo $cultivo, string $sufijo, string $hectareas = '50.00'): OrdenAplicacion
 {
-    $campo = Campo::create(['cliente_id' => $contrato->cliente_id, 'nombre' => "Campo orden {$sufijo}"]);
+    $propiedad = Propiedad::create(['cliente_id' => $contrato->cliente_id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
+    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => "Campo orden {$sufijo}"]);
     $lote = Lote::create(['campo_id' => $campo->id, 'codigo' => "L-ORD-{$sufijo}", 'hectareas' => $hectareas]);
 
     // Registra la siembra del lote en esta campaña

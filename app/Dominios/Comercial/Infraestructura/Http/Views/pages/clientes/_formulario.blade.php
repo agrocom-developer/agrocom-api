@@ -1,10 +1,11 @@
 {{--
     Partial: formulario de cliente, compartido por create.blade.php y
-    edit.blade.php (HU-22, tarea 33) — arquetipo Formulario, §6.3 de
-    docs/diseno/guia_pantalla_panel.md. Las dos pantallas arman el MISMO
-    formulario; lo único que cambia es contra qué URL/método postea y los
-    valores iniciales — evita que las dos plantillas diverjan con el tiempo,
-    que es justo el riesgo de un molde que van a copiar HU-23 a HU-27.
+    edit.blade.php (HU-22, tarea 33; actualizado ADR 0018) — arquetipo
+    Formulario, §6.3 de docs/diseno/guia_pantalla_panel.md. Las dos pantallas
+    arman el MISMO formulario; lo único que cambia es contra qué URL/método
+    postea y los valores iniciales — evita que las dos plantillas diverjan con
+    el tiempo, que es justo el riesgo de un molde que van a copiar HU-23 a
+    HU-27.
 
     Espera:
     - $cliente (Cliente|null): null en alta; el modelo, con `contactos` ya
@@ -12,6 +13,9 @@
     - $tiposContacto (list<TipoContactoCliente>): opciones del select de
       tipo de contacto (ver ClientesController) — la vista no conoce el
       enum de dominio.
+    - $tiposPersona (list<TipoPersonaCliente>): opciones del select de tipo
+      de persona (física/jurídica, ADR 0018) — la vista no conoce el enum
+      de dominio.
 
     Tras un error de validación, `old()` pisa los valores del modelo/vacíos
     — mismo criterio en alta y en edición, para que el usuario no pierda lo
@@ -24,8 +28,9 @@
 @php
     $esEdicion = $cliente !== null;
     $accion = $esEdicion ? route('panel.clientes.update', $cliente) : route('panel.clientes.store');
-    $razonSocial = old('razon_social', $cliente->razon_social ?? '');
-    $nit = old('nit', $cliente->nit ?? '');
+    $razonSocial = old('razon_social', $cliente?->razon_social ?? '');
+    $nit = old('nit', $cliente?->nit ?? '');
+    $tipoPersonaValor = old('tipo_persona', $cliente?->tipo_persona?->value ?? '');
     $contactosPorDefecto = $esEdicion
         ? $cliente->contactos->map(fn ($contacto) => [
             'id' => $contacto->id,
@@ -37,6 +42,9 @@
         ])->all()
         : [[]];
     $contactosIniciales = old('contactos', $contactosPorDefecto);
+    $tiposPersonaOptions = collect($tiposPersona)->mapWithKeys(fn ($tipo) => [
+        $tipo->value => __('comercial.clientes.tipo_persona_opcion.'.$tipo->value)
+    ]);
 @endphp
 
 <form method="POST" action="{{ $accion }}" class="ag-clientes-form" novalidate data-ag-clientes-form>
@@ -50,18 +58,15 @@
         :subtitle="__('comercial.clientes.subtitulo_form')"
     >
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.clientes.index') }}" variant="outline">
-                {{ __('ui.action.cancel') }}
-            </x-atoms.button>
-            <x-atoms.button type="submit" variant="primary">
-                {{ __('ui.action.save') }}
+            <x-atoms.button href="{{ route('panel.clientes.index') }}" variant="outline" icon="arrow_back">
+                {{ __('comercial.clientes.volver') }}
             </x-atoms.button>
         </x-slot:actions>
     </x-organisms.page-header>
 
     <x-molecules.form-section
         :title="__('comercial.clientes.seccion_datos')"
-        :count="__('comercial.clientes.campos_contador', ['cantidad' => 2])"
+        :count="__('comercial.clientes.campos_contador', ['cantidad' => 3])"
     >
         <x-atoms.input
             type="text"
@@ -70,6 +75,17 @@
             value="{{ $razonSocial }}"
             required
             error="{{ $errors->first('razon_social') }}"
+        />
+
+        <x-atoms.select
+            name="tipo_persona"
+            id="tipo_persona"
+            label="{{ __('comercial.clientes.campo_tipo_persona') }}"
+            :options="$tiposPersonaOptions"
+            :value="$tipoPersonaValor"
+            placeholder="{{ __('comercial.clientes.campo_tipo_persona_placeholder') }}"
+            required
+            error="{{ $errors->first('tipo_persona') }}"
         />
 
         <x-atoms.input

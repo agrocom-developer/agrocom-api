@@ -71,6 +71,7 @@ return [
         'consulta_ayuda' => 'Elegí una persona para ver cuánto puede adelantar todavía este mes, antes de completar el formulario.',
         'consulta_boton' => 'Consultar',
         'consulta_resultado' => 'Disponible para :persona este mes: Bs :monto',
+        'volver' => 'Volver a anticipos',
     ],
 
     // HU-30 (tarea 44): "como dueño, quiero generar la planilla del período
@@ -191,6 +192,7 @@ return [
         'error_rubro_invalido' => 'El rubro seleccionado no es válido.',
         'error_comprobante_tipo' => 'El comprobante tiene que ser una imagen (JPG/PNG) o un PDF.',
         'error_comprobante_tamano' => 'El comprobante no puede superar los 10 MB.',
+        'volver' => 'Volver a gastos',
     ],
 
     // HU-34 (tarea 48): "como jefe de campo, quiero rendir los gastos que
@@ -335,6 +337,7 @@ return [
         'error_equipo_invalido' => 'El equipo seleccionado no es válido.',
         'error_recurso_requerido' => 'Elegí el recurso (dron, vehículo o generador) que consumió la carga.',
         'error_recurso_invalido' => 'El recurso seleccionado no es válido.',
+        'volver' => 'Volver a combustible',
     ],
 
 ];

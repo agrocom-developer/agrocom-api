@@ -5,6 +5,7 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cultivo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\LoteCampania;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUserRole;
@@ -46,7 +47,7 @@ function entrarAlPanelParaSiembra(SecUser $usuario, int $idRolActivo): void
 
 function clienteParaSiembraPanel(string $razonSocial = 'Agropecuaria Panel Siembra S.R.L.'): Cliente
 {
-    return Cliente::query()->create(['razon_social' => $razonSocial]);
+    return Cliente::query()->create(['razon_social' => $razonSocial, 'tipo_persona' => 'juridica']);
 }
 
 function campaniaParaSiembraPanel(int $clienteId, string $codigo = '2025-2026'): Campania
@@ -62,7 +63,8 @@ function campaniaParaSiembraPanel(int $clienteId, string $codigo = '2025-2026'):
 
 function campoConLotesParaSiembraPanel(int $clienteId): Campo
 {
-    $campo = Campo::query()->create(['cliente_id' => $clienteId, 'nombre' => 'Campo panel siembra']);
+    $propiedad = Propiedad::create(['cliente_id' => $clienteId, 'nombre' => 'Propiedad de prueba '.uniqid()]);
+    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo panel siembra']);
     $campo->lotes()->create(['codigo' => 'L-01', 'hectareas' => '20.00']);
     $campo->lotes()->create(['codigo' => 'L-02', 'hectareas' => '15.00']);
 

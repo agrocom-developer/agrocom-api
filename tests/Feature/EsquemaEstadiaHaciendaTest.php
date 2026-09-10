@@ -2,6 +2,7 @@
 
 use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Personal\Infraestructura\Eloquent\EquipoTrabajo;
 use App\Dominios\Personal\Infraestructura\Eloquent\PerBase;
 use Illuminate\Database\QueryException;
@@ -33,9 +34,10 @@ function crearEquipoYCampoParaEstadia(): array
         'desde' => '2026-01-01',
     ]);
 
-    $cliente = Cliente::query()->create(['razon_social' => 'Cliente de prueba '.uniqid()]);
+    $cliente = Cliente::query()->create(['razon_social' => 'Cliente de prueba '.uniqid(), 'tipo_persona' => 'juridica']);
 
-    $campo = Campo::query()->create(['cliente_id' => $cliente->id, 'nombre' => 'Campo de prueba '.uniqid()]);
+    $propiedad = Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
+    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo de prueba '.uniqid()]);
 
     return ['equipo_trabajo_id' => $equipo->id, 'campo_id' => $campo->id];
 }

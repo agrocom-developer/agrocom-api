@@ -5,11 +5,20 @@ namespace App\Dominios\Comercial\Infraestructura\Busqueda;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Compartido\Contratos\ResultadoBusqueda;
 use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaEloquent;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Propiedades (campos, estancias) por nombre y ubicación. Es la entidad que
- * el dueño nombró al pedir la búsqueda — "el nombre de una estancia".
+ * Campos físicos por nombre. Es la entidad que el dueño nombró al pedir la
+ * búsqueda — "el nombre de una estancia" — aunque desde ADR 0018 esa palabra
+ * se reserva para `Propiedad` (ver `BusquedaPropiedades`); este proveedor
+ * sigue existiendo para el campo delimitado dentro de una propiedad.
+ *
+ * `ubicacion` se mudó a `com_propiedades` (ADR 0018): ya no es columna de
+ * `Campo`, así que sale de `columnas()` (evita un `WHERE` contra una columna
+ * que no existe) y `fila()` muestra el nombre de la propiedad como detalle
+ * en su lugar — `consultaBase()` precarga la relación para no armar una
+ * query nueva por fila.
  *
  * @extends BusquedaEloquent<Campo>
  */
@@ -38,7 +47,7 @@ final class BusquedaCampos extends BusquedaEloquent
     /** @return list<string> */
     protected function columnas(): array
     {
-        return ['nombre', 'ubicacion'];
+        return ['nombre'];
     }
 
     protected function icono(): string
@@ -51,12 +60,18 @@ final class BusquedaCampos extends BusquedaEloquent
         return 'panel.campos.index';
     }
 
+    /** @return Builder<Campo> */
+    protected function consultaBase(): Builder
+    {
+        return Campo::query()->with('propiedad:id,nombre');
+    }
+
     /** @param Campo $modelo */
     protected function fila(Model $modelo): ResultadoBusqueda
     {
         return new ResultadoBusqueda(
             titulo: (string) $modelo->nombre,
-            detalle: $modelo->ubicacion,
+            detalle: $modelo->propiedad?->nombre,
             href: route('panel.campos.edit', $modelo),
         );
     }

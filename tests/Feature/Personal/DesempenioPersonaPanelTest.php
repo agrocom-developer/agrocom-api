@@ -7,6 +7,7 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Dominio\EstadoSesion;
 use App\Dominios\Operaciones\Dominio\EstadoTrabajo;
@@ -62,7 +63,7 @@ function entrarAlPanelParaDesempenio(SecUser $usuario, int $idRolActivo): void
 /** Cliente (o uno ya existente, para dos campañas del mismo cliente) con una campaña abierta y un contrato asignado a ella. */
 function clienteConCampaniaFicha(string $sufijo, string $campaniaCodigo, string $campaniaDesde, string $campaniaHasta, ?Cliente $cliente = null): Contrato
 {
-    $cliente ??= Cliente::create(['razon_social' => "Cliente ficha {$sufijo}"]);
+    $cliente ??= Cliente::create(['razon_social' => "Cliente ficha {$sufijo}", 'tipo_persona' => 'juridica']);
     $campania = Campania::create([
         'cliente_id' => $cliente->id,
         'codigo' => $campaniaCodigo,
@@ -85,7 +86,8 @@ function clienteConCampaniaFicha(string $sufijo, string $campaniaCodigo, string 
 
 function trabajoDeContratoFicha(Contrato $contrato, string $sufijo): Trabajo
 {
-    $campo = Campo::create(['cliente_id' => $contrato->cliente_id, 'nombre' => "Campo ficha {$sufijo}"]);
+    $propiedad = Propiedad::create(['cliente_id' => $contrato->cliente_id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
+    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => "Campo ficha {$sufijo}"]);
     $lote = Lote::create(['campo_id' => $campo->id, 'codigo' => "L-FICHA-{$sufijo}", 'hectareas' => '50.00']);
     $orden = OrdenAplicacion::create([
         'contrato_id' => $contrato->id,

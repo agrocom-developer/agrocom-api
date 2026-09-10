@@ -41,6 +41,9 @@
 @php
     $prefijo ??= "lotes[{$indice}]";
     $idBase = str_replace(['[', ']'], ['-', ''], $prefijo);
+    // El error bag usa notación con punto (`lotes.0.codigo`), el `name` del
+    // input usa corchetes (`lotes[0][codigo]`) — mismo prefijo, otra sintaxis.
+    $erroresPrefijo = str_replace(['[', ']'], ['.', ''], $prefijo);
     $mostrarQuitar ??= true;
 @endphp
 {{--
@@ -65,6 +68,7 @@
         label="{{ __('comercial.campos.lote_codigo') }}"
         value="{{ $lote['codigo'] ?? '' }}"
         required
+        error="{{ $errors->first($erroresPrefijo.'.codigo') }}"
     />
 
     <x-atoms.input
@@ -75,6 +79,7 @@
         min="0.01"
         step="0.01"
         required
+        error="{{ $errors->first($erroresPrefijo.'.hectareas') }}"
     />
 
     <div
@@ -86,6 +91,10 @@
         @endif
     >
         <span class="ag-input__label">{{ __('comercial.campos.lote_geometria') }}</span>
+
+        @error($erroresPrefijo.'.geometria')
+            <p class="ag-input__error" role="alert">{{ $message }}</p>
+        @enderror
 
         {{-- El valor real. Lo escribe el editor; queda en el DOM aunque el
              mapa no llegue a cargar, así que una geometría ya guardada nunca

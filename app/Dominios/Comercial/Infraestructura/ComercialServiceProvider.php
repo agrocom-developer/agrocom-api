@@ -11,6 +11,7 @@ use App\Dominios\Comercial\Infraestructura\Busqueda\BusquedaCampos;
 use App\Dominios\Comercial\Infraestructura\Busqueda\BusquedaClientes;
 use App\Dominios\Comercial\Infraestructura\Busqueda\BusquedaCultivos;
 use App\Dominios\Comercial\Infraestructura\Busqueda\BusquedaLotes;
+use App\Dominios\Comercial\Infraestructura\Busqueda\BusquedaPropiedades;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -38,6 +39,7 @@ final class ComercialServiceProvider extends ServiceProvider
         // no conoce estas clases, las recibe por tag. Sumar una entidad al
         // buscador es escribir su proveedor y taggearlo acá.
         $this->app->tag(BusquedaClientes::class, 'busqueda.proveedores');
+        $this->app->tag(BusquedaPropiedades::class, 'busqueda.proveedores');
         $this->app->tag(BusquedaCampos::class, 'busqueda.proveedores');
         $this->app->tag(BusquedaLotes::class, 'busqueda.proveedores');
         $this->app->tag(BusquedaCultivos::class, 'busqueda.proveedores');

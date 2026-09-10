@@ -164,7 +164,7 @@
 
                             <span role="cell" class="ag-contratos__acciones">
                                 @puede('comercial.contrato.editar')
-                                    <x-atoms.button href="{{ route('panel.contratos.edit', $contrato) }}" variant="outline" size="sm" icon="edit">
+                                    <x-atoms.button href="{{ route('panel.contratos.edit', $contrato) }}" variant="warning-outline" size="sm" icon="edit">
                                         {{ __('comercial.contratos.editar') }}
                                     </x-atoms.button>
                                 @endpuede

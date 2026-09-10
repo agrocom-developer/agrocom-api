@@ -250,6 +250,7 @@ return [
         'error_sesion_invalida' => 'La sesión elegida no existe.',
         'error_causa_requerida' => 'Elegí la causa de la pausa.',
         'error_causa_invalida' => 'Esa causa no es válida.',
+        'volver' => 'Volver a pausas',
 
         'causa' => [
             'clima' => 'Clima fuera de rango',
@@ -340,6 +341,7 @@ return [
         'creado' => 'Dron creado correctamente.',
         'actualizado' => 'Dron actualizado correctamente.',
         'eliminado' => 'Dron dado de baja correctamente.',
+        'volver' => 'Volver a drones',
     ],
 
     // Pantalla de panel "Operación › Órdenes" (HU-25, tarea 38): alta y
@@ -414,6 +416,7 @@ return [
         'actualizada' => 'Orden de aplicación actualizada correctamente.',
         'activada' => 'Orden de aplicación activada correctamente.',
         'eliminada' => 'Orden de aplicación dada de baja correctamente.',
+        'volver' => 'Volver a órdenes',
     ],
 
     // Pantalla de panel "Reportes › Técnicos" (HU-43, tarea 57):

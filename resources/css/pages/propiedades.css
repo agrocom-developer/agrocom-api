@@ -1,0 +1,102 @@
+/*
+ * Pages: propiedades/index, propiedades/create, propiedades/edit
+ * (app/Dominios/Comercial/Infraestructura/Http/Views/pages/propiedades/) —
+ * ADR 0018: nivel de terreno nuevo entre Cliente y Campo. CSS propio de
+ * ESTAS páginas (ver convención en resources/css/pages/index.css), mismo
+ * patrón que campos.css/clientes.css.
+ *
+ * El wrapper `.ag-propiedades`/`.ag-propiedades-form` sigue el mismo patrón
+ * que `.ag-campos`/`.ag-campos-form`: flex en columna con un único `gap` en
+ * vez de `margin-top` repetido en cada hijo. Las tarjetas de formulario
+ * (`molecules/form-section`), la cabecera (`organisms/page-header`) y la
+ * barra de acciones (`organisms/form-actions-bar`) ya traen su propio chrome
+ * — acá solo el layout específico de estas pantallas. Todo color y medida
+ * por token (CLAUDE.md invariante 11).
+ */
+
+.ag-propiedades,
+.ag-propiedades-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+/* Listado (index) */
+
+.ag-propiedades__filtros .ag-input,
+.ag-propiedades__filtros .ag-select {
+    min-width: 16rem;
+}
+
+.ag-propiedades__tabla {
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+    overflow: hidden;
+}
+
+.ag-propiedades__head,
+.ag-propiedades__fila {
+    display: grid;
+    grid-template-columns: 2fr 1.5fr 1fr auto;
+    gap: var(--ag-space-4);
+    align-items: center;
+    padding: var(--ag-space-3) var(--ag-space-4);
+}
+
+.ag-propiedades__head {
+    background-color: var(--ag-color-bg-table-head);
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ag-propiedades__fila {
+    border-top: 1px solid var(--ag-color-border-row);
+    color: var(--ag-color-text);
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-propiedades__fila:hover {
+    background-color: var(--ag-color-bg-row-hover);
+}
+
+.ag-propiedades__nombre {
+    font-weight: var(--ag-font-weight-medium);
+}
+
+.ag-propiedades__acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--ag-space-2);
+}
+
+.ag-propiedades__paginacion {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ag-space-4);
+}
+
+.ag-propiedades__paginacion-info {
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-sm);
+}
+
+@media (max-width: 992px) {
+    .ag-propiedades__head {
+        display: none;
+    }
+
+    .ag-propiedades__fila {
+        grid-template-columns: 1fr;
+        gap: var(--ag-space-1);
+    }
+
+    .ag-propiedades__acciones {
+        justify-content: flex-start;
+        margin-top: var(--ag-space-2);
+    }
+}

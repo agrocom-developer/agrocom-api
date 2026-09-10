@@ -21,12 +21,13 @@ final class CrearCliente
      * @throws ClienteDuplicado si el NIT ya pertenece a otro cliente activo
      *                          (índice parcial `com_clientes_nit_unico`).
      */
-    public function ejecutar(string $razonSocial, ?string $nit, array $contactos): Cliente
+    public function ejecutar(string $razonSocial, ?string $nit, string $tipoPersona, array $contactos): Cliente
     {
-        return DB::transaction(function () use ($razonSocial, $nit, $contactos): Cliente {
+        return DB::transaction(function () use ($razonSocial, $nit, $tipoPersona, $contactos): Cliente {
             $cliente = new Cliente([
                 'razon_social' => $razonSocial,
                 'nit' => $nit,
+                'tipo_persona' => $tipoPersona,
             ]);
 
             try {

@@ -50,21 +50,34 @@ function rutaMigracionMenuPropiedadesLotes(): string
 }
 
 it('el seeder separa "campos" en "propiedades" (misma fila) y "lotes" (item nuevo, con su propia ruta)', function () {
+    // ADR 0018 (10/9/2026) revierte el vocabulario que esta tarea (77) le
+    // había dado a esta pantalla: "Propiedad" pasa a ser una entidad real,
+    // distinta de "Campo" (ver SecMenuSeeder::revertirVocabularioPropiedadesCampos()).
+    // La fila legada de "campos" sigue siendo la MISMA fila (mismo id, misma
+    // ruta `panel.campos.index`) pero recupera su nombre; "Propiedades" pasa
+    // a ser un ítem nuevo con su propia ruta (`panel.propiedades.index`).
     $this->seed(SeguridadSeeder::class);
     $vieja = crearArbolMenuComercialLegado();
 
     $this->seed(SecMenuSeeder::class);
 
-    $propiedades = $vieja->fresh();
-    expect($propiedades)->not->toBeNull()
-        ->and($propiedades->label)->toBe('menu.comercial.items.propiedades')
-        ->and($propiedades->ruta)->toBe('panel.campos.index')
-        ->and($propiedades->trashed())->toBeFalse();
+    $campos = $vieja->fresh();
+    expect($campos)->not->toBeNull()
+        ->and($campos->label)->toBe('menu.comercial.items.campos')
+        ->and($campos->ruta)->toBe('panel.campos.index')
+        ->and($campos->trashed())->toBeFalse();
+
+    $propiedades = SecMenu::query()->where('label', 'menu.comercial.items.propiedades')->sole();
+    $idPermisoPropiedad = (int) SecPermission::query()->where('code', 'comercial.propiedad.ver')->value('id');
+
+    expect($propiedades->padre_id)->toBe($campos->padre_id)
+        ->and($propiedades->ruta)->toBe('panel.propiedades.index')
+        ->and($propiedades->permission_id)->toBe($idPermisoPropiedad);
 
     $lotes = SecMenu::query()->where('label', 'menu.comercial.items.lotes')->sole();
     $idPermisoLote = (int) SecPermission::query()->where('code', 'comercial.lote.ver')->value('id');
 
-    expect($lotes->padre_id)->toBe($propiedades->padre_id)
+    expect($lotes->padre_id)->toBe($campos->padre_id)
         ->and($lotes->ruta)->toBe('panel.lotes.index')
         ->and($lotes->permission_id)->toBe($idPermisoLote);
 });
@@ -166,7 +179,9 @@ it('el item "Lotes" del sidebar se gobierna por comercial.lote.ver, independient
     $comercial = collect($obtenerMenu->ejecutar($usuario, $rol->id))->firstWhere('label', 'menu.comercial.label');
     $etiquetas = collect($comercial->hijos)->map(fn ($item) => $item->label)->all();
 
-    expect($etiquetas)->toContain('menu.comercial.items.propiedades')
+    // ADR 0018: el ítem gateado por `comercial.campo.ver` se llama de nuevo
+    // "campos" (ver la aduana equivalente en la primera prueba del archivo).
+    expect($etiquetas)->toContain('menu.comercial.items.campos')
         ->not->toContain('menu.comercial.items.lotes');
 
     (new SecRolePermission(['id_role' => $rol->id, 'id_permission' => $idPermisoLote]))->save();

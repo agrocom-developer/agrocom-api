@@ -22,14 +22,14 @@ final class ListarCampos
     public function ejecutar(?string $busqueda = null, int $porPagina = 15): LengthAwarePaginator
     {
         return Campo::query()
-            ->with('cliente')
+            ->with('propiedad.cliente')
             ->withCount('lotes')
             ->withSum('lotes as hectareas_totales', 'hectareas')
             ->when(
                 $busqueda !== null && $busqueda !== '',
                 fn (Builder $consulta) => $consulta->where(function (Builder $sub) use ($busqueda): void {
                     $sub->where('nombre', 'like', "%{$busqueda}%")
-                        ->orWhereHas('cliente', fn (Builder $cliente) => $cliente->where('razon_social', 'like', "%{$busqueda}%"));
+                        ->orWhereHas('propiedad.cliente', fn (Builder $cliente) => $cliente->where('razon_social', 'like', "%{$busqueda}%"));
                 }),
             )
             ->orderBy('nombre')

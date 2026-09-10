@@ -13,6 +13,7 @@ use App\Dominios\Comercial\Dominio\Excepciones\LoteDuplicado;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\ActualizarLoteRequest;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\CrearLoteRequest;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
@@ -64,6 +65,7 @@ final class LotesController
             'filtros' => ['q' => $busqueda, 'cliente_id' => $clienteId, 'campo_id' => $campoId],
             'clientesDisponibles' => $this->clientesActivos(),
             'propiedadesDisponibles' => $this->propiedadesActivas(),
+            'camposDisponibles' => $this->camposActivos(),
         ]);
     }
 
@@ -75,6 +77,7 @@ final class LotesController
             ...$this->autorizacion->cascara($request),
             'clientesDisponibles' => $this->clientesActivos(),
             'propiedadesDisponibles' => $this->propiedadesActivas(),
+            'camposDisponibles' => $this->camposActivos(),
             'proveedorMapa' => $this->resolverProveedorMapa->ejecutar(),
         ]);
     }
@@ -105,9 +108,10 @@ final class LotesController
 
         return view('comercial::pages.lotes.edit', [
             ...$this->autorizacion->cascara($request),
-            'lote' => $lote->load('campo'),
+            'lote' => $lote->load('campo.propiedad'),
             'clientesDisponibles' => $this->clientesActivos(),
             'propiedadesDisponibles' => $this->propiedadesActivas(),
+            'camposDisponibles' => $this->camposActivos(),
             'proveedorMapa' => $this->resolverProveedorMapa->ejecutar(),
         ]);
     }
@@ -155,13 +159,36 @@ final class LotesController
         return Cliente::query()->orderBy('razon_social')->pluck('razon_social', 'id');
     }
 
-    /** @return Collection<int, Campo> id => Campo (con `cliente_id`, `nombre` y `cliente` precargada), para el select de propiedad y su cascada por cliente. */
+    /**
+     * Propiedades activas con su `cliente_id`, para el primer nivel del
+     * cascade cliente → propiedad → campo (ADR 0018 introdujo el nivel de
+     * propiedad entre cliente y campo).
+     *
+     * @return Collection<int, Propiedad> id => Propiedad (con `cliente_id`, `nombre`)
+     */
     private function propiedadesActivas(): Collection
     {
-        return Campo::query()
-            ->with('cliente:id,razon_social')
+        return Propiedad::query()
             ->orderBy('nombre')
             ->get(['id', 'cliente_id', 'nombre'])
+            ->keyBy('id');
+    }
+
+    /**
+     * Campos activos con su `propiedad_id`, para el segundo nivel del
+     * cascade cliente → propiedad → campo y para el select final del que
+     * cuelga el lote. Antes de ADR 0018 este método se llamaba
+     * `propiedadesActivas()` y devolvía lo mismo que hoy es `Campo` — el
+     * nombre quedó incorrecto cuando "Propiedad" pasó a ser una entidad
+     * propia (ver ADR 0018, punto 1).
+     *
+     * @return Collection<int, Campo> id => Campo (con `propiedad_id`, `nombre`)
+     */
+    private function camposActivos(): Collection
+    {
+        return Campo::query()
+            ->orderBy('nombre')
+            ->get(['id', 'propiedad_id', 'nombre'])
             ->keyBy('id');
     }
 
@@ -171,11 +198,13 @@ final class LotesController
      */
     private function normalizarDatos(array $datos): array
     {
+        $lote = $datos['lote'];
+
         return [
-            'codigo' => (string) $datos['codigo'],
-            'hectareas' => (string) $datos['hectareas'],
-            'geometria' => $this->decodificarGeometria($datos['geometria'] ?? null),
-            'restricciones' => $this->cadenaONull($datos['restricciones'] ?? null),
+            'codigo' => (string) $lote['codigo'],
+            'hectareas' => (string) $lote['hectareas'],
+            'geometria' => $this->decodificarGeometria($lote['geometria'] ?? null),
+            'restricciones' => $this->cadenaONull($lote['restricciones'] ?? null),
         ];
     }
 

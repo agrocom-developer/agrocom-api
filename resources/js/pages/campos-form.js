@@ -1,11 +1,19 @@
 /**
- * Lotes dinámicos del formulario de campo (HU-24, tarea 35): agregar y
- * quitar filas de `lotes[]` sin recargar la página. Mismo patrón que
- * `resources/js/pages/clientes-form.js` (tarea 33) — JS vanilla, clona el
- * `<template>` que ya trae el partial `_lote-fila.blade.php` con el
- * placeholder `__INDICE__` en cada `name`, y lo reemplaza por el próximo
- * índice libre. No hay reindexado al quitar una fila: PHP arma igual el
- * array de `lotes` aunque los índices numéricos queden con huecos.
+ * Manejo del formulario de campo (HU-24, tarea 35; actualizado ADR 0018):
+ *
+ * 1. Filtra el `<select>` de propiedad según el cliente elegido (ADR 0018:
+ *    el campo ahora cuelga de una propiedad, no directo de un cliente) —
+ *    mismo patrón que cliente→propiedad en `lotes-form.js`. Es presentación,
+ *    no validación: el servidor (`CrearCampoRequest`) valida `propiedad_id`
+ *    contra `com_propiedades` sin importar qué cliente esté seleccionado.
+ *
+ * 2. Lotes dinámicos: agregar y quitar filas de `lotes[]` sin recargar la
+ *    página. Mismo patrón que `resources/js/pages/clientes-form.js` (tarea 33)
+ *    — JS vanilla, clona el `<template>` que ya trae el partial
+ *    `_lote-fila.blade.php` con el placeholder `__INDICE__` en cada `name`,
+ *    y lo reemplaza por el próximo índice libre. No hay reindexado al quitar
+ *    una fila: PHP arma igual el array de `lotes` aunque los índices
+ *    numéricos queden con huecos.
  *
  * Guard de presencia en el DOM (mismo criterio que `login.js`): en cualquier
  * página sin `[data-ag-campos-form]` este módulo no hace nada.
@@ -17,6 +25,36 @@
 document.addEventListener('DOMContentLoaded', () => {
     const formulario = document.querySelector('[data-ag-campos-form]');
     if (!formulario) return;
+
+    // Cascade cliente → propiedad
+    const selectCliente = formulario.querySelector('[data-ag-campo-cliente]');
+    const selectPropiedad = formulario.querySelector('[data-ag-campo-propiedad]');
+
+    if (selectCliente && selectPropiedad) {
+        const mapaClientePropiedad = JSON.parse(selectPropiedad.dataset.mapaClientePropiedad || '{}');
+        const opciones = Array.from(selectPropiedad.querySelectorAll('option')).filter((opcion) => opcion.value !== '');
+
+        const aplicarFiltro = () => {
+            const clienteId = selectCliente.value;
+            let valorSigueVisible = false;
+
+            opciones.forEach((opcion) => {
+                const visible = clienteId === '' || String(mapaClientePropiedad[opcion.value]) === clienteId;
+                opcion.hidden = !visible;
+                opcion.disabled = !visible;
+                if (visible && opcion.value === selectPropiedad.value) {
+                    valorSigueVisible = true;
+                }
+            });
+
+            if (!valorSigueVisible) {
+                selectPropiedad.value = '';
+            }
+        };
+
+        selectCliente.addEventListener('change', aplicarFiltro);
+        aplicarFiltro();
+    }
 
     const contenedor = formulario.querySelector('[data-ag-lotes]');
     const lista = formulario.querySelector('[data-ag-lotes-lista]');

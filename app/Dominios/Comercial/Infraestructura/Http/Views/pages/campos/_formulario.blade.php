@@ -1,17 +1,20 @@
 {{--
     Partial: formulario de campo, compartido por create.blade.php y
-    edit.blade.php (HU-24, tarea 35) — arquetipo Formulario, §6.3 de
-    docs/diseno/guia_pantalla_panel.md. Mismo patrón que
+    edit.blade.php (HU-24, tarea 35; actualizado ADR 0018) — arquetipo
+    Formulario, §6.3 de docs/diseno/guia_pantalla_panel.md. Mismo patrón que
     `clientes/_formulario.blade.php` (tarea 33): las dos páginas arman el
     MISMO formulario; lo único que cambia es contra qué URL/método postea y
     los valores iniciales.
 
     Espera:
-    - $campo (Campo|null): null en alta; el modelo, con `lotes` ya cargada,
-      en edición.
+    - $campo (Campo|null): null en alta; el modelo, con `lotes` y `propiedad`
+      ya cargadas, en edición.
     - $clientesDisponibles (Collection<int, string>): id => razón social,
       clientes activos (ver CamposController::clientesActivos()) — la vista
       no conoce el modelo Cliente.
+    - $propiedadesDisponibles (Collection<int, Propiedad>): id => Propiedad
+      con `cliente_id` y `nombre` — para el cascade cliente → propiedad
+      (ADR 0018: campo ahora cuelga de propiedad, no directo de cliente).
 
     Tras un error de validación, `old()` pisa los valores del modelo/vacíos
     — mismo criterio en alta y en edición.
@@ -23,9 +26,9 @@
 @php
     $esEdicion = $campo !== null;
     $accion = $esEdicion ? route('panel.campos.update', $campo) : route('panel.campos.store');
-    $clienteId = old('cliente_id', $campo?->cliente_id ?? '');
+    $propiedadId = old('propiedad_id', $campo?->propiedad_id ?? '');
+    $clienteId = old('cliente_id', $campo?->propiedad?->cliente_id ?? '');
     $nombre = old('nombre', $campo?->nombre ?? '');
-    $ubicacion = old('ubicacion', $campo?->ubicacion ?? '');
     $lotesPorDefecto = $esEdicion
         ? $campo->lotes->map(fn ($lote) => [
             'id' => $lote->id,
@@ -36,6 +39,10 @@
         ])->all()
         : [[]];
     $lotesIniciales = old('lotes', $lotesPorDefecto);
+    $mapaClientePropiedad = $propiedadesDisponibles->pluck('cliente_id', 'id');
+    $propiedadesOptions = $propiedadesDisponibles->mapWithKeys(fn ($propiedad) => [
+        $propiedad->id => $propiedad->nombre,
+    ]);
 @endphp
 
 <form method="POST" action="{{ $accion }}" class="ag-campos-form" novalidate data-ag-campos-form>
@@ -49,18 +56,15 @@
         :subtitle="__('comercial.campos.subtitulo_form')"
     >
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.campos.index') }}" variant="outline">
-                {{ __('ui.action.cancel') }}
-            </x-atoms.button>
-            <x-atoms.button type="submit" variant="primary">
-                {{ __('ui.action.save') }}
+            <x-atoms.button href="{{ route('panel.campos.index') }}" variant="outline" icon="arrow_back">
+                {{ __('comercial.campos.volver') }}
             </x-atoms.button>
         </x-slot:actions>
     </x-organisms.page-header>
 
     <x-molecules.form-section
         :title="__('comercial.campos.seccion_datos')"
-        :count="__('comercial.campos.campos_contador', ['cantidad' => 3])"
+        :count="__('comercial.campos.campos_contador', ['cantidad' => 2])"
     >
         <x-atoms.select
             name="cliente_id"
@@ -70,7 +74,20 @@
             :value="$clienteId"
             placeholder="{{ __('comercial.campos.campo_cliente_placeholder') }}"
             required
-            error="{{ $errors->first('cliente_id') }}"
+            data-ag-campo-cliente
+        />
+
+        <x-atoms.select
+            name="propiedad_id"
+            id="propiedad_id"
+            label="{{ __('comercial.campos.campo_propiedad') }}"
+            :options="$propiedadesOptions"
+            :value="$propiedadId"
+            placeholder="{{ __('comercial.campos.campo_propiedad_placeholder') }}"
+            required
+            error="{{ $errors->first('propiedad_id') }}"
+            data-ag-campo-propiedad
+            data-mapa-cliente-propiedad="{{ $mapaClientePropiedad->toJson() }}"
         />
 
         <x-atoms.input
@@ -81,17 +98,9 @@
             required
             error="{{ $errors->first('nombre') }}"
         />
-
-        <x-atoms.input
-            type="text"
-            name="ubicacion"
-            label="{{ __('comercial.campos.campo_ubicacion') }}"
-            value="{{ $ubicacion }}"
-            error="{{ $errors->first('ubicacion') }}"
-        />
     </x-molecules.form-section>
 
-    <x-molecules.form-section :title="__('comercial.campos.seccion_lotes')">
+    <x-molecules.form-section :title="__('comercial.campos.seccion_lotes')" class="ag-campos-form__lotes-seccion">
         <div class="ag-form-section__field--full ag-campos-form__lotes" data-ag-lotes>
             @if ($errors->has('lotes'))
                 <p class="ag-input__error" role="alert">{{ $errors->first('lotes') }}</p>

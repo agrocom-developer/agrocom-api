@@ -68,6 +68,7 @@ it('registra created_by y updated_by desde el usuario autenticado', function () 
     $cliente = Cliente::query()->create([
         'razon_social' => 'Cliente Auditado S.R.L.',
         'nit' => '999888777',
+        'tipo_persona' => 'juridica',
     ]);
 
     expect($cliente->created_by)->toBe($autora->id)

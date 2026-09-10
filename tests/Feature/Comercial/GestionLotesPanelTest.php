@@ -4,6 +4,7 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Compartido\Dominio\AccionBitacora;
 use App\Dominios\Compartido\Infraestructura\Eloquent\Bitacora;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
@@ -50,27 +51,36 @@ function entrarAlPanelParaLotes(SecUser $usuario, int $idRolActivo): void
         ->withSession(['sec_rol_activo_id' => $idRolActivo]);
 }
 
-function propiedadDeLotesDePrueba(?Cliente $cliente = null, string $nombre = 'Campo Norte'): Campo
+function campoDeLotesDePrueba(?Cliente $cliente = null, string $nombre = 'Campo Norte'): Campo
 {
-    $cliente ??= Cliente::query()->create(['razon_social' => 'Agropecuaria del Valle S.R.L.']);
+    $cliente ??= Cliente::query()->create(['razon_social' => 'Agropecuaria del Valle S.R.L.', 'tipo_persona' => 'juridica']);
 
-    return Campo::query()->create(['cliente_id' => $cliente->id, 'nombre' => $nombre]);
+    $propiedad = Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
+
+    return Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => $nombre]);
 }
 
-/** Payload mínimo válido de alta/edición de un lote suelto. */
+/**
+ * Payload mínimo válido de alta/edición de un lote suelto — anidado bajo
+ * `lote[...]`, igual que lo postea el HTML real (`campos/_lote-fila.blade.php`
+ * con `prefijo: 'lote'`). Antes viajaba aplanado y enmascaraba el bug de
+ * nesting entre la vista y `CrearLoteRequest`/`ActualizarLoteRequest`.
+ */
 function payloadLote(int $campoId, array $overrides = []): array
 {
-    return array_merge([
+    return [
         'campo_id' => $campoId,
-        'codigo' => 'L-01',
-        'hectareas' => '15.50',
-    ], $overrides);
+        'lote' => array_merge([
+            'codigo' => 'L-01',
+            'hectareas' => '15.50',
+        ], $overrides),
+    ];
 }
 
 function crearOrdenAplicacionParaLoteDePrueba(Lote $lote): void
 {
     $contrato = Contrato::query()->create([
-        'cliente_id' => $lote->campo->cliente_id,
+        'cliente_id' => $lote->campo->propiedad->cliente_id,
         'hectareas_contratadas' => '10.00',
         'aplicaciones_previstas' => 1,
         'precio_ha' => '100.00',
@@ -92,7 +102,7 @@ function crearOrdenAplicacionParaLoteDePrueba(Lote $lote): void
 }
 
 it('da de alta un lote suelto desde su propia ficha', function () {
-    $campo = propiedadDeLotesDePrueba();
+    $campo = campoDeLotesDePrueba();
     [$encargado, $idRol] = usuarioConRolParaLotes('encargado', 'encargado_operaciones');
     entrarAlPanelParaLotes($encargado, $idRol);
 
@@ -106,18 +116,18 @@ it('da de alta un lote suelto desde su propia ficha', function () {
 });
 
 it('rechaza un lote con hectareas menores o iguales a cero', function () {
-    $campo = propiedadDeLotesDePrueba();
+    $campo = campoDeLotesDePrueba();
     [$encargado, $idRol] = usuarioConRolParaLotes('encargado', 'encargado_operaciones');
     entrarAlPanelParaLotes($encargado, $idRol);
 
     $this->post(route('panel.lotes.store'), payloadLote($campo->id, ['hectareas' => '0']))
-        ->assertSessionHasErrors('hectareas');
+        ->assertSessionHasErrors('lote.hectareas');
 
     expect(Lote::query()->count())->toBe(0);
 });
 
 it('el codigo de lote duplicado en la misma propiedad es un error de validacion, no un QueryException', function () {
-    $campo = propiedadDeLotesDePrueba();
+    $campo = campoDeLotesDePrueba();
     [$encargado, $idRol] = usuarioConRolParaLotes('encargado', 'encargado_operaciones');
     entrarAlPanelParaLotes($encargado, $idRol);
 
@@ -130,8 +140,8 @@ it('el codigo de lote duplicado en la misma propiedad es un error de validacion,
 });
 
 it('el mismo codigo se permite en dos propiedades distintas', function () {
-    $campoA = propiedadDeLotesDePrueba(nombre: 'Campo Norte');
-    $campoB = propiedadDeLotesDePrueba(nombre: 'Campo Sur');
+    $campoA = campoDeLotesDePrueba(nombre: 'Campo Norte');
+    $campoB = campoDeLotesDePrueba(nombre: 'Campo Sur');
     [$encargado, $idRol] = usuarioConRolParaLotes('encargado', 'encargado_operaciones');
     entrarAlPanelParaLotes($encargado, $idRol);
 
@@ -144,8 +154,8 @@ it('el mismo codigo se permite en dos propiedades distintas', function () {
 });
 
 it('edita un lote suelto, incluida la reasignacion de propiedad', function () {
-    $campoOrigen = propiedadDeLotesDePrueba(nombre: 'Campo Norte');
-    $campoDestino = propiedadDeLotesDePrueba(cliente: $campoOrigen->cliente, nombre: 'Campo Sur');
+    $campoOrigen = campoDeLotesDePrueba(nombre: 'Campo Norte');
+    $campoDestino = campoDeLotesDePrueba(cliente: $campoOrigen->propiedad->cliente, nombre: 'Campo Sur');
     [$encargado, $idRol] = usuarioConRolParaLotes('encargado', 'encargado_operaciones');
     entrarAlPanelParaLotes($encargado, $idRol);
 
@@ -164,7 +174,7 @@ it('edita un lote suelto, incluida la reasignacion de propiedad', function () {
 });
 
 it('acepta una geometria GeoJSON Polygon minima y la conserva al reabrir la edicion', function () {
-    $campo = propiedadDeLotesDePrueba();
+    $campo = campoDeLotesDePrueba();
     [$encargado, $idRol] = usuarioConRolParaLotes('encargado', 'encargado_operaciones');
     entrarAlPanelParaLotes($encargado, $idRol);
 
@@ -183,18 +193,18 @@ it('acepta una geometria GeoJSON Polygon minima y la conserva al reabrir la edic
 });
 
 it('rechaza una geometria mal formada', function () {
-    $campo = propiedadDeLotesDePrueba();
+    $campo = campoDeLotesDePrueba();
     [$encargado, $idRol] = usuarioConRolParaLotes('encargado', 'encargado_operaciones');
     entrarAlPanelParaLotes($encargado, $idRol);
 
     $this->post(route('panel.lotes.store'), payloadLote($campo->id, ['geometria' => 'no es json']))
-        ->assertSessionHasErrors('geometria');
+        ->assertSessionHasErrors('lote.geometria');
 
     expect(Lote::query()->count())->toBe(0);
 });
 
 it('registra en bitacora el alta, la edicion y la baja de un lote', function () {
-    $campo = propiedadDeLotesDePrueba();
+    $campo = campoDeLotesDePrueba();
     [$encargado, $idRol] = usuarioConRolParaLotes('encargado', 'encargado_operaciones');
     entrarAlPanelParaLotes($encargado, $idRol);
 
@@ -230,7 +240,7 @@ it('registra en bitacora el alta, la edicion y la baja de un lote', function () 
 });
 
 it('da de baja un lote por soft delete: no aparece en el indice y un segundo intento da 404', function () {
-    $campo = propiedadDeLotesDePrueba();
+    $campo = campoDeLotesDePrueba();
     [$encargado, $idRol] = usuarioConRolParaLotes('encargado', 'encargado_operaciones');
     entrarAlPanelParaLotes($encargado, $idRol);
 
@@ -251,7 +261,7 @@ it('da de baja un lote por soft delete: no aparece en el indice y un segundo int
 });
 
 it('rechaza dar de baja un lote con una orden de aplicacion asociada', function () {
-    $campo = propiedadDeLotesDePrueba();
+    $campo = campoDeLotesDePrueba();
     [$encargado, $idRol] = usuarioConRolParaLotes('encargado', 'encargado_operaciones');
     entrarAlPanelParaLotes($encargado, $idRol);
 
@@ -268,10 +278,10 @@ it('rechaza dar de baja un lote con una orden de aplicacion asociada', function 
 });
 
 it('filtra el listado por cliente, por propiedad y por codigo', function () {
-    $clienteA = Cliente::query()->create(['razon_social' => 'Agropecuaria del Valle S.R.L.']);
-    $clienteB = Cliente::query()->create(['razon_social' => 'Estancia Los Robles S.A.']);
-    $campoA = propiedadDeLotesDePrueba($clienteA, 'Campo Norte');
-    $campoB = propiedadDeLotesDePrueba($clienteB, 'Campo Sur');
+    $clienteA = Cliente::query()->create(['razon_social' => 'Agropecuaria del Valle S.R.L.', 'tipo_persona' => 'juridica']);
+    $clienteB = Cliente::query()->create(['razon_social' => 'Estancia Los Robles S.A.', 'tipo_persona' => 'juridica']);
+    $campoA = campoDeLotesDePrueba($clienteA, 'Campo Norte');
+    $campoB = campoDeLotesDePrueba($clienteB, 'Campo Sur');
 
     Lote::query()->create(['campo_id' => $campoA->id, 'codigo' => 'A-01', 'hectareas' => '10']);
     Lote::query()->create(['campo_id' => $campoB->id, 'codigo' => 'B-01', 'hectareas' => '20']);
@@ -296,7 +306,7 @@ it('filtra el listado por cliente, por propiedad y por codigo', function () {
 });
 
 it('un rol sin el permiso recibe 403 en todas las acciones, incluida la entrada directa por URL', function () {
-    $campo = propiedadDeLotesDePrueba();
+    $campo = campoDeLotesDePrueba();
     [$piloto, $idRol] = usuarioConRolParaLotes('piloto.curioso', 'piloto');
     entrarAlPanelParaLotes($piloto, $idRol);
 
@@ -314,7 +324,7 @@ it('un rol sin el permiso recibe 403 en todas las acciones, incluida la entrada 
 });
 
 it('no deja actuar a quien tiene el permiso de lote en otro rol pero no en el activo', function () {
-    $campo = propiedadDeLotesDePrueba();
+    $campo = campoDeLotesDePrueba();
     [$multirol, $idEncargado] = usuarioConRolParaLotes('jefe.multirol', 'encargado_operaciones');
     $idPiloto = (int) SecRole::query()->where('name', 'piloto')->value('id');
     $pivote = new SecUserRole(['id_user' => $multirol->id, 'id_role' => $idPiloto]);

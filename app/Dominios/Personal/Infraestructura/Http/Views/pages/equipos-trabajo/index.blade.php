@@ -145,7 +145,7 @@
                                 </x-atoms.button>
 
                                 @puede('personal.equipo_trabajo.editar')
-                                    <x-atoms.button href="{{ route('panel.equipos-trabajo.edit', $equipo) }}" variant="outline" size="sm" icon="edit">
+                                    <x-atoms.button href="{{ route('panel.equipos-trabajo.edit', $equipo) }}" variant="warning-outline" size="sm" icon="edit">
                                         {{ __('personal.equipos_trabajo.editar') }}
                                     </x-atoms.button>
                                 @endpuede

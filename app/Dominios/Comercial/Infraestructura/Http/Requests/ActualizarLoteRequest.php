@@ -8,7 +8,8 @@ use Illuminate\Validation\Rule;
 
 /**
  * `PUT /panel/lotes/{lote}` (tarea 77, HU-54, etapa 2). Mismo criterio que
- * `CrearLoteRequest` para `campo_id`/`codigo`/`geometria` (ver su docblock).
+ * `CrearLoteRequest` para `campo_id`/`lote.codigo`/`lote.geometria` (ver su
+ * docblock).
  */
 final class ActualizarLoteRequest extends FormRequest
 {
@@ -21,10 +22,10 @@ final class ActualizarLoteRequest extends FormRequest
                 'integer',
                 Rule::exists('com_campos', 'id')->whereNull('deleted_at'),
             ],
-            'codigo' => ['required', 'string', 'max:50'],
-            'hectareas' => ['required', 'numeric', 'gt:0'],
-            'geometria' => ['nullable', 'string', $this->reglaGeometriaValida()],
-            'restricciones' => ['nullable', 'string'],
+            'lote.codigo' => ['required', 'string', 'max:50'],
+            'lote.hectareas' => ['required', 'numeric', 'gt:0'],
+            'lote.geometria' => ['nullable', 'string', $this->reglaGeometriaValida()],
+            'lote.restricciones' => ['nullable', 'string'],
         ];
     }
 
@@ -34,7 +35,7 @@ final class ActualizarLoteRequest extends FormRequest
         return [
             'campo_id.required' => 'Seleccioná una propiedad.',
             'campo_id.exists' => 'La propiedad seleccionada no es válida.',
-            'hectareas.gt' => 'Las hectáreas tienen que ser mayores a cero.',
+            'lote.hectareas.gt' => 'Las hectáreas tienen que ser mayores a cero.',
         ];
     }
 

@@ -13,6 +13,7 @@ dataset('tablas del núcleo comercial', [
     'com_cliente_contactos',
     'com_contratos',
     'com_contrato_ventanas',
+    'com_propiedades',
     'com_campos',
     'com_lotes',
     'com_cultivos',
@@ -40,12 +41,20 @@ it('ope_ordenes_aplicacion tiene el tipo de aplicación, con desarrollo como def
 
     $clienteId = DB::table('com_clientes')->insertGetId([
         'razon_social' => 'Cliente de prueba tipo_aplicacion',
+        'tipo_persona' => 'juridica',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $propiedadId = DB::table('com_propiedades')->insertGetId([
+        'cliente_id' => $clienteId,
+        'nombre' => 'Propiedad de prueba tipo_aplicacion',
         'created_at' => now(),
         'updated_at' => now(),
     ]);
 
     $campoId = DB::table('com_campos')->insertGetId([
-        'cliente_id' => $clienteId,
+        'propiedad_id' => $propiedadId,
         'nombre' => 'Campo de prueba tipo_aplicacion',
         'created_at' => now(),
         'updated_at' => now(),

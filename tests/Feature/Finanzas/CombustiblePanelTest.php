@@ -242,7 +242,7 @@ it('registra una carga atribuida a la campaña donde se consumió', function () 
     $base = baseParaCombustible();
     $equipo = equipoParaCombustible($base);
     [, $clave] = asignarVehiculoAEquipo($equipo);
-    $cliente = Cliente::create(['razon_social' => 'Cliente de combustible '.uniqid()]);
+    $cliente = Cliente::create(['razon_social' => 'Cliente de combustible '.uniqid(), 'tipo_persona' => 'juridica']);
     $campania = Campania::query()->create([
         'cliente_id' => $cliente->id,
         'codigo' => '2025-2026',
@@ -262,7 +262,7 @@ it('rechaza una carga contra una campaña cerrada', function () {
     $base = baseParaCombustible();
     $equipo = equipoParaCombustible($base);
     [, $clave] = asignarVehiculoAEquipo($equipo);
-    $cliente = Cliente::create(['razon_social' => 'Cliente de combustible '.uniqid()]);
+    $cliente = Cliente::create(['razon_social' => 'Cliente de combustible '.uniqid(), 'tipo_persona' => 'juridica']);
     $campaniaCerrada = Campania::query()->create([
         'cliente_id' => $cliente->id,
         'codigo' => '2024-2025',

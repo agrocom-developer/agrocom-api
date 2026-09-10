@@ -54,7 +54,7 @@ function entrarABuscar(SecUser $usuario, int $idRolActivo): void
 /** `Comercial` no tiene factories: sus tests crean así (ver GestionCamposPanelTest). */
 function cliente(string $razonSocial): Cliente
 {
-    return Cliente::query()->create(['razon_social' => $razonSocial]);
+    return Cliente::query()->create(['razon_social' => $razonSocial, 'tipo_persona' => 'juridica']);
 }
 
 /** @return list<string> Títulos del bloque `clientes`, o [] si no hubo bloque. */

@@ -51,7 +51,7 @@ function entrarAlPanelParaCampanias(SecUser $usuario, int $idRolActivo): void
 
 function clienteParaCampanias(string $razonSocial = 'Agropecuaria del Valle S.R.L.', string $nit = '999888777'): Cliente
 {
-    return Cliente::query()->create(['razon_social' => $razonSocial, 'nit' => $nit]);
+    return Cliente::query()->create(['razon_social' => $razonSocial, 'nit' => $nit, 'tipo_persona' => 'juridica']);
 }
 
 /** Payload mínimo válido de alta/edición. */
