@@ -6,7 +6,7 @@
 
     Datos esperados (ver CamposController::index()): la cáscara de
     CascaraPanel, más:
-    - $campos (LengthAwarePaginator<Campo>, con `cliente` cargada,
+    - $campos (LengthAwarePaginator<Campo>, con `propiedad.cliente` cargada,
       `lotes_count` y `hectareas_totales` precargados vía withCount/withSum):
       nombre ascendente.
     - $filtros (array{q: string}): búsqueda aplicada, para dejar el campo
@@ -100,7 +100,7 @@
                     @foreach ($campos as $campo)
                         <div class="ag-campos__fila" role="row">
                             <span role="cell" class="ag-campos__nombre">{{ $campo->nombre }}</span>
-                            <span role="cell">{{ $campo->cliente->razon_social }}</span>
+                            <span role="cell">{{ $campo->propiedad->cliente->razon_social }}</span>
                             <span role="cell">{{ __('comercial.campos.lotes_cantidad', ['cantidad' => $campo->lotes_count]) }}</span>
                             <span role="cell" class="ag-campos__hectareas">{{ __('comercial.campos.hectareas_valor', ['cantidad' => number_format((float) $campo->hectareas_totales, 2, ',', '.')]) }}</span>
 
