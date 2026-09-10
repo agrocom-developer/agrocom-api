@@ -16,6 +16,13 @@ use Illuminate\Validation\Rule;
  * `resources/js/pages/lotes-form.js`), no viaja como columna propia — un
  * lote no tiene `cliente_id`, lo hereda de su campo.
  *
+ * `codigo`/`hectareas`/`geometria`/`restricciones` viajan anidados bajo
+ * `lote[...]`: el formulario reusa `campos/_lote-fila.blade.php` con
+ * `prefijo: 'lote'` (ver su docblock) en vez de envolver un único lote en
+ * un array de uno, así que las reglas tienen que validar `lote.codigo`,
+ * no `codigo` suelto — de lo contrario el `required` nunca encuentra el
+ * dato y el guardado falla en silencio.
+ *
  * El código no lleva regla `unique` a propósito: el índice único real es
  * PARCIAL (`com_lotes_codigo_unico`, solo entre lotes activos del mismo
  * campo) — la violación se atrapa en `CrearLote` (vía `GuardadoLote`) y se
@@ -35,10 +42,10 @@ final class CrearLoteRequest extends FormRequest
                 'integer',
                 Rule::exists('com_campos', 'id')->whereNull('deleted_at'),
             ],
-            'codigo' => ['required', 'string', 'max:50'],
-            'hectareas' => ['required', 'numeric', 'gt:0'],
-            'geometria' => ['nullable', 'string', $this->reglaGeometriaValida()],
-            'restricciones' => ['nullable', 'string'],
+            'lote.codigo' => ['required', 'string', 'max:50'],
+            'lote.hectareas' => ['required', 'numeric', 'gt:0'],
+            'lote.geometria' => ['nullable', 'string', $this->reglaGeometriaValida()],
+            'lote.restricciones' => ['nullable', 'string'],
         ];
     }
 
@@ -48,7 +55,7 @@ final class CrearLoteRequest extends FormRequest
         return [
             'campo_id.required' => 'Seleccioná una propiedad.',
             'campo_id.exists' => 'La propiedad seleccionada no es válida.',
-            'hectareas.gt' => 'Las hectáreas tienen que ser mayores a cero.',
+            'lote.hectareas.gt' => 'Las hectáreas tienen que ser mayores a cero.',
         ];
     }
 

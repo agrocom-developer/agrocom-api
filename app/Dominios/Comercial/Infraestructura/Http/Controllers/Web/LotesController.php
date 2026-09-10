@@ -171,11 +171,13 @@ final class LotesController
      */
     private function normalizarDatos(array $datos): array
     {
+        $lote = $datos['lote'];
+
         return [
-            'codigo' => (string) $datos['codigo'],
-            'hectareas' => (string) $datos['hectareas'],
-            'geometria' => $this->decodificarGeometria($datos['geometria'] ?? null),
-            'restricciones' => $this->cadenaONull($datos['restricciones'] ?? null),
+            'codigo' => (string) $lote['codigo'],
+            'hectareas' => (string) $lote['hectareas'],
+            'geometria' => $this->decodificarGeometria($lote['geometria'] ?? null),
+            'restricciones' => $this->cadenaONull($lote['restricciones'] ?? null),
         ];
     }
 
