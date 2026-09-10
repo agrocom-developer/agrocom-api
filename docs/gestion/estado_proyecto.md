@@ -46,13 +46,13 @@ Al empezar una iteración nueva: leé este documento completo primero (es corto)
 
 | Id | Qué | Estado |
 |---|---|---|
-| TE-01 | Esqueleto, CI, GitFlow, `CLAUDE.md` | **hecho** en `agrocom-api`. Faltan el repo `agrocom-field` (Flutter) y staging (diferido, ADR 0010: el servidor no está definido) |
+| TE-01 | Esqueleto, CI, GitFlow, `CLAUDE.md` | **hecho** en `agrocom-api`. En `agrocom-field`: **hecho** (repo creado, `flutter create` corrido, flavors `piloto`/`auxiliar`, tema Material 3 del logo, PR #1 mergeado a `develop` de ese repo, 10/9/2026). Falta solo staging (diferido, ADR 0010: el servidor no está definido) |
 | TE-02 | Spike de hardware en el RC real | **pendiente**, sin dependencias — necesita el RC en mano |
 | TE-03 | Migraciones del núcleo comercial | **hecho** (PR #9) |
 | HU-01 | Usuarios multi-rol con un solo login | **hecho** (PR #10) |
 | HU-02 | Panel: login, rol activo, menú dinámico, tema | **hecho** (PR #14, más las vueltas de diseño #15 a #20 y #31) |
-| HU-03 | Token Sanctum por dispositivo | **hecho** (PR #26) |
-| TE-04 | Base local drift + outbox | **pendiente** — es de `agrocom-field`, no de este repo |
+| HU-03 | Token Sanctum por dispositivo | **hecho** en `agrocom-api` (PR #26). Consumo del token del lado `agrocom-field` (guardado seguro + interceptor de `Authorization: Bearer`): **en curso**, PR propio en ese repo |
+| TE-04 | Base local drift + outbox | **en curso en `agrocom-field`** (PR #2 en ese repo, 10/9/2026): tabla `ColaSync` (outbox mínimo, `uuid_cliente` único, `secuencia`, estados `pendiente/enviado/confirmado/rechazado`) ya escrita; faltan las tablas espejo de negocio |
 | TE-05 | `POST /api/sync` idempotente | **pendiente**, próxima en la cola (tarea 09, crítica) |
 | TE-06 | Pull de catálogo con cursor | **parcial** (PR #40): órdenes, lotes y personas. Recetas y productos esperan al módulo `Mezclas`, que no existe |
 | HU-04 | Órdenes vigentes offline | **pendiente** — depende de TE-06 (ya cubierto) y del lado app |
@@ -153,8 +153,9 @@ maqueta.
    negocio: no lo puede resolver el ciclo automático.**
 4. **TE-02, spike de hardware en el RC real**: pendiente, sin dependencias
    técnicas — necesita el equipo en mano.
-5. **`agrocom-field`**: el repo Flutter no existe todavía. TE-04 (drift +
-   outbox) vive ahí, no acá.
+5. **`agrocom-field`** (actualizado 10/9/2026): el repo ya existe y tiene su
+   workstation + esqueleto real (TE-01, PR #1 mergeado). TE-04 (drift +
+   outbox) está en curso ahí (PR #2) — vive en ese repo, no en este.
 
 ## Decisiones diferidas explícitamente (no reabrir sin que el usuario lo pida)
 
