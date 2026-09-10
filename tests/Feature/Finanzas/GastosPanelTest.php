@@ -6,6 +6,7 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Compartido\Dominio\AccionBitacora;
 use App\Dominios\Compartido\Infraestructura\Eloquent\Bitacora;
 use App\Dominios\Finanzas\Infraestructura\Eloquent\Gasto;
@@ -93,8 +94,9 @@ function equipoParaGastos(): EquipoTrabajo
 
 function trabajoParaGastos(): Trabajo
 {
-    $cliente = Cliente::create(['razon_social' => 'Cliente de gastos '.uniqid()]);
-    $campo = Campo::create(['cliente_id' => $cliente->id, 'nombre' => 'Campo de gastos']);
+    $cliente = Cliente::create(['razon_social' => 'Cliente de gastos '.uniqid(), 'tipo_persona' => 'juridica']);
+    $propiedad = Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
+    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo de gastos']);
     $lote = Lote::create(['campo_id' => $campo->id, 'codigo' => 'L-GAS-'.uniqid(), 'hectareas' => '100.00']);
     $contrato = Contrato::create([
         'cliente_id' => $cliente->id,
@@ -296,7 +298,7 @@ it('guarda un gasto sin campania_id: es un gasto interno que no pertenece a ning
 
 it('registra un gasto atribuido a la campaña donde se consumió', function () {
     $rubro = rubroParaGastos();
-    $cliente = Cliente::create(['razon_social' => 'Cliente de gastos '.uniqid()]);
+    $cliente = Cliente::create(['razon_social' => 'Cliente de gastos '.uniqid(), 'tipo_persona' => 'juridica']);
     $campania = Campania::query()->create([
         'cliente_id' => $cliente->id,
         'codigo' => '2025-2026',
@@ -315,7 +317,7 @@ it('registra un gasto atribuido a la campaña donde se consumió', function () {
 
 it('rechaza un gasto contra una campaña cerrada', function () {
     $rubro = rubroParaGastos();
-    $cliente = Cliente::create(['razon_social' => 'Cliente de gastos '.uniqid()]);
+    $cliente = Cliente::create(['razon_social' => 'Cliente de gastos '.uniqid(), 'tipo_persona' => 'juridica']);
     $campaniaCerrada = Campania::query()->create([
         'cliente_id' => $cliente->id,
         'codigo' => '2024-2025',

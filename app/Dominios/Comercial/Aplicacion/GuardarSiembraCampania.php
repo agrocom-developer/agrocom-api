@@ -94,7 +94,7 @@ final class GuardarSiembraCampania
             return;
         }
 
-        if ($campania->clienteId !== $campo->cliente_id) {
+        if ($campania->clienteId !== $campo->propiedad->cliente_id) {
             throw CampaniaDeOtroCliente::paraCampania($campania->codigo);
         }
     }

@@ -20,17 +20,16 @@ final class CrearCampo
      * @param  list<array{codigo: string, hectareas: string, geometria: array<string, mixed>|null, restricciones: string|null}>  $lotes
      *
      * @throws CampoDuplicado si el nombre ya pertenece a otro campo activo
-     *                        del mismo cliente (índice parcial `com_campos_nombre_unico`).
+     *                        de la misma propiedad (índice parcial `com_campos_nombre_unico`).
      * @throws LoteDuplicado si el código de un lote ya pertenece a otro lote
      *                       activo del mismo campo (índice parcial `com_lotes_codigo_unico`).
      */
-    public function ejecutar(int $clienteId, string $nombre, ?string $ubicacion, array $lotes): Campo
+    public function ejecutar(int $propiedadId, string $nombre, array $lotes): Campo
     {
-        return DB::transaction(function () use ($clienteId, $nombre, $ubicacion, $lotes): Campo {
+        return DB::transaction(function () use ($propiedadId, $nombre, $lotes): Campo {
             $campo = new Campo([
-                'cliente_id' => $clienteId,
+                'propiedad_id' => $propiedadId,
                 'nombre' => $nombre,
-                'ubicacion' => $ubicacion,
             ]);
 
             try {

@@ -32,7 +32,7 @@ beforeEach(function () {
 
 function contratoVigenteParaAbm(string $sufijo, string $hectareas = '40.00'): Contrato
 {
-    $cliente = Cliente::create(['razon_social' => "Cliente ABM {$sufijo}"]);
+    $cliente = Cliente::create(['razon_social' => "Cliente ABM {$sufijo}", 'tipo_persona' => 'juridica']);
 
     return Contrato::create([
         'cliente_id' => $cliente->id,
@@ -47,7 +47,7 @@ function contratoVigenteParaAbm(string $sufijo, string $hectareas = '40.00'): Co
 
 function contratoNoVigenteParaAbm(string $sufijo): Contrato
 {
-    $cliente = Cliente::create(['razon_social' => "Cliente ABM no vigente {$sufijo}"]);
+    $cliente = Cliente::create(['razon_social' => "Cliente ABM no vigente {$sufijo}", 'tipo_persona' => 'juridica']);
 
     return Contrato::create([
         'cliente_id' => $cliente->id,

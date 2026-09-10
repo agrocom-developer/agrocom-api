@@ -2,6 +2,7 @@
 
 use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\EstadiaHacienda;
 use App\Dominios\Personal\Dominio\RolOperativoPersona;
 use App\Dominios\Personal\Infraestructura\Eloquent\EquipoTrabajo;
@@ -59,9 +60,9 @@ function entrarAlPanelParaEstadias(SecUser $usuario, int $idRolActivo): void
 
 function estadiaDemo(): EstadiaHacienda
 {
-    $cliente = Cliente::create(['razon_social' => 'Cliente panel estadias']);
-    $campo = Campo::create(['cliente_id' => $cliente->id, 'nombre' => 'Campo panel']);
-
+    $cliente = Cliente::create(['razon_social' => 'Cliente panel estadias', 'tipo_persona' => 'juridica']);
+    $propiedad = Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
+    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo panel']);
     $base = baseParaEstadias();
 
     $equipo = EquipoTrabajo::create([
@@ -130,9 +131,9 @@ it('la pantalla muestra una estadía cerrada con sus datos completos', function 
 });
 
 it('muestra "en curso" cuando la salida es null', function () {
-    $cliente = Cliente::create(['razon_social' => 'Cliente panel estadias en curso']);
-    $campo = Campo::create(['cliente_id' => $cliente->id, 'nombre' => 'Campo en curso']);
-
+    $cliente = Cliente::create(['razon_social' => 'Cliente panel estadias en curso', 'tipo_persona' => 'juridica']);
+    $propiedad = Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
+    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo en curso']);
     $base = baseParaEstadias();
 
     $equipo = EquipoTrabajo::create([
@@ -171,9 +172,9 @@ it('sin estadías, muestra el aviso de vacío', function () {
 });
 
 it('el filtro por equipo devuelve solo las estadías de ese equipo', function () {
-    $cliente = Cliente::create(['razon_social' => 'Cliente filtro equipo']);
-    $campo = Campo::create(['cliente_id' => $cliente->id, 'nombre' => 'Campo filtro']);
-
+    $cliente = Cliente::create(['razon_social' => 'Cliente filtro equipo', 'tipo_persona' => 'juridica']);
+    $propiedad = Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
+    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo filtro']);
     $base = baseParaEstadias();
 
     $equipoA = EquipoTrabajo::create(['codigo' => 'EQ-A', 'nombre' => 'Equipo A', 'base_id' => $base->id, 'desde' => now()->format('Y-m-d')]);
@@ -208,9 +209,9 @@ it('el filtro por equipo devuelve solo las estadías de ese equipo', function ()
 });
 
 it('calcula correctamente los días efectivos de una estadía de 3 días (debe ser 3.0, no 1)', function () {
-    $cliente = Cliente::create(['razon_social' => 'Cliente dias efectivos']);
-    $campo = Campo::create(['cliente_id' => $cliente->id, 'nombre' => 'Campo dias']);
-
+    $cliente = Cliente::create(['razon_social' => 'Cliente dias efectivos', 'tipo_persona' => 'juridica']);
+    $propiedad = Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
+    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo dias']);
     $base = baseParaEstadias();
 
     $equipo = EquipoTrabajo::create(['codigo' => 'EQ-DIAS', 'nombre' => 'Equipo dias', 'base_id' => $base->id, 'desde' => '2026-09-01']);
@@ -239,9 +240,9 @@ it('calcula correctamente los días efectivos de una estadía de 3 días (debe s
 });
 
 it('pagina el listado de estadías', function () {
-    $cliente = Cliente::create(['razon_social' => 'Cliente paginacion']);
-    $campo = Campo::create(['cliente_id' => $cliente->id, 'nombre' => 'Campo paginacion']);
-
+    $cliente = Cliente::create(['razon_social' => 'Cliente paginacion', 'tipo_persona' => 'juridica']);
+    $propiedad = Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
+    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo paginacion']);
     $base = baseParaEstadias();
 
     $equipo = EquipoTrabajo::create(['codigo' => 'EQ-PAG', 'nombre' => 'Equipo paginacion', 'base_id' => $base->id, 'desde' => now()->format('Y-m-d')]);

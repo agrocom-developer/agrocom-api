@@ -5,6 +5,7 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Dominio\EstadoTrabajo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
@@ -41,8 +42,9 @@ beforeEach(function () {
 
 function ordenParaListadoReportes(string $sufijo, ?Cliente $cliente = null): OrdenAplicacion
 {
-    $cliente ??= Cliente::create(['razon_social' => "Cliente listado reportes {$sufijo}"]);
-    $campo = Campo::create(['cliente_id' => $cliente->id, 'nombre' => "Campo listado reportes {$sufijo}"]);
+    $cliente ??= Cliente::create(['razon_social' => "Cliente listado reportes {$sufijo}", 'tipo_persona' => 'juridica']);
+    $propiedad = Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
+    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => "Campo listado reportes {$sufijo}"]);
     $lote = Lote::create(['campo_id' => $campo->id, 'codigo' => "L-LISTA-{$sufijo}", 'hectareas' => '20.00']);
     $contrato = Contrato::create([
         'cliente_id' => $cliente->id,
@@ -136,8 +138,8 @@ it('lista todos los reportes técnicos generados, sin filtro', function () {
 });
 
 it('filtra por cliente_id: solo trae los reportes de contratos de ese cliente', function () {
-    $clienteA = Cliente::create(['razon_social' => 'Cliente listado filtro A']);
-    $clienteB = Cliente::create(['razon_social' => 'Cliente listado filtro B']);
+    $clienteA = Cliente::create(['razon_social' => 'Cliente listado filtro A', 'tipo_persona' => 'juridica']);
+    $clienteB = Cliente::create(['razon_social' => 'Cliente listado filtro B', 'tipo_persona' => 'juridica']);
 
     reporteParaListado('filtro-a', '2026-09-01T10:00:00-04:00', $clienteA);
     reporteParaListado('filtro-b', '2026-09-01T10:00:00-04:00', $clienteB);

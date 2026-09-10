@@ -12,6 +12,7 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\ClienteContacto;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\ContratoVentana;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
 use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraAutoria;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
@@ -56,6 +57,7 @@ class NucleoComercialSeeder extends Seeder
         $cliente = $this->crear(new Cliente([
             'razon_social' => 'Agropecuaria San Jorge S.R.L.',
             'nit' => self::NIT_DEMO,
+            'tipo_persona' => 'juridica',
         ]), $autorId);
 
         // Campaña del cliente (ADR 0015 punto 1, tarea 69): `com_contratos.campania_id`
@@ -126,10 +128,15 @@ class NucleoComercialSeeder extends Seeder
             ]), $autorId);
         }
 
-        $campo = $this->crear(new Campo([
+        $propiedad = $this->crear(new Propiedad([
             'cliente_id' => $cliente->id,
-            'nombre' => 'San Jorge — Cuatro Cañadas',
+            'nombre' => 'San Jorge',
             'ubicacion' => 'Este cruceño, km 12 camino a Cuatro Cañadas, Santa Cruz, Bolivia',
+        ]), $autorId);
+
+        $campo = $this->crear(new Campo([
+            'propiedad_id' => $propiedad->id,
+            'nombre' => 'San Jorge — Cuatro Cañadas',
         ]), $autorId);
 
         $lotePrimero = $this->crear(new Lote([

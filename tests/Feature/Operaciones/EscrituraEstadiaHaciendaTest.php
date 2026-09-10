@@ -2,6 +2,7 @@
 
 use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Mantenimiento\Infraestructura\Eloquent\Vehiculo;
 use App\Dominios\Operaciones\Contratos\AperturaEstadiaHacienda;
 use App\Dominios\Operaciones\Contratos\CierreEstadiaHacienda;
@@ -35,9 +36,11 @@ function equipoTrabajoParaEstadia(): EquipoTrabajo
 
 function campoParaEstadia(): Campo
 {
-    $cliente = Cliente::create(['razon_social' => 'Cliente de prueba']);
+    $cliente = Cliente::create(['razon_social' => 'Cliente de prueba', 'tipo_persona' => 'juridica']);
 
-    return Campo::create(['cliente_id' => $cliente->id, 'nombre' => 'Campo de prueba']);
+    $propiedad = Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
+
+    return Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo de prueba']);
 }
 
 test('abrirEstadia con datos válidos aplica y persiste la fila', function () {

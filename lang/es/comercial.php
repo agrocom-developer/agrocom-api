@@ -46,6 +46,12 @@ return [
         'seccion_datos' => 'Datos del cliente',
         'campos_contador' => ':cantidad campos',
         'campo_razon_social' => 'Razón social',
+        'campo_tipo_persona' => 'Tipo de persona',
+        'campo_tipo_persona_placeholder' => 'Seleccioná un tipo',
+        'tipo_persona_opcion' => [
+            'fisica' => 'Persona física (unipersonal)',
+            'juridica' => 'Persona jurídica (sociedad)',
+        ],
         'campo_nit' => 'NIT',
         'campo_nit_ayuda' => 'Opcional. No puede repetirse entre clientes activos.',
         'seccion_contactos' => 'Contactos',
@@ -74,6 +80,52 @@ return [
             'finalizado' => 'Finalizado',
             'cancelado' => 'Cancelado',
         ],
+    ],
+
+    // ADR 0018 (tarea x): nivel de terreno entre cliente y campo.
+    // Propiedades: un cliente tiene varias propiedades; cada propiedad tiene
+    // varios campos. Mismo molde que campos/clientes.
+    'propiedades' => [
+        'creado' => 'La propiedad se dio de alta correctamente.',
+        'actualizado' => 'Los datos de la propiedad se actualizaron correctamente.',
+        'eliminado' => 'La propiedad se dio de baja correctamente.',
+
+        // Listado
+        'titulo' => 'Propiedades',
+        'subtitulo' => 'Administración de propiedades, con sus campos y lotes.',
+        'nuevo' => 'Nueva propiedad',
+        'filtro_busqueda' => 'Buscar',
+        'filtro_busqueda_placeholder' => 'Nombre de la propiedad o cliente',
+        'filtrar' => 'Buscar',
+        'limpiar_filtro' => 'Limpiar búsqueda',
+        'vacio' => 'Todavía no se dio de alta ninguna propiedad.',
+        'filtro_vacio' => 'Ninguna propiedad coincide con la búsqueda.',
+        'col_nombre' => 'Propiedad',
+        'col_cliente' => 'Cliente',
+        'col_campos' => 'Campos',
+        'campos_cantidad' => ':cantidad campos',
+        'editar' => 'Editar',
+        'eliminar_accion' => 'Eliminar',
+        'confirmar_baja' => '¿Dar de baja esta propiedad? Sus campos y lotes no se ven afectados.',
+        'paginacion_aria' => 'Paginación de propiedades',
+        'paginacion_anterior' => 'Anterior',
+        'paginacion_siguiente' => 'Siguiente',
+        'paginacion_info' => 'Página :actual de :total',
+
+        // Formulario (create/edit)
+        'titulo_crear' => 'Nueva propiedad',
+        'titulo_editar' => 'Editar propiedad',
+        'subtitulo_form' => 'Datos principales de la propiedad.',
+        'seccion_datos' => 'Datos de la propiedad',
+        'campos_contador' => ':cantidad campos',
+        'campo_cliente' => 'Cliente',
+        'campo_cliente_placeholder' => 'Seleccioná un cliente',
+        'campo_nombre' => 'Nombre de la propiedad',
+        'campo_ubicacion' => 'Ubicación',
+        'campo_ubicacion_placeholder' => 'Ej. Cuatro Cañadas, Roboré, San Matías',
+        'campo_ubicacion_ayuda' => 'Localidad física: departamento, provincia, municipio o pueblo.',
+        'estado_form' => 'Los cambios se guardan al confirmar.',
+        'volver' => 'Volver a propiedades',
     ],
 
     // HU-23 (tarea 34): administración de contratos con sus ventanas de
@@ -177,10 +229,11 @@ return [
         'volver' => 'Volver a contratos',
     ],
 
-    // HU-24 (tarea 35): administración de campos con sus lotes. Tercer ABM
-    // del panel — mismo molde que clientes (tarea 33): un campo se
-    // crea/edita con sus lotes en la misma operación, sin pantalla propia
-    // para lotes.
+    // HU-24 (tarea 35; actualizado ADR 0018): administración de campos con sus
+    // lotes. Tercer ABM del panel — mismo molde que clientes (tarea 33): un
+    // campo se crea/edita con sus lotes en la misma operación, sin pantalla
+    // propia para lotes. ADR 0018: ahora el campo cuelga de una propiedad, no
+    // directo de un cliente.
     'campos' => [
         'creado' => 'El campo se dio de alta correctamente.',
         'actualizado' => 'Los datos del campo se actualizaron correctamente.',
@@ -188,10 +241,10 @@ return [
 
         // Listado
         'titulo' => 'Campos',
-        'subtitulo' => 'Administración de campos y sus lotes.',
+        'subtitulo' => 'Administración de campos y sus lotes, agrupados por propiedad.',
         'nuevo' => 'Nuevo campo',
         'filtro_busqueda' => 'Buscar',
-        'filtro_busqueda_placeholder' => 'Nombre del campo o cliente',
+        'filtro_busqueda_placeholder' => 'Nombre del campo',
         'filtrar' => 'Buscar',
         'limpiar_filtro' => 'Limpiar búsqueda',
         'vacio' => 'Todavía no se dio de alta ningún campo.',
@@ -219,8 +272,9 @@ return [
         'campos_contador' => ':cantidad campos',
         'campo_cliente' => 'Cliente',
         'campo_cliente_placeholder' => 'Seleccioná un cliente',
+        'campo_propiedad' => 'Propiedad',
+        'campo_propiedad_placeholder' => 'Seleccioná una propiedad',
         'campo_nombre' => 'Nombre',
-        'campo_ubicacion' => 'Ubicación',
         'seccion_lotes' => 'Lotes',
         'lote_agregar' => 'Agregar lote',
         'lote_quitar' => 'Quitar',
@@ -280,10 +334,11 @@ return [
         'vacio' => 'Todavía no se dio de alta ningún lote.',
         'filtro_vacio' => 'Ningún lote coincide con el filtro.',
         'col_codigo' => 'Código',
-        'col_propiedad' => 'Propiedad',
+        'col_propiedad' => 'Campo',
         'col_cliente' => 'Cliente',
         'col_hectareas' => 'Hectáreas',
         'hectareas_valor' => ':cantidad ha',
+        'filtro_campo' => 'Campo',
         'editar' => 'Editar',
         'eliminar_accion' => 'Eliminar',
         'confirmar_baja' => '¿Dar de baja este lote?',
@@ -296,14 +351,15 @@ return [
         'titulo_crear' => 'Nuevo lote',
         'titulo_editar' => 'Editar lote',
         'subtitulo_form' => 'Alta o edición de un lote suelto, con su perímetro en el mapa.',
-        'seccion_datos' => 'Propiedad',
+        'seccion_datos' => 'Ubicación',
         'campos_contador' => ':cantidad campos',
         'campo_cliente' => 'Cliente',
         'campo_cliente_placeholder' => 'Todos los clientes',
-        'campo_cliente_ayuda' => 'Filtra las propiedades de abajo. No se guarda: la propiedad ya define el cliente del lote.',
+        'campo_cliente_ayuda' => 'Filtra las propiedades y campos de abajo. No se guarda: el lote hereda el cliente de su propiedad.',
         'campo_propiedad' => 'Propiedad',
         'campo_propiedad_placeholder' => 'Seleccioná una propiedad',
-        'campo_propiedad_opcion' => ':nombre — :cliente',
+        'campo_campo' => 'Campo',
+        'campo_campo_placeholder' => 'Seleccioná un campo',
         'seccion_lote' => 'Datos del lote',
         'estado_form' => 'Los cambios se guardan al confirmar.',
         'volver' => 'Volver a lotes',

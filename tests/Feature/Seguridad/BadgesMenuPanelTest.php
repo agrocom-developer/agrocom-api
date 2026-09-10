@@ -5,6 +5,7 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Inventario\Infraestructura\Eloquent\Repuesto;
 use App\Dominios\Inventario\Infraestructura\Eloquent\Stock;
 use App\Dominios\Operaciones\Aplicacion\MaquinaEstados\MaquinaEstadosSesion;
@@ -85,8 +86,9 @@ function menuBadgesDelDashboard(string $ruta = 'panel.dashboard', array $paramet
 
 function ordenParaBadgesPanel(string $sufijo, EstadoOrdenAplicacion $estado): OrdenAplicacion
 {
-    $cliente = Cliente::create(['razon_social' => "Cliente badges panel {$sufijo}"]);
-    $campo = Campo::create(['cliente_id' => $cliente->id, 'nombre' => "Campo badges panel {$sufijo}"]);
+    $cliente = Cliente::create(['razon_social' => "Cliente badges panel {$sufijo}", 'tipo_persona' => 'juridica']);
+    $propiedad = Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
+    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => "Campo badges panel {$sufijo}"]);
     $lote = Lote::create(['campo_id' => $campo->id, 'codigo' => "L-BDG-{$sufijo}", 'hectareas' => '20.00']);
     $contrato = Contrato::create([
         'cliente_id' => $cliente->id,

@@ -13,6 +13,7 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cultivo;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Operaciones\Dominio\EstadoActa;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Dominio\EstadoTrabajo;
@@ -41,7 +42,7 @@ beforeEach(function () {
 
 function clienteInforme(string $sufijo): Cliente
 {
-    return Cliente::create(['razon_social' => "Cliente informe {$sufijo}"]);
+    return Cliente::create(['razon_social' => "Cliente informe {$sufijo}", 'tipo_persona' => 'juridica']);
 }
 
 function campaniaInforme(Cliente $cliente, string $sufijo): Campania
@@ -73,7 +74,8 @@ function contratoInforme(Cliente $cliente, Campania $campania, string $sufijo, s
 /** Siembra un lote nuevo del cliente, en esa campaña, con el cultivo dado — devuelve el id del cultivo. */
 function siembraInforme(Cliente $cliente, Campania $campania, string $sufijo, string $cultivoNombre, string $hectareasSembradas = '10.00'): int
 {
-    $campo = Campo::create(['cliente_id' => $cliente->id, 'nombre' => "Campo informe {$sufijo}"]);
+    $propiedad = Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
+    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => "Campo informe {$sufijo}"]);
     $lote = $campo->lotes()->create(['codigo' => "L-INF-{$sufijo}", 'hectareas' => '100.00']);
     $campo->load('lotes');
 
@@ -89,7 +91,8 @@ function siembraInforme(Cliente $cliente, Campania $campania, string $sufijo, st
 /** Orden + trabajo + acta ya `firmada`, con `hectareasConformadas` = `$hectareas` — hace crecer `hectareasAplicadas` del contrato. */
 function actaFirmadaInforme(Contrato $contrato, string $sufijo, string $hectareas): void
 {
-    $campo = Campo::create(['cliente_id' => $contrato->cliente_id, 'nombre' => "Campo acta informe {$sufijo}"]);
+    $propiedad = Propiedad::create(['cliente_id' => $contrato->cliente_id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
+    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => "Campo acta informe {$sufijo}"]);
     $lote = $campo->lotes()->create(['codigo' => "L-ACTA-INF-{$sufijo}", 'hectareas' => '999.00']);
 
     $orden = OrdenAplicacion::create([

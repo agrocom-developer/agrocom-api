@@ -28,11 +28,12 @@ final class ActualizarCliente
      * @throws ClienteDuplicado si el NIT ya pertenece a otro cliente activo
      *                          (índice parcial `com_clientes_nit_unico`).
      */
-    public function ejecutar(Cliente $cliente, string $razonSocial, ?string $nit, array $contactos): Cliente
+    public function ejecutar(Cliente $cliente, string $razonSocial, ?string $nit, string $tipoPersona, array $contactos): Cliente
     {
-        return DB::transaction(function () use ($cliente, $razonSocial, $nit, $contactos): Cliente {
+        return DB::transaction(function () use ($cliente, $razonSocial, $nit, $tipoPersona, $contactos): Cliente {
             $cliente->razon_social = $razonSocial;
             $cliente->nit = $nit;
+            $cliente->tipo_persona = $tipoPersona;
 
             try {
                 $cliente->save();

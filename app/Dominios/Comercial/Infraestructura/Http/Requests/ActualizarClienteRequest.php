@@ -3,6 +3,7 @@
 namespace App\Dominios\Comercial\Infraestructura\Http\Requests;
 
 use App\Dominios\Comercial\Dominio\TipoContactoCliente;
+use App\Dominios\Comercial\Dominio\TipoPersonaCliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -27,6 +28,7 @@ final class ActualizarClienteRequest extends FormRequest
         return [
             'razon_social' => ['required', 'string', 'max:200'],
             'nit' => ['nullable', 'string', 'max:20'],
+            'tipo_persona' => ['required', Rule::enum(TipoPersonaCliente::class)],
             'contactos' => ['required', 'array', 'min:1'],
             'contactos.*.id' => [
                 'nullable',
@@ -47,6 +49,8 @@ final class ActualizarClienteRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'tipo_persona.required' => 'Seleccioná si el cliente es persona física o jurídica.',
+            'tipo_persona.enum' => 'El tipo de persona no es válido.',
             'contactos.required' => 'Agregá al menos un contacto.',
             'contactos.min' => 'Agregá al menos un contacto.',
             'contactos.*.id.exists' => 'Uno de los contactos enviados no pertenece a este cliente.',

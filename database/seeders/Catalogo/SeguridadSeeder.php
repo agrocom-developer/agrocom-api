@@ -148,6 +148,14 @@ class SeguridadSeeder extends Seeder
         'comercial.cliente.crear' => 'Dar de alta un cliente con sus contactos',
         'comercial.cliente.editar' => 'Editar los datos y contactos de un cliente',
         'comercial.cliente.eliminar' => 'Dar de baja (lógica) un cliente',
+        // ADR 0018: propiedades del cliente — nivel de terreno entre
+        // `Cliente` y `Campo` (una propiedad puede tener más de un campo
+        // físico delimitado, caso "Gamelera"). Grano fino, mismo criterio
+        // que `comercial.cliente.*`.
+        'comercial.propiedad.ver' => 'Ver el listado y detalle de propiedades',
+        'comercial.propiedad.crear' => 'Dar de alta una propiedad',
+        'comercial.propiedad.editar' => 'Editar los datos de una propiedad',
+        'comercial.propiedad.eliminar' => 'Dar de baja (lógica) una propiedad sin campos asociados',
         // HU-23 (tarea 34): administración de contratos con sus ventanas de
         // aplicación. `cambiar_estado` separado de `.editar`, mismo criterio
         // que `usuario.bloquear` separado de `usuario.editar`: pasar un
@@ -453,6 +461,12 @@ class SeguridadSeeder extends Seeder
         'comercial.cliente.crear',
         'comercial.cliente.editar',
         'comercial.cliente.eliminar',
+        // ADR 0018: administra también las propiedades del cliente — mismo
+        // criterio que clientes arriba.
+        'comercial.propiedad.ver',
+        'comercial.propiedad.crear',
+        'comercial.propiedad.editar',
+        'comercial.propiedad.eliminar',
         // HU-23 (tarea 34): "Como encargado, quiero administrar contratos
         // con sus ventanas de aplicación" — la HU lo dice literal, mismo
         // criterio que clientes arriba.

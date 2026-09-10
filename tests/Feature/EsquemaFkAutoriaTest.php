@@ -18,6 +18,7 @@ uses(RefreshDatabase::class);
 it('rechaza un cliente con created_by apuntando a un sec_user inexistente', function () {
     DB::table('com_clientes')->insert([
         'razon_social' => 'Cliente de prueba',
+        'tipo_persona' => 'juridica',
         'created_by' => 999999,
         'created_at' => now(),
         'updated_at' => now(),

@@ -5,6 +5,7 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Operaciones\Aplicacion\CalcularCoberturaTrabajo;
 use App\Dominios\Operaciones\Dominio\EstadoCoberturaTrabajo;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
@@ -280,8 +281,9 @@ it('reintentar el mismo cierre de lote con evidencia responde duplicado sin rece
 it('un trabajo observado por exceder la tolerancia sigue observado después de cerrarse con evidencia válida', function () {
     config(['operaciones.tolerancia_solape_hectareas' => '2.00']);
 
-    $cliente = Cliente::create(['razon_social' => 'Cliente cobertura cierre']);
-    $campo = Campo::create(['cliente_id' => $cliente->id, 'nombre' => 'Campo cobertura cierre']);
+    $cliente = Cliente::create(['razon_social' => 'Cliente cobertura cierre', 'tipo_persona' => 'juridica']);
+    $propiedad = Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
+    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo cobertura cierre']);
     $lote = Lote::create(['campo_id' => $campo->id, 'codigo' => 'L-COB-CIERRE', 'hectareas' => '10.00']);
     $contrato = Contrato::create([
         'cliente_id' => $cliente->id,

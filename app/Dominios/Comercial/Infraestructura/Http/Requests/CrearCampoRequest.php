@@ -7,7 +7,8 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 /**
- * `POST /panel/campos` (HU-24, tarea 35). La autorización (permiso
+ * `POST /panel/campos` (HU-24, tarea 35; ADR 0018 — el campo ahora cuelga de
+ * una propiedad, no directo de un cliente). La autorización (permiso
  * `comercial.campo.crear`) se verifica en el controlador, contra el rol
  * activo — no acá, mismo criterio que el resto del panel.
  *
@@ -18,10 +19,13 @@ use Illuminate\Validation\Rule;
  * frágil ante altas y bajas lógicas — la violación se atrapa en `CrearCampo`
  * y se traduce ahí (mismo criterio que `CrearClienteRequest` con el NIT).
  *
- * `geometria` viaja como STRING (el textarea manda el JSON crudo, sin
- * librería de mapas — prompt de la tarea): se valida como JSON bien formado
- * con la forma mínima de un GeoJSON `Polygon` (`type`/`coordinates`), nunca
- * contra el spec completo de GeoJSON.
+ * `geometria` (por lote) viaja como STRING (el textarea manda el JSON crudo,
+ * sin librería de mapas — prompt de la tarea): se valida como JSON bien
+ * formado con la forma mínima de un GeoJSON `Polygon` (`type`/`coordinates`),
+ * nunca contra el spec completo de GeoJSON. El perímetro propio del CAMPO
+ * (`com_campos.geometria`, ADR 0018) no tiene campo de formulario todavía —
+ * el editor de mapa que lo delimita como capa de referencia queda fuera de
+ * esta tarea.
  */
 final class CrearCampoRequest extends FormRequest
 {
@@ -29,13 +33,12 @@ final class CrearCampoRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'cliente_id' => [
+            'propiedad_id' => [
                 'required',
                 'integer',
-                Rule::exists('com_clientes', 'id')->whereNull('deleted_at'),
+                Rule::exists('com_propiedades', 'id')->whereNull('deleted_at'),
             ],
             'nombre' => ['required', 'string', 'max:150'],
-            'ubicacion' => ['nullable', 'string', 'max:255'],
             'lotes' => ['required', 'array', 'min:1'],
             'lotes.*.codigo' => ['required', 'string', 'max:50'],
             'lotes.*.hectareas' => ['required', 'numeric', 'gt:0'],
@@ -48,8 +51,8 @@ final class CrearCampoRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'cliente_id.required' => 'Seleccioná un cliente.',
-            'cliente_id.exists' => 'El cliente seleccionado no es válido.',
+            'propiedad_id.required' => 'Seleccioná una propiedad.',
+            'propiedad_id.exists' => 'La propiedad seleccionada no es válida.',
             'lotes.required' => 'Agregá al menos un lote.',
             'lotes.min' => 'Agregá al menos un lote.',
             'lotes.*.hectareas.gt' => 'Las hectáreas tienen que ser mayores a cero.',

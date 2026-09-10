@@ -31,7 +31,8 @@ return [
     'bloques' => [
         'clientes' => 'Clientes',
         'personas' => 'Personas',
-        'campos' => 'Propiedades',
+        'propiedades' => 'Propiedades',
+        'campos' => 'Campos',
         'drones' => 'Drones',
         'lotes' => 'Lotes',
         'campanias' => 'Campañas',

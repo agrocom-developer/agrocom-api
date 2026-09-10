@@ -22,6 +22,8 @@ En la misma conversación, el dueño pidió además:
 
 `com_propiedades`: `id`, `cliente_id` (FK → `com_clientes`), `nombre`, `ubicacion` (se muda acá desde `com_campos`: la dirección/zona es de la propiedad, no de cada campo dentro de ella). Único parcial `(cliente_id, nombre)` entre activos, mismo patrón que ya tenía `com_campos`.
 
+`com_propiedades.ubicacion` es la localidad física del predio — departamento, provincia, municipio o pueblo (ej. Cuatro Cañadas, Roboré, San Matías) —, texto libre igual que hoy en `com_campos.ubicacion`: no hay pedido de reporte por zona que justifique partirla en columnas o un catálogo, así que no se infiere esa estructura.
+
 `com_campos` pasa a colgar de `Propiedad`, no de `Cliente`: pierde `cliente_id`, gana `propiedad_id` (FK → `com_propiedades`) y `geometria` JSONB nullable — el perímetro del campo, mismo formato GeoJSON que ya usa `com_lotes.geometria`. Esto resuelve de paso el segundo pedido de `pendiente_delimitacion_campo_lotes.md`: delimitar el campo primero, y que el editor de mapa del lote muestre ese perímetro como capa de referencia visual (sin PostGIS, sigue siendo una capa de referencia, no una restricción validada en base — misma limitación ya documentada ahí).
 
 Se descartó el agrupador liviano (`propiedad_id` autorreferenciado en `Campo`, o un `grupo` de texto libre) porque no resuelve dos necesidades reales: una dirección/ubicación propia del predio físico completo, y un nivel donde el contrato pueda pactar hectáreas sin tener que enumerar cada campo. Con un agrupador liviano, "toda la propiedad Gamelera" no es una fila referenciable — hay que enumerar sus campos uno por uno en cada lugar que hoy pensamos "propiedad".

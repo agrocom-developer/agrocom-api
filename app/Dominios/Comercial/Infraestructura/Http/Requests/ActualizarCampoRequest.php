@@ -27,13 +27,12 @@ final class ActualizarCampoRequest extends FormRequest
         $campoId = $campo?->id;
 
         return [
-            'cliente_id' => [
+            'propiedad_id' => [
                 'required',
                 'integer',
-                Rule::exists('com_clientes', 'id')->whereNull('deleted_at'),
+                Rule::exists('com_propiedades', 'id')->whereNull('deleted_at'),
             ],
             'nombre' => ['required', 'string', 'max:150'],
-            'ubicacion' => ['nullable', 'string', 'max:255'],
             'lotes' => ['required', 'array', 'min:1'],
             'lotes.*.id' => [
                 'nullable',
@@ -53,8 +52,8 @@ final class ActualizarCampoRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'cliente_id.required' => 'Seleccioná un cliente.',
-            'cliente_id.exists' => 'El cliente seleccionado no es válido.',
+            'propiedad_id.required' => 'Seleccioná una propiedad.',
+            'propiedad_id.exists' => 'La propiedad seleccionada no es válida.',
             'lotes.required' => 'Agregá al menos un lote.',
             'lotes.min' => 'Agregá al menos un lote.',
             'lotes.*.id.exists' => 'Uno de los lotes enviados no pertenece a este campo.',

@@ -30,7 +30,7 @@ beforeEach(function () {
 });
 
 it('resuelve el resumen de un contrato existente, con el nombre del cliente y su campaña', function () {
-    $cliente = Cliente::create(['razon_social' => 'Cliente resumen contrato']);
+    $cliente = Cliente::create(['razon_social' => 'Cliente resumen contrato', 'tipo_persona' => 'juridica']);
     $campania = Campania::create([
         'cliente_id' => $cliente->id,
         'codigo' => '2025-2026',
@@ -60,7 +60,7 @@ it('resuelve el resumen de un contrato existente, con el nombre del cliente y su
 });
 
 it('resuelve el resumen de un contrato sin campaña asignada, con campaniaId y campaniaCodigo en null', function () {
-    $cliente = Cliente::create(['razon_social' => 'Cliente contrato sin campaña']);
+    $cliente = Cliente::create(['razon_social' => 'Cliente contrato sin campaña', 'tipo_persona' => 'juridica']);
     $contrato = Contrato::create([
         'cliente_id' => $cliente->id,
         'hectareas_contratadas' => '15.00',
@@ -83,7 +83,7 @@ it('devuelve null si el contrato no existe', function () {
 });
 
 it('devuelve null si el contrato está borrado (soft delete)', function () {
-    $cliente = Cliente::create(['razon_social' => 'Cliente contrato borrado']);
+    $cliente = Cliente::create(['razon_social' => 'Cliente contrato borrado', 'tipo_persona' => 'juridica']);
     $contrato = Contrato::create([
         'cliente_id' => $cliente->id,
         'hectareas_contratadas' => '5.00',

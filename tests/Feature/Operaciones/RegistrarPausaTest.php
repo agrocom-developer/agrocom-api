@@ -5,6 +5,7 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Operaciones\Aplicacion\AgregarPausasPorCausa;
 use App\Dominios\Operaciones\Aplicacion\RegistrarPausa;
 use App\Dominios\Operaciones\Dominio\CausaPausa;
@@ -31,8 +32,9 @@ uses(RefreshDatabase::class);
 
 function sesionParaPausas(): Sesion
 {
-    $cliente = Cliente::create(['razon_social' => 'Cliente pausas '.uniqid()]);
-    $campo = Campo::create(['cliente_id' => $cliente->id, 'nombre' => 'Campo pausas']);
+    $cliente = Cliente::create(['razon_social' => 'Cliente pausas '.uniqid(), 'tipo_persona' => 'juridica']);
+    $propiedad = Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
+    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo pausas']);
     $lote = Lote::create(['campo_id' => $campo->id, 'codigo' => 'L-PAU-'.uniqid(), 'hectareas' => '50.00']);
     $contrato = Contrato::create([
         'cliente_id' => $cliente->id,

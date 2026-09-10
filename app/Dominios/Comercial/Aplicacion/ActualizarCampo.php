@@ -50,18 +50,17 @@ final class ActualizarCampo
      * @param  list<array{id: int|null, codigo: string, hectareas: string, geometria: array<string, mixed>|null, restricciones: string|null}>  $lotes
      *
      * @throws CampoDuplicado si el nombre ya pertenece a otro campo activo
-     *                        del mismo cliente.
+     *                        de la misma propiedad.
      * @throws LoteDuplicado si el código de un lote ya pertenece a otro lote
      *                       activo del mismo campo.
      * @throws LoteConHistorialAsociado si un lote quitado del set enviado
      *                                  tiene órdenes o trabajos asociados.
      */
-    public function ejecutar(Campo $campo, int $clienteId, string $nombre, ?string $ubicacion, array $lotes): Campo
+    public function ejecutar(Campo $campo, int $propiedadId, string $nombre, array $lotes): Campo
     {
-        return DB::transaction(function () use ($campo, $clienteId, $nombre, $ubicacion, $lotes): Campo {
-            $campo->cliente_id = $clienteId;
+        return DB::transaction(function () use ($campo, $propiedadId, $nombre, $lotes): Campo {
+            $campo->propiedad_id = $propiedadId;
             $campo->nombre = $nombre;
-            $campo->ubicacion = $ubicacion;
 
             try {
                 $campo->save();

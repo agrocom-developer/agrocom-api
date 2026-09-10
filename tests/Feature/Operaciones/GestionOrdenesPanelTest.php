@@ -5,6 +5,7 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Compartido\Dominio\AccionBitacora;
 use App\Dominios\Compartido\Infraestructura\Eloquent\Bitacora;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
@@ -71,7 +72,7 @@ function entrarAlPanelParaOrdenes(SecUser $usuario, int $idRolActivo): void
 
 function clienteParaOrdenes(): Cliente
 {
-    return Cliente::query()->create(['razon_social' => 'Agropecuaria del Valle S.R.L.', 'nit' => '999888777']);
+    return Cliente::query()->create(['razon_social' => 'Agropecuaria del Valle S.R.L.', 'nit' => '999888777', 'tipo_persona' => 'juridica']);
 }
 
 function contratoParaOrdenes(int $clienteId): Contrato
@@ -89,7 +90,9 @@ function contratoParaOrdenes(int $clienteId): Contrato
 
 function campoParaOrdenes(int $clienteId): Campo
 {
-    return Campo::query()->create(['cliente_id' => $clienteId, 'nombre' => 'Campo Norte']);
+    $propiedad = Propiedad::create(['cliente_id' => $clienteId, 'nombre' => 'Propiedad de prueba '.uniqid()]);
+
+    return Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo Norte']);
 }
 
 function loteParaOrdenes(Campo $campo, string $codigo = 'L-01'): Lote

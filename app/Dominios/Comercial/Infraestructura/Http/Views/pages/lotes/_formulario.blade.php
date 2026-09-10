@@ -1,23 +1,25 @@
 {{--
     Partial: formulario de lote suelto, compartido por create.blade.php y
-    edit.blade.php (tarea 77, HU-54, etapa 2) — arquetipo Formulario, §6.3 de
-    docs/diseno/guia_pantalla_panel.md. Mismo patrón que
+    edit.blade.php (tarea 77, HU-54, etapa 2; actualizado ADR 0018) — arquetipo
+    Formulario, §6.3 de docs/diseno/guia_pantalla_panel.md. Mismo patrón que
     `campos/_formulario.blade.php`: las dos páginas arman el MISMO
     formulario; lo único que cambia es contra qué URL/método postea y los
     valores iniciales.
 
     Espera:
-    - $lote (Lote|null): null en alta; el modelo, con `campo` ya cargada, en
-      edición.
+    - $lote (Lote|null): null en alta; el modelo, con `campo.propiedad` ya
+      cargada, en edición.
     - $clientesDisponibles (Collection<int, string>): id => razón social —
-      alimenta el select de cliente, que es solo un FILTRO del select de
-      propiedad (no viaja al servidor como columna propia: un lote no tiene
-      `cliente_id`, lo hereda de su campo).
-    - $propiedadesDisponibles (Collection<int, Campo>): id => Campo (con
-      `cliente_id`, `nombre` y `cliente` precargada) — arma las opciones del
-      select de propiedad y el mapa propiedad→cliente que filtra en el
-      cliente (`resources/js/pages/lotes-form.js`, mismo patrón que
-      cliente→campaña en `contratos-form.js`).
+      alimenta el select de cliente, que es solo un FILTRO del segundo nivel
+      (no viaja al servidor como columna propia: un lote no tiene `cliente_id`,
+      lo hereda de su propiedad).
+    - $propiedadesDisponibles (Collection<int, Propiedad>): id => Propiedad (con
+      `cliente_id`, `nombre`) — primer nivel del cascade cliente → propiedad →
+      campo (ADR 0018).
+    - $camposDisponibles (Collection<int, Campo>): id => Campo (con
+      `propiedad_id`, `nombre`) — segundo nivel del cascade, y select final
+      donde cuelga el lote. Arma el mapa propiedad→campo que filtra en la
+      propiedad (`resources/js/pages/lotes-form.js`, expandido a 3 niveles).
 
     El código de campo/hectáreas/geometría/restricciones reusa el MISMO
     partial `campos/_lote-fila.blade.php` que arma cada fila del array de
@@ -33,7 +35,8 @@
     $esEdicion = $lote !== null;
     $accion = $esEdicion ? route('panel.lotes.update', $lote) : route('panel.lotes.store');
     $campoId = old('campo_id', $lote?->campo_id ?? '');
-    $clienteId = old('cliente_id', $lote?->campo?->cliente_id ?? '');
+    $propiedadId = old('propiedad_id', $lote?->campo?->propiedad_id ?? '');
+    $clienteId = old('cliente_id', $lote?->campo?->propiedad?->cliente_id ?? '');
     $datosLote = [
         'codigo' => old('lote.codigo', $lote?->codigo ?? ''),
         'hectareas' => old('lote.hectareas', $lote?->hectareas ?? ''),
@@ -41,8 +44,12 @@
         'restricciones' => old('lote.restricciones', $lote?->restricciones ?? ''),
     ];
     $mapaClientePropiedad = $propiedadesDisponibles->pluck('cliente_id', 'id');
-    $propiedadesOptions = $propiedadesDisponibles->mapWithKeys(fn ($campo) => [
-        $campo->id => __('comercial.lotes.campo_propiedad_opcion', ['nombre' => $campo->nombre, 'cliente' => $campo->cliente->razon_social]),
+    $propiedadesOptions = $propiedadesDisponibles->mapWithKeys(fn ($propiedad) => [
+        $propiedad->id => $propiedad->nombre,
+    ]);
+    $mapaPropiedadCampo = $camposDisponibles->pluck('propiedad_id', 'id');
+    $camposOptions = $camposDisponibles->mapWithKeys(fn ($campo) => [
+        $campo->id => $campo->nombre,
     ]);
 @endphp
 
@@ -65,7 +72,7 @@
 
     <x-molecules.form-section
         :title="__('comercial.lotes.seccion_datos')"
-        :count="__('comercial.lotes.campos_contador', ['cantidad' => 2])"
+        :count="__('comercial.lotes.campos_contador', ['cantidad' => 3])"
     >
         <x-atoms.select
             name="cliente_id"
@@ -79,16 +86,27 @@
         />
 
         <x-atoms.select
-            name="campo_id"
-            id="campo_id"
+            name="propiedad_id"
+            id="propiedad_id"
             label="{{ __('comercial.lotes.campo_propiedad') }}"
             :options="$propiedadesOptions"
-            :value="$campoId"
+            :value="$propiedadId"
             placeholder="{{ __('comercial.lotes.campo_propiedad_placeholder') }}"
-            required
-            error="{{ $errors->first('campo_id') }}"
             data-ag-lote-propiedad
             data-mapa-cliente-propiedad="{{ $mapaClientePropiedad->toJson() }}"
+        />
+
+        <x-atoms.select
+            name="campo_id"
+            id="campo_id"
+            label="{{ __('comercial.lotes.campo_campo') }}"
+            :options="$camposOptions"
+            :value="$campoId"
+            placeholder="{{ __('comercial.lotes.campo_campo_placeholder') }}"
+            required
+            error="{{ $errors->first('campo_id') }}"
+            data-ag-lote-campo
+            data-mapa-propiedad-campo="{{ $mapaPropiedadCampo->toJson() }}"
         />
     </x-molecules.form-section>
 

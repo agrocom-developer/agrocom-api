@@ -11,6 +11,7 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\ClienteContacto;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
 use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraAutoria;
 use App\Dominios\Operaciones\Aplicacion\FirmarActa;
@@ -132,6 +133,7 @@ class PortalDemoSeeder extends Seeder
         $cliente = $this->crear(new Cliente([
             'razon_social' => 'Estancia La Esperanza S.A.',
             'nit' => self::NIT_ESPERANZA,
+            'tipo_persona' => 'juridica',
         ]), $autorId);
 
         $this->contactoDuenoEsperanza($cliente, $autorId);
@@ -156,10 +158,15 @@ class PortalDemoSeeder extends Seeder
             'estado' => EstadoContrato::Vigente,
         ]), $autorId);
 
-        $campo = $this->crear(new Campo([
+        $propiedad = $this->crear(new Propiedad([
             'cliente_id' => $cliente->id,
-            'nombre' => 'La Esperanza — Casco Central',
+            'nombre' => 'La Esperanza',
             'ubicacion' => 'Zona norte cruceña, km 30 camino a Okinawa, Santa Cruz, Bolivia',
+        ]), $autorId);
+
+        $campo = $this->crear(new Campo([
+            'propiedad_id' => $propiedad->id,
+            'nombre' => 'La Esperanza — Casco Central',
         ]), $autorId);
 
         $lote = $this->crear(new Lote([

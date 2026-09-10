@@ -22,7 +22,7 @@ uses(RefreshDatabase::class);
 
 function contratoParaLoginPortal(): Contrato
 {
-    $cliente = Cliente::create(['razon_social' => 'Cliente portal login']);
+    $cliente = Cliente::create(['razon_social' => 'Cliente portal login', 'tipo_persona' => 'juridica']);
 
     return Contrato::create([
         'cliente_id' => $cliente->id,

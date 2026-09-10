@@ -42,6 +42,7 @@ return [
             'clientes' => 'Clientes',
             'contratos' => 'Contratos',
             'propiedades' => 'Propiedades',
+            'campos' => 'Campos',
             'lotes' => 'Lotes',
             'cultivos' => 'Cultivos',
             'campanias' => 'Campañas',
