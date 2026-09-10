@@ -77,6 +77,7 @@ return [
         'campo_nombre' => 'Nombre',
         'campo_ubicacion' => 'Ubicación',
         'estado_form' => 'Los cambios se guardan al confirmar.',
+        'volver' => 'Volver a bases',
     ],
 
     // HU-26 (tarea 37): alta y mantenimiento de personas operativas, con su
@@ -138,6 +139,7 @@ return [
         'campo_activo' => 'Persona activa',
         'campo_activo_ayuda' => 'Una persona inactiva no puede asignarse a sesiones nuevas.',
         'estado_form' => 'Los cambios se guardan al confirmar.',
+        'volver' => 'Volver a personas',
     ],
 
     // Tarea 72 (HU-49, ADR 0015 punto 3): equipos de trabajo — el piloto y
@@ -198,6 +200,7 @@ return [
         'campo_hasta' => 'Vigente hasta',
         'campo_hasta_ayuda' => 'Dejalo vacío si el equipo sigue vigente.',
         'estado_form' => 'Los cambios se guardan al confirmar.',
+        'volver' => 'Volver a equipos de trabajo',
 
         // Ficha
         'ficha_titulo' => 'Equipo :codigo',

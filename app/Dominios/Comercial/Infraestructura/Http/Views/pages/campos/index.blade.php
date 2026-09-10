@@ -110,7 +110,7 @@
                                         {{ __('comercial.campos.siembra') }}
                                     </x-atoms.button>
 
-                                    <x-atoms.button href="{{ route('panel.campos.edit', $campo) }}" variant="outline" size="sm" icon="edit">
+                                    <x-atoms.button href="{{ route('panel.campos.edit', $campo) }}" variant="warning-outline" size="sm" icon="edit">
                                         {{ __('comercial.campos.editar') }}
                                     </x-atoms.button>
                                 @endpuede

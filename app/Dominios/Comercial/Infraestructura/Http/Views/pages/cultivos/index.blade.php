@@ -106,7 +106,7 @@
 
                             <span role="cell" class="ag-cultivos__acciones">
                                 @puede('comercial.cultivo.editar')
-                                    <x-atoms.button href="{{ route('panel.cultivos.edit', $cultivo) }}" variant="outline" size="sm" icon="edit">
+                                    <x-atoms.button href="{{ route('panel.cultivos.edit', $cultivo) }}" variant="warning-outline" size="sm" icon="edit">
                                         {{ __('comercial.cultivos.editar') }}
                                     </x-atoms.button>
                                 @endpuede

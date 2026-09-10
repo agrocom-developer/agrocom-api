@@ -57,14 +57,21 @@ function propiedadDeLotesDePrueba(?Cliente $cliente = null, string $nombre = 'Ca
     return Campo::query()->create(['cliente_id' => $cliente->id, 'nombre' => $nombre]);
 }
 
-/** Payload mínimo válido de alta/edición de un lote suelto. */
+/**
+ * Payload mínimo válido de alta/edición de un lote suelto — anidado bajo
+ * `lote[...]`, igual que lo postea el HTML real (`campos/_lote-fila.blade.php`
+ * con `prefijo: 'lote'`). Antes viajaba aplanado y enmascaraba el bug de
+ * nesting entre la vista y `CrearLoteRequest`/`ActualizarLoteRequest`.
+ */
 function payloadLote(int $campoId, array $overrides = []): array
 {
-    return array_merge([
+    return [
         'campo_id' => $campoId,
-        'codigo' => 'L-01',
-        'hectareas' => '15.50',
-    ], $overrides);
+        'lote' => array_merge([
+            'codigo' => 'L-01',
+            'hectareas' => '15.50',
+        ], $overrides),
+    ];
 }
 
 function crearOrdenAplicacionParaLoteDePrueba(Lote $lote): void
@@ -111,7 +118,7 @@ it('rechaza un lote con hectareas menores o iguales a cero', function () {
     entrarAlPanelParaLotes($encargado, $idRol);
 
     $this->post(route('panel.lotes.store'), payloadLote($campo->id, ['hectareas' => '0']))
-        ->assertSessionHasErrors('hectareas');
+        ->assertSessionHasErrors('lote.hectareas');
 
     expect(Lote::query()->count())->toBe(0);
 });
@@ -188,7 +195,7 @@ it('rechaza una geometria mal formada', function () {
     entrarAlPanelParaLotes($encargado, $idRol);
 
     $this->post(route('panel.lotes.store'), payloadLote($campo->id, ['geometria' => 'no es json']))
-        ->assertSessionHasErrors('geometria');
+        ->assertSessionHasErrors('lote.geometria');
 
     expect(Lote::query()->count())->toBe(0);
 });

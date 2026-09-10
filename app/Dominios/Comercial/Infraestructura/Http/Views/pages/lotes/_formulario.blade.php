@@ -35,10 +35,10 @@
     $campoId = old('campo_id', $lote?->campo_id ?? '');
     $clienteId = old('cliente_id', $lote?->campo?->cliente_id ?? '');
     $datosLote = [
-        'codigo' => old('codigo', $lote?->codigo ?? ''),
-        'hectareas' => old('hectareas', $lote?->hectareas ?? ''),
-        'geometria' => old('geometria', $lote?->geometria !== null ? json_encode($lote->geometria) : ''),
-        'restricciones' => old('restricciones', $lote?->restricciones ?? ''),
+        'codigo' => old('lote.codigo', $lote?->codigo ?? ''),
+        'hectareas' => old('lote.hectareas', $lote?->hectareas ?? ''),
+        'geometria' => old('lote.geometria', $lote?->geometria !== null ? json_encode($lote->geometria) : ''),
+        'restricciones' => old('lote.restricciones', $lote?->restricciones ?? ''),
     ];
     $mapaClientePropiedad = $propiedadesDisponibles->pluck('cliente_id', 'id');
     $propiedadesOptions = $propiedadesDisponibles->mapWithKeys(fn ($campo) => [
@@ -57,11 +57,8 @@
         :subtitle="__('comercial.lotes.subtitulo_form')"
     >
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.lotes.index') }}" variant="outline">
-                {{ __('ui.action.cancel') }}
-            </x-atoms.button>
-            <x-atoms.button type="submit" variant="primary">
-                {{ __('ui.action.save') }}
+            <x-atoms.button href="{{ route('panel.lotes.index') }}" variant="outline" icon="arrow_back">
+                {{ __('comercial.lotes.volver') }}
             </x-atoms.button>
         </x-slot:actions>
     </x-organisms.page-header>

@@ -120,7 +120,7 @@
                                 @endpuede
 
                                 @puede('personal.persona.editar')
-                                    <x-atoms.button href="{{ route('panel.personas.edit', $persona) }}" variant="outline" size="sm" icon="edit">
+                                    <x-atoms.button href="{{ route('panel.personas.edit', $persona) }}" variant="warning-outline" size="sm" icon="edit">
                                         {{ __('personal.personas.editar') }}
                                     </x-atoms.button>
                                 @endpuede

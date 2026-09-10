@@ -137,6 +137,15 @@ function formatearHectareas(valor) {
     return valor.toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+/** Escribe el input oculto Y avisa el cambio (`input`, con burbujeo): sin
+ *  esto, `shared/barra-acciones-dirty.js` nunca se entera de que se dibujó
+ *  o movió un polígono — el valor cambia, pero ningún evento del DOM lo
+ *  dice. */
+function fijarGeometria(input, valor) {
+    input.value = valor ?? '';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
 /** Lee el valor del input oculto, tolerando JSON inválido cargado a mano. */
 function leerGeometria(input) {
     if (!input.value.trim()) {
@@ -268,7 +277,7 @@ function inicializarLeaflet(contenedor, refs) {
         const capas = capa.getLayers();
 
         if (capas.length === 0) {
-            input.value = '';
+            fijarGeometria(input, '');
             mostrarMedida(null);
 
             return;
@@ -279,13 +288,13 @@ function inicializarLeaflet(contenedor, refs) {
         // guarda `com_lotes.geometria`.
         const geometria = capas[capas.length - 1].toGeoJSON().geometry;
 
-        input.value = JSON.stringify(geometria);
+        fijarGeometria(input, JSON.stringify(geometria));
         mostrarMedida(hectareasDe(geometria));
     };
 
     const aplicarGeometria = (valorJson) => {
         capa.clearLayers();
-        input.value = valorJson ?? '';
+        fijarGeometria(input, valorJson);
 
         const geometria = leerGeometria(input);
 
@@ -573,7 +582,7 @@ function inicializarGoogle(contenedor, refs, googleMapsNs) {
     const sincronizar = () => {
         const geometria = geometriaDePoligono();
 
-        input.value = geometria ? JSON.stringify(geometria) : '';
+        fijarGeometria(input, geometria ? JSON.stringify(geometria) : '');
         mostrarMedida(geometria ? hectareasDe(geometria) : null);
     };
 
@@ -617,7 +626,7 @@ function inicializarGoogle(contenedor, refs, googleMapsNs) {
     };
 
     const aplicarGeometria = (valorJson) => {
-        input.value = valorJson ?? '';
+        fijarGeometria(input, valorJson);
 
         const geometria = leerGeometria(input);
         dibujarPoligono(geometria, confirmarEdicion);

@@ -137,7 +137,7 @@
 
                             <span role="cell" class="ag-lotes__acciones">
                                 @puede('comercial.lote.editar')
-                                    <x-atoms.button href="{{ route('panel.lotes.edit', $lote) }}" variant="outline" size="sm" icon="edit">
+                                    <x-atoms.button href="{{ route('panel.lotes.edit', $lote) }}" variant="warning-outline" size="sm" icon="edit">
                                         {{ __('comercial.lotes.editar') }}
                                     </x-atoms.button>
                                 @endpuede

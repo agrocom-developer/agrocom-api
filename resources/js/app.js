@@ -1,4 +1,5 @@
 import * as bootstrap from 'bootstrap';
+import './shared/barra-acciones-dirty.js';
 import './atoms/input.js';
 import './atoms/select.js';
 import './atoms/date.js';

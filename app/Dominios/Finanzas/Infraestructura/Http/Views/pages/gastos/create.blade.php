@@ -76,11 +76,8 @@
                     :subtitle="__('finanzas.gastos.subtitulo_form')"
                 >
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.gastos.index') }}" variant="outline">
-                            {{ __('ui.action.cancel') }}
-                        </x-atoms.button>
-                        <x-atoms.button type="submit" variant="primary">
-                            {{ __('ui.action.save') }}
+                        <x-atoms.button href="{{ route('panel.gastos.index') }}" variant="outline" icon="arrow_back">
+                            {{ __('finanzas.gastos.volver') }}
                         </x-atoms.button>
                     </x-slot:actions>
                 </x-organisms.page-header>

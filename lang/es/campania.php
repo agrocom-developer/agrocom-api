@@ -68,6 +68,7 @@ return [
         'campo_fecha_inicio' => 'Fecha de inicio',
         'campo_fecha_fin' => 'Fecha de fin',
         'estado_form' => 'Los cambios se guardan al confirmar.',
+        'volver' => 'Volver a campañas',
 
         // Errores de validación
         'error_cliente_requerido' => 'Seleccioná el cliente de la campaña.',

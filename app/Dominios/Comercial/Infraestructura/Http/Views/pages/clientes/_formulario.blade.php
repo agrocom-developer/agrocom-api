@@ -50,11 +50,8 @@
         :subtitle="__('comercial.clientes.subtitulo_form')"
     >
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.clientes.index') }}" variant="outline">
-                {{ __('ui.action.cancel') }}
-            </x-atoms.button>
-            <x-atoms.button type="submit" variant="primary">
-                {{ __('ui.action.save') }}
+            <x-atoms.button href="{{ route('panel.clientes.index') }}" variant="outline" icon="arrow_back">
+                {{ __('comercial.clientes.volver') }}
             </x-atoms.button>
         </x-slot:actions>
     </x-organisms.page-header>

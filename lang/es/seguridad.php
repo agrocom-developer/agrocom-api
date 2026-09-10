@@ -396,6 +396,7 @@ return [
         'campo_contrato' => 'Contrato',
         'campo_contrato_placeholder' => 'Elegí un contrato vigente',
         'campo_contrato_opcion' => ':cliente — :hectareas ha',
+        'volver' => 'Volver a usuarios',
     ],
 
     // Revocación de sesiones de la app de campo (HU-03). El nombre del rol

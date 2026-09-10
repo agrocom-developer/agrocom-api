@@ -147,7 +147,7 @@
 
                             <span role="cell" class="ag-vehiculos__acciones">
                                 @puede('mantenimiento.vehiculo.editar')
-                                    <x-atoms.button href="{{ route('panel.vehiculos.edit', $vehiculo) }}" variant="outline" size="sm" icon="edit">
+                                    <x-atoms.button href="{{ route('panel.vehiculos.edit', $vehiculo) }}" variant="warning-outline" size="sm" icon="edit">
                                         {{ __('mantenimiento.vehiculos.editar') }}
                                     </x-atoms.button>
                                 @endpuede

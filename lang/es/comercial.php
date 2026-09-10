@@ -64,6 +64,7 @@ return [
         'contacto_email' => 'Email',
         'contacto_observaciones' => 'Observaciones',
         'estado_form' => 'Los cambios se guardan al confirmar.',
+        'volver' => 'Volver a clientes',
     ],
 
     'contrato' => [
@@ -173,6 +174,7 @@ return [
         'error_ventana_incompleta' => 'Completá la hora de inicio y la hora de fin de la ventana.',
         'error_ventana_horas' => 'La hora de fin tiene que ser posterior a la hora de inicio.',
         'error_humedad_rango' => 'La humedad mínima no puede ser mayor que la máxima.',
+        'volver' => 'Volver a contratos',
     ],
 
     // HU-24 (tarea 35): administración de campos con sus lotes. Tercer ABM
@@ -247,6 +249,7 @@ return [
         'lote_restricciones' => 'Restricciones',
         'lote_restricciones_placeholder' => 'Cables, viviendas, colmenas, vecinos sensibles',
         'estado_form' => 'Los cambios se guardan al confirmar.',
+        'volver' => 'Volver a campos',
 
         // Errores de validación
         'error_geometria_invalida' => 'La geometría tiene que ser un JSON con "type": "Polygon" y "coordinates" como arreglo.',
@@ -303,6 +306,7 @@ return [
         'campo_propiedad_opcion' => ':nombre — :cliente',
         'seccion_lote' => 'Datos del lote',
         'estado_form' => 'Los cambios se guardan al confirmar.',
+        'volver' => 'Volver a lotes',
 
         // Errores de validación
         'error_geometria_invalida' => 'La geometría tiene que ser un JSON con "type": "Polygon" y "coordinates" como arreglo.',
@@ -347,6 +351,7 @@ return [
         'campo_activo' => 'Activo',
         'campo_activo_ayuda' => 'Un cultivo inactivo deja de ofrecerse para nuevas siembras, sin afectar las ya cargadas.',
         'estado_form' => 'Los cambios se guardan al confirmar.',
+        'volver' => 'Volver a cultivos',
     ],
 
     // HU-48 (tarea 71, etapa 3, ADR 0015 punto 4): qué se sembró en cada
@@ -415,6 +420,7 @@ return [
         'estado_form' => 'El monto se calcula al confirmar.',
         'error_acta_requerida' => 'Seleccioná un acta conformada.',
         'error_acta_invalida' => 'El acta seleccionada no está disponible para facturar.',
+        'volver' => 'Volver a facturas',
     ],
 
     // HU-32 (tarea 46, reemplazado por HU-52 tarea 75): "como dueño, quiero
