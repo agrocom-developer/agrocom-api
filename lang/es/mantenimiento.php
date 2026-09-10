@@ -66,6 +66,7 @@ return [
         'creado' => 'Vehículo creado correctamente.',
         'actualizado' => 'Vehículo actualizado correctamente.',
         'eliminado' => 'Vehículo dado de baja correctamente.',
+        'volver' => 'Volver a vehículos',
     ],
 
     // Pantalla de panel "Recursos › Generadores" (tarea 72, HU-49, ADR 0015
@@ -113,6 +114,7 @@ return [
         'creado' => 'Generador creado correctamente.',
         'actualizado' => 'Generador actualizado correctamente.',
         'eliminado' => 'Generador dado de baja correctamente.',
+        'volver' => 'Volver a generadores',
     ],
 
     // Pantalla de panel "Recursos › Baterías" (HU-39, tarea 51): ABM del
@@ -166,6 +168,7 @@ return [
         'creado' => 'Batería creada correctamente.',
         'actualizado' => 'Batería actualizada correctamente.',
         'eliminado' => 'Batería dada de baja correctamente.',
+        'volver' => 'Volver a baterías',
     ],
 
     // Estado de una orden de mantenimiento (EstadoOrdenMantenimiento) —
@@ -268,6 +271,7 @@ return [
         'confirmar_cierre' => '¿Confirmás el cierre de esta orden? Esta acción descuenta stock y genera un gasto.',
         'cerrada' => 'Orden de mantenimiento cerrada correctamente.',
         'ya_cerrada' => 'Esta orden ya está cerrada.',
+        'volver' => 'Volver a órdenes',
     ],
 
     // Pantalla de panel "Mantenimiento › Planes" (HU-38, tarea 54): ABM de
@@ -308,6 +312,7 @@ return [
         'creado' => 'Plan de mantenimiento creado correctamente.',
         'actualizado' => 'Plan de mantenimiento actualizado correctamente.',
         'eliminado' => 'Plan de mantenimiento dado de baja correctamente.',
+        'volver' => 'Volver a planes',
     ],
 
 ];

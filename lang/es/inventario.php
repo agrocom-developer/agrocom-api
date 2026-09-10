@@ -65,6 +65,7 @@ return [
         'creado' => 'Repuesto creado.',
         'actualizado' => 'Repuesto actualizado.',
         'eliminado' => 'Repuesto dado de baja.',
+        'volver' => 'Volver a repuestos',
     ],
 
     // Pantalla de panel "Mantenimiento › Stock" (HU-36, tarea 52): stock
@@ -111,6 +112,7 @@ return [
         'campo_motivo' => 'Motivo',
         'campo_motivo_placeholder' => 'Obligatorio en ajuste y traslado',
         'estado_form' => 'Sin guardar',
+        'volver' => 'Volver a stock',
     ],
 
 ];
