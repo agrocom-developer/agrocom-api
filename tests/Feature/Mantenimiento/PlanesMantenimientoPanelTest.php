@@ -188,13 +188,13 @@ it('activa la alerta cuando la suma de horas de sesiones cerradas de un dron del
 
     $this->get(route('panel.planes-mantenimiento.index'))
         ->assertOk()
-        ->assertDontSee('warning');
+        ->assertDontSee(__('mantenimiento.planes.alerta_titulo'));
 
     crearSesionCerrada($trabajo, 2, $dron->id, '2026-01-01 15:00:00', '2026-01-01 19:00:00');
 
     $this->get(route('panel.planes-mantenimiento.index'))
         ->assertOk()
-        ->assertSee('warning');
+        ->assertSee(__('mantenimiento.planes.alerta_titulo'));
 });
 
 it('no activa la alerta si ningún dron tiene el modelo del plan', function () {
@@ -205,7 +205,12 @@ it('no activa la alerta si ningún dron tiene el modelo del plan', function () {
 
     $this->get(route('panel.planes-mantenimiento.index'))
         ->assertOk()
-        ->assertDontSee('warning');
+        // Antes se buscaba el substring genérico "warning": desde que el
+        // botón "Editar" de esta lista es `variant="warning-outline"`
+        // (color warning, tarea reporte del jefe), ese substring está
+        // SIEMPRE presente por el botón — hay que apuntar al texto único
+        // del badge de alerta, no a "warning" a secas.
+        ->assertDontSee(__('mantenimiento.planes.alerta_titulo'));
 });
 
 it('registra en bitácora el alta, la edición y la baja de un plan de mantenimiento', function () {
