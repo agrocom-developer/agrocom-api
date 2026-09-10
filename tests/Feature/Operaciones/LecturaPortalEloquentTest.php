@@ -5,6 +5,7 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Operaciones\Contratos\LecturaActaConformada;
 use App\Dominios\Operaciones\Contratos\LecturaReporteTecnico;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
@@ -43,7 +44,7 @@ beforeEach(function () {
 
 function contratoParaLecturaPortal(string $sufijo): Contrato
 {
-    $cliente = Cliente::create(['razon_social' => "Cliente lectura portal {$sufijo}"]);
+    $cliente = Cliente::create(['razon_social' => "Cliente lectura portal {$sufijo}", 'tipo_persona' => 'juridica']);
 
     return Contrato::create([
         'cliente_id' => $cliente->id,
@@ -58,7 +59,8 @@ function contratoParaLecturaPortal(string $sufijo): Contrato
 
 function ordenParaLecturaPortal(Contrato $contrato, string $sufijo): OrdenAplicacion
 {
-    $campo = Campo::create(['cliente_id' => $contrato->cliente_id, 'nombre' => "Campo lectura portal {$sufijo}"]);
+    $propiedad = Propiedad::create(['cliente_id' => $contrato->cliente_id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
+    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => "Campo lectura portal {$sufijo}"]);
     $lote = Lote::create(['campo_id' => $campo->id, 'codigo' => "L-PORTAL-{$sufijo}", 'hectareas' => '25.00']);
 
     return OrdenAplicacion::create([

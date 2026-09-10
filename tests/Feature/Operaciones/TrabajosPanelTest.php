@@ -5,6 +5,7 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Operaciones\Dominio\EstadoActa;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Dominio\EstadoSesion;
@@ -71,8 +72,9 @@ function entrarAlPanelParaTrabajos(SecUser $usuario, int $idRolActivo): void
 
 function trabajoCerradoDemo(): Trabajo
 {
-    $cliente = Cliente::create(['razon_social' => 'Cliente panel trabajos']);
-    $campo = Campo::create(['cliente_id' => $cliente->id, 'nombre' => 'Campo panel']);
+    $cliente = Cliente::create(['razon_social' => 'Cliente panel trabajos', 'tipo_persona' => 'juridica']);
+    $propiedad = Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
+    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo panel']);
     $lote = Lote::create(['campo_id' => $campo->id, 'codigo' => 'L-PANEL', 'hectareas' => '40.00']);
     $contrato = Contrato::create([
         'cliente_id' => $cliente->id,
@@ -171,8 +173,9 @@ it('publica el ítem de menú de trabajos gateado por operaciones.trabajo.ver', 
  */
 function crearTrabajo(array $atributosTrabajo = [], array $sesiones = []): Trabajo
 {
-    $cliente = Cliente::create(['razon_social' => 'Cliente panel trabajos '.Str::random(6)]);
-    $campo = Campo::create(['cliente_id' => $cliente->id, 'nombre' => 'Campo panel '.Str::random(6)]);
+    $cliente = Cliente::create(['razon_social' => 'Cliente panel trabajos '.Str::random(6), 'tipo_persona' => 'juridica']);
+    $propiedad = Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
+    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo panel '.Str::random(6)]);
     $lote = Lote::create([
         'campo_id' => $campo->id,
         'codigo' => 'L-'.Str::random(6),

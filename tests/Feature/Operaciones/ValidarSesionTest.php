@@ -5,6 +5,7 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Operaciones\Aplicacion\MaquinaEstados\MaquinaEstadosSesion;
 use App\Dominios\Operaciones\Aplicacion\RechazarSesion;
 use App\Dominios\Operaciones\Aplicacion\ValidarSesion;
@@ -31,8 +32,9 @@ uses(RefreshDatabase::class);
 
 function trabajoAbiertoParaValidarSesion(): Trabajo
 {
-    $cliente = Cliente::create(['razon_social' => 'Cliente de validación de sesión']);
-    $campo = Campo::create(['cliente_id' => $cliente->id, 'nombre' => 'Campo de validación de sesión']);
+    $cliente = Cliente::create(['razon_social' => 'Cliente de validación de sesión', 'tipo_persona' => 'juridica']);
+    $propiedad = Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
+    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo de validación de sesión']);
     $lote = Lote::create(['campo_id' => $campo->id, 'codigo' => 'L-VALSES', 'hectareas' => '50.00']);
     $contrato = Contrato::create([
         'cliente_id' => $cliente->id,

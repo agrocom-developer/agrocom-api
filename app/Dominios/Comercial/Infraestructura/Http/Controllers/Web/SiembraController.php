@@ -40,8 +40,8 @@ final class SiembraController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO), 403);
 
-        $campo->load('lotes');
-        $campanias = $this->campaniasDelCliente($campo->cliente_id);
+        $campo->load('lotes', 'propiedad');
+        $campanias = $this->campaniasDelCliente($campo->propiedad->cliente_id);
         $campaniaId = $request->integer('campania_id') ?: $campanias->keys()->first();
 
         $siembraPorLote = $campaniaId !== null

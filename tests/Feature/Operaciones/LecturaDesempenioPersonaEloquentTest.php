@@ -7,6 +7,7 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Operaciones\Contratos\LecturaDesempenioPersona;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Dominio\EstadoSesion;
@@ -42,7 +43,7 @@ beforeEach(function () {
 /** Cliente (o uno ya existente, para dos campañas del mismo cliente) con una campaña abierta y un contrato asignado a ella. */
 function contratoConCampania(string $sufijo, string $campaniaCodigo, string $campaniaDesde, string $campaniaHasta, ?Cliente $cliente = null): Contrato
 {
-    $cliente ??= Cliente::create(['razon_social' => "Cliente desempeño {$sufijo}"]);
+    $cliente ??= Cliente::create(['razon_social' => "Cliente desempeño {$sufijo}", 'tipo_persona' => 'juridica']);
     $campania = Campania::create([
         'cliente_id' => $cliente->id,
         'codigo' => $campaniaCodigo,
@@ -65,7 +66,8 @@ function contratoConCampania(string $sufijo, string $campaniaCodigo, string $cam
 
 function trabajoDeContrato(Contrato $contrato, string $sufijo): Trabajo
 {
-    $campo = Campo::create(['cliente_id' => $contrato->cliente_id, 'nombre' => "Campo desempeño {$sufijo}"]);
+    $propiedad = Propiedad::create(['cliente_id' => $contrato->cliente_id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
+    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => "Campo desempeño {$sufijo}"]);
     $lote = Lote::create(['campo_id' => $campo->id, 'codigo' => "L-DES-{$sufijo}", 'hectareas' => '50.00']);
     $orden = OrdenAplicacion::create([
         'contrato_id' => $contrato->id,

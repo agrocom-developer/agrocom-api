@@ -10,6 +10,7 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cultivo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\LoteCampania;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use Database\Seeders\Catalogo\CatalogoSeeder;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -29,7 +30,7 @@ beforeEach(function () {
 
 function clienteParaSiembra(string $razonSocial = 'Agropecuaria Siembra S.R.L.'): Cliente
 {
-    return Cliente::query()->create(['razon_social' => $razonSocial]);
+    return Cliente::query()->create(['razon_social' => $razonSocial, 'tipo_persona' => 'juridica']);
 }
 
 function campaniaParaSiembra(int $clienteId, string $codigo = '2025-2026'): Campania
@@ -45,7 +46,8 @@ function campaniaParaSiembra(int $clienteId, string $codigo = '2025-2026'): Camp
 
 function campoConLoteParaSiembra(int $clienteId, string $hectareasLote = '20.00'): Campo
 {
-    $campo = Campo::query()->create(['cliente_id' => $clienteId, 'nombre' => 'Campo de prueba siembra']);
+    $propiedad = Propiedad::create(['cliente_id' => $clienteId, 'nombre' => 'Propiedad de prueba '.uniqid()]);
+    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo de prueba siembra']);
     $campo->lotes()->create(['codigo' => 'L-01', 'hectareas' => $hectareasLote]);
 
     return $campo->refresh()->load('lotes');

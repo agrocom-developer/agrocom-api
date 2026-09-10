@@ -5,6 +5,7 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Operaciones\Contratos\LecturaReporteTecnico;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Dominio\EstadoTrabajo;
@@ -31,8 +32,9 @@ beforeEach(function () {
 
 function ordenParaLecturaReporte(string $sufijo): OrdenAplicacion
 {
-    $cliente = Cliente::create(['razon_social' => "Cliente lectura reporte {$sufijo}"]);
-    $campo = Campo::create(['cliente_id' => $cliente->id, 'nombre' => "Campo lectura reporte {$sufijo}"]);
+    $cliente = Cliente::create(['razon_social' => "Cliente lectura reporte {$sufijo}", 'tipo_persona' => 'juridica']);
+    $propiedad = Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
+    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => "Campo lectura reporte {$sufijo}"]);
     $lote = Lote::create(['campo_id' => $campo->id, 'codigo' => "L-LEC-{$sufijo}", 'hectareas' => '20.00']);
     $contrato = Contrato::create([
         'cliente_id' => $cliente->id,

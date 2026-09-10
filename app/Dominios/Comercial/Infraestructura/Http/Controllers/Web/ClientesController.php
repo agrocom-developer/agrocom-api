@@ -8,6 +8,7 @@ use App\Dominios\Comercial\Aplicacion\EliminarCliente;
 use App\Dominios\Comercial\Aplicacion\ListarClientes;
 use App\Dominios\Comercial\Dominio\Excepciones\ClienteDuplicado;
 use App\Dominios\Comercial\Dominio\TipoContactoCliente;
+use App\Dominios\Comercial\Dominio\TipoPersonaCliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\ActualizarClienteRequest;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\CrearClienteRequest;
@@ -61,6 +62,7 @@ final class ClientesController
         return view('comercial::pages.clientes.create', [
             ...$this->autorizacion->cascara($request),
             'tiposContacto' => TipoContactoCliente::cases(),
+            'tiposPersona' => TipoPersonaCliente::cases(),
         ]);
     }
 
@@ -77,6 +79,7 @@ final class ClientesController
             $crearCliente->ejecutar(
                 (string) $datos['razon_social'],
                 isset($datos['nit']) ? (string) $datos['nit'] : null,
+                (string) $datos['tipo_persona'],
                 array_map($this->normalizarContactoNuevo(...), $contactosCrudos),
             );
         } catch (ClienteDuplicado $excepcion) {
@@ -99,6 +102,7 @@ final class ClientesController
             ...$this->autorizacion->cascara($request),
             'cliente' => $cliente->load('contactos'),
             'tiposContacto' => TipoContactoCliente::cases(),
+            'tiposPersona' => TipoPersonaCliente::cases(),
         ]);
     }
 
@@ -116,6 +120,7 @@ final class ClientesController
                 $cliente,
                 (string) $datos['razon_social'],
                 isset($datos['nit']) ? (string) $datos['nit'] : null,
+                (string) $datos['tipo_persona'],
                 array_map($this->normalizarContactoExistente(...), $contactosCrudos),
             );
         } catch (ClienteDuplicado $excepcion) {

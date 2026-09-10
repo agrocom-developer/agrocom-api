@@ -7,6 +7,7 @@ use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ContratosControl
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\CultivosController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\FacturasController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\LotesController;
+use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\PropiedadesController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ReportesComercialesController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\SiembraController;
 use App\Dominios\Distribucion\Infraestructura\Http\Controllers\Web\VersionesApkController;
@@ -445,10 +446,36 @@ Route::middleware('auth:interno')->group(function () {
         Route::post('/panel/contratos/{contrato}/estado', [ContratosController::class, 'cambiarEstado'])
             ->name('panel.contratos.cambiar-estado');
 
-        // HU-24 (tarea 35): administración de campos (propiedades) con sus
-        // lotes. Un campo se crea/edita con sus lotes en la misma operación
-        // (mismo criterio que `clientes` arriba con sus contactos) — eso NO
-        // cambió con la tarea 77. Cuatro permisos de grano fino
+        // ADR 0018: propiedades del cliente — nivel de terreno entre
+        // `Cliente` y `Campo`. Sin sub-entidad propia en esta pantalla: los
+        // campos de una propiedad se cargan desde `campos` (abajo). Cuatro
+        // permisos de grano fino
+        // (`comercial.propiedad.ver`/`.crear`/`.editar`/`.eliminar`)
+        // verificados DENTRO del controlador contra el ROL ACTIVO, mismo
+        // criterio que `clientes`/`contratos` arriba.
+        Route::get('/panel/propiedades', [PropiedadesController::class, 'index'])
+            ->name('panel.propiedades.index');
+
+        Route::get('/panel/propiedades/crear', [PropiedadesController::class, 'create'])
+            ->name('panel.propiedades.create');
+
+        Route::post('/panel/propiedades', [PropiedadesController::class, 'store'])
+            ->name('panel.propiedades.store');
+
+        Route::get('/panel/propiedades/{propiedad}/editar', [PropiedadesController::class, 'edit'])
+            ->name('panel.propiedades.edit');
+
+        Route::put('/panel/propiedades/{propiedad}', [PropiedadesController::class, 'update'])
+            ->name('panel.propiedades.update');
+
+        Route::delete('/panel/propiedades/{propiedad}', [PropiedadesController::class, 'destroy'])
+            ->name('panel.propiedades.destroy');
+
+        // HU-24 (tarea 35): administración de campos con sus lotes. Un campo
+        // se crea/edita con sus lotes en la misma operación (mismo criterio
+        // que `clientes` arriba con sus contactos) — eso NO cambió con la
+        // tarea 77. Desde ADR 0018 el campo cuelga de una propiedad (arriba),
+        // no directo de un cliente. Cuatro permisos de grano fino
         // (`comercial.campo.ver`/`.crear`/`.editar`/`.eliminar`) verificados
         // DENTRO del controlador contra el ROL ACTIVO, mismo criterio que
         // `clientes`/`contratos` arriba.

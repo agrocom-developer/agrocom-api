@@ -52,6 +52,7 @@ function payloadCliente(array $overrides = []): array
     return array_merge([
         'razon_social' => 'Agropecuaria del Valle S.R.L.',
         'nit' => '123456789',
+        'tipo_persona' => 'juridica',
         'contactos' => [
             ['tipo' => 'dueno', 'nombre' => 'Juana Pérez', 'telefono' => '77712345', 'email' => 'juana@example.com'],
         ],
@@ -138,7 +139,7 @@ it('el NIT duplicado entre clientes activos es un error de validación, no un Qu
     [$encargado, $idRol] = usuarioConRolParaClientes('encargado', 'encargado_operaciones');
     entrarAlPanelParaClientes($encargado, $idRol);
 
-    Cliente::query()->create(['razon_social' => 'Cliente Uno S.R.L.', 'nit' => '111222333']);
+    Cliente::query()->create(['razon_social' => 'Cliente Uno S.R.L.', 'nit' => '111222333', 'tipo_persona' => 'juridica']);
 
     $this->post(route('panel.clientes.store'), payloadCliente([
         'razon_social' => 'Cliente Dos S.R.L.',
@@ -152,7 +153,7 @@ it('un rol sin el permiso recibe 403 en todas las acciones', function () {
     [$piloto, $idRol] = usuarioConRolParaClientes('piloto.curioso', 'piloto');
     entrarAlPanelParaClientes($piloto, $idRol);
 
-    $cliente = Cliente::query()->create(['razon_social' => 'Cliente Existente S.R.L.']);
+    $cliente = Cliente::query()->create(['razon_social' => 'Cliente Existente S.R.L.', 'tipo_persona' => 'juridica']);
 
     $this->get(route('panel.clientes.index'))->assertForbidden();
     $this->get(route('panel.clientes.create'))->assertForbidden();

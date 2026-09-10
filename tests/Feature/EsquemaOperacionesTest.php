@@ -38,12 +38,20 @@ function crearOrdenVigenteParaTrabajo(): array
 {
     $clienteId = DB::table('com_clientes')->insertGetId([
         'razon_social' => 'Cliente de prueba',
+        'tipo_persona' => 'juridica',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $propiedadId = DB::table('com_propiedades')->insertGetId([
+        'cliente_id' => $clienteId,
+        'nombre' => 'Propiedad de prueba',
         'created_at' => now(),
         'updated_at' => now(),
     ]);
 
     $campoId = DB::table('com_campos')->insertGetId([
-        'cliente_id' => $clienteId,
+        'propiedad_id' => $propiedadId,
         'nombre' => 'Campo de prueba',
         'created_at' => now(),
         'updated_at' => now(),

@@ -12,6 +12,7 @@ use App\Dominios\Comercial\Dominio\Excepciones\LoteConHistorialAsociado;
 use App\Dominios\Comercial\Dominio\Excepciones\LoteDuplicado;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\ActualizarCampoRequest;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\CrearCampoRequest;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
@@ -71,6 +72,7 @@ final class CamposController
         return view('comercial::pages.campos.create', [
             ...$this->autorizacion->cascara($request),
             'clientesDisponibles' => $this->clientesActivos(),
+            'propiedadesDisponibles' => $this->propiedadesActivas(),
             'proveedorMapa' => $this->resolverProveedorMapa->ejecutar(),
         ]);
     }
@@ -86,9 +88,8 @@ final class CamposController
 
         try {
             $crearCampo->ejecutar(
-                (int) $datos['cliente_id'],
+                (int) $datos['propiedad_id'],
                 (string) $datos['nombre'],
-                $this->cadenaONull($datos['ubicacion'] ?? null),
                 array_map($this->normalizarLoteNuevo(...), $lotesCrudos),
             );
         } catch (CampoDuplicado $excepcion) {
@@ -114,8 +115,9 @@ final class CamposController
 
         return view('comercial::pages.campos.edit', [
             ...$this->autorizacion->cascara($request),
-            'campo' => $campo->load('lotes'),
+            'campo' => $campo->load('lotes', 'propiedad'),
             'clientesDisponibles' => $this->clientesActivos(),
+            'propiedadesDisponibles' => $this->propiedadesActivas(),
             'proveedorMapa' => $this->resolverProveedorMapa->ejecutar(),
         ]);
     }
@@ -132,9 +134,8 @@ final class CamposController
         try {
             $actualizarCampo->ejecutar(
                 $campo,
-                (int) $datos['cliente_id'],
+                (int) $datos['propiedad_id'],
                 (string) $datos['nombre'],
-                $this->cadenaONull($datos['ubicacion'] ?? null),
                 array_map($this->normalizarLoteExistente(...), $lotesCrudos),
             );
         } catch (CampoDuplicado $excepcion) {
@@ -169,6 +170,21 @@ final class CamposController
     private function clientesActivos(): Collection
     {
         return Cliente::query()->orderBy('razon_social')->pluck('razon_social', 'id');
+    }
+
+    /**
+     * Propiedades activas con su `cliente_id`, para el cascade cliente →
+     * propiedad del formulario de campo (ADR 0018: el campo ahora cuelga de
+     * una propiedad, no directo de un cliente).
+     *
+     * @return Collection<int, Propiedad> id => Propiedad (con `cliente_id`, `nombre`)
+     */
+    private function propiedadesActivas(): Collection
+    {
+        return Propiedad::query()
+            ->orderBy('nombre')
+            ->get(['id', 'cliente_id', 'nombre'])
+            ->keyBy('id');
     }
 
     /**
