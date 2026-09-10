@@ -22,6 +22,18 @@ use Illuminate\Support\Facades\Schema;
  * Máquina de estados (espec §5): emitida → vigente → consumida | vencida.
  * "Una única orden vigente por lote" se garantiza en la base con un índice
  * parcial (ADR 0001), no solo en la aplicación.
+ *
+ * tipo_aplicacion (HU-47, tarea 70): en qué momento del ciclo del cultivo se
+ * aplica — el dueño pidió distinguir `siembra` de `cosecha` (7/9/2026);
+ * `desarrollo` (aplicaciones desde el desarrollo vegetativo hasta cerca de
+ * cosecha — `ventana_al_negocio.md` §67) sale de la especificación, no del
+ * pedido, y es el default porque cubre el grueso de las 6-8 aplicaciones
+ * típicas de un contrato. `NOT NULL DEFAULT 'desarrollo'` (a diferencia de
+ * los límites de la orden, que son NULL = hereda): acá no hay nada que
+ * heredar, toda orden tiene un momento del ciclo aunque nadie lo haya
+ * elegido a propósito. Enum de dominio propio en
+ * `Operaciones/Dominio/TipoAplicacion`, mismo criterio que
+ * `EstadoOrdenAplicacion`.
  */
 return new class extends Migration
 {
@@ -32,6 +44,7 @@ return new class extends Migration
             $table->foreignId('contrato_id')->constrained('com_contratos')->restrictOnDelete();
             $table->foreignId('lote_id')->constrained('com_lotes')->restrictOnDelete();
             $table->unsignedSmallInteger('nro_aplicacion');
+            $table->string('tipo_aplicacion', 20)->default('desarrollo');
             $table->decimal('litros_ha', 8, 2);
             $table->decimal('humedad_min_pct', 5, 2)->nullable();
 
@@ -103,7 +116,9 @@ return new class extends Migration
                 ADD CONSTRAINT {$prefijo}ope_ordenes_aplicacion_velocidad_vuelo_chk
                     CHECK (velocidad_vuelo_kmh IS NULL OR velocidad_vuelo_kmh > 0),
                 ADD CONSTRAINT {$prefijo}ope_ordenes_aplicacion_ancho_pasada_chk
-                    CHECK (ancho_pasada_m IS NULL OR ancho_pasada_m > 0)
+                    CHECK (ancho_pasada_m IS NULL OR ancho_pasada_m > 0),
+                ADD CONSTRAINT {$prefijo}ope_ordenes_aplicacion_tipo_aplicacion_chk
+                    CHECK (tipo_aplicacion IN ('siembra', 'desarrollo', 'cosecha'))
             SQL);
         }
     }
