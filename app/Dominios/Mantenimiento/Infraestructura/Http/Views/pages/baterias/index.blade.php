@@ -161,7 +161,7 @@
 
                             <span role="cell" class="ag-baterias__acciones">
                                 @puede('mantenimiento.bateria.editar')
-                                    <x-atoms.button href="{{ route('panel.baterias.edit', $bateria) }}" variant="outline" size="sm" icon="edit">
+                                    <x-atoms.button href="{{ route('panel.baterias.edit', $bateria) }}" variant="warning-outline" size="sm" icon="edit">
                                         {{ __('mantenimiento.baterias.editar') }}
                                     </x-atoms.button>
                                 @endpuede

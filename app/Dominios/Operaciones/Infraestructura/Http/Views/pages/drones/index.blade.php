@@ -105,7 +105,7 @@
 
                             <span role="cell" class="ag-drones__acciones">
                                 @puede('operaciones.dron.editar')
-                                    <x-atoms.button href="{{ route('panel.drones.edit', $dron) }}" variant="outline" size="sm" icon="edit">
+                                    <x-atoms.button href="{{ route('panel.drones.edit', $dron) }}" variant="warning-outline" size="sm" icon="edit">
                                         {{ __('operaciones.drones.editar') }}
                                     </x-atoms.button>
                                 @endpuede

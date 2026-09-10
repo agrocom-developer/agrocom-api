@@ -149,7 +149,7 @@
 
                             <span role="cell" class="ag-generadores__acciones">
                                 @puede('mantenimiento.generador.editar')
-                                    <x-atoms.button href="{{ route('panel.generadores.edit', $generador) }}" variant="outline" size="sm" icon="edit">
+                                    <x-atoms.button href="{{ route('panel.generadores.edit', $generador) }}" variant="warning-outline" size="sm" icon="edit">
                                         {{ __('mantenimiento.generadores.editar') }}
                                     </x-atoms.button>
                                 @endpuede

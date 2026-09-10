@@ -85,7 +85,7 @@
 
                             <span role="cell" class="ag-planes__acciones">
                                 @puede('mantenimiento.plan.editar')
-                                    <x-atoms.button href="{{ route('panel.planes-mantenimiento.edit', $plan) }}" variant="outline" size="sm" icon="edit">
+                                    <x-atoms.button href="{{ route('panel.planes-mantenimiento.edit', $plan) }}" variant="warning-outline" size="sm" icon="edit">
                                         {{ __('mantenimiento.planes.editar') }}
                                     </x-atoms.button>
                                 @endpuede

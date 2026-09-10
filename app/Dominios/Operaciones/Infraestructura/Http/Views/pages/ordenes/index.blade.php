@@ -156,7 +156,7 @@
                             <span role="cell" class="ag-ordenes__acciones">
                                 @puede('operaciones.orden.editar')
                                     @if ($estadoValor === 'emitida')
-                                        <x-atoms.button href="{{ route('panel.ordenes.edit', $orden) }}" variant="outline" size="sm" icon="edit">
+                                        <x-atoms.button href="{{ route('panel.ordenes.edit', $orden) }}" variant="warning-outline" size="sm" icon="edit">
                                             {{ __('operaciones.ordenes.editar') }}
                                         </x-atoms.button>
                                     @endif

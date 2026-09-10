@@ -143,7 +143,7 @@
 
                             <span role="cell" class="ag-campanias__acciones">
                                 @puede('campania.campania.editar')
-                                    <x-atoms.button href="{{ route('panel.campanias.edit', $campania) }}" variant="outline" size="sm" icon="edit">
+                                    <x-atoms.button href="{{ route('panel.campanias.edit', $campania) }}" variant="warning-outline" size="sm" icon="edit">
                                         {{ __('campania.campanias.editar') }}
                                     </x-atoms.button>
                                 @endpuede

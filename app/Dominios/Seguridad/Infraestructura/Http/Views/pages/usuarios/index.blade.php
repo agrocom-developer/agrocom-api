@@ -142,7 +142,7 @@
 
                             <span role="cell" class="ag-usuarios__acciones">
                                 @puede('seguridad.usuario.editar')
-                                    <x-atoms.button href="{{ route('panel.usuarios.edit', $usuario) }}" variant="outline" size="sm" icon="edit">
+                                    <x-atoms.button href="{{ route('panel.usuarios.edit', $usuario) }}" variant="warning-outline" size="sm" icon="edit">
                                         {{ __('seguridad.usuarios.editar') }}
                                     </x-atoms.button>
                                 @endpuede

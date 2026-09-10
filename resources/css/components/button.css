@@ -129,6 +129,22 @@
     background-color: var(--ag-color-danger-subtle);
 }
 
+/* "Editar" en los listados (tarea reporte del jefe, sept/2026): mismo
+   criterio que --danger-outline (transparente + borde + hover con
+   -subtle), con el tono de warning — para diferenciar la acción de
+   modificar un registro del resto de los botones outline neutros de la
+   fila, sin competir con el sólido primary de la pantalla. */
+.ag-button--warning-outline {
+    background-color: transparent;
+    color: var(--ag-color-warning-strong);
+    border-color: var(--ag-color-warning-border);
+    box-shadow: none;
+}
+
+.ag-button--warning-outline:hover {
+    background-color: var(--ag-color-warning-subtle);
+}
+
 .ag-button__spinner {
     width: 1em;
     height: 1em;
