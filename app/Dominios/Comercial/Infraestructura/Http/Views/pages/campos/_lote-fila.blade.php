@@ -68,7 +68,7 @@
         label="{{ __('comercial.campos.lote_codigo') }}"
         value="{{ $lote['codigo'] ?? '' }}"
         required
-        error="{{ $errors->first("{$erroresPrefijo}.codigo") }}"
+        error="{{ $errors->first($erroresPrefijo.'.codigo') }}"
     />
 
     <x-atoms.input
@@ -79,7 +79,7 @@
         min="0.01"
         step="0.01"
         required
-        error="{{ $errors->first("{$erroresPrefijo}.hectareas") }}"
+        error="{{ $errors->first($erroresPrefijo.'.hectareas') }}"
     />
 
     <div
@@ -92,7 +92,7 @@
     >
         <span class="ag-input__label">{{ __('comercial.campos.lote_geometria') }}</span>
 
-        @error("{$erroresPrefijo}.geometria")
+        @error($erroresPrefijo.'.geometria')
             <p class="ag-input__error" role="alert">{{ $message }}</p>
         @enderror
 
