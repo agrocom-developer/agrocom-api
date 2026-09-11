@@ -20,7 +20,10 @@
 
 .ag-form-section__body {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    /* El techo en 50% cap las columnas en 2 aun en pantallas anchas: sin él,
+       auto-fit mete tantas columnas de 14rem+ como entren (4-6 en desktop),
+       angostando los campos sin importar cuántos tenga el formulario. */
+    grid-template-columns: repeat(auto-fit, minmax(max(14rem, calc(50% - var(--ag-space-4) / 2)), 1fr));
     gap: var(--ag-space-4);
     align-items: start;
 }
