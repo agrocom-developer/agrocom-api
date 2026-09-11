@@ -68,7 +68,11 @@
     gap: var(--ag-space-1);
     width: 100%;
     box-sizing: border-box;
-    padding-inline: 34px;
+    /* Lo justo para no pisar el botón prev/next (34px de ancho real), no
+       más: un padding mayor no acerca las flechas, solo achica el área
+       centrada donde caben mes+año — y con poco margen, "2026" (4 dígitos)
+       terminaba recortado dentro de su propio casillero. */
+    padding-inline: 26px;
 }
 
 .flatpickr-current-month .flatpickr-monthDropdown-months {
@@ -79,7 +83,10 @@
 
 .flatpickr-current-month .numInputWrapper {
     flex: 0 0 auto;
-    width: 3.5ch;
+    /* 5ch, no 3.5ch: "2026" son 4 dígitos y a este tamaño de fuente (135%
+       de la base) 3.5ch le quedaba corto — el input recortaba el primer
+       carácter en vez de mostrar el año completo. */
+    width: 5ch;
 }
 
 .flatpickr-current-month input.cur-year {
