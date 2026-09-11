@@ -20,49 +20,54 @@
 // instancia por defecto al primer click — `Dropdown.getOrCreateInstance()`
 // (que usa la data-api internamente) encuentra esta instancia ya configurada.
 document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('.ag-topbar [data-bs-toggle="dropdown"]').forEach((el) => {
+    // `.ag-mobile-topbar` sumado el 11/9/2026: sus dos dropdowns
+    // (notificaciones/usuario, `molecules/notifications-menu` y
+    // `molecules/user-menu`) sufren el mismo recorte que los de escritorio
+    // — están en el DOM a la vez, uno por breakpoint, así que ambos
+    // contenedores necesitan la misma pre-instanciación.
+    document.querySelectorAll('.ag-topbar [data-bs-toggle="dropdown"], .ag-mobile-topbar [data-bs-toggle="dropdown"]').forEach((el) => {
         // window.bootstrap: ver comentario en app.js ("Bootstrap components
         // are now available globally via window") — mismo criterio que el
         // resto del proyecto para no re-importar el paquete por archivo.
         new window.bootstrap.Dropdown(el, { popperConfig: { strategy: 'fixed' } });
     });
 
-    const logoutButton = document.querySelector('[data-ag-logout]');
+    // `querySelectorAll`, no `querySelector` (fix 11/9/2026): topbar y
+    // mobile-topbar están los dos en el DOM a la vez, cada uno con su
+    // propio botón de logout — con `querySelector` (uno solo) el de mobile
+    // nunca se wireaba, quedaba muerto al tacto.
+    document.querySelectorAll('[data-ag-logout]').forEach((logoutButton) => {
+        // Defaults preservan el comportamiento histórico del panel interno; el
+        // portal del cliente (HU-41, tarea 55) reusa este mismo botón/script con
+        // `data-ag-logout-url="/portal/logout"` y `data-ag-logout-redirect="/portal/login"`
+        // (guard `cliente`, sin selector de rol al volver a loguearse).
+        const logoutUrl = logoutButton.dataset.agLogoutUrl || '/logout';
+        const redirectUrl = logoutButton.dataset.agLogoutRedirect || '/login';
 
-    if (!logoutButton) {
-        return; // Esta página no tiene el botón de logout
-    }
+        logoutButton.addEventListener('click', async function (e) {
+            e.preventDefault();
 
-    // Defaults preservan el comportamiento histórico del panel interno; el
-    // portal del cliente (HU-41, tarea 55) reusa este mismo botón/script con
-    // `data-ag-logout-url="/portal/logout"` y `data-ag-logout-redirect="/portal/login"`
-    // (guard `cliente`, sin selector de rol al volver a loguearse).
-    const logoutUrl = logoutButton.dataset.agLogoutUrl || '/logout';
-    const redirectUrl = logoutButton.dataset.agLogoutRedirect || '/login';
+            try {
+                const response = await fetch(logoutUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
+                    },
+                });
 
-    logoutButton.addEventListener('click', async function (e) {
-        e.preventDefault();
-
-        try {
-            const response = await fetch(logoutUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
-                },
-            });
-
-            if (response.ok) {
-                window.location.href = redirectUrl;
-            } else {
-                console.error('Logout failed:', response.status);
-                // En caso de error, mantener en la página actual
-                // (el usuario puede reintentar)
+                if (response.ok) {
+                    window.location.href = redirectUrl;
+                } else {
+                    console.error('Logout failed:', response.status);
+                    // En caso de error, mantener en la página actual
+                    // (el usuario puede reintentar)
+                }
+            } catch (error) {
+                console.error('Logout error:', error);
+                // En caso de error de red, mantener en la página actual
             }
-        } catch (error) {
-            console.error('Logout error:', error);
-            // En caso de error de red, mantener en la página actual
-        }
+        });
     });
 });
 

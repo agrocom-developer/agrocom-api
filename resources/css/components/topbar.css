@@ -174,10 +174,11 @@
     box-shadow: inset 0 0 0 1.5px var(--ag-color-primary-border-subtle);
 }
 
-.ag-topbar__notifications-count {
+/* Badge compartido por escritorio y mobile (11/9/2026, extracción a
+   molecules/notifications-menu) — posición/color quedan a cargo de quien
+   lo contiene, cada botón disparador define su propia variante acá abajo. */
+.ag-notification-badge {
     position: absolute;
-    top: 1px;
-    right: 0;
     min-width: 15px;
     height: 15px;
     padding: 0 4px;
@@ -185,10 +186,15 @@
     align-items: center;
     justify-content: center;
     border-radius: var(--ag-radius-pill);
-    background: var(--ag-color-danger);
     color: var(--ag-color-gray-0);
     font-size: 0.59rem;
     font-weight: var(--ag-font-weight-bold);
+}
+
+.ag-topbar__icon-btn .ag-notification-badge {
+    top: 1px;
+    right: 0;
+    background: var(--ag-color-danger);
 }
 
 /* Bloque de usuario: avatar + nombre + rol activo (mono ámbar, uppercase). */
@@ -499,27 +505,56 @@
     text-overflow: ellipsis;
 }
 
-.ag-mobile-topbar__bell {
+/* Campana y avatar de mobile: BOTONES reales (11/9/2026, antes `<span>`
+   decorativos sin `data-bs-toggle` — no abrían nada al tocarlos). Mismo
+   objetivo táctil ≥44px que `.ag-mobile-topbar__menu-btn`; los tokens son
+   los constantes del riel (`olive`/`rail-*`), no los del tema — coherente
+   con que este header es "oscuro, constante entre temas" (docblock del
+   componente). */
+.ag-mobile-topbar__bell-btn {
     position: relative;
-    display: flex;
-    color: var(--ag-color-olive-150);
-}
-
-.ag-mobile-topbar__bell-count {
-    position: absolute;
-    top: -3px;
-    right: -4px;
-    min-width: 15px;
-    height: 15px;
-    padding: 0 4px;
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    margin-right: calc(var(--ag-space-2) * -1);
+    border: none;
     border-radius: var(--ag-radius-pill);
+    background: transparent;
+    color: var(--ag-color-olive-150);
+    cursor: pointer;
+}
+
+.ag-mobile-topbar__bell-btn:hover,
+.ag-mobile-topbar__bell-btn:active,
+.ag-mobile-topbar__bell-btn[aria-expanded='true'] {
+    background: var(--ag-color-bg-rail-active);
+    color: var(--ag-color-text-rail-active);
+}
+
+.ag-mobile-topbar__bell-btn .ag-notification-badge {
+    top: 6px;
+    right: 6px;
     background: var(--ag-color-red-600);
-    color: var(--ag-color-gray-0);
-    font-size: 0.59rem;
-    font-weight: var(--ag-font-weight-bold);
+}
+
+.ag-mobile-topbar__avatar-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: none;
+    border-radius: var(--ag-radius-pill);
+    background: transparent;
+    cursor: pointer;
+}
+
+.ag-mobile-topbar__avatar-btn:hover,
+.ag-mobile-topbar__avatar-btn:active,
+.ag-mobile-topbar__avatar-btn[aria-expanded='true'] {
+    background: var(--ag-color-bg-rail-active);
 }
 
 .ag-mobile-topbar__avatar {
@@ -533,6 +568,21 @@
     justify-content: center;
     font-size: var(--ag-font-size-xs);
     font-weight: var(--ag-font-weight-bold);
+}
+
+/* Toggle de tema en mobile: mismo componente que escritorio
+   (`molecules/theme-toggle`), tokens de color pisados por los constantes
+   del riel — sin esto heredaba `--ag-color-text-muted`, pensado para el
+   chrome claro de escritorio, ilegible sobre el fondo siempre-oscuro de
+   este header. */
+.ag-mobile-topbar__theme-toggle {
+    color: var(--ag-color-olive-150);
+}
+
+.ag-mobile-topbar__theme-toggle:hover,
+.ag-mobile-topbar__theme-toggle:active {
+    background: var(--ag-color-bg-rail-active);
+    color: var(--ag-color-text-rail-active);
 }
 
 .ag-mobile-topbar__crumb {
@@ -559,8 +609,108 @@
     flex: 1;
 }
 
+/* Checkbox "visually hidden" que revela la barra de búsqueda de abajo —
+   mismo criterio que `.ag-file-field__native`: sigue alcanzable por
+   teclado, a diferencia de `display: none`. */
+.ag-mobile-topbar__search-toggle {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* `<label for>` del checkbox de arriba — real disparador clickeable, ya no
+   un ícono suelto sin acción (11/9/2026). */
 .ag-mobile-topbar__crumb-search {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    margin: calc(var(--ag-space-1) * -1);
+    border-radius: var(--ag-radius-pill);
     color: var(--ag-color-text-faint);
+    cursor: pointer;
+}
+
+.ag-mobile-topbar__crumb-search:hover {
+    background: var(--ag-color-bg-row-hover);
+    color: var(--ag-color-text);
+}
+
+.ag-mobile-topbar__search-toggle:focus-visible + .ag-mobile-topbar__crumb {
+    outline: 2px solid var(--ag-color-focus-ring);
+    outline-offset: -2px;
+}
+
+/* Fila de búsqueda real: oculta hasta tildar el checkbox, mismo alto/fondo
+   que la banda de breadcrumb que reemplaza (no un elemento flotante
+   aparte). `input[type=search]` real — el mismo GET a `panel.buscar` que ya
+   usa el buscador de escritorio. */
+.ag-mobile-topbar__search-bar {
+    display: none;
+    align-items: center;
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-2) var(--ag-space-4);
+    background: var(--ag-color-bg-chrome);
+    border-bottom: 1px solid var(--ag-color-border);
+}
+
+.ag-mobile-topbar__search-toggle:checked ~ .ag-mobile-topbar__crumb {
+    display: none;
+}
+
+.ag-mobile-topbar__search-toggle:checked ~ .ag-mobile-topbar__search-bar {
+    display: flex;
+}
+
+.ag-mobile-topbar__search-icon {
+    flex: 0 0 auto;
+    color: var(--ag-color-text-faint);
+}
+
+.ag-mobile-topbar__search-input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    font-family: var(--ag-font-family-base);
+    font-size: 0.8125rem;
+    color: var(--ag-color-text);
+}
+
+.ag-mobile-topbar__search-input:focus {
+    outline: none;
+}
+
+.ag-mobile-topbar__search-input::placeholder {
+    color: var(--ag-color-text-muted);
+}
+
+/* Segundo `<label>` del MISMO checkbox — cierra la búsqueda. Solo existe
+   dentro de `.ag-mobile-topbar__search-bar`, que solo se ve `:checked`, así
+   que tocarlo siempre destilda (nunca lo contrario). */
+.ag-mobile-topbar__search-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 2rem;
+    height: 2rem;
+    margin: calc(var(--ag-space-1) * -1) calc(var(--ag-space-2) * -1) calc(var(--ag-space-1) * -1) 0;
+    border-radius: var(--ag-radius-pill);
+    color: var(--ag-color-text-muted);
+    cursor: pointer;
+}
+
+.ag-mobile-topbar__search-close:hover {
+    background: var(--ag-color-bg-row-hover);
+    color: var(--ag-color-text);
 }
 
 @media (max-width: 767.98px) {
