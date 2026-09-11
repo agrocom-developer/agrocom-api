@@ -17,6 +17,14 @@
     ($puedeEditarOrganizacion) — sin ese permiso, los campos se muestran deshabilitados
     y sin barra de acciones, mismo criterio que el resto del panel (ver vs. editar).
 
+    Sin barra de acciones global ni acciones en `page-header` (11/9/2026, corrección
+    de bug real): había una `form-actions-bar` decorativa y deshabilitada FUERA de
+    los tabs, de la era 100% mockup. `form-actions-bar` es `position: sticky; bottom:
+    0` — con dos barras en el mismo contenedor con scroll, la de más abajo en el DOM
+    (esta, siempre deshabilitada) pintaba ENCIMA de la real del tab activo y absorbía
+    el clic: el botón "Guardar" real quedaba inalcanzable. Cada tab ya tiene su propia
+    barra real, dentro de su propio `<form>` — no hace falta una global.
+
     Reconstruida sobre el arquetipo formulario (tarea 31): es el caso de prueba de
     `organisms/page-header`, `molecules/tabs`, `molecules/form-section` evolucionado
     (tarjeta + grid de dos columnas), `molecules/progress-meter`, `molecules/summary-card`,
@@ -50,16 +58,7 @@
             <x-organisms.page-header
                 :title="__('seguridad.organizacion.titulo')"
                 :subtitle="__('seguridad.organizacion.subtitulo')"
-            >
-                <x-slot:actions>
-                    <x-atoms.button type="button" variant="outline" disabled>
-                        {{ __('seguridad.organizacion.accion_descartar') }}
-                    </x-atoms.button>
-                    <x-atoms.button type="button" variant="primary" disabled>
-                        {{ __('ui.action.save') }}
-                    </x-atoms.button>
-                </x-slot:actions>
-            </x-organisms.page-header>
+            />
 
             @if ($tabActiva === 'organizacion')
                 <x-molecules.alert-strip variant="info" icon="visibility">
@@ -345,17 +344,6 @@
                     </form>
                 </div>
             </div>
-
-            <x-organisms.form-actions-bar :status="__('seguridad.organizacion.estado_sin_cambios')">
-                <x-slot:actions>
-                    <x-atoms.button type="button" variant="outline" disabled>
-                        {{ __('seguridad.organizacion.accion_descartar') }}
-                    </x-atoms.button>
-                    <x-atoms.button type="button" variant="primary" disabled>
-                        {{ __('ui.action.save') }}
-                    </x-atoms.button>
-                </x-slot:actions>
-            </x-organisms.form-actions-bar>
         </div>
     </x-templates.panel-layout>
 </x-templates.panel-shell>
