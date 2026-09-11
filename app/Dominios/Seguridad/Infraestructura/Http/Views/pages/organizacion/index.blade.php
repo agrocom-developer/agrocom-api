@@ -1,17 +1,21 @@
 {{--
     Page: organizacion/index (GET /panel/organizacion, panel.organizacion.index)
-    Pestaña "Organización": mockup visual de "Registro de la compañía" — vista previa
-    de una pantalla de gestión de organización multi-tenant futura (SIN implementación
-    real de tenancy, sin tabla, sin persistencia). Prellenada con datos realistas para
-    demostración. Botones "Guardar"/"Descartar" deshabilitados, estado fijo "Sin cambios
-    pendientes" (nada de esta pestaña es editable).
+    Pestaña "Organización": "Datos de empresa" y "Datos de contacto" son REALES desde
+    el 11/9/2026 — formulario propio, con su propio botón "Guardar", que persiste en
+    `sec_datos_empresa` vía `OrganizacionController::actualizarEmpresa()`. El resto de
+    la pestaña (logo, plan de suscripción, multi-sucursal) SIGUE siendo mockup sin
+    tabla ni ADR — es la conversación sobre un pivot SaaS multi-tenant que no está
+    decidida. Por eso esas secciones NO viven dentro del `<form>` real: son `<div>`s
+    con controles `disabled`, deliberadamente fuera de cualquier form (HTML no permite
+    forms anidados, y meterlas dentro del real sugeriría que se guardan con el resto).
 
-    Pestaña "Facturación" (tarea 78, HU-55): REAL. Formulario propio, con su propio botón
-    "Guardar", que persiste en `sec_datos_fiscales` vía
-    `OrganizacionController::actualizarFacturacion()`. Gateada por
-    `seguridad.organizacion.editar` ($puedeEditarFacturacion) — sin ese permiso, los
-    campos se muestran deshabilitados y sin barra de acciones, mismo criterio que el
-    resto del panel (ver vs. editar).
+    Pestaña "Facturación" (tarea 78, HU-55): REAL, mismo criterio. Formulario propio,
+    con su propio botón "Guardar", que persiste en `sec_datos_fiscales` vía
+    `OrganizacionController::actualizarFacturacion()`.
+
+    Las dos pestañas reales comparten el mismo gate: `seguridad.organizacion.editar`
+    ($puedeEditarOrganizacion) — sin ese permiso, los campos se muestran deshabilitados
+    y sin barra de acciones, mismo criterio que el resto del panel (ver vs. editar).
 
     Reconstruida sobre el arquetipo formulario (tarea 31): es el caso de prueba de
     `organisms/page-header`, `molecules/tabs`, `molecules/form-section` evolucionado
@@ -21,7 +25,7 @@
 
     Datos esperados (ver OrganizacionController::index()): la cáscara completa de
     CascaraPanel (menu/roles/…/tema/zonaHoraria/version) + tabs/progreso/
-    suscripcion/logoArchivo/tabActiva/datosFiscales/puedeEditarFacturacion.
+    suscripcion/logoArchivo/tabActiva/datosEmpresa/datosFiscales/puedeEditarOrganizacion.
 
     NO tiene pestaña de "Usuarios y roles": usuarios internos y la asignación de
     sus roles ya son una pantalla REAL y propia — Seguridad › Usuarios
@@ -73,37 +77,53 @@
 
             <div class="tab-content ag-organizacion__panes">
                 <div class="tab-pane fade {{ $tabActiva === 'organizacion' ? 'show active' : '' }}" id="ag-tab-organizacion" role="tabpanel" tabindex="0">
-                    <form class="ag-organizacion__form" onsubmit="return false">
-                        <div class="ag-organizacion__layout">
-                            <div class="ag-organizacion__main">
+                    <div class="ag-organizacion__layout">
+                        <div class="ag-organizacion__main">
+                            <form
+                                method="POST"
+                                action="{{ route('panel.organizacion.empresa.actualizar') }}"
+                                enctype="multipart/form-data"
+                                class="ag-organizacion__form"
+                            >
+                                @csrf
                                 <x-molecules.form-section
                                     :title="__('seguridad.organizacion.seccion_datos_empresa')"
                                     :count="__('seguridad.organizacion.campos_contador', ['cantidad' => 3])"
                                 >
                                     <x-atoms.input
                                         type="text"
-                                        name="empresa_nombre"
+                                        name="nombre"
                                         label="{{ __('seguridad.organizacion.campo_nombre') }}"
-                                        value="{{ __('seguridad.organizacion.mock_nombre_empresa') }}"
-                                        disabled
+                                        value="{{ old('nombre', $datosEmpresa?->nombre) }}"
+                                        error="{{ $errors->first('nombre') }}"
+                                        required
+                                        :disabled="! $puedeEditarOrganizacion"
                                     />
 
                                     <x-atoms.input
                                         type="text"
-                                        name="empresa_rubro"
+                                        name="rubro"
                                         label="{{ __('seguridad.organizacion.campo_rubro') }}"
-                                        value="{{ __('seguridad.organizacion.mock_rubro') }}"
-                                        disabled
+                                        value="{{ old('rubro', $datosEmpresa?->rubro) }}"
+                                        error="{{ $errors->first('rubro') }}"
+                                        required
+                                        :disabled="! $puedeEditarOrganizacion"
                                     />
 
                                     <x-molecules.file-field
                                         class="ag-form-section__field--full"
+                                        name="logo"
+                                        accept=".png,.svg"
+                                        remove-name="logo_eliminar"
                                         :label="__('seguridad.organizacion.campo_logo')"
-                                        :file-name="$logoArchivo['nombre']"
-                                        :file-size="$logoArchivo['peso']"
+                                        :file-name="$logoArchivo['nombre'] ?? null"
+                                        :file-size="$logoArchivo['peso'] ?? null"
+                                        :preview-url="$logoArchivo['url'] ?? null"
                                         :help="__('seguridad.organizacion.campo_logo_ayuda')"
                                         :replace-label="__('seguridad.organizacion.campo_logo_reemplazar')"
-                                        :remove-label="__('seguridad.organizacion.campo_logo_quitar')"
+                                        :remove-label="$logoArchivo ? __('seguridad.organizacion.campo_logo_quitar') : null"
+                                        :disabled="! $puedeEditarOrganizacion"
+                                        error="{{ $errors->first('logo') }}"
                                     >
                                         <x-atoms.logo size="sm" />
                                     </x-molecules.file-field>
@@ -115,30 +135,49 @@
                                 >
                                     <x-atoms.input
                                         type="email"
-                                        name="contacto_email"
+                                        name="email"
                                         label="{{ __('seguridad.organizacion.campo_email') }}"
-                                        value="{{ __('seguridad.organizacion.mock_email') }}"
-                                        disabled
+                                        value="{{ old('email', $datosEmpresa?->email) }}"
+                                        error="{{ $errors->first('email') }}"
+                                        :disabled="! $puedeEditarOrganizacion"
                                     />
 
                                     <x-atoms.input
                                         type="tel"
-                                        name="contacto_telefono"
+                                        name="telefono"
                                         label="{{ __('seguridad.organizacion.campo_telefono') }}"
-                                        value="{{ __('seguridad.organizacion.mock_telefono') }}"
-                                        disabled
+                                        value="{{ old('telefono', $datosEmpresa?->telefono) }}"
+                                        error="{{ $errors->first('telefono') }}"
+                                        :disabled="! $puedeEditarOrganizacion"
                                     />
 
                                     <x-atoms.input
                                         class="ag-form-section__field--full"
                                         type="text"
-                                        name="contacto_direccion"
+                                        name="direccion"
                                         label="{{ __('seguridad.organizacion.campo_direccion') }}"
-                                        value="{{ __('seguridad.organizacion.mock_direccion') }}"
-                                        disabled
+                                        value="{{ old('direccion', $datosEmpresa?->direccion) }}"
+                                        error="{{ $errors->first('direccion') }}"
+                                        :disabled="! $puedeEditarOrganizacion"
                                     />
                                 </x-molecules.form-section>
 
+                                @if ($puedeEditarOrganizacion)
+                                    <x-organisms.form-actions-bar :status="__('seguridad.organizacion.empresa_estado')">
+                                        <x-slot:actions>
+                                            <x-atoms.button type="submit" variant="primary">
+                                                {{ __('ui.action.save') }}
+                                            </x-atoms.button>
+                                        </x-slot:actions>
+                                    </x-organisms.form-actions-bar>
+                                @endif
+                            </form>
+
+                            {{-- Plan de suscripción / funcionalidades: mockup sin persistencia
+                                 (pivot SaaS multi-tenant sin decidir, sin ADR) — a propósito
+                                 FUERA del <form> de arriba, HTML no permite forms anidados y
+                                 meterlas adentro sugeriría que se guardan con "Datos de empresa". --}}
+                            <div class="ag-organizacion__form">
                                 <x-molecules.form-section :title="__('seguridad.organizacion.seccion_plan')">
                                     <div
                                         role="radiogroup"
@@ -207,8 +246,9 @@
                                     />
                                 </x-molecules.form-section>
                             </div>
+                        </div>
 
-                            <aside class="ag-organizacion__aside">
+                        <aside class="ag-organizacion__aside">
                                 <x-molecules.progress-meter
                                     :title="__('seguridad.organizacion.aside_progreso_titulo')"
                                     :percent="$progreso['percent']"
@@ -226,9 +266,8 @@
                                         </x-atoms.button>
                                     </x-slot:action>
                                 </x-molecules.summary-card>
-                            </aside>
-                        </div>
-                    </form>
+                        </aside>
+                    </div>
                 </div>
 
                 <div class="tab-pane fade {{ $tabActiva === 'facturacion' ? 'show active' : '' }}" id="ag-tab-facturacion" role="tabpanel" tabindex="0">
@@ -249,7 +288,7 @@
                                 value="{{ old('razon_social_fiscal', $datosFiscales?->razon_social_fiscal) }}"
                                 error="{{ $errors->first('razon_social_fiscal') }}"
                                 required
-                                :disabled="! $puedeEditarFacturacion"
+                                :disabled="! $puedeEditarOrganizacion"
                             />
 
                             <x-atoms.input
@@ -259,7 +298,7 @@
                                 value="{{ old('nit', $datosFiscales?->nit) }}"
                                 error="{{ $errors->first('nit') }}"
                                 required
-                                :disabled="! $puedeEditarFacturacion"
+                                :disabled="! $puedeEditarOrganizacion"
                             />
 
                             <x-atoms.input
@@ -270,7 +309,7 @@
                                 value="{{ old('domicilio_fiscal', $datosFiscales?->domicilio_fiscal) }}"
                                 error="{{ $errors->first('domicilio_fiscal') }}"
                                 required
-                                :disabled="! $puedeEditarFacturacion"
+                                :disabled="! $puedeEditarOrganizacion"
                             />
 
                             <x-atoms.input
@@ -281,7 +320,7 @@
                                 value="{{ old('actividad_economica', $datosFiscales?->actividad_economica) }}"
                                 error="{{ $errors->first('actividad_economica') }}"
                                 required
-                                :disabled="! $puedeEditarFacturacion"
+                                :disabled="! $puedeEditarOrganizacion"
                             />
 
                             <x-atoms.textarea
@@ -290,11 +329,11 @@
                                 label="{{ __('seguridad.organizacion.campo_leyenda_pie') }}"
                                 value="{{ old('leyenda_pie', $datosFiscales?->leyenda_pie) }}"
                                 help="{{ __('seguridad.organizacion.campo_leyenda_pie_ayuda') }}"
-                                :disabled="! $puedeEditarFacturacion"
+                                :disabled="! $puedeEditarOrganizacion"
                             />
                         </x-molecules.form-section>
 
-                        @if ($puedeEditarFacturacion)
+                        @if ($puedeEditarOrganizacion)
                             <x-organisms.form-actions-bar :status="__('seguridad.organizacion.facturacion_estado')">
                                 <x-slot:actions>
                                     <x-atoms.button type="submit" variant="primary">
