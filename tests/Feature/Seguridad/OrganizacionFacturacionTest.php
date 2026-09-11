@@ -62,7 +62,7 @@ it('la pestaña de facturación llega con los datos fiscales guardados y el perm
         ->assertOk()
         ->assertViewIs('seguridad::pages.organizacion.index')
         ->assertViewHas('tabActiva', 'facturacion')
-        ->assertViewHas('puedeEditarFacturacion', true)
+        ->assertViewHas('puedeEditarOrganizacion', true)
         ->assertViewHas('datosFiscales', fn (SecDatosFiscales $fiscales) => $fiscales->nit === '1023456789');
 });
 
