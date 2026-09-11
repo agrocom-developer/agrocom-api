@@ -55,4 +55,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.querySelector('[data-ag-lote-mapa]')) {
         import('./organisms/lote-mapa-editor.js');
     }
+
+    // atoms/datetime (flatpickr): solo dos usos hoy (pausas), no vale la
+    // pena bajarlo en el resto del panel.
+    if (document.querySelector('[data-ag-datetime]')) {
+        import('./atoms/datetime.js');
+    }
 });

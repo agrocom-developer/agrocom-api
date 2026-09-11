@@ -1,0 +1,165 @@
+/*
+ * Retematizado de flatpickr (atoms/datetime) a los tokens del panel.
+ * flatpickr no expone sus colores como custom properties — su CSS base
+ * (resources/css/app.css) trae hexadecimales fijos, igual que el CSS
+ * compilado de Bootstrap. Este archivo sobreescribe cada selector de color
+ * con `--ag-color-*` (CLAUDE.md invariante 11); nada de layout/posición se
+ * toca — eso lo resuelve bien el CSS de flatpickr tal cual viene.
+ *
+ * Paleta calcada de `.ag-date__dialog`/`.ag-date__day` (atoms/date, el
+ * calendario hecho a mano) para que los dos selectores de fecha del panel
+ * se vean como el mismo sistema, aunque uno sea propio y el otro una
+ * librería.
+ */
+
+.flatpickr-calendar {
+    background-color: var(--ag-color-bg-elevated);
+    border: 1px solid var(--ag-color-border-strong);
+    border-radius: var(--ag-radius-md);
+    box-shadow: var(--ag-shadow-lg);
+    font-family: var(--ag-font-family-base);
+}
+
+.flatpickr-calendar:before,
+.flatpickr-calendar:after {
+    display: none;
+}
+
+.flatpickr-months .flatpickr-month {
+    color: var(--ag-color-text);
+    fill: var(--ag-color-text);
+}
+
+.flatpickr-months .flatpickr-prev-month,
+.flatpickr-months .flatpickr-next-month {
+    color: var(--ag-color-text-muted);
+    fill: var(--ag-color-text-muted);
+    border-radius: var(--ag-radius-pill);
+}
+
+.flatpickr-months .flatpickr-prev-month:hover,
+.flatpickr-months .flatpickr-next-month:hover {
+    color: var(--ag-color-primary);
+}
+
+.flatpickr-months .flatpickr-prev-month:hover svg,
+.flatpickr-months .flatpickr-next-month:hover svg {
+    fill: var(--ag-color-primary);
+}
+
+.flatpickr-current-month span.cur-month:hover,
+.flatpickr-current-month .numInputWrapper:hover,
+.flatpickr-current-month .flatpickr-monthDropdown-months:hover {
+    background-color: var(--ag-color-primary-subtle);
+}
+
+.flatpickr-current-month .numInputWrapper span.arrowUp:after {
+    border-bottom-color: var(--ag-color-text);
+}
+
+.flatpickr-current-month .numInputWrapper span.arrowDown:after {
+    border-top-color: var(--ag-color-text);
+}
+
+span.flatpickr-weekday {
+    color: var(--ag-color-text-muted);
+}
+
+.flatpickr-day {
+    color: var(--ag-color-text);
+}
+
+.flatpickr-day.inRange,
+.flatpickr-day.today.inRange,
+.flatpickr-day:hover,
+.flatpickr-day:focus {
+    background-color: var(--ag-color-primary-subtle);
+    border-color: var(--ag-color-primary-subtle);
+    color: var(--ag-color-primary);
+}
+
+.flatpickr-day.today {
+    border-color: var(--ag-color-primary);
+    color: var(--ag-color-primary);
+    font-weight: var(--ag-font-weight-bold);
+}
+
+.flatpickr-day.today:hover,
+.flatpickr-day.today:focus {
+    border-color: var(--ag-color-primary);
+    background-color: var(--ag-color-primary-subtle);
+    color: var(--ag-color-primary);
+}
+
+.flatpickr-day.selected,
+.flatpickr-day.startRange,
+.flatpickr-day.endRange,
+.flatpickr-day.selected.inRange,
+.flatpickr-day.startRange.inRange,
+.flatpickr-day.endRange.inRange,
+.flatpickr-day.selected:focus,
+.flatpickr-day.startRange:focus,
+.flatpickr-day.endRange:focus,
+.flatpickr-day.selected:hover,
+.flatpickr-day.startRange:hover,
+.flatpickr-day.endRange:hover {
+    background-color: var(--ag-color-primary);
+    border-color: var(--ag-color-primary);
+    color: var(--ag-color-primary-contrast);
+}
+
+.flatpickr-day.flatpickr-disabled,
+.flatpickr-day.flatpickr-disabled:hover,
+.flatpickr-day.prevMonthDay,
+.flatpickr-day.nextMonthDay,
+.flatpickr-day.notAllowed,
+.flatpickr-day.notAllowed.prevMonthDay,
+.flatpickr-day.notAllowed.nextMonthDay {
+    color: var(--ag-color-text-faint);
+    background-color: transparent;
+    border-color: transparent;
+}
+
+.flatpickr-day.flatpickr-disabled,
+.flatpickr-day.flatpickr-disabled:hover {
+    color: var(--ag-color-text-faint);
+}
+
+.numInputWrapper span {
+    border-color: var(--ag-color-border);
+}
+
+.numInputWrapper span:hover,
+.numInputWrapper:hover {
+    background-color: var(--ag-color-primary-subtle);
+}
+
+.numInputWrapper span.arrowUp:after {
+    border-bottom-color: var(--ag-color-text-muted);
+}
+
+.numInputWrapper span.arrowDown:after {
+    border-top-color: var(--ag-color-text-muted);
+}
+
+.flatpickr-calendar.hasTime .flatpickr-time {
+    border-top: 1px solid var(--ag-color-border);
+}
+
+.flatpickr-time input,
+.flatpickr-time .flatpickr-time-separator {
+    color: var(--ag-color-text);
+}
+
+.flatpickr-time .numInputWrapper span.arrowUp:after {
+    border-bottom-color: var(--ag-color-text);
+}
+
+.flatpickr-time .numInputWrapper span.arrowDown:after {
+    border-top-color: var(--ag-color-text);
+}
+
+.flatpickr-time input:hover,
+.flatpickr-time input:focus {
+    background-color: var(--ag-color-primary-subtle);
+}

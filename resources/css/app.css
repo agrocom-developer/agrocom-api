@@ -29,6 +29,11 @@
 /* Bootstrap 5.3 base (versión compilada CSS) */
 @import 'bootstrap/dist/css/bootstrap.css';
 
+/* flatpickr (atoms/datetime): CSS estructural de terceros, igual criterio
+   que Bootstrap arriba — el retematizado a tokens vive en
+   components/datetime.css, importado después, que gana la cascada. */
+@import 'flatpickr/dist/flatpickr.css';
+
 /* Tokens y componentes propios (ganan especificidad sobre Bootstrap) */
 @import './tokens/index.css';
 @import './components/index.css';
