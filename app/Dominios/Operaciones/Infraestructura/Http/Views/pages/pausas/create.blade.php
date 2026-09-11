@@ -93,8 +93,7 @@
                         :error="$errors->first('causa')"
                     />
 
-                    <x-atoms.input
-                        type="datetime-local"
+                    <x-atoms.datetime
                         name="inicio"
                         label="{{ __('operaciones.pausas.campo_inicio') }}"
                         value="{{ $inicio }}"
@@ -102,8 +101,7 @@
                         error="{{ $errors->first('inicio') }}"
                     />
 
-                    <x-atoms.input
-                        type="datetime-local"
+                    <x-atoms.datetime
                         name="fin"
                         label="{{ __('operaciones.pausas.campo_fin') }}"
                         value="{{ $fin }}"
