@@ -55,6 +55,37 @@
     fill: var(--ag-color-primary);
 }
 
+/* Mes (select) + año (spinner) recentrados con flex: la posición absoluta
+   con ancho en % que trae flatpickr los deja pegados entre sí de un lado y
+   con un hueco grande del otro (el "hueco" que separaba mal el título del
+   mes). `padding-inline` deja el lugar exacto de las flechas
+   prev/next-month, que son absolutas y viven fuera de este elemento. */
+.flatpickr-current-month {
+    position: static;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ag-space-1);
+    width: 100%;
+    box-sizing: border-box;
+    padding-inline: 34px;
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-months {
+    flex: 0 0 auto;
+    margin: 0;
+    padding: 0;
+}
+
+.flatpickr-current-month .numInputWrapper {
+    flex: 0 0 auto;
+    width: 3.5ch;
+}
+
+.flatpickr-current-month input.cur-year {
+    padding: 0;
+}
+
 .flatpickr-current-month span.cur-month:hover,
 .flatpickr-current-month .numInputWrapper:hover,
 .flatpickr-current-month .flatpickr-monthDropdown-months:hover {
@@ -158,11 +189,31 @@ span.flatpickr-weekday {
    acá: el footer (Hoy/Limpiar) se agrega DESPUÉS en el DOM y es quien de
    verdad toca el borde inferior de la tarjeta. */
 .flatpickr-calendar.hasTime .flatpickr-time {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ag-space-2);
     margin: var(--ag-space-3) calc(-1 * var(--ag-space-3)) 0;
-    padding: var(--ag-space-2) var(--ag-space-3);
+    padding: var(--ag-space-3);
     height: auto;
     background-color: var(--ag-color-bg-table-head);
     border-top: 1px solid var(--ag-color-border);
+}
+
+/* Cada casillero (hora/minuto) del ancho justo de su número: flatpickr por
+   defecto les da 49%/40% del ancho total de la caja, así que la flecha de
+   incremento (superpuesta al borde derecho DEL CASILLERO, no del número)
+   termina lejísimos del dígito centrado — se ve descuadrado, sobre todo en
+   el minuto. Con flex + ancho de contenido, la flecha queda siempre pegada
+   al número, sea hora o minuto. */
+.flatpickr-time .numInputWrapper {
+    flex: 0 0 auto;
+    width: 2.25ch;
+}
+
+.flatpickr-time .flatpickr-time-separator {
+    flex: 0 0 auto;
+    width: auto;
 }
 
 .flatpickr-time input,
