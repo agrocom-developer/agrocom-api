@@ -59,5 +59,7 @@
     placeholder="dd/mm/aaaa hh:mm"
     autocomplete="off"
     data-ag-datetime
+    data-label-hoy="{{ __('ui.date.hoy') }}"
+    data-label-limpiar="{{ __('ui.date.limpiar') }}"
     {{ $attributes }}
 />

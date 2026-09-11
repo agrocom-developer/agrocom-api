@@ -18,11 +18,36 @@
 import flatpickr from 'flatpickr';
 import { Spanish } from 'flatpickr/dist/l10n/es.js';
 
+// Footer "Hoy"/"Limpiar", mismo texto y comportamiento que
+// `.ag-date__dialog-footer`/`.ag-date__today` de atoms/date — flatpickr no
+// trae uno propio, así que se arma a mano una sola vez por instancia
+// (onReady) y se estiliza en resources/css/components/datetime.css.
+function agregarFooter(instancia, input) {
+    const footer = document.createElement('div');
+    footer.className = 'ag-datetime-footer';
+
+    const limpiar = document.createElement('button');
+    limpiar.type = 'button';
+    limpiar.className = 'ag-datetime-footer__limpiar';
+    limpiar.textContent = input.dataset.labelLimpiar;
+    limpiar.addEventListener('click', () => instancia.clear());
+
+    const hoy = document.createElement('button');
+    hoy.type = 'button';
+    hoy.className = 'ag-datetime-footer__hoy';
+    hoy.textContent = input.dataset.labelHoy;
+    hoy.addEventListener('click', () => instancia.setDate(new Date(), true));
+
+    footer.append(limpiar, hoy);
+    instancia.calendarContainer.appendChild(footer);
+}
+
 document.querySelectorAll('[data-ag-datetime]').forEach((input) => {
     flatpickr(input, {
         locale: Spanish,
         enableTime: true,
         time_24hr: true,
         dateFormat: 'Y-m-d H:i',
+        onReady: (fechasSeleccionadas, valorTexto, instancia) => agregarFooter(instancia, input),
     });
 });
