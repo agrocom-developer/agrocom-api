@@ -39,6 +39,16 @@
     gap: var(--ag-space-5);
 }
 
+/* El form real de "Datos de empresa"/"Datos de contacto" y el bloque mock de
+   "Plan"/"Funcionalidades" son dos elementos hermanos dentro de
+   `.ag-organizacion__main` (antes eran 4 form-section directas) — esta clase
+   les da el mismo apilado con gap que tenían como hijos directos. */
+.ag-organizacion__form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
 /* Columna lateral pegajosa (§6.3 regla 4 de la guía de pantalla): lo que no
    se edita (progreso de completitud, resumen del plan) queda visible
    mientras el usuario scrollea el formulario. `position: sticky` respecto

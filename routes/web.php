@@ -259,12 +259,15 @@ Route::middleware('auth:interno')->group(function () {
         Route::delete('/panel/dispositivos/{dispositivo}', [DispositivosController::class, 'destroy'])
             ->name('panel.dispositivos.revocar');
 
-        // Mockup visual de "Registro de la compañía" — GET/solo-lectura, sin
-        // persistencia real, para demostración de visión multi-tenant futura.
-        // La pestaña "Facturación" (tarea 78, HU-55) es la excepción real: sus
-        // datos fiscales sí persisten, vía el POST de abajo.
+        // "Registro de la compañía": el plan de suscripción y multi-sucursal
+        // siguen siendo mockup sin persistencia (visión multi-tenant futura,
+        // sin ADR todavía). "Datos de empresa"/"Datos de contacto" y
+        // "Facturación" (tarea 78, HU-55) SÍ persisten, vía los POST de abajo.
         Route::get('/panel/organizacion', [OrganizacionController::class, 'index'])
             ->name('panel.organizacion.index');
+
+        Route::post('/panel/organizacion/empresa', [OrganizacionController::class, 'actualizarEmpresa'])
+            ->name('panel.organizacion.empresa.actualizar');
 
         Route::post('/panel/organizacion/facturacion', [OrganizacionController::class, 'actualizarFacturacion'])
             ->name('panel.organizacion.facturacion.actualizar');
