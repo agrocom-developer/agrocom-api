@@ -24,6 +24,7 @@
         "@geoman-io/leaflet-geoman-free": "^2.20.0",
         "apexcharts": "^7.0.0",
         "bootstrap": "^5.3.8",
+        "flatpickr": "^4.6.13",
         "leaflet": "^1.9.4",
         "material-symbols": "^0.47.0"
     }

@@ -301,6 +301,14 @@ Es el bloque más caro: módulos nuevos (`man_*`, `inv_*`) con su propio modelo 
 
 ---
 
+## Sprint 15 — App de campo: ciclo automatizado, UI simple y funciones de seguridad (`agrocom-field`)
+
+**Movido a `docs/gestion/plan_sprints.md` de `agrocom-field` (10/9/2026)** — para que ajustar la planificación de la app no requiera abrir rama/PR en este repo cada vez (mismo criterio que ya evitaba mezclar el código de los dos repos). Ver ese documento para el detalle completo: TE-18 (ciclo automatizado propio), TE-15/16/17 (sistema de diseño, preferencias, i18n español/portugués), HU-59, HU-69 (selector de rol, ADR 0005 de `agrocom-field`) y HU-60 a HU-68.
+
+Este repo sigue siendo la fuente de la especificación funcional/técnica y de las decisiones de negocio que ese plan referencia (`docs/especificacion/`, `docs/negocio/`, ADR 0004 de este repo para lo de roles/token de dispositivo).
+
+---
+
 ## Alcance total del sistema
 
 | Bloque | Días | Pantallas de menú | Estado |

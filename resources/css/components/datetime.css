@@ -1,0 +1,300 @@
+/*
+ * Retematizado de flatpickr (atoms/datetime) a los tokens del panel.
+ * flatpickr no expone sus colores como custom properties — su CSS base
+ * (resources/css/app.css) trae hexadecimales fijos, igual que el CSS
+ * compilado de Bootstrap. Este archivo sobreescribe cada selector de color
+ * con `--ag-color-*` (CLAUDE.md invariante 11); nada de layout/posición se
+ * toca — eso lo resuelve bien el CSS de flatpickr tal cual viene.
+ *
+ * Paleta calcada de `.ag-date__dialog`/`.ag-date__day` (atoms/date, el
+ * calendario hecho a mano) para que los dos selectores de fecha del panel
+ * se vean como el mismo sistema, aunque uno sea propio y el otro una
+ * librería.
+ */
+
+.flatpickr-calendar {
+    /* `box-sizing: content-box` (flatpickr trae `border-box` + `width`
+       fijo en px): así el padding se suma AFUERA del ancho de contenido
+       en vez de comérselo — la grilla de días interna, con sus propios
+       anchos en px, no se entera del cambio y no se desalinea. Sin esto,
+       los días quedaban pegados al borde de la tarjeta (feedback directo:
+       "queda simple" al lado del selector nativo del SO). */
+    box-sizing: content-box;
+    padding: var(--ag-space-3);
+    background-color: var(--ag-color-bg-elevated);
+    border: 1px solid var(--ag-color-border-strong);
+    border-radius: var(--ag-radius-md);
+    box-shadow: var(--ag-shadow-lg);
+    font-family: var(--ag-font-family-base);
+}
+
+.flatpickr-calendar:before,
+.flatpickr-calendar:after {
+    display: none;
+}
+
+.flatpickr-months .flatpickr-month {
+    color: var(--ag-color-text);
+    fill: var(--ag-color-text);
+}
+
+.flatpickr-months .flatpickr-prev-month,
+.flatpickr-months .flatpickr-next-month {
+    color: var(--ag-color-text-muted);
+    fill: var(--ag-color-text-muted);
+    border-radius: var(--ag-radius-pill);
+}
+
+.flatpickr-months .flatpickr-prev-month:hover,
+.flatpickr-months .flatpickr-next-month:hover {
+    color: var(--ag-color-primary);
+}
+
+.flatpickr-months .flatpickr-prev-month:hover svg,
+.flatpickr-months .flatpickr-next-month:hover svg {
+    fill: var(--ag-color-primary);
+}
+
+/* Mes (select) + año (spinner) recentrados con flex: la posición absoluta
+   con ancho en % que trae flatpickr los deja pegados entre sí de un lado y
+   con un hueco grande del otro (el "hueco" que separaba mal el título del
+   mes). `padding-inline` deja el lugar exacto de las flechas
+   prev/next-month, que son absolutas y viven fuera de este elemento. */
+.flatpickr-current-month {
+    position: static;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ag-space-1);
+    width: 100%;
+    box-sizing: border-box;
+    /* Lo justo para no pisar el botón prev/next (34px de ancho real), no
+       más: un padding mayor no acerca las flechas, solo achica el área
+       centrada donde caben mes+año — y con poco margen, "2026" (4 dígitos)
+       terminaba recortado dentro de su propio casillero. */
+    padding-inline: 26px;
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-months {
+    flex: 0 0 auto;
+    margin: 0;
+    padding: 0;
+}
+
+.flatpickr-current-month .numInputWrapper {
+    flex: 0 0 auto;
+    /* 5ch, no 3.5ch: "2026" son 4 dígitos y a este tamaño de fuente (135%
+       de la base) 3.5ch le quedaba corto — el input recortaba el primer
+       carácter en vez de mostrar el año completo. */
+    width: 5ch;
+}
+
+.flatpickr-current-month input.cur-year {
+    padding: 0;
+}
+
+.flatpickr-current-month span.cur-month:hover,
+.flatpickr-current-month .numInputWrapper:hover,
+.flatpickr-current-month .flatpickr-monthDropdown-months:hover {
+    background-color: var(--ag-color-primary-subtle);
+}
+
+.flatpickr-current-month .numInputWrapper span.arrowUp:after {
+    border-bottom-color: var(--ag-color-text);
+}
+
+.flatpickr-current-month .numInputWrapper span.arrowDown:after {
+    border-top-color: var(--ag-color-text);
+}
+
+span.flatpickr-weekday {
+    color: var(--ag-color-text-muted);
+}
+
+.flatpickr-day {
+    color: var(--ag-color-text);
+}
+
+.flatpickr-day.inRange,
+.flatpickr-day.today.inRange,
+.flatpickr-day:hover,
+.flatpickr-day:focus {
+    background-color: var(--ag-color-primary-subtle);
+    border-color: var(--ag-color-primary-subtle);
+    color: var(--ag-color-primary);
+}
+
+.flatpickr-day.today {
+    border-color: var(--ag-color-primary);
+    color: var(--ag-color-primary);
+    font-weight: var(--ag-font-weight-bold);
+}
+
+.flatpickr-day.today:hover,
+.flatpickr-day.today:focus {
+    border-color: var(--ag-color-primary);
+    background-color: var(--ag-color-primary-subtle);
+    color: var(--ag-color-primary);
+}
+
+.flatpickr-day.selected,
+.flatpickr-day.startRange,
+.flatpickr-day.endRange,
+.flatpickr-day.selected.inRange,
+.flatpickr-day.startRange.inRange,
+.flatpickr-day.endRange.inRange,
+.flatpickr-day.selected:focus,
+.flatpickr-day.startRange:focus,
+.flatpickr-day.endRange:focus,
+.flatpickr-day.selected:hover,
+.flatpickr-day.startRange:hover,
+.flatpickr-day.endRange:hover {
+    background-color: var(--ag-color-primary);
+    border-color: var(--ag-color-primary);
+    color: var(--ag-color-primary-contrast);
+}
+
+.flatpickr-day.flatpickr-disabled,
+.flatpickr-day.flatpickr-disabled:hover,
+.flatpickr-day.prevMonthDay,
+.flatpickr-day.nextMonthDay,
+.flatpickr-day.notAllowed,
+.flatpickr-day.notAllowed.prevMonthDay,
+.flatpickr-day.notAllowed.nextMonthDay {
+    color: var(--ag-color-text-faint);
+    background-color: transparent;
+    border-color: transparent;
+}
+
+.flatpickr-day.flatpickr-disabled,
+.flatpickr-day.flatpickr-disabled:hover {
+    color: var(--ag-color-text-faint);
+}
+
+.numInputWrapper span {
+    border-color: var(--ag-color-border);
+}
+
+.numInputWrapper span:hover,
+.numInputWrapper:hover {
+    background-color: var(--ag-color-primary-subtle);
+}
+
+.numInputWrapper span.arrowUp:after {
+    border-bottom-color: var(--ag-color-text-muted);
+}
+
+.numInputWrapper span.arrowDown:after {
+    border-top-color: var(--ag-color-text-muted);
+}
+
+/* Caja de hora separada, no números sueltos flotando (la comparación que
+   motivó este pase: la sección de hora del picker de Filament es un bloque
+   con su propio fondo, no un renglón desnudo). Los márgenes laterales
+   negativos cancelan el padding de `.flatpickr-calendar` para que llegue de
+   borde a borde; el padding interno lo repone. Sin radio ni margen inferior
+   acá: el footer (Hoy/Limpiar) se agrega DESPUÉS en el DOM y es quien de
+   verdad toca el borde inferior de la tarjeta. */
+.flatpickr-calendar.hasTime .flatpickr-time {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ag-space-2);
+    margin: var(--ag-space-3) calc(-1 * var(--ag-space-3)) 0;
+    padding: var(--ag-space-3);
+    height: auto;
+    background-color: var(--ag-color-bg-table-head);
+    border-top: 1px solid var(--ag-color-border);
+}
+
+/* Cada casillero (hora/minuto) del ancho justo de su número: flatpickr por
+   defecto les da 49%/40% del ancho total de la caja, así que la flecha de
+   incremento (superpuesta al borde derecho DEL CASILLERO, no del número)
+   termina lejísimos del dígito centrado — se ve descuadrado, sobre todo en
+   el minuto. Con flex + ancho de contenido, la flecha queda siempre pegada
+   al número, sea hora o minuto. */
+.flatpickr-time .numInputWrapper {
+    flex: 0 0 auto;
+    width: 2.25ch;
+}
+
+.flatpickr-time .flatpickr-time-separator {
+    flex: 0 0 auto;
+    width: auto;
+}
+
+.flatpickr-time input,
+.flatpickr-time .flatpickr-time-separator {
+    color: var(--ag-color-text);
+}
+
+.flatpickr-time .numInputWrapper span.arrowUp:after {
+    border-bottom-color: var(--ag-color-text);
+}
+
+.flatpickr-time .numInputWrapper span.arrowDown:after {
+    border-top-color: var(--ag-color-text);
+}
+
+.flatpickr-time input:hover,
+.flatpickr-time input:focus {
+    background-color: var(--ag-color-primary-subtle);
+}
+
+/* Flechas de incremento/decremento SIEMPRE visibles (flatpickr las trae en
+   `opacity: 0` hasta el hover del wrapper completo) — sin esto no hay
+   ninguna señal visual de que la hora/minuto se puede pisar con las
+   flechas, no solo escribiendo. */
+.flatpickr-time .numInputWrapper span {
+    opacity: 1;
+}
+
+/* Footer "Hoy"/"Limpiar" (armado por resources/js/atoms/datetime.js, sin
+   equivalente nativo en flatpickr) — mismas clases visuales que
+   `.ag-date__dialog-footer`/`.ag-date__today` de atoms/date, para que los
+   dos selectores de fecha del panel compartan el mismo cierre. */
+.ag-datetime-footer {
+    display: flex;
+    justify-content: space-between;
+    margin: 0 calc(-1 * var(--ag-space-3)) calc(-1 * var(--ag-space-3));
+    padding: var(--ag-space-2) var(--ag-space-3);
+    background-color: var(--ag-color-bg-table-head);
+    border-top: 1px solid var(--ag-color-border);
+    border-radius: 0 0 var(--ag-radius-md) var(--ag-radius-md);
+}
+
+/* Sin hora (`atoms/date` cubre ese caso hoy, pero por si algún día se usa
+   `enableTime: false` acá): el footer sigue siendo el último hijo y necesita
+   su propio margen superior para separarse de la grilla de días. */
+.flatpickr-calendar:not(.hasTime) .ag-datetime-footer {
+    margin-top: var(--ag-space-3);
+}
+
+.ag-datetime-footer__hoy,
+.ag-datetime-footer__limpiar {
+    background: none;
+    border: none;
+    font-family: var(--ag-font-family-base);
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+    padding: var(--ag-space-1) var(--ag-space-3);
+    border-radius: var(--ag-radius-md);
+    cursor: pointer;
+}
+
+.ag-datetime-footer__hoy {
+    color: var(--ag-color-primary);
+}
+
+.ag-datetime-footer__hoy:hover {
+    background-color: var(--ag-color-primary-subtle);
+}
+
+.ag-datetime-footer__limpiar {
+    color: var(--ag-color-text-muted);
+}
+
+.ag-datetime-footer__limpiar:hover {
+    background-color: var(--ag-color-bg-table-head);
+    color: var(--ag-color-text);
+}
