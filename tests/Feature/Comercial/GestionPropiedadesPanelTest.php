@@ -175,6 +175,19 @@ it('rechaza longitud sin latitud', function () {
     expect(Propiedad::query()->count())->toBe(0);
 });
 
+it('el formulario de alta muestra los campos de ubicacion estructurada (HU-76)', function () {
+    [$encargado, $idRol] = usuarioConRolParaPropiedades('encargado', 'encargado_operaciones');
+    entrarAlPanelParaPropiedades($encargado, $idRol);
+
+    $respuesta = $this->get(route('panel.propiedades.create'))->assertOk();
+
+    $respuesta->assertSee('name="departamento"', escape: false)
+        ->assertSee('name="municipio"', escape: false)
+        ->assertSee('name="localidad"', escape: false)
+        ->assertSee('name="latitud"', escape: false)
+        ->assertSee('name="longitud"', escape: false);
+});
+
 it('acepta una propiedad sin ubicacion', function () {
     $cliente = clienteDePropiedadesDePrueba();
     [$encargado, $idRol] = usuarioConRolParaPropiedades('encargado', 'encargado_operaciones');
