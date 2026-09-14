@@ -11,11 +11,14 @@
 return [
 
     // Estado descriptivo de un vehículo (EstadoVehiculo) — compartido por el
-    // filtro, el badge del listado y el select del formulario.
+    // filtro, el badge del listado y el select del formulario. 'pausa'
+    // (HU-84, tarea 99): baja temporal, distinta de 'taller' (en reparación)
+    // y de 'de_baja' (definitiva).
     'estado' => [
         'activo' => 'Activo',
         'taller' => 'En taller',
         'de_baja' => 'De baja',
+        'pausa' => 'En pausa',
     ],
 
     // Estado descriptivo de una batería (EstadoBateria) — mismo patrón que
@@ -29,7 +32,8 @@ return [
 
     // Pantalla de panel "Recursos › Vehículos" (HU-40, tarea 50): alta y
     // mantenimiento de la flota de vehículos, con su asignación a base y
-    // estado.
+    // estado. Ficha completa (marca, modelo, año, combustible, 4x4,
+    // kilometraje inicial y actual) y estado 'pausa': HU-84, tarea 99.
     'vehiculos' => [
         'titulo' => 'Vehículos',
         'subtitulo' => 'Flota de vehículos registrada, con su base asignada y estado.',
@@ -56,13 +60,26 @@ return [
         'paginacion_info' => 'Página :actual de :total',
         'titulo_crear' => 'Nuevo vehículo',
         'titulo_editar' => 'Editar vehículo',
-        'subtitulo_form' => 'Identificador, base asignada y estado del vehículo.',
+        'subtitulo_form' => 'Identificador, ficha de inventario, base asignada y estado del vehículo.',
         'seccion_datos' => 'Datos del vehículo',
         'campos_contador' => ':cantidad campos',
         'campo_identificador' => 'Identificador',
+        'campo_marca' => 'Marca',
+        'campo_modelo' => 'Modelo',
+        'campo_anio' => 'Año',
+        'campo_combustible' => 'Combustible',
+        'campo_combustible_placeholder' => 'Sin especificar',
+        'campo_es_4x4' => 'Es 4x4',
+        'campo_kilometraje_inicial' => 'Kilometraje inicial',
+        'campo_kilometraje_inicial_ayuda' => 'Con cuántos kilómetros entró el vehículo a la flota.',
+        'campo_kilometraje_actual' => 'Kilometraje actual',
         'campo_base' => 'Base',
         'campo_base_placeholder' => 'Sin asignar',
         'campo_estado' => 'Estado',
+        'combustible' => [
+            'gasolina' => 'Gasolina',
+            'diesel' => 'Diésel',
+        ],
         'estado_form' => 'Los cambios se guardan al confirmar.',
         'creado' => 'Vehículo creado correctamente.',
         'actualizado' => 'Vehículo actualizado correctamente.',

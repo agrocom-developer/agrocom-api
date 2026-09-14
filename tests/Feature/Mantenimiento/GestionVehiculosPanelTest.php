@@ -20,6 +20,10 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
  * sesión, nunca la unión de los roles del usuario (invariante 10 de
  * CLAUDE.md). Mismo patrón de asserts que
  * tests/Feature/Operaciones/GestionDronesPanelTest.php (tarea 36).
+ *
+ * HU-84 (tarea 99) suma la ficha completa (marca, modelo, año, combustible,
+ * 4x4, kilometraje inicial y actual) y el estado `pausa` — ver los tests
+ * agregados más abajo.
  */
 
 uses(RefreshDatabase::class);
@@ -53,6 +57,13 @@ function payloadVehiculo(array $overrides = []): array
 {
     return array_merge([
         'identificador' => 'VHC-001',
+        'marca' => '',
+        'modelo' => '',
+        'anio' => '',
+        'combustible' => '',
+        'es_4x4' => '0',
+        'kilometraje_inicial' => '',
+        'kilometraje_actual' => '',
         'base_id' => '',
         'estado' => 'activo',
     ], $overrides);
@@ -148,6 +159,114 @@ it('edita un vehículo existente, incluida su asignación de base', function () 
     expect($vehiculo->identificador)->toBe('VHC-001-B')
         ->and($vehiculo->base_id)->toBe($baseNueva->id)
         ->and($vehiculo->estado)->toBe('de_baja');
+});
+
+it('da de alta un vehículo con la ficha completa de inventario', function () {
+    [$encargado, $idRol] = usuarioConRolParaVehiculos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaVehiculos($encargado, $idRol);
+
+    $this->post(route('panel.vehiculos.store'), payloadVehiculo([
+        'marca' => 'Toyota',
+        'modelo' => 'Hilux',
+        'anio' => '2022',
+        'combustible' => 'diesel',
+        'es_4x4' => '1',
+        'kilometraje_inicial' => '1000.50',
+        'kilometraje_actual' => '1500.75',
+    ]))->assertRedirect(route('panel.vehiculos.index'));
+
+    $vehiculo = Vehiculo::query()->where('identificador', 'VHC-001')->sole();
+
+    expect($vehiculo->marca)->toBe('Toyota')
+        ->and($vehiculo->modelo)->toBe('Hilux')
+        ->and($vehiculo->anio)->toBe(2022)
+        ->and($vehiculo->combustible)->toBe('diesel')
+        ->and($vehiculo->es_4x4)->toBeTrue()
+        ->and((string) $vehiculo->kilometraje_inicial)->toBe('1000.50')
+        ->and((string) $vehiculo->kilometraje_actual)->toBe('1500.75');
+});
+
+it('edita la ficha completa de un vehículo existente, incluido el kilometraje inicial', function () {
+    [$encargado, $idRol] = usuarioConRolParaVehiculos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaVehiculos($encargado, $idRol);
+
+    $vehiculo = Vehiculo::query()->create([
+        'identificador' => 'VHC-001',
+        'estado' => 'activo',
+        'kilometraje_inicial' => '1000.00',
+        'kilometraje_actual' => '1000.00',
+    ]);
+
+    $this->put(
+        route('panel.vehiculos.update', $vehiculo),
+        payloadVehiculo([
+            'marca' => 'Ford',
+            'modelo' => 'Ranger',
+            'anio' => '2020',
+            'combustible' => 'gasolina',
+            'es_4x4' => '1',
+            'kilometraje_inicial' => '500.00',
+            'kilometraje_actual' => '2000.00',
+        ]),
+    )->assertRedirect(route('panel.vehiculos.index'));
+
+    $vehiculo->refresh();
+    expect($vehiculo->marca)->toBe('Ford')
+        ->and($vehiculo->modelo)->toBe('Ranger')
+        ->and($vehiculo->anio)->toBe(2020)
+        ->and($vehiculo->combustible)->toBe('gasolina')
+        ->and($vehiculo->es_4x4)->toBeTrue()
+        ->and((string) $vehiculo->kilometraje_inicial)->toBe('500.00')
+        ->and((string) $vehiculo->kilometraje_actual)->toBe('2000.00');
+});
+
+it('rechaza un combustible fuera del catálogo sin persistir', function () {
+    [$encargado, $idRol] = usuarioConRolParaVehiculos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaVehiculos($encargado, $idRol);
+
+    $this->post(route('panel.vehiculos.store'), payloadVehiculo(['combustible' => 'nafta']))
+        ->assertSessionHasErrors('combustible');
+
+    expect(Vehiculo::query()->where('identificador', 'VHC-001')->exists())->toBeFalse();
+});
+
+it('acepta el estado pausa tanto al alta como a la edición, sin romper activo/taller/de_baja', function () {
+    [$encargado, $idRol] = usuarioConRolParaVehiculos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaVehiculos($encargado, $idRol);
+
+    $this->post(route('panel.vehiculos.store'), payloadVehiculo(['estado' => 'pausa']))
+        ->assertRedirect(route('panel.vehiculos.index'));
+
+    $vehiculo = Vehiculo::query()->where('identificador', 'VHC-001')->sole();
+    expect($vehiculo->estado)->toBe('pausa');
+
+    $this->put(
+        route('panel.vehiculos.update', $vehiculo),
+        payloadVehiculo(['estado' => 'activo']),
+    )->assertRedirect(route('panel.vehiculos.index'));
+
+    expect($vehiculo->refresh()->estado)->toBe('activo');
+
+    $this->put(
+        route('panel.vehiculos.update', $vehiculo),
+        payloadVehiculo(['estado' => 'taller']),
+    )->assertRedirect(route('panel.vehiculos.index'));
+
+    expect($vehiculo->refresh()->estado)->toBe('taller');
+
+    $this->put(
+        route('panel.vehiculos.update', $vehiculo),
+        payloadVehiculo(['estado' => 'de_baja']),
+    )->assertRedirect(route('panel.vehiculos.index'));
+
+    expect($vehiculo->refresh()->estado)->toBe('de_baja');
+
+    $this->put(
+        route('panel.vehiculos.update', $vehiculo),
+        payloadVehiculo(['estado' => 'pausa']),
+    )->assertRedirect(route('panel.vehiculos.index'));
+
+    expect($vehiculo->refresh()->estado)->toBe('pausa');
 });
 
 it('filtra el listado por base y por estado', function () {
