@@ -188,7 +188,28 @@
         </table>
     @endif
 
-    <h2>Mezcla y dosis</h2>
-    <p class="nota">{{ $datos['nota_mezcla'] }}</p>
+    <h2>Productos cargados en el caldo</h2>
+    {{-- Espec §7 (HU-78, tarea 94, revierte CR-01): lo que el piloto
+         transcribió al crear la aplicación — nunca dosis, orden de
+         incorporación ni compatibilidad entre productos (§7.1 sigue
+         vigente). --}}
+    @if (count($datos['productos_mezcla']) > 0)
+        <table>
+            <tr>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Unidad</th>
+            </tr>
+            @foreach ($datos['productos_mezcla'] as $producto)
+                <tr>
+                    <td>{{ $producto['producto'] }}</td>
+                    <td>{{ $producto['cantidad'] }}</td>
+                    <td>{{ $producto['unidad'] }}</td>
+                </tr>
+            @endforeach
+        </table>
+    @else
+        <p class="nota">Sin productos registrados para este trabajo.</p>
+    @endif
 </body>
 </html>
