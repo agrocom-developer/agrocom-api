@@ -442,6 +442,21 @@ it('el nombre de campo duplicado para el mismo cliente es un error de validacion
 // aparte de `restricciones` (texto libre). Cubre los dos Request de este
 // controlador (`CrearCampoRequest`/`ActualizarCampoRequest`).
 
+it('el formulario ofrece los selects de desnivel y limpieza junto a restricciones', function () {
+    $cliente = clienteDeCamposDePrueba();
+    $propiedad = propiedadDeCamposDePrueba($cliente);
+    [$encargado, $idRol] = usuarioConRolParaCampos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaCampos($encargado, $idRol);
+
+    $respuesta = $this->get(route('panel.campos.create'))->assertOk();
+
+    $respuesta->assertSee('name="lotes[0][desnivel]"', escape: false)
+        ->assertSee('name="lotes[0][limpieza]"', escape: false)
+        ->assertSee('name="lotes[0][restricciones]"', escape: false)
+        ->assertSee(__('comercial.campos.lote_desnivel_empinado'), escape: false)
+        ->assertSee(__('comercial.campos.lote_limpieza_muchos_obstaculos'), escape: false);
+});
+
 it('rechaza un desnivel o limpieza fuera de catalogo en el alta y en la edicion de un campo', function () {
     $cliente = clienteDeCamposDePrueba();
     $propiedad = propiedadDeCamposDePrueba($cliente);

@@ -208,6 +208,19 @@ it('rechaza una geometria mal formada', function () {
 // controlador (`CrearLoteRequest`/`ActualizarLoteRequest`), complementarios
 // a los de `GestionCamposPanelTest` sobre el otro punto de entrada.
 
+it('el formulario de la ficha propia tambien ofrece los selects de desnivel y limpieza', function () {
+    $campo = campoDeLotesDePrueba();
+    [$encargado, $idRol] = usuarioConRolParaLotes('encargado', 'encargado_operaciones');
+    entrarAlPanelParaLotes($encargado, $idRol);
+
+    $respuesta = $this->get(route('panel.lotes.create'))->assertOk();
+
+    $respuesta->assertSee('name="lote[desnivel]"', escape: false)
+        ->assertSee('name="lote[limpieza]"', escape: false)
+        ->assertSee(__('comercial.campos.lote_desnivel_empinado'), escape: false)
+        ->assertSee(__('comercial.campos.lote_limpieza_muchos_obstaculos'), escape: false);
+});
+
 it('rechaza un desnivel o limpieza fuera de catalogo en el alta y en la edicion de un lote suelto', function () {
     $campo = campoDeLotesDePrueba();
     [$encargado, $idRol] = usuarioConRolParaLotes('encargado', 'encargado_operaciones');
