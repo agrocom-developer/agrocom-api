@@ -1,9 +1,9 @@
 {{--
     Partial: formulario de generador, compartido por create.blade.php y
-    edit.blade.php (tarea 72, HU-49) — arquetipo Formulario, §6.3 de
-    docs/diseno/guia_pantalla_panel.md. Mismo patrón que
-    `vehiculos/_formulario.blade.php`, con dos campos adicionales opcionales
-    (modelo, horas de uso).
+    edit.blade.php (tarea 72, HU-49; horas inicial/actual HU-86, tarea 101)
+    — arquetipo Formulario, §6.3 de docs/diseno/guia_pantalla_panel.md.
+    Mismo patrón que `vehiculos/_formulario.blade.php`, con campos
+    adicionales opcionales (modelo, horas inicial, horas actual).
 
     Espera:
     - $generador (Generador|null): null en alta; el modelo en edición.
@@ -28,7 +28,8 @@
     $modelo = old('modelo', $generador?->modelo ?? '');
     $baseId = old('base_id', $generador?->base_id ?? '');
     $estado = old('estado', $generador?->estado ?? 'activo');
-    $horasUso = old('horas_uso', $generador?->horas_uso ?? '');
+    $horasInicial = old('horas_inicial', $generador?->horas_inicial ?? '');
+    $horasActual = old('horas_actual', $generador?->horas_actual ?? '');
 @endphp
 
 <form method="POST" action="{{ $accion }}" class="ag-generadores-form" novalidate data-ag-generadores-form>
@@ -50,7 +51,7 @@
 
     <x-molecules.form-section
         :title="__('mantenimiento.generadores.seccion_datos')"
-        :count="__('mantenimiento.generadores.campos_contador', ['cantidad' => 5])"
+        :count="__('mantenimiento.generadores.campos_contador', ['cantidad' => 6])"
     >
         <x-atoms.input
             type="text"
@@ -96,12 +97,23 @@
 
         <x-atoms.input
             type="number"
-            name="horas_uso"
-            label="{{ __('mantenimiento.generadores.campo_horas_uso') }}"
-            value="{{ $horasUso }}"
+            name="horas_inicial"
+            label="{{ __('mantenimiento.generadores.campo_horas_inicial') }}"
+            value="{{ $horasInicial }}"
+            help="{{ __('mantenimiento.generadores.campo_horas_inicial_ayuda') }}"
             min="0"
             step="0.01"
-            error="{{ $errors->first('horas_uso') }}"
+            error="{{ $errors->first('horas_inicial') }}"
+        />
+
+        <x-atoms.input
+            type="number"
+            name="horas_actual"
+            label="{{ __('mantenimiento.generadores.campo_horas_actual') }}"
+            value="{{ $horasActual }}"
+            min="0"
+            step="0.01"
+            error="{{ $errors->first('horas_actual') }}"
         />
     </x-molecules.form-section>
 

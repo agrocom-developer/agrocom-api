@@ -89,11 +89,11 @@ return [
 
     // Pantalla de panel "Recursos › Generadores" (tarea 72, HU-49, ADR 0015
     // punto 3): ABM mínimo del catálogo de generadores. Mismo molde de
-    // claves que 'vehiculos' arriba, con dos campos extra opcionales
-    // (modelo, horas de uso).
+    // claves que 'vehiculos' arriba, con campos extra opcionales (modelo,
+    // horas inicial y actual).
     'generadores' => [
         'titulo' => 'Generadores',
-        'subtitulo' => 'Catálogo de generadores registrado, con su modelo, base asignada, estado y horas de uso.',
+        'subtitulo' => 'Catálogo de generadores registrado, con su modelo, base asignada, estado y horas inicial/actual.',
         'nuevo' => 'Nuevo generador',
         'filtro_busqueda' => 'Buscar',
         'filtro_busqueda_placeholder' => 'Identificador…',
@@ -119,7 +119,7 @@ return [
         'paginacion_info' => 'Página :actual de :total',
         'titulo_crear' => 'Nuevo generador',
         'titulo_editar' => 'Editar generador',
-        'subtitulo_form' => 'Identificador, modelo, base asignada, estado y horas de uso del generador.',
+        'subtitulo_form' => 'Identificador, modelo, base asignada, estado y horas inicial/actual del generador.',
         'seccion_datos' => 'Datos del generador',
         'campos_contador' => ':cantidad campos',
         'campo_identificador' => 'Identificador',
@@ -127,7 +127,9 @@ return [
         'campo_base' => 'Base',
         'campo_base_placeholder' => 'Sin asignar',
         'campo_estado' => 'Estado',
-        'campo_horas_uso' => 'Horas de uso',
+        'campo_horas_inicial' => 'Horas inicial',
+        'campo_horas_inicial_ayuda' => 'Con cuántas horas entró el generador a la flota.',
+        'campo_horas_actual' => 'Horas actual',
         'estado_form' => 'Los cambios se guardan al confirmar.',
         'creado' => 'Generador creado correctamente.',
         'actualizado' => 'Generador actualizado correctamente.',
