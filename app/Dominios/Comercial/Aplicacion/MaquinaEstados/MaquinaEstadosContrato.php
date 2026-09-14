@@ -92,21 +92,58 @@ final class MaquinaEstadosContrato
     }
 
     /**
+     * `vigente → pausado` (HU-71, tarea 87): interrupción del contrato
+     * vigente, no una cancelación. Sin guarda adicional — pausar es una
+     * decisión del encargado, no depende de fechas como `activar()`.
+     *
+     * @throws TransicionContratoNoPermitida si `$contrato` no está `vigente`.
+     */
+    public function pausar(Contrato $contrato): Contrato
+    {
+        return $this->transicionar($contrato, EstadoContrato::Pausado);
+    }
+
+    /**
+     * `pausado → vigente` (HU-71, tarea 87): vuelta de una interrupción. Sin
+     * guarda adicional, mismo criterio que `pausar()`.
+     *
+     * @throws TransicionContratoNoPermitida si `$contrato` no está `pausado`.
+     */
+    public function reanudar(Contrato $contrato): Contrato
+    {
+        return $this->transicionar($contrato, EstadoContrato::Vigente);
+    }
+
+    /**
      * Punto de entrada único para `Aplicacion/CambiarEstadoContrato` (HTTP):
      * resuelve a qué método de transición corresponde `$hacia` sin que el
      * llamador tenga que conocer el nombre de cada uno. `Borrador` nunca es
      * un destino válido — ningún estado lo admite en la tabla de
      * transiciones, así que cae al camino genérico y siempre rechaza.
      *
+     * `Vigente` como destino tiene dos orígenes posibles con semántica
+     * distinta (HU-71, tarea 87): desde `borrador` es `activar()`, con su
+     * guarda de `fecha_inicio` no en el pasado; desde `pausado` es
+     * `reanudar()`, sin esa guarda — un contrato que ya estuvo vigente y se
+     * pausó casi siempre tiene `fecha_inicio` en el pasado, así que
+     * aplicarle la guarda de `activar()` lo dejaría sin poder reanudarse
+     * nunca. Por eso se distingue por el estado ACTUAL de `$contrato`, antes
+     * del `match` por destino.
+     *
      * @throws TransicionContratoNoPermitida si la transición no está en la tabla.
-     * @throws ActivacionContratoNoDisponible si el destino es `vigente` y falta alguna guarda.
+     * @throws ActivacionContratoNoDisponible si el destino es `vigente` desde `borrador` y falta alguna guarda.
      */
     public function cambiarA(Contrato $contrato, EstadoContrato $hacia): Contrato
     {
+        if ($hacia === EstadoContrato::Vigente && $contrato->estado === EstadoContrato::Pausado) {
+            return $this->reanudar($contrato);
+        }
+
         return match ($hacia) {
             EstadoContrato::Vigente => $this->activar($contrato),
             EstadoContrato::Finalizado => $this->finalizar($contrato),
             EstadoContrato::Cancelado => $this->cancelar($contrato),
+            EstadoContrato::Pausado => $this->pausar($contrato),
             EstadoContrato::Borrador => $this->transicionar($contrato, $hacia),
         };
     }

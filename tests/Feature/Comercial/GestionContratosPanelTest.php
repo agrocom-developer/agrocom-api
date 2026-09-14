@@ -16,6 +16,7 @@ use Database\Seeders\Catalogo\CatalogoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 /*
  * HU-23 (tarea 34): administración de contratos con sus ventanas de
@@ -263,6 +264,115 @@ it('una transición inválida es rechazada por la máquina de estados y no llega
         ->assertSessionHasErrors('estado');
 
     expect($contrato->fresh()->estado)->toBe(EstadoContrato::Finalizado);
+});
+
+it('un contrato vigente pasa a pausado y de vuelta a vigente (HU-71, tarea 87)', function () {
+    [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaContratos($encargado, $idRol);
+    $cliente = clienteParaContratos();
+
+    $contrato = new Contrato([
+        'cliente_id' => $cliente->id,
+        'hectareas_contratadas' => '100.00',
+        'aplicaciones_previstas' => 3,
+        'precio_ha' => '50.00',
+        'monto_total' => '15000.00',
+        'fecha_inicio' => Carbon::yesterday()->toDateString(),
+        'estado' => EstadoContrato::Vigente,
+    ]);
+    $contrato->save();
+
+    $this->post(route('panel.contratos.cambiar-estado', $contrato), ['estado' => 'pausado'])
+        ->assertRedirect(route('panel.contratos.index'))
+        ->assertSessionDoesntHaveErrors();
+
+    expect($contrato->fresh()->estado)->toBe(EstadoContrato::Pausado);
+
+    // La vuelta a vigente NO pasa por la guarda de `activar()` (fecha_inicio
+    // no en el pasado): este contrato ya tiene `fecha_inicio` ayer, y si
+    // `cambiarA()` no distinguiera el origen `pausado` de `borrador`,
+    // reanudar fallaría siempre para un contrato que ya estuvo vigente.
+    $this->post(route('panel.contratos.cambiar-estado', $contrato), ['estado' => 'vigente'])
+        ->assertRedirect(route('panel.contratos.index'))
+        ->assertSessionDoesntHaveErrors();
+
+    expect($contrato->fresh()->estado)->toBe(EstadoContrato::Vigente);
+});
+
+it('borrador a pausado se rechaza: no está en la tabla de transiciones (HU-71, tarea 87)', function () {
+    [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaContratos($encargado, $idRol);
+    $cliente = clienteParaContratos();
+
+    $contrato = new Contrato([
+        'cliente_id' => $cliente->id,
+        'hectareas_contratadas' => '100.00',
+        'aplicaciones_previstas' => 3,
+        'precio_ha' => '50.00',
+        'monto_total' => '15000.00',
+        'fecha_inicio' => Carbon::tomorrow()->toDateString(),
+        'estado' => EstadoContrato::Borrador,
+    ]);
+    $contrato->save();
+
+    $this->post(route('panel.contratos.cambiar-estado', $contrato), ['estado' => 'pausado'])
+        ->assertRedirect(route('panel.contratos.index'))
+        ->assertSessionHasErrors('estado');
+
+    expect($contrato->fresh()->estado)->toBe(EstadoContrato::Borrador);
+});
+
+it('pausado a cancelado se rechaza: el CA de HU-71 solo pide ida y vuelta con vigente', function () {
+    [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaContratos($encargado, $idRol);
+    $cliente = clienteParaContratos();
+
+    $contrato = new Contrato([
+        'cliente_id' => $cliente->id,
+        'hectareas_contratadas' => '100.00',
+        'aplicaciones_previstas' => 3,
+        'precio_ha' => '50.00',
+        'monto_total' => '15000.00',
+        'fecha_inicio' => Carbon::yesterday()->toDateString(),
+        'estado' => EstadoContrato::Pausado,
+    ]);
+    $contrato->save();
+
+    $this->post(route('panel.contratos.cambiar-estado', $contrato), ['estado' => 'cancelado'])
+        ->assertRedirect(route('panel.contratos.index'))
+        ->assertSessionHasErrors('estado');
+
+    expect($contrato->fresh()->estado)->toBe(EstadoContrato::Pausado);
+});
+
+it('el CHECK de estado admite pausado sin alterar el valor de un contrato vigente existente (solo pgsql)', function () {
+    if (DB::getDriverName() !== 'pgsql') {
+        $this->markTestSkipped('CHECK solo existe en pgsql; SQLite no soporta ADD CONSTRAINT (ver docblock de la migración 2026_09_13_100001).');
+    }
+
+    $cliente = clienteParaContratos();
+    $contrato = new Contrato([
+        'cliente_id' => $cliente->id,
+        'hectareas_contratadas' => '100.00',
+        'aplicaciones_previstas' => 3,
+        'precio_ha' => '50.00',
+        'monto_total' => '15000.00',
+        'fecha_inicio' => Carbon::yesterday()->toDateString(),
+        'estado' => EstadoContrato::Vigente,
+    ]);
+    $contrato->save();
+
+    // Regresión (tarea 87): RefreshDatabase ya corrió la migración nueva
+    // antes de este test, así que se la vuelve a correr sobre un esquema que
+    // ya la tiene aplicada — simula el caso real, una fila `vigente`
+    // preexistente antes del ALTER. DROP+ADD CONSTRAINT del mismo CHECK es
+    // idempotente y no toca ninguna columna de datos.
+    (require database_path('migrations/2026_09_13_100001_add_pausado_a_com_contratos_estado_chk.php'))->up();
+
+    expect($contrato->fresh()->estado)->toBe(EstadoContrato::Vigente);
+
+    DB::table('com_contratos')->where('id', $contrato->id)->update(['estado' => 'pausado']);
+    expect($contrato->fresh()->estado)->toBe(EstadoContrato::Pausado);
 });
 
 it('registra en bitácora el alta y el cambio de estado de un contrato', function () {

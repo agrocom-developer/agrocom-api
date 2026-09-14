@@ -73,12 +73,15 @@ return [
         'volver' => 'Volver a clientes',
     ],
 
+    // Los nombres visibles cambian; las claves siguen siendo las mismas que
+    // usa el estado del contrato internamente.
     'contrato' => [
         'estado' => [
-            'borrador' => 'Borrador',
-            'vigente' => 'Vigente',
-            'finalizado' => 'Finalizado',
+            'borrador' => 'En Aprobación',
+            'vigente' => 'En Ejecución',
+            'finalizado' => 'Ejecutado',
             'cancelado' => 'Cancelado',
+            'pausado' => 'Pausado',
         ],
     ],
 
@@ -167,9 +170,13 @@ return [
         'accion_activar' => 'Activar',
         'accion_finalizar' => 'Finalizar',
         'accion_cancelar' => 'Cancelar',
+        'accion_pausar' => 'Pausar',
+        'accion_reanudar' => 'Reanudar',
         'confirmar_activar' => '¿Pasar este contrato a vigente?',
         'confirmar_finalizar' => '¿Dar este contrato por finalizado?',
         'confirmar_cancelar' => '¿Cancelar este contrato? La baja no se puede deshacer desde el panel.',
+        'confirmar_pausar' => '¿Pausar este contrato? Se interrumpe la ejecución sin cancelarlo.',
+        'confirmar_reanudar' => '¿Reanudar este contrato?',
 
         // Formulario (create/edit)
         'titulo_crear' => 'Nuevo contrato',
