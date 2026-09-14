@@ -19,10 +19,19 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * `tipo_persona` (ADR 0018, punto 3): física (unipersonal) o jurídica
  * (sociedad) — {@see TipoPersonaCliente}.
  *
+ * `ubicacion_oficina`/`logo_path` (HU-75, tarea 91): dónde queda la oficina
+ * central del cliente y su logo. `logo_path` deliberadamente NO es
+ * `fillable` (mismo criterio que `SecDatosEmpresa.logo_path`, ADR 0019):
+ * solo `CrearCliente`/`ActualizarCliente` lo escriben, con asignación
+ * directa tras guardar el archivo — nunca vía `fill()` de datos crudos del
+ * request.
+ *
  * @property int $id
  * @property string $razon_social
  * @property string|null $nit
  * @property string $tipo_persona
+ * @property string|null $ubicacion_oficina
+ * @property string|null $logo_path
  */
 class Cliente extends ModeloDominio
 {
@@ -36,6 +45,7 @@ class Cliente extends ModeloDominio
         'razon_social',
         'nit',
         'tipo_persona',
+        'ubicacion_oficina',
     ];
 
     /** @return HasMany<ClienteContacto, $this> */

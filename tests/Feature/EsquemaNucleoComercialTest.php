@@ -40,6 +40,10 @@ it('com_lotes tiene desnivel y limpieza, nullable (HU-73, tarea 89)', function (
     expect(Schema::hasColumns('com_lotes', ['desnivel', 'limpieza']))->toBeTrue();
 });
 
+it('com_clientes tiene ubicación de oficina y logo, nullable (HU-75, tarea 91)', function () {
+    expect(Schema::hasColumns('com_clientes', ['ubicacion_oficina', 'logo_path']))->toBeTrue();
+});
+
 it('com_contratos tiene las acomodaciones logísticas, con los booleanos en false por defecto (HU-74, tarea 90)', function () {
     expect(Schema::hasColumns('com_contratos', [
         'brinda_alimentacion',
