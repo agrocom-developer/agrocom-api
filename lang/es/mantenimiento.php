@@ -24,6 +24,7 @@ return [
     'estado_bateria' => [
         'activa' => 'Activa',
         'retirada' => 'Retirada',
+        'mantenimiento' => 'En mantenimiento',
     ],
 
     // Pantalla de panel "Recursos › Vehículos" (HU-40, tarea 50): alta y
@@ -160,6 +161,8 @@ return [
         'seccion_datos' => 'Datos de la batería',
         'campos_contador' => ':cantidad campos',
         'campo_identificador' => 'Identificador',
+        'campo_ciclos_inicial' => 'Ciclos inicial',
+        'campo_ciclos_inicial_ayuda' => 'Con cuántos ciclos entró la batería al catálogo. No se puede editar después del alta.',
         'campo_ciclos' => 'Ciclos acumulados',
         'campo_base' => 'Base',
         'campo_base_placeholder' => 'Sin asignar',

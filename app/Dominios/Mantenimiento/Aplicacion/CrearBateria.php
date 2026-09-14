@@ -11,6 +11,11 @@ use Illuminate\Database\QueryException;
  * Alta de una batería del catálogo (HU-39, tarea 51): identificador, ciclos
  * acumulados (una batería puede entrar al catálogo con uso previo), base
  * asignada (opcional) y estado.
+ *
+ * `ciclosInicial` (HU-83, tarea 98) es el punto de partida del historial,
+ * independiente de `ciclosAcumulados`: una batería puede entrar con uso
+ * previo en ambos, iguales o distintos si ya se usó desde que se detectó.
+ * Fijado al alta, inmutable después — `ActualizarBateria` no lo recibe.
  */
 final class CrearBateria
 {
@@ -19,10 +24,11 @@ final class CrearBateria
      *                          batería activa (índice parcial
      *                          `man_baterias_identificador_unico`).
      */
-    public function ejecutar(string $identificador, int $ciclosAcumulados, ?int $baseId, EstadoBateria $estado): Bateria
+    public function ejecutar(string $identificador, int $ciclosInicial, int $ciclosAcumulados, ?int $baseId, EstadoBateria $estado): Bateria
     {
         $bateria = new Bateria([
             'identificador' => $identificador,
+            'ciclos_inicial' => $ciclosInicial,
             'ciclos_acumulados' => $ciclosAcumulados,
             'base_id' => $baseId,
             'estado' => $estado->value,
