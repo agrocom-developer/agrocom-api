@@ -127,13 +127,14 @@ class EquiposTrabajoDemoSeeder extends Seeder
 
         $ids = [];
 
-        foreach ($catalogo as [$identificador, $modelo, $baseId, $horasUso]) {
+        foreach ($catalogo as [$identificador, $modelo, $baseId, $horasActual]) {
             $generador = $this->crear(new Generador([
                 'identificador' => $identificador,
                 'modelo' => $modelo,
                 'base_id' => $baseId,
                 'estado' => 'activo',
-                'horas_uso' => $horasUso,
+                'horas_inicial' => $horasActual,
+                'horas_actual' => $horasActual,
             ]), $autorId);
 
             $ids[$identificador] = $generador->id;

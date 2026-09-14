@@ -93,7 +93,8 @@ final class GeneradoresController
                 $this->stringONull($datos['modelo'] ?? null),
                 $this->enteroONull($datos['base_id'] ?? null),
                 EstadoGenerador::from((string) $datos['estado']),
-                $this->stringONull($datos['horas_uso'] ?? null),
+                $this->stringONull($datos['horas_inicial'] ?? null),
+                $this->stringONull($datos['horas_actual'] ?? null),
             );
         } catch (GeneradorDuplicado $excepcion) {
             return redirect()
@@ -132,7 +133,8 @@ final class GeneradoresController
                 $this->stringONull($datos['modelo'] ?? null),
                 $this->enteroONull($datos['base_id'] ?? null),
                 EstadoGenerador::from((string) $datos['estado']),
-                $this->stringONull($datos['horas_uso'] ?? null),
+                $this->stringONull($datos['horas_inicial'] ?? null),
+                $this->stringONull($datos['horas_actual'] ?? null),
             );
         } catch (GeneradorDuplicado $excepcion) {
             return redirect()
