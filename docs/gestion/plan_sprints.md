@@ -309,6 +309,53 @@ Este repo sigue siendo la fuente de la especificación funcional/técnica y de l
 
 ---
 
+## Sprint 16 — Ajustes de negocio de Operaciones y Comercial (ronda del dueño, 13/9/2026)
+
+*Objetivo: cerrar los gaps de negocio reales que aparecieron en la ronda de
+observaciones del dueño (Word "MODULO OPERACIONES - COMERCIAL" + 2 audios),
+documentados en
+`docs/negocio/observaciones_operaciones_comercial_2026-09-13.md`. La
+numeración de HU sigue desde 70 (no desde 59) para no chocar con la de
+`agrocom-field`, que ya usa HU-59 a HU-69 en su propio `plan_sprints.md`
+(Sprint 15, movido el 10/9/2026).*
+
+| ID | Historia / tarea | CA esenciales | Est. |
+|---|---|---|---|
+| HU-70 | Como **jefe de campo**, quiero asignar uno o más equipos de trabajo (con sus lotes y hectáreas) a una orden de aplicación vigente, para que el sistema genere el `Trabajo` de cada equipo automáticamente y el piloto sepa qué le toca sin que se lo mande por WhatsApp | Una orden admite N asignaciones (`equipo_trabajo_id` + `lote_id` + hectáreas), con `SUM(hectáreas asignadas) ≤ hectáreas del lote`; confirmar la asignación crea un `Trabajo` por equipo con su lote y hectáreas ya resueltos; el trabajo generado sale en `GET /api/sync/catalogo` con su equipo, para que la app lo muestre al iniciar sesión | 4,0 d |
+| HU-71 | Como **encargado**, quiero pausar un contrato vigente y reanudarlo, y ver sus estados con el vocabulario del negocio (En Ejecución/En Aprobación/Ejecutado/Pausado), para reflejar una interrupción sin cancelarlo | Nuevo estado `pausado` en `TransicionesContrato` (`vigente ↔ pausado`, transición inválida rechazada); las etiquetas del panel traducen `borrador/vigente/finalizado/cancelado/pausado` sin tocar los valores guardados | 2,0 d |
+| HU-72 | Como **encargado**, quiero crear varios lotes de una propiedad de una sola vez indicando cuántos y su tipo de siembra, para no cargar uno por uno y poder renombrarlos y dibujar el polígono después | Extiende `CrearCampo` (ya acepta `lotes[]`) con una cantidad `N` + cultivo por defecto; genera `N` lotes con nombre provisorio y su fila en `com_lote_campania` para la campaña activa del cliente; cada lote se puede renombrar/dibujar después sin perder el cultivo | 2,0 d |
+| HU-73 | Como **encargado**, quiero registrar si un lote tiene desniveles y si está limpio de obstáculos, para planificar el vuelo antes de asignar el equipo | `com_lotes` gana `desnivel` (`ninguno/algunos/varios/empinado`) y `limpieza` (`limpio/algunos_obstaculos/muchos_obstaculos`), catálogos cerrados distintos de `restricciones` (texto libre existente) | 1,0 d |
+| HU-74 | Como **encargado**, quiero registrar si el cliente brinda alimentación, hospedaje y combustible al equipo, con observaciones, para saber qué logística cubre Agrocom en cada contrato | `com_contratos` gana `brinda_alimentacion`/`brinda_hospedaje`/`brinda_combustible` (booleanos) y `observaciones_logistica` (texto) | 1,0 d |
+| HU-75 | Como **encargado**, quiero registrar la ubicación de la oficina central y el logo del cliente, y clasificar sus contactos también como Gerente General, Finanzas o Secretario, para tener el directorio completo | `com_clientes` gana `ubicacion_oficina`/`logo_path`; `TipoContactoCliente` suma `gerente_general\|finanzas\|secretario` sin quitar los valores existentes (`dueno/agronomo/encargado_propiedad/otro`) | 1,0 d |
+| HU-76 | Como **encargado**, quiero cargar Departamento/Municipio/Localidad y una coordenada de la propiedad, para ubicarla en el mapa y filtrar por zona | `com_propiedades` gana `departamento`/`municipio`/`localidad` (texto) y `latitud`/`longitud` (DECIMAL); amplía ADR 0018 punto 1 con una adenda fechada (no lo reescribe: el pedido explícito que faltaba ya existe) | 1,5 d |
+| HU-77 | Como **encargado**, quiero elegir si la campaña es de invierno o verano y que el nombre se arme solo (`Estación/AñoInicio/AñoFin`), para no tipear un nombre cada vez | `cpn_campanias` gana `estacion` (`invierno/verano`); `nombre` se autogenera si no se especifica; el panel puede *mostrar* "Activa"/"Inactiva" como etiqueta de `planificada+abierta`/`cerrada`, pero la máquina sigue siendo irreversible desde `cerrada` (ADR 0015) — sin excepción nueva | 1,0 d |
+| HU-78 | Como **piloto**, quiero registrar qué productos y en qué cantidad se cargaron en el caldo (p. ej. Glifosato, 24D, litros de agua, Urea) al crear una aplicación, para que quede trazado qué se aplicó realmente | **Revierte CR-01** (nota fechada ya en `especificacion_funcional_tecnica.md` §7): módulo `Mezclas` nuevo (`ope_mezclas`/`ope_mezcla_items`, producto + cantidad + unidad) ligado por `uuid_cliente` al motor de sync; el reporte técnico deja de imprimir la nota fija de "fuera de alcance" y lista los productos cargados; la sección §7 de la especificación se reescribe con el alcance nuevo (qué transcribe el piloto vs. qué sigue sin validar Agrocom) | 4,0 d |
+| HU-79 | Como **encargado**, quiero indicar si una orden es de producto sólido (kilos por vuelo: fertilizante, semilla de pasto) o líquido (litros por hectárea: insecticida/herbicida/fungicida/fertilizante líquido/coadyuvante/antiespumante), para que la orden pida los datos correctos según el insumo | `tipo_insumo` (`solido/liquido`) en `ope_ordenes_aplicacion`, catálogo de productos por tipo (reusa `Mezclas` de HU-78); depende de HU-78 (mismo catálogo) y HU-70 (misma tabla, para no iterarla dos veces) | 3,0 d |
+| HU-80 | Como **jefe de campo**, quiero que el reporte incluya la cantidad de ciclos de batería, el ciclo actual, las horas de vuelo del dron y fotos de control/balanceo/limpieza, junto con la fecha y hora de emisión, para no preguntar por WhatsApp el estado del equipo | Contrato de lectura nuevo de `Operaciones` hacia `Mantenimiento` (mismo patrón que `LecturaAlertasTemperaturaBateria`) trae `ciclos_acumulados` real; nuevos campos de evidencia (`horas_vuelo_dron`, `foto_control`, `foto_ciclo_bateria_balanceo`, `foto_dron_limpio`) ligados por `uuid_cliente`; el PDF imprime `generado_en` (ya existe en la base, solo falta el blade) junto con batería/ciclos/horas de vuelo | 3,0 d |
+
+**Total: 22,5 d · 0 pantallas nuevas de menú (todas amplían pantallas existentes, salvo la asignación de HU-70)**
+
+**Orden y dependencias.** HU-70 va primera: resuelve el reclamo activo del
+dueño (audio 1) y varias observaciones del Word cuelgan de la misma
+cardinalidad orden↔trabajo. HU-80 segunda, por ser el otro reclamo por audio y
+no depender de nada. HU-71 a HU-77 son independientes entre sí y de bajo
+riesgo — se intercalan según convenga. HU-78 va antes que HU-79 porque
+comparten el catálogo de insumos; HU-79 además espera a HU-70 integrada para
+no iterar dos veces sobre `ope_ordenes_aplicacion`.
+
+**HU-70, HU-78, HU-79 y HU-80 son críticas** (tocan el motor de sync o una
+guarda de negocio ya existente) — igual se implementan y se integran; la
+revisión línea por línea es posterior, anotada en `runs/revision-pendiente.txt`
+(regla de `CLAUDE.md` y `automatizacion_desarrollo.md` §5).
+
+**Lo que quedó afuera a propósito** (ver el documento de observaciones,
+sección 4): la reubicación de la ventana de aplicación y el recorte de
+parámetros de vuelo del contrato, y el alcance exacto de "editar/eliminar
+trabajo" — son ambiguos en el Word y necesitan una aclaración puntual del
+dueño antes de convertirse en HU.
+
+---
+
 ## Alcance total del sistema
 
 | Bloque | Días | Pantallas de menú | Estado |
