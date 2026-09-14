@@ -16,11 +16,12 @@ final class ActualizarDron
      * @throws DronDuplicado si el identificador ya pertenece a otro dron
      *                       activo (índice parcial `ope_drones_identificador_unico`).
      */
-    public function ejecutar(Dron $dron, string $identificador, ?string $modelo, ?string $capacidadL): Dron
+    public function ejecutar(Dron $dron, string $identificador, ?string $modelo, ?string $capacidadL, ?string $capacidadKg): Dron
     {
         $dron->identificador = $identificador;
         $dron->modelo = $modelo;
         $dron->capacidad_l = $capacidadL;
+        $dron->capacidad_kg = $capacidadKg;
 
         try {
             $dron->save();
