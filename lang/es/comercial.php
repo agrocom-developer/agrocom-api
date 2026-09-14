@@ -282,6 +282,18 @@ return [
         'campo_propiedad' => 'Propiedad',
         'campo_propiedad_placeholder' => 'Seleccioná una propiedad',
         'campo_nombre' => 'Nombre',
+
+        // Generador de lotes (alta masiva, HU-72, tarea 88)
+        'seccion_generador' => 'Generar lotes',
+        'generador_cantidad' => 'Cantidad de lotes',
+        'generador_hectareas' => 'Hectáreas por lote',
+        'generador_cultivo' => 'Cultivo por defecto',
+        'generador_cultivo_placeholder' => 'Sin sembrar',
+        'generador_campania' => 'Campaña',
+        'generador_campania_placeholder' => 'Seleccioná una campaña',
+        'generador_generar' => 'Generar lotes',
+        'generador_ayuda' => 'Genera lotes provisorios ("Lote 1".."Lote N") con la misma superficie. Renombralos y dibujá su perímetro después, desde la ficha de cada lote.',
+
         'seccion_lotes' => 'Lotes',
         'lote_agregar' => 'Agregar lote',
         'lote_quitar' => 'Quitar',
