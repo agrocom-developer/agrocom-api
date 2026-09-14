@@ -67,7 +67,21 @@ así que no hay de dónde derivarlo como con las horas de vuelo del dron).
 **GAP_REAL, chico**: separar en `horas_inicial`/`horas_actual`, mismo patrón
 que kilometraje de vehículo y ciclos de batería. → **HU-86**.
 
-## Nada ambiguo ni contradictorio en este documento
+## 7. El hallazgo más importante: el ciclo de batería tiene que ser un odómetro, no un campo editable
+
+Nota textual del dueño en el Word: *"El campo Ciclo Acumulado es la cantidad
+de ciclo registrado en aplicación, en teoría debe ser como el odómetro de la
+batería."* Hoy `ActualizarBateria::ejecutar()` deja fijar
+`ciclos_acumulados` a cualquier valor que se le pase — es un campo de
+formulario común, no un contador auto-incremental. Esto es más que un campo
+que falta: es una **regla de negocio** que hoy no existe en ningún lado
+(mismo espíritu que la invariante 9 de `CLAUDE.md`: nada que se pueda pisar
+sin dejar rastro). Conecta directo con HU-80 del Sprint 16 (el reporte de
+equipos necesita un `ciclos_acumulados` **confiable** para tener sentido) y
+con HU-83 de este mismo sprint (que agrega `ciclos_inicial`, pero no toca
+cómo se actualiza el acumulado). → **HU-87**, agregada a este Sprint 17.
+
+## Nada más ambiguo ni contradictorio en este documento
 
 A diferencia del Word de Operaciones/Comercial, acá no hay ningún pedido que
 choque con un ADR o invariante, ni redacción ambigua — son todas columnas

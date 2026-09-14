@@ -124,9 +124,12 @@ código:
    redundante con la orden (altura/velocidad/ancho)? (b) ¿la ventana horaria
    pasa de contrato a orden, cambiando su cardinalidad, o es solo una
    sugerencia de dónde mostrarla en pantalla?
-2. **"TRABAJO (EMILIMINAR)"** — probable error de tipeo de "ELIMINAR", no se
-   entiende si se refiere al encabezado de la sección, a un campo puntual, o
-   a toda la pantalla de Trabajos.
+2. ~~**"TRABAJO (EMILIMINAR)"**~~ — **resuelto, no era un pedido.** Al leer
+   el PDF (en vez del texto plano) se ve que es un encabezado de sección en
+   **amarillo**, el mismo color que usa el dueño para "CONTRATOS:", "MODULO
+   OPERACIONES" y "MODULO COMERCIAL" — es decir, es una nota personal al
+   redactar el documento (recordatorio de revisar/borrar ese título antes de
+   mandarlo), no rojo ni un pedido funcional. No genera tarea ni aclaración.
 3. **"Cambiar número de aplicación a Número de aplicaciones"** — puede ser
    solo el plural del label de `ordenes_aplicacion.nro_aplicacion`, o puede
    estar confundiéndose con `contratos.aplicaciones_previstas` (el total

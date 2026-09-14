@@ -373,15 +373,18 @@ base, tarifa por hectárea, activo) ya estaba completo y no generó HU.*
 | HU-84 | Como **encargado**, quiero la ficha completa del vehículo (marca, modelo, año, combustible, 4x4, kilometraje inicial y actual) y poder pausarlo, para llevar la flota igual que los drones | `man_vehiculos` gana `marca`/`modelo`/`anio`/`combustible` (gasolina/diesel)/`es_4x4`/`kilometraje_inicial`/`kilometraje_actual`; `EstadoVehiculo` suma el caso `Pausa` (hoy `activo`/`taller`/`de_baja`) | 2,0 d |
 | HU-85 | Como **encargado**, quiero cargar la coordenada de una base además de su ubicación en texto, para ubicarla en el mapa | `latitud`/`longitud` (DECIMAL) en `per_bases`, mismo patrón de validación de rango que HU-76 (Sprint 16) | 0,5 d |
 | HU-86 | Como **encargado**, quiero registrar las horas inicial y actual de un generador en vez de un solo valor cargado a mano, para saber cuánto acumuló desde que entró en la flota | `man_generadores` reemplaza `horas_uso` único por `horas_inicial`/`horas_actual` (ambos siguen siendo carga manual — un generador no vuela, no hay de dónde derivarlo); migración de datos existentes: `horas_inicial = horas_actual = horas_uso` | 1,0 d |
+| HU-87 | Como **dueño**, quiero que el ciclo acumulado de una batería se incremente solo al cerrarse cada recarga que la usó, y que nunca se pueda bajar a mano sin dejar rastro, para que el dato del reporte (HU-80) sea confiable — "como el odómetro de un auto" (nota textual del dueño) | Al cerrarse una `Recarga` correlacionada por identificador con una `man_baterias`, el ciclo se incrementa automáticamente (evento de dominio desde Operaciones, consumido por Mantenimiento); `ActualizarBateria` deja de aceptar un valor menor al actual salvo como corrección explícita y auditada; test de dos recargas de la misma batería incrementando el contador dos veces, y test de que bajar el valor a mano sin ese mecanismo se rechaza. Depende de HU-83 (`ciclos_inicial` ya integrado) | 2,5 d |
 
-**Total: 7,0 d · sin pantallas nuevas de menú (todas amplían fichas existentes)**
+**Total: 9,5 d · sin pantallas nuevas de menú (todas amplían fichas existentes)**
 
-**Orden y dependencias.** Ninguna depende de otra dentro de este sprint. HU-81
-conviene antes que HU-79 (Sprint 16) si ambas quedan en la misma vuelta del
-ciclo, porque HU-79 puede aprovechar `capacidad_kg` para validar el máximo por
-vuelo — no es bloqueante, HU-79 ya tiene su propio criterio sin ese dato.
-Ninguna es crítica: todas son columnas nuevas sobre catálogos que ya existen,
-sin motor de sync ni guarda de negocio de por medio.
+**Orden y dependencias.** HU-81 conviene antes que HU-79 (Sprint 16) si ambas
+quedan en la misma vuelta del ciclo, porque HU-79 puede aprovechar
+`capacidad_kg` para validar el máximo por vuelo — no es bloqueante, HU-79 ya
+tiene su propio criterio sin ese dato. HU-87 depende de HU-83 (mismo campo).
+El resto es independiente entre sí. **HU-87 es crítica** (toca el motor de
+sync/eventos de dominio entre Operaciones y Mantenimiento, y es la garantía
+de auditabilidad de un dato que va a un reporte); el resto de este sprint no
+lo es: son columnas nuevas sobre catálogos que ya existen.
 
 ---
 
