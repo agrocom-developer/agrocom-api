@@ -27,6 +27,7 @@ use Carbon\CarbonImmutable;
  * @property int $cliente_id
  * @property string $codigo
  * @property string|null $nombre
+ * @property string $estacion
  * @property CarbonImmutable $fecha_inicio
  * @property CarbonImmutable $fecha_fin
  * @property EstadoCampania $estado
@@ -42,6 +43,7 @@ class Campania extends ModeloDominio
         'cliente_id',
         'codigo',
         'nombre',
+        'estacion',
         'fecha_inicio',
         'fecha_fin',
         'estado',
@@ -55,5 +57,16 @@ class Campania extends ModeloDominio
             'fecha_fin' => 'immutable_date',
             'estado' => EstadoCampania::class,
         ];
+    }
+
+    /**
+     * "Activa"/"Inactiva" (HU-77, tarea 93): etiqueta de presentación pedida
+     * por el dueño para el panel — nunca una columna propia. Deriva de
+     * `estado`: `planificada`/`abierta` son actividad en curso o por venir,
+     * `cerrada` es terminal (ADR 0015 punto 1) y no vuelve atrás.
+     */
+    public function esActiva(): bool
+    {
+        return $this->estado !== EstadoCampania::Cerrada;
     }
 }

@@ -23,8 +23,19 @@ use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
  * un vehículo desde el panel es una mutación de negocio con autor y momento
  * auditables, mismo criterio que `Dron` en Operaciones.
  *
+ * `marca`/`modelo`/`anio`/`combustible`/`es_4x4`/`kilometraje_inicial`/
+ * `kilometraje_actual` (HU-84, tarea 99): ver docblock de
+ * `database/migrations/2026_09_14_100013_add_ficha_completa_y_pausa_a_man_vehiculos_table.php`.
+ *
  * @property int $id
  * @property string $identificador
+ * @property string|null $marca
+ * @property string|null $modelo
+ * @property int|null $anio
+ * @property string|null $combustible
+ * @property bool $es_4x4
+ * @property string|null $kilometraje_inicial
+ * @property string|null $kilometraje_actual
  * @property int|null $base_id
  * @property string $estado
  */
@@ -37,7 +48,25 @@ class Vehiculo extends ModeloDominio
     /** @var list<string> */
     protected $fillable = [
         'identificador',
+        'marca',
+        'modelo',
+        'anio',
+        'combustible',
+        'es_4x4',
+        'kilometraje_inicial',
+        'kilometraje_actual',
         'base_id',
         'estado',
     ];
+
+    /** @return array<string, string> */
+    protected function casts(): array
+    {
+        return [
+            'anio' => 'integer',
+            'es_4x4' => 'boolean',
+            'kilometraje_inicial' => 'decimal:2',
+            'kilometraje_actual' => 'decimal:2',
+        ];
+    }
 }

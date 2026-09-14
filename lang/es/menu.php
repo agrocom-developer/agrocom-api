@@ -52,7 +52,7 @@ return [
 
     'recursos' => [
         'label' => 'Recursos',
-        'descripcion' => 'Drones, baterías, vehículos, generadores, bases, personal y equipos de trabajo.',
+        'descripcion' => 'Drones, baterías, vehículos, generadores, bases, personal, equipos de trabajo y fichas de inventario de dron.',
         'items' => [
             'drones' => 'Drones',
             'baterias' => 'Baterías',
@@ -61,6 +61,7 @@ return [
             'bases' => 'Bases',
             'personal' => 'Personal',
             'equipos_trabajo' => 'Equipos de trabajo',
+            'fichas_dron' => 'Fichas de dron',
         ],
     ],
 

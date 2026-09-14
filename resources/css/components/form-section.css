@@ -18,6 +18,17 @@
     border-bottom: 1px solid var(--ag-color-border);
 }
 
+/* Es también el grid de una FILA REPETIBLE (contactos de cliente, ventanas
+   de contrato, lotes de campo/siembra): esas filas viven un nivel más abajo
+   del `.ag-form-section__body` de la tarjeta, envueltas en su propio
+   `ag-form-section__field--full`, y necesitan el MISMO reparto en dos
+   columnas — así que reusan esta clase por composición en vez de que cada
+   página redeclare su propio `grid-template-columns` con el mismo valor.
+   Hasta el 14/9/2026 cuatro páginas lo hacían (`clientes`, `contratos`,
+   `siembra`, `campos`), cada una con su propio piso en rem, y cuando este
+   grid ganó el techo en 50% (PR #180) ninguna de las cuatro copias se
+   enteró — ver §8 regla 12 de docs/diseno/sistema_diseno_panel.md. Con
+   compuerta automática en tests/Unit/PulidoNavegacionPanelTest.php. */
 .ag-form-section__body {
     display: grid;
     /* El techo en 50% cap las columnas en 2 aun en pantallas anchas: sin él,

@@ -16,6 +16,10 @@ use Illuminate\Validation\Rule;
  * PARCIAL (`com_clientes_nit_unico`, solo entre clientes activos), y la
  * regla `unique` de Laravel no lo replica sola sin quedar frágil ante altas y
  * bajas lógicas — la violación se atrapa en `CrearCliente` y se traduce ahí.
+ *
+ * `logo` (HU-75, tarea 91): mismos límites que `ActualizarDatosEmpresaRequest`
+ * (ADR 0019) — `mimes:png,svg` en vez de `image` (que excluye SVG), `max:2048`
+ * = 2 MB. Sin `logo_eliminar`: en alta no hay logo previo que eliminar.
  */
 final class CrearClienteRequest extends FormRequest
 {
@@ -26,6 +30,8 @@ final class CrearClienteRequest extends FormRequest
             'razon_social' => ['required', 'string', 'max:200'],
             'nit' => ['nullable', 'string', 'max:20'],
             'tipo_persona' => ['required', Rule::enum(TipoPersonaCliente::class)],
+            'ubicacion_oficina' => ['nullable', 'string', 'max:255'],
+            'logo' => ['nullable', 'file', 'mimes:png,svg', 'max:2048'],
             'contactos' => ['required', 'array', 'min:1'],
             'contactos.*.tipo' => ['required', Rule::enum(TipoContactoCliente::class)],
             'contactos.*.nombre' => ['required', 'string', 'max:150'],
@@ -41,6 +47,8 @@ final class CrearClienteRequest extends FormRequest
         return [
             'tipo_persona.required' => 'Seleccioná si el cliente es persona física o jurídica.',
             'tipo_persona.enum' => 'El tipo de persona no es válido.',
+            'logo.mimes' => __('comercial.clientes.error_logo_tipo'),
+            'logo.max' => __('comercial.clientes.error_logo_tamano'),
             'contactos.required' => 'Agregá al menos un contacto.',
             'contactos.min' => 'Agregá al menos un contacto.',
             'contactos.*.tipo.enum' => 'El tipo de contacto no es válido.',

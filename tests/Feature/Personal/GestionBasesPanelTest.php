@@ -66,6 +66,103 @@ it('da de alta una base con nombre y ubicación', function () {
     expect($base->ubicacion)->toBe('Km 12, ruta a Montero');
 });
 
+it('da de alta una base con coordenada (HU-85)', function () {
+    [$encargado, $idRol] = usuarioConRolParaBases('encargado', 'encargado_operaciones');
+    entrarAlPanelParaBases($encargado, $idRol);
+
+    $this->post(route('panel.bases.store'), payloadBase([
+        'latitud' => '-17.123456',
+        'longitud' => '-63.123456',
+    ]))->assertRedirect(route('panel.bases.index'));
+
+    $base = PerBase::query()->where('nombre', 'Base Norte')->sole();
+
+    expect($base->latitud)->toBe('-17.123456')
+        ->and($base->longitud)->toBe('-63.123456');
+});
+
+it('edita la coordenada de una base', function () {
+    [$encargado, $idRol] = usuarioConRolParaBases('encargado', 'encargado_operaciones');
+    entrarAlPanelParaBases($encargado, $idRol);
+
+    $this->post(route('panel.bases.store'), payloadBase());
+    $base = PerBase::query()->sole();
+
+    $this->put(route('panel.bases.update', $base), payloadBase([
+        'latitud' => '-18.5',
+        'longitud' => '-59.75',
+    ]))->assertRedirect(route('panel.bases.index'));
+
+    $base->refresh();
+    expect($base->latitud)->toBe('-18.500000')
+        ->and($base->longitud)->toBe('-59.750000');
+});
+
+it('rechaza una latitud fuera de rango', function () {
+    [$encargado, $idRol] = usuarioConRolParaBases('encargado', 'encargado_operaciones');
+    entrarAlPanelParaBases($encargado, $idRol);
+
+    $this->post(route('panel.bases.store'), payloadBase([
+        'latitud' => '-95',
+        'longitud' => '-63',
+    ]))->assertSessionHasErrors('latitud');
+
+    expect(PerBase::query()->count())->toBe(0);
+});
+
+it('rechaza una longitud fuera de rango', function () {
+    [$encargado, $idRol] = usuarioConRolParaBases('encargado', 'encargado_operaciones');
+    entrarAlPanelParaBases($encargado, $idRol);
+
+    $this->post(route('panel.bases.store'), payloadBase([
+        'latitud' => '-17',
+        'longitud' => '-185',
+    ]))->assertSessionHasErrors('longitud');
+
+    expect(PerBase::query()->count())->toBe(0);
+});
+
+it('rechaza latitud sin longitud', function () {
+    [$encargado, $idRol] = usuarioConRolParaBases('encargado', 'encargado_operaciones');
+    entrarAlPanelParaBases($encargado, $idRol);
+
+    $this->post(route('panel.bases.store'), payloadBase([
+        'latitud' => '-17.123456',
+    ]))->assertSessionHasErrors('longitud');
+
+    expect(PerBase::query()->count())->toBe(0);
+});
+
+it('rechaza longitud sin latitud', function () {
+    [$encargado, $idRol] = usuarioConRolParaBases('encargado', 'encargado_operaciones');
+    entrarAlPanelParaBases($encargado, $idRol);
+
+    $this->post(route('panel.bases.store'), payloadBase([
+        'longitud' => '-63.123456',
+    ]))->assertSessionHasErrors('latitud');
+
+    expect(PerBase::query()->count())->toBe(0);
+});
+
+it('acepta una base sin coordenada, en alta y en edición (regresión HU-85)', function () {
+    [$encargado, $idRol] = usuarioConRolParaBases('encargado', 'encargado_operaciones');
+    entrarAlPanelParaBases($encargado, $idRol);
+
+    $this->post(route('panel.bases.store'), payloadBase())
+        ->assertRedirect(route('panel.bases.index'));
+
+    $base = PerBase::query()->sole();
+    expect($base->latitud)->toBeNull()
+        ->and($base->longitud)->toBeNull();
+
+    $this->put(route('panel.bases.update', $base), payloadBase(['nombre' => 'Base Norte B']))
+        ->assertRedirect(route('panel.bases.index'));
+
+    $base->refresh();
+    expect($base->latitud)->toBeNull()
+        ->and($base->longitud)->toBeNull();
+});
+
 it('registra en bitácora el alta, la edición y la baja de una base', function () {
     [$encargado, $idRol] = usuarioConRolParaBases('encargado', 'encargado_operaciones');
     entrarAlPanelParaBases($encargado, $idRol);

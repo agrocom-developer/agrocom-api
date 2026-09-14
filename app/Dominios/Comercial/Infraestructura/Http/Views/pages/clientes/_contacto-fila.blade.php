@@ -17,7 +17,7 @@
       página (Blade comparte variables con `@include`) — la vista no conoce
       el enum, se lo entrega el controlador.
 --}}
-<div class="ag-clientes-form__contacto" data-ag-contacto-fila>
+<div class="ag-form-section__body ag-clientes-form__contacto" data-ag-contacto-fila>
     @if (! empty($contacto['id']))
         <input type="hidden" name="contactos[{{ $indice }}][id]" value="{{ $contacto['id'] }}">
     @endif

@@ -228,6 +228,17 @@ class SecMenuSeeder extends Seeder
         // `bases`/`personal` abajo (ADR 0011, extensión 26/8/2026, punto 3).
         $this->item($recursos, 'recursos', 'equipos_trabajo', 'groups', 7, ruta: 'panel.equipos-trabajo.index', codigoPermiso: 'personal.equipo_trabajo.ver');
 
+        // HU-82 (tarea 97): ficha de inventario del dron (serie, chasis,
+        // versión de software, región, serie del control, accesorios). ABM
+        // mínimo nuevo, sin placeholder previo, mismo criterio que
+        // `generadores`/`equipos_trabajo` arriba. El backend vive en
+        // `Mantenimiento` (`man_drones`) aunque el ítem quede agrupado bajo
+        // "Recursos": misma agrupación de layout que el resto de este bloque
+        // (ADR 0011, extensión 26/8/2026, punto 3). Icono `memory`, distinto
+        // del `airplanemode_active` de `drones` (el catálogo operativo) para
+        // no confundir los dos ítems en el sidebar.
+        $this->item($recursos, 'recursos', 'fichas_dron', 'memory', 8, ruta: 'panel.fichas-dron.index', codigoPermiso: 'mantenimiento.ficha_dron.ver');
+
         // HU-26 (tarea 37): administración de personas y bases — activa los
         // dos ítems que ya estaban sembrados como "botón sin link" (ver
         // docblock de `item()`).

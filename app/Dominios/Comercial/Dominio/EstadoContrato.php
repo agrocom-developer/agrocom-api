@@ -14,4 +14,5 @@ enum EstadoContrato: string
     case Vigente = 'vigente';
     case Finalizado = 'finalizado';
     case Cancelado = 'cancelado';
+    case Pausado = 'pausado';
 }

@@ -68,6 +68,8 @@ final class BasesController
         $crearBase->ejecutar(
             (string) $datos['nombre'],
             $this->cadenaONull($datos['ubicacion'] ?? null),
+            $this->cadenaONull($datos['latitud'] ?? null),
+            $this->cadenaONull($datos['longitud'] ?? null),
         );
 
         return redirect()
@@ -95,6 +97,8 @@ final class BasesController
             $base,
             (string) $datos['nombre'],
             $this->cadenaONull($datos['ubicacion'] ?? null),
+            $this->cadenaONull($datos['latitud'] ?? null),
+            $this->cadenaONull($datos['longitud'] ?? null),
         );
 
         return redirect()

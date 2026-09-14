@@ -41,7 +41,7 @@
    Reportado por el dueño sobre el panel andando (9/9/2026). El resto de los
    listados del panel ya declaraba tantas columnas como celdas.
 
-   Los seis tracks van en `fr`, ninguno en `auto`: el encabezado y las filas
+   Los siete tracks van en `fr`, ninguno en `auto`: el encabezado y las filas
    son grids HERMANOS, no uno solo, así que un track `auto` lo resuelve cada
    grid contra su propio contenido — con "VIGENCIA" arriba y una fecha
    abajo, la columna medía distinto en cada fila y los rótulos quedaban
@@ -50,7 +50,7 @@
 .ag-campanias__head,
 .ag-campanias__fila {
     display: grid;
-    grid-template-columns: 1.7fr 0.75fr 0.7fr 1.5fr 0.7fr 1.7fr;
+    grid-template-columns: 1.7fr 0.75fr 0.7fr 1.5fr 0.7fr 0.7fr 1.7fr;
     gap: var(--ag-space-4);
     align-items: center;
     padding: var(--ag-space-3) var(--ag-space-4);

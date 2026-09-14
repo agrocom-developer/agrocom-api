@@ -8,7 +8,8 @@ use Illuminate\Database\QueryException;
 
 /**
  * Alta de un dron (HU-27, tarea 36): identificador, modelo (texto libre) y
- * capacidad de carga en litros (30/50/60, CHECK de base de datos).
+ * capacidad de carga en litros (30/50/60, CHECK de base de datos). Capacidad
+ * en kilos (HU-81, tarea 96) sin catálogo cerrado, ver `CrearDronRequest`.
  */
 final class CrearDron
 {
@@ -16,12 +17,13 @@ final class CrearDron
      * @throws DronDuplicado si el identificador ya pertenece a otro dron
      *                       activo (índice parcial `ope_drones_identificador_unico`).
      */
-    public function ejecutar(string $identificador, ?string $modelo, ?string $capacidadL): Dron
+    public function ejecutar(string $identificador, ?string $modelo, ?string $capacidadL, ?string $capacidadKg): Dron
     {
         $dron = new Dron([
             'identificador' => $identificador,
             'modelo' => $modelo,
             'capacidad_l' => $capacidadL,
+            'capacidad_kg' => $capacidadKg,
         ]);
 
         try {

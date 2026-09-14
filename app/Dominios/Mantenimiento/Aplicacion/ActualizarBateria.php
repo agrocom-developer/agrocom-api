@@ -14,6 +14,11 @@ use Illuminate\Database\QueryException;
  * dato que dispara la alerta de retiro (ver `ListarBaterias`). Mismo
  * criterio que `ActualizarVehiculo` para la traducción de la violación del
  * índice único parcial.
+ *
+ * `ciclos_inicial` (HU-83, tarea 98) NO se recibe acá a propósito: es
+ * inmutable después del alta (fijado por `CrearBateria`), ese es el
+ * criterio de aceptación central de la HU. `ActualizarBateriaRequest`
+ * tampoco lo valida, así que ni siquiera llega en `$datos`.
  */
 final class ActualizarBateria
 {

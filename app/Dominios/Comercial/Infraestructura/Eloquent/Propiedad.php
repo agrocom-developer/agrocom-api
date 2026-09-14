@@ -22,6 +22,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $cliente_id
  * @property string $nombre
  * @property string|null $ubicacion
+ * @property string|null $departamento
+ * @property string|null $municipio
+ * @property string|null $localidad
+ * @property string|null $latitud
+ * @property string|null $longitud
  */
 class Propiedad extends ModeloDominio
 {
@@ -34,7 +39,21 @@ class Propiedad extends ModeloDominio
         'cliente_id',
         'nombre',
         'ubicacion',
+        'departamento',
+        'municipio',
+        'localidad',
+        'latitud',
+        'longitud',
     ];
+
+    /** @return array<string, string> */
+    protected function casts(): array
+    {
+        return [
+            'latitud' => 'decimal:6',
+            'longitud' => 'decimal:6',
+        ];
+    }
 
     /** @return BelongsTo<Cliente, $this> */
     public function cliente(): BelongsTo

@@ -128,6 +128,7 @@
                                 'vigente' => 'success',
                                 'finalizado' => 'info',
                                 'cancelado' => 'danger',
+                                'pausado' => 'warning',
                             ];
                             $estadoValor = $contrato->estado->value;
                         @endphp
@@ -170,21 +171,16 @@
                                 @endpuede
 
                                 @puede('comercial.contrato.cambiar_estado')
-                                    @if ($estadoValor === 'borrador' || $estadoValor === 'vigente')
-                                        @php
-                                            $siguienteEstado = $estadoValor === 'borrador' ? 'vigente' : 'finalizado';
-                                            $etiquetaSiguiente = $estadoValor === 'borrador' ? 'accion_activar' : 'accion_finalizar';
-                                            $confirmacionSiguiente = $estadoValor === 'borrador' ? 'confirmar_activar' : 'confirmar_finalizar';
-                                        @endphp
+                                    @if ($estadoValor === 'borrador')
                                         <form
                                             method="POST"
                                             action="{{ route('panel.contratos.cambiar-estado', $contrato) }}"
-                                            onsubmit="return confirm('{{ __('comercial.contratos.'.$confirmacionSiguiente) }}')"
+                                            onsubmit="return confirm('{{ __('comercial.contratos.confirmar_activar') }}')"
                                         >
                                             @csrf
-                                            <input type="hidden" name="estado" value="{{ $siguienteEstado }}">
+                                            <input type="hidden" name="estado" value="vigente">
                                             <x-atoms.button type="submit" variant="outline" size="sm" icon="check_circle">
-                                                {{ __('comercial.contratos.'.$etiquetaSiguiente) }}
+                                                {{ __('comercial.contratos.accion_activar') }}
                                             </x-atoms.button>
                                         </form>
 
@@ -197,6 +193,54 @@
                                             <input type="hidden" name="estado" value="cancelado">
                                             <x-atoms.button type="submit" variant="danger-outline" size="sm" icon="cancel">
                                                 {{ __('comercial.contratos.accion_cancelar') }}
+                                            </x-atoms.button>
+                                        </form>
+                                    @elseif ($estadoValor === 'vigente')
+                                        <form
+                                            method="POST"
+                                            action="{{ route('panel.contratos.cambiar-estado', $contrato) }}"
+                                            onsubmit="return confirm('{{ __('comercial.contratos.confirmar_finalizar') }}')"
+                                        >
+                                            @csrf
+                                            <input type="hidden" name="estado" value="finalizado">
+                                            <x-atoms.button type="submit" variant="outline" size="sm" icon="check_circle">
+                                                {{ __('comercial.contratos.accion_finalizar') }}
+                                            </x-atoms.button>
+                                        </form>
+
+                                        <form
+                                            method="POST"
+                                            action="{{ route('panel.contratos.cambiar-estado', $contrato) }}"
+                                            onsubmit="return confirm('{{ __('comercial.contratos.confirmar_pausar') }}')"
+                                        >
+                                            @csrf
+                                            <input type="hidden" name="estado" value="pausado">
+                                            <x-atoms.button type="submit" variant="warning-outline" size="sm" icon="pause_circle">
+                                                {{ __('comercial.contratos.accion_pausar') }}
+                                            </x-atoms.button>
+                                        </form>
+
+                                        <form
+                                            method="POST"
+                                            action="{{ route('panel.contratos.cambiar-estado', $contrato) }}"
+                                            onsubmit="return confirm('{{ __('comercial.contratos.confirmar_cancelar') }}')"
+                                        >
+                                            @csrf
+                                            <input type="hidden" name="estado" value="cancelado">
+                                            <x-atoms.button type="submit" variant="danger-outline" size="sm" icon="cancel">
+                                                {{ __('comercial.contratos.accion_cancelar') }}
+                                            </x-atoms.button>
+                                        </form>
+                                    @elseif ($estadoValor === 'pausado')
+                                        <form
+                                            method="POST"
+                                            action="{{ route('panel.contratos.cambiar-estado', $contrato) }}"
+                                            onsubmit="return confirm('{{ __('comercial.contratos.confirmar_reanudar') }}')"
+                                        >
+                                            @csrf
+                                            <input type="hidden" name="estado" value="vigente">
+                                            <x-atoms.button type="submit" variant="outline" size="sm" icon="play_circle">
+                                                {{ __('comercial.contratos.accion_reanudar') }}
                                             </x-atoms.button>
                                         </form>
                                     @endif

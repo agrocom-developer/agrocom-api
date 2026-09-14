@@ -20,6 +20,8 @@
     $accion = $esEdicion ? route('panel.bases.update', $base) : route('panel.bases.store');
     $nombre = old('nombre', $base?->nombre ?? '');
     $ubicacion = old('ubicacion', $base?->ubicacion ?? '');
+    $latitud = old('latitud', $base?->latitud ?? '');
+    $longitud = old('longitud', $base?->longitud ?? '');
 @endphp
 
 <form method="POST" action="{{ $accion }}" class="ag-bases-form" novalidate data-ag-bases-form>
@@ -41,7 +43,7 @@
 
     <x-molecules.form-section
         :title="__('personal.bases.seccion_datos')"
-        :count="__('personal.bases.campos_contador', ['cantidad' => 2])"
+        :count="__('personal.bases.campos_contador', ['cantidad' => 4])"
     >
         <x-atoms.input
             type="text"
@@ -58,6 +60,28 @@
             label="{{ __('personal.bases.campo_ubicacion') }}"
             value="{{ $ubicacion }}"
             error="{{ $errors->first('ubicacion') }}"
+        />
+
+        <x-atoms.input
+            type="number"
+            name="latitud"
+            label="{{ __('personal.bases.campo_latitud') }}"
+            value="{{ $latitud }}"
+            step="0.000001"
+            min="-90"
+            max="90"
+            error="{{ $errors->first('latitud') }}"
+        />
+
+        <x-atoms.input
+            type="number"
+            name="longitud"
+            label="{{ __('personal.bases.campo_longitud') }}"
+            value="{{ $longitud }}"
+            step="0.000001"
+            min="-180"
+            max="180"
+            error="{{ $errors->first('longitud') }}"
         />
     </x-molecules.form-section>
 

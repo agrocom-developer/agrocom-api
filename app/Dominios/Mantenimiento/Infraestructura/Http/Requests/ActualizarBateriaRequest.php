@@ -9,6 +9,11 @@ use Illuminate\Validation\Rule;
 /**
  * `PUT /panel/baterias/{bateria}` (HU-39, tarea 51). Mismas reglas que
  * `CrearBateriaRequest` — ver ese docblock.
+ *
+ * A propósito NO valida `ciclos_inicial` (HU-83, tarea 98): es inmutable
+ * después del alta, así que aunque el formulario lo muestre de solo
+ * lectura, si algo lo mandara igual no llegaría a `$datos` en el
+ * controlador — `ActualizarBateria` no lo recibe.
  */
 final class ActualizarBateriaRequest extends FormRequest
 {

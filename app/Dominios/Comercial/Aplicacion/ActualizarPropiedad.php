@@ -15,11 +15,25 @@ final class ActualizarPropiedad
      * @throws PropiedadDuplicada si el nombre ya pertenece a otra propiedad
      *                            activa del mismo cliente.
      */
-    public function ejecutar(Propiedad $propiedad, int $clienteId, string $nombre, ?string $ubicacion): Propiedad
-    {
+    public function ejecutar(
+        Propiedad $propiedad,
+        int $clienteId,
+        string $nombre,
+        ?string $ubicacion,
+        ?string $departamento,
+        ?string $municipio,
+        ?string $localidad,
+        ?string $latitud,
+        ?string $longitud,
+    ): Propiedad {
         $propiedad->cliente_id = $clienteId;
         $propiedad->nombre = $nombre;
         $propiedad->ubicacion = $ubicacion;
+        $propiedad->departamento = $departamento;
+        $propiedad->municipio = $municipio;
+        $propiedad->localidad = $localidad;
+        $propiedad->latitud = $latitud;
+        $propiedad->longitud = $longitud;
 
         try {
             $propiedad->save();

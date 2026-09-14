@@ -23,6 +23,11 @@ final class ActualizarPropiedadRequest extends FormRequest
             ],
             'nombre' => ['required', 'string', 'max:150'],
             'ubicacion' => ['nullable', 'string', 'max:255'],
+            'departamento' => ['nullable', 'string', 'max:100'],
+            'municipio' => ['nullable', 'string', 'max:100'],
+            'localidad' => ['nullable', 'string', 'max:150'],
+            'latitud' => ['nullable', 'required_with:longitud', 'numeric', 'between:-90,90'],
+            'longitud' => ['nullable', 'required_with:latitud', 'numeric', 'between:-180,180'],
         ];
     }
 
@@ -32,6 +37,8 @@ final class ActualizarPropiedadRequest extends FormRequest
         return [
             'cliente_id.required' => 'Seleccioná un cliente.',
             'cliente_id.exists' => 'El cliente seleccionado no es válido.',
+            'latitud.required_with' => __('comercial.propiedades.error_coordenada_incompleta'),
+            'longitud.required_with' => __('comercial.propiedades.error_coordenada_incompleta'),
         ];
     }
 }

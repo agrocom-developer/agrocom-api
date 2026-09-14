@@ -61,6 +61,7 @@ function payloadCampania(int $clienteId, array $overrides = []): array
         'cliente_id' => $clienteId,
         'codigo' => '2025-2026',
         'nombre' => 'Campaña 2025-2026',
+        'estacion' => 'verano',
         'fecha_inicio' => '2025-07-01',
         'fecha_fin' => '2026-06-30',
     ], $overrides);
@@ -79,6 +80,51 @@ it('da de alta una campaña en estado planificada, del cliente elegido', functio
     expect($campania->estado)->toBe(EstadoCampania::Planificada)
         ->and($campania->cliente_id)->toBe($cliente->id)
         ->and($campania->nombre)->toBe('Campaña 2025-2026');
+});
+
+it('autogenera el nombre a partir de la estación y los años cuando no se especifica', function () {
+    $cliente = clienteParaCampanias();
+    [$encargado, $idRol] = usuarioConRolParaCampanias('encargado', 'encargado_operaciones');
+    entrarAlPanelParaCampanias($encargado, $idRol);
+
+    $this->post(route('panel.campanias.store'), payloadCampania($cliente->id, [
+        'nombre' => null,
+        'estacion' => 'verano',
+        'fecha_inicio' => '2025-07-01',
+        'fecha_fin' => '2026-06-30',
+    ]))->assertRedirect(route('panel.campanias.index'));
+
+    $campania = Campania::query()->where('codigo', '2025-2026')->sole();
+
+    expect($campania->nombre)->toBe('Verano/2025/2026')
+        ->and($campania->estacion)->toBe('verano');
+});
+
+it('rechaza una estación fuera del catálogo cerrado invierno/verano', function () {
+    $cliente = clienteParaCampanias();
+    [$encargado, $idRol] = usuarioConRolParaCampanias('encargado', 'encargado_operaciones');
+    entrarAlPanelParaCampanias($encargado, $idRol);
+
+    $this->post(route('panel.campanias.store'), payloadCampania($cliente->id, ['estacion' => 'otoño']))
+        ->assertSessionHasErrors('estacion');
+
+    expect(Campania::query()->where('codigo', '2025-2026')->exists())->toBeFalse();
+});
+
+it('editar una campaña sin tocar el nombre preserva el que ya tenía, sin vaciarlo ni regenerarlo', function () {
+    $cliente = clienteParaCampanias();
+    [$encargado, $idRol] = usuarioConRolParaCampanias('encargado', 'encargado_operaciones');
+    entrarAlPanelParaCampanias($encargado, $idRol);
+
+    $this->post(route('panel.campanias.store'), payloadCampania($cliente->id, ['nombre' => 'Nombre a mano']))
+        ->assertRedirect(route('panel.campanias.index'));
+
+    $campania = Campania::query()->where('codigo', '2025-2026')->sole();
+
+    $this->put(route('panel.campanias.update', $campania), payloadCampania($cliente->id, ['nombre' => null]))
+        ->assertRedirect(route('panel.campanias.index'));
+
+    expect($campania->fresh()->nombre)->toBe('Nombre a mano');
 });
 
 it('rechaza un código de campaña duplicado entre filas activas del mismo cliente', function () {
@@ -297,6 +343,43 @@ it('renderiza el listado y los formularios de alta/edición', function () {
     $this->get(route('panel.campanias.index'))->assertOk()->assertSee('2025-2026')->assertSee($cliente->razon_social);
     $this->get(route('panel.campanias.create'))->assertOk()->assertSee($cliente->razon_social);
     $this->get(route('panel.campanias.edit', $campania))->assertOk()->assertSee('2025-2026');
+});
+
+it('el formulario ofrece el selector de estación y el listado muestra Activa/Inactiva', function () {
+    $cliente = clienteParaCampanias();
+    [$dueno, $idRol] = usuarioConRolParaCampanias('dueno', 'dueno');
+    entrarAlPanelParaCampanias($dueno, $idRol);
+
+    $abierta = Campania::query()->create([
+        'cliente_id' => $cliente->id,
+        'codigo' => '2025-2026',
+        'estacion' => 'verano',
+        'fecha_inicio' => '2025-07-01',
+        'fecha_fin' => '2026-06-30',
+        'estado' => 'abierta',
+    ]);
+    Campania::query()->create([
+        'cliente_id' => $cliente->id,
+        'codigo' => '2023-2024',
+        'estacion' => 'invierno',
+        'fecha_inicio' => '2023-07-01',
+        'fecha_fin' => '2024-06-30',
+        'estado' => 'cerrada',
+    ]);
+
+    $this->get(route('panel.campanias.create'))
+        ->assertOk()
+        ->assertSee(__('campania.campanias.campo_estacion'))
+        ->assertSee(__('campania.campania.estacion.invierno'))
+        ->assertSee(__('campania.campania.estacion.verano'));
+
+    $this->get(route('panel.campanias.index'))
+        ->assertOk()
+        ->assertSeeInOrder([__('campania.campanias.actividad_activa'), __('campania.campanias.actividad_inactiva')]);
+
+    $this->get(route('panel.campanias.edit', $abierta))
+        ->assertOk()
+        ->assertSee(__('campania.campanias.actividad_activa'));
 });
 
 it('filtra el listado por cliente', function () {

@@ -338,6 +338,15 @@ class SeguridadSeeder extends Seeder
         'mantenimiento.bateria.crear' => 'Dar de alta una batería',
         'mantenimiento.bateria.editar' => 'Editar los datos de una batería, incluidos sus ciclos acumulados',
         'mantenimiento.bateria.eliminar' => 'Dar de baja (lógica) una batería',
+        // HU-82 (tarea 97): "como encargado, quiero llevar el activo completo
+        // del dron (serie, chasis, versión de software, región, serie del
+        // control, accesorios), para tener el inventario completo". ABM
+        // nuevo sin máquina de estados. Grano fino, mismo criterio que
+        // `mantenimiento.bateria.*`.
+        'mantenimiento.ficha_dron.ver' => 'Ver el listado de fichas de inventario de dron',
+        'mantenimiento.ficha_dron.crear' => 'Dar de alta una ficha de inventario de dron',
+        'mantenimiento.ficha_dron.editar' => 'Editar los datos de una ficha de inventario de dron',
+        'mantenimiento.ficha_dron.eliminar' => 'Dar de baja (lógica) una ficha de inventario de dron',
         // HU-36 (tarea 52): "como encargado, quiero llevar stock de
         // repuestos por base con alerta de mínimo, para reponer antes de
         // quedarme sin" — cierra Sprint 11 y abre el módulo `Inventario`
@@ -610,6 +619,13 @@ class SeguridadSeeder extends Seeder
         'mantenimiento.bateria.crear',
         'mantenimiento.bateria.editar',
         'mantenimiento.bateria.eliminar',
+        // HU-82 (tarea 97): "como encargado, quiero llevar el activo
+        // completo del dron" — la HU lo dice literal, mismo criterio que el
+        // resto de este rol arriba.
+        'mantenimiento.ficha_dron.ver',
+        'mantenimiento.ficha_dron.crear',
+        'mantenimiento.ficha_dron.editar',
+        'mantenimiento.ficha_dron.eliminar',
         // HU-36 (tarea 52): "como encargado, quiero llevar stock de
         // repuestos por base con alerta de mínimo" — la HU lo dice literal,
         // mismo criterio que clientes, contratos, campos, drones, bases,

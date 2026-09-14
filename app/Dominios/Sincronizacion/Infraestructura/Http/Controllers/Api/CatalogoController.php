@@ -15,7 +15,9 @@ use OpenApi\Attributes as OA;
     name: 'Sincronizacion',
     description: 'Pull de catálogo con cursor para la app de campo (espec §2.1, punto 6). '
         .'TE-06 parcial: órdenes, lotes, personas y trabajos asignados desde el panel (HU-70) — '
-        .'recetas y productos quedan fuera hasta que exista el módulo Mezclas (ver docs/gestion/cola_tareas.md).',
+        .'recetas y productos de mezcla quedan fuera a propósito (ver docblock de '
+        .'`ObtenerCatalogoDesdeCursor`, HU-78/tarea 94): el piloto transcribe el producto por '
+        .'nombre en el propio evento `mezcla` de `POST /api/sync`, sin necesitar bajarlo antes.',
 )]
 #[OA\Schema(
     schema: 'OrdenCatalogo',
