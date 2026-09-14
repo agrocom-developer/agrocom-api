@@ -15,6 +15,10 @@ return [
             'abierta' => 'Abierta',
             'cerrada' => 'Cerrada',
         ],
+        'estacion' => [
+            'invierno' => 'Invierno',
+            'verano' => 'Verano',
+        ],
     ],
 
     // HU-46 (tarea 69): la campaña como eje transversal del sistema. ABM
@@ -42,6 +46,9 @@ return [
         'col_nombre' => 'Nombre',
         'col_vigencia' => 'Vigencia',
         'col_estado' => 'Estado',
+        'col_actividad' => 'Actividad',
+        'actividad_activa' => 'Activa',
+        'actividad_inactiva' => 'Inactiva',
         'editar' => 'Editar',
         'vigencia' => ':inicio – :fin',
         'paginacion_aria' => 'Paginación de campañas',
@@ -65,6 +72,9 @@ return [
         'campo_cliente_placeholder' => 'Seleccioná un cliente',
         'campo_codigo' => 'Código',
         'campo_nombre' => 'Nombre',
+        'campo_nombre_ayuda' => 'Si lo dejás vacío, se arma solo con la estación y los años (por ejemplo, Verano/2025/2026).',
+        'campo_estacion' => 'Estación',
+        'campo_estacion_placeholder' => 'Seleccioná una estación',
         'campo_fecha_inicio' => 'Fecha de inicio',
         'campo_fecha_fin' => 'Fecha de fin',
         'estado_form' => 'Los cambios se guardan al confirmar.',

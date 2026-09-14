@@ -15,6 +15,11 @@
     `panel.campanias.cambiar-estado` (otra pantalla, otra responsabilidad —
     invariante 7) — ver docblock de `CampaniasController`.
 
+    `estacion` (HU-77, tarea 93) sí es un campo, catálogo cerrado
+    invierno/verano. `nombre` queda opcional con ayuda: vacío autogenera al
+    alta (`CrearCampania`) y se preserva tal cual al editar
+    (`ActualizarCampania`) — nunca se pisa solo.
+
     Tras un error de validación, `old()` pisa los valores del modelo/vacíos
     — mismo criterio en alta y en edición.
 
@@ -28,8 +33,13 @@
     $clienteId = old('cliente_id', $campania?->cliente_id ?? '');
     $codigo = old('codigo', $campania?->codigo ?? '');
     $nombre = old('nombre', $campania?->nombre ?? '');
+    $estacion = old('estacion', $campania?->estacion ?? '');
     $fechaInicio = old('fecha_inicio', $campania?->fecha_inicio?->toDateString() ?? '');
     $fechaFin = old('fecha_fin', $campania?->fecha_fin?->toDateString() ?? '');
+    $opcionesEstacion = [
+        'invierno' => __('campania.campania.estacion.invierno'),
+        'verano' => __('campania.campania.estacion.verano'),
+    ];
 @endphp
 
 <form method="POST" action="{{ $accion }}" class="ag-campanias-form" novalidate data-ag-campanias-form>
@@ -43,6 +53,12 @@
         :subtitle="__('campania.campanias.subtitulo_form')"
     >
         <x-slot:actions>
+            @if ($esEdicion)
+                <x-atoms.badge :variant="$campania->esActiva() ? 'success' : 'neutral'">
+                    {{ __($campania->esActiva() ? 'campania.campanias.actividad_activa' : 'campania.campanias.actividad_inactiva') }}
+                </x-atoms.badge>
+            @endif
+
             <x-atoms.button href="{{ route('panel.campanias.index') }}" variant="outline" icon="arrow_back">
                 {{ __('campania.campanias.volver') }}
             </x-atoms.button>
@@ -51,7 +67,7 @@
 
     <x-molecules.form-section
         :title="__('campania.campanias.seccion_datos')"
-        :count="__('campania.campanias.campos_contador', ['cantidad' => 5])"
+        :count="__('campania.campanias.campos_contador', ['cantidad' => 6])"
     >
         <x-atoms.select
             name="cliente_id"
@@ -74,11 +90,23 @@
             error="{{ $errors->first('codigo') }}"
         />
 
+        <x-atoms.select
+            name="estacion"
+            id="estacion"
+            label="{{ __('campania.campanias.campo_estacion') }}"
+            placeholder="{{ __('campania.campanias.campo_estacion_placeholder') }}"
+            :options="$opcionesEstacion"
+            value="{{ $estacion }}"
+            required
+            error="{{ $errors->first('estacion') }}"
+        />
+
         <x-atoms.input
             type="text"
             name="nombre"
             label="{{ __('campania.campanias.campo_nombre') }}"
             value="{{ $nombre }}"
+            help="{{ __('campania.campanias.campo_nombre_ayuda') }}"
             error="{{ $errors->first('nombre') }}"
         />
 

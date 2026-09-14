@@ -8,10 +8,15 @@ use Illuminate\Database\QueryException;
 
 /**
  * Edición de los datos de una campaña (ADR 0015 punto 1, tarea 69):
- * `codigo`/`nombre`/`fecha_inicio`/`fecha_fin`. Sin `estado`: la transición
- * de estado es responsabilidad exclusiva de {@see
+ * `codigo`/`nombre`/`estacion`/`fecha_inicio`/`fecha_fin`. Sin `estado`: la
+ * transición de estado es responsabilidad exclusiva de {@see
  * \App\Dominios\Campania\Aplicacion\MaquinaEstados\MaquinaEstadosCampania}
  * (invariante 7 de CLAUDE.md), nunca de esta clase.
+ *
+ * A diferencia de {@see CrearCampania}, acá `nombre` en `null` NO autogenera
+ * ni vacía el nombre existente (HU-77, tarea 93): editar una campaña sin
+ * tocar el campo nombre no debe pisar lo que el encargado ya tenía, tipeado
+ * a mano o autogenerado al alta.
  */
 final class ActualizarCampania
 {
@@ -19,15 +24,19 @@ final class ActualizarCampania
      * @throws CampaniaDuplicada si el código ya pertenece a otra campaña activa
      *                           del mismo cliente (índice parcial `cpn_campanias_cliente_codigo_unico`).
      */
-    public function ejecutar(Campania $campania, int $clienteId, string $codigo, ?string $nombre, string $fechaInicio, string $fechaFin): Campania
+    public function ejecutar(Campania $campania, int $clienteId, string $codigo, ?string $nombre, string $fechaInicio, string $fechaFin, string $estacion): Campania
     {
         $campania->fill([
             'cliente_id' => $clienteId,
             'codigo' => $codigo,
-            'nombre' => $nombre,
+            'estacion' => $estacion,
             'fecha_inicio' => $fechaInicio,
             'fecha_fin' => $fechaFin,
         ]);
+
+        if ($nombre !== null) {
+            $campania->nombre = $nombre;
+        }
 
         try {
             $campania->save();

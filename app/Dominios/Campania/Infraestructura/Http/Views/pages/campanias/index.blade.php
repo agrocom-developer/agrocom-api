@@ -27,6 +27,10 @@
 
     Estilos en resources/css/pages/campanias.css — cero color hardcodeado
     (CLAUDE.md invariante 11).
+
+    Columna "Actividad" (HU-77, tarea 93): "Activa"/"Inactiva" derivada de
+    `Campania::esActiva()`, presentación pura — no reemplaza a "Estado", que
+    sigue mostrando los tres valores reales de la máquina de estados.
 --}}
 <x-templates.panel-shell :title="__('campania.campanias.titulo')" :tema="$tema">
     <x-templates.panel-layout
@@ -116,6 +120,7 @@
                         <span role="columnheader">{{ __('campania.campanias.col_nombre') }}</span>
                         <span role="columnheader">{{ __('campania.campanias.col_vigencia') }}</span>
                         <span role="columnheader">{{ __('campania.campanias.col_estado') }}</span>
+                        <span role="columnheader">{{ __('campania.campanias.col_actividad') }}</span>
                         <span role="columnheader" aria-hidden="true"></span>
                     </div>
 
@@ -138,6 +143,11 @@
                             <span role="cell">
                                 <x-atoms.badge :variant="$variantePorEstado[$estadoValor]">
                                     {{ __('campania.campania.estado.'.$estadoValor) }}
+                                </x-atoms.badge>
+                            </span>
+                            <span role="cell">
+                                <x-atoms.badge :variant="$campania->esActiva() ? 'success' : 'neutral'">
+                                    {{ __($campania->esActiva() ? 'campania.campanias.actividad_activa' : 'campania.campanias.actividad_inactiva') }}
                                 </x-atoms.badge>
                             </span>
 
