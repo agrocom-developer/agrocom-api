@@ -40,6 +40,40 @@ it('com_lotes tiene desnivel y limpieza, nullable (HU-73, tarea 89)', function (
     expect(Schema::hasColumns('com_lotes', ['desnivel', 'limpieza']))->toBeTrue();
 });
 
+it('com_contratos tiene las acomodaciones logísticas, con los booleanos en false por defecto (HU-74, tarea 90)', function () {
+    expect(Schema::hasColumns('com_contratos', [
+        'brinda_alimentacion',
+        'brinda_hospedaje',
+        'brinda_combustible',
+        'observaciones_logistica',
+    ]))->toBeTrue();
+
+    $contratoId = DB::table('com_contratos')->insertGetId([
+        'cliente_id' => DB::table('com_clientes')->insertGetId([
+            'razon_social' => 'Cliente esquema logística',
+            'nit' => '555444333',
+            'tipo_persona' => 'juridica',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]),
+        'hectareas_contratadas' => '10.00',
+        'aplicaciones_previstas' => 1,
+        'precio_ha' => '50.00',
+        'monto_total' => '500.00',
+        'fecha_inicio' => now()->toDateString(),
+        'estado' => 'borrador',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $contrato = DB::table('com_contratos')->where('id', $contratoId)->first();
+
+    expect((bool) $contrato->brinda_alimentacion)->toBeFalse()
+        ->and((bool) $contrato->brinda_hospedaje)->toBeFalse()
+        ->and((bool) $contrato->brinda_combustible)->toBeFalse()
+        ->and($contrato->observaciones_logistica)->toBeNull();
+});
+
 it('ope_ordenes_aplicacion tiene el tipo de aplicación, con desarrollo como default (HU-47, tarea 70)', function () {
     expect(Schema::hasColumn('ope_ordenes_aplicacion', 'tipo_aplicacion'))->toBeTrue();
 

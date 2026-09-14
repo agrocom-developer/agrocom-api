@@ -51,6 +51,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $velocidad_max_kmh
  * @property string|null $umbral_reporte_avance_ha
  * @property string|null $altura_vuelo_m
+ * @property bool $brinda_alimentacion
+ * @property bool $brinda_hospedaje
+ * @property bool $brinda_combustible
+ * @property string|null $observaciones_logistica
  */
 class Contrato extends ModeloDominio
 {
@@ -78,6 +82,10 @@ class Contrato extends ModeloDominio
         'velocidad_max_kmh',
         'umbral_reporte_avance_ha',
         'altura_vuelo_m',
+        'brinda_alimentacion',
+        'brinda_hospedaje',
+        'brinda_combustible',
+        'observaciones_logistica',
     ];
 
     /** @return array<string, string> */
@@ -100,6 +108,9 @@ class Contrato extends ModeloDominio
             'velocidad_max_kmh' => 'decimal:2',
             'umbral_reporte_avance_ha' => 'decimal:2',
             'altura_vuelo_m' => 'decimal:2',
+            'brinda_alimentacion' => 'boolean',
+            'brinda_hospedaje' => 'boolean',
+            'brinda_combustible' => 'boolean',
         ];
     }
 
