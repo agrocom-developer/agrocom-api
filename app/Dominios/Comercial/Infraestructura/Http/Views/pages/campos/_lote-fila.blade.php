@@ -58,7 +58,7 @@
     Leaflet igual (tarea 79).
 --}}
 @php $esGoogle = ($proveedorMapa['proveedor'] ?? 'leaflet') === 'google'; @endphp
-<div class="ag-campos-form__lote" data-ag-lote-fila>
+<div class="ag-form-section__body ag-campos-form__lote" data-ag-lote-fila>
     @if (! empty($lote['id']))
         <input type="hidden" name="{{ $prefijo }}[id]" value="{{ $lote['id'] }}">
     @endif
