@@ -15,6 +15,7 @@ use App\Dominios\Comercial\Infraestructura\Http\Requests\CrearClienteRequest;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 /**
@@ -29,6 +30,10 @@ use Illuminate\View\View;
  * `SecUser`/`session()` directos (ADR 0003 regla 2). Ninguna regla de negocio
  * acá: los casos de uso de `Aplicacion/` hacen el trabajo, incluido el
  * upsert de cliente+contactos en una sola transacción.
+ *
+ * `logoArchivo()` (HU-75, tarea 91): mismo criterio que
+ * `OrganizacionController::logoArchivo()` (ADR 0019) — resuelve `logo_path`
+ * a lo que `molecules/file-field` necesita para pintar el preview.
  */
 final class ClientesController
 {
@@ -63,6 +68,7 @@ final class ClientesController
             ...$this->autorizacion->cascara($request),
             'tiposContacto' => TipoContactoCliente::cases(),
             'tiposPersona' => TipoPersonaCliente::cases(),
+            'logoArchivo' => $this->logoArchivo(null),
         ]);
     }
 
@@ -80,7 +86,9 @@ final class ClientesController
                 (string) $datos['razon_social'],
                 isset($datos['nit']) ? (string) $datos['nit'] : null,
                 (string) $datos['tipo_persona'],
+                isset($datos['ubicacion_oficina']) ? (string) $datos['ubicacion_oficina'] : null,
                 array_map($this->normalizarContactoNuevo(...), $contactosCrudos),
+                $request->file('logo'),
             );
         } catch (ClienteDuplicado $excepcion) {
             return redirect()
@@ -103,6 +111,7 @@ final class ClientesController
             'cliente' => $cliente->load('contactos'),
             'tiposContacto' => TipoContactoCliente::cases(),
             'tiposPersona' => TipoPersonaCliente::cases(),
+            'logoArchivo' => $this->logoArchivo($cliente),
         ]);
     }
 
@@ -121,7 +130,10 @@ final class ClientesController
                 (string) $datos['razon_social'],
                 isset($datos['nit']) ? (string) $datos['nit'] : null,
                 (string) $datos['tipo_persona'],
+                isset($datos['ubicacion_oficina']) ? (string) $datos['ubicacion_oficina'] : null,
                 array_map($this->normalizarContactoExistente(...), $contactosCrudos),
+                $request->file('logo'),
+                $request->boolean('logo_eliminar'),
             );
         } catch (ClienteDuplicado $excepcion) {
             return redirect()
@@ -176,5 +188,42 @@ final class ClientesController
     private function cadenaONull(mixed $valor): ?string
     {
         return $valor === null || $valor === '' ? null : (string) $valor;
+    }
+
+    /**
+     * `logo_path` es una ruta relativa del disco `public` (mismo criterio
+     * que `SecDatosEmpresa`, ADR 0019) — acá se resuelve a lo que la vista
+     * necesita para pintar el `file-field`: nombre de archivo, peso legible
+     * y URL pública. Sin logo guardado, `null` — `file-field` ya sabe
+     * mostrar el estado vacío.
+     *
+     * @return array{nombre: string, peso: string, url: string}|null
+     */
+    private function logoArchivo(?Cliente $cliente): ?array
+    {
+        if ($cliente?->logo_path === null) {
+            return null;
+        }
+
+        $disco = Storage::disk('public');
+
+        if (! $disco->exists($cliente->logo_path)) {
+            return null;
+        }
+
+        return [
+            'nombre' => basename($cliente->logo_path),
+            'peso' => $this->pesoLegible($disco->size($cliente->logo_path)),
+            'url' => $disco->url($cliente->logo_path),
+        ];
+    }
+
+    private function pesoLegible(int $bytes): string
+    {
+        if ($bytes < 1024) {
+            return "{$bytes} B";
+        }
+
+        return round($bytes / 1024).' KB';
     }
 }

@@ -15,6 +15,9 @@ use Illuminate\Validation\Rule;
  * `contactos.*.id`, cuando viene, tiene que pertenecer AL PROPIO cliente que
  * se está editando — nunca a otro (mismo espíritu que la regla del portal del
  * cliente, invariante 5 de CLAUDE.md, aplicada acá al panel interno).
+ *
+ * `logo`/`logo_eliminar` (HU-75, tarea 91): mismos límites y mismo criterio
+ * de checkbox que `ActualizarDatosEmpresaRequest` (ADR 0019).
  */
 final class ActualizarClienteRequest extends FormRequest
 {
@@ -29,6 +32,9 @@ final class ActualizarClienteRequest extends FormRequest
             'razon_social' => ['required', 'string', 'max:200'],
             'nit' => ['nullable', 'string', 'max:20'],
             'tipo_persona' => ['required', Rule::enum(TipoPersonaCliente::class)],
+            'ubicacion_oficina' => ['nullable', 'string', 'max:255'],
+            'logo' => ['nullable', 'file', 'mimes:png,svg', 'max:2048'],
+            'logo_eliminar' => ['nullable', 'boolean'],
             'contactos' => ['required', 'array', 'min:1'],
             'contactos.*.id' => [
                 'nullable',
@@ -51,6 +57,8 @@ final class ActualizarClienteRequest extends FormRequest
         return [
             'tipo_persona.required' => 'Seleccioná si el cliente es persona física o jurídica.',
             'tipo_persona.enum' => 'El tipo de persona no es válido.',
+            'logo.mimes' => __('comercial.clientes.error_logo_tipo'),
+            'logo.max' => __('comercial.clientes.error_logo_tamano'),
             'contactos.required' => 'Agregá al menos un contacto.',
             'contactos.min' => 'Agregá al menos un contacto.',
             'contactos.*.id.exists' => 'Uno de los contactos enviados no pertenece a este cliente.',
