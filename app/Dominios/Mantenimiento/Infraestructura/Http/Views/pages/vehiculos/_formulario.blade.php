@@ -17,6 +17,8 @@
       `personas/_formulario.blade.php`.
     - $combustibles (list<TipoCombustibleVehiculo>): ídem, para el select de
       combustible.
+    - $tipos (list<TipoVehiculo>): ídem, para el select de tipo (HU-90,
+      tarea 105) — catálogo cerrado, incluye "chata".
 
     Tras un error de validación, `old()` pisa los valores del modelo/vacíos
     — mismo criterio en alta y en edición. `kilometraje_inicial` es editable
@@ -31,6 +33,7 @@
     $esEdicion = $vehiculo !== null;
     $accion = $esEdicion ? route('panel.vehiculos.update', $vehiculo) : route('panel.vehiculos.store');
     $identificador = old('identificador', $vehiculo?->identificador ?? '');
+    $tipo = old('tipo', $vehiculo?->tipo ?? '');
     $marca = old('marca', $vehiculo?->marca ?? '');
     $modelo = old('modelo', $vehiculo?->modelo ?? '');
     $anio = old('anio', $vehiculo?->anio ?? '');
@@ -61,7 +64,7 @@
 
     <x-molecules.form-section
         :title="__('mantenimiento.vehiculos.seccion_datos')"
-        :count="__('mantenimiento.vehiculos.campos_contador', ['cantidad' => 10])"
+        :count="__('mantenimiento.vehiculos.campos_contador', ['cantidad' => 11])"
     >
         <x-atoms.input
             type="text"
@@ -70,6 +73,21 @@
             value="{{ $identificador }}"
             required
             error="{{ $errors->first('identificador') }}"
+        />
+
+        @php
+            $opcionesTipo = collect($tipos)->mapWithKeys(fn ($opcion) => [
+                $opcion->value => __('mantenimiento.vehiculos.tipo.'.$opcion->value)
+            ])->all();
+        @endphp
+        <x-atoms.select
+            name="tipo"
+            id="tipo"
+            label="{{ __('mantenimiento.vehiculos.campo_tipo') }}"
+            :options="$opcionesTipo"
+            :value="$tipo"
+            placeholder="{{ __('mantenimiento.vehiculos.campo_tipo_placeholder') }}"
+            error="{{ $errors->first('tipo') }}"
         />
 
         <x-atoms.input
