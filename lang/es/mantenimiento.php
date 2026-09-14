@@ -327,6 +327,7 @@ return [
         'detalle_fecha_cierre' => 'Fecha de cierre',
         'detalle_gasto' => 'Gasto generado',
         'detalle_gasto_valor' => 'Gasto #:id',
+        'detalle_precio_final' => 'Precio de Mantenimiento Final',
 
         'seccion_cierre' => 'Cerrar orden',
         'seccion_cierre_ayuda' => 'El cierre descuenta el stock de cada repuesto y genera el gasto correspondiente. Si el stock de algún repuesto no alcanza, la orden no se cierra y no se descuenta ni se imputa nada.',

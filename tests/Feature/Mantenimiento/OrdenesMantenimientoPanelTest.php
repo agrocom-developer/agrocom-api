@@ -120,6 +120,36 @@ it('cierra una orden con stock suficiente: descuenta el stock exacto y crea un g
         ->and($orden->fecha_cierre)->not->toBeNull();
 });
 
+it('el detalle de una orden cerrada muestra el precio final real, igual a fin_gastos.monto (HU-88, tarea 103)', function () {
+    [$encargado, $idRol] = usuarioConRolParaOrdenesMantenimiento('encargado', 'encargado_operaciones');
+    entrarAlPanelParaOrdenesMantenimiento($encargado, $idRol);
+
+    $dron = Dron::query()->create(['identificador' => 'DRN-001']);
+    $repuesto = Repuesto::query()->create(['codigo' => 'REP-001', 'descripcion' => 'Hélice', 'unidad' => 'unidad', 'costo_unitario' => '8.25']);
+    $base = PerBase::query()->create(['nombre' => 'Base Norte']);
+    Stock::query()->create(['repuesto_id' => $repuesto->id, 'base_id' => $base->id, 'cantidad' => '20.00', 'stock_minimo' => '0']);
+
+    $this->post(route('panel.ordenes-mantenimiento.store'), payloadOrdenMantenimiento(['equipo_id' => (string) $dron->id]));
+    $orden = OrdenMantenimiento::query()->sole();
+
+    $this->post(route('panel.ordenes-mantenimiento.cerrar', $orden), [
+        'repuestos' => [
+            ['repuesto_id' => (string) $repuesto->id, 'base_id' => (string) $base->id, 'cantidad' => '5.00'],
+        ],
+    ]);
+
+    $gasto = Gasto::query()->sole();
+    expect($gasto->monto)->toBe('41.25');
+
+    // El monto mostrado sale de `fin_gastos.monto` vía el contrato de
+    // lectura de `Finanzas` (`LecturaGastoMantenimiento`), nunca recalculado
+    // del lado de `Mantenimiento` (invariante 6 de CLAUDE.md).
+    $this->get(route('panel.ordenes-mantenimiento.edit', $orden))
+        ->assertOk()
+        ->assertSee(__('mantenimiento.ordenes.detalle_precio_final'))
+        ->assertSee('Bs 41.25');
+});
+
 it('cierra una orden sumando el costo de varias líneas de repuestos en un único gasto', function () {
     [$encargado, $idRol] = usuarioConRolParaOrdenesMantenimiento('encargado', 'encargado_operaciones');
     entrarAlPanelParaOrdenesMantenimiento($encargado, $idRol);
