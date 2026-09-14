@@ -89,6 +89,9 @@ final class ContratosController
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_CREAR), 403);
 
         $datos = $request->validated();
+        $datos['brinda_alimentacion'] = $request->boolean('brinda_alimentacion');
+        $datos['brinda_hospedaje'] = $request->boolean('brinda_hospedaje');
+        $datos['brinda_combustible'] = $request->boolean('brinda_combustible');
 
         /** @var list<array<string, mixed>> $ventanasCrudas */
         $ventanasCrudas = $datos['ventanas'] ?? [];
@@ -133,6 +136,9 @@ final class ContratosController
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
 
         $datos = $request->validated();
+        $datos['brinda_alimentacion'] = $request->boolean('brinda_alimentacion');
+        $datos['brinda_hospedaje'] = $request->boolean('brinda_hospedaje');
+        $datos['brinda_combustible'] = $request->boolean('brinda_combustible');
 
         /** @var list<array<string, mixed>> $ventanasCrudas */
         $ventanasCrudas = $datos['ventanas'] ?? [];
@@ -240,6 +246,10 @@ final class ContratosController
             'velocidad_max_kmh' => $this->cadenaONull($datos['velocidad_max_kmh'] ?? null),
             'umbral_reporte_avance_ha' => $this->cadenaONull($datos['umbral_reporte_avance_ha'] ?? null),
             'altura_vuelo_m' => $this->cadenaONull($datos['altura_vuelo_m'] ?? null),
+            'brinda_alimentacion' => (bool) $datos['brinda_alimentacion'],
+            'brinda_hospedaje' => (bool) $datos['brinda_hospedaje'],
+            'brinda_combustible' => (bool) $datos['brinda_combustible'],
+            'observaciones_logistica' => $this->cadenaONull($datos['observaciones_logistica'] ?? null),
         ];
     }
 

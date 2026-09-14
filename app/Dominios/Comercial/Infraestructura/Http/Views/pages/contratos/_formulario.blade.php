@@ -60,6 +60,9 @@
     $hayVentanasCargadas = collect($ventanasIniciales)->contains(
         fn ($ventana) => ($ventana['hora_inicio'] ?? '') !== '' || ($ventana['hora_fin'] ?? '') !== '',
     );
+    $brindaAlimentacion = (bool) $valor('brinda_alimentacion', false);
+    $brindaHospedaje = (bool) $valor('brinda_hospedaje', false);
+    $brindaCombustible = (bool) $valor('brinda_combustible', false);
 @endphp
 
 <form method="POST" action="{{ $accion }}" class="ag-contratos-form" novalidate data-ag-contratos-form>
@@ -292,6 +295,38 @@
                 @include('comercial::pages.contratos._ventana-fila', ['indice' => '__INDICE__', 'ventana' => []])
             </template>
         </div>
+    </x-molecules.form-section>
+
+    <x-molecules.form-section
+        :title="__('comercial.contratos.seccion_logistica')"
+        :count="__('comercial.contratos.campos_contador', ['cantidad' => 4])"
+    >
+        <x-atoms.switch
+            name="brinda_alimentacion"
+            label="{{ __('comercial.contratos.campo_brinda_alimentacion') }}"
+            :checked="$brindaAlimentacion"
+        />
+
+        <x-atoms.switch
+            name="brinda_hospedaje"
+            label="{{ __('comercial.contratos.campo_brinda_hospedaje') }}"
+            :checked="$brindaHospedaje"
+        />
+
+        <x-atoms.switch
+            name="brinda_combustible"
+            label="{{ __('comercial.contratos.campo_brinda_combustible') }}"
+            :checked="$brindaCombustible"
+        />
+
+        <x-atoms.textarea
+            class="ag-form-section__field--full"
+            name="observaciones_logistica"
+            label="{{ __('comercial.contratos.campo_observaciones_logistica') }}"
+            placeholder="{{ __('comercial.contratos.campo_observaciones_logistica_placeholder') }}"
+            value="{{ $valor('observaciones_logistica') }}"
+            error="{{ $errors->first('observaciones_logistica') }}"
+        />
     </x-molecules.form-section>
 
     <x-organisms.form-actions-bar :status="__('comercial.contratos.estado_form')">

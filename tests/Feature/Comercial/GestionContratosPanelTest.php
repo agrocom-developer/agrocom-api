@@ -205,6 +205,100 @@ it('guarda la altura de vuelo del contrato cuando se informa', function () {
     expect($contrato->altura_vuelo_m)->toBe('3.50');
 });
 
+it('da de alta un contrato con las tres coberturas logísticas activas y observaciones (HU-74, tarea 90)', function () {
+    [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaContratos($encargado, $idRol);
+    $cliente = clienteParaContratos();
+    $campania = campaniaParaContratos($cliente->id);
+
+    $this->post(route('panel.contratos.store'), payloadContrato($cliente->id, $campania->id, [
+        'brinda_alimentacion' => '1',
+        'brinda_hospedaje' => '1',
+        'brinda_combustible' => '1',
+        'observaciones_logistica' => 'Hospedaje en la posta del campo; combustible lo provee Agrocom.',
+    ]))->assertRedirect(route('panel.contratos.index'));
+
+    $contrato = Contrato::query()->where('cliente_id', $cliente->id)->sole();
+
+    expect($contrato->brinda_alimentacion)->toBeTrue()
+        ->and($contrato->brinda_hospedaje)->toBeTrue()
+        ->and($contrato->brinda_combustible)->toBeTrue()
+        ->and($contrato->observaciones_logistica)->toBe('Hospedaje en la posta del campo; combustible lo provee Agrocom.');
+});
+
+it('un contrato sin logística informada se crea igual, con los tres booleanos en false (HU-74, tarea 90)', function () {
+    [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaContratos($encargado, $idRol);
+    $cliente = clienteParaContratos();
+    $campania = campaniaParaContratos($cliente->id);
+
+    $this->post(route('panel.contratos.store'), payloadContrato($cliente->id, $campania->id))
+        ->assertRedirect(route('panel.contratos.index'));
+
+    $contrato = Contrato::query()->where('cliente_id', $cliente->id)->sole();
+
+    expect($contrato->brinda_alimentacion)->toBeFalse()
+        ->and($contrato->brinda_hospedaje)->toBeFalse()
+        ->and($contrato->brinda_combustible)->toBeFalse()
+        ->and($contrato->observaciones_logistica)->toBeNull();
+});
+
+it('editar un contrato sin marcar ninguna cobertura logística la deja en false, no en su valor anterior (HU-74, tarea 90)', function () {
+    [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaContratos($encargado, $idRol);
+    $cliente = clienteParaContratos();
+    $campania = campaniaParaContratos($cliente->id);
+
+    $this->post(route('panel.contratos.store'), payloadContrato($cliente->id, $campania->id, [
+        'brinda_alimentacion' => '1',
+        'brinda_hospedaje' => '1',
+        'brinda_combustible' => '1',
+        'observaciones_logistica' => 'Cobertura completa inicial.',
+    ]));
+    $contrato = Contrato::query()->where('cliente_id', $cliente->id)->sole();
+
+    // Ningún checkbox va en este envío: un checkbox sin marcar no llega en el
+    // POST, así que el controlador tiene que leerlo con `$request->boolean()`
+    // y guardar `false` explícito, no dejar el valor anterior sin tocar.
+    $this->put(route('panel.contratos.update', $contrato), payloadContrato($cliente->id, $campania->id))
+        ->assertRedirect(route('panel.contratos.index'));
+
+    $contratoActualizado = $contrato->fresh();
+
+    expect($contratoActualizado->brinda_alimentacion)->toBeFalse()
+        ->and($contratoActualizado->brinda_hospedaje)->toBeFalse()
+        ->and($contratoActualizado->brinda_combustible)->toBeFalse();
+});
+
+it('el formulario de contrato muestra la sección de logística (HU-74, tarea 90)', function () {
+    [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaContratos($encargado, $idRol);
+
+    $this->get(route('panel.contratos.create'))
+        ->assertOk()
+        ->assertSee(__('comercial.contratos.seccion_logistica'))
+        ->assertSee(__('comercial.contratos.campo_brinda_alimentacion'))
+        ->assertSee(__('comercial.contratos.campo_brinda_hospedaje'))
+        ->assertSee(__('comercial.contratos.campo_brinda_combustible'))
+        ->assertSee(__('comercial.contratos.campo_observaciones_logistica'));
+});
+
+it('la ficha de edición de un contrato muestra las observaciones de logística guardadas (HU-74, tarea 90)', function () {
+    [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaContratos($encargado, $idRol);
+    $cliente = clienteParaContratos();
+    $campania = campaniaParaContratos($cliente->id);
+
+    $this->post(route('panel.contratos.store'), payloadContrato($cliente->id, $campania->id, [
+        'observaciones_logistica' => 'Alojamiento cubierto en la base de operaciones.',
+    ]));
+    $contrato = Contrato::query()->where('cliente_id', $cliente->id)->sole();
+
+    $this->get(route('panel.contratos.edit', $contrato))
+        ->assertOk()
+        ->assertSee('Alojamiento cubierto en la base de operaciones.');
+});
+
 it('el formulario de alta muestra el interruptor "Día completo"', function () {
     [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
     entrarAlPanelParaContratos($encargado, $idRol);
