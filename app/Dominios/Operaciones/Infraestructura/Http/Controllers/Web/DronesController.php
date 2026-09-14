@@ -72,6 +72,7 @@ final class DronesController
                 (string) $datos['identificador'],
                 $this->cadenaONull($datos['modelo'] ?? null),
                 $this->cadenaONull($datos['capacidad_l'] ?? null),
+                $this->cadenaONull($datos['capacidad_kg'] ?? null),
             );
         } catch (DronDuplicado $excepcion) {
             return redirect()
@@ -107,6 +108,7 @@ final class DronesController
                 (string) $datos['identificador'],
                 $this->cadenaONull($datos['modelo'] ?? null),
                 $this->cadenaONull($datos['capacidad_l'] ?? null),
+                $this->cadenaONull($datos['capacidad_kg'] ?? null),
             );
         } catch (DronDuplicado $excepcion) {
             return redirect()

@@ -14,6 +14,8 @@ use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
  *
  * `modelo`/`capacidad_l` (HU-27, tarea 36): ver docblock de
  * `2026_09_02_100004_add_modelo_capacidad_a_ope_drones_table.php`.
+ * `capacidad_kg` (HU-81, tarea 96): ver docblock de
+ * `2026_09_14_100010_add_capacidad_kg_a_ope_drones_table.php`.
  *
  * `RegistraBitacora` (invariante 9 de CLAUDE.md, HU-27): el alta, edición y
  * baja de un dron desde el panel es una mutación de negocio con autor y
@@ -23,6 +25,7 @@ use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
  * @property string $identificador
  * @property string|null $modelo
  * @property string|null $capacidad_l
+ * @property string|null $capacidad_kg
  */
 class Dron extends ModeloDominio
 {
@@ -36,6 +39,7 @@ class Dron extends ModeloDominio
         'identificador',
         'modelo',
         'capacidad_l',
+        'capacidad_kg',
     ];
 
     /** @return array<string, string> */
@@ -43,6 +47,7 @@ class Dron extends ModeloDominio
     {
         return [
             'capacidad_l' => 'decimal:2',
+            'capacidad_kg' => 'decimal:2',
         ];
     }
 }

@@ -79,6 +79,67 @@ it('rechaza una capacidad fuera de {30, 50, 60} sin persistir', function () {
     expect(Dron::query()->where('identificador', 'DRN-001')->exists())->toBeFalse();
 });
 
+it('guarda y lee capacidad_kg desde el alta y desde la edición de un dron', function () {
+    [$encargado, $idRol] = usuarioConRolParaDrones('encargado', 'encargado_operaciones');
+    entrarAlPanelParaDrones($encargado, $idRol);
+
+    $this->post(route('panel.drones.store'), payloadDron(['capacidad_kg' => 12.5]))
+        ->assertRedirect(route('panel.drones.index'));
+
+    $dron = Dron::query()->where('identificador', 'DRN-001')->sole();
+    expect((float) $dron->capacidad_kg)->toBe(12.5);
+
+    $this->put(
+        route('panel.drones.update', $dron),
+        payloadDron(['capacidad_kg' => 500]),
+    )->assertRedirect(route('panel.drones.index'));
+
+    expect((float) $dron->fresh()->capacidad_kg)->toBe(500.0);
+});
+
+it('un dron sin capacidad_kg (NULL) sigue operando líquido sin cambios: alta y edición con solo capacidad_l', function () {
+    [$encargado, $idRol] = usuarioConRolParaDrones('encargado', 'encargado_operaciones');
+    entrarAlPanelParaDrones($encargado, $idRol);
+
+    $this->post(route('panel.drones.store'), payloadDron())
+        ->assertRedirect(route('panel.drones.index'));
+
+    $dron = Dron::query()->where('identificador', 'DRN-001')->sole();
+    expect($dron->capacidad_kg)->toBeNull()
+        ->and((int) $dron->capacidad_l)->toBe(30);
+
+    $this->put(
+        route('panel.drones.update', $dron),
+        payloadDron(['identificador' => 'DRN-001-B']),
+    )->assertRedirect(route('panel.drones.index'));
+
+    $dron->refresh();
+    expect($dron->capacidad_kg)->toBeNull()
+        ->and((int) $dron->capacidad_l)->toBe(30)
+        ->and($dron->identificador)->toBe('DRN-001-B');
+});
+
+it('rechaza capacidad_kg negativo o cero sin persistir, en alta y en edición', function () {
+    [$encargado, $idRol] = usuarioConRolParaDrones('encargado', 'encargado_operaciones');
+    entrarAlPanelParaDrones($encargado, $idRol);
+
+    $this->post(route('panel.drones.store'), payloadDron(['capacidad_kg' => 0]))
+        ->assertSessionHasErrors('capacidad_kg');
+    $this->post(route('panel.drones.store'), payloadDron(['capacidad_kg' => -5]))
+        ->assertSessionHasErrors('capacidad_kg');
+
+    expect(Dron::query()->where('identificador', 'DRN-001')->exists())->toBeFalse();
+
+    $dron = Dron::query()->create(['identificador' => 'DRN-001', 'capacidad_l' => 30]);
+
+    $this->put(
+        route('panel.drones.update', $dron),
+        payloadDron(['capacidad_kg' => 0]),
+    )->assertSessionHasErrors('capacidad_kg');
+
+    expect($dron->fresh()->capacidad_kg)->toBeNull();
+});
+
 it('el identificador duplicado entre drones activos es un error de validación, no un QueryException', function () {
     [$encargado, $idRol] = usuarioConRolParaDrones('encargado', 'encargado_operaciones');
     entrarAlPanelParaDrones($encargado, $idRol);
