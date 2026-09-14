@@ -70,14 +70,41 @@ final class OrdenesController
 
         $ordenes = $listarOrdenes->ejecutar(estado: $estado, tipoAplicacion: $tipoAplicacion);
 
+        $loteIdsPorOrden = $this->loteIdsPorOrden($ordenes->pluck('id')->map(fn ($id) => (int) $id)->all());
+        $todosLosLoteIds = collect($loteIdsPorOrden)->flatten()->unique()->values()->all();
+
         return view('operaciones::pages.ordenes.index', [
             ...$this->autorizacion->cascara($request),
             'ordenes' => $ordenes,
             'etiquetasContrato' => $this->etiquetasContrato($ordenes->pluck('contrato_id')->map(fn ($id) => (int) $id)->unique()->values()->all()),
-            'etiquetasLote' => $this->etiquetasLote($ordenes->pluck('lote_id')->map(fn ($id) => (int) $id)->unique()->values()->all()),
+            'etiquetasLote' => $this->etiquetasLote($todosLosLoteIds),
+            'loteIdsPorOrden' => $loteIdsPorOrden,
             'filtros' => ['estado' => $estado?->value, 'tipo_aplicacion' => $tipoAplicacion?->value],
             'puedeActivar' => $this->autorizacion->tienePermiso($request, self::PERMISO_ACTIVAR),
         ]);
+    }
+
+    /**
+     * Lotes de CADA orden (HU-92, tarea 107: ya no es un `lote_id` único por
+     * orden) — una sola consulta para todo el listado, evita N+1.
+     *
+     * @param  list<int>  $ordenIds
+     * @return array<int, list<int>>
+     */
+    private function loteIdsPorOrden(array $ordenIds): array
+    {
+        if ($ordenIds === []) {
+            return [];
+        }
+
+        return DB::table('ope_orden_lotes')
+            ->whereIn('orden_id', $ordenIds)
+            ->whereNull('deleted_at')
+            ->orderBy('lote_id')
+            ->get(['orden_id', 'lote_id'])
+            ->groupBy('orden_id')
+            ->map(fn (Collection $filas): array => $filas->pluck('lote_id')->map(fn ($id) => (int) $id)->all())
+            ->all();
     }
 
     public function create(Request $request): View
@@ -96,7 +123,9 @@ final class OrdenesController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_CREAR), 403);
 
-        $crearOrden->ejecutar($this->normalizarDatos($request->validated()));
+        $datos = $request->validated();
+
+        $crearOrden->ejecutar($this->normalizarDatos($datos), $this->normalizarLotes($datos));
 
         return redirect()
             ->route('panel.ordenes.index')
@@ -110,6 +139,7 @@ final class OrdenesController
         return view('operaciones::pages.ordenes.edit', [
             ...$this->autorizacion->cascara($request),
             'orden' => $orden,
+            'lotesOrden' => $orden->ordenLotes()->orderBy('lote_id')->get(),
             'contratosDisponibles' => $this->contratosDisponibles(),
             'lotesDisponibles' => $this->lotesDisponibles(),
             'contactosDisponibles' => $this->contactosDisponibles(),
@@ -120,8 +150,10 @@ final class OrdenesController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
 
+        $datos = $request->validated();
+
         try {
-            $actualizarOrden->ejecutar($orden, $this->normalizarDatos($request->validated()));
+            $actualizarOrden->ejecutar($orden, $this->normalizarDatos($datos), $this->normalizarLotes($datos));
         } catch (OrdenNoEditable $excepcion) {
             return redirect()
                 ->route('panel.ordenes.index')
@@ -175,8 +207,8 @@ final class OrdenesController
     {
         return [
             'contrato_id' => (int) $datos['contrato_id'],
-            'lote_id' => (int) $datos['lote_id'],
             'nro_aplicacion' => (int) $datos['nro_aplicacion'],
+            'cantidad_equipos_necesarios' => (int) $datos['cantidad_equipos_necesarios'],
             'tipo_aplicacion' => TipoAplicacion::from((string) $datos['tipo_aplicacion']),
             'litros_ha' => (string) $datos['litros_ha'],
             'humedad_min_pct' => $this->cadenaONull($datos['humedad_min_pct'] ?? null),
@@ -198,6 +230,21 @@ final class OrdenesController
     private function cadenaONull(mixed $valor): ?string
     {
         return $valor === null || $valor === '' ? null : (string) $valor;
+    }
+
+    /**
+     * @param  array<string, mixed>  $datos  validados
+     * @return list<array{lote_id: int, hectareas_solicitadas: string}>
+     */
+    private function normalizarLotes(array $datos): array
+    {
+        return array_map(
+            static fn (array $lote): array => [
+                'lote_id' => (int) $lote['lote_id'],
+                'hectareas_solicitadas' => (string) $lote['hectareas_solicitadas'],
+            ],
+            array_values($datos['lotes']),
+        );
     }
 
     /** @return Collection<int, string> */

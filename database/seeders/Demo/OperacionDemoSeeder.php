@@ -305,7 +305,12 @@ class OperacionDemoSeeder extends Seeder
                 continue;
             }
 
-            $orden = OrdenAplicacion::query()->where('lote_id', $lote->id)->first();
+            // HU-92 (tarea 107): el lote de la orden ya no es una columna
+            // propia, se resuelve por `ope_orden_lotes`.
+            $orden = OrdenAplicacion::query()->whereHas(
+                'ordenLotes',
+                fn ($ordenLotes) => $ordenLotes->where('lote_id', $lote->id),
+            )->first();
 
             if ($orden === null) {
                 continue;

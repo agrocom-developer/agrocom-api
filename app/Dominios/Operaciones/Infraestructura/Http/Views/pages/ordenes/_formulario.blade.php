@@ -6,10 +6,16 @@
 
     Espera:
     - $orden (OrdenAplicacion|null): null en alta; el modelo en edición.
+    - $lotesOrden (Collection<int, OrdenLote>|null, SOLO en edición): los
+      lotes ya cargados de la orden — en alta ni siquiera existe la
+      variable (`edit.blade.php` la pasa, `create.blade.php` no), por eso el
+      valor por defecto de abajo usa `?? null`.
     - $contratosDisponibles / $lotesDisponibles / $contactosDisponibles
       (Collection<int, string>): id => etiqueta ya resuelta por el
       controlador (ver OrdenesController) — la vista no conoce los modelos
-      de Comercial (ADR 0003 regla 3).
+      de Comercial (ADR 0003 regla 3). `$lotesDisponibles` es el universo
+      completo de lotes (HU-92, tarea 107): cada fila de la sección "Lotes"
+      elige el suyo ahí, independiente de las demás filas.
 
     `estado` NUNCA es un campo de este formulario: lo fija la máquina de
     estados al crear, y lo cambia `panel.ordenes.activar` (otra pantalla,
@@ -32,12 +38,16 @@
     $accion = $esEdicion ? route('panel.ordenes.update', $orden) : route('panel.ordenes.store');
     $valor = fn (string $campo, mixed $porDefecto = '') => old($campo, $orden?->{$campo} ?? $porDefecto);
     $contratoId = old('contrato_id', $orden?->contrato_id ?? '');
-    $loteId = old('lote_id', $orden?->lote_id ?? '');
     $contactoId = old('emitida_por_contacto_id', $orden?->emitida_por_contacto_id ?? '');
     $fechaEmision = old('fecha_emision', $orden?->fecha_emision?->toDateString() ?? '');
     $tipoAplicacion = old('tipo_aplicacion', $orden?->tipo_aplicacion?->value ?? \App\Dominios\Operaciones\Dominio\TipoAplicacion::Desarrollo->value);
+    $cantidadEquiposNecesarios = old('cantidad_equipos_necesarios', $orden?->cantidad_equipos_necesarios ?? 1);
     $opcionesTipoAplicacion = collect(\App\Dominios\Operaciones\Dominio\TipoAplicacion::cases())
         ->mapWithKeys(fn ($caso) => [$caso->value => __('operaciones.tipo_aplicacion.'.$caso->value)]);
+    $lotesPorDefecto = ($lotesOrden ?? null) !== null
+        ? $lotesOrden->map(fn ($lote) => ['lote_id' => $lote->lote_id, 'hectareas_solicitadas' => $lote->hectareas_solicitadas])->all()
+        : [[]];
+    $lotesIniciales = old('lotes', $lotesPorDefecto);
 @endphp
 
 <form method="POST" action="{{ $accion }}" class="ag-ordenes-form" novalidate data-ag-ordenes-form>
@@ -72,17 +82,6 @@
             :error="$errors->first('contrato_id')"
         />
 
-        <x-atoms.select
-            name="lote_id"
-            id="lote_id"
-            label="{{ __('operaciones.ordenes.campo_lote') }}"
-            :options="$lotesDisponibles"
-            :value="$loteId"
-            :placeholder="__('operaciones.ordenes.campo_lote_placeholder')"
-            required
-            :error="$errors->first('lote_id')"
-        />
-
         <x-atoms.input
             type="number"
             name="nro_aplicacion"
@@ -92,6 +91,17 @@
             step="1"
             required
             error="{{ $errors->first('nro_aplicacion') }}"
+        />
+
+        <x-atoms.input
+            type="number"
+            name="cantidad_equipos_necesarios"
+            label="{{ __('operaciones.ordenes.campo_cantidad_equipos') }}"
+            value="{{ $cantidadEquiposNecesarios }}"
+            min="1"
+            step="1"
+            required
+            error="{{ $errors->first('cantidad_equipos_necesarios') }}"
         />
 
         <x-atoms.select
@@ -141,6 +151,38 @@
                 value="{{ $valor('observaciones') }}"
                 error="{{ $errors->first('observaciones') }}"
             />
+        </div>
+    </x-molecules.form-section>
+
+    {{--
+        Lotes de la orden (HU-92, tarea 107): selección múltiple con
+        hectáreas por lote — reemplaza el `<select>` único de `lote_id`.
+        Mismo patrón repetible (agregar/quitar, plantilla clonable) que
+        `campos/_lote-fila.blade.php`, ver
+        `resources/js/pages/ordenes-form.js`.
+    --}}
+    <x-molecules.form-section :title="__('operaciones.ordenes.seccion_lotes')" class="ag-ordenes-form__lotes-seccion">
+        <div class="ag-form-section__field--full ag-ordenes-form__lotes" data-ag-orden-lotes>
+            @if ($errors->has('lotes'))
+                <p class="ag-input__error" role="alert">{{ $errors->first('lotes') }}</p>
+            @endif
+
+            <div data-ag-orden-lotes-lista>
+                @foreach ($lotesIniciales as $indice => $lote)
+                    @include('operaciones::pages.ordenes._lote-orden-fila', ['indice' => $indice, 'lote' => $lote])
+                @endforeach
+            </div>
+
+            <x-atoms.button type="button" variant="outline" icon="add" data-ag-orden-lotes-agregar>
+                {{ __('operaciones.ordenes.lote_agregar') }}
+            </x-atoms.button>
+
+            {{-- Plantilla clonable: el índice literal se reemplaza por el
+                 próximo número al clonar (`ordenes-form.js`). Un `<template>`
+                 nunca se renderiza ni se envía con el form. --}}
+            <template data-ag-orden-lote-template>
+                @include('operaciones::pages.ordenes._lote-orden-fila', ['indice' => '__INDICE__', 'lote' => []])
+            </template>
         </div>
     </x-molecules.form-section>
 
