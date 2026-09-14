@@ -54,6 +54,14 @@ return [
         ],
         'campo_nit' => 'NIT',
         'campo_nit_ayuda' => 'Opcional. No puede repetirse entre clientes activos.',
+        'campo_ubicacion_oficina' => 'Ubicación de la oficina central',
+        'campo_ubicacion_oficina_ayuda' => 'Opcional. Dirección de la oficina central del cliente.',
+        'campo_logo' => 'Logo del cliente',
+        'campo_logo_ayuda' => 'PNG o SVG, fondo transparente recomendado.',
+        'campo_logo_reemplazar' => 'Reemplazar',
+        'campo_logo_quitar' => 'Quitar',
+        'error_logo_tipo' => 'El logo tiene que ser un archivo PNG o SVG.',
+        'error_logo_tamano' => 'El logo no puede superar los 2 MB.',
         'seccion_contactos' => 'Contactos',
         'contacto_agregar' => 'Agregar contacto',
         'contacto_quitar' => 'Quitar',
@@ -64,6 +72,9 @@ return [
             'agronomo' => 'Agrónomo',
             'encargado_propiedad' => 'Encargado de la propiedad',
             'otro' => 'Otro',
+            'gerente_general' => 'Gerente general',
+            'finanzas' => 'Finanzas',
+            'secretario' => 'Secretario',
         ],
         'contacto_nombre' => 'Nombre',
         'contacto_telefono' => 'Teléfono',
@@ -73,12 +84,15 @@ return [
         'volver' => 'Volver a clientes',
     ],
 
+    // Los nombres visibles cambian; las claves siguen siendo las mismas que
+    // usa el estado del contrato internamente.
     'contrato' => [
         'estado' => [
-            'borrador' => 'Borrador',
-            'vigente' => 'Vigente',
-            'finalizado' => 'Finalizado',
+            'borrador' => 'En Aprobación',
+            'vigente' => 'En Ejecución',
+            'finalizado' => 'Ejecutado',
             'cancelado' => 'Cancelado',
+            'pausado' => 'Pausado',
         ],
     ],
 
@@ -124,8 +138,14 @@ return [
         'campo_ubicacion' => 'Ubicación',
         'campo_ubicacion_placeholder' => 'Ej. Cuatro Cañadas, Roboré, San Matías',
         'campo_ubicacion_ayuda' => 'Localidad física: departamento, provincia, municipio o pueblo.',
+        'campo_departamento' => 'Departamento',
+        'campo_municipio' => 'Municipio',
+        'campo_localidad' => 'Localidad',
+        'campo_latitud' => 'Latitud',
+        'campo_longitud' => 'Longitud',
         'estado_form' => 'Los cambios se guardan al confirmar.',
         'volver' => 'Volver a propiedades',
+        'error_coordenada_incompleta' => 'Completá latitud y longitud juntas, o dejá las dos vacías.',
     ],
 
     // HU-23 (tarea 34): administración de contratos con sus ventanas de
@@ -167,9 +187,13 @@ return [
         'accion_activar' => 'Activar',
         'accion_finalizar' => 'Finalizar',
         'accion_cancelar' => 'Cancelar',
+        'accion_pausar' => 'Pausar',
+        'accion_reanudar' => 'Reanudar',
         'confirmar_activar' => '¿Pasar este contrato a vigente?',
         'confirmar_finalizar' => '¿Dar este contrato por finalizado?',
         'confirmar_cancelar' => '¿Cancelar este contrato? La baja no se puede deshacer desde el panel.',
+        'confirmar_pausar' => '¿Pausar este contrato? Se interrumpe la ejecución sin cancelarlo.',
+        'confirmar_reanudar' => '¿Reanudar este contrato?',
 
         // Formulario (create/edit)
         'titulo_crear' => 'Nuevo contrato',
@@ -215,6 +239,18 @@ return [
         'ventana_hora_inicio' => 'Desde',
         'ventana_hora_fin' => 'Hasta',
         'ventana_rango' => ':inicio – :fin',
+
+        // Acomodaciones logísticas (HU-74, tarea 90): lo que Agrocom cubre
+        // para el equipo de campo durante la ejecución del contrato. Solo se
+        // registra el dato — el costeo en Finanzas es alcance de una tarea
+        // futura.
+        'seccion_logistica' => 'Logística',
+        'campo_brinda_alimentacion' => 'Brinda alimentación',
+        'campo_brinda_hospedaje' => 'Brinda hospedaje',
+        'campo_brinda_combustible' => 'Brinda combustible',
+        'campo_observaciones_logistica' => 'Observaciones de logística',
+        'campo_observaciones_logistica_placeholder' => 'Detalles adicionales sobre la logística cubierta',
+
         'estado_form' => 'Los cambios se guardan al confirmar.',
 
         // Errores de validación
@@ -275,6 +311,18 @@ return [
         'campo_propiedad' => 'Propiedad',
         'campo_propiedad_placeholder' => 'Seleccioná una propiedad',
         'campo_nombre' => 'Nombre',
+
+        // Generador de lotes (alta masiva, HU-72, tarea 88)
+        'seccion_generador' => 'Generar lotes',
+        'generador_cantidad' => 'Cantidad de lotes',
+        'generador_hectareas' => 'Hectáreas por lote',
+        'generador_cultivo' => 'Cultivo por defecto',
+        'generador_cultivo_placeholder' => 'Sin sembrar',
+        'generador_campania' => 'Campaña',
+        'generador_campania_placeholder' => 'Seleccioná una campaña',
+        'generador_generar' => 'Generar lotes',
+        'generador_ayuda' => 'Genera lotes provisorios ("Lote 1".."Lote N") con la misma superficie. Renombralos y dibujá su perímetro después, desde la ficha de cada lote.',
+
         'seccion_lotes' => 'Lotes',
         'lote_agregar' => 'Agregar lote',
         'lote_quitar' => 'Quitar',
@@ -302,6 +350,21 @@ return [
         'lote_mapa_medida_declaradas' => ':dibujadas ha dibujadas de :declaradas ha declaradas',
         'lote_restricciones' => 'Restricciones',
         'lote_restricciones_placeholder' => 'Cables, viviendas, colmenas, vecinos sensibles',
+
+        // Desnivel y limpieza del lote: catálogos cerrados aparte de
+        // `restricciones` (texto libre).
+        'lote_desnivel' => 'Desnivel',
+        'lote_desnivel_placeholder' => 'Sin especificar',
+        'lote_desnivel_ninguno' => 'Ninguno',
+        'lote_desnivel_algunos' => 'Algunos desniveles',
+        'lote_desnivel_varios' => 'Varios desniveles',
+        'lote_desnivel_empinado' => 'Empinado',
+        'lote_limpieza' => 'Limpieza',
+        'lote_limpieza_placeholder' => 'Sin especificar',
+        'lote_limpieza_limpio' => 'Limpio',
+        'lote_limpieza_algunos_obstaculos' => 'Algunos obstáculos',
+        'lote_limpieza_muchos_obstaculos' => 'Muchos obstáculos',
+
         'estado_form' => 'Los cambios se guardan al confirmar.',
         'volver' => 'Volver a campos',
 
@@ -312,9 +375,10 @@ return [
     // Tarea 77 (HU-54, etapa 2): ficha propia de un lote — antes solo se
     // podía tocar entrando por su propiedad (`campos`, arriba). Mismo molde
     // de listado/formulario que el resto del panel; los rótulos
-    // `lote_codigo`/`lote_hectareas`/`lote_geometria*`/`lote_restricciones*`
-    // del bloque `campos` de arriba se reusan tal cual (mismo copy, misma
-    // fila `_lote-fila.blade.php` compartida por las dos pantallas).
+    // `lote_codigo`/`lote_hectareas`/`lote_geometria*`/`lote_restricciones*`/
+    // `lote_desnivel*`/`lote_limpieza*` del bloque `campos` de arriba se
+    // reusan tal cual (mismo copy, misma fila `_lote-fila.blade.php`
+    // compartida por las dos pantallas).
     'lotes' => [
         'creado' => 'El lote se dio de alta correctamente.',
         'actualizado' => 'Los datos del lote se actualizaron correctamente.',

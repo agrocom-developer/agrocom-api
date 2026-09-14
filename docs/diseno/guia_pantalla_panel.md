@@ -214,6 +214,26 @@ Las seis reglas que salen de ahí:
 
 1. **Cada sección es una tarjeta, no un `<fieldset>` desnudo.** Superficie `--ag-color-surface-card`, borde `--ag-color-border-card`, radio `--ag-radius-lg`, y un header separado por borde que es exactamente `molecules/section-head` (la barra de color + el rótulo mono uppercase + el contador — el contador dice cuántos campos tiene la sección).
 2. **Dos columnas de campos dentro de la tarjeta, no una, y nunca más de dos.** `grid-template-columns: repeat(auto-fit, minmax(max(14rem, calc(50% - var(--ag-space-4) / 2)), 1fr))`; el techo en 50% es lo que impide que en pantallas anchas el `auto-fit` meta 4-6 columnas angostas — un `minmax(14rem, 1fr)` sin ese techo no alcanza. Un campo que necesita el ancho completo (dirección, logo, textarea) declara `grid-column: 1 / -1`. Un formulario de una sola columna angosta desperdicia toda la mitad derecha de la pantalla — es lo que hace hoy `organizacion` con su `max-width: 600px`.
+
+   **Esto vale también dentro de una fila repetible** (una sección con
+   "Agregar X" que clona filas por JS — contactos de cliente, ventanas de
+   contrato, lotes de un campo). La fila queda un nivel más abajo del
+   `.ag-form-section__body` de la tarjeta (envuelta en su propio
+   `ag-form-section__field--full`), así que ese grid no le llega solo por
+   anidamiento — pero la solución NO es que la página redeclare su propio
+   `grid-template-columns` con el mismo valor: es que el elemento raíz de la
+   fila lleve la clase `ag-form-section__body` ADEMÁS de su clase propia
+   (`<div class="ag-form-section__body ag-clientes-form__contacto">`), y que
+   la hoja de la página solo agregue lo que es realmente distinto de esa
+   fila (el separador entre una fila y la siguiente, algún `align-items`
+   puntual) — nunca el grid en sí. Cuatro páginas (`clientes`, `contratos`,
+   `siembra`, `campos`) habían redeclarado el mismo grid por su cuenta antes
+   de esto (14/9/2026): cada una con su propio piso en rem, y cuando el
+   componente ganó el techo en 50% (PR #180) ninguna de las cuatro copias se
+   enteró — ver §8 regla 12 de `sistema_diseno_panel.md`. Compuerta
+   automática en `tests/Unit/PulidoNavegacionPanelTest.php`: castiga tanto un
+   grid de campos "form" sin el techo como una fila repetible que no
+   comparte la clase.
 3. **Cada campo son tres piezas: label, control, ayuda.** El texto de ayuda no es opcional cuando el campo tiene una consecuencia que el usuario no puede adivinar ("Razón social visible en órdenes y reportes exportados"). Es `atoms/input` con su prop `help`.
 4. **Columna lateral pegajosa (`position: sticky`) para lo que no se edita**: progreso de completitud, resumen del plan, metadatos. `flex: 1 1 19rem; max-width: 20rem`. Nunca campos ahí.
 5. **Barra de acciones pegajosa al pie**, con el estado de guardado en texto ("Sin cambios pendientes" / "Cambios sin guardar") y las mismas dos acciones de la cabecera. En un formulario largo, el usuario no debería scrollear para guardar.

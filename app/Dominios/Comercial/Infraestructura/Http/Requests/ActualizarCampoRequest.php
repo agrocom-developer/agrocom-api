@@ -45,6 +45,8 @@ final class ActualizarCampoRequest extends FormRequest
             'lotes.*.hectareas' => ['required', 'numeric', 'gt:0'],
             'lotes.*.geometria' => ['nullable', 'string', $this->reglaGeometriaValida()],
             'lotes.*.restricciones' => ['nullable', 'string'],
+            'lotes.*.desnivel' => ['nullable', Rule::in(['ninguno', 'algunos', 'varios', 'empinado'])],
+            'lotes.*.limpieza' => ['nullable', Rule::in(['limpio', 'algunos_obstaculos', 'muchos_obstaculos'])],
         ];
     }
 

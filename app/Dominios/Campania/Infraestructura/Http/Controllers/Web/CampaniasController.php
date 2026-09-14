@@ -93,6 +93,7 @@ final class CampaniasController
                 $this->cadenaONull($datos['nombre'] ?? null),
                 (string) $datos['fecha_inicio'],
                 (string) $datos['fecha_fin'],
+                (string) $datos['estacion'],
             );
         } catch (CampaniaDuplicada $excepcion) {
             return redirect()
@@ -131,6 +132,7 @@ final class CampaniasController
                 $this->cadenaONull($datos['nombre'] ?? null),
                 (string) $datos['fecha_inicio'],
                 (string) $datos['fecha_fin'],
+                (string) $datos['estacion'],
             );
         } catch (CampaniaDuplicada $excepcion) {
             return redirect()

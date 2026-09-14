@@ -11,11 +11,14 @@
 return [
 
     // Estado descriptivo de un vehículo (EstadoVehiculo) — compartido por el
-    // filtro, el badge del listado y el select del formulario.
+    // filtro, el badge del listado y el select del formulario. 'pausa'
+    // (HU-84, tarea 99): baja temporal, distinta de 'taller' (en reparación)
+    // y de 'de_baja' (definitiva).
     'estado' => [
         'activo' => 'Activo',
         'taller' => 'En taller',
         'de_baja' => 'De baja',
+        'pausa' => 'En pausa',
     ],
 
     // Estado descriptivo de una batería (EstadoBateria) — mismo patrón que
@@ -24,11 +27,13 @@ return [
     'estado_bateria' => [
         'activa' => 'Activa',
         'retirada' => 'Retirada',
+        'mantenimiento' => 'En mantenimiento',
     ],
 
     // Pantalla de panel "Recursos › Vehículos" (HU-40, tarea 50): alta y
     // mantenimiento de la flota de vehículos, con su asignación a base y
-    // estado.
+    // estado. Ficha completa (marca, modelo, año, combustible, 4x4,
+    // kilometraje inicial y actual) y estado 'pausa': HU-84, tarea 99.
     'vehiculos' => [
         'titulo' => 'Vehículos',
         'subtitulo' => 'Flota de vehículos registrada, con su base asignada y estado.',
@@ -55,13 +60,26 @@ return [
         'paginacion_info' => 'Página :actual de :total',
         'titulo_crear' => 'Nuevo vehículo',
         'titulo_editar' => 'Editar vehículo',
-        'subtitulo_form' => 'Identificador, base asignada y estado del vehículo.',
+        'subtitulo_form' => 'Identificador, ficha de inventario, base asignada y estado del vehículo.',
         'seccion_datos' => 'Datos del vehículo',
         'campos_contador' => ':cantidad campos',
         'campo_identificador' => 'Identificador',
+        'campo_marca' => 'Marca',
+        'campo_modelo' => 'Modelo',
+        'campo_anio' => 'Año',
+        'campo_combustible' => 'Combustible',
+        'campo_combustible_placeholder' => 'Sin especificar',
+        'campo_es_4x4' => 'Es 4x4',
+        'campo_kilometraje_inicial' => 'Kilometraje inicial',
+        'campo_kilometraje_inicial_ayuda' => 'Con cuántos kilómetros entró el vehículo a la flota.',
+        'campo_kilometraje_actual' => 'Kilometraje actual',
         'campo_base' => 'Base',
         'campo_base_placeholder' => 'Sin asignar',
         'campo_estado' => 'Estado',
+        'combustible' => [
+            'gasolina' => 'Gasolina',
+            'diesel' => 'Diésel',
+        ],
         'estado_form' => 'Los cambios se guardan al confirmar.',
         'creado' => 'Vehículo creado correctamente.',
         'actualizado' => 'Vehículo actualizado correctamente.',
@@ -71,11 +89,11 @@ return [
 
     // Pantalla de panel "Recursos › Generadores" (tarea 72, HU-49, ADR 0015
     // punto 3): ABM mínimo del catálogo de generadores. Mismo molde de
-    // claves que 'vehiculos' arriba, con dos campos extra opcionales
-    // (modelo, horas de uso).
+    // claves que 'vehiculos' arriba, con campos extra opcionales (modelo,
+    // horas inicial y actual).
     'generadores' => [
         'titulo' => 'Generadores',
-        'subtitulo' => 'Catálogo de generadores registrado, con su modelo, base asignada, estado y horas de uso.',
+        'subtitulo' => 'Catálogo de generadores registrado, con su modelo, base asignada, estado y horas inicial/actual.',
         'nuevo' => 'Nuevo generador',
         'filtro_busqueda' => 'Buscar',
         'filtro_busqueda_placeholder' => 'Identificador…',
@@ -101,7 +119,7 @@ return [
         'paginacion_info' => 'Página :actual de :total',
         'titulo_crear' => 'Nuevo generador',
         'titulo_editar' => 'Editar generador',
-        'subtitulo_form' => 'Identificador, modelo, base asignada, estado y horas de uso del generador.',
+        'subtitulo_form' => 'Identificador, modelo, base asignada, estado y horas inicial/actual del generador.',
         'seccion_datos' => 'Datos del generador',
         'campos_contador' => ':cantidad campos',
         'campo_identificador' => 'Identificador',
@@ -109,7 +127,9 @@ return [
         'campo_base' => 'Base',
         'campo_base_placeholder' => 'Sin asignar',
         'campo_estado' => 'Estado',
-        'campo_horas_uso' => 'Horas de uso',
+        'campo_horas_inicial' => 'Horas inicial',
+        'campo_horas_inicial_ayuda' => 'Con cuántas horas entró el generador a la flota.',
+        'campo_horas_actual' => 'Horas actual',
         'estado_form' => 'Los cambios se guardan al confirmar.',
         'creado' => 'Generador creado correctamente.',
         'actualizado' => 'Generador actualizado correctamente.',
@@ -160,6 +180,8 @@ return [
         'seccion_datos' => 'Datos de la batería',
         'campos_contador' => ':cantidad campos',
         'campo_identificador' => 'Identificador',
+        'campo_ciclos_inicial' => 'Ciclos inicial',
+        'campo_ciclos_inicial_ayuda' => 'Con cuántos ciclos entró la batería al catálogo. No se puede editar después del alta.',
         'campo_ciclos' => 'Ciclos acumulados',
         'campo_base' => 'Base',
         'campo_base_placeholder' => 'Sin asignar',
@@ -169,6 +191,61 @@ return [
         'actualizado' => 'Batería actualizada correctamente.',
         'eliminado' => 'Batería dada de baja correctamente.',
         'volver' => 'Volver a baterías',
+    ],
+
+    // Pantalla de panel "Recursos › Fichas de dron" (HU-82, tarea 97): alta
+    // y mantenimiento de la ficha de inventario del dron (serie, chasis,
+    // versión de software, región, serie del control, accesorios). Mismo
+    // molde que 'baterias' arriba, sin estado ni alerta: es un ABM plano.
+    'fichas_dron' => [
+        'titulo' => 'Fichas de dron',
+        'subtitulo' => 'Inventario de drones registrado, con serie, chasis, versión de software y accesorios.',
+        'nuevo' => 'Nueva ficha',
+        'filtro_busqueda' => 'Buscar',
+        'filtro_busqueda_placeholder' => 'Identificador del dron…',
+        'filtrar' => 'Filtrar',
+        'limpiar_filtro' => 'Limpiar filtro',
+        'vacio' => 'Todavía no hay fichas de dron registradas.',
+        'filtro_vacio' => 'Ninguna ficha coincide con esta búsqueda.',
+        'col_identificador' => 'Dron',
+        'col_numero_serie' => 'N.° de serie',
+        'col_chasis' => 'Chasis',
+        'col_version_software' => 'Versión de software',
+        'col_region' => 'Región',
+        'col_accesorios' => 'Accesorios',
+        'sin_dato' => '—',
+        'accesorio_cargador_control' => 'Cargador de control',
+        'accesorio_modem' => 'Módem',
+        'accesorio_maletin' => 'Maletín',
+        'sin_accesorios' => 'Sin accesorios',
+        'editar' => 'Editar',
+        'eliminar_accion' => 'Eliminar',
+        'confirmar_baja' => '¿Confirmás la baja de esta ficha?',
+        'paginacion_aria' => 'Paginación de fichas de dron',
+        'paginacion_anterior' => 'Anterior',
+        'paginacion_siguiente' => 'Siguiente',
+        'paginacion_info' => 'Página :actual de :total',
+        'titulo_crear' => 'Nueva ficha de dron',
+        'titulo_editar' => 'Editar ficha de dron',
+        'subtitulo_form' => 'Identificador del dron, datos de serie y accesorios de la ficha.',
+        'seccion_datos' => 'Datos de la ficha',
+        'campos_contador' => ':cantidad campos',
+        'campo_identificador' => 'Identificador del dron',
+        'campo_identificador_ayuda' => 'Tiene que corresponder a un dron activo del catálogo de Operaciones.',
+        'campo_numero_serie' => 'N.° de serie',
+        'campo_chasis' => 'Chasis',
+        'campo_version_software' => 'Versión de software',
+        'campo_region' => 'Región',
+        'campo_serie_control' => 'Serie del control',
+        'seccion_accesorios' => 'Accesorios',
+        'campo_tiene_cargador_control' => 'Tiene cargador de control',
+        'campo_tiene_modem' => 'Tiene módem',
+        'campo_tiene_maletin' => 'Tiene maletín',
+        'estado_form' => 'Los cambios se guardan al confirmar.',
+        'creado' => 'Ficha de dron creada correctamente.',
+        'actualizado' => 'Ficha de dron actualizada correctamente.',
+        'eliminado' => 'Ficha de dron dada de baja correctamente.',
+        'volver' => 'Volver a fichas de dron',
     ],
 
     // Estado de una orden de mantenimiento (EstadoOrdenMantenimiento) —

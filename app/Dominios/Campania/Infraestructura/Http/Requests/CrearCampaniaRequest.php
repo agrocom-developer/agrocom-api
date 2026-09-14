@@ -19,6 +19,10 @@ use Illuminate\Validation\Rule;
  * quedar frágil ante altas y bajas lógicas — la violación se atrapa en
  * `CrearCampania` y se traduce ahí (mismo criterio que `CrearCampoRequest`
  * con el nombre del campo).
+ *
+ * `estacion` (HU-77, tarea 93) es catálogo cerrado — `Rule::in`, mismo
+ * criterio que `estado` en `CambiarEstadoCampaniaRequest` — y `nombre` pasa
+ * a `nullable` de verdad: vacío autogenera (ver `CrearCampania`).
  */
 final class CrearCampaniaRequest extends FormRequest
 {
@@ -29,6 +33,7 @@ final class CrearCampaniaRequest extends FormRequest
             'cliente_id' => ['required', 'integer', Rule::exists('com_clientes', 'id')->whereNull('deleted_at')],
             'codigo' => ['required', 'string', 'max:20'],
             'nombre' => ['nullable', 'string', 'max:150'],
+            'estacion' => ['required', Rule::in(['invierno', 'verano'])],
             'fecha_inicio' => ['required', 'date'],
             'fecha_fin' => ['required', 'date', 'after_or_equal:fecha_inicio'],
         ];

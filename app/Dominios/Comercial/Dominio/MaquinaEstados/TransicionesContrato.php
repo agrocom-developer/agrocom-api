@@ -15,18 +15,22 @@ use App\Dominios\Comercial\Dominio\EstadoContrato;
  * con `pendiente`). Desde `borrador`: a `vigente` (con guarda de negocio, ver
  * `MaquinaEstadosContrato::activar()`) o a `cancelado` (baja anticipada antes
  * de vigenciar). Desde `vigente`: a `finalizado` (sin guarda de esta tarea —
- * el cierre real por consumo de hectáreas es de `Operaciones`) o a
- * `cancelado` (baja anticipada). Los dos estados terminales (`finalizado`,
- * `cancelado`) no admiten ninguna salida.
+ * el cierre real por consumo de hectáreas es de `Operaciones`), a
+ * `cancelado` (baja anticipada) o a `pausado` (HU-71, tarea 87: interrupción
+ * del contrato vigente, no una cancelación). Los dos estados terminales
+ * (`finalizado`, `cancelado`) no admiten ninguna salida. `pausado` solo
+ * vuelve a `vigente` — el CA de HU-71 pide únicamente el ida y vuelta con
+ * `vigente`, no `pausado → cancelado` ni `pausado → finalizado`.
  */
 final class TransicionesContrato
 {
     /** @var array<string, list<string>> */
     private const array PERMITIDAS = [
         'borrador' => ['vigente', 'cancelado'],
-        'vigente' => ['finalizado', 'cancelado'],
+        'vigente' => ['finalizado', 'cancelado', 'pausado'],
         'finalizado' => [],
         'cancelado' => [],
+        'pausado' => ['vigente'],
     ];
 
     public static function permitida(EstadoContrato $desde, EstadoContrato $hacia): bool

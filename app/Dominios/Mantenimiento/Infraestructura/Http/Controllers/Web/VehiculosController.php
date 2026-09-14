@@ -8,6 +8,7 @@ use App\Dominios\Mantenimiento\Aplicacion\EliminarVehiculo;
 use App\Dominios\Mantenimiento\Aplicacion\ListarVehiculos;
 use App\Dominios\Mantenimiento\Dominio\EstadoVehiculo;
 use App\Dominios\Mantenimiento\Dominio\Excepciones\VehiculoDuplicado;
+use App\Dominios\Mantenimiento\Dominio\TipoCombustibleVehiculo;
 use App\Dominios\Mantenimiento\Infraestructura\Eloquent\Vehiculo;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Requests\ActualizarVehiculoRequest;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Requests\CrearVehiculoRequest;
@@ -33,6 +34,10 @@ use Illuminate\View\View;
  * regla 3, mismo criterio que los selects de `OrdenesController`), sin
  * importar el modelo Eloquent `PerBase` de `Personal` — `Vehiculo` y
  * `PerBase` son de módulos distintos.
+ *
+ * `combustible` (HU-84, tarea 99) se traduce a `TipoCombustibleVehiculo`
+ * solo si viene informado — mismo criterio que `sentido` en
+ * `StockController::registrarAjuste()` para un enum opcional.
  */
 final class VehiculosController
 {
@@ -79,6 +84,7 @@ final class VehiculosController
             ...$this->autorizacion->cascara($request),
             'basesDisponibles' => $this->basesDisponibles(),
             'estados' => EstadoVehiculo::cases(),
+            'combustibles' => TipoCombustibleVehiculo::cases(),
         ]);
     }
 
@@ -93,6 +99,13 @@ final class VehiculosController
                 (string) $datos['identificador'],
                 $this->enteroONull($datos['base_id'] ?? null),
                 EstadoVehiculo::from((string) $datos['estado']),
+                $this->cadenaONull($datos['marca'] ?? null),
+                $this->cadenaONull($datos['modelo'] ?? null),
+                $this->enteroONull($datos['anio'] ?? null),
+                isset($datos['combustible']) && $datos['combustible'] !== '' ? TipoCombustibleVehiculo::from((string) $datos['combustible']) : null,
+                (bool) ($datos['es_4x4'] ?? false),
+                $this->cadenaONull($datos['kilometraje_inicial'] ?? null),
+                $this->cadenaONull($datos['kilometraje_actual'] ?? null),
             );
         } catch (VehiculoDuplicado $excepcion) {
             return redirect()
@@ -115,6 +128,7 @@ final class VehiculosController
             'vehiculo' => $vehiculo,
             'basesDisponibles' => $this->basesDisponibles(),
             'estados' => EstadoVehiculo::cases(),
+            'combustibles' => TipoCombustibleVehiculo::cases(),
         ]);
     }
 
@@ -130,6 +144,13 @@ final class VehiculosController
                 (string) $datos['identificador'],
                 $this->enteroONull($datos['base_id'] ?? null),
                 EstadoVehiculo::from((string) $datos['estado']),
+                $this->cadenaONull($datos['marca'] ?? null),
+                $this->cadenaONull($datos['modelo'] ?? null),
+                $this->enteroONull($datos['anio'] ?? null),
+                isset($datos['combustible']) && $datos['combustible'] !== '' ? TipoCombustibleVehiculo::from((string) $datos['combustible']) : null,
+                (bool) ($datos['es_4x4'] ?? false),
+                $this->cadenaONull($datos['kilometraje_inicial'] ?? null),
+                $this->cadenaONull($datos['kilometraje_actual'] ?? null),
             );
         } catch (VehiculoDuplicado $excepcion) {
             return redirect()
@@ -157,6 +178,11 @@ final class VehiculosController
     private function enteroONull(mixed $valor): ?int
     {
         return $valor === null || $valor === '' ? null : (int) $valor;
+    }
+
+    private function cadenaONull(mixed $valor): ?string
+    {
+        return $valor === null || $valor === '' ? null : (string) $valor;
     }
 
     /** @return Collection<int, string> */

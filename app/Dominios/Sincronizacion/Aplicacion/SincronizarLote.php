@@ -2,6 +2,8 @@
 
 namespace App\Dominios\Sincronizacion\Aplicacion;
 
+use App\Dominios\Mezclas\Contratos\EscrituraMezclas;
+use App\Dominios\Mezclas\Contratos\RegistroMezcla;
 use App\Dominios\Operaciones\Contratos\AperturaEstadiaHacienda;
 use App\Dominios\Operaciones\Contratos\AperturaSesion;
 use App\Dominios\Operaciones\Contratos\AperturaTrabajo;
@@ -28,10 +30,11 @@ use App\Dominios\Operaciones\Contratos\ResultadoSincronizacion;
  * pushes para el caso "en desorden" (ver el prompt de la tarea 09, "Diseño
  * que evita el problema difícil").
  *
- * Solo conoce el contrato de `Operaciones` ({@see EscrituraSincronizacion}) —
- * nunca sus modelos Eloquent (ADR 0003, regla 2). El orden de la respuesta
- * respeta el orden de ENTRADA, no el de procesamiento, para que el cliente
- * pueda correlacionar cada resultado con el registro que envió.
+ * Solo conoce los contratos de `Operaciones` ({@see EscrituraSincronizacion})
+ * y, desde la tarea 94, de `Mezclas` ({@see EscrituraMezclas}) — nunca sus
+ * modelos Eloquent (ADR 0003, regla 2). El orden de la respuesta respeta el
+ * orden de ENTRADA, no el de procesamiento, para que el cliente pueda
+ * correlacionar cada resultado con el registro que envió.
  */
 final class SincronizarLote
 {
@@ -46,19 +49,23 @@ final class SincronizarLote
      * `recepcion_caldo` (tarea 18) solo depende de `trabajo` —no de
      * `sesion`— así que va justo después: el cliente puede entregar el
      * caldo en el mismo lote en que se abre el trabajo, antes de que exista
-     * ninguna sesión todavía. `recarga` (tarea 23) depende solo de `sesion`,
-     * igual que `condiciones` — el orden relativo entre esas dos no importa,
-     * ninguna referencia a la otra. `estadia_entrada`/`estadia_salida` (HU-51,
-     * tarea 74) van al final: no son prerrequisito causal de nada — la
-     * estadía del equipo en la hacienda es independiente de trabajo/sesión.
-     * `evidencia_equipo` (HU-80, tarea 86) solo depende de `trabajo` —no de
-     * `sesion`—, mismo criterio que `recepcion_caldo`, así que va junto a
-     * ella.
+     * ninguna sesión todavía. `mezcla` (espec §7, HU-78, tarea 94, revierte
+     * CR-01) y `evidencia_equipo` (HU-80, tarea 86) también dependen solo de
+     * `trabajo` —"al crear una aplicación" es cuando se abre el trabajo, no
+     * hace falta que exista sesión, y lo mismo para adjuntar la evidencia del
+     * equipo— así que van junto a `recepcion_caldo`; el orden relativo entre
+     * esas tres no importa, ninguna referencia a las otras. `recarga` (tarea
+     * 23) depende solo de `sesion`, igual que `condiciones` — el orden
+     * relativo entre esas dos no importa, ninguna referencia a la otra.
+     * `estadia_entrada`/`estadia_salida` (HU-51, tarea 74) van al final: no
+     * son prerrequisito causal de nada — la estadía del equipo en la hacienda
+     * es independiente de trabajo/sesión.
      */
-    private const array ORDEN_CAUSAL = ['trabajo', 'recepcion_caldo', 'evidencia_equipo', 'sesion', 'condiciones', 'incidencia', 'recarga', 'cierre_trabajo', 'cierre_sesion', 'estadia_entrada', 'estadia_salida'];
+    private const array ORDEN_CAUSAL = ['trabajo', 'recepcion_caldo', 'evidencia_equipo', 'mezcla', 'sesion', 'condiciones', 'incidencia', 'recarga', 'cierre_trabajo', 'cierre_sesion', 'estadia_entrada', 'estadia_salida'];
 
     public function __construct(
         private readonly EscrituraSincronizacion $operaciones,
+        private readonly EscrituraMezclas $mezclas,
     ) {}
 
     /**
@@ -111,6 +118,7 @@ final class SincronizarLote
             'trabajo' => $this->aplicarTrabajo($registro),
             'recepcion_caldo' => $this->aplicarRecepcionCaldo($registro),
             'evidencia_equipo' => $this->aplicarEvidenciaEquipo($registro),
+            'mezcla' => $this->aplicarMezcla($registro),
             'sesion' => $this->aplicarSesion($registro, $operarioPersonaId),
             'condiciones' => $this->aplicarCondiciones($registro),
             'incidencia' => $this->aplicarIncidencia($registro),
@@ -153,6 +161,23 @@ final class SincronizarLote
         return $datos === null
             ? ResultadoSincronizacion::rechazado('evidencia de equipo con datos incompletos o inválidos')
             : $this->operaciones->registrarEvidenciaEquipo($datos);
+    }
+
+    /**
+     * @param  array<string, mixed>  $registro
+     *
+     * Sin verificación de pertenencia (ver docblock de
+     * `aplicarRecepcionCaldo()`): la espec no define una noción de "dueño"
+     * para este registro — cualquier operario legítimo del trabajo puede
+     * transcribir qué se cargó.
+     */
+    private function aplicarMezcla(array $registro): ResultadoSincronizacion
+    {
+        $datos = RegistroMezcla::intentarDesdeArreglo($registro);
+
+        return $datos === null
+            ? ResultadoSincronizacion::rechazado('mezcla con datos incompletos o inválidos')
+            : $this->mezclas->registrarMezcla($datos);
     }
 
     /** @param  array<string, mixed>  $registro */

@@ -43,6 +43,10 @@ final class ActualizarContratoRequest extends FormRequest
             'velocidad_max_kmh' => ['nullable', 'numeric', 'gt:0'],
             'umbral_reporte_avance_ha' => ['nullable', 'numeric', 'gt:0'],
             'altura_vuelo_m' => ['nullable', 'numeric', 'gt:0'],
+            'brinda_alimentacion' => ['boolean'],
+            'brinda_hospedaje' => ['boolean'],
+            'brinda_combustible' => ['boolean'],
+            'observaciones_logistica' => ['nullable', 'string'],
             'ventanas' => ['nullable', 'array'],
             'ventanas.*.id' => [
                 'nullable',

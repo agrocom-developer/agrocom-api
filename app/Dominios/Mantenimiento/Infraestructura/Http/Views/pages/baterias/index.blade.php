@@ -26,14 +26,16 @@
 
     Estilos en resources/css/pages/baterias.css — cero color hardcodeado
     (CLAUDE.md invariante 11). El badge de estado usa el eje gris↔verde
-    (activa=success, retirada=neutral); el de alerta usa "warning" (ámbar),
-    reservado a esta columna — nunca para el estado, que no es un problema
-    en sí (sistema_diseno_panel.md §8).
+    (activa=success, retirada/mantenimiento=neutral, mismo "neutral" que
+    `taller` en vehiculos/generadores para una baja temporal); el de alerta
+    usa "warning" (ámbar), reservado a esta columna — nunca para el estado,
+    que no es un problema en sí (sistema_diseno_panel.md §8).
 --}}
 @php
     $variantePorEstado = [
         'activa' => 'success',
         'retirada' => 'neutral',
+        'mantenimiento' => 'neutral',
     ];
 @endphp
 <x-templates.panel-shell :title="__('mantenimiento.baterias.titulo')" :tema="$tema">

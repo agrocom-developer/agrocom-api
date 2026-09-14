@@ -28,6 +28,26 @@ test('contrato: vigente puede pasar a cancelado', function () {
     expect(TransicionesContrato::permitida(EstadoContrato::Vigente, EstadoContrato::Cancelado))->toBeTrue();
 });
 
+test('contrato: vigente puede pasar a pausado', function () {
+    expect(TransicionesContrato::permitida(EstadoContrato::Vigente, EstadoContrato::Pausado))->toBeTrue();
+});
+
+test('contrato: pausado vuelve a vigente', function () {
+    expect(TransicionesContrato::permitida(EstadoContrato::Pausado, EstadoContrato::Vigente))->toBeTrue();
+});
+
+test('contrato: pausado no pasa a cancelado', function () {
+    expect(TransicionesContrato::permitida(EstadoContrato::Pausado, EstadoContrato::Cancelado))->toBeFalse();
+});
+
+test('contrato: pausado no pasa a finalizado', function () {
+    expect(TransicionesContrato::permitida(EstadoContrato::Pausado, EstadoContrato::Finalizado))->toBeFalse();
+});
+
+test('contrato: borrador no puede pasar directo a pausado', function () {
+    expect(TransicionesContrato::permitida(EstadoContrato::Borrador, EstadoContrato::Pausado))->toBeFalse();
+});
+
 test('contrato: finalizado no vuelve a vigente', function () {
     expect(TransicionesContrato::permitida(EstadoContrato::Finalizado, EstadoContrato::Vigente))->toBeFalse();
 });
@@ -49,5 +69,6 @@ test('contrato: ningún estado se transiciona a sí mismo', function () {
     expect(TransicionesContrato::permitida(EstadoContrato::Borrador, EstadoContrato::Borrador))->toBeFalse()
         ->and(TransicionesContrato::permitida(EstadoContrato::Vigente, EstadoContrato::Vigente))->toBeFalse()
         ->and(TransicionesContrato::permitida(EstadoContrato::Finalizado, EstadoContrato::Finalizado))->toBeFalse()
-        ->and(TransicionesContrato::permitida(EstadoContrato::Cancelado, EstadoContrato::Cancelado))->toBeFalse();
+        ->and(TransicionesContrato::permitida(EstadoContrato::Cancelado, EstadoContrato::Cancelado))->toBeFalse()
+        ->and(TransicionesContrato::permitida(EstadoContrato::Pausado, EstadoContrato::Pausado))->toBeFalse();
 });

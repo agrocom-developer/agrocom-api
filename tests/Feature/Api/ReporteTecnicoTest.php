@@ -7,6 +7,9 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Mantenimiento\Infraestructura\Eloquent\Bateria;
+use App\Dominios\Mezclas\Infraestructura\Eloquent\Mezcla;
+use App\Dominios\Mezclas\Infraestructura\Eloquent\MezclaDetalle;
+use App\Dominios\Mezclas\Infraestructura\Eloquent\Producto;
 use App\Dominios\Operaciones\Aplicacion\ArmarContenidoReporteTecnico;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Dominio\EstadoSesion;
@@ -343,29 +346,55 @@ it('un trabajo con relevo de piloto detalla cada sesión por separado', function
 });
 
 /*
- * ── Caso 7: el contenido NO incluye ningún campo de mezcla, dosis, receta o producto ──
+ * ── Caso 7: el reporte lista los productos cargados en la mezcla del
+ *    trabajo (HU-78, tarea 94, revierte CR-01) ──
  */
 
-it('el contenido del reporte no incluye ningún campo de mezcla, dosis, receta o producto', function () {
+it('el contenido del reporte lista los productos cargados en la mezcla del trabajo', function () {
+    $trabajo = trabajoListoParaReporte('con-mezcla');
+
+    $mezcla = Mezcla::create([
+        'uuid_cliente' => 'uuid-mezcla-reporte-con-mezcla',
+        'trabajo_id' => $trabajo->id,
+        'hora' => '2026-09-01T07:45:00-04:00',
+    ]);
+    $producto = Producto::create(['nombre' => 'Glifosato 48%']);
+    MezclaDetalle::create([
+        'mezcla_id' => $mezcla->id,
+        'producto_id' => $producto->id,
+        'cantidad' => '2.50',
+        'unidad' => 'l',
+    ]);
+
+    conformarTrabajoParaReporte($trabajo, usuarioConPermisoReporte(), 'con-mezcla');
+
+    $datos = app(ArmarContenidoReporteTecnico::class)->ejecutar($trabajo->fresh());
+
+    expect($datos['productos_mezcla'])->toBe([
+        ['producto' => 'Glifosato 48%', 'cantidad' => '2.50', 'unidad' => 'l'],
+    ]);
+});
+
+/*
+ * ── Caso 7b: sin mezcla registrada, la lista queda vacía — y el contenido
+ *    JAMÁS incluye dosis, receta, fórmula ni compatibilidad (§7.1 sigue
+ *    vigente: se revirtió el registro de QUÉ se cargó, no el cálculo) ──
+ */
+
+it('un trabajo sin mezcla registrada devuelve la lista de productos vacía, y nunca incluye dosis, receta, fórmula ni compatibilidad', function () {
     $trabajo = trabajoListoParaReporte('sin-mezcla');
     conformarTrabajoParaReporte($trabajo, usuarioConPermisoReporte(), 'sin-mezcla');
 
     $datos = app(ArmarContenidoReporteTecnico::class)->ejecutar($trabajo->fresh());
 
-    // La única mención permitida es la nota de exclusión explícita (CR-01)
-    // — se saca antes de buscar las palabras prohibidas en el resto del array.
-    $datosSinNota = $datos;
-    unset($datosSinNota['nota_mezcla']);
-    $json = mb_strtolower(json_encode($datosSinNota, JSON_THROW_ON_ERROR));
+    expect($datos['productos_mezcla'])->toBe([]);
 
-    expect($json)->not->toContain('mezcla')
-        ->not->toContain('dosis')
+    $json = mb_strtolower(json_encode($datos, JSON_THROW_ON_ERROR));
+
+    expect($json)->not->toContain('dosis')
         ->not->toContain('receta')
-        ->not->toContain('producto')
-        ->not->toContain('formula');
-
-    // La nota SÍ debe estar, y en texto explícito (no un placeholder vacío).
-    expect($datos['nota_mezcla'])->toContain('CR-01')->toContain('fuera de alcance');
+        ->not->toContain('formula')
+        ->not->toContain('compatibilidad');
 });
 
 /*

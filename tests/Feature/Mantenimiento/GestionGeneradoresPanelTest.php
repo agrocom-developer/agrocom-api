@@ -56,11 +56,12 @@ function payloadGenerador(array $overrides = []): array
         'modelo' => '',
         'base_id' => '',
         'estado' => 'activo',
-        'horas_uso' => '',
+        'horas_inicial' => '',
+        'horas_actual' => '',
     ], $overrides);
 }
 
-it('da de alta un generador con identificador, modelo, base, estado y horas de uso válidos', function () {
+it('da de alta un generador con identificador, modelo, base, estado y horas inicial/actual válidas', function () {
     [$encargado, $idRol] = usuarioConRolParaGeneradores('encargado', 'encargado_operaciones');
     entrarAlPanelParaGeneradores($encargado, $idRol);
 
@@ -70,7 +71,8 @@ it('da de alta un generador con identificador, modelo, base, estado y horas de u
         'modelo' => 'Honda EU3000',
         'base_id' => (string) $base->id,
         'estado' => 'taller',
-        'horas_uso' => '120.50',
+        'horas_inicial' => '100.00',
+        'horas_actual' => '120.50',
     ]))->assertRedirect(route('panel.generadores.index'));
 
     $generador = Generador::query()->where('identificador', 'GEN-001')->sole();
@@ -78,10 +80,11 @@ it('da de alta un generador con identificador, modelo, base, estado y horas de u
     expect($generador->base_id)->toBe($base->id)
         ->and($generador->estado)->toBe('taller')
         ->and($generador->modelo)->toBe('Honda EU3000')
-        ->and((float) $generador->horas_uso)->toBe(120.50);
+        ->and((float) $generador->horas_inicial)->toBe(100.00)
+        ->and((float) $generador->horas_actual)->toBe(120.50);
 });
 
-it('da de alta un generador sin modelo, base ni horas de uso', function () {
+it('da de alta un generador sin modelo, base ni horas inicial/actual', function () {
     [$encargado, $idRol] = usuarioConRolParaGeneradores('encargado', 'encargado_operaciones');
     entrarAlPanelParaGeneradores($encargado, $idRol);
 
@@ -91,7 +94,8 @@ it('da de alta un generador sin modelo, base ni horas de uso', function () {
     $generador = Generador::query()->where('identificador', 'GEN-001')->sole();
     expect($generador->base_id)->toBeNull()
         ->and($generador->modelo)->toBeNull()
-        ->and($generador->horas_uso)->toBeNull()
+        ->and($generador->horas_inicial)->toBeNull()
+        ->and($generador->horas_actual)->toBeNull()
         ->and($generador->estado)->toBe('activo');
 });
 
@@ -115,14 +119,50 @@ it('rechaza una base_id inexistente sin persistir', function () {
     expect(Generador::query()->where('identificador', 'GEN-001')->exists())->toBeFalse();
 });
 
-it('rechaza horas de uso negativas sin persistir', function () {
+it('rechaza horas inicial negativas sin persistir', function () {
     [$encargado, $idRol] = usuarioConRolParaGeneradores('encargado', 'encargado_operaciones');
     entrarAlPanelParaGeneradores($encargado, $idRol);
 
-    $this->post(route('panel.generadores.store'), payloadGenerador(['horas_uso' => '-5']))
-        ->assertSessionHasErrors('horas_uso');
+    $this->post(route('panel.generadores.store'), payloadGenerador(['horas_inicial' => '-5']))
+        ->assertSessionHasErrors('horas_inicial');
 
     expect(Generador::query()->where('identificador', 'GEN-001')->exists())->toBeFalse();
+});
+
+it('rechaza horas actual negativas sin persistir', function () {
+    [$encargado, $idRol] = usuarioConRolParaGeneradores('encargado', 'encargado_operaciones');
+    entrarAlPanelParaGeneradores($encargado, $idRol);
+
+    $this->post(route('panel.generadores.store'), payloadGenerador(['horas_actual' => '-5']))
+        ->assertSessionHasErrors('horas_actual');
+
+    expect(Generador::query()->where('identificador', 'GEN-001')->exists())->toBeFalse();
+});
+
+it('rechaza horas_actual menor a horas_inicial como error de validación, no de base de datos', function () {
+    [$encargado, $idRol] = usuarioConRolParaGeneradores('encargado', 'encargado_operaciones');
+    entrarAlPanelParaGeneradores($encargado, $idRol);
+
+    $this->post(route('panel.generadores.store'), payloadGenerador([
+        'horas_inicial' => '100.00',
+        'horas_actual' => '50.00',
+    ]))->assertSessionHasErrors('horas_actual');
+
+    expect(Generador::query()->where('identificador', 'GEN-001')->exists())->toBeFalse();
+});
+
+it('acepta horas_actual igual a horas_inicial, el límite del CHECK', function () {
+    [$encargado, $idRol] = usuarioConRolParaGeneradores('encargado', 'encargado_operaciones');
+    entrarAlPanelParaGeneradores($encargado, $idRol);
+
+    $this->post(route('panel.generadores.store'), payloadGenerador([
+        'horas_inicial' => '100.00',
+        'horas_actual' => '100.00',
+    ]))->assertRedirect(route('panel.generadores.index'));
+
+    $generador = Generador::query()->where('identificador', 'GEN-001')->sole();
+    expect((float) $generador->horas_inicial)->toBe(100.00)
+        ->and((float) $generador->horas_actual)->toBe(100.00);
 });
 
 it('el identificador duplicado entre generadores activos es un error de validación, no un QueryException', function () {
@@ -150,24 +190,38 @@ it('un generador dado de baja no bloquea el re-alta con el mismo identificador',
     expect(Generador::query()->where('identificador', 'GEN-001')->count())->toBe(1);
 });
 
-it('edita un generador existente, incluida su asignación de base', function () {
+it('edita un generador existente, incluida su asignación de base y sus horas inicial/actual', function () {
     [$encargado, $idRol] = usuarioConRolParaGeneradores('encargado', 'encargado_operaciones');
     entrarAlPanelParaGeneradores($encargado, $idRol);
 
     $baseVieja = PerBase::query()->create(['nombre' => 'Base Norte']);
     $baseNueva = PerBase::query()->create(['nombre' => 'Base Sur']);
 
-    $generador = Generador::query()->create(['identificador' => 'GEN-001', 'base_id' => $baseVieja->id, 'estado' => 'activo']);
+    $generador = Generador::query()->create([
+        'identificador' => 'GEN-001',
+        'base_id' => $baseVieja->id,
+        'estado' => 'activo',
+        'horas_inicial' => '10.00',
+        'horas_actual' => '10.00',
+    ]);
 
     $this->put(
         route('panel.generadores.update', $generador),
-        payloadGenerador(['identificador' => 'GEN-001-B', 'base_id' => (string) $baseNueva->id, 'estado' => 'de_baja']),
+        payloadGenerador([
+            'identificador' => 'GEN-001-B',
+            'base_id' => (string) $baseNueva->id,
+            'estado' => 'de_baja',
+            'horas_inicial' => '10.00',
+            'horas_actual' => '45.75',
+        ]),
     )->assertRedirect(route('panel.generadores.index'));
 
     $generador->refresh();
     expect($generador->identificador)->toBe('GEN-001-B')
         ->and($generador->base_id)->toBe($baseNueva->id)
-        ->and($generador->estado)->toBe('de_baja');
+        ->and($generador->estado)->toBe('de_baja')
+        ->and((float) $generador->horas_inicial)->toBe(10.00)
+        ->and((float) $generador->horas_actual)->toBe(45.75);
 });
 
 it('filtra el listado por base y por estado', function () {

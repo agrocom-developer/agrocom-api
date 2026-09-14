@@ -7,6 +7,7 @@ use App\Dominios\Distribucion\Infraestructura\DistribucionServiceProvider;
 use App\Dominios\Finanzas\Infraestructura\FinanzasServiceProvider;
 use App\Dominios\Inventario\Infraestructura\InventarioServiceProvider;
 use App\Dominios\Mantenimiento\Infraestructura\MantenimientoServiceProvider;
+use App\Dominios\Mezclas\Infraestructura\MezclasServiceProvider;
 use App\Dominios\Operaciones\Infraestructura\OperacionesServiceProvider;
 use App\Dominios\Personal\Infraestructura\PersonalServiceProvider;
 use App\Dominios\Portal\Infraestructura\PortalServiceProvider;
@@ -19,6 +20,7 @@ return [
     SeguridadServiceProvider::class,
     ComercialServiceProvider::class,
     OperacionesServiceProvider::class,
+    MezclasServiceProvider::class,
     PersonalServiceProvider::class,
     DistribucionServiceProvider::class,
     FinanzasServiceProvider::class,

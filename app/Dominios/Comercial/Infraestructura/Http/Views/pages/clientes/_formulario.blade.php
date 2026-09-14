@@ -16,6 +16,11 @@
     - $tiposPersona (list<TipoPersonaCliente>): opciones del select de tipo
       de persona (física/jurídica, ADR 0018) — la vista no conoce el enum
       de dominio.
+    - $logoArchivo (array{nombre: string, peso: string, url: string}|null):
+      resuelto por ClientesController::logoArchivo() (HU-75, tarea 91) —
+      null en alta o si el cliente no tiene logo guardado. `remove-name`
+      del `file-field` solo se pasa en edición: en alta no hay logo previo
+      que quitar.
 
     Tras un error de validación, `old()` pisa los valores del modelo/vacíos
     — mismo criterio en alta y en edición, para que el usuario no pierda lo
@@ -30,6 +35,7 @@
     $accion = $esEdicion ? route('panel.clientes.update', $cliente) : route('panel.clientes.store');
     $razonSocial = old('razon_social', $cliente?->razon_social ?? '');
     $nit = old('nit', $cliente?->nit ?? '');
+    $ubicacionOficina = old('ubicacion_oficina', $cliente?->ubicacion_oficina ?? '');
     $tipoPersonaValor = old('tipo_persona', $cliente?->tipo_persona?->value ?? '');
     $contactosPorDefecto = $esEdicion
         ? $cliente->contactos->map(fn ($contacto) => [
@@ -47,7 +53,7 @@
     ]);
 @endphp
 
-<form method="POST" action="{{ $accion }}" class="ag-clientes-form" novalidate data-ag-clientes-form>
+<form method="POST" action="{{ $accion }}" enctype="multipart/form-data" class="ag-clientes-form" novalidate data-ag-clientes-form>
     @csrf
     @if ($esEdicion)
         @method('PUT')
@@ -66,7 +72,7 @@
 
     <x-molecules.form-section
         :title="__('comercial.clientes.seccion_datos')"
-        :count="__('comercial.clientes.campos_contador', ['cantidad' => 3])"
+        :count="__('comercial.clientes.campos_contador', ['cantidad' => 5])"
     >
         <x-atoms.input
             type="text"
@@ -96,6 +102,32 @@
             help="{{ __('comercial.clientes.campo_nit_ayuda') }}"
             error="{{ $errors->first('nit') }}"
         />
+
+        <x-atoms.input
+            type="text"
+            name="ubicacion_oficina"
+            label="{{ __('comercial.clientes.campo_ubicacion_oficina') }}"
+            value="{{ $ubicacionOficina }}"
+            help="{{ __('comercial.clientes.campo_ubicacion_oficina_ayuda') }}"
+            error="{{ $errors->first('ubicacion_oficina') }}"
+        />
+
+        <x-molecules.file-field
+            class="ag-form-section__field--full"
+            name="logo"
+            accept=".png,.svg"
+            :remove-name="$esEdicion ? 'logo_eliminar' : null"
+            :label="__('comercial.clientes.campo_logo')"
+            :file-name="$logoArchivo['nombre'] ?? null"
+            :file-size="$logoArchivo['peso'] ?? null"
+            :preview-url="$logoArchivo['url'] ?? null"
+            :help="__('comercial.clientes.campo_logo_ayuda')"
+            :replace-label="__('comercial.clientes.campo_logo_reemplazar')"
+            :remove-label="$esEdicion && $logoArchivo ? __('comercial.clientes.campo_logo_quitar') : null"
+            error="{{ $errors->first('logo') }}"
+        >
+            <x-atoms.icon name="business" />
+        </x-molecules.file-field>
     </x-molecules.form-section>
 
     <x-molecules.form-section :title="__('comercial.clientes.seccion_contactos')">

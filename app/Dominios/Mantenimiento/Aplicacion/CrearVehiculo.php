@@ -4,12 +4,19 @@ namespace App\Dominios\Mantenimiento\Aplicacion;
 
 use App\Dominios\Mantenimiento\Dominio\EstadoVehiculo;
 use App\Dominios\Mantenimiento\Dominio\Excepciones\VehiculoDuplicado;
+use App\Dominios\Mantenimiento\Dominio\TipoCombustibleVehiculo;
 use App\Dominios\Mantenimiento\Infraestructura\Eloquent\Vehiculo;
 use Illuminate\Database\QueryException;
 
 /**
  * Alta de un vehículo de la flota (HU-40, tarea 50): identificador, base
  * asignada (opcional) y estado.
+ *
+ * `marca`/`modelo`/`anio`/`combustible`/`es4x4`/`kilometrajeInicial`/
+ * `kilometrajeActual` (HU-84, tarea 99) completan la ficha de inventario.
+ * A diferencia de `ciclosInicial` en baterías (tarea 98),
+ * `kilometrajeInicial` NO es inmutable: el criterio de esta HU no lo pide,
+ * así que `ActualizarVehiculo` lo recibe igual que acá.
  */
 final class CrearVehiculo
 {
@@ -18,12 +25,29 @@ final class CrearVehiculo
      *                           vehículo activo (índice parcial
      *                           `man_vehiculos_identificador_unico`).
      */
-    public function ejecutar(string $identificador, ?int $baseId, EstadoVehiculo $estado): Vehiculo
-    {
+    public function ejecutar(
+        string $identificador,
+        ?int $baseId,
+        EstadoVehiculo $estado,
+        ?string $marca,
+        ?string $modelo,
+        ?int $anio,
+        ?TipoCombustibleVehiculo $combustible,
+        bool $es4x4,
+        ?string $kilometrajeInicial,
+        ?string $kilometrajeActual,
+    ): Vehiculo {
         $vehiculo = new Vehiculo([
             'identificador' => $identificador,
             'base_id' => $baseId,
             'estado' => $estado->value,
+            'marca' => $marca,
+            'modelo' => $modelo,
+            'anio' => $anio,
+            'combustible' => $combustible?->value,
+            'es_4x4' => $es4x4,
+            'kilometraje_inicial' => $kilometrajeInicial,
+            'kilometraje_actual' => $kilometrajeActual,
         ]);
 
         try {
