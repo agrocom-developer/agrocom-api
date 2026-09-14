@@ -35,6 +35,10 @@ it('crea la tabla con soft delete y columnas de auditoría', function (string $t
         ]))->toBeTrue();
 })->with('tablas de Personal y Seguridad');
 
+it('per_bases tiene coordenada, nullable (HU-85, tarea 100)', function () {
+    expect(Schema::hasColumns('per_bases', ['latitud', 'longitud']))->toBeTrue();
+});
+
 /*
  * HU-03 — `sec_token_dispositivo`. La tabla NO es la `personal_access_tokens`
  * de Sanctum: lleva prefijo de módulo (ADR 0011), auditoría y soft delete
