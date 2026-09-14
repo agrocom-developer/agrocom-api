@@ -47,7 +47,7 @@ use Illuminate\Support\Facades\DB;
 final class ActualizarCampo
 {
     /**
-     * @param  list<array{id: int|null, codigo: string, hectareas: string, geometria: array<string, mixed>|null, restricciones: string|null}>  $lotes
+     * @param  list<array{id: int|null, codigo: string, hectareas: string, geometria: array<string, mixed>|null, restricciones: string|null, desnivel: string|null, limpieza: string|null}>  $lotes
      *
      * @throws CampoDuplicado si el nombre ya pertenece a otro campo activo
      *                        de la misma propiedad.
@@ -74,7 +74,7 @@ final class ActualizarCampo
         });
     }
 
-    /** @param  list<array{id: int|null, codigo: string, hectareas: string, geometria: array<string, mixed>|null, restricciones: string|null}>  $lotes */
+    /** @param  list<array{id: int|null, codigo: string, hectareas: string, geometria: array<string, mixed>|null, restricciones: string|null, desnivel: string|null, limpieza: string|null}>  $lotes */
     private function sincronizarLotes(Campo $campo, array $lotes): void
     {
         $idsEnviados = array_values(array_filter(array_column($lotes, 'id')));

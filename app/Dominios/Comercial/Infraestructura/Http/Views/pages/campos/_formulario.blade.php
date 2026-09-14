@@ -42,6 +42,8 @@
             'hectareas' => $lote->hectareas,
             'geometria' => $lote->geometria !== null ? json_encode($lote->geometria) : '',
             'restricciones' => $lote->restricciones,
+            'desnivel' => $lote->desnivel,
+            'limpieza' => $lote->limpieza,
         ])->all()
         : [[]];
     $lotesIniciales = old('lotes', $lotesPorDefecto);

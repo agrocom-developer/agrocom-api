@@ -321,6 +321,21 @@ return [
         'lote_mapa_medida_declaradas' => ':dibujadas ha dibujadas de :declaradas ha declaradas',
         'lote_restricciones' => 'Restricciones',
         'lote_restricciones_placeholder' => 'Cables, viviendas, colmenas, vecinos sensibles',
+
+        // Desnivel y limpieza del lote: catálogos cerrados aparte de
+        // `restricciones` (texto libre).
+        'lote_desnivel' => 'Desnivel',
+        'lote_desnivel_placeholder' => 'Sin especificar',
+        'lote_desnivel_ninguno' => 'Ninguno',
+        'lote_desnivel_algunos' => 'Algunos desniveles',
+        'lote_desnivel_varios' => 'Varios desniveles',
+        'lote_desnivel_empinado' => 'Empinado',
+        'lote_limpieza' => 'Limpieza',
+        'lote_limpieza_placeholder' => 'Sin especificar',
+        'lote_limpieza_limpio' => 'Limpio',
+        'lote_limpieza_algunos_obstaculos' => 'Algunos obstáculos',
+        'lote_limpieza_muchos_obstaculos' => 'Muchos obstáculos',
+
         'estado_form' => 'Los cambios se guardan al confirmar.',
         'volver' => 'Volver a campos',
 
@@ -331,9 +346,10 @@ return [
     // Tarea 77 (HU-54, etapa 2): ficha propia de un lote — antes solo se
     // podía tocar entrando por su propiedad (`campos`, arriba). Mismo molde
     // de listado/formulario que el resto del panel; los rótulos
-    // `lote_codigo`/`lote_hectareas`/`lote_geometria*`/`lote_restricciones*`
-    // del bloque `campos` de arriba se reusan tal cual (mismo copy, misma
-    // fila `_lote-fila.blade.php` compartida por las dos pantallas).
+    // `lote_codigo`/`lote_hectareas`/`lote_geometria*`/`lote_restricciones*`/
+    // `lote_desnivel*`/`lote_limpieza*` del bloque `campos` de arriba se
+    // reusan tal cual (mismo copy, misma fila `_lote-fila.blade.php`
+    // compartida por las dos pantallas).
     'lotes' => [
         'creado' => 'El lote se dio de alta correctamente.',
         'actualizado' => 'Los datos del lote se actualizaron correctamente.',

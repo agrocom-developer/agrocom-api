@@ -29,7 +29,7 @@ final class CrearCampo
     public function __construct(private readonly GuardarSiembraCampania $guardarSiembraCampania) {}
 
     /**
-     * @param  list<array{codigo: string, hectareas: string, geometria: array<string, mixed>|null, restricciones: string|null}>  $lotes
+     * @param  list<array{codigo: string, hectareas: string, geometria: array<string, mixed>|null, restricciones: string|null, desnivel: string|null, limpieza: string|null}>  $lotes
      *
      * @throws CampoDuplicado si el nombre ya pertenece a otro campo activo
      *                        de la misma propiedad (índice parcial `com_campos_nombre_unico`).

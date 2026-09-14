@@ -36,6 +36,10 @@ it('com_contratos tiene la altura de vuelo pactada por contrato (HU-47, tarea 70
     expect(Schema::hasColumn('com_contratos', 'altura_vuelo_m'))->toBeTrue();
 });
 
+it('com_lotes tiene desnivel y limpieza, nullable (HU-73, tarea 89)', function () {
+    expect(Schema::hasColumns('com_lotes', ['desnivel', 'limpieza']))->toBeTrue();
+});
+
 it('ope_ordenes_aplicacion tiene el tipo de aplicación, con desarrollo como default (HU-47, tarea 70)', function () {
     expect(Schema::hasColumn('ope_ordenes_aplicacion', 'tipo_aplicacion'))->toBeTrue();
 

@@ -227,7 +227,7 @@ final class CamposController
 
     /**
      * @param  array<string, mixed>  $lote
-     * @return array{codigo: string, hectareas: string, geometria: array<string, mixed>|null, restricciones: string|null}
+     * @return array{codigo: string, hectareas: string, geometria: array<string, mixed>|null, restricciones: string|null, desnivel: string|null, limpieza: string|null}
      */
     private function normalizarLoteNuevo(array $lote): array
     {
@@ -236,12 +236,14 @@ final class CamposController
             'hectareas' => (string) $lote['hectareas'],
             'geometria' => $this->decodificarGeometria($lote['geometria'] ?? null),
             'restricciones' => $this->cadenaONull($lote['restricciones'] ?? null),
+            'desnivel' => $this->cadenaONull($lote['desnivel'] ?? null),
+            'limpieza' => $this->cadenaONull($lote['limpieza'] ?? null),
         ];
     }
 
     /**
      * @param  array<string, mixed>  $lote
-     * @return array{id: int|null, codigo: string, hectareas: string, geometria: array<string, mixed>|null, restricciones: string|null}
+     * @return array{id: int|null, codigo: string, hectareas: string, geometria: array<string, mixed>|null, restricciones: string|null, desnivel: string|null, limpieza: string|null}
      */
     private function normalizarLoteExistente(array $lote): array
     {

@@ -12,7 +12,8 @@
       reemplaza por el próximo número al clonar. No hace falta si se pasa
       `$prefijo` explícito (ver abajo).
     - $lote (array{id?: int, codigo?: string, hectareas?: string,
-      geometria?: string, restricciones?: string}): vacío en una fila nueva.
+      geometria?: string, restricciones?: string, desnivel?: string,
+      limpieza?: string}): vacío en una fila nueva.
     - $prefijo (string, opcional): prefijo de los `name` de los campos —
       por defecto `lotes[{indice}]` (el caso de siempre: fila dentro del
       array del formulario de propiedad). La ficha de un lote suelto
@@ -227,6 +228,35 @@
             </div>
         </div>
     </div>
+
+    <x-atoms.select
+        name="{{ $prefijo }}[desnivel]"
+        id="{{ $idBase }}-desnivel"
+        label="{{ __('comercial.campos.lote_desnivel') }}"
+        :options="[
+            'ninguno' => __('comercial.campos.lote_desnivel_ninguno'),
+            'algunos' => __('comercial.campos.lote_desnivel_algunos'),
+            'varios' => __('comercial.campos.lote_desnivel_varios'),
+            'empinado' => __('comercial.campos.lote_desnivel_empinado'),
+        ]"
+        :value="$lote['desnivel'] ?? ''"
+        placeholder="{{ __('comercial.campos.lote_desnivel_placeholder') }}"
+        error="{{ $errors->first($erroresPrefijo.'.desnivel') }}"
+    />
+
+    <x-atoms.select
+        name="{{ $prefijo }}[limpieza]"
+        id="{{ $idBase }}-limpieza"
+        label="{{ __('comercial.campos.lote_limpieza') }}"
+        :options="[
+            'limpio' => __('comercial.campos.lote_limpieza_limpio'),
+            'algunos_obstaculos' => __('comercial.campos.lote_limpieza_algunos_obstaculos'),
+            'muchos_obstaculos' => __('comercial.campos.lote_limpieza_muchos_obstaculos'),
+        ]"
+        :value="$lote['limpieza'] ?? ''"
+        placeholder="{{ __('comercial.campos.lote_limpieza_placeholder') }}"
+        error="{{ $errors->first($erroresPrefijo.'.limpieza') }}"
+    />
 
     <x-atoms.textarea
         name="{{ $prefijo }}[restricciones]"

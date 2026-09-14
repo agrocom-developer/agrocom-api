@@ -26,6 +26,8 @@ final class ActualizarLoteRequest extends FormRequest
             'lote.hectareas' => ['required', 'numeric', 'gt:0'],
             'lote.geometria' => ['nullable', 'string', $this->reglaGeometriaValida()],
             'lote.restricciones' => ['nullable', 'string'],
+            'lote.desnivel' => ['nullable', Rule::in(['ninguno', 'algunos', 'varios', 'empinado'])],
+            'lote.limpieza' => ['nullable', Rule::in(['limpio', 'algunos_obstaculos', 'muchos_obstaculos'])],
         ];
     }
 

@@ -42,6 +42,8 @@
         'hectareas' => old('lote.hectareas', $lote?->hectareas ?? ''),
         'geometria' => old('lote.geometria', $lote?->geometria !== null ? json_encode($lote->geometria) : ''),
         'restricciones' => old('lote.restricciones', $lote?->restricciones ?? ''),
+        'desnivel' => old('lote.desnivel', $lote?->desnivel ?? ''),
+        'limpieza' => old('lote.limpieza', $lote?->limpieza ?? ''),
     ];
     $mapaClientePropiedad = $propiedadesDisponibles->pluck('cliente_id', 'id');
     $propiedadesOptions = $propiedadesDisponibles->mapWithKeys(fn ($propiedad) => [
