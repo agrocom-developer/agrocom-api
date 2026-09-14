@@ -133,6 +133,12 @@
                         <strong>{{ __('mantenimiento.ordenes.detalle_gasto') }}</strong>
                         {{ __('mantenimiento.ordenes.detalle_gasto_valor', ['id' => $orden->gasto_id]) }}
                     </span>
+                    @if ($montoGasto !== null)
+                        <span class="ag-orden-mantenimiento-detalle__campo">
+                            <strong>{{ __('mantenimiento.ordenes.detalle_precio_final') }}</strong>
+                            Bs {{ $montoGasto }}
+                        </span>
+                    @endif
                 @endif
                 <span class="ag-orden-mantenimiento-detalle__campo ag-orden-mantenimiento-detalle__campo--full">
                     <strong>{{ __('mantenimiento.ordenes.detalle_descripcion') }}</strong>

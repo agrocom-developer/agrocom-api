@@ -22,6 +22,12 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
  * ACTIVO de la sesión, nunca la unión de los roles del usuario (invariante
  * 10 de CLAUDE.md). Mismo patrón de asserts que
  * tests/Feature/Mantenimiento/GestionBateriasPanelTest.php (tarea 51).
+ *
+ * Los casos de "rol con el permiso" usan `dueno`, no `encargado_operaciones`:
+ * HU-88 (tarea 103) le sacó a este último el catálogo completo de repuestos y
+ * stock (dejaba un hueco raro con solo `.ver` afuera, ver
+ * `SeguridadSeeder::PERMISOS_ENCARGADO_OPERACIONES`) para que la HU sacara
+ * los ítems de su menú.
  */
 
 uses(RefreshDatabase::class);
@@ -77,8 +83,8 @@ function payloadMovimiento(array $overrides = []): array
 }
 
 it('da de alta un repuesto con código, descripción, unidad y costo válidos', function () {
-    [$encargado, $idRol] = usuarioConRolParaInventario('encargado', 'encargado_operaciones');
-    entrarAlPanelParaInventario($encargado, $idRol);
+    [$dueno, $idRol] = usuarioConRolParaInventario('dueno', 'dueno');
+    entrarAlPanelParaInventario($dueno, $idRol);
 
     $this->post(route('panel.repuestos.store'), payloadRepuesto(['costo_unitario' => '45.50']))
         ->assertRedirect(route('panel.repuestos.index'));
@@ -91,8 +97,8 @@ it('da de alta un repuesto con código, descripción, unidad y costo válidos', 
 });
 
 it('da de alta un repuesto sin costo unitario, todavía sin ninguna compra', function () {
-    [$encargado, $idRol] = usuarioConRolParaInventario('encargado', 'encargado_operaciones');
-    entrarAlPanelParaInventario($encargado, $idRol);
+    [$dueno, $idRol] = usuarioConRolParaInventario('dueno', 'dueno');
+    entrarAlPanelParaInventario($dueno, $idRol);
 
     $this->post(route('panel.repuestos.store'), payloadRepuesto())
         ->assertRedirect(route('panel.repuestos.index'));
@@ -102,8 +108,8 @@ it('da de alta un repuesto sin costo unitario, todavía sin ninguna compra', fun
 });
 
 it('el código duplicado entre repuestos activos es un error de validación, no un QueryException', function () {
-    [$encargado, $idRol] = usuarioConRolParaInventario('encargado', 'encargado_operaciones');
-    entrarAlPanelParaInventario($encargado, $idRol);
+    [$dueno, $idRol] = usuarioConRolParaInventario('dueno', 'dueno');
+    entrarAlPanelParaInventario($dueno, $idRol);
 
     Repuesto::query()->create(['codigo' => 'REP-001', 'descripcion' => 'Otro', 'unidad' => 'unidad']);
 
@@ -114,8 +120,8 @@ it('el código duplicado entre repuestos activos es un error de validación, no 
 });
 
 it('un repuesto dado de baja no bloquea el re-alta con el mismo código', function () {
-    [$encargado, $idRol] = usuarioConRolParaInventario('encargado', 'encargado_operaciones');
-    entrarAlPanelParaInventario($encargado, $idRol);
+    [$dueno, $idRol] = usuarioConRolParaInventario('dueno', 'dueno');
+    entrarAlPanelParaInventario($dueno, $idRol);
 
     $existente = Repuesto::query()->create(['codigo' => 'REP-001', 'descripcion' => 'Viejo', 'unidad' => 'unidad']);
     $existente->delete();
@@ -127,8 +133,8 @@ it('un repuesto dado de baja no bloquea el re-alta con el mismo código', functi
 });
 
 it('edita un repuesto existente', function () {
-    [$encargado, $idRol] = usuarioConRolParaInventario('encargado', 'encargado_operaciones');
-    entrarAlPanelParaInventario($encargado, $idRol);
+    [$dueno, $idRol] = usuarioConRolParaInventario('dueno', 'dueno');
+    entrarAlPanelParaInventario($dueno, $idRol);
 
     $repuesto = Repuesto::query()->create(['codigo' => 'REP-001', 'descripcion' => 'Hélice', 'unidad' => 'unidad', 'costo_unitario' => '10.00']);
 
@@ -144,8 +150,8 @@ it('edita un repuesto existente', function () {
 });
 
 it('filtra el listado de repuestos por código o descripción', function () {
-    [$encargado, $idRol] = usuarioConRolParaInventario('encargado', 'encargado_operaciones');
-    entrarAlPanelParaInventario($encargado, $idRol);
+    [$dueno, $idRol] = usuarioConRolParaInventario('dueno', 'dueno');
+    entrarAlPanelParaInventario($dueno, $idRol);
 
     Repuesto::query()->create(['codigo' => 'REP-HELICE', 'descripcion' => 'Hélice', 'unidad' => 'unidad']);
     Repuesto::query()->create(['codigo' => 'REP-MOTOR', 'descripcion' => 'Motor', 'unidad' => 'unidad']);
@@ -157,8 +163,8 @@ it('filtra el listado de repuestos por código o descripción', function () {
 });
 
 it('registra una compra: incrementa el stock de la base y sobrescribe el costo unitario del repuesto', function () {
-    [$encargado, $idRol] = usuarioConRolParaInventario('encargado', 'encargado_operaciones');
-    entrarAlPanelParaInventario($encargado, $idRol);
+    [$dueno, $idRol] = usuarioConRolParaInventario('dueno', 'dueno');
+    entrarAlPanelParaInventario($dueno, $idRol);
 
     $repuesto = Repuesto::query()->create(['codigo' => 'REP-001', 'descripcion' => 'Hélice', 'unidad' => 'unidad']);
     $base = PerBase::query()->create(['nombre' => 'Base Norte']);
@@ -184,8 +190,8 @@ it('registra una compra: incrementa el stock de la base y sobrescribe el costo u
 });
 
 it('registra una salida: decrementa el stock existente', function () {
-    [$encargado, $idRol] = usuarioConRolParaInventario('encargado', 'encargado_operaciones');
-    entrarAlPanelParaInventario($encargado, $idRol);
+    [$dueno, $idRol] = usuarioConRolParaInventario('dueno', 'dueno');
+    entrarAlPanelParaInventario($dueno, $idRol);
 
     $repuesto = Repuesto::query()->create(['codigo' => 'REP-001', 'descripcion' => 'Hélice', 'unidad' => 'unidad']);
     $base = PerBase::query()->create(['nombre' => 'Base Norte']);
@@ -203,8 +209,8 @@ it('registra una salida: decrementa el stock existente', function () {
 });
 
 it('registra un ajuste por incremento: suma stock con el motivo declarado', function () {
-    [$encargado, $idRol] = usuarioConRolParaInventario('encargado', 'encargado_operaciones');
-    entrarAlPanelParaInventario($encargado, $idRol);
+    [$dueno, $idRol] = usuarioConRolParaInventario('dueno', 'dueno');
+    entrarAlPanelParaInventario($dueno, $idRol);
 
     $repuesto = Repuesto::query()->create(['codigo' => 'REP-001', 'descripcion' => 'Hélice', 'unidad' => 'unidad']);
     $base = PerBase::query()->create(['nombre' => 'Base Norte']);
@@ -228,8 +234,8 @@ it('registra un ajuste por incremento: suma stock con el motivo declarado', func
 });
 
 it('registra un ajuste por decremento: resta stock con el motivo declarado', function () {
-    [$encargado, $idRol] = usuarioConRolParaInventario('encargado', 'encargado_operaciones');
-    entrarAlPanelParaInventario($encargado, $idRol);
+    [$dueno, $idRol] = usuarioConRolParaInventario('dueno', 'dueno');
+    entrarAlPanelParaInventario($dueno, $idRol);
 
     $repuesto = Repuesto::query()->create(['codigo' => 'REP-001', 'descripcion' => 'Hélice', 'unidad' => 'unidad']);
     $base = PerBase::query()->create(['nombre' => 'Base Norte']);
@@ -249,8 +255,8 @@ it('registra un ajuste por decremento: resta stock con el motivo declarado', fun
 });
 
 it('registra un traslado: decrementa la base de origen e incrementa la de destino desde un único movimiento', function () {
-    [$encargado, $idRol] = usuarioConRolParaInventario('encargado', 'encargado_operaciones');
-    entrarAlPanelParaInventario($encargado, $idRol);
+    [$dueno, $idRol] = usuarioConRolParaInventario('dueno', 'dueno');
+    entrarAlPanelParaInventario($dueno, $idRol);
 
     $repuesto = Repuesto::query()->create(['codigo' => 'REP-001', 'descripcion' => 'Hélice', 'unidad' => 'unidad']);
     $baseOrigen = PerBase::query()->create(['nombre' => 'Base Norte']);
@@ -279,8 +285,8 @@ it('registra un traslado: decrementa la base de origen e incrementa la de destin
 });
 
 it('rechaza una salida que dejaría el stock negativo: error de validación, no un 500 ni el CHECK de la base', function () {
-    [$encargado, $idRol] = usuarioConRolParaInventario('encargado', 'encargado_operaciones');
-    entrarAlPanelParaInventario($encargado, $idRol);
+    [$dueno, $idRol] = usuarioConRolParaInventario('dueno', 'dueno');
+    entrarAlPanelParaInventario($dueno, $idRol);
 
     $repuesto = Repuesto::query()->create(['codigo' => 'REP-001', 'descripcion' => 'Hélice', 'unidad' => 'unidad']);
     $base = PerBase::query()->create(['nombre' => 'Base Norte']);
@@ -298,8 +304,8 @@ it('rechaza una salida que dejaría el stock negativo: error de validación, no 
 });
 
 it('rechaza un traslado que dejaría la base de origen en negativo, sin tocar ninguna de las dos filas de stock', function () {
-    [$encargado, $idRol] = usuarioConRolParaInventario('encargado', 'encargado_operaciones');
-    entrarAlPanelParaInventario($encargado, $idRol);
+    [$dueno, $idRol] = usuarioConRolParaInventario('dueno', 'dueno');
+    entrarAlPanelParaInventario($dueno, $idRol);
 
     $repuesto = Repuesto::query()->create(['codigo' => 'REP-001', 'descripcion' => 'Hélice', 'unidad' => 'unidad']);
     $baseOrigen = PerBase::query()->create(['nombre' => 'Base Norte']);
@@ -321,8 +327,8 @@ it('rechaza un traslado que dejaría la base de origen en negativo, sin tocar ni
 });
 
 it('activa la alerta cuando la cantidad cae al mínimo o por debajo, no antes', function () {
-    [$encargado, $idRol] = usuarioConRolParaInventario('encargado', 'encargado_operaciones');
-    entrarAlPanelParaInventario($encargado, $idRol);
+    [$dueno, $idRol] = usuarioConRolParaInventario('dueno', 'dueno');
+    entrarAlPanelParaInventario($dueno, $idRol);
 
     $repuesto = Repuesto::query()->create(['codigo' => 'REP-ALERTA', 'descripcion' => 'Hélice', 'unidad' => 'unidad']);
     $base = PerBase::query()->create(['nombre' => 'Base Norte']);
@@ -342,8 +348,8 @@ it('activa la alerta cuando la cantidad cae al mínimo o por debajo, no antes', 
 });
 
 it('registra en bitácora el alta y la edición de un repuesto, y el alta de un movimiento', function () {
-    [$encargado, $idRol] = usuarioConRolParaInventario('encargado', 'encargado_operaciones');
-    entrarAlPanelParaInventario($encargado, $idRol);
+    [$dueno, $idRol] = usuarioConRolParaInventario('dueno', 'dueno');
+    entrarAlPanelParaInventario($dueno, $idRol);
 
     $this->post(route('panel.repuestos.store'), payloadRepuesto());
     $repuesto = Repuesto::query()->sole();
@@ -354,7 +360,7 @@ it('registra en bitácora el alta y la edición de un repuesto, y el alta de un 
         ->where('accion', AccionBitacora::Creado)
         ->sole();
 
-    expect($filaCreado->user_id)->toBe($encargado->id)
+    expect($filaCreado->user_id)->toBe($dueno->id)
         ->and($filaCreado->despues['codigo'])->toBe('REP-001');
 
     $this->put(route('panel.repuestos.update', $repuesto), payloadRepuesto(['codigo' => 'REP-001-B']))
@@ -381,13 +387,13 @@ it('registra en bitácora el alta y la edición de un repuesto, y el alta de un 
         ->where('accion', AccionBitacora::Creado)
         ->sole();
 
-    expect($filaMovimiento->user_id)->toBe($encargado->id)
+    expect($filaMovimiento->user_id)->toBe($dueno->id)
         ->and($filaMovimiento->despues['tipo'])->toBe('compra');
 });
 
 it('da de baja un repuesto por soft delete: no aparece en el índice y un segundo intento da 404', function () {
-    [$encargado, $idRol] = usuarioConRolParaInventario('encargado', 'encargado_operaciones');
-    entrarAlPanelParaInventario($encargado, $idRol);
+    [$dueno, $idRol] = usuarioConRolParaInventario('dueno', 'dueno');
+    entrarAlPanelParaInventario($dueno, $idRol);
 
     $this->post(route('panel.repuestos.store'), payloadRepuesto());
     $repuesto = Repuesto::query()->sole();
@@ -434,10 +440,10 @@ it('un rol sin el permiso recibe 403 en todas las acciones de repuestos y de sto
 });
 
 it('no deja actuar a quien tiene el permiso en otro rol pero no en el activo', function () {
-    // Multirol: encargado (con el permiso) + piloto (sin él). Opera bajo
+    // Multirol: dueño (con el permiso) + piloto (sin él). Opera bajo
     // piloto, así que NO puede dar de alta — los permisos efectivos son los
     // del rol activo, jamás la unión.
-    [$multirol, $idEncargado] = usuarioConRolParaInventario('jefe.multirol', 'encargado_operaciones');
+    [$multirol, $idDueno] = usuarioConRolParaInventario('jefe.multirol', 'dueno');
     $idPiloto = (int) SecRole::query()->where('name', 'piloto')->value('id');
     $pivote = new SecUserRole(['id_user' => $multirol->id, 'id_role' => $idPiloto]);
     $pivote->created_by = $multirol->id;
@@ -449,7 +455,7 @@ it('no deja actuar a quien tiene el permiso en otro rol pero no en el activo', f
     expect(Repuesto::query()->count())->toBe(0);
 
     // Con el rol activo correcto, la misma cuenta sí puede.
-    entrarAlPanelParaInventario($multirol, $idEncargado);
+    entrarAlPanelParaInventario($multirol, $idDueno);
     $this->post(route('panel.repuestos.store'), payloadRepuesto())->assertRedirect();
     expect(Repuesto::query()->count())->toBe(1);
 });

@@ -626,31 +626,22 @@ class SeguridadSeeder extends Seeder
         'mantenimiento.ficha_dron.crear',
         'mantenimiento.ficha_dron.editar',
         'mantenimiento.ficha_dron.eliminar',
-        // HU-36 (tarea 52): "como encargado, quiero llevar stock de
-        // repuestos por base con alerta de mínimo" — la HU lo dice literal,
-        // mismo criterio que clientes, contratos, campos, drones, bases,
-        // personas, anticipos, facturas, gastos, combustible, vehículos y
-        // baterías arriba.
-        'inventario.repuesto.ver',
-        'inventario.repuesto.crear',
-        'inventario.repuesto.editar',
-        'inventario.repuesto.eliminar',
-        'inventario.movimiento.ver',
-        'inventario.movimiento.crear',
         // HU-37 (tarea 53): "como encargado, quiero abrir órdenes de
         // mantenimiento y cerrarlas consumiendo repuestos" — la HU lo dice
         // literal, mismo criterio que el resto de este rol arriba.
+        // (HU-36/HU-38 daban acceso completo a repuestos, stock y planes de
+        // mantenimiento; HU-88, tarea 103, se lo saca: los usa poco y le
+        // ensucian el menú del día a día. Se retira el catálogo entero de
+        // cada uno —ver/crear/editar/eliminar— y no solo `.ver`: dejar
+        // `.crear`/`.editar`/`.eliminar` sin `.ver` abría un hueco raro
+        // —podría crear un repuesto o un plan sin poder listarlo después—
+        // y agregar `.ver` de vuelta habría revertido el pedido de la HU de
+        // sacarlo del menú. Sigue disponible para `dueno`, que recibe el
+        // catálogo completo sin excepción.)
         'mantenimiento.orden.ver',
         'mantenimiento.orden.crear',
         'mantenimiento.orden.editar',
         'mantenimiento.orden.cerrar',
-        // HU-38 (tarea 54): "como encargado, quiero planes de mantenimiento
-        // preventivo por horas de vuelo" — la HU lo dice literal, mismo
-        // criterio que el resto de este rol arriba.
-        'mantenimiento.plan.ver',
-        'mantenimiento.plan.crear',
-        'mantenimiento.plan.editar',
-        'mantenimiento.plan.eliminar',
         // HU-46 (tarea 69, ADR 0015 punto 1): arma la campaña (código,
         // nombre, fechas) — sin `.cambiar_estado`, exclusivo del dueño (ver
         // el comentario en PERMISOS de arriba).
