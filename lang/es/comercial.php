@@ -210,21 +210,10 @@ return [
         'campo_aplicaciones_previstas' => 'Aplicaciones previstas',
         'campo_precio_ha' => 'Precio por hectárea (Bs)',
         'campo_monto_total_ayuda' => 'Se calcula automáticamente: hectáreas × aplicaciones × precio por hectárea.',
-        'campo_adelanto_monto' => 'Adelanto (monto)',
-        'campo_adelanto_pct' => 'Adelanto (%)',
+        'campo_adelanto_monto' => 'Adelanto Solicitado',
         'campo_fecha_inicio' => 'Fecha de inicio',
         'campo_fecha_fin' => 'Fecha de fin',
         'campo_fecha_fin_ayuda' => 'Opcional. Si no se define, el contrato queda abierto.',
-
-        'seccion_clima' => 'Parámetros de vuelo',
-        'seccion_clima_ayuda' => 'Opcionales. En blanco, rige el valor por defecto del sistema.',
-        'campo_viento_max_kmh' => 'Viento máximo (km/h)',
-        'campo_temperatura_max_c' => 'Temperatura máxima (°C)',
-        'campo_humedad_min_pct' => 'Humedad mínima (%)',
-        'campo_humedad_max_pct' => 'Humedad máxima (%)',
-        'campo_velocidad_max_kmh' => 'Velocidad máxima de vuelo (km/h)',
-        'campo_umbral_reporte_avance_ha' => 'Umbral de reporte de avance (ha)',
-        'campo_altura_vuelo_m' => 'Altura de vuelo (m)',
 
         // Ventanas de aplicación (HU-47, tarea 70): "Día completo" convive con
         // las filas cargadas, nunca un booleano en la base (ADR 0015 punto 5)
@@ -261,7 +250,6 @@ return [
         'error_ventana_ajena' => 'Una de las ventanas enviadas no pertenece a este contrato.',
         'error_ventana_incompleta' => 'Completá la hora de inicio y la hora de fin de la ventana.',
         'error_ventana_horas' => 'La hora de fin tiene que ser posterior a la hora de inicio.',
-        'error_humedad_rango' => 'La humedad mínima no puede ser mayor que la máxima.',
         'volver' => 'Volver a contratos',
     ],
 

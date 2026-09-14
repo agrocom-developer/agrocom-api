@@ -32,9 +32,20 @@ it('crea la tabla con soft delete y columnas de auditoría', function (string $t
         ]))->toBeTrue();
 })->with('tablas del núcleo comercial');
 
-it('com_contratos tiene la altura de vuelo pactada por contrato (HU-47, tarea 70)', function () {
-    expect(Schema::hasColumn('com_contratos', 'altura_vuelo_m'))->toBeTrue();
-});
+dataset('columnas de vuelo retiradas de com_contratos', [
+    'adelanto_pct',
+    'viento_max_kmh',
+    'temperatura_max_c',
+    'humedad_min_pct',
+    'humedad_max_pct',
+    'velocidad_max_kmh',
+    'umbral_reporte_avance_ha',
+    'altura_vuelo_m',
+]);
+
+it('com_contratos ya no tiene parámetros de vuelo propios (HU-91, tarea 106): heredan siempre de la orden o del valor por defecto', function (string $columna) {
+    expect(Schema::hasColumn('com_contratos', $columna))->toBeFalse();
+})->with('columnas de vuelo retiradas de com_contratos');
 
 it('com_lotes tiene desnivel y limpieza, nullable (HU-73, tarea 89)', function () {
     expect(Schema::hasColumns('com_lotes', ['desnivel', 'limpieza']))->toBeTrue();
