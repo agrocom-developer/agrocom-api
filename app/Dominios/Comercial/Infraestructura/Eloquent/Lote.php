@@ -19,6 +19,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $hectareas
  * @property array<string, mixed>|null $geometria
  * @property string|null $restricciones
+ * @property string|null $desnivel
+ * @property string|null $limpieza
  */
 class Lote extends ModeloDominio
 {
@@ -33,6 +35,8 @@ class Lote extends ModeloDominio
         'hectareas',
         'geometria',
         'restricciones',
+        'desnivel',
+        'limpieza',
     ];
 
     /** @return array<string, string> */
