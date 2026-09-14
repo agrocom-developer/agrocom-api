@@ -4,6 +4,7 @@ namespace App\Dominios\Mantenimiento\Aplicacion;
 
 use App\Dominios\Mantenimiento\Dominio\EstadoVehiculo;
 use App\Dominios\Mantenimiento\Dominio\Excepciones\VehiculoDuplicado;
+use App\Dominios\Mantenimiento\Dominio\TipoCombustibleVehiculo;
 use App\Dominios\Mantenimiento\Infraestructura\Eloquent\Vehiculo;
 use Illuminate\Database\QueryException;
 
@@ -11,6 +12,10 @@ use Illuminate\Database\QueryException;
  * Edición de un vehículo de la flota (HU-40, tarea 50). Mismo criterio que
  * `CrearVehiculo` para la traducción de la violación del índice único
  * parcial.
+ *
+ * `kilometrajeInicial` (HU-84, tarea 99) SÍ se recibe acá, a diferencia de
+ * `ciclosInicial` en `ActualizarBateria`: el criterio de esta HU no pide
+ * que quede fijo tras el alta.
  */
 final class ActualizarVehiculo
 {
@@ -19,11 +24,29 @@ final class ActualizarVehiculo
      *                           vehículo activo (índice parcial
      *                           `man_vehiculos_identificador_unico`).
      */
-    public function ejecutar(Vehiculo $vehiculo, string $identificador, ?int $baseId, EstadoVehiculo $estado): Vehiculo
-    {
+    public function ejecutar(
+        Vehiculo $vehiculo,
+        string $identificador,
+        ?int $baseId,
+        EstadoVehiculo $estado,
+        ?string $marca,
+        ?string $modelo,
+        ?int $anio,
+        ?TipoCombustibleVehiculo $combustible,
+        bool $es4x4,
+        ?string $kilometrajeInicial,
+        ?string $kilometrajeActual,
+    ): Vehiculo {
         $vehiculo->identificador = $identificador;
         $vehiculo->base_id = $baseId;
         $vehiculo->estado = $estado->value;
+        $vehiculo->marca = $marca;
+        $vehiculo->modelo = $modelo;
+        $vehiculo->anio = $anio;
+        $vehiculo->combustible = $combustible?->value;
+        $vehiculo->es_4x4 = $es4x4;
+        $vehiculo->kilometraje_inicial = $kilometrajeInicial;
+        $vehiculo->kilometraje_actual = $kilometrajeActual;
 
         try {
             $vehiculo->save();

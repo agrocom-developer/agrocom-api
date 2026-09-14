@@ -3,6 +3,7 @@
 namespace App\Dominios\Mantenimiento\Infraestructura\Http\Requests;
 
 use App\Dominios\Mantenimiento\Dominio\EstadoVehiculo;
+use App\Dominios\Mantenimiento\Dominio\TipoCombustibleVehiculo;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -15,6 +16,12 @@ use Illuminate\Validation\Rule;
  * caso válido. Cuando viene, tiene que apuntar a una base VIVA
  * (`whereNull('deleted_at')`), mismo criterio que `base_id` en
  * `CrearPersonaRequest`.
+ *
+ * `marca`/`modelo`/`anio`/`combustible`/`es_4x4`/`kilometraje_inicial`/
+ * `kilometraje_actual` (HU-84, tarea 99) completan la ficha, todos
+ * opcionales. `kilometraje_inicial` es editable ya en el alta y también en
+ * `ActualizarVehiculoRequest` — a diferencia de `ciclos_inicial` en
+ * baterías (tarea 98), esta HU no lo pide inmutable.
  */
 final class CrearVehiculoRequest extends FormRequest
 {
@@ -23,6 +30,13 @@ final class CrearVehiculoRequest extends FormRequest
     {
         return [
             'identificador' => ['required', 'string', 'max:40'],
+            'marca' => ['nullable', 'string', 'max:60'],
+            'modelo' => ['nullable', 'string', 'max:60'],
+            'anio' => ['nullable', 'integer'],
+            'combustible' => ['nullable', Rule::enum(TipoCombustibleVehiculo::class)],
+            'es_4x4' => ['boolean'],
+            'kilometraje_inicial' => ['nullable', 'numeric', 'min:0'],
+            'kilometraje_actual' => ['nullable', 'numeric', 'min:0'],
             'base_id' => [
                 'nullable',
                 'integer',
