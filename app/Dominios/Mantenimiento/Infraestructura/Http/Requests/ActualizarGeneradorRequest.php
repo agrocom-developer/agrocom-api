@@ -8,7 +8,8 @@ use Illuminate\Validation\Rule;
 
 /**
  * `PUT /panel/generadores/{generador}` (tarea 72, HU-49). Mismas reglas que
- * `CrearGeneradorRequest` — ver ese docblock.
+ * `CrearGeneradorRequest` — ver ese docblock, incluida `horas_inicial`/
+ * `horas_actual` (HU-86, tarea 101).
  */
 final class ActualizarGeneradorRequest extends FormRequest
 {
@@ -24,7 +25,8 @@ final class ActualizarGeneradorRequest extends FormRequest
                 Rule::exists('per_bases', 'id')->whereNull('deleted_at'),
             ],
             'estado' => ['required', Rule::enum(EstadoGenerador::class)],
-            'horas_uso' => ['nullable', 'numeric', 'min:0'],
+            'horas_inicial' => ['nullable', 'numeric', 'min:0'],
+            'horas_actual' => ['nullable', 'numeric', 'min:0', 'gte:horas_inicial'],
         ];
     }
 
@@ -33,6 +35,7 @@ final class ActualizarGeneradorRequest extends FormRequest
     {
         return [
             'base_id.exists' => 'La base seleccionada no es válida.',
+            'horas_actual.gte' => 'Las horas actuales no pueden ser menores a las horas inicial.',
         ];
     }
 }
