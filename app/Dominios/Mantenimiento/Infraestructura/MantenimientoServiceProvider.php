@@ -3,6 +3,7 @@
 namespace App\Dominios\Mantenimiento\Infraestructura;
 
 use App\Dominios\Mantenimiento\Aplicacion\IncrementarCiclosBateria;
+use App\Dominios\Mantenimiento\Contratos\LecturaCiclosBateria;
 use App\Dominios\Mantenimiento\Infraestructura\Busqueda\BusquedaBaterias;
 use App\Dominios\Mantenimiento\Infraestructura\Busqueda\BusquedaGeneradores;
 use App\Dominios\Mantenimiento\Infraestructura\Busqueda\BusquedaVehiculos;
@@ -18,9 +19,9 @@ use Illuminate\Support\ServiceProvider;
  * registra su propio provider para lo que el contenedor no resuelve por
  * convención.
  *
- * `register()` queda vacío a propósito: esta tarea (vehículos) no define
- * ningún contrato de lectura hacia otro módulo — se completa cuando haga
- * falta uno (ver `PersonalServiceProvider` para el patrón de binding).
+ * `register()` liga {@see LecturaCiclosBateria} (HU-80, tarea 86) — mismo
+ * patrón que `OperacionesServiceProvider` con
+ * `LecturaAlertasTemperaturaBateria`, en la dirección inversa.
  *
  * `boot()` registra el namespace de vista `mantenimiento::` (mismo patrón
  * que `operaciones::`/`personal::`): las páginas Blade del módulo viven bajo
@@ -34,6 +35,8 @@ final class MantenimientoServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        $this->app->bind(LecturaCiclosBateria::class, LecturaCiclosBateriaEloquent::class);
+
         // Buscador global (`busqueda.proveedores`): el agregador de Seguridad
         // no conoce estas clases, las recibe por tag. Sumar una entidad al
         // buscador es escribir su proveedor y taggearlo acá.

@@ -14,6 +14,7 @@ use App\Dominios\Operaciones\Contratos\CierreTrabajo;
 use App\Dominios\Operaciones\Contratos\EscrituraSincronizacion;
 use App\Dominios\Operaciones\Contratos\Eventos\RecargaRegistrada;
 use App\Dominios\Operaciones\Contratos\RegistroCondiciones;
+use App\Dominios\Operaciones\Contratos\RegistroEvidenciaEquipo;
 use App\Dominios\Operaciones\Contratos\RegistroIncidencia;
 use App\Dominios\Operaciones\Contratos\RegistroRecarga;
 use App\Dominios\Operaciones\Contratos\RegistroRecepcionCaldo;
@@ -27,6 +28,7 @@ use App\Dominios\Operaciones\Dominio\TipoEvidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Condiciones;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\EstadiaHacienda;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Evidencia;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\EvidenciaEquipo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Incidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Recarga;
@@ -736,6 +738,121 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
 
         if (str_contains($mensaje, 'ope_estadias_hacienda_equipo_abierta_unico') || str_contains($mensaje, 'ope_estadias_hacienda.equipo_trabajo_id')) {
             return ResultadoSincronizacion::rechazado('el equipo ya tiene una estadía abierta');
+        }
+
+        return ResultadoSincronizacion::rechazado('no se pudo aplicar el registro: referencia o dato inválido');
+    }
+
+    /**
+     * "Reporte de Equipos" (HU-80, tarea 86): crea una fila nueva, mismo
+     * mecanismo de idempotencia que `registrarRecepcionCaldo()` — el
+     * `UNIQUE` parcial de `uuid_cliente` resuelve el reintento, nunca un
+     * `SELECT` previo. Las tres fotos (control, ciclo de batería y
+     * balanceo, dron limpio) son OBLIGATORIAS, mismo criterio que
+     * `registrarIncidencia()` con su evidencia: se rechaza el registro
+     * completo si falta cualquiera, antes de intentar el `INSERT`.
+     */
+    public function registrarEvidenciaEquipo(RegistroEvidenciaEquipo $datos): ResultadoSincronizacion
+    {
+        $trabajoId = Trabajo::query()->where('uuid_cliente', $datos->trabajoUuidCliente)->value('id');
+
+        if ($trabajoId === null) {
+            return ResultadoSincronizacion::rechazado('el trabajo referenciado no existe todavía');
+        }
+
+        $fotoControl = $this->evidenciaFotoEquipo($datos->fotoControlUuidCliente, TipoEvidencia::FotoControl);
+
+        if ($fotoControl === null) {
+            return ResultadoSincronizacion::rechazado('falta la foto de control: evidencia inexistente o de tipo distinto');
+        }
+
+        $fotoCicloBateria = $this->evidenciaFotoEquipo($datos->fotoCicloBateriaBalanceoUuidCliente, TipoEvidencia::FotoCicloBateriaBalanceo);
+
+        if ($fotoCicloBateria === null) {
+            return ResultadoSincronizacion::rechazado('falta la foto del ciclo de batería y balanceo: evidencia inexistente o de tipo distinto');
+        }
+
+        $fotoDronLimpio = $this->evidenciaFotoEquipo($datos->fotoDronLimpioUuidCliente, TipoEvidencia::FotoDronLimpio);
+
+        if ($fotoDronLimpio === null) {
+            return ResultadoSincronizacion::rechazado('falta la foto del dron limpio: evidencia inexistente o de tipo distinto');
+        }
+
+        // `!= $datos->uuidCliente`, mismo criterio que
+        // `registrarIncidencia()`: un reintento EXACTO del mismo evento
+        // repite las mismas tres fotos además del mismo `uuid_cliente` — sin
+        // excluirlo acá, ese reintento se rechazaría como "foto reutilizada"
+        // en vez de resolverse como `duplicado` en el `INSERT` de abajo.
+        if (EvidenciaEquipo::query()->where('foto_control_id', $fotoControl->id)->where('uuid_cliente', '!=', $datos->uuidCliente)->exists()) {
+            return ResultadoSincronizacion::rechazado('la foto de control ya fue usada para respaldar otro reporte de equipo');
+        }
+
+        if (EvidenciaEquipo::query()->where('foto_ciclo_bateria_balanceo_id', $fotoCicloBateria->id)->where('uuid_cliente', '!=', $datos->uuidCliente)->exists()) {
+            return ResultadoSincronizacion::rechazado('la foto del ciclo de batería y balanceo ya fue usada para respaldar otro reporte de equipo');
+        }
+
+        if (EvidenciaEquipo::query()->where('foto_dron_limpio_id', $fotoDronLimpio->id)->where('uuid_cliente', '!=', $datos->uuidCliente)->exists()) {
+            return ResultadoSincronizacion::rechazado('la foto del dron limpio ya fue usada para respaldar otro reporte de equipo');
+        }
+
+        try {
+            DB::transaction(function () use ($datos, $trabajoId, $fotoControl, $fotoCicloBateria, $fotoDronLimpio): void {
+                EvidenciaEquipo::query()->create([
+                    'uuid_cliente' => $datos->uuidCliente,
+                    'trabajo_id' => $trabajoId,
+                    'horas_vuelo_dron' => $datos->horasVueloDron,
+                    'foto_control_id' => $fotoControl->id,
+                    'foto_ciclo_bateria_balanceo_id' => $fotoCicloBateria->id,
+                    'foto_dron_limpio_id' => $fotoDronLimpio->id,
+                ]);
+            });
+        } catch (QueryException $excepcion) {
+            return $this->resultadoEvidenciaEquipoDesdeExcepcion($excepcion, $datos->uuidCliente);
+        }
+
+        return ResultadoSincronizacion::aplicado();
+    }
+
+    private function evidenciaFotoEquipo(string $uuidCliente, TipoEvidencia $tipo): ?Evidencia
+    {
+        $evidencia = Evidencia::query()->where('uuid_cliente', $uuidCliente)->first();
+
+        return $evidencia !== null && $evidencia->tipo === $tipo ? $evidencia : null;
+    }
+
+    /**
+     * Mismo criterio que {@see resultadoAperturaEstadiaDesdeExcepcion()}:
+     * `ope_evidencias_equipo` tiene CUATRO índices únicos parciales
+     * (`uuid_cliente` y los tres `foto_*_id`) que un mismo `INSERT` puede
+     * violar A LA VEZ — un reintento EXACTO del mismo evento repite las
+     * cuatro columnas de golpe, y el driver solo reporta UNA violación (no
+     * necesariamente la de `uuid_cliente` primero: SQLite, motor de los
+     * tests, reportó en la práctica la del último índice creado). Por eso se
+     * pregunta primero si YA EXISTE una fila con ese `uuid_cliente` —si la
+     * hay, es `duplicado` sin importar qué haya dicho el mensaje— y solo si
+     * no la hay se interpreta el mensaje como una foto reutilizada por OTRO
+     * registro (el chequeo de `registrarEvidenciaEquipo()` ya excluye ese
+     * caso antes del `INSERT`; esto solo cubre la carrera entre ese chequeo y
+     * el `INSERT` mismo).
+     */
+    private function resultadoEvidenciaEquipoDesdeExcepcion(QueryException $excepcion, string $uuidCliente): ResultadoSincronizacion
+    {
+        if (EvidenciaEquipo::query()->where('uuid_cliente', $uuidCliente)->exists()) {
+            return ResultadoSincronizacion::duplicado();
+        }
+
+        $mensaje = $excepcion->getMessage();
+
+        if (str_contains($mensaje, 'ope_evidencias_equipo_foto_control_unico') || str_contains($mensaje, 'ope_evidencias_equipo.foto_control_id')) {
+            return ResultadoSincronizacion::rechazado('la foto de control ya fue usada para respaldar otro reporte de equipo');
+        }
+
+        if (str_contains($mensaje, 'ope_evidencias_equipo_foto_ciclo_bateria_unico') || str_contains($mensaje, 'ope_evidencias_equipo.foto_ciclo_bateria_balanceo_id')) {
+            return ResultadoSincronizacion::rechazado('la foto del ciclo de batería y balanceo ya fue usada para respaldar otro reporte de equipo');
+        }
+
+        if (str_contains($mensaje, 'ope_evidencias_equipo_foto_dron_limpio_unico') || str_contains($mensaje, 'ope_evidencias_equipo.foto_dron_limpio_id')) {
+            return ResultadoSincronizacion::rechazado('la foto del dron limpio ya fue usada para respaldar otro reporte de equipo');
         }
 
         return ResultadoSincronizacion::rechazado('no se pudo aplicar el registro: referencia o dato inválido');

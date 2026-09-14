@@ -33,6 +33,25 @@ it('crea la tabla con soft delete y columnas de auditoría', function (string $t
         ]))->toBeTrue();
 })->with('tablas de operaciones con uuid_cliente');
 
+it('ope_trabajos tiene equipo_trabajo_id, nullable (HU-70, tarea 85)', function () {
+    expect(Schema::hasColumn('ope_trabajos', 'equipo_trabajo_id'))->toBeTrue();
+
+    $orden = crearOrdenVigenteParaTrabajo();
+
+    $trabajoId = DB::table('ope_trabajos')->insertGetId([
+        'uuid_cliente' => 'uuid-trabajo-sin-equipo',
+        'orden_id' => $orden['orden_id'],
+        'lote_id' => $orden['lote_id'],
+        'nro_aplicacion' => 1,
+        'estado' => 'abierto',
+        'inicio' => now(),
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    expect(DB::table('ope_trabajos')->where('id', $trabajoId)->value('equipo_trabajo_id'))->toBeNull();
+});
+
 /** @return array{orden_id: int, lote_id: int} */
 function crearOrdenVigenteParaTrabajo(): array
 {

@@ -424,6 +424,38 @@ return [
         'volver' => 'Volver a órdenes',
     ],
 
+    // Pantalla de panel "Operación › Asignación de equipos" (HU-70, tarea
+    // 85): reparto de las hectáreas de una orden vigente entre equipos de
+    // trabajo. Ficha propia, no sub-pantalla de `ordenes` — ver docblock de
+    // `AsignacionEquiposController`.
+    'asignacion_equipos' => [
+        'titulo' => 'Asignación de equipos',
+        'subtitulo' => 'Repartí las hectáreas de cada orden vigente entre los equipos de trabajo.',
+        'vacio' => 'No hay órdenes vigentes para repartir.',
+        'col_orden' => 'Orden',
+        'col_contrato' => 'Contrato',
+        'col_lote' => 'Lote',
+        'col_hectareas_lote' => 'Hectáreas del lote',
+        'col_asignadas' => 'Asignadas',
+        'col_restantes' => 'Restantes',
+        'asignar_accion' => 'Asignar equipos',
+        'ficha_titulo' => 'Orden #:nro — :lote',
+        'ficha_subtitulo' => 'Aplicación #:nro del contrato :contrato.',
+        'ficha_volver' => 'Volver a asignación de equipos',
+        'resumen_hectareas_lote' => 'Hectáreas del lote',
+        'resumen_asignadas' => 'Asignadas',
+        'resumen_restantes' => 'Restantes',
+        'orden_no_vigente' => 'Esta orden ya no está vigente: no admite nuevas asignaciones.',
+        'seccion_equipos' => 'Equipos asignados',
+        'equipos_vacio' => 'Todavía no se asignó ningún equipo a esta orden.',
+        'campo_equipo' => 'Equipo de trabajo',
+        'campo_equipo_placeholder' => 'Seleccioná un equipo…',
+        'campo_hectareas' => 'Hectáreas a asignar',
+        'asignar_boton' => 'Asignar',
+        'asignado' => 'Equipo asignado correctamente.',
+        'equipos_sin_vigentes' => 'No hay equipos de trabajo vigentes hoy.',
+    ],
+
     // Pantalla de panel "Reportes › Técnicos" (HU-43, tarea 57):
     // panel.reportes.tecnicos.index. Solo lectura — filtra y enlaza a la
     // descarga individual ya existente (panel.trabajos.reporte-pdf).

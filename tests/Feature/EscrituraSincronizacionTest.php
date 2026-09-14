@@ -13,6 +13,7 @@ use App\Dominios\Operaciones\Contratos\CierreTrabajo;
 use App\Dominios\Operaciones\Contratos\EscrituraSincronizacion;
 use App\Dominios\Operaciones\Contratos\Eventos\RecargaRegistrada;
 use App\Dominios\Operaciones\Contratos\RegistroCondiciones;
+use App\Dominios\Operaciones\Contratos\RegistroEvidenciaEquipo;
 use App\Dominios\Operaciones\Contratos\RegistroIncidencia;
 use App\Dominios\Operaciones\Contratos\RegistroRecarga;
 use App\Dominios\Operaciones\Contratos\RegistroRecepcionCaldo;
@@ -21,6 +22,7 @@ use App\Dominios\Operaciones\Dominio\TipoEvidencia;
 use App\Dominios\Operaciones\Dominio\TipoIncidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Condiciones;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Evidencia;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\EvidenciaEquipo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Incidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Recarga;
@@ -1154,6 +1156,233 @@ test('registrarRecarga con una sesion_uuid_cliente que no existe se rechaza sin 
         ->and($resultado->motivo)->not->toBeNull();
 
     expect(Recarga::query()->where('uuid_cliente', 'uuid-recarga-huerfana')->exists())->toBeFalse();
+});
+
+/*
+ * ── "Reporte de Equipos" (ronda del dueño, 13/9/2026; HU-80, tarea 86) ──
+ */
+
+/** Abre solo un trabajo vía el propio contrato (evidencia_equipo no depende de sesión, mismo criterio que recepción de caldo). */
+function trabajoAbiertoParaEquipo(string $id): Trabajo
+{
+    $orden = ordenVigenteParaEscritura();
+    $contrato = app(EscrituraSincronizacion::class);
+
+    $contrato->abrirTrabajo(AperturaTrabajo::intentarDesdeArreglo([
+        'uuid_cliente' => "uuid-trabajo-equipo-{$id}",
+        'orden_id' => $orden->id,
+        'lote_id' => $orden->lote_id,
+        'nro_aplicacion' => 1,
+        'inicio' => '2026-09-01T10:00:00-04:00',
+    ]));
+
+    return Trabajo::query()->where('uuid_cliente', "uuid-trabajo-equipo-{$id}")->firstOrFail();
+}
+
+/** Una evidencia de un `$tipo` dado, lista para referenciar por `uuid_cliente`. */
+function evidenciaEquipoParaEscritura(string $id, TipoEvidencia $tipo): string
+{
+    $uuidCliente = "uuid-evidencia-{$tipo->value}-{$id}";
+
+    Evidencia::query()->create([
+        'uuid_cliente' => $uuidCliente,
+        'tipo' => $tipo,
+        'archivo_url' => "evidencias/{$tipo->value}/2026/09/{$uuidCliente}.jpg",
+        'hash' => hash('sha256', $uuidCliente),
+        'fecha' => '2026-09-01T09:00:00-04:00',
+    ]);
+
+    return $uuidCliente;
+}
+
+/** @return array{control: string, ciclo: string, dron: string} las tres `uuid_cliente` de foto, del tipo correcto cada una. */
+function fotosEquipoParaEscritura(string $id): array
+{
+    return [
+        'control' => evidenciaEquipoParaEscritura($id, TipoEvidencia::FotoControl),
+        'ciclo' => evidenciaEquipoParaEscritura($id, TipoEvidencia::FotoCicloBateriaBalanceo),
+        'dron' => evidenciaEquipoParaEscritura($id, TipoEvidencia::FotoDronLimpio),
+    ];
+}
+
+/** @return array<string, mixed> */
+function registroEvidenciaEquipoArreglo(array $sobrescribir = []): array
+{
+    return array_merge([
+        'uuid_cliente' => 'uuid-evidencia-equipo-default',
+        'trabajo_uuid_cliente' => 'uuid-trabajo-equipo-default',
+        'horas_vuelo_dron' => '12.50',
+        'foto_control_uuid_cliente' => 'uuid-evidencia-foto_control-default',
+        'foto_ciclo_bateria_balanceo_uuid_cliente' => 'uuid-evidencia-foto_ciclo_bateria_balanceo-default',
+        'foto_dron_limpio_uuid_cliente' => 'uuid-evidencia-foto_dron_limpio-default',
+    ], $sobrescribir);
+}
+
+test('RegistroEvidenciaEquipo::intentarDesdeArreglo devuelve null ante un campo requerido faltante', function () {
+    expect(RegistroEvidenciaEquipo::intentarDesdeArreglo([
+        'uuid_cliente' => 'uuid-incompleto',
+        'trabajo_uuid_cliente' => 'uuid-trabajo',
+        // faltan horas_vuelo_dron y las tres fotos
+    ]))->toBeNull();
+});
+
+test('RegistroEvidenciaEquipo::intentarDesdeArreglo devuelve null con horas_vuelo_dron negativo', function () {
+    expect(RegistroEvidenciaEquipo::intentarDesdeArreglo(registroEvidenciaEquipoArreglo(['horas_vuelo_dron' => '-1'])))->toBeNull();
+});
+
+test('RegistroEvidenciaEquipo::intentarDesdeArreglo devuelve null con horas_vuelo_dron no numérico', function () {
+    expect(RegistroEvidenciaEquipo::intentarDesdeArreglo(registroEvidenciaEquipoArreglo(['horas_vuelo_dron' => 'no-numerico'])))->toBeNull();
+});
+
+test('RegistroEvidenciaEquipo::intentarDesdeArreglo devuelve null con foto_control_uuid_cliente vacío', function () {
+    expect(RegistroEvidenciaEquipo::intentarDesdeArreglo(registroEvidenciaEquipoArreglo(['foto_control_uuid_cliente' => ''])))->toBeNull();
+});
+
+test('RegistroEvidenciaEquipo::intentarDesdeArreglo devuelve null con foto_ciclo_bateria_balanceo_uuid_cliente vacío', function () {
+    expect(RegistroEvidenciaEquipo::intentarDesdeArreglo(registroEvidenciaEquipoArreglo(['foto_ciclo_bateria_balanceo_uuid_cliente' => ''])))->toBeNull();
+});
+
+test('RegistroEvidenciaEquipo::intentarDesdeArreglo devuelve null con foto_dron_limpio_uuid_cliente vacío', function () {
+    expect(RegistroEvidenciaEquipo::intentarDesdeArreglo(registroEvidenciaEquipoArreglo(['foto_dron_limpio_uuid_cliente' => ''])))->toBeNull();
+});
+
+test('registrarEvidenciaEquipo con datos válidos aplica y persiste horas y las tres fotos correctas', function () {
+    $trabajo = trabajoAbiertoParaEquipo('a');
+    $fotos = fotosEquipoParaEscritura('a');
+    $contrato = app(EscrituraSincronizacion::class);
+
+    $datos = RegistroEvidenciaEquipo::intentarDesdeArreglo(registroEvidenciaEquipoArreglo([
+        'uuid_cliente' => 'uuid-evidencia-equipo-a',
+        'trabajo_uuid_cliente' => $trabajo->uuid_cliente,
+        'foto_control_uuid_cliente' => $fotos['control'],
+        'foto_ciclo_bateria_balanceo_uuid_cliente' => $fotos['ciclo'],
+        'foto_dron_limpio_uuid_cliente' => $fotos['dron'],
+    ]));
+
+    $resultado = $contrato->registrarEvidenciaEquipo($datos);
+
+    expect($resultado->estado)->toBe('aplicado');
+
+    $evidenciaEquipo = EvidenciaEquipo::query()->where('uuid_cliente', 'uuid-evidencia-equipo-a')->firstOrFail();
+    $fotoControl = Evidencia::query()->where('uuid_cliente', $fotos['control'])->firstOrFail();
+
+    expect($evidenciaEquipo->trabajo_id)->toBe($trabajo->id)
+        ->and($evidenciaEquipo->horas_vuelo_dron)->toBe('12.50')
+        ->and($evidenciaEquipo->foto_control_id)->toBe($fotoControl->id);
+});
+
+test('registrarEvidenciaEquipo con el mismo uuid_cliente responde duplicado sin crear una fila nueva', function () {
+    $trabajo = trabajoAbiertoParaEquipo('b');
+    $fotos = fotosEquipoParaEscritura('b');
+    $contrato = app(EscrituraSincronizacion::class);
+
+    $datos = RegistroEvidenciaEquipo::intentarDesdeArreglo(registroEvidenciaEquipoArreglo([
+        'uuid_cliente' => 'uuid-evidencia-equipo-b',
+        'trabajo_uuid_cliente' => $trabajo->uuid_cliente,
+        'foto_control_uuid_cliente' => $fotos['control'],
+        'foto_ciclo_bateria_balanceo_uuid_cliente' => $fotos['ciclo'],
+        'foto_dron_limpio_uuid_cliente' => $fotos['dron'],
+    ]));
+
+    expect($contrato->registrarEvidenciaEquipo($datos)->estado)->toBe('aplicado');
+
+    $resultado = $contrato->registrarEvidenciaEquipo($datos);
+
+    expect($resultado->estado)->toBe('duplicado')
+        ->and(EvidenciaEquipo::query()->where('uuid_cliente', 'uuid-evidencia-equipo-b')->count())->toBe(1);
+});
+
+test('registrarEvidenciaEquipo con un trabajo_uuid_cliente que no existe se rechaza sin romper nada', function () {
+    $fotos = fotosEquipoParaEscritura('huerfana');
+    $contrato = app(EscrituraSincronizacion::class);
+
+    $datos = RegistroEvidenciaEquipo::intentarDesdeArreglo(registroEvidenciaEquipoArreglo([
+        'uuid_cliente' => 'uuid-evidencia-equipo-huerfana',
+        'trabajo_uuid_cliente' => 'uuid-trabajo-que-no-existe',
+        'foto_control_uuid_cliente' => $fotos['control'],
+        'foto_ciclo_bateria_balanceo_uuid_cliente' => $fotos['ciclo'],
+        'foto_dron_limpio_uuid_cliente' => $fotos['dron'],
+    ]));
+
+    $resultado = $contrato->registrarEvidenciaEquipo($datos);
+
+    expect($resultado->estado)->toBe('rechazado')
+        ->and($resultado->motivo)->not->toBeNull();
+
+    expect(EvidenciaEquipo::query()->where('uuid_cliente', 'uuid-evidencia-equipo-huerfana')->exists())->toBeFalse();
+});
+
+test('registrarEvidenciaEquipo se rechaza sin foto adjunta: uuid_cliente de foto inexistente', function () {
+    $trabajo = trabajoAbiertoParaEquipo('sin-foto');
+    $fotos = fotosEquipoParaEscritura('sin-foto');
+    $contrato = app(EscrituraSincronizacion::class);
+
+    $datos = RegistroEvidenciaEquipo::intentarDesdeArreglo(registroEvidenciaEquipoArreglo([
+        'uuid_cliente' => 'uuid-evidencia-equipo-sin-foto',
+        'trabajo_uuid_cliente' => $trabajo->uuid_cliente,
+        'foto_control_uuid_cliente' => 'uuid-evidencia-que-no-existe',
+        'foto_ciclo_bateria_balanceo_uuid_cliente' => $fotos['ciclo'],
+        'foto_dron_limpio_uuid_cliente' => $fotos['dron'],
+    ]));
+
+    $resultado = $contrato->registrarEvidenciaEquipo($datos);
+
+    expect($resultado->estado)->toBe('rechazado')
+        ->and($resultado->motivo)->not->toBeNull();
+
+    expect(EvidenciaEquipo::query()->where('uuid_cliente', 'uuid-evidencia-equipo-sin-foto')->exists())->toBeFalse();
+});
+
+test('registrarEvidenciaEquipo se rechaza si una foto referenciada es de un tipo distinto al esperado', function () {
+    $trabajo = trabajoAbiertoParaEquipo('tipo-distinto');
+    $fotos = fotosEquipoParaEscritura('tipo-distinto');
+    $otraEvidencia = evidenciaEquipoParaEscritura('tipo-distinto-captura', TipoEvidencia::CapturaRc);
+    $contrato = app(EscrituraSincronizacion::class);
+
+    $datos = RegistroEvidenciaEquipo::intentarDesdeArreglo(registroEvidenciaEquipoArreglo([
+        'uuid_cliente' => 'uuid-evidencia-equipo-tipo-distinto',
+        'trabajo_uuid_cliente' => $trabajo->uuid_cliente,
+        // `foto_control` referencia una evidencia real, pero de tipo `captura_rc`.
+        'foto_control_uuid_cliente' => $otraEvidencia,
+        'foto_ciclo_bateria_balanceo_uuid_cliente' => $fotos['ciclo'],
+        'foto_dron_limpio_uuid_cliente' => $fotos['dron'],
+    ]));
+
+    $resultado = $contrato->registrarEvidenciaEquipo($datos);
+
+    expect($resultado->estado)->toBe('rechazado')
+        ->and($resultado->motivo)->not->toBeNull();
+
+    expect(EvidenciaEquipo::query()->where('uuid_cliente', 'uuid-evidencia-equipo-tipo-distinto')->exists())->toBeFalse();
+});
+
+test('registrarEvidenciaEquipo rechaza una foto ya usada para respaldar otro reporte de equipo', function () {
+    $trabajoUno = trabajoAbiertoParaEquipo('foto-repetida-1');
+    $trabajoDos = trabajoAbiertoParaEquipo('foto-repetida-2');
+    $fotos = fotosEquipoParaEscritura('foto-repetida');
+    $contrato = app(EscrituraSincronizacion::class);
+
+    $contrato->registrarEvidenciaEquipo(RegistroEvidenciaEquipo::intentarDesdeArreglo(registroEvidenciaEquipoArreglo([
+        'uuid_cliente' => 'uuid-evidencia-equipo-foto-repetida-1',
+        'trabajo_uuid_cliente' => $trabajoUno->uuid_cliente,
+        'foto_control_uuid_cliente' => $fotos['control'],
+        'foto_ciclo_bateria_balanceo_uuid_cliente' => $fotos['ciclo'],
+        'foto_dron_limpio_uuid_cliente' => $fotos['dron'],
+    ])));
+
+    $resultado = $contrato->registrarEvidenciaEquipo(RegistroEvidenciaEquipo::intentarDesdeArreglo(registroEvidenciaEquipoArreglo([
+        'uuid_cliente' => 'uuid-evidencia-equipo-foto-repetida-2',
+        'trabajo_uuid_cliente' => $trabajoDos->uuid_cliente,
+        // Reutiliza la MISMA foto de control ya usada por el trabajo anterior.
+        'foto_control_uuid_cliente' => $fotos['control'],
+        'foto_ciclo_bateria_balanceo_uuid_cliente' => evidenciaEquipoParaEscritura('foto-repetida-2', TipoEvidencia::FotoCicloBateriaBalanceo),
+        'foto_dron_limpio_uuid_cliente' => evidenciaEquipoParaEscritura('foto-repetida-2', TipoEvidencia::FotoDronLimpio),
+    ])));
+
+    expect($resultado->estado)->toBe('rechazado')
+        ->and($resultado->motivo)->not->toBeNull();
+
+    expect(EvidenciaEquipo::query()->where('uuid_cliente', 'uuid-evidencia-equipo-foto-repetida-2')->exists())->toBeFalse();
 });
 
 /*

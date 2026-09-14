@@ -6,6 +6,7 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
+use App\Dominios\Mantenimiento\Infraestructura\Eloquent\Bateria;
 use App\Dominios\Mezclas\Infraestructura\Eloquent\Mezcla;
 use App\Dominios\Mezclas\Infraestructura\Eloquent\MezclaDetalle;
 use App\Dominios\Mezclas\Infraestructura\Eloquent\Producto;
@@ -18,8 +19,10 @@ use App\Dominios\Operaciones\Dominio\TipoIncidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Acta;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Dron;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Evidencia;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\EvidenciaEquipo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Incidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\Recarga;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\ReporteTecnico;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
@@ -454,4 +457,108 @@ it('sin incidencias registradas, la lista del reporte sigue vacía', function ()
     $datos = app(ArmarContenidoReporteTecnico::class)->ejecutar($trabajo->fresh());
 
     expect($datos['incidencias'])->toBe([]);
+});
+
+/*
+ * ── Caso 10: "Reporte de Equipos" — ciclos de batería reales desde Mantenimiento (HU-80, tarea 86) ──
+ */
+
+it('el contenido del reporte incluye los ciclos de batería reales leídos desde Mantenimiento', function () {
+    $trabajo = trabajoParaReporte('equipo-ciclos', EstadoTrabajo::Cerrado, '18.50', '18.50');
+    $sesion = sesionParaReporte($trabajo, 'equipo-ciclos', EstadoSesion::Validado, '18.50', 'completado', '2026-09-01T08:00:00-04:00', '2026-09-01T11:00:00-04:00');
+
+    Bateria::create(['identificador' => 'BAT-EQUIPO-01', 'ciclos_acumulados' => 187]);
+
+    Recarga::create([
+        'uuid_cliente' => 'uuid-recarga-equipo-ciclos',
+        'sesion_id' => $sesion->id,
+        'secuencia' => 1,
+        'litros_caldo' => '20.00',
+        'bateria_saliente_id' => 'BAT-EQUIPO-01',
+        'temperatura_bateria_c' => '30.00',
+        'alerta_temperatura' => false,
+        'hora' => '2026-09-01T09:00:00-04:00',
+    ]);
+
+    $datos = app(ArmarContenidoReporteTecnico::class)->ejecutar($trabajo->fresh());
+
+    expect($datos['equipo']['ciclos_bateria'])->toBe([
+        ['identificador' => 'BAT-EQUIPO-01', 'ciclos_acumulados' => 187],
+    ]);
+});
+
+it('una batería sin catálogo en Mantenimiento se reporta con ciclos nulos, no cero', function () {
+    $trabajo = trabajoParaReporte('equipo-sin-catalogo', EstadoTrabajo::Cerrado, '18.50', '18.50');
+    $sesion = sesionParaReporte($trabajo, 'equipo-sin-catalogo', EstadoSesion::Validado, '18.50', 'completado', '2026-09-01T08:00:00-04:00', '2026-09-01T11:00:00-04:00');
+
+    Recarga::create([
+        'uuid_cliente' => 'uuid-recarga-equipo-sin-catalogo',
+        'sesion_id' => $sesion->id,
+        'secuencia' => 1,
+        'litros_caldo' => '20.00',
+        'bateria_saliente_id' => 'BAT-INEXISTENTE',
+        'temperatura_bateria_c' => '30.00',
+        'alerta_temperatura' => false,
+        'hora' => '2026-09-01T09:00:00-04:00',
+    ]);
+
+    $datos = app(ArmarContenidoReporteTecnico::class)->ejecutar($trabajo->fresh());
+
+    expect($datos['equipo']['ciclos_bateria'])->toBe([
+        ['identificador' => 'BAT-INEXISTENTE', 'ciclos_acumulados' => null],
+    ]);
+});
+
+it('sin ninguna recarga ni "Reporte de Equipos" cargado, la sección equipo del reporte es nula', function () {
+    $trabajo = trabajoListoParaReporte('sin-equipo');
+    conformarTrabajoParaReporte($trabajo, usuarioConPermisoReporte(), 'sin-equipo');
+
+    $datos = app(ArmarContenidoReporteTecnico::class)->ejecutar($trabajo->fresh());
+
+    expect($datos['equipo'])->toBeNull();
+});
+
+it('el contenido del reporte incluye las horas de vuelo y las tres fotos del "Reporte de Equipos"', function () {
+    $trabajo = trabajoListoParaReporte('equipo-completo');
+    conformarTrabajoParaReporte($trabajo, usuarioConPermisoReporte(), 'equipo-completo');
+
+    $fotoControl = Evidencia::create(['uuid_cliente' => 'uuid-foto-control-equipo-completo', 'tipo' => TipoEvidencia::FotoControl, 'archivo_url' => 'evidencias/foto_control/2026/09/foto-control.jpg', 'hash' => hash('sha256', 'foto-control'), 'fecha' => '2026-09-01T12:00:00-04:00']);
+    $fotoCiclo = Evidencia::create(['uuid_cliente' => 'uuid-foto-ciclo-equipo-completo', 'tipo' => TipoEvidencia::FotoCicloBateriaBalanceo, 'archivo_url' => 'evidencias/foto_ciclo_bateria_balanceo/2026/09/foto-ciclo.jpg', 'hash' => hash('sha256', 'foto-ciclo'), 'fecha' => '2026-09-01T12:00:00-04:00']);
+    $fotoDron = Evidencia::create(['uuid_cliente' => 'uuid-foto-dron-equipo-completo', 'tipo' => TipoEvidencia::FotoDronLimpio, 'archivo_url' => 'evidencias/foto_dron_limpio/2026/09/foto-dron.jpg', 'hash' => hash('sha256', 'foto-dron'), 'fecha' => '2026-09-01T12:00:00-04:00']);
+
+    EvidenciaEquipo::create([
+        'uuid_cliente' => 'uuid-evidencia-equipo-completo',
+        'trabajo_id' => $trabajo->id,
+        'horas_vuelo_dron' => '12.50',
+        'foto_control_id' => $fotoControl->id,
+        'foto_ciclo_bateria_balanceo_id' => $fotoCiclo->id,
+        'foto_dron_limpio_id' => $fotoDron->id,
+    ]);
+
+    $datos = app(ArmarContenidoReporteTecnico::class)->ejecutar($trabajo->fresh());
+
+    expect($datos['equipo']['horas_vuelo_dron'])->toBe('12.50')
+        ->and($datos['equipo']['foto_control_url'])->toBe($fotoControl->archivo_url)
+        ->and($datos['equipo']['foto_ciclo_bateria_balanceo_url'])->toBe($fotoCiclo->archivo_url)
+        ->and($datos['equipo']['foto_dron_limpio_url'])->toBe($fotoDron->archivo_url);
+});
+
+/*
+ * ── Caso 11: el PDF imprime la fecha y hora de emisión (HU-80, tarea 86) ──
+ */
+
+it('el PDF del reporte técnico imprime la fecha y hora de generación', function () {
+    $trabajo = trabajoListoParaReporte('generado-en');
+    conformarTrabajoParaReporte($trabajo, usuarioConPermisoReporte(), 'generado-en');
+
+    $trabajo = $trabajo->fresh();
+    $reporte = ReporteTecnico::query()->where('trabajo_id', $trabajo->id)->firstOrFail();
+
+    $html = view('operaciones::pdf.reporte-tecnico', [
+        'trabajo' => $trabajo,
+        'reporte' => $reporte,
+        'datos' => app(ArmarContenidoReporteTecnico::class)->ejecutar($trabajo),
+    ])->render();
+
+    expect($html)->toContain($reporte->generado_en->format('d/m/Y H:i'));
 });
