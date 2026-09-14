@@ -31,5 +31,8 @@ class CatalogoSeeder extends Seeder
         // HU-48 (tarea 71): catálogo de cultivos — sin dependencia de los
         // anteriores, cualquier orden relativo sirve.
         $this->call(ComercialCultivosSeeder::class);
+        // HU-79 (tarea 110): categorías de insumo (sólido/líquido) de la
+        // orden de aplicación — sin dependencia de los anteriores.
+        $this->call(OperacionesCategoriasInsumoSeeder::class);
     }
 }
