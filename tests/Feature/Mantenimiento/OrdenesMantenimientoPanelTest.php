@@ -99,6 +99,7 @@ it('cierra una orden con stock suficiente: descuenta el stock exacto y crea un g
         'repuestos' => [
             ['repuesto_id' => (string) $repuesto->id, 'base_id' => (string) $base->id, 'cantidad' => '5.00'],
         ],
+        'descripcion_final' => 'Se cambió la hélice dañada.',
     ])->assertRedirect(route('panel.ordenes-mantenimiento.index'));
 
     $stock = Stock::query()->where('repuesto_id', $repuesto->id)->where('base_id', $base->id)->sole();
@@ -117,7 +118,11 @@ it('cierra una orden con stock suficiente: descuenta el stock exacto y crea un g
     $orden->refresh();
     expect($orden->estado->value)->toBe('cerrada')
         ->and($orden->gasto_id)->toBe($gasto->id)
-        ->and($orden->fecha_cierre)->not->toBeNull();
+        ->and($orden->fecha_cierre)->not->toBeNull()
+        // HU-89 (tarea 104): la descripción final del cierre se persiste
+        // sin pisar la descripción de apertura.
+        ->and($orden->descripcion_final)->toBe('Se cambió la hélice dañada.')
+        ->and($orden->descripcion)->toBe('Revisión de rutina');
 });
 
 it('el detalle de una orden cerrada muestra el precio final real, igual a fin_gastos.monto (HU-88, tarea 103)', function () {
@@ -136,6 +141,7 @@ it('el detalle de una orden cerrada muestra el precio final real, igual a fin_ga
         'repuestos' => [
             ['repuesto_id' => (string) $repuesto->id, 'base_id' => (string) $base->id, 'cantidad' => '5.00'],
         ],
+        'descripcion_final' => 'Se cambió la hélice dañada.',
     ]);
 
     $gasto = Gasto::query()->sole();
@@ -169,6 +175,7 @@ it('cierra una orden sumando el costo de varias líneas de repuestos en un únic
             ['repuesto_id' => (string) $repuestoA->id, 'base_id' => (string) $base->id, 'cantidad' => '2.00'],
             ['repuesto_id' => (string) $repuestoB->id, 'base_id' => (string) $base->id, 'cantidad' => '1.00'],
         ],
+        'descripcion_final' => 'Se cambiaron la hélice y el motor.',
     ])->assertRedirect(route('panel.ordenes-mantenimiento.index'));
 
     // 2 × 10.00 + 1 × 50.00 = 70.00
@@ -193,6 +200,7 @@ it('rechaza el cierre sin stock suficiente: no descuenta nada y no crea ningún 
         'repuestos' => [
             ['repuesto_id' => (string) $repuesto->id, 'base_id' => (string) $base->id, 'cantidad' => '9.00'],
         ],
+        'descripcion_final' => 'Se intentó cambiar la hélice.',
     ])->assertStatus(422);
 
     $stock = Stock::query()->where('repuesto_id', $repuesto->id)->where('base_id', $base->id)->sole();
@@ -217,7 +225,10 @@ it('rechaza cerrar una orden que ya está cerrada: transición inválida', funct
     $this->post(route('panel.ordenes-mantenimiento.store'), payloadOrdenMantenimiento(['equipo_id' => (string) $dron->id]));
     $orden = OrdenMantenimiento::query()->sole();
 
-    $lineas = ['repuestos' => [['repuesto_id' => (string) $repuesto->id, 'base_id' => (string) $base->id, 'cantidad' => '5.00']]];
+    $lineas = [
+        'repuestos' => [['repuesto_id' => (string) $repuesto->id, 'base_id' => (string) $base->id, 'cantidad' => '5.00']],
+        'descripcion_final' => 'Se cambió la hélice dañada.',
+    ];
 
     $this->post(route('panel.ordenes-mantenimiento.cerrar', $orden), $lineas)
         ->assertRedirect(route('panel.ordenes-mantenimiento.index'));
@@ -230,6 +241,29 @@ it('rechaza cerrar una orden que ya está cerrada: transición inválida', funct
     // El segundo intento no descontó stock de nuevo ni generó un segundo gasto.
     expect(MovimientoStock::query()->count())->toBe(1)
         ->and(Gasto::query()->count())->toBe(1);
+});
+
+it('rechaza cerrar sin descripción final (HU-89, tarea 104)', function () {
+    [$encargado, $idRol] = usuarioConRolParaOrdenesMantenimiento('encargado', 'encargado_operaciones');
+    entrarAlPanelParaOrdenesMantenimiento($encargado, $idRol);
+
+    $dron = Dron::query()->create(['identificador' => 'DRN-001']);
+    $repuesto = Repuesto::query()->create(['codigo' => 'REP-001', 'descripcion' => 'Hélice', 'unidad' => 'unidad', 'costo_unitario' => '8.25']);
+    $base = PerBase::query()->create(['nombre' => 'Base Norte']);
+    Stock::query()->create(['repuesto_id' => $repuesto->id, 'base_id' => $base->id, 'cantidad' => '20.00', 'stock_minimo' => '0']);
+
+    $this->post(route('panel.ordenes-mantenimiento.store'), payloadOrdenMantenimiento(['equipo_id' => (string) $dron->id]));
+    $orden = OrdenMantenimiento::query()->sole();
+
+    $this->postJson(route('panel.ordenes-mantenimiento.cerrar', $orden), [
+        'repuestos' => [['repuesto_id' => (string) $repuesto->id, 'base_id' => (string) $base->id, 'cantidad' => '5.00']],
+    ])->assertStatus(422)
+        ->assertJsonValidationErrors('descripcion_final');
+
+    $orden->refresh();
+    expect($orden->estado->value)->toBe('abierta')
+        ->and($orden->descripcion_final)->toBeNull()
+        ->and(Gasto::query()->count())->toBe(0);
 });
 
 it('registra en bitácora la apertura y el cierre de una orden', function () {
@@ -253,6 +287,7 @@ it('registra en bitácora la apertura y el cierre de una orden', function () {
 
     $this->post(route('panel.ordenes-mantenimiento.cerrar', $orden), [
         'repuestos' => [['repuesto_id' => (string) $repuesto->id, 'base_id' => (string) $base->id, 'cantidad' => '5.00']],
+        'descripcion_final' => 'Se cambió la hélice dañada.',
     ])->assertRedirect(route('panel.ordenes-mantenimiento.index'));
 
     $filaCerrada = Bitacora::query()
@@ -286,6 +321,7 @@ it('un rol sin el permiso recibe 403 en todas las acciones de órdenes de manten
     $this->get(route('panel.ordenes-mantenimiento.edit', $orden))->assertForbidden();
     $this->post(route('panel.ordenes-mantenimiento.cerrar', $orden), [
         'repuestos' => [['repuesto_id' => (string) $repuesto->id, 'base_id' => (string) $base->id, 'cantidad' => '1']],
+        'descripcion_final' => 'Se cambió la hélice dañada.',
     ])->assertForbidden();
 
     expect(OrdenMantenimiento::query()->count())->toBe(1)
