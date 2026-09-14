@@ -177,34 +177,6 @@ it('una fila de ventana con una sola hora cargada es un error de validación, no
     expect(Contrato::query()->where('cliente_id', $cliente->id)->exists())->toBeFalse();
 });
 
-it('altura_vuelo_m cero o negativa es un error de validación, no persiste', function (string $valor) {
-    [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
-    entrarAlPanelParaContratos($encargado, $idRol);
-    $cliente = clienteParaContratos();
-    $campania = campaniaParaContratos($cliente->id);
-
-    $this->post(route('panel.contratos.store'), payloadContrato($cliente->id, $campania->id, [
-        'altura_vuelo_m' => $valor,
-    ]))->assertSessionHasErrors('altura_vuelo_m');
-
-    expect(Contrato::query()->where('cliente_id', $cliente->id)->exists())->toBeFalse();
-})->with(['0', '-1']);
-
-it('guarda la altura de vuelo del contrato cuando se informa', function () {
-    [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
-    entrarAlPanelParaContratos($encargado, $idRol);
-    $cliente = clienteParaContratos();
-    $campania = campaniaParaContratos($cliente->id);
-
-    $this->post(route('panel.contratos.store'), payloadContrato($cliente->id, $campania->id, [
-        'altura_vuelo_m' => '3.50',
-    ]))->assertRedirect(route('panel.contratos.index'));
-
-    $contrato = Contrato::query()->where('cliente_id', $cliente->id)->sole();
-
-    expect($contrato->altura_vuelo_m)->toBe('3.50');
-});
-
 it('da de alta un contrato con las tres coberturas logísticas activas y observaciones (HU-74, tarea 90)', function () {
     [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
     entrarAlPanelParaContratos($encargado, $idRol);
@@ -281,6 +253,45 @@ it('el formulario de contrato muestra la sección de logística (HU-74, tarea 90
         ->assertSee(__('comercial.contratos.campo_brinda_hospedaje'))
         ->assertSee(__('comercial.contratos.campo_brinda_combustible'))
         ->assertSee(__('comercial.contratos.campo_observaciones_logistica'));
+});
+
+it('el formulario de contrato ya no pide adelanto_pct ni parámetros de vuelo (HU-91, tarea 106)', function () {
+    [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaContratos($encargado, $idRol);
+
+    $this->get(route('panel.contratos.create'))
+        ->assertOk()
+        ->assertDontSee('name="adelanto_pct"', false)
+        ->assertDontSee('name="viento_max_kmh"', false)
+        ->assertDontSee('name="temperatura_max_c"', false)
+        ->assertDontSee('name="humedad_min_pct"', false)
+        ->assertDontSee('name="humedad_max_pct"', false)
+        ->assertDontSee('name="velocidad_max_kmh"', false)
+        ->assertDontSee('name="umbral_reporte_avance_ha"', false)
+        ->assertDontSee('name="altura_vuelo_m"', false);
+});
+
+it('crear/editar un contrato sin los 7 campos de clima/vuelo valida correcto y el monto_total no depende de ellos (HU-91, tarea 106)', function () {
+    [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaContratos($encargado, $idRol);
+    $cliente = clienteParaContratos();
+    $campania = campaniaParaContratos($cliente->id);
+
+    $this->post(route('panel.contratos.store'), payloadContrato($cliente->id, $campania->id))
+        ->assertSessionDoesntHaveErrors()
+        ->assertRedirect(route('panel.contratos.index'));
+
+    $contrato = Contrato::query()->where('cliente_id', $cliente->id)->sole();
+
+    expect($contrato->monto_total)->toBe('15000.00');
+
+    $this->put(route('panel.contratos.update', $contrato), payloadContrato($cliente->id, $campania->id, [
+        'precio_ha' => '80.00',
+    ]))
+        ->assertSessionDoesntHaveErrors()
+        ->assertRedirect(route('panel.contratos.index'));
+
+    expect($contrato->fresh()->monto_total)->toBe('24000.00');
 });
 
 it('la ficha de edición de un contrato muestra las observaciones de logística guardadas (HU-74, tarea 90)', function () {
