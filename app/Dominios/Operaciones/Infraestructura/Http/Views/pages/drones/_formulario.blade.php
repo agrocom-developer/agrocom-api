@@ -3,8 +3,8 @@
     edit.blade.php (HU-27, tarea 36) — arquetipo Formulario, §6.3 de
     docs/diseno/guia_pantalla_panel.md. Mismo patrón que
     `clientes/_formulario.blade.php`, pero sin sub-entidad repetible ni
-    selects: un dron es tres campos planos (identificador, modelo,
-    capacidad_l).
+    selects: un dron es cuatro campos planos (identificador, modelo,
+    capacidad_l, capacidad_kg — HU-81, tarea 96).
 
     Espera:
     - $dron (Dron|null): null en alta; el modelo en edición.
@@ -22,6 +22,7 @@
     $identificador = old('identificador', $dron?->identificador ?? '');
     $modelo = old('modelo', $dron?->modelo ?? '');
     $capacidadL = old('capacidad_l', $dron?->capacidad_l !== null ? (string) (int) $dron->capacidad_l : '');
+    $capacidadKg = old('capacidad_kg', $dron?->capacidad_kg ?? '');
 @endphp
 
 <form method="POST" action="{{ $accion }}" class="ag-drones-form" novalidate data-ag-drones-form>
@@ -43,7 +44,7 @@
 
     <x-molecules.form-section
         :title="__('operaciones.drones.seccion_datos')"
-        :count="__('operaciones.drones.campos_contador', ['cantidad' => 3])"
+        :count="__('operaciones.drones.campos_contador', ['cantidad' => 4])"
     >
         <x-atoms.input
             type="text"
@@ -73,6 +74,17 @@
             min="30"
             max="60"
             step="1"
+        />
+
+        <x-atoms.input
+            type="number"
+            name="capacidad_kg"
+            label="{{ __('operaciones.drones.campo_capacidad_kg') }}"
+            value="{{ $capacidadKg }}"
+            help="{{ __('operaciones.drones.campo_capacidad_kg_ayuda') }}"
+            error="{{ $errors->first('capacidad_kg') }}"
+            min="0"
+            step="0.01"
         />
     </x-molecules.form-section>
 

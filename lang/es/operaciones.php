@@ -304,6 +304,8 @@ return [
     // flota de drones, con su modelo (texto libre) y capacidad de carga en
     // litros (30/50/60, CHECK de base de datos). Mismo molde que
     // `comercial.campos`/`comercial.clientes`, sin sub-entidad.
+    // Capacidad de carga en kilos (HU-81, tarea 96): sin catálogo cerrado,
+    // a diferencia de los litros.
     'drones' => [
         'titulo' => 'Drones',
         'subtitulo' => 'Flota de drones registrada, con su modelo y volumen de carga.',
@@ -320,6 +322,7 @@ return [
         'sin_modelo' => '—',
         'sin_capacidad' => '—',
         'capacidad_valor' => ':cantidad L',
+        'capacidad_kg_valor' => ':cantidad kg',
         'editar' => 'Editar',
         'eliminar_accion' => 'Eliminar',
         'confirmar_baja' => '¿Confirmás la baja de este dron?',
@@ -337,6 +340,8 @@ return [
         'campo_modelo_ayuda' => 'Texto libre, ej.: DJI Agras T30.',
         'campo_capacidad' => 'Capacidad de carga (L)',
         'campo_capacidad_ayuda' => 'Valores permitidos: 30, 50 o 60 litros.',
+        'campo_capacidad_kg' => 'Capacidad de carga (kg)',
+        'campo_capacidad_kg_ayuda' => 'Kilos que puede llevar el dron por vuelo, para aplicación sólida.',
         'estado_form' => 'Los cambios se guardan al confirmar.',
         'creado' => 'Dron creado correctamente.',
         'actualizado' => 'Dron actualizado correctamente.',
