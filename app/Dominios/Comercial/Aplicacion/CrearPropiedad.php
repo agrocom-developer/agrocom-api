@@ -20,12 +20,25 @@ final class CrearPropiedad
      *                            activa del mismo cliente (índice parcial
      *                            `com_propiedades_nombre_unico`).
      */
-    public function ejecutar(int $clienteId, string $nombre, ?string $ubicacion): Propiedad
-    {
+    public function ejecutar(
+        int $clienteId,
+        string $nombre,
+        ?string $ubicacion,
+        ?string $departamento,
+        ?string $municipio,
+        ?string $localidad,
+        ?string $latitud,
+        ?string $longitud,
+    ): Propiedad {
         $propiedad = new Propiedad([
             'cliente_id' => $clienteId,
             'nombre' => $nombre,
             'ubicacion' => $ubicacion,
+            'departamento' => $departamento,
+            'municipio' => $municipio,
+            'localidad' => $localidad,
+            'latitud' => $latitud,
+            'longitud' => $longitud,
         ]);
 
         try {

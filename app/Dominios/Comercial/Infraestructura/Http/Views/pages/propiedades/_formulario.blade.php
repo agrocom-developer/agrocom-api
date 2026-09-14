@@ -25,6 +25,11 @@
     $clienteId = old('cliente_id', $propiedad?->cliente_id ?? '');
     $nombre = old('nombre', $propiedad?->nombre ?? '');
     $ubicacion = old('ubicacion', $propiedad?->ubicacion ?? '');
+    $departamento = old('departamento', $propiedad?->departamento ?? '');
+    $municipio = old('municipio', $propiedad?->municipio ?? '');
+    $localidad = old('localidad', $propiedad?->localidad ?? '');
+    $latitud = old('latitud', $propiedad?->latitud ?? '');
+    $longitud = old('longitud', $propiedad?->longitud ?? '');
 @endphp
 
 <form method="POST" action="{{ $accion }}" class="ag-propiedades-form" novalidate>
@@ -46,7 +51,7 @@
 
     <x-molecules.form-section
         :title="__('comercial.propiedades.seccion_datos')"
-        :count="__('comercial.propiedades.campos_contador', ['cantidad' => 3])"
+        :count="__('comercial.propiedades.campos_contador', ['cantidad' => 8])"
     >
         <x-atoms.select
             name="cliente_id"
@@ -76,6 +81,52 @@
             placeholder="{{ __('comercial.propiedades.campo_ubicacion_placeholder') }}"
             help="{{ __('comercial.propiedades.campo_ubicacion_ayuda') }}"
             error="{{ $errors->first('ubicacion') }}"
+        />
+
+        <x-atoms.input
+            type="text"
+            name="departamento"
+            label="{{ __('comercial.propiedades.campo_departamento') }}"
+            value="{{ $departamento }}"
+            error="{{ $errors->first('departamento') }}"
+        />
+
+        <x-atoms.input
+            type="text"
+            name="municipio"
+            label="{{ __('comercial.propiedades.campo_municipio') }}"
+            value="{{ $municipio }}"
+            error="{{ $errors->first('municipio') }}"
+        />
+
+        <x-atoms.input
+            type="text"
+            name="localidad"
+            label="{{ __('comercial.propiedades.campo_localidad') }}"
+            value="{{ $localidad }}"
+            error="{{ $errors->first('localidad') }}"
+        />
+
+        <x-atoms.input
+            type="number"
+            name="latitud"
+            label="{{ __('comercial.propiedades.campo_latitud') }}"
+            value="{{ $latitud }}"
+            step="0.000001"
+            min="-90"
+            max="90"
+            error="{{ $errors->first('latitud') }}"
+        />
+
+        <x-atoms.input
+            type="number"
+            name="longitud"
+            label="{{ __('comercial.propiedades.campo_longitud') }}"
+            value="{{ $longitud }}"
+            step="0.000001"
+            min="-180"
+            max="180"
+            error="{{ $errors->first('longitud') }}"
         />
     </x-molecules.form-section>
 

@@ -79,6 +79,115 @@ it('da de alta una propiedad', function () {
         ->and($propiedad->ubicacion)->toBe('Cuatro Cañadas, Santa Cruz, Bolivia');
 });
 
+it('da de alta una propiedad con departamento, municipio, localidad y coordenada (HU-76)', function () {
+    $cliente = clienteDePropiedadesDePrueba();
+    [$encargado, $idRol] = usuarioConRolParaPropiedades('encargado', 'encargado_operaciones');
+    entrarAlPanelParaPropiedades($encargado, $idRol);
+
+    $this->post(route('panel.propiedades.store'), payloadPropiedad($cliente->id, [
+        'departamento' => 'Santa Cruz',
+        'municipio' => 'Cuatro Cañadas',
+        'localidad' => 'Km 25',
+        'latitud' => '-17.123456',
+        'longitud' => '-63.123456',
+    ]))->assertRedirect(route('panel.propiedades.index'));
+
+    $propiedad = Propiedad::query()->where('nombre', 'Gamelera')->sole();
+
+    expect($propiedad->departamento)->toBe('Santa Cruz')
+        ->and($propiedad->municipio)->toBe('Cuatro Cañadas')
+        ->and($propiedad->localidad)->toBe('Km 25')
+        ->and($propiedad->latitud)->toBe('-17.123456')
+        ->and($propiedad->longitud)->toBe('-63.123456');
+});
+
+it('edita departamento, municipio, localidad y coordenada de una propiedad', function () {
+    $cliente = clienteDePropiedadesDePrueba();
+    [$encargado, $idRol] = usuarioConRolParaPropiedades('encargado', 'encargado_operaciones');
+    entrarAlPanelParaPropiedades($encargado, $idRol);
+
+    $this->post(route('panel.propiedades.store'), payloadPropiedad($cliente->id));
+    $propiedad = Propiedad::query()->sole();
+
+    $this->put(route('panel.propiedades.update', $propiedad), payloadPropiedad($cliente->id, [
+        'departamento' => 'Santa Cruz',
+        'municipio' => 'Roboré',
+        'localidad' => 'San Matías',
+        'latitud' => '-18.5',
+        'longitud' => '-59.75',
+    ]))->assertRedirect(route('panel.propiedades.index'));
+
+    $propiedad->refresh();
+    expect($propiedad->departamento)->toBe('Santa Cruz')
+        ->and($propiedad->municipio)->toBe('Roboré')
+        ->and($propiedad->localidad)->toBe('San Matías')
+        ->and($propiedad->latitud)->toBe('-18.500000')
+        ->and($propiedad->longitud)->toBe('-59.750000');
+});
+
+it('rechaza una latitud fuera de rango', function () {
+    $cliente = clienteDePropiedadesDePrueba();
+    [$encargado, $idRol] = usuarioConRolParaPropiedades('encargado', 'encargado_operaciones');
+    entrarAlPanelParaPropiedades($encargado, $idRol);
+
+    $this->post(route('panel.propiedades.store'), payloadPropiedad($cliente->id, [
+        'latitud' => '-95',
+        'longitud' => '-63',
+    ]))->assertSessionHasErrors('latitud');
+
+    expect(Propiedad::query()->count())->toBe(0);
+});
+
+it('rechaza una longitud fuera de rango', function () {
+    $cliente = clienteDePropiedadesDePrueba();
+    [$encargado, $idRol] = usuarioConRolParaPropiedades('encargado', 'encargado_operaciones');
+    entrarAlPanelParaPropiedades($encargado, $idRol);
+
+    $this->post(route('panel.propiedades.store'), payloadPropiedad($cliente->id, [
+        'latitud' => '-17',
+        'longitud' => '-185',
+    ]))->assertSessionHasErrors('longitud');
+
+    expect(Propiedad::query()->count())->toBe(0);
+});
+
+it('rechaza latitud sin longitud', function () {
+    $cliente = clienteDePropiedadesDePrueba();
+    [$encargado, $idRol] = usuarioConRolParaPropiedades('encargado', 'encargado_operaciones');
+    entrarAlPanelParaPropiedades($encargado, $idRol);
+
+    $this->post(route('panel.propiedades.store'), payloadPropiedad($cliente->id, [
+        'latitud' => '-17.123456',
+    ]))->assertSessionHasErrors('longitud');
+
+    expect(Propiedad::query()->count())->toBe(0);
+});
+
+it('rechaza longitud sin latitud', function () {
+    $cliente = clienteDePropiedadesDePrueba();
+    [$encargado, $idRol] = usuarioConRolParaPropiedades('encargado', 'encargado_operaciones');
+    entrarAlPanelParaPropiedades($encargado, $idRol);
+
+    $this->post(route('panel.propiedades.store'), payloadPropiedad($cliente->id, [
+        'longitud' => '-63.123456',
+    ]))->assertSessionHasErrors('latitud');
+
+    expect(Propiedad::query()->count())->toBe(0);
+});
+
+it('el formulario de alta muestra los campos de ubicacion estructurada (HU-76)', function () {
+    [$encargado, $idRol] = usuarioConRolParaPropiedades('encargado', 'encargado_operaciones');
+    entrarAlPanelParaPropiedades($encargado, $idRol);
+
+    $respuesta = $this->get(route('panel.propiedades.create'))->assertOk();
+
+    $respuesta->assertSee('name="departamento"', escape: false)
+        ->assertSee('name="municipio"', escape: false)
+        ->assertSee('name="localidad"', escape: false)
+        ->assertSee('name="latitud"', escape: false)
+        ->assertSee('name="longitud"', escape: false);
+});
+
 it('acepta una propiedad sin ubicacion', function () {
     $cliente = clienteDePropiedadesDePrueba();
     [$encargado, $idRol] = usuarioConRolParaPropiedades('encargado', 'encargado_operaciones');
