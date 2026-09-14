@@ -22,12 +22,17 @@ use Illuminate\Support\Facades\DB;
  * contrato formal en `Operaciones/Contratos/` (fuera de "Puede tocar" del
  * prompt). Lectura de solo existencia, sin escritura ni acoplamiento de
  * código.
+ *
+ * "Tiene órdenes" se resuelve por `ope_orden_lotes` (HU-92, tarea 107): el
+ * lote de una orden ya no es `ope_ordenes_aplicacion.lote_id` (columna
+ * eliminada, una orden puede cubrir varios lotes), sino una fila de esa
+ * tabla de detalle.
  */
 final class VerificadorHistorialLote
 {
     public static function tiene(Lote $lote): bool
     {
-        $tieneOrdenes = DB::table('ope_ordenes_aplicacion')
+        $tieneOrdenes = DB::table('ope_orden_lotes')
             ->where('lote_id', $lote->id)
             ->whereNull('deleted_at')
             ->exists();

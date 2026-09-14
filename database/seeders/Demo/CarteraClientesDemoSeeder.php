@@ -16,6 +16,7 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenLote;
 use Illuminate\Database\Seeder;
 
 /**
@@ -331,9 +332,11 @@ class CarteraClientesDemoSeeder extends Seeder
      */
     private function orden(int $contratoId, int $loteId, int $agronomoId, int $autorId, array $datos): void
     {
-        $this->crear(new OrdenAplicacion([
+        // HU-92 (tarea 107): el lote de la orden ya no es una columna propia,
+        // se arma como fila de `ope_orden_lotes` (con el lote completo como
+        // tope, mismo criterio que HU-70 antes de esta tarea).
+        $orden = $this->crear(new OrdenAplicacion([
             'contrato_id' => $contratoId,
-            'lote_id' => $loteId,
             'humedad_min_pct' => '80.00',
             'altura_vuelo_m' => '3.00',
             'velocidad_vuelo_kmh' => '15.00',
@@ -341,6 +344,12 @@ class CarteraClientesDemoSeeder extends Seeder
             'emitida_por_contacto_id' => $agronomoId,
             'estado' => EstadoOrdenAplicacion::Vigente,
             ...$datos,
+        ]), $autorId);
+
+        $this->crear(new OrdenLote([
+            'orden_id' => $orden->id,
+            'lote_id' => $loteId,
+            'hectareas_solicitadas' => Lote::query()->findOrFail($loteId)->hectareas,
         ]), $autorId);
     }
 

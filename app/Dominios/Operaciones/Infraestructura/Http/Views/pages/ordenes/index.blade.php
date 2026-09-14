@@ -15,6 +15,8 @@
       consulta Comercial (ADR 0003 regla 3, ninguna relación Eloquent desde
       OrdenAplicacion). Un id sin etiqueta (contrato/lote borrado después)
       cae al `#id` crudo.
+    - $loteIdsPorOrden (array<int, list<int>>): lotes de CADA orden (HU-92,
+      tarea 107 — antes un único `lote_id` por orden), clave `orden->id`.
     - $filtros (array{estado: ?string, tipo_aplicacion: ?string}): filtros
       aplicados, para dejar los selects con el valor tras el submit.
     - $puedeActivar (bool): si el rol activo tiene `operaciones.orden.activar`
@@ -139,10 +141,15 @@
                     </div>
 
                     @foreach ($ordenes as $orden)
-                        @php $estadoValor = $orden->estado->value; @endphp
+                        @php
+                            $estadoValor = $orden->estado->value;
+                            $lotesTexto = collect($loteIdsPorOrden[$orden->id] ?? [])
+                                ->map(fn ($loteId) => $etiquetasLote[$loteId] ?? "#{$loteId}")
+                                ->implode(', ');
+                        @endphp
                         <div class="ag-ordenes__fila" role="row">
                             <span role="cell">{{ $etiquetasContrato[$orden->contrato_id] ?? "#{$orden->contrato_id}" }}</span>
-                            <span role="cell">{{ $etiquetasLote[$orden->lote_id] ?? "#{$orden->lote_id}" }}</span>
+                            <span role="cell">{{ $lotesTexto }}</span>
                             <span role="cell" class="ag-ordenes__mono">{{ $orden->nro_aplicacion }}</span>
                             <span role="cell">{{ __('operaciones.tipo_aplicacion.'.$orden->tipo_aplicacion->value) }}</span>
                             <span role="cell" class="ag-ordenes__mono">{{ number_format((float) $orden->litros_ha, 2, ',', '.') }}</span>

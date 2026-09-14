@@ -5,14 +5,17 @@ namespace App\Dominios\Operaciones\Dominio\Excepciones;
 use RuntimeException;
 
 /**
- * Traducción legible de la violación del índice único parcial
- * `ope_ordenes_aplicacion_lote_vigente_unico` (HU-25, tarea 38): un lote no
- * puede tener dos órdenes VIGENTES a la vez — sin orden vigente no se abre
- * trabajo; con dos vigentes no se sabría cuál rige (ver docblock de la
- * migración `create_ope_ordenes_aplicacion_table`). `MaquinaEstadosOrden::activar()`
- * captura la `QueryException` que dispara esa violación y la relanza como
- * esta excepción — nunca deja propagarse el 500 crudo del motor de base de
- * datos. Mismo criterio que `DronDuplicado`.
+ * Un lote no puede tener dos órdenes VIGENTES a la vez — sin orden vigente
+ * no se abre trabajo; con dos vigentes no se sabría cuál rige. Hasta HU-70
+ * lo garantizaba el índice único parcial `ope_ordenes_aplicacion_lote_vigente_unico`
+ * y esta excepción traducía la `QueryException` de esa violación. Desde
+ * HU-92 (tarea 107, orden con N lotes) la regla cruza `ope_orden_lotes` con
+ * `ope_ordenes_aplicacion.estado` — un índice parcial no puede condicionar
+ * sobre una tabla ajena — así que `MaquinaEstadosOrden::activar()` la
+ * verifica de forma explícita (con lock, ver su docblock) y lanza esta
+ * excepción directo, sin pasar por una `QueryException`. Mismo criterio que
+ * `DronDuplicado`: nunca dejar propagarse el 500 crudo del motor de base de
+ * datos.
  */
 final class OrdenVigenteDuplicadaEnLote extends RuntimeException
 {

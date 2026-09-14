@@ -97,12 +97,12 @@ function actaFirmadaInforme(Contrato $contrato, string $sufijo, string $hectarea
 
     $orden = OrdenAplicacion::create([
         'contrato_id' => $contrato->id,
-        'lote_id' => $lote->id,
         'nro_aplicacion' => 1,
         'litros_ha' => '10.00',
         'fecha_emision' => '2026-01-01',
         'estado' => EstadoOrdenAplicacion::Vigente,
     ]);
+    $orden->ordenLotes()->create(['lote_id' => $lote->id, 'hectareas_solicitadas' => '999.00']);
 
     $trabajo = Trabajo::create([
         'uuid_cliente' => "uuid-trabajo-informe-{$sufijo}",

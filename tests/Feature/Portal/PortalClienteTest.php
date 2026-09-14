@@ -64,14 +64,22 @@ function ordenParaPortal(Contrato $contrato, string $sufijo): OrdenAplicacion
     $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => "Campo portal {$sufijo}"]);
     $lote = Lote::create(['campo_id' => $campo->id, 'codigo' => "L-PORTAL-{$sufijo}", 'hectareas' => '25.00']);
 
-    return OrdenAplicacion::create([
+    $orden = OrdenAplicacion::create([
         'contrato_id' => $contrato->id,
-        'lote_id' => $lote->id,
         'nro_aplicacion' => 1,
         'litros_ha' => '10.00',
         'fecha_emision' => '2026-09-01',
         'estado' => EstadoOrdenAplicacion::Vigente,
     ]);
+    $orden->ordenLotes()->create(['lote_id' => $lote->id, 'hectareas_solicitadas' => '25.00']);
+
+    return $orden;
+}
+
+/** Id del único lote de `$orden` (HU-92: el lote ya no es columna de la orden). */
+function loteIdParaPortal(OrdenAplicacion $orden): int
+{
+    return (int) $orden->ordenLotes()->value('lote_id');
 }
 
 /** Acta FIRMADA (con su ReporteTecnico generado al firmar) de un trabajo nuevo de esa orden. */
@@ -80,7 +88,7 @@ function actaFirmadaParaPortal(OrdenAplicacion $orden, string $sufijo): Acta
     $trabajo = Trabajo::create([
         'uuid_cliente' => "uuid-trabajo-portal-{$sufijo}",
         'orden_id' => $orden->id,
-        'lote_id' => $orden->lote_id,
+        'lote_id' => loteIdParaPortal($orden),
         'nro_aplicacion' => 1,
         'hectareas_declaradas' => '5.00',
         'estado' => EstadoTrabajo::Cerrado,
@@ -257,7 +265,7 @@ it('el listado de reportes muestra solo los del contrato propio', function () {
 
     $this->get(route('portal.reportes.index'))
         ->assertOk()
-        ->assertSee(__('portal.reportes.lote_valor', ['id' => $ordenA->lote_id]));
+        ->assertSee(__('portal.reportes.lote_valor', ['id' => loteIdParaPortal($ordenA)]));
 });
 
 it('descarga el PDF del propio reporte técnico', function () {

@@ -87,12 +87,12 @@ function trabajoCerradoDemo(): Trabajo
     ]);
     $orden = OrdenAplicacion::create([
         'contrato_id' => $contrato->id,
-        'lote_id' => $lote->id,
         'nro_aplicacion' => 1,
         'litros_ha' => '10.00',
         'fecha_emision' => '2026-09-01',
         'estado' => EstadoOrdenAplicacion::Vigente,
     ]);
+    $orden->ordenLotes()->create(['lote_id' => $lote->id, 'hectareas_solicitadas' => '40.00']);
     $piloto = PerPersona::create(['nombre' => 'Piloto panel', 'rol' => RolOperativoPersona::Piloto, 'activo' => true]);
 
     $trabajo = Trabajo::create([
@@ -194,12 +194,12 @@ function crearTrabajo(array $atributosTrabajo = [], array $sesiones = []): Traba
     $nroAplicacion = $atributosTrabajo['nro_aplicacion'] ?? 1;
     $orden = OrdenAplicacion::create([
         'contrato_id' => $contrato->id,
-        'lote_id' => $lote->id,
         'nro_aplicacion' => $nroAplicacion,
         'litros_ha' => '10.00',
         'fecha_emision' => '2026-09-01',
         'estado' => EstadoOrdenAplicacion::Vigente,
     ]);
+    $orden->ordenLotes()->create(['lote_id' => $lote->id, 'hectareas_solicitadas' => '40.00']);
 
     $estadoTrabajo = $atributosTrabajo['estado'] ?? EstadoTrabajo::Cerrado;
 

@@ -32,7 +32,7 @@ beforeEach(function () {
 it('un lote con un registro de cada tipo aceptado por el sync aplica todos', function () {
     $loteId = Lote::query()->where('codigo', 'L-01')->value('id');
     $orden = OrdenAplicacion::query()
-        ->where('lote_id', $loteId)
+        ->whereHas('ordenLotes', fn ($q) => $q->where('lote_id', $loteId))
         ->where('estado', EstadoOrdenAplicacion::Vigente)
         ->firstOrFail();
 
@@ -60,7 +60,7 @@ it('un lote con un registro de cada tipo aceptado por el sync aplica todos', fun
                 'tipo' => 'trabajo',
                 'uuid_cliente' => 'uuid-todos-trabajo',
                 'orden_id' => $orden->id,
-                'lote_id' => $orden->lote_id,
+                'lote_id' => (int) $orden->ordenLotes()->value('lote_id'),
                 'nro_aplicacion' => $orden->nro_aplicacion,
                 'inicio' => '2026-09-01T10:00:00-04:00',
             ],

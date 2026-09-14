@@ -856,11 +856,11 @@ components:
       type: object
     OrdenAplicacion:
       title: 'Orden de aplicación'
-      description: 'Orden de aplicación emitida por el cliente para un lote (espec §4.3). Los valores DECIMAL (dosis, límites climáticos y de vuelo) viajan como string. Los límites en null heredan del contrato o del parámetro por defecto del sistema (RF-60).'
+      description: 'Orden de aplicación emitida por el cliente, cubriendo uno o varios lotes de la propiedad (espec §4.3, ampliada HU-92 tarea 107). Los valores DECIMAL (dosis, límites climáticos y de vuelo) viajan como string. Los límites en null heredan del contrato o del parámetro por defecto del sistema (RF-60).'
       required:
         - id
         - contrato_id
-        - lote_id
+        - lotes
         - nro_aplicacion
         - litros_ha
         - humedad_min_pct
@@ -886,10 +886,11 @@ components:
           description: 'Contrato al que pertenece la orden (módulo Comercial, solo ID).'
           type: integer
           example: 1
-        lote_id:
-          description: 'Lote sobre el que se aplica (módulo Comercial, solo ID).'
-          type: integer
-          example: 3
+        lotes:
+          description: 'Lotes que cubre la orden (módulo Comercial, solo ID) con las hectáreas solicitadas a cada uno.'
+          type: array
+          items:
+            $ref: '#/components/schemas/LoteDeOrdenCatalogo'
         nro_aplicacion:
           description: 'Número de aplicación dentro del contrato (1..n).'
           type: integer
@@ -1058,13 +1059,29 @@ components:
           example: 3
           nullable: true
       type: object
+    LoteDeOrdenCatalogo:
+      title: 'Lote de una orden (catálogo)'
+      description: 'Uno de los lotes que cubre una orden, con las hectáreas que le pidió a ESE lote (HU-92, tarea 107 — una orden puede cubrir varios lotes de la propiedad). DECIMAL como string (invariante 6).'
+      required:
+        - lote_id
+        - hectareas_solicitadas
+      properties:
+        lote_id:
+          description: 'Lote que cubre la orden (módulo Comercial, solo ID).'
+          type: integer
+          example: 3
+        hectareas_solicitadas:
+          description: 'Hectáreas que la orden le pidió a ESE lote. DECIMAL como string.'
+          type: string
+          example: '50.00'
+      type: object
     OrdenCatalogo:
       title: 'Orden de aplicación (catálogo)'
-      description: 'Orden vigente para el pull de catálogo (espec §4.3). Los DECIMAL viajan como string (invariante 6).'
+      description: 'Orden vigente para el pull de catálogo (espec §4.3, ampliada HU-92 tarea 107: `lotes` reemplaza el `lote_id` único de antes). Los DECIMAL viajan como string (invariante 6).'
       required:
         - id
         - contrato_id
-        - lote_id
+        - lotes
         - nro_aplicacion
         - litros_ha
         - humedad_min_pct
@@ -1082,15 +1099,15 @@ components:
         - updated_at
       properties:
         id:
-          description: "Adaptador delgado (ADR 0008): valida la query string, invoca el caso de\nuso y devuelve la respuesta — ninguna regla de negocio vive acá."
           type: integer
           example: 1
         contrato_id:
           type: integer
           example: 1
-        lote_id:
-          type: integer
-          example: 3
+        lotes:
+          type: array
+          items:
+            $ref: '#/components/schemas/LoteDeOrdenCatalogo'
         nro_aplicacion:
           type: integer
           example: 1

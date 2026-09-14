@@ -56,14 +56,17 @@ function ordenParaListadoReportes(string $sufijo, ?Cliente $cliente = null): Ord
         'estado' => EstadoContrato::Vigente,
     ]);
 
-    return OrdenAplicacion::create([
+    $orden = OrdenAplicacion::create([
         'contrato_id' => $contrato->id,
-        'lote_id' => $lote->id,
         'nro_aplicacion' => 1,
         'litros_ha' => '10.00',
         'fecha_emision' => '2026-09-01',
         'estado' => EstadoOrdenAplicacion::Vigente,
     ]);
+
+    $orden->ordenLotes()->create(['lote_id' => $lote->id, 'hectareas_solicitadas' => '20.00']);
+
+    return $orden;
 }
 
 /** Trabajo + reporte técnico ya generado (fixture directa por Eloquent), con su cliente. */
@@ -74,7 +77,7 @@ function reporteParaListado(string $sufijo, string $generadoEn, ?Cliente $client
     $trabajo = Trabajo::create([
         'uuid_cliente' => "uuid-trabajo-listado-{$sufijo}",
         'orden_id' => $orden->id,
-        'lote_id' => $orden->lote_id,
+        'lote_id' => (int) $orden->ordenLotes()->value('lote_id'),
         'nro_aplicacion' => 1,
         'hectareas_declaradas' => '20.00',
         'estado' => EstadoTrabajo::Cerrado,

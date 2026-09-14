@@ -20,11 +20,24 @@ use OpenApi\Attributes as OA;
         .'nombre en el propio evento `mezcla` de `POST /api/sync`, sin necesitar bajarlo antes.',
 )]
 #[OA\Schema(
+    schema: 'LoteDeOrdenCatalogo',
+    title: 'Lote de una orden (catálogo)',
+    description: 'Uno de los lotes que cubre una orden, con las hectáreas que le pidió a ESE lote '
+        .'(HU-92, tarea 107 — una orden puede cubrir varios lotes de la propiedad). DECIMAL como string (invariante 6).',
+    required: ['lote_id', 'hectareas_solicitadas'],
+    properties: [
+        new OA\Property(property: 'lote_id', description: 'Lote que cubre la orden (módulo Comercial, solo ID).', type: 'integer', example: 3),
+        new OA\Property(property: 'hectareas_solicitadas', description: 'Hectáreas que la orden le pidió a ESE lote. DECIMAL como string.', type: 'string', example: '50.00'),
+    ],
+    type: 'object',
+)]
+#[OA\Schema(
     schema: 'OrdenCatalogo',
     title: 'Orden de aplicación (catálogo)',
-    description: 'Orden vigente para el pull de catálogo (espec §4.3). Los DECIMAL viajan como string (invariante 6).',
+    description: 'Orden vigente para el pull de catálogo (espec §4.3, ampliada HU-92 tarea 107: '
+        .'`lotes` reemplaza el `lote_id` único de antes). Los DECIMAL viajan como string (invariante 6).',
     required: [
-        'id', 'contrato_id', 'lote_id', 'nro_aplicacion', 'litros_ha', 'humedad_min_pct',
+        'id', 'contrato_id', 'lotes', 'nro_aplicacion', 'litros_ha', 'humedad_min_pct',
         'viento_max_kmh', 'temperatura_max_c', 'humedad_max_pct', 'velocidad_max_kmh',
         'altura_vuelo_m', 'velocidad_vuelo_kmh', 'ancho_pasada_m', 'observaciones',
         'emitida_por_contacto_id', 'fecha_emision', 'estado', 'updated_at',
@@ -32,7 +45,11 @@ use OpenApi\Attributes as OA;
     properties: [
         new OA\Property(property: 'id', type: 'integer', example: 1),
         new OA\Property(property: 'contrato_id', type: 'integer', example: 1),
-        new OA\Property(property: 'lote_id', type: 'integer', example: 3),
+        new OA\Property(
+            property: 'lotes',
+            type: 'array',
+            items: new OA\Items(ref: '#/components/schemas/LoteDeOrdenCatalogo'),
+        ),
         new OA\Property(property: 'nro_aplicacion', type: 'integer', example: 1),
         new OA\Property(property: 'litros_ha', type: 'string', example: '10.00'),
         new OA\Property(property: 'humedad_min_pct', type: 'string', example: '60.00', nullable: true),

@@ -24,6 +24,7 @@ use App\Dominios\Operaciones\Dominio\TipoEvidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Acta;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Evidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenLote;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\ReporteTecnico;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
@@ -186,13 +187,20 @@ class PortalDemoSeeder extends Seeder
             'restricciones' => null,
         ]), $autorId);
 
-        $this->crear(new OrdenAplicacion([
+        // HU-92 (tarea 107): el lote de la orden ya no es una columna propia,
+        // se arma como fila de `ope_orden_lotes`.
+        $orden = $this->crear(new OrdenAplicacion([
             'contrato_id' => $contrato->id,
-            'lote_id' => $lote->id,
             'nro_aplicacion' => 1,
             'litros_ha' => '12.00',
             'fecha_emision' => '2026-08-20',
             'estado' => EstadoOrdenAplicacion::Vigente,
+        ]), $autorId);
+
+        $this->crear(new OrdenLote([
+            'orden_id' => $orden->id,
+            'lote_id' => $lote->id,
+            'hectareas_solicitadas' => $lote->hectareas,
         ]), $autorId);
 
         return $cliente;
@@ -298,7 +306,7 @@ class PortalDemoSeeder extends Seeder
         $trabajo = $this->maquinaTrabajo->abrir([
             'uuid_cliente' => $uuidTrabajo,
             'orden_id' => $orden->id,
-            'lote_id' => $orden->lote_id,
+            'lote_id' => (int) $orden->ordenLotes()->value('lote_id'),
             'nro_aplicacion' => $orden->nro_aplicacion,
             'hectareas_declaradas' => '0',
             'inicio' => '2026-08-25T08:00:00-04:00',

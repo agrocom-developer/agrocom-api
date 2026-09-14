@@ -100,17 +100,49 @@ function loteParaOrdenes(Campo $campo, string $codigo = 'L-01'): Lote
     return $campo->lotes()->create(['codigo' => $codigo, 'hectareas' => '10.00']);
 }
 
-/** Payload mínimo válido de alta/edición. */
+/**
+ * Payload mínimo válido de alta/edición (HU-92, tarea 107: `lotes[]`
+ * reemplaza `lote_id`). `hectareas_solicitadas` iguala las `10.00` de
+ * `loteParaOrdenes()`: ningún test de este archivo ejercita el tope contra
+ * `com_lotes.hectareas`, así que alcanza con no superarlo.
+ */
 function payloadOrden(int $contratoId, int $loteId, array $overrides = []): array
 {
     return array_merge([
         'contrato_id' => $contratoId,
-        'lote_id' => $loteId,
+        'lotes' => [['lote_id' => $loteId, 'hectareas_solicitadas' => '10.00']],
+        'cantidad_equipos_necesarios' => 1,
         'nro_aplicacion' => 1,
         'tipo_aplicacion' => 'desarrollo',
         'litros_ha' => '15.00',
         'fecha_emision' => Carbon::today()->toDateString(),
     ], $overrides);
+}
+
+/**
+ * Alta directa por Eloquent (bypass del panel, para dejar una orden en un
+ * estado que el flujo normal no permitiría llegar solo) CON su fila de
+ * `ope_orden_lotes` ya armada — sin esto, la guarda de
+ * `MaquinaEstadosOrden::activar()` (HU-92, tarea 107) no tendría nada que
+ * comparar entre dos órdenes del mismo lote.
+ *
+ * @param  array<string, mixed>  $overrides  atributos de `OrdenAplicacion` (nunca `lotes`/`lote_id`).
+ */
+function ordenDirectaParaOrdenes(int $contratoId, int $loteId, EstadoOrdenAplicacion $estado, array $overrides = []): OrdenAplicacion
+{
+    $orden = OrdenAplicacion::query()->create([
+        'contrato_id' => $contratoId,
+        'nro_aplicacion' => 1,
+        'tipo_aplicacion' => 'desarrollo',
+        'litros_ha' => '15.00',
+        'fecha_emision' => Carbon::today()->toDateString(),
+        'estado' => $estado,
+        ...$overrides,
+    ]);
+
+    $orden->ordenLotes()->create(['lote_id' => $loteId, 'hectareas_solicitadas' => '10.00']);
+
+    return $orden->refresh();
 }
 
 it('da de alta una orden que persiste en estado emitida', function () {
@@ -126,7 +158,44 @@ it('da de alta una orden que persiste en estado emitida', function () {
     $orden = OrdenAplicacion::query()->where('contrato_id', $contrato->id)->sole();
 
     expect($orden->estado)->toBe(EstadoOrdenAplicacion::Emitida)
-        ->and($orden->lote_id)->toBe($lote->id);
+        ->and($orden->ordenLotes()->where('lote_id', $lote->id)->exists())->toBeTrue();
+});
+
+it('admite dar de alta una orden con varios lotes, cada uno con su propia hectareas_solicitadas', function () {
+    [$encargado, $idRol] = usuarioConRolParaOrdenes('encargado', 'encargado_operaciones');
+    entrarAlPanelParaOrdenes($encargado, $idRol);
+    $cliente = clienteParaOrdenes();
+    $contrato = contratoParaOrdenes($cliente->id);
+    $campo = campoParaOrdenes($cliente->id);
+    $loteA = loteParaOrdenes($campo, 'L-01');
+    $loteB = $campo->lotes()->create(['codigo' => 'L-02', 'hectareas' => '20.00']);
+
+    $this->post(route('panel.ordenes.store'), payloadOrden($contrato->id, $loteA->id, [
+        'lotes' => [
+            ['lote_id' => $loteA->id, 'hectareas_solicitadas' => '10.00'],
+            ['lote_id' => $loteB->id, 'hectareas_solicitadas' => '20.00'],
+        ],
+    ]))->assertRedirect(route('panel.ordenes.index'));
+
+    $orden = OrdenAplicacion::query()->where('contrato_id', $contrato->id)->sole();
+
+    expect($orden->ordenLotes()->count())->toBe(2)
+        ->and((string) $orden->ordenLotes()->where('lote_id', $loteA->id)->value('hectareas_solicitadas'))->toBe('10.00')
+        ->and((string) $orden->ordenLotes()->where('lote_id', $loteB->id)->value('hectareas_solicitadas'))->toBe('20.00');
+});
+
+it('rechaza hectareas_solicitadas que superan las hectáreas del lote, sin persistir nada', function () {
+    [$encargado, $idRol] = usuarioConRolParaOrdenes('encargado', 'encargado_operaciones');
+    entrarAlPanelParaOrdenes($encargado, $idRol);
+    $cliente = clienteParaOrdenes();
+    $contrato = contratoParaOrdenes($cliente->id);
+    $lote = loteParaOrdenes(campoParaOrdenes($cliente->id));
+
+    $this->post(route('panel.ordenes.store'), payloadOrden($contrato->id, $lote->id, [
+        'lotes' => [['lote_id' => $lote->id, 'hectareas_solicitadas' => '15.00']],
+    ]))->assertSessionHasErrors('lotes.0.hectareas_solicitadas');
+
+    expect(OrdenAplicacion::query()->where('contrato_id', $contrato->id)->exists())->toBeFalse();
 });
 
 it('el formulario de alta muestra el campo tipo de aplicación, preseleccionado en desarrollo', function () {
@@ -180,10 +249,7 @@ it('activar una orden que no está emitida es rechazado por la máquina de estad
     $contrato = contratoParaOrdenes($cliente->id);
     $lote = loteParaOrdenes(campoParaOrdenes($cliente->id));
 
-    $orden = OrdenAplicacion::query()->create([
-        ...payloadOrden($contrato->id, $lote->id),
-        'estado' => EstadoOrdenAplicacion::Vigente,
-    ]);
+    $orden = ordenDirectaParaOrdenes($contrato->id, $lote->id, EstadoOrdenAplicacion::Vigente);
 
     $this->post(route('panel.ordenes.activar', $orden))
         ->assertRedirect(route('panel.ordenes.index'))
@@ -199,14 +265,8 @@ it('una segunda activación sobre el mismo lote falla como error de validación 
     $contrato = contratoParaOrdenes($cliente->id);
     $lote = loteParaOrdenes(campoParaOrdenes($cliente->id));
 
-    $primera = OrdenAplicacion::query()->create([
-        ...payloadOrden($contrato->id, $lote->id, ['nro_aplicacion' => 1]),
-        'estado' => EstadoOrdenAplicacion::Vigente,
-    ]);
-    $segunda = OrdenAplicacion::query()->create([
-        ...payloadOrden($contrato->id, $lote->id, ['nro_aplicacion' => 2]),
-        'estado' => EstadoOrdenAplicacion::Emitida,
-    ]);
+    $primera = ordenDirectaParaOrdenes($contrato->id, $lote->id, EstadoOrdenAplicacion::Vigente, ['nro_aplicacion' => 1]);
+    $segunda = ordenDirectaParaOrdenes($contrato->id, $lote->id, EstadoOrdenAplicacion::Emitida, ['nro_aplicacion' => 2]);
 
     $this->post(route('panel.ordenes.activar', $segunda))
         ->assertRedirect(route('panel.ordenes.index'))
@@ -271,7 +331,6 @@ it('una orden creada sin tipo_aplicacion (fuera del formulario del panel) queda 
 
     $orden = OrdenAplicacion::query()->create([
         'contrato_id' => $contrato->id,
-        'lote_id' => $lote->id,
         'nro_aplicacion' => 1,
         'litros_ha' => '15.00',
         'fecha_emision' => Carbon::today()->toDateString(),
@@ -329,10 +388,7 @@ it('una orden vigente no admite edición: el caso de uso la rechaza aunque el li
     $contrato = contratoParaOrdenes($cliente->id);
     $lote = loteParaOrdenes(campoParaOrdenes($cliente->id));
 
-    $orden = OrdenAplicacion::query()->create([
-        ...payloadOrden($contrato->id, $lote->id),
-        'estado' => EstadoOrdenAplicacion::Vigente,
-    ]);
+    $orden = ordenDirectaParaOrdenes($contrato->id, $lote->id, EstadoOrdenAplicacion::Vigente);
 
     $this->put(route('panel.ordenes.update', $orden), payloadOrden($contrato->id, $lote->id, ['nro_aplicacion' => 9]))
         ->assertRedirect(route('panel.ordenes.index'))
@@ -348,10 +404,7 @@ it('una orden vigente no se puede eliminar directamente', function () {
     $contrato = contratoParaOrdenes($cliente->id);
     $lote = loteParaOrdenes(campoParaOrdenes($cliente->id));
 
-    $orden = OrdenAplicacion::query()->create([
-        ...payloadOrden($contrato->id, $lote->id),
-        'estado' => EstadoOrdenAplicacion::Vigente,
-    ]);
+    $orden = ordenDirectaParaOrdenes($contrato->id, $lote->id, EstadoOrdenAplicacion::Vigente);
 
     $this->delete(route('panel.ordenes.destroy', $orden))
         ->assertRedirect(route('panel.ordenes.index'))
@@ -434,7 +487,7 @@ it('un rol sin el permiso recibe 403 en todas las acciones', function () {
     $contrato = contratoParaOrdenes($cliente->id);
     $lote = loteParaOrdenes(campoParaOrdenes($cliente->id));
 
-    $orden = OrdenAplicacion::query()->create(payloadOrden($contrato->id, $lote->id) + ['estado' => EstadoOrdenAplicacion::Emitida]);
+    $orden = ordenDirectaParaOrdenes($contrato->id, $lote->id, EstadoOrdenAplicacion::Emitida);
 
     $this->get(route('panel.ordenes.index'))->assertForbidden();
     $this->get(route('panel.ordenes.create'))->assertForbidden();
@@ -482,7 +535,7 @@ it('operaciones.orden.activar está separado de .editar: un rol con uno y no el 
     $pivoteEditor->updated_by = $usuarioEditor->id;
     $pivoteEditor->save();
 
-    $ordenParaEditor = OrdenAplicacion::query()->create(payloadOrden($contrato->id, $lote->id) + ['estado' => EstadoOrdenAplicacion::Emitida]);
+    $ordenParaEditor = ordenDirectaParaOrdenes($contrato->id, $lote->id, EstadoOrdenAplicacion::Emitida);
 
     entrarAlPanelParaOrdenes($usuarioEditor, $rolSoloEditar->id);
     $this->post(route('panel.ordenes.activar', $ordenParaEditor))->assertForbidden();
@@ -498,7 +551,7 @@ it('operaciones.orden.activar está separado de .editar: un rol con uno y no el 
     $pivoteActivador->updated_by = $usuarioActivador->id;
     $pivoteActivador->save();
 
-    $ordenParaActivador = OrdenAplicacion::query()->create(payloadOrden($contrato->id, $lote->id, ['nro_aplicacion' => 5]) + ['estado' => EstadoOrdenAplicacion::Emitida]);
+    $ordenParaActivador = ordenDirectaParaOrdenes($contrato->id, $lote->id, EstadoOrdenAplicacion::Emitida, ['nro_aplicacion' => 5]);
 
     entrarAlPanelParaOrdenes($usuarioActivador, $rolSoloActivar->id);
     $this->put(route('panel.ordenes.update', $ordenParaActivador), payloadOrden($contrato->id, $lote->id, ['nro_aplicacion' => 6]))

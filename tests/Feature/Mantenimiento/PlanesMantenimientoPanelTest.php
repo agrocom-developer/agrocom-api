@@ -89,7 +89,7 @@ function ordenVigenteParaPlan(): OrdenAplicacion
     $loteId = Lote::query()->where('codigo', 'L-01')->value('id');
 
     return OrdenAplicacion::query()
-        ->where('lote_id', $loteId)
+        ->whereHas('ordenLotes', fn ($q) => $q->where('lote_id', $loteId))
         ->where('estado', EstadoOrdenAplicacion::Vigente)
         ->firstOrFail();
 }
@@ -101,7 +101,7 @@ function crearTrabajoParaPlan(): Trabajo
     return Trabajo::query()->create([
         'uuid_cliente' => (string) Str::uuid(),
         'orden_id' => $orden->id,
-        'lote_id' => $orden->lote_id,
+        'lote_id' => (int) $orden->ordenLotes()->value('lote_id'),
         'nro_aplicacion' => $orden->nro_aplicacion,
         'inicio' => now(),
     ]);

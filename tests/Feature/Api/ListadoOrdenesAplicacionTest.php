@@ -32,23 +32,30 @@ beforeEach(function () {
 });
 
 /**
- * Crea una orden adicional sobre el contrato y el lote L-02 de la demo.
- * Ojo con el índice parcial "una sola vigente por lote": las órdenes vigentes
- * extra deben ir en lotes distintos de L-01.
+ * Crea una orden adicional sobre el contrato y el lote L-02 de la demo (HU-92,
+ * tarea 107: el lote ya no es una columna de `OrdenAplicacion`, se arma como
+ * fila de `ope_orden_lotes`). Ojo con "una sola vigente por lote"
+ * (`MaquinaEstadosOrden::activar()`): las órdenes vigentes extra deben ir en
+ * lotes distintos de L-01 — este helper crea directo por Eloquent, sin pasar
+ * por `activar()`, así que esa guarda no se ejercita acá de todos modos.
  *
  * @param  array<string, mixed>  $atributos
  */
-function crearOrdenDemo(array $atributos = []): OrdenAplicacion
+function crearOrdenDemo(array $atributos = [], string $loteCodigo = 'L-02'): OrdenAplicacion
 {
-    return OrdenAplicacion::query()->create([
+    $orden = OrdenAplicacion::query()->create([
         'contrato_id' => Contrato::query()->value('id'),
-        'lote_id' => Lote::query()->where('codigo', 'L-02')->value('id'),
         'nro_aplicacion' => 1,
         'litros_ha' => '10.00',
         'fecha_emision' => '2026-08-26',
         'estado' => EstadoOrdenAplicacion::Emitida,
         ...$atributos,
     ]);
+
+    $lote = Lote::query()->where('codigo', $loteCodigo)->firstOrFail();
+    $orden->ordenLotes()->create(['lote_id' => $lote->id, 'hectareas_solicitadas' => $lote->hectareas]);
+
+    return $orden->refresh();
 }
 
 it('lista las órdenes paginadas con los campos del esquema', function () {
@@ -59,7 +66,7 @@ it('lista las órdenes paginadas con los campos del esquema', function () {
             'data' => [[
                 'id',
                 'contrato_id',
-                'lote_id',
+                'lotes' => [['lote_id', 'hectareas_solicitadas']],
                 'nro_aplicacion',
                 'litros_ha',
                 'humedad_min_pct',
@@ -96,11 +103,12 @@ it('filtra por estado', function () {
 
 it('filtra por lote_id', function () {
     $orden = crearOrdenDemo();
+    $loteId = (int) $orden->ordenLotes()->value('lote_id');
 
-    $this->getJson('/api/ordenes?lote_id='.$orden->lote_id)
+    $this->getJson('/api/ordenes?lote_id='.$loteId)
         ->assertOk()
         ->assertJsonCount(1, 'data')
-        ->assertJsonPath('data.0.lote_id', $orden->lote_id)
+        ->assertJsonPath('data.0.lotes.0.lote_id', $loteId)
         ->assertJsonPath('data.0.id', $orden->id);
 });
 
@@ -138,10 +146,7 @@ it('filtra por nro_aplicacion', function () {
 
 it('con vigentes=1 devuelve solo las órdenes vigentes', function () {
     crearOrdenDemo(['estado' => EstadoOrdenAplicacion::Emitida]);
-    crearOrdenDemo([
-        'estado' => EstadoOrdenAplicacion::Vencida,
-        'lote_id' => Lote::query()->where('codigo', 'L-03')->value('id'),
-    ]);
+    crearOrdenDemo(['estado' => EstadoOrdenAplicacion::Vencida], 'L-03');
 
     $respuesta = $this->getJson('/api/ordenes?vigentes=1')
         ->assertOk()

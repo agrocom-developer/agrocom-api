@@ -22,6 +22,8 @@ import './pages/gastos-form.js';
 import './pages/combustible-form.js';
 import './pages/stock-movimiento-form.js';
 import './pages/ordenes-mantenimiento-form.js';
+import './pages/ordenes-form.js';
+import './pages/asignacion-equipos-form.js';
 import './pages/roles-permisos.js';
 import './pages/reportes-comerciales.js';
 import './pages/personas-desempeno.js';

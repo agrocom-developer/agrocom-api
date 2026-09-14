@@ -17,6 +17,7 @@ use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
 use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraAutoria;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenLote;
 use Illuminate\Database\Seeder;
 
 /**
@@ -185,9 +186,11 @@ class NucleoComercialSeeder extends Seeder
         ]), $autorId);
 
         // Orden de aplicación vigente para L-01: requisito para abrir un trabajo.
-        $this->crear(new OrdenAplicacion([
+        // HU-92 (tarea 107): el lote ya no es una columna de la orden, es una
+        // fila de `ope_orden_lotes` — con la hectáreas completa de L-01 como
+        // tope (mismo criterio de HU-70 antes de esta tarea).
+        $orden = $this->crear(new OrdenAplicacion([
             'contrato_id' => $contrato->id,
-            'lote_id' => $lotePrimero->id,
             'nro_aplicacion' => 1,
             'litros_ha' => '10.00',
             'humedad_min_pct' => '80.00',
@@ -198,6 +201,12 @@ class NucleoComercialSeeder extends Seeder
             'emitida_por_contacto_id' => $agronomo->id,
             'fecha_emision' => '2026-08-25',
             'estado' => EstadoOrdenAplicacion::Vigente,
+        ]), $autorId);
+
+        $this->crear(new OrdenLote([
+            'orden_id' => $orden->id,
+            'lote_id' => $lotePrimero->id,
+            'hectareas_solicitadas' => $lotePrimero->hectareas,
         ]), $autorId);
     }
 

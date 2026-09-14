@@ -63,14 +63,23 @@ function ordenParaLecturaPortal(Contrato $contrato, string $sufijo): OrdenAplica
     $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => "Campo lectura portal {$sufijo}"]);
     $lote = Lote::create(['campo_id' => $campo->id, 'codigo' => "L-PORTAL-{$sufijo}", 'hectareas' => '25.00']);
 
-    return OrdenAplicacion::create([
+    $orden = OrdenAplicacion::create([
         'contrato_id' => $contrato->id,
-        'lote_id' => $lote->id,
         'nro_aplicacion' => 1,
         'litros_ha' => '10.00',
         'fecha_emision' => '2026-09-01',
         'estado' => EstadoOrdenAplicacion::Vigente,
     ]);
+
+    $orden->ordenLotes()->create(['lote_id' => $lote->id, 'hectareas_solicitadas' => '25.00']);
+
+    return $orden;
+}
+
+/** HU-92 (tarea 107): la orden ya no tiene `lote_id` propio; se resuelve vía `ordenLotes()`. */
+function loteIdParaLecturaPortal(OrdenAplicacion $orden): int
+{
+    return (int) $orden->ordenLotes()->value('lote_id');
 }
 
 function usuarioPilotoParaLecturaPortal(string $sufijo): SecUser
@@ -92,7 +101,7 @@ function actaFirmadaParaLecturaPortal(OrdenAplicacion $orden, string $sufijo): A
     $trabajo = Trabajo::create([
         'uuid_cliente' => "uuid-trabajo-lectura-{$sufijo}",
         'orden_id' => $orden->id,
-        'lote_id' => $orden->lote_id,
+        'lote_id' => loteIdParaLecturaPortal($orden),
         'nro_aplicacion' => 1,
         'hectareas_declaradas' => '5.00',
         'estado' => EstadoTrabajo::Cerrado,
@@ -176,7 +185,7 @@ it('listarPorContrato de reportes técnicos devuelve solo los del contrato pedid
     expect($resultado)->toHaveCount(1)
         ->and($resultado[0]->trabajoId)->toBe($actaA->trabajo_id)
         ->and($resultado[0]->contratoId)->toBe($contratoA->id)
-        ->and($resultado[0]->loteId)->toBe($ordenA->lote_id)
+        ->and($resultado[0]->loteId)->toBe(loteIdParaLecturaPortal($ordenA))
         ->and($resultado[0]->pdfPath)->not->toBeNull();
 });
 

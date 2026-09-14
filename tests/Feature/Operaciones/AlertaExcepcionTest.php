@@ -57,7 +57,7 @@ describe('generación de alertas por excepción', function () {
         $loteId = Lote::query()->where('codigo', 'L-01')->value('id');
 
         return OrdenAplicacion::query()
-            ->where('lote_id', $loteId)
+            ->whereHas('ordenLotes', fn ($q) => $q->where('lote_id', $loteId))
             ->where('estado', EstadoOrdenAplicacion::Vigente)
             ->firstOrFail();
     }
@@ -76,7 +76,7 @@ describe('generación de alertas por excepción', function () {
             'tipo' => 'trabajo',
             'uuid_cliente' => $uuidCliente,
             'orden_id' => $orden->id,
-            'lote_id' => $orden->lote_id,
+            'lote_id' => (int) $orden->ordenLotes()->value('lote_id'),
             'nro_aplicacion' => $orden->nro_aplicacion,
             'inicio' => '2026-09-01T10:00:00-04:00',
         ];

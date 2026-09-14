@@ -15,6 +15,8 @@
     - $etiquetasContrato / $etiquetasLote (array<int, string>): mismo criterio
       que ordenes/index.blade.php — la vista nunca consulta Comercial (ADR
       0003 regla 3).
+    - $loteIdsPorOrden (array<int, list<int>>): lotes de CADA orden (HU-92,
+      tarea 107 — antes un único `lote_id` por orden), clave `orden->id`.
 
     Gateada por `operaciones.orden.asignar_equipos` (ficha propia, ver
     docblock de `AsignacionEquiposController` — no depende de
@@ -58,11 +60,16 @@
                     </div>
 
                     @foreach ($ordenes as $orden)
-                        @php $resumen = $resumenes[$orden->id]; @endphp
+                        @php
+                            $resumen = $resumenes[$orden->id];
+                            $lotesTexto = collect($loteIdsPorOrden[$orden->id] ?? [])
+                                ->map(fn ($loteId) => $etiquetasLote[$loteId] ?? "#{$loteId}")
+                                ->implode(', ');
+                        @endphp
                         <div class="ag-asignacion-equipos__fila" role="row">
                             <span role="cell" class="ag-asignacion-equipos__mono">#{{ $orden->nro_aplicacion }}</span>
                             <span role="cell">{{ $etiquetasContrato[$orden->contrato_id] ?? "#{$orden->contrato_id}" }}</span>
-                            <span role="cell">{{ $etiquetasLote[$orden->lote_id] ?? "#{$orden->lote_id}" }}</span>
+                            <span role="cell">{{ $lotesTexto }}</span>
                             <span role="cell" class="ag-asignacion-equipos__mono">{{ number_format((float) $resumen['hectareas_lote'], 2, ',', '.') }}</span>
                             <span role="cell" class="ag-asignacion-equipos__mono">{{ number_format((float) $resumen['asignadas'], 2, ',', '.') }}</span>
                             <span role="cell" class="ag-asignacion-equipos__mono">{{ number_format((float) $resumen['restantes'], 2, ',', '.') }}</span>

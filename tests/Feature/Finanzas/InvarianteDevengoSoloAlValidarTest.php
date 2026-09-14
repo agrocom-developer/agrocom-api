@@ -45,12 +45,12 @@ test('cerrar() una sesión, sin pasar por validar(), nunca crea una fila en fin_
     ]);
     $orden = OrdenAplicacion::create([
         'contrato_id' => $contrato->id,
-        'lote_id' => $lote->id,
         'nro_aplicacion' => 1,
         'litros_ha' => '10.00',
         'fecha_emision' => '2026-09-01',
         'estado' => EstadoOrdenAplicacion::Vigente,
     ]);
+    $orden->ordenLotes()->create(['lote_id' => $lote->id, 'hectareas_solicitadas' => '50.00']);
     $trabajo = Trabajo::create([
         'uuid_cliente' => 'uuid-trabajo-gatedev-'.uniqid(),
         'orden_id' => $orden->id,
