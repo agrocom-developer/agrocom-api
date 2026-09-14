@@ -2,13 +2,19 @@
 
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
+use App\Dominios\Operaciones\Aplicacion\AsignarEquiposOrden;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
+use App\Dominios\Personal\Dominio\EstadoEquipoTrabajo;
 use App\Dominios\Personal\Dominio\RolOperativoPersona;
+use App\Dominios\Personal\Infraestructura\Eloquent\EquipoTrabajo;
+use App\Dominios\Personal\Infraestructura\Eloquent\PerBase;
 use App\Dominios\Personal\Infraestructura\Eloquent\PerPersona;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use Database\Seeders\Demo\DemoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 
 /*
  * GET /api/sync/catalogo (espec §2.1, punto 6; TE-06 parcial — ver
@@ -42,6 +48,29 @@ function crearPersonaDemo(array $atributos = []): PerPersona
         'activo' => true,
         ...$atributos,
     ]);
+}
+
+/**
+ * Trabajo asignado desde el panel (HU-70, tarea 85): pasa por el caso de uso
+ * real `AsignarEquiposOrden`, no un `Trabajo::create()` directo — así el
+ * `uuid_cliente` propio (`Str::uuid()`) y el `equipo_trabajo_id` quedan
+ * exactamente como los deja el flujo real, sección `trabajos` del catálogo.
+ */
+function crearTrabajoAsignadoDemo(): Trabajo
+{
+    $orden = OrdenAplicacion::query()->where('estado', EstadoOrdenAplicacion::Vigente)->firstOrFail();
+    $base = PerBase::create(['nombre' => 'Base catálogo '.uniqid()]);
+    $equipo = EquipoTrabajo::create([
+        'codigo' => 'EQ-CAT-'.uniqid(),
+        'base_id' => $base->id,
+        'estado' => EstadoEquipoTrabajo::Activo,
+        'desde' => now()->subYear()->toDateString(),
+        'hasta' => null,
+    ]);
+
+    return app(AsignarEquiposOrden::class)->ejecutar($orden, [
+        ['equipo_trabajo_id' => $equipo->id, 'hectareas' => '10.00'],
+    ])[0];
 }
 
 /** @param  array<string, mixed>  $atributos */
@@ -162,6 +191,45 @@ it('excluye del catálogo un lote borrado lógicamente', function () {
 
     expect($respuesta->json('lotes'))->toHaveCount(2)
         ->and(collect($respuesta->json('lotes'))->pluck('id')->all())->not->toContain($lote->id);
+});
+
+it('un trabajo asignado desde el panel aparece en la sección trabajos con su uuid_cliente y su equipo', function () {
+    $trabajo = crearTrabajoAsignadoDemo();
+
+    $respuesta = $this->getJson('/api/sync/catalogo')->assertOk();
+
+    expect($respuesta->json('trabajos'))->toHaveCount(1)
+        ->and($respuesta->json('trabajos.0.uuid_cliente'))->toBe($trabajo->uuid_cliente)
+        ->and($respuesta->json('trabajos.0.equipo_trabajo_id'))->toBe($trabajo->equipo_trabajo_id)
+        ->and($respuesta->json('trabajos.0.hectareas_declaradas'))->toBe('10.00');
+});
+
+it('un segundo pull con el cursor devuelto no repite el trabajo ya entregado', function () {
+    crearTrabajoAsignadoDemo();
+
+    $primero = $this->getJson('/api/sync/catalogo')->assertOk();
+    expect($primero->json('trabajos'))->toHaveCount(1);
+
+    $segundo = $this->getJson('/api/sync/catalogo?desde='.$primero->json('cursor'))->assertOk();
+
+    expect($segundo->json('trabajos'))->toBe([]);
+});
+
+it('excluye de la sección trabajos los que nacen por sync, sin equipo asignado', function () {
+    $orden = OrdenAplicacion::query()->where('estado', EstadoOrdenAplicacion::Vigente)->firstOrFail();
+
+    Trabajo::create([
+        'uuid_cliente' => (string) Str::uuid(),
+        'orden_id' => $orden->id,
+        'lote_id' => $orden->lote_id,
+        'nro_aplicacion' => 1,
+        'estado' => 'abierto',
+        'inicio' => now(),
+    ]);
+
+    $respuesta = $this->getJson('/api/sync/catalogo')->assertOk();
+
+    expect($respuesta->json('trabajos'))->toBe([]);
 });
 
 it('excluye del siguiente pull una persona borrada lógicamente después de haber sido entregada', function () {

@@ -4,6 +4,7 @@ namespace App\Dominios\Sincronizacion\Aplicacion;
 
 use App\Dominios\Comercial\Contratos\LecturaLotes;
 use App\Dominios\Operaciones\Contratos\LecturaOrdenesVigentes;
+use App\Dominios\Operaciones\Contratos\LecturaTrabajosAsignados;
 use App\Dominios\Personal\Contratos\LecturaPersonas;
 use App\Dominios\Sincronizacion\Dominio\CursorCatalogo;
 use App\Dominios\Sincronizacion\Dominio\PosicionCursor;
@@ -31,6 +32,7 @@ final class ObtenerCatalogoDesdeCursor
         private readonly LecturaOrdenesVigentes $ordenes,
         private readonly LecturaLotes $lotes,
         private readonly LecturaPersonas $personas,
+        private readonly LecturaTrabajosAsignados $trabajos,
     ) {}
 
     /** @return array<string, mixed> */
@@ -72,10 +74,22 @@ final class ObtenerCatalogoDesdeCursor
             $saliente = $saliente->conPosicion(CursorCatalogo::PERSONAS, new PosicionCursor($ultima->updatedAt, $ultima->id));
         }
 
+        $posicionTrabajos = $entrante->posicion(CursorCatalogo::TRABAJOS);
+        $trabajos = $this->trabajos->listarModificadosDesde(
+            $posicionTrabajos?->actualizadoEn,
+            $posicionTrabajos?->id,
+            self::LIMITE_POR_SECCION,
+        );
+        if ($trabajos !== []) {
+            $ultima = $trabajos[array_key_last($trabajos)];
+            $saliente = $saliente->conPosicion(CursorCatalogo::TRABAJOS, new PosicionCursor($ultima->updatedAt, $ultima->id));
+        }
+
         return [
             'ordenes' => array_map(static fn ($orden) => $orden->toArray(), $ordenes),
             'lotes' => array_map(static fn ($lote) => $lote->toArray(), $lotes),
             'personas' => array_map(static fn ($persona) => $persona->toArray(), $personas),
+            'trabajos' => array_map(static fn ($trabajo) => $trabajo->toArray(), $trabajos),
             'cursor' => $saliente->serializar(),
         ];
     }
