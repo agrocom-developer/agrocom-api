@@ -29,6 +29,17 @@
       `name` — mismo criterio ver/editar que el resto del panel
       (`:disabled="! $puedeEditar"`).
     - error (nullable): mensaje de validación del campo `name`.
+    - size (sm|md|lg, default "md" — 14/9/2026): tamaño del cuadro de
+      preview. "lg" es para un logo que es EL dato principal de la pantalla
+      (`/panel/organizacion`, HU-19/ADR 0019) — en una fila de formulario
+      compartida con otros campos ("Logo" de un cliente, tarea 91) el
+      tamaño por defecto sigue siendo el correcto.
+
+    Vista previa EN VIVO del archivo recién elegido (14/9/2026,
+    `resources/js/molecules/file-field.js`): mejora progresiva vía JS — el
+    campo en sí sigue funcionando sin JS (ver más arriba), solo la vista
+    previa de un archivo todavía no guardado depende de él (no hay forma de
+    hacerlo sin JS).
 
     Slot (default): preview cuando NO hay archivo real (ícono, `atoms/logo`
     como placeholder). Con archivo real, el propio componente pinta un
@@ -49,6 +60,7 @@
     'removeName' => null,
     'disabled' => false,
     'error' => null,
+    'size' => 'md',
 ])
 
 @php
@@ -59,7 +71,7 @@
     $errorId = $error ? "{$inputId}-error" : null;
 @endphp
 
-<div {{ $attributes->class(['ag-file-field']) }}>
+<div {{ $attributes->class(['ag-file-field', "ag-file-field--{$size}"]) }}>
     @if ($label)
         <p class="ag-file-field__label">{{ $label }}</p>
     @endif
