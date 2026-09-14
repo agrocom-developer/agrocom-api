@@ -10,11 +10,13 @@ use App\Dominios\Personal\Infraestructura\Eloquent\PerBase;
  */
 final class CrearBase
 {
-    public function ejecutar(string $nombre, ?string $ubicacion): PerBase
+    public function ejecutar(string $nombre, ?string $ubicacion, ?string $latitud, ?string $longitud): PerBase
     {
         $base = new PerBase([
             'nombre' => $nombre,
             'ubicacion' => $ubicacion,
+            'latitud' => $latitud,
+            'longitud' => $longitud,
         ]);
 
         $base->save();

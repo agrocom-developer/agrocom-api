@@ -19,6 +19,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $id
  * @property string $nombre
  * @property string|null $ubicacion
+ * @property string|null $latitud
+ * @property string|null $longitud
  */
 class PerBase extends ModeloDominio
 {
@@ -30,7 +32,18 @@ class PerBase extends ModeloDominio
     protected $fillable = [
         'nombre',
         'ubicacion',
+        'latitud',
+        'longitud',
     ];
+
+    /** @return array<string, string> */
+    protected function casts(): array
+    {
+        return [
+            'latitud' => 'decimal:6',
+            'longitud' => 'decimal:6',
+        ];
+    }
 
     /** @return HasMany<PerPersona, $this> */
     public function personas(): HasMany
