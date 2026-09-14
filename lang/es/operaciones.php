@@ -29,6 +29,14 @@ return [
         'cosecha' => 'Cosecha',
     ],
 
+    // HU-79 (tarea 110): etiquetas del selector de PRESENTACIÓN "Tipo" que
+    // filtra "Categoría de insumo" en el formulario de orden — no es un
+    // campo que el server valide, ver docblock de `_formulario.blade.php`.
+    'tipo_insumo' => [
+        'solido' => 'Sólido',
+        'liquido' => 'Líquido',
+    ],
+
     // Estados de sesión del dashboard demo (quinta vuelta — maquetas
     // 4a/5a/5b). "Validada"/"En vuelo"/"Programada" son vocabulario del
     // ciclo de vida real de `sesiones` (especificación §4.3/§5);
@@ -368,7 +376,9 @@ return [
         'col_lote' => 'Lote',
         'col_aplicacion' => 'Aplicación',
         'col_tipo_aplicacion' => 'Tipo',
-        'col_litros_ha' => 'Litros/ha',
+        'col_dosis' => 'Dosis',
+        'dosis_litros_ha' => ':cantidad l/ha',
+        'dosis_kilos_por_vuelo' => ':cantidad kg/vuelo',
         'col_fecha_emision' => 'Emisión',
         'col_estado' => 'Estado',
         'editar' => 'Editar',
@@ -382,7 +392,7 @@ return [
         'paginacion_info' => 'Página :actual de :total',
         'titulo_crear' => 'Nueva orden de aplicación',
         'titulo_editar' => 'Editar orden de aplicación',
-        'subtitulo_form' => 'Contrato, lote, límites climáticos y parámetros de vuelo de la orden.',
+        'subtitulo_form' => 'Contrato, lotes, categoría de insumo, límites climáticos y parámetros de vuelo de la orden.',
         'seccion_datos' => 'Datos de la orden',
         'seccion_lotes' => 'Lotes',
         'seccion_limites' => 'Límites climáticos',
@@ -401,7 +411,12 @@ return [
         'campo_cantidad_equipos' => 'Cantidad de equipos necesarios',
         'campo_nro_aplicacion' => 'Número de aplicaciones',
         'campo_tipo_aplicacion' => 'Tipo de aplicación',
+        'campo_tipo_insumo' => 'Tipo',
+        'campo_tipo_insumo_placeholder' => 'Sólido o líquido…',
+        'campo_categoria_insumo' => 'Categoría de insumo',
+        'campo_categoria_insumo_placeholder' => 'Seleccioná una categoría…',
         'campo_litros_ha' => 'Litros por hectárea',
+        'campo_kilos_por_vuelo' => 'Kilos por vuelo',
         'campo_fecha_emision' => 'Fecha de emisión',
         'campo_contacto' => 'Emitida por (contacto)',
         'campo_contacto_placeholder' => 'Sin especificar',
@@ -424,6 +439,11 @@ return [
         'error_lotes_requerido' => 'Agregá al menos un lote.',
         'error_lote_repetido' => 'Un lote no puede repetirse dentro de la misma orden.',
         'error_hectareas_solicitadas_superan_lote' => 'Las hectáreas solicitadas superan las hectáreas del lote.',
+        'error_lote_de_otro_cliente' => 'El lote pertenece a un cliente distinto del contrato.',
+        'error_categoria_insumo_requerida' => 'Seleccioná una categoría de insumo.',
+        'error_categoria_insumo_invalida' => 'La categoría de insumo seleccionada no es válida.',
+        'error_kilos_por_vuelo_requerido' => 'Los kilos por vuelo son obligatorios para un insumo sólido.',
+        'error_litros_ha_requerido' => 'Los litros por hectárea son obligatorios para un insumo líquido.',
         'error_contacto_invalido' => 'El contacto seleccionado no es válido.',
         'creada' => 'Orden de aplicación creada correctamente.',
         'actualizada' => 'Orden de aplicación actualizada correctamente.',

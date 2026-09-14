@@ -3,6 +3,7 @@
 namespace App\Dominios\Operaciones\Infraestructura\Http\Requests;
 
 use App\Dominios\Operaciones\Dominio\TipoAplicacion;
+use App\Dominios\Operaciones\Dominio\TipoInsumo;
 use Brick\Math\BigDecimal;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -31,7 +32,9 @@ final class ActualizarOrdenRequest extends FormRequest
             'cantidad_equipos_necesarios' => ['required', 'integer', 'min:1'],
             'nro_aplicacion' => ['required', 'integer', 'min:1'],
             'tipo_aplicacion' => ['required', Rule::enum(TipoAplicacion::class)],
-            'litros_ha' => ['required', 'numeric', 'gt:0'],
+            'categoria_insumo_id' => ['required', 'integer', Rule::exists('ope_categorias_insumo', 'id')->whereNull('deleted_at')],
+            'litros_ha' => ['nullable', 'numeric', 'gt:0'],
+            'kilos_por_vuelo' => ['nullable', 'numeric', 'gt:0'],
             'humedad_min_pct' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'humedad_max_pct' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'viento_max_kmh' => ['nullable', 'numeric', 'gt:0'],
@@ -56,17 +59,43 @@ final class ActualizarOrdenRequest extends FormRequest
                 $validator->errors()->add('humedad_min_pct', __('operaciones.ordenes.error_humedad_rango'));
             }
 
+            $this->validarCampoSegunCategoriaInsumo($validator);
+
+            $contratoId = $this->input('contrato_id');
+            $clienteDelContrato = $contratoId !== null && $contratoId !== ''
+                ? DB::table('com_contratos')->where('id', $contratoId)->value('cliente_id')
+                : null;
+
             foreach ((array) $this->input('lotes', []) as $indice => $lote) {
                 $loteId = $lote['lote_id'] ?? null;
                 $hectareasSolicitadas = $lote['hectareas_solicitadas'] ?? null;
 
-                if ($loteId === null || $loteId === '' || $hectareasSolicitadas === null || $hectareasSolicitadas === '') {
+                if ($loteId === null || $loteId === '') {
                     continue;
                 }
 
-                $hectareasLote = DB::table('com_lotes')->where('id', $loteId)->value('hectareas');
+                $filaLote = DB::table('com_lotes as l')
+                    ->join('com_campos as c', 'c.id', '=', 'l.campo_id')
+                    ->join('com_propiedades as p', 'p.id', '=', 'c.propiedad_id')
+                    ->where('l.id', $loteId)
+                    ->first(['l.hectareas', 'p.cliente_id']);
 
-                if ($hectareasLote !== null && BigDecimal::of((string) $hectareasSolicitadas)->isGreaterThan(BigDecimal::of((string) $hectareasLote))) {
+                if ($filaLote === null) {
+                    continue;
+                }
+
+                if ($clienteDelContrato !== null && (int) $filaLote->cliente_id !== (int) $clienteDelContrato) {
+                    $validator->errors()->add(
+                        "lotes.{$indice}.lote_id",
+                        __('operaciones.ordenes.error_lote_de_otro_cliente'),
+                    );
+                }
+
+                if ($hectareasSolicitadas === null || $hectareasSolicitadas === '') {
+                    continue;
+                }
+
+                if (BigDecimal::of((string) $hectareasSolicitadas)->isGreaterThan(BigDecimal::of((string) $filaLote->hectareas))) {
                     $validator->errors()->add(
                         "lotes.{$indice}.hectareas_solicitadas",
                         __('operaciones.ordenes.error_hectareas_solicitadas_superan_lote'),
@@ -74,6 +103,32 @@ final class ActualizarOrdenRequest extends FormRequest
                 }
             }
         });
+    }
+
+    /** Mismo criterio que {@see CrearOrdenRequest::validarCampoSegunCategoriaInsumo()}. */
+    private function validarCampoSegunCategoriaInsumo(Validator $validator): void
+    {
+        $categoriaInsumoId = $this->input('categoria_insumo_id');
+
+        if ($categoriaInsumoId === null || $categoriaInsumoId === '') {
+            return;
+        }
+
+        $tipoInsumo = DB::table('ope_categorias_insumo')->where('id', $categoriaInsumoId)->value('tipo_insumo');
+
+        if ($tipoInsumo === TipoInsumo::Solido->value) {
+            $kilosPorVuelo = $this->input('kilos_por_vuelo');
+
+            if ($kilosPorVuelo === null || $kilosPorVuelo === '') {
+                $validator->errors()->add('kilos_por_vuelo', __('operaciones.ordenes.error_kilos_por_vuelo_requerido'));
+            }
+        } elseif ($tipoInsumo === TipoInsumo::Liquido->value) {
+            $litrosHa = $this->input('litros_ha');
+
+            if ($litrosHa === null || $litrosHa === '') {
+                $validator->errors()->add('litros_ha', __('operaciones.ordenes.error_litros_ha_requerido'));
+            }
+        }
     }
 
     /** @return array<string, string> */
@@ -86,6 +141,8 @@ final class ActualizarOrdenRequest extends FormRequest
             'lotes.*.lote_id.required' => __('operaciones.ordenes.error_lote_requerido'),
             'lotes.*.lote_id.exists' => __('operaciones.ordenes.error_lote_invalido'),
             'lotes.*.lote_id.distinct' => __('operaciones.ordenes.error_lote_repetido'),
+            'categoria_insumo_id.required' => __('operaciones.ordenes.error_categoria_insumo_requerida'),
+            'categoria_insumo_id.exists' => __('operaciones.ordenes.error_categoria_insumo_invalida'),
             'emitida_por_contacto_id.exists' => __('operaciones.ordenes.error_contacto_invalido'),
         ];
     }

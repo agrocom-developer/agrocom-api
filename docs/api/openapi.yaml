@@ -863,6 +863,7 @@ components:
         - lotes
         - nro_aplicacion
         - litros_ha
+        - kilos_por_vuelo
         - humedad_min_pct
         - viento_max_kmh
         - temperatura_max_c
@@ -896,9 +897,15 @@ components:
           type: integer
           example: 1
         litros_ha:
-          description: 'Dosis en litros por hectárea. DECIMAL como string.'
+          description: 'Dosis en litros por hectárea (insumo líquido). DECIMAL como string; null si la categoría de insumo es sólida (HU-79, tarea 110).'
           type: string
           example: '10.00'
+          nullable: true
+        kilos_por_vuelo:
+          description: 'Dosis en kilos por vuelo (insumo sólido). DECIMAL como string; null si la categoría de insumo es líquida (HU-79, tarea 110).'
+          type: string
+          example: '8.50'
+          nullable: true
         humedad_min_pct:
           description: 'Humedad relativa mínima para aplicar (%). DECIMAL como string; null hereda.'
           type: string
@@ -1077,13 +1084,14 @@ components:
       type: object
     OrdenCatalogo:
       title: 'Orden de aplicación (catálogo)'
-      description: 'Orden vigente para el pull de catálogo (espec §4.3, ampliada HU-92 tarea 107: `lotes` reemplaza el `lote_id` único de antes). Los DECIMAL viajan como string (invariante 6).'
+      description: 'Orden vigente para el pull de catálogo (espec §4.3, ampliada HU-92 tarea 107: `lotes` reemplaza el `lote_id` único de antes; HU-79 tarea 110: `litros_ha`/`kilos_por_vuelo` son mutuamente excluyentes según la categoría de insumo). Los DECIMAL viajan como string (invariante 6).'
       required:
         - id
         - contrato_id
         - lotes
         - nro_aplicacion
         - litros_ha
+        - kilos_por_vuelo
         - humedad_min_pct
         - viento_max_kmh
         - temperatura_max_c
@@ -1112,8 +1120,15 @@ components:
           type: integer
           example: 1
         litros_ha:
+          description: 'Dosis en litros por hectárea (insumo líquido); null si la categoría es sólida.'
           type: string
           example: '10.00'
+          nullable: true
+        kilos_por_vuelo:
+          description: 'Dosis en kilos por vuelo (insumo sólido); null si la categoría es líquida.'
+          type: string
+          example: '8.50'
+          nullable: true
         humedad_min_pct:
           type: string
           example: '60.00'

@@ -69,6 +69,7 @@ final class LecturaOrdenesVigentesEloquent implements LecturaOrdenesVigentes
                 lotes: $lotesPorOrden[$orden->id] ?? [],
                 nroAplicacion: $orden->nro_aplicacion,
                 litrosHa: $orden->litros_ha,
+                kilosPorVuelo: $orden->kilos_por_vuelo,
                 humedadMinPct: $orden->humedad_min_pct,
                 vientoMaxKmh: $orden->viento_max_kmh,
                 temperaturaMaxC: $orden->temperatura_max_c,

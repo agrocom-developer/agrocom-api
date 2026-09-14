@@ -3,6 +3,7 @@
 namespace App\Dominios\Operaciones\Infraestructura\Http\Requests;
 
 use App\Dominios\Operaciones\Dominio\TipoAplicacion;
+use App\Dominios\Operaciones\Dominio\TipoInsumo;
 use Brick\Math\BigDecimal;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -40,10 +41,26 @@ use Illuminate\Validation\Rule;
  * criterio ADR 0003 regla 3): pedir más de lo que el lote tiene no es un
  * error de forma que un `numeric`/`gt:0` alcance a cubrir.
  *
+ * Cada lote también debe ser de la MISMA propiedad/cliente que el contrato
+ * elegido (`withValidator()`, vía `com_lotes.campo_id` → `com_campos.propiedad_id`
+ * → `com_propiedades.cliente_id`): el contrato es el QUIÉN, la orden es el
+ * CÓMO — no tiene sentido de negocio un contrato del cliente A con un lote
+ * del cliente B. El formulario del panel ya filtra el `<select>` de lote por
+ * el cliente del contrato elegido (JS), pero esa es presentación — acá es la
+ * guarda real.
+ *
  * `tipo_aplicacion` (HU-47, tarea 70) es `required` en el formulario del
  * panel — a diferencia de la columna, que trae `DEFAULT 'desarrollo'` para
  * cualquier alta que no pase por acá (p. ej. un `OrdenAplicacion::create()`
  * directo) — porque acá el usuario elige a propósito, no por omisión.
+ *
+ * `categoria_insumo_id` (HU-79, tarea 110) es `required` acá aunque la
+ * columna sea nullable: no hay valor de origen del que inferirla para
+ * órdenes ya cargadas (ver docblock de la migración), pero toda orden nueva
+ * del panel sí la elige a propósito. `litros_ha`/`kilos_por_vuelo` son
+ * `nullable` en `rules()` porque cuál de los dos hace falta depende del
+ * `tipo_insumo` de la categoría elegida, no de la forma del campo — esa
+ * exigencia cruzada vive en `withValidator()`.
  */
 final class CrearOrdenRequest extends FormRequest
 {
@@ -58,7 +75,9 @@ final class CrearOrdenRequest extends FormRequest
             'cantidad_equipos_necesarios' => ['required', 'integer', 'min:1'],
             'nro_aplicacion' => ['required', 'integer', 'min:1'],
             'tipo_aplicacion' => ['required', Rule::enum(TipoAplicacion::class)],
-            'litros_ha' => ['required', 'numeric', 'gt:0'],
+            'categoria_insumo_id' => ['required', 'integer', Rule::exists('ope_categorias_insumo', 'id')->whereNull('deleted_at')],
+            'litros_ha' => ['nullable', 'numeric', 'gt:0'],
+            'kilos_por_vuelo' => ['nullable', 'numeric', 'gt:0'],
             'humedad_min_pct' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'humedad_max_pct' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'viento_max_kmh' => ['nullable', 'numeric', 'gt:0'],
@@ -83,17 +102,49 @@ final class CrearOrdenRequest extends FormRequest
                 $validator->errors()->add('humedad_min_pct', __('operaciones.ordenes.error_humedad_rango'));
             }
 
+            $this->validarCampoSegunCategoriaInsumo($validator);
+
+            $contratoId = $this->input('contrato_id');
+            $clienteDelContrato = $contratoId !== null && $contratoId !== ''
+                ? DB::table('com_contratos')->where('id', $contratoId)->value('cliente_id')
+                : null;
+
             foreach ((array) $this->input('lotes', []) as $indice => $lote) {
                 $loteId = $lote['lote_id'] ?? null;
                 $hectareasSolicitadas = $lote['hectareas_solicitadas'] ?? null;
 
-                if ($loteId === null || $loteId === '' || $hectareasSolicitadas === null || $hectareasSolicitadas === '') {
+                if ($loteId === null || $loteId === '') {
                     continue;
                 }
 
-                $hectareasLote = DB::table('com_lotes')->where('id', $loteId)->value('hectareas');
+                // Una sola consulta para hectáreas y cliente (vía
+                // campo_id → propiedad_id → cliente_id): consistencia de
+                // negocio, el contrato es el QUIÉN, la orden es el CÓMO — no
+                // se arma una orden del contrato del cliente A con un lote
+                // del cliente B (mismo criterio que invariante 5, aplicado
+                // acá al panel interno, no al portal del cliente).
+                $filaLote = DB::table('com_lotes as l')
+                    ->join('com_campos as c', 'c.id', '=', 'l.campo_id')
+                    ->join('com_propiedades as p', 'p.id', '=', 'c.propiedad_id')
+                    ->where('l.id', $loteId)
+                    ->first(['l.hectareas', 'p.cliente_id']);
 
-                if ($hectareasLote !== null && BigDecimal::of((string) $hectareasSolicitadas)->isGreaterThan(BigDecimal::of((string) $hectareasLote))) {
+                if ($filaLote === null) {
+                    continue;
+                }
+
+                if ($clienteDelContrato !== null && (int) $filaLote->cliente_id !== (int) $clienteDelContrato) {
+                    $validator->errors()->add(
+                        "lotes.{$indice}.lote_id",
+                        __('operaciones.ordenes.error_lote_de_otro_cliente'),
+                    );
+                }
+
+                if ($hectareasSolicitadas === null || $hectareasSolicitadas === '') {
+                    continue;
+                }
+
+                if (BigDecimal::of((string) $hectareasSolicitadas)->isGreaterThan(BigDecimal::of((string) $filaLote->hectareas))) {
                     $validator->errors()->add(
                         "lotes.{$indice}.hectareas_solicitadas",
                         __('operaciones.ordenes.error_hectareas_solicitadas_superan_lote'),
@@ -101,6 +152,41 @@ final class CrearOrdenRequest extends FormRequest
                 }
             }
         });
+    }
+
+    /**
+     * HU-79 (tarea 110): el campo que la orden REALMENTE exige depende del
+     * `tipo_insumo` de la categoría elegida — sólido pide `kilos_por_vuelo`,
+     * líquido pide `litros_ha`. Cruza `ope_categorias_insumo` (no es un
+     * `Rule::requiredIf` estático porque depende de un valor de OTRA tabla,
+     * resuelto recién acá) — mismo criterio que la validación de hectáreas
+     * por lote, unas líneas más abajo. Si `categoria_insumo_id` ya falló su
+     * propio `exists`, no hay categoría que resolver: no se agrega un
+     * segundo error encima del que ya puso `rules()`.
+     */
+    private function validarCampoSegunCategoriaInsumo(Validator $validator): void
+    {
+        $categoriaInsumoId = $this->input('categoria_insumo_id');
+
+        if ($categoriaInsumoId === null || $categoriaInsumoId === '') {
+            return;
+        }
+
+        $tipoInsumo = DB::table('ope_categorias_insumo')->where('id', $categoriaInsumoId)->value('tipo_insumo');
+
+        if ($tipoInsumo === TipoInsumo::Solido->value) {
+            $kilosPorVuelo = $this->input('kilos_por_vuelo');
+
+            if ($kilosPorVuelo === null || $kilosPorVuelo === '') {
+                $validator->errors()->add('kilos_por_vuelo', __('operaciones.ordenes.error_kilos_por_vuelo_requerido'));
+            }
+        } elseif ($tipoInsumo === TipoInsumo::Liquido->value) {
+            $litrosHa = $this->input('litros_ha');
+
+            if ($litrosHa === null || $litrosHa === '') {
+                $validator->errors()->add('litros_ha', __('operaciones.ordenes.error_litros_ha_requerido'));
+            }
+        }
     }
 
     /** @return array<string, string> */
@@ -113,6 +199,8 @@ final class CrearOrdenRequest extends FormRequest
             'lotes.*.lote_id.required' => __('operaciones.ordenes.error_lote_requerido'),
             'lotes.*.lote_id.exists' => __('operaciones.ordenes.error_lote_invalido'),
             'lotes.*.lote_id.distinct' => __('operaciones.ordenes.error_lote_repetido'),
+            'categoria_insumo_id.required' => __('operaciones.ordenes.error_categoria_insumo_requerida'),
+            'categoria_insumo_id.exists' => __('operaciones.ordenes.error_categoria_insumo_invalida'),
             'emitida_por_contacto_id.exists' => __('operaciones.ordenes.error_contacto_invalido'),
         ];
     }
