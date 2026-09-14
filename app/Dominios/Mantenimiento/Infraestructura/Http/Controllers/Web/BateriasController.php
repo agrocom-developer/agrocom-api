@@ -92,6 +92,7 @@ final class BateriasController
         try {
             $crearBateria->ejecutar(
                 (string) $datos['identificador'],
+                (int) $datos['ciclos_inicial'],
                 (int) $datos['ciclos_acumulados'],
                 $this->enteroONull($datos['base_id'] ?? null),
                 EstadoBateria::from((string) $datos['estado']),

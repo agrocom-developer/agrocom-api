@@ -14,6 +14,10 @@ use Illuminate\Validation\Rule;
  * `ciclos_acumulados` es editable ya en el alta: una batería puede entrar
  * al catálogo con uso previo, no siempre arranca en 0.
  *
+ * `ciclos_inicial` (HU-83, tarea 98) se pide solo acá, nunca en
+ * `ActualizarBateriaRequest`: es el punto de partida del historial, fijado
+ * al alta e inmutable después (ver `ActualizarBateria`).
+ *
  * `base_id` es opcional (FK nullable) — una batería sin base asignada es un
  * caso válido. Cuando viene, tiene que apuntar a una base VIVA
  * (`whereNull('deleted_at')`), mismo criterio que `base_id` en
@@ -26,6 +30,7 @@ final class CrearBateriaRequest extends FormRequest
     {
         return [
             'identificador' => ['required', 'string', 'max:40'],
+            'ciclos_inicial' => ['required', 'integer', 'min:0'],
             'ciclos_acumulados' => ['required', 'integer', 'min:0'],
             'base_id' => [
                 'nullable',
