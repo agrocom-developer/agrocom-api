@@ -57,14 +57,12 @@ if [ -z "$FALLO" ] && [ "$CON_ASSETS" = "1" ]; then
     etapa "Compilación de assets (Vite, en el host)" npm run build || true
 fi
 
-# Regresión visual (tests/Visual/, Playwright): sacada de la cascada
-# automática el 14/9/2026 (ver memoria `regresion-visual-fuera-de-bin-verify`).
-# Nunca corrió en CI (ci.yml no tiene paso de Playwright) y acá se saltea
-# salvo en Windows (snapshots -win32), así que "✓ Cascada completa en verde"
-# terminaba significando "no se verificó nada visual" con más frecuencia que
-# lo contrario — un verde que no era verde. Si el cambio es visual, correr a
-# mano: `npx playwright test` (o `--update-snapshots` si cambió a propósito),
-# revisar las capturas y commitearlas aparte.
+# No hay etapa de regresión visual: se sacó de la cascada el 14/9/2026 (nunca
+# corrió en CI y acá se salteaba salvo en Windows) y el arnés Playwright
+# (`tests/Visual/`) se borró el mismo día — ver memoria
+# `regresion-visual-fuera-de-bin-verify`. La verificación visual de un cambio
+# es manual: mirar la pantalla en el navegador, en ambos temas (ver el skill
+# `panel-design-ui`, "Verificación visual").
 
 echo
 if [ -n "$FALLO" ]; then

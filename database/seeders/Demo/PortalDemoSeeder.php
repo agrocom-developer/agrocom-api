@@ -338,9 +338,8 @@ class PortalDemoSeeder extends Seeder
         $this->autoria($acta, $autorId);
 
         // El archivo tiene que EXISTIR de verdad en el disco `r2` (ADR
-        // 0009): a diferencia de `tests/Visual/fixtures/portal-demo.php`
-        // (que solo lo referencia), `SeedDemoCompletaTest` comprueba que
-        // toda evidencia sembrada por la demo tenga su archivo real.
+        // 0009): `SeedDemoCompletaTest` comprueba que toda evidencia
+        // sembrada por la demo tenga su archivo real, no solo la fila.
         $evidenciaUuid = "demo-portal-firma-{$sufijo}";
         $rutaArchivo = "evidencias/firma_acta/2026/08/{$evidenciaUuid}.jpg";
         $contenidoArchivo = "Carta de conformidad — demo portal ({$sufijo})";
