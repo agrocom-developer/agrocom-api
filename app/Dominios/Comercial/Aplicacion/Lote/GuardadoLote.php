@@ -19,7 +19,7 @@ use Illuminate\Database\QueryException;
 final class GuardadoLote
 {
     /**
-     * @param  array{codigo: string, hectareas: string, geometria: array<string, mixed>|null, restricciones: string|null}  $datos
+     * @param  array{codigo: string, hectareas: string, geometria: array<string, mixed>|null, restricciones: string|null, desnivel: string|null, limpieza: string|null}  $datos
      *
      * @throws LoteDuplicado si el código ya pertenece a otro lote activo del mismo campo.
      */

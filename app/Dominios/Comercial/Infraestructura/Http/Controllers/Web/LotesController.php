@@ -194,7 +194,7 @@ final class LotesController
 
     /**
      * @param  array<string, mixed>  $datos
-     * @return array{codigo: string, hectareas: string, geometria: array<string, mixed>|null, restricciones: string|null}
+     * @return array{codigo: string, hectareas: string, geometria: array<string, mixed>|null, restricciones: string|null, desnivel: string|null, limpieza: string|null}
      */
     private function normalizarDatos(array $datos): array
     {
@@ -205,6 +205,8 @@ final class LotesController
             'hectareas' => (string) $lote['hectareas'],
             'geometria' => $this->decodificarGeometria($lote['geometria'] ?? null),
             'restricciones' => $this->cadenaONull($lote['restricciones'] ?? null),
+            'desnivel' => $this->cadenaONull($lote['desnivel'] ?? null),
+            'limpieza' => $this->cadenaONull($lote['limpieza'] ?? null),
         ];
     }
 

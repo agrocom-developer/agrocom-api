@@ -438,6 +438,59 @@ it('el nombre de campo duplicado para el mismo cliente es un error de validacion
     expect(Campo::query()->count())->toBe(1);
 });
 
+// HU-73 (tarea 89): desnivel y limpieza del lote — catálogos cerrados
+// aparte de `restricciones` (texto libre). Cubre los dos Request de este
+// controlador (`CrearCampoRequest`/`ActualizarCampoRequest`).
+
+it('rechaza un desnivel o limpieza fuera de catalogo en el alta y en la edicion de un campo', function () {
+    $cliente = clienteDeCamposDePrueba();
+    $propiedad = propiedadDeCamposDePrueba($cliente);
+    [$encargado, $idRol] = usuarioConRolParaCampos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaCampos($encargado, $idRol);
+
+    $this->post(route('panel.campos.store'), payloadCampo($propiedad->id, [
+        'lotes' => [['codigo' => 'L-01', 'hectareas' => '10', 'desnivel' => 'montanioso']],
+    ]))->assertSessionHasErrors('lotes.0.desnivel');
+
+    $this->post(route('panel.campos.store'), payloadCampo($propiedad->id, [
+        'lotes' => [['codigo' => 'L-01', 'hectareas' => '10', 'limpieza' => 'sucio']],
+    ]))->assertSessionHasErrors('lotes.0.limpieza');
+
+    expect(Campo::query()->count())->toBe(0);
+
+    $this->post(route('panel.campos.store'), payloadCampo($propiedad->id, [
+        'lotes' => [['codigo' => 'L-01', 'hectareas' => '10', 'desnivel' => 'varios', 'limpieza' => 'algunos_obstaculos']],
+    ]))->assertRedirect(route('panel.campos.index'));
+
+    $campo = Campo::query()->sole();
+    $lote = $campo->lotes()->sole();
+    expect($lote->desnivel)->toBe('varios')
+        ->and($lote->limpieza)->toBe('algunos_obstaculos');
+
+    $this->put(route('panel.campos.update', $campo), payloadCampo($propiedad->id, [
+        'lotes' => [['id' => $lote->id, 'codigo' => 'L-01', 'hectareas' => '10', 'desnivel' => 'no-valido']],
+    ]))->assertSessionHasErrors('lotes.0.desnivel');
+});
+
+it('un lote existente sin desnivel ni limpieza se sigue editando sin que la validacion los fuerce', function () {
+    $cliente = clienteDeCamposDePrueba();
+    $propiedad = propiedadDeCamposDePrueba($cliente);
+    [$encargado, $idRol] = usuarioConRolParaCampos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaCampos($encargado, $idRol);
+
+    $this->post(route('panel.campos.store'), payloadCampo($propiedad->id));
+    $campo = Campo::query()->sole();
+    $lote = $campo->lotes()->sole();
+    expect($lote->desnivel)->toBeNull()->and($lote->limpieza)->toBeNull();
+
+    $this->put(route('panel.campos.update', $campo), payloadCampo($propiedad->id, [
+        'lotes' => [['id' => $lote->id, 'codigo' => 'L-01', 'hectareas' => '20']],
+    ]))->assertRedirect(route('panel.campos.index'));
+
+    expect($lote->fresh()?->desnivel)->toBeNull()
+        ->and($lote->fresh()?->limpieza)->toBeNull();
+});
+
 it('el codigo de lote duplicado para el mismo campo es un error de validacion, no un QueryException', function () {
     $cliente = clienteDeCamposDePrueba();
     $propiedad = propiedadDeCamposDePrueba($cliente);
