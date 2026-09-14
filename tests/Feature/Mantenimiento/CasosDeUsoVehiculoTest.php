@@ -5,6 +5,7 @@ use App\Dominios\Mantenimiento\Aplicacion\CrearVehiculo;
 use App\Dominios\Mantenimiento\Dominio\EstadoVehiculo;
 use App\Dominios\Mantenimiento\Dominio\Excepciones\VehiculoDuplicado;
 use App\Dominios\Mantenimiento\Dominio\TipoCombustibleVehiculo;
+use App\Dominios\Mantenimiento\Dominio\TipoVehiculo;
 use App\Dominios\Mantenimiento\Infraestructura\Eloquent\Vehiculo;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -19,6 +20,9 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
  * A diferencia de `ciclos_inicial` en baterías (tarea 98),
  * `kilometraje_inicial` NO es inmutable: `ActualizarVehiculo` lo recibe
  * igual que `CrearVehiculo`, sin restricción.
+ *
+ * `tipo` (HU-90, tarea 105): clasificación de flota, catálogo cerrado,
+ * incluye `chata` — ver los tests agregados al final.
  */
 
 uses(RefreshDatabase::class);
@@ -166,4 +170,43 @@ it('ActualizarVehiculo::ejecutar() acepta la transición hacia y desde el estado
     );
 
     expect($reactivado->estado)->toBe('activo');
+});
+
+it('da de alta un vehículo de tipo chata, igual que cualquier otro tipo del catálogo', function () {
+    $vehiculo = (new CrearVehiculo)->ejecutar(
+        identificador: 'VHC-004',
+        baseId: null,
+        estado: EstadoVehiculo::Activo,
+        marca: null,
+        modelo: null,
+        anio: null,
+        combustible: null,
+        es4x4: false,
+        kilometrajeInicial: null,
+        kilometrajeActual: null,
+        tipo: TipoVehiculo::Chata,
+    );
+
+    expect($vehiculo->tipo)->toBe('chata');
+});
+
+it('ActualizarVehiculo::ejecutar() edita el tipo de un vehículo existente', function () {
+    $vehiculo = Vehiculo::query()->create(['identificador' => 'VHC-001', 'estado' => 'activo', 'tipo' => 'camioneta']);
+
+    $editado = (new ActualizarVehiculo)->ejecutar(
+        $vehiculo,
+        identificador: 'VHC-001',
+        baseId: null,
+        estado: EstadoVehiculo::Activo,
+        marca: null,
+        modelo: null,
+        anio: null,
+        combustible: null,
+        es4x4: false,
+        kilometrajeInicial: null,
+        kilometrajeActual: null,
+        tipo: TipoVehiculo::Chata,
+    );
+
+    expect($editado->tipo)->toBe('chata');
 });

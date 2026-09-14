@@ -24,6 +24,9 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
  * HU-84 (tarea 99) suma la ficha completa (marca, modelo, año, combustible,
  * 4x4, kilometraje inicial y actual) y el estado `pausa` — ver los tests
  * agregados más abajo.
+ *
+ * HU-90 (tarea 105) suma `tipo` (catálogo cerrado, incluye `chata`) — ver
+ * los tests agregados al final.
  */
 
 uses(RefreshDatabase::class);
@@ -57,6 +60,7 @@ function payloadVehiculo(array $overrides = []): array
 {
     return array_merge([
         'identificador' => 'VHC-001',
+        'tipo' => '',
         'marca' => '',
         'modelo' => '',
         'anio' => '',
@@ -388,6 +392,38 @@ it('no deja actuar a quien tiene el permiso en otro rol pero no en el activo', f
     entrarAlPanelParaVehiculos($multirol, $idEncargado);
     $this->post(route('panel.vehiculos.store'), payloadVehiculo())->assertRedirect();
     expect(Vehiculo::query()->count())->toBe(1);
+});
+
+it('rechaza un tipo fuera del catálogo sin persistir', function () {
+    [$encargado, $idRol] = usuarioConRolParaVehiculos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaVehiculos($encargado, $idRol);
+
+    $this->post(route('panel.vehiculos.store'), payloadVehiculo(['tipo' => 'tractor']))
+        ->assertSessionHasErrors('tipo');
+
+    expect(Vehiculo::query()->where('identificador', 'VHC-001')->exists())->toBeFalse();
+});
+
+it('da de alta, lista y edita un vehículo de tipo chata igual que cualquier otro tipo', function () {
+    [$encargado, $idRol] = usuarioConRolParaVehiculos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaVehiculos($encargado, $idRol);
+
+    $this->post(route('panel.vehiculos.store'), payloadVehiculo(['tipo' => 'chata']))
+        ->assertRedirect(route('panel.vehiculos.index'));
+
+    $vehiculo = Vehiculo::query()->where('identificador', 'VHC-001')->sole();
+    expect($vehiculo->tipo)->toBe('chata');
+
+    $this->get(route('panel.vehiculos.index'))
+        ->assertOk()
+        ->assertSee('VHC-001');
+
+    $this->put(
+        route('panel.vehiculos.update', $vehiculo),
+        payloadVehiculo(['tipo' => 'camion']),
+    )->assertRedirect(route('panel.vehiculos.index'));
+
+    expect($vehiculo->refresh()->tipo)->toBe('camion');
 });
 
 it('publica el ítem de menú de vehículos gateado por mantenimiento.vehiculo.ver', function () {
