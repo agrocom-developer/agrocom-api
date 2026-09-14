@@ -46,7 +46,7 @@ final class CrearGeneradorRequest extends FormRequest
     {
         return [
             'base_id.exists' => 'La base seleccionada no es válida.',
-            'horas_actual.gte' => 'Las horas actual no pueden ser menores que las horas inicial.',
+            'horas_actual.gte' => 'Las horas actuales no pueden ser menores que las horas iniciales.',
         ];
     }
 }
