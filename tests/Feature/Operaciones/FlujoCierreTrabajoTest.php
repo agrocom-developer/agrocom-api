@@ -55,7 +55,7 @@ it('abre, cierra y el jefe ve el trabajo cerrado en el panel', function () {
     $piloto = PerPersona::query()->create(['nombre' => 'Piloto e2e', 'rol' => RolOperativoPersona::Piloto, 'activo' => true]);
     $loteId = Lote::query()->where('codigo', 'L-01')->value('id');
     $orden = OrdenAplicacion::query()
-        ->where('lote_id', $loteId)
+        ->whereHas('ordenLotes', fn ($q) => $q->where('lote_id', $loteId))
         ->where('estado', EstadoOrdenAplicacion::Vigente)
         ->firstOrFail();
 
@@ -64,7 +64,7 @@ it('abre, cierra y el jefe ve el trabajo cerrado en el panel', function () {
             'tipo' => 'trabajo',
             'uuid_cliente' => 'uuid-e2e-trabajo',
             'orden_id' => $orden->id,
-            'lote_id' => $orden->lote_id,
+            'lote_id' => (int) $orden->ordenLotes()->value('lote_id'),
             'nro_aplicacion' => $orden->nro_aplicacion,
             'inicio' => '2026-09-01T08:00:00-04:00',
         ],

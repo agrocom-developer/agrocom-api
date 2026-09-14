@@ -67,14 +67,26 @@ function ordenVigenteParaEscritura(): OrdenAplicacion
         'estado' => EstadoContrato::Vigente,
     ]);
 
-    return OrdenAplicacion::create([
+    $orden = OrdenAplicacion::create([
         'contrato_id' => $contrato->id,
-        'lote_id' => $lote->id,
         'nro_aplicacion' => 1,
         'litros_ha' => '10.00',
         'fecha_emision' => '2026-09-01',
         'estado' => EstadoOrdenAplicacion::Vigente,
     ]);
+    $orden->ordenLotes()->create(['lote_id' => $lote->id, 'hectareas_solicitadas' => $lote->hectareas]);
+
+    return $orden->refresh();
+}
+
+/**
+ * `$orden->lote_id` ya no existe (HU-92, tarea 107: el lote de la orden es
+ * `ope_orden_lotes`, no una columna propia) — este archivo solo ejercita
+ * órdenes de UN lote, así que alcanza con el primero.
+ */
+function loteIdDeEscritura(OrdenAplicacion $orden): int
+{
+    return (int) $orden->ordenLotes()->value('lote_id');
 }
 
 function pilotoParaEscritura(): PerPersona
@@ -110,7 +122,7 @@ test('abrirTrabajo con datos válidos aplica y persiste la fila', function () {
     $datos = AperturaTrabajo::intentarDesdeArreglo([
         'uuid_cliente' => 'uuid-trabajo-1',
         'orden_id' => $orden->id,
-        'lote_id' => $orden->lote_id,
+        'lote_id' => loteIdDeEscritura($orden),
         'nro_aplicacion' => 1,
         'inicio' => '2026-09-01T10:00:00-04:00',
     ]);
@@ -130,7 +142,7 @@ test('abrirTrabajo con el mismo uuid_cliente responde duplicado sin crear una fi
     $datos = AperturaTrabajo::intentarDesdeArreglo([
         'uuid_cliente' => 'uuid-trabajo-repetido',
         'orden_id' => $orden->id,
-        'lote_id' => $orden->lote_id,
+        'lote_id' => loteIdDeEscritura($orden),
         'nro_aplicacion' => 1,
         'inicio' => '2026-09-01T10:00:00-04:00',
     ]);
@@ -151,7 +163,7 @@ test('abrirSesion resuelve su trabajo por uuid_cliente, no por id de servidor', 
     $trabajo = AperturaTrabajo::intentarDesdeArreglo([
         'uuid_cliente' => 'uuid-trabajo-para-sesion',
         'orden_id' => $orden->id,
-        'lote_id' => $orden->lote_id,
+        'lote_id' => loteIdDeEscritura($orden),
         'nro_aplicacion' => 1,
         'inicio' => '2026-09-01T10:00:00-04:00',
     ]);
@@ -203,7 +215,7 @@ test('abrirSesion con el mismo uuid_cliente responde duplicado sin crear una fil
     $contrato->abrirTrabajo(AperturaTrabajo::intentarDesdeArreglo([
         'uuid_cliente' => 'uuid-trabajo-de-sesion-duplicada',
         'orden_id' => $orden->id,
-        'lote_id' => $orden->lote_id,
+        'lote_id' => loteIdDeEscritura($orden),
         'nro_aplicacion' => 1,
         'inicio' => '2026-09-01T10:00:00-04:00',
     ]));
@@ -311,7 +323,7 @@ test('AperturaSesion::intentarDesdeArreglo devuelve null con hectareas_declarada
 
 test('abrirTrabajo con un lote_id que no es el de la orden declarada se rechaza sin persistir la fila', function () {
     $orden = ordenVigenteParaEscritura();
-    $campoId = Lote::query()->findOrFail($orden->lote_id)->campo_id;
+    $campoId = Lote::query()->findOrFail(loteIdDeEscritura($orden))->campo_id;
 
     $otroLote = Lote::create([
         'campo_id' => $campoId,
@@ -347,7 +359,7 @@ test('abrirTrabajo con una orden no vigente se rechaza sin persistir la fila', f
     $datos = AperturaTrabajo::intentarDesdeArreglo([
         'uuid_cliente' => 'uuid-trabajo-orden-no-vigente',
         'orden_id' => $orden->id,
-        'lote_id' => $orden->lote_id,
+        'lote_id' => loteIdDeEscritura($orden),
         'nro_aplicacion' => 1,
         'inicio' => '2026-09-01T10:00:00-04:00',
     ]);
@@ -376,7 +388,7 @@ function sesionAbiertaParaCondiciones(string $id): Sesion
     $contrato->abrirTrabajo(AperturaTrabajo::intentarDesdeArreglo([
         'uuid_cliente' => "uuid-trabajo-cond-{$id}",
         'orden_id' => $orden->id,
-        'lote_id' => $orden->lote_id,
+        'lote_id' => loteIdDeEscritura($orden),
         'nro_aplicacion' => 1,
         'inicio' => '2026-09-01T10:00:00-04:00',
     ]));
@@ -569,7 +581,7 @@ function trabajoAbiertoParaRecepcion(string $id): Trabajo
     $contrato->abrirTrabajo(AperturaTrabajo::intentarDesdeArreglo([
         'uuid_cliente' => "uuid-trabajo-recepcion-{$id}",
         'orden_id' => $orden->id,
-        'lote_id' => $orden->lote_id,
+        'lote_id' => loteIdDeEscritura($orden),
         'nro_aplicacion' => 1,
         'inicio' => '2026-09-01T10:00:00-04:00',
     ]));
@@ -807,7 +819,7 @@ test('Trabajo::cuadreCaldo recalcula recibido/consumido/sobrante exacto y cuadra
     $contrato->abrirTrabajo(AperturaTrabajo::intentarDesdeArreglo([
         'uuid_cliente' => 'uuid-trabajo-cuadre',
         'orden_id' => $orden->id,
-        'lote_id' => $orden->lote_id,
+        'lote_id' => loteIdDeEscritura($orden),
         'nro_aplicacion' => 1,
         'inicio' => '2026-09-01T08:00:00-04:00',
     ]));
@@ -1024,7 +1036,7 @@ function sesionAbiertaParaRecarga(string $id): Sesion
     $contrato->abrirTrabajo(AperturaTrabajo::intentarDesdeArreglo([
         'uuid_cliente' => "uuid-trabajo-recarga-{$id}",
         'orden_id' => $orden->id,
-        'lote_id' => $orden->lote_id,
+        'lote_id' => loteIdDeEscritura($orden),
         'nro_aplicacion' => 1,
         'inicio' => '2026-09-01T10:00:00-04:00',
     ]));
@@ -1171,7 +1183,7 @@ function trabajoAbiertoParaEquipo(string $id): Trabajo
     $contrato->abrirTrabajo(AperturaTrabajo::intentarDesdeArreglo([
         'uuid_cliente' => "uuid-trabajo-equipo-{$id}",
         'orden_id' => $orden->id,
-        'lote_id' => $orden->lote_id,
+        'lote_id' => loteIdDeEscritura($orden),
         'nro_aplicacion' => 1,
         'inicio' => '2026-09-01T10:00:00-04:00',
     ]));

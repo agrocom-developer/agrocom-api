@@ -32,7 +32,7 @@ function ordenDemoVigente(): OrdenAplicacion
     $loteId = Lote::query()->where('codigo', 'L-01')->value('id');
 
     return OrdenAplicacion::query()
-        ->where('lote_id', $loteId)
+        ->whereHas('ordenLotes', fn ($q) => $q->where('lote_id', $loteId))
         ->where('estado', EstadoOrdenAplicacion::Vigente)
         ->firstOrFail();
 }
@@ -54,7 +54,7 @@ function registroTrabajo(string $uuidCliente, OrdenAplicacion $orden, array $ext
         'tipo' => 'trabajo',
         'uuid_cliente' => $uuidCliente,
         'orden_id' => $orden->id,
-        'lote_id' => $orden->lote_id,
+        'lote_id' => (int) $orden->ordenLotes()->value('lote_id'),
         'nro_aplicacion' => $orden->nro_aplicacion,
         'inicio' => '2026-09-01T10:00:00-04:00',
         ...$extra,
@@ -126,7 +126,7 @@ it('un registro inválido no bloquea el resto del lote', function () {
     $respuesta = $this->postJson('/api/sync', [
         'registros' => [
             // Sin 'inicio': AperturaTrabajo::intentarDesdeArreglo() lo rechaza.
-            ['tipo' => 'trabajo', 'uuid_cliente' => 'uuid-invalido', 'orden_id' => $orden->id, 'lote_id' => $orden->lote_id, 'nro_aplicacion' => 1],
+            ['tipo' => 'trabajo', 'uuid_cliente' => 'uuid-invalido', 'orden_id' => $orden->id, 'lote_id' => (int) $orden->ordenLotes()->value('lote_id'), 'nro_aplicacion' => 1],
             registroTrabajo('uuid-t3', $orden),
             registroSesion('uuid-s3', 'uuid-t3', $piloto->id),
         ],

@@ -47,7 +47,7 @@ function ordenParaCierreLote(): OrdenAplicacion
     $loteId = Lote::query()->where('codigo', 'L-01')->value('id');
 
     return OrdenAplicacion::query()
-        ->where('lote_id', $loteId)
+        ->whereHas('ordenLotes', fn ($q) => $q->where('lote_id', $loteId))
         ->where('estado', EstadoOrdenAplicacion::Vigente)
         ->firstOrFail();
 }
@@ -66,7 +66,7 @@ function registroTrabajoParaCierreLote(string $uuidCliente): array
         'tipo' => 'trabajo',
         'uuid_cliente' => $uuidCliente,
         'orden_id' => $orden->id,
-        'lote_id' => $orden->lote_id,
+        'lote_id' => (int) $orden->ordenLotes()->value('lote_id'),
         'nro_aplicacion' => $orden->nro_aplicacion,
         'inicio' => '2026-09-01T10:00:00-04:00',
     ];
@@ -296,12 +296,12 @@ it('un trabajo observado por exceder la tolerancia sigue observado después de c
     ]);
     $orden = OrdenAplicacion::create([
         'contrato_id' => $contrato->id,
-        'lote_id' => $lote->id,
         'nro_aplicacion' => 1,
         'litros_ha' => '10.00',
         'fecha_emision' => '2026-09-01',
         'estado' => EstadoOrdenAplicacion::Vigente,
     ]);
+    $orden->ordenLotes()->create(['lote_id' => $lote->id, 'hectareas_solicitadas' => '10.00']);
 
     $piloto = pilotoParaCierreLote();
 

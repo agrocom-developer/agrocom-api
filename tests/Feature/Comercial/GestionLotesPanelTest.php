@@ -89,13 +89,22 @@ function crearOrdenAplicacionParaLoteDePrueba(Lote $lote): void
         'estado' => 'borrador',
     ]);
 
-    DB::table('ope_ordenes_aplicacion')->insert([
+    $ordenId = DB::table('ope_ordenes_aplicacion')->insertGetId([
         'contrato_id' => $contrato->id,
-        'lote_id' => $lote->id,
         'nro_aplicacion' => 1,
         'litros_ha' => '20.00',
         'fecha_emision' => now()->toDateString(),
         'estado' => 'emitida',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    // HU-92 (tarea 107): el lote de la orden ya no es una columna propia,
+    // se arma como fila de `ope_orden_lotes`.
+    DB::table('ope_orden_lotes')->insert([
+        'orden_id' => $ordenId,
+        'lote_id' => $lote->id,
+        'hectareas_solicitadas' => $lote->hectareas,
         'created_at' => now(),
         'updated_at' => now(),
     ]);

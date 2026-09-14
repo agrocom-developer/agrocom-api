@@ -59,6 +59,7 @@ function crearPersonaDemo(array $atributos = []): PerPersona
 function crearTrabajoAsignadoDemo(): Trabajo
 {
     $orden = OrdenAplicacion::query()->where('estado', EstadoOrdenAplicacion::Vigente)->firstOrFail();
+    $loteId = (int) $orden->ordenLotes()->value('lote_id');
     $base = PerBase::create(['nombre' => 'Base catálogo '.uniqid()]);
     $equipo = EquipoTrabajo::create([
         'codigo' => 'EQ-CAT-'.uniqid(),
@@ -69,22 +70,27 @@ function crearTrabajoAsignadoDemo(): Trabajo
     ]);
 
     return app(AsignarEquiposOrden::class)->ejecutar($orden, [
-        ['equipo_trabajo_id' => $equipo->id, 'hectareas' => '10.00'],
+        ['equipo_trabajo_id' => $equipo->id, 'lotes' => [['lote_id' => $loteId, 'hectareas' => '10.00']]],
     ])[0];
 }
 
 /** @param  array<string, mixed>  $atributos */
 function crearOrdenEnLote(string $codigoLote, array $atributos = []): OrdenAplicacion
 {
-    return OrdenAplicacion::query()->create([
+    $lote = Lote::query()->where('codigo', $codigoLote)->firstOrFail();
+
+    $orden = OrdenAplicacion::query()->create([
         'contrato_id' => Contrato::query()->value('id'),
-        'lote_id' => Lote::query()->where('codigo', $codigoLote)->value('id'),
         'nro_aplicacion' => 1,
         'litros_ha' => '10.00',
         'fecha_emision' => '2026-08-26',
         'estado' => EstadoOrdenAplicacion::Emitida,
         ...$atributos,
     ]);
+
+    $orden->ordenLotes()->create(['lote_id' => $lote->id, 'hectareas_solicitadas' => $lote->hectareas]);
+
+    return $orden;
 }
 
 it('con desde vacío trae todo lo vigente de las tres secciones (primera sincronización)', function () {
@@ -221,7 +227,7 @@ it('excluye de la sección trabajos los que nacen por sync, sin equipo asignado'
     Trabajo::create([
         'uuid_cliente' => (string) Str::uuid(),
         'orden_id' => $orden->id,
-        'lote_id' => $orden->lote_id,
+        'lote_id' => (int) $orden->ordenLotes()->value('lote_id'),
         'nro_aplicacion' => 1,
         'estado' => 'abierto',
         'inicio' => now(),

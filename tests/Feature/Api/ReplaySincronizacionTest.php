@@ -39,7 +39,7 @@ function ordenVigenteParaReplay(): OrdenAplicacion
     $loteId = Lote::query()->where('codigo', 'L-01')->value('id');
 
     return OrdenAplicacion::query()
-        ->where('lote_id', $loteId)
+        ->whereHas('ordenLotes', fn ($q) => $q->where('lote_id', $loteId))
         ->where('estado', EstadoOrdenAplicacion::Vigente)
         ->firstOrFail();
 }
@@ -61,7 +61,7 @@ it('el mismo lote aplicado 10 veces, en orden y en desorden parcial, deja un est
         'tipo' => 'trabajo',
         'uuid_cliente' => 'uuid-replay-trabajo',
         'orden_id' => $orden->id,
-        'lote_id' => $orden->lote_id,
+        'lote_id' => (int) $orden->ordenLotes()->value('lote_id'),
         'nro_aplicacion' => $orden->nro_aplicacion,
         'hectareas_declaradas' => '12.50',
         'inicio' => '2026-09-01T10:00:00-04:00',

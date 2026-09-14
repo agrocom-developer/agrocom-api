@@ -1,7 +1,6 @@
 <?php
 
 use Database\Seeders\Demo\DemoSeeder;
-use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -145,9 +144,11 @@ it('ope_ordenes_aplicacion tiene el tipo de aplicación, con desarrollo como def
 
     // Sin `tipo_aplicacion` en el insert: rige el DEFAULT de la migración
     // (columna con `->default('desarrollo')`, aplicado también en SQLite).
+    // `lote_id` ya no es columna de esta tabla (HU-92, tarea 107) — $loteId
+    // queda sin usar en este test puntual, no hace falta la fila de
+    // `ope_orden_lotes` para lo que se verifica acá.
     $ordenId = DB::table('ope_ordenes_aplicacion')->insertGetId([
         'contrato_id' => $contratoId,
-        'lote_id' => $loteId,
         'nro_aplicacion' => 1,
         'litros_ha' => '10.00',
         'fecha_emision' => '2026-09-01',
@@ -169,7 +170,10 @@ it('el seeder demo deja una orden de aplicación vigente consultable', function 
 
     expect($orden)->not->toBeNull();
 
-    $lote = DB::table('com_lotes')->where('id', $orden->lote_id)->first();
+    // HU-92 (tarea 107): el lote de la orden ya no es una columna propia,
+    // se resuelve por `ope_orden_lotes`.
+    $loteId = DB::table('ope_orden_lotes')->where('orden_id', $orden->id)->value('lote_id');
+    $lote = DB::table('com_lotes')->where('id', $loteId)->first();
     $contrato = DB::table('com_contratos')->where('id', $orden->contrato_id)->first();
 
     expect($lote)->not->toBeNull()
@@ -190,22 +194,16 @@ it('el monto total del contrato demo cuadra exacto desde sus factores', function
     expect($cuadra)->toBeTrue();
 });
 
-it('rechaza una segunda orden vigente para el mismo lote por el índice parcial', function () {
-    $this->seed(DemoSeeder::class);
-
-    $orden = DB::table('ope_ordenes_aplicacion')
-        ->where('estado', 'vigente')
-        ->whereNull('deleted_at')
-        ->first();
-
-    DB::table('ope_ordenes_aplicacion')->insert([
-        'contrato_id' => $orden->contrato_id,
-        'lote_id' => $orden->lote_id,
-        'nro_aplicacion' => 2,
-        'litros_ha' => '10.00',
-        'fecha_emision' => '2026-08-26',
-        'estado' => 'vigente',
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
-})->throws(QueryException::class);
+/*
+ * "Una única orden vigente por lote" YA NO es un índice parcial de esta
+ * tabla (HU-92, tarea 107): desde que una orden cubre N lotes
+ * (`ope_orden_lotes`), la regla cruza esa tabla con
+ * `ope_ordenes_aplicacion.estado` — algo que un índice parcial de Postgres
+ * no puede expresar (condicionar sobre una tabla ajena). La garantía se
+ * movió a `MaquinaEstadosOrden::activar()` (verificación explícita + lock,
+ * ver su docblock) y su test vive en
+ * tests/Feature/Operaciones/GestionOrdenesPanelTest.php ("una segunda
+ * activación sobre el mismo lote falla como error de validación legible, no
+ * un QueryException") — ya no es un mecanismo de ESQUEMA, así que no
+ * corresponde acá.
+ */

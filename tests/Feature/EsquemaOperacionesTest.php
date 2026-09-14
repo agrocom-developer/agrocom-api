@@ -98,7 +98,6 @@ function crearOrdenVigenteParaTrabajo(): array
 
     $ordenId = DB::table('ope_ordenes_aplicacion')->insertGetId([
         'contrato_id' => $contratoId,
-        'lote_id' => $loteId,
         'nro_aplicacion' => 1,
         'litros_ha' => '10.00',
         'fecha_emision' => '2026-09-01',

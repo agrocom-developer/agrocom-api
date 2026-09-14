@@ -77,14 +77,17 @@ function ordenParaActa(string $sufijo): OrdenAplicacion
         'estado' => EstadoContrato::Vigente,
     ]);
 
-    return OrdenAplicacion::create([
+    $orden = OrdenAplicacion::create([
         'contrato_id' => $contrato->id,
-        'lote_id' => $lote->id,
         'nro_aplicacion' => 1,
         'litros_ha' => '10.00',
         'fecha_emision' => '2026-09-01',
         'estado' => EstadoOrdenAplicacion::Vigente,
     ]);
+
+    $orden->ordenLotes()->create(['lote_id' => $lote->id, 'hectareas_solicitadas' => '20.00']);
+
+    return $orden;
 }
 
 function trabajoParaActa(string $sufijo, EstadoTrabajo $estado): Trabajo
@@ -94,7 +97,7 @@ function trabajoParaActa(string $sufijo, EstadoTrabajo $estado): Trabajo
     return Trabajo::create([
         'uuid_cliente' => "uuid-trabajo-acta-{$sufijo}",
         'orden_id' => $orden->id,
-        'lote_id' => $orden->lote_id,
+        'lote_id' => (int) $orden->ordenLotes()->value('lote_id'),
         'nro_aplicacion' => 1,
         'hectareas_declaradas' => '18.50',
         'estado' => $estado,

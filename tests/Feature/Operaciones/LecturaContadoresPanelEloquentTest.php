@@ -57,14 +57,16 @@ function ordenParaContadoresPanel(string $sufijo, EstadoOrdenAplicacion $estado)
         'estado' => EstadoContrato::Vigente,
     ]);
 
-    return OrdenAplicacion::create([
+    $orden = OrdenAplicacion::create([
         'contrato_id' => $contrato->id,
-        'lote_id' => $lote->id,
         'nro_aplicacion' => 1,
         'litros_ha' => '10.00',
         'fecha_emision' => '2026-09-01',
         'estado' => $estado,
     ]);
+    $orden->ordenLotes()->create(['lote_id' => $lote->id, 'hectareas_solicitadas' => '20.00']);
+
+    return $orden;
 }
 
 function sesionParaContadoresPanel(string $sufijo, EstadoSesion $estado): Sesion
@@ -73,7 +75,7 @@ function sesionParaContadoresPanel(string $sufijo, EstadoSesion $estado): Sesion
     $trabajo = Trabajo::create([
         'uuid_cliente' => "uuid-trabajo-ctp-{$sufijo}",
         'orden_id' => $orden->id,
-        'lote_id' => $orden->lote_id,
+        'lote_id' => (int) $orden->ordenLotes()->value('lote_id'),
         'nro_aplicacion' => 1,
         'estado' => EstadoTrabajo::Abierto,
         'inicio' => '2026-09-01T08:00:00-04:00',

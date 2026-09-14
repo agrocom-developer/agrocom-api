@@ -51,14 +51,22 @@ function ordenVigenteDePrueba(): OrdenAplicacion
         'estado' => EstadoContrato::Vigente,
     ]);
 
-    return OrdenAplicacion::create([
+    $orden = OrdenAplicacion::create([
         'contrato_id' => $contrato->id,
-        'lote_id' => $lote->id,
         'nro_aplicacion' => 1,
         'litros_ha' => '10.00',
         'fecha_emision' => '2026-09-01',
         'estado' => EstadoOrdenAplicacion::Vigente,
     ]);
+    $orden->ordenLotes()->create(['lote_id' => $lote->id, 'hectareas_solicitadas' => $lote->hectareas]);
+
+    return $orden->refresh();
+}
+
+/** `$orden->lote_id` ya no existe (HU-92, tarea 107) — este archivo solo ejercita órdenes de UN lote. */
+function loteIdDePrueba(OrdenAplicacion $orden): int
+{
+    return (int) $orden->ordenLotes()->value('lote_id');
 }
 
 test('abrir un trabajo lo crea en estado abierto', function () {
@@ -67,7 +75,7 @@ test('abrir un trabajo lo crea en estado abierto', function () {
     $trabajo = (new MaquinaEstadosTrabajo)->abrir([
         'uuid_cliente' => 'uuid-trabajo-1',
         'orden_id' => $orden->id,
-        'lote_id' => $orden->lote_id,
+        'lote_id' => loteIdDePrueba($orden),
         'nro_aplicacion' => 1,
         'inicio' => now(),
     ]);
@@ -84,7 +92,7 @@ test('reabrir el mismo uuid_cliente de un trabajo choca con el índice único, n
     (new MaquinaEstadosTrabajo)->abrir([
         'uuid_cliente' => 'uuid-trabajo-repetido',
         'orden_id' => $orden->id,
-        'lote_id' => $orden->lote_id,
+        'lote_id' => loteIdDePrueba($orden),
         'nro_aplicacion' => 1,
         'inicio' => now(),
     ]);
@@ -92,7 +100,7 @@ test('reabrir el mismo uuid_cliente de un trabajo choca con el índice único, n
     (new MaquinaEstadosTrabajo)->abrir([
         'uuid_cliente' => 'uuid-trabajo-repetido',
         'orden_id' => $orden->id,
-        'lote_id' => $orden->lote_id,
+        'lote_id' => loteIdDePrueba($orden),
         'nro_aplicacion' => 1,
         'inicio' => now(),
     ]);
@@ -104,7 +112,7 @@ test('abrir una sesión la crea en estado abierto', function () {
     $trabajo = (new MaquinaEstadosTrabajo)->abrir([
         'uuid_cliente' => 'uuid-trabajo-para-sesion',
         'orden_id' => $orden->id,
-        'lote_id' => $orden->lote_id,
+        'lote_id' => loteIdDePrueba($orden),
         'nro_aplicacion' => 1,
         'inicio' => now(),
     ]);
