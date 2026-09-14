@@ -20,6 +20,7 @@ use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\RendicionesContro
 use App\Dominios\Inventario\Infraestructura\Http\Controllers\Web\RepuestosController;
 use App\Dominios\Inventario\Infraestructura\Http\Controllers\Web\StockController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\BateriasController;
+use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\FichasDronController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\GeneradoresController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\OrdenesMantenimientoController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\PlanesMantenimientoController;
@@ -870,6 +871,33 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::delete('/panel/planes-mantenimiento/{plan}', [PlanesMantenimientoController::class, 'destroy'])
             ->name('panel.planes-mantenimiento.destroy');
+
+        // HU-82 (tarea 97): ficha de inventario del dron — serie, chasis,
+        // versión de software, región, serie del control y accesorios. ABM
+        // nuevo sin máquina de estados, mismo molde que `baterias` arriba.
+        // Cuatro permisos de grano fino
+        // (`mantenimiento.ficha_dron.ver`/`.crear`/`.editar`/`.eliminar`)
+        // verificados DENTRO del controlador contra el ROL ACTIVO, mismo
+        // criterio que el resto del panel. `identificador_dron` correlaciona
+        // por TEXTO contra `ope_drones.identificador`, sin FK real (ver
+        // docblock de la migración `man_drones`).
+        Route::get('/panel/fichas-dron', [FichasDronController::class, 'index'])
+            ->name('panel.fichas-dron.index');
+
+        Route::get('/panel/fichas-dron/crear', [FichasDronController::class, 'create'])
+            ->name('panel.fichas-dron.create');
+
+        Route::post('/panel/fichas-dron', [FichasDronController::class, 'store'])
+            ->name('panel.fichas-dron.store');
+
+        Route::get('/panel/fichas-dron/{fichaDron}/editar', [FichasDronController::class, 'edit'])
+            ->name('panel.fichas-dron.edit');
+
+        Route::put('/panel/fichas-dron/{fichaDron}', [FichasDronController::class, 'update'])
+            ->name('panel.fichas-dron.update');
+
+        Route::delete('/panel/fichas-dron/{fichaDron}', [FichasDronController::class, 'destroy'])
+            ->name('panel.fichas-dron.destroy');
 
         // HU-28 (tarea 40): "como piloto o auxiliar, quiero ver mis devengos
         // por período" — primer permiso de panel para esos dos roles
