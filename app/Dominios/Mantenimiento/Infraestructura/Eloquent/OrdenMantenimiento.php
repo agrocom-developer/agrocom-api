@@ -34,6 +34,7 @@ use Illuminate\Support\Carbon;
  * @property int $equipo_id
  * @property string $tipo
  * @property string $descripcion
+ * @property string|null $descripcion_final
  * @property EstadoOrdenMantenimiento $estado
  * @property Carbon $fecha_apertura
  * @property Carbon|null $fecha_cierre
@@ -51,6 +52,7 @@ class OrdenMantenimiento extends ModeloDominio
         'equipo_id',
         'tipo',
         'descripcion',
+        'descripcion_final',
         'estado',
         'fecha_apertura',
         'fecha_cierre',

@@ -82,6 +82,7 @@ it('cierra una orden con `repuestos` keyed por repuesto_id (como lo arma el sele
             $repuestoB->id => ['repuesto_id' => (string) $repuestoB->id, 'base_id' => (string) $base->id, 'cantidad' => '1.00'],
             $repuestoC->id => ['repuesto_id' => (string) $repuestoC->id, 'base_id' => (string) $base->id, 'cantidad' => '3.00'],
         ],
+        'descripcion_final' => 'Se cambiaron hélice, motor y batería.',
     ])->assertRedirect(route('panel.ordenes-mantenimiento.index'));
 
     // 2×10.00 + 1×50.00 + 3×5.00 = 85.00
@@ -152,6 +153,7 @@ it('repinta la casilla marcada y la cantidad tras un error de validación (stock
             'repuestos' => [
                 $repuesto->id => ['repuesto_id' => (string) $repuesto->id, 'base_id' => (string) $base->id, 'cantidad' => '9.00'],
             ],
+            'descripcion_final' => 'Se intentó cambiar el motor.',
         ])->assertRedirect(route('panel.ordenes-mantenimiento.edit', $orden));
 
     expect(Gasto::query()->count())->toBe(0)

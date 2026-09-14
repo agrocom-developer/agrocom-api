@@ -154,7 +154,7 @@ final class OrdenesMantenimientoController
             ->all();
 
         try {
-            $maquinaEstados->cerrar($orden, $lineas);
+            $maquinaEstados->cerrar($orden, $lineas, (string) $request->validated('descripcion_final'));
         } catch (RepuestosInsuficientes|TransicionOrdenMantenimientoNoPermitida $excepcion) {
             throw ValidationException::withMessages(['repuestos' => $excepcion->getMessage()]);
         }

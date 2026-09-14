@@ -21,6 +21,11 @@ use Illuminate\Validation\Rule;
  * de `Inventario` — la guarda real de "alcanza el stock" NO vive acá: la
  * tira `Inventario\Contratos\EscrituraConsumoStock` dentro de la transacción
  * de `MaquinaEstadosOrdenMantenimiento::cerrar()`.
+ *
+ * `descripcion_final` (HU-89, tarea 104): requerida acá Y en el dominio
+ * (`MaquinaEstadosOrdenMantenimiento::cerrar()` la vuelve a exigir con
+ * `DescripcionFinalRequerida`) — esta regla cubre el formulario del panel,
+ * la del dominio cubre cualquier otro llamador futuro.
  */
 final class CerrarOrdenMantenimientoRequest extends FormRequest
 {
@@ -32,6 +37,7 @@ final class CerrarOrdenMantenimientoRequest extends FormRequest
             'repuestos.*.repuesto_id' => ['required', 'integer', Rule::exists('inv_repuestos', 'id')->whereNull('deleted_at')],
             'repuestos.*.base_id' => ['required', 'integer', Rule::exists('per_bases', 'id')->whereNull('deleted_at')],
             'repuestos.*.cantidad' => ['required', 'numeric', 'gt:0'],
+            'descripcion_final' => ['required', 'string'],
         ];
     }
 
@@ -41,6 +47,7 @@ final class CerrarOrdenMantenimientoRequest extends FormRequest
         return [
             'repuestos.required' => 'La orden necesita al menos un repuesto consumido para cerrarse.',
             'repuestos.min' => 'La orden necesita al menos un repuesto consumido para cerrarse.',
+            'descripcion_final.required' => 'El cierre necesita una descripción de qué se hizo realmente.',
         ];
     }
 }

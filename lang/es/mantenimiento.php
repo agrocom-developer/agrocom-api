@@ -323,6 +323,7 @@ return [
         'detalle_tipo' => 'Tipo',
         'detalle_estado' => 'Estado',
         'detalle_descripcion' => 'Descripción',
+        'detalle_descripcion_final' => 'Descripción final',
         'detalle_fecha_apertura' => 'Fecha de apertura',
         'detalle_fecha_cierre' => 'Fecha de cierre',
         'detalle_gasto' => 'Gasto generado',
@@ -331,6 +332,8 @@ return [
 
         'seccion_cierre' => 'Cerrar orden',
         'seccion_cierre_ayuda' => 'El cierre descuenta el stock de cada repuesto y genera el gasto correspondiente. Si el stock de algún repuesto no alcanza, la orden no se cierra y no se descuenta ni se imputa nada.',
+        'campo_descripcion_final' => 'Descripción final',
+        'campo_descripcion_final_ayuda' => 'Qué se hizo realmente al cerrar la orden — no reemplaza la descripción de apertura.',
         'campo_base' => 'Base',
         'campo_base_placeholder' => 'Seleccioná una base',
         'campo_cantidad' => 'Cantidad',
