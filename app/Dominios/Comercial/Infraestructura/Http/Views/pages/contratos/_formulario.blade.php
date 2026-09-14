@@ -84,7 +84,7 @@
 
     <x-molecules.form-section
         :title="__('comercial.contratos.seccion_datos')"
-        :count="__('comercial.contratos.campos_contador', ['cantidad' => 9])"
+        :count="__('comercial.contratos.campos_contador', ['cantidad' => 8])"
     >
         <x-atoms.select
             name="cliente_id"
@@ -154,17 +154,6 @@
             error="{{ $errors->first('adelanto_monto') }}"
         />
 
-        <x-atoms.input
-            type="number"
-            name="adelanto_pct"
-            label="{{ __('comercial.contratos.campo_adelanto_pct') }}"
-            value="{{ $valor('adelanto_pct') }}"
-            min="0"
-            max="100"
-            step="0.01"
-            error="{{ $errors->first('adelanto_pct') }}"
-        />
-
         <x-atoms.date
             name="fecha_inicio"
             label="{{ __('comercial.contratos.campo_fecha_inicio') }}"
@@ -179,86 +168,6 @@
             value="{{ $fechaFin }}"
             help="{{ __('comercial.contratos.campo_fecha_fin_ayuda') }}"
             error="{{ $errors->first('fecha_fin') }}"
-        />
-    </x-molecules.form-section>
-
-    <x-molecules.form-section
-        :title="__('comercial.contratos.seccion_clima')"
-        :count="__('comercial.contratos.campos_contador', ['cantidad' => 7])"
-    >
-        <div class="ag-form-section__field--full ag-contratos-form__ayuda">
-            {{ __('comercial.contratos.seccion_clima_ayuda') }}
-        </div>
-
-        <x-atoms.input
-            type="number"
-            name="viento_max_kmh"
-            label="{{ __('comercial.contratos.campo_viento_max_kmh') }}"
-            value="{{ $valor('viento_max_kmh') }}"
-            min="0.01"
-            step="0.01"
-            error="{{ $errors->first('viento_max_kmh') }}"
-        />
-
-        <x-atoms.input
-            type="number"
-            name="temperatura_max_c"
-            label="{{ __('comercial.contratos.campo_temperatura_max_c') }}"
-            value="{{ $valor('temperatura_max_c') }}"
-            step="0.01"
-            error="{{ $errors->first('temperatura_max_c') }}"
-        />
-
-        <x-atoms.input
-            type="number"
-            name="humedad_min_pct"
-            label="{{ __('comercial.contratos.campo_humedad_min_pct') }}"
-            value="{{ $valor('humedad_min_pct') }}"
-            min="0"
-            max="100"
-            step="0.01"
-            error="{{ $errors->first('humedad_min_pct') }}"
-        />
-
-        <x-atoms.input
-            type="number"
-            name="humedad_max_pct"
-            label="{{ __('comercial.contratos.campo_humedad_max_pct') }}"
-            value="{{ $valor('humedad_max_pct') }}"
-            min="0"
-            max="100"
-            step="0.01"
-            error="{{ $errors->first('humedad_max_pct') }}"
-        />
-
-        <x-atoms.input
-            type="number"
-            name="velocidad_max_kmh"
-            label="{{ __('comercial.contratos.campo_velocidad_max_kmh') }}"
-            value="{{ $valor('velocidad_max_kmh') }}"
-            min="0.01"
-            step="0.01"
-            error="{{ $errors->first('velocidad_max_kmh') }}"
-        />
-
-        <x-atoms.input
-            type="number"
-            name="umbral_reporte_avance_ha"
-            label="{{ __('comercial.contratos.campo_umbral_reporte_avance_ha') }}"
-            value="{{ $valor('umbral_reporte_avance_ha') }}"
-            min="0.01"
-            step="0.01"
-            error="{{ $errors->first('umbral_reporte_avance_ha') }}"
-        />
-
-        <x-atoms.input
-            type="number"
-            name="altura_vuelo_m"
-            label="{{ __('comercial.contratos.campo_altura_vuelo_m') }}"
-            value="{{ $valor('altura_vuelo_m') }}"
-            min="0.01"
-            step="0.01"
-            error="{{ $errors->first('altura_vuelo_m') }}"
         />
     </x-molecules.form-section>
 
