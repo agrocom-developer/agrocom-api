@@ -345,6 +345,43 @@ it('renderiza el listado y los formularios de alta/edición', function () {
     $this->get(route('panel.campanias.edit', $campania))->assertOk()->assertSee('2025-2026');
 });
 
+it('el formulario ofrece el selector de estación y el listado muestra Activa/Inactiva', function () {
+    $cliente = clienteParaCampanias();
+    [$dueno, $idRol] = usuarioConRolParaCampanias('dueno', 'dueno');
+    entrarAlPanelParaCampanias($dueno, $idRol);
+
+    $abierta = Campania::query()->create([
+        'cliente_id' => $cliente->id,
+        'codigo' => '2025-2026',
+        'estacion' => 'verano',
+        'fecha_inicio' => '2025-07-01',
+        'fecha_fin' => '2026-06-30',
+        'estado' => 'abierta',
+    ]);
+    Campania::query()->create([
+        'cliente_id' => $cliente->id,
+        'codigo' => '2023-2024',
+        'estacion' => 'invierno',
+        'fecha_inicio' => '2023-07-01',
+        'fecha_fin' => '2024-06-30',
+        'estado' => 'cerrada',
+    ]);
+
+    $this->get(route('panel.campanias.create'))
+        ->assertOk()
+        ->assertSee(__('campania.campanias.campo_estacion'))
+        ->assertSee(__('campania.campania.estacion.invierno'))
+        ->assertSee(__('campania.campania.estacion.verano'));
+
+    $this->get(route('panel.campanias.index'))
+        ->assertOk()
+        ->assertSeeInOrder([__('campania.campanias.actividad_activa'), __('campania.campanias.actividad_inactiva')]);
+
+    $this->get(route('panel.campanias.edit', $abierta))
+        ->assertOk()
+        ->assertSee(__('campania.campanias.actividad_activa'));
+});
+
 it('filtra el listado por cliente', function () {
     $clienteA = clienteParaCampanias('Agropecuaria del Valle S.R.L.', '999888777');
     $clienteB = clienteParaCampanias('Agrícola San Marcos S.R.L.', '111222333');
