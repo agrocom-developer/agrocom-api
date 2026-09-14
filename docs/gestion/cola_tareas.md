@@ -1,5 +1,26 @@
 # Cola de tareas automatizables
 
+**Última actualización: 14/9/2026 (planificación tras la tarea 92 — tareas 93
+a 95 escritas).** Con HU-76 (tarea 92, PR #196) integrada, las filas 90 a 92
+quedan `hecha`. Las tres siguientes ya tenían fila con criterio ejecutable
+desde la ronda del 13/9/2026 (Sprint 16): HU-77 (93, campaña con estación),
+HU-78 (94, módulo `Mezclas` — revierte CR-01, crítica) y HU-79 (95, tipo
+sólido/líquido en la orden, crítica). Esta sesión solo escribió
+`prompts/93-campania-estacion.md`, `prompts/94-mezclas-caldo.md` y
+`prompts/95-tipo-insumo-orden.md` — no cambia alcance ni orden de la cola.
+
+Hallazgo real, no pedido, anotado abajo en "Deuda técnica detectada": las
+tareas 85 y 86 (HU-70/HU-80, críticas) quedaron con sus PR #189 y #190
+abiertos **en modo borrador**, sin mergear a `develop`, contra la política
+vigente (`automatizacion_desarrollo.md` §5: "ninguna sesión abre su PR en
+borrador por ser crítica" — corregida el 2/9/2026 después de que el PR #46
+bloqueara doce HU por quedar retenido). Importa acá porque la tarea 95
+(HU-79) depende explícitamente de que la 85 esté integrada: su prompt le deja
+instrucción explícita de comprobarlo primero y declararse `BLOQUEADA` sin
+tocar código si el PR #189 sigue sin mergear cuando le toque el turno, en vez
+de asumir la dependencia cumplida solo porque el orden de la cola ya pasó por
+ahí.
+
 **Última actualización: 13/9/2026 (Sprint 18 planificado — tareas 103 a
 105).** Cuarto documento de la misma ronda (`Mantenimiento.pdf`, sin texto en
 rojo): ajusta la orden de mantenimiento. Detalle en
@@ -220,9 +241,9 @@ exista el módulo `Mezclas`).
 | 87 | HU-71 — estado `pausado` de contrato sobre la máquina de estados ya existente (`TransicionesContrato`), con etiquetas de panel en el vocabulario del dueño (En Ejecución/En Aprobación/Ejecutado/Pausado) | `./bin/verify` = 0, con test de transición `vigente ↔ pausado` válida, test de una transición inválida (p. ej. `borrador → pausado`) rechazada, y test de que el enum guardado en base no cambia sus valores existentes | `app/Dominios/Comercial/Dominio/MaquinaEstados/TransicionesContrato.php`, `app/Dominios/Comercial/Dominio/EstadoContrato.php`, migración `ALTER` del `CHECK`, vistas de `Comercial`, `lang/es/comercial.php`, tests | no | 2 | **hecha** (PR #191, mergeado 13/9/2026) |
 | 88 | HU-72 — alta masiva de lotes: extiende `CrearCampo` (ya acepta `lotes[]`) con una cantidad `N` y un cultivo por defecto, para renombrar y dibujar el polígono de cada lote después sin perder el cultivo asignado | `./bin/verify` = 0, con test de que pedir `N` lotes genera `N` filas de `com_lotes` + `com_lote_campania` con el cultivo elegido, y test de que renombrar/dibujar un lote generado no le borra el cultivo | `app/Dominios/Comercial/**`, `resources/views/components/**` (formulario), `lang/es/comercial.php`, tests | no | 3 | **hecha** (PR #192, mergeado 14/9/2026) |
 | 89 | HU-73 — atributos de terreno del lote: `desnivel` (ninguno/algunos/varios/empinado) y `limpieza` (limpio/algunos_obstaculos/muchos_obstaculos), catálogos cerrados distintos de `restricciones` (texto libre ya existente) | `./bin/verify` = 0, con test de valor fuera de catálogo rechazado en ambos campos | `app/Dominios/Comercial/**`, migración `ALTER com_lotes`, `lang/es/comercial.php`, tests | no | 2 | **hecha** (PR #193, mergeado 14/9/2026) |
-| 90 | HU-74 — acomodaciones logísticas del contrato: `brinda_alimentacion`/`brinda_hospedaje`/`brinda_combustible` (booleanos) + `observaciones_logistica` | `./bin/verify` = 0, con test de guardado y lectura de los tres booleanos y las observaciones | `app/Dominios/Comercial/**`, migración `ALTER com_contratos`, `lang/es/comercial.php`, tests | no | 2 | **pendiente** |
-| 91 | HU-75 — ficha de cliente ampliada (`ubicacion_oficina`, `logo_path`) y contactos con los tipos nuevos Gerente General/Finanzas/Secretario, sumados a los ya existentes | `./bin/verify` = 0, con test de que los 3 tipos de contacto nuevos se aceptan y de que un tipo fuera del catálogo completo sigue rechazándose | `app/Dominios/Comercial/**`, migración `ALTER com_clientes` + `CHECK` de `com_cliente_contactos`, `lang/es/comercial.php`, tests | no | 2 | **pendiente** |
-| 92 | HU-76 — Departamento/Municipio/Localidad/Coordenada en Propiedad, ampliando ADR 0018 punto 1 con una adenda fechada (no lo reescribe: el pedido explícito que faltaba para justificar la estructura ya existe) | `./bin/verify` = 0, con test de guardado/lectura de los 4 campos nuevos y de que una coordenada fuera de rango (±90/±180) se rechaza | `app/Dominios/Comercial/**`, migración `ALTER com_propiedades`, `docs/decisiones/0018-propiedad-nivel-terreno-y-alcance-contrato.md` (solo adenda), `lang/es/comercial.php`, tests | no | 2 | **pendiente** |
+| 90 | HU-74 — acomodaciones logísticas del contrato: `brinda_alimentacion`/`brinda_hospedaje`/`brinda_combustible` (booleanos) + `observaciones_logistica` | `./bin/verify` = 0, con test de guardado y lectura de los tres booleanos y las observaciones | `app/Dominios/Comercial/**`, migración `ALTER com_contratos`, `lang/es/comercial.php`, tests | no | 2 | **hecha** (PR #194, mergeado 14/9/2026) |
+| 91 | HU-75 — ficha de cliente ampliada (`ubicacion_oficina`, `logo_path`) y contactos con los tipos nuevos Gerente General/Finanzas/Secretario, sumados a los ya existentes | `./bin/verify` = 0, con test de que los 3 tipos de contacto nuevos se aceptan y de que un tipo fuera del catálogo completo sigue rechazándose | `app/Dominios/Comercial/**`, migración `ALTER com_clientes` + `CHECK` de `com_cliente_contactos`, `lang/es/comercial.php`, tests | no | 2 | **hecha** (PR #195, mergeado 14/9/2026) |
+| 92 | HU-76 — Departamento/Municipio/Localidad/Coordenada en Propiedad, ampliando ADR 0018 punto 1 con una adenda fechada (no lo reescribe: el pedido explícito que faltaba para justificar la estructura ya existe) | `./bin/verify` = 0, con test de guardado/lectura de los 4 campos nuevos y de que una coordenada fuera de rango (±90/±180) se rechaza | `app/Dominios/Comercial/**`, migración `ALTER com_propiedades`, `docs/decisiones/0018-propiedad-nivel-terreno-y-alcance-contrato.md` (solo adenda), `lang/es/comercial.php`, tests | no | 2 | **hecha** (PR #196, mergeado 14/9/2026; `ubicacion` no se tocó, coexiste con las 5 columnas nuevas) |
 | 93 | HU-77 — campaña con estación (invierno/verano) y nombre autogenerado (`Estación/AñoInicio/AñoFin`); el panel puede mostrar "Activa"/"Inactiva" como etiqueta de `planificada+abierta`/`cerrada`, pero la máquina sigue siendo irreversible desde `cerrada` (ADR 0015), sin excepción nueva | `./bin/verify` = 0, con test de que crear una campaña sin nombre lo autogenera correcto, y test de regresión de que una campaña `cerrada` sigue sin poder reabrirse | `app/Dominios/Campania/**`, migración `ALTER cpn_campanias`, `lang/es/campania.php`, tests | no | 2 | **pendiente** |
 | 94 | HU-78 — módulo `Mezclas`: el piloto registra producto y cantidad cargados en el caldo al crear una aplicación — **revierte CR-01** (nota fechada ya puesta en `especificacion_funcional_tecnica.md` §7 el 13/9/2026; esta tarea reescribe la sección con el alcance nuevo) | `./bin/verify` = 0, con test de idempotencia por `uuid_cliente` sobre el nuevo tipo de registro de sync, test de que el reporte técnico lista los productos cargados en vez de la nota fija de "fuera de alcance", y `grep` de que §7 ya no describe la prohibición absoluta sin la nota de reversión | módulo nuevo (a decidir por la propia tarea entre `Operaciones/Mezclas` u otro, documentando el porqué como hizo la tarea 18 con Mezclas/Operaciones), `Sincronizacion/Aplicacion/**`, migración nueva, `docs/especificacion/especificacion_funcional_tecnica.md` (§7), `docs/api/openapi.yaml`, tests | **sí** | 5 | **pendiente** |
 | 95 | HU-79 — tipo sólido/líquido en la orden de aplicación con catálogo de insumos por tipo (reusa el catálogo de la tarea 94); depende de que las tareas 85 y 94 estén integradas para no iterar dos veces sobre `ope_ordenes_aplicacion` | `./bin/verify` = 0, con test de que una orden sólida pide kilos por vuelo y una líquida litros por hectárea, y test de que un insumo sólido no se puede cargar en una orden marcada líquida | `app/Dominios/Operaciones/**`, migración `ALTER ope_ordenes_aplicacion`, `lang/es/operaciones.php`, tests | **sí** | 4 | **pendiente** |
@@ -316,6 +337,33 @@ pedido por el dueño — ver
 existiera (tarea 72, 9/9/2026). Hoy no se puede abrir una orden de
 mantenimiento sobre un generador. Sin fila propia hasta que el usuario decida
 si entra a la cola.
+
+**Pendiente al 14/9/2026** (hallazgo propio al planificar tras la tarea 92,
+no pedido por el dueño): los PR #189 (tarea 85, HU-70) y #190 (tarea 86,
+HU-80) — ambos `critica=si` — quedaron abiertos **en modo borrador** y sin
+mergear a `develop` (confirmado con `gh pr view 189/190`: `isDraft: true`,
+`mergedAt: null`). Contradice la política vigente, ya corregida una vez:
+`docs/gestion/automatizacion_desarrollo.md` §5 dice explícitamente "ninguna
+sesión abre su PR en borrador por ser crítica" desde el 2/9/2026, después de
+que el PR #46 (motor de sync) quedara retenido en borrador y bloqueara doce
+HU de los sprints 2 a 5 hasta que el ciclo se detuvo solo. `bin/ciclo` (fase
+`fase_pr`) ya tiene esa corrección — con `critica=si` no pasa `--draft`,
+solo anota `runs/revision-pendiente.txt` — pero el log (`runs/ciclo.log`,
+líneas ~1176 y ~1197) muestra que al llegar a `fase_pr` los PR #189/#190 **ya
+existían**: los creó la propia sesión de implementación, en borrador, antes
+de que el ciclo interviniera — el mismo bug documentado para los PR #59/#62
+el 2/9/2026 ("las sesiones de implementación lo leyeron y abrieron sus PR en
+borrador por su cuenta"). La causa probable: el texto de
+`prompts/plantillas/planificar.md` (la plantilla que redacta cada prompt de
+planificación, esta sesión incluida) todavía dice, en su sección final,
+"`critica=si` para lo de la lista de arriba (**PR en borrador**)" — en
+contra de lo que dicen `CLAUDE.md` y `automatizacion_desarrollo.md` §5. Esta
+sesión no tocó esa plantilla (no está en su alcance) y en los prompts nuevos
+94 y 95 (críticos) evitó repetir la frase "PR en borrador" para no perpetuar
+el bug — pero los PR #189/#190 siguen trabados y bloquean HU-79 (tarea 95),
+que depende de HU-70 integrada. Sin fila propia: decisión del usuario —
+corregir la plantilla, y decidir si pasa los PR #189/#190 a "ready for
+review" a mano para destrabar la 95.
 
 ### Fuera del ciclo automático
 
