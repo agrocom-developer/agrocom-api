@@ -332,8 +332,12 @@ numeración de HU sigue desde 70 (no desde 59) para no chocar con la de
 | HU-78 | Como **piloto**, quiero registrar qué productos y en qué cantidad se cargaron en el caldo (p. ej. Glifosato, 24D, litros de agua, Urea) al crear una aplicación, para que quede trazado qué se aplicó realmente | **Revierte CR-01** (nota fechada ya en `especificacion_funcional_tecnica.md` §7): módulo `Mezclas` nuevo (`ope_mezclas`/`ope_mezcla_items`, producto + cantidad + unidad) ligado por `uuid_cliente` al motor de sync; el reporte técnico deja de imprimir la nota fija de "fuera de alcance" y lista los productos cargados; la sección §7 de la especificación se reescribe con el alcance nuevo (qué transcribe el piloto vs. qué sigue sin validar Agrocom) | 4,0 d |
 | HU-79 | Como **encargado**, quiero indicar si una orden es de producto sólido (kilos por vuelo: fertilizante, semilla de pasto) o líquido (litros por hectárea: insecticida/herbicida/fungicida/fertilizante líquido/coadyuvante/antiespumante), para que la orden pida los datos correctos según el insumo | `tipo_insumo` (`solido/liquido`) en `ope_ordenes_aplicacion`, catálogo de productos por tipo (reusa `Mezclas` de HU-78); depende de HU-78 (mismo catálogo) y HU-70 (misma tabla, para no iterarla dos veces) | 3,0 d |
 | HU-80 | Como **jefe de campo**, quiero que el reporte incluya la cantidad de ciclos de batería, el ciclo actual, las horas de vuelo del dron y fotos de control/balanceo/limpieza, junto con la fecha y hora de emisión, para no preguntar por WhatsApp el estado del equipo | Contrato de lectura nuevo de `Operaciones` hacia `Mantenimiento` (mismo patrón que `LecturaAlertasTemperaturaBateria`) trae `ciclos_acumulados` real; nuevos campos de evidencia (`horas_vuelo_dron`, `foto_control`, `foto_ciclo_bateria_balanceo`, `foto_dron_limpio`) ligados por `uuid_cliente`; el PDF imprime `generado_en` (ya existe en la base, solo falta el blade) junto con batería/ciclos/horas de vuelo | 3,0 d |
+| HU-91 | Como **encargado**, quiero que el contrato deje de pedir un adelanto en porcentaje y el bloque completo de "Parámetros de vuelo" (clima, velocidad máxima, umbral de reporte y altura de vuelo), porque esos siete campos no van en el contrato — quedan solo en la Orden o heredan del sistema | Se elimina `adelanto_pct` de `com_contratos` (columna, validación, formulario, listado); `adelanto_monto` se relabelea a "Adelanto Solicitado" (mismo criterio de adopción de label que "Monto Estimado", sin migración de por medio); se elimina la sección completa "Parámetros de vuelo" (`viento_max_kmh`/`temperatura_max_c`/`humedad_min_pct`/`humedad_max_pct`/`velocidad_max_kmh`/`umbral_reporte_avance_ha`/`altura_vuelo_m`) del formulario y del modelo de contrato — el contrato deja de tener límites propios, todo hereda de la Orden o del valor por defecto del sistema (RF-60). `com_contrato_ventanas` **no se toca**: confirmado con el dueño (14/9/2026) que "VENTANA DE APLICACION (ORDEN DE APLICACION)" del Word era la misma instrucción de sacar parámetros de vuelo, leída en el contexto de esa pantalla — no una reubicación de la ventana; ADR 0015 punto 5 sigue vigente | 1,5 d |
+| HU-92 | Como **jefe de campo**, quiero que una Orden de Aplicación pueda cubrir varios lotes de la propiedad y repartir esos lotes entre uno o más equipos con sus hectáreas, indicando cuántos equipos hacen falta, para no limitarme a un lote por orden | **Amplía HU-70** (ya integrada, PR #189): `ope_ordenes_aplicacion` deja de tener un `lote_id` único y pasa a N lotes vía una tabla de detalle nueva (`orden_lotes`: `orden_id`, `lote_id`, `hectareas_solicitadas`), con el índice único "una orden vigente por lote" migrado a esa tabla; en `/panel/ordenes/crear` se agrega "Cantidad de Equipos Necesarios" (default 1) — con 1 equipo se asigna a un dron/equipo específico que ejecuta el total de hectáreas de todos los lotes de la orden; con 2 o más, cada equipo elige un subconjunto de esos lotes (selección múltiple) y sus hectáreas en `/panel/asignacion-equipos`, y confirmar genera un `Trabajo` por cada par equipo↔lote (mismo criterio de generación automática que ya usa `AsignarEquiposOrden`); el campo hoy llamado "Nro. Aplicación" pasa a "Número de aplicaciones" (cambio de label, mismo `nro_aplicacion`) | 5,0 d |
+| HU-93 | Como **encargado**, quiero que el listado de Trabajos muestre a qué Orden de Trabajo y equipo pertenece cada uno, y poder editarlo o eliminarlo antes de validarlo, para no navegar a otra pantalla ni perder un trabajo cargado mal | El listado de `/panel/trabajos` suma las columnas "Nro. Trabajo", "Orden de Trabajo" (`nro_aplicacion` de la orden) y "equipo asignado", junto a "Hectáreas"/"Estado" ya existentes; gana acciones de editar/eliminar solo mientras el trabajo no esté `validado` (invariante 8: soft delete; invariante 2: un trabajo validado nunca se sobrescribe — no se ofrece ni editar ni eliminar sobre uno validado, criterio por defecto ya escrito en `docs/negocio/observaciones_operaciones_comercial_2026-09-13.md` §4.4) | 2,0 d |
+| HU-94 | Como **encargado**, quiero delimitar el perímetro del Campo en el mapa al crearlo, y recién después dividirlo en Lotes viendo ese límite como referencia, para no cargar un lote sin saber dónde termina el campo | `com_campos.geometria` ya existe en la base y en el modelo (ADR 0018) pero ningún formulario la expone — `CrearCampoRequest` lo dejó documentado como pendiente desde tarea 35/68. Se suma a `/panel/campos/crear` y `.../edit` el mismo editor de mapa que ya usan los lotes, para el perímetro propio del campo; la fila de lote con editor de mapa se saca de la pantalla de ALTA del campo (el generador de HU-72 sigue creando lotes provisorios sin geometría ahí) — dibujar el polígono de un lote pasa a requerir siempre un campo ya guardado (edición del campo, o `/panel/lotes/crear` con el campo elegido); el editor de mapa del lote pinta el perímetro del campo elegido como capa de referencia de solo lectura | 3,0 d |
 
-**Total: 22,5 d · 0 pantallas nuevas de menú (todas amplían pantallas existentes, salvo la asignación de HU-70)**
+**Total: 34,0 d · 0 pantallas nuevas de menú (todas amplían pantallas existentes, salvo la asignación de HU-70)**
 
 **Orden y dependencias.** HU-70 va primera: resuelve el reclamo activo del
 dueño (audio 1) y varias observaciones del Word cuelgan de la misma
@@ -341,18 +345,33 @@ cardinalidad orden↔trabajo. HU-80 segunda, por ser el otro reclamo por audio y
 no depender de nada. HU-71 a HU-77 son independientes entre sí y de bajo
 riesgo — se intercalan según convenga. HU-78 va antes que HU-79 porque
 comparten el catálogo de insumos; HU-79 además espera a HU-70 integrada para
-no iterar dos veces sobre `ope_ordenes_aplicacion`.
+no iterar dos veces sobre `ope_ordenes_aplicacion`. HU-92 también reescribe
+`ope_ordenes_aplicacion` (pasa de 1 a N lotes) — conviene resolverla junto con
+o inmediatamente antes de HU-79, para no iterar la misma tabla tres veces.
+HU-91, HU-93 y HU-94 son independientes del resto. HU-94 conviene resolverla
+antes que cualquier otra que toque el formulario de campos/lotes (ninguna de
+este sprint lo hace), y no depende de HU-72 (Sprint 16, ya integrada) más que
+en no romper su generador de alta masiva.
 
-**HU-70, HU-78, HU-79 y HU-80 son críticas** (tocan el motor de sync o una
-guarda de negocio ya existente) — igual se implementan y se integran; la
+**HU-70, HU-78, HU-79, HU-80 y HU-92 son críticas** (tocan el motor de sync o
+una guarda de negocio ya existente) — igual se implementan y se integran; la
 revisión línea por línea es posterior, anotada en `runs/revision-pendiente.txt`
-(regla de `CLAUDE.md` y `automatizacion_desarrollo.md` §5).
+(regla de `CLAUDE.md` y `automatizacion_desarrollo.md` §5). HU-91, HU-93 y
+HU-94 no son críticas: son columnas que se sacan de un formulario, un
+listado con soft delete ya cubierto por la plataforma, y un editor de mapa
+que ya existe para lotes y se reutiliza para el campo — ninguna toca el
+motor de sync ni una máquina de estados.
 
-**Lo que quedó afuera a propósito** (ver el documento de observaciones,
-sección 4): la reubicación de la ventana de aplicación y el recorte de
-parámetros de vuelo del contrato, y el alcance exacto de "editar/eliminar
-trabajo" — son ambiguos en el Word y necesitan una aclaración puntual del
-dueño antes de convertirse en HU.
+**Ambigüedades de la sección 4 del documento de observaciones — resueltas el
+14/9/2026** (ver
+`docs/negocio/observaciones_operaciones_comercial_2026-09-14.md`): el dueño
+compartió el texto completo del Word original y confirmó en el momento el
+recorte de parámetros de vuelo del contrato (HU-91) y que la ventana de
+aplicación no se reubica. También surgió, leyendo el documento completo, que
+la Orden de Aplicación debe cubrir varios lotes (no estaba en la lectura
+parcial del 13/9) — HU-92. El alcance de "editar/eliminar trabajo" no cambió:
+sigue el criterio por defecto ya escrito (§4.4), ahora con columnas de
+listado confirmadas — HU-93.
 
 ---
 
