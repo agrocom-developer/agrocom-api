@@ -7,17 +7,19 @@ use App\Dominios\Operaciones\Dominio\Excepciones\OrdenVigenteDuplicadaEnLote;
 use App\Dominios\Operaciones\Dominio\Excepciones\TransicionOrdenNoPermitida;
 use App\Dominios\Operaciones\Dominio\MaquinaEstados\TransicionesOrden;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
-use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Única clase que crea/muta el `estado` de `ope_ordenes_aplicacion`
  * (invariante 7 de CLAUDE.md), mismo criterio que `MaquinaEstadosContrato`.
  *
- * La guarda de "una única orden vigente por lote" NO se duplica acá en PHP:
- * ya vive en el índice parcial de la base
- * (`ope_ordenes_aplicacion_lote_vigente_unico`, ver docblock de la
- * migración) — `activar()` solo atrapa la `QueryException` que esa
- * violación produce y la traduce a un error de dominio legible.
+ * La guarda de "una única orden vigente por lote" (HU-92, tarea 107) YA NO
+ * puede vivir en un índice parcial de Postgres: desde que una orden cubre N
+ * lotes (`ope_orden_lotes`), la regla cruza esa tabla (`lote_id`) con
+ * `ope_ordenes_aplicacion.estado` — un índice parcial no puede condicionar
+ * sobre una tabla ajena (ver docblock de la migración
+ * `create_ope_orden_lotes_table`). `activar()` la verifica explícito, DENTRO
+ * de la transacción que también aplica el cambio de estado.
  */
 final class MaquinaEstadosOrden
 {
@@ -30,13 +32,11 @@ final class MaquinaEstadosOrden
     }
 
     /**
-     * `emitida → vigente` (HU-25, tarea 38). Sin guarda de datos adicional
-     * (a diferencia de `MaquinaEstadosContrato::activar()`): la única regla
-     * de negocio de esta transición es la unicidad por lote, y esa vive en
-     * la base.
+     * `emitida → vigente` (HU-25, tarea 38; guarda rediseñada HU-92, tarea
+     * 107).
      *
      * @throws TransicionOrdenNoPermitida si `$orden` no está `emitida`.
-     * @throws OrdenVigenteDuplicadaEnLote si el lote ya tiene otra orden vigente.
+     * @throws OrdenVigenteDuplicadaEnLote si alguno de los lotes de la orden ya tiene otra orden vigente.
      */
     public function activar(OrdenAplicacion $orden): OrdenAplicacion
     {
@@ -47,34 +47,51 @@ final class MaquinaEstadosOrden
             throw TransicionOrdenNoPermitida::entre($desde, $hasta);
         }
 
-        $orden->estado = $hasta;
+        return DB::transaction(function () use ($orden, $hasta): OrdenAplicacion {
+            $this->verificarSinOrdenVigenteQueComparteLote($orden);
 
-        try {
+            $orden->estado = $hasta;
             $orden->save();
-        } catch (QueryException $excepcion) {
-            $this->relanzarComoDuplicado($excepcion, (int) $orden->lote_id);
-        }
 
-        return $orden->refresh();
+            return $orden->refresh();
+        });
     }
 
     /**
-     * Formato del mensaje distinto por driver: Postgres nombra el índice
-     * (`ope_ordenes_aplicacion_lote_vigente_unico`); SQLite (motor de los
-     * tests) nombra tabla.columna (`ope_ordenes_aplicacion.lote_id`) — mismo
-     * criterio que `CrearDron::relanzarComoDuplicado`.
+     * Bloquea (`FOR UPDATE`, sin efecto en SQLite — motor de los tests) TODAS
+     * las filas de `ope_orden_lotes` de los lotes de `$orden`, sin importar
+     * de qué orden sean: sin este lock, dos activaciones concurrentes de
+     * órdenes DISTINTAS que comparten un lote leerían ambas "ninguna vigente
+     * todavía" (ninguna cambió su estado aún) y las dos pasarían la guarda —
+     * antes, el índice único parcial cerraba esa carrera a nivel de base;
+     * acá lo hace este lock, serializando la segunda transacción hasta que
+     * la primera confirme (o revierta) su cambio de estado.
      *
-     * @throws OrdenVigenteDuplicadaEnLote si la violación corresponde al índice de lote vigente.
-     * @throws QueryException si la violación no es la contemplada.
+     * @throws OrdenVigenteDuplicadaEnLote si algún lote de `$orden` ya está cubierto por otra orden vigente.
      */
-    private function relanzarComoDuplicado(QueryException $excepcion, int $loteId): never
+    private function verificarSinOrdenVigenteQueComparteLote(OrdenAplicacion $orden): void
     {
-        $mensaje = $excepcion->getMessage();
+        $lotesIds = DB::table('ope_orden_lotes')
+            ->where('orden_id', $orden->id)
+            ->whereNull('deleted_at')
+            ->pluck('lote_id');
 
-        if (str_contains($mensaje, 'ope_ordenes_aplicacion_lote_vigente_unico') || str_contains($mensaje, 'ope_ordenes_aplicacion.lote_id')) {
-            throw OrdenVigenteDuplicadaEnLote::porLote($loteId);
+        if ($lotesIds->isEmpty()) {
+            return;
         }
 
-        throw $excepcion;
+        $loteVigenteEnOtraOrden = DB::table('ope_orden_lotes as ol')
+            ->join('ope_ordenes_aplicacion as o', 'o.id', '=', 'ol.orden_id')
+            ->whereIn('ol.lote_id', $lotesIds)
+            ->whereNull('ol.deleted_at')
+            ->whereNull('o.deleted_at')
+            ->lockForUpdate()
+            ->where('o.id', '!=', $orden->id)
+            ->where('o.estado', EstadoOrdenAplicacion::Vigente->value)
+            ->value('ol.lote_id');
+
+        if ($loteVigenteEnOtraOrden !== null) {
+            throw OrdenVigenteDuplicadaEnLote::porLote((int) $loteVigenteEnOtraOrden);
+        }
     }
 }
