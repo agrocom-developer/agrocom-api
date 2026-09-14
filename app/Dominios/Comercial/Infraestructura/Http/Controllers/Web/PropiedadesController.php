@@ -77,6 +77,11 @@ final class PropiedadesController
                 (int) $datos['cliente_id'],
                 (string) $datos['nombre'],
                 $this->cadenaONull($datos['ubicacion'] ?? null),
+                $this->cadenaONull($datos['departamento'] ?? null),
+                $this->cadenaONull($datos['municipio'] ?? null),
+                $this->cadenaONull($datos['localidad'] ?? null),
+                $this->cadenaONull($datos['latitud'] ?? null),
+                $this->cadenaONull($datos['longitud'] ?? null),
             );
         } catch (PropiedadDuplicada $excepcion) {
             return redirect()
@@ -113,6 +118,11 @@ final class PropiedadesController
                 (int) $datos['cliente_id'],
                 (string) $datos['nombre'],
                 $this->cadenaONull($datos['ubicacion'] ?? null),
+                $this->cadenaONull($datos['departamento'] ?? null),
+                $this->cadenaONull($datos['municipio'] ?? null),
+                $this->cadenaONull($datos['localidad'] ?? null),
+                $this->cadenaONull($datos['latitud'] ?? null),
+                $this->cadenaONull($datos['longitud'] ?? null),
             );
         } catch (PropiedadDuplicada $excepcion) {
             return redirect()

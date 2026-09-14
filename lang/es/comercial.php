@@ -140,6 +140,7 @@ return [
         'campo_ubicacion_ayuda' => 'Localidad física: departamento, provincia, municipio o pueblo.',
         'estado_form' => 'Los cambios se guardan al confirmar.',
         'volver' => 'Volver a propiedades',
+        'error_coordenada_incompleta' => 'Completá latitud y longitud juntas, o dejá las dos vacías.',
     ],
 
     // HU-23 (tarea 34): administración de contratos con sus ventanas de

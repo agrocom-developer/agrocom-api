@@ -44,6 +44,16 @@ it('com_clientes tiene ubicación de oficina y logo, nullable (HU-75, tarea 91)'
     expect(Schema::hasColumns('com_clientes', ['ubicacion_oficina', 'logo_path']))->toBeTrue();
 });
 
+it('com_propiedades tiene departamento, municipio, localidad y coordenada, nullable (HU-76, tarea 92)', function () {
+    expect(Schema::hasColumns('com_propiedades', [
+        'departamento',
+        'municipio',
+        'localidad',
+        'latitud',
+        'longitud',
+    ]))->toBeTrue();
+});
+
 it('com_contratos tiene las acomodaciones logísticas, con los booleanos en false por defecto (HU-74, tarea 90)', function () {
     expect(Schema::hasColumns('com_contratos', [
         'brinda_alimentacion',
