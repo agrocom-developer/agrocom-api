@@ -10,6 +10,8 @@ use App\Dominios\Compartido\Dominio\AccionBitacora;
 use App\Dominios\Compartido\Infraestructura\Eloquent\Bitacora;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Dominio\TipoAplicacion;
+use App\Dominios\Operaciones\Dominio\TipoInsumo;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\CategoriaInsumo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecMenu;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecPermission;
@@ -106,6 +108,16 @@ function loteParaOrdenes(Campo $campo, string $codigo = 'L-01'): Lote
  * `loteParaOrdenes()`: ningún test de este archivo ejercita el tope contra
  * `com_lotes.hectareas`, así que alcanza con no superarlo.
  */
+/**
+ * Categoría de insumo líquida sembrada por `OperacionesCategoriasInsumoSeeder`
+ * (parte de `CatalogoSeeder`, ya corrido por el `beforeEach` del archivo) —
+ * `firstOrCreate` solo por si algún test puntual corriera sin ese seed.
+ */
+function categoriaInsumoLiquidaParaOrdenes(): CategoriaInsumo
+{
+    return CategoriaInsumo::query()->firstOrCreate(['nombre' => 'Herbicida'], ['tipo_insumo' => TipoInsumo::Liquido]);
+}
+
 function payloadOrden(int $contratoId, int $loteId, array $overrides = []): array
 {
     return array_merge([
@@ -114,6 +126,7 @@ function payloadOrden(int $contratoId, int $loteId, array $overrides = []): arra
         'cantidad_equipos_necesarios' => 1,
         'nro_aplicacion' => 1,
         'tipo_aplicacion' => 'desarrollo',
+        'categoria_insumo_id' => categoriaInsumoLiquidaParaOrdenes()->id,
         'litros_ha' => '15.00',
         'fecha_emision' => Carbon::today()->toDateString(),
     ], $overrides);
@@ -196,6 +209,21 @@ it('rechaza hectareas_solicitadas que superan las hectáreas del lote, sin persi
     ]))->assertSessionHasErrors('lotes.0.hectareas_solicitadas');
 
     expect(OrdenAplicacion::query()->where('contrato_id', $contrato->id)->exists())->toBeFalse();
+});
+
+it('rechaza un lote de un cliente distinto del contrato: el contrato es el quién, la orden es el cómo', function () {
+    [$encargado, $idRol] = usuarioConRolParaOrdenes('encargado', 'encargado_operaciones');
+    entrarAlPanelParaOrdenes($encargado, $idRol);
+    $clienteA = clienteParaOrdenes();
+    $contratoDeA = contratoParaOrdenes($clienteA->id);
+
+    $clienteB = Cliente::query()->create(['razon_social' => 'Cliente Ajeno S.R.L.', 'nit' => '111222333', 'tipo_persona' => 'juridica']);
+    $loteDeB = loteParaOrdenes(campoParaOrdenes($clienteB->id));
+
+    $this->post(route('panel.ordenes.store'), payloadOrden($contratoDeA->id, $loteDeB->id))
+        ->assertSessionHasErrors('lotes.0.lote_id');
+
+    expect(OrdenAplicacion::query()->where('contrato_id', $contratoDeA->id)->exists())->toBeFalse();
 });
 
 it('el formulario de alta muestra el campo tipo de aplicación, preseleccionado en desarrollo', function () {
@@ -349,6 +377,73 @@ it('litros_ha menor o igual a cero es un error de validación, no persiste', fun
 
     $this->post(route('panel.ordenes.store'), payloadOrden($contrato->id, $lote->id, ['litros_ha' => '0']))
         ->assertSessionHasErrors('litros_ha');
+
+    expect(OrdenAplicacion::query()->count())->toBe(0);
+});
+
+it('una categoría de insumo líquida pide litros_ha y guarda kilos_por_vuelo en null', function () {
+    [$encargado, $idRol] = usuarioConRolParaOrdenes('encargado', 'encargado_operaciones');
+    entrarAlPanelParaOrdenes($encargado, $idRol);
+    $cliente = clienteParaOrdenes();
+    $contrato = contratoParaOrdenes($cliente->id);
+    $lote = loteParaOrdenes(campoParaOrdenes($cliente->id));
+
+    // Sin litros_ha: la categoría elegida es líquida, así que hace falta.
+    $this->post(route('panel.ordenes.store'), payloadOrden($contrato->id, $lote->id, ['litros_ha' => null]))
+        ->assertSessionHasErrors('litros_ha');
+
+    expect(OrdenAplicacion::query()->count())->toBe(0);
+
+    $this->post(route('panel.ordenes.store'), payloadOrden($contrato->id, $lote->id))
+        ->assertRedirect(route('panel.ordenes.index'));
+
+    $orden = OrdenAplicacion::query()->where('contrato_id', $contrato->id)->sole();
+
+    expect((string) $orden->litros_ha)->toBe('15.00')
+        ->and($orden->kilos_por_vuelo)->toBeNull();
+});
+
+it('una categoría de insumo sólida pide kilos_por_vuelo y guarda litros_ha en null', function () {
+    [$encargado, $idRol] = usuarioConRolParaOrdenes('encargado', 'encargado_operaciones');
+    entrarAlPanelParaOrdenes($encargado, $idRol);
+    $cliente = clienteParaOrdenes();
+    $contrato = contratoParaOrdenes($cliente->id);
+    $lote = loteParaOrdenes(campoParaOrdenes($cliente->id));
+    $categoriaSolida = CategoriaInsumo::query()->where('nombre', 'Fertilizantes')->sole();
+
+    // Sin kilos_por_vuelo: la categoría elegida es sólida, así que hace falta.
+    $this->post(route('panel.ordenes.store'), payloadOrden($contrato->id, $lote->id, [
+        'categoria_insumo_id' => $categoriaSolida->id,
+        'litros_ha' => null,
+    ]))->assertSessionHasErrors('kilos_por_vuelo');
+
+    expect(OrdenAplicacion::query()->count())->toBe(0);
+
+    $this->post(route('panel.ordenes.store'), payloadOrden($contrato->id, $lote->id, [
+        'categoria_insumo_id' => $categoriaSolida->id,
+        'litros_ha' => null,
+        'kilos_por_vuelo' => '8.50',
+    ]))->assertRedirect(route('panel.ordenes.index'));
+
+    $orden = OrdenAplicacion::query()->where('contrato_id', $contrato->id)->sole();
+
+    expect((string) $orden->kilos_por_vuelo)->toBe('8.50')
+        ->and($orden->litros_ha)->toBeNull()
+        ->and($orden->categoria_insumo_id)->toBe($categoriaSolida->id);
+});
+
+it('categoria_insumo_id es obligatoria y debe existir en el catálogo', function () {
+    [$encargado, $idRol] = usuarioConRolParaOrdenes('encargado', 'encargado_operaciones');
+    entrarAlPanelParaOrdenes($encargado, $idRol);
+    $cliente = clienteParaOrdenes();
+    $contrato = contratoParaOrdenes($cliente->id);
+    $lote = loteParaOrdenes(campoParaOrdenes($cliente->id));
+
+    $this->post(route('panel.ordenes.store'), payloadOrden($contrato->id, $lote->id, ['categoria_insumo_id' => null]))
+        ->assertSessionHasErrors('categoria_insumo_id');
+
+    $this->post(route('panel.ordenes.store'), payloadOrden($contrato->id, $lote->id, ['categoria_insumo_id' => 999999]))
+        ->assertSessionHasErrors('categoria_insumo_id');
 
     expect(OrdenAplicacion::query()->count())->toBe(0);
 });
