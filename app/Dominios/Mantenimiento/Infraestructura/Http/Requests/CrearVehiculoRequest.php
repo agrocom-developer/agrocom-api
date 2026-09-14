@@ -4,6 +4,7 @@ namespace App\Dominios\Mantenimiento\Infraestructura\Http\Requests;
 
 use App\Dominios\Mantenimiento\Dominio\EstadoVehiculo;
 use App\Dominios\Mantenimiento\Dominio\TipoCombustibleVehiculo;
+use App\Dominios\Mantenimiento\Dominio\TipoVehiculo;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -22,6 +23,9 @@ use Illuminate\Validation\Rule;
  * opcionales. `kilometraje_inicial` es editable ya en el alta y también en
  * `ActualizarVehiculoRequest` — a diferencia de `ciclos_inicial` en
  * baterías (tarea 98), esta HU no lo pide inmutable.
+ *
+ * `tipo` (HU-90, tarea 105): catálogo cerrado, opcional — mismo criterio de
+ * validación que `combustible`.
  */
 final class CrearVehiculoRequest extends FormRequest
 {
@@ -30,6 +34,7 @@ final class CrearVehiculoRequest extends FormRequest
     {
         return [
             'identificador' => ['required', 'string', 'max:40'],
+            'tipo' => ['nullable', Rule::enum(TipoVehiculo::class)],
             'marca' => ['nullable', 'string', 'max:60'],
             'modelo' => ['nullable', 'string', 'max:60'],
             'anio' => ['nullable', 'integer'],

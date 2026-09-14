@@ -9,6 +9,7 @@ use App\Dominios\Mantenimiento\Aplicacion\ListarVehiculos;
 use App\Dominios\Mantenimiento\Dominio\EstadoVehiculo;
 use App\Dominios\Mantenimiento\Dominio\Excepciones\VehiculoDuplicado;
 use App\Dominios\Mantenimiento\Dominio\TipoCombustibleVehiculo;
+use App\Dominios\Mantenimiento\Dominio\TipoVehiculo;
 use App\Dominios\Mantenimiento\Infraestructura\Eloquent\Vehiculo;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Requests\ActualizarVehiculoRequest;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Requests\CrearVehiculoRequest;
@@ -37,7 +38,8 @@ use Illuminate\View\View;
  *
  * `combustible` (HU-84, tarea 99) se traduce a `TipoCombustibleVehiculo`
  * solo si viene informado — mismo criterio que `sentido` en
- * `StockController::registrarAjuste()` para un enum opcional.
+ * `StockController::registrarAjuste()` para un enum opcional. `tipo`
+ * (HU-90, tarea 105) sigue el mismo criterio con `TipoVehiculo`.
  */
 final class VehiculosController
 {
@@ -85,6 +87,7 @@ final class VehiculosController
             'basesDisponibles' => $this->basesDisponibles(),
             'estados' => EstadoVehiculo::cases(),
             'combustibles' => TipoCombustibleVehiculo::cases(),
+            'tipos' => TipoVehiculo::cases(),
         ]);
     }
 
@@ -106,6 +109,7 @@ final class VehiculosController
                 (bool) ($datos['es_4x4'] ?? false),
                 $this->cadenaONull($datos['kilometraje_inicial'] ?? null),
                 $this->cadenaONull($datos['kilometraje_actual'] ?? null),
+                isset($datos['tipo']) && $datos['tipo'] !== '' ? TipoVehiculo::from((string) $datos['tipo']) : null,
             );
         } catch (VehiculoDuplicado $excepcion) {
             return redirect()
@@ -129,6 +133,7 @@ final class VehiculosController
             'basesDisponibles' => $this->basesDisponibles(),
             'estados' => EstadoVehiculo::cases(),
             'combustibles' => TipoCombustibleVehiculo::cases(),
+            'tipos' => TipoVehiculo::cases(),
         ]);
     }
 
@@ -151,6 +156,7 @@ final class VehiculosController
                 (bool) ($datos['es_4x4'] ?? false),
                 $this->cadenaONull($datos['kilometraje_inicial'] ?? null),
                 $this->cadenaONull($datos['kilometraje_actual'] ?? null),
+                isset($datos['tipo']) && $datos['tipo'] !== '' ? TipoVehiculo::from((string) $datos['tipo']) : null,
             );
         } catch (VehiculoDuplicado $excepcion) {
             return redirect()
