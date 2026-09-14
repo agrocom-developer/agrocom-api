@@ -7,11 +7,13 @@ use App\Dominios\Comercial\Aplicacion\CrearCampo;
 use App\Dominios\Comercial\Aplicacion\EliminarCampo;
 use App\Dominios\Comercial\Aplicacion\ListarCampos;
 use App\Dominios\Comercial\Aplicacion\ResolverProveedorMapa;
+use App\Dominios\Comercial\Dominio\Excepciones\CampaniaDeOtroCliente;
 use App\Dominios\Comercial\Dominio\Excepciones\CampoDuplicado;
 use App\Dominios\Comercial\Dominio\Excepciones\LoteConHistorialAsociado;
 use App\Dominios\Comercial\Dominio\Excepciones\LoteDuplicado;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Cultivo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\ActualizarCampoRequest;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\CrearCampoRequest;
@@ -19,6 +21,7 @@ use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 /**
@@ -74,6 +77,8 @@ final class CamposController
             'clientesDisponibles' => $this->clientesActivos(),
             'propiedadesDisponibles' => $this->propiedadesActivas(),
             'proveedorMapa' => $this->resolverProveedorMapa->ejecutar(),
+            'cultivosDisponibles' => $this->cultivosActivos(),
+            'campaniasDisponibles' => $this->campaniasActivas(),
         ]);
     }
 
@@ -91,6 +96,8 @@ final class CamposController
                 (int) $datos['propiedad_id'],
                 (string) $datos['nombre'],
                 array_map($this->normalizarLoteNuevo(...), $lotesCrudos),
+                isset($datos['cultivo_id']) ? (int) $datos['cultivo_id'] : null,
+                isset($datos['campania_id']) ? (int) $datos['campania_id'] : null,
             );
         } catch (CampoDuplicado $excepcion) {
             return redirect()
@@ -102,6 +109,11 @@ final class CamposController
                 ->route('panel.campos.create')
                 ->withInput()
                 ->withErrors(['lotes' => $excepcion->getMessage()]);
+        } catch (CampaniaDeOtroCliente $excepcion) {
+            return redirect()
+                ->route('panel.campos.create')
+                ->withInput()
+                ->withErrors(['campania_id' => $excepcion->getMessage()]);
         }
 
         return redirect()
@@ -185,6 +197,32 @@ final class CamposController
             ->orderBy('nombre')
             ->get(['id', 'cliente_id', 'nombre'])
             ->keyBy('id');
+    }
+
+    /** @return Collection<int, string> id => nombre, cultivos activos (HU-72, tarea 88: cultivo por defecto del generador). */
+    private function cultivosActivos(): Collection
+    {
+        return Cultivo::query()->where('activo', true)->orderBy('nombre')->pluck('nombre', 'id');
+    }
+
+    /**
+     * Campañas no dadas de baja de TODOS los clientes, con su `cliente_id`
+     * (HU-72, tarea 88): a diferencia de `SiembraController::campaniasDelCliente()`,
+     * acá todavía no existe un campo del que derivar el cliente — el
+     * generador filtra client-side contra el cliente elegido, mismo patrón
+     * que `propiedadesActivas()` con `data-mapa-cliente-propiedad`. Lectura
+     * directa de `cpn_campanias` (ADR 0003 regla 3), sin el modelo Eloquent
+     * `Campania` de otro módulo.
+     *
+     * @return Collection<int, \stdClass>
+     */
+    private function campaniasActivas(): Collection
+    {
+        return DB::table('cpn_campanias')
+            ->whereNull('deleted_at')
+            ->orderByDesc('fecha_inicio')
+            ->get(['id', 'cliente_id', 'codigo'])
+            ->mapWithKeys(fn (object $fila): array => [(int) $fila->id => $fila]);
     }
 
     /**
