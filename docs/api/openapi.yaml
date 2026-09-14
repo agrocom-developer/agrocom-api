@@ -243,6 +243,9 @@ paths:
                     - foto_incidencia
                     - comprobante
                     - firma_acta
+                    - foto_control
+                    - foto_ciclo_bateria_balanceo
+                    - foto_dron_limpio
                 fecha:
                   type: string
                   format: date-time
@@ -621,8 +624,8 @@ paths:
     get:
       tags:
         - Sincronizacion
-      summary: 'Pull de catálogo con cursor (órdenes, lotes, personas)'
-      description: 'Baja el catálogo de órdenes vigentes, lotes y personas modificados desde la posición del cursor recibido, con paginación por cursor (`updated_at`, `id`) — nunca por número de página, para no perder ni repetir registros entre pulls. `desde` vacío o ausente trae todo lo vigente (primera sincronización). Un `desde` no decodificable se trata igual que vacío, nunca como error de validación.'
+      summary: 'Pull de catálogo con cursor (órdenes, lotes, personas, trabajos)'
+      description: 'Baja el catálogo de órdenes vigentes, lotes, personas y trabajos asignados desde el panel modificados desde la posición del cursor recibido, con paginación por cursor (`updated_at`, `id`) — nunca por número de página, para no perder ni repetir registros entre pulls. `desde` vacío o ausente trae todo lo vigente (primera sincronización). Un `desde` no decodificable se trata igual que vacío, nunca como error de validación.'
       operationId: obtenerCatalogoSincronizacion
       parameters:
         -
@@ -642,6 +645,7 @@ paths:
                   - ordenes
                   - lotes
                   - personas
+                  - trabajos
                   - cursor
                 properties:
                   ordenes:
@@ -656,6 +660,10 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/PersonaCatalogo'
+                  trabajos:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TrabajoCatalogo'
                   cursor:
                     description: 'Cursor opaco a reenviar tal cual en `desde` en el próximo pull.'
                     type: string
@@ -848,13 +856,14 @@ components:
       type: object
     OrdenAplicacion:
       title: 'Orden de aplicación'
-      description: 'Orden de aplicación emitida por el cliente para un lote (espec §4.3). Los valores DECIMAL (dosis, límites climáticos y de vuelo) viajan como string. Los límites en null heredan del contrato o del parámetro por defecto del sistema (RF-60).'
+      description: 'Orden de aplicación emitida por el cliente, cubriendo uno o varios lotes de la propiedad (espec §4.3, ampliada HU-92 tarea 107). Los valores DECIMAL (dosis, límites climáticos y de vuelo) viajan como string. Los límites en null heredan del contrato o del parámetro por defecto del sistema (RF-60).'
       required:
         - id
         - contrato_id
-        - lote_id
+        - lotes
         - nro_aplicacion
         - litros_ha
+        - kilos_por_vuelo
         - humedad_min_pct
         - viento_max_kmh
         - temperatura_max_c
@@ -878,18 +887,25 @@ components:
           description: 'Contrato al que pertenece la orden (módulo Comercial, solo ID).'
           type: integer
           example: 1
-        lote_id:
-          description: 'Lote sobre el que se aplica (módulo Comercial, solo ID).'
-          type: integer
-          example: 3
+        lotes:
+          description: 'Lotes que cubre la orden (módulo Comercial, solo ID) con las hectáreas solicitadas a cada uno.'
+          type: array
+          items:
+            $ref: '#/components/schemas/LoteDeOrdenCatalogo'
         nro_aplicacion:
           description: 'Número de aplicación dentro del contrato (1..n).'
           type: integer
           example: 1
         litros_ha:
-          description: 'Dosis en litros por hectárea. DECIMAL como string.'
+          description: 'Dosis en litros por hectárea (insumo líquido). DECIMAL como string; null si la categoría de insumo es sólida (HU-79, tarea 110).'
           type: string
           example: '10.00'
+          nullable: true
+        kilos_por_vuelo:
+          description: 'Dosis en kilos por vuelo (insumo sólido). DECIMAL como string; null si la categoría de insumo es líquida (HU-79, tarea 110).'
+          type: string
+          example: '8.50'
+          nullable: true
         humedad_min_pct:
           description: 'Humedad relativa mínima para aplicar (%). DECIMAL como string; null hereda.'
           type: string
@@ -1050,15 +1066,32 @@ components:
           example: 3
           nullable: true
       type: object
+    LoteDeOrdenCatalogo:
+      title: 'Lote de una orden (catálogo)'
+      description: 'Uno de los lotes que cubre una orden, con las hectáreas que le pidió a ESE lote (HU-92, tarea 107 — una orden puede cubrir varios lotes de la propiedad). DECIMAL como string (invariante 6).'
+      required:
+        - lote_id
+        - hectareas_solicitadas
+      properties:
+        lote_id:
+          description: 'Lote que cubre la orden (módulo Comercial, solo ID).'
+          type: integer
+          example: 3
+        hectareas_solicitadas:
+          description: 'Hectáreas que la orden le pidió a ESE lote. DECIMAL como string.'
+          type: string
+          example: '50.00'
+      type: object
     OrdenCatalogo:
       title: 'Orden de aplicación (catálogo)'
-      description: 'Orden vigente para el pull de catálogo (espec §4.3). Los DECIMAL viajan como string (invariante 6).'
+      description: 'Orden vigente para el pull de catálogo (espec §4.3, ampliada HU-92 tarea 107: `lotes` reemplaza el `lote_id` único de antes; HU-79 tarea 110: `litros_ha`/`kilos_por_vuelo` son mutuamente excluyentes según la categoría de insumo). Los DECIMAL viajan como string (invariante 6).'
       required:
         - id
         - contrato_id
-        - lote_id
+        - lotes
         - nro_aplicacion
         - litros_ha
+        - kilos_por_vuelo
         - humedad_min_pct
         - viento_max_kmh
         - temperatura_max_c
@@ -1074,21 +1107,28 @@ components:
         - updated_at
       properties:
         id:
-          description: "Adaptador delgado (ADR 0008): valida la query string, invoca el caso de\nuso y devuelve la respuesta — ninguna regla de negocio vive acá."
           type: integer
           example: 1
         contrato_id:
           type: integer
           example: 1
-        lote_id:
-          type: integer
-          example: 3
+        lotes:
+          type: array
+          items:
+            $ref: '#/components/schemas/LoteDeOrdenCatalogo'
         nro_aplicacion:
           type: integer
           example: 1
         litros_ha:
+          description: 'Dosis en litros por hectárea (insumo líquido); null si la categoría es sólida.'
           type: string
           example: '10.00'
+          nullable: true
+        kilos_por_vuelo:
+          description: 'Dosis en kilos por vuelo (insumo sólido); null si la categoría es líquida.'
+          type: string
+          example: '8.50'
+          nullable: true
         humedad_min_pct:
           type: string
           example: '60.00'
@@ -1209,9 +1249,44 @@ components:
           format: date-time
           example: '2026-08-26T12:00:00+00:00'
       type: object
+    TrabajoCatalogo:
+      title: 'Trabajo asignado desde el panel (catálogo)'
+      description: 'Trabajo abierto por el jefe de campo al repartir una orden vigente entre equipos (HU-70, tarea 85) — nunca los que nacen por sync (`equipo_trabajo_id` siempre presente acá). `uuid_cliente` es el que generó el panel al confirmar la asignación: la app lo usa TAL CUAL para abrir sesiones sobre este trabajo. `hectareas_declaradas` es DECIMAL como string (invariante 6).'
+      required:
+        - id
+        - uuid_cliente
+        - orden_id
+        - lote_id
+        - hectareas_declaradas
+        - equipo_trabajo_id
+        - updated_at
+      properties:
+        id:
+          type: integer
+          example: 42
+        uuid_cliente:
+          type: string
+          example: 9a1b7e3e-2f7a-4b3d-8c1e-6f2a1d9c4b0a
+        orden_id:
+          type: integer
+          example: 1
+        lote_id:
+          type: integer
+          example: 3
+        hectareas_declaradas:
+          type: string
+          example: '300.00'
+        equipo_trabajo_id:
+          type: integer
+          example: 7
+        updated_at:
+          type: string
+          format: date-time
+          example: '2026-09-13T12:00:00+00:00'
+      type: object
     RegistroSync:
       title: 'Registro de entrada del lote de sync'
-      description: 'Un elemento del arreglo `registros`. La forma exacta de los campos depende de `tipo`; un registro con datos incompletos o inválidos se responde `rechazado` sin frenar el resto del lote — nunca un 422 para el lote completo. `cierre_trabajo`/`cierre_sesion` (HU-05) MUTAN una fila existente en vez de crear una nueva: `uuid_cliente` identifica el EVENTO de cierre — distinto del `uuid_cliente` de apertura del trabajo/sesión que referencian. `recepcion_caldo` (HU-10 redefinida por CR-01, tarea 18) registra volumen de caldo entregado por el cliente — nunca su composición (espec §7.1: sin producto, dosis ni fórmula). `incidencia` (HU-08, tarea 22) registra un evento puntual de la sesión (caldo/ESC/batería/mecánica/clima/otro) con foto SIEMPRE obligatoria, referenciada por `uuid_cliente` a una evidencia ya subida por `POST /api/evidencias` con `tipo: foto_incidencia`. `recarga` (HU-13, tarea 23) registra cada ciclo de cambio de batería/recarga de caldo durante el vuelo — temperatura de batería > 50°C se persiste con `alerta_temperatura = true` sin rechazar el registro; sin `mezcla_id` (CR-01: Agrocom no prepara la mezcla). `estadia_entrada`/`estadia_salida` (HU-51, tarea 74) registran cuándo un equipo de trabajo llega y se va de una hacienda — sin `campania_id` (la estadía es del campo, no de una campaña) y sin verificación de pertenencia a una persona (es del equipo). `estadia_salida` referencia la estadía por el `uuid_cliente` de su `estadia_entrada`, igual criterio que `cierre_trabajo`/`cierre_sesion`.'
+      description: 'Un elemento del arreglo `registros`. La forma exacta de los campos depende de `tipo`; un registro con datos incompletos o inválidos se responde `rechazado` sin frenar el resto del lote — nunca un 422 para el lote completo. `cierre_trabajo`/`cierre_sesion` (HU-05) MUTAN una fila existente en vez de crear una nueva: `uuid_cliente` identifica el EVENTO de cierre — distinto del `uuid_cliente` de apertura del trabajo/sesión que referencian. `recepcion_caldo` (HU-10 redefinida por CR-01, tarea 18) registra volumen de caldo entregado por el cliente — nunca su composición: eso es lo que ahora registra `mezcla` por separado (ver abajo), no `recepcion_caldo`. `mezcla` (espec §7, HU-78, tarea 94, revierte CR-01 del 1/9/2026) registra qué productos y en qué cantidad se cargaron en el caldo al crear una aplicación — cabecera (`trabajo_uuid_cliente`, `hora`) más una lista `productos` (nombre de texto libre, cantidad, unidad); nunca dosis por hectárea, orden de incorporación ni compatibilidad entre productos (§7.1 sigue vigente en eso, ver espec §7). `incidencia` (HU-08, tarea 22) registra un evento puntual de la sesión (caldo/ESC/batería/mecánica/clima/otro) con foto SIEMPRE obligatoria, referenciada por `uuid_cliente` a una evidencia ya subida por `POST /api/evidencias` con `tipo: foto_incidencia`. `recarga` (HU-13, tarea 23) registra cada ciclo de cambio de batería/recarga de caldo durante el vuelo — temperatura de batería > 50°C se persiste con `alerta_temperatura = true` sin rechazar el registro; independiente del evento `mezcla` (sin vínculo entre ambos en esta tarea). `estadia_entrada`/`estadia_salida` (HU-51, tarea 74) registran cuándo un equipo de trabajo llega y se va de una hacienda — sin `campania_id` (la estadía es del campo, no de una campaña) y sin verificación de pertenencia a una persona (es del equipo). `estadia_salida` referencia la estadía por el `uuid_cliente` de su `estadia_entrada`, igual criterio que `cierre_trabajo`/`cierre_sesion`. `evidencia_equipo` (HU-80, tarea 86) registra el "Reporte de Equipos": horas de vuelo declaradas del dron y las tres fotos de chequeo (control, ciclo de batería y balanceo, dron limpio), cada una referenciada por `uuid_cliente` a una evidencia ya subida por `POST /api/evidencias` — las tres son obligatorias, falta cualquiera y se rechaza el registro completo.'
       required:
         - tipo
         - uuid_cliente
@@ -1223,6 +1298,8 @@ components:
           enum:
             - trabajo
             - recepcion_caldo
+            - evidencia_equipo
+            - mezcla
             - sesion
             - condiciones
             - incidencia
@@ -1247,7 +1324,7 @@ components:
           type: integer
           example: 1
         trabajo_uuid_cliente:
-          description: '`sesion`/`cierre_trabajo`: `uuid_cliente` de apertura del trabajo — nunca el id de servidor, que puede no existir todavía si el trabajo llegó en este mismo lote.'
+          description: '`sesion`/`cierre_trabajo`/`recepcion_caldo`/`evidencia_equipo`/`mezcla`: `uuid_cliente` de apertura del trabajo — nunca el id de servidor, que puede no existir todavía si el trabajo llegó en este mismo lote.'
           type: string
           example: a1b2c3d4-0000-4000-8000-000000000001
         sesion_uuid_cliente:
@@ -1302,10 +1379,35 @@ components:
           example: null
           nullable: true
         hora:
-          description: '`recepcion_caldo`: cuándo se entregó. `incidencia`: cuándo ocurrió. `recarga`: cuándo ocurrió el ciclo de cambio de batería/recarga de caldo.'
+          description: '`recepcion_caldo`: cuándo se entregó. `mezcla`: cuándo se cargó el caldo. `incidencia`: cuándo ocurrió. `recarga`: cuándo ocurrió el ciclo de cambio de batería/recarga de caldo.'
           type: string
           format: date-time
           example: null
+          nullable: true
+        productos:
+          description: '`mezcla`: lista de productos cargados en el caldo. Cada elemento trae `producto` (nombre de texto libre, transcripto del envase — sin catálogo previo que la app baje), `cantidad` (DECIMAL positivo como string, invariante 6) y `unidad` (`l`, `ml`, `kg` o `g`). No puede venir vacía: si algún elemento es inválido, se rechaza el registro `mezcla` completo.'
+          type: array
+          items:
+            required:
+              - producto
+              - cantidad
+              - unidad
+            properties:
+              producto:
+                type: string
+                example: 'Glifosato 48%'
+              cantidad:
+                type: string
+                example: '2.50'
+              unidad:
+                type: string
+                example: l
+                enum:
+                  - l
+                  - ml
+                  - kg
+                  - g
+            type: object
           nullable: true
         litros_consumidos:
           description: '`cierre_sesion`, opcional: litros de caldo efectivamente rociados en la sesión (espec §7.2). DECIMAL como string.'
@@ -1460,6 +1562,26 @@ components:
           format: date-time
           example: null
           nullable: true
+        horas_vuelo_dron:
+          description: '`evidencia_equipo`: horas de vuelo del dron declaradas por el auxiliar/piloto (no calculadas). DECIMAL como string (invariante 6).'
+          type: string
+          example: null
+          nullable: true
+        foto_control_uuid_cliente:
+          description: '`evidencia_equipo`, obligatorio: `uuid_cliente` de una evidencia ya subida por `POST /api/evidencias` con `tipo: foto_control`.'
+          type: string
+          example: null
+          nullable: true
+        foto_ciclo_bateria_balanceo_uuid_cliente:
+          description: '`evidencia_equipo`, obligatorio: `uuid_cliente` de una evidencia con `tipo: foto_ciclo_bateria_balanceo`.'
+          type: string
+          example: null
+          nullable: true
+        foto_dron_limpio_uuid_cliente:
+          description: '`evidencia_equipo`, obligatorio: `uuid_cliente` de una evidencia con `tipo: foto_dron_limpio`.'
+          type: string
+          example: null
+          nullable: true
       type: object
     ResultadoSync:
       title: 'Resultado de aplicar un registro del lote'
@@ -1506,4 +1628,4 @@ tags:
     description: 'Sesión de la app de campo por token de dispositivo (espec §4.6, HU-03).'
   -
     name: Sincronizacion
-    description: 'Push de escritura offline de la app de campo (espec §2.1, puntos 3 a 5; TE-05). Recorte de alcance de la tarea 09: solo `trabajo` y `sesion` — `incidencia` (tarea 22) y `recarga` (tarea 23) se sumaron después como tipos de registro de este mismo endpoint; `mezcla` no aplica (CR-01: Agrocom no prepara la mezcla) y `acta` tiene sus propios endpoints (`ActaController`), fuera de este push (ver docs/gestion/cola_tareas.md).'
+    description: 'Push de escritura offline de la app de campo (espec §2.1, puntos 3 a 5; TE-05). Recorte de alcance de la tarea 09: solo `trabajo` y `sesion` — `incidencia` (tarea 22), `recarga` (tarea 23) y `mezcla` (HU-78, tarea 94, revierte CR-01 del 1/9/2026) se sumaron después como tipos de registro de este mismo endpoint; `acta` tiene sus propios endpoints (`ActaController`), fuera de este push (ver docs/gestion/cola_tareas.md).'

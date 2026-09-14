@@ -91,12 +91,12 @@ function trabajoDeContratoFicha(Contrato $contrato, string $sufijo): Trabajo
     $lote = Lote::create(['campo_id' => $campo->id, 'codigo' => "L-FICHA-{$sufijo}", 'hectareas' => '50.00']);
     $orden = OrdenAplicacion::create([
         'contrato_id' => $contrato->id,
-        'lote_id' => $lote->id,
         'nro_aplicacion' => 1,
         'litros_ha' => '10.00',
         'fecha_emision' => '2026-08-01',
         'estado' => EstadoOrdenAplicacion::Vigente,
     ]);
+    $orden->ordenLotes()->create(['lote_id' => $lote->id, 'hectareas_solicitadas' => '50.00']);
 
     return Trabajo::create([
         'uuid_cliente' => "uuid-trabajo-ficha-{$sufijo}",

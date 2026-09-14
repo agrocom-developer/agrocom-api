@@ -2,7 +2,6 @@
 
 namespace App\Dominios\Comercial\Infraestructura\Http\Requests;
 
-use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -12,12 +11,15 @@ use Illuminate\Validation\Rule;
  * activo — no acá, mismo criterio que `CrearClienteRequest`.
  *
  * Los rangos replican, uno a uno, los `CHECK` de
- * `database/migrations/2026_08_26_100003_create_com_contratos_table.php` y
- * `database/migrations/2026_09_08_300001_add_altura_vuelo_m_a_com_contratos_table.php`
+ * `database/migrations/2026_08_26_100003_create_com_contratos_table.php`
  * que corresponden a un campo del formulario (los otros dos —`estado` y
  * `monto_total`— no son input: los fija el servicio de dominio, ver
  * `Aplicacion/CrearContrato`) — así el usuario ve un error de validación de
  * Laravel, nunca el `QueryException` crudo de Postgres.
+ *
+ * Sin parámetros de vuelo ni `adelanto_pct` (HU-91, tarea 106): esos 7
+ * límites de condiciones heredan siempre de la Orden o del valor por defecto
+ * del sistema (RF-60), nunca del contrato.
  *
  * `ventanas` es opcional (HU-47, tarea 70, pedido del dueño del 7/9/2026):
  * cero ventanas significa "día completo", no un formulario incompleto — la
@@ -53,32 +55,16 @@ final class CrearContratoRequest extends FormRequest
             'aplicaciones_previstas' => ['required', 'integer', 'min:1'],
             'precio_ha' => ['required', 'numeric', 'min:0'],
             'adelanto_monto' => ['nullable', 'numeric', 'min:0'],
-            'adelanto_pct' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'fecha_inicio' => ['required', 'date'],
             'fecha_fin' => ['nullable', 'date', 'after_or_equal:fecha_inicio'],
-            'viento_max_kmh' => ['nullable', 'numeric', 'gt:0'],
-            'temperatura_max_c' => ['nullable', 'numeric', 'gt:-10', 'lt:60'],
-            'humedad_min_pct' => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'humedad_max_pct' => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'velocidad_max_kmh' => ['nullable', 'numeric', 'gt:0'],
-            'umbral_reporte_avance_ha' => ['nullable', 'numeric', 'gt:0'],
-            'altura_vuelo_m' => ['nullable', 'numeric', 'gt:0'],
+            'brinda_alimentacion' => ['boolean'],
+            'brinda_hospedaje' => ['boolean'],
+            'brinda_combustible' => ['boolean'],
+            'observaciones_logistica' => ['nullable', 'string'],
             'ventanas' => ['nullable', 'array'],
             'ventanas.*.hora_inicio' => ['nullable', 'required_with:ventanas.*.hora_fin', 'date_format:H:i'],
             'ventanas.*.hora_fin' => ['nullable', 'required_with:ventanas.*.hora_inicio', 'date_format:H:i', 'after:ventanas.*.hora_inicio'],
         ];
-    }
-
-    public function withValidator(Validator $validator): void
-    {
-        $validator->after(function (Validator $validator): void {
-            $minimo = $this->input('humedad_min_pct');
-            $maximo = $this->input('humedad_max_pct');
-
-            if ($minimo !== null && $minimo !== '' && $maximo !== null && $maximo !== '' && (float) $minimo > (float) $maximo) {
-                $validator->errors()->add('humedad_min_pct', __('comercial.contratos.error_humedad_rango'));
-            }
-        });
     }
 
     /** @return array<string, string> */

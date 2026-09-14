@@ -16,6 +16,17 @@ final class ActualizarBaseRequest extends FormRequest
         return [
             'nombre' => ['required', 'string', 'max:100'],
             'ubicacion' => ['nullable', 'string', 'max:200'],
+            'latitud' => ['nullable', 'required_with:longitud', 'numeric', 'between:-90,90'],
+            'longitud' => ['nullable', 'required_with:latitud', 'numeric', 'between:-180,180'],
+        ];
+    }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return [
+            'latitud.required_with' => __('personal.bases.error_coordenada_incompleta'),
+            'longitud.required_with' => __('personal.bases.error_coordenada_incompleta'),
         ];
     }
 }

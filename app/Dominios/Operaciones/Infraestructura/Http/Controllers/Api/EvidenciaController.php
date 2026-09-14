@@ -50,7 +50,7 @@ final class EvidenciaController
                     required: ['uuid_cliente', 'tipo', 'fecha', 'archivo'],
                     properties: [
                         new OA\Property(property: 'uuid_cliente', type: 'string', example: 'a1b2c3d4-0000-4000-8000-000000000010'),
-                        new OA\Property(property: 'tipo', type: 'string', enum: ['captura_rc', 'imagen_campo', 'foto_incidencia', 'comprobante', 'firma_acta'], example: 'imagen_campo'),
+                        new OA\Property(property: 'tipo', type: 'string', enum: ['captura_rc', 'imagen_campo', 'foto_incidencia', 'comprobante', 'firma_acta', 'foto_control', 'foto_ciclo_bateria_balanceo', 'foto_dron_limpio'], example: 'imagen_campo'),
                         new OA\Property(property: 'fecha', type: 'string', format: 'date-time', example: '2026-09-01T10:00:00-04:00'),
                         new OA\Property(property: 'hash_dispositivo', description: 'SHA-256 calculado en el dispositivo al capturar (ADR 0009), opcional — si se declara, debe coincidir con el hash recalculado por el servidor.', type: 'string', nullable: true, example: null),
                         new OA\Property(property: 'archivo', type: 'string', format: 'binary'),

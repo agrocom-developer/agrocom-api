@@ -107,7 +107,7 @@ SIN_CHECKS_MAX=180
 # resuelve git, no el shell — por eso van entre comillas. `prompts/plantillas/`
 # queda deliberadamente afuera: si alguien está editando una plantilla, eso es
 # trabajo humano en curso y el ciclo tiene que abortar, no commitearlo.
-PLANIFICACION=('prompts/[0-9][0-9]-*.md' 'docs/gestion/cola_tareas.md')
+PLANIFICACION=('prompts/[0-9]*-*.md' 'docs/gestion/cola_tareas.md')
 
 # --- Modelo por fase --------------------------------------------------
 # Mismo criterio que .claude/agents/README.md, aplicado a las sesiones del
@@ -367,7 +367,7 @@ rama_de() {
 sucio_ajeno() {
     git status --porcelain |
         sed -E 's/^.{3}//; s/^.* -> //' |
-        grep -vE '^(prompts/[0-9]{2}-[^/]*\.md|docs/gestion/cola_tareas\.md)$' |
+        grep -vE '^(prompts/[0-9]+-[^/]*\.md|docs/gestion/cola_tareas\.md)$' |
         head -5
 }
 
@@ -1165,7 +1165,7 @@ reconciliar() {
     local encurso; encurso=$(sed -nE 's/^([0-9]+) .*/\1/p' runs/ciclo.estado 2>/dev/null | head -1)
 
     local ids id estado ev pr por corregidas=0 sin_evidencia="" tocadas=""
-    ids=$( { ls runs/[0-9][0-9].estado 2>/dev/null | sed -E 's|runs/([0-9]+)\.estado|\1|'
+    ids=$( { ls runs/[0-9]*.estado 2>/dev/null | sed -E 's|runs/([0-9]+)\.estado|\1|'
              grep -vE '^[[:space:]]*(#|$)' "$COLA" 2>/dev/null | tr -d '[:space:]'
            } | sort -un )
 
@@ -1249,7 +1249,7 @@ case "${1:-}" in
         # Lo que el ciclo dejó atrás sin integrar: sigue avanzando, pero esto
         # espera una decisión y si no se mira, no se mira nunca.
         trabadas=""
-        for e in runs/[0-9][0-9].estado; do
+        for e in runs/[0-9]*.estado; do
             [ -f "$e" ] || continue
             v=$(tr -d '[:space:]' < "$e")
             case "$v" in
@@ -1344,7 +1344,7 @@ done < "$COLA" 2>/dev/null
 # propósito: cambiar un estado sin que nadie mire es justo lo que haría que una
 # tarea sin hacer pase por hecha. Acá se avisa; decidir es del usuario.
 trabadas_al_cierre=""
-for e in runs/[0-9][0-9].estado; do
+for e in runs/[0-9]*.estado; do
     [ -f "$e" ] || continue
     case "$(tr -d '[:space:]' < "$e")" in
         AGOTADA|INCOMPLETA|RECHAZADA) trabadas_al_cierre="$trabadas_al_cierre $(basename "$e" .estado)" ;;

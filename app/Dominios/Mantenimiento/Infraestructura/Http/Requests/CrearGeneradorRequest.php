@@ -15,6 +15,12 @@ use Illuminate\Validation\Rule;
  * caso válido. Cuando viene, tiene que apuntar a una base VIVA
  * (`whereNull('deleted_at')`), mismo criterio que `base_id` en
  * `CrearVehiculoRequest`.
+ *
+ * `horas_inicial`/`horas_actual` (HU-86, tarea 101) reemplazan a
+ * `horas_uso`, ambas opcionales. `gte:horas_inicial` rechaza como error de
+ * validación (nunca como excepción de base de datos) que el generador entre
+ * con menos horas de las que ya acumuló — solo se evalúa cuando las dos
+ * vienen cargadas, mismo criterio que el `CHECK` de la migración.
  */
 final class CrearGeneradorRequest extends FormRequest
 {
@@ -30,7 +36,8 @@ final class CrearGeneradorRequest extends FormRequest
                 Rule::exists('per_bases', 'id')->whereNull('deleted_at'),
             ],
             'estado' => ['required', Rule::enum(EstadoGenerador::class)],
-            'horas_uso' => ['nullable', 'numeric', 'min:0'],
+            'horas_inicial' => ['nullable', 'numeric', 'min:0'],
+            'horas_actual' => ['nullable', 'numeric', 'min:0', 'gte:horas_inicial'],
         ];
     }
 
@@ -39,6 +46,7 @@ final class CrearGeneradorRequest extends FormRequest
     {
         return [
             'base_id.exists' => 'La base seleccionada no es válida.',
+            'horas_actual.gte' => 'Las horas actuales no pueden ser menores que las horas iniciales.',
         ];
     }
 }

@@ -3,6 +3,8 @@
 namespace App\Dominios\Operaciones\Aplicacion;
 
 use App\Dominios\Comercial\Contratos\LecturaLotes;
+use App\Dominios\Mantenimiento\Contratos\LecturaCiclosBateria;
+use App\Dominios\Mezclas\Contratos\LecturaMezclas;
 use App\Dominios\Operaciones\Dominio\EstadoCoberturaTrabajo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Condiciones;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Incidencia;
@@ -28,16 +30,20 @@ use Illuminate\Support\Collection;
  * renderizado y las columnas `hora_inicio`/`hora_fin` de `ReporteTecnico`,
  * no esta clase (ver runs/25.md).
  *
- * Nunca incluye mezcla, dosis, receta ni producto — CR-01 (espec §7) saca
- * eso de alcance; no hay ni de dónde leerlo (sin módulo `Mezclas`, sin
- * `receta_id` en el esquema). La única mención es la nota fija de
- * `notaMezcla()`, en texto explícito, no un placeholder vacío.
+ * `productosMezcla()` (espec §7, HU-78, tarea 94, revierte CR-01 del
+ * 1/9/2026) lista los productos que el piloto transcribió como cargados en
+ * el caldo, leídos por `Mezclas\Contratos\LecturaMezclas` (ADR 0003, regla
+ * 2 — nunca el Eloquent de `Mezclas`). Sigue sin incluir dosis, orden de
+ * incorporación ni compatibilidad entre productos: §7.1 sigue vigente en
+ * eso, esta tarea solo revirtió la prohibición de registrar QUÉ se cargó.
  */
 final class ArmarContenidoReporteTecnico
 {
     public function __construct(
         private readonly CalcularCoberturaTrabajo $calcularCobertura,
         private readonly LecturaLotes $lecturaLotes,
+        private readonly LecturaCiclosBateria $lecturaCiclosBateria,
+        private readonly LecturaMezclas $lecturaMezclas,
     ) {}
 
     /**
@@ -53,12 +59,29 @@ final class ArmarContenidoReporteTecnico
      *     capturas_rc: list<array{secuencia: int, hectareas_declaradas: string, evidencia_url: string}>,
      *     incidencias: list<array{tipo: string, evidencia_url: string}>,
      *     sesiones_detalle: list<array{sesion_id: int, piloto_id: int, dron_id: int|null, hectareas_declaradas: string, motivo_cierre: string|null}>,
-     *     nota_mezcla: string,
+     *     productos_mezcla: list<array{producto: string, cantidad: string, unidad: string}>,
+     *     equipo: array{
+     *         ciclos_bateria: list<array{identificador: string, ciclos_acumulados: int|null}>,
+     *         horas_vuelo_dron: string|null,
+     *         foto_control_url: string|null,
+     *         foto_ciclo_bateria_balanceo_url: string|null,
+     *         foto_dron_limpio_url: string|null,
+     *     }|null,
      * }
      */
     public function ejecutar(Trabajo $trabajo): array
     {
-        $trabajo->loadMissing(['sesiones.incidencias.evidenciaFoto', 'sesiones.capturaRc', 'imagenCampoEvidencia', 'acta', 'condiciones']);
+        $trabajo->loadMissing([
+            'sesiones.incidencias.evidenciaFoto',
+            'sesiones.capturaRc',
+            'sesiones.recargas',
+            'imagenCampoEvidencia',
+            'acta',
+            'condiciones',
+            'evidenciaEquipo.fotoControl',
+            'evidenciaEquipo.fotoCicloBateriaBalanceo',
+            'evidenciaEquipo.fotoDronLimpio',
+        ]);
 
         /** @var Collection<int, Sesion> $sesionesVigentes */
         $sesionesVigentes = $trabajo->sesiones->whereNull('anulada_en')->sortBy('secuencia')->values();
@@ -124,7 +147,54 @@ final class ArmarContenidoReporteTecnico
                     ])
                     ->all()
                 : [],
-            'nota_mezcla' => $this->notaMezcla(),
+            'productos_mezcla' => $this->productosMezcla($trabajo),
+            'equipo' => $this->datosEquipo($trabajo, $sesionesVigentes),
+        ];
+    }
+
+    /**
+     * "Reporte de Equipos" (ronda del dueño, 13/9/2026; HU-80, tarea 86):
+     * ciclos acumulados de cada batería usada (leídos de `Mantenimiento` vía
+     * {@see LecturaCiclosBateria}, nunca calculados acá), horas de vuelo
+     * declaradas del dron y las tres fotos de chequeo. `null` completo si el
+     * trabajo todavía no tiene su "Reporte de Equipos" cargado — a
+     * diferencia del resto de las secciones, esta es siempre opcional: no
+     * todo trabajo cerrado antes de HU-80 la va a tener.
+     *
+     * @param  Collection<int, Sesion>  $sesionesVigentes
+     * @return array{ciclos_bateria: list<array{identificador: string, ciclos_acumulados: int|null}>, horas_vuelo_dron: string|null, foto_control_url: string|null, foto_ciclo_bateria_balanceo_url: string|null, foto_dron_limpio_url: string|null}|null
+     */
+    private function datosEquipo(Trabajo $trabajo, Collection $sesionesVigentes): ?array
+    {
+        $ciclosBateria = $sesionesVigentes
+            ->flatMap(fn (Sesion $sesion): Collection => $sesion->recargas)
+            ->pluck('bateria_saliente_id')
+            ->unique()
+            ->values()
+            ->map(fn (string $identificador): array => [
+                'identificador' => $identificador,
+                'ciclos_acumulados' => $this->lecturaCiclosBateria->obtenerCiclosAcumulados($identificador),
+            ])
+            ->all();
+
+        $evidenciaEquipo = $trabajo->evidenciaEquipo;
+
+        if ($evidenciaEquipo === null) {
+            return $ciclosBateria === [] ? null : [
+                'ciclos_bateria' => $ciclosBateria,
+                'horas_vuelo_dron' => null,
+                'foto_control_url' => null,
+                'foto_ciclo_bateria_balanceo_url' => null,
+                'foto_dron_limpio_url' => null,
+            ];
+        }
+
+        return [
+            'ciclos_bateria' => $ciclosBateria,
+            'horas_vuelo_dron' => (string) $evidenciaEquipo->horas_vuelo_dron,
+            'foto_control_url' => $evidenciaEquipo->fotoControl?->archivo_url,
+            'foto_ciclo_bateria_balanceo_url' => $evidenciaEquipo->fotoCicloBateriaBalanceo?->archivo_url,
+            'foto_dron_limpio_url' => $evidenciaEquipo->fotoDronLimpio?->archivo_url,
         ];
     }
 
@@ -192,10 +262,20 @@ final class ArmarContenidoReporteTecnico
         ];
     }
 
-    private function notaMezcla(): string
+    /**
+     * Espec §7 (HU-78, tarea 94, revierte CR-01): lo que el piloto transcribió
+     * como cargado en el caldo de ESTE trabajo, en TODAS sus mezclas (puede
+     * haber más de un evento `mezcla`, mismo criterio que
+     * `ope_recepciones_caldo`). Lista vacía si no se registró ninguna — no
+     * hay nota fija que mostrar en su lugar, el listado vacío ya lo dice.
+     *
+     * @return list<array{producto: string, cantidad: string, unidad: string}>
+     */
+    private function productosMezcla(Trabajo $trabajo): array
     {
-        return 'Mezcla y dosis: fuera de alcance (CR-01, 1/9/2026). El cliente formula, '
-            .'prepara y controla la calidad de su propio caldo — Agrocom recibe el caldo '
-            .'ya hecho y lo aplica.';
+        return array_map(
+            static fn ($producto): array => $producto->toArray(),
+            $this->lecturaMezclas->listarPorTrabajoId($trabajo->id),
+        );
     }
 }

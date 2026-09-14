@@ -131,14 +131,16 @@ function ordenSiembraPantalla(Contrato $contrato, Cultivo $cultivo, string $sufi
         'updated_at' => now(),
     ]);
 
-    return OrdenAplicacion::create([
+    $orden = OrdenAplicacion::create([
         'contrato_id' => $contrato->id,
-        'lote_id' => $lote->id,
         'nro_aplicacion' => 1,
         'litros_ha' => '10.00',
         'fecha_emision' => '2026-09-01',
         'estado' => EstadoOrdenAplicacion::Vigente,
     ]);
+    $orden->ordenLotes()->create(['lote_id' => $lote->id, 'hectareas_solicitadas' => $hectareas]);
+
+    return $orden;
 }
 
 function actaFirmadaPantalla(string $sufijo, Contrato $contrato, Cultivo $cultivo, string $hectareas = '50.00'): Acta
@@ -147,7 +149,7 @@ function actaFirmadaPantalla(string $sufijo, Contrato $contrato, Cultivo $cultiv
     $trabajo = Trabajo::create([
         'uuid_cliente' => "uuid-trabajo-informe-{$sufijo}",
         'orden_id' => $orden->id,
-        'lote_id' => $orden->lote_id,
+        'lote_id' => (int) $orden->ordenLotes()->value('lote_id'),
         'nro_aplicacion' => 1,
         'hectareas_declaradas' => $hectareas,
         'estado' => EstadoTrabajo::Cerrado,

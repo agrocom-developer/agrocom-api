@@ -9,6 +9,16 @@ use Illuminate\Validation\Rule;
 /**
  * `PUT /panel/baterias/{bateria}` (HU-39, tarea 51). Mismas reglas que
  * `CrearBateriaRequest` — ver ese docblock.
+ *
+ * A propósito NO valida `ciclos_inicial` (HU-83, tarea 98): es inmutable
+ * después del alta, así que aunque el formulario lo muestre de solo
+ * lectura, si algo lo mandara igual no llegaría a `$datos` en el
+ * controlador — `ActualizarBateria` no lo recibe.
+ *
+ * `motivo_correccion` (HU-87, tarea 102) es `nullable`: la validación de
+ * "obligatorio SOLO si baja el contador" no puede vivir acá (esta clase no
+ * conoce el valor actual de la batería) — la guarda real está en
+ * `ActualizarBateria::ejecutar()`, ver su docblock.
  */
 final class ActualizarBateriaRequest extends FormRequest
 {
@@ -24,6 +34,7 @@ final class ActualizarBateriaRequest extends FormRequest
                 Rule::exists('per_bases', 'id')->whereNull('deleted_at'),
             ],
             'estado' => ['required', Rule::enum(EstadoBateria::class)],
+            'motivo_correccion' => ['nullable', 'string', 'max:255'],
         ];
     }
 

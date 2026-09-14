@@ -133,11 +133,23 @@
                         <strong>{{ __('mantenimiento.ordenes.detalle_gasto') }}</strong>
                         {{ __('mantenimiento.ordenes.detalle_gasto_valor', ['id' => $orden->gasto_id]) }}
                     </span>
+                    @if ($montoGasto !== null)
+                        <span class="ag-orden-mantenimiento-detalle__campo">
+                            <strong>{{ __('mantenimiento.ordenes.detalle_precio_final') }}</strong>
+                            Bs {{ $montoGasto }}
+                        </span>
+                    @endif
                 @endif
                 <span class="ag-orden-mantenimiento-detalle__campo ag-orden-mantenimiento-detalle__campo--full">
                     <strong>{{ __('mantenimiento.ordenes.detalle_descripcion') }}</strong>
                     {{ $orden->descripcion }}
                 </span>
+                @if ($orden->descripcion_final !== null)
+                    <span class="ag-orden-mantenimiento-detalle__campo ag-orden-mantenimiento-detalle__campo--full">
+                        <strong>{{ __('mantenimiento.ordenes.detalle_descripcion_final') }}</strong>
+                        {{ $orden->descripcion_final }}
+                    </span>
+                @endif
             </div>
 
             @if ($orden->estado->value === 'abierta' && $puedeCerrar)
@@ -157,6 +169,16 @@
                         <p class="ag-form-section__field--full ag-orden-mantenimiento-detalle__ayuda">
                             {{ __('mantenimiento.ordenes.seccion_cierre_ayuda') }}
                         </p>
+
+                        <x-atoms.textarea
+                            name="descripcion_final"
+                            label="{{ __('mantenimiento.ordenes.campo_descripcion_final') }}"
+                            help="{{ __('mantenimiento.ordenes.campo_descripcion_final_ayuda') }}"
+                            value="{{ old('descripcion_final') }}"
+                            required
+                            error="{{ $errors->first('descripcion_final') }}"
+                            class="ag-form-section__field--full"
+                        />
 
                         <div
                             class="ag-form-section__field--full ag-orden-mantenimiento-detalle__repuestos"

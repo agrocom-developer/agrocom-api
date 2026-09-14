@@ -20,7 +20,7 @@
     completar una sin la otra sigue siendo un error, solo que no bloquea el
     envío del formulario con el interruptor encendido y ninguna fila visible.
 --}}
-<div class="ag-contratos-form__ventana" data-ag-ventana-fila>
+<div class="ag-form-section__body ag-contratos-form__ventana" data-ag-ventana-fila>
     @if (! empty($ventana['id']))
         <input type="hidden" name="ventanas[{{ $indice }}][id]" value="{{ $ventana['id'] }}">
     @endif

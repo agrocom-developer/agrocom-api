@@ -21,12 +21,17 @@ use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
  * un generador desde el panel es una mutación de negocio con autor y momento
  * auditables, mismo criterio que `Vehiculo`/`Bateria`.
  *
+ * `horas_inicial`/`horas_actual` (HU-86, tarea 101) reemplazan a
+ * `horas_uso` — ver docblock de
+ * `database/migrations/2026_09_14_100015_reemplaza_horas_uso_por_inicial_y_actual_en_man_generadores_table.php`.
+ *
  * @property int $id
  * @property string $identificador
  * @property string|null $modelo
  * @property int|null $base_id
  * @property string $estado
- * @property string|null $horas_uso
+ * @property string|null $horas_inicial
+ * @property string|null $horas_actual
  */
 class Generador extends ModeloDominio
 {
@@ -40,6 +45,16 @@ class Generador extends ModeloDominio
         'modelo',
         'base_id',
         'estado',
-        'horas_uso',
+        'horas_inicial',
+        'horas_actual',
     ];
+
+    /** @return array<string, string> */
+    protected function casts(): array
+    {
+        return [
+            'horas_inicial' => 'decimal:2',
+            'horas_actual' => 'decimal:2',
+        ];
+    }
 }

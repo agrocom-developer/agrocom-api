@@ -15,6 +15,8 @@
       consulta Comercial (ADR 0003 regla 3, ninguna relación Eloquent desde
       OrdenAplicacion). Un id sin etiqueta (contrato/lote borrado después)
       cae al `#id` crudo.
+    - $loteIdsPorOrden (array<int, list<int>>): lotes de CADA orden (HU-92,
+      tarea 107 — antes un único `lote_id` por orden), clave `orden->id`.
     - $filtros (array{estado: ?string, tipo_aplicacion: ?string}): filtros
       aplicados, para dejar los selects con el valor tras el submit.
     - $puedeActivar (bool): si el rol activo tiene `operaciones.orden.activar`
@@ -132,20 +134,33 @@
                         <span role="columnheader">{{ __('operaciones.ordenes.col_lote') }}</span>
                         <span role="columnheader">{{ __('operaciones.ordenes.col_aplicacion') }}</span>
                         <span role="columnheader">{{ __('operaciones.ordenes.col_tipo_aplicacion') }}</span>
-                        <span role="columnheader">{{ __('operaciones.ordenes.col_litros_ha') }}</span>
+                        <span role="columnheader">{{ __('operaciones.ordenes.col_dosis') }}</span>
                         <span role="columnheader">{{ __('operaciones.ordenes.col_fecha_emision') }}</span>
                         <span role="columnheader">{{ __('operaciones.ordenes.col_estado') }}</span>
                         <span role="columnheader" aria-hidden="true"></span>
                     </div>
 
                     @foreach ($ordenes as $orden)
-                        @php $estadoValor = $orden->estado->value; @endphp
+                        @php
+                            $estadoValor = $orden->estado->value;
+                            $lotesTexto = collect($loteIdsPorOrden[$orden->id] ?? [])
+                                ->map(fn ($loteId) => $etiquetasLote[$loteId] ?? "#{$loteId}")
+                                ->implode(', ');
+                            // HU-79 (tarea 110): la orden guarda uno de los dos según la
+                            // categoría de insumo elegida, nunca ambos — ver
+                            // OrdenesController::normalizarDatos().
+                            $dosisTexto = $orden->kilos_por_vuelo !== null
+                                ? __('operaciones.ordenes.dosis_kilos_por_vuelo', ['cantidad' => number_format((float) $orden->kilos_por_vuelo, 2, ',', '.')])
+                                : ($orden->litros_ha !== null
+                                    ? __('operaciones.ordenes.dosis_litros_ha', ['cantidad' => number_format((float) $orden->litros_ha, 2, ',', '.')])
+                                    : '—');
+                        @endphp
                         <div class="ag-ordenes__fila" role="row">
                             <span role="cell">{{ $etiquetasContrato[$orden->contrato_id] ?? "#{$orden->contrato_id}" }}</span>
-                            <span role="cell">{{ $etiquetasLote[$orden->lote_id] ?? "#{$orden->lote_id}" }}</span>
+                            <span role="cell">{{ $lotesTexto }}</span>
                             <span role="cell" class="ag-ordenes__mono">{{ $orden->nro_aplicacion }}</span>
                             <span role="cell">{{ __('operaciones.tipo_aplicacion.'.$orden->tipo_aplicacion->value) }}</span>
-                            <span role="cell" class="ag-ordenes__mono">{{ number_format((float) $orden->litros_ha, 2, ',', '.') }}</span>
+                            <span role="cell" class="ag-ordenes__mono">{{ $dosisTexto }}</span>
                             <span role="cell" class="ag-ordenes__mono">{{ $orden->fecha_emision->format('d/m/Y') }}</span>
                             <span role="cell">
                                 <x-atoms.badge :variant="$variantePorEstado[$estadoValor]">

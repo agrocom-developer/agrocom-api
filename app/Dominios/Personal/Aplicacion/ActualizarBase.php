@@ -9,10 +9,12 @@ use App\Dominios\Personal\Infraestructura\Eloquent\PerBase;
  */
 final class ActualizarBase
 {
-    public function ejecutar(PerBase $base, string $nombre, ?string $ubicacion): PerBase
+    public function ejecutar(PerBase $base, string $nombre, ?string $ubicacion, ?string $latitud, ?string $longitud): PerBase
     {
         $base->nombre = $nombre;
         $base->ubicacion = $ubicacion;
+        $base->latitud = $latitud;
+        $base->longitud = $longitud;
         $base->save();
 
         return $base->refresh();

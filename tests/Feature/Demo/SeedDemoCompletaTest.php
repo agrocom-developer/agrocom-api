@@ -118,9 +118,11 @@ it('siembra las 21 capturas del control remoto como evidencias con archivo real'
 
     // 21 capturas de OperacionDemoSeeder + 2 evidencias de firma de acta de
     // PortalDemoSeeder (tarea 65, HU-41: cliente.sanjorge y
-    // cliente.esperanza) — este test verifica TODA evidencia sembrada por
-    // DemostracionSeeder, no solo el relato de las capturas de RC.
-    expect($evidencias)->toHaveCount(23);
+    // cliente.esperanza) + 3 del "Reporte de Equipos" de T1 (HU-80, tarea 86:
+    // `sembrarEvidenciaEquipo()`, tres copias de `rc_01.jpeg`) — este test
+    // verifica TODA evidencia sembrada por DemostracionSeeder, no solo el
+    // relato de las capturas de RC.
+    expect($evidencias)->toHaveCount(26);
 
     foreach ($evidencias as $evidencia) {
         expect(Storage::disk('r2')->exists($evidencia->archivo_url))
@@ -129,7 +131,7 @@ it('siembra las 21 capturas del control remoto como evidencias con archivo real'
             ->and($evidencia->archivo_url)->toStartWith("evidencias/{$evidencia->tipo->value}/");
     }
 
-    // Las cuatro secciones de la galería de evidencias tienen contenido.
+    // Las secciones de la galería de evidencias tienen contenido.
     foreach (TipoEvidencia::cases() as $tipo) {
         if ($tipo === TipoEvidencia::Comprobante) {
             continue; // el único que no participa del relato de las capturas

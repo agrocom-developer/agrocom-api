@@ -17,7 +17,7 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
  */
 final class ActualizarLote
 {
-    /** @param  array{codigo: string, hectareas: string, geometria: array<string, mixed>|null, restricciones: string|null}  $datos
+    /** @param  array{codigo: string, hectareas: string, geometria: array<string, mixed>|null, restricciones: string|null, desnivel: string|null, limpieza: string|null}  $datos
      *
      * @throws LoteDuplicado si el código ya pertenece a otro lote activo de la propiedad de destino.
      */

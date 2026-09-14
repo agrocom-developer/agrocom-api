@@ -3,14 +3,14 @@
 namespace App\Dominios\Comercial\Infraestructura\Http\Requests;
 
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
-use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 /**
  * `PUT /panel/contratos/{contrato}` (HU-23, tarea 34). Mismo criterio que
- * `CrearContratoRequest` para los rangos de `CHECK` y para que `ventanas` sea
- * opcional (HU-47, tarea 70) — ver su docblock.
+ * `CrearContratoRequest` para los rangos de `CHECK`, para que `ventanas` sea
+ * opcional (HU-47, tarea 70) y para no pedir parámetros de vuelo ni
+ * `adelanto_pct` (HU-91, tarea 106) — ver su docblock.
  *
  * `ventanas.*.id`, cuando viene, tiene que pertenecer AL PROPIO contrato que
  * se está editando — nunca a otro (mismo espíritu que
@@ -33,16 +33,12 @@ final class ActualizarContratoRequest extends FormRequest
             'aplicaciones_previstas' => ['required', 'integer', 'min:1'],
             'precio_ha' => ['required', 'numeric', 'min:0'],
             'adelanto_monto' => ['nullable', 'numeric', 'min:0'],
-            'adelanto_pct' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'fecha_inicio' => ['required', 'date'],
             'fecha_fin' => ['nullable', 'date', 'after_or_equal:fecha_inicio'],
-            'viento_max_kmh' => ['nullable', 'numeric', 'gt:0'],
-            'temperatura_max_c' => ['nullable', 'numeric', 'gt:-10', 'lt:60'],
-            'humedad_min_pct' => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'humedad_max_pct' => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'velocidad_max_kmh' => ['nullable', 'numeric', 'gt:0'],
-            'umbral_reporte_avance_ha' => ['nullable', 'numeric', 'gt:0'],
-            'altura_vuelo_m' => ['nullable', 'numeric', 'gt:0'],
+            'brinda_alimentacion' => ['boolean'],
+            'brinda_hospedaje' => ['boolean'],
+            'brinda_combustible' => ['boolean'],
+            'observaciones_logistica' => ['nullable', 'string'],
             'ventanas' => ['nullable', 'array'],
             'ventanas.*.id' => [
                 'nullable',
@@ -54,18 +50,6 @@ final class ActualizarContratoRequest extends FormRequest
             'ventanas.*.hora_inicio' => ['nullable', 'required_with:ventanas.*.hora_fin', 'date_format:H:i'],
             'ventanas.*.hora_fin' => ['nullable', 'required_with:ventanas.*.hora_inicio', 'date_format:H:i', 'after:ventanas.*.hora_inicio'],
         ];
-    }
-
-    public function withValidator(Validator $validator): void
-    {
-        $validator->after(function (Validator $validator): void {
-            $minimo = $this->input('humedad_min_pct');
-            $maximo = $this->input('humedad_max_pct');
-
-            if ($minimo !== null && $minimo !== '' && $maximo !== null && $maximo !== '' && (float) $minimo > (float) $maximo) {
-                $validator->errors()->add('humedad_min_pct', __('comercial.contratos.error_humedad_rango'));
-            }
-        });
     }
 
     /** @return array<string, string> */

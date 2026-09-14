@@ -260,3 +260,83 @@ test('cada listado declara tantas columnas de grid como celdas tiene su encabeza
 
     expect($desajustes)->toBe([], "Un listado con menos columnas que celdas no falla: CSS Grid abre una fila implícita y las últimas celdas —casi siempre las ACCIONES— caen debajo de la primera columna.\n".implode("\n", $desajustes));
 });
+
+test('ninguna página redeclara su propio grid de campos de formulario', function () use ($raizProyecto) {
+    // El grid de dos columnas de un formulario vive en UN solo lugar:
+    // `.ag-form-section__body` (components/form-section.css), con el techo
+    // en 50% que lo cap a dos columnas aun en pantallas anchas
+    // (docs/diseno/guia_pantalla_panel.md §6.3, regla 2). Hasta el
+    // 14/9/2026, cuatro páginas (`clientes`, `contratos`, `siembra`,
+    // `campos`) redeclaraban ese mismo grid a mano para su fila repetible
+    // (contactos, ventanas, lotes) — cada una citando a la anterior como
+    // molde ("mismo patrón que clientes/_contacto-fila.blade.php") en vez de
+    // compartir la clase, así que cuando el componente ganó el techo (PR
+    // #180) las cuatro copias quedaron atrás. La corrección no es que cada
+    // copia declare el techo también: es que la fila comparta la clase
+    // `ag-form-section__body` por composición (ver el test siguiente) y la
+    // página deje de declarar el grid. Por eso esta regla es más estricta
+    // que "le falta el techo": ninguna página declara su propio
+    // `auto-fit`+`minmax(` para un selector con "form" en el nombre, tenga
+    // o no el techo — la única declaración legítima es la del componente.
+    $duplicados = [];
+
+    foreach (glob($raizProyecto.'/resources/css/pages/*.css') ?: [] as $hoja) {
+        $relativa = substr($hoja, strlen($raizProyecto) + 1);
+        $contenido = file_get_contents($hoja);
+
+        if ($contenido === false) {
+            continue;
+        }
+
+        // Solo selectores con "form" en el nombre: una galería de tarjetas o
+        // un grid de estadísticas (`totales-grid`, `plan-grid`) puede querer
+        // tantas columnas como entren a propósito — esta regla es de campos
+        // de formulario, no de todo `auto-fit`.
+        preg_match_all('~\.([a-zA-Z0-9_-]*form[a-zA-Z0-9_-]*)\s*\{([^}]*)\}~', $contenido, $reglas, PREG_SET_ORDER);
+
+        foreach ($reglas as $regla) {
+            [$selector, $cuerpo] = [$regla[1], $regla[2]];
+
+            if (str_contains($cuerpo, 'auto-fit') && str_contains($cuerpo, 'minmax(')) {
+                $duplicados[] = "{$relativa}: .{$selector}";
+            }
+        }
+    }
+
+    expect($duplicados)->toBe([], "Estas páginas redeclaran su propio grid de auto-fit/minmax para un elemento de formulario en vez de compartir la clase `ag-form-section__body` (components/form-section.css) — el sitio único de esa decisión.\n".implode("\n", $duplicados));
+});
+
+test('toda fila repetible de un formulario comparte la clase ag-form-section__body', function () use ($raizProyecto) {
+    // Contraparte del test anterior: cómo SÍ se logra el grid de dos
+    // columnas en una fila repetible (contactos de cliente, ventanas de
+    // contrato, lotes de campo/siembra) sin redeclararlo — por composición,
+    // agregando la clase del componente al elemento raíz de la fila además
+    // de su propia clase BEM. La convención de nombre del partial ya existe
+    // en el árbol (`_contacto-fila.blade.php`, `_ventana-fila.blade.php`,
+    // `_siembra-fila.blade.php`, `_lote-fila.blade.php`), así que el
+    // descubrimiento no depende de una lista a mano.
+    $sinClase = [];
+
+    /** @var iterable<SplFileInfo> $iterador */
+    $iterador = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($raizProyecto.'/app/Dominios', FilesystemIterator::SKIP_DOTS));
+
+    foreach ($iterador as $archivo) {
+        $relativa = substr($archivo->getPathname(), strlen($raizProyecto) + 1);
+
+        if (! $archivo->isFile() || ! preg_match('~/pages/.*/_[a-z-]+-fila\.blade\.php$~', $relativa)) {
+            continue;
+        }
+
+        $contenido = file_get_contents($raizProyecto.'/'.$relativa);
+
+        if ($contenido === false || preg_match('~<div\s+class="([^"]*)"~', $contenido, $raiz) !== 1) {
+            continue;
+        }
+
+        if (! in_array('ag-form-section__body', explode(' ', $raiz[1]), true)) {
+            $sinClase[] = $relativa;
+        }
+    }
+
+    expect($sinClase)->toBe([], "Estas filas repetibles no llevan la clase ag-form-section__body en su elemento raíz, así que no comparten el grid de dos columnas del componente (van a necesitar su propio grid duplicado, que es justo lo que esta convención evita).\n".implode("\n", $sinClase));
+});

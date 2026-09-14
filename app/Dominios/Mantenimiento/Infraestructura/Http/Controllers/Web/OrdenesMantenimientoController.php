@@ -2,6 +2,8 @@
 
 namespace App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Finanzas\Contratos\EscrituraGastoMantenimiento;
+use App\Dominios\Finanzas\Contratos\LecturaGastoMantenimiento;
 use App\Dominios\Mantenimiento\Aplicacion\ListarOrdenesMantenimiento;
 use App\Dominios\Mantenimiento\Aplicacion\MaquinaEstados\MaquinaEstadosOrdenMantenimiento;
 use App\Dominios\Mantenimiento\Dominio\EstadoOrdenMantenimiento;
@@ -43,6 +45,12 @@ use Illuminate\View\View;
  * Los selects de equipo/repuestos/bases se arman con `DB::table(...)` (ADR
  * 0003 regla 3, mismo criterio que `VehiculosController`/`StockController`),
  * sin importar los modelos Eloquent de `Operaciones`/`Inventario`/`Personal`.
+ *
+ * `edit()` también pasa el precio final real de una orden cerrada (HU-88,
+ * tarea 103), leído vía {@see LecturaGastoMantenimiento} — nunca
+ * `Gasto::query()` directo (ADR 0003 regla 2, mismo criterio que
+ * `MaquinaEstadosOrdenMantenimiento` con {@see EscrituraGastoMantenimiento}
+ * en sentido contrario).
  */
 final class OrdenesMantenimientoController
 {
@@ -52,7 +60,10 @@ final class OrdenesMantenimientoController
 
     private const PERMISO_CERRAR = 'mantenimiento.orden.cerrar';
 
-    public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
+    public function __construct(
+        private readonly AutorizacionPanelWeb $autorizacion,
+        private readonly LecturaGastoMantenimiento $lecturaGastoMantenimiento,
+    ) {}
 
     public function index(Request $request, ListarOrdenesMantenimiento $listarOrdenesMantenimiento): View
     {
@@ -118,6 +129,7 @@ final class OrdenesMantenimientoController
             'basesDisponibles' => $this->basesDisponibles(),
             'stockPorRepuesto' => $this->stockPorRepuesto(),
             'puedeCerrar' => $this->autorizacion->tienePermiso($request, self::PERMISO_CERRAR),
+            'montoGasto' => $orden->gasto_id !== null ? $this->lecturaGastoMantenimiento->montoDe($orden->gasto_id) : null,
         ]);
     }
 
@@ -142,7 +154,7 @@ final class OrdenesMantenimientoController
             ->all();
 
         try {
-            $maquinaEstados->cerrar($orden, $lineas);
+            $maquinaEstados->cerrar($orden, $lineas, (string) $request->validated('descripcion_final'));
         } catch (RepuestosInsuficientes|TransicionOrdenMantenimientoNoPermitida $excepcion) {
             throw ValidationException::withMessages(['repuestos' => $excepcion->getMessage()]);
         }

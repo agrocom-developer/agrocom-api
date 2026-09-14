@@ -24,6 +24,9 @@ use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
  *
  * @property int $id
  * @property string $identificador
+ * @property int $ciclos_inicial punto de partida del historial (HU-83, tarea
+ *                               98), fijado al alta e inmutable después —
+ *                               ver docblock de `ActualizarBateria`.
  * @property int $ciclos_acumulados
  * @property string $estado
  * @property int|null $base_id
@@ -40,6 +43,7 @@ class Bateria extends ModeloDominio
     /** @var list<string> */
     protected $fillable = [
         'identificador',
+        'ciclos_inicial',
         'ciclos_acumulados',
         'estado',
         'base_id',
@@ -49,6 +53,7 @@ class Bateria extends ModeloDominio
     protected function casts(): array
     {
         return [
+            'ciclos_inicial' => 'integer',
             'ciclos_acumulados' => 'integer',
         ];
     }

@@ -47,10 +47,17 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * `Operaciones`, así que sí tiene relación Eloquent normal
  * ({@see self::imagenCampoEvidencia()}).
  *
+ * `equipo_trabajo_id` (HU-70, tarea 85): equipo al que el jefe de campo le
+ * asignó este trabajo desde el panel — `NULL` en los trabajos que nacen por
+ * sync (ver `MaquinaEstadosTrabajo::abrir()`) o que existían antes de esta
+ * tarea. FK plana a `per_equipos_trabajo` (otro módulo, ADR 0003 regla 3):
+ * sin relación Eloquent, se lee por `Personal\Contratos\LecturaEquipoTrabajo`.
+ *
  * @property int $id
  * @property string $uuid_cliente
  * @property int $orden_id
  * @property int $lote_id
+ * @property int|null $equipo_trabajo_id
  * @property int $nro_aplicacion
  * @property string $hectareas_declaradas
  * @property EstadoTrabajo $estado
@@ -72,6 +79,7 @@ class Trabajo extends ModeloDominio
         'uuid_cliente',
         'orden_id',
         'lote_id',
+        'equipo_trabajo_id',
         'nro_aplicacion',
         'hectareas_declaradas',
         'estado',
@@ -87,6 +95,7 @@ class Trabajo extends ModeloDominio
     {
         return [
             'nro_aplicacion' => 'integer',
+            'equipo_trabajo_id' => 'integer',
             'hectareas_declaradas' => 'decimal:2',
             'estado' => EstadoTrabajo::class,
             'inicio' => 'immutable_datetime',
@@ -137,6 +146,19 @@ class Trabajo extends ModeloDominio
     public function reporteTecnico(): HasOne
     {
         return $this->hasOne(ReporteTecnico::class, 'trabajo_id');
+    }
+
+    /**
+     * "Reporte de Equipos" de este trabajo (HU-80, tarea 86): horas de
+     * vuelo declaradas y las tres fotos de chequeo. `hasOne` porque
+     * `ope_evidencias_equipo.trabajo_id` es `UNIQUE` — un solo registro por
+     * trabajo, mismo criterio que `reporteTecnico()`.
+     *
+     * @return HasOne<EvidenciaEquipo, $this>
+     */
+    public function evidenciaEquipo(): HasOne
+    {
+        return $this->hasOne(EvidenciaEquipo::class, 'trabajo_id');
     }
 
     /**

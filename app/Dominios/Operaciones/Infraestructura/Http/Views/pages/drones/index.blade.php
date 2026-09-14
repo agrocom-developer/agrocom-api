@@ -5,6 +5,10 @@
     paginación. Mismo molde que campos/index.blade.php (tarea 35), sin
     sub-entidad: un dron no tiene lotes ni contactos.
 
+    Columna "Capacidad de carga" (HU-81, tarea 96): un dron puede tener
+    litros, kilos, ambos o ninguno — se muestran las dos cifras que existan
+    separadas por "·", sin agregar columna nueva.
+
     Datos esperados (ver DronesController::index()): la cáscara de
     CascaraPanel, más:
     - $drones (LengthAwarePaginator<Dron>): identificador ascendente.
@@ -100,7 +104,13 @@
                             <span role="cell" class="ag-drones__identificador">{{ $dron->identificador }}</span>
                             <span role="cell">{{ $dron->modelo ?? __('operaciones.drones.sin_modelo') }}</span>
                             <span role="cell" class="ag-drones__capacidad">
-                                {{ $dron->capacidad_l !== null ? __('operaciones.drones.capacidad_valor', ['cantidad' => (int) $dron->capacidad_l]) : __('operaciones.drones.sin_capacidad') }}
+                                @php
+                                    $capacidades = array_filter([
+                                        $dron->capacidad_l !== null ? __('operaciones.drones.capacidad_valor', ['cantidad' => (int) $dron->capacidad_l]) : null,
+                                        $dron->capacidad_kg !== null ? __('operaciones.drones.capacidad_kg_valor', ['cantidad' => number_format((float) $dron->capacidad_kg, 2, ',', '.')]) : null,
+                                    ]);
+                                @endphp
+                                {{ $capacidades !== [] ? implode(' · ', $capacidades) : __('operaciones.drones.sin_capacidad') }}
                             </span>
 
                             <span role="cell" class="ag-drones__acciones">

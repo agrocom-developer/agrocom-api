@@ -17,6 +17,7 @@ use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
 use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraAutoria;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenLote;
 use Illuminate\Database\Seeder;
 
 /**
@@ -27,8 +28,9 @@ use Illuminate\Database\Seeder;
  *
  * Los números son los del escenario base del contrato residente
  * (docs/negocio/ventana_al_negocio.md §1–2): 4.000 ha × 7 aplicaciones
- * a 65 Bs/ha = Bs 1.820.000, adelanto del 35% (Bs 637.000), soya en el
- * este cruceño; velocidad ≤ 15 km/h impuesta por el cliente (RF-60).
+ * a 65 Bs/ha = Bs 1.820.000, adelanto de Bs 637.000, soya en el este
+ * cruceño; velocidad ≤ 15 km/h impuesta por el cliente (RF-60), fijada en
+ * la orden de aplicación (HU-91, tarea 106: ya no vive en el contrato).
  *
  * Escribe por los modelos Eloquent de cada módulo (regla dura del ADR 0012).
  * La autoría va explícita: en seeders no hay usuario autenticado, así que
@@ -106,17 +108,10 @@ class NucleoComercialSeeder extends Seeder
             'aplicaciones_previstas' => 7,
             'precio_ha' => '65.00',
             'monto_total' => '1820000.00',
-            'adelanto_pct' => '35.00',
             'adelanto_monto' => '637000.00',
             'fecha_inicio' => '2026-08-01',
             'fecha_fin' => '2026-12-31',
             'estado' => EstadoContrato::Vigente,
-            'viento_max_kmh' => '17.00',
-            'temperatura_max_c' => '30.00',
-            'humedad_min_pct' => '80.00',
-            'humedad_max_pct' => '95.00',
-            'velocidad_max_kmh' => '15.00',
-            'umbral_reporte_avance_ha' => '500.00',
         ]), $autorId);
 
         // Ventanas horarias permitidas: 06:00–10:00 y 16:00–20:00 (insumos §7.1).
@@ -191,9 +186,11 @@ class NucleoComercialSeeder extends Seeder
         ]), $autorId);
 
         // Orden de aplicación vigente para L-01: requisito para abrir un trabajo.
-        $this->crear(new OrdenAplicacion([
+        // HU-92 (tarea 107): el lote ya no es una columna de la orden, es una
+        // fila de `ope_orden_lotes` — con la hectáreas completa de L-01 como
+        // tope (mismo criterio de HU-70 antes de esta tarea).
+        $orden = $this->crear(new OrdenAplicacion([
             'contrato_id' => $contrato->id,
-            'lote_id' => $lotePrimero->id,
             'nro_aplicacion' => 1,
             'litros_ha' => '10.00',
             'humedad_min_pct' => '80.00',
@@ -204,6 +201,12 @@ class NucleoComercialSeeder extends Seeder
             'emitida_por_contacto_id' => $agronomo->id,
             'fecha_emision' => '2026-08-25',
             'estado' => EstadoOrdenAplicacion::Vigente,
+        ]), $autorId);
+
+        $this->crear(new OrdenLote([
+            'orden_id' => $orden->id,
+            'lote_id' => $lotePrimero->id,
+            'hectareas_solicitadas' => $lotePrimero->hectareas,
         ]), $autorId);
     }
 

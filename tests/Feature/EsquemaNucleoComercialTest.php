@@ -1,7 +1,6 @@
 <?php
 
 use Database\Seeders\Demo\DemoSeeder;
-use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -32,8 +31,71 @@ it('crea la tabla con soft delete y columnas de auditoría', function (string $t
         ]))->toBeTrue();
 })->with('tablas del núcleo comercial');
 
-it('com_contratos tiene la altura de vuelo pactada por contrato (HU-47, tarea 70)', function () {
-    expect(Schema::hasColumn('com_contratos', 'altura_vuelo_m'))->toBeTrue();
+dataset('columnas de vuelo retiradas de com_contratos', [
+    'adelanto_pct',
+    'viento_max_kmh',
+    'temperatura_max_c',
+    'humedad_min_pct',
+    'humedad_max_pct',
+    'velocidad_max_kmh',
+    'umbral_reporte_avance_ha',
+    'altura_vuelo_m',
+]);
+
+it('com_contratos ya no tiene parámetros de vuelo propios (HU-91, tarea 106): heredan siempre de la orden o del valor por defecto', function (string $columna) {
+    expect(Schema::hasColumn('com_contratos', $columna))->toBeFalse();
+})->with('columnas de vuelo retiradas de com_contratos');
+
+it('com_lotes tiene desnivel y limpieza, nullable (HU-73, tarea 89)', function () {
+    expect(Schema::hasColumns('com_lotes', ['desnivel', 'limpieza']))->toBeTrue();
+});
+
+it('com_clientes tiene ubicación de oficina y logo, nullable (HU-75, tarea 91)', function () {
+    expect(Schema::hasColumns('com_clientes', ['ubicacion_oficina', 'logo_path']))->toBeTrue();
+});
+
+it('com_propiedades tiene departamento, municipio, localidad y coordenada, nullable (HU-76, tarea 92)', function () {
+    expect(Schema::hasColumns('com_propiedades', [
+        'departamento',
+        'municipio',
+        'localidad',
+        'latitud',
+        'longitud',
+    ]))->toBeTrue();
+});
+
+it('com_contratos tiene las acomodaciones logísticas, con los booleanos en false por defecto (HU-74, tarea 90)', function () {
+    expect(Schema::hasColumns('com_contratos', [
+        'brinda_alimentacion',
+        'brinda_hospedaje',
+        'brinda_combustible',
+        'observaciones_logistica',
+    ]))->toBeTrue();
+
+    $contratoId = DB::table('com_contratos')->insertGetId([
+        'cliente_id' => DB::table('com_clientes')->insertGetId([
+            'razon_social' => 'Cliente esquema logística',
+            'nit' => '555444333',
+            'tipo_persona' => 'juridica',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]),
+        'hectareas_contratadas' => '10.00',
+        'aplicaciones_previstas' => 1,
+        'precio_ha' => '50.00',
+        'monto_total' => '500.00',
+        'fecha_inicio' => now()->toDateString(),
+        'estado' => 'borrador',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $contrato = DB::table('com_contratos')->where('id', $contratoId)->first();
+
+    expect((bool) $contrato->brinda_alimentacion)->toBeFalse()
+        ->and((bool) $contrato->brinda_hospedaje)->toBeFalse()
+        ->and((bool) $contrato->brinda_combustible)->toBeFalse()
+        ->and($contrato->observaciones_logistica)->toBeNull();
 });
 
 it('ope_ordenes_aplicacion tiene el tipo de aplicación, con desarrollo como default (HU-47, tarea 70)', function () {
@@ -82,9 +144,11 @@ it('ope_ordenes_aplicacion tiene el tipo de aplicación, con desarrollo como def
 
     // Sin `tipo_aplicacion` en el insert: rige el DEFAULT de la migración
     // (columna con `->default('desarrollo')`, aplicado también en SQLite).
+    // `lote_id` ya no es columna de esta tabla (HU-92, tarea 107) — $loteId
+    // queda sin usar en este test puntual, no hace falta la fila de
+    // `ope_orden_lotes` para lo que se verifica acá.
     $ordenId = DB::table('ope_ordenes_aplicacion')->insertGetId([
         'contrato_id' => $contratoId,
-        'lote_id' => $loteId,
         'nro_aplicacion' => 1,
         'litros_ha' => '10.00',
         'fecha_emision' => '2026-09-01',
@@ -106,7 +170,10 @@ it('el seeder demo deja una orden de aplicación vigente consultable', function 
 
     expect($orden)->not->toBeNull();
 
-    $lote = DB::table('com_lotes')->where('id', $orden->lote_id)->first();
+    // HU-92 (tarea 107): el lote de la orden ya no es una columna propia,
+    // se resuelve por `ope_orden_lotes`.
+    $loteId = DB::table('ope_orden_lotes')->where('orden_id', $orden->id)->value('lote_id');
+    $lote = DB::table('com_lotes')->where('id', $loteId)->first();
     $contrato = DB::table('com_contratos')->where('id', $orden->contrato_id)->first();
 
     expect($lote)->not->toBeNull()
@@ -127,22 +194,16 @@ it('el monto total del contrato demo cuadra exacto desde sus factores', function
     expect($cuadra)->toBeTrue();
 });
 
-it('rechaza una segunda orden vigente para el mismo lote por el índice parcial', function () {
-    $this->seed(DemoSeeder::class);
-
-    $orden = DB::table('ope_ordenes_aplicacion')
-        ->where('estado', 'vigente')
-        ->whereNull('deleted_at')
-        ->first();
-
-    DB::table('ope_ordenes_aplicacion')->insert([
-        'contrato_id' => $orden->contrato_id,
-        'lote_id' => $orden->lote_id,
-        'nro_aplicacion' => 2,
-        'litros_ha' => '10.00',
-        'fecha_emision' => '2026-08-26',
-        'estado' => 'vigente',
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
-})->throws(QueryException::class);
+/*
+ * "Una única orden vigente por lote" YA NO es un índice parcial de esta
+ * tabla (HU-92, tarea 107): desde que una orden cubre N lotes
+ * (`ope_orden_lotes`), la regla cruza esa tabla con
+ * `ope_ordenes_aplicacion.estado` — algo que un índice parcial de Postgres
+ * no puede expresar (condicionar sobre una tabla ajena). La garantía se
+ * movió a `MaquinaEstadosOrden::activar()` (verificación explícita + lock,
+ * ver su docblock) y su test vive en
+ * tests/Feature/Operaciones/GestionOrdenesPanelTest.php ("una segunda
+ * activación sobre el mismo lote falla como error de validación legible, no
+ * un QueryException") — ya no es un mecanismo de ESQUEMA, así que no
+ * corresponde acá.
+ */

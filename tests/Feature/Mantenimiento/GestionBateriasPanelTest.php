@@ -35,6 +35,9 @@ use Illuminate\Support\Str;
  * la orden vigente sobre el lote 'L-01' es la que le da un `sesion_id`
  * válido a la recarga de prueba (`ope_recargas` exige la FK real) — mismo
  * dato demo que usa `tests/Feature/Api/RecargaSincronizacionTest.php`.
+ *
+ * HU-83 (tarea 98) suma `ciclos_inicial` (punto de partida, inmutable tras
+ * el alta) y el estado `mantenimiento` — ver los tests agregados más abajo.
  */
 
 uses(RefreshDatabase::class);
@@ -68,6 +71,7 @@ function payloadBateria(array $overrides = []): array
 {
     return array_merge([
         'identificador' => 'BAT-001',
+        'ciclos_inicial' => '0',
         'ciclos_acumulados' => '0',
         'base_id' => '',
         'estado' => 'activa',
@@ -85,7 +89,7 @@ function ordenVigenteParaBateria(): OrdenAplicacion
     $loteId = Lote::query()->where('codigo', 'L-01')->value('id');
 
     return OrdenAplicacion::query()
-        ->where('lote_id', $loteId)
+        ->whereHas('ordenLotes', fn ($q) => $q->where('lote_id', $loteId))
         ->where('estado', EstadoOrdenAplicacion::Vigente)
         ->firstOrFail();
 }
@@ -104,7 +108,7 @@ function crearRecargaConAlertaTemperatura(string $identificadorBateria): void
     $trabajo = Trabajo::query()->create([
         'uuid_cliente' => (string) Str::uuid(),
         'orden_id' => $orden->id,
-        'lote_id' => $orden->lote_id,
+        'lote_id' => (int) $orden->ordenLotes()->value('lote_id'),
         'nro_aplicacion' => $orden->nro_aplicacion,
         'inicio' => now(),
     ]);
@@ -154,8 +158,31 @@ it('da de alta una batería sin base asignada', function () {
 
     $bateria = Bateria::query()->where('identificador', 'BAT-001')->sole();
     expect($bateria->base_id)->toBeNull()
+        ->and($bateria->ciclos_inicial)->toBe(0)
         ->and($bateria->ciclos_acumulados)->toBe(0)
         ->and($bateria->estado)->toBe('activa');
+});
+
+it('da de alta una batería con ciclo inicial y acumulado distintos, guardando ambos valores', function () {
+    [$encargado, $idRol] = usuarioConRolParaBaterias('encargado', 'encargado_operaciones');
+    entrarAlPanelParaBaterias($encargado, $idRol);
+
+    $this->post(route('panel.baterias.store'), payloadBateria(['ciclos_inicial' => '40', 'ciclos_acumulados' => '120']))
+        ->assertRedirect(route('panel.baterias.index'));
+
+    $bateria = Bateria::query()->where('identificador', 'BAT-001')->sole();
+    expect($bateria->ciclos_inicial)->toBe(40)
+        ->and($bateria->ciclos_acumulados)->toBe(120);
+});
+
+it('rechaza ciclos_inicial negativo sin persistir', function () {
+    [$encargado, $idRol] = usuarioConRolParaBaterias('encargado', 'encargado_operaciones');
+    entrarAlPanelParaBaterias($encargado, $idRol);
+
+    $this->post(route('panel.baterias.store'), payloadBateria(['ciclos_inicial' => '-1']))
+        ->assertSessionHasErrors('ciclos_inicial');
+
+    expect(Bateria::query()->where('identificador', 'BAT-001')->exists())->toBeFalse();
 });
 
 it('rechaza un estado fuera del enum sin persistir', function () {
@@ -234,6 +261,94 @@ it('edita una batería existente, incluidos sus ciclos acumulados', function () 
         ->and($bateria->estado)->toBe('retirada');
 });
 
+it('ofrece ciclos_inicial editable en el alta, de solo lectura en la edición', function () {
+    [$encargado, $idRol] = usuarioConRolParaBaterias('encargado', 'encargado_operaciones');
+    entrarAlPanelParaBaterias($encargado, $idRol);
+
+    $this->get(route('panel.baterias.create'))
+        ->assertOk()
+        ->assertSee('name="ciclos_inicial"', false);
+
+    $bateria = Bateria::query()->create(['identificador' => 'BAT-001', 'ciclos_inicial' => 40, 'ciclos_acumulados' => 40, 'estado' => 'activa']);
+
+    $this->get(route('panel.baterias.edit', $bateria))
+        ->assertOk()
+        ->assertSee('40')
+        ->assertDontSee('name="ciclos_inicial"', false);
+});
+
+it('actualizar ciclos_acumulados nunca pisa ciclos_inicial, aunque el payload lo incluya', function () {
+    [$encargado, $idRol] = usuarioConRolParaBaterias('encargado', 'encargado_operaciones');
+    entrarAlPanelParaBaterias($encargado, $idRol);
+
+    $bateria = Bateria::query()->create(['identificador' => 'BAT-001', 'ciclos_inicial' => 40, 'ciclos_acumulados' => 40, 'estado' => 'activa']);
+
+    // `ciclos_inicial` viaja igual en el payload (por si el formulario lo
+    // reenvía) pero `ActualizarBateriaRequest` no lo valida — no debe llegar
+    // a `ActualizarBateria::ejecutar()` ni pisar el valor original.
+    $this->put(
+        route('panel.baterias.update', $bateria),
+        payloadBateria(['ciclos_inicial' => '999', 'ciclos_acumulados' => '85']),
+    )->assertRedirect(route('panel.baterias.index'));
+
+    $bateria->refresh();
+    expect($bateria->ciclos_inicial)->toBe(40)
+        ->and($bateria->ciclos_acumulados)->toBe(85);
+});
+
+it('rechaza bajar ciclos_acumulados desde el panel sin motivo_correccion, sin persistir', function () {
+    [$encargado, $idRol] = usuarioConRolParaBaterias('encargado', 'encargado_operaciones');
+    entrarAlPanelParaBaterias($encargado, $idRol);
+
+    $bateria = Bateria::query()->create(['identificador' => 'BAT-001', 'ciclos_acumulados' => 100, 'estado' => 'activa']);
+
+    $this->put(
+        route('panel.baterias.update', $bateria),
+        payloadBateria(['ciclos_acumulados' => '80']),
+    )->assertSessionHasErrors('motivo_correccion');
+
+    expect($bateria->refresh()->ciclos_acumulados)->toBe(100);
+});
+
+it('acepta bajar ciclos_acumulados desde el panel con motivo_correccion', function () {
+    [$encargado, $idRol] = usuarioConRolParaBaterias('encargado', 'encargado_operaciones');
+    entrarAlPanelParaBaterias($encargado, $idRol);
+
+    $bateria = Bateria::query()->create(['identificador' => 'BAT-001', 'ciclos_acumulados' => 100, 'estado' => 'activa']);
+
+    $this->put(
+        route('panel.baterias.update', $bateria),
+        payloadBateria(['ciclos_acumulados' => '80', 'motivo_correccion' => 'Corrección de carga inicial errónea']),
+    )->assertRedirect(route('panel.baterias.index'));
+
+    expect($bateria->refresh()->ciclos_acumulados)->toBe(80);
+});
+
+it('acepta el estado mantenimiento tanto al alta como a la edición', function () {
+    [$encargado, $idRol] = usuarioConRolParaBaterias('encargado', 'encargado_operaciones');
+    entrarAlPanelParaBaterias($encargado, $idRol);
+
+    $this->post(route('panel.baterias.store'), payloadBateria(['estado' => 'mantenimiento']))
+        ->assertRedirect(route('panel.baterias.index'));
+
+    $bateria = Bateria::query()->where('identificador', 'BAT-001')->sole();
+    expect($bateria->estado)->toBe('mantenimiento');
+
+    $this->put(
+        route('panel.baterias.update', $bateria),
+        payloadBateria(['estado' => 'activa']),
+    )->assertRedirect(route('panel.baterias.index'));
+
+    expect($bateria->refresh()->estado)->toBe('activa');
+
+    $this->put(
+        route('panel.baterias.update', $bateria),
+        payloadBateria(['estado' => 'mantenimiento']),
+    )->assertRedirect(route('panel.baterias.index'));
+
+    expect($bateria->refresh()->estado)->toBe('mantenimiento');
+});
+
 it('filtra el listado por base y por estado', function () {
     [$encargado, $idRol] = usuarioConRolParaBaterias('encargado', 'encargado_operaciones');
     entrarAlPanelParaBaterias($encargado, $idRol);
@@ -253,6 +368,19 @@ it('filtra el listado por base y por estado', function () {
         ->assertOk()
         ->assertSee('BAT-SUR')
         ->assertDontSee('BAT-NORTE');
+});
+
+it('lista y filtra baterías en estado mantenimiento sin romper el badge', function () {
+    [$encargado, $idRol] = usuarioConRolParaBaterias('encargado', 'encargado_operaciones');
+    entrarAlPanelParaBaterias($encargado, $idRol);
+
+    Bateria::query()->create(['identificador' => 'BAT-MANT', 'estado' => 'mantenimiento']);
+    Bateria::query()->create(['identificador' => 'BAT-ACTIVA', 'estado' => 'activa']);
+
+    $this->get(route('panel.baterias.index', ['estado' => 'mantenimiento']))
+        ->assertOk()
+        ->assertSee('BAT-MANT')
+        ->assertDontSee('BAT-ACTIVA');
 });
 
 it('activa la alerta cuando los ciclos acumulados alcanzan el umbral, no antes', function () {

@@ -15,6 +15,12 @@
     - $propiedadesDisponibles (Collection<int, Propiedad>): id => Propiedad
       con `cliente_id` y `nombre` — para el cascade cliente → propiedad
       (ADR 0018: campo ahora cuelga de propiedad, no directo de cliente).
+    - $cultivosDisponibles / $campaniasDisponibles: SOLO en alta (HU-72,
+      tarea 88) — `CamposController::create()` las pasa, `edit()` no. Por eso
+      el bloque "Generar lotes" que las usa está adentro de
+      `@if (! $esEdicion)`: en edición esas variables ni siquiera existen, y
+      el generador no aplica (dibujar/renombrar un lote ya creado es la ficha
+      existente del lote, no esta pantalla).
 
     Tras un error de validación, `old()` pisa los valores del modelo/vacíos
     — mismo criterio en alta y en edición.
@@ -36,12 +42,21 @@
             'hectareas' => $lote->hectareas,
             'geometria' => $lote->geometria !== null ? json_encode($lote->geometria) : '',
             'restricciones' => $lote->restricciones,
+            'desnivel' => $lote->desnivel,
+            'limpieza' => $lote->limpieza,
         ])->all()
         : [[]];
     $lotesIniciales = old('lotes', $lotesPorDefecto);
     $mapaClientePropiedad = $propiedadesDisponibles->pluck('cliente_id', 'id');
     $propiedadesOptions = $propiedadesDisponibles->mapWithKeys(fn ($propiedad) => [
         $propiedad->id => $propiedad->nombre,
+    ]);
+    // Solo llegan en alta (ver nota de arriba) — `?? collect()` evita el
+    // acceso a variable indefinida cuando este partial se renderiza desde
+    // edit.blade.php, aunque el bloque que las usa nunca se pinte ahí.
+    $mapaClienteCampania = ($campaniasDisponibles ?? collect())->pluck('cliente_id', 'id');
+    $campaniasOptions = ($campaniasDisponibles ?? collect())->mapWithKeys(fn ($campania) => [
+        $campania->id => $campania->codigo,
     ]);
 @endphp
 
@@ -99,6 +114,72 @@
             error="{{ $errors->first('nombre') }}"
         />
     </x-molecules.form-section>
+
+    @if (! $esEdicion)
+        {{--
+            Generador de alta masiva (HU-72, tarea 88): rellena `lotes[]` con N
+            filas provisorias ("Lote 1".."Lote N", JS en
+            resources/js/pages/campos-form.js) y, si se elige cultivo, siembra
+            todos los lotes del campo en la campaña elegida —`cultivo_id`/
+            `campania_id` viajan a NIVEL FORMULARIO (no por lote), los procesa
+            `CrearCampo` una sola vez para todo el campo. Renombrar cada lote o
+            dibujar su perímetro es la ficha existente del lote, después de
+            crear el campo — no algo de esta pantalla.
+        --}}
+        <x-molecules.form-section
+            :title="__('comercial.campos.seccion_generador')"
+            :count="__('comercial.campos.campos_contador', ['cantidad' => 4])"
+            data-ag-generador
+        >
+            <x-atoms.input
+                type="number"
+                name="generador_cantidad"
+                label="{{ __('comercial.campos.generador_cantidad') }}"
+                min="1"
+                step="1"
+                data-ag-generador-cantidad
+            />
+
+            <x-atoms.input
+                type="number"
+                name="generador_hectareas"
+                label="{{ __('comercial.campos.generador_hectareas') }}"
+                min="0.01"
+                step="0.01"
+                data-ag-generador-hectareas
+            />
+
+            <x-atoms.select
+                name="cultivo_id"
+                id="cultivo_id"
+                label="{{ __('comercial.campos.generador_cultivo') }}"
+                :options="$cultivosDisponibles"
+                :value="old('cultivo_id')"
+                placeholder="{{ __('comercial.campos.generador_cultivo_placeholder') }}"
+                error="{{ $errors->first('cultivo_id') }}"
+                data-ag-generador-cultivo
+            />
+
+            <x-atoms.select
+                name="campania_id"
+                id="campania_id"
+                label="{{ __('comercial.campos.generador_campania') }}"
+                :options="$campaniasOptions"
+                :value="old('campania_id')"
+                placeholder="{{ __('comercial.campos.generador_campania_placeholder') }}"
+                error="{{ $errors->first('campania_id') }}"
+                data-ag-generador-campania
+                data-mapa-cliente-campania="{{ $mapaClienteCampania->toJson() }}"
+            />
+
+            <div class="ag-form-section__field--full ag-campos-form__generador-pie">
+                <x-atoms.button type="button" variant="outline" icon="auto_awesome" data-ag-generador-generar>
+                    {{ __('comercial.campos.generador_generar') }}
+                </x-atoms.button>
+                <p class="ag-input__help">{{ __('comercial.campos.generador_ayuda') }}</p>
+            </div>
+        </x-molecules.form-section>
+    @endif
 
     <x-molecules.form-section :title="__('comercial.campos.seccion_lotes')" class="ag-campos-form__lotes-seccion">
         <div class="ag-form-section__field--full ag-campos-form__lotes" data-ag-lotes>

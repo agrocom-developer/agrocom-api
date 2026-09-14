@@ -309,6 +309,125 @@ Este repo sigue siendo la fuente de la especificación funcional/técnica y de l
 
 ---
 
+## Sprint 16 — Ajustes de negocio de Operaciones y Comercial (ronda del dueño, 13/9/2026)
+
+*Objetivo: cerrar los gaps de negocio reales que aparecieron en la ronda de
+observaciones del dueño (Word "MODULO OPERACIONES - COMERCIAL" + 2 audios),
+documentados en
+`docs/negocio/observaciones_operaciones_comercial_2026-09-13.md`. La
+numeración de HU sigue desde 70 (no desde 59) para no chocar con la de
+`agrocom-field`, que ya usa HU-59 a HU-69 en su propio `plan_sprints.md`
+(Sprint 15, movido el 10/9/2026).*
+
+| ID | Historia / tarea | CA esenciales | Est. |
+|---|---|---|---|
+| HU-70 | Como **jefe de campo**, quiero asignar uno o más equipos de trabajo (con sus lotes y hectáreas) a una orden de aplicación vigente, para que el sistema genere el `Trabajo` de cada equipo automáticamente y el piloto sepa qué le toca sin que se lo mande por WhatsApp | Una orden admite N asignaciones (`equipo_trabajo_id` + `lote_id` + hectáreas), con `SUM(hectáreas asignadas) ≤ hectáreas del lote`; confirmar la asignación crea un `Trabajo` por equipo con su lote y hectáreas ya resueltos; el trabajo generado sale en `GET /api/sync/catalogo` con su equipo, para que la app lo muestre al iniciar sesión | 4,0 d |
+| HU-71 | Como **encargado**, quiero pausar un contrato vigente y reanudarlo, y ver sus estados con el vocabulario del negocio (En Ejecución/En Aprobación/Ejecutado/Pausado), para reflejar una interrupción sin cancelarlo | Nuevo estado `pausado` en `TransicionesContrato` (`vigente ↔ pausado`, transición inválida rechazada); las etiquetas del panel traducen `borrador/vigente/finalizado/cancelado/pausado` sin tocar los valores guardados | 2,0 d |
+| HU-72 | Como **encargado**, quiero crear varios lotes de una propiedad de una sola vez indicando cuántos y su tipo de siembra, para no cargar uno por uno y poder renombrarlos y dibujar el polígono después | Extiende `CrearCampo` (ya acepta `lotes[]`) con una cantidad `N` + cultivo por defecto; genera `N` lotes con nombre provisorio y su fila en `com_lote_campania` para la campaña activa del cliente; cada lote se puede renombrar/dibujar después sin perder el cultivo | 2,0 d |
+| HU-73 | Como **encargado**, quiero registrar si un lote tiene desniveles y si está limpio de obstáculos, para planificar el vuelo antes de asignar el equipo | `com_lotes` gana `desnivel` (`ninguno/algunos/varios/empinado`) y `limpieza` (`limpio/algunos_obstaculos/muchos_obstaculos`), catálogos cerrados distintos de `restricciones` (texto libre existente) | 1,0 d |
+| HU-74 | Como **encargado**, quiero registrar si el cliente brinda alimentación, hospedaje y combustible al equipo, con observaciones, para saber qué logística cubre Agrocom en cada contrato | `com_contratos` gana `brinda_alimentacion`/`brinda_hospedaje`/`brinda_combustible` (booleanos) y `observaciones_logistica` (texto) | 1,0 d |
+| HU-75 | Como **encargado**, quiero registrar la ubicación de la oficina central y el logo del cliente, y clasificar sus contactos también como Gerente General, Finanzas o Secretario, para tener el directorio completo | `com_clientes` gana `ubicacion_oficina`/`logo_path`; `TipoContactoCliente` suma `gerente_general\|finanzas\|secretario` sin quitar los valores existentes (`dueno/agronomo/encargado_propiedad/otro`) | 1,0 d |
+| HU-76 | Como **encargado**, quiero cargar Departamento/Municipio/Localidad y una coordenada de la propiedad, para ubicarla en el mapa y filtrar por zona | `com_propiedades` gana `departamento`/`municipio`/`localidad` (texto) y `latitud`/`longitud` (DECIMAL); amplía ADR 0018 punto 1 con una adenda fechada (no lo reescribe: el pedido explícito que faltaba ya existe) | 1,5 d |
+| HU-77 | Como **encargado**, quiero elegir si la campaña es de invierno o verano y que el nombre se arme solo (`Estación/AñoInicio/AñoFin`), para no tipear un nombre cada vez | `cpn_campanias` gana `estacion` (`invierno/verano`); `nombre` se autogenera si no se especifica; el panel puede *mostrar* "Activa"/"Inactiva" como etiqueta de `planificada+abierta`/`cerrada`, pero la máquina sigue siendo irreversible desde `cerrada` (ADR 0015) — sin excepción nueva | 1,0 d |
+| HU-78 | Como **piloto**, quiero registrar qué productos y en qué cantidad se cargaron en el caldo (p. ej. Glifosato, 24D, litros de agua, Urea) al crear una aplicación, para que quede trazado qué se aplicó realmente | **Revierte CR-01** (nota fechada ya en `especificacion_funcional_tecnica.md` §7): módulo `Mezclas` nuevo (`ope_mezclas`/`ope_mezcla_items`, producto + cantidad + unidad) ligado por `uuid_cliente` al motor de sync; el reporte técnico deja de imprimir la nota fija de "fuera de alcance" y lista los productos cargados; la sección §7 de la especificación se reescribe con el alcance nuevo (qué transcribe el piloto vs. qué sigue sin validar Agrocom) | 4,0 d |
+| HU-79 | Como **encargado**, quiero indicar si una orden es de producto sólido (kilos por vuelo: fertilizante, semilla de pasto) o líquido (litros por hectárea: insecticida/herbicida/fungicida/fertilizante líquido/coadyuvante/antiespumante), para que la orden pida los datos correctos según el insumo | `tipo_insumo` (`solido/liquido`) en `ope_ordenes_aplicacion`, catálogo de productos por tipo (reusa `Mezclas` de HU-78); depende de HU-78 (mismo catálogo) y HU-70 (misma tabla, para no iterarla dos veces) | 3,0 d |
+| HU-80 | Como **jefe de campo**, quiero que el reporte incluya la cantidad de ciclos de batería, el ciclo actual, las horas de vuelo del dron y fotos de control/balanceo/limpieza, junto con la fecha y hora de emisión, para no preguntar por WhatsApp el estado del equipo | Contrato de lectura nuevo de `Operaciones` hacia `Mantenimiento` (mismo patrón que `LecturaAlertasTemperaturaBateria`) trae `ciclos_acumulados` real; nuevos campos de evidencia (`horas_vuelo_dron`, `foto_control`, `foto_ciclo_bateria_balanceo`, `foto_dron_limpio`) ligados por `uuid_cliente`; el PDF imprime `generado_en` (ya existe en la base, solo falta el blade) junto con batería/ciclos/horas de vuelo | 3,0 d |
+| HU-91 | Como **encargado**, quiero que el contrato deje de pedir un adelanto en porcentaje y el bloque completo de "Parámetros de vuelo" (clima, velocidad máxima, umbral de reporte y altura de vuelo), porque esos siete campos no van en el contrato — quedan solo en la Orden o heredan del sistema | Se elimina `adelanto_pct` de `com_contratos` (columna, validación, formulario, listado); `adelanto_monto` se relabelea a "Adelanto Solicitado" (mismo criterio de adopción de label que "Monto Estimado", sin migración de por medio); se elimina la sección completa "Parámetros de vuelo" (`viento_max_kmh`/`temperatura_max_c`/`humedad_min_pct`/`humedad_max_pct`/`velocidad_max_kmh`/`umbral_reporte_avance_ha`/`altura_vuelo_m`) del formulario y del modelo de contrato — el contrato deja de tener límites propios, todo hereda de la Orden o del valor por defecto del sistema (RF-60). `com_contrato_ventanas` **no se toca**: confirmado con el dueño (14/9/2026) que "VENTANA DE APLICACION (ORDEN DE APLICACION)" del Word era la misma instrucción de sacar parámetros de vuelo, leída en el contexto de esa pantalla — no una reubicación de la ventana; ADR 0015 punto 5 sigue vigente | 1,5 d |
+| HU-92 | Como **jefe de campo**, quiero que una Orden de Aplicación pueda cubrir varios lotes de la propiedad y repartir esos lotes entre uno o más equipos con sus hectáreas, indicando cuántos equipos hacen falta, para no limitarme a un lote por orden | **Amplía HU-70** (ya integrada, PR #189): `ope_ordenes_aplicacion` deja de tener un `lote_id` único y pasa a N lotes vía una tabla de detalle nueva (`orden_lotes`: `orden_id`, `lote_id`, `hectareas_solicitadas`), con el índice único "una orden vigente por lote" migrado a esa tabla; en `/panel/ordenes/crear` se agrega "Cantidad de Equipos Necesarios" (default 1) — con 1 equipo se asigna a un dron/equipo específico que ejecuta el total de hectáreas de todos los lotes de la orden; con 2 o más, cada equipo elige un subconjunto de esos lotes (selección múltiple) y sus hectáreas en `/panel/asignacion-equipos`, y confirmar genera un `Trabajo` por cada par equipo↔lote (mismo criterio de generación automática que ya usa `AsignarEquiposOrden`); el campo hoy llamado "Nro. Aplicación" pasa a "Número de aplicaciones" (cambio de label, mismo `nro_aplicacion`) | 5,0 d |
+| HU-93 | Como **encargado**, quiero que el listado de Trabajos muestre a qué Orden de Trabajo y equipo pertenece cada uno, y poder editarlo o eliminarlo antes de validarlo, para no navegar a otra pantalla ni perder un trabajo cargado mal | El listado de `/panel/trabajos` suma las columnas "Nro. Trabajo", "Orden de Trabajo" (`nro_aplicacion` de la orden) y "equipo asignado", junto a "Hectáreas"/"Estado" ya existentes; gana acciones de editar/eliminar solo mientras el trabajo no esté `validado` (invariante 8: soft delete; invariante 2: un trabajo validado nunca se sobrescribe — no se ofrece ni editar ni eliminar sobre uno validado, criterio por defecto ya escrito en `docs/negocio/observaciones_operaciones_comercial_2026-09-13.md` §4.4) | 2,0 d |
+| HU-94 | Como **encargado**, quiero delimitar el perímetro del Campo en el mapa al crearlo, y recién después dividirlo en Lotes viendo ese límite como referencia, para no cargar un lote sin saber dónde termina el campo | `com_campos.geometria` ya existe en la base y en el modelo (ADR 0018) pero ningún formulario la expone — `CrearCampoRequest` lo dejó documentado como pendiente desde tarea 35/68. Se suma a `/panel/campos/crear` y `.../edit` el mismo editor de mapa que ya usan los lotes, para el perímetro propio del campo; la fila de lote con editor de mapa se saca de la pantalla de ALTA del campo (el generador de HU-72 sigue creando lotes provisorios sin geometría ahí) — dibujar el polígono de un lote pasa a requerir siempre un campo ya guardado (edición del campo, o `/panel/lotes/crear` con el campo elegido); el editor de mapa del lote pinta el perímetro del campo elegido como capa de referencia de solo lectura | 3,0 d |
+
+**Total: 34,0 d · 0 pantallas nuevas de menú (todas amplían pantallas existentes, salvo la asignación de HU-70)**
+
+**Orden y dependencias.** HU-70 va primera: resuelve el reclamo activo del
+dueño (audio 1) y varias observaciones del Word cuelgan de la misma
+cardinalidad orden↔trabajo. HU-80 segunda, por ser el otro reclamo por audio y
+no depender de nada. HU-71 a HU-77 son independientes entre sí y de bajo
+riesgo — se intercalan según convenga. HU-78 va antes que HU-79 porque
+comparten el catálogo de insumos; HU-79 además espera a HU-70 integrada para
+no iterar dos veces sobre `ope_ordenes_aplicacion`. HU-92 también reescribe
+`ope_ordenes_aplicacion` (pasa de 1 a N lotes) — conviene resolverla junto con
+o inmediatamente antes de HU-79, para no iterar la misma tabla tres veces.
+HU-91, HU-93 y HU-94 son independientes del resto. HU-94 conviene resolverla
+antes que cualquier otra que toque el formulario de campos/lotes (ninguna de
+este sprint lo hace), y no depende de HU-72 (Sprint 16, ya integrada) más que
+en no romper su generador de alta masiva.
+
+**HU-70, HU-78, HU-79, HU-80 y HU-92 son críticas** (tocan el motor de sync o
+una guarda de negocio ya existente) — igual se implementan y se integran; la
+revisión línea por línea es posterior, anotada en `runs/revision-pendiente.txt`
+(regla de `CLAUDE.md` y `automatizacion_desarrollo.md` §5). HU-91, HU-93 y
+HU-94 no son críticas: son columnas que se sacan de un formulario, un
+listado con soft delete ya cubierto por la plataforma, y un editor de mapa
+que ya existe para lotes y se reutiliza para el campo — ninguna toca el
+motor de sync ni una máquina de estados.
+
+**Ambigüedades de la sección 4 del documento de observaciones — resueltas el
+14/9/2026** (ver
+`docs/negocio/observaciones_operaciones_comercial_2026-09-14.md`): el dueño
+compartió el texto completo del Word original y confirmó en el momento el
+recorte de parámetros de vuelo del contrato (HU-91) y que la ventana de
+aplicación no se reubica. También surgió, leyendo el documento completo, que
+la Orden de Aplicación debe cubrir varios lotes (no estaba en la lectura
+parcial del 13/9) — HU-92. El alcance de "editar/eliminar trabajo" no cambió:
+sigue el criterio por defecto ya escrito (§4.4), ahora con columnas de
+listado confirmadas — HU-93.
+
+---
+
+## Sprint 17 — Catálogo de recursos ampliado (ronda del dueño, `REcursos.docx`, 13/9/2026)
+
+*Objetivo: completar las fichas de Drones, Baterías, Vehículos, Base y
+Generador con los campos de inventario/mantenimiento que el dueño pidió en un
+tercer documento de la misma ronda, sin texto marcado en rojo — ninguno choca
+con arquitectura. Detalle en
+`docs/negocio/observaciones_recursos_2026-09-13.md`. Personal (nombre, rol,
+base, tarifa por hectárea, activo) ya estaba completo y no generó HU.*
+
+| ID | Historia / tarea | CA esenciales | Est. |
+|---|---|---|---|
+| HU-81 | Como **encargado**, quiero cargar la capacidad de un dron en kilos además de en litros, para que una orden de aplicación sólida sepa cuánto puede llevar cada vuelo | `capacidad_kg` en `ope_drones`, mismo patrón que `capacidad_l`; sin catálogo cerrado de valores (a diferencia de los litros, no hay 3 capacidades fijas conocidas todavía) | 0,5 d |
+| HU-82 | Como **encargado**, quiero una ficha de inventario del dron con número de serie, chasis, versión de software, región y sus accesorios (cargador de control, módem, maletín), para llevar el activo completo sin mezclarlo con el dato operativo | Ficha nueva en `Mantenimiento` (`man_drones` o equivalente), correlación por identificador de texto con `ope_drones` (mismo patrón sin FK real que batería/recarga, justificado por el propio docblock de `ope_drones`: "deliberadamente mínima") | 2,0 d |
+| HU-83 | Como **encargado**, quiero registrar el ciclo inicial de una batería además del acumulado, y poder marcarla en mantenimiento, para llevar su historial completo | `ciclos_inicial` nuevo en `man_baterias` (separado de `ciclos_acumulados`, que sigue siendo el total corriente); `EstadoBateria` suma el caso `Mantenimiento` (hoy solo `Activa`/`Retirada`), con su `CHECK` actualizado | 1,0 d |
+| HU-84 | Como **encargado**, quiero la ficha completa del vehículo (marca, modelo, año, combustible, 4x4, kilometraje inicial y actual) y poder pausarlo, para llevar la flota igual que los drones | `man_vehiculos` gana `marca`/`modelo`/`anio`/`combustible` (gasolina/diesel)/`es_4x4`/`kilometraje_inicial`/`kilometraje_actual`; `EstadoVehiculo` suma el caso `Pausa` (hoy `activo`/`taller`/`de_baja`) | 2,0 d |
+| HU-85 | Como **encargado**, quiero cargar la coordenada de una base además de su ubicación en texto, para ubicarla en el mapa | `latitud`/`longitud` (DECIMAL) en `per_bases`, mismo patrón de validación de rango que HU-76 (Sprint 16) | 0,5 d |
+| HU-86 | Como **encargado**, quiero registrar las horas inicial y actual de un generador en vez de un solo valor cargado a mano, para saber cuánto acumuló desde que entró en la flota | `man_generadores` reemplaza `horas_uso` único por `horas_inicial`/`horas_actual` (ambos siguen siendo carga manual — un generador no vuela, no hay de dónde derivarlo); migración de datos existentes: `horas_inicial = horas_actual = horas_uso` | 1,0 d |
+| HU-87 | Como **dueño**, quiero que el ciclo acumulado de una batería se incremente solo al cerrarse cada recarga que la usó, y que nunca se pueda bajar a mano sin dejar rastro, para que el dato del reporte (HU-80) sea confiable — "como el odómetro de un auto" (nota textual del dueño) | Al cerrarse una `Recarga` correlacionada por identificador con una `man_baterias`, el ciclo se incrementa automáticamente (evento de dominio desde Operaciones, consumido por Mantenimiento); `ActualizarBateria` deja de aceptar un valor menor al actual salvo como corrección explícita y auditada; test de dos recargas de la misma batería incrementando el contador dos veces, y test de que bajar el valor a mano sin ese mecanismo se rechaza. Depende de HU-83 (`ciclos_inicial` ya integrado) | 2,5 d |
+
+**Total: 9,5 d · sin pantallas nuevas de menú (todas amplían fichas existentes)**
+
+**Orden y dependencias.** HU-81 conviene antes que HU-79 (Sprint 16) si ambas
+quedan en la misma vuelta del ciclo, porque HU-79 puede aprovechar
+`capacidad_kg` para validar el máximo por vuelo — no es bloqueante, HU-79 ya
+tiene su propio criterio sin ese dato. HU-87 depende de HU-83 (mismo campo).
+El resto es independiente entre sí. **HU-87 es crítica** (toca el motor de
+sync/eventos de dominio entre Operaciones y Mantenimiento, y es la garantía
+de auditabilidad de un dato que va a un reporte); el resto de este sprint no
+lo es: son columnas nuevas sobre catálogos que ya existen.
+
+---
+
+## Sprint 18 — Orden de mantenimiento (ronda del dueño, `Mantenimiento.pdf`, 13/9/2026)
+
+*Objetivo: ajustar la pantalla de orden de mantenimiento a lo que el
+encargado necesita ver en el día a día, sin tocar el costeo automático de
+repuestos que ya funciona por debajo. Detalle en
+`docs/negocio/observaciones_mantenimiento_2026-09-13.md`.*
+
+| ID | Historia / tarea | CA esenciales | Est. |
+|---|---|---|---|
+| HU-88 | Como **encargado**, quiero no ver en mi menú del día a día las pantallas de Plan de Mantenimiento, Repuestos y Stock Base, y ver el precio final real de una orden cerrada, para no navegar pantallas de administración que no uso seguido | Los 3 ítems dejan de verse en el menú del rol `encargado` (sin eliminar rutas ni lógica — siguen accesibles a quien sí tenga el permiso); la orden cerrada muestra "Precio de Mantenimiento Final" = el monto real del `fin_gastos` vinculado por `gasto_id` (HU-37), sin campo editable nuevo que lo reemplace | 1,5 d |
+| HU-89 | Como **encargado**, quiero registrar una descripción de mantenimiento final al cerrar la orden, separada de la descripción de apertura, para dejar constancia de qué se hizo realmente | `man_ordenes_mantenimiento` gana `descripcion_final`; `MaquinaEstadosOrdenMantenimiento::cerrar()` la exige antes de transicionar a `cerrada` | 1,0 d |
+| HU-90 | Como **encargado**, quiero clasificar un vehículo por tipo (incluida "chata"), para diferenciar la flota | `man_vehiculos` gana `tipo` (catálogo cerrado con al menos `chata`); no toca `equipo_tipo` de `man_ordenes_mantenimiento` (esa columna distingue tabla de origen — `dron`/`vehiculo` —, no el tipo de vehículo). Complementa HU-84 (Sprint 17), misma tabla, sin bloquearla | 1,0 d |
+
+**Total: 3,5 d · sin pantallas nuevas de menú**
+
+**Ninguna es crítica**: son ajustes de visibilidad de menú y columnas nuevas
+sobre una máquina de estados y un flujo de costeo que ya existen y no se
+tocan en su lógica.
+
+---
+
 ## Alcance total del sistema
 
 | Bloque | Días | Pantallas de menú | Estado |

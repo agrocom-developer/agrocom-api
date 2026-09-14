@@ -9,7 +9,8 @@ use Illuminate\Database\QueryException;
 
 /**
  * Alta de un generador de catálogo (tarea 72, HU-49): identificador, modelo
- * (opcional), base asignada (opcional), estado y horas de uso (opcional).
+ * (opcional), base asignada (opcional), estado y horas inicial/actual
+ * (opcionales, HU-86 tarea 101).
  */
 final class CrearGenerador
 {
@@ -23,14 +24,16 @@ final class CrearGenerador
         ?string $modelo,
         ?int $baseId,
         EstadoGenerador $estado,
-        ?string $horasUso,
+        ?string $horasInicial,
+        ?string $horasActual,
     ): Generador {
         $generador = new Generador([
             'identificador' => $identificador,
             'modelo' => $modelo,
             'base_id' => $baseId,
             'estado' => $estado->value,
-            'horas_uso' => $horasUso,
+            'horas_inicial' => $horasInicial,
+            'horas_actual' => $horasActual,
         ]);
 
         try {

@@ -16,6 +16,7 @@ use Database\Seeders\Catalogo\CatalogoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 /*
  * HU-23 (tarea 34): administración de contratos con sus ventanas de
@@ -176,32 +177,137 @@ it('una fila de ventana con una sola hora cargada es un error de validación, no
     expect(Contrato::query()->where('cliente_id', $cliente->id)->exists())->toBeFalse();
 });
 
-it('altura_vuelo_m cero o negativa es un error de validación, no persiste', function (string $valor) {
+it('da de alta un contrato con las tres coberturas logísticas activas y observaciones (HU-74, tarea 90)', function () {
     [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
     entrarAlPanelParaContratos($encargado, $idRol);
     $cliente = clienteParaContratos();
     $campania = campaniaParaContratos($cliente->id);
 
     $this->post(route('panel.contratos.store'), payloadContrato($cliente->id, $campania->id, [
-        'altura_vuelo_m' => $valor,
-    ]))->assertSessionHasErrors('altura_vuelo_m');
-
-    expect(Contrato::query()->where('cliente_id', $cliente->id)->exists())->toBeFalse();
-})->with(['0', '-1']);
-
-it('guarda la altura de vuelo del contrato cuando se informa', function () {
-    [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
-    entrarAlPanelParaContratos($encargado, $idRol);
-    $cliente = clienteParaContratos();
-    $campania = campaniaParaContratos($cliente->id);
-
-    $this->post(route('panel.contratos.store'), payloadContrato($cliente->id, $campania->id, [
-        'altura_vuelo_m' => '3.50',
+        'brinda_alimentacion' => '1',
+        'brinda_hospedaje' => '1',
+        'brinda_combustible' => '1',
+        'observaciones_logistica' => 'Hospedaje en la posta del campo; combustible lo provee Agrocom.',
     ]))->assertRedirect(route('panel.contratos.index'));
 
     $contrato = Contrato::query()->where('cliente_id', $cliente->id)->sole();
 
-    expect($contrato->altura_vuelo_m)->toBe('3.50');
+    expect($contrato->brinda_alimentacion)->toBeTrue()
+        ->and($contrato->brinda_hospedaje)->toBeTrue()
+        ->and($contrato->brinda_combustible)->toBeTrue()
+        ->and($contrato->observaciones_logistica)->toBe('Hospedaje en la posta del campo; combustible lo provee Agrocom.');
+});
+
+it('un contrato sin logística informada se crea igual, con los tres booleanos en false (HU-74, tarea 90)', function () {
+    [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaContratos($encargado, $idRol);
+    $cliente = clienteParaContratos();
+    $campania = campaniaParaContratos($cliente->id);
+
+    $this->post(route('panel.contratos.store'), payloadContrato($cliente->id, $campania->id))
+        ->assertRedirect(route('panel.contratos.index'));
+
+    $contrato = Contrato::query()->where('cliente_id', $cliente->id)->sole();
+
+    expect($contrato->brinda_alimentacion)->toBeFalse()
+        ->and($contrato->brinda_hospedaje)->toBeFalse()
+        ->and($contrato->brinda_combustible)->toBeFalse()
+        ->and($contrato->observaciones_logistica)->toBeNull();
+});
+
+it('editar un contrato sin marcar ninguna cobertura logística la deja en false, no en su valor anterior (HU-74, tarea 90)', function () {
+    [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaContratos($encargado, $idRol);
+    $cliente = clienteParaContratos();
+    $campania = campaniaParaContratos($cliente->id);
+
+    $this->post(route('panel.contratos.store'), payloadContrato($cliente->id, $campania->id, [
+        'brinda_alimentacion' => '1',
+        'brinda_hospedaje' => '1',
+        'brinda_combustible' => '1',
+        'observaciones_logistica' => 'Cobertura completa inicial.',
+    ]));
+    $contrato = Contrato::query()->where('cliente_id', $cliente->id)->sole();
+
+    // Ningún checkbox va en este envío: un checkbox sin marcar no llega en el
+    // POST, así que el controlador tiene que leerlo con `$request->boolean()`
+    // y guardar `false` explícito, no dejar el valor anterior sin tocar.
+    $this->put(route('panel.contratos.update', $contrato), payloadContrato($cliente->id, $campania->id))
+        ->assertRedirect(route('panel.contratos.index'));
+
+    $contratoActualizado = $contrato->fresh();
+
+    expect($contratoActualizado->brinda_alimentacion)->toBeFalse()
+        ->and($contratoActualizado->brinda_hospedaje)->toBeFalse()
+        ->and($contratoActualizado->brinda_combustible)->toBeFalse();
+});
+
+it('el formulario de contrato muestra la sección de logística (HU-74, tarea 90)', function () {
+    [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaContratos($encargado, $idRol);
+
+    $this->get(route('panel.contratos.create'))
+        ->assertOk()
+        ->assertSee(__('comercial.contratos.seccion_logistica'))
+        ->assertSee(__('comercial.contratos.campo_brinda_alimentacion'))
+        ->assertSee(__('comercial.contratos.campo_brinda_hospedaje'))
+        ->assertSee(__('comercial.contratos.campo_brinda_combustible'))
+        ->assertSee(__('comercial.contratos.campo_observaciones_logistica'));
+});
+
+it('el formulario de contrato ya no pide adelanto_pct ni parámetros de vuelo (HU-91, tarea 106)', function () {
+    [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaContratos($encargado, $idRol);
+
+    $this->get(route('panel.contratos.create'))
+        ->assertOk()
+        ->assertDontSee('name="adelanto_pct"', false)
+        ->assertDontSee('name="viento_max_kmh"', false)
+        ->assertDontSee('name="temperatura_max_c"', false)
+        ->assertDontSee('name="humedad_min_pct"', false)
+        ->assertDontSee('name="humedad_max_pct"', false)
+        ->assertDontSee('name="velocidad_max_kmh"', false)
+        ->assertDontSee('name="umbral_reporte_avance_ha"', false)
+        ->assertDontSee('name="altura_vuelo_m"', false);
+});
+
+it('crear/editar un contrato sin los 7 campos de clima/vuelo valida correcto y el monto_total no depende de ellos (HU-91, tarea 106)', function () {
+    [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaContratos($encargado, $idRol);
+    $cliente = clienteParaContratos();
+    $campania = campaniaParaContratos($cliente->id);
+
+    $this->post(route('panel.contratos.store'), payloadContrato($cliente->id, $campania->id))
+        ->assertSessionDoesntHaveErrors()
+        ->assertRedirect(route('panel.contratos.index'));
+
+    $contrato = Contrato::query()->where('cliente_id', $cliente->id)->sole();
+
+    expect($contrato->monto_total)->toBe('15000.00');
+
+    $this->put(route('panel.contratos.update', $contrato), payloadContrato($cliente->id, $campania->id, [
+        'precio_ha' => '80.00',
+    ]))
+        ->assertSessionDoesntHaveErrors()
+        ->assertRedirect(route('panel.contratos.index'));
+
+    expect($contrato->fresh()->monto_total)->toBe('24000.00');
+});
+
+it('la ficha de edición de un contrato muestra las observaciones de logística guardadas (HU-74, tarea 90)', function () {
+    [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaContratos($encargado, $idRol);
+    $cliente = clienteParaContratos();
+    $campania = campaniaParaContratos($cliente->id);
+
+    $this->post(route('panel.contratos.store'), payloadContrato($cliente->id, $campania->id, [
+        'observaciones_logistica' => 'Alojamiento cubierto en la base de operaciones.',
+    ]));
+    $contrato = Contrato::query()->where('cliente_id', $cliente->id)->sole();
+
+    $this->get(route('panel.contratos.edit', $contrato))
+        ->assertOk()
+        ->assertSee('Alojamiento cubierto en la base de operaciones.');
 });
 
 it('el formulario de alta muestra el interruptor "Día completo"', function () {
@@ -263,6 +369,115 @@ it('una transición inválida es rechazada por la máquina de estados y no llega
         ->assertSessionHasErrors('estado');
 
     expect($contrato->fresh()->estado)->toBe(EstadoContrato::Finalizado);
+});
+
+it('un contrato vigente pasa a pausado y de vuelta a vigente (HU-71, tarea 87)', function () {
+    [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaContratos($encargado, $idRol);
+    $cliente = clienteParaContratos();
+
+    $contrato = new Contrato([
+        'cliente_id' => $cliente->id,
+        'hectareas_contratadas' => '100.00',
+        'aplicaciones_previstas' => 3,
+        'precio_ha' => '50.00',
+        'monto_total' => '15000.00',
+        'fecha_inicio' => Carbon::yesterday()->toDateString(),
+        'estado' => EstadoContrato::Vigente,
+    ]);
+    $contrato->save();
+
+    $this->post(route('panel.contratos.cambiar-estado', $contrato), ['estado' => 'pausado'])
+        ->assertRedirect(route('panel.contratos.index'))
+        ->assertSessionDoesntHaveErrors();
+
+    expect($contrato->fresh()->estado)->toBe(EstadoContrato::Pausado);
+
+    // La vuelta a vigente NO pasa por la guarda de `activar()` (fecha_inicio
+    // no en el pasado): este contrato ya tiene `fecha_inicio` ayer, y si
+    // `cambiarA()` no distinguiera el origen `pausado` de `borrador`,
+    // reanudar fallaría siempre para un contrato que ya estuvo vigente.
+    $this->post(route('panel.contratos.cambiar-estado', $contrato), ['estado' => 'vigente'])
+        ->assertRedirect(route('panel.contratos.index'))
+        ->assertSessionDoesntHaveErrors();
+
+    expect($contrato->fresh()->estado)->toBe(EstadoContrato::Vigente);
+});
+
+it('borrador a pausado se rechaza: no está en la tabla de transiciones (HU-71, tarea 87)', function () {
+    [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaContratos($encargado, $idRol);
+    $cliente = clienteParaContratos();
+
+    $contrato = new Contrato([
+        'cliente_id' => $cliente->id,
+        'hectareas_contratadas' => '100.00',
+        'aplicaciones_previstas' => 3,
+        'precio_ha' => '50.00',
+        'monto_total' => '15000.00',
+        'fecha_inicio' => Carbon::tomorrow()->toDateString(),
+        'estado' => EstadoContrato::Borrador,
+    ]);
+    $contrato->save();
+
+    $this->post(route('panel.contratos.cambiar-estado', $contrato), ['estado' => 'pausado'])
+        ->assertRedirect(route('panel.contratos.index'))
+        ->assertSessionHasErrors('estado');
+
+    expect($contrato->fresh()->estado)->toBe(EstadoContrato::Borrador);
+});
+
+it('pausado a cancelado se rechaza: el CA de HU-71 solo pide ida y vuelta con vigente', function () {
+    [$encargado, $idRol] = usuarioConRolParaContratos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaContratos($encargado, $idRol);
+    $cliente = clienteParaContratos();
+
+    $contrato = new Contrato([
+        'cliente_id' => $cliente->id,
+        'hectareas_contratadas' => '100.00',
+        'aplicaciones_previstas' => 3,
+        'precio_ha' => '50.00',
+        'monto_total' => '15000.00',
+        'fecha_inicio' => Carbon::yesterday()->toDateString(),
+        'estado' => EstadoContrato::Pausado,
+    ]);
+    $contrato->save();
+
+    $this->post(route('panel.contratos.cambiar-estado', $contrato), ['estado' => 'cancelado'])
+        ->assertRedirect(route('panel.contratos.index'))
+        ->assertSessionHasErrors('estado');
+
+    expect($contrato->fresh()->estado)->toBe(EstadoContrato::Pausado);
+});
+
+it('el CHECK de estado admite pausado sin alterar el valor de un contrato vigente existente (solo pgsql)', function () {
+    if (DB::getDriverName() !== 'pgsql') {
+        $this->markTestSkipped('CHECK solo existe en pgsql; SQLite no soporta ADD CONSTRAINT (ver docblock de la migración 2026_09_13_100001).');
+    }
+
+    $cliente = clienteParaContratos();
+    $contrato = new Contrato([
+        'cliente_id' => $cliente->id,
+        'hectareas_contratadas' => '100.00',
+        'aplicaciones_previstas' => 3,
+        'precio_ha' => '50.00',
+        'monto_total' => '15000.00',
+        'fecha_inicio' => Carbon::yesterday()->toDateString(),
+        'estado' => EstadoContrato::Vigente,
+    ]);
+    $contrato->save();
+
+    // Regresión (tarea 87): RefreshDatabase ya corrió la migración nueva
+    // antes de este test, así que se la vuelve a correr sobre un esquema que
+    // ya la tiene aplicada — simula el caso real, una fila `vigente`
+    // preexistente antes del ALTER. DROP+ADD CONSTRAINT del mismo CHECK es
+    // idempotente y no toca ninguna columna de datos.
+    (require database_path('migrations/2026_09_13_100001_add_pausado_a_com_contratos_estado_chk.php'))->up();
+
+    expect($contrato->fresh()->estado)->toBe(EstadoContrato::Vigente);
+
+    DB::table('com_contratos')->where('id', $contrato->id)->update(['estado' => 'pausado']);
+    expect($contrato->fresh()->estado)->toBe(EstadoContrato::Pausado);
 });
 
 it('registra en bitácora el alta y el cambio de estado de un contrato', function () {

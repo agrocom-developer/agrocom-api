@@ -6,6 +6,7 @@ use App\Dominios\Finanzas\Contratos\EscrituraGastoMantenimiento;
 use App\Dominios\Inventario\Contratos\EscrituraConsumoStock;
 use App\Dominios\Inventario\Contratos\Excepciones\StockInsuficiente;
 use App\Dominios\Mantenimiento\Dominio\EstadoOrdenMantenimiento;
+use App\Dominios\Mantenimiento\Dominio\Excepciones\DescripcionFinalRequerida;
 use App\Dominios\Mantenimiento\Dominio\Excepciones\RepuestosInsuficientes;
 use App\Dominios\Mantenimiento\Dominio\Excepciones\TransicionOrdenMantenimientoNoPermitida;
 use App\Dominios\Mantenimiento\Dominio\MaquinaEstados\TransicionesOrdenMantenimiento;
@@ -22,7 +23,9 @@ use Illuminate\Support\Facades\DB;
  * `abrir()` fija el único estado de alta (`Abierta`), sin guarda de negocio.
  *
  * `cerrar()` es la única transición real (`Abierta → Cerrada`), con guarda de
- * stock disponible y efecto de dominio: consume `inv_stock` línea por línea
+ * stock disponible, guarda de `descripcion_final` no vacía (HU-89, tarea 104
+ * — {@see DescripcionFinalRequerida}, evaluada antes de tocar stock) y efecto
+ * de dominio: consume `inv_stock` línea por línea
  * a través de {@see EscrituraConsumoStock} y, si TODAS las líneas salen bien,
  * genera el gasto a través de {@see EscrituraGastoMantenimiento}. Todo dentro
  * de una ÚNICA transacción abierta acá (`DB::transaction()`) — ni
@@ -55,9 +58,10 @@ final class MaquinaEstadosOrdenMantenimiento
      * @param  list<array{repuesto_id: int, base_id: int, cantidad: string}>  $lineasRepuestos
      *
      * @throws TransicionOrdenMantenimientoNoPermitida si `$orden` no está `Abierta`.
+     * @throws DescripcionFinalRequerida si `$descripcionFinal` está vacía o solo espacios.
      * @throws RepuestosInsuficientes si el stock de algún repuesto no alcanza.
      */
-    public function cerrar(OrdenMantenimiento $orden, array $lineasRepuestos): OrdenMantenimiento
+    public function cerrar(OrdenMantenimiento $orden, array $lineasRepuestos, string $descripcionFinal): OrdenMantenimiento
     {
         $desde = $orden->estado;
         $hasta = EstadoOrdenMantenimiento::Cerrada;
@@ -66,7 +70,11 @@ final class MaquinaEstadosOrdenMantenimiento
             throw TransicionOrdenMantenimientoNoPermitida::entre($desde, $hasta);
         }
 
-        DB::transaction(function () use ($orden, $lineasRepuestos): void {
+        if (trim($descripcionFinal) === '') {
+            throw DescripcionFinalRequerida::paraCierre();
+        }
+
+        DB::transaction(function () use ($orden, $lineasRepuestos, $descripcionFinal): void {
             $montoTotal = BigDecimal::zero();
 
             foreach ($lineasRepuestos as $linea) {
@@ -94,6 +102,7 @@ final class MaquinaEstadosOrdenMantenimiento
             $orden->estado = EstadoOrdenMantenimiento::Cerrada;
             $orden->fecha_cierre = $fechaCierre;
             $orden->gasto_id = $gastoId;
+            $orden->descripcion_final = $descripcionFinal;
             $orden->save();
         });
 

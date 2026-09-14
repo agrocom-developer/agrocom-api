@@ -10,9 +10,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * Contrato comercial (espec §4.1, tabla com_contratos) con sus parámetros
- * operativos (RF-60): los límites en NULL significan que rige el valor por
- * defecto del sistema; el contrato solo los modula.
+ * Contrato comercial (espec §4.1, tabla com_contratos).
+ *
+ * HU-91 (tarea 106): el contrato ya no tiene parámetros operativos propios
+ * (viento, temperatura, humedad, velocidad, umbral de reporte, altura de
+ * vuelo) ni `adelanto_pct`. Esos límites (RF-60) heredan siempre de la Orden
+ * o del valor por defecto del sistema — nunca del contrato.
  *
  * Dinero y hectáreas en DECIMAL — el cast `decimal:2` entrega string, nunca
  * float (invariante 6). Las transiciones de `estado` pasan por
@@ -40,17 +43,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $precio_ha
  * @property string $monto_total
  * @property string|null $adelanto_monto
- * @property string|null $adelanto_pct
  * @property CarbonImmutable $fecha_inicio
  * @property CarbonImmutable|null $fecha_fin
  * @property EstadoContrato $estado
- * @property string|null $viento_max_kmh
- * @property string|null $temperatura_max_c
- * @property string|null $humedad_min_pct
- * @property string|null $humedad_max_pct
- * @property string|null $velocidad_max_kmh
- * @property string|null $umbral_reporte_avance_ha
- * @property string|null $altura_vuelo_m
+ * @property bool $brinda_alimentacion
+ * @property bool $brinda_hospedaje
+ * @property bool $brinda_combustible
+ * @property string|null $observaciones_logistica
  */
 class Contrato extends ModeloDominio
 {
@@ -67,17 +66,13 @@ class Contrato extends ModeloDominio
         'precio_ha',
         'monto_total',
         'adelanto_monto',
-        'adelanto_pct',
         'fecha_inicio',
         'fecha_fin',
         'estado',
-        'viento_max_kmh',
-        'temperatura_max_c',
-        'humedad_min_pct',
-        'humedad_max_pct',
-        'velocidad_max_kmh',
-        'umbral_reporte_avance_ha',
-        'altura_vuelo_m',
+        'brinda_alimentacion',
+        'brinda_hospedaje',
+        'brinda_combustible',
+        'observaciones_logistica',
     ];
 
     /** @return array<string, string> */
@@ -89,17 +84,12 @@ class Contrato extends ModeloDominio
             'precio_ha' => 'decimal:2',
             'monto_total' => 'decimal:2',
             'adelanto_monto' => 'decimal:2',
-            'adelanto_pct' => 'decimal:2',
             'fecha_inicio' => 'immutable_date',
             'fecha_fin' => 'immutable_date',
             'estado' => EstadoContrato::class,
-            'viento_max_kmh' => 'decimal:2',
-            'temperatura_max_c' => 'decimal:2',
-            'humedad_min_pct' => 'decimal:2',
-            'humedad_max_pct' => 'decimal:2',
-            'velocidad_max_kmh' => 'decimal:2',
-            'umbral_reporte_avance_ha' => 'decimal:2',
-            'altura_vuelo_m' => 'decimal:2',
+            'brinda_alimentacion' => 'boolean',
+            'brinda_hospedaje' => 'boolean',
+            'brinda_combustible' => 'boolean',
         ];
     }
 

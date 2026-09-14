@@ -54,12 +54,12 @@ function trabajoParaCobertura(string $hectareasLote, array $sesiones = []): Trab
     ]);
     $orden = OrdenAplicacion::create([
         'contrato_id' => $contrato->id,
-        'lote_id' => $lote->id,
         'nro_aplicacion' => 1,
         'litros_ha' => '10.00',
         'fecha_emision' => '2026-09-01',
         'estado' => EstadoOrdenAplicacion::Vigente,
     ]);
+    $orden->ordenLotes()->create(['lote_id' => $lote->id, 'hectareas_solicitadas' => $hectareasLote]);
 
     $trabajo = Trabajo::create([
         'uuid_cliente' => (string) Str::uuid(),

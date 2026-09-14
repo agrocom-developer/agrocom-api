@@ -16,6 +16,7 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenLote;
 use Illuminate\Database\Seeder;
 
 /**
@@ -33,8 +34,9 @@ use Illuminate\Database\Seeder;
  * presentación mock.
  *
  * Cada contrato cuadra exacto desde sus factores (invariante 6):
- * `monto_total = hectareas_contratadas × aplicaciones_previstas × precio_ha`,
- * y `adelanto_monto = monto_total × adelanto_pct`. Los tres quedan
+ * `monto_total = hectareas_contratadas × aplicaciones_previstas × precio_ha`.
+ * `adelanto_monto` es un monto fijado directamente (HU-91, tarea 106:
+ * `adelanto_pct` no existe, nunca estuvo pedido). Los tres contratos quedan
  * `vigente`, con ventanas horarias y una orden de aplicación por lote — sin
  * eso no se puede abrir un trabajo.
  *
@@ -64,7 +66,7 @@ class CarteraClientesDemoSeeder extends Seeder
 
     /**
      * Soya en Cuatro Cañadas. Contrato chico y de ciclo corto: 1.200 ha × 4
-     * aplicaciones × 70 Bs/ha = 336.000 Bs, adelanto del 30%.
+     * aplicaciones × 70 Bs/ha = 336.000 Bs, adelanto de 100.800 Bs.
      */
     private function sanMarcos(int $autorId): void
     {
@@ -88,17 +90,10 @@ class CarteraClientesDemoSeeder extends Seeder
             'aplicaciones_previstas' => 4,
             'precio_ha' => '70.00',
             'monto_total' => '336000.00',
-            'adelanto_pct' => '30.00',
             'adelanto_monto' => '100800.00',
             'fecha_inicio' => '2026-07-15',
             'fecha_fin' => '2026-11-30',
             'estado' => EstadoContrato::Vigente,
-            'viento_max_kmh' => '15.00',
-            'temperatura_max_c' => '32.00',
-            'humedad_min_pct' => '75.00',
-            'humedad_max_pct' => '95.00',
-            'velocidad_max_kmh' => '15.00',
-            'umbral_reporte_avance_ha' => '300.00',
         ]), $autorId);
 
         $this->ventanas($contrato->id, $autorId, [['05:30', '10:00'], ['16:30', '19:30']]);
@@ -132,8 +127,8 @@ class CarteraClientesDemoSeeder extends Seeder
 
     /**
      * El cliente grande: 2.500 ha × 5 aplicaciones × 62 Bs/ha = 775.000 Bs,
-     * adelanto del 40%. Dos lotes activos — es el único con más de uno, y por
-     * eso el que ejercita el reporte de avance por lote.
+     * adelanto de 310.000 Bs. Dos lotes activos — es el único con más de
+     * uno, y por eso el que ejercita el reporte de avance por lote.
      */
     private function elCarmen(int $autorId): void
     {
@@ -158,17 +153,10 @@ class CarteraClientesDemoSeeder extends Seeder
             'aplicaciones_previstas' => 5,
             'precio_ha' => '62.00',
             'monto_total' => '775000.00',
-            'adelanto_pct' => '40.00',
             'adelanto_monto' => '310000.00',
             'fecha_inicio' => '2026-07-01',
             'fecha_fin' => '2026-12-15',
             'estado' => EstadoContrato::Vigente,
-            'viento_max_kmh' => '18.00',
-            'temperatura_max_c' => '31.00',
-            'humedad_min_pct' => '78.00',
-            'humedad_max_pct' => '96.00',
-            'velocidad_max_kmh' => '16.00',
-            'umbral_reporte_avance_ha' => '500.00',
         ]), $autorId);
 
         $this->ventanas($contrato->id, $autorId, [['06:00', '10:30'], ['16:00', '20:00']]);
@@ -217,9 +205,9 @@ class CarteraClientesDemoSeeder extends Seeder
     }
 
     /**
-     * El chico: 800 ha × 3 aplicaciones × 75 Bs/ha = 180.000 Bs, adelanto del
-     * 25%. Precio por hectárea más alto porque el lote es cerrado y con
-     * obstáculos — menos hectáreas por hora de vuelo.
+     * El chico: 800 ha × 3 aplicaciones × 75 Bs/ha = 180.000 Bs, adelanto de
+     * 45.000 Bs. Precio por hectárea más alto porque el lote es cerrado y
+     * con obstáculos — menos hectáreas por hora de vuelo.
      */
     private function santaRosa(int $autorId): void
     {
@@ -243,17 +231,10 @@ class CarteraClientesDemoSeeder extends Seeder
             'aplicaciones_previstas' => 3,
             'precio_ha' => '75.00',
             'monto_total' => '180000.00',
-            'adelanto_pct' => '25.00',
             'adelanto_monto' => '45000.00',
             'fecha_inicio' => '2026-08-05',
             'fecha_fin' => '2026-11-15',
             'estado' => EstadoContrato::Vigente,
-            'viento_max_kmh' => '14.00',
-            'temperatura_max_c' => '29.00',
-            'humedad_min_pct' => '80.00',
-            'humedad_max_pct' => '94.00',
-            'velocidad_max_kmh' => '13.00',
-            'umbral_reporte_avance_ha' => '200.00',
         ]), $autorId);
 
         $this->ventanas($contrato->id, $autorId, [['06:30', '09:30']]);
@@ -351,9 +332,11 @@ class CarteraClientesDemoSeeder extends Seeder
      */
     private function orden(int $contratoId, int $loteId, int $agronomoId, int $autorId, array $datos): void
     {
-        $this->crear(new OrdenAplicacion([
+        // HU-92 (tarea 107): el lote de la orden ya no es una columna propia,
+        // se arma como fila de `ope_orden_lotes` (con el lote completo como
+        // tope, mismo criterio que HU-70 antes de esta tarea).
+        $orden = $this->crear(new OrdenAplicacion([
             'contrato_id' => $contratoId,
-            'lote_id' => $loteId,
             'humedad_min_pct' => '80.00',
             'altura_vuelo_m' => '3.00',
             'velocidad_vuelo_kmh' => '15.00',
@@ -361,6 +344,12 @@ class CarteraClientesDemoSeeder extends Seeder
             'emitida_por_contacto_id' => $agronomoId,
             'estado' => EstadoOrdenAplicacion::Vigente,
             ...$datos,
+        ]), $autorId);
+
+        $this->crear(new OrdenLote([
+            'orden_id' => $orden->id,
+            'lote_id' => $loteId,
+            'hectareas_solicitadas' => Lote::query()->findOrFail($loteId)->hectareas,
         ]), $autorId);
     }
 

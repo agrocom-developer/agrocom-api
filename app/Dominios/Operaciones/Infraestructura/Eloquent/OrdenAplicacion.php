@@ -7,15 +7,25 @@ use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Dominio\TipoAplicacion;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Orden de aplicación (espec §4.3, tabla ope_ordenes_aplicacion).
  *
- * `contrato_id`, `lote_id` y `emitida_por_contacto_id` referencian tablas del
- * módulo Comercial **solo por ID** (ADR 0003, regla 3): acá no hay relaciones
- * Eloquent hacia Comercial — si Operaciones necesita datos del contrato o del
- * lote, los pide por `Contratos/` del módulo dueño, nunca importando sus
+ * `contrato_id` y `emitida_por_contacto_id` referencian tablas del módulo
+ * Comercial **solo por ID** (ADR 0003, regla 3): acá no hay relaciones
+ * Eloquent hacia Comercial — si Operaciones necesita datos del contrato o de
+ * un lote, los pide por `Contratos/` del módulo dueño, nunca importando sus
  * modelos.
+ *
+ * Qué lotes cubre la orden (HU-92, tarea 107, ampliación de HU-70: una orden
+ * puede cubrir varios lotes de la propiedad) vive en `ope_orden_lotes`
+ * (`ordenLotes()`, abajo) — esta tabla ya NO tiene `lote_id` propio: hasta
+ * la tarea 107 una orden era 1:1 con un lote y esa columna alcanzaba, pero
+ * mantenerla junto con la tabla de detalle habría dejado dos fuentes de
+ * verdad sobre el mismo dato (ver docblock de la migración
+ * `create_ope_orden_lotes_table`).
  *
  * Los límites por orden en NULL heredan del contrato o del parámetro por
  * defecto del sistema (RF-60). Las transiciones de `estado` (emitida →
@@ -33,10 +43,12 @@ use Carbon\CarbonImmutable;
  *
  * @property int $id
  * @property int $contrato_id
- * @property int $lote_id
  * @property int $nro_aplicacion
+ * @property int $cantidad_equipos_necesarios
  * @property TipoAplicacion $tipo_aplicacion
- * @property string $litros_ha
+ * @property int|null $categoria_insumo_id
+ * @property string|null $kilos_por_vuelo
+ * @property string|null $litros_ha
  * @property string|null $humedad_min_pct
  * @property string|null $viento_max_kmh
  * @property string|null $temperatura_max_c
@@ -60,9 +72,11 @@ class OrdenAplicacion extends ModeloDominio
     /** @var list<string> */
     protected $fillable = [
         'contrato_id',
-        'lote_id',
         'nro_aplicacion',
+        'cantidad_equipos_necesarios',
         'tipo_aplicacion',
+        'categoria_insumo_id',
+        'kilos_por_vuelo',
         'litros_ha',
         'humedad_min_pct',
         'viento_max_kmh',
@@ -83,7 +97,9 @@ class OrdenAplicacion extends ModeloDominio
     {
         return [
             'nro_aplicacion' => 'integer',
+            'cantidad_equipos_necesarios' => 'integer',
             'tipo_aplicacion' => TipoAplicacion::class,
+            'kilos_por_vuelo' => 'decimal:2',
             'litros_ha' => 'decimal:2',
             'humedad_min_pct' => 'decimal:2',
             'viento_max_kmh' => 'decimal:2',
@@ -96,5 +112,23 @@ class OrdenAplicacion extends ModeloDominio
             'fecha_emision' => 'immutable_date',
             'estado' => EstadoOrdenAplicacion::class,
         ];
+    }
+
+    /** @return HasMany<OrdenLote, $this> */
+    public function ordenLotes(): HasMany
+    {
+        return $this->hasMany(OrdenLote::class, 'orden_id');
+    }
+
+    /**
+     * Categoría de insumo (HU-79, tarea 110): de dónde sale si la orden es
+     * sólida (kilos por vuelo) o líquida (litros por hectárea) — la orden no
+     * repite ese `tipo_insumo`, ver docblock de la migración.
+     *
+     * @return BelongsTo<CategoriaInsumo, $this>
+     */
+    public function categoriaInsumo(): BelongsTo
+    {
+        return $this->belongsTo(CategoriaInsumo::class, 'categoria_insumo_id');
     }
 }

@@ -25,13 +25,15 @@ final class ActualizarGenerador
         ?string $modelo,
         ?int $baseId,
         EstadoGenerador $estado,
-        ?string $horasUso,
+        ?string $horasInicial,
+        ?string $horasActual,
     ): Generador {
         $generador->identificador = $identificador;
         $generador->modelo = $modelo;
         $generador->base_id = $baseId;
         $generador->estado = $estado->value;
-        $generador->horas_uso = $horasUso;
+        $generador->horas_inicial = $horasInicial;
+        $generador->horas_actual = $horasActual;
 
         try {
             $generador->save();

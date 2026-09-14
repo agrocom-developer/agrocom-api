@@ -34,6 +34,12 @@ use Illuminate\Support\Str;
  * orden vigente sobre el lote 'L-01' es la que le da un `lote_id`/`orden_id`
  * válidos a los trabajos de prueba (`ope_trabajos` exige las FK reales) —
  * mismo dato demo que usa `GestionBateriasPanelTest`.
+ *
+ * Los casos de "rol con el permiso" usan `dueno`, no `encargado_operaciones`:
+ * HU-88 (tarea 103) le sacó a este último el catálogo completo de planes de
+ * mantenimiento (dejaba un hueco raro con solo `.ver` afuera, ver
+ * `SeguridadSeeder::PERMISOS_ENCARGADO_OPERACIONES`) para que la HU sacara el
+ * ítem de su menú.
  */
 
 uses(RefreshDatabase::class);
@@ -83,7 +89,7 @@ function ordenVigenteParaPlan(): OrdenAplicacion
     $loteId = Lote::query()->where('codigo', 'L-01')->value('id');
 
     return OrdenAplicacion::query()
-        ->where('lote_id', $loteId)
+        ->whereHas('ordenLotes', fn ($q) => $q->where('lote_id', $loteId))
         ->where('estado', EstadoOrdenAplicacion::Vigente)
         ->firstOrFail();
 }
@@ -95,7 +101,7 @@ function crearTrabajoParaPlan(): Trabajo
     return Trabajo::query()->create([
         'uuid_cliente' => (string) Str::uuid(),
         'orden_id' => $orden->id,
-        'lote_id' => $orden->lote_id,
+        'lote_id' => (int) $orden->ordenLotes()->value('lote_id'),
         'nro_aplicacion' => $orden->nro_aplicacion,
         'inicio' => now(),
     ]);
@@ -123,8 +129,8 @@ function crearSesionCerrada(Trabajo $trabajo, int $secuencia, int $dronId, strin
 }
 
 it('da de alta un plan de mantenimiento con modelo, tarea y umbral válidos', function () {
-    [$encargado, $idRol] = usuarioConRolParaPlanes('encargado', 'encargado_operaciones');
-    entrarAlPanelParaPlanes($encargado, $idRol);
+    [$dueno, $idRol] = usuarioConRolParaPlanes('dueno', 'dueno');
+    entrarAlPanelParaPlanes($dueno, $idRol);
 
     $this->post(route('panel.planes-mantenimiento.store'), payloadPlan())
         ->assertRedirect(route('panel.planes-mantenimiento.index'));
@@ -136,8 +142,8 @@ it('da de alta un plan de mantenimiento con modelo, tarea y umbral válidos', fu
 });
 
 it('rechaza un horas_umbral menor o igual a cero sin persistir', function () {
-    [$encargado, $idRol] = usuarioConRolParaPlanes('encargado', 'encargado_operaciones');
-    entrarAlPanelParaPlanes($encargado, $idRol);
+    [$dueno, $idRol] = usuarioConRolParaPlanes('dueno', 'dueno');
+    entrarAlPanelParaPlanes($dueno, $idRol);
 
     $this->post(route('panel.planes-mantenimiento.store'), payloadPlan(['horas_umbral' => '0']))
         ->assertSessionHasErrors('horas_umbral');
@@ -146,8 +152,8 @@ it('rechaza un horas_umbral menor o igual a cero sin persistir', function () {
 });
 
 it('rechaza un modelo vacío sin persistir', function () {
-    [$encargado, $idRol] = usuarioConRolParaPlanes('encargado', 'encargado_operaciones');
-    entrarAlPanelParaPlanes($encargado, $idRol);
+    [$dueno, $idRol] = usuarioConRolParaPlanes('dueno', 'dueno');
+    entrarAlPanelParaPlanes($dueno, $idRol);
 
     $this->post(route('panel.planes-mantenimiento.store'), payloadPlan(['modelo' => '']))
         ->assertSessionHasErrors('modelo');
@@ -156,8 +162,8 @@ it('rechaza un modelo vacío sin persistir', function () {
 });
 
 it('edita un plan de mantenimiento existente', function () {
-    [$encargado, $idRol] = usuarioConRolParaPlanes('encargado', 'encargado_operaciones');
-    entrarAlPanelParaPlanes($encargado, $idRol);
+    [$dueno, $idRol] = usuarioConRolParaPlanes('dueno', 'dueno');
+    entrarAlPanelParaPlanes($dueno, $idRol);
 
     $plan = PlanMantenimiento::query()->create(['modelo' => 'DJI Agras T20', 'tarea' => 'Revisión general', 'horas_umbral' => '20.00']);
 
@@ -175,8 +181,8 @@ it('edita un plan de mantenimiento existente', function () {
 it('activa la alerta cuando la suma de horas de sesiones cerradas de un dron del modelo alcanza el umbral, no antes', function () {
     $this->seed(DemoSeeder::class);
 
-    [$encargado, $idRol] = usuarioConRolParaPlanes('encargado', 'encargado_operaciones');
-    entrarAlPanelParaPlanes($encargado, $idRol);
+    [$dueno, $idRol] = usuarioConRolParaPlanes('dueno', 'dueno');
+    entrarAlPanelParaPlanes($dueno, $idRol);
 
     PlanMantenimiento::query()->create(['modelo' => 'DJI Agras T30', 'tarea' => 'Cambio de hélices', 'horas_umbral' => '10.00']);
 
@@ -198,8 +204,8 @@ it('activa la alerta cuando la suma de horas de sesiones cerradas de un dron del
 });
 
 it('no activa la alerta si ningún dron tiene el modelo del plan', function () {
-    [$encargado, $idRol] = usuarioConRolParaPlanes('encargado', 'encargado_operaciones');
-    entrarAlPanelParaPlanes($encargado, $idRol);
+    [$dueno, $idRol] = usuarioConRolParaPlanes('dueno', 'dueno');
+    entrarAlPanelParaPlanes($dueno, $idRol);
 
     PlanMantenimiento::query()->create(['modelo' => 'Modelo Sin Drones', 'tarea' => 'Revisión', 'horas_umbral' => '5.00']);
 
@@ -214,8 +220,8 @@ it('no activa la alerta si ningún dron tiene el modelo del plan', function () {
 });
 
 it('registra en bitácora el alta, la edición y la baja de un plan de mantenimiento', function () {
-    [$encargado, $idRol] = usuarioConRolParaPlanes('encargado', 'encargado_operaciones');
-    entrarAlPanelParaPlanes($encargado, $idRol);
+    [$dueno, $idRol] = usuarioConRolParaPlanes('dueno', 'dueno');
+    entrarAlPanelParaPlanes($dueno, $idRol);
 
     $this->post(route('panel.planes-mantenimiento.store'), payloadPlan());
 
@@ -227,7 +233,7 @@ it('registra en bitácora el alta, la edición y la baja de un plan de mantenimi
         ->where('accion', AccionBitacora::Creado)
         ->sole();
 
-    expect($filaCreado->user_id)->toBe($encargado->id)
+    expect($filaCreado->user_id)->toBe($dueno->id)
         ->and($filaCreado->despues['modelo'])->toBe('DJI Agras T30');
 
     $this->put(
@@ -254,8 +260,8 @@ it('registra en bitácora el alta, la edición y la baja de un plan de mantenimi
 });
 
 it('da de baja un plan de mantenimiento por soft delete: no aparece en el índice y un segundo intento da 404', function () {
-    [$encargado, $idRol] = usuarioConRolParaPlanes('encargado', 'encargado_operaciones');
-    entrarAlPanelParaPlanes($encargado, $idRol);
+    [$dueno, $idRol] = usuarioConRolParaPlanes('dueno', 'dueno');
+    entrarAlPanelParaPlanes($dueno, $idRol);
 
     $this->post(route('panel.planes-mantenimiento.store'), payloadPlan());
     $plan = PlanMantenimiento::query()->sole();
@@ -293,10 +299,10 @@ it('un rol sin el permiso recibe 403 en todas las acciones', function () {
 });
 
 it('no deja actuar a quien tiene el permiso en otro rol pero no en el activo', function () {
-    // Multirol: encargado (con el permiso) + piloto (sin él). Opera bajo
+    // Multirol: dueño (con el permiso) + piloto (sin él). Opera bajo
     // piloto, así que NO puede dar de alta — los permisos efectivos son los
     // del rol activo, jamás la unión.
-    [$multirol, $idEncargado] = usuarioConRolParaPlanes('jefe.multirol', 'encargado_operaciones');
+    [$multirol, $idDueno] = usuarioConRolParaPlanes('jefe.multirol', 'dueno');
     $idPiloto = (int) SecRole::query()->where('name', 'piloto')->value('id');
     $pivote = new SecUserRole(['id_user' => $multirol->id, 'id_role' => $idPiloto]);
     $pivote->created_by = $multirol->id;
@@ -308,7 +314,7 @@ it('no deja actuar a quien tiene el permiso en otro rol pero no en el activo', f
     expect(PlanMantenimiento::query()->count())->toBe(0);
 
     // Con el rol activo correcto, la misma cuenta sí puede.
-    entrarAlPanelParaPlanes($multirol, $idEncargado);
+    entrarAlPanelParaPlanes($multirol, $idDueno);
     $this->post(route('panel.planes-mantenimiento.store'), payloadPlan())->assertRedirect();
     expect(PlanMantenimiento::query()->count())->toBe(1);
 });

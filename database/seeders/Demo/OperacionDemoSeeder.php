@@ -20,6 +20,7 @@ use App\Dominios\Operaciones\Infraestructura\Eloquent\Alerta;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Condiciones;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Dron;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Evidencia;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\EvidenciaEquipo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Incidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Pausa;
@@ -69,6 +70,11 @@ use Illuminate\Support\Facades\Storage;
  * - 5 `firma_acta`: las cartas de confirmación de efecto laboral firmadas.
  * - 4 `imagen_campo`: una por trabajo, las cuatro restantes.
  * - 2 `foto_incidencia`: las dos que ilustran una incidencia registrada.
+ *
+ * `sembrarEvidenciaEquipo()` (HU-80, tarea 86) suma un quinto grupo, fuera de
+ * las 21 originales: tres copias de `rc_01.jpeg` como `foto_control`/
+ * `foto_ciclo_bateria_balanceo`/`foto_dron_limpio` de T1, para que el
+ * "Reporte de Equipos" tenga contenido real en la demo.
  *
  * ### Estados repartidos
  *
@@ -204,6 +210,10 @@ class OperacionDemoSeeder extends Seeder
         $this->cerrarTrabajos($trabajos, $autorId);
         $this->sembrarActasYReportes($trabajos, $evidencias, $autorId);
         $this->sembrarAlertas($trabajos, $personas, $drones, $autorId);
+
+        if (isset($trabajos['T1'])) {
+            $this->sembrarEvidenciaEquipo($trabajos['T1'], $autorId);
+        }
     }
 
     /**
@@ -295,7 +305,12 @@ class OperacionDemoSeeder extends Seeder
                 continue;
             }
 
-            $orden = OrdenAplicacion::query()->where('lote_id', $lote->id)->first();
+            // HU-92 (tarea 107): el lote de la orden ya no es una columna
+            // propia, se resuelve por `ope_orden_lotes`.
+            $orden = OrdenAplicacion::query()->whereHas(
+                'ordenLotes',
+                fn ($ordenLotes) => $ordenLotes->where('lote_id', $lote->id),
+            )->first();
 
             if ($orden === null) {
                 continue;
@@ -555,6 +570,69 @@ class OperacionDemoSeeder extends Seeder
             $reporte = $this->generarReporte->ejecutar($trabajo->refresh());
             $this->autoria($reporte, $autorId);
         }
+    }
+
+    /**
+     * "Reporte de Equipos" de HU-80 (ronda del dueño, 13/9/2026): un único
+     * ejemplo, sobre T1, para que la sección tenga contenido real en la
+     * demo. Reutiliza `rc_01.jpeg` (las 21 capturas ya están repartidas 1 a 1
+     * entre `captura_rc`/`firma_acta`/`imagen_campo`/`foto_incidencia`, mismo
+     * criterio del docblock de esta clase) — el contenido de la foto es
+     * irrelevante para las tres evidencias de chequeo, así que copiarla tres
+     * veces no inventa nada que el relato no pueda sostener.
+     *
+     * Los ciclos de batería del reporte NO se siembran acá: `BAT-01`/`BAT-04`
+     * (`FlotaDemoSeeder`) ya son las que usan `recargas()` de todas las
+     * sesiones — el contrato de lectura hacia `Mantenimiento` los resuelve
+     * solos, sin dato adicional.
+     */
+    private function sembrarEvidenciaEquipo(Trabajo $trabajo, int $autorId): void
+    {
+        $archivo = 'rc_01.jpeg';
+        $origen = base_path(self::ORIGEN_CAPTURAS.'/'.$archivo);
+
+        if (! is_file($origen)) {
+            return; // captura ausente del repo: se omite, no se inventa
+        }
+
+        $fecha = '2026-08-01 13:00:00';
+        $fotos = [];
+
+        foreach ([TipoEvidencia::FotoControl, TipoEvidencia::FotoCicloBateriaBalanceo, TipoEvidencia::FotoDronLimpio] as $tipo) {
+            $uuidCliente = $this->uuid('evidencia', $tipo->value.'-T1');
+
+            $evidencia = $this->crear(new Evidencia([
+                'uuid_cliente' => $uuidCliente,
+                'tipo' => $tipo,
+                // Se completa abajo, mismo motivo que `sembrarEvidencias()`.
+                'archivo_url' => $uuidCliente,
+                'hash' => (string) hash_file('sha256', $origen),
+                'fecha' => $fecha,
+            ]), $autorId);
+
+            $ruta = sprintf(
+                'evidencias/%s/%s/%s-%d.jpeg',
+                $tipo->value,
+                date('Y/m', (int) strtotime($fecha)),
+                $uuidCliente,
+                $evidencia->id,
+            );
+
+            Storage::disk('r2')->put($ruta, (string) file_get_contents($origen));
+            $evidencia->archivo_url = $ruta;
+            $evidencia->save();
+
+            $fotos[$tipo->value] = $evidencia;
+        }
+
+        $this->crear(new EvidenciaEquipo([
+            'uuid_cliente' => $this->uuid('evidencia_equipo', 'T1'),
+            'trabajo_id' => $trabajo->id,
+            'horas_vuelo_dron' => '38.50',
+            'foto_control_id' => $fotos[TipoEvidencia::FotoControl->value]->id,
+            'foto_ciclo_bateria_balanceo_id' => $fotos[TipoEvidencia::FotoCicloBateriaBalanceo->value]->id,
+            'foto_dron_limpio_id' => $fotos[TipoEvidencia::FotoDronLimpio->value]->id,
+        ]), $autorId);
     }
 
     /**

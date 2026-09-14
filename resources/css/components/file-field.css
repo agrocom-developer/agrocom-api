@@ -45,6 +45,15 @@
     object-fit: contain;
 }
 
+/* size="lg" (14/9/2026): para un logo que es el dato principal de la
+   pantalla (/panel/organizacion) — el tamaño por defecto (--ag-space-8)
+   sigue siendo el correcto en una fila de formulario compartida con otros
+   campos (logo de un cliente). */
+.ag-file-field--lg .ag-file-field__preview {
+    width: calc(var(--ag-space-8) * 2);
+    height: calc(var(--ag-space-8) * 2);
+}
+
 .ag-file-field__meta {
     display: flex;
     flex-direction: column;

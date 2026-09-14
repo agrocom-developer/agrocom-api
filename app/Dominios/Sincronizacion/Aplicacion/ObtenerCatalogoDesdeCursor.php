@@ -4,18 +4,25 @@ namespace App\Dominios\Sincronizacion\Aplicacion;
 
 use App\Dominios\Comercial\Contratos\LecturaLotes;
 use App\Dominios\Operaciones\Contratos\LecturaOrdenesVigentes;
+use App\Dominios\Operaciones\Contratos\LecturaTrabajosAsignados;
 use App\Dominios\Personal\Contratos\LecturaPersonas;
 use App\Dominios\Sincronizacion\Dominio\CursorCatalogo;
 use App\Dominios\Sincronizacion\Dominio\PosicionCursor;
 
 /**
  * Caso de uso de `GET /api/sync/catalogo` (espec §2.1, punto 6; TE-06
- * parcial — ver `runs/08-diseno.md`). Combina los tres contratos de lectura
+ * parcial — ver `runs/08-diseno.md`). Combina los cuatro contratos de lectura
  * de los módulos dueños (nunca sus modelos Eloquent, ADR 0003 regla 2) y
  * arma la respuesta con el cursor de continuación.
  *
- * Recetas y productos quedan fuera a propósito: `Mezclas` no existe todavía
- * (ver recorte de alcance de la tarea 08 en `docs/gestion/cola_tareas.md`).
+ * Recetas y productos quedan fuera a propósito: el registro `mezcla` del
+ * lote de sync (espec §7, HU-78, tarea 94) no necesita un catálogo previo —
+ * el piloto transcribe el nombre del producto en el propio evento, y el
+ * servidor lo resuelve contra `mez_productos` al aplicarlo (ver
+ * `Mezclas\Infraestructura\EscrituraMezclasEloquent`). Si una futura HU
+ * necesitara que el piloto ELIJA de un catálogo cerrado en vez de
+ * transcribir, ahí sí haría falta sumar `productos` a este pull (recorte de
+ * alcance original de la tarea 08 en `docs/gestion/cola_tareas.md`).
  */
 final class ObtenerCatalogoDesdeCursor
 {
@@ -31,6 +38,7 @@ final class ObtenerCatalogoDesdeCursor
         private readonly LecturaOrdenesVigentes $ordenes,
         private readonly LecturaLotes $lotes,
         private readonly LecturaPersonas $personas,
+        private readonly LecturaTrabajosAsignados $trabajos,
     ) {}
 
     /** @return array<string, mixed> */
@@ -72,10 +80,22 @@ final class ObtenerCatalogoDesdeCursor
             $saliente = $saliente->conPosicion(CursorCatalogo::PERSONAS, new PosicionCursor($ultima->updatedAt, $ultima->id));
         }
 
+        $posicionTrabajos = $entrante->posicion(CursorCatalogo::TRABAJOS);
+        $trabajos = $this->trabajos->listarModificadosDesde(
+            $posicionTrabajos?->actualizadoEn,
+            $posicionTrabajos?->id,
+            self::LIMITE_POR_SECCION,
+        );
+        if ($trabajos !== []) {
+            $ultima = $trabajos[array_key_last($trabajos)];
+            $saliente = $saliente->conPosicion(CursorCatalogo::TRABAJOS, new PosicionCursor($ultima->updatedAt, $ultima->id));
+        }
+
         return [
             'ordenes' => array_map(static fn ($orden) => $orden->toArray(), $ordenes),
             'lotes' => array_map(static fn ($lote) => $lote->toArray(), $lotes),
             'personas' => array_map(static fn ($persona) => $persona->toArray(), $personas),
+            'trabajos' => array_map(static fn ($trabajo) => $trabajo->toArray(), $trabajos),
             'cursor' => $saliente->serializar(),
         ];
     }

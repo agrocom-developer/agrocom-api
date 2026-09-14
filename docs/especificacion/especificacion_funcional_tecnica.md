@@ -115,7 +115,7 @@ Llevan `campania_id` propio solo las entidades donde alguien la **elige explíci
 ### 4.1 Comercial
 
 - `clientes` — id, razón social, nit, tipo_persona (física / jurídica), contacto dueño, contacto agrónomo. *El dueño, cuando el cliente es una sociedad, se registra como contacto tipo `dueno` — no como cliente propio (ADR 0018).*
-- `contratos` — id, campania_id, cliente_id, hectáreas_contratadas, aplicaciones_previstas, precio_ha, monto_total, adelanto_monto, adelanto_pct, fecha_inicio, fecha_fin, estado, + parámetros de vuelo y límites de condiciones (altura_vuelo_m, velocidad_max_kmh, viento_max_kmh, temperatura_max_c, humedad_min_pct, humedad_max_pct, umbral_reporte_avance_ha; NULL = rige el valor por defecto del sistema)
+- `contratos` — id, campania_id, cliente_id, hectáreas_contratadas, aplicaciones_previstas, precio_ha, monto_total, adelanto_monto ("Adelanto Solicitado"), fecha_inicio, fecha_fin, estado. *Nota del 14/9/2026 (HU-91): sin `adelanto_pct` ni parámetros de vuelo/límites de condiciones propios — esos campos (`altura_vuelo_m`, `velocidad_max_kmh`, `viento_max_kmh`, `temperatura_max_c`, `humedad_min_pct`, `humedad_max_pct`, `umbral_reporte_avance_ha`) se sacan del contrato; hereda de la Orden o del valor por defecto del sistema (RF-60). `contrato_ventanas` no cambia (ADR 0015 punto 5 sigue vigente).*
 - `contrato_ventanas` — id, contrato_id, hora_inicio, hora_fin. *N por contrato y **opcionales**: sin ninguna ventana cargada, el contrato aplica a cualquier hora ("todo el día"). No hay booleano de "todo el día" — la ausencia de filas es el dato (ADR 0015).*
 - `contrato_alcances` — id, contrato_id, propiedad_id, campo_id (nullable), hectareas. *Qué terreno cubre el contrato: una propiedad entera (`campo_id` nulo), un campo específico, o una mezcla de varias propiedades — N filas por contrato, y la suma no puede superar `hectareas_contratadas` (ADR 0018).*
 - `propiedades` — id, cliente_id, nombre, ubicación (departamento, provincia, municipio o pueblo — ej. Cuatro Cañadas, Roboré, San Matías). *Un cliente tiene varias propiedades — el nivel de negocio ("Gamelera"), no necesariamente un único predio físico delimitado.*
@@ -138,14 +138,15 @@ Llevan `campania_id` propio solo las entidades donde alguien la **elige explíci
 
 ### 4.3 Operación
 
-- `ordenes_aplicacion` — id, contrato_id, lote_id, nro_aplicacion, tipo_aplicacion (siembra / desarrollo / cosecha), litros_ha, humedad_minima, parámetros de vuelo acordados (altura_vuelo_m, velocidad_vuelo_kmh, ancho_pasada_m), observaciones, emitida_por (agrónomo), fecha_emision, estado. *`tipo_aplicacion` dice en qué momento del ciclo se fumiga: `siembra` (barbecho o presiembra), `desarrollo` (el grueso de las 6-8 aplicaciones, desde el desarrollo vegetativo) y `cosecha` (desecante previo a cosechar). Cambia qué se espera de la aplicación y cómo se agrupa el informe de avance.*
+- `ordenes_aplicacion` — id, contrato_id, nro_aplicacion ("Número de aplicaciones"), tipo_aplicacion (siembra / desarrollo / cosecha), tipo_insumo (solido / liquido), litros_ha (líquido) o kilos por vuelo (sólido), humedad_minima, parámetros de vuelo acordados (altura_vuelo_m, velocidad_vuelo_kmh, ancho_pasada_m), observaciones, emitida_por (agrónomo), fecha_emision, estado. *`tipo_aplicacion` dice en qué momento del ciclo se fumiga: `siembra` (barbecho o presiembra), `desarrollo` (el grueso de las 6-8 aplicaciones, desde el desarrollo vegetativo) y `cosecha` (desecante previo a cosechar). Cambia qué se espera de la aplicación y cómo se agrupa el informe de avance.* *`tipo_insumo` (HU-79) separa el catálogo de productos: sólido (fertilizante, semilla de pasto) pide kilos por vuelo; líquido (insecticida, herbicida, fungicida, fertilizante, coadyuvante, antiespumante) pide litros por hectárea.*
+- `orden_lotes` — id, orden_id, lote_id, hectareas_solicitadas. *Nota del 14/9/2026 (HU-92, amplía HU-70): reemplaza el `lote_id` único que tenía `ordenes_aplicacion` — una orden pasa a cubrir N lotes de la propiedad, y "una orden vigente por lote" migra su índice único acá. El reparto por equipo (`/panel/asignacion-equipos`) elige, por equipo, qué lotes de esta lista le corresponden y sus hectáreas.*
 - `recetas_mezcla` — id, orden_id, volumen_referencia_l, agitacion_requerida, ph_objetivo, observaciones
 - `receta_items` — id, receta_id, secuencia, producto_id, tipo (fitosanitario / coadyuvante / antiespumante / antideriva / corrector_ph / aceite / fertilizante_foliar), dosis_valor, dosis_unidad (ml/ha, g/ha, ml/100L, %v/v), pre_disolucion_requerida (bool), nota. *La receta la define el agrónomo, con su orden de incorporación; Agrocom la ejecuta y la documenta, no la modifica.*
 - `productos` — id, nombre_comercial, ingrediente_activo, formulación (WG / WP / SC / SL / EC / EW / OD / adyuvante), unidad, densidad, proveedor
 - `mezclas` — id, uuid_cliente, sesion_id, secuencia, receta_id, volumen_agua_l, volumen_final_l, hectareas_cubiertas, preparada_por, inicio, fin, estado (en_preparacion / lista / cargada / anulada), evidencia_id
 - `mezcla_items` — id, mezcla_id, receta_item_id, secuencia, cantidad_calculada, cantidad_real, unidad, hora_incorporacion, confirmado_por. *Cada tanque preparado es una mezcla; el sistema calcula la cantidad de cada producto y el auxiliar confirma la real — la diferencia explica una aplicación fallida.*
 - `sobrantes` — id, mezcla_id, volumen_sobrante_l, destino (aplicado_en_lote / devuelto / dispuesto), triple_lavado (bool), observacion
-- `trabajos` — id, uuid_cliente, orden_id, lote_id, nro_aplicacion, hectareas_declaradas (suma de sesiones), hectareas_validadas, inicio, fin, estado, motivo_observacion. *La orden es requisito previo para abrir un trabajo; sin orden vigente, el sistema no permite iniciar. El trabajo no lleva dron ni piloto propio — un lote puede tener varios pilotos y drones por relevo, falla o logística; eso vive en las sesiones.*
+- `trabajos` — id, uuid_cliente, orden_id, lote_id, equipo_trabajo_id (nullable — HU-70: solo para trabajos abiertos por asignación de equipo, no para los que abre la sincronización), nro_aplicacion, hectareas_declaradas (suma de sesiones), hectareas_validadas, inicio, fin, estado, motivo_observacion. *La orden es requisito previo para abrir un trabajo; sin orden vigente, el sistema no permite iniciar. El trabajo no lleva dron ni piloto propio — un lote puede tener varios pilotos y drones por relevo, falla o logística; eso vive en las sesiones.*
 - `sesiones` — id, uuid_cliente, trabajo_id, secuencia, dron_id, piloto_id, auxiliar_id, hectareas_declaradas, hectarea_inicial_acumulada, inicio, fin, motivo_cierre (completado / relevo_piloto / cambio_dron / falla_equipo / clima / fin_jornada / otro), captura_rc_id, estado, validado_por, fecha_validacion. *Cada sesión es una unidad de trabajo continua de un piloto con un dron; se cierra con su propia captura de RC.*
 - `condiciones` — id, trabajo_id, sesion_id, momento (inicio_sesion / incidencia), viento_kmh, temperatura_c, humedad_pct, autorizado (bool), observacion_agronomo, firma_observacion
 - `recargas` — id, sesion_id, mezcla_id, secuencia, litros_caldo, problema_caldo (enum: ninguno / filtro_tapado / grumos / decantacion / espuma / color_olor_anormal), bateria_saliente_id, temperatura_bateria_c, hora, registrado_por
@@ -259,32 +260,49 @@ Este es el activo real del sistema: defiende ante el reclamo de eficacia del agr
 
 ---
 
-## 7. Recepción del caldo (lo prepara el cliente)
+## 7. Caldo: recepción, carga y su deslinde de responsabilidad
 
-**Agrocom no prepara la mezcla y no quiere prepararla.** El caldo lo formula y
-lo prepara el cliente, con su propio ingeniero agrónomo. Agrocom recibe el
-caldo ya hecho y lo rocía. Esta es la decisión de negocio CR-01, cerrada el
-1/9/2026 por el dueño y confirmada en todas las entrevistas de campo.
+**El caldo lo formula el cliente, con su propio ingeniero agrónomo — eso no
+cambió.** Esta era la decisión de negocio CR-01, cerrada el 1/9/2026 por el
+dueño y confirmada en todas las entrevistas de campo. Lo que sí cambió, el
+13/9/2026 (HU-78, Sprint 16), es que ahora el piloto **transcribe** qué
+productos y en qué cantidad se cargaron en el caldo al crear la aplicación —
+antes ese dato no se registraba en absoluto. Sigue sin ser Agrocom quien
+elige, calcula o valida esa composición (ver 7.1): el piloto anota lo que lee
+en el envase, nada más.
 
-### 7.1 Por qué el alcance termina acá
+### 7.1 Por qué el alcance de cálculo sigue cerrado
 
 Es un deslinde de responsabilidad, no una comodidad. Quien elige el producto,
 la dosis y la compatibilidad de la mezcla asume el resultado agronómico. Si la
 aplicación se hace y el producto no hace efecto, o el cultivo se daña, o falla
 la germinación, la causa está en la formulación — y la formulación no es de
-Agrocom. Tomar la preparación sería tomar esa responsabilidad junto con ella.
+Agrocom. Tomar la preparación, o tomar la responsabilidad de decir si está
+bien hecha, sería tomar esa responsabilidad agronómica junto con ella.
 
-Por eso el sistema **no** modela: fórmula, receta, dosis por hectárea, cálculo
-de producto por tanque, checklist secuencial de incorporación, orden de mezcla,
+Por eso el sistema **no** modela ni calcula: dosis por hectárea, cálculo de
+producto por tanque, checklist secuencial de incorporación, orden de mezcla,
 compatibilidad entre productos, ni triple lavado de envases. Nada de eso entra
-al alcance, ni siquiera como campo opcional: un dato de fórmula guardado acá
+al alcance, ni siquiera como campo opcional: un dato de cálculo guardado acá
 sugiere una responsabilidad que Agrocom no tiene.
+
+Lo que sí entra, desde HU-78, es una **transcripción**, no una validación:
+nombre del producto, cantidad y unidad, tal como el piloto los lee y los
+carga. Agrocom no verifica que esa cantidad sea la correcta para el lote, ni
+que los productos declarados sean compatibles entre sí — registra lo que el
+piloto declaró haber cargado, punto.
 
 ### 7.2 Qué sí registra Agrocom
 
-Lo que necesita para cobrar y para demostrar qué hizo con lo que le dieron:
+Lo que necesita para cobrar, para demostrar qué hizo con lo que le dieron, y
+—desde HU-78— qué se cargó:
 
 - **Litros recibidos**: cuánto caldo entrega el cliente, cuándo y quién lo entregó.
+- **Productos cargados** (HU-78, revierte CR-01 del 1/9/2026): qué productos y
+  en qué cantidad transcribió el piloto al crear la aplicación — nombre de
+  texto libre, cantidad y unidad (litros, mililitros, kilos o gramos). Sin
+  dosis por hectárea, sin orden de incorporación, sin compatibilidad entre
+  productos (ver 7.1).
 - **Litros consumidos por sesión**: qué se roció efectivamente en cada sesión.
 - **Sobrante**: cuánto quedó sin aplicar al cerrar, y que se devuelve al cliente.
 - **Retraso o rechazo por calidad del caldo**: si el vuelo se demoró, se
@@ -296,10 +314,13 @@ resultado no fueron del servicio de aplicación.
 
 ### 7.3 Qué protege esto
 
-Cierra el circuito del volumen sin entrar en el del contenido: Agrocom puede
-demostrar cuántos litros recibió, cuántos aplicó sobre qué lote y cuántos
-devolvió, y que la diferencia cuadra. Sobre la composición de esos litros no
-opina, no calcula y no responde.
+Cierra el circuito del volumen y, desde HU-78, deja constancia de qué se
+cargó — sin entrar en si esa carga fue la correcta. Agrocom puede demostrar
+cuántos litros recibió, cuántos aplicó sobre qué lote y cuántos devolvió, que
+la diferencia cuadra, y qué productos transcribió el piloto como cargados.
+Sobre si esa combinación es la que correspondía, en qué orden se incorporó, o
+si los productos son compatibles entre sí, no opina, no calcula y no
+responde.
 
 ### 7.4 Volúmenes de carga de la flota
 

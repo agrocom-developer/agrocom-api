@@ -4,15 +4,23 @@ namespace App\Dominios\Operaciones\Infraestructura\Http\Resources;
 
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenLote;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use OpenApi\Attributes as OA;
 
 /**
  * Representación API de la orden de aplicación. Expone las referencias al
- * módulo Comercial (`contrato_id`, `lote_id`, `emitida_por_contacto_id`)
+ * módulo Comercial (`contrato_id`, `lotes.*.lote_id`, `emitida_por_contacto_id`)
  * solo como IDs (ADR 0003, regla 3): la app de campo resuelve el detalle de
  * lotes/contratos desde su catálogo sincronizado, no anidado acá.
+ *
+ * `lotes` (HU-92, tarea 107, reemplaza el `lote_id` único de antes): la
+ * orden puede cubrir varios lotes de la propiedad — ver
+ * `OrdenAplicacionCatalogo` para el mismo criterio de forma (lista plana de
+ * arrays, sin DTO propio por ítem). Requiere `ordenLotes` cargada por el
+ * llamador (`ListarOrdenesAplicacion` ya la trae con `with()`) para no
+ * generar un N+1 en el listado paginado.
  *
  * Los DECIMAL viajan como string (invariante 6: nunca float en dinero ni
  * hectáreas — tampoco en el JSON del contrato de API). El schema OpenAPI de
@@ -24,15 +32,16 @@ use OpenApi\Attributes as OA;
 #[OA\Schema(
     schema: 'OrdenAplicacion',
     title: 'Orden de aplicación',
-    description: 'Orden de aplicación emitida por el cliente para un lote (espec §4.3). '
+    description: 'Orden de aplicación emitida por el cliente, cubriendo uno o varios lotes de la propiedad (espec §4.3, ampliada HU-92 tarea 107). '
         .'Los valores DECIMAL (dosis, límites climáticos y de vuelo) viajan como string. '
         .'Los límites en null heredan del contrato o del parámetro por defecto del sistema (RF-60).',
     required: [
         'id',
         'contrato_id',
-        'lote_id',
+        'lotes',
         'nro_aplicacion',
         'litros_ha',
+        'kilos_por_vuelo',
         'humedad_min_pct',
         'viento_max_kmh',
         'temperatura_max_c',
@@ -51,9 +60,15 @@ use OpenApi\Attributes as OA;
     properties: [
         new OA\Property(property: 'id', description: 'Identificador de la orden.', type: 'integer', example: 1),
         new OA\Property(property: 'contrato_id', description: 'Contrato al que pertenece la orden (módulo Comercial, solo ID).', type: 'integer', example: 1),
-        new OA\Property(property: 'lote_id', description: 'Lote sobre el que se aplica (módulo Comercial, solo ID).', type: 'integer', example: 3),
+        new OA\Property(
+            property: 'lotes',
+            description: 'Lotes que cubre la orden (módulo Comercial, solo ID) con las hectáreas solicitadas a cada uno.',
+            type: 'array',
+            items: new OA\Items(ref: '#/components/schemas/LoteDeOrdenCatalogo'),
+        ),
         new OA\Property(property: 'nro_aplicacion', description: 'Número de aplicación dentro del contrato (1..n).', type: 'integer', example: 1),
-        new OA\Property(property: 'litros_ha', description: 'Dosis en litros por hectárea. DECIMAL como string.', type: 'string', example: '10.00'),
+        new OA\Property(property: 'litros_ha', description: 'Dosis en litros por hectárea (insumo líquido). DECIMAL como string; null si la categoría de insumo es sólida (HU-79, tarea 110).', type: 'string', example: '10.00', nullable: true),
+        new OA\Property(property: 'kilos_por_vuelo', description: 'Dosis en kilos por vuelo (insumo sólido). DECIMAL como string; null si la categoría de insumo es líquida (HU-79, tarea 110).', type: 'string', example: '8.50', nullable: true),
         new OA\Property(property: 'humedad_min_pct', description: 'Humedad relativa mínima para aplicar (%). DECIMAL como string; null hereda.', type: 'string', example: '60.00', nullable: true),
         new OA\Property(property: 'viento_max_kmh', description: 'Viento máximo para aplicar (km/h). DECIMAL como string; null hereda.', type: 'string', example: '15.00', nullable: true),
         new OA\Property(property: 'temperatura_max_c', description: 'Temperatura máxima para aplicar (°C). DECIMAL como string; null hereda.', type: 'string', example: '32.00', nullable: true),
@@ -79,9 +94,13 @@ class OrdenAplicacionResource extends JsonResource
         return [
             'id' => $this->id,
             'contrato_id' => $this->contrato_id,
-            'lote_id' => $this->lote_id,
+            'lotes' => $this->ordenLotes->map(fn (OrdenLote $ordenLote): array => [
+                'lote_id' => $ordenLote->lote_id,
+                'hectareas_solicitadas' => (string) $ordenLote->hectareas_solicitadas,
+            ])->all(),
             'nro_aplicacion' => $this->nro_aplicacion,
             'litros_ha' => $this->litros_ha,
+            'kilos_por_vuelo' => $this->kilos_por_vuelo,
             'humedad_min_pct' => $this->humedad_min_pct,
             'viento_max_kmh' => $this->viento_max_kmh,
             'temperatura_max_c' => $this->temperatura_max_c,

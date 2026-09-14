@@ -20,11 +20,13 @@ use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\RendicionesContro
 use App\Dominios\Inventario\Infraestructura\Http\Controllers\Web\RepuestosController;
 use App\Dominios\Inventario\Infraestructura\Http\Controllers\Web\StockController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\BateriasController;
+use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\FichasDronController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\GeneradoresController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\OrdenesMantenimientoController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\PlanesMantenimientoController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\VehiculosController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\AlertasController;
+use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\AsignacionEquiposController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\DronesController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\EstadiasHaciendaController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\OrdenesController;
@@ -613,6 +615,19 @@ Route::middleware('auth:interno')->group(function () {
         Route::delete('/panel/ordenes/{orden}', [OrdenesController::class, 'destroy'])
             ->name('panel.ordenes.destroy');
 
+        // HU-70 (tarea 85): reparto de una orden vigente entre equipos de
+        // trabajo — ficha propia, no sub-recurso de `ordenes` (ver docblock
+        // de `AsignacionEquiposController`). Un único permiso
+        // (`operaciones.orden.asignar_equipos`) gatea las tres rutas.
+        Route::get('/panel/asignacion-equipos', [AsignacionEquiposController::class, 'index'])
+            ->name('panel.asignacion-equipos.index');
+
+        Route::get('/panel/asignacion-equipos/{orden}', [AsignacionEquiposController::class, 'mostrar'])
+            ->name('panel.asignacion-equipos.show');
+
+        Route::post('/panel/asignacion-equipos/{orden}', [AsignacionEquiposController::class, 'asignar'])
+            ->name('panel.asignacion-equipos.store');
+
         // HU-26 (tarea 37): administración de bases y personas operativas,
         // dos ABMs INDEPENDIENTES (una base es catálogo simple; una persona
         // la referencia por `base_id`, FK nullable, pero cada una tiene su
@@ -870,6 +885,33 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::delete('/panel/planes-mantenimiento/{plan}', [PlanesMantenimientoController::class, 'destroy'])
             ->name('panel.planes-mantenimiento.destroy');
+
+        // HU-82 (tarea 97): ficha de inventario del dron — serie, chasis,
+        // versión de software, región, serie del control y accesorios. ABM
+        // nuevo sin máquina de estados, mismo molde que `baterias` arriba.
+        // Cuatro permisos de grano fino
+        // (`mantenimiento.ficha_dron.ver`/`.crear`/`.editar`/`.eliminar`)
+        // verificados DENTRO del controlador contra el ROL ACTIVO, mismo
+        // criterio que el resto del panel. `identificador_dron` correlaciona
+        // por TEXTO contra `ope_drones.identificador`, sin FK real (ver
+        // docblock de la migración `man_drones`).
+        Route::get('/panel/fichas-dron', [FichasDronController::class, 'index'])
+            ->name('panel.fichas-dron.index');
+
+        Route::get('/panel/fichas-dron/crear', [FichasDronController::class, 'create'])
+            ->name('panel.fichas-dron.create');
+
+        Route::post('/panel/fichas-dron', [FichasDronController::class, 'store'])
+            ->name('panel.fichas-dron.store');
+
+        Route::get('/panel/fichas-dron/{fichaDron}/editar', [FichasDronController::class, 'edit'])
+            ->name('panel.fichas-dron.edit');
+
+        Route::put('/panel/fichas-dron/{fichaDron}', [FichasDronController::class, 'update'])
+            ->name('panel.fichas-dron.update');
+
+        Route::delete('/panel/fichas-dron/{fichaDron}', [FichasDronController::class, 'destroy'])
+            ->name('panel.fichas-dron.destroy');
 
         // HU-28 (tarea 40): "como piloto o auxiliar, quiero ver mis devengos
         // por período" — primer permiso de panel para esos dos roles

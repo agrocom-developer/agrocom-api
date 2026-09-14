@@ -210,6 +210,12 @@ class SeguridadSeeder extends Seeder
         'operaciones.orden.editar' => 'Editar los datos de una orden de aplicación',
         'operaciones.orden.activar' => 'Activar una orden de aplicación (emitida → vigente)',
         'operaciones.orden.eliminar' => 'Dar de baja (lógica) una orden de aplicación',
+        // HU-70 (tarea 85): "dónde asignarle el trabajo al piloto" — repartir
+        // las hectáreas de una orden vigente entre equipos de trabajo. Grano
+        // propio, no parte de `.editar`: no corrige la orden, reparte su
+        // trabajo; una ficha propia (`panel.asignacion-equipos.*`), no la
+        // ficha de la orden, así que no depende de `operaciones.orden.ver`.
+        'operaciones.orden.asignar_equipos' => 'Asignar equipos de trabajo (con sus hectáreas) a una orden vigente',
         // HU-44 (tarea 58): pausas de sesión con causa atribuible (DS-01).
         // Grano fino (ver/registrar), mismo criterio que `operaciones.alerta.*`:
         // ver el tablero agregado y cargar una pausa no son la misma
@@ -332,6 +338,15 @@ class SeguridadSeeder extends Seeder
         'mantenimiento.bateria.crear' => 'Dar de alta una batería',
         'mantenimiento.bateria.editar' => 'Editar los datos de una batería, incluidos sus ciclos acumulados',
         'mantenimiento.bateria.eliminar' => 'Dar de baja (lógica) una batería',
+        // HU-82 (tarea 97): "como encargado, quiero llevar el activo completo
+        // del dron (serie, chasis, versión de software, región, serie del
+        // control, accesorios), para tener el inventario completo". ABM
+        // nuevo sin máquina de estados. Grano fino, mismo criterio que
+        // `mantenimiento.bateria.*`.
+        'mantenimiento.ficha_dron.ver' => 'Ver el listado de fichas de inventario de dron',
+        'mantenimiento.ficha_dron.crear' => 'Dar de alta una ficha de inventario de dron',
+        'mantenimiento.ficha_dron.editar' => 'Editar los datos de una ficha de inventario de dron',
+        'mantenimiento.ficha_dron.eliminar' => 'Dar de baja (lógica) una ficha de inventario de dron',
         // HU-36 (tarea 52): "como encargado, quiero llevar stock de
         // repuestos por base con alerta de mínimo, para reponer antes de
         // quedarme sin" — cierra Sprint 11 y abre el módulo `Inventario`
@@ -508,6 +523,9 @@ class SeguridadSeeder extends Seeder
         'operaciones.orden.editar',
         'operaciones.orden.activar',
         'operaciones.orden.eliminar',
+        // HU-70 (tarea 85): administra también el reparto de equipos por
+        // orden — mismo criterio que el resto de `operaciones.orden.*` arriba.
+        'operaciones.orden.asignar_equipos',
         // HU-44 (tarea 58): "jefe de campo, quiero registrar las pausas con
         // su causa atribuible" — el jefe de campo es dueño de la HU, pero el
         // encargado administra la operación diaria (mismo criterio que
@@ -601,31 +619,29 @@ class SeguridadSeeder extends Seeder
         'mantenimiento.bateria.crear',
         'mantenimiento.bateria.editar',
         'mantenimiento.bateria.eliminar',
-        // HU-36 (tarea 52): "como encargado, quiero llevar stock de
-        // repuestos por base con alerta de mínimo" — la HU lo dice literal,
-        // mismo criterio que clientes, contratos, campos, drones, bases,
-        // personas, anticipos, facturas, gastos, combustible, vehículos y
-        // baterías arriba.
-        'inventario.repuesto.ver',
-        'inventario.repuesto.crear',
-        'inventario.repuesto.editar',
-        'inventario.repuesto.eliminar',
-        'inventario.movimiento.ver',
-        'inventario.movimiento.crear',
+        // HU-82 (tarea 97): "como encargado, quiero llevar el activo
+        // completo del dron" — la HU lo dice literal, mismo criterio que el
+        // resto de este rol arriba.
+        'mantenimiento.ficha_dron.ver',
+        'mantenimiento.ficha_dron.crear',
+        'mantenimiento.ficha_dron.editar',
+        'mantenimiento.ficha_dron.eliminar',
         // HU-37 (tarea 53): "como encargado, quiero abrir órdenes de
         // mantenimiento y cerrarlas consumiendo repuestos" — la HU lo dice
         // literal, mismo criterio que el resto de este rol arriba.
+        // (HU-36/HU-38 daban acceso completo a repuestos, stock y planes de
+        // mantenimiento; HU-88, tarea 103, se lo saca: los usa poco y le
+        // ensucian el menú del día a día. Se retira el catálogo entero de
+        // cada uno —ver/crear/editar/eliminar— y no solo `.ver`: dejar
+        // `.crear`/`.editar`/`.eliminar` sin `.ver` abría un hueco raro
+        // —podría crear un repuesto o un plan sin poder listarlo después—
+        // y agregar `.ver` de vuelta habría revertido el pedido de la HU de
+        // sacarlo del menú. Sigue disponible para `dueno`, que recibe el
+        // catálogo completo sin excepción.)
         'mantenimiento.orden.ver',
         'mantenimiento.orden.crear',
         'mantenimiento.orden.editar',
         'mantenimiento.orden.cerrar',
-        // HU-38 (tarea 54): "como encargado, quiero planes de mantenimiento
-        // preventivo por horas de vuelo" — la HU lo dice literal, mismo
-        // criterio que el resto de este rol arriba.
-        'mantenimiento.plan.ver',
-        'mantenimiento.plan.crear',
-        'mantenimiento.plan.editar',
-        'mantenimiento.plan.eliminar',
         // HU-46 (tarea 69, ADR 0015 punto 1): arma la campaña (código,
         // nombre, fechas) — sin `.cambiar_estado`, exclusivo del dueño (ver
         // el comentario en PERMISOS de arriba).
@@ -644,6 +660,13 @@ class SeguridadSeeder extends Seeder
     private const PERMISOS_JEFE_CAMPO = [
         'operaciones.trabajo.ver',
         'operaciones.sesion.validar',
+        // HU-70 (tarea 85): "dónde asignarle el trabajo al piloto" — el
+        // reclamo del dueño (audio del 13/9/2026) es literalmente del jefe
+        // de campo, que hoy avisa por WhatsApp. Ficha propia
+        // (`panel.asignacion-equipos.*`), no la de la orden: no necesita
+        // `operaciones.orden.ver` (CRUD completo de la orden) para repartir
+        // equipos.
+        'operaciones.orden.asignar_equipos',
         // Tarea 62 (fuga 2): coordina la cuadrilla, aterriza en el dashboard
         // tras elegir rol y necesita la ficha de la compañía.
         'seguridad.dashboard.ver',

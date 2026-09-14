@@ -11,8 +11,9 @@ use Illuminate\Support\Facades\Blade;
  *
  * El flujo de teclado real sobre la grilla del calendario (abrir el diálogo,
  * navegar con flechas/PageUp/PageDown, elegir, Escape, min/max) necesita un
- * navegador de verdad — eso lo cubre tests/Visual/date-atom.spec.ts, corrido
- * a mano (ver su cabecera).
+ * navegador de verdad — no hay spec automatizado para eso (ver el skill
+ * `verificacion`, "Qué NO cubre la cascada"); se revisa a mano en el
+ * navegador cuando cambia este átomo.
  */
 
 test('el <input type="date"> nativo lleva name, id, value, min y max', function () {

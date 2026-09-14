@@ -1,9 +1,12 @@
 <?php
 
+use App\Dominios\Campania\Infraestructura\Eloquent\Campania;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Cultivo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
+use App\Dominios\Comercial\Infraestructura\Eloquent\LoteCampania;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Compartido\Dominio\AccionBitacora;
 use App\Dominios\Compartido\Infraestructura\Eloquent\Bitacora;
@@ -80,6 +83,24 @@ function payloadCampo(int $propiedadId, array $overrides = []): array
     ], $overrides);
 }
 
+/** Campaña de prueba del cliente (HU-72, tarea 88: campaña del generador de alta masiva). */
+function campaniaDeCamposDePrueba(int $clienteId, string $codigo = '2025-2026'): Campania
+{
+    return Campania::query()->create([
+        'cliente_id' => $clienteId,
+        'codigo' => $codigo,
+        'fecha_inicio' => '2025-07-01',
+        'fecha_fin' => '2026-06-30',
+        'estado' => 'abierta',
+    ]);
+}
+
+/** Id de un cultivo del catálogo demo (HU-72, tarea 88). */
+function cultivoIdDeCamposDePrueba(string $nombre = 'Soya'): int
+{
+    return (int) Cultivo::query()->where('nombre', $nombre)->value('id');
+}
+
 /** Orden de aplicación mínima válida asociada a un lote (fuera del alcance de Comercial, pero necesaria para el test de historial). */
 function crearOrdenAplicacionParaLote(Lote $lote): void
 {
@@ -93,13 +114,22 @@ function crearOrdenAplicacionParaLote(Lote $lote): void
         'estado' => 'borrador',
     ]);
 
-    DB::table('ope_ordenes_aplicacion')->insert([
+    $ordenId = DB::table('ope_ordenes_aplicacion')->insertGetId([
         'contrato_id' => $contrato->id,
-        'lote_id' => $lote->id,
         'nro_aplicacion' => 1,
         'litros_ha' => '20.00',
         'fecha_emision' => now()->toDateString(),
         'estado' => 'emitida',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    // HU-92 (tarea 107): el lote de la orden ya no es una columna propia,
+    // se arma como fila de `ope_orden_lotes`.
+    DB::table('ope_orden_lotes')->insert([
+        'orden_id' => $ordenId,
+        'lote_id' => $lote->id,
+        'hectareas_solicitadas' => $lote->hectareas,
         'created_at' => now(),
         'updated_at' => now(),
     ]);
@@ -417,6 +447,74 @@ it('el nombre de campo duplicado para el mismo cliente es un error de validacion
     expect(Campo::query()->count())->toBe(1);
 });
 
+// HU-73 (tarea 89): desnivel y limpieza del lote — catálogos cerrados
+// aparte de `restricciones` (texto libre). Cubre los dos Request de este
+// controlador (`CrearCampoRequest`/`ActualizarCampoRequest`).
+
+it('el formulario ofrece los selects de desnivel y limpieza junto a restricciones', function () {
+    $cliente = clienteDeCamposDePrueba();
+    $propiedad = propiedadDeCamposDePrueba($cliente);
+    [$encargado, $idRol] = usuarioConRolParaCampos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaCampos($encargado, $idRol);
+
+    $respuesta = $this->get(route('panel.campos.create'))->assertOk();
+
+    $respuesta->assertSee('name="lotes[0][desnivel]"', escape: false)
+        ->assertSee('name="lotes[0][limpieza]"', escape: false)
+        ->assertSee('name="lotes[0][restricciones]"', escape: false)
+        ->assertSee(__('comercial.campos.lote_desnivel_empinado'), escape: false)
+        ->assertSee(__('comercial.campos.lote_limpieza_muchos_obstaculos'), escape: false);
+});
+
+it('rechaza un desnivel o limpieza fuera de catalogo en el alta y en la edicion de un campo', function () {
+    $cliente = clienteDeCamposDePrueba();
+    $propiedad = propiedadDeCamposDePrueba($cliente);
+    [$encargado, $idRol] = usuarioConRolParaCampos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaCampos($encargado, $idRol);
+
+    $this->post(route('panel.campos.store'), payloadCampo($propiedad->id, [
+        'lotes' => [['codigo' => 'L-01', 'hectareas' => '10', 'desnivel' => 'montanioso']],
+    ]))->assertSessionHasErrors('lotes.0.desnivel');
+
+    $this->post(route('panel.campos.store'), payloadCampo($propiedad->id, [
+        'lotes' => [['codigo' => 'L-01', 'hectareas' => '10', 'limpieza' => 'sucio']],
+    ]))->assertSessionHasErrors('lotes.0.limpieza');
+
+    expect(Campo::query()->count())->toBe(0);
+
+    $this->post(route('panel.campos.store'), payloadCampo($propiedad->id, [
+        'lotes' => [['codigo' => 'L-01', 'hectareas' => '10', 'desnivel' => 'varios', 'limpieza' => 'algunos_obstaculos']],
+    ]))->assertRedirect(route('panel.campos.index'));
+
+    $campo = Campo::query()->sole();
+    $lote = $campo->lotes()->sole();
+    expect($lote->desnivel)->toBe('varios')
+        ->and($lote->limpieza)->toBe('algunos_obstaculos');
+
+    $this->put(route('panel.campos.update', $campo), payloadCampo($propiedad->id, [
+        'lotes' => [['id' => $lote->id, 'codigo' => 'L-01', 'hectareas' => '10', 'desnivel' => 'no-valido']],
+    ]))->assertSessionHasErrors('lotes.0.desnivel');
+});
+
+it('un lote existente sin desnivel ni limpieza se sigue editando sin que la validacion los fuerce', function () {
+    $cliente = clienteDeCamposDePrueba();
+    $propiedad = propiedadDeCamposDePrueba($cliente);
+    [$encargado, $idRol] = usuarioConRolParaCampos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaCampos($encargado, $idRol);
+
+    $this->post(route('panel.campos.store'), payloadCampo($propiedad->id));
+    $campo = Campo::query()->sole();
+    $lote = $campo->lotes()->sole();
+    expect($lote->desnivel)->toBeNull()->and($lote->limpieza)->toBeNull();
+
+    $this->put(route('panel.campos.update', $campo), payloadCampo($propiedad->id, [
+        'lotes' => [['id' => $lote->id, 'codigo' => 'L-01', 'hectareas' => '20']],
+    ]))->assertRedirect(route('panel.campos.index'));
+
+    expect($lote->fresh()?->desnivel)->toBeNull()
+        ->and($lote->fresh()?->limpieza)->toBeNull();
+});
+
 it('el codigo de lote duplicado para el mismo campo es un error de validacion, no un QueryException', function () {
     $cliente = clienteDeCamposDePrueba();
     $propiedad = propiedadDeCamposDePrueba($cliente);
@@ -490,4 +588,115 @@ it('publica el item de menu de campos gateado por comercial.campo.ver', function
 
     expect($itemMenu->ruta)->toBe('panel.campos.index')
         ->and($itemMenu->permission_id)->toBe($idPermiso);
+});
+
+// HU-72 (tarea 88): alta masiva de lotes — el generador del formulario solo
+// rellena el mismo array `lotes[]` que ya se posteaba (tarea 35); lo nuevo es
+// `cultivo_id`/`campania_id` a nivel formulario, que siembran cada lote
+// recién creado. Tests end to end sobre `POST /panel/campos`, complementarios
+// a los del caso de uso en `CrearCampoConSiembraTest.php`.
+
+it('un POST con N lotes generados y un cultivo por defecto crea N lotes y N filas de siembra', function () {
+    $cliente = clienteDeCamposDePrueba();
+    $propiedad = propiedadDeCamposDePrueba($cliente);
+    $campania = campaniaDeCamposDePrueba($cliente->id);
+    $cultivoId = cultivoIdDeCamposDePrueba('Soya');
+    [$encargado, $idRol] = usuarioConRolParaCampos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaCampos($encargado, $idRol);
+
+    $this->post(route('panel.campos.store'), payloadCampo($propiedad->id, [
+        'lotes' => [
+            ['codigo' => 'Lote 1', 'hectareas' => '10.00'],
+            ['codigo' => 'Lote 2', 'hectareas' => '10.00'],
+            ['codigo' => 'Lote 3', 'hectareas' => '10.00'],
+        ],
+        'cultivo_id' => $cultivoId,
+        'campania_id' => $campania->id,
+    ]))->assertRedirect(route('panel.campos.index'));
+
+    $campo = Campo::query()->sole();
+    expect($campo->lotes()->count())->toBe(3);
+
+    $siembras = LoteCampania::query()->where('campania_id', $campania->id)->get();
+    expect($siembras)->toHaveCount(3);
+
+    foreach ($campo->lotes as $lote) {
+        $siembra = $siembras->firstWhere('lote_id', $lote->id);
+
+        expect($siembra)->not->toBeNull()
+            ->and($siembra->cultivo_id)->toBe($cultivoId)
+            ->and((string) $siembra->hectareas_sembradas)->toBe((string) $lote->hectareas);
+    }
+});
+
+it('un alta de campo sin cultivo_id ni campania_id sigue sin crear ninguna fila de siembra', function () {
+    $cliente = clienteDeCamposDePrueba();
+    $propiedad = propiedadDeCamposDePrueba($cliente);
+    [$encargado, $idRol] = usuarioConRolParaCampos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaCampos($encargado, $idRol);
+
+    $this->post(route('panel.campos.store'), payloadCampo($propiedad->id))
+        ->assertRedirect(route('panel.campos.index'));
+
+    expect(Campo::query()->sole()->lotes()->count())->toBe(1)
+        ->and(LoteCampania::query()->count())->toBe(0);
+});
+
+it('una campaña de otro cliente en el generador es un error de validacion, no un 500, y no deja el campo a medio crear', function () {
+    $cliente = clienteDeCamposDePrueba('Cliente dueño de la propiedad');
+    $otroCliente = clienteDeCamposDePrueba('Otro cliente');
+    $propiedad = propiedadDeCamposDePrueba($cliente);
+    $campaniaAjena = campaniaDeCamposDePrueba($otroCliente->id);
+    $cultivoId = cultivoIdDeCamposDePrueba('Soya');
+    [$encargado, $idRol] = usuarioConRolParaCampos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaCampos($encargado, $idRol);
+
+    $this->post(route('panel.campos.store'), payloadCampo($propiedad->id, [
+        'cultivo_id' => $cultivoId,
+        'campania_id' => $campaniaAjena->id,
+    ]))->assertSessionHasErrors('campania_id');
+
+    expect(Campo::query()->count())->toBe(0)
+        ->and(Lote::query()->count())->toBe(0);
+});
+
+it('renombrar y redibujar despues, desde la ficha existente, no borra la siembra ni el cultivo del lote generado', function () {
+    $cliente = clienteDeCamposDePrueba();
+    $propiedad = propiedadDeCamposDePrueba($cliente);
+    $campania = campaniaDeCamposDePrueba($cliente->id);
+    $cultivoId = cultivoIdDeCamposDePrueba('Soya');
+    [$encargado, $idRol] = usuarioConRolParaCampos('encargado', 'encargado_operaciones');
+    entrarAlPanelParaCampos($encargado, $idRol);
+
+    $this->post(route('panel.campos.store'), payloadCampo($propiedad->id, [
+        'lotes' => [['codigo' => 'Lote 1', 'hectareas' => '10.00']],
+        'cultivo_id' => $cultivoId,
+        'campania_id' => $campania->id,
+    ]));
+
+    $campo = Campo::query()->sole();
+    $lote = $campo->lotes()->sole();
+    $siembra = LoteCampania::query()->where('lote_id', $lote->id)->where('campania_id', $campania->id)->sole();
+
+    $geometria = json_encode(['type' => 'Polygon', 'coordinates' => [[[-63.1, -17.7], [-63.1, -17.8], [-63.05, -17.8], [-63.1, -17.7]]]]);
+
+    $this->put(route('panel.campos.update', $campo), [
+        'propiedad_id' => $propiedad->id,
+        'nombre' => $campo->nombre,
+        'lotes' => [[
+            'id' => $lote->id,
+            'codigo' => 'Lote Norte renombrado',
+            'hectareas' => '10.00',
+            'geometria' => $geometria,
+        ]],
+    ])->assertRedirect(route('panel.campos.index'));
+
+    $lote->refresh();
+    expect($lote->codigo)->toBe('Lote Norte renombrado')
+        ->and($lote->geometria)->not->toBeNull();
+
+    $siembra->refresh();
+    expect($siembra->trashed())->toBeFalse()
+        ->and($siembra->cultivo_id)->toBe($cultivoId)
+        ->and(LoteCampania::query()->where('lote_id', $lote->id)->where('campania_id', $campania->id)->exists())->toBeTrue();
 });

@@ -5,6 +5,7 @@ namespace App\Dominios\Finanzas\Infraestructura;
 use App\Dominios\Finanzas\Aplicacion\GenerarDevengosSesion;
 use App\Dominios\Finanzas\Contratos\EscrituraGastoMantenimiento;
 use App\Dominios\Finanzas\Contratos\LecturaContadoresPanel;
+use App\Dominios\Finanzas\Contratos\LecturaGastoMantenimiento;
 use App\Dominios\Finanzas\Contratos\LecturaPanelFinanzas;
 use App\Dominios\Operaciones\Contratos\Eventos\SesionValidada;
 use Illuminate\Support\Facades\Event;
@@ -25,13 +26,17 @@ use Illuminate\Support\ServiceProvider;
  *
  * `register()` bindea {@see EscrituraGastoMantenimiento} (HU-37, tarea 53):
  * primer contrato de escritura que `Finanzas` expone hacia afuera, consumido
- * por `Mantenimiento` para generar el gasto del cierre de una orden.
+ * por `Mantenimiento` para generar el gasto del cierre de una orden. También
+ * {@see LecturaGastoMantenimiento} (HU-88, tarea 103): de lectura, para que
+ * `Mantenimiento` muestre el precio final real de una orden cerrada sin
+ * tocar el modelo Eloquent `Gasto`.
  */
 final class FinanzasServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
         $this->app->bind(EscrituraGastoMantenimiento::class, EscrituraGastoMantenimientoEloquent::class);
+        $this->app->bind(LecturaGastoMantenimiento::class, LecturaGastoMantenimientoEloquent::class);
         $this->app->bind(LecturaContadoresPanel::class, LecturaContadoresPanelEloquent::class);
         $this->app->bind(LecturaPanelFinanzas::class, LecturaPanelFinanzasEloquent::class);
     }

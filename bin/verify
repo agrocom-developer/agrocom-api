@@ -57,35 +57,12 @@ if [ -z "$FALLO" ] && [ "$CON_ASSETS" = "1" ]; then
     etapa "Compilación de assets (Vite, en el host)" npm run build || true
 fi
 
-# Regresión visual (Playwright, en el host — el contenedor `app` no trae Node
-# ni navegadores). Compuerta desconectada desde la tarea 07 hasta la 31: el
-# arnés (tests/Visual/) existía pero nadie lo corría. Snapshots `-win32`
-# (el desarrollo se hace en Windows desde el 3/9/2026): fuera de CI a propósito.
-#
-# El sufijo de plataforma lo pone Playwright, no nosotros: la misma vista se
-# compara contra `-win32`, `-darwin` o `-linux` según dónde corra. En el árbol
-# solo hay `-win32`, así que en otra máquina la etapa no falla por un cambio de
-# código: falla porque la imagen de referencia no existe — y la primera corrida
-# la escribiría con lo que haya en pantalla, dejando un centenar de PNG "de
-# referencia" que nadie miró, que es peor que no tener la etapa. Por eso, si no
-# hay ni un snapshot de esta plataforma, se saltea diciéndolo. Vuelve sola en
-# cuanto alguien genere y revise los de la suya.
-case "$(uname -s)" in
-    Darwin) PLATAFORMA=darwin ;;
-    Linux)  PLATAFORMA=linux ;;
-    *)      PLATAFORMA=win32 ;;
-esac
-
-if [ -z "$FALLO" ] && [ "$CON_ASSETS" = "1" ]; then
-    if find tests/Visual -name "*-$PLATAFORMA.png" -print -quit 2>/dev/null | grep -q .; then
-        etapa "Regresión visual (Playwright, en el host)" npx playwright test || true
-    else
-        printf '\n\033[1m▸ Regresión visual (Playwright, en el host)\033[0m\n'
-        printf '\033[33m  ⊘ Salteada: no hay capturas de referencia -%s en tests/Visual/\033[0m\n' "$PLATAFORMA"
-        printf '    Las versionadas son -win32. Para tenerla en esta máquina:\n'
-        printf '    npx playwright test --update-snapshots, revisá las imágenes y commiteálas.\n'
-    fi
-fi
+# No hay etapa de regresión visual: se sacó de la cascada el 14/9/2026 (nunca
+# corrió en CI y acá se salteaba salvo en Windows) y el arnés Playwright
+# (`tests/Visual/`) se borró el mismo día — ver memoria
+# `regresion-visual-fuera-de-bin-verify`. La verificación visual de un cambio
+# es manual: mirar la pantalla en el navegador, en ambos temas (ver el skill
+# `panel-design-ui`, "Verificación visual").
 
 echo
 if [ -n "$FALLO" ]; then

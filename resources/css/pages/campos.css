@@ -116,10 +116,13 @@
     gap: var(--ag-space-4);
 }
 
+/* El grid de dos columnas es el de `.ag-form-section__body`
+   (components/form-section.css) — la fila lo comparte por clase en vez de
+   redeclararlo (ver §8 regla 12 de sistema_diseno_panel.md); acá solo lo que
+   es propio de ser una fila DENTRO de una lista repetible: el separador
+   entre una fila y la siguiente. El mismo partial (y esta misma clase) se
+   reusa en lotes/_formulario.blade.php (/panel/lotes/crear). */
 .ag-campos-form__lote {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
-    gap: var(--ag-space-4);
     padding-top: var(--ag-space-4);
     border-top: 1px solid var(--ag-color-border-row);
 }
@@ -185,4 +188,17 @@
 .ag-campos-form__lote-pie {
     display: flex;
     justify-content: flex-end;
+}
+
+/* Generador de alta masiva (HU-72, tarea 88): botón + ayuda en la misma
+   línea cuando entra, apilados si no — mismo patrón que `.ag-lote-mapa__pie`. */
+.ag-campos-form__generador-pie {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+    flex-wrap: wrap;
+}
+
+.ag-campos-form__generador-pie .ag-input__help {
+    margin: 0;
 }

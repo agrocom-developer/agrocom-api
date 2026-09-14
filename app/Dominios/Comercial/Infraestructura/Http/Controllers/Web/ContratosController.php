@@ -89,6 +89,9 @@ final class ContratosController
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_CREAR), 403);
 
         $datos = $request->validated();
+        $datos['brinda_alimentacion'] = $request->boolean('brinda_alimentacion');
+        $datos['brinda_hospedaje'] = $request->boolean('brinda_hospedaje');
+        $datos['brinda_combustible'] = $request->boolean('brinda_combustible');
 
         /** @var list<array<string, mixed>> $ventanasCrudas */
         $ventanasCrudas = $datos['ventanas'] ?? [];
@@ -133,6 +136,9 @@ final class ContratosController
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
 
         $datos = $request->validated();
+        $datos['brinda_alimentacion'] = $request->boolean('brinda_alimentacion');
+        $datos['brinda_hospedaje'] = $request->boolean('brinda_hospedaje');
+        $datos['brinda_combustible'] = $request->boolean('brinda_combustible');
 
         /** @var list<array<string, mixed>> $ventanasCrudas */
         $ventanasCrudas = $datos['ventanas'] ?? [];
@@ -230,16 +236,12 @@ final class ContratosController
             'aplicaciones_previstas' => (int) $datos['aplicaciones_previstas'],
             'precio_ha' => (string) $datos['precio_ha'],
             'adelanto_monto' => $this->cadenaONull($datos['adelanto_monto'] ?? null),
-            'adelanto_pct' => $this->cadenaONull($datos['adelanto_pct'] ?? null),
             'fecha_inicio' => (string) $datos['fecha_inicio'],
             'fecha_fin' => $this->cadenaONull($datos['fecha_fin'] ?? null),
-            'viento_max_kmh' => $this->cadenaONull($datos['viento_max_kmh'] ?? null),
-            'temperatura_max_c' => $this->cadenaONull($datos['temperatura_max_c'] ?? null),
-            'humedad_min_pct' => $this->cadenaONull($datos['humedad_min_pct'] ?? null),
-            'humedad_max_pct' => $this->cadenaONull($datos['humedad_max_pct'] ?? null),
-            'velocidad_max_kmh' => $this->cadenaONull($datos['velocidad_max_kmh'] ?? null),
-            'umbral_reporte_avance_ha' => $this->cadenaONull($datos['umbral_reporte_avance_ha'] ?? null),
-            'altura_vuelo_m' => $this->cadenaONull($datos['altura_vuelo_m'] ?? null),
+            'brinda_alimentacion' => (bool) $datos['brinda_alimentacion'],
+            'brinda_hospedaje' => (bool) $datos['brinda_hospedaje'],
+            'brinda_combustible' => (bool) $datos['brinda_combustible'],
+            'observaciones_logistica' => $this->cadenaONull($datos['observaciones_logistica'] ?? null),
         ];
     }
 

@@ -24,6 +24,7 @@ final class CambiarEstadoContratoRequest extends FormRequest
                     EstadoContrato::Vigente->value,
                     EstadoContrato::Finalizado->value,
                     EstadoContrato::Cancelado->value,
+                    EstadoContrato::Pausado->value,
                 ]),
             ],
         ];

@@ -10,8 +10,9 @@ use Illuminate\Support\Facades\Blade;
  * automática, y el reenvío de $attributes (LSP).
  *
  * El filtro de texto en sí (ocultar/mostrar filas al tipear) sí necesita un
- * navegador real — eso lo cubre tests/Visual/checkbox-group-atom.spec.ts,
- * corrido a mano (ver su cabecera).
+ * navegador real — no hay spec automatizado para eso (ver el skill
+ * `verificacion`, "Qué NO cubre la cascada"); se revisa a mano en el
+ * navegador cuando cambia este átomo.
  */
 
 const REPUESTOS_CORTOS = [

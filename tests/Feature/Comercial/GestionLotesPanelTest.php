@@ -89,13 +89,22 @@ function crearOrdenAplicacionParaLoteDePrueba(Lote $lote): void
         'estado' => 'borrador',
     ]);
 
-    DB::table('ope_ordenes_aplicacion')->insert([
+    $ordenId = DB::table('ope_ordenes_aplicacion')->insertGetId([
         'contrato_id' => $contrato->id,
-        'lote_id' => $lote->id,
         'nro_aplicacion' => 1,
         'litros_ha' => '20.00',
         'fecha_emision' => now()->toDateString(),
         'estado' => 'emitida',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    // HU-92 (tarea 107): el lote de la orden ya no es una columna propia,
+    // se arma como fila de `ope_orden_lotes`.
+    DB::table('ope_orden_lotes')->insert([
+        'orden_id' => $ordenId,
+        'lote_id' => $lote->id,
+        'hectareas_solicitadas' => $lote->hectareas,
         'created_at' => now(),
         'updated_at' => now(),
     ]);
@@ -201,6 +210,66 @@ it('rechaza una geometria mal formada', function () {
         ->assertSessionHasErrors('lote.geometria');
 
     expect(Lote::query()->count())->toBe(0);
+});
+
+// HU-73 (tarea 89): desnivel y limpieza del lote — catálogos cerrados
+// aparte de `restricciones` (texto libre). Cubre los dos Request de este
+// controlador (`CrearLoteRequest`/`ActualizarLoteRequest`), complementarios
+// a los de `GestionCamposPanelTest` sobre el otro punto de entrada.
+
+it('el formulario de la ficha propia tambien ofrece los selects de desnivel y limpieza', function () {
+    $campo = campoDeLotesDePrueba();
+    [$encargado, $idRol] = usuarioConRolParaLotes('encargado', 'encargado_operaciones');
+    entrarAlPanelParaLotes($encargado, $idRol);
+
+    $respuesta = $this->get(route('panel.lotes.create'))->assertOk();
+
+    $respuesta->assertSee('name="lote[desnivel]"', escape: false)
+        ->assertSee('name="lote[limpieza]"', escape: false)
+        ->assertSee(__('comercial.campos.lote_desnivel_empinado'), escape: false)
+        ->assertSee(__('comercial.campos.lote_limpieza_muchos_obstaculos'), escape: false);
+});
+
+it('rechaza un desnivel o limpieza fuera de catalogo en el alta y en la edicion de un lote suelto', function () {
+    $campo = campoDeLotesDePrueba();
+    [$encargado, $idRol] = usuarioConRolParaLotes('encargado', 'encargado_operaciones');
+    entrarAlPanelParaLotes($encargado, $idRol);
+
+    $this->post(route('panel.lotes.store'), payloadLote($campo->id, ['desnivel' => 'montanioso']))
+        ->assertSessionHasErrors('lote.desnivel');
+
+    $this->post(route('panel.lotes.store'), payloadLote($campo->id, ['limpieza' => 'sucio']))
+        ->assertSessionHasErrors('lote.limpieza');
+
+    expect(Lote::query()->count())->toBe(0);
+
+    $this->post(route('panel.lotes.store'), payloadLote($campo->id, [
+        'desnivel' => 'empinado',
+        'limpieza' => 'muchos_obstaculos',
+    ]))->assertRedirect(route('panel.lotes.index'));
+
+    $lote = Lote::query()->sole();
+    expect($lote->desnivel)->toBe('empinado')
+        ->and($lote->limpieza)->toBe('muchos_obstaculos');
+
+    $this->put(route('panel.lotes.update', $lote), payloadLote($campo->id, ['desnivel' => 'no-valido']))
+        ->assertSessionHasErrors('lote.desnivel');
+});
+
+it('un lote suelto existente sin desnivel ni limpieza se sigue editando sin que la validacion los fuerce', function () {
+    $campo = campoDeLotesDePrueba();
+    [$encargado, $idRol] = usuarioConRolParaLotes('encargado', 'encargado_operaciones');
+    entrarAlPanelParaLotes($encargado, $idRol);
+
+    $this->post(route('panel.lotes.store'), payloadLote($campo->id));
+    $lote = Lote::query()->sole();
+    expect($lote->desnivel)->toBeNull()->and($lote->limpieza)->toBeNull();
+
+    $this->put(route('panel.lotes.update', $lote), payloadLote($campo->id, ['hectareas' => '20']))
+        ->assertRedirect(route('panel.lotes.index'));
+
+    expect($lote->fresh()?->desnivel)->toBeNull()
+        ->and($lote->fresh()?->limpieza)->toBeNull();
 });
 
 it('registra en bitacora el alta, la edicion y la baja de un lote', function () {

@@ -29,6 +29,14 @@ return [
         'cosecha' => 'Cosecha',
     ],
 
+    // HU-79 (tarea 110): etiquetas del selector de PRESENTACIÓN "Tipo" que
+    // filtra "Categoría de insumo" en el formulario de orden — no es un
+    // campo que el server valide, ver docblock de `_formulario.blade.php`.
+    'tipo_insumo' => [
+        'solido' => 'Sólido',
+        'liquido' => 'Líquido',
+    ],
+
     // Estados de sesión del dashboard demo (quinta vuelta — maquetas
     // 4a/5a/5b). "Validada"/"En vuelo"/"Programada" son vocabulario del
     // ciclo de vida real de `sesiones` (especificación §4.3/§5);
@@ -304,6 +312,8 @@ return [
     // flota de drones, con su modelo (texto libre) y capacidad de carga en
     // litros (30/50/60, CHECK de base de datos). Mismo molde que
     // `comercial.campos`/`comercial.clientes`, sin sub-entidad.
+    // Capacidad de carga en kilos (HU-81, tarea 96): sin catálogo cerrado,
+    // a diferencia de los litros.
     'drones' => [
         'titulo' => 'Drones',
         'subtitulo' => 'Flota de drones registrada, con su modelo y volumen de carga.',
@@ -320,6 +330,7 @@ return [
         'sin_modelo' => '—',
         'sin_capacidad' => '—',
         'capacidad_valor' => ':cantidad L',
+        'capacidad_kg_valor' => ':cantidad kg',
         'editar' => 'Editar',
         'eliminar_accion' => 'Eliminar',
         'confirmar_baja' => '¿Confirmás la baja de este dron?',
@@ -337,6 +348,8 @@ return [
         'campo_modelo_ayuda' => 'Texto libre, ej.: DJI Agras T30.',
         'campo_capacidad' => 'Capacidad de carga (L)',
         'campo_capacidad_ayuda' => 'Valores permitidos: 30, 50 o 60 litros.',
+        'campo_capacidad_kg' => 'Capacidad de carga (kg)',
+        'campo_capacidad_kg_ayuda' => 'Kilos que puede llevar el dron por vuelo, para aplicación sólida.',
         'estado_form' => 'Los cambios se guardan al confirmar.',
         'creado' => 'Dron creado correctamente.',
         'actualizado' => 'Dron actualizado correctamente.',
@@ -350,7 +363,7 @@ return [
     // (arriba) — no se duplican acá.
     'ordenes' => [
         'titulo' => 'Órdenes de aplicación',
-        'subtitulo' => 'Órdenes emitidas por contrato y lote, con sus límites y parámetros de vuelo.',
+        'subtitulo' => 'Órdenes emitidas por contrato y lotes, con sus límites y parámetros de vuelo.',
         'nueva' => 'Nueva orden',
         'filtro_estado' => 'Estado',
         'filtro_tipo_aplicacion' => 'Tipo de aplicación',
@@ -363,7 +376,9 @@ return [
         'col_lote' => 'Lote',
         'col_aplicacion' => 'Aplicación',
         'col_tipo_aplicacion' => 'Tipo',
-        'col_litros_ha' => 'Litros/ha',
+        'col_dosis' => 'Dosis',
+        'dosis_litros_ha' => ':cantidad l/ha',
+        'dosis_kilos_por_vuelo' => ':cantidad kg/vuelo',
         'col_fecha_emision' => 'Emisión',
         'col_estado' => 'Estado',
         'editar' => 'Editar',
@@ -377,8 +392,9 @@ return [
         'paginacion_info' => 'Página :actual de :total',
         'titulo_crear' => 'Nueva orden de aplicación',
         'titulo_editar' => 'Editar orden de aplicación',
-        'subtitulo_form' => 'Contrato, lote, límites climáticos y parámetros de vuelo de la orden.',
+        'subtitulo_form' => 'Contrato, lotes, categoría de insumo, límites climáticos y parámetros de vuelo de la orden.',
         'seccion_datos' => 'Datos de la orden',
+        'seccion_lotes' => 'Lotes',
         'seccion_limites' => 'Límites climáticos',
         'seccion_limites_ayuda' => 'Un límite en blanco hereda el valor del contrato o el parámetro por defecto del sistema.',
         'seccion_vuelo' => 'Parámetros de vuelo',
@@ -389,9 +405,18 @@ return [
         'campo_lote' => 'Lote',
         'campo_lote_placeholder' => 'Seleccioná un lote…',
         'campo_lote_opcion' => ':campo — Lote :codigo',
-        'campo_nro_aplicacion' => 'Número de aplicación',
+        'campo_lote_hectareas' => 'Hectáreas solicitadas',
+        'lote_agregar' => 'Agregar lote',
+        'lote_quitar' => 'Quitar',
+        'campo_cantidad_equipos' => 'Cantidad de equipos necesarios',
+        'campo_nro_aplicacion' => 'Número de aplicaciones',
         'campo_tipo_aplicacion' => 'Tipo de aplicación',
+        'campo_tipo_insumo' => 'Tipo',
+        'campo_tipo_insumo_placeholder' => 'Sólido o líquido…',
+        'campo_categoria_insumo' => 'Categoría de insumo',
+        'campo_categoria_insumo_placeholder' => 'Seleccioná una categoría…',
         'campo_litros_ha' => 'Litros por hectárea',
+        'campo_kilos_por_vuelo' => 'Kilos por vuelo',
         'campo_fecha_emision' => 'Fecha de emisión',
         'campo_contacto' => 'Emitida por (contacto)',
         'campo_contacto_placeholder' => 'Sin especificar',
@@ -411,12 +436,59 @@ return [
         'error_contrato_invalido' => 'El contrato seleccionado no es válido.',
         'error_lote_requerido' => 'Seleccioná un lote.',
         'error_lote_invalido' => 'El lote seleccionado no es válido.',
+        'error_lotes_requerido' => 'Agregá al menos un lote.',
+        'error_lote_repetido' => 'Un lote no puede repetirse dentro de la misma orden.',
+        'error_hectareas_solicitadas_superan_lote' => 'Las hectáreas solicitadas superan las hectáreas del lote.',
+        'error_lote_de_otro_cliente' => 'El lote pertenece a un cliente distinto del contrato.',
+        'error_categoria_insumo_requerida' => 'Seleccioná una categoría de insumo.',
+        'error_categoria_insumo_invalida' => 'La categoría de insumo seleccionada no es válida.',
+        'error_kilos_por_vuelo_requerido' => 'Los kilos por vuelo son obligatorios para un insumo sólido.',
+        'error_litros_ha_requerido' => 'Los litros por hectárea son obligatorios para un insumo líquido.',
         'error_contacto_invalido' => 'El contacto seleccionado no es válido.',
         'creada' => 'Orden de aplicación creada correctamente.',
         'actualizada' => 'Orden de aplicación actualizada correctamente.',
         'activada' => 'Orden de aplicación activada correctamente.',
         'eliminada' => 'Orden de aplicación dada de baja correctamente.',
         'volver' => 'Volver a órdenes',
+    ],
+
+    // Pantalla de panel "Operación › Asignación de equipos" (HU-70, tarea
+    // 85): reparto de las hectáreas de una orden vigente entre equipos de
+    // trabajo. Ficha propia, no sub-pantalla de `ordenes` — ver docblock de
+    // `AsignacionEquiposController`.
+    'asignacion_equipos' => [
+        'titulo' => 'Asignación de equipos',
+        'subtitulo' => 'Repartí las hectáreas de cada orden vigente entre los equipos de trabajo.',
+        'vacio' => 'No hay órdenes vigentes para repartir.',
+        'col_orden' => 'Orden',
+        'col_contrato' => 'Contrato',
+        'col_lote' => 'Lote',
+        'col_hectareas_lote' => 'Hectáreas del lote',
+        'col_asignadas' => 'Asignadas',
+        'col_restantes' => 'Restantes',
+        'asignar_accion' => 'Asignar equipos',
+        'ficha_titulo' => 'Orden #:nro',
+        'ficha_subtitulo' => 'Aplicación #:nro del contrato :contrato.',
+        'ficha_volver' => 'Volver a asignación de equipos',
+        'resumen_hectareas_lote' => 'Hectáreas del lote',
+        'resumen_asignadas' => 'Asignadas',
+        'resumen_restantes' => 'Restantes',
+        'orden_no_vigente' => 'Esta orden ya no está vigente: no admite nuevas asignaciones.',
+        'seccion_lotes' => 'Lotes de la orden',
+        'seccion_equipos' => 'Equipos asignados',
+        'equipos_vacio' => 'Todavía no se asignó ningún equipo a esta orden.',
+        'campo_equipo' => 'Equipo de trabajo',
+        'campo_equipo_placeholder' => 'Seleccioná un equipo…',
+        'campo_lote' => 'Lote',
+        'campo_lote_placeholder' => 'Seleccioná un lote…',
+        'campo_hectareas' => 'Hectáreas a asignar',
+        'equipo_agregar' => 'Agregar equipo',
+        'equipo_quitar' => 'Quitar equipo',
+        'lote_agregar' => 'Agregar lote',
+        'lote_quitar' => 'Quitar',
+        'asignar_boton' => 'Confirmar reparto',
+        'asignado' => 'Equipos asignados correctamente.',
+        'equipos_sin_vigentes' => 'No hay equipos de trabajo vigentes hoy.',
     ],
 
     // Pantalla de panel "Reportes › Técnicos" (HU-43, tarea 57):

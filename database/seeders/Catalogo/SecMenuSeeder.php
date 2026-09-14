@@ -119,10 +119,10 @@ class SecMenuSeeder extends Seeder
         // TE-13, tarea 59) — ítem nuevo desde el vamos, sin placeholder
         // previo (mismo criterio que `equipos_trabajo`/`generadores`).
         $this->item($operacion, 'operacion', 'estadias', 'holiday_village', 6, ruta: 'panel.estadias.index', codigoPermiso: 'operaciones.estadia.ver');
-        // Orden 7 (evidencias) queda vacante a propósito: se retiró acá
-        // (tarea 62, fuga 3 — ver el borrado de catálogo al inicio de
-        // `run()`) — no se renumera el ítem que sigue para no tocar algo que
-        // esta tarea no pidió mover.
+        // HU-70 (tarea 85): reparto de equipos por orden vigente. Ocupa el
+        // orden 7, vacante desde que "evidencias" se retiró (tarea 62, fuga
+        // 3) — mismo criterio que "estadías" arriba al ocupar el 6.
+        $this->item($operacion, 'operacion', 'asignacion_equipos', 'groups', 7, ruta: 'panel.asignacion-equipos.index', codigoPermiso: 'operaciones.orden.asignar_equipos');
 
         // Comercial (§4.1 + cap. 9)
         // HU-22 (tarea 33): alta y mantenimiento de clientes — activa el
@@ -227,6 +227,17 @@ class SecMenuSeeder extends Seeder
         // quede agrupado bajo "Recursos": misma agrupación de layout que
         // `bases`/`personal` abajo (ADR 0011, extensión 26/8/2026, punto 3).
         $this->item($recursos, 'recursos', 'equipos_trabajo', 'groups', 7, ruta: 'panel.equipos-trabajo.index', codigoPermiso: 'personal.equipo_trabajo.ver');
+
+        // HU-82 (tarea 97): ficha de inventario del dron (serie, chasis,
+        // versión de software, región, serie del control, accesorios). ABM
+        // mínimo nuevo, sin placeholder previo, mismo criterio que
+        // `generadores`/`equipos_trabajo` arriba. El backend vive en
+        // `Mantenimiento` (`man_drones`) aunque el ítem quede agrupado bajo
+        // "Recursos": misma agrupación de layout que el resto de este bloque
+        // (ADR 0011, extensión 26/8/2026, punto 3). Icono `memory`, distinto
+        // del `airplanemode_active` de `drones` (el catálogo operativo) para
+        // no confundir los dos ítems en el sidebar.
+        $this->item($recursos, 'recursos', 'fichas_dron', 'memory', 8, ruta: 'panel.fichas-dron.index', codigoPermiso: 'mantenimiento.ficha_dron.ver');
 
         // HU-26 (tarea 37): administración de personas y bases — activa los
         // dos ítems que ya estaban sembrados como "botón sin link" (ver

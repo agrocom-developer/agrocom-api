@@ -1,7 +1,171 @@
 # Cola de tareas automatizables
 
-**Última actualización: 9/9/2026 (plan agotado; el ciclo queda detenido a la
-espera de trabajo nuevo).** Las tareas 82 a 84 las escribió la propia sesión de
+**Última actualización: 14/9/2026 (planificación tras la tarea 104 — tareas
+105 a 107 escritas; tarea 95 reencolada).** `bin/ciclo` llegó a la fila 105
+de `runs/cola.txt` sin encontrar su prompt (la ronda dirigida por el usuario
+había escrito las filas 106 a 108 en esta tabla, con criterio ejecutable,
+pero no sus archivos `prompts/*.md`, y la 105 —HU-90— tampoco tenía el suyo
+todavía) y cayó a planificación; esta sesión quedó etiquetada "105" por
+continuidad de numeración, mismo caso que documentó `runs/99-plan.md` para
+la ronda anterior.
+
+Se escribieron `prompts/105-tipo-vehiculo.md` (HU-90, Sprint 18: catálogo
+`tipo` de `man_vehiculos`, incluye "chata"), `prompts/106-recorte-contrato-vuelo.md`
+(HU-91: saca `adelanto_pct` y la sección completa de parámetros de vuelo de
+`com_contratos`) y `prompts/107-orden-multiples-lotes.md` (HU-92, crítica:
+`ope_ordenes_aplicacion` pasa de 1 a N lotes vía `ope_orden_lotes` nueva,
+reescribe la asignación de equipos de HU-70 y el contrato público de
+`GET /api/sync/catalogo`/`GET /api/ordenes`).
+
+**La tarea 95 (HU-79) se reencola, no se reescribe.** Quedó `BLOQUEADA`
+(`runs/95.estado`) esperando que se mergeara el PR #189 (HU-70) — ya
+mergeado el 14/9/2026, la fila de esta tabla ya lo reflejaba como
+"pendiente" desde la ronda dirigida por el usuario. Su prompt
+(`prompts/95-tipo-insumo-orden.md`) sigue siendo válido: no se implementó
+nada la vez que corrió, así que no hay nada que rescatar de una rama vieja.
+Se agregó de nuevo al final de `runs/cola.txt`, **después** de la tarea 107
+(no antes): ambas tocan `ope_ordenes_aplicacion` y el prompt 95 ya avisaba
+"no tiene sentido iterar dos veces sobre lo mismo" — HU-92 (107) reescribe
+la tabla de forma más profunda (N lotes), así que conviene que la vigencia
+del insumo sólido/líquido (95) se agregue después de esa forma nueva, no
+antes.
+
+`runs/cola.txt` queda, en las últimas líneas: `..., 104, 105, 106, 107, 95`.
+
+Fila 108 (HU-93, listado de Trabajos) y 109 (HU-94, editor de mapa del
+Campo) quedan sin prompt para la próxima ronda de planificación — ya tienen
+criterio ejecutable escrito en esta tabla desde la ronda dirigida por el
+usuario, así que esa ronda puede escribirlos directo sin tener que releer
+`plan_sprints.md` ni los documentos de negocio de nuevo.
+
+**Última actualización anterior: 14/9/2026 (ronda dirigida por el usuario — tareas 106
+a 108 escritas, HU-91/92/93).** Antes de retomar el ciclo, el dueño resolvió
+las dos ambigüedades que habían quedado pendientes en la sección 4 de
+`docs/negocio/observaciones_operaciones_comercial_2026-09-13.md` (recorte de
+parámetros de vuelo del contrato y ventana de aplicación) y sumó una
+corrección sobre Adelanto y un pedido que la lectura parcial del Word no
+había capturado (Orden de Aplicación con varios lotes) — todo consolidado en
+`docs/negocio/observaciones_operaciones_comercial_2026-09-14.md`. Nuevas
+filas 106 (HU-91), 107 (HU-92, amplía la 85/HU-70 ya integrada) y 108
+(HU-93). De paso, con los PR #189 y #190 ya mergeados a `develop`, las filas
+85 y 86 quedan actualizadas de "en BORRADOR" a mergeadas, y la fila 95
+(HU-79) pasa de `bloqueada` a `pendiente` porque su dependencia (la 85) ya
+está saldada. Esta ronda la escribió una sesión dirigida por el usuario, no
+la propia planificación del ciclo agotando su plan — mismo criterio que la
+ronda del 13/9/2026: acá el usuario ya decidió.
+
+**Última actualización anterior: 14/9/2026 (planificación tras la tarea 101 — tareas
+102 a 104 escritas).** Con HU-84 (tarea 99, PR #203), HU-85 (tarea 100, PR
+#205) y HU-86 (tarea 101, PR #206) integradas, las filas 99 a 101 quedan
+`hecha`. Esta ronda no encontró `runs/102.md`: `runs/cola.txt` ya traía los
+ids 102 a 105 desde el 13/9/2026, pero solo estaba escrito el prompt hasta el
+101 — al llegar su turno, `bin/ciclo` cayó a planificación y esta sesión
+quedó etiquetada "102" por continuidad de numeración, no porque exista una
+tarea 102 cerrada (mismo caso que documentó `runs/99-plan.md` para la ronda
+anterior).
+
+Se escribieron `prompts/102-ciclos-bateria-odometro.md` (HU-87, **crítica**:
+toca el evento de dominio entre `Operaciones` y `Mantenimiento` — el
+"odómetro" de `ciclos_acumulados`, depende de HU-83/tarea 98 ya integrada),
+`prompts/103-menu-precio-mantenimiento.md` (HU-88: oculta 3 ítems del menú
+de `encargado_operaciones`, precio final real en la orden cerrada) y
+`prompts/104-descripcion-cierre-orden.md` (HU-89: descripción de cierre
+separada de la de apertura). Con esto, Sprint 17 queda completo detrás de la
+102; Sprint 18 completo con 103-105 (a la 105, HU-90, todavía sin prompt, le
+toca la próxima ronda).
+
+Deuda técnica NO tocada por esta ronda, ya anotada en rondas anteriores y sin
+cambios: los PR #189 y #190 (tareas 85/86, HU-70/HU-80) siguen abiertos en
+borrador (`isDraft: true`, confirmado el 14/9/2026), bloqueando la tarea 95
+(HU-79) — no afecta a las tareas 102-104, que no dependen de esa rama.
+
+**Última actualización anterior: 14/9/2026 (planificación tras la tarea 98 — tareas 99
+a 101 escritas).** Con HU-81 (tarea 96, PR #199), HU-82 (tarea 97, PR #200) y
+HU-83 (tarea 98, PR #201) integradas, las filas 96 a 98 quedan `hecha`. Las
+filas 99 a 101 (HU-84/85/86) ya tenían fila con criterio ejecutable desde la
+ronda del 13/9/2026 (Sprint 17), pero sin su prompt: escribir esos tres
+prompts es el único entregable de esta ronda, no cambia alcance ni orden de
+la cola. Ninguna de las tres depende de otra tarea pendiente de este sprint.
+La 102 (HU-87, crítica — el "odómetro" de `ciclos_acumulados`) sí depende de
+la 98, que ya está integrada, así que su dependencia queda saldada; su prompt
+se escribe en la próxima ronda de planificación, no en esta.
+
+**Última actualización: 14/9/2026 (planificación tras la tarea 95 — tareas 96
+a 98 escritas).** Tareas 93 (HU-77, PR #197) y 94 (HU-78, PR #198) quedan
+`hecha`. La 95 (HU-79) quedó **`bloqueada`**, no `pendiente`: su propio prompt
+le exigía comprobar antes de escribir código que el PR #189 (tarea 85, HU-70)
+estuviera mergeado a `develop` — no lo está (sigue `isDraft: true`), así que se
+declaró bloqueada sin tocar código, tal como debía (ver `runs/95.md`). No es
+trabajo de esta sesión resolverlo: espera que una persona revise y mergee el
+PR #189 (y de paso el #190, mismo bloqueo — ver "Deuda técnica detectada" más
+abajo, entrada del 14/9/2026).
+
+Esta sesión escribió `prompts/96-dron-capacidad-kg.md`,
+`prompts/97-ficha-inventario-dron.md` y `prompts/98-ciclos-inicial-bateria.md`
+— las tres primeras filas de Sprint 17 (HU-81/82/83) que ya tenían fila con
+criterio ejecutable desde la ronda del 13/9/2026, pero sin su prompt: escribir
+ese prompt es el único entregable de esta ronda, no cambia alcance ni orden de
+la cola. Ninguna de las tres depende de las tareas 85/94/95 (no tocan
+`ope_ordenes_aplicacion`) ni entre sí, salvo lo ya anotado en `plan_sprints.md`
+Sprint 17 (HU-87/tarea 102 depende de HU-83/tarea 98 — todavía no escrita,
+queda para la próxima ronda).
+
+**Última actualización anterior: 14/9/2026 (planificación tras la tarea 92 — tareas 93
+a 95 escritas).** Con HU-76 (tarea 92, PR #196) integrada, las filas 90 a 92
+quedan `hecha`. Las tres siguientes ya tenían fila con criterio ejecutable
+desde la ronda del 13/9/2026 (Sprint 16): HU-77 (93, campaña con estación),
+HU-78 (94, módulo `Mezclas` — revierte CR-01, crítica) y HU-79 (95, tipo
+sólido/líquido en la orden, crítica). Esta sesión solo escribió
+`prompts/93-campania-estacion.md`, `prompts/94-mezclas-caldo.md` y
+`prompts/95-tipo-insumo-orden.md` — no cambia alcance ni orden de la cola.
+
+Hallazgo real, no pedido, anotado abajo en "Deuda técnica detectada": las
+tareas 85 y 86 (HU-70/HU-80, críticas) quedaron con sus PR #189 y #190
+abiertos **en modo borrador**, sin mergear a `develop`, contra la política
+vigente (`automatizacion_desarrollo.md` §5: "ninguna sesión abre su PR en
+borrador por ser crítica" — corregida el 2/9/2026 después de que el PR #46
+bloqueara doce HU por quedar retenido). Importa acá porque la tarea 95
+(HU-79) depende explícitamente de que la 85 esté integrada: su prompt le deja
+instrucción explícita de comprobarlo primero y declararse `BLOQUEADA` sin
+tocar código si el PR #189 sigue sin mergear cuando le toque el turno, en vez
+de asumir la dependencia cumplida solo porque el orden de la cola ya pasó por
+ahí.
+
+**Última actualización: 13/9/2026 (Sprint 18 planificado — tareas 103 a
+105).** Cuarto documento de la misma ronda (`Mantenimiento.pdf`, sin texto en
+rojo): ajusta la orden de mantenimiento. Detalle en
+`docs/negocio/observaciones_mantenimiento_2026-09-13.md`. De paso apareció un
+hallazgo propio (no pedido por el dueño) anotado en "Deuda técnica
+detectada" más abajo, sin fila en la cola.
+
+**Última actualización anterior: 13/9/2026 (Sprint 17 planificado — tareas 96 a
+101).** Tercer documento de la misma ronda del dueño (`REcursos.docx`, sin
+texto en rojo): completa las fichas de Drones, Baterías, Vehículos, Base y
+Generador. Detalle en `docs/negocio/observaciones_recursos_2026-09-13.md` y
+en el Sprint 17 de `plan_sprints.md`. Ninguna es crítica ni ambigua — son
+columnas nuevas sobre catálogos que ya existen.
+
+**Última actualización anterior: 13/9/2026 (Sprint 16 planificado — tareas 85 a 95).**
+El dueño trajo una ronda de ajustes de negocio de Operaciones y Comercial
+(Word "MODULO OPERACIONES - COMERCIAL" + 2 audios), consolidada en
+`docs/negocio/observaciones_operaciones_comercial_2026-09-13.md` y en el
+**Sprint 16** de `plan_sprints.md`. De ahí salen las once filas nuevas (85 a
+95). Dos puntos del Word no generaron tarea porque el dueño los resolvió en la
+misma conversación: "Campos es lo mismo que lote" era vocabulario viejo (el
+modelo de 4 niveles Cliente→Propiedad→Campo→Lote del ADR 0018 queda tal cual),
+y CR-01 (mezcla del caldo) se revierte de verdad — ver HU-78 y la nota fechada
+en `especificacion_funcional_tecnica.md` §7. Quedan sin tarea, a la espera de
+una aclaración puntual del dueño: la reubicación de la ventana de aplicación,
+el recorte de parámetros de vuelo del contrato, y el alcance exacto de
+"editar/eliminar trabajo" (ver el documento de observaciones, sección 4).
+
+Esta ronda la escribió una sesión dirigida por el usuario, no la propia
+planificación del ciclo agotando su plan — por eso no aplica la regla de "la
+deuda que aparezca queda pendiente para que el usuario decida": acá el usuario
+ya decidió. `runs/DETENER` se levanta junto con este commit.
+
+**Última actualización anterior: 9/9/2026 (plan agotado; el ciclo queda
+detenido a la espera de trabajo nuevo).** Las tareas 82 a 84 las escribió la propia sesión de
 planificación al quedarse sin HU/TE, y eso estuvo mal: el ciclo ejecuta el plan
 del usuario, no se da trabajo a sí mismo. Se corrigió
 `prompts/plantillas/planificar.md` —agotado el plan, la deuda que aparezca se
@@ -182,6 +346,31 @@ exista el módulo `Mezclas`).
 | 82 | Deuda técnica (no es fila de `plan_sprints.md`, mismo criterio que 28-30/61): `tests/Unit/ArquitecturaModulosTest.php` no prohíbe genéricamente que un módulo importe la capa `Dominio/` de otro — solo cubre `Infraestructura/Eloquent` y `Aplicacion/` ajenas. Hallazgo de la tarea 69 (`runs/69.md`): `Mantenimiento` ya importa `Inventario\Dominio\Excepciones\StockInsuficiente` directo, en vez de por `Inventario/Contratos/` | `./bin/verify` = 0, con un test de arquitectura que falla si CUALQUIER módulo importa la capa `Dominio/` de otro (mismo patrón que la regla de `Aplicacion/` ajena ya existente) | `tests/Unit/ArquitecturaModulosTest.php`, `app/Dominios/Inventario/Dominio/Excepciones/StockInsuficiente.php` (mover a `Contratos/Excepciones/`), `app/Dominios/Inventario/Contratos/EscrituraConsumoStock.php`, `app/Dominios/Inventario/Aplicacion/RegistrarMovimientoStock.php`, `app/Dominios/Inventario/Infraestructura/Http/Controllers/Web/StockController.php`, `app/Dominios/Mantenimiento/Aplicacion/MaquinaEstados/MaquinaEstadosOrdenMantenimiento.php` | no | 2 | **hecha** (PR #154, 9/9/2026, en el PR único de cierre de deuda técnica) |
 | 83 | Deuda de documentación (no es fila de `plan_sprints.md`): pegar en `docs/decisiones/0003-arquitectura-modular-clean-por-feature.md` la sección "Revisión (3/9/2026) — Comercial lee Operaciones vía `Contratos/`" que el agente `arquitectura` dejó redactada en la tarea 45 (`runs/45.md`, texto exacto incluido) y que quedó sin pegar porque esa tarea no tenía `descongela=decisiones`. La regla que describe YA está aplicada en `tests/Unit/ArquitecturaModulosTest.php` desde el PR #91 — es solo la constancia escrita, no una decisión nueva | `./bin/verify` = 0, y `grep -q "Comercial lee Operaciones vía" docs/decisiones/0003-arquitectura-modular-clean-por-feature.md` | `docs/decisiones/0003-arquitectura-modular-clean-por-feature.md` | no | 1 | **hecha** (PR #154, 9/9/2026, en el PR único de cierre de deuda técnica) |
 | 84 | Deuda técnica (no es fila de `plan_sprints.md`, mismo criterio que 61): `database/factories/VersionApkFactory.php` genera `version` con `fake()->numberBetween(0,20)` dos veces sin `unique()` (solo `version_code` lo tiene) contra una columna con índice único parcial (`dis_versiones_apk_version_unico`) — colisión intermitente ya observada y documentada como flake por la tarea 71 (`runs/71.md`, `MaquinaEstadosVersionApkTest`) | `./bin/verify` = 0, con un test nuevo que crea 200+ `VersionApk::factory()` en un solo test sin colisión de `version`, corrido 5 veces seguidas sin fallar | `database/factories/VersionApkFactory.php`, `tests/Feature/Distribucion/**` | no | 1 | **hecha** (PR #154, 9/9/2026, en el PR único de cierre de deuda técnica) |
+| 85 | HU-70 — asignación de equipo(s) de trabajo a una orden de aplicación: reparto de lotes/hectáreas por equipo y generación automática de un `Trabajo` por equipo, para que el piloto sepa qué le toca sin que se lo manden por WhatsApp (audio del dueño, 13/9/2026) | `./bin/verify` = 0, con test de que la suma de hectáreas asignadas a una orden no supera las del lote, test de que confirmar la asignación crea un `Trabajo` por equipo con lote y hectáreas ya resueltos, y test de que el trabajo generado aparece en `GET /api/sync/catalogo` con su equipo resuelto | `app/Dominios/Operaciones/**`, `app/Dominios/Personal/Contratos/**` (lectura de `equipos_trabajo`, sin escribir esa tabla), migración nueva, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/operaciones.php`, `docs/api/openapi.yaml`, tests | **sí** | 5 | **hecha** (PR #189, `feature/asignacion-equipos`, **mergeado a `develop` el 14/9/2026** — crítica: motor de sync y máquina de estados de `Trabajo`, revisión línea por línea pendiente; la tarea 107 (HU-92) la amplía a N lotes) |
+| 86 | HU-80 — reporte con ciclos de batería, ciclo actual, horas de vuelo del dron y evidencia fotográfica (control, balanceo, dron limpio), con la fecha/hora de emisión impresa (audio del dueño, 13/9/2026, más la sección "Reporte de Equipos" agregada en la segunda versión del Word) | `./bin/verify` = 0, con test de que el reporte técnico lee `ciclos_acumulados` real desde `Mantenimiento` por el contrato de lectura nuevo, test de que el PDF imprime `generado_en`, y test de que el nuevo registro de evidencia de equipo se rechaza sin foto adjunta | `app/Dominios/Operaciones/**`, `app/Dominios/Operaciones/Contratos/**` (contrato de lectura nuevo hacia `Mantenimiento`, mismo patrón que `LecturaAlertasTemperaturaBateria`), `app/Dominios/Mantenimiento/Infraestructura/**` (su implementación), migración nueva, vista `reporte-tecnico.blade.php`, tests | **sí** | 4 | **hecha** (PR #190, `feature/reporte-equipo`, **mergeado a `develop` el 14/9/2026** — crítica: motor de sync, revisión línea por línea pendiente; el contrato de lectura quedó en `Mantenimiento/Contratos/` en vez de `Operaciones/Contratos/` como decía esta fila — decisión documentada en `runs/86.md`, mismo criterio que los otros contratos de lectura del repo: viven en el módulo dueño del dato) |
+| 87 | HU-71 — estado `pausado` de contrato sobre la máquina de estados ya existente (`TransicionesContrato`), con etiquetas de panel en el vocabulario del dueño (En Ejecución/En Aprobación/Ejecutado/Pausado) | `./bin/verify` = 0, con test de transición `vigente ↔ pausado` válida, test de una transición inválida (p. ej. `borrador → pausado`) rechazada, y test de que el enum guardado en base no cambia sus valores existentes | `app/Dominios/Comercial/Dominio/MaquinaEstados/TransicionesContrato.php`, `app/Dominios/Comercial/Dominio/EstadoContrato.php`, migración `ALTER` del `CHECK`, vistas de `Comercial`, `lang/es/comercial.php`, tests | no | 2 | **hecha** (PR #191, mergeado 13/9/2026) |
+| 88 | HU-72 — alta masiva de lotes: extiende `CrearCampo` (ya acepta `lotes[]`) con una cantidad `N` y un cultivo por defecto, para renombrar y dibujar el polígono de cada lote después sin perder el cultivo asignado | `./bin/verify` = 0, con test de que pedir `N` lotes genera `N` filas de `com_lotes` + `com_lote_campania` con el cultivo elegido, y test de que renombrar/dibujar un lote generado no le borra el cultivo | `app/Dominios/Comercial/**`, `resources/views/components/**` (formulario), `lang/es/comercial.php`, tests | no | 3 | **hecha** (PR #192, mergeado 14/9/2026) |
+| 89 | HU-73 — atributos de terreno del lote: `desnivel` (ninguno/algunos/varios/empinado) y `limpieza` (limpio/algunos_obstaculos/muchos_obstaculos), catálogos cerrados distintos de `restricciones` (texto libre ya existente) | `./bin/verify` = 0, con test de valor fuera de catálogo rechazado en ambos campos | `app/Dominios/Comercial/**`, migración `ALTER com_lotes`, `lang/es/comercial.php`, tests | no | 2 | **hecha** (PR #193, mergeado 14/9/2026) |
+| 90 | HU-74 — acomodaciones logísticas del contrato: `brinda_alimentacion`/`brinda_hospedaje`/`brinda_combustible` (booleanos) + `observaciones_logistica` | `./bin/verify` = 0, con test de guardado y lectura de los tres booleanos y las observaciones | `app/Dominios/Comercial/**`, migración `ALTER com_contratos`, `lang/es/comercial.php`, tests | no | 2 | **hecha** (PR #194, mergeado 14/9/2026) |
+| 91 | HU-75 — ficha de cliente ampliada (`ubicacion_oficina`, `logo_path`) y contactos con los tipos nuevos Gerente General/Finanzas/Secretario, sumados a los ya existentes | `./bin/verify` = 0, con test de que los 3 tipos de contacto nuevos se aceptan y de que un tipo fuera del catálogo completo sigue rechazándose | `app/Dominios/Comercial/**`, migración `ALTER com_clientes` + `CHECK` de `com_cliente_contactos`, `lang/es/comercial.php`, tests | no | 2 | **hecha** (PR #195, mergeado 14/9/2026) |
+| 92 | HU-76 — Departamento/Municipio/Localidad/Coordenada en Propiedad, ampliando ADR 0018 punto 1 con una adenda fechada (no lo reescribe: el pedido explícito que faltaba para justificar la estructura ya existe) | `./bin/verify` = 0, con test de guardado/lectura de los 4 campos nuevos y de que una coordenada fuera de rango (±90/±180) se rechaza | `app/Dominios/Comercial/**`, migración `ALTER com_propiedades`, `docs/decisiones/0018-propiedad-nivel-terreno-y-alcance-contrato.md` (solo adenda), `lang/es/comercial.php`, tests | no | 2 | **hecha** (PR #196, mergeado 14/9/2026; `ubicacion` no se tocó, coexiste con las 5 columnas nuevas) |
+| 93 | HU-77 — campaña con estación (invierno/verano) y nombre autogenerado (`Estación/AñoInicio/AñoFin`); el panel puede mostrar "Activa"/"Inactiva" como etiqueta de `planificada+abierta`/`cerrada`, pero la máquina sigue siendo irreversible desde `cerrada` (ADR 0015), sin excepción nueva | `./bin/verify` = 0, con test de que crear una campaña sin nombre lo autogenera correcto, y test de regresión de que una campaña `cerrada` sigue sin poder reabrirse | `app/Dominios/Campania/**`, migración `ALTER cpn_campanias`, `lang/es/campania.php`, tests | no | 2 | **hecha** (PR #197, mergeado 14/9/2026) |
+| 94 | HU-78 — módulo `Mezclas`: el piloto registra producto y cantidad cargados en el caldo al crear una aplicación — **revierte CR-01** (nota fechada ya puesta en `especificacion_funcional_tecnica.md` §7 el 13/9/2026; esta tarea reescribe la sección con el alcance nuevo) | `./bin/verify` = 0, con test de idempotencia por `uuid_cliente` sobre el nuevo tipo de registro de sync, test de que el reporte técnico lista los productos cargados en vez de la nota fija de "fuera de alcance", y `grep` de que §7 ya no describe la prohibición absoluta sin la nota de reversión | módulo nuevo (a decidir por la propia tarea entre `Operaciones/Mezclas` u otro, documentando el porqué como hizo la tarea 18 con Mezclas/Operaciones), `Sincronizacion/Aplicacion/**`, migración nueva, `docs/especificacion/especificacion_funcional_tecnica.md` (§7), `docs/api/openapi.yaml`, tests | **sí** | 5 | **hecha** (PR #198, mergeado 14/9/2026, en modo borrador pese a la política vigente — anotado en `runs/revision-pendiente.txt`, revisión línea por línea pendiente) |
+| 95 | HU-79 — tipo sólido/líquido en la orden de aplicación con catálogo de insumos por tipo (reusa el catálogo de la tarea 94); depende de que las tareas 85 y 94 estén integradas para no iterar dos veces sobre `ope_ordenes_aplicacion` | `./bin/verify` = 0, con test de que una orden sólida pide kilos por vuelo y una líquida litros por hectárea, y test de que un insumo sólido no se puede cargar en una orden marcada líquida | `app/Dominios/Operaciones/**`, migración `ALTER ope_ordenes_aplicacion`, `lang/es/operaciones.php`, tests | **sí** | 4 | **pendiente, reencolada** — HU-70 (tarea 85, PR #189) ya está mergeada a `develop` (14/9/2026), la dependencia queda saldada. Su prompt ya existía (`prompts/95-tipo-insumo-orden.md`, no se reescribió) y se agregó de nuevo al final de `runs/cola.txt` (planificación del 14/9/2026), inmediatamente después de la tarea 107 (HU-92), que también reescribe `ope_ordenes_aplicacion` (pasa de 1 a N lotes) — mismo criterio que ya tenía esta fila con la tarea 85: no iterar la misma tabla dos veces |
+| 106 | HU-91 — Contrato: eliminar `adelanto_pct` (relabelear `adelanto_monto` a "Adelanto Solicitado") y sacar toda la sección "Parámetros de vuelo" (clima, velocidad máxima, umbral de reporte, altura de vuelo) del formulario y del modelo; `com_contrato_ventanas` no se toca (aclarado con el dueño 14/9/2026, ver `docs/negocio/observaciones_operaciones_comercial_2026-09-14.md` §2) | `./bin/verify` = 0, con test de que `adelanto_pct` ya no existe como columna ni como campo del formulario, test de regresión de que el cálculo de `monto_total` no depende de ningún campo eliminado, y test de que crear/editar un contrato sin los 7 campos de clima/vuelo sigue validando correcto | `app/Dominios/Comercial/**`, migración `ALTER com_contratos` (drop columns + drop CHECKs), `lang/es/comercial.php`, tests | no | 2 | **escrita** (`prompts/106-recorte-contrato-vuelo.md`) |
+| 107 | HU-92 — Orden de Aplicación pasa a cubrir N lotes (`orden_lotes` nueva, reemplaza el `lote_id` único); "Cantidad de Equipos Necesarios" en `/panel/ordenes/crear`; el reparto de equipos en `/panel/asignacion-equipos` elige lotes (selección múltiple) + hectáreas por equipo y genera un `Trabajo` por equipo↔lote; label de `nro_aplicacion` a "Número de aplicaciones". Amplía HU-70 (tarea 85, PR #189, ya integrada) | `./bin/verify` = 0, con test de que una orden admite N filas de lote con `SUM(hectareas_solicitadas) ≤` la suma de hectáreas de esos lotes, test de que "una orden vigente por lote" sigue garantizado por índice único sobre la tabla nueva, test de que asignar un equipo a 2 lotes genera 2 `Trabajo` (uno por lote) con su lote y hectáreas resueltos, y test de que `GET /api/sync/catalogo` sigue resolviendo el equipo de cada trabajo generado | `app/Dominios/Operaciones/**`, migración nueva (`orden_lotes`, drop `lote_id` de `ope_ordenes_aplicacion` con migración de datos existentes), `routes/web.php`, `lang/es/operaciones.php`, `docs/api/openapi.yaml`, tests | **sí** | 5 | **escrita** (`prompts/107-orden-multiples-lotes.md`) — depende de HU-70 (tarea 85, PR #189), ya integrada a `develop`. Encolada en `runs/cola.txt` justo antes de la tarea 95 (HU-79), misma tabla, para no iterarla dos veces. Investigación previa (planificación del 14/9/2026, ver el propio prompt): el índice único parcial actual no puede migrarse tal cual a la tabla de detalle (un índice de una sola tabla no puede condicionar por el `estado` de la tabla padre) — el prompt pide resolverlo con una guarda explícita en `MaquinaEstadosOrden::activar()`, no con un índice nuevo |
+| 108 | HU-93 — Listado de Trabajos: columnas "Nro. Trabajo"/"Orden de Trabajo"/"equipo asignado" sumadas a "Hectáreas"/"Estado" ya existentes, y acciones editar/eliminar solo mientras el trabajo no esté `validado` | `./bin/verify` = 0, con test de que el listado muestra las 5 columnas con datos correctos, test de que un trabajo `validado` no ofrece ni editar ni eliminar, y test de que eliminar un trabajo no validado hace soft delete (invariante 8) sin afectar validados (invariante 2) | `app/Dominios/Operaciones/Infraestructura/Http/Controllers/Web/TrabajosController.php`, vistas de `trabajos/`, `lang/es/operaciones.php`, tests | no | 2 | **pendiente** |
+| 109 | HU-94 — editor de mapa para `com_campos.geometria` (perímetro del campo, hoy sin campo de formulario — pendiente documentada desde `CrearCampoRequest`, tarea 35/68); la fila de lote con editor de mapa se saca de `/panel/campos/crear` (el generador de HU-72 sigue creando lotes provisorios sin geometría ahí); el editor de mapa del lote pinta el perímetro del campo elegido como capa de referencia de solo lectura | `./bin/verify` = 0, con test de que crear/editar un campo guarda su `geometria`, test de que `/panel/campos/crear` ya no permite cargar la geometría de un lote (solo el generador por cantidad, sin mapa), y test de que la vista de alta de lote (`/panel/lotes/crear` o la edición del campo) recibe el `geometria` del campo elegido como dato de solo lectura para el mapa | `app/Dominios/Comercial/**`, `resources/js/pages/campos-form.js`, editor de mapa del lote (JS), `lang/es/comercial.php`, tests | no | 2 | **pendiente** |
+| 96 | HU-81 — capacidad de un dron en kilos (`capacidad_kg`), para que una orden de aplicación sólida sepa cuánto puede llevar cada vuelo | `./bin/verify` = 0, con test de guardado/lectura de `capacidad_kg` y de que un dron sin capacidad de sólidos sigue operando líquido sin cambios | `app/Dominios/Operaciones/**`, migración `ALTER ope_drones`, `lang/es/operaciones.php`, tests | no | 1 | **hecha** (PR #199, mergeado 14/9/2026) |
+| 97 | HU-82 — ficha de inventario del dron en `Mantenimiento` (serie, chasis, versión de software, región, serie del control, accesorios), correlacionada por identificador de texto con `ope_drones` (mismo patrón sin FK real que `man_baterias`/`ope_recargas`) | `./bin/verify` = 0, con test de alta de la ficha para un identificador de dron existente y de que borrar la ficha de inventario no afecta `ope_drones` (módulos independientes, sin FK) | módulo `Mantenimiento` (ficha nueva), `Operaciones/Contratos/**` (contrato de lectura si la ficha necesita mostrarse desde Operaciones), migración nueva, `routes/web.php`, `SeguridadSeeder`, `SecMenuSeeder`, `lang/es/mantenimiento.php`, tests | no | 3 | **hecha** (PR #200, mergeado 14/9/2026) |
+| 98 | HU-83 — ciclo inicial de batería (`ciclos_inicial`, separado del acumulado) y estado `mantenimiento` nuevo en `EstadoBateria` | `./bin/verify` = 0, con test de que `ciclos_inicial` no se pisa al actualizar `ciclos_acumulados`, y test de transición al estado `mantenimiento` aceptada por el `CHECK` actualizado | `app/Dominios/Mantenimiento/**`, migración `ALTER man_baterias` + `CHECK`, `lang/es/mantenimiento.php`, tests | no | 2 | **hecha** (PR #201, mergeado 14/9/2026) |
+| 99 | HU-84 — ficha completa de vehículo (marca, modelo, año, combustible, 4x4, kilometraje inicial y actual) y estado `pausa` nuevo en `EstadoVehiculo` | `./bin/verify` = 0, con test de guardado/lectura de los campos nuevos, test de `combustible` fuera de `{gasolina,diesel}` rechazado, y test de transición al estado `pausa` aceptada | `app/Dominios/Mantenimiento/**`, migración `ALTER man_vehiculos` + `CHECK`, `lang/es/mantenimiento.php`, tests | no | 3 | **hecha** (PR #203, mergeado 14/9/2026) |
+| 100 | HU-85 — coordenada (`latitud`/`longitud`) de una base, además de la `ubicacion` en texto libre ya existente | `./bin/verify` = 0, con test de guardado/lectura de coordenada y de que una coordenada fuera de rango (±90/±180) se rechaza | `app/Dominios/Personal/**`, migración `ALTER per_bases`, `lang/es/personal.php`, tests | no | 1 | **hecha** (PR #205, mergeado 14/9/2026) |
+| 101 | HU-86 — horas inicial y horas actual de un generador, reemplazando el único `horas_uso` cargado a mano; migra los datos existentes (`horas_inicial = horas_actual = horas_uso`) | `./bin/verify` = 0, con test de migración de datos que preserva el valor existente en ambas columnas nuevas, y test de que `horas_actual < horas_inicial` se rechaza | `app/Dominios/Mantenimiento/**`, migración `ALTER man_generadores` (agrega columnas + migra datos + elimina `horas_uso`), `lang/es/mantenimiento.php`, tests | no | 2 | **hecha** (PR #206, mergeado 14/9/2026) |
+| 102 | HU-87 — el ciclo acumulado de una batería se incrementa solo al cerrarse cada recarga que la usó (regla "odómetro" del dueño), nunca se edita a mano hacia abajo sin corrección auditada; depende de que la tarea 98 esté integrada | `./bin/verify` = 0, con test de que dos recargas de la misma batería incrementan `ciclos_acumulados` dos veces, y test de que bajar el valor a mano sin el mecanismo de corrección se rechaza | `app/Dominios/Mantenimiento/**`, `app/Dominios/Operaciones/**` (evento de dominio al cerrar una recarga), migración si hace falta columna de auditoría propia, tests | **sí** | 3 | **escrita** (`prompts/102-ciclos-bateria-odometro.md`) |
+| 103 | HU-88 — ocultar del menú del encargado Plan de Mantenimiento/Repuestos/Stock Base (siguen funcionando por debajo) y mostrar "Precio de Mantenimiento Final" como el monto real del gasto vinculado a la orden cerrada | `./bin/verify` = 0, con test de que el rol `encargado` ya no ve esos 3 ítems en su menú, test de que un rol con el permiso sigue accediendo por URL directa, y test de que el total mostrado coincide con `fin_gastos.monto` del gasto generado al cerrar (regresión de HU-37/tarea 53) | `app/Dominios/Mantenimiento/**`, `SecMenuSeeder`, `lang/es/mantenimiento.php`, tests | no | 2 | **escrita** (`prompts/103-menu-precio-mantenimiento.md`) |
+| 104 | HU-89 — descripción de mantenimiento final al cerrar la orden, separada de la descripción de apertura | `./bin/verify` = 0, con test de que `MaquinaEstadosOrdenMantenimiento::cerrar()` rechaza sin `descripcion_final`, y de que la `descripcion` de apertura no se pisa | `app/Dominios/Mantenimiento/**`, migración `ALTER man_ordenes_mantenimiento`, `lang/es/mantenimiento.php`, tests | no | 1 | **escrita** (`prompts/104-descripcion-cierre-orden.md`) |
+| 105 | HU-90 — tipo de vehículo (catálogo cerrado, incluye "chata") en `man_vehiculos`; complementa la tarea 99 (Sprint 17), misma tabla, sin bloquearla | `./bin/verify` = 0, con test de valor fuera de catálogo rechazado y de que un vehículo `chata` opera igual que cualquier otro en las pantallas ya existentes | `app/Dominios/Mantenimiento/**`, migración `ALTER man_vehiculos`, `lang/es/mantenimiento.php`, tests | no | 2 | **escrita** (`prompts/105-tipo-vehiculo.md`) |
 
 ### El bug de la 24 — ya pasó dos veces, sigue sin arreglarse
 
@@ -253,8 +442,42 @@ el 9/9/2026 con las tareas 82 a 84.
 Cuando la sesión de planificación se queda sin HU/TE y encuentra algo acá,
 escribe `runs/DETENER` y para: la decisión es del usuario.
 
-_Nada pendiente al 9/9/2026: las tres entradas que había (82, 83 y 84) se
-cerraron en el PR #154._
+**Pendiente al 13/9/2026** (hallazgo propio al planificar el Sprint 18, no
+pedido por el dueño — ver
+`docs/negocio/observaciones_mantenimiento_2026-09-13.md` §3): el `CHECK` de
+`man_ordenes_mantenimiento.equipo_tipo` solo acepta `('dron', 'vehiculo')`
+(`database/migrations/2026_09_03_300004_create_man_ordenes_mantenimiento_table.php:80-81`)
+— la tabla se creó el 3/9/2026 (tarea 53), antes de que `man_generadores`
+existiera (tarea 72, 9/9/2026). Hoy no se puede abrir una orden de
+mantenimiento sobre un generador. Sin fila propia hasta que el usuario decida
+si entra a la cola.
+
+**Pendiente al 14/9/2026** (hallazgo propio al planificar tras la tarea 92,
+no pedido por el dueño): los PR #189 (tarea 85, HU-70) y #190 (tarea 86,
+HU-80) — ambos `critica=si` — quedaron abiertos **en modo borrador** y sin
+mergear a `develop` (confirmado con `gh pr view 189/190`: `isDraft: true`,
+`mergedAt: null`). Contradice la política vigente, ya corregida una vez:
+`docs/gestion/automatizacion_desarrollo.md` §5 dice explícitamente "ninguna
+sesión abre su PR en borrador por ser crítica" desde el 2/9/2026, después de
+que el PR #46 (motor de sync) quedara retenido en borrador y bloqueara doce
+HU de los sprints 2 a 5 hasta que el ciclo se detuvo solo. `bin/ciclo` (fase
+`fase_pr`) ya tiene esa corrección — con `critica=si` no pasa `--draft`,
+solo anota `runs/revision-pendiente.txt` — pero el log (`runs/ciclo.log`,
+líneas ~1176 y ~1197) muestra que al llegar a `fase_pr` los PR #189/#190 **ya
+existían**: los creó la propia sesión de implementación, en borrador, antes
+de que el ciclo interviniera — el mismo bug documentado para los PR #59/#62
+el 2/9/2026 ("las sesiones de implementación lo leyeron y abrieron sus PR en
+borrador por su cuenta"). La causa probable: el texto de
+`prompts/plantillas/planificar.md` (la plantilla que redacta cada prompt de
+planificación, esta sesión incluida) todavía dice, en su sección final,
+"`critica=si` para lo de la lista de arriba (**PR en borrador**)" — en
+contra de lo que dicen `CLAUDE.md` y `automatizacion_desarrollo.md` §5. Esta
+sesión no tocó esa plantilla (no está en su alcance) y en los prompts nuevos
+94 y 95 (críticos) evitó repetir la frase "PR en borrador" para no perpetuar
+el bug — pero los PR #189/#190 siguen trabados y bloquean HU-79 (tarea 95),
+que depende de HU-70 integrada. Sin fila propia: decisión del usuario —
+corregir la plantilla, y decidir si pasa los PR #189/#190 a "ready for
+review" a mano para destrabar la 95.
 
 ### Fuera del ciclo automático
 
