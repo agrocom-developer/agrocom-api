@@ -35,9 +35,10 @@ use OpenApi\Attributes as OA;
     schema: 'OrdenCatalogo',
     title: 'Orden de aplicación (catálogo)',
     description: 'Orden vigente para el pull de catálogo (espec §4.3, ampliada HU-92 tarea 107: '
-        .'`lotes` reemplaza el `lote_id` único de antes). Los DECIMAL viajan como string (invariante 6).',
+        .'`lotes` reemplaza el `lote_id` único de antes; HU-79 tarea 110: `litros_ha`/`kilos_por_vuelo` '
+        .'son mutuamente excluyentes según la categoría de insumo). Los DECIMAL viajan como string (invariante 6).',
     required: [
-        'id', 'contrato_id', 'lotes', 'nro_aplicacion', 'litros_ha', 'humedad_min_pct',
+        'id', 'contrato_id', 'lotes', 'nro_aplicacion', 'litros_ha', 'kilos_por_vuelo', 'humedad_min_pct',
         'viento_max_kmh', 'temperatura_max_c', 'humedad_max_pct', 'velocidad_max_kmh',
         'altura_vuelo_m', 'velocidad_vuelo_kmh', 'ancho_pasada_m', 'observaciones',
         'emitida_por_contacto_id', 'fecha_emision', 'estado', 'updated_at',
@@ -51,7 +52,8 @@ use OpenApi\Attributes as OA;
             items: new OA\Items(ref: '#/components/schemas/LoteDeOrdenCatalogo'),
         ),
         new OA\Property(property: 'nro_aplicacion', type: 'integer', example: 1),
-        new OA\Property(property: 'litros_ha', type: 'string', example: '10.00'),
+        new OA\Property(property: 'litros_ha', description: 'Dosis en litros por hectárea (insumo líquido); null si la categoría es sólida.', type: 'string', example: '10.00', nullable: true),
+        new OA\Property(property: 'kilos_por_vuelo', description: 'Dosis en kilos por vuelo (insumo sólido); null si la categoría es líquida.', type: 'string', example: '8.50', nullable: true),
         new OA\Property(property: 'humedad_min_pct', type: 'string', example: '60.00', nullable: true),
         new OA\Property(property: 'viento_max_kmh', type: 'string', example: '15.00', nullable: true),
         new OA\Property(property: 'temperatura_max_c', type: 'string', example: '32.00', nullable: true),
