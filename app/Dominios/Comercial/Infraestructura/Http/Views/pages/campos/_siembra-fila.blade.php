@@ -24,7 +24,7 @@
     $fechaSiembra = old("{$prefijo}.fecha_siembra", $siembra?->fecha_siembra?->format('Y-m-d'));
     $fechaCosechaEstimada = old("{$prefijo}.fecha_cosecha_estimada", $siembra?->fecha_cosecha_estimada?->format('Y-m-d'));
 @endphp
-<div class="ag-siembra-form__lote" data-ag-siembra-fila>
+<div class="ag-form-section__body ag-siembra-form__lote" data-ag-siembra-fila>
     <input type="hidden" name="{{ $prefijo }}[lote_id]" value="{{ $lote->id }}">
 
     <div class="ag-siembra-form__lote-info">

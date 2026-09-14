@@ -587,6 +587,47 @@ pantalla ya hecha, se anota acá.
     `tests/Unit/PulidoNavegacionPanelTest.php`, que descubre sola qué átomos
     llevan margen de raíz.
 
+12. **Una fila repetible (contactos, ventanas, lotes) COMPARTE la clase
+    `.ag-form-section__body`, nunca redeclara su propio grid de dos columnas
+    (14/9/2026).** El primer síntoma fue de ancho: cuatro páginas
+    (`clientes`, `contratos`, `siembra`, `campos`) tenían cada una su propio
+    `.ag-‹página›-form__‹fila›` con `grid-template-columns: repeat(auto-fit,
+    minmax(‹piso›, 1fr))` copiado a mano — `.ag-clientes-form__contacto`
+    (tarea 33) es el original, y el resto se escribió citándolo como molde
+    ("mismo patrón que clientes/_contacto-fila.blade.php") sin extraer nunca
+    un componente. Cuando el grid de `.ag-form-section__body` ganó el techo
+    en 50% que lo cap a dos columnas (PR #180,
+    `minmax(max(‹piso›, calc(50% - var(--ag-space-4) / 2)), 1fr)`), el PR
+    solo tocó `components/form-section.css` — las cuatro copias de página
+    quedaron atrás, y en pantallas anchas sus 2 a 4 campos reales (tipo/
+    nombre/teléfono, código/hectáreas, hora_inicio/hora_fin, cultivo/
+    hectáreas/fechas) quedaban angostos a un ancho fijo en vez de repartirse
+    en dos columnas parejas. El usuario lo reportó mirando `clientes/crear`
+    y `lotes/crear` a la vez —`lotes/_formulario.blade.php` reusa el mismo
+    partial y clase de `campos/_lote-fila.blade.php`, así que el bug se veía
+    ahí sin que esa página tuviera ninguna fila repetible propia.
+
+    Parchear las cuatro copias agregando el `calc(50%` a cada una habría
+    dejado el problema de fondo intacto: es exactamente la duplicación que
+    Atomic Design existe para evitar (ADR 0002) — cuatro implementaciones
+    del mismo patrón visual que solo coinciden porque alguien copió bien, y
+    que un quinto formulario puede volver a divergir sin que nada avise.
+    Corrección real: el elemento raíz de la fila lleva la clase
+    `ag-form-section__body` ADEMÁS de su clase propia — la hoja de la página
+    ya NO declara `display: grid` ni `grid-template-columns` para esa fila,
+    solo lo que es genuinamente distinto de la tarjeta (el separador entre
+    una fila y la siguiente, algún `align-items` puntual como en
+    `.ag-siembra-form__lote`). El piso de 12rem que tenían las cuatro copias
+    (contra los 14rem del componente) también desaparece: era otra
+    divergencia de la misma copia manual, no una decisión de diseño por
+    página. Con DOS compuertas automáticas en
+    `tests/Unit/PulidoNavegacionPanelTest.php`: una recorre `resources/css/`
+    y rechaza cualquier selector con "form" en el nombre que declare su
+    propio `auto-fit`+`minmax(` (con o sin el techo — ya no hace falta
+    declararlo nunca más en una página), y la otra recorre las filas
+    repetibles (`pages/**/_*-fila.blade.php`) y exige que su elemento raíz
+    lleve la clase `ag-form-section__body`.
+
 ## 9. Sexta vuelta — parte 2 (28/8/2026): rediseño del dashboard
 
 Ejecuta `docs/gestion/plan_dashboard_rediseno.md` — Anexo A y fases 1 a 7 de

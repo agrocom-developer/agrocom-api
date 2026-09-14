@@ -119,10 +119,12 @@
     gap: var(--ag-space-4);
 }
 
+/* El grid de dos columnas es el de `.ag-form-section__body`
+   (components/form-section.css) — la fila lo comparte por clase en vez de
+   redeclararlo (ver §8 regla 12 de sistema_diseno_panel.md); acá solo lo que
+   es propio de ser una fila DENTRO de una lista repetible: el separador
+   entre una fila y la siguiente. */
 .ag-contratos-form__ventana {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
-    gap: var(--ag-space-4);
     padding-top: var(--ag-space-4);
     border-top: 1px solid var(--ag-color-border-row);
 }
