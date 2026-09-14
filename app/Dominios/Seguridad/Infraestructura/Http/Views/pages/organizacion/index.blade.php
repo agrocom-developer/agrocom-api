@@ -112,6 +112,7 @@
                                     <x-molecules.file-field
                                         class="ag-form-section__field--full"
                                         name="logo"
+                                        size="lg"
                                         accept=".png,.svg"
                                         remove-name="logo_eliminar"
                                         :label="__('seguridad.organizacion.campo_logo')"
@@ -124,7 +125,7 @@
                                         :disabled="! $puedeEditarOrganizacion"
                                         error="{{ $errors->first('logo') }}"
                                     >
-                                        <x-atoms.logo size="sm" />
+                                        <x-atoms.logo size="md" />
                                     </x-molecules.file-field>
                                 </x-molecules.form-section>
 
