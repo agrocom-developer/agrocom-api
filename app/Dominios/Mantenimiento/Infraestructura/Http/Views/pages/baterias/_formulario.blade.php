@@ -2,8 +2,8 @@
     Partial: formulario de batería, compartido por create.blade.php y
     edit.blade.php (HU-39, tarea 51) — arquetipo Formulario, §6.3 de
     docs/diseno/guia_pantalla_panel.md. Mismo patrón que
-    `vehiculos/_formulario.blade.php`, con un campo numérico adicional
-    (ciclos acumulados).
+    `vehiculos/_formulario.blade.php`, con dos campos numéricos adicionales
+    (ciclos inicial y acumulados).
 
     Espera:
     - $bateria (Bateria|null): null en alta; el modelo en edición.
@@ -19,6 +19,14 @@
     en alta (no vacío): el campo es requerido y numérico, un placeholder
     vacío invitaría a dejarlo en blanco.
 
+    `ciclos_inicial` (HU-83, tarea 98) es editable SOLO en alta: es el punto
+    de partida del historial, fijado una vez e inmutable después —
+    `ActualizarBateria` no lo recibe (ver su docblock). En edición se
+    muestra de solo lectura con `x-atoms.input` sin `name` (mismo patrón
+    que el campo "Nombre" de `seguridad/perfil/index.blade.php`): no viaja
+    en el POST, así que `ActualizarBateriaRequest` ni siquiera necesita
+    ignorarlo.
+
     El aside pegajoso del arquetipo (summary-card/progress-meter) se omite a
     propósito, mismo criterio que vehiculos/personas: ningún dato de solo
     lectura justifica hoy la columna lateral.
@@ -27,6 +35,7 @@
     $esEdicion = $bateria !== null;
     $accion = $esEdicion ? route('panel.baterias.update', $bateria) : route('panel.baterias.store');
     $identificador = old('identificador', $bateria?->identificador ?? '');
+    $ciclosInicial = old('ciclos_inicial', $bateria?->ciclos_inicial ?? 0);
     $ciclosAcumulados = old('ciclos_acumulados', $bateria?->ciclos_acumulados ?? 0);
     $baseId = old('base_id', $bateria?->base_id ?? '');
     $estado = old('estado', $bateria?->estado ?? 'activa');
@@ -51,7 +60,7 @@
 
     <x-molecules.form-section
         :title="__('mantenimiento.baterias.seccion_datos')"
-        :count="__('mantenimiento.baterias.campos_contador', ['cantidad' => 4])"
+        :count="__('mantenimiento.baterias.campos_contador', ['cantidad' => 5])"
     >
         <x-atoms.input
             type="text"
@@ -61,6 +70,32 @@
             required
             error="{{ $errors->first('identificador') }}"
         />
+
+        @if ($esEdicion)
+            {{-- Sin `name`: no viaja en el POST, mismo criterio que el
+                 campo "Nombre" de seguridad/perfil/index.blade.php.
+                 `readonly` y no `disabled` para que siga siendo enfocable,
+                 copiable y legible por un lector de pantalla. --}}
+            <x-atoms.input
+                type="number"
+                id="ciclos_inicial"
+                label="{{ __('mantenimiento.baterias.campo_ciclos_inicial') }}"
+                value="{{ $ciclosInicial }}"
+                help="{{ __('mantenimiento.baterias.campo_ciclos_inicial_ayuda') }}"
+                readonly
+            />
+        @else
+            <x-atoms.input
+                type="number"
+                name="ciclos_inicial"
+                label="{{ __('mantenimiento.baterias.campo_ciclos_inicial') }}"
+                value="{{ $ciclosInicial }}"
+                help="{{ __('mantenimiento.baterias.campo_ciclos_inicial_ayuda') }}"
+                min="0"
+                required
+                error="{{ $errors->first('ciclos_inicial') }}"
+            />
+        @endif
 
         <x-atoms.input
             type="number"
