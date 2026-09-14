@@ -621,8 +621,8 @@ paths:
     get:
       tags:
         - Sincronizacion
-      summary: 'Pull de catálogo con cursor (órdenes, lotes, personas)'
-      description: 'Baja el catálogo de órdenes vigentes, lotes y personas modificados desde la posición del cursor recibido, con paginación por cursor (`updated_at`, `id`) — nunca por número de página, para no perder ni repetir registros entre pulls. `desde` vacío o ausente trae todo lo vigente (primera sincronización). Un `desde` no decodificable se trata igual que vacío, nunca como error de validación.'
+      summary: 'Pull de catálogo con cursor (órdenes, lotes, personas, trabajos)'
+      description: 'Baja el catálogo de órdenes vigentes, lotes, personas y trabajos asignados desde el panel modificados desde la posición del cursor recibido, con paginación por cursor (`updated_at`, `id`) — nunca por número de página, para no perder ni repetir registros entre pulls. `desde` vacío o ausente trae todo lo vigente (primera sincronización). Un `desde` no decodificable se trata igual que vacío, nunca como error de validación.'
       operationId: obtenerCatalogoSincronizacion
       parameters:
         -
@@ -642,6 +642,7 @@ paths:
                   - ordenes
                   - lotes
                   - personas
+                  - trabajos
                   - cursor
                 properties:
                   ordenes:
@@ -656,6 +657,10 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/PersonaCatalogo'
+                  trabajos:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TrabajoCatalogo'
                   cursor:
                     description: 'Cursor opaco a reenviar tal cual en `desde` en el próximo pull.'
                     type: string
@@ -1208,6 +1213,41 @@ components:
           type: string
           format: date-time
           example: '2026-08-26T12:00:00+00:00'
+      type: object
+    TrabajoCatalogo:
+      title: 'Trabajo asignado desde el panel (catálogo)'
+      description: 'Trabajo abierto por el jefe de campo al repartir una orden vigente entre equipos (HU-70, tarea 85) — nunca los que nacen por sync (`equipo_trabajo_id` siempre presente acá). `uuid_cliente` es el que generó el panel al confirmar la asignación: la app lo usa TAL CUAL para abrir sesiones sobre este trabajo. `hectareas_declaradas` es DECIMAL como string (invariante 6).'
+      required:
+        - id
+        - uuid_cliente
+        - orden_id
+        - lote_id
+        - hectareas_declaradas
+        - equipo_trabajo_id
+        - updated_at
+      properties:
+        id:
+          type: integer
+          example: 42
+        uuid_cliente:
+          type: string
+          example: 9a1b7e3e-2f7a-4b3d-8c1e-6f2a1d9c4b0a
+        orden_id:
+          type: integer
+          example: 1
+        lote_id:
+          type: integer
+          example: 3
+        hectareas_declaradas:
+          type: string
+          example: '300.00'
+        equipo_trabajo_id:
+          type: integer
+          example: 7
+        updated_at:
+          type: string
+          format: date-time
+          example: '2026-09-13T12:00:00+00:00'
       type: object
     RegistroSync:
       title: 'Registro de entrada del lote de sync'

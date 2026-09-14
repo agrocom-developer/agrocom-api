@@ -41,6 +41,27 @@ final class MaquinaEstadosTrabajo
     }
 
     /**
+     * Apertura desde el panel (HU-70, tarea 85): el jefe de campo confirma el
+     * reparto de equipos ANTES de que el piloto toque el dispositivo — a
+     * diferencia de {@see self::abrir()}, acá no hay `uuid_cliente` de
+     * dispositivo que preceda a la fila (invariante 1 de CLAUDE.md: ese
+     * `uuid_cliente` solo es obligatorio para lo que "nace en la app de
+     * campo"; `AsignarEquiposOrden` genera el suyo propio con `Str::uuid()`,
+     * que la app relee del catálogo y usa tal cual para abrir sesiones).
+     *
+     * `inicio` no es "cuándo abrió el dispositivo" en este camino: es el
+     * instante de la confirmación en el panel — "el trabajo quedó abierto en
+     * el sistema desde acá", no "arrancó el vuelo". Las horas reales de vuelo
+     * siguen viniendo de las sesiones, ninguna se pierde por esta elección.
+     *
+     * @param  array<string, mixed>  $atributos  sin `estado` ni `inicio`: los fija esta clase.
+     */
+    public function abrirPorAsignacion(array $atributos): Trabajo
+    {
+        return $this->abrir([...$atributos, 'inicio' => CarbonImmutable::now()]);
+    }
+
+    /**
      * @throws TransicionTrabajoNoPermitida si `$trabajo` no está `abierto`.
      */
     public function cerrar(Trabajo $trabajo, string $cierreUuidCliente, string $fin): Trabajo

@@ -11,11 +11,14 @@ namespace App\Dominios\Sincronizacion\Dominio;
  *
  * Formato de serialización: `base64(json_encode(['ordenes' => ['u' =>
  * <updated_at ISO8601>, 'id' => <int>], 'lotes' => [...], 'personas' =>
- * [...]]))`. Una sección ausente (nunca hubo registros, o el `desde` no
- * decodifica) se trata como "sin posición": esa sección trae todo lo
- * vigente desde el principio — nunca un error. Un cursor corrupto en un
- * cliente offline no debe romper la sincronización, el peor caso aceptable
- * es una resincronización completa.
+ * [...], 'trabajos' => [...]]))`. Una sección ausente (nunca hubo registros,
+ * o el `desde` no decodifica) se trata como "sin posición": esa sección trae
+ * todo lo vigente desde el principio — nunca un error. Un cursor corrupto en
+ * un cliente offline no debe romper la sincronización, el peor caso
+ * aceptable es una resincronización completa.
+ *
+ * `TRABAJOS` (HU-70, tarea 85): trabajos abiertos por asignación de equipo
+ * desde el panel — ver `Operaciones\Contratos\LecturaTrabajosAsignados`.
  *
  * Clase pura: sin Eloquent, sin `Illuminate\Database` (verificado por
  * `tests/Unit/ArquitecturaModulosTest.php`).
@@ -28,8 +31,10 @@ final readonly class CursorCatalogo
 
     public const string PERSONAS = 'personas';
 
+    public const string TRABAJOS = 'trabajos';
+
     /** @var list<string> */
-    private const array SECCIONES = [self::ORDENES, self::LOTES, self::PERSONAS];
+    private const array SECCIONES = [self::ORDENES, self::LOTES, self::PERSONAS, self::TRABAJOS];
 
     /** @param array<string, PosicionCursor|null> $posiciones */
     private function __construct(private array $posiciones) {}

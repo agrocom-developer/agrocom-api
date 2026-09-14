@@ -14,10 +14,10 @@ use OpenApi\Attributes as OA;
 #[OA\Tag(
     name: 'Sincronizacion',
     description: 'Pull de catálogo con cursor para la app de campo (espec §2.1, punto 6). '
-        .'TE-06 parcial: órdenes, lotes y personas — recetas y productos de mezcla quedan fuera '
-        .'a propósito (ver docblock de `ObtenerCatalogoDesdeCursor`, HU-78/tarea 94): el piloto '
-        .'transcribe el producto por nombre en el propio evento `mezcla` de `POST /api/sync`, sin '
-        .'necesitar bajarlo antes.',
+        .'TE-06 parcial: órdenes, lotes, personas y trabajos asignados desde el panel (HU-70) — '
+        .'recetas y productos de mezcla quedan fuera a propósito (ver docblock de '
+        .'`ObtenerCatalogoDesdeCursor`, HU-78/tarea 94): el piloto transcribe el producto por '
+        .'nombre en el propio evento `mezcla` de `POST /api/sync`, sin necesitar bajarlo antes.',
 )]
 #[OA\Schema(
     schema: 'OrdenCatalogo',
@@ -82,17 +82,37 @@ use OpenApi\Attributes as OA;
     ],
     type: 'object',
 )]
+#[OA\Schema(
+    schema: 'TrabajoCatalogo',
+    title: 'Trabajo asignado desde el panel (catálogo)',
+    description: 'Trabajo abierto por el jefe de campo al repartir una orden vigente entre equipos '
+        .'(HU-70, tarea 85) — nunca los que nacen por sync (`equipo_trabajo_id` siempre presente acá). '
+        .'`uuid_cliente` es el que generó el panel al confirmar la asignación: la app lo usa TAL CUAL '
+        .'para abrir sesiones sobre este trabajo. `hectareas_declaradas` es DECIMAL como string (invariante 6).',
+    required: ['id', 'uuid_cliente', 'orden_id', 'lote_id', 'hectareas_declaradas', 'equipo_trabajo_id', 'updated_at'],
+    properties: [
+        new OA\Property(property: 'id', type: 'integer', example: 42),
+        new OA\Property(property: 'uuid_cliente', type: 'string', example: '9a1b7e3e-2f7a-4b3d-8c1e-6f2a1d9c4b0a'),
+        new OA\Property(property: 'orden_id', type: 'integer', example: 1),
+        new OA\Property(property: 'lote_id', type: 'integer', example: 3),
+        new OA\Property(property: 'hectareas_declaradas', type: 'string', example: '300.00'),
+        new OA\Property(property: 'equipo_trabajo_id', type: 'integer', example: 7),
+        new OA\Property(property: 'updated_at', type: 'string', format: 'date-time', example: '2026-09-13T12:00:00+00:00'),
+    ],
+    type: 'object',
+)]
 final class CatalogoController
 {
     #[OA\Get(
         path: '/api/sync/catalogo',
         operationId: 'obtenerCatalogoSincronizacion',
-        description: 'Baja el catálogo de órdenes vigentes, lotes y personas modificados desde '
-            .'la posición del cursor recibido, con paginación por cursor (`updated_at`, `id`) — '
-            .'nunca por número de página, para no perder ni repetir registros entre pulls. '
-            .'`desde` vacío o ausente trae todo lo vigente (primera sincronización). Un `desde` '
-            .'no decodificable se trata igual que vacío, nunca como error de validación.',
-        summary: 'Pull de catálogo con cursor (órdenes, lotes, personas)',
+        description: 'Baja el catálogo de órdenes vigentes, lotes, personas y trabajos asignados '
+            .'desde el panel modificados desde la posición del cursor recibido, con paginación por '
+            .'cursor (`updated_at`, `id`) — nunca por número de página, para no perder ni repetir '
+            .'registros entre pulls. `desde` vacío o ausente trae todo lo vigente (primera '
+            .'sincronización). Un `desde` no decodificable se trata igual que vacío, nunca como '
+            .'error de validación.',
+        summary: 'Pull de catálogo con cursor (órdenes, lotes, personas, trabajos)',
         security: [['tokenDispositivo' => []]],
         tags: ['Sincronizacion'],
         parameters: [
@@ -109,7 +129,7 @@ final class CatalogoController
                 response: 200,
                 description: 'Catálogo modificado desde el cursor, y el cursor de continuación para el próximo pull.',
                 content: new OA\JsonContent(
-                    required: ['ordenes', 'lotes', 'personas', 'cursor'],
+                    required: ['ordenes', 'lotes', 'personas', 'trabajos', 'cursor'],
                     properties: [
                         new OA\Property(
                             property: 'ordenes',
@@ -125,6 +145,11 @@ final class CatalogoController
                             property: 'personas',
                             type: 'array',
                             items: new OA\Items(ref: '#/components/schemas/PersonaCatalogo'),
+                        ),
+                        new OA\Property(
+                            property: 'trabajos',
+                            type: 'array',
+                            items: new OA\Items(ref: '#/components/schemas/TrabajoCatalogo'),
                         ),
                         new OA\Property(
                             property: 'cursor',
