@@ -7,13 +7,22 @@ namespace App\Dominios\Operaciones\Contratos;
  * catálogo (ADR 0003, regla 2): ningún módulo consumidor recibe el modelo
  * Eloquent `OrdenAplicacion`, solo estos campos planos. Los DECIMAL viajan
  * como string (invariante 6 de CLAUDE.md), igual que `OrdenAplicacionResource`.
+ *
+ * `lotes` (HU-92, tarea 107, reemplaza el `loteId: int` de antes): la orden
+ * cubre varios lotes de la propiedad, cada uno con su propia hectáreas
+ * solicitada. Forma elegida — lista plana de arrays, NO un DTO propio por
+ * ítem: no hay precedente en el repo de un DTO anidado dentro de un
+ * `*Catalogo` (todos son planos, ver `TrabajoAsignadoCatalogo`/`LoteCatalogo`),
+ * y cada lote acá son solo dos escalares — un DTO propio sería una capa sin
+ * beneficio.
  */
 final readonly class OrdenAplicacionCatalogo
 {
+    /** @param  list<array{lote_id: int, hectareas_solicitadas: string}>  $lotes */
     public function __construct(
         public int $id,
         public int $contratoId,
-        public int $loteId,
+        public array $lotes,
         public int $nroAplicacion,
         public string $litrosHa,
         public ?string $humedadMinPct,
@@ -37,7 +46,7 @@ final readonly class OrdenAplicacionCatalogo
         return [
             'id' => $this->id,
             'contrato_id' => $this->contratoId,
-            'lote_id' => $this->loteId,
+            'lotes' => $this->lotes,
             'nro_aplicacion' => $this->nroAplicacion,
             'litros_ha' => $this->litrosHa,
             'humedad_min_pct' => $this->humedadMinPct,
