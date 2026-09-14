@@ -13,6 +13,8 @@ use App\Dominios\Operaciones\Dominio\Excepciones\OrdenVigenteDuplicadaEnLote;
 use App\Dominios\Operaciones\Dominio\Excepciones\OrdenVigenteNoEliminable;
 use App\Dominios\Operaciones\Dominio\Excepciones\TransicionOrdenNoPermitida;
 use App\Dominios\Operaciones\Dominio\TipoAplicacion;
+use App\Dominios\Operaciones\Dominio\TipoInsumo;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\CategoriaInsumo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Http\Requests\ActualizarOrdenRequest;
 use App\Dominios\Operaciones\Infraestructura\Http\Requests\CrearOrdenRequest;
@@ -116,6 +118,9 @@ final class OrdenesController
             'contratosDisponibles' => $this->contratosDisponibles(),
             'lotesDisponibles' => $this->lotesDisponibles(),
             'contactosDisponibles' => $this->contactosDisponibles(),
+            'categoriasInsumoDisponibles' => $this->categoriasInsumoDisponibles(),
+            'mapaContratoCliente' => $this->mapaContratoCliente(),
+            'mapaLoteCliente' => $this->mapaLoteCliente(),
         ]);
     }
 
@@ -143,6 +148,9 @@ final class OrdenesController
             'contratosDisponibles' => $this->contratosDisponibles(),
             'lotesDisponibles' => $this->lotesDisponibles(),
             'contactosDisponibles' => $this->contactosDisponibles(),
+            'categoriasInsumoDisponibles' => $this->categoriasInsumoDisponibles(),
+            'mapaContratoCliente' => $this->mapaContratoCliente(),
+            'mapaLoteCliente' => $this->mapaLoteCliente(),
         ]);
     }
 
@@ -205,12 +213,27 @@ final class OrdenesController
      */
     private function normalizarDatos(array $datos): array
     {
+        $categoriaInsumoId = (int) $datos['categoria_insumo_id'];
+        // `DB::table` (no `CategoriaInsumo::query()`): un `->value()` sobre un
+        // Eloquent Builder resuelve por `first()` y devuelve el enum YA
+        // CASTEADO, no el string crudo — comparar eso contra `->value` nunca
+        // da true. Mismo criterio (y misma trampa evitada) que
+        // `CrearOrdenRequest::validarCampoSegunCategoriaInsumo()`.
+        $tipoInsumo = DB::table('ope_categorias_insumo')->where('id', $categoriaInsumoId)->value('tipo_insumo');
+
         return [
             'contrato_id' => (int) $datos['contrato_id'],
             'nro_aplicacion' => (int) $datos['nro_aplicacion'],
             'cantidad_equipos_necesarios' => (int) $datos['cantidad_equipos_necesarios'],
             'tipo_aplicacion' => TipoAplicacion::from((string) $datos['tipo_aplicacion']),
-            'litros_ha' => (string) $datos['litros_ha'],
+            'categoria_insumo_id' => $categoriaInsumoId,
+            // Cuál de los dos guarda un valor depende del tipo_insumo de la
+            // categoría, no de lo que haya venido en el POST (invariante
+            // 5-ish: la fuente de verdad es la categoría elegida, nunca un
+            // campo oculto que el navegador no mandó a tiempo) — el que no
+            // corresponde siempre queda NULL, aunque el request lo mande.
+            'kilos_por_vuelo' => $tipoInsumo === TipoInsumo::Solido->value ? $this->cadenaONull($datos['kilos_por_vuelo'] ?? null) : null,
+            'litros_ha' => $tipoInsumo === TipoInsumo::Liquido->value ? $this->cadenaONull($datos['litros_ha'] ?? null) : null,
             'humedad_min_pct' => $this->cadenaONull($datos['humedad_min_pct'] ?? null),
             'humedad_max_pct' => $this->cadenaONull($datos['humedad_max_pct'] ?? null),
             'viento_max_kmh' => $this->cadenaONull($datos['viento_max_kmh'] ?? null),
@@ -264,6 +287,21 @@ final class OrdenesController
             ]);
     }
 
+    /**
+     * Categorías de insumo (HU-79, tarea 110) — catálogo PROPIO de
+     * Operaciones (no de Comercial): a diferencia de `lotesDisponibles()` y
+     * el resto de abajo, se lee por el modelo Eloquent del módulo, no por
+     * `DB::table` (ADR 0003 regla 3 solo exige lectura directa cruzando
+     * MÓDULOS). La vista arma el `<select>` y el mapa id→tipo_insumo a partir
+     * de esta colección de modelos.
+     *
+     * @return Collection<int, CategoriaInsumo>
+     */
+    private function categoriasInsumoDisponibles(): Collection
+    {
+        return CategoriaInsumo::query()->orderBy('nombre')->get(['id', 'nombre', 'tipo_insumo']);
+    }
+
     /** @return Collection<int, string> */
     private function lotesDisponibles(): Collection
     {
@@ -280,6 +318,42 @@ final class OrdenesController
                     'codigo' => $fila->codigo,
                 ]),
             ]);
+    }
+
+    /**
+     * De qué cliente es cada contrato — consistencia de negocio (el contrato
+     * es el QUIÉN, la orden es el CÓMO): el formulario del panel usa esto
+     * para filtrar, en JS, el universo de `lotesDisponibles()` al cliente del
+     * contrato elegido (nunca al revés — un lote no sabe de contratos). El
+     * servidor exige lo mismo en `withValidator()`; esto es solo el dato para
+     * la presentación.
+     *
+     * @return array<int, int> contrato_id => cliente_id
+     */
+    private function mapaContratoCliente(): array
+    {
+        return DB::table('com_contratos')
+            ->whereNull('deleted_at')
+            ->pluck('cliente_id', 'id')
+            ->all();
+    }
+
+    /**
+     * De qué cliente es cada lote (vía `campo_id` → `propiedad_id` →
+     * `cliente_id`) — mismo criterio que {@see mapaContratoCliente()}.
+     *
+     * @return array<int, int> lote_id => cliente_id
+     */
+    private function mapaLoteCliente(): array
+    {
+        return DB::table('com_lotes as l')
+            ->join('com_campos as c', 'c.id', '=', 'l.campo_id')
+            ->join('com_propiedades as p', 'p.id', '=', 'c.propiedad_id')
+            ->whereNull('l.deleted_at')
+            ->whereNull('c.deleted_at')
+            ->whereNull('p.deleted_at')
+            ->pluck('p.cliente_id', 'l.id')
+            ->all();
     }
 
     /**
