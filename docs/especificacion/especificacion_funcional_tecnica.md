@@ -261,10 +261,23 @@ Este es el activo real del sistema: defiende ante el reclamo de eficacia del agr
 
 ## 7. Recepción del caldo (lo prepara el cliente)
 
+> **CR-01 revertida el 13/9/2026.** El dueño cambió de opinión: ahora sí
+> quiere que el piloto registre qué productos y en qué cantidad se cargaron en
+> el caldo (ver `docs/negocio/observaciones_operaciones_comercial_2026-09-13.md`
+> y HU-78 de `docs/gestion/plan_sprints.md`, Sprint 16). El texto de 7.1 que
+> sigue describe el razonamiento de la decisión **vieja** — se conserva porque
+> el deslinde de responsabilidad que argumenta sigue siendo relevante para
+> decidir qué datos carga el piloto y cuáles siguen siendo del agrónomo del
+> cliente — pero la prohibición absoluta de modelar fórmula/dosis **ya no
+> aplica**. HU-78 reescribe esta sección cuando se implemente; hasta entonces,
+> el código (`ArmarContenidoReporteTecnico::notaMezcla()`) todavía imprime la
+> nota vieja.
+
 **Agrocom no prepara la mezcla y no quiere prepararla.** El caldo lo formula y
 lo prepara el cliente, con su propio ingeniero agrónomo. Agrocom recibe el
-caldo ya hecho y lo rocía. Esta es la decisión de negocio CR-01, cerrada el
-1/9/2026 por el dueño y confirmada en todas las entrevistas de campo.
+caldo ya hecho y lo rocía. Esta era la decisión de negocio CR-01, cerrada el
+1/9/2026 por el dueño y confirmada en todas las entrevistas de campo, hasta su
+reversión parcial del 13/9/2026 (ver nota arriba).
 
 ### 7.1 Por qué el alcance termina acá
 
