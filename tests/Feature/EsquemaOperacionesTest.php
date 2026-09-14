@@ -135,6 +135,79 @@ it('rechaza un trabajo con uuid_cliente repetido por el índice parcial', functi
     ]);
 })->throws(QueryException::class);
 
+it('crea ope_orden_lotes con soft delete, columnas de auditoría y hectareas_solicitadas (HU-92, tarea 107)', function () {
+    expect(Schema::hasTable('ope_orden_lotes'))->toBeTrue()
+        ->and(Schema::hasColumns('ope_orden_lotes', [
+            'orden_id',
+            'lote_id',
+            'hectareas_solicitadas',
+            'deleted_at',
+            'created_by',
+            'updated_by',
+            'created_at',
+            'updated_at',
+        ]))->toBeTrue();
+});
+
+it('rechaza un lote repetido dentro de la misma orden por el índice único parcial (HU-92, tarea 107)', function () {
+    $orden = crearOrdenVigenteParaTrabajo();
+
+    DB::table('ope_orden_lotes')->insert([
+        'orden_id' => $orden['orden_id'],
+        'lote_id' => $orden['lote_id'],
+        'hectareas_solicitadas' => '10.00',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    DB::table('ope_orden_lotes')->insert([
+        'orden_id' => $orden['orden_id'],
+        'lote_id' => $orden['lote_id'],
+        'hectareas_solicitadas' => '5.00',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+})->throws(QueryException::class);
+
+it('permite repetir orden+lote si la fila anterior está soft-deleted (HU-92, tarea 107)', function () {
+    $orden = crearOrdenVigenteParaTrabajo();
+
+    DB::table('ope_orden_lotes')->insert([
+        'orden_id' => $orden['orden_id'],
+        'lote_id' => $orden['lote_id'],
+        'hectareas_solicitadas' => '10.00',
+        'deleted_at' => now(),
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    DB::table('ope_orden_lotes')->insert([
+        'orden_id' => $orden['orden_id'],
+        'lote_id' => $orden['lote_id'],
+        'hectareas_solicitadas' => '5.00',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    expect(DB::table('ope_orden_lotes')->where('orden_id', $orden['orden_id'])->count())->toBe(2);
+});
+
+it('rechaza hectareas_solicitadas en cero o negativo por el CHECK (solo pgsql)', function () {
+    if (DB::getDriverName() !== 'pgsql') {
+        $this->markTestSkipped('CHECK solo existe en pgsql; SQLite no soporta ADD CONSTRAINT (ver docblock de la migración).');
+    }
+
+    $orden = crearOrdenVigenteParaTrabajo();
+
+    DB::table('ope_orden_lotes')->insert([
+        'orden_id' => $orden['orden_id'],
+        'lote_id' => $orden['lote_id'],
+        'hectareas_solicitadas' => '0.00',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+})->throws(QueryException::class);
+
 it('rechaza una sesión con uuid_cliente repetido por el índice parcial', function () {
     $orden = crearOrdenVigenteParaTrabajo();
 
