@@ -25,6 +25,7 @@ use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\OrdenesMante
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\PlanesMantenimientoController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\VehiculosController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\AlertasController;
+use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\AsignacionEquiposController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\DronesController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\EstadiasHaciendaController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\OrdenesController;
@@ -612,6 +613,19 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::delete('/panel/ordenes/{orden}', [OrdenesController::class, 'destroy'])
             ->name('panel.ordenes.destroy');
+
+        // HU-70 (tarea 85): reparto de una orden vigente entre equipos de
+        // trabajo — ficha propia, no sub-recurso de `ordenes` (ver docblock
+        // de `AsignacionEquiposController`). Un único permiso
+        // (`operaciones.orden.asignar_equipos`) gatea las tres rutas.
+        Route::get('/panel/asignacion-equipos', [AsignacionEquiposController::class, 'index'])
+            ->name('panel.asignacion-equipos.index');
+
+        Route::get('/panel/asignacion-equipos/{orden}', [AsignacionEquiposController::class, 'mostrar'])
+            ->name('panel.asignacion-equipos.show');
+
+        Route::post('/panel/asignacion-equipos/{orden}', [AsignacionEquiposController::class, 'asignar'])
+            ->name('panel.asignacion-equipos.store');
 
         // HU-26 (tarea 37): administración de bases y personas operativas,
         // dos ABMs INDEPENDIENTES (una base es catálogo simple; una persona

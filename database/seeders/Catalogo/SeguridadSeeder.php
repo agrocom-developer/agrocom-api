@@ -210,6 +210,12 @@ class SeguridadSeeder extends Seeder
         'operaciones.orden.editar' => 'Editar los datos de una orden de aplicación',
         'operaciones.orden.activar' => 'Activar una orden de aplicación (emitida → vigente)',
         'operaciones.orden.eliminar' => 'Dar de baja (lógica) una orden de aplicación',
+        // HU-70 (tarea 85): "dónde asignarle el trabajo al piloto" — repartir
+        // las hectáreas de una orden vigente entre equipos de trabajo. Grano
+        // propio, no parte de `.editar`: no corrige la orden, reparte su
+        // trabajo; una ficha propia (`panel.asignacion-equipos.*`), no la
+        // ficha de la orden, así que no depende de `operaciones.orden.ver`.
+        'operaciones.orden.asignar_equipos' => 'Asignar equipos de trabajo (con sus hectáreas) a una orden vigente',
         // HU-44 (tarea 58): pausas de sesión con causa atribuible (DS-01).
         // Grano fino (ver/registrar), mismo criterio que `operaciones.alerta.*`:
         // ver el tablero agregado y cargar una pausa no son la misma
@@ -508,6 +514,9 @@ class SeguridadSeeder extends Seeder
         'operaciones.orden.editar',
         'operaciones.orden.activar',
         'operaciones.orden.eliminar',
+        // HU-70 (tarea 85): administra también el reparto de equipos por
+        // orden — mismo criterio que el resto de `operaciones.orden.*` arriba.
+        'operaciones.orden.asignar_equipos',
         // HU-44 (tarea 58): "jefe de campo, quiero registrar las pausas con
         // su causa atribuible" — el jefe de campo es dueño de la HU, pero el
         // encargado administra la operación diaria (mismo criterio que
@@ -644,6 +653,13 @@ class SeguridadSeeder extends Seeder
     private const PERMISOS_JEFE_CAMPO = [
         'operaciones.trabajo.ver',
         'operaciones.sesion.validar',
+        // HU-70 (tarea 85): "dónde asignarle el trabajo al piloto" — el
+        // reclamo del dueño (audio del 13/9/2026) es literalmente del jefe
+        // de campo, que hoy avisa por WhatsApp. Ficha propia
+        // (`panel.asignacion-equipos.*`), no la de la orden: no necesita
+        // `operaciones.orden.ver` (CRUD completo de la orden) para repartir
+        // equipos.
+        'operaciones.orden.asignar_equipos',
         // Tarea 62 (fuga 2): coordina la cuadrilla, aterriza en el dashboard
         // tras elegir rol y necesita la ficha de la compañía.
         'seguridad.dashboard.ver',

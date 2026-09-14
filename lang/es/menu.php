@@ -32,6 +32,7 @@ return [
             'sesiones' => 'Sesiones',
             'pausas' => 'Pausas',
             'estadias' => 'Estadías en hacienda',
+            'asignacion_equipos' => 'Asignación de equipos',
         ],
     ],
 
