@@ -11,6 +11,7 @@ use App\Dominios\Operaciones\Contratos\AperturaTrabajo;
 use App\Dominios\Operaciones\Contratos\CierreSesion;
 use App\Dominios\Operaciones\Contratos\CierreTrabajo;
 use App\Dominios\Operaciones\Contratos\EscrituraSincronizacion;
+use App\Dominios\Operaciones\Contratos\Eventos\RecargaRegistrada;
 use App\Dominios\Operaciones\Contratos\RegistroCondiciones;
 use App\Dominios\Operaciones\Contratos\RegistroEvidenciaEquipo;
 use App\Dominios\Operaciones\Contratos\RegistroIncidencia;
@@ -31,6 +32,7 @@ use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
 use App\Dominios\Personal\Dominio\RolOperativoPersona;
 use App\Dominios\Personal\Infraestructura\Eloquent\PerPersona;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 
 /*
  * Contrato de escritura de `Operaciones` para el motor de sync (ADR 0003,
@@ -1381,4 +1383,45 @@ test('registrarEvidenciaEquipo rechaza una foto ya usada para respaldar otro rep
         ->and($resultado->motivo)->not->toBeNull();
 
     expect(EvidenciaEquipo::query()->where('uuid_cliente', 'uuid-evidencia-equipo-foto-repetida-2')->exists())->toBeFalse();
+});
+
+/*
+ * HU-87, tarea 102: el "odómetro" de `ciclos_acumulados` — cada recarga
+ * dispara `RecargaRegistrada`, dentro de la misma transacción que la crea.
+ * El listener real (`Mantenimiento\Aplicacion\IncrementarCiclosBateria`) se
+ * prueba aislado en tests/Feature/Mantenimiento/IncrementarCiclosBateriaTest.php.
+ */
+
+test('registrarRecarga dispara RecargaRegistrada con el bateria_saliente_id del registro', function () {
+    Event::fake([RecargaRegistrada::class]);
+
+    $sesion = sesionAbiertaParaRecarga('evento');
+    $contrato = app(EscrituraSincronizacion::class);
+
+    $datos = RegistroRecarga::intentarDesdeArreglo(registroRecargaArreglo([
+        'uuid_cliente' => 'uuid-recarga-evento',
+        'sesion_uuid_cliente' => $sesion->uuid_cliente,
+        'bateria_saliente_id' => 'BAT-EVENTO',
+    ]));
+
+    $contrato->registrarRecarga($datos);
+
+    Event::assertDispatched(RecargaRegistrada::class, fn (RecargaRegistrada $evento): bool => $evento->bateriaSalienteId === 'BAT-EVENTO');
+    Event::assertDispatchedTimes(RecargaRegistrada::class, 1);
+});
+
+test('registrarRecarga con un bateria_saliente_id que no corresponde a ninguna batería cargada no rompe el sync', function () {
+    $sesion = sesionAbiertaParaRecarga('bateria-huerfana');
+    $contrato = app(EscrituraSincronizacion::class);
+
+    $datos = RegistroRecarga::intentarDesdeArreglo(registroRecargaArreglo([
+        'uuid_cliente' => 'uuid-recarga-bateria-huerfana',
+        'sesion_uuid_cliente' => $sesion->uuid_cliente,
+        'bateria_saliente_id' => 'BAT-INEXISTENTE',
+    ]));
+
+    $resultado = $contrato->registrarRecarga($datos);
+
+    expect($resultado->estado)->toBe('aplicado')
+        ->and(Recarga::query()->where('uuid_cliente', 'uuid-recarga-bateria-huerfana')->exists())->toBeTrue();
 });

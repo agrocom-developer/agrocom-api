@@ -8,6 +8,7 @@ use App\Dominios\Mantenimiento\Aplicacion\EliminarBateria;
 use App\Dominios\Mantenimiento\Aplicacion\ListarBaterias;
 use App\Dominios\Mantenimiento\Dominio\EstadoBateria;
 use App\Dominios\Mantenimiento\Dominio\Excepciones\BateriaDuplicada;
+use App\Dominios\Mantenimiento\Dominio\Excepciones\CorreccionCiclosNoAutorizada;
 use App\Dominios\Mantenimiento\Infraestructura\Eloquent\Bateria;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Requests\ActualizarBateriaRequest;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Requests\CrearBateriaRequest;
@@ -134,12 +135,18 @@ final class BateriasController
                 (int) $datos['ciclos_acumulados'],
                 $this->enteroONull($datos['base_id'] ?? null),
                 EstadoBateria::from((string) $datos['estado']),
+                $this->stringONull($datos['motivo_correccion'] ?? null),
             );
         } catch (BateriaDuplicada $excepcion) {
             return redirect()
                 ->route('panel.baterias.edit', $bateria)
                 ->withInput()
                 ->withErrors(['identificador' => $excepcion->getMessage()]);
+        } catch (CorreccionCiclosNoAutorizada $excepcion) {
+            return redirect()
+                ->route('panel.baterias.edit', $bateria)
+                ->withInput()
+                ->withErrors(['motivo_correccion' => $excepcion->getMessage()]);
         }
 
         return redirect()
@@ -161,6 +168,11 @@ final class BateriasController
     private function enteroONull(mixed $valor): ?int
     {
         return $valor === null || $valor === '' ? null : (int) $valor;
+    }
+
+    private function stringONull(mixed $valor): ?string
+    {
+        return $valor === null || $valor === '' ? null : (string) $valor;
     }
 
     /** @return Collection<int, string> */

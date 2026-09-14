@@ -27,6 +27,14 @@
     en el POST, así que `ActualizarBateriaRequest` ni siquiera necesita
     ignorarlo.
 
+    `motivo_correccion` (HU-87, tarea 102) solo aparece en edición: es la
+    única puerta para bajar `ciclos_acumulados` a mano (ver el docblock de
+    `ActualizarBateria`) — en el alta no hay un valor previo que bajar, así
+    que el campo no tiene sentido ahí. Siempre visible en vez de aparecer
+    condicionalmente al detectar una baja: mostrarlo/ocultarlo con JS según
+    lo que el usuario tipea en otro campo es más frágil que dejarlo fijo y
+    opcional, y la ayuda ya aclara cuándo es obligatorio.
+
     El aside pegajoso del arquetipo (summary-card/progress-meter) se omite a
     propósito, mismo criterio que vehiculos/personas: ningún dato de solo
     lectura justifica hoy la columna lateral.
@@ -39,6 +47,7 @@
     $ciclosAcumulados = old('ciclos_acumulados', $bateria?->ciclos_acumulados ?? 0);
     $baseId = old('base_id', $bateria?->base_id ?? '');
     $estado = old('estado', $bateria?->estado ?? 'activa');
+    $motivoCorreccion = old('motivo_correccion', '');
 @endphp
 
 <form method="POST" action="{{ $accion }}" class="ag-baterias-form" novalidate data-ag-baterias-form>
@@ -60,7 +69,7 @@
 
     <x-molecules.form-section
         :title="__('mantenimiento.baterias.seccion_datos')"
-        :count="__('mantenimiento.baterias.campos_contador', ['cantidad' => 5])"
+        :count="__('mantenimiento.baterias.campos_contador', ['cantidad' => $esEdicion ? 6 : 5])"
     >
         <x-atoms.input
             type="text"
@@ -102,10 +111,22 @@
             name="ciclos_acumulados"
             label="{{ __('mantenimiento.baterias.campo_ciclos') }}"
             value="{{ $ciclosAcumulados }}"
+            help="{{ $esEdicion ? __('mantenimiento.baterias.campo_ciclos_correccion_ayuda') : null }}"
             min="0"
             required
             error="{{ $errors->first('ciclos_acumulados') }}"
         />
+
+        @if ($esEdicion)
+            <x-atoms.input
+                type="text"
+                name="motivo_correccion"
+                label="{{ __('mantenimiento.baterias.campo_motivo_correccion') }}"
+                value="{{ $motivoCorreccion }}"
+                help="{{ __('mantenimiento.baterias.campo_motivo_correccion_ayuda') }}"
+                error="{{ $errors->first('motivo_correccion') }}"
+            />
+        @endif
 
         <x-atoms.select
             name="base_id"

@@ -2,10 +2,13 @@
 
 namespace App\Dominios\Mantenimiento\Infraestructura;
 
+use App\Dominios\Mantenimiento\Aplicacion\IncrementarCiclosBateria;
 use App\Dominios\Mantenimiento\Contratos\LecturaCiclosBateria;
 use App\Dominios\Mantenimiento\Infraestructura\Busqueda\BusquedaBaterias;
 use App\Dominios\Mantenimiento\Infraestructura\Busqueda\BusquedaGeneradores;
 use App\Dominios\Mantenimiento\Infraestructura\Busqueda\BusquedaVehiculos;
+use App\Dominios\Operaciones\Contratos\Eventos\RecargaRegistrada;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -22,7 +25,11 @@ use Illuminate\Support\ServiceProvider;
  *
  * `boot()` registra el namespace de vista `mantenimiento::` (mismo patrón
  * que `operaciones::`/`personal::`): las páginas Blade del módulo viven bajo
- * `Infraestructura/Http/Views/`, no bajo `resources/views/`.
+ * `Infraestructura/Http/Views/`, no bajo `resources/views/`. También cablea
+ * el oyente real de `RecargaRegistrada` (HU-87, tarea 102), mismo molde que
+ * `FinanzasServiceProvider::boot()` con `SesionValidada`: un closure
+ * resuelto por el contenedor, no una clase de listener registrada por
+ * convención.
  */
 final class MantenimientoServiceProvider extends ServiceProvider
 {
@@ -40,6 +47,10 @@ final class MantenimientoServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        Event::listen(function (RecargaRegistrada $evento): void {
+            app(IncrementarCiclosBateria::class)->ejecutar($evento->bateriaSalienteId);
+        });
+
         View::addNamespace('mantenimiento', app_path('Dominios/Mantenimiento/Infraestructura/Http/Views'));
     }
 }

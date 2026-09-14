@@ -12,6 +12,7 @@ use App\Dominios\Operaciones\Contratos\CierreEstadiaHacienda;
 use App\Dominios\Operaciones\Contratos\CierreSesion;
 use App\Dominios\Operaciones\Contratos\CierreTrabajo;
 use App\Dominios\Operaciones\Contratos\EscrituraSincronizacion;
+use App\Dominios\Operaciones\Contratos\Eventos\RecargaRegistrada;
 use App\Dominios\Operaciones\Contratos\RegistroCondiciones;
 use App\Dominios\Operaciones\Contratos\RegistroEvidenciaEquipo;
 use App\Dominios\Operaciones\Contratos\RegistroIncidencia;
@@ -314,6 +315,13 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
      * `alerta_temperatura` se calcula una sola vez, al momento del hecho
      * (`RegistroRecarga::alertaTemperatura()`) — nunca rechaza el registro,
      * solo lo marca (CA de HU-13: "alerta", no "bloqueo").
+     *
+     * Dispara `RecargaRegistrada` (HU-87, tarea 102) DENTRO de la misma
+     * transacción, después del `create()`: un reintento con el mismo
+     * `uuid_cliente` nunca llega a esta línea porque la `QueryException` del
+     * `UNIQUE` corta la transacción antes — así el oyente de `Mantenimiento`
+     * (`IncrementarCiclosBateria`, el "odómetro" de la batería) nunca cuenta
+     * dos veces la misma recarga.
      */
     public function registrarRecarga(RegistroRecarga $datos): ResultadoSincronizacion
     {
@@ -345,6 +353,8 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
                 if ($recarga->alerta_temperatura) {
                     $this->alertas->porBateriaCaliente($recarga, $sesion);
                 }
+
+                event(new RecargaRegistrada($datos->bateriaSalienteId));
             });
         } catch (QueryException $excepcion) {
             return $this->resultadoDesdeExcepcion($excepcion, 'ope_recargas');
