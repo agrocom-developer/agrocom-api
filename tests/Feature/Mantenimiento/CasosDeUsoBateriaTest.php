@@ -4,6 +4,7 @@ use App\Dominios\Mantenimiento\Aplicacion\ActualizarBateria;
 use App\Dominios\Mantenimiento\Aplicacion\CrearBateria;
 use App\Dominios\Mantenimiento\Dominio\EstadoBateria;
 use App\Dominios\Mantenimiento\Dominio\Excepciones\BateriaDuplicada;
+use App\Dominios\Mantenimiento\Dominio\Excepciones\CorreccionCiclosNoAutorizada;
 use App\Dominios\Mantenimiento\Infraestructura\Eloquent\Bateria;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -103,4 +104,66 @@ it('ActualizarBateria::ejecutar() acepta la transición hacia y desde el estado 
     );
 
     expect($editada->estado)->toBe('mantenimiento');
+});
+
+/*
+ * HU-87 (tarea 102): "odómetro" de ciclos_acumulados — sube solo con cada
+ * recarga real, bajarlo a mano sin dejar rastro queda bloqueado salvo que
+ * se declare el motivo explícitamente.
+ */
+
+it('ActualizarBateria::ejecutar() rechaza una baja de ciclos_acumulados sin motivoCorreccion', function () {
+    $bateria = Bateria::query()->create(['identificador' => 'BAT-001', 'ciclos_inicial' => 0, 'ciclos_acumulados' => 100, 'estado' => 'activa']);
+
+    expect(fn () => (new ActualizarBateria)->ejecutar(
+        $bateria,
+        identificador: 'BAT-001',
+        ciclosAcumulados: 80,
+        baseId: null,
+        estado: EstadoBateria::Activa,
+    ))->toThrow(CorreccionCiclosNoAutorizada::class);
+
+    expect(Bateria::query()->findOrFail($bateria->id)->ciclos_acumulados)->toBe(100);
+});
+
+it('ActualizarBateria::ejecutar() acepta una baja de ciclos_acumulados con motivoCorreccion', function () {
+    $bateria = Bateria::query()->create(['identificador' => 'BAT-001', 'ciclos_inicial' => 0, 'ciclos_acumulados' => 100, 'estado' => 'activa']);
+
+    $editada = (new ActualizarBateria)->ejecutar(
+        $bateria,
+        identificador: 'BAT-001',
+        ciclosAcumulados: 80,
+        baseId: null,
+        estado: EstadoBateria::Activa,
+        motivoCorreccion: 'Ciclos cargados de más por error de tipeo en el alta.',
+    );
+
+    expect($editada->ciclos_acumulados)->toBe(80);
+});
+
+it('ActualizarBateria::ejecutar() con un motivoCorreccion vacío se trata igual que sin motivo', function () {
+    $bateria = Bateria::query()->create(['identificador' => 'BAT-001', 'ciclos_inicial' => 0, 'ciclos_acumulados' => 100, 'estado' => 'activa']);
+
+    expect(fn () => (new ActualizarBateria)->ejecutar(
+        $bateria,
+        identificador: 'BAT-001',
+        ciclosAcumulados: 80,
+        baseId: null,
+        estado: EstadoBateria::Activa,
+        motivoCorreccion: '',
+    ))->toThrow(CorreccionCiclosNoAutorizada::class);
+});
+
+it('ActualizarBateria::ejecutar() no exige motivoCorreccion cuando ciclos_acumulados queda igual o sube', function () {
+    $bateria = Bateria::query()->create(['identificador' => 'BAT-001', 'ciclos_inicial' => 0, 'ciclos_acumulados' => 100, 'estado' => 'activa']);
+
+    $editada = (new ActualizarBateria)->ejecutar(
+        $bateria,
+        identificador: 'BAT-001',
+        ciclosAcumulados: 100,
+        baseId: null,
+        estado: EstadoBateria::Activa,
+    );
+
+    expect($editada->ciclos_acumulados)->toBe(100);
 });

@@ -296,6 +296,34 @@ it('actualizar ciclos_acumulados nunca pisa ciclos_inicial, aunque el payload lo
         ->and($bateria->ciclos_acumulados)->toBe(85);
 });
 
+it('rechaza bajar ciclos_acumulados desde el panel sin motivo_correccion, sin persistir', function () {
+    [$encargado, $idRol] = usuarioConRolParaBaterias('encargado', 'encargado_operaciones');
+    entrarAlPanelParaBaterias($encargado, $idRol);
+
+    $bateria = Bateria::query()->create(['identificador' => 'BAT-001', 'ciclos_acumulados' => 100, 'estado' => 'activa']);
+
+    $this->put(
+        route('panel.baterias.update', $bateria),
+        payloadBateria(['ciclos_acumulados' => '80']),
+    )->assertSessionHasErrors('motivo_correccion');
+
+    expect($bateria->refresh()->ciclos_acumulados)->toBe(100);
+});
+
+it('acepta bajar ciclos_acumulados desde el panel con motivo_correccion', function () {
+    [$encargado, $idRol] = usuarioConRolParaBaterias('encargado', 'encargado_operaciones');
+    entrarAlPanelParaBaterias($encargado, $idRol);
+
+    $bateria = Bateria::query()->create(['identificador' => 'BAT-001', 'ciclos_acumulados' => 100, 'estado' => 'activa']);
+
+    $this->put(
+        route('panel.baterias.update', $bateria),
+        payloadBateria(['ciclos_acumulados' => '80', 'motivo_correccion' => 'Corrección de carga inicial errónea']),
+    )->assertRedirect(route('panel.baterias.index'));
+
+    expect($bateria->refresh()->ciclos_acumulados)->toBe(80);
+});
+
 it('acepta el estado mantenimiento tanto al alta como a la edición', function () {
     [$encargado, $idRol] = usuarioConRolParaBaterias('encargado', 'encargado_operaciones');
     entrarAlPanelParaBaterias($encargado, $idRol);
