@@ -11,6 +11,7 @@ use App\Dominios\Inventario\Infraestructura\Eloquent\Stock;
 use App\Dominios\Mantenimiento\Dominio\EstadoBateria;
 use App\Dominios\Mantenimiento\Dominio\EstadoOrdenMantenimiento;
 use App\Dominios\Mantenimiento\Dominio\EstadoVehiculo;
+use App\Dominios\Mantenimiento\Dominio\TipoVehiculo;
 use App\Dominios\Mantenimiento\Infraestructura\Eloquent\Bateria;
 use App\Dominios\Mantenimiento\Infraestructura\Eloquent\OrdenMantenimiento;
 use App\Dominios\Mantenimiento\Infraestructura\Eloquent\PlanMantenimiento;
@@ -130,18 +131,22 @@ class FlotaDemoSeeder extends Seeder
      */
     private function vehiculos(int $autorId, int $cuatroCanadas, int $pailon): array
     {
+        // 'tipo' (HU-90, tarea 105): CAM-03 queda como 'chata' a propósito
+        // (en vez de 'camioneta'/'camion' como el resto de los CAM-*), para
+        // que el valor nuevo del catálogo se vea en el panel de demo.
         $catalogo = [
-            ['CAM-01', $cuatroCanadas, EstadoVehiculo::Activo],
-            ['CAM-02', $cuatroCanadas, EstadoVehiculo::Taller],
-            ['CAM-03', $pailon, EstadoVehiculo::Activo],
-            ['MOT-01', $pailon, EstadoVehiculo::Activo],
+            ['CAM-01', $cuatroCanadas, EstadoVehiculo::Activo, TipoVehiculo::Camioneta],
+            ['CAM-02', $cuatroCanadas, EstadoVehiculo::Taller, TipoVehiculo::Camion],
+            ['CAM-03', $pailon, EstadoVehiculo::Activo, TipoVehiculo::Chata],
+            ['MOT-01', $pailon, EstadoVehiculo::Activo, TipoVehiculo::Moto],
         ];
 
         $ids = [];
 
-        foreach ($catalogo as [$identificador, $baseId, $estado]) {
+        foreach ($catalogo as [$identificador, $baseId, $estado, $tipo]) {
             $vehiculo = $this->crear(new Vehiculo([
                 'identificador' => $identificador,
+                'tipo' => $tipo,
                 'base_id' => $baseId,
                 'estado' => $estado,
             ]), $autorId);
