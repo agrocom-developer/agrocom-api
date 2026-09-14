@@ -33,7 +33,8 @@ return [
     // Pantalla de panel "Recursos › Vehículos" (HU-40, tarea 50): alta y
     // mantenimiento de la flota de vehículos, con su asignación a base y
     // estado. Ficha completa (marca, modelo, año, combustible, 4x4,
-    // kilometraje inicial y actual) y estado 'pausa': HU-84, tarea 99.
+    // kilometraje inicial y actual) y estado 'pausa': HU-84, tarea 99. Tipo
+    // de vehículo (catálogo cerrado, incluye 'chata'): HU-90, tarea 105.
     'vehiculos' => [
         'titulo' => 'Vehículos',
         'subtitulo' => 'Flota de vehículos registrada, con su base asignada y estado.',
@@ -64,6 +65,8 @@ return [
         'seccion_datos' => 'Datos del vehículo',
         'campos_contador' => ':cantidad campos',
         'campo_identificador' => 'Identificador',
+        'campo_tipo' => 'Tipo',
+        'campo_tipo_placeholder' => 'Sin especificar',
         'campo_marca' => 'Marca',
         'campo_modelo' => 'Modelo',
         'campo_anio' => 'Año',
@@ -79,6 +82,12 @@ return [
         'combustible' => [
             'gasolina' => 'Gasolina',
             'diesel' => 'Diésel',
+        ],
+        'tipo' => [
+            'camioneta' => 'Camioneta',
+            'camion' => 'Camión',
+            'moto' => 'Moto',
+            'chata' => 'Chata',
         ],
         'estado_form' => 'Los cambios se guardan al confirmar.',
         'creado' => 'Vehículo creado correctamente.',

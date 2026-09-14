@@ -27,8 +27,13 @@ use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
  * `kilometraje_actual` (HU-84, tarea 99): ver docblock de
  * `database/migrations/2026_09_14_100013_add_ficha_completa_y_pausa_a_man_vehiculos_table.php`.
  *
+ * `tipo` (HU-90, tarea 105): clasificación de flota, catálogo cerrado — ver
+ * docblock de
+ * `database/migrations/2026_09_14_100017_add_tipo_a_man_vehiculos_table.php`.
+ *
  * @property int $id
  * @property string $identificador
+ * @property string|null $tipo
  * @property string|null $marca
  * @property string|null $modelo
  * @property int|null $anio
@@ -48,6 +53,7 @@ class Vehiculo extends ModeloDominio
     /** @var list<string> */
     protected $fillable = [
         'identificador',
+        'tipo',
         'marca',
         'modelo',
         'anio',

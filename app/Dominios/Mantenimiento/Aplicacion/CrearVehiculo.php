@@ -5,6 +5,7 @@ namespace App\Dominios\Mantenimiento\Aplicacion;
 use App\Dominios\Mantenimiento\Dominio\EstadoVehiculo;
 use App\Dominios\Mantenimiento\Dominio\Excepciones\VehiculoDuplicado;
 use App\Dominios\Mantenimiento\Dominio\TipoCombustibleVehiculo;
+use App\Dominios\Mantenimiento\Dominio\TipoVehiculo;
 use App\Dominios\Mantenimiento\Infraestructura\Eloquent\Vehiculo;
 use Illuminate\Database\QueryException;
 
@@ -17,6 +18,9 @@ use Illuminate\Database\QueryException;
  * A diferencia de `ciclosInicial` en baterías (tarea 98),
  * `kilometrajeInicial` NO es inmutable: el criterio de esta HU no lo pide,
  * así que `ActualizarVehiculo` lo recibe igual que acá.
+ *
+ * `tipo` (HU-90, tarea 105): clasificación de flota, catálogo cerrado,
+ * opcional — mismo criterio que `combustible`.
  */
 final class CrearVehiculo
 {
@@ -36,9 +40,11 @@ final class CrearVehiculo
         bool $es4x4,
         ?string $kilometrajeInicial,
         ?string $kilometrajeActual,
+        ?TipoVehiculo $tipo = null,
     ): Vehiculo {
         $vehiculo = new Vehiculo([
             'identificador' => $identificador,
+            'tipo' => $tipo?->value,
             'base_id' => $baseId,
             'estado' => $estado->value,
             'marca' => $marca,

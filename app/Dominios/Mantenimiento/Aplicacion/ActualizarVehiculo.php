@@ -5,6 +5,7 @@ namespace App\Dominios\Mantenimiento\Aplicacion;
 use App\Dominios\Mantenimiento\Dominio\EstadoVehiculo;
 use App\Dominios\Mantenimiento\Dominio\Excepciones\VehiculoDuplicado;
 use App\Dominios\Mantenimiento\Dominio\TipoCombustibleVehiculo;
+use App\Dominios\Mantenimiento\Dominio\TipoVehiculo;
 use App\Dominios\Mantenimiento\Infraestructura\Eloquent\Vehiculo;
 use Illuminate\Database\QueryException;
 
@@ -16,6 +17,9 @@ use Illuminate\Database\QueryException;
  * `kilometrajeInicial` (HU-84, tarea 99) SÍ se recibe acá, a diferencia de
  * `ciclosInicial` en `ActualizarBateria`: el criterio de esta HU no pide
  * que quede fijo tras el alta.
+ *
+ * `tipo` (HU-90, tarea 105) también es editable acá, mismo criterio que
+ * `combustible`.
  */
 final class ActualizarVehiculo
 {
@@ -36,8 +40,10 @@ final class ActualizarVehiculo
         bool $es4x4,
         ?string $kilometrajeInicial,
         ?string $kilometrajeActual,
+        ?TipoVehiculo $tipo = null,
     ): Vehiculo {
         $vehiculo->identificador = $identificador;
+        $vehiculo->tipo = $tipo?->value;
         $vehiculo->base_id = $baseId;
         $vehiculo->estado = $estado->value;
         $vehiculo->marca = $marca;
