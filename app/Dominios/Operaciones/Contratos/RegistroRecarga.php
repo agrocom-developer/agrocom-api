@@ -19,8 +19,11 @@ namespace App\Dominios\Operaciones\Contratos;
  * `$motivoRetrasoCaldo` reencuadra el `problema_caldo` de la espec §4.3
  * (escrita antes de CR-01): la CA vigente (`plan_sprints.md`) lo pide como
  * "motivo del retraso/rechazo por caldo", nullable — solo se completa si
- * hubo retraso, no en cada recarga. Sin `mezcla_id`: CR-01 cerró que Agrocom
- * no prepara la mezcla.
+ * hubo retraso, no en cada recarga. Sin `mezcla_id`: la recarga (cambio de
+ * batería o carga adicional de caldo durante el vuelo) es un evento
+ * independiente del registro `mezcla` (espec §7, HU-78, tarea 94) que
+ * transcribe qué se cargó al abrir el trabajo — no hace falta vincular ambos
+ * para esta tarea.
  *
  * `$bateriaSalienteId` es texto libre, no una FK: no existe catálogo de
  * baterías en el esquema (el prompt de la tarea lo prohíbe explícitamente).
