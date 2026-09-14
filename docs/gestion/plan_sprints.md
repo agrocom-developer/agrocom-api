@@ -356,6 +356,35 @@ dueño antes de convertirse en HU.
 
 ---
 
+## Sprint 17 — Catálogo de recursos ampliado (ronda del dueño, `REcursos.docx`, 13/9/2026)
+
+*Objetivo: completar las fichas de Drones, Baterías, Vehículos, Base y
+Generador con los campos de inventario/mantenimiento que el dueño pidió en un
+tercer documento de la misma ronda, sin texto marcado en rojo — ninguno choca
+con arquitectura. Detalle en
+`docs/negocio/observaciones_recursos_2026-09-13.md`. Personal (nombre, rol,
+base, tarifa por hectárea, activo) ya estaba completo y no generó HU.*
+
+| ID | Historia / tarea | CA esenciales | Est. |
+|---|---|---|---|
+| HU-81 | Como **encargado**, quiero cargar la capacidad de un dron en kilos además de en litros, para que una orden de aplicación sólida sepa cuánto puede llevar cada vuelo | `capacidad_kg` en `ope_drones`, mismo patrón que `capacidad_l`; sin catálogo cerrado de valores (a diferencia de los litros, no hay 3 capacidades fijas conocidas todavía) | 0,5 d |
+| HU-82 | Como **encargado**, quiero una ficha de inventario del dron con número de serie, chasis, versión de software, región y sus accesorios (cargador de control, módem, maletín), para llevar el activo completo sin mezclarlo con el dato operativo | Ficha nueva en `Mantenimiento` (`man_drones` o equivalente), correlación por identificador de texto con `ope_drones` (mismo patrón sin FK real que batería/recarga, justificado por el propio docblock de `ope_drones`: "deliberadamente mínima") | 2,0 d |
+| HU-83 | Como **encargado**, quiero registrar el ciclo inicial de una batería además del acumulado, y poder marcarla en mantenimiento, para llevar su historial completo | `ciclos_inicial` nuevo en `man_baterias` (separado de `ciclos_acumulados`, que sigue siendo el total corriente); `EstadoBateria` suma el caso `Mantenimiento` (hoy solo `Activa`/`Retirada`), con su `CHECK` actualizado | 1,0 d |
+| HU-84 | Como **encargado**, quiero la ficha completa del vehículo (marca, modelo, año, combustible, 4x4, kilometraje inicial y actual) y poder pausarlo, para llevar la flota igual que los drones | `man_vehiculos` gana `marca`/`modelo`/`anio`/`combustible` (gasolina/diesel)/`es_4x4`/`kilometraje_inicial`/`kilometraje_actual`; `EstadoVehiculo` suma el caso `Pausa` (hoy `activo`/`taller`/`de_baja`) | 2,0 d |
+| HU-85 | Como **encargado**, quiero cargar la coordenada de una base además de su ubicación en texto, para ubicarla en el mapa | `latitud`/`longitud` (DECIMAL) en `per_bases`, mismo patrón de validación de rango que HU-76 (Sprint 16) | 0,5 d |
+| HU-86 | Como **encargado**, quiero registrar las horas inicial y actual de un generador en vez de un solo valor cargado a mano, para saber cuánto acumuló desde que entró en la flota | `man_generadores` reemplaza `horas_uso` único por `horas_inicial`/`horas_actual` (ambos siguen siendo carga manual — un generador no vuela, no hay de dónde derivarlo); migración de datos existentes: `horas_inicial = horas_actual = horas_uso` | 1,0 d |
+
+**Total: 7,0 d · sin pantallas nuevas de menú (todas amplían fichas existentes)**
+
+**Orden y dependencias.** Ninguna depende de otra dentro de este sprint. HU-81
+conviene antes que HU-79 (Sprint 16) si ambas quedan en la misma vuelta del
+ciclo, porque HU-79 puede aprovechar `capacidad_kg` para validar el máximo por
+vuelo — no es bloqueante, HU-79 ya tiene su propio criterio sin ese dato.
+Ninguna es crítica: todas son columnas nuevas sobre catálogos que ya existen,
+sin motor de sync ni guarda de negocio de por medio.
+
+---
+
 ## Alcance total del sistema
 
 | Bloque | Días | Pantallas de menú | Estado |
