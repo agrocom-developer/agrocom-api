@@ -1,6 +1,13 @@
 # Cola de tareas automatizables
 
-**Última actualización: 13/9/2026 (Sprint 17 planificado — tareas 96 a
+**Última actualización: 13/9/2026 (Sprint 18 planificado — tareas 103 a
+105).** Cuarto documento de la misma ronda (`Mantenimiento.pdf`, sin texto en
+rojo): ajusta la orden de mantenimiento. Detalle en
+`docs/negocio/observaciones_mantenimiento_2026-09-13.md`. De paso apareció un
+hallazgo propio (no pedido por el dueño) anotado en "Deuda técnica
+detectada" más abajo, sin fila en la cola.
+
+**Última actualización anterior: 13/9/2026 (Sprint 17 planificado — tareas 96 a
 101).** Tercer documento de la misma ronda del dueño (`REcursos.docx`, sin
 texto en rojo): completa las fichas de Drones, Baterías, Vehículos, Base y
 Generador. Detalle en `docs/negocio/observaciones_recursos_2026-09-13.md` y
@@ -226,6 +233,9 @@ exista el módulo `Mezclas`).
 | 100 | HU-85 — coordenada (`latitud`/`longitud`) de una base, además de la `ubicacion` en texto libre ya existente | `./bin/verify` = 0, con test de guardado/lectura de coordenada y de que una coordenada fuera de rango (±90/±180) se rechaza | `app/Dominios/Personal/**`, migración `ALTER per_bases`, `lang/es/personal.php`, tests | no | 1 | **pendiente** |
 | 101 | HU-86 — horas inicial y horas actual de un generador, reemplazando el único `horas_uso` cargado a mano; migra los datos existentes (`horas_inicial = horas_actual = horas_uso`) | `./bin/verify` = 0, con test de migración de datos que preserva el valor existente en ambas columnas nuevas, y test de que `horas_actual < horas_inicial` se rechaza | `app/Dominios/Mantenimiento/**`, migración `ALTER man_generadores` (agrega columnas + migra datos + elimina `horas_uso`), `lang/es/mantenimiento.php`, tests | no | 2 | **pendiente** |
 | 102 | HU-87 — el ciclo acumulado de una batería se incrementa solo al cerrarse cada recarga que la usó (regla "odómetro" del dueño), nunca se edita a mano hacia abajo sin corrección auditada; depende de que la tarea 98 esté integrada | `./bin/verify` = 0, con test de que dos recargas de la misma batería incrementan `ciclos_acumulados` dos veces, y test de que bajar el valor a mano sin el mecanismo de corrección se rechaza | `app/Dominios/Mantenimiento/**`, `app/Dominios/Operaciones/**` (evento de dominio al cerrar una recarga), migración si hace falta columna de auditoría propia, tests | **sí** | 3 | **pendiente** |
+| 103 | HU-88 — ocultar del menú del encargado Plan de Mantenimiento/Repuestos/Stock Base (siguen funcionando por debajo) y mostrar "Precio de Mantenimiento Final" como el monto real del gasto vinculado a la orden cerrada | `./bin/verify` = 0, con test de que el rol `encargado` ya no ve esos 3 ítems en su menú, test de que un rol con el permiso sigue accediendo por URL directa, y test de que el total mostrado coincide con `fin_gastos.monto` del gasto generado al cerrar (regresión de HU-37/tarea 53) | `app/Dominios/Mantenimiento/**`, `SecMenuSeeder`, `lang/es/mantenimiento.php`, tests | no | 2 | **pendiente** |
+| 104 | HU-89 — descripción de mantenimiento final al cerrar la orden, separada de la descripción de apertura | `./bin/verify` = 0, con test de que `MaquinaEstadosOrdenMantenimiento::cerrar()` rechaza sin `descripcion_final`, y de que la `descripcion` de apertura no se pisa | `app/Dominios/Mantenimiento/**`, migración `ALTER man_ordenes_mantenimiento`, `lang/es/mantenimiento.php`, tests | no | 1 | **pendiente** |
+| 105 | HU-90 — tipo de vehículo (catálogo cerrado, incluye "chata") en `man_vehiculos`; complementa la tarea 99 (Sprint 17), misma tabla, sin bloquearla | `./bin/verify` = 0, con test de valor fuera de catálogo rechazado y de que un vehículo `chata` opera igual que cualquier otro en las pantallas ya existentes | `app/Dominios/Mantenimiento/**`, migración `ALTER man_vehiculos`, `lang/es/mantenimiento.php`, tests | no | 1 | **pendiente** |
 
 ### El bug de la 24 — ya pasó dos veces, sigue sin arreglarse
 
@@ -297,8 +307,15 @@ el 9/9/2026 con las tareas 82 a 84.
 Cuando la sesión de planificación se queda sin HU/TE y encuentra algo acá,
 escribe `runs/DETENER` y para: la decisión es del usuario.
 
-_Nada pendiente al 9/9/2026: las tres entradas que había (82, 83 y 84) se
-cerraron en el PR #154._
+**Pendiente al 13/9/2026** (hallazgo propio al planificar el Sprint 18, no
+pedido por el dueño — ver
+`docs/negocio/observaciones_mantenimiento_2026-09-13.md` §3): el `CHECK` de
+`man_ordenes_mantenimiento.equipo_tipo` solo acepta `('dron', 'vehiculo')`
+(`database/migrations/2026_09_03_300004_create_man_ordenes_mantenimiento_table.php:80-81`)
+— la tabla se creó el 3/9/2026 (tarea 53), antes de que `man_generadores`
+existiera (tarea 72, 9/9/2026). Hoy no se puede abrir una orden de
+mantenimiento sobre un generador. Sin fila propia hasta que el usuario decida
+si entra a la cola.
 
 ### Fuera del ciclo automático
 

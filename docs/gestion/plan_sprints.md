@@ -388,6 +388,27 @@ lo es: son columnas nuevas sobre catálogos que ya existen.
 
 ---
 
+## Sprint 18 — Orden de mantenimiento (ronda del dueño, `Mantenimiento.pdf`, 13/9/2026)
+
+*Objetivo: ajustar la pantalla de orden de mantenimiento a lo que el
+encargado necesita ver en el día a día, sin tocar el costeo automático de
+repuestos que ya funciona por debajo. Detalle en
+`docs/negocio/observaciones_mantenimiento_2026-09-13.md`.*
+
+| ID | Historia / tarea | CA esenciales | Est. |
+|---|---|---|---|
+| HU-88 | Como **encargado**, quiero no ver en mi menú del día a día las pantallas de Plan de Mantenimiento, Repuestos y Stock Base, y ver el precio final real de una orden cerrada, para no navegar pantallas de administración que no uso seguido | Los 3 ítems dejan de verse en el menú del rol `encargado` (sin eliminar rutas ni lógica — siguen accesibles a quien sí tenga el permiso); la orden cerrada muestra "Precio de Mantenimiento Final" = el monto real del `fin_gastos` vinculado por `gasto_id` (HU-37), sin campo editable nuevo que lo reemplace | 1,5 d |
+| HU-89 | Como **encargado**, quiero registrar una descripción de mantenimiento final al cerrar la orden, separada de la descripción de apertura, para dejar constancia de qué se hizo realmente | `man_ordenes_mantenimiento` gana `descripcion_final`; `MaquinaEstadosOrdenMantenimiento::cerrar()` la exige antes de transicionar a `cerrada` | 1,0 d |
+| HU-90 | Como **encargado**, quiero clasificar un vehículo por tipo (incluida "chata"), para diferenciar la flota | `man_vehiculos` gana `tipo` (catálogo cerrado con al menos `chata`); no toca `equipo_tipo` de `man_ordenes_mantenimiento` (esa columna distingue tabla de origen — `dron`/`vehiculo` —, no el tipo de vehículo). Complementa HU-84 (Sprint 17), misma tabla, sin bloquearla | 1,0 d |
+
+**Total: 3,5 d · sin pantallas nuevas de menú**
+
+**Ninguna es crítica**: son ajustes de visibilidad de menú y columnas nuevas
+sobre una máquina de estados y un flujo de costeo que ya existen y no se
+tocan en su lógica.
+
+---
+
 ## Alcance total del sistema
 
 | Bloque | Días | Pantallas de menú | Estado |
