@@ -149,6 +149,19 @@ class Trabajo extends ModeloDominio
     }
 
     /**
+     * "Reporte de Equipos" de este trabajo (HU-80, tarea 86): horas de
+     * vuelo declaradas y las tres fotos de chequeo. `hasOne` porque
+     * `ope_evidencias_equipo.trabajo_id` es `UNIQUE` — un solo registro por
+     * trabajo, mismo criterio que `reporteTecnico()`.
+     *
+     * @return HasOne<EvidenciaEquipo, $this>
+     */
+    public function evidenciaEquipo(): HasOne
+    {
+        return $this->hasOne(EvidenciaEquipo::class, 'trabajo_id');
+    }
+
+    /**
      * Cuadre de caldo (espec §7.3, criterio de aceptación 4 de la tarea 18):
      * `recibido` (suma de `ope_recepciones_caldo.litros` de este trabajo),
      * `consumido` (suma de `ope_sesiones.litros_consumidos` de sus sesiones,
