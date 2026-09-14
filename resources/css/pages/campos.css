@@ -186,3 +186,16 @@
     display: flex;
     justify-content: flex-end;
 }
+
+/* Generador de alta masiva (HU-72, tarea 88): botón + ayuda en la misma
+   línea cuando entra, apilados si no — mismo patrón que `.ag-lote-mapa__pie`. */
+.ag-campos-form__generador-pie {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+    flex-wrap: wrap;
+}
+
+.ag-campos-form__generador-pie .ag-input__help {
+    margin: 0;
+}
