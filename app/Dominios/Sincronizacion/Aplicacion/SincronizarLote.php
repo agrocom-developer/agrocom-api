@@ -10,6 +10,7 @@ use App\Dominios\Operaciones\Contratos\CierreSesion;
 use App\Dominios\Operaciones\Contratos\CierreTrabajo;
 use App\Dominios\Operaciones\Contratos\EscrituraSincronizacion;
 use App\Dominios\Operaciones\Contratos\RegistroCondiciones;
+use App\Dominios\Operaciones\Contratos\RegistroEvidenciaEquipo;
 use App\Dominios\Operaciones\Contratos\RegistroIncidencia;
 use App\Dominios\Operaciones\Contratos\RegistroRecarga;
 use App\Dominios\Operaciones\Contratos\RegistroRecepcionCaldo;
@@ -50,8 +51,11 @@ final class SincronizarLote
      * ninguna referencia a la otra. `estadia_entrada`/`estadia_salida` (HU-51,
      * tarea 74) van al final: no son prerrequisito causal de nada — la
      * estadía del equipo en la hacienda es independiente de trabajo/sesión.
+     * `evidencia_equipo` (HU-80, tarea 86) solo depende de `trabajo` —no de
+     * `sesion`—, mismo criterio que `recepcion_caldo`, así que va junto a
+     * ella.
      */
-    private const array ORDEN_CAUSAL = ['trabajo', 'recepcion_caldo', 'sesion', 'condiciones', 'incidencia', 'recarga', 'cierre_trabajo', 'cierre_sesion', 'estadia_entrada', 'estadia_salida'];
+    private const array ORDEN_CAUSAL = ['trabajo', 'recepcion_caldo', 'evidencia_equipo', 'sesion', 'condiciones', 'incidencia', 'recarga', 'cierre_trabajo', 'cierre_sesion', 'estadia_entrada', 'estadia_salida'];
 
     public function __construct(
         private readonly EscrituraSincronizacion $operaciones,
@@ -106,6 +110,7 @@ final class SincronizarLote
         return match ($tipo) {
             'trabajo' => $this->aplicarTrabajo($registro),
             'recepcion_caldo' => $this->aplicarRecepcionCaldo($registro),
+            'evidencia_equipo' => $this->aplicarEvidenciaEquipo($registro),
             'sesion' => $this->aplicarSesion($registro, $operarioPersonaId),
             'condiciones' => $this->aplicarCondiciones($registro),
             'incidencia' => $this->aplicarIncidencia($registro),
@@ -132,6 +137,22 @@ final class SincronizarLote
         return $datos === null
             ? ResultadoSincronizacion::rechazado('recepción de caldo con datos incompletos o inválidos')
             : $this->operaciones->registrarRecepcionCaldo($datos);
+    }
+
+    /**
+     * @param  array<string, mixed>  $registro
+     *
+     * Sin verificación de pertenencia (mismo criterio que
+     * `aplicarRecepcionCaldo()`): la espec no define una noción de "dueño"
+     * para este registro.
+     */
+    private function aplicarEvidenciaEquipo(array $registro): ResultadoSincronizacion
+    {
+        $datos = RegistroEvidenciaEquipo::intentarDesdeArreglo($registro);
+
+        return $datos === null
+            ? ResultadoSincronizacion::rechazado('evidencia de equipo con datos incompletos o inválidos')
+            : $this->operaciones->registrarEvidenciaEquipo($datos);
     }
 
     /** @param  array<string, mixed>  $registro */

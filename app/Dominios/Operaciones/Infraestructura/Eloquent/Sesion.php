@@ -192,4 +192,17 @@ class Sesion extends ModeloDominio
     {
         return $this->belongsTo(Dron::class, 'dron_id');
     }
+
+    /**
+     * Recargas de batería/caldo registradas durante esta sesión (HU-13,
+     * tarea 23). `ArmarContenidoReporteTecnico` (HU-80, tarea 86) las
+     * recorre para saber qué baterías (`bateria_saliente_id`) se usaron y
+     * pedir sus ciclos acumulados a `Mantenimiento`.
+     *
+     * @return HasMany<Recarga, $this>
+     */
+    public function recargas(): HasMany
+    {
+        return $this->hasMany(Recarga::class, 'sesion_id');
+    }
 }

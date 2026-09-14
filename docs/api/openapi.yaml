@@ -243,6 +243,9 @@ paths:
                     - foto_incidencia
                     - comprobante
                     - firma_acta
+                    - foto_control
+                    - foto_ciclo_bateria_balanceo
+                    - foto_dron_limpio
                 fecha:
                   type: string
                   format: date-time
@@ -1211,7 +1214,7 @@ components:
       type: object
     RegistroSync:
       title: 'Registro de entrada del lote de sync'
-      description: 'Un elemento del arreglo `registros`. La forma exacta de los campos depende de `tipo`; un registro con datos incompletos o inválidos se responde `rechazado` sin frenar el resto del lote — nunca un 422 para el lote completo. `cierre_trabajo`/`cierre_sesion` (HU-05) MUTAN una fila existente en vez de crear una nueva: `uuid_cliente` identifica el EVENTO de cierre — distinto del `uuid_cliente` de apertura del trabajo/sesión que referencian. `recepcion_caldo` (HU-10 redefinida por CR-01, tarea 18) registra volumen de caldo entregado por el cliente — nunca su composición (espec §7.1: sin producto, dosis ni fórmula). `incidencia` (HU-08, tarea 22) registra un evento puntual de la sesión (caldo/ESC/batería/mecánica/clima/otro) con foto SIEMPRE obligatoria, referenciada por `uuid_cliente` a una evidencia ya subida por `POST /api/evidencias` con `tipo: foto_incidencia`. `recarga` (HU-13, tarea 23) registra cada ciclo de cambio de batería/recarga de caldo durante el vuelo — temperatura de batería > 50°C se persiste con `alerta_temperatura = true` sin rechazar el registro; sin `mezcla_id` (CR-01: Agrocom no prepara la mezcla). `estadia_entrada`/`estadia_salida` (HU-51, tarea 74) registran cuándo un equipo de trabajo llega y se va de una hacienda — sin `campania_id` (la estadía es del campo, no de una campaña) y sin verificación de pertenencia a una persona (es del equipo). `estadia_salida` referencia la estadía por el `uuid_cliente` de su `estadia_entrada`, igual criterio que `cierre_trabajo`/`cierre_sesion`.'
+      description: 'Un elemento del arreglo `registros`. La forma exacta de los campos depende de `tipo`; un registro con datos incompletos o inválidos se responde `rechazado` sin frenar el resto del lote — nunca un 422 para el lote completo. `cierre_trabajo`/`cierre_sesion` (HU-05) MUTAN una fila existente en vez de crear una nueva: `uuid_cliente` identifica el EVENTO de cierre — distinto del `uuid_cliente` de apertura del trabajo/sesión que referencian. `recepcion_caldo` (HU-10 redefinida por CR-01, tarea 18) registra volumen de caldo entregado por el cliente — nunca su composición (espec §7.1: sin producto, dosis ni fórmula). `incidencia` (HU-08, tarea 22) registra un evento puntual de la sesión (caldo/ESC/batería/mecánica/clima/otro) con foto SIEMPRE obligatoria, referenciada por `uuid_cliente` a una evidencia ya subida por `POST /api/evidencias` con `tipo: foto_incidencia`. `recarga` (HU-13, tarea 23) registra cada ciclo de cambio de batería/recarga de caldo durante el vuelo — temperatura de batería > 50°C se persiste con `alerta_temperatura = true` sin rechazar el registro; sin `mezcla_id` (CR-01: Agrocom no prepara la mezcla). `estadia_entrada`/`estadia_salida` (HU-51, tarea 74) registran cuándo un equipo de trabajo llega y se va de una hacienda — sin `campania_id` (la estadía es del campo, no de una campaña) y sin verificación de pertenencia a una persona (es del equipo). `estadia_salida` referencia la estadía por el `uuid_cliente` de su `estadia_entrada`, igual criterio que `cierre_trabajo`/`cierre_sesion`. `evidencia_equipo` (HU-80, tarea 86) registra el "Reporte de Equipos": horas de vuelo declaradas del dron y las tres fotos de chequeo (control, ciclo de batería y balanceo, dron limpio), cada una referenciada por `uuid_cliente` a una evidencia ya subida por `POST /api/evidencias` — las tres son obligatorias, falta cualquiera y se rechaza el registro completo.'
       required:
         - tipo
         - uuid_cliente
@@ -1223,6 +1226,7 @@ components:
           enum:
             - trabajo
             - recepcion_caldo
+            - evidencia_equipo
             - sesion
             - condiciones
             - incidencia
@@ -1247,7 +1251,7 @@ components:
           type: integer
           example: 1
         trabajo_uuid_cliente:
-          description: '`sesion`/`cierre_trabajo`: `uuid_cliente` de apertura del trabajo — nunca el id de servidor, que puede no existir todavía si el trabajo llegó en este mismo lote.'
+          description: '`sesion`/`cierre_trabajo`/`recepcion_caldo`/`evidencia_equipo`: `uuid_cliente` de apertura del trabajo — nunca el id de servidor, que puede no existir todavía si el trabajo llegó en este mismo lote.'
           type: string
           example: a1b2c3d4-0000-4000-8000-000000000001
         sesion_uuid_cliente:
@@ -1458,6 +1462,26 @@ components:
           description: '`estadia_salida`: cuándo se fue el equipo. Anterior o igual a la `entrada` de la estadía rechaza el registro.'
           type: string
           format: date-time
+          example: null
+          nullable: true
+        horas_vuelo_dron:
+          description: '`evidencia_equipo`: horas de vuelo del dron declaradas por el auxiliar/piloto (no calculadas). DECIMAL como string (invariante 6).'
+          type: string
+          example: null
+          nullable: true
+        foto_control_uuid_cliente:
+          description: '`evidencia_equipo`, obligatorio: `uuid_cliente` de una evidencia ya subida por `POST /api/evidencias` con `tipo: foto_control`.'
+          type: string
+          example: null
+          nullable: true
+        foto_ciclo_bateria_balanceo_uuid_cliente:
+          description: '`evidencia_equipo`, obligatorio: `uuid_cliente` de una evidencia con `tipo: foto_ciclo_bateria_balanceo`.'
+          type: string
+          example: null
+          nullable: true
+        foto_dron_limpio_uuid_cliente:
+          description: '`evidencia_equipo`, obligatorio: `uuid_cliente` de una evidencia con `tipo: foto_dron_limpio`.'
+          type: string
           example: null
           nullable: true
       type: object

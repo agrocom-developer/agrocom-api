@@ -39,18 +39,23 @@ use OpenApi\Attributes as OA;
         .'cuándo un equipo de trabajo llega y se va de una hacienda — sin `campania_id` (la estadía es '
         .'del campo, no de una campaña) y sin verificación de pertenencia a una persona (es del equipo). '
         .'`estadia_salida` referencia la estadía por el `uuid_cliente` de su `estadia_entrada`, igual '
-        .'criterio que `cierre_trabajo`/`cierre_sesion`.',
+        .'criterio que `cierre_trabajo`/`cierre_sesion`. `evidencia_equipo` (HU-80, tarea 86) registra el '
+        .'"Reporte de Equipos": horas de vuelo declaradas del dron y las tres fotos de chequeo (control, '
+        .'ciclo de batería y balanceo, dron limpio), cada una referenciada por `uuid_cliente` a una '
+        .'evidencia ya subida por `POST /api/evidencias` — las tres son obligatorias, falta cualquiera y '
+        .'se rechaza el registro completo.',
     required: ['tipo', 'uuid_cliente'],
     properties: [
-        new OA\Property(property: 'tipo', type: 'string', enum: ['trabajo', 'recepcion_caldo', 'sesion', 'condiciones', 'incidencia', 'recarga', 'cierre_trabajo', 'cierre_sesion', 'estadia_entrada', 'estadia_salida'], example: 'trabajo'),
+        new OA\Property(property: 'tipo', type: 'string', enum: ['trabajo', 'recepcion_caldo', 'evidencia_equipo', 'sesion', 'condiciones', 'incidencia', 'recarga', 'cierre_trabajo', 'cierre_sesion', 'estadia_entrada', 'estadia_salida'], example: 'trabajo'),
         new OA\Property(property: 'uuid_cliente', type: 'string', example: 'a1b2c3d4-0000-4000-8000-000000000001'),
         new OA\Property(property: 'orden_id', description: '`trabajo`: id de servidor de la orden (del pull de catálogo).', type: 'integer', example: 1),
         new OA\Property(property: 'lote_id', description: '`trabajo`: id de servidor del lote (del pull de catálogo).', type: 'integer', example: 3),
         new OA\Property(property: 'nro_aplicacion', description: '`trabajo`.', type: 'integer', example: 1),
         new OA\Property(
             property: 'trabajo_uuid_cliente',
-            description: '`sesion`/`cierre_trabajo`: `uuid_cliente` de apertura del trabajo — nunca el id de '
-                .'servidor, que puede no existir todavía si el trabajo llegó en este mismo lote.',
+            description: '`sesion`/`cierre_trabajo`/`recepcion_caldo`/`evidencia_equipo`: `uuid_cliente` de '
+                .'apertura del trabajo — nunca el id de servidor, que puede no existir todavía si el trabajo '
+                .'llegó en este mismo lote.',
             type: 'string',
             example: 'a1b2c3d4-0000-4000-8000-000000000001',
         ),
@@ -149,6 +154,10 @@ use OpenApi\Attributes as OA;
             example: null,
         ),
         new OA\Property(property: 'salida', description: '`estadia_salida`: cuándo se fue el equipo. Anterior o igual a la `entrada` de la estadía rechaza el registro.', type: 'string', format: 'date-time', nullable: true, example: null),
+        new OA\Property(property: 'horas_vuelo_dron', description: '`evidencia_equipo`: horas de vuelo del dron declaradas por el auxiliar/piloto (no calculadas). DECIMAL como string (invariante 6).', type: 'string', nullable: true, example: null),
+        new OA\Property(property: 'foto_control_uuid_cliente', description: '`evidencia_equipo`, obligatorio: `uuid_cliente` de una evidencia ya subida por `POST /api/evidencias` con `tipo: foto_control`.', type: 'string', nullable: true, example: null),
+        new OA\Property(property: 'foto_ciclo_bateria_balanceo_uuid_cliente', description: '`evidencia_equipo`, obligatorio: `uuid_cliente` de una evidencia con `tipo: foto_ciclo_bateria_balanceo`.', type: 'string', nullable: true, example: null),
+        new OA\Property(property: 'foto_dron_limpio_uuid_cliente', description: '`evidencia_equipo`, obligatorio: `uuid_cliente` de una evidencia con `tipo: foto_dron_limpio`.', type: 'string', nullable: true, example: null),
     ],
     type: 'object',
 )]

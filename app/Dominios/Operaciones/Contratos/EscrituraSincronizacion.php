@@ -71,6 +71,15 @@ namespace App\Dominios\Operaciones\Contratos;
  * resuelve dentro de la implementación comparando `cierre_uuid_cliente`
  * bajo `lockForUpdate()`. Sin `$operarioPersonaId`, mismo motivo que
  * `abrirEstadia()`.
+ *
+ * `registrarEvidenciaEquipo()` (HU-80, tarea 86) crea una fila nueva, mismo
+ * mecanismo de idempotencia que `registrarRecepcionCaldo()`: solo depende de
+ * `trabajo`, no de `sesion`. Sin `$operarioPersonaId`, mismo motivo que ese
+ * método: la espec no define dueño para este registro. A diferencia de
+ * `registrarRecepcionCaldo()`, sí puede rechazar por una razón adicional a
+ * "dato inválido o referencia inexistente": las tres fotos de evidencia
+ * (control, ciclo de batería y balanceo, dron limpio) son obligatorias —
+ * falta cualquiera de las tres, se rechaza el registro completo.
  */
 interface EscrituraSincronizacion
 {
@@ -93,4 +102,6 @@ interface EscrituraSincronizacion
     public function abrirEstadia(AperturaEstadiaHacienda $datos): ResultadoSincronizacion;
 
     public function cerrarEstadia(CierreEstadiaHacienda $datos): ResultadoSincronizacion;
+
+    public function registrarEvidenciaEquipo(RegistroEvidenciaEquipo $datos): ResultadoSincronizacion;
 }

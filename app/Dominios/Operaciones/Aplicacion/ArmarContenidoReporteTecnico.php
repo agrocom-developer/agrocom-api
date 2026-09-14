@@ -3,6 +3,7 @@
 namespace App\Dominios\Operaciones\Aplicacion;
 
 use App\Dominios\Comercial\Contratos\LecturaLotes;
+use App\Dominios\Mantenimiento\Contratos\LecturaCiclosBateria;
 use App\Dominios\Operaciones\Dominio\EstadoCoberturaTrabajo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Condiciones;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Incidencia;
@@ -38,6 +39,7 @@ final class ArmarContenidoReporteTecnico
     public function __construct(
         private readonly CalcularCoberturaTrabajo $calcularCobertura,
         private readonly LecturaLotes $lecturaLotes,
+        private readonly LecturaCiclosBateria $lecturaCiclosBateria,
     ) {}
 
     /**
@@ -54,11 +56,28 @@ final class ArmarContenidoReporteTecnico
      *     incidencias: list<array{tipo: string, evidencia_url: string}>,
      *     sesiones_detalle: list<array{sesion_id: int, piloto_id: int, dron_id: int|null, hectareas_declaradas: string, motivo_cierre: string|null}>,
      *     nota_mezcla: string,
+     *     equipo: array{
+     *         ciclos_bateria: list<array{identificador: string, ciclos_acumulados: int|null}>,
+     *         horas_vuelo_dron: string|null,
+     *         foto_control_url: string|null,
+     *         foto_ciclo_bateria_balanceo_url: string|null,
+     *         foto_dron_limpio_url: string|null,
+     *     }|null,
      * }
      */
     public function ejecutar(Trabajo $trabajo): array
     {
-        $trabajo->loadMissing(['sesiones.incidencias.evidenciaFoto', 'sesiones.capturaRc', 'imagenCampoEvidencia', 'acta', 'condiciones']);
+        $trabajo->loadMissing([
+            'sesiones.incidencias.evidenciaFoto',
+            'sesiones.capturaRc',
+            'sesiones.recargas',
+            'imagenCampoEvidencia',
+            'acta',
+            'condiciones',
+            'evidenciaEquipo.fotoControl',
+            'evidenciaEquipo.fotoCicloBateriaBalanceo',
+            'evidenciaEquipo.fotoDronLimpio',
+        ]);
 
         /** @var Collection<int, Sesion> $sesionesVigentes */
         $sesionesVigentes = $trabajo->sesiones->whereNull('anulada_en')->sortBy('secuencia')->values();
@@ -125,6 +144,53 @@ final class ArmarContenidoReporteTecnico
                     ->all()
                 : [],
             'nota_mezcla' => $this->notaMezcla(),
+            'equipo' => $this->datosEquipo($trabajo, $sesionesVigentes),
+        ];
+    }
+
+    /**
+     * "Reporte de Equipos" (ronda del dueño, 13/9/2026; HU-80, tarea 86):
+     * ciclos acumulados de cada batería usada (leídos de `Mantenimiento` vía
+     * {@see LecturaCiclosBateria}, nunca calculados acá), horas de vuelo
+     * declaradas del dron y las tres fotos de chequeo. `null` completo si el
+     * trabajo todavía no tiene su "Reporte de Equipos" cargado — a
+     * diferencia del resto de las secciones, esta es siempre opcional: no
+     * todo trabajo cerrado antes de HU-80 la va a tener.
+     *
+     * @param  Collection<int, Sesion>  $sesionesVigentes
+     * @return array{ciclos_bateria: list<array{identificador: string, ciclos_acumulados: int|null}>, horas_vuelo_dron: string|null, foto_control_url: string|null, foto_ciclo_bateria_balanceo_url: string|null, foto_dron_limpio_url: string|null}|null
+     */
+    private function datosEquipo(Trabajo $trabajo, Collection $sesionesVigentes): ?array
+    {
+        $ciclosBateria = $sesionesVigentes
+            ->flatMap(fn (Sesion $sesion): Collection => $sesion->recargas)
+            ->pluck('bateria_saliente_id')
+            ->unique()
+            ->values()
+            ->map(fn (string $identificador): array => [
+                'identificador' => $identificador,
+                'ciclos_acumulados' => $this->lecturaCiclosBateria->obtenerCiclosAcumulados($identificador),
+            ])
+            ->all();
+
+        $evidenciaEquipo = $trabajo->evidenciaEquipo;
+
+        if ($evidenciaEquipo === null) {
+            return $ciclosBateria === [] ? null : [
+                'ciclos_bateria' => $ciclosBateria,
+                'horas_vuelo_dron' => null,
+                'foto_control_url' => null,
+                'foto_ciclo_bateria_balanceo_url' => null,
+                'foto_dron_limpio_url' => null,
+            ];
+        }
+
+        return [
+            'ciclos_bateria' => $ciclosBateria,
+            'horas_vuelo_dron' => (string) $evidenciaEquipo->horas_vuelo_dron,
+            'foto_control_url' => $evidenciaEquipo->fotoControl?->archivo_url,
+            'foto_ciclo_bateria_balanceo_url' => $evidenciaEquipo->fotoCicloBateriaBalanceo?->archivo_url,
+            'foto_dron_limpio_url' => $evidenciaEquipo->fotoDronLimpio?->archivo_url,
         ];
     }
 

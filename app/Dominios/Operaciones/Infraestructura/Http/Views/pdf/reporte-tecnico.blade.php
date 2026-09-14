@@ -34,6 +34,7 @@
 <body>
     <h1>Reporte técnico</h1>
     <p class="subtitulo">Lote #{{ $trabajo->lote_id }} — Orden #{{ $trabajo->orden_id }} (aplicación {{ $trabajo->nro_aplicacion }})</p>
+    <p class="subtitulo">Emitido el {{ $reporte->generado_en->format('d/m/Y H:i') }}</p>
 
     <h2>Imagen del campo</h2>
     {{-- `archivo_url` es una clave del bucket, no una URL: dompdf no puede
@@ -190,5 +191,47 @@
 
     <h2>Mezcla y dosis</h2>
     <p class="nota">{{ $datos['nota_mezcla'] }}</p>
+
+    <h2>Reporte de Equipos</h2>
+    {{-- "Reporte de Equipos" (ronda del dueño, 13/9/2026; HU-80): ciclos de
+         batería reales (Mantenimiento), horas de vuelo declaradas del dron y
+         las tres fotos de chequeo. --}}
+    @if ($datos['equipo'] !== null)
+        @if (count($datos['equipo']['ciclos_bateria']) > 0)
+            <table>
+                <tr>
+                    <th>Batería</th>
+                    <th>Ciclos acumulados</th>
+                </tr>
+                @foreach ($datos['equipo']['ciclos_bateria'] as $bateria)
+                    <tr>
+                        <td>{{ $bateria['identificador'] }}</td>
+                        <td>{{ $bateria['ciclos_acumulados'] ?? 'sin dato' }}</td>
+                    </tr>
+                @endforeach
+            </table>
+        @endif
+        <table>
+            <tr>
+                <th>Horas de vuelo del dron</th>
+                <td>{{ $datos['equipo']['horas_vuelo_dron'] ?? '—' }}</td>
+            </tr>
+        </table>
+        @foreach ([
+            'foto_control_url' => 'Control',
+            'foto_ciclo_bateria_balanceo_url' => 'Ciclo de batería y balanceo',
+            'foto_dron_limpio_url' => 'Dron limpio',
+        ] as $clave => $etiqueta)
+            @php($imagenEquipo = \App\Dominios\Operaciones\Infraestructura\Http\Presentacion\EvidenciaIncrustada::dataUri($datos['equipo'][$clave]))
+            <div class="captura">
+                @if ($imagenEquipo !== null)
+                    <img src="{{ $imagenEquipo }}" alt="Foto de {{ $etiqueta }}">
+                @endif
+                <span>{{ $etiqueta }}</span>
+            </div>
+        @endforeach
+    @else
+        <p>Sin "Reporte de Equipos" registrado para este trabajo.</p>
+    @endif
 </body>
 </html>
