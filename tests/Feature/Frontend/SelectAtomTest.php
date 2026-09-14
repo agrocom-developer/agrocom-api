@@ -10,8 +10,9 @@ use Illuminate\Support\Facades\Blade;
  * $attributes (LSP, docs/diseno/guia_pantalla_panel.md §3).
  *
  * El flujo de teclado real (abrir/navegar/elegir, aria-activedescendant
- * cambiando en vivo) necesita un navegador de verdad — eso lo cubre
- * tests/Visual/select-atom.spec.ts, corrido a mano (ver su cabecera).
+ * cambiando en vivo) necesita un navegador de verdad — no hay spec
+ * automatizado para eso (ver el skill `verificacion`, "Qué NO cubre la
+ * cascada"); se revisa a mano en el navegador cuando cambia este átomo.
  */
 
 const OPCIONES_CORTAS = [

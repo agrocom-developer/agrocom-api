@@ -81,20 +81,19 @@ presión, y las tres vacían la compuerta de contenido.
 
 Saberlo importa para no confiar de más en un verde:
 
-- **La regresión visual (`tests/Visual/**`, Playwright) no es parte de
-  `bin/verify` ni de CI.** Lo fue entre las tareas 07 y 14/9/2026, pero nunca
-  corrió en `ci.yml` (no tiene paso de Playwright) y localmente se salteaba en
-  cualquier plataforma sin capturas `-darwin`/`-linux` propias (las
-  versionadas son `-win32`) — así que "✓ Cascada completa en verde" terminaba
-  significando casi siempre "no se corrió nada visual", sin decirlo con
-  claridad suficiente. Se sacó de la cascada automática a propósito (ver
-  memoria `regresion-visual-fuera-de-bin-verify`): un `⊘` que nadie lee no es
-  mejor que no tener la etapa. La suite sigue viva como herramienta manual —
-  si el cambio es visual, correr `npx playwright test` (o
-  `--update-snapshots` si el cambio visual es intencional) y revisar las
-  capturas a mano antes de cerrar. Ver también el skill [panel-design-ui]
-  para el procedimiento de captura ad-hoc (claro/oscuro) que ya se usa para
-  revisión humana.
+- **No hay regresión visual automática — ni gate ni herramienta versionada.**
+  Existió como `tests/Visual/` (Playwright) entre las tareas 07 y 14/9/2026,
+  pero nunca corrió en `ci.yml` (no tenía paso de Playwright) y localmente se
+  salteaba en cualquier plataforma sin capturas `-darwin`/`-linux` propias
+  (las versionadas eran `-win32`) — así que "✓ Cascada completa en verde"
+  terminaba significando casi siempre "no se corrió nada visual", sin decirlo
+  con claridad suficiente. Se sacó de `bin/verify` y el directorio se borró
+  el mismo día (ver memoria `regresion-visual-fuera-de-bin-verify`): un `⊘`
+  que nadie lee no es mejor que no tener la etapa, y una suite que nadie corre
+  no vale mantener viva "por si". La verificación visual de un cambio es
+  manual — ver el skill [panel-design-ui], "Verificación visual", para el
+  procedimiento de captura ad-hoc (claro/oscuro) que ya se usa para revisión
+  humana.
 - **Invariantes 2 y 3 de CLAUDE.md no tienen gate automático todavía** (no
   sobrescribir un registro validado, devengo solo al validar una sesión):
   vigilan tablas que aún no existen (`sesion`, `devengo`, la máquina de
