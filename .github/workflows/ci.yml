@@ -1,10 +1,18 @@
 name: CI
 
+# Solo `pull_request`: todo lo que llega a develop/master pasa por PR (ver
+# CONTRIBUTING.md), y auto-merge.yml ya espera este mismo check sobre el SHA
+# de cabecera del PR antes de mergear. Un `push` a develop/master ocurre
+# siempre como consecuencia de ese merge (squash o merge commit, según
+# auto-merge.yml) — repetir la corrida ahí vuelve a probar el mismo árbol de
+# archivos que el `pull_request` ya validó momentos antes, así que duplicaba
+# ~1600 tests + reinstalar todo por cada cambio, chico o grande, sin agregar
+# cobertura real (no hay branch protection que dependa de este segundo run,
+# y deploy.yml dispara por tag, no por este push).
 on:
   pull_request:
     branches: [develop, master]
-  push:
-    branches: [develop, master]
+  workflow_dispatch: {}
 
 jobs:
   detect-laravel:
@@ -40,14 +48,27 @@ jobs:
       - name: Crear .env
         run: cp .env.example .env
 
-      - name: Caché de Composer
+      # Dos cachés de Composer, cada uno resuelve algo distinto: el de
+      # ~/.cache/composer/files es la descarga (siempre corre `composer
+      # install`, pero sin volver a bajar cada paquete); el de `vendor/` de
+      # abajo es el resultado ya instalado — con `cache-hit`, `composer
+      # install` ni se ejecuta. El primero acelera el miss del segundo.
+      - name: Caché de Composer (descarga)
         uses: actions/cache@v4
         with:
           path: ~/.cache/composer/files
           key: composer-${{ hashFiles('composer.lock') }}
           restore-keys: composer-
 
+      - name: Caché de vendor (instalado)
+        id: cache-vendor
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: vendor-php8.3-${{ hashFiles('composer.lock') }}
+
       - name: Instalar dependencias
+        if: steps.cache-vendor.outputs.cache-hit != 'true'
         run: composer install --no-interaction --prefer-dist
 
       - name: Setup Node
@@ -56,7 +77,19 @@ jobs:
           node-version: '22'
           cache: npm
 
+      # Mismo criterio que `vendor/`: `npm ci` borra `node_modules` y
+      # reinstala siempre por diseño, así que el caché de descarga de `npm`
+      # (arriba) no evita esa reinstalación — solo cachear el propio
+      # `node_modules/` y saltear el paso entero en el hit lo hace.
+      - name: Caché de node_modules (instalado)
+        id: cache-node-modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-node22-${{ hashFiles('package-lock.json') }}
+
       - name: Instalar dependencias de Node
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: npm ci
 
       - name: Compilar assets (Vite)
