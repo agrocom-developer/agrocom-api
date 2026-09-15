@@ -1183,10 +1183,10 @@ components:
       type: object
     LoteCatalogo:
       title: 'Lote (catálogo)'
-      description: 'Lote vigente (no borrado) para el pull de catálogo (espec §4.1). `hectareas` es DECIMAL como string (invariante 6).'
+      description: 'Lote vigente (no borrado) para el pull de catálogo (espec §4.1; ADR 0020: cuelga directo de la propiedad, sin el nivel intermedio Campo). `hectareas` es DECIMAL como string (invariante 6).'
       required:
         - id
-        - campo_id
+        - propiedad_id
         - codigo
         - hectareas
         - geometria
@@ -1196,7 +1196,8 @@ components:
         id:
           type: integer
           example: 3
-        campo_id:
+        propiedad_id:
+          description: 'Id de servidor de la propiedad.'
           type: integer
           example: 1
         codigo:
@@ -1530,8 +1531,8 @@ components:
           type: integer
           example: null
           nullable: true
-        campo_id:
-          description: '`estadia_entrada`: id de servidor del campo (del pull de catálogo).'
+        propiedad_id:
+          description: '`estadia_entrada`: id de servidor de la propiedad (del pull de catálogo).'
           type: integer
           example: null
           nullable: true
