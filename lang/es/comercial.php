@@ -98,7 +98,7 @@ return [
 
     // ADR 0018 (tarea x): nivel de terreno entre cliente y campo.
     // Propiedades: un cliente tiene varias propiedades; cada propiedad tiene
-    // varios campos. Mismo molde que campos/clientes.
+    // varios lotes (ADR 0020: eliminó el nivel de campo intermedio).
     'propiedades' => [
         'creado' => 'La propiedad se dio de alta correctamente.',
         'actualizado' => 'Los datos de la propiedad se actualizaron correctamente.',
@@ -106,7 +106,7 @@ return [
 
         // Listado
         'titulo' => 'Propiedades',
-        'subtitulo' => 'Administración de propiedades, con sus campos y lotes.',
+        'subtitulo' => 'Administración de propiedades y sus lotes.',
         'nuevo' => 'Nueva propiedad',
         'filtro_busqueda' => 'Buscar',
         'filtro_busqueda_placeholder' => 'Nombre de la propiedad o cliente',
@@ -116,11 +116,13 @@ return [
         'filtro_vacio' => 'Ninguna propiedad coincide con la búsqueda.',
         'col_nombre' => 'Propiedad',
         'col_cliente' => 'Cliente',
-        'col_campos' => 'Campos',
-        'campos_cantidad' => ':cantidad campos',
+        'col_lotes' => 'Lotes',
+        'lotes_cantidad' => ':cantidad lotes',
+        'col_hectareas' => 'Hectáreas',
+        'hectareas_valor' => ':cantidad ha',
         'editar' => 'Editar',
         'eliminar_accion' => 'Eliminar',
-        'confirmar_baja' => '¿Dar de baja esta propiedad? Sus campos y lotes no se ven afectados.',
+        'confirmar_baja' => '¿Dar de baja esta propiedad? Sus lotes no se ven afectados.',
         'paginacion_aria' => 'Paginación de propiedades',
         'paginacion_anterior' => 'Anterior',
         'paginacion_siguiente' => 'Siguiente',
@@ -129,7 +131,7 @@ return [
         // Formulario (create/edit)
         'titulo_crear' => 'Nueva propiedad',
         'titulo_editar' => 'Editar propiedad',
-        'subtitulo_form' => 'Datos principales de la propiedad.',
+        'subtitulo_form' => 'Datos principales de la propiedad, sin lotes (se agregan desde la ficha de lotes).',
         'seccion_datos' => 'Datos de la propiedad',
         'campos_contador' => ':cantidad campos',
         'campo_cliente' => 'Cliente',
@@ -143,9 +145,13 @@ return [
         'campo_localidad' => 'Localidad',
         'campo_latitud' => 'Latitud',
         'campo_longitud' => 'Longitud',
+        'campo_geometria' => 'Geometría de terrenos (GeoJSON MultiPolygon)',
+        'campo_geometria_placeholder' => '{"type":"MultiPolygon","coordinates":[[[[...]]]}',
+        'campo_geometria_ayuda' => 'Opcional. JSON crudo de un GeoJSON MultiPolygon con los terrenos de la propiedad (ej. si hay islas separadas).',
         'estado_form' => 'Los cambios se guardan al confirmar.',
         'volver' => 'Volver a propiedades',
         'error_coordenada_incompleta' => 'Completá latitud y longitud juntas, o dejá las dos vacías.',
+        'error_geometria_invalida' => 'La geometría tiene que ser un JSON válido con "type": "MultiPolygon" y "coordinates" como arreglo.',
     ],
 
     // HU-23 (tarea 34): administración de contratos con sus ventanas de
@@ -253,120 +259,11 @@ return [
         'volver' => 'Volver a contratos',
     ],
 
-    // HU-24 (tarea 35; actualizado ADR 0018): administración de campos con sus
-    // lotes. Tercer ABM del panel — mismo molde que clientes (tarea 33): un
-    // campo se crea/edita con sus lotes en la misma operación, sin pantalla
-    // propia para lotes. ADR 0018: ahora el campo cuelga de una propiedad, no
-    // directo de un cliente.
-    'campos' => [
-        'creado' => 'El campo se dio de alta correctamente.',
-        'actualizado' => 'Los datos del campo se actualizaron correctamente.',
-        'eliminado' => 'El campo se dio de baja correctamente.',
-
-        // Listado
-        'titulo' => 'Campos',
-        'subtitulo' => 'Administración de campos y sus lotes, agrupados por propiedad.',
-        'nuevo' => 'Nuevo campo',
-        'filtro_busqueda' => 'Buscar',
-        'filtro_busqueda_placeholder' => 'Nombre del campo',
-        'filtrar' => 'Buscar',
-        'limpiar_filtro' => 'Limpiar búsqueda',
-        'vacio' => 'Todavía no se dio de alta ningún campo.',
-        'filtro_vacio' => 'Ningún campo coincide con la búsqueda.',
-        'col_nombre' => 'Campo',
-        'col_cliente' => 'Cliente',
-        'col_lotes' => 'Lotes',
-        'col_hectareas' => 'Hectáreas',
-        'lotes_cantidad' => ':cantidad lotes',
-        'hectareas_valor' => ':cantidad ha',
-        'siembra' => 'Siembra',
-        'editar' => 'Editar',
-        'eliminar_accion' => 'Eliminar',
-        'confirmar_baja' => '¿Dar de baja este campo? Sus lotes no se ven afectados.',
-        'paginacion_aria' => 'Paginación de campos',
-        'paginacion_anterior' => 'Anterior',
-        'paginacion_siguiente' => 'Siguiente',
-        'paginacion_info' => 'Página :actual de :total',
-
-        // Formulario (create/edit)
-        'titulo_crear' => 'Nuevo campo',
-        'titulo_editar' => 'Editar campo',
-        'subtitulo_form' => 'El campo se guarda junto con sus lotes en una sola operación.',
-        'seccion_datos' => 'Datos del campo',
-        'campos_contador' => ':cantidad campos',
-        'campo_cliente' => 'Cliente',
-        'campo_cliente_placeholder' => 'Seleccioná un cliente',
-        'campo_propiedad' => 'Propiedad',
-        'campo_propiedad_placeholder' => 'Seleccioná una propiedad',
-        'campo_nombre' => 'Nombre',
-
-        // Generador de lotes (alta masiva, HU-72, tarea 88)
-        'seccion_generador' => 'Generar lotes',
-        'generador_cantidad' => 'Cantidad de lotes',
-        'generador_hectareas' => 'Hectáreas por lote',
-        'generador_cultivo' => 'Cultivo por defecto',
-        'generador_cultivo_placeholder' => 'Sin sembrar',
-        'generador_campania' => 'Campaña',
-        'generador_campania_placeholder' => 'Seleccioná una campaña',
-        'generador_generar' => 'Generar lotes',
-        'generador_ayuda' => 'Genera lotes provisorios ("Lote 1".."Lote N") con la misma superficie. Renombralos y dibujá su perímetro después, desde la ficha de cada lote.',
-
-        'seccion_lotes' => 'Lotes',
-        'lote_agregar' => 'Agregar lote',
-        'lote_quitar' => 'Quitar',
-        'lote_codigo' => 'Código',
-        'lote_hectareas' => 'Hectáreas',
-        'lote_geometria' => 'Perímetro del lote',
-        'lote_geometria_ayuda' => 'Opcional. Dibujá el contorno del lote sobre la imagen satelital con la herramienta de polígono. Se guarda como GeoJSON y es lo que colorea el mapa del tablero.',
-        'lote_usar_superficie' => 'Usar como hectáreas',
-        'lote_mapa_barra_aria' => 'Acciones del mapa',
-        'lote_mapa_dibujar' => 'Dibujar perímetro',
-        'lote_mapa_editar_vertices' => 'Editar vértices',
-        'lote_mapa_mover' => 'Mover',
-        'lote_mapa_borrar' => 'Borrar',
-        'lote_mapa_deshacer' => 'Deshacer',
-        'lote_mapa_centrar' => 'Centrar en el lote',
-        'lote_mapa_capa_satelite' => 'Ver capa satelital',
-        'lote_mapa_capa_calles' => 'Ver capa de calles',
-        'lote_mapa_pantalla_completa' => 'Pantalla completa',
-        'lote_mapa_salir_pantalla_completa' => 'Salir de pantalla completa',
-        // Plantillas con placeholders `:dibujadas`/`:declaradas`: el JS del
-        // editor (organisms/lote-mapa-editor.js) los reemplaza por los
-        // números ya calculados en el navegador — nunca arma la frase él
-        // mismo (ADR 0013, el JS no sabe de idiomas).
-        'lote_mapa_medida' => ':dibujadas ha dibujadas',
-        'lote_mapa_medida_declaradas' => ':dibujadas ha dibujadas de :declaradas ha declaradas',
-        'lote_restricciones' => 'Restricciones',
-        'lote_restricciones_placeholder' => 'Cables, viviendas, colmenas, vecinos sensibles',
-
-        // Desnivel y limpieza del lote: catálogos cerrados aparte de
-        // `restricciones` (texto libre).
-        'lote_desnivel' => 'Desnivel',
-        'lote_desnivel_placeholder' => 'Sin especificar',
-        'lote_desnivel_ninguno' => 'Ninguno',
-        'lote_desnivel_algunos' => 'Algunos desniveles',
-        'lote_desnivel_varios' => 'Varios desniveles',
-        'lote_desnivel_empinado' => 'Empinado',
-        'lote_limpieza' => 'Limpieza',
-        'lote_limpieza_placeholder' => 'Sin especificar',
-        'lote_limpieza_limpio' => 'Limpio',
-        'lote_limpieza_algunos_obstaculos' => 'Algunos obstáculos',
-        'lote_limpieza_muchos_obstaculos' => 'Muchos obstáculos',
-
-        'estado_form' => 'Los cambios se guardan al confirmar.',
-        'volver' => 'Volver a campos',
-
-        // Errores de validación
-        'error_geometria_invalida' => 'La geometría tiene que ser un JSON con "type": "Polygon" y "coordinates" como arreglo.',
-    ],
-
     // Tarea 77 (HU-54, etapa 2): ficha propia de un lote — antes solo se
-    // podía tocar entrando por su propiedad (`campos`, arriba). Mismo molde
-    // de listado/formulario que el resto del panel; los rótulos
-    // `lote_codigo`/`lote_hectareas`/`lote_geometria*`/`lote_restricciones*`/
-    // `lote_desnivel*`/`lote_limpieza*` del bloque `campos` de arriba se
-    // reusan tal cual (mismo copy, misma fila `_lote-fila.blade.php`
-    // compartida por las dos pantallas).
+    // podía tocar entrando por su propiedad. Mismo molde de listado/formulario
+    // que el resto del panel. Reusa el partial `_lote-fila.blade.php` para el
+    // editor de geometría y los datos del lote (mismo copy, código/hectáreas/
+    // geometría/restricciones/desnivel/limpieza).
     'lotes' => [
         'creado' => 'El lote se dio de alta correctamente.',
         'actualizado' => 'Los datos del lote se actualizaron correctamente.',
@@ -386,11 +283,10 @@ return [
         'vacio' => 'Todavía no se dio de alta ningún lote.',
         'filtro_vacio' => 'Ningún lote coincide con el filtro.',
         'col_codigo' => 'Código',
-        'col_propiedad' => 'Campo',
+        'col_propiedad' => 'Propiedad',
         'col_cliente' => 'Cliente',
         'col_hectareas' => 'Hectáreas',
         'hectareas_valor' => ':cantidad ha',
-        'filtro_campo' => 'Campo',
         'editar' => 'Editar',
         'eliminar_accion' => 'Eliminar',
         'confirmar_baja' => '¿Dar de baja este lote?',
@@ -407,12 +303,46 @@ return [
         'campos_contador' => ':cantidad campos',
         'campo_cliente' => 'Cliente',
         'campo_cliente_placeholder' => 'Todos los clientes',
-        'campo_cliente_ayuda' => 'Filtra las propiedades y campos de abajo. No se guarda: el lote hereda el cliente de su propiedad.',
+        'campo_cliente_ayuda' => 'Filtra las propiedades de abajo. No se guarda: el lote hereda el cliente de su propiedad.',
         'campo_propiedad' => 'Propiedad',
         'campo_propiedad_placeholder' => 'Seleccioná una propiedad',
-        'campo_campo' => 'Campo',
-        'campo_campo_placeholder' => 'Seleccioná un campo',
         'seccion_lote' => 'Datos del lote',
+
+        'lote_agregar' => 'Agregar lote',
+        'lote_quitar' => 'Quitar',
+        'lote_codigo' => 'Código',
+        'lote_hectareas' => 'Hectáreas',
+        'lote_geometria' => 'Perímetro del lote',
+        'lote_geometria_ayuda' => 'Opcional. Dibujá el contorno del lote sobre la imagen satelital con la herramienta de polígono. Se guarda como GeoJSON y es lo que colorea el mapa del tablero.',
+        'lote_usar_superficie' => 'Usar como hectáreas',
+        'lote_mapa_barra_aria' => 'Acciones del mapa',
+        'lote_mapa_dibujar' => 'Dibujar perímetro',
+        'lote_mapa_editar_vertices' => 'Editar vértices',
+        'lote_mapa_mover' => 'Mover',
+        'lote_mapa_borrar' => 'Borrar',
+        'lote_mapa_deshacer' => 'Deshacer',
+        'lote_mapa_centrar' => 'Centrar en el lote',
+        'lote_mapa_capa_satelite' => 'Ver capa satelital',
+        'lote_mapa_capa_calles' => 'Ver capa de calles',
+        'lote_mapa_pantalla_completa' => 'Pantalla completa',
+        'lote_mapa_salir_pantalla_completa' => 'Salir de pantalla completa',
+        'lote_mapa_medida' => ':dibujadas ha dibujadas',
+        'lote_mapa_medida_declaradas' => ':dibujadas ha dibujadas de :declaradas ha declaradas',
+        'lote_restricciones' => 'Restricciones',
+        'lote_restricciones_placeholder' => 'Cables, viviendas, colmenas, vecinos sensibles',
+
+        'lote_desnivel' => 'Desnivel',
+        'lote_desnivel_placeholder' => 'Sin especificar',
+        'lote_desnivel_ninguno' => 'Ninguno',
+        'lote_desnivel_algunos' => 'Algunos desniveles',
+        'lote_desnivel_varios' => 'Varios desniveles',
+        'lote_desnivel_empinado' => 'Empinado',
+        'lote_limpieza' => 'Limpieza',
+        'lote_limpieza_placeholder' => 'Sin especificar',
+        'lote_limpieza_limpio' => 'Limpio',
+        'lote_limpieza_algunos_obstaculos' => 'Algunos obstáculos',
+        'lote_limpieza_muchos_obstaculos' => 'Muchos obstáculos',
+
         'estado_form' => 'Los cambios se guardan al confirmar.',
         'volver' => 'Volver a lotes',
 

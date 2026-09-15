@@ -6,7 +6,7 @@ use App\Dominios\Comercial\Aplicacion\ActualizarPropiedad;
 use App\Dominios\Comercial\Aplicacion\CrearPropiedad;
 use App\Dominios\Comercial\Aplicacion\EliminarPropiedad;
 use App\Dominios\Comercial\Aplicacion\ListarPropiedades;
-use App\Dominios\Comercial\Dominio\Excepciones\PropiedadConCamposAsociados;
+use App\Dominios\Comercial\Dominio\Excepciones\PropiedadConLotesAsociados;
 use App\Dominios\Comercial\Dominio\Excepciones\PropiedadDuplicada;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
@@ -19,11 +19,11 @@ use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 /**
- * `GET/POST/PUT/DELETE /panel/propiedades*` (ADR 0018): alta y mantenimiento
- * de propiedades — nivel de terreno entre `Cliente` y `Campo`. Mismo molde
- * que `CamposController` (HU-24, tarea 35), sin sub-entidad propia en esta
- * pantalla: los campos de una propiedad se cargan desde `CamposController`,
- * no acá.
+ * `GET/POST/PUT/DELETE /panel/propiedades*` (ADR 0018, revertido por ADR 0020):
+ * alta y mantenimiento de propiedades — nivel de terreno entre `Cliente` y
+ * `Lote` (directo, sin `Campo` como nivel intermedio). Mismo molde que
+ * `LotesController` (tarea 77), sin sub-entidad propia en esta pantalla: los
+ * lotes de una propiedad se cargan desde `LotesController`, no acá.
  *
  * Cuatro permisos de grano fino
  * (`comercial.propiedad.ver`/`.crear`/`.editar`/`.eliminar`), verificados
@@ -82,6 +82,7 @@ final class PropiedadesController
                 $this->cadenaONull($datos['localidad'] ?? null),
                 $this->cadenaONull($datos['latitud'] ?? null),
                 $this->cadenaONull($datos['longitud'] ?? null),
+                $this->decodificarGeometria($datos['geometria'] ?? null),
             );
         } catch (PropiedadDuplicada $excepcion) {
             return redirect()
@@ -123,6 +124,7 @@ final class PropiedadesController
                 $this->cadenaONull($datos['localidad'] ?? null),
                 $this->cadenaONull($datos['latitud'] ?? null),
                 $this->cadenaONull($datos['longitud'] ?? null),
+                $this->decodificarGeometria($datos['geometria'] ?? null),
             );
         } catch (PropiedadDuplicada $excepcion) {
             return redirect()
@@ -142,7 +144,7 @@ final class PropiedadesController
 
         try {
             $eliminarPropiedad->ejecutar($propiedad);
-        } catch (PropiedadConCamposAsociados $excepcion) {
+        } catch (PropiedadConLotesAsociados $excepcion) {
             return redirect()
                 ->route('panel.propiedades.index')
                 ->withErrors(['propiedad' => $excepcion->getMessage()]);
@@ -157,6 +159,25 @@ final class PropiedadesController
     private function clientesActivos(): Collection
     {
         return Cliente::query()->orderBy('razon_social')->pluck('razon_social', 'id');
+    }
+
+    /**
+     * El Form Request ya validó que, si viene, es JSON bien formado con la
+     * forma mínima de un GeoJSON `MultiPolygon` — acá solo se decodifica, no se
+     * revalida.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function decodificarGeometria(mixed $valor): ?array
+    {
+        if ($valor === null || $valor === '') {
+            return null;
+        }
+
+        /** @var array<string, mixed> $decodificado */
+        $decodificado = json_decode((string) $valor, true);
+
+        return $decodificado;
     }
 
     private function cadenaONull(mixed $valor): ?string

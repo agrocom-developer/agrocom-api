@@ -11,25 +11,25 @@ use Illuminate\Validation\Rule;
  * `comercial.lote.crear`) se verifica en el controlador, contra el rol
  * activo — no acá, mismo criterio que el resto del panel.
  *
- * `campo_id` es la propiedad dueña del lote: el select de cliente de la
+ * `propiedad_id` es la propiedad dueña del lote: el select de cliente de la
  * ficha es solo para filtrar el select de propiedad en el cliente (JS,
  * `resources/js/pages/lotes-form.js`), no viaja como columna propia — un
- * lote no tiene `cliente_id`, lo hereda de su campo.
+ * lote no tiene `cliente_id`, lo hereda de su propiedad.
  *
  * `codigo`/`hectareas`/`geometria`/`restricciones` viajan anidados bajo
- * `lote[...]`: el formulario reusa `campos/_lote-fila.blade.php` con
+ * `lote[...]`: el formulario reusa `lotes/_lote-fila.blade.php` con
  * `prefijo: 'lote'` (ver su docblock) en vez de envolver un único lote en
  * un array de uno, así que las reglas tienen que validar `lote.codigo`,
  * no `codigo` suelto — de lo contrario el `required` nunca encuentra el
  * dato y el guardado falla en silencio.
  *
  * El código no lleva regla `unique` a propósito: el índice único real es
- * PARCIAL (`com_lotes_codigo_unico`, solo entre lotes activos del mismo
- * campo) — la violación se atrapa en `CrearLote` (vía `GuardadoLote`) y se
- * traduce ahí, mismo criterio que `CrearCampoRequest`.
+ * PARCIAL (`com_lotes_codigo_unico`, solo entre lotes activos de la misma
+ * propiedad) — la violación se atrapa en `CrearLote` (vía `GuardadoLote`) y se
+ * traduce ahí, mismo criterio que `CrearPropiedadRequest`.
  *
  * `geometria` y su regla de forma mínima de GeoJSON `Polygon`: mismo criterio
- * que `CrearCampoRequest`.
+ * que `CrearPropiedadRequest`.
  */
 final class CrearLoteRequest extends FormRequest
 {
@@ -37,10 +37,10 @@ final class CrearLoteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'campo_id' => [
+            'propiedad_id' => [
                 'required',
                 'integer',
-                Rule::exists('com_campos', 'id')->whereNull('deleted_at'),
+                Rule::exists('com_propiedades', 'id')->whereNull('deleted_at'),
             ],
             'lote.codigo' => ['required', 'string', 'max:50'],
             'lote.hectareas' => ['required', 'numeric', 'gt:0'],
@@ -55,8 +55,8 @@ final class CrearLoteRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'campo_id.required' => 'Seleccioná una propiedad.',
-            'campo_id.exists' => 'La propiedad seleccionada no es válida.',
+            'propiedad_id.required' => 'Seleccioná una propiedad.',
+            'propiedad_id.exists' => 'La propiedad seleccionada no es válida.',
             'lote.hectareas.gt' => 'Las hectáreas tienen que ser mayores a cero.',
         ];
     }

@@ -1,20 +1,19 @@
 {{--
     Page: lotes/index (GET /panel/lotes, panel.lotes.index)
-    Listado de lotes (tarea 77, HU-54, etapa 2; actualizado ADR 0018): arquetipo
+    Listado de lotes (tarea 77, HU-54, etapa 2; actualizado ADR 0020): arquetipo
     Listado, §6.2 de docs/diseno/guia_pantalla_panel.md — cabecera → filtros →
     tabla → paginación. Antes de esta tarea un lote solo se podía ver entrando
-    por su campo (`campos/index.blade.php`); esta pantalla es su ficha propia.
+    por su propiedad; esta pantalla es su ficha propia.
 
     Datos esperados (ver LotesController::index()): la cáscara de
     CascaraPanel, más:
-    - $lotes (LengthAwarePaginator<Lote>, con `campo.propiedad.cliente` cargada):
+    - $lotes (LengthAwarePaginator<Lote>, con `propiedad.cliente` cargada):
       código ascendente.
-    - $filtros (array{q: string, cliente_id: ?int, campo_id: ?int}): filtros
+    - $filtros (array{q: string, cliente_id: ?int, propiedad_id: ?int}): filtros
       aplicados, para dejarlos con el valor tras el submit.
     - $clientesDisponibles (Collection<int, string>), $propiedadesDisponibles
-      (Collection<int, Propiedad>), $camposDisponibles (Collection<int, Campo>):
-      opciones de los selects de filtro (ADR 0018: cascade cliente → propiedad
-      → campo).
+      (Collection<int, Propiedad>): opciones de los selects de filtro (ADR 0020:
+      cascade cliente → propiedad).
 
     Gateada por `comercial.lote.ver`, verificado server-side en el
     controlador. Los botones "Nuevo lote"/"Editar"/"Eliminar" se ocultan con
@@ -64,9 +63,9 @@
             @endif
 
             @php
-                $hayFiltrosActivos = $filtros['q'] !== '' || $filtros['cliente_id'] !== null || $filtros['campo_id'] !== null;
-                $camposOptions = $camposDisponibles->mapWithKeys(fn ($campo) => [
-                    $campo->id => $campo->nombre,
+                $hayFiltrosActivos = $filtros['q'] !== '' || $filtros['cliente_id'] !== null || $filtros['propiedad_id'] !== null;
+                $propiedadesOptions = $propiedadesDisponibles->mapWithKeys(fn ($propiedad) => [
+                    $propiedad->id => $propiedad->nombre,
                 ]);
             @endphp
 
@@ -95,11 +94,11 @@
                 />
 
                 <x-atoms.select
-                    name="campo_id"
-                    id="filtro-campo"
-                    label="{{ __('comercial.lotes.filtro_campo') }}"
-                    :options="$camposOptions"
-                    :value="$filtros['campo_id']"
+                    name="propiedad_id"
+                    id="filtro-propiedad"
+                    label="{{ __('comercial.lotes.filtro_propiedad') }}"
+                    :options="$propiedadesOptions"
+                    :value="$filtros['propiedad_id']"
                     placeholder="{{ __('comercial.lotes.filtro_todos') }}"
                 />
 
@@ -133,8 +132,8 @@
                     @foreach ($lotes as $lote)
                         <div class="ag-lotes__fila" role="row">
                             <span role="cell" class="ag-lotes__codigo">{{ $lote->codigo }}</span>
-                            <span role="cell">{{ $lote->campo->nombre }}</span>
-                            <span role="cell">{{ $lote->campo->propiedad->cliente->razon_social }}</span>
+                            <span role="cell">{{ $lote->propiedad->nombre }}</span>
+                            <span role="cell">{{ $lote->propiedad->cliente->razon_social }}</span>
                             <span role="cell" class="ag-lotes__hectareas">{{ __('comercial.lotes.hectareas_valor', ['cantidad' => number_format((float) $lote->hectareas, 2, ',', '.')]) }}</span>
 
                             <span role="cell" class="ag-lotes__acciones">

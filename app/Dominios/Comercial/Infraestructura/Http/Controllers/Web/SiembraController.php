@@ -6,9 +6,9 @@ use App\Dominios\Comercial\Aplicacion\GuardarSiembraCampania;
 use App\Dominios\Comercial\Dominio\Excepciones\CampaniaDeOtroCliente;
 use App\Dominios\Comercial\Dominio\Excepciones\HectareasSembradasSuperanLote;
 use App\Dominios\Comercial\Dominio\Excepciones\SiembraDuplicada;
-use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cultivo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\LoteCampania;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\GuardarSiembraRequest;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\RedirectResponse;
@@ -18,12 +18,12 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 /**
- * `GET/POST /panel/campos/{campo}/siembra` (HU-48, tarea 71, etapa 3): qué
- * se sembró en cada lote del campo, por campaña — se entra desde la ficha
- * del campo, no tiene listado propio. Reusa el permiso
- * `comercial.campo.editar`: no es un ABM nuevo, es parte de mantener los
- * datos de ESE campo (mismo criterio que los lotes dentro de
- * `CamposController` antes de que tuvieran su propia ficha).
+ * `GET/POST /panel/propiedades/{propiedad}/siembra` (HU-48, tarea 71, etapa 3): qué
+ * se sembró en cada lote de la propiedad, por campaña — se entra desde la ficha
+ * de la propiedad, no tiene listado propio. Reusa el permiso
+ * `comercial.propiedad.editar`: no es un ABM nuevo, es parte de mantener los
+ * datos de ESA propiedad (mismo criterio que los lotes dentro de
+ * `LotesController`, que tienen su propia ficha).
  *
  * `campaniasDelCliente()` lee `cpn_campanias` con `DB::table` directo (ADR
  * 0003 regla 3, mismo criterio que `ContratosController`), sin importar el
@@ -32,29 +32,29 @@ use Illuminate\View\View;
  */
 final class SiembraController
 {
-    private const PERMISO = 'comercial.campo.editar';
+    private const PERMISO = 'comercial.propiedad.editar';
 
     public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
 
-    public function mostrar(Request $request, Campo $campo): View
+    public function mostrar(Request $request, Propiedad $propiedad): View
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO), 403);
 
-        $campo->load('lotes', 'propiedad');
-        $campanias = $this->campaniasDelCliente($campo->propiedad->cliente_id);
+        $propiedad->load('lotes');
+        $campanias = $this->campaniasDelCliente($propiedad->cliente_id);
         $campaniaId = $request->integer('campania_id') ?: $campanias->keys()->first();
 
         $siembraPorLote = $campaniaId !== null
             ? LoteCampania::query()
                 ->where('campania_id', $campaniaId)
-                ->whereIn('lote_id', $campo->lotes->pluck('id'))
+                ->whereIn('lote_id', $propiedad->lotes->pluck('id'))
                 ->get()
                 ->keyBy('lote_id')
             : new Collection;
 
-        return view('comercial::pages.campos.siembra', [
+        return view('comercial::pages.propiedades.siembra', [
             ...$this->autorizacion->cascara($request),
-            'campo' => $campo,
+            'propiedad' => $propiedad,
             'campanias' => $campanias,
             'campaniaId' => $campaniaId,
             'siembraPorLote' => $siembraPorLote,
@@ -62,7 +62,7 @@ final class SiembraController
         ]);
     }
 
-    public function guardar(GuardarSiembraRequest $request, Campo $campo, GuardarSiembraCampania $guardarSiembraCampania): RedirectResponse
+    public function guardar(GuardarSiembraRequest $request, Propiedad $propiedad, GuardarSiembraCampania $guardarSiembraCampania): RedirectResponse
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO), 403);
 
@@ -73,21 +73,21 @@ final class SiembraController
         $lotesCrudos = $datos['lotes'];
 
         try {
-            $guardarSiembraCampania->ejecutar($campo, $campaniaId, array_map($this->normalizarFila(...), $lotesCrudos));
+            $guardarSiembraCampania->ejecutar($propiedad, $campaniaId, array_map($this->normalizarFila(...), $lotesCrudos));
         } catch (CampaniaDeOtroCliente $excepcion) {
             return redirect()
-                ->route('panel.campos.siembra', ['campo' => $campo, 'campania_id' => $campaniaId])
+                ->route('panel.propiedades.siembra', ['propiedad' => $propiedad, 'campania_id' => $campaniaId])
                 ->withInput()
                 ->withErrors(['campania_id' => $excepcion->getMessage()]);
         } catch (HectareasSembradasSuperanLote|SiembraDuplicada $excepcion) {
             return redirect()
-                ->route('panel.campos.siembra', ['campo' => $campo, 'campania_id' => $campaniaId])
+                ->route('panel.propiedades.siembra', ['propiedad' => $propiedad, 'campania_id' => $campaniaId])
                 ->withInput()
                 ->withErrors(['lotes' => $excepcion->getMessage()]);
         }
 
         return redirect()
-            ->route('panel.campos.siembra', ['campo' => $campo, 'campania_id' => $campaniaId])
+            ->route('panel.propiedades.siembra', ['propiedad' => $propiedad, 'campania_id' => $campaniaId])
             ->with('estado', __('comercial.siembra.guardado'));
     }
 

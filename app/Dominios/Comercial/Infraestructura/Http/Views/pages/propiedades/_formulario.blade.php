@@ -30,6 +30,7 @@
     $localidad = old('localidad', $propiedad?->localidad ?? '');
     $latitud = old('latitud', $propiedad?->latitud ?? '');
     $longitud = old('longitud', $propiedad?->longitud ?? '');
+    $geometria = old('geometria', $propiedad?->geometria !== null ? json_encode($propiedad->geometria) : '');
 @endphp
 
 <form method="POST" action="{{ $accion }}" class="ag-propiedades-form" novalidate>
@@ -128,6 +129,20 @@
             max="180"
             error="{{ $errors->first('longitud') }}"
         />
+
+        <textarea
+            name="geometria"
+            class="form-control @error('geometria') is-invalid @enderror"
+            placeholder="{{ __('comercial.propiedades.campo_geometria_placeholder') }}"
+            rows="4"
+            aria-label="{{ __('comercial.propiedades.campo_geometria') }}"
+        >{{ $geometria }}</textarea>
+        @error('geometria')
+            <div class="invalid-feedback d-block">{{ $message }}</div>
+        @enderror
+        @if (isset($help))
+            <small class="form-text text-muted">{{ __('comercial.propiedades.campo_geometria_ayuda') }}</small>
+        @endif
     </x-molecules.form-section>
 
     <x-organisms.form-actions-bar :status="__('comercial.propiedades.estado_form')">
