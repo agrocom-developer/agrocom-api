@@ -99,17 +99,6 @@
                         </x-atoms.button>
                     </div>
                 </form>
-
-                {{-- Estado vacío en pantalla de entrada (sin consulta o con error) --}}
-                @if (!$consultado)
-                    <x-molecules.alert-strip
-                        variant="info"
-                        icon="insert_chart"
-                        class="ag-reportes-comerciales__estado-vacio"
-                    >
-                        {{ __('comercial.reportes_comerciales.estado.primera_visita') }}
-                    </x-molecules.alert-strip>
-                @endif
             @else
                 {{-- Pantalla de resultados --}}
 

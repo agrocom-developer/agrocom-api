@@ -67,11 +67,16 @@
             @endif
 
             @if ($planillas->isEmpty())
-                <x-molecules.empty-state
-                    icon="event_note"
-                    :title="__('finanzas.planillas.vacio_titulo')"
-                    :detail="__('finanzas.planillas.vacio_detalle')"
-                />
+                {{-- El formulario "Generar planilla" de arriba ya es la llamada
+                     a la acción cuando el usuario puede generar; el cartel de
+                     vacío solo suma algo para quien no puede y no lo ve. --}}
+                @unless ($puedeGenerar)
+                    <x-molecules.empty-state
+                        icon="event_note"
+                        :title="__('finanzas.planillas.vacio_titulo')"
+                        :detail="__('finanzas.planillas.vacio_detalle')"
+                    />
+                @endunless
             @else
                 <div class="ag-planillas__tabla" role="table">
                     <div class="ag-planillas__head" role="row">

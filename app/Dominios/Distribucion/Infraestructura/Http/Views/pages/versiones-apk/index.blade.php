@@ -86,11 +86,16 @@
         @endpuede
 
         @if ($versiones->isEmpty())
-            <x-molecules.empty-state
-                icon="system_update"
-                :title="__('distribucion.versiones.vacio_titulo')"
-                :detail="__('distribucion.versiones.vacio_detalle')"
-            />
+            {{-- El formulario de arriba ya es la llamada a la acción cuando el
+                 usuario puede subir una versión; el cartel de vacío solo suma
+                 algo para quien no tiene ese permiso y no ve el formulario. --}}
+            @cannot('distribucion.version.autorizar')
+                <x-molecules.empty-state
+                    icon="system_update"
+                    :title="__('distribucion.versiones.vacio_titulo')"
+                    :detail="__('distribucion.versiones.vacio_detalle')"
+                />
+            @endcannot
         @else
             <div class="ag-versiones-apk__tabla" role="table">
                 <div class="ag-versiones-apk__head" role="row">

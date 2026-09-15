@@ -487,9 +487,8 @@ return [
             'error_cultivo' => 'Seleccioná al menos un cultivo.',
         ],
 
-        // Estados vacíos
+        // Estado vacío
         'estado' => [
-            'primera_visita' => 'Seleccioná clientes y cultivos para generar el informe.',
             'sin_resultados' => 'Ningún contrato coincide con el filtro aplicado.',
         ],
 
