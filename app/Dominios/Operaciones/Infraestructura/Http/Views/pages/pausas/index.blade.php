@@ -63,23 +63,29 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <div class="ag-card ag-card--padded ag-pausas__tablero">
-                <div class="ag-card__head ag-card__head--flush">
-                    <h2 class="ag-card__title">{{ __('operaciones.pausas.tablero_titulo') }}</h2>
-                    <span class="ag-pausas__tablero-total">
-                        {{ __('operaciones.pausas.tablero_total') }}: {{ $formatearDuracion($agregado['total_minutos']) }}
-                    </span>
-                </div>
+            {{-- El tablero suma TODAS las causas del catálogo, 0 incluido
+                 (ver ObtenerAgregadoPausas) — útil para ver de un vistazo
+                 dónde se concentra el tiempo perdido, inútil cuando el total
+                 del período es 0: ahí no hay nada que comparar entre causas. --}}
+            @if ($agregado['total_minutos'] > 0)
+                <div class="ag-card ag-card--padded ag-pausas__tablero">
+                    <div class="ag-card__head ag-card__head--flush">
+                        <h2 class="ag-card__title">{{ __('operaciones.pausas.tablero_titulo') }}</h2>
+                        <span class="ag-pausas__tablero-total">
+                            {{ __('operaciones.pausas.tablero_total') }}: {{ $formatearDuracion($agregado['total_minutos']) }}
+                        </span>
+                    </div>
 
-                <div class="ag-pausas__tablero-tabla" role="table">
-                    @foreach ($agregado['por_causa'] as $causa => $minutos)
-                        <div class="ag-pausas__tablero-fila" role="row">
-                            <span role="cell">{{ __('operaciones.pausas.causa.'.$causa) }}</span>
-                            <span role="cell" class="ag-pausas__cifra">{{ $formatearDuracion($minutos) }}</span>
-                        </div>
-                    @endforeach
+                    <div class="ag-pausas__tablero-tabla" role="table">
+                        @foreach ($agregado['por_causa'] as $causa => $minutos)
+                            <div class="ag-pausas__tablero-fila" role="row">
+                                <span role="cell">{{ __('operaciones.pausas.causa.'.$causa) }}</span>
+                                <span role="cell" class="ag-pausas__cifra">{{ $formatearDuracion($minutos) }}</span>
+                            </div>
+                        @endforeach
+                    </div>
                 </div>
-            </div>
+            @endif
 
             @php $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== ''); @endphp
 
