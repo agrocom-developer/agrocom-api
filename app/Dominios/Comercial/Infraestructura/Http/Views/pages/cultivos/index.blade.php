@@ -53,43 +53,36 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <form method="GET" action="{{ route('panel.cultivos.index') }}" class="ag-filtros ag-cultivos__filtros">
-                <div class="ag-input">
-                    <label for="filtro-q" class="ag-input__label">{{ __('comercial.cultivos.filtro_busqueda') }}</label>
-                    <div class="ag-input__control">
-                        <input
-                            type="search"
-                            name="q"
-                            id="filtro-q"
-                            class="ag-input__field"
-                            value="{{ $filtros['q'] }}"
-                            placeholder="{{ __('comercial.cultivos.filtro_busqueda_placeholder') }}"
-                        >
-                    </div>
-                </div>
+            @php
+                $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
+            @endphp
 
-                <div class="ag-filtros__acciones ag-cultivos__filtros-acciones">
-                    {{-- outline, no primary: "Nuevo cultivo" ya es el único
-                         botón sólido del pliegue (§5 de la guía de pantalla). --}}
-                    <x-atoms.button type="submit" variant="outline" size="md" icon="search">
-                        {{ __('comercial.cultivos.filtrar') }}
-                    </x-atoms.button>
-
-                    @if ($filtros['q'] !== '')
-                        <x-atoms.button href="{{ route('panel.cultivos.index') }}" variant="text" size="md">
-                            {{ __('comercial.cultivos.limpiar_filtro') }}
-                        </x-atoms.button>
-                    @endif
+            @if ($hayFiltrosActivos || $cultivos->isNotEmpty())
+                <div class="ag-table-toolbar">
+                    <x-molecules.table-search
+                        action="{{ route('panel.cultivos.index') }}"
+                        :value="$filtros['q']"
+                        :placeholder="__('comercial.cultivos.filtro_busqueda_placeholder')"
+                    />
                 </div>
-            </form>
+            @endif
 
             @if ($cultivos->isEmpty())
-                <x-molecules.alert-strip variant="info" icon="grass" class="ag-cultivos__aviso">
-                    {{ __($filtros['q'] !== '' ? 'comercial.cultivos.filtro_vacio' : 'comercial.cultivos.vacio') }}
-                </x-molecules.alert-strip>
+                @if ($hayFiltrosActivos)
+                    <x-molecules.alert-strip variant="info" icon="grass" class="ag-cultivos__aviso">
+                        {{ __('comercial.cultivos.filtro_vacio') }}
+                    </x-molecules.alert-strip>
+                @else
+                    <x-molecules.empty-state
+                        icon="grass"
+                        :title="__('comercial.cultivos.vacio_titulo')"
+                        :detail="__('comercial.cultivos.vacio_detalle')"
+                    />
+                @endif
             @else
                 <div class="ag-cultivos__tabla" role="table">
                     <div class="ag-cultivos__head" role="row">
+                        <span role="columnheader" class="ag-cultivos__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('comercial.cultivos.col_nombre') }}</span>
                         <span role="columnheader">{{ __('comercial.cultivos.col_estado') }}</span>
                         <span role="columnheader" aria-hidden="true"></span>
@@ -97,6 +90,9 @@
 
                     @foreach ($cultivos as $cultivo)
                         <div class="ag-cultivos__fila" role="row">
+                            <span role="cell" class="ag-cultivos__indice">
+                                {{ ($cultivos->currentPage() - 1) * $cultivos->perPage() + $loop->iteration }}
+                            </span>
                             <span role="cell" class="ag-cultivos__nombre">{{ $cultivo->nombre }}</span>
                             <span role="cell">
                                 <x-atoms.badge :variant="$cultivo->activo ? 'success' : 'neutral'">
@@ -129,25 +125,7 @@
                     @endforeach
                 </div>
 
-                @if ($cultivos->hasPages())
-                    <nav class="ag-cultivos__paginacion" aria-label="{{ __('comercial.cultivos.paginacion_aria') }}">
-                        @if (! $cultivos->onFirstPage())
-                            <x-atoms.button href="{{ $cultivos->previousPageUrl() }}" variant="outline" size="sm" icon="chevron_left">
-                                {{ __('comercial.cultivos.paginacion_anterior') }}
-                            </x-atoms.button>
-                        @endif
-
-                        <span class="ag-cultivos__paginacion-info">
-                            {{ __('comercial.cultivos.paginacion_info', ['actual' => $cultivos->currentPage(), 'total' => $cultivos->lastPage()]) }}
-                        </span>
-
-                        @if ($cultivos->hasMorePages())
-                            <x-atoms.button href="{{ $cultivos->nextPageUrl() }}" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
-                                {{ __('comercial.cultivos.paginacion_siguiente') }}
-                            </x-atoms.button>
-                        @endif
-                    </nav>
-                @endif
+                <x-molecules.pagination :paginator="$cultivos" :aria-label="__('comercial.cultivos.paginacion_aria')" />
             @endif
         </div>
     </x-templates.panel-layout>

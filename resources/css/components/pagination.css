@@ -1,0 +1,15 @@
+/*
+ * Molecule: pagination.
+ * Usa el componente `.pagination`/`.page-item`/`.page-link` nativo de
+ * Bootstrap (ver el componente Blade) — ya sale coloreado con la marca
+ * porque `--bs-primary` está mapeado a `--ag-color-primary`
+ * (tokens/semantic/theme-{light,dark}.css). Acá solo lo necesario para que
+ * el ícono de los extremos (Anterior/Siguiente) quede centrado dentro del
+ * link, que Bootstrap no resuelve solo cuando el contenido es un ícono en
+ * vez de texto.
+ */
+.pagination .page-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}

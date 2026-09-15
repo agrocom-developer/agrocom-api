@@ -34,8 +34,17 @@
 
 .ag-page-header__subtitle {
     margin: 0;
+    font-size: var(--ag-font-size-sm);
     color: var(--ag-color-text-muted);
     max-width: 50rem;
+}
+
+/* Solo existe cuando el llamador pasa el slot `chip` (ver docblock). */
+.ag-page-header__subtitle-row {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+    flex-wrap: wrap;
 }
 
 .ag-page-header__actions {

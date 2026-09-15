@@ -71,7 +71,12 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <form method="GET" action="{{ route('panel.campanias.index') }}" class="ag-filtros ag-campanias__filtros">
+            @php
+                $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
+            @endphp
+
+            @if ($hayFiltrosActivos || $campanias->isNotEmpty())
+                <form method="GET" action="{{ route('panel.campanias.index') }}" class="ag-filtros ag-campanias__filtros">
                 <div class="ag-input">
                     <label for="filtro-q" class="ag-input__label">{{ __('campania.campanias.filtro_busqueda') }}</label>
                     <div class="ag-input__control">
@@ -100,18 +105,27 @@
                         {{ __('campania.campanias.filtrar') }}
                     </x-atoms.button>
 
-                    @if ($filtros['q'] !== '' || $filtros['cliente_id'] !== null)
+                    @if ($hayFiltrosActivos)
                         <x-atoms.button href="{{ route('panel.campanias.index') }}" variant="text" size="md">
                             {{ __('campania.campanias.limpiar_filtro') }}
                         </x-atoms.button>
                     @endif
                 </div>
-            </form>
+                </form>
+            @endif
 
             @if ($campanias->isEmpty())
-                <x-molecules.alert-strip variant="info" icon="calendar_month" class="ag-campanias__aviso">
-                    {{ __(($filtros['q'] !== '' || $filtros['cliente_id'] !== null) ? 'campania.campanias.filtro_vacio' : 'campania.campanias.vacio') }}
-                </x-molecules.alert-strip>
+                @if ($hayFiltrosActivos)
+                    <x-molecules.alert-strip variant="info" icon="calendar_month" class="ag-campanias__aviso">
+                        {{ __('campania.campanias.filtro_vacio') }}
+                    </x-molecules.alert-strip>
+                @else
+                    <x-molecules.empty-state
+                        icon="calendar_month"
+                        :title="__('campania.campanias.vacio_titulo')"
+                        :detail="__('campania.campanias.vacio_detalle')"
+                    />
+                @endif
             @else
                 <div class="ag-campanias__tabla" role="table">
                     <div class="ag-campanias__head" role="row">

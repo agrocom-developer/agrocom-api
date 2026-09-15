@@ -13,13 +13,6 @@
     margin-top: var(--ag-space-4);
 }
 
-.ag-alertas__filtros .ag-input,
-.ag-alertas__filtros .ag-select,
-.ag-alertas__filtros .ag-date {
-    min-width: 12rem;
-}
-
-
 .ag-alertas__tabla {
     margin-top: var(--ag-space-5);
     border: 1px solid var(--ag-color-border-card);

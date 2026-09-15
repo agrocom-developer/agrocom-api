@@ -53,38 +53,52 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <form method="GET" action="{{ route('panel.fichas-dron.index') }}" class="ag-filtros ag-fichas-dron__filtros">
-                <div class="ag-input">
-                    <label for="filtro-q" class="ag-input__label">{{ __('mantenimiento.fichas_dron.filtro_busqueda') }}</label>
-                    <div class="ag-input__control">
-                        <input
-                            type="search"
-                            name="q"
-                            id="filtro-q"
-                            class="ag-input__field"
-                            value="{{ $filtros['q'] }}"
-                            placeholder="{{ __('mantenimiento.fichas_dron.filtro_busqueda_placeholder') }}"
-                        >
+            @php
+                $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
+            @endphp
+
+            @if ($hayFiltrosActivos || $fichas->isNotEmpty())
+                <form method="GET" action="{{ route('panel.fichas-dron.index') }}" class="ag-filtros ag-fichas-dron__filtros">
+                    <div class="ag-input">
+                        <label for="filtro-q" class="ag-input__label">{{ __('mantenimiento.fichas_dron.filtro_busqueda') }}</label>
+                        <div class="ag-input__control">
+                            <input
+                                type="search"
+                                name="q"
+                                id="filtro-q"
+                                class="ag-input__field"
+                                value="{{ $filtros['q'] }}"
+                                placeholder="{{ __('mantenimiento.fichas_dron.filtro_busqueda_placeholder') }}"
+                            >
+                        </div>
                     </div>
-                </div>
 
-                <div class="ag-filtros__acciones ag-fichas-dron__filtros-acciones">
-                    <x-atoms.button type="submit" variant="outline" size="md" icon="search">
-                        {{ __('mantenimiento.fichas_dron.filtrar') }}
-                    </x-atoms.button>
-
-                    @if ($filtros['q'] !== '')
-                        <x-atoms.button href="{{ route('panel.fichas-dron.index') }}" variant="text" size="md">
-                            {{ __('mantenimiento.fichas_dron.limpiar_filtro') }}
+                    <div class="ag-filtros__acciones ag-fichas-dron__filtros-acciones">
+                        <x-atoms.button type="submit" variant="outline" size="md" icon="search">
+                            {{ __('mantenimiento.fichas_dron.filtrar') }}
                         </x-atoms.button>
-                    @endif
-                </div>
-            </form>
+
+                        @if ($hayFiltrosActivos)
+                            <x-atoms.button href="{{ route('panel.fichas-dron.index') }}" variant="text" size="md">
+                                {{ __('mantenimiento.fichas_dron.limpiar_filtro') }}
+                            </x-atoms.button>
+                        @endif
+                    </div>
+                </form>
+            @endif
 
             @if ($fichas->isEmpty())
-                <x-molecules.alert-strip variant="info" icon="memory" class="ag-fichas-dron__aviso">
-                    {{ __($filtros['q'] !== '' ? 'mantenimiento.fichas_dron.filtro_vacio' : 'mantenimiento.fichas_dron.vacio') }}
-                </x-molecules.alert-strip>
+                @if ($hayFiltrosActivos)
+                    <x-molecules.alert-strip variant="info" icon="memory" class="ag-fichas-dron__aviso">
+                        {{ __('mantenimiento.fichas_dron.filtro_vacio') }}
+                    </x-molecules.alert-strip>
+                @else
+                    <x-molecules.empty-state
+                        icon="memory"
+                        :title="__('mantenimiento.fichas_dron.vacio_titulo')"
+                        :detail="__('mantenimiento.fichas_dron.vacio_detalle')"
+                    />
+                @endif
             @else
                 <div class="ag-fichas-dron__tabla" role="table">
                     <div class="ag-fichas-dron__head" role="row">

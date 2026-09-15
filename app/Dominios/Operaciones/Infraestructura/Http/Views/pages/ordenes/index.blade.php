@@ -80,53 +80,65 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <form method="GET" action="{{ route('panel.ordenes.index') }}" class="ag-filtros ag-ordenes__filtros">
-                @php
-                    $opcionesEstado = collect($variantePorEstado)->mapWithKeys(fn ($variante, $valor) => [
-                        $valor => __('operaciones.estado.'.$valor)
-                    ])->all();
-                @endphp
+            @php $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== ''); @endphp
 
-                <x-atoms.select
-                    name="estado"
-                    id="filtro-estado"
-                    label="{{ __('operaciones.ordenes.filtro_estado') }}"
-                    :options="$opcionesEstado"
-                    :value="$filtros['estado']"
-                    :placeholder="__('operaciones.ordenes.filtro_todos')"
-                />
+            @if ($hayFiltrosActivos || $ordenes->isNotEmpty())
+                <form method="GET" action="{{ route('panel.ordenes.index') }}" class="ag-filtros ag-ordenes__filtros">
+                    @php
+                        $opcionesEstado = collect($variantePorEstado)->mapWithKeys(fn ($variante, $valor) => [
+                            $valor => __('operaciones.estado.'.$valor)
+                        ])->all();
+                    @endphp
 
-                @php
-                    $opcionesTipoAplicacion = collect(\App\Dominios\Operaciones\Dominio\TipoAplicacion::cases())
-                        ->mapWithKeys(fn ($caso) => [$caso->value => __('operaciones.tipo_aplicacion.'.$caso->value)]);
-                @endphp
+                    <x-atoms.select
+                        name="estado"
+                        id="filtro-estado"
+                        label="{{ __('operaciones.ordenes.filtro_estado') }}"
+                        :options="$opcionesEstado"
+                        :value="$filtros['estado']"
+                        :placeholder="__('operaciones.ordenes.filtro_todos')"
+                    />
 
-                <x-atoms.select
-                    name="tipo_aplicacion"
-                    id="filtro-tipo-aplicacion"
-                    label="{{ __('operaciones.ordenes.filtro_tipo_aplicacion') }}"
-                    :options="$opcionesTipoAplicacion"
-                    :value="$filtros['tipo_aplicacion']"
-                    :placeholder="__('operaciones.ordenes.filtro_todos')"
-                />
+                    @php
+                        $opcionesTipoAplicacion = collect(\App\Dominios\Operaciones\Dominio\TipoAplicacion::cases())
+                            ->mapWithKeys(fn ($caso) => [$caso->value => __('operaciones.tipo_aplicacion.'.$caso->value)]);
+                    @endphp
 
-                <div class="ag-filtros__acciones ag-ordenes__filtros-acciones">
-                    <x-atoms.button type="submit" variant="outline" size="md" icon="search">
-                        {{ __('operaciones.ordenes.filtrar') }}
-                    </x-atoms.button>
+                    <x-atoms.select
+                        name="tipo_aplicacion"
+                        id="filtro-tipo-aplicacion"
+                        label="{{ __('operaciones.ordenes.filtro_tipo_aplicacion') }}"
+                        :options="$opcionesTipoAplicacion"
+                        :value="$filtros['tipo_aplicacion']"
+                        :placeholder="__('operaciones.ordenes.filtro_todos')"
+                    />
 
-                    @if ($filtros['estado'] !== null || $filtros['tipo_aplicacion'] !== null)
-                        <x-atoms.button href="{{ route('panel.ordenes.index') }}" variant="text" size="md">
-                            {{ __('operaciones.ordenes.limpiar_filtros') }}
+                    <div class="ag-filtros__acciones ag-ordenes__filtros-acciones">
+                        <x-atoms.button type="submit" variant="outline" size="md" icon="search">
+                            {{ __('operaciones.ordenes.filtrar') }}
                         </x-atoms.button>
-                    @endif
-                </div>
-            </form>
+
+                        @if ($hayFiltrosActivos)
+                            <x-atoms.button href="{{ route('panel.ordenes.index') }}" variant="text" size="md">
+                                {{ __('operaciones.ordenes.limpiar_filtros') }}
+                            </x-atoms.button>
+                        @endif
+                    </div>
+                </form>
+            @endif
 
             @if ($ordenes->isEmpty())
-                <x-molecules.alert-strip variant="info" icon="assignment" class="ag-ordenes__aviso">
-                    {{ __(($filtros['estado'] !== null || $filtros['tipo_aplicacion'] !== null) ? 'operaciones.ordenes.filtro_vacio' : 'operaciones.ordenes.vacio') }}
-                </x-molecules.alert-strip>
+                @if ($hayFiltrosActivos)
+                    <x-molecules.alert-strip variant="info" icon="assignment" class="ag-ordenes__aviso">
+                        {{ __('operaciones.ordenes.filtro_vacio') }}
+                    </x-molecules.alert-strip>
+                @else
+                    <x-molecules.empty-state
+                        icon="assignment"
+                        :title="__('operaciones.ordenes.vacio_titulo')"
+                        :detail="__('operaciones.ordenes.vacio_detalle')"
+                    />
+                @endif
             @else
                 <div class="ag-ordenes__tabla" role="table">
                     <div class="ag-ordenes__head" role="row">

@@ -128,7 +128,8 @@ return [
         'eliminar' => 'Dar de baja',
         'eliminar_confirmar' => '¿Dar de baja el rol :rol? Sus permisos se dan de baja con él.',
         'badge_rol_activo' => 'Tu rol',
-        'vacio' => 'Todavía no hay ningún rol en el catálogo.',
+        'vacio_titulo' => 'Todavía no hay roles en el catálogo',
+        'vacio_detalle' => 'Los roles son administrados por el sistema. Tu cuenta debería tener asignado al menos un rol para acceder. Contactá a un administrador.',
         'catalogo_fijo' => 'El catálogo de :total permisos no se edita desde acá: cada código está escrito en el código del servidor, que es quien lo exige. Lo que se administra es qué rol tiene cuáles.',
 
         'creado' => 'Rol creado. Ahora dale sus permisos.',
@@ -347,7 +348,8 @@ return [
         'filtro_busqueda_placeholder' => 'Nombre o usuario…',
         'filtrar' => 'Filtrar',
         'limpiar_filtro' => 'Limpiar filtro',
-        'vacio' => 'Todavía no hay usuarios registrados.',
+        'vacio_titulo' => 'Todavía no hay usuarios registrados',
+        'vacio_detalle' => 'Los usuarios se crean desde el panel de administración. Pedidle a un administrador que cree tu cuenta.',
         'filtro_vacio' => 'Ningún usuario coincide con esta búsqueda.',
         'col_nombre' => 'Nombre',
         'col_username' => 'Usuario',
@@ -420,7 +422,8 @@ return [
         'col_ultimo_uso' => 'Último uso',
         'revocar' => 'Revocar',
         'revocado' => 'El dispositivo perdió el acceso.',
-        'vacio' => 'No hay dispositivos con sesión abierta.',
+        'vacio_titulo' => 'Todavía no hay dispositivos con sesión',
+        'vacio_detalle' => 'Los dispositivos aparecen acá cuando la app de campo se usa en un equipo. Volvé a esta pantalla después de tu primer vuelo.',
         'equipo_sin_nombre' => 'Equipo sin nombre',
         'usuario_desconocido' => 'Cuenta dada de baja',
         'sin_uso' => 'Todavía sin uso',
@@ -432,7 +435,6 @@ return [
     'organizacion' => [
         'titulo' => 'Registro de la compañía',
         'subtitulo' => 'Gestión centralizada de tu organización y configuración de suscripción.',
-        'alerta_vista_previa' => 'El plan de suscripción y multi-sucursal son vista previa: todavía no se persisten.',
 
         'tabs_aria' => 'Secciones de organización',
         'tab_organizacion' => 'Organización',
@@ -568,6 +570,8 @@ return [
         'diff_despues' => 'Después',
         'diff_sin_datos' => 'Sin datos antes/después para esta fila.',
         'sin_resultados' => 'No hay movimientos con estos filtros.',
+        'vacio_titulo' => 'Todavía no hay movimientos registrados',
+        'vacio_detalle' => 'Cada acción en el panel (crear, actualizar, eliminar) queda anotada acá. Volvé a esta pantalla después de tus primeros cambios.',
 
         'filtro_usuario' => 'Usuario',
         'filtro_usuario_todos' => 'Todos',

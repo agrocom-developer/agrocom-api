@@ -51,9 +51,11 @@
         @endif
 
         @if ($sesiones->isEmpty())
-            <x-molecules.alert-strip variant="info" icon="flight" class="ag-sesiones-validacion__aviso">
-                {{ __('operaciones.sesiones_validacion.vacio') }}
-            </x-molecules.alert-strip>
+            <x-molecules.empty-state
+                icon="flight"
+                :title="__('operaciones.sesiones_validacion.vacio_titulo')"
+                :detail="__('operaciones.sesiones_validacion.vacio_detalle')"
+            />
         @else
             <div class="ag-sesiones-validacion__lista">
                 @foreach ($sesiones as $sesion)

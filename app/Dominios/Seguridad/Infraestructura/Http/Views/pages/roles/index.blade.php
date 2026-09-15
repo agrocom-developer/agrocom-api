@@ -58,9 +58,11 @@
             @endif
 
             @if ($filas->isEmpty())
-                <x-molecules.alert-strip variant="info" icon="shield_person" class="ag-roles__aviso">
-                    {{ __('seguridad.roles.vacio') }}
-                </x-molecules.alert-strip>
+                <x-molecules.empty-state
+                    icon="shield_person"
+                    :title="__('seguridad.roles.vacio_titulo')"
+                    :detail="__('seguridad.roles.vacio_detalle')"
+                />
             @else
                 <div class="ag-roles__tabla" role="table">
                     <div class="ag-roles__head" role="row">

@@ -67,7 +67,12 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <form method="GET" action="{{ route('panel.gastos.index') }}" class="ag-filtros ag-gastos__filtros">
+            @php
+                $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
+            @endphp
+
+            @if ($hayFiltrosActivos || $gastos->isNotEmpty())
+                <form method="GET" action="{{ route('panel.gastos.index') }}" class="ag-filtros ag-gastos__filtros">
                 <x-atoms.select
                     name="rubro_id"
                     id="filtro-rubro"
@@ -122,13 +127,14 @@
                         {{ __('finanzas.gastos.filtrar') }}
                     </x-atoms.button>
 
-                    @if ($filtros['rubro_id'] !== null || $filtros['base_id'] !== null || $filtros['trabajo_id'] !== null || $filtros['equipo_trabajo_id'] !== null || $filtros['campania_id'] !== null || $filtros['periodo'] !== '')
+                    @if ($hayFiltrosActivos)
                         <x-atoms.button href="{{ route('panel.gastos.index') }}" variant="text" size="md">
                             {{ __('finanzas.gastos.limpiar_filtro') }}
                         </x-atoms.button>
                     @endif
                 </div>
             </form>
+            @endif
 
             @if ($total !== null)
                 <x-molecules.alert-strip variant="info" icon="functions" class="ag-gastos__aviso">
@@ -137,9 +143,17 @@
             @endif
 
             @if ($gastos->isEmpty())
-                <x-molecules.alert-strip variant="info" icon="receipt_long" class="ag-gastos__aviso">
-                    {{ __(($filtros['rubro_id'] !== null || $filtros['base_id'] !== null || $filtros['trabajo_id'] !== null || $filtros['equipo_trabajo_id'] !== null || $filtros['campania_id'] !== null || $filtros['periodo'] !== '') ? 'finanzas.gastos.filtro_vacio' : 'finanzas.gastos.vacio') }}
-                </x-molecules.alert-strip>
+                @if ($hayFiltrosActivos)
+                    <x-molecules.alert-strip variant="info" icon="receipt_long" class="ag-gastos__aviso">
+                        {{ __('finanzas.gastos.filtro_vacio') }}
+                    </x-molecules.alert-strip>
+                @else
+                    <x-molecules.empty-state
+                        icon="receipt_long"
+                        :title="__('finanzas.gastos.vacio_titulo')"
+                        :detail="__('finanzas.gastos.vacio_detalle')"
+                    />
+                @endif
             @else
                 <div class="ag-gastos__tabla" role="table">
                     <div class="ag-gastos__head" role="row">

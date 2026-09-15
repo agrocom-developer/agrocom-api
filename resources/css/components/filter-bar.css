@@ -52,6 +52,23 @@
     margin-bottom: 0;
 }
 
+/* Ancho de un campo dentro de la barra. Antes repetido en 31 `pages/*.css`
+   con 3 valores distintos de min-width (12/14/16rem) bajo un nombre BEM
+   propio — un solo criterio acá, como el resto de esta barra.
+
+   El max-width es necesario porque atoms/select trunca su valor con
+   ellipsis (select.css `.ag-select__value`), pero solo cuando el propio
+   campo tiene un límite de ancho — sin él, un select con búsqueda (más de
+   8 opciones) crece libre para mostrar el valor elegido entero + botón de
+   limpiar, y en un usuario con nombre largo (ej. filtro "Usuario" de
+   Bitácora) eso empuja el resto de la fila a envolver en un renglón aparte. */
+.ag-filtros .ag-input,
+.ag-filtros .ag-select,
+.ag-filtros .ag-date {
+    min-width: 14rem;
+    max-width: 18rem;
+}
+
 .ag-filtros__acciones {
     display: flex;
     align-items: center;

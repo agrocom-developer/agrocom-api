@@ -86,9 +86,20 @@
         @endpuede
 
         @if ($versiones->isEmpty())
-            <x-molecules.alert-strip variant="info" icon="system_update" class="ag-versiones-apk__aviso">
-                {{ __('distribucion.versiones.vacio') }}
-            </x-molecules.alert-strip>
+            {{-- El formulario de arriba ya es la llamada a la acción cuando el
+                 usuario puede subir una versión; el cartel de vacío solo suma
+                 algo para quien no tiene ese permiso y no ve el formulario.
+                 `@puede` es el `Blade::if` custom de PermisoVista (soporta
+                 `@else` genérico, igual que `@env` — no es el `@cannot` de
+                 Gate/Policy, que acá no aplica). --}}
+            @puede('distribucion.version.autorizar')
+            @else
+                <x-molecules.empty-state
+                    icon="system_update"
+                    :title="__('distribucion.versiones.vacio_titulo')"
+                    :detail="__('distribucion.versiones.vacio_detalle')"
+                />
+            @endpuede
         @else
             <div class="ag-versiones-apk__tabla" role="table">
                 <div class="ag-versiones-apk__head" role="row">

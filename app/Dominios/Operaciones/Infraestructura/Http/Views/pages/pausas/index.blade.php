@@ -63,55 +63,73 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <div class="ag-card ag-card--padded ag-pausas__tablero">
-                <div class="ag-card__head ag-card__head--flush">
-                    <h2 class="ag-card__title">{{ __('operaciones.pausas.tablero_titulo') }}</h2>
-                    <span class="ag-pausas__tablero-total">
-                        {{ __('operaciones.pausas.tablero_total') }}: {{ $formatearDuracion($agregado['total_minutos']) }}
-                    </span>
-                </div>
+            {{-- El tablero suma TODAS las causas del catálogo, 0 incluido
+                 (ver ObtenerAgregadoPausas) — útil para ver de un vistazo
+                 dónde se concentra el tiempo perdido, inútil cuando el total
+                 del período es 0: ahí no hay nada que comparar entre causas. --}}
+            @if ($agregado['total_minutos'] > 0)
+                <div class="ag-card ag-card--padded ag-pausas__tablero">
+                    <div class="ag-card__head ag-card__head--flush">
+                        <h2 class="ag-card__title">{{ __('operaciones.pausas.tablero_titulo') }}</h2>
+                        <span class="ag-pausas__tablero-total">
+                            {{ __('operaciones.pausas.tablero_total') }}: {{ $formatearDuracion($agregado['total_minutos']) }}
+                        </span>
+                    </div>
 
-                <div class="ag-pausas__tablero-tabla" role="table">
-                    @foreach ($agregado['por_causa'] as $causa => $minutos)
-                        <div class="ag-pausas__tablero-fila" role="row">
-                            <span role="cell">{{ __('operaciones.pausas.causa.'.$causa) }}</span>
-                            <span role="cell" class="ag-pausas__cifra">{{ $formatearDuracion($minutos) }}</span>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-
-            <form method="GET" action="{{ route('panel.pausas.index') }}" class="ag-filtros ag-pausas__filtros">
-                <div class="ag-input">
-                    <label for="filtro-periodo" class="ag-input__label">{{ __('operaciones.pausas.filtro_periodo') }}</label>
-                    <div class="ag-input__control">
-                        <input
-                            type="month"
-                            name="periodo"
-                            id="filtro-periodo"
-                            class="ag-input__field"
-                            value="{{ $filtros['periodo'] }}"
-                        >
+                    <div class="ag-pausas__tablero-tabla" role="table">
+                        @foreach ($agregado['por_causa'] as $causa => $minutos)
+                            <div class="ag-pausas__tablero-fila" role="row">
+                                <span role="cell">{{ __('operaciones.pausas.causa.'.$causa) }}</span>
+                                <span role="cell" class="ag-pausas__cifra">{{ $formatearDuracion($minutos) }}</span>
+                            </div>
+                        @endforeach
                     </div>
                 </div>
+            @endif
 
-                <div class="ag-filtros__acciones ag-pausas__filtros-acciones">
-                    <x-atoms.button type="submit" variant="outline" size="md" icon="search">
-                        {{ __('operaciones.pausas.filtrar') }}
-                    </x-atoms.button>
+            @php $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== ''); @endphp
 
-                    @if ($filtros['periodo'] !== '')
-                        <x-atoms.button href="{{ route('panel.pausas.index') }}" variant="text" size="md">
-                            {{ __('operaciones.pausas.limpiar_filtro') }}
+            @if ($hayFiltrosActivos || $pausas->isNotEmpty())
+                <form method="GET" action="{{ route('panel.pausas.index') }}" class="ag-filtros ag-pausas__filtros">
+                    <div class="ag-input">
+                        <label for="filtro-periodo" class="ag-input__label">{{ __('operaciones.pausas.filtro_periodo') }}</label>
+                        <div class="ag-input__control">
+                            <input
+                                type="month"
+                                name="periodo"
+                                id="filtro-periodo"
+                                class="ag-input__field"
+                                value="{{ $filtros['periodo'] }}"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="ag-filtros__acciones ag-pausas__filtros-acciones">
+                        <x-atoms.button type="submit" variant="outline" size="md" icon="search">
+                            {{ __('operaciones.pausas.filtrar') }}
                         </x-atoms.button>
-                    @endif
-                </div>
-            </form>
+
+                        @if ($hayFiltrosActivos)
+                            <x-atoms.button href="{{ route('panel.pausas.index') }}" variant="text" size="md">
+                                {{ __('operaciones.pausas.limpiar_filtro') }}
+                            </x-atoms.button>
+                        @endif
+                    </div>
+                </form>
+            @endif
 
             @if ($pausas->isEmpty())
-                <x-molecules.alert-strip variant="info" icon="pause_circle" class="ag-pausas__aviso">
-                    {{ __($filtros['periodo'] !== '' ? 'operaciones.pausas.filtro_vacio' : 'operaciones.pausas.vacio') }}
-                </x-molecules.alert-strip>
+                @if ($hayFiltrosActivos)
+                    <x-molecules.alert-strip variant="info" icon="pause_circle" class="ag-pausas__aviso">
+                        {{ __('operaciones.pausas.filtro_vacio') }}
+                    </x-molecules.alert-strip>
+                @else
+                    <x-molecules.empty-state
+                        icon="pause_circle"
+                        :title="__('operaciones.pausas.vacio_titulo')"
+                        :detail="__('operaciones.pausas.vacio_detalle')"
+                    />
+                @endif
             @else
                 <div class="ag-pausas__tabla" role="table">
                     <div class="ag-pausas__head" role="row">

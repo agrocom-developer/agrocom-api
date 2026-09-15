@@ -40,9 +40,11 @@
         @endif
 
         @if ($dispositivos->isEmpty())
-            <x-molecules.alert-strip variant="info" icon="smartphone" class="ag-dispositivos__aviso">
-                {{ __('seguridad.dispositivos.vacio') }}
-            </x-molecules.alert-strip>
+            <x-molecules.empty-state
+                icon="smartphone"
+                :title="__('seguridad.dispositivos.vacio_titulo')"
+                :detail="__('seguridad.dispositivos.vacio_detalle')"
+            />
         @else
             <div class="ag-dispositivos__tabla" role="table">
                 <div class="ag-dispositivos__head" role="row">

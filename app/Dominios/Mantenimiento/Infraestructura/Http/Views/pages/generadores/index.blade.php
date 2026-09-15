@@ -67,63 +67,77 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <form method="GET" action="{{ route('panel.generadores.index') }}" class="ag-filtros ag-generadores__filtros">
-                <div class="ag-input">
-                    <label for="filtro-q" class="ag-input__label">{{ __('mantenimiento.generadores.filtro_busqueda') }}</label>
-                    <div class="ag-input__control">
-                        <input
-                            type="search"
-                            name="q"
-                            id="filtro-q"
-                            class="ag-input__field"
-                            value="{{ $filtros['q'] }}"
-                            placeholder="{{ __('mantenimiento.generadores.filtro_busqueda_placeholder') }}"
-                        >
+            @php
+                $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
+            @endphp
+
+            @if ($hayFiltrosActivos || $generadores->isNotEmpty())
+                <form method="GET" action="{{ route('panel.generadores.index') }}" class="ag-filtros ag-generadores__filtros">
+                    <div class="ag-input">
+                        <label for="filtro-q" class="ag-input__label">{{ __('mantenimiento.generadores.filtro_busqueda') }}</label>
+                        <div class="ag-input__control">
+                            <input
+                                type="search"
+                                name="q"
+                                id="filtro-q"
+                                class="ag-input__field"
+                                value="{{ $filtros['q'] }}"
+                                placeholder="{{ __('mantenimiento.generadores.filtro_busqueda_placeholder') }}"
+                            >
+                        </div>
                     </div>
-                </div>
 
-                <x-atoms.select
-                    name="base_id"
-                    id="filtro-base"
-                    label="{{ __('mantenimiento.generadores.filtro_base') }}"
-                    :options="$basesDisponibles"
-                    :value="$filtros['base_id']"
-                    placeholder="{{ __('mantenimiento.generadores.filtro_todos') }}"
-                />
+                    <x-atoms.select
+                        name="base_id"
+                        id="filtro-base"
+                        label="{{ __('mantenimiento.generadores.filtro_base') }}"
+                        :options="$basesDisponibles"
+                        :value="$filtros['base_id']"
+                        placeholder="{{ __('mantenimiento.generadores.filtro_todos') }}"
+                    />
 
-                @php
-                    $opcionesEstado = collect($variantePorEstado)->mapWithKeys(fn ($_, $valor) => [
-                        $valor => __('mantenimiento.estado.'.$valor)
-                    ])->all();
-                @endphp
-                <x-atoms.select
-                    name="estado"
-                    id="filtro-estado"
-                    label="{{ __('mantenimiento.generadores.filtro_estado') }}"
-                    :options="$opcionesEstado"
-                    :value="$filtros['estado']"
-                    placeholder="{{ __('mantenimiento.generadores.filtro_todos') }}"
-                />
+                    @php
+                        $opcionesEstado = collect($variantePorEstado)->mapWithKeys(fn ($_, $valor) => [
+                            $valor => __('mantenimiento.estado.'.$valor)
+                        ])->all();
+                    @endphp
+                    <x-atoms.select
+                        name="estado"
+                        id="filtro-estado"
+                        label="{{ __('mantenimiento.generadores.filtro_estado') }}"
+                        :options="$opcionesEstado"
+                        :value="$filtros['estado']"
+                        placeholder="{{ __('mantenimiento.generadores.filtro_todos') }}"
+                    />
 
-                <div class="ag-filtros__acciones ag-generadores__filtros-acciones">
-                    {{-- outline, no primary: "Nuevo generador" ya es el único
-                         botón sólido del pliegue (§5 de la guía de pantalla). --}}
-                    <x-atoms.button type="submit" variant="outline" size="md" icon="search">
-                        {{ __('mantenimiento.generadores.filtrar') }}
-                    </x-atoms.button>
-
-                    @if ($filtros['q'] !== '' || $filtros['base_id'] !== null || $filtros['estado'] !== null)
-                        <x-atoms.button href="{{ route('panel.generadores.index') }}" variant="text" size="md">
-                            {{ __('mantenimiento.generadores.limpiar_filtro') }}
+                    <div class="ag-filtros__acciones ag-generadores__filtros-acciones">
+                        {{-- outline, no primary: "Nuevo generador" ya es el único
+                             botón sólido del pliegue (§5 de la guía de pantalla). --}}
+                        <x-atoms.button type="submit" variant="outline" size="md" icon="search">
+                            {{ __('mantenimiento.generadores.filtrar') }}
                         </x-atoms.button>
-                    @endif
-                </div>
-            </form>
+
+                        @if ($hayFiltrosActivos)
+                            <x-atoms.button href="{{ route('panel.generadores.index') }}" variant="text" size="md">
+                                {{ __('mantenimiento.generadores.limpiar_filtro') }}
+                            </x-atoms.button>
+                        @endif
+                    </div>
+                </form>
+            @endif
 
             @if ($generadores->isEmpty())
-                <x-molecules.alert-strip variant="info" icon="bolt" class="ag-generadores__aviso">
-                    {{ __(($filtros['q'] !== '' || $filtros['base_id'] !== null || $filtros['estado'] !== null) ? 'mantenimiento.generadores.filtro_vacio' : 'mantenimiento.generadores.vacio') }}
-                </x-molecules.alert-strip>
+                @if ($hayFiltrosActivos)
+                    <x-molecules.alert-strip variant="info" icon="bolt" class="ag-generadores__aviso">
+                        {{ __('mantenimiento.generadores.filtro_vacio') }}
+                    </x-molecules.alert-strip>
+                @else
+                    <x-molecules.empty-state
+                        icon="bolt"
+                        :title="__('mantenimiento.generadores.vacio_titulo')"
+                        :detail="__('mantenimiento.generadores.vacio_detalle')"
+                    />
+                @endif
             @else
                 <div class="ag-generadores__tabla" role="table">
                     <div class="ag-generadores__head" role="row">

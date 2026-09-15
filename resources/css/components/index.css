@@ -27,6 +27,7 @@
 @import './plan-card.css';
 @import './form-section.css';
 @import './alert-strip.css';
+@import './empty-state.css';
 @import './role-card.css';
 @import './section-head.css';
 @import './distribution-bar.css';
@@ -38,6 +39,8 @@
 @import './tiered-progress-bar.css';
 @import './file-field.css';
 @import './filter-bar.css';
+@import './table-search.css';
+@import './pagination.css';
 
 /* Organisms (quinta vuelta — layout de tres niveles) */
 @import './collapsible-menu-group.css';

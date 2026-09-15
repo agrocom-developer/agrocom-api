@@ -22,14 +22,6 @@
 
 /* Listado (index) */
 
-
-.ag-ordenes__filtros .ag-input,
-.ag-ordenes__filtros .ag-select,
-.ag-ordenes__filtros .ag-date {
-    min-width: 16rem;
-}
-
-
 .ag-ordenes__tabla {
     border: 1px solid var(--ag-color-border-card);
     border-radius: var(--ag-radius-md);

@@ -24,7 +24,8 @@ return [
         'filtro_busqueda_placeholder' => 'Razón social o NIT',
         'filtrar' => 'Buscar',
         'limpiar_filtro' => 'Limpiar búsqueda',
-        'vacio' => 'Todavía no se dio de alta ningún cliente.',
+        'vacio_titulo' => 'Todavía no hay clientes',
+        'vacio_detalle' => 'Los clientes se dan de alta con sus contactos principales. En cuanto se registre el primero, vas a verlo en este listado.',
         'filtro_vacio' => 'Ningún cliente coincide con la búsqueda.',
         'col_razon_social' => 'Razón social',
         'col_nit' => 'NIT',
@@ -112,7 +113,8 @@ return [
         'filtro_busqueda_placeholder' => 'Nombre de la propiedad o cliente',
         'filtrar' => 'Buscar',
         'limpiar_filtro' => 'Limpiar búsqueda',
-        'vacio' => 'Todavía no se dio de alta ninguna propiedad.',
+        'vacio_titulo' => 'Todavía no hay propiedades',
+        'vacio_detalle' => 'Las propiedades son terrenos de un cliente donde se trabaja. Se dan de alta con sus datos básicos y ubicación. En cuanto se registre la primera, vas a verla aquí con sus lotes.',
         'filtro_vacio' => 'Ninguna propiedad coincide con la búsqueda.',
         'col_nombre' => 'Propiedad',
         'col_cliente' => 'Cliente',
@@ -172,7 +174,8 @@ return [
         'filtro_campania_placeholder' => 'Todas las campañas',
         'filtrar' => 'Buscar',
         'limpiar_filtro' => 'Limpiar búsqueda',
-        'vacio' => 'Todavía no se dio de alta ningún contrato.',
+        'vacio_titulo' => 'Todavía no hay contratos',
+        'vacio_detalle' => 'Los contratos se crean entre un cliente y una campaña para especificar hectáreas, tarifa y ventanas. En cuanto se dé de alta el primero, vas a verlo en este listado.',
         'filtro_vacio' => 'Ningún contrato coincide con la búsqueda.',
         'col_cliente' => 'Cliente',
         'col_campania' => 'Campaña',
@@ -280,7 +283,8 @@ return [
         'filtro_todos' => 'Todas',
         'filtrar' => 'Buscar',
         'limpiar_filtro' => 'Limpiar filtros',
-        'vacio' => 'Todavía no se dio de alta ningún lote.',
+        'vacio_titulo' => 'Todavía no hay lotes',
+        'vacio_detalle' => 'Los lotes se crean al dar de alta una propiedad o desde su ficha. En cuanto se registre el primero, vas a verlo aquí con su mapa de ubicación y perímetro.',
         'filtro_vacio' => 'Ningún lote coincide con el filtro.',
         'col_codigo' => 'Código',
         'col_propiedad' => 'Propiedad',
@@ -361,11 +365,9 @@ return [
         'titulo' => 'Cultivos',
         'subtitulo' => 'Catálogo de cultivos disponibles para la siembra por lote y campaña.',
         'nuevo' => 'Nuevo cultivo',
-        'filtro_busqueda' => 'Buscar',
-        'filtro_busqueda_placeholder' => 'Nombre del cultivo',
-        'filtrar' => 'Buscar',
-        'limpiar_filtro' => 'Limpiar búsqueda',
-        'vacio' => 'Todavía no se dio de alta ningún cultivo.',
+        'filtro_busqueda_placeholder' => 'Buscar cultivo…',
+        'vacio_titulo' => 'Todavía no hay cultivos',
+        'vacio_detalle' => 'Los cultivos son el catálogo de opciones disponibles para sembrar en cada lote. En cuanto se registre el primero, vas a verlo aquí y en los formularios de siembra.',
         'filtro_vacio' => 'Ningún cultivo coincide con la búsqueda.',
         'col_nombre' => 'Cultivo',
         'col_estado' => 'Estado',
@@ -375,9 +377,6 @@ return [
         'eliminar_accion' => 'Eliminar',
         'confirmar_baja' => '¿Dar de baja este cultivo? Las siembras que ya lo tienen cargado no se ven afectadas.',
         'paginacion_aria' => 'Paginación de cultivos',
-        'paginacion_anterior' => 'Anterior',
-        'paginacion_siguiente' => 'Siguiente',
-        'paginacion_info' => 'Página :actual de :total',
 
         // Formulario (create/edit)
         'titulo_crear' => 'Nuevo cultivo',
@@ -431,7 +430,8 @@ return [
         'titulo' => 'Facturas',
         'subtitulo' => 'Facturas emitidas desde actas de conformidad ya firmadas.',
         'nueva' => 'Emitir factura',
-        'vacio' => 'Todavía no se emitió ninguna factura.',
+        'vacio_titulo' => 'Todavía no hay facturas',
+        'vacio_detalle' => 'Las facturas se emiten a partir de actas de conformidad ya firmadas. En cuanto se firme la primera acta, vas a poder emitir su factura y verla en este listado.',
         'col_cliente' => 'Cliente',
         'col_acta' => 'Acta',
         'col_hectareas' => 'Hectáreas facturadas',
@@ -470,6 +470,8 @@ return [
     'reportes_comerciales' => [
         'titulo' => 'Informe de avance de contratos',
         'subtitulo' => 'Hectáreas contratadas, aplicadas y pendientes, agrupadas por cultivo y cliente.',
+        'sin_datos_titulo' => 'Todavía no hay nada que informar',
+        'sin_datos_detalle' => 'Este informe agrupa contratos por cliente y cultivo — hace falta al menos un cliente y un cultivo dados de alta para poder generarlo.',
 
         // Entrada (pantalla inicial, con formulario de selección obligatoria)
         'entrada' => [
@@ -481,9 +483,8 @@ return [
             'error_cultivo' => 'Seleccioná al menos un cultivo.',
         ],
 
-        // Estados vacíos
+        // Estado vacío
         'estado' => [
-            'primera_visita' => 'Seleccioná clientes y cultivos para generar el informe.',
             'sin_resultados' => 'Ningún contrato coincide con el filtro aplicado.',
         ],
 

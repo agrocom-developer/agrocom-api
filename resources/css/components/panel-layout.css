@@ -27,11 +27,21 @@
     flex-direction: column;
 }
 
+/* display:flex + gap acá (no solo padding) porque no todas las páginas
+   envuelven su contenido en un `.ag-<pagina>` propio con su propio
+   `display:flex; flex-direction:column; gap:...` (~35 sí lo hacen; las que
+   renderizan directo como hijas de panel-layout dependían de márgenes
+   sueltos o de nada, con espaciado inconsistente entre pantallas). Para las
+   que SÍ envuelven, este gap no cambia nada: un único hijo directo no
+   produce separación visible. */
 .ag-panel__content {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
     padding: var(--ag-space-5) calc(var(--ag-space-5) + var(--ag-space-1));
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
 }
 
 /* Pie en mono (maqueta 5b: "AGROCOM SRL · 2026" + versión) — presente en

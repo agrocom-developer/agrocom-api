@@ -53,40 +53,54 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <form method="GET" action="{{ route('panel.personas.index') }}" class="ag-filtros ag-personas__filtros">
-                <div class="ag-input">
-                    <label for="filtro-q" class="ag-input__label">{{ __('personal.personas.filtro_busqueda') }}</label>
-                    <div class="ag-input__control">
-                        <input
-                            type="search"
-                            name="q"
-                            id="filtro-q"
-                            class="ag-input__field"
-                            value="{{ $filtros['q'] }}"
-                            placeholder="{{ __('personal.personas.filtro_busqueda_placeholder') }}"
-                        >
+            @php
+                $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
+            @endphp
+
+            @if ($hayFiltrosActivos || $personas->isNotEmpty())
+                <form method="GET" action="{{ route('panel.personas.index') }}" class="ag-filtros ag-personas__filtros">
+                    <div class="ag-input">
+                        <label for="filtro-q" class="ag-input__label">{{ __('personal.personas.filtro_busqueda') }}</label>
+                        <div class="ag-input__control">
+                            <input
+                                type="search"
+                                name="q"
+                                id="filtro-q"
+                                class="ag-input__field"
+                                value="{{ $filtros['q'] }}"
+                                placeholder="{{ __('personal.personas.filtro_busqueda_placeholder') }}"
+                            >
+                        </div>
                     </div>
-                </div>
 
-                <div class="ag-filtros__acciones ag-personas__filtros-acciones">
-                    {{-- outline, no primary: "Nueva persona" ya es el único
-                         botón sólido del pliegue (§5 de la guía de pantalla). --}}
-                    <x-atoms.button type="submit" variant="outline" size="md" icon="search">
-                        {{ __('personal.personas.filtrar') }}
-                    </x-atoms.button>
-
-                    @if ($filtros['q'] !== '')
-                        <x-atoms.button href="{{ route('panel.personas.index') }}" variant="text" size="md">
-                            {{ __('personal.personas.limpiar_filtro') }}
+                    <div class="ag-filtros__acciones ag-personas__filtros-acciones">
+                        {{-- outline, no primary: "Nueva persona" ya es el único
+                             botón sólido del pliegue (§5 de la guía de pantalla). --}}
+                        <x-atoms.button type="submit" variant="outline" size="md" icon="search">
+                            {{ __('personal.personas.filtrar') }}
                         </x-atoms.button>
-                    @endif
-                </div>
-            </form>
+
+                        @if ($filtros['q'] !== '')
+                            <x-atoms.button href="{{ route('panel.personas.index') }}" variant="text" size="md">
+                                {{ __('personal.personas.limpiar_filtro') }}
+                            </x-atoms.button>
+                        @endif
+                    </div>
+                </form>
+            @endif
 
             @if ($personas->isEmpty())
-                <x-molecules.alert-strip variant="info" icon="badge" class="ag-personas__aviso">
-                    {{ __($filtros['q'] !== '' ? 'personal.personas.filtro_vacio' : 'personal.personas.vacio') }}
-                </x-molecules.alert-strip>
+                @if ($hayFiltrosActivos)
+                    <x-molecules.alert-strip variant="info" icon="badge" class="ag-personas__aviso">
+                        {{ __('personal.personas.filtro_vacio') }}
+                    </x-molecules.alert-strip>
+                @else
+                    <x-molecules.empty-state
+                        icon="badge"
+                        :title="__('personal.personas.vacio_titulo')"
+                        :detail="__('personal.personas.vacio_detalle')"
+                    />
+                @endif
             @else
                 <div class="ag-personas__tabla" role="table">
                     <div class="ag-personas__head" role="row">

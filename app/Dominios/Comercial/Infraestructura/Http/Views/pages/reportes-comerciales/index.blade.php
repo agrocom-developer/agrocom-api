@@ -53,8 +53,17 @@
                 :subtitle="__('comercial.reportes_comerciales.subtitulo')"
             ></x-organisms.page-header>
 
+            {{-- Sin clientes o sin cultivos no hay nada que elegir: la
+                 pantalla de entrada quedaría con un checkbox-group vacío,
+                 imposible de completar. --}}
+            @if ($clientesDisponibles->isEmpty() || $cultivosDisponibles->isEmpty())
+                <x-molecules.empty-state
+                    icon="insert_chart"
+                    :title="__('comercial.reportes_comerciales.sin_datos_titulo')"
+                    :detail="__('comercial.reportes_comerciales.sin_datos_detalle')"
+                />
             {{-- Pantalla de entrada: checkbox-group de cliente y cultivo --}}
-            @if (!$consultado || !empty($erroresEntrada))
+            @elseif (!$consultado || !empty($erroresEntrada))
                 <form method="GET" action="{{ route('panel.reportes.comercial.index') }}" class="ag-reportes-comerciales__entrada">
                     <input type="hidden" name="consultado" value="1">
 
@@ -99,17 +108,6 @@
                         </x-atoms.button>
                     </div>
                 </form>
-
-                {{-- Estado vacío en pantalla de entrada (sin consulta o con error) --}}
-                @if (!$consultado)
-                    <x-molecules.alert-strip
-                        variant="info"
-                        icon="insert_chart"
-                        class="ag-reportes-comerciales__estado-vacio"
-                    >
-                        {{ __('comercial.reportes_comerciales.estado.primera_visita') }}
-                    </x-molecules.alert-strip>
-                @endif
             @else
                 {{-- Pantalla de resultados --}}
 

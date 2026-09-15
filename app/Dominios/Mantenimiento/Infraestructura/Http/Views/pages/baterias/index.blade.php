@@ -71,63 +71,77 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <form method="GET" action="{{ route('panel.baterias.index') }}" class="ag-filtros ag-baterias__filtros">
-                <div class="ag-input">
-                    <label for="filtro-q" class="ag-input__label">{{ __('mantenimiento.baterias.filtro_busqueda') }}</label>
-                    <div class="ag-input__control">
-                        <input
-                            type="search"
-                            name="q"
-                            id="filtro-q"
-                            class="ag-input__field"
-                            value="{{ $filtros['q'] }}"
-                            placeholder="{{ __('mantenimiento.baterias.filtro_busqueda_placeholder') }}"
-                        >
+            @php
+                $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
+            @endphp
+
+            @if ($hayFiltrosActivos || $baterias->isNotEmpty())
+                <form method="GET" action="{{ route('panel.baterias.index') }}" class="ag-filtros ag-baterias__filtros">
+                    <div class="ag-input">
+                        <label for="filtro-q" class="ag-input__label">{{ __('mantenimiento.baterias.filtro_busqueda') }}</label>
+                        <div class="ag-input__control">
+                            <input
+                                type="search"
+                                name="q"
+                                id="filtro-q"
+                                class="ag-input__field"
+                                value="{{ $filtros['q'] }}"
+                                placeholder="{{ __('mantenimiento.baterias.filtro_busqueda_placeholder') }}"
+                            >
+                        </div>
                     </div>
-                </div>
 
-                <x-atoms.select
-                    name="base_id"
-                    id="filtro-base"
-                    label="{{ __('mantenimiento.baterias.filtro_base') }}"
-                    :options="$basesDisponibles"
-                    :value="$filtros['base_id']"
-                    placeholder="{{ __('mantenimiento.baterias.filtro_todos') }}"
-                />
+                    <x-atoms.select
+                        name="base_id"
+                        id="filtro-base"
+                        label="{{ __('mantenimiento.baterias.filtro_base') }}"
+                        :options="$basesDisponibles"
+                        :value="$filtros['base_id']"
+                        placeholder="{{ __('mantenimiento.baterias.filtro_todos') }}"
+                    />
 
-                @php
-                    $opcionesEstado = collect($variantePorEstado)->mapWithKeys(fn ($_, $valor) => [
-                        $valor => __('mantenimiento.estado_bateria.'.$valor)
-                    ])->all();
-                @endphp
-                <x-atoms.select
-                    name="estado"
-                    id="filtro-estado"
-                    label="{{ __('mantenimiento.baterias.filtro_estado') }}"
-                    :options="$opcionesEstado"
-                    :value="$filtros['estado']"
-                    placeholder="{{ __('mantenimiento.baterias.filtro_todos') }}"
-                />
+                    @php
+                        $opcionesEstado = collect($variantePorEstado)->mapWithKeys(fn ($_, $valor) => [
+                            $valor => __('mantenimiento.estado_bateria.'.$valor)
+                        ])->all();
+                    @endphp
+                    <x-atoms.select
+                        name="estado"
+                        id="filtro-estado"
+                        label="{{ __('mantenimiento.baterias.filtro_estado') }}"
+                        :options="$opcionesEstado"
+                        :value="$filtros['estado']"
+                        placeholder="{{ __('mantenimiento.baterias.filtro_todos') }}"
+                    />
 
-                <div class="ag-filtros__acciones ag-baterias__filtros-acciones">
-                    {{-- outline, no primary: "Nueva batería" ya es el único
-                         botón sólido del pliegue (§5 de la guía de pantalla). --}}
-                    <x-atoms.button type="submit" variant="outline" size="md" icon="search">
-                        {{ __('mantenimiento.baterias.filtrar') }}
-                    </x-atoms.button>
-
-                    @if ($filtros['q'] !== '' || $filtros['base_id'] !== null || $filtros['estado'] !== null)
-                        <x-atoms.button href="{{ route('panel.baterias.index') }}" variant="text" size="md">
-                            {{ __('mantenimiento.baterias.limpiar_filtro') }}
+                    <div class="ag-filtros__acciones ag-baterias__filtros-acciones">
+                        {{-- outline, no primary: "Nueva batería" ya es el único
+                             botón sólido del pliegue (§5 de la guía de pantalla). --}}
+                        <x-atoms.button type="submit" variant="outline" size="md" icon="search">
+                            {{ __('mantenimiento.baterias.filtrar') }}
                         </x-atoms.button>
-                    @endif
-                </div>
-            </form>
+
+                        @if ($hayFiltrosActivos)
+                            <x-atoms.button href="{{ route('panel.baterias.index') }}" variant="text" size="md">
+                                {{ __('mantenimiento.baterias.limpiar_filtro') }}
+                            </x-atoms.button>
+                        @endif
+                    </div>
+                </form>
+            @endif
 
             @if ($baterias->isEmpty())
-                <x-molecules.alert-strip variant="info" icon="battery_charging_full" class="ag-baterias__aviso">
-                    {{ __(($filtros['q'] !== '' || $filtros['base_id'] !== null || $filtros['estado'] !== null) ? 'mantenimiento.baterias.filtro_vacio' : 'mantenimiento.baterias.vacio') }}
-                </x-molecules.alert-strip>
+                @if ($hayFiltrosActivos)
+                    <x-molecules.alert-strip variant="info" icon="battery_charging_full" class="ag-baterias__aviso">
+                        {{ __('mantenimiento.baterias.filtro_vacio') }}
+                    </x-molecules.alert-strip>
+                @else
+                    <x-molecules.empty-state
+                        icon="battery_charging_full"
+                        :title="__('mantenimiento.baterias.vacio_titulo')"
+                        :detail="__('mantenimiento.baterias.vacio_detalle')"
+                    />
+                @endif
             @else
                 <div class="ag-baterias__tabla" role="table">
                     <div class="ag-baterias__head" role="row">

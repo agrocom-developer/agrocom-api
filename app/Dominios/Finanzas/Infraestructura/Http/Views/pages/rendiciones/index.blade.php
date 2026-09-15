@@ -56,7 +56,12 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <form method="GET" action="{{ route('panel.rendiciones.index') }}" class="ag-filtros ag-rendiciones__filtros">
+            @php
+                $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
+            @endphp
+
+            @if ($hayFiltrosActivos || $rendiciones->isNotEmpty())
+                <form method="GET" action="{{ route('panel.rendiciones.index') }}" class="ag-filtros ag-rendiciones__filtros">
                 <x-atoms.select
                     name="base_id"
                     id="filtro-base"
@@ -80,18 +85,27 @@
                         {{ __('finanzas.rendiciones.filtrar') }}
                     </x-atoms.button>
 
-                    @if ($filtros['base_id'] !== null || $filtros['estado'] !== '')
+                    @if ($hayFiltrosActivos)
                         <x-atoms.button href="{{ route('panel.rendiciones.index') }}" variant="text" size="md">
                             {{ __('finanzas.rendiciones.limpiar_filtro') }}
                         </x-atoms.button>
                     @endif
                 </div>
             </form>
+            @endif
 
             @if ($rendiciones->isEmpty())
-                <x-molecules.alert-strip variant="info" icon="receipt_long" class="ag-rendiciones__aviso">
-                    {{ __(($filtros['base_id'] !== null || $filtros['estado'] !== '') ? 'finanzas.rendiciones.filtro_vacio' : 'finanzas.rendiciones.vacio') }}
-                </x-molecules.alert-strip>
+                @if ($hayFiltrosActivos)
+                    <x-molecules.alert-strip variant="info" icon="receipt_long" class="ag-rendiciones__aviso">
+                        {{ __('finanzas.rendiciones.filtro_vacio') }}
+                    </x-molecules.alert-strip>
+                @else
+                    <x-molecules.empty-state
+                        icon="receipt_long"
+                        :title="__('finanzas.rendiciones.vacio_titulo')"
+                        :detail="__('finanzas.rendiciones.vacio_detalle')"
+                    />
+                @endif
             @else
                 <div class="ag-rendiciones__tabla" role="table">
                     <div class="ag-rendiciones__head" role="row">

@@ -63,13 +63,14 @@
             @endif
 
             @php
-                $hayFiltrosActivos = $filtros['q'] !== '' || $filtros['cliente_id'] !== null || $filtros['propiedad_id'] !== null;
+                $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
                 $propiedadesOptions = $propiedadesDisponibles->mapWithKeys(fn ($propiedad) => [
                     $propiedad->id => $propiedad->nombre,
                 ]);
             @endphp
 
-            <form method="GET" action="{{ route('panel.lotes.index') }}" class="ag-filtros ag-lotes__filtros">
+            @if ($hayFiltrosActivos || $lotes->isNotEmpty())
+                <form method="GET" action="{{ route('panel.lotes.index') }}" class="ag-filtros ag-lotes__filtros">
                 <div class="ag-input">
                     <label for="filtro-q" class="ag-input__label">{{ __('comercial.lotes.filtro_busqueda') }}</label>
                     <div class="ag-input__control">
@@ -113,12 +114,21 @@
                         </x-atoms.button>
                     @endif
                 </div>
-            </form>
+                </form>
+            @endif
 
             @if ($lotes->isEmpty())
-                <x-molecules.alert-strip variant="info" icon="grid_view" class="ag-lotes__aviso">
-                    {{ __($hayFiltrosActivos ? 'comercial.lotes.filtro_vacio' : 'comercial.lotes.vacio') }}
-                </x-molecules.alert-strip>
+                @if ($hayFiltrosActivos)
+                    <x-molecules.alert-strip variant="info" icon="grid_view" class="ag-lotes__aviso">
+                        {{ __('comercial.lotes.filtro_vacio') }}
+                    </x-molecules.alert-strip>
+                @else
+                    <x-molecules.empty-state
+                        icon="grid_view"
+                        :title="__('comercial.lotes.vacio_titulo')"
+                        :detail="__('comercial.lotes.vacio_detalle')"
+                    />
+                @endif
             @else
                 <div class="ag-lotes__tabla" role="table">
                     <div class="ag-lotes__head" role="row">

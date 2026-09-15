@@ -56,40 +56,52 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <form method="GET" action="{{ route('panel.drones.index') }}" class="ag-filtros ag-drones__filtros">
-                <div class="ag-input">
-                    <label for="filtro-q" class="ag-input__label">{{ __('operaciones.drones.filtro_busqueda') }}</label>
-                    <div class="ag-input__control">
-                        <input
-                            type="search"
-                            name="q"
-                            id="filtro-q"
-                            class="ag-input__field"
-                            value="{{ $filtros['q'] }}"
-                            placeholder="{{ __('operaciones.drones.filtro_busqueda_placeholder') }}"
-                        >
+            @php $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== ''); @endphp
+
+            @if ($hayFiltrosActivos || $drones->isNotEmpty())
+                <form method="GET" action="{{ route('panel.drones.index') }}" class="ag-filtros ag-drones__filtros">
+                    <div class="ag-input">
+                        <label for="filtro-q" class="ag-input__label">{{ __('operaciones.drones.filtro_busqueda') }}</label>
+                        <div class="ag-input__control">
+                            <input
+                                type="search"
+                                name="q"
+                                id="filtro-q"
+                                class="ag-input__field"
+                                value="{{ $filtros['q'] }}"
+                                placeholder="{{ __('operaciones.drones.filtro_busqueda_placeholder') }}"
+                            >
+                        </div>
                     </div>
-                </div>
 
-                <div class="ag-filtros__acciones ag-drones__filtros-acciones">
-                    {{-- outline, no primary: "Nuevo dron" ya es el único botón
-                         sólido del pliegue (§5 de la guía de pantalla). --}}
-                    <x-atoms.button type="submit" variant="outline" size="md" icon="search">
-                        {{ __('operaciones.drones.filtrar') }}
-                    </x-atoms.button>
-
-                    @if ($filtros['q'] !== '')
-                        <x-atoms.button href="{{ route('panel.drones.index') }}" variant="text" size="md">
-                            {{ __('operaciones.drones.limpiar_filtro') }}
+                    <div class="ag-filtros__acciones ag-drones__filtros-acciones">
+                        {{-- outline, no primary: "Nuevo dron" ya es el único botón
+                             sólido del pliegue (§5 de la guía de pantalla). --}}
+                        <x-atoms.button type="submit" variant="outline" size="md" icon="search">
+                            {{ __('operaciones.drones.filtrar') }}
                         </x-atoms.button>
-                    @endif
-                </div>
-            </form>
+
+                        @if ($hayFiltrosActivos)
+                            <x-atoms.button href="{{ route('panel.drones.index') }}" variant="text" size="md">
+                                {{ __('operaciones.drones.limpiar_filtro') }}
+                            </x-atoms.button>
+                        @endif
+                    </div>
+                </form>
+            @endif
 
             @if ($drones->isEmpty())
-                <x-molecules.alert-strip variant="info" icon="airplanemode_active" class="ag-drones__aviso">
-                    {{ __($filtros['q'] !== '' ? 'operaciones.drones.filtro_vacio' : 'operaciones.drones.vacio') }}
-                </x-molecules.alert-strip>
+                @if ($hayFiltrosActivos)
+                    <x-molecules.alert-strip variant="info" icon="airplanemode_active" class="ag-drones__aviso">
+                        {{ __('operaciones.drones.filtro_vacio') }}
+                    </x-molecules.alert-strip>
+                @else
+                    <x-molecules.empty-state
+                        icon="airplanemode_active"
+                        :title="__('operaciones.drones.vacio_titulo')"
+                        :detail="__('operaciones.drones.vacio_detalle')"
+                    />
+                @endif
             @else
                 <div class="ag-drones__tabla" role="table">
                     <div class="ag-drones__head" role="row">

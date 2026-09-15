@@ -53,7 +53,12 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <form method="GET" action="{{ route('panel.propiedades.index') }}" class="ag-filtros ag-propiedades__filtros">
+            @php
+                $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
+            @endphp
+
+            @if ($hayFiltrosActivos || $propiedades->isNotEmpty())
+                <form method="GET" action="{{ route('panel.propiedades.index') }}" class="ag-filtros ag-propiedades__filtros">
                 <div class="ag-input">
                     <label for="filtro-q" class="ag-input__label">{{ __('comercial.propiedades.filtro_busqueda') }}</label>
                     <div class="ag-input__control">
@@ -75,18 +80,27 @@
                         {{ __('comercial.propiedades.filtrar') }}
                     </x-atoms.button>
 
-                    @if ($filtros['q'] !== '')
+                    @if ($hayFiltrosActivos)
                         <x-atoms.button href="{{ route('panel.propiedades.index') }}" variant="text" size="md">
                             {{ __('comercial.propiedades.limpiar_filtro') }}
                         </x-atoms.button>
                     @endif
                 </div>
-            </form>
+                </form>
+            @endif
 
             @if ($propiedades->isEmpty())
-                <x-molecules.alert-strip variant="info" icon="map" class="ag-propiedades__aviso">
-                    {{ __($filtros['q'] !== '' ? 'comercial.propiedades.filtro_vacio' : 'comercial.propiedades.vacio') }}
-                </x-molecules.alert-strip>
+                @if ($hayFiltrosActivos)
+                    <x-molecules.alert-strip variant="info" icon="map" class="ag-propiedades__aviso">
+                        {{ __('comercial.propiedades.filtro_vacio') }}
+                    </x-molecules.alert-strip>
+                @else
+                    <x-molecules.empty-state
+                        icon="map"
+                        :title="__('comercial.propiedades.vacio_titulo')"
+                        :detail="__('comercial.propiedades.vacio_detalle')"
+                    />
+                @endif
             @else
                 <div class="ag-propiedades__tabla" role="table">
                     <div class="ag-propiedades__head" role="row">
