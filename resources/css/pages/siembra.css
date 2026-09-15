@@ -13,10 +13,6 @@
     gap: var(--ag-space-5);
 }
 
-.ag-siembra__filtros .ag-select {
-    min-width: 16rem;
-}
-
 .ag-siembra-form {
     display: flex;
     flex-direction: column;

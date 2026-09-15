@@ -18,12 +18,6 @@
 
 /* Listado (index) */
 
-.ag-bitacora__filtros .ag-input,
-.ag-bitacora__filtros .ag-select,
-.ag-bitacora__filtros .ag-date {
-    min-width: 16rem;
-}
-
 .ag-bitacora__tabla {
     border: 1px solid var(--ag-color-border-card);
     border-radius: var(--ag-radius-md);

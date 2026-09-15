@@ -52,6 +52,15 @@
     margin-bottom: 0;
 }
 
+/* Ancho mínimo de un campo dentro de la barra. Antes repetido en 31
+   `pages/*.css` con 3 valores distintos (12/14/16rem) bajo un nombre BEM
+   propio — un solo criterio acá, como el resto de esta barra. */
+.ag-filtros .ag-input,
+.ag-filtros .ag-select,
+.ag-filtros .ag-date {
+    min-width: 14rem;
+}
+
 .ag-filtros__acciones {
     display: flex;
     align-items: center;

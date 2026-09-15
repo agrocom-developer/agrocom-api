@@ -20,12 +20,6 @@
 
 /* Listado (index) */
 
-.ag-equipos-trabajo__filtros .ag-input,
-.ag-equipos-trabajo__filtros .ag-select,
-.ag-equipos-trabajo__filtros .ag-date {
-    min-width: 14rem;
-}
-
 .ag-equipos-trabajo__tabla {
     border: 1px solid var(--ag-color-border-card);
     border-radius: var(--ag-radius-md);

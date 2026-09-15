@@ -22,10 +22,6 @@
 
 /* Listado (index) */
 
-.ag-fichas-dron__filtros .ag-input {
-    min-width: 14rem;
-}
-
 .ag-fichas-dron__tabla {
     border: 1px solid var(--ag-color-border-card);
     border-radius: var(--ag-radius-md);

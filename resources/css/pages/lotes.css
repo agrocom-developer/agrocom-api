@@ -21,12 +21,6 @@
 
 /* Listado (index) */
 
-.ag-lotes__filtros .ag-input,
-.ag-lotes__filtros .ag-select,
-.ag-lotes__filtros .ag-date {
-    min-width: 14rem;
-}
-
 .ag-lotes__tabla {
     border: 1px solid var(--ag-color-border-card);
     border-radius: var(--ag-radius-md);

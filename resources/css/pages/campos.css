@@ -23,14 +23,6 @@
 
 /* Listado (index) */
 
-
-.ag-campos__filtros .ag-input,
-.ag-campos__filtros .ag-select,
-.ag-campos__filtros .ag-date {
-    min-width: 16rem;
-}
-
-
 .ag-campos__tabla {
     border: 1px solid var(--ag-color-border-card);
     border-radius: var(--ag-radius-md);

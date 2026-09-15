@@ -20,12 +20,6 @@
 
 /* Listado (index) */
 
-.ag-campanias__filtros .ag-input,
-.ag-campanias__filtros .ag-select,
-.ag-campanias__filtros .ag-date {
-    min-width: 16rem;
-}
-
 .ag-campanias__tabla {
     border: 1px solid var(--ag-color-border-card);
     border-radius: var(--ag-radius-md);

@@ -20,14 +20,6 @@
 
 /* Listado (index) */
 
-
-.ag-stock__filtros .ag-input,
-.ag-stock__filtros .ag-select,
-.ag-stock__filtros .ag-date {
-    min-width: 14rem;
-}
-
-
 .ag-stock__tabla {
     border: 1px solid var(--ag-color-border-card);
     border-radius: var(--ag-radius-md);
