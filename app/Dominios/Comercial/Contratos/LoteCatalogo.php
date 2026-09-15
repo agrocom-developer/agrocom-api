@@ -7,14 +7,10 @@ namespace App\Dominios\Comercial\Contratos;
  * regla 2): ningún módulo consumidor recibe el modelo Eloquent `Lote`, solo
  * estos campos planos. `hectareas` viaja como string (invariante 6).
  *
- * `toArray()` sigue devolviendo la clave `campo_id` a propósito (ADR 0020):
- * es el contrato externo real de `GET /api/sync/catalogo` con `agrocom-field`
- * — a diferencia de `LotePanel` (puramente interno, panel/dashboard), este
- * JSON lo consume la app de campo ya distribuida. Renombrar la clave acá
- * rompería el catálogo para cualquier APK que no se haya actualizado todavía;
- * el rename real queda para una rama coordinada con una versión nueva del
- * APK (`feature/sync-propiedad`), igual que `AperturaEstadiaHacienda` en el
- * sentido inverso (payload de entrada).
+ * `toArray()` devuelve `propiedad_id` (ADR 0020): contrato externo real de
+ * `GET /api/sync/catalogo` con `agrocom-field`, renombrado en conjunto con
+ * esa app (rama `feature/sync-propiedad`) — sin APK distribuido todavía, sin
+ * ventana de compatibilidad que cuidar.
  */
 final readonly class LoteCatalogo
 {
@@ -34,8 +30,7 @@ final readonly class LoteCatalogo
     {
         return [
             'id' => $this->id,
-            // Ver docblock de la clase: clave de wire sin renombrar a propósito.
-            'campo_id' => $this->propiedadId,
+            'propiedad_id' => $this->propiedadId,
             'codigo' => $this->codigo,
             'hectareas' => $this->hectareas,
             'geometria' => $this->geometria,

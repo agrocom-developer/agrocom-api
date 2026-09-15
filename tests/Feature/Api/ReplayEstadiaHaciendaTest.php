@@ -36,7 +36,7 @@ function equipoTrabajoParaReplayEstadia(): EquipoTrabajo
     ]);
 }
 
-function campoParaReplayEstadia(): Propiedad
+function propiedadParaReplayEstadia(): Propiedad
 {
     $cliente = Cliente::query()->create(['razon_social' => 'Cliente Replay', 'tipo_persona' => 'juridica']);
 
@@ -45,13 +45,13 @@ function campoParaReplayEstadia(): Propiedad
 
 it('el mismo lote de estadia_entrada/estadia_salida aplicado 10 veces, en orden y en desorden, deja un estado final idéntico', function () {
     $equipo = equipoTrabajoParaReplayEstadia();
-    $campo = campoParaReplayEstadia();
+    $propiedad = propiedadParaReplayEstadia();
 
     $entrada = [
         'tipo' => 'estadia_entrada',
         'uuid_cliente' => 'uuid-replay-estadia',
         'equipo_trabajo_id' => $equipo->id,
-        'campo_id' => $campo->id,
+        'propiedad_id' => $propiedad->id,
         'entrada' => '2026-09-01T08:00:00-04:00',
     ];
 
@@ -88,20 +88,20 @@ it('el mismo lote de estadia_entrada/estadia_salida aplicado 10 veces, en orden 
     $estadiaFinal = EstadiaHacienda::query()->where('uuid_cliente', 'uuid-replay-estadia')->firstOrFail();
 
     expect($estadiaFinal->equipo_trabajo_id)->toBe($equipo->id)
-        ->and($estadiaFinal->propiedad_id)->toBe($campo->id)
+        ->and($estadiaFinal->propiedad_id)->toBe($propiedad->id)
         ->and($estadiaFinal->salida)->not->toBeNull()
         ->and($estadiaFinal->cierre_uuid_cliente)->toBe('uuid-replay-estadia-salida');
 });
 
 it('un estadia_entrada rechazado por equipo ya abierto no frena el resto del lote', function () {
     $equipo = equipoTrabajoParaReplayEstadia();
-    $campo = campoParaReplayEstadia();
+    $propiedad = propiedadParaReplayEstadia();
 
     $primeraEntrada = [
         'tipo' => 'estadia_entrada',
         'uuid_cliente' => 'uuid-lote-estadia-1',
         'equipo_trabajo_id' => $equipo->id,
-        'campo_id' => $campo->id,
+        'propiedad_id' => $propiedad->id,
         'entrada' => '2026-09-01T08:00:00-04:00',
     ];
 
@@ -110,7 +110,7 @@ it('un estadia_entrada rechazado por equipo ya abierto no frena el resto del lot
         'tipo' => 'estadia_entrada',
         'uuid_cliente' => 'uuid-lote-estadia-2',
         'equipo_trabajo_id' => $equipo->id,
-        'campo_id' => $campo->id,
+        'propiedad_id' => $propiedad->id,
         'entrada' => '2026-09-02T08:00:00-04:00',
     ];
 
@@ -119,7 +119,7 @@ it('un estadia_entrada rechazado por equipo ya abierto no frena el resto del lot
         'tipo' => 'estadia_entrada',
         'uuid_cliente' => 'uuid-lote-estadia-otro-equipo',
         'equipo_trabajo_id' => $otroEquipo->id,
-        'campo_id' => $campo->id,
+        'propiedad_id' => $propiedad->id,
         'entrada' => '2026-09-02T08:00:00-04:00',
     ];
 

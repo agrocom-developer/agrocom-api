@@ -48,7 +48,7 @@ test('abrirEstadia con datos válidos aplica y persiste la fila', function () {
     $datos = AperturaEstadiaHacienda::intentarDesdeArreglo([
         'uuid_cliente' => 'uuid-estadia-1',
         'equipo_trabajo_id' => $equipo->id,
-        'campo_id' => $propiedad->id,
+        'propiedad_id' => $propiedad->id,
         'entrada' => '2026-09-01T08:00:00-04:00',
     ]);
 
@@ -72,7 +72,7 @@ test('abrirEstadia con vehículo y observación persiste ambos campos', function
     $datos = AperturaEstadiaHacienda::intentarDesdeArreglo([
         'uuid_cliente' => 'uuid-estadia-vehiculo',
         'equipo_trabajo_id' => $equipo->id,
-        'campo_id' => $propiedad->id,
+        'propiedad_id' => $propiedad->id,
         'entrada' => '2026-09-01T08:00:00-04:00',
         'vehiculo_id' => $vehiculo->id,
         'observacion' => 'ingreso por tranquera norte',
@@ -94,7 +94,7 @@ test('abrirEstadia reintentando el mismo uuid_cliente devuelve duplicado', funct
     $datos = AperturaEstadiaHacienda::intentarDesdeArreglo([
         'uuid_cliente' => 'uuid-estadia-reintento',
         'equipo_trabajo_id' => $equipo->id,
-        'campo_id' => $propiedad->id,
+        'propiedad_id' => $propiedad->id,
         'entrada' => '2026-09-01T08:00:00-04:00',
     ]);
 
@@ -113,7 +113,7 @@ test('abrirEstadia para un equipo con estadía abierta se rechaza sin frenar el 
     $primera = AperturaEstadiaHacienda::intentarDesdeArreglo([
         'uuid_cliente' => 'uuid-estadia-abierta-1',
         'equipo_trabajo_id' => $equipo->id,
-        'campo_id' => $propiedad->id,
+        'propiedad_id' => $propiedad->id,
         'entrada' => '2026-09-01T08:00:00-04:00',
     ]);
     $contrato->abrirEstadia($primera);
@@ -121,7 +121,7 @@ test('abrirEstadia para un equipo con estadía abierta se rechaza sin frenar el 
     $segunda = AperturaEstadiaHacienda::intentarDesdeArreglo([
         'uuid_cliente' => 'uuid-estadia-abierta-2',
         'equipo_trabajo_id' => $equipo->id,
-        'campo_id' => $propiedad->id,
+        'propiedad_id' => $propiedad->id,
         'entrada' => '2026-09-02T08:00:00-04:00',
     ]);
     $resultado = $contrato->abrirEstadia($segunda);
@@ -137,7 +137,7 @@ test('abrirEstadia para un equipo con estadía abierta se rechaza sin frenar el 
     $tercera = AperturaEstadiaHacienda::intentarDesdeArreglo([
         'uuid_cliente' => 'uuid-estadia-otro-equipo',
         'equipo_trabajo_id' => $otroEquipo->id,
-        'campo_id' => $propiedad->id,
+        'propiedad_id' => $propiedad->id,
         'entrada' => '2026-09-02T08:00:00-04:00',
     ]);
     expect($contrato->abrirEstadia($tercera)->estado)->toBe('aplicado');
@@ -151,7 +151,7 @@ test('cerrarEstadia con datos válidos aplica y persiste la salida', function ()
     $contrato->abrirEstadia(AperturaEstadiaHacienda::intentarDesdeArreglo([
         'uuid_cliente' => 'uuid-estadia-a-cerrar',
         'equipo_trabajo_id' => $equipo->id,
-        'campo_id' => $propiedad->id,
+        'propiedad_id' => $propiedad->id,
         'entrada' => '2026-09-01T08:00:00-04:00',
     ]));
 
@@ -193,7 +193,7 @@ test('cerrarEstadia reintentando el mismo evento de salida devuelve duplicado', 
     $contrato->abrirEstadia(AperturaEstadiaHacienda::intentarDesdeArreglo([
         'uuid_cliente' => 'uuid-estadia-reintento-cierre',
         'equipo_trabajo_id' => $equipo->id,
-        'campo_id' => $propiedad->id,
+        'propiedad_id' => $propiedad->id,
         'entrada' => '2026-09-01T08:00:00-04:00',
     ]));
 
@@ -217,7 +217,7 @@ test('cerrarEstadia con un segundo evento de salida distinto sobre una estadía 
     $contrato->abrirEstadia(AperturaEstadiaHacienda::intentarDesdeArreglo([
         'uuid_cliente' => 'uuid-estadia-doble-cierre',
         'equipo_trabajo_id' => $equipo->id,
-        'campo_id' => $propiedad->id,
+        'propiedad_id' => $propiedad->id,
         'entrada' => '2026-09-01T08:00:00-04:00',
     ]));
 
@@ -245,7 +245,7 @@ test('cerrarEstadia con salida anterior o igual a la entrada se rechaza', functi
     $contrato->abrirEstadia(AperturaEstadiaHacienda::intentarDesdeArreglo([
         'uuid_cliente' => 'uuid-estadia-fecha-invalida',
         'equipo_trabajo_id' => $equipo->id,
-        'campo_id' => $propiedad->id,
+        'propiedad_id' => $propiedad->id,
         'entrada' => '2026-09-01T08:00:00-04:00',
     ]));
 

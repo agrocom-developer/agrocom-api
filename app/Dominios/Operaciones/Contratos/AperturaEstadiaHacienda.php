@@ -5,7 +5,7 @@ namespace App\Dominios\Operaciones\Contratos;
 /**
  * DTO primitivo de entrada del contrato de escritura de `Operaciones` (ADR
  * 0003, regla 2; HU-51, tarea 74): la forma de un registro `estadia_entrada`
- * en el lote de `POST /api/sync`. `equipo_trabajo_id`, `campo_id` y
+ * en el lote de `POST /api/sync`. `equipo_trabajo_id`, `propiedad_id` y
  * `vehiculo_id` ya vienen resueltos a id de servidor (el cliente los trae del
  * pull de catálogo), mismo criterio que `AperturaTrabajo::$ordenId`/`$loteId`.
  *
@@ -15,14 +15,18 @@ namespace App\Dominios\Operaciones\Contratos;
  * rechazo no frena el resto del lote.
  *
  * Sin `campania_id` (ver docblock de la migración de `ope_estadias_hacienda`):
- * la estadía es del campo, no de una campaña.
+ * la estadía es de la propiedad, no de una campaña.
+ *
+ * `propiedad_id` (ADR 0020): contrato externo con `agrocom-field`, renombrado
+ * de `campo_id` en conjunto con esa app (rama `feature/sync-propiedad`) — sin
+ * APK distribuido todavía, sin ventana de compatibilidad que cuidar.
  */
 final readonly class AperturaEstadiaHacienda
 {
     private function __construct(
         public string $uuidCliente,
         public int $equipoTrabajoId,
-        public int $campoId,
+        public int $propiedadId,
         public string $entrada,
         public ?int $vehiculoId,
         public ?string $observacion,
@@ -33,7 +37,7 @@ final readonly class AperturaEstadiaHacienda
     {
         if (! self::esStringNoVacio($datos['uuid_cliente'] ?? null)
             || ! self::esEntero($datos['equipo_trabajo_id'] ?? null)
-            || ! self::esEntero($datos['campo_id'] ?? null)
+            || ! self::esEntero($datos['propiedad_id'] ?? null)
             || ! self::esStringNoVacio($datos['entrada'] ?? null)
             || ! self::esEnteroOAusente($datos['vehiculo_id'] ?? null)
             || ! self::esStringOAusente($datos['observacion'] ?? null)
@@ -44,7 +48,7 @@ final readonly class AperturaEstadiaHacienda
         return new self(
             uuidCliente: (string) $datos['uuid_cliente'],
             equipoTrabajoId: (int) $datos['equipo_trabajo_id'],
-            campoId: (int) $datos['campo_id'],
+            propiedadId: (int) $datos['propiedad_id'],
             entrada: (string) $datos['entrada'],
             vehiculoId: isset($datos['vehiculo_id']) ? (int) $datos['vehiculo_id'] : null,
             observacion: isset($datos['observacion']) ? (string) $datos['observacion'] : null,
