@@ -6,9 +6,11 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 /**
- * `POST /panel/campos/{campo}/siembra` (HU-48, tarea 71, etapa 3). La
- * autorización (permiso `comercial.campo.editar`) se verifica en el
- * controlador, contra el rol activo — no acá.
+ * `POST /panel/propiedades/{propiedad}/siembra` (HU-48, tarea 71, etapa 3;
+ * ruta y permiso renombrados por ADR 0020 — antes
+ * `panel.campos.{campo}.siembra` / `comercial.campo.editar`, `Campo` ya no
+ * existe como entidad). La autorización (permiso `comercial.propiedad.editar`)
+ * se verifica en el controlador, contra el rol activo — no acá.
  *
  * `lotes.*.cultivo_id` en blanco es válido a propósito: no todos los lotes
  * de un campo se siembran en la misma campaña. Cuando viene en blanco, el
