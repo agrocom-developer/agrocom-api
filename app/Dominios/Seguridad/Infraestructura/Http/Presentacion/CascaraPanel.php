@@ -103,36 +103,46 @@ final class CascaraPanel
         $badges = [];
 
         $ordenesVigentes = $this->contadoresOperaciones->ordenesVigentes();
-        $badges['menu.operacion.items.ordenes'] = [
-            'numero' => (string) $ordenesVigentes,
-            'texto' => "{$ordenesVigentes} vigentes",
-        ];
+        if ($ordenesVigentes > 0) {
+            $badges['menu.operacion.items.ordenes'] = [
+                'numero' => (string) $ordenesVigentes,
+                'texto' => "{$ordenesVigentes} vigentes",
+            ];
+        }
 
         $sesionesPendientes = $this->contadoresOperaciones->sesionesPendientesValidacion();
-        $badges['menu.operacion.items.sesiones'] = [
-            'numero' => (string) $sesionesPendientes,
-            'texto' => "{$sesionesPendientes} sin validar",
-        ];
+        if ($sesionesPendientes > 0) {
+            $badges['menu.operacion.items.sesiones'] = [
+                'numero' => (string) $sesionesPendientes,
+                'texto' => "{$sesionesPendientes} sin validar",
+            ];
+        }
 
         $pausas = $this->contadoresOperaciones->pausasDelMes();
-        $badges['menu.operacion.items.pausas'] = [
-            'numero' => (string) $pausas['cantidad'],
-            'texto' => "{$pausas['cantidad']} este mes",
-        ];
+        if ($pausas['cantidad'] > 0) {
+            $badges['menu.operacion.items.pausas'] = [
+                'numero' => (string) $pausas['cantidad'],
+                'texto' => "{$pausas['cantidad']} este mes",
+            ];
+        }
 
         $stockBajoMinimo = $this->contadoresInventario->stockBajoMinimo();
-        $badges['menu.mantenimiento.items.stock'] = [
-            'numero' => (string) $stockBajoMinimo,
-            'texto' => "{$stockBajoMinimo} bajo mínimo",
-        ];
+        if ($stockBajoMinimo > 0) {
+            $badges['menu.mantenimiento.items.stock'] = [
+                'numero' => (string) $stockBajoMinimo,
+                'texto' => "{$stockBajoMinimo} bajo mínimo",
+            ];
+        }
 
         if ($usuario->persona_id !== null) {
             $devengado = $this->contadoresFinanzas->devengadoDelMes($usuario->persona_id);
-            $devengadoFormateado = number_format((float) $devengado, 0, ',', '.');
-            $badges['menu.financiero.items.devengos'] = [
-                'numero' => $devengadoFormateado,
-                'texto' => "Bs {$devengadoFormateado}",
-            ];
+            if ((float) $devengado > 0) {
+                $devengadoFormateado = number_format((float) $devengado, 0, ',', '.');
+                $badges['menu.financiero.items.devengos'] = [
+                    'numero' => $devengadoFormateado,
+                    'texto' => "Bs {$devengadoFormateado}",
+                ];
+            }
         }
 
         return $badges;
