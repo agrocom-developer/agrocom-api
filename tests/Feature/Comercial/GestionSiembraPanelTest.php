@@ -1,7 +1,6 @@
 <?php
 
 use App\Dominios\Campania\Infraestructura\Eloquent\Campania;
-use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cultivo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\LoteCampania;
@@ -14,10 +13,9 @@ use Database\Seeders\Catalogo\CatalogoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 /*
- * HU-48 (tarea 71, etapa 3, ADR 0015 punto 4): pantalla de siembra en la
- * ficha del campo. Reusa el permiso `comercial.campo.editar` (no es un ABM
- * propio). Mismo patrón de asserts que
- * tests/Feature/Comercial/GestionCamposPanelTest.php.
+ * HU-48 (tarea 71, etapa 3, ADR 0020): pantalla de siembra en la
+ * ficha de la propiedad. Reusa el permiso `comercial.propiedad.editar` (no es un ABM
+ * propio). ADR 0020 colapsa el tercernivel (Campo) convirtiéndola en Lote.
  */
 
 uses(RefreshDatabase::class);
@@ -61,14 +59,13 @@ function campaniaParaSiembraPanel(int $clienteId, string $codigo = '2025-2026'):
     ]);
 }
 
-function campoConLotesParaSiembraPanel(int $clienteId): Campo
+function propiedadConLotesParaSiembraPanel(int $clienteId): Propiedad
 {
     $propiedad = Propiedad::create(['cliente_id' => $clienteId, 'nombre' => 'Propiedad de prueba '.uniqid()]);
-    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo panel siembra']);
-    $campo->lotes()->create(['codigo' => 'L-01', 'hectareas' => '20.00']);
-    $campo->lotes()->create(['codigo' => 'L-02', 'hectareas' => '15.00']);
+    $propiedad->lotes()->create(['codigo' => 'L-01', 'hectareas' => '20.00']);
+    $propiedad->lotes()->create(['codigo' => 'L-02', 'hectareas' => '15.00']);
 
-    return $campo->refresh()->load('lotes');
+    return $propiedad->refresh()->load('lotes');
 }
 
 function cultivoIdParaSiembraPanel(string $nombre): int
@@ -81,29 +78,29 @@ it('muestra el mensaje para crear una campaña cuando el cliente todavía no tie
     entrarAlPanelParaSiembra($encargado, $idRol);
 
     $cliente = clienteParaSiembraPanel();
-    $campo = campoConLotesParaSiembraPanel($cliente->id);
+    $propiedad = propiedadConLotesParaSiembraPanel($cliente->id);
 
-    $this->get(route('panel.campos.siembra', $campo))
+    $this->get(route('panel.propiedades.siembra', $propiedad))
         ->assertOk()
         ->assertSee(__('comercial.siembra.sin_campanias'));
 });
 
-it('guarda la siembra de los lotes de un campo para una campaña', function () {
+it('guarda la siembra de los lotes de una propiedad para una campaña', function () {
     [$encargado, $idRol] = usuarioConRolParaSiembraPanel('encargado', 'encargado_operaciones');
     entrarAlPanelParaSiembra($encargado, $idRol);
 
     $cliente = clienteParaSiembraPanel();
     $campania = campaniaParaSiembraPanel($cliente->id);
-    $campo = campoConLotesParaSiembraPanel($cliente->id);
-    [$loteUno, $loteDos] = $campo->lotes->all();
+    $propiedad = propiedadConLotesParaSiembraPanel($cliente->id);
+    [$loteUno, $loteDos] = $propiedad->lotes->all();
 
-    $this->post(route('panel.campos.siembra.guardar', $campo), [
+    $this->post(route('panel.propiedades.siembra.guardar', $propiedad), [
         'campania_id' => $campania->id,
         'lotes' => [
             ['lote_id' => $loteUno->id, 'cultivo_id' => cultivoIdParaSiembraPanel('Soya'), 'hectareas_sembradas' => '18.00', 'fecha_siembra' => '2025-11-01', 'fecha_cosecha_estimada' => '2026-03-01'],
             ['lote_id' => $loteDos->id, 'cultivo_id' => '', 'hectareas_sembradas' => '', 'fecha_siembra' => '', 'fecha_cosecha_estimada' => ''],
         ],
-    ])->assertRedirect(route('panel.campos.siembra', ['campo' => $campo, 'campania_id' => $campania->id]));
+    ])->assertRedirect(route('panel.propiedades.siembra', ['propiedad' => $propiedad, 'campania_id' => $campania->id]));
 
     $siembra = LoteCampania::query()->where('lote_id', $loteUno->id)->where('campania_id', $campania->id)->sole();
     expect((string) $siembra->hectareas_sembradas)->toBe('18.00');
@@ -117,17 +114,17 @@ it('rechaza hectáreas sembradas por encima de las del lote, con un mensaje trad
 
     $cliente = clienteParaSiembraPanel();
     $campania = campaniaParaSiembraPanel($cliente->id);
-    $campo = campoConLotesParaSiembraPanel($cliente->id);
-    $lote = $campo->lotes->first();
+    $propiedad = propiedadConLotesParaSiembraPanel($cliente->id);
+    $lote = $propiedad->lotes->first();
 
-    $this->from(route('panel.campos.siembra', $campo))
-        ->post(route('panel.campos.siembra.guardar', $campo), [
+    $this->from(route('panel.propiedades.siembra', $propiedad))
+        ->post(route('panel.propiedades.siembra.guardar', $propiedad), [
             'campania_id' => $campania->id,
             'lotes' => [
                 ['lote_id' => $lote->id, 'cultivo_id' => cultivoIdParaSiembraPanel('Soya'), 'hectareas_sembradas' => '999.00', 'fecha_siembra' => '', 'fecha_cosecha_estimada' => ''],
             ],
         ])
-        ->assertRedirect(route('panel.campos.siembra', ['campo' => $campo, 'campania_id' => $campania->id]))
+        ->assertRedirect(route('panel.propiedades.siembra', ['propiedad' => $propiedad, 'campania_id' => $campania->id]))
         ->assertSessionHasErrors('lotes');
 
     expect(LoteCampania::query()->where('lote_id', $lote->id)->exists())->toBeFalse();
@@ -139,14 +136,14 @@ it('un rol sin el permiso recibe 403', function () {
 
     $cliente = clienteParaSiembraPanel();
     $campania = campaniaParaSiembraPanel($cliente->id);
-    $campo = campoConLotesParaSiembraPanel($cliente->id);
-    $lote = $campo->lotes->first();
+    $propiedad = propiedadConLotesParaSiembraPanel($cliente->id);
+    $lote = $propiedad->lotes->first();
 
-    $this->get(route('panel.campos.siembra', $campo))->assertForbidden();
+    $this->get(route('panel.propiedades.siembra', $propiedad))->assertForbidden();
 
     // Payload válido (pasaría la validación): el 403 tiene que llegar por el
     // permiso, no ser un 302 de validación disfrazado.
-    $this->post(route('panel.campos.siembra.guardar', $campo), [
+    $this->post(route('panel.propiedades.siembra.guardar', $propiedad), [
         'campania_id' => $campania->id,
         'lotes' => [
             ['lote_id' => $lote->id, 'cultivo_id' => cultivoIdParaSiembraPanel('Soya'), 'hectareas_sembradas' => '5.00', 'fecha_siembra' => '', 'fecha_cosecha_estimada' => ''],

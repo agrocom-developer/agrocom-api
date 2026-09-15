@@ -8,7 +8,7 @@ use Illuminate\Validation\Rule;
 
 /**
  * `PUT /panel/lotes/{lote}` (tarea 77, HU-54, etapa 2). Mismo criterio que
- * `CrearLoteRequest` para `campo_id`/`lote.codigo`/`lote.geometria` (ver su
+ * `CrearLoteRequest` para `propiedad_id`/`lote.codigo`/`lote.geometria` (ver su
  * docblock).
  */
 final class ActualizarLoteRequest extends FormRequest
@@ -17,10 +17,10 @@ final class ActualizarLoteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'campo_id' => [
+            'propiedad_id' => [
                 'required',
                 'integer',
-                Rule::exists('com_campos', 'id')->whereNull('deleted_at'),
+                Rule::exists('com_propiedades', 'id')->whereNull('deleted_at'),
             ],
             'lote.codigo' => ['required', 'string', 'max:50'],
             'lote.hectareas' => ['required', 'numeric', 'gt:0'],
@@ -35,8 +35,8 @@ final class ActualizarLoteRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'campo_id.required' => 'Seleccioná una propiedad.',
-            'campo_id.exists' => 'La propiedad seleccionada no es válida.',
+            'propiedad_id.required' => 'Seleccioná una propiedad.',
+            'propiedad_id.exists' => 'La propiedad seleccionada no es válida.',
             'lote.hectareas.gt' => 'Las hectáreas tienen que ser mayores a cero.',
         ];
     }

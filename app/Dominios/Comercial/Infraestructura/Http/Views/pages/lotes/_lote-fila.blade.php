@@ -1,10 +1,10 @@
 {{--
-    Partial: fila de lote del formulario de campo (HU-24, tarea 35) — mismo
+    Partial: fila de lote del formulario de lote (tarea 77, HU-54) — mismo
     patrón que `clientes/_contacto-fila.blade.php` (tarea 33): una fila
-    repetible dentro de la sección "Lotes" de `_formulario.blade.php`, reusada
-    para pintar los lotes existentes, para repetir `old('lotes')` tras un
-    error de validación, y como plantilla que clona
-    `resources/js/pages/campos-form.js` al apretar "Agregar lote".
+    repetible dentro de la sección "Lote" de `_formulario.blade.php` (o dentro
+    de un array de lotes en un formulario de propiedad), reusada para pintar
+    lotes existentes, para repetir `old('lotes')` tras un error de validación,
+    y como plantilla que clona JavaScript al apretar "Agregar lote" o similar.
 
     Espera:
     - $indice (int|string): posición dentro del array `lotes[]` — en la
@@ -66,7 +66,7 @@
     <x-atoms.input
         type="text"
         name="{{ $prefijo }}[codigo]"
-        label="{{ __('comercial.campos.lote_codigo') }}"
+        label="{{ __('comercial.lotes.lote_codigo') }}"
         value="{{ $lote['codigo'] ?? '' }}"
         required
         error="{{ $errors->first($erroresPrefijo.'.codigo') }}"
@@ -75,7 +75,7 @@
     <x-atoms.input
         type="number"
         name="{{ $prefijo }}[hectareas]"
-        label="{{ __('comercial.campos.lote_hectareas') }}"
+        label="{{ __('comercial.lotes.lote_hectareas') }}"
         value="{{ $lote['hectareas'] ?? '' }}"
         min="0.01"
         step="0.01"
@@ -91,7 +91,7 @@
             data-ag-lote-mapa-google-key="{{ $proveedorMapa['googleMapsApiKey'] }}"
         @endif
     >
-        <span class="ag-input__label">{{ __('comercial.campos.lote_geometria') }}</span>
+        <span class="ag-input__label">{{ __('comercial.lotes.lote_geometria') }}</span>
 
         @error($erroresPrefijo.'.geometria')
             <p class="ag-input__error" role="alert">{{ $message }}</p>
@@ -116,15 +116,15 @@
             <div
                 class="ag-mapa-barra"
                 role="toolbar"
-                aria-label="{{ __('comercial.campos.lote_mapa_barra_aria') }}"
+                aria-label="{{ __('comercial.lotes.lote_mapa_barra_aria') }}"
                 data-ag-lote-mapa-barra
             >
                 <button
                     type="button"
                     class="ag-mapa-accion"
                     data-ag-lote-accion="dibujar"
-                    title="{{ __('comercial.campos.lote_mapa_dibujar') }}"
-                    aria-label="{{ __('comercial.campos.lote_mapa_dibujar') }}"
+                    title="{{ __('comercial.lotes.lote_mapa_dibujar') }}"
+                    aria-label="{{ __('comercial.lotes.lote_mapa_dibujar') }}"
                     aria-pressed="false"
                 >
                     <x-atoms.icon name="draw" />
@@ -133,8 +133,8 @@
                     type="button"
                     class="ag-mapa-accion"
                     data-ag-lote-accion="editar"
-                    title="{{ __('comercial.campos.lote_mapa_editar_vertices') }}"
-                    aria-label="{{ __('comercial.campos.lote_mapa_editar_vertices') }}"
+                    title="{{ __('comercial.lotes.lote_mapa_editar_vertices') }}"
+                    aria-label="{{ __('comercial.lotes.lote_mapa_editar_vertices') }}"
                     aria-pressed="false"
                 >
                     <x-atoms.icon name="edit" />
@@ -143,8 +143,8 @@
                     type="button"
                     class="ag-mapa-accion"
                     data-ag-lote-accion="mover"
-                    title="{{ __('comercial.campos.lote_mapa_mover') }}"
-                    aria-label="{{ __('comercial.campos.lote_mapa_mover') }}"
+                    title="{{ __('comercial.lotes.lote_mapa_mover') }}"
+                    aria-label="{{ __('comercial.lotes.lote_mapa_mover') }}"
                     aria-pressed="false"
                 >
                     <x-atoms.icon name="open_with" />
@@ -153,8 +153,8 @@
                     type="button"
                     class="ag-mapa-accion"
                     data-ag-lote-accion="borrar"
-                    title="{{ __('comercial.campos.lote_mapa_borrar') }}"
-                    aria-label="{{ __('comercial.campos.lote_mapa_borrar') }}"
+                    title="{{ __('comercial.lotes.lote_mapa_borrar') }}"
+                    aria-label="{{ __('comercial.lotes.lote_mapa_borrar') }}"
                     aria-pressed="false"
                 >
                     <x-atoms.icon name="delete" />
@@ -163,8 +163,8 @@
                     type="button"
                     class="ag-mapa-accion"
                     data-ag-lote-accion="deshacer"
-                    title="{{ __('comercial.campos.lote_mapa_deshacer') }}"
-                    aria-label="{{ __('comercial.campos.lote_mapa_deshacer') }}"
+                    title="{{ __('comercial.lotes.lote_mapa_deshacer') }}"
+                    aria-label="{{ __('comercial.lotes.lote_mapa_deshacer') }}"
                     disabled
                 >
                     <x-atoms.icon name="undo" />
@@ -173,8 +173,8 @@
                     type="button"
                     class="ag-mapa-accion"
                     data-ag-lote-accion="centrar"
-                    title="{{ __('comercial.campos.lote_mapa_centrar') }}"
-                    aria-label="{{ __('comercial.campos.lote_mapa_centrar') }}"
+                    title="{{ __('comercial.lotes.lote_mapa_centrar') }}"
+                    aria-label="{{ __('comercial.lotes.lote_mapa_centrar') }}"
                 >
                     <x-atoms.icon name="center_focus_strong" />
                 </button>
@@ -182,11 +182,11 @@
                     type="button"
                     class="ag-mapa-accion"
                     data-ag-lote-accion="capa"
-                    title="{{ __('comercial.campos.lote_mapa_capa_calles') }}"
-                    aria-label="{{ __('comercial.campos.lote_mapa_capa_calles') }}"
+                    title="{{ __('comercial.lotes.lote_mapa_capa_calles') }}"
+                    aria-label="{{ __('comercial.lotes.lote_mapa_capa_calles') }}"
                     aria-pressed="false"
-                    data-ag-lote-mapa-capa-satelite="{{ __('comercial.campos.lote_mapa_capa_satelite') }}"
-                    data-ag-lote-mapa-capa-calles="{{ __('comercial.campos.lote_mapa_capa_calles') }}"
+                    data-ag-lote-mapa-capa-satelite="{{ __('comercial.lotes.lote_mapa_capa_satelite') }}"
+                    data-ag-lote-mapa-capa-calles="{{ __('comercial.lotes.lote_mapa_capa_calles') }}"
                 >
                     <x-atoms.icon name="layers" />
                 </button>
@@ -194,11 +194,11 @@
                     type="button"
                     class="ag-mapa-accion ag-mapa-accion--pantalla-completa"
                     data-ag-lote-mapa-boton-pantalla-completa
-                    title="{{ __('comercial.campos.lote_mapa_pantalla_completa') }}"
-                    aria-label="{{ __('comercial.campos.lote_mapa_pantalla_completa') }}"
+                    title="{{ __('comercial.lotes.lote_mapa_pantalla_completa') }}"
+                    aria-label="{{ __('comercial.lotes.lote_mapa_pantalla_completa') }}"
                     aria-pressed="false"
-                    data-ag-lote-mapa-entrar="{{ __('comercial.campos.lote_mapa_pantalla_completa') }}"
-                    data-ag-lote-mapa-salir="{{ __('comercial.campos.lote_mapa_salir_pantalla_completa') }}"
+                    data-ag-lote-mapa-entrar="{{ __('comercial.lotes.lote_mapa_pantalla_completa') }}"
+                    data-ag-lote-mapa-salir="{{ __('comercial.lotes.lote_mapa_salir_pantalla_completa') }}"
                 >
                     <x-atoms.icon name="fullscreen" data-ag-lote-mapa-icono-pantalla-completa />
                 </button>
@@ -207,14 +207,14 @@
             <div class="ag-lote-mapa__lienzo" data-ag-lote-mapa-lienzo></div>
 
             <div class="ag-lote-mapa__pie">
-                <p class="ag-input__help ag-lote-mapa__ayuda">{{ __('comercial.campos.lote_geometria_ayuda') }}</p>
+                <p class="ag-input__help ag-lote-mapa__ayuda">{{ __('comercial.lotes.lote_geometria_ayuda') }}</p>
 
                 <div
                     class="ag-lote-mapa__medida"
                     data-ag-lote-medida
                     hidden
-                    data-ag-lote-mapa-medida-plantilla="{{ __('comercial.campos.lote_mapa_medida') }}"
-                    data-ag-lote-mapa-medida-plantilla-declarada="{{ __('comercial.campos.lote_mapa_medida_declaradas') }}"
+                    data-ag-lote-mapa-medida-plantilla="{{ __('comercial.lotes.lote_mapa_medida') }}"
+                    data-ag-lote-mapa-medida-plantilla-declarada="{{ __('comercial.lotes.lote_mapa_medida_declaradas') }}"
                 >
                     <span data-ag-lote-medida-texto></span>
                     {{-- Botón y no autocompletado: `hectareas` es la superficie
@@ -222,7 +222,7 @@
                          dibujado, y es la base de lo que se factura (invariante
                          6). La decisión de copiarla es de quien carga el campo. --}}
                     <x-atoms.button type="button" variant="text" size="sm" data-ag-lote-usar-superficie>
-                        {{ __('comercial.campos.lote_usar_superficie') }}
+                        {{ __('comercial.lotes.lote_usar_superficie') }}
                     </x-atoms.button>
                 </div>
             </div>
@@ -232,45 +232,45 @@
     <x-atoms.select
         name="{{ $prefijo }}[desnivel]"
         id="{{ $idBase }}-desnivel"
-        label="{{ __('comercial.campos.lote_desnivel') }}"
+        label="{{ __('comercial.lotes.lote_desnivel') }}"
         :options="[
-            'ninguno' => __('comercial.campos.lote_desnivel_ninguno'),
-            'algunos' => __('comercial.campos.lote_desnivel_algunos'),
-            'varios' => __('comercial.campos.lote_desnivel_varios'),
-            'empinado' => __('comercial.campos.lote_desnivel_empinado'),
+            'ninguno' => __('comercial.lotes.lote_desnivel_ninguno'),
+            'algunos' => __('comercial.lotes.lote_desnivel_algunos'),
+            'varios' => __('comercial.lotes.lote_desnivel_varios'),
+            'empinado' => __('comercial.lotes.lote_desnivel_empinado'),
         ]"
         :value="$lote['desnivel'] ?? ''"
-        placeholder="{{ __('comercial.campos.lote_desnivel_placeholder') }}"
+        placeholder="{{ __('comercial.lotes.lote_desnivel_placeholder') }}"
         error="{{ $errors->first($erroresPrefijo.'.desnivel') }}"
     />
 
     <x-atoms.select
         name="{{ $prefijo }}[limpieza]"
         id="{{ $idBase }}-limpieza"
-        label="{{ __('comercial.campos.lote_limpieza') }}"
+        label="{{ __('comercial.lotes.lote_limpieza') }}"
         :options="[
-            'limpio' => __('comercial.campos.lote_limpieza_limpio'),
-            'algunos_obstaculos' => __('comercial.campos.lote_limpieza_algunos_obstaculos'),
-            'muchos_obstaculos' => __('comercial.campos.lote_limpieza_muchos_obstaculos'),
+            'limpio' => __('comercial.lotes.lote_limpieza_limpio'),
+            'algunos_obstaculos' => __('comercial.lotes.lote_limpieza_algunos_obstaculos'),
+            'muchos_obstaculos' => __('comercial.lotes.lote_limpieza_muchos_obstaculos'),
         ]"
         :value="$lote['limpieza'] ?? ''"
-        placeholder="{{ __('comercial.campos.lote_limpieza_placeholder') }}"
+        placeholder="{{ __('comercial.lotes.lote_limpieza_placeholder') }}"
         error="{{ $errors->first($erroresPrefijo.'.limpieza') }}"
     />
 
     <x-atoms.textarea
         name="{{ $prefijo }}[restricciones]"
         id="{{ $idBase }}-restricciones"
-        label="{{ __('comercial.campos.lote_restricciones') }}"
+        label="{{ __('comercial.lotes.lote_restricciones') }}"
         value="{{ $lote['restricciones'] ?? '' }}"
-        placeholder="{{ __('comercial.campos.lote_restricciones_placeholder') }}"
+        placeholder="{{ __('comercial.lotes.lote_restricciones_placeholder') }}"
         rows="2"
     />
 
     @if ($mostrarQuitar)
         <div class="ag-form-section__field--full ag-campos-form__lote-pie">
             <x-atoms.button type="button" variant="text" size="sm" icon="delete" data-ag-lote-quitar>
-                {{ __('comercial.campos.lote_quitar') }}
+                {{ __('comercial.lotes.lote_quitar') }}
             </x-atoms.button>
         </div>
     @endif

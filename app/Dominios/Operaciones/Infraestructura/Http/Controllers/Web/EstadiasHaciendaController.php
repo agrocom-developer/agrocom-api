@@ -11,18 +11,19 @@ use Illuminate\View\View;
 
 /**
  * `GET /panel/estadias` (HU-51, tarea 74): consulta de estadías del equipo en
- * cada hacienda, con filtro por rango de fechas, equipo y campo, y el total
- * de días efectivos por equipo y por propiedad dentro de ese mismo filtro.
- * Solo lectura — la estadía nace en la app de campo (`POST /api/sync`), el
- * panel nunca abre ni cierra una (ver "Qué NO hacer" del prompt de la tarea).
+ * cada hacienda, con filtro por rango de fechas, equipo y propiedad, y el
+ * total de días efectivos por equipo y por propiedad dentro de ese mismo
+ * filtro. Solo lectura — la estadía nace en la app de campo (`POST
+ * /api/sync`), el panel nunca abre ni cierra una (ver "Qué NO hacer" del
+ * prompt de la tarea).
  *
  * Un único permiso (`operaciones.estadia.ver`) gatea toda la pantalla,
  * verificado DENTRO del controlador contra el ROL ACTIVO vía
  * {@see AutorizacionPanelWeb} — mismo criterio que `TrabajosController`.
  *
- * Los selects de `equipo_trabajo_id`/`campo_id` (y las etiquetas de la tabla)
- * se arman con `DB::table` directo (ADR 0003 regla 3, mismo criterio que
- * `GastosController::equiposDisponibles()`), sin importar los modelos
+ * Los selects de `equipo_trabajo_id`/`propiedad_id` (y las etiquetas de la
+ * tabla) se arman con `DB::table` directo (ADR 0003 regla 3, mismo criterio
+ * que `GastosController::equiposDisponibles()`), sin importar los modelos
  * Eloquent de `Personal`/`Comercial`/`Mantenimiento`.
  */
 final class EstadiasHaciendaController
@@ -38,26 +39,26 @@ final class EstadiasHaciendaController
         $desde = $request->filled('desde') ? $request->string('desde')->toString() : null;
         $hasta = $request->filled('hasta') ? $request->string('hasta')->toString() : null;
         $equipoTrabajoId = $request->integer('equipo_trabajo_id') ?: null;
-        $campoId = $request->integer('campo_id') ?: null;
+        $propiedadId = $request->integer('propiedad_id') ?: null;
 
         $equiposDisponibles = $this->equiposDisponibles();
-        $camposDisponibles = $this->camposDisponibles();
+        $propiedadesDisponibles = $this->propiedadesDisponibles();
 
         return view('operaciones::pages.estadias.index', [
             ...$this->autorizacion->cascara($request),
-            'estadias' => $listarEstadias->ejecutar($desde, $hasta, $equipoTrabajoId, $campoId),
+            'estadias' => $listarEstadias->ejecutar($desde, $hasta, $equipoTrabajoId, $propiedadId),
             'etiquetasEquipo' => $equiposDisponibles->all(),
-            'etiquetasCampo' => $camposDisponibles->all(),
+            'etiquetasPropiedad' => $propiedadesDisponibles->all(),
             'etiquetasVehiculo' => $this->vehiculosDisponibles()->all(),
             'equiposDisponibles' => $equiposDisponibles,
-            'camposDisponibles' => $camposDisponibles,
-            'diasPorEquipo' => $listarEstadias->diasEfectivosPorEquipo($desde, $hasta, $equipoTrabajoId, $campoId),
-            'diasPorCampo' => $listarEstadias->diasEfectivosPorCampo($desde, $hasta, $equipoTrabajoId, $campoId),
+            'propiedadesDisponibles' => $propiedadesDisponibles,
+            'diasPorEquipo' => $listarEstadias->diasEfectivosPorEquipo($desde, $hasta, $equipoTrabajoId, $propiedadId),
+            'diasPorPropiedad' => $listarEstadias->diasEfectivosPorPropiedad($desde, $hasta, $equipoTrabajoId, $propiedadId),
             'filtros' => [
                 'desde' => $desde,
                 'hasta' => $hasta,
                 'equipo_trabajo_id' => $equipoTrabajoId,
-                'campo_id' => $campoId,
+                'propiedad_id' => $propiedadId,
             ],
         ]);
     }
@@ -75,9 +76,9 @@ final class EstadiasHaciendaController
     }
 
     /** @return Collection<int, string> */
-    private function camposDisponibles(): Collection
+    private function propiedadesDisponibles(): Collection
     {
-        return DB::table('com_campos')
+        return DB::table('com_propiedades')
             ->whereNull('deleted_at')
             ->orderBy('nombre')
             ->pluck('nombre', 'id')

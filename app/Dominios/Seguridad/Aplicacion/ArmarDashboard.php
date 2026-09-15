@@ -260,7 +260,7 @@ final class ArmarDashboard
                 'inicio' => $sesion->inicio,
                 'fin' => $sesion->fin,
                 'lote' => $lote->codigo ?? "#{$sesion->loteId}",
-                'campo' => $lote?->campoNombre,
+                'propiedad' => $lote?->propiedadNombre,
                 'cliente' => $lote?->clienteNombre,
                 'piloto' => $this->nombres->persona($sesion->pilotoId),
                 'dron' => $sesion->dronCodigo,
@@ -320,7 +320,7 @@ final class ArmarDashboard
         return [
             'loteId' => $loteId,
             'codigo' => $lote->codigo ?? "#{$loteId}",
-            'campo' => $lote?->campoNombre,
+            'propiedad' => $lote?->propiedadNombre,
             'cliente' => $lote?->clienteNombre,
             'hectareasLote' => $lote?->hectareas,
             'hectareasAplicadas' => $avance->hectareasAplicadas,

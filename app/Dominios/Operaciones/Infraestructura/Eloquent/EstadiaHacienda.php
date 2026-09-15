@@ -14,7 +14,7 @@ use Carbon\CarbonImmutable;
  * propio `uuid_cliente` — nunca por id de servidor (ver
  * `EscrituraSincronizacionEloquent::cerrarEstadia()`).
  *
- * `equipo_trabajo_id`, `campo_id` y `vehiculo_id` referencian tablas de otros
+ * `equipo_trabajo_id`, `propiedad_id` y `vehiculo_id` referencian tablas de otros
  * módulos (`Personal`, `Comercial`, `Mantenimiento` respectivamente) solo por
  * FK + entero plano (ADR 0003, regla 3) — sin relaciones Eloquent cruzadas.
  *
@@ -32,7 +32,7 @@ use Carbon\CarbonImmutable;
  * @property int $id
  * @property string $uuid_cliente
  * @property int $equipo_trabajo_id
- * @property int $campo_id
+ * @property int $propiedad_id
  * @property CarbonImmutable $entrada
  * @property CarbonImmutable|null $salida
  * @property int|null $vehiculo_id
@@ -50,7 +50,7 @@ class EstadiaHacienda extends ModeloDominio
     protected $fillable = [
         'uuid_cliente',
         'equipo_trabajo_id',
-        'campo_id',
+        'propiedad_id',
         'entrada',
         'salida',
         'vehiculo_id',

@@ -21,7 +21,7 @@ final readonly class DatosRechazoDesempenio
         public string $rol,
         public int $loteId,
         public string $loteCodigo,
-        public string $campoNombre,
+        public string $propiedadNombre,
         public int $clienteId,
         public string $clienteNombre,
         public ?int $campaniaId,

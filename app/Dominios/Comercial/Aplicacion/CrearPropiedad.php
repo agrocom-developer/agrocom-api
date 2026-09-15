@@ -7,15 +7,18 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use Illuminate\Database\QueryException;
 
 /**
- * Alta de una propiedad (ADR 0018): nivel de terreno entre `Cliente` y
- * `Campo`. Sin sub-entidad propia en esta operación (a diferencia de
- * `CrearCliente`/`CrearCampo`, que traen contactos/lotes en la misma
- * transacción): los campos de una propiedad se cargan por su propia pantalla
- * (`CamposController`), no acá.
+ * Alta de una propiedad (ADR 0020): nivel de terreno entre `Cliente` y
+ * `Lote`. Sin sub-entidad propia en esta operación (a diferencia de
+ * `CrearCliente`, que trae sus contactos en la misma transacción): los
+ * lotes de una propiedad se cargan por su propia pantalla
+ * (`LotesController`), no acá — `geometria` es un atributo propio de la
+ * propiedad (los terrenos que la componen), no una sub-entidad.
  */
 final class CrearPropiedad
 {
     /**
+     * @param  array<string, mixed>|null  $geometria
+     *
      * @throws PropiedadDuplicada si el nombre ya pertenece a otra propiedad
      *                            activa del mismo cliente (índice parcial
      *                            `com_propiedades_nombre_unico`).
@@ -29,6 +32,7 @@ final class CrearPropiedad
         ?string $localidad,
         ?string $latitud,
         ?string $longitud,
+        ?array $geometria = null,
     ): Propiedad {
         $propiedad = new Propiedad([
             'cliente_id' => $clienteId,
@@ -39,6 +43,7 @@ final class CrearPropiedad
             'localidad' => $localidad,
             'latitud' => $latitud,
             'longitud' => $longitud,
+            'geometria' => $geometria,
         ]);
 
         try {
@@ -51,7 +56,7 @@ final class CrearPropiedad
     }
 
     /**
-     * Mismo criterio que `CrearCliente`/`CrearCampo`: el formato del mensaje
+     * Mismo criterio que `CrearCliente`: el formato del mensaje
      * difiere por driver (Postgres nombra el índice; SQLite, motor de los
      * tests, nombra tabla.columna).
      *

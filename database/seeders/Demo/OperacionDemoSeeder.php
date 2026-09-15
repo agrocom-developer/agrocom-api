@@ -688,11 +688,13 @@ class OperacionDemoSeeder extends Seeder
     }
 
     /**
-     * Sigla de campo → prefijo del nombre en `com_campos`.
+     * Sigla de propiedad → prefijo del nombre en `com_propiedades` (ADR
+     * 0020: sin `Campo` de por medio, el lote cuelga directo de la
+     * propiedad).
      *
      * El código de lote NO identifica un lote: `L-01` y `L-03` existen a la
      * vez en San Jorge, El Carmen y Santa Rosa, porque cada cliente numera
-     * los suyos desde uno. Sin el campo por delante, `TRABAJOS` terminaría
+     * los suyos desde uno. Sin la propiedad por delante, `TRABAJOS` terminaría
      * colgando el trabajo de El Carmen del lote homónimo de San Jorge — que
      * además no tiene orden vigente, así que el trabajo se caía en silencio.
      *
@@ -714,11 +716,11 @@ class OperacionDemoSeeder extends Seeder
     {
         $porClave = [];
 
-        foreach (Lote::query()->with('campo')->get() as $lote) {
-            $nombreCampo = $lote->campo?->nombre ?? '';
+        foreach (Lote::query()->with('propiedad')->get() as $lote) {
+            $nombrePropiedad = $lote->propiedad?->nombre ?? '';
 
             foreach (self::CAMPOS as $sigla => $prefijo) {
-                if (! str_starts_with($nombreCampo, $prefijo)) {
+                if (! str_starts_with($nombrePropiedad, $prefijo)) {
                     continue;
                 }
 

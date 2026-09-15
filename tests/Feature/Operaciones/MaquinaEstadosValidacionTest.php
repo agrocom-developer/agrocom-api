@@ -1,7 +1,6 @@
 <?php
 
 use App\Dominios\Comercial\Dominio\EstadoContrato;
-use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
@@ -39,8 +38,7 @@ function trabajoAbiertoParaValidacion(): Trabajo
 {
     $cliente = Cliente::create(['razon_social' => 'Cliente de validación', 'tipo_persona' => 'juridica']);
     $propiedad = Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
-    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo de validación']);
-    $lote = Lote::create(['campo_id' => $campo->id, 'codigo' => 'L-VALIDA', 'hectareas' => '50.00']);
+    $lote = Lote::create(['propiedad_id' => $propiedad->id, 'codigo' => 'L-VALIDA', 'hectareas' => '50.00']);
     $contrato = Contrato::create([
         'cliente_id' => $cliente->id,
         'hectareas_contratadas' => '50.00',

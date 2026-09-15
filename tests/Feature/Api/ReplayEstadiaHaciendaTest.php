@@ -1,6 +1,5 @@
 <?php
 
-use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\EstadiaHacienda;
@@ -37,13 +36,11 @@ function equipoTrabajoParaReplayEstadia(): EquipoTrabajo
     ]);
 }
 
-function campoParaReplayEstadia(): Campo
+function campoParaReplayEstadia(): Propiedad
 {
     $cliente = Cliente::query()->create(['razon_social' => 'Cliente Replay', 'tipo_persona' => 'juridica']);
 
-    $propiedad = Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
-
-    return Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo Replay']);
+    return Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
 }
 
 it('el mismo lote de estadia_entrada/estadia_salida aplicado 10 veces, en orden y en desorden, deja un estado final idéntico', function () {
@@ -91,7 +88,7 @@ it('el mismo lote de estadia_entrada/estadia_salida aplicado 10 veces, en orden 
     $estadiaFinal = EstadiaHacienda::query()->where('uuid_cliente', 'uuid-replay-estadia')->firstOrFail();
 
     expect($estadiaFinal->equipo_trabajo_id)->toBe($equipo->id)
-        ->and($estadiaFinal->campo_id)->toBe($campo->id)
+        ->and($estadiaFinal->propiedad_id)->toBe($campo->id)
         ->and($estadiaFinal->salida)->not->toBeNull()
         ->and($estadiaFinal->cierre_uuid_cliente)->toBe('uuid-replay-estadia-salida');
 });

@@ -1,7 +1,6 @@
 <?php
 
 use App\Dominios\Comercial\Dominio\EstadoContrato;
-use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
@@ -50,9 +49,8 @@ function ordenVigenteParaEscritura(): OrdenAplicacion
     $cliente = Cliente::create(['razon_social' => 'Cliente de prueba', 'tipo_persona' => 'juridica']);
 
     $propiedad = Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
-    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo de prueba']);
     $lote = Lote::create([
-        'campo_id' => $campo->id,
+        'propiedad_id' => $propiedad->id,
         'codigo' => 'L-TEST',
         'hectareas' => '50.00',
     ]);
@@ -323,10 +321,10 @@ test('AperturaSesion::intentarDesdeArreglo devuelve null con hectareas_declarada
 
 test('abrirTrabajo con un lote_id que no es el de la orden declarada se rechaza sin persistir la fila', function () {
     $orden = ordenVigenteParaEscritura();
-    $campoId = Lote::query()->findOrFail(loteIdDeEscritura($orden))->campo_id;
+    $propiedadId = Lote::query()->findOrFail(loteIdDeEscritura($orden))->propiedad_id;
 
     $otroLote = Lote::create([
-        'campo_id' => $campoId,
+        'propiedad_id' => $propiedadId,
         'codigo' => 'L-OTRO',
         'hectareas' => '30.00',
     ]);

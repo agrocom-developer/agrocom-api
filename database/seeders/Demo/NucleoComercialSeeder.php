@@ -6,7 +6,6 @@ use App\Dominios\Campania\Dominio\EstadoCampania;
 use App\Dominios\Campania\Infraestructura\Eloquent\Campania;
 use App\Dominios\Comercial\Dominio\EstadoContrato;
 use App\Dominios\Comercial\Dominio\TipoContactoCliente;
-use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\ClienteContacto;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
@@ -22,9 +21,9 @@ use Illuminate\Database\Seeder;
 
 /**
  * Demo del núcleo comercial: un cliente con su campaña `2025-2026` (`abierta`,
- * ADR 0015 punto 1), contrato vigente, campo, lotes y una orden de aplicación
- * vigente — lo mínimo para que el flujo transaccional (orden → trabajo →
- * sesión → validación → devengo) tenga dónde arrancar.
+ * ADR 0015 punto 1), contrato vigente, propiedad, lotes y una orden de
+ * aplicación vigente — lo mínimo para que el flujo transaccional (orden →
+ * trabajo → sesión → validación → devengo) tenga dónde arrancar.
  *
  * Los números son los del escenario base del contrato residente
  * (docs/negocio/ventana_al_negocio.md §1–2): 4.000 ha × 7 aplicaciones
@@ -123,19 +122,17 @@ class NucleoComercialSeeder extends Seeder
             ]), $autorId);
         }
 
+        // Sin geometría de propiedad: el `Campo` que existía en el escenario
+        // (`San Jorge — Cuatro Cañadas`) nunca tuvo `geometria` cargada, así
+        // que no hay nada que mover al colapsar (ADR 0020).
         $propiedad = $this->crear(new Propiedad([
             'cliente_id' => $cliente->id,
             'nombre' => 'San Jorge',
             'ubicacion' => 'Este cruceño, km 12 camino a Cuatro Cañadas, Santa Cruz, Bolivia',
         ]), $autorId);
 
-        $campo = $this->crear(new Campo([
-            'propiedad_id' => $propiedad->id,
-            'nombre' => 'San Jorge — Cuatro Cañadas',
-        ]), $autorId);
-
         $lotePrimero = $this->crear(new Lote([
-            'campo_id' => $campo->id,
+            'propiedad_id' => $propiedad->id,
             'codigo' => 'L-01',
             'hectareas' => '250.00',
             'geometria' => [
@@ -152,7 +149,7 @@ class NucleoComercialSeeder extends Seeder
         ]), $autorId);
 
         $this->crear(new Lote([
-            'campo_id' => $campo->id,
+            'propiedad_id' => $propiedad->id,
             'codigo' => 'L-02',
             'hectareas' => '180.50',
             'geometria' => [
@@ -169,7 +166,7 @@ class NucleoComercialSeeder extends Seeder
         ]), $autorId);
 
         $this->crear(new Lote([
-            'campo_id' => $campo->id,
+            'propiedad_id' => $propiedad->id,
             'codigo' => 'L-03',
             'hectareas' => '320.75',
             'geometria' => [

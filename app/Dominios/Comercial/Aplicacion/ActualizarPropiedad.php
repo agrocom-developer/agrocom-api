@@ -7,11 +7,13 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use Illuminate\Database\QueryException;
 
 /**
- * Edición de una propiedad (ADR 0018). Mismas reglas que `CrearPropiedad`.
+ * Edición de una propiedad (ADR 0020). Mismas reglas que `CrearPropiedad`.
  */
 final class ActualizarPropiedad
 {
     /**
+     * @param  array<string, mixed>|null  $geometria
+     *
      * @throws PropiedadDuplicada si el nombre ya pertenece a otra propiedad
      *                            activa del mismo cliente.
      */
@@ -25,6 +27,7 @@ final class ActualizarPropiedad
         ?string $localidad,
         ?string $latitud,
         ?string $longitud,
+        ?array $geometria = null,
     ): Propiedad {
         $propiedad->cliente_id = $clienteId;
         $propiedad->nombre = $nombre;
@@ -34,6 +37,7 @@ final class ActualizarPropiedad
         $propiedad->localidad = $localidad;
         $propiedad->latitud = $latitud;
         $propiedad->longitud = $longitud;
+        $propiedad->geometria = $geometria;
 
         try {
             $propiedad->save();

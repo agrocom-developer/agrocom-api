@@ -1,6 +1,5 @@
 <?php
 
-use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Personal\Infraestructura\Eloquent\EquipoTrabajo;
@@ -22,8 +21,8 @@ use Illuminate\Support\Facades\Schema;
 
 uses(RefreshDatabase::class);
 
-/** @return array{equipo_trabajo_id: int, campo_id: int} */
-function crearEquipoYCampoParaEstadia(): array
+/** @return array{equipo_trabajo_id: int, propiedad_id: int} */
+function crearEquipoYPropiedadParaEstadia(): array
 {
     $base = PerBase::query()->create(['nombre' => 'Base de prueba '.uniqid()]);
 
@@ -37,9 +36,8 @@ function crearEquipoYCampoParaEstadia(): array
     $cliente = Cliente::query()->create(['razon_social' => 'Cliente de prueba '.uniqid(), 'tipo_persona' => 'juridica']);
 
     $propiedad = Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
-    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo de prueba '.uniqid()]);
 
-    return ['equipo_trabajo_id' => $equipo->id, 'campo_id' => $campo->id];
+    return ['equipo_trabajo_id' => $equipo->id, 'propiedad_id' => $propiedad->id];
 }
 
 it('crea la tabla con soft delete y columnas de auditoría', function () {
@@ -47,7 +45,7 @@ it('crea la tabla con soft delete y columnas de auditoría', function () {
         ->and(Schema::hasColumns('ope_estadias_hacienda', [
             'uuid_cliente',
             'equipo_trabajo_id',
-            'campo_id',
+            'propiedad_id',
             'entrada',
             'salida',
             'vehiculo_id',
@@ -63,12 +61,12 @@ it('crea la tabla con soft delete y columnas de auditoría', function () {
 });
 
 it('rechaza una estadía con uuid_cliente repetido por el índice parcial', function () {
-    $datos = crearEquipoYCampoParaEstadia();
+    $datos = crearEquipoYPropiedadParaEstadia();
 
     DB::table('ope_estadias_hacienda')->insert([
         'uuid_cliente' => 'uuid-estadia-duplicada',
         'equipo_trabajo_id' => $datos['equipo_trabajo_id'],
-        'campo_id' => $datos['campo_id'],
+        'propiedad_id' => $datos['propiedad_id'],
         'entrada' => now(),
         'created_at' => now(),
         'updated_at' => now(),
@@ -77,7 +75,7 @@ it('rechaza una estadía con uuid_cliente repetido por el índice parcial', func
     DB::table('ope_estadias_hacienda')->insert([
         'uuid_cliente' => 'uuid-estadia-duplicada',
         'equipo_trabajo_id' => $datos['equipo_trabajo_id'],
-        'campo_id' => $datos['campo_id'],
+        'propiedad_id' => $datos['propiedad_id'],
         'entrada' => now(),
         'created_at' => now(),
         'updated_at' => now(),
@@ -85,12 +83,12 @@ it('rechaza una estadía con uuid_cliente repetido por el índice parcial', func
 })->throws(QueryException::class);
 
 it('rechaza una segunda estadía abierta para el mismo equipo por el índice parcial', function () {
-    $datos = crearEquipoYCampoParaEstadia();
+    $datos = crearEquipoYPropiedadParaEstadia();
 
     DB::table('ope_estadias_hacienda')->insert([
         'uuid_cliente' => 'uuid-estadia-1',
         'equipo_trabajo_id' => $datos['equipo_trabajo_id'],
-        'campo_id' => $datos['campo_id'],
+        'propiedad_id' => $datos['propiedad_id'],
         'entrada' => now(),
         'created_at' => now(),
         'updated_at' => now(),
@@ -100,7 +98,7 @@ it('rechaza una segunda estadía abierta para el mismo equipo por el índice par
     DB::table('ope_estadias_hacienda')->insert([
         'uuid_cliente' => 'uuid-estadia-2',
         'equipo_trabajo_id' => $datos['equipo_trabajo_id'],
-        'campo_id' => $datos['campo_id'],
+        'propiedad_id' => $datos['propiedad_id'],
         'entrada' => now(),
         'created_at' => now(),
         'updated_at' => now(),
@@ -108,12 +106,12 @@ it('rechaza una segunda estadía abierta para el mismo equipo por el índice par
 })->throws(QueryException::class);
 
 it('permite una segunda estadía para el mismo equipo si la primera ya está cerrada', function () {
-    $datos = crearEquipoYCampoParaEstadia();
+    $datos = crearEquipoYPropiedadParaEstadia();
 
     DB::table('ope_estadias_hacienda')->insert([
         'uuid_cliente' => 'uuid-estadia-cerrada',
         'equipo_trabajo_id' => $datos['equipo_trabajo_id'],
-        'campo_id' => $datos['campo_id'],
+        'propiedad_id' => $datos['propiedad_id'],
         'entrada' => '2026-09-01 08:00:00',
         'salida' => '2026-09-02 08:00:00',
         'created_at' => now(),
@@ -123,7 +121,7 @@ it('permite una segunda estadía para el mismo equipo si la primera ya está cer
     DB::table('ope_estadias_hacienda')->insert([
         'uuid_cliente' => 'uuid-estadia-nueva',
         'equipo_trabajo_id' => $datos['equipo_trabajo_id'],
-        'campo_id' => $datos['campo_id'],
+        'propiedad_id' => $datos['propiedad_id'],
         'entrada' => '2026-09-03 08:00:00',
         'created_at' => now(),
         'updated_at' => now(),
@@ -133,12 +131,12 @@ it('permite una segunda estadía para el mismo equipo si la primera ya está cer
 });
 
 it('permite una segunda estadía para el mismo equipo si la primera fue borrada lógicamente', function () {
-    $datos = crearEquipoYCampoParaEstadia();
+    $datos = crearEquipoYPropiedadParaEstadia();
 
     DB::table('ope_estadias_hacienda')->insert([
         'uuid_cliente' => 'uuid-estadia-anulada',
         'equipo_trabajo_id' => $datos['equipo_trabajo_id'],
-        'campo_id' => $datos['campo_id'],
+        'propiedad_id' => $datos['propiedad_id'],
         'entrada' => now(),
         'deleted_at' => now(),
         'created_at' => now(),
@@ -148,7 +146,7 @@ it('permite una segunda estadía para el mismo equipo si la primera fue borrada 
     DB::table('ope_estadias_hacienda')->insert([
         'uuid_cliente' => 'uuid-estadia-reintento',
         'equipo_trabajo_id' => $datos['equipo_trabajo_id'],
-        'campo_id' => $datos['campo_id'],
+        'propiedad_id' => $datos['propiedad_id'],
         'entrada' => now(),
         'created_at' => now(),
         'updated_at' => now(),
@@ -162,12 +160,12 @@ it('rechaza salida anterior o igual a la entrada por el CHECK (solo pgsql)', fun
         $this->markTestSkipped('CHECK solo existe en pgsql; SQLite no soporta ADD CONSTRAINT (ver docblock de la migración).');
     }
 
-    $datos = crearEquipoYCampoParaEstadia();
+    $datos = crearEquipoYPropiedadParaEstadia();
 
     DB::table('ope_estadias_hacienda')->insert([
         'uuid_cliente' => 'uuid-estadia-chk',
         'equipo_trabajo_id' => $datos['equipo_trabajo_id'],
-        'campo_id' => $datos['campo_id'],
+        'propiedad_id' => $datos['propiedad_id'],
         'entrada' => '2026-09-01 08:00:00',
         'salida' => '2026-09-01 08:00:00',
         'created_at' => now(),

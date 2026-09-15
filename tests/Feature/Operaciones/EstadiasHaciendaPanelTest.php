@@ -1,6 +1,5 @@
 <?php
 
-use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\EstadiaHacienda;
@@ -62,7 +61,6 @@ function estadiaDemo(): EstadiaHacienda
 {
     $cliente = Cliente::create(['razon_social' => 'Cliente panel estadias', 'tipo_persona' => 'juridica']);
     $propiedad = Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
-    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo panel']);
     $base = baseParaEstadias();
 
     $equipo = EquipoTrabajo::create([
@@ -78,7 +76,7 @@ function estadiaDemo(): EstadiaHacienda
     return EstadiaHacienda::create([
         'uuid_cliente' => 'uuid-estadia-panel',
         'equipo_trabajo_id' => $equipo->id,
-        'campo_id' => $campo->id,
+        'propiedad_id' => $propiedad->id,
         'entrada' => '2026-09-01T09:00:00-04:00',
         'salida' => '2026-09-01T12:00:00-04:00',
         'cierre_uuid_cliente' => 'uuid-cierre-estadia-panel',
@@ -133,7 +131,6 @@ it('la pantalla muestra una estadía cerrada con sus datos completos', function 
 it('muestra "en curso" cuando la salida es null', function () {
     $cliente = Cliente::create(['razon_social' => 'Cliente panel estadias en curso', 'tipo_persona' => 'juridica']);
     $propiedad = Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
-    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo en curso']);
     $base = baseParaEstadias();
 
     $equipo = EquipoTrabajo::create([
@@ -146,7 +143,7 @@ it('muestra "en curso" cuando la salida es null', function () {
     EstadiaHacienda::create([
         'uuid_cliente' => 'uuid-estadia-encurso',
         'equipo_trabajo_id' => $equipo->id,
-        'campo_id' => $campo->id,
+        'propiedad_id' => $propiedad->id,
         'entrada' => '2026-09-01T09:00:00-04:00',
         'salida' => null,
         'cierre_uuid_cliente' => null,
@@ -174,7 +171,6 @@ it('sin estadías, muestra el aviso de vacío', function () {
 it('el filtro por equipo devuelve solo las estadías de ese equipo', function () {
     $cliente = Cliente::create(['razon_social' => 'Cliente filtro equipo', 'tipo_persona' => 'juridica']);
     $propiedad = Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
-    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo filtro']);
     $base = baseParaEstadias();
 
     $equipoA = EquipoTrabajo::create(['codigo' => 'EQ-A', 'nombre' => 'Equipo A', 'base_id' => $base->id, 'desde' => now()->format('Y-m-d')]);
@@ -183,7 +179,7 @@ it('el filtro por equipo devuelve solo las estadías de ese equipo', function ()
     EstadiaHacienda::create([
         'uuid_cliente' => 'uuid-estadia-a',
         'equipo_trabajo_id' => $equipoA->id,
-        'campo_id' => $campo->id,
+        'propiedad_id' => $propiedad->id,
         'entrada' => '2026-09-01T09:00:00-04:00',
         'salida' => '2026-09-01T12:00:00-04:00',
         'cierre_uuid_cliente' => 'uuid-cierre-a',
@@ -192,7 +188,7 @@ it('el filtro por equipo devuelve solo las estadías de ese equipo', function ()
     EstadiaHacienda::create([
         'uuid_cliente' => 'uuid-estadia-b',
         'equipo_trabajo_id' => $equipoB->id,
-        'campo_id' => $campo->id,
+        'propiedad_id' => $propiedad->id,
         'entrada' => '2026-09-01T09:00:00-04:00',
         'salida' => '2026-09-01T12:00:00-04:00',
         'cierre_uuid_cliente' => 'uuid-cierre-b',
@@ -211,7 +207,6 @@ it('el filtro por equipo devuelve solo las estadías de ese equipo', function ()
 it('calcula correctamente los días efectivos de una estadía de 3 días (debe ser 3.0, no 1)', function () {
     $cliente = Cliente::create(['razon_social' => 'Cliente dias efectivos', 'tipo_persona' => 'juridica']);
     $propiedad = Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
-    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo dias']);
     $base = baseParaEstadias();
 
     $equipo = EquipoTrabajo::create(['codigo' => 'EQ-DIAS', 'nombre' => 'Equipo dias', 'base_id' => $base->id, 'desde' => '2026-09-01']);
@@ -224,7 +219,7 @@ it('calcula correctamente los días efectivos de una estadía de 3 días (debe s
     EstadiaHacienda::create([
         'uuid_cliente' => 'uuid-estadia-3dias',
         'equipo_trabajo_id' => $equipo->id,
-        'campo_id' => $campo->id,
+        'propiedad_id' => $propiedad->id,
         'entrada' => $entrada,
         'salida' => $salida,
         'cierre_uuid_cliente' => 'uuid-cierre-3dias',
@@ -242,7 +237,6 @@ it('calcula correctamente los días efectivos de una estadía de 3 días (debe s
 it('pagina el listado de estadías', function () {
     $cliente = Cliente::create(['razon_social' => 'Cliente paginacion', 'tipo_persona' => 'juridica']);
     $propiedad = Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
-    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo paginacion']);
     $base = baseParaEstadias();
 
     $equipo = EquipoTrabajo::create(['codigo' => 'EQ-PAG', 'nombre' => 'Equipo paginacion', 'base_id' => $base->id, 'desde' => now()->format('Y-m-d')]);
@@ -251,7 +245,7 @@ it('pagina el listado de estadías', function () {
         EstadiaHacienda::create([
             'uuid_cliente' => "uuid-estadia-pag-$i",
             'equipo_trabajo_id' => $equipo->id,
-            'campo_id' => $campo->id,
+            'propiedad_id' => $propiedad->id,
             'entrada' => now()->addDays($i)->setTime(9, 0, 0),
             'salida' => now()->addDays($i)->setTime(12, 0, 0),
             'cierre_uuid_cliente' => "uuid-cierre-pag-$i",

@@ -7,13 +7,11 @@ use App\Dominios\Comercial\Dominio\Excepciones\LoteDuplicado;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
 
 /**
- * Edición de un lote suelto, desde su propia ficha (tarea 77, HU-54, etapa
- * 2). Admite reasignar la propiedad (`campo_id`): la ficha del lote trae su
- * propio select de propiedad, a diferencia del formulario de propiedad
- * (`ActualizarCampo`) donde el campo padre ya está fijo.
+ * Edición de un lote, desde su propia ficha (tarea 77, HU-54, etapa 2).
+ * Admite reasignar la propiedad (`propiedad_id`): la ficha del lote trae su
+ * propio select de propiedad.
  *
- * Mismo caso de uso de guardado que `CrearCampo`/`ActualizarCampo`, vía
- * {@see GuardadoLote}.
+ * Mismo caso de uso de guardado que `CrearLote`, vía {@see GuardadoLote}.
  */
 final class ActualizarLote
 {
@@ -21,9 +19,9 @@ final class ActualizarLote
      *
      * @throws LoteDuplicado si el código ya pertenece a otro lote activo de la propiedad de destino.
      */
-    public function ejecutar(Lote $lote, int $campoId, array $datos): Lote
+    public function ejecutar(Lote $lote, int $propiedadId, array $datos): Lote
     {
-        $lote->campo_id = $campoId;
+        $lote->propiedad_id = $propiedadId;
 
         return GuardadoLote::guardar($lote, $datos);
     }

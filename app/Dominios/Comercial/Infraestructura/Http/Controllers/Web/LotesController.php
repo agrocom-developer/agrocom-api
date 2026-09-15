@@ -10,7 +10,6 @@ use App\Dominios\Comercial\Aplicacion\Lote\GuardadoLote;
 use App\Dominios\Comercial\Aplicacion\ResolverProveedorMapa;
 use App\Dominios\Comercial\Dominio\Excepciones\LoteConHistorialAsociado;
 use App\Dominios\Comercial\Dominio\Excepciones\LoteDuplicado;
-use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
@@ -25,14 +24,15 @@ use Illuminate\View\View;
 /**
  * `GET/POST/PUT/DELETE /panel/lotes*` (tarea 77, HU-54, etapa 2): ficha
  * propia de un lote — antes solo se podía tocar un lote entrando por su
- * propiedad (`CamposController`). Mismo molde que `CamposController`.
+ * propiedad. Mismo molde que `PropiedadesController`, sin sub-entidad propia
+ * en esta pantalla: los lotes de una propiedad se cargan desde aquí, no acá.
  *
  * Cuatro permisos de grano fino
  * (`comercial.lote.ver`/`.crear`/`.editar`/`.eliminar`, sembrados en la
  * etapa 1 de esta tarea), verificados DENTRO del controlador contra el ROL
  * ACTIVO vía {@see AutorizacionPanelWeb}. Ninguna regla de negocio acá: los
  * casos de uso de `Aplicacion/` hacen el trabajo, y el guardado en sí es el
- * MISMO colaborador que usa `CrearCampo`/`ActualizarCampo`
+ * MISMO colaborador que usa `CrearLote`/`ActualizarLote`
  * ({@see GuardadoLote}) — no hay dos
  * formas de crear o editar un lote, solo dos puertas de entrada.
  */
@@ -57,15 +57,14 @@ final class LotesController
 
         $busqueda = $request->string('q')->toString();
         $clienteId = $request->filled('cliente_id') ? $request->integer('cliente_id') : null;
-        $campoId = $request->filled('campo_id') ? $request->integer('campo_id') : null;
+        $propiedadId = $request->filled('propiedad_id') ? $request->integer('propiedad_id') : null;
 
         return view('comercial::pages.lotes.index', [
             ...$this->autorizacion->cascara($request),
-            'lotes' => $listarLotes->ejecutar($clienteId, $campoId, $busqueda !== '' ? $busqueda : null),
-            'filtros' => ['q' => $busqueda, 'cliente_id' => $clienteId, 'campo_id' => $campoId],
+            'lotes' => $listarLotes->ejecutar($clienteId, $propiedadId, $busqueda !== '' ? $busqueda : null),
+            'filtros' => ['q' => $busqueda, 'cliente_id' => $clienteId, 'propiedad_id' => $propiedadId],
             'clientesDisponibles' => $this->clientesActivos(),
             'propiedadesDisponibles' => $this->propiedadesActivas(),
-            'camposDisponibles' => $this->camposActivos(),
         ]);
     }
 
@@ -77,7 +76,6 @@ final class LotesController
             ...$this->autorizacion->cascara($request),
             'clientesDisponibles' => $this->clientesActivos(),
             'propiedadesDisponibles' => $this->propiedadesActivas(),
-            'camposDisponibles' => $this->camposActivos(),
             'proveedorMapa' => $this->resolverProveedorMapa->ejecutar(),
         ]);
     }
@@ -89,7 +87,7 @@ final class LotesController
         $datos = $request->validated();
 
         try {
-            $crearLote->ejecutar((int) $datos['campo_id'], $this->normalizarDatos($datos));
+            $crearLote->ejecutar((int) $datos['propiedad_id'], $this->normalizarDatos($datos));
         } catch (LoteDuplicado $excepcion) {
             return redirect()
                 ->route('panel.lotes.create')
@@ -108,10 +106,9 @@ final class LotesController
 
         return view('comercial::pages.lotes.edit', [
             ...$this->autorizacion->cascara($request),
-            'lote' => $lote->load('campo.propiedad'),
+            'lote' => $lote->load('propiedad'),
             'clientesDisponibles' => $this->clientesActivos(),
             'propiedadesDisponibles' => $this->propiedadesActivas(),
-            'camposDisponibles' => $this->camposActivos(),
             'proveedorMapa' => $this->resolverProveedorMapa->ejecutar(),
         ]);
     }
@@ -123,7 +120,7 @@ final class LotesController
         $datos = $request->validated();
 
         try {
-            $actualizarLote->ejecutar($lote, (int) $datos['campo_id'], $this->normalizarDatos($datos));
+            $actualizarLote->ejecutar($lote, (int) $datos['propiedad_id'], $this->normalizarDatos($datos));
         } catch (LoteDuplicado $excepcion) {
             return redirect()
                 ->route('panel.lotes.edit', $lote)
@@ -161,8 +158,8 @@ final class LotesController
 
     /**
      * Propiedades activas con su `cliente_id`, para el primer nivel del
-     * cascade cliente → propiedad → campo (ADR 0018 introdujo el nivel de
-     * propiedad entre cliente y campo).
+     * cascade cliente → propiedad (ADR 0020: eliminó el nivel de campo
+     * intermedio).
      *
      * @return Collection<int, Propiedad> id => Propiedad (con `cliente_id`, `nombre`)
      */
@@ -171,24 +168,6 @@ final class LotesController
         return Propiedad::query()
             ->orderBy('nombre')
             ->get(['id', 'cliente_id', 'nombre'])
-            ->keyBy('id');
-    }
-
-    /**
-     * Campos activos con su `propiedad_id`, para el segundo nivel del
-     * cascade cliente → propiedad → campo y para el select final del que
-     * cuelga el lote. Antes de ADR 0018 este método se llamaba
-     * `propiedadesActivas()` y devolvía lo mismo que hoy es `Campo` — el
-     * nombre quedó incorrecto cuando "Propiedad" pasó a ser una entidad
-     * propia (ver ADR 0018, punto 1).
-     *
-     * @return Collection<int, Campo> id => Campo (con `propiedad_id`, `nombre`)
-     */
-    private function camposActivos(): Collection
-    {
-        return Campo::query()
-            ->orderBy('nombre')
-            ->get(['id', 'propiedad_id', 'nombre'])
             ->keyBy('id');
     }
 

@@ -18,7 +18,7 @@ final readonly class FilaRechazoDesempenio
         public string $fecha,
         public string $rol,
         public string $loteCodigo,
-        public string $campoNombre,
+        public string $propiedadNombre,
         public int $clienteId,
         public string $clienteNombre,
         public ?int $campaniaId,

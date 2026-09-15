@@ -4,18 +4,17 @@ namespace App\Dominios\Comercial\Aplicacion;
 
 use App\Dominios\Comercial\Aplicacion\Lote\GuardadoLote;
 use App\Dominios\Comercial\Dominio\Excepciones\LoteDuplicado;
-use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 
 /**
- * Alta de un lote suelto, desde su propia ficha (tarea 77, HU-54, etapa 2) —
- * no confundir con el alta de lotes que trae `CrearCampo` cuando una
- * propiedad se da de alta con los suyos en la misma operación.
+ * Alta de un lote, desde su propia ficha (tarea 77, HU-54, etapa 2; ADR
+ * 0020 — flujo separado del de propiedad, la propiedad nunca trae lotes
+ * en su propio formulario).
  *
- * Mismo caso de uso de guardado que `CrearCampo`/`ActualizarCampo`, vía
- * {@see GuardadoLote}: no hay dos formas de crear un lote, solo dos puntos de
- * entrada (formulario de propiedad, formulario de lote) que llaman al mismo
- * colaborador — prompt de la tarea, punto "Qué NO hacer".
+ * Mismo caso de uso de guardado que `ActualizarLote`, vía
+ * {@see GuardadoLote}: no hay dos formas de crear un lote, un único
+ * colaborador que ambos reusan.
  */
 final class CrearLote
 {
@@ -23,10 +22,10 @@ final class CrearLote
      *
      * @throws LoteDuplicado si el código ya pertenece a otro lote activo de la misma propiedad.
      */
-    public function ejecutar(int $campoId, array $datos): Lote
+    public function ejecutar(int $propiedadId, array $datos): Lote
     {
-        $campo = Campo::query()->findOrFail($campoId);
+        $propiedad = Propiedad::query()->findOrFail($propiedadId);
 
-        return GuardadoLote::guardar($campo->lotes()->make(), $datos);
+        return GuardadoLote::guardar($propiedad->lotes()->make(), $datos);
     }
 }

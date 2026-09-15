@@ -7,11 +7,16 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 /**
- * Caso de uso: listado de propiedades con búsqueda opcional (ADR 0018).
- * Solo lectura — mismo patrón de paginación que `ListarCampos`.
+ * Caso de uso: listado de propiedades con búsqueda opcional (ADR 0020).
+ * Solo lectura.
  *
- * `withCount('campos')` trae la cantidad de campos de cada propiedad en la
- * misma consulta (subconsulta agregada), sin una query N+1 nueva por fila.
+ * `withCount('lotes')` trae la cantidad de lotes de cada propiedad, y
+ * `withSum('lotes as hectareas_totales', 'hectareas')` la suma de sus
+ * hectáreas, ambas en la misma consulta (subconsulta agregada) — sin una
+ * query N+1 nueva por fila. Las hectáreas totales de una propiedad son la
+ * suma de sus lotes, nunca un dato que el usuario declare a mano (no hay
+ * nada contra qué comparar el área dibujada en `geometria`, que es
+ * puramente visual/de referencia).
  */
 final class ListarPropiedades
 {
@@ -20,7 +25,8 @@ final class ListarPropiedades
     {
         return Propiedad::query()
             ->with('cliente')
-            ->withCount('campos')
+            ->withCount('lotes')
+            ->withSum('lotes as hectareas_totales', 'hectareas')
             ->when(
                 $busqueda !== null && $busqueda !== '',
                 fn (Builder $consulta) => $consulta->where(function (Builder $sub) use ($busqueda): void {

@@ -6,7 +6,6 @@ use App\Dominios\Campania\Dominio\EstadoCampania;
 use App\Dominios\Campania\Infraestructura\Eloquent\Campania;
 use App\Dominios\Comercial\Dominio\EstadoContrato;
 use App\Dominios\Comercial\Dominio\TipoContactoCliente;
-use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\ClienteContacto;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
@@ -165,13 +164,8 @@ class PortalDemoSeeder extends Seeder
             'ubicacion' => 'Zona norte cruceña, km 30 camino a Okinawa, Santa Cruz, Bolivia',
         ]), $autorId);
 
-        $campo = $this->crear(new Campo([
-            'propiedad_id' => $propiedad->id,
-            'nombre' => 'La Esperanza — Casco Central',
-        ]), $autorId);
-
         $lote = $this->crear(new Lote([
-            'campo_id' => $campo->id,
+            'propiedad_id' => $propiedad->id,
             'codigo' => 'LE-01',
             'hectareas' => '300.00',
             'geometria' => [

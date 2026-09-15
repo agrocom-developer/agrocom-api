@@ -15,7 +15,6 @@ import './templates/auth-layout.js';
 import './pages/login.js';
 import './pages/clientes-form.js';
 import './pages/contratos-form.js';
-import './pages/campos-form.js';
 import './pages/lotes-form.js';
 import './pages/usuarios-form.js';
 import './pages/gastos-form.js';

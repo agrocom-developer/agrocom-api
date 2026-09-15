@@ -28,22 +28,21 @@ final class LecturaPanelComercialEloquent implements LecturaPanelComercial
     public function lotesPorId(): array
     {
         $lotes = Lote::query()
-            ->with('campo:id,nombre,propiedad_id', 'campo.propiedad:id,nombre,cliente_id', 'campo.propiedad.cliente:id,razon_social')
+            ->with('propiedad:id,nombre,cliente_id', 'propiedad.cliente:id,razon_social')
             ->orderBy('id')
             ->get();
 
         $porId = [];
 
         foreach ($lotes as $lote) {
-            $campo = $lote->campo;
-            $propiedad = $campo->propiedad;
+            $propiedad = $lote->propiedad;
 
             $porId[$lote->id] = new LotePanel(
                 id: $lote->id,
                 codigo: $lote->codigo,
                 hectareas: (string) $lote->hectareas,
-                campoId: $lote->campo_id,
-                campoNombre: $campo->nombre ?? '',
+                propiedadId: $lote->propiedad_id,
+                propiedadNombre: $propiedad->nombre ?? '',
                 clienteId: (int) ($propiedad->cliente_id ?? 0),
                 clienteNombre: $propiedad->cliente->razon_social ?? '',
                 geometria: $lote->geometria,

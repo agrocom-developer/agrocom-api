@@ -6,7 +6,6 @@ use App\Dominios\Comercial\Contratos\LecturaCultivoLote;
 use App\Dominios\Comercial\Dominio\Excepciones\CampaniaDeOtroCliente;
 use App\Dominios\Comercial\Dominio\Excepciones\HectareasSembradasSuperanLote;
 use App\Dominios\Comercial\Dominio\Excepciones\SiembraDuplicada;
-use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cultivo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\LoteCampania;
@@ -44,13 +43,12 @@ function campaniaParaSiembra(int $clienteId, string $codigo = '2025-2026'): Camp
     ]);
 }
 
-function campoConLoteParaSiembra(int $clienteId, string $hectareasLote = '20.00'): Campo
+function propiedadConLoteParaSiembra(int $clienteId, string $hectareasLote = '20.00'): Propiedad
 {
     $propiedad = Propiedad::create(['cliente_id' => $clienteId, 'nombre' => 'Propiedad de prueba '.uniqid()]);
-    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo de prueba siembra']);
-    $campo->lotes()->create(['codigo' => 'L-01', 'hectareas' => $hectareasLote]);
+    $propiedad->lotes()->create(['codigo' => 'L-01', 'hectareas' => $hectareasLote]);
 
-    return $campo->refresh()->load('lotes');
+    return $propiedad->refresh()->load('lotes');
 }
 
 function cultivoIdParaSiembra(string $nombre): int
@@ -61,10 +59,10 @@ function cultivoIdParaSiembra(string $nombre): int
 it('siembra un lote con un cultivo dentro de una campaña', function () {
     $cliente = clienteParaSiembra();
     $campania = campaniaParaSiembra($cliente->id);
-    $campo = campoConLoteParaSiembra($cliente->id);
-    $lote = $campo->lotes->first();
+    $propiedad = propiedadConLoteParaSiembra($cliente->id);
+    $lote = $propiedad->lotes->first();
 
-    app(GuardarSiembraCampania::class)->ejecutar($campo, $campania->id, [
+    app(GuardarSiembraCampania::class)->ejecutar($propiedad, $campania->id, [
         [
             'lote_id' => $lote->id,
             'cultivo_id' => cultivoIdParaSiembra('Soya'),
@@ -83,15 +81,15 @@ it('siembra un lote con un cultivo dentro de una campaña', function () {
 it('reejecutar sobre la misma campaña actualiza la siembra existente, sin duplicarla', function () {
     $cliente = clienteParaSiembra();
     $campania = campaniaParaSiembra($cliente->id);
-    $campo = campoConLoteParaSiembra($cliente->id);
-    $lote = $campo->lotes->first();
+    $propiedad = propiedadConLoteParaSiembra($cliente->id);
+    $lote = $propiedad->lotes->first();
 
     $guardar = app(GuardarSiembraCampania::class);
 
-    $guardar->ejecutar($campo, $campania->id, [
+    $guardar->ejecutar($propiedad, $campania->id, [
         ['lote_id' => $lote->id, 'cultivo_id' => cultivoIdParaSiembra('Soya'), 'hectareas_sembradas' => '10.00', 'fecha_siembra' => null, 'fecha_cosecha_estimada' => null],
     ]);
-    $guardar->ejecutar($campo, $campania->id, [
+    $guardar->ejecutar($propiedad, $campania->id, [
         ['lote_id' => $lote->id, 'cultivo_id' => cultivoIdParaSiembra('Maíz'), 'hectareas_sembradas' => '18.00', 'fecha_siembra' => null, 'fecha_cosecha_estimada' => null],
     ]);
 
@@ -105,15 +103,15 @@ it('el mismo lote con soya en la campaña A y maíz en la campaña B convive sin
     $cliente = clienteParaSiembra();
     $campaniaA = campaniaParaSiembra($cliente->id, '2025-2026');
     $campaniaB = campaniaParaSiembra($cliente->id, '2026-2027');
-    $campo = campoConLoteParaSiembra($cliente->id);
-    $lote = $campo->lotes->first();
+    $propiedad = propiedadConLoteParaSiembra($cliente->id);
+    $lote = $propiedad->lotes->first();
 
     $guardar = app(GuardarSiembraCampania::class);
 
-    $guardar->ejecutar($campo, $campaniaA->id, [
+    $guardar->ejecutar($propiedad, $campaniaA->id, [
         ['lote_id' => $lote->id, 'cultivo_id' => cultivoIdParaSiembra('Soya'), 'hectareas_sembradas' => '12.00', 'fecha_siembra' => null, 'fecha_cosecha_estimada' => null],
     ]);
-    $guardar->ejecutar($campo, $campaniaB->id, [
+    $guardar->ejecutar($propiedad, $campaniaB->id, [
         ['lote_id' => $lote->id, 'cultivo_id' => cultivoIdParaSiembra('Maíz'), 'hectareas_sembradas' => '9.00', 'fecha_siembra' => null, 'fecha_cosecha_estimada' => null],
     ]);
 
@@ -132,10 +130,10 @@ it('el mismo lote con soya en la campaña A y maíz en la campaña B convive sin
 it('rechaza hectáreas sembradas por encima de las hectáreas del lote', function () {
     $cliente = clienteParaSiembra();
     $campania = campaniaParaSiembra($cliente->id);
-    $campo = campoConLoteParaSiembra($cliente->id, hectareasLote: '10.00');
-    $lote = $campo->lotes->first();
+    $propiedad = propiedadConLoteParaSiembra($cliente->id, hectareasLote: '10.00');
+    $lote = $propiedad->lotes->first();
 
-    app(GuardarSiembraCampania::class)->ejecutar($campo, $campania->id, [
+    app(GuardarSiembraCampania::class)->ejecutar($propiedad, $campania->id, [
         ['lote_id' => $lote->id, 'cultivo_id' => cultivoIdParaSiembra('Soya'), 'hectareas_sembradas' => '10.01', 'fecha_siembra' => null, 'fecha_cosecha_estimada' => null],
     ]);
 })->throws(HectareasSembradasSuperanLote::class);
@@ -143,13 +141,13 @@ it('rechaza hectáreas sembradas por encima de las hectáreas del lote', functio
 it('rechaza sembrar el mismo lote dos veces en la misma campaña, con un error traducido y no un QueryException', function () {
     $cliente = clienteParaSiembra();
     $campania = campaniaParaSiembra($cliente->id);
-    $campo = campoConLoteParaSiembra($cliente->id);
-    $lote = $campo->lotes->first();
+    $propiedad = propiedadConLoteParaSiembra($cliente->id);
+    $lote = $propiedad->lotes->first();
 
     // Dos filas para el MISMO lote en una sola llamada: el índice único
     // parcial `com_lote_campania_lote_campania_unico` rechaza la segunda, y
     // GuardarSiembra la traduce a SiembraDuplicada — nunca un 500 crudo.
-    app(GuardarSiembraCampania::class)->ejecutar($campo, $campania->id, [
+    app(GuardarSiembraCampania::class)->ejecutar($propiedad, $campania->id, [
         ['lote_id' => $lote->id, 'cultivo_id' => cultivoIdParaSiembra('Soya'), 'hectareas_sembradas' => '5.00', 'fecha_siembra' => null, 'fecha_cosecha_estimada' => null],
         ['lote_id' => $lote->id, 'cultivo_id' => cultivoIdParaSiembra('Maíz'), 'hectareas_sembradas' => '5.00', 'fecha_siembra' => null, 'fecha_cosecha_estimada' => null],
     ]);
@@ -158,12 +156,12 @@ it('rechaza sembrar el mismo lote dos veces en la misma campaña, con un error t
 it('no relanza como SiembraDuplicada una QueryException que no corresponde al índice único', function () {
     $cliente = clienteParaSiembra();
     $campania = campaniaParaSiembra($cliente->id);
-    $campo = campoConLoteParaSiembra($cliente->id);
-    $lote = $campo->lotes->first();
+    $propiedad = propiedadConLoteParaSiembra($cliente->id);
+    $lote = $propiedad->lotes->first();
 
     // cultivo_id inexistente: viola la FK de com_lote_campania.cultivo_id,
     // una violación distinta a la del índice único — no debe traducirse.
-    app(GuardarSiembraCampania::class)->ejecutar($campo, $campania->id, [
+    app(GuardarSiembraCampania::class)->ejecutar($propiedad, $campania->id, [
         ['lote_id' => $lote->id, 'cultivo_id' => 999999, 'hectareas_sembradas' => '5.00', 'fecha_siembra' => null, 'fecha_cosecha_estimada' => null],
     ]);
 })->throws(QueryException::class);
@@ -172,10 +170,10 @@ it('rechaza guardar contra una campaña de otro cliente', function () {
     $cliente = clienteParaSiembra('Cliente dueño del campo');
     $otroCliente = clienteParaSiembra('Otro cliente');
     $campaniaAjena = campaniaParaSiembra($otroCliente->id);
-    $campo = campoConLoteParaSiembra($cliente->id);
-    $lote = $campo->lotes->first();
+    $propiedad = propiedadConLoteParaSiembra($cliente->id);
+    $lote = $propiedad->lotes->first();
 
-    app(GuardarSiembraCampania::class)->ejecutar($campo, $campaniaAjena->id, [
+    app(GuardarSiembraCampania::class)->ejecutar($propiedad, $campaniaAjena->id, [
         ['lote_id' => $lote->id, 'cultivo_id' => cultivoIdParaSiembra('Soya'), 'hectareas_sembradas' => '5.00', 'fecha_siembra' => null, 'fecha_cosecha_estimada' => null],
     ]);
 })->throws(CampaniaDeOtroCliente::class);
@@ -183,15 +181,15 @@ it('rechaza guardar contra una campaña de otro cliente', function () {
 it('una fila sin cultivo da de baja (soft delete) la siembra existente de ese lote', function () {
     $cliente = clienteParaSiembra();
     $campania = campaniaParaSiembra($cliente->id);
-    $campo = campoConLoteParaSiembra($cliente->id);
-    $lote = $campo->lotes->first();
+    $propiedad = propiedadConLoteParaSiembra($cliente->id);
+    $lote = $propiedad->lotes->first();
 
     $guardar = app(GuardarSiembraCampania::class);
 
-    $guardar->ejecutar($campo, $campania->id, [
+    $guardar->ejecutar($propiedad, $campania->id, [
         ['lote_id' => $lote->id, 'cultivo_id' => cultivoIdParaSiembra('Soya'), 'hectareas_sembradas' => '5.00', 'fecha_siembra' => null, 'fecha_cosecha_estimada' => null],
     ]);
-    $guardar->ejecutar($campo, $campania->id, [
+    $guardar->ejecutar($propiedad, $campania->id, [
         ['lote_id' => $lote->id, 'cultivo_id' => null, 'hectareas_sembradas' => null, 'fecha_siembra' => null, 'fecha_cosecha_estimada' => null],
     ]);
 

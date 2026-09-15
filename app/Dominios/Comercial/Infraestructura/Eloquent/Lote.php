@@ -7,14 +7,16 @@ use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Lote del campo (espec §4.1, tabla com_lotes). Hectáreas en DECIMAL — las
- * hectáreas son dinero (invariante 6); la geometría es GeoJSON en JSONB, se
- * guarda y se dibuja, no se consulta espacialmente (sin PostGIS en v1).
+ * Lote de la propiedad (espec §4.1, tabla com_lotes; ADR 0020 — cuelga
+ * directo de `Propiedad`, sin el nivel intermedio `Campo`). Hectáreas en
+ * DECIMAL — las hectáreas son dinero (invariante 6); la geometría es GeoJSON
+ * en JSONB, se guarda y se dibuja, no se consulta espacialmente (sin PostGIS
+ * en v1).
  *
- * `RegistraBitacora` (HU-24, tarea 35): mismo criterio que {@see Campo}.
+ * `RegistraBitacora` (HU-24, tarea 35): mismo criterio que {@see Propiedad}.
  *
  * @property int $id
- * @property int $campo_id
+ * @property int $propiedad_id
  * @property string $codigo
  * @property string $hectareas
  * @property array<string, mixed>|null $geometria
@@ -30,7 +32,7 @@ class Lote extends ModeloDominio
 
     /** @var list<string> */
     protected $fillable = [
-        'campo_id',
+        'propiedad_id',
         'codigo',
         'hectareas',
         'geometria',
@@ -48,9 +50,9 @@ class Lote extends ModeloDominio
         ];
     }
 
-    /** @return BelongsTo<Campo, $this> */
-    public function campo(): BelongsTo
+    /** @return BelongsTo<Propiedad, $this> */
+    public function propiedad(): BelongsTo
     {
-        return $this->belongsTo(Campo::class, 'campo_id');
+        return $this->belongsTo(Propiedad::class, 'propiedad_id');
     }
 }

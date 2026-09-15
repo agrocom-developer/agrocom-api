@@ -8,15 +8,19 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * Propiedad del cliente (ADR 0018, tabla com_propiedades): nivel de negocio
- * entre `Cliente` y `Campo` — un cliente tiene varias propiedades, y una
- * propiedad puede estar dividida en más de un campo físico delimitado (caso
- * "Gamelera": dos mitades de 1500 ha separadas por una carretera, cada una
- * con su propia campaña).
+ * Propiedad del cliente (ADR 0020, tabla com_propiedades): nivel de negocio
+ * entre `Cliente` y `Lote` — un cliente tiene varias propiedades, y sus
+ * lotes cuelgan directo de la propiedad, sin el nivel intermedio `Campo`
+ * que existió bajo ADR 0018 (reemplazado por ADR 0020). El caso "Gamelera"
+ * (dos mitades de 1500 ha separadas por una carretera) se representa con
+ * `geometria` (GeoJSON `MultiPolygon`, un terreno por elemento), no con
+ * filas hijas: no tiene código propio, ni hectáreas propias, ni
+ * restricciones — es geometría de referencia, no una entidad de negocio. La
+ * independencia de campaña por terreno la resuelve `com_lote_campania` a
+ * nivel `Lote`.
  *
- * `RegistraBitacora` (invariante 9 de CLAUDE.md): mismo criterio que
- * {@see Campo} — el alta, edición y baja de una propiedad es una mutación de
- * negocio con autor y momento auditables.
+ * `RegistraBitacora` (invariante 9 de CLAUDE.md): el alta, edición y baja de
+ * una propiedad es una mutación de negocio con autor y momento auditables.
  *
  * @property int $id
  * @property int $cliente_id
@@ -27,6 +31,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $localidad
  * @property string|null $latitud
  * @property string|null $longitud
+ * @property array<string, mixed>|null $geometria
  */
 class Propiedad extends ModeloDominio
 {
@@ -44,6 +49,7 @@ class Propiedad extends ModeloDominio
         'localidad',
         'latitud',
         'longitud',
+        'geometria',
     ];
 
     /** @return array<string, string> */
@@ -52,6 +58,7 @@ class Propiedad extends ModeloDominio
         return [
             'latitud' => 'decimal:6',
             'longitud' => 'decimal:6',
+            'geometria' => 'array',
         ];
     }
 
@@ -61,9 +68,9 @@ class Propiedad extends ModeloDominio
         return $this->belongsTo(Cliente::class, 'cliente_id');
     }
 
-    /** @return HasMany<Campo, $this> */
-    public function campos(): HasMany
+    /** @return HasMany<Lote, $this> */
+    public function lotes(): HasMany
     {
-        return $this->hasMany(Campo::class, 'propiedad_id');
+        return $this->hasMany(Lote::class, 'propiedad_id');
     }
 }

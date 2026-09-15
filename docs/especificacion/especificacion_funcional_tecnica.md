@@ -117,10 +117,9 @@ Llevan `campania_id` propio solo las entidades donde alguien la **elige explíci
 - `clientes` — id, razón social, nit, tipo_persona (física / jurídica), contacto dueño, contacto agrónomo. *El dueño, cuando el cliente es una sociedad, se registra como contacto tipo `dueno` — no como cliente propio (ADR 0018).*
 - `contratos` — id, campania_id, cliente_id, hectáreas_contratadas, aplicaciones_previstas, precio_ha, monto_total, adelanto_monto ("Adelanto Solicitado"), fecha_inicio, fecha_fin, estado. *Nota del 14/9/2026 (HU-91): sin `adelanto_pct` ni parámetros de vuelo/límites de condiciones propios — esos campos (`altura_vuelo_m`, `velocidad_max_kmh`, `viento_max_kmh`, `temperatura_max_c`, `humedad_min_pct`, `humedad_max_pct`, `umbral_reporte_avance_ha`) se sacan del contrato; hereda de la Orden o del valor por defecto del sistema (RF-60). `contrato_ventanas` no cambia (ADR 0015 punto 5 sigue vigente).*
 - `contrato_ventanas` — id, contrato_id, hora_inicio, hora_fin. *N por contrato y **opcionales**: sin ninguna ventana cargada, el contrato aplica a cualquier hora ("todo el día"). No hay booleano de "todo el día" — la ausencia de filas es el dato (ADR 0015).*
-- `contrato_alcances` — id, contrato_id, propiedad_id, campo_id (nullable), hectareas. *Qué terreno cubre el contrato: una propiedad entera (`campo_id` nulo), un campo específico, o una mezcla de varias propiedades — N filas por contrato, y la suma no puede superar `hectareas_contratadas` (ADR 0018).*
-- `propiedades` — id, cliente_id, nombre, ubicación (departamento, provincia, municipio o pueblo — ej. Cuatro Cañadas, Roboré, San Matías). *Un cliente tiene varias propiedades — el nivel de negocio ("Gamelera"), no necesariamente un único predio físico delimitado.*
-- `campos` — id, propiedad_id, nombre, geometría (GeoJSON, perímetro de referencia). *Una propiedad tiene uno o más campos físicos (ej. dos mitades separadas por una carretera, cada una con su propia campaña); cada campo tiene varios lotes (ADR 0018).*
-- `lotes` — id, campo_id, código, hectáreas, geometría (GeoJSON), restricciones (texto: cables, viviendas, colmenas, vecinos sensibles)
+- `contrato_alcances` — id, contrato_id, propiedad_id, hectareas. *Qué propiedad cubre el contrato — N filas por contrato, así se modela una mezcla de varias propiedades, y la suma no puede superar `hectareas_contratadas` (ADR 0020).*
+- `propiedades` — id, cliente_id, nombre, ubicación (departamento, provincia, municipio o pueblo — ej. Cuatro Cañadas, Roboré, San Matías), geometría (GeoJSON `MultiPolygon` nullable: terrenos físicos de la propiedad, uno o más — la propiedad puede tener porciones de terreno separadas geográficamente sin dejar de ser una sola fila). *Un cliente tiene varias propiedades — el nivel de negocio y también el nivel de terreno: no hay una entidad intermedia entre la propiedad y sus lotes (ADR 0020, reemplaza a ADR 0018).*
+- `lotes` — id, propiedad_id, código, hectáreas, geometría (GeoJSON), restricciones (texto: cables, viviendas, colmenas, vecinos sensibles)
 - `cultivos` — id, nombre (soya, maíz, girasol, trigo, sorgo…), activo. *Catálogo.*
 - `lote_campania` — id, lote_id, campania_id, cultivo_id, hectareas_sembradas, fecha_siembra, fecha_cosecha_estimada. *Qué se sembró en cada lote en cada campaña — un cultivo por lote y campaña. El lote no "es" de soya: se siembra de soya esta campaña y de maíz la siguiente. Es la dimensión que agrupa el informe de avance de contratos (§9.1).*
 
@@ -153,7 +152,7 @@ Llevan `campania_id` propio solo las entidades donde alguien la **elige explíci
 - `incidencias` — id, sesion_id, tipo (enum: caldo / esc / bateria / mecanica / clima / otro), descripcion, hora, evidencia_id
 - `evidencias` — id, tipo (captura_rc / imagen_campo / foto_incidencia / comprobante / firma_acta), archivo_url, hash, subido_por, fecha, uuid_cliente
 - `actas` — id, trabajo_id, hectareas_conformadas, firmante (agrónomo), fecha_firma, evidencia_firma_id, observaciones, estado
-- `estadias_hacienda` — id, uuid_cliente, equipo_trabajo_id, campo_id, entrada, salida, vehiculo_id, observacion. *Entrada y salida del equipo en cada hacienda. Nace en la app de campo (lleva `uuid_cliente` y viaja por `POST /api/sync`, §2.1) porque la registra el equipo al llegar y al irse, no la oficina. Responde cuántos días efectivos estuvo cada cuadrilla en cada propiedad — el dato que hoy falta para justificar el gasto imputado al equipo. Sin `campania_id`: el campo dice de qué cliente es y la fecha ubica la campaña; el piloto no elige campañas desde el celular. Un equipo no puede tener dos estadías abiertas a la vez; `salida` nula = estadía en curso, sin columna de estado que pueda contradecirla.*
+- `estadias_hacienda` — id, uuid_cliente, equipo_trabajo_id, propiedad_id, entrada, salida, vehiculo_id, observacion. *Entrada y salida del equipo en cada hacienda. Nace en la app de campo (lleva `uuid_cliente` y viaja por `POST /api/sync`, §2.1) porque la registra el equipo al llegar y al irse, no la oficina. Responde cuántos días efectivos estuvo cada cuadrilla en cada propiedad — el dato que hoy falta para justificar el gasto imputado al equipo. Sin `campania_id`: la propiedad dice de qué cliente es y la fecha ubica la campaña; el piloto no elige campañas desde el celular. Un equipo no puede tener dos estadías abiertas a la vez; `salida` nula = estadía en curso, sin columna de estado que pueda contradecirla.*
 
 ### 4.4 Financiero
 
@@ -507,7 +506,7 @@ El calendario concreto (sprints, historias de usuario, betas) vive en `docs/gest
 ## 16. Supuestos a confirmar
 
 - La app de campo corre en el RC del Agras (Android), con control de actualizaciones por red (`GET /api/version`, sin Firebase/FCM — polling, no push).
-- Un solo cliente contratante en v1, pero el modelo admite varios contratos, propiedades y campos.
+- Un solo cliente contratante en v1, pero el modelo admite varios contratos y propiedades.
 - La planilla es una liquidación interna de pagos, no un documento laboral normado. Sin aportes ni retenciones.
 - Sueldos del jefe de campo y del encargado de operaciones: se cargan como parámetro, sin impacto en el diseño.
 - Tolerancia de solape entre sesiones: parámetro configurable, a definir con la experiencia de campo.

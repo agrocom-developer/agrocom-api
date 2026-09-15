@@ -1,7 +1,6 @@
 <?php
 
 use App\Dominios\Campania\Infraestructura\Http\Controllers\Web\CampaniasController;
-use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\CamposController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ClientesController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ContratosController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\CultivosController;
@@ -476,32 +475,6 @@ Route::middleware('auth:interno')->group(function () {
         Route::delete('/panel/propiedades/{propiedad}', [PropiedadesController::class, 'destroy'])
             ->name('panel.propiedades.destroy');
 
-        // HU-24 (tarea 35): administración de campos con sus lotes. Un campo
-        // se crea/edita con sus lotes en la misma operación (mismo criterio
-        // que `clientes` arriba con sus contactos) — eso NO cambió con la
-        // tarea 77. Desde ADR 0018 el campo cuelga de una propiedad (arriba),
-        // no directo de un cliente. Cuatro permisos de grano fino
-        // (`comercial.campo.ver`/`.crear`/`.editar`/`.eliminar`) verificados
-        // DENTRO del controlador contra el ROL ACTIVO, mismo criterio que
-        // `clientes`/`contratos` arriba.
-        Route::get('/panel/campos', [CamposController::class, 'index'])
-            ->name('panel.campos.index');
-
-        Route::get('/panel/campos/crear', [CamposController::class, 'create'])
-            ->name('panel.campos.create');
-
-        Route::post('/panel/campos', [CamposController::class, 'store'])
-            ->name('panel.campos.store');
-
-        Route::get('/panel/campos/{campo}/editar', [CamposController::class, 'edit'])
-            ->name('panel.campos.edit');
-
-        Route::put('/panel/campos/{campo}', [CamposController::class, 'update'])
-            ->name('panel.campos.update');
-
-        Route::delete('/panel/campos/{campo}', [CamposController::class, 'destroy'])
-            ->name('panel.campos.destroy');
-
         // Tarea 77 (HU-54, etapa 2): ficha propia de un lote — antes solo se
         // podía tocar entrando por su propiedad. Cuatro permisos de grano
         // fino (`comercial.lote.ver`/`.crear`/`.editar`/`.eliminar`,
@@ -551,15 +524,15 @@ Route::middleware('auth:interno')->group(function () {
             ->name('panel.cultivos.destroy');
 
         // HU-48 (tarea 71, etapa 3, ADR 0015 punto 4): qué se sembró en cada
-        // lote del campo, por campaña. Entra desde la ficha del campo, no
+        // lote de la propiedad, por campaña. Entra desde la ficha de la propiedad, no
         // desde `cultivos` (catálogo) ni desde `lotes` (estructura) — reusa
-        // el permiso `comercial.campo.editar`: no es un ABM propio, es parte
-        // de mantener los datos de ESE campo.
-        Route::get('/panel/campos/{campo}/siembra', [SiembraController::class, 'mostrar'])
-            ->name('panel.campos.siembra');
+        // el permiso `comercial.propiedad.editar`: no es un ABM propio, es parte
+        // de mantener los datos de ESA propiedad.
+        Route::get('/panel/propiedades/{propiedad}/siembra', [SiembraController::class, 'mostrar'])
+            ->name('panel.propiedades.siembra');
 
-        Route::post('/panel/campos/{campo}/siembra', [SiembraController::class, 'guardar'])
-            ->name('panel.campos.siembra.guardar');
+        Route::post('/panel/propiedades/{propiedad}/siembra', [SiembraController::class, 'guardar'])
+            ->name('panel.propiedades.siembra.guardar');
 
         // HU-27 (tarea 36): administración de la flota de drones con su
         // modelo y capacidad de carga. Sin sub-entidad (a diferencia de

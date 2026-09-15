@@ -1,8 +1,8 @@
 <?php
 
 use App\Dominios\Comercial\Aplicacion\ListarPropiedades;
-use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Compartido\Dominio\AccionBitacora;
 use App\Dominios\Compartido\Infraestructura\Eloquent\Bitacora;
@@ -16,12 +16,12 @@ use Database\Seeders\Catalogo\CatalogoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 /*
- * ADR 0018: administración de propiedades — nivel de terreno entre `Cliente`
- * y `Campo`. Mismo molde que tests/Feature/Comercial/GestionCamposPanelTest.php
- * (HU-24, tarea 35), sin sub-entidad: los campos de una propiedad se crean y
- * editan desde su propia pantalla (`CamposController`), no acá. Permisos
- * evaluados contra el ROL ACTIVO de la sesión, nunca la unión de los roles
- * del usuario (invariante 10 de CLAUDE.md).
+ * ADR 0020: administración de propiedades — nivel de terreno entre `Cliente`
+ * y `Lote` directo (sin `Campo` como nivel intermedio, que ADR 0018 introdujo
+ * y ADR 0020 revierte). Permisos evaluados contra el ROL ACTIVO de la sesión,
+ * nunca la unión de los roles del usuario (invariante 10 de CLAUDE.md).
+ * Los lotes de una propiedad se crean y editan desde su propia pantalla
+ * (`LotesController`), no acá.
  */
 
 uses(RefreshDatabase::class);
@@ -280,7 +280,7 @@ it('rechaza dar de baja una propiedad con campos asociados', function () {
     $this->post(route('panel.propiedades.store'), payloadPropiedad($cliente->id));
     $propiedad = Propiedad::query()->sole();
 
-    Campo::query()->create(['propiedad_id' => $propiedad->id, 'nombre' => 'Norte']);
+    Lote::query()->create(['propiedad_id' => $propiedad->id, 'codigo' => 'L-01', 'hectareas' => '100.00']);
 
     $this->delete(route('panel.propiedades.destroy', $propiedad))
         ->assertRedirect(route('panel.propiedades.index'))

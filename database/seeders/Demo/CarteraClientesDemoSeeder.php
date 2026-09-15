@@ -6,7 +6,6 @@ use App\Dominios\Campania\Dominio\EstadoCampania;
 use App\Dominios\Campania\Infraestructura\Eloquent\Campania;
 use App\Dominios\Comercial\Dominio\EstadoContrato;
 use App\Dominios\Comercial\Dominio\TipoContactoCliente;
-use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\ClienteContacto;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
@@ -104,13 +103,8 @@ class CarteraClientesDemoSeeder extends Seeder
             'ubicacion' => 'Km 28 camino a Cuatro Cañadas, Santa Cruz, Bolivia',
         ]), $autorId);
 
-        $campo = $this->crear(new Campo([
-            'propiedad_id' => $propiedad->id,
-            'nombre' => 'San Marcos — Cuatro Cañadas',
-        ]), $autorId);
-
         $lote = $this->crear(new Lote([
-            'campo_id' => $campo->id,
+            'propiedad_id' => $propiedad->id,
             'codigo' => 'L-12',
             'hectareas' => '320.00',
             'geometria' => $this->poligono(-62.7900, -17.4100),
@@ -167,13 +161,8 @@ class CarteraClientesDemoSeeder extends Seeder
             'ubicacion' => 'Km 9 camino a Pailón Norte, Santa Cruz, Bolivia',
         ]), $autorId);
 
-        $campo = $this->crear(new Campo([
-            'propiedad_id' => $propiedad->id,
-            'nombre' => 'El Carmen — Pailón',
-        ]), $autorId);
-
         $loteTres = $this->crear(new Lote([
-            'campo_id' => $campo->id,
+            'propiedad_id' => $propiedad->id,
             'codigo' => 'L-03',
             'hectareas' => '410.50',
             'geometria' => $this->poligono(-62.7400, -17.6500),
@@ -181,7 +170,7 @@ class CarteraClientesDemoSeeder extends Seeder
         ]), $autorId);
 
         $loteOcho = $this->crear(new Lote([
-            'campo_id' => $campo->id,
+            'propiedad_id' => $propiedad->id,
             'codigo' => 'L-08',
             'hectareas' => '275.25',
             'geometria' => $this->poligono(-62.7200, -17.6650),
@@ -245,13 +234,8 @@ class CarteraClientesDemoSeeder extends Seeder
             'ubicacion' => 'Colonia Okinawa 1, Santa Cruz, Bolivia',
         ]), $autorId);
 
-        $campo = $this->crear(new Campo([
-            'propiedad_id' => $propiedad->id,
-            'nombre' => 'Santa Rosa — Okinawa',
-        ]), $autorId);
-
         $lote = $this->crear(new Lote([
-            'campo_id' => $campo->id,
+            'propiedad_id' => $propiedad->id,
             'codigo' => 'L-01',
             'hectareas' => '190.00',
             'geometria' => $this->poligono(-62.9600, -17.2100),

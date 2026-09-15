@@ -1,16 +1,16 @@
 {{--
-    Page: campos/siembra (GET/POST /panel/campos/{campo}/siembra,
-    panel.campos.siembra[.guardar])
-    Qué se sembró en cada lote del campo, por campaña (HU-48, tarea 71,
-    etapa 3; ADR 0015 punto 4). Se entra desde la ficha del campo, gateada
-    por `comercial.campo.editar` (mismo permiso que editar el campo: no es
+    Page: propiedades/siembra (GET/POST /panel/propiedades/{propiedad}/siembra,
+    panel.propiedades.siembra[.guardar])
+    Qué se sembró en cada lote de la propiedad, por campaña (HU-48, tarea 71,
+    etapa 3; ADR 0015 punto 4). Se entra desde la ficha de la propiedad, gateada
+    por `comercial.propiedad.editar` (mismo permiso que editar la propiedad: no es
     un ABM propio).
 
     Datos esperados (ver SiembraController::mostrar()): la cáscara de
     CascaraPanel, más:
-    - $campo (Campo, con `lotes` cargada).
+    - $propiedad (Propiedad, con `lotes` cargada).
     - $campanias (Collection<int, string>): id => código, campañas del
-      CLIENTE DUEÑO de este campo, la más reciente primero. Vacía si el
+      CLIENTE DUEÑO de esta propiedad, la más reciente primero. Vacía si el
       cliente todavía no tiene ninguna.
     - $campaniaId (int|null): la campaña que se está mostrando — de la
       querystring, o la primera de $campanias si no vino ninguna.
@@ -24,7 +24,7 @@
     se pisan entre sí (GuardarSiembraCampania siempre filtra por
     campania_id).
 --}}
-<x-templates.panel-shell :title="__('comercial.siembra.titulo', ['campo' => $campo->nombre])" :tema="$tema">
+<x-templates.panel-shell :title="__('comercial.siembra.titulo', ['campo' => $propiedad->nombre])" :tema="$tema">
     <x-templates.panel-layout
         :menu="$menu"
         :roles="$roles"
@@ -35,15 +35,15 @@
         :notifications="$notifications"
         :menu-badges="$menuBadges"
         :version="$version"
-        :vista-actual="__('comercial.siembra.titulo', ['campo' => $campo->nombre])"
+        :vista-actual="__('comercial.siembra.titulo', ['campo' => $propiedad->nombre])"
     >
         <div class="ag-siembra">
             <x-organisms.page-header
-                :title="__('comercial.siembra.titulo', ['campo' => $campo->nombre])"
+                :title="__('comercial.siembra.titulo', ['campo' => $propiedad->nombre])"
                 :subtitle="__('comercial.siembra.subtitulo')"
             >
                 <x-slot:actions>
-                    <x-atoms.button href="{{ route('panel.campos.index') }}" variant="outline" icon="arrow_back">
+                    <x-atoms.button href="{{ route('panel.propiedades.index') }}" variant="outline" icon="arrow_back">
                         {{ __('comercial.siembra.volver') }}
                     </x-atoms.button>
                 </x-slot:actions>
@@ -78,7 +78,7 @@
                     @endpuede
                 </x-molecules.alert-strip>
             @else
-                <form method="GET" action="{{ route('panel.campos.siembra', $campo) }}" class="ag-filtros ag-siembra__filtros">
+                <form method="GET" action="{{ route('panel.propiedades.siembra', $propiedad) }}" class="ag-filtros ag-siembra__filtros">
                     <x-atoms.select
                         name="campania_id"
                         id="campania_id"
@@ -94,7 +94,7 @@
                     </div>
                 </form>
 
-                <form method="POST" action="{{ route('panel.campos.siembra.guardar', $campo) }}" class="ag-siembra-form" novalidate>
+                <form method="POST" action="{{ route('panel.propiedades.siembra.guardar', $propiedad) }}" class="ag-siembra-form" novalidate>
                     @csrf
                     <input type="hidden" name="campania_id" value="{{ $campaniaId }}">
 
