@@ -20,6 +20,11 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
  * lote y con ella la ruta `panel.lotes.index` — `item()` la activa sola en
  * cualquier instalación que ya tuviera el ítem sembrado, sin migración de
  * datos nueva.
+ *
+ * ADR 0020 (15/9/2026) va más allá: `Campo` se elimina como entidad, así que
+ * el ítem legado "campos" ya no vuelve a llamarse "Campos" (como hacía ADR
+ * 0018) — el seeder lo retira del árbol (ver la primera prueba de este
+ * archivo).
  */
 
 uses(RefreshDatabase::class);
@@ -49,13 +54,15 @@ function rutaMigracionMenuPropiedadesLotes(): string
     return database_path('migrations/2026_09_08_200001_dividir_menu_propiedades_lotes_y_renombrar_personal.php');
 }
 
-it('el seeder separa "campos" en "propiedades" (misma fila) y "lotes" (item nuevo, con su propia ruta)', function () {
-    // ADR 0018 (10/9/2026) revierte el vocabulario que esta tarea (77) le
-    // había dado a esta pantalla: "Propiedad" pasa a ser una entidad real,
-    // distinta de "Campo" (ver SecMenuSeeder::revertirVocabularioPropiedadesCampos()).
-    // La fila legada de "campos" sigue siendo la MISMA fila (mismo id, misma
-    // ruta `panel.campos.index`) pero recupera su nombre; "Propiedades" pasa
-    // a ser un ítem nuevo con su propia ruta (`panel.propiedades.index`).
+it('el seeder retira el ítem legado de "campos" (ADR 0020) y "propiedades"/"lotes" quedan como ítems independientes', function () {
+    // ADR 0020 (15/9/2026) elimina `Campo` como entidad — `Lote` cuelga
+    // directo de `Propiedad`, sin nivel intermedio. La fila legada de
+    // "campos" (la misma fila que, bajo la tarea 77 y luego ADR 0018, pasó
+    // de "Campos y lotes" a "Propiedades" y de vuelta a "Campos") ya no
+    // tiene pantalla ni permiso vigentes: el seeder la RETIRA
+    // (`SecMenuSeeder::retirarItemCampos()`, soft delete) en vez de
+    // revertirle el nombre. "Propiedades" sigue siendo el ítem nuevo con su
+    // propia ruta (`panel.propiedades.index`); "Lotes" también.
     $this->seed(SeguridadSeeder::class);
     $vieja = crearArbolMenuComercialLegado();
 
@@ -65,7 +72,7 @@ it('el seeder separa "campos" en "propiedades" (misma fila) y "lotes" (item nuev
     expect($campos)->not->toBeNull()
         ->and($campos->label)->toBe('menu.comercial.items.campos')
         ->and($campos->ruta)->toBe('panel.campos.index')
-        ->and($campos->trashed())->toBeFalse();
+        ->and($campos->trashed())->toBeTrue();
 
     $propiedades = SecMenu::query()->where('label', 'menu.comercial.items.propiedades')->sole();
     $idPermisoPropiedad = (int) SecPermission::query()->where('code', 'comercial.propiedad.ver')->value('id');
@@ -158,15 +165,15 @@ it('correr la migración y volver a sembrar dos veces no duplica el árbol ni re
         ->exists())->toBeTrue();
 });
 
-it('el item "Lotes" del sidebar se gobierna por comercial.lote.ver, independiente de comercial.campo.ver', function () {
+it('el item "Lotes" del sidebar se gobierna por comercial.lote.ver, independiente de comercial.propiedad.ver', function () {
     $this->seed(SeguridadSeeder::class);
     $this->seed(SecMenuSeeder::class);
 
     $rol = SecRole::query()->create(['name' => 'rol_prueba_lotes_77', 'description' => 'Rol de prueba', 'state' => true]);
-    $idPermisoCampo = (int) SecPermission::query()->where('code', 'comercial.campo.ver')->value('id');
+    $idPermisoPropiedad = (int) SecPermission::query()->where('code', 'comercial.propiedad.ver')->value('id');
     $idPermisoLote = (int) SecPermission::query()->where('code', 'comercial.lote.ver')->value('id');
 
-    (new SecRolePermission(['id_role' => $rol->id, 'id_permission' => $idPermisoCampo]))->save();
+    (new SecRolePermission(['id_role' => $rol->id, 'id_permission' => $idPermisoPropiedad]))->save();
 
     $usuario = SecUser::factory()->create();
     $pivote = new SecUserRole(['id_user' => $usuario->id, 'id_role' => $rol->id]);
@@ -179,9 +186,11 @@ it('el item "Lotes" del sidebar se gobierna por comercial.lote.ver, independient
     $comercial = collect($obtenerMenu->ejecutar($usuario, $rol->id))->firstWhere('label', 'menu.comercial.label');
     $etiquetas = collect($comercial->hijos)->map(fn ($item) => $item->label)->all();
 
-    // ADR 0018: el ítem gateado por `comercial.campo.ver` se llama de nuevo
-    // "campos" (ver la aduana equivalente en la primera prueba del archivo).
-    expect($etiquetas)->toContain('menu.comercial.items.campos')
+    // ADR 0020: "campos" ya no existe en el árbol (el seeder lo retira, ver
+    // la primera prueba del archivo). Un rol con solo `comercial.propiedad.ver`
+    // ve "propiedades" pero no "lotes" — el gating de ítems hermanos sigue
+    // siendo independiente.
+    expect($etiquetas)->toContain('menu.comercial.items.propiedades')
         ->not->toContain('menu.comercial.items.lotes');
 
     (new SecRolePermission(['id_role' => $rol->id, 'id_permission' => $idPermisoLote]))->save();

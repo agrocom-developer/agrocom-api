@@ -149,31 +149,31 @@ class SecMenuSeeder extends Seeder
         // distinta de "Campo" (antes eran la misma fila — ver el ADR, punto
         // 1, para el caso "Gamelera" que rompió ese supuesto). El vocabulario
         // que la tarea 77 le había dado a esta pantalla ("Propiedades", para
-        // lo que hoy es `Campo`) queda incorrecto y se revierte con
-        // `revertirVocabularioPropiedadesCampos()` — el ítem sigue siendo la
-        // MISMA fila (mismo id, mismo permiso `comercial.campo.ver`, misma
-        // ruta `panel.campos.index`), solo cambia cómo se llama. No se
-        // reusa `renombrar()` (que matchea solo por label) porque, una vez
-        // sembrado el ítem nuevo de abajo, DOS filas del árbol pueden llegar
-        // a compartir el label `propiedades` en algún momento del ciclo de
-        // vida de la base — el filtro adicional por `ruta` deja la
-        // transformación segura de repetir. "Propiedades" se reserva para el
-        // ítem nuevo, que apunta a la pantalla nueva (`PropiedadesController`,
-        // permiso `comercial.propiedad.ver`) y se ubica ANTES de "Campos" en
-        // el orden (3), reflejando la jerarquía real cliente → propiedad →
-        // campo → lote; "Campos", "Lotes" y "Cultivos" corren un lugar
-        // (4, 5, 6).
-        $this->revertirVocabularioPropiedadesCampos($comercial);
+        // lo que hoy era `Campo`) quedó incorrecto un tiempo y se revertía con
+        // un método dedicado — ver ADR 0020 justo abajo, que reemplaza esa
+        // reversión: ahora el ítem legado se retira directamente.
+        //
+        // ADR 0020 (15/9/2026): `Campo` se elimina como entidad — `Lote`
+        // cuelga directo de `Propiedad`, sin nivel intermedio. El ítem legado
+        // "campos" (la MISMA fila de arriba, que pasó de "Campos y lotes" a
+        // "Propiedades" y de vuelta a "Campos") ya no tiene pantalla
+        // (`panel.campos.index` no existe) ni permiso vigente
+        // (`comercial.campo.ver` se retira en `SeguridadSeeder`): se retira
+        // del árbol con `retirarItemCampos()` (soft delete explícito, mismo
+        // criterio que las bajas de catálogo al principio de este método).
+        // "Propiedades" y "Lotes" quedan como ítems independientes: "Lotes"
+        // ocupa el orden 4 (antes 5, vacante por "Campos"); "Cultivos" y
+        // "Campañas" corren un lugar detrás (ver abajo).
+        $this->retirarItemCampos($comercial);
         $this->item($comercial, 'comercial', 'propiedades', 'domain', 3, ruta: 'panel.propiedades.index', codigoPermiso: 'comercial.propiedad.ver');
-        $this->item($comercial, 'comercial', 'campos', 'map', 4, ruta: 'panel.campos.index', codigoPermiso: 'comercial.campo.ver');
-        $this->item($comercial, 'comercial', 'lotes', 'grid_view', 5, ruta: 'panel.lotes.index', codigoPermiso: 'comercial.lote.ver');
+        $this->item($comercial, 'comercial', 'lotes', 'grid_view', 4, ruta: 'panel.lotes.index', codigoPermiso: 'comercial.lote.ver');
 
         // HU-48 (tarea 71, ADR 0015 punto 4): catálogo de cultivos. Ítem
         // creado directo con ruta y permiso, no "botón sin link": el
         // catálogo no formaba parte de la siembra original de `sec_menu`
-        // (ver docblock de `item()`). Orden 6 desde ADR 0018 (corrido un
-        // lugar por "Propiedades", ver arriba).
-        $this->item($comercial, 'comercial', 'cultivos', 'grass', 6, ruta: 'panel.cultivos.index', codigoPermiso: 'comercial.cultivo.ver');
+        // (ver docblock de `item()`). Orden 5 desde ADR 0020 (corrido un
+        // lugar más al retirarse "Campos", ver arriba).
+        $this->item($comercial, 'comercial', 'cultivos', 'grass', 5, ruta: 'panel.cultivos.index', codigoPermiso: 'comercial.cultivo.ver');
 
         // HU-46 (tarea 69, ADR 0015 punto 1) — reubicado el 9/9/2026 por
         // pedido del dueño, mirando el panel andando. El ítem había nacido
@@ -189,10 +189,11 @@ class SecMenuSeeder extends Seeder
         // El permiso no cambia (`campania.campania.ver`, módulo `Campania`):
         // esto es agrupación de layout, no una frontera de módulo — mismo caso
         // que `vehiculos`, que vive en `Mantenimiento` y se muestra bajo
-        // Recursos (ADR 0011, extensión del 26/8/2026, punto 3). Orden 7
-        // desde ADR 0018 (corrido un lugar por "Propiedades", ver arriba).
-        $this->mover('menu.seguridad.items.campanias', 'menu.comercial.items.campanias', $comercial, 7);
-        $this->item($comercial, 'comercial', 'campanias', 'calendar_month', 7, ruta: 'panel.campanias.index', codigoPermiso: 'campania.campania.ver');
+        // Recursos (ADR 0011, extensión del 26/8/2026, punto 3). Orden 6
+        // desde ADR 0020 (corrido un lugar más al retirarse "Campos", ver
+        // arriba).
+        $this->mover('menu.seguridad.items.campanias', 'menu.comercial.items.campanias', $comercial, 6);
+        $this->item($comercial, 'comercial', 'campanias', 'calendar_month', 6, ruta: 'panel.campanias.index', codigoPermiso: 'campania.campania.ver');
 
         // Recursos (§4.2)
         // HU-27 (tarea 36): administración de la flota de drones — activa
@@ -397,26 +398,27 @@ class SecMenuSeeder extends Seeder
     }
 
     /**
-     * ADR 0018: revierte el vocabulario que la tarea 77 le dio a la
-     * pantalla de `Campo` ("Propiedades", cuando "Propiedad" todavía era la
-     * misma fila que "Campo") — la deja de nuevo como `campos`.
+     * ADR 0020: `Campo` se elimina como entidad — `Lote` cuelga directo de
+     * `Propiedad`, sin nivel intermedio. El ítem legado "campos" (que en su
+     * momento supo llamarse "Campos y lotes", después "Propiedades" bajo la
+     * tarea 77, y de vuelta a "Campos" con ADR 0018 — siempre la MISMA fila,
+     * ver el historial en `run()` justo arriba de donde se llama a este
+     * método) ya no tiene pantalla (`panel.campos.index` no existe) ni
+     * permiso vigente (`comercial.campo.ver` se retira en `SeguridadSeeder`):
+     * se retira del árbol en vez de renombrarlo.
      *
-     * Filtra por `ruta = panel.campos.index` en vez de reusar `renombrar()`
-     * (que matchea solo por `label`): correr el seeder una segunda vez, con
-     * el ítem nuevo de `propiedades` ya sembrado (`ruta = panel.propiedades.index`,
-     * mismo label), un match por label a secas tocaría las dos filas y
-     * arrastraría también al ítem nuevo de vuelta a `campos`. Idempotente:
-     * en cualquier corrida donde ya no haya una fila `propiedades` con esa
-     * `ruta` (porque ya se convirtió, o porque la instalación nunca pasó por
-     * el vocabulario de la tarea 77), no encuentra nada que tocar.
+     * Filtra por `padre_id` + `ruta` (no por `label`, que solo puede haber
+     * cambiado con el tiempo — mismo criterio que ya documentaba el método
+     * que este reemplaza). `delete()` es soft (invariante 8 de CLAUDE.md:
+     * `ModeloDominio` trae `SoftDeletes` de fábrica) y `SecMenu::query()` ya
+     * excluye lo soft-deleteado, así que correr esto dos veces es no-op.
      */
-    private function revertirVocabularioPropiedadesCampos(SecMenu $padre): void
+    private function retirarItemCampos(SecMenu $padre): void
     {
         SecMenu::query()
             ->where('padre_id', $padre->id)
-            ->where('label', 'menu.comercial.items.propiedades')
             ->where('ruta', 'panel.campos.index')
-            ->update(['label' => 'menu.comercial.items.campos']);
+            ->delete();
     }
 
     /**

@@ -165,21 +165,21 @@ class SeguridadSeeder extends Seeder
         'comercial.contrato.crear' => 'Dar de alta un contrato con sus ventanas de aplicación',
         'comercial.contrato.editar' => 'Editar los datos y ventanas de un contrato',
         'comercial.contrato.cambiar_estado' => 'Cambiar el estado de un contrato (vigente, finalizado, cancelado)',
-        // HU-24 (tarea 35): administración de campos con sus lotes. Grano
-        // fino, mismo criterio que `comercial.cliente.*`. Hasta la tarea 77
-        // los lotes no tenían permiso propio (solo se tocaban dentro del
-        // formulario del campo); `comercial.lote.*` abajo abre la entrada
-        // directa por lote, sin reemplazar esta.
-        'comercial.campo.ver' => 'Ver el listado y detalle de campos con sus lotes',
-        'comercial.campo.crear' => 'Dar de alta un campo con sus lotes',
-        'comercial.campo.editar' => 'Editar los datos y lotes de un campo',
-        'comercial.campo.eliminar' => 'Dar de baja (lógica) un campo',
+        // ADR 0020 (15/9/2026): `Campo` se elimina como entidad — `Lote`
+        // cuelga directo de `Propiedad`. Los cuatro permisos
+        // `comercial.campo.*` que administraban "campos con sus lotes"
+        // (HU-24, tarea 35) quedan huérfanos: ningún controlador los
+        // verifica ya (`CamposController` no existe). Se retiran del
+        // catálogo — ver `retirarPermiso()`, llamado desde `run()`, que
+        // además soft-deletea las filas ya sembradas en una base existente
+        // (sacar la línea de acá solo evita que una instalación NUEVA vuelva
+        // a crearlas).
         // HU-54 (tarea 77): pantalla propia de lotes — listado con filtro
         // por cliente/propiedad y ficha con alta, edición y baja lógica de
-        // un lote suelto. Grano fino, mismo criterio que `comercial.campo.*`;
+        // un lote suelto. Grano fino, mismo criterio que `comercial.cliente.*`;
         // el alta de una propiedad con sus lotes en la misma transacción
-        // sigue siendo un único caso de uso (`CrearCampo`), llamado desde
-        // cualquiera de los dos formularios.
+        // sigue siendo un único caso de uso, llamado desde cualquiera de los
+        // dos formularios.
         'comercial.lote.ver' => 'Ver el listado y detalle de lotes',
         'comercial.lote.crear' => 'Dar de alta un lote suelto',
         'comercial.lote.editar' => 'Editar los datos y el perímetro de un lote',
@@ -491,13 +491,12 @@ class SeguridadSeeder extends Seeder
         'comercial.contrato.cambiar_estado',
         // HU-24 (tarea 35): "Como encargado, quiero administrar campos y sus
         // lotes" — la HU lo dice literal, mismo criterio que clientes y
-        // contratos arriba.
-        'comercial.campo.ver',
-        'comercial.campo.crear',
-        'comercial.campo.editar',
-        'comercial.campo.eliminar',
+        // contratos arriba. ADR 0020 retira `comercial.campo.*` (entidad
+        // eliminada, ver el comentario en PERMISOS de arriba); el encargado
+        // ya tiene `comercial.propiedad.*` asignado arriba, así que retirar
+        // estos cuatro no le saca ninguna capacidad real.
         // HU-54 (tarea 77): administra también la entrada directa por
-        // lote — mismo criterio que campos arriba.
+        // lote — mismo criterio que propiedades arriba.
         'comercial.lote.ver',
         'comercial.lote.crear',
         'comercial.lote.editar',
@@ -688,8 +687,28 @@ class SeguridadSeeder extends Seeder
         'operaciones.estadia.ver',
     ];
 
+    /**
+     * ADR 0020 (15/9/2026) retira `Campo` como entidad; los cuatro permisos
+     * `comercial.campo.*` que administraban su ABM quedan huérfanos. Se
+     * retiran acá, antes de la siembra normal de abajo — el orden no
+     * importa, porque opera sobre datos que ya existen (o no existen) en la
+     * base, no sobre lo que la siembra está por crear.
+     *
+     * @var list<string>
+     */
+    private const PERMISOS_RETIRADOS = [
+        'comercial.campo.ver',
+        'comercial.campo.crear',
+        'comercial.campo.editar',
+        'comercial.campo.eliminar',
+    ];
+
     public function run(): void
     {
+        foreach (self::PERMISOS_RETIRADOS as $codigoRetirado) {
+            $this->retirarPermiso($codigoRetirado);
+        }
+
         $roles = collect(self::ROLES)->mapWithKeys(
             fn (string $description, string $name) => [$name => $this->rol($name, $description)],
         );
@@ -772,5 +791,37 @@ class SeguridadSeeder extends Seeder
                 'id_permission' => $permiso->id,
             ]))->save();
         }
+    }
+
+    /**
+     * Inversa de {@see asignar()}: ahí "sembrar es otorgar si nunca se
+     * otorgó, nunca reponer lo que alguien quitó"; acá es "retirar lo que ya
+     * no debería estar", así que no se reusa ese método. Sacar la línea del
+     * array `PERMISOS` (con `firstOrCreate`, que solo agrega) evita que una
+     * instalación NUEVA cree el permiso, pero una base YA sembrada conserva
+     * la fila y sus asignaciones en `sec_role_permission` — hay que
+     * retirarlas de manera explícita.
+     *
+     * Soft delete (invariante 8 de CLAUDE.md): la fila de `sec_permission` y
+     * cada `sec_role_permission` que la referencia se borran una por una (no
+     * un `update()` masivo), para que cada `delete()` pase por el observer
+     * de bitácora. Idempotente: si el permiso ya está soft-deleteado (o
+     * nunca existió, instalación nueva), `SecPermission::query()` no lo
+     * encuentra y no hace nada.
+     */
+    private function retirarPermiso(string $code): void
+    {
+        $permiso = SecPermission::query()->where('code', $code)->first();
+
+        if ($permiso === null) {
+            return;
+        }
+
+        SecRolePermission::query()
+            ->where('id_permission', $permiso->id)
+            ->get()
+            ->each(fn (SecRolePermission $asignacion) => $asignacion->delete());
+
+        $permiso->delete();
     }
 }
