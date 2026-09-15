@@ -317,17 +317,6 @@
     border-top: 1px solid var(--ag-color-border);
 }
 
-/* Estado vacío del tablero completo: el rol entró pero no tiene secciones. */
-.ag-dash__vacio {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--ag-space-2);
-    padding: var(--ag-space-6) var(--ag-space-4);
-    text-align: center;
-    color: var(--ag-color-text-muted);
-}
-
 .ag-table-scroll {
     overflow-x: auto;
 }

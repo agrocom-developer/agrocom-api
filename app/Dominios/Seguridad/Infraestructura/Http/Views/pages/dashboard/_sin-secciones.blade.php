@@ -7,8 +7,8 @@
     página en blanco: es exactamente lo que ve un rol recién creado antes de
     que se le asignen permisos.
 --}}
-<div class="ag-card ag-card--padded ag-dash__vacio">
-    <x-atoms.icon name="dashboard" size="lg" />
-    <h2 class="ag-card__title">{{ __('seguridad.dashboard.vacio_titulo') }}</h2>
-    <p class="ag-dash__subtitle">{{ __('seguridad.dashboard.vacio_detalle') }}</p>
-</div>
+<x-molecules.empty-state
+    icon="dashboard"
+    :title="__('seguridad.dashboard.vacio_titulo')"
+    :detail="__('seguridad.dashboard.vacio_detalle')"
+/>

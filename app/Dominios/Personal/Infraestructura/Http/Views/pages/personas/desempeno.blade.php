@@ -116,16 +116,13 @@
                     opcionesDeFiltro) sin aplicar el filtro de cliente/
                     campaña, así que si está vacío las tres secciones de
                     abajo también lo estarían. Un único bloque en vez de tres
-                    alert-strip repitiendo "no hay nada" — mismo criterio que
-                    `seguridad::pages.dashboard._sin-secciones` (tarjeta +
-                    ícono grande + título + detalle), único precedente real
-                    de "estado vacío" prominente en el panel.
+                    alert-strip repitiendo "no hay nada" — molecules/empty-state.
                 --}}
-                <div class="ag-persona-desempeno__vacio">
-                    <x-atoms.icon name="flight_takeoff" size="lg" />
-                    <h2 class="ag-persona-desempeno__vacio-titulo">{{ __('personal.desempenio.vacio_titulo') }}</h2>
-                    <p class="ag-persona-desempeno__vacio-detalle">{{ __('personal.desempenio.vacio_detalle') }}</p>
-                </div>
+                <x-molecules.empty-state
+                    icon="flight_takeoff"
+                    :title="__('personal.desempenio.vacio_titulo')"
+                    :detail="__('personal.desempenio.vacio_detalle')"
+                />
             @else
             <section class="ag-persona-desempeno__totales">
                 <x-molecules.stat-card
