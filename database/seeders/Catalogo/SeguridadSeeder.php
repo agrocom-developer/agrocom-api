@@ -29,6 +29,7 @@ class SeguridadSeeder extends Seeder
         'jefe_campo' => 'Jefe de campo: coordina la cuadrilla y valida sesiones ajenas.',
         'encargado_operaciones' => 'Encargado de operaciones: administra usuarios, órdenes y planificación.',
         'dueno' => 'Dueño de Agrocom SRL: acceso total, incluida la gestión de otros dueños.',
+        'admin_plataforma' => 'Administrador de la plataforma Agrocom: acceso total sobre cualquier instalación, incluida la gestión de dueños — rol técnico de plataforma, no del negocio del cliente.',
     ];
 
     /** @var array<string, string> */
@@ -719,6 +720,13 @@ class SeguridadSeeder extends Seeder
 
         // dueno: todos los permisos del catálogo, sin excepción (diseño §2).
         $this->asignar($roles['dueno'], $permisos->values()->all());
+
+        // admin_plataforma (tarea 100): mismo criterio que dueno, sin
+        // excepción — es dato de catálogo puro, corre en TODOS los entornos
+        // (un rol sin usuarios asignados no daña nada en producción). Quien
+        // recibe usuarios asignados a este rol es AdminPlataformaSeeder, que
+        // sí está gateado a local/staging.
+        $this->asignar($roles['admin_plataforma'], $permisos->values()->all());
 
         // encargado_operaciones: todo salvo asignar_rol_dueno.
         $this->asignar(
