@@ -3,6 +3,7 @@
 namespace App\Dominios\Comercial\Aplicacion;
 
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cultivo;
+use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaTexto;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 /**
@@ -17,7 +18,7 @@ final class ListarCultivos
         return Cultivo::query()
             ->when(
                 $busqueda !== null && $busqueda !== '',
-                fn ($consulta) => $consulta->where('nombre', 'like', "%{$busqueda}%"),
+                fn ($consulta) => BusquedaTexto::aplicar($consulta, ['nombre'], $busqueda),
             )
             ->orderBy('nombre')
             ->paginate($porPagina)
