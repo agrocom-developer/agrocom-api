@@ -64,21 +64,19 @@
             @endphp
 
             @if ($hayFiltrosActivos || $equipos->isNotEmpty())
-                <form method="GET" action="{{ route('panel.equipos-trabajo.index') }}" class="ag-filtros ag-equipos-trabajo__filtros">
-                    <div class="ag-input">
-                        <label for="filtro-q" class="ag-input__label">{{ __('personal.equipos_trabajo.filtro_busqueda') }}</label>
-                        <div class="ag-input__control">
-                            <input
-                                type="search"
-                                name="q"
-                                id="filtro-q"
-                                class="ag-input__field"
-                                value="{{ $filtros['q'] }}"
-                                placeholder="{{ __('personal.equipos_trabajo.filtro_busqueda_placeholder') }}"
-                            >
-                        </div>
-                    </div>
+                <div class="ag-table-toolbar">
+                    <x-molecules.table-search
+                        action="{{ route('panel.equipos-trabajo.index') }}"
+                        :value="$filtros['q']"
+                        :placeholder="__('personal.equipos_trabajo.filtro_busqueda_placeholder')"
+                        :clear-label="__('ui.tabla.buscador_limpiar')"
+                    />
+                </div>
+            @endif
 
+            @if ($hayFiltrosActivos || $equipos->isNotEmpty())
+                <form method="GET" action="{{ route('panel.equipos-trabajo.index') }}" class="ag-filtros ag-equipos-trabajo__filtros">
+                    <input type="hidden" name="q" value="{{ $filtros['q'] }}">
                     <x-atoms.select
                         name="base_id"
                         id="filtro-base"
@@ -103,11 +101,11 @@
                     />
 
                     <div class="ag-filtros__acciones ag-equipos-trabajo__filtros-acciones">
-                        <x-atoms.button type="submit" variant="outline" size="md" icon="search">
+                        <x-atoms.button type="submit" variant="primary" size="md" icon="search">
                             {{ __('personal.equipos_trabajo.filtrar') }}
                         </x-atoms.button>
 
-                        @if ($filtros['q'] !== '' || $filtros['base_id'] !== null || $filtros['estado'] !== null)
+                        @if ($filtros['base_id'] !== null || $filtros['estado'] !== null)
                             <x-atoms.button href="{{ route('panel.equipos-trabajo.index') }}" variant="text" size="md">
                                 {{ __('personal.equipos_trabajo.limpiar_filtro') }}
                             </x-atoms.button>
@@ -131,6 +129,7 @@
             @else
                 <div class="ag-equipos-trabajo__tabla" role="table">
                     <div class="ag-equipos-trabajo__head" role="row">
+                        <span role="columnheader" class="ag-equipos-trabajo__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('personal.equipos_trabajo.col_codigo') }}</span>
                         <span role="columnheader">{{ __('personal.equipos_trabajo.col_nombre') }}</span>
                         <span role="columnheader">{{ __('personal.equipos_trabajo.col_base') }}</span>
@@ -141,6 +140,9 @@
 
                     @foreach ($equipos as $equipo)
                         <div class="ag-equipos-trabajo__fila" role="row">
+                            <span role="cell" class="ag-equipos-trabajo__indice">
+                                {{ ($equipos->currentPage() - 1) * $equipos->perPage() + $loop->iteration }}
+                            </span>
                             <span role="cell" class="ag-equipos-trabajo__codigo">{{ $equipo->codigo }}</span>
                             <span role="cell">{{ $equipo->nombre ?? __('personal.equipos_trabajo.sin_nombre') }}</span>
                             <span role="cell">{{ $etiquetasBase[$equipo->base_id] ?? "#{$equipo->base_id}" }}</span>
@@ -182,25 +184,7 @@
                     @endforeach
                 </div>
 
-                @if ($equipos->hasPages())
-                    <nav class="ag-equipos-trabajo__paginacion" aria-label="{{ __('personal.equipos_trabajo.paginacion_aria') }}">
-                        @if (! $equipos->onFirstPage())
-                            <x-atoms.button href="{{ $equipos->previousPageUrl() }}" variant="outline" size="sm" icon="chevron_left">
-                                {{ __('personal.equipos_trabajo.paginacion_anterior') }}
-                            </x-atoms.button>
-                        @endif
-
-                        <span class="ag-equipos-trabajo__paginacion-info">
-                            {{ __('personal.equipos_trabajo.paginacion_info', ['actual' => $equipos->currentPage(), 'total' => $equipos->lastPage()]) }}
-                        </span>
-
-                        @if ($equipos->hasMorePages())
-                            <x-atoms.button href="{{ $equipos->nextPageUrl() }}" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
-                                {{ __('personal.equipos_trabajo.paginacion_siguiente') }}
-                            </x-atoms.button>
-                        @endif
-                    </nav>
-                @endif
+                <x-molecules.pagination :paginator="$equipos" :aria-label="__('personal.equipos_trabajo.paginacion_aria')" />
             @endif
         </div>
     </x-templates.panel-layout>
