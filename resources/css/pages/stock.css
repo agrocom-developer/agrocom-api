@@ -30,10 +30,16 @@
 .ag-stock__head,
 .ag-stock__fila {
     display: grid;
-    grid-template-columns: 2fr 1fr 0.7fr 0.7fr 1fr;
+    grid-template-columns: 3rem 2fr 1fr 0.7fr 0.7fr 1fr;
     gap: var(--ag-space-4);
     align-items: center;
     padding: var(--ag-space-3) var(--ag-space-4);
+}
+
+.ag-stock__indice {
+    color: var(--ag-color-text-faint);
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-xs);
 }
 
 .ag-stock__head {
@@ -59,18 +65,6 @@
     font-weight: var(--ag-font-weight-medium);
 }
 
-.ag-stock__paginacion {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--ag-space-4);
-}
-
-.ag-stock__paginacion-info {
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-sm);
-}
-
 @media (max-width: 992px) {
     .ag-stock__head {
         display: none;
@@ -79,5 +73,11 @@
     .ag-stock__fila {
         grid-template-columns: 1fr;
         gap: var(--ag-space-1);
+    }
+
+    /* El índice numérico solo ordena filas de una tabla — en tarjeta
+       apilada no aporta. */
+    .ag-stock__indice {
+        display: none;
     }
 }

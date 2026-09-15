@@ -76,21 +76,19 @@
             @endphp
 
             @if ($hayFiltrosActivos || $campanias->isNotEmpty())
-                <form method="GET" action="{{ route('panel.campanias.index') }}" class="ag-filtros ag-campanias__filtros">
-                <div class="ag-input">
-                    <label for="filtro-q" class="ag-input__label">{{ __('campania.campanias.filtro_busqueda') }}</label>
-                    <div class="ag-input__control">
-                        <input
-                            type="search"
-                            name="q"
-                            id="filtro-q"
-                            class="ag-input__field"
-                            value="{{ $filtros['q'] }}"
-                            placeholder="{{ __('campania.campanias.filtro_busqueda_placeholder') }}"
-                        >
-                    </div>
+                <div class="ag-table-toolbar">
+                    <x-molecules.table-search
+                        action="{{ route('panel.campanias.index') }}"
+                        :value="$filtros['q']"
+                        :placeholder="__('campania.campanias.filtro_busqueda_placeholder')"
+                        :clear-label="__('ui.tabla.buscador_limpiar')"
+                    />
                 </div>
+            @endif
 
+            @if ($hayFiltrosActivos || $campanias->isNotEmpty())
+                <form method="GET" action="{{ route('panel.campanias.index') }}" class="ag-filtros ag-campanias__filtros">
+                    <input type="hidden" name="q" value="{{ $filtros['q'] }}">
                 <x-atoms.select
                     name="cliente_id"
                     id="filtro-cliente"
@@ -101,7 +99,7 @@
                 />
 
                 <div class="ag-filtros__acciones ag-campanias__filtros-acciones">
-                    <x-atoms.button type="submit" variant="outline" size="md" icon="search">
+                    <x-atoms.button type="submit" variant="primary" size="md" icon="search">
                         {{ __('campania.campanias.filtrar') }}
                     </x-atoms.button>
 
@@ -129,6 +127,7 @@
             @else
                 <div class="ag-campanias__tabla" role="table">
                     <div class="ag-campanias__head" role="row">
+                        <span role="columnheader" class="ag-campanias__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('campania.campanias.col_cliente') }}</span>
                         <span role="columnheader">{{ __('campania.campanias.col_codigo') }}</span>
                         <span role="columnheader">{{ __('campania.campanias.col_nombre') }}</span>
@@ -148,6 +147,9 @@
                             $estadoValor = $campania->estado->value;
                         @endphp
                         <div class="ag-campanias__fila" role="row">
+                            <span role="cell" class="ag-campanias__indice">
+                                {{ ($campanias->currentPage() - 1) * $campanias->perPage() + $loop->iteration }}
+                            </span>
                             <span role="cell">{{ $etiquetasCliente[$campania->cliente_id] ?? '—' }}</span>
                             <span role="cell" class="ag-campanias__codigo">{{ $campania->codigo }}</span>
                             <span role="cell">{{ $campania->nombre ?? '—' }}</span>
@@ -204,25 +206,7 @@
                     @endforeach
                 </div>
 
-                @if ($campanias->hasPages())
-                    <nav class="ag-campanias__paginacion" aria-label="{{ __('campania.campanias.paginacion_aria') }}">
-                        @if (! $campanias->onFirstPage())
-                            <x-atoms.button href="{{ $campanias->previousPageUrl() }}" variant="outline" size="sm" icon="chevron_left">
-                                {{ __('campania.campanias.paginacion_anterior') }}
-                            </x-atoms.button>
-                        @endif
-
-                        <span class="ag-campanias__paginacion-info">
-                            {{ __('campania.campanias.paginacion_info', ['actual' => $campanias->currentPage(), 'total' => $campanias->lastPage()]) }}
-                        </span>
-
-                        @if ($campanias->hasMorePages())
-                            <x-atoms.button href="{{ $campanias->nextPageUrl() }}" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
-                                {{ __('campania.campanias.paginacion_siguiente') }}
-                            </x-atoms.button>
-                        @endif
-                    </nav>
-                @endif
+                <x-molecules.pagination :paginator="$campanias" :aria-label="__('campania.campanias.paginacion_aria')" />
             @endif
         </div>
     </x-templates.panel-layout>

@@ -43,7 +43,7 @@
                 aria-controls="ag-module-sidebar-nav"
                 aria-label="{{ __('ui.sidebar.collapse') }}"
             >
-                <x-atoms.icon name="menu" size="sm" />
+                <x-atoms.icon name="menu" size="md" />
             </button>
 
             <div class="ag-module-sidebar__heading">
@@ -82,7 +82,7 @@
                     data-bs-placement="right"
                     data-bs-title="{{ __('seguridad.rol.switch_trigger') }}"
                 >
-                    <x-atoms.icon name="swap_horiz" size="sm" />
+                    <x-atoms.icon name="swap_horiz" size="md" />
                     <span class="ag-module-sidebar__role-label">{{ __('seguridad.rol.switch_trigger') }}</span>
                 </a>
             </div>

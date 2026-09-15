@@ -1,0 +1,147 @@
+/*
+ * Organism: row-actions (resources/views/components/organisms/row-actions.blade.php)
+ *
+ * El slot llega renderizado DOS VECES desde el Blade (ver su docblock):
+ * `.ag-row-actions__visible` y `.ag-row-actions__menu` tienen exactamente
+ * los mismos hijos, en el mismo orden. Acá se decide, por breakpoint, cuáles
+ * hijos se ven en cada mitad — nunca los dos a la vez para el mismo botón.
+ *
+ * Las acciones visibles conservan ícono + texto (nunca solo-ícono — pedido
+ * explícito del usuario, 15/9/2026): la celda de acciones de cada tabla fija
+ * su ancho en rem a medida de sus propios botones (mismo criterio que el
+ * resto de columnas del grid, cada una con su valor propio en
+ * resources/css/pages/*.css) en vez de un ancho universal — con `auto`, el
+ * head (celda vacía o con solo el rótulo "Acciones") y la fila (celda con
+ * botones) son grids separados que resuelven ese ancho cada uno por su
+ * cuenta y el header queda corrido; un valor fijo, igual en los dos, es la
+ * única forma de que calcen.
+ */
+
+.ag-row-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--ag-space-2);
+}
+
+.ag-row-actions__visible {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+}
+
+.ag-row-actions__more-btn {
+    aspect-ratio: 1;
+    padding: var(--ag-space-2);
+}
+
+.ag-row-actions__more {
+    display: none;
+    position: relative;
+}
+
+/* Mismo popover skin que `.ag-user-menu` (topbar.css): dropdown-menu de
+   Bootstrap con `.show` animado por opacity/transform en vez del `display`
+   nativo. */
+.ag-row-actions__menu {
+    display: block !important;
+    min-width: 12rem;
+    padding: var(--ag-space-2);
+    background: var(--ag-color-bg-elevated);
+    border: 1px solid var(--ag-color-border);
+    border-radius: var(--ag-radius-lg);
+    box-shadow: var(--ag-shadow-lg);
+    margin-top: var(--ag-space-2) !important;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: scale(0.95);
+    transform-origin: top right;
+    transition:
+        opacity 180ms var(--ag-ease-emphasized),
+        transform 180ms var(--ag-ease-emphasized),
+        visibility 0s linear 180ms;
+}
+
+.ag-row-actions__menu.show {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: scale(1);
+    transition:
+        opacity 180ms var(--ag-ease-emphasized),
+        transform 180ms var(--ag-ease-emphasized),
+        visibility 0s linear 0s;
+}
+
+/* Dentro del menú cada acción se ve como ítem de lista (ancho completo,
+   texto completo), no como el botón pill de la celda — mismo lenguaje que
+   `.ag-user-menu__item`, conservando el color propio de cada variante
+   (ámbar en warning, rojo en danger) para no perder la pista semántica. */
+.ag-row-actions__menu .ag-button {
+    display: flex;
+    width: 100%;
+    justify-content: flex-start;
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+    border-radius: var(--ag-radius-md);
+    padding: var(--ag-space-2) var(--ag-space-3);
+}
+
+.ag-row-actions__menu .ag-button:hover {
+    background: var(--ag-color-primary-subtle);
+}
+
+.ag-row-actions__menu form {
+    display: block;
+}
+
+/* ≥1200px: hasta 3 acciones sueltas en la celda. */
+@media (min-width: 1200px) {
+    .ag-row-actions__visible > :nth-child(n + 4) {
+        display: none;
+    }
+
+    .ag-row-actions__menu > :nth-child(-n + 3) {
+        display: none;
+    }
+
+    .ag-row-actions:has(.ag-row-actions__visible > :nth-child(4)) .ag-row-actions__more {
+        display: block;
+    }
+}
+
+/* Tablet: hasta 2 — la sidebar de módulo y el chrome de header comen más
+   ancho relativo, dos acciones ya es la fila más angosta que se puede leer
+   cómoda. */
+@media (min-width: 768px) and (max-width: 1199.98px) {
+    .ag-row-actions__visible > :nth-child(n + 3) {
+        display: none;
+    }
+
+    .ag-row-actions__menu > :nth-child(-n + 2) {
+        display: none;
+    }
+
+    .ag-row-actions:has(.ag-row-actions__visible > :nth-child(3)) .ag-row-actions__more {
+        display: block;
+    }
+}
+
+/* Mobile: ninguna suelta — todas al menú. */
+@media (max-width: 767.98px) {
+    .ag-row-actions__visible {
+        display: none;
+    }
+
+    .ag-row-actions:has(.ag-row-actions__visible > :nth-child(1)) .ag-row-actions__more {
+        display: block;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ag-row-actions__menu {
+        transition-duration: 0.01ms !important;
+    }
+}

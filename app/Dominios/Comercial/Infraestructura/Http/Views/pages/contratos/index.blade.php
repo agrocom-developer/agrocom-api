@@ -73,21 +73,19 @@
             @endphp
 
             @if ($hayFiltrosActivos || $contratos->isNotEmpty())
-                <form method="GET" action="{{ route('panel.contratos.index') }}" class="ag-filtros ag-contratos__filtros">
-                <div class="ag-input">
-                    <label for="filtro-q" class="ag-input__label">{{ __('comercial.contratos.filtro_busqueda') }}</label>
-                    <div class="ag-input__control">
-                        <input
-                            type="search"
-                            name="q"
-                            id="filtro-q"
-                            class="ag-input__field"
-                            value="{{ $filtros['q'] }}"
-                            placeholder="{{ __('comercial.contratos.filtro_busqueda_placeholder') }}"
-                        >
-                    </div>
+                <div class="ag-table-toolbar">
+                    <x-molecules.table-search
+                        action="{{ route('panel.contratos.index') }}"
+                        :value="$filtros['q']"
+                        :placeholder="__('comercial.contratos.filtro_busqueda_placeholder')"
+                        :clear-label="__('ui.tabla.buscador_limpiar')"
+                    />
                 </div>
+            @endif
 
+            @if ($hayFiltrosActivos || $contratos->isNotEmpty())
+                <form method="GET" action="{{ route('panel.contratos.index') }}" class="ag-filtros ag-contratos__filtros">
+                    <input type="hidden" name="q" value="{{ $filtros['q'] }}">
                 <x-atoms.select
                     name="campania_id"
                     id="filtro-campania"
@@ -98,7 +96,7 @@
                 />
 
                 <div class="ag-filtros__acciones ag-contratos__filtros-acciones">
-                    <x-atoms.button type="submit" variant="outline" size="md" icon="search">
+                    <x-atoms.button type="submit" variant="primary" size="md" icon="search">
                         {{ __('comercial.contratos.filtrar') }}
                     </x-atoms.button>
 
@@ -126,6 +124,7 @@
             @else
                 <div class="ag-contratos__tabla" role="table">
                     <div class="ag-contratos__head" role="row">
+                        <span role="columnheader" class="ag-contratos__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('comercial.contratos.col_cliente') }}</span>
                         <span role="columnheader">{{ __('comercial.contratos.col_hectareas') }}</span>
                         <span role="columnheader">{{ __('comercial.contratos.col_monto_total') }}</span>
@@ -147,6 +146,9 @@
                             $estadoValor = $contrato->estado->value;
                         @endphp
                         <div class="ag-contratos__fila" role="row">
+                            <span role="cell" class="ag-contratos__indice">
+                                {{ ($contratos->currentPage() - 1) * $contratos->perPage() + $loop->iteration }}
+                            </span>
                             <span role="cell" class="ag-contratos__cliente">{{ $contrato->cliente->razon_social }}</span>
                             <span role="cell" class="ag-contratos__mono">{{ number_format((float) $contrato->hectareas_contratadas, 2, ',', '.') }}</span>
                             <span role="cell" class="ag-contratos__mono">{{ number_format((float) $contrato->monto_total, 2, ',', '.') }}</span>
@@ -264,25 +266,7 @@
                     @endforeach
                 </div>
 
-                @if ($contratos->hasPages())
-                    <nav class="ag-contratos__paginacion" aria-label="{{ __('comercial.contratos.paginacion_aria') }}">
-                        @if (! $contratos->onFirstPage())
-                            <x-atoms.button href="{{ $contratos->previousPageUrl() }}" variant="outline" size="sm" icon="chevron_left">
-                                {{ __('comercial.contratos.paginacion_anterior') }}
-                            </x-atoms.button>
-                        @endif
-
-                        <span class="ag-contratos__paginacion-info">
-                            {{ __('comercial.contratos.paginacion_info', ['actual' => $contratos->currentPage(), 'total' => $contratos->lastPage()]) }}
-                        </span>
-
-                        @if ($contratos->hasMorePages())
-                            <x-atoms.button href="{{ $contratos->nextPageUrl() }}" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
-                                {{ __('comercial.contratos.paginacion_siguiente') }}
-                            </x-atoms.button>
-                        @endif
-                    </nav>
-                @endif
+                <x-molecules.pagination :paginator="$contratos" :aria-label="__('comercial.contratos.paginacion_aria')" />
             @endif
         </div>
     </x-templates.panel-layout>

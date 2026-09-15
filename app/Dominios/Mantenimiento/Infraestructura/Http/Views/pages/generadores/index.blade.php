@@ -72,21 +72,19 @@
             @endphp
 
             @if ($hayFiltrosActivos || $generadores->isNotEmpty())
-                <form method="GET" action="{{ route('panel.generadores.index') }}" class="ag-filtros ag-generadores__filtros">
-                    <div class="ag-input">
-                        <label for="filtro-q" class="ag-input__label">{{ __('mantenimiento.generadores.filtro_busqueda') }}</label>
-                        <div class="ag-input__control">
-                            <input
-                                type="search"
-                                name="q"
-                                id="filtro-q"
-                                class="ag-input__field"
-                                value="{{ $filtros['q'] }}"
-                                placeholder="{{ __('mantenimiento.generadores.filtro_busqueda_placeholder') }}"
-                            >
-                        </div>
-                    </div>
+                <div class="ag-table-toolbar">
+                    <x-molecules.table-search
+                        action="{{ route('panel.generadores.index') }}"
+                        :value="$filtros['q']"
+                        :placeholder="__('mantenimiento.generadores.filtro_busqueda_placeholder')"
+                        :clear-label="__('ui.tabla.buscador_limpiar')"
+                    />
+                </div>
+            @endif
 
+            @if ($hayFiltrosActivos || $generadores->isNotEmpty())
+                <form method="GET" action="{{ route('panel.generadores.index') }}" class="ag-filtros ag-generadores__filtros">
+                    <input type="hidden" name="q" value="{{ $filtros['q'] }}">
                     <x-atoms.select
                         name="base_id"
                         id="filtro-base"
@@ -111,9 +109,7 @@
                     />
 
                     <div class="ag-filtros__acciones ag-generadores__filtros-acciones">
-                        {{-- outline, no primary: "Nuevo generador" ya es el único
-                             botón sólido del pliegue (§5 de la guía de pantalla). --}}
-                        <x-atoms.button type="submit" variant="outline" size="md" icon="search">
+                        <x-atoms.button type="submit" variant="primary" size="md" icon="search">
                             {{ __('mantenimiento.generadores.filtrar') }}
                         </x-atoms.button>
 
@@ -141,6 +137,7 @@
             @else
                 <div class="ag-generadores__tabla" role="table">
                     <div class="ag-generadores__head" role="row">
+                        <span role="columnheader" class="ag-generadores__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('mantenimiento.generadores.col_identificador') }}</span>
                         <span role="columnheader">{{ __('mantenimiento.generadores.col_modelo') }}</span>
                         <span role="columnheader">{{ __('mantenimiento.generadores.col_base') }}</span>
@@ -150,6 +147,9 @@
 
                     @foreach ($generadores as $generador)
                         <div class="ag-generadores__fila" role="row">
+                            <span role="cell" class="ag-generadores__indice">
+                                {{ ($generadores->currentPage() - 1) * $generadores->perPage() + $loop->iteration }}
+                            </span>
                             <span role="cell" class="ag-generadores__identificador">{{ $generador->identificador }}</span>
                             <span role="cell">{{ $generador->modelo ?? __('mantenimiento.generadores.sin_modelo') }}</span>
                             <span role="cell">
@@ -186,25 +186,7 @@
                     @endforeach
                 </div>
 
-                @if ($generadores->hasPages())
-                    <nav class="ag-generadores__paginacion" aria-label="{{ __('mantenimiento.generadores.paginacion_aria') }}">
-                        @if (! $generadores->onFirstPage())
-                            <x-atoms.button href="{{ $generadores->previousPageUrl() }}" variant="outline" size="sm" icon="chevron_left">
-                                {{ __('mantenimiento.generadores.paginacion_anterior') }}
-                            </x-atoms.button>
-                        @endif
-
-                        <span class="ag-generadores__paginacion-info">
-                            {{ __('mantenimiento.generadores.paginacion_info', ['actual' => $generadores->currentPage(), 'total' => $generadores->lastPage()]) }}
-                        </span>
-
-                        @if ($generadores->hasMorePages())
-                            <x-atoms.button href="{{ $generadores->nextPageUrl() }}" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
-                                {{ __('mantenimiento.generadores.paginacion_siguiente') }}
-                            </x-atoms.button>
-                        @endif
-                    </nav>
-                @endif
+                <x-molecules.pagination :paginator="$generadores" :aria-label="__('mantenimiento.generadores.paginacion_aria')" />
             @endif
         </div>
     </x-templates.panel-layout>

@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Operaciones\Aplicacion;
 
+use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaTexto;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Dron;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -17,10 +18,7 @@ final class ListarDrones
         return Dron::query()
             ->when(
                 $busqueda !== null && $busqueda !== '',
-                fn ($consulta) => $consulta->where(function ($sub) use ($busqueda): void {
-                    $sub->where('identificador', 'like', "%{$busqueda}%")
-                        ->orWhere('modelo', 'like', "%{$busqueda}%");
-                }),
+                fn ($consulta) => BusquedaTexto::aplicar($consulta, ['identificador', 'modelo'], $busqueda),
             )
             ->orderBy('identificador')
             ->paginate($porPagina)

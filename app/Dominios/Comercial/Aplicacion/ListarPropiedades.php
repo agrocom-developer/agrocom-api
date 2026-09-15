@@ -3,6 +3,7 @@
 namespace App\Dominios\Comercial\Aplicacion;
 
 use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
+use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaTexto;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -29,10 +30,8 @@ final class ListarPropiedades
             ->withSum('lotes as hectareas_totales', 'hectareas')
             ->when(
                 $busqueda !== null && $busqueda !== '',
-                fn (Builder $consulta) => $consulta->where(function (Builder $sub) use ($busqueda): void {
-                    $sub->where('nombre', 'like', "%{$busqueda}%")
-                        ->orWhereHas('cliente', fn (Builder $cliente) => $cliente->where('razon_social', 'like', "%{$busqueda}%"));
-                }),
+                fn (Builder $consulta) => BusquedaTexto::aplicar($consulta, ['nombre'], $busqueda)
+                    ->orWhereHas('cliente', fn (Builder $cliente) => BusquedaTexto::aplicar($cliente, ['razon_social'], $busqueda)),
             )
             ->orderBy('nombre')
             ->paginate($porPagina)

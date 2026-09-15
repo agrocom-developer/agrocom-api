@@ -140,15 +140,15 @@
     display: none;
 }
 
-/* Misma altura que .ag-panel__footer (panel-layout.css): los dos pies están
-   uno al lado del otro al fondo de la pantalla, así que sus border-top
-   tienen que caer en la MISMA línea horizontal. Antes la altura de este
-   salía del padding + el alto del link, que es mayor que el del texto mono
-   del footer del layout, y la línea del sidebar quedaba unos píxeles más
-   arriba que la del contenido. */
+/* Misma altura que `.ag-module-sidebar__header`/`.ag-topbar`
+   (`--ag-size-topbar-height`) — pedido directo del usuario, 15/9/2026: antes
+   compartía altura con `.ag-panel__footer` para que ambos pies cayeran en
+   la misma línea horizontal al fondo de la pantalla (`--ag-size-footer-height`,
+   más bajo); ahora prioriza verse igual de "alto" que el header, aunque
+   ambas líneas de pie ya no queden a la misma altura. */
 .ag-module-sidebar__footer {
     flex: 0 0 auto;
-    min-height: var(--ag-size-footer-height);
+    min-height: var(--ag-size-topbar-height);
     display: flex;
     align-items: center;
     padding-block: 0;

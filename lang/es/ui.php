@@ -120,10 +120,17 @@ return [
     ],
 
     // Chrome de una tabla de listado (patrón `.ag-<pagina>__tabla`) — el
-    // índice numérico de fila es idéntico en cualquier pantalla, no hace
-    // falta redefinirlo en cada lang/es/<dominio>.php.
+    // índice numérico de fila y el link de "Limpiar" de molecules/table-search
+    // son idénticos en cualquier pantalla, no hace falta redefinirlos en cada
+    // lang/es/<dominio>.php.
     'tabla' => [
         'col_indice' => '#',
+        'col_acciones' => 'Acciones',
+        'buscador_limpiar' => 'Limpiar búsqueda',
+        'mas_acciones' => 'Más acciones',
+        'filtros_boton' => 'Filtros',
+        'filtros_aplicar' => 'Aplicar',
+        'filtros_limpiar' => 'Limpiar filtros',
     ],
 
 ];

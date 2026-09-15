@@ -50,69 +50,56 @@
             @endphp
 
             @if ($hayFiltrosActivos || $bitacora->isNotEmpty())
-                <form method="GET" action="{{ route('panel.bitacora.index') }}" class="ag-filtros ag-bitacora__filtros">
-                    <x-atoms.select
-                        name="usuario_id"
-                        label="{{ __('seguridad.bitacora.filtro_usuario') }}"
-                        :options="$usuariosDisponibles"
-                        :value="(string) $filtros['usuario_id']"
-                        placeholder="{{ __('seguridad.bitacora.filtro_usuario_todos') }}"
-                    />
+                @php
+                    $filtrosActivosCount = collect($filtros)->filter(fn ($valor) => $valor !== null && $valor !== '')->count();
+                @endphp
 
-                    <x-atoms.select
-                        name="tabla"
-                        label="{{ __('seguridad.bitacora.filtro_entidad') }}"
-                        :options="$tablasDisponibles"
-                        :value="$filtros['tabla']"
-                        placeholder="{{ __('seguridad.bitacora.filtro_entidad_todas') }}"
-                    />
+                <div class="ag-table-toolbar">
+                    <x-organisms.filter-panel
+                        action="{{ route('panel.bitacora.index') }}"
+                        :active-count="$filtrosActivosCount"
+                    >
+                        <x-atoms.select
+                            name="usuario_id"
+                            label="{{ __('seguridad.bitacora.filtro_usuario') }}"
+                            :options="$usuariosDisponibles"
+                            :value="(string) $filtros['usuario_id']"
+                            placeholder="{{ __('seguridad.bitacora.filtro_usuario_todos') }}"
+                        />
 
-                    <x-atoms.select
-                        name="accion"
-                        label="{{ __('seguridad.bitacora.filtro_accion') }}"
-                        :options="$accionesDisponibles"
-                        :value="$filtros['accion']"
-                        placeholder="{{ __('seguridad.bitacora.filtro_accion_todas') }}"
-                    />
+                        <x-atoms.select
+                            name="tabla"
+                            label="{{ __('seguridad.bitacora.filtro_entidad') }}"
+                            :options="$tablasDisponibles"
+                            :value="$filtros['tabla']"
+                            placeholder="{{ __('seguridad.bitacora.filtro_entidad_todas') }}"
+                        />
 
-                    <x-atoms.date
-                        name="desde"
-                        label="{{ __('seguridad.bitacora.filtro_desde') }}"
-                        value="{{ $filtros['desde'] }}"
-                    />
+                        <x-atoms.select
+                            name="accion"
+                            label="{{ __('seguridad.bitacora.filtro_accion') }}"
+                            :options="$accionesDisponibles"
+                            :value="$filtros['accion']"
+                            placeholder="{{ __('seguridad.bitacora.filtro_accion_todas') }}"
+                        />
 
-                    <x-atoms.date
-                        name="hasta"
-                        label="{{ __('seguridad.bitacora.filtro_hasta') }}"
-                        value="{{ $filtros['hasta'] }}"
-                    />
-
-                    <x-atoms.input
-                        type="number"
-                        name="registro_id"
-                        label="{{ __('seguridad.bitacora.filtro_registro_id') }}"
-                        value="{{ $filtros['registro_id'] }}"
-                    />
-
-                    <div class="ag-filtros__acciones ag-bitacora__filtros-acciones">
-                        <x-atoms.button type="submit" variant="outline" size="md" icon="search">
-                            {{ __('seguridad.bitacora.filtro_aplicar') }}
-                        </x-atoms.button>
-
-                        @if ($hayFiltrosActivos)
-                            <x-atoms.button href="{{ route('panel.bitacora.index') }}" variant="text" size="md">
-                                {{ __('seguridad.bitacora.filtro_limpiar') }}
-                            </x-atoms.button>
-                        @endif
-                    </div>
-                </form>
+                        <x-atoms.input
+                            type="number"
+                            name="registro_id"
+                            label="{{ __('seguridad.bitacora.filtro_registro_id') }}"
+                            value="{{ $filtros['registro_id'] }}"
+                        />
+                    </x-organisms.filter-panel>
+                </div>
             @endif
 
             @if ($bitacora->isEmpty())
                 @if ($hayFiltrosActivos)
-                    <x-molecules.alert-strip variant="info" icon="history" class="ag-bitacora__aviso">
-                        {{ __('seguridad.bitacora.sin_resultados') }}
-                    </x-molecules.alert-strip>
+                    <x-molecules.empty-state
+                        icon="search_off"
+                        :title="__('seguridad.bitacora.filtro_vacio_titulo')"
+                        :detail="__('seguridad.bitacora.filtro_vacio_detalle')"
+                    />
                 @else
                     <x-molecules.empty-state
                         icon="history"
@@ -123,6 +110,7 @@
             @else
                 <div class="ag-bitacora__tabla" role="table">
                     <div class="ag-bitacora__head" role="row">
+                        <span role="columnheader" class="ag-bitacora__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('seguridad.bitacora.columna_instante') }}</span>
                         <span role="columnheader">{{ __('seguridad.bitacora.columna_usuario') }}</span>
                         <span role="columnheader">{{ __('seguridad.bitacora.columna_entidad') }}</span>
@@ -132,6 +120,9 @@
 
                     @foreach ($bitacora as $fila)
                         <div class="ag-bitacora__fila" role="row">
+                            <span role="cell" class="ag-bitacora__indice">
+                                {{ ($bitacora->currentPage() - 1) * $bitacora->perPage() + $loop->iteration }}
+                            </span>
                             <span role="cell" class="ag-bitacora__instante">
                                 <div class="ag-bitacora__instante-principal">{{ $fila->instante->format('d/m/Y H:i') }} ({{ $fila->offset }})</div>
                                 @if ($fila->zonaRegistrada !== null)
@@ -199,25 +190,7 @@
                     @endforeach
                 </div>
 
-                @if ($bitacora->hasPages())
-                    <nav class="ag-bitacora__paginacion" aria-label="{{ __('seguridad.usuarios.paginacion_aria') }}">
-                        @if (! $bitacora->onFirstPage())
-                            <x-atoms.button href="{{ $bitacora->previousPageUrl() }}" variant="outline" size="sm" icon="chevron_left">
-                                {{ __('seguridad.usuarios.paginacion_anterior') }}
-                            </x-atoms.button>
-                        @endif
-
-                        <span class="ag-bitacora__paginacion-info">
-                            {{ __('seguridad.usuarios.paginacion_info', ['actual' => $bitacora->currentPage(), 'total' => $bitacora->lastPage()]) }}
-                        </span>
-
-                        @if ($bitacora->hasMorePages())
-                            <x-atoms.button href="{{ $bitacora->nextPageUrl() }}" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
-                                {{ __('seguridad.usuarios.paginacion_siguiente') }}
-                            </x-atoms.button>
-                        @endif
-                    </nav>
-                @endif
+                <x-molecules.pagination :paginator="$bitacora" :aria-label="__('seguridad.bitacora.paginacion_aria')" />
             @endif
         </div>
     </x-templates.panel-layout>

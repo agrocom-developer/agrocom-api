@@ -57,35 +57,14 @@
             @endphp
 
             @if ($hayFiltrosActivos || $bases->isNotEmpty())
-                <form method="GET" action="{{ route('panel.bases.index') }}" class="ag-filtros ag-bases__filtros">
-                    <div class="ag-input">
-                        <label for="filtro-q" class="ag-input__label">{{ __('personal.bases.filtro_busqueda') }}</label>
-                        <div class="ag-input__control">
-                            <input
-                                type="search"
-                                name="q"
-                                id="filtro-q"
-                                class="ag-input__field"
-                                value="{{ $filtros['q'] }}"
-                                placeholder="{{ __('personal.bases.filtro_busqueda_placeholder') }}"
-                            >
-                        </div>
-                    </div>
-
-                    <div class="ag-filtros__acciones ag-bases__filtros-acciones">
-                        {{-- outline, no primary: "Nueva base" ya es el único botón
-                             sólido del pliegue (§5 de la guía de pantalla). --}}
-                        <x-atoms.button type="submit" variant="outline" size="md" icon="search">
-                            {{ __('personal.bases.filtrar') }}
-                        </x-atoms.button>
-
-                        @if ($filtros['q'] !== '')
-                            <x-atoms.button href="{{ route('panel.bases.index') }}" variant="text" size="md">
-                                {{ __('personal.bases.limpiar_filtro') }}
-                            </x-atoms.button>
-                        @endif
-                    </div>
-                </form>
+                <div class="ag-table-toolbar">
+                    <x-molecules.table-search
+                        action="{{ route('panel.bases.index') }}"
+                        :value="$filtros['q']"
+                        :placeholder="__('personal.bases.filtro_busqueda_placeholder')"
+                        :clear-label="__('ui.tabla.buscador_limpiar')"
+                    />
+                </div>
             @endif
 
             @if ($bases->isEmpty())
@@ -103,6 +82,7 @@
             @else
                 <div class="ag-bases__tabla" role="table">
                     <div class="ag-bases__head" role="row">
+                        <span role="columnheader" class="ag-bases__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('personal.bases.col_nombre') }}</span>
                         <span role="columnheader">{{ __('personal.bases.col_ubicacion') }}</span>
                         <span role="columnheader" aria-hidden="true"></span>
@@ -110,6 +90,9 @@
 
                     @foreach ($bases as $base)
                         <div class="ag-bases__fila" role="row">
+                            <span role="cell" class="ag-bases__indice">
+                                {{ ($bases->currentPage() - 1) * $bases->perPage() + $loop->iteration }}
+                            </span>
                             <span role="cell" class="ag-bases__nombre">{{ $base->nombre }}</span>
                             <span role="cell">{{ $base->ubicacion ?? __('personal.bases.sin_ubicacion') }}</span>
 
@@ -138,25 +121,7 @@
                     @endforeach
                 </div>
 
-                @if ($bases->hasPages())
-                    <nav class="ag-bases__paginacion" aria-label="{{ __('personal.bases.paginacion_aria') }}">
-                        @if (! $bases->onFirstPage())
-                            <x-atoms.button href="{{ $bases->previousPageUrl() }}" variant="outline" size="sm" icon="chevron_left">
-                                {{ __('personal.bases.paginacion_anterior') }}
-                            </x-atoms.button>
-                        @endif
-
-                        <span class="ag-bases__paginacion-info">
-                            {{ __('personal.bases.paginacion_info', ['actual' => $bases->currentPage(), 'total' => $bases->lastPage()]) }}
-                        </span>
-
-                        @if ($bases->hasMorePages())
-                            <x-atoms.button href="{{ $bases->nextPageUrl() }}" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
-                                {{ __('personal.bases.paginacion_siguiente') }}
-                            </x-atoms.button>
-                        @endif
-                    </nav>
-                @endif
+                <x-molecules.pagination :paginator="$bases" :aria-label="__('personal.bases.paginacion_aria')" />
             @endif
         </div>
     </x-templates.panel-layout>

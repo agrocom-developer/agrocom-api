@@ -3,6 +3,7 @@
 namespace App\Dominios\Comercial\Aplicacion;
 
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
+use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaTexto;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -36,7 +37,7 @@ final class ListarLotes
             )
             ->when(
                 $busqueda !== null && $busqueda !== '',
-                fn (Builder $consulta) => $consulta->where('codigo', 'like', "%{$busqueda}%"),
+                fn (Builder $consulta) => BusquedaTexto::aplicar($consulta, ['codigo'], $busqueda),
             )
             ->orderBy('codigo')
             ->paginate($porPagina)

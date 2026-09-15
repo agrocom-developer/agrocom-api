@@ -32,10 +32,16 @@
 .ag-drones__head,
 .ag-drones__fila {
     display: grid;
-    grid-template-columns: 1.5fr 1.5fr 1fr auto;
+    grid-template-columns: 3rem 1.5fr 1.5fr 1fr auto;
     gap: var(--ag-space-4);
     align-items: center;
     padding: var(--ag-space-3) var(--ag-space-4);
+}
+
+.ag-drones__indice {
+    color: var(--ag-color-text-faint);
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-xs);
 }
 
 .ag-drones__head {
@@ -71,18 +77,6 @@
     gap: var(--ag-space-2);
 }
 
-.ag-drones__paginacion {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--ag-space-4);
-}
-
-.ag-drones__paginacion-info {
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-sm);
-}
-
 @media (max-width: 992px) {
     .ag-drones__head {
         display: none;
@@ -91,6 +85,12 @@
     .ag-drones__fila {
         grid-template-columns: 1fr;
         gap: var(--ag-space-1);
+    }
+
+    /* El índice numérico solo ordena filas de una tabla — en tarjeta
+       apilada no aporta. */
+    .ag-drones__indice {
+        display: none;
     }
 
     .ag-drones__acciones {

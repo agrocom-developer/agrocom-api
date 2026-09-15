@@ -57,35 +57,14 @@
             @endphp
 
             @if ($hayFiltrosActivos || $clientes->isNotEmpty())
-                <form method="GET" action="{{ route('panel.clientes.index') }}" class="ag-filtros ag-clientes__filtros">
-                <div class="ag-input">
-                    <label for="filtro-q" class="ag-input__label">{{ __('comercial.clientes.filtro_busqueda') }}</label>
-                    <div class="ag-input__control">
-                        <input
-                            type="search"
-                            name="q"
-                            id="filtro-q"
-                            class="ag-input__field"
-                            value="{{ $filtros['q'] }}"
-                            placeholder="{{ __('comercial.clientes.filtro_busqueda_placeholder') }}"
-                        >
-                    </div>
+                <div class="ag-table-toolbar">
+                    <x-molecules.table-search
+                        action="{{ route('panel.clientes.index') }}"
+                        :value="$filtros['q']"
+                        :placeholder="__('comercial.clientes.filtro_busqueda_placeholder')"
+                        :clear-label="__('ui.tabla.buscador_limpiar')"
+                    />
                 </div>
-
-                <div class="ag-filtros__acciones ag-clientes__filtros-acciones">
-                    {{-- outline, no primary: "Nuevo cliente" ya es el único botón
-                         sólido del pliegue (§5 de la guía de pantalla). --}}
-                    <x-atoms.button type="submit" variant="outline" size="md" icon="search">
-                        {{ __('comercial.clientes.filtrar') }}
-                    </x-atoms.button>
-
-                    @if ($hayFiltrosActivos)
-                        <x-atoms.button href="{{ route('panel.clientes.index') }}" variant="text" size="md">
-                            {{ __('comercial.clientes.limpiar_filtro') }}
-                        </x-atoms.button>
-                    @endif
-                </div>
-                </form>
             @endif
 
             @if ($clientes->isEmpty())
@@ -103,6 +82,7 @@
             @else
                 <div class="ag-clientes__tabla" role="table">
                     <div class="ag-clientes__head" role="row">
+                        <span role="columnheader" class="ag-clientes__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('comercial.clientes.col_razon_social') }}</span>
                         <span role="columnheader">{{ __('comercial.clientes.col_nit') }}</span>
                         <span role="columnheader">{{ __('comercial.clientes.col_contactos') }}</span>
@@ -111,6 +91,9 @@
 
                     @foreach ($clientes as $cliente)
                         <div class="ag-clientes__fila" role="row">
+                            <span role="cell" class="ag-clientes__indice">
+                                {{ ($clientes->currentPage() - 1) * $clientes->perPage() + $loop->iteration }}
+                            </span>
                             <span role="cell" class="ag-clientes__razon-social">{{ $cliente->razon_social }}</span>
                             <span role="cell" class="ag-clientes__nit">{{ $cliente->nit ?? __('comercial.clientes.sin_nit') }}</span>
                             <span role="cell">{{ __('comercial.clientes.contactos_cantidad', ['cantidad' => $cliente->contactos_count]) }}</span>
@@ -140,25 +123,7 @@
                     @endforeach
                 </div>
 
-                @if ($clientes->hasPages())
-                    <nav class="ag-clientes__paginacion" aria-label="{{ __('comercial.clientes.paginacion_aria') }}">
-                        @if (! $clientes->onFirstPage())
-                            <x-atoms.button href="{{ $clientes->previousPageUrl() }}" variant="outline" size="sm" icon="chevron_left">
-                                {{ __('comercial.clientes.paginacion_anterior') }}
-                            </x-atoms.button>
-                        @endif
-
-                        <span class="ag-clientes__paginacion-info">
-                            {{ __('comercial.clientes.paginacion_info', ['actual' => $clientes->currentPage(), 'total' => $clientes->lastPage()]) }}
-                        </span>
-
-                        @if ($clientes->hasMorePages())
-                            <x-atoms.button href="{{ $clientes->nextPageUrl() }}" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
-                                {{ __('comercial.clientes.paginacion_siguiente') }}
-                            </x-atoms.button>
-                        @endif
-                    </nav>
-                @endif
+                <x-molecules.pagination :paginator="$clientes" :aria-label="__('comercial.clientes.paginacion_aria')" />
             @endif
         </div>
     </x-templates.panel-layout>

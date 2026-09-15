@@ -1,14 +1,14 @@
 {{--
     Molecule: empty-state (`.ag-empty-state`, docs/diseno/guia_pantalla_panel.md
-    §5.1, caso 2): la pantalla o un bloque suyo no tiene NADA que mostrar,
-    más allá de cualquier filtro. Tercera aparición de este patrón
-    (`dashboard/_sin-secciones`, `personas/desempeno`) — se promueve al
-    catálogo en vez de copiar la clase BEM una cuarta vez.
-
-    No es `alert-strip`: esa es la pieza para "el filtro elegido no trae
-    nada" (banda delgada, en línea con el contenido). Esta es para "no hay
-    nada que filtrar todavía" (tarjeta centrada, reemplaza al bloque
-    entero, incluida la barra de filtros).
+    §5.1): cubre las DOS situaciones de "no hay filas que mostrar" — la
+    pantalla no tiene NADA todavía, o el filtro/búsqueda aplicado no trae
+    nada. Hasta el 15/9/2026 el segundo caso usaba `alert-strip` (banda
+    delgada en línea); pedido directo del usuario: una sola pieza para
+    ambos, tarjeta centrada siempre, cambiando solo `icon`/`title`/`detail`
+    (p. ej. `icon="search_off"` + "Sin resultados para este filtro" contra
+    el `icon` propio de la pantalla + "Todavía no hay X" del caso vacío
+    real). El criterio para elegir cuál mensaje usar sigue siendo el mismo
+    `$hayFiltrosActivos` que gatea la barra de filtros.
 
     Props:
     - icon (string, requerido): ícono Material Symbols — mismo criterio

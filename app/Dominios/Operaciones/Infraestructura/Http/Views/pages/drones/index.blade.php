@@ -59,35 +59,14 @@
             @php $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== ''); @endphp
 
             @if ($hayFiltrosActivos || $drones->isNotEmpty())
-                <form method="GET" action="{{ route('panel.drones.index') }}" class="ag-filtros ag-drones__filtros">
-                    <div class="ag-input">
-                        <label for="filtro-q" class="ag-input__label">{{ __('operaciones.drones.filtro_busqueda') }}</label>
-                        <div class="ag-input__control">
-                            <input
-                                type="search"
-                                name="q"
-                                id="filtro-q"
-                                class="ag-input__field"
-                                value="{{ $filtros['q'] }}"
-                                placeholder="{{ __('operaciones.drones.filtro_busqueda_placeholder') }}"
-                            >
-                        </div>
-                    </div>
-
-                    <div class="ag-filtros__acciones ag-drones__filtros-acciones">
-                        {{-- outline, no primary: "Nuevo dron" ya es el único botón
-                             sólido del pliegue (§5 de la guía de pantalla). --}}
-                        <x-atoms.button type="submit" variant="outline" size="md" icon="search">
-                            {{ __('operaciones.drones.filtrar') }}
-                        </x-atoms.button>
-
-                        @if ($hayFiltrosActivos)
-                            <x-atoms.button href="{{ route('panel.drones.index') }}" variant="text" size="md">
-                                {{ __('operaciones.drones.limpiar_filtro') }}
-                            </x-atoms.button>
-                        @endif
-                    </div>
-                </form>
+                <div class="ag-table-toolbar">
+                    <x-molecules.table-search
+                        action="{{ route('panel.drones.index') }}"
+                        :value="$filtros['q']"
+                        :placeholder="__('operaciones.drones.filtro_busqueda_placeholder')"
+                        :clear-label="__('ui.tabla.buscador_limpiar')"
+                    />
+                </div>
             @endif
 
             @if ($drones->isEmpty())
@@ -105,6 +84,7 @@
             @else
                 <div class="ag-drones__tabla" role="table">
                     <div class="ag-drones__head" role="row">
+                        <span role="columnheader" class="ag-drones__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('operaciones.drones.col_identificador') }}</span>
                         <span role="columnheader">{{ __('operaciones.drones.col_modelo') }}</span>
                         <span role="columnheader">{{ __('operaciones.drones.col_capacidad') }}</span>
@@ -113,6 +93,9 @@
 
                     @foreach ($drones as $dron)
                         <div class="ag-drones__fila" role="row">
+                            <span role="cell" class="ag-drones__indice">
+                                {{ ($drones->currentPage() - 1) * $drones->perPage() + $loop->iteration }}
+                            </span>
                             <span role="cell" class="ag-drones__identificador">{{ $dron->identificador }}</span>
                             <span role="cell">{{ $dron->modelo ?? __('operaciones.drones.sin_modelo') }}</span>
                             <span role="cell" class="ag-drones__capacidad">
@@ -150,25 +133,7 @@
                     @endforeach
                 </div>
 
-                @if ($drones->hasPages())
-                    <nav class="ag-drones__paginacion" aria-label="{{ __('operaciones.drones.paginacion_aria') }}">
-                        @if (! $drones->onFirstPage())
-                            <x-atoms.button href="{{ $drones->previousPageUrl() }}" variant="outline" size="sm" icon="chevron_left">
-                                {{ __('operaciones.drones.paginacion_anterior') }}
-                            </x-atoms.button>
-                        @endif
-
-                        <span class="ag-drones__paginacion-info">
-                            {{ __('operaciones.drones.paginacion_info', ['actual' => $drones->currentPage(), 'total' => $drones->lastPage()]) }}
-                        </span>
-
-                        @if ($drones->hasMorePages())
-                            <x-atoms.button href="{{ $drones->nextPageUrl() }}" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
-                                {{ __('operaciones.drones.paginacion_siguiente') }}
-                            </x-atoms.button>
-                        @endif
-                    </nav>
-                @endif
+                <x-molecules.pagination :paginator="$drones" :aria-label="__('operaciones.drones.paginacion_aria')" />
             @endif
         </div>
     </x-templates.panel-layout>

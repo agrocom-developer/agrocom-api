@@ -66,7 +66,7 @@
         data-bs-title="{{ $resolvedLabel }}"
     >
         @if ($icon)
-            <x-atoms.icon :name="$icon" size="sm" class="ag-menu-item__icon" />
+            <x-atoms.icon :name="$icon" size="md" class="ag-menu-item__icon" />
         @endif
         <span class="ag-menu-item__label">{{ $resolvedLabel }}</span>
         @if ($badge !== null)
@@ -92,7 +92,7 @@
         data-bs-title="{{ $resolvedLabel }}"
     >
         @if ($icon)
-            <x-atoms.icon :name="$icon" size="sm" class="ag-menu-item__icon" />
+            <x-atoms.icon :name="$icon" size="md" class="ag-menu-item__icon" />
         @endif
         <span class="ag-menu-item__label">{{ $resolvedLabel }}</span>
         @if ($badge !== null)

@@ -58,33 +58,14 @@
             @endphp
 
             @if ($hayFiltrosActivos || $fichas->isNotEmpty())
-                <form method="GET" action="{{ route('panel.fichas-dron.index') }}" class="ag-filtros ag-fichas-dron__filtros">
-                    <div class="ag-input">
-                        <label for="filtro-q" class="ag-input__label">{{ __('mantenimiento.fichas_dron.filtro_busqueda') }}</label>
-                        <div class="ag-input__control">
-                            <input
-                                type="search"
-                                name="q"
-                                id="filtro-q"
-                                class="ag-input__field"
-                                value="{{ $filtros['q'] }}"
-                                placeholder="{{ __('mantenimiento.fichas_dron.filtro_busqueda_placeholder') }}"
-                            >
-                        </div>
-                    </div>
-
-                    <div class="ag-filtros__acciones ag-fichas-dron__filtros-acciones">
-                        <x-atoms.button type="submit" variant="outline" size="md" icon="search">
-                            {{ __('mantenimiento.fichas_dron.filtrar') }}
-                        </x-atoms.button>
-
-                        @if ($hayFiltrosActivos)
-                            <x-atoms.button href="{{ route('panel.fichas-dron.index') }}" variant="text" size="md">
-                                {{ __('mantenimiento.fichas_dron.limpiar_filtro') }}
-                            </x-atoms.button>
-                        @endif
-                    </div>
-                </form>
+                <div class="ag-table-toolbar">
+                    <x-molecules.table-search
+                        action="{{ route('panel.fichas-dron.index') }}"
+                        :value="$filtros['q']"
+                        :placeholder="__('mantenimiento.fichas_dron.filtro_busqueda_placeholder')"
+                        :clear-label="__('ui.tabla.buscador_limpiar')"
+                    />
+                </div>
             @endif
 
             @if ($fichas->isEmpty())
@@ -102,6 +83,7 @@
             @else
                 <div class="ag-fichas-dron__tabla" role="table">
                     <div class="ag-fichas-dron__head" role="row">
+                        <span role="columnheader" class="ag-fichas-dron__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('mantenimiento.fichas_dron.col_identificador') }}</span>
                         <span role="columnheader">{{ __('mantenimiento.fichas_dron.col_numero_serie') }}</span>
                         <span role="columnheader">{{ __('mantenimiento.fichas_dron.col_chasis') }}</span>
@@ -113,6 +95,9 @@
 
                     @foreach ($fichas as $ficha)
                         <div class="ag-fichas-dron__fila" role="row">
+                            <span role="cell" class="ag-fichas-dron__indice">
+                                {{ ($fichas->currentPage() - 1) * $fichas->perPage() + $loop->iteration }}
+                            </span>
                             <span role="cell" class="ag-fichas-dron__identificador">{{ $ficha->identificador_dron }}</span>
                             <span role="cell">{{ $ficha->numero_serie ?? __('mantenimiento.fichas_dron.sin_dato') }}</span>
                             <span role="cell">{{ $ficha->chasis ?? __('mantenimiento.fichas_dron.sin_dato') }}</span>
@@ -158,25 +143,7 @@
                     @endforeach
                 </div>
 
-                @if ($fichas->hasPages())
-                    <nav class="ag-fichas-dron__paginacion" aria-label="{{ __('mantenimiento.fichas_dron.paginacion_aria') }}">
-                        @if (! $fichas->onFirstPage())
-                            <x-atoms.button href="{{ $fichas->previousPageUrl() }}" variant="outline" size="sm" icon="chevron_left">
-                                {{ __('mantenimiento.fichas_dron.paginacion_anterior') }}
-                            </x-atoms.button>
-                        @endif
-
-                        <span class="ag-fichas-dron__paginacion-info">
-                            {{ __('mantenimiento.fichas_dron.paginacion_info', ['actual' => $fichas->currentPage(), 'total' => $fichas->lastPage()]) }}
-                        </span>
-
-                        @if ($fichas->hasMorePages())
-                            <x-atoms.button href="{{ $fichas->nextPageUrl() }}" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
-                                {{ __('mantenimiento.fichas_dron.paginacion_siguiente') }}
-                            </x-atoms.button>
-                        @endif
-                    </nav>
-                @endif
+                <x-molecules.pagination :paginator="$fichas" :aria-label="__('mantenimiento.fichas_dron.paginacion_aria')" />
             @endif
         </div>
     </x-templates.panel-layout>

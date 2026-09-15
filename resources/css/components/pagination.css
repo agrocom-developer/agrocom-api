@@ -1,15 +1,49 @@
 /*
  * Molecule: pagination.
  * Usa el componente `.pagination`/`.page-item`/`.page-link` nativo de
- * Bootstrap (ver el componente Blade) — ya sale coloreado con la marca
- * porque `--bs-primary` está mapeado a `--ag-color-primary`
- * (tokens/semantic/theme-{light,dark}.css). Acá solo lo necesario para que
- * el ícono de los extremos (Anterior/Siguiente) quede centrado dentro del
- * link, que Bootstrap no resuelve solo cuando el contenido es un ícono en
- * vez de texto.
+ * Bootstrap (ver el componente Blade). El docblock original asumía que
+ * mapear `--bs-primary` alcanzaba para que saliera coloreado con la marca
+ * — cierto para la mayoría de componentes de Bootstrap, pero `.pagination`
+ * es una excepción: sus variables `--bs-pagination-active-bg`/
+ * `--bs-pagination-active-border-color` y la global `--bs-link-color` vienen
+ * HARDCODEADAS al azul de Bootstrap (`#0d6efd`) en `bootstrap.css`
+ * compilado — no referencian `--bs-primary` en runtime. Nadie lo notó hasta
+ * ahora porque ninguna pantalla había llegado a tener más de una página
+ * (descubierto en Bitácora, con 27 páginas, 15/9/2026). Se sobreescriben acá
+ * las variables locales del componente, más el radio (Bootstrap trae sus
+ * esquinas cuadradas por defecto — el resto del sistema usa `--ag-radius-md`
+ * para superficies interactivas).
  */
+.pagination {
+    --bs-pagination-color: var(--ag-color-primary-emphasis);
+    --bs-pagination-hover-color: var(--ag-color-primary-hover);
+    --bs-pagination-focus-color: var(--ag-color-primary-hover);
+    --bs-pagination-focus-box-shadow: 0 0 0 0.25rem var(--ag-color-primary-subtle);
+    --bs-pagination-active-color: var(--ag-color-primary-contrast);
+    --bs-pagination-active-bg: var(--ag-color-primary);
+    --bs-pagination-active-border-color: var(--ag-color-primary);
+    --bs-pagination-border-radius: var(--ag-radius-md);
+}
+
+/* `min-width` (no `width`): dos dígitos ("26", "27") siguen ensanchando un
+   poco su propia celda, pero un solo dígito y el ícono de flecha (que sin
+   esto media menos que "27" y más que "1", según el glifo) ya no quedan
+   más angostos o más anchos entre sí sin explicación — todos parten del
+   mismo piso.
+
+   `min-height` + `line-height: 1`: el `‹`/`›` es `atoms/icon`, que fija su
+   propio `line-height: 1` (icon.css); el texto plano de un número hereda el
+   `line-height` normal del body (>1), así que su caja de línea es más alta
+   aunque el `font-size` sea igual — con `.pagination` siendo flex (Bootstrap)
+   sus `.page-item` ya se estiran parejo, pero antes de esta regla el
+   contenido de cada `.page-link` seguía centrándose dentro de una altura de
+   línea distinta según fuera ícono o texto, y el link con ícono se veía más
+   bajo (15/9/2026). */
 .pagination .page-link {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    min-width: calc(var(--bs-pagination-font-size) * 2.5);
+    min-height: calc(var(--bs-pagination-font-size) * 2.5);
+    line-height: 1;
 }

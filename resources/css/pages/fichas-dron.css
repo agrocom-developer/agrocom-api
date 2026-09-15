@@ -32,7 +32,7 @@
 .ag-fichas-dron__head,
 .ag-fichas-dron__fila {
     display: grid;
-    grid-template-columns: 1fr 1fr 0.8fr 0.9fr 0.7fr 1.2fr auto;
+    grid-template-columns: 3rem 1fr 1fr 0.8fr 0.9fr 0.7fr 1.2fr auto;
     gap: var(--ag-space-4);
     align-items: center;
     padding: var(--ag-space-3) var(--ag-space-4);
@@ -61,6 +61,12 @@
     font-weight: var(--ag-font-weight-medium);
 }
 
+.ag-fichas-dron__indice {
+    color: var(--ag-color-text-faint);
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-xs);
+}
+
 .ag-fichas-dron__accesorios {
     display: flex;
     flex-wrap: wrap;
@@ -73,18 +79,6 @@
     gap: var(--ag-space-2);
 }
 
-.ag-fichas-dron__paginacion {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--ag-space-4);
-}
-
-.ag-fichas-dron__paginacion-info {
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-sm);
-}
-
 @media (max-width: 992px) {
     .ag-fichas-dron__head {
         display: none;
@@ -93,6 +87,12 @@
     .ag-fichas-dron__fila {
         grid-template-columns: 1fr;
         gap: var(--ag-space-1);
+    }
+
+    /* El índice numérico solo ordena filas de una tabla — en tarjeta
+       apilada no aporta. */
+    .ag-fichas-dron__indice {
+        display: none;
     }
 
     .ag-fichas-dron__acciones {

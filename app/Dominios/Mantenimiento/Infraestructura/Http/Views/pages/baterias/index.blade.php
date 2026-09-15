@@ -76,21 +76,19 @@
             @endphp
 
             @if ($hayFiltrosActivos || $baterias->isNotEmpty())
-                <form method="GET" action="{{ route('panel.baterias.index') }}" class="ag-filtros ag-baterias__filtros">
-                    <div class="ag-input">
-                        <label for="filtro-q" class="ag-input__label">{{ __('mantenimiento.baterias.filtro_busqueda') }}</label>
-                        <div class="ag-input__control">
-                            <input
-                                type="search"
-                                name="q"
-                                id="filtro-q"
-                                class="ag-input__field"
-                                value="{{ $filtros['q'] }}"
-                                placeholder="{{ __('mantenimiento.baterias.filtro_busqueda_placeholder') }}"
-                            >
-                        </div>
-                    </div>
+                <div class="ag-table-toolbar">
+                    <x-molecules.table-search
+                        action="{{ route('panel.baterias.index') }}"
+                        :value="$filtros['q']"
+                        :placeholder="__('mantenimiento.baterias.filtro_busqueda_placeholder')"
+                        :clear-label="__('ui.tabla.buscador_limpiar')"
+                    />
+                </div>
+            @endif
 
+            @if ($hayFiltrosActivos || $baterias->isNotEmpty())
+                <form method="GET" action="{{ route('panel.baterias.index') }}" class="ag-filtros ag-baterias__filtros">
+                    <input type="hidden" name="q" value="{{ $filtros['q'] }}">
                     <x-atoms.select
                         name="base_id"
                         id="filtro-base"
@@ -115,9 +113,7 @@
                     />
 
                     <div class="ag-filtros__acciones ag-baterias__filtros-acciones">
-                        {{-- outline, no primary: "Nueva batería" ya es el único
-                             botón sólido del pliegue (§5 de la guía de pantalla). --}}
-                        <x-atoms.button type="submit" variant="outline" size="md" icon="search">
+                        <x-atoms.button type="submit" variant="primary" size="md" icon="search">
                             {{ __('mantenimiento.baterias.filtrar') }}
                         </x-atoms.button>
 
@@ -145,6 +141,7 @@
             @else
                 <div class="ag-baterias__tabla" role="table">
                     <div class="ag-baterias__head" role="row">
+                        <span role="columnheader" class="ag-baterias__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('mantenimiento.baterias.col_identificador') }}</span>
                         <span role="columnheader">{{ __('mantenimiento.baterias.col_base') }}</span>
                         <span role="columnheader">{{ __('mantenimiento.baterias.col_ciclos') }}</span>
@@ -155,6 +152,9 @@
 
                     @foreach ($baterias as $bateria)
                         <div class="ag-baterias__fila" role="row">
+                            <span role="cell" class="ag-baterias__indice">
+                                {{ ($baterias->currentPage() - 1) * $baterias->perPage() + $loop->iteration }}
+                            </span>
                             <span role="cell" class="ag-baterias__identificador">{{ $bateria->identificador }}</span>
                             <span role="cell">
                                 {{ $bateria->base_id !== null ? ($etiquetasBase[$bateria->base_id] ?? "#{$bateria->base_id}") : __('mantenimiento.baterias.sin_base') }}
@@ -200,25 +200,7 @@
                     @endforeach
                 </div>
 
-                @if ($baterias->hasPages())
-                    <nav class="ag-baterias__paginacion" aria-label="{{ __('mantenimiento.baterias.paginacion_aria') }}">
-                        @if (! $baterias->onFirstPage())
-                            <x-atoms.button href="{{ $baterias->previousPageUrl() }}" variant="outline" size="sm" icon="chevron_left">
-                                {{ __('mantenimiento.baterias.paginacion_anterior') }}
-                            </x-atoms.button>
-                        @endif
-
-                        <span class="ag-baterias__paginacion-info">
-                            {{ __('mantenimiento.baterias.paginacion_info', ['actual' => $baterias->currentPage(), 'total' => $baterias->lastPage()]) }}
-                        </span>
-
-                        @if ($baterias->hasMorePages())
-                            <x-atoms.button href="{{ $baterias->nextPageUrl() }}" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
-                                {{ __('mantenimiento.baterias.paginacion_siguiente') }}
-                            </x-atoms.button>
-                        @endif
-                    </nav>
-                @endif
+                <x-molecules.pagination :paginator="$baterias" :aria-label="__('mantenimiento.baterias.paginacion_aria')" />
             @endif
         </div>
     </x-templates.panel-layout>

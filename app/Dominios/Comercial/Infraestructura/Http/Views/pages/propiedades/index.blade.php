@@ -58,35 +58,14 @@
             @endphp
 
             @if ($hayFiltrosActivos || $propiedades->isNotEmpty())
-                <form method="GET" action="{{ route('panel.propiedades.index') }}" class="ag-filtros ag-propiedades__filtros">
-                <div class="ag-input">
-                    <label for="filtro-q" class="ag-input__label">{{ __('comercial.propiedades.filtro_busqueda') }}</label>
-                    <div class="ag-input__control">
-                        <input
-                            type="search"
-                            name="q"
-                            id="filtro-q"
-                            class="ag-input__field"
-                            value="{{ $filtros['q'] }}"
-                            placeholder="{{ __('comercial.propiedades.filtro_busqueda_placeholder') }}"
-                        >
-                    </div>
+                <div class="ag-table-toolbar">
+                    <x-molecules.table-search
+                        action="{{ route('panel.propiedades.index') }}"
+                        :value="$filtros['q']"
+                        :placeholder="__('comercial.propiedades.filtro_busqueda_placeholder')"
+                        :clear-label="__('ui.tabla.buscador_limpiar')"
+                    />
                 </div>
-
-                <div class="ag-filtros__acciones ag-propiedades__filtros-acciones">
-                    {{-- outline, no primary: "Nueva propiedad" ya es el único botón
-                         sólido del pliegue (§5 de la guía de pantalla). --}}
-                    <x-atoms.button type="submit" variant="outline" size="md" icon="search">
-                        {{ __('comercial.propiedades.filtrar') }}
-                    </x-atoms.button>
-
-                    @if ($hayFiltrosActivos)
-                        <x-atoms.button href="{{ route('panel.propiedades.index') }}" variant="text" size="md">
-                            {{ __('comercial.propiedades.limpiar_filtro') }}
-                        </x-atoms.button>
-                    @endif
-                </div>
-                </form>
             @endif
 
             @if ($propiedades->isEmpty())
@@ -104,6 +83,7 @@
             @else
                 <div class="ag-propiedades__tabla" role="table">
                     <div class="ag-propiedades__head" role="row">
+                        <span role="columnheader" class="ag-propiedades__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('comercial.propiedades.col_nombre') }}</span>
                         <span role="columnheader">{{ __('comercial.propiedades.col_cliente') }}</span>
                         <span role="columnheader">{{ __('comercial.propiedades.col_campos') }}</span>
@@ -112,6 +92,9 @@
 
                     @foreach ($propiedades as $propiedad)
                         <div class="ag-propiedades__fila" role="row">
+                            <span role="cell" class="ag-propiedades__indice">
+                                {{ ($propiedades->currentPage() - 1) * $propiedades->perPage() + $loop->iteration }}
+                            </span>
                             <span role="cell" class="ag-propiedades__nombre">{{ $propiedad->nombre }}</span>
                             <span role="cell">{{ $propiedad->cliente->razon_social }}</span>
                             <span role="cell">{{ __('comercial.propiedades.campos_cantidad', ['cantidad' => $propiedad->campos_count]) }}</span>
@@ -141,25 +124,7 @@
                     @endforeach
                 </div>
 
-                @if ($propiedades->hasPages())
-                    <nav class="ag-propiedades__paginacion" aria-label="{{ __('comercial.propiedades.paginacion_aria') }}">
-                        @if (! $propiedades->onFirstPage())
-                            <x-atoms.button href="{{ $propiedades->previousPageUrl() }}" variant="outline" size="sm" icon="chevron_left">
-                                {{ __('comercial.propiedades.paginacion_anterior') }}
-                            </x-atoms.button>
-                        @endif
-
-                        <span class="ag-propiedades__paginacion-info">
-                            {{ __('comercial.propiedades.paginacion_info', ['actual' => $propiedades->currentPage(), 'total' => $propiedades->lastPage()]) }}
-                        </span>
-
-                        @if ($propiedades->hasMorePages())
-                            <x-atoms.button href="{{ $propiedades->nextPageUrl() }}" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
-                                {{ __('comercial.propiedades.paginacion_siguiente') }}
-                            </x-atoms.button>
-                        @endif
-                    </nav>
-                @endif
+                <x-molecules.pagination :paginator="$propiedades" :aria-label="__('comercial.propiedades.paginacion_aria')" />
             @endif
         </div>
     </x-templates.panel-layout>

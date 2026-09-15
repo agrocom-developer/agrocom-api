@@ -58,35 +58,14 @@
             @endphp
 
             @if ($hayFiltrosActivos || $personas->isNotEmpty())
-                <form method="GET" action="{{ route('panel.personas.index') }}" class="ag-filtros ag-personas__filtros">
-                    <div class="ag-input">
-                        <label for="filtro-q" class="ag-input__label">{{ __('personal.personas.filtro_busqueda') }}</label>
-                        <div class="ag-input__control">
-                            <input
-                                type="search"
-                                name="q"
-                                id="filtro-q"
-                                class="ag-input__field"
-                                value="{{ $filtros['q'] }}"
-                                placeholder="{{ __('personal.personas.filtro_busqueda_placeholder') }}"
-                            >
-                        </div>
-                    </div>
-
-                    <div class="ag-filtros__acciones ag-personas__filtros-acciones">
-                        {{-- outline, no primary: "Nueva persona" ya es el único
-                             botón sólido del pliegue (§5 de la guía de pantalla). --}}
-                        <x-atoms.button type="submit" variant="outline" size="md" icon="search">
-                            {{ __('personal.personas.filtrar') }}
-                        </x-atoms.button>
-
-                        @if ($filtros['q'] !== '')
-                            <x-atoms.button href="{{ route('panel.personas.index') }}" variant="text" size="md">
-                                {{ __('personal.personas.limpiar_filtro') }}
-                            </x-atoms.button>
-                        @endif
-                    </div>
-                </form>
+                <div class="ag-table-toolbar">
+                    <x-molecules.table-search
+                        action="{{ route('panel.personas.index') }}"
+                        :value="$filtros['q']"
+                        :placeholder="__('personal.personas.filtro_busqueda_placeholder')"
+                        :clear-label="__('ui.tabla.buscador_limpiar')"
+                    />
+                </div>
             @endif
 
             @if ($personas->isEmpty())
@@ -104,6 +83,7 @@
             @else
                 <div class="ag-personas__tabla" role="table">
                     <div class="ag-personas__head" role="row">
+                        <span role="columnheader" class="ag-personas__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('personal.personas.col_nombre') }}</span>
                         <span role="columnheader">{{ __('personal.personas.col_rol') }}</span>
                         <span role="columnheader">{{ __('personal.personas.col_base') }}</span>
@@ -114,6 +94,9 @@
 
                     @foreach ($personas as $persona)
                         <div class="ag-personas__fila" role="row">
+                            <span role="cell" class="ag-personas__indice">
+                                {{ ($personas->currentPage() - 1) * $personas->perPage() + $loop->iteration }}
+                            </span>
                             <span role="cell" class="ag-personas__nombre">{{ $persona->nombre }}</span>
                             <span role="cell">{{ __('personal.roles.'.$persona->rol->value) }}</span>
                             <span role="cell">{{ $persona->base?->nombre ?? __('personal.personas.sin_base') }}</span>
@@ -157,25 +140,7 @@
                     @endforeach
                 </div>
 
-                @if ($personas->hasPages())
-                    <nav class="ag-personas__paginacion" aria-label="{{ __('personal.personas.paginacion_aria') }}">
-                        @if (! $personas->onFirstPage())
-                            <x-atoms.button href="{{ $personas->previousPageUrl() }}" variant="outline" size="sm" icon="chevron_left">
-                                {{ __('personal.personas.paginacion_anterior') }}
-                            </x-atoms.button>
-                        @endif
-
-                        <span class="ag-personas__paginacion-info">
-                            {{ __('personal.personas.paginacion_info', ['actual' => $personas->currentPage(), 'total' => $personas->lastPage()]) }}
-                        </span>
-
-                        @if ($personas->hasMorePages())
-                            <x-atoms.button href="{{ $personas->nextPageUrl() }}" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
-                                {{ __('personal.personas.paginacion_siguiente') }}
-                            </x-atoms.button>
-                        @endif
-                    </nav>
-                @endif
+                <x-molecules.pagination :paginator="$personas" :aria-label="__('personal.personas.paginacion_aria')" />
             @endif
         </div>
     </x-templates.panel-layout>

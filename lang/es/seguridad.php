@@ -350,7 +350,8 @@ return [
         'limpiar_filtro' => 'Limpiar filtro',
         'vacio_titulo' => 'Todavía no hay usuarios registrados',
         'vacio_detalle' => 'Los usuarios se crean desde el panel de administración. Pedidle a un administrador que cree tu cuenta.',
-        'filtro_vacio' => 'Ningún usuario coincide con esta búsqueda.',
+        'filtro_vacio_titulo' => 'Sin resultados para este filtro',
+        'filtro_vacio_detalle' => 'Ningún usuario coincide con la búsqueda o el filtro aplicado. Probá con otro término o quitá el filtro.',
         'col_nombre' => 'Nombre',
         'col_username' => 'Usuario',
         'col_tipo' => 'Tipo',
@@ -569,7 +570,8 @@ return [
         'diff_antes' => 'Antes',
         'diff_despues' => 'Después',
         'diff_sin_datos' => 'Sin datos antes/después para esta fila.',
-        'sin_resultados' => 'No hay movimientos con estos filtros.',
+        'filtro_vacio_titulo' => 'Sin resultados para este filtro',
+        'filtro_vacio_detalle' => 'No hay movimientos que coincidan con los filtros aplicados. Probá quitando alguno.',
         'vacio_titulo' => 'Todavía no hay movimientos registrados',
         'vacio_detalle' => 'Cada acción en el panel (crear, actualizar, eliminar) queda anotada acá. Volvé a esta pantalla después de tus primeros cambios.',
 
@@ -584,6 +586,7 @@ return [
         'filtro_registro_id' => 'ID de registro',
         'filtro_limpiar' => 'Limpiar filtros',
         'filtro_aplicar' => 'Filtrar',
+        'paginacion_aria' => 'Paginación de bitácora',
 
         'acciones' => [
             'creado' => 'Creado',
@@ -619,6 +622,7 @@ return [
             'man_vehiculos' => 'Vehículos',
             'ope_actas' => 'Actas de conformidad',
             'ope_alertas' => 'Alertas',
+            'ope_categorias_insumo' => 'Categorías de insumo',
             'ope_drones' => 'Drones',
             'ope_estadias_hacienda' => 'Estadías en hacienda',
             'ope_ordenes_aplicacion' => 'Órdenes de aplicación',

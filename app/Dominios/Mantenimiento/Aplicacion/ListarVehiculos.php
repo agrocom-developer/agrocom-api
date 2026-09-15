@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Mantenimiento\Aplicacion;
 
+use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaTexto;
 use App\Dominios\Mantenimiento\Infraestructura\Eloquent\Vehiculo;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -24,7 +25,7 @@ final class ListarVehiculos
         return Vehiculo::query()
             ->when(
                 $busqueda !== null && $busqueda !== '',
-                fn ($consulta) => $consulta->where('identificador', 'like', "%{$busqueda}%"),
+                fn ($consulta) => BusquedaTexto::aplicar($consulta, ['identificador'], $busqueda),
             )
             ->when($baseId !== null, fn ($consulta) => $consulta->where('base_id', $baseId))
             ->when($estado !== null, fn ($consulta) => $consulta->where('estado', $estado))

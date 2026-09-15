@@ -58,33 +58,14 @@
             @endphp
 
             @if ($hayFiltrosActivos || $repuestos->isNotEmpty())
-                <form method="GET" action="{{ route('panel.repuestos.index') }}" class="ag-filtros ag-repuestos__filtros">
-                    <div class="ag-input">
-                        <label for="filtro-q" class="ag-input__label">{{ __('inventario.repuestos.filtro_busqueda') }}</label>
-                        <div class="ag-input__control">
-                            <input
-                                type="search"
-                                name="q"
-                                id="filtro-q"
-                                class="ag-input__field"
-                                value="{{ $filtros['q'] }}"
-                                placeholder="{{ __('inventario.repuestos.filtro_busqueda_placeholder') }}"
-                            >
-                        </div>
-                    </div>
-
-                    <div class="ag-filtros__acciones ag-repuestos__filtros-acciones">
-                        <x-atoms.button type="submit" variant="outline" size="md" icon="search">
-                            {{ __('inventario.repuestos.filtrar') }}
-                        </x-atoms.button>
-
-                        @if ($filtros['q'] !== '')
-                            <x-atoms.button href="{{ route('panel.repuestos.index') }}" variant="text" size="md">
-                                {{ __('inventario.repuestos.limpiar_filtro') }}
-                            </x-atoms.button>
-                        @endif
-                    </div>
-                </form>
+                <div class="ag-table-toolbar">
+                    <x-molecules.table-search
+                        action="{{ route('panel.repuestos.index') }}"
+                        :value="$filtros['q']"
+                        :placeholder="__('inventario.repuestos.filtro_busqueda_placeholder')"
+                        :clear-label="__('ui.tabla.buscador_limpiar')"
+                    />
+                </div>
             @endif
 
             @if ($repuestos->isEmpty())
@@ -102,6 +83,7 @@
             @else
                 <div class="ag-repuestos__tabla" role="table">
                     <div class="ag-repuestos__head" role="row">
+                        <span role="columnheader" class="ag-repuestos__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('inventario.repuestos.col_codigo') }}</span>
                         <span role="columnheader">{{ __('inventario.repuestos.col_descripcion') }}</span>
                         <span role="columnheader">{{ __('inventario.repuestos.col_unidad') }}</span>
@@ -111,6 +93,9 @@
 
                     @foreach ($repuestos as $repuesto)
                         <div class="ag-repuestos__fila" role="row">
+                            <span role="cell" class="ag-repuestos__indice">
+                                {{ ($repuestos->currentPage() - 1) * $repuestos->perPage() + $loop->iteration }}
+                            </span>
                             <span role="cell" class="ag-repuestos__codigo">{{ $repuesto->codigo }}</span>
                             <span role="cell">{{ $repuesto->descripcion }}</span>
                             <span role="cell">{{ $repuesto->unidad }}</span>
@@ -141,25 +126,7 @@
                     @endforeach
                 </div>
 
-                @if ($repuestos->hasPages())
-                    <nav class="ag-repuestos__paginacion" aria-label="{{ __('inventario.repuestos.paginacion_aria') }}">
-                        @if (! $repuestos->onFirstPage())
-                            <x-atoms.button href="{{ $repuestos->previousPageUrl() }}" variant="outline" size="sm" icon="chevron_left">
-                                {{ __('inventario.repuestos.paginacion_anterior') }}
-                            </x-atoms.button>
-                        @endif
-
-                        <span class="ag-repuestos__paginacion-info">
-                            {{ __('inventario.repuestos.paginacion_info', ['actual' => $repuestos->currentPage(), 'total' => $repuestos->lastPage()]) }}
-                        </span>
-
-                        @if ($repuestos->hasMorePages())
-                            <x-atoms.button href="{{ $repuestos->nextPageUrl() }}" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
-                                {{ __('inventario.repuestos.paginacion_siguiente') }}
-                            </x-atoms.button>
-                        @endif
-                    </nav>
-                @endif
+                <x-molecules.pagination :paginator="$repuestos" :aria-label="__('inventario.repuestos.paginacion_aria')" />
             @endif
         </div>
     </x-templates.panel-layout>

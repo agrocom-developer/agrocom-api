@@ -69,20 +69,17 @@
             @endphp
 
             @if ($hayFiltrosActivos || $stock->isNotEmpty())
+                <div class="ag-table-toolbar">
+                    <x-molecules.table-search
+                        action="{{ route('panel.stock.index') }}"
+                        :value="$filtros['q']"
+                        :placeholder="__('inventario.stock.filtro_busqueda_placeholder')"
+                        :clear-label="__('ui.tabla.buscador_limpiar')"
+                    />
+                </div>
+
                 <form method="GET" action="{{ route('panel.stock.index') }}" class="ag-filtros ag-stock__filtros">
-                    <div class="ag-input">
-                        <label for="filtro-q" class="ag-input__label">{{ __('inventario.stock.filtro_busqueda') }}</label>
-                        <div class="ag-input__control">
-                            <input
-                                type="search"
-                                name="q"
-                                id="filtro-q"
-                                class="ag-input__field"
-                                value="{{ $filtros['q'] }}"
-                                placeholder="{{ __('inventario.stock.filtro_busqueda_placeholder') }}"
-                            >
-                        </div>
-                    </div>
+                    <input type="hidden" name="q" value="{{ $filtros['q'] }}">
 
                     <x-atoms.select
                         name="base_id"
@@ -94,11 +91,11 @@
                     />
 
                     <div class="ag-filtros__acciones ag-stock__filtros-acciones">
-                        <x-atoms.button type="submit" variant="outline" size="md" icon="search">
+                        <x-atoms.button type="submit" variant="primary" size="md" icon="search">
                             {{ __('inventario.stock.filtrar') }}
                         </x-atoms.button>
 
-                        @if ($filtros['q'] !== '' || $filtros['base_id'] !== null)
+                        @if ($filtros['base_id'] !== null)
                             <x-atoms.button href="{{ route('panel.stock.index') }}" variant="text" size="md">
                                 {{ __('inventario.stock.limpiar_filtro') }}
                             </x-atoms.button>
@@ -122,6 +119,7 @@
             @else
                 <div class="ag-stock__tabla" role="table">
                     <div class="ag-stock__head" role="row">
+                        <span role="columnheader" class="ag-stock__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('inventario.stock.col_codigo') }}</span>
                         <span role="columnheader">{{ __('inventario.stock.col_base') }}</span>
                         <span role="columnheader">{{ __('inventario.stock.col_cantidad') }}</span>
@@ -131,6 +129,9 @@
 
                     @foreach ($stock as $fila)
                         <div class="ag-stock__fila" role="row">
+                            <span role="cell" class="ag-stock__indice">
+                                {{ ($stock->currentPage() - 1) * $stock->perPage() + $loop->iteration }}
+                            </span>
                             <span role="cell" class="ag-stock__codigo">{{ $fila->repuesto->codigo }} — {{ $fila->repuesto->descripcion }}</span>
                             <span role="cell">{{ $etiquetasBase[$fila->base_id] ?? "#{$fila->base_id}" }}</span>
                             <span role="cell">{{ $fila->cantidad }}</span>
@@ -148,25 +149,7 @@
                     @endforeach
                 </div>
 
-                @if ($stock->hasPages())
-                    <nav class="ag-stock__paginacion" aria-label="{{ __('inventario.stock.paginacion_aria') }}">
-                        @if (! $stock->onFirstPage())
-                            <x-atoms.button href="{{ $stock->previousPageUrl() }}" variant="outline" size="sm" icon="chevron_left">
-                                {{ __('inventario.stock.paginacion_anterior') }}
-                            </x-atoms.button>
-                        @endif
-
-                        <span class="ag-stock__paginacion-info">
-                            {{ __('inventario.stock.paginacion_info', ['actual' => $stock->currentPage(), 'total' => $stock->lastPage()]) }}
-                        </span>
-
-                        @if ($stock->hasMorePages())
-                            <x-atoms.button href="{{ $stock->nextPageUrl() }}" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
-                                {{ __('inventario.stock.paginacion_siguiente') }}
-                            </x-atoms.button>
-                        @endif
-                    </nav>
-                @endif
+                <x-molecules.pagination :paginator="$stock" :aria-label="__('inventario.stock.paginacion_aria')" />
             @endif
         </div>
     </x-templates.panel-layout>

@@ -50,7 +50,7 @@
                         <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
                     @endif
 
-                    @foreach ($ventana[$segmento] as $url => $pagina)
+                    @foreach ($ventana[$segmento] as $pagina => $url)
                         @php $esActual = (int) $pagina === $paginator->currentPage(); @endphp
                         <li class="page-item {{ $esActual ? 'active' : '' }}" @if ($esActual) aria-current="page" @endif>
                             @if ($esActual)

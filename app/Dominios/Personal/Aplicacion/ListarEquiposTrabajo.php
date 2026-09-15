@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Personal\Aplicacion;
 
+use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaTexto;
 use App\Dominios\Personal\Infraestructura\Eloquent\EquipoTrabajo;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -22,10 +23,7 @@ final class ListarEquiposTrabajo
         return EquipoTrabajo::query()
             ->when(
                 $busqueda !== null && $busqueda !== '',
-                fn ($consulta) => $consulta->where(function ($sub) use ($busqueda) {
-                    $sub->where('codigo', 'like', "%{$busqueda}%")
-                        ->orWhere('nombre', 'like', "%{$busqueda}%");
-                }),
+                fn ($consulta) => BusquedaTexto::aplicar($consulta, ['codigo', 'nombre'], $busqueda),
             )
             ->when($baseId !== null, fn ($consulta) => $consulta->where('base_id', $baseId))
             ->when($estado !== null, fn ($consulta) => $consulta->where('estado', $estado))

@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Personal\Aplicacion;
 
+use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaTexto;
 use App\Dominios\Personal\Infraestructura\Eloquent\PerBase;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -17,10 +18,7 @@ final class ListarBases
         return PerBase::query()
             ->when(
                 $busqueda !== null && $busqueda !== '',
-                fn ($consulta) => $consulta->where(function ($sub) use ($busqueda): void {
-                    $sub->where('nombre', 'like', "%{$busqueda}%")
-                        ->orWhere('ubicacion', 'like', "%{$busqueda}%");
-                }),
+                fn ($consulta) => BusquedaTexto::aplicar($consulta, ['nombre', 'ubicacion'], $busqueda),
             )
             ->orderBy('nombre')
             ->paginate($porPagina)
