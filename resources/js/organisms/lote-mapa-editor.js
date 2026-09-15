@@ -7,7 +7,9 @@
  *   (tarea 68), y el que corre siempre que no hay llave de Google Maps
  *   configurada. Sigue funcionando completo — Google Maps Platform se
  *   factura por uso y la llave puede faltar o agotarse.
- * - **Google Maps** (JS API + Drawing Library): solo cuando
+ * - **Google Maps JS API** (trazo del polígono a mano, ver docblock de
+ *   `inicializarGoogle` — sin `google.maps.drawing`, retirada de la API):
+ *   solo cuando
  *   `/panel/configuracion` tiene cargada `mapas.google_maps_api_key`
  *   (tarea 78) y el SDK carga bien. Si la carga falla, cae a Leaflet en vez
  *   de dejar el formulario sin mapa.
@@ -531,10 +533,18 @@ function inicializarLeaflet(contenedor, refs) {
 }
 
 /**
- * Mismo editor, sobre Google Maps (JS API + Drawing Library) — se usa solo
- * cuando hay llave configurada y el SDK cargó bien. La barra de acciones es
- * la MISMA de `inicializarLeaflet`; acá solo cambia qué API de mapas
- * responde a cada botón.
+ * Mismo editor, sobre Google Maps JS API — se usa solo cuando hay llave
+ * configurada y el SDK cargó bien. La barra de acciones es la MISMA de
+ * `inicializarLeaflet`; acá solo cambia qué API de mapas responde a cada
+ * botón.
+ *
+ * El trazo de "dibujar" se arma a mano sobre un `Polygon` propio (click
+ * agrega un vértice, doble click cierra el trazo) — NO con
+ * `google.maps.drawing.DrawingManager`: Google la retiró de la API en la
+ * v3.65 (confirmado en vivo, 15/9/2026 — tira
+ * "The DrawingManager functionality... is no longer available", ver
+ * https://developers.google.com/maps/deprecations). El resto de la API
+ * (`Map`, `Polygon`, `LatLngBounds`) sigue como siempre.
  *
  * Sin undo/redo propio en la librería (igual que Geoman free) — mismo
  * mecanismo de {@see crearHistorial} que Leaflet, sobre el mismo string
@@ -550,11 +560,20 @@ function inicializarGoogle(contenedor, refs, googleMapsNs) {
     const mapa = new googleMapsNs.Map(lienzo, {
         center: CENTRO_POR_DEFECTO,
         zoom: ZOOM_SIN_GEOMETRIA,
-        mapTypeId: googleMapsNs.MapTypeId.SATELLITE,
+        // HYBRID (satelital + nombres/caminos), no SATELLITE a secas: sin
+        // etiquetas, un lote se pierde en un mar de verde indistinguible del
+        // vecino — es lo mismo que muestra el Google Maps normal cuando pasás
+        // a vista satelital.
+        mapTypeId: googleMapsNs.MapTypeId.HYBRID,
+        // Sin esto, la rueda/trackpad zoomea de a niveles enteros por cada
+        // evento de scroll — con un trackpad, que dispara muchos eventos
+        // chicos seguidos, se siente como que salta varios niveles de golpe.
+        // Con zoom fraccionario el nivel avanza proporcional al gesto, igual
+        // de suave que en maps.google.com.
+        isFractionalZoomEnabled: true,
         streetViewControl: false,
         mapTypeControl: false,
         fullscreenControl: false, // el botón propio de pantalla completa lo reemplaza
-        drawingControl: false, // barra propia, sin el chrome de dibujo de Google
     });
 
     let esSatelital = true;
@@ -655,36 +674,71 @@ function inicializarGoogle(contenedor, refs, googleMapsNs) {
 
     // ---------- Barra de acciones ----------
 
-    const drawingManager = new googleMapsNs.drawing.DrawingManager({
-        drawingMode: null,
-        drawingControl: false,
-        polygonOptions: estiloPoligonoGoogle(),
-    });
-    drawingManager.setMap(mapa);
-
+    // Trazo a mano sobre un `Polygon` propio: click agrega un vértice, doble
+    // click cierra el trazo — reemplaza a `DrawingManager` (ver docblock de
+    // esta función). `clickPendiente` distingue un click suelto (agrega
+    // vértice) de la primera mitad de un doble click (Google dispara
+    // click+click+dblclick: sin este delay, el doble click para CERRAR el
+    // trazo le agregaría además un vértice de más pegado al último real).
+    let modoDibujo = false;
     let modoBorrar = false;
-    let puntosEnCurso = [];
+    let poligonoEnCurso = null;
+    let clickPendiente = null;
 
-    const enModoDibujo = () => drawingManager.getDrawingMode() === googleMapsNs.drawing.OverlayType.POLYGON;
+    const salirDeModoDibujo = () => {
+        modoDibujo = false;
+        window.clearTimeout(clickPendiente);
+        poligonoEnCurso?.setMap(null);
+        poligonoEnCurso = null;
+        mapa.setOptions({ draggableCursor: null, disableDoubleClickZoom: false });
+    };
 
     /** Apaga los cuatro modos antes de prender uno — mutuamente excluyentes
      *  desde la barra, igual que en `inicializarLeaflet`. */
     const apagarModos = () => {
-        drawingManager.setDrawingMode(null);
+        if (modoDibujo) {
+            salirDeModoDibujo();
+
+            // Se salió del modo dibujar sin terminar el trazo: la medida en
+            // vivo vuelve a reflejar lo que hay REALMENTE guardado.
+            sincronizar();
+        }
+
         poligono?.setEditable(false);
         poligono?.setDraggable(false);
         modoBorrar = false;
     };
 
     const sincronizarEstadoBarra = () => {
-        botonDibujar?.setAttribute('aria-pressed', String(enModoDibujo()));
+        botonDibujar?.setAttribute('aria-pressed', String(modoDibujo));
         botonEditar?.setAttribute('aria-pressed', String(!!poligono?.getEditable()));
         botonMover?.setAttribute('aria-pressed', String(!!poligono?.getDraggable()));
         botonBorrar?.setAttribute('aria-pressed', String(modoBorrar));
     };
 
-    drawingManager.addListener('overlaycomplete', (evento) => {
-        if (evento.type !== googleMapsNs.drawing.OverlayType.POLYGON) {
+    const agregarVertice = (latLng) => {
+        if (!poligonoEnCurso) {
+            poligonoEnCurso = new googleMapsNs.Polygon({ paths: [latLng], ...estiloPoligonoGoogle() });
+            poligonoEnCurso.setMap(mapa);
+        } else {
+            poligonoEnCurso.getPath().push(latLng);
+        }
+
+        const ruta = poligonoEnCurso.getPath().getArray();
+
+        if (ruta.length >= 3) {
+            mostrarMedida(hectareasDeAnillo(ruta.map((punto) => [punto.lng(), punto.lat()])));
+        }
+    };
+
+    const terminarTrazo = () => {
+        const ruta = poligonoEnCurso?.getPath().getArray() ?? [];
+
+        salirDeModoDibujo();
+
+        if (ruta.length < 3) {
+            sincronizar();
+
             return;
         }
 
@@ -692,47 +746,39 @@ function inicializarGoogle(contenedor, refs, googleMapsNs) {
 
         // Uno solo: el nuevo reemplaza al anterior.
         quitarPoligono();
-        poligono = evento.overlay;
+        poligono = new googleMapsNs.Polygon({ paths: ruta, ...estiloPoligonoGoogle() });
+        poligono.setMap(mapa);
         conectarPoligono(confirmarEdicion);
 
-        drawingManager.setDrawingMode(null);
         sincronizarEstadoBarra();
         sincronizar();
-    });
+    };
 
-    drawingManager.addListener('drawingmode_changed', () => {
-        sincronizarEstadoBarra();
-
-        if (enModoDibujo()) {
-            puntosEnCurso = [];
-        } else {
-            // Se salió del modo dibujar sin terminar el trazo: la medida en
-            // vivo vuelve a reflejar lo que hay REALMENTE guardado.
-            sincronizar();
-        }
-    });
-
-    // Superficie EN VIVO mientras se dibuja — misma técnica que Leaflet: el
-    // `click` nativo del mapa es la única fuente pública de cada vértice
-    // mientras el `DrawingManager` arma el polígono.
     mapa.addListener('click', (evento) => {
-        if (!enModoDibujo()) {
+        if (!modoDibujo) {
             return;
         }
 
-        puntosEnCurso.push([evento.latLng.lng(), evento.latLng.lat()]);
+        window.clearTimeout(clickPendiente);
+        clickPendiente = window.setTimeout(() => agregarVertice(evento.latLng), 250);
+    });
 
-        if (puntosEnCurso.length >= 3) {
-            mostrarMedida(hectareasDeAnillo(puntosEnCurso));
+    mapa.addListener('dblclick', () => {
+        if (!modoDibujo) {
+            return;
         }
+
+        window.clearTimeout(clickPendiente);
+        terminarTrazo();
     });
 
     botonDibujar?.addEventListener('click', () => {
-        const activo = enModoDibujo();
+        const activo = modoDibujo;
         apagarModos();
 
         if (!activo) {
-            drawingManager.setDrawingMode(googleMapsNs.drawing.OverlayType.POLYGON);
+            modoDibujo = true;
+            mapa.setOptions({ draggableCursor: 'crosshair', disableDoubleClickZoom: true });
         }
 
         sincronizarEstadoBarra();
@@ -783,7 +829,7 @@ function inicializarGoogle(contenedor, refs, googleMapsNs) {
 
         botonCapa.addEventListener('click', () => {
             esSatelital = !esSatelital;
-            mapa.setMapTypeId(esSatelital ? googleMapsNs.MapTypeId.SATELLITE : googleMapsNs.MapTypeId.ROADMAP);
+            mapa.setMapTypeId(esSatelital ? googleMapsNs.MapTypeId.HYBRID : googleMapsNs.MapTypeId.ROADMAP);
             actualizarBotonCapa();
         });
 
@@ -819,7 +865,7 @@ function inicializarGoogle(contenedor, refs, googleMapsNs) {
     // inicializar, así que hay que releerlos.
     window.addEventListener('agrocom:theme-changed', () => {
         poligono?.setOptions(estiloPoligonoGoogle());
-        drawingManager.setOptions({ polygonOptions: estiloPoligonoGoogle() });
+        poligonoEnCurso?.setOptions(estiloPoligonoGoogle());
     });
 }
 
@@ -843,7 +889,13 @@ function inicializar(contenedor) {
     if (contenedor.dataset.agLoteMapaProveedor === 'google' && llave) {
         cargarGoogleMaps(llave)
             .then((googleMapsNs) => inicializarGoogle(contenedor, refs, googleMapsNs))
-            .catch(() => inicializarLeaflet(contenedor, refs));
+            .catch((error) => {
+                // Antes caía a Leaflet sin dejar rastro — imposible saber SI
+                // Google falló y POR QUÉ sin esto. El fallback en sí queda
+                // igual: el formulario nunca se queda sin mapa.
+                console.warn('No se pudo inicializar Google Maps, se usa Leaflet como respaldo.', error);
+                inicializarLeaflet(contenedor, refs);
+            });
 
         return;
     }

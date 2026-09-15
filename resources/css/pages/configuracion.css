@@ -18,6 +18,17 @@
     flex-direction: column;
 }
 
+/* El `<form>` de cada pestaña tiene dos hijos directos, la tarjeta de campos
+   (`molecules/form-section`) y la barra de acciones (`organisms/form-actions-bar`,
+   `position: sticky`) — sin esto quedan pegados uno contra el otro porque
+   ninguno de los dos pone margen propio. Mismo criterio que
+   `.ag-organizacion__form` en organizacion.css. */
+.ag-configuracion__form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
 .ag-configuracion__vacio {
     color: var(--ag-color-text-muted);
 }

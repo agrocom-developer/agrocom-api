@@ -21,6 +21,7 @@ return [
 
     'accion_borrar' => 'Borrar',
     'ayuda_secreto' => 'Dejalo vacío para no modificarlo. Para reemplazarlo, escribí el valor nuevo completo.',
+    'ayuda_forzar_leaflet' => 'Activado: el editor de lotes usa Leaflet aunque haya una llave de Google Maps cargada. Desactivado: usa Google automáticamente si hay una llave válida.',
 
     'vacio_integraciones' => 'Todavía no hay integraciones configurables. Se agregan a medida que el sistema las necesite.',
 
@@ -29,7 +30,7 @@ return [
     // `__("configuracion.claves.{$clave}")`: ver el docblock de
     // `ListarConfiguracionPorGrupo::ejecutar()`.
     'claves' => [
-        'mapas.proveedor_preferido' => 'Proveedor de mapas preferido',
+        'mapas.proveedor_preferido' => 'Forzar Leaflet (no usar Google Maps)',
         'mapas.google_maps_api_key' => 'Llave de Google Maps',
         'correo.host' => 'Host del servidor de correo',
         'correo.puerto' => 'Puerto',

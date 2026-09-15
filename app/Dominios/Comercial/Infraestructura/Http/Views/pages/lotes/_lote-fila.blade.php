@@ -83,6 +83,44 @@
         error="{{ $errors->first($erroresPrefijo.'.hectareas') }}"
     />
 
+    <x-atoms.select
+        name="{{ $prefijo }}[desnivel]"
+        id="{{ $idBase }}-desnivel"
+        label="{{ __('comercial.lotes.lote_desnivel') }}"
+        :options="[
+            'ninguno' => __('comercial.lotes.lote_desnivel_ninguno'),
+            'algunos' => __('comercial.lotes.lote_desnivel_algunos'),
+            'varios' => __('comercial.lotes.lote_desnivel_varios'),
+            'empinado' => __('comercial.lotes.lote_desnivel_empinado'),
+        ]"
+        :value="$lote['desnivel'] ?? ''"
+        placeholder="{{ __('comercial.lotes.lote_desnivel_placeholder') }}"
+        error="{{ $errors->first($erroresPrefijo.'.desnivel') }}"
+    />
+
+    <x-atoms.select
+        name="{{ $prefijo }}[limpieza]"
+        id="{{ $idBase }}-limpieza"
+        label="{{ __('comercial.lotes.lote_limpieza') }}"
+        :options="[
+            'limpio' => __('comercial.lotes.lote_limpieza_limpio'),
+            'algunos_obstaculos' => __('comercial.lotes.lote_limpieza_algunos_obstaculos'),
+            'muchos_obstaculos' => __('comercial.lotes.lote_limpieza_muchos_obstaculos'),
+        ]"
+        :value="$lote['limpieza'] ?? ''"
+        placeholder="{{ __('comercial.lotes.lote_limpieza_placeholder') }}"
+        error="{{ $errors->first($erroresPrefijo.'.limpieza') }}"
+    />
+
+    <x-atoms.textarea
+        name="{{ $prefijo }}[restricciones]"
+        id="{{ $idBase }}-restricciones"
+        label="{{ __('comercial.lotes.lote_restricciones') }}"
+        value="{{ $lote['restricciones'] ?? '' }}"
+        placeholder="{{ __('comercial.lotes.lote_restricciones_placeholder') }}"
+        rows="2"
+    />
+
     <div
         class="ag-input ag-form-section__field--full ag-lote-mapa"
         data-ag-lote-mapa
@@ -228,44 +266,6 @@
             </div>
         </div>
     </div>
-
-    <x-atoms.select
-        name="{{ $prefijo }}[desnivel]"
-        id="{{ $idBase }}-desnivel"
-        label="{{ __('comercial.lotes.lote_desnivel') }}"
-        :options="[
-            'ninguno' => __('comercial.lotes.lote_desnivel_ninguno'),
-            'algunos' => __('comercial.lotes.lote_desnivel_algunos'),
-            'varios' => __('comercial.lotes.lote_desnivel_varios'),
-            'empinado' => __('comercial.lotes.lote_desnivel_empinado'),
-        ]"
-        :value="$lote['desnivel'] ?? ''"
-        placeholder="{{ __('comercial.lotes.lote_desnivel_placeholder') }}"
-        error="{{ $errors->first($erroresPrefijo.'.desnivel') }}"
-    />
-
-    <x-atoms.select
-        name="{{ $prefijo }}[limpieza]"
-        id="{{ $idBase }}-limpieza"
-        label="{{ __('comercial.lotes.lote_limpieza') }}"
-        :options="[
-            'limpio' => __('comercial.lotes.lote_limpieza_limpio'),
-            'algunos_obstaculos' => __('comercial.lotes.lote_limpieza_algunos_obstaculos'),
-            'muchos_obstaculos' => __('comercial.lotes.lote_limpieza_muchos_obstaculos'),
-        ]"
-        :value="$lote['limpieza'] ?? ''"
-        placeholder="{{ __('comercial.lotes.lote_limpieza_placeholder') }}"
-        error="{{ $errors->first($erroresPrefijo.'.limpieza') }}"
-    />
-
-    <x-atoms.textarea
-        name="{{ $prefijo }}[restricciones]"
-        id="{{ $idBase }}-restricciones"
-        label="{{ __('comercial.lotes.lote_restricciones') }}"
-        value="{{ $lote['restricciones'] ?? '' }}"
-        placeholder="{{ __('comercial.lotes.lote_restricciones_placeholder') }}"
-        rows="2"
-    />
 
     @if ($mostrarQuitar)
         <div class="ag-form-section__field--full ag-campos-form__lote-pie">
