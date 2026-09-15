@@ -7,6 +7,7 @@ import './atoms/checkbox-group.js';
 import './molecules/theme-toggle.js';
 import './molecules/timezone-badge.js';
 import './molecules/file-field.js';
+import './molecules/table-search.js';
 import './organisms/login-form.js';
 import './organisms/topbar.js';
 import './organisms/role-selection.js';

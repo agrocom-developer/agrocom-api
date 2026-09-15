@@ -49,7 +49,28 @@
     color: var(--ag-color-text-muted);
 }
 
-/* Barra sobre la tabla, buscador anclado a la derecha. */
+.ag-table-search-wrap {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+}
+
+/* Naranja de marca (logo), reservado para links de texto — mismo token que
+   ya usa el catálogo para esto, nunca el verde de acción primaria: "Limpiar"
+   deshace, no confirma. */
+.ag-table-search__clear {
+    flex: 0 0 auto;
+    color: var(--ag-color-accent-link);
+    font-size: var(--ag-font-size-sm);
+    white-space: nowrap;
+}
+
+.ag-table-search__clear:hover {
+    color: var(--ag-color-accent-hover);
+}
+
+/* Barra sobre la tabla, buscador (+ "Limpiar" si hay filtro) anclados a la
+   derecha. */
 .ag-table-toolbar {
     display: flex;
     justify-content: flex-end;
@@ -58,5 +79,9 @@
 @media (max-width: 767.98px) {
     .ag-table-search {
         max-width: none;
+    }
+
+    .ag-table-search-wrap {
+        width: 100%;
     }
 }

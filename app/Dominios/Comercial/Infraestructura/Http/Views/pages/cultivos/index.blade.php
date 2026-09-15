@@ -63,6 +63,7 @@
                         action="{{ route('panel.cultivos.index') }}"
                         :value="$filtros['q']"
                         :placeholder="__('comercial.cultivos.filtro_busqueda_placeholder')"
+                        :clear-label="__('ui.tabla.buscador_limpiar')"
                     />
                 </div>
             @endif
