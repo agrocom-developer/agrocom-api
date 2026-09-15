@@ -39,6 +39,33 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((el) => new bootstrap.Tooltip(el));
 });
 
+// Pre-instanciación de TODO dropdown del panel con `strategy: 'fixed'`
+// (movido acá desde organisms/topbar.js el 15/9/2026, cuando dejó de ser
+// exclusivo del header: organisms/filter-panel y organisms/row-actions
+// también son dropdowns, y viven dentro de `.ag-panel__content`, que igual
+// que `.ag-topbar` tiene `overflow` para no romper el alto fijo del layout
+// de tres niveles). Con `position: absolute` (default de Bootstrap) ese
+// `overflow` recorta el menú apenas se abre — `strategy: 'fixed'` lo
+// posiciona respecto del viewport en vez de sus ancestros, fuera de
+// cualquier contexto de recorte. Se pre-instancia ANTES de que la data-api
+// de Bootstrap cree su propia instancia por defecto al primer click.
+// `computeStyles.gpuAcceleration: false` hace que Popper posicione con
+// `top`/`left` en vez de `transform: translate3d(...)` (su default) — sin
+// esto, CSS no puede sobreescribir la posición con `!important` (un
+// `transform` inline gana siempre), que es lo que organisms/filter-panel
+// necesita en mobile para anclarse a los bordes del viewport en vez de a la
+// posición del botón que lo abre (15/9/2026).
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach((el) => {
+        new bootstrap.Dropdown(el, {
+            popperConfig: {
+                strategy: 'fixed',
+                modifiers: [{ name: 'computeStyles', options: { gpuAcceleration: false } }],
+            },
+        });
+    });
+});
+
 // Carga diferida de ApexCharts/Leaflet (dashboard): un solo entrypoint Vite
 // para todo el panel, así que un import estático acá los bajaría hasta en el
 // login. `import()` dinámico + guard de presencia en el DOM hace que Vite

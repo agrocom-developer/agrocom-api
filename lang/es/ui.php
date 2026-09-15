@@ -125,7 +125,12 @@ return [
     // lang/es/<dominio>.php.
     'tabla' => [
         'col_indice' => '#',
+        'col_acciones' => 'Acciones',
         'buscador_limpiar' => 'Limpiar búsqueda',
+        'mas_acciones' => 'Más acciones',
+        'filtros_boton' => 'Filtros',
+        'filtros_aplicar' => 'Aplicar',
+        'filtros_limpiar' => 'Limpiar filtros',
     ],
 
 ];

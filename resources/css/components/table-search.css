@@ -12,7 +12,7 @@
     align-items: center;
     gap: var(--ag-space-2);
     width: 100%;
-    max-width: 20rem;
+    max-width: 28rem;
     height: var(--ag-size-control-height);
     padding: 0 var(--ag-space-3);
     background: var(--ag-color-bg-input-chrome);
@@ -69,9 +69,38 @@
     color: var(--ag-color-accent-hover);
 }
 
-/* Barra sobre la tabla, buscador (+ "Limpiar" si hay filtro) anclados a la
-   derecha. */
+/* Barra sobre la tabla: `organisms/filter-panel` (si la página tiene filtros
+   aparte del buscador) a la izquierda, buscador a la derecha — antes eran
+   dos bloques separados (el buscador acá, el form `.ag-filtros` como franja
+   aparte debajo), lo que en la práctica los desalineaba: el buscador quedaba
+   arriba a la derecha y el filtro abajo a la izquierda. Depende del ORDEN
+   en el Blade: `filter-panel` va primero en el markup, `table-search`
+   después — en una página sin buscador, el filter-panel es el único hijo y
+   ya queda a la izquierda sin necesitar ningún margen extra. */
 .ag-table-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--ag-space-3);
+}
+
+/* `.ag-table-search` ya limita su propio ancho con `max-width` — sin
+   `flex-grow` acá, el `width:100%` de más arriba se resuelve como
+   flex-basis:100% del contenedor y termina compitiendo por espacio con
+   `.ag-filter-panel-wrap` en vez de ocupar lo que sobra: el buscador queda
+   angosto sin importar cuánto crezca su `max-width` (15/9/2026). `flex:1`
+   lo deja crecer hasta ese tope; `min-width:0` evita que el default
+   `min-width:auto` de flexbox le impida encogerse en mobile. */
+.ag-table-toolbar .ag-table-search-wrap {
+    flex: 1 1 auto;
+    min-width: 0;
+    /* El wrap ahora ocupa TODO el espacio sobrante del toolbar (ese es el
+       punto de flex-grow), pero `.ag-table-search` adentro no necesariamente
+       llena ese espacio (para en su propio `max-width`) — sin esto, el campo
+       quedaba pegado al borde IZQUIERDO del wrap, con el resto del espacio
+       vacío a la derecha, en vez de pegado al borde derecho del toolbar
+       como antes de que el wrap creciera (15/9/2026). */
     display: flex;
     justify-content: flex-end;
 }
@@ -83,5 +112,13 @@
 
     .ag-table-search-wrap {
         width: 100%;
+    }
+
+    /* El buscador (segundo hijo del DOM) pasa a la línea de abajo, ancho
+       completo; el filtro queda arriba — orden natural en columna, sin
+       reverse. */
+    .ag-table-toolbar {
+        flex-direction: column;
+        align-items: stretch;
     }
 }
