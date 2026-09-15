@@ -61,50 +61,64 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <form method="GET" action="{{ route('panel.usuarios.index') }}" class="ag-filtros ag-usuarios__filtros">
-                <div class="ag-input">
-                    <label for="filtro-q" class="ag-input__label">{{ __('seguridad.usuarios.filtro_busqueda') }}</label>
-                    <div class="ag-input__control">
-                        <input
-                            type="search"
-                            name="q"
-                            id="filtro-q"
-                            class="ag-input__field"
-                            value="{{ $filtros['q'] }}"
-                            placeholder="{{ __('seguridad.usuarios.filtro_busqueda_placeholder') }}"
-                        >
+            @php
+                $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
+            @endphp
+
+            @if ($hayFiltrosActivos || $usuarios->isNotEmpty())
+                <form method="GET" action="{{ route('panel.usuarios.index') }}" class="ag-filtros ag-usuarios__filtros">
+                    <div class="ag-input">
+                        <label for="filtro-q" class="ag-input__label">{{ __('seguridad.usuarios.filtro_busqueda') }}</label>
+                        <div class="ag-input__control">
+                            <input
+                                type="search"
+                                name="q"
+                                id="filtro-q"
+                                class="ag-input__field"
+                                value="{{ $filtros['q'] }}"
+                                placeholder="{{ __('seguridad.usuarios.filtro_busqueda_placeholder') }}"
+                            >
+                        </div>
                     </div>
-                </div>
 
-                <x-atoms.select
-                    name="tipo"
-                    id="filtro-tipo"
-                    label="{{ __('seguridad.usuarios.filtro_tipo') }}"
-                    :options="[
-                        'interno' => __('seguridad.usuarios.tipo_interno'),
-                        'cliente' => __('seguridad.usuarios.tipo_cliente'),
-                    ]"
-                    :value="$filtros['tipo']"
-                    placeholder="{{ __('seguridad.usuarios.filtro_tipo_todos') }}"
-                />
+                    <x-atoms.select
+                        name="tipo"
+                        id="filtro-tipo"
+                        label="{{ __('seguridad.usuarios.filtro_tipo') }}"
+                        :options="[
+                            'interno' => __('seguridad.usuarios.tipo_interno'),
+                            'cliente' => __('seguridad.usuarios.tipo_cliente'),
+                        ]"
+                        :value="$filtros['tipo']"
+                        placeholder="{{ __('seguridad.usuarios.filtro_tipo_todos') }}"
+                    />
 
-                <div class="ag-filtros__acciones ag-usuarios__filtros-acciones">
-                    <x-atoms.button type="submit" variant="outline" size="md" icon="search">
-                        {{ __('seguridad.usuarios.filtrar') }}
-                    </x-atoms.button>
-
-                    @if ($filtros['q'] !== '' || $filtros['tipo'] !== '')
-                        <x-atoms.button href="{{ route('panel.usuarios.index') }}" variant="text" size="md">
-                            {{ __('seguridad.usuarios.limpiar_filtro') }}
+                    <div class="ag-filtros__acciones ag-usuarios__filtros-acciones">
+                        <x-atoms.button type="submit" variant="outline" size="md" icon="search">
+                            {{ __('seguridad.usuarios.filtrar') }}
                         </x-atoms.button>
-                    @endif
-                </div>
-            </form>
+
+                        @if ($filtros['q'] !== '' || $filtros['tipo'] !== '')
+                            <x-atoms.button href="{{ route('panel.usuarios.index') }}" variant="text" size="md">
+                                {{ __('seguridad.usuarios.limpiar_filtro') }}
+                            </x-atoms.button>
+                        @endif
+                    </div>
+                </form>
+            @endif
 
             @if ($usuarios->isEmpty())
-                <x-molecules.alert-strip variant="info" icon="badge" class="ag-usuarios__aviso">
-                    {{ __($filtros['q'] !== '' ? 'seguridad.usuarios.filtro_vacio' : 'seguridad.usuarios.vacio') }}
-                </x-molecules.alert-strip>
+                @if ($hayFiltrosActivos)
+                    <x-molecules.alert-strip variant="info" icon="badge" class="ag-usuarios__aviso">
+                        {{ __('seguridad.usuarios.filtro_vacio') }}
+                    </x-molecules.alert-strip>
+                @else
+                    <x-molecules.empty-state
+                        icon="badge"
+                        :title="__('seguridad.usuarios.vacio_titulo')"
+                        :detail="__('seguridad.usuarios.vacio_detalle')"
+                    />
+                @endif
             @else
                 <div class="ag-usuarios__tabla" role="table">
                     <div class="ag-usuarios__head" role="row">
