@@ -1,59 +1,15 @@
 /*
- * Molecule: pagination (`.ag-pagination`).
- * Reemplaza el patrón "Anterior · Página X de Y · Siguiente" — acá se
- * puede saltar directo a cualquier página de la ventana calculada por
- * `\Illuminate\Pagination\UrlWindow` (ver el componente Blade).
+ * Molecule: pagination.
+ * Usa el componente `.pagination`/`.page-item`/`.page-link` nativo de
+ * Bootstrap (ver el componente Blade) — ya sale coloreado con la marca
+ * porque `--bs-primary` está mapeado a `--ag-color-primary`
+ * (tokens/semantic/theme-{light,dark}.css). Acá solo lo necesario para que
+ * el ícono de los extremos (Anterior/Siguiente) quede centrado dentro del
+ * link, que Bootstrap no resuelve solo cuando el contenido es un ícono en
+ * vez de texto.
  */
-.ag-pagination {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--ag-space-2);
-}
-
-.ag-pagination__pages {
-    display: flex;
-    align-items: center;
-    gap: var(--ag-space-1);
-}
-
-.ag-pagination__arrow,
-.ag-pagination__page {
+.pagination .page-link {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 2.25rem;
-    height: 2.25rem;
-    padding: 0 var(--ag-space-2);
-    border-radius: var(--ag-radius-md);
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-sm);
-    text-decoration: none;
-}
-
-a.ag-pagination__arrow,
-a.ag-pagination__page {
-    border: 1px solid var(--ag-color-border);
-    background: var(--ag-color-surface-card);
-}
-
-a.ag-pagination__arrow:hover,
-a.ag-pagination__page:hover {
-    background: var(--ag-color-bg-row-hover);
-    color: var(--ag-color-text);
-}
-
-.ag-pagination__arrow--disabled {
-    color: var(--ag-color-text-faint);
-}
-
-.ag-pagination__page--current {
-    background: var(--ag-color-primary);
-    color: var(--ag-color-primary-contrast);
-    font-weight: var(--ag-font-weight-bold);
-}
-
-.ag-pagination__dots {
-    padding: 0 var(--ag-space-1);
-    color: var(--ag-color-text-faint);
 }
