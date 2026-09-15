@@ -42,72 +42,82 @@
             :subtitle="__('operaciones.estadias.subtitulo')"
         />
 
-        @php $hayFiltrosActivos = $filtros['desde'] !== null || $filtros['hasta'] !== null || $filtros['equipo_trabajo_id'] !== null || $filtros['propiedad_id'] !== null; @endphp
+        @php $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== ''); @endphp
 
-        <form method="GET" action="{{ route('panel.estadias.index') }}" class="ag-filtros ag-estadias__filtros">
-            @php
-                $opcionesEquipo = collect($equiposDisponibles)->mapWithKeys(fn ($etiqueta, $id) => [
-                    $id => $etiqueta
-                ])->all();
-            @endphp
+        @if ($hayFiltrosActivos || $estadias->isNotEmpty())
+            <form method="GET" action="{{ route('panel.estadias.index') }}" class="ag-filtros ag-estadias__filtros">
+                @php
+                    $opcionesEquipo = collect($equiposDisponibles)->mapWithKeys(fn ($etiqueta, $id) => [
+                        $id => $etiqueta
+                    ])->all();
+                @endphp
 
-            <x-atoms.date
-                name="desde"
-                id="filtro-desde"
-                label="{{ __('operaciones.estadias.filtro_desde') }}"
-                :value="$filtros['desde']"
-                :placeholder="__('operaciones.estadias.filtro_placeholder_desde')"
-            />
+                <x-atoms.date
+                    name="desde"
+                    id="filtro-desde"
+                    label="{{ __('operaciones.estadias.filtro_desde') }}"
+                    :value="$filtros['desde']"
+                    :placeholder="__('operaciones.estadias.filtro_placeholder_desde')"
+                />
 
-            <x-atoms.date
-                name="hasta"
-                id="filtro-hasta"
-                label="{{ __('operaciones.estadias.filtro_hasta') }}"
-                :value="$filtros['hasta']"
-                :placeholder="__('operaciones.estadias.filtro_placeholder_hasta')"
-            />
+                <x-atoms.date
+                    name="hasta"
+                    id="filtro-hasta"
+                    label="{{ __('operaciones.estadias.filtro_hasta') }}"
+                    :value="$filtros['hasta']"
+                    :placeholder="__('operaciones.estadias.filtro_placeholder_hasta')"
+                />
 
-            <x-atoms.select
-                name="equipo_trabajo_id"
-                id="filtro-equipo"
-                label="{{ __('operaciones.estadias.filtro_equipo') }}"
-                :options="$opcionesEquipo"
-                :value="$filtros['equipo_trabajo_id']"
-                :placeholder="__('operaciones.estadias.filtro_todos')"
-            />
+                <x-atoms.select
+                    name="equipo_trabajo_id"
+                    id="filtro-equipo"
+                    label="{{ __('operaciones.estadias.filtro_equipo') }}"
+                    :options="$opcionesEquipo"
+                    :value="$filtros['equipo_trabajo_id']"
+                    :placeholder="__('operaciones.estadias.filtro_todos')"
+                />
 
-            @php
-                $opcionesPropiedad = collect($propiedadesDisponibles)->mapWithKeys(fn ($etiqueta, $id) => [
-                    $id => $etiqueta
-                ])->all();
-            @endphp
+                @php
+                    $opcionesPropiedad = collect($propiedadesDisponibles)->mapWithKeys(fn ($etiqueta, $id) => [
+                        $id => $etiqueta
+                    ])->all();
+                @endphp
 
-            <x-atoms.select
-                name="propiedad_id"
-                id="filtro-campo"
-                label="{{ __('operaciones.estadias.filtro_campo') }}"
-                :options="$opcionesPropiedad"
-                :value="$filtros['propiedad_id']"
-                :placeholder="__('operaciones.estadias.filtro_todos')"
-            />
+                <x-atoms.select
+                    name="propiedad_id"
+                    id="filtro-campo"
+                    label="{{ __('operaciones.estadias.filtro_campo') }}"
+                    :options="$opcionesPropiedad"
+                    :value="$filtros['propiedad_id']"
+                    :placeholder="__('operaciones.estadias.filtro_todos')"
+                />
 
-            <div class="ag-filtros__acciones ag-estadias__filtros-acciones">
-                <x-atoms.button type="submit" variant="outline" size="md" icon="filter_alt">
-                    {{ __('operaciones.estadias.filtrar') }}
-                </x-atoms.button>
-
-                @if ($hayFiltrosActivos)
-                    <x-atoms.button href="{{ route('panel.estadias.index') }}" variant="text" size="md">
-                        {{ __('operaciones.estadias.limpiar_filtros') }}
+                <div class="ag-filtros__acciones ag-estadias__filtros-acciones">
+                    <x-atoms.button type="submit" variant="outline" size="md" icon="filter_alt">
+                        {{ __('operaciones.estadias.filtrar') }}
                     </x-atoms.button>
-                @endif
-            </div>
-        </form>
+
+                    @if ($hayFiltrosActivos)
+                        <x-atoms.button href="{{ route('panel.estadias.index') }}" variant="text" size="md">
+                            {{ __('operaciones.estadias.limpiar_filtros') }}
+                        </x-atoms.button>
+                    @endif
+                </div>
+            </form>
+        @endif
 
         @if ($estadias->isEmpty())
-            <x-molecules.alert-strip variant="info" icon="fact_check" class="ag-estadias__aviso">
-                {{ __($hayFiltrosActivos ? 'operaciones.estadias.filtro_vacio' : 'operaciones.estadias.vacio') }}
-            </x-molecules.alert-strip>
+            @if ($hayFiltrosActivos)
+                <x-molecules.alert-strip variant="info" icon="fact_check" class="ag-estadias__aviso">
+                    {{ __('operaciones.estadias.filtro_vacio') }}
+                </x-molecules.alert-strip>
+            @else
+                <x-molecules.empty-state
+                    icon="fact_check"
+                    :title="__('operaciones.estadias.vacio_titulo')"
+                    :detail="__('operaciones.estadias.vacio_detalle')"
+                />
+            @endif
         @else
             @if (! empty($diasPorEquipo) || ! empty($diasPorPropiedad))
                 <div class="ag-estadias__totales">

@@ -42,73 +42,83 @@
             :subtitle="__('operaciones.trabajos.subtitulo')"
         />
 
-        @php $hayFiltrosActivos = $filtros['estado'] !== null || $filtros['lote_id'] !== null || $filtros['orden_id'] !== null; @endphp
+        @php $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== ''); @endphp
 
-        <form method="GET" action="{{ route('panel.trabajos.index') }}" class="ag-filtros ag-trabajos__filtros">
-            @php
-                $opcionesEstado = [
-                    'abierto' => __('operaciones.trabajos.estado.abierto'),
-                    'cerrado' => __('operaciones.trabajos.estado.cerrado'),
-                    'validado' => __('operaciones.trabajos.estado.validado'),
-                ];
-            @endphp
+        @if ($hayFiltrosActivos || $trabajos->isNotEmpty())
+            <form method="GET" action="{{ route('panel.trabajos.index') }}" class="ag-filtros ag-trabajos__filtros">
+                @php
+                    $opcionesEstado = [
+                        'abierto' => __('operaciones.trabajos.estado.abierto'),
+                        'cerrado' => __('operaciones.trabajos.estado.cerrado'),
+                        'validado' => __('operaciones.trabajos.estado.validado'),
+                    ];
+                @endphp
 
-            <x-atoms.select
-                name="estado"
-                id="filtro-estado"
-                label="{{ __('operaciones.trabajos.filtro_estado') }}"
-                :options="$opcionesEstado"
-                :value="$filtros['estado']"
-                :placeholder="__('operaciones.trabajos.filtro_todos')"
-            />
+                <x-atoms.select
+                    name="estado"
+                    id="filtro-estado"
+                    label="{{ __('operaciones.trabajos.filtro_estado') }}"
+                    :options="$opcionesEstado"
+                    :value="$filtros['estado']"
+                    :placeholder="__('operaciones.trabajos.filtro_todos')"
+                />
 
-            @php
-                $opcionesLote = collect($lotesDisponibles)->mapWithKeys(fn ($loteId) => [
-                    $loteId => __('operaciones.trabajos.filtro_lote_opcion', ['id' => $loteId])
-                ])->all();
-            @endphp
+                @php
+                    $opcionesLote = collect($lotesDisponibles)->mapWithKeys(fn ($loteId) => [
+                        $loteId => __('operaciones.trabajos.filtro_lote_opcion', ['id' => $loteId])
+                    ])->all();
+                @endphp
 
-            <x-atoms.select
-                name="lote_id"
-                id="filtro-lote"
-                label="{{ __('operaciones.trabajos.filtro_lote') }}"
-                :options="$opcionesLote"
-                :value="$filtros['lote_id']"
-                :placeholder="__('operaciones.trabajos.filtro_todos')"
-            />
+                <x-atoms.select
+                    name="lote_id"
+                    id="filtro-lote"
+                    label="{{ __('operaciones.trabajos.filtro_lote') }}"
+                    :options="$opcionesLote"
+                    :value="$filtros['lote_id']"
+                    :placeholder="__('operaciones.trabajos.filtro_todos')"
+                />
 
-            @php
-                $opcionesOrden = collect($ordenesDisponibles)->mapWithKeys(fn ($orden) => [
-                    $orden->orden_id => __('operaciones.trabajos.filtro_orden_opcion', ['id' => $orden->orden_id, 'aplicacion' => $orden->nro_aplicacion])
-                ])->all();
-            @endphp
+                @php
+                    $opcionesOrden = collect($ordenesDisponibles)->mapWithKeys(fn ($orden) => [
+                        $orden->orden_id => __('operaciones.trabajos.filtro_orden_opcion', ['id' => $orden->orden_id, 'aplicacion' => $orden->nro_aplicacion])
+                    ])->all();
+                @endphp
 
-            <x-atoms.select
-                name="orden_id"
-                id="filtro-orden"
-                label="{{ __('operaciones.trabajos.filtro_orden') }}"
-                :options="$opcionesOrden"
-                :value="$filtros['orden_id']"
-                :placeholder="__('operaciones.trabajos.filtro_todos')"
-            />
+                <x-atoms.select
+                    name="orden_id"
+                    id="filtro-orden"
+                    label="{{ __('operaciones.trabajos.filtro_orden') }}"
+                    :options="$opcionesOrden"
+                    :value="$filtros['orden_id']"
+                    :placeholder="__('operaciones.trabajos.filtro_todos')"
+                />
 
-            <div class="ag-filtros__acciones ag-trabajos__filtros-acciones">
-                <x-atoms.button type="submit" variant="outline" size="md" icon="filter_alt">
-                    {{ __('operaciones.trabajos.filtrar') }}
-                </x-atoms.button>
-
-                @if ($hayFiltrosActivos)
-                    <x-atoms.button href="{{ route('panel.trabajos.index') }}" variant="text" size="md">
-                        {{ __('operaciones.trabajos.limpiar_filtros') }}
+                <div class="ag-filtros__acciones ag-trabajos__filtros-acciones">
+                    <x-atoms.button type="submit" variant="outline" size="md" icon="filter_alt">
+                        {{ __('operaciones.trabajos.filtrar') }}
                     </x-atoms.button>
-                @endif
-            </div>
-        </form>
+
+                    @if ($hayFiltrosActivos)
+                        <x-atoms.button href="{{ route('panel.trabajos.index') }}" variant="text" size="md">
+                            {{ __('operaciones.trabajos.limpiar_filtros') }}
+                        </x-atoms.button>
+                    @endif
+                </div>
+            </form>
+        @endif
 
         @if ($trabajos->isEmpty())
-            <x-molecules.alert-strip variant="info" icon="fact_check" class="ag-trabajos__aviso">
-                {{ __($hayFiltrosActivos ? 'operaciones.trabajos.filtro_vacio' : 'operaciones.trabajos.vacio') }}
-            </x-molecules.alert-strip>
+            @if ($hayFiltrosActivos)
+                <x-molecules.alert-strip variant="info" icon="fact_check" class="ag-trabajos__aviso">
+                    {{ __('operaciones.trabajos.filtro_vacio') }}
+                </x-molecules.alert-strip>
+            @else
+                <x-molecules.empty-state
+                    icon="fact_check"
+                    :title="__('operaciones.trabajos.vacio_titulo')"
+                    :detail="__('operaciones.trabajos.vacio_detalle')"
+                />
+            @endif
         @else
             <div class="ag-trabajos__tabla" role="table">
                 <div class="ag-trabajos__head" role="row">

@@ -44,9 +44,11 @@
             />
 
             @if ($ordenes->isEmpty())
-                <x-molecules.alert-strip variant="info" icon="groups" class="ag-asignacion-equipos__aviso">
-                    {{ __('operaciones.asignacion_equipos.vacio') }}
-                </x-molecules.alert-strip>
+                <x-molecules.empty-state
+                    icon="groups"
+                    :title="__('operaciones.asignacion_equipos.vacio_titulo')"
+                    :detail="__('operaciones.asignacion_equipos.vacio_detalle')"
+                />
             @else
                 <div class="ag-asignacion-equipos__tabla" role="table">
                     <div class="ag-asignacion-equipos__head" role="row">

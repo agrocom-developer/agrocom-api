@@ -76,7 +76,8 @@ return [
     'trabajos' => [
         'titulo' => 'Trabajos',
         'subtitulo' => 'Trabajos sincronizados desde la app de campo, con sus sesiones.',
-        'vacio' => 'Todavía no llegó ningún trabajo sincronizado.',
+        'vacio_titulo' => 'Todavía no llegó ningún trabajo sincronizado',
+        'vacio_detalle' => 'Los trabajos se sincronizan automáticamente desde la app de campo cuando un piloto cierra una sesión. Volvé a esta pantalla cuando llegue el primero.',
         // HU-15 (tarea 15): sin resultados por los filtros aplicados —
         // distinto de "vacio" (no hay NADA todavía), para no confundir al
         // jefe con un tablero que en realidad tiene datos.
@@ -226,7 +227,8 @@ return [
         'filtro_periodo' => 'Período',
         'filtrar' => 'Filtrar',
         'limpiar_filtro' => 'Limpiar filtro',
-        'vacio' => 'No hay pausas registradas.',
+        'vacio_titulo' => 'Sin pausas registradas',
+        'vacio_detalle' => 'Las pausas se registran cuando un piloto o supervisor pausan una sesión en la app de campo, con su causa atribuible. Volvé a esta pantalla cuando se registre la primera.',
         'filtro_vacio' => 'No hay pausas que coincidan con el filtro.',
         'tablero_titulo' => 'Total por causa',
         'tablero_total' => 'Total del período',
@@ -274,7 +276,8 @@ return [
     'alertas' => [
         'titulo' => 'Alertas por excepción',
         'subtitulo' => 'Solo lo anómalo: batería caliente, dron sospechoso, condiciones forzadas y suma excedida.',
-        'vacio' => 'No hay alertas registradas todavía.',
+        'vacio_titulo' => 'Sin alertas registradas',
+        'vacio_detalle' => 'Las alertas se generan automáticamente cuando se detecta una condición anómala durante una sesión. Volvé a esta pantalla cuando se registre la primera.',
         'filtro_vacio' => 'Ninguna alerta coincide con estos filtros.',
         'col_tipo' => 'Tipo',
         'col_mensaje' => 'Detalle',
@@ -322,7 +325,8 @@ return [
         'filtro_busqueda_placeholder' => 'Identificador o modelo…',
         'filtrar' => 'Filtrar',
         'limpiar_filtro' => 'Limpiar filtro',
-        'vacio' => 'Todavía no hay drones registrados.',
+        'vacio_titulo' => 'Todavía no hay drones registrados',
+        'vacio_detalle' => 'Registrá cada dron de la flota con su identificador, modelo y capacidad de carga. Necesitarás al menos uno para ejecutar trabajos.',
         'filtro_vacio' => 'Ningún dron coincide con esta búsqueda.',
         'col_identificador' => 'Identificador',
         'col_modelo' => 'Modelo',
@@ -370,7 +374,8 @@ return [
         'filtro_todos' => 'Todos',
         'filtrar' => 'Filtrar',
         'limpiar_filtros' => 'Limpiar filtros',
-        'vacio' => 'Todavía no hay órdenes de aplicación registradas.',
+        'vacio_titulo' => 'Sin órdenes de aplicación',
+        'vacio_detalle' => 'Emití órdenes de aplicación para los lotes donde se necesita un trabajo. Cada orden define los límites climáticos, parámetros de vuelo y dosis del insumo.',
         'filtro_vacio' => 'Ninguna orden coincide con estos filtros.',
         'col_contrato' => 'Contrato',
         'col_lote' => 'Lote',
@@ -459,7 +464,8 @@ return [
     'asignacion_equipos' => [
         'titulo' => 'Asignación de equipos',
         'subtitulo' => 'Repartí las hectáreas de cada orden vigente entre los equipos de trabajo.',
-        'vacio' => 'No hay órdenes vigentes para repartir.',
+        'vacio_titulo' => 'Sin órdenes vigentes',
+        'vacio_detalle' => 'Activá una orden de aplicación para que aparezca acá. Una orden vigente es la que está lista para que los equipos comiencen a trabajar.',
         'col_orden' => 'Orden',
         'col_contrato' => 'Contrato',
         'col_lote' => 'Lote',
@@ -521,7 +527,8 @@ return [
     'estadias' => [
         'titulo' => 'Estadías en hacienda',
         'subtitulo' => 'Entrada y salida del equipo de trabajo en cada propiedad, con sus tiempos efectivos.',
-        'vacio' => 'Todavía no hay estadías registradas.',
+        'vacio_titulo' => 'Sin estadías registradas',
+        'vacio_detalle' => 'Las estadías se registran automáticamente desde la app de campo cuando el equipo entra o sale de una propiedad. Volvé a esta pantalla cuando se complete el primer registro.',
         'filtro_vacio' => 'Ninguna estadía coincide con estos filtros.',
         'filtro_desde' => 'Desde',
         'filtro_placeholder_desde' => 'Fecha de inicio…',

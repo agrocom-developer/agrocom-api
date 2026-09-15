@@ -44,60 +44,70 @@
             </x-molecules.alert-strip>
         @endif
 
-        @php $hayFiltrosActivos = $filtros['estado'] !== null || $filtros['tipo'] !== null; @endphp
+        @php $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== ''); @endphp
 
-        <form method="GET" action="{{ route('panel.alertas.index') }}" class="ag-filtros ag-alertas__filtros">
-            @php
-                $opcionesEstado = [
-                    'pendiente' => __('operaciones.alertas.estado.pendiente'),
-                    'atendida' => __('operaciones.alertas.estado.atendida'),
-                ];
-            @endphp
+        @if ($hayFiltrosActivos || $alertas->isNotEmpty())
+            <form method="GET" action="{{ route('panel.alertas.index') }}" class="ag-filtros ag-alertas__filtros">
+                @php
+                    $opcionesEstado = [
+                        'pendiente' => __('operaciones.alertas.estado.pendiente'),
+                        'atendida' => __('operaciones.alertas.estado.atendida'),
+                    ];
+                @endphp
 
-            <x-atoms.select
-                name="estado"
-                id="filtro-estado"
-                label="{{ __('operaciones.alertas.filtro_estado') }}"
-                :options="$opcionesEstado"
-                :value="$filtros['estado']"
-                :placeholder="__('operaciones.alertas.filtro_todos')"
-            />
+                <x-atoms.select
+                    name="estado"
+                    id="filtro-estado"
+                    label="{{ __('operaciones.alertas.filtro_estado') }}"
+                    :options="$opcionesEstado"
+                    :value="$filtros['estado']"
+                    :placeholder="__('operaciones.alertas.filtro_todos')"
+                />
 
-            @php
-                $opcionesTipo = [
-                    'bateria_caliente' => __('operaciones.alertas.tipo.bateria_caliente'),
-                    'dron_sospechoso' => __('operaciones.alertas.tipo.dron_sospechoso'),
-                    'condiciones_forzadas' => __('operaciones.alertas.tipo.condiciones_forzadas'),
-                    'suma_excedida' => __('operaciones.alertas.tipo.suma_excedida'),
-                ];
-            @endphp
+                @php
+                    $opcionesTipo = [
+                        'bateria_caliente' => __('operaciones.alertas.tipo.bateria_caliente'),
+                        'dron_sospechoso' => __('operaciones.alertas.tipo.dron_sospechoso'),
+                        'condiciones_forzadas' => __('operaciones.alertas.tipo.condiciones_forzadas'),
+                        'suma_excedida' => __('operaciones.alertas.tipo.suma_excedida'),
+                    ];
+                @endphp
 
-            <x-atoms.select
-                name="tipo"
-                id="filtro-tipo"
-                label="{{ __('operaciones.alertas.filtro_tipo') }}"
-                :options="$opcionesTipo"
-                :value="$filtros['tipo']"
-                :placeholder="__('operaciones.alertas.filtro_todos')"
-            />
+                <x-atoms.select
+                    name="tipo"
+                    id="filtro-tipo"
+                    label="{{ __('operaciones.alertas.filtro_tipo') }}"
+                    :options="$opcionesTipo"
+                    :value="$filtros['tipo']"
+                    :placeholder="__('operaciones.alertas.filtro_todos')"
+                />
 
-            <div class="ag-filtros__acciones ag-alertas__filtros-acciones">
-                <x-atoms.button type="submit" variant="outline" size="md" icon="filter_alt">
-                    {{ __('operaciones.alertas.filtrar') }}
-                </x-atoms.button>
-
-                @if ($hayFiltrosActivos)
-                    <x-atoms.button href="{{ route('panel.alertas.index') }}" variant="text" size="md">
-                        {{ __('operaciones.alertas.limpiar_filtros') }}
+                <div class="ag-filtros__acciones ag-alertas__filtros-acciones">
+                    <x-atoms.button type="submit" variant="outline" size="md" icon="filter_alt">
+                        {{ __('operaciones.alertas.filtrar') }}
                     </x-atoms.button>
-                @endif
-            </div>
-        </form>
+
+                    @if ($hayFiltrosActivos)
+                        <x-atoms.button href="{{ route('panel.alertas.index') }}" variant="text" size="md">
+                            {{ __('operaciones.alertas.limpiar_filtros') }}
+                        </x-atoms.button>
+                    @endif
+                </div>
+            </form>
+        @endif
 
         @if ($alertas->isEmpty())
-            <x-molecules.alert-strip variant="info" icon="notifications_active" class="ag-alertas__aviso">
-                {{ __($hayFiltrosActivos ? 'operaciones.alertas.filtro_vacio' : 'operaciones.alertas.vacio') }}
-            </x-molecules.alert-strip>
+            @if ($hayFiltrosActivos)
+                <x-molecules.alert-strip variant="info" icon="notifications_active" class="ag-alertas__aviso">
+                    {{ __('operaciones.alertas.filtro_vacio') }}
+                </x-molecules.alert-strip>
+            @else
+                <x-molecules.empty-state
+                    icon="notifications_active"
+                    :title="__('operaciones.alertas.vacio_titulo')"
+                    :detail="__('operaciones.alertas.vacio_detalle')"
+                />
+            @endif
         @else
             <div class="ag-alertas__tabla" role="table">
                 <div class="ag-alertas__head" role="row">

@@ -81,37 +81,49 @@
                 </div>
             </div>
 
-            <form method="GET" action="{{ route('panel.pausas.index') }}" class="ag-filtros ag-pausas__filtros">
-                <div class="ag-input">
-                    <label for="filtro-periodo" class="ag-input__label">{{ __('operaciones.pausas.filtro_periodo') }}</label>
-                    <div class="ag-input__control">
-                        <input
-                            type="month"
-                            name="periodo"
-                            id="filtro-periodo"
-                            class="ag-input__field"
-                            value="{{ $filtros['periodo'] }}"
-                        >
+            @php $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== ''); @endphp
+
+            @if ($hayFiltrosActivos || $pausas->isNotEmpty())
+                <form method="GET" action="{{ route('panel.pausas.index') }}" class="ag-filtros ag-pausas__filtros">
+                    <div class="ag-input">
+                        <label for="filtro-periodo" class="ag-input__label">{{ __('operaciones.pausas.filtro_periodo') }}</label>
+                        <div class="ag-input__control">
+                            <input
+                                type="month"
+                                name="periodo"
+                                id="filtro-periodo"
+                                class="ag-input__field"
+                                value="{{ $filtros['periodo'] }}"
+                            >
+                        </div>
                     </div>
-                </div>
 
-                <div class="ag-filtros__acciones ag-pausas__filtros-acciones">
-                    <x-atoms.button type="submit" variant="outline" size="md" icon="search">
-                        {{ __('operaciones.pausas.filtrar') }}
-                    </x-atoms.button>
-
-                    @if ($filtros['periodo'] !== '')
-                        <x-atoms.button href="{{ route('panel.pausas.index') }}" variant="text" size="md">
-                            {{ __('operaciones.pausas.limpiar_filtro') }}
+                    <div class="ag-filtros__acciones ag-pausas__filtros-acciones">
+                        <x-atoms.button type="submit" variant="outline" size="md" icon="search">
+                            {{ __('operaciones.pausas.filtrar') }}
                         </x-atoms.button>
-                    @endif
-                </div>
-            </form>
+
+                        @if ($hayFiltrosActivos)
+                            <x-atoms.button href="{{ route('panel.pausas.index') }}" variant="text" size="md">
+                                {{ __('operaciones.pausas.limpiar_filtro') }}
+                            </x-atoms.button>
+                        @endif
+                    </div>
+                </form>
+            @endif
 
             @if ($pausas->isEmpty())
-                <x-molecules.alert-strip variant="info" icon="pause_circle" class="ag-pausas__aviso">
-                    {{ __($filtros['periodo'] !== '' ? 'operaciones.pausas.filtro_vacio' : 'operaciones.pausas.vacio') }}
-                </x-molecules.alert-strip>
+                @if ($hayFiltrosActivos)
+                    <x-molecules.alert-strip variant="info" icon="pause_circle" class="ag-pausas__aviso">
+                        {{ __('operaciones.pausas.filtro_vacio') }}
+                    </x-molecules.alert-strip>
+                @else
+                    <x-molecules.empty-state
+                        icon="pause_circle"
+                        :title="__('operaciones.pausas.vacio_titulo')"
+                        :detail="__('operaciones.pausas.vacio_detalle')"
+                    />
+                @endif
             @else
                 <div class="ag-pausas__tabla" role="table">
                     <div class="ag-pausas__head" role="row">
