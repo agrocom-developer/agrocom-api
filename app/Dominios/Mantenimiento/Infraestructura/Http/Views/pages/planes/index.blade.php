@@ -55,9 +55,11 @@
             @endif
 
             @if ($planes->isEmpty())
-                <x-molecules.alert-strip variant="info" icon="checklist" class="ag-planes__aviso">
-                    {{ __('mantenimiento.planes.vacio') }}
-                </x-molecules.alert-strip>
+                <x-molecules.empty-state
+                    icon="checklist"
+                    :title="__('mantenimiento.planes.vacio_titulo')"
+                    :detail="__('mantenimiento.planes.vacio_detalle')"
+                />
             @else
                 <div class="ag-planes__tabla" role="table">
                     <div class="ag-planes__head" role="row">

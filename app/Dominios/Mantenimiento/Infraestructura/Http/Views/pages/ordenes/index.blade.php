@@ -68,53 +68,67 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <form method="GET" action="{{ route('panel.ordenes-mantenimiento.index') }}" class="ag-filtros ag-ordenes-mantenimiento__filtros">
-                @php
-                    $opcionesEstado = collect($variantePorEstado)->mapWithKeys(fn ($_, $valor) => [
-                        $valor => __('mantenimiento.estado_orden.'.$valor)
-                    ])->all();
-                @endphp
-                <x-atoms.select
-                    name="estado"
-                    id="filtro-estado"
-                    label="{{ __('mantenimiento.ordenes.filtro_estado') }}"
-                    :options="$opcionesEstado"
-                    :value="$filtros['estado']"
-                    placeholder="{{ __('mantenimiento.ordenes.filtro_todos') }}"
-                />
+            @php
+                $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
+            @endphp
 
-                @php
-                    $opcionesEquipoTipo = [
-                        'dron' => __('mantenimiento.equipo_tipo.dron'),
-                        'vehiculo' => __('mantenimiento.equipo_tipo.vehiculo'),
-                    ];
-                @endphp
-                <x-atoms.select
-                    name="equipo_tipo"
-                    id="filtro-equipo-tipo"
-                    label="{{ __('mantenimiento.ordenes.filtro_equipo_tipo') }}"
-                    :options="$opcionesEquipoTipo"
-                    :value="$filtros['equipo_tipo']"
-                    placeholder="{{ __('mantenimiento.ordenes.filtro_todos') }}"
-                />
+            @if ($hayFiltrosActivos || $ordenes->isNotEmpty())
+                <form method="GET" action="{{ route('panel.ordenes-mantenimiento.index') }}" class="ag-filtros ag-ordenes-mantenimiento__filtros">
+                    @php
+                        $opcionesEstado = collect($variantePorEstado)->mapWithKeys(fn ($_, $valor) => [
+                            $valor => __('mantenimiento.estado_orden.'.$valor)
+                        ])->all();
+                    @endphp
+                    <x-atoms.select
+                        name="estado"
+                        id="filtro-estado"
+                        label="{{ __('mantenimiento.ordenes.filtro_estado') }}"
+                        :options="$opcionesEstado"
+                        :value="$filtros['estado']"
+                        placeholder="{{ __('mantenimiento.ordenes.filtro_todos') }}"
+                    />
 
-                <div class="ag-filtros__acciones ag-ordenes-mantenimiento__filtros-acciones">
-                    <x-atoms.button type="submit" variant="outline" size="md" icon="search">
-                        {{ __('mantenimiento.ordenes.filtrar') }}
-                    </x-atoms.button>
+                    @php
+                        $opcionesEquipoTipo = [
+                            'dron' => __('mantenimiento.equipo_tipo.dron'),
+                            'vehiculo' => __('mantenimiento.equipo_tipo.vehiculo'),
+                        ];
+                    @endphp
+                    <x-atoms.select
+                        name="equipo_tipo"
+                        id="filtro-equipo-tipo"
+                        label="{{ __('mantenimiento.ordenes.filtro_equipo_tipo') }}"
+                        :options="$opcionesEquipoTipo"
+                        :value="$filtros['equipo_tipo']"
+                        placeholder="{{ __('mantenimiento.ordenes.filtro_todos') }}"
+                    />
 
-                    @if ($filtros['estado'] !== null || $filtros['equipo_tipo'] !== null)
-                        <x-atoms.button href="{{ route('panel.ordenes-mantenimiento.index') }}" variant="text" size="md">
-                            {{ __('mantenimiento.ordenes.limpiar_filtro') }}
+                    <div class="ag-filtros__acciones ag-ordenes-mantenimiento__filtros-acciones">
+                        <x-atoms.button type="submit" variant="outline" size="md" icon="search">
+                            {{ __('mantenimiento.ordenes.filtrar') }}
                         </x-atoms.button>
-                    @endif
-                </div>
-            </form>
+
+                        @if ($hayFiltrosActivos)
+                            <x-atoms.button href="{{ route('panel.ordenes-mantenimiento.index') }}" variant="text" size="md">
+                                {{ __('mantenimiento.ordenes.limpiar_filtro') }}
+                            </x-atoms.button>
+                        @endif
+                    </div>
+                </form>
+            @endif
 
             @if ($ordenes->isEmpty())
-                <x-molecules.alert-strip variant="info" icon="build" class="ag-ordenes-mantenimiento__aviso">
-                    {{ __(($filtros['estado'] !== null || $filtros['equipo_tipo'] !== null) ? 'mantenimiento.ordenes.filtro_vacio' : 'mantenimiento.ordenes.vacio') }}
-                </x-molecules.alert-strip>
+                @if ($hayFiltrosActivos)
+                    <x-molecules.alert-strip variant="info" icon="build" class="ag-ordenes-mantenimiento__aviso">
+                        {{ __('mantenimiento.ordenes.filtro_vacio') }}
+                    </x-molecules.alert-strip>
+                @else
+                    <x-molecules.empty-state
+                        icon="build"
+                        :title="__('mantenimiento.ordenes.vacio_titulo')"
+                        :detail="__('mantenimiento.ordenes.vacio_detalle')"
+                    />
+                @endif
             @else
                 <div class="ag-ordenes-mantenimiento__tabla" role="table">
                     <div class="ag-ordenes-mantenimiento__head" role="row">
