@@ -72,21 +72,19 @@
             @endphp
 
             @if ($hayFiltrosActivos || $vehiculos->isNotEmpty())
-                <form method="GET" action="{{ route('panel.vehiculos.index') }}" class="ag-filtros ag-vehiculos__filtros">
-                    <div class="ag-input">
-                        <label for="filtro-q" class="ag-input__label">{{ __('mantenimiento.vehiculos.filtro_busqueda') }}</label>
-                        <div class="ag-input__control">
-                            <input
-                                type="search"
-                                name="q"
-                                id="filtro-q"
-                                class="ag-input__field"
-                                value="{{ $filtros['q'] }}"
-                                placeholder="{{ __('mantenimiento.vehiculos.filtro_busqueda_placeholder') }}"
-                            >
-                        </div>
-                    </div>
+                <div class="ag-table-toolbar">
+                    <x-molecules.table-search
+                        action="{{ route('panel.vehiculos.index') }}"
+                        :value="$filtros['q']"
+                        :placeholder="__('mantenimiento.vehiculos.filtro_busqueda_placeholder')"
+                        :clear-label="__('ui.tabla.buscador_limpiar')"
+                    />
+                </div>
+            @endif
 
+            @if ($hayFiltrosActivos || $vehiculos->isNotEmpty())
+                <form method="GET" action="{{ route('panel.vehiculos.index') }}" class="ag-filtros ag-vehiculos__filtros">
+                    <input type="hidden" name="q" value="{{ $filtros['q'] }}">
                     <x-atoms.select
                         name="base_id"
                         id="filtro-base"
@@ -111,9 +109,7 @@
                     />
 
                     <div class="ag-filtros__acciones ag-vehiculos__filtros-acciones">
-                        {{-- outline, no primary: "Nuevo vehículo" ya es el único
-                             botón sólido del pliegue (§5 de la guía de pantalla). --}}
-                        <x-atoms.button type="submit" variant="outline" size="md" icon="search">
+                        <x-atoms.button type="submit" variant="primary" size="md" icon="search">
                             {{ __('mantenimiento.vehiculos.filtrar') }}
                         </x-atoms.button>
 
@@ -141,6 +137,7 @@
             @else
                 <div class="ag-vehiculos__tabla" role="table">
                     <div class="ag-vehiculos__head" role="row">
+                        <span role="columnheader" class="ag-vehiculos__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('mantenimiento.vehiculos.col_identificador') }}</span>
                         <span role="columnheader">{{ __('mantenimiento.vehiculos.col_base') }}</span>
                         <span role="columnheader">{{ __('mantenimiento.vehiculos.col_estado') }}</span>
@@ -149,6 +146,9 @@
 
                     @foreach ($vehiculos as $vehiculo)
                         <div class="ag-vehiculos__fila" role="row">
+                            <span role="cell" class="ag-vehiculos__indice">
+                                {{ ($vehiculos->currentPage() - 1) * $vehiculos->perPage() + $loop->iteration }}
+                            </span>
                             <span role="cell" class="ag-vehiculos__identificador">{{ $vehiculo->identificador }}</span>
                             <span role="cell">
                                 {{ $vehiculo->base_id !== null ? ($etiquetasBase[$vehiculo->base_id] ?? "#{$vehiculo->base_id}") : __('mantenimiento.vehiculos.sin_base') }}
@@ -184,25 +184,7 @@
                     @endforeach
                 </div>
 
-                @if ($vehiculos->hasPages())
-                    <nav class="ag-vehiculos__paginacion" aria-label="{{ __('mantenimiento.vehiculos.paginacion_aria') }}">
-                        @if (! $vehiculos->onFirstPage())
-                            <x-atoms.button href="{{ $vehiculos->previousPageUrl() }}" variant="outline" size="sm" icon="chevron_left">
-                                {{ __('mantenimiento.vehiculos.paginacion_anterior') }}
-                            </x-atoms.button>
-                        @endif
-
-                        <span class="ag-vehiculos__paginacion-info">
-                            {{ __('mantenimiento.vehiculos.paginacion_info', ['actual' => $vehiculos->currentPage(), 'total' => $vehiculos->lastPage()]) }}
-                        </span>
-
-                        @if ($vehiculos->hasMorePages())
-                            <x-atoms.button href="{{ $vehiculos->nextPageUrl() }}" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
-                                {{ __('mantenimiento.vehiculos.paginacion_siguiente') }}
-                            </x-atoms.button>
-                        @endif
-                    </nav>
-                @endif
+                <x-molecules.pagination :paginator="$vehiculos" :aria-label="__('mantenimiento.vehiculos.paginacion_aria')" />
             @endif
         </div>
     </x-templates.panel-layout>

@@ -32,7 +32,7 @@
 .ag-baterias__head,
 .ag-baterias__fila {
     display: grid;
-    grid-template-columns: 1.2fr 1fr 0.7fr 0.9fr 0.9fr auto;
+    grid-template-columns: 3rem 1.2fr 1fr 0.7fr 0.9fr 0.9fr auto;
     gap: var(--ag-space-4);
     align-items: center;
     padding: var(--ag-space-3) var(--ag-space-4);
@@ -61,22 +61,16 @@
     font-weight: var(--ag-font-weight-medium);
 }
 
+.ag-baterias__indice {
+    color: var(--ag-color-text-faint);
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-xs);
+}
+
 .ag-baterias__acciones {
     display: flex;
     justify-content: flex-end;
     gap: var(--ag-space-2);
-}
-
-.ag-baterias__paginacion {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--ag-space-4);
-}
-
-.ag-baterias__paginacion-info {
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-sm);
 }
 
 @media (max-width: 992px) {
@@ -87,6 +81,12 @@
     .ag-baterias__fila {
         grid-template-columns: 1fr;
         gap: var(--ag-space-1);
+    }
+
+    /* El índice numérico solo ordena filas de una tabla — en tarjeta
+       apilada no aporta. */
+    .ag-baterias__indice {
+        display: none;
     }
 
     .ag-baterias__acciones {
