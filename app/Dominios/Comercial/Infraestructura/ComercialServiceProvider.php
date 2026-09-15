@@ -7,7 +7,6 @@ use App\Dominios\Comercial\Contratos\LecturaContrato;
 use App\Dominios\Comercial\Contratos\LecturaCultivoLote;
 use App\Dominios\Comercial\Contratos\LecturaLotes;
 use App\Dominios\Comercial\Contratos\LecturaPanelComercial;
-use App\Dominios\Comercial\Infraestructura\Busqueda\BusquedaCampos;
 use App\Dominios\Comercial\Infraestructura\Busqueda\BusquedaClientes;
 use App\Dominios\Comercial\Infraestructura\Busqueda\BusquedaCultivos;
 use App\Dominios\Comercial\Infraestructura\Busqueda\BusquedaLotes;
@@ -40,7 +39,6 @@ final class ComercialServiceProvider extends ServiceProvider
         // buscador es escribir su proveedor y taggearlo acá.
         $this->app->tag(BusquedaClientes::class, 'busqueda.proveedores');
         $this->app->tag(BusquedaPropiedades::class, 'busqueda.proveedores');
-        $this->app->tag(BusquedaCampos::class, 'busqueda.proveedores');
         $this->app->tag(BusquedaLotes::class, 'busqueda.proveedores');
         $this->app->tag(BusquedaCultivos::class, 'busqueda.proveedores');
     }

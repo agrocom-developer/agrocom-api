@@ -8,11 +8,10 @@ use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaEloquent;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Propiedades por nombre y ubicación en el buscador global (ADR 0018): es la
+ * Propiedades por nombre y ubicación en el buscador global (ADR 0020): es la
  * entidad que el dueño nombró al pedir la búsqueda original — "el nombre de
- * una estancia" — y ese vocabulario (`nombre`/`ubicacion`) vivía en `Campo`
- * hasta que este ADR separó los dos niveles; ahora vive acá (ver
- * `BusquedaCampos`, que perdió `ubicacion`).
+ * una estancia" — y ese vocabulario (`nombre`/`ubicacion`) vive en
+ * `Propiedad` (ver ADR 0020, que eliminó el nivel de `Campo` intermedio).
  *
  * @extends BusquedaEloquent<Propiedad>
  */

@@ -52,7 +52,7 @@ final class LecturaLotesEloquent implements LecturaLotes
     {
         return new LoteCatalogo(
             id: $lote->id,
-            campoId: $lote->campo_id,
+            propiedadId: $lote->propiedad_id,
             codigo: $lote->codigo,
             hectareas: $lote->hectareas,
             geometria: $lote->geometria,

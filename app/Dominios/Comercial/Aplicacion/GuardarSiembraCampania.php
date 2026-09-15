@@ -5,25 +5,27 @@ namespace App\Dominios\Comercial\Aplicacion;
 use App\Dominios\Campania\Contratos\LecturaCampania;
 use App\Dominios\Comercial\Aplicacion\Siembra\GuardarSiembra;
 use App\Dominios\Comercial\Dominio\Excepciones\CampaniaDeOtroCliente;
-use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\LoteCampania;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Guarda la siembra de un campo para UNA campaña (HU-48, tarea 71, etapa 3):
- * la ficha del campo manda el set completo de filas de esa campaña —una por
- * lote, algunas vacías si ese lote no se sembró— y esta clase decide, por
- * lote, si crea, actualiza o da de baja la fila de `com_lote_campania`
- * correspondiente. Nunca toca las siembras de OTRA campaña del mismo lote
- * (prompt, punto 4: "cambiar de campaña en el selector... no pisa la de la
- * anterior") porque el `where` siempre incluye `campania_id`.
+ * Guarda la siembra de una propiedad para UNA campaña (HU-48, tarea 71,
+ * etapa 3; ADR 0020 — opera sobre `Propiedad` directo, un salto menos que
+ * bajo ADR 0018): la ficha de la propiedad manda el set completo de filas
+ * de esa campaña —una por lote, algunas vacías si ese lote no se sembró— y
+ * esta clase decide, por lote, si crea, actualiza o da de baja la fila de
+ * `com_lote_campania` correspondiente. Nunca toca las siembras de OTRA
+ * campaña del mismo lote (prompt, punto 4: "cambiar de campaña en el
+ * selector... no pisa la de la anterior") porque el `where` siempre incluye
+ * `campania_id`.
  *
  * Guarda central de esta tarea (prompt, punto 3): el lote tiene que
- * pertenecer a un campo del MISMO cliente que la campaña. Se verifica UNA
- * sola vez para el lote de la campaña elegida —todas las filas del
- * formulario son de lotes de este mismo `$campo`, así que alcanza con
- * comprobar `$campo` contra la campaña— vía {@see LecturaCampania} (ADR
+ * pertenecer a una propiedad del MISMO cliente que la campaña. Se verifica
+ * UNA sola vez para el lote de la campaña elegida —todas las filas del
+ * formulario son de lotes de esta misma `$propiedad`, así que alcanza con
+ * comprobar `$propiedad` contra la campaña— vía {@see LecturaCampania} (ADR
  * 0003 regla 2, frontera de `Campania`), mismo criterio que
  * `CrearContrato::verificarCampania`.
  */
@@ -34,14 +36,14 @@ final class GuardarSiembraCampania
     /**
      * @param  list<array{lote_id: int, cultivo_id: int|null, hectareas_sembradas: string|null, fecha_siembra: string|null, fecha_cosecha_estimada: string|null}>  $filas
      *
-     * @throws CampaniaDeOtroCliente si la campaña elegida no es del cliente dueño del campo.
+     * @throws CampaniaDeOtroCliente si la campaña elegida no es del cliente dueño de la propiedad.
      */
-    public function ejecutar(Campo $campo, int $campaniaId, array $filas): void
+    public function ejecutar(Propiedad $propiedad, int $campaniaId, array $filas): void
     {
-        $this->verificarCampania($campo, $campaniaId);
+        $this->verificarCampania($propiedad, $campaniaId);
 
-        DB::transaction(function () use ($campo, $campaniaId, $filas): void {
-            $lotesPorId = $campo->lotes->keyBy('id');
+        DB::transaction(function () use ($propiedad, $campaniaId, $filas): void {
+            $lotesPorId = $propiedad->lotes->keyBy('id');
 
             $existentesPorLote = LoteCampania::query()
                 ->where('campania_id', $campaniaId)
@@ -52,8 +54,8 @@ final class GuardarSiembraCampania
             foreach ($filas as $fila) {
                 $lote = $lotesPorId->get($fila['lote_id']);
 
-                // Defensivo: una fila que no corresponde a un lote de este
-                // campo no puede llegar desde la ficha (los <select> del
+                // Defensivo: una fila que no corresponde a un lote de esta
+                // propiedad no puede llegar desde la ficha (los <select> del
                 // formulario solo listan lotes propios), pero si llegara no
                 // se procesa en silencio.
                 if ($lote === null) {
@@ -85,8 +87,8 @@ final class GuardarSiembraCampania
         });
     }
 
-    /** @throws CampaniaDeOtroCliente si la campaña elegida no es del cliente dueño del campo. */
-    private function verificarCampania(Campo $campo, int $campaniaId): void
+    /** @throws CampaniaDeOtroCliente si la campaña elegida no es del cliente dueño de la propiedad. */
+    private function verificarCampania(Propiedad $propiedad, int $campaniaId): void
     {
         $campania = $this->lecturaCampania->obtener($campaniaId);
 
@@ -94,7 +96,7 @@ final class GuardarSiembraCampania
             return;
         }
 
-        if ($campania->clienteId !== $campo->propiedad->cliente_id) {
+        if ($campania->clienteId !== $propiedad->cliente_id) {
             throw CampaniaDeOtroCliente::paraCampania($campania->codigo);
         }
     }
@@ -102,7 +104,7 @@ final class GuardarSiembraCampania
     /**
      * Fila quitada del formulario: la siembra se da de baja (soft delete),
      * nunca un DELETE físico (invariante 8) — mismo criterio que
-     * `EliminarCultivo`/`ActualizarCampo::sincronizarLotes`.
+     * `EliminarCultivo`.
      */
     private function darDeBaja(LoteCampania $siembra): void
     {

@@ -10,7 +10,7 @@ use RuntimeException;
  * repetirse entre propiedades ACTIVAS del mismo cliente. El caso de uso que
  * persiste `Propiedad` captura la `QueryException` y la relanza como esta
  * excepción — nunca deja propagarse el 500 crudo del motor de base de datos.
- * Mismo criterio que `CampoDuplicado`/`ClienteDuplicado`.
+ * Mismo criterio que `LoteDuplicado`/`ClienteDuplicado`.
  */
 final class PropiedadDuplicada extends RuntimeException
 {

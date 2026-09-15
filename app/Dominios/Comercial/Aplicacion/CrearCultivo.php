@@ -29,7 +29,7 @@ final class CrearCultivo
     }
 
     /**
-     * Mismo criterio que `CrearCliente`/`CrearCampo`: el formato del mensaje
+     * Mismo criterio que `CrearCliente`/`CrearPropiedad`: el formato del mensaje
      * difiere por driver (Postgres nombra el índice; SQLite nombra
      * tabla.columna).
      *
