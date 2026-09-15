@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Personal\Aplicacion;
 
+use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaTexto;
 use App\Dominios\Personal\Infraestructura\Eloquent\PerPersona;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -19,7 +20,7 @@ final class ListarPersonas
             ->with('base')
             ->when(
                 $busqueda !== null && $busqueda !== '',
-                fn ($consulta) => $consulta->where('nombre', 'like', "%{$busqueda}%"),
+                fn ($consulta) => BusquedaTexto::aplicar($consulta, ['nombre'], $busqueda),
             )
             ->orderBy('nombre')
             ->paginate($porPagina)

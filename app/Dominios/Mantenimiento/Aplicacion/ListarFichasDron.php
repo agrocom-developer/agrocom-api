@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Mantenimiento\Aplicacion;
 
+use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaTexto;
 use App\Dominios\Mantenimiento\Infraestructura\Eloquent\FichaDron;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -19,7 +20,7 @@ final class ListarFichasDron
         return FichaDron::query()
             ->when(
                 $busqueda !== null && $busqueda !== '',
-                fn ($consulta) => $consulta->where('identificador_dron', 'like', "%{$busqueda}%"),
+                fn ($consulta) => BusquedaTexto::aplicar($consulta, ['identificador_dron'], $busqueda),
             )
             ->orderBy('identificador_dron')
             ->paginate($porPagina)

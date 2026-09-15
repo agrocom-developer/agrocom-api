@@ -3,6 +3,7 @@
 namespace App\Dominios\Comercial\Aplicacion;
 
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
+use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaTexto;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 /**
@@ -24,7 +25,7 @@ final class ListarContratos
                 $busqueda !== null && $busqueda !== '',
                 fn ($consulta) => $consulta->whereHas(
                     'cliente',
-                    fn ($sub) => $sub->where('razon_social', 'like', "%{$busqueda}%"),
+                    fn ($sub) => BusquedaTexto::aplicar($sub, ['razon_social'], $busqueda),
                 ),
             )
             ->when(

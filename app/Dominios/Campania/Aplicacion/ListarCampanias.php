@@ -3,6 +3,7 @@
 namespace App\Dominios\Campania\Aplicacion;
 
 use App\Dominios\Campania\Infraestructura\Eloquent\Campania;
+use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaTexto;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 /**
@@ -21,10 +22,7 @@ final class ListarCampanias
         return Campania::query()
             ->when(
                 $busqueda !== null && $busqueda !== '',
-                fn ($consulta) => $consulta->where(function ($sub) use ($busqueda): void {
-                    $sub->where('codigo', 'like', "%{$busqueda}%")
-                        ->orWhere('nombre', 'like', "%{$busqueda}%");
-                }),
+                fn ($consulta) => BusquedaTexto::aplicar($consulta, ['codigo', 'nombre'], $busqueda),
             )
             ->when(
                 $clienteId !== null,

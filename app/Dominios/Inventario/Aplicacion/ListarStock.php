@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Inventario\Aplicacion;
 
+use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaTexto;
 use App\Dominios\Inventario\Infraestructura\Eloquent\Stock;
 use Brick\Math\BigDecimal;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -27,9 +28,10 @@ final class ListarStock
             ->with('repuesto')
             ->when(
                 $busqueda !== null && $busqueda !== '',
-                fn ($consulta) => $consulta->whereHas('repuesto', fn ($sub) => $sub
-                    ->where('codigo', 'like', "%{$busqueda}%")
-                    ->orWhere('descripcion', 'like', "%{$busqueda}%")),
+                fn ($consulta) => $consulta->whereHas(
+                    'repuesto',
+                    fn ($sub) => BusquedaTexto::aplicar($sub, ['codigo', 'descripcion'], $busqueda),
+                ),
             )
             ->when($baseId !== null, fn ($consulta) => $consulta->where('base_id', $baseId))
             ->orderBy('base_id')

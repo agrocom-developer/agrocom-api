@@ -3,6 +3,7 @@
 namespace App\Dominios\Comercial\Aplicacion;
 
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
+use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaTexto;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 /**
@@ -18,10 +19,7 @@ final class ListarClientes
             ->withCount('contactos')
             ->when(
                 $busqueda !== null && $busqueda !== '',
-                fn ($consulta) => $consulta->where(function ($sub) use ($busqueda): void {
-                    $sub->where('razon_social', 'like', "%{$busqueda}%")
-                        ->orWhere('nit', 'like', "%{$busqueda}%");
-                }),
+                fn ($consulta) => BusquedaTexto::aplicar($consulta, ['razon_social', 'nit'], $busqueda),
             )
             ->orderBy('razon_social')
             ->paginate($porPagina)
