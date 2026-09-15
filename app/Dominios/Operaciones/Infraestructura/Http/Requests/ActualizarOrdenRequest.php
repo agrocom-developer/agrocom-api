@@ -75,8 +75,7 @@ final class ActualizarOrdenRequest extends FormRequest
                 }
 
                 $filaLote = DB::table('com_lotes as l')
-                    ->join('com_campos as c', 'c.id', '=', 'l.campo_id')
-                    ->join('com_propiedades as p', 'p.id', '=', 'c.propiedad_id')
+                    ->join('com_propiedades as p', 'p.id', '=', 'l.propiedad_id')
                     ->where('l.id', $loteId)
                     ->first(['l.hectareas', 'p.cliente_id']);
 

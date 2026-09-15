@@ -306,12 +306,12 @@ final class OrdenesController
     private function lotesDisponibles(): Collection
     {
         return DB::table('com_lotes as l')
-            ->join('com_campos as c', 'c.id', '=', 'l.campo_id')
+            ->join('com_propiedades as p', 'p.id', '=', 'l.propiedad_id')
             ->whereNull('l.deleted_at')
-            ->whereNull('c.deleted_at')
-            ->orderBy('c.nombre')
+            ->whereNull('p.deleted_at')
+            ->orderBy('p.nombre')
             ->orderBy('l.codigo')
-            ->get(['l.id', 'c.nombre', 'l.codigo'])
+            ->get(['l.id', 'p.nombre', 'l.codigo'])
             ->mapWithKeys(fn (object $fila): array => [
                 (int) $fila->id => __('operaciones.ordenes.campo_lote_opcion', [
                     'campo' => $fila->nombre,
@@ -339,18 +339,16 @@ final class OrdenesController
     }
 
     /**
-     * De qué cliente es cada lote (vía `campo_id` → `propiedad_id` →
-     * `cliente_id`) — mismo criterio que {@see mapaContratoCliente()}.
+     * De qué cliente es cada lote (vía `propiedad_id` → `cliente_id`) —
+     * mismo criterio que {@see mapaContratoCliente()}.
      *
      * @return array<int, int> lote_id => cliente_id
      */
     private function mapaLoteCliente(): array
     {
         return DB::table('com_lotes as l')
-            ->join('com_campos as c', 'c.id', '=', 'l.campo_id')
-            ->join('com_propiedades as p', 'p.id', '=', 'c.propiedad_id')
+            ->join('com_propiedades as p', 'p.id', '=', 'l.propiedad_id')
             ->whereNull('l.deleted_at')
-            ->whereNull('c.deleted_at')
             ->whereNull('p.deleted_at')
             ->pluck('p.cliente_id', 'l.id')
             ->all();
@@ -400,9 +398,9 @@ final class OrdenesController
         }
 
         return DB::table('com_lotes as l')
-            ->join('com_campos as c', 'c.id', '=', 'l.campo_id')
+            ->join('com_propiedades as p', 'p.id', '=', 'l.propiedad_id')
             ->whereIn('l.id', $ids)
-            ->get(['l.id', 'c.nombre', 'l.codigo'])
+            ->get(['l.id', 'p.nombre', 'l.codigo'])
             ->mapWithKeys(fn (object $fila): array => [
                 (int) $fila->id => __('operaciones.ordenes.campo_lote_opcion', [
                     'campo' => $fila->nombre,

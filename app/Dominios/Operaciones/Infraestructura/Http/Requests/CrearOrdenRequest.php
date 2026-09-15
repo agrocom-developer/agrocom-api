@@ -42,8 +42,8 @@ use Illuminate\Validation\Rule;
  * error de forma que un `numeric`/`gt:0` alcance a cubrir.
  *
  * Cada lote también debe ser de la MISMA propiedad/cliente que el contrato
- * elegido (`withValidator()`, vía `com_lotes.campo_id` → `com_campos.propiedad_id`
- * → `com_propiedades.cliente_id`): el contrato es el QUIÉN, la orden es el
+ * elegido (`withValidator()`, vía `com_lotes.propiedad_id` →
+ * `com_propiedades.cliente_id`): el contrato es el QUIÉN, la orden es el
  * CÓMO — no tiene sentido de negocio un contrato del cliente A con un lote
  * del cliente B. El formulario del panel ya filtra el `<select>` de lote por
  * el cliente del contrato elegido (JS), pero esa es presentación — acá es la
@@ -118,14 +118,13 @@ final class CrearOrdenRequest extends FormRequest
                 }
 
                 // Una sola consulta para hectáreas y cliente (vía
-                // campo_id → propiedad_id → cliente_id): consistencia de
-                // negocio, el contrato es el QUIÉN, la orden es el CÓMO — no
-                // se arma una orden del contrato del cliente A con un lote
-                // del cliente B (mismo criterio que invariante 5, aplicado
-                // acá al panel interno, no al portal del cliente).
+                // propiedad_id → cliente_id): consistencia de negocio, el
+                // contrato es el QUIÉN, la orden es el CÓMO — no se arma una
+                // orden del contrato del cliente A con un lote del cliente B
+                // (mismo criterio que invariante 5, aplicado acá al panel
+                // interno, no al portal del cliente).
                 $filaLote = DB::table('com_lotes as l')
-                    ->join('com_campos as c', 'c.id', '=', 'l.campo_id')
-                    ->join('com_propiedades as p', 'p.id', '=', 'c.propiedad_id')
+                    ->join('com_propiedades as p', 'p.id', '=', 'l.propiedad_id')
                     ->where('l.id', $loteId)
                     ->first(['l.hectareas', 'p.cliente_id']);
 

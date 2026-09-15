@@ -2,22 +2,22 @@
     Page: estadias/index (GET /panel/estadias, panel.estadias.index)
     Consulta de estadías del equipo en cada hacienda (HU-51, tarea 74): entrada
     y salida del equipo cargadas desde la app de campo, con filtro por rango de
-    fechas, equipo de trabajo y campo. Totales de días efectivos por equipo y
-    por campo. Solo lectura — la estadía nace en `/api/sync`, nunca se
-    crea/edita desde el panel.
+    fechas, equipo de trabajo y propiedad. Totales de días efectivos por
+    equipo y por propiedad. Solo lectura — la estadía nace en `/api/sync`,
+    nunca se crea/edita desde el panel.
 
     Datos esperados (ver EstadiasHaciendaController::index()): la cáscara de
     CascaraPanel, más:
     - $estadias (LengthAwarePaginator<EstadiaHacienda>, más reciente primero).
-    - $filtros (array{desde: ?string, hasta: ?string, equipo_trabajo_id: ?int, campo_id: ?int}):
+    - $filtros (array{desde: ?string, hasta: ?string, equipo_trabajo_id: ?int, propiedad_id: ?int}):
       valores actualmente aplicados.
     - $etiquetasEquipo (array<int,string>: id => "CÓDIGO — Nombre" o solo "CÓDIGO").
-    - $etiquetasCampo (array<int,string>: id => nombre del campo).
+    - $etiquetasPropiedad (array<int,string>: id => nombre de la propiedad).
     - $etiquetasVehiculo (array<int,string>: id => identificador del vehículo).
     - $equiposDisponibles (Collection<int>, para el <select> de filtro).
-    - $camposDisponibles (Collection<int>, para el <select> de filtro).
+    - $propiedadesDisponibles (Collection<int>, para el <select> de filtro).
     - $diasPorEquipo (array<int,float>: id de equipo => total de días efectivos).
-    - $diasPorCampo (array<int,float>: id de campo => total de días efectivos).
+    - $diasPorPropiedad (array<int,float>: id de propiedad => total de días efectivos).
 
     Gateada por el permiso `operaciones.estadia.ver`, verificado server-side en
     el controlador (no hay acción mutable acá que ocultar con @puede).
@@ -42,7 +42,7 @@
             :subtitle="__('operaciones.estadias.subtitulo')"
         />
 
-        @php $hayFiltrosActivos = $filtros['desde'] !== null || $filtros['hasta'] !== null || $filtros['equipo_trabajo_id'] !== null || $filtros['campo_id'] !== null; @endphp
+        @php $hayFiltrosActivos = $filtros['desde'] !== null || $filtros['hasta'] !== null || $filtros['equipo_trabajo_id'] !== null || $filtros['propiedad_id'] !== null; @endphp
 
         <form method="GET" action="{{ route('panel.estadias.index') }}" class="ag-filtros ag-estadias__filtros">
             @php
@@ -77,17 +77,17 @@
             />
 
             @php
-                $opcionesCampo = collect($camposDisponibles)->mapWithKeys(fn ($etiqueta, $id) => [
+                $opcionesPropiedad = collect($propiedadesDisponibles)->mapWithKeys(fn ($etiqueta, $id) => [
                     $id => $etiqueta
                 ])->all();
             @endphp
 
             <x-atoms.select
-                name="campo_id"
+                name="propiedad_id"
                 id="filtro-campo"
                 label="{{ __('operaciones.estadias.filtro_campo') }}"
-                :options="$opcionesCampo"
-                :value="$filtros['campo_id']"
+                :options="$opcionesPropiedad"
+                :value="$filtros['propiedad_id']"
                 :placeholder="__('operaciones.estadias.filtro_todos')"
             />
 
@@ -109,7 +109,7 @@
                 {{ __($hayFiltrosActivos ? 'operaciones.estadias.filtro_vacio' : 'operaciones.estadias.vacio') }}
             </x-molecules.alert-strip>
         @else
-            @if (! empty($diasPorEquipo) || ! empty($diasPorCampo))
+            @if (! empty($diasPorEquipo) || ! empty($diasPorPropiedad))
                 <div class="ag-estadias__totales">
                     @if (! empty($diasPorEquipo))
                         <div class="ag-estadias__totales-seccion">
@@ -132,14 +132,14 @@
                         </div>
                     @endif
 
-                    @if (! empty($diasPorCampo))
+                    @if (! empty($diasPorPropiedad))
                         <div class="ag-estadias__totales-seccion">
                             <h3 class="ag-estadias__totales-titulo">{{ __('operaciones.estadias.totales_campo') }}</h3>
                             <div class="ag-estadias__totales-grid">
-                                @foreach ($diasPorCampo as $campoId => $dias)
+                                @foreach ($diasPorPropiedad as $propiedadId => $dias)
                                     <div class="ag-estadias__total-item">
                                         <span class="ag-estadias__total-etiqueta">
-                                            {{ $etiquetasCampo[$campoId] ?? '—' }}
+                                            {{ $etiquetasPropiedad[$propiedadId] ?? '—' }}
                                         </span>
                                         <span class="ag-estadias__total-valor">
                                             {{ number_format($dias, 1) }}
@@ -171,7 +171,7 @@
                         </span>
 
                         <span role="cell">
-                            {{ $etiquetasCampo[$estadia->campo_id] ?? '—' }}
+                            {{ $etiquetasPropiedad[$estadia->propiedad_id] ?? '—' }}
                         </span>
 
                         <span role="cell">

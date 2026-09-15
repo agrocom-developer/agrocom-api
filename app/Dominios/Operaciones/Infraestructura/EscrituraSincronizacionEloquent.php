@@ -645,7 +645,7 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
                 EstadiaHacienda::query()->create([
                     'uuid_cliente' => $datos->uuidCliente,
                     'equipo_trabajo_id' => $datos->equipoTrabajoId,
-                    'campo_id' => $datos->campoId,
+                    'propiedad_id' => $datos->campoId,
                     'entrada' => self::normalizarUtc($datos->entrada),
                     'vehiculo_id' => $datos->vehiculoId,
                     'observacion' => $datos->observacion,

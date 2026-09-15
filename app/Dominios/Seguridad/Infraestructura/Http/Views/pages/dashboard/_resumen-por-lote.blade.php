@@ -22,7 +22,7 @@
     @foreach ($lotes as $lote)
         <x-molecules.lote-resumen-card
             :lote="$lote['codigo']"
-            :cliente="$lote['cliente'] ?? $lote['campo'] ?? ''"
+            :cliente="$lote['cliente'] ?? $lote['propiedad'] ?? ''"
             :hectareas-totales="(float) ($lote['hectareasLote'] ?? 0)"
             :hectareas-completadas="(float) $lote['hectareasAplicadas']"
             :hectareas-pendientes="(float) $lote['hectareasPendientes']"

@@ -177,7 +177,7 @@
                                 <span role="cell">{{ __('personal.rol_equipo.'.$sesion->rol) }}</span>
                                 <span role="cell">{{ $sesion->clienteNombre }}</span>
                                 <span role="cell">{{ $sesion->campaniaCodigo ?? __('personal.desempenio.sin_campania') }}</span>
-                                <span role="cell">{{ $sesion->loteCodigo }} — {{ $sesion->campoNombre }}</span>
+                                <span role="cell">{{ $sesion->loteCodigo }} — {{ $sesion->propiedadNombre }}</span>
                                 <span role="cell">{{ number_format((float) $sesion->hectareasDeclaradas, 2, ',', '.') }}</span>
                                 <span role="cell">
                                     <x-atoms.badge :variant="$sesion->estado === 'validado' ? 'success' : 'warning'">
@@ -207,7 +207,7 @@
                                     <span>{{ __('personal.rol_equipo.'.$rechazo->rol) }}</span>
                                     <span>{{ $rechazo->clienteNombre }}</span>
                                     <span>{{ $rechazo->campaniaCodigo ?? __('personal.desempenio.sin_campania') }}</span>
-                                    <span>{{ $rechazo->loteCodigo }} — {{ $rechazo->campoNombre }}</span>
+                                    <span>{{ $rechazo->loteCodigo }} — {{ $rechazo->propiedadNombre }}</span>
                                     <span>{{ number_format((float) $rechazo->hectareasDeclaradas, 2, ',', '.') }} ha</span>
                                 </div>
                                 <p class="ag-persona-desempeno__rechazo-motivo">

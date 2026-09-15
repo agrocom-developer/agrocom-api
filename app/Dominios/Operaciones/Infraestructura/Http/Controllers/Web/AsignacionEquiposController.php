@@ -328,9 +328,9 @@ final class AsignacionEquiposController
         }
 
         return DB::table('com_lotes as l')
-            ->join('com_campos as c', 'c.id', '=', 'l.campo_id')
+            ->join('com_propiedades as p', 'p.id', '=', 'l.propiedad_id')
             ->whereIn('l.id', $ids)
-            ->get(['l.id', 'c.nombre', 'l.codigo'])
+            ->get(['l.id', 'p.nombre', 'l.codigo'])
             ->mapWithKeys(fn (object $fila): array => [
                 (int) $fila->id => __('operaciones.ordenes.campo_lote_opcion', [
                     'campo' => $fila->nombre,

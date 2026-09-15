@@ -53,7 +53,7 @@ final class ObtenerDesempenioPersona
                 fecha: $rechazo->fecha,
                 rol: $rechazo->rol,
                 loteCodigo: $rechazo->loteCodigo,
-                campoNombre: $rechazo->campoNombre,
+                propiedadNombre: $rechazo->propiedadNombre,
                 clienteId: $rechazo->clienteId,
                 clienteNombre: $rechazo->clienteNombre,
                 campaniaId: $rechazo->campaniaId,

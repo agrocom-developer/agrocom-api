@@ -73,11 +73,15 @@ use OpenApi\Attributes as OA;
 #[OA\Schema(
     schema: 'LoteCatalogo',
     title: 'Lote (catálogo)',
-    description: 'Lote vigente (no borrado) para el pull de catálogo (espec §4.1). `hectareas` es DECIMAL como string (invariante 6).',
+    description: 'Lote vigente (no borrado) para el pull de catálogo (espec §4.1; ADR 0020: cuelga '
+        .'directo de la propiedad, sin el nivel intermedio Campo). `hectareas` es DECIMAL como string '
+        .'(invariante 6). `campo_id` sin renombrar a propósito (ver docblock de `LoteCatalogo::toArray()`): '
+        .'ahora es el id de servidor de la propiedad, pero la clave del contrato con `agrocom-field` se '
+        .'renombra recién en una rama coordinada con una versión nueva del APK.',
     required: ['id', 'campo_id', 'codigo', 'hectareas', 'geometria', 'restricciones', 'updated_at'],
     properties: [
         new OA\Property(property: 'id', type: 'integer', example: 3),
-        new OA\Property(property: 'campo_id', type: 'integer', example: 1),
+        new OA\Property(property: 'campo_id', description: 'Id de servidor de la propiedad (ver descripción del schema).', type: 'integer', example: 1),
         new OA\Property(property: 'codigo', type: 'string', example: 'L-01'),
         new OA\Property(property: 'hectareas', type: 'string', example: '120.50'),
         new OA\Property(property: 'geometria', description: 'GeoJSON del lote, o null si no está cargado.', type: 'object', nullable: true),

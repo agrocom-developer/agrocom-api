@@ -25,10 +25,10 @@ final class ListarEstadiasHacienda
         ?string $desde = null,
         ?string $hasta = null,
         ?int $equipoTrabajoId = null,
-        ?int $campoId = null,
+        ?int $propiedadId = null,
         int $porPagina = 15,
     ): LengthAwarePaginator {
-        return $this->consulta($desde, $hasta, $equipoTrabajoId, $campoId)
+        return $this->consulta($desde, $hasta, $equipoTrabajoId, $propiedadId)
             ->orderByDesc('entrada')
             ->paginate($porPagina)
             ->withQueryString();
@@ -43,23 +43,23 @@ final class ListarEstadiasHacienda
      *
      * @return array<int, float>
      */
-    public function diasEfectivosPorEquipo(?string $desde = null, ?string $hasta = null, ?int $equipoTrabajoId = null, ?int $campoId = null): array
+    public function diasEfectivosPorEquipo(?string $desde = null, ?string $hasta = null, ?int $equipoTrabajoId = null, ?int $propiedadId = null): array
     {
-        return $this->diasEfectivosAgrupadoPor('equipo_trabajo_id', $desde, $hasta, $equipoTrabajoId, $campoId);
+        return $this->diasEfectivosAgrupadoPor('equipo_trabajo_id', $desde, $hasta, $equipoTrabajoId, $propiedadId);
     }
 
     /** @return array<int, float> */
-    public function diasEfectivosPorCampo(?string $desde = null, ?string $hasta = null, ?int $equipoTrabajoId = null, ?int $campoId = null): array
+    public function diasEfectivosPorPropiedad(?string $desde = null, ?string $hasta = null, ?int $equipoTrabajoId = null, ?int $propiedadId = null): array
     {
-        return $this->diasEfectivosAgrupadoPor('campo_id', $desde, $hasta, $equipoTrabajoId, $campoId);
+        return $this->diasEfectivosAgrupadoPor('propiedad_id', $desde, $hasta, $equipoTrabajoId, $propiedadId);
     }
 
     /** @return array<int, float> */
-    private function diasEfectivosAgrupadoPor(string $columna, ?string $desde, ?string $hasta, ?int $equipoTrabajoId, ?int $campoId): array
+    private function diasEfectivosAgrupadoPor(string $columna, ?string $desde, ?string $hasta, ?int $equipoTrabajoId, ?int $propiedadId): array
     {
-        return $this->consulta($desde, $hasta, $equipoTrabajoId, $campoId)
+        return $this->consulta($desde, $hasta, $equipoTrabajoId, $propiedadId)
             ->whereNotNull('salida')
-            ->get(['equipo_trabajo_id', 'campo_id', 'entrada', 'salida'])
+            ->get(['equipo_trabajo_id', 'propiedad_id', 'entrada', 'salida'])
             ->groupBy($columna)
             ->map(fn (Collection $estadias): float => $estadias->sum(
                 fn (EstadiaHacienda $estadia): float => $estadia->entrada->diffInSeconds($estadia->salida) / 86400,
@@ -68,12 +68,12 @@ final class ListarEstadiasHacienda
     }
 
     /** @return Builder<EstadiaHacienda> */
-    private function consulta(?string $desde, ?string $hasta, ?int $equipoTrabajoId, ?int $campoId): Builder
+    private function consulta(?string $desde, ?string $hasta, ?int $equipoTrabajoId, ?int $propiedadId): Builder
     {
         return EstadiaHacienda::query()
             ->when($desde !== null, fn (Builder $consulta) => $consulta->whereDate('entrada', '>=', $desde))
             ->when($hasta !== null, fn (Builder $consulta) => $consulta->whereDate('entrada', '<=', $hasta))
             ->when($equipoTrabajoId !== null, fn (Builder $consulta) => $consulta->where('equipo_trabajo_id', $equipoTrabajoId))
-            ->when($campoId !== null, fn (Builder $consulta) => $consulta->where('campo_id', $campoId));
+            ->when($propiedadId !== null, fn (Builder $consulta) => $consulta->where('propiedad_id', $propiedadId));
     }
 }
