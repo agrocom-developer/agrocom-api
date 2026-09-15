@@ -67,9 +67,11 @@
             @endif
 
             @if ($planillas->isEmpty())
-                <x-molecules.alert-strip variant="info" icon="event_note" class="ag-planillas__aviso">
-                    {{ __('finanzas.planillas.vacio') }}
-                </x-molecules.alert-strip>
+                <x-molecules.empty-state
+                    icon="event_note"
+                    :title="__('finanzas.planillas.vacio_titulo')"
+                    :detail="__('finanzas.planillas.vacio_detalle')"
+                />
             @else
                 <div class="ag-planillas__tabla" role="table">
                     <div class="ag-planillas__head" role="row">

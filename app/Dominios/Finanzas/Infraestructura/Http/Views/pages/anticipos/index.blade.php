@@ -59,7 +59,12 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <form method="GET" action="{{ route('panel.anticipos.index') }}" class="ag-filtros ag-anticipos__filtros">
+            @php
+                $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
+            @endphp
+
+            @if ($hayFiltrosActivos || $anticipos->isNotEmpty())
+                <form method="GET" action="{{ route('panel.anticipos.index') }}" class="ag-filtros ag-anticipos__filtros">
                 <x-atoms.select
                     name="persona_id"
                     id="filtro-persona"
@@ -87,18 +92,27 @@
                         {{ __('finanzas.anticipos.filtrar') }}
                     </x-atoms.button>
 
-                    @if ($filtros['persona_id'] !== null || $filtros['periodo'] !== '')
+                    @if ($hayFiltrosActivos)
                         <x-atoms.button href="{{ route('panel.anticipos.index') }}" variant="text" size="md">
                             {{ __('finanzas.anticipos.limpiar_filtro') }}
                         </x-atoms.button>
                     @endif
                 </div>
             </form>
+            @endif
 
             @if ($anticipos->isEmpty())
-                <x-molecules.alert-strip variant="info" icon="payments" class="ag-anticipos__aviso">
-                    {{ __(($filtros['persona_id'] !== null || $filtros['periodo'] !== '') ? 'finanzas.anticipos.filtro_vacio' : 'finanzas.anticipos.vacio') }}
-                </x-molecules.alert-strip>
+                @if ($hayFiltrosActivos)
+                    <x-molecules.alert-strip variant="info" icon="payments" class="ag-anticipos__aviso">
+                        {{ __('finanzas.anticipos.filtro_vacio') }}
+                    </x-molecules.alert-strip>
+                @else
+                    <x-molecules.empty-state
+                        icon="payments"
+                        :title="__('finanzas.anticipos.vacio_titulo')"
+                        :detail="__('finanzas.anticipos.vacio_detalle')"
+                    />
+                @endif
             @else
                 <div class="ag-anticipos__tabla" role="table">
                     <div class="ag-anticipos__head" role="row">

@@ -67,7 +67,12 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <form method="GET" action="{{ route('panel.combustible.index') }}" class="ag-filtros ag-combustible__filtros">
+            @php
+                $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
+            @endphp
+
+            @if ($hayFiltrosActivos || $combustibles->isNotEmpty())
+                <form method="GET" action="{{ route('panel.combustible.index') }}" class="ag-filtros ag-combustible__filtros">
                 <x-atoms.select
                     name="base_id"
                     id="filtro-base"
@@ -114,13 +119,14 @@
                         {{ __('finanzas.combustible.filtrar') }}
                     </x-atoms.button>
 
-                    @if ($filtros['base_id'] !== null || $filtros['desde'] !== '' || $filtros['hasta'] !== '' || $filtros['equipo_trabajo_id'] !== null || $filtros['campania_id'] !== null)
+                    @if ($hayFiltrosActivos)
                         <x-atoms.button href="{{ route('panel.combustible.index') }}" variant="text" size="md">
                             {{ __('finanzas.combustible.limpiar_filtro') }}
                         </x-atoms.button>
                     @endif
                 </div>
             </form>
+            @endif
 
             @if ($total !== null)
                 <x-molecules.alert-strip variant="info" icon="functions" class="ag-combustible__aviso">
@@ -129,9 +135,17 @@
             @endif
 
             @if ($combustibles->isEmpty())
-                <x-molecules.alert-strip variant="info" icon="local_gas_station" class="ag-combustible__aviso">
-                    {{ __(($filtros['base_id'] !== null || $filtros['desde'] !== '' || $filtros['hasta'] !== '' || $filtros['equipo_trabajo_id'] !== null || $filtros['campania_id'] !== null) ? 'finanzas.combustible.filtro_vacio' : 'finanzas.combustible.vacio') }}
-                </x-molecules.alert-strip>
+                @if ($hayFiltrosActivos)
+                    <x-molecules.alert-strip variant="info" icon="local_gas_station" class="ag-combustible__aviso">
+                        {{ __('finanzas.combustible.filtro_vacio') }}
+                    </x-molecules.alert-strip>
+                @else
+                    <x-molecules.empty-state
+                        icon="local_gas_station"
+                        :title="__('finanzas.combustible.vacio_titulo')"
+                        :detail="__('finanzas.combustible.vacio_detalle')"
+                    />
+                @endif
             @else
                 <div class="ag-combustible__tabla" role="table">
                     <div class="ag-combustible__head" role="row">
