@@ -59,61 +59,75 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <form method="GET" action="{{ route('panel.equipos-trabajo.index') }}" class="ag-filtros ag-equipos-trabajo__filtros">
-                <div class="ag-input">
-                    <label for="filtro-q" class="ag-input__label">{{ __('personal.equipos_trabajo.filtro_busqueda') }}</label>
-                    <div class="ag-input__control">
-                        <input
-                            type="search"
-                            name="q"
-                            id="filtro-q"
-                            class="ag-input__field"
-                            value="{{ $filtros['q'] }}"
-                            placeholder="{{ __('personal.equipos_trabajo.filtro_busqueda_placeholder') }}"
-                        >
+            @php
+                $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
+            @endphp
+
+            @if ($hayFiltrosActivos || $equipos->isNotEmpty())
+                <form method="GET" action="{{ route('panel.equipos-trabajo.index') }}" class="ag-filtros ag-equipos-trabajo__filtros">
+                    <div class="ag-input">
+                        <label for="filtro-q" class="ag-input__label">{{ __('personal.equipos_trabajo.filtro_busqueda') }}</label>
+                        <div class="ag-input__control">
+                            <input
+                                type="search"
+                                name="q"
+                                id="filtro-q"
+                                class="ag-input__field"
+                                value="{{ $filtros['q'] }}"
+                                placeholder="{{ __('personal.equipos_trabajo.filtro_busqueda_placeholder') }}"
+                            >
+                        </div>
                     </div>
-                </div>
 
-                <x-atoms.select
-                    name="base_id"
-                    id="filtro-base"
-                    label="{{ __('personal.equipos_trabajo.filtro_base') }}"
-                    :options="$basesDisponibles"
-                    :value="$filtros['base_id']"
-                    placeholder="{{ __('personal.equipos_trabajo.filtro_todos') }}"
-                />
+                    <x-atoms.select
+                        name="base_id"
+                        id="filtro-base"
+                        label="{{ __('personal.equipos_trabajo.filtro_base') }}"
+                        :options="$basesDisponibles"
+                        :value="$filtros['base_id']"
+                        placeholder="{{ __('personal.equipos_trabajo.filtro_todos') }}"
+                    />
 
-                @php
-                    $opcionesEstado = collect($variantePorEstado)->mapWithKeys(fn ($_, $valor) => [
-                        $valor => __('personal.estado.'.$valor)
-                    ])->all();
-                @endphp
-                <x-atoms.select
-                    name="estado"
-                    id="filtro-estado"
-                    label="{{ __('personal.equipos_trabajo.filtro_estado') }}"
-                    :options="$opcionesEstado"
-                    :value="$filtros['estado']"
-                    placeholder="{{ __('personal.equipos_trabajo.filtro_todos') }}"
-                />
+                    @php
+                        $opcionesEstado = collect($variantePorEstado)->mapWithKeys(fn ($_, $valor) => [
+                            $valor => __('personal.estado.'.$valor)
+                        ])->all();
+                    @endphp
+                    <x-atoms.select
+                        name="estado"
+                        id="filtro-estado"
+                        label="{{ __('personal.equipos_trabajo.filtro_estado') }}"
+                        :options="$opcionesEstado"
+                        :value="$filtros['estado']"
+                        placeholder="{{ __('personal.equipos_trabajo.filtro_todos') }}"
+                    />
 
-                <div class="ag-filtros__acciones ag-equipos-trabajo__filtros-acciones">
-                    <x-atoms.button type="submit" variant="outline" size="md" icon="search">
-                        {{ __('personal.equipos_trabajo.filtrar') }}
-                    </x-atoms.button>
-
-                    @if ($filtros['q'] !== '' || $filtros['base_id'] !== null || $filtros['estado'] !== null)
-                        <x-atoms.button href="{{ route('panel.equipos-trabajo.index') }}" variant="text" size="md">
-                            {{ __('personal.equipos_trabajo.limpiar_filtro') }}
+                    <div class="ag-filtros__acciones ag-equipos-trabajo__filtros-acciones">
+                        <x-atoms.button type="submit" variant="outline" size="md" icon="search">
+                            {{ __('personal.equipos_trabajo.filtrar') }}
                         </x-atoms.button>
-                    @endif
-                </div>
-            </form>
+
+                        @if ($filtros['q'] !== '' || $filtros['base_id'] !== null || $filtros['estado'] !== null)
+                            <x-atoms.button href="{{ route('panel.equipos-trabajo.index') }}" variant="text" size="md">
+                                {{ __('personal.equipos_trabajo.limpiar_filtro') }}
+                            </x-atoms.button>
+                        @endif
+                    </div>
+                </form>
+            @endif
 
             @if ($equipos->isEmpty())
-                <x-molecules.alert-strip variant="info" icon="groups" class="ag-equipos-trabajo__aviso">
-                    {{ __(($filtros['q'] !== '' || $filtros['base_id'] !== null || $filtros['estado'] !== null) ? 'personal.equipos_trabajo.filtro_vacio' : 'personal.equipos_trabajo.vacio') }}
-                </x-molecules.alert-strip>
+                @if ($hayFiltrosActivos)
+                    <x-molecules.alert-strip variant="info" icon="groups" class="ag-equipos-trabajo__aviso">
+                        {{ __('personal.equipos_trabajo.filtro_vacio') }}
+                    </x-molecules.alert-strip>
+                @else
+                    <x-molecules.empty-state
+                        icon="groups"
+                        :title="__('personal.equipos_trabajo.vacio_titulo')"
+                        :detail="__('personal.equipos_trabajo.vacio_detalle')"
+                    />
+                @endif
             @else
                 <div class="ag-equipos-trabajo__tabla" role="table">
                     <div class="ag-equipos-trabajo__head" role="row">

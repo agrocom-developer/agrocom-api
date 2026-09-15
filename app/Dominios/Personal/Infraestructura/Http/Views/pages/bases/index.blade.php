@@ -52,40 +52,54 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <form method="GET" action="{{ route('panel.bases.index') }}" class="ag-filtros ag-bases__filtros">
-                <div class="ag-input">
-                    <label for="filtro-q" class="ag-input__label">{{ __('personal.bases.filtro_busqueda') }}</label>
-                    <div class="ag-input__control">
-                        <input
-                            type="search"
-                            name="q"
-                            id="filtro-q"
-                            class="ag-input__field"
-                            value="{{ $filtros['q'] }}"
-                            placeholder="{{ __('personal.bases.filtro_busqueda_placeholder') }}"
-                        >
+            @php
+                $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
+            @endphp
+
+            @if ($hayFiltrosActivos || $bases->isNotEmpty())
+                <form method="GET" action="{{ route('panel.bases.index') }}" class="ag-filtros ag-bases__filtros">
+                    <div class="ag-input">
+                        <label for="filtro-q" class="ag-input__label">{{ __('personal.bases.filtro_busqueda') }}</label>
+                        <div class="ag-input__control">
+                            <input
+                                type="search"
+                                name="q"
+                                id="filtro-q"
+                                class="ag-input__field"
+                                value="{{ $filtros['q'] }}"
+                                placeholder="{{ __('personal.bases.filtro_busqueda_placeholder') }}"
+                            >
+                        </div>
                     </div>
-                </div>
 
-                <div class="ag-filtros__acciones ag-bases__filtros-acciones">
-                    {{-- outline, no primary: "Nueva base" ya es el único botón
-                         sólido del pliegue (§5 de la guía de pantalla). --}}
-                    <x-atoms.button type="submit" variant="outline" size="md" icon="search">
-                        {{ __('personal.bases.filtrar') }}
-                    </x-atoms.button>
-
-                    @if ($filtros['q'] !== '')
-                        <x-atoms.button href="{{ route('panel.bases.index') }}" variant="text" size="md">
-                            {{ __('personal.bases.limpiar_filtro') }}
+                    <div class="ag-filtros__acciones ag-bases__filtros-acciones">
+                        {{-- outline, no primary: "Nueva base" ya es el único botón
+                             sólido del pliegue (§5 de la guía de pantalla). --}}
+                        <x-atoms.button type="submit" variant="outline" size="md" icon="search">
+                            {{ __('personal.bases.filtrar') }}
                         </x-atoms.button>
-                    @endif
-                </div>
-            </form>
+
+                        @if ($filtros['q'] !== '')
+                            <x-atoms.button href="{{ route('panel.bases.index') }}" variant="text" size="md">
+                                {{ __('personal.bases.limpiar_filtro') }}
+                            </x-atoms.button>
+                        @endif
+                    </div>
+                </form>
+            @endif
 
             @if ($bases->isEmpty())
-                <x-molecules.alert-strip variant="info" icon="home_work" class="ag-bases__aviso">
-                    {{ __($filtros['q'] !== '' ? 'personal.bases.filtro_vacio' : 'personal.bases.vacio') }}
-                </x-molecules.alert-strip>
+                @if ($hayFiltrosActivos)
+                    <x-molecules.alert-strip variant="info" icon="home_work" class="ag-bases__aviso">
+                        {{ __('personal.bases.filtro_vacio') }}
+                    </x-molecules.alert-strip>
+                @else
+                    <x-molecules.empty-state
+                        icon="home_work"
+                        :title="__('personal.bases.vacio_titulo')"
+                        :detail="__('personal.bases.vacio_detalle')"
+                    />
+                @endif
             @else
                 <div class="ag-bases__tabla" role="table">
                     <div class="ag-bases__head" role="row">

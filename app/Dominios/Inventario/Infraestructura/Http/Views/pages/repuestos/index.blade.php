@@ -53,38 +53,52 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <form method="GET" action="{{ route('panel.repuestos.index') }}" class="ag-filtros ag-repuestos__filtros">
-                <div class="ag-input">
-                    <label for="filtro-q" class="ag-input__label">{{ __('inventario.repuestos.filtro_busqueda') }}</label>
-                    <div class="ag-input__control">
-                        <input
-                            type="search"
-                            name="q"
-                            id="filtro-q"
-                            class="ag-input__field"
-                            value="{{ $filtros['q'] }}"
-                            placeholder="{{ __('inventario.repuestos.filtro_busqueda_placeholder') }}"
-                        >
+            @php
+                $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
+            @endphp
+
+            @if ($hayFiltrosActivos || $repuestos->isNotEmpty())
+                <form method="GET" action="{{ route('panel.repuestos.index') }}" class="ag-filtros ag-repuestos__filtros">
+                    <div class="ag-input">
+                        <label for="filtro-q" class="ag-input__label">{{ __('inventario.repuestos.filtro_busqueda') }}</label>
+                        <div class="ag-input__control">
+                            <input
+                                type="search"
+                                name="q"
+                                id="filtro-q"
+                                class="ag-input__field"
+                                value="{{ $filtros['q'] }}"
+                                placeholder="{{ __('inventario.repuestos.filtro_busqueda_placeholder') }}"
+                            >
+                        </div>
                     </div>
-                </div>
 
-                <div class="ag-filtros__acciones ag-repuestos__filtros-acciones">
-                    <x-atoms.button type="submit" variant="outline" size="md" icon="search">
-                        {{ __('inventario.repuestos.filtrar') }}
-                    </x-atoms.button>
-
-                    @if ($filtros['q'] !== '')
-                        <x-atoms.button href="{{ route('panel.repuestos.index') }}" variant="text" size="md">
-                            {{ __('inventario.repuestos.limpiar_filtro') }}
+                    <div class="ag-filtros__acciones ag-repuestos__filtros-acciones">
+                        <x-atoms.button type="submit" variant="outline" size="md" icon="search">
+                            {{ __('inventario.repuestos.filtrar') }}
                         </x-atoms.button>
-                    @endif
-                </div>
-            </form>
+
+                        @if ($filtros['q'] !== '')
+                            <x-atoms.button href="{{ route('panel.repuestos.index') }}" variant="text" size="md">
+                                {{ __('inventario.repuestos.limpiar_filtro') }}
+                            </x-atoms.button>
+                        @endif
+                    </div>
+                </form>
+            @endif
 
             @if ($repuestos->isEmpty())
-                <x-molecules.alert-strip variant="info" icon="construction" class="ag-repuestos__aviso">
-                    {{ __($filtros['q'] !== '' ? 'inventario.repuestos.filtro_vacio' : 'inventario.repuestos.vacio') }}
-                </x-molecules.alert-strip>
+                @if ($hayFiltrosActivos)
+                    <x-molecules.alert-strip variant="info" icon="construction" class="ag-repuestos__aviso">
+                        {{ __('inventario.repuestos.filtro_vacio') }}
+                    </x-molecules.alert-strip>
+                @else
+                    <x-molecules.empty-state
+                        icon="construction"
+                        :title="__('inventario.repuestos.vacio_titulo')"
+                        :detail="__('inventario.repuestos.vacio_detalle')"
+                    />
+                @endif
             @else
                 <div class="ag-repuestos__tabla" role="table">
                     <div class="ag-repuestos__head" role="row">

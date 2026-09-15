@@ -86,9 +86,11 @@
         @endpuede
 
         @if ($versiones->isEmpty())
-            <x-molecules.alert-strip variant="info" icon="system_update" class="ag-versiones-apk__aviso">
-                {{ __('distribucion.versiones.vacio') }}
-            </x-molecules.alert-strip>
+            <x-molecules.empty-state
+                icon="system_update"
+                :title="__('distribucion.versiones.vacio_titulo')"
+                :detail="__('distribucion.versiones.vacio_detalle')"
+            />
         @else
             <div class="ag-versiones-apk__tabla" role="table">
                 <div class="ag-versiones-apk__head" role="row">

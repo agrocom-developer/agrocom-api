@@ -64,47 +64,61 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <form method="GET" action="{{ route('panel.stock.index') }}" class="ag-filtros ag-stock__filtros">
-                <div class="ag-input">
-                    <label for="filtro-q" class="ag-input__label">{{ __('inventario.stock.filtro_busqueda') }}</label>
-                    <div class="ag-input__control">
-                        <input
-                            type="search"
-                            name="q"
-                            id="filtro-q"
-                            class="ag-input__field"
-                            value="{{ $filtros['q'] }}"
-                            placeholder="{{ __('inventario.stock.filtro_busqueda_placeholder') }}"
-                        >
+            @php
+                $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
+            @endphp
+
+            @if ($hayFiltrosActivos || $stock->isNotEmpty())
+                <form method="GET" action="{{ route('panel.stock.index') }}" class="ag-filtros ag-stock__filtros">
+                    <div class="ag-input">
+                        <label for="filtro-q" class="ag-input__label">{{ __('inventario.stock.filtro_busqueda') }}</label>
+                        <div class="ag-input__control">
+                            <input
+                                type="search"
+                                name="q"
+                                id="filtro-q"
+                                class="ag-input__field"
+                                value="{{ $filtros['q'] }}"
+                                placeholder="{{ __('inventario.stock.filtro_busqueda_placeholder') }}"
+                            >
+                        </div>
                     </div>
-                </div>
 
-                <x-atoms.select
-                    name="base_id"
-                    id="filtro-base"
-                    :label="__('inventario.stock.filtro_base')"
-                    :options="$basesDisponibles"
-                    :value="$filtros['base_id']"
-                    :placeholder="__('inventario.stock.filtro_todos')"
-                />
+                    <x-atoms.select
+                        name="base_id"
+                        id="filtro-base"
+                        :label="__('inventario.stock.filtro_base')"
+                        :options="$basesDisponibles"
+                        :value="$filtros['base_id']"
+                        :placeholder="__('inventario.stock.filtro_todos')"
+                    />
 
-                <div class="ag-filtros__acciones ag-stock__filtros-acciones">
-                    <x-atoms.button type="submit" variant="outline" size="md" icon="search">
-                        {{ __('inventario.stock.filtrar') }}
-                    </x-atoms.button>
-
-                    @if ($filtros['q'] !== '' || $filtros['base_id'] !== null)
-                        <x-atoms.button href="{{ route('panel.stock.index') }}" variant="text" size="md">
-                            {{ __('inventario.stock.limpiar_filtro') }}
+                    <div class="ag-filtros__acciones ag-stock__filtros-acciones">
+                        <x-atoms.button type="submit" variant="outline" size="md" icon="search">
+                            {{ __('inventario.stock.filtrar') }}
                         </x-atoms.button>
-                    @endif
-                </div>
-            </form>
+
+                        @if ($filtros['q'] !== '' || $filtros['base_id'] !== null)
+                            <x-atoms.button href="{{ route('panel.stock.index') }}" variant="text" size="md">
+                                {{ __('inventario.stock.limpiar_filtro') }}
+                            </x-atoms.button>
+                        @endif
+                    </div>
+                </form>
+            @endif
 
             @if ($stock->isEmpty())
-                <x-molecules.alert-strip variant="info" icon="warehouse" class="ag-stock__aviso">
-                    {{ __(($filtros['q'] !== '' || $filtros['base_id'] !== null) ? 'inventario.stock.filtro_vacio' : 'inventario.stock.vacio') }}
-                </x-molecules.alert-strip>
+                @if ($hayFiltrosActivos)
+                    <x-molecules.alert-strip variant="info" icon="warehouse" class="ag-stock__aviso">
+                        {{ __('inventario.stock.filtro_vacio') }}
+                    </x-molecules.alert-strip>
+                @else
+                    <x-molecules.empty-state
+                        icon="warehouse"
+                        :title="__('inventario.stock.vacio_titulo')"
+                        :detail="__('inventario.stock.vacio_detalle')"
+                    />
+                @endif
             @else
                 <div class="ag-stock__tabla" role="table">
                     <div class="ag-stock__head" role="row">
