@@ -66,21 +66,17 @@
             @endphp
 
             @if ($hayFiltrosActivos || $usuarios->isNotEmpty())
-                <form method="GET" action="{{ route('panel.usuarios.index') }}" class="ag-filtros ag-usuarios__filtros">
-                    <div class="ag-input">
-                        <label for="filtro-q" class="ag-input__label">{{ __('seguridad.usuarios.filtro_busqueda') }}</label>
-                        <div class="ag-input__control">
-                            <input
-                                type="search"
-                                name="q"
-                                id="filtro-q"
-                                class="ag-input__field"
-                                value="{{ $filtros['q'] }}"
-                                placeholder="{{ __('seguridad.usuarios.filtro_busqueda_placeholder') }}"
-                            >
-                        </div>
-                    </div>
+                <div class="ag-table-toolbar">
+                    <x-molecules.table-search
+                        action="{{ route('panel.usuarios.index') }}"
+                        :value="$filtros['q']"
+                        :placeholder="__('seguridad.usuarios.filtro_busqueda_placeholder')"
+                        :clear-label="__('ui.tabla.buscador_limpiar')"
+                    />
+                </div>
 
+                <form method="GET" action="{{ route('panel.usuarios.index') }}" class="ag-filtros ag-usuarios__filtros">
+                    <input type="hidden" name="q" value="{{ $filtros['q'] }}">
                     <x-atoms.select
                         name="tipo"
                         id="filtro-tipo"
@@ -94,11 +90,11 @@
                     />
 
                     <div class="ag-filtros__acciones ag-usuarios__filtros-acciones">
-                        <x-atoms.button type="submit" variant="outline" size="md" icon="search">
+                        <x-atoms.button type="submit" variant="primary" size="md" icon="search">
                             {{ __('seguridad.usuarios.filtrar') }}
                         </x-atoms.button>
 
-                        @if ($filtros['q'] !== '' || $filtros['tipo'] !== '')
+                        @if ($filtros['tipo'] !== '')
                             <x-atoms.button href="{{ route('panel.usuarios.index') }}" variant="text" size="md">
                                 {{ __('seguridad.usuarios.limpiar_filtro') }}
                             </x-atoms.button>
@@ -122,6 +118,7 @@
             @else
                 <div class="ag-usuarios__tabla" role="table">
                     <div class="ag-usuarios__head" role="row">
+                        <span role="columnheader" class="ag-usuarios__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('seguridad.usuarios.col_nombre') }}</span>
                         <span role="columnheader">{{ __('seguridad.usuarios.col_username') }}</span>
                         <span role="columnheader">{{ __('seguridad.usuarios.col_tipo') }}</span>
@@ -133,6 +130,9 @@
 
                     @foreach ($usuarios as $usuario)
                         <div class="ag-usuarios__fila" role="row">
+                            <span role="cell" class="ag-usuarios__indice">
+                                {{ ($usuarios->currentPage() - 1) * $usuarios->perPage() + $loop->iteration }}
+                            </span>
                             <span role="cell" class="ag-usuarios__nombre">{{ $usuario->name }}</span>
                             <span role="cell" class="ag-usuarios__username">{{ $usuario->username }}</span>
                             <span role="cell">
@@ -193,25 +193,7 @@
                     @endforeach
                 </div>
 
-                @if ($usuarios->hasPages())
-                    <nav class="ag-usuarios__paginacion" aria-label="{{ __('seguridad.usuarios.paginacion_aria') }}">
-                        @if (! $usuarios->onFirstPage())
-                            <x-atoms.button href="{{ $usuarios->previousPageUrl() }}" variant="outline" size="sm" icon="chevron_left">
-                                {{ __('seguridad.usuarios.paginacion_anterior') }}
-                            </x-atoms.button>
-                        @endif
-
-                        <span class="ag-usuarios__paginacion-info">
-                            {{ __('seguridad.usuarios.paginacion_info', ['actual' => $usuarios->currentPage(), 'total' => $usuarios->lastPage()]) }}
-                        </span>
-
-                        @if ($usuarios->hasMorePages())
-                            <x-atoms.button href="{{ $usuarios->nextPageUrl() }}" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
-                                {{ __('seguridad.usuarios.paginacion_siguiente') }}
-                            </x-atoms.button>
-                        @endif
-                    </nav>
-                @endif
+                <x-molecules.pagination :paginator="$usuarios" :aria-label="__('seguridad.usuarios.paginacion_aria')" />
             @endif
         </div>
     </x-templates.panel-layout>

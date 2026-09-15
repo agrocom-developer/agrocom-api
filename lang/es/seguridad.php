@@ -584,6 +584,7 @@ return [
         'filtro_registro_id' => 'ID de registro',
         'filtro_limpiar' => 'Limpiar filtros',
         'filtro_aplicar' => 'Filtrar',
+        'paginacion_aria' => 'Paginación de bitácora',
 
         'acciones' => [
             'creado' => 'Creado',

@@ -123,6 +123,7 @@
             @else
                 <div class="ag-bitacora__tabla" role="table">
                     <div class="ag-bitacora__head" role="row">
+                        <span role="columnheader" class="ag-bitacora__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('seguridad.bitacora.columna_instante') }}</span>
                         <span role="columnheader">{{ __('seguridad.bitacora.columna_usuario') }}</span>
                         <span role="columnheader">{{ __('seguridad.bitacora.columna_entidad') }}</span>
@@ -132,6 +133,9 @@
 
                     @foreach ($bitacora as $fila)
                         <div class="ag-bitacora__fila" role="row">
+                            <span role="cell" class="ag-bitacora__indice">
+                                {{ ($bitacora->currentPage() - 1) * $bitacora->perPage() + $loop->iteration }}
+                            </span>
                             <span role="cell" class="ag-bitacora__instante">
                                 <div class="ag-bitacora__instante-principal">{{ $fila->instante->format('d/m/Y H:i') }} ({{ $fila->offset }})</div>
                                 @if ($fila->zonaRegistrada !== null)
@@ -199,25 +203,7 @@
                     @endforeach
                 </div>
 
-                @if ($bitacora->hasPages())
-                    <nav class="ag-bitacora__paginacion" aria-label="{{ __('seguridad.usuarios.paginacion_aria') }}">
-                        @if (! $bitacora->onFirstPage())
-                            <x-atoms.button href="{{ $bitacora->previousPageUrl() }}" variant="outline" size="sm" icon="chevron_left">
-                                {{ __('seguridad.usuarios.paginacion_anterior') }}
-                            </x-atoms.button>
-                        @endif
-
-                        <span class="ag-bitacora__paginacion-info">
-                            {{ __('seguridad.usuarios.paginacion_info', ['actual' => $bitacora->currentPage(), 'total' => $bitacora->lastPage()]) }}
-                        </span>
-
-                        @if ($bitacora->hasMorePages())
-                            <x-atoms.button href="{{ $bitacora->nextPageUrl() }}" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
-                                {{ __('seguridad.usuarios.paginacion_siguiente') }}
-                            </x-atoms.button>
-                        @endif
-                    </nav>
-                @endif
+                <x-molecules.pagination :paginator="$bitacora" :aria-label="__('seguridad.bitacora.paginacion_aria')" />
             @endif
         </div>
     </x-templates.panel-layout>
