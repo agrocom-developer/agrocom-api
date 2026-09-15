@@ -215,6 +215,11 @@ return [
                 'descripcion' => 'Administra usuarios, órdenes, stock y la planificación de la base.',
                 'permisos' => ['Operación', 'Recursos', 'Usuarios'],
             ],
+            'admin_plataforma' => [
+                'nombre' => 'Administrador de plataforma',
+                'descripcion' => 'Acceso técnico total sobre la instalación, incluida la gestión de dueños.',
+                'permisos' => ['Todos los módulos', 'Roles y permisos', 'Configuración'],
+            ],
         ],
     ],
 

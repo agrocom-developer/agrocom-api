@@ -77,50 +77,34 @@ y 9 ya tienen gate propio (`tests/Unit/TransicionesEstadoTest.php`,
 - **Respuestas de campo procesadas (26/8/2026)**: los 5 CSV del banco de preguntas clasificados en CONFIRMADO/CORREGIDO/DESCUBIERTO con matriz de límites (`docs/gestion/respuestas_campo/analisis_clasificacion.md`), 7 documentos de políticas por rol (`docs/negocio/politicas/` — incluye dueño y cliente, derivados), flujo base y excepciones, automatización/sistematización, alcance y objetivos, requerimientos de sistema (RF/RNF) e insumos para el modelo de datos. Hallazgos mayores: la mezcla la prepara hoy el cliente (CR-01), las pausas atribuibles nunca se registran (DS-01), el actor "encargado de la propiedad" (DS-02), límites de clima como parámetros por contrato, y T30 en la flota real. Supuestos §16 cerrados: ±5% aceptado, firma en cualquier formato, vuelo nocturno confirmado.
 - **Auditoría SOLID/Clean Code de HU-01 y TE-03 (27/8/2026)**, hecha por `estandares-programacion` a pedido explícito del usuario (quedó sin argumentar al tomar las decisiones de código, y quería la constancia antes de seguir a HU-02): **cumple**, con evidencia archivo:línea para los 5 principios SOLID y para las convenciones de CLAUDE.md — casos de uso con responsabilidad única (`AsignarRolesUsuario`, `ListarOrdenesAplicacion`), controladores delgados (`OrdenAplicacionController`, comentario explícito "ninguna regla de negocio vive acá"), subtipos sin romper el contrato del padre (`SecUsuarioInterno`/`SecUsuarioCliente` sobre `SecUser`), inyección de dependencias y cero relaciones Eloquent cruzando módulos (solo FK por ID). Dos huecos reales pero no causados por mal diseño, sino por alcance aún no llegado — ver gaps abajo. No bloquean HU-02 (login/menú/tema no tocan estados de contrato/orden ni mutan dinero/hectáreas).
 
-## Datos demo (cuentas para probar a mano)
+## Cuenta de arranque (tarea 100)
 
-Sembrados por `database/seeders/Demo/` — corren solo en `local`/`staging`
-(`DatabaseSeeder`), nunca en producción. Contraseña única para todas:
-**`password`**. Esta sección reemplaza cualquier referencia vieja a
-`camila.rojas` (retirada; ver docblock de `PersonalDemoSeeder`) — la lista
-de abajo es la vigente, actualizarla si un seeder demo cambia usernames.
+Decisión directa del usuario: la familia `database/seeders/Demo/` se retiró
+completa (11 seeders), junto con `tests/Feature/` (157 tests que dependían
+de sus datos) — ya no se confía en que la suite automática refleje que el
+sistema hace lo que se pide, y se prueba todo a mano, en vivo, contra el
+compose real. Esta sección reemplaza a la vieja "Datos demo (cuentas para
+probar a mano)", que documentaba `carlos.ferrufino`, `cliente.sanjorge` y el
+resto de la cuadrilla/cartera de ejemplo.
 
-**Cuentas internas** (`PersonalDemoSeeder`, guard `interno`), todas sobre
-el mismo cliente de `NucleoComercialSeeder` (Agropecuaria San Jorge
-S.R.L.):
+Una instalación nueva de `local`/`staging` arranca con menú, roles y
+permisos (`CatalogoSeeder`) más una única cuenta, sembrada por
+`AdminPlataformaSeeder` (gateado igual que corría `Demo/` antes — nunca en
+producción):
 
-| Usuario | Roles | Persona |
-|---|---|---|
-| `carlos.ferrufino` | dueño, encargado de operaciones, jefe de campo, piloto | Autor (`created_by`) de todo lo demás sembrado por la demo |
-| `jorge.scheidel` | encargado de operaciones | — |
-| `abraham.gutierrez` | jefe de campo, auxiliar | — |
-| `josue.haenke` | piloto | — |
-| `miguelito.justiniano` | piloto, auxiliar | — |
-| `david.rios` | auxiliar | — |
-
-**Cuentas de portal** (`PortalDemoSeeder`, tarea 65/HU-41, guard `cliente`,
-encadenado desde `DemostracionSeeder` — no desde `DemoSeeder`, que se
-mantiene deliberadamente mínimo para no romper los tests que afirman sobre
-su tamaño; ver el docblock del seeder para el porqué). Sin roles ni
-persona: una cuenta de portal solo tiene contrato.
-
-| Usuario | Cliente | Contrato | Qué tiene para mostrar |
+| Usuario | Password | Rol | Persona |
 |---|---|---|---|
-| `cliente.sanjorge` | Agropecuaria San Jorge S.R.L. (4.000 ha, 65 Bs/ha) | El de `NucleoComercialSeeder` | Una sesión validada, un acta firmada y su reporte técnico, sobre el lote L-01 |
-| `cliente.esperanza` | Estancia La Esperanza S.A. (850 ha, 48 Bs/ha) | Propio, creado por este seeder | Idem, sobre su propio lote LE-01 |
+| `miguelo` | `0000` | `admin_plataforma` | — (`persona_id` null: cuenta técnica, no gente de campo) |
 
-Guion de prueba manual paso a paso: [prueba_portal.md](prueba_portal.md).
+`admin_plataforma` recibe el catálogo de permisos completo, sin excepción
+— mismo criterio que `dueno` (`SeguridadSeeder`): acceso total sobre
+cualquier instalación, incluida la gestión de dueños. Es un rol técnico de
+plataforma, no del negocio del cliente, y su seeder es dato de catálogo
+puro que corre en todos los entornos (un rol sin usuarios asignados no daña
+nada en producción).
 
-**Correo de la cuenta (tarea 66, ADR 0004 ampliación 9/9/2026):** todas las
-cuentas internas de la tabla de arriba tienen `<username>@agrocom.example`
-(p. ej. `carlos.ferrufino@agrocom.example`); las de portal, el correo del
-contacto real de su cliente (`cliente.sanjorge` → `jantelo@sanjorge.example`,
-`cliente.esperanza` → `manez@laesperanza.example`). Los correos que salgan
-del entorno local (`docker compose up`, `MAIL_MAILER=smtp` en
-`.env.example`) se leen en Mailpit: **http://localhost:8025** — nunca salen
-a una casilla real. `/panel/perfil` y `/portal/perfil` (autoservicio) y
-"Recuperar acceso"/`/restablecer` (por correo) ya son flujos reales, no
-maqueta.
+El resto de los datos —clientes, contratos, personas, órdenes, sesiones—
+los carga el usuario a mano desde el panel, con esta cuenta.
 
 ## Ramas y remoto (estado real, no solo local)
 
