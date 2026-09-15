@@ -33,10 +33,16 @@
 .ag-propiedades__head,
 .ag-propiedades__fila {
     display: grid;
-    grid-template-columns: 2fr 1.5fr 1fr auto;
+    grid-template-columns: 3rem 2fr 1.5fr 1fr auto;
     gap: var(--ag-space-4);
     align-items: center;
     padding: var(--ag-space-3) var(--ag-space-4);
+}
+
+.ag-propiedades__indice {
+    color: var(--ag-color-text-faint);
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-xs);
 }
 
 .ag-propiedades__head {
@@ -68,17 +74,6 @@
     gap: var(--ag-space-2);
 }
 
-.ag-propiedades__paginacion {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--ag-space-4);
-}
-
-.ag-propiedades__paginacion-info {
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-sm);
-}
 
 @media (max-width: 992px) {
     .ag-propiedades__head {
@@ -88,6 +83,10 @@
     .ag-propiedades__fila {
         grid-template-columns: 1fr;
         gap: var(--ag-space-1);
+    }
+
+    .ag-propiedades__indice {
+        display: none;
     }
 
     .ag-propiedades__acciones {

@@ -44,10 +44,16 @@
 .ag-campanias__head,
 .ag-campanias__fila {
     display: grid;
-    grid-template-columns: 1.7fr 0.75fr 0.7fr 1.5fr 0.7fr 0.7fr 1.7fr;
+    grid-template-columns: 3rem 1.7fr 0.75fr 0.7fr 1.5fr 0.7fr 0.7fr 1.7fr;
     gap: var(--ag-space-4);
     align-items: center;
     padding: var(--ag-space-3) var(--ag-space-4);
+}
+
+.ag-campanias__indice {
+    color: var(--ag-color-text-faint);
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-xs);
 }
 
 /* El encabezado de acciones va vacío (`aria-hidden`) pero ocupa su columna:
@@ -101,17 +107,6 @@
     gap: var(--ag-space-2);
 }
 
-.ag-campanias__paginacion {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--ag-space-4);
-}
-
-.ag-campanias__paginacion-info {
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-sm);
-}
 
 @media (max-width: 992px) {
     .ag-campanias__head {
@@ -121,6 +116,10 @@
     .ag-campanias__fila {
         grid-template-columns: 1fr;
         gap: var(--ag-space-1);
+    }
+
+    .ag-campanias__indice {
+        display: none;
     }
 
     .ag-campanias__acciones {
