@@ -365,10 +365,7 @@ return [
         'titulo' => 'Cultivos',
         'subtitulo' => 'Catálogo de cultivos disponibles para la siembra por lote y campaña.',
         'nuevo' => 'Nuevo cultivo',
-        'filtro_busqueda' => 'Buscar',
-        'filtro_busqueda_placeholder' => 'Nombre del cultivo',
-        'filtrar' => 'Buscar',
-        'limpiar_filtro' => 'Limpiar búsqueda',
+        'filtro_busqueda_placeholder' => 'Buscar cultivo…',
         'vacio_titulo' => 'Todavía no hay cultivos',
         'vacio_detalle' => 'Los cultivos son el catálogo de opciones disponibles para sembrar en cada lote. En cuanto se registre el primero, vas a verlo aquí y en los formularios de siembra.',
         'filtro_vacio' => 'Ningún cultivo coincide con la búsqueda.',
@@ -380,9 +377,6 @@ return [
         'eliminar_accion' => 'Eliminar',
         'confirmar_baja' => '¿Dar de baja este cultivo? Las siembras que ya lo tienen cargado no se ven afectadas.',
         'paginacion_aria' => 'Paginación de cultivos',
-        'paginacion_anterior' => 'Anterior',
-        'paginacion_siguiente' => 'Siguiente',
-        'paginacion_info' => 'Página :actual de :total',
 
         // Formulario (create/edit)
         'titulo_crear' => 'Nuevo cultivo',
@@ -476,6 +470,8 @@ return [
     'reportes_comerciales' => [
         'titulo' => 'Informe de avance de contratos',
         'subtitulo' => 'Hectáreas contratadas, aplicadas y pendientes, agrupadas por cultivo y cliente.',
+        'sin_datos_titulo' => 'Todavía no hay nada que informar',
+        'sin_datos_detalle' => 'Este informe agrupa contratos por cliente y cultivo — hace falta al menos un cliente y un cultivo dados de alta para poder generarlo.',
 
         // Entrada (pantalla inicial, con formulario de selección obligatoria)
         'entrada' => [
