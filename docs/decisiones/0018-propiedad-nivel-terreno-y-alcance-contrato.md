@@ -1,6 +1,6 @@
 # ADR 0018 — Propiedad como nivel de terreno entre Cliente y Campo, alcance mixto de contrato, y Cliente persona física/jurídica
 
-**Estado:** Aceptada · **Fecha:** 10/9/2026 · **Origen:** hallazgo de campo del dueño (caso "Gamelera", investigado en `docs/gestion/pendiente_delimitacion_campo_lotes.md`) + pedido de rediseño del modelo comercial (mensaje del 10/9/2026).
+**Estado:** Reemplazada por [ADR 0020](0020-propiedad-lote-directo.md) (15/9/2026) · **Fecha:** 10/9/2026 · **Origen:** hallazgo de campo del dueño (caso "Gamelera", investigado en `docs/gestion/pendiente_delimitacion_campo_lotes.md`) + pedido de rediseño del modelo comercial (mensaje del 10/9/2026).
 
 ## Contexto
 
