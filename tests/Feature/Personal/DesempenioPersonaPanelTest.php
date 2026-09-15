@@ -3,7 +3,6 @@
 use App\Dominios\Campania\Dominio\EstadoCampania;
 use App\Dominios\Campania\Infraestructura\Eloquent\Campania;
 use App\Dominios\Comercial\Dominio\EstadoContrato;
-use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
@@ -87,8 +86,7 @@ function clienteConCampaniaFicha(string $sufijo, string $campaniaCodigo, string 
 function trabajoDeContratoFicha(Contrato $contrato, string $sufijo): Trabajo
 {
     $propiedad = Propiedad::create(['cliente_id' => $contrato->cliente_id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
-    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => "Campo ficha {$sufijo}"]);
-    $lote = Lote::create(['campo_id' => $campo->id, 'codigo' => "L-FICHA-{$sufijo}", 'hectareas' => '50.00']);
+    $lote = Lote::create(['propiedad_id' => $propiedad->id, 'codigo' => "L-FICHA-{$sufijo}", 'hectareas' => '50.00']);
     $orden = OrdenAplicacion::create([
         'contrato_id' => $contrato->id,
         'nro_aplicacion' => 1,

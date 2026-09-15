@@ -69,15 +69,8 @@ function crearOrdenVigenteParaTrabajo(): array
         'updated_at' => now(),
     ]);
 
-    $campoId = DB::table('com_campos')->insertGetId([
-        'propiedad_id' => $propiedadId,
-        'nombre' => 'Campo de prueba',
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
-
     $loteId = DB::table('com_lotes')->insertGetId([
-        'campo_id' => $campoId,
+        'propiedad_id' => $propiedadId,
         'codigo' => 'L-TEST',
         'hectareas' => '50.00',
         'created_at' => now(),

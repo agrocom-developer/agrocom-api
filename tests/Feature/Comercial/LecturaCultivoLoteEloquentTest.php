@@ -3,7 +3,6 @@
 use App\Dominios\Campania\Infraestructura\Eloquent\Campania;
 use App\Dominios\Comercial\Aplicacion\GuardarSiembraCampania;
 use App\Dominios\Comercial\Contratos\LecturaCultivoLote;
-use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cultivo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
@@ -47,17 +46,16 @@ it('resuelve el cultivo y las hectáreas de cada lote sembrado en una campaña',
         'estado' => 'abierta',
     ]);
     $propiedad = Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
-    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo con siembra']);
-    $campo->lotes()->create(['codigo' => 'L-01', 'hectareas' => '20.00']);
-    $campo->lotes()->create(['codigo' => 'L-02', 'hectareas' => '30.00']);
-    $campo->refresh()->load('lotes');
+    $propiedad->lotes()->create(['codigo' => 'L-01', 'hectareas' => '20.00']);
+    $propiedad->lotes()->create(['codigo' => 'L-02', 'hectareas' => '30.00']);
+    $propiedad->refresh()->load('lotes');
 
     $soyaId = (int) Cultivo::query()->where('nombre', 'Soya')->value('id');
     $maizId = (int) Cultivo::query()->where('nombre', 'Maíz')->value('id');
 
-    app(GuardarSiembraCampania::class)->ejecutar($campo, $campania->id, [
-        ['lote_id' => $campo->lotes[0]->id, 'cultivo_id' => $soyaId, 'hectareas_sembradas' => '18.00', 'fecha_siembra' => null, 'fecha_cosecha_estimada' => null],
-        ['lote_id' => $campo->lotes[1]->id, 'cultivo_id' => $maizId, 'hectareas_sembradas' => '25.00', 'fecha_siembra' => null, 'fecha_cosecha_estimada' => null],
+    app(GuardarSiembraCampania::class)->ejecutar($propiedad, $campania->id, [
+        ['lote_id' => $propiedad->lotes[0]->id, 'cultivo_id' => $soyaId, 'hectareas_sembradas' => '18.00', 'fecha_siembra' => null, 'fecha_cosecha_estimada' => null],
+        ['lote_id' => $propiedad->lotes[1]->id, 'cultivo_id' => $maizId, 'hectareas_sembradas' => '25.00', 'fecha_siembra' => null, 'fecha_cosecha_estimada' => null],
     ]);
 
     $siembras = collect(app(LecturaCultivoLote::class)->porCampania($campania->id))->keyBy('loteCodigo');

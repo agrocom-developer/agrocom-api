@@ -1,7 +1,6 @@
 <?php
 
 use App\Dominios\Comercial\Dominio\EstadoContrato;
-use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
@@ -41,8 +40,7 @@ function trabajoParaCobertura(string $hectareasLote, array $sesiones = []): Trab
 {
     $cliente = Cliente::create(['razon_social' => 'Cliente cobertura '.Str::random(6), 'tipo_persona' => 'juridica']);
     $propiedad = Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
-    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo cobertura '.Str::random(6)]);
-    $lote = Lote::create(['campo_id' => $campo->id, 'codigo' => 'L-COB-'.Str::random(6), 'hectareas' => $hectareasLote]);
+    $lote = Lote::create(['propiedad_id' => $propiedad->id, 'codigo' => 'L-COB-'.Str::random(6), 'hectareas' => $hectareasLote]);
     $contrato = Contrato::create([
         'cliente_id' => $cliente->id,
         'hectareas_contratadas' => $hectareasLote,

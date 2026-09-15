@@ -1,6 +1,7 @@
 <?php
 
 use Database\Seeders\Demo\DemoSeeder;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -13,7 +14,6 @@ dataset('tablas del núcleo comercial', [
     'com_contratos',
     'com_contrato_ventanas',
     'com_propiedades',
-    'com_campos',
     'com_lotes',
     'com_cultivos',
     'com_lote_campania',
@@ -30,6 +30,56 @@ it('crea la tabla con soft delete y columnas de auditoría', function (string $t
             'updated_at',
         ]))->toBeTrue();
 })->with('tablas del núcleo comercial');
+
+it('com_campos ya no existe (ADR 0020): el lote cuelga directo de la propiedad', function () {
+    expect(Schema::hasTable('com_campos'))->toBeFalse();
+});
+
+it('com_lotes.propiedad_id existe, es NOT NULL y acepta un insert de humo contra la FK', function () {
+    expect(Schema::hasColumn('com_lotes', 'propiedad_id'))->toBeTrue();
+
+    $clienteId = DB::table('com_clientes')->insertGetId([
+        'razon_social' => 'Cliente esquema propiedad_id',
+        'tipo_persona' => 'juridica',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $propiedadId = DB::table('com_propiedades')->insertGetId([
+        'cliente_id' => $clienteId,
+        'nombre' => 'Propiedad esquema propiedad_id',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    // Insert de humo: la FK com_lotes.propiedad_id -> com_propiedades.id
+    // funciona sin el nivel intermedio Campo.
+    $loteId = DB::table('com_lotes')->insertGetId([
+        'propiedad_id' => $propiedadId,
+        'codigo' => 'L-ESQUEMA',
+        'hectareas' => '10.00',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    expect(DB::table('com_lotes')->where('id', $loteId)->value('propiedad_id'))->toBe($propiedadId);
+
+    // NOT NULL solo se aplica en pgsql (SQLite, el motor de los tests, no
+    // soporta ALTER COLUMN ... SET NOT NULL — ver docblock de la migración
+    // `add_propiedad_id_a_com_lotes_table`), mismo criterio que el CHECK de
+    // `EsquemaEstadiaHaciendaTest`.
+    if (DB::getDriverName() !== 'pgsql') {
+        $this->markTestSkipped('NOT NULL solo se aplica en pgsql; SQLite no soporta ALTER COLUMN SET NOT NULL (ver docblock de la migración).');
+    }
+
+    expect(fn () => DB::table('com_lotes')->insert([
+        'propiedad_id' => null,
+        'codigo' => 'L-ESQUEMA-NULL',
+        'hectareas' => '10.00',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]))->toThrow(QueryException::class);
+});
 
 dataset('columnas de vuelo retiradas de com_contratos', [
     'adelanto_pct',
@@ -115,15 +165,8 @@ it('ope_ordenes_aplicacion tiene el tipo de aplicación, con desarrollo como def
         'updated_at' => now(),
     ]);
 
-    $campoId = DB::table('com_campos')->insertGetId([
-        'propiedad_id' => $propiedadId,
-        'nombre' => 'Campo de prueba tipo_aplicacion',
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
-
     $loteId = DB::table('com_lotes')->insertGetId([
-        'campo_id' => $campoId,
+        'propiedad_id' => $propiedadId,
         'codigo' => 'L-TIPO',
         'hectareas' => '10.00',
         'created_at' => now(),

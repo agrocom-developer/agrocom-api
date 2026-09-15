@@ -1,11 +1,11 @@
 <?php
 
-use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\ClienteContacto;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\ContratoVentana;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Compartido\Dominio\Excepciones\BorradoFisicoNoPermitido;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
@@ -29,7 +29,7 @@ dataset('modelos de dominio del núcleo comercial', [
     'ClienteContacto' => [ClienteContacto::class],
     'Contrato' => [Contrato::class],
     'ContratoVentana' => [ContratoVentana::class],
-    'Campo' => [Campo::class],
+    'Propiedad' => [Propiedad::class],
     'Lote' => [Lote::class],
     'OrdenAplicacion' => [OrdenAplicacion::class],
 ]);

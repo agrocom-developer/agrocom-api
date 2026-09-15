@@ -1,7 +1,6 @@
 <?php
 
 use App\Dominios\Comercial\Dominio\EstadoContrato;
-use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
@@ -283,8 +282,7 @@ it('un trabajo observado por exceder la tolerancia sigue observado después de c
 
     $cliente = Cliente::create(['razon_social' => 'Cliente cobertura cierre', 'tipo_persona' => 'juridica']);
     $propiedad = Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
-    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo cobertura cierre']);
-    $lote = Lote::create(['campo_id' => $campo->id, 'codigo' => 'L-COB-CIERRE', 'hectareas' => '10.00']);
+    $lote = Lote::create(['propiedad_id' => $propiedad->id, 'codigo' => 'L-COB-CIERRE', 'hectareas' => '10.00']);
     $contrato = Contrato::create([
         'cliente_id' => $cliente->id,
         'hectareas_contratadas' => '10.00',

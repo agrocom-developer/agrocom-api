@@ -1,7 +1,6 @@
 <?php
 
 use App\Dominios\Comercial\Dominio\EstadoContrato;
-use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
@@ -62,8 +61,7 @@ function ordenVigenteParaAsignacionPanel(string $hectareasLote, EstadoOrdenAplic
 {
     $cliente = Cliente::create(['razon_social' => 'Cliente panel asignación '.Str::random(6), 'tipo_persona' => 'juridica']);
     $propiedad = Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
-    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo panel asignación '.Str::random(6)]);
-    $lote = Lote::create(['campo_id' => $campo->id, 'codigo' => 'L-PNL-'.Str::random(6), 'hectareas' => $hectareasLote]);
+    $lote = Lote::create(['propiedad_id' => $propiedad->id, 'codigo' => 'L-PNL-'.Str::random(6), 'hectareas' => $hectareasLote]);
     $contrato = Contrato::create([
         'cliente_id' => $cliente->id,
         'hectareas_contratadas' => $hectareasLote,
@@ -143,7 +141,7 @@ it('confirma en un solo submit el reparto de 2 equipos sobre 2 lotes distintos',
 
     [$orden, $loteUno] = ordenVigenteParaAsignacionPanel('300.00');
     $loteDos = Lote::create([
-        'campo_id' => Lote::query()->findOrFail($loteUno)->campo_id,
+        'propiedad_id' => Lote::query()->findOrFail($loteUno)->propiedad_id,
         'codigo' => 'L-PNL-'.Str::random(6),
         'hectareas' => '200.00',
     ]);

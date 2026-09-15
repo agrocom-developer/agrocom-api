@@ -9,7 +9,6 @@ use App\Dominios\Comercial\Dominio\EstadoContrato;
 use App\Dominios\Comercial\Dominio\Excepciones\FiltroInformeIncompleto;
 use App\Dominios\Comercial\Dominio\SaldoContrato;
 use App\Dominios\Comercial\Dominio\TramoAvance;
-use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cultivo;
@@ -75,13 +74,12 @@ function contratoInforme(Cliente $cliente, Campania $campania, string $sufijo, s
 function siembraInforme(Cliente $cliente, Campania $campania, string $sufijo, string $cultivoNombre, string $hectareasSembradas = '10.00'): int
 {
     $propiedad = Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
-    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => "Campo informe {$sufijo}"]);
-    $lote = $campo->lotes()->create(['codigo' => "L-INF-{$sufijo}", 'hectareas' => '100.00']);
-    $campo->load('lotes');
+    $lote = $propiedad->lotes()->create(['codigo' => "L-INF-{$sufijo}", 'hectareas' => '100.00']);
+    $propiedad->load('lotes');
 
     $cultivoId = (int) Cultivo::query()->where('nombre', $cultivoNombre)->value('id');
 
-    app(GuardarSiembraCampania::class)->ejecutar($campo, $campania->id, [
+    app(GuardarSiembraCampania::class)->ejecutar($propiedad, $campania->id, [
         ['lote_id' => $lote->id, 'cultivo_id' => $cultivoId, 'hectareas_sembradas' => $hectareasSembradas, 'fecha_siembra' => null, 'fecha_cosecha_estimada' => null],
     ]);
 
@@ -92,8 +90,7 @@ function siembraInforme(Cliente $cliente, Campania $campania, string $sufijo, st
 function actaFirmadaInforme(Contrato $contrato, string $sufijo, string $hectareas): void
 {
     $propiedad = Propiedad::create(['cliente_id' => $contrato->cliente_id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
-    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => "Campo acta informe {$sufijo}"]);
-    $lote = $campo->lotes()->create(['codigo' => "L-ACTA-INF-{$sufijo}", 'hectareas' => '999.00']);
+    $lote = $propiedad->lotes()->create(['codigo' => "L-ACTA-INF-{$sufijo}", 'hectareas' => '999.00']);
 
     $orden = OrdenAplicacion::create([
         'contrato_id' => $contrato->id,

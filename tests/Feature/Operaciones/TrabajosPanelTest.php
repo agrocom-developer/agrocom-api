@@ -1,7 +1,6 @@
 <?php
 
 use App\Dominios\Comercial\Dominio\EstadoContrato;
-use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
@@ -74,8 +73,7 @@ function trabajoCerradoDemo(): Trabajo
 {
     $cliente = Cliente::create(['razon_social' => 'Cliente panel trabajos', 'tipo_persona' => 'juridica']);
     $propiedad = Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
-    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo panel']);
-    $lote = Lote::create(['campo_id' => $campo->id, 'codigo' => 'L-PANEL', 'hectareas' => '40.00']);
+    $lote = Lote::create(['propiedad_id' => $propiedad->id, 'codigo' => 'L-PANEL', 'hectareas' => '40.00']);
     $contrato = Contrato::create([
         'cliente_id' => $cliente->id,
         'hectareas_contratadas' => '40.00',
@@ -160,8 +158,8 @@ it('publica el ítem de menú de trabajos gateado por operaciones.trabajo.ver', 
  */
 
 /**
- * Fixture parametrizable: crea la cadena completa (Cliente → Campo → Lote →
- * Contrato → OrdenAplicacion → Trabajo, con sesiones opcionales) — las FKs
+ * Fixture parametrizable: crea la cadena completa (Cliente → Propiedad →
+ * Lote → Contrato → OrdenAplicacion → Trabajo, con sesiones opcionales) — las FKs
  * son reales, no hay atajo. `$atributosTrabajo` acepta `estado` (default
  * Cerrado) y `nro_aplicacion` (default 1); `$sesiones` es una lista de
  * arreglos de atributos de `Sesion` (fusionados sobre un default "cerrada,
@@ -175,9 +173,8 @@ function crearTrabajo(array $atributosTrabajo = [], array $sesiones = []): Traba
 {
     $cliente = Cliente::create(['razon_social' => 'Cliente panel trabajos '.Str::random(6), 'tipo_persona' => 'juridica']);
     $propiedad = Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
-    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo panel '.Str::random(6)]);
     $lote = Lote::create([
-        'campo_id' => $campo->id,
+        'propiedad_id' => $propiedad->id,
         'codigo' => 'L-'.Str::random(6),
         'hectareas' => '40.00',
     ]);

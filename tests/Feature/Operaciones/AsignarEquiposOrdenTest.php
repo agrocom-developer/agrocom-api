@@ -1,7 +1,6 @@
 <?php
 
 use App\Dominios\Comercial\Dominio\EstadoContrato;
-use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
@@ -43,7 +42,6 @@ function crearOrdenConLotesParaAsignacion(array $hectareasPorLote, EstadoOrdenAp
 {
     $cliente = Cliente::create(['razon_social' => 'Cliente asignación '.Str::random(6), 'tipo_persona' => 'juridica']);
     $propiedad = Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
-    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo asignación '.Str::random(6)]);
     $contrato = Contrato::create([
         'cliente_id' => $cliente->id,
         'hectareas_contratadas' => array_sum(array_map('floatval', $hectareasPorLote)),
@@ -65,7 +63,7 @@ function crearOrdenConLotesParaAsignacion(array $hectareasPorLote, EstadoOrdenAp
     $loteIds = [];
 
     foreach ($hectareasPorLote as $hectareas) {
-        $lote = Lote::create(['campo_id' => $campo->id, 'codigo' => 'L-ASG-'.Str::random(6), 'hectareas' => $hectareas]);
+        $lote = Lote::create(['propiedad_id' => $propiedad->id, 'codigo' => 'L-ASG-'.Str::random(6), 'hectareas' => $hectareas]);
         $orden->ordenLotes()->create(['lote_id' => $lote->id, 'hectareas_solicitadas' => $hectareas]);
         $loteIds[] = $lote->id;
     }

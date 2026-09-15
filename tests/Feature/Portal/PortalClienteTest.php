@@ -1,7 +1,6 @@
 <?php
 
 use App\Dominios\Comercial\Dominio\EstadoContrato;
-use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
@@ -61,8 +60,7 @@ function contratoParaPortal(string $sufijo, string $hectareas = '50.00', string 
 function ordenParaPortal(Contrato $contrato, string $sufijo): OrdenAplicacion
 {
     $propiedad = Propiedad::create(['cliente_id' => $contrato->cliente_id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
-    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => "Campo portal {$sufijo}"]);
-    $lote = Lote::create(['campo_id' => $campo->id, 'codigo' => "L-PORTAL-{$sufijo}", 'hectareas' => '25.00']);
+    $lote = Lote::create(['propiedad_id' => $propiedad->id, 'codigo' => "L-PORTAL-{$sufijo}", 'hectareas' => '25.00']);
 
     $orden = OrdenAplicacion::create([
         'contrato_id' => $contrato->id,

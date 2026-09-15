@@ -1,6 +1,5 @@
 <?php
 
-use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Mantenimiento\Infraestructura\Eloquent\Vehiculo;
@@ -34,24 +33,22 @@ function equipoTrabajoParaEstadia(): EquipoTrabajo
     ]);
 }
 
-function campoParaEstadia(): Campo
+function propiedadParaEstadia(): Propiedad
 {
     $cliente = Cliente::create(['razon_social' => 'Cliente de prueba', 'tipo_persona' => 'juridica']);
 
-    $propiedad = Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
-
-    return Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo de prueba']);
+    return Propiedad::create(['cliente_id' => $cliente->id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
 }
 
 test('abrirEstadia con datos válidos aplica y persiste la fila', function () {
     $equipo = equipoTrabajoParaEstadia();
-    $campo = campoParaEstadia();
+    $propiedad = propiedadParaEstadia();
     $contrato = app(EscrituraSincronizacion::class);
 
     $datos = AperturaEstadiaHacienda::intentarDesdeArreglo([
         'uuid_cliente' => 'uuid-estadia-1',
         'equipo_trabajo_id' => $equipo->id,
-        'campo_id' => $campo->id,
+        'campo_id' => $propiedad->id,
         'entrada' => '2026-09-01T08:00:00-04:00',
     ]);
 
@@ -65,7 +62,7 @@ test('abrirEstadia con datos válidos aplica y persiste la fila', function () {
 
 test('abrirEstadia con vehículo y observación persiste ambos campos', function () {
     $equipo = equipoTrabajoParaEstadia();
-    $campo = campoParaEstadia();
+    $propiedad = propiedadParaEstadia();
     $vehiculo = Vehiculo::create([
         'identificador' => 'VEH-'.uniqid(),
         'estado' => 'activo',
@@ -75,7 +72,7 @@ test('abrirEstadia con vehículo y observación persiste ambos campos', function
     $datos = AperturaEstadiaHacienda::intentarDesdeArreglo([
         'uuid_cliente' => 'uuid-estadia-vehiculo',
         'equipo_trabajo_id' => $equipo->id,
-        'campo_id' => $campo->id,
+        'campo_id' => $propiedad->id,
         'entrada' => '2026-09-01T08:00:00-04:00',
         'vehiculo_id' => $vehiculo->id,
         'observacion' => 'ingreso por tranquera norte',
@@ -91,13 +88,13 @@ test('abrirEstadia con vehículo y observación persiste ambos campos', function
 
 test('abrirEstadia reintentando el mismo uuid_cliente devuelve duplicado', function () {
     $equipo = equipoTrabajoParaEstadia();
-    $campo = campoParaEstadia();
+    $propiedad = propiedadParaEstadia();
     $contrato = app(EscrituraSincronizacion::class);
 
     $datos = AperturaEstadiaHacienda::intentarDesdeArreglo([
         'uuid_cliente' => 'uuid-estadia-reintento',
         'equipo_trabajo_id' => $equipo->id,
-        'campo_id' => $campo->id,
+        'campo_id' => $propiedad->id,
         'entrada' => '2026-09-01T08:00:00-04:00',
     ]);
 
@@ -110,13 +107,13 @@ test('abrirEstadia reintentando el mismo uuid_cliente devuelve duplicado', funct
 
 test('abrirEstadia para un equipo con estadía abierta se rechaza sin frenar el uso posterior del contrato', function () {
     $equipo = equipoTrabajoParaEstadia();
-    $campo = campoParaEstadia();
+    $propiedad = propiedadParaEstadia();
     $contrato = app(EscrituraSincronizacion::class);
 
     $primera = AperturaEstadiaHacienda::intentarDesdeArreglo([
         'uuid_cliente' => 'uuid-estadia-abierta-1',
         'equipo_trabajo_id' => $equipo->id,
-        'campo_id' => $campo->id,
+        'campo_id' => $propiedad->id,
         'entrada' => '2026-09-01T08:00:00-04:00',
     ]);
     $contrato->abrirEstadia($primera);
@@ -124,7 +121,7 @@ test('abrirEstadia para un equipo con estadía abierta se rechaza sin frenar el 
     $segunda = AperturaEstadiaHacienda::intentarDesdeArreglo([
         'uuid_cliente' => 'uuid-estadia-abierta-2',
         'equipo_trabajo_id' => $equipo->id,
-        'campo_id' => $campo->id,
+        'campo_id' => $propiedad->id,
         'entrada' => '2026-09-02T08:00:00-04:00',
     ]);
     $resultado = $contrato->abrirEstadia($segunda);
@@ -140,7 +137,7 @@ test('abrirEstadia para un equipo con estadía abierta se rechaza sin frenar el 
     $tercera = AperturaEstadiaHacienda::intentarDesdeArreglo([
         'uuid_cliente' => 'uuid-estadia-otro-equipo',
         'equipo_trabajo_id' => $otroEquipo->id,
-        'campo_id' => $campo->id,
+        'campo_id' => $propiedad->id,
         'entrada' => '2026-09-02T08:00:00-04:00',
     ]);
     expect($contrato->abrirEstadia($tercera)->estado)->toBe('aplicado');
@@ -148,13 +145,13 @@ test('abrirEstadia para un equipo con estadía abierta se rechaza sin frenar el 
 
 test('cerrarEstadia con datos válidos aplica y persiste la salida', function () {
     $equipo = equipoTrabajoParaEstadia();
-    $campo = campoParaEstadia();
+    $propiedad = propiedadParaEstadia();
     $contrato = app(EscrituraSincronizacion::class);
 
     $contrato->abrirEstadia(AperturaEstadiaHacienda::intentarDesdeArreglo([
         'uuid_cliente' => 'uuid-estadia-a-cerrar',
         'equipo_trabajo_id' => $equipo->id,
-        'campo_id' => $campo->id,
+        'campo_id' => $propiedad->id,
         'entrada' => '2026-09-01T08:00:00-04:00',
     ]));
 
@@ -190,13 +187,13 @@ test('cerrarEstadia sobre una estadía inexistente se rechaza', function () {
 
 test('cerrarEstadia reintentando el mismo evento de salida devuelve duplicado', function () {
     $equipo = equipoTrabajoParaEstadia();
-    $campo = campoParaEstadia();
+    $propiedad = propiedadParaEstadia();
     $contrato = app(EscrituraSincronizacion::class);
 
     $contrato->abrirEstadia(AperturaEstadiaHacienda::intentarDesdeArreglo([
         'uuid_cliente' => 'uuid-estadia-reintento-cierre',
         'equipo_trabajo_id' => $equipo->id,
-        'campo_id' => $campo->id,
+        'campo_id' => $propiedad->id,
         'entrada' => '2026-09-01T08:00:00-04:00',
     ]));
 
@@ -214,13 +211,13 @@ test('cerrarEstadia reintentando el mismo evento de salida devuelve duplicado', 
 
 test('cerrarEstadia con un segundo evento de salida distinto sobre una estadía ya cerrada se rechaza', function () {
     $equipo = equipoTrabajoParaEstadia();
-    $campo = campoParaEstadia();
+    $propiedad = propiedadParaEstadia();
     $contrato = app(EscrituraSincronizacion::class);
 
     $contrato->abrirEstadia(AperturaEstadiaHacienda::intentarDesdeArreglo([
         'uuid_cliente' => 'uuid-estadia-doble-cierre',
         'equipo_trabajo_id' => $equipo->id,
-        'campo_id' => $campo->id,
+        'campo_id' => $propiedad->id,
         'entrada' => '2026-09-01T08:00:00-04:00',
     ]));
 
@@ -242,13 +239,13 @@ test('cerrarEstadia con un segundo evento de salida distinto sobre una estadía 
 
 test('cerrarEstadia con salida anterior o igual a la entrada se rechaza', function () {
     $equipo = equipoTrabajoParaEstadia();
-    $campo = campoParaEstadia();
+    $propiedad = propiedadParaEstadia();
     $contrato = app(EscrituraSincronizacion::class);
 
     $contrato->abrirEstadia(AperturaEstadiaHacienda::intentarDesdeArreglo([
         'uuid_cliente' => 'uuid-estadia-fecha-invalida',
         'equipo_trabajo_id' => $equipo->id,
-        'campo_id' => $campo->id,
+        'campo_id' => $propiedad->id,
         'entrada' => '2026-09-01T08:00:00-04:00',
     ]));
 

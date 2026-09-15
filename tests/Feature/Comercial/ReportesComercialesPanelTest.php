@@ -2,7 +2,6 @@
 
 use App\Dominios\Comercial\Aplicacion\ObtenerInformeAvanceContratos;
 use App\Dominios\Comercial\Dominio\EstadoContrato;
-use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cultivo;
@@ -100,8 +99,7 @@ function contratoPantalla(string $sufijo, Cliente $cliente, object $campania, st
 function siembraPantalla(Contrato $contrato, Cultivo $cultivo): void
 {
     $propiedad = Propiedad::create(['cliente_id' => $contrato->cliente_id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
-    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => "Campo siembra {$contrato->id}"]);
-    $lote = Lote::create(['campo_id' => $campo->id, 'codigo' => "L-{$contrato->id}", 'hectareas' => '100.00']);
+    $lote = Lote::create(['propiedad_id' => $propiedad->id, 'codigo' => "L-{$contrato->id}", 'hectareas' => '100.00']);
 
     DB::table('com_lote_campania')->insert([
         'lote_id' => $lote->id,
@@ -117,8 +115,7 @@ function siembraPantalla(Contrato $contrato, Cultivo $cultivo): void
 function ordenSiembraPantalla(Contrato $contrato, Cultivo $cultivo, string $sufijo, string $hectareas = '50.00'): OrdenAplicacion
 {
     $propiedad = Propiedad::create(['cliente_id' => $contrato->cliente_id, 'nombre' => 'Propiedad de prueba '.uniqid()]);
-    $campo = Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => "Campo orden {$sufijo}"]);
-    $lote = Lote::create(['campo_id' => $campo->id, 'codigo' => "L-ORD-{$sufijo}", 'hectareas' => $hectareas]);
+    $lote = Lote::create(['propiedad_id' => $propiedad->id, 'codigo' => "L-ORD-{$sufijo}", 'hectareas' => $hectareas]);
 
     // Registra la siembra del lote en esta campaña
     DB::table('com_lote_campania')->insert([

@@ -1,7 +1,6 @@
 <?php
 
 use App\Dominios\Comercial\Dominio\EstadoContrato;
-use App\Dominios\Comercial\Infraestructura\Eloquent\Campo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
@@ -90,16 +89,14 @@ function contratoParaOrdenes(int $clienteId): Contrato
     ]);
 }
 
-function campoParaOrdenes(int $clienteId): Campo
+function propiedadParaOrdenes(int $clienteId): Propiedad
 {
-    $propiedad = Propiedad::create(['cliente_id' => $clienteId, 'nombre' => 'Propiedad de prueba '.uniqid()]);
-
-    return Campo::create(['propiedad_id' => $propiedad->id, 'nombre' => 'Campo Norte']);
+    return Propiedad::create(['cliente_id' => $clienteId, 'nombre' => 'Propiedad de prueba '.uniqid()]);
 }
 
-function loteParaOrdenes(Campo $campo, string $codigo = 'L-01'): Lote
+function loteParaOrdenes(Propiedad $propiedad, string $codigo = 'L-01'): Lote
 {
-    return $campo->lotes()->create(['codigo' => $codigo, 'hectareas' => '10.00']);
+    return $propiedad->lotes()->create(['codigo' => $codigo, 'hectareas' => '10.00']);
 }
 
 /**
@@ -163,7 +160,7 @@ it('da de alta una orden que persiste en estado emitida', function () {
     entrarAlPanelParaOrdenes($encargado, $idRol);
     $cliente = clienteParaOrdenes();
     $contrato = contratoParaOrdenes($cliente->id);
-    $lote = loteParaOrdenes(campoParaOrdenes($cliente->id));
+    $lote = loteParaOrdenes(propiedadParaOrdenes($cliente->id));
 
     $this->post(route('panel.ordenes.store'), payloadOrden($contrato->id, $lote->id))
         ->assertRedirect(route('panel.ordenes.index'));
@@ -179,9 +176,9 @@ it('admite dar de alta una orden con varios lotes, cada uno con su propia hectar
     entrarAlPanelParaOrdenes($encargado, $idRol);
     $cliente = clienteParaOrdenes();
     $contrato = contratoParaOrdenes($cliente->id);
-    $campo = campoParaOrdenes($cliente->id);
-    $loteA = loteParaOrdenes($campo, 'L-01');
-    $loteB = $campo->lotes()->create(['codigo' => 'L-02', 'hectareas' => '20.00']);
+    $propiedad = propiedadParaOrdenes($cliente->id);
+    $loteA = loteParaOrdenes($propiedad, 'L-01');
+    $loteB = $propiedad->lotes()->create(['codigo' => 'L-02', 'hectareas' => '20.00']);
 
     $this->post(route('panel.ordenes.store'), payloadOrden($contrato->id, $loteA->id, [
         'lotes' => [
@@ -202,7 +199,7 @@ it('rechaza hectareas_solicitadas que superan las hectáreas del lote, sin persi
     entrarAlPanelParaOrdenes($encargado, $idRol);
     $cliente = clienteParaOrdenes();
     $contrato = contratoParaOrdenes($cliente->id);
-    $lote = loteParaOrdenes(campoParaOrdenes($cliente->id));
+    $lote = loteParaOrdenes(propiedadParaOrdenes($cliente->id));
 
     $this->post(route('panel.ordenes.store'), payloadOrden($contrato->id, $lote->id, [
         'lotes' => [['lote_id' => $lote->id, 'hectareas_solicitadas' => '15.00']],
@@ -218,7 +215,7 @@ it('rechaza un lote de un cliente distinto del contrato: el contrato es el quié
     $contratoDeA = contratoParaOrdenes($clienteA->id);
 
     $clienteB = Cliente::query()->create(['razon_social' => 'Cliente Ajeno S.R.L.', 'nit' => '111222333', 'tipo_persona' => 'juridica']);
-    $loteDeB = loteParaOrdenes(campoParaOrdenes($clienteB->id));
+    $loteDeB = loteParaOrdenes(propiedadParaOrdenes($clienteB->id));
 
     $this->post(route('panel.ordenes.store'), payloadOrden($contratoDeA->id, $loteDeB->id))
         ->assertSessionHasErrors('lotes.0.lote_id');
@@ -241,7 +238,7 @@ it('el listado muestra el tipo de aplicación de cada orden y admite filtrarlo',
     entrarAlPanelParaOrdenes($encargado, $idRol);
     $cliente = clienteParaOrdenes();
     $contrato = contratoParaOrdenes($cliente->id);
-    $lote = loteParaOrdenes(campoParaOrdenes($cliente->id));
+    $lote = loteParaOrdenes(propiedadParaOrdenes($cliente->id));
 
     $this->post(route('panel.ordenes.store'), payloadOrden($contrato->id, $lote->id, ['tipo_aplicacion' => 'cosecha']));
 
@@ -259,7 +256,7 @@ it('activar una orden emitida la pasa a vigente', function () {
     entrarAlPanelParaOrdenes($encargado, $idRol);
     $cliente = clienteParaOrdenes();
     $contrato = contratoParaOrdenes($cliente->id);
-    $lote = loteParaOrdenes(campoParaOrdenes($cliente->id));
+    $lote = loteParaOrdenes(propiedadParaOrdenes($cliente->id));
 
     $this->post(route('panel.ordenes.store'), payloadOrden($contrato->id, $lote->id));
     $orden = OrdenAplicacion::query()->sole();
@@ -275,7 +272,7 @@ it('activar una orden que no está emitida es rechazado por la máquina de estad
     entrarAlPanelParaOrdenes($encargado, $idRol);
     $cliente = clienteParaOrdenes();
     $contrato = contratoParaOrdenes($cliente->id);
-    $lote = loteParaOrdenes(campoParaOrdenes($cliente->id));
+    $lote = loteParaOrdenes(propiedadParaOrdenes($cliente->id));
 
     $orden = ordenDirectaParaOrdenes($contrato->id, $lote->id, EstadoOrdenAplicacion::Vigente);
 
@@ -291,7 +288,7 @@ it('una segunda activación sobre el mismo lote falla como error de validación 
     entrarAlPanelParaOrdenes($encargado, $idRol);
     $cliente = clienteParaOrdenes();
     $contrato = contratoParaOrdenes($cliente->id);
-    $lote = loteParaOrdenes(campoParaOrdenes($cliente->id));
+    $lote = loteParaOrdenes(propiedadParaOrdenes($cliente->id));
 
     $primera = ordenDirectaParaOrdenes($contrato->id, $lote->id, EstadoOrdenAplicacion::Vigente, ['nro_aplicacion' => 1]);
     $segunda = ordenDirectaParaOrdenes($contrato->id, $lote->id, EstadoOrdenAplicacion::Emitida, ['nro_aplicacion' => 2]);
@@ -309,7 +306,7 @@ it('la orden queda visible en el catálogo de sync una vez vigente, no antes', f
     entrarAlPanelParaOrdenes($encargado, $idRol);
     $cliente = clienteParaOrdenes();
     $contrato = contratoParaOrdenes($cliente->id);
-    $lote = loteParaOrdenes(campoParaOrdenes($cliente->id));
+    $lote = loteParaOrdenes(propiedadParaOrdenes($cliente->id));
 
     $this->post(route('panel.ordenes.store'), payloadOrden($contrato->id, $lote->id));
     $orden = OrdenAplicacion::query()->sole();
@@ -329,7 +326,7 @@ it('da de alta una orden de siembra o de cosecha, no solo de desarrollo', functi
     entrarAlPanelParaOrdenes($encargado, $idRol);
     $cliente = clienteParaOrdenes();
     $contrato = contratoParaOrdenes($cliente->id);
-    $lote = loteParaOrdenes(campoParaOrdenes($cliente->id));
+    $lote = loteParaOrdenes(propiedadParaOrdenes($cliente->id));
 
     $this->post(route('panel.ordenes.store'), payloadOrden($contrato->id, $lote->id, ['tipo_aplicacion' => $tipo]))
         ->assertRedirect(route('panel.ordenes.index'));
@@ -344,7 +341,7 @@ it('un tipo_aplicacion fuera del enum es un error de validación, no persiste', 
     entrarAlPanelParaOrdenes($encargado, $idRol);
     $cliente = clienteParaOrdenes();
     $contrato = contratoParaOrdenes($cliente->id);
-    $lote = loteParaOrdenes(campoParaOrdenes($cliente->id));
+    $lote = loteParaOrdenes(propiedadParaOrdenes($cliente->id));
 
     $this->post(route('panel.ordenes.store'), payloadOrden($contrato->id, $lote->id, ['tipo_aplicacion' => 'floracion']))
         ->assertSessionHasErrors('tipo_aplicacion');
@@ -355,7 +352,7 @@ it('un tipo_aplicacion fuera del enum es un error de validación, no persiste', 
 it('una orden creada sin tipo_aplicacion (fuera del formulario del panel) queda en desarrollo', function () {
     $cliente = clienteParaOrdenes();
     $contrato = contratoParaOrdenes($cliente->id);
-    $lote = loteParaOrdenes(campoParaOrdenes($cliente->id));
+    $lote = loteParaOrdenes(propiedadParaOrdenes($cliente->id));
 
     $orden = OrdenAplicacion::query()->create([
         'contrato_id' => $contrato->id,
@@ -373,7 +370,7 @@ it('litros_ha menor o igual a cero es un error de validación, no persiste', fun
     entrarAlPanelParaOrdenes($encargado, $idRol);
     $cliente = clienteParaOrdenes();
     $contrato = contratoParaOrdenes($cliente->id);
-    $lote = loteParaOrdenes(campoParaOrdenes($cliente->id));
+    $lote = loteParaOrdenes(propiedadParaOrdenes($cliente->id));
 
     $this->post(route('panel.ordenes.store'), payloadOrden($contrato->id, $lote->id, ['litros_ha' => '0']))
         ->assertSessionHasErrors('litros_ha');
@@ -386,7 +383,7 @@ it('una categoría de insumo líquida pide litros_ha y guarda kilos_por_vuelo en
     entrarAlPanelParaOrdenes($encargado, $idRol);
     $cliente = clienteParaOrdenes();
     $contrato = contratoParaOrdenes($cliente->id);
-    $lote = loteParaOrdenes(campoParaOrdenes($cliente->id));
+    $lote = loteParaOrdenes(propiedadParaOrdenes($cliente->id));
 
     // Sin litros_ha: la categoría elegida es líquida, así que hace falta.
     $this->post(route('panel.ordenes.store'), payloadOrden($contrato->id, $lote->id, ['litros_ha' => null]))
@@ -408,7 +405,7 @@ it('una categoría de insumo sólida pide kilos_por_vuelo y guarda litros_ha en 
     entrarAlPanelParaOrdenes($encargado, $idRol);
     $cliente = clienteParaOrdenes();
     $contrato = contratoParaOrdenes($cliente->id);
-    $lote = loteParaOrdenes(campoParaOrdenes($cliente->id));
+    $lote = loteParaOrdenes(propiedadParaOrdenes($cliente->id));
     $categoriaSolida = CategoriaInsumo::query()->where('nombre', 'Fertilizantes')->sole();
 
     // Sin kilos_por_vuelo: la categoría elegida es sólida, así que hace falta.
@@ -437,7 +434,7 @@ it('categoria_insumo_id es obligatoria y debe existir en el catálogo', function
     entrarAlPanelParaOrdenes($encargado, $idRol);
     $cliente = clienteParaOrdenes();
     $contrato = contratoParaOrdenes($cliente->id);
-    $lote = loteParaOrdenes(campoParaOrdenes($cliente->id));
+    $lote = loteParaOrdenes(propiedadParaOrdenes($cliente->id));
 
     $this->post(route('panel.ordenes.store'), payloadOrden($contrato->id, $lote->id, ['categoria_insumo_id' => null]))
         ->assertSessionHasErrors('categoria_insumo_id');
@@ -453,7 +450,7 @@ it('nro_aplicacion menor a uno es un error de validación, no persiste', functio
     entrarAlPanelParaOrdenes($encargado, $idRol);
     $cliente = clienteParaOrdenes();
     $contrato = contratoParaOrdenes($cliente->id);
-    $lote = loteParaOrdenes(campoParaOrdenes($cliente->id));
+    $lote = loteParaOrdenes(propiedadParaOrdenes($cliente->id));
 
     $this->post(route('panel.ordenes.store'), payloadOrden($contrato->id, $lote->id, ['nro_aplicacion' => 0]))
         ->assertSessionHasErrors('nro_aplicacion');
@@ -466,7 +463,7 @@ it('humedad_min_pct mayor que humedad_max_pct es un error de validación, no per
     entrarAlPanelParaOrdenes($encargado, $idRol);
     $cliente = clienteParaOrdenes();
     $contrato = contratoParaOrdenes($cliente->id);
-    $lote = loteParaOrdenes(campoParaOrdenes($cliente->id));
+    $lote = loteParaOrdenes(propiedadParaOrdenes($cliente->id));
 
     $this->post(route('panel.ordenes.store'), payloadOrden($contrato->id, $lote->id, [
         'humedad_min_pct' => '80',
@@ -481,7 +478,7 @@ it('una orden vigente no admite edición: el caso de uso la rechaza aunque el li
     entrarAlPanelParaOrdenes($encargado, $idRol);
     $cliente = clienteParaOrdenes();
     $contrato = contratoParaOrdenes($cliente->id);
-    $lote = loteParaOrdenes(campoParaOrdenes($cliente->id));
+    $lote = loteParaOrdenes(propiedadParaOrdenes($cliente->id));
 
     $orden = ordenDirectaParaOrdenes($contrato->id, $lote->id, EstadoOrdenAplicacion::Vigente);
 
@@ -497,7 +494,7 @@ it('una orden vigente no se puede eliminar directamente', function () {
     entrarAlPanelParaOrdenes($encargado, $idRol);
     $cliente = clienteParaOrdenes();
     $contrato = contratoParaOrdenes($cliente->id);
-    $lote = loteParaOrdenes(campoParaOrdenes($cliente->id));
+    $lote = loteParaOrdenes(propiedadParaOrdenes($cliente->id));
 
     $orden = ordenDirectaParaOrdenes($contrato->id, $lote->id, EstadoOrdenAplicacion::Vigente);
 
@@ -513,7 +510,7 @@ it('registra en bitácora el alta, la edición y la baja de una orden', function
     entrarAlPanelParaOrdenes($encargado, $idRol);
     $cliente = clienteParaOrdenes();
     $contrato = contratoParaOrdenes($cliente->id);
-    $lote = loteParaOrdenes(campoParaOrdenes($cliente->id));
+    $lote = loteParaOrdenes(propiedadParaOrdenes($cliente->id));
 
     $this->post(route('panel.ordenes.store'), payloadOrden($contrato->id, $lote->id));
     $orden = OrdenAplicacion::query()->sole();
@@ -553,7 +550,7 @@ it('da de baja una orden emitida por soft delete: no aparece en el índice y un 
     entrarAlPanelParaOrdenes($encargado, $idRol);
     $cliente = clienteParaOrdenes();
     $contrato = contratoParaOrdenes($cliente->id);
-    $lote = loteParaOrdenes(campoParaOrdenes($cliente->id));
+    $lote = loteParaOrdenes(propiedadParaOrdenes($cliente->id));
 
     $this->post(route('panel.ordenes.store'), payloadOrden($contrato->id, $lote->id, [
         'observaciones' => 'ORDEN-MARCA-BAJA',
@@ -580,7 +577,7 @@ it('un rol sin el permiso recibe 403 en todas las acciones', function () {
     entrarAlPanelParaOrdenes($piloto, $idRol);
     $cliente = clienteParaOrdenes();
     $contrato = contratoParaOrdenes($cliente->id);
-    $lote = loteParaOrdenes(campoParaOrdenes($cliente->id));
+    $lote = loteParaOrdenes(propiedadParaOrdenes($cliente->id));
 
     $orden = ordenDirectaParaOrdenes($contrato->id, $lote->id, EstadoOrdenAplicacion::Emitida);
 
@@ -606,7 +603,7 @@ it('no deja actuar a quien tiene el permiso en otro rol pero no en el activo', f
 
     $cliente = clienteParaOrdenes();
     $contrato = contratoParaOrdenes($cliente->id);
-    $lote = loteParaOrdenes(campoParaOrdenes($cliente->id));
+    $lote = loteParaOrdenes(propiedadParaOrdenes($cliente->id));
 
     entrarAlPanelParaOrdenes($multirol, $idPiloto);
     $this->post(route('panel.ordenes.store'), payloadOrden($contrato->id, $lote->id))->assertForbidden();
@@ -621,7 +618,7 @@ it('no deja actuar a quien tiene el permiso en otro rol pero no en el activo', f
 it('operaciones.orden.activar está separado de .editar: un rol con uno y no el otro no puede hacer la acción que no tiene', function () {
     $cliente = clienteParaOrdenes();
     $contrato = contratoParaOrdenes($cliente->id);
-    $lote = loteParaOrdenes(campoParaOrdenes($cliente->id));
+    $lote = loteParaOrdenes(propiedadParaOrdenes($cliente->id));
 
     $rolSoloEditar = rolConPermisosParaOrdenes('solo_editar_ordenes', ['operaciones.orden.ver', 'operaciones.orden.editar']);
     $usuarioEditor = SecUser::factory()->create(['username' => 'editor.ordenes', 'password' => 'Secreta123']);
