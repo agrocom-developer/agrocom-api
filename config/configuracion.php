@@ -25,10 +25,16 @@ return [
     */
 
     'claves' => [
+        // `tipo`/`valor_activado` (default 'texto' si se omiten): la pantalla
+        // los usa para decidir qué control pintar (`ListarConfiguracionPorGrupo`,
+        // `configuracion/index.blade.php`) — este es hoy el único `switch` del
+        // catálogo porque es el único caso binario real (forzar Leaflet sí/no).
         'mapas.proveedor_preferido' => [
             'grupo' => 'mapas',
             'es_secreto' => false,
             'respaldo' => null,
+            'tipo' => 'switch',
+            'valor_activado' => 'leaflet',
         ],
         'mapas.google_maps_api_key' => [
             'grupo' => 'mapas',
