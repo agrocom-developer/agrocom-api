@@ -160,9 +160,17 @@ Reglas fijas:
 No es una sola pieza con variantes — son dos situaciones distintas que se leen distinto:
 
 - **La sección tiene datos en general, pero el filtro elegido no trae nada** (p. ej. "sin sesiones de este cliente" habiendo sesiones de otros). Sigue siendo `molecules/alert-strip variant="info"` con ícono, en línea con el resto del contenido — precedente: `comercial::pages.reportes-comerciales.index` ("sin resultados coincidentes"), `personal::pages.personas.desempeno` (sección "Sesiones" filtrada).
-- **La pantalla (o un bloque completo suyo) no tiene NADA que mostrar**, más allá de cualquier filtro — p. ej. un rol recién creado sin permisos, o una persona sin ninguna sesión registrada. Ahí no alcanza un alert-strip: es una tarjeta centrada con ícono grande (`atoms/icon size="lg"`), título (`h2`) y una línea de detalle que explica qué hace falta para que deje de estar vacío. Precedente: `seguridad::pages.dashboard._sin-secciones`, `personal::pages.personas.desempeno` (bloque `.ag-persona-desempeno__vacio`, cuando `$sinDatosEnRango`).
+- **La pantalla (o un bloque completo suyo) no tiene NADA que mostrar**, más allá de cualquier filtro — p. ej. un rol recién creado sin permisos, o una persona sin ninguna sesión registrada. Ahí no alcanza un alert-strip: es `molecules/empty-state` — tarjeta centrada con ícono grande (`atoms/icon size="lg"`), título (`h2`) y una línea de detalle que explica qué hace falta para que deje de estar vacío. Cuando este es el caso, la barra de filtros tampoco se muestra: no tiene sentido filtrar algo que todavía no existe.
 
-Esta segunda pieza **todavía no es del catálogo** — cada página la arma con su propia clase BEM (`.ag-dash__vacio`, `.ag-persona-desempeno__vacio`), sin `.ag-card` compartida porque esa clase hoy es local a `dashboard.css`. Si una tercera pantalla necesita este patrón, ya son tres repeticiones: se lo pedís a `design-ui` como `molecules/empty-state` (ícono + título + detalle + slot de acción opcional) en vez de copiar la clase una cuarta vez.
+```blade
+<x-molecules.empty-state
+    icon="local_gas_station"
+    :title="__('finanzas.combustible.vacio_titulo')"
+    :detail="__('finanzas.combustible.vacio_detalle')"
+/>
+```
+
+Reusá el mismo ícono que ya tenía el `alert-strip` de esa pantalla — no inventes uno nuevo para este caso. El criterio para decidir cuál de los dos casos aplica es el mismo `$hayFiltrosActivos` que gatea la barra de filtros (§6.2).
 
 ---
 
@@ -179,6 +187,32 @@ Cabecera → tabs → por cada sector: `molecules/section-head` (barra de color 
 Referencia viva: la tabla "Clientes" del dashboard y `operaciones::pages.trabajos.index`.
 
 Orden fijo de secciones: cabecera → filtros → tabla → paginación. La tabla usa `--ag-color-bg-table-head`, `--ag-color-border-row` y `--ag-color-bg-row-hover`; los estados por fila son `atoms/badge`, y las cifras van en `--ag-font-family-mono` para que aliñen en columna.
+
+**La barra de filtros no se muestra si no hay nada que filtrar todavía.** Mostrarla sobre una tabla genuinamente vacía (sin que el usuario haya aplicado ningún filtro) invita a filtrar la nada. El criterio, idéntico en cada página que tiene filtros:
+
+```blade
+@php
+    $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
+@endphp
+
+@if ($hayFiltrosActivos || $coleccion->isNotEmpty())
+    <form method="GET" ... class="ag-filtros ...">
+        {{-- campos de filtro --}}
+    </form>
+@endif
+
+@if ($coleccion->isEmpty())
+    @if ($hayFiltrosActivos)
+        <x-molecules.alert-strip variant="info" icon="...">{{ __('...filtro_vacio') }}</x-molecules.alert-strip>
+    @else
+        <x-molecules.empty-state icon="..." :title="__('...vacio_titulo')" :detail="__('...vacio_detalle')" />
+    @endif
+@else
+    {{-- tabla + paginación --}}
+@endif
+```
+
+`collect($filtros)->contains(...)` funciona igual sea cual sea la forma del array de filtros de cada página (mezcla de `null` y `''` como default entre distintos campos). Las páginas sin barra de filtros propia (universo acotado, lo dice cada una en su comentario de cabecera) no necesitan `$hayFiltrosActivos`: `isEmpty()` ya solo puede significar el segundo caso de §5.1.
 
 Responsive: la tabla no scrollea horizontalmente en móvil — colapsa. El dashboard ya tiene el patrón resuelto en tres variantes (`_tabla-sesiones` / lista de dos líneas en tablet / `_fichas-sesiones` en móvil); copiá ese patrón, no inventes uno nuevo.
 
