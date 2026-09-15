@@ -119,4 +119,11 @@ return [
         'logout' => 'Cerrar sesión',
     ],
 
+    // Chrome de una tabla de listado (patrón `.ag-<pagina>__tabla`) — el
+    // índice numérico de fila es idéntico en cualquier pantalla, no hace
+    // falta redefinirlo en cada lang/es/<dominio>.php.
+    'tabla' => [
+        'col_indice' => '#',
+    ],
+
 ];

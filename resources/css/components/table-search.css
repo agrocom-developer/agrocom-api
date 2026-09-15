@@ -1,0 +1,62 @@
+/*
+ * Molecule: table-search (`.ag-table-search`).
+ *
+ * Mismo lenguaje visual que `.ag-topbar__search` (organisms/topbar) —
+ * mismo radio, mismo fondo, mismo criterio de foco (border+halo con el
+ * token primary, no el `--ag-color-focus-ring` genérico) — pero declarado
+ * acá aparte: el del header es un componente de layout fijo (organism),
+ * este es una molécula reusable en cualquier listado.
+ */
+.ag-table-search {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    width: 100%;
+    max-width: 20rem;
+    height: var(--ag-size-control-height);
+    padding: 0 var(--ag-space-3);
+    background: var(--ag-color-bg-input-chrome);
+    border: 1px solid var(--ag-color-border);
+    border-radius: 9px;
+    cursor: text;
+}
+
+.ag-table-search:focus-within {
+    border-color: var(--ag-color-primary);
+    box-shadow: 0 0 0 3px var(--ag-color-primary-subtle);
+}
+
+.ag-table-search__icon {
+    flex: 0 0 auto;
+    color: var(--ag-color-text-faint);
+}
+
+.ag-table-search__input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    font-family: var(--ag-font-family-base);
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text);
+}
+
+.ag-table-search__input:focus {
+    outline: none;
+}
+
+.ag-table-search__input::placeholder {
+    color: var(--ag-color-text-muted);
+}
+
+/* Barra sobre la tabla, buscador anclado a la derecha. */
+.ag-table-toolbar {
+    display: flex;
+    justify-content: flex-end;
+}
+
+@media (max-width: 767.98px) {
+    .ag-table-search {
+        max-width: none;
+    }
+}
