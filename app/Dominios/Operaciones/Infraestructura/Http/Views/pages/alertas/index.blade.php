@@ -82,7 +82,7 @@
             />
 
             <div class="ag-filtros__acciones ag-alertas__filtros-acciones">
-                <x-atoms.button type="submit" variant="primary" size="md" icon="filter_alt">
+                <x-atoms.button type="submit" variant="outline" size="md" icon="filter_alt">
                     {{ __('operaciones.alertas.filtrar') }}
                 </x-atoms.button>
 

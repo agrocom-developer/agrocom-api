@@ -72,7 +72,7 @@
                 />
 
                 <div class="ag-filtros__acciones ag-reportes-tecnicos__filtros-acciones">
-                    <x-atoms.button type="submit" variant="primary" size="md" icon="filter_alt">
+                    <x-atoms.button type="submit" variant="outline" size="md" icon="filter_alt">
                         {{ __('operaciones.reportes_tecnicos.filtrar') }}
                     </x-atoms.button>
 
