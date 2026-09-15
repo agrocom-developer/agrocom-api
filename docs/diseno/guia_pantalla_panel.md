@@ -155,22 +155,30 @@ Reglas fijas:
 - **El título es `h1` y hay exactamente uno.** Los rótulos de sector son `h2` vía `molecules/section-head`.
 - **Cero texto literal en Blade** — todo por `__('modulo.pantalla.clave')` (ADR 0013).
 
-### 5.1. Estado vacío: dos casos distintos, dos piezas distintas
+### 5.1. Estado vacío: dos situaciones, una sola pieza (`molecules/empty-state`)
 
-No es una sola pieza con variantes — son dos situaciones distintas que se leen distinto:
+Hasta el 15/9/2026 eran dos piezas (`alert-strip` para "el filtro no trae nada", `empty-state` para "no hay nada todavía") — pedido directo del usuario: una sola pieza, tarjeta centrada siempre, cambiando `icon`/`title`/`detail` según el caso. El criterio para elegir el mensaje sigue siendo el mismo `$hayFiltrosActivos` que gatea la barra de filtros (§6.2):
 
-- **La sección tiene datos en general, pero el filtro elegido no trae nada** (p. ej. "sin sesiones de este cliente" habiendo sesiones de otros). Sigue siendo `molecules/alert-strip variant="info"` con ícono, en línea con el resto del contenido — precedente: `comercial::pages.reportes-comerciales.index` ("sin resultados coincidentes"), `personal::pages.personas.desempeno` (sección "Sesiones" filtrada).
-- **La pantalla (o un bloque completo suyo) no tiene NADA que mostrar**, más allá de cualquier filtro — p. ej. un rol recién creado sin permisos, o una persona sin ninguna sesión registrada. Ahí no alcanza un alert-strip: es `molecules/empty-state` — tarjeta centrada con ícono grande (`atoms/icon size="lg"`), título (`h2`) y una línea de detalle que explica qué hace falta para que deje de estar vacío. Cuando este es el caso, la barra de filtros tampoco se muestra: no tiene sentido filtrar algo que todavía no existe.
+- **La sección tiene datos en general, pero el filtro/búsqueda elegido no trae nada** (p. ej. "sin sesiones de este cliente" habiendo sesiones de otros). `icon="search_off"` (no el ícono propio de la pantalla — así se distingue de un vacío real) + título/detalle que invitan a probar otro término o quitar el filtro.
+- **La pantalla (o un bloque completo suyo) no tiene NADA que mostrar**, más allá de cualquier filtro — p. ej. un rol recién creado sin permisos, o una persona sin ninguna sesión registrada. Ahí el ícono es el propio de esa entidad (`atoms/icon size="lg"`), título (`h2`) y una línea de detalle que explica qué hace falta para que deje de estar vacío. Cuando este es el caso, la barra de filtros tampoco se muestra: no tiene sentido filtrar algo que todavía no existe.
 
 ```blade
-<x-molecules.empty-state
-    icon="local_gas_station"
-    :title="__('finanzas.combustible.vacio_titulo')"
-    :detail="__('finanzas.combustible.vacio_detalle')"
-/>
+@if ($hayFiltrosActivos)
+    <x-molecules.empty-state
+        icon="search_off"
+        :title="__('finanzas.combustible.filtro_vacio_titulo')"
+        :detail="__('finanzas.combustible.filtro_vacio_detalle')"
+    />
+@else
+    <x-molecules.empty-state
+        icon="local_gas_station"
+        :title="__('finanzas.combustible.vacio_titulo')"
+        :detail="__('finanzas.combustible.vacio_detalle')"
+    />
+@endif
 ```
 
-Reusá el mismo ícono que ya tenía el `alert-strip` de esa pantalla — no inventes uno nuevo para este caso. El criterio para decidir cuál de los dos casos aplica es el mismo `$hayFiltrosActivos` que gatea la barra de filtros (§6.2).
+Migrado en `seguridad::pages.usuarios.index` y `seguridad::pages.bitacora.index` (piloto, 15/9/2026); las pantallas que todavía usan `alert-strip` para este caso (`comercial::pages.reportes-comerciales.index`, `personal::pages.personas.desempeno`, y cualquier otra del rollout de filtros) migran al mismo patrón cuando les toque su pasada.
 
 ---
 
@@ -184,26 +192,31 @@ Cabecera → tabs → por cada sector: `molecules/section-head` (barra de color 
 
 ### 6.2. Listado
 
-Referencia viva: la tabla "Clientes" del dashboard y `operaciones::pages.trabajos.index`.
+Referencia viva (patrón vigente desde el 15/9/2026): `seguridad::pages.usuarios.index` (buscador + 1 filtro + acciones) y `seguridad::pages.bitacora.index` (4+ filtros, sin acciones). El resto del rollout (ver `docs/gestion/estado_proyecto.md`) todavía migra desde el patrón anterior (`molecules/table-search` + `<form class="ag-filtros">` suelto debajo) — no lo copies para una pantalla nueva.
 
-Orden fijo de secciones: cabecera → filtros → tabla → paginación. La tabla usa `--ag-color-bg-table-head`, `--ag-color-border-row` y `--ag-color-bg-row-hover`; los estados por fila son `atoms/badge`, y las cifras van en `--ag-font-family-mono` para que aliñen en columna.
+Orden fijo de secciones: cabecera → toolbar (buscador + filtros) → tabla → paginación. La tabla usa `--ag-color-bg-table-head`, `--ag-color-border-row` y `--ag-color-bg-row-hover`; los estados por fila son `atoms/badge`, y las cifras van en `--ag-font-family-mono` para que aliñen en columna.
 
-**La barra de filtros no se muestra si no hay nada que filtrar todavía.** Mostrarla sobre una tabla genuinamente vacía (sin que el usuario haya aplicado ningún filtro) invita a filtrar la nada. El criterio, idéntico en cada página que tiene filtros:
+**Toolbar: `organisms/filter-panel` (izquierda) + `molecules/table-search` (derecha), en ese orden en el Blade.** Ya no hay un `<form class="ag-filtros">` visible permanentemente — todos los campos de filtro (`select`/`date`/`input`) van dentro del slot de `filter-panel`, que los agrupa en un panel desplegable (botón "Filtros" + contador) sin importar si son 1 o 6. El buscador queda afuera, siempre visible, con su propio auto-submit. Una página sin buscador solo pone `filter-panel` (queda igual de pegado a la izquierda). En mobile el buscador pasa a su propia línea, ancho completo — es automático por CSS (`table-search.css`), no hace falta tocar nada en el Blade.
 
 ```blade
 @php
     $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
+    $filtrosActivosCount = collect($filtros)->filter(fn ($valor) => $valor !== null && $valor !== '')->count();
 @endphp
 
 @if ($hayFiltrosActivos || $coleccion->isNotEmpty())
-    <form method="GET" ... class="ag-filtros ...">
-        {{-- campos de filtro --}}
-    </form>
+    <div class="ag-table-toolbar">
+        <x-organisms.filter-panel action="{{ route('panel.x.index') }}" :active-count="$filtrosActivosCount">
+            {{-- <x-atoms.select>/<x-atoms.date>/<x-atoms.input> de esta página --}}
+        </x-organisms.filter-panel>
+
+        <x-molecules.table-search action="{{ route('panel.x.index') }}" :value="$filtros['q']" ... />
+    </div>
 @endif
 
 @if ($coleccion->isEmpty())
     @if ($hayFiltrosActivos)
-        <x-molecules.alert-strip variant="info" icon="...">{{ __('...filtro_vacio') }}</x-molecules.alert-strip>
+        <x-molecules.empty-state icon="search_off" :title="__('...filtro_vacio_titulo')" :detail="__('...filtro_vacio_detalle')" />
     @else
         <x-molecules.empty-state icon="..." :title="__('...vacio_titulo')" :detail="__('...vacio_detalle')" />
     @endif
@@ -213,6 +226,8 @@ Orden fijo de secciones: cabecera → filtros → tabla → paginación. La tabl
 ```
 
 `collect($filtros)->contains(...)` funciona igual sea cual sea la forma del array de filtros de cada página (mezcla de `null` y `''` como default entre distintos campos). Las páginas sin barra de filtros propia (universo acotado, lo dice cada una en su comentario de cabecera) no necesitan `$hayFiltrosActivos`: `isEmpty()` ya solo puede significar el segundo caso de §5.1.
+
+**Columna de acciones: header con texto, ancho fijo, `organisms/row-actions`.** El `role="columnheader"` de acciones lleva `{{ __('ui.tabla.col_acciones') }}` (nunca `aria-hidden` vacío) y la celda envuelve sus botones en `<x-organisms.row-actions>` — el componente colapsa a un menú "⋮" las acciones que no entran (más de 3 en desktop, más de 2 en tablet, todas en mobile), siempre con ícono + texto (nunca solo-ícono). La última columna del `grid-template-columns` de esa página (head y fila comparten la MISMA declaración, ver `.ag-usuarios__head, .ag-usuarios__fila` en `usuarios.css`) es un **ancho fijo en rem calculado a mano para los botones reales de esa página** (`24rem` en Usuarios: 3 acciones con texto), nunca `auto` — con `auto`, el head (antes vacío) y la fila (con botones) son grids separados que resuelven ese ancho cada uno por su cuenta y el header queda corrido respecto al resto de columnas. Páginas sin celda de acciones (solo lectura, o un único control con su propio header ya con texto) no usan `row-actions`.
 
 Responsive: la tabla no scrollea horizontalmente en móvil — colapsa. El dashboard ya tiene el patrón resuelto en tres variantes (`_tabla-sesiones` / lista de dos líneas en tablet / `_fichas-sesiones` en móvil); copiá ese patrón, no inventes uno nuevo.
 
