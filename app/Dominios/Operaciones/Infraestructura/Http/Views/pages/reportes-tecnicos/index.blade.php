@@ -45,49 +45,59 @@
                 :subtitle="__('operaciones.reportes_tecnicos.subtitulo')"
             />
 
-            @php $hayFiltrosActivos = $filtros['cliente_id'] !== null || $filtros['desde'] !== null || $filtros['hasta'] !== null; @endphp
+            @php $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== ''); @endphp
 
-            <form method="GET" action="{{ route('panel.reportes.tecnicos.index') }}" class="ag-filtros ag-reportes-tecnicos__filtros">
-                <x-atoms.select
-                    name="cliente_id"
-                    id="filtro-cliente"
-                    label="{{ __('operaciones.reportes_tecnicos.filtro_cliente') }}"
-                    :options="$clientesDisponibles"
-                    :value="$filtros['cliente_id']"
-                    :placeholder="__('operaciones.reportes_tecnicos.filtro_cliente_placeholder')"
-                />
+            @if ($hayFiltrosActivos || ! empty($reportes))
+                <form method="GET" action="{{ route('panel.reportes.tecnicos.index') }}" class="ag-filtros ag-reportes-tecnicos__filtros">
+                    <x-atoms.select
+                        name="cliente_id"
+                        id="filtro-cliente"
+                        label="{{ __('operaciones.reportes_tecnicos.filtro_cliente') }}"
+                        :options="$clientesDisponibles"
+                        :value="$filtros['cliente_id']"
+                        :placeholder="__('operaciones.reportes_tecnicos.filtro_cliente_placeholder')"
+                    />
 
-                <x-atoms.date
-                    name="desde"
-                    id="filtro-desde"
-                    label="{{ __('operaciones.reportes_tecnicos.filtro_desde') }}"
-                    :value="$filtros['desde']"
-                />
+                    <x-atoms.date
+                        name="desde"
+                        id="filtro-desde"
+                        label="{{ __('operaciones.reportes_tecnicos.filtro_desde') }}"
+                        :value="$filtros['desde']"
+                    />
 
-                <x-atoms.date
-                    name="hasta"
-                    id="filtro-hasta"
-                    label="{{ __('operaciones.reportes_tecnicos.filtro_hasta') }}"
-                    :value="$filtros['hasta']"
-                />
+                    <x-atoms.date
+                        name="hasta"
+                        id="filtro-hasta"
+                        label="{{ __('operaciones.reportes_tecnicos.filtro_hasta') }}"
+                        :value="$filtros['hasta']"
+                    />
 
-                <div class="ag-filtros__acciones ag-reportes-tecnicos__filtros-acciones">
-                    <x-atoms.button type="submit" variant="outline" size="md" icon="filter_alt">
-                        {{ __('operaciones.reportes_tecnicos.filtrar') }}
-                    </x-atoms.button>
-
-                    @if ($hayFiltrosActivos)
-                        <x-atoms.button href="{{ route('panel.reportes.tecnicos.index') }}" variant="text" size="md">
-                            {{ __('operaciones.reportes_tecnicos.limpiar_filtro') }}
+                    <div class="ag-filtros__acciones ag-reportes-tecnicos__filtros-acciones">
+                        <x-atoms.button type="submit" variant="outline" size="md" icon="filter_alt">
+                            {{ __('operaciones.reportes_tecnicos.filtrar') }}
                         </x-atoms.button>
-                    @endif
-                </div>
-            </form>
+
+                        @if ($hayFiltrosActivos)
+                            <x-atoms.button href="{{ route('panel.reportes.tecnicos.index') }}" variant="text" size="md">
+                                {{ __('operaciones.reportes_tecnicos.limpiar_filtro') }}
+                            </x-atoms.button>
+                        @endif
+                    </div>
+                </form>
+            @endif
 
             @if (empty($reportes))
-                <x-molecules.alert-strip variant="info" icon="summarize" class="ag-reportes-tecnicos__aviso">
-                    {{ __($hayFiltrosActivos ? 'operaciones.reportes_tecnicos.filtro_vacio' : 'operaciones.reportes_tecnicos.vacio') }}
-                </x-molecules.alert-strip>
+                @if ($hayFiltrosActivos)
+                    <x-molecules.alert-strip variant="info" icon="summarize" class="ag-reportes-tecnicos__aviso">
+                        {{ __('operaciones.reportes_tecnicos.filtro_vacio') }}
+                    </x-molecules.alert-strip>
+                @else
+                    <x-molecules.empty-state
+                        icon="summarize"
+                        :title="__('operaciones.reportes_tecnicos.vacio_titulo')"
+                        :detail="__('operaciones.reportes_tecnicos.vacio_detalle')"
+                    />
+                @endif
             @else
                 <div class="ag-reportes-tecnicos__tabla" role="table">
                     <div class="ag-reportes-tecnicos__head" role="row">
