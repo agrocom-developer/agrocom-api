@@ -137,7 +137,7 @@
 }
 
 .ag-lote-mapa__lienzo {
-    height: 340px;
+    height: 520px;
     border-radius: var(--ag-radius-md);
     border: 1px solid var(--ag-color-border);
     overflow: hidden;
