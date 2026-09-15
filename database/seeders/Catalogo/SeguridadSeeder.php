@@ -29,7 +29,14 @@ class SeguridadSeeder extends Seeder
         'jefe_campo' => 'Jefe de campo: coordina la cuadrilla y valida sesiones ajenas.',
         'encargado_operaciones' => 'Encargado de operaciones: administra usuarios, órdenes y planificación.',
         'dueno' => 'Dueño de Agrocom SRL: acceso total, incluida la gestión de otros dueños.',
-        'admin_plataforma' => 'Administrador de la plataforma Agrocom: acceso total sobre cualquier instalación, incluida la gestión de dueños — rol técnico de plataforma, no del negocio del cliente.',
+        // Descripción recortada a propósito: `sec_role.description` es
+        // `varchar(150)` (migración `2026_08_27_100003`) y el texto original
+        // del pedido (168 caracteres) no entra — SQLite no lo detecta (sin
+        // límite de longitud), Postgres sí lo rechazó en la corrida real
+        // contra el compose (`value too long for type character
+        // varying(150)`). Se preserva el sentido: acceso total incluida la
+        // gestión de dueños, y que es un rol técnico, no del negocio.
+        'admin_plataforma' => 'Administrador de la plataforma Agrocom: acceso total, incluida la gestión de dueños — rol técnico, no del negocio del cliente.',
     ];
 
     /** @var array<string, string> */
