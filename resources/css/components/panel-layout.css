@@ -60,7 +60,7 @@
     border-top: 1px solid var(--ag-color-border);
     background: var(--ag-color-bg-chrome);
     font-family: var(--ag-font-family-mono);
-    font-size: 0.625rem;
+    font-size: var(--ag-font-size-sm);
     letter-spacing: 0.08em;
     color: var(--ag-color-text-muted);
 }

@@ -54,7 +54,7 @@
         aria-controls="{{ $groupId }}"
     >
         @if ($icon)
-            <x-atoms.icon :name="$icon" size="sm" class="ag-menu-item__icon" />
+            <x-atoms.icon :name="$icon" size="md" class="ag-menu-item__icon" />
         @endif
         <span class="ag-menu-item__label">{{ $resolvedLabel }}</span>
         <x-atoms.icon name="expand_more" size="sm" class="ag-menu-group__chevron" />

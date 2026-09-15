@@ -12,7 +12,7 @@
     align-items: center;
     gap: var(--ag-space-2);
     width: 100%;
-    max-width: 28rem;
+    max-width: 22rem;
     height: var(--ag-size-control-height);
     padding: 0 var(--ag-space-3);
     background: var(--ag-color-bg-input-chrome);
