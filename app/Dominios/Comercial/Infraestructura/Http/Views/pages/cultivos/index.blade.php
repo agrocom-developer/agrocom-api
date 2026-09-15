@@ -53,7 +53,12 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <form method="GET" action="{{ route('panel.cultivos.index') }}" class="ag-filtros ag-cultivos__filtros">
+            @php
+                $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
+            @endphp
+
+            @if ($hayFiltrosActivos || $cultivos->isNotEmpty())
+                <form method="GET" action="{{ route('panel.cultivos.index') }}" class="ag-filtros ag-cultivos__filtros">
                 <div class="ag-input">
                     <label for="filtro-q" class="ag-input__label">{{ __('comercial.cultivos.filtro_busqueda') }}</label>
                     <div class="ag-input__control">
@@ -75,18 +80,27 @@
                         {{ __('comercial.cultivos.filtrar') }}
                     </x-atoms.button>
 
-                    @if ($filtros['q'] !== '')
+                    @if ($hayFiltrosActivos)
                         <x-atoms.button href="{{ route('panel.cultivos.index') }}" variant="text" size="md">
                             {{ __('comercial.cultivos.limpiar_filtro') }}
                         </x-atoms.button>
                     @endif
                 </div>
-            </form>
+                </form>
+            @endif
 
             @if ($cultivos->isEmpty())
-                <x-molecules.alert-strip variant="info" icon="grass" class="ag-cultivos__aviso">
-                    {{ __($filtros['q'] !== '' ? 'comercial.cultivos.filtro_vacio' : 'comercial.cultivos.vacio') }}
-                </x-molecules.alert-strip>
+                @if ($hayFiltrosActivos)
+                    <x-molecules.alert-strip variant="info" icon="grass" class="ag-cultivos__aviso">
+                        {{ __('comercial.cultivos.filtro_vacio') }}
+                    </x-molecules.alert-strip>
+                @else
+                    <x-molecules.empty-state
+                        icon="grass"
+                        :title="__('comercial.cultivos.vacio_titulo')"
+                        :detail="__('comercial.cultivos.vacio_detalle')"
+                    />
+                @endif
             @else
                 <div class="ag-cultivos__tabla" role="table">
                     <div class="ag-cultivos__head" role="row">

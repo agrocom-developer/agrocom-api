@@ -68,7 +68,12 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <form method="GET" action="{{ route('panel.contratos.index') }}" class="ag-filtros ag-contratos__filtros">
+            @php
+                $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
+            @endphp
+
+            @if ($hayFiltrosActivos || $contratos->isNotEmpty())
+                <form method="GET" action="{{ route('panel.contratos.index') }}" class="ag-filtros ag-contratos__filtros">
                 <div class="ag-input">
                     <label for="filtro-q" class="ag-input__label">{{ __('comercial.contratos.filtro_busqueda') }}</label>
                     <div class="ag-input__control">
@@ -97,18 +102,27 @@
                         {{ __('comercial.contratos.filtrar') }}
                     </x-atoms.button>
 
-                    @if ($filtros['q'] !== '' || $filtros['campania_id'] !== null)
+                    @if ($hayFiltrosActivos)
                         <x-atoms.button href="{{ route('panel.contratos.index') }}" variant="text" size="md">
                             {{ __('comercial.contratos.limpiar_filtro') }}
                         </x-atoms.button>
                     @endif
                 </div>
-            </form>
+                </form>
+            @endif
 
             @if ($contratos->isEmpty())
-                <x-molecules.alert-strip variant="info" icon="description" class="ag-contratos__aviso">
-                    {{ __(($filtros['q'] !== '' || $filtros['campania_id'] !== null) ? 'comercial.contratos.filtro_vacio' : 'comercial.contratos.vacio') }}
-                </x-molecules.alert-strip>
+                @if ($hayFiltrosActivos)
+                    <x-molecules.alert-strip variant="info" icon="description" class="ag-contratos__aviso">
+                        {{ __('comercial.contratos.filtro_vacio') }}
+                    </x-molecules.alert-strip>
+                @else
+                    <x-molecules.empty-state
+                        icon="description"
+                        :title="__('comercial.contratos.vacio_titulo')"
+                        :detail="__('comercial.contratos.vacio_detalle')"
+                    />
+                @endif
             @else
                 <div class="ag-contratos__tabla" role="table">
                     <div class="ag-contratos__head" role="row">

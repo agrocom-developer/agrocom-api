@@ -53,9 +53,11 @@
             @endif
 
             @if ($facturas->isEmpty())
-                <x-molecules.alert-strip variant="info" icon="receipt_long" class="ag-facturas__aviso">
-                    {{ __('comercial.facturas.vacio') }}
-                </x-molecules.alert-strip>
+                <x-molecules.empty-state
+                    icon="receipt_long"
+                    :title="__('comercial.facturas.vacio_titulo')"
+                    :detail="__('comercial.facturas.vacio_detalle')"
+                />
             @else
                 <div class="ag-facturas__tabla" role="table">
                     <div class="ag-facturas__head" role="row">

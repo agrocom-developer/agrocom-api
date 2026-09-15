@@ -52,7 +52,12 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <form method="GET" action="{{ route('panel.clientes.index') }}" class="ag-filtros ag-clientes__filtros">
+            @php
+                $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
+            @endphp
+
+            @if ($hayFiltrosActivos || $clientes->isNotEmpty())
+                <form method="GET" action="{{ route('panel.clientes.index') }}" class="ag-filtros ag-clientes__filtros">
                 <div class="ag-input">
                     <label for="filtro-q" class="ag-input__label">{{ __('comercial.clientes.filtro_busqueda') }}</label>
                     <div class="ag-input__control">
@@ -74,18 +79,27 @@
                         {{ __('comercial.clientes.filtrar') }}
                     </x-atoms.button>
 
-                    @if ($filtros['q'] !== '')
+                    @if ($hayFiltrosActivos)
                         <x-atoms.button href="{{ route('panel.clientes.index') }}" variant="text" size="md">
                             {{ __('comercial.clientes.limpiar_filtro') }}
                         </x-atoms.button>
                     @endif
                 </div>
-            </form>
+                </form>
+            @endif
 
             @if ($clientes->isEmpty())
-                <x-molecules.alert-strip variant="info" icon="contact_page" class="ag-clientes__aviso">
-                    {{ __($filtros['q'] !== '' ? 'comercial.clientes.filtro_vacio' : 'comercial.clientes.vacio') }}
-                </x-molecules.alert-strip>
+                @if ($hayFiltrosActivos)
+                    <x-molecules.alert-strip variant="info" icon="contact_page" class="ag-clientes__aviso">
+                        {{ __('comercial.clientes.filtro_vacio') }}
+                    </x-molecules.alert-strip>
+                @else
+                    <x-molecules.empty-state
+                        icon="contact_page"
+                        :title="__('comercial.clientes.vacio_titulo')"
+                        :detail="__('comercial.clientes.vacio_detalle')"
+                    />
+                @endif
             @else
                 <div class="ag-clientes__tabla" role="table">
                     <div class="ag-clientes__head" role="row">
