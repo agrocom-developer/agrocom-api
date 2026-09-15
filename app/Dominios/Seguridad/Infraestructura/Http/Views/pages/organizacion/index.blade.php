@@ -60,12 +60,6 @@
                 :subtitle="__('seguridad.organizacion.subtitulo')"
             />
 
-            @if ($tabActiva === 'organizacion')
-                <x-molecules.alert-strip variant="info" icon="visibility">
-                    {{ __('seguridad.organizacion.alerta_vista_previa') }}
-                </x-molecules.alert-strip>
-            @endif
-
             @if (session('estado'))
                 <x-molecules.alert-strip variant="success" icon="check_circle">
                     {{ session('estado') }}

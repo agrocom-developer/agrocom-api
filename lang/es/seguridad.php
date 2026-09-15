@@ -435,7 +435,6 @@ return [
     'organizacion' => [
         'titulo' => 'Registro de la compañía',
         'subtitulo' => 'Gestión centralizada de tu organización y configuración de suscripción.',
-        'alerta_vista_previa' => 'El plan de suscripción y multi-sucursal son vista previa: todavía no se persisten.',
 
         'tabs_aria' => 'Secciones de organización',
         'tab_organizacion' => 'Organización',
