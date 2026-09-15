@@ -86,9 +86,13 @@
     cursor: text;
 }
 
+/* Es un campo de texto, no un elemento genérico enfocable: sigue el mismo
+   criterio de foco que `.ag-input__control` (input.css) — borde + halo con
+   el token primary — en vez de `--ag-color-focus-ring` (azul a propósito,
+   reservado para anillos de foco de elementos no-input). */
 .ag-topbar__search:focus-within {
-    outline: 2px solid var(--ag-color-focus-ring);
-    outline-offset: 1px;
+    border-color: var(--ag-color-primary);
+    box-shadow: 0 0 0 3px var(--ag-color-primary-subtle);
 }
 
 .ag-topbar__search-icon {
