@@ -1,5 +1,0 @@
-# Créditos de imágenes
-
-- `drone-hero.jpg`: foto de Magda Ehlers en Pexels (https://www.pexels.com/photo/34182367/), licencia Pexels (uso comercial libre, sin atribución obligatoria). Descargada y optimizada (1920px, JPEG ~78%) el 27/8/2026 para el layout de autenticación de HU-02.
-- `drone-hero-2.jpg`: foto de Magda Ehlers en Pexels (https://www.pexels.com/photo/high-tech-drone-spraying-crops-in-field-34182370/), misma serie/fotógrafa que `drone-hero.jpg`, licencia Pexels (uso comercial libre, sin atribución obligatoria). Descargada y optimizada (1920px, JPEG ~78%) el 28/8/2026 para la galería de imágenes de `auth-layout` (rediseño de login, cuarta vuelta).
-- `drone-hero-3.jpg`: foto de Magda Ehlers en Pexels (https://www.pexels.com/photo/advanced-drone-spraying-over-lush-farmland-34182385/), misma serie/fotógrafa que `drone-hero.jpg`, licencia Pexels (uso comercial libre, sin atribución obligatoria). Descargada y optimizada (1920px, JPEG ~78%) el 28/8/2026 para la galería de imágenes de `auth-layout` (rediseño de login, cuarta vuelta).

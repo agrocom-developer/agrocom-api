@@ -80,7 +80,7 @@
     // idioma — ADR 0013). No se mezclan en el lang file porque un nombre de
     // archivo de imagen no es texto traducible.
     $galeriaCopy = __('seguridad.auth.galeria');
-    $galeriaImagenes = ['drone-hero.jpg', 'drone-hero-2.jpg', 'drone-hero-3.jpg'];
+    $galeriaImagenes = ['drone-hero.jpg', 'drone-hero-2.jpg', 'drone-hero-3.jpg', 'drone-hero-4.jpg'];
     $galeria = collect($galeriaImagenes)->values()->map(fn ($imagen, $indice) => [
         'imagen' => $imagen,
         'headline' => $headline ?? $galeriaCopy[$indice]['headline'],

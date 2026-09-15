@@ -30,6 +30,10 @@ return [
                 'subheadline' => 'Planificación de vuelo, mezclas y reportes de aplicación en un solo panel.',
             ],
             [
+                'headline' => 'Todo lo que necesitás para entrar al campo.',
+                'subheadline' => 'DJI Agras T50 completo: dron, baterías, generador y control listos para trabajar.',
+            ],
+            [
                 'headline' => 'Cada vuelo, documentado desde el despegue.',
                 'subheadline' => 'Sesiones, mezclas y áreas cubiertas, trazables en tiempo real.',
             ],
