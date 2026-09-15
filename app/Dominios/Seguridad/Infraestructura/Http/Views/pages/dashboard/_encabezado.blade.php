@@ -6,23 +6,24 @@
     de negocio. Antes venía del mock como el string fijo "Viernes 28 de
     agosto", que a los dos días ya mentía.
 
+    Envuelve `organisms/page-header` (mismo markup que el resto del panel,
+    ver su docblock) en vez del `.ag-dash__header` propio que tenía antes —
+    el slot `chip` es exactamente para este caso.
+
     Espera: $rol (string|null) — nombre legible del rol activo.
 --}}
-<div class="ag-dash__header">
-    <div class="ag-dash__heading">
-        <h1 class="ag-dash__title">{{ __('seguridad.dashboard.titulo') }}</h1>
-        <div class="ag-dash__subtitle-row">
-            <p class="ag-dash__subtitle">
-                {{ __('seguridad.dashboard.bajada', [
-                    'fecha' => \Illuminate\Support\Str::ucfirst(now()->locale(app()->getLocale())->isoFormat('dddd D [de] MMMM')),
-                ]) }}
-            </p>
-            @if ($rol)
-                <span class="ag-dash__ventana-chip">
-                    <x-atoms.icon name="badge" size="sm" />
-                    <span>{{ __('seguridad.dashboard.viendo_como', ['rol' => $rol]) }}</span>
-                </span>
-            @endif
-        </div>
-    </div>
-</div>
+<x-organisms.page-header
+    :title="__('seguridad.dashboard.titulo')"
+    :subtitle="__('seguridad.dashboard.bajada', [
+        'fecha' => \Illuminate\Support\Str::ucfirst(now()->locale(app()->getLocale())->isoFormat('dddd D [de] MMMM')),
+    ])"
+>
+    @if ($rol)
+        <x-slot:chip>
+            <span class="ag-dash__ventana-chip">
+                <x-atoms.icon name="badge" size="sm" />
+                <span>{{ __('seguridad.dashboard.viendo_como', ['rol' => $rol]) }}</span>
+            </span>
+        </x-slot:chip>
+    @endif
+</x-organisms.page-header>
