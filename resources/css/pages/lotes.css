@@ -31,10 +31,14 @@
 .ag-lotes__head,
 .ag-lotes__fila {
     display: grid;
-    grid-template-columns: 3rem 1fr 2fr 2fr 1fr auto;
+    grid-template-columns: 3rem 1fr 2fr 2fr 1fr var(--ag-row-actions-width);
     gap: var(--ag-space-4);
     align-items: center;
     padding: var(--ag-space-3) var(--ag-space-4);
+}
+
+.ag-lotes__acciones-head {
+    text-align: right;
 }
 
 .ag-lotes__indice {
@@ -56,6 +60,60 @@
     border-top: 1px solid var(--ag-color-border-row);
     color: var(--ag-color-text);
     font-size: var(--ag-font-size-sm);
+}
+
+/* Formulario (create/edit) — aside "Siembra actual" en edición, mismo
+   criterio que .ag-propiedades-form__layout/__main/__aside. */
+
+.ag-lotes-form__layout {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--ag-space-5);
+}
+
+.ag-lotes-form__main {
+    flex: 1 1 32rem;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+.ag-lotes-form__main:only-child {
+    flex-basis: 100%;
+}
+
+/* Envuelve las secciones "Datos del lote" + "Mapa" (16/9/2026, dos
+   secciones separadas que antes eran una sola) — mismo gap que el resto,
+   para que no queden pegadas por vivir un nivel más adentro que
+   `.ag-lotes-form__main`. */
+.ag-lotes-form__ficha {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+.ag-lotes-form__aside {
+    flex: 1 1 19rem;
+    min-width: 16rem;
+    max-width: 20rem;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+    position: sticky;
+    top: var(--ag-space-4);
+}
+
+@media (max-width: 1199.98px) {
+    .ag-lotes-form__layout {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .ag-lotes-form__aside {
+        max-width: none;
+        position: static;
+    }
 }
 
 .ag-lotes__fila:hover {

@@ -5,6 +5,7 @@ use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ClientesControll
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ContratosController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\CultivosController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\FacturasController;
+use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\GenerarLotesController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\LotesController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\PropiedadesController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\PropiedadMapaController;
@@ -534,6 +535,16 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::post('/panel/propiedades/{propiedad}/siembra', [SiembraController::class, 'guardar'])
             ->name('panel.propiedades.siembra.guardar');
+
+        // "Crear Lotes" con un solo botón (HU-72 reconstruida, 16/9/2026 —
+        // ver CrearLotesMasivo): entra desde la ficha de la propiedad,
+        // reusa el permiso de Lote (`comercial.lote.crear`), no el de
+        // Propiedad — mismo criterio que el resto del aside "Lotes".
+        Route::get('/panel/propiedades/{propiedad}/lotes/generar', [GenerarLotesController::class, 'mostrar'])
+            ->name('panel.propiedades.lotes.generar');
+
+        Route::post('/panel/propiedades/{propiedad}/lotes/generar', [GenerarLotesController::class, 'guardar'])
+            ->name('panel.propiedades.lotes.generar.guardar');
 
         // Adenda 16/9/2026 a ADR 0018 / ADR 0020 ("el editor de mapa
         // multi-polígono se construye en un feature aparte"): punto de

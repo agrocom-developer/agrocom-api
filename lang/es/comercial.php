@@ -133,6 +133,7 @@ return [
         'actualizado' => 'Los datos de la propiedad se actualizaron correctamente.',
         'eliminado' => 'La propiedad se dio de baja correctamente.',
         'mapa_guardado' => 'Las coordenadas de la propiedad se guardaron correctamente.',
+        'lotes_generados' => ':cantidad lotes generados correctamente. Entrá a cada uno para renombrarlo y dibujar su polígono.',
         'volver_a_formulario_origen' => 'Volver al formulario anterior',
 
         // Listado
@@ -208,7 +209,8 @@ return [
         'aside_lotes_hectareas_propiedad' => 'Hectáreas totales (declaradas)',
         'aside_lotes_vacio_titulo' => 'Sin lotes todavía',
         'aside_lotes_vacio_detalle' => 'Los lotes de esta propiedad se dan de alta desde su propia ficha.',
-        'aside_lotes_accion' => 'Nuevo lote',
+        'aside_lotes_accion' => 'Ver lotes',
+        'aside_lotes_generar' => 'Crear lotes',
 
         'aside_siembra_titulo' => 'Siembra actual',
         'aside_siembra_campania' => 'Campaña',
@@ -242,6 +244,25 @@ return [
         'mapa_buscador_placeholder' => 'Lat, long (ej. -17.78, -63.18)',
         'mapa_buscador_error' => 'Coordenadas inválidas — usá el formato "lat, long".',
         'mapa_medida' => 'Superficie dibujada: :hectareas ha',
+
+        // Pantalla "Crear Lotes" (HU-72 reconstruida, 16/9/2026) — sin
+        // cultivo/campaña a propósito: eso es siembra, vive en el summary
+        // "Siembra actual" / propiedades/siembra, no acá.
+        'lotes_generar_titulo' => 'Crear lotes — :propiedad',
+        'lotes_generar_subtitulo' => 'Generá varios lotes de una vez, con sus atributos de terreno; después entrás a cada uno a renombrarlo y dibujar su polígono.',
+        'lotes_generar_volver' => 'Volver a la propiedad',
+        'lotes_generar_error' => 'Revisá los datos marcados antes de generar los lotes.',
+        'lotes_generar_seccion_destino' => 'Dónde van estos lotes',
+        'lotes_generar_cliente' => 'Cliente',
+        'lotes_generar_propiedad' => 'Propiedad',
+        'lotes_generar_seccion_cuantos' => 'Cuántos y con qué código',
+        'lotes_generar_prefijo' => 'Prefijo del código',
+        'lotes_generar_prefijo_ayuda' => 'Cada lote nace como prefijo + número correlativo (ej. Lote 6, Lote 7...), a renombrar después. El número sigue desde el último ya usado en esta propiedad con el mismo prefijo.',
+        'lotes_generar_cantidad' => 'Cantidad de lotes',
+        'lotes_generar_seccion_terreno' => 'Atributos del terreno',
+        'lotes_generar_terreno_ayuda' => 'Se cargan una sola vez y se aplican a todos los lotes generados — si alguno necesita algo distinto, se ajusta después desde su propia ficha.',
+        'lotes_generar_estado_form' => 'Los lotes se generan al confirmar.',
+        'lotes_generar_accion' => 'Crear lotes',
     ],
 
     // HU-23 (tarea 34): administración de contratos con sus ventanas de
@@ -434,11 +455,10 @@ return [
         'filtro_cliente' => 'Cliente',
         'filtro_propiedad' => 'Propiedad',
         'filtro_todos' => 'Todas',
-        'filtrar' => 'Buscar',
-        'limpiar_filtro' => 'Limpiar filtros',
         'vacio_titulo' => 'Todavía no hay lotes',
         'vacio_detalle' => 'Los lotes se crean al dar de alta una propiedad o desde su ficha. En cuanto se registre el primero, vas a verlo aquí con su mapa de ubicación y perímetro.',
-        'filtro_vacio' => 'Ningún lote coincide con el filtro.',
+        'filtro_vacio_titulo' => 'Sin resultados para este filtro',
+        'filtro_vacio_detalle' => 'Ningún lote coincide con el filtro. Probá con otro cliente, propiedad o término de búsqueda.',
         'col_codigo' => 'Código',
         'col_propiedad' => 'Propiedad',
         'col_cliente' => 'Cliente',
@@ -464,6 +484,7 @@ return [
         'campo_propiedad' => 'Propiedad',
         'campo_propiedad_placeholder' => 'Seleccioná una propiedad',
         'seccion_lote' => 'Datos del lote',
+        'seccion_mapa' => 'Mapa',
 
         'lote_agregar' => 'Agregar lote',
         'lote_quitar' => 'Quitar',
@@ -474,8 +495,7 @@ return [
         'lote_usar_superficie' => 'Usar como hectáreas',
         'lote_mapa_barra_aria' => 'Acciones del mapa',
         'lote_mapa_dibujar' => 'Dibujar perímetro',
-        'lote_mapa_editar_vertices' => 'Editar vértices',
-        'lote_mapa_mover' => 'Mover',
+        'lote_mapa_dibujar_terminar' => 'Terminar perímetro',
         'lote_mapa_borrar' => 'Borrar',
         'lote_mapa_deshacer' => 'Deshacer',
         'lote_mapa_centrar' => 'Centrar en el lote',
@@ -497,14 +517,34 @@ return [
         'lote_limpieza' => 'Limpieza',
         'lote_limpieza_placeholder' => 'Sin especificar',
         'lote_limpieza_limpio' => 'Limpio',
+        'lote_limpieza_pocos_obstaculos' => 'Pocos obstáculos',
         'lote_limpieza_algunos_obstaculos' => 'Algunos obstáculos',
         'lote_limpieza_muchos_obstaculos' => 'Muchos obstáculos',
+        // Formulario del lote (16/9/2026): switch "¿está limpio?" + grado de
+        // obstáculos si no lo está — mismas 4 claves de arriba para el
+        // rótulo de cada opción, ver `lotes/_lote-fila.blade.php`.
+        'lote_limpio' => '¿Está limpio el terreno?',
+        'lote_limpio_si' => 'Sí',
+        'lote_limpio_no' => 'No',
+        'lote_grado_obstaculos' => 'Grado de obstáculos',
+        'lote_grado_obstaculos_placeholder' => 'Sin especificar',
 
         'estado_form' => 'Los cambios se guardan al confirmar.',
         'volver' => 'Volver a lotes',
 
+        // Aside "Siembra actual" (ficha de un lote, en edición)
+        'aside_siembra_titulo' => 'Siembra actual',
+        'aside_siembra_campania' => 'Campaña vigente',
+        'aside_siembra_cultivo' => 'Cultivo',
+        'aside_siembra_cultivo_desconocido' => 'Sin especificar',
+        'aside_siembra_vacio_titulo' => 'Sin siembra registrada',
+        'aside_siembra_vacio_detalle' => 'Este lote todavía no tiene un cultivo asignado en la campaña vigente.',
+        'aside_siembra_accion' => 'Ir a siembra de la propiedad',
+
         // Errores de validación
         'error_geometria_invalida' => 'La geometría tiene que ser un JSON con "type": "Polygon" y "coordinates" como arreglo.',
+        'error_grado_obstaculos_invalido' => 'El grado de obstáculos no es válido.',
+        'error_grado_obstaculos_requerido' => 'Elegí un grado de obstáculos para este lote.',
     ],
 
     // HU-48 (tarea 71, ADR 0015 punto 4): catálogo de cultivos. Cuarto ABM

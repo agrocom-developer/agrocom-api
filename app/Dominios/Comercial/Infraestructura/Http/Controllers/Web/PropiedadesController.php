@@ -304,11 +304,12 @@ final class PropiedadesController
         if ($puedeVerLotes || $puedeCrearLotes) {
             $totalLotes = $puedeVerLotes ? $propiedad->lotes()->count() : 0;
             $hectareasTotales = $puedeVerLotes ? (float) $propiedad->lotes()->sum('hectareas') : 0.0;
+            $tieneLotes = $puedeVerLotes && $totalLotes > 0;
 
             $resumen[] = [
                 'titulo' => __('comercial.propiedades.aside_lotes_titulo'),
                 'icono' => 'grid_view',
-                'tieneDatos' => $puedeVerLotes && $totalLotes > 0,
+                'tieneDatos' => $tieneLotes,
                 'items' => [
                     ['label' => __('comercial.propiedades.aside_lotes_total'), 'value' => (string) $totalLotes, 'mono' => true],
                     ['label' => __('comercial.propiedades.aside_lotes_hectareas'), 'value' => number_format($hectareasTotales, 2, ',', '.'), 'mono' => true],
@@ -321,11 +322,23 @@ final class PropiedadesController
                 ],
                 'vacioTitulo' => __('comercial.propiedades.aside_lotes_vacio_titulo'),
                 'vacioDetalle' => __('comercial.propiedades.aside_lotes_vacio_detalle'),
-                'mostrarAccion' => $puedeCrearLotes,
-                'accion' => [
-                    'label' => __('comercial.propiedades.aside_lotes_accion'),
-                    'href' => route('panel.lotes.create', ['propiedad_id' => $propiedad->id]),
-                ],
+                // Un solo botón, según haya o no lotes (16/9/2026, pedido
+                // directo): con lotes, a la LISTA filtrada por esta
+                // propiedad (de ahí "Nuevo lote" ya arrastra el mismo
+                // propiedad_id, con cliente resuelto, ver
+                // lotes/_formulario.blade.php); sin lotes todavía, directo
+                // al generador masivo (CrearLotesMasivo) — es la vía rápida
+                // para la primera tanda, no el alta de uno por uno.
+                'mostrarAccion' => $tieneLotes ? $puedeVerLotes : $puedeCrearLotes,
+                'accion' => $tieneLotes
+                    ? [
+                        'label' => __('comercial.propiedades.aside_lotes_accion'),
+                        'href' => route('panel.lotes.index', ['propiedad_id' => $propiedad->id]),
+                    ]
+                    : [
+                        'label' => __('comercial.propiedades.aside_lotes_generar'),
+                        'href' => route('panel.propiedades.lotes.generar', $propiedad),
+                    ],
             ];
         }
 

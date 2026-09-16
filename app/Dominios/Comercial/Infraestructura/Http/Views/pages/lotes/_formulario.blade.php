@@ -33,7 +33,11 @@
     // alta, desde ?propiedad_id= del acceso rápido del formulario de
     // contrato — `edit()` no lo pasa (no aplica editando un lote existente).
     $propiedadId = old('propiedad_id', $lote?->propiedad_id ?? $propiedadIdPreseleccionado ?? '');
-    $clienteId = old('cliente_id', $lote?->propiedad?->cliente_id ?? '');
+    // Alta rápida con ?propiedad_id= (tarea "contratos-lotes"): sin lote
+    // todavía, el cliente se resuelve de la propiedad preseleccionada, no
+    // solo de $lote->propiedad — si no, el select de cliente queda vacío y
+    // el cascade de lotes-form.js arranca sin filtrar (16/9/2026).
+    $clienteId = old('cliente_id', $lote?->propiedad?->cliente_id ?? $propiedadesDisponibles->get($propiedadIdPreseleccionado ?? 0)?->cliente_id ?? '');
     $datosLote = [
         'codigo' => old('lote.codigo', $lote?->codigo ?? ''),
         'hectareas' => old('lote.hectareas', $lote?->hectareas ?? ''),
@@ -69,6 +73,8 @@
         {!! json_encode($referenciaMapa) !!}
     </script>
 
+    <div class="ag-lotes-form__layout">
+    <div class="ag-lotes-form__main">
     <x-organisms.page-header
         :title="$esEdicion ? __('comercial.lotes.titulo_editar') : __('comercial.lotes.titulo_crear')"
         :subtitle="__('comercial.lotes.subtitulo_form')"
@@ -115,11 +121,26 @@
         />
     </x-molecules.form-section>
 
-    <x-molecules.form-section :title="__('comercial.lotes.seccion_lote')">
-        <div class="ag-form-section__field--full">
-            @include('comercial::pages.lotes._lote-fila', ['lote' => $datosLote, 'prefijo' => 'lote', 'mostrarQuitar' => false])
-        </div>
-    </x-molecules.form-section>
+    {{-- `data-ag-lote-ficha` envuelve las DOS secciones (campos + mapa,
+         16/9/2026): `organisms/lote-mapa-editor.js` sube hasta acá con
+         `.closest()` para encontrar el input de hectáreas de la OTRA
+         sección al hacer "usar superficie" — antes estaba todo dentro del
+         mismo `[data-ag-lote-fila]`, ahora el mapa vive en su propia
+         sección hermana. --}}
+    <div class="ag-lotes-form__ficha" data-ag-lote-ficha>
+        <x-molecules.form-section :title="__('comercial.lotes.seccion_lote')">
+            <div class="ag-form-section__field--full">
+                @include('comercial::pages.lotes._lote-fila', ['lote' => $datosLote, 'prefijo' => 'lote', 'mostrarQuitar' => false])
+            </div>
+        </x-molecules.form-section>
+
+        {{-- Sección propia (16/9/2026, pedido directo): el mapa no es un
+             campo más de "Datos del lote", es su propio bloque, mismo
+             criterio que la sección de mapa de `propiedades/mapa.blade.php`. --}}
+        <x-molecules.form-section :title="__('comercial.lotes.seccion_mapa')">
+            @include('comercial::pages.lotes._lote-mapa', ['lote' => $datosLote, 'prefijo' => 'lote'])
+        </x-molecules.form-section>
+    </div>
 
     <x-organisms.form-actions-bar :status="__('comercial.lotes.estado_form')">
         <x-slot:actions>
@@ -136,4 +157,38 @@
             </x-atoms.button>
         </x-slot:actions>
     </x-organisms.form-actions-bar>
+    </div>
+
+    @if ($esEdicion)
+        <aside class="ag-lotes-form__aside">
+            @foreach ($resumenLote ?? [] as $resumen)
+                @if ($resumen['tieneDatos'])
+                    <x-molecules.summary-card :title="$resumen['titulo']" :items="$resumen['items']">
+                        @if ($resumen['mostrarAccion'])
+                            <x-slot:action>
+                                <x-atoms.button href="{{ $resumen['accion']['href'] }}" variant="outline" icon="arrow_forward" block>
+                                    {{ $resumen['accion']['label'] }}
+                                </x-atoms.button>
+                            </x-slot:action>
+                        @endif
+                    </x-molecules.summary-card>
+                @else
+                    <x-molecules.empty-state
+                        :icon="$resumen['icono']"
+                        :title="$resumen['vacioTitulo']"
+                        :detail="$resumen['vacioDetalle']"
+                    >
+                        @if ($resumen['mostrarAccion'])
+                            <x-slot:action>
+                                <x-atoms.button href="{{ $resumen['accion']['href'] }}" variant="outline" icon="arrow_forward">
+                                    {{ $resumen['accion']['label'] }}
+                                </x-atoms.button>
+                            </x-slot:action>
+                        @endif
+                    </x-molecules.empty-state>
+                @endif
+            @endforeach
+        </aside>
+    @endif
+    </div>
 </form>

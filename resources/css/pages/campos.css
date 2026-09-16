@@ -136,7 +136,14 @@
     gap: var(--ag-space-2);
 }
 
+/* `position:relative` ancla las acciones flotantes y el div del mapa
+   (`-mapa`, absoluto) — mismo patrón que `.ag-propiedad-mapa__lienzo`
+   (16/9/2026, pedido directo: mismo componente visual que Propiedad, no
+   una barra externa aparte). El `.ag-mapa-accion` de adentro sigue siendo
+   el mismo átomo compartido con el mapa operativo del tablero — ver
+   `components/mapa-pantalla-completa.css`. */
 .ag-lote-mapa__lienzo {
+    position: relative;
     height: 520px;
     border-radius: var(--ag-radius-md);
     border: 1px solid var(--ag-color-border);
@@ -144,15 +151,87 @@
     z-index: 0;
 }
 
-/* El marco (`.ag-mapa-marco`) y la barra de acciones (`.ag-mapa-barra`/
-   `.ag-mapa-accion`) son compartidos con el mapa operativo del tablero —
-   ver `components/mapa-pantalla-completa.css`. Acá solo el tamaño del
-   LIENZO propio de este editor cuando el marco pasa a pantalla completa
-   (nativa o de respaldo). */
+/* El div real que Leaflet/Google Maps controlan — nunca le agregues hijos
+   propios acá, Google Maps los borra al inicializarse. Llena el marco por
+   completo vía `inset:0` sobre `position:relative` del padre. */
+.ag-lote-mapa__mapa {
+    position: absolute;
+    inset: 0;
+}
+
+/* Columna de acciones flotante, por encima de los controles nativos de
+   Leaflet/Google — mismo chrome que `.ag-propiedad-mapa__acciones`
+   (radio, fondo, sombra), escalado a esta clase para no acoplar los dos
+   editores por CSS compartido (ver vite.config.js: compartir JS entre
+   ellos ya rompió la carga en producción — el CSS se duplica a propósito
+   por el mismo criterio de precaución). */
+.ag-lote-mapa__acciones {
+    position: absolute;
+    top: var(--ag-space-3);
+    right: var(--ag-space-3);
+    z-index: 1010;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-1);
+    padding: var(--ag-space-1);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+    box-shadow: var(--ag-shadow-overlay-mapa);
+}
+
+.ag-lote-mapa__acciones .ag-mapa-accion[aria-pressed="true"] {
+    background-color: var(--ag-color-primary-subtle);
+    color: var(--ag-color-primary);
+}
+
+/* Tooltip propio (el `title` nativo tarda en aparecer y casi no se nota
+   sobre el mapa) — mismo mecanismo que `[data-ag-propiedad-mapa-tooltip]`,
+   escalado a este editor. */
+[data-ag-lote-mapa-tooltip] {
+    position: relative;
+}
+
+[data-ag-lote-mapa-tooltip]::after {
+    content: attr(data-ag-lote-mapa-tooltip);
+    position: absolute;
+    top: 50%;
+    right: calc(100% + var(--ag-space-2));
+    transform: translateY(-50%);
+    padding: var(--ag-space-1) var(--ag-space-2);
+    border-radius: var(--ag-radius-sm);
+    background-color: var(--ag-color-gray-1000);
+    color: var(--ag-color-gray-0);
+    font-family: var(--ag-font-family-base);
+    font-size: var(--ag-font-size-xs);
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 120ms ease, visibility 120ms ease;
+    pointer-events: none;
+    z-index: 1030;
+}
+
+[data-ag-lote-mapa-tooltip]:hover::after,
+[data-ag-lote-mapa-tooltip]:focus-visible::after {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* El marco (`.ag-mapa-marco`) es compartido con el mapa operativo del
+   tablero — ver `components/mapa-pantalla-completa.css`. Acá solo el
+   tamaño del LIENZO propio de este editor cuando el marco pasa a pantalla
+   completa (nativa o de respaldo). */
 .ag-mapa-marco:fullscreen .ag-lote-mapa__lienzo,
 .ag-mapa-marco.ag-mapa--pantalla-completa-respaldo .ag-lote-mapa__lienzo {
     flex: 1 1 auto;
     height: auto;
+}
+
+@media (max-width: 767.98px) {
+    .ag-lote-mapa__acciones {
+        top: var(--ag-space-2);
+        right: var(--ag-space-2);
+    }
 }
 
 .ag-lote-mapa__pie {
@@ -168,13 +247,32 @@
     flex: 1 1 260px;
 }
 
-.ag-lote-mapa__medida {
-    display: flex;
-    align-items: center;
-    gap: var(--ag-space-2);
+/* Cuadro flotante con la superficie dibujada, abajo a la izquierda — mismo
+   lugar y chrome que `.ag-propiedad-mapa__info` (16/9/2026, pedido
+   directo), sin coordenadas: el lote no tiene marcador de referencia.
+   Desplazado del borde igual que Propiedad: el control nativo de zoom
+   (+/-) vive en esa misma esquina (`L.control.zoom`/`zoomControlOptions`,
+   ambos reposicionados a `bottomleft` para dejar la esquina superior
+   derecha libre para `.ag-lote-mapa__acciones`). */
+.ag-lote-mapa__info {
+    position: absolute;
+    bottom: calc(var(--ag-space-3) + 1.25rem);
+    left: calc(var(--ag-space-3) + 0.15rem);
+    z-index: 1010;
+    padding: var(--ag-space-1) var(--ag-space-2);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+    box-shadow: var(--ag-shadow-overlay-mapa);
     font-family: var(--ag-font-family-mono);
     font-size: var(--ag-font-size-xs);
     color: var(--ag-color-text-muted);
+}
+
+@media (max-width: 767.98px) {
+    .ag-lote-mapa__info {
+        bottom: calc(var(--ag-space-2) + 1.25rem);
+        left: var(--ag-space-2);
+    }
 }
 
 .ag-campos-form__lote-pie {
