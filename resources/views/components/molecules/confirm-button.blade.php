@@ -88,10 +88,8 @@
                 <span class="ag-confirm-modal__icon ag-confirm-modal__icon--{{ $tone }}">
                     <x-atoms.icon :name="$modalIcon" size="md" />
                 </span>
-                <div class="ag-confirm-modal__text">
-                    <h2 class="ag-confirm-modal__title" id="{{ $tituloId }}">{{ $title }}</h2>
-                    <p class="ag-confirm-modal__message">{{ $message }}</p>
-                </div>
+                <h2 class="ag-confirm-modal__title" id="{{ $tituloId }}">{{ $title }}</h2>
+                <p class="ag-confirm-modal__message">{{ $message }}</p>
             </div>
             <div class="ag-confirm-modal__footer">
                 <x-atoms.button type="button" variant="outline" data-bs-dismiss="modal">
