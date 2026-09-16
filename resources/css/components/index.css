@@ -36,6 +36,7 @@
 @import './lote-card.css';
 @import './captura-rc-card.css';
 @import './summary-card.css';
+@import './confirm-button.css';
 @import './progress-meter.css';
 @import './tiered-progress-bar.css';
 @import './file-field.css';

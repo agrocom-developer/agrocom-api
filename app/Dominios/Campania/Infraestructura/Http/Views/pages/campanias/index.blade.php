@@ -145,6 +145,30 @@
                             </span>
 
                             <span role="cell" class="ag-campanias__acciones">
+                                @php
+                                    $formIdAbrir = "campania-abrir-{$campania->id}";
+                                    $formIdCerrar = "campania-cerrar-{$campania->id}";
+                                @endphp
+
+                                {{-- Forms FUERA de row-actions a propósito: ese organism repite su
+                                     slot dos veces (visible/menú, ver su docblock) — un <form> ahí
+                                     adentro se duplicaría con el mismo id, HTML inválido. El botón
+                                     que sí puede duplicarse (confirm-button) envía este form por su
+                                     atributo `form`, sin importar dónde viva en el documento. --}}
+                                @puede('campania.campania.cambiar_estado')
+                                    @if ($estadoValor === 'planificada')
+                                        <form id="{{ $formIdAbrir }}" method="POST" action="{{ route('panel.campanias.cambiar-estado', $campania) }}">
+                                            @csrf
+                                            <input type="hidden" name="estado" value="abierta">
+                                        </form>
+                                    @elseif ($estadoValor === 'abierta')
+                                        <form id="{{ $formIdCerrar }}" method="POST" action="{{ route('panel.campanias.cambiar-estado', $campania) }}">
+                                            @csrf
+                                            <input type="hidden" name="estado" value="cerrada">
+                                        </form>
+                                    @endif
+                                @endpuede
+
                                 <x-organisms.row-actions>
                                     @puede('campania.campania.editar')
                                         <x-atoms.button href="{{ route('panel.campanias.edit', $campania) }}" variant="warning-outline" size="sm" icon="edit">
@@ -154,29 +178,30 @@
 
                                     @puede('campania.campania.cambiar_estado')
                                         @if ($estadoValor === 'planificada')
-                                            <form
-                                                method="POST"
-                                                action="{{ route('panel.campanias.cambiar-estado', $campania) }}"
-                                                onsubmit="return confirm('{{ __('campania.campanias.confirmar_abrir') }}')"
+                                            <x-molecules.confirm-button
+                                                :form-id="$formIdAbrir"
+                                                :title="__('campania.campanias.confirmar_abrir_titulo')"
+                                                :message="__('campania.campanias.confirmar_abrir')"
+                                                :confirm-label="__('campania.campanias.accion_abrir')"
+                                                tone="success"
+                                                variant="outline"
+                                                size="sm"
+                                                icon="check_circle"
                                             >
-                                                @csrf
-                                                <input type="hidden" name="estado" value="abierta">
-                                                <x-atoms.button type="submit" variant="outline" size="sm" icon="check_circle">
-                                                    {{ __('campania.campanias.accion_abrir') }}
-                                                </x-atoms.button>
-                                            </form>
+                                                {{ __('campania.campanias.accion_abrir') }}
+                                            </x-molecules.confirm-button>
                                         @elseif ($estadoValor === 'abierta')
-                                            <form
-                                                method="POST"
-                                                action="{{ route('panel.campanias.cambiar-estado', $campania) }}"
-                                                onsubmit="return confirm('{{ __('campania.campanias.confirmar_cerrar') }}')"
+                                            <x-molecules.confirm-button
+                                                :form-id="$formIdCerrar"
+                                                :title="__('campania.campanias.confirmar_cerrar_titulo')"
+                                                :message="__('campania.campanias.confirmar_cerrar')"
+                                                :confirm-label="__('campania.campanias.accion_cerrar')"
+                                                variant="danger-outline"
+                                                size="sm"
+                                                icon="lock"
                                             >
-                                                @csrf
-                                                <input type="hidden" name="estado" value="cerrada">
-                                                <x-atoms.button type="submit" variant="danger-outline" size="sm" icon="lock">
-                                                    {{ __('campania.campanias.accion_cerrar') }}
-                                                </x-atoms.button>
-                                            </form>
+                                                {{ __('campania.campanias.accion_cerrar') }}
+                                            </x-molecules.confirm-button>
                                         @endif
                                     @endpuede
                                 </x-organisms.row-actions>

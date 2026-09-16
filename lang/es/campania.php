@@ -56,7 +56,9 @@ return [
         // Cambio de estado (listado)
         'accion_abrir' => 'Abrir',
         'accion_cerrar' => 'Cerrar',
+        'confirmar_abrir_titulo' => 'Abrir campaña',
         'confirmar_abrir' => '¿Abrir esta campaña? Desde ese momento admite contratos y gastos.',
+        'confirmar_cerrar_titulo' => 'Cerrar campaña',
         'confirmar_cerrar' => '¿Cerrar esta campaña? No se puede volver a abrir desde el panel.',
 
         // Formulario (create/edit)
