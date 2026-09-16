@@ -135,6 +135,53 @@ function estiloReferenciaLote() {
     };
 }
 
+/**
+ * Máscara fuera del límite de la propiedad (16/9/2026, pedido directo):
+ * "que el mapa salga cortado, solo el polígono, y lo demás oculto o negro
+ * o difuminado, dando la idea de prohibido/inaccesible". No es un recorte
+ * real de las teselas — es un polígono con un AGUJERO por cada terreno de
+ * la propiedad (`--ag-color-scrim-strong`, el mismo tono que ya oscurece
+ * la foto de fondo del login) que cubre el resto del mapa visible.
+ *
+ * Puramente visual, nunca bloqueante (decisión del dueño, 16/9/2026): si
+ * la propiedad no tiene geometría todavía, no hay máscara y el lote se
+ * dibuja libremente — la ayuda visual solo aparece cuando hay algo contra
+ * qué guiarse.
+ *
+ * `fillOpacity: 1` porque el color YA trae su propio alfa (0.82,
+ * `leerColorToken` resuelve el token completo): con el 0.2 por defecto de
+ * Leaflet/Google se multiplican y queda casi transparente.
+ */
+function colorMascaraFueraDePropiedad() {
+    return leerColorToken('--ag-color-scrim-strong');
+}
+
+/** Rectángulo que cubre cualquier vista posible del mapa — no exactamente
+ *  ±90/±180 (algunos renderers tienen artefactos justo en el límite de la
+ *  proyección). */
+const ANILLO_MUNDO_LATLNG = [[-89, -179], [-89, 179], [89, 179], [89, -179]];
+
+/**
+ * El anillo EXTERIOR de cada polígono de un GeoJSON `Polygon`/`MultiPolygon`
+ * — una propiedad con terrenos separados ("islas") deja un agujero por
+ * cada una. Ignora agujeros propios de la propiedad (nunca los tiene: es
+ * un perímetro de referencia, no terreno editable) — alcanza con el
+ * primer anillo de cada polígono.
+ *
+ * @return {Array<Array<[number, number]>>} lista de anillos `[lat, lng]`.
+ */
+function anillosExterioresLatLng(geometria) {
+    if (!geometria) {
+        return [];
+    }
+
+    const poligonos = geometria.type === 'MultiPolygon' ? geometria.coordinates : [geometria.coordinates];
+
+    return poligonos
+        .filter((anillos) => Array.isArray(anillos) && Array.isArray(anillos[0]))
+        .map((anillos) => anillos[0].map(([lng, lat]) => [lat, lng]));
+}
+
 function estiloReferenciaPropiedadGoogle() {
     return {
         strokeColor: leerColorToken('--ag-color-border-strong'),
@@ -377,10 +424,18 @@ function inicializarLeaflet(contenedor, refs) {
 
     // ---------- Capas de referencia (límite de propiedad + lotes hermanos) ----------
     const referencia = leerReferencia(contenedor);
+    // Capa APARTE de la máscara (16/9/2026): si viviera en `capaReferencia`,
+    // `getBounds()` (más abajo, para encuadrar) devolvería el rectángulo
+    // que cubre el mundo entero en vez del límite real de la propiedad.
+    // Se agrega ANTES que `capaReferencia` para quedar DEBAJO — Leaflet
+    // apila las capas por orden de alta, y el contorno punteado tiene que
+    // verse por encima del oscurecido, no tapado por él.
+    const capaMascara = L.layerGroup().addTo(mapa);
     const capaReferencia = L.layerGroup().addTo(mapa);
 
     const redibujarReferencia = () => {
         capaReferencia.clearLayers();
+        capaMascara.clearLayers();
 
         if (!referencia) {
             return;
@@ -390,6 +445,17 @@ function inicializarLeaflet(contenedor, refs) {
         const limite = propiedadId ? referencia.propiedades[propiedadId] : null;
 
         if (limite) {
+            const agujeros = anillosExterioresLatLng(limite);
+
+            if (agujeros.length > 0) {
+                L.polygon([ANILLO_MUNDO_LATLNG, ...agujeros], {
+                    fillColor: colorMascaraFueraDePropiedad(),
+                    fillOpacity: 1,
+                    stroke: false,
+                    interactive: false,
+                }).addTo(capaMascara);
+            }
+
             L.geoJSON(limite, { style: estiloReferenciaPropiedad, interactive: false }).addTo(capaReferencia);
         }
 
@@ -739,8 +805,32 @@ function inicializarGoogle(contenedor, refs, googleMapsNs) {
         return poligonos.map((anillos) => new googleMapsNs.Polygon({
             paths: anillos[0].map(([lng, lat]) => ({ lat, lng })),
             map: mapa,
+            zIndex: 1,
             ...opciones,
         }));
+    };
+
+    /** Máscara fuera del límite de la propiedad ({@see colorMascaraFueraDePropiedad}):
+     *  UN solo polígono, mundo entero como anillo exterior y un agujero
+     *  por cada terreno de la propiedad — `zIndex: 0`, siempre por debajo
+     *  del contorno punteado. */
+    const poligonoMascaraDesdeGeoJSON = (geometria) => {
+        const agujeros = anillosExterioresLatLng(geometria).map((anillo) => anillo.map(([lat, lng]) => ({ lat, lng })));
+
+        if (agujeros.length === 0) {
+            return [];
+        }
+
+        return [new googleMapsNs.Polygon({
+            paths: [ANILLO_MUNDO_LATLNG.map(([lat, lng]) => ({ lat, lng })), ...agujeros],
+            map: mapa,
+            fillColor: colorMascaraFueraDePropiedad(),
+            fillOpacity: 1,
+            strokeWeight: 0,
+            clickable: false,
+            editable: false,
+            zIndex: 0,
+        })];
     };
 
     const redibujarReferencia = () => {
@@ -755,6 +845,7 @@ function inicializarGoogle(contenedor, refs, googleMapsNs) {
         const limite = propiedadId ? referencia.propiedades[propiedadId] : null;
 
         if (limite) {
+            poligonosReferencia.push(...poligonoMascaraDesdeGeoJSON(limite));
             poligonosReferencia.push(...poligonosDesdeGeoJSON(limite, estiloReferenciaPropiedadGoogle()));
         }
 
