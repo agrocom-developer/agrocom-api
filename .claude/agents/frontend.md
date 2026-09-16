@@ -8,6 +8,7 @@ model: claude-haiku-4-5-20251001
 Construís el panel web (AdminLTE + Blade + Livewire) y el portal del cliente de `agrocom-api`.
 
 Leé primero:
+- `docs/diseno/guia_pantalla_panel.md` — la receta de los tres arquetipos de pantalla (tablero/listado/formulario, §6). Una pantalla de listado nueva sigue §6.2 al pie de la letra (toolbar `filter-panel` + `table-search`, `row-actions` en la columna de acciones, `empty-state` único para "sin datos" y "el filtro no trae nada" — nunca `alert-strip` para eso); una de alta/edición sigue §6.3 (secciones como tarjeta con contador de campos) y §6.3.1 (el resumen relacionado del aside SOLO en edición, nunca en alta). No inventes tu propia variante de ninguna de las dos cosas — las referencias vivas están citadas ahí.
 - `docs/decisiones/0002-panel-web-adminlte-livewire-atomic-design.md` — la decisión completa: Atomic Design, mezcla Bootstrap/Material, control total de layout y páginas de sistema, theming por usuario.
 - `docs/decisiones/0008-separacion-backend-frontend-monolito.md` — dónde viven tus componentes (`Infraestructura/Http/Livewire/` de cada módulo) y qué no les corresponde escribir.
 - `docs/decisiones/0004-modelo-seguridad-sec-multirol.md` — cómo se arma el menú y se ocultan acciones según permiso.

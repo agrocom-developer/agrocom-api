@@ -288,19 +288,50 @@ Las seis reglas que salen de ahí:
 5. **Barra de acciones pegajosa al pie**, con el estado de guardado en texto ("Sin cambios pendientes" / "Cambios sin guardar") y las mismas dos acciones de la cabecera. En un formulario largo, el usuario no debería scrollear para guardar.
 6. **Cifras y datos técnicos en `--ag-font-family-mono`** (teléfono, fechas, "6 / 10"); prosa y labels en la familia base.
 
-#### Qué falta en el catálogo para armar esto
+### 6.3.1. Alta vs. edición: el resumen relacionado (`molecules/summary-card`) solo en edición
 
-Ninguna de estas piezas se construye suelta dentro de una página: se le piden a `design-ui`.
+Referencia viva: `comercial::pages.clientes._formulario` + `ClientesController::resumenRelacionado()` (tarea "resumen de cliente", 15/9/2026).
 
-| Pieza | Nivel | Estado |
-|---|---|---|
-| `form-section` como **tarjeta** con `section-head` de header | molecule | **Existe, hay que evolucionarlo** — hoy es `<fieldset>`+`<legend>` sin chrome ni grid de dos columnas |
-| `page-header` (h1 + bajada + acciones) | organism | **Falta** — hoy cada página repite el markup (`ag-dash__header`, `ag-organizacion__intro`…) |
-| `tabs` | molecule | **Falta como componente** — el CSS (`tabs.css`) existe y el dashboard lo usa a mano con `data-bs-toggle` |
-| `form-actions-bar` pegajosa con estado dirty | organism | **Falta** |
-| `summary-card` (lista etiqueta→valor + acción al pie) | molecule | **Falta** — es la tarjeta de "Suscripción" |
-| `progress-meter` (porcentaje + barra + checklist) | molecule | **Falta** — es "Perfil completo" |
-| `file-field` (preview + reemplazar/quitar) | molecule | **Falta** — hoy es markup suelto en `organizacion.css` |
+Alta y edición comparten el MISMO partial y la misma anatomía de §6.3 — difieren solo en la columna lateral pegajosa (regla 4):
+
+- **Alta**: sin columna lateral. Un registro que todavía no existe no puede tener nada relacionado (contratos, propiedades, órdenes…) — mostrarla vacía sería puro relleno. Las secciones ocupan el ancho completo.
+- **Edición**: la columna se llena con una tarjeta por cada tipo de entidad relacionada, resuelta SERVER-SIDE por un método `resumenRelacionado()` del controlador (nunca calculado en el Blade). Por categoría: gatea por el permiso `.ver`/`.crear` de CADA módulo relacionado (no el permiso de la entidad que se edita — ver el resumen de contratos de un cliente exige `comercial.contrato.ver`, no `comercial.cliente.ver`); `tieneDatos` decide `summary-card` (con conteos) vs `empty-state` compacto (con acceso directo de alta, con el id de esta entidad precargado en la URL cuando la pantalla destino lo acepta); nunca las dos piezas a la vez; una categoría sin `.ver` NI `.crear` se omite del todo.
+
+```blade
+@if ($esEdicion)
+    <aside class="ag-x-form__aside">
+        @foreach ($resumenRelacionado ?? [] as $resumen)
+            @if ($resumen['tieneDatos'])
+                <x-molecules.summary-card :title="$resumen['titulo']" :items="$resumen['items']">
+                    @if ($resumen['mostrarAccion'])
+                        <x-slot:action>
+                            <x-atoms.button href="{{ $resumen['accion']['href'] }}" variant="outline" icon="add" block>
+                                {{ $resumen['accion']['label'] }}
+                            </x-atoms.button>
+                        </x-slot:action>
+                    @endif
+                </x-molecules.summary-card>
+            @else
+                <x-molecules.empty-state :icon="$resumen['icono']" :title="$resumen['vacioTitulo']" :detail="$resumen['vacioDetalle']">
+                    @if ($resumen['mostrarAccion'])
+                        <x-slot:action>
+                            <x-atoms.button href="{{ $resumen['accion']['href'] }}" variant="outline" icon="add">
+                                {{ $resumen['accion']['label'] }}
+                            </x-atoms.button>
+                        </x-slot:action>
+                    @endif
+                </x-molecules.empty-state>
+            @endif
+        @endforeach
+    </aside>
+@endif
+```
+
+No confundir con la columna lateral del canvas "Registro de la compañía" (regla 4 de arriba: progreso de completitud, resumen del plan). Esa es de METADATOS de la propia entidad; el resumen relacionado es de OTRAS entidades que cuelgan de esta. Una pantalla usa la que le corresponda según lo que la entidad realmente necesita mostrar — decidilo por eso, no por copiar la que ya existe en otra pantalla.
+
+#### Estado del catálogo para este arquetipo
+
+Todas las piezas de la anatomía de arriba ya existen en el catálogo — nada pendiente de pedirle a `design-ui` para este arquetipo: `molecules/form-section` (tarjeta + `section-head` con contador, evolucionado desde el `<fieldset>` original), `organisms/page-header`, `molecules/tabs`, `organisms/form-actions-bar`, `molecules/summary-card`, `molecules/progress-meter`, `molecules/file-field`. Si una pantalla nueva necesita una variante que ninguna de estas cubre, ESO es lo que se le pide a `design-ui` — no la pieza entera de nuevo.
 
 ---
 
