@@ -69,9 +69,11 @@
 
             @if ($clientes->isEmpty())
                 @if ($hayFiltrosActivos)
-                    <x-molecules.alert-strip variant="info" icon="contact_page" class="ag-clientes__aviso">
-                        {{ __('comercial.clientes.filtro_vacio') }}
-                    </x-molecules.alert-strip>
+                    <x-molecules.empty-state
+                        icon="search_off"
+                        :title="__('comercial.clientes.filtro_vacio_titulo')"
+                        :detail="__('comercial.clientes.filtro_vacio_detalle')"
+                    />
                 @else
                     <x-molecules.empty-state
                         icon="contact_page"

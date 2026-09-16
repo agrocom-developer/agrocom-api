@@ -8,20 +8,54 @@
  *
  * Las acciones visibles conservan ícono + texto (nunca solo-ícono — pedido
  * explícito del usuario, 15/9/2026): la celda de acciones de cada tabla fija
- * su ancho en rem a medida de sus propios botones (mismo criterio que el
- * resto de columnas del grid, cada una con su valor propio en
- * resources/css/pages/*.css) en vez de un ancho universal — con `auto`, el
- * head (celda vacía o con solo el rótulo "Acciones") y la fila (celda con
- * botones) son grids separados que resuelven ese ancho cada uno por su
- * cuenta y el header queda corrido; un valor fijo, igual en los dos, es la
- * única forma de que calcen.
+ * su ancho en rem (mismo criterio que el resto de columnas del grid) en vez
+ * de un ancho universal — con `auto`, el head (celda vacía o con solo el
+ * rótulo "Acciones") y la fila (celda con botones) son grids separados que
+ * resuelven ese ancho cada uno por su cuenta y el header queda corrido; un
+ * valor fijo, igual en los dos, es la única forma de que calcen.
+ *
+ * Cupo de 2 sueltas en TODAS las pantallas ≥768px (pedido explícito,
+ * 16/9/2026: quería simetría de ancho entre páginas sin importar cuántos
+ * estados tenga cada una) — por eso `--ag-row-actions-width` de abajo es
+ * UNA sola variable, no un valor en rem repetido en cada
+ * `resources/css/pages/*.css`: factorizarlo evita que las cuatro páginas
+ * que usan este organism (usuarios/clientes/campanias/contratos) diverjan
+ * con el tiempo si el cupo visible vuelve a cambiar.
  */
+
+/* `:root`, no `.ag-row-actions`: la consume `grid-template-columns` de la
+   FILA de cada tabla (`.ag-contratos__fila` y las otras tres), que es
+   ANCESTRO de `.ag-row-actions`, no descendiente — una custom property
+   scopeada al propio componente no llegaría hasta ahí por herencia. Vive
+   acá (el archivo del componente dueño de la restricción) y no en
+   `tokens/`, porque no es un token de diseño reusable en cualquier
+   contexto — es una medida de layout de ESTE organism en particular. */
+:root {
+    --ag-row-actions-width: 16rem;
+}
 
 .ag-row-actions {
     display: flex;
     align-items: center;
     justify-content: flex-end;
     gap: var(--ag-space-2);
+}
+
+/* Envuelve una acción COMPUESTA (p. ej. `molecules/confirm-button`, que
+   renderiza el botón disparador y su `<div class="modal">` como hermanos,
+   no un solo nodo) para que cuente como UN hijo en el `:nth-child` de más
+   abajo — sin esto, el modal oculto de cada confirm-button se cuela como
+   posición extra, corre el índice y esconde una acción real que sí entraba
+   en el cupo visible (bug real, encontrado 16/9/2026 en vivo con dos
+   confirm-button en la misma fila de `contratos/index.blade.php`; con uno
+   solo, como en `campanias/index.blade.php`, nunca se notaba). `display:
+   contents` saca el wrapper del layout — el botón de adentro sigue siendo
+   un ítem flex normal — sin sacarlo del árbol del DOM que `:nth-child`
+   sigue contando. El llamador lo usa envolviendo CADA `confirm-button`
+   dentro de `row-actions`; una acción simple (un solo `<x-atoms.button>` o
+   `<a>`) no lo necesita, ya cuenta como un hijo por sí sola. */
+.ag-row-actions__item {
+    display: contents;
 }
 
 .ag-row-actions__visible {
@@ -97,25 +131,15 @@
     display: block;
 }
 
-/* ≥1200px: hasta 3 acciones sueltas en la celda. */
-@media (min-width: 1200px) {
-    .ag-row-actions__visible > :nth-child(n + 4) {
-        display: none;
-    }
-
-    .ag-row-actions__menu > :nth-child(-n + 3) {
-        display: none;
-    }
-
-    .ag-row-actions:has(.ag-row-actions__visible > :nth-child(4)) .ag-row-actions__more {
-        display: block;
-    }
-}
-
-/* Tablet: hasta 2 — la sidebar de módulo y el chrome de header comen más
-   ancho relativo, dos acciones ya es la fila más angosta que se puede leer
-   cómoda. */
-@media (min-width: 768px) and (max-width: 1199.98px) {
+/* ≥768px ("pantallas normales", pedido explícito del usuario 16/9/2026):
+   hasta 2 acciones sueltas en la celda, SIEMPRE — antes eran 3 desde
+   1200px y 2 en el tramo tablet, un cupo que variaba con el breakpoint Y
+   con cuántos estados tuviera cada página (usuarios/contratos con 24rem
+   fijo para 3, clientes/campanias con 14rem para 2 — la celda no calzaba
+   igual de una página a otra). Un cupo único da un ancho de columna único
+   en `resources/css/pages/*.css`, sin importar cuántas acciones tenga la
+   fila más cargada de cada pantalla. */
+@media (min-width: 768px) {
     .ag-row-actions__visible > :nth-child(n + 3) {
         display: none;
     }
