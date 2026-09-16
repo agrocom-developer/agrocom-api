@@ -27,24 +27,33 @@
     overflow: hidden;
 }
 
-/* SEIS columnas, una por celda: cliente · código · nombre · vigencia ·
-   estado · acciones. Nacieron cinco (tarea 69) y la fila siempre tuvo seis
-   celdas, así que la de acciones no entraba en el track explícito y el grid
-   le abría una FILA IMPLÍCITA: "Editar" y "Cerrar" aparecían debajo del
-   nombre del cliente, en la primera columna, con la fila al doble de alto.
-   Reportado por el dueño sobre el panel andando (9/9/2026). El resto de los
-   listados del panel ya declaraba tantas columnas como celdas.
+/* SIETE columnas, una por celda: índice · código · nombre · vigencia ·
+   estado · actividad · acciones (sin columna de cliente desde la corrección
+   del 15/9/2026, ADR 0015 — la campaña es catálogo compartido). Nacieron
+   cinco (tarea 69) y la fila siempre tuvo seis celdas, así que la de
+   acciones no entraba en el track explícito y el grid le abría una FILA
+   IMPLÍCITA: "Editar" y "Cerrar" aparecían debajo del nombre del cliente, en
+   la primera columna, con la fila al doble de alto. Reportado por el dueño
+   sobre el panel andando (9/9/2026). El resto de los listados del panel ya
+   declaraba tantas columnas como celdas.
 
-   Los siete tracks van en `fr`, ninguno en `auto`: el encabezado y las filas
-   son grids HERMANOS, no uno solo, así que un track `auto` lo resuelve cada
-   grid contra su propio contenido — con "VIGENCIA" arriba y una fecha
+   Los tracks de dato van en `fr`, ninguno en `auto`: el encabezado y las
+   filas son grids HERMANOS, no uno solo, así que un track `auto` lo resuelve
+   cada grid contra su propio contenido — con "VIGENCIA" arriba y una fecha
    abajo, la columna medía distinto en cada fila y los rótulos quedaban
    corridos respecto de los datos. Con `fr` los dos grids reparten idéntico.
-   Es también lo que hacen las otras 40 páginas de listado. */
+   Es también lo que hacen las otras 40 páginas de listado.
+
+   La columna de acciones es la excepción: `14rem` fijo (§6.2 de
+   docs/diseno/guia_pantalla_panel.md, mismo criterio que `usuarios.css`,
+   24rem ahí por tener 3 acciones con texto contra las 2 de acá — "Editar" +
+   "Abrir"/"Cerrar", nunca las dos juntas) — con `fr`, el ancho de
+   `x-organisms.row-actions` dependería del resto de columnas y no calzaría
+   entre el head y la fila, que son grids separados. */
 .ag-campanias__head,
 .ag-campanias__fila {
     display: grid;
-    grid-template-columns: 3rem 1.7fr 0.75fr 0.7fr 1.5fr 0.7fr 0.7fr 1.7fr;
+    grid-template-columns: 3rem 0.9fr 1.6fr 1.4fr 0.8fr 0.8fr 14rem;
     gap: var(--ag-space-4);
     align-items: center;
     padding: var(--ag-space-3) var(--ag-space-4);
@@ -56,16 +65,11 @@
     font-size: var(--ag-font-size-xs);
 }
 
-/* El encabezado de acciones va vacío (`aria-hidden`) pero ocupa su columna:
-   sin él, "ESTADO" se leería como rótulo de los botones. */
-.ag-campanias__head > [aria-hidden] {
-    min-width: 0;
-}
-
 /* Los rótulos de estado y acciones se alinean con lo que rotulan: el badge
    arranca a la izquierda de su celda, los botones terminan a la derecha. */
 .ag-campanias__head > :last-child,
-.ag-campanias__acciones {
+.ag-campanias__acciones,
+.ag-campanias__acciones-head {
     text-align: right;
 }
 

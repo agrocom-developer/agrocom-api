@@ -192,7 +192,7 @@ Cabecera → tabs → por cada sector: `molecules/section-head` (barra de color 
 
 ### 6.2. Listado
 
-Referencia viva (patrón vigente desde el 15/9/2026): `seguridad::pages.usuarios.index` (buscador + 1 filtro + acciones) y `seguridad::pages.bitacora.index` (4+ filtros, sin acciones). El resto del rollout (ver `docs/gestion/estado_proyecto.md`) todavía migra desde el patrón anterior (`molecules/table-search` + `<form class="ag-filtros">` suelto debajo) — no lo copies para una pantalla nueva.
+Referencia viva (patrón vigente desde el 15/9/2026): `seguridad::pages.usuarios.index` (buscador + 1 filtro + acciones), `seguridad::pages.bitacora.index` (4+ filtros, sin acciones) y `campania::pages.campanias.index` (solo buscador, sin `filter-panel` — una página sin filtros extra no lo agrega solo para tener el chrome). El resto del rollout (ver `docs/gestion/estado_proyecto.md`) todavía migra desde el patrón anterior (`molecules/table-search` + `<form class="ag-filtros">` suelto debajo) — no lo copies para una pantalla nueva.
 
 Orden fijo de secciones: cabecera → toolbar (buscador + filtros) → tabla → paginación. La tabla usa `--ag-color-bg-table-head`, `--ag-color-border-row` y `--ag-color-bg-row-hover`; los estados por fila son `atoms/badge`, y las cifras van en `--ag-font-family-mono` para que aliñen en columna.
 
