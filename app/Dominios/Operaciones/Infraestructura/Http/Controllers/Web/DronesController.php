@@ -68,7 +68,7 @@ final class DronesController
         $datos = $request->validated();
 
         try {
-            $crearDron->ejecutar(
+            $dron = $crearDron->ejecutar(
                 (string) $datos['identificador'],
                 $this->cadenaONull($datos['modelo'] ?? null),
                 $this->cadenaONull($datos['capacidad_l'] ?? null),
@@ -81,8 +81,10 @@ final class DronesController
                 ->withErrors(['identificador' => $excepcion->getMessage()]);
         }
 
+        // Se queda en la propia ficha de edición (no vuelve al listado,
+        // 16/9/2026 — mismo criterio que ClientesController::store()).
         return redirect()
-            ->route('panel.drones.index')
+            ->route('panel.drones.edit', $dron)
             ->with('estado', __('operaciones.drones.creado'));
     }
 
@@ -117,8 +119,10 @@ final class DronesController
                 ->withErrors(['identificador' => $excepcion->getMessage()]);
         }
 
+        // Se queda en la propia ficha de edición (no vuelve al listado,
+        // 16/9/2026 — mismo criterio que ClientesController::update()).
         return redirect()
-            ->route('panel.drones.index')
+            ->route('panel.drones.edit', $dron)
             ->with('estado', __('operaciones.drones.actualizado'));
     }
 

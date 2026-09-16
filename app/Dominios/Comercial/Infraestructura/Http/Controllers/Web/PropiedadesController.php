@@ -122,22 +122,15 @@ final class PropiedadesController
                 ->withErrors(['provincia_id' => $excepcion->getMessage()]);
         }
 
-        $volverA = $request->input('volver_a');
-
-        // Con volver_a (alta rápida desde otro formulario), el siguiente paso
-        // natural es ofrecer la vuelta desde la ficha de edición — mismo
-        // criterio que ClientesController::store(). Sin volver_a, se
-        // mantiene el comportamiento existente (vuelve al listado).
-        if ($volverA) {
-            return redirect()
-                ->route('panel.propiedades.edit', $propiedad)
-                ->with('estado', __('comercial.propiedades.creado'))
-                ->with('volverA', $volverA);
-        }
-
+        // Se queda en la propia ficha de edición (no vuelve al listado,
+        // 16/9/2026 — mismo criterio que ClientesController::store(): crear
+        // o editar un objeto del sistema permanece en su formulario, nunca
+        // salta al listado). `volverA` viaja igual que antes para el caso de
+        // alta rápida desde otro formulario.
         return redirect()
-            ->route('panel.propiedades.index')
-            ->with('estado', __('comercial.propiedades.creado'));
+            ->route('panel.propiedades.edit', $propiedad)
+            ->with('estado', __('comercial.propiedades.creado'))
+            ->with('volverA', $request->input('volver_a'));
     }
 
     public function edit(Request $request, Propiedad $propiedad): View
@@ -186,8 +179,10 @@ final class PropiedadesController
                 ->withErrors(['provincia_id' => $excepcion->getMessage()]);
         }
 
+        // Se queda en la propia ficha de edición (no vuelve al listado,
+        // 16/9/2026 — mismo criterio que ClientesController::update()).
         return redirect()
-            ->route('panel.propiedades.index')
+            ->route('panel.propiedades.edit', $propiedad)
             ->with('estado', __('comercial.propiedades.actualizado'));
     }
 

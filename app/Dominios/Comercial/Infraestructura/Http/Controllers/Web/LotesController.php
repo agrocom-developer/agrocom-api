@@ -102,22 +102,14 @@ final class LotesController
                 ->withErrors(['codigo' => $excepcion->getMessage()]);
         }
 
-        $volverA = $request->input('volver_a');
-
-        // Con volver_a (alta rápida desde otro formulario), el siguiente paso
-        // natural es ofrecer la vuelta desde la ficha de edición — mismo
-        // criterio que ClientesController::store(). Sin volver_a, se
-        // mantiene el comportamiento existente (vuelve al listado).
-        if ($volverA) {
-            return redirect()
-                ->route('panel.lotes.edit', $lote)
-                ->with('estado', __('comercial.lotes.creado'))
-                ->with('volverA', $volverA);
-        }
-
+        // Se queda en la propia ficha de edición (no vuelve al listado,
+        // 16/9/2026 — mismo criterio que ClientesController::store()).
+        // `volverA` viaja igual que antes para el caso de alta rápida desde
+        // otro formulario.
         return redirect()
-            ->route('panel.lotes.index')
-            ->with('estado', __('comercial.lotes.creado'));
+            ->route('panel.lotes.edit', $lote)
+            ->with('estado', __('comercial.lotes.creado'))
+            ->with('volverA', $request->input('volver_a'));
     }
 
     public function edit(Request $request, Lote $lote): View
@@ -150,8 +142,10 @@ final class LotesController
                 ->withErrors(['codigo' => $excepcion->getMessage()]);
         }
 
+        // Se queda en la propia ficha de edición (no vuelve al listado,
+        // 16/9/2026 — mismo criterio que ClientesController::update()).
         return redirect()
-            ->route('panel.lotes.index')
+            ->route('panel.lotes.edit', $lote)
             ->with('estado', __('comercial.lotes.actualizado'));
     }
 

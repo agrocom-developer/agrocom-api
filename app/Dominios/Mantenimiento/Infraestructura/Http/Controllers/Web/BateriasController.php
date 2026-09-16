@@ -91,7 +91,7 @@ final class BateriasController
         $datos = $request->validated();
 
         try {
-            $crearBateria->ejecutar(
+            $bateria = $crearBateria->ejecutar(
                 (string) $datos['identificador'],
                 (int) $datos['ciclos_inicial'],
                 (int) $datos['ciclos_acumulados'],
@@ -105,8 +105,9 @@ final class BateriasController
                 ->withErrors(['identificador' => $excepcion->getMessage()]);
         }
 
+        // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
         return redirect()
-            ->route('panel.baterias.index')
+            ->route('panel.baterias.edit', $bateria)
             ->with('estado', __('mantenimiento.baterias.creado'));
     }
 
@@ -149,8 +150,9 @@ final class BateriasController
                 ->withErrors(['motivo_correccion' => $excepcion->getMessage()]);
         }
 
+        // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
         return redirect()
-            ->route('panel.baterias.index')
+            ->route('panel.baterias.edit', $bateria)
             ->with('estado', __('mantenimiento.baterias.actualizado'));
     }
 

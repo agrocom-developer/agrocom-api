@@ -88,7 +88,7 @@ final class GeneradoresController
         $datos = $request->validated();
 
         try {
-            $crearGenerador->ejecutar(
+            $generador = $crearGenerador->ejecutar(
                 (string) $datos['identificador'],
                 $this->stringONull($datos['modelo'] ?? null),
                 $this->enteroONull($datos['base_id'] ?? null),
@@ -103,8 +103,9 @@ final class GeneradoresController
                 ->withErrors(['identificador' => $excepcion->getMessage()]);
         }
 
+        // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
         return redirect()
-            ->route('panel.generadores.index')
+            ->route('panel.generadores.edit', $generador)
             ->with('estado', __('mantenimiento.generadores.creado'));
     }
 
@@ -143,8 +144,9 @@ final class GeneradoresController
                 ->withErrors(['identificador' => $excepcion->getMessage()]);
         }
 
+        // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
         return redirect()
-            ->route('panel.generadores.index')
+            ->route('panel.generadores.edit', $generador)
             ->with('estado', __('mantenimiento.generadores.actualizado'));
     }
 

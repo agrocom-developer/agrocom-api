@@ -98,7 +98,7 @@ final class VehiculosController
         $datos = $request->validated();
 
         try {
-            $crearVehiculo->ejecutar(
+            $vehiculo = $crearVehiculo->ejecutar(
                 (string) $datos['identificador'],
                 $this->enteroONull($datos['base_id'] ?? null),
                 EstadoVehiculo::from((string) $datos['estado']),
@@ -118,8 +118,9 @@ final class VehiculosController
                 ->withErrors(['identificador' => $excepcion->getMessage()]);
         }
 
+        // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
         return redirect()
-            ->route('panel.vehiculos.index')
+            ->route('panel.vehiculos.edit', $vehiculo)
             ->with('estado', __('mantenimiento.vehiculos.creado'));
     }
 
@@ -165,8 +166,9 @@ final class VehiculosController
                 ->withErrors(['identificador' => $excepcion->getMessage()]);
         }
 
+        // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
         return redirect()
-            ->route('panel.vehiculos.index')
+            ->route('panel.vehiculos.edit', $vehiculo)
             ->with('estado', __('mantenimiento.vehiculos.actualizado'));
     }
 

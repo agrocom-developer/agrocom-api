@@ -140,8 +140,10 @@ final class RolesController
             return redirect()->back()->withInput()->withErrors(['estado' => $excepcion->getMessage()]);
         }
 
+        // Se queda en la propia ficha de edición (no vuelve al listado,
+        // 16/9/2026 — mismo criterio que ClientesController::update()).
         return redirect()
-            ->route('panel.roles.index')
+            ->route('panel.roles.edit', $rol)
             ->with('estado', __('seguridad.roles.actualizado'));
     }
 

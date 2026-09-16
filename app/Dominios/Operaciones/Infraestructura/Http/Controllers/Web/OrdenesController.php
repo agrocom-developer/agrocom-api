@@ -130,10 +130,12 @@ final class OrdenesController
 
         $datos = $request->validated();
 
-        $crearOrden->ejecutar($this->normalizarDatos($datos), $this->normalizarLotes($datos));
+        $orden = $crearOrden->ejecutar($this->normalizarDatos($datos), $this->normalizarLotes($datos));
 
+        // Se queda en la propia ficha de edición (no vuelve al listado,
+        // 16/9/2026 — mismo criterio que ClientesController::store()).
         return redirect()
-            ->route('panel.ordenes.index')
+            ->route('panel.ordenes.edit', $orden)
             ->with('estado', __('operaciones.ordenes.creada'));
     }
 
@@ -168,8 +170,10 @@ final class OrdenesController
                 ->withErrors(['estado' => $excepcion->getMessage()]);
         }
 
+        // Se queda en la propia ficha de edición (no vuelve al listado,
+        // 16/9/2026 — mismo criterio que ClientesController::update()).
         return redirect()
-            ->route('panel.ordenes.index')
+            ->route('panel.ordenes.edit', $orden)
             ->with('estado', __('operaciones.ordenes.actualizada'));
     }
 

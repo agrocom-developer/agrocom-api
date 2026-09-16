@@ -114,7 +114,7 @@ final class UsuariosController
             abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_PORTAL), 403);
 
             try {
-                $crearCuentaPortal->ejecutar(
+                $usuario = $crearCuentaPortal->ejecutar(
                     actor: $request->user('interno'),
                     usuarioId: null,
                     username: (string) $datos['username'],
@@ -128,8 +128,9 @@ final class UsuariosController
                 return redirect()->back()->withErrors(['estado' => $excepcion->getMessage()]);
             }
 
+            // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
             return redirect()
-                ->route('panel.usuarios.index')
+                ->route('panel.usuarios.edit', $usuario)
                 ->with('estado', __('seguridad.usuarios.creado'));
         }
 
@@ -140,7 +141,7 @@ final class UsuariosController
         $this->abortarSiFaltaPermisoRolDueno($request, [], $rolesDeseados);
 
         try {
-            $asignarRoles->ejecutar(
+            $usuario = $asignarRoles->ejecutar(
                 actor: $request->user('interno'),
                 usuarioId: null,
                 username: (string) $datos['username'],
@@ -157,8 +158,9 @@ final class UsuariosController
             return redirect()->back()->withErrors(['estado' => $excepcion->getMessage()]);
         }
 
+        // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
         return redirect()
-            ->route('panel.usuarios.index')
+            ->route('panel.usuarios.edit', $usuario)
             ->with('estado', __('seguridad.usuarios.creado'));
     }
 
@@ -202,8 +204,9 @@ final class UsuariosController
                 return redirect()->back()->withErrors(['estado' => $excepcion->getMessage()]);
             }
 
+            // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
             return redirect()
-                ->route('panel.usuarios.index')
+                ->route('panel.usuarios.edit', $usuario)
                 ->with('estado', __('seguridad.usuarios.actualizado'));
         }
 
@@ -229,8 +232,9 @@ final class UsuariosController
             return redirect()->back()->withErrors(['estado' => $excepcion->getMessage()]);
         }
 
+        // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
         return redirect()
-            ->route('panel.usuarios.index')
+            ->route('panel.usuarios.edit', $usuario)
             ->with('estado', __('seguridad.usuarios.actualizado'));
     }
 

@@ -70,7 +70,7 @@ final class FichasDronController
         $datos = $request->validated();
 
         try {
-            $crearFichaDron->ejecutar(
+            $fichaDron = $crearFichaDron->ejecutar(
                 (string) $datos['identificador_dron'],
                 $this->cadenaONull($datos['numero_serie'] ?? null),
                 $this->cadenaONull($datos['chasis'] ?? null),
@@ -88,8 +88,9 @@ final class FichasDronController
                 ->withErrors(['identificador_dron' => $excepcion->getMessage()]);
         }
 
+        // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
         return redirect()
-            ->route('panel.fichas-dron.index')
+            ->route('panel.fichas-dron.edit', $fichaDron)
             ->with('estado', __('mantenimiento.fichas_dron.creado'));
     }
 
@@ -129,8 +130,9 @@ final class FichasDronController
                 ->withErrors(['identificador_dron' => $excepcion->getMessage()]);
         }
 
+        // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
         return redirect()
-            ->route('panel.fichas-dron.index')
+            ->route('panel.fichas-dron.edit', $fichaDron)
             ->with('estado', __('mantenimiento.fichas_dron.actualizado'));
     }
 

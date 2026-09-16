@@ -81,6 +81,12 @@
         </x-slot:actions>
     </x-organisms.page-header>
 
+    @if (session('estado'))
+        <x-molecules.alert-strip variant="success" icon="check_circle">
+            {{ session('estado') }}
+        </x-molecules.alert-strip>
+    @endif
+
     <x-molecules.form-section :title="__('seguridad.usuarios.seccion_datos')">
         <x-atoms.input
             type="text"
