@@ -77,6 +77,10 @@ final class CampaniasController
         return view('campania::pages.campanias.create', [
             ...$this->autorizacion->cascara($request),
             'clientesDisponibles' => $this->clientesDisponibles(),
+            // Acceso directo desde el aside de `panel.clientes.edit` (tarea
+            // "resumen de cliente"): con ?cliente_id=, el formulario arranca
+            // con ese cliente ya elegido — ver _formulario.blade.php.
+            'clienteIdPreseleccionado' => $request->integer('cliente_id') ?: null,
         ]);
     }
 

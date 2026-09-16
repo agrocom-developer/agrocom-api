@@ -29,11 +29,15 @@
       `name` — mismo criterio ver/editar que el resto del panel
       (`:disabled="! $puedeEditar"`).
     - error (nullable): mensaje de validación del campo `name`.
-    - size (sm|md|lg, default "md" — 14/9/2026): tamaño del cuadro de
-      preview. "lg" es para un logo que es EL dato principal de la pantalla
-      (`/panel/organizacion`, HU-19/ADR 0019) — en una fila de formulario
-      compartida con otros campos ("Logo" de un cliente, tarea 91) el
-      tamaño por defecto sigue siendo el correcto.
+    - size (sm|md|lg|xl, default "md" — 14/9/2026, "xl" 15/9/2026): tamaño
+      del cuadro de preview. "lg" es para un logo que es EL dato principal
+      de la pantalla (`/panel/organizacion`, HU-19/ADR 0019). "xl" es para
+      cuando el campo, aunque comparte fila con otros, ocupa a propósito el
+      alto de dos filas del grid (`grid-row: span 2` en la página, ver
+      "Logo del cliente" en `comercial::pages.clientes._formulario` —
+      pedido directo tras ver el resultado con "lg": la caja se veía alta
+      pero vacía, "xl" la llena con un preview real más grande en vez de
+      espacio muerto).
 
     Vista previa EN VIVO del archivo recién elegido (14/9/2026,
     `resources/js/molecules/file-field.js`): mejora progresiva vía JS — el
@@ -43,8 +47,11 @@
 
     Slot (default): preview cuando NO hay archivo real (ícono, `atoms/logo`
     como placeholder). Con archivo real, el propio componente pinta un
-    `<img>` con la URL que el llamador ya resolvió — este componente no
-    decide cómo se sirve el archivo, eso es responsabilidad del controlador.
+    `atoms/image-modal` (15/9/2026, pedido directo) con la URL que el
+    llamador ya resolvió — este componente no decide cómo se sirve el
+    archivo, eso es responsabilidad del controlador. Clic en el preview abre
+    la imagen en grande; el placeholder del slot (sin archivo real) no es
+    clickeable, no hay nada que agrandar.
 --}}
 @props([
     'label' => null,
@@ -79,9 +86,22 @@
     <div class="ag-file-field__control {{ $error ? 'ag-file-field__control--error' : '' }}">
         <span class="ag-file-field__preview">
             @if ($previewUrl)
-                <img src="{{ $previewUrl }}" alt="" class="ag-file-field__preview-img">
+                {{-- Clic para ver el archivo real en grande (15/9/2026,
+                     pedido directo): `atoms/image-modal` reemplaza al
+                     `<img>` suelto — su propio CSS ya llena el 100% del
+                     `.ag-file-field__preview` que lo contiene, mismo
+                     resultado visual que el `<img>` de antes. --}}
+                <x-atoms.image-modal :src="$previewUrl" :label="$label" />
             @else
-                {{ $slot }}
+                {{-- Envuelto aparte (15/9/2026): `.ag-file-field__preview-placeholder`
+                     es donde vive la regla `object-fit: contain` genérica —
+                     scopeada acá adentro para que NUNCA alcance al `<img>`
+                     real de `image-modal` de arriba (antes competían por el
+                     mismo selector `.ag-file-field__preview :where(img)`, y
+                     ganaba uno u otro según el orden de `@import` de sus
+                     CSS — el archivo real terminaba con letterbox en vez de
+                     recortado). --}}
+                <span class="ag-file-field__preview-placeholder">{{ $slot }}</span>
             @endif
         </span>
 

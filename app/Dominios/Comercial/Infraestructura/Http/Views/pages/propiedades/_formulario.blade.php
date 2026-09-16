@@ -11,18 +11,27 @@
     - $clientesDisponibles (Collection<int, string>): id => razón social,
       clientes activos (ver PropiedadesController::clientesActivos()) — la vista
       no conoce el modelo Cliente.
+    - $clienteIdPreseleccionado (int|null, tarea "resumen de cliente"): solo
+      en alta, desde `?cliente_id=` (ver PropiedadesController::create()) —
+      el atajo "Nueva propiedad" del aside de `panel.clientes.edit` llega acá
+      con el cliente ya elegido. `edit()` no lo pasa (`null` por el `??` de
+      abajo).
 
     Tras un error de validación, `old()` pisa los valores del modelo/vacíos
     — mismo criterio en alta y en edición.
 
     El aside pegajoso del arquetipo (summary-card/progress-meter) se omite a
-    propósito, mismo criterio que clientes: ningún dato de solo lectura
-    justifica hoy la columna lateral.
+    propósito: ninguna métrica de solo lectura de la propiedad EN SÍ
+    justifica hoy la columna lateral (distinto del cliente, que desde la
+    tarea "resumen de cliente" sí tiene una: contratos/propiedades/campañas
+    relacionados, no de la propiedad).
 --}}
 @php
     $esEdicion = $propiedad !== null;
     $accion = $esEdicion ? route('panel.propiedades.update', $propiedad) : route('panel.propiedades.store');
-    $clienteId = old('cliente_id', $propiedad?->cliente_id ?? '');
+    // $clienteIdPreseleccionado (tarea "resumen de cliente"): solo llega en
+    // alta, desde el atajo del aside de `panel.clientes.edit`.
+    $clienteId = old('cliente_id', $propiedad?->cliente_id ?? $clienteIdPreseleccionado ?? '');
     $nombre = old('nombre', $propiedad?->nombre ?? '');
     $ubicacion = old('ubicacion', $propiedad?->ubicacion ?? '');
     $departamento = old('departamento', $propiedad?->departamento ?? '');

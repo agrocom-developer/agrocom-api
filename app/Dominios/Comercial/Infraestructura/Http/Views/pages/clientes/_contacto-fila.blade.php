@@ -10,12 +10,21 @@
     - $indice (int|string): posición dentro del array `contactos[]` — en la
       plantilla clonable viene el placeholder literal `__INDICE__`, que el JS
       reemplaza por el próximo número al clonar.
-    - $contacto (array{id?: int, tipo?: string, nombre?: string,
-      telefono?: string, email?: string, observaciones?: string}): vacío en
-      una fila nueva.
+    - $contacto (array{id?: int, tipo?: string, tipo_otro?: string|null,
+      nombre?: string, telefono?: string, email?: string,
+      observaciones?: string}): vacío en una fila nueva.
     - $tiposContacto (list<TipoContactoCliente>): heredado del scope de la
       página (Blade comparte variables con `@include`) — la vista no conoce
-      el enum, se lo entrega el controlador.
+      el enum, se lo entrega el controlador. `Otro` es siempre la última
+      opción (orden de declaración del enum).
+
+    `tipo_otro` (tarea "resumen de cliente"): campo libre que solo aplica
+    cuando `tipo = otro` — oculto por defecto (SSR, sin parpadeo) y
+    sincronizado por delegación de eventos en
+    resources/js/pages/clientes-form.js (la fila puede clonarse dinámico, no
+    alcanza con un listener fijado una sola vez al cargar la página).
+    `data-ag-contacto-tipo` en el `<select>` es el gancho que ese script usa
+    para encontrar el tipo de CADA fila sin depender del `name` indexado.
 --}}
 <div class="ag-form-section__body ag-clientes-form__contacto" data-ag-contacto-fila>
     @if (! empty($contacto['id']))
@@ -35,7 +44,24 @@
         :value="$contacto['tipo'] ?? null"
         placeholder="{{ __('comercial.clientes.contacto_tipo_placeholder') }}"
         required
+        data-ag-contacto-tipo
     />
+
+    {{-- col-6 a propósito (sin `--field--full`, pedido directo): se coloca al
+         lado del <select> de "Tipo" en la misma fila, no debajo a ancho
+         completo. --}}
+    <div
+        data-ag-contacto-tipo-otro
+        @if (($contacto['tipo'] ?? null) !== 'otro') hidden @endif
+    >
+        <x-atoms.input
+            type="text"
+            name="contactos[{{ $indice }}][tipo_otro]"
+            label="{{ __('comercial.clientes.contacto_tipo_otro') }}"
+            value="{{ $contacto['tipo_otro'] ?? '' }}"
+            help="{{ __('comercial.clientes.contacto_tipo_otro_ayuda') }}"
+        />
+    </div>
 
     <x-atoms.input
         type="text"
@@ -69,7 +95,7 @@
     </div>
 
     <div class="ag-form-section__field--full ag-clientes-form__contacto-pie">
-        <x-atoms.button type="button" variant="text" size="sm" icon="delete" data-ag-contacto-quitar>
+        <x-atoms.button type="button" variant="danger-outline" size="sm" icon="delete" data-ag-contacto-quitar>
             {{ __('comercial.clientes.contacto_quitar') }}
         </x-atoms.button>
     </div>

@@ -68,6 +68,10 @@ return [
         'badge_title' => 'Zona horaria',
     ],
 
+    'image_modal' => [
+        'ver_completa' => 'Ver imagen completa',
+    ],
+
     'action' => [
         'save' => 'Guardar',
         'cancel' => 'Cancelar',

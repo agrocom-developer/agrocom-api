@@ -15,9 +15,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * la misma operación que el cliente, y su auditoría tiene que quedar tan
  * completa como la de su padre.
  *
+ * `tipo_otro` (tarea "resumen de cliente"): detalle libre cuando `tipo =
+ * TipoContactoCliente::Otro` — ese caso no dice nada por sí solo. Se ignora
+ * para cualquier otro tipo; el formulario ya lo oculta en ese caso.
+ *
  * @property int $id
  * @property int $cliente_id
  * @property TipoContactoCliente $tipo
+ * @property string|null $tipo_otro
  * @property string $nombre
  * @property string|null $telefono
  * @property string|null $email
@@ -33,6 +38,7 @@ class ClienteContacto extends ModeloDominio
     protected $fillable = [
         'cliente_id',
         'tipo',
+        'tipo_otro',
         'nombre',
         'telefono',
         'email',

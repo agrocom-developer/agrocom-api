@@ -39,10 +39,35 @@
     background-color: var(--ag-color-surface-card);
 }
 
-.ag-file-field__preview :where(img) {
+/* Solo para el ícono/placeholder cuando NO hay archivo real (slot por
+   defecto) — a propósito NO alcanza al `<img>` de `atoms/image-modal` (ese
+   vive directo en `.ag-file-field__preview`, nunca dentro de este wrapper),
+   así nunca vuelve a competir por especificidad con `.ag-image-modal-trigger__img`
+   (image-modal.css) ni con `.ag-file-field__preview-img` de abajo. */
+.ag-file-field__preview-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+.ag-file-field__preview-placeholder :where(img) {
     width: 100%;
     height: 100%;
     object-fit: contain;
+}
+
+/* Vista previa EN VIVO del archivo recién elegido, antes de guardar
+   (resources/js/molecules/file-field.js): `cover`, no `contain` — mismo
+   criterio que `.ag-image-modal-trigger__img` (image-modal.css) para que se
+   vea igual que el preview del archivo ya guardado. Cualquier imagen entra
+   recortada y centrada en el cuadrado sin importar su proporción original;
+   el modal (mismo componente, una vez guardado) es donde se ve completa. */
+.ag-file-field__preview-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 /* size="lg" (14/9/2026): para un logo que es el dato principal de la
@@ -52,6 +77,13 @@
 .ag-file-field--lg .ag-file-field__preview {
     width: calc(var(--ag-space-8) * 2);
     height: calc(var(--ag-space-8) * 2);
+}
+
+/* size="xl" (15/9/2026, ver docblock del componente): un escalón más que
+   "lg" — el preview real ocupa el alto extra en vez de dejarlo vacío. */
+.ag-file-field--xl .ag-file-field__preview {
+    width: calc(var(--ag-space-8) * 2.75);
+    height: calc(var(--ag-space-8) * 2.75);
 }
 
 .ag-file-field__meta {

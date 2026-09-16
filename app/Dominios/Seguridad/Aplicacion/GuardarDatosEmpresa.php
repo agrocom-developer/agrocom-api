@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Seguridad\Aplicacion;
 
+use App\Dominios\Compartido\Aplicacion\OptimizarImagenSubida;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecDatosEmpresa;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -23,9 +24,16 @@ use Illuminate\Support\Facades\Storage;
  * distinto de una evidencia (ADR 0007/0009: nunca se sobrescribe ni se
  * borra), porque esto es un asset de presentación editable, no un registro
  * de auditoría de campo.
+ *
+ * El contenido pasa por {@see OptimizarImagenSubida} antes de guardarse
+ * (15/9/2026): el Form Request solo valida tipo y un tope técnico de subida,
+ * el peso final liviano lo garantiza esta conversión, no un rechazo al
+ * usuario.
  */
 final class GuardarDatosEmpresa
 {
+    public function __construct(private readonly OptimizarImagenSubida $optimizarImagen) {}
+
     /**
      * @param  array{nombre: string, rubro: string, email: ?string, telefono: ?string, direccion: ?string}  $datos
      */
@@ -52,10 +60,10 @@ final class GuardarDatosEmpresa
             Storage::disk('public')->delete($empresa->logo_path);
         }
 
-        $extension = $logo->extension() ?: 'bin';
+        ['contenido' => $contenido, 'extension' => $extension] = $this->optimizarImagen->ejecutar($logo);
         $ruta = sprintf('logos/empresa/logo-%d.%s', now()->timestamp, $extension);
 
-        Storage::disk('public')->put($ruta, (string) file_get_contents($logo->getRealPath()));
+        Storage::disk('public')->put($ruta, $contenido);
 
         $empresa->logo_path = $ruta;
     }

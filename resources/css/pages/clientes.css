@@ -29,13 +29,22 @@
     overflow: hidden;
 }
 
+/* La última columna (acciones) es un ancho fijo en rem, no `auto` (mismo
+   motivo que usuarios.css): con `auto`, el head (antes vacío, ahora con el
+   rótulo "Acciones") y la fila (2 botones con ícono + texto) son grids
+   separados que resuelven ese ancho cada uno por su cuenta y quedan
+   corridos. 14rem alcanza para "Editar" + "Eliminar" sin envolver. */
 .ag-clientes__head,
 .ag-clientes__fila {
     display: grid;
-    grid-template-columns: 3rem 2fr 1fr 1fr auto;
+    grid-template-columns: 3rem 2fr 1fr 1fr 14rem;
     gap: var(--ag-space-4);
     align-items: center;
     padding: var(--ag-space-3) var(--ag-space-4);
+}
+
+.ag-clientes__acciones-head {
+    text-align: right;
 }
 
 .ag-clientes__indice {
@@ -98,6 +107,41 @@
     }
 }
 
+/* Formulario (create/edit): "Datos del cliente" */
+
+/* El logo (`size="lg"`) es casi tan alto como dos campos normales apilados
+   (pedido directo): ocupa las dos filas del grid de `.ag-form-section__body`
+   que a su lado tienen tipo de persona + nombre comercial, en vez de una
+   fila propia — así la columna izquierda queda del alto del logo solo, y la
+   derecha con dos campos de igual alto combinado. Sin `grid-column`
+   explícito: sigue cayendo en la primera columna por orden de flujo (es el
+   primer campo de la sección). */
+.ag-clientes-form__campo-logo {
+    grid-row: span 2;
+}
+
+/* "Nombre comercial" cuando no aplica (persona física, pedido directo):
+   `visibility: hidden`, no `display: none` — reserva la celda del grid en
+   vez de liberarla, así "Razón social" no la ocupa en su lugar (ver
+   comentario en _formulario.blade.php). Quita el elemento del árbol de
+   accesibilidad y del orden de tabulación igual que `display: none`. */
+.ag-clientes-form__campo-reservado {
+    visibility: hidden;
+}
+
+/* Mobile (pedido directo 15/9/2026, encontrado en vivo): el grid de
+   `.ag-form-section__body` es fluido (auto-fit sobre `minmax`, sin
+   breakpoint propio) y ya cae solo a UNA columna bastante antes de 768px —
+   ahí "reservar la celda" no tiene sentido (no hay con quién compartir fila)
+   y solo deja un bloque vacío entre "Tipo de persona" y "Razón social". En
+   ese tramo, todo campo es col-12 igual — así que acá sí vuelve a
+   `display: none` (sin reservar nada). */
+@media (max-width: 767.98px) {
+    .ag-clientes-form__campo-reservado {
+        display: none;
+    }
+}
+
 /* Formulario (create/edit): contactos repetibles */
 
 .ag-clientes-form__contactos {
@@ -110,9 +154,14 @@
    (components/form-section.css) — la fila lo comparte por clase en vez de
    redeclararlo (ver §8 regla 12 de sistema_diseno_panel.md); acá solo lo que
    es propio de ser una fila DENTRO de una lista repetible: el separador
-   entre una fila y la siguiente. */
+   entre una fila y la siguiente. `padding-bottom` (pedido directo
+   15/9/2026, antes solo tenía `padding-top`): sin él, el botón "Quitar" de
+   una fila queda pegado a la línea divisoria de la fila siguiente — se ve
+   "pisado". Con los dos, la línea queda con el mismo respiro arriba y
+   abajo. */
 .ag-clientes-form__contacto {
     padding-top: var(--ag-space-4);
+    padding-bottom: var(--ag-space-4);
     border-top: 1px solid var(--ag-color-border-row);
 }
 
@@ -125,4 +174,79 @@
 .ag-clientes-form__contacto-pie {
     display: flex;
     justify-content: flex-end;
+}
+
+/* `.ag-clientes-form__contactos` es flex en columna (arriba): sin esto el
+   botón hereda `align-items: stretch` del contenedor y ocupa el 100% del
+   ancho (col-12) igual que la lista de filas que sí necesita ese ancho —
+   acá se lo saca solo a él. */
+.ag-clientes-form__contactos-agregar {
+    align-self: flex-start;
+}
+
+/* Layout de dos columnas del formulario (tarea "resumen de cliente"): mismo
+   patrón que `.ag-organizacion__layout/__main/__aside`
+   (resources/css/pages/organizacion.css) — acá solo aparece en edición
+   (`_formulario.blade.php`); en alta `.ag-clientes-form__main` queda sin
+   hermano (`:only-child` debajo). */
+.ag-clientes-form__layout {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--ag-space-5);
+}
+
+.ag-clientes-form__main {
+    flex: 1 1 32rem;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+/* Alta (sin aside, pedido directo 15/9/2026): nada de lo que sigue —
+   flex-basis de 32rem, el breakpoint de abajo, el min-width del aside— debe
+   afectarlo. `:only-child` es la señal (el aside solo existe en edición, ver
+   `_formulario.blade.php`), no un breakpoint: ocupa el 100% del ancho a
+   cualquier tamaño de pantalla, sin depender de que el flex-grow le alcance
+   a ganarle a un flex-basis competidor que en alta ni siquiera existe. */
+.ag-clientes-form__main:only-child {
+    flex-basis: 100%;
+}
+
+/* Columna lateral pegajosa (§6.3 regla 4 de la guía de pantalla): resumen de
+   Contratos/Propiedades/Campañas, de solo lectura — nunca campos.
+   `min-width` (pedido directo 15/9/2026): en el tramo angosto ANTES del
+   breakpoint de abajo, evita que se achique de más antes de apilarse —
+   `.ag-clientes-form__main` (flex-grow: 1, `min-width: 0`) es el que cede
+   ancho primero. */
+.ag-clientes-form__aside {
+    flex: 1 1 19rem;
+    min-width: 16rem;
+    max-width: 20rem;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+    position: sticky;
+    top: var(--ag-space-4);
+}
+
+@media (max-width: 1199.98px) {
+    .ag-clientes-form__layout {
+        /* `align-items: flex-start` de arriba es para el eje CRUZADO en
+           fila (desktop, vertical: no estirar main/aside a la misma
+           altura). Al pasar a columna el eje cruzado pasa a ser el
+           HORIZONTAL — sin este override, `flex-start` deja de significar
+           "no estirar verticalmente" y pasa a significar "no estirar el
+           ancho", y `.ag-clientes-form__main` se encoge a su contenido en
+           vez de ocupar el ancho completo (bug real, encontrado 15/9/2026
+           en vivo en `/panel/clientes/crear` — el mismo patrón sin este
+           override en organizacion.css tiene la misma falla latente). */
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .ag-clientes-form__aside {
+        max-width: none;
+        position: static;
+    }
 }

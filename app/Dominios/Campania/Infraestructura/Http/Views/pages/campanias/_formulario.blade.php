@@ -10,6 +10,11 @@
     - $clientesDisponibles (Collection<int, string>): id => razón social
       (ver CampaniasController::clientesDisponibles()) — la vista no conoce
       el modelo Cliente (cross-módulo, ADR 0003 regla 3).
+    - $clienteIdPreseleccionado (int|null, tarea "resumen de cliente"): solo
+      en alta, desde `?cliente_id=` (ver CampaniasController::create()) — el
+      atajo "Nueva campaña" del aside de `panel.clientes.edit` llega acá con
+      el cliente ya elegido. `edit()` no lo pasa (`null` por el `??` de
+      abajo).
 
     `estado` NUNCA es un campo de este formulario: lo cambia
     `panel.campanias.cambiar-estado` (otra pantalla, otra responsabilidad —
@@ -30,7 +35,9 @@
 @php
     $esEdicion = $campania !== null;
     $accion = $esEdicion ? route('panel.campanias.update', $campania) : route('panel.campanias.store');
-    $clienteId = old('cliente_id', $campania?->cliente_id ?? '');
+    // $clienteIdPreseleccionado (tarea "resumen de cliente"): solo llega en
+    // alta, desde el atajo del aside de `panel.clientes.edit`.
+    $clienteId = old('cliente_id', $campania?->cliente_id ?? $clienteIdPreseleccionado ?? '');
     $codigo = old('codigo', $campania?->codigo ?? '');
     $nombre = old('nombre', $campania?->nombre ?? '');
     $estacion = old('estacion', $campania?->estacion ?? '');

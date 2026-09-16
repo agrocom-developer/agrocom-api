@@ -63,6 +63,10 @@ final class PropiedadesController
         return view('comercial::pages.propiedades.create', [
             ...$this->autorizacion->cascara($request),
             'clientesDisponibles' => $this->clientesActivos(),
+            // Acceso directo desde el aside de `panel.clientes.edit` (tarea
+            // "resumen de cliente"): con ?cliente_id=, el formulario arranca
+            // con ese cliente ya elegido — ver _formulario.blade.php.
+            'clienteIdPreseleccionado' => $request->integer('cliente_id') ?: null,
         ]);
     }
 

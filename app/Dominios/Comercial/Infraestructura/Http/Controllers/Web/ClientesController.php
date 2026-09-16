@@ -6,15 +6,18 @@ use App\Dominios\Comercial\Aplicacion\ActualizarCliente;
 use App\Dominios\Comercial\Aplicacion\CrearCliente;
 use App\Dominios\Comercial\Aplicacion\EliminarCliente;
 use App\Dominios\Comercial\Aplicacion\ListarClientes;
+use App\Dominios\Comercial\Dominio\EstadoContrato;
 use App\Dominios\Comercial\Dominio\Excepciones\ClienteDuplicado;
 use App\Dominios\Comercial\Dominio\TipoContactoCliente;
 use App\Dominios\Comercial\Dominio\TipoPersonaCliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\ActualizarClienteRequest;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\CrearClienteRequest;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
@@ -30,6 +33,14 @@ use Illuminate\View\View;
  * `SecUser`/`session()` directos (ADR 0003 regla 2). Ninguna regla de negocio
  * acá: los casos de uso de `Aplicacion/` hacen el trabajo, incluido el
  * upsert de cliente+contactos en una sola transacción.
+ *
+ * `resumenRelacionado()` (tarea "resumen de cliente"): la ficha de edición
+ * dobla de vista, ya que no hay una pantalla de "ver cliente" propia (mismo
+ * criterio documentado en `_formulario.blade.php`) — el aside con Contratos/
+ * Propiedades/Campañas del cliente vive ahí. `store()` y `update()` (esta
+ * última, 15/9/2026) redirigen a la propia ficha de edición (no al listado)
+ * para que ese aside —con sus accesos directos a "Nuevo contrato"/"Nueva
+ * propiedad"/"Nueva campaña"— quede a un clic, sin pasar por el listado.
  *
  * `logoArchivo()` (HU-75, tarea 91): mismo criterio que
  * `OrganizacionController::logoArchivo()` (ADR 0019) — resuelve `logo_path`
@@ -82,8 +93,9 @@ final class ClientesController
         $contactosCrudos = $datos['contactos'];
 
         try {
-            $crearCliente->ejecutar(
+            $cliente = $crearCliente->ejecutar(
                 (string) $datos['razon_social'],
+                isset($datos['nombre_comercial']) ? (string) $datos['nombre_comercial'] : null,
                 isset($datos['nit']) ? (string) $datos['nit'] : null,
                 (string) $datos['tipo_persona'],
                 isset($datos['ubicacion_oficina']) ? (string) $datos['ubicacion_oficina'] : null,
@@ -97,8 +109,14 @@ final class ClientesController
                 ->withErrors(['nit' => $excepcion->getMessage()]);
         }
 
+        // Se queda en la ficha de edición del cliente recién creado (no
+        // vuelve al listado): es ahí donde vive el aside de Contratos/
+        // Propiedades/Campañas (`resumenRelacionado()`), el siguiente paso
+        // natural del flujo cliente → contrato/propiedad → lote. Crear un
+        // cliente sin nada relacionado todavía es el caso más común, así que
+        // arrancar ese flujo desde el listado sería un clic de más siempre.
         return redirect()
-            ->route('panel.clientes.index')
+            ->route('panel.clientes.edit', $cliente)
             ->with('estado', __('comercial.clientes.creado'));
     }
 
@@ -106,12 +124,15 @@ final class ClientesController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
 
+        $cliente->load(['contactos', 'contratos', 'propiedades']);
+
         return view('comercial::pages.clientes.edit', [
             ...$this->autorizacion->cascara($request),
-            'cliente' => $cliente->load('contactos'),
+            'cliente' => $cliente,
             'tiposContacto' => TipoContactoCliente::cases(),
             'tiposPersona' => TipoPersonaCliente::cases(),
             'logoArchivo' => $this->logoArchivo($cliente),
+            'resumenRelacionado' => $this->resumenRelacionado($cliente, $request),
         ]);
     }
 
@@ -128,6 +149,7 @@ final class ClientesController
             $actualizarCliente->ejecutar(
                 $cliente,
                 (string) $datos['razon_social'],
+                isset($datos['nombre_comercial']) ? (string) $datos['nombre_comercial'] : null,
                 isset($datos['nit']) ? (string) $datos['nit'] : null,
                 (string) $datos['tipo_persona'],
                 isset($datos['ubicacion_oficina']) ? (string) $datos['ubicacion_oficina'] : null,
@@ -142,8 +164,13 @@ final class ClientesController
                 ->withErrors(['nit' => $excepcion->getMessage()]);
         }
 
+        // Se queda en la propia ficha de edición (no vuelve al listado,
+        // 15/9/2026 — pedido directo): mismo criterio que `store()` — es
+        // donde vive el aside de Contratos/Propiedades/Campañas
+        // (`resumenRelacionado()`), y de ahí es más común seguir editando o
+        // encadenar una acción relacionada que volver al listado a mano.
         return redirect()
-            ->route('panel.clientes.index')
+            ->route('panel.clientes.edit', $cliente)
             ->with('estado', __('comercial.clientes.actualizado'));
     }
 
@@ -160,12 +187,13 @@ final class ClientesController
 
     /**
      * @param  array<string, mixed>  $contacto
-     * @return array{tipo: string, nombre: string, telefono: string|null, email: string|null, observaciones: string|null}
+     * @return array{tipo: string, tipo_otro: string|null, nombre: string, telefono: string|null, email: string|null, observaciones: string|null}
      */
     private function normalizarContactoNuevo(array $contacto): array
     {
         return [
             'tipo' => (string) $contacto['tipo'],
+            'tipo_otro' => $this->cadenaONull($contacto['tipo_otro'] ?? null),
             'nombre' => (string) $contacto['nombre'],
             'telefono' => $this->cadenaONull($contacto['telefono'] ?? null),
             'email' => $this->cadenaONull($contacto['email'] ?? null),
@@ -175,7 +203,7 @@ final class ClientesController
 
     /**
      * @param  array<string, mixed>  $contacto
-     * @return array{id: int|null, tipo: string, nombre: string, telefono: string|null, email: string|null, observaciones: string|null}
+     * @return array{id: int|null, tipo: string, tipo_otro: string|null, nombre: string, telefono: string|null, email: string|null, observaciones: string|null}
      */
     private function normalizarContactoExistente(array $contacto): array
     {
@@ -188,6 +216,139 @@ final class ClientesController
     private function cadenaONull(mixed $valor): ?string
     {
         return $valor === null || $valor === '' ? null : (string) $valor;
+    }
+
+    /**
+     * Resumen de Contratos/Propiedades/Campañas de un cliente, para el aside
+     * de `edit.blade.php` (tarea "resumen de cliente"): solo tiene sentido en
+     * edición — un cliente recién creado nunca puede tener ya contratos,
+     * propiedades ni campañas propias (todos nacen con un `cliente_id` de un
+     * cliente que ya existe).
+     *
+     * Gateado por los permisos de grano fino de CADA módulo contra el ROL
+     * ACTIVO (invariante 10 de CLAUDE.md), no por `comercial.cliente.*`: ver
+     * el resumen de contratos de un cliente es ver contratos, así que exige
+     * `comercial.contrato.ver`, no el permiso de cliente. Una categoría sin
+     * `.ver` NI `.crear` se omite del todo (el usuario no tiene nada que
+     * hacer ahí); con `.ver` pero sin `.crear` se puede mirar el resumen pero
+     * no aparece el atajo de alta; sin `.ver` pero con `.crear` se ofrece el
+     * atajo sin revelar conteos que el usuario no puede consultar. También
+     * evita la consulta cuando no hace falta (sin `.ver` no se cuenta nada).
+     *
+     * Campañas es lectura cross-módulo (ADR 0003 regla 3): `DB::table`
+     * directo sobre `cpn_campanias`, sin importar el modelo Eloquent
+     * `Campania` de otro módulo — mismo criterio que
+     * `ContratosController::campaniasParaFormulario()`. Contratos y
+     * Propiedades sí usan las relaciones Eloquent de `Cliente` (mismo
+     * módulo).
+     *
+     * @return list<array{
+     *     titulo: string,
+     *     icono: string,
+     *     tieneDatos: bool,
+     *     items: list<array{label: string, value: string, mono?: bool}>,
+     *     vacioTitulo: string,
+     *     vacioDetalle: string,
+     *     mostrarAccion: bool,
+     *     accion: array{label: string, href: string},
+     * }>
+     */
+    private function resumenRelacionado(Cliente $cliente, Request $request): array
+    {
+        $resumen = [];
+
+        $puedeVerContratos = $this->autorizacion->tienePermiso($request, 'comercial.contrato.ver');
+        $puedeCrearContratos = $this->autorizacion->tienePermiso($request, 'comercial.contrato.crear');
+
+        if ($puedeVerContratos || $puedeCrearContratos) {
+            $contratos = $puedeVerContratos ? $cliente->contratos : collect();
+            $totalContratos = $contratos->count();
+            $contratosVigentes = $contratos->filter(fn ($contrato) => $contrato->estado === EstadoContrato::Vigente)->count();
+
+            $resumen[] = [
+                'titulo' => __('comercial.clientes.aside_contratos_titulo'),
+                'icono' => 'description',
+                'tieneDatos' => $puedeVerContratos && $totalContratos > 0,
+                'items' => [
+                    ['label' => __('comercial.clientes.aside_contratos_total'), 'value' => (string) $totalContratos, 'mono' => true],
+                    ['label' => __('comercial.clientes.aside_contratos_vigentes'), 'value' => (string) $contratosVigentes, 'mono' => true],
+                ],
+                'vacioTitulo' => __('comercial.clientes.aside_contratos_vacio_titulo'),
+                'vacioDetalle' => __('comercial.clientes.aside_contratos_vacio_detalle'),
+                'mostrarAccion' => $puedeCrearContratos,
+                'accion' => [
+                    'label' => __('comercial.clientes.aside_contratos_accion'),
+                    'href' => route('panel.contratos.create', ['cliente_id' => $cliente->id]),
+                ],
+            ];
+        }
+
+        $puedeVerPropiedades = $this->autorizacion->tienePermiso($request, 'comercial.propiedad.ver');
+        $puedeCrearPropiedades = $this->autorizacion->tienePermiso($request, 'comercial.propiedad.crear');
+
+        if ($puedeVerPropiedades || $puedeCrearPropiedades) {
+            $propiedades = $puedeVerPropiedades ? $cliente->propiedades : collect();
+            $totalPropiedades = $propiedades->count();
+            $totalLotes = $totalPropiedades > 0
+                ? Lote::whereIn('propiedad_id', $propiedades->pluck('id'))->count()
+                : 0;
+
+            $resumen[] = [
+                'titulo' => __('comercial.clientes.aside_propiedades_titulo'),
+                'icono' => 'domain',
+                'tieneDatos' => $puedeVerPropiedades && $totalPropiedades > 0,
+                'items' => [
+                    ['label' => __('comercial.clientes.aside_propiedades_total'), 'value' => (string) $totalPropiedades, 'mono' => true],
+                    ['label' => __('comercial.clientes.aside_propiedades_lotes'), 'value' => (string) $totalLotes, 'mono' => true],
+                ],
+                'vacioTitulo' => __('comercial.clientes.aside_propiedades_vacio_titulo'),
+                'vacioDetalle' => __('comercial.clientes.aside_propiedades_vacio_detalle'),
+                'mostrarAccion' => $puedeCrearPropiedades,
+                'accion' => [
+                    'label' => __('comercial.clientes.aside_propiedades_accion'),
+                    'href' => route('panel.propiedades.create', ['cliente_id' => $cliente->id]),
+                ],
+            ];
+        }
+
+        $puedeVerCampanias = $this->autorizacion->tienePermiso($request, 'campania.campania.ver');
+        $puedeCrearCampanias = $this->autorizacion->tienePermiso($request, 'campania.campania.crear');
+
+        if ($puedeVerCampanias || $puedeCrearCampanias) {
+            $totalCampanias = 0;
+            $campaniasActivas = 0;
+
+            if ($puedeVerCampanias) {
+                $totalCampanias = DB::table('cpn_campanias')
+                    ->where('cliente_id', $cliente->id)
+                    ->whereNull('deleted_at')
+                    ->count();
+                $campaniasActivas = DB::table('cpn_campanias')
+                    ->where('cliente_id', $cliente->id)
+                    ->whereNull('deleted_at')
+                    ->where('estado', '<>', 'cerrada')
+                    ->count();
+            }
+
+            $resumen[] = [
+                'titulo' => __('comercial.clientes.aside_campanias_titulo'),
+                'icono' => 'calendar_month',
+                'tieneDatos' => $puedeVerCampanias && $totalCampanias > 0,
+                'items' => [
+                    ['label' => __('comercial.clientes.aside_campanias_total'), 'value' => (string) $totalCampanias, 'mono' => true],
+                    ['label' => __('comercial.clientes.aside_campanias_activas'), 'value' => (string) $campaniasActivas, 'mono' => true],
+                ],
+                'vacioTitulo' => __('comercial.clientes.aside_campanias_vacio_titulo'),
+                'vacioDetalle' => __('comercial.clientes.aside_campanias_vacio_detalle'),
+                'mostrarAccion' => $puedeCrearCampanias,
+                'accion' => [
+                    'label' => __('comercial.clientes.aside_campanias_accion'),
+                    'href' => route('panel.campanias.create', ['cliente_id' => $cliente->id]),
+                ],
+            ];
+        }
+
+        return $resumen;
     }
 
     /**

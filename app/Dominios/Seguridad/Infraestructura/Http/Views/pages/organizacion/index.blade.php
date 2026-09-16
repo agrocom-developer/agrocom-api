@@ -107,7 +107,7 @@
                                         class="ag-form-section__field--full"
                                         name="logo"
                                         size="lg"
-                                        accept=".png,.svg"
+                                        accept=".png,.svg,.jpg,.jpeg,.webp,.gif"
                                         remove-name="logo_eliminar"
                                         :label="__('seguridad.organizacion.campo_logo')"
                                         :file-name="$logoArchivo['nombre'] ?? null"

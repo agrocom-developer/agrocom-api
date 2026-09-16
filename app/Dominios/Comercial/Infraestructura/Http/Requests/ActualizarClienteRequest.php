@@ -30,10 +30,11 @@ final class ActualizarClienteRequest extends FormRequest
 
         return [
             'razon_social' => ['required', 'string', 'max:200'],
+            'nombre_comercial' => ['nullable', 'string', 'max:200'],
             'nit' => ['nullable', 'string', 'max:20'],
             'tipo_persona' => ['required', Rule::enum(TipoPersonaCliente::class)],
             'ubicacion_oficina' => ['nullable', 'string', 'max:255'],
-            'logo' => ['nullable', 'file', 'mimes:png,svg', 'max:2048'],
+            'logo' => ['nullable', 'file', 'mimes:png,svg,jpg,jpeg,webp,gif', 'max:20480'],
             'logo_eliminar' => ['nullable', 'boolean'],
             'contactos' => ['required', 'array', 'min:1'],
             'contactos.*.id' => [
@@ -44,6 +45,7 @@ final class ActualizarClienteRequest extends FormRequest
                     ->whereNull('deleted_at'),
             ],
             'contactos.*.tipo' => ['required', Rule::enum(TipoContactoCliente::class)],
+            'contactos.*.tipo_otro' => ['nullable', 'string', 'max:100', 'required_if:contactos.*.tipo,otro'],
             'contactos.*.nombre' => ['required', 'string', 'max:150'],
             'contactos.*.telefono' => ['nullable', 'string', 'max:30'],
             'contactos.*.email' => ['nullable', 'email', 'max:150'],
@@ -59,10 +61,12 @@ final class ActualizarClienteRequest extends FormRequest
             'tipo_persona.enum' => 'El tipo de persona no es válido.',
             'logo.mimes' => __('comercial.clientes.error_logo_tipo'),
             'logo.max' => __('comercial.clientes.error_logo_tamano'),
+            'logo.uploaded' => __('comercial.clientes.error_logo_subida'),
             'contactos.required' => 'Agregá al menos un contacto.',
             'contactos.min' => 'Agregá al menos un contacto.',
             'contactos.*.id.exists' => 'Uno de los contactos enviados no pertenece a este cliente.',
             'contactos.*.tipo.enum' => 'El tipo de contacto no es válido.',
+            'contactos.*.tipo_otro.required_if' => __('comercial.clientes.error_contacto_tipo_otro'),
         ];
     }
 }

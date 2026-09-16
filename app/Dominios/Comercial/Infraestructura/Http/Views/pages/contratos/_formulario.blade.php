@@ -20,6 +20,10 @@
       propio `<select>` de campaña (tarea 76: `x-atoms.select` arma un
       combobox encima del nativo y no soporta atributos por `<option>`, así
       que el mapeo no puede ir en cada opción como antes).
+    - $clienteIdPreseleccionado (int|null, tarea "resumen de cliente"): solo
+      en alta, desde `?cliente_id=` (ver ContratosController::create()) — el
+      atajo "Nuevo contrato" del aside de `panel.clientes.edit` llega acá con
+      el cliente ya elegido. `edit()` no lo pasa (`null` por el `??` de abajo).
 
     `estado` y `monto_total` NUNCA son campos de este formulario: el primero
     lo cambia `panel.contratos.cambiar-estado` (otra pantalla, otra
@@ -44,7 +48,10 @@
     $esEdicion = $contrato !== null;
     $accion = $esEdicion ? route('panel.contratos.update', $contrato) : route('panel.contratos.store');
     $valor = fn (string $campo, mixed $porDefecto = '') => old($campo, $contrato?->{$campo} ?? $porDefecto);
-    $clienteId = old('cliente_id', $contrato?->cliente_id ?? '');
+    // $clienteIdPreseleccionado (tarea "resumen de cliente"): solo llega en
+    // alta, desde el atajo del aside de `panel.clientes.edit` — `?? null`
+    // porque `edit()` no lo pasa (no aplica editando un contrato existente).
+    $clienteId = old('cliente_id', $contrato?->cliente_id ?? $clienteIdPreseleccionado ?? '');
     $campaniaId = old('campania_id', $contrato?->campania_id ?? '');
     $fechaInicio = old('fecha_inicio', $contrato?->fecha_inicio?->toDateString() ?? '');
     $fechaFin = old('fecha_fin', $contrato?->fecha_fin?->toDateString() ?? '');
