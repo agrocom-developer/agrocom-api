@@ -77,7 +77,7 @@ final class PersonasController
 
         $datos = $request->validated();
 
-        $crearPersona->ejecutar(
+        $persona = $crearPersona->ejecutar(
             (string) $datos['nombre'],
             RolOperativoPersona::from((string) $datos['rol']),
             isset($datos['base_id']) && $datos['base_id'] !== '' ? (int) $datos['base_id'] : null,
@@ -85,8 +85,9 @@ final class PersonasController
             (bool) ($datos['activo'] ?? false),
         );
 
+        // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
         return redirect()
-            ->route('panel.personas.index')
+            ->route('panel.personas.edit', $persona)
             ->with('estado', __('personal.personas.creado'));
     }
 
@@ -117,8 +118,9 @@ final class PersonasController
             (bool) ($datos['activo'] ?? false),
         );
 
+        // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
         return redirect()
-            ->route('panel.personas.index')
+            ->route('panel.personas.edit', $persona)
             ->with('estado', __('personal.personas.actualizado'));
     }
 

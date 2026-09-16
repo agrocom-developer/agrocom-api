@@ -65,15 +65,16 @@ final class BasesController
 
         $datos = $request->validated();
 
-        $crearBase->ejecutar(
+        $base = $crearBase->ejecutar(
             (string) $datos['nombre'],
             $this->cadenaONull($datos['ubicacion'] ?? null),
             $this->cadenaONull($datos['latitud'] ?? null),
             $this->cadenaONull($datos['longitud'] ?? null),
         );
 
+        // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
         return redirect()
-            ->route('panel.bases.index')
+            ->route('panel.bases.edit', $base)
             ->with('estado', __('personal.bases.creado'));
     }
 
@@ -101,8 +102,9 @@ final class BasesController
             $this->cadenaONull($datos['longitud'] ?? null),
         );
 
+        // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
         return redirect()
-            ->route('panel.bases.index')
+            ->route('panel.bases.edit', $base)
             ->with('estado', __('personal.bases.actualizado'));
     }
 

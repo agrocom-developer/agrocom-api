@@ -2,42 +2,51 @@
 
 namespace App\Dominios\Comercial\Aplicacion;
 
+use App\Dominios\Comercial\Aplicacion\Propiedad\ValidadorUbicacionGeografica;
 use App\Dominios\Comercial\Dominio\Excepciones\PropiedadDuplicada;
+use App\Dominios\Comercial\Dominio\Excepciones\UbicacionGeograficaInconsistente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use Illuminate\Database\QueryException;
 
 /**
- * Edición de una propiedad (ADR 0020). Mismas reglas que `CrearPropiedad`.
+ * Edición de los datos principales de una propiedad (ADR 0020; ubicación
+ * estructurada — adenda 16/9/2026 a ADR 0018 punto 1). Mismas reglas que
+ * `CrearPropiedad`.
+ *
+ * NO toca latitud/longitud/geometría — eso es `ActualizarUbicacionMapaPropiedad`,
+ * pantalla aparte (ver docblock de `CrearPropiedad`).
  */
 final class ActualizarPropiedad
 {
     /**
-     * @param  array<string, mixed>|null  $geometria
-     *
      * @throws PropiedadDuplicada si el nombre ya pertenece a otra propiedad
      *                            activa del mismo cliente.
+     * @throws UbicacionGeograficaInconsistente
+     *                                          si la provincia no pertenece al
+     *                                          departamento, o el municipio no pertenece
+     *                                          a la provincia.
      */
     public function ejecutar(
         Propiedad $propiedad,
         int $clienteId,
         string $nombre,
-        ?string $ubicacion,
-        ?string $departamento,
-        ?string $municipio,
+        ?string $hectareas,
+        ?int $departamentoId,
+        ?int $provinciaId,
+        ?int $municipioId,
         ?string $localidad,
-        ?string $latitud,
-        ?string $longitud,
-        ?array $geometria = null,
+        ?string $color,
     ): Propiedad {
+        ValidadorUbicacionGeografica::validar($departamentoId, $provinciaId, $municipioId);
+
         $propiedad->cliente_id = $clienteId;
         $propiedad->nombre = $nombre;
-        $propiedad->ubicacion = $ubicacion;
-        $propiedad->departamento = $departamento;
-        $propiedad->municipio = $municipio;
+        $propiedad->hectareas = $hectareas;
+        $propiedad->departamento_id = $departamentoId;
+        $propiedad->provincia_id = $provinciaId;
+        $propiedad->municipio_id = $municipioId;
         $propiedad->localidad = $localidad;
-        $propiedad->latitud = $latitud;
-        $propiedad->longitud = $longitud;
-        $propiedad->geometria = $geometria;
+        $propiedad->color = $color;
 
         try {
             $propiedad->save();

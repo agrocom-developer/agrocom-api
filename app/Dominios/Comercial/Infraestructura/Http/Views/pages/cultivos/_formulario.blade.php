@@ -39,6 +39,12 @@
         </x-slot:actions>
     </x-organisms.page-header>
 
+    @if (session('estado'))
+        <x-molecules.alert-strip variant="success" icon="check_circle">
+            {{ session('estado') }}
+        </x-molecules.alert-strip>
+    @endif
+
     <x-molecules.form-section
         :title="__('comercial.cultivos.seccion_datos')"
         :count="__('comercial.cultivos.campos_contador', ['cantidad' => 2])"

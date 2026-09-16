@@ -67,7 +67,7 @@ final class CultivosController
         $datos = $request->validated();
 
         try {
-            $crearCultivo->ejecutar(
+            $cultivo = $crearCultivo->ejecutar(
                 (string) $datos['nombre'],
                 (bool) ($datos['activo'] ?? true),
             );
@@ -78,8 +78,9 @@ final class CultivosController
                 ->withErrors(['nombre' => $excepcion->getMessage()]);
         }
 
+        // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
         return redirect()
-            ->route('panel.cultivos.index')
+            ->route('panel.cultivos.edit', $cultivo)
             ->with('estado', __('comercial.cultivos.creado'));
     }
 
@@ -112,8 +113,9 @@ final class CultivosController
                 ->withErrors(['nombre' => $excepcion->getMessage()]);
         }
 
+        // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
         return redirect()
-            ->route('panel.cultivos.index')
+            ->route('panel.cultivos.edit', $cultivo)
             ->with('estado', __('comercial.cultivos.actualizado'));
     }
 

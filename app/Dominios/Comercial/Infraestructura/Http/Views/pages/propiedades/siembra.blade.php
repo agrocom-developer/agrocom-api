@@ -24,7 +24,7 @@
     se pisan entre sí (GuardarSiembraCampania siempre filtra por
     campania_id).
 --}}
-<x-templates.panel-shell :title="__('comercial.siembra.titulo', ['campo' => $propiedad->nombre])" :tema="$tema">
+<x-templates.panel-shell :title="__('comercial.siembra.titulo', ['propiedad' => $propiedad->nombre])" :tema="$tema">
     <x-templates.panel-layout
         :menu="$menu"
         :roles="$roles"
@@ -35,7 +35,7 @@
         :notifications="$notifications"
         :menu-badges="$menuBadges"
         :version="$version"
-        :vista-actual="__('comercial.siembra.titulo', ['campo' => $propiedad->nombre])"
+        :vista-actual="__('comercial.siembra.titulo', ['propiedad' => $propiedad->nombre])"
     >
         <div class="ag-siembra">
             <x-organisms.page-header
@@ -100,11 +100,11 @@
 
                     <x-molecules.form-section
                         :title="__('comercial.siembra.seccion_lotes')"
-                        :count="__('comercial.siembra.lotes_contador', ['cantidad' => $campo->lotes->count()])"
+                        :count="__('comercial.siembra.lotes_contador', ['cantidad' => $propiedad->lotes->count()])"
                     >
                         <div class="ag-form-section__field--full ag-siembra-form__lotes">
-                            @foreach ($campo->lotes as $indice => $lote)
-                                @include('comercial::pages.campos._siembra-fila', [
+                            @foreach ($propiedad->lotes as $indice => $lote)
+                                @include('comercial::pages.propiedades._siembra-fila', [
                                     'indice' => $indice,
                                     'lote' => $lote,
                                     'siembra' => $siembraPorLote->get($lote->id),
@@ -116,7 +116,7 @@
 
                     <x-organisms.form-actions-bar :status="__('comercial.siembra.estado_form')">
                         <x-slot:actions>
-                            <x-atoms.button href="{{ route('panel.campos.index') }}" variant="outline">
+                            <x-atoms.button href="{{ route('panel.propiedades.index') }}" variant="outline">
                                 {{ __('ui.action.cancel') }}
                             </x-atoms.button>
                             <x-atoms.button type="submit" variant="primary">

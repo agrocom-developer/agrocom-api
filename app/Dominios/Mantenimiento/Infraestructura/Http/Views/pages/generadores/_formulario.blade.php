@@ -49,6 +49,12 @@
         </x-slot:actions>
     </x-organisms.page-header>
 
+    @if (session('estado'))
+        <x-molecules.alert-strip variant="success" icon="check_circle">
+            {{ session('estado') }}
+        </x-molecules.alert-strip>
+    @endif
+
     <x-molecules.form-section
         :title="__('mantenimiento.generadores.seccion_datos')"
         :count="__('mantenimiento.generadores.campos_contador', ['cantidad' => 6])"

@@ -15,7 +15,8 @@ use Illuminate\Database\Seeder;
  * demás seeders de catálogo llegan con sus módulos: roles y permisos sec_*
  * (Seguridad, HU-01), modelos de dron (Recursos), productos y formulaciones
  * (Mezcla), rubros y subrubros (Finanzas), enums operativos y parámetros de
- * negocio.
+ * negocio, y el catálogo geográfico de Bolivia (Comercial, adenda 16/9/2026
+ * a ADR 0018) sembrado por `GeografiaBoliviaSeeder`.
  */
 class CatalogoSeeder extends Seeder
 {
@@ -34,5 +35,9 @@ class CatalogoSeeder extends Seeder
         // HU-79 (tarea 110): categorías de insumo (sólido/líquido) de la
         // orden de aplicación — sin dependencia de los anteriores.
         $this->call(OperacionesCategoriasInsumoSeeder::class);
+        // Adenda 16/9/2026 a ADR 0018: catálogo geográfico de Bolivia
+        // (departamento → provincia → municipio) para com_propiedades — sin
+        // dependencia de los anteriores.
+        $this->call(GeografiaBoliviaSeeder::class);
     }
 }

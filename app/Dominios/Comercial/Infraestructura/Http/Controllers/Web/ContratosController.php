@@ -135,7 +135,7 @@ final class ContratosController
         unset($datos['lotes']);
 
         try {
-            $crearContrato->ejecutar(
+            $contrato = $crearContrato->ejecutar(
                 $this->normalizarDatosContrato($datos),
                 $lotes,
             );
@@ -151,8 +151,9 @@ final class ContratosController
                 ->withErrors(['lotes' => $excepcion->getMessage()]);
         }
 
+        // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
         return redirect()
-            ->route('panel.contratos.index')
+            ->route('panel.contratos.edit', $contrato)
             ->with('estado', __('comercial.contratos.creado'));
     }
 
@@ -206,8 +207,9 @@ final class ContratosController
                 ->withErrors(['lotes' => $excepcion->getMessage()]);
         }
 
+        // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
         return redirect()
-            ->route('panel.contratos.index')
+            ->route('panel.contratos.edit', $contrato)
             ->with('estado', __('comercial.contratos.actualizado'));
     }
 

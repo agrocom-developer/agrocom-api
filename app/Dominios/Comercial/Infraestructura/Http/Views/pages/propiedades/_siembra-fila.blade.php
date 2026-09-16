@@ -1,11 +1,11 @@
 {{--
     Partial: fila de siembra de un lote (HU-48, tarea 71, etapa 3) — una fila
-    FIJA por cada lote del campo (a diferencia de `_lote-fila.blade.php`, acá
+    FIJA por cada lote de la propiedad (a diferencia de `_lote-fila.blade.php`, acá
     no se agregan ni quitan filas: los lotes ya existen, esto solo carga qué
     se sembró en cada uno para la campaña elegida).
 
     Espera:
-    - $indice (int): posición dentro de $campo->lotes, para el name
+    - $indice (int): posición dentro de $propiedad->lotes, para el name
       `lotes[{indice}][...]`.
     - $lote (Lote): el lote de esta fila.
     - $siembra (LoteCampania|null): su siembra en la campaña que se está
@@ -15,6 +15,17 @@
     `cultivo_id` en blanco es una fila válida (lote sin sembrar esta
     campaña): por eso no lleva `required`, a diferencia del resto del
     formulario del panel.
+--}}
+{{--
+    16/9/2026: los `error="{{ $errors->first(...) }}"` de abajo usan
+    concatenación (`$prefijo.'.campo'`), nunca `"{$prefijo}.campo"` — una
+    cadena de PHP con comillas dobles DENTRO de un atributo HTML también
+    entre comillas dobles rompe el compilador de component tags de Blade
+    (confunde dónde termina el atributo) y deja `<x-atoms.select>` sin
+    compilar, como texto literal. Mismo criterio que ya usaba
+    `_lote-fila.blade.php` con `$erroresPrefijo.'.codigo'` — acá no se había
+    seguido, y el bug real (encontrado recién al probar la pantalla en vivo)
+    era exactamente este.
 --}}
 @php
     $prefijo = "lotes[{$indice}]";
@@ -41,7 +52,7 @@
         :options="$cultivosDisponibles"
         :value="$cultivoId"
         placeholder="{{ __('comercial.siembra.campo_cultivo_placeholder') }}"
-        error="{{ $errors->first(\"{$prefijo}.cultivo_id\") }}"
+        error="{{ $errors->first($prefijo.'.cultivo_id') }}"
     />
 
     <x-atoms.input
@@ -53,7 +64,7 @@
         min="0.01"
         max="{{ $lote->hectareas }}"
         step="0.01"
-        error="{{ $errors->first(\"{$prefijo}.hectareas_sembradas\") }}"
+        error="{{ $errors->first($prefijo.'.hectareas_sembradas') }}"
     />
 
     <x-atoms.date
@@ -61,7 +72,7 @@
         id="{{ $idBase }}-fecha-siembra"
         label="{{ __('comercial.siembra.campo_fecha_siembra') }}"
         value="{{ $fechaSiembra }}"
-        error="{{ $errors->first(\"{$prefijo}.fecha_siembra\") }}"
+        error="{{ $errors->first($prefijo.'.fecha_siembra') }}"
     />
 
     <x-atoms.date
@@ -69,6 +80,6 @@
         id="{{ $idBase }}-fecha-cosecha"
         label="{{ __('comercial.siembra.campo_fecha_cosecha_estimada') }}"
         value="{{ $fechaCosechaEstimada }}"
-        error="{{ $errors->first(\"{$prefijo}.fecha_cosecha_estimada\") }}"
+        error="{{ $errors->first($prefijo.'.fecha_cosecha_estimada') }}"
     />
 </div>

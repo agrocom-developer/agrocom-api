@@ -2,14 +2,25 @@
 
 namespace App\Dominios\Comercial\Infraestructura\Http\Requests;
 
-use Closure;
+use App\Dominios\Comercial\Dominio\ColorPropiedad;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 /**
- * `POST /panel/propiedades` (ADR 0018). La autorización (permiso
+ * `POST /panel/propiedades` (ADR 0018; ubicación estructurada — adenda
+ * 16/9/2026 a ADR 0018 punto 1). La autorización (permiso
  * `comercial.propiedad.crear`) se verifica en el controlador, contra el rol
  * activo — no acá, mismo criterio que el resto del panel.
+ *
+ * `departamento_id`/`provincia_id`/`municipio_id` solo validan `exists`
+ * contra el catálogo activo acá — la consistencia de la CADENA (la
+ * provincia pertenece al departamento elegido, el municipio a la provincia)
+ * es una guarda de negocio y vive en el caso de uso
+ * (`ValidadorUbicacionGeografica`), mismo criterio que `CampaniaDeOtroCliente`
+ * de ADR 0015.
+ *
+ * Latitud/longitud/geometría NO se validan acá: se movieron a
+ * `GuardarUbicacionMapaPropiedadRequest`, pantalla aparte.
  *
  * El nombre de la propiedad no lleva regla `unique` a propósito: el índice
  * único real es PARCIAL (`com_propiedades_nombre_unico`, solo entre filas
@@ -30,13 +41,24 @@ final class CrearPropiedadRequest extends FormRequest
                 Rule::exists('com_clientes', 'id')->whereNull('deleted_at'),
             ],
             'nombre' => ['required', 'string', 'max:150'],
-            'ubicacion' => ['nullable', 'string', 'max:255'],
-            'departamento' => ['nullable', 'string', 'max:100'],
-            'municipio' => ['nullable', 'string', 'max:100'],
+            'hectareas' => ['nullable', 'numeric', 'gt:0'],
+            'departamento_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('com_departamentos', 'id')->whereNull('deleted_at'),
+            ],
+            'provincia_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('com_provincias', 'id')->whereNull('deleted_at'),
+            ],
+            'municipio_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('com_municipios', 'id')->whereNull('deleted_at'),
+            ],
             'localidad' => ['nullable', 'string', 'max:150'],
-            'latitud' => ['nullable', 'required_with:longitud', 'numeric', 'between:-90,90'],
-            'longitud' => ['nullable', 'required_with:latitud', 'numeric', 'between:-180,180'],
-            'geometria' => ['nullable', 'string', $this->reglaGeometriaValida()],
+            'color' => ['nullable', 'string', Rule::in(ColorPropiedad::valores())],
         ];
     }
 
@@ -46,27 +68,11 @@ final class CrearPropiedadRequest extends FormRequest
         return [
             'cliente_id.required' => 'Seleccioná un cliente.',
             'cliente_id.exists' => 'El cliente seleccionado no es válido.',
-            'latitud.required_with' => __('comercial.propiedades.error_coordenada_incompleta'),
-            'longitud.required_with' => __('comercial.propiedades.error_coordenada_incompleta'),
+            'hectareas.gt' => 'Las hectáreas tienen que ser mayores a cero.',
+            'departamento_id.exists' => 'El departamento seleccionado no es válido.',
+            'provincia_id.exists' => 'La provincia seleccionada no es válida.',
+            'municipio_id.exists' => 'El municipio seleccionado no es válido.',
+            'color.in' => 'Elegí un color de la paleta disponible.',
         ];
-    }
-
-    private function reglaGeometriaValida(): Closure
-    {
-        return function (string $atributo, mixed $valor, Closure $falla): void {
-            if (! is_string($valor) || $valor === '') {
-                return;
-            }
-
-            $decodificado = json_decode($valor, true);
-
-            $esMultiPolygonMinimo = is_array($decodificado)
-                && ($decodificado['type'] ?? null) === 'MultiPolygon'
-                && is_array($decodificado['coordinates'] ?? null);
-
-            if (! $esMultiPolygonMinimo) {
-                $falla('comercial.propiedades.error_geometria_invalida')->translate();
-            }
-        };
     }
 }

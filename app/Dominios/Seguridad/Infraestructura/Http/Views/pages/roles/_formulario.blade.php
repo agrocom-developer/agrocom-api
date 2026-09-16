@@ -53,6 +53,12 @@
         </x-slot:actions>
     </x-organisms.page-header>
 
+    @if (session('estado'))
+        <x-molecules.alert-strip variant="success" icon="check_circle">
+            {{ session('estado') }}
+        </x-molecules.alert-strip>
+    @endif
+
     @if ($errors->has('estado'))
         <x-molecules.alert-strip variant="danger" icon="error" class="ag-rol-form__aviso">
             {{ $errors->first('estado') }}

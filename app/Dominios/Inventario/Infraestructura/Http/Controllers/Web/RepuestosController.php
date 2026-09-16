@@ -69,7 +69,7 @@ final class RepuestosController
         $datos = $request->validated();
 
         try {
-            $crearRepuesto->ejecutar(
+            $repuesto = $crearRepuesto->ejecutar(
                 (string) $datos['codigo'],
                 (string) $datos['descripcion'],
                 (string) $datos['unidad'],
@@ -82,8 +82,9 @@ final class RepuestosController
                 ->withErrors(['codigo' => $excepcion->getMessage()]);
         }
 
+        // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
         return redirect()
-            ->route('panel.repuestos.index')
+            ->route('panel.repuestos.edit', $repuesto)
             ->with('estado', __('inventario.repuestos.creado'));
     }
 
@@ -118,8 +119,9 @@ final class RepuestosController
                 ->withErrors(['codigo' => $excepcion->getMessage()]);
         }
 
+        // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
         return redirect()
-            ->route('panel.repuestos.index')
+            ->route('panel.repuestos.edit', $repuesto)
             ->with('estado', __('inventario.repuestos.actualizado'));
     }
 

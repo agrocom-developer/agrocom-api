@@ -70,14 +70,15 @@ final class PlanesMantenimientoController
 
         $datos = $request->validated();
 
-        $crearPlan->ejecutar(
+        $plan = $crearPlan->ejecutar(
             (string) $datos['modelo'],
             (string) $datos['tarea'],
             (string) $datos['horas_umbral'],
         );
 
+        // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
         return redirect()
-            ->route('panel.planes-mantenimiento.index')
+            ->route('panel.planes-mantenimiento.edit', $plan)
             ->with('estado', __('mantenimiento.planes.creado'));
     }
 
@@ -104,8 +105,9 @@ final class PlanesMantenimientoController
             (string) $datos['horas_umbral'],
         );
 
+        // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
         return redirect()
-            ->route('panel.planes-mantenimiento.index')
+            ->route('panel.planes-mantenimiento.edit', $plan)
             ->with('estado', __('mantenimiento.planes.actualizado'));
     }
 

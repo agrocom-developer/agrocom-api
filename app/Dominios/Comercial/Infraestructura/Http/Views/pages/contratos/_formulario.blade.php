@@ -122,6 +122,12 @@
         </x-slot:actions>
     </x-organisms.page-header>
 
+    @if (session('estado'))
+        <x-molecules.alert-strip variant="success" icon="check_circle">
+            {{ session('estado') }}
+        </x-molecules.alert-strip>
+    @endif
+
     <div class="ag-contratos-form__layout">
         <div class="ag-contratos-form__main">
     {{-- Sección 1: Datos del contrato (8 campos, sin tocar) --}}

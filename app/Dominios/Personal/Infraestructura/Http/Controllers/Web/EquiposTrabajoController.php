@@ -109,7 +109,7 @@ final class EquiposTrabajoController
         $datos = $request->validated();
 
         try {
-            $crearEquipoTrabajo->ejecutar(
+            $equipoTrabajo = $crearEquipoTrabajo->ejecutar(
                 (string) $datos['codigo'],
                 $this->cadenaONull($datos['nombre'] ?? null),
                 (int) $datos['base_id'],
@@ -124,8 +124,9 @@ final class EquiposTrabajoController
                 ->withErrors(['codigo' => $excepcion->getMessage()]);
         }
 
+        // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
         return redirect()
-            ->route('panel.equipos-trabajo.index')
+            ->route('panel.equipos-trabajo.edit', $equipoTrabajo)
             ->with('estado', __('personal.equipos_trabajo.creado'));
     }
 
@@ -164,8 +165,9 @@ final class EquiposTrabajoController
                 ->withErrors(['codigo' => $excepcion->getMessage()]);
         }
 
+        // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
         return redirect()
-            ->route('panel.equipos-trabajo.index')
+            ->route('panel.equipos-trabajo.edit', $equipoTrabajo)
             ->with('estado', __('personal.equipos_trabajo.actualizado'));
     }
 

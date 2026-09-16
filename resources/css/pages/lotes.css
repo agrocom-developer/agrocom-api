@@ -67,6 +67,25 @@
     font-family: var(--ag-font-family-mono);
 }
 
+.ag-lotes__propiedad {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+}
+
+/* Color heredado de la propiedad (adenda 16/9/2026 a ADR 0018 punto 1):
+   mismo chip que `.ag-propiedades__color` — dato de negocio (HEX de la
+   paleta curada elegido en la propiedad), no token de theming, ver el
+   comentario completo en resources/css/pages/propiedades.css. */
+.ag-lotes__color {
+    display: inline-block;
+    width: var(--ag-space-3);
+    height: var(--ag-space-3);
+    border-radius: var(--ag-radius-full, 50%);
+    border: 1px solid var(--ag-color-border-card);
+    flex-shrink: 0;
+}
+
 .ag-lotes__hectareas {
     font-family: var(--ag-font-family-mono);
 }

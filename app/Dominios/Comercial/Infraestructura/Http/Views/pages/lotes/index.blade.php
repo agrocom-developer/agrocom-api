@@ -144,7 +144,12 @@
                                 {{ ($lotes->currentPage() - 1) * $lotes->perPage() + $loop->iteration }}
                             </span>
                             <span role="cell" class="ag-lotes__codigo">{{ $lote->codigo }}</span>
-                            <span role="cell">{{ $lote->propiedad->nombre }}</span>
+                            <span role="cell" class="ag-lotes__propiedad">
+                                @if ($lote->propiedad->color)
+                                    <span class="ag-lotes__color" style="background-color: {{ $lote->propiedad->color }}" aria-hidden="true"></span>
+                                @endif
+                                {{ $lote->propiedad->nombre }}
+                            </span>
                             <span role="cell">{{ $lote->propiedad->cliente->razon_social }}</span>
                             <span role="cell" class="ag-lotes__hectareas">{{ __('comercial.lotes.hectareas_valor', ['cantidad' => number_format((float) $lote->hectareas, 2, ',', '.')]) }}</span>
 

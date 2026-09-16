@@ -329,6 +329,30 @@ Alta y edición comparten el MISMO partial y la misma anatomía de §6.3 — dif
 
 No confundir con la columna lateral del canvas "Registro de la compañía" (regla 4 de arriba: progreso de completitud, resumen del plan). Esa es de METADATOS de la propia entidad; el resumen relacionado es de OTRAS entidades que cuelgan de esta. Una pantalla usa la que le corresponda según lo que la entidad realmente necesita mostrar — decidilo por eso, no por copiar la que ya existe en otra pantalla.
 
+### 6.3.2. Tras guardar, el formulario se queda en `edit()` — nunca vuelve a `index()`
+
+Corrección de convención (16/9/2026): hasta ahora esto NO estaba escrito en ningún lado y cada controlador lo resolvía por su cuenta — `ClientesController`/`CampaniasController` ya volvían siempre a `edit()`, pero 17 controladores más volvían a `index()` en `store()`/`update()` (dos, `PropiedadesController`/`LotesController`, solo a medias: a `edit()` nada más en el flujo de alta rápida `?volver_a=`). Regla fija a partir de ahora, para toda pantalla con arquetipo Formulario (§6.3) que tenga `edit()`:
+
+```php
+// store(): igual que update(), reemplazando `route('panel.x.index')`
+return redirect()
+    ->route('panel.x.edit', $modelo)
+    ->with('estado', __('modulo.x.creado'));
+```
+
+- **Por qué**: crear o editar un registro es CONTINUAR trabajando sobre ÉL — el siguiente paso natural casi siempre es seguir completando ese mismo registro (agregar un lote, revisar el resumen relacionado del §6.3.1, corregir algo), no volver a buscarlo en el listado. Los controladores sin ningún `edit()` (altas simples tipo bitácora — Gastos, Anticipos, Combustible, Facturas, Pausas, Stock, Planillas, Rendiciones, VersionesApk) quedan afuera: no hay a qué volver. Las transiciones de estado (`activar()`, `cerrar()`, `destroy()`) TAMPOCO cambian — siguen yendo a `index()`, porque ahí sí no queda nada editable a lo que quedarse.
+- **El mensaje de confirmación viaja con el redirect, pero HAY QUE PINTARLO en el propio `_formulario.blade.php`** — no alcanza con el `->with('estado', ...)` del controlador. El flash `session('estado')` normalmente solo se renderiza en `index.blade.php` de cada módulo; si el formulario no lo pinta también, el usuario guarda y no ve ningún aviso. Bloque exacto, inmediatamente después del `</x-organisms.page-header>` de cierre (antes de cualquier otro contenido, incluido un `@if ($errors->has('estado'))` de error si la pantalla ya tuviera uno):
+
+  ```blade
+  @if (session('estado'))
+      <x-molecules.alert-strip variant="success" icon="check_circle">
+          {{ session('estado') }}
+      </x-molecules.alert-strip>
+  @endif
+  ```
+
+- **Checklist para una pantalla nueva**: si el arquetipo Formulario que estás armando tiene `edit()`, andá derecho por los dos puntos de arriba — no lo redescubras mirando qué hizo la pantalla anterior, porque durante meses la mayoría hizo lo viejo (volver a `index()`, sin flash en el form).
+
 #### Estado del catálogo para este arquetipo
 
 Todas las piezas de la anatomía de arriba ya existen en el catálogo — nada pendiente de pedirle a `design-ui` para este arquetipo: `molecules/form-section` (tarjeta + `section-head` con contador, evolucionado desde el `<fieldset>` original), `organisms/page-header`, `molecules/tabs`, `organisms/form-actions-bar`, `molecules/summary-card`, `molecules/progress-meter`, `molecules/file-field`. Si una pantalla nueva necesita una variante que ninguna de estas cubre, ESO es lo que se le pide a `design-ui` — no la pieza entera de nuevo.

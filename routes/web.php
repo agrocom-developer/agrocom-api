@@ -7,6 +7,7 @@ use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\CultivosControll
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\FacturasController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\LotesController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\PropiedadesController;
+use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\PropiedadMapaController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ReportesComercialesController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\SiembraController;
 use App\Dominios\Distribucion\Infraestructura\Http\Controllers\Web\VersionesApkController;
@@ -533,6 +534,17 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::post('/panel/propiedades/{propiedad}/siembra', [SiembraController::class, 'guardar'])
             ->name('panel.propiedades.siembra.guardar');
+
+        // Adenda 16/9/2026 a ADR 0018 / ADR 0020 ("el editor de mapa
+        // multi-polígono se construye en un feature aparte"): punto de
+        // referencia (latitud/longitud) y perímetro (`geometria`) de la
+        // propiedad, en pantalla propia — no en el formulario principal.
+        // Reusa `comercial.propiedad.editar`: no es un ABM propio.
+        Route::get('/panel/propiedades/{propiedad}/mapa', [PropiedadMapaController::class, 'mostrar'])
+            ->name('panel.propiedades.mapa');
+
+        Route::post('/panel/propiedades/{propiedad}/mapa', [PropiedadMapaController::class, 'guardar'])
+            ->name('panel.propiedades.mapa.guardar');
 
         // HU-27 (tarea 36): administración de la flota de drones con su
         // modelo y capacidad de carga. Sin sub-entidad (a diferencia de

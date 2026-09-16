@@ -76,9 +76,15 @@
 
 /* Mismo popover skin que `.ag-user-menu` (topbar.css): dropdown-menu de
    Bootstrap con `.show` animado por opacity/transform en vez del `display`
-   nativo. */
+   nativo. `position: fixed` en la regla base — mismo motivo documentado en
+   color-swatch-field.css: `display:block` siempre puesto deja el menú
+   cerrado ocupando layout real (position:absolute por defecto de Bootstrap
+   hasta el primer open de Popper), lo que puede desbordar `.ag-panel__content`
+   sin que se note por estar invisible, hasta que algo lo scrollea a la
+   vista. */
 .ag-row-actions__menu {
     display: block !important;
+    position: fixed;
     min-width: 12rem;
     padding: var(--ag-space-2);
     background: var(--ag-color-bg-elevated);
