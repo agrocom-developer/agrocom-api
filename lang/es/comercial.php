@@ -194,7 +194,7 @@ return [
 
         // Listado
         'titulo' => 'Contratos',
-        'subtitulo' => 'Administración de contratos con sus ventanas de aplicación y tarifa.',
+        'subtitulo' => 'Administración de contratos con sus lotes y tarifa.',
         'nuevo' => 'Nuevo contrato',
         'filtro_busqueda' => 'Buscar',
         'filtro_busqueda_placeholder' => 'Razón social del cliente',
@@ -234,7 +234,7 @@ return [
         // Formulario (create/edit)
         'titulo_crear' => 'Nuevo contrato',
         'titulo_editar' => 'Editar contrato',
-        'subtitulo_form' => 'El contrato se guarda junto con sus ventanas de aplicación en una sola operación.',
+        'subtitulo_form' => 'El contrato se guarda junto con sus lotes en una sola operación.',
         'seccion_datos' => 'Datos del contrato',
         'campos_contador' => ':cantidad campos',
         'campo_cliente' => 'Cliente',
@@ -288,6 +288,7 @@ return [
         'campo_lote_checkbox' => 'Seleccionar todos',
         'lote_seleccionar_todos' => 'Seleccionar todos',
         'lote_deseleccionar_todos' => 'Deseleccionar todos',
+        'lote_personalizar_horario' => 'Personalizar horario',
         'lotes_sin_datos' => 'Esta propiedad todavía no tiene lotes cargados.',
         'lotes_agregar' => 'Agregar lotes',
         'lotes_quitar' => 'Quitar',

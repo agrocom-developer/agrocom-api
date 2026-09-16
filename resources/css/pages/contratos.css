@@ -286,3 +286,81 @@
 .ag-contratos-form__lotes-checkbox-group label span {
     font-size: var(--ag-font-size-sm);
 }
+
+/* Multi-select de propiedades con pills (16/9/2026) */
+.ag-contratos-form__propiedades-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ag-space-2);
+    margin-bottom: var(--ag-space-3);
+    min-height: 2rem;
+    align-items: center;
+}
+
+.ag-contratos-form__propiedad-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-2) var(--ag-space-3);
+    background-color: var(--ag-color-accent-subtle);
+    border-radius: var(--ag-radius-pill);
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text);
+}
+
+.ag-contratos-form__propiedad-pill-close {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    color: var(--ag-color-text-muted);
+    transition: color var(--ag-transition-fast);
+}
+
+.ag-contratos-form__propiedad-pill-close:hover {
+    color: var(--ag-color-text);
+}
+
+.ag-contratos-form__propiedad-pill-close .material-icons {
+    font-size: 1.2rem;
+}
+
+/* Paneles de lotes por propiedad */
+.ag-contratos-form__lotes-panels {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-4);
+    margin-bottom: var(--ag-space-4);
+    padding: var(--ag-space-4);
+    background-color: var(--ag-color-bg-surface);
+    border-radius: var(--ag-radius-md);
+}
+
+.ag-contratos-form__lotes-panel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-3);
+}
+
+.ag-contratos-form__lotes-panel-title {
+    margin: 0;
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+    color: var(--ag-color-text);
+}
+
+/* Horario por lote */
+.ag-contratos-form__lote-horario {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+}
+
+.ag-contratos-form__lote-horario input[type="time"] {
+    padding: var(--ag-space-2) var(--ag-space-3);
+    border: 1px solid var(--ag-color-border-input);
+    border-radius: var(--ag-radius-sm);
+    font-size: var(--ag-font-size-sm);
+}

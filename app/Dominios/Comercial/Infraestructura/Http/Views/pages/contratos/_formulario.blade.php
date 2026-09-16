@@ -33,21 +33,22 @@
     Tras un error de validación, `old()` pisa los valores del modelo/vacíos
     — mismo criterio en alta y en edición.
 
-    "Día completo" (HU-47, tarea 70) NO es un campo que se envíe ni se
-    guarde: es un interruptor puramente de presentación
-    (`resources/js/pages/contratos-form.js`) que muestra/oculta la lista de
-    filas de `ventanas[]` — cero ventanas en la base YA significa "día
-    completo" (ADR 0015 punto 5), así que no hace falta un booleano extra
-    que pudiera contradecir a las filas cargadas. Arranca encendido cuando no
-    hay ninguna fila cargada (alta nueva, o edición de un contrato sin
-    ventanas) y apagado cuando sí la hay — se deriva de `$ventanasIniciales`,
-    nunca de un valor propio.
+    "Día completo" por lote (tarea "contratos-lotes", reemplaza al HU-47 de
+    contrato completo del 16/9/2026 — ver más abajo): cada lote agregado
+    arranca sin horario propio (`hora_inicio`/`hora_fin` vacíos = día
+    completo, mismo criterio que ya regía a nivel de todo el contrato) y
+    ofrece un link "Personalizar horario" (`resources/js/pages/contratos-form.js`)
+    que despliega los dos campos de hora SOLO para esa fila.
 
     Orden de secciones (tarea "contratos-lotes", pedido del dueño): Datos →
-    Logística → Propiedad/Lotes → Orden de aplicación. La sección de
-    Propiedad/Lotes (nueva, tarea "contratos-lotes") es un select
-    dependiente maestro-detalle: propiedades del cliente → checkboxes de lotes
-    → lista apilada (mismo criterio que ventanas).
+    Logística → Propiedad/Lotes. Ya no hay una sección de "Orden de
+    aplicación"/"Ventanas de aplicación" a nivel de contrato completo — ese
+    horario se retiró junto con `com_contrato_ventanas` (16/9/2026): vive
+    por lote, dentro de esta misma sección. Propiedad/Lotes es un multi-select
+    de propiedades del cliente con pills (podés elegir varias a la vez, cada
+    una despliega su propio panel de checkboxes de lotes, todos visibles en
+    simultáneo — no hay que "confirmar y repetir" propiedad por propiedad) que
+    arma la lista apilada final de lotes del contrato.
 --}}
 @php
     $esEdicion = $contrato !== null;
@@ -60,29 +61,15 @@
     $campaniaId = old('campania_id', $contrato?->campania_id ?? '');
     $fechaInicio = old('fecha_inicio', $contrato?->fecha_inicio?->toDateString() ?? '');
     $fechaFin = old('fecha_fin', $contrato?->fecha_fin?->toDateString() ?? '');
-    // Ventanas de contrato retiradas el 16/9/2026 (reemplazo completo por
-    // horario a nivel de lote: `Contrato::ventanas()` ya no existe, ver el
-    // docblock de `Aplicacion/CrearContrato`) — `$ventanasPorDefecto` queda
-    // siempre vacío, tanto en alta como en edición, porque ya no hay ninguna
-    // fuente de datos que lo llene. La sección "Orden de aplicación" de más
-    // abajo queda como UI vestigial (el formulario la sigue mostrando, pero
-    // lo que se envíe ahí ya no lo procesa `ContratosController`): el
-    // horario por lote todavía no tiene UI propia — pendiente de una tarea
-    // de diseño aparte — y hasta que la tenga, los lotes se guardan como
-    // "día completo" (`hora_inicio`/`hora_fin` en NULL) desde este
-    // formulario.
-    $ventanasPorDefecto = [];
-    $ventanasIniciales = old('ventanas', $ventanasPorDefecto);
-    $hayVentanasCargadas = collect($ventanasIniciales)->contains(
-        fn ($ventana) => ($ventana['hora_inicio'] ?? '') !== '' || ($ventana['hora_fin'] ?? '') !== '',
-    );
     $brindaAlimentacion = (bool) $valor('brinda_alimentacion', false);
     $brindaHospedaje = (bool) $valor('brinda_hospedaje', false);
     $brindaCombustible = (bool) $valor('brinda_combustible', false);
 
-    // Lotes iniciales en edición (tarea "contratos-lotes"): mapear el
-    // resultado de $contrato->lotes (que son filas ContratoLote con ->lote
-    // cargado) a un array por propiedad, para mostrar el agrupamiento visual.
+    // Lotes iniciales en edición (tarea "contratos-lotes", ampliado con
+    // horario por lote el 16/9/2026): mapear el resultado de $contrato->lotes
+    // (que son filas ContratoLote con ->lote cargado) a un array por
+    // propiedad, para mostrar el agrupamiento visual. Cada lote trae su
+    // hora_inicio/hora_fin (nullable, string `H:i` o NULL para "día completo").
     $lotesPorDefecto = [];
     if ($esEdicion && $contrato->lotes->isNotEmpty()) {
         foreach ($contrato->lotes as $contratoLote) {
@@ -98,6 +85,8 @@
                 'lote_id' => $lote->id,
                 'codigo' => $lote->codigo,
                 'hectareas' => (string) $lote->hectareas,
+                'hora_inicio' => $contratoLote->hora_inicio,
+                'hora_fin' => $contratoLote->hora_fin,
             ];
         }
     }
@@ -261,15 +250,15 @@
         :count="__('comercial.contratos.lotes_contador', ['cantidad' => collect($lotesIniciales)->sum(fn ($g) => count($g['lotes'] ?? []))])"
     >
         {{-- Datos JSON embebidos: propiedades y lotes por cliente. El JS los
-             lee para armar el select dependiente sin AJAX. --}}
+             lee para armar el multi-select de propiedades sin AJAX. --}}
         <script type="application/json" data-ag-propiedades-lotes>
             {!! json_encode($propiedadesYLotesPorCliente) !!}
         </script>
 
-        {{-- Select de Propiedad (dependiente de Cliente, deshabilitado si no
-             hay cliente elegido). Muestra solo propiedades del cliente actual. --}}
+        {{-- Multi-select de Propiedades (dependiente de Cliente, deshabilitado si no
+             hay cliente elegido). Muestra propiedades del cliente actual como pills. --}}
         <div class="ag-field-label-with-action">
-            <label for="propiedad_id" class="ag-field-label-with-action__label">
+            <label for="propiedades_multi" class="ag-field-label-with-action__label">
                 {{ __('comercial.contratos.campo_propiedad') }}
             </label>
             <a href="#"
@@ -281,61 +270,25 @@
             </a>
         </div>
 
+        {{-- Contenedor de pills de propiedades seleccionadas --}}
+        <div class="ag-contratos-form__propiedades-pills" data-ag-propiedades-pills>
+        </div>
+
+        {{-- Select oculto que dispara cambios al agregar/quitar propiedades --}}
         <x-atoms.select
-            name="propiedad_id_temp"
-            id="propiedad_id"
+            name="propiedades_temp"
+            id="propiedades_multi"
             :label="null"
             placeholder="{{ __('comercial.contratos.campo_propiedad_placeholder') }}"
             help="{{ __('comercial.contratos.campo_propiedad_ayuda') }}"
             :options="[]"
-            data-ag-propiedad-select
+            data-ag-propiedades-select
             disabled
         />
 
-        {{-- Área de checkboxes de lotes (inicialmente oculta, se muestra al
-             elegir propiedad con lotes). --}}
-        <div
-            class="ag-form-section__field--full ag-contratos-form__lotes-checkboxes"
-            data-ag-lotes-checkboxes
-            hidden
-        >
-            <label class="ag-contratos-form__lotes-select-all">
-                <input type="checkbox" data-ag-lotes-seleccionar-todos>
-                <span class="ag-contratos-form__lotes-select-all-label">
-                    {{ __('comercial.contratos.lote_seleccionar_todos') }}
-                </span>
-            </label>
-            <div data-ag-lotes-lista-checkboxes class="ag-contratos-form__lotes-checkbox-group"></div>
+        {{-- Paneles de lotes agrupados por propiedad seleccionada --}}
+        <div class="ag-contratos-form__lotes-panels" data-ag-lotes-panels>
         </div>
-
-        {{-- Mensaje "sin lotes" (cuando la propiedad elegida no tiene lotes). --}}
-        <div
-            class="ag-form-section__field--full ag-contratos-form__lotes-empty"
-            data-ag-lotes-sin-datos
-            hidden
-        >
-            <p class="ag-contratos-form__lotes-empty-text">
-                {{ __('comercial.contratos.lotes_sin_datos') }}
-            </p>
-            <a href="#"
-               class="ag-contratos-form__lotes-empty-link"
-               id="link-crear-lote"
-               data-ag-link-accent
-               hidden>
-                {{ __('comercial.contratos.crear_lote') }}
-            </a>
-        </div>
-
-        {{-- Botón "Agregar lotes" (agrega los tildados a la lista apilada). --}}
-        <x-atoms.button
-            type="button"
-            variant="outline"
-            icon="add"
-            data-ag-lotes-agregar
-            hidden
-        >
-            {{ __('comercial.contratos.lotes_agregar') }}
-        </x-atoms.button>
 
         {{-- Lista apilada de lotes ya agregados (agrupada por propiedad). --}}
         <div data-ag-lotes-lista-apilada class="ag-form-section__field--full ag-contratos-form__lotes-list">
@@ -344,6 +297,7 @@
             @endif
 
             <div data-ag-lotes-agrupados>
+                @php $indiceGlobal = 0; @endphp
                 @foreach ($lotesIniciales as $propiedadId => $grupo)
                     <div data-ag-lote-grupo="propiedad-{{ $propiedadId }}" class="ag-contratos-form__lote-group">
                         <h4 class="ag-contratos-form__lote-group-title">
@@ -351,14 +305,22 @@
                         </h4>
                         <div class="ag-contratos-form__lote-group-items">
                             @foreach ($grupo['lotes'] as $lote)
-                                <div class="ag-contratos-form__lote-row">
+                                <div class="ag-contratos-form__lote-row" data-lote-id="{{ $lote['lote_id'] }}">
                                     <div class="ag-contratos-form__lote-info">
                                         <strong class="ag-contratos-form__lote-code">{{ $lote['codigo'] }}</strong>
                                         <span class="ag-contratos-form__lote-hectareas">
                                             {{ number_format((float) $lote['hectareas'], 2, ',', '.') }} ha
                                         </span>
                                     </div>
-                                    <input type="hidden" name="lotes[]" value="{{ $lote['lote_id'] }}">
+                                    <div class="ag-contratos-form__lote-horario" data-ag-lote-horario="{{ $lote['lote_id'] }}">
+                                        <input type="hidden" name="lotes[{{ $indiceGlobal }}][lote_id]" value="{{ $lote['lote_id'] }}">
+                                        <input type="hidden" name="lotes[{{ $indiceGlobal }}][hora_inicio]" value="{{ $lote['hora_inicio'] ?? '' }}" data-ag-hora-inicio>
+                                        <input type="hidden" name="lotes[{{ $indiceGlobal }}][hora_fin]" value="{{ $lote['hora_fin'] ?? '' }}" data-ag-hora-fin>
+                                        <button type="button" class="ag-btn ag-btn--text ag-btn--sm" data-ag-lote-personalizar-horario="{{ $lote['lote_id'] }}">
+                                            <span class="material-icons">schedule</span>
+                                            {{ __('comercial.contratos.lote_personalizar_horario') }}
+                                        </button>
+                                    </div>
                                     <x-atoms.button
                                         type="button"
                                         variant="text"
@@ -370,48 +332,12 @@
                                         {{ __('comercial.contratos.lotes_quitar') }}
                                     </x-atoms.button>
                                 </div>
+                                @php $indiceGlobal++; @endphp
                             @endforeach
                         </div>
                     </div>
                 @endforeach
             </div>
-        </div>
-    </x-molecules.form-section>
-
-    {{-- Sección 4: Orden de aplicación (antes "Ventanas de aplicación",
-         renombrada en esta tarea) --}}
-    <x-molecules.form-section :title="__('comercial.contratos.seccion_ventanas')">
-        <div class="ag-form-section__field--full">
-            <x-atoms.switch
-                name="dia_completo"
-                label="{{ __('comercial.contratos.ventana_dia_completo') }}"
-                help="{{ __('comercial.contratos.ventana_dia_completo_ayuda') }}"
-                :checked="! $hayVentanasCargadas"
-                data-ag-dia-completo
-            />
-        </div>
-
-        <div class="ag-form-section__field--full ag-contratos-form__ventanas" data-ag-ventanas @if (! $hayVentanasCargadas) hidden @endif>
-            @if ($errors->has('ventanas'))
-                <p class="ag-input__error" role="alert">{{ $errors->first('ventanas') }}</p>
-            @endif
-
-            <div data-ag-ventanas-lista>
-                @foreach ($ventanasIniciales as $indice => $ventana)
-                    @include('comercial::pages.contratos._ventana-fila', ['indice' => $indice, 'ventana' => $ventana])
-                @endforeach
-            </div>
-
-            <x-atoms.button type="button" variant="outline" icon="add" data-ag-ventanas-agregar>
-                {{ __('comercial.contratos.ventana_agregar') }}
-            </x-atoms.button>
-
-            {{-- Plantilla clonable (JS vanilla, resources/js/pages/contratos-form.js):
-                 el índice literal se reemplaza por el próximo número al clonar. Un
-                 <template> nunca se renderiza ni se envía con el form. --}}
-            <template data-ag-ventana-template>
-                @include('comercial::pages.contratos._ventana-fila', ['indice' => '__INDICE__', 'ventana' => []])
-            </template>
         </div>
     </x-molecules.form-section>
 
