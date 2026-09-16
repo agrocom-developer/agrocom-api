@@ -35,13 +35,22 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * ADR 0003 regla 3): acá `Contrato` y `Lote` son del mismo módulo, así que
  * no hay frontera que cruzar.
  *
- * `RegistraBitacora` (invariante 9 de CLAUDE.md), mismo criterio que
- * {@see ContratoVentana}: quién agregó o quitó un lote del contrato y
- * cuándo es auditable.
+ * `RegistraBitacora` (invariante 9 de CLAUDE.md): quién agregó o quitó un
+ * lote del contrato y cuándo es auditable.
+ *
+ * `hora_inicio`/`hora_fin` (decisión del dueño, 16/9/2026: reemplazo
+ * completo de `com_contrato_ventanas`, que se dio de baja en la misma
+ * tanda): rango horario permitido para fumigar ESE lote. Ambas NULL = día
+ * completo (mismo criterio de "cero ventanas = día completo" que tenía la
+ * tabla vieja, HU-47, trasladado a nivel de lote). Quedan sin cast, igual
+ * que las mantenía el modelo que reemplazan: son columnas TIME sin fecha,
+ * castearlas a datetime inventaría un día.
  *
  * @property int $id
  * @property int $contrato_id
  * @property int $lote_id
+ * @property string|null $hora_inicio
+ * @property string|null $hora_fin
  */
 class ContratoLote extends ModeloDominio
 {
@@ -53,6 +62,8 @@ class ContratoLote extends ModeloDominio
     protected $fillable = [
         'contrato_id',
         'lote_id',
+        'hora_inicio',
+        'hora_fin',
     ];
 
     /** @return BelongsTo<Contrato, $this> */

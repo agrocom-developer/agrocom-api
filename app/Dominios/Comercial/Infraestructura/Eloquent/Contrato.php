@@ -99,12 +99,6 @@ class Contrato extends ModeloDominio
         return $this->belongsTo(Cliente::class, 'cliente_id');
     }
 
-    /** @return HasMany<ContratoVentana, $this> */
-    public function ventanas(): HasMany
-    {
-        return $this->hasMany(ContratoVentana::class, 'contrato_id');
-    }
-
     /**
      * Lotes concretos del cliente que cubre este contrato (pedido del dueño:
      * elegir una propiedad y uno o más lotes de ella, no solo un número
