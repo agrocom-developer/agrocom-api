@@ -126,7 +126,12 @@ final class LotesController
             'propiedadesDisponibles' => $this->propiedadesActivas(),
             'proveedorMapa' => $this->resolverProveedorMapa->ejecutar(),
             'referenciaMapa' => $this->referenciaMapa($lote->id),
-            'resumenLote' => $this->resumenLote($lote),
+            // Lista de UNA tarjeta (16/9/2026): el Blade del aside itera
+            // `$resumenLote` igual que `$resumenPropiedad` en Propiedad,
+            // que sí puede traer varias — acá alcanza con "Siembra actual",
+            // pero el shape tiene que ser lista igual para que el mismo
+            // @foreach sirva sin ifs especiales.
+            'resumenLote' => [$this->resumenLote($lote)],
             'volverA' => session('volverA'),
         ]);
     }
