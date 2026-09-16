@@ -13,12 +13,13 @@ use App\Dominios\Campania\Infraestructura\Eloquent\Campania;
 use App\Dominios\Campania\Infraestructura\Http\Requests\ActualizarCampaniaRequest;
 use App\Dominios\Campania\Infraestructura\Http\Requests\CambiarEstadoCampaniaRequest;
 use App\Dominios\Campania\Infraestructura\Http\Requests\CrearCampaniaRequest;
+use App\Dominios\Comercial\Contratos\LecturaResumenComercialCampania;
+use App\Dominios\Finanzas\Contratos\LecturaGastoPorCampania;
+use App\Dominios\Operaciones\Contratos\LecturaTrabajosPorContrato;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Brick\Math\BigDecimal;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 /**
@@ -103,14 +104,19 @@ final class CampaniasController
             ->with('estado', __('campania.campanias.creado'));
     }
 
-    public function edit(Request $request, Campania $campania): View
-    {
+    public function edit(
+        Request $request,
+        Campania $campania,
+        LecturaResumenComercialCampania $lecturaComercial,
+        LecturaGastoPorCampania $lecturaGasto,
+        LecturaTrabajosPorContrato $lecturaTrabajos,
+    ): View {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
 
         return view('campania::pages.campanias.edit', [
             ...$this->autorizacion->cascara($request),
             'campania' => $campania,
-            'resumenCampania' => $this->resumenCampania($campania),
+            'resumenCampania' => $this->resumenCampania($campania, $lecturaComercial, $lecturaGasto, $lecturaTrabajos),
         ]);
     }
 
@@ -181,20 +187,29 @@ final class CampaniasController
      * alta — por eso el shape es más chico (sin `tieneDatos`; `accion` acá
      * es "ver detalle" en el listado real, no "crear").
      *
-     * Todo por `DB::table` directo (ADR 0003 regla 3: referencias por ID
-     * sí, lógica cruzada no) — nunca reconstruyendo una regla de negocio de
-     * otro módulo. Por eso "trabajo realizado" es una CUENTA de filas de
-     * `ope_trabajos` vía la cadena de FKs contrato→orden→trabajo, no una
-     * suma de hectáreas filtrada por algún estado de validación: esa regla
-     * (qué cuenta como "aplicado") es de `Operaciones`/`Comercial`
-     * (`ObtenerAvanceComercial`, `Aplicacion/` ajeno) y no se puede invocar
-     * desde acá sin una frontera `Contratos/` propia — pendiente si hace
-     * falta más precisión que un conteo.
+     * Cross-módulo vía `Contratos/` (ADR 0003 regla 2), corregido el
+     * 16/9/2026 — la versión original de esta tarea hacía `DB::table`
+     * directo sobre `com_facturas`/`com_contratos`/`fin_gastos`/
+     * `fin_combustibles`/`ope_trabajos`/`ope_ordenes_aplicacion` con joins
+     * crudos entre tablas de tres módulos ajenos: pasaba el arch test
+     * (`ArquitecturaModulosTest`) porque `DB::table` no deja rastro de
+     * `Node\Name` para el analizador AST, pero violaba la frontera igual.
+     * Ahora {@see LecturaResumenComercialCampania} (Comercial: facturado,
+     * contratos, hectáreas contratadas y los `contratoIds` que necesita
+     * Operaciones), {@see LecturaGastoPorCampania} (Finanzas: gasto +
+     * combustible) y {@see LecturaTrabajosPorContrato} (Operaciones: cuenta
+     * de trabajos por la cadena contrato→orden→trabajo, resuelta DENTRO de
+     * Operaciones) hacen cada una lo suyo sin que Campania conozca sus
+     * tablas ni modelos Eloquent. "Trabajo realizado" sigue siendo una
+     * CUENTA de filas, no una suma de hectáreas filtrada por validación: esa
+     * regla es de `Operaciones`/`Comercial` (`ObtenerAvanceComercial`) y no
+     * se invoca desde acá sin ampliar esa frontera — pendiente si hace falta
+     * más precisión que un conteo.
      *
-     * Sumas en `Brick\Math\BigDecimal` (invariante 6 de CLAUDE.md), nunca
-     * `SUM()` de SQL ni cast a float durante el cálculo — el cast a float
-     * (`aMoneda()`) es solo para `number_format()`, mismo criterio de
-     * presentación que ya usa `contratos/index.blade.php`.
+     * Sumas en `Brick\Math\BigDecimal` (invariante 6 de CLAUDE.md) — cada
+     * contrato ya devuelve sus montos como `string` decimal, nunca `float`;
+     * el cast a float (`aMoneda()`) es solo para `number_format()`, mismo
+     * criterio de presentación que ya usa `contratos/index.blade.php`.
      *
      * Color y acción de "ver detalle" (pedido directo del 15/9/2026, mismo
      * criterio que la tarjeta "Suscripción" de `panel/organizacion`): el
@@ -211,37 +226,20 @@ final class CampaniasController
      *
      * @return list<array{titulo: string, items: list<array{label: string, value: string, mono?: bool, badge?: bool, variant?: string}>, accion: array{label: string, href: string}}>
      */
-    private function resumenCampania(Campania $campania): array
-    {
-        $montoFacturado = $this->sumarDecimal(
-            DB::table('com_facturas')
-                ->join('com_contratos', 'com_contratos.id', '=', 'com_facturas.contrato_id')
-                ->where('com_contratos.campania_id', $campania->id)
-                ->whereNull('com_facturas.deleted_at')
-                ->whereNull('com_contratos.deleted_at')
-                ->pluck('com_facturas.monto'),
-        );
-
-        $montoGastado = $this->sumarDecimal(
-            DB::table('fin_gastos')->where('campania_id', $campania->id)->whereNull('deleted_at')->pluck('monto'),
-        )->plus($this->sumarDecimal(
-            DB::table('fin_combustibles')->where('campania_id', $campania->id)->whereNull('deleted_at')->pluck('monto'),
-        ));
-
+    private function resumenCampania(
+        Campania $campania,
+        LecturaResumenComercialCampania $lecturaComercial,
+        LecturaGastoPorCampania $lecturaGasto,
+        LecturaTrabajosPorContrato $lecturaTrabajos,
+    ): array {
+        $resumenComercial = $lecturaComercial->resumen($campania->id);
+        $montoFacturado = BigDecimal::of($resumenComercial->facturado);
+        $montoGastado = BigDecimal::of($lecturaGasto->totalGastado($campania->id));
         $balance = $montoFacturado->minus($montoGastado);
 
-        $contratosCampania = DB::table('com_contratos')->where('campania_id', $campania->id)->whereNull('deleted_at');
-        $totalContratos = (clone $contratosCampania)->count();
-        $hectareasContratadas = $this->sumarDecimal((clone $contratosCampania)->pluck('hectareas_contratadas'));
-
-        $totalTrabajos = DB::table('ope_trabajos')
-            ->join('ope_ordenes_aplicacion', 'ope_ordenes_aplicacion.id', '=', 'ope_trabajos.orden_id')
-            ->join('com_contratos', 'com_contratos.id', '=', 'ope_ordenes_aplicacion.contrato_id')
-            ->where('com_contratos.campania_id', $campania->id)
-            ->whereNull('ope_trabajos.deleted_at')
-            ->whereNull('ope_ordenes_aplicacion.deleted_at')
-            ->whereNull('com_contratos.deleted_at')
-            ->count();
+        $totalContratos = $resumenComercial->totalContratos;
+        $hectareasContratadas = BigDecimal::of($resumenComercial->hectareasContratadas);
+        $totalTrabajos = $lecturaTrabajos->total($resumenComercial->contratoIds);
 
         return [
             [
@@ -279,12 +277,6 @@ final class CampaniasController
                 ],
             ],
         ];
-    }
-
-    /** @param  Collection<int, string>  $valores */
-    private function sumarDecimal(Collection $valores): BigDecimal
-    {
-        return $valores->reduce(fn (BigDecimal $acumulado, string $valor) => $acumulado->plus($valor), BigDecimal::zero());
     }
 
     private function aMoneda(BigDecimal $valor): string

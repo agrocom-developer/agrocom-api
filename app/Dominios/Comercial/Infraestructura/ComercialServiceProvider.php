@@ -7,6 +7,7 @@ use App\Dominios\Comercial\Contratos\LecturaContrato;
 use App\Dominios\Comercial\Contratos\LecturaCultivoLote;
 use App\Dominios\Comercial\Contratos\LecturaLotes;
 use App\Dominios\Comercial\Contratos\LecturaPanelComercial;
+use App\Dominios\Comercial\Contratos\LecturaResumenComercialCampania;
 use App\Dominios\Comercial\Infraestructura\Busqueda\BusquedaClientes;
 use App\Dominios\Comercial\Infraestructura\Busqueda\BusquedaCultivos;
 use App\Dominios\Comercial\Infraestructura\Busqueda\BusquedaLotes;
@@ -33,6 +34,7 @@ final class ComercialServiceProvider extends ServiceProvider
         $this->app->bind(LecturaPanelComercial::class, LecturaPanelComercialEloquent::class);
         $this->app->bind(LecturaCultivoLote::class, LecturaCultivoLoteEloquent::class);
         $this->app->bind(LecturaAvanceComercial::class, LecturaAvanceComercialEloquent::class);
+        $this->app->bind(LecturaResumenComercialCampania::class, LecturaResumenComercialCampaniaEloquent::class);
 
         // Buscador global (`busqueda.proveedores`): el agregador de Seguridad
         // no conoce estas clases, las recibe por tag. Sumar una entidad al
