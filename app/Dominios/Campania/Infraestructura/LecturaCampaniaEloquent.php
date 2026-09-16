@@ -25,6 +25,20 @@ final class LecturaCampaniaEloquent implements LecturaCampania
             return null;
         }
 
+        return $this->aDato($campania);
+    }
+
+    public function todas(): array
+    {
+        return Campania::query()
+            ->orderBy('codigo')
+            ->get()
+            ->map($this->aDato(...))
+            ->all();
+    }
+
+    private function aDato(Campania $campania): DatosCampania
+    {
         return new DatosCampania(
             id: $campania->id,
             codigo: $campania->codigo,
