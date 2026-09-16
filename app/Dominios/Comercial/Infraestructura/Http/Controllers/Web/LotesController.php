@@ -77,6 +77,7 @@ final class LotesController
             'clientesDisponibles' => $this->clientesActivos(),
             'propiedadesDisponibles' => $this->propiedadesActivas(),
             'proveedorMapa' => $this->resolverProveedorMapa->ejecutar(),
+            'referenciaMapa' => $this->referenciaMapa(null),
             // Alta rápida desde otro formulario (tarea "contratos-lotes",
             // 16/9/2026): con ?propiedad_id=, arranca con esa propiedad ya
             // elegida; con ?volver_a=, al guardar se ofrece un botón para
@@ -129,6 +130,7 @@ final class LotesController
             'clientesDisponibles' => $this->clientesActivos(),
             'propiedadesDisponibles' => $this->propiedadesActivas(),
             'proveedorMapa' => $this->resolverProveedorMapa->ejecutar(),
+            'referenciaMapa' => $this->referenciaMapa($lote->id),
             'volverA' => session('volverA'),
         ]);
     }
@@ -189,6 +191,42 @@ final class LotesController
             ->orderBy('nombre')
             ->get(['id', 'cliente_id', 'nombre'])
             ->keyBy('id');
+    }
+
+    /**
+     * Capas de referencia del editor de mapa (pedido directo del dueño,
+     * 16/9/2026): el límite de la propiedad y los lotes YA dibujados de esa
+     * misma propiedad, para no "dibujar a ciegas" un lote nuevo — el
+     * perímetro de la propiedad es un contenedor visual, nunca una hectárea
+     * oficial (ver docblock de `Propiedad`: eso queda para reportes, no para
+     * la portada del cliente en el portal, que podría malinterpretar un
+     * desvío del polígono dibujado como un cobro de más).
+     *
+     * Todas las propiedades y todos los lotes con geometría viajan embebidos
+     * de una — mismo criterio "estrategia embebida" que el cascade
+     * cliente→propiedad de este mismo formulario (`$mapaClientePropiedad`):
+     * la cascada es 100% cliente, sin ida y vuelta al servidor cuando se
+     * cambia de propiedad en el select.
+     *
+     * @param  int|null  $loteActualId  se excluye de "lotes ya dibujados" —
+     *                                  un lote no es referencia de sí mismo.
+     * @return array{propiedades: array<int, array<string, mixed>|null>, lotesPorPropiedad: array<int, list<array<string, mixed>>>}
+     */
+    private function referenciaMapa(?int $loteActualId): array
+    {
+        $propiedades = Propiedad::query()->whereNotNull('geometria')->get(['id', 'geometria'])
+            ->mapWithKeys(fn (Propiedad $propiedad) => [$propiedad->id => $propiedad->geometria])
+            ->all();
+
+        $lotesPorPropiedad = Lote::query()
+            ->whereNotNull('geometria')
+            ->when($loteActualId !== null, fn ($consulta) => $consulta->where('id', '!=', $loteActualId))
+            ->get(['id', 'propiedad_id', 'geometria'])
+            ->groupBy('propiedad_id')
+            ->map(fn (Collection $lotes) => $lotes->map(fn (Lote $lote) => ['id' => $lote->id, 'geometria' => $lote->geometria])->values()->all())
+            ->all();
+
+        return ['propiedades' => $propiedades, 'lotesPorPropiedad' => $lotesPorPropiedad];
     }
 
     /**

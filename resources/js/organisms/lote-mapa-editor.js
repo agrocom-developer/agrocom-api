@@ -37,6 +37,15 @@
  *
  * Colores desde tokens (shared/color-tokens.js), nunca hex acá: CLAUDE.md
  * invariante 11, y el editor se abre en ambos temas.
+ *
+ * Capas de REFERENCIA (16/9/2026, pedido directo): el límite de la
+ * propiedad elegida y sus lotes ya cargados se dibujan punteados y sin
+ * interacción, para no cargar un lote nuevo a ciegas ni superpuesto con uno
+ * existente — se leen de `[data-ag-lote-mapa-referencia]`
+ * (`lotes/_formulario.blade.php`, ver `LotesController::referenciaMapa()`)
+ * y se redibujan solas al cambiar el `<select propiedad_id>`. Es la ÚNICA
+ * parte de este archivo que sabe que existe `Propiedad`; todo lo demás
+ * sigue siendo agnóstico de qué formulario lo incluye.
  */
 
 import 'leaflet/dist/leaflet.css';
@@ -87,6 +96,95 @@ function estiloPoligonoGoogle() {
         fillColor: leerColorToken('--ag-color-primary'),
         fillOpacity: 0.2,
     };
+}
+
+/**
+ * Capas de REFERENCIA (16/9/2026, pedido directo del dueño): el límite de
+ * la propiedad elegida y sus lotes ya cargados, para no dibujar un lote
+ * nuevo a ciegas — "la idea es dibujar un polígono dentro de la propiedad y
+ * cuando se agregue otro lote se muestre el polígono de los lotes previos,
+ * hasta llenar o terminar toda la propiedad". Trazo punteado + SIN
+ * interacción (`interactive`/`clickable: false`, nunca editable ni
+ * clickeable — no son la capa que se guarda) para que nunca se confundan
+ * con el polígono editable de ESTE lote, que sigue en ámbar sólido
+ * ({@see estiloPoligono}).
+ *
+ * Dos estilos distintos entre sí — el límite de la propiedad (contorno
+ * nada más, es un contenedor) y los lotes hermanos (con relleno tenue, ya
+ * son terreno ocupado) — con el mismo criterio de tokens que el resto del
+ * archivo (CLAUDE.md invariante 11).
+ */
+function estiloReferenciaPropiedad() {
+    return {
+        color: leerColorToken('--ag-color-border-strong'),
+        weight: 2,
+        dashArray: '6 4',
+        fill: false,
+        interactive: false,
+    };
+}
+
+function estiloReferenciaLote() {
+    return {
+        color: leerColorToken('--ag-color-text-faint'),
+        weight: 1.5,
+        dashArray: '4 3',
+        fillColor: leerColorToken('--ag-color-text-faint'),
+        fillOpacity: 0.15,
+        interactive: false,
+    };
+}
+
+function estiloReferenciaPropiedadGoogle() {
+    return {
+        strokeColor: leerColorToken('--ag-color-border-strong'),
+        strokeWeight: 2,
+        fillOpacity: 0,
+        clickable: false,
+        editable: false,
+    };
+}
+
+function estiloReferenciaLoteGoogle() {
+    return {
+        strokeColor: leerColorToken('--ag-color-text-faint'),
+        strokeWeight: 1.5,
+        fillColor: leerColorToken('--ag-color-text-faint'),
+        fillOpacity: 0.15,
+        clickable: false,
+        editable: false,
+    };
+}
+
+/**
+ * Lee `[data-ag-lote-mapa-referencia]` (JSON embebido por
+ * `lotes/_formulario.blade.php`, ver `LotesController::referenciaMapa()`) y
+ * el `<select propiedad_id>` del mismo formulario — mismo patrón "estrategia
+ * embebida" que `propiedades-form.js`/`contratos-form.js`: sin AJAX, todo
+ * ya viajó con la página.
+ *
+ * `null` si el formulario no tiene ninguna de las dos piezas (p. ej. un
+ * contexto futuro donde `_lote-fila.blade.php` se reuse sin este
+ * formulario) — la referencia es opcional, nunca requerida para que el
+ * editor funcione.
+ */
+function leerReferencia(contenedor) {
+    const formulario = contenedor.closest('form');
+    const scriptDatos = formulario?.querySelector('[data-ag-lote-mapa-referencia]');
+    const selectPropiedad = formulario?.querySelector('[data-ag-lote-propiedad]');
+
+    if (!scriptDatos || !selectPropiedad) {
+        return null;
+    }
+
+    let datos;
+    try {
+        datos = JSON.parse(scriptDatos.textContent);
+    } catch {
+        return null;
+    }
+
+    return { selectPropiedad, propiedades: datos.propiedades ?? {}, lotesPorPropiedad: datos.lotesPorPropiedad ?? {} };
 }
 
 /**
@@ -273,6 +371,41 @@ function inicializarLeaflet(contenedor, refs) {
 
     const capa = L.featureGroup().addTo(mapa);
     const { mostrarMedida } = crearMedidor({ contenedor, medida, medidaTexto });
+
+    // ---------- Capas de referencia (límite de propiedad + lotes hermanos) ----------
+    const referencia = leerReferencia(contenedor);
+    const capaReferencia = L.layerGroup().addTo(mapa);
+
+    const redibujarReferencia = () => {
+        capaReferencia.clearLayers();
+
+        if (!referencia) {
+            return;
+        }
+
+        const propiedadId = referencia.selectPropiedad.value;
+        const limite = propiedadId ? referencia.propiedades[propiedadId] : null;
+
+        if (limite) {
+            L.geoJSON(limite, { style: estiloReferenciaPropiedad, interactive: false }).addTo(capaReferencia);
+        }
+
+        (propiedadId ? referencia.lotesPorPropiedad[propiedadId] ?? [] : []).forEach((loteHermano) => {
+            L.geoJSON(loteHermano.geometria, { style: estiloReferenciaLote, interactive: false }).addTo(capaReferencia);
+        });
+
+        // Sin nada dibujado todavía en ESTE lote: encuadra sobre el límite
+        // de la propiedad en vez del centro genérico — "no dibujar a
+        // ciegas" también vale para saber adónde mirar en el mapa.
+        if (capa.getLayers().length === 0 && capaReferencia.getLayers().length > 0) {
+            mapa.fitBounds(capaReferencia.getBounds(), { padding: [24, 24], maxZoom: ZOOM_MAXIMO_AL_ENCUADRAR });
+        }
+    };
+
+    if (referencia) {
+        redibujarReferencia();
+        referencia.selectPropiedad.addEventListener('change', redibujarReferencia);
+    }
 
     /** Vuelca la capa dibujada al input oculto y refresca la superficie. */
     const sincronizar = () => {
@@ -521,10 +654,13 @@ function inicializarLeaflet(contenedor, refs) {
     }
 
     // El repintado al cambiar de tema: los tokens de color se resuelven al
-    // inicializar, así que hay que releerlos.
+    // inicializar, así que hay que releerlos. Las capas de referencia se
+    // redibujan enteras (mismo costo que recalcular sus dos estilos a
+    // mano, mucho más simple).
     window.addEventListener('agrocom:theme-changed', () => {
         capa.eachLayer((capaDibujada) => capaDibujada.setStyle?.(estiloPoligono()));
         mapa.pm.setPathOptions(estiloPoligono());
+        redibujarReferencia();
     });
 
     // Leaflet en un contenedor que todavía no tiene tamaño (fila recién
@@ -580,6 +716,60 @@ function inicializarGoogle(contenedor, refs, googleMapsNs) {
     let poligono = null;
 
     const { mostrarMedida } = crearMedidor({ contenedor, medida, medidaTexto });
+
+    // ---------- Capas de referencia (límite de propiedad + lotes hermanos) ----------
+    // Mismo criterio que inicializarLeaflet: trazo punteado, sin clic ni
+    // edición — google.maps.Polygon no tiene un layerGroup nativo, así que
+    // se lleva un array propio aparte de `poligono` (el editable).
+    const referencia = leerReferencia(contenedor);
+    let poligonosReferencia = [];
+
+    /** Un GeoJSON `Polygon` o `MultiPolygon` → uno o más `google.maps.Polygon`,
+     *  con las mismas opciones (nunca editables/clickeables). */
+    const poligonosDesdeGeoJSON = (geometria, opciones) => {
+        if (!geometria) {
+            return [];
+        }
+
+        const poligonos = geometria.type === 'MultiPolygon' ? geometria.coordinates : [geometria.coordinates];
+
+        return poligonos.map((anillos) => new googleMapsNs.Polygon({
+            paths: anillos[0].map(([lng, lat]) => ({ lat, lng })),
+            map: mapa,
+            ...opciones,
+        }));
+    };
+
+    const redibujarReferencia = () => {
+        poligonosReferencia.forEach((poligonoReferencia) => poligonoReferencia.setMap(null));
+        poligonosReferencia = [];
+
+        if (!referencia) {
+            return;
+        }
+
+        const propiedadId = referencia.selectPropiedad.value;
+        const limite = propiedadId ? referencia.propiedades[propiedadId] : null;
+
+        if (limite) {
+            poligonosReferencia.push(...poligonosDesdeGeoJSON(limite, estiloReferenciaPropiedadGoogle()));
+        }
+
+        (propiedadId ? referencia.lotesPorPropiedad[propiedadId] ?? [] : []).forEach((loteHermano) => {
+            poligonosReferencia.push(...poligonosDesdeGeoJSON(loteHermano.geometria, estiloReferenciaLoteGoogle()));
+        });
+
+        if (!poligono && poligonosReferencia.length > 0) {
+            const limites = new googleMapsNs.LatLngBounds();
+            poligonosReferencia.forEach((poligonoReferencia) => poligonoReferencia.getPath().forEach((punto) => limites.extend(punto)));
+            mapa.fitBounds(limites);
+        }
+    };
+
+    if (referencia) {
+        redibujarReferencia();
+        referencia.selectPropiedad.addEventListener('change', redibujarReferencia);
+    }
 
     /** GeoJSON `Polygon` a partir del `Path` actual de `poligono`, con el
      *  mismo anillo CERRADO que emite Leaflet (`toGeoJSON()`), para que el
@@ -866,6 +1056,7 @@ function inicializarGoogle(contenedor, refs, googleMapsNs) {
     window.addEventListener('agrocom:theme-changed', () => {
         poligono?.setOptions(estiloPoligonoGoogle());
         poligonoEnCurso?.setOptions(estiloPoligonoGoogle());
+        redibujarReferencia();
     });
 }
 

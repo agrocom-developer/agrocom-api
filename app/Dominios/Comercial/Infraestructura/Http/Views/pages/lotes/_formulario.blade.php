@@ -60,6 +60,15 @@
         <input type="hidden" name="volver_a" value="{{ $volverA }}">
     @endif
 
+    {{-- Capas de referencia del mapa (pedido directo del dueño, 16/9/2026):
+         el límite de la propiedad elegida y sus lotes ya dibujados, para no
+         dibujar el lote nuevo a ciegas — ver LotesController::referenciaMapa().
+         `organisms/lote-mapa-editor.js` las lee y las redibuja cada vez que
+         cambia el select de propiedad. --}}
+    <script type="application/json" data-ag-lote-mapa-referencia>
+        {!! json_encode($referenciaMapa) !!}
+    </script>
+
     <x-organisms.page-header
         :title="$esEdicion ? __('comercial.lotes.titulo_editar') : __('comercial.lotes.titulo_crear')"
         :subtitle="__('comercial.lotes.subtitulo_form')"
