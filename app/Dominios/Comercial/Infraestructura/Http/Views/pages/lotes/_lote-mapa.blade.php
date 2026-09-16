@@ -145,27 +145,33 @@
                     <x-atoms.icon name="fullscreen" data-ag-lote-mapa-icono-pantalla-completa />
                 </button>
             </div>
-        </div>
 
-        <div class="ag-lote-mapa__pie">
-            <p class="ag-input__help ag-lote-mapa__ayuda">{{ __('comercial.lotes.lote_geometria_ayuda') }}</p>
-
+            {{-- Cuadro flotante abajo a la izquierda con la superficie
+                 dibujada (16/9/2026, pedido directo: "el mismo que tenemos
+                 en propiedad") — mismo lugar y chrome que
+                 `.ag-propiedad-mapa__info`, sin las coordenadas (el lote no
+                 tiene marcador de referencia). --}}
             <div
-                class="ag-lote-mapa__medida"
+                class="ag-lote-mapa__info"
                 data-ag-lote-medida
                 hidden
                 data-ag-lote-mapa-medida-plantilla="{{ __('comercial.lotes.lote_mapa_medida') }}"
                 data-ag-lote-mapa-medida-plantilla-declarada="{{ __('comercial.lotes.lote_mapa_medida_declaradas') }}"
             >
                 <span data-ag-lote-medida-texto></span>
-                {{-- Botón y no autocompletado: `hectareas` es la superficie
-                     CONTRATADA, que puede no coincidir con el polígono
-                     dibujado, y es la base de lo que se factura (invariante
-                     6). La decisión de copiarla es de quien carga el campo. --}}
-                <x-atoms.button type="button" variant="text" size="sm" data-ag-lote-usar-superficie>
-                    {{ __('comercial.lotes.lote_usar_superficie') }}
-                </x-atoms.button>
             </div>
+        </div>
+
+        <div class="ag-lote-mapa__pie">
+            <p class="ag-input__help ag-lote-mapa__ayuda">{{ __('comercial.lotes.lote_geometria_ayuda') }}</p>
+
+            {{-- Botón y no autocompletado: `hectareas` es la superficie
+                 CONTRATADA, que puede no coincidir con el polígono dibujado,
+                 y es la base de lo que se factura (invariante 6). La
+                 decisión de copiarla es de quien carga el campo. --}}
+            <x-atoms.button type="button" variant="text" size="sm" data-ag-lote-usar-superficie>
+                {{ __('comercial.lotes.lote_usar_superficie') }}
+            </x-atoms.button>
         </div>
     </div>
 </div>

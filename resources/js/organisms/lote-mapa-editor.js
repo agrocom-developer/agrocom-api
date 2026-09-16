@@ -711,10 +711,14 @@ function inicializarLeaflet(contenedor, refs) {
     });
 
     botonCentrar?.addEventListener('click', () => {
-        const capas = capa.getLayers();
-
-        if (capas.length > 0) {
+        // Sin lote todavía: centra sobre el límite de la PROPIEDAD, no un
+        // punto fijo genérico (16/9/2026, bug real) — con la máscara
+        // encima, un centro que cae fuera de la propiedad mostraba todo
+        // oscurecido, como si el polígono hubiera desaparecido.
+        if (capa.getLayers().length > 0) {
             mapa.fitBounds(capa.getBounds(), { padding: [16, 16], maxZoom: ZOOM_MAXIMO_AL_ENCUADRAR });
+        } else if (capaReferencia.getLayers().length > 0) {
+            mapa.fitBounds(capaReferencia.getBounds(), { padding: [24, 24], maxZoom: ZOOM_MAXIMO_AL_ENCUADRAR });
         } else {
             mapa.setView([CENTRO_POR_DEFECTO.lat, CENTRO_POR_DEFECTO.lng], ZOOM_SIN_GEOMETRIA);
         }
@@ -1129,9 +1133,17 @@ function inicializarGoogle(contenedor, refs, googleMapsNs) {
     });
 
     botonCentrar?.addEventListener('click', () => {
+        // Sin lote todavía: centra sobre el límite de la PROPIEDAD, no un
+        // punto fijo genérico (16/9/2026, bug real) — con la máscara
+        // encima, un centro que cae fuera de la propiedad mostraba todo
+        // oscurecido, como si el polígono hubiera desaparecido.
         if (poligono) {
             const limites = new googleMapsNs.LatLngBounds();
             poligono.getPath().forEach((punto) => limites.extend(punto));
+            mapa.fitBounds(limites);
+        } else if (poligonosReferencia.length > 0) {
+            const limites = new googleMapsNs.LatLngBounds();
+            poligonosReferencia.forEach((poligonoReferencia) => poligonoReferencia.getPath().forEach((punto) => limites.extend(punto)));
             mapa.fitBounds(limites);
         } else {
             mapa.setCenter(CENTRO_POR_DEFECTO);
