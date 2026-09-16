@@ -83,7 +83,7 @@
                             name="cultivo_ids"
                             id="entrada-cultivos"
                             :label="__('comercial.reportes_comerciales.entrada.cultivo')"
-                            :options="$cultivosDisponibles->mapWithKeys(fn($c) => [$c->id => $c->nombre])"
+                            :options="$cultivosDisponibles->mapWithKeys(fn($c) => [$c->id => $c->nombre_comun])"
                             :value="$cultivoIds"
                             :error="$erroresEntrada['cultivo_ids'] ?? null"
                         />
@@ -412,7 +412,7 @@
                             name="cultivo_ids"
                             id="filtros-cultivos"
                             :label="__('comercial.reportes_comerciales.filtros.cultivo')"
-                            :options="$cultivosDisponibles->mapWithKeys(fn($c) => [$c->id => $c->nombre])"
+                            :options="$cultivosDisponibles->mapWithKeys(fn($c) => [$c->id => $c->nombre_comun])"
                             :value="$cultivoIds"
                         />
 
