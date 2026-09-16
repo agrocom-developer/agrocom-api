@@ -86,7 +86,7 @@
                         <span role="columnheader">{{ __('comercial.clientes.col_razon_social') }}</span>
                         <span role="columnheader">{{ __('comercial.clientes.col_nit') }}</span>
                         <span role="columnheader">{{ __('comercial.clientes.col_contactos') }}</span>
-                        <span role="columnheader" aria-hidden="true"></span>
+                        <span role="columnheader" class="ag-clientes__acciones-head">{{ __('ui.tabla.col_acciones') }}</span>
                     </div>
 
                     @foreach ($clientes as $cliente)
@@ -99,25 +99,27 @@
                             <span role="cell">{{ __('comercial.clientes.contactos_cantidad', ['cantidad' => $cliente->contactos_count]) }}</span>
 
                             <span role="cell" class="ag-clientes__acciones">
-                                @puede('comercial.cliente.editar')
-                                    <x-atoms.button href="{{ route('panel.clientes.edit', $cliente) }}" variant="warning-outline" size="sm" icon="edit">
-                                        {{ __('comercial.clientes.editar') }}
-                                    </x-atoms.button>
-                                @endpuede
-
-                                @puede('comercial.cliente.eliminar')
-                                    <form
-                                        method="POST"
-                                        action="{{ route('panel.clientes.destroy', $cliente) }}"
-                                        onsubmit="return confirm('{{ __('comercial.clientes.confirmar_baja') }}')"
-                                    >
-                                        @csrf
-                                        @method('DELETE')
-                                        <x-atoms.button type="submit" variant="danger-outline" size="sm" icon="delete">
-                                            {{ __('comercial.clientes.eliminar_accion') }}
+                                <x-organisms.row-actions>
+                                    @puede('comercial.cliente.editar')
+                                        <x-atoms.button href="{{ route('panel.clientes.edit', $cliente) }}" variant="warning-outline" size="sm" icon="edit">
+                                            {{ __('comercial.clientes.editar') }}
                                         </x-atoms.button>
-                                    </form>
-                                @endpuede
+                                    @endpuede
+
+                                    @puede('comercial.cliente.eliminar')
+                                        <form
+                                            method="POST"
+                                            action="{{ route('panel.clientes.destroy', $cliente) }}"
+                                            onsubmit="return confirm('{{ __('comercial.clientes.confirmar_baja') }}')"
+                                        >
+                                            @csrf
+                                            @method('DELETE')
+                                            <x-atoms.button type="submit" variant="danger-outline" size="sm" icon="delete">
+                                                {{ __('comercial.clientes.eliminar_accion') }}
+                                            </x-atoms.button>
+                                        </form>
+                                    @endpuede
+                                </x-organisms.row-actions>
                             </span>
                         </div>
                     @endforeach

@@ -4,6 +4,7 @@ namespace App\Dominios\Comercial\Aplicacion;
 
 use App\Dominios\Comercial\Dominio\Excepciones\ClienteDuplicado;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
+use App\Dominios\Compartido\Aplicacion\OptimizarImagenSubida;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -25,20 +26,28 @@ use Illuminate\Support\Facades\Storage;
  * `com_clientes` sí tiene el índice parcial del NIT — subir el logo antes
  * dejaría un archivo huérfano en disco si el alta termina rechazada por
  * `ClienteDuplicado`.
+ *
+ * El contenido pasa por {@see OptimizarImagenSubida} antes de guardarse
+ * (15/9/2026): el Form Request solo valida tipo y un tope técnico de subida,
+ * el peso final liviano lo garantiza esta conversión, no un rechazo al
+ * usuario.
  */
 final class CrearCliente
 {
+    public function __construct(private readonly OptimizarImagenSubida $optimizarImagen) {}
+
     /**
-     * @param  list<array{tipo: string, nombre: string, telefono: string|null, email: string|null, observaciones: string|null}>  $contactos
+     * @param  list<array{tipo: string, tipo_otro: string|null, nombre: string, telefono: string|null, email: string|null, observaciones: string|null}>  $contactos
      *
      * @throws ClienteDuplicado si el NIT ya pertenece a otro cliente activo
      *                          (índice parcial `com_clientes_nit_unico`).
      */
-    public function ejecutar(string $razonSocial, ?string $nit, string $tipoPersona, ?string $ubicacionOficina, array $contactos, ?UploadedFile $logo = null): Cliente
+    public function ejecutar(string $razonSocial, ?string $nombreComercial, ?string $nit, string $tipoPersona, ?string $ubicacionOficina, array $contactos, ?UploadedFile $logo = null): Cliente
     {
-        return DB::transaction(function () use ($razonSocial, $nit, $tipoPersona, $ubicacionOficina, $contactos, $logo): Cliente {
+        return DB::transaction(function () use ($razonSocial, $nombreComercial, $nit, $tipoPersona, $ubicacionOficina, $contactos, $logo): Cliente {
             $cliente = new Cliente([
                 'razon_social' => $razonSocial,
+                'nombre_comercial' => $nombreComercial,
                 'nit' => $nit,
                 'tipo_persona' => $tipoPersona,
                 'ubicacion_oficina' => $ubicacionOficina,
@@ -65,10 +74,10 @@ final class CrearCliente
 
     private function reemplazarLogo(Cliente $cliente, UploadedFile $logo): void
     {
-        $extension = $logo->extension() ?: 'bin';
+        ['contenido' => $contenido, 'extension' => $extension] = $this->optimizarImagen->ejecutar($logo);
         $ruta = sprintf('logos/clientes/logo-%d.%s', now()->timestamp, $extension);
 
-        Storage::disk('public')->put($ruta, (string) file_get_contents($logo->getRealPath()));
+        Storage::disk('public')->put($ruta, $contenido);
 
         $cliente->logo_path = $ruta;
     }

@@ -73,7 +73,7 @@
    fijo; sigue pudiendo encoger bajo presión real de espacio. */
 .ag-topbar__search {
     flex: 0 1 480px;
-    min-width: 220px;
+    min-width: 320px;
     max-width: 480px;
     height: 36px;
     display: flex;

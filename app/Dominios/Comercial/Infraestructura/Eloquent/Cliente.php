@@ -26,10 +26,27 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * directa tras guardar el archivo — nunca vía `fill()` de datos crudos del
  * request.
  *
+ * `nombre_comercial` (tarea "resumen de cliente"): solo tiene sentido para
+ * `tipo_persona = juridica` (una sociedad puede operar bajo un nombre
+ * distinto al de su razón social) — el formulario lo oculta para persona
+ * física, pero la columna no lleva CHECK cruzado: es dato de presentación.
+ *
+ * `tipo_persona` cast a {@see TipoPersonaCliente} (bug encontrado 15/9/2026,
+ * tarea "resumen de cliente"): faltaba desde el alta original (HU-22/ADR
+ * 0018) — sin cast, `$cliente->tipo_persona` es un string plano, y
+ * `_formulario.blade.php` ya asumía un enum (`$cliente?->tipo_persona?->value`).
+ * `->value` sobre un string dispara un warning silencioso y da `null`, así
+ * que en TODA edición el `<select>` de tipo de persona nunca reflejaba el
+ * valor real guardado — el navegador mostraba la primera opción por
+ * default, sin que nada quedara realmente seleccionado. Pasó desapercibido
+ * hasta que "Nombre comercial" (que depende de leer `tipo_persona`
+ * correctamente) lo hizo visible.
+ *
  * @property int $id
  * @property string $razon_social
+ * @property string|null $nombre_comercial
  * @property string|null $nit
- * @property string $tipo_persona
+ * @property TipoPersonaCliente $tipo_persona
  * @property string|null $ubicacion_oficina
  * @property string|null $logo_path
  */
@@ -43,10 +60,19 @@ class Cliente extends ModeloDominio
     /** @var list<string> */
     protected $fillable = [
         'razon_social',
+        'nombre_comercial',
         'nit',
         'tipo_persona',
         'ubicacion_oficina',
     ];
+
+    /** @return array<string, string> */
+    protected function casts(): array
+    {
+        return [
+            'tipo_persona' => TipoPersonaCliente::class,
+        ];
+    }
 
     /** @return HasMany<ClienteContacto, $this> */
     public function contactos(): HasMany

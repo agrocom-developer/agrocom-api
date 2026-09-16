@@ -81,6 +81,10 @@ final class ContratosController
             ...$this->autorizacion->cascara($request),
             'clientesDisponibles' => $this->clientesActivos(),
             'campaniasDisponibles' => $this->campaniasParaFormulario(),
+            // Acceso directo desde el aside de `panel.clientes.edit` (tarea
+            // "resumen de cliente"): con ?cliente_id=, el formulario arranca
+            // con ese cliente ya elegido — ver _formulario.blade.php.
+            'clienteIdPreseleccionado' => $request->integer('cliente_id') ?: null,
         ]);
     }
 
