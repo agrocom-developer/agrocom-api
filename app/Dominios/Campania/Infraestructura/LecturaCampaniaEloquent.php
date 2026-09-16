@@ -28,7 +28,6 @@ final class LecturaCampaniaEloquent implements LecturaCampania
         return new DatosCampania(
             id: $campania->id,
             codigo: $campania->codigo,
-            clienteId: $campania->cliente_id,
             cerrada: $campania->estado === EstadoCampania::Cerrada,
         );
     }

@@ -31,18 +31,15 @@ return [
 
         // Listado
         'titulo' => 'Campañas',
-        'subtitulo' => 'La campaña es del cliente: contratos y gastos se imputan a la suya.',
+        'subtitulo' => 'La campaña es la temporada: cada contrato indica para cuál trabaja.',
         'nueva' => 'Nueva campaña',
         'filtro_busqueda' => 'Buscar',
         'filtro_busqueda_placeholder' => 'Código o nombre',
-        'filtro_cliente' => 'Cliente',
-        'filtro_cliente_placeholder' => 'Todos los clientes',
         'filtrar' => 'Buscar',
         'limpiar_filtro' => 'Limpiar búsqueda',
         'vacio_titulo' => 'Todavía no hay campañas',
-        'vacio_detalle' => 'Las campañas se crean para organizar contratos y gastos por cliente. En cuanto se dé de alta la primera, vas a verla acá.',
+        'vacio_detalle' => 'Las campañas organizan contratos y gastos por temporada. En cuanto se dé de alta la primera, vas a verla acá.',
         'filtro_vacio' => 'Ninguna campaña coincide con la búsqueda.',
-        'col_cliente' => 'Cliente',
         'col_codigo' => 'Código',
         'col_nombre' => 'Nombre',
         'col_vigencia' => 'Vigencia',
@@ -69,8 +66,6 @@ return [
         'subtitulo_form' => 'El código identifica la campaña en reportes y filtros (por ejemplo, 2025-2026).',
         'seccion_datos' => 'Datos de la campaña',
         'campos_contador' => ':cantidad campos',
-        'campo_cliente' => 'Cliente',
-        'campo_cliente_placeholder' => 'Seleccioná un cliente',
         'campo_codigo' => 'Código',
         'campo_nombre' => 'Nombre',
         'campo_nombre_ayuda' => 'Si lo dejás vacío, se arma solo con la estación y los años (por ejemplo, Verano/2025/2026).',
@@ -82,8 +77,6 @@ return [
         'volver' => 'Volver a campañas',
 
         // Errores de validación
-        'error_cliente_requerido' => 'Seleccioná el cliente de la campaña.',
-        'error_cliente_invalido' => 'El cliente seleccionado no es válido.',
         'error_codigo_requerido' => 'Ingresá un código para la campaña.',
         'error_fechas_rango' => 'La fecha de fin tiene que ser igual o posterior a la de inicio.',
     ],

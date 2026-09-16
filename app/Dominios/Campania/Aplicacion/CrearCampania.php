@@ -18,6 +18,10 @@ use Illuminate\Database\QueryException;
  * no tiene que tipearlo a mano si no quiere. `ActualizarCampania` NO repite
  * esta lógica a propósito: editar sin nombre preserva el que ya tiene, nunca
  * lo regenera solo (ver su docblock).
+ *
+ * Sin `cliente_id` (ADR 0015, corregido el 15/9/2026): la campaña es un
+ * catálogo compartido, no de un cliente. Quien la vincula a un cliente es el
+ * contrato.
  */
 final class CrearCampania
 {
@@ -25,13 +29,12 @@ final class CrearCampania
 
     /**
      * @throws CampaniaDuplicada si el código ya pertenece a otra campaña activa
-     *                           del mismo cliente (índice parcial `cpn_campanias_cliente_codigo_unico`).
+     *                           (índice único `cpn_campanias_codigo_unico`).
      */
-    public function ejecutar(int $clienteId, string $codigo, ?string $nombre, string $fechaInicio, string $fechaFin, string $estacion): Campania
+    public function ejecutar(string $codigo, ?string $nombre, string $fechaInicio, string $fechaFin, string $estacion): Campania
     {
         try {
             return $this->maquinaEstados->crear([
-                'cliente_id' => $clienteId,
                 'codigo' => $codigo,
                 'nombre' => $nombre ?? $this->generarNombre($estacion, $fechaInicio, $fechaFin),
                 'estacion' => $estacion,
@@ -61,7 +64,7 @@ final class CrearCampania
     {
         $mensaje = $excepcion->getMessage();
 
-        if (str_contains($mensaje, 'cpn_campanias_cliente_codigo_unico') || str_contains($mensaje, 'cpn_campanias.codigo')) {
+        if (str_contains($mensaje, 'cpn_campanias_codigo_unico') || str_contains($mensaje, 'cpn_campanias.codigo')) {
             throw CampaniaDuplicada::porCodigo($codigo);
         }
 

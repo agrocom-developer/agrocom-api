@@ -11,14 +11,12 @@ use App\Dominios\Campania\Infraestructura\Eloquent\Campania;
  * Única clase que crea/muta el `estado` de `campania` (invariante 7 de
  * CLAUDE.md), mismo criterio que `MaquinaEstadosContrato`.
  *
- * `abrir()` no lleva guarda de datos (corregido el 8/9/2026, ADR 0015 punto
- * 1): la campaña es del cliente, hay tantas abiertas como clientes en
- * campaña y sus rangos se pisan por definición (uno cosechando mientras otro
- * siembra), y hasta dentro de un mismo cliente se permiten varias abiertas a
- * la vez (soya de verano, maíz de invierno). "Solo el dueño cierra una
- * campaña" (ADR 0015, tarea 69) es autorización y se resuelve con el permiso
+ * `abrir()` no lleva guarda de datos (ADR 0015, corregido el 15/9/2026): la
+ * campaña es un catálogo compartido, sus rangos pueden pisarse con los de
+ * otras sin problema. "Solo el dueño cierra una campaña" (ADR 0015, tarea
+ * 69) es autorización y se resuelve con el permiso
  * `campania.campania.cambiar_estado` en `SeguridadSeeder`, no con una guarda
- * acá.
+ * acá — y cerrarla afecta a TODOS los contratos que la usan a la vez.
  */
 final class MaquinaEstadosCampania
 {

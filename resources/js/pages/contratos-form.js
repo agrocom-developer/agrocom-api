@@ -14,11 +14,9 @@
  * manda); apagarlo la muestra y, si está vacía, agrega una fila para no
  * dejar al usuario con el botón "Agregar ventana" como único camino.
  *
- * Filtra el `<select>` de campaña según el cliente elegido (ADR 0015 punto
- * 1, tarea 69): el contrato es con un cliente y para una campaña SUYA, mismo
- * patrón que rubro/subrubro en `gastos-form.js`. Es presentación, no
- * validación — el servidor (`Aplicacion/CrearContrato`) rechaza igual una
- * campaña de otro cliente ante un POST manual.
+ * Sin filtro de campaña por cliente (ADR 0015, corregido el 15/9/2026): la
+ * campaña es un catálogo compartido, todas están disponibles para cualquier
+ * cliente.
  *
  * Guard de presencia en el DOM (mismo criterio que `login.js`): en cualquier
  * página sin `[data-ag-contratos-form]` este módulo no hace nada.
@@ -26,39 +24,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     const formulario = document.querySelector('[data-ag-contratos-form]');
     if (!formulario) return;
-
-    const selectCliente = formulario.querySelector('[data-ag-contrato-cliente]');
-    const selectCampania = formulario.querySelector('[data-ag-contrato-campania]');
-
-    if (selectCliente && selectCampania) {
-        // El mapa campaña→cliente viaja en el propio <select> (tarea 76,
-        // `x-atoms.select`), no por <option> como antes: el combobox que arma
-        // atoms/select.js reemplaza al nativo visualmente y no soporta
-        // atributos por opción.
-        const mapaClienteCampania = JSON.parse(selectCampania.dataset.mapaClienteCampania || '{}');
-        const opciones = Array.from(selectCampania.querySelectorAll('option')).filter((opcion) => opcion.value !== '');
-
-        const aplicarFiltro = () => {
-            const clienteId = selectCliente.value;
-            let valorSigueVisible = false;
-
-            opciones.forEach((opcion) => {
-                const visible = String(mapaClienteCampania[opcion.value]) === clienteId;
-                opcion.hidden = !visible;
-                opcion.disabled = !visible;
-                if (visible && opcion.value === selectCampania.value) {
-                    valorSigueVisible = true;
-                }
-            });
-
-            if (!valorSigueVisible) {
-                selectCampania.value = '';
-            }
-        };
-
-        selectCliente.addEventListener('change', aplicarFiltro);
-        aplicarFiltro();
-    }
 
     const contenedor = formulario.querySelector('[data-ag-ventanas]');
     const lista = formulario.querySelector('[data-ag-ventanas-lista]');

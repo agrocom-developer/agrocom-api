@@ -4,7 +4,6 @@ namespace App\Dominios\Comercial\Aplicacion;
 
 use App\Dominios\Campania\Contratos\LecturaCampania;
 use App\Dominios\Comercial\Dominio\Excepciones\CampaniaCerrada;
-use App\Dominios\Comercial\Dominio\Excepciones\CampaniaDeOtroCliente;
 use App\Dominios\Comercial\Dominio\Excepciones\VentanasContratoSolapadas;
 use App\Dominios\Comercial\Dominio\ValidadorSolapamientoVentanas;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
@@ -28,10 +27,9 @@ use Illuminate\Support\Facades\DB;
  * toca — el cambio de estado es responsabilidad exclusiva de
  * `Aplicacion/CambiarEstadoContrato`.
  *
- * Misma guarda de campaña que `CrearContrato` (ADR 0015 punto 1, corregido
- * el 8/9/2026, y corrección de arquitectura del 8/9/2026): la campaña
- * elegida tiene que ser del mismo cliente y no puede estar `cerrada` — ver
- * ese docblock para el criterio de lectura vía `LecturaCampania`.
+ * Misma guarda de campaña que `CrearContrato` (ADR 0015 punto 1, corregida
+ * el 15/9/2026): la campaña elegida no puede estar `cerrada` — ver ese
+ * docblock para el criterio de lectura vía `LecturaCampania`.
  */
 final class ActualizarContrato
 {
@@ -42,12 +40,11 @@ final class ActualizarContrato
      * @param  list<array{id: int|null, hora_inicio: string, hora_fin: string}>  $ventanas  set completo y definitivo
      *
      * @throws VentanasContratoSolapadas si dos ventanas del set final se solapan entre sí.
-     * @throws CampaniaDeOtroCliente si la campaña elegida no es del cliente del contrato.
      * @throws CampaniaCerrada si la campaña elegida está `cerrada`.
      */
     public function ejecutar(Contrato $contrato, array $datosContrato, array $ventanas): Contrato
     {
-        $this->verificarCampania((int) $datosContrato['cliente_id'], (int) $datosContrato['campania_id']);
+        $this->verificarCampania((int) $datosContrato['campania_id']);
 
         $solapamiento = ValidadorSolapamientoVentanas::primerSolapamiento($ventanas);
 
@@ -109,20 +106,13 @@ final class ActualizarContrato
         }
     }
 
-    /**
-     * @throws CampaniaDeOtroCliente si la campaña elegida no es del cliente del contrato.
-     * @throws CampaniaCerrada si la campaña elegida está `cerrada`.
-     */
-    private function verificarCampania(int $clienteId, int $campaniaId): void
+    /** @throws CampaniaCerrada si la campaña elegida está `cerrada`. */
+    private function verificarCampania(int $campaniaId): void
     {
         $campania = $this->lecturaCampania->obtener($campaniaId);
 
         if ($campania === null) {
             return;
-        }
-
-        if ($campania->clienteId !== $clienteId) {
-            throw CampaniaDeOtroCliente::paraCampania($campania->codigo);
         }
 
         if ($campania->cerrada) {

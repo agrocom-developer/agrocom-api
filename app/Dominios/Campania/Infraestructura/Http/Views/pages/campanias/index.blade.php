@@ -8,12 +8,11 @@
     Datos esperados (ver CampaniasController::index()): la cáscara de
     CascaraPanel, más:
     - $campanias (LengthAwarePaginator<Campania>): fecha de inicio descendente.
-    - $clientesDisponibles (Collection<int, string>): id => razón social,
-      para el <select> del filtro por cliente.
-    - $etiquetasCliente (array<int, string>): id => razón social, acotado a
-      los clientes de la página actual — evita un N+1 al pintar la tabla.
-    - $filtros (array{q: string, cliente_id: int|null}): filtros aplicados,
-      para dejar los campos con el valor tras el submit.
+    - $filtros (array{q: string}): filtros aplicados, para dejar los campos
+      con el valor tras el submit.
+
+    Sin filtro ni columna de cliente desde la corrección del 15/9/2026: la
+    campaña es un catálogo compartido, no de un cliente.
 
     Gateada por `campania.campania.ver`, verificado server-side en el
     controlador. El botón "Nueva campaña" y las acciones de cambio de estado
@@ -86,30 +85,12 @@
                 </div>
             @endif
 
-            @if ($hayFiltrosActivos || $campanias->isNotEmpty())
-                <form method="GET" action="{{ route('panel.campanias.index') }}" class="ag-filtros ag-campanias__filtros">
-                    <input type="hidden" name="q" value="{{ $filtros['q'] }}">
-                <x-atoms.select
-                    name="cliente_id"
-                    id="filtro-cliente"
-                    label="{{ __('campania.campanias.filtro_cliente') }}"
-                    placeholder="{{ __('campania.campanias.filtro_cliente_placeholder') }}"
-                    :options="$clientesDisponibles"
-                    value="{{ $filtros['cliente_id'] }}"
-                />
-
+            @if ($hayFiltrosActivos)
                 <div class="ag-filtros__acciones ag-campanias__filtros-acciones">
-                    <x-atoms.button type="submit" variant="primary" size="md" icon="search">
-                        {{ __('campania.campanias.filtrar') }}
+                    <x-atoms.button href="{{ route('panel.campanias.index') }}" variant="text" size="md">
+                        {{ __('campania.campanias.limpiar_filtro') }}
                     </x-atoms.button>
-
-                    @if ($hayFiltrosActivos)
-                        <x-atoms.button href="{{ route('panel.campanias.index') }}" variant="text" size="md">
-                            {{ __('campania.campanias.limpiar_filtro') }}
-                        </x-atoms.button>
-                    @endif
                 </div>
-                </form>
             @endif
 
             @if ($campanias->isEmpty())
@@ -128,7 +109,6 @@
                 <div class="ag-campanias__tabla" role="table">
                     <div class="ag-campanias__head" role="row">
                         <span role="columnheader" class="ag-campanias__indice">{{ __('ui.tabla.col_indice') }}</span>
-                        <span role="columnheader">{{ __('campania.campanias.col_cliente') }}</span>
                         <span role="columnheader">{{ __('campania.campanias.col_codigo') }}</span>
                         <span role="columnheader">{{ __('campania.campanias.col_nombre') }}</span>
                         <span role="columnheader">{{ __('campania.campanias.col_vigencia') }}</span>
@@ -150,7 +130,6 @@
                             <span role="cell" class="ag-campanias__indice">
                                 {{ ($campanias->currentPage() - 1) * $campanias->perPage() + $loop->iteration }}
                             </span>
-                            <span role="cell">{{ $etiquetasCliente[$campania->cliente_id] ?? '—' }}</span>
                             <span role="cell" class="ag-campanias__codigo">{{ $campania->codigo }}</span>
                             <span role="cell">{{ $campania->nombre ?? '—' }}</span>
                             <span role="cell" class="ag-campanias__mono">

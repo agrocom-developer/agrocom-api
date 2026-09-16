@@ -16,29 +16,23 @@ use App\Dominios\Campania\Infraestructura\Http\Requests\CrearCampaniaRequest;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 /**
  * `GET/POST/PUT /panel/campanias*` (ADR 0015 punto 1, tarea 69): alta y
- * mantenimiento de campañas **del cliente** (corregido el 8/9/2026). Mismo
- * molde que `ContratosController`: sin `destroy` (la baja es una transición
- * de estado hacia `cerrada`, no un soft delete fuera de la máquina de
- * estados — invariante 7), sin sub-entidad.
+ * mantenimiento del catálogo de campañas — compartido entre clientes desde
+ * la corrección del 15/9/2026. Mismo molde que `ContratosController`: sin
+ * `destroy` (la baja es una transición de estado hacia `cerrada`, no un soft
+ * delete fuera de la máquina de estados — invariante 7), sin sub-entidad.
  *
  * Cuatro permisos de grano fino
  * (`campania.campania.ver`/`.crear`/`.editar`/`.cambiar_estado`), verificados
  * DENTRO del controlador contra el ROL ACTIVO vía {@see AutorizacionPanelWeb}.
  * `.cambiar_estado` es exclusivo del rol `dueno` en `SeguridadSeeder` — "solo
- * el dueño cierra una campaña" (ADR 0015, prompt de la tarea 69) — pero eso es
- * dato del catálogo de permisos, no una guarda extra acá. Ninguna regla de
- * negocio acá: los casos de uso de `Aplicacion/` hacen el trabajo.
- *
- * `clientesDisponibles()`/`etiquetasCliente()` leen `com_clientes` con
- * `DB::table` directo (ADR 0003 regla 3, mismo criterio que
- * `GastosController::basesDisponibles()`), sin importar el modelo Eloquent
- * `Cliente` de `Comercial` — cross-módulo, así que solo FK + entero plano.
+ * el dueño cierra una campaña" (ADR 0015, prompt de la tarea 69), y ahora
+ * cierra la campaña para TODOS los clientes que la usan, no solo para uno.
+ * Ninguna regla de negocio acá: los casos de uso de `Aplicacion/` hacen el
+ * trabajo.
  */
 final class CampaniasController
 {
@@ -57,16 +51,13 @@ final class CampaniasController
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
         $busqueda = $request->string('q')->toString();
-        $clienteId = $request->integer('cliente_id') ?: null;
 
-        $campanias = $listarCampanias->ejecutar($busqueda !== '' ? $busqueda : null, $clienteId);
+        $campanias = $listarCampanias->ejecutar($busqueda !== '' ? $busqueda : null);
 
         return view('campania::pages.campanias.index', [
             ...$this->autorizacion->cascara($request),
             'campanias' => $campanias,
-            'clientesDisponibles' => $this->clientesDisponibles(),
-            'etiquetasCliente' => $this->etiquetasCliente($campanias->pluck('cliente_id')->unique()->all()),
-            'filtros' => ['q' => $busqueda, 'cliente_id' => $clienteId],
+            'filtros' => ['q' => $busqueda],
         ]);
     }
 
@@ -76,11 +67,6 @@ final class CampaniasController
 
         return view('campania::pages.campanias.create', [
             ...$this->autorizacion->cascara($request),
-            'clientesDisponibles' => $this->clientesDisponibles(),
-            // Acceso directo desde el aside de `panel.clientes.edit` (tarea
-            // "resumen de cliente"): con ?cliente_id=, el formulario arranca
-            // con ese cliente ya elegido — ver _formulario.blade.php.
-            'clienteIdPreseleccionado' => $request->integer('cliente_id') ?: null,
         ]);
     }
 
@@ -92,7 +78,6 @@ final class CampaniasController
 
         try {
             $crearCampania->ejecutar(
-                (int) $datos['cliente_id'],
                 (string) $datos['codigo'],
                 $this->cadenaONull($datos['nombre'] ?? null),
                 (string) $datos['fecha_inicio'],
@@ -118,7 +103,6 @@ final class CampaniasController
         return view('campania::pages.campanias.edit', [
             ...$this->autorizacion->cascara($request),
             'campania' => $campania,
-            'clientesDisponibles' => $this->clientesDisponibles(),
         ]);
     }
 
@@ -131,7 +115,6 @@ final class CampaniasController
         try {
             $actualizarCampania->ejecutar(
                 $campania,
-                (int) $datos['cliente_id'],
                 (string) $datos['codigo'],
                 $this->cadenaONull($datos['nombre'] ?? null),
                 (string) $datos['fecha_inicio'],
@@ -172,35 +155,5 @@ final class CampaniasController
     private function cadenaONull(mixed $valor): ?string
     {
         return $valor === null || $valor === '' ? null : (string) $valor;
-    }
-
-    /** @return Collection<int, string> */
-    private function clientesDisponibles(): Collection
-    {
-        return DB::table('com_clientes')
-            ->whereNull('deleted_at')
-            ->orderBy('razon_social')
-            ->pluck('razon_social', 'id')
-            ->mapWithKeys(fn (string $razonSocial, int|string $id): array => [(int) $id => $razonSocial]);
-    }
-
-    /**
-     * Etiquetas de cliente acotadas a la página actual del listado, mismo
-     * criterio de lectura directa que `GastosController::etiquetasTrabajo()`.
-     *
-     * @param  list<int>  $ids
-     * @return array<int, string>
-     */
-    private function etiquetasCliente(array $ids): array
-    {
-        if ($ids === []) {
-            return [];
-        }
-
-        return DB::table('com_clientes')
-            ->whereIn('id', $ids)
-            ->pluck('razon_social', 'id')
-            ->mapWithKeys(fn (string $razonSocial, int|string $id): array => [(int) $id => $razonSocial])
-            ->all();
     }
 }

@@ -9,7 +9,6 @@ use App\Dominios\Comercial\Aplicacion\ListarContratos;
 use App\Dominios\Comercial\Dominio\EstadoContrato;
 use App\Dominios\Comercial\Dominio\Excepciones\ActivacionContratoNoDisponible;
 use App\Dominios\Comercial\Dominio\Excepciones\CampaniaCerrada;
-use App\Dominios\Comercial\Dominio\Excepciones\CampaniaDeOtroCliente;
 use App\Dominios\Comercial\Dominio\Excepciones\TransicionContratoNoPermitida;
 use App\Dominios\Comercial\Dominio\Excepciones\VentanasContratoSolapadas;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
@@ -39,10 +38,12 @@ use Illuminate\View\View;
  * uso de `Aplicacion/` hacen el trabajo, incluido el cálculo de
  * `monto_total` y el upsert de contrato+ventanas en una sola transacción.
  *
- * `campaniasParaFormulario()`/`etiquetasCampania()` leen `cpn_campanias` con
- * `DB::table` directo (ADR 0003 regla 3, mismo criterio que
+ * `campaniasParaFormulario()`/`campaniasParaFiltro()` leen `cpn_campanias`
+ * con `DB::table` directo (ADR 0003 regla 3, mismo criterio que
  * `clientesActivos()` con el modelo Eloquent — acá no aplica porque
- * `Campania` es de otro módulo), sin importar su modelo Eloquent.
+ * `Campania` es de otro módulo), sin importar su modelo Eloquent. Sin
+ * `cliente_id` (ADR 0015, corregido el 15/9/2026): la campaña es un catálogo
+ * compartido, todas las campañas están disponibles para cualquier cliente.
  */
 final class ContratosController
 {
@@ -111,7 +112,7 @@ final class ContratosController
                 ->route('panel.contratos.create')
                 ->withInput()
                 ->withErrors(['ventanas' => $excepcion->getMessage()]);
-        } catch (CampaniaDeOtroCliente|CampaniaCerrada $excepcion) {
+        } catch (CampaniaCerrada $excepcion) {
             return redirect()
                 ->route('panel.contratos.create')
                 ->withInput()
@@ -159,7 +160,7 @@ final class ContratosController
                 ->route('panel.contratos.edit', $contrato)
                 ->withInput()
                 ->withErrors(['ventanas' => $excepcion->getMessage()]);
-        } catch (CampaniaDeOtroCliente|CampaniaCerrada $excepcion) {
+        } catch (CampaniaCerrada $excepcion) {
             return redirect()
                 ->route('panel.contratos.edit', $contrato)
                 ->withInput()
@@ -197,13 +198,12 @@ final class ContratosController
     }
 
     /**
-     * Todas las campañas del sistema, con su `cliente_id` — el formulario
-     * (`contratos-form.js`) filtra en cliente cuáles mostrar según el
-     * cliente elegido, mismo patrón que rubro/subrubro en gastos.
+     * Todas las campañas del catálogo (ADR 0015, corregido el 15/9/2026: la
+     * campaña es compartida, no hay que filtrarla por cliente).
      *
      * `stdClass`, no un shape tipado: es lo que devuelve el query builder
      * plano (ADR 0003 regla 3), no el modelo Eloquent `Campania` de otro
-     * módulo. Trae `id`, `codigo` (string) y `cliente_id` (int).
+     * módulo. Trae `id` y `codigo` (string).
      *
      * @return Collection<int, \stdClass>
      */
@@ -212,19 +212,17 @@ final class ContratosController
         return DB::table('cpn_campanias')
             ->whereNull('deleted_at')
             ->orderBy('codigo')
-            ->get(['id', 'codigo', 'cliente_id']);
+            ->get(['id', 'codigo']);
     }
 
-    /** @return Collection<int, non-falsy-string> id => "código — cliente", para el filtro del listado. */
+    /** @return Collection<int, string> id => código, para el filtro del listado. */
     private function campaniasParaFiltro(): Collection
     {
         return DB::table('cpn_campanias')
-            ->join('com_clientes', 'com_clientes.id', '=', 'cpn_campanias.cliente_id')
-            ->whereNull('cpn_campanias.deleted_at')
-            ->orderBy('com_clientes.razon_social')
-            ->orderBy('cpn_campanias.codigo')
-            ->get(['cpn_campanias.id', 'cpn_campanias.codigo', 'com_clientes.razon_social'])
-            ->mapWithKeys(fn (object $fila): array => [(int) $fila->id => sprintf('%s — %s', $fila->codigo, $fila->razon_social)]);
+            ->whereNull('deleted_at')
+            ->orderBy('codigo')
+            ->pluck('codigo', 'id')
+            ->mapWithKeys(fn (string $codigo, int|string $id): array => [(int) $id => $codigo]);
     }
 
     /**
