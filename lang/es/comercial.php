@@ -208,7 +208,7 @@ return [
         'aside_lotes_hectareas_propiedad' => 'Hectáreas totales (declaradas)',
         'aside_lotes_vacio_titulo' => 'Sin lotes todavía',
         'aside_lotes_vacio_detalle' => 'Los lotes de esta propiedad se dan de alta desde su propia ficha.',
-        'aside_lotes_accion' => 'Nuevo lote',
+        'aside_lotes_accion' => 'Ver lotes',
 
         'aside_siembra_titulo' => 'Siembra actual',
         'aside_siembra_campania' => 'Campaña',

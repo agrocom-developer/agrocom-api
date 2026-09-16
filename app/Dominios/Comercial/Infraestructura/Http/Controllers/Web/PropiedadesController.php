@@ -321,10 +321,15 @@ final class PropiedadesController
                 ],
                 'vacioTitulo' => __('comercial.propiedades.aside_lotes_vacio_titulo'),
                 'vacioDetalle' => __('comercial.propiedades.aside_lotes_vacio_detalle'),
-                'mostrarAccion' => $puedeCrearLotes,
+                // Manda a la LISTA filtrada por esta propiedad (16/9/2026),
+                // no directo al alta: desde ahí ya se ve qué lotes tiene y el
+                // botón "Nuevo lote" de esa pantalla arrastra el mismo
+                // propiedad_id (con cliente ya resuelto, ver
+                // lotes/_formulario.blade.php).
+                'mostrarAccion' => $puedeVerLotes,
                 'accion' => [
                     'label' => __('comercial.propiedades.aside_lotes_accion'),
-                    'href' => route('panel.lotes.create', ['propiedad_id' => $propiedad->id]),
+                    'href' => route('panel.lotes.index', ['propiedad_id' => $propiedad->id]),
                 ],
             ];
         }

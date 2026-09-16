@@ -33,7 +33,11 @@
     // alta, desde ?propiedad_id= del acceso rápido del formulario de
     // contrato — `edit()` no lo pasa (no aplica editando un lote existente).
     $propiedadId = old('propiedad_id', $lote?->propiedad_id ?? $propiedadIdPreseleccionado ?? '');
-    $clienteId = old('cliente_id', $lote?->propiedad?->cliente_id ?? '');
+    // Alta rápida con ?propiedad_id= (tarea "contratos-lotes"): sin lote
+    // todavía, el cliente se resuelve de la propiedad preseleccionada, no
+    // solo de $lote->propiedad — si no, el select de cliente queda vacío y
+    // el cascade de lotes-form.js arranca sin filtrar (16/9/2026).
+    $clienteId = old('cliente_id', $lote?->propiedad?->cliente_id ?? $propiedadesDisponibles->get($propiedadIdPreseleccionado ?? 0)?->cliente_id ?? '');
     $datosLote = [
         'codigo' => old('lote.codigo', $lote?->codigo ?? ''),
         'hectareas' => old('lote.hectareas', $lote?->hectareas ?? ''),
