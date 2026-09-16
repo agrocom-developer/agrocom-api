@@ -103,12 +103,12 @@ return [
         'aside_propiedades_vacio_titulo' => 'Sin propiedades todavía',
         'aside_propiedades_vacio_detalle' => 'Registrá la primera propiedad de este cliente para después cargar sus lotes.',
         'aside_propiedades_accion' => 'Nueva propiedad',
-        'aside_campanias_titulo' => 'Campañas',
-        'aside_campanias_total' => 'Total',
-        'aside_campanias_activas' => 'Activas',
-        'aside_campanias_vacio_titulo' => 'Sin campañas todavía',
-        'aside_campanias_vacio_detalle' => 'Una campaña agrupa los contratos y gastos de este cliente en el tiempo.',
-        'aside_campanias_accion' => 'Nueva campaña',
+        'aside_ordenes_titulo' => 'Aplicación',
+        'aside_ordenes_total' => 'Total',
+        'aside_ordenes_vigentes' => 'Vigentes',
+        'aside_ordenes_vacio_titulo' => 'Sin órdenes todavía',
+        'aside_ordenes_vacio_detalle' => 'Las órdenes de aplicación de este cliente van a aparecer acá una vez que tenga un contrato vigente.',
+        'aside_ordenes_accion' => 'Nueva orden de aplicación',
     ],
 
     // Los nombres visibles cambian; las claves siguen siendo las mismas que

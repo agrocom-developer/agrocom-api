@@ -42,11 +42,14 @@
     Aside pegajoso del arquetipo (tarea "resumen de cliente", reemplaza la
     decisión anterior documentada en runs/33.md de omitirlo): SOLO en
     edición — un cliente recién creado no puede tener contratos, propiedades
-    ni campañas todavía. Por cada categoría, `summary-card` si ya hay datos
-    o `empty-state` compacto con acceso directo a "Nuevo contrato"/"Nueva
-    propiedad"/"Nueva campaña" (con `cliente_id` precargado) si no hay nada
-    — nunca las dos cosas a la vez. Es el primer tramo del flujo cliente →
-    contrato/propiedad → lote.
+    ni órdenes de aplicación todavía. Por cada categoría, `summary-card` si
+    ya hay datos o `empty-state` compacto con acceso directo a "Nuevo
+    contrato"/"Nueva propiedad" (con `cliente_id` precargado) o "Nueva orden
+    de aplicación" (sin precarga: la orden se filtra por contrato, no por
+    cliente, ver `OrdenesController::create()`) si no hay nada — nunca las
+    dos cosas a la vez. Es el primer tramo del flujo cliente →
+    contrato/propiedad → lote. "Campañas" salió de este aside el 15/9/2026
+    (ADR 0015): dejó de ser del cliente, ver `ClientesController::resumenRelacionado()`.
 --}}
 @php
     $esEdicion = $cliente !== null;

@@ -14,6 +14,7 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\ActualizarClienteRequest;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\CrearClienteRequest;
+use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -34,13 +35,17 @@ use Illuminate\View\View;
  * acá: los casos de uso de `Aplicacion/` hacen el trabajo, incluido el
  * upsert de cliente+contactos en una sola transacción.
  *
- * `resumenRelacionado()` (tarea "resumen de cliente"): la ficha de edición
- * dobla de vista, ya que no hay una pantalla de "ver cliente" propia (mismo
- * criterio documentado en `_formulario.blade.php`) — el aside con Contratos/
- * Propiedades/Campañas del cliente vive ahí. `store()` y `update()` (esta
- * última, 15/9/2026) redirigen a la propia ficha de edición (no al listado)
- * para que ese aside —con sus accesos directos a "Nuevo contrato"/"Nueva
- * propiedad"/"Nueva campaña"— quede a un clic, sin pasar por el listado.
+ * `resumenRelacionado()` (tarea "resumen de cliente"; corregida el
+ * 15/9/2026): la ficha de edición dobla de vista, ya que no hay una pantalla
+ * de "ver cliente" propia (mismo criterio documentado en
+ * `_formulario.blade.php`) — el aside con Contratos/Propiedades/Aplicación
+ * del cliente vive ahí. "Campañas" salió del aside ese mismo día: dejó de
+ * ser del cliente (ADR 0015, corrección del 15/9/2026) — es catálogo
+ * compartido, y lo que sí es del cliente es la Orden de Aplicación que
+ * cuelga de su contrato. `store()` y `update()` redirigen a la propia ficha
+ * de edición (no al listado) para que ese aside —con sus accesos directos a
+ * "Nuevo contrato"/"Nueva propiedad"/"Nueva orden de aplicación"— quede a un
+ * clic, sin pasar por el listado.
  *
  * `logoArchivo()` (HU-75, tarea 91): mismo criterio que
  * `OrganizacionController::logoArchivo()` (ADR 0019) — resuelve `logo_path`
@@ -219,11 +224,11 @@ final class ClientesController
     }
 
     /**
-     * Resumen de Contratos/Propiedades/Campañas de un cliente, para el aside
-     * de `edit.blade.php` (tarea "resumen de cliente"): solo tiene sentido en
-     * edición — un cliente recién creado nunca puede tener ya contratos,
-     * propiedades ni campañas propias (todos nacen con un `cliente_id` de un
-     * cliente que ya existe).
+     * Resumen de Contratos/Propiedades/Aplicación de un cliente, para el
+     * aside de `edit.blade.php` (tarea "resumen de cliente"): solo tiene
+     * sentido en edición — un cliente recién creado nunca puede tener ya
+     * contratos, propiedades ni órdenes de aplicación propias (todos nacen
+     * de un `cliente_id`/`contrato_id` de un cliente que ya existe).
      *
      * Gateado por los permisos de grano fino de CADA módulo contra el ROL
      * ACTIVO (invariante 10 de CLAUDE.md), no por `comercial.cliente.*`: ver
@@ -235,12 +240,14 @@ final class ClientesController
      * atajo sin revelar conteos que el usuario no puede consultar. También
      * evita la consulta cuando no hace falta (sin `.ver` no se cuenta nada).
      *
-     * Campañas es lectura cross-módulo (ADR 0003 regla 3): `DB::table`
-     * directo sobre `cpn_campanias`, sin importar el modelo Eloquent
-     * `Campania` de otro módulo — mismo criterio que
-     * `ContratosController::campaniasParaFormulario()`. Contratos y
-     * Propiedades sí usan las relaciones Eloquent de `Cliente` (mismo
-     * módulo).
+     * Corrección del 15/9/2026 (ADR 0015): "Campañas" sale del aside — dejó
+     * de ser del cliente, es catálogo compartido sin `cliente_id`. En su
+     * lugar entra "Aplicación" (Orden de Aplicación), que sí es del cliente
+     * vía su contrato. Aplicación es lectura cross-módulo (ADR 0003 regla
+     * 3): `DB::table` directo sobre `ope_ordenes_aplicacion`, sin importar
+     * el modelo Eloquent `OrdenAplicacion` de `Operaciones` — mismo criterio
+     * que antes usaba Campañas. Contratos y Propiedades sí usan las
+     * relaciones Eloquent de `Cliente` (mismo módulo).
      *
      * @return list<array{
      *     titulo: string,
@@ -311,39 +318,40 @@ final class ClientesController
             ];
         }
 
-        $puedeVerCampanias = $this->autorizacion->tienePermiso($request, 'campania.campania.ver');
-        $puedeCrearCampanias = $this->autorizacion->tienePermiso($request, 'campania.campania.crear');
+        $puedeVerOrdenes = $this->autorizacion->tienePermiso($request, 'operaciones.orden.ver');
+        $puedeCrearOrdenes = $this->autorizacion->tienePermiso($request, 'operaciones.orden.crear');
 
-        if ($puedeVerCampanias || $puedeCrearCampanias) {
-            $totalCampanias = 0;
-            $campaniasActivas = 0;
+        if ($puedeVerOrdenes || $puedeCrearOrdenes) {
+            $totalOrdenes = 0;
+            $ordenesVigentes = 0;
 
-            if ($puedeVerCampanias) {
-                $totalCampanias = DB::table('cpn_campanias')
-                    ->where('cliente_id', $cliente->id)
+            if ($puedeVerOrdenes) {
+                $contratoIds = $cliente->contratos->pluck('id');
+                $totalOrdenes = DB::table('ope_ordenes_aplicacion')
+                    ->whereIn('contrato_id', $contratoIds)
                     ->whereNull('deleted_at')
                     ->count();
-                $campaniasActivas = DB::table('cpn_campanias')
-                    ->where('cliente_id', $cliente->id)
+                $ordenesVigentes = DB::table('ope_ordenes_aplicacion')
+                    ->whereIn('contrato_id', $contratoIds)
                     ->whereNull('deleted_at')
-                    ->where('estado', '<>', 'cerrada')
+                    ->where('estado', EstadoOrdenAplicacion::Vigente->value)
                     ->count();
             }
 
             $resumen[] = [
-                'titulo' => __('comercial.clientes.aside_campanias_titulo'),
-                'icono' => 'calendar_month',
-                'tieneDatos' => $puedeVerCampanias && $totalCampanias > 0,
+                'titulo' => __('comercial.clientes.aside_ordenes_titulo'),
+                'icono' => 'assignment',
+                'tieneDatos' => $puedeVerOrdenes && $totalOrdenes > 0,
                 'items' => [
-                    ['label' => __('comercial.clientes.aside_campanias_total'), 'value' => (string) $totalCampanias, 'mono' => true],
-                    ['label' => __('comercial.clientes.aside_campanias_activas'), 'value' => (string) $campaniasActivas, 'mono' => true],
+                    ['label' => __('comercial.clientes.aside_ordenes_total'), 'value' => (string) $totalOrdenes, 'mono' => true],
+                    ['label' => __('comercial.clientes.aside_ordenes_vigentes'), 'value' => (string) $ordenesVigentes, 'mono' => true],
                 ],
-                'vacioTitulo' => __('comercial.clientes.aside_campanias_vacio_titulo'),
-                'vacioDetalle' => __('comercial.clientes.aside_campanias_vacio_detalle'),
-                'mostrarAccion' => $puedeCrearCampanias,
+                'vacioTitulo' => __('comercial.clientes.aside_ordenes_vacio_titulo'),
+                'vacioDetalle' => __('comercial.clientes.aside_ordenes_vacio_detalle'),
+                'mostrarAccion' => $puedeCrearOrdenes,
                 'accion' => [
-                    'label' => __('comercial.clientes.aside_campanias_accion'),
-                    'href' => route('panel.campanias.create', ['cliente_id' => $cliente->id]),
+                    'label' => __('comercial.clientes.aside_ordenes_accion'),
+                    'href' => route('panel.ordenes.create'),
                 ],
             ];
         }
