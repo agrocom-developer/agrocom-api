@@ -61,6 +61,10 @@ import { cargarGoogleMaps } from '../shared/cargador-google-maps.js';
 const CENTRO_POR_DEFECTO = { lat: -17.34, lng: -62.85 };
 const ZOOM_SIN_GEOMETRIA = 13;
 const ZOOM_MAXIMO_AL_ENCUADRAR = 17;
+// La cámara no aleja más allá de una vista tipo país (16/9/2026, pedido
+// directo): con la máscara del tamaño de Sudamérica de fondo, alejar del
+// todo mostraba el rectángulo entero — esto lo corta antes.
+const ZOOM_MINIMO = 6;
 
 /** Historial de deshacer: alcanza con unos pocos pasos — no es un editor de
  *  vectores, es el perímetro de UN lote. */
@@ -478,7 +482,7 @@ function inicializarLeaflet(contenedor, refs) {
         }
     };
 
-    const mapa = L.map(mapaDiv, { zoomControl: false }).setView([CENTRO_POR_DEFECTO.lat, CENTRO_POR_DEFECTO.lng], ZOOM_SIN_GEOMETRIA);
+    const mapa = L.map(mapaDiv, { zoomControl: false, minZoom: ZOOM_MINIMO }).setView([CENTRO_POR_DEFECTO.lat, CENTRO_POR_DEFECTO.lng], ZOOM_SIN_GEOMETRIA);
     L.control.zoom({ position: 'bottomleft' }).addTo(mapa);
 
     let esSatelital = true;
@@ -813,6 +817,7 @@ function inicializarGoogle(contenedor, refs, googleMapsNs) {
     const mapa = new googleMapsNs.Map(mapaDiv, {
         center: CENTRO_POR_DEFECTO,
         zoom: ZOOM_SIN_GEOMETRIA,
+        minZoom: ZOOM_MINIMO,
         // HYBRID (satelital + nombres/caminos), no SATELLITE a secas: sin
         // etiquetas, un lote se pierde en un mar de verde indistinguible del
         // vecino — es lo mismo que muestra el Google Maps normal cuando pasás
