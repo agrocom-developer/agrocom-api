@@ -2,14 +2,16 @@
 
 namespace App\Dominios\Comercial\Infraestructura\Http\Requests;
 
-use Closure;
+use App\Dominios\Comercial\Dominio\ColorPropiedad;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 /**
- * `PUT /panel/propiedades/{propiedad}` (ADR 0018). Mismo criterio que
+ * `PUT /panel/propiedades/{propiedad}` (ADR 0018; ubicación estructurada —
+ * adenda 16/9/2026 a ADR 0018 punto 1). Mismo criterio que
  * `CrearPropiedadRequest` para el nombre (sin regla `unique`, ver su
- * docblock).
+ * docblock) y para la cadena geográfica (la consistencia real la valida el
+ * caso de uso, no este Request).
  */
 final class ActualizarPropiedadRequest extends FormRequest
 {
@@ -23,13 +25,24 @@ final class ActualizarPropiedadRequest extends FormRequest
                 Rule::exists('com_clientes', 'id')->whereNull('deleted_at'),
             ],
             'nombre' => ['required', 'string', 'max:150'],
-            'ubicacion' => ['nullable', 'string', 'max:255'],
-            'departamento' => ['nullable', 'string', 'max:100'],
-            'municipio' => ['nullable', 'string', 'max:100'],
+            'hectareas' => ['nullable', 'numeric', 'gt:0'],
+            'departamento_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('com_departamentos', 'id')->whereNull('deleted_at'),
+            ],
+            'provincia_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('com_provincias', 'id')->whereNull('deleted_at'),
+            ],
+            'municipio_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('com_municipios', 'id')->whereNull('deleted_at'),
+            ],
             'localidad' => ['nullable', 'string', 'max:150'],
-            'latitud' => ['nullable', 'required_with:longitud', 'numeric', 'between:-90,90'],
-            'longitud' => ['nullable', 'required_with:latitud', 'numeric', 'between:-180,180'],
-            'geometria' => ['nullable', 'string', $this->reglaGeometriaValida()],
+            'color' => ['nullable', 'string', Rule::in(ColorPropiedad::valores())],
         ];
     }
 
@@ -39,27 +52,11 @@ final class ActualizarPropiedadRequest extends FormRequest
         return [
             'cliente_id.required' => 'Seleccioná un cliente.',
             'cliente_id.exists' => 'El cliente seleccionado no es válido.',
-            'latitud.required_with' => __('comercial.propiedades.error_coordenada_incompleta'),
-            'longitud.required_with' => __('comercial.propiedades.error_coordenada_incompleta'),
+            'hectareas.gt' => 'Las hectáreas tienen que ser mayores a cero.',
+            'departamento_id.exists' => 'El departamento seleccionado no es válido.',
+            'provincia_id.exists' => 'La provincia seleccionada no es válida.',
+            'municipio_id.exists' => 'El municipio seleccionado no es válido.',
+            'color.in' => 'Elegí un color de la paleta disponible.',
         ];
-    }
-
-    private function reglaGeometriaValida(): Closure
-    {
-        return function (string $atributo, mixed $valor, Closure $falla): void {
-            if (! is_string($valor) || $valor === '') {
-                return;
-            }
-
-            $decodificado = json_decode($valor, true);
-
-            $esMultiPolygonMinimo = is_array($decodificado)
-                && ($decodificado['type'] ?? null) === 'MultiPolygon'
-                && is_array($decodificado['coordinates'] ?? null);
-
-            if (! $esMultiPolygonMinimo) {
-                $falla('comercial.propiedades.error_geometria_invalida')->translate();
-            }
-        };
     }
 }

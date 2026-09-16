@@ -2,48 +2,57 @@
 
 namespace App\Dominios\Comercial\Aplicacion;
 
+use App\Dominios\Comercial\Aplicacion\Propiedad\ValidadorUbicacionGeografica;
 use App\Dominios\Comercial\Dominio\Excepciones\PropiedadDuplicada;
+use App\Dominios\Comercial\Dominio\Excepciones\UbicacionGeograficaInconsistente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use Illuminate\Database\QueryException;
 
 /**
- * Alta de una propiedad (ADR 0020): nivel de terreno entre `Cliente` y
- * `Lote`. Sin sub-entidad propia en esta operación (a diferencia de
- * `CrearCliente`, que trae sus contactos en la misma transacción): los
- * lotes de una propiedad se cargan por su propia pantalla
- * (`LotesController`), no acá — `geometria` es un atributo propio de la
- * propiedad (los terrenos que la componen), no una sub-entidad.
+ * Alta de una propiedad (ADR 0020; ubicación estructurada — adenda
+ * 16/9/2026 a ADR 0018 punto 1). Sin sub-entidad propia en esta operación
+ * (a diferencia de `CrearCliente`, que trae sus contactos en la misma
+ * transacción): los lotes de una propiedad se cargan por su propia
+ * pantalla (`LotesController`), no acá.
+ *
+ * Latitud/longitud/geometría NO se cargan en el alta (ver
+ * `ActualizarUbicacionMapaPropiedad`, tarea aparte tal como ADR 0020 ya
+ * anticipaba): un registro recién creado no tiene todavía nada que ubicar
+ * en el mapa, mismo criterio que el aside de resumen relacionado (§6.3.1 de
+ * la guía de pantalla), que tampoco existe en alta.
  */
 final class CrearPropiedad
 {
     /**
-     * @param  array<string, mixed>|null  $geometria
-     *
      * @throws PropiedadDuplicada si el nombre ya pertenece a otra propiedad
      *                            activa del mismo cliente (índice parcial
      *                            `com_propiedades_nombre_unico`).
+     * @throws UbicacionGeograficaInconsistente
+     *                                          si la provincia no pertenece al
+     *                                          departamento, o el municipio no pertenece
+     *                                          a la provincia.
      */
     public function ejecutar(
         int $clienteId,
         string $nombre,
-        ?string $ubicacion,
-        ?string $departamento,
-        ?string $municipio,
+        ?string $hectareas,
+        ?int $departamentoId,
+        ?int $provinciaId,
+        ?int $municipioId,
         ?string $localidad,
-        ?string $latitud,
-        ?string $longitud,
-        ?array $geometria = null,
+        ?string $color,
     ): Propiedad {
+        ValidadorUbicacionGeografica::validar($departamentoId, $provinciaId, $municipioId);
+
         $propiedad = new Propiedad([
             'cliente_id' => $clienteId,
             'nombre' => $nombre,
-            'ubicacion' => $ubicacion,
-            'departamento' => $departamento,
-            'municipio' => $municipio,
+            'hectareas' => $hectareas,
+            'departamento_id' => $departamentoId,
+            'provincia_id' => $provinciaId,
+            'municipio_id' => $municipioId,
             'localidad' => $localidad,
-            'latitud' => $latitud,
-            'longitud' => $longitud,
-            'geometria' => $geometria,
+            'color' => $color,
         ]);
 
         try {
