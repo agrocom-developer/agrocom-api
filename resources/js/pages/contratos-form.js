@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const listaApilada = formulario.querySelector('[data-ag-lotes-agrupados]');
     const scriptDatos = formulario.querySelector('[data-ag-propiedades-lotes]');
     const linkCrearPropiedad = formulario.querySelector('#link-crear-propiedad');
-    const linkCrearLote = formulario.querySelector('#link-crear-lote');
+    const urlCrearLote = contenedorPaneles?.dataset.urlCrearLote || '';
 
     // Estado global accesible para restaurarBorrador
     let propiedadesSeleccionadas = new Set();
@@ -136,18 +136,17 @@ document.addEventListener('DOMContentLoaded', () => {
             if (lotes.length === 0) {
                 const sinDatos = document.createElement('p');
                 sinDatos.className = 'ag-contratos-form__lotes-empty-text';
-                sinDatos.textContent = formulario.querySelector('[data-ag-lotes-sin-datos]')?.querySelector('p')?.textContent || 'Sin lotes';
+                sinDatos.textContent = contenedorPaneles?.dataset.textoSinLotes || 'Sin lotes';
 
                 const linkCrearLotePropiedadPanel = document.createElement('a');
                 linkCrearLotePropiedadPanel.href = '#';
                 linkCrearLotePropiedadPanel.className = 'ag-contratos-form__lotes-empty-link';
                 linkCrearLotePropiedadPanel.setAttribute('data-ag-link-accent', '');
-                linkCrearLotePropiedadPanel.textContent = linkCrearLote?.textContent || 'Crear lote';
+                linkCrearLotePropiedadPanel.textContent = contenedorPaneles?.dataset.textoCrearLote || 'Crear lote';
                 linkCrearLotePropiedadPanel.addEventListener('click', (e) => {
                     e.preventDefault();
                     guardarBorrador();
-                    const urlCrear = linkCrearLote.href.split('?')[0];
-                    window.location.href = `${urlCrear}?propiedad_id=${propiedadId}&volver_a=${encodeURIComponent(window.location.href)}`;
+                    window.location.href = `${urlCrearLote}?propiedad_id=${propiedadId}&volver_a=${encodeURIComponent(window.location.href)}`;
                 });
 
                 listaCheckboxes.appendChild(sinDatos);

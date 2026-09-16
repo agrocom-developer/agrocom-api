@@ -261,7 +261,7 @@
             <label for="propiedades_multi" class="ag-field-label-with-action__label">
                 {{ __('comercial.contratos.campo_propiedad') }}
             </label>
-            <a href="#"
+            <a href="{{ route('panel.propiedades.create') }}"
                class="ag-field-label-with-action__link"
                data-ag-link-accent
                id="link-crear-propiedad"
@@ -286,8 +286,17 @@
             disabled
         />
 
-        {{-- Paneles de lotes agrupados por propiedad seleccionada --}}
-        <div class="ag-contratos-form__lotes-panels" data-ag-lotes-panels>
+        {{-- Paneles de lotes agrupados por propiedad seleccionada. La URL de
+             alta rápida de lote viaja en un data-attribute (no en un link
+             estático): el panel es 100% generado por JS por cada propiedad
+             elegida, sin un único elemento fijo del que copiarla. --}}
+        <div
+            class="ag-contratos-form__lotes-panels"
+            data-ag-lotes-panels
+            data-url-crear-lote="{{ route('panel.lotes.create') }}"
+            data-texto-crear-lote="{{ __('comercial.contratos.crear_lote') }}"
+            data-texto-sin-lotes="{{ __('comercial.contratos.lotes_sin_datos') }}"
+        >
         </div>
 
         {{-- Lista apilada de lotes ya agregados (agrupada por propiedad). --}}
