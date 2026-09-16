@@ -205,18 +205,21 @@ final class GastosController
      * ofrecerla en el formulario. `DB::table` directo (ADR 0003 regla 3):
      * `Campania` es de otro módulo.
      *
+     * Sin `cliente_id`/`com_clientes` (ADR 0015, corregido el 15/9/2026): la
+     * campaña es un catálogo compartido, sin cliente propio — el join que
+     * armaba la etiqueta "código — cliente" rompía con `column
+     * cpn_campanias.cliente_id does not exist` apenas se aplicó esa
+     * migración. La etiqueta pasa a ser solo el código.
+     *
      * @return Collection<int, non-falsy-string>
      */
     private function campaniasNoCerradas(): Collection
     {
         return DB::table('cpn_campanias')
-            ->join('com_clientes', 'com_clientes.id', '=', 'cpn_campanias.cliente_id')
-            ->whereNull('cpn_campanias.deleted_at')
-            ->where('cpn_campanias.estado', '!=', 'cerrada')
-            ->orderBy('com_clientes.razon_social')
-            ->orderBy('cpn_campanias.codigo')
-            ->get(['cpn_campanias.id', 'cpn_campanias.codigo', 'com_clientes.razon_social'])
-            ->mapWithKeys(fn (object $fila): array => [(int) $fila->id => sprintf('%s — %s', $fila->codigo, $fila->razon_social)]);
+            ->whereNull('deleted_at')
+            ->where('estado', '!=', 'cerrada')
+            ->orderBy('codigo')
+            ->pluck('codigo', 'id');
     }
 
     /**
@@ -226,17 +229,17 @@ final class GastosController
      * filtro del LISTADO tiene que poder encontrar gastos de una campaña ya
      * `cerrada`: cerrarla no borra su historial de costo.
      *
+     * Sin `cliente_id`/`com_clientes` (ADR 0015, corregido el 15/9/2026):
+     * mismo motivo que {@see self::campaniasNoCerradas()}.
+     *
      * @return Collection<int, non-falsy-string>
      */
     private function todasLasCampanias(): Collection
     {
         return DB::table('cpn_campanias')
-            ->join('com_clientes', 'com_clientes.id', '=', 'cpn_campanias.cliente_id')
-            ->whereNull('cpn_campanias.deleted_at')
-            ->orderBy('com_clientes.razon_social')
-            ->orderBy('cpn_campanias.codigo')
-            ->get(['cpn_campanias.id', 'cpn_campanias.codigo', 'com_clientes.razon_social'])
-            ->mapWithKeys(fn (object $fila): array => [(int) $fila->id => sprintf('%s — %s', $fila->codigo, $fila->razon_social)]);
+            ->whereNull('deleted_at')
+            ->orderBy('codigo')
+            ->pluck('codigo', 'id');
     }
 
     /**

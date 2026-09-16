@@ -534,7 +534,6 @@ return [
             'cliente' => 'Clientes',
             'cultivo' => 'Cultivos',
             'campania' => 'Campañas',
-            'campania_opcion' => ':codigo — :cliente',
             'campania_sin_cliente' => 'Seleccioná clientes para filtrar campañas.',
             'fecha_desde' => 'Desde (fecha)',
             'fecha_hasta' => 'Hasta (fecha)',
