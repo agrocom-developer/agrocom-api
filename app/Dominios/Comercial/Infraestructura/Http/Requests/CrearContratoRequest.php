@@ -42,6 +42,16 @@ use Illuminate\Validation\Rule;
  * es una guarda de negocio cruzando dos tablas, y vive en
  * `Aplicacion/CrearContrato` (invariante 5, mismo criterio que "el portal
  * consulta desde el contrato del usuario" aplicado acá al panel interno).
+ *
+ * `lotes` (pedido del dueño, tarea "contratos-lotes", 16/9/2026): al menos un
+ * lote concreto, cada uno existente entre `com_lotes` activos — igual que
+ * `campania_id`, solo se valida ACÁ que el ID exista, nunca que sea de una
+ * propiedad del cliente elegido ni que esa propiedad tenga superficie libre
+ * en la campaña: ambas cruzan varias tablas y son guardas de negocio, viven
+ * en `Aplicacion/CrearContrato` vía
+ * `Aplicacion/Contrato/VerificadorLotesDelContrato` ({@see
+ * \App\Dominios\Comercial\Dominio\Excepciones\LoteAjenoAlCliente}, {@see
+ * \App\Dominios\Comercial\Dominio\Excepciones\LotesDePropiedadAgotados}).
  */
 final class CrearContratoRequest extends FormRequest
 {
@@ -64,6 +74,8 @@ final class CrearContratoRequest extends FormRequest
             'ventanas' => ['nullable', 'array'],
             'ventanas.*.hora_inicio' => ['nullable', 'required_with:ventanas.*.hora_fin', 'date_format:H:i'],
             'ventanas.*.hora_fin' => ['nullable', 'required_with:ventanas.*.hora_inicio', 'date_format:H:i', 'after:ventanas.*.hora_inicio'],
+            'lotes' => ['required', 'array', 'min:1'],
+            'lotes.*' => ['integer', Rule::exists('com_lotes', 'id')->whereNull('deleted_at')],
         ];
     }
 
@@ -78,6 +90,8 @@ final class CrearContratoRequest extends FormRequest
             'ventanas.*.hora_inicio.required_with' => __('comercial.contratos.error_ventana_incompleta'),
             'ventanas.*.hora_fin.required_with' => __('comercial.contratos.error_ventana_incompleta'),
             'ventanas.*.hora_fin.after' => __('comercial.contratos.error_ventana_horas'),
+            'lotes.required' => __('comercial.contratos.error_lotes_requeridos'),
+            'lotes.*.exists' => __('comercial.contratos.error_lote_invalido'),
         ];
     }
 }

@@ -285,6 +285,8 @@ return [
         'error_ventana_ajena' => 'Una de las ventanas enviadas no pertenece a este contrato.',
         'error_ventana_incompleta' => 'Completá la hora de inicio y la hora de fin de la ventana.',
         'error_ventana_horas' => 'La hora de fin tiene que ser posterior a la hora de inicio.',
+        'error_lotes_requeridos' => 'Seleccioná al menos un lote.',
+        'error_lote_invalido' => 'Uno de los lotes seleccionados no es válido.',
         'volver' => 'Volver a contratos',
     ],
 

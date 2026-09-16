@@ -112,7 +112,7 @@ class Contrato extends ModeloDominio
      * directo: es `HasMany` hacia el pivote propio, no `belongsToMany` hacia
      * `Lote` — ver el docblock de `ContratoLote` para el porqué (soft delete
      * + auditoría propia del pivote, mismo criterio que
-     * {@see \App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion::ordenLotes()}).
+     * `\App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion::ordenLotes()`).
      * Para llegar al `Lote` real: `$contrato->lotes->pluck('lote')` (eager
      * loading `lotes.lote`), nunca asumir que la colección ya son `Lote`.
      *

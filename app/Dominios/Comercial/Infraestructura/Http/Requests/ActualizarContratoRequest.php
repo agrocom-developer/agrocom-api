@@ -16,6 +16,15 @@ use Illuminate\Validation\Rule;
  * se está editando — nunca a otro (mismo espíritu que
  * `ActualizarClienteRequest` con `contactos.*.id`, invariante 5 de CLAUDE.md
  * aplicada acá al panel interno).
+ *
+ * `lotes` (pedido del dueño, tarea "contratos-lotes", 16/9/2026): mismo
+ * criterio que en `CrearContratoRequest` — acá solo se valida que el ID
+ * exista entre `com_lotes` activos. A diferencia de `ventanas.*.id`, no hace
+ * falta acotar `lotes.*` a los que ya pertenecen a ESTE contrato: el set
+ * enviado es libre de traer lotes nuevos (de cualquier propiedad del
+ * cliente); es `Aplicacion/ActualizarContrato` quien decide, vía
+ * `Aplicacion/Contrato/VerificadorLotesDelContrato`, si pertenecen al
+ * cliente y si hay superficie libre en la propiedad.
  */
 final class ActualizarContratoRequest extends FormRequest
 {
@@ -49,6 +58,8 @@ final class ActualizarContratoRequest extends FormRequest
             ],
             'ventanas.*.hora_inicio' => ['nullable', 'required_with:ventanas.*.hora_fin', 'date_format:H:i'],
             'ventanas.*.hora_fin' => ['nullable', 'required_with:ventanas.*.hora_inicio', 'date_format:H:i', 'after:ventanas.*.hora_inicio'],
+            'lotes' => ['required', 'array', 'min:1'],
+            'lotes.*' => ['integer', Rule::exists('com_lotes', 'id')->whereNull('deleted_at')],
         ];
     }
 
@@ -64,6 +75,8 @@ final class ActualizarContratoRequest extends FormRequest
             'ventanas.*.hora_inicio.required_with' => __('comercial.contratos.error_ventana_incompleta'),
             'ventanas.*.hora_fin.required_with' => __('comercial.contratos.error_ventana_incompleta'),
             'ventanas.*.hora_fin.after' => __('comercial.contratos.error_ventana_horas'),
+            'lotes.required' => __('comercial.contratos.error_lotes_requeridos'),
+            'lotes.*.exists' => __('comercial.contratos.error_lote_invalido'),
         ];
     }
 }

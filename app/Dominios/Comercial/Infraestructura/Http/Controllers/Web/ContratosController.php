@@ -9,6 +9,8 @@ use App\Dominios\Comercial\Aplicacion\ListarContratos;
 use App\Dominios\Comercial\Dominio\EstadoContrato;
 use App\Dominios\Comercial\Dominio\Excepciones\ActivacionContratoNoDisponible;
 use App\Dominios\Comercial\Dominio\Excepciones\CampaniaCerrada;
+use App\Dominios\Comercial\Dominio\Excepciones\LoteAjenoAlCliente;
+use App\Dominios\Comercial\Dominio\Excepciones\LotesDePropiedadAgotados;
 use App\Dominios\Comercial\Dominio\Excepciones\TransicionContratoNoPermitida;
 use App\Dominios\Comercial\Dominio\Excepciones\VentanasContratoSolapadas;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
@@ -36,7 +38,12 @@ use Illuminate\View\View;
  * verificados DENTRO del controlador contra el ROL ACTIVO vía
  * {@see AutorizacionPanelWeb}. Ninguna regla de negocio acá: los casos de
  * uso de `Aplicacion/` hacen el trabajo, incluido el cálculo de
- * `monto_total` y el upsert de contrato+ventanas en una sola transacción.
+ * `monto_total` y el upsert de contrato+ventanas+lotes en una sola
+ * transacción (lotes agregados en la tarea "contratos-lotes", 16/9/2026:
+ * `normalizarLoteIds()` solo castea a `int` lo que ya validó
+ * `CrearContratoRequest`/`ActualizarContratoRequest` — las dos guardas de
+ * negocio, "el lote es del cliente" y "la propiedad no está agotada", viven
+ * en `Aplicacion/CrearContrato`/`Aplicacion/ActualizarContrato`, nunca acá).
  *
  * `campaniasParaFormulario()`/`campaniasParaFiltro()` leen `cpn_campanias`
  * con `DB::table` directo (ADR 0003 regla 3, mismo criterio que
@@ -102,10 +109,14 @@ final class ContratosController
         $ventanasCrudas = $datos['ventanas'] ?? [];
         unset($datos['ventanas']);
 
+        $loteIds = $this->normalizarLoteIds($datos['lotes'] ?? []);
+        unset($datos['lotes']);
+
         try {
             $crearContrato->ejecutar(
                 $this->normalizarDatosContrato($datos),
                 array_map($this->normalizarVentanaNueva(...), $this->filasVentanaCompletas($ventanasCrudas)),
+                $loteIds,
             );
         } catch (VentanasContratoSolapadas $excepcion) {
             return redirect()
@@ -117,6 +128,11 @@ final class ContratosController
                 ->route('panel.contratos.create')
                 ->withInput()
                 ->withErrors(['campania_id' => $excepcion->getMessage()]);
+        } catch (LoteAjenoAlCliente|LotesDePropiedadAgotados $excepcion) {
+            return redirect()
+                ->route('panel.contratos.create')
+                ->withInput()
+                ->withErrors(['lotes' => $excepcion->getMessage()]);
         }
 
         return redirect()
@@ -130,7 +146,7 @@ final class ContratosController
 
         return view('comercial::pages.contratos.edit', [
             ...$this->autorizacion->cascara($request),
-            'contrato' => $contrato->load('ventanas'),
+            'contrato' => $contrato->load('ventanas', 'lotes.lote'),
             'clientesDisponibles' => $this->clientesActivos(),
             'campaniasDisponibles' => $this->campaniasParaFormulario(),
         ]);
@@ -149,11 +165,15 @@ final class ContratosController
         $ventanasCrudas = $datos['ventanas'] ?? [];
         unset($datos['ventanas']);
 
+        $loteIds = $this->normalizarLoteIds($datos['lotes'] ?? []);
+        unset($datos['lotes']);
+
         try {
             $actualizarContrato->ejecutar(
                 $contrato,
                 $this->normalizarDatosContrato($datos),
                 array_map($this->normalizarVentanaExistente(...), $this->filasVentanaCompletas($ventanasCrudas)),
+                $loteIds,
             );
         } catch (VentanasContratoSolapadas $excepcion) {
             return redirect()
@@ -165,6 +185,11 @@ final class ContratosController
                 ->route('panel.contratos.edit', $contrato)
                 ->withInput()
                 ->withErrors(['campania_id' => $excepcion->getMessage()]);
+        } catch (LoteAjenoAlCliente|LotesDePropiedadAgotados $excepcion) {
+            return redirect()
+                ->route('panel.contratos.edit', $contrato)
+                ->withInput()
+                ->withErrors(['lotes' => $excepcion->getMessage()]);
         }
 
         return redirect()
@@ -294,5 +319,14 @@ final class ContratosController
     private function cadenaONull(mixed $valor): ?string
     {
         return $valor === null || $valor === '' ? null : (string) $valor;
+    }
+
+    /**
+     * @param  list<mixed>  $loteIdsCrudos  validados por `lotes.*` (enteros existentes en `com_lotes`)
+     * @return list<int>
+     */
+    private function normalizarLoteIds(array $loteIdsCrudos): array
+    {
+        return array_map(fn (mixed $loteId): int => (int) $loteId, $loteIdsCrudos);
     }
 }

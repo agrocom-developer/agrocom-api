@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * poder validar más adelante que no se sobre-comprometan los lotes de una
  * propiedad dentro de la misma campaña). Sin hectáreas propias por fila: el
  * agregado sigue siendo `com_contratos.hectareas_contratadas` — a diferencia
- * de {@see \App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenLote},
+ * de `\App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenLote`,
  * que sí desglosa `hectareas_solicitadas` por ser una orden concreta de
  * vuelo, no un pacto comercial.
  *
