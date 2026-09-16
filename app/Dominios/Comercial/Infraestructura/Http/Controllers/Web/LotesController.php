@@ -290,8 +290,25 @@ final class LotesController
             'geometria' => $this->decodificarGeometria($lote['geometria'] ?? null),
             'restricciones' => $this->cadenaONull($lote['restricciones'] ?? null),
             'desnivel' => $this->cadenaONull($lote['desnivel'] ?? null),
-            'limpieza' => $this->cadenaONull($lote['limpieza'] ?? null),
+            'limpieza' => $this->limpiezaDesdeSwitch($lote),
         ];
+    }
+
+    /**
+     * Combina el switch "¿está limpio?" (`lote.limpio`) con el grado de
+     * obstáculos (`lote.grado_obstaculos`) en el único valor que persiste
+     * la columna `limpieza` (16/9/2026) — el Form Request ya garantizó que
+     * `grado_obstaculos` viene si el switch no está marcado.
+     *
+     * @param  array<string, mixed>  $lote
+     */
+    private function limpiezaDesdeSwitch(array $lote): ?string
+    {
+        if (! empty($lote['limpio'])) {
+            return 'limpio';
+        }
+
+        return $this->cadenaONull($lote['grado_obstaculos'] ?? null);
     }
 
     /**

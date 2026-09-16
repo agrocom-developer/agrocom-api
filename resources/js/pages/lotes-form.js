@@ -48,4 +48,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     selectCliente.addEventListener('change', aplicarFiltros);
     aplicarFiltros();
+
+    // Limpieza del lote (16/9/2026): el switch "¿está limpio?" oculta o
+    // muestra el grado de obstáculos — `lotes/_lote-fila.blade.php` ya
+    // resuelve el estado inicial correcto server-side (atributo HTML
+    // `hidden`), esto solo reacciona al cambio. Por cada fila de lote en el
+    // formulario (hoy una sola, reusable si el partial vuelve a incluirse
+    // en un array).
+    formulario.querySelectorAll('[data-ag-lote-fila]').forEach((bloque) => {
+        const switchLimpio = bloque.querySelector('[data-ag-lote-limpio]');
+        const envoltorioGrado = bloque.querySelector('[data-ag-lote-grado-obstaculos-wrap]');
+        if (!switchLimpio || !envoltorioGrado) return;
+
+        // El color del track (primario/gris) no alcanza para leer el
+        // estado del switch a simple vista — el label inline responde la
+        // pregunta en palabras ("Sí"/"No", ya traducidas en los `data-*`).
+        const textoLabel = switchLimpio.closest('.ag-switch__control')?.querySelector('.ag-switch__label');
+        const textoSi = switchLimpio.dataset.agLoteLimpioTextoSi;
+        const textoNo = switchLimpio.dataset.agLoteLimpioTextoNo;
+
+        switchLimpio.addEventListener('change', () => {
+            envoltorioGrado.hidden = switchLimpio.checked;
+            if (textoLabel) {
+                textoLabel.textContent = switchLimpio.checked ? textoSi : textoNo;
+            }
+        });
+    });
 });

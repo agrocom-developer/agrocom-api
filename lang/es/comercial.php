@@ -496,8 +496,17 @@ return [
         'lote_limpieza' => 'Limpieza',
         'lote_limpieza_placeholder' => 'Sin especificar',
         'lote_limpieza_limpio' => 'Limpio',
+        'lote_limpieza_pocos_obstaculos' => 'Pocos obstáculos',
         'lote_limpieza_algunos_obstaculos' => 'Algunos obstáculos',
         'lote_limpieza_muchos_obstaculos' => 'Muchos obstáculos',
+        // Formulario del lote (16/9/2026): switch "¿está limpio?" + grado de
+        // obstáculos si no lo está — mismas 4 claves de arriba para el
+        // rótulo de cada opción, ver `lotes/_lote-fila.blade.php`.
+        'lote_limpio' => '¿Está limpio el terreno?',
+        'lote_limpio_si' => 'Sí',
+        'lote_limpio_no' => 'No',
+        'lote_grado_obstaculos' => 'Grado de obstáculos',
+        'lote_grado_obstaculos_placeholder' => 'Sin especificar',
 
         'estado_form' => 'Los cambios se guardan al confirmar.',
         'volver' => 'Volver a lotes',

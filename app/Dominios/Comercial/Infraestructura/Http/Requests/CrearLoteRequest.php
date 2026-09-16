@@ -47,7 +47,16 @@ final class CrearLoteRequest extends FormRequest
             'lote.geometria' => ['nullable', 'string', $this->reglaGeometriaValida()],
             'lote.restricciones' => ['nullable', 'string'],
             'lote.desnivel' => ['nullable', Rule::in(['ninguno', 'algunos', 'varios', 'empinado'])],
-            'lote.limpieza' => ['nullable', Rule::in(['limpio', 'algunos_obstaculos', 'muchos_obstaculos'])],
+            // `limpieza` ya no viaja directo: el formulario manda un switch
+            // (`lote.limpio`) + el grado de obstáculos si no está marcado
+            // (16/9/2026) — LotesController::normalizarDatos() los combina
+            // en el único valor que persiste el modelo.
+            'lote.limpio' => ['boolean'],
+            'lote.grado_obstaculos' => [
+                Rule::requiredIf(fn () => ! $this->boolean('lote.limpio')),
+                'nullable',
+                Rule::in(['pocos_obstaculos', 'algunos_obstaculos', 'muchos_obstaculos']),
+            ],
         ];
     }
 
