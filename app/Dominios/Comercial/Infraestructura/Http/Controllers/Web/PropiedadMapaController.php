@@ -3,6 +3,7 @@
 namespace App\Dominios\Comercial\Infraestructura\Http\Controllers\Web;
 
 use App\Dominios\Comercial\Aplicacion\ActualizarUbicacionMapaPropiedad;
+use App\Dominios\Comercial\Aplicacion\ResolverCentroReferenciaPropiedad;
 use App\Dominios\Comercial\Aplicacion\ResolverProveedorMapa;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\GuardarUbicacionMapaPropiedadRequest;
@@ -27,6 +28,7 @@ final class PropiedadMapaController
     public function __construct(
         private readonly AutorizacionPanelWeb $autorizacion,
         private readonly ResolverProveedorMapa $resolverProveedorMapa,
+        private readonly ResolverCentroReferenciaPropiedad $resolverCentroReferencia,
     ) {}
 
     public function mostrar(Request $request, Propiedad $propiedad): View
@@ -37,6 +39,7 @@ final class PropiedadMapaController
             ...$this->autorizacion->cascara($request),
             'propiedad' => $propiedad,
             'proveedorMapa' => $this->resolverProveedorMapa->ejecutar(),
+            'centroDefecto' => $this->resolverCentroReferencia->ejecutar($propiedad),
         ]);
     }
 

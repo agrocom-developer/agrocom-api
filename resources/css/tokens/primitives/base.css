@@ -48,6 +48,14 @@
     --ag-color-blue-50: #e4edf8;
     --ag-color-blue-700: #1d5fa8;
 
+    /* No es color de marca Agrocom — el azul de referencia de Google Maps,
+       fallback del polígono del editor de mapa de propiedad cuando la
+       propiedad no tiene `color` propio cargado (invariante 11 de
+       CLAUDE.md: cualquier literal de color del panel vive en tokens/,
+       de marca o no). Fijo, no reasignado por tema — mismo criterio que
+       `--ag-shadow-sm/-md/-lg`, no depende de claro/oscuro. */
+    --ag-color-mapa-poligono-defecto: #3367d6;
+
     /* Espaciado — escala de 8px, compatible con los spacers de Bootstrap y la grilla de 8dp de Material */
     --ag-space-1: 0.25rem;
     --ag-space-2: 0.5rem;

@@ -279,6 +279,14 @@
        CLAUDE.md; el color resultante es idéntico (green-700 = #1e7a34 al 14%). */
     --ag-shadow-selected: 0 4px 14px color-mix(in srgb, var(--ag-color-green-700) 14%, transparent);
 
+    /* Segunda sombra reasignada por tema (mismo motivo que --ag-shadow-selected
+       arriba): los overlays flotantes del editor de mapa de propiedad
+       (acciones, buscador, coordenadas) viven SOBRE una imagen satelital, no
+       sobre --ag-color-bg — una sombra negra los separa bien en claro, pero
+       en oscuro el mapa ya es oscuro y esa misma sombra se vuelve invisible
+       (pedido directo del dueño, 16/9/2026: "sombra casi clara" en oscuro). */
+    --ag-shadow-overlay-mapa: var(--ag-shadow-md);
+
     /* Bootstrap 5 hereda la marca reasignando sus propias variables nativas
        — así `.btn-primary`, `.alert-success`, el sidebar de AdminLTE, etc.
        no necesitan overrides por componente ni por tema. */
