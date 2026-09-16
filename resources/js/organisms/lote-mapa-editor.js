@@ -138,28 +138,62 @@ function estiloReferenciaLote() {
 /**
  * Máscara fuera del límite de la propiedad (16/9/2026, pedido directo):
  * "que el mapa salga cortado, solo el polígono, y lo demás oculto o negro
- * o difuminado, dando la idea de prohibido/inaccesible". No es un recorte
- * real de las teselas — es un polígono con un AGUJERO por cada terreno de
- * la propiedad (`--ag-color-scrim-strong`, el mismo tono que ya oscurece
- * la foto de fondo del login) que cubre el resto del mapa visible.
+ * o difuminado, dando la idea de prohibido/inaccesible" — pero "no tan
+ * oscuro, un color con opacity" (ajuste en vivo, mismo día): un neutral
+ * ya usado en este archivo para las referencias (`--ag-color-border-strong`,
+ * el contorno de `estiloReferenciaPropiedad`), a media opacidad — no el
+ * scrim casi opaco del fondo del login, que ahí sí busca tapar del todo.
+ * No es un recorte real de las teselas — es un polígono con un AGUJERO
+ * por cada terreno de la propiedad.
  *
  * Puramente visual, nunca bloqueante (decisión del dueño, 16/9/2026): si
  * la propiedad no tiene geometría todavía, no hay máscara y el lote se
  * dibuja libremente — la ayuda visual solo aparece cuando hay algo contra
  * qué guiarse.
- *
- * `fillOpacity: 1` porque el color YA trae su propio alfa (0.82,
- * `leerColorToken` resuelve el token completo): con el 0.2 por defecto de
- * Leaflet/Google se multiplican y queda casi transparente.
  */
 function colorMascaraFueraDePropiedad() {
-    return leerColorToken('--ag-color-scrim-strong');
+    return leerColorToken('--ag-color-border-strong');
 }
+
+const OPACIDAD_MASCARA_FUERA_DE_PROPIEDAD = 0.45;
 
 /** Rectángulo que cubre cualquier vista posible del mapa — no exactamente
  *  ±90/±180 (algunos renderers tienen artefactos justo en el límite de la
  *  proyección). */
 const ANILLO_MUNDO_LATLNG = [[-89, -179], [-89, 179], [89, 179], [89, -179]];
+
+/**
+ * Área con signo de un anillo `[[x, y], ...]` (fórmula del lazo/shoelace):
+ * positiva en un sentido de giro, negativa en el otro — el signo exacto no
+ * importa, solo que sea consistente para comparar dos anillos entre sí.
+ */
+function areaConSigno(anillo) {
+    let suma = 0;
+
+    for (let i = 0; i < anillo.length; i++) {
+        const [x1, y1] = anillo[i];
+        const [x2, y2] = anillo[(i + 1) % anillo.length];
+
+        suma += x1 * y2 - x2 * y1;
+    }
+
+    return suma;
+}
+
+/**
+ * Google Maps (a diferencia de Leaflet) SÍ le importa el sentido de giro
+ * para tratar un anillo como agujero: tiene que girar al REVÉS que el
+ * anillo exterior, o el "agujero" se pinta relleno en vez de vacío
+ * (confirmado en vivo, 16/9/2026 — el polígono del lote quedaba pintado
+ * de negro sólido en vez de la propiedad oscurecida alrededor). Como el
+ * anillo de la propiedad lo traza un usuario a mano, su sentido no está
+ * garantizado — se fuerza acá en vez de confiar en cómo se dibujó.
+ */
+function conSentidoOpuestoA(anilloBase, anillo) {
+    const mismoSentido = (areaConSigno(anilloBase) >= 0) === (areaConSigno(anillo) >= 0);
+
+    return mismoSentido ? [...anillo].reverse() : anillo;
+}
 
 /**
  * El anillo EXTERIOR de cada polígono de un GeoJSON `Polygon`/`MultiPolygon`
@@ -450,7 +484,7 @@ function inicializarLeaflet(contenedor, refs) {
             if (agujeros.length > 0) {
                 L.polygon([ANILLO_MUNDO_LATLNG, ...agujeros], {
                     fillColor: colorMascaraFueraDePropiedad(),
-                    fillOpacity: 1,
+                    fillOpacity: OPACIDAD_MASCARA_FUERA_DE_PROPIEDAD,
                     stroke: false,
                     interactive: false,
                 }).addTo(capaMascara);
@@ -822,7 +856,9 @@ function inicializarGoogle(contenedor, refs, googleMapsNs) {
      *  por cada terreno de la propiedad — `zIndex: 0`, siempre por debajo
      *  del contorno punteado. */
     const poligonoMascaraDesdeGeoJSON = (geometria) => {
-        const agujeros = anillosExterioresLatLng(geometria).map((anillo) => anillo.map(([lat, lng]) => ({ lat, lng })));
+        const agujeros = anillosExterioresLatLng(geometria)
+            .map((anillo) => conSentidoOpuestoA(ANILLO_MUNDO_LATLNG, anillo))
+            .map((anillo) => anillo.map(([lat, lng]) => ({ lat, lng })));
 
         if (agujeros.length === 0) {
             return [];
@@ -832,7 +868,7 @@ function inicializarGoogle(contenedor, refs, googleMapsNs) {
             paths: [ANILLO_MUNDO_LATLNG.map(([lat, lng]) => ({ lat, lng })), ...agujeros],
             map: mapa,
             fillColor: colorMascaraFueraDePropiedad(),
-            fillOpacity: 1,
+            fillOpacity: OPACIDAD_MASCARA_FUERA_DE_PROPIEDAD,
             strokeWeight: 0,
             clickable: false,
             editable: false,
