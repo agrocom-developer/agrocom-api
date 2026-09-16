@@ -400,6 +400,37 @@ Consulta interna del dueño y del encargado: cuánto de lo contratado ya se apli
 
 La forma de la pantalla sigue el molde del informe de contratos de producción de `synagroweb.com/manual/contrato-de-produccion/`, con hectáreas donde ese sistema pone kilos de grano. Agrocom vende servicio de aplicación, no compra grano: de ahí se toma la interacción, no el modelo (ADR 0015).
 
+## 9.2 Resumen económico de campaña (interno)
+
+Aside de solo lectura en `/panel/campanias/{id}/editar` (HU-95, 16/9/2026 — pedido directo del dueño: *"un resumen del balance sobre los datos de la campaña... un balance económico de gastos, ingresos, contratos y demás"*). Mismo criterio que §9.1: consulta interna del dueño y del encargado, no es un reporte del portal ni un documento para el cliente. Solo aparece en edición — igual que el resumen relacionado de `ClientesController` (§4.1, "resumen de cliente"): una campaña recién creada no puede tener aún contratos, gastos ni facturas propios.
+
+**Es el balance de la temporada, no el de un cliente.** Desde la corrección del 15/9/2026 de ADR 0015, la campaña es un catálogo compartido: muchos contratos de muchos clientes distintos pueden referenciar la misma fila de `cpn_campanias`. Este resumen agrega TODO lo que cuelga de esa fila, sin importar de qué cliente sea cada contrato — es el balance de la temporada completa para Agrocom, no el de un cliente en particular. Quien necesite el balance de un cliente puntual dentro de una campaña compartida no lo obtiene filtrando acá: lo arma cruzando el listado de contratos de ese cliente.
+
+**Ingresos = facturado, no contratado.** Suma de `com_facturas.monto` (columna congelada al emitir, nunca recalculada contra el contrato o el acta actuales — ver `Factura`) de las facturas cuyo `contrato_id` referencia un contrato con `campania_id` igual a esta campaña. No lo contratado ni lo proyectado: lo que ya se emitió como factura. `com_facturas` no tiene columna `estado` ni mecanismo de anulación (`anula_a_id`) hoy — la única exclusión es el soft-delete estándar (invariante 8 de `CLAUDE.md`), igual que en los contratos. Si en el futuro se modela una nota de crédito o una anulación de factura, la resta correspondiente entra acá; hoy no existe el concepto, así que no se resta nada (ver §16).
+
+**Gastos = todo lo atribuido a la campaña, por las dos vías que existen.** Suma de `fin_gastos.monto` (los 9 rubros del catálogo — Combustible, Mantenimiento de equipos, Personal de apoyo, Insumos varios, Alojamiento y viáticos, Transporte y logística, Comunicaciones, Seguros, Indirectos —, ninguno excluido) con ese `campania_id`, más `fin_combustibles.monto` (la carga de combustible imputada al recurso concreto de un equipo) con ese mismo `campania_id`. Ambas tablas son atribución de costo, nunca de cobro (ADR 0015 punto 6): el cliente no ve ni paga esta cifra, paga por hectárea aplicada. Ambas se filtran por `deleted_at IS NULL`.
+
+*Riesgo de doble carga, no resuelto por el sistema*: el catálogo de rubros de `Gasto` incluye "Combustible" (subrubros Gasolina/Diésel), una vía distinta de la dedicada `cargas_combustible` que ya imputa al recurso concreto del equipo. Nada impide cargar el mismo consumo por las dos vías y que el balance lo cuente dos veces. No es un problema nuevo de esta HU — es una característica ya existente del modelo de gastos —, pero acá se vuelve visible por primera vez. Pregunta abierta, sin resolver: si el rubro "Combustible" de `Gasto` debería reservarse para lo que todavía no se asigna a un recurso, dejando `cargas_combustible` como el único camino de imputación real de consumo de un equipo (ver §16).
+
+**Balance = ingresos − gastos**, en `Brick\Math\BigDecimal` (invariante 6, nunca `float`), calculado en el momento de la consulta — no se guarda en ninguna columna, así que siempre es recalculable desde `com_facturas`, `fin_gastos` y `fin_combustibles`. Puede dar negativo, sobre todo en campañas recién abiertas: el 35% de adelanto que financia la instalación (`ventana_al_negocio.md` §2.2) no es un ingreso que este balance contemple, así que un balance negativo al arrancar la campaña es normal, no una alarma. El label y cualquier ayuda visual de esta cifra no deben sugerir "pérdida": es facturado contra gastado, nada más.
+
+**Contratos.** Cantidad total y hectáreas contratadas (suma de `hectareas_contratadas`), sin filtrar por estado ni por cliente. Se completan con tres cifras más, de la misma consulta ya armada:
+
+- **Valor contratado** — suma de `monto_total` de esos mismos contratos. Sin esto no se puede leer "facturado X de un total contratado Y", que es la lectura que ADR 0015 punto 6 dejó pendiente ("la rentabilidad por campaña se lee como facturado por hectárea vs. costo atribuido"). Va en la tarjeta financiera, no en la de trabajo: es plata, no actividad.
+- **Contratos vigentes** — cantidad con `estado = Vigente`, junto al total. Mismo criterio que ya usa el resumen de cliente para su tarjeta de contratos: sin esto, un contrato `cancelado` o `finalizado` infla igual la lectura de "cuánto se contrató para esta temporada".
+- **Clientes en la campaña** — cantidad de `cliente_id` distintos entre esos contratos. Es la lectura espejo de la que ya describe ADR 0015 (corrección del 15/9/2026, punto 6: "cuántas campañas se trabajó para el cliente X" se cuenta por `campania_id` distintos desde el contrato); desde la campaña, la pregunta simétrica es para cuántos clientes distintos corre esta misma temporada. Mostrar solo "N contratos" sin decir a cuántos clientes distintos pertenecen esconde justamente el cambio de modelo más reciente.
+
+**Trabajos.** Se mantiene como conteo de filas (no de hectáreas ni de hectáreas validadas): traer esa precisión exigiría que este módulo importara una regla de negocio ("qué cuenta como aplicado") que es de `Operaciones`/`Comercial`. No se propone tocarlo en esta HU.
+
+### Criterios de aceptación
+
+- Campaña sin contratos: ingresos = 0, gastos = 0 si tampoco hay gastos/combustibles sueltos imputados a ella, balance = 0, contratos = 0, valor contratado = 0, contratos vigentes = 0, clientes = 0, hectáreas contratadas = 0, trabajos = 0. Ninguna división por cero en ninguna cifra derivada.
+- Campaña con contratos de **más de un cliente**: la suma de ingresos, gastos, contratos, hectáreas y valor contratado incluye a TODOS esos clientes — es el caso esperado desde el cambio del 15/9/2026, no una excepción.
+- Campaña con contratos y gastos pero sin ninguna factura emitida todavía (aplicaciones en curso, actas sin firmar): ingresos = 0, gastos > 0, balance negativo — la pantalla lo muestra sin lenguaje que sugiera pérdida.
+- Campaña `cerrada`: el resumen se sigue mostrando (es de solo lectura), y su cifra queda fija porque no admite nuevas imputaciones — ni un gasto nuevo ni, por la misma guarda, una corrección con `anula_a_id` de un gasto viejo de esa campaña (coherente con "nada se imputa a una campaña cerrada", ADR 0015 punto 1).
+- Todo monto se recalcula desde `com_facturas`/`fin_gastos`/`fin_combustibles`/`com_contratos` en cada carga de la pantalla — ninguna columna de "balance" ni de "total facturado" se persiste en `cpn_campanias`.
+- Existen en `lang/es/campania.php` todas las claves de traducción que el aside usa (`campania.campanias.aside_financiero_titulo`, `aside_recaudado`, `aside_gastado`, `aside_balance`, `aside_financiero_accion`, `aside_trabajo_titulo`, `aside_contratos`, `aside_hectareas_contratadas`, `aside_trabajos`, `aside_trabajo_accion`, más las tres nuevas de este punto: valor contratado, contratos vigentes, clientes en la campaña).
+
 ---
 
 ## 10. Alertas por excepción
@@ -514,5 +545,7 @@ El calendario concreto (sprints, historias de usuario, betas) vive en `docs/gest
 - Tolerancia de desvío de mezcla: propuesta ±5%, a validar con el agrónomo.
 - Las firmas del agrónomo se capturan como firma en pantalla o foto del acta física.
 - Sin integración con la API de DJI en v1: las hectáreas son declaradas y respaldadas por captura de RC.
+- No existe hoy un concepto de anulación o nota de crédito de factura (`com_facturas` no tiene columna `estado` ni `anula_a_id`); el resumen económico de campaña (§9.2) asume que toda factura no eliminada lógicamente está firme. A confirmar con el dueño si hace falta modelar la anulación.
+- El rubro "Combustible" de `Gasto` y la carga de combustible dedicada (`cargas_combustible`) son dos vías de registro para el mismo tipo de consumo, sin regla que impida cargarlo por las dos y que el resumen económico de campaña (§9.2) lo sume dos veces. A confirmar si el rubro "Combustible" de `Gasto` debe reservarse para consumo sin asignar todavía a un recurso.
 
 El contexto de negocio completo (cadena comercial, economía del piloto, conflictos típicos, guía de conversación con pilotos y operarios) vive en `docs/negocio/ventana_al_negocio.md`.
