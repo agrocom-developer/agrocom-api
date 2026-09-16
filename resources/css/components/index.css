@@ -19,6 +19,7 @@
 @import './radio-group.css';
 @import './checkbox-group.css';
 @import './textarea.css';
+@import './color-swatch-picker.css';
 
 /* Molecules */
 @import './theme-toggle.css';
@@ -37,6 +38,7 @@
 @import './captura-rc-card.css';
 @import './summary-card.css';
 @import './confirm-button.css';
+@import './color-swatch-field.css';
 @import './progress-meter.css';
 @import './tiered-progress-bar.css';
 @import './file-field.css';

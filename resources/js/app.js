@@ -7,6 +7,7 @@ import './atoms/checkbox-group.js';
 import './molecules/theme-toggle.js';
 import './molecules/timezone-badge.js';
 import './molecules/file-field.js';
+import './molecules/color-swatch-field.js';
 import './molecules/table-search.js';
 import './organisms/login-form.js';
 import './organisms/topbar.js';
@@ -17,6 +18,7 @@ import './pages/login.js';
 import './pages/clientes-form.js';
 import './pages/contratos-form.js';
 import './pages/lotes-form.js';
+import './pages/propiedades-form.js';
 import './pages/usuarios-form.js';
 import './pages/gastos-form.js';
 import './pages/combustible-form.js';
@@ -85,6 +87,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // plugin de dibujo, que no entra en ninguna otra pantalla.
     if (document.querySelector('[data-ag-lote-mapa]')) {
         import('./organisms/lote-mapa-editor.js');
+    }
+
+    // Editor de coordenadas de una propiedad (adenda 16/9/2026 a ADR 0018
+    // punto 1 / ADR 0020): marcador + polígonos múltiples, módulo aparte del
+    // de Lote (ver su docblock).
+    if (document.querySelector('[data-ag-propiedad-mapa]')) {
+        import('./organisms/propiedad-mapa-editor.js');
     }
 
     // atoms/datetime (flatpickr): solo dos usos hoy (pausas), no vale la

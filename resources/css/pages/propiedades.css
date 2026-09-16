@@ -1,21 +1,26 @@
 /*
- * Pages: propiedades/index, propiedades/create, propiedades/edit
+ * Pages: propiedades/index, propiedades/create, propiedades/edit, propiedades/mapa
  * (app/Dominios/Comercial/Infraestructura/Http/Views/pages/propiedades/) —
- * ADR 0018: nivel de terreno nuevo entre Cliente y Campo. CSS propio de
- * ESTAS páginas (ver convención en resources/css/pages/index.css), mismo
- * patrón que campos.css/clientes.css.
+ * ADR 0018/0020: nivel de terreno entre Cliente y Lote. Rediseño al patrón
+ * vigente (adenda 16/9/2026 a ADR 0018 punto 1): mismo molde que
+ * contratos.css/clientes.css — cabecera → filtros → tabla → paginación en el
+ * índice, layout de dos columnas (main/aside) en el formulario.
  *
  * El wrapper `.ag-propiedades`/`.ag-propiedades-form` sigue el mismo patrón
- * que `.ag-campos`/`.ag-campos-form`: flex en columna con un único `gap` en
- * vez de `margin-top` repetido en cada hijo. Las tarjetas de formulario
- * (`molecules/form-section`), la cabecera (`organisms/page-header`) y la
- * barra de acciones (`organisms/form-actions-bar`) ya traen su propio chrome
- * — acá solo el layout específico de estas pantallas. Todo color y medida
- * por token (CLAUDE.md invariante 11).
+ * que `.ag-contratos`/`.ag-contratos-form`: flex en columna con un único
+ * `gap` en vez de `margin-top` repetido en cada hijo. Las tarjetas de
+ * formulario (`molecules/form-section`), la cabecera (`organisms/page-header`)
+ * y la barra de acciones (`organisms/form-actions-bar`) ya traen su propio
+ * chrome — acá solo el layout específico de estas pantallas. Todo color y
+ * medida por token (CLAUDE.md invariante 11) — EXCEPTO el chip de
+ * `.ag-propiedades__color`, que pinta un HEX de dato de negocio elegido por
+ * el usuario (paleta curada, `ColorPropiedad`), no un token de theming: ver
+ * su comentario puntual más abajo.
  */
 
 .ag-propiedades,
-.ag-propiedades-form {
+.ag-propiedades-form,
+.ag-propiedad-mapa-pagina {
     display: flex;
     flex-direction: column;
     gap: var(--ag-space-5);
@@ -30,13 +35,22 @@
     overflow: hidden;
 }
 
+/* 7 columnas: índice, nombre, cliente, ubicación, lotes, hectáreas, acciones.
+   La última es un ancho fijo (`--ag-row-actions-width`), no `auto` — mismo
+   motivo que contratos.css: con `auto`, el head y la fila (organisms/row-actions)
+   son grids separados que resuelven ese ancho cada uno por su cuenta y
+   quedan corridos. */
 .ag-propiedades__head,
 .ag-propiedades__fila {
     display: grid;
-    grid-template-columns: 3rem 2fr 1.5fr 1fr auto;
+    grid-template-columns: 3rem 2fr 1.3fr 1.3fr 0.8fr 0.8fr var(--ag-row-actions-width);
     gap: var(--ag-space-4);
     align-items: center;
     padding: var(--ag-space-3) var(--ag-space-4);
+}
+
+.ag-propiedades__acciones-head {
+    text-align: right;
 }
 
 .ag-propiedades__indice {
@@ -65,7 +79,32 @@
 }
 
 .ag-propiedades__nombre {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
     font-weight: var(--ag-font-weight-medium);
+}
+
+/* Chip de color de la propiedad (pedido directo del dueño): separa
+   visualmente propiedades de distintos clientes en el listado — sus lotes
+   heredan el mismo color leyendo `propiedad->color`. El HEX es dato de
+   negocio elegido por el usuario entre la paleta curada (`ColorPropiedad`),
+   no un token de theming del panel — por eso viaja como `style` inline
+   desde el Blade en vez de una clase de color, sin que esto sea la
+   excepción "color hardcodeado" de la invariante 11 (esa invariante rige
+   colores de la INTERFAZ, no datos de negocio por registro). El tamaño/forma
+   sí son del sistema de diseño — token acá, hex solo en el `style` inline. */
+.ag-propiedades__color {
+    display: inline-block;
+    width: var(--ag-space-3);
+    height: var(--ag-space-3);
+    border-radius: var(--ag-radius-full, 50%);
+    border: 1px solid var(--ag-color-border-card);
+    flex-shrink: 0;
+}
+
+.ag-propiedades__mono {
+    font-family: var(--ag-font-family-mono);
 }
 
 .ag-propiedades__acciones {
@@ -93,4 +132,92 @@
         justify-content: flex-start;
         margin-top: var(--ag-space-2);
     }
+}
+
+/* Formulario (create/edit) */
+
+/* Layout de dos columnas (aside solo en edición, §6.3.1 de la guía de
+   pantalla): mismo patrón que `.ag-clientes-form__layout/__main/__aside`. */
+.ag-propiedades-form__layout {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--ag-space-5);
+}
+
+.ag-propiedades-form__main {
+    flex: 1 1 32rem;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+/* Alta (sin aside): ocupa el 100% del ancho a cualquier tamaño de pantalla,
+   mismo criterio que `.ag-clientes-form__main:only-child`. */
+.ag-propiedades-form__main:only-child {
+    flex-basis: 100%;
+}
+
+.ag-propiedades-form__aside {
+    flex: 1 1 19rem;
+    min-width: 16rem;
+    max-width: 20rem;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+    position: sticky;
+    top: var(--ag-space-4);
+}
+
+@media (max-width: 1199.98px) {
+    .ag-propiedades-form__layout {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .ag-propiedades-form__aside {
+        max-width: none;
+        position: static;
+    }
+}
+
+/* Pantalla de mapa (propiedades/mapa.blade.php) */
+
+/* Mismo alto generoso que `.ag-lote-mapa__lienzo` (campos.css) — un mapa
+   chico obliga a hacer zoom para distinguir el borde de un terreno de la
+   sombra de un monte. Marco/barra/acciones reusan `.ag-mapa-marco`/
+   `.ag-mapa-barra`/`.ag-mapa-accion` de components/mapa-pantalla-completa.css
+   (compartidas con el editor de Lote y el mapa operativo) — acá solo lo
+   propio de este editor. */
+.ag-propiedad-mapa {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-2);
+}
+
+.ag-propiedad-mapa__lienzo {
+    height: 520px;
+    border-radius: var(--ag-radius-md);
+    border: 1px solid var(--ag-color-border);
+    overflow: hidden;
+    z-index: 0;
+}
+
+.ag-propiedad-mapa__pie {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--ag-space-3);
+    flex-wrap: wrap;
+}
+
+.ag-propiedad-mapa__ayuda {
+    margin: 0;
+    flex: 1 1 260px;
+}
+
+.ag-propiedad-mapa__medida {
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
 }
