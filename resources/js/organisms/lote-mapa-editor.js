@@ -157,10 +157,21 @@ function colorMascaraFueraDePropiedad() {
 
 const OPACIDAD_MASCARA_FUERA_DE_PROPIEDAD = 0.45;
 
-/** Rectángulo que cubre cualquier vista posible del mapa — no exactamente
- *  ±90/±180 (algunos renderers tienen artefactos justo en el límite de la
- *  proyección). */
-const ANILLO_MUNDO_LATLNG = [[-89, -179], [-89, 179], [89, 179], [89, -179]];
+/**
+ * Rectángulo "todo el mapa" — Sudamérica entera con Bolivia centrada, NO
+ * el planeta (16/9/2026, bug real, no solo cautela): cerca del polo, la
+ * proyección Mercator de Google Maps distorsiona tanto que el algoritmo de
+ * relleno por sentido de giro ("nonzero") queda confundido con un polígono
+ * tan degenerado y termina pintando el agujero (el lote) en vez del resto
+ * — confirmado en vivo, el lote quedaba oscurecido y la propiedad
+ * alrededor sin tocar, justo al revés. Leaflet no tiene este problema
+ * (regla de relleno "evenodd", no depende del sentido de giro), pero el
+ * rectángulo se comparte entre los dos proveedores, así que se ajusta para
+ * el que sí es sensible. Agrocom opera en Bolivia — un rectángulo del
+ * tamaño de Sudamérica sigue cubriendo cualquier zoom razonable sin
+ * acercarse a la zona degenerada.
+ */
+const ANILLO_MUNDO_LATLNG = [[-40, -85], [-40, -35], [10, -35], [10, -85]];
 
 /**
  * Área con signo de un anillo `[[x, y], ...]` (fórmula del lazo/shoelace):
@@ -348,13 +359,13 @@ function referenciasDom(contenedor) {
     return {
         marco: contenedor.querySelector('[data-ag-lote-mapa-marco]'),
         lienzo: contenedor.querySelector('[data-ag-lote-mapa-lienzo]'),
+        mapaDiv: contenedor.querySelector('[data-ag-lote-mapa-mapa]'),
         input: contenedor.querySelector('[data-ag-lote-geometria]'),
         medida: contenedor.querySelector('[data-ag-lote-medida]'),
         medidaTexto: contenedor.querySelector('[data-ag-lote-medida-texto]'),
         botonUsar: contenedor.querySelector('[data-ag-lote-usar-superficie]'),
         botonDibujar: contenedor.querySelector('[data-ag-lote-accion="dibujar"]'),
-        botonEditar: contenedor.querySelector('[data-ag-lote-accion="editar"]'),
-        botonMover: contenedor.querySelector('[data-ag-lote-accion="mover"]'),
+        iconoDibujar: contenedor.querySelector('[data-ag-lote-mapa-icono-dibujar]'),
         botonBorrar: contenedor.querySelector('[data-ag-lote-accion="borrar"]'),
         botonDeshacer: contenedor.querySelector('[data-ag-lote-accion="deshacer"]'),
         botonCentrar: contenedor.querySelector('[data-ag-lote-accion="centrar"]'),
@@ -443,12 +454,32 @@ function crearHistorial({ boton, aplicar }) {
 
 function inicializarLeaflet(contenedor, refs) {
     const {
-        marco, lienzo, input, medida, medidaTexto, botonUsar,
-        botonDibujar, botonEditar, botonMover, botonBorrar, botonDeshacer, botonCentrar, botonCapa,
+        marco, lienzo, mapaDiv, input, medida, medidaTexto, botonUsar,
+        botonDibujar, iconoDibujar, botonBorrar, botonDeshacer, botonCentrar, botonCapa,
         botonPantallaCompleta, iconoPantallaCompleta,
     } = refs;
 
-    const mapa = L.map(lienzo).setView([CENTRO_POR_DEFECTO.lat, CENTRO_POR_DEFECTO.lng], ZOOM_SIN_GEOMETRIA);
+    // El lápiz cambia de "Dibujar" a "Terminar" mientras hay un trazo en
+    // curso (16/9/2026, mismo patrón que `propiedades/mapa.blade.php`): el
+    // propio ícono anticipa que volver a presionarlo confirma el
+    // perímetro, no solo cancela.
+    const actualizarBotonDibujar = (activo) => {
+        if (!botonDibujar) {
+            return;
+        }
+
+        const etiqueta = activo ? botonDibujar.dataset.agLoteMapaDibujarTerminar : botonDibujar.dataset.agLoteMapaDibujarIniciar;
+        botonDibujar.dataset.agLoteMapaTooltip = etiqueta;
+        botonDibujar.setAttribute('aria-label', etiqueta);
+        botonDibujar.setAttribute('aria-pressed', String(activo));
+
+        if (iconoDibujar) {
+            iconoDibujar.textContent = activo ? 'account_tree' : 'draw';
+        }
+    };
+
+    const mapa = L.map(mapaDiv, { zoomControl: false }).setView([CENTRO_POR_DEFECTO.lat, CENTRO_POR_DEFECTO.lng], ZOOM_SIN_GEOMETRIA);
+    L.control.zoom({ position: 'bottomleft' }).addTo(mapa);
 
     let esSatelital = true;
     let capaBase = L.tileLayer(URL_CAPA_SATELITE, { attribution: ATRIBUCION_ESRI, maxZoom: 19 }).addTo(mapa);
@@ -559,10 +590,15 @@ function inicializarLeaflet(contenedor, refs) {
 
     // Perímetro ya guardado: se dibuja y el mapa encuadra sobre él (sin
     // pasar por el historial — no hay nada previo a lo que "deshacer" acá).
+    // `.pm.enable()` (16/9/2026, mismo criterio que Propiedad): los vértices
+    // quedan arrastrables de entrada, sin un botón "editar" aparte.
     const guardada = leerGeometria(input);
 
     if (guardada) {
-        L.geoJSON(guardada, { style: estiloPoligono }).eachLayer((capaGuardada) => capa.addLayer(capaGuardada));
+        L.geoJSON(guardada, { style: estiloPoligono }).eachLayer((capaGuardada) => {
+            capaGuardada.pm.enable({ allowSelfIntersection: false });
+            capa.addLayer(capaGuardada);
+        });
         mapa.fitBounds(capa.getBounds(), { padding: [16, 16], maxZoom: ZOOM_MAXIMO_AL_ENCUADRAR });
         sincronizar();
     }
@@ -576,18 +612,15 @@ function inicializarLeaflet(contenedor, refs) {
     mapa.on('pm:create', ({ layer }) => {
         historial.registrar(input.value);
 
-        // Uno solo: el nuevo reemplaza al anterior.
+        // Uno solo: el nuevo reemplaza al anterior. Vértices editables de
+        // entrada, mismo criterio que arriba.
         capa.clearLayers();
         mapa.removeLayer(layer);
+        layer.pm.enable({ allowSelfIntersection: false });
         capa.addLayer(layer);
 
         sincronizar();
-    });
-
-    mapa.on('pm:remove', () => {
-        historial.registrar(input.value);
-        capa.clearLayers();
-        sincronizar();
+        actualizarBotonDibujar(false);
     });
 
     // Superficie EN VIVO mientras se dibuja, antes de cerrar el polígono —
@@ -624,40 +657,13 @@ function inicializarLeaflet(contenedor, refs) {
     });
 
     // ---------- Barra de acciones ----------
-
-    /** Apaga los cuatro modos de Geoman antes de prender uno — son
-     *  mutuamente excluyentes desde la barra, aunque la librería en sí
-     *  permitiría combinarlos. */
-    const apagarModos = () => {
-        if (mapa.pm.globalDrawModeEnabled()) {
-            mapa.pm.disableDraw();
-        }
-
-        if (mapa.pm.globalEditModeEnabled()) {
-            mapa.pm.disableGlobalEditMode();
-        }
-
-        if (mapa.pm.globalDragModeEnabled()) {
-            mapa.pm.toggleGlobalDragMode();
-        }
-
-        if (mapa.pm.globalRemovalModeEnabled()) {
-            mapa.pm.toggleGlobalRemovalMode();
-        }
-    };
-
-    const sincronizarEstadoBarra = () => {
-        botonDibujar?.setAttribute('aria-pressed', String(mapa.pm.globalDrawModeEnabled()));
-        botonEditar?.setAttribute('aria-pressed', String(mapa.pm.globalEditModeEnabled()));
-        botonMover?.setAttribute('aria-pressed', String(mapa.pm.globalDragModeEnabled()));
-        botonBorrar?.setAttribute('aria-pressed', String(mapa.pm.globalRemovalModeEnabled()));
-    };
-
-    ['pm:globaleditmodetoggled', 'pm:globaldragmodetoggled', 'pm:globalremovalmodetoggled']
-        .forEach((evento) => mapa.on(evento, sincronizarEstadoBarra));
+    // Un solo modo (dibujar) — vértices editables SIEMPRE una vez trazado
+    // el perímetro, no un modo "editar"/"mover" aparte (16/9/2026, mismo
+    // criterio que `propiedades/mapa.blade.php`: "un componente
+    // compartido", incluida la forma de interactuar).
 
     mapa.on('pm:globaldrawmodetoggled', ({ enabled }) => {
-        sincronizarEstadoBarra();
+        actualizarBotonDibujar(enabled);
 
         if (enabled) {
             puntosEnCurso = [];
@@ -669,44 +675,35 @@ function inicializarLeaflet(contenedor, refs) {
         }
     });
 
-    sincronizarEstadoBarra();
-
     botonDibujar?.addEventListener('click', () => {
         if (mapa.pm.globalDrawModeEnabled()) {
-            mapa.pm.disableDraw();
+            // Volver a presionar el lápiz CONFIRMA el perímetro en curso (si
+            // ya tiene 3+ vértices) en vez de solo cancelar — mismo criterio
+            // que Propiedad. `_finishShape` es el método que usa la propia UI
+            // de Geoman para su botón "Finish"; si en algún update deja de
+            // existir, el `typeof` cae al comportamiento anterior (cancela).
+            const manejador = mapa.pm.Draw?.Polygon;
+
+            if (manejador && typeof manejador._finishShape === 'function') {
+                manejador._finishShape();
+            } else {
+                mapa.pm.disableDraw();
+            }
 
             return;
         }
 
-        apagarModos();
         mapa.pm.enableDraw('Polygon');
     });
 
-    botonEditar?.addEventListener('click', () => {
-        const activar = !mapa.pm.globalEditModeEnabled();
-        apagarModos();
-
-        if (activar) {
-            mapa.pm.enableGlobalEditMode();
-        }
-    });
-
-    botonMover?.addEventListener('click', () => {
-        const activo = mapa.pm.globalDragModeEnabled();
-        apagarModos();
-
-        if (!activo) {
-            mapa.pm.toggleGlobalDragMode();
-        }
-    });
-
     botonBorrar?.addEventListener('click', () => {
-        const activo = mapa.pm.globalRemovalModeEnabled();
-        apagarModos();
-
-        if (!activo) {
-            mapa.pm.toggleGlobalRemovalMode();
+        if (capa.getLayers().length === 0) {
+            return;
         }
+
+        historial.registrar(input.value);
+        capa.clearLayers();
+        sincronizar();
     });
 
     botonCentrar?.addEventListener('click', () => {
@@ -723,7 +720,7 @@ function inicializarLeaflet(contenedor, refs) {
         const actualizarBotonCapa = () => {
             const etiqueta = esSatelital ? botonCapa.dataset.agLoteMapaCapaCalles : botonCapa.dataset.agLoteMapaCapaSatelite;
 
-            botonCapa.title = etiqueta;
+            botonCapa.dataset.agLoteMapaTooltip = etiqueta;
             botonCapa.setAttribute('aria-label', etiqueta);
             botonCapa.setAttribute('aria-pressed', String(!esSatelital));
         };
@@ -791,12 +788,29 @@ function inicializarLeaflet(contenedor, refs) {
  */
 function inicializarGoogle(contenedor, refs, googleMapsNs) {
     const {
-        marco, lienzo, input, medida, medidaTexto, botonUsar,
-        botonDibujar, botonEditar, botonMover, botonBorrar, botonDeshacer, botonCentrar, botonCapa,
+        marco, lienzo, mapaDiv, input, medida, medidaTexto, botonUsar,
+        botonDibujar, iconoDibujar, botonBorrar, botonDeshacer, botonCentrar, botonCapa,
         botonPantallaCompleta, iconoPantallaCompleta,
     } = refs;
 
-    const mapa = new googleMapsNs.Map(lienzo, {
+    // El lápiz cambia de "Dibujar" a "Terminar" mientras hay un trazo en
+    // curso (16/9/2026, mismo patrón que `propiedades/mapa.blade.php`).
+    const actualizarBotonDibujar = (activo) => {
+        if (!botonDibujar) {
+            return;
+        }
+
+        const etiqueta = activo ? botonDibujar.dataset.agLoteMapaDibujarTerminar : botonDibujar.dataset.agLoteMapaDibujarIniciar;
+        botonDibujar.dataset.agLoteMapaTooltip = etiqueta;
+        botonDibujar.setAttribute('aria-label', etiqueta);
+        botonDibujar.setAttribute('aria-pressed', String(activo));
+
+        if (iconoDibujar) {
+            iconoDibujar.textContent = activo ? 'account_tree' : 'draw';
+        }
+    };
+
+    const mapa = new googleMapsNs.Map(mapaDiv, {
         center: CENTRO_POR_DEFECTO,
         zoom: ZOOM_SIN_GEOMETRIA,
         // HYBRID (satelital + nombres/caminos), no SATELLITE a secas: sin
@@ -813,6 +827,9 @@ function inicializarGoogle(contenedor, refs, googleMapsNs) {
         streetViewControl: false,
         mapTypeControl: false,
         fullscreenControl: false, // el botón propio de pantalla completa lo reemplaza
+        // Zoom nativo abajo a la izquierda: la columna de acciones propia
+        // vive arriba a la derecha (16/9/2026, mismo acomodo que Propiedad).
+        zoomControlOptions: { position: googleMapsNs.ControlPosition.LEFT_BOTTOM },
     });
 
     let esSatelital = true;
@@ -949,16 +966,12 @@ function inicializarGoogle(contenedor, refs, googleMapsNs) {
         ruta.addListener('set_at', confirmarEdicion);
         ruta.addListener('insert_at', confirmarEdicion);
         ruta.addListener('remove_at', confirmarEdicion);
-
-        poligono.addListener('click', () => {
-            if (modoBorrar) {
-                confirmarEdicion(); // registra el valor ANTES de borrar
-                quitarPoligono();
-                sincronizar();
-            }
-        });
     };
 
+    // `editable: true` (16/9/2026, mismo criterio que Propiedad): los
+    // vértices quedan arrastrables de entrada, sin un botón "editar" aparte
+    // — "Borrar" ahora es una acción directa (ver más abajo), no un modo de
+    // click-sobre-el-polígono.
     const dibujarPoligono = (geometria, confirmarEdicion) => {
         quitarPoligono();
 
@@ -968,7 +981,7 @@ function inicializarGoogle(contenedor, refs, googleMapsNs) {
 
         const ruta = geometria.coordinates[0].slice(0, -1).map(([lng, lat]) => ({ lat, lng }));
 
-        poligono = new googleMapsNs.Polygon({ paths: ruta, ...estiloPoligonoGoogle() });
+        poligono = new googleMapsNs.Polygon({ paths: ruta, editable: true, ...estiloPoligonoGoogle() });
         poligono.setMap(mapa);
         conectarPoligono(confirmarEdicion);
     };
@@ -1009,8 +1022,13 @@ function inicializarGoogle(contenedor, refs, googleMapsNs) {
     // vértice) de la primera mitad de un doble click (Google dispara
     // click+click+dblclick: sin este delay, el doble click para CERRAR el
     // trazo le agregaría además un vértice de más pegado al último real).
+    // Un solo modo (dibujar) — vértices editables SIEMPRE una vez trazado
+    // el perímetro (`editable: true` en `dibujarPoligono`/`terminarTrazo`),
+    // no un modo "editar"/"mover" aparte; "Borrar" es una acción directa,
+    // no un modo de click-sobre-el-polígono (16/9/2026, mismo criterio que
+    // Propiedad — "un componente compartido", incluida la forma de
+    // interactuar).
     let modoDibujo = false;
-    let modoBorrar = false;
     let poligonoEnCurso = null;
     let clickPendiente = null;
 
@@ -1020,29 +1038,7 @@ function inicializarGoogle(contenedor, refs, googleMapsNs) {
         poligonoEnCurso?.setMap(null);
         poligonoEnCurso = null;
         mapa.setOptions({ draggableCursor: null, disableDoubleClickZoom: false });
-    };
-
-    /** Apaga los cuatro modos antes de prender uno — mutuamente excluyentes
-     *  desde la barra, igual que en `inicializarLeaflet`. */
-    const apagarModos = () => {
-        if (modoDibujo) {
-            salirDeModoDibujo();
-
-            // Se salió del modo dibujar sin terminar el trazo: la medida en
-            // vivo vuelve a reflejar lo que hay REALMENTE guardado.
-            sincronizar();
-        }
-
-        poligono?.setEditable(false);
-        poligono?.setDraggable(false);
-        modoBorrar = false;
-    };
-
-    const sincronizarEstadoBarra = () => {
-        botonDibujar?.setAttribute('aria-pressed', String(modoDibujo));
-        botonEditar?.setAttribute('aria-pressed', String(!!poligono?.getEditable()));
-        botonMover?.setAttribute('aria-pressed', String(!!poligono?.getDraggable()));
-        botonBorrar?.setAttribute('aria-pressed', String(modoBorrar));
+        actualizarBotonDibujar(false);
     };
 
     const agregarVertice = (latLng) => {
@@ -1073,13 +1069,13 @@ function inicializarGoogle(contenedor, refs, googleMapsNs) {
 
         historial.registrar(input.value);
 
-        // Uno solo: el nuevo reemplaza al anterior.
+        // Uno solo: el nuevo reemplaza al anterior. Editable de entrada,
+        // mismo criterio que `dibujarPoligono`.
         quitarPoligono();
-        poligono = new googleMapsNs.Polygon({ paths: ruta, ...estiloPoligonoGoogle() });
+        poligono = new googleMapsNs.Polygon({ paths: ruta, editable: true, ...estiloPoligonoGoogle() });
         poligono.setMap(mapa);
         conectarPoligono(confirmarEdicion);
 
-        sincronizarEstadoBarra();
         sincronizar();
     };
 
@@ -1102,39 +1098,30 @@ function inicializarGoogle(contenedor, refs, googleMapsNs) {
     });
 
     botonDibujar?.addEventListener('click', () => {
-        const activo = modoDibujo;
-        apagarModos();
+        if (modoDibujo) {
+            // Volver a presionar el lápiz CONFIRMA el perímetro en curso (si
+            // ya tiene 3+ vértices) en vez de solo cancelar — mismo criterio
+            // que Propiedad. `terminarTrazo()` ya sale del modo y descarta
+            // el trazo si tiene menos de 3 puntos.
+            terminarTrazo();
 
-        if (!activo) {
-            modoDibujo = true;
-            mapa.setOptions({ draggableCursor: 'crosshair', disableDoubleClickZoom: true });
+            return;
         }
 
-        sincronizarEstadoBarra();
-    });
-
-    botonEditar?.addEventListener('click', () => {
-        const activo = !!poligono?.getEditable();
-        apagarModos();
-        poligono?.setEditable(!activo);
-        sincronizarEstadoBarra();
-    });
-
-    botonMover?.addEventListener('click', () => {
-        const activo = !!poligono?.getDraggable();
-        apagarModos();
-        poligono?.setDraggable(!activo);
-        sincronizarEstadoBarra();
+        modoDibujo = true;
+        mapa.setOptions({ draggableCursor: 'crosshair', disableDoubleClickZoom: true });
+        actualizarBotonDibujar(true);
     });
 
     botonBorrar?.addEventListener('click', () => {
-        const activo = modoBorrar;
-        apagarModos();
-        modoBorrar = !activo;
-        sincronizarEstadoBarra();
-    });
+        if (!poligono) {
+            return;
+        }
 
-    sincronizarEstadoBarra();
+        historial.registrar(input.value);
+        quitarPoligono();
+        sincronizar();
+    });
 
     botonCentrar?.addEventListener('click', () => {
         if (poligono) {
@@ -1151,7 +1138,7 @@ function inicializarGoogle(contenedor, refs, googleMapsNs) {
         const actualizarBotonCapa = () => {
             const etiqueta = esSatelital ? botonCapa.dataset.agLoteMapaCapaCalles : botonCapa.dataset.agLoteMapaCapaSatelite;
 
-            botonCapa.title = etiqueta;
+            botonCapa.dataset.agLoteMapaTooltip = etiqueta;
             botonCapa.setAttribute('aria-label', etiqueta);
             botonCapa.setAttribute('aria-pressed', String(!esSatelital));
         };
@@ -1206,7 +1193,7 @@ function inicializar(contenedor) {
 
     const refs = referenciasDom(contenedor);
 
-    if (!refs.marco || !refs.lienzo || !refs.input) {
+    if (!refs.marco || !refs.lienzo || !refs.mapaDiv || !refs.input) {
         return;
     }
 

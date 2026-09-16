@@ -58,101 +58,94 @@
 
     {{-- Pantalla completa (Fullscreen API, con respaldo a un contenedor
          fijo al 100% si el navegador la niega) actúa sobre ESTE marco:
-         lienzo + barra + medida viajan juntos, así la superficie sigue
-         visible mientras se dibuja a pantalla completa (tarea 79). --}}
-    <div class="ag-mapa-marco" data-ag-lote-mapa-marco>
-        <div
-            class="ag-mapa-barra"
-            role="toolbar"
-            aria-label="{{ __('comercial.lotes.lote_mapa_barra_aria') }}"
-            data-ag-lote-mapa-barra
-        >
-            <button
-                type="button"
-                class="ag-mapa-accion"
-                data-ag-lote-accion="dibujar"
-                title="{{ __('comercial.lotes.lote_mapa_dibujar') }}"
-                aria-label="{{ __('comercial.lotes.lote_mapa_dibujar') }}"
-                aria-pressed="false"
-            >
-                <x-atoms.icon name="draw" />
-            </button>
-            <button
-                type="button"
-                class="ag-mapa-accion"
-                data-ag-lote-accion="editar"
-                title="{{ __('comercial.lotes.lote_mapa_editar_vertices') }}"
-                aria-label="{{ __('comercial.lotes.lote_mapa_editar_vertices') }}"
-                aria-pressed="false"
-            >
-                <x-atoms.icon name="edit" />
-            </button>
-            <button
-                type="button"
-                class="ag-mapa-accion"
-                data-ag-lote-accion="mover"
-                title="{{ __('comercial.lotes.lote_mapa_mover') }}"
-                aria-label="{{ __('comercial.lotes.lote_mapa_mover') }}"
-                aria-pressed="false"
-            >
-                <x-atoms.icon name="open_with" />
-            </button>
-            <button
-                type="button"
-                class="ag-mapa-accion"
-                data-ag-lote-accion="borrar"
-                title="{{ __('comercial.lotes.lote_mapa_borrar') }}"
-                aria-label="{{ __('comercial.lotes.lote_mapa_borrar') }}"
-                aria-pressed="false"
-            >
-                <x-atoms.icon name="delete" />
-            </button>
-            <button
-                type="button"
-                class="ag-mapa-accion"
-                data-ag-lote-accion="deshacer"
-                title="{{ __('comercial.lotes.lote_mapa_deshacer') }}"
-                aria-label="{{ __('comercial.lotes.lote_mapa_deshacer') }}"
-                disabled
-            >
-                <x-atoms.icon name="undo" />
-            </button>
-            <button
-                type="button"
-                class="ag-mapa-accion"
-                data-ag-lote-accion="centrar"
-                title="{{ __('comercial.lotes.lote_mapa_centrar') }}"
-                aria-label="{{ __('comercial.lotes.lote_mapa_centrar') }}"
-            >
-                <x-atoms.icon name="center_focus_strong" />
-            </button>
-            <button
-                type="button"
-                class="ag-mapa-accion"
-                data-ag-lote-accion="capa"
-                title="{{ __('comercial.lotes.lote_mapa_capa_calles') }}"
-                aria-label="{{ __('comercial.lotes.lote_mapa_capa_calles') }}"
-                aria-pressed="false"
-                data-ag-lote-mapa-capa-satelite="{{ __('comercial.lotes.lote_mapa_capa_satelite') }}"
-                data-ag-lote-mapa-capa-calles="{{ __('comercial.lotes.lote_mapa_capa_calles') }}"
-            >
-                <x-atoms.icon name="layers" />
-            </button>
-            <button
-                type="button"
-                class="ag-mapa-accion ag-mapa-accion--pantalla-completa"
-                data-ag-lote-mapa-boton-pantalla-completa
-                title="{{ __('comercial.lotes.lote_mapa_pantalla_completa') }}"
-                aria-label="{{ __('comercial.lotes.lote_mapa_pantalla_completa') }}"
-                aria-pressed="false"
-                data-ag-lote-mapa-entrar="{{ __('comercial.lotes.lote_mapa_pantalla_completa') }}"
-                data-ag-lote-mapa-salir="{{ __('comercial.lotes.lote_mapa_salir_pantalla_completa') }}"
-            >
-                <x-atoms.icon name="fullscreen" data-ag-lote-mapa-icono-pantalla-completa />
-            </button>
-        </div>
+         lienzo + acciones + medida viajan juntos, así la superficie sigue
+         visible mientras se dibuja a pantalla completa (tarea 79).
 
-        <div class="ag-lote-mapa__lienzo" data-ag-lote-mapa-lienzo></div>
+         Acciones flotantes DENTRO del lienzo (16/9/2026, pedido directo:
+         "quiero un componente compartido" — mismo patrón visual y de
+         interacción que `propiedades/mapa.blade.php`, no una barra externa
+         aparte): vértices siempre editables una vez dibujado el polígono,
+         un solo botón "dibujar" en vez de dibujar/editar/mover separados
+         — ver `organisms/lote-mapa-editor.js`. Dos niveles como en
+         Propiedad: `-lienzo` es el marco (ancla los overlays), `-mapa` es
+         el div que se le pasa A LEAFLET/GOOGLE — Google Maps toma
+         posesión de ESE elemento y borra cualquier hijo que ya tuviera,
+         así que las acciones tienen que ser HERMANAS del mapa, no hijas. --}}
+    <div class="ag-mapa-marco" data-ag-lote-mapa-marco>
+        <div class="ag-lote-mapa__lienzo" data-ag-lote-mapa-lienzo>
+            <div class="ag-lote-mapa__mapa" data-ag-lote-mapa-mapa></div>
+
+            <div
+                class="ag-lote-mapa__acciones"
+                role="toolbar"
+                aria-label="{{ __('comercial.lotes.lote_mapa_barra_aria') }}"
+            >
+                <button
+                    type="button"
+                    class="ag-mapa-accion"
+                    data-ag-lote-accion="dibujar"
+                    data-ag-lote-mapa-tooltip="{{ __('comercial.lotes.lote_mapa_dibujar') }}"
+                    aria-label="{{ __('comercial.lotes.lote_mapa_dibujar') }}"
+                    aria-pressed="false"
+                    data-ag-lote-mapa-dibujar-iniciar="{{ __('comercial.lotes.lote_mapa_dibujar') }}"
+                    data-ag-lote-mapa-dibujar-terminar="{{ __('comercial.lotes.lote_mapa_dibujar_terminar') }}"
+                >
+                    <x-atoms.icon name="draw" data-ag-lote-mapa-icono-dibujar />
+                </button>
+                <button
+                    type="button"
+                    class="ag-mapa-accion"
+                    data-ag-lote-accion="borrar"
+                    data-ag-lote-mapa-tooltip="{{ __('comercial.lotes.lote_mapa_borrar') }}"
+                    aria-label="{{ __('comercial.lotes.lote_mapa_borrar') }}"
+                >
+                    <x-atoms.icon name="delete" />
+                </button>
+                <button
+                    type="button"
+                    class="ag-mapa-accion"
+                    data-ag-lote-accion="deshacer"
+                    data-ag-lote-mapa-tooltip="{{ __('comercial.lotes.lote_mapa_deshacer') }}"
+                    aria-label="{{ __('comercial.lotes.lote_mapa_deshacer') }}"
+                    disabled
+                >
+                    <x-atoms.icon name="undo" />
+                </button>
+                <button
+                    type="button"
+                    class="ag-mapa-accion"
+                    data-ag-lote-accion="capa"
+                    data-ag-lote-mapa-tooltip="{{ __('comercial.lotes.lote_mapa_capa_calles') }}"
+                    aria-label="{{ __('comercial.lotes.lote_mapa_capa_calles') }}"
+                    aria-pressed="false"
+                    data-ag-lote-mapa-capa-satelite="{{ __('comercial.lotes.lote_mapa_capa_satelite') }}"
+                    data-ag-lote-mapa-capa-calles="{{ __('comercial.lotes.lote_mapa_capa_calles') }}"
+                >
+                    <x-atoms.icon name="layers" />
+                </button>
+                <button
+                    type="button"
+                    class="ag-mapa-accion"
+                    data-ag-lote-accion="centrar"
+                    data-ag-lote-mapa-tooltip="{{ __('comercial.lotes.lote_mapa_centrar') }}"
+                    aria-label="{{ __('comercial.lotes.lote_mapa_centrar') }}"
+                >
+                    <x-atoms.icon name="center_focus_strong" />
+                </button>
+                <button
+                    type="button"
+                    class="ag-mapa-accion ag-mapa-accion--pantalla-completa"
+                    data-ag-lote-mapa-boton-pantalla-completa
+                    data-ag-lote-mapa-tooltip="{{ __('comercial.lotes.lote_mapa_pantalla_completa') }}"
+                    aria-label="{{ __('comercial.lotes.lote_mapa_pantalla_completa') }}"
+                    aria-pressed="false"
+                    data-ag-lote-mapa-entrar="{{ __('comercial.lotes.lote_mapa_pantalla_completa') }}"
+                    data-ag-lote-mapa-salir="{{ __('comercial.lotes.lote_mapa_salir_pantalla_completa') }}"
+                >
+                    <x-atoms.icon name="fullscreen" data-ag-lote-mapa-icono-pantalla-completa />
+                </button>
+            </div>
+        </div>
 
         <div class="ag-lote-mapa__pie">
             <p class="ag-input__help ag-lote-mapa__ayuda">{{ __('comercial.lotes.lote_geometria_ayuda') }}</p>
