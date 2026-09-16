@@ -7,8 +7,9 @@
     valores iniciales.
 
     Espera:
-    - $contrato (Contrato|null): null en alta; el modelo, con `ventanas` y
-      `lotes.lote` ya cargados, en edición.
+    - $contrato (Contrato|null): null en alta; el modelo, con `lotes.lote`
+      ya cargado, en edición (sin `ventanas`: la relación ya no existe,
+      retirada el 16/9/2026 junto con `com_contrato_ventanas`).
     - $clientesDisponibles (Collection<int, string>): id => razón social,
       clientes activos (ver ContratosController::clientesActivos()) — la
       vista no conoce el modelo Cliente.
@@ -59,13 +60,18 @@
     $campaniaId = old('campania_id', $contrato?->campania_id ?? '');
     $fechaInicio = old('fecha_inicio', $contrato?->fecha_inicio?->toDateString() ?? '');
     $fechaFin = old('fecha_fin', $contrato?->fecha_fin?->toDateString() ?? '');
-    $ventanasPorDefecto = $esEdicion
-        ? $contrato->ventanas->map(fn ($ventana) => [
-            'id' => $ventana->id,
-            'hora_inicio' => substr((string) $ventana->hora_inicio, 0, 5),
-            'hora_fin' => substr((string) $ventana->hora_fin, 0, 5),
-        ])->all()
-        : [];
+    // Ventanas de contrato retiradas el 16/9/2026 (reemplazo completo por
+    // horario a nivel de lote: `Contrato::ventanas()` ya no existe, ver el
+    // docblock de `Aplicacion/CrearContrato`) — `$ventanasPorDefecto` queda
+    // siempre vacío, tanto en alta como en edición, porque ya no hay ninguna
+    // fuente de datos que lo llene. La sección "Orden de aplicación" de más
+    // abajo queda como UI vestigial (el formulario la sigue mostrando, pero
+    // lo que se envíe ahí ya no lo procesa `ContratosController`): el
+    // horario por lote todavía no tiene UI propia — pendiente de una tarea
+    // de diseño aparte — y hasta que la tenga, los lotes se guardan como
+    // "día completo" (`hora_inicio`/`hora_fin` en NULL) desde este
+    // formulario.
+    $ventanasPorDefecto = [];
     $ventanasIniciales = old('ventanas', $ventanasPorDefecto);
     $hayVentanasCargadas = collect($ventanasIniciales)->contains(
         fn ($ventana) => ($ventana['hora_inicio'] ?? '') !== '' || ($ventana['hora_fin'] ?? '') !== '',

@@ -12,7 +12,6 @@ use App\Dominios\Comercial\Dominio\Excepciones\CampaniaCerrada;
 use App\Dominios\Comercial\Dominio\Excepciones\LoteAjenoAlCliente;
 use App\Dominios\Comercial\Dominio\Excepciones\LotesDePropiedadAgotados;
 use App\Dominios\Comercial\Dominio\Excepciones\TransicionContratoNoPermitida;
-use App\Dominios\Comercial\Dominio\Excepciones\VentanasContratoSolapadas;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
@@ -28,9 +27,9 @@ use Illuminate\View\View;
 
 /**
  * `GET/POST/PUT /panel/contratos*` (HU-23, tarea 34): alta y mantenimiento de
- * contratos con sus ventanas de aplicación. Mismo molde que
- * `ClientesController` (HU-22, tarea 33) — ver `prompts/33-abm-clientes.md`
- * para el detalle de las decisiones que este controlador reutiliza.
+ * contratos con sus lotes. Mismo molde que `ClientesController` (HU-22,
+ * tarea 33) — ver `prompts/33-abm-clientes.md` para el detalle de las
+ * decisiones que este controlador reutiliza.
  *
  * Sin `destroy`: la baja de un contrato es una transición de estado
  * (`cambiarEstado` hacia `cancelado`), no un soft delete fuera de la máquina
@@ -39,12 +38,23 @@ use Illuminate\View\View;
  * verificados DENTRO del controlador contra el ROL ACTIVO vía
  * {@see AutorizacionPanelWeb}. Ninguna regla de negocio acá: los casos de
  * uso de `Aplicacion/` hacen el trabajo, incluido el cálculo de
- * `monto_total` y el upsert de contrato+ventanas+lotes en una sola
- * transacción (lotes agregados en la tarea "contratos-lotes", 16/9/2026:
- * `normalizarLoteIds()` solo castea a `int` lo que ya validó
- * `CrearContratoRequest`/`ActualizarContratoRequest` — las dos guardas de
- * negocio, "el lote es del cliente" y "la propiedad no está agotada", viven
- * en `Aplicacion/CrearContrato`/`Aplicacion/ActualizarContrato`, nunca acá).
+ * `monto_total` y el upsert de contrato+lotes en una sola transacción.
+ *
+ * Sin ventanas de contrato (retiradas el 16/9/2026, reemplazo completo por
+ * horario a nivel de lote: ver el docblock de `Aplicacion/CrearContrato`):
+ * ya no hay `ventanas` en el request ni `VentanasContratoSolapadas` que
+ * atrapar.
+ *
+ * `normalizarLotes()` (lotes agregados en la tarea "contratos-lotes",
+ * 16/9/2026, ampliado con horario por lote el mismo día): transforma el
+ * array crudo `lotes` del request — `[['lote_id' => '5', 'hora_inicio' =>
+ * '06:00', 'hora_fin' => '10:00'], ...]`, ya validado por
+ * `CrearContratoRequest`/`ActualizarContratoRequest` — al shape tipado que
+ * espera `Aplicacion/CrearContrato`/`ActualizarContrato::ejecutar()`
+ * (`lote_id` a `int`, `hora_inicio`/`hora_fin` a `?string`, cadena vacía
+ * tratada como `null`). Las dos guardas de negocio, "el lote es del
+ * cliente" y "la propiedad no está agotada", viven en
+ * `Aplicacion/CrearContrato`/`Aplicacion/ActualizarContrato`, nunca acá.
  *
  * `campaniasParaFormulario()`/`campaniasParaFiltro()` leen `cpn_campanias`
  * con `DB::table` directo (ADR 0003 regla 3, mismo criterio que
@@ -107,24 +117,14 @@ final class ContratosController
         $datos['brinda_hospedaje'] = $request->boolean('brinda_hospedaje');
         $datos['brinda_combustible'] = $request->boolean('brinda_combustible');
 
-        /** @var list<array<string, mixed>> $ventanasCrudas */
-        $ventanasCrudas = $datos['ventanas'] ?? [];
-        unset($datos['ventanas']);
-
-        $loteIds = $this->normalizarLoteIds($datos['lotes'] ?? []);
+        $lotes = $this->normalizarLotes($datos['lotes'] ?? []);
         unset($datos['lotes']);
 
         try {
             $crearContrato->ejecutar(
                 $this->normalizarDatosContrato($datos),
-                array_map($this->normalizarVentanaNueva(...), $this->filasVentanaCompletas($ventanasCrudas)),
-                $loteIds,
+                $lotes,
             );
-        } catch (VentanasContratoSolapadas $excepcion) {
-            return redirect()
-                ->route('panel.contratos.create')
-                ->withInput()
-                ->withErrors(['ventanas' => $excepcion->getMessage()]);
         } catch (CampaniaCerrada $excepcion) {
             return redirect()
                 ->route('panel.contratos.create')
@@ -148,7 +148,7 @@ final class ContratosController
 
         return view('comercial::pages.contratos.edit', [
             ...$this->autorizacion->cascara($request),
-            'contrato' => $contrato->load('ventanas', 'lotes.lote'),
+            'contrato' => $contrato->load('lotes.lote'),
             'clientesDisponibles' => $this->clientesActivos(),
             'campaniasDisponibles' => $this->campaniasParaFormulario(),
             'propiedadesYLotesPorCliente' => $this->propiedadesYLotesPorCliente(),
@@ -164,25 +164,15 @@ final class ContratosController
         $datos['brinda_hospedaje'] = $request->boolean('brinda_hospedaje');
         $datos['brinda_combustible'] = $request->boolean('brinda_combustible');
 
-        /** @var list<array<string, mixed>> $ventanasCrudas */
-        $ventanasCrudas = $datos['ventanas'] ?? [];
-        unset($datos['ventanas']);
-
-        $loteIds = $this->normalizarLoteIds($datos['lotes'] ?? []);
+        $lotes = $this->normalizarLotes($datos['lotes'] ?? []);
         unset($datos['lotes']);
 
         try {
             $actualizarContrato->ejecutar(
                 $contrato,
                 $this->normalizarDatosContrato($datos),
-                array_map($this->normalizarVentanaExistente(...), $this->filasVentanaCompletas($ventanasCrudas)),
-                $loteIds,
+                $lotes,
             );
-        } catch (VentanasContratoSolapadas $excepcion) {
-            return redirect()
-                ->route('panel.contratos.edit', $contrato)
-                ->withInput()
-                ->withErrors(['ventanas' => $excepcion->getMessage()]);
         } catch (CampaniaCerrada $excepcion) {
             return redirect()
                 ->route('panel.contratos.edit', $contrato)
@@ -254,7 +244,7 @@ final class ContratosController
     }
 
     /**
-     * @param  array<string, mixed>  $datos  validados, sin `ventanas`
+     * @param  array<string, mixed>  $datos  validados, sin `lotes`
      * @return array<string, mixed> listo para `Aplicacion/CrearContrato`/`ActualizarContrato`
      */
     private function normalizarDatosContrato(array $datos): array
@@ -275,62 +265,31 @@ final class ContratosController
         ];
     }
 
-    /**
-     * Descarta las filas totalmente vacías (HU-47, tarea 70): con "Día
-     * completo" encendido el formulario no manda ninguna, pero un envío
-     * manual o una plantilla clonada sin completar podría traer una fila sin
-     * `hora_inicio` ni `hora_fin` — ninguna de las dos es obligatoria por sí
-     * sola (`required_with` mutuo en el Request), así que acá se filtra antes
-     * de llegar al caso de uso: `com_contrato_ventanas.hora_inicio`/`hora_fin`
-     * son `NOT NULL`, y una fila vacía no es una ventana, es la ausencia de una.
-     *
-     * @param  list<array<string, mixed>>  $ventanasCrudas
-     * @return list<array<string, mixed>>
-     */
-    private function filasVentanaCompletas(array $ventanasCrudas): array
-    {
-        return array_values(array_filter(
-            $ventanasCrudas,
-            fn (array $ventana): bool => ($ventana['hora_inicio'] ?? '') !== '' && ($ventana['hora_fin'] ?? '') !== '',
-        ));
-    }
-
-    /**
-     * @param  array<string, mixed>  $ventana
-     * @return array{hora_inicio: string, hora_fin: string}
-     */
-    private function normalizarVentanaNueva(array $ventana): array
-    {
-        return [
-            'hora_inicio' => (string) $ventana['hora_inicio'],
-            'hora_fin' => (string) $ventana['hora_fin'],
-        ];
-    }
-
-    /**
-     * @param  array<string, mixed>  $ventana
-     * @return array{id: int|null, hora_inicio: string, hora_fin: string}
-     */
-    private function normalizarVentanaExistente(array $ventana): array
-    {
-        return [
-            'id' => isset($ventana['id']) && $ventana['id'] !== '' ? (int) $ventana['id'] : null,
-            ...$this->normalizarVentanaNueva($ventana),
-        ];
-    }
-
     private function cadenaONull(mixed $valor): ?string
     {
         return $valor === null || $valor === '' ? null : (string) $valor;
     }
 
     /**
-     * @param  list<mixed>  $loteIdsCrudos  validados por `lotes.*` (enteros existentes en `com_lotes`)
-     * @return list<int>
+     * Transforma el array crudo `lotes` del request — ya validado por
+     * `CrearContratoRequest`/`ActualizarContratoRequest` (cada fila trae
+     * `lote_id` y, opcionalmente, `hora_inicio`/`hora_fin`) — al shape
+     * tipado que espera
+     * `Aplicacion/CrearContrato`/`ActualizarContrato::ejecutar()`: castea
+     * `lote_id` a `int`, y `hora_inicio`/`hora_fin` a `?string`, tratando
+     * cadena vacía como `null` (mismo criterio que `cadenaONull()` para el
+     * resto del formulario).
+     *
+     * @param  list<array<string, mixed>>  $lotesCrudos
+     * @return list<array{lote_id: int, hora_inicio: ?string, hora_fin: ?string}>
      */
-    private function normalizarLoteIds(array $loteIdsCrudos): array
+    private function normalizarLotes(array $lotesCrudos): array
     {
-        return array_map(fn (mixed $loteId): int => (int) $loteId, $loteIdsCrudos);
+        return array_map(fn (array $lote): array => [
+            'lote_id' => (int) $lote['lote_id'],
+            'hora_inicio' => $this->cadenaONull($lote['hora_inicio'] ?? null),
+            'hora_fin' => $this->cadenaONull($lote['hora_fin'] ?? null),
+        ], $lotesCrudos);
     }
 
     /**

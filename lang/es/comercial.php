@@ -210,7 +210,6 @@ return [
         'col_hectareas' => 'Hectáreas',
         'col_monto_total' => 'Monto total',
         'col_vigencia' => 'Vigencia',
-        'col_ventanas' => 'Ventanas',
         'col_estado' => 'Estado',
         'editar' => 'Editar',
         'vigencia_con_fin' => ':inicio – :fin',
@@ -265,7 +264,6 @@ return [
         'ventana_quitar' => 'Quitar',
         'ventana_hora_inicio' => 'Desde',
         'ventana_hora_fin' => 'Hasta',
-        'ventana_rango' => ':inicio – :fin',
 
         // Acomodaciones logísticas (HU-74, tarea 90): lo que Agrocom cubre
         // para el equipo de campo durante la ejecución del contrato. Solo se
@@ -301,11 +299,10 @@ return [
         'error_cliente_invalido' => 'El cliente seleccionado no es válido.',
         'error_campania_requerida' => 'Seleccioná la campaña del contrato.',
         'error_campania_invalida' => 'La campaña seleccionada no es válida.',
-        'error_ventana_ajena' => 'Una de las ventanas enviadas no pertenece a este contrato.',
-        'error_ventana_incompleta' => 'Completá la hora de inicio y la hora de fin de la ventana.',
-        'error_ventana_horas' => 'La hora de fin tiene que ser posterior a la hora de inicio.',
         'error_lotes_requeridos' => 'Seleccioná al menos un lote.',
         'error_lote_invalido' => 'Uno de los lotes seleccionados no es válido.',
+        'error_lote_horario_incompleto' => 'Completá la hora de inicio y la hora de fin del lote.',
+        'error_lote_horario_invalido' => 'La hora de fin del lote tiene que ser posterior a la hora de inicio.',
         'volver' => 'Volver a contratos',
     ],
 
