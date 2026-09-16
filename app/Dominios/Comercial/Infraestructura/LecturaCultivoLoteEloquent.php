@@ -26,7 +26,7 @@ final class LecturaCultivoLoteEloquent implements LecturaCultivoLote
                 loteId: $siembra->lote_id,
                 loteCodigo: $siembra->lote->codigo,
                 cultivoId: $siembra->cultivo_id,
-                cultivoNombre: $siembra->cultivo->nombre,
+                cultivoNombre: $siembra->cultivo->nombre_comun,
                 hectareasSembradas: (string) $siembra->hectareas_sembradas,
             ))
             ->all();

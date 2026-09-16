@@ -35,7 +35,7 @@ final class BusquedaCultivos extends BusquedaEloquent
     /** @return list<string> */
     protected function columnas(): array
     {
-        return ['nombre'];
+        return ['nombre_comun', 'nombre_cientifico'];
     }
 
     protected function icono(): string
@@ -52,7 +52,7 @@ final class BusquedaCultivos extends BusquedaEloquent
     protected function fila(Model $modelo): ResultadoBusqueda
     {
         return new ResultadoBusqueda(
-            titulo: (string) $modelo->nombre,
+            titulo: (string) $modelo->nombre_comun,
             href: route('panel.cultivos.edit', $modelo),
         );
     }
