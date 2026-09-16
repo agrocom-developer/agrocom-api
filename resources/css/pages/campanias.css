@@ -138,3 +138,51 @@
         white-space: normal;
     }
 }
+
+/* Formulario (create/edit) */
+
+/* Layout de dos columnas (§6.3.1 de la guía de pantalla, 15/9/2026): mismo
+   patrón que `.ag-clientes-form__layout/__main/__aside` — el aside con el
+   resumen financiero/de trabajo solo existe en edición
+   (`_formulario.blade.php`); en alta `.ag-campanias-form__main` queda sin
+   hermano (`:only-child` debajo). */
+.ag-campanias-form__layout {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--ag-space-5);
+}
+
+.ag-campanias-form__main {
+    flex: 1 1 32rem;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+.ag-campanias-form__main:only-child {
+    flex-basis: 100%;
+}
+
+.ag-campanias-form__aside {
+    flex: 1 1 19rem;
+    min-width: 16rem;
+    max-width: 20rem;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+    position: sticky;
+    top: var(--ag-space-4);
+}
+
+@media (max-width: 1199.98px) {
+    .ag-campanias-form__layout {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .ag-campanias-form__aside {
+        max-width: none;
+        position: static;
+    }
+}

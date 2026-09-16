@@ -14,8 +14,11 @@ use App\Dominios\Campania\Infraestructura\Http\Requests\ActualizarCampaniaReques
 use App\Dominios\Campania\Infraestructura\Http\Requests\CambiarEstadoCampaniaRequest;
 use App\Dominios\Campania\Infraestructura\Http\Requests\CrearCampaniaRequest;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
+use Brick\Math\BigDecimal;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 /**
@@ -103,6 +106,7 @@ final class CampaniasController
         return view('campania::pages.campanias.edit', [
             ...$this->autorizacion->cascara($request),
             'campania' => $campania,
+            'resumenCampania' => $this->resumenCampania($campania),
         ]);
     }
 
@@ -155,5 +159,93 @@ final class CampaniasController
     private function cadenaONull(mixed $valor): ?string
     {
         return $valor === null || $valor === '' ? null : (string) $valor;
+    }
+
+    /**
+     * Resumen financiero y de trabajo de la campaña, para el aside de
+     * `edit.blade.php` (§6.3.1 de docs/diseno/guia_pantalla_panel.md,
+     * pedido directo del 15/9/2026: "campaña va más con la parte financiera
+     * — cuándo se recaudó, cuánto se gastó — otro vínculo es cuánto trabajo
+     * se realizó, cuyo nexo son los contratos"). A diferencia de
+     * `ClientesController::resumenRelacionado()`, estas dos tarjetas no
+     * alternan con `empty-state`: son magnitudes que siempre tienen un
+     * valor (aunque sea cero), no un listado de registros con atajo de
+     * alta — por eso el shape es más chico (sin `tieneDatos`/`accion`).
+     *
+     * Todo por `DB::table` directo (ADR 0003 regla 3: referencias por ID
+     * sí, lógica cruzada no) — nunca reconstruyendo una regla de negocio de
+     * otro módulo. Por eso "trabajo realizado" es una CUENTA de filas de
+     * `ope_trabajos` vía la cadena de FKs contrato→orden→trabajo, no una
+     * suma de hectáreas filtrada por algún estado de validación: esa regla
+     * (qué cuenta como "aplicado") es de `Operaciones`/`Comercial`
+     * (`ObtenerAvanceComercial`, `Aplicacion/` ajeno) y no se puede invocar
+     * desde acá sin una frontera `Contratos/` propia — pendiente si hace
+     * falta más precisión que un conteo.
+     *
+     * Sumas en `Brick\Math\BigDecimal` (invariante 6 de CLAUDE.md), nunca
+     * `SUM()` de SQL ni cast a float durante el cálculo — el cast a float
+     * (`aFloat()`) es solo para `number_format()`, mismo criterio de
+     * presentación que ya usa `contratos/index.blade.php`.
+     *
+     * @return list<array{titulo: string, items: list<array{label: string, value: string, mono: bool}>}>
+     */
+    private function resumenCampania(Campania $campania): array
+    {
+        $montoFacturado = $this->sumarDecimal(
+            DB::table('com_facturas')
+                ->join('com_contratos', 'com_contratos.id', '=', 'com_facturas.contrato_id')
+                ->where('com_contratos.campania_id', $campania->id)
+                ->whereNull('com_facturas.deleted_at')
+                ->whereNull('com_contratos.deleted_at')
+                ->pluck('com_facturas.monto'),
+        );
+
+        $montoGastado = $this->sumarDecimal(
+            DB::table('fin_gastos')->where('campania_id', $campania->id)->whereNull('deleted_at')->pluck('monto'),
+        )->plus($this->sumarDecimal(
+            DB::table('fin_combustibles')->where('campania_id', $campania->id)->whereNull('deleted_at')->pluck('monto'),
+        ));
+
+        $contratosCampania = DB::table('com_contratos')->where('campania_id', $campania->id)->whereNull('deleted_at');
+        $totalContratos = (clone $contratosCampania)->count();
+        $hectareasContratadas = $this->sumarDecimal((clone $contratosCampania)->pluck('hectareas_contratadas'));
+
+        $totalTrabajos = DB::table('ope_trabajos')
+            ->join('ope_ordenes_aplicacion', 'ope_ordenes_aplicacion.id', '=', 'ope_trabajos.orden_id')
+            ->join('com_contratos', 'com_contratos.id', '=', 'ope_ordenes_aplicacion.contrato_id')
+            ->where('com_contratos.campania_id', $campania->id)
+            ->whereNull('ope_trabajos.deleted_at')
+            ->whereNull('ope_ordenes_aplicacion.deleted_at')
+            ->whereNull('com_contratos.deleted_at')
+            ->count();
+
+        return [
+            [
+                'titulo' => __('campania.campanias.aside_financiero_titulo'),
+                'items' => [
+                    ['label' => __('campania.campanias.aside_recaudado'), 'value' => $this->aMoneda($montoFacturado), 'mono' => true],
+                    ['label' => __('campania.campanias.aside_gastado'), 'value' => $this->aMoneda($montoGastado), 'mono' => true],
+                ],
+            ],
+            [
+                'titulo' => __('campania.campanias.aside_trabajo_titulo'),
+                'items' => [
+                    ['label' => __('campania.campanias.aside_contratos'), 'value' => (string) $totalContratos, 'mono' => true],
+                    ['label' => __('campania.campanias.aside_hectareas_contratadas'), 'value' => $this->aMoneda($hectareasContratadas), 'mono' => true],
+                    ['label' => __('campania.campanias.aside_trabajos'), 'value' => (string) $totalTrabajos, 'mono' => true],
+                ],
+            ],
+        ];
+    }
+
+    /** @param  Collection<int, string>  $valores */
+    private function sumarDecimal(Collection $valores): BigDecimal
+    {
+        return $valores->reduce(fn (BigDecimal $acumulado, string $valor) => $acumulado->plus($valor), BigDecimal::zero());
+    }
+
+    private function aMoneda(BigDecimal $valor): string
+    {
+        return number_format((float) (string) $valor, 2, ',', '.');
     }
 }

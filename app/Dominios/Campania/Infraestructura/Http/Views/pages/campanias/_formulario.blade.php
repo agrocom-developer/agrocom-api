@@ -8,6 +8,8 @@
 
     Espera:
     - $campania (Campania|null): null en alta; el modelo en edición.
+    - $resumenCampania (list<array{...}>|null): solo en edición, ver
+      CampaniasController::resumenCampania(). `null`/ausente en alta.
 
     `estado` NUNCA es un campo de este formulario: lo cambia
     `panel.campanias.cambiar-estado` (otra pantalla, otra responsabilidad —
@@ -21,9 +23,12 @@
     Tras un error de validación, `old()` pisa los valores del modelo/vacíos
     — mismo criterio en alta y en edición.
 
-    El aside pegajoso del arquetipo (summary-card/progress-meter) se omite a
-    propósito, mismo criterio que bases/personas: ningún dato de solo lectura
-    justifica hoy la columna lateral.
+    Aside pegajoso (§6.3.1 de la guía de pantalla, 15/9/2026): SOLO en
+    edición — una campaña recién creada no puede tener contratos, gastos ni
+    trabajos todavía. Dos `summary-card` de solo lectura (Financiero,
+    Trabajo), sin alternar con `empty-state`: a diferencia del resumen
+    relacionado de cliente, acá el "dato" es una magnitud que siempre existe
+    (aunque sea cero), no un listado con atajo de alta.
 --}}
 @php
     $esEdicion = $campania !== null;
@@ -62,6 +67,8 @@
         </x-slot:actions>
     </x-organisms.page-header>
 
+    <div class="ag-campanias-form__layout">
+        <div class="ag-campanias-form__main">
     <x-molecules.form-section
         :title="__('campania.campanias.seccion_datos')"
         :count="__('campania.campanias.campos_contador', ['cantidad' => 5])"
@@ -123,4 +130,14 @@
             </x-atoms.button>
         </x-slot:actions>
     </x-organisms.form-actions-bar>
+        </div>
+
+        @if ($esEdicion)
+            <aside class="ag-campanias-form__aside">
+                @foreach ($resumenCampania ?? [] as $resumen)
+                    <x-molecules.summary-card :title="$resumen['titulo']" :items="$resumen['items']" />
+                @endforeach
+            </aside>
+        @endif
+    </div>
 </form>

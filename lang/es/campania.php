@@ -75,6 +75,15 @@ return [
         'estado_form' => 'Los cambios se guardan al confirmar.',
         'volver' => 'Volver a campañas',
 
+        // Resumen (aside, solo edición)
+        'aside_financiero_titulo' => 'Financiero',
+        'aside_recaudado' => 'Recaudado (facturado)',
+        'aside_gastado' => 'Gastado',
+        'aside_trabajo_titulo' => 'Trabajo',
+        'aside_contratos' => 'Contratos',
+        'aside_hectareas_contratadas' => 'Hectáreas contratadas',
+        'aside_trabajos' => 'Trabajos realizados',
+
         // Errores de validación
         'error_codigo_requerido' => 'Ingresá un código para la campaña.',
         'error_fechas_rango' => 'La fecha de fin tiene que ser igual o posterior a la de inicio.',
