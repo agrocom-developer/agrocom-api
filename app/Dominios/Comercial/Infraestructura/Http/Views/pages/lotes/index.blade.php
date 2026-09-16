@@ -43,7 +43,7 @@
             >
                 @puede('comercial.lote.crear')
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.lotes.create') }}" variant="primary" icon="add">
+                        <x-atoms.button href="{{ route('panel.lotes.create', array_filter(['propiedad_id' => $filtros['propiedad_id']])) }}" variant="primary" icon="add">
                             {{ __('comercial.lotes.nuevo') }}
                         </x-atoms.button>
                     </x-slot:actions>
@@ -67,10 +67,37 @@
                 $propiedadesOptions = $propiedadesDisponibles->mapWithKeys(fn ($propiedad) => [
                     $propiedad->id => $propiedad->nombre,
                 ]);
+                $filtrosPanelActivos = collect(['cliente_id', 'propiedad_id'])
+                    ->filter(fn ($campo) => $filtros[$campo] !== null && $filtros[$campo] !== '')
+                    ->count();
             @endphp
 
             @if ($hayFiltrosActivos || $lotes->isNotEmpty())
                 <div class="ag-table-toolbar">
+                    <x-organisms.filter-panel
+                        action="{{ route('panel.lotes.index') }}"
+                        :active-count="$filtrosPanelActivos"
+                    >
+                        <input type="hidden" name="q" value="{{ $filtros['q'] }}">
+                        <x-atoms.select
+                            name="cliente_id"
+                            id="filtro-cliente"
+                            label="{{ __('comercial.lotes.filtro_cliente') }}"
+                            :options="$clientesDisponibles"
+                            :value="$filtros['cliente_id']"
+                            placeholder="{{ __('comercial.lotes.filtro_todos') }}"
+                        />
+
+                        <x-atoms.select
+                            name="propiedad_id"
+                            id="filtro-propiedad"
+                            label="{{ __('comercial.lotes.filtro_propiedad') }}"
+                            :options="$propiedadesOptions"
+                            :value="$filtros['propiedad_id']"
+                            placeholder="{{ __('comercial.lotes.filtro_todos') }}"
+                        />
+                    </x-organisms.filter-panel>
+
                     <x-molecules.table-search
                         action="{{ route('panel.lotes.index') }}"
                         :value="$filtros['q']"
@@ -80,46 +107,13 @@
                 </div>
             @endif
 
-            @if ($hayFiltrosActivos || $lotes->isNotEmpty())
-                <form method="GET" action="{{ route('panel.lotes.index') }}" class="ag-filtros ag-lotes__filtros">
-                    <input type="hidden" name="q" value="{{ $filtros['q'] }}">
-                <x-atoms.select
-                    name="cliente_id"
-                    id="filtro-cliente"
-                    label="{{ __('comercial.lotes.filtro_cliente') }}"
-                    :options="$clientesDisponibles"
-                    :value="$filtros['cliente_id']"
-                    placeholder="{{ __('comercial.lotes.filtro_todos') }}"
-                />
-
-                <x-atoms.select
-                    name="propiedad_id"
-                    id="filtro-propiedad"
-                    label="{{ __('comercial.lotes.filtro_propiedad') }}"
-                    :options="$propiedadesOptions"
-                    :value="$filtros['propiedad_id']"
-                    placeholder="{{ __('comercial.lotes.filtro_todos') }}"
-                />
-
-                <div class="ag-filtros__acciones ag-lotes__filtros-acciones">
-                    <x-atoms.button type="submit" variant="primary" size="md" icon="search">
-                        {{ __('comercial.lotes.filtrar') }}
-                    </x-atoms.button>
-
-                    @if ($hayFiltrosActivos)
-                        <x-atoms.button href="{{ route('panel.lotes.index') }}" variant="text" size="md">
-                            {{ __('comercial.lotes.limpiar_filtro') }}
-                        </x-atoms.button>
-                    @endif
-                </div>
-                </form>
-            @endif
-
             @if ($lotes->isEmpty())
                 @if ($hayFiltrosActivos)
-                    <x-molecules.alert-strip variant="info" icon="grid_view" class="ag-lotes__aviso">
-                        {{ __('comercial.lotes.filtro_vacio') }}
-                    </x-molecules.alert-strip>
+                    <x-molecules.empty-state
+                        icon="search_off"
+                        :title="__('comercial.lotes.filtro_vacio_titulo')"
+                        :detail="__('comercial.lotes.filtro_vacio_detalle')"
+                    />
                 @else
                     <x-molecules.empty-state
                         icon="grid_view"
@@ -135,7 +129,7 @@
                         <span role="columnheader">{{ __('comercial.lotes.col_propiedad') }}</span>
                         <span role="columnheader">{{ __('comercial.lotes.col_cliente') }}</span>
                         <span role="columnheader">{{ __('comercial.lotes.col_hectareas') }}</span>
-                        <span role="columnheader" aria-hidden="true"></span>
+                        <span role="columnheader" class="ag-lotes__acciones-head">{{ __('ui.tabla.col_acciones') }}</span>
                     </div>
 
                     @foreach ($lotes as $lote)
@@ -154,25 +148,27 @@
                             <span role="cell" class="ag-lotes__hectareas">{{ __('comercial.lotes.hectareas_valor', ['cantidad' => number_format((float) $lote->hectareas, 2, ',', '.')]) }}</span>
 
                             <span role="cell" class="ag-lotes__acciones">
-                                @puede('comercial.lote.editar')
-                                    <x-atoms.button href="{{ route('panel.lotes.edit', $lote) }}" variant="warning-outline" size="sm" icon="edit">
-                                        {{ __('comercial.lotes.editar') }}
-                                    </x-atoms.button>
-                                @endpuede
-
-                                @puede('comercial.lote.eliminar')
-                                    <form
-                                        method="POST"
-                                        action="{{ route('panel.lotes.destroy', $lote) }}"
-                                        onsubmit="return confirm('{{ __('comercial.lotes.confirmar_baja') }}')"
-                                    >
-                                        @csrf
-                                        @method('DELETE')
-                                        <x-atoms.button type="submit" variant="danger-outline" size="sm" icon="delete">
-                                            {{ __('comercial.lotes.eliminar_accion') }}
+                                <x-organisms.row-actions>
+                                    @puede('comercial.lote.editar')
+                                        <x-atoms.button href="{{ route('panel.lotes.edit', $lote) }}" variant="warning-outline" size="sm" icon="edit">
+                                            {{ __('comercial.lotes.editar') }}
                                         </x-atoms.button>
-                                    </form>
-                                @endpuede
+                                    @endpuede
+
+                                    @puede('comercial.lote.eliminar')
+                                        <form
+                                            method="POST"
+                                            action="{{ route('panel.lotes.destroy', $lote) }}"
+                                            onsubmit="return confirm('{{ __('comercial.lotes.confirmar_baja') }}')"
+                                        >
+                                            @csrf
+                                            @method('DELETE')
+                                            <x-atoms.button type="submit" variant="danger-outline" size="sm" icon="delete">
+                                                {{ __('comercial.lotes.eliminar_accion') }}
+                                            </x-atoms.button>
+                                        </form>
+                                    @endpuede
+                                </x-organisms.row-actions>
                             </span>
                         </div>
                     @endforeach

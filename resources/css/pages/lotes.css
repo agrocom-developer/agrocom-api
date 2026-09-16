@@ -31,10 +31,14 @@
 .ag-lotes__head,
 .ag-lotes__fila {
     display: grid;
-    grid-template-columns: 3rem 1fr 2fr 2fr 1fr auto;
+    grid-template-columns: 3rem 1fr 2fr 2fr 1fr var(--ag-row-actions-width);
     gap: var(--ag-space-4);
     align-items: center;
     padding: var(--ag-space-3) var(--ag-space-4);
+}
+
+.ag-lotes__acciones-head {
+    text-align: right;
 }
 
 .ag-lotes__indice {
