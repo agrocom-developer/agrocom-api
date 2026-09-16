@@ -12,14 +12,9 @@
     - $clientesDisponibles (Collection<int, string>): id => razón social,
       clientes activos (ver ContratosController::clientesActivos()) — la
       vista no conoce el modelo Cliente.
-    - $campaniasDisponibles (Collection<int, object{id,codigo,cliente_id}>):
-      TODAS las campañas activas, con su cliente — `contratos-form.js` (ADR
-      0015 punto 1) filtra en cliente cuáles mostrar según el cliente
-      elegido, mismo patrón que rubro/subrubro en `gastos-form.js`. El mapa
-      campaña→cliente viaja como `data-mapa-cliente-campania` (JSON) en el
-      propio `<select>` de campaña (tarea 76: `x-atoms.select` arma un
-      combobox encima del nativo y no soporta atributos por `<option>`, así
-      que el mapeo no puede ir en cada opción como antes).
+    - $campaniasDisponibles (Collection<int, object{id,codigo}>): TODAS las
+      campañas activas del catálogo (ADR 0015, corregido el 15/9/2026: la
+      campaña es compartida, no hay que filtrarla por cliente).
     - $clienteIdPreseleccionado (int|null, tarea "resumen de cliente"): solo
       en alta, desde `?cliente_id=` (ver ContratosController::create()) — el
       atajo "Nuevo contrato" del aside de `panel.clientes.edit` llega acá con
@@ -55,7 +50,6 @@
     $campaniaId = old('campania_id', $contrato?->campania_id ?? '');
     $fechaInicio = old('fecha_inicio', $contrato?->fecha_inicio?->toDateString() ?? '');
     $fechaFin = old('fecha_fin', $contrato?->fecha_fin?->toDateString() ?? '');
-    $mapaClienteCampania = $campaniasDisponibles->pluck('cliente_id', 'id');
     $ventanasPorDefecto = $esEdicion
         ? $contrato->ventanas->map(fn ($ventana) => [
             'id' => $ventana->id,
@@ -101,7 +95,6 @@
             value="{{ $clienteId }}"
             required
             error="{{ $errors->first('cliente_id') }}"
-            data-ag-contrato-cliente
         />
 
         <x-atoms.select
@@ -113,8 +106,6 @@
             required
             help="{{ __('comercial.contratos.campo_campania_ayuda') }}"
             error="{{ $errors->first('campania_id') }}"
-            data-ag-contrato-campania
-            data-mapa-cliente-campania="{{ $mapaClienteCampania->toJson() }}"
         />
 
         <x-atoms.input

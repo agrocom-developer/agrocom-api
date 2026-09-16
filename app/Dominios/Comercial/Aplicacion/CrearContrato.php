@@ -5,7 +5,6 @@ namespace App\Dominios\Comercial\Aplicacion;
 use App\Dominios\Campania\Contratos\LecturaCampania;
 use App\Dominios\Comercial\Aplicacion\MaquinaEstados\MaquinaEstadosContrato;
 use App\Dominios\Comercial\Dominio\Excepciones\CampaniaCerrada;
-use App\Dominios\Comercial\Dominio\Excepciones\CampaniaDeOtroCliente;
 use App\Dominios\Comercial\Dominio\Excepciones\VentanasContratoSolapadas;
 use App\Dominios\Comercial\Dominio\ValidadorSolapamientoVentanas;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
@@ -22,12 +21,13 @@ use Illuminate\Support\Facades\DB;
  * {@see MaquinaEstadosContrato::crear()}, nunca esta clase directamente
  * (invariante 7).
  *
- * Guarda central de HU-46 (ADR 0015 punto 1, corregido el 8/9/2026, y
- * corrección de arquitectura del 8/9/2026): la campaña elegida tiene que ser
- * del MISMO cliente que el contrato, y no puede estar `cerrada`. Se lee vía
- * {@see LecturaCampania} (ADR 0003 regla 2, frontera de `Campania`) — no con
- * `DB::table` directo, porque "está cerrada" es lógica de negocio de
- * `Campania`, no una lectura plana por FK.
+ * Guarda central de HU-46 (ADR 0015 punto 1, corregida el 15/9/2026): la
+ * campaña elegida no puede estar `cerrada` — ya no se verifica de qué
+ * cliente es, porque desde la corrección del 15/9/2026 la campaña es un
+ * catálogo compartido, sin dueño. Se lee vía {@see LecturaCampania} (ADR
+ * 0003 regla 2, frontera de `Campania`) — no con `DB::table` directo, porque
+ * "está cerrada" es lógica de negocio de `Campania`, no una lectura plana
+ * por FK.
  */
 final class CrearContrato
 {
@@ -41,12 +41,11 @@ final class CrearContrato
      * @param  list<array{hora_inicio: string, hora_fin: string}>  $ventanas
      *
      * @throws VentanasContratoSolapadas si dos ventanas del alta se solapan entre sí.
-     * @throws CampaniaDeOtroCliente si la campaña elegida no es del cliente del contrato.
      * @throws CampaniaCerrada si la campaña elegida está `cerrada`.
      */
     public function ejecutar(array $datosContrato, array $ventanas): Contrato
     {
-        $this->verificarCampania((int) $datosContrato['cliente_id'], (int) $datosContrato['campania_id']);
+        $this->verificarCampania((int) $datosContrato['campania_id']);
 
         $solapamiento = ValidadorSolapamientoVentanas::primerSolapamiento($ventanas);
 
@@ -73,20 +72,13 @@ final class CrearContrato
         });
     }
 
-    /**
-     * @throws CampaniaDeOtroCliente si la campaña elegida no es del cliente del contrato.
-     * @throws CampaniaCerrada si la campaña elegida está `cerrada`.
-     */
-    private function verificarCampania(int $clienteId, int $campaniaId): void
+    /** @throws CampaniaCerrada si la campaña elegida está `cerrada`. */
+    private function verificarCampania(int $campaniaId): void
     {
         $campania = $this->lecturaCampania->obtener($campaniaId);
 
         if ($campania === null) {
             return;
-        }
-
-        if ($campania->clienteId !== $clienteId) {
-            throw CampaniaDeOtroCliente::paraCampania($campania->codigo);
         }
 
         if ($campania->cerrada) {

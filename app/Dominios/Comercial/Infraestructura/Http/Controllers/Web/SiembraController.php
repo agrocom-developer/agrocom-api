@@ -3,7 +3,6 @@
 namespace App\Dominios\Comercial\Infraestructura\Http\Controllers\Web;
 
 use App\Dominios\Comercial\Aplicacion\GuardarSiembraCampania;
-use App\Dominios\Comercial\Dominio\Excepciones\CampaniaDeOtroCliente;
 use App\Dominios\Comercial\Dominio\Excepciones\HectareasSembradasSuperanLote;
 use App\Dominios\Comercial\Dominio\Excepciones\SiembraDuplicada;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cultivo;
@@ -25,10 +24,11 @@ use Illuminate\View\View;
  * datos de ESA propiedad (mismo criterio que los lotes dentro de
  * `LotesController`, que tienen su propia ficha).
  *
- * `campaniasDelCliente()` lee `cpn_campanias` con `DB::table` directo (ADR
+ * `campaniasDisponibles()` lee `cpn_campanias` con `DB::table` directo (ADR
  * 0003 regla 3, mismo criterio que `ContratosController`), sin importar el
  * modelo Eloquent `Campania` de otro módulo — solo lo necesario para
- * alimentar el selector.
+ * alimentar el selector. Sin filtro por cliente (ADR 0015, corregido el
+ * 15/9/2026): la campaña es un catálogo compartido.
  */
 final class SiembraController
 {
@@ -41,7 +41,7 @@ final class SiembraController
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO), 403);
 
         $propiedad->load('lotes');
-        $campanias = $this->campaniasDelCliente($propiedad->cliente_id);
+        $campanias = $this->campaniasDisponibles();
         $campaniaId = $request->integer('campania_id') ?: $campanias->keys()->first();
 
         $siembraPorLote = $campaniaId !== null
@@ -74,11 +74,6 @@ final class SiembraController
 
         try {
             $guardarSiembraCampania->ejecutar($propiedad, $campaniaId, array_map($this->normalizarFila(...), $lotesCrudos));
-        } catch (CampaniaDeOtroCliente $excepcion) {
-            return redirect()
-                ->route('panel.propiedades.siembra', ['propiedad' => $propiedad, 'campania_id' => $campaniaId])
-                ->withInput()
-                ->withErrors(['campania_id' => $excepcion->getMessage()]);
         } catch (HectareasSembradasSuperanLote|SiembraDuplicada $excepcion) {
             return redirect()
                 ->route('panel.propiedades.siembra', ['propiedad' => $propiedad, 'campania_id' => $campaniaId])
@@ -91,11 +86,10 @@ final class SiembraController
             ->with('estado', __('comercial.siembra.guardado'));
     }
 
-    /** @return Collection<int, string> id => código, campañas del cliente dueño del campo, la más reciente primero. */
-    private function campaniasDelCliente(int $clienteId): Collection
+    /** @return Collection<int, string> id => código, todas las campañas del catálogo, la más reciente primero. */
+    private function campaniasDisponibles(): Collection
     {
         return DB::table('cpn_campanias')
-            ->where('cliente_id', $clienteId)
             ->whereNull('deleted_at')
             ->orderByDesc('fecha_inicio')
             ->get(['id', 'codigo'])

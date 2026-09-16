@@ -23,7 +23,9 @@
     - incluirDeshabilitados (bool)
     - clientesDisponibles (Collection<Cliente>)
     - cultivosDisponibles (Collection<Cultivo>)
-    - campaniasDisponibles (Collection<stdClass{id,codigo,cliente_id,razon_social}>)
+    - campaniasDisponibles (Collection<stdClass{id,codigo}>): sin cliente_id/
+      razon_social desde el 15/9/2026 (ADR 0015) — la campaña ya no es de un
+      cliente, el código alcanza como etiqueta.
     - estadosDisponibles (list<EstadoContrato>)
     - saldosDisponibles (list<SaldoContrato>)
 
@@ -420,7 +422,7 @@
                                 name="campania_ids"
                                 id="filtros-campanias"
                                 :label="__('comercial.reportes_comerciales.filtros.campania')"
-                                :options="$campaniasDisponibles->mapWithKeys(fn($c) => [$c->id => __('comercial.reportes_comerciales.filtros.campania_opcion', ['codigo' => $c->codigo, 'cliente' => $c->razon_social])])"
+                                :options="$campaniasDisponibles->mapWithKeys(fn($c) => [$c->id => $c->codigo])"
                                 :value="$campaniaIds"
                             />
                         @elseif (empty($clienteIds))

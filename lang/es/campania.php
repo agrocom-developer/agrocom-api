@@ -31,18 +31,14 @@ return [
 
         // Listado
         'titulo' => 'Campañas',
-        'subtitulo' => 'La campaña es del cliente: contratos y gastos se imputan a la suya.',
+        'subtitulo' => 'La campaña es la temporada: cada contrato indica para cuál trabaja.',
         'nueva' => 'Nueva campaña',
         'filtro_busqueda' => 'Buscar',
         'filtro_busqueda_placeholder' => 'Código o nombre',
-        'filtro_cliente' => 'Cliente',
-        'filtro_cliente_placeholder' => 'Todos los clientes',
-        'filtrar' => 'Buscar',
-        'limpiar_filtro' => 'Limpiar búsqueda',
         'vacio_titulo' => 'Todavía no hay campañas',
-        'vacio_detalle' => 'Las campañas se crean para organizar contratos y gastos por cliente. En cuanto se dé de alta la primera, vas a verla acá.',
-        'filtro_vacio' => 'Ninguna campaña coincide con la búsqueda.',
-        'col_cliente' => 'Cliente',
+        'vacio_detalle' => 'Las campañas organizan contratos y gastos por temporada. En cuanto se dé de alta la primera, vas a verla acá.',
+        'filtro_vacio_titulo' => 'Sin resultados para esta búsqueda',
+        'filtro_vacio_detalle' => 'Ninguna campaña coincide con el término buscado. Probá con otro código o nombre.',
         'col_codigo' => 'Código',
         'col_nombre' => 'Nombre',
         'col_vigencia' => 'Vigencia',
@@ -60,7 +56,9 @@ return [
         // Cambio de estado (listado)
         'accion_abrir' => 'Abrir',
         'accion_cerrar' => 'Cerrar',
+        'confirmar_abrir_titulo' => 'Abrir campaña',
         'confirmar_abrir' => '¿Abrir esta campaña? Desde ese momento admite contratos y gastos.',
+        'confirmar_cerrar_titulo' => 'Cerrar campaña',
         'confirmar_cerrar' => '¿Cerrar esta campaña? No se puede volver a abrir desde el panel.',
 
         // Formulario (create/edit)
@@ -69,8 +67,6 @@ return [
         'subtitulo_form' => 'El código identifica la campaña en reportes y filtros (por ejemplo, 2025-2026).',
         'seccion_datos' => 'Datos de la campaña',
         'campos_contador' => ':cantidad campos',
-        'campo_cliente' => 'Cliente',
-        'campo_cliente_placeholder' => 'Seleccioná un cliente',
         'campo_codigo' => 'Código',
         'campo_nombre' => 'Nombre',
         'campo_nombre_ayuda' => 'Si lo dejás vacío, se arma solo con la estación y los años (por ejemplo, Verano/2025/2026).',
@@ -81,9 +77,19 @@ return [
         'estado_form' => 'Los cambios se guardan al confirmar.',
         'volver' => 'Volver a campañas',
 
+        // Resumen (aside, solo edición)
+        'aside_financiero_titulo' => 'Financiero',
+        'aside_recaudado' => 'Recaudado (facturado)',
+        'aside_gastado' => 'Gastado',
+        'aside_balance' => 'Balance',
+        'aside_financiero_accion' => 'Ver gastos',
+        'aside_trabajo_titulo' => 'Trabajo',
+        'aside_contratos' => 'Contratos',
+        'aside_hectareas_contratadas' => 'Hectáreas contratadas',
+        'aside_trabajos' => 'Trabajos realizados',
+        'aside_trabajo_accion' => 'Ver contratos',
+
         // Errores de validación
-        'error_cliente_requerido' => 'Seleccioná el cliente de la campaña.',
-        'error_cliente_invalido' => 'El cliente seleccionado no es válido.',
         'error_codigo_requerido' => 'Ingresá un código para la campaña.',
         'error_fechas_rango' => 'La fecha de fin tiene que ser igual o posterior a la de inicio.',
     ],

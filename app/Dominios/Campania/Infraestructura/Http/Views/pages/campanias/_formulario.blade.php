@@ -2,19 +2,14 @@
     Partial: formulario de campaña, compartido por create.blade.php y
     edit.blade.php (ADR 0015 punto 1, tarea 69) — arquetipo Formulario, §6.3
     de docs/diseno/guia_pantalla_panel.md. Mismo patrón que
-    `personal/bases/_formulario.blade.php`, con el selector de cliente que
-    agrega la corrección del 8/9/2026: la campaña es del cliente.
+    `personal/bases/_formulario.blade.php`. Sin selector de cliente desde la
+    corrección del 15/9/2026: la campaña es un catálogo compartido, el
+    vínculo con el cliente lo pone el contrato.
 
     Espera:
     - $campania (Campania|null): null en alta; el modelo en edición.
-    - $clientesDisponibles (Collection<int, string>): id => razón social
-      (ver CampaniasController::clientesDisponibles()) — la vista no conoce
-      el modelo Cliente (cross-módulo, ADR 0003 regla 3).
-    - $clienteIdPreseleccionado (int|null, tarea "resumen de cliente"): solo
-      en alta, desde `?cliente_id=` (ver CampaniasController::create()) — el
-      atajo "Nueva campaña" del aside de `panel.clientes.edit` llega acá con
-      el cliente ya elegido. `edit()` no lo pasa (`null` por el `??` de
-      abajo).
+    - $resumenCampania (list<array{...}>|null): solo en edición, ver
+      CampaniasController::resumenCampania(). `null`/ausente en alta.
 
     `estado` NUNCA es un campo de este formulario: lo cambia
     `panel.campanias.cambiar-estado` (otra pantalla, otra responsabilidad —
@@ -28,16 +23,16 @@
     Tras un error de validación, `old()` pisa los valores del modelo/vacíos
     — mismo criterio en alta y en edición.
 
-    El aside pegajoso del arquetipo (summary-card/progress-meter) se omite a
-    propósito, mismo criterio que bases/personas: ningún dato de solo lectura
-    justifica hoy la columna lateral.
+    Aside pegajoso (§6.3.1 de la guía de pantalla, 15/9/2026): SOLO en
+    edición — una campaña recién creada no puede tener contratos, gastos ni
+    trabajos todavía. Dos `summary-card` de solo lectura (Financiero,
+    Trabajo), sin alternar con `empty-state`: a diferencia del resumen
+    relacionado de cliente, acá el "dato" es una magnitud que siempre existe
+    (aunque sea cero), no un listado con atajo de alta.
 --}}
 @php
     $esEdicion = $campania !== null;
     $accion = $esEdicion ? route('panel.campanias.update', $campania) : route('panel.campanias.store');
-    // $clienteIdPreseleccionado (tarea "resumen de cliente"): solo llega en
-    // alta, desde el atajo del aside de `panel.clientes.edit`.
-    $clienteId = old('cliente_id', $campania?->cliente_id ?? $clienteIdPreseleccionado ?? '');
     $codigo = old('codigo', $campania?->codigo ?? '');
     $nombre = old('nombre', $campania?->nombre ?? '');
     $estacion = old('estacion', $campania?->estacion ?? '');
@@ -59,34 +54,34 @@
         :title="$esEdicion ? __('campania.campanias.titulo_editar') : __('campania.campanias.titulo_crear')"
         :subtitle="__('campania.campanias.subtitulo_form')"
     >
-        <x-slot:actions>
-            @if ($esEdicion)
-                <x-atoms.badge :variant="$campania->esActiva() ? 'success' : 'neutral'">
-                    {{ __($campania->esActiva() ? 'campania.campanias.actividad_activa' : 'campania.campanias.actividad_inactiva') }}
-                </x-atoms.badge>
-            @endif
+        @if ($esEdicion)
+            <x-slot:chip>
+                <span class="ag-campanias-form__estado-chip {{ $campania->esActiva() ? 'ag-campanias-form__estado-chip--activa' : 'ag-campanias-form__estado-chip--inactiva' }}">
+                    <x-atoms.icon name="{{ $campania->esActiva() ? 'check_circle' : 'radio_button_unchecked' }}" size="sm" />
+                    <span>{{ __($campania->esActiva() ? 'campania.campanias.actividad_activa' : 'campania.campanias.actividad_inactiva') }}</span>
+                </span>
+            </x-slot:chip>
+        @endif
 
+        <x-slot:actions>
             <x-atoms.button href="{{ route('panel.campanias.index') }}" variant="outline" icon="arrow_back">
                 {{ __('campania.campanias.volver') }}
             </x-atoms.button>
         </x-slot:actions>
     </x-organisms.page-header>
 
+    @if (session('estado'))
+        <x-molecules.alert-strip variant="success" icon="check_circle">
+            {{ session('estado') }}
+        </x-molecules.alert-strip>
+    @endif
+
+    <div class="ag-campanias-form__layout">
+        <div class="ag-campanias-form__main">
     <x-molecules.form-section
         :title="__('campania.campanias.seccion_datos')"
-        :count="__('campania.campanias.campos_contador', ['cantidad' => 6])"
+        :count="__('campania.campanias.campos_contador', ['cantidad' => 5])"
     >
-        <x-atoms.select
-            name="cliente_id"
-            id="cliente_id"
-            label="{{ __('campania.campanias.campo_cliente') }}"
-            placeholder="{{ __('campania.campanias.campo_cliente_placeholder') }}"
-            :options="$clientesDisponibles"
-            value="{{ $clienteId }}"
-            required
-            error="{{ $errors->first('cliente_id') }}"
-        />
-
         <x-atoms.input
             type="text"
             name="codigo"
@@ -144,4 +139,20 @@
             </x-atoms.button>
         </x-slot:actions>
     </x-organisms.form-actions-bar>
+        </div>
+
+        @if ($esEdicion)
+            <aside class="ag-campanias-form__aside">
+                @foreach ($resumenCampania ?? [] as $resumen)
+                    <x-molecules.summary-card :title="$resumen['titulo']" :items="$resumen['items']">
+                        <x-slot:action>
+                            <x-atoms.button href="{{ $resumen['accion']['href'] }}" variant="outline" icon="arrow_forward" block>
+                                {{ $resumen['accion']['label'] }}
+                            </x-atoms.button>
+                        </x-slot:action>
+                    </x-molecules.summary-card>
+                @endforeach
+            </aside>
+        @endif
+    </div>
 </form>

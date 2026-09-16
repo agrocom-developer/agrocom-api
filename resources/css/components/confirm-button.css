@@ -1,0 +1,74 @@
+/*
+ * Molecule: confirm-button (resources/views/components/molecules/confirm-button.blade.php)
+ * Sin `.modal-header`/`.modal-footer` de Bootstrap a propósito (pedido
+ * directo, mockup de referencia): un solo bloque con ícono en círculo +
+ * título + mensaje, acciones al pie — chrome mínimo para una confirmación
+ * simple, no el modal genérico con barra de título y "×".
+ */
+
+.ag-confirm-modal__content {
+    padding: var(--ag-space-5);
+}
+
+.ag-confirm-modal__body {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--ag-space-2);
+}
+
+.ag-confirm-modal__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: var(--ag-radius-pill);
+    flex-shrink: 0;
+}
+
+.ag-confirm-modal__icon--danger {
+    background-color: var(--ag-color-danger-subtle);
+    color: var(--ag-color-danger-strong);
+}
+
+.ag-confirm-modal__icon--success {
+    background-color: var(--ag-color-success-subtle);
+    color: var(--ag-color-success-strong);
+}
+
+.ag-confirm-modal__icon--warning {
+    background-color: var(--ag-color-warning-subtle);
+    color: var(--ag-color-warning-strong);
+}
+
+.ag-confirm-modal__icon--info {
+    background-color: var(--ag-color-info-subtle);
+    color: var(--ag-color-info-strong);
+}
+
+.ag-confirm-modal__icon--neutral {
+    background-color: var(--ag-color-neutral-subtle);
+    color: var(--ag-color-neutral-strong);
+}
+
+.ag-confirm-modal__title {
+    margin: 0;
+    font-family: var(--ag-font-family-display);
+    font-size: var(--ag-font-size-lg);
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-color-text);
+}
+
+.ag-confirm-modal__message {
+    margin: 0;
+    color: var(--ag-color-text-muted);
+    line-height: 1.5;
+}
+
+.ag-confirm-modal__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--ag-space-2);
+    margin-top: var(--ag-space-5);
+}

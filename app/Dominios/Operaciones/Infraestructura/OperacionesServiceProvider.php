@@ -11,6 +11,7 @@ use App\Dominios\Operaciones\Contratos\LecturaHorasVueloPorModelo;
 use App\Dominios\Operaciones\Contratos\LecturaOrdenesVigentes;
 use App\Dominios\Operaciones\Contratos\LecturaPanelOperaciones;
 use App\Dominios\Operaciones\Contratos\LecturaReporteTecnico;
+use App\Dominios\Operaciones\Contratos\LecturaResumenOrdenesContrato;
 use App\Dominios\Operaciones\Contratos\LecturaSesionValidada;
 use App\Dominios\Operaciones\Contratos\LecturaTrabajos;
 use App\Dominios\Operaciones\Contratos\LecturaTrabajosAsignados;
@@ -44,6 +45,7 @@ final class OperacionesServiceProvider extends ServiceProvider
         $this->app->bind(LecturaPanelOperaciones::class, LecturaPanelOperacionesEloquent::class);
         $this->app->bind(LecturaDesempenioPersona::class, LecturaDesempenioPersonaEloquent::class);
         $this->app->bind(LecturaTrabajos::class, LecturaTrabajosEloquent::class);
+        $this->app->bind(LecturaResumenOrdenesContrato::class, LecturaResumenOrdenesContratoEloquent::class);
 
         // Buscador global (`busqueda.proveedores`): el agregador de Seguridad
         // no conoce estas clases, las recibe por tag. Sumar una entidad al

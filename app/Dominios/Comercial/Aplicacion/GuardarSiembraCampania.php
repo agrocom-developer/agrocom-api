@@ -2,9 +2,7 @@
 
 namespace App\Dominios\Comercial\Aplicacion;
 
-use App\Dominios\Campania\Contratos\LecturaCampania;
 use App\Dominios\Comercial\Aplicacion\Siembra\GuardarSiembra;
-use App\Dominios\Comercial\Dominio\Excepciones\CampaniaDeOtroCliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\LoteCampania;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use Illuminate\Support\Facades\Auth;
@@ -21,27 +19,17 @@ use Illuminate\Support\Facades\DB;
  * selector... no pisa la de la anterior") porque el `where` siempre incluye
  * `campania_id`.
  *
- * Guarda central de esta tarea (prompt, punto 3): el lote tiene que
- * pertenecer a una propiedad del MISMO cliente que la campaña. Se verifica
- * UNA sola vez para el lote de la campaña elegida —todas las filas del
- * formulario son de lotes de esta misma `$propiedad`, así que alcanza con
- * comprobar `$propiedad` contra la campaña— vía {@see LecturaCampania} (ADR
- * 0003 regla 2, frontera de `Campania`), mismo criterio que
- * `CrearContrato::verificarCampania`.
+ * Sin guarda de cliente (ADR 0015, corregida el 15/9/2026): la campaña es un
+ * catálogo compartido, sin `cliente_id` propio contra el cual comparar el de
+ * la propiedad — cualquier lote puede sembrarse en cualquier campaña.
  */
 final class GuardarSiembraCampania
 {
-    public function __construct(private readonly LecturaCampania $lecturaCampania) {}
-
     /**
      * @param  list<array{lote_id: int, cultivo_id: int|null, hectareas_sembradas: string|null, fecha_siembra: string|null, fecha_cosecha_estimada: string|null}>  $filas
-     *
-     * @throws CampaniaDeOtroCliente si la campaña elegida no es del cliente dueño de la propiedad.
      */
     public function ejecutar(Propiedad $propiedad, int $campaniaId, array $filas): void
     {
-        $this->verificarCampania($propiedad, $campaniaId);
-
         DB::transaction(function () use ($propiedad, $campaniaId, $filas): void {
             $lotesPorId = $propiedad->lotes->keyBy('id');
 
@@ -85,20 +73,6 @@ final class GuardarSiembraCampania
                 ]);
             }
         });
-    }
-
-    /** @throws CampaniaDeOtroCliente si la campaña elegida no es del cliente dueño de la propiedad. */
-    private function verificarCampania(Propiedad $propiedad, int $campaniaId): void
-    {
-        $campania = $this->lecturaCampania->obtener($campaniaId);
-
-        if ($campania === null) {
-            return;
-        }
-
-        if ($campania->clienteId !== $propiedad->cliente_id) {
-            throw CampaniaDeOtroCliente::paraCampania($campania->codigo);
-        }
     }
 
     /**

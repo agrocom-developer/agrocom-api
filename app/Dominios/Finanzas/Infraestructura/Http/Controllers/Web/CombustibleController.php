@@ -217,18 +217,18 @@ final class CombustibleController
      * rechaza igual `Aplicacion/CrearCombustible`, esto es solo para no
      * ofrecerla en el formulario.
      *
+     * Sin `cliente_id`/`com_clientes` (ADR 0015, corregido el 15/9/2026): la
+     * campaña es un catálogo compartido, sin cliente propio.
+     *
      * @return Collection<int, non-falsy-string>
      */
     private function campaniasNoCerradas(): Collection
     {
         return DB::table('cpn_campanias')
-            ->join('com_clientes', 'com_clientes.id', '=', 'cpn_campanias.cliente_id')
-            ->whereNull('cpn_campanias.deleted_at')
-            ->where('cpn_campanias.estado', '!=', 'cerrada')
-            ->orderBy('com_clientes.razon_social')
-            ->orderBy('cpn_campanias.codigo')
-            ->get(['cpn_campanias.id', 'cpn_campanias.codigo', 'com_clientes.razon_social'])
-            ->mapWithKeys(fn (object $fila): array => [(int) $fila->id => sprintf('%s — %s', $fila->codigo, $fila->razon_social)]);
+            ->whereNull('deleted_at')
+            ->where('estado', '!=', 'cerrada')
+            ->orderBy('codigo')
+            ->pluck('codigo', 'id');
     }
 
     /**
@@ -237,17 +237,17 @@ final class CombustibleController
      * filtro del LISTADO tiene que poder encontrar cargas de una campaña ya
      * `cerrada`: mismo criterio que `GastosController::todasLasCampanias()`.
      *
+     * Sin `cliente_id`/`com_clientes` (ADR 0015, corregido el 15/9/2026):
+     * mismo motivo que {@see self::campaniasNoCerradas()}.
+     *
      * @return Collection<int, non-falsy-string>
      */
     private function todasLasCampanias(): Collection
     {
         return DB::table('cpn_campanias')
-            ->join('com_clientes', 'com_clientes.id', '=', 'cpn_campanias.cliente_id')
-            ->whereNull('cpn_campanias.deleted_at')
-            ->orderBy('com_clientes.razon_social')
-            ->orderBy('cpn_campanias.codigo')
-            ->get(['cpn_campanias.id', 'cpn_campanias.codigo', 'com_clientes.razon_social'])
-            ->mapWithKeys(fn (object $fila): array => [(int) $fila->id => sprintf('%s — %s', $fila->codigo, $fila->razon_social)]);
+            ->whereNull('deleted_at')
+            ->orderBy('codigo')
+            ->pluck('codigo', 'id');
     }
 
     /**

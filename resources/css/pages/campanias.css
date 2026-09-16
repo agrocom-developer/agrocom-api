@@ -27,24 +27,33 @@
     overflow: hidden;
 }
 
-/* SEIS columnas, una por celda: cliente · código · nombre · vigencia ·
-   estado · acciones. Nacieron cinco (tarea 69) y la fila siempre tuvo seis
-   celdas, así que la de acciones no entraba en el track explícito y el grid
-   le abría una FILA IMPLÍCITA: "Editar" y "Cerrar" aparecían debajo del
-   nombre del cliente, en la primera columna, con la fila al doble de alto.
-   Reportado por el dueño sobre el panel andando (9/9/2026). El resto de los
-   listados del panel ya declaraba tantas columnas como celdas.
+/* SIETE columnas, una por celda: índice · código · nombre · vigencia ·
+   estado · actividad · acciones (sin columna de cliente desde la corrección
+   del 15/9/2026, ADR 0015 — la campaña es catálogo compartido). Nacieron
+   cinco (tarea 69) y la fila siempre tuvo seis celdas, así que la de
+   acciones no entraba en el track explícito y el grid le abría una FILA
+   IMPLÍCITA: "Editar" y "Cerrar" aparecían debajo del nombre del cliente, en
+   la primera columna, con la fila al doble de alto. Reportado por el dueño
+   sobre el panel andando (9/9/2026). El resto de los listados del panel ya
+   declaraba tantas columnas como celdas.
 
-   Los siete tracks van en `fr`, ninguno en `auto`: el encabezado y las filas
-   son grids HERMANOS, no uno solo, así que un track `auto` lo resuelve cada
-   grid contra su propio contenido — con "VIGENCIA" arriba y una fecha
+   Los tracks de dato van en `fr`, ninguno en `auto`: el encabezado y las
+   filas son grids HERMANOS, no uno solo, así que un track `auto` lo resuelve
+   cada grid contra su propio contenido — con "VIGENCIA" arriba y una fecha
    abajo, la columna medía distinto en cada fila y los rótulos quedaban
    corridos respecto de los datos. Con `fr` los dos grids reparten idéntico.
-   Es también lo que hacen las otras 40 páginas de listado. */
+   Es también lo que hacen las otras 40 páginas de listado.
+
+   La columna de acciones es la excepción: `14rem` fijo (§6.2 de
+   docs/diseno/guia_pantalla_panel.md, mismo criterio que `usuarios.css`,
+   24rem ahí por tener 3 acciones con texto contra las 2 de acá — "Editar" +
+   "Abrir"/"Cerrar", nunca las dos juntas) — con `fr`, el ancho de
+   `x-organisms.row-actions` dependería del resto de columnas y no calzaría
+   entre el head y la fila, que son grids separados. */
 .ag-campanias__head,
 .ag-campanias__fila {
     display: grid;
-    grid-template-columns: 3rem 1.7fr 0.75fr 0.7fr 1.5fr 0.7fr 0.7fr 1.7fr;
+    grid-template-columns: 3rem 0.9fr 1.6fr 1.4fr 0.8fr 0.8fr 14rem;
     gap: var(--ag-space-4);
     align-items: center;
     padding: var(--ag-space-3) var(--ag-space-4);
@@ -56,16 +65,11 @@
     font-size: var(--ag-font-size-xs);
 }
 
-/* El encabezado de acciones va vacío (`aria-hidden`) pero ocupa su columna:
-   sin él, "ESTADO" se leería como rótulo de los botones. */
-.ag-campanias__head > [aria-hidden] {
-    min-width: 0;
-}
-
 /* Los rótulos de estado y acciones se alinean con lo que rotulan: el badge
    arranca a la izquierda de su celda, los botones terminan a la derecha. */
 .ag-campanias__head > :last-child,
-.ag-campanias__acciones {
+.ag-campanias__acciones,
+.ag-campanias__acciones-head {
     text-align: right;
 }
 
@@ -133,4 +137,85 @@
     .ag-campanias__mono {
         white-space: normal;
     }
+}
+
+/* Formulario (create/edit) */
+
+/* Layout de dos columnas (§6.3.1 de la guía de pantalla, 15/9/2026): mismo
+   patrón que `.ag-clientes-form__layout/__main/__aside` — el aside con el
+   resumen financiero/de trabajo solo existe en edición
+   (`_formulario.blade.php`); en alta `.ag-campanias-form__main` queda sin
+   hermano (`:only-child` debajo). */
+.ag-campanias-form__layout {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--ag-space-5);
+}
+
+.ag-campanias-form__main {
+    flex: 1 1 32rem;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+.ag-campanias-form__main:only-child {
+    flex-basis: 100%;
+}
+
+.ag-campanias-form__aside {
+    flex: 1 1 19rem;
+    min-width: 16rem;
+    max-width: 20rem;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+    position: sticky;
+    top: var(--ag-space-4);
+}
+
+@media (max-width: 1199.98px) {
+    .ag-campanias-form__layout {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .ag-campanias-form__aside {
+        max-width: none;
+        position: static;
+    }
+}
+
+/* Chip de estado junto al subtítulo (15/9/2026, pedido directo — "que se
+   note más"): vive en el slot `chip` de `organisms/page-header`, mismo
+   patrón que `.ag-dash__ventana-chip` de `pages/dashboard/_encabezado`
+   ("Viendo como X rol") — acá con el eje gris↔verde de
+   `color-estado-seleccion-vs-etiquetas` en vez del warning fijo del
+   dashboard, porque esto es un estado de dos valores, no una alerta. */
+.ag-campanias-form__estado-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-1) var(--ag-space-3);
+    border-radius: var(--ag-radius-pill);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-medium);
+    white-space: nowrap;
+}
+
+.ag-campanias-form__estado-chip--activa {
+    background: var(--ag-color-success-subtle);
+    border: 1px solid var(--ag-color-success-border);
+    color: var(--ag-color-success-strong);
+}
+
+.ag-campanias-form__estado-chip--inactiva {
+    background: var(--ag-color-neutral-subtle);
+    border: 1px solid var(--ag-color-border-card);
+    color: var(--ag-color-neutral-strong);
+}
+
+.ag-campanias-form__estado-chip .ag-icon {
+    color: inherit;
 }

@@ -125,13 +125,40 @@ class SecMenuSeeder extends Seeder
         $this->item($operacion, 'operacion', 'asignacion_equipos', 'groups', 7, ruta: 'panel.asignacion-equipos.index', codigoPermiso: 'operaciones.orden.asignar_equipos');
 
         // Comercial (§4.1 + cap. 9)
+        //
+        // HU-46 (tarea 69, ADR 0015 punto 1) — reubicado el 9/9/2026 por
+        // pedido del dueño, mirando el panel andando. El ítem había nacido
+        // bajo Seguridad leyendo la campaña como "configuración de toda la
+        // operación", y eso contradecía el propio ADR corregido el 8/9: la
+        // campaña era del **cliente**. Agrocom es una empresa de servicio —
+        // *"si fuera por nosotros daríamos servicio todo el año, no tuviéramos
+        // que abrir campaña propia"*—: el cliente habilitaba su campaña, con
+        // sus tiempos de riego y siembra, y recién ahí entraba la fumigación.
+        // Por eso se agrupó con Clientes, Contratos y Propiedades, no con la
+        // configuración de la casa.
+        //
+        // Corrección del 15/9/2026 (ADR 0015): esa lectura de "la campaña es
+        // del cliente" quedó reemplazada — la campaña pasa a ser catálogo
+        // compartido, sin dueño; el vínculo con el cliente vive en
+        // `com_contratos`, no en `cpn_campanias`. Sigue agrupada bajo
+        // Comercial (agrupación de layout, no una frontera de módulo — mismo
+        // caso que `vehiculos`, que vive en `Mantenimiento` y se muestra bajo
+        // Recursos, ADR 0011 extensión del 26/8/2026 punto 3), pero pasa a la
+        // CABEZA del grupo: en el flujo de alta la campaña ya existe antes
+        // que el contrato que la referencia. El permiso no cambia
+        // (`campania.campania.ver`, módulo `Campania`). El resto del grupo
+        // corre un lugar: Clientes 2, Contratos 3, Propiedades 4, Lotes 5,
+        // Cultivos 6.
+        $this->mover('menu.seguridad.items.campanias', 'menu.comercial.items.campanias', $comercial, 1);
+        $this->item($comercial, 'comercial', 'campanias', 'calendar_month', 1, ruta: 'panel.campanias.index', codigoPermiso: 'campania.campania.ver');
+
         // HU-22 (tarea 33): alta y mantenimiento de clientes — activa el
         // ítem que ya estaba sembrado como "botón sin link" (ver docblock
         // de `item()`).
-        $this->item($comercial, 'comercial', 'clientes', 'contact_page', 1, ruta: 'panel.clientes.index', codigoPermiso: 'comercial.cliente.ver');
+        $this->item($comercial, 'comercial', 'clientes', 'contact_page', 2, ruta: 'panel.clientes.index', codigoPermiso: 'comercial.cliente.ver');
         // HU-23 (tarea 34): administración de contratos — activa el ítem que
         // ya estaba sembrado como "botón sin link" (ver docblock de `item()`).
-        $this->item($comercial, 'comercial', 'contratos', 'description', 2, ruta: 'panel.contratos.index', codigoPermiso: 'comercial.contrato.ver');
+        $this->item($comercial, 'comercial', 'contratos', 'description', 3, ruta: 'panel.contratos.index', codigoPermiso: 'comercial.contrato.ver');
         // HU-24 (tarea 35): administración de campos y sus lotes — activa
         // el ítem que ya estaba sembrado como "botón sin link" (ver
         // docblock de `item()`).
@@ -161,39 +188,18 @@ class SecMenuSeeder extends Seeder
         // (`comercial.campo.ver` se retira en `SeguridadSeeder`): se retira
         // del árbol con `retirarItemCampos()` (soft delete explícito, mismo
         // criterio que las bajas de catálogo al principio de este método).
-        // "Propiedades" y "Lotes" quedan como ítems independientes: "Lotes"
-        // ocupa el orden 4 (antes 5, vacante por "Campos"); "Cultivos" y
-        // "Campañas" corren un lugar detrás (ver abajo).
+        // "Propiedades" y "Lotes" quedan como ítems independientes: orden 4
+        // y 5 desde la corrección del 15/9/2026 de "Campañas" de arriba.
         $this->retirarItemCampos($comercial);
-        $this->item($comercial, 'comercial', 'propiedades', 'domain', 3, ruta: 'panel.propiedades.index', codigoPermiso: 'comercial.propiedad.ver');
-        $this->item($comercial, 'comercial', 'lotes', 'grid_view', 4, ruta: 'panel.lotes.index', codigoPermiso: 'comercial.lote.ver');
+        $this->item($comercial, 'comercial', 'propiedades', 'domain', 4, ruta: 'panel.propiedades.index', codigoPermiso: 'comercial.propiedad.ver');
+        $this->item($comercial, 'comercial', 'lotes', 'grid_view', 5, ruta: 'panel.lotes.index', codigoPermiso: 'comercial.lote.ver');
 
         // HU-48 (tarea 71, ADR 0015 punto 4): catálogo de cultivos. Ítem
         // creado directo con ruta y permiso, no "botón sin link": el
         // catálogo no formaba parte de la siembra original de `sec_menu`
-        // (ver docblock de `item()`). Orden 5 desde ADR 0020 (corrido un
-        // lugar más al retirarse "Campos", ver arriba).
-        $this->item($comercial, 'comercial', 'cultivos', 'grass', 5, ruta: 'panel.cultivos.index', codigoPermiso: 'comercial.cultivo.ver');
-
-        // HU-46 (tarea 69, ADR 0015 punto 1) — reubicado el 9/9/2026 por
-        // pedido del dueño, mirando el panel andando. El ítem había nacido
-        // bajo Seguridad leyendo la campaña como "configuración de toda la
-        // operación", y eso contradice el propio ADR corregido el 8/9: la
-        // campaña es del **cliente**. Agrocom es una empresa de servicio —
-        // *"si fuera por nosotros daríamos servicio todo el año, no tuviéramos
-        // que abrir campaña propia"*—: el cliente habilita su campaña, con sus
-        // tiempos de riego y siembra, y recién ahí entra la fumigación. Es
-        // información de cada cliente, así que va con Clientes, Contratos y
-        // Propiedades, no con la configuración de la casa.
-        //
-        // El permiso no cambia (`campania.campania.ver`, módulo `Campania`):
-        // esto es agrupación de layout, no una frontera de módulo — mismo caso
-        // que `vehiculos`, que vive en `Mantenimiento` y se muestra bajo
-        // Recursos (ADR 0011, extensión del 26/8/2026, punto 3). Orden 6
-        // desde ADR 0020 (corrido un lugar más al retirarse "Campos", ver
-        // arriba).
-        $this->mover('menu.seguridad.items.campanias', 'menu.comercial.items.campanias', $comercial, 6);
-        $this->item($comercial, 'comercial', 'campanias', 'calendar_month', 6, ruta: 'panel.campanias.index', codigoPermiso: 'campania.campania.ver');
+        // (ver docblock de `item()`). Último del grupo (orden 6) desde la
+        // corrección del 15/9/2026 de "Campañas" de arriba.
+        $this->item($comercial, 'comercial', 'cultivos', 'grass', 6, ruta: 'panel.cultivos.index', codigoPermiso: 'comercial.cultivo.ver');
 
         // Recursos (§4.2)
         // HU-27 (tarea 36): administración de la flota de drones — activa
@@ -348,9 +354,9 @@ class SecMenuSeeder extends Seeder
         // entra bajo Seguridad, mismo criterio que Organización.
         $this->item($seguridad, 'seguridad', 'versiones_apk', 'system_update', 5, ruta: 'panel.versiones-apk.index', codigoPermiso: 'distribucion.version.autorizar');
         // Orden 6 queda vacante a propósito: lo ocupaba "Campañas", que el
-        // 9/9/2026 se movió a Comercial —la campaña es del cliente, ver el
-        // comentario allá—. No se renumeran los ítems que siguen, mismo
-        // criterio que las otras vacantes del menú.
+        // 9/9/2026 se movió a Comercial —ver el comentario allá para el
+        // porqué, corregido el 15/9/2026—. No se renumeran los ítems que
+        // siguen, mismo criterio que las otras vacantes del menú.
         // Tarea 78 (HU-55): llaves y tokens de infraestructura, exclusivo del
         // dueño — separado a propósito de "Organización" arriba (datos de la
         // empresa). Gateado por `seguridad.configuracion.ver`, que ningún

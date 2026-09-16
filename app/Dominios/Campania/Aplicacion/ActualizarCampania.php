@@ -17,17 +17,19 @@ use Illuminate\Database\QueryException;
  * ni vacía el nombre existente (HU-77, tarea 93): editar una campaña sin
  * tocar el campo nombre no debe pisar lo que el encargado ya tenía, tipeado
  * a mano o autogenerado al alta.
+ *
+ * Sin `cliente_id` (ADR 0015, corregido el 15/9/2026): ver docblock de
+ * {@see CrearCampania}.
  */
 final class ActualizarCampania
 {
     /**
      * @throws CampaniaDuplicada si el código ya pertenece a otra campaña activa
-     *                           del mismo cliente (índice parcial `cpn_campanias_cliente_codigo_unico`).
+     *                           (índice único `cpn_campanias_codigo_unico`).
      */
-    public function ejecutar(Campania $campania, int $clienteId, string $codigo, ?string $nombre, string $fechaInicio, string $fechaFin, string $estacion): Campania
+    public function ejecutar(Campania $campania, string $codigo, ?string $nombre, string $fechaInicio, string $fechaFin, string $estacion): Campania
     {
         $campania->fill([
-            'cliente_id' => $clienteId,
             'codigo' => $codigo,
             'estacion' => $estacion,
             'fecha_inicio' => $fechaInicio,
@@ -55,7 +57,7 @@ final class ActualizarCampania
     {
         $mensaje = $excepcion->getMessage();
 
-        if (str_contains($mensaje, 'cpn_campanias_cliente_codigo_unico') || str_contains($mensaje, 'cpn_campanias.codigo')) {
+        if (str_contains($mensaje, 'cpn_campanias_codigo_unico') || str_contains($mensaje, 'cpn_campanias.codigo')) {
             throw CampaniaDuplicada::porCodigo($codigo);
         }
 

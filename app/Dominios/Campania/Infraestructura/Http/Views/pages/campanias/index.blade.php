@@ -1,19 +1,22 @@
 {{--
     Page: campanias/index (GET /panel/campanias, panel.campanias.index)
     Listado de campañas (ADR 0015 punto 1, tarea 69): arquetipo Listado, §6.2
-    de docs/diseno/guia_pantalla_panel.md — cabecera → filtros → tabla →
-    paginación. Mismo molde que `comercial/contratos/index.blade.php`, con
-    una máquina de estados más simple (dos transiciones, no cuatro).
+    de docs/diseno/guia_pantalla_panel.md — cabecera → toolbar → tabla →
+    paginación. Migrado al patrón vigente el 15/9/2026 (mismo molde que
+    `seguridad::pages.usuarios.index`, sin `filter-panel` porque el único
+    filtro es la búsqueda): `empty-state` único para "sin datos"/"la
+    búsqueda no trae nada" (nunca `alert-strip`) y `organisms/row-actions`
+    en la celda de acciones. `comercial/contratos/index.blade.php` todavía
+    no migró — no lo copies como referencia para una pantalla nueva.
 
     Datos esperados (ver CampaniasController::index()): la cáscara de
     CascaraPanel, más:
     - $campanias (LengthAwarePaginator<Campania>): fecha de inicio descendente.
-    - $clientesDisponibles (Collection<int, string>): id => razón social,
-      para el <select> del filtro por cliente.
-    - $etiquetasCliente (array<int, string>): id => razón social, acotado a
-      los clientes de la página actual — evita un N+1 al pintar la tabla.
-    - $filtros (array{q: string, cliente_id: int|null}): filtros aplicados,
-      para dejar los campos con el valor tras el submit.
+    - $filtros (array{q: string}): filtros aplicados, para dejar los campos
+      con el valor tras el submit.
+
+    Sin filtro ni columna de cliente desde la corrección del 15/9/2026: la
+    campaña es un catálogo compartido, no de un cliente.
 
     Gateada por `campania.campania.ver`, verificado server-side en el
     controlador. El botón "Nueva campaña" y las acciones de cambio de estado
@@ -86,37 +89,13 @@
                 </div>
             @endif
 
-            @if ($hayFiltrosActivos || $campanias->isNotEmpty())
-                <form method="GET" action="{{ route('panel.campanias.index') }}" class="ag-filtros ag-campanias__filtros">
-                    <input type="hidden" name="q" value="{{ $filtros['q'] }}">
-                <x-atoms.select
-                    name="cliente_id"
-                    id="filtro-cliente"
-                    label="{{ __('campania.campanias.filtro_cliente') }}"
-                    placeholder="{{ __('campania.campanias.filtro_cliente_placeholder') }}"
-                    :options="$clientesDisponibles"
-                    value="{{ $filtros['cliente_id'] }}"
-                />
-
-                <div class="ag-filtros__acciones ag-campanias__filtros-acciones">
-                    <x-atoms.button type="submit" variant="primary" size="md" icon="search">
-                        {{ __('campania.campanias.filtrar') }}
-                    </x-atoms.button>
-
-                    @if ($hayFiltrosActivos)
-                        <x-atoms.button href="{{ route('panel.campanias.index') }}" variant="text" size="md">
-                            {{ __('campania.campanias.limpiar_filtro') }}
-                        </x-atoms.button>
-                    @endif
-                </div>
-                </form>
-            @endif
-
             @if ($campanias->isEmpty())
                 @if ($hayFiltrosActivos)
-                    <x-molecules.alert-strip variant="info" icon="calendar_month" class="ag-campanias__aviso">
-                        {{ __('campania.campanias.filtro_vacio') }}
-                    </x-molecules.alert-strip>
+                    <x-molecules.empty-state
+                        icon="search_off"
+                        :title="__('campania.campanias.filtro_vacio_titulo')"
+                        :detail="__('campania.campanias.filtro_vacio_detalle')"
+                    />
                 @else
                     <x-molecules.empty-state
                         icon="calendar_month"
@@ -128,13 +107,12 @@
                 <div class="ag-campanias__tabla" role="table">
                     <div class="ag-campanias__head" role="row">
                         <span role="columnheader" class="ag-campanias__indice">{{ __('ui.tabla.col_indice') }}</span>
-                        <span role="columnheader">{{ __('campania.campanias.col_cliente') }}</span>
                         <span role="columnheader">{{ __('campania.campanias.col_codigo') }}</span>
                         <span role="columnheader">{{ __('campania.campanias.col_nombre') }}</span>
                         <span role="columnheader">{{ __('campania.campanias.col_vigencia') }}</span>
                         <span role="columnheader">{{ __('campania.campanias.col_estado') }}</span>
                         <span role="columnheader">{{ __('campania.campanias.col_actividad') }}</span>
-                        <span role="columnheader" aria-hidden="true"></span>
+                        <span role="columnheader" class="ag-campanias__acciones-head">{{ __('ui.tabla.col_acciones') }}</span>
                     </div>
 
                     @foreach ($campanias as $campania)
@@ -150,7 +128,6 @@
                             <span role="cell" class="ag-campanias__indice">
                                 {{ ($campanias->currentPage() - 1) * $campanias->perPage() + $loop->iteration }}
                             </span>
-                            <span role="cell">{{ $etiquetasCliente[$campania->cliente_id] ?? '—' }}</span>
                             <span role="cell" class="ag-campanias__codigo">{{ $campania->codigo }}</span>
                             <span role="cell">{{ $campania->nombre ?? '—' }}</span>
                             <span role="cell" class="ag-campanias__mono">
@@ -168,39 +145,66 @@
                             </span>
 
                             <span role="cell" class="ag-campanias__acciones">
-                                @puede('campania.campania.editar')
-                                    <x-atoms.button href="{{ route('panel.campanias.edit', $campania) }}" variant="warning-outline" size="sm" icon="edit">
-                                        {{ __('campania.campanias.editar') }}
-                                    </x-atoms.button>
-                                @endpuede
+                                @php
+                                    $formIdAbrir = "campania-abrir-{$campania->id}";
+                                    $formIdCerrar = "campania-cerrar-{$campania->id}";
+                                @endphp
 
+                                {{-- Forms FUERA de row-actions a propósito: ese organism repite su
+                                     slot dos veces (visible/menú, ver su docblock) — un <form> ahí
+                                     adentro se duplicaría con el mismo id, HTML inválido. El botón
+                                     que sí puede duplicarse (confirm-button) envía este form por su
+                                     atributo `form`, sin importar dónde viva en el documento. --}}
                                 @puede('campania.campania.cambiar_estado')
                                     @if ($estadoValor === 'planificada')
-                                        <form
-                                            method="POST"
-                                            action="{{ route('panel.campanias.cambiar-estado', $campania) }}"
-                                            onsubmit="return confirm('{{ __('campania.campanias.confirmar_abrir') }}')"
-                                        >
+                                        <form id="{{ $formIdAbrir }}" method="POST" action="{{ route('panel.campanias.cambiar-estado', $campania) }}">
                                             @csrf
                                             <input type="hidden" name="estado" value="abierta">
-                                            <x-atoms.button type="submit" variant="outline" size="sm" icon="check_circle">
-                                                {{ __('campania.campanias.accion_abrir') }}
-                                            </x-atoms.button>
                                         </form>
                                     @elseif ($estadoValor === 'abierta')
-                                        <form
-                                            method="POST"
-                                            action="{{ route('panel.campanias.cambiar-estado', $campania) }}"
-                                            onsubmit="return confirm('{{ __('campania.campanias.confirmar_cerrar') }}')"
-                                        >
+                                        <form id="{{ $formIdCerrar }}" method="POST" action="{{ route('panel.campanias.cambiar-estado', $campania) }}">
                                             @csrf
                                             <input type="hidden" name="estado" value="cerrada">
-                                            <x-atoms.button type="submit" variant="danger-outline" size="sm" icon="lock">
-                                                {{ __('campania.campanias.accion_cerrar') }}
-                                            </x-atoms.button>
                                         </form>
                                     @endif
                                 @endpuede
+
+                                <x-organisms.row-actions>
+                                    @puede('campania.campania.editar')
+                                        <x-atoms.button href="{{ route('panel.campanias.edit', $campania) }}" variant="warning-outline" size="sm" icon="edit">
+                                            {{ __('campania.campanias.editar') }}
+                                        </x-atoms.button>
+                                    @endpuede
+
+                                    @puede('campania.campania.cambiar_estado')
+                                        @if ($estadoValor === 'planificada')
+                                            <x-molecules.confirm-button
+                                                :form-id="$formIdAbrir"
+                                                :title="__('campania.campanias.confirmar_abrir_titulo')"
+                                                :message="__('campania.campanias.confirmar_abrir')"
+                                                :confirm-label="__('campania.campanias.accion_abrir')"
+                                                tone="success"
+                                                variant="outline"
+                                                size="sm"
+                                                icon="check_circle"
+                                            >
+                                                {{ __('campania.campanias.accion_abrir') }}
+                                            </x-molecules.confirm-button>
+                                        @elseif ($estadoValor === 'abierta')
+                                            <x-molecules.confirm-button
+                                                :form-id="$formIdCerrar"
+                                                :title="__('campania.campanias.confirmar_cerrar_titulo')"
+                                                :message="__('campania.campanias.confirmar_cerrar')"
+                                                :confirm-label="__('campania.campanias.accion_cerrar')"
+                                                variant="danger-outline"
+                                                size="sm"
+                                                icon="lock"
+                                            >
+                                                {{ __('campania.campanias.accion_cerrar') }}
+                                            </x-molecules.confirm-button>
+                                        @endif
+                                    @endpuede
+                                </x-organisms.row-actions>
                             </span>
                         </div>
                     @endforeach

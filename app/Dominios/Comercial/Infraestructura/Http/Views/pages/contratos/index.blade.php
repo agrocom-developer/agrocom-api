@@ -11,8 +11,8 @@
       precargadas): fecha de inicio descendente. La columna "Ventanas"
       muestra "Día completo" (HU-47, tarea 70) cuando la relación viene
       vacía — cero ventanas ya significa eso, sin booleano propio.
-    - $campaniasDisponibles (Collection<int, string>): id => "código —
-      cliente", para el <select> del filtro por campaña (ADR 0015 punto 1).
+    - $campaniasDisponibles (Collection<int, string>): id => código, para el
+      <select> del filtro por campaña (ADR 0015 punto 1).
     - $filtros (array{q: string, campania_id: int|null}): filtros aplicados,
       para dejar los campos con el valor tras el submit.
 
