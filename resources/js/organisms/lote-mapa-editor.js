@@ -792,6 +792,13 @@ function inicializarGoogle(contenedor, refs, googleMapsNs) {
     // se lleva un array propio aparte de `poligono` (el editable).
     const referencia = leerReferencia(contenedor);
     let poligonosReferencia = [];
+    // Aparte de `poligonosReferencia` (16/9/2026 — bug real, no solo
+    // cautela): si la máscara entrara en el mismo array que se usa para
+    // `fitBounds` más abajo, sus vértices en las puntas del mundo
+    // (`ANILLO_MUNDO_LATLNG`) hacen que el mapa encuadre el planeta entero
+    // en vez de la propiedad — confirmado en vivo, el mapa quedaba a zoom
+    // mundial con Google Maps.
+    let poligonosMascara = [];
 
     /** Un GeoJSON `Polygon` o `MultiPolygon` → uno o más `google.maps.Polygon`,
      *  con las mismas opciones (nunca editables/clickeables). */
@@ -836,6 +843,8 @@ function inicializarGoogle(contenedor, refs, googleMapsNs) {
     const redibujarReferencia = () => {
         poligonosReferencia.forEach((poligonoReferencia) => poligonoReferencia.setMap(null));
         poligonosReferencia = [];
+        poligonosMascara.forEach((poligonoMascara) => poligonoMascara.setMap(null));
+        poligonosMascara = [];
 
         if (!referencia) {
             return;
@@ -845,7 +854,7 @@ function inicializarGoogle(contenedor, refs, googleMapsNs) {
         const limite = propiedadId ? referencia.propiedades[propiedadId] : null;
 
         if (limite) {
-            poligonosReferencia.push(...poligonoMascaraDesdeGeoJSON(limite));
+            poligonosMascara.push(...poligonoMascaraDesdeGeoJSON(limite));
             poligonosReferencia.push(...poligonosDesdeGeoJSON(limite, estiloReferenciaPropiedadGoogle()));
         }
 
