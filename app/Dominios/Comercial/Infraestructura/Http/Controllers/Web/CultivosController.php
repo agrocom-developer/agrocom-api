@@ -6,7 +6,9 @@ use App\Dominios\Comercial\Aplicacion\ActualizarCultivo;
 use App\Dominios\Comercial\Aplicacion\CrearCultivo;
 use App\Dominios\Comercial\Aplicacion\EliminarCultivo;
 use App\Dominios\Comercial\Aplicacion\ListarCultivos;
+use App\Dominios\Comercial\Dominio\CicloVidaCultivo;
 use App\Dominios\Comercial\Dominio\Excepciones\CultivoDuplicado;
+use App\Dominios\Comercial\Dominio\TipoCultivo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cultivo;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\ActualizarCultivoRequest;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\CrearCultivoRequest;
@@ -25,6 +27,10 @@ use Illuminate\View\View;
  * DENTRO del controlador contra el ROL ACTIVO vía {@see AutorizacionPanelWeb}
  * — mismo criterio que el resto del panel. Ninguna regla de negocio acá: los
  * casos de uso de `Aplicacion/` hacen el trabajo.
+ *
+ * Filtros de listado (ampliación 16/9/2026, arquetipo Listado §6.2 de
+ * `guia_pantalla_panel.md`): `tipo_cultivo`/`ciclo_vida`/`activo`, todos
+ * dentro de `filter-panel`, además del buscador de texto ya existente.
  */
 final class CultivosController
 {
@@ -43,11 +49,26 @@ final class CultivosController
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
         $busqueda = $request->string('q')->toString();
+        $tipoCultivo = $request->string('tipo_cultivo')->toString();
+        $cicloVida = $request->string('ciclo_vida')->toString();
+        $activo = $request->string('activo')->toString();
 
         return view('comercial::pages.cultivos.index', [
             ...$this->autorizacion->cascara($request),
-            'cultivos' => $listarCultivos->ejecutar($busqueda !== '' ? $busqueda : null),
-            'filtros' => ['q' => $busqueda],
+            'cultivos' => $listarCultivos->ejecutar(
+                busqueda: $busqueda !== '' ? $busqueda : null,
+                tipoCultivo: $tipoCultivo !== '' ? $tipoCultivo : null,
+                cicloVida: $cicloVida !== '' ? $cicloVida : null,
+                activo: $activo !== '' ? $activo === '1' : null,
+            ),
+            'filtros' => [
+                'q' => $busqueda,
+                'tipo_cultivo' => $tipoCultivo,
+                'ciclo_vida' => $cicloVida,
+                'activo' => $activo,
+            ],
+            'tiposCultivo' => TipoCultivo::cases(),
+            'ciclosVida' => CicloVidaCultivo::cases(),
         ]);
     }
 
@@ -57,6 +78,8 @@ final class CultivosController
 
         return view('comercial::pages.cultivos.create', [
             ...$this->autorizacion->cascara($request),
+            'tiposCultivo' => TipoCultivo::cases(),
+            'ciclosVida' => CicloVidaCultivo::cases(),
         ]);
     }
 
@@ -68,14 +91,18 @@ final class CultivosController
 
         try {
             $cultivo = $crearCultivo->ejecutar(
-                (string) $datos['nombre'],
+                (string) $datos['nombre_comun'],
+                isset($datos['nombre_cientifico']) ? (string) $datos['nombre_cientifico'] : null,
+                (string) $datos['tipo_cultivo'],
+                (string) $datos['ciclo_vida'],
+                isset($datos['notas_agronomicas']) ? (string) $datos['notas_agronomicas'] : null,
                 (bool) ($datos['activo'] ?? true),
             );
         } catch (CultivoDuplicado $excepcion) {
             return redirect()
                 ->route('panel.cultivos.create')
                 ->withInput()
-                ->withErrors(['nombre' => $excepcion->getMessage()]);
+                ->withErrors(['nombre_comun' => $excepcion->getMessage()]);
         }
 
         // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
@@ -91,6 +118,8 @@ final class CultivosController
         return view('comercial::pages.cultivos.edit', [
             ...$this->autorizacion->cascara($request),
             'cultivo' => $cultivo,
+            'tiposCultivo' => TipoCultivo::cases(),
+            'ciclosVida' => CicloVidaCultivo::cases(),
         ]);
     }
 
@@ -103,14 +132,18 @@ final class CultivosController
         try {
             $actualizarCultivo->ejecutar(
                 $cultivo,
-                (string) $datos['nombre'],
+                (string) $datos['nombre_comun'],
+                isset($datos['nombre_cientifico']) ? (string) $datos['nombre_cientifico'] : null,
+                (string) $datos['tipo_cultivo'],
+                (string) $datos['ciclo_vida'],
+                isset($datos['notas_agronomicas']) ? (string) $datos['notas_agronomicas'] : null,
                 (bool) ($datos['activo'] ?? true),
             );
         } catch (CultivoDuplicado $excepcion) {
             return redirect()
                 ->route('panel.cultivos.edit', $cultivo)
                 ->withInput()
-                ->withErrors(['nombre' => $excepcion->getMessage()]);
+                ->withErrors(['nombre_comun' => $excepcion->getMessage()]);
         }
 
         // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).

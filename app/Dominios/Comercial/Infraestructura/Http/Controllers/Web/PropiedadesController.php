@@ -369,7 +369,7 @@ final class PropiedadesController
         $lotesSembrados = $siembra->count();
         $cultivoPredominanteId = $siembra->groupBy('cultivo_id')->sortByDesc(fn ($grupo) => $grupo->count())->keys()->first();
         $cultivoPredominante = $cultivoPredominanteId !== null
-            ? Cultivo::query()->find($cultivoPredominanteId)?->nombre
+            ? Cultivo::query()->find($cultivoPredominanteId)?->nombre_comun
             : null;
 
         $items = [];

@@ -107,8 +107,8 @@ final class SiembraController
      */
     private function cultivosDisponibles(Collection $siembraPorLote): Collection
     {
-        $activos = Cultivo::query()->where('activo', true)->orderBy('nombre')->pluck('nombre', 'id');
-        $usados = Cultivo::query()->whereIn('id', $siembraPorLote->pluck('cultivo_id'))->pluck('nombre', 'id');
+        $activos = Cultivo::query()->where('activo', true)->orderBy('nombre_comun')->pluck('nombre_comun', 'id');
+        $usados = Cultivo::query()->whereIn('id', $siembraPorLote->pluck('cultivo_id'))->pluck('nombre_comun', 'id');
 
         return $activos->union($usados)->sort();
     }

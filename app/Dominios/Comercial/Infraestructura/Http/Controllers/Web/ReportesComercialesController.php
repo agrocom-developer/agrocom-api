@@ -87,8 +87,8 @@ final class ReportesComercialesController
                 ->get(['id', 'razon_social']),
             'cultivosDisponibles' => Cultivo::query()
                 ->where('activo', true)
-                ->orderBy('nombre')
-                ->get(['id', 'nombre']),
+                ->orderBy('nombre_comun')
+                ->get(['id', 'nombre_comun']),
             'campaniasDisponibles' => $this->campaniasDe($clienteIds),
             'estadosDisponibles' => EstadoContrato::cases(),
             'saldosDisponibles' => SaldoContrato::cases(),
