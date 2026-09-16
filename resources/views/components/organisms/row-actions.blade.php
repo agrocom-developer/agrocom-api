@@ -2,9 +2,10 @@
     Organism: row-actions (`.ag-row-actions`)
     Envuelve las acciones de una fila de tabla (los `<x-atoms.button>` que
     cada página ya arma detrás de `@puede`/`@if` de permiso) y colapsa las
-    que no entran a un menú "⋮" — nunca más de 3 acciones sueltas en una
-    celda, y mientras más angosta la pantalla, más acciones se mueven al
-    menú, hasta que en mobile están TODAS ahí.
+    que no entran a un menú "⋮" — nunca más de 2 acciones sueltas en una
+    celda (pedido explícito del usuario, 16/9/2026: simetría de ancho de
+    columna entre páginas, sin importar cuántos estados tenga cada una), y
+    en mobile están TODAS en el menú.
 
     Es organism (no molecule) por el mismo criterio que `topbar`: orquesta
     botones y tiene JS propio (dropdown de Bootstrap + el title automático

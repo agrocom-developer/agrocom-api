@@ -47,6 +47,12 @@
     @if ($esEdicion)
         @method('PUT')
     @endif
+    {{-- Alta rápida desde otro formulario (tarea "contratos-lotes", 16/9/2026):
+         solo hace falta reenviarlo en el alta — en edición ya llega vía
+         sesión (`PropiedadesController::edit()`), no como campo del form. --}}
+    @if (! $esEdicion && ! empty($volverA))
+        <input type="hidden" name="volver_a" value="{{ $volverA }}">
+    @endif
 
     <x-organisms.page-header
         :title="$esEdicion ? __('comercial.propiedades.titulo_editar') : __('comercial.propiedades.titulo_crear')"
@@ -156,6 +162,11 @@
 
     <x-organisms.form-actions-bar :status="__('comercial.propiedades.estado_form')">
         <x-slot:actions>
+            @if ($esEdicion && ! empty($volverA))
+                <x-atoms.button href="{{ $volverA }}{{ str_contains($volverA, '?') ? '&' : '?' }}propiedad_id={{ $propiedad->id }}" variant="outline" icon="arrow_back">
+                    {{ __('comercial.propiedades.volver_a_formulario_origen') }}
+                </x-atoms.button>
+            @endif
             <x-atoms.button href="{{ route('panel.propiedades.index') }}" variant="outline">
                 {{ __('ui.action.cancel') }}
             </x-atoms.button>

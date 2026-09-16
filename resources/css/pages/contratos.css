@@ -27,13 +27,27 @@
     overflow: hidden;
 }
 
+/* La última columna (acciones) es un ancho fijo, no `auto` — mismo motivo
+   que usuarios.css: con `auto`, el head (rótulo "Acciones") y la fila
+   (organisms/row-actions) son grids separados que resuelven ese ancho cada
+   uno por su cuenta y quedan corridos. `--ag-row-actions-width`, no un
+   valor en rem propio: ver el comentario de
+   resources/css/components/row-actions.css (tarea
+   "listado-contratos-acciones", 16/9/2026). */
 .ag-contratos__head,
 .ag-contratos__fila {
     display: grid;
-    grid-template-columns: 3rem 2fr 1fr 1fr 1.4fr 1.4fr 1fr auto;
+    /* 7 columnas (era 8 hasta el 16/9/2026: "Ventanas" se retiró junto con
+       com_contrato_ventanas — el horario pasó a ser un dato de cada lote,
+       no del contrato, ver contratos/index.blade.php). */
+    grid-template-columns: 3rem 2fr 1fr 1fr 1.4fr 1fr var(--ag-row-actions-width);
     gap: var(--ag-space-4);
     align-items: center;
     padding: var(--ag-space-3) var(--ag-space-4);
+}
+
+.ag-contratos__acciones-head {
+    text-align: right;
 }
 
 .ag-contratos__indice {
@@ -71,7 +85,6 @@
 
 .ag-contratos__acciones {
     display: flex;
-    flex-wrap: wrap;
     justify-content: flex-end;
     gap: var(--ag-space-2);
 }
@@ -129,4 +142,402 @@
 .ag-contratos-form__ventana-pie {
     display: flex;
     align-items: flex-end;
+}
+
+/* Logística: los 3 switches en una sola fila (pedido del dueño, tarea
+   "contratos-lotes"). Sub-grid propio de 3 columnas DENTRO de la celda
+   `ag-form-section__field--full` — no toca `.ag-form-section__body`
+   (ese grid de 2 columnas es compartido y tiene su propia compuerta en
+   tests/Unit/PulidoNavegacionPanelTest.php, ver form-section.css). */
+.ag-contratos-form__logistica-switches {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--ag-space-4);
+}
+
+@media (max-width: 576px) {
+    .ag-contratos-form__logistica-switches {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Sección de lotes (tarea "contratos-lotes") */
+
+/* Patrón reutilizable: label + acción a la derecha en la misma fila */
+.ag-field-label-with-action {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--ag-space-3);
+}
+
+.ag-field-label-with-action__label {
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+    color: var(--ag-color-text);
+}
+
+.ag-field-label-with-action__link {
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-accent);
+    text-decoration: none;
+    transition: color var(--ag-transition-fast), background-color var(--ag-transition-fast);
+    padding: var(--ag-space-1) var(--ag-space-2);
+    border-radius: var(--ag-radius-sm);
+}
+
+.ag-field-label-with-action__link:hover {
+    color: var(--ag-color-accent);
+    background-color: var(--ag-color-accent-subtle);
+    text-decoration: underline;
+}
+
+/* Área de checkboxes de lotes */
+.ag-contratos-form__lotes-checkboxes {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-3);
+}
+
+.ag-contratos-form__lotes-select-all {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    cursor: pointer;
+}
+
+.ag-contratos-form__lotes-select-all-label {
+    font-weight: var(--ag-font-weight-medium);
+}
+
+/* Área "sin datos" - cuando no hay lotes en la propiedad */
+.ag-contratos-form__lotes-empty {
+    padding: var(--ag-space-4);
+    background-color: var(--ag-color-bg-surface);
+    border-radius: var(--ag-radius-md);
+    text-align: center;
+}
+
+.ag-contratos-form__lotes-empty-text {
+    color: var(--ag-color-text-muted);
+    margin: 0 0 var(--ag-space-2) 0;
+}
+
+.ag-contratos-form__lotes-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-3);
+}
+
+/* Tabla de lotes ya agregados (tercera vuelta del rediseño: Código /
+   Hectáreas / Día completo / Horario / Acciones en columnas propias — mismo
+   lenguaje visual que `.ag-contratos__tabla` del listado, con su propio
+   grid porque el número de columnas es otro. El título de propiedad es una
+   fila que ocupa el ancho completo (banda de sección), no una columna más. */
+.ag-contratos-form__lotes-tabla {
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+    overflow: hidden;
+}
+
+.ag-contratos-form__lotes-tabla-head,
+.ag-contratos-form__lote-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto 2fr auto;
+    gap: var(--ag-space-4);
+    align-items: center;
+    padding: var(--ag-space-3) var(--ag-space-4);
+}
+
+.ag-contratos-form__lotes-tabla-head {
+    background-color: var(--ag-color-bg-table-head);
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ag-contratos-form__lote-group-title {
+    padding: var(--ag-space-2) var(--ag-space-4);
+    background-color: var(--ag-color-bg-surface);
+    border-top: 1px solid var(--ag-color-border-row);
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-contratos-form__lote-row {
+    border-top: 1px solid var(--ag-color-border-row);
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-contratos-form__lote-row:hover {
+    background-color: var(--ag-color-bg-row-hover);
+}
+
+.ag-contratos-form__lote-code {
+    font-weight: var(--ag-font-weight-medium);
+}
+
+.ag-contratos-form__lote-hectareas {
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-sm);
+}
+
+/* `position: relative` no es decorativo: sin un ancestro posicionado, el
+   `position: absolute` de `.ag-checkbox-group__input` (técnica
+   visually-hidden) usa el viewport como bloque contenedor y desborda el
+   layout — mismo bug ya documentado y corregido en `.ag-switch__control`
+   (switch.css), `.ag-checkbox__control` (checkbox.css) y
+   `.ag-checkbox-group__option` (checkbox-group.css). Acá se repitió porque
+   esta celda arma el checkbox a mano en vez de reusar el átomo completo
+   (columna propia de la tabla, no una lista de opciones). */
+.ag-contratos-form__lote-dia-completo-celda {
+    position: relative;
+    display: inline-flex;
+    cursor: pointer;
+}
+
+/* Siempre visible aunque esté deshabilitada (día completo tildado): si se
+   ocultara, esa fila pierde el ancho de columna y la tabla queda dentada
+   entre filas con/sin horario propio (pedido explícito, revertido tras
+   probarlo oculto). */
+.ag-contratos-form__lote-rango-horas {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    color: var(--ag-color-text-muted);
+}
+
+/* Input de hora pulido (reemplaza el <input type="time"> crudo del
+   navegador): mismo lenguaje visual que `.ag-input__control` — outlined,
+   token de borde/foco propio. */
+.ag-contratos-form__input-hora {
+    width: 6.5rem;
+    padding: var(--ag-space-2) var(--ag-space-3);
+    background-color: var(--ag-color-bg-elevated);
+    border: 1px solid var(--ag-color-border-strong);
+    border-radius: var(--ag-radius-md);
+    color: var(--ag-color-text);
+    font-family: inherit;
+    font-size: var(--ag-font-size-sm);
+    transition: border-color var(--ag-transition-fast), box-shadow var(--ag-transition-fast);
+}
+
+.ag-contratos-form__input-hora:focus-visible {
+    outline: none;
+    border-color: var(--ag-color-primary);
+    box-shadow: 0 0 0 3px var(--ag-color-primary-subtle);
+}
+
+.ag-contratos-form__input-hora:disabled {
+    background-color: var(--ag-color-bg-surface);
+    color: var(--ag-color-text-faint);
+    cursor: not-allowed;
+}
+
+/* "Quitar" de la tabla de lotes: mismo `ag-button--text` (transparente,
+   hover con fondo tenue) pero recoloreado a danger — es la única acción
+   destructiva de la fila, pedido explícito de distinguirla en rojo. */
+.ag-contratos-form__lote-quitar-btn {
+    color: var(--ag-color-danger-strong);
+}
+
+.ag-contratos-form__lote-quitar-btn:hover {
+    background-color: var(--ag-color-danger-subtle);
+}
+
+/* Multi-select de propiedades con pills (16/9/2026). El wrap con el label
+   fantasma alinea las pills con el INPUT del select vecino, no con su label
+   — mismo truco de "ocupa el mismo alto" que ya usa `ag-select__label`, sin
+   inventar un margen mágico que se desincroniza si cambia la tipografía. */
+.ag-contratos-form__propiedades-pills-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-1);
+}
+
+.ag-contratos-form__propiedades-pills-wrap > .ag-select__label {
+    visibility: hidden;
+}
+
+.ag-contratos-form__propiedades-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ag-space-2);
+    min-height: 2rem;
+    align-items: center;
+}
+
+/* La pill es un `.ag-badge.ag-badge--success` (JS) MÁS este modificador —
+   fondo/color/radio/tipografía ya los da el badge (gris↔verde, nunca ámbar
+   para un chip que se repite fila a fila — regla de sistema_diseno_panel.md
+   §8.2; verde en vez de gris neutro, pedido explícito de más color). Acá
+   solo lo que el badge no sabe: que esta instancia es clickeable (abre el
+   modal de lotes) y necesita más aire para el botón de cerrar. */
+.ag-contratos-form__propiedad-pill {
+    gap: var(--ag-space-2);
+    padding-block: var(--ag-space-2);
+    cursor: pointer;
+    border: 1px solid var(--ag-color-success-border);
+    transition: background-color var(--ag-transition-fast);
+}
+
+.ag-contratos-form__propiedad-pill:hover {
+    background-color: var(--ag-color-success-strong);
+    color: var(--ag-color-gray-0);
+}
+
+.ag-contratos-form__propiedad-pill:focus-visible {
+    outline: 2px solid var(--ag-color-focus-ring);
+    outline-offset: 2px;
+}
+
+.ag-contratos-form__propiedad-pill-close {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    color: inherit;
+    opacity: 0.7;
+    transition: opacity var(--ag-transition-fast);
+}
+
+.ag-contratos-form__propiedad-pill-close:hover {
+    opacity: 1;
+}
+
+/* Modal de lotes por propiedad (reemplaza al panel lateral con checkboxes
+   siempre visibles). Fila de cabecera: bajada a la izquierda, botón "Crear
+   lote" a la derecha — mismo patrón que `.ag-field-label-with-action` del
+   resto del formulario (label/acción en los extremos de una fila). */
+.ag-contratos-form__modal-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--ag-space-4);
+    margin-bottom: var(--ag-space-4);
+}
+
+.ag-contratos-form__modal-ayuda {
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-sm);
+    margin: 0;
+}
+
+/* Botón "Crear lote" — siempre visible, no solo en el estado vacío (pedido
+   del usuario: sumar lotes sin cerrar el modal). Botón real, no link de
+   texto, con los mismos tokens naranja/acento que el resto del formulario. */
+.ag-contratos-form__modal-crear-lote {
+    flex-shrink: 0;
+}
+
+/* Tabla de lotes del modal: checkbox + Código + Hectáreas + Desnivel +
+   Limpieza en columnas, mismo lenguaje que `.ag-contratos-form__lotes-tabla`
+   de la página (borde/radio/cabecera muted uppercase). */
+.ag-contratos-form__modal-tabla {
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+    overflow: hidden;
+}
+
+.ag-contratos-form__modal-tabla-head,
+.ag-contratos-form__modal-tabla-fila {
+    display: grid;
+    grid-template-columns: 2.5rem 1.2fr 1fr 1fr 1fr;
+    gap: var(--ag-space-3);
+    align-items: center;
+    padding: var(--ag-space-3);
+}
+
+.ag-contratos-form__modal-tabla-head {
+    background-color: var(--ag-color-bg-table-head);
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ag-contratos-form__modal-tabla-fila {
+    border-top: 1px solid var(--ag-color-border-row);
+    font-size: var(--ag-font-size-sm);
+    cursor: pointer;
+}
+
+.ag-contratos-form__modal-tabla-fila:hover {
+    background-color: var(--ag-color-bg-row-hover);
+}
+
+.ag-contratos-form__modal-tabla-vacio {
+    color: var(--ag-color-text-faint);
+}
+
+/* Mismo bug que `.ag-contratos-form__lote-dia-completo-celda` de arriba
+   (ver ese comentario): esta celda también arma el checkbox a mano, con el
+   mismo `.ag-checkbox-group__input` crudo — necesita el mismo
+   `position: relative`. */
+.ag-contratos-form__modal-checkbox-celda {
+    position: relative;
+    display: inline-flex;
+    cursor: pointer;
+}
+
+/* Layout de dos columnas del formulario (tarea "resumen de contrato"): mismo
+   patrón que `.ag-clientes-form__layout/__main/__aside`
+   (resources/css/pages/clientes.css) — faltaba portarlo acá cuando se armó
+   el wrapper en `_formulario.blade.php` (16/9/2026): sin estas reglas
+   `.ag-contratos-form__main` queda como único hijo de `.ag-contratos-form`
+   y el `gap` de ese flex (arriba del todo en este archivo) deja de tener
+   efecto entre las tarjetas — el bug real de "secciones sin espacio entre
+   ellas" que motivó este bloque. Solo aparece un aside en edición
+   (`_formulario.blade.php`); en alta `.ag-contratos-form__main` queda sin
+   hermano (`:only-child` debajo). */
+.ag-contratos-form__layout {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--ag-space-5);
+}
+
+.ag-contratos-form__main {
+    flex: 1 1 32rem;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+.ag-contratos-form__main:only-child {
+    flex-basis: 100%;
+}
+
+/* Columna lateral pegajosa: resumen de facturación/aplicación, de solo
+   lectura — nunca campos. `min-width` evita que se achique de más antes del
+   breakpoint de abajo: `.ag-contratos-form__main` (flex-grow: 1,
+   `min-width: 0`) es el que cede ancho primero. */
+.ag-contratos-form__aside {
+    flex: 1 1 19rem;
+    min-width: 16rem;
+    max-width: 20rem;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+    position: sticky;
+    top: var(--ag-space-4);
+}
+
+@media (max-width: 1199.98px) {
+    .ag-contratos-form__layout {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .ag-contratos-form__aside {
+        max-width: none;
+        position: static;
+    }
 }

@@ -1,12 +1,12 @@
 {{--
     Page: contratos/edit (GET /panel/contratos/{contrato}/editar, panel.contratos.edit)
-    Edición de un contrato con sus ventanas de aplicación (HU-23, tarea 34):
-    el formulario real vive en `_formulario.blade.php`, compartido con
-    `create.blade.php`.
+    Edición de un contrato con sus lotes (HU-23, tarea 34): el formulario
+    real vive en `_formulario.blade.php`, compartido con `create.blade.php`.
 
     Datos esperados (ver ContratosController::edit()): la cáscara de
     CascaraPanel, más:
-    - $contrato (Contrato, con `ventanas` cargada).
+    - $contrato (Contrato, con `lotes.lote` cargada; sin `ventanas`, retirada
+      el 16/9/2026 junto con `com_contrato_ventanas`).
     - $clientesDisponibles (Collection<int, string>).
 
     Gateada por `comercial.contrato.editar`, verificado server-side en el

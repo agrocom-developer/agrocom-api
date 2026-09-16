@@ -149,6 +149,54 @@
     transition: transform var(--ag-transition-fast);
 }
 
+/* Sufijo "crear nuevo" (prop actionIcon/actionHref/actionLabel del átomo).
+   Adosado al borde del control, alto completo (`align-self: stretch`) —
+   mismo patrón que el botón "Browse" de un input file de Bootstrap (pedido
+   explícito del usuario), no una píldora flotante con margen. Redondea SOLO
+   las esquinas exteriores, con el mismo radio que `.ag-select__control`,
+   para que el borde compartido se lea como una sola pieza. Mismos tokens
+   que `.ag-button--accent`: relleno naranja de marca con ícono en ámbar-100
+   en vez de blanco/negro puro, ya verificado AA contra ese relleno (ver
+   theme-light.css, --ag-color-accent-contrast-fill). */
+.ag-select__action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    align-self: stretch;
+    flex-shrink: 0;
+    gap: var(--ag-space-1);
+    padding-inline: var(--ag-space-3);
+    background-color: var(--ag-color-accent);
+    color: var(--ag-color-accent-contrast-fill);
+    text-decoration: none;
+    border-start-end-radius: var(--ag-radius-md);
+    border-end-end-radius: var(--ag-radius-md);
+    transition: background-color var(--ag-transition-fast);
+}
+
+/* `display` en la regla de arriba gana por origen (author > user-agent)
+   aunque el selector `[hidden]` tenga la misma especificidad — sin esto,
+   `actionHidden`/`hidden` en el <a> no ocultaría nada (caso "Propiedad" del
+   formulario de contrato, oculto hasta elegir cliente). */
+.ag-select__action[hidden] {
+    display: none;
+}
+
+.ag-select__action-label {
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+    white-space: nowrap;
+}
+
+.ag-select__action:hover {
+    background-color: var(--ag-color-accent-hover);
+}
+
+.ag-select__action:focus-visible {
+    outline: 2px solid var(--ag-color-focus-ring);
+    outline-offset: -2px;
+}
+
 .ag-select__trigger[aria-expanded='true'] .ag-select__arrow {
     transform: rotate(180deg);
 }

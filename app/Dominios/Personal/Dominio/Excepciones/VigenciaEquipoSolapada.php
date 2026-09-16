@@ -15,7 +15,8 @@ use RuntimeException;
  * {@see ResultadoSolapamientoVigencias}). El
  * caso de uso que asigna el integrante o el recurso la atrapa y la traduce a
  * un error de validación legible, nunca deja propagarse un 500. Mismo
- * criterio que `VentanasContratoSolapadas` en Comercial.
+ * criterio que usaba `VentanasContratoSolapadas` en Comercial (retirada el
+ * 16/9/2026 junto con las ventanas de contrato).
  */
 final class VigenciaEquipoSolapada extends RuntimeException
 {

@@ -29,7 +29,10 @@
 @php
     $esEdicion = $lote !== null;
     $accion = $esEdicion ? route('panel.lotes.update', $lote) : route('panel.lotes.store');
-    $propiedadId = old('propiedad_id', $lote?->propiedad_id ?? '');
+    // $propiedadIdPreseleccionado (tarea "contratos-lotes"): solo llega en
+    // alta, desde ?propiedad_id= del acceso rápido del formulario de
+    // contrato — `edit()` no lo pasa (no aplica editando un lote existente).
+    $propiedadId = old('propiedad_id', $lote?->propiedad_id ?? $propiedadIdPreseleccionado ?? '');
     $clienteId = old('cliente_id', $lote?->propiedad?->cliente_id ?? '');
     $datosLote = [
         'codigo' => old('lote.codigo', $lote?->codigo ?? ''),
@@ -49,6 +52,12 @@
     @csrf
     @if ($esEdicion)
         @method('PUT')
+    @endif
+    {{-- Alta rápida desde otro formulario (tarea "contratos-lotes", 16/9/2026):
+         solo hace falta reenviarlo en el alta — en edición ya llega vía
+         sesión (`LotesController::edit()`), no como campo del form. --}}
+    @if (! $esEdicion && ! empty($volverA))
+        <input type="hidden" name="volver_a" value="{{ $volverA }}">
     @endif
 
     <x-organisms.page-header
@@ -99,6 +108,11 @@
 
     <x-organisms.form-actions-bar :status="__('comercial.lotes.estado_form')">
         <x-slot:actions>
+            @if ($esEdicion && ! empty($volverA))
+                <x-atoms.button href="{{ $volverA }}{{ str_contains($volverA, '?') ? '&' : '?' }}lote_id={{ $lote->id }}" variant="outline" icon="arrow_back">
+                    {{ __('comercial.lotes.volver_a_formulario_origen') }}
+                </x-atoms.button>
+            @endif
             <x-atoms.button href="{{ route('panel.lotes.index') }}" variant="outline">
                 {{ __('ui.action.cancel') }}
             </x-atoms.button>

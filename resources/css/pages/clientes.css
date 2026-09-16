@@ -29,15 +29,15 @@
     overflow: hidden;
 }
 
-/* La última columna (acciones) es un ancho fijo en rem, no `auto` (mismo
-   motivo que usuarios.css): con `auto`, el head (antes vacío, ahora con el
-   rótulo "Acciones") y la fila (2 botones con ícono + texto) son grids
-   separados que resuelven ese ancho cada uno por su cuenta y quedan
-   corridos. 14rem alcanza para "Editar" + "Eliminar" sin envolver. */
+/* La última columna (acciones) es un ancho fijo, no `auto` (mismo motivo
+   que usuarios.css): con `auto`, el head y la fila (organisms/row-actions)
+   son grids separados que resuelven ese ancho cada uno por su cuenta y
+   quedan corridos. `--ag-row-actions-width`, no un valor en rem propio: ver
+   el comentario de `resources/css/components/row-actions.css`. */
 .ag-clientes__head,
 .ag-clientes__fila {
     display: grid;
-    grid-template-columns: 3rem 2fr 1fr 1fr 14rem;
+    grid-template-columns: 3rem 2fr 1fr 1fr var(--ag-row-actions-width);
     gap: var(--ag-space-4);
     align-items: center;
     padding: var(--ag-space-3) var(--ag-space-4);

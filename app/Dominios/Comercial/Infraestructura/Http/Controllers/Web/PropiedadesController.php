@@ -67,6 +67,10 @@ final class PropiedadesController
             // "resumen de cliente"): con ?cliente_id=, el formulario arranca
             // con ese cliente ya elegido — ver _formulario.blade.php.
             'clienteIdPreseleccionado' => $request->integer('cliente_id') ?: null,
+            // Alta rápida desde otro formulario (tarea "contratos-lotes",
+            // 16/9/2026): con ?volver_a=, al guardar se ofrece un botón para
+            // volver a esa URL con esta propiedad ya preseleccionada.
+            'volverA' => $request->query('volver_a'),
         ]);
     }
 
@@ -77,7 +81,7 @@ final class PropiedadesController
         $datos = $request->validated();
 
         try {
-            $crearPropiedad->ejecutar(
+            $propiedad = $crearPropiedad->ejecutar(
                 (int) $datos['cliente_id'],
                 (string) $datos['nombre'],
                 $this->cadenaONull($datos['ubicacion'] ?? null),
@@ -95,6 +99,19 @@ final class PropiedadesController
                 ->withErrors(['nombre' => $excepcion->getMessage()]);
         }
 
+        $volverA = $request->input('volver_a');
+
+        // Con volver_a (alta rápida desde otro formulario), el siguiente paso
+        // natural es ofrecer la vuelta desde la ficha de edición — mismo
+        // criterio que ClientesController::store(). Sin volver_a, se
+        // mantiene el comportamiento existente (vuelve al listado).
+        if ($volverA) {
+            return redirect()
+                ->route('panel.propiedades.edit', $propiedad)
+                ->with('estado', __('comercial.propiedades.creado'))
+                ->with('volverA', $volverA);
+        }
+
         return redirect()
             ->route('panel.propiedades.index')
             ->with('estado', __('comercial.propiedades.creado'));
@@ -108,6 +125,7 @@ final class PropiedadesController
             ...$this->autorizacion->cascara($request),
             'propiedad' => $propiedad,
             'clientesDisponibles' => $this->clientesActivos(),
+            'volverA' => session('volverA'),
         ]);
     }
 

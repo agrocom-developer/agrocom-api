@@ -27,6 +27,28 @@
       contraseña de `atoms/input`).
     - icon: ícono Material Symbols de prefijo, igual que `atoms/input`.
     - required, disabled (bool, default false).
+    - actionIcon/actionHref/actionLabel (nullable, los tres van juntos):
+      sufijo del control — un botón-ícono dentro del mismo borde del select
+      (mismo lugar que `ag-select__clear`, no un elemento aparte), pensado
+      para "crear nuevo" sin salir del combobox (p. ej. `cliente_id` del
+      formulario de contrato). Relleno naranja de marca (`--ag-color-accent`,
+      ídem `ag-button--accent`), navega de página completa a `actionHref`
+      (nunca abre modal — mismo criterio que el resto del panel) y lleva
+      `data-ag-link-accent`, el mismo hook que ya usan los links de alta
+      rápida de propiedad/lote para que `contratos-form.js` (si la página lo
+      trae) guarde el borrador del formulario antes de navegar. `actionLabel`
+      es el tooltip (Bootstrap, `data-bs-toggle="tooltip"`, ya inicializado
+      globalmente en `resources/js/app.js`) y siempre el `aria-label`
+      (nombre accesible completo, aunque haya `actionText` visible — mismo
+      criterio que un botón con ícono+texto corto pero descripción más larga
+      para el lector de pantalla). `actionText` (nullable): texto corto
+      opcional junto al ícono (p. ej. "Nuevo"); sin él, el botón es solo-
+      ícono. Sin `actionIcon`+`actionHref` no se renderiza nada nuevo: los
+      ~70 usos existentes del átomo quedan igual. `actionHidden` (bool,
+      default false): arranca con `hidden` en el sufijo — para el caso de
+      "Propiedad" del formulario de contrato, deshabilitado hasta elegir
+      cliente, donde el JS de la página saca el `hidden` a mano (mismo
+      criterio que el `disabled` del `<select>`).
 
     Búsqueda automática: con más de 8 opciones el combobox arma un filtro de
     texto dentro del propio desplegable (substring, sin distinguir
@@ -61,6 +83,11 @@
     'help' => null,
     'required' => false,
     'disabled' => false,
+    'actionIcon' => null,
+    'actionHref' => null,
+    'actionLabel' => null,
+    'actionText' => null,
+    'actionHidden' => false,
 ])
 
 @php
@@ -155,6 +182,24 @@
 
             <x-atoms.icon name="arrow_drop_down" size="sm" class="ag-select__arrow" />
         </div>
+
+        @if ($actionIcon && $actionHref)
+            <a
+                href="{{ $actionHref }}"
+                class="ag-select__action"
+                data-bs-toggle="tooltip"
+                data-bs-placement="top"
+                data-ag-link-accent
+                aria-label="{{ $actionLabel }}"
+                title="{{ $actionLabel }}"
+                @if ($actionHidden) hidden @endif
+            >
+                <x-atoms.icon name="{{ $actionIcon }}" size="md" />
+                @if ($actionText)
+                    <span class="ag-select__action-label">{{ $actionText }}</span>
+                @endif
+            </a>
+        @endif
     </div>
 
     <ul

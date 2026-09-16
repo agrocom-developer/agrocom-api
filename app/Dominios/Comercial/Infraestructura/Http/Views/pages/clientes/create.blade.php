@@ -22,6 +22,6 @@
         :version="$version"
         :vista-actual="__('comercial.clientes.titulo_crear')"
     >
-        @include('comercial::pages.clientes._formulario', ['cliente' => null])
+        @include('comercial::pages.clientes._formulario', ['cliente' => null, 'volverA' => $volverA ?? null])
     </x-templates.panel-layout>
 </x-templates.panel-shell>

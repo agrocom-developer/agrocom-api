@@ -77,6 +77,12 @@ final class LotesController
             'clientesDisponibles' => $this->clientesActivos(),
             'propiedadesDisponibles' => $this->propiedadesActivas(),
             'proveedorMapa' => $this->resolverProveedorMapa->ejecutar(),
+            // Alta rápida desde otro formulario (tarea "contratos-lotes",
+            // 16/9/2026): con ?propiedad_id=, arranca con esa propiedad ya
+            // elegida; con ?volver_a=, al guardar se ofrece un botón para
+            // volver a esa URL con este lote ya preseleccionado.
+            'propiedadIdPreseleccionado' => $request->integer('propiedad_id') ?: null,
+            'volverA' => $request->query('volver_a'),
         ]);
     }
 
@@ -87,12 +93,25 @@ final class LotesController
         $datos = $request->validated();
 
         try {
-            $crearLote->ejecutar((int) $datos['propiedad_id'], $this->normalizarDatos($datos));
+            $lote = $crearLote->ejecutar((int) $datos['propiedad_id'], $this->normalizarDatos($datos));
         } catch (LoteDuplicado $excepcion) {
             return redirect()
                 ->route('panel.lotes.create')
                 ->withInput()
                 ->withErrors(['codigo' => $excepcion->getMessage()]);
+        }
+
+        $volverA = $request->input('volver_a');
+
+        // Con volver_a (alta rápida desde otro formulario), el siguiente paso
+        // natural es ofrecer la vuelta desde la ficha de edición — mismo
+        // criterio que ClientesController::store(). Sin volver_a, se
+        // mantiene el comportamiento existente (vuelve al listado).
+        if ($volverA) {
+            return redirect()
+                ->route('panel.lotes.edit', $lote)
+                ->with('estado', __('comercial.lotes.creado'))
+                ->with('volverA', $volverA);
         }
 
         return redirect()
@@ -110,6 +129,7 @@ final class LotesController
             'clientesDisponibles' => $this->clientesActivos(),
             'propiedadesDisponibles' => $this->propiedadesActivas(),
             'proveedorMapa' => $this->resolverProveedorMapa->ejecutar(),
+            'volverA' => session('volverA'),
         ]);
     }
 

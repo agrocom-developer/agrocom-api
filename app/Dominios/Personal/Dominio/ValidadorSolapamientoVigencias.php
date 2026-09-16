@@ -4,10 +4,11 @@ namespace App\Dominios\Personal\Dominio;
 
 /**
  * Solapamiento entre vigencias de una asignación a un equipo de trabajo
- * (tarea 72, HU-49, ADR 0015 punto 3) — mismo problema que
- * `Comercial\Dominio\ValidadorSolapamientoVentanas` (rango contra rango),
- * con fechas en vez de horas y con dos desenlaces distintos según de qué
- * equipos se trate:
+ * (tarea 72, HU-49, ADR 0015 punto 3) — mismo problema que el que resolvía
+ * `Comercial\Dominio\ValidadorSolapamientoVentanas` para las ventanas de
+ * contrato (rango contra rango, retirado el 16/9/2026 junto con
+ * `com_contrato_ventanas`), con fechas en vez de horas y con dos desenlaces
+ * distintos según de qué equipos se trate:
  *
  * - Misma persona (o mismo recurso) en el MISMO equipo, vigencias que se
  *   pisan: es la misma fila dos veces — se rechaza.
@@ -26,9 +27,10 @@ namespace App\Dominios\Personal\Dominio;
  *
  * Las fechas son string `YYYY-MM-DD`: la comparación lexicográfica de dos
  * strings con ese formato de ancho fijo da el mismo resultado que comparar
- * las fechas como tales, igual que `ValidadorSolapamientoVentanas` con
- * `HH:MM`. `hasta === null` significa "vigente" (sin fecha de fin) y se
- * trata como el extremo más lejano posible, nunca como "no aplica".
+ * las fechas como tales, mismo truco que usaba el validador de ventanas de
+ * contrato con `HH:MM`. `hasta === null` significa "vigente" (sin fecha de
+ * fin) y se trata como el extremo más lejano posible, nunca como "no
+ * aplica".
  */
 final class ValidadorSolapamientoVigencias
 {

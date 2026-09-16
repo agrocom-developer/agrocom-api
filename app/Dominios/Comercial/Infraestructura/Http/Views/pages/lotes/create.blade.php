@@ -22,6 +22,6 @@
         :version="$version"
         :vista-actual="__('comercial.lotes.titulo_crear')"
     >
-        @include('comercial::pages.lotes._formulario', ['lote' => null])
+        @include('comercial::pages.lotes._formulario', ['lote' => null, 'propiedadIdPreseleccionado' => $propiedadIdPreseleccionado ?? null, 'volverA' => $volverA ?? null])
     </x-templates.panel-layout>
 </x-templates.panel-shell>

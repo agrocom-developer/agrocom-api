@@ -384,7 +384,15 @@ function inicializar(root) {
     // `<option>` disabled/hidden desde afuera. `opciones` es una foto tomada
     // acá arriba: sin este observer, esa foto queda vieja y el combobox
     // mostraría opciones que el formulario ya descartó.
+    //
+    // Safeguard (tarea "contratos-lotes"): cuando JS externo modifica el select
+    // (p. ej. limpia innerHTML y agrega opciones nuevas), el observer dispara
+    // múltiples veces. Nos aseguramos de que el nativo SIEMPRE mantenga la clase
+    // que lo hace invisible (opacity: 0), incluso si algo lo quita por error.
     const observador = new MutationObserver(() => {
+        if (!nativo.classList.contains('ag-select__native--enhanced')) {
+            nativo.classList.add('ag-select__native--enhanced');
+        }
         leerOpciones();
         actualizarValorMostrado();
         if (abierto) {

@@ -27,17 +27,15 @@
     overflow: hidden;
 }
 
-/* La última columna (acciones) es un ancho fijo en rem, no `auto`: con
-   `auto`, `.ag-usuarios__head` y `.ag-usuarios__fila` son grids separados
-   que resuelven ese ancho cada uno según su propio contenido — la celda del
-   head (antes vacía, ahora con el rótulo corto "Acciones") mide menos que
-   la de la fila (3 botones con ícono + texto: "Editar"/"Bloquear" o
-   "Desbloquear"/"Eliminar") y el header entero se ve corrido. 24rem alcanza
-   para esos 3 botones + sus gaps sin envolver. */
+/* La última columna (acciones) es un ancho fijo, no `auto`: con `auto`,
+   `.ag-usuarios__head` y `.ag-usuarios__fila` son grids separados que
+   resuelven ese ancho cada uno según su propio contenido y el header queda
+   corrido. `--ag-row-actions-width`, no un valor en rem propio: ver el
+   comentario de resources/css/components/row-actions.css. */
 .ag-usuarios__head,
 .ag-usuarios__fila {
     display: grid;
-    grid-template-columns: 3rem 1.3fr 1fr 0.9fr 1.6fr 1.1fr 0.8fr 24rem;
+    grid-template-columns: 3rem 1.3fr 1fr 0.9fr 1.6fr 1.1fr 0.8fr var(--ag-row-actions-width);
     gap: var(--ag-space-4);
     align-items: center;
     padding: var(--ag-space-3) var(--ag-space-4);

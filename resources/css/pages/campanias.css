@@ -44,16 +44,16 @@
    corridos respecto de los datos. Con `fr` los dos grids reparten idéntico.
    Es también lo que hacen las otras 40 páginas de listado.
 
-   La columna de acciones es la excepción: `14rem` fijo (§6.2 de
-   docs/diseno/guia_pantalla_panel.md, mismo criterio que `usuarios.css`,
-   24rem ahí por tener 3 acciones con texto contra las 2 de acá — "Editar" +
-   "Abrir"/"Cerrar", nunca las dos juntas) — con `fr`, el ancho de
-   `x-organisms.row-actions` dependería del resto de columnas y no calzaría
-   entre el head y la fila, que son grids separados. */
+   La columna de acciones es la excepción: ancho fijo (§6.2 de
+   docs/diseno/guia_pantalla_panel.md), `--ag-row-actions-width` en vez de
+   un valor en rem propio — ver el comentario de
+   resources/css/components/row-actions.css. Con `fr`, el ancho de
+   `row-actions` dependería del resto de columnas y no calzaría entre el
+   head y la fila, que son grids separados. */
 .ag-campanias__head,
 .ag-campanias__fila {
     display: grid;
-    grid-template-columns: 3rem 0.9fr 1.6fr 1.4fr 0.8fr 0.8fr 14rem;
+    grid-template-columns: 3rem 0.9fr 1.6fr 1.4fr 0.8fr 0.8fr var(--ag-row-actions-width);
     gap: var(--ag-space-4);
     align-items: center;
     padding: var(--ag-space-3) var(--ag-space-4);

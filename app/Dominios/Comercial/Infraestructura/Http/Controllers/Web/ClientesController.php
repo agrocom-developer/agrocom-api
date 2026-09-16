@@ -84,6 +84,10 @@ final class ClientesController
             'tiposContacto' => TipoContactoCliente::cases(),
             'tiposPersona' => TipoPersonaCliente::cases(),
             'logoArchivo' => $this->logoArchivo(null),
+            // Alta rápida desde otro formulario (tarea "contratos-lotes",
+            // 16/9/2026): con ?volver_a=, al guardar se ofrece un botón para
+            // volver a esa URL con este cliente ya preseleccionado.
+            'volverA' => $request->query('volver_a'),
         ]);
     }
 
@@ -121,7 +125,8 @@ final class ClientesController
         // arrancar ese flujo desde el listado sería un clic de más siempre.
         return redirect()
             ->route('panel.clientes.edit', $cliente)
-            ->with('estado', __('comercial.clientes.creado'));
+            ->with('estado', __('comercial.clientes.creado'))
+            ->with('volverA', $request->input('volver_a'));
     }
 
     public function edit(Request $request, Cliente $cliente, LecturaResumenOrdenesContrato $lecturaResumenOrdenes): View
@@ -137,6 +142,7 @@ final class ClientesController
             'tiposPersona' => TipoPersonaCliente::cases(),
             'logoArchivo' => $this->logoArchivo($cliente),
             'resumenRelacionado' => $this->resumenRelacionado($cliente, $request, $lecturaResumenOrdenes),
+            'volverA' => session('volverA'),
         ]);
     }
 

@@ -70,9 +70,11 @@
 
             @if ($cultivos->isEmpty())
                 @if ($hayFiltrosActivos)
-                    <x-molecules.alert-strip variant="info" icon="grass" class="ag-cultivos__aviso">
-                        {{ __('comercial.cultivos.filtro_vacio') }}
-                    </x-molecules.alert-strip>
+                    <x-molecules.empty-state
+                        icon="search_off"
+                        :title="__('comercial.cultivos.filtro_vacio_titulo')"
+                        :detail="__('comercial.cultivos.filtro_vacio_detalle')"
+                    />
                 @else
                     <x-molecules.empty-state
                         icon="grass"

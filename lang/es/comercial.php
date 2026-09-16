@@ -15,6 +15,7 @@ return [
         'creado' => 'El cliente se dio de alta correctamente.',
         'actualizado' => 'Los datos del cliente se actualizaron correctamente.',
         'eliminado' => 'El cliente se dio de baja correctamente.',
+        'volver_a_formulario_origen' => 'Volver al formulario anterior',
 
         // Listado
         'titulo' => 'Clientes',
@@ -26,7 +27,8 @@ return [
         'limpiar_filtro' => 'Limpiar búsqueda',
         'vacio_titulo' => 'Todavía no hay clientes',
         'vacio_detalle' => 'Los clientes se dan de alta con sus contactos principales. En cuanto se registre el primero, vas a verlo en este listado.',
-        'filtro_vacio' => 'Ningún cliente coincide con la búsqueda.',
+        'filtro_vacio_titulo' => 'Sin resultados para esta búsqueda',
+        'filtro_vacio_detalle' => 'Ningún cliente coincide con el término buscado. Probá con otra razón social o NIT.',
         'col_razon_social' => 'Razón social',
         'col_nit' => 'NIT',
         'col_contactos' => 'Contactos',
@@ -130,6 +132,7 @@ return [
         'creado' => 'La propiedad se dio de alta correctamente.',
         'actualizado' => 'Los datos de la propiedad se actualizaron correctamente.',
         'eliminado' => 'La propiedad se dio de baja correctamente.',
+        'volver_a_formulario_origen' => 'Volver al formulario anterior',
 
         // Listado
         'titulo' => 'Propiedades',
@@ -192,23 +195,27 @@ return [
 
         // Listado
         'titulo' => 'Contratos',
-        'subtitulo' => 'Administración de contratos con sus ventanas de aplicación y tarifa.',
+        'subtitulo' => 'Administración de contratos con sus lotes y tarifa.',
         'nuevo' => 'Nuevo contrato',
         'filtro_busqueda' => 'Buscar',
         'filtro_busqueda_placeholder' => 'Razón social del cliente',
         'filtro_campania' => 'Campaña',
         'filtro_campania_placeholder' => 'Todas las campañas',
+        'filtro_cliente' => 'Cliente',
+        'filtro_cliente_placeholder' => 'Todos los clientes',
+        'filtro_propiedad' => 'Propiedad',
+        'filtro_propiedad_placeholder' => 'Todas las propiedades',
         'filtrar' => 'Buscar',
         'limpiar_filtro' => 'Limpiar búsqueda',
         'vacio_titulo' => 'Todavía no hay contratos',
         'vacio_detalle' => 'Los contratos se crean entre un cliente y una campaña para especificar hectáreas, tarifa y ventanas. En cuanto se dé de alta el primero, vas a verlo en este listado.',
-        'filtro_vacio' => 'Ningún contrato coincide con la búsqueda.',
+        'filtro_vacio_titulo' => 'Sin resultados para esta búsqueda',
+        'filtro_vacio_detalle' => 'Ningún contrato coincide con la búsqueda o los filtros aplicados. Probá con otro cliente, campaña o propiedad.',
         'col_cliente' => 'Cliente',
         'col_campania' => 'Campaña',
         'col_hectareas' => 'Hectáreas',
         'col_monto_total' => 'Monto total',
         'col_vigencia' => 'Vigencia',
-        'col_ventanas' => 'Ventanas',
         'col_estado' => 'Estado',
         'editar' => 'Editar',
         'vigencia_con_fin' => ':inicio – :fin',
@@ -219,25 +226,38 @@ return [
         'paginacion_info' => 'Página :actual de :total',
 
         // Cambio de estado (listado)
-        'accion_activar' => 'Activar',
+        'accion_aprobar' => 'Aprobar',
         'accion_finalizar' => 'Finalizar',
         'accion_cancelar' => 'Cancelar',
         'accion_pausar' => 'Pausar',
         'accion_reanudar' => 'Reanudar',
-        'confirmar_activar' => '¿Pasar este contrato a vigente?',
+        // Las cinco transiciones (tarea "listado-contratos-acciones") tienen
+        // modal propio (molecules/confirm-button, mismo patrón que "Abrir
+        // campaña"/"Cerrar campaña") en vez del confirm() nativo del
+        // navegador — tono por destino: success al estado vigente
+        // (aprobar/reanudar), info a finalizado, warning a pausado, danger a
+        // cancelado (irreversible desde el panel).
+        'confirmar_aprobar_titulo' => 'Aprobar contrato',
+        'confirmar_aprobar' => '¿Aprobar este contrato? Pasa a vigente.',
+        'confirmar_finalizar_titulo' => 'Finalizar contrato',
         'confirmar_finalizar' => '¿Dar este contrato por finalizado?',
+        'confirmar_cancelar_titulo' => 'Cancelar contrato',
         'confirmar_cancelar' => '¿Cancelar este contrato? La baja no se puede deshacer desde el panel.',
+        'confirmar_pausar_titulo' => 'Pausar contrato',
         'confirmar_pausar' => '¿Pausar este contrato? Se interrumpe la ejecución sin cancelarlo.',
+        'confirmar_reanudar_titulo' => 'Reanudar contrato',
         'confirmar_reanudar' => '¿Reanudar este contrato?',
 
         // Formulario (create/edit)
         'titulo_crear' => 'Nuevo contrato',
         'titulo_editar' => 'Editar contrato',
-        'subtitulo_form' => 'El contrato se guarda junto con sus ventanas de aplicación en una sola operación.',
+        'subtitulo_form' => 'El contrato se guarda junto con sus lotes en una sola operación.',
         'seccion_datos' => 'Datos del contrato',
         'campos_contador' => ':cantidad campos',
         'campo_cliente' => 'Cliente',
         'campo_cliente_placeholder' => 'Seleccioná un cliente',
+        'crear_cliente' => 'Crear nuevo cliente',
+        'crear_cliente_corto' => 'Nuevo',
         'campo_campania' => 'Campaña',
         'campo_campania_placeholder' => 'Seleccioná primero un cliente',
         'campo_campania_ayuda' => 'Solo se listan las campañas del cliente elegido (ADR 0015): el contrato es con un cliente y para una campaña suya.',
@@ -250,19 +270,19 @@ return [
         'campo_fecha_fin' => 'Fecha de fin',
         'campo_fecha_fin_ayuda' => 'Opcional. Si no se define, el contrato queda abierto.',
 
-        // Ventanas de aplicación (HU-47, tarea 70): "Día completo" convive con
-        // las filas cargadas, nunca un booleano en la base (ADR 0015 punto 5)
-        // — el interruptor es puramente de presentación, arranca encendido
-        // sin ventanas cargadas y las filas se muestran/ocultan según su
-        // estado (resources/js/pages/contratos-form.js).
-        'seccion_ventanas' => 'Ventanas de aplicación',
+        // Orden de aplicación (antes "Ventanas de aplicación", HU-23 tarea 34,
+        // renombrada en tarea "contratos-lotes"). "Día completo" convive con las
+        // filas cargadas, nunca un booleano en la base (ADR 0015 punto 5) — el
+        // interruptor es puramente de presentación, arranca encendido sin ventanas
+        // cargadas y las filas se muestran/ocultan según su estado
+        // (resources/js/pages/contratos-form.js).
+        'seccion_ventanas' => 'Orden de aplicación',
         'ventana_dia_completo' => 'Día completo',
         'ventana_dia_completo_ayuda' => 'Sin restricción de horario. Apagalo para cargar franjas horarias.',
         'ventana_agregar' => 'Agregar ventana',
         'ventana_quitar' => 'Quitar',
         'ventana_hora_inicio' => 'Desde',
         'ventana_hora_fin' => 'Hasta',
-        'ventana_rango' => ':inicio – :fin',
 
         // Acomodaciones logísticas (HU-74, tarea 90): lo que Agrocom cubre
         // para el equipo de campo durante la ejecución del contrato. Solo se
@@ -277,14 +297,61 @@ return [
 
         'estado_form' => 'Los cambios se guardan al confirmar.',
 
+        // Sección de propiedad y lotes (tarea "contratos-lotes"): selección
+        // maestro-detalle de propiedades y sus lotes de un cliente.
+        'seccion_lotes' => 'Propiedad y lotes',
+        'lotes_contador' => ':cantidad lotes',
+        'campo_propiedad' => 'Propiedad',
+        'campo_propiedad_placeholder' => 'Seleccioná una propiedad',
+        'campo_propiedad_ayuda' => 'Del cliente ya elegido arriba. Cargá una si no figura en la lista.',
+        'lote_seleccionar_todos' => 'Seleccionar todos',
+        'lote_personalizar_horario' => 'Personalizar horario',
+        'lotes_sin_datos' => 'Esta propiedad todavía no tiene lotes cargados.',
+        'lotes_quitar' => 'Quitar',
+        'crear_propiedad' => 'Crear propiedad',
+        'crear_propiedad_corto' => 'Nueva',
+        'crear_lote' => 'Crear lote',
+
+        // Modal de lotes por propiedad (tarea "contratos-lotes", rediseño
+        // sept/2026): reemplaza al panel lateral con checkboxes siempre
+        // visibles — un modal por click de pill/opción del select, con
+        // "Guardar selección" recién aplica los cambios al contrato. Tabla
+        // (segunda vuelta del rediseño, mismo mes): checkbox + atributos del
+        // lote en columnas, en vez de una lista con meta-línea.
+        'lotes_modal_ayuda' => 'Marcá los lotes que forman parte de este contrato.',
+        'lotes_modal_guardar' => 'Guardar selección',
+
+        // Tabla de lotes ya agregados (bajo el select de Propiedad): una
+        // columna por dato, "Horario" refleja "Día completo" o el rango
+        // cargado — ver contratos-form.js.
+        'lotes_col_horario' => 'Horario',
+        'lotes_col_acciones' => 'Acciones',
+
+        // Resumen del aside de editar contrato (tarea "resumen de contrato",
+        // sept/2026): mismo criterio que el aside de clientes/campañas —
+        // vacío con atajo a crear una orden, o dos tarjetas de solo lectura
+        // (facturación / aplicación) una vez que hay datos.
+        'aside_vacio_titulo' => 'Todavía no hay órdenes de aplicación',
+        'aside_vacio_detalle' => 'Este contrato no tiene ninguna orden de aplicación cargada. En cuanto se registre la primera, vas a ver acá el avance de facturación y trabajos.',
+        'aside_vacio_accion' => 'Nueva orden de aplicación',
+        'aside_facturacion_titulo' => 'Facturación',
+        'aside_monto_contratado' => 'Monto contratado (Bs)',
+        'aside_monto_facturado' => 'Monto facturado (Bs)',
+        'aside_saldo_pendiente' => 'Saldo pendiente (Bs)',
+        'aside_aplicacion_titulo' => 'Aplicación',
+        'aside_hectareas_contratadas' => 'Hectáreas contratadas',
+        'aside_hectareas_aplicadas' => 'Hectáreas aplicadas',
+        'aside_trabajos' => 'Trabajos realizados',
+
         // Errores de validación
         'error_cliente_requerido' => 'Seleccioná un cliente.',
         'error_cliente_invalido' => 'El cliente seleccionado no es válido.',
         'error_campania_requerida' => 'Seleccioná la campaña del contrato.',
         'error_campania_invalida' => 'La campaña seleccionada no es válida.',
-        'error_ventana_ajena' => 'Una de las ventanas enviadas no pertenece a este contrato.',
-        'error_ventana_incompleta' => 'Completá la hora de inicio y la hora de fin de la ventana.',
-        'error_ventana_horas' => 'La hora de fin tiene que ser posterior a la hora de inicio.',
+        'error_lotes_requeridos' => 'Seleccioná al menos un lote.',
+        'error_lote_invalido' => 'Uno de los lotes seleccionados no es válido.',
+        'error_lote_horario_incompleto' => 'Completá la hora de inicio y la hora de fin del lote.',
+        'error_lote_horario_invalido' => 'La hora de fin del lote tiene que ser posterior a la hora de inicio.',
         'volver' => 'Volver a contratos',
     ],
 
@@ -297,6 +364,7 @@ return [
         'creado' => 'El lote se dio de alta correctamente.',
         'actualizado' => 'Los datos del lote se actualizaron correctamente.',
         'eliminado' => 'El lote se dio de baja correctamente.',
+        'volver_a_formulario_origen' => 'Volver al formulario anterior',
 
         // Listado
         'titulo' => 'Lotes',
@@ -394,7 +462,8 @@ return [
         'filtro_busqueda_placeholder' => 'Buscar cultivo…',
         'vacio_titulo' => 'Todavía no hay cultivos',
         'vacio_detalle' => 'Los cultivos son el catálogo de opciones disponibles para sembrar en cada lote. En cuanto se registre el primero, vas a verlo aquí y en los formularios de siembra.',
-        'filtro_vacio' => 'Ningún cultivo coincide con la búsqueda.',
+        'filtro_vacio_titulo' => 'Sin resultados para esta búsqueda',
+        'filtro_vacio_detalle' => 'Ningún cultivo coincide con el término buscado. Probá con otro nombre.',
         'col_nombre' => 'Cultivo',
         'col_estado' => 'Estado',
         'estado_activo' => 'Activo',

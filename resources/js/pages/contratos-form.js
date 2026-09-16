@@ -1,22 +1,33 @@
 /**
- * Ventanas horarias dinámicas del formulario de contrato (HU-23, tarea 34):
- * agregar y quitar filas de `ventanas[]` sin recargar la página. Mismo patrón
- * que `resources/js/pages/clientes-form.js` (tarea 33) — JS vanilla, clona el
- * `<template>` que ya trae el partial `_ventana-fila.blade.php` con el
- * placeholder `__INDICE__` en cada `name`, y lo reemplaza por el próximo
- * índice libre. No hay reindexado al quitar una fila: PHP arma igual el
- * array de `ventanas` aunque los índices numéricos queden con huecos.
+ * Dinámicas del formulario de contrato (HU-23, tarea 34; ampliado tarea
+ * "contratos-lotes", 16/9/2026; rediseño modal de lotes, sept/2026). JS
+ * vanilla, sin frameworks nuevos.
  *
- * El interruptor "Día completo" (HU-47, tarea 70) es puro DOM, sin campo
- * propio que viaje al servidor (ADR 0015 punto 5 — no hay
- * `ventana_todo_el_dia` en la base, cero filas ya significa "día completo"):
- * encenderlo oculta la sección Y VACÍA la lista (nada de `ventanas[]` se
- * manda); apagarlo la muestra y, si está vacía, agrega una fila para no
- * dejar al usuario con el botón "Agregar ventana" como único camino.
+ * Propiedades: multi-select mostrado como pills (chip `.ag-badge`, tarea
+ * "contratos-lotes"). Elegir una propiedad del select, o clickear una pill
+ * ya agregada, abre `#ag-modal-lotes-propiedad` con TODOS los lotes de esa
+ * propiedad — tildados los que ya están en la lista apilada del contrato.
+ * Nada cambia en el contrato hasta "Guardar selección" (`guardarSeleccionModal`):
+ * cerrar el modal por la X/Cancelar/fondo descarta los cambios. El ícono de
+ * cerrar de la pill saca la propiedad ENTERA (con todos sus lotes) del
+ * contrato — `quitarGrupoDeLista`.
  *
- * Sin filtro de campaña por cliente (ADR 0015, corregido el 15/9/2026): la
- * campaña es un catálogo compartido, todas están disponibles para cualquier
- * cliente.
+ * Horario por lote (16/9/2026, reemplazo completo de com_contrato_ventanas):
+ * cada lote tiene su propio rango horario (nullable, string `H:i`). Arranca
+ * como "día completo" (sin inputs visibles) con un botón "Personalizar
+ * horario" que despliega dos campos. Se guarda en `lotes[N][hora_inicio]` y
+ * `lotes[N][hora_fin]`. El índice N es un contador monotónico
+ * (`contadorIndiceLote`, nunca se reutiliza) para que agregar/quitar lotes
+ * en cualquier orden no choque índices entre filas.
+ *
+ * "Personalizar horario" y "Quitar" de una fila de la lista apilada se
+ * manejan por DELEGACIÓN sobre `listaApilada` (un solo listener), no por
+ * listener individual al crear cada fila — así funcionan igual para las
+ * filas que ya vienen renderizadas por el servidor (modo edición) que para
+ * las que arma este JS al guardar una selección del modal.
+ *
+ * SessionStorage (guardar/restaurar el estado del formulario al navegar a
+ * "Crear cliente/propiedad/lote" y volver, clave `ag_contrato_borrador`).
  *
  * Guard de presencia en el DOM (mismo criterio que `login.js`): en cualquier
  * página sin `[data-ag-contratos-form]` este módulo no hace nada.
@@ -25,49 +36,625 @@ document.addEventListener('DOMContentLoaded', () => {
     const formulario = document.querySelector('[data-ag-contratos-form]');
     if (!formulario) return;
 
-    const contenedor = formulario.querySelector('[data-ag-ventanas]');
-    const lista = formulario.querySelector('[data-ag-ventanas-lista]');
-    const plantilla = formulario.querySelector('[data-ag-ventana-template]');
-    const botonAgregar = formulario.querySelector('[data-ag-ventanas-agregar]');
-    const interruptorDiaCompleto = formulario.querySelector('[data-ag-dia-completo]');
+    // ===== PROPIEDADES Y LOTES (estrategia 'a': datos embebidos) =====
+    const selectCliente = formulario.querySelector('[name="cliente_id"]');
+    const selectPropiedad = formulario.querySelector('[data-ag-propiedades-select]');
+    const accionCrearPropiedad = selectPropiedad?.closest('.ag-select')?.querySelector('.ag-select__action') || null;
+    const contenedorPropiedadesPills = formulario.querySelector('[data-ag-propiedades-pills]');
+    const listaApilada = formulario.querySelector('[data-ag-lotes-lista-apilada]');
+    const tablaLotes = formulario.querySelector('[data-ag-lotes-tabla]');
+    const contenedorGrupos = formulario.querySelector('[data-ag-lotes-agrupados]');
+    const scriptDatos = formulario.querySelector('[data-ag-propiedades-lotes]');
 
-    if (!contenedor || !lista || !plantilla || !botonAgregar) return;
+    const modalLotesEl = formulario.querySelector('[data-ag-modal-lotes]');
+    const modalLotesTitulo = formulario.querySelector('[data-ag-modal-lotes-titulo]');
+    const modalCrearLoteSlot = formulario.querySelector('[data-ag-modal-crear-lote-slot]');
+    const modalLotesLista = formulario.querySelector('[data-ag-modal-lotes-lista]');
+    const modalLotesGuardarBtn = formulario.querySelector('[data-ag-modal-lotes-guardar]');
+    const bsModal = modalLotesEl ? bootstrap.Modal.getOrCreateInstance(modalLotesEl) : null;
 
-    let proximoIndice = lista.querySelectorAll('[data-ag-ventana-fila]').length;
+    const urlCrearLote = modalLotesEl?.dataset.urlCrearLote || '';
+    const textoSinLotes = modalLotesEl?.dataset.textoSinLotes || '';
+    const textoCrearLote = modalLotesEl?.dataset.textoCrearLote || '';
+    const textoSeleccionarTodos = modalLotesEl?.dataset.textoSeleccionarTodos || '';
+    const textoColCodigo = modalLotesEl?.dataset.textoColCodigo || '';
+    const textoColHectareas = modalLotesEl?.dataset.textoColHectareas || '';
+    const textoColDesnivel = modalLotesEl?.dataset.textoColDesnivel || '';
+    const textoColLimpieza = modalLotesEl?.dataset.textoColLimpieza || '';
+    const textoQuitarLote = listaApilada?.dataset.textoQuitarLote || '';
+    const textoQuitarPropiedadPrefijo = contenedorPropiedadesPills?.dataset.textoQuitar || '';
 
-    const agregarFila = () => {
-        const html = plantilla.innerHTML.replaceAll('__INDICE__', String(proximoIndice));
-        proximoIndice += 1;
+    // Estado global accesible para restaurarBorrador
+    let propiedadesSeleccionadas = new Set();
+    let propiedadesYLotes = {};
+    // Contador monotónico de índice de fila — nunca se reutiliza, ni al
+    // quitar y volver a agregar el mismo lote (evita choques de `name`).
+    let contadorIndiceLote = listaApilada?.querySelectorAll('[data-lote-id]').length || 0;
 
-        const envoltorio = document.createElement('div');
-        envoltorio.innerHTML = html.trim();
-
-        const fila = envoltorio.firstElementChild;
-        if (fila) {
-            lista.appendChild(fila);
-        }
+    const crearIcono = (nombre, size = 'sm', claseExtra = '') => {
+        const span = document.createElement('span');
+        span.className = `material-symbols-rounded ag-icon ag-icon--${size}${claseExtra ? ` ${claseExtra}` : ''}`;
+        span.setAttribute('aria-hidden', 'true');
+        span.textContent = nombre;
+        return span;
     };
 
-    botonAgregar.addEventListener('click', agregarFila);
+    const crearBotonAccion = (icono, texto) => {
+        const boton = document.createElement('button');
+        boton.type = 'button';
+        boton.className = 'ag-button ag-button--text ag-button--sm';
+        boton.appendChild(crearIcono(icono));
+        const label = document.createElement('span');
+        label.className = 'ag-button__label';
+        label.textContent = texto;
+        boton.appendChild(label);
+        return boton;
+    };
 
-    contenedor.addEventListener('click', (evento) => {
-        const botonQuitar = evento.target.closest('[data-ag-ventana-quitar]');
-        if (!botonQuitar) return;
+    const crearInputHidden = (name, value, dataAttr) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = name;
+        input.value = value;
+        if (dataAttr) input.setAttribute(dataAttr, '');
+        return input;
+    };
 
-        botonQuitar.closest('[data-ag-ventana-fila]')?.remove();
-    });
+    // ===== Lista apilada: fila de lote (Código | Hectáreas | Día completo |
+    // Horario | Acciones). Un lote recién agregado desde el modal arranca en
+    // "día completo" (sin horario propio, mismo criterio que regía antes a
+    // nivel de todo el contrato) — el checkbox habilita/deshabilita el par
+    // de inputs de hora vía delegación (ver más abajo, cubre esta fila y las
+    // que ya vienen renderizadas por el servidor en modo edición). =====
+    const crearFilaLote = (loteId, loteData) => {
+        const fila = document.createElement('div');
+        fila.className = 'ag-contratos-form__lote-row';
+        fila.setAttribute('data-lote-id', loteId);
 
-    if (interruptorDiaCompleto) {
-        interruptorDiaCompleto.addEventListener('change', () => {
-            if (interruptorDiaCompleto.checked) {
-                lista.replaceChildren();
-                contenedor.hidden = true;
-            } else {
-                contenedor.hidden = false;
-                if (lista.querySelectorAll('[data-ag-ventana-fila]').length === 0) {
-                    agregarFila();
+        const indiceGlobal = contadorIndiceLote++;
+        const inputLoteId = crearInputHidden(`lotes[${indiceGlobal}][lote_id]`, loteId);
+
+        const codigo = document.createElement('strong');
+        codigo.className = 'ag-contratos-form__lote-code';
+        codigo.textContent = loteData.codigo;
+
+        const hectareas = document.createElement('span');
+        hectareas.className = 'ag-contratos-form__lote-hectareas';
+        hectareas.textContent = `${Number(loteData.hectareas).toFixed(2)} ha`;
+
+        const celdaDiaCompleto = document.createElement('label');
+        celdaDiaCompleto.className = 'ag-contratos-form__lote-dia-completo-celda';
+        const checkDiaCompleto = document.createElement('input');
+        checkDiaCompleto.type = 'checkbox';
+        checkDiaCompleto.className = 'ag-checkbox-group__input';
+        checkDiaCompleto.checked = true;
+        checkDiaCompleto.setAttribute('data-ag-lote-dia-completo', loteId);
+        const boxDiaCompleto = document.createElement('span');
+        boxDiaCompleto.className = 'ag-checkbox-group__box';
+        boxDiaCompleto.setAttribute('aria-hidden', 'true');
+        boxDiaCompleto.appendChild(crearIcono('check', 'sm', 'ag-checkbox-group__check'));
+        celdaDiaCompleto.append(checkDiaCompleto, boxDiaCompleto);
+
+        const celdaRango = document.createElement('div');
+        celdaRango.className = 'ag-contratos-form__lote-rango-horas';
+        const inputHoraInicio = document.createElement('input');
+        inputHoraInicio.type = 'time';
+        inputHoraInicio.className = 'ag-contratos-form__input-hora';
+        inputHoraInicio.name = `lotes[${indiceGlobal}][hora_inicio]`;
+        inputHoraInicio.disabled = true;
+        const separador = document.createElement('span');
+        separador.setAttribute('aria-hidden', 'true');
+        separador.textContent = '–';
+        const inputHoraFin = document.createElement('input');
+        inputHoraFin.type = 'time';
+        inputHoraFin.className = 'ag-contratos-form__input-hora';
+        inputHoraFin.name = `lotes[${indiceGlobal}][hora_fin]`;
+        inputHoraFin.disabled = true;
+        celdaRango.append(inputHoraInicio, separador, inputHoraFin);
+
+        const botonQuitar = crearBotonAccion('delete', textoQuitarLote);
+        botonQuitar.setAttribute('data-ag-lote-quitar', '');
+        botonQuitar.classList.add('ag-contratos-form__lote-quitar-btn');
+
+        fila.append(inputLoteId, codigo, hectareas, celdaDiaCompleto, celdaRango, botonQuitar);
+        return fila;
+    };
+
+    const quitarGrupoDeLista = (propiedadId) => {
+        const grupo = contenedorGrupos?.querySelector(`[data-ag-lote-grupo="propiedad-${propiedadId}"]`);
+        grupo?.remove();
+    };
+
+    /**
+     * Reconcilia los lotes marcados en el modal con la lista apilada: agrega
+     * los nuevos, quita los desmarcados, y NO TOCA los que ya estaban (para
+     * no perder su horario personalizado ni el índice de su fila).
+     */
+    const sincronizarLotesDePropiedad = (propiedadId, propiedad, idsSeleccionados) => {
+        if (!contenedorGrupos) return;
+
+        let grupo = contenedorGrupos.querySelector(`[data-ag-lote-grupo="propiedad-${propiedadId}"]`);
+
+        if (grupo) {
+            grupo.querySelectorAll('[data-lote-id]').forEach((fila) => {
+                if (!idsSeleccionados.has(fila.getAttribute('data-lote-id'))) {
+                    fila.remove();
                 }
+            });
+        }
+
+        if (idsSeleccionados.size === 0) {
+            grupo?.remove();
+            return;
+        }
+
+        if (!grupo) {
+            grupo = document.createElement('div');
+            grupo.setAttribute('data-ag-lote-grupo', `propiedad-${propiedadId}`);
+            grupo.className = 'ag-contratos-form__lote-group';
+
+            const titulo = document.createElement('h4');
+            titulo.className = 'ag-contratos-form__lote-group-title';
+            titulo.textContent = propiedad.nombre;
+
+            const contenedorLotes = document.createElement('div');
+            contenedorLotes.className = 'ag-contratos-form__lote-group-items';
+            contenedorLotes.setAttribute('data-ag-lote-contenedor', '');
+
+            grupo.appendChild(titulo);
+            grupo.appendChild(contenedorLotes);
+            contenedorGrupos.appendChild(grupo);
+        }
+
+        const contenedorLotes = grupo.querySelector('[data-ag-lote-contenedor]');
+
+        idsSeleccionados.forEach((loteId) => {
+            if (contenedorLotes.querySelector(`[data-lote-id="${loteId}"]`)) {
+                return; // ya estaba: no se toca (preserva horario)
+            }
+            const loteData = propiedad.lotes.find((l) => String(l.id) === loteId);
+            if (loteData) {
+                contenedorLotes.appendChild(crearFilaLote(loteId, loteData));
             }
         });
+    };
+
+    // Muestra la tabla de lotes agregados solo si hay al menos un grupo —
+    // evita el cascarón vacío (solo encabezado) en un contrato nuevo.
+    const actualizarVisibilidadTablaLotes = () => {
+        if (!tablaLotes || !contenedorGrupos) return;
+        tablaLotes.toggleAttribute('hidden', contenedorGrupos.children.length === 0);
+    };
+
+    // ===== Pills de propiedades seleccionadas =====
+    const renderizarPills = () => {
+        actualizarVisibilidadTablaLotes();
+
+        if (!contenedorPropiedadesPills) return;
+
+        contenedorPropiedadesPills.innerHTML = '';
+
+        if (propiedadesSeleccionadas.size === 0) return;
+
+        const clienteId = selectCliente?.value;
+        if (!clienteId) return;
+
+        const propiedades = propiedadesYLotes[clienteId] || {};
+
+        Array.from(propiedadesSeleccionadas).forEach((propiedadId) => {
+            const propiedad = propiedades[propiedadId];
+            if (!propiedad) return;
+
+            const cantidadLotes = contenedorGrupos?.querySelectorAll(
+                `[data-ag-lote-grupo="propiedad-${propiedadId}"] [data-lote-id]`,
+            ).length || 0;
+
+            const pill = document.createElement('span');
+            pill.className = 'ag-badge ag-badge--success ag-contratos-form__propiedad-pill';
+            pill.setAttribute('role', 'button');
+            pill.setAttribute('tabindex', '0');
+
+            const label = document.createElement('span');
+            label.className = 'ag-badge__label';
+            label.textContent = cantidadLotes > 0 ? `${propiedad.nombre} (${cantidadLotes})` : propiedad.nombre;
+            pill.appendChild(label);
+
+            const botonQuitar = document.createElement('button');
+            botonQuitar.type = 'button';
+            botonQuitar.className = 'ag-contratos-form__propiedad-pill-close';
+            botonQuitar.setAttribute('aria-label', `${textoQuitarPropiedadPrefijo} ${propiedad.nombre}`.trim());
+            botonQuitar.appendChild(crearIcono('close'));
+            botonQuitar.addEventListener('click', (e) => {
+                e.stopPropagation();
+                propiedadesSeleccionadas.delete(propiedadId);
+                quitarGrupoDeLista(propiedadId);
+                renderizarPills();
+            });
+            pill.appendChild(botonQuitar);
+
+            const abrir = () => abrirModalLotes(propiedadId);
+            pill.addEventListener('click', abrir);
+            pill.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    abrir();
+                }
+            });
+
+            contenedorPropiedadesPills.appendChild(pill);
+        });
+    };
+
+    // ===== Modal de lotes de una propiedad =====
+    function sincronizarSeleccionarTodosModal() {
+        const checkboxes = modalLotesLista.querySelectorAll('[data-ag-modal-lote-checkbox]');
+        const checkTodos = modalLotesLista.querySelector('[data-ag-modal-seleccionar-todos]');
+        if (!checkTodos) return;
+
+        const todosMarcados = Array.from(checkboxes).every((cb) => cb.checked);
+        const algunosMarcados = Array.from(checkboxes).some((cb) => cb.checked);
+
+        checkTodos.checked = todosMarcados && checkboxes.length > 0;
+        checkTodos.indeterminate = algunosMarcados && !todosMarcados;
     }
+
+    const abrirModalLotes = (propiedadId) => {
+        if (!modalLotesEl || !bsModal) return;
+
+        const clienteId = selectCliente?.value;
+        if (!clienteId) return;
+
+        const propiedad = (propiedadesYLotes[clienteId] || {})[propiedadId];
+        if (!propiedad) return;
+
+        modalLotesEl.setAttribute('data-propiedad-id-actual', propiedadId);
+        if (modalLotesTitulo) {
+            modalLotesTitulo.textContent = propiedad.nombre;
+        }
+
+        const idsYaEnContrato = new Set(
+            Array.from(
+                contenedorGrupos?.querySelectorAll(`[data-ag-lote-grupo="propiedad-${propiedadId}"] [data-lote-id]`) || [],
+            ).map((el) => el.getAttribute('data-lote-id')),
+        );
+
+        modalLotesLista.innerHTML = '';
+
+        // Acción "Crear lote", siempre visible arriba de la tabla (con o sin
+        // lotes cargados todavía) — antes solo existía dentro del estado
+        // vacío, pedido del usuario para poder sumar lotes sin cerrar el
+        // modal y repetir el flujo desde cero. Botón real (no link de texto,
+        // pedido explícito: "adentro de un modal no hace falta que sea un
+        // btn link"), mismos tokens naranja/acento que el resto de los
+        // botones "crear nuevo" del formulario (`ag-button--accent`).
+        const accionCrearLote = document.createElement('a');
+        accionCrearLote.href = '#';
+        accionCrearLote.className = 'ag-button ag-button--accent ag-button--sm ag-contratos-form__modal-crear-lote';
+        accionCrearLote.setAttribute('data-ag-link-accent', '');
+        accionCrearLote.appendChild(crearIcono('add', 'sm', 'ag-button__icon'));
+        const etiquetaCrearLote = document.createElement('span');
+        etiquetaCrearLote.className = 'ag-button__label';
+        etiquetaCrearLote.textContent = textoCrearLote;
+        accionCrearLote.appendChild(etiquetaCrearLote);
+        accionCrearLote.addEventListener('click', (e) => {
+            e.preventDefault();
+            guardarBorrador();
+            window.location.href = `${urlCrearLote}?propiedad_id=${propiedadId}&volver_a=${encodeURIComponent(window.location.href)}`;
+        });
+        if (modalCrearLoteSlot) {
+            modalCrearLoteSlot.innerHTML = '';
+            modalCrearLoteSlot.appendChild(accionCrearLote);
+        } else {
+            modalLotesLista.appendChild(accionCrearLote);
+        }
+
+        const lotes = propiedad.lotes || [];
+
+        if (lotes.length === 0) {
+            const vacio = document.createElement('p');
+            vacio.className = 'ag-contratos-form__lotes-empty-text';
+            vacio.textContent = textoSinLotes;
+            modalLotesLista.appendChild(vacio);
+        } else {
+            const tabla = document.createElement('div');
+            tabla.className = 'ag-contratos-form__modal-tabla';
+
+            const crearCeldaCheckbox = (esSeleccionarTodos, loteId) => {
+                const celda = document.createElement('label');
+                celda.className = 'ag-contratos-form__modal-checkbox-celda';
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'ag-checkbox-group__input';
+                if (esSeleccionarTodos) {
+                    checkbox.setAttribute('data-ag-modal-seleccionar-todos', '');
+                    checkbox.setAttribute('aria-label', textoSeleccionarTodos);
+                } else {
+                    checkbox.value = loteId;
+                    checkbox.setAttribute('data-ag-modal-lote-checkbox', '');
+                }
+
+                const box = document.createElement('span');
+                box.className = 'ag-checkbox-group__box';
+                box.setAttribute('aria-hidden', 'true');
+                box.appendChild(crearIcono('check', 'sm', 'ag-checkbox-group__check'));
+
+                celda.append(checkbox, box);
+                return { celda, checkbox };
+            };
+
+            const head = document.createElement('div');
+            head.className = 'ag-contratos-form__modal-tabla-head';
+            const { celda: celdaTodos, checkbox: checkTodos } = crearCeldaCheckbox(true);
+            checkTodos.addEventListener('change', () => {
+                modalLotesLista.querySelectorAll('[data-ag-modal-lote-checkbox]').forEach((cb) => {
+                    cb.checked = checkTodos.checked;
+                });
+            });
+            const colCodigo = document.createElement('span');
+            colCodigo.textContent = textoColCodigo;
+            const colHectareas = document.createElement('span');
+            colHectareas.textContent = textoColHectareas;
+            const colDesnivel = document.createElement('span');
+            colDesnivel.textContent = textoColDesnivel;
+            const colLimpieza = document.createElement('span');
+            colLimpieza.textContent = textoColLimpieza;
+            head.append(celdaTodos, colCodigo, colHectareas, colDesnivel, colLimpieza);
+            tabla.appendChild(head);
+
+            lotes.forEach((lote) => {
+                const fila = document.createElement('div');
+                fila.className = 'ag-contratos-form__modal-tabla-fila';
+
+                const { celda: celdaCheck, checkbox } = crearCeldaCheckbox(false, lote.id);
+                checkbox.checked = idsYaEnContrato.has(String(lote.id));
+                checkbox.addEventListener('change', sincronizarSeleccionarTodosModal);
+
+                const celdaCodigo = document.createElement('strong');
+                celdaCodigo.textContent = lote.codigo;
+
+                const celdaHectareas = document.createElement('span');
+                celdaHectareas.textContent = `${Number(lote.hectareas).toFixed(2)} ha`;
+
+                const celdaDesnivel = document.createElement('span');
+                celdaDesnivel.textContent = lote.desnivel_label || '—';
+                celdaDesnivel.classList.toggle('ag-contratos-form__modal-tabla-vacio', !lote.desnivel_label);
+
+                const celdaLimpieza = document.createElement('span');
+                celdaLimpieza.textContent = lote.limpieza_label || '—';
+                celdaLimpieza.classList.toggle('ag-contratos-form__modal-tabla-vacio', !lote.limpieza_label);
+
+                fila.append(celdaCheck, celdaCodigo, celdaHectareas, celdaDesnivel, celdaLimpieza);
+
+                // Clickear cualquier parte de la fila marca/desmarca — salvo
+                // la propia celda de checkbox, que ya lo hace nativo (label
+                // asociado) y duplicaría el toggle si también la contamos acá.
+                fila.addEventListener('click', (e) => {
+                    if (e.target.closest('.ag-contratos-form__modal-checkbox-celda')) return;
+                    checkbox.checked = !checkbox.checked;
+                    checkbox.dispatchEvent(new Event('change'));
+                });
+
+                tabla.appendChild(fila);
+            });
+
+            modalLotesLista.appendChild(tabla);
+            sincronizarSeleccionarTodosModal();
+        }
+
+        bsModal.show();
+    };
+
+    const guardarSeleccionModal = () => {
+        const propiedadId = modalLotesEl?.getAttribute('data-propiedad-id-actual');
+        if (!propiedadId) return;
+
+        const clienteId = selectCliente?.value;
+        const propiedad = (propiedadesYLotes[clienteId] || {})[propiedadId];
+        if (!propiedad) return;
+
+        const idsSeleccionados = new Set(
+            Array.from(modalLotesLista.querySelectorAll('[data-ag-modal-lote-checkbox]:checked')).map((cb) => cb.value),
+        );
+
+        sincronizarLotesDePropiedad(propiedadId, propiedad, idsSeleccionados);
+        renderizarPills();
+        bsModal.hide();
+    };
+
+    modalLotesGuardarBtn?.addEventListener('click', guardarSeleccionModal);
+
+    // ===== Día completo, horario y quitar (delegación — cubre filas del
+    // servidor y del JS con un solo listener cada una) =====
+    listaApilada?.addEventListener('change', (e) => {
+        const checkDiaCompleto = e.target.closest('[data-ag-lote-dia-completo]');
+        if (!checkDiaCompleto) return;
+
+        const fila = checkDiaCompleto.closest('.ag-contratos-form__lote-row');
+        const inputs = fila?.querySelectorAll('.ag-contratos-form__input-hora') || [];
+        inputs.forEach((input) => {
+            input.disabled = checkDiaCompleto.checked;
+            if (checkDiaCompleto.checked) input.value = '';
+        });
+    });
+
+    listaApilada?.addEventListener('click', (e) => {
+        const botonQuitar = e.target.closest('[data-ag-lote-quitar]');
+        if (botonQuitar) {
+            e.preventDefault();
+            const fila = botonQuitar.closest('[data-lote-id]');
+            const grupo = fila?.closest('[data-ag-lote-grupo]');
+            fila?.remove();
+            if (grupo && !grupo.querySelector('[data-lote-id]')) {
+                grupo.remove();
+            }
+            renderizarPills();
+        }
+    });
+
+    // Configurar eventos solo si tenemos los elementos necesarios
+    if (selectCliente && selectPropiedad && contenedorPropiedadesPills && scriptDatos) {
+        try {
+            propiedadesYLotes = JSON.parse(scriptDatos.textContent) || {};
+        } catch (e) {
+            console.error('Error al parsear propiedades/lotes JSON:', e);
+        }
+
+        /**
+         * Actualizar select de propiedad cuando cambia el cliente.
+         * Llena el <select> oculto con las propiedades del cliente actual.
+         */
+        const actualizarSelectPropiedad = () => {
+            const clienteId = selectCliente.value;
+            const propiedades = propiedadesYLotes[clienteId] || {};
+
+            selectPropiedad.innerHTML = `<option value="">${selectPropiedad.getAttribute('placeholder') || 'Seleccioná'}</option>`;
+            selectPropiedad.disabled = !clienteId;
+
+            Object.entries(propiedades).forEach(([propiedadId, propiedad]) => {
+                const option = document.createElement('option');
+                option.value = propiedadId;
+                option.textContent = propiedad.nombre;
+                selectPropiedad.appendChild(option);
+            });
+
+            if (accionCrearPropiedad) {
+                if (clienteId) {
+                    const urlCrear = accionCrearPropiedad.href.split('?')[0];
+                    accionCrearPropiedad.href = `${urlCrear}?cliente_id=${clienteId}&volver_a=${encodeURIComponent(window.location.href)}`;
+                    accionCrearPropiedad.removeAttribute('hidden');
+                } else {
+                    accionCrearPropiedad.setAttribute('hidden', '');
+                }
+            }
+
+            propiedadesSeleccionadas.clear();
+            renderizarPills();
+        };
+
+        selectCliente.addEventListener('change', actualizarSelectPropiedad);
+
+        selectPropiedad.addEventListener('change', () => {
+            const propiedadId = selectPropiedad.value;
+            if (!propiedadId) return;
+
+            propiedadesSeleccionadas.add(propiedadId);
+            selectPropiedad.value = '';
+            renderizarPills();
+            abrirModalLotes(propiedadId);
+        });
+
+        if (selectCliente.value) {
+            actualizarSelectPropiedad();
+
+            // Sembrar pills desde los grupos ya renderizados por el servidor
+            // (modo edición) — actualizarSelectPropiedad() los vació arriba
+            // porque asume "cambio de cliente"; en la carga inicial el
+            // cliente no cambió, ya trae lotes de antes.
+            contenedorGrupos?.querySelectorAll('[data-ag-lote-grupo]').forEach((grupo) => {
+                const coincidencia = grupo.getAttribute('data-ag-lote-grupo')?.match(/^propiedad-(\d+)$/);
+                if (coincidencia) propiedadesSeleccionadas.add(coincidencia[1]);
+            });
+            renderizarPills();
+        }
+    }
+
+    // ===== SESSIONSTORAGE (guarda/restaura estado formulario) =====
+    // Guardar borrador en sessionStorage antes de navegar (tarea "contratos-lotes", punto 5)
+    const linksAltaRapida = formulario.querySelectorAll('[data-ag-link-accent]');
+    linksAltaRapida.forEach((link) => {
+        link.addEventListener('click', () => {
+            guardarBorrador();
+        });
+    });
+
+    function guardarBorrador() {
+        const datos = new FormData(formulario);
+        const bor = {};
+
+        datos.forEach((value, key) => {
+            if (key.startsWith('lotes[')) {
+                if (!bor[key]) bor[key] = [];
+                bor[key].push(value);
+            } else if (!bor[key]) {
+                bor[key] = value;
+            }
+        });
+
+        sessionStorage.setItem('ag_contrato_borrador', JSON.stringify(bor));
+    }
+
+    function restaurarBorrador() {
+        // Leer URL primero para permitir que los query params ganen
+        const urlParams = new URLSearchParams(window.location.search);
+        const clienteIdUrl = urlParams.get('cliente_id');
+        const propiedadIdUrl = urlParams.get('propiedad_id');
+        const loteIdUrl = urlParams.get('lote_id');
+
+        const bor = sessionStorage.getItem('ag_contrato_borrador');
+        if (bor) {
+            try {
+                const datos = JSON.parse(bor);
+                Object.entries(datos).forEach(([key, value]) => {
+                    if (Array.isArray(value)) {
+                        value.forEach((v) => {
+                            const input = formulario.querySelector(`[name="${key}"]`);
+                            if (input) input.value = v;
+                        });
+                    } else {
+                        const input = formulario.querySelector(`[name="${key}"]`);
+                        if (input) {
+                            if (input.type === 'checkbox') {
+                                input.checked = value === 'on' || value === '1';
+                            } else {
+                                input.value = value;
+                            }
+                        }
+                    }
+                });
+
+                sessionStorage.removeItem('ag_contrato_borrador');
+            } catch (e) {
+                console.error('Error al restaurar borrador:', e);
+            }
+        }
+
+        // Aplicar valores de URL (ganan sobre el borrador)
+        if (clienteIdUrl && !urlParams.has('_limpiar_cliente')) {
+            if (selectCliente) {
+                selectCliente.value = clienteIdUrl;
+                selectCliente.dispatchEvent(new Event('change'));
+            }
+        }
+
+        // Volver de "Crear propiedad" (con o sin lote): agregar la propiedad
+        // y, si ya viene con un lote recién creado, sumarlo directo a la
+        // lista apilada (mismo resultado que tildarlo en el modal y guardar).
+        if (propiedadIdUrl && selectCliente && selectCliente.value) {
+            propiedadesSeleccionadas.add(propiedadIdUrl);
+
+            if (loteIdUrl) {
+                const propiedad = (propiedadesYLotes[selectCliente.value] || {})[propiedadIdUrl];
+                if (propiedad) {
+                    const idsActuales = new Set(
+                        Array.from(
+                            contenedorGrupos?.querySelectorAll(`[data-ag-lote-grupo="propiedad-${propiedadIdUrl}"] [data-lote-id]`) || [],
+                        ).map((el) => el.getAttribute('data-lote-id')),
+                    );
+                    idsActuales.add(loteIdUrl);
+                    sincronizarLotesDePropiedad(propiedadIdUrl, propiedad, idsActuales);
+                }
+            }
+
+            renderizarPills();
+        }
+    }
+
+    // Restaurar al cargar
+    restaurarBorrador();
+
+    // Guardar al enviar (limpiar después)
+    formulario.addEventListener('submit', () => {
+        sessionStorage.removeItem('ag_contrato_borrador');
+    });
 });
