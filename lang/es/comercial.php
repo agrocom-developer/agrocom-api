@@ -245,19 +245,22 @@ return [
         'mapa_buscador_error' => 'Coordenadas inválidas — usá el formato "lat, long".',
         'mapa_medida' => 'Superficie dibujada: :hectareas ha',
 
-        // Pantalla "Crear Lotes" (HU-72 reconstruida, 16/9/2026)
+        // Pantalla "Crear Lotes" (HU-72 reconstruida, 16/9/2026) — sin
+        // cultivo/campaña a propósito: eso es siembra, vive en el summary
+        // "Siembra actual" / propiedades/siembra, no acá.
         'lotes_generar_titulo' => 'Crear lotes — :propiedad',
-        'lotes_generar_subtitulo' => 'Generá varios lotes de una vez; después entrás a cada uno a renombrarlo y dibujar su polígono.',
+        'lotes_generar_subtitulo' => 'Generá varios lotes de una vez, con sus atributos de terreno; después entrás a cada uno a renombrarlo y dibujar su polígono.',
         'lotes_generar_volver' => 'Volver a la propiedad',
         'lotes_generar_error' => 'Revisá los datos marcados antes de generar los lotes.',
-        'lotes_generar_seccion' => 'Cuántos y con qué siembra',
+        'lotes_generar_seccion_destino' => 'Dónde van estos lotes',
+        'lotes_generar_cliente' => 'Cliente',
+        'lotes_generar_propiedad' => 'Propiedad',
+        'lotes_generar_seccion_cuantos' => 'Cuántos y con qué código',
+        'lotes_generar_prefijo' => 'Prefijo del código',
+        'lotes_generar_prefijo_ayuda' => 'Cada lote nace como prefijo + número correlativo (ej. Lote 6, Lote 7...), a renombrar después. El número sigue desde el último ya usado en esta propiedad con el mismo prefijo.',
         'lotes_generar_cantidad' => 'Cantidad de lotes',
-        'lotes_generar_cantidad_ayuda' => 'Cada uno nace con un código provisorio ("Lote 1", "Lote 2"...) para renombrar después.',
-        'lotes_generar_cultivo' => 'Cultivo (opcional)',
-        'lotes_generar_cultivo_placeholder' => 'Sin siembra por ahora',
-        'lotes_generar_campania' => 'Campaña (opcional)',
-        'lotes_generar_campania_placeholder' => 'Sin siembra por ahora',
-        'lotes_generar_campania_ayuda' => 'Con cultivo y campaña, cada lote generado queda sembrado desde ya — ajustable después desde la ficha del lote o desde "Siembra".',
+        'lotes_generar_seccion_terreno' => 'Atributos del terreno',
+        'lotes_generar_terreno_ayuda' => 'Se cargan una sola vez y se aplican a todos los lotes generados — si alguno necesita algo distinto, se ajusta después desde su propia ficha.',
         'lotes_generar_estado_form' => 'Los lotes se generan al confirmar.',
         'lotes_generar_accion' => 'Crear lotes',
     ],
@@ -541,6 +544,8 @@ return [
 
         // Errores de validación
         'error_geometria_invalida' => 'La geometría tiene que ser un JSON con "type": "Polygon" y "coordinates" como arreglo.',
+        'error_grado_obstaculos_invalido' => 'El grado de obstáculos no es válido.',
+        'error_grado_obstaculos_requerido' => 'Elegí un grado de obstáculos para este lote.',
     ],
 
     // HU-48 (tarea 71, ADR 0015 punto 4): catálogo de cultivos. Cuarto ABM

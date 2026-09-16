@@ -11,9 +11,18 @@ use Illuminate\Validation\Rule;
  * controlador, contra el rol activo — no acá, mismo criterio que el resto
  * del panel.
  *
- * `campania_id` sin guarda de cliente (ADR 0015, corregido el 15/9/2026):
- * la campaña es un catálogo compartido, cualquier lote puede sembrarse en
- * cualquier campaña.
+ * `terreno.*` son las mismas reglas de terreno que `CrearLoteRequest`
+ * (switch `limpio` + grado de obstáculos si no está marcado), pero UN
+ * SOLO juego de valores — se aplican a los `cantidad` lotes generados por
+ * igual (16/9/2026, pedido directo: no una fila por lote). Sin
+ * `codigo`/`hectareas`/`geometria`: el código lo arma `CrearLotesMasivo`
+ * con `prefijo` + numeración correlativa, y las hectáreas quedan en un
+ * placeholder a corregir después dibujando el polígono.
+ *
+ * SIN `cultivo_id`/`campania_id` a propósito (corregido tras confundir
+ * los dos conceptos): esta pantalla crea ESTRUCTURA, no siembra — el
+ * cultivo se asigna después desde la ficha del lote o desde
+ * `propiedades/siembra` (`GuardarSiembraCampania`), nunca acá.
  */
 final class GenerarLotesRequest extends FormRequest
 {
@@ -21,9 +30,16 @@ final class GenerarLotesRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'prefijo' => ['required', 'string', 'max:30'],
             'cantidad' => ['required', 'integer', 'min:1', 'max:50'],
-            'cultivo_id' => ['nullable', 'integer', Rule::exists('com_cultivos', 'id')],
-            'campania_id' => ['nullable', 'integer', Rule::exists('cpn_campanias', 'id')->whereNull('deleted_at')],
+            'terreno.desnivel' => ['nullable', Rule::in(['ninguno', 'algunos', 'varios', 'empinado'])],
+            'terreno.limpio' => ['boolean'],
+            'terreno.grado_obstaculos' => [
+                Rule::requiredIf(fn () => ! $this->boolean('terreno.limpio')),
+                'nullable',
+                Rule::in(['pocos_obstaculos', 'algunos_obstaculos', 'muchos_obstaculos']),
+            ],
+            'terreno.restricciones' => ['nullable', 'string'],
         ];
     }
 
@@ -31,6 +47,7 @@ final class GenerarLotesRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'prefijo.required' => 'Elegí un prefijo para el código de los lotes.',
             'cantidad.required' => 'Indicá cuántos lotes generar.',
             'cantidad.min' => 'Generá al menos un lote.',
             'cantidad.max' => 'No se pueden generar más de 50 lotes a la vez.',

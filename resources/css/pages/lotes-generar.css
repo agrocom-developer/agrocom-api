@@ -18,3 +18,19 @@
     flex-direction: column;
     gap: var(--ag-space-5);
 }
+
+/* Cliente/Propiedad de solo lectura (16/9/2026, pedido directo: a simple
+   vista tiene que quedar claro a dónde van estos lotes) — mismo tamaño y
+   color que un valor de input real, sin chrome de campo editable. */
+.ag-lotes-generar__solo-lectura {
+    margin: 0;
+    padding: var(--ag-space-2) 0;
+    color: var(--ag-color-text);
+    font-size: var(--ag-font-size-base);
+}
+
+.ag-lotes-generar__ayuda-terreno {
+    margin: 0 0 var(--ag-space-2);
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-sm);
+}
