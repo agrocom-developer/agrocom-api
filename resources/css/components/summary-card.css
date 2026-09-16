@@ -74,8 +74,5 @@
 }
 
 .ag-summary-card__action {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-2);
     margin-top: var(--ag-space-1);
 }

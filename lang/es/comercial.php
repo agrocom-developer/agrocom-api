@@ -133,6 +133,7 @@ return [
         'actualizado' => 'Los datos de la propiedad se actualizaron correctamente.',
         'eliminado' => 'La propiedad se dio de baja correctamente.',
         'mapa_guardado' => 'Las coordenadas de la propiedad se guardaron correctamente.',
+        'lotes_generados' => ':cantidad lotes generados correctamente. Entrá a cada uno para renombrarlo y dibujar su polígono.',
         'volver_a_formulario_origen' => 'Volver al formulario anterior',
 
         // Listado
@@ -243,6 +244,22 @@ return [
         'mapa_buscador_placeholder' => 'Lat, long (ej. -17.78, -63.18)',
         'mapa_buscador_error' => 'Coordenadas inválidas — usá el formato "lat, long".',
         'mapa_medida' => 'Superficie dibujada: :hectareas ha',
+
+        // Pantalla "Crear Lotes" (HU-72 reconstruida, 16/9/2026)
+        'lotes_generar_titulo' => 'Crear lotes — :propiedad',
+        'lotes_generar_subtitulo' => 'Generá varios lotes de una vez; después entrás a cada uno a renombrarlo y dibujar su polígono.',
+        'lotes_generar_volver' => 'Volver a la propiedad',
+        'lotes_generar_error' => 'Revisá los datos marcados antes de generar los lotes.',
+        'lotes_generar_seccion' => 'Cuántos y con qué siembra',
+        'lotes_generar_cantidad' => 'Cantidad de lotes',
+        'lotes_generar_cantidad_ayuda' => 'Cada uno nace con un código provisorio ("Lote 1", "Lote 2"...) para renombrar después.',
+        'lotes_generar_cultivo' => 'Cultivo (opcional)',
+        'lotes_generar_cultivo_placeholder' => 'Sin siembra por ahora',
+        'lotes_generar_campania' => 'Campaña (opcional)',
+        'lotes_generar_campania_placeholder' => 'Sin siembra por ahora',
+        'lotes_generar_campania_ayuda' => 'Con cultivo y campaña, cada lote generado queda sembrado desde ya — ajustable después desde la ficha del lote o desde "Siembra".',
+        'lotes_generar_estado_form' => 'Los lotes se generan al confirmar.',
+        'lotes_generar_accion' => 'Crear lotes',
     ],
 
     // HU-23 (tarea 34): administración de contratos con sus ventanas de

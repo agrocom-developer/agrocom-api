@@ -1,0 +1,20 @@
+/*
+ * Page: propiedades/lotes-generar
+ * (app/Dominios/Comercial/Infraestructura/Http/Views/pages/propiedades/) —
+ * HU-72 reconstruida, 16/9/2026: "Crear Lotes" con un solo botón. CSS
+ * propio de ESTA página (ver convención en resources/css/pages/index.css),
+ * mismo patrón que siembra.css. Todo color y medida por token (CLAUDE.md
+ * invariante 11).
+ */
+
+.ag-lotes-generar {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+.ag-lotes-generar-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}

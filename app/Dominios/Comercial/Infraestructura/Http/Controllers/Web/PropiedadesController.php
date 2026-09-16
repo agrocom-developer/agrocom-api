@@ -304,11 +304,12 @@ final class PropiedadesController
         if ($puedeVerLotes || $puedeCrearLotes) {
             $totalLotes = $puedeVerLotes ? $propiedad->lotes()->count() : 0;
             $hectareasTotales = $puedeVerLotes ? (float) $propiedad->lotes()->sum('hectareas') : 0.0;
+            $tieneLotes = $puedeVerLotes && $totalLotes > 0;
 
             $resumen[] = [
                 'titulo' => __('comercial.propiedades.aside_lotes_titulo'),
                 'icono' => 'grid_view',
-                'tieneDatos' => $puedeVerLotes && $totalLotes > 0,
+                'tieneDatos' => $tieneLotes,
                 'items' => [
                     ['label' => __('comercial.propiedades.aside_lotes_total'), 'value' => (string) $totalLotes, 'mono' => true],
                     ['label' => __('comercial.propiedades.aside_lotes_hectareas'), 'value' => number_format($hectareasTotales, 2, ',', '.'), 'mono' => true],
@@ -321,27 +322,23 @@ final class PropiedadesController
                 ],
                 'vacioTitulo' => __('comercial.propiedades.aside_lotes_vacio_titulo'),
                 'vacioDetalle' => __('comercial.propiedades.aside_lotes_vacio_detalle'),
-                // Manda a la LISTA filtrada por esta propiedad (16/9/2026),
-                // no directo al alta: desde ahí ya se ve qué lotes tiene y el
-                // botón "Nuevo lote" de esa pantalla arrastra el mismo
-                // propiedad_id (con cliente ya resuelto, ver
-                // lotes/_formulario.blade.php).
-                'mostrarAccion' => $puedeVerLotes,
-                'accion' => [
-                    'label' => __('comercial.propiedades.aside_lotes_accion'),
-                    'href' => route('panel.lotes.index', ['propiedad_id' => $propiedad->id]),
-                ],
-                // "Crear Lotes" masivo (HU-72 reconstruida, 16/9/2026): un
-                // botón, cuántos + cultivo/campaña opcionales — ver
-                // CrearLotesMasivo. Vale con o sin lotes todavía (es
-                // justamente la vía rápida para la primera tanda), así que
-                // se ofrece en las dos variantes del aside (con datos y
-                // empty-state).
-                'mostrarAccionSecundaria' => $puedeCrearLotes,
-                'accionSecundaria' => [
-                    'label' => __('comercial.propiedades.aside_lotes_generar'),
-                    'href' => route('panel.propiedades.lotes.generar', $propiedad),
-                ],
+                // Un solo botón, según haya o no lotes (16/9/2026, pedido
+                // directo): con lotes, a la LISTA filtrada por esta
+                // propiedad (de ahí "Nuevo lote" ya arrastra el mismo
+                // propiedad_id, con cliente resuelto, ver
+                // lotes/_formulario.blade.php); sin lotes todavía, directo
+                // al generador masivo (CrearLotesMasivo) — es la vía rápida
+                // para la primera tanda, no el alta de uno por uno.
+                'mostrarAccion' => $tieneLotes ? $puedeVerLotes : $puedeCrearLotes,
+                'accion' => $tieneLotes
+                    ? [
+                        'label' => __('comercial.propiedades.aside_lotes_accion'),
+                        'href' => route('panel.lotes.index', ['propiedad_id' => $propiedad->id]),
+                    ]
+                    : [
+                        'label' => __('comercial.propiedades.aside_lotes_generar'),
+                        'href' => route('panel.propiedades.lotes.generar', $propiedad),
+                    ],
             ];
         }
 

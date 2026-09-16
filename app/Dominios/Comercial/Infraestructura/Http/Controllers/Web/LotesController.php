@@ -255,9 +255,11 @@ final class LotesController
             $items[] = ['label' => __('comercial.lotes.aside_siembra_campania'), 'value' => $campaniaVigente->codigo, 'mono' => true];
         }
         if ($siembra !== null) {
+            $cultivo = Cultivo::query()->find($siembra->cultivo_id);
+
             $items[] = [
                 'label' => __('comercial.lotes.aside_siembra_cultivo'),
-                'value' => Cultivo::query()->find($siembra->cultivo_id)?->nombre ?? __('comercial.lotes.aside_siembra_cultivo_desconocido'),
+                'value' => $cultivo !== null ? $cultivo->nombre : __('comercial.lotes.aside_siembra_cultivo_desconocido'),
             ];
         }
 
