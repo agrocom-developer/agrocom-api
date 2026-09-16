@@ -135,7 +135,13 @@
         @if ($esEdicion)
             <aside class="ag-campanias-form__aside">
                 @foreach ($resumenCampania ?? [] as $resumen)
-                    <x-molecules.summary-card :title="$resumen['titulo']" :items="$resumen['items']" />
+                    <x-molecules.summary-card :title="$resumen['titulo']" :items="$resumen['items']">
+                        <x-slot:action>
+                            <x-atoms.button href="{{ $resumen['accion']['href'] }}" variant="outline" icon="arrow_forward" block>
+                                {{ $resumen['accion']['label'] }}
+                            </x-atoms.button>
+                        </x-slot:action>
+                    </x-molecules.summary-card>
                 @endforeach
             </aside>
         @endif

@@ -79,10 +79,13 @@ return [
         'aside_financiero_titulo' => 'Financiero',
         'aside_recaudado' => 'Recaudado (facturado)',
         'aside_gastado' => 'Gastado',
+        'aside_balance' => 'Balance',
+        'aside_financiero_accion' => 'Ver gastos de esta campaña',
         'aside_trabajo_titulo' => 'Trabajo',
         'aside_contratos' => 'Contratos',
         'aside_hectareas_contratadas' => 'Hectáreas contratadas',
         'aside_trabajos' => 'Trabajos realizados',
+        'aside_trabajo_accion' => 'Ver contratos de esta campaña',
 
         // Errores de validación
         'error_codigo_requerido' => 'Ingresá un código para la campaña.',

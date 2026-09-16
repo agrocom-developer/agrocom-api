@@ -170,7 +170,8 @@ final class CampaniasController
      * `ClientesController::resumenRelacionado()`, estas dos tarjetas no
      * alternan con `empty-state`: son magnitudes que siempre tienen un
      * valor (aunque sea cero), no un listado de registros con atajo de
-     * alta — por eso el shape es más chico (sin `tieneDatos`/`accion`).
+     * alta — por eso el shape es más chico (sin `tieneDatos`; `accion` acá
+     * es "ver detalle" en el listado real, no "crear").
      *
      * Todo por `DB::table` directo (ADR 0003 regla 3: referencias por ID
      * sí, lógica cruzada no) — nunca reconstruyendo una regla de negocio de
@@ -184,10 +185,19 @@ final class CampaniasController
      *
      * Sumas en `Brick\Math\BigDecimal` (invariante 6 de CLAUDE.md), nunca
      * `SUM()` de SQL ni cast a float durante el cálculo — el cast a float
-     * (`aFloat()`) es solo para `number_format()`, mismo criterio de
+     * (`aMoneda()`) es solo para `number_format()`, mismo criterio de
      * presentación que ya usa `contratos/index.blade.php`.
      *
-     * @return list<array{titulo: string, items: list<array{label: string, value: string, mono: bool}>}>
+     * Color y acción de "ver detalle" (pedido directo del 15/9/2026, mismo
+     * criterio que la tarjeta "Suscripción" de `panel/organizacion`): el
+     * balance y el conteo de contratos se pintan como `atoms/badge`
+     * (variant success/danger/neutral, nunca ámbar — regla fija de
+     * `docs/diseno/sistema_diseno_panel.md` §8), y cada tarjeta enlaza al
+     * listado real ya filtrable por `campania_id`
+     * (`GastosController`/`ContratosController` — `panel.facturas.index` NO
+     * tiene ese filtro todavía, así que "Recaudado" queda sin acción propia).
+     *
+     * @return list<array{titulo: string, items: list<array{label: string, value: string, mono?: bool, badge?: bool, variant?: string}>, accion: array{label: string, href: string}}>
      */
     private function resumenCampania(Campania $campania): array
     {
@@ -205,6 +215,8 @@ final class CampaniasController
         )->plus($this->sumarDecimal(
             DB::table('fin_combustibles')->where('campania_id', $campania->id)->whereNull('deleted_at')->pluck('monto'),
         ));
+
+        $balance = $montoFacturado->minus($montoGastado);
 
         $contratosCampania = DB::table('com_contratos')->where('campania_id', $campania->id)->whereNull('deleted_at');
         $totalContratos = (clone $contratosCampania)->count();
@@ -225,14 +237,33 @@ final class CampaniasController
                 'items' => [
                     ['label' => __('campania.campanias.aside_recaudado'), 'value' => $this->aMoneda($montoFacturado), 'mono' => true],
                     ['label' => __('campania.campanias.aside_gastado'), 'value' => $this->aMoneda($montoGastado), 'mono' => true],
+                    [
+                        'label' => __('campania.campanias.aside_balance'),
+                        'value' => $this->aMoneda($balance),
+                        'badge' => true,
+                        'variant' => $balance->isNegative() ? 'danger' : ($balance->isZero() ? 'neutral' : 'success'),
+                    ],
+                ],
+                'accion' => [
+                    'label' => __('campania.campanias.aside_financiero_accion'),
+                    'href' => route('panel.gastos.index', ['campania_id' => $campania->id]),
                 ],
             ],
             [
                 'titulo' => __('campania.campanias.aside_trabajo_titulo'),
                 'items' => [
-                    ['label' => __('campania.campanias.aside_contratos'), 'value' => (string) $totalContratos, 'mono' => true],
+                    [
+                        'label' => __('campania.campanias.aside_contratos'),
+                        'value' => (string) $totalContratos,
+                        'badge' => true,
+                        'variant' => $totalContratos > 0 ? 'success' : 'neutral',
+                    ],
                     ['label' => __('campania.campanias.aside_hectareas_contratadas'), 'value' => $this->aMoneda($hectareasContratadas), 'mono' => true],
                     ['label' => __('campania.campanias.aside_trabajos'), 'value' => (string) $totalTrabajos, 'mono' => true],
+                ],
+                'accion' => [
+                    'label' => __('campania.campanias.aside_trabajo_accion'),
+                    'href' => route('panel.contratos.index', ['campania_id' => $campania->id]),
                 ],
             ],
         ];
