@@ -502,6 +502,15 @@ return [
         'estado_form' => 'Los cambios se guardan al confirmar.',
         'volver' => 'Volver a lotes',
 
+        // Aside "Siembra actual" (ficha de un lote, en edición)
+        'aside_siembra_titulo' => 'Siembra actual',
+        'aside_siembra_campania' => 'Campaña vigente',
+        'aside_siembra_cultivo' => 'Cultivo',
+        'aside_siembra_cultivo_desconocido' => 'Sin especificar',
+        'aside_siembra_vacio_titulo' => 'Sin siembra registrada',
+        'aside_siembra_vacio_detalle' => 'Este lote todavía no tiene un cultivo asignado en la campaña vigente.',
+        'aside_siembra_accion' => 'Ir a siembra de la propiedad',
+
         // Errores de validación
         'error_geometria_invalida' => 'La geometría tiene que ser un JSON con "type": "Polygon" y "coordinates" como arreglo.',
     ],

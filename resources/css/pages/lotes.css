@@ -62,6 +62,50 @@
     font-size: var(--ag-font-size-sm);
 }
 
+/* Formulario (create/edit) — aside "Siembra actual" en edición, mismo
+   criterio que .ag-propiedades-form__layout/__main/__aside. */
+
+.ag-lotes-form__layout {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--ag-space-5);
+}
+
+.ag-lotes-form__main {
+    flex: 1 1 32rem;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+.ag-lotes-form__main:only-child {
+    flex-basis: 100%;
+}
+
+.ag-lotes-form__aside {
+    flex: 1 1 19rem;
+    min-width: 16rem;
+    max-width: 20rem;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+    position: sticky;
+    top: var(--ag-space-4);
+}
+
+@media (max-width: 1199.98px) {
+    .ag-lotes-form__layout {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .ag-lotes-form__aside {
+        max-width: none;
+        position: static;
+    }
+}
+
 .ag-lotes__fila:hover {
     background-color: var(--ag-color-bg-row-hover);
 }

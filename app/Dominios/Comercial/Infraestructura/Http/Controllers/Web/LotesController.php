@@ -11,7 +11,9 @@ use App\Dominios\Comercial\Aplicacion\ResolverProveedorMapa;
 use App\Dominios\Comercial\Dominio\Excepciones\LoteConHistorialAsociado;
 use App\Dominios\Comercial\Dominio\Excepciones\LoteDuplicado;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Cultivo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
+use App\Dominios\Comercial\Infraestructura\Eloquent\LoteCampania;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\ActualizarLoteRequest;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\CrearLoteRequest;
@@ -19,6 +21,7 @@ use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 /**
@@ -123,6 +126,7 @@ final class LotesController
             'propiedadesDisponibles' => $this->propiedadesActivas(),
             'proveedorMapa' => $this->resolverProveedorMapa->ejecutar(),
             'referenciaMapa' => $this->referenciaMapa($lote->id),
+            'resumenLote' => $this->resumenLote($lote),
             'volverA' => session('volverA'),
         ]);
     }
@@ -221,6 +225,55 @@ final class LotesController
             ->all();
 
         return ['propiedades' => $propiedades, 'lotesPorPropiedad' => $lotesPorPropiedad];
+    }
+
+    /**
+     * Aside "Siembra actual" de la ficha del lote (16/9/2026): mismo shape
+     * que `PropiedadesController::resumenSiembra()`, acotado a UN lote en
+     * vez de a toda la propiedad — informativo, con acción a la pantalla
+     * real de siembra (ADR 0015 punto 4: el cultivo se edita por
+     * propiedad×campaña, no acá).
+     *
+     * @return array{titulo: string, icono: string, tieneDatos: bool, items: list<array<string, mixed>>, vacioTitulo: string, vacioDetalle: string, mostrarAccion: bool, accion: array{label: string, href: string}}
+     */
+    private function resumenLote(Lote $lote): array
+    {
+        $campaniaVigente = DB::table('cpn_campanias')
+            ->whereNull('deleted_at')
+            ->orderByDesc('fecha_inicio')
+            ->first(['id', 'codigo']);
+
+        $siembra = $campaniaVigente !== null
+            ? LoteCampania::query()
+                ->where('lote_id', $lote->id)
+                ->where('campania_id', $campaniaVigente->id)
+                ->first()
+            : null;
+
+        $items = [];
+        if ($campaniaVigente !== null) {
+            $items[] = ['label' => __('comercial.lotes.aside_siembra_campania'), 'value' => $campaniaVigente->codigo, 'mono' => true];
+        }
+        if ($siembra !== null) {
+            $items[] = [
+                'label' => __('comercial.lotes.aside_siembra_cultivo'),
+                'value' => Cultivo::query()->find($siembra->cultivo_id)?->nombre ?? __('comercial.lotes.aside_siembra_cultivo_desconocido'),
+            ];
+        }
+
+        return [
+            'titulo' => __('comercial.lotes.aside_siembra_titulo'),
+            'icono' => 'eco',
+            'tieneDatos' => $siembra !== null,
+            'items' => $items,
+            'vacioTitulo' => __('comercial.lotes.aside_siembra_vacio_titulo'),
+            'vacioDetalle' => __('comercial.lotes.aside_siembra_vacio_detalle'),
+            'mostrarAccion' => true,
+            'accion' => [
+                'label' => __('comercial.lotes.aside_siembra_accion'),
+                'href' => route('panel.propiedades.siembra', $lote->propiedad),
+            ],
+        ];
     }
 
     /**

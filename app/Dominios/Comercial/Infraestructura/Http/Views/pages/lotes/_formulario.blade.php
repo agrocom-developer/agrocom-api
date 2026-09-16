@@ -73,6 +73,8 @@
         {!! json_encode($referenciaMapa) !!}
     </script>
 
+    <div class="ag-lotes-form__layout">
+    <div class="ag-lotes-form__main">
     <x-organisms.page-header
         :title="$esEdicion ? __('comercial.lotes.titulo_editar') : __('comercial.lotes.titulo_crear')"
         :subtitle="__('comercial.lotes.subtitulo_form')"
@@ -140,4 +142,38 @@
             </x-atoms.button>
         </x-slot:actions>
     </x-organisms.form-actions-bar>
+    </div>
+
+    @if ($esEdicion)
+        <aside class="ag-lotes-form__aside">
+            @foreach ($resumenLote ?? [] as $resumen)
+                @if ($resumen['tieneDatos'])
+                    <x-molecules.summary-card :title="$resumen['titulo']" :items="$resumen['items']">
+                        @if ($resumen['mostrarAccion'])
+                            <x-slot:action>
+                                <x-atoms.button href="{{ $resumen['accion']['href'] }}" variant="outline" icon="arrow_forward" block>
+                                    {{ $resumen['accion']['label'] }}
+                                </x-atoms.button>
+                            </x-slot:action>
+                        @endif
+                    </x-molecules.summary-card>
+                @else
+                    <x-molecules.empty-state
+                        :icon="$resumen['icono']"
+                        :title="$resumen['vacioTitulo']"
+                        :detail="$resumen['vacioDetalle']"
+                    >
+                        @if ($resumen['mostrarAccion'])
+                            <x-slot:action>
+                                <x-atoms.button href="{{ $resumen['accion']['href'] }}" variant="outline" icon="arrow_forward">
+                                    {{ $resumen['accion']['label'] }}
+                                </x-atoms.button>
+                            </x-slot:action>
+                        @endif
+                    </x-molecules.empty-state>
+                @endif
+            @endforeach
+        </aside>
+    @endif
+    </div>
 </form>
