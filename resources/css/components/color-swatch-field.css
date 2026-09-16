@@ -107,9 +107,24 @@
    anclado al botón "Cambiar") — mismo lenguaje visual que
    `organisms/filter-panel` (`.ag-filter-panel__menu`): `display: block
    !important` porque Bootstrap wire `display: none` inline hasta que Popper
-   lo posiciona, transición de opacity/scale en vez del display nativo. */
+   lo posiciona, transición de opacity/scale en vez del display nativo.
+   `position: fixed` acá en la regla base (no solo la que Popper aplica
+   inline al abrir, ver app.js) — corrección 16/9/2026: con `display:block`
+   siempre puesto, ANTES del primer open (Popper recién crea/posiciona en
+   `show()`) este menú vivía con el `position: absolute` por defecto de
+   Bootstrap, invisible pero ocupando layout real — y `position: absolute`
+   SÍ cuenta para el scroll interno de `.ag-panel__content` aunque el
+   elemento esté con `opacity: 0`. En Propiedades (grilla de 23 swatches,
+   botón "Cambiar" cerca del borde derecho) ese menú cerrado desbordaba
+   ~200px por fuera del panel; al elegir un swatch, el foco nativo del
+   navegador sobre el radio (oculto pero real) scrolleaba `.ag-panel__content`
+   para "mostrarlo", dejando la página corrida y un espacio vacío a la
+   derecha tras cerrar el popup. `position: fixed` desde el primer render
+   saca al menú del cálculo de overflow del contenedor en TODO momento,
+   abierto o cerrado — no solo mientras Popper lo repositiona. */
 .ag-color-swatch-field__menu {
     display: block !important;
+    position: fixed;
     width: 22rem;
     max-width: calc(100vw - var(--ag-space-6));
     padding: var(--ag-space-4);

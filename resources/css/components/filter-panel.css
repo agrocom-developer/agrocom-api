@@ -4,6 +4,13 @@
  * `.ag-notifications-popover` en topbar.css): dropdown-menu de Bootstrap con
  * skin propio, `.show` anima con opacity/transform en vez del `display`
  * nativo — ver el docblock de ese archivo para el porqué de `!important`.
+ * `position: fixed` en la regla base (no solo la que Popper aplica inline al
+ * abrir) por el mismo motivo documentado en color-swatch-field.css: con
+ * `display:block` siempre puesto, antes del primer open el menú cerrado
+ * vive con el `position: absolute` por defecto de Bootstrap y SÍ cuenta
+ * para el scroll interno de `.ag-panel__content` aunque esté invisible —
+ * deja un desborde latente que el navegador puede "revelar" con scroll al
+ * enfocar un control de adentro.
  */
 
 /* Wrapper: trigger + link "Limpiar" afuera del panel — mismo patrón que
@@ -27,6 +34,7 @@
 
 .ag-filter-panel__menu {
     display: block !important;
+    position: fixed;
     width: 32rem;
     max-width: calc(100vw - var(--ag-space-6));
     padding: var(--ag-space-4);

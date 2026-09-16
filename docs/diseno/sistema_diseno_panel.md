@@ -632,6 +632,50 @@ pantalla ya hecha, se anota acá.
     repetibles (`pages/**/_*-fila.blade.php`) y exige que su elemento raíz
     lleve la clase `ag-form-section__body`.
 
+13. **Un popover/dropdown-menu con `display: block !important` (animado por
+    opacity/transform, no por el `display` nativo) fija `position: fixed`
+    en su propia regla base, no solo la que Popper aplica al abrir
+    (16/9/2026).** Los cinco popovers del panel que usan esta técnica
+    (`.ag-notifications-popover`, `.ag-user-menu` en `topbar.css`,
+    `.ag-row-actions__menu`, `.ag-filter-panel__menu`,
+    `.ag-color-swatch-field__menu`) la comparten para poder animar con
+    transición en vez del salto de `display: none → block` — pero al forzar
+    `display: block` SIEMPRE, el menú queda maquetado en el DOM incluso
+    cerrado/invisible (`opacity: 0; visibility: hidden`), y antes del primer
+    `show()` de Bootstrap (que es cuando recién se crea el Popper y se le
+    aplica `position: fixed` inline, ver `app.js`) el menú vive con el
+    `position: absolute` por defecto de Bootstrap. Un elemento
+    `position: absolute` SÍ cuenta para el `scrollWidth`/`scrollHeight` del
+    ancestro con overflow (`.ag-panel__content`, que por CSS solo declara
+    `overflow-y: auto` pero la spec fuerza el otro eje también a `auto`
+    cuando no es `visible` en ambos) aunque esté invisible — deja un
+    desborde LATENTE, invisible hasta que algo lo revela.
+
+    Se encontró en Propiedades: con la grilla de 23 swatches y el botón
+    "Cambiar" cerca del borde derecho del formulario, ese desborde latente
+    rondaba ~200px. Al elegir un color, el navegador enfoca el
+    `<input type="radio">` real (visualmente oculto pero interactivo) y
+    dispara su scroll-into-view nativo sobre `.ag-panel__content`, que salta
+    al máximo scroll posible — exactamente el tamaño del desborde latente —
+    y ese `scrollLeft` NO se resetea al cerrar el popup: la página queda
+    corrida a la izquierda con una franja vacía a la derecha. Mismo
+    mecanismo con el que Cliente/Contrato ya se habían topado antes (ahí en
+    el eje vertical, con `filter-panel`/`row-actions`), aunque el fix
+    anterior (pre-instanciar con `strategy: 'fixed'` en `app.js`, 15/9/2026)
+    solo corrige la posición MIENTRAS el Popper está activo — no evita el
+    desborde latente del estado cerrado, que es una causa distinta y
+    anterior en el tiempo.
+
+    Regla: todo popover/dropdown-menu de este catálogo que use
+    `display: block !important` para animarse declara `position: fixed`
+    en su propia regla base (no solo en la config de Popper) — así queda
+    excluido del cálculo de overflow del contenedor en TODO momento, abierto
+    o cerrado, y no solo mientras Popper lo reposiciona. Sin compuerta
+    automática todavía (es un caso de `tests/Visual/`, que no corre —
+    ver skill `verificacion`, "Qué NO cubre la cascada"); verificado a mano
+    con Playwright contra el compose real, los 5 popovers, antes y después
+    del fix.
+
 ## 9. Sexta vuelta — parte 2 (28/8/2026): rediseño del dashboard
 
 Ejecuta `docs/gestion/plan_dashboard_rediseno.md` — Anexo A y fases 1 a 7 de

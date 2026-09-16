@@ -58,13 +58,33 @@ document.addEventListener('DOMContentLoaded', () => {
 // `transform` inline gana siempre), que es lo que organisms/filter-panel
 // necesita en mobile para anclarse a los bordes del viewport en vez de a la
 // posición del botón que lo abre (15/9/2026).
+//
+// `popperConfig` como función (en vez de objeto plano): Bootstrap arma su
+// config final con un merge SUPERFICIAL (`{...defaultBsPopperConfig,
+// ...customConfig}`, ver node_modules/bootstrap/js/src/dropdown.js
+// `_getPopperConfig`) — un `modifiers` propio reemplaza entero al default
+// en vez de combinarse. Un objeto plano acá (como estaba hasta el
+// 16/9/2026) tira los modifiers por defecto de Bootstrap, `preventOverflow`
+// y `offset`, dejando CUALQUIER dropdown del panel sin clamp contra el
+// viewport. Con los 4 dropdowns angostos (campana, menú usuario, 3 puntos,
+// filtros) no se notaba porque casi siempre abren cerca de una esquina; se
+// hizo visible con molecules/color-swatch-field (Propiedades, grilla de 23
+// swatches, botón "Cambiar" cerca del borde derecho del formulario): el
+// popup se salía por la derecha y el documento ganaba ancho de scroll
+// (espacio vacío a la derecha, contenido corrido). Pasar una función
+// recibe `defaultBsPopperConfig` como argumento y permite conservar sus
+// modifiers en vez de pisarlos.
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach((el) => {
         new bootstrap.Dropdown(el, {
-            popperConfig: {
+            popperConfig: (defaultBsPopperConfig) => ({
+                ...defaultBsPopperConfig,
                 strategy: 'fixed',
-                modifiers: [{ name: 'computeStyles', options: { gpuAcceleration: false } }],
-            },
+                modifiers: [
+                    ...defaultBsPopperConfig.modifiers,
+                    { name: 'computeStyles', options: { gpuAcceleration: false } },
+                ],
+            }),
         });
     });
 });
