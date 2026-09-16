@@ -14,11 +14,10 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\ActualizarClienteRequest;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\CrearClienteRequest;
-use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
+use App\Dominios\Operaciones\Contratos\LecturaResumenOrdenesContrato;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
@@ -125,7 +124,7 @@ final class ClientesController
             ->with('estado', __('comercial.clientes.creado'));
     }
 
-    public function edit(Request $request, Cliente $cliente): View
+    public function edit(Request $request, Cliente $cliente, LecturaResumenOrdenesContrato $lecturaResumenOrdenes): View
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
 
@@ -137,7 +136,7 @@ final class ClientesController
             'tiposContacto' => TipoContactoCliente::cases(),
             'tiposPersona' => TipoPersonaCliente::cases(),
             'logoArchivo' => $this->logoArchivo($cliente),
-            'resumenRelacionado' => $this->resumenRelacionado($cliente, $request),
+            'resumenRelacionado' => $this->resumenRelacionado($cliente, $request, $lecturaResumenOrdenes),
         ]);
     }
 
@@ -244,10 +243,11 @@ final class ClientesController
      * de ser del cliente, es catálogo compartido sin `cliente_id`. En su
      * lugar entra "Aplicación" (Orden de Aplicación), que sí es del cliente
      * vía su contrato. Aplicación es lectura cross-módulo (ADR 0003 regla
-     * 3): `DB::table` directo sobre `ope_ordenes_aplicacion`, sin importar
-     * el modelo Eloquent `OrdenAplicacion` de `Operaciones` — mismo criterio
-     * que antes usaba Campañas. Contratos y Propiedades sí usan las
-     * relaciones Eloquent de `Cliente` (mismo módulo).
+     * 2): vía {@see LecturaResumenOrdenesContrato}, la frontera de
+     * `Operaciones` — nunca su tabla `ope_ordenes_aplicacion` ni su modelo
+     * Eloquent `OrdenAplicacion` ni su enum `EstadoOrdenAplicacion`
+     * cruzando a Comercial. Contratos y Propiedades sí usan las relaciones
+     * Eloquent de `Cliente` (mismo módulo).
      *
      * @return list<array{
      *     titulo: string,
@@ -260,7 +260,7 @@ final class ClientesController
      *     accion: array{label: string, href: string},
      * }>
      */
-    private function resumenRelacionado(Cliente $cliente, Request $request): array
+    private function resumenRelacionado(Cliente $cliente, Request $request, LecturaResumenOrdenesContrato $lecturaResumenOrdenes): array
     {
         $resumen = [];
 
@@ -326,16 +326,10 @@ final class ClientesController
             $ordenesVigentes = 0;
 
             if ($puedeVerOrdenes) {
-                $contratoIds = $cliente->contratos->pluck('id');
-                $totalOrdenes = DB::table('ope_ordenes_aplicacion')
-                    ->whereIn('contrato_id', $contratoIds)
-                    ->whereNull('deleted_at')
-                    ->count();
-                $ordenesVigentes = DB::table('ope_ordenes_aplicacion')
-                    ->whereIn('contrato_id', $contratoIds)
-                    ->whereNull('deleted_at')
-                    ->where('estado', EstadoOrdenAplicacion::Vigente->value)
-                    ->count();
+                $contratoIds = $cliente->contratos->pluck('id')->all();
+                $resumenOrdenes = $lecturaResumenOrdenes->resumen($contratoIds);
+                $totalOrdenes = $resumenOrdenes['total'];
+                $ordenesVigentes = $resumenOrdenes['vigentes'];
             }
 
             $resumen[] = [
