@@ -54,13 +54,16 @@
         :title="$esEdicion ? __('campania.campanias.titulo_editar') : __('campania.campanias.titulo_crear')"
         :subtitle="__('campania.campanias.subtitulo_form')"
     >
-        <x-slot:actions>
-            @if ($esEdicion)
-                <x-atoms.badge :variant="$campania->esActiva() ? 'success' : 'neutral'">
-                    {{ __($campania->esActiva() ? 'campania.campanias.actividad_activa' : 'campania.campanias.actividad_inactiva') }}
-                </x-atoms.badge>
-            @endif
+        @if ($esEdicion)
+            <x-slot:chip>
+                <span class="ag-campanias-form__estado-chip {{ $campania->esActiva() ? 'ag-campanias-form__estado-chip--activa' : 'ag-campanias-form__estado-chip--inactiva' }}">
+                    <x-atoms.icon name="{{ $campania->esActiva() ? 'check_circle' : 'radio_button_unchecked' }}" size="sm" />
+                    <span>{{ __($campania->esActiva() ? 'campania.campanias.actividad_activa' : 'campania.campanias.actividad_inactiva') }}</span>
+                </span>
+            </x-slot:chip>
+        @endif
 
+        <x-slot:actions>
             <x-atoms.button href="{{ route('panel.campanias.index') }}" variant="outline" icon="arrow_back">
                 {{ __('campania.campanias.volver') }}
             </x-atoms.button>

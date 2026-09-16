@@ -186,3 +186,36 @@
         position: static;
     }
 }
+
+/* Chip de estado junto al subtítulo (15/9/2026, pedido directo — "que se
+   note más"): vive en el slot `chip` de `organisms/page-header`, mismo
+   patrón que `.ag-dash__ventana-chip` de `pages/dashboard/_encabezado`
+   ("Viendo como X rol") — acá con el eje gris↔verde de
+   `color-estado-seleccion-vs-etiquetas` en vez del warning fijo del
+   dashboard, porque esto es un estado de dos valores, no una alerta. */
+.ag-campanias-form__estado-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-1) var(--ag-space-3);
+    border-radius: var(--ag-radius-pill);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-medium);
+    white-space: nowrap;
+}
+
+.ag-campanias-form__estado-chip--activa {
+    background: var(--ag-color-success-subtle);
+    border: 1px solid var(--ag-color-success-border);
+    color: var(--ag-color-success-strong);
+}
+
+.ag-campanias-form__estado-chip--inactiva {
+    background: var(--ag-color-neutral-subtle);
+    border: 1px solid var(--ag-color-border-card);
+    color: var(--ag-color-neutral-strong);
+}
+
+.ag-campanias-form__estado-chip .ag-icon {
+    color: inherit;
+}

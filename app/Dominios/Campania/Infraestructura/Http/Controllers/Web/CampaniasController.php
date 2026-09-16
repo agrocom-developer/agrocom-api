@@ -190,12 +190,16 @@ final class CampaniasController
      *
      * Color y acción de "ver detalle" (pedido directo del 15/9/2026, mismo
      * criterio que la tarjeta "Suscripción" de `panel/organizacion`): el
-     * balance y el conteo de contratos se pintan como `atoms/badge`
-     * (variant success/danger/neutral, nunca ámbar — regla fija de
-     * `docs/diseno/sistema_diseno_panel.md` §8), y cada tarjeta enlaza al
-     * listado real ya filtrable por `campania_id`
-     * (`GastosController`/`ContratosController` — `panel.facturas.index` NO
-     * tiene ese filtro todavía, así que "Recaudado" queda sin acción propia).
+     * balance y el conteo de contratos van con `variant` (success/danger/
+     * neutral, nunca ámbar — regla fija de `sistema_diseno_panel.md` §8)
+     * SIN `badge` — texto plano coloreado (`molecules/summary-card`,
+     * corregido el mismo día), no la píldora: un badge tiene padding propio
+     * que corre el dígito a la izquierda del resto de la columna de cifras
+     * de la tarjeta, aunque la píldora en sí calce con el borde derecho
+     * (bug real, visto en el panel andando). Cada tarjeta enlaza al listado
+     * real ya filtrable por `campania_id` (`GastosController`/
+     * `ContratosController` — `panel.facturas.index` NO tiene ese filtro
+     * todavía, así que "Recaudado" queda sin acción propia).
      *
      * @return list<array{titulo: string, items: list<array{label: string, value: string, mono?: bool, badge?: bool, variant?: string}>, accion: array{label: string, href: string}}>
      */
@@ -240,7 +244,7 @@ final class CampaniasController
                     [
                         'label' => __('campania.campanias.aside_balance'),
                         'value' => $this->aMoneda($balance),
-                        'badge' => true,
+                        'mono' => true,
                         'variant' => $balance->isNegative() ? 'danger' : ($balance->isZero() ? 'neutral' : 'success'),
                     ],
                 ],
@@ -255,7 +259,7 @@ final class CampaniasController
                     [
                         'label' => __('campania.campanias.aside_contratos'),
                         'value' => (string) $totalContratos,
-                        'badge' => true,
+                        'mono' => true,
                         'variant' => $totalContratos > 0 ? 'success' : 'neutral',
                     ],
                     ['label' => __('campania.campanias.aside_hectareas_contratadas'), 'value' => $this->aMoneda($hectareasContratadas), 'mono' => true],
