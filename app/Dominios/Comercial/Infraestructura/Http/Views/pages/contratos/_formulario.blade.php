@@ -13,9 +13,10 @@
     - $clientesDisponibles (Collection<int, string>): id => razón social,
       clientes activos (ver ContratosController::clientesActivos()) — la
       vista no conoce el modelo Cliente.
-    - $campaniasDisponibles (Collection<int, object{id,codigo}>): TODAS las
-      campañas activas del catálogo (ADR 0015, corregido el 15/9/2026: la
-      campaña es compartida, no hay que filtrarla por cliente).
+    - $campaniasDisponibles (Collection<int, string>): id => código, TODAS
+      las campañas del catálogo (ADR 0015, corregido el 15/9/2026: la
+      campaña es compartida, no hay que filtrarla por cliente) — ver
+      ContratosController::campaniasDisponibles().
     - $clienteIdPreseleccionado (int|null, tarea "resumen de cliente"): solo
       en alta, desde `?cliente_id=` (ver ContratosController::create()) — el
       atajo "Nuevo contrato" del aside de `panel.clientes.edit` llega acá con
@@ -45,10 +46,21 @@
     aplicación"/"Ventanas de aplicación" a nivel de contrato completo — ese
     horario se retiró junto con `com_contrato_ventanas` (16/9/2026): vive
     por lote, dentro de esta misma sección. Propiedad/Lotes es un multi-select
-    de propiedades del cliente con pills (podés elegir varias a la vez, cada
-    una despliega su propio panel de checkboxes de lotes, todos visibles en
-    simultáneo — no hay que "confirmar y repetir" propiedad por propiedad) que
-    arma la lista apilada final de lotes del contrato.
+    de propiedades del cliente con pills (podés elegir varias a la vez).
+
+    Selección de lotes vía modal (rediseño sept/2026, reemplaza al panel
+    lateral con checkboxes siempre visibles): elegir una propiedad del select
+    — o clickear una pill ya agregada — abre el modal único
+    (`#ag-modal-lotes-propiedad`, partial propio: `_modal-lotes.blade.php`)
+    con TODOS los lotes de esa propiedad, tildados los que ya están en el
+    contrato. Guarda la selección en la tabla apilada de abajo (partial
+    propio: `_lotes-tabla.blade.php`) recién al apretar "Guardar selección"
+    del modal — cerrarlo por la X, Cancelar o el fondo descarta los cambios.
+    El ícono de cerrar de la pill saca la propiedad ENTERA de la tabla;
+    clickear el cuerpo de la pill reabre el modal para seguir editando esa
+    propiedad. Lógica en `abrirModalLotes`/`guardarSeleccionModal` de
+    `resources/js/pages/contratos-form.js`, sin cambios por esta separación
+    en archivos — los `data-ag-*` que ese script busca son los mismos.
 --}}
 @php
     $esEdicion = $contrato !== null;
@@ -110,32 +122,26 @@
         </x-slot:actions>
     </x-organisms.page-header>
 
+    <div class="ag-contratos-form__layout">
+        <div class="ag-contratos-form__main">
     {{-- Sección 1: Datos del contrato (8 campos, sin tocar) --}}
     <x-molecules.form-section
         :title="__('comercial.contratos.seccion_datos')"
         :count="__('comercial.contratos.campos_contador', ['cantidad' => 8])"
     >
-        <div class="ag-field-label-with-action">
-            <label for="cliente_id" class="ag-field-label-with-action__label">
-                {{ __('comercial.contratos.campo_cliente') }}
-                <span class="ag-select__required" aria-hidden="true">*</span>
-            </label>
-            <a href="{{ route('panel.clientes.create', ['volver_a' => route('panel.contratos.create')]) }}"
-               class="ag-field-label-with-action__link"
-               data-ag-link-accent>
-                {{ __('comercial.clientes.nuevo') }}
-            </a>
-        </div>
-
         <x-atoms.select
             name="cliente_id"
             id="cliente_id"
-            :label="null"
+            label="{{ __('comercial.contratos.campo_cliente') }}"
             placeholder="{{ __('comercial.contratos.campo_cliente_placeholder') }}"
             :options="$clientesDisponibles"
             value="{{ $clienteId }}"
             required
             error="{{ $errors->first('cliente_id') }}"
+            action-icon="add"
+            action-href="{{ route('panel.clientes.create', ['volver_a' => route('panel.contratos.create')]) }}"
+            action-label="{{ __('comercial.contratos.crear_cliente') }}"
+            action-text="{{ __('comercial.contratos.crear_cliente_corto') }}"
         />
 
 
@@ -143,7 +149,7 @@
             name="campania_id"
             label="{{ __('comercial.contratos.campo_campania') }}"
             placeholder="{{ __('comercial.contratos.campo_campania_placeholder') }}"
-            :options="$campaniasDisponibles->pluck('codigo', 'id')"
+            :options="$campaniasDisponibles"
             value="{{ $campaniaId }}"
             required
             help="{{ __('comercial.contratos.campo_campania_ayuda') }}"
@@ -216,23 +222,25 @@
         :title="__('comercial.contratos.seccion_logistica')"
         :count="__('comercial.contratos.campos_contador', ['cantidad' => 4])"
     >
-        <x-atoms.switch
-            name="brinda_alimentacion"
-            label="{{ __('comercial.contratos.campo_brinda_alimentacion') }}"
-            :checked="$brindaAlimentacion"
-        />
+        <div class="ag-form-section__field--full ag-contratos-form__logistica-switches">
+            <x-atoms.switch
+                name="brinda_alimentacion"
+                label="{{ __('comercial.contratos.campo_brinda_alimentacion') }}"
+                :checked="$brindaAlimentacion"
+            />
 
-        <x-atoms.switch
-            name="brinda_hospedaje"
-            label="{{ __('comercial.contratos.campo_brinda_hospedaje') }}"
-            :checked="$brindaHospedaje"
-        />
+            <x-atoms.switch
+                name="brinda_hospedaje"
+                label="{{ __('comercial.contratos.campo_brinda_hospedaje') }}"
+                :checked="$brindaHospedaje"
+            />
 
-        <x-atoms.switch
-            name="brinda_combustible"
-            label="{{ __('comercial.contratos.campo_brinda_combustible') }}"
-            :checked="$brindaCombustible"
-        />
+            <x-atoms.switch
+                name="brinda_combustible"
+                label="{{ __('comercial.contratos.campo_brinda_combustible') }}"
+                :checked="$brindaCombustible"
+            />
+        </div>
 
         <x-atoms.textarea
             class="ag-form-section__field--full"
@@ -256,99 +264,50 @@
         </script>
 
         {{-- Multi-select de Propiedades (dependiente de Cliente, deshabilitado si no
-             hay cliente elegido). Muestra propiedades del cliente actual como pills. --}}
-        <div class="ag-field-label-with-action">
-            <label for="propiedades_multi" class="ag-field-label-with-action__label">
-                {{ __('comercial.contratos.campo_propiedad') }}
-            </label>
-            <a href="{{ route('panel.propiedades.create') }}"
-               class="ag-field-label-with-action__link"
-               data-ag-link-accent
-               id="link-crear-propiedad"
-               hidden>
-                {{ __('comercial.contratos.crear_propiedad') }}
-            </a>
-        </div>
-
-        {{-- Contenedor de pills de propiedades seleccionadas --}}
-        <div class="ag-contratos-form__propiedades-pills" data-ag-propiedades-pills>
-        </div>
-
-        {{-- Select oculto que dispara cambios al agregar/quitar propiedades --}}
+             hay cliente elegido). Elegir una opción agrega su pill Y abre de una
+             el modal de lotes de esa propiedad (ver contratos-form.js,
+             `abrirModalLotes`) — no hace falta un paso aparte para ver los lotes. --}}
         <x-atoms.select
             name="propiedades_temp"
             id="propiedades_multi"
-            :label="null"
+            label="{{ __('comercial.contratos.campo_propiedad') }}"
             placeholder="{{ __('comercial.contratos.campo_propiedad_placeholder') }}"
             help="{{ __('comercial.contratos.campo_propiedad_ayuda') }}"
             :options="[]"
             data-ag-propiedades-select
             disabled
+            action-icon="add"
+            action-href="{{ route('panel.propiedades.create') }}"
+            action-label="{{ __('comercial.contratos.crear_propiedad') }}"
+            action-text="{{ __('comercial.contratos.crear_propiedad_corto') }}"
+            action-hidden
         />
 
-        {{-- Paneles de lotes agrupados por propiedad seleccionada. La URL de
-             alta rápida de lote viaja en un data-attribute (no en un link
-             estático): el panel es 100% generado por JS por cada propiedad
-             elegida, sin un único elemento fijo del que copiarla. --}}
-        <div
-            class="ag-contratos-form__lotes-panels"
-            data-ag-lotes-panels
-            data-url-crear-lote="{{ route('panel.lotes.create') }}"
-            data-texto-crear-lote="{{ __('comercial.contratos.crear_lote') }}"
-            data-texto-sin-lotes="{{ __('comercial.contratos.lotes_sin_datos') }}"
-        >
-        </div>
-
-        {{-- Lista apilada de lotes ya agregados (agrupada por propiedad). --}}
-        <div data-ag-lotes-lista-apilada class="ag-form-section__field--full ag-contratos-form__lotes-list">
-            @if ($errors->has('lotes'))
-                <p class="ag-input__error" role="alert">{{ $errors->first('lotes') }}</p>
-            @endif
-
-            <div data-ag-lotes-agrupados>
-                @php $indiceGlobal = 0; @endphp
-                @foreach ($lotesIniciales as $propiedadId => $grupo)
-                    <div data-ag-lote-grupo="propiedad-{{ $propiedadId }}" class="ag-contratos-form__lote-group">
-                        <h4 class="ag-contratos-form__lote-group-title">
-                            {{ $grupo['propiedad_nombre'] }}
-                        </h4>
-                        <div class="ag-contratos-form__lote-group-items">
-                            @foreach ($grupo['lotes'] as $lote)
-                                <div class="ag-contratos-form__lote-row" data-lote-id="{{ $lote['lote_id'] }}">
-                                    <div class="ag-contratos-form__lote-info">
-                                        <strong class="ag-contratos-form__lote-code">{{ $lote['codigo'] }}</strong>
-                                        <span class="ag-contratos-form__lote-hectareas">
-                                            {{ number_format((float) $lote['hectareas'], 2, ',', '.') }} ha
-                                        </span>
-                                    </div>
-                                    <div class="ag-contratos-form__lote-horario" data-ag-lote-horario="{{ $lote['lote_id'] }}">
-                                        <input type="hidden" name="lotes[{{ $indiceGlobal }}][lote_id]" value="{{ $lote['lote_id'] }}">
-                                        <input type="hidden" name="lotes[{{ $indiceGlobal }}][hora_inicio]" value="{{ $lote['hora_inicio'] ?? '' }}" data-ag-hora-inicio>
-                                        <input type="hidden" name="lotes[{{ $indiceGlobal }}][hora_fin]" value="{{ $lote['hora_fin'] ?? '' }}" data-ag-hora-fin>
-                                        <button type="button" class="ag-btn ag-btn--text ag-btn--sm" data-ag-lote-personalizar-horario="{{ $lote['lote_id'] }}">
-                                            <span class="material-icons">schedule</span>
-                                            {{ __('comercial.contratos.lote_personalizar_horario') }}
-                                        </button>
-                                    </div>
-                                    <x-atoms.button
-                                        type="button"
-                                        variant="text"
-                                        size="sm"
-                                        icon="delete"
-                                        data-ag-lote-quitar
-                                        data-lote-id="{{ $lote['lote_id'] }}"
-                                    >
-                                        {{ __('comercial.contratos.lotes_quitar') }}
-                                    </x-atoms.button>
-                                </div>
-                                @php $indiceGlobal++; @endphp
-                            @endforeach
-                        </div>
-                    </div>
-                @endforeach
+        {{-- Pills de propiedades ya elegidas — clickear el cuerpo reabre el
+             modal de sus lotes; el ícono de cerrar saca la propiedad ENTERA
+             del contrato (y con ella, todos sus lotes de la lista apilada).
+             El "label" fantasma de arriba (mismo `ag-select__label`, oculto)
+             empuja las pills la misma altura que el label real del select
+             empuja su control — así quedan alineadas con el INPUT, no con
+             el label, sin numeritos mágicos de margen. --}}
+        <div class="ag-contratos-form__propiedades-pills-wrap">
+            <span class="ag-select__label" aria-hidden="true">&nbsp;</span>
+            <div
+                class="ag-contratos-form__propiedades-pills"
+                data-ag-propiedades-pills
+                data-texto-quitar="{{ __('comercial.contratos.lotes_quitar') }}"
+            >
             </div>
         </div>
+
+        {{-- Lista apilada de lotes ya agregados (agrupada por propiedad) —
+             partial propio, ver `_lotes-tabla.blade.php`. --}}
+        @include('comercial::pages.contratos._lotes-tabla', ['lotesIniciales' => $lotesIniciales])
     </x-molecules.form-section>
+
+    {{-- Modal único de selección de lotes por propiedad — partial propio,
+         ver `_modal-lotes.blade.php`. --}}
+    @include('comercial::pages.contratos._modal-lotes')
 
     <x-organisms.form-actions-bar :status="__('comercial.contratos.estado_form')">
         <x-slot:actions>
@@ -360,4 +319,35 @@
             </x-atoms.button>
         </x-slot:actions>
     </x-organisms.form-actions-bar>
+        </div>
+
+        @if ($esEdicion && $resumenContrato !== null)
+            {{-- Resumen (tarea "resumen de contrato"): sin datos de
+                 aplicación todavía, empty-state con atajo a crear una orden
+                 (mismo patrón que el aside de clientes); con datos, dos
+                 tarjetas de solo lectura (facturación / aplicación) armadas
+                 100% server-side en ContratosController::resumenContrato(). --}}
+            <aside class="ag-contratos-form__aside">
+                @if ($resumenContrato['tieneDatos'])
+                    @foreach ($resumenContrato['tarjetas'] as $tarjeta)
+                        <x-molecules.summary-card :title="$tarjeta['titulo']" :items="$tarjeta['items']" />
+                    @endforeach
+                @else
+                    <x-molecules.empty-state
+                        :icon="$resumenContrato['icono']"
+                        :title="$resumenContrato['titulo']"
+                        :detail="$resumenContrato['detalle']"
+                    >
+                        @if ($resumenContrato['mostrarAccion'])
+                            <x-slot:action>
+                                <x-atoms.button href="{{ $resumenContrato['accion']['href'] }}" variant="outline" icon="add">
+                                    {{ $resumenContrato['accion']['label'] }}
+                                </x-atoms.button>
+                            </x-slot:action>
+                        @endif
+                    </x-molecules.empty-state>
+                @endif
+            </aside>
+        @endif
+    </div>
 </form>
