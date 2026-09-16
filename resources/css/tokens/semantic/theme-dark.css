@@ -286,6 +286,11 @@
        borde -primary). Sombra neutra, mismo vocabulario que --ag-shadow-*. */
     --ag-shadow-selected: 0 4px 14px color-mix(in srgb, var(--ag-color-gray-1000) 40%, transparent);
 
+    /* Ver el comentario extenso en theme-light.css: overlays flotantes sobre
+       la imagen satelital del editor de mapa de propiedad. Clara y no negra
+       — una sombra oscura sobre un mapa ya oscuro no se nota. */
+    --ag-shadow-overlay-mapa: 0 2px 10px color-mix(in srgb, var(--ag-color-gray-0) 25%, transparent);
+
     /* Ídem theme-light.css: la interfaz es siempre IBM Plex Sans. */
     --bs-body-font-family: var(--ag-font-family-base);
     --bs-body-bg: var(--ag-color-bg);
