@@ -70,6 +70,12 @@
         </x-slot:actions>
     </x-organisms.page-header>
 
+    @if (session('estado'))
+        <x-molecules.alert-strip variant="success" icon="check_circle">
+            {{ session('estado') }}
+        </x-molecules.alert-strip>
+    @endif
+
     <div class="ag-campanias-form__layout">
         <div class="ag-campanias-form__main">
     <x-molecules.form-section

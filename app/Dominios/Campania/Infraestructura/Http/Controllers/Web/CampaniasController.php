@@ -80,7 +80,7 @@ final class CampaniasController
         $datos = $request->validated();
 
         try {
-            $crearCampania->ejecutar(
+            $campania = $crearCampania->ejecutar(
                 (string) $datos['codigo'],
                 $this->cadenaONull($datos['nombre'] ?? null),
                 (string) $datos['fecha_inicio'],
@@ -94,8 +94,12 @@ final class CampaniasController
                 ->withErrors(['codigo' => $excepcion->getMessage()]);
         }
 
+        // Se queda en la ficha de edición de la campaña recién creada (no
+        // vuelve al listado), mismo criterio que ClientesController::store():
+        // ahí vive el resumen financiero/de trabajo (resumenCampania()), y
+        // volver al listado para entrar de nuevo es un clic de más siempre.
         return redirect()
-            ->route('panel.campanias.index')
+            ->route('panel.campanias.edit', $campania)
             ->with('estado', __('campania.campanias.creado'));
     }
 
@@ -132,8 +136,12 @@ final class CampaniasController
                 ->withErrors(['codigo' => $excepcion->getMessage()]);
         }
 
+        // Se queda en la propia ficha de edición (no vuelve al listado),
+        // mismo criterio que ClientesController::update(): ahí vive el
+        // resumen financiero/de trabajo, y de ahí es más común seguir
+        // editando o encadenar una acción relacionada que volver al listado.
         return redirect()
-            ->route('panel.campanias.index')
+            ->route('panel.campanias.edit', $campania)
             ->with('estado', __('campania.campanias.actualizado'));
     }
 
