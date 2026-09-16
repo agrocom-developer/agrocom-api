@@ -15,6 +15,7 @@ return [
         'creado' => 'El cliente se dio de alta correctamente.',
         'actualizado' => 'Los datos del cliente se actualizaron correctamente.',
         'eliminado' => 'El cliente se dio de baja correctamente.',
+        'volver_a_formulario_origen' => 'Volver al formulario anterior',
 
         // Listado
         'titulo' => 'Clientes',
@@ -130,6 +131,7 @@ return [
         'creado' => 'La propiedad se dio de alta correctamente.',
         'actualizado' => 'Los datos de la propiedad se actualizaron correctamente.',
         'eliminado' => 'La propiedad se dio de baja correctamente.',
+        'volver_a_formulario_origen' => 'Volver al formulario anterior',
 
         // Listado
         'titulo' => 'Propiedades',
@@ -250,12 +252,13 @@ return [
         'campo_fecha_fin' => 'Fecha de fin',
         'campo_fecha_fin_ayuda' => 'Opcional. Si no se define, el contrato queda abierto.',
 
-        // Ventanas de aplicación (HU-47, tarea 70): "Día completo" convive con
-        // las filas cargadas, nunca un booleano en la base (ADR 0015 punto 5)
-        // — el interruptor es puramente de presentación, arranca encendido
-        // sin ventanas cargadas y las filas se muestran/ocultan según su
-        // estado (resources/js/pages/contratos-form.js).
-        'seccion_ventanas' => 'Ventanas de aplicación',
+        // Orden de aplicación (antes "Ventanas de aplicación", HU-23 tarea 34,
+        // renombrada en tarea "contratos-lotes"). "Día completo" convive con las
+        // filas cargadas, nunca un booleano en la base (ADR 0015 punto 5) — el
+        // interruptor es puramente de presentación, arranca encendido sin ventanas
+        // cargadas y las filas se muestran/ocultan según su estado
+        // (resources/js/pages/contratos-form.js).
+        'seccion_ventanas' => 'Orden de aplicación',
         'ventana_dia_completo' => 'Día completo',
         'ventana_dia_completo_ayuda' => 'Sin restricción de horario. Apagalo para cargar franjas horarias.',
         'ventana_agregar' => 'Agregar ventana',
@@ -276,6 +279,22 @@ return [
         'campo_observaciones_logistica_placeholder' => 'Detalles adicionales sobre la logística cubierta',
 
         'estado_form' => 'Los cambios se guardan al confirmar.',
+
+        // Sección de propiedad y lotes (tarea "contratos-lotes"): selección
+        // maestro-detalle de propiedades y sus lotes de un cliente.
+        'seccion_lotes' => 'Propiedad y lotes',
+        'lotes_contador' => ':cantidad lotes',
+        'campo_propiedad' => 'Propiedad',
+        'campo_propiedad_placeholder' => 'Seleccioná una propiedad',
+        'campo_propiedad_ayuda' => 'Del cliente ya elegido arriba. Cargá una si no figura en la lista.',
+        'campo_lote_checkbox' => 'Seleccionar todos',
+        'lote_seleccionar_todos' => 'Seleccionar todos',
+        'lote_deseleccionar_todos' => 'Deseleccionar todos',
+        'lotes_sin_datos' => 'Esta propiedad todavía no tiene lotes cargados.',
+        'lotes_agregar' => 'Agregar lotes',
+        'lotes_quitar' => 'Quitar',
+        'crear_propiedad' => 'Crear propiedad',
+        'crear_lote' => 'Crear lote',
 
         // Errores de validación
         'error_cliente_requerido' => 'Seleccioná un cliente.',
@@ -299,6 +318,7 @@ return [
         'creado' => 'El lote se dio de alta correctamente.',
         'actualizado' => 'Los datos del lote se actualizaron correctamente.',
         'eliminado' => 'El lote se dio de baja correctamente.',
+        'volver_a_formulario_origen' => 'Volver al formulario anterior',
 
         // Listado
         'titulo' => 'Lotes',

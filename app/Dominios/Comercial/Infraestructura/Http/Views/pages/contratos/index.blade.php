@@ -74,6 +74,21 @@
 
             @if ($hayFiltrosActivos || $contratos->isNotEmpty())
                 <div class="ag-table-toolbar">
+                    <x-organisms.filter-panel
+                        action="{{ route('panel.contratos.index') }}"
+                        :active-count="$filtros['campania_id'] !== null && $filtros['campania_id'] !== '' ? 1 : 0"
+                    >
+                        <input type="hidden" name="q" value="{{ $filtros['q'] }}">
+                        <x-atoms.select
+                            name="campania_id"
+                            id="filtro-campania"
+                            label="{{ __('comercial.contratos.filtro_campania') }}"
+                            :options="$campaniasDisponibles"
+                            :value="$filtros['campania_id']"
+                            placeholder="{{ __('comercial.contratos.filtro_campania_placeholder') }}"
+                        />
+                    </x-organisms.filter-panel>
+
                     <x-molecules.table-search
                         action="{{ route('panel.contratos.index') }}"
                         :value="$filtros['q']"
@@ -81,32 +96,6 @@
                         :clear-label="__('ui.tabla.buscador_limpiar')"
                     />
                 </div>
-            @endif
-
-            @if ($hayFiltrosActivos || $contratos->isNotEmpty())
-                <form method="GET" action="{{ route('panel.contratos.index') }}" class="ag-filtros ag-contratos__filtros">
-                    <input type="hidden" name="q" value="{{ $filtros['q'] }}">
-                <x-atoms.select
-                    name="campania_id"
-                    id="filtro-campania"
-                    label="{{ __('comercial.contratos.filtro_campania') }}"
-                    :options="$campaniasDisponibles"
-                    :value="$filtros['campania_id']"
-                    placeholder="{{ __('comercial.contratos.filtro_campania_placeholder') }}"
-                />
-
-                <div class="ag-filtros__acciones ag-contratos__filtros-acciones">
-                    <x-atoms.button type="submit" variant="primary" size="md" icon="search">
-                        {{ __('comercial.contratos.filtrar') }}
-                    </x-atoms.button>
-
-                    @if ($hayFiltrosActivos)
-                        <x-atoms.button href="{{ route('panel.contratos.index') }}" variant="text" size="md">
-                            {{ __('comercial.contratos.limpiar_filtro') }}
-                        </x-atoms.button>
-                    @endif
-                </div>
-                </form>
             @endif
 
             @if ($contratos->isEmpty())

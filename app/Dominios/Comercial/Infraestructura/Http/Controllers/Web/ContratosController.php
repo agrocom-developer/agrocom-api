@@ -15,6 +15,7 @@ use App\Dominios\Comercial\Dominio\Excepciones\TransicionContratoNoPermitida;
 use App\Dominios\Comercial\Dominio\Excepciones\VentanasContratoSolapadas;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\ActualizarContratoRequest;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\CambiarEstadoContratoRequest;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\CrearContratoRequest;
@@ -93,6 +94,7 @@ final class ContratosController
             // "resumen de cliente"): con ?cliente_id=, el formulario arranca
             // con ese cliente ya elegido — ver _formulario.blade.php.
             'clienteIdPreseleccionado' => $request->integer('cliente_id') ?: null,
+            'propiedadesYLotesPorCliente' => $this->propiedadesYLotesPorCliente(),
         ]);
     }
 
@@ -149,6 +151,7 @@ final class ContratosController
             'contrato' => $contrato->load('ventanas', 'lotes.lote'),
             'clientesDisponibles' => $this->clientesActivos(),
             'campaniasDisponibles' => $this->campaniasParaFormulario(),
+            'propiedadesYLotesPorCliente' => $this->propiedadesYLotesPorCliente(),
         ]);
     }
 
@@ -328,5 +331,42 @@ final class ContratosController
     private function normalizarLoteIds(array $loteIdsCrudos): array
     {
         return array_map(fn (mixed $loteId): int => (int) $loteId, $loteIdsCrudos);
+    }
+
+    /**
+     * Propiedades y sus lotes, agrupados por cliente, para precargar en el
+     * formulario de contrato (tarea "contratos-lotes", estrategia 'a': datos
+     * embebidos en el HTML). Estructura JSON embebida en un data-attribute:
+     * `{ [cliente_id]: { [propiedad_id]: { nombre, lotes: [{ id, codigo, hectareas }] } } }`.
+     *
+     * @return array<int, array<int, array{nombre: string, lotes: list<array{id: int, codigo: string, hectareas: string}>}>>
+     */
+    private function propiedadesYLotesPorCliente(): array
+    {
+        $propiedades = Propiedad::query()
+            ->with(['lotes' => fn ($query) => $query->whereNull('deleted_at')])
+            ->whereNull('deleted_at')
+            ->get(['id', 'cliente_id', 'nombre']);
+
+        $result = [];
+        foreach ($propiedades as $propiedad) {
+            $clienteId = (int) $propiedad->cliente_id;
+            $propiedadId = (int) $propiedad->id;
+
+            if (! isset($result[$clienteId])) {
+                $result[$clienteId] = [];
+            }
+
+            $result[$clienteId][$propiedadId] = [
+                'nombre' => $propiedad->nombre,
+                'lotes' => $propiedad->lotes->map(fn ($lote) => [
+                    'id' => (int) $lote->id,
+                    'codigo' => $lote->codigo,
+                    'hectareas' => (string) $lote->hectareas,
+                ])->values()->all(),
+            ];
+        }
+
+        return $result;
     }
 }

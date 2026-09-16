@@ -81,6 +81,12 @@
     @if ($esEdicion)
         @method('PUT')
     @endif
+    {{-- Alta rápida desde otro formulario (tarea "contratos-lotes", 16/9/2026):
+         solo hace falta reenviarlo en el alta — en edición ya llega vía
+         sesión (`ClientesController::edit()`), no como campo del form. --}}
+    @if (! $esEdicion && ! empty($volverA))
+        <input type="hidden" name="volver_a" value="{{ $volverA }}">
+    @endif
 
     <x-organisms.page-header
         :title="$esEdicion ? __('comercial.clientes.titulo_editar') : __('comercial.clientes.titulo_crear')"
@@ -235,6 +241,11 @@
 
             <x-organisms.form-actions-bar :status="__('comercial.clientes.estado_form')">
                 <x-slot:actions>
+                    @if ($esEdicion && ! empty($volverA))
+                        <x-atoms.button href="{{ $volverA }}{{ str_contains($volverA, '?') ? '&' : '?' }}cliente_id={{ $cliente->id }}" variant="outline" icon="arrow_back">
+                            {{ __('comercial.clientes.volver_a_formulario_origen') }}
+                        </x-atoms.button>
+                    @endif
                     <x-atoms.button href="{{ route('panel.clientes.index') }}" variant="outline">
                         {{ __('ui.action.cancel') }}
                     </x-atoms.button>
