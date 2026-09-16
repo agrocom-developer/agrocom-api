@@ -211,11 +211,18 @@
                 @foreach ($resumenPropiedad ?? [] as $resumen)
                     @if ($resumen['tieneDatos'])
                         <x-molecules.summary-card :title="$resumen['titulo']" :items="$resumen['items']">
-                            @if ($resumen['mostrarAccion'])
+                            @if ($resumen['mostrarAccion'] || ($resumen['mostrarAccionSecundaria'] ?? false))
                                 <x-slot:action>
-                                    <x-atoms.button href="{{ $resumen['accion']['href'] }}" variant="outline" icon="arrow_forward" block>
-                                        {{ $resumen['accion']['label'] }}
-                                    </x-atoms.button>
+                                    @if ($resumen['mostrarAccion'])
+                                        <x-atoms.button href="{{ $resumen['accion']['href'] }}" variant="outline" icon="arrow_forward" block>
+                                            {{ $resumen['accion']['label'] }}
+                                        </x-atoms.button>
+                                    @endif
+                                    @if ($resumen['mostrarAccionSecundaria'] ?? false)
+                                        <x-atoms.button href="{{ $resumen['accionSecundaria']['href'] }}" variant="text" icon="add" block>
+                                            {{ $resumen['accionSecundaria']['label'] }}
+                                        </x-atoms.button>
+                                    @endif
                                 </x-slot:action>
                             @endif
                         </x-molecules.summary-card>
@@ -225,11 +232,18 @@
                             :title="$resumen['vacioTitulo']"
                             :detail="$resumen['vacioDetalle']"
                         >
-                            @if ($resumen['mostrarAccion'])
+                            @if ($resumen['mostrarAccion'] || ($resumen['mostrarAccionSecundaria'] ?? false))
                                 <x-slot:action>
-                                    <x-atoms.button href="{{ $resumen['accion']['href'] }}" variant="outline" icon="add">
-                                        {{ $resumen['accion']['label'] }}
-                                    </x-atoms.button>
+                                    @if ($resumen['mostrarAccion'])
+                                        <x-atoms.button href="{{ $resumen['accion']['href'] }}" variant="outline" icon="add">
+                                            {{ $resumen['accion']['label'] }}
+                                        </x-atoms.button>
+                                    @endif
+                                    @if ($resumen['mostrarAccionSecundaria'] ?? false)
+                                        <x-atoms.button href="{{ $resumen['accionSecundaria']['href'] }}" variant="text" icon="add">
+                                            {{ $resumen['accionSecundaria']['label'] }}
+                                        </x-atoms.button>
+                                    @endif
                                 </x-slot:action>
                             @endif
                         </x-molecules.empty-state>

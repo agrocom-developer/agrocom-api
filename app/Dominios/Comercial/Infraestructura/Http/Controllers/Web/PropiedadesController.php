@@ -331,6 +331,17 @@ final class PropiedadesController
                     'label' => __('comercial.propiedades.aside_lotes_accion'),
                     'href' => route('panel.lotes.index', ['propiedad_id' => $propiedad->id]),
                 ],
+                // "Crear Lotes" masivo (HU-72 reconstruida, 16/9/2026): un
+                // botón, cuántos + cultivo/campaña opcionales — ver
+                // CrearLotesMasivo. Vale con o sin lotes todavía (es
+                // justamente la vía rápida para la primera tanda), así que
+                // se ofrece en las dos variantes del aside (con datos y
+                // empty-state).
+                'mostrarAccionSecundaria' => $puedeCrearLotes,
+                'accionSecundaria' => [
+                    'label' => __('comercial.propiedades.aside_lotes_generar'),
+                    'href' => route('panel.propiedades.lotes.generar', $propiedad),
+                ],
             ];
         }
 

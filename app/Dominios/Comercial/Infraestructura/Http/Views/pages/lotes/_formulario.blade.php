@@ -121,11 +121,26 @@
         />
     </x-molecules.form-section>
 
-    <x-molecules.form-section :title="__('comercial.lotes.seccion_lote')">
-        <div class="ag-form-section__field--full">
-            @include('comercial::pages.lotes._lote-fila', ['lote' => $datosLote, 'prefijo' => 'lote', 'mostrarQuitar' => false])
-        </div>
-    </x-molecules.form-section>
+    {{-- `data-ag-lote-ficha` envuelve las DOS secciones (campos + mapa,
+         16/9/2026): `organisms/lote-mapa-editor.js` sube hasta acá con
+         `.closest()` para encontrar el input de hectáreas de la OTRA
+         sección al hacer "usar superficie" — antes estaba todo dentro del
+         mismo `[data-ag-lote-fila]`, ahora el mapa vive en su propia
+         sección hermana. --}}
+    <div class="ag-lotes-form__ficha" data-ag-lote-ficha>
+        <x-molecules.form-section :title="__('comercial.lotes.seccion_lote')">
+            <div class="ag-form-section__field--full">
+                @include('comercial::pages.lotes._lote-fila', ['lote' => $datosLote, 'prefijo' => 'lote', 'mostrarQuitar' => false])
+            </div>
+        </x-molecules.form-section>
+
+        {{-- Sección propia (16/9/2026, pedido directo): el mapa no es un
+             campo más de "Datos del lote", es su propio bloque, mismo
+             criterio que la sección de mapa de `propiedades/mapa.blade.php`. --}}
+        <x-molecules.form-section :title="__('comercial.lotes.seccion_mapa')">
+            @include('comercial::pages.lotes._lote-mapa', ['lote' => $datosLote, 'prefijo' => 'lote'])
+        </x-molecules.form-section>
+    </div>
 
     <x-organisms.form-actions-bar :status="__('comercial.lotes.estado_form')">
         <x-slot:actions>

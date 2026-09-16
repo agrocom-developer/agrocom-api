@@ -209,6 +209,7 @@ return [
         'aside_lotes_vacio_titulo' => 'Sin lotes todavía',
         'aside_lotes_vacio_detalle' => 'Los lotes de esta propiedad se dan de alta desde su propia ficha.',
         'aside_lotes_accion' => 'Ver lotes',
+        'aside_lotes_generar' => 'Crear lotes',
 
         'aside_siembra_titulo' => 'Siembra actual',
         'aside_siembra_campania' => 'Campaña',
@@ -463,6 +464,7 @@ return [
         'campo_propiedad' => 'Propiedad',
         'campo_propiedad_placeholder' => 'Seleccioná una propiedad',
         'seccion_lote' => 'Datos del lote',
+        'seccion_mapa' => 'Mapa',
 
         'lote_agregar' => 'Agregar lote',
         'lote_quitar' => 'Quitar',

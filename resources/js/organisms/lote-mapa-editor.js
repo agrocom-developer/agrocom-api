@@ -289,8 +289,11 @@ function referenciasDom(contenedor) {
  * se compara, nunca se pisa solo). Provider-agnóstico: solo lee/escribe DOM.
  */
 function crearMedidor({ contenedor, medida, medidaTexto }) {
+    // `[data-ag-lote-ficha]` (16/9/2026), no `[data-ag-lote-fila]`: el mapa
+    // vive en su propia sección "Mapa", hermana de "Datos del lote" — hay
+    // que subir un nivel más para encontrar el input de hectáreas.
     const leerHectareasDeclaradas = () => {
-        const campo = contenedor.closest('[data-ag-lote-fila]')?.querySelector('input[name$="[hectareas]"]');
+        const campo = contenedor.closest('[data-ag-lote-ficha]')?.querySelector('input[name$="[hectareas]"]');
         const valor = campo ? Number.parseFloat(campo.value) : NaN;
 
         return Number.isFinite(valor) && valor > 0 ? valor : null;
@@ -511,7 +514,7 @@ function inicializarLeaflet(contenedor, refs) {
     botonUsar?.addEventListener('click', () => {
         const hectareas = medida?.dataset.agLoteHectareas;
         const campoHectareas = contenedor
-            .closest('[data-ag-lote-fila]')
+            .closest('[data-ag-lote-ficha]')
             ?.querySelector('input[name$="[hectareas]"]');
 
         if (hectareas && campoHectareas) {
@@ -1029,7 +1032,7 @@ function inicializarGoogle(contenedor, refs, googleMapsNs) {
     botonUsar?.addEventListener('click', () => {
         const hectareas = medida?.dataset.agLoteHectareas;
         const campoHectareas = contenedor
-            .closest('[data-ag-lote-fila]')
+            .closest('[data-ag-lote-ficha]')
             ?.querySelector('input[name$="[hectareas]"]');
 
         if (hectareas && campoHectareas) {

@@ -83,6 +83,16 @@
     flex-basis: 100%;
 }
 
+/* Envuelve las secciones "Datos del lote" + "Mapa" (16/9/2026, dos
+   secciones separadas que antes eran una sola) — mismo gap que el resto,
+   para que no queden pegadas por vivir un nivel más adentro que
+   `.ag-lotes-form__main`. */
+.ag-lotes-form__ficha {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
 .ag-lotes-form__aside {
     flex: 1 1 19rem;
     min-width: 16rem;

@@ -1,0 +1,178 @@
+{{--
+    Partial: mapa de un lote (extraído de `_lote-fila.blade.php`, 16/9/2026 —
+    pedido directo: el mapa va en su propia sección del formulario, "Mapa",
+    separada de "Datos del lote", mismo criterio que la sección de mapa de
+    `propiedades/mapa.blade.php`).
+
+    Espera:
+    - $lote (array{geometria?: string}), $prefijo (string): mismo par que
+      `_lote-fila.blade.php` — ver su docblock.
+    - $proveedorMapa (array{proveedor: 'google'|'leaflet', googleMapsApiKey: ?string}):
+      resuelto por ResolverProveedorMapa (Comercial/Aplicacion), que a su vez
+      consulta LecturaConfiguracion (Compartido, tarea 78). SIEMPRE llega
+      desde afuera vía el scope compartido de @include — LotesController lo
+      agrega a `create`/`edit`. La llave solo se imprime cuando el proveedor
+      elegido es Google: es lo que evita que `google_maps_api_key` viaje al
+      HTML de un formulario que va a usar Leaflet igual (tarea 79).
+
+    `geometria` se dibuja sobre un MAPA SATELITAL: el perímetro de un lote se
+    reconoce mirando la imagen, no tipeando pares de coordenadas. Leaflet +
+    Esri + Geoman por defecto; Google Maps cuando hay llave configurada
+    (tarea 79) — el mismo GeoJSON sale de cualquiera de los dos.
+    `organisms/lote-mapa-editor.js` inicializa TODO `[data-ag-lote-mapa]` que
+    encuentre en la página al cargar, sin JS adicional acá.
+
+    El valor viaja como string JSON en un `<input hidden>`: el Form Request
+    valida la forma mínima (`type`/`coordinates`), y una geometría cargada
+    por otra vía sigue siendo válida.
+--}}
+@php
+    $idBase = str_replace(['[', ']'], ['-', ''], $prefijo);
+    $erroresPrefijo = str_replace(['[', ']'], ['.', ''], $prefijo);
+    $esGoogle = ($proveedorMapa['proveedor'] ?? 'leaflet') === 'google';
+@endphp
+<div
+    class="ag-input ag-form-section__field--full ag-lote-mapa"
+    data-ag-lote-mapa
+    data-ag-lote-mapa-proveedor="{{ $esGoogle ? 'google' : 'leaflet' }}"
+    @if ($esGoogle)
+        data-ag-lote-mapa-google-key="{{ $proveedorMapa['googleMapsApiKey'] }}"
+    @endif
+>
+    <span class="ag-input__label">{{ __('comercial.lotes.lote_geometria') }}</span>
+
+    @error($erroresPrefijo.'.geometria')
+        <p class="ag-input__error" role="alert">{{ $message }}</p>
+    @enderror
+
+    {{-- El valor real. Lo escribe el editor; queda en el DOM aunque el mapa
+         no llegue a cargar, así que una geometría ya guardada nunca se
+         pierde por un fallo del JS. --}}
+    <input
+        type="hidden"
+        name="{{ $prefijo }}[geometria]"
+        id="{{ $idBase }}-geometria"
+        value="{{ $lote['geometria'] ?? '' }}"
+        data-ag-lote-geometria
+    >
+
+    {{-- Pantalla completa (Fullscreen API, con respaldo a un contenedor
+         fijo al 100% si el navegador la niega) actúa sobre ESTE marco:
+         lienzo + barra + medida viajan juntos, así la superficie sigue
+         visible mientras se dibuja a pantalla completa (tarea 79). --}}
+    <div class="ag-mapa-marco" data-ag-lote-mapa-marco>
+        <div
+            class="ag-mapa-barra"
+            role="toolbar"
+            aria-label="{{ __('comercial.lotes.lote_mapa_barra_aria') }}"
+            data-ag-lote-mapa-barra
+        >
+            <button
+                type="button"
+                class="ag-mapa-accion"
+                data-ag-lote-accion="dibujar"
+                title="{{ __('comercial.lotes.lote_mapa_dibujar') }}"
+                aria-label="{{ __('comercial.lotes.lote_mapa_dibujar') }}"
+                aria-pressed="false"
+            >
+                <x-atoms.icon name="draw" />
+            </button>
+            <button
+                type="button"
+                class="ag-mapa-accion"
+                data-ag-lote-accion="editar"
+                title="{{ __('comercial.lotes.lote_mapa_editar_vertices') }}"
+                aria-label="{{ __('comercial.lotes.lote_mapa_editar_vertices') }}"
+                aria-pressed="false"
+            >
+                <x-atoms.icon name="edit" />
+            </button>
+            <button
+                type="button"
+                class="ag-mapa-accion"
+                data-ag-lote-accion="mover"
+                title="{{ __('comercial.lotes.lote_mapa_mover') }}"
+                aria-label="{{ __('comercial.lotes.lote_mapa_mover') }}"
+                aria-pressed="false"
+            >
+                <x-atoms.icon name="open_with" />
+            </button>
+            <button
+                type="button"
+                class="ag-mapa-accion"
+                data-ag-lote-accion="borrar"
+                title="{{ __('comercial.lotes.lote_mapa_borrar') }}"
+                aria-label="{{ __('comercial.lotes.lote_mapa_borrar') }}"
+                aria-pressed="false"
+            >
+                <x-atoms.icon name="delete" />
+            </button>
+            <button
+                type="button"
+                class="ag-mapa-accion"
+                data-ag-lote-accion="deshacer"
+                title="{{ __('comercial.lotes.lote_mapa_deshacer') }}"
+                aria-label="{{ __('comercial.lotes.lote_mapa_deshacer') }}"
+                disabled
+            >
+                <x-atoms.icon name="undo" />
+            </button>
+            <button
+                type="button"
+                class="ag-mapa-accion"
+                data-ag-lote-accion="centrar"
+                title="{{ __('comercial.lotes.lote_mapa_centrar') }}"
+                aria-label="{{ __('comercial.lotes.lote_mapa_centrar') }}"
+            >
+                <x-atoms.icon name="center_focus_strong" />
+            </button>
+            <button
+                type="button"
+                class="ag-mapa-accion"
+                data-ag-lote-accion="capa"
+                title="{{ __('comercial.lotes.lote_mapa_capa_calles') }}"
+                aria-label="{{ __('comercial.lotes.lote_mapa_capa_calles') }}"
+                aria-pressed="false"
+                data-ag-lote-mapa-capa-satelite="{{ __('comercial.lotes.lote_mapa_capa_satelite') }}"
+                data-ag-lote-mapa-capa-calles="{{ __('comercial.lotes.lote_mapa_capa_calles') }}"
+            >
+                <x-atoms.icon name="layers" />
+            </button>
+            <button
+                type="button"
+                class="ag-mapa-accion ag-mapa-accion--pantalla-completa"
+                data-ag-lote-mapa-boton-pantalla-completa
+                title="{{ __('comercial.lotes.lote_mapa_pantalla_completa') }}"
+                aria-label="{{ __('comercial.lotes.lote_mapa_pantalla_completa') }}"
+                aria-pressed="false"
+                data-ag-lote-mapa-entrar="{{ __('comercial.lotes.lote_mapa_pantalla_completa') }}"
+                data-ag-lote-mapa-salir="{{ __('comercial.lotes.lote_mapa_salir_pantalla_completa') }}"
+            >
+                <x-atoms.icon name="fullscreen" data-ag-lote-mapa-icono-pantalla-completa />
+            </button>
+        </div>
+
+        <div class="ag-lote-mapa__lienzo" data-ag-lote-mapa-lienzo></div>
+
+        <div class="ag-lote-mapa__pie">
+            <p class="ag-input__help ag-lote-mapa__ayuda">{{ __('comercial.lotes.lote_geometria_ayuda') }}</p>
+
+            <div
+                class="ag-lote-mapa__medida"
+                data-ag-lote-medida
+                hidden
+                data-ag-lote-mapa-medida-plantilla="{{ __('comercial.lotes.lote_mapa_medida') }}"
+                data-ag-lote-mapa-medida-plantilla-declarada="{{ __('comercial.lotes.lote_mapa_medida_declaradas') }}"
+            >
+                <span data-ag-lote-medida-texto></span>
+                {{-- Botón y no autocompletado: `hectareas` es la superficie
+                     CONTRATADA, que puede no coincidir con el polígono
+                     dibujado, y es la base de lo que se factura (invariante
+                     6). La decisión de copiarla es de quien carga el campo. --}}
+                <x-atoms.button type="button" variant="text" size="sm" data-ag-lote-usar-superficie>
+                    {{ __('comercial.lotes.lote_usar_superficie') }}
+                </x-atoms.button>
+            </div>
+        </div>
+    </div>
+</div>
