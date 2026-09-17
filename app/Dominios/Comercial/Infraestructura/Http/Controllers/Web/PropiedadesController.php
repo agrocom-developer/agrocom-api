@@ -233,7 +233,11 @@ final class PropiedadesController
      * usa el nombre completo de la provincia como desambiguador — una sigla
      * inventada sería un dato que no existe en el catálogo.
      *
-     * @return Collection<int, string>
+     * @return Collection<int, non-falsy-string> el separador ' - ' literal
+     *                                           garantiza que la etiqueta nunca sea cadena vacía; Larastan infiere
+     *                                           ese tipo más preciso en la concatenación, y como `Collection` no es
+     *                                           covariante en su tipo de valor, el docblock tiene que declararlo
+     *                                           igual, no `string` en general.
      */
     private function municipiosConPropiedades(): Collection
     {
