@@ -93,7 +93,7 @@
         :subtitle="__('comercial.clientes.subtitulo_form')"
     >
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.clientes.index') }}" variant="outline" icon="arrow_back">
+            <x-atoms.button :href="route('panel.clientes.index')" variant="outline" icon="arrow_back">
                 {{ __('comercial.clientes.volver') }}
             </x-atoms.button>
         </x-slot:actions>
@@ -130,7 +130,7 @@
                     :help="__('comercial.clientes.campo_logo_ayuda')"
                     :replace-label="__('comercial.clientes.campo_logo_reemplazar')"
                     :remove-label="$esEdicion && $logoArchivo ? __('comercial.clientes.campo_logo_quitar') : null"
-                    error="{{ $errors->first('logo') }}"
+                    :error="$errors->first('logo')"
                 >
                     {{-- Placeholder mientras el cliente no tiene logo cargado
                          (pedido directo, tarea "resumen de cliente"):
@@ -145,12 +145,12 @@
                 <x-atoms.select
                     name="tipo_persona"
                     id="tipo_persona"
-                    label="{{ __('comercial.clientes.campo_tipo_persona') }}"
+                    :label="__('comercial.clientes.campo_tipo_persona')"
                     :options="$tiposPersonaOptions"
                     :value="$tipoPersonaValor"
-                    placeholder="{{ __('comercial.clientes.campo_tipo_persona_placeholder') }}"
+                    :placeholder="__('comercial.clientes.campo_tipo_persona_placeholder')"
                     required
-                    error="{{ $errors->first('tipo_persona') }}"
+                    :error="$errors->first('tipo_persona')"
                 />
 
                 {{-- Apilado bajo "Tipo de persona" A PROPÓSITO (misma columna
@@ -175,39 +175,39 @@
                     <x-atoms.input
                         type="text"
                         name="nombre_comercial"
-                        label="{{ __('comercial.clientes.campo_nombre_comercial') }}"
-                        value="{{ $nombreComercial }}"
-                        help="{{ __('comercial.clientes.campo_nombre_comercial_ayuda') }}"
-                        error="{{ $errors->first('nombre_comercial') }}"
+                        :label="__('comercial.clientes.campo_nombre_comercial')"
+                        :value="$nombreComercial"
+                        :help="__('comercial.clientes.campo_nombre_comercial_ayuda')"
+                        :error="$errors->first('nombre_comercial')"
                     />
                 </div>
 
                 <x-atoms.input
                     type="text"
                     name="razon_social"
-                    label="{{ __('comercial.clientes.campo_razon_social') }}"
-                    value="{{ $razonSocial }}"
+                    :label="__('comercial.clientes.campo_razon_social')"
+                    :value="$razonSocial"
                     required
-                    error="{{ $errors->first('razon_social') }}"
+                    :error="$errors->first('razon_social')"
                 />
 
                 <x-atoms.input
                     type="text"
                     name="nit"
-                    label="{{ __('comercial.clientes.campo_nit') }}"
-                    value="{{ $nit }}"
-                    help="{{ __('comercial.clientes.campo_nit_ayuda') }}"
-                    error="{{ $errors->first('nit') }}"
+                    :label="__('comercial.clientes.campo_nit')"
+                    :value="$nit"
+                    :help="__('comercial.clientes.campo_nit_ayuda')"
+                    :error="$errors->first('nit')"
                 />
 
                 <x-atoms.input
                     class="ag-form-section__field--full"
                     type="text"
                     name="ubicacion_oficina"
-                    label="{{ __('comercial.clientes.campo_ubicacion_oficina') }}"
-                    value="{{ $ubicacionOficina }}"
-                    help="{{ __('comercial.clientes.campo_ubicacion_oficina_ayuda') }}"
-                    error="{{ $errors->first('ubicacion_oficina') }}"
+                    :label="__('comercial.clientes.campo_ubicacion_oficina')"
+                    :value="$ubicacionOficina"
+                    :help="__('comercial.clientes.campo_ubicacion_oficina_ayuda')"
+                    :error="$errors->first('ubicacion_oficina')"
                 />
             </x-molecules.form-section>
 
@@ -246,7 +246,7 @@
                             {{ __('comercial.clientes.volver_a_formulario_origen') }}
                         </x-atoms.button>
                     @endif
-                    <x-atoms.button href="{{ route('panel.clientes.index') }}" variant="outline">
+                    <x-atoms.button :href="route('panel.clientes.index')" variant="outline">
                         {{ __('ui.action.cancel') }}
                     </x-atoms.button>
                     <x-atoms.button type="submit" variant="primary">
@@ -266,7 +266,7 @@
                         <x-molecules.summary-card :title="$resumen['titulo']" :items="$resumen['items']">
                             @if ($resumen['mostrarAccion'])
                                 <x-slot:action>
-                                    <x-atoms.button href="{{ $resumen['accion']['href'] }}" variant="outline" icon="add" block>
+                                    <x-atoms.button :href="$resumen['accion']['href']" variant="outline" icon="add" block>
                                         {{ $resumen['accion']['label'] }}
                                     </x-atoms.button>
                                 </x-slot:action>
@@ -280,7 +280,7 @@
                         >
                             @if ($resumen['mostrarAccion'])
                                 <x-slot:action>
-                                    <x-atoms.button href="{{ $resumen['accion']['href'] }}" variant="outline" icon="add">
+                                    <x-atoms.button :href="$resumen['accion']['href']" variant="outline" icon="add">
                                         {{ $resumen['accion']['label'] }}
                                     </x-atoms.button>
                                 </x-slot:action>

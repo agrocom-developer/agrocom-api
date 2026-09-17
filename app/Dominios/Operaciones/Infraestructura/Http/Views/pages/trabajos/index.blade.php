@@ -57,7 +57,7 @@
                 <x-atoms.select
                     name="estado"
                     id="filtro-estado"
-                    label="{{ __('operaciones.trabajos.filtro_estado') }}"
+                    :label="__('operaciones.trabajos.filtro_estado')"
                     :options="$opcionesEstado"
                     :value="$filtros['estado']"
                     :placeholder="__('operaciones.trabajos.filtro_todos')"
@@ -72,7 +72,7 @@
                 <x-atoms.select
                     name="lote_id"
                     id="filtro-lote"
-                    label="{{ __('operaciones.trabajos.filtro_lote') }}"
+                    :label="__('operaciones.trabajos.filtro_lote')"
                     :options="$opcionesLote"
                     :value="$filtros['lote_id']"
                     :placeholder="__('operaciones.trabajos.filtro_todos')"
@@ -87,7 +87,7 @@
                 <x-atoms.select
                     name="orden_id"
                     id="filtro-orden"
-                    label="{{ __('operaciones.trabajos.filtro_orden') }}"
+                    :label="__('operaciones.trabajos.filtro_orden')"
                     :options="$opcionesOrden"
                     :value="$filtros['orden_id']"
                     :placeholder="__('operaciones.trabajos.filtro_todos')"
@@ -99,7 +99,7 @@
                     </x-atoms.button>
 
                     @if ($hayFiltrosActivos)
-                        <x-atoms.button href="{{ route('panel.trabajos.index') }}" variant="text" size="md">
+                        <x-atoms.button :href="route('panel.trabajos.index')" variant="text" size="md">
                             {{ __('operaciones.trabajos.limpiar_filtros') }}
                         </x-atoms.button>
                     @endif
@@ -150,7 +150,7 @@
                         <span role="cell">{{ $trabajo->fin?->format('d/m/Y H:i') ?? __('operaciones.trabajos.sin_fin') }}</span>
 
                         <span role="cell">
-                            <x-atoms.button href="{{ route('panel.trabajos.show', $trabajo) }}" variant="outline" size="sm" icon="visibility">
+                            <x-atoms.button :href="route('panel.trabajos.show', $trabajo)" variant="outline" size="sm" icon="visibility">
                                 {{ __('operaciones.trabajos.ver_detalle') }}
                             </x-atoms.button>
                         </span>
@@ -201,7 +201,7 @@
             @if ($trabajos->hasPages())
                 <nav class="ag-trabajos__paginacion" aria-label="{{ __('operaciones.trabajos.paginacion_aria') }}">
                     @if (! $trabajos->onFirstPage())
-                        <x-atoms.button href="{{ $trabajos->previousPageUrl() }}" variant="outline" size="sm" icon="chevron_left">
+                        <x-atoms.button :href="$trabajos->previousPageUrl()" variant="outline" size="sm" icon="chevron_left">
                             {{ __('operaciones.trabajos.paginacion_anterior') }}
                         </x-atoms.button>
                     @endif
@@ -211,7 +211,7 @@
                     </span>
 
                     @if ($trabajos->hasMorePages())
-                        <x-atoms.button href="{{ $trabajos->nextPageUrl() }}" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
+                        <x-atoms.button :href="$trabajos->nextPageUrl()" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
                             {{ __('operaciones.trabajos.paginacion_siguiente') }}
                         </x-atoms.button>
                     @endif

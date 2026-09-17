@@ -43,7 +43,7 @@
             >
                 @puede('comercial.lote.crear')
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.lotes.create', array_filter(['propiedad_id' => $filtros['propiedad_id']])) }}" variant="primary" icon="add">
+                        <x-atoms.button :href="route('panel.lotes.create', array_filter(['propiedad_id' => $filtros['propiedad_id']]))" variant="primary" icon="add">
                             {{ __('comercial.lotes.nuevo') }}
                         </x-atoms.button>
                     </x-slot:actions>
@@ -75,31 +75,31 @@
             @if ($hayFiltrosActivos || $lotes->isNotEmpty())
                 <div class="ag-table-toolbar">
                     <x-organisms.filter-panel
-                        action="{{ route('panel.lotes.index') }}"
+                        :action="route('panel.lotes.index')"
                         :active-count="$filtrosPanelActivos"
                     >
                         <input type="hidden" name="q" value="{{ $filtros['q'] }}">
                         <x-atoms.select
                             name="cliente_id"
                             id="filtro-cliente"
-                            label="{{ __('comercial.lotes.filtro_cliente') }}"
+                            :label="__('comercial.lotes.filtro_cliente')"
                             :options="$clientesDisponibles"
                             :value="$filtros['cliente_id']"
-                            placeholder="{{ __('comercial.lotes.filtro_todos') }}"
+                            :placeholder="__('comercial.lotes.filtro_todos')"
                         />
 
                         <x-atoms.select
                             name="propiedad_id"
                             id="filtro-propiedad"
-                            label="{{ __('comercial.lotes.filtro_propiedad') }}"
+                            :label="__('comercial.lotes.filtro_propiedad')"
                             :options="$propiedadesOptions"
                             :value="$filtros['propiedad_id']"
-                            placeholder="{{ __('comercial.lotes.filtro_todos') }}"
+                            :placeholder="__('comercial.lotes.filtro_todos')"
                         />
                     </x-organisms.filter-panel>
 
                     <x-molecules.table-search
-                        action="{{ route('panel.lotes.index') }}"
+                        :action="route('panel.lotes.index')"
                         :value="$filtros['q']"
                         :placeholder="__('comercial.lotes.filtro_busqueda_placeholder')"
                         :clear-label="__('ui.tabla.buscador_limpiar')"
@@ -150,7 +150,7 @@
                             <span role="cell" class="ag-lotes__acciones">
                                 <x-organisms.row-actions>
                                     @puede('comercial.lote.editar')
-                                        <x-atoms.button href="{{ route('panel.lotes.edit', $lote) }}" variant="warning-outline" size="sm" icon="edit">
+                                        <x-atoms.button :href="route('panel.lotes.edit', $lote)" variant="warning-outline" size="sm" icon="edit">
                                             {{ __('comercial.lotes.editar') }}
                                         </x-atoms.button>
                                     @endpuede

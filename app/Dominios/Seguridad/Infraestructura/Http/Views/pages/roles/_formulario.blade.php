@@ -44,7 +44,7 @@
         :subtitle="__($esEdicion ? 'seguridad.roles.editar_subtitulo' : 'seguridad.roles.crear_subtitulo')"
     >
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.roles.index') }}" variant="outline">
+            <x-atoms.button :href="route('panel.roles.index')" variant="outline">
                 {{ __('seguridad.roles.cancelar') }}
             </x-atoms.button>
             <x-atoms.button type="submit" variant="primary">
@@ -69,7 +69,7 @@
         <x-atoms.input
             type="text"
             name="name"
-            label="{{ __('seguridad.roles.campo_nombre') }}"
+            :label="__('seguridad.roles.campo_nombre')"
             :value="$nombre"
             :help="__('seguridad.roles.campo_nombre_ayuda')"
             :error="$errors->first('name')"
@@ -82,7 +82,7 @@
             class="ag-form-section__field--full"
             type="text"
             name="description"
-            label="{{ __('seguridad.roles.campo_descripcion') }}"
+            :label="__('seguridad.roles.campo_descripcion')"
             :value="$descripcion"
             :help="__('seguridad.roles.campo_descripcion_ayuda')"
             :error="$errors->first('description')"
@@ -94,7 +94,7 @@
         <div class="ag-form-section__field--full">
             <x-atoms.switch
                 name="state"
-                label="{{ __('seguridad.roles.campo_activo') }}"
+                :label="__('seguridad.roles.campo_activo')"
                 :checked="$activo"
                 :disabled="$esRolActivo"
                 :help="__($esRolActivo ? 'seguridad.roles.campo_activo_bloqueado' : 'seguridad.roles.campo_activo_ayuda')"

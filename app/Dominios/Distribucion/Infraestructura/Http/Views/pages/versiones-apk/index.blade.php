@@ -122,7 +122,7 @@
                                     'rechazada' => 'danger',
                                 ];
                             @endphp
-                            <x-atoms.badge variant="{{ $variantePorEstado[$versionApk->estado->value] }}">
+                            <x-atoms.badge :variant="$variantePorEstado[$versionApk->estado->value]">
                                 {{ __("distribucion.versiones.estado_{$versionApk->estado->value}") }}
                             </x-atoms.badge>
                         </span>

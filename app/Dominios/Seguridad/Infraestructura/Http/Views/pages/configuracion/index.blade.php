@@ -71,9 +71,9 @@
                                                 <x-atoms.input
                                                     type="password"
                                                     name="valores[{{ $fila['clave'] }}]"
-                                                    label="{{ $fila['descripcion'] }}"
+                                                    :label="$fila['descripcion']"
                                                     value=""
-                                                    help="{{ __('configuracion.ayuda_secreto') }}"
+                                                    :help="__('configuracion.ayuda_secreto')"
                                                     :disabled="! $puedeEditar"
                                                     :data-ag-config-llave-google="$fila['clave'] === 'mapas.google_maps_api_key'"
                                                 />
@@ -105,8 +105,8 @@
                                                 <x-atoms.switch
                                                     name="valores[{{ $fila['clave'] }}]"
                                                     value="{{ $fila['valorActivado'] }}"
-                                                    label="{{ $fila['descripcion'] }}"
-                                                    help="{{ __('configuracion.ayuda_forzar_leaflet') }}"
+                                                    :label="$fila['descripcion']"
+                                                    :help="__('configuracion.ayuda_forzar_leaflet')"
                                                     :checked="old('valores.'.$fila['clave']) !== null ? old('valores.'.$fila['clave']) === $fila['valorActivado'] : $fila['activado']"
                                                     :disabled="! $puedeEditar"
                                                     :data-ag-config-switch-forzar-leaflet="$fila['clave'] === 'mapas.proveedor_preferido'"
@@ -116,8 +116,8 @@
                                             <x-atoms.input
                                                 type="text"
                                                 name="valores[{{ $fila['clave'] }}]"
-                                                label="{{ $fila['descripcion'] }}"
-                                                value="{{ old('valores.'.$fila['clave'], $fila['valorVisible']) }}"
+                                                :label="$fila['descripcion']"
+                                                :value="old('valores.'.$fila['clave'], $fila['valorVisible'])"
                                                 :disabled="! $puedeEditar"
                                             />
                                         @endif

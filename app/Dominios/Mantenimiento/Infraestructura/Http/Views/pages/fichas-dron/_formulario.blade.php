@@ -42,7 +42,7 @@
         :subtitle="__('mantenimiento.fichas_dron.subtitulo_form')"
     >
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.fichas-dron.index') }}" variant="outline" icon="arrow_back">
+            <x-atoms.button :href="route('panel.fichas-dron.index')" variant="outline" icon="arrow_back">
                 {{ __('mantenimiento.fichas_dron.volver') }}
             </x-atoms.button>
         </x-slot:actions>
@@ -61,51 +61,51 @@
         <x-atoms.input
             type="text"
             name="identificador_dron"
-            label="{{ __('mantenimiento.fichas_dron.campo_identificador') }}"
-            value="{{ $identificadorDron }}"
-            help="{{ __('mantenimiento.fichas_dron.campo_identificador_ayuda') }}"
+            :label="__('mantenimiento.fichas_dron.campo_identificador')"
+            :value="$identificadorDron"
+            :help="__('mantenimiento.fichas_dron.campo_identificador_ayuda')"
             required
-            error="{{ $errors->first('identificador_dron') }}"
+            :error="$errors->first('identificador_dron')"
         />
 
         <x-atoms.input
             type="text"
             name="numero_serie"
-            label="{{ __('mantenimiento.fichas_dron.campo_numero_serie') }}"
-            value="{{ $numeroSerie }}"
-            error="{{ $errors->first('numero_serie') }}"
+            :label="__('mantenimiento.fichas_dron.campo_numero_serie')"
+            :value="$numeroSerie"
+            :error="$errors->first('numero_serie')"
         />
 
         <x-atoms.input
             type="text"
             name="chasis"
-            label="{{ __('mantenimiento.fichas_dron.campo_chasis') }}"
-            value="{{ $chasis }}"
-            error="{{ $errors->first('chasis') }}"
+            :label="__('mantenimiento.fichas_dron.campo_chasis')"
+            :value="$chasis"
+            :error="$errors->first('chasis')"
         />
 
         <x-atoms.input
             type="text"
             name="version_software"
-            label="{{ __('mantenimiento.fichas_dron.campo_version_software') }}"
-            value="{{ $versionSoftware }}"
-            error="{{ $errors->first('version_software') }}"
+            :label="__('mantenimiento.fichas_dron.campo_version_software')"
+            :value="$versionSoftware"
+            :error="$errors->first('version_software')"
         />
 
         <x-atoms.input
             type="text"
             name="region"
-            label="{{ __('mantenimiento.fichas_dron.campo_region') }}"
-            value="{{ $region }}"
-            error="{{ $errors->first('region') }}"
+            :label="__('mantenimiento.fichas_dron.campo_region')"
+            :value="$region"
+            :error="$errors->first('region')"
         />
 
         <x-atoms.input
             type="text"
             name="serie_control"
-            label="{{ __('mantenimiento.fichas_dron.campo_serie_control') }}"
-            value="{{ $serieControl }}"
-            error="{{ $errors->first('serie_control') }}"
+            :label="__('mantenimiento.fichas_dron.campo_serie_control')"
+            :value="$serieControl"
+            :error="$errors->first('serie_control')"
         />
     </x-molecules.form-section>
 
@@ -114,7 +114,7 @@
         <x-atoms.checkbox
             name="tiene_cargador_control"
             value="1"
-            label="{{ __('mantenimiento.fichas_dron.campo_tiene_cargador_control') }}"
+            :label="__('mantenimiento.fichas_dron.campo_tiene_cargador_control')"
             :checked="$tieneCargadorControl"
         />
 
@@ -122,7 +122,7 @@
         <x-atoms.checkbox
             name="tiene_modem"
             value="1"
-            label="{{ __('mantenimiento.fichas_dron.campo_tiene_modem') }}"
+            :label="__('mantenimiento.fichas_dron.campo_tiene_modem')"
             :checked="$tieneModem"
         />
 
@@ -130,14 +130,14 @@
         <x-atoms.checkbox
             name="tiene_maletin"
             value="1"
-            label="{{ __('mantenimiento.fichas_dron.campo_tiene_maletin') }}"
+            :label="__('mantenimiento.fichas_dron.campo_tiene_maletin')"
             :checked="$tieneMaletin"
         />
     </x-molecules.form-section>
 
     <x-organisms.form-actions-bar :status="__('mantenimiento.fichas_dron.estado_form')">
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.fichas-dron.index') }}" variant="outline">
+            <x-atoms.button :href="route('panel.fichas-dron.index')" variant="outline">
                 {{ __('ui.action.cancel') }}
             </x-atoms.button>
             <x-atoms.button type="submit" variant="primary">

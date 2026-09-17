@@ -172,7 +172,7 @@
             <div class="ag-login-form__actions">
                 <x-atoms.checkbox
                     name="remember"
-                    label="{{ __('seguridad.login.recordarme') }}"
+                    :label="__('seguridad.login.recordarme')"
                 />
 
                 <button

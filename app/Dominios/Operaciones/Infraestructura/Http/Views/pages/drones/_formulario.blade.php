@@ -36,7 +36,7 @@
         :subtitle="__('operaciones.drones.subtitulo_form')"
     >
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.drones.index') }}" variant="outline" icon="arrow_back">
+            <x-atoms.button :href="route('panel.drones.index')" variant="outline" icon="arrow_back">
                 {{ __('operaciones.drones.volver') }}
             </x-atoms.button>
         </x-slot:actions>
@@ -55,28 +55,28 @@
         <x-atoms.input
             type="text"
             name="identificador"
-            label="{{ __('operaciones.drones.campo_identificador') }}"
-            value="{{ $identificador }}"
+            :label="__('operaciones.drones.campo_identificador')"
+            :value="$identificador"
             required
-            error="{{ $errors->first('identificador') }}"
+            :error="$errors->first('identificador')"
         />
 
         <x-atoms.input
             type="text"
             name="modelo"
-            label="{{ __('operaciones.drones.campo_modelo') }}"
-            value="{{ $modelo }}"
-            help="{{ __('operaciones.drones.campo_modelo_ayuda') }}"
-            error="{{ $errors->first('modelo') }}"
+            :label="__('operaciones.drones.campo_modelo')"
+            :value="$modelo"
+            :help="__('operaciones.drones.campo_modelo_ayuda')"
+            :error="$errors->first('modelo')"
         />
 
         <x-atoms.input
             type="number"
             name="capacidad_l"
-            label="{{ __('operaciones.drones.campo_capacidad') }}"
-            value="{{ $capacidadL }}"
-            help="{{ __('operaciones.drones.campo_capacidad_ayuda') }}"
-            error="{{ $errors->first('capacidad_l') }}"
+            :label="__('operaciones.drones.campo_capacidad')"
+            :value="$capacidadL"
+            :help="__('operaciones.drones.campo_capacidad_ayuda')"
+            :error="$errors->first('capacidad_l')"
             min="30"
             max="60"
             step="1"
@@ -85,10 +85,10 @@
         <x-atoms.input
             type="number"
             name="capacidad_kg"
-            label="{{ __('operaciones.drones.campo_capacidad_kg') }}"
-            value="{{ $capacidadKg }}"
-            help="{{ __('operaciones.drones.campo_capacidad_kg_ayuda') }}"
-            error="{{ $errors->first('capacidad_kg') }}"
+            :label="__('operaciones.drones.campo_capacidad_kg')"
+            :value="$capacidadKg"
+            :help="__('operaciones.drones.campo_capacidad_kg_ayuda')"
+            :error="$errors->first('capacidad_kg')"
             min="0"
             step="0.01"
         />
@@ -96,7 +96,7 @@
 
     <x-organisms.form-actions-bar :status="__('operaciones.drones.estado_form')">
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.drones.index') }}" variant="outline">
+            <x-atoms.button :href="route('panel.drones.index')" variant="outline">
                 {{ __('ui.action.cancel') }}
             </x-atoms.button>
             <x-atoms.button type="submit" variant="primary">

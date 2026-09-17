@@ -54,7 +54,7 @@
             >
                 @puede('mantenimiento.vehiculo.crear')
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.vehiculos.create') }}" variant="primary" icon="add">
+                        <x-atoms.button :href="route('panel.vehiculos.create')" variant="primary" icon="add">
                             {{ __('mantenimiento.vehiculos.nuevo') }}
                         </x-atoms.button>
                     </x-slot:actions>
@@ -74,7 +74,7 @@
             @if ($hayFiltrosActivos || $vehiculos->isNotEmpty())
                 <div class="ag-table-toolbar">
                     <x-molecules.table-search
-                        action="{{ route('panel.vehiculos.index') }}"
+                        :action="route('panel.vehiculos.index')"
                         :value="$filtros['q']"
                         :placeholder="__('mantenimiento.vehiculos.filtro_busqueda_placeholder')"
                         :clear-label="__('ui.tabla.buscador_limpiar')"
@@ -88,10 +88,10 @@
                     <x-atoms.select
                         name="base_id"
                         id="filtro-base"
-                        label="{{ __('mantenimiento.vehiculos.filtro_base') }}"
+                        :label="__('mantenimiento.vehiculos.filtro_base')"
                         :options="$basesDisponibles"
                         :value="$filtros['base_id']"
-                        placeholder="{{ __('mantenimiento.vehiculos.filtro_todos') }}"
+                        :placeholder="__('mantenimiento.vehiculos.filtro_todos')"
                     />
 
                     @php
@@ -102,10 +102,10 @@
                     <x-atoms.select
                         name="estado"
                         id="filtro-estado"
-                        label="{{ __('mantenimiento.vehiculos.filtro_estado') }}"
+                        :label="__('mantenimiento.vehiculos.filtro_estado')"
                         :options="$opcionesEstado"
                         :value="$filtros['estado']"
-                        placeholder="{{ __('mantenimiento.vehiculos.filtro_todos') }}"
+                        :placeholder="__('mantenimiento.vehiculos.filtro_todos')"
                     />
 
                     <div class="ag-filtros__acciones ag-vehiculos__filtros-acciones">
@@ -114,7 +114,7 @@
                         </x-atoms.button>
 
                         @if ($hayFiltrosActivos)
-                            <x-atoms.button href="{{ route('panel.vehiculos.index') }}" variant="text" size="md">
+                            <x-atoms.button :href="route('panel.vehiculos.index')" variant="text" size="md">
                                 {{ __('mantenimiento.vehiculos.limpiar_filtro') }}
                             </x-atoms.button>
                         @endif
@@ -161,7 +161,7 @@
 
                             <span role="cell" class="ag-vehiculos__acciones">
                                 @puede('mantenimiento.vehiculo.editar')
-                                    <x-atoms.button href="{{ route('panel.vehiculos.edit', $vehiculo) }}" variant="warning-outline" size="sm" icon="edit">
+                                    <x-atoms.button :href="route('panel.vehiculos.edit', $vehiculo)" variant="warning-outline" size="sm" icon="edit">
                                         {{ __('mantenimiento.vehiculos.editar') }}
                                     </x-atoms.button>
                                 @endpuede

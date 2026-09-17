@@ -44,21 +44,21 @@
     <x-atoms.input
         type="text"
         name="{{ $prefijo }}[codigo]"
-        label="{{ __('comercial.lotes.lote_codigo') }}"
-        value="{{ $lote['codigo'] ?? '' }}"
+        :label="__('comercial.lotes.lote_codigo')"
+        :value="$lote['codigo'] ?? ''"
         required
-        error="{{ $errors->first($erroresPrefijo.'.codigo') }}"
+        :error="$errors->first($erroresPrefijo.'.codigo')"
     />
 
     <x-atoms.input
         type="number"
         name="{{ $prefijo }}[hectareas]"
-        label="{{ __('comercial.lotes.lote_hectareas') }}"
-        value="{{ $lote['hectareas'] ?? '' }}"
+        :label="__('comercial.lotes.lote_hectareas')"
+        :value="$lote['hectareas'] ?? ''"
         min="0.01"
         step="0.01"
         required
-        error="{{ $errors->first($erroresPrefijo.'.hectareas') }}"
+        :error="$errors->first($erroresPrefijo.'.hectareas')"
     />
 
     @include('comercial::pages.lotes._lote-terreno', ['lote' => $lote, 'prefijo' => $prefijo, 'idBase' => $idBase, 'erroresPrefijo' => $erroresPrefijo])

@@ -35,7 +35,7 @@
         :subtitle="__('personal.bases.subtitulo_form')"
     >
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.bases.index') }}" variant="outline" icon="arrow_back">
+            <x-atoms.button :href="route('panel.bases.index')" variant="outline" icon="arrow_back">
                 {{ __('personal.bases.volver') }}
             </x-atoms.button>
         </x-slot:actions>
@@ -54,46 +54,46 @@
         <x-atoms.input
             type="text"
             name="nombre"
-            label="{{ __('personal.bases.campo_nombre') }}"
-            value="{{ $nombre }}"
+            :label="__('personal.bases.campo_nombre')"
+            :value="$nombre"
             required
-            error="{{ $errors->first('nombre') }}"
+            :error="$errors->first('nombre')"
         />
 
         <x-atoms.input
             type="text"
             name="ubicacion"
-            label="{{ __('personal.bases.campo_ubicacion') }}"
-            value="{{ $ubicacion }}"
-            error="{{ $errors->first('ubicacion') }}"
+            :label="__('personal.bases.campo_ubicacion')"
+            :value="$ubicacion"
+            :error="$errors->first('ubicacion')"
         />
 
         <x-atoms.input
             type="number"
             name="latitud"
-            label="{{ __('personal.bases.campo_latitud') }}"
-            value="{{ $latitud }}"
+            :label="__('personal.bases.campo_latitud')"
+            :value="$latitud"
             step="0.000001"
             min="-90"
             max="90"
-            error="{{ $errors->first('latitud') }}"
+            :error="$errors->first('latitud')"
         />
 
         <x-atoms.input
             type="number"
             name="longitud"
-            label="{{ __('personal.bases.campo_longitud') }}"
-            value="{{ $longitud }}"
+            :label="__('personal.bases.campo_longitud')"
+            :value="$longitud"
             step="0.000001"
             min="-180"
             max="180"
-            error="{{ $errors->first('longitud') }}"
+            :error="$errors->first('longitud')"
         />
     </x-molecules.form-section>
 
     <x-organisms.form-actions-bar :status="__('personal.bases.estado_form')">
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.bases.index') }}" variant="outline">
+            <x-atoms.button :href="route('panel.bases.index')" variant="outline">
                 {{ __('ui.action.cancel') }}
             </x-atoms.button>
             <x-atoms.button type="submit" variant="primary">

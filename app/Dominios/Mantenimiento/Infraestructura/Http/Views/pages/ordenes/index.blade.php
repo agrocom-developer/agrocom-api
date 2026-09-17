@@ -55,7 +55,7 @@
             >
                 @if ($puedeCrear)
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.ordenes-mantenimiento.create') }}" variant="primary" icon="add">
+                        <x-atoms.button :href="route('panel.ordenes-mantenimiento.create')" variant="primary" icon="add">
                             {{ __('mantenimiento.ordenes.nuevo') }}
                         </x-atoms.button>
                     </x-slot:actions>
@@ -82,10 +82,10 @@
                     <x-atoms.select
                         name="estado"
                         id="filtro-estado"
-                        label="{{ __('mantenimiento.ordenes.filtro_estado') }}"
+                        :label="__('mantenimiento.ordenes.filtro_estado')"
                         :options="$opcionesEstado"
                         :value="$filtros['estado']"
-                        placeholder="{{ __('mantenimiento.ordenes.filtro_todos') }}"
+                        :placeholder="__('mantenimiento.ordenes.filtro_todos')"
                     />
 
                     @php
@@ -97,10 +97,10 @@
                     <x-atoms.select
                         name="equipo_tipo"
                         id="filtro-equipo-tipo"
-                        label="{{ __('mantenimiento.ordenes.filtro_equipo_tipo') }}"
+                        :label="__('mantenimiento.ordenes.filtro_equipo_tipo')"
                         :options="$opcionesEquipoTipo"
                         :value="$filtros['equipo_tipo']"
-                        placeholder="{{ __('mantenimiento.ordenes.filtro_todos') }}"
+                        :placeholder="__('mantenimiento.ordenes.filtro_todos')"
                     />
 
                     <div class="ag-filtros__acciones ag-ordenes-mantenimiento__filtros-acciones">
@@ -109,7 +109,7 @@
                         </x-atoms.button>
 
                         @if ($hayFiltrosActivos)
-                            <x-atoms.button href="{{ route('panel.ordenes-mantenimiento.index') }}" variant="text" size="md">
+                            <x-atoms.button :href="route('panel.ordenes-mantenimiento.index')" variant="text" size="md">
                                 {{ __('mantenimiento.ordenes.limpiar_filtro') }}
                             </x-atoms.button>
                         @endif
@@ -155,7 +155,7 @@
                             <span role="cell">{{ $orden->fecha_cierre?->format('d/m/Y') ?? __('mantenimiento.ordenes.sin_fecha_cierre') }}</span>
 
                             <span role="cell" class="ag-ordenes-mantenimiento__acciones">
-                                <x-atoms.button href="{{ route('panel.ordenes-mantenimiento.edit', $orden) }}" variant="outline" size="sm" icon="visibility">
+                                <x-atoms.button :href="route('panel.ordenes-mantenimiento.edit', $orden)" variant="outline" size="sm" icon="visibility">
                                     {{ __('mantenimiento.ordenes.ver_accion') }}
                                 </x-atoms.button>
                             </span>
@@ -166,7 +166,7 @@
                 @if ($ordenes->hasPages())
                     <nav class="ag-ordenes-mantenimiento__paginacion" aria-label="{{ __('mantenimiento.ordenes.paginacion_aria') }}">
                         @if (! $ordenes->onFirstPage())
-                            <x-atoms.button href="{{ $ordenes->previousPageUrl() }}" variant="outline" size="sm" icon="chevron_left">
+                            <x-atoms.button :href="$ordenes->previousPageUrl()" variant="outline" size="sm" icon="chevron_left">
                                 {{ __('mantenimiento.ordenes.paginacion_anterior') }}
                             </x-atoms.button>
                         @endif
@@ -176,7 +176,7 @@
                         </span>
 
                         @if ($ordenes->hasMorePages())
-                            <x-atoms.button href="{{ $ordenes->nextPageUrl() }}" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
+                            <x-atoms.button :href="$ordenes->nextPageUrl()" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
                                 {{ __('mantenimiento.ordenes.paginacion_siguiente') }}
                             </x-atoms.button>
                         @endif

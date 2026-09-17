@@ -21,24 +21,24 @@
     <x-atoms.select
         name="{{ $prefijo }}[lote_id]"
         id="{{ $idBase }}-lote"
-        label="{{ __('operaciones.ordenes.campo_lote') }}"
+        :label="__('operaciones.ordenes.campo_lote')"
         :options="$lotesDisponibles"
         :value="$lote['lote_id'] ?? ''"
         :placeholder="__('operaciones.ordenes.campo_lote_placeholder')"
         required
-        error="{{ $errors->first($erroresPrefijo.'.lote_id') }}"
+        :error="$errors->first($erroresPrefijo.'.lote_id')"
     />
 
     <x-atoms.input
         type="number"
         name="{{ $prefijo }}[hectareas_solicitadas]"
         id="{{ $idBase }}-hectareas"
-        label="{{ __('operaciones.ordenes.campo_lote_hectareas') }}"
-        value="{{ $lote['hectareas_solicitadas'] ?? '' }}"
+        :label="__('operaciones.ordenes.campo_lote_hectareas')"
+        :value="$lote['hectareas_solicitadas'] ?? ''"
         min="0.01"
         step="0.01"
         required
-        error="{{ $errors->first($erroresPrefijo.'.hectareas_solicitadas') }}"
+        :error="$errors->first($erroresPrefijo.'.hectareas_solicitadas')"
     />
 
     <div class="ag-form-section__field--full ag-ordenes-form__lote-pie">

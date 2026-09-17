@@ -61,7 +61,7 @@
         :subtitle="__('mantenimiento.baterias.subtitulo_form')"
     >
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.baterias.index') }}" variant="outline" icon="arrow_back">
+            <x-atoms.button :href="route('panel.baterias.index')" variant="outline" icon="arrow_back">
                 {{ __('mantenimiento.baterias.volver') }}
             </x-atoms.button>
         </x-slot:actions>
@@ -80,10 +80,10 @@
         <x-atoms.input
             type="text"
             name="identificador"
-            label="{{ __('mantenimiento.baterias.campo_identificador') }}"
-            value="{{ $identificador }}"
+            :label="__('mantenimiento.baterias.campo_identificador')"
+            :value="$identificador"
             required
-            error="{{ $errors->first('identificador') }}"
+            :error="$errors->first('identificador')"
         />
 
         @if ($esEdicion)
@@ -94,54 +94,54 @@
             <x-atoms.input
                 type="number"
                 id="ciclos_inicial"
-                label="{{ __('mantenimiento.baterias.campo_ciclos_inicial') }}"
-                value="{{ $ciclosInicial }}"
-                help="{{ __('mantenimiento.baterias.campo_ciclos_inicial_ayuda') }}"
+                :label="__('mantenimiento.baterias.campo_ciclos_inicial')"
+                :value="$ciclosInicial"
+                :help="__('mantenimiento.baterias.campo_ciclos_inicial_ayuda')"
                 readonly
             />
         @else
             <x-atoms.input
                 type="number"
                 name="ciclos_inicial"
-                label="{{ __('mantenimiento.baterias.campo_ciclos_inicial') }}"
-                value="{{ $ciclosInicial }}"
-                help="{{ __('mantenimiento.baterias.campo_ciclos_inicial_ayuda') }}"
+                :label="__('mantenimiento.baterias.campo_ciclos_inicial')"
+                :value="$ciclosInicial"
+                :help="__('mantenimiento.baterias.campo_ciclos_inicial_ayuda')"
                 min="0"
                 required
-                error="{{ $errors->first('ciclos_inicial') }}"
+                :error="$errors->first('ciclos_inicial')"
             />
         @endif
 
         <x-atoms.input
             type="number"
             name="ciclos_acumulados"
-            label="{{ __('mantenimiento.baterias.campo_ciclos') }}"
-            value="{{ $ciclosAcumulados }}"
-            help="{{ $esEdicion ? __('mantenimiento.baterias.campo_ciclos_correccion_ayuda') : null }}"
+            :label="__('mantenimiento.baterias.campo_ciclos')"
+            :value="$ciclosAcumulados"
+            :help="$esEdicion ? __('mantenimiento.baterias.campo_ciclos_correccion_ayuda') : null"
             min="0"
             required
-            error="{{ $errors->first('ciclos_acumulados') }}"
+            :error="$errors->first('ciclos_acumulados')"
         />
 
         @if ($esEdicion)
             <x-atoms.input
                 type="text"
                 name="motivo_correccion"
-                label="{{ __('mantenimiento.baterias.campo_motivo_correccion') }}"
-                value="{{ $motivoCorreccion }}"
-                help="{{ __('mantenimiento.baterias.campo_motivo_correccion_ayuda') }}"
-                error="{{ $errors->first('motivo_correccion') }}"
+                :label="__('mantenimiento.baterias.campo_motivo_correccion')"
+                :value="$motivoCorreccion"
+                :help="__('mantenimiento.baterias.campo_motivo_correccion_ayuda')"
+                :error="$errors->first('motivo_correccion')"
             />
         @endif
 
         <x-atoms.select
             name="base_id"
             id="base_id"
-            label="{{ __('mantenimiento.baterias.campo_base') }}"
+            :label="__('mantenimiento.baterias.campo_base')"
             :options="$basesDisponibles"
             :value="$baseId"
-            placeholder="{{ __('mantenimiento.baterias.campo_base_placeholder') }}"
-            error="{{ $errors->first('base_id') }}"
+            :placeholder="__('mantenimiento.baterias.campo_base_placeholder')"
+            :error="$errors->first('base_id')"
         />
 
         @php
@@ -152,17 +152,17 @@
         <x-atoms.select
             name="estado"
             id="estado"
-            label="{{ __('mantenimiento.baterias.campo_estado') }}"
+            :label="__('mantenimiento.baterias.campo_estado')"
             :options="$opcionesEstado"
             :value="$estado"
             required
-            error="{{ $errors->first('estado') }}"
+            :error="$errors->first('estado')"
         />
     </x-molecules.form-section>
 
     <x-organisms.form-actions-bar :status="__('mantenimiento.baterias.estado_form')">
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.baterias.index') }}" variant="outline">
+            <x-atoms.button :href="route('panel.baterias.index')" variant="outline">
                 {{ __('ui.action.cancel') }}
             </x-atoms.button>
             <x-atoms.button type="submit" variant="primary">

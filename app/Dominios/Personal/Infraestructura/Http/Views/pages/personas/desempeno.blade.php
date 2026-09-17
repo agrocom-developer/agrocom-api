@@ -59,7 +59,7 @@
         :vista-actual="__('personal.personas.titulo')"
     >
         <div class="ag-persona-desempeno">
-            <x-atoms.button href="{{ route('panel.personas.index') }}" variant="text" size="sm" icon="arrow_back">
+            <x-atoms.button :href="route('panel.personas.index')" variant="text" size="sm" icon="arrow_back">
                 {{ __('personal.desempenio.volver') }}
             </x-atoms.button>
 
@@ -74,24 +74,24 @@
                 class="ag-filtros ag-persona-desempeno__filtros"
                 data-ag-desempenio-filtros
             >
-                <x-atoms.date name="desde" label="{{ __('personal.desempenio.filtro_desde') }}" :value="$filtros['desde']" required />
-                <x-atoms.date name="hasta" label="{{ __('personal.desempenio.filtro_hasta') }}" :value="$filtros['hasta']" required />
+                <x-atoms.date name="desde" :label="__('personal.desempenio.filtro_desde')" :value="$filtros['desde']" required />
+                <x-atoms.date name="hasta" :label="__('personal.desempenio.filtro_hasta')" :value="$filtros['hasta']" required />
 
                 <x-atoms.select
                     name="cliente_id"
-                    label="{{ __('personal.desempenio.filtro_cliente') }}"
+                    :label="__('personal.desempenio.filtro_cliente')"
                     :options="$opcionesCliente"
                     :value="$filtros['cliente_id']"
-                    placeholder="{{ __('personal.desempenio.filtro_cliente_placeholder') }}"
+                    :placeholder="__('personal.desempenio.filtro_cliente_placeholder')"
                     data-ag-desempenio-cliente
                 />
 
                 <x-atoms.select
                     name="campania_id"
-                    label="{{ __('personal.desempenio.filtro_campania') }}"
+                    :label="__('personal.desempenio.filtro_campania')"
                     :options="$opcionesCampania"
                     :value="$filtros['campania_id']"
-                    placeholder="{{ __('personal.desempenio.filtro_campania_placeholder') }}"
+                    :placeholder="__('personal.desempenio.filtro_campania_placeholder')"
                     data-ag-desempenio-campania
                     data-mapa-cliente-campania="{{ json_encode($resultado->clientePorCampania) }}"
                 />
@@ -101,7 +101,7 @@
                         {{ __('personal.desempenio.filtrar') }}
                     </x-atoms.button>
 
-                    <x-atoms.button href="{{ route('panel.personas.desempenio', $persona) }}" variant="text" size="md">
+                    <x-atoms.button :href="route('panel.personas.desempenio', $persona)" variant="text" size="md">
                         {{ __('personal.desempenio.limpiar_filtro') }}
                     </x-atoms.button>
                 </div>

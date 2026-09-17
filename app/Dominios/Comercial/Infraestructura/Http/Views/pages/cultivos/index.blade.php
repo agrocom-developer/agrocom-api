@@ -43,7 +43,7 @@
             >
                 @puede('comercial.cultivo.crear')
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.cultivos.create') }}" variant="primary" icon="add">
+                        <x-atoms.button :href="route('panel.cultivos.create')" variant="primary" icon="add">
                             {{ __('comercial.cultivos.nuevo') }}
                         </x-atoms.button>
                     </x-slot:actions>
@@ -66,7 +66,7 @@
             @if ($hayFiltrosActivos || $cultivos->isNotEmpty())
                 <div class="ag-table-toolbar">
                     <x-organisms.filter-panel
-                        action="{{ route('panel.cultivos.index') }}"
+                        :action="route('panel.cultivos.index')"
                         :active-count="$filtrosActivosCount"
                     >
                         <input type="hidden" name="q" value="{{ $filtros['q'] }}">
@@ -74,36 +74,36 @@
                         <x-atoms.select
                             name="tipo_cultivo"
                             id="filtro-tipo-cultivo"
-                            label="{{ __('comercial.cultivos.filtro_tipo_cultivo') }}"
+                            :label="__('comercial.cultivos.filtro_tipo_cultivo')"
                             :options="collect($tiposCultivo)->mapWithKeys(fn ($tipo) => [$tipo->value => __('comercial.cultivos.tipo_cultivo_opcion.'.$tipo->value)])"
                             :value="$filtros['tipo_cultivo'] !== '' ? $filtros['tipo_cultivo'] : null"
-                            placeholder="{{ __('comercial.cultivos.filtro_todos') }}"
+                            :placeholder="__('comercial.cultivos.filtro_todos')"
                         />
 
                         <x-atoms.select
                             name="ciclo_vida"
                             id="filtro-ciclo-vida"
-                            label="{{ __('comercial.cultivos.filtro_ciclo_vida') }}"
+                            :label="__('comercial.cultivos.filtro_ciclo_vida')"
                             :options="collect($ciclosVida)->mapWithKeys(fn ($ciclo) => [$ciclo->value => __('comercial.cultivos.ciclo_vida_opcion.'.$ciclo->value)])"
                             :value="$filtros['ciclo_vida'] !== '' ? $filtros['ciclo_vida'] : null"
-                            placeholder="{{ __('comercial.cultivos.filtro_todos') }}"
+                            :placeholder="__('comercial.cultivos.filtro_todos')"
                         />
 
                         <x-atoms.select
                             name="activo"
                             id="filtro-activo"
-                            label="{{ __('comercial.cultivos.filtro_estado') }}"
+                            :label="__('comercial.cultivos.filtro_estado')"
                             :options="[
                                 '1' => __('comercial.cultivos.estado_activo'),
                                 '0' => __('comercial.cultivos.estado_inactivo'),
                             ]"
                             :value="$filtros['activo'] !== '' ? $filtros['activo'] : null"
-                            placeholder="{{ __('comercial.cultivos.filtro_todos') }}"
+                            :placeholder="__('comercial.cultivos.filtro_todos')"
                         />
                     </x-organisms.filter-panel>
 
                     <x-molecules.table-search
-                        action="{{ route('panel.cultivos.index') }}"
+                        :action="route('panel.cultivos.index')"
                         :value="$filtros['q']"
                         :placeholder="__('comercial.cultivos.filtro_busqueda_placeholder')"
                         :clear-label="__('ui.tabla.buscador_limpiar')"
@@ -166,7 +166,7 @@
                             <span role="cell" class="ag-cultivos__acciones">
                                 <x-organisms.row-actions>
                                     @puede('comercial.cultivo.editar')
-                                        <x-atoms.button href="{{ route('panel.cultivos.edit', $cultivo) }}" variant="warning-outline" size="sm" icon="edit">
+                                        <x-atoms.button :href="route('panel.cultivos.edit', $cultivo)" variant="warning-outline" size="sm" icon="edit">
                                             {{ __('comercial.cultivos.editar') }}
                                         </x-atoms.button>
                                     @endpuede

@@ -42,7 +42,7 @@
             >
                 @puede('seguridad.usuario.crear')
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.usuarios.create') }}" variant="primary" icon="add">
+                        <x-atoms.button :href="route('panel.usuarios.create')" variant="primary" icon="add">
                             {{ __('seguridad.usuarios.nueva') }}
                         </x-atoms.button>
                     </x-slot:actions>
@@ -68,25 +68,25 @@
             @if ($hayFiltrosActivos || $usuarios->isNotEmpty())
                 <div class="ag-table-toolbar">
                     <x-organisms.filter-panel
-                        action="{{ route('panel.usuarios.index') }}"
+                        :action="route('panel.usuarios.index')"
                         :active-count="$filtros['tipo'] !== '' ? 1 : 0"
                     >
                         <input type="hidden" name="q" value="{{ $filtros['q'] }}">
                         <x-atoms.select
                             name="tipo"
                             id="filtro-tipo"
-                            label="{{ __('seguridad.usuarios.filtro_tipo') }}"
+                            :label="__('seguridad.usuarios.filtro_tipo')"
                             :options="[
                                 'interno' => __('seguridad.usuarios.tipo_interno'),
                                 'cliente' => __('seguridad.usuarios.tipo_cliente'),
                             ]"
                             :value="$filtros['tipo']"
-                            placeholder="{{ __('seguridad.usuarios.filtro_tipo_todos') }}"
+                            :placeholder="__('seguridad.usuarios.filtro_tipo_todos')"
                         />
                     </x-organisms.filter-panel>
 
                     <x-molecules.table-search
-                        action="{{ route('panel.usuarios.index') }}"
+                        :action="route('panel.usuarios.index')"
                         :value="$filtros['q']"
                         :placeholder="__('seguridad.usuarios.filtro_busqueda_placeholder')"
                         :clear-label="__('ui.tabla.buscador_limpiar')"
@@ -150,7 +150,7 @@
                             <span role="cell" class="ag-usuarios__acciones">
                                 <x-organisms.row-actions>
                                     @puede('seguridad.usuario.editar')
-                                        <x-atoms.button href="{{ route('panel.usuarios.edit', $usuario) }}" variant="warning-outline" size="sm" icon="edit">
+                                        <x-atoms.button :href="route('panel.usuarios.edit', $usuario)" variant="warning-outline" size="sm" icon="edit">
                                             {{ __('seguridad.usuarios.editar') }}
                                         </x-atoms.button>
                                     @endpuede

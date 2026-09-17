@@ -43,7 +43,7 @@
             >
                 @puede('finanzas.rendicion.crear')
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.rendiciones.create') }}" variant="primary" icon="add">
+                        <x-atoms.button :href="route('panel.rendiciones.create')" variant="primary" icon="add">
                             {{ __('finanzas.rendiciones.nueva') }}
                         </x-atoms.button>
                     </x-slot:actions>
@@ -65,19 +65,19 @@
                 <x-atoms.select
                     name="base_id"
                     id="filtro-base"
-                    label="{{ __('finanzas.rendiciones.filtro_base') }}"
+                    :label="__('finanzas.rendiciones.filtro_base')"
                     :options="$basesDisponibles"
                     :value="(string) $filtros['base_id']"
-                    placeholder="{{ __('finanzas.rendiciones.filtro_base_placeholder') }}"
+                    :placeholder="__('finanzas.rendiciones.filtro_base_placeholder')"
                 />
 
                 <x-atoms.select
                     name="estado"
                     id="filtro-estado"
-                    label="{{ __('finanzas.rendiciones.filtro_estado') }}"
+                    :label="__('finanzas.rendiciones.filtro_estado')"
                     :options="collect(['abierta' => __('finanzas.rendiciones.estado.abierta'), 'presentada' => __('finanzas.rendiciones.estado.presentada'), 'aprobada' => __('finanzas.rendiciones.estado.aprobada')])"
-                    value="{{ $filtros['estado'] }}"
-                    placeholder="{{ __('finanzas.rendiciones.filtro_estado_placeholder') }}"
+                    :value="$filtros['estado']"
+                    :placeholder="__('finanzas.rendiciones.filtro_estado_placeholder')"
                 />
 
                 <div class="ag-filtros__acciones ag-rendiciones__filtros-acciones">
@@ -86,7 +86,7 @@
                     </x-atoms.button>
 
                     @if ($hayFiltrosActivos)
-                        <x-atoms.button href="{{ route('panel.rendiciones.index') }}" variant="text" size="md">
+                        <x-atoms.button :href="route('panel.rendiciones.index')" variant="text" size="md">
                             {{ __('finanzas.rendiciones.limpiar_filtro') }}
                         </x-atoms.button>
                     @endif
@@ -130,7 +130,7 @@
                             </span>
 
                             <span role="cell" class="ag-rendiciones__acciones">
-                                <x-atoms.button href="{{ route('panel.rendiciones.show', $rendicion) }}" variant="outline" size="sm" icon="visibility">
+                                <x-atoms.button :href="route('panel.rendiciones.show', $rendicion)" variant="outline" size="sm" icon="visibility">
                                     {{ __('finanzas.rendiciones.ver_accion') }}
                                 </x-atoms.button>
                             </span>
@@ -141,7 +141,7 @@
                 @if ($rendiciones->hasPages())
                     <nav class="ag-rendiciones__paginacion" aria-label="{{ __('finanzas.rendiciones.paginacion_aria') }}">
                         @if (! $rendiciones->onFirstPage())
-                            <x-atoms.button href="{{ $rendiciones->previousPageUrl() }}" variant="outline" size="sm" icon="chevron_left">
+                            <x-atoms.button :href="$rendiciones->previousPageUrl()" variant="outline" size="sm" icon="chevron_left">
                                 {{ __('finanzas.rendiciones.paginacion_anterior') }}
                             </x-atoms.button>
                         @endif
@@ -151,7 +151,7 @@
                         </span>
 
                         @if ($rendiciones->hasMorePages())
-                            <x-atoms.button href="{{ $rendiciones->nextPageUrl() }}" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
+                            <x-atoms.button :href="$rendiciones->nextPageUrl()" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
                                 {{ __('finanzas.rendiciones.paginacion_siguiente') }}
                             </x-atoms.button>
                         @endif

@@ -54,7 +54,7 @@
             >
                 @puede('finanzas.combustible.crear')
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.combustible.create') }}" variant="primary" icon="add">
+                        <x-atoms.button :href="route('panel.combustible.create')" variant="primary" icon="add">
                             {{ __('finanzas.combustible.nuevo') }}
                         </x-atoms.button>
                     </x-slot:actions>
@@ -76,42 +76,42 @@
                 <x-atoms.select
                     name="base_id"
                     id="filtro-base"
-                    label="{{ __('finanzas.combustible.filtro_base') }}"
+                    :label="__('finanzas.combustible.filtro_base')"
                     :options="$basesDisponibles"
                     :value="(string) $filtros['base_id']"
-                    placeholder="{{ __('finanzas.combustible.filtro_base_placeholder') }}"
+                    :placeholder="__('finanzas.combustible.filtro_base_placeholder')"
                 />
 
                 <x-atoms.select
                     name="equipo_trabajo_id"
                     id="filtro-equipo"
-                    label="{{ __('finanzas.combustible.filtro_equipo') }}"
+                    :label="__('finanzas.combustible.filtro_equipo')"
                     :options="$equiposDisponibles"
                     :value="(string) $filtros['equipo_trabajo_id']"
-                    placeholder="{{ __('finanzas.combustible.filtro_equipo_placeholder') }}"
+                    :placeholder="__('finanzas.combustible.filtro_equipo_placeholder')"
                 />
 
                 <x-atoms.select
                     name="campania_id"
                     id="filtro-campania"
-                    label="{{ __('finanzas.combustible.filtro_campania') }}"
+                    :label="__('finanzas.combustible.filtro_campania')"
                     :options="$campaniasDisponibles"
                     :value="(string) $filtros['campania_id']"
-                    placeholder="{{ __('finanzas.combustible.filtro_campania_placeholder') }}"
+                    :placeholder="__('finanzas.combustible.filtro_campania_placeholder')"
                 />
 
                 <x-atoms.date
                     name="desde"
                     id="filtro-desde"
-                    label="{{ __('finanzas.combustible.filtro_desde') }}"
-                    value="{{ $filtros['desde'] }}"
+                    :label="__('finanzas.combustible.filtro_desde')"
+                    :value="$filtros['desde']"
                 />
 
                 <x-atoms.date
                     name="hasta"
                     id="filtro-hasta"
-                    label="{{ __('finanzas.combustible.filtro_hasta') }}"
-                    value="{{ $filtros['hasta'] }}"
+                    :label="__('finanzas.combustible.filtro_hasta')"
+                    :value="$filtros['hasta']"
                 />
 
                 <div class="ag-filtros__acciones ag-combustible__filtros-acciones">
@@ -120,7 +120,7 @@
                     </x-atoms.button>
 
                     @if ($hayFiltrosActivos)
-                        <x-atoms.button href="{{ route('panel.combustible.index') }}" variant="text" size="md">
+                        <x-atoms.button :href="route('panel.combustible.index')" variant="text" size="md">
                             {{ __('finanzas.combustible.limpiar_filtro') }}
                         </x-atoms.button>
                     @endif
@@ -187,7 +187,7 @@
                 @if ($combustibles->hasPages())
                     <nav class="ag-combustible__paginacion" aria-label="{{ __('finanzas.combustible.paginacion_aria') }}">
                         @if (! $combustibles->onFirstPage())
-                            <x-atoms.button href="{{ $combustibles->previousPageUrl() }}" variant="outline" size="sm" icon="chevron_left">
+                            <x-atoms.button :href="$combustibles->previousPageUrl()" variant="outline" size="sm" icon="chevron_left">
                                 {{ __('finanzas.combustible.paginacion_anterior') }}
                             </x-atoms.button>
                         @endif
@@ -197,7 +197,7 @@
                         </span>
 
                         @if ($combustibles->hasMorePages())
-                            <x-atoms.button href="{{ $combustibles->nextPageUrl() }}" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
+                            <x-atoms.button :href="$combustibles->nextPageUrl()" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
                                 {{ __('finanzas.combustible.paginacion_siguiente') }}
                             </x-atoms.button>
                         @endif

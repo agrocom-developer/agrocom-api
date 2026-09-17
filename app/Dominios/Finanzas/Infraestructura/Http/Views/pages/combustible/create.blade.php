@@ -69,7 +69,7 @@
                     :subtitle="__('finanzas.combustible.subtitulo_form')"
                 >
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.combustible.index') }}" variant="outline" icon="arrow_back">
+                        <x-atoms.button :href="route('panel.combustible.index')" variant="outline" icon="arrow_back">
                             {{ __('finanzas.combustible.volver') }}
                         </x-atoms.button>
                     </x-slot:actions>
@@ -82,20 +82,20 @@
                     <x-atoms.date
                         name="fecha"
                         id="fecha"
-                        label="{{ __('finanzas.combustible.campo_fecha') }}"
-                        value="{{ $fecha }}"
+                        :label="__('finanzas.combustible.campo_fecha')"
+                        :value="$fecha"
                         required
-                        error="{{ $errors->first('fecha') }}"
+                        :error="$errors->first('fecha')"
                         data-ag-combustible-fecha
                     />
 
                     <x-atoms.select
                         name="base_id"
                         id="base_id"
-                        label="{{ __('finanzas.combustible.campo_base') }}"
+                        :label="__('finanzas.combustible.campo_base')"
                         :options="$basesDisponibles"
                         :value="(string) $baseId"
-                        placeholder="{{ __('finanzas.combustible.campo_base_placeholder') }}"
+                        :placeholder="__('finanzas.combustible.campo_base_placeholder')"
                         :error="$errors->first('base_id')"
                         required
                     />
@@ -103,10 +103,10 @@
                     <x-atoms.select
                         name="equipo_trabajo_id"
                         id="equipo_trabajo_id"
-                        label="{{ __('finanzas.combustible.campo_equipo') }}"
+                        :label="__('finanzas.combustible.campo_equipo')"
                         :options="$equiposDisponibles"
                         :value="(string) $equipoTrabajoId"
-                        placeholder="{{ __('finanzas.combustible.campo_equipo_placeholder') }}"
+                        :placeholder="__('finanzas.combustible.campo_equipo_placeholder')"
                         :error="$errors->first('equipo_trabajo_id')"
                         required
                         data-ag-combustible-equipo
@@ -114,22 +114,22 @@
 
                     <x-atoms.select
                         name="campania_id"
-                        label="{{ __('finanzas.combustible.campo_campania') }}"
-                        placeholder="{{ __('finanzas.combustible.campo_campania_placeholder') }}"
+                        :label="__('finanzas.combustible.campo_campania')"
+                        :placeholder="__('finanzas.combustible.campo_campania_placeholder')"
                         :options="$campaniasDisponibles"
-                        value="{{ $campaniaId }}"
-                        help="{{ __('finanzas.combustible.campo_campania_ayuda') }}"
-                        error="{{ $errors->first('campania_id') }}"
+                        :value="$campaniaId"
+                        :help="__('finanzas.combustible.campo_campania_ayuda')"
+                        :error="$errors->first('campania_id')"
                     />
 
                     <x-atoms.select
                         name="recurso"
                         id="recurso"
-                        label="{{ __('finanzas.combustible.campo_recurso') }}"
+                        :label="__('finanzas.combustible.campo_recurso')"
                         :options="$recursosDisponibles"
                         :value="(string) $recurso"
-                        placeholder="{{ __('finanzas.combustible.campo_recurso_placeholder') }}"
-                        help="{{ __('finanzas.combustible.campo_recurso_ayuda') }}"
+                        :placeholder="__('finanzas.combustible.campo_recurso_placeholder')"
+                        :help="__('finanzas.combustible.campo_recurso_ayuda')"
                         :error="$errors->first('recurso')"
                         :disabled="$recursosDisponibles->isEmpty()"
                         required
@@ -138,39 +138,39 @@
                     <x-atoms.input
                         type="number"
                         name="litros"
-                        label="{{ __('finanzas.combustible.campo_litros') }}"
-                        value="{{ $litros }}"
+                        :label="__('finanzas.combustible.campo_litros')"
+                        :value="$litros"
                         min="0.01"
                         step="0.01"
                         required
-                        error="{{ $errors->first('litros') }}"
+                        :error="$errors->first('litros')"
                     />
 
                     <x-atoms.input
                         type="number"
                         name="monto"
-                        label="{{ __('finanzas.combustible.campo_monto') }}"
-                        value="{{ $monto }}"
+                        :label="__('finanzas.combustible.campo_monto')"
+                        :value="$monto"
                         min="0.01"
                         step="0.01"
                         required
-                        error="{{ $errors->first('monto') }}"
+                        :error="$errors->first('monto')"
                     />
 
                     <div class="ag-form-section__field--full">
                         <x-atoms.input
                             type="text"
                             name="descripcion"
-                            label="{{ __('finanzas.combustible.campo_descripcion') }}"
-                            value="{{ $descripcion }}"
-                            error="{{ $errors->first('descripcion') }}"
+                            :label="__('finanzas.combustible.campo_descripcion')"
+                            :value="$descripcion"
+                            :error="$errors->first('descripcion')"
                         />
                     </div>
                 </x-molecules.form-section>
 
                 <x-organisms.form-actions-bar :status="__('finanzas.combustible.estado_form')">
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.combustible.index') }}" variant="outline">
+                        <x-atoms.button :href="route('panel.combustible.index')" variant="outline">
                             {{ __('ui.action.cancel') }}
                         </x-atoms.button>
                         <x-atoms.button type="submit" variant="primary">

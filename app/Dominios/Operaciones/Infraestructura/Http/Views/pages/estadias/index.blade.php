@@ -55,7 +55,7 @@
                 <x-atoms.date
                     name="desde"
                     id="filtro-desde"
-                    label="{{ __('operaciones.estadias.filtro_desde') }}"
+                    :label="__('operaciones.estadias.filtro_desde')"
                     :value="$filtros['desde']"
                     :placeholder="__('operaciones.estadias.filtro_placeholder_desde')"
                 />
@@ -63,7 +63,7 @@
                 <x-atoms.date
                     name="hasta"
                     id="filtro-hasta"
-                    label="{{ __('operaciones.estadias.filtro_hasta') }}"
+                    :label="__('operaciones.estadias.filtro_hasta')"
                     :value="$filtros['hasta']"
                     :placeholder="__('operaciones.estadias.filtro_placeholder_hasta')"
                 />
@@ -71,7 +71,7 @@
                 <x-atoms.select
                     name="equipo_trabajo_id"
                     id="filtro-equipo"
-                    label="{{ __('operaciones.estadias.filtro_equipo') }}"
+                    :label="__('operaciones.estadias.filtro_equipo')"
                     :options="$opcionesEquipo"
                     :value="$filtros['equipo_trabajo_id']"
                     :placeholder="__('operaciones.estadias.filtro_todos')"
@@ -86,7 +86,7 @@
                 <x-atoms.select
                     name="propiedad_id"
                     id="filtro-campo"
-                    label="{{ __('operaciones.estadias.filtro_campo') }}"
+                    :label="__('operaciones.estadias.filtro_campo')"
                     :options="$opcionesPropiedad"
                     :value="$filtros['propiedad_id']"
                     :placeholder="__('operaciones.estadias.filtro_todos')"
@@ -98,7 +98,7 @@
                     </x-atoms.button>
 
                     @if ($hayFiltrosActivos)
-                        <x-atoms.button href="{{ route('panel.estadias.index') }}" variant="text" size="md">
+                        <x-atoms.button :href="route('panel.estadias.index')" variant="text" size="md">
                             {{ __('operaciones.estadias.limpiar_filtros') }}
                         </x-atoms.button>
                     @endif
@@ -208,7 +208,7 @@
             @if ($estadias->hasPages())
                 <nav class="ag-estadias__paginacion" aria-label="{{ __('operaciones.estadias.paginacion_aria') }}">
                     @if (! $estadias->onFirstPage())
-                        <x-atoms.button href="{{ $estadias->previousPageUrl() }}" variant="outline" size="sm" icon="chevron_left">
+                        <x-atoms.button :href="$estadias->previousPageUrl()" variant="outline" size="sm" icon="chevron_left">
                             {{ __('operaciones.estadias.paginacion_anterior') }}
                         </x-atoms.button>
                     @endif
@@ -218,7 +218,7 @@
                     </span>
 
                     @if ($estadias->hasMorePages())
-                        <x-atoms.button href="{{ $estadias->nextPageUrl() }}" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
+                        <x-atoms.button :href="$estadias->nextPageUrl()" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
                             {{ __('operaciones.estadias.paginacion_siguiente') }}
                         </x-atoms.button>
                     @endif

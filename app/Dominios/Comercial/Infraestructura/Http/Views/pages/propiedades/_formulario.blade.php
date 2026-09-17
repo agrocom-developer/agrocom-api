@@ -81,7 +81,7 @@
         :subtitle="__('comercial.propiedades.subtitulo_form')"
     >
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.propiedades.index') }}" variant="outline" icon="arrow_back">
+            <x-atoms.button :href="route('panel.propiedades.index')" variant="outline" icon="arrow_back">
                 {{ __('comercial.propiedades.volver') }}
             </x-atoms.button>
         </x-slot:actions>
@@ -102,90 +102,90 @@
                 <x-atoms.select
                     name="cliente_id"
                     id="cliente_id"
-                    label="{{ __('comercial.propiedades.campo_cliente') }}"
+                    :label="__('comercial.propiedades.campo_cliente')"
                     :options="$clientesDisponibles"
                     :value="$clienteId"
-                    placeholder="{{ __('comercial.propiedades.campo_cliente_placeholder') }}"
+                    :placeholder="__('comercial.propiedades.campo_cliente_placeholder')"
                     required
-                    error="{{ $errors->first('cliente_id') }}"
+                    :error="$errors->first('cliente_id')"
                 />
 
                 <x-atoms.input
                     type="text"
                     name="nombre"
-                    label="{{ __('comercial.propiedades.campo_nombre') }}"
-                    value="{{ $nombre }}"
+                    :label="__('comercial.propiedades.campo_nombre')"
+                    :value="$nombre"
                     required
-                    error="{{ $errors->first('nombre') }}"
+                    :error="$errors->first('nombre')"
                 />
 
                 <x-atoms.input
                     type="number"
                     name="hectareas"
-                    label="{{ __('comercial.propiedades.campo_hectareas') }}"
-                    value="{{ $hectareas }}"
+                    :label="__('comercial.propiedades.campo_hectareas')"
+                    :value="$hectareas"
                     min="0.01"
                     step="0.01"
-                    help="{{ __('comercial.propiedades.campo_hectareas_ayuda') }}"
-                    error="{{ $errors->first('hectareas') }}"
+                    :help="__('comercial.propiedades.campo_hectareas_ayuda')"
+                    :error="$errors->first('hectareas')"
                 />
 
                 <x-atoms.select
                     name="departamento_id"
                     id="departamento_id"
-                    label="{{ __('comercial.propiedades.campo_departamento') }}"
+                    :label="__('comercial.propiedades.campo_departamento')"
                     :options="$departamentosDisponibles"
                     :value="$departamentoId"
-                    placeholder="{{ __('comercial.propiedades.campo_departamento_placeholder') }}"
-                    error="{{ $errors->first('departamento_id') }}"
+                    :placeholder="__('comercial.propiedades.campo_departamento_placeholder')"
+                    :error="$errors->first('departamento_id')"
                 />
 
                 <x-atoms.select
                     name="provincia_id"
                     id="provincia_id"
-                    label="{{ __('comercial.propiedades.campo_provincia') }}"
+                    :label="__('comercial.propiedades.campo_provincia')"
                     :options="[]"
                     :value="$provinciaId"
                     data-valor-inicial="{{ $provinciaId }}"
                     data-placeholder="{{ __('comercial.propiedades.campo_provincia_placeholder') }}"
-                    placeholder="{{ __('comercial.propiedades.campo_provincia_placeholder') }}"
+                    :placeholder="__('comercial.propiedades.campo_provincia_placeholder')"
                     :disabled="empty($departamentoId)"
-                    error="{{ $errors->first('provincia_id') }}"
+                    :error="$errors->first('provincia_id')"
                 />
 
                 <x-atoms.select
                     name="municipio_id"
                     id="municipio_id"
-                    label="{{ __('comercial.propiedades.campo_municipio') }}"
+                    :label="__('comercial.propiedades.campo_municipio')"
                     :options="[]"
                     :value="$municipioId"
                     data-valor-inicial="{{ $municipioId }}"
                     data-placeholder="{{ __('comercial.propiedades.campo_municipio_placeholder') }}"
-                    placeholder="{{ __('comercial.propiedades.campo_municipio_placeholder') }}"
+                    :placeholder="__('comercial.propiedades.campo_municipio_placeholder')"
                     :disabled="empty($provinciaId)"
-                    error="{{ $errors->first('municipio_id') }}"
+                    :error="$errors->first('municipio_id')"
                 />
 
                 <x-atoms.input
                     type="text"
                     name="localidad"
-                    label="{{ __('comercial.propiedades.campo_localidad') }}"
-                    value="{{ $localidad }}"
-                    placeholder="{{ __('comercial.propiedades.campo_localidad_placeholder') }}"
-                    help="{{ __('comercial.propiedades.campo_localidad_ayuda') }}"
-                    error="{{ $errors->first('localidad') }}"
+                    :label="__('comercial.propiedades.campo_localidad')"
+                    :value="$localidad"
+                    :placeholder="__('comercial.propiedades.campo_localidad_placeholder')"
+                    :help="__('comercial.propiedades.campo_localidad_ayuda')"
+                    :error="$errors->first('localidad')"
                 />
 
                 <x-molecules.color-swatch-field
                     id="color-field"
                     name="color"
                     :options="$coloresDisponibles"
-                    label="{{ __('comercial.propiedades.campo_color') }}"
-                    help="{{ __('comercial.propiedades.campo_color_ayuda') }}"
+                    :label="__('comercial.propiedades.campo_color')"
+                    :help="__('comercial.propiedades.campo_color_ayuda')"
                     :value="$color ?: null"
-                    change-label="{{ __('comercial.propiedades.campo_color_cambiar') }}"
-                    placeholder-label="{{ __('comercial.propiedades.campo_color_sin_elegir') }}"
-                    error="{{ $errors->first('color') }}"
+                    :change-label="__('comercial.propiedades.campo_color_cambiar')"
+                    :placeholder-label="__('comercial.propiedades.campo_color_sin_elegir')"
+                    :error="$errors->first('color')"
                 />
             </x-molecules.form-section>
 
@@ -196,7 +196,7 @@
                             {{ __('comercial.propiedades.volver_a_formulario_origen') }}
                         </x-atoms.button>
                     @endif
-                    <x-atoms.button href="{{ route('panel.propiedades.index') }}" variant="outline">
+                    <x-atoms.button :href="route('panel.propiedades.index')" variant="outline">
                         {{ __('ui.action.cancel') }}
                     </x-atoms.button>
                     <x-atoms.button type="submit" variant="primary">
@@ -213,7 +213,7 @@
                         <x-molecules.summary-card :title="$resumen['titulo']" :items="$resumen['items']">
                             @if ($resumen['mostrarAccion'])
                                 <x-slot:action>
-                                    <x-atoms.button href="{{ $resumen['accion']['href'] }}" variant="outline" icon="arrow_forward" block>
+                                    <x-atoms.button :href="$resumen['accion']['href']" variant="outline" icon="arrow_forward" block>
                                         {{ $resumen['accion']['label'] }}
                                     </x-atoms.button>
                                 </x-slot:action>
@@ -227,7 +227,7 @@
                         >
                             @if ($resumen['mostrarAccion'])
                                 <x-slot:action>
-                                    <x-atoms.button href="{{ $resumen['accion']['href'] }}" variant="outline" icon="add">
+                                    <x-atoms.button :href="$resumen['accion']['href']" variant="outline" icon="add">
                                         {{ $resumen['accion']['label'] }}
                                     </x-atoms.button>
                                 </x-slot:action>

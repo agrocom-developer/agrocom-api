@@ -39,7 +39,7 @@
             >
                 @puede('comercial.factura.crear')
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.facturas.create') }}" variant="primary" icon="add">
+                        <x-atoms.button :href="route('panel.facturas.create')" variant="primary" icon="add">
                             {{ __('comercial.facturas.nueva') }}
                         </x-atoms.button>
                     </x-slot:actions>
@@ -84,7 +84,7 @@
                 @if ($facturas->hasPages())
                     <nav class="ag-facturas__paginacion" aria-label="{{ __('comercial.facturas.paginacion_aria') }}">
                         @if (! $facturas->onFirstPage())
-                            <x-atoms.button href="{{ $facturas->previousPageUrl() }}" variant="outline" size="sm" icon="chevron_left">
+                            <x-atoms.button :href="$facturas->previousPageUrl()" variant="outline" size="sm" icon="chevron_left">
                                 {{ __('comercial.facturas.paginacion_anterior') }}
                             </x-atoms.button>
                         @endif
@@ -94,7 +94,7 @@
                         </span>
 
                         @if ($facturas->hasMorePages())
-                            <x-atoms.button href="{{ $facturas->nextPageUrl() }}" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
+                            <x-atoms.button :href="$facturas->nextPageUrl()" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
                                 {{ __('comercial.facturas.paginacion_siguiente') }}
                             </x-atoms.button>
                         @endif

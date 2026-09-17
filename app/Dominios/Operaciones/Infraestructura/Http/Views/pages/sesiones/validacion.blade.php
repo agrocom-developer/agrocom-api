@@ -115,7 +115,7 @@
                                     <x-atoms.textarea
                                         id="motivo-{{ $sesion->id }}"
                                         name="motivo"
-                                        label="{{ __('operaciones.sesiones_validacion.motivo_label') }}"
+                                        :label="__('operaciones.sesiones_validacion.motivo_label')"
                                         :placeholder="__('operaciones.sesiones_validacion.motivo_placeholder')"
                                         :help="__('operaciones.sesiones_validacion.motivo_ayuda')"
                                         rows="2"

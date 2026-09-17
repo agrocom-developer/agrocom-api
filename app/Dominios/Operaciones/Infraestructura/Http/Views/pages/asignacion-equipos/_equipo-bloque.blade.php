@@ -41,11 +41,11 @@
         <x-atoms.select
             name="{{ $prefijo }}[equipo_trabajo_id]"
             id="{{ $idBase }}-equipo"
-            label="{{ __('operaciones.asignacion_equipos.campo_equipo') }}"
+            :label="__('operaciones.asignacion_equipos.campo_equipo')"
             :options="$equiposDisponibles"
-            placeholder="{{ __('operaciones.asignacion_equipos.campo_equipo_placeholder') }}"
+            :placeholder="__('operaciones.asignacion_equipos.campo_equipo_placeholder')"
             required
-            error="{{ $errors->first($erroresPrefijo.'.equipo_trabajo_id') }}"
+            :error="$errors->first($erroresPrefijo.'.equipo_trabajo_id')"
         />
 
         @if ($mostrarQuitarEquipo)

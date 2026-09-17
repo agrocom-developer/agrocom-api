@@ -35,7 +35,7 @@
         :subtitle="__('mantenimiento.planes.subtitulo_form')"
     >
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.planes-mantenimiento.index') }}" variant="outline" icon="arrow_back">
+            <x-atoms.button :href="route('panel.planes-mantenimiento.index')" variant="outline" icon="arrow_back">
                 {{ __('mantenimiento.planes.volver') }}
             </x-atoms.button>
         </x-slot:actions>
@@ -54,37 +54,37 @@
         <x-atoms.input
             type="text"
             name="modelo"
-            label="{{ __('mantenimiento.planes.campo_modelo') }}"
-            value="{{ $modelo }}"
-            help="{{ __('mantenimiento.planes.campo_modelo_ayuda') }}"
+            :label="__('mantenimiento.planes.campo_modelo')"
+            :value="$modelo"
+            :help="__('mantenimiento.planes.campo_modelo_ayuda')"
             required
-            error="{{ $errors->first('modelo') }}"
+            :error="$errors->first('modelo')"
         />
 
         <x-atoms.input
             type="text"
             name="tarea"
-            label="{{ __('mantenimiento.planes.campo_tarea') }}"
-            value="{{ $tarea }}"
+            :label="__('mantenimiento.planes.campo_tarea')"
+            :value="$tarea"
             required
-            error="{{ $errors->first('tarea') }}"
+            :error="$errors->first('tarea')"
         />
 
         <x-atoms.input
             type="number"
             name="horas_umbral"
-            label="{{ __('mantenimiento.planes.campo_horas_umbral') }}"
-            value="{{ $horasUmbral }}"
+            :label="__('mantenimiento.planes.campo_horas_umbral')"
+            :value="$horasUmbral"
             min="0.01"
             step="0.01"
             required
-            error="{{ $errors->first('horas_umbral') }}"
+            :error="$errors->first('horas_umbral')"
         />
     </x-molecules.form-section>
 
     <x-organisms.form-actions-bar :status="__('mantenimiento.planes.estado_form')">
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.planes-mantenimiento.index') }}" variant="outline">
+            <x-atoms.button :href="route('panel.planes-mantenimiento.index')" variant="outline">
                 {{ __('ui.action.cancel') }}
             </x-atoms.button>
             <x-atoms.button type="submit" variant="primary">

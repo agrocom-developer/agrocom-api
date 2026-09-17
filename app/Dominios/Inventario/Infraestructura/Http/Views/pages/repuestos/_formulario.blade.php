@@ -36,7 +36,7 @@
         :subtitle="__('inventario.repuestos.subtitulo_form')"
     >
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.repuestos.index') }}" variant="outline" icon="arrow_back">
+            <x-atoms.button :href="route('panel.repuestos.index')" variant="outline" icon="arrow_back">
                 {{ __('inventario.repuestos.volver') }}
             </x-atoms.button>
         </x-slot:actions>
@@ -55,46 +55,46 @@
         <x-atoms.input
             type="text"
             name="codigo"
-            label="{{ __('inventario.repuestos.campo_codigo') }}"
-            value="{{ $codigo }}"
+            :label="__('inventario.repuestos.campo_codigo')"
+            :value="$codigo"
             required
-            error="{{ $errors->first('codigo') }}"
+            :error="$errors->first('codigo')"
         />
 
         <x-atoms.input
             type="text"
             name="descripcion"
-            label="{{ __('inventario.repuestos.campo_descripcion') }}"
-            value="{{ $descripcion }}"
+            :label="__('inventario.repuestos.campo_descripcion')"
+            :value="$descripcion"
             required
-            error="{{ $errors->first('descripcion') }}"
+            :error="$errors->first('descripcion')"
         />
 
         <x-atoms.input
             type="text"
             name="unidad"
-            label="{{ __('inventario.repuestos.campo_unidad') }}"
-            value="{{ $unidad }}"
-            placeholder="{{ __('inventario.repuestos.campo_unidad_placeholder') }}"
+            :label="__('inventario.repuestos.campo_unidad')"
+            :value="$unidad"
+            :placeholder="__('inventario.repuestos.campo_unidad_placeholder')"
             required
-            error="{{ $errors->first('unidad') }}"
+            :error="$errors->first('unidad')"
         />
 
         <x-atoms.input
             type="number"
             name="costo_unitario"
-            label="{{ __('inventario.repuestos.campo_costo') }}"
-            value="{{ $costoUnitario }}"
-            placeholder="{{ __('inventario.repuestos.campo_costo_placeholder') }}"
+            :label="__('inventario.repuestos.campo_costo')"
+            :value="$costoUnitario"
+            :placeholder="__('inventario.repuestos.campo_costo_placeholder')"
             min="0"
             step="0.01"
-            error="{{ $errors->first('costo_unitario') }}"
+            :error="$errors->first('costo_unitario')"
         />
     </x-molecules.form-section>
 
     <x-organisms.form-actions-bar :status="__('inventario.repuestos.estado_form')">
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.repuestos.index') }}" variant="outline">
+            <x-atoms.button :href="route('panel.repuestos.index')" variant="outline">
                 {{ __('ui.action.cancel') }}
             </x-atoms.button>
             <x-atoms.button type="submit" variant="primary">

@@ -42,7 +42,7 @@
                 :subtitle="__('mantenimiento.ordenes.subtitulo_form')"
             >
                 <x-slot:actions>
-                    <x-atoms.button href="{{ route('panel.ordenes-mantenimiento.index') }}" variant="outline" icon="arrow_back">
+                    <x-atoms.button :href="route('panel.ordenes-mantenimiento.index')" variant="outline" icon="arrow_back">
                         {{ __('mantenimiento.ordenes.volver') }}
                     </x-atoms.button>
                 </x-slot:actions>
@@ -65,12 +65,12 @@
                 <x-atoms.select
                     name="equipo_tipo"
                     id="equipo_tipo"
-                    label="{{ __('mantenimiento.ordenes.campo_equipo_tipo') }}"
+                    :label="__('mantenimiento.ordenes.campo_equipo_tipo')"
                     :options="$opcionesEquipoTipo"
                     :value="$equipoTipo"
-                    placeholder="{{ __('mantenimiento.ordenes.campo_equipo_tipo_placeholder') }}"
+                    :placeholder="__('mantenimiento.ordenes.campo_equipo_tipo_placeholder')"
                     required
-                    error="{{ $errors->first('equipo_tipo') }}"
+                    :error="$errors->first('equipo_tipo')"
                     data-ag-orden-equipo-tipo
                 />
 
@@ -78,10 +78,10 @@
                     <x-atoms.select
                         name="equipo_id"
                         id="equipo_id_dron"
-                        label="{{ __('mantenimiento.ordenes.campo_equipo_dron') }}"
+                        :label="__('mantenimiento.ordenes.campo_equipo_dron')"
                         :options="$dronesDisponibles"
                         :value="$equipoTipo === 'dron' ? $equipoId : ''"
-                        placeholder="{{ __('mantenimiento.ordenes.campo_equipo_dron_placeholder') }}"
+                        :placeholder="__('mantenimiento.ordenes.campo_equipo_dron_placeholder')"
                     />
                 </div>
 
@@ -89,38 +89,38 @@
                     <x-atoms.select
                         name="equipo_id"
                         id="equipo_id_vehiculo"
-                        label="{{ __('mantenimiento.ordenes.campo_equipo_vehiculo') }}"
+                        :label="__('mantenimiento.ordenes.campo_equipo_vehiculo')"
                         :options="$vehiculosDisponibles"
                         :value="$equipoTipo === 'vehiculo' ? $equipoId : ''"
-                        placeholder="{{ __('mantenimiento.ordenes.campo_equipo_vehiculo_placeholder') }}"
-                        error="{{ $errors->first('equipo_id') }}"
+                        :placeholder="__('mantenimiento.ordenes.campo_equipo_vehiculo_placeholder')"
+                        :error="$errors->first('equipo_id')"
                     />
                 </div>
 
                 <x-atoms.select
                     name="tipo"
                     id="tipo"
-                    label="{{ __('mantenimiento.ordenes.campo_tipo') }}"
+                    :label="__('mantenimiento.ordenes.campo_tipo')"
                     :options="$opcionesTipo"
                     :value="$tipo"
-                    placeholder="{{ __('mantenimiento.ordenes.campo_tipo_placeholder') }}"
+                    :placeholder="__('mantenimiento.ordenes.campo_tipo_placeholder')"
                     required
-                    error="{{ $errors->first('tipo') }}"
+                    :error="$errors->first('tipo')"
                 />
 
                 <x-atoms.input
                     type="text"
                     name="descripcion"
-                    label="{{ __('mantenimiento.ordenes.campo_descripcion') }}"
-                    value="{{ $descripcion }}"
+                    :label="__('mantenimiento.ordenes.campo_descripcion')"
+                    :value="$descripcion"
                     required
-                    error="{{ $errors->first('descripcion') }}"
+                    :error="$errors->first('descripcion')"
                 />
             </x-molecules.form-section>
 
             <x-organisms.form-actions-bar :status="__('mantenimiento.ordenes.estado_form')">
                 <x-slot:actions>
-                    <x-atoms.button href="{{ route('panel.ordenes-mantenimiento.index') }}" variant="outline">
+                    <x-atoms.button :href="route('panel.ordenes-mantenimiento.index')" variant="outline">
                         {{ __('ui.action.cancel') }}
                     </x-atoms.button>
                     <x-atoms.button type="submit" variant="primary">

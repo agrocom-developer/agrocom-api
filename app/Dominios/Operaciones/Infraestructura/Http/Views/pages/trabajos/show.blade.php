@@ -33,7 +33,7 @@
         :menu-badges="$menuBadges"
         :version="$version"
     >
-        <x-atoms.button href="{{ route('panel.trabajos.index') }}" variant="text" size="sm" icon="arrow_back">
+        <x-atoms.button :href="route('panel.trabajos.index')" variant="text" size="sm" icon="arrow_back">
             {{ __('operaciones.trabajos.volver') }}
         </x-atoms.button>
 
@@ -147,7 +147,7 @@
             </div>
 
             @if ($trabajo->acta->pdf_path !== null)
-                <x-atoms.button href="{{ route('panel.trabajos.acta-pdf', $trabajo) }}" variant="outline" size="sm" icon="picture_as_pdf">
+                <x-atoms.button :href="route('panel.trabajos.acta-pdf', $trabajo)" variant="outline" size="sm" icon="picture_as_pdf">
                     {{ __('operaciones.trabajos.acta_descargar_pdf') }}
                 </x-atoms.button>
             @endif
@@ -161,7 +161,7 @@
                     {{ __('operaciones.trabajos.detalle_reporte_vacio') }}
                 </x-molecules.alert-strip>
             @else
-                <x-atoms.button href="{{ route('panel.trabajos.reporte-pdf', $trabajo) }}" variant="outline" size="sm" icon="picture_as_pdf">
+                <x-atoms.button :href="route('panel.trabajos.reporte-pdf', $trabajo)" variant="outline" size="sm" icon="picture_as_pdf">
                     {{ __('operaciones.trabajos.reporte_descargar_pdf') }}
                 </x-atoms.button>
             @endif
@@ -173,7 +173,7 @@
             {{ __('operaciones.trabajos.detalle_evidencias_vacio') }}
         </x-molecules.alert-strip>
 
-        <x-atoms.button href="{{ route('panel.trabajos.evidencias', $trabajo) }}" variant="outline" size="sm" icon="photo_library">
+        <x-atoms.button :href="route('panel.trabajos.evidencias', $trabajo)" variant="outline" size="sm" icon="photo_library">
             {{ __('operaciones.trabajos.evidencias_ver_galeria') }}
         </x-atoms.button>
     </x-templates.panel-layout>

@@ -40,7 +40,7 @@
             >
                 @puede('inventario.repuesto.crear')
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.repuestos.create') }}" variant="primary" icon="add">
+                        <x-atoms.button :href="route('panel.repuestos.create')" variant="primary" icon="add">
                             {{ __('inventario.repuestos.nuevo') }}
                         </x-atoms.button>
                     </x-slot:actions>
@@ -60,7 +60,7 @@
             @if ($hayFiltrosActivos || $repuestos->isNotEmpty())
                 <div class="ag-table-toolbar">
                     <x-molecules.table-search
-                        action="{{ route('panel.repuestos.index') }}"
+                        :action="route('panel.repuestos.index')"
                         :value="$filtros['q']"
                         :placeholder="__('inventario.repuestos.filtro_busqueda_placeholder')"
                         :clear-label="__('ui.tabla.buscador_limpiar')"
@@ -103,7 +103,7 @@
 
                             <span role="cell" class="ag-repuestos__acciones">
                                 @puede('inventario.repuesto.editar')
-                                    <x-atoms.button href="{{ route('panel.repuestos.edit', $repuesto) }}" variant="warning-outline" size="sm" icon="edit">
+                                    <x-atoms.button :href="route('panel.repuestos.edit', $repuesto)" variant="warning-outline" size="sm" icon="edit">
                                         {{ __('inventario.repuestos.editar') }}
                                     </x-atoms.button>
                                 @endpuede

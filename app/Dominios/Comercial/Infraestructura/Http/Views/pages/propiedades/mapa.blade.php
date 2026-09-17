@@ -53,7 +53,7 @@
                 :subtitle="__('comercial.propiedades.mapa_subtitulo')"
             >
                 <x-slot:actions>
-                    <x-atoms.button href="{{ route('panel.propiedades.edit', $propiedad) }}" variant="outline" icon="arrow_back">
+                    <x-atoms.button :href="route('panel.propiedades.edit', $propiedad)" variant="outline" icon="arrow_back">
                         {{ __('comercial.propiedades.mapa_volver') }}
                     </x-atoms.button>
                 </x-slot:actions>
@@ -249,7 +249,7 @@
 
                 <x-organisms.form-actions-bar :status="__('comercial.propiedades.estado_form')">
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.propiedades.edit', $propiedad) }}" variant="outline">
+                        <x-atoms.button :href="route('panel.propiedades.edit', $propiedad)" variant="outline">
                             {{ __('ui.action.cancel') }}
                         </x-atoms.button>
                         <x-atoms.button type="submit" variant="primary">

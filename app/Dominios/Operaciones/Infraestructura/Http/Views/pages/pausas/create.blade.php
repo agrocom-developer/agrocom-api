@@ -48,7 +48,7 @@
                     :subtitle="__('operaciones.pausas.subtitulo_form')"
                 >
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.pausas.index') }}" variant="outline" icon="arrow_back">
+                        <x-atoms.button :href="route('panel.pausas.index')" variant="outline" icon="arrow_back">
                             {{ __('operaciones.pausas.volver') }}
                         </x-atoms.button>
                     </x-slot:actions>
@@ -67,7 +67,7 @@
                     <x-atoms.select
                         name="sesion_id"
                         id="sesion_id"
-                        label="{{ __('operaciones.pausas.campo_sesion') }}"
+                        :label="__('operaciones.pausas.campo_sesion')"
                         :options="$sesionesDisponibles"
                         :value="$sesionId"
                         :placeholder="__('operaciones.pausas.campo_sesion_placeholder')"
@@ -85,7 +85,7 @@
                     <x-atoms.select
                         name="causa"
                         id="causa"
-                        label="{{ __('operaciones.pausas.campo_causa') }}"
+                        :label="__('operaciones.pausas.campo_causa')"
                         :options="$opcionesCausa"
                         :value="$causa"
                         :placeholder="__('operaciones.pausas.campo_causa_placeholder')"
@@ -95,24 +95,24 @@
 
                     <x-atoms.datetime
                         name="inicio"
-                        label="{{ __('operaciones.pausas.campo_inicio') }}"
-                        value="{{ $inicio }}"
+                        :label="__('operaciones.pausas.campo_inicio')"
+                        :value="$inicio"
                         required
-                        error="{{ $errors->first('inicio') }}"
+                        :error="$errors->first('inicio')"
                     />
 
                     <x-atoms.datetime
                         name="fin"
-                        label="{{ __('operaciones.pausas.campo_fin') }}"
-                        value="{{ $fin }}"
+                        :label="__('operaciones.pausas.campo_fin')"
+                        :value="$fin"
                         required
-                        error="{{ $errors->first('fin') }}"
+                        :error="$errors->first('fin')"
                     />
                 </x-molecules.form-section>
 
                 <x-organisms.form-actions-bar :status="__('operaciones.pausas.estado_form')">
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.pausas.index') }}" variant="outline">
+                        <x-atoms.button :href="route('panel.pausas.index')" variant="outline">
                             {{ __('ui.action.cancel') }}
                         </x-atoms.button>
                         <x-atoms.button type="submit" variant="primary">

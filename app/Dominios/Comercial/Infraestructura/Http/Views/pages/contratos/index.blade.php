@@ -81,7 +81,7 @@
             >
                 @puede('comercial.contrato.crear')
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.contratos.create') }}" variant="primary" icon="add">
+                        <x-atoms.button :href="route('panel.contratos.create')" variant="primary" icon="add">
                             {{ __('comercial.contratos.nuevo') }}
                         </x-atoms.button>
                     </x-slot:actions>
@@ -110,40 +110,40 @@
             @if ($hayFiltrosActivos || $contratos->isNotEmpty())
                 <div class="ag-table-toolbar">
                     <x-organisms.filter-panel
-                        action="{{ route('panel.contratos.index') }}"
+                        :action="route('panel.contratos.index')"
                         :active-count="$filtrosPanelActivos"
                     >
                         <input type="hidden" name="q" value="{{ $filtros['q'] }}">
                         <x-atoms.select
                             name="campania_id"
                             id="filtro-campania"
-                            label="{{ __('comercial.contratos.filtro_campania') }}"
+                            :label="__('comercial.contratos.filtro_campania')"
                             :options="$campaniasDisponibles"
                             :value="$filtros['campania_id']"
-                            placeholder="{{ __('comercial.contratos.filtro_campania_placeholder') }}"
+                            :placeholder="__('comercial.contratos.filtro_campania_placeholder')"
                         />
 
                         <x-atoms.select
                             name="cliente_id"
                             id="filtro-cliente"
-                            label="{{ __('comercial.contratos.filtro_cliente') }}"
+                            :label="__('comercial.contratos.filtro_cliente')"
                             :options="$clientesDisponibles"
                             :value="$filtros['cliente_id']"
-                            placeholder="{{ __('comercial.contratos.filtro_cliente_placeholder') }}"
+                            :placeholder="__('comercial.contratos.filtro_cliente_placeholder')"
                         />
 
                         <x-atoms.select
                             name="propiedad_id"
                             id="filtro-propiedad"
-                            label="{{ __('comercial.contratos.filtro_propiedad') }}"
+                            :label="__('comercial.contratos.filtro_propiedad')"
                             :options="$propiedadesDisponibles"
                             :value="$filtros['propiedad_id']"
-                            placeholder="{{ __('comercial.contratos.filtro_propiedad_placeholder') }}"
+                            :placeholder="__('comercial.contratos.filtro_propiedad_placeholder')"
                         />
                     </x-organisms.filter-panel>
 
                     <x-molecules.table-search
-                        action="{{ route('panel.contratos.index') }}"
+                        :action="route('panel.contratos.index')"
                         :value="$filtros['q']"
                         :placeholder="__('comercial.contratos.filtro_busqueda_placeholder')"
                         :clear-label="__('ui.tabla.buscador_limpiar')"
@@ -259,7 +259,7 @@
 
                                 <x-organisms.row-actions>
                                     @puede('comercial.contrato.editar')
-                                        <x-atoms.button href="{{ route('panel.contratos.edit', $contrato) }}" variant="warning-outline" size="sm" icon="edit">
+                                        <x-atoms.button :href="route('panel.contratos.edit', $contrato)" variant="warning-outline" size="sm" icon="edit">
                                             {{ __('comercial.contratos.editar') }}
                                         </x-atoms.button>
                                     @endpuede

@@ -52,7 +52,7 @@
                     <x-atoms.select
                         name="cliente_id"
                         id="filtro-cliente"
-                        label="{{ __('operaciones.reportes_tecnicos.filtro_cliente') }}"
+                        :label="__('operaciones.reportes_tecnicos.filtro_cliente')"
                         :options="$clientesDisponibles"
                         :value="$filtros['cliente_id']"
                         :placeholder="__('operaciones.reportes_tecnicos.filtro_cliente_placeholder')"
@@ -61,14 +61,14 @@
                     <x-atoms.date
                         name="desde"
                         id="filtro-desde"
-                        label="{{ __('operaciones.reportes_tecnicos.filtro_desde') }}"
+                        :label="__('operaciones.reportes_tecnicos.filtro_desde')"
                         :value="$filtros['desde']"
                     />
 
                     <x-atoms.date
                         name="hasta"
                         id="filtro-hasta"
-                        label="{{ __('operaciones.reportes_tecnicos.filtro_hasta') }}"
+                        :label="__('operaciones.reportes_tecnicos.filtro_hasta')"
                         :value="$filtros['hasta']"
                     />
 
@@ -78,7 +78,7 @@
                         </x-atoms.button>
 
                         @if ($hayFiltrosActivos)
-                            <x-atoms.button href="{{ route('panel.reportes.tecnicos.index') }}" variant="text" size="md">
+                            <x-atoms.button :href="route('panel.reportes.tecnicos.index')" variant="text" size="md">
                                 {{ __('operaciones.reportes_tecnicos.limpiar_filtro') }}
                             </x-atoms.button>
                         @endif
@@ -115,7 +115,7 @@
                             <span role="cell">{{ $fila['clienteNombre'] }}</span>
                             <span role="cell">{{ $fila['generadoEn']->format('d/m/Y H:i') }}</span>
                             <span role="cell">
-                                <x-atoms.button href="{{ route('panel.trabajos.reporte-pdf', $fila['trabajoId']) }}" variant="outline" size="sm" icon="picture_as_pdf">
+                                <x-atoms.button :href="route('panel.trabajos.reporte-pdf', $fila['trabajoId'])" variant="outline" size="sm" icon="picture_as_pdf">
                                     {{ __('operaciones.reportes_tecnicos.descargar_pdf') }}
                                 </x-atoms.button>
                             </span>

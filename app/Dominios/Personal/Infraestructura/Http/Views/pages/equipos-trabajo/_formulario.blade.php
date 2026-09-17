@@ -39,7 +39,7 @@
         :subtitle="__('personal.equipos_trabajo.subtitulo_form')"
     >
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.equipos-trabajo.index') }}" variant="outline" icon="arrow_back">
+            <x-atoms.button :href="route('panel.equipos-trabajo.index')" variant="outline" icon="arrow_back">
                 {{ __('personal.equipos_trabajo.volver') }}
             </x-atoms.button>
         </x-slot:actions>
@@ -58,30 +58,30 @@
         <x-atoms.input
             type="text"
             name="codigo"
-            label="{{ __('personal.equipos_trabajo.campo_codigo') }}"
-            value="{{ $codigo }}"
+            :label="__('personal.equipos_trabajo.campo_codigo')"
+            :value="$codigo"
             required
             maxlength="20"
-            error="{{ $errors->first('codigo') }}"
+            :error="$errors->first('codigo')"
         />
 
         <x-atoms.input
             type="text"
             name="nombre"
-            label="{{ __('personal.equipos_trabajo.campo_nombre') }}"
-            value="{{ $nombre }}"
-            error="{{ $errors->first('nombre') }}"
+            :label="__('personal.equipos_trabajo.campo_nombre')"
+            :value="$nombre"
+            :error="$errors->first('nombre')"
         />
 
         <x-atoms.select
             name="base_id"
             id="base_id"
-            label="{{ __('personal.equipos_trabajo.campo_base') }}"
+            :label="__('personal.equipos_trabajo.campo_base')"
             :options="$basesDisponibles"
             :value="$baseId"
-            placeholder="{{ __('personal.equipos_trabajo.campo_base_placeholder') }}"
+            :placeholder="__('personal.equipos_trabajo.campo_base_placeholder')"
             required
-            error="{{ $errors->first('base_id') }}"
+            :error="$errors->first('base_id')"
         />
 
         @php
@@ -92,33 +92,33 @@
         <x-atoms.select
             name="estado"
             id="estado"
-            label="{{ __('personal.equipos_trabajo.campo_estado') }}"
+            :label="__('personal.equipos_trabajo.campo_estado')"
             :options="$opcionesEstado"
             :value="$estado"
             required
-            error="{{ $errors->first('estado') }}"
+            :error="$errors->first('estado')"
         />
 
         <x-atoms.date
             name="desde"
-            label="{{ __('personal.equipos_trabajo.campo_desde') }}"
-            value="{{ $desde }}"
+            :label="__('personal.equipos_trabajo.campo_desde')"
+            :value="$desde"
             required
-            error="{{ $errors->first('desde') }}"
+            :error="$errors->first('desde')"
         />
 
         <x-atoms.date
             name="hasta"
-            label="{{ __('personal.equipos_trabajo.campo_hasta') }}"
-            value="{{ $hasta }}"
-            help="{{ __('personal.equipos_trabajo.campo_hasta_ayuda') }}"
-            error="{{ $errors->first('hasta') }}"
+            :label="__('personal.equipos_trabajo.campo_hasta')"
+            :value="$hasta"
+            :help="__('personal.equipos_trabajo.campo_hasta_ayuda')"
+            :error="$errors->first('hasta')"
         />
     </x-molecules.form-section>
 
     <x-organisms.form-actions-bar :status="__('personal.equipos_trabajo.estado_form')">
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.equipos-trabajo.index') }}" variant="outline">
+            <x-atoms.button :href="route('panel.equipos-trabajo.index')" variant="outline">
                 {{ __('ui.action.cancel') }}
             </x-atoms.button>
             <x-atoms.button type="submit" variant="primary">

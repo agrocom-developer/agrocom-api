@@ -27,24 +27,24 @@
     <x-atoms.select
         name="{{ $prefijo }}[lote_id]"
         id="{{ $idBase }}-lote"
-        label="{{ __('operaciones.asignacion_equipos.campo_lote') }}"
+        :label="__('operaciones.asignacion_equipos.campo_lote')"
         :options="$etiquetasLote"
         :value="$lote['lote_id'] ?? ''"
-        placeholder="{{ __('operaciones.asignacion_equipos.campo_lote_placeholder') }}"
+        :placeholder="__('operaciones.asignacion_equipos.campo_lote_placeholder')"
         required
-        error="{{ $errors->first($erroresPrefijo.'.lote_id') }}"
+        :error="$errors->first($erroresPrefijo.'.lote_id')"
     />
 
     <x-atoms.input
         type="number"
         name="{{ $prefijo }}[hectareas]"
         id="{{ $idBase }}-hectareas"
-        label="{{ __('operaciones.asignacion_equipos.campo_hectareas') }}"
-        value="{{ $lote['hectareas'] ?? '' }}"
+        :label="__('operaciones.asignacion_equipos.campo_hectareas')"
+        :value="$lote['hectareas'] ?? ''"
         min="0.01"
         step="0.01"
         required
-        error="{{ $errors->first($erroresPrefijo.'.hectareas') }}"
+        :error="$errors->first($erroresPrefijo.'.hectareas')"
     />
 
     <div class="ag-form-section__field--full ag-asignacion-equipos-ficha__lote-fila-pie">

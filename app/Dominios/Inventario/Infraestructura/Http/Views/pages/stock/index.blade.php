@@ -51,7 +51,7 @@
             >
                 @puede('inventario.movimiento.crear')
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.stock.movimientos.create') }}" variant="primary" icon="add">
+                        <x-atoms.button :href="route('panel.stock.movimientos.create')" variant="primary" icon="add">
                             {{ __('inventario.stock.nuevo_movimiento') }}
                         </x-atoms.button>
                     </x-slot:actions>
@@ -71,7 +71,7 @@
             @if ($hayFiltrosActivos || $stock->isNotEmpty())
                 <div class="ag-table-toolbar">
                     <x-molecules.table-search
-                        action="{{ route('panel.stock.index') }}"
+                        :action="route('panel.stock.index')"
                         :value="$filtros['q']"
                         :placeholder="__('inventario.stock.filtro_busqueda_placeholder')"
                         :clear-label="__('ui.tabla.buscador_limpiar')"
@@ -96,7 +96,7 @@
                         </x-atoms.button>
 
                         @if ($filtros['base_id'] !== null)
-                            <x-atoms.button href="{{ route('panel.stock.index') }}" variant="text" size="md">
+                            <x-atoms.button :href="route('panel.stock.index')" variant="text" size="md">
                                 {{ __('inventario.stock.limpiar_filtro') }}
                             </x-atoms.button>
                         @endif

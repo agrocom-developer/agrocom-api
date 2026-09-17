@@ -64,10 +64,10 @@
                     <x-atoms.select
                         name="persona_id"
                         id="consulta-persona"
-                        label="{{ __('finanzas.anticipos.campo_persona') }}"
+                        :label="__('finanzas.anticipos.campo_persona')"
                         :options="$personasDisponibles"
                         :value="$consultaDisponible !== null ? (string) $consultaDisponible['personaId'] : ''"
-                        placeholder="{{ __('finanzas.anticipos.campo_persona_placeholder') }}"
+                        :placeholder="__('finanzas.anticipos.campo_persona_placeholder')"
                     />
 
                     <x-atoms.button type="submit" variant="outline" size="md" icon="search">
@@ -90,7 +90,7 @@
                     :subtitle="__('finanzas.anticipos.subtitulo_form')"
                 >
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.anticipos.index') }}" variant="outline" icon="arrow_back">
+                        <x-atoms.button :href="route('panel.anticipos.index')" variant="outline" icon="arrow_back">
                             {{ __('finanzas.anticipos.volver') }}
                         </x-atoms.button>
                     </x-slot:actions>
@@ -109,10 +109,10 @@
                     <x-atoms.select
                         name="persona_id"
                         id="persona_id"
-                        label="{{ __('finanzas.anticipos.campo_persona') }}"
+                        :label="__('finanzas.anticipos.campo_persona')"
                         :options="$personasDisponibles"
                         :value="(string) $personaId"
-                        placeholder="{{ __('finanzas.anticipos.campo_persona_placeholder') }}"
+                        :placeholder="__('finanzas.anticipos.campo_persona_placeholder')"
                         :error="$errors->first('persona_id')"
                         required
                     />
@@ -120,36 +120,36 @@
                     <x-atoms.input
                         type="number"
                         name="monto"
-                        label="{{ __('finanzas.anticipos.campo_monto') }}"
-                        value="{{ $monto }}"
+                        :label="__('finanzas.anticipos.campo_monto')"
+                        :value="$monto"
                         min="0.01"
                         step="0.01"
                         required
-                        error="{{ $errors->first('monto') }}"
+                        :error="$errors->first('monto')"
                     />
 
                     <x-atoms.date
                         name="fecha"
-                        label="{{ __('finanzas.anticipos.campo_fecha') }}"
-                        value="{{ $fecha }}"
+                        :label="__('finanzas.anticipos.campo_fecha')"
+                        :value="$fecha"
                         required
-                        error="{{ $errors->first('fecha') }}"
+                        :error="$errors->first('fecha')"
                     />
 
                     <div class="ag-form-section__field--full">
                         <x-atoms.input
                             type="text"
                             name="motivo"
-                            label="{{ __('finanzas.anticipos.campo_motivo') }}"
-                            value="{{ $motivo }}"
-                            error="{{ $errors->first('motivo') }}"
+                            :label="__('finanzas.anticipos.campo_motivo')"
+                            :value="$motivo"
+                            :error="$errors->first('motivo')"
                         />
                     </div>
                 </x-molecules.form-section>
 
                 <x-organisms.form-actions-bar :status="__('finanzas.anticipos.estado_form')">
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.anticipos.index') }}" variant="outline">
+                        <x-atoms.button :href="route('panel.anticipos.index')" variant="outline">
                             {{ __('ui.action.cancel') }}
                         </x-atoms.button>
                         <x-atoms.button type="submit" variant="primary">

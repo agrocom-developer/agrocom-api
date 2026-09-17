@@ -75,7 +75,7 @@
         :subtitle="__('seguridad.usuarios.subtitulo_form')"
     >
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.usuarios.index') }}" variant="outline" icon="arrow_back">
+            <x-atoms.button :href="route('panel.usuarios.index')" variant="outline" icon="arrow_back">
                 {{ __('seguridad.usuarios.volver') }}
             </x-atoms.button>
         </x-slot:actions>
@@ -91,28 +91,28 @@
         <x-atoms.input
             type="text"
             name="name"
-            label="{{ __('seguridad.usuarios.campo_name') }}"
-            value="{{ $name }}"
+            :label="__('seguridad.usuarios.campo_name')"
+            :value="$name"
             required
-            error="{{ $errors->first('name') }}"
+            :error="$errors->first('name')"
         />
 
         <x-atoms.input
             type="text"
             name="username"
-            label="{{ __('seguridad.usuarios.campo_username') }}"
-            value="{{ $username }}"
+            :label="__('seguridad.usuarios.campo_username')"
+            :value="$username"
             required
-            error="{{ $errors->first('username') }}"
+            :error="$errors->first('username')"
         />
 
         <x-atoms.input
             type="email"
             name="email"
-            label="{{ __('seguridad.usuarios.campo_email') }}"
-            value="{{ $email }}"
-            help="{{ __('seguridad.usuarios.campo_email_ayuda') }}"
-            error="{{ $errors->first('email') }}"
+            :label="__('seguridad.usuarios.campo_email')"
+            :value="$email"
+            :help="__('seguridad.usuarios.campo_email_ayuda')"
+            :error="$errors->first('email')"
             data-ag-usuario-email
             data-mapa-cliente-email="{{ json_encode($emailPorCliente ?? []) }}"
         />
@@ -120,10 +120,10 @@
         <x-atoms.input
             type="password"
             name="password"
-            label="{{ __('seguridad.usuarios.campo_password') }}"
-            help="{{ $esEdicion ? __('seguridad.usuarios.campo_password_ayuda_edicion') : __('seguridad.usuarios.campo_password_ayuda_alta') }}"
+            :label="__('seguridad.usuarios.campo_password')"
+            :help="$esEdicion ? __('seguridad.usuarios.campo_password_ayuda_edicion') : __('seguridad.usuarios.campo_password_ayuda_alta')"
             :required="! $esEdicion"
-            error="{{ $errors->first('password') }}"
+            :error="$errors->first('password')"
         />
 
         @if ($esEdicion)
@@ -140,14 +140,14 @@
             <x-atoms.select
                 name="type"
                 id="type"
-                label="{{ __('seguridad.usuarios.campo_tipo') }}"
+                :label="__('seguridad.usuarios.campo_tipo')"
                 :options="[
                     'interno' => __('seguridad.usuarios.tipo_interno'),
                     ...($puedeCrearPortal ? ['cliente' => __('seguridad.usuarios.tipo_cliente')] : []),
                 ]"
                 :value="$tipoActual"
                 required
-                error="{{ $errors->first('type') }}"
+                :error="$errors->first('type')"
                 data-ag-usuario-tipo
             />
         @endif
@@ -161,22 +161,22 @@
         <x-atoms.select
             name="persona_id"
             id="persona_id"
-            label="{{ __('seguridad.usuarios.campo_persona') }}"
+            :label="__('seguridad.usuarios.campo_persona')"
             :options="$personasDisponibles"
             :value="$personaId"
-            placeholder="{{ __('seguridad.usuarios.campo_persona_placeholder') }}"
-            error="{{ $errors->first('persona_id') }}"
+            :placeholder="__('seguridad.usuarios.campo_persona_placeholder')"
+            :error="$errors->first('persona_id')"
             :disabled="$esCliente"
         />
 
         <x-atoms.checkbox-group
             name="roles"
             id="roles"
-            label="{{ __('seguridad.usuarios.campo_roles') }}"
+            :label="__('seguridad.usuarios.campo_roles')"
             :options="$opcionesRoles"
             :value="$rolesSeleccionados"
-            help="{{ __('seguridad.usuarios.campo_roles_ayuda') }}"
-            error="{{ $errors->first('roles') }}"
+            :help="__('seguridad.usuarios.campo_roles_ayuda')"
+            :error="$errors->first('roles')"
             class="ag-form-section__field--full"
             :disabled="$esCliente"
         />
@@ -190,11 +190,11 @@
         <x-atoms.select
             name="cliente_id"
             id="cliente_id"
-            label="{{ __('seguridad.usuarios.campo_cliente') }}"
+            :label="__('seguridad.usuarios.campo_cliente')"
             :options="$clientesDisponibles"
             :value="$clienteId"
-            placeholder="{{ __('seguridad.usuarios.campo_cliente_placeholder') }}"
-            help="{{ __('seguridad.usuarios.campo_cliente_ayuda') }}"
+            :placeholder="__('seguridad.usuarios.campo_cliente_placeholder')"
+            :help="__('seguridad.usuarios.campo_cliente_ayuda')"
             :disabled="! $esCliente"
             data-ag-usuario-cliente
         />
@@ -202,12 +202,12 @@
         <x-atoms.select
             name="contrato_id"
             id="contrato_id"
-            label="{{ __('seguridad.usuarios.campo_contrato') }}"
+            :label="__('seguridad.usuarios.campo_contrato')"
             :options="$opcionesContrato"
             :value="$contratoId"
-            placeholder="{{ __('seguridad.usuarios.campo_contrato_placeholder') }}"
+            :placeholder="__('seguridad.usuarios.campo_contrato_placeholder')"
             :required="$esCliente"
-            error="{{ $errors->first('contrato_id') }}"
+            :error="$errors->first('contrato_id')"
             :disabled="! $esCliente"
             data-ag-usuario-contrato
             data-mapa-cliente-contrato="{{ $mapaClienteContrato->toJson() }}"
@@ -216,7 +216,7 @@
 
     <x-organisms.form-actions-bar :status="__('seguridad.usuarios.estado_form')">
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.usuarios.index') }}" variant="outline">
+            <x-atoms.button :href="route('panel.usuarios.index')" variant="outline">
                 {{ __('ui.action.cancel') }}
             </x-atoms.button>
             <x-atoms.button type="submit" variant="primary">

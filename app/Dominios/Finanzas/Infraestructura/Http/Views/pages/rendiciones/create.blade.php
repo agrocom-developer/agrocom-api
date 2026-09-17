@@ -48,7 +48,7 @@
                     :subtitle="__('finanzas.rendiciones.subtitulo_form')"
                 >
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.rendiciones.index') }}" variant="outline" icon="arrow_back">
+                        <x-atoms.button :href="route('panel.rendiciones.index')" variant="outline" icon="arrow_back">
                             {{ __('finanzas.rendiciones.volver') }}
                         </x-atoms.button>
                     </x-slot:actions>
@@ -61,10 +61,10 @@
                     <x-atoms.select
                         name="base_id"
                         id="base_id"
-                        label="{{ __('finanzas.rendiciones.campo_base') }}"
+                        :label="__('finanzas.rendiciones.campo_base')"
                         :options="$basesDisponibles"
                         :value="(string) $baseId"
-                        placeholder="{{ __('finanzas.rendiciones.campo_base_placeholder') }}"
+                        :placeholder="__('finanzas.rendiciones.campo_base_placeholder')"
                         :error="$errors->first('base_id')"
                         required
                     />
@@ -72,35 +72,35 @@
                     <x-atoms.select
                         name="jefe_campo_id"
                         id="jefe_campo_id"
-                        label="{{ __('finanzas.rendiciones.campo_jefe_campo') }}"
+                        :label="__('finanzas.rendiciones.campo_jefe_campo')"
                         :options="$personasDisponibles"
                         :value="(string) $jefeId"
-                        placeholder="{{ __('finanzas.rendiciones.campo_jefe_campo_placeholder') }}"
+                        :placeholder="__('finanzas.rendiciones.campo_jefe_campo_placeholder')"
                         :error="$errors->first('jefe_campo_id')"
                         required
                     />
 
                     <x-atoms.date
                         name="fecha"
-                        label="{{ __('finanzas.rendiciones.campo_fecha') }}"
-                        value="{{ $fecha }}"
+                        :label="__('finanzas.rendiciones.campo_fecha')"
+                        :value="$fecha"
                         required
-                        error="{{ $errors->first('fecha') }}"
+                        :error="$errors->first('fecha')"
                     />
 
                     <div class="ag-form-section__field--full">
                         <x-atoms.textarea
                             name="descripcion"
-                            label="{{ __('finanzas.rendiciones.campo_descripcion') }}"
-                            value="{{ $descripcion }}"
-                            error="{{ $errors->first('descripcion') }}"
+                            :label="__('finanzas.rendiciones.campo_descripcion')"
+                            :value="$descripcion"
+                            :error="$errors->first('descripcion')"
                         />
                     </div>
                 </x-molecules.form-section>
 
                 <x-organisms.form-actions-bar :status="__('finanzas.rendiciones.estado_form')">
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.rendiciones.index') }}" variant="outline">
+                        <x-atoms.button :href="route('panel.rendiciones.index')" variant="outline">
                             {{ __('ui.action.cancel') }}
                         </x-atoms.button>
                         <x-atoms.button type="submit" variant="primary">

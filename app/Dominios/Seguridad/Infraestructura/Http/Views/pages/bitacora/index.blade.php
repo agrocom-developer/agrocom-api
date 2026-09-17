@@ -56,38 +56,38 @@
 
                 <div class="ag-table-toolbar">
                     <x-organisms.filter-panel
-                        action="{{ route('panel.bitacora.index') }}"
+                        :action="route('panel.bitacora.index')"
                         :active-count="$filtrosActivosCount"
                     >
                         <x-atoms.select
                             name="usuario_id"
-                            label="{{ __('seguridad.bitacora.filtro_usuario') }}"
+                            :label="__('seguridad.bitacora.filtro_usuario')"
                             :options="$usuariosDisponibles"
                             :value="(string) $filtros['usuario_id']"
-                            placeholder="{{ __('seguridad.bitacora.filtro_usuario_todos') }}"
+                            :placeholder="__('seguridad.bitacora.filtro_usuario_todos')"
                         />
 
                         <x-atoms.select
                             name="tabla"
-                            label="{{ __('seguridad.bitacora.filtro_entidad') }}"
+                            :label="__('seguridad.bitacora.filtro_entidad')"
                             :options="$tablasDisponibles"
                             :value="$filtros['tabla']"
-                            placeholder="{{ __('seguridad.bitacora.filtro_entidad_todas') }}"
+                            :placeholder="__('seguridad.bitacora.filtro_entidad_todas')"
                         />
 
                         <x-atoms.select
                             name="accion"
-                            label="{{ __('seguridad.bitacora.filtro_accion') }}"
+                            :label="__('seguridad.bitacora.filtro_accion')"
                             :options="$accionesDisponibles"
                             :value="$filtros['accion']"
-                            placeholder="{{ __('seguridad.bitacora.filtro_accion_todas') }}"
+                            :placeholder="__('seguridad.bitacora.filtro_accion_todas')"
                         />
 
                         <x-atoms.input
                             type="number"
                             name="registro_id"
-                            label="{{ __('seguridad.bitacora.filtro_registro_id') }}"
-                            value="{{ $filtros['registro_id'] }}"
+                            :label="__('seguridad.bitacora.filtro_registro_id')"
+                            :value="$filtros['registro_id']"
                         />
                     </x-organisms.filter-panel>
                 </div>

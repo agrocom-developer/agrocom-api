@@ -41,7 +41,7 @@
             >
                 @puede('mantenimiento.plan.crear')
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.planes-mantenimiento.create') }}" variant="primary" icon="add">
+                        <x-atoms.button :href="route('panel.planes-mantenimiento.create')" variant="primary" icon="add">
                             {{ __('mantenimiento.planes.nuevo') }}
                         </x-atoms.button>
                     </x-slot:actions>
@@ -87,7 +87,7 @@
 
                             <span role="cell" class="ag-planes__acciones">
                                 @puede('mantenimiento.plan.editar')
-                                    <x-atoms.button href="{{ route('panel.planes-mantenimiento.edit', $plan) }}" variant="warning-outline" size="sm" icon="edit">
+                                    <x-atoms.button :href="route('panel.planes-mantenimiento.edit', $plan)" variant="warning-outline" size="sm" icon="edit">
                                         {{ __('mantenimiento.planes.editar') }}
                                     </x-atoms.button>
                                 @endpuede
@@ -113,7 +113,7 @@
                 @if ($planes->hasPages())
                     <nav class="ag-planes__paginacion" aria-label="{{ __('mantenimiento.planes.paginacion_aria') }}">
                         @if (! $planes->onFirstPage())
-                            <x-atoms.button href="{{ $planes->previousPageUrl() }}" variant="outline" size="sm" icon="chevron_left">
+                            <x-atoms.button :href="$planes->previousPageUrl()" variant="outline" size="sm" icon="chevron_left">
                                 {{ __('mantenimiento.planes.paginacion_anterior') }}
                             </x-atoms.button>
                         @endif
@@ -123,7 +123,7 @@
                         </span>
 
                         @if ($planes->hasMorePages())
-                            <x-atoms.button href="{{ $planes->nextPageUrl() }}" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
+                            <x-atoms.button :href="$planes->nextPageUrl()" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
                                 {{ __('mantenimiento.planes.paginacion_siguiente') }}
                             </x-atoms.button>
                         @endif
