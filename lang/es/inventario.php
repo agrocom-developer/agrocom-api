@@ -46,7 +46,7 @@ return [
         'sin_costo' => '—',
         'editar' => 'Editar',
         'eliminar_accion' => 'Eliminar',
-        'confirmar_baja' => '¿Confirmás la baja de este repuesto?',
+        'confirmar_baja' => '¿Confirmas la baja de este repuesto?',
         'paginacion_aria' => 'Paginación de repuestos',
         'paginacion_anterior' => 'Anterior',
         'paginacion_siguiente' => 'Siguiente',

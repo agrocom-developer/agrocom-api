@@ -23,6 +23,7 @@ Este repo es el backend (Laravel + PostgreSQL) y el panel web (AdminLTE + Blade/
 - **Arquitectura**: monolito modular Laravel, un módulo de dominio = una carpeta bajo `app/Dominios/`, con `Contratos/`, `Aplicacion/`, `Dominio/`, `Infraestructura/` (ver `docs/decisiones/0003-arquitectura-modular-clean-por-feature.md`). Un módulo solo escribe sus propias tablas; entre módulos se viaja por contratos o eventos de dominio, nunca por modelos ajenos.
 - **Panel web**: componentes Blade en Atomic Design (atoms/molecules/organisms/templates/pages), AdminLTE (Bootstrap) para estructura + Material Design para inputs/cards/iconos (ver ADR 0002).
 - **Branching**: GitFlow simplificado — ver `CONTRIBUTING.md` y `docs/decisiones/0006-gitflow-simplificado.md`.
+- **Tuteo estándar, nunca voseo ni "usted".** Todo texto visible al usuario (labels, placeholders, mensajes, botones) va en segunda persona singular neutra — "Selecciona", "Confirma", "Elige" — nunca voseo rioplatense ("Seleccioná") ni la forma formal de "usted" ("Seleccione"). Vive en `lang/es/*.php`, nunca hardcodeado en Blade. Ver skill `redaccion-neutra` para la tabla de conversión y los verbos irregulares.
 
 ## Testing
 

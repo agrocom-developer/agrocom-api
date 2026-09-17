@@ -12,7 +12,7 @@ return [
 
     'versiones' => [
         'titulo' => 'Versiones del APK',
-        'subtitulo' => 'Autorizá la versión del APK que va a recibir cada dispositivo de campo. Solo puede haber una vigente a la vez.',
+        'subtitulo' => 'Autoriza la versión del APK que va a recibir cada dispositivo de campo. Solo puede haber una vigente a la vez.',
         'col_version' => 'Versión',
         'col_version_code' => 'Código',
         'col_estado' => 'Estado',
