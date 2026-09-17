@@ -331,6 +331,8 @@ Alta y edición comparten el MISMO partial y la misma anatomía de §6.3 — dif
 
 No confundir con la columna lateral del canvas "Registro de la compañía" (regla 4 de arriba: progreso de completitud, resumen del plan). Esa es de METADATOS de la propia entidad; el resumen relacionado es de OTRAS entidades que cuelgan de esta. Una pantalla usa la que le corresponda según lo que la entidad realmente necesita mostrar — decidilo por eso, no por copiar la que ya existe en otra pantalla.
 
+**Componente estático primero, funcionalidad después (17/9/2026).** Toda pantalla con arquetipo Formulario que tenga `edit()` lleva la pieza del resumen relacionado — aunque todavía no exista el contrato de lectura que la resuelva de verdad. Mientras ese contrato no esté armado, el aside se construye con datos de ejemplo/estáticos (misma anatomía de arriba, con sus accesos directos ya apuntando a la ruta real), y queda anotado en el reporte de la tarea como pendiente de conectar. Lo que no está permitido es omitir la pieza entera "porque no hay tiempo de escribir la consulta" — eso fue lo que pasó con Cultivo y quedó descubierto recién en revisión. Cuando el contrato de lectura se escriba, la pantalla pasa de estático a `resumenRelacionado()` real sin cambiar la anatomía Blade.
+
 ### 6.3.2. Tras guardar, el formulario se queda en `edit()` — nunca vuelve a `index()`
 
 Corrección de convención (16/9/2026): hasta ahora esto NO estaba escrito en ningún lado y cada controlador lo resolvía por su cuenta — `ClientesController`/`CampaniasController` ya volvían siempre a `edit()`, pero 17 controladores más volvían a `index()` en `store()`/`update()` (dos, `PropiedadesController`/`LotesController`, solo a medias: a `edit()` nada más en el flujo de alta rápida `?volver_a=`). Regla fija a partir de ahora, para toda pantalla con arquetipo Formulario (§6.3) que tenga `edit()`:
@@ -358,6 +360,24 @@ return redirect()
 #### Estado del catálogo para este arquetipo
 
 Todas las piezas de la anatomía de arriba ya existen en el catálogo — nada pendiente de pedirle a `design-ui` para este arquetipo: `molecules/form-section` (tarjeta + `section-head` con contador, evolucionado desde el `<fieldset>` original), `organisms/page-header`, `molecules/tabs`, `organisms/form-actions-bar`, `molecules/summary-card`, `molecules/progress-meter`, `molecules/file-field`. Si una pantalla nueva necesita una variante que ninguna de estas cubre, ESO es lo que se le pide a `design-ui` — no la pieza entera de nuevo.
+
+### 6.3.3. Activo/inactivo: patrón de sistema para toda entidad propia
+
+Regla de negocio fijada el 17/9/2026: **toda entidad propia del dominio —la que vive en su propia tabla con identidad propia, no una tabla pivote/de unión (`com_lote_campania`, `sec_user_role`…) ni un resultado calculado/concatenado (un informe, un resumen)— tiene una propiedad `activo` (boolean, default `true`).**
+
+- El campo va en el formulario de **alta y de edición** (el mismo `_formulario.blade.php` compartido), nunca solo en edición — un registro puede nacer inactivo. `atoms/switch`, con este texto de referencia (adaptar el sustantivo, no la estructura):
+  ```blade
+  <x-atoms.switch
+      name="activo"
+      value="1"
+      :label="__('modulo.x.campo_activo')"
+      :checked="(bool) $activo"
+      :help="__('modulo.x.campo_activo_ayuda')"
+  />
+  ```
+  Texto de ayuda, patrón: "Un/a **{entidad}** inactivo/a deja de **{consecuencia — ofrecerse, asignarse, aparecer como opción}**, sin afectar **{lo ya cargado con esta entidad}**." Ejemplo real (Cultivo): "Un cultivo inactivo deja de ofrecerse para nuevas siembras, sin afectar las ya cargadas."
+- El campo **no** se muestra en el listado ni en sus filtros — ver la regla de §6.2 "Catálogos simples con toggle activo/inactivo" (misma fecha, misma decisión, dos caras de la misma moneda: se edita en el formulario, no se navega por él en la tabla).
+- **Pendiente, no construir todavía**: una forma de prender/apagar el `activo` de un registro puntual sin pasar por el formulario completo (acción rápida desde el listado o similar). Lo define y encarga el dueño del proyecto más adelante — no es parte del alcance de homogeneizar un módulo.
 
 ---
 
