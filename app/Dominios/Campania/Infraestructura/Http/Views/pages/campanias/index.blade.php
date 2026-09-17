@@ -170,13 +170,17 @@
                                 @php
                                     $formIdAbrir = "campania-abrir-{$campania->id}";
                                     $formIdCerrar = "campania-cerrar-{$campania->id}";
+                                    $formIdEliminar = "campania-eliminar-{$campania->id}";
+                                    $modalIdAbrir = "campania-abrir-modal-{$campania->id}";
+                                    $modalIdCerrar = "campania-cerrar-modal-{$campania->id}";
+                                    $modalIdEliminar = "campania-eliminar-modal-{$campania->id}";
                                 @endphp
 
                                 {{-- Forms FUERA de row-actions a propósito: ese organism repite su
                                      slot dos veces (visible/menú, ver su docblock) — un <form> ahí
-                                     adentro se duplicaría con el mismo id, HTML inválido. El botón
-                                     que sí puede duplicarse (confirm-button) envía este form por su
-                                     atributo `form`, sin importar dónde viva en el documento. --}}
+                                     adentro se duplicaría con el mismo id, HTML inválido. Los botones
+                                     que sí pueden duplicarse envían estos forms por su atributo `form`,
+                                     sin importar dónde vivan en el documento. --}}
                                 @puede('campania.campania.cambiar_estado')
                                     @if ($estadoValor === 'planificada')
                                         <form id="{{ $formIdAbrir }}" method="POST" action="{{ route('panel.campanias.cambiar-estado', $campania) }}">
@@ -191,6 +195,58 @@
                                     @endif
                                 @endpuede
 
+                                @puede('campania.campania.eliminar')
+                                    <form id="{{ $formIdEliminar }}" method="POST" action="{{ route('panel.campanias.destroy', $campania) }}">
+                                        @csrf
+                                        @method('DELETE')
+                                    </form>
+                                @endpuede
+
+                                {{-- Modales FUERA de row-actions: ese organism repite su slot dos
+                                     veces (visible/menú), un <div class="modal"> ahí adentro se
+                                     duplicaría con el mismo id, HTML inválido, y además Bootstrap no
+                                     encontraría el modal correcto al clickear el trigger en una mitad
+                                     (querySelector devuelve el primero del documento, que puede estar
+                                     oculto en el :nth-child overflow de la otra mitad) — ver
+                                     resources/css/components/row-actions.css comentario "Forms
+                                     FUERA de row-actions a propósito", mismo criterio. Los triggers
+                                     viven adentro (se duplican sin problema, son botones normales sin
+                                     id propio); el modal una sola vez, junto a los <form> que ya viven
+                                     acá afuera. --}}
+                                @puede('campania.campania.cambiar_estado')
+                                    @if ($estadoValor === 'planificada')
+                                        <x-molecules.confirm-modal
+                                            :id="$modalIdAbrir"
+                                            :form-id="$formIdAbrir"
+                                            :title="__('campania.campanias.confirmar_abrir_titulo')"
+                                            :message="__('campania.campanias.confirmar_abrir')"
+                                            :confirm-label="__('campania.campanias.accion_abrir')"
+                                            tone="success"
+                                        />
+                                    @elseif ($estadoValor === 'abierta')
+                                        <x-molecules.confirm-modal
+                                            :id="$modalIdCerrar"
+                                            :form-id="$formIdCerrar"
+                                            :title="__('campania.campanias.confirmar_cerrar_titulo')"
+                                            :message="__('campania.campanias.confirmar_cerrar')"
+                                            :confirm-label="__('campania.campanias.accion_cerrar')"
+                                        />
+                                    @endif
+                                @endpuede
+
+                                {{-- Independiente del permiso/estado de arriba: la baja lógica no
+                                     depende de poder cambiar el estado (invariante 8, mismo criterio
+                                     sin guarda que EliminarCultivo). --}}
+                                @puede('campania.campania.eliminar')
+                                    <x-molecules.confirm-modal
+                                        :id="$modalIdEliminar"
+                                        :form-id="$formIdEliminar"
+                                        :title="__('campania.campanias.confirmar_eliminar_titulo')"
+                                        :message="__('campania.campanias.confirmar_eliminar')"
+                                        :confirm-label="__('campania.campanias.eliminar_accion')"
+                                    />
+                                @endpuede
+
                                 <x-organisms.row-actions>
                                     @puede('campania.campania.editar')
                                         <x-atoms.button :href="route('panel.campanias.edit', $campania)" variant="warning-outline" size="sm" icon="edit">
@@ -200,31 +256,41 @@
 
                                     @puede('campania.campania.cambiar_estado')
                                         @if ($estadoValor === 'planificada')
-                                            <x-molecules.confirm-button
-                                                :form-id="$formIdAbrir"
-                                                :title="__('campania.campanias.confirmar_abrir_titulo')"
-                                                :message="__('campania.campanias.confirmar_abrir')"
-                                                :confirm-label="__('campania.campanias.accion_abrir')"
-                                                tone="success"
+                                            <x-atoms.button
+                                                type="button"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#{{ $modalIdAbrir }}"
                                                 variant="outline"
                                                 size="sm"
                                                 icon="check_circle"
                                             >
                                                 {{ __('campania.campanias.accion_abrir') }}
-                                            </x-molecules.confirm-button>
+                                            </x-atoms.button>
                                         @elseif ($estadoValor === 'abierta')
-                                            <x-molecules.confirm-button
-                                                :form-id="$formIdCerrar"
-                                                :title="__('campania.campanias.confirmar_cerrar_titulo')"
-                                                :message="__('campania.campanias.confirmar_cerrar')"
-                                                :confirm-label="__('campania.campanias.accion_cerrar')"
+                                            <x-atoms.button
+                                                type="button"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#{{ $modalIdCerrar }}"
                                                 variant="danger-outline"
                                                 size="sm"
                                                 icon="lock"
                                             >
                                                 {{ __('campania.campanias.accion_cerrar') }}
-                                            </x-molecules.confirm-button>
+                                            </x-atoms.button>
                                         @endif
+                                    @endpuede
+
+                                    @puede('campania.campania.eliminar')
+                                        <x-atoms.button
+                                            type="button"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#{{ $modalIdEliminar }}"
+                                            variant="danger-outline"
+                                            size="sm"
+                                            icon="delete"
+                                        >
+                                            {{ __('campania.campanias.eliminar_accion') }}
+                                        </x-atoms.button>
                                     @endpuede
                                 </x-organisms.row-actions>
                             </span>
