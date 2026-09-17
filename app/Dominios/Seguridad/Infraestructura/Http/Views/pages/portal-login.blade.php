@@ -32,6 +32,8 @@
         <x-organisms.login-form
             :action="route('portal.login')"
             :csrf="csrf_token()"
+            :titulo="__('portal.login.titulo')"
+            :subtitulo="__('portal.login.subtitulo')"
             :recuperar-action="route('portal.recuperar.store')"
             :recuperar-email-value="old('email')"
             :recuperar-email-error="$errors->first('email')"

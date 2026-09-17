@@ -34,6 +34,12 @@
     - method (default "POST").
     - csrf (nullable): si se pasa, agrega el input oculto `_token` en AMBOS
       forms (ingreso y recuperar comparten el mismo token de la página).
+    - titulo / subtitulo (nullable): copy del tab de ingreso, ya traducido
+      por el llamador. Sin ellos, cae a `seguridad.login.titulo`/`subtitulo`
+      ("Ingresa a tu panel") — ese default es correcto para `login.blade.php`
+      (panel interno) pero NO para `portal-login.blade.php`: el cliente del
+      portal no tiene "panel", así que esa página pasa los suyos propios
+      (`portal.login.titulo`/`subtitulo`).
     - usernameValue (nullable): valor a repoblar tras un submit fallido.
     - usernameError / passwordError (nullable): error específico de ese
       campo, ya traducido por el llamador.
@@ -52,12 +58,18 @@
 
     JS: resources/js/organisms/login-form.js maneja los tabs, roving tabindex,
     keyboard navigation (ArrowRight/ArrowLeft en los tabs cambia/activa el
-    otro), y clicks en los links de cambio de tab.
+    otro), y clicks en los links de cambio de tab. resources/js/pages/login.js
+    intercepta el submit del tab de ingreso (fetch, ver comentario de ese
+    archivo) y lee `data-label-error-credenciales`/`data-label-error-generico`
+    del root de este organism para los mensajes de error de red/422 sin
+    `message` — ya traducidos acá, nunca hardcodeados en el JS.
 --}}
 @props([
     'action',
     'method' => 'POST',
     'csrf' => null,
+    'titulo' => null,
+    'subtitulo' => null,
     'usernameValue' => null,
     'usernameError' => null,
     'passwordError' => null,
@@ -77,7 +89,12 @@
     $arrancaEnRecuperar = filled($recuperarEstado) || filled($recuperarEmailError);
 @endphp
 
-<div {{ $attributes->class(['ag-login-form']) }} @if ($arrancaEnRecuperar) data-ag-login-tab-inicial="recuperar" @endif>
+<div
+    {{ $attributes->class(['ag-login-form']) }}
+    @if ($arrancaEnRecuperar) data-ag-login-tab-inicial="recuperar" @endif
+    data-label-error-credenciales="{{ __('seguridad.login.error_credenciales') }}"
+    data-label-error-generico="{{ __('seguridad.login.error_generico') }}"
+>
     {{-- Tabs --}}
     <div role="tablist" class="ag-login-form__tabs" aria-label="{{ __('seguridad.login.tabs_aria_label') }}">
         <button
@@ -112,8 +129,8 @@
         @if ($arrancaEnRecuperar) hidden @endif
     >
         <div class="ag-login-form__header">
-            <h1 class="ag-login-form__title">{{ __('seguridad.login.titulo') }}</h1>
-            <p class="ag-login-form__subtitle">{{ __('seguridad.login.subtitulo') }}</p>
+            <h1 class="ag-login-form__title">{{ $titulo ?? __('seguridad.login.titulo') }}</h1>
+            <p class="ag-login-form__subtitle">{{ $subtitulo ?? __('seguridad.login.subtitulo') }}</p>
         </div>
 
         @if ($slot->isNotEmpty())

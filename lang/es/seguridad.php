@@ -60,6 +60,8 @@ return [
         'olvido_password' => '¿Olvidaste tu contraseña?',
         'boton_ingresar' => 'Iniciar sesión',
         'boton_ingresando' => 'Verificando acceso…',
+        'error_credenciales' => 'Las credenciales no coinciden con ningún registro.',
+        'error_generico' => 'Ocurrió un error. Intenta nuevamente.',
     ],
 
     'recuperar' => [

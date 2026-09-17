@@ -30,7 +30,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const form = document.querySelector('[data-ag-login-form] form');
     if (!form) return;
 
-    const redirectPorDefecto = document.querySelector('[data-ag-login-form]')?.dataset.agLoginRedirect || '/panel/dashboard';
+    const loginFormRoot = document.querySelector('[data-ag-login-form]');
+    const redirectPorDefecto = loginFormRoot?.dataset.agLoginRedirect || '/panel/dashboard';
+    const labelErrorCredenciales = loginFormRoot?.dataset.labelErrorCredenciales || '';
+    const labelErrorGenerico = loginFormRoot?.dataset.labelErrorGenerico || '';
 
     // Detectar y fijar la zona horaria del navegador en el input oculto
     const zonaHorariaInput = form.querySelector('input[name="zona_horaria"]');
@@ -84,10 +87,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) {
                 // Error de validación o credenciales inválidas
                 if (response.status === 422) {
-                    const errorMsg = data.message || 'Las credenciales no coinciden con ningún registro.';
+                    const errorMsg = data.message || labelErrorCredenciales;
                     showError(errorMsg);
                 } else {
-                    showError('Ocurrió un error. Intenta nuevamente.');
+                    showError(labelErrorGenerico);
                 }
             } else {
                 // Login exitoso
@@ -101,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error('Error during login:', error);
-            showError('Error de red. Intenta nuevamente.');
+            showError(labelErrorGenerico);
         } finally {
             // Rehabilitar submit
             if (submitBtn) {
