@@ -252,7 +252,6 @@
    navegador): mismo lenguaje visual que `.ag-input__control` — outlined,
    token de borde/foco propio. */
 .ag-contratos-form__input-hora {
-    width: 6.5rem;
     padding: var(--ag-space-2) var(--ag-space-3);
     background-color: var(--ag-color-bg-elevated);
     border: 1px solid var(--ag-color-border-strong);
