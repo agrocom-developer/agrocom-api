@@ -1623,7 +1623,7 @@ request.
    sistema y tiene que serlo: todo lo que entra por `@vite` se carga como
    `type="module"`, diferido por definición, y nunca llega antes del primer
    pintado. Va en `templates/panel-shell` y en las tres páginas públicas que
-   arman su propio `<html>` (login, portal-login, restablecer).
+   arman su propio `<html>` (login, restablecer).
 2. `theme-toggle.js` deja de aplicar el tema al cargar y, en su lugar,
    **cierra la divergencia**: si el tema del navegador no es el que sirvió el
    servidor (anotado en `data-ag-tema-servidor` por el script de arriba),

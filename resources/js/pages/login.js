@@ -1,18 +1,17 @@
 /**
  * Login handler — intercepta el submit del login-form y lo convierte en un
- * fetch POST (JSON) a la URL de `form.action`. Sirve tanto al login del
- * panel interno (/login) como al del portal del cliente (/portal/login,
- * HU-41) — el mismo organism `login-form` se reutiliza para los dos (ADR
- * 0002 punto 6), así que este handler no asume guard. Maneja la respuesta:
+ * fetch POST (JSON) a la URL de `form.action`. Hay un solo login (/login)
+ * para el personal y para los clientes del portal (16/9/2026): el servidor
+ * decide a qué guard pertenece la cuenta y responde adónde ir, así que este
+ * handler no asume guard. Maneja la respuesta:
  * - Si hay error de validación (422), muestra el mensaje de error en la UI.
  * - Si requiere selección de rol (solo el panel interno lo responde),
  *   redirige a /panel/seleccionar-rol.
  * - Si no, redirige a `data.destino` (primer ítem visible del menú del rol
  *   activo recién fijado, tarea 62 — nunca un `/panel/dashboard` fijo: un rol
- *   sin ese permiso aterrizaría en un 403); a falta de `destino` (el portal
- *   del cliente no lo responde), cae a `data-ag-login-redirect` del
- *   contenedor ([data-ag-login-form]) o a /panel/dashboard (el default
- *   histórico, para no romper la página de login del panel).
+ *   sin ese permiso aterrizaría en un 403; para un cliente, su portal); a
+ *   falta de `destino`, cae a `data-ag-login-redirect` del contenedor
+ *   ([data-ag-login-form]) o a /panel/dashboard (el default histórico).
  *
  * Dos cosas que el fetch tiene que hacer a mano porque no son un submit
  * clásico (9/9/2026):

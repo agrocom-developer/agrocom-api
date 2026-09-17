@@ -23,7 +23,7 @@ final class RestablecerContrasenaPortalController
     {
         return view('seguridad::pages.restablecer', [
             'accion' => route('portal.restablecer.store'),
-            'volverA' => route('portal.login.form'),
+            'volverA' => route('login.form'),
             'token' => $token,
             'email' => (string) $request->query('email', ''),
         ]);
@@ -50,12 +50,12 @@ final class RestablecerContrasenaPortalController
 
         if ($estado !== Password::PASSWORD_RESET) {
             return redirect()
-                ->route('portal.login.form')
+                ->route('login.form')
                 ->withErrors(['email' => __('seguridad.restablecer.token_invalido')]);
         }
 
         return redirect()
-            ->route('portal.login.form')
+            ->route('login.form')
             ->with('estado', __('seguridad.restablecer.actualizada'));
     }
 }

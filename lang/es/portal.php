@@ -19,11 +19,6 @@ return [
         'cerrar_sesion' => 'Cerrar sesión',
     ],
 
-    'login' => [
-        'titulo' => 'Ingresa al portal',
-        'subtitulo' => 'Usa el usuario que te asignó tu contacto en Agrocom.',
-    ],
-
     'avance' => [
         'titulo' => 'Avance',
         'subtitulo' => 'Hectáreas contratadas, aplicadas y monto facturado de tu contrato.',

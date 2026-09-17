@@ -21,8 +21,8 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('[data-ag-logout]').forEach((logoutButton) => {
         // Defaults preservan el comportamiento histórico del panel interno; el
         // portal del cliente (HU-41, tarea 55) reusa este mismo botón/script con
-        // `data-ag-logout-url="/portal/logout"` y `data-ag-logout-redirect="/portal/login"`
-        // (guard `cliente`, sin selector de rol al volver a loguearse).
+        // `data-ag-logout-url="/portal/logout"` (guard `cliente`). Los dos vuelven
+        // al mismo `/login`: hay una sola URL de ingreso para todos (16/9/2026).
         const logoutUrl = logoutButton.dataset.agLogoutUrl || '/logout';
         const redirectUrl = logoutButton.dataset.agLogoutRedirect || '/login';
 

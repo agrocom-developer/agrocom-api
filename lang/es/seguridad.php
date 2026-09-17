@@ -52,7 +52,7 @@ return [
         'tabs_aria_label' => 'Opciones de acceso',
         'tab_ingreso' => 'Ingreso',
         'tab_recuperar' => 'Recupera tu acceso',
-        'titulo' => 'Ingresa al panel',
+        'titulo' => 'Ingresa al sistema',
         'subtitulo' => 'Usa el usuario que te asignó el administrador.',
         'campo_usuario' => 'Usuario',
         'campo_password' => 'Contraseña',

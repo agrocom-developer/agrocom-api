@@ -69,7 +69,7 @@
                 class="ag-portal__logout"
                 data-ag-logout
                 data-ag-logout-url="{{ route('portal.logout') }}"
-                data-ag-logout-redirect="{{ route('portal.login.form') }}"
+                data-ag-logout-redirect="{{ route('login.form') }}"
             >
                 <x-atoms.icon name="logout" size="sm" />
                 {{ __('portal.chrome.cerrar_sesion') }}

@@ -36,10 +36,9 @@
       forms (ingreso y recuperar comparten el mismo token de la página).
     - titulo / subtitulo (nullable): copy del tab de ingreso, ya traducido
       por el llamador. Sin ellos, cae a `seguridad.login.titulo`/`subtitulo`
-      ("Ingresa al panel") — ese default es correcto para `login.blade.php`
-      (panel interno) pero NO para `portal-login.blade.php`: el cliente del
-      portal no tiene "panel", así que esa página pasa los suyos propios
-      (`portal.login.titulo`/`subtitulo`).
+      ("Ingresa al sistema"). Hay un solo login para personal y clientes
+      (16/9/2026), así que ese default le habla a los dos: por eso dice
+      "sistema" y no "panel" — el cliente no tiene panel.
     - usernameValue (nullable): valor a repoblar tras un submit fallido.
     - usernameError / passwordError (nullable): error específico de ese
       campo, ya traducido por el llamador.

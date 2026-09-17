@@ -3,8 +3,7 @@
     Tarea 66: mismo formulario que `pages/perfil/index.blade.php`, para el
     guard `cliente` — sobre `portal-layout` (sin menú de módulos: una cuenta
     de portal no tiene `sec_user_role`). Vive en Seguridad (no en Portal):
-    toca `sec_user`, la tabla del módulo dueño (mismo criterio que
-    `portal-login.blade.php`).
+    toca `sec_user`, la tabla del módulo dueño.
 
     Datos esperados (ver PerfilPortalController::edit()): $userName, $tema
     (AutorizacionPortalCliente::cascara()) más $usuario (SecUser).

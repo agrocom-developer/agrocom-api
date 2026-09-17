@@ -53,7 +53,6 @@ use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\PerfilPortalCont
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\PreferenciasController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\PreferenciasPortalController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\RecuperarContrasenaController;
-use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\RecuperarContrasenaPortalController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\RestablecerContrasenaController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\RestablecerContrasenaPortalController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\RolActivoController;
@@ -82,7 +81,11 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function (AutorizacionPanelWeb $autorizacion, Request $request) {
     if (! auth('interno')->check()) {
-        return redirect()->route('login.form');
+        // Un solo login para todos (16/9/2026): quien ya entró como cliente
+        // vuelve a su portal, no a un formulario de ingreso.
+        return auth('cliente')->check()
+            ? redirect()->route('portal.avance.index')
+            : redirect()->route('login.form');
     }
 
     // Primer ítem visible del menú del rol activo (tarea 62, fuga 2): un
@@ -92,23 +95,21 @@ Route::get('/', function (AutorizacionPanelWeb $autorizacion, Request $request) 
     return redirect()->to($autorizacion->primerDestinoVisible($request));
 });
 
+// Única puerta de entrada del sistema (16/9/2026): personal de Agrocom y
+// clientes ingresan por acá. El portal del cliente (HU-41) conserva su guard
+// `cliente` y sus pantallas, pero ya no tiene URL de login propia —
+// `SesionController::store()` prueba los dos guards.
 Route::get('/login', function () {
     return view('seguridad::pages.login');
 })->name('login.form');
 
 Route::post('/login', [SesionController::class, 'store'])->name('login');
 
-// HU-41 (tarea 55): portal del cliente, guard `cliente` (ADR 0002 punto 6,
-// ADR 0004). Sin selección de rol: una cuenta de portal no tiene
-// `sec_user_role` — ver SesionPortalController.
-Route::get('/portal/login', function () {
-    return view('seguridad::pages.portal-login');
-})->name('portal.login.form');
-
-Route::post('/portal/login', [SesionPortalController::class, 'store'])->name('portal.login');
-
 // Recuperación de contraseña por correo (tarea 66; ADR 0004, ampliación
 // 9/9/2026) — públicas, sin guard: quien las usa todavía no tiene sesión.
+// `POST /recuperar` sirve a los dos guards (un solo login, un solo "recuperar
+// acceso"); restablecer sí tiene una URL por guard, porque el enlace del
+// correo ya sabe de qué tipo de cuenta es.
 // `throttle:6,1` por IP, además del throttle por email que ya aplica el
 // broker (`config('auth.passwords.*.throttle')`, 60 s).
 Route::post('/recuperar', [RecuperarContrasenaController::class, 'store'])
@@ -121,10 +122,6 @@ Route::get('/restablecer/{token}', [RestablecerContrasenaController::class, 'cre
 Route::post('/restablecer', [RestablecerContrasenaController::class, 'store'])
     ->middleware('throttle:6,1')
     ->name('restablecer.store');
-
-Route::post('/portal/recuperar', [RecuperarContrasenaPortalController::class, 'store'])
-    ->middleware('throttle:6,1')
-    ->name('portal.recuperar.store');
 
 Route::get('/portal/restablecer/{token}', [RestablecerContrasenaPortalController::class, 'create'])
     ->name('portal.restablecer.form');
