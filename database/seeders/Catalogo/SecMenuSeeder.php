@@ -134,7 +134,7 @@ class SecMenuSeeder extends Seeder
         // Orden 3: antes de "Asignación de equipos" y "Estadías" — primero
         // se crea el trabajo, después se le asigna el equipo y recién ahí
         // se sabe dónde se aloja (pedido directo del dueño, 17/9/2026).
-        $this->item($operacion, 'operacion', 'orden_trabajo', 'fact_check', 3, ruta: 'panel.trabajos.index', codigoPermiso: 'operaciones.trabajo.ver');
+        $this->item($operacion, 'operacion', 'orden_trabajo', 'work_history', 3, ruta: 'panel.trabajos.index', codigoPermiso: 'operaciones.trabajo.ver');
 
         // Tarea 85 (HU-70/92): reparto de equipos por orden vigente, con
         // varios lotes por orden. Sube del orden 7 al 4 en este refactor: es
@@ -560,14 +560,20 @@ class SecMenuSeeder extends Seeder
         // para siempre. Este seeder es la única fuente del orden del menú (no
         // hay pantalla que lo reordene), así que pisarlo es correcto y no
         // descarta ninguna edición de nadie.
+        //
+        // `icono` se sumó el 17/9/2026 (cambio de "Orden de Trabajo" de
+        // fact_check a work_history): sin sincronizarlo, cambiar el ícono acá
+        // no se reflejaba en una base ya sembrada — mismo motivo que `orden`.
         $ajustaRequisito = $fila->requiere_persona !== $requierePersona;
         $ajustaOrden = $fila->orden !== $orden;
+        $ajustaIcono = $fila->icono !== $icono;
 
-        if ($activaRuta || $activaPermiso || $ajustaRequisito || $ajustaOrden) {
+        if ($activaRuta || $activaPermiso || $ajustaRequisito || $ajustaOrden || $ajustaIcono) {
             $fila->ruta ??= $ruta;
             $fila->permission_id ??= $permissionId;
             $fila->requiere_persona = $requierePersona;
             $fila->orden = $orden;
+            $fila->icono = $icono;
             $fila->save();
         }
 
