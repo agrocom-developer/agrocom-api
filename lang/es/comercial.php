@@ -622,6 +622,13 @@ return [
         'estado_form' => 'Los cambios se guardan al confirmar.',
         'volver' => 'Volver a cultivos',
 
+        // Resumen relacionado (edición, §6.3.1 de guia_pantalla_panel.md):
+        // estático por ahora, pendiente de conectar a un contrato de
+        // lectura por cultivo.
+        'resumen_titulo' => 'Lotes con este cultivo',
+        'resumen_detalle' => 'Acá vas a ver cuántos lotes tienen este cultivo sembrado en la campaña vigente.',
+        'resumen_accion' => 'Ir a propiedades',
+
         // Mensajes de los campos obligatorios.
         'error_nombre_comun_requerido' => 'Ingresa el nombre común del cultivo.',
     ],

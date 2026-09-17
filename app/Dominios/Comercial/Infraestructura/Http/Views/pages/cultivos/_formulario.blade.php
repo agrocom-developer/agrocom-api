@@ -22,10 +22,14 @@
     docs/diseno/guia_pantalla_panel.md. Se activa/desactiva desde una pieza
     aparte, todavía sin construir.
 
-    El aside pegajoso del arquetipo (summary-card/progress-meter) queda
-    pendiente: falta el contrato de lectura para el resumen relacionado
-    (lotes que usan este cultivo) — ver §6.3.1 de la guía, "componente
-    estático primero".
+    Resumen relacionado en edición (§6.3.1 de la guía, "componente estático
+    primero"): todavía no hay contrato de lectura por cultivo (los que
+    existen, `LecturaCultivoLote`, agrupan por CAMPAÑA, no por cultivo), así
+    que el aside es un `empty-state` fijo en vez de datos reales — el botón
+    ya apunta a una ruta real (`panel.propiedades.index`, donde se carga la
+    siembra de un lote). Cuando exista el contrato, esto pasa a
+    `resumenRelacionado()` resuelto en el controlador, sin tocar esta
+    anatomía.
 --}}
 @php
     $esEdicion = $cultivo !== null;
@@ -65,6 +69,23 @@
         <x-molecules.alert-strip variant="success" icon="check_circle">
             {{ session('estado') }}
         </x-molecules.alert-strip>
+    @endif
+
+    <x-molecules.form-layout>
+    @if ($esEdicion)
+        <x-slot:aside>
+            <x-molecules.empty-state
+                icon="grass"
+                :title="__('comercial.cultivos.resumen_titulo')"
+                :detail="__('comercial.cultivos.resumen_detalle')"
+            >
+                <x-slot:action>
+                    <x-atoms.button :href="route('panel.propiedades.index')" variant="outline" icon="arrow_forward">
+                        {{ __('comercial.cultivos.resumen_accion') }}
+                    </x-atoms.button>
+                </x-slot:action>
+            </x-molecules.empty-state>
+        </x-slot:aside>
     @endif
 
     <x-molecules.form-section
@@ -139,4 +160,5 @@
             </x-atoms.button>
         </x-slot:actions>
     </x-organisms.form-actions-bar>
+    </x-molecules.form-layout>
 </form>
