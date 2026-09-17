@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Comercial\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use RuntimeException;
 
 /**
@@ -17,6 +18,6 @@ final class PropiedadConLotesAsociados extends RuntimeException
 {
     public static function paraPropiedad(string $nombre): self
     {
-        return new self("La propiedad '{$nombre}' tiene lotes asociados y no se puede eliminar.");
+        return new self(Texto::de('comercial.errores.propiedad_con_lotes_asociados', ['nombre' => $nombre]));
     }
 }

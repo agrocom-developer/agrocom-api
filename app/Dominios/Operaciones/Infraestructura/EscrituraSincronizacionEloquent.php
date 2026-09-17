@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Operaciones\Infraestructura;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use App\Dominios\Operaciones\Aplicacion\GenerarAlertaExcepcion;
 use App\Dominios\Operaciones\Aplicacion\MaquinaEstados\MaquinaEstadosSesion;
 use App\Dominios\Operaciones\Aplicacion\MaquinaEstados\MaquinaEstadosTrabajo;
@@ -88,13 +89,13 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
         $orden = OrdenAplicacion::query()->find($datos->ordenId);
 
         if ($orden === null || $orden->estado !== EstadoOrdenAplicacion::Vigente) {
-            return ResultadoSincronizacion::rechazado('la orden y el lote declarados no forman un par vigente');
+            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.orden_lote_no_vigente'));
         }
 
         $loteEsDeLaOrden = $orden->ordenLotes()->where('lote_id', $datos->loteId)->exists();
 
         if (! $loteEsDeLaOrden) {
-            return ResultadoSincronizacion::rechazado('la orden y el lote declarados no forman un par vigente');
+            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.orden_lote_no_vigente'));
         }
 
         try {
@@ -121,7 +122,7 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
         $trabajoId = Trabajo::query()->where('uuid_cliente', $datos->trabajoUuidCliente)->value('id');
 
         if ($trabajoId === null) {
-            return ResultadoSincronizacion::rechazado('el trabajo referenciado no existe todavía');
+            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.trabajo_no_existe_aun'));
         }
 
         try {
@@ -168,13 +169,13 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
         $sesion = Sesion::query()->where('uuid_cliente', $datos->sesionUuidCliente)->first();
 
         if ($sesion === null) {
-            return ResultadoSincronizacion::rechazado('la sesión referenciada no existe todavía');
+            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.sesion_no_existe_aun'));
         }
 
         $dentroDeRango = $datos->dentroDeRango();
 
         if (! $dentroDeRango && ! $datos->tieneObservacionFirmada()) {
-            return ResultadoSincronizacion::rechazado('condiciones fuera de rango sin observación firmada del agrónomo');
+            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.condiciones_fuera_de_rango'));
         }
 
         try {
@@ -240,13 +241,13 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
         $sesion = Sesion::query()->where('uuid_cliente', $datos->sesionUuidCliente)->first();
 
         if ($sesion === null) {
-            return ResultadoSincronizacion::rechazado('la sesión referenciada no existe todavía');
+            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.sesion_no_existe_aun'));
         }
 
         $evidenciaFoto = Evidencia::query()->where('uuid_cliente', $datos->evidenciaFotoUuidCliente)->first();
 
         if ($evidenciaFoto === null || $evidenciaFoto->tipo !== TipoEvidencia::FotoIncidencia) {
-            return ResultadoSincronizacion::rechazado('falta la foto de la incidencia: evidencia inexistente o de tipo distinto');
+            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.falta_foto_incidencia'));
         }
 
         $yaUsadaPorOtraIncidencia = Incidencia::query()
@@ -255,7 +256,7 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
             ->exists();
 
         if ($yaUsadaPorOtraIncidencia) {
-            return ResultadoSincronizacion::rechazado('la foto ya fue usada para respaldar otra incidencia');
+            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.foto_incidencia_reutilizada'));
         }
 
         try {
@@ -290,7 +291,7 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
         $trabajoId = Trabajo::query()->where('uuid_cliente', $datos->trabajoUuidCliente)->value('id');
 
         if ($trabajoId === null) {
-            return ResultadoSincronizacion::rechazado('el trabajo referenciado no existe todavía');
+            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.trabajo_no_existe_aun'));
         }
 
         try {
@@ -335,7 +336,7 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
         $sesion = Sesion::query()->where('uuid_cliente', $datos->sesionUuidCliente)->first();
 
         if ($sesion === null) {
-            return ResultadoSincronizacion::rechazado('la sesión referenciada no existe todavía');
+            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.sesion_no_existe_aun'));
         }
 
         try {
@@ -384,7 +385,7 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
             return ResultadoSincronizacion::duplicado();
         }
 
-        return ResultadoSincronizacion::rechazado('no se pudo aplicar el registro: referencia o dato inválido');
+        return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.registro_invalido'));
     }
 
     /**
@@ -413,7 +414,7 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
             return ResultadoSincronizacion::duplicado();
         }
 
-        return ResultadoSincronizacion::rechazado('no se pudo aplicar el registro: referencia o dato inválido');
+        return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.registro_invalido'));
     }
 
     /**
@@ -466,7 +467,7 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
         $trabajoId = Trabajo::query()->where('uuid_cliente', $datos->trabajoUuidCliente)->value('id');
 
         if ($trabajoId === null) {
-            return ResultadoSincronizacion::rechazado('el trabajo referenciado no existe');
+            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.trabajo_no_existe'));
         }
 
         try {
@@ -477,11 +478,11 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
                 if ($trabajo->estado === EstadoTrabajo::Cerrado) {
                     return $trabajo->cierre_uuid_cliente === $datos->uuidCliente
                         ? ResultadoSincronizacion::duplicado()
-                        : ResultadoSincronizacion::rechazado('el trabajo ya está cerrado');
+                        : ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.trabajo_ya_cerrado'));
                 }
 
                 if ($operarioPersonaId !== null && ! $this->operarioPuedeCerrarTrabajo($trabajo->id, $operarioPersonaId)) {
-                    return ResultadoSincronizacion::rechazado('el operario no participó en este trabajo');
+                    return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.operario_no_participo'));
                 }
 
                 $evidenciaImagenCampo = Evidencia::query()
@@ -489,7 +490,7 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
                     ->first();
 
                 if ($evidenciaImagenCampo === null || $evidenciaImagenCampo->tipo !== TipoEvidencia::ImagenCampo) {
-                    return ResultadoSincronizacion::rechazado('falta la imagen del campo: evidencia inexistente o de tipo distinto');
+                    return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.falta_imagen_campo'));
                 }
 
                 $yaUsadaPorOtroTrabajo = Trabajo::query()
@@ -498,7 +499,7 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
                     ->exists();
 
                 if ($yaUsadaPorOtroTrabajo) {
-                    return ResultadoSincronizacion::rechazado('la imagen del campo ya fue usada para cerrar otro trabajo');
+                    return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.imagen_campo_reutilizada'));
                 }
 
                 $trabajo->imagen_campo_evidencia_id = $evidenciaImagenCampo->id;
@@ -522,9 +523,9 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
                 return ResultadoSincronizacion::aplicado();
             });
         } catch (QueryException) {
-            return ResultadoSincronizacion::rechazado('no se pudo cerrar el trabajo: referencia o dato inválido');
+            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.trabajo_cierre_invalido'));
         } catch (TransicionTrabajoNoPermitida) {
-            return ResultadoSincronizacion::rechazado('el trabajo ya está cerrado');
+            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.trabajo_ya_cerrado'));
         }
     }
 
@@ -554,7 +555,7 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
         $sesionId = Sesion::query()->where('uuid_cliente', $datos->sesionUuidCliente)->value('id');
 
         if ($sesionId === null) {
-            return ResultadoSincronizacion::rechazado('la sesión referenciada no existe');
+            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.sesion_no_existe'));
         }
 
         try {
@@ -565,11 +566,11 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
                 if ($sesion->estado === EstadoSesion::Cerrado) {
                     return $sesion->cierre_uuid_cliente === $datos->uuidCliente
                         ? ResultadoSincronizacion::duplicado()
-                        : ResultadoSincronizacion::rechazado('la sesión ya está cerrada');
+                        : ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.sesion_ya_cerrada'));
                 }
 
                 if ($operarioPersonaId !== null && (int) $sesion->piloto_id !== $operarioPersonaId) {
-                    return ResultadoSincronizacion::rechazado('el piloto de la sesión no corresponde al operario autenticado');
+                    return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.piloto_no_corresponde'));
                 }
 
                 // `litros_consumidos` (espec §7.2, tarea 18): igual que
@@ -586,9 +587,9 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
                 return ResultadoSincronizacion::aplicado();
             });
         } catch (QueryException) {
-            return ResultadoSincronizacion::rechazado('no se pudo cerrar la sesión: referencia o dato inválido');
+            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.sesion_cierre_invalido'));
         } catch (TransicionSesionNoPermitida) {
-            return ResultadoSincronizacion::rechazado('la sesión ya está cerrada');
+            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.sesion_ya_cerrada'));
         }
     }
 
@@ -672,7 +673,7 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
         $estadiaId = EstadiaHacienda::query()->where('uuid_cliente', $datos->estadiaUuidCliente)->value('id');
 
         if ($estadiaId === null) {
-            return ResultadoSincronizacion::rechazado('la estadía referenciada no existe');
+            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.estadia_no_existe'));
         }
 
         try {
@@ -683,13 +684,13 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
                 if ($estadia->salida !== null) {
                     return $estadia->cierre_uuid_cliente === $datos->uuidCliente
                         ? ResultadoSincronizacion::duplicado()
-                        : ResultadoSincronizacion::rechazado('la estadía ya está cerrada');
+                        : ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.estadia_ya_cerrada'));
                 }
 
                 $salida = self::normalizarUtc($datos->salida);
 
                 if ($salida->lessThanOrEqualTo($estadia->entrada)) {
-                    return ResultadoSincronizacion::rechazado('la salida no puede ser anterior o igual a la entrada');
+                    return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.salida_anterior_a_entrada'));
                 }
 
                 $estadia->salida = $salida;
@@ -699,7 +700,7 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
                 return ResultadoSincronizacion::aplicado();
             });
         } catch (QueryException) {
-            return ResultadoSincronizacion::rechazado('no se pudo cerrar la estadía: referencia o dato inválido');
+            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.estadia_cierre_invalido'));
         }
     }
 
@@ -744,10 +745,10 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
         }
 
         if (str_contains($mensaje, 'ope_estadias_hacienda_equipo_abierta_unico') || str_contains($mensaje, 'ope_estadias_hacienda.equipo_trabajo_id')) {
-            return ResultadoSincronizacion::rechazado('el equipo ya tiene una estadía abierta');
+            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.equipo_con_estadia_abierta'));
         }
 
-        return ResultadoSincronizacion::rechazado('no se pudo aplicar el registro: referencia o dato inválido');
+        return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.registro_invalido'));
     }
 
     /**
@@ -764,25 +765,25 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
         $trabajoId = Trabajo::query()->where('uuid_cliente', $datos->trabajoUuidCliente)->value('id');
 
         if ($trabajoId === null) {
-            return ResultadoSincronizacion::rechazado('el trabajo referenciado no existe todavía');
+            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.trabajo_no_existe_aun'));
         }
 
         $fotoControl = $this->evidenciaFotoEquipo($datos->fotoControlUuidCliente, TipoEvidencia::FotoControl);
 
         if ($fotoControl === null) {
-            return ResultadoSincronizacion::rechazado('falta la foto de control: evidencia inexistente o de tipo distinto');
+            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.falta_foto_control'));
         }
 
         $fotoCicloBateria = $this->evidenciaFotoEquipo($datos->fotoCicloBateriaBalanceoUuidCliente, TipoEvidencia::FotoCicloBateriaBalanceo);
 
         if ($fotoCicloBateria === null) {
-            return ResultadoSincronizacion::rechazado('falta la foto del ciclo de batería y balanceo: evidencia inexistente o de tipo distinto');
+            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.falta_foto_ciclo_bateria'));
         }
 
         $fotoDronLimpio = $this->evidenciaFotoEquipo($datos->fotoDronLimpioUuidCliente, TipoEvidencia::FotoDronLimpio);
 
         if ($fotoDronLimpio === null) {
-            return ResultadoSincronizacion::rechazado('falta la foto del dron limpio: evidencia inexistente o de tipo distinto');
+            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.falta_foto_dron_limpio'));
         }
 
         // `!= $datos->uuidCliente`, mismo criterio que
@@ -791,15 +792,15 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
         // excluirlo acá, ese reintento se rechazaría como "foto reutilizada"
         // en vez de resolverse como `duplicado` en el `INSERT` de abajo.
         if (EvidenciaEquipo::query()->where('foto_control_id', $fotoControl->id)->where('uuid_cliente', '!=', $datos->uuidCliente)->exists()) {
-            return ResultadoSincronizacion::rechazado('la foto de control ya fue usada para respaldar otro reporte de equipo');
+            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.foto_control_reutilizada'));
         }
 
         if (EvidenciaEquipo::query()->where('foto_ciclo_bateria_balanceo_id', $fotoCicloBateria->id)->where('uuid_cliente', '!=', $datos->uuidCliente)->exists()) {
-            return ResultadoSincronizacion::rechazado('la foto del ciclo de batería y balanceo ya fue usada para respaldar otro reporte de equipo');
+            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.foto_ciclo_bateria_reutilizada'));
         }
 
         if (EvidenciaEquipo::query()->where('foto_dron_limpio_id', $fotoDronLimpio->id)->where('uuid_cliente', '!=', $datos->uuidCliente)->exists()) {
-            return ResultadoSincronizacion::rechazado('la foto del dron limpio ya fue usada para respaldar otro reporte de equipo');
+            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.foto_dron_limpio_reutilizada'));
         }
 
         try {
@@ -851,17 +852,17 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
         $mensaje = $excepcion->getMessage();
 
         if (str_contains($mensaje, 'ope_evidencias_equipo_foto_control_unico') || str_contains($mensaje, 'ope_evidencias_equipo.foto_control_id')) {
-            return ResultadoSincronizacion::rechazado('la foto de control ya fue usada para respaldar otro reporte de equipo');
+            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.foto_control_reutilizada'));
         }
 
         if (str_contains($mensaje, 'ope_evidencias_equipo_foto_ciclo_bateria_unico') || str_contains($mensaje, 'ope_evidencias_equipo.foto_ciclo_bateria_balanceo_id')) {
-            return ResultadoSincronizacion::rechazado('la foto del ciclo de batería y balanceo ya fue usada para respaldar otro reporte de equipo');
+            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.foto_ciclo_bateria_reutilizada'));
         }
 
         if (str_contains($mensaje, 'ope_evidencias_equipo_foto_dron_limpio_unico') || str_contains($mensaje, 'ope_evidencias_equipo.foto_dron_limpio_id')) {
-            return ResultadoSincronizacion::rechazado('la foto del dron limpio ya fue usada para respaldar otro reporte de equipo');
+            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.foto_dron_limpio_reutilizada'));
         }
 
-        return ResultadoSincronizacion::rechazado('no se pudo aplicar el registro: referencia o dato inválido');
+        return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.registro_invalido'));
     }
 }

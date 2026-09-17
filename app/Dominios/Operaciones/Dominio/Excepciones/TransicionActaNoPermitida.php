@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Operaciones\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use App\Dominios\Operaciones\Dominio\EstadoActa;
 use DomainException;
 
@@ -14,8 +15,9 @@ final class TransicionActaNoPermitida extends DomainException
 {
     public static function entre(EstadoActa $desde, EstadoActa $hasta): self
     {
-        return new self(
-            "No se puede pasar un acta de '{$desde->value}' a '{$hasta->value}'.",
-        );
+        return new self(Texto::de('operaciones.errores.transicion_acta_no_permitida', [
+            'desde' => $desde->value,
+            'hasta' => $hasta->value,
+        ]));
     }
 }

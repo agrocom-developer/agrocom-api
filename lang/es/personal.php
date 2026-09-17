@@ -80,6 +80,7 @@ return [
         'campo_latitud' => 'Latitud',
         'campo_longitud' => 'Longitud',
         'error_coordenada_incompleta' => 'Completa latitud y longitud juntas, o deja las dos vacías.',
+        'error_nombre_requerido' => 'Ingresa el nombre de la base.',
         'estado_form' => 'Los cambios se guardan al confirmar.',
         'volver' => 'Volver a bases',
     ],
@@ -143,6 +144,8 @@ return [
         'campo_tarifa_ayuda' => 'Se usa para calcular el devengo de cada sesión validada. Cambiarla no altera los devengos ya generados.',
         'campo_activo' => 'Persona activa',
         'campo_activo_ayuda' => 'Una persona inactiva no puede asignarse a sesiones nuevas.',
+        'error_nombre_requerido' => 'Ingresa el nombre de la persona.',
+        'error_rol_requerido' => 'Elige el rol de la persona.',
         'estado_form' => 'Los cambios se guardan al confirmar.',
         'volver' => 'Volver a personas',
     ],
@@ -160,6 +163,17 @@ return [
         'recurso_asignado' => 'El recurso se asignó correctamente.',
         'recurso_finalizado' => 'Se finalizó la vigencia del recurso.',
         'aviso_solapamiento' => 'Ya está vigente en otro equipo en fechas que se superponen: :equipos. Se guardó igual — la operación real presta gente y equipamiento entre cuadrillas.',
+        'error_codigo_requerido' => 'Ingresa el código del equipo.',
+        'error_base_requerida' => 'Elige la base del equipo.',
+        'error_estado_requerido' => 'Elige el estado del equipo.',
+        'error_desde_requerida' => 'Elige la fecha de inicio de la vigencia.',
+        'error_integrante_persona_requerida' => 'Elige la persona que integra el equipo.',
+        'error_integrante_rol_requerido' => 'Elige el rol de la persona en el equipo.',
+        'error_integrante_desde_requerida' => 'Elige la fecha desde la que integra el equipo.',
+        'error_recurso_tipo_requerido' => 'Elige el tipo de recurso.',
+        'error_recurso_id_requerido' => 'Elige el recurso.',
+        'error_recurso_desde_requerida' => 'Elige la fecha desde la que se asigna el recurso.',
+        'error_vigencia_hasta_requerida' => 'Elige la fecha en que termina la vigencia.',
 
         // Listado
         'titulo' => 'Equipos de trabajo',
@@ -301,6 +315,21 @@ return [
             'clima' => 'Clima',
             'otro' => 'Otro',
         ],
+    ],
+
+    // Mensajes de error.
+    'errores' => [
+        'equipo_trabajo_duplicado' => "Ya existe un equipo de trabajo activo con el código ':codigo'.",
+        'recurso_equipo_invalido' => 'El :tipo #:recurso_id no existe o no está activo.',
+        'vigencia_integrante_solapada' => ':persona ya integra este equipo en una vigencia que se superpone con :rango.',
+        'vigencia_recurso_solapada' => ':recurso ya está asignado a este equipo en una vigencia que se superpone con :rango.',
+        'vigencia_indefinida' => 'vigente',
+    ],
+
+    // Mensajes de los formularios.
+    'validacion' => [
+        'base_invalida' => 'La base seleccionada no es válida.',
+        'persona_invalida' => 'La persona seleccionada no es válida.',
     ],
 
 ];

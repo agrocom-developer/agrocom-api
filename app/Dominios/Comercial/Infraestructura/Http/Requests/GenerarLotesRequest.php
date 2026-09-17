@@ -47,10 +47,11 @@ final class GenerarLotesRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'prefijo.required' => 'Elegí un prefijo para el código de los lotes.',
-            'cantidad.required' => 'Indicá cuántos lotes generar.',
-            'cantidad.min' => 'Generá al menos un lote.',
-            'cantidad.max' => 'No se pueden generar más de 50 lotes a la vez.',
+            'prefijo.required' => __('comercial.validacion.lotes_generar_prefijo_requerido'),
+            'cantidad.required' => __('comercial.validacion.lotes_generar_cantidad_requerida'),
+            'cantidad.min' => __('comercial.validacion.lotes_generar_cantidad_minima'),
+            'cantidad.max' => __('comercial.validacion.lotes_generar_cantidad_maxima'),
+            'terreno.grado_obstaculos.required' => __('comercial.lotes.error_grado_obstaculos_requerido'),
         ];
     }
 }

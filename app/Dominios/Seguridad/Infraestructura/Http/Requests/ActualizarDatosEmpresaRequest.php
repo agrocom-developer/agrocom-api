@@ -37,6 +37,8 @@ final class ActualizarDatosEmpresaRequest extends FormRequest
             'logo.mimes' => __('seguridad.organizacion.error_logo_tipo'),
             'logo.max' => __('seguridad.organizacion.error_logo_tamano'),
             'logo.uploaded' => __('seguridad.organizacion.error_logo_subida'),
+            'nombre.required' => __('seguridad.organizacion.error_nombre_requerido'),
+            'rubro.required' => __('seguridad.organizacion.error_rubro_requerido'),
         ];
     }
 }

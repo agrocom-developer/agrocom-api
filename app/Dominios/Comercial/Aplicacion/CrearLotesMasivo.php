@@ -6,6 +6,7 @@ use App\Dominios\Comercial\Aplicacion\Lote\GuardadoLote;
 use App\Dominios\Comercial\Dominio\Excepciones\LoteDuplicado;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -102,6 +103,6 @@ final class CrearLotesMasivo
             }
         }
 
-        throw new RuntimeException('No se pudo generar un código de lote libre tras '.self::INTENTOS_MAXIMOS.' intentos.');
+        throw new RuntimeException(Texto::de('comercial.errores.lote_codigo_libre_agotado', ['intentos' => self::INTENTOS_MAXIMOS]));
     }
 }

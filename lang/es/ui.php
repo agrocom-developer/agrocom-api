@@ -48,6 +48,8 @@ return [
         'hoy' => 'Hoy',
         'limpiar' => 'Limpiar fecha',
         'elegir_fecha' => 'Elegir fecha',
+        // Formato que se muestra como guía al escribir fecha y hora.
+        'formato_fecha_hora' => 'dd/mm/aaaa hh:mm',
     ],
 
     // Chrome de la búsqueda de atoms/checkbox-group (tarea 76, HU-53), etapa
@@ -78,6 +80,9 @@ return [
         'continue' => 'Continuar',
         'close' => 'Cerrar',
     ],
+
+    // Botón de cerrar genérico.
+    'cerrar' => 'Cerrar',
 
     // Chrome genérico del panel (organisms/sidebar-nav, organisms/topbar,
     // HU-02): acciones de la cáscara de navegación, reutilizables en
@@ -135,6 +140,21 @@ return [
         'filtros_boton' => 'Filtros',
         'filtros_aplicar' => 'Aplicar',
         'filtros_limpiar' => 'Limpiar filtros',
+    ],
+
+    // Mensajes de error.
+    'errores' => [
+        'borrado_fisico_no_permitido' => 'Borrado físico bloqueado para :clase: los modelos de dominio solo admiten borrado lógico (ADR 0007 — soft delete y bitácora de auditoría).',
+        // Aviso cuando no carga el mapa de Google.
+        'google_maps_no_disponible' => 'No se pudo cargar el SDK de Google Maps',
+    ],
+
+    // Textos de los comandos de consola.
+    'consola' => [
+        'listar_modelos_ruta_inexistente' => 'No existe :ruta',
+        'listar_modelos_vacio' => 'No se encontró ningún modelo Eloquent bajo app/Dominios/*/Infraestructura/Eloquent.',
+        'listar_modelos_columnas' => ['Módulo', 'Modelo', 'Tabla', 'Namespace'],
+        'listar_modelos_resumen' => ':cantidad modelo(s) en :modulos módulo(s).',
     ],
 
 ];

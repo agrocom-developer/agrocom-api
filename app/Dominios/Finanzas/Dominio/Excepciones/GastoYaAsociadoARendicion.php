@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Finanzas\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use DomainException;
 
 /**
@@ -15,6 +16,6 @@ final class GastoYaAsociadoARendicion extends DomainException
 {
     public static function paraGasto(int $gastoId): self
     {
-        return new self("El gasto #{$gastoId} ya está asociado a una rendición.");
+        return new self(Texto::de('finanzas.errores.gasto_ya_asociado_a_rendicion', ['gasto_id' => $gastoId]));
     }
 }

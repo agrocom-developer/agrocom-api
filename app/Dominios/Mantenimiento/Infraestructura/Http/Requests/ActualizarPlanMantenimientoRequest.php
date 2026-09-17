@@ -19,4 +19,14 @@ final class ActualizarPlanMantenimientoRequest extends FormRequest
             'horas_umbral' => ['required', 'numeric', 'gt:0'],
         ];
     }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return [
+            'modelo.required' => __('mantenimiento.validacion.modelo_requerido'),
+            'tarea.required' => __('mantenimiento.validacion.tarea_requerida'),
+            'horas_umbral.required' => __('mantenimiento.validacion.horas_umbral_requerido'),
+        ];
+    }
 }

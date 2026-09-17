@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Comercial\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use RuntimeException;
 
 /**
@@ -16,6 +17,6 @@ final class SiembraDuplicada extends RuntimeException
 {
     public static function paraLote(string $codigoLote): self
     {
-        return new self("El lote '{$codigoLote}' ya tiene una siembra cargada para esta campaña.");
+        return new self(Texto::de('comercial.errores.siembra_duplicada', ['codigo' => $codigoLote]));
     }
 }

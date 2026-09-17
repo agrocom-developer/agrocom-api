@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Mezclas\Infraestructura;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use App\Dominios\Mezclas\Contratos\EscrituraMezclas;
 use App\Dominios\Mezclas\Contratos\RegistroMezcla;
 use App\Dominios\Mezclas\Infraestructura\Eloquent\Mezcla;
@@ -43,7 +44,7 @@ final class EscrituraMezclasEloquent implements EscrituraMezclas
         $trabajoId = $this->trabajos->idPorUuidCliente($datos->trabajoUuidCliente);
 
         if ($trabajoId === null) {
-            return ResultadoSincronizacion::rechazado('el trabajo referenciado no existe todavía');
+            return ResultadoSincronizacion::rechazado(Texto::de('mezclas.errores.trabajo_no_existe'));
         }
 
         try {
@@ -95,6 +96,6 @@ final class EscrituraMezclasEloquent implements EscrituraMezclas
             return ResultadoSincronizacion::duplicado();
         }
 
-        return ResultadoSincronizacion::rechazado('no se pudo aplicar el registro: referencia o dato inválido');
+        return ResultadoSincronizacion::rechazado(Texto::de('mezclas.errores.registro_invalido'));
     }
 }

@@ -27,4 +27,24 @@ final class ActualizarCampaniaRequest extends FormRequest
             'fecha_fin' => ['required', 'date', 'after_or_equal:fecha_inicio'],
         ];
     }
+
+    /**
+     * Solo lo que merece decir algo MÁS específico que el genérico de
+     * `lang/es/validation.php` ("Este campo es obligatorio."). El resto de las
+     * reglas (`max`, `date`, `in`) cae a ese catálogo. `required` ya cubre
+     * nulo, vacío y solo espacios: los middlewares globales `TrimStrings` y
+     * `ConvertEmptyStringsToNull` normalizan el dato antes de validar.
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'codigo.required' => __('campania.campanias.error_codigo_requerido'),
+            'estacion.required' => __('campania.campanias.error_estacion_requerida'),
+            'fecha_inicio.required' => __('campania.campanias.error_fecha_inicio_requerida'),
+            'fecha_fin.required' => __('campania.campanias.error_fecha_fin_requerida'),
+            'fecha_fin.after_or_equal' => __('campania.campanias.error_fechas_rango'),
+        ];
+    }
 }

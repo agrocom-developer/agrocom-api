@@ -3,6 +3,7 @@
 namespace App\Dominios\Comercial\Dominio\Excepciones;
 
 use App\Dominios\Comercial\Aplicacion\Contrato\VerificadorLotesDelContrato;
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use RuntimeException;
 
 /**
@@ -22,6 +23,6 @@ final class LotesDePropiedadAgotados extends RuntimeException
 {
     public static function paraPropiedad(string $nombre): self
     {
-        return new self("La propiedad '{$nombre}' ya tiene todos sus lotes cubiertos por otros contratos vigentes de esta campaña.");
+        return new self(Texto::de('comercial.errores.propiedad_lotes_agotados', ['nombre' => $nombre]));
     }
 }

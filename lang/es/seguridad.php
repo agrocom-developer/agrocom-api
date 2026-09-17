@@ -62,6 +62,8 @@ return [
         'boton_ingresando' => 'Verificando acceso…',
         'error_credenciales' => 'Las credenciales no coinciden con ningún registro.',
         'error_generico' => 'Ocurrió un error. Intenta nuevamente.',
+        'error_username_requerido' => 'Ingresa tu usuario.',
+        'error_password_requerido' => 'Ingresa tu contraseña.',
     ],
 
     'recuperar' => [
@@ -155,6 +157,8 @@ return [
         'cancelar' => 'Cancelar',
         'error_nombre_formato' => 'El nombre interno va en minúsculas, dígitos y guion bajo, y empieza con letra (por ejemplo: supervisor_taller).',
         'error_nombre_duplicado' => 'Ya existe un rol con ese nombre. Un rol dado de baja tampoco libera el suyo.',
+        'error_nombre_requerido' => 'Ingresa el nombre interno del rol.',
+        'error_descripcion_requerida' => 'Ingresa una descripción para el rol.',
 
         'permisos_titulo' => 'Permisos de :rol',
         'permisos_subtitulo' => 'Lo que este rol ve en el menú y lo que puede hacer dentro de cada pantalla. El menú no se edita aparte: se enciende al dar el permiso de la pantalla.',
@@ -189,6 +193,7 @@ return [
         'recordar' => 'Entrar siempre con este rol',
         'error_actualizar' => 'No se pudo cambiar de rol. Intenta nuevamente.',
         'error_red' => 'Error de red. Intenta nuevamente.',
+        'error_id_role_requerido' => 'Elige el rol con el que vas a trabajar.',
         'switch_trigger' => 'Cambiar de rol',
         'switch_titulo' => 'Cambiar de rol activo',
         'badge_activo' => 'Rol activo',
@@ -411,6 +416,10 @@ return [
         'campo_contrato_placeholder' => 'Elige un contrato vigente',
         'campo_contrato_opcion' => ':cliente — :hectareas ha',
         'volver' => 'Volver a usuarios',
+        'error_type_requerido' => 'Elige el tipo de cuenta.',
+        'error_name_requerido' => 'Ingresa el nombre completo del usuario.',
+        'error_username_requerido' => 'Ingresa el usuario de la cuenta.',
+        'error_password_requerido' => 'Ingresa una contraseña para la cuenta.',
     ],
 
     // Revocación de sesiones de la app de campo (HU-03). El nombre del rol
@@ -470,6 +479,12 @@ return [
         'error_logo_tipo' => 'El logo debe ser PNG, JPG, WEBP, GIF o SVG.',
         'error_logo_tamano' => 'El logo no puede pesar más de 20 MB.',
         'error_logo_subida' => 'No se pudo subir el archivo. Prueba de nuevo con una imagen más liviana.',
+        'error_nombre_requerido' => 'Ingresa el nombre de la empresa.',
+        'error_rubro_requerido' => 'Ingresa el rubro de la empresa.',
+        'error_razon_social_fiscal_requerida' => 'Ingresa la razón social fiscal.',
+        'error_nit_requerido' => 'Ingresa el NIT.',
+        'error_domicilio_fiscal_requerido' => 'Ingresa el domicilio fiscal.',
+        'error_actividad_economica_requerida' => 'Ingresa la actividad económica.',
 
         'seccion_contacto' => 'Datos de contacto',
         'campo_email' => 'Correo electrónico',
@@ -544,6 +559,7 @@ return [
         'campo_password_nueva_ayuda' => 'Mínimo 8 caracteres. Cambiarla cierra tu sesión en otros dispositivos.',
         'campo_password_confirmacion' => 'Confirmar contraseña nueva',
         'estado_form' => 'Los cambios se guardan al confirmar.',
+        'error_name_requerido' => 'Ingresa tu nombre completo.',
     ],
 
     // Tarea 63 (invariante 9 de CLAUDE.md): pantalla `/panel/bitacora`.
@@ -645,6 +661,55 @@ return [
             'sec_user' => 'Usuarios',
             'sec_user_role' => 'Asignación de roles a usuario',
         ],
+    ],
+
+    // Mensajes de error.
+    'errores' => [
+        'contrasena_actual_incorrecta' => 'La contraseña actual no es correcta.',
+        'contrato_no_disponible' => 'El contrato #:id no existe o no está vigente.',
+        'dispositivo_no_encontrado' => 'El dispositivo #:id_dispositivo no existe entre los del usuario #:id_usuario.',
+        'emision_directa_token' => 'Los tokens de dispositivo no se emiten con createToken(): usa :caso_uso, que registra el dispositivo y el rol activo con el que opera.',
+        'idioma_no_soportado' => "El idioma ':idioma' no está habilitado todavía.",
+        'permiso_denegado' => "Falta el permiso ':permiso' para completar esta acción.",
+        'rol_duplicado' => "Ya existe un rol con el nombre ':nombre'. Un rol dado de baja tampoco libera su nombre: el catálogo de roles es del sistema.",
+        'rol_no_asignado' => 'El usuario #:id_usuario no tiene asignado (o ya no tiene vivo) el rol #:id_rol.',
+        'rol_protegido_ultima_llave' => "No se puede dejar el sistema sin ningún rol activo que tenga ':permiso': sería la última llave, y nadie podría volver a otorgarla desde el panel.",
+        'rol_protegido_rol_activo_propio' => "No puedes quitarle ':permiso' al rol con el que estás operando: perderías el acceso a esta pantalla en el próximo clic.",
+        'rol_protegido_ultimo_portador' => "':permiso' quedaría sin ningún rol activo que lo tenga. Otórgaselo antes a otro rol: nadie puede conceder un permiso que no tiene, así que un permiso huérfano no se recupera desde el panel.",
+        'rol_protegido_tiene_usuarios_uno' => "El rol ':rol' tiene :cantidad usuario asignado. Reasígnalos antes de darlo de baja.",
+        'rol_protegido_tiene_usuarios_varios' => "El rol ':rol' tiene :cantidad usuarios asignados. Reasígnalos antes de darlo de baja.",
+        'rol_protegido_es_rol_activo' => "No puedes dar de baja ni desactivar ':rol': es el rol con el que estás operando.",
+        'usuario_duplicado_username' => "Ya existe una cuenta activa con el username ':username'.",
+        'usuario_duplicado_persona' => 'La persona #:persona_id ya tiene una cuenta activa — una persona operativa, una sola cuenta.',
+        'usuario_duplicado_email' => "Ya existe una cuenta activa con el correo ':email'.",
+        'zona_horaria_invalida' => "':identificador' no es un identificador de zona horaria IANA válido.",
+    ],
+
+    // Mensajes de los formularios.
+    'validacion' => [
+        'usuario_username_unico' => 'Ya existe una cuenta activa con ese username.',
+        'usuario_email_unico' => 'Ya existe una cuenta activa con ese correo.',
+        'usuario_persona_invalida' => 'La persona seleccionada no es válida.',
+        'usuario_persona_prohibida_portal' => 'Una cuenta de portal no tiene persona asociada.',
+        'usuario_contrato_requerido' => 'Elige el contrato de la cuenta de portal.',
+        'usuario_contrato_prohibido_interno' => 'Una cuenta interna no tiene contrato asociado.',
+        'usuario_contrato_invalido' => 'El contrato elegido no existe o no está vigente.',
+        'usuario_roles_requerido' => 'Falta el campo de roles.',
+        'usuario_roles_prohibido_portal' => 'Una cuenta de portal no tiene roles.',
+        'usuario_rol_invalido' => 'Uno de los roles seleccionados no es válido.',
+        'perfil_password_actual_requerida' => 'Ingresa tu contraseña actual para poder cambiarla.',
+        'perfil_password_confirmacion' => 'La confirmación no coincide con la contraseña nueva.',
+    ],
+
+    // Respuestas del sistema.
+    'respuestas' => [
+        'sesion_finalizada' => 'Sesión finalizada.',
+        'rol_dispositivo_requerido' => 'Debes indicar con qué rol opera este dispositivo.',
+        'rol_activo_requerido' => 'Debes seleccionar un rol activo antes de continuar.',
+        'badge_ordenes_vigentes' => ':cantidad vigentes',
+        'badge_sesiones_pendientes' => ':cantidad sin validar',
+        'badge_pausas_mes' => ':cantidad este mes',
+        'badge_stock_bajo_minimo' => ':cantidad bajo mínimo',
     ],
 
 ];

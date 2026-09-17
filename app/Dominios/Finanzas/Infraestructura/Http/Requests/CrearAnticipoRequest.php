@@ -41,6 +41,8 @@ final class CrearAnticipoRequest extends FormRequest
         return [
             'persona_id.required' => __('finanzas.anticipos.error_persona_requerida'),
             'persona_id.exists' => __('finanzas.anticipos.error_persona_invalida'),
+            'monto.required' => __('finanzas.anticipos.error_monto_requerido'),
+            'fecha.required' => __('finanzas.anticipos.error_fecha_requerida'),
         ];
     }
 }

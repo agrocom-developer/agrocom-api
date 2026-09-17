@@ -68,6 +68,7 @@ return [
         'error_logo_tipo' => 'El logo tiene que ser un archivo PNG, JPG, WEBP, GIF o SVG.',
         'error_logo_tamano' => 'El logo no puede superar los 20 MB.',
         'error_logo_subida' => 'No se pudo subir el archivo. Prueba de nuevo con una imagen más liviana.',
+        'error_razon_social_requerida' => 'Ingresa la razón social del cliente.',
         'seccion_contactos' => 'Contactos',
         'contacto_agregar' => 'Agregar contacto',
         'contacto_quitar' => 'Quitar',
@@ -85,6 +86,8 @@ return [
         'contacto_tipo_otro' => 'Especifica el tipo',
         'contacto_tipo_otro_ayuda' => 'Solo si el tipo es "Otro" — descríbelo en pocas palabras (ej. "Contador externo").',
         'error_contacto_tipo_otro' => 'Especifica el tipo de contacto.',
+        'error_contacto_tipo_requerido' => 'Elige el tipo de contacto.',
+        'error_contacto_nombre_requerido' => 'Ingresa el nombre del contacto.',
         'contacto_nombre' => 'Nombre Completo',
         'contacto_telefono' => 'Teléfono',
         'contacto_email' => 'Email',
@@ -193,6 +196,7 @@ return [
         'volver' => 'Volver a propiedades',
         'error_coordenada_incompleta' => 'Completa latitud y longitud juntas, o deja las dos vacías.',
         'error_geometria_invalida' => 'La geometría tiene que ser un JSON válido con "type": "MultiPolygon" y "coordinates" como arreglo.',
+        'error_nombre_requerido' => 'Ingresa el nombre de la propiedad.',
 
         // Aside de resumen de mapa/lotes/siembra, solo en edición.
         'aside_mapa_titulo' => 'Coordenadas del mapa',
@@ -432,6 +436,11 @@ return [
         'error_lote_invalido' => 'Uno de los lotes seleccionados no es válido.',
         'error_lote_horario_incompleto' => 'Completa la hora de inicio y la hora de fin del lote.',
         'error_lote_horario_invalido' => 'La hora de fin del lote tiene que ser posterior a la hora de inicio.',
+        'error_hectareas_contratadas_requeridas' => 'Ingresa las hectáreas contratadas.',
+        'error_aplicaciones_previstas_requeridas' => 'Ingresa las aplicaciones previstas.',
+        'error_precio_ha_requerido' => 'Ingresa el precio por hectárea.',
+        'error_fecha_inicio_requerida' => 'Elige la fecha de inicio del contrato.',
+        'error_estado_requerido' => 'Elige el estado del contrato.',
         'volver' => 'Volver a contratos',
     ],
 
@@ -545,6 +554,8 @@ return [
         'error_geometria_invalida' => 'La geometría tiene que ser un JSON con "type": "Polygon" y "coordinates" como arreglo.',
         'error_grado_obstaculos_invalido' => 'El grado de obstáculos no es válido.',
         'error_grado_obstaculos_requerido' => 'Elige un grado de obstáculos para este lote.',
+        'error_codigo_requerido' => 'Ingresa el código del lote.',
+        'error_hectareas_requeridas' => 'Ingresa las hectáreas del lote.',
     ],
 
     // HU-48 (tarea 71, ADR 0015 punto 4): catálogo de cultivos. Cuarto ABM
@@ -616,6 +627,9 @@ return [
         'campo_notas_agronomicas_ayuda' => 'Referencia informativa de un agrónomo — Agrocom no define ni valida la composición del caldo, eso es responsabilidad del cliente.',
         'estado_form' => 'Los cambios se guardan al confirmar.',
         'volver' => 'Volver a cultivos',
+
+        // Mensajes de los campos obligatorios.
+        'error_nombre_comun_requerido' => 'Ingresa el nombre común del cultivo.',
     ],
 
     // HU-48 (tarea 71, etapa 3, ADR 0015 punto 4): qué se sembró en cada
@@ -644,6 +658,10 @@ return [
         'campo_fecha_siembra' => 'Fecha de siembra',
         'campo_fecha_cosecha_estimada' => 'Cosecha estimada',
         'estado_form' => 'Los cambios se guardan al confirmar.',
+
+        // Mensajes de los campos obligatorios.
+        'error_lotes_requeridos' => 'Agrega al menos un lote.',
+        'error_lote_id_requerido' => 'Selecciona un lote.',
     ],
 
     // HU-31 (tarea 45): "como encargado, quiero emitir la factura de un
@@ -769,6 +787,86 @@ return [
         'pendiente' => 'Pendiente',
         'a_aplicar' => 'A aplicar',
         'cumplido' => 'Cumplido',
+    ],
+
+    // Nombres de los colores de propiedad.
+    'colores' => [
+        'rojo' => 'Rojo',
+        'naranja' => 'Naranja',
+        'ambar' => 'Ámbar',
+        'verde_bosque' => 'Verde bosque',
+        'verde_azulado' => 'Verde azulado',
+        'turquesa' => 'Turquesa',
+        'azul' => 'Azul',
+        'indigo' => 'Índigo',
+        'violeta' => 'Violeta',
+        'purpura' => 'Púrpura',
+        'frambuesa' => 'Frambuesa',
+        'carmin' => 'Carmín',
+        'marron' => 'Marrón',
+        'pizarra' => 'Pizarra',
+        'musgo' => 'Musgo',
+        'malva' => 'Malva',
+        'caqui' => 'Caqui',
+        'salvia' => 'Salvia',
+        'acero' => 'Acero',
+        'aciano' => 'Aciano',
+        'vino' => 'Vino',
+        'terracota' => 'Terracota',
+        'negro' => 'Negro',
+    ],
+
+    // Mensajes de error.
+    'errores' => [
+        'acta_no_existe' => 'El acta #:id no existe.',
+        'acta_no_firmada' => 'El acta #:id debe estar firmada para poder facturarse.',
+        'acta_ya_facturada' => 'El acta #:id ya tiene una factura emitida.',
+        'contrato_fecha_inicio_pasada' => "El contrato #:id tiene fecha de inicio :fecha, ya pasada — no puede pasar a 'vigente'.",
+        'campania_cerrada' => "La campaña ':codigo' está cerrada: no admite nuevas imputaciones.",
+        'cliente_nit_duplicado' => "Ya existe un cliente activo con el NIT ':nit'.",
+        'cultivo_nombre_duplicado' => "Ya existe un cultivo activo con el nombre ':nombre'.",
+        'informe_falta_cliente' => 'El informe de avance de contratos requiere al menos un cliente.',
+        'informe_falta_cultivo' => 'El informe de avance de contratos requiere al menos un cultivo.',
+        'hectareas_sembradas_superan_lote' => "Las hectáreas sembradas (:sembradas) superan las hectáreas del lote ':codigo' (:hectareas).",
+        'lote_ajeno_al_cliente' => "El lote ':codigo' no pertenece a ninguna propiedad del cliente elegido.",
+        'lote_con_historial_asociado' => "El lote ':codigo' tiene órdenes de aplicación o trabajos asociados y no se puede eliminar.",
+        'lote_codigo_duplicado' => "Ya existe un lote activo con el código ':codigo' para esta propiedad.",
+        'lote_codigo_libre_agotado' => 'No se pudo generar un código de lote libre tras :intentos intentos.',
+        'propiedad_lotes_agotados' => "La propiedad ':nombre' ya tiene todos sus lotes cubiertos por otros contratos vigentes de esta campaña.",
+        'propiedad_con_lotes_asociados' => "La propiedad ':nombre' tiene lotes asociados y no se puede eliminar.",
+        'propiedad_nombre_duplicado' => "Ya existe una propiedad activa con el nombre ':nombre' para este cliente.",
+        'siembra_duplicada' => "El lote ':codigo' ya tiene una siembra cargada para esta campaña.",
+        'contrato_transicion_no_permitida' => "No se puede pasar un contrato de ':desde' a ':hasta'.",
+        'provincia_ajena_al_departamento' => 'La provincia seleccionada no pertenece al departamento elegido.',
+        'municipio_ajeno_a_la_provincia' => 'El municipio seleccionado no pertenece a la provincia elegida.',
+    ],
+
+    // Mensajes de los formularios.
+    'validacion' => [
+        'tipo_persona_requerido' => 'Selecciona si el cliente es persona física o jurídica.',
+        'tipo_persona_invalido' => 'El tipo de persona no es válido.',
+        'contactos_requeridos' => 'Agrega al menos un contacto.',
+        'contacto_ajeno_al_cliente' => 'Uno de los contactos enviados no pertenece a este cliente.',
+        'contacto_tipo_invalido' => 'El tipo de contacto no es válido.',
+        'tipo_cultivo_requerido' => 'Selecciona el tipo de cultivo.',
+        'tipo_cultivo_invalido' => 'El tipo de cultivo no es válido.',
+        'ciclo_vida_requerido' => 'Selecciona el ciclo de vida.',
+        'ciclo_vida_invalido' => 'El ciclo de vida no es válido.',
+        'propiedad_requerida' => 'Selecciona una propiedad.',
+        'propiedad_invalida' => 'La propiedad seleccionada no es válida.',
+        'hectareas_mayor_a_cero' => 'Las hectáreas tienen que ser mayores a cero.',
+        'departamento_invalido' => 'El departamento seleccionado no es válido.',
+        'provincia_invalida' => 'La provincia seleccionada no es válida.',
+        'municipio_invalido' => 'El municipio seleccionado no es válido.',
+        'color_invalido' => 'Elige un color de la paleta disponible.',
+        'lotes_generar_prefijo_requerido' => 'Elige un prefijo para el código de los lotes.',
+        'lotes_generar_cantidad_requerida' => 'Indica cuántos lotes generar.',
+        'lotes_generar_cantidad_minima' => 'Genera al menos un lote.',
+        'lotes_generar_cantidad_maxima' => 'No se pueden generar más de 50 lotes a la vez.',
+        'siembra_campania_requerida' => 'Selecciona la campaña.',
+        'siembra_hectareas_sembradas_mayor_a_cero' => 'Las hectáreas sembradas tienen que ser mayores a cero.',
+        'siembra_hectareas_sembradas_requeridas' => 'Indica las hectáreas sembradas de ese lote.',
+        'siembra_cosecha_estimada_invalida' => 'La cosecha estimada no puede ser anterior a la siembra.',
     ],
 
 ];

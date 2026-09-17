@@ -91,7 +91,17 @@ return [
 
         // Errores de validación
         'error_codigo_requerido' => 'Ingresa un código para la campaña.',
+        'error_estacion_requerida' => 'Elige la estación de la campaña.',
+        'error_fecha_inicio_requerida' => 'Elige la fecha en que empieza la campaña.',
+        'error_fecha_fin_requerida' => 'Elige la fecha en que termina la campaña.',
         'error_fechas_rango' => 'La fecha de fin tiene que ser igual o posterior a la de inicio.',
+        'error_estado_requerido' => 'Elige el estado de la campaña.',
+    ],
+
+    // Mensajes de error.
+    'errores' => [
+        'campania_duplicada' => "Ya existe una campaña activa con el código ':codigo'.",
+        'transicion_campania_no_permitida' => "No se puede pasar una campaña de ':desde' a ':hasta'.",
     ],
 
 ];

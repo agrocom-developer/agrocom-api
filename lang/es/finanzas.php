@@ -67,6 +67,8 @@ return [
         'estado_form' => 'Sin guardar',
         'error_persona_requerida' => 'Elige la persona que recibe el anticipo.',
         'error_persona_invalida' => 'La persona seleccionada no es válida.',
+        'error_monto_requerido' => 'Ingresa el monto del anticipo.',
+        'error_fecha_requerida' => 'Elige la fecha del anticipo.',
 
         'consulta_titulo' => 'Consultar disponible',
         'consulta_ayuda' => 'Elige una persona para ver cuánto puede adelantar todavía este mes, antes de completar el formulario.',
@@ -104,6 +106,7 @@ return [
         'generar_ayuda' => 'Elige el mes calendario: se arma un borrador con un renglón por cada persona con devengos en ese período.',
         'campo_periodo' => 'Período',
         'generar_boton' => 'Generar',
+        'error_periodo_requerido' => 'Elige el período de la planilla.',
 
         'volver' => 'Volver a planillas',
         'detalle_titulo' => 'Planilla :periodo',
@@ -195,6 +198,9 @@ return [
         'error_rubro_invalido' => 'El rubro seleccionado no es válido.',
         'error_comprobante_tipo' => 'El comprobante tiene que ser una imagen (JPG/PNG) o un PDF.',
         'error_comprobante_tamano' => 'El comprobante no puede superar los 10 MB.',
+        'error_fecha_requerida' => 'Elige la fecha del gasto.',
+        'error_cantidad_requerida' => 'Ingresa la cantidad del gasto.',
+        'error_precio_unitario_requerido' => 'Ingresa el precio unitario.',
         'volver' => 'Volver a gastos',
     ],
 
@@ -251,6 +257,7 @@ return [
         'error_base_invalida' => 'La base seleccionada no es válida.',
         'error_jefe_campo_requerido' => 'Elige el jefe de campo que rinde.',
         'error_jefe_campo_invalido' => 'La persona seleccionada no es válida.',
+        'error_fecha_requerida' => 'Elige la fecha de la rendición.',
 
         'volver' => 'Volver a rendiciones',
         'detalle_titulo' => 'Rendición #:id',
@@ -342,7 +349,39 @@ return [
         'error_equipo_invalido' => 'El equipo seleccionado no es válido.',
         'error_recurso_requerido' => 'Elige el recurso (dron, vehículo o generador) que consumió la carga.',
         'error_recurso_invalido' => 'El recurso seleccionado no es válido.',
+        'error_fecha_requerida' => 'Elige la fecha de la carga.',
+        'error_litros_requerido' => 'Ingresa los litros cargados.',
+        'error_monto_requerido' => 'Ingresa el monto de la carga.',
         'volver' => 'Volver a combustible',
+    ],
+
+    // Mensajes de error.
+    'errores' => [
+        'anticipo_excede_tope' => 'El anticipo excede el tope disponible: el máximo que se puede adelantar ahora es Bs :disponible.',
+        'campania_cerrada' => "La campaña ':codigo' está cerrada: no admite nuevas imputaciones.",
+        'gasto_ya_asociado_a_rendicion' => 'El gasto #:gasto_id ya está asociado a una rendición.',
+        'jefe_campo_no_puede_aprobar_propia_rendicion' => 'El jefe de campo de la rendición #:rendicion_id no puede aprobar su propia rendición.',
+        'persona_sin_tarifa_ha' => 'La persona :persona_id no tiene tarifa_ha configurada: no se puede calcular su devengo.',
+        'planilla_no_aprobable' => "La planilla #:planilla_id no se puede aprobar: está en ':estado_actual', no en 'borrador'.",
+        'recurso_no_asignado_al_equipo' => "El recurso ':recurso_tipo' #:recurso_id no estaba asignado al equipo #:equipo_trabajo_id el :fecha.",
+        'rendicion_no_acepta_gastos' => "La rendición #:rendicion_id no acepta gastos: ya no está 'abierta'.",
+        'rendicion_no_aprobable' => "La rendición #:rendicion_id no se puede aprobar: está en ':estado_actual', no en 'presentada'.",
+        'rendicion_no_presentable' => "La rendición #:rendicion_id no se puede presentar: está en ':estado_actual', no en 'abierta'.",
+        'rendicion_sin_gastos_asociados' => 'La rendición #:rendicion_id no se puede presentar: no tiene ningún gasto asociado.',
+    ],
+
+    // Textos de los documentos PDF.
+    'pdf' => [
+        'recibo_planilla' => [
+            'titulo_documento' => 'Recibo de planilla — Período :periodo',
+            'titulo' => 'Recibo de planilla',
+            'subtitulo' => 'Período :periodo — Persona #:persona_id',
+            'devengado' => 'Devengado',
+            'monto_valor' => 'Bs :monto',
+            'anticipos' => 'Anticipos',
+            'neto' => 'Neto a pagar',
+            'fecha_aprobacion' => 'Fecha de aprobación',
+        ],
     ],
 
 ];

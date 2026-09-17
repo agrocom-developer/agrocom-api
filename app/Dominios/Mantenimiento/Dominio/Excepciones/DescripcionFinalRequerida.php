@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Mantenimiento\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use RuntimeException;
 
 /**
@@ -15,6 +16,6 @@ final class DescripcionFinalRequerida extends RuntimeException
 {
     public static function paraCierre(): self
     {
-        return new self('El cierre de una orden de mantenimiento requiere una descripción final.');
+        return new self(Texto::de('mantenimiento.errores.descripcion_final_requerida'));
     }
 }

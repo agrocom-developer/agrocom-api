@@ -22,4 +22,12 @@ final class FinalizarRecursoEquipoRequest extends FormRequest
             'hasta' => ['required', 'date', 'after_or_equal:'.$recurso->desde->toDateString()],
         ];
     }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return [
+            'hasta.required' => __('personal.equipos_trabajo.error_vigencia_hasta_requerida'),
+        ];
+    }
 }

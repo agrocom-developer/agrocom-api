@@ -106,7 +106,7 @@ final class CascaraPanel
         if ($ordenesVigentes > 0) {
             $badges['menu.operacion.items.ordenes'] = [
                 'numero' => (string) $ordenesVigentes,
-                'texto' => "{$ordenesVigentes} vigentes",
+                'texto' => __('seguridad.respuestas.badge_ordenes_vigentes', ['cantidad' => $ordenesVigentes]),
             ];
         }
 
@@ -114,7 +114,7 @@ final class CascaraPanel
         if ($sesionesPendientes > 0) {
             $badges['menu.operacion.items.sesiones'] = [
                 'numero' => (string) $sesionesPendientes,
-                'texto' => "{$sesionesPendientes} sin validar",
+                'texto' => __('seguridad.respuestas.badge_sesiones_pendientes', ['cantidad' => $sesionesPendientes]),
             ];
         }
 
@@ -122,7 +122,7 @@ final class CascaraPanel
         if ($pausas['cantidad'] > 0) {
             $badges['menu.operacion.items.pausas'] = [
                 'numero' => (string) $pausas['cantidad'],
-                'texto' => "{$pausas['cantidad']} este mes",
+                'texto' => __('seguridad.respuestas.badge_pausas_mes', ['cantidad' => $pausas['cantidad']]),
             ];
         }
 
@@ -130,7 +130,7 @@ final class CascaraPanel
         if ($stockBajoMinimo > 0) {
             $badges['menu.mantenimiento.items.stock'] = [
                 'numero' => (string) $stockBajoMinimo,
-                'texto' => "{$stockBajoMinimo} bajo mínimo",
+                'texto' => __('seguridad.respuestas.badge_stock_bajo_minimo', ['cantidad' => $stockBajoMinimo]),
             ];
         }
 
@@ -140,7 +140,7 @@ final class CascaraPanel
                 $devengadoFormateado = number_format((float) $devengado, 0, ',', '.');
                 $badges['menu.financiero.items.devengos'] = [
                     'numero' => $devengadoFormateado,
-                    'texto' => "Bs {$devengadoFormateado}",
+                    'texto' => __('seguridad.dashboard.liquidacion_total', ['monto' => $devengadoFormateado]),
                 ];
             }
         }

@@ -60,7 +60,7 @@ final class SesionController
 
         if ($guard === null) {
             throw ValidationException::withMessages([
-                'username' => ['Las credenciales no coinciden con ningún registro.'],
+                'username' => [__('seguridad.login.error_credenciales')],
             ]);
         }
 
@@ -122,6 +122,6 @@ final class SesionController
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return response()->json(['message' => 'Sesión finalizada.']);
+        return response()->json(['message' => __('seguridad.respuestas.sesion_finalizada')]);
     }
 }

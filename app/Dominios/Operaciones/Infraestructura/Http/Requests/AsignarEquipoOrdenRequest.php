@@ -56,4 +56,16 @@ final class AsignarEquipoOrdenRequest extends FormRequest
             'equipos.*.lotes.*.hectareas' => ['required', 'numeric', 'gt:0'],
         ];
     }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return [
+            'equipos.required' => __('operaciones.asignacion_equipos.error_equipos_requerido'),
+            'equipos.*.equipo_trabajo_id.required' => __('operaciones.asignacion_equipos.error_equipo_requerido'),
+            'equipos.*.lotes.required' => __('operaciones.asignacion_equipos.error_lotes_requerido'),
+            'equipos.*.lotes.*.lote_id.required' => __('operaciones.asignacion_equipos.error_lote_requerido'),
+            'equipos.*.lotes.*.hectareas.required' => __('operaciones.asignacion_equipos.error_hectareas_requerido'),
+        ];
+    }
 }

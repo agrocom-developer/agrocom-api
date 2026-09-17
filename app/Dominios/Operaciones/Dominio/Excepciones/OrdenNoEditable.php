@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Operaciones\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use RuntimeException;
 
 /**
@@ -16,6 +17,6 @@ final class OrdenNoEditable extends RuntimeException
 {
     public static function porEstado(string $estado): self
     {
-        return new self("No se puede editar una orden en estado '{$estado}': solo una orden 'emitida' admite edición.");
+        return new self(Texto::de('operaciones.errores.orden_no_editable', ['estado' => $estado]));
     }
 }

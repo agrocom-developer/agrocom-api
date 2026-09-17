@@ -23,6 +23,6 @@ final class SesionPortalController
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return response()->json(['message' => 'Sesión finalizada.']);
+        return response()->json(['message' => __('seguridad.respuestas.sesion_finalizada')]);
     }
 }

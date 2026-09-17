@@ -31,4 +31,18 @@ return [
         'campo_url_apk' => 'URL del release en agrocom-field',
     ],
 
+    // Mensajes de error.
+    'errores' => [
+        'transicion_version_apk_no_permitida' => "No se puede pasar una versión de APK de ':desde' a ':hasta'.",
+    ],
+
+    // Mensajes de los formularios.
+    'validacion' => [
+        'version_formato' => 'La versión debe seguir el formato SemVer (por ejemplo: 1.4.2).',
+        'url_apk_https' => 'La URL debe ser una dirección https válida.',
+        'version_requerida' => 'Ingresa la versión del APK.',
+        'version_code_requerido' => 'Ingresa el código de versión.',
+        'url_apk_requerida' => 'Ingresa la URL del release.',
+    ],
+
 ];

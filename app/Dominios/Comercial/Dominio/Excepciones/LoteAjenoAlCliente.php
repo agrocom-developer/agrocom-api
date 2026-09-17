@@ -3,6 +3,7 @@
 namespace App\Dominios\Comercial\Dominio\Excepciones;
 
 use App\Dominios\Comercial\Aplicacion\Contrato\VerificadorLotesDelContrato;
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use RuntimeException;
 
 /**
@@ -20,6 +21,6 @@ final class LoteAjenoAlCliente extends RuntimeException
 {
     public static function paraLote(string $codigoLote): self
     {
-        return new self("El lote '{$codigoLote}' no pertenece a ninguna propiedad del cliente elegido.");
+        return new self(Texto::de('comercial.errores.lote_ajeno_al_cliente', ['codigo' => $codigoLote]));
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Comercial\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use RuntimeException;
 
 /**
@@ -16,6 +17,6 @@ final class PropiedadDuplicada extends RuntimeException
 {
     public static function porNombre(string $nombre): self
     {
-        return new self("Ya existe una propiedad activa con el nombre '{$nombre}' para este cliente.");
+        return new self(Texto::de('comercial.errores.propiedad_nombre_duplicado', ['nombre' => $nombre]));
     }
 }

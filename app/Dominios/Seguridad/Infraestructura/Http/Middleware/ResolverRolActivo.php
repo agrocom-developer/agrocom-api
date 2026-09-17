@@ -115,7 +115,7 @@ final class ResolverRolActivo
 
         if ($request->expectsJson()) {
             return response()->json([
-                'message' => 'Debe seleccionar un rol activo antes de continuar.',
+                'message' => __('seguridad.respuestas.rol_activo_requerido'),
                 'roles' => $rolesDisponibles,
             ], 409);
         }

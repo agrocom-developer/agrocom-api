@@ -34,9 +34,10 @@ final class ActualizarPerfilPortalRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'email.unique' => 'Ya existe una cuenta activa con ese correo.',
-            'password_actual.required_with' => 'Ingresá tu contraseña actual para poder cambiarla.',
-            'password.confirmed' => 'La confirmación no coincide con la contraseña nueva.',
+            'name.required' => __('seguridad.perfil.error_name_requerido'),
+            'email.unique' => __('seguridad.validacion.usuario_email_unico'),
+            'password_actual.required_with' => __('seguridad.validacion.perfil_password_actual_requerida'),
+            'password.confirmed' => __('seguridad.validacion.perfil_password_confirmacion'),
         ];
     }
 }

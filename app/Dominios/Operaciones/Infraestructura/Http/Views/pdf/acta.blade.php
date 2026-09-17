@@ -21,7 +21,7 @@
 <html lang="es">
 <head>
     <meta charset="utf-8">
-    <title>Acta de conformidad — Trabajo #{{ $trabajo->id }}</title>
+    <title>{{ __('operaciones.pdf.acta.titulo_documento', ['id' => $trabajo->id]) }}</title>
     <style>
         body { font-family: Helvetica, Arial, sans-serif; font-size: 12px; color: black; }
         h1 { font-size: 18px; margin-bottom: 4px; }
@@ -32,20 +32,20 @@
     </style>
 </head>
 <body>
-    <h1>Acta de conformidad</h1>
-    <p class="subtitulo">Lote #{{ $trabajo->lote_id }} — Orden #{{ $trabajo->orden_id }} (aplicación {{ $trabajo->nro_aplicacion }})</p>
+    <h1>{{ __('operaciones.pdf.acta.titulo') }}</h1>
+    <p class="subtitulo">{{ __('operaciones.pdf.comun.subtitulo_lote_orden', ['lote' => $trabajo->lote_id, 'orden' => $trabajo->orden_id, 'aplicacion' => $trabajo->nro_aplicacion]) }}</p>
 
     <table>
         <tr>
-            <th>Trabajo</th>
+            <th>{{ __('operaciones.trabajos.col_trabajo') }}</th>
             <td>#{{ $trabajo->id }}</td>
         </tr>
         <tr>
-            <th>Hectáreas conformadas</th>
+            <th>{{ __('operaciones.pdf.acta.hectareas_conformadas') }}</th>
             <td>{{ $acta->hectareas_conformadas }}</td>
         </tr>
         <tr>
-            <th>Fecha de generación</th>
+            <th>{{ __('operaciones.pdf.acta.fecha_generacion') }}</th>
             <td>{{ optional($acta->created_at)->format('d/m/Y H:i') }}</td>
         </tr>
     </table>

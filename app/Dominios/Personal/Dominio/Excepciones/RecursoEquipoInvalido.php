@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Personal\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use App\Dominios\Personal\Dominio\RecursoTipoEquipo;
 use RuntimeException;
 
@@ -18,6 +19,9 @@ final class RecursoEquipoInvalido extends RuntimeException
 {
     public static function porTipoYId(RecursoTipoEquipo $tipo, int $recursoId): self
     {
-        return new self("El {$tipo->value} #{$recursoId} no existe o no está activo.");
+        return new self(Texto::de('personal.errores.recurso_equipo_invalido', [
+            'tipo' => $tipo->value,
+            'recurso_id' => $recursoId,
+        ]));
     }
 }

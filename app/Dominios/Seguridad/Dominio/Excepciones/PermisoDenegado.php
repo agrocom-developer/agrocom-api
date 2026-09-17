@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Seguridad\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use Illuminate\Auth\Access\AuthorizationException;
 
 /**
@@ -20,6 +21,6 @@ final class PermisoDenegado extends AuthorizationException
 {
     public static function porFaltaDePermiso(string $codigoPermiso): self
     {
-        return new self("Falta el permiso '{$codigoPermiso}' para completar esta acción.");
+        return new self(Texto::de('seguridad.errores.permiso_denegado', ['permiso' => $codigoPermiso]));
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Operaciones\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use RuntimeException;
 
 /**
@@ -17,8 +18,11 @@ final class HectareasAsignadasSuperanLote extends RuntimeException
 {
     public static function porOrdenYLote(int $ordenId, int $loteId, string $totalAsignado, string $hectareasSolicitadas): self
     {
-        return new self(
-            "Las hectáreas asignadas al lote #{$loteId} de la orden #{$ordenId} ({$totalAsignado}) superan las hectáreas solicitadas para ese lote ({$hectareasSolicitadas})."
-        );
+        return new self(Texto::de('operaciones.errores.hectareas_asignadas_superan_lote', [
+            'lote' => $loteId,
+            'orden' => $ordenId,
+            'asignado' => $totalAsignado,
+            'solicitadas' => $hectareasSolicitadas,
+        ]));
     }
 }

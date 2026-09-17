@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Operaciones\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use RuntimeException;
 
 /**
@@ -17,6 +18,6 @@ final class DronDuplicado extends RuntimeException
 {
     public static function porIdentificador(string $identificador): self
     {
-        return new self("Ya existe un dron activo con el identificador '{$identificador}'.");
+        return new self(Texto::de('operaciones.errores.dron_duplicado', ['identificador' => $identificador]));
     }
 }

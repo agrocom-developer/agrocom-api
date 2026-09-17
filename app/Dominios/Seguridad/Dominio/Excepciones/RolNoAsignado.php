@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Seguridad\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use Illuminate\Auth\Access\AuthorizationException;
 
 /**
@@ -21,8 +22,9 @@ final class RolNoAsignado extends AuthorizationException
 {
     public static function paraUsuario(int $idUsuario, int $idRolDeseado): self
     {
-        return new self(
-            "El usuario #{$idUsuario} no tiene asignado (o ya no tiene vivo) el rol #{$idRolDeseado}.",
-        );
+        return new self(Texto::de('seguridad.errores.rol_no_asignado', [
+            'id_usuario' => $idUsuario,
+            'id_rol' => $idRolDeseado,
+        ]));
     }
 }

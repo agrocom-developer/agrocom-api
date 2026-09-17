@@ -45,9 +45,12 @@ final class CerrarOrdenMantenimientoRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'repuestos.required' => 'La orden necesita al menos un repuesto consumido para cerrarse.',
-            'repuestos.min' => 'La orden necesita al menos un repuesto consumido para cerrarse.',
-            'descripcion_final.required' => 'El cierre necesita una descripción de qué se hizo realmente.',
+            'repuestos.required' => __('mantenimiento.validacion.orden_repuestos_requeridos'),
+            'repuestos.min' => __('mantenimiento.validacion.orden_repuestos_requeridos'),
+            'repuestos.*.repuesto_id.required' => __('mantenimiento.validacion.repuesto_linea_requerido'),
+            'repuestos.*.base_id.required' => __('mantenimiento.validacion.base_linea_requerida'),
+            'repuestos.*.cantidad.required' => __('mantenimiento.validacion.cantidad_linea_requerida'),
+            'descripcion_final.required' => __('mantenimiento.validacion.orden_descripcion_requerida'),
         ];
     }
 }

@@ -41,7 +41,9 @@ final class ActualizarVehiculoRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'base_id.exists' => 'La base seleccionada no es válida.',
+            'identificador.required' => __('mantenimiento.validacion.vehiculo_identificador_requerido'),
+            'estado.required' => __('mantenimiento.validacion.vehiculo_estado_requerido'),
+            'base_id.exists' => __('mantenimiento.validacion.base_invalida'),
         ];
     }
 }

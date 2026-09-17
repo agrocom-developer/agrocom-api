@@ -28,4 +28,12 @@ final class CambiarEstadoCampaniaRequest extends FormRequest
             ],
         ];
     }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return [
+            'estado.required' => __('campania.campanias.error_estado_requerido'),
+        ];
+    }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Mantenimiento\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use RuntimeException;
 
 /**
@@ -17,6 +18,10 @@ final class CorreccionCiclosNoAutorizada extends RuntimeException
 {
     public static function porBaja(string $identificador, int $actual, int $propuesto): self
     {
-        return new self("La batería '{$identificador}' tiene {$actual} ciclos acumulados; bajar a {$propuesto} requiere un motivo de corrección.");
+        return new self(Texto::de('mantenimiento.errores.correccion_ciclos_no_autorizada', [
+            'identificador' => $identificador,
+            'actual' => $actual,
+            'propuesto' => $propuesto,
+        ]));
     }
 }

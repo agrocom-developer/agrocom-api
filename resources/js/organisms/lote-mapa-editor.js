@@ -1221,7 +1221,7 @@ function inicializar(contenedor) {
     const llave = contenedor.dataset.agLoteMapaGoogleKey;
 
     if (contenedor.dataset.agLoteMapaProveedor === 'google' && llave) {
-        cargarGoogleMaps(llave)
+        cargarGoogleMaps(llave, contenedor.dataset.agLoteMapaErrorGoogle || '')
             .then((googleMapsNs) => inicializarGoogle(contenedor, refs, googleMapsNs))
             .catch((error) => {
                 // Antes caía a Leaflet sin dejar rastro — imposible saber SI

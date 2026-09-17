@@ -29,4 +29,12 @@ final class CambiarEstadoContratoRequest extends FormRequest
             ],
         ];
     }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return [
+            'estado.required' => __('comercial.contratos.error_estado_requerido'),
+        ];
+    }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Seguridad\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use RuntimeException;
 
 /**
@@ -16,6 +17,6 @@ final class IdiomaNoSoportado extends RuntimeException
 {
     public static function paraCodigo(string $idioma): self
     {
-        return new self("El idioma '{$idioma}' no está habilitado todavía.");
+        return new self(Texto::de('seguridad.errores.idioma_no_soportado', ['idioma' => $idioma]));
     }
 }

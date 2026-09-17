@@ -56,7 +56,7 @@
     :error="$error"
     :required="$required"
     icon="calendar_month"
-    placeholder="dd/mm/aaaa hh:mm"
+    :placeholder="__('ui.date.formato_fecha_hora')"
     autocomplete="off"
     data-ag-datetime
     data-label-hoy="{{ __('ui.date.hoy') }}"

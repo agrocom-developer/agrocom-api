@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Seguridad\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
@@ -22,6 +23,9 @@ final class DispositivoNoEncontrado extends NotFoundHttpException
 {
     public static function paraUsuario(int $idUsuario, int $idDispositivo): self
     {
-        return new self("El dispositivo #{$idDispositivo} no existe entre los del usuario #{$idUsuario}.");
+        return new self(Texto::de('seguridad.errores.dispositivo_no_encontrado', [
+            'id_dispositivo' => $idDispositivo,
+            'id_usuario' => $idUsuario,
+        ]));
     }
 }

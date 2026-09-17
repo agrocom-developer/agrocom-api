@@ -58,11 +58,13 @@ final class GuardarSiembraRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'campania_id.required' => 'Seleccioná la campaña.',
-            'campania_id.exists' => 'La campaña seleccionada no es válida.',
-            'lotes.*.hectareas_sembradas.gt' => 'Las hectáreas sembradas tienen que ser mayores a cero.',
-            'lotes.*.hectareas_sembradas.required_with' => 'Indicá las hectáreas sembradas de ese lote.',
-            'lotes.*.fecha_cosecha_estimada.after_or_equal' => 'La cosecha estimada no puede ser anterior a la siembra.',
+            'campania_id.required' => __('comercial.validacion.siembra_campania_requerida'),
+            'campania_id.exists' => __('comercial.contratos.error_campania_invalida'),
+            'lotes.required' => __('comercial.siembra.error_lotes_requeridos'),
+            'lotes.*.lote_id.required' => __('comercial.siembra.error_lote_id_requerido'),
+            'lotes.*.hectareas_sembradas.gt' => __('comercial.validacion.siembra_hectareas_sembradas_mayor_a_cero'),
+            'lotes.*.hectareas_sembradas.required_with' => __('comercial.validacion.siembra_hectareas_sembradas_requeridas'),
+            'lotes.*.fecha_cosecha_estimada.after_or_equal' => __('comercial.validacion.siembra_cosecha_estimada_invalida'),
         ];
     }
 }

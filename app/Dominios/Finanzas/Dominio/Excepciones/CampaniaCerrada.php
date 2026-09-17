@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Finanzas\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use RuntimeException;
 
 /**
@@ -18,6 +19,6 @@ final class CampaniaCerrada extends RuntimeException
 {
     public static function paraCampania(string $codigo): self
     {
-        return new self("La campaña '{$codigo}' está cerrada: no admite nuevas imputaciones.");
+        return new self(Texto::de('finanzas.errores.campania_cerrada', ['codigo' => $codigo]));
     }
 }

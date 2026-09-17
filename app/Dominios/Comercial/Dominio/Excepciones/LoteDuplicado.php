@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Comercial\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use RuntimeException;
 
 /**
@@ -17,6 +18,6 @@ final class LoteDuplicado extends RuntimeException
 {
     public static function porCodigo(string $codigo): self
     {
-        return new self("Ya existe un lote activo con el código '{$codigo}' para esta propiedad.");
+        return new self(Texto::de('comercial.errores.lote_codigo_duplicado', ['codigo' => $codigo]));
     }
 }

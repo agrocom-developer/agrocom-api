@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Comercial\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use DomainException;
 
 /**
@@ -14,11 +15,11 @@ final class FiltroInformeIncompleto extends DomainException
 {
     public static function porFaltaDeCliente(): self
     {
-        return new self('El informe de avance de contratos requiere al menos un cliente.');
+        return new self(Texto::de('comercial.errores.informe_falta_cliente'));
     }
 
     public static function porFaltaDeCultivo(): self
     {
-        return new self('El informe de avance de contratos requiere al menos un cultivo.');
+        return new self(Texto::de('comercial.errores.informe_falta_cultivo'));
     }
 }

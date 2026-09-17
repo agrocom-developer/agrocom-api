@@ -88,6 +88,7 @@
                     data-ag-propiedad-mapa-centro-defecto="{{ $centroDefecto['lat'] }},{{ $centroDefecto['lng'] }}"
                     @if ($esGoogle)
                         data-ag-propiedad-mapa-google-key="{{ $proveedorMapa['googleMapsApiKey'] }}"
+                        data-ag-propiedad-mapa-error-google="{{ __('ui.errores.google_maps_no_disponible') }}"
                     @endif
                     @if ($propiedad->color)
                         data-ag-propiedad-mapa-color="{{ $propiedad->color }}"

@@ -414,4 +414,45 @@ return [
         'volver' => 'Volver a planes',
     ],
 
+    // Mensajes de error.
+    'errores' => [
+        'bateria_duplicada' => "Ya existe una batería activa con el identificador ':identificador'.",
+        'correccion_ciclos_no_autorizada' => "La batería ':identificador' tiene :actual ciclos acumulados; bajar a :propuesto requiere un motivo de corrección.",
+        'descripcion_final_requerida' => 'El cierre de una orden de mantenimiento requiere una descripción final.',
+        'ficha_dron_duplicada' => "Ya existe una ficha activa para el dron con identificador ':identificador_dron'.",
+        'generador_duplicado' => "Ya existe un generador activo con el identificador ':identificador'.",
+        'repuestos_insuficientes' => 'No se puede cerrar la orden: stock insuficiente para el repuesto #:repuesto_id (:mensaje_original).',
+        'transicion_orden_no_permitida' => "No se puede pasar una orden de mantenimiento de ':desde' a ':hasta'.",
+        'vehiculo_duplicado' => "Ya existe un vehículo activo con el identificador ':identificador'.",
+    ],
+
+    // Mensajes de los formularios.
+    'validacion' => [
+        'base_invalida' => 'La base seleccionada no es válida.',
+        'dron_invalido' => 'El dron seleccionado no es válido.',
+        'horas_actual_menor' => 'Las horas actuales no pueden ser menores que las horas iniciales.',
+        'equipo_invalido' => 'El equipo seleccionado no es válido.',
+        'orden_repuestos_requeridos' => 'La orden necesita al menos un repuesto consumido para cerrarse.',
+        'orden_descripcion_requerida' => 'El cierre necesita una descripción de qué se hizo realmente.',
+        'bateria_identificador_requerido' => 'Ingresa el identificador de la batería.',
+        'generador_identificador_requerido' => 'Ingresa el identificador del generador.',
+        'vehiculo_identificador_requerido' => 'Ingresa el identificador del vehículo.',
+        'identificador_dron_requerido' => 'Ingresa el identificador del dron.',
+        'ciclos_inicial_requerido' => 'Ingresa los ciclos iniciales de la batería.',
+        'ciclos_acumulados_requerido' => 'Ingresa los ciclos acumulados de la batería.',
+        'bateria_estado_requerido' => 'Elige el estado de la batería.',
+        'generador_estado_requerido' => 'Elige el estado del generador.',
+        'vehiculo_estado_requerido' => 'Elige el estado del vehículo.',
+        'modelo_requerido' => 'Ingresa el modelo de dron.',
+        'tarea_requerida' => 'Ingresa la tarea preventiva.',
+        'horas_umbral_requerido' => 'Ingresa el umbral de horas de vuelo.',
+        'equipo_tipo_requerido' => 'Elige el tipo de equipo.',
+        'equipo_requerido' => 'Elige el equipo.',
+        'tipo_orden_requerido' => 'Elige el tipo de orden.',
+        'descripcion_orden_requerida' => 'Ingresa la descripción de la orden.',
+        'repuesto_linea_requerido' => 'Elige el repuesto de esta línea.',
+        'base_linea_requerida' => 'Elige la base de este repuesto.',
+        'cantidad_linea_requerida' => 'Ingresa la cantidad de este repuesto.',
+    ],
+
 ];

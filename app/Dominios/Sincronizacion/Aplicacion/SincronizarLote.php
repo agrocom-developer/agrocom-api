@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Sincronizacion\Aplicacion;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use App\Dominios\Mezclas\Contratos\EscrituraMezclas;
 use App\Dominios\Mezclas\Contratos\RegistroMezcla;
 use App\Dominios\Operaciones\Contratos\AperturaEstadiaHacienda;
@@ -102,7 +103,7 @@ final class SincronizarLote
             if ($resultados[$indice] === null) {
                 $resultados[$indice] = $this->filaResultado(
                     $registro,
-                    ResultadoSincronizacion::rechazado('tipo de registro desconocido o dato mal formado'),
+                    ResultadoSincronizacion::rechazado(Texto::de('sincronizacion.sync.tipo_desconocido')),
                 );
             }
         }
@@ -127,7 +128,7 @@ final class SincronizarLote
             'cierre_sesion' => $this->aplicarCierreSesion($registro, $operarioPersonaId),
             'estadia_entrada' => $this->aplicarEstadiaEntrada($registro),
             'estadia_salida' => $this->aplicarEstadiaSalida($registro),
-            default => ResultadoSincronizacion::rechazado('tipo de registro desconocido o dato mal formado'),
+            default => ResultadoSincronizacion::rechazado(Texto::de('sincronizacion.sync.tipo_desconocido')),
         };
     }
 
@@ -143,7 +144,7 @@ final class SincronizarLote
         $datos = RegistroRecepcionCaldo::intentarDesdeArreglo($registro);
 
         return $datos === null
-            ? ResultadoSincronizacion::rechazado('recepción de caldo con datos incompletos o inválidos')
+            ? ResultadoSincronizacion::rechazado(Texto::de('sincronizacion.sync.recepcion_caldo_invalida'))
             : $this->operaciones->registrarRecepcionCaldo($datos);
     }
 
@@ -159,7 +160,7 @@ final class SincronizarLote
         $datos = RegistroEvidenciaEquipo::intentarDesdeArreglo($registro);
 
         return $datos === null
-            ? ResultadoSincronizacion::rechazado('evidencia de equipo con datos incompletos o inválidos')
+            ? ResultadoSincronizacion::rechazado(Texto::de('sincronizacion.sync.evidencia_equipo_invalida'))
             : $this->operaciones->registrarEvidenciaEquipo($datos);
     }
 
@@ -176,7 +177,7 @@ final class SincronizarLote
         $datos = RegistroMezcla::intentarDesdeArreglo($registro);
 
         return $datos === null
-            ? ResultadoSincronizacion::rechazado('mezcla con datos incompletos o inválidos')
+            ? ResultadoSincronizacion::rechazado(Texto::de('sincronizacion.sync.mezcla_invalida'))
             : $this->mezclas->registrarMezcla($datos);
     }
 
@@ -186,7 +187,7 @@ final class SincronizarLote
         $datos = AperturaTrabajo::intentarDesdeArreglo($registro);
 
         return $datos === null
-            ? ResultadoSincronizacion::rechazado('trabajo con datos incompletos o inválidos')
+            ? ResultadoSincronizacion::rechazado(Texto::de('sincronizacion.sync.trabajo_invalido'))
             : $this->operaciones->abrirTrabajo($datos);
     }
 
@@ -208,11 +209,11 @@ final class SincronizarLote
         $datos = AperturaSesion::intentarDesdeArreglo($registro);
 
         if ($datos === null) {
-            return ResultadoSincronizacion::rechazado('sesión con datos incompletos o inválidos');
+            return ResultadoSincronizacion::rechazado(Texto::de('sincronizacion.sync.sesion_invalida'));
         }
 
         if ($operarioPersonaId !== null && $datos->pilotoId !== $operarioPersonaId) {
-            return ResultadoSincronizacion::rechazado('el piloto declarado no corresponde al operario autenticado');
+            return ResultadoSincronizacion::rechazado(Texto::de('sincronizacion.sync.piloto_no_coincide'));
         }
 
         return $this->operaciones->abrirSesion($datos);
@@ -230,7 +231,7 @@ final class SincronizarLote
         $datos = RegistroCondiciones::intentarDesdeArreglo($registro);
 
         return $datos === null
-            ? ResultadoSincronizacion::rechazado('condiciones con datos incompletos o inválidos')
+            ? ResultadoSincronizacion::rechazado(Texto::de('sincronizacion.sync.condiciones_invalidas'))
             : $this->operaciones->registrarCondiciones($datos);
     }
 
@@ -246,7 +247,7 @@ final class SincronizarLote
         $datos = RegistroIncidencia::intentarDesdeArreglo($registro);
 
         return $datos === null
-            ? ResultadoSincronizacion::rechazado('incidencia con datos incompletos o inválidos')
+            ? ResultadoSincronizacion::rechazado(Texto::de('sincronizacion.sync.incidencia_invalida'))
             : $this->operaciones->registrarIncidencia($datos);
     }
 
@@ -262,7 +263,7 @@ final class SincronizarLote
         $datos = RegistroRecarga::intentarDesdeArreglo($registro);
 
         return $datos === null
-            ? ResultadoSincronizacion::rechazado('recarga con datos incompletos o inválidos')
+            ? ResultadoSincronizacion::rechazado(Texto::de('sincronizacion.sync.recarga_invalida'))
             : $this->operaciones->registrarRecarga($datos);
     }
 
@@ -281,7 +282,7 @@ final class SincronizarLote
         $datos = CierreTrabajo::intentarDesdeArreglo($registro);
 
         return $datos === null
-            ? ResultadoSincronizacion::rechazado('cierre de trabajo con datos incompletos o inválidos')
+            ? ResultadoSincronizacion::rechazado(Texto::de('sincronizacion.sync.cierre_trabajo_invalido'))
             : $this->operaciones->cerrarTrabajo($datos, $operarioPersonaId);
     }
 
@@ -291,7 +292,7 @@ final class SincronizarLote
         $datos = CierreSesion::intentarDesdeArreglo($registro);
 
         return $datos === null
-            ? ResultadoSincronizacion::rechazado('cierre de sesión con datos incompletos o inválidos')
+            ? ResultadoSincronizacion::rechazado(Texto::de('sincronizacion.sync.cierre_sesion_invalido'))
             : $this->operaciones->cerrarSesion($datos, $operarioPersonaId);
     }
 
@@ -308,7 +309,7 @@ final class SincronizarLote
         $datos = AperturaEstadiaHacienda::intentarDesdeArreglo($registro);
 
         return $datos === null
-            ? ResultadoSincronizacion::rechazado('estadía con datos incompletos o inválidos')
+            ? ResultadoSincronizacion::rechazado(Texto::de('sincronizacion.sync.estadia_invalida'))
             : $this->operaciones->abrirEstadia($datos);
     }
 
@@ -322,7 +323,7 @@ final class SincronizarLote
         $datos = CierreEstadiaHacienda::intentarDesdeArreglo($registro);
 
         return $datos === null
-            ? ResultadoSincronizacion::rechazado('cierre de estadía con datos incompletos o inválidos')
+            ? ResultadoSincronizacion::rechazado(Texto::de('sincronizacion.sync.cierre_estadia_invalido'))
             : $this->operaciones->cerrarEstadia($datos);
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Operaciones\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use RuntimeException;
 
 /**
@@ -17,6 +18,6 @@ final class OrdenVigenteNoEliminable extends RuntimeException
 {
     public static function porId(int $ordenId): self
     {
-        return new self("La orden #{$ordenId} está vigente: no se puede eliminar sin pasar antes por un estado terminal.");
+        return new self(Texto::de('operaciones.errores.orden_vigente_no_eliminable', ['id' => $ordenId]));
     }
 }
