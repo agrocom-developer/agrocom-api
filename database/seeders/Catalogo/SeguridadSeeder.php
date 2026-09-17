@@ -391,19 +391,21 @@ class SeguridadSeeder extends Seeder
         'mantenimiento.plan.eliminar' => 'Dar de baja (lógica) un plan de mantenimiento preventivo',
         // HU-46 (tarea 69, ADR 0015 punto 1): la campaña como eje transversal
         // del sistema. Grano fino, mismo criterio que `comercial.contrato.*`
-        // — `.cambiar_estado` separado de `.editar`. A diferencia de
-        // `comercial.contrato.cambiar_estado` (compartido con
+        // — `.cambiar_estado` y `.eliminar` separados de `.editar`. A
+        // diferencia de `comercial.contrato.cambiar_estado` (compartido con
         // `encargado_operaciones`), `.cambiar_estado` NO entra en
         // PERMISOS_ENCARGADO_OPERACIONES (ver más abajo): "solo el dueño
         // cierra una campaña" (pedido explícito del 7/9/2026) — con una
         // única apertura/cierre por campaña al año no hay costo operativo en
         // concentrarla en el dueño, a diferencia de `.ver`/`.crear`/`.editar`,
         // que sí comparte con el encargado (arma la campaña, el dueño decide
-        // cuándo abrirla y cerrarla).
+        // cuándo abrirla y cerrarla). `.eliminar` es soft delete sin guarda
+        // de "tiene contratos asociados", mismo criterio que `comercial.cultivo.eliminar`.
         'campania.campania.ver' => 'Ver el listado de campañas',
         'campania.campania.crear' => 'Dar de alta una campaña',
         'campania.campania.editar' => 'Editar los datos de una campaña',
         'campania.campania.cambiar_estado' => 'Cambiar el estado de una campaña (abrir, cerrar) — exclusivo del dueño',
+        'campania.campania.eliminar' => 'Dar de baja (lógica) una campaña',
     ];
 
     /**
@@ -655,6 +657,7 @@ class SeguridadSeeder extends Seeder
         'campania.campania.ver',
         'campania.campania.crear',
         'campania.campania.editar',
+        'campania.campania.eliminar',
     ];
 
     /**

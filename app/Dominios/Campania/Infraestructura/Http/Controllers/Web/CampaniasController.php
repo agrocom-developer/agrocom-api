@@ -5,6 +5,7 @@ namespace App\Dominios\Campania\Infraestructura\Http\Controllers\Web;
 use App\Dominios\Campania\Aplicacion\ActualizarCampania;
 use App\Dominios\Campania\Aplicacion\CambiarEstadoCampania;
 use App\Dominios\Campania\Aplicacion\CrearCampania;
+use App\Dominios\Campania\Aplicacion\EliminarCampania;
 use App\Dominios\Campania\Aplicacion\ListarCampanias;
 use App\Dominios\Campania\Dominio\EstadoCampania;
 use App\Dominios\Campania\Dominio\Excepciones\CampaniaDuplicada;
@@ -23,18 +24,16 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**
- * `GET/POST/PUT /panel/campanias*` (ADR 0015 punto 1, tarea 69): alta y
+ * `GET/POST/PUT/DELETE /panel/campanias*` (ADR 0015 punto 1, tarea 69): alta y
  * mantenimiento del catálogo de campañas — compartido entre clientes desde
- * la corrección del 15/9/2026. Mismo molde que `ContratosController`: sin
- * `destroy` (la baja es una transición de estado hacia `cerrada`, no un soft
- * delete fuera de la máquina de estados — invariante 7), sin sub-entidad.
- *
- * Cuatro permisos de grano fino
- * (`campania.campania.ver`/`.crear`/`.editar`/`.cambiar_estado`), verificados
- * DENTRO del controlador contra el ROL ACTIVO vía {@see AutorizacionPanelWeb}.
- * `.cambiar_estado` es exclusivo del rol `dueno` en `SeguridadSeeder` — "solo
- * el dueño cierra una campaña" (ADR 0015, prompt de la tarea 69), y ahora
- * cierra la campaña para TODOS los clientes que la usan, no solo para uno.
+ * la corrección del 15/9/2026. Cinco permisos de grano fino
+ * (`campania.campania.ver`/`.crear`/`.editar`/`.cambiar_estado`/`.eliminar`),
+ * verificados DENTRO del controlador contra el ROL ACTIVO vía
+ * {@see AutorizacionPanelWeb}. `.cambiar_estado` es exclusivo del rol `dueno`
+ * en `SeguridadSeeder` — "solo el dueño cierra una campaña" (ADR 0015, prompt
+ * de la tarea 69), y ahora cierra la campaña para TODOS los clientes que la
+ * usan, no solo para uno. `.eliminar` es soft delete sin guarda de "tiene
+ * contratos asociados", mismo criterio que `comercial.cultivo.eliminar`.
  * Ninguna regla de negocio acá: los casos de uso de `Aplicacion/` hacen el
  * trabajo.
  */
@@ -47,6 +46,8 @@ final class CampaniasController
     private const PERMISO_EDITAR = 'campania.campania.editar';
 
     private const PERMISO_CAMBIAR_ESTADO = 'campania.campania.cambiar_estado';
+
+    private const PERMISO_ELIMINAR = 'campania.campania.eliminar';
 
     public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
 
@@ -168,6 +169,17 @@ final class CampaniasController
         return redirect()
             ->route('panel.campanias.index')
             ->with('estado', __('campania.campanias.estado_cambiado'));
+    }
+
+    public function destroy(Request $request, Campania $campania, EliminarCampania $eliminarCampania): RedirectResponse
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_ELIMINAR), 403);
+
+        $eliminarCampania->ejecutar($campania);
+
+        return redirect()
+            ->route('panel.campanias.index')
+            ->with('estado', __('campania.campanias.eliminada'));
     }
 
     private function cadenaONull(mixed $valor): ?string

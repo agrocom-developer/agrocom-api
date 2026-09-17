@@ -28,6 +28,7 @@ return [
         'creado' => 'La campaña se dio de alta correctamente, en estado planificada.',
         'actualizado' => 'Los datos de la campaña se actualizaron correctamente.',
         'estado_cambiado' => 'El estado de la campaña se actualizó correctamente.',
+        'eliminada' => 'La campaña se eliminó correctamente.',
 
         // Listado
         'titulo' => 'Campañas',
@@ -47,6 +48,7 @@ return [
         'actividad_activa' => 'Activa',
         'actividad_inactiva' => 'Inactiva',
         'editar' => 'Editar',
+        'eliminar_accion' => 'Eliminar',
         'vigencia' => ':inicio – :fin',
         'paginacion_aria' => 'Paginación de campañas',
         'paginacion_anterior' => 'Anterior',
@@ -60,6 +62,8 @@ return [
         'confirmar_abrir' => '¿Abrir esta campaña? Desde ese momento admite contratos y gastos.',
         'confirmar_cerrar_titulo' => 'Cerrar campaña',
         'confirmar_cerrar' => '¿Cerrar esta campaña? No se puede volver a abrir desde el panel.',
+        'confirmar_eliminar_titulo' => 'Eliminar campaña',
+        'confirmar_eliminar' => '¿Eliminar esta campaña? Esta acción no se puede deshacer.',
 
         // Formulario (create/edit)
         'titulo_crear' => 'Nueva campaña',
