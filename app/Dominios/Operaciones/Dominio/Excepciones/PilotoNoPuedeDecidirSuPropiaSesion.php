@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Operaciones\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use Illuminate\Auth\Access\AuthorizationException;
 
 /**
@@ -18,6 +19,6 @@ final class PilotoNoPuedeDecidirSuPropiaSesion extends AuthorizationException
 {
     public static function paraSesion(int $sesionId): self
     {
-        return new self("El piloto de la sesión #{$sesionId} no puede validar ni rechazar su propia sesión.");
+        return new self(Texto::de('operaciones.errores.piloto_no_puede_decidir_su_propia_sesion', ['id' => $sesionId]));
     }
 }

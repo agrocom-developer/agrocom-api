@@ -61,7 +61,7 @@
         :vista-actual="__('personal.equipos_trabajo.titulo')"
     >
         <div class="ag-equipos-trabajo-ficha">
-            <x-atoms.button href="{{ route('panel.equipos-trabajo.index') }}" variant="text" size="sm" icon="arrow_back">
+            <x-atoms.button :href="route('panel.equipos-trabajo.index')" variant="text" size="sm" icon="arrow_back">
                 {{ __('personal.equipos_trabajo.ficha_volver') }}
             </x-atoms.button>
 
@@ -106,7 +106,7 @@
             <form method="GET" action="{{ route('panel.equipos-trabajo.show', $equipo) }}" class="ag-equipos-trabajo-ficha__selector-fecha">
                 <x-atoms.date
                     name="fecha"
-                    label="{{ __('personal.equipos_trabajo.ficha_selector_fecha') }}"
+                    :label="__('personal.equipos_trabajo.ficha_selector_fecha')"
                     :value="$fecha"
                     required
                 />
@@ -162,22 +162,22 @@
                         <x-atoms.select
                             id="alta-integrante-persona_id"
                             name="persona_id"
-                            label="{{ __('personal.equipos_trabajo.ficha_campo_persona') }}"
+                            :label="__('personal.equipos_trabajo.ficha_campo_persona')"
                             :options="$personasDisponibles"
-                            placeholder="{{ __('personal.equipos_trabajo.ficha_campo_persona_placeholder') }}"
+                            :placeholder="__('personal.equipos_trabajo.ficha_campo_persona_placeholder')"
                             required
                         />
 
                         <x-atoms.select
                             id="alta-integrante-rol_equipo"
                             name="rol_equipo"
-                            label="{{ __('personal.equipos_trabajo.ficha_campo_rol') }}"
+                            :label="__('personal.equipos_trabajo.ficha_campo_rol')"
                             :options="$opcionesRol"
                             required
                         />
 
-                        <x-atoms.date id="alta-integrante-desde" name="desde" label="{{ __('personal.equipos_trabajo.campo_desde') }}" :value="$fecha" required />
-                        <x-atoms.date id="alta-integrante-hasta" name="hasta" label="{{ __('personal.equipos_trabajo.campo_hasta') }}" />
+                        <x-atoms.date id="alta-integrante-desde" name="desde" :label="__('personal.equipos_trabajo.campo_desde')" :value="$fecha" required />
+                        <x-atoms.date id="alta-integrante-hasta" name="hasta" :label="__('personal.equipos_trabajo.campo_hasta')" />
 
                         <x-atoms.button type="submit" variant="primary" icon="add">
                             {{ __('personal.equipos_trabajo.ficha_asignar_integrante') }}
@@ -239,14 +239,14 @@
                             <x-atoms.select
                                 id="alta-recurso-{{ $tipo->value }}-recurso_id"
                                 name="recurso_id"
-                                label="{{ __('personal.recurso_tipo.'.$tipo->value) }}"
+                                :label="__('personal.recurso_tipo.'.$tipo->value)"
                                 :options="$opcionesPorTipo[$tipo->value]"
-                                placeholder="{{ __('personal.equipos_trabajo.ficha_campo_recurso_placeholder') }}"
+                                :placeholder="__('personal.equipos_trabajo.ficha_campo_recurso_placeholder')"
                                 required
                             />
 
-                            <x-atoms.date id="alta-recurso-{{ $tipo->value }}-desde" name="desde" label="{{ __('personal.equipos_trabajo.campo_desde') }}" :value="$fecha" required />
-                            <x-atoms.date id="alta-recurso-{{ $tipo->value }}-hasta" name="hasta" label="{{ __('personal.equipos_trabajo.campo_hasta') }}" />
+                            <x-atoms.date id="alta-recurso-{{ $tipo->value }}-desde" name="desde" :label="__('personal.equipos_trabajo.campo_desde')" :value="$fecha" required />
+                            <x-atoms.date id="alta-recurso-{{ $tipo->value }}-hasta" name="hasta" :label="__('personal.equipos_trabajo.campo_hasta')" />
 
                             <x-atoms.button type="submit" variant="outline" icon="add">
                                 {{ __('personal.equipos_trabajo.ficha_asignar_recurso') }}

@@ -34,8 +34,10 @@ final class ActualizarGeneradorRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'base_id.exists' => 'La base seleccionada no es válida.',
-            'horas_actual.gte' => 'Las horas actuales no pueden ser menores que las horas iniciales.',
+            'identificador.required' => __('mantenimiento.validacion.generador_identificador_requerido'),
+            'estado.required' => __('mantenimiento.validacion.generador_estado_requerido'),
+            'base_id.exists' => __('mantenimiento.validacion.base_invalida'),
+            'horas_actual.gte' => __('mantenimiento.validacion.horas_actual_menor'),
         ];
     }
 }

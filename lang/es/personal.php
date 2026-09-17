@@ -63,7 +63,7 @@ return [
         'sin_ubicacion' => '—',
         'editar' => 'Editar',
         'eliminar_accion' => 'Eliminar',
-        'confirmar_baja' => '¿Confirmás la baja de esta base?',
+        'confirmar_baja' => '¿Confirmas la baja de esta base?',
         'paginacion_aria' => 'Paginación de bases',
         'paginacion_anterior' => 'Anterior',
         'paginacion_siguiente' => 'Siguiente',
@@ -79,7 +79,8 @@ return [
         'campo_ubicacion' => 'Ubicación',
         'campo_latitud' => 'Latitud',
         'campo_longitud' => 'Longitud',
-        'error_coordenada_incompleta' => 'Completá latitud y longitud juntas, o dejá las dos vacías.',
+        'error_coordenada_incompleta' => 'Completa latitud y longitud juntas, o deja las dos vacías.',
+        'error_nombre_requerido' => 'Ingresa el nombre de la base.',
         'estado_form' => 'Los cambios se guardan al confirmar.',
         'volver' => 'Volver a bases',
     ],
@@ -115,7 +116,7 @@ return [
         'estado_inactivo' => 'Inactiva',
         'editar' => 'Editar',
         'eliminar_accion' => 'Eliminar',
-        'confirmar_baja' => '¿Confirmás la baja de esta persona?',
+        'confirmar_baja' => '¿Confirmas la baja de esta persona?',
         'paginacion_aria' => 'Paginación de personas',
         'paginacion_anterior' => 'Anterior',
         'paginacion_siguiente' => 'Siguiente',
@@ -136,13 +137,15 @@ return [
         'campos_contador' => ':cantidad campos',
         'campo_nombre' => 'Nombre',
         'campo_rol' => 'Rol',
-        'campo_rol_placeholder' => 'Seleccioná un rol',
+        'campo_rol_placeholder' => 'Selecciona un rol',
         'campo_base' => 'Base',
         'campo_base_placeholder' => 'Sin base asignada',
         'campo_tarifa' => 'Tarifa por hectárea',
         'campo_tarifa_ayuda' => 'Se usa para calcular el devengo de cada sesión validada. Cambiarla no altera los devengos ya generados.',
         'campo_activo' => 'Persona activa',
         'campo_activo_ayuda' => 'Una persona inactiva no puede asignarse a sesiones nuevas.',
+        'error_nombre_requerido' => 'Ingresa el nombre de la persona.',
+        'error_rol_requerido' => 'Elige el rol de la persona.',
         'estado_form' => 'Los cambios se guardan al confirmar.',
         'volver' => 'Volver a personas',
     ],
@@ -160,6 +163,17 @@ return [
         'recurso_asignado' => 'El recurso se asignó correctamente.',
         'recurso_finalizado' => 'Se finalizó la vigencia del recurso.',
         'aviso_solapamiento' => 'Ya está vigente en otro equipo en fechas que se superponen: :equipos. Se guardó igual — la operación real presta gente y equipamiento entre cuadrillas.',
+        'error_codigo_requerido' => 'Ingresa el código del equipo.',
+        'error_base_requerida' => 'Elige la base del equipo.',
+        'error_estado_requerido' => 'Elige el estado del equipo.',
+        'error_desde_requerida' => 'Elige la fecha de inicio de la vigencia.',
+        'error_integrante_persona_requerida' => 'Elige la persona que integra el equipo.',
+        'error_integrante_rol_requerido' => 'Elige el rol de la persona en el equipo.',
+        'error_integrante_desde_requerida' => 'Elige la fecha desde la que integra el equipo.',
+        'error_recurso_tipo_requerido' => 'Elige el tipo de recurso.',
+        'error_recurso_id_requerido' => 'Elige el recurso.',
+        'error_recurso_desde_requerida' => 'Elige la fecha desde la que se asigna el recurso.',
+        'error_vigencia_hasta_requerida' => 'Elige la fecha en que termina la vigencia.',
 
         // Listado
         'titulo' => 'Equipos de trabajo',
@@ -185,7 +199,7 @@ return [
         'ver' => 'Ver ficha',
         'editar' => 'Editar',
         'eliminar_accion' => 'Eliminar',
-        'confirmar_baja' => '¿Confirmás la baja de este equipo de trabajo?',
+        'confirmar_baja' => '¿Confirmas la baja de este equipo de trabajo?',
         'paginacion_aria' => 'Paginación de equipos de trabajo',
         'paginacion_anterior' => 'Anterior',
         'paginacion_siguiente' => 'Siguiente',
@@ -200,11 +214,11 @@ return [
         'campo_codigo' => 'Código',
         'campo_nombre' => 'Nombre',
         'campo_base' => 'Base',
-        'campo_base_placeholder' => 'Seleccioná una base',
+        'campo_base_placeholder' => 'Selecciona una base',
         'campo_estado' => 'Estado',
         'campo_desde' => 'Vigente desde',
         'campo_hasta' => 'Vigente hasta',
-        'campo_hasta_ayuda' => 'Dejalo vacío si el equipo sigue vigente.',
+        'campo_hasta_ayuda' => 'Déjalo vacío si el equipo sigue vigente.',
         'estado_form' => 'Los cambios se guardan al confirmar.',
         'volver' => 'Volver a equipos de trabajo',
 
@@ -221,12 +235,12 @@ return [
         'ficha_finalizar' => 'Finalizar vigencia',
         'ficha_asignar_integrante' => 'Asignar integrante',
         'ficha_campo_persona' => 'Persona',
-        'ficha_campo_persona_placeholder' => 'Seleccioná una persona',
+        'ficha_campo_persona_placeholder' => 'Selecciona una persona',
         'ficha_campo_rol' => 'Rol en el equipo',
         'ficha_seccion_recursos' => 'Recursos asignados',
         'ficha_recursos_vacio' => 'Este equipo no tenía recursos asignados en la fecha elegida.',
         'ficha_asignar_recurso' => 'Asignar recurso',
-        'ficha_campo_recurso_placeholder' => 'Seleccioná un recurso',
+        'ficha_campo_recurso_placeholder' => 'Selecciona un recurso',
     ],
 
     // Ficha de desempeño de una persona (HU-58, tarea 81): "¿qué hizo esta
@@ -257,7 +271,7 @@ return [
         // cabecera de desempeno.blade.php. Distinto de 'sesiones_vacio' de
         // abajo, que es "hay datos pero este filtro puntual no trae nada".
         'vacio_titulo' => 'Sin actividad registrada',
-        'vacio_detalle' => 'Esta persona no tiene sesiones en el rango elegido. Probá ampliar las fechas, o volvé cuando haya volado su primera aplicación.',
+        'vacio_detalle' => 'Esta persona no tiene sesiones en el rango elegido. Prueba ampliar las fechas, o vuelve cuando haya volado su primera aplicación.',
 
         'seccion_sesiones' => 'Sesiones',
         'sesiones_vacio' => 'No hay sesiones de esta persona con estos filtros.',
@@ -301,6 +315,21 @@ return [
             'clima' => 'Clima',
             'otro' => 'Otro',
         ],
+    ],
+
+    // Mensajes de error.
+    'errores' => [
+        'equipo_trabajo_duplicado' => "Ya existe un equipo de trabajo activo con el código ':codigo'.",
+        'recurso_equipo_invalido' => 'El :tipo #:recurso_id no existe o no está activo.',
+        'vigencia_integrante_solapada' => ':persona ya integra este equipo en una vigencia que se superpone con :rango.',
+        'vigencia_recurso_solapada' => ':recurso ya está asignado a este equipo en una vigencia que se superpone con :rango.',
+        'vigencia_indefinida' => 'vigente',
+    ],
+
+    // Mensajes de los formularios.
+    'validacion' => [
+        'base_invalida' => 'La base seleccionada no es válida.',
+        'persona_invalida' => 'La persona seleccionada no es válida.',
     ],
 
 ];

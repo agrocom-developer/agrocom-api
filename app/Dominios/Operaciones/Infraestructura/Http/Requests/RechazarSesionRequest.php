@@ -23,4 +23,12 @@ final class RechazarSesionRequest extends FormRequest
             'motivo' => ['required', 'string', 'max:500'],
         ];
     }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return [
+            'motivo.required' => __('operaciones.sesiones_validacion.error_motivo_requerido'),
+        ];
+    }
 }

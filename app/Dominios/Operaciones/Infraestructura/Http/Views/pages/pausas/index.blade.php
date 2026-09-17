@@ -50,7 +50,7 @@
             >
                 @if ($puedeRegistrar)
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.pausas.create') }}" variant="primary" icon="add">
+                        <x-atoms.button :href="route('panel.pausas.create')" variant="primary" icon="add">
                             {{ __('operaciones.pausas.nuevo') }}
                         </x-atoms.button>
                     </x-slot:actions>
@@ -110,7 +110,7 @@
                         </x-atoms.button>
 
                         @if ($hayFiltrosActivos)
-                            <x-atoms.button href="{{ route('panel.pausas.index') }}" variant="text" size="md">
+                            <x-atoms.button :href="route('panel.pausas.index')" variant="text" size="md">
                                 {{ __('operaciones.pausas.limpiar_filtro') }}
                             </x-atoms.button>
                         @endif
@@ -154,7 +154,7 @@
                 @if ($pausas->hasPages())
                     <nav class="ag-pausas__paginacion" aria-label="{{ __('operaciones.pausas.paginacion_aria') }}">
                         @if (! $pausas->onFirstPage())
-                            <x-atoms.button href="{{ $pausas->previousPageUrl() }}" variant="outline" size="sm" icon="chevron_left">
+                            <x-atoms.button :href="$pausas->previousPageUrl()" variant="outline" size="sm" icon="chevron_left">
                                 {{ __('operaciones.pausas.paginacion_anterior') }}
                             </x-atoms.button>
                         @endif
@@ -164,7 +164,7 @@
                         </span>
 
                         @if ($pausas->hasMorePages())
-                            <x-atoms.button href="{{ $pausas->nextPageUrl() }}" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
+                            <x-atoms.button :href="$pausas->nextPageUrl()" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
                                 {{ __('operaciones.pausas.paginacion_siguiente') }}
                             </x-atoms.button>
                         @endif

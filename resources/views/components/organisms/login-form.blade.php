@@ -14,7 +14,7 @@
     los nombres de campo correctos (`username`/`password`, los que espera
     IniciarSesionRequest) para que ese wiring no tenga que inventar nada.
 
-    Tab "Recuperar acceso" (tarea 66): `<form method="POST">` real con
+    Tab "Recupera tu acceso" (tarea 66): `<form method="POST">` real con
     `@csrf`, a `$recuperarAction` — POST clásico con redirect (a diferencia
     del panel de ingreso, que responde JSON vía fetch): no hay JS que
     intercepte este submit, así que una recarga completa de página es el
@@ -34,6 +34,11 @@
     - method (default "POST").
     - csrf (nullable): si se pasa, agrega el input oculto `_token` en AMBOS
       forms (ingreso y recuperar comparten el mismo token de la página).
+    - titulo / subtitulo (nullable): copy del tab de ingreso, ya traducido
+      por el llamador. Sin ellos, cae a `seguridad.login.titulo`/`subtitulo`
+      ("Ingresa al sistema"). Hay un solo login para personal y clientes
+      (16/9/2026), así que ese default le habla a los dos: por eso dice
+      "sistema" y no "panel" — el cliente no tiene panel.
     - usernameValue (nullable): valor a repoblar tras un submit fallido.
     - usernameError / passwordError (nullable): error específico de ese
       campo, ya traducido por el llamador.
@@ -52,12 +57,18 @@
 
     JS: resources/js/organisms/login-form.js maneja los tabs, roving tabindex,
     keyboard navigation (ArrowRight/ArrowLeft en los tabs cambia/activa el
-    otro), y clicks en los links de cambio de tab.
+    otro), y clicks en los links de cambio de tab. resources/js/pages/login.js
+    intercepta el submit del tab de ingreso (fetch, ver comentario de ese
+    archivo) y lee `data-label-error-credenciales`/`data-label-error-generico`
+    del root de este organism para los mensajes de error de red/422 sin
+    `message` — ya traducidos acá, nunca hardcodeados en el JS.
 --}}
 @props([
     'action',
     'method' => 'POST',
     'csrf' => null,
+    'titulo' => null,
+    'subtitulo' => null,
     'usernameValue' => null,
     'usernameError' => null,
     'passwordError' => null,
@@ -77,7 +88,12 @@
     $arrancaEnRecuperar = filled($recuperarEstado) || filled($recuperarEmailError);
 @endphp
 
-<div {{ $attributes->class(['ag-login-form']) }} @if ($arrancaEnRecuperar) data-ag-login-tab-inicial="recuperar" @endif>
+<div
+    {{ $attributes->class(['ag-login-form']) }}
+    @if ($arrancaEnRecuperar) data-ag-login-tab-inicial="recuperar" @endif
+    data-label-error-credenciales="{{ __('seguridad.login.error_credenciales') }}"
+    data-label-error-generico="{{ __('seguridad.login.error_generico') }}"
+>
     {{-- Tabs --}}
     <div role="tablist" class="ag-login-form__tabs" aria-label="{{ __('seguridad.login.tabs_aria_label') }}">
         <button
@@ -112,8 +128,8 @@
         @if ($arrancaEnRecuperar) hidden @endif
     >
         <div class="ag-login-form__header">
-            <h1 class="ag-login-form__title">{{ __('seguridad.login.titulo') }}</h1>
-            <p class="ag-login-form__subtitle">{{ __('seguridad.login.subtitulo') }}</p>
+            <h1 class="ag-login-form__title">{{ $titulo ?? __('seguridad.login.titulo') }}</h1>
+            <p class="ag-login-form__subtitle">{{ $subtitulo ?? __('seguridad.login.subtitulo') }}</p>
         </div>
 
         @if ($slot->isNotEmpty())
@@ -156,7 +172,7 @@
             <div class="ag-login-form__actions">
                 <x-atoms.checkbox
                     name="remember"
-                    label="{{ __('seguridad.login.recordarme') }}"
+                    :label="__('seguridad.login.recordarme')"
                 />
 
                 <button

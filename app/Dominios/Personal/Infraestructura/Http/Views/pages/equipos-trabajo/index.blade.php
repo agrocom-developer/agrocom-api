@@ -46,7 +46,7 @@
             >
                 @puede('personal.equipo_trabajo.crear')
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.equipos-trabajo.create') }}" variant="primary" icon="add">
+                        <x-atoms.button :href="route('panel.equipos-trabajo.create')" variant="primary" icon="add">
                             {{ __('personal.equipos_trabajo.nuevo') }}
                         </x-atoms.button>
                     </x-slot:actions>
@@ -66,7 +66,7 @@
             @if ($hayFiltrosActivos || $equipos->isNotEmpty())
                 <div class="ag-table-toolbar">
                     <x-molecules.table-search
-                        action="{{ route('panel.equipos-trabajo.index') }}"
+                        :action="route('panel.equipos-trabajo.index')"
                         :value="$filtros['q']"
                         :placeholder="__('personal.equipos_trabajo.filtro_busqueda_placeholder')"
                         :clear-label="__('ui.tabla.buscador_limpiar')"
@@ -80,10 +80,10 @@
                     <x-atoms.select
                         name="base_id"
                         id="filtro-base"
-                        label="{{ __('personal.equipos_trabajo.filtro_base') }}"
+                        :label="__('personal.equipos_trabajo.filtro_base')"
                         :options="$basesDisponibles"
                         :value="$filtros['base_id']"
-                        placeholder="{{ __('personal.equipos_trabajo.filtro_todos') }}"
+                        :placeholder="__('personal.equipos_trabajo.filtro_todos')"
                     />
 
                     @php
@@ -94,10 +94,10 @@
                     <x-atoms.select
                         name="estado"
                         id="filtro-estado"
-                        label="{{ __('personal.equipos_trabajo.filtro_estado') }}"
+                        :label="__('personal.equipos_trabajo.filtro_estado')"
                         :options="$opcionesEstado"
                         :value="$filtros['estado']"
-                        placeholder="{{ __('personal.equipos_trabajo.filtro_todos') }}"
+                        :placeholder="__('personal.equipos_trabajo.filtro_todos')"
                     />
 
                     <div class="ag-filtros__acciones ag-equipos-trabajo__filtros-acciones">
@@ -106,7 +106,7 @@
                         </x-atoms.button>
 
                         @if ($filtros['base_id'] !== null || $filtros['estado'] !== null)
-                            <x-atoms.button href="{{ route('panel.equipos-trabajo.index') }}" variant="text" size="md">
+                            <x-atoms.button :href="route('panel.equipos-trabajo.index')" variant="text" size="md">
                                 {{ __('personal.equipos_trabajo.limpiar_filtro') }}
                             </x-atoms.button>
                         @endif
@@ -156,12 +156,12 @@
                             </span>
 
                             <span role="cell" class="ag-equipos-trabajo__acciones">
-                                <x-atoms.button href="{{ route('panel.equipos-trabajo.show', $equipo) }}" variant="outline" size="sm" icon="visibility">
+                                <x-atoms.button :href="route('panel.equipos-trabajo.show', $equipo)" variant="outline" size="sm" icon="visibility">
                                     {{ __('personal.equipos_trabajo.ver') }}
                                 </x-atoms.button>
 
                                 @puede('personal.equipo_trabajo.editar')
-                                    <x-atoms.button href="{{ route('panel.equipos-trabajo.edit', $equipo) }}" variant="warning-outline" size="sm" icon="edit">
+                                    <x-atoms.button :href="route('panel.equipos-trabajo.edit', $equipo)" variant="warning-outline" size="sm" icon="edit">
                                         {{ __('personal.equipos_trabajo.editar') }}
                                     </x-atoms.button>
                                 @endpuede

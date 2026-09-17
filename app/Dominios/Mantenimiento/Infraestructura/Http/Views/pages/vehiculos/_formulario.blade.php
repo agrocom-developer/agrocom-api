@@ -56,7 +56,7 @@
         :subtitle="__('mantenimiento.vehiculos.subtitulo_form')"
     >
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.vehiculos.index') }}" variant="outline" icon="arrow_back">
+            <x-atoms.button :href="route('panel.vehiculos.index')" variant="outline" icon="arrow_back">
                 {{ __('mantenimiento.vehiculos.volver') }}
             </x-atoms.button>
         </x-slot:actions>
@@ -75,10 +75,10 @@
         <x-atoms.input
             type="text"
             name="identificador"
-            label="{{ __('mantenimiento.vehiculos.campo_identificador') }}"
-            value="{{ $identificador }}"
+            :label="__('mantenimiento.vehiculos.campo_identificador')"
+            :value="$identificador"
             required
-            error="{{ $errors->first('identificador') }}"
+            :error="$errors->first('identificador')"
         />
 
         @php
@@ -89,35 +89,35 @@
         <x-atoms.select
             name="tipo"
             id="tipo"
-            label="{{ __('mantenimiento.vehiculos.campo_tipo') }}"
+            :label="__('mantenimiento.vehiculos.campo_tipo')"
             :options="$opcionesTipo"
             :value="$tipo"
-            placeholder="{{ __('mantenimiento.vehiculos.campo_tipo_placeholder') }}"
-            error="{{ $errors->first('tipo') }}"
+            :placeholder="__('mantenimiento.vehiculos.campo_tipo_placeholder')"
+            :error="$errors->first('tipo')"
         />
 
         <x-atoms.input
             type="text"
             name="marca"
-            label="{{ __('mantenimiento.vehiculos.campo_marca') }}"
-            value="{{ $marca }}"
-            error="{{ $errors->first('marca') }}"
+            :label="__('mantenimiento.vehiculos.campo_marca')"
+            :value="$marca"
+            :error="$errors->first('marca')"
         />
 
         <x-atoms.input
             type="text"
             name="modelo"
-            label="{{ __('mantenimiento.vehiculos.campo_modelo') }}"
-            value="{{ $modelo }}"
-            error="{{ $errors->first('modelo') }}"
+            :label="__('mantenimiento.vehiculos.campo_modelo')"
+            :value="$modelo"
+            :error="$errors->first('modelo')"
         />
 
         <x-atoms.input
             type="number"
             name="anio"
-            label="{{ __('mantenimiento.vehiculos.campo_anio') }}"
-            value="{{ $anio }}"
-            error="{{ $errors->first('anio') }}"
+            :label="__('mantenimiento.vehiculos.campo_anio')"
+            :value="$anio"
+            :error="$errors->first('anio')"
             step="1"
         />
 
@@ -129,28 +129,28 @@
         <x-atoms.select
             name="combustible"
             id="combustible"
-            label="{{ __('mantenimiento.vehiculos.campo_combustible') }}"
+            :label="__('mantenimiento.vehiculos.campo_combustible')"
             :options="$opcionesCombustible"
             :value="$combustible"
-            placeholder="{{ __('mantenimiento.vehiculos.campo_combustible_placeholder') }}"
-            error="{{ $errors->first('combustible') }}"
+            :placeholder="__('mantenimiento.vehiculos.campo_combustible_placeholder')"
+            :error="$errors->first('combustible')"
         />
 
         <input type="hidden" name="es_4x4" value="0">
         <x-atoms.checkbox
             name="es_4x4"
             value="1"
-            label="{{ __('mantenimiento.vehiculos.campo_es_4x4') }}"
+            :label="__('mantenimiento.vehiculos.campo_es_4x4')"
             :checked="$es4x4"
         />
 
         <x-atoms.input
             type="number"
             name="kilometraje_inicial"
-            label="{{ __('mantenimiento.vehiculos.campo_kilometraje_inicial') }}"
-            value="{{ $kilometrajeInicial }}"
-            help="{{ __('mantenimiento.vehiculos.campo_kilometraje_inicial_ayuda') }}"
-            error="{{ $errors->first('kilometraje_inicial') }}"
+            :label="__('mantenimiento.vehiculos.campo_kilometraje_inicial')"
+            :value="$kilometrajeInicial"
+            :help="__('mantenimiento.vehiculos.campo_kilometraje_inicial_ayuda')"
+            :error="$errors->first('kilometraje_inicial')"
             min="0"
             step="0.01"
         />
@@ -158,9 +158,9 @@
         <x-atoms.input
             type="number"
             name="kilometraje_actual"
-            label="{{ __('mantenimiento.vehiculos.campo_kilometraje_actual') }}"
-            value="{{ $kilometrajeActual }}"
-            error="{{ $errors->first('kilometraje_actual') }}"
+            :label="__('mantenimiento.vehiculos.campo_kilometraje_actual')"
+            :value="$kilometrajeActual"
+            :error="$errors->first('kilometraje_actual')"
             min="0"
             step="0.01"
         />
@@ -168,11 +168,11 @@
         <x-atoms.select
             name="base_id"
             id="base_id"
-            label="{{ __('mantenimiento.vehiculos.campo_base') }}"
+            :label="__('mantenimiento.vehiculos.campo_base')"
             :options="$basesDisponibles"
             :value="$baseId"
-            placeholder="{{ __('mantenimiento.vehiculos.campo_base_placeholder') }}"
-            error="{{ $errors->first('base_id') }}"
+            :placeholder="__('mantenimiento.vehiculos.campo_base_placeholder')"
+            :error="$errors->first('base_id')"
         />
 
         @php
@@ -183,17 +183,17 @@
         <x-atoms.select
             name="estado"
             id="estado"
-            label="{{ __('mantenimiento.vehiculos.campo_estado') }}"
+            :label="__('mantenimiento.vehiculos.campo_estado')"
             :options="$opcionesEstado"
             :value="$estado"
             required
-            error="{{ $errors->first('estado') }}"
+            :error="$errors->first('estado')"
         />
     </x-molecules.form-section>
 
     <x-organisms.form-actions-bar :status="__('mantenimiento.vehiculos.estado_form')">
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.vehiculos.index') }}" variant="outline">
+            <x-atoms.button :href="route('panel.vehiculos.index')" variant="outline">
                 {{ __('ui.action.cancel') }}
             </x-atoms.button>
             <x-atoms.button type="submit" variant="primary">

@@ -76,7 +76,7 @@
                     :subtitle="__('finanzas.gastos.subtitulo_form')"
                 >
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.gastos.index') }}" variant="outline" icon="arrow_back">
+                        <x-atoms.button :href="route('panel.gastos.index')" variant="outline" icon="arrow_back">
                             {{ __('finanzas.gastos.volver') }}
                         </x-atoms.button>
                     </x-slot:actions>
@@ -88,30 +88,30 @@
                 >
                     <x-atoms.date
                         name="fecha"
-                        label="{{ __('finanzas.gastos.campo_fecha') }}"
-                        value="{{ $fecha }}"
+                        :label="__('finanzas.gastos.campo_fecha')"
+                        :value="$fecha"
                         required
-                        error="{{ $errors->first('fecha') }}"
+                        :error="$errors->first('fecha')"
                     />
 
                     <x-atoms.select
                         name="rubro_id"
-                        label="{{ __('finanzas.gastos.campo_rubro') }}"
-                        placeholder="{{ __('finanzas.gastos.campo_rubro_placeholder') }}"
+                        :label="__('finanzas.gastos.campo_rubro')"
+                        :placeholder="__('finanzas.gastos.campo_rubro_placeholder')"
                         :options="$rubrosConSubrubros->pluck('nombre', 'id')"
-                        value="{{ $rubroId }}"
+                        :value="$rubroId"
                         required
-                        error="{{ $errors->first('rubro_id') }}"
+                        :error="$errors->first('rubro_id')"
                         data-ag-gasto-rubro
                     />
 
                     <x-atoms.select
                         name="subrubro_id"
-                        label="{{ __('finanzas.gastos.campo_subrubro') }}"
-                        placeholder="{{ __('finanzas.gastos.campo_subrubro_placeholder') }}"
+                        :label="__('finanzas.gastos.campo_subrubro')"
+                        :placeholder="__('finanzas.gastos.campo_subrubro_placeholder')"
                         :options="$subrubrosOpciones"
-                        value="{{ $subrubroId }}"
-                        error="{{ $errors->first('subrubro_id') }}"
+                        :value="$subrubroId"
+                        :error="$errors->first('subrubro_id')"
                         data-ag-gasto-subrubro
                         data-mapa-rubro-subrubro="{{ $mapaRubroSubrubro->toJson() }}"
                     />
@@ -119,77 +119,77 @@
                     <x-atoms.input
                         type="number"
                         name="cantidad"
-                        label="{{ __('finanzas.gastos.campo_cantidad') }}"
-                        value="{{ $cantidad }}"
+                        :label="__('finanzas.gastos.campo_cantidad')"
+                        :value="$cantidad"
                         min="0.01"
                         step="0.01"
                         required
-                        error="{{ $errors->first('cantidad') }}"
+                        :error="$errors->first('cantidad')"
                     />
 
                     <x-atoms.input
                         type="number"
                         name="precio_unitario"
-                        label="{{ __('finanzas.gastos.campo_precio_unitario') }}"
-                        value="{{ $precioUnitario }}"
+                        :label="__('finanzas.gastos.campo_precio_unitario')"
+                        :value="$precioUnitario"
                         min="0.01"
                         step="0.01"
                         required
-                        error="{{ $errors->first('precio_unitario') }}"
+                        :error="$errors->first('precio_unitario')"
                     />
 
                     <x-atoms.select
                         name="equipo_trabajo_id"
-                        label="{{ __('finanzas.gastos.campo_equipo') }}"
-                        placeholder="{{ __('finanzas.gastos.campo_equipo_placeholder') }}"
+                        :label="__('finanzas.gastos.campo_equipo')"
+                        :placeholder="__('finanzas.gastos.campo_equipo_placeholder')"
                         :options="$equiposDisponibles"
-                        value="{{ $equipoTrabajoId }}"
-                        error="{{ $errors->first('equipo_trabajo_id') }}"
+                        :value="$equipoTrabajoId"
+                        :error="$errors->first('equipo_trabajo_id')"
                     />
 
                     <x-atoms.select
                         name="base_id"
-                        label="{{ __('finanzas.gastos.campo_base') }}"
-                        placeholder="{{ __('finanzas.gastos.campo_base_placeholder') }}"
+                        :label="__('finanzas.gastos.campo_base')"
+                        :placeholder="__('finanzas.gastos.campo_base_placeholder')"
                         :options="$basesDisponibles"
-                        value="{{ $baseId }}"
-                        error="{{ $errors->first('base_id') }}"
+                        :value="$baseId"
+                        :error="$errors->first('base_id')"
                     />
 
                     <x-atoms.select
                         name="trabajo_id"
-                        label="{{ __('finanzas.gastos.campo_trabajo') }}"
-                        placeholder="{{ __('finanzas.gastos.campo_trabajo_placeholder') }}"
+                        :label="__('finanzas.gastos.campo_trabajo')"
+                        :placeholder="__('finanzas.gastos.campo_trabajo_placeholder')"
                         :options="$trabajosDisponibles"
-                        value="{{ $trabajoId }}"
-                        error="{{ $errors->first('trabajo_id') }}"
+                        :value="$trabajoId"
+                        :error="$errors->first('trabajo_id')"
                     />
 
                     <x-atoms.select
                         name="campania_id"
-                        label="{{ __('finanzas.gastos.campo_campania') }}"
-                        placeholder="{{ __('finanzas.gastos.campo_campania_placeholder') }}"
+                        :label="__('finanzas.gastos.campo_campania')"
+                        :placeholder="__('finanzas.gastos.campo_campania_placeholder')"
                         :options="$campaniasDisponibles"
-                        value="{{ $campaniaId }}"
-                        help="{{ __('finanzas.gastos.campo_campania_ayuda') }}"
-                        error="{{ $errors->first('campania_id') }}"
+                        :value="$campaniaId"
+                        :help="__('finanzas.gastos.campo_campania_ayuda')"
+                        :error="$errors->first('campania_id')"
                     />
 
                     <div class="ag-form-section__field--full">
                         <x-atoms.input
                             type="file"
                             name="comprobante"
-                            label="{{ __('finanzas.gastos.campo_comprobante') }}"
+                            :label="__('finanzas.gastos.campo_comprobante')"
                             accept="image/jpeg,image/png,application/pdf"
-                            help="{{ __('finanzas.gastos.campo_comprobante_ayuda') }}"
-                            error="{{ $errors->first('comprobante') }}"
+                            :help="__('finanzas.gastos.campo_comprobante_ayuda')"
+                            :error="$errors->first('comprobante')"
                         />
                     </div>
                 </x-molecules.form-section>
 
                 <x-organisms.form-actions-bar :status="__('finanzas.gastos.estado_form')">
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.gastos.index') }}" variant="outline">
+                        <x-atoms.button :href="route('panel.gastos.index')" variant="outline">
                             {{ __('ui.action.cancel') }}
                         </x-atoms.button>
                         <x-atoms.button type="submit" variant="primary">

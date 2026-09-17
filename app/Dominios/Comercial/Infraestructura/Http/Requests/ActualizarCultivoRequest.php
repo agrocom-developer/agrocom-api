@@ -30,10 +30,11 @@ final class ActualizarCultivoRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'tipo_cultivo.required' => 'Seleccioná el tipo de cultivo.',
-            'tipo_cultivo.enum' => 'El tipo de cultivo no es válido.',
-            'ciclo_vida.required' => 'Seleccioná el ciclo de vida.',
-            'ciclo_vida.enum' => 'El ciclo de vida no es válido.',
+            'nombre_comun.required' => __('comercial.cultivos.error_nombre_comun_requerido'),
+            'tipo_cultivo.required' => __('comercial.validacion.tipo_cultivo_requerido'),
+            'tipo_cultivo.enum' => __('comercial.validacion.tipo_cultivo_invalido'),
+            'ciclo_vida.required' => __('comercial.validacion.ciclo_vida_requerido'),
+            'ciclo_vida.enum' => __('comercial.validacion.ciclo_vida_invalido'),
         ];
     }
 }

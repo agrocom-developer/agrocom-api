@@ -59,9 +59,11 @@ let llaveGoogleMapsEnCurso = null;
 
 /**
  * @param {string} llave - `mapas.google_maps_api_key` ya resuelta por el servidor.
+ * @param {string} [mensajeError] - texto ya traducido por Blade (`data-*` del
+ *   contenedor que llama a esta función); nunca un literal en este archivo.
  * @returns {Promise<typeof google.maps>} el namespace `google.maps`, listo para usar.
  */
-function cargarGoogleMaps(llave) {
+function cargarGoogleMaps(llave, mensajeError = '') {
     if (cargaGoogleMapsEnCurso && llaveGoogleMapsEnCurso === llave) {
         return cargaGoogleMapsEnCurso;
     }
@@ -82,7 +84,7 @@ function cargarGoogleMaps(llave) {
         const script = document.createElement('script');
         script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(llave)}&loading=async&callback=${NOMBRE_CALLBACK_GOOGLE_MAPS}`;
         script.async = true;
-        script.onerror = () => reject(new Error('No se pudo cargar el SDK de Google Maps'));
+        script.onerror = () => reject(new Error(mensajeError));
         document.head.appendChild(script);
     });
 
@@ -1217,7 +1219,7 @@ function inicializar(contenedor) {
     const llave = contenedor.dataset.agPropiedadMapaGoogleKey;
 
     if (contenedor.dataset.agPropiedadMapaProveedor === 'google' && llave) {
-        cargarGoogleMaps(llave)
+        cargarGoogleMaps(llave, contenedor.dataset.agPropiedadMapaErrorGoogle || '')
             .then((googleMapsNs) => inicializarGoogle(contenedor, refs, googleMapsNs))
             .catch((error) => {
                 console.warn('No se pudo inicializar Google Maps, se usa Leaflet como respaldo.', error);

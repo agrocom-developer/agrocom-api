@@ -44,9 +44,12 @@ final class ActualizarLoteRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'propiedad_id.required' => 'Seleccioná una propiedad.',
-            'propiedad_id.exists' => 'La propiedad seleccionada no es válida.',
-            'lote.hectareas.gt' => 'Las hectáreas tienen que ser mayores a cero.',
+            'propiedad_id.required' => __('comercial.validacion.propiedad_requerida'),
+            'propiedad_id.exists' => __('comercial.validacion.propiedad_invalida'),
+            'lote.codigo.required' => __('comercial.lotes.error_codigo_requerido'),
+            'lote.hectareas.required' => __('comercial.lotes.error_hectareas_requeridas'),
+            'lote.hectareas.gt' => __('comercial.validacion.hectareas_mayor_a_cero'),
+            'lote.grado_obstaculos.required' => __('comercial.lotes.error_grado_obstaculos_requerido'),
         ];
     }
 

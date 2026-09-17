@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Operaciones\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use App\Dominios\Operaciones\Dominio\EstadoSesion;
 use DomainException;
 
@@ -22,13 +23,14 @@ final class SesionNoDisponibleParaDecision extends DomainException
 {
     public static function porEstadoInvalido(int $sesionId, EstadoSesion $actual): self
     {
-        return new self(
-            "La sesión #{$sesionId} está '{$actual->value}': solo una sesión 'cerrado' admite validación o rechazo.",
-        );
+        return new self(Texto::de('operaciones.errores.sesion_no_disponible_por_estado', [
+            'id' => $sesionId,
+            'estado' => $actual->value,
+        ]));
     }
 
     public static function porYaAnulada(int $sesionId): self
     {
-        return new self("La sesión #{$sesionId} ya fue rechazada — no admite una nueva decisión.");
+        return new self(Texto::de('operaciones.errores.sesion_no_disponible_por_anulada', ['id' => $sesionId]));
     }
 }

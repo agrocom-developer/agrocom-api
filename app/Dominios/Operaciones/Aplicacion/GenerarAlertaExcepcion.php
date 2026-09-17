@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Operaciones\Aplicacion;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use App\Dominios\Operaciones\Aplicacion\MaquinaEstados\MaquinaEstadosAlerta;
 use App\Dominios\Operaciones\Dominio\EstadoCoberturaTrabajo;
 use App\Dominios\Operaciones\Dominio\TipoAlerta;
@@ -53,7 +54,12 @@ final class GenerarAlertaExcepcion
             'trabajo_id' => $sesion->trabajo_id,
             'sesion_id' => $sesion->id,
             'recarga_id' => $recarga->id,
-            'mensaje' => "Batería a {$recarga->temperatura_bateria_c} °C en la recarga #{$recarga->secuencia} de la sesión #{$sesion->id} (trabajo #{$sesion->trabajo_id}).",
+            'mensaje' => Texto::de('operaciones.errores.alerta_bateria_caliente', [
+                'temperatura' => $recarga->temperatura_bateria_c,
+                'secuencia' => $recarga->secuencia,
+                'sesion' => $sesion->id,
+                'trabajo' => $sesion->trabajo_id,
+            ]),
         ]);
 
         if ($sesion->dron_id !== null) {
@@ -85,7 +91,10 @@ final class GenerarAlertaExcepcion
             'tipo' => TipoAlerta::DronSospechoso,
             'dron_id' => $dronId,
             'recarga_id' => $recargaDisparadora->id,
-            'mensaje' => "El dron #{$dronId} acumula {$recargasCalientes} recargas con alerta de temperatura — revisar motores/ESC.",
+            'mensaje' => Texto::de('operaciones.errores.alerta_dron_sospechoso', [
+                'dron' => $dronId,
+                'recargas' => $recargasCalientes,
+            ]),
         ]);
     }
 
@@ -102,7 +111,7 @@ final class GenerarAlertaExcepcion
             'trabajo_id' => $condiciones->trabajo_id,
             'sesion_id' => $condiciones->sesion_id,
             'condiciones_id' => $condiciones->id,
-            'mensaje' => "El trabajo #{$condiciones->trabajo_id} arrancó fuera de rango, autorizado con observación del agrónomo.",
+            'mensaje' => Texto::de('operaciones.errores.alerta_condiciones_forzadas', ['trabajo' => $condiciones->trabajo_id]),
         ]);
     }
 
@@ -129,7 +138,7 @@ final class GenerarAlertaExcepcion
         $this->crear([
             'tipo' => TipoAlerta::SumaExcedida,
             'trabajo_id' => $trabajo->id,
-            'mensaje' => "El trabajo #{$trabajo->id} superó las hectáreas del lote más la tolerancia de solape configurada.",
+            'mensaje' => Texto::de('operaciones.errores.alerta_suma_excedida', ['trabajo' => $trabajo->id]),
         ]);
     }
 

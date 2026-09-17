@@ -68,6 +68,9 @@ final class CrearGastoRequest extends FormRequest
             'rubro_id.exists' => __('finanzas.gastos.error_rubro_invalido'),
             'comprobante.mimes' => __('finanzas.gastos.error_comprobante_tipo'),
             'comprobante.max' => __('finanzas.gastos.error_comprobante_tamano'),
+            'fecha.required' => __('finanzas.gastos.error_fecha_requerida'),
+            'cantidad.required' => __('finanzas.gastos.error_cantidad_requerida'),
+            'precio_unitario.required' => __('finanzas.gastos.error_precio_unitario_requerido'),
         ];
     }
 }

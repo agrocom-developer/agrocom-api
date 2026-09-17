@@ -40,7 +40,7 @@
             >
                 @puede('personal.persona.crear')
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.personas.create') }}" variant="primary" icon="add">
+                        <x-atoms.button :href="route('panel.personas.create')" variant="primary" icon="add">
                             {{ __('personal.personas.nueva') }}
                         </x-atoms.button>
                     </x-slot:actions>
@@ -60,7 +60,7 @@
             @if ($hayFiltrosActivos || $personas->isNotEmpty())
                 <div class="ag-table-toolbar">
                     <x-molecules.table-search
-                        action="{{ route('panel.personas.index') }}"
+                        :action="route('panel.personas.index')"
                         :value="$filtros['q']"
                         :placeholder="__('personal.personas.filtro_busqueda_placeholder')"
                         :clear-label="__('ui.tabla.buscador_limpiar')"
@@ -111,13 +111,13 @@
 
                             <span role="cell" class="ag-personas__acciones">
                                 @puede('personal.persona.desempenio')
-                                    <x-atoms.button href="{{ route('panel.personas.desempenio', $persona) }}" variant="outline" size="sm" icon="insights">
+                                    <x-atoms.button :href="route('panel.personas.desempenio', $persona)" variant="outline" size="sm" icon="insights">
                                         {{ __('personal.personas.desempenio.ver') }}
                                     </x-atoms.button>
                                 @endpuede
 
                                 @puede('personal.persona.editar')
-                                    <x-atoms.button href="{{ route('panel.personas.edit', $persona) }}" variant="warning-outline" size="sm" icon="edit">
+                                    <x-atoms.button :href="route('panel.personas.edit', $persona)" variant="warning-outline" size="sm" icon="edit">
                                         {{ __('personal.personas.editar') }}
                                     </x-atoms.button>
                                 @endpuede

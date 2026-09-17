@@ -43,7 +43,7 @@
                 :subtitle="__('comercial.siembra.subtitulo')"
             >
                 <x-slot:actions>
-                    <x-atoms.button href="{{ route('panel.propiedades.index') }}" variant="outline" icon="arrow_back">
+                    <x-atoms.button :href="route('panel.propiedades.index')" variant="outline" icon="arrow_back">
                         {{ __('comercial.siembra.volver') }}
                     </x-atoms.button>
                 </x-slot:actions>
@@ -72,7 +72,7 @@
                     {{ __('comercial.siembra.sin_campanias') }}
 
                     @puede('campania.campania.crear')
-                        <x-atoms.button href="{{ route('panel.campanias.create') }}" variant="text" size="sm">
+                        <x-atoms.button :href="route('panel.campanias.create')" variant="text" size="sm">
                             {{ __('comercial.siembra.crear_campania') }}
                         </x-atoms.button>
                     @endpuede
@@ -82,7 +82,7 @@
                     <x-atoms.select
                         name="campania_id"
                         id="campania_id"
-                        label="{{ __('comercial.siembra.campo_campania') }}"
+                        :label="__('comercial.siembra.campo_campania')"
                         :options="$campanias"
                         :value="$campaniaId"
                     />
@@ -116,7 +116,7 @@
 
                     <x-organisms.form-actions-bar :status="__('comercial.siembra.estado_form')">
                         <x-slot:actions>
-                            <x-atoms.button href="{{ route('panel.propiedades.index') }}" variant="outline">
+                            <x-atoms.button :href="route('panel.propiedades.index')" variant="outline">
                                 {{ __('ui.action.cancel') }}
                             </x-atoms.button>
                             <x-atoms.button type="submit" variant="primary">

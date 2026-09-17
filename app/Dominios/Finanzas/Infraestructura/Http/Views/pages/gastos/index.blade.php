@@ -54,7 +54,7 @@
             >
                 @puede('finanzas.gasto.crear')
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.gastos.create') }}" variant="primary" icon="add">
+                        <x-atoms.button :href="route('panel.gastos.create')" variant="primary" icon="add">
                             {{ __('finanzas.gastos.nuevo') }}
                         </x-atoms.button>
                     </x-slot:actions>
@@ -76,37 +76,37 @@
                 <x-atoms.select
                     name="rubro_id"
                     id="filtro-rubro"
-                    label="{{ __('finanzas.gastos.filtro_rubro') }}"
+                    :label="__('finanzas.gastos.filtro_rubro')"
                     :options="$rubrosDisponibles"
                     :value="(string) $filtros['rubro_id']"
-                    placeholder="{{ __('finanzas.gastos.filtro_rubro_placeholder') }}"
+                    :placeholder="__('finanzas.gastos.filtro_rubro_placeholder')"
                 />
 
                 <x-atoms.select
                     name="equipo_trabajo_id"
                     id="filtro-equipo"
-                    label="{{ __('finanzas.gastos.filtro_equipo') }}"
+                    :label="__('finanzas.gastos.filtro_equipo')"
                     :options="$equiposDisponibles"
                     :value="(string) $filtros['equipo_trabajo_id']"
-                    placeholder="{{ __('finanzas.gastos.filtro_equipo_placeholder') }}"
+                    :placeholder="__('finanzas.gastos.filtro_equipo_placeholder')"
                 />
 
                 <x-atoms.select
                     name="base_id"
                     id="filtro-base"
-                    label="{{ __('finanzas.gastos.filtro_base') }}"
+                    :label="__('finanzas.gastos.filtro_base')"
                     :options="$basesDisponibles"
                     :value="(string) $filtros['base_id']"
-                    placeholder="{{ __('finanzas.gastos.filtro_base_placeholder') }}"
+                    :placeholder="__('finanzas.gastos.filtro_base_placeholder')"
                 />
 
                 <x-atoms.select
                     name="campania_id"
                     id="filtro-campania"
-                    label="{{ __('finanzas.gastos.filtro_campania') }}"
+                    :label="__('finanzas.gastos.filtro_campania')"
                     :options="$campaniasDisponibles"
                     :value="(string) $filtros['campania_id']"
-                    placeholder="{{ __('finanzas.gastos.filtro_campania_placeholder') }}"
+                    :placeholder="__('finanzas.gastos.filtro_campania_placeholder')"
                 />
 
                 <div class="ag-input">
@@ -128,7 +128,7 @@
                     </x-atoms.button>
 
                     @if ($hayFiltrosActivos)
-                        <x-atoms.button href="{{ route('panel.gastos.index') }}" variant="text" size="md">
+                        <x-atoms.button :href="route('panel.gastos.index')" variant="text" size="md">
                             {{ __('finanzas.gastos.limpiar_filtro') }}
                         </x-atoms.button>
                     @endif
@@ -183,7 +183,7 @@
                             <span role="cell" class="ag-gastos__cifra">{{ __('finanzas.gastos.monto_valor', ['monto' => $gasto->monto]) }}</span>
                             <span role="cell">
                                 @if ($gasto->comprobante_url !== null)
-                                    <x-atoms.button href="{{ route('panel.gastos.comprobante', $gasto) }}" target="_blank" rel="noopener" variant="outline" size="sm" icon="description">
+                                    <x-atoms.button :href="route('panel.gastos.comprobante', $gasto)" target="_blank" rel="noopener" variant="outline" size="sm" icon="description">
                                         {{ __('finanzas.gastos.comprobante_ver') }}
                                     </x-atoms.button>
                                 @else
@@ -213,7 +213,7 @@
                 @if ($gastos->hasPages())
                     <nav class="ag-gastos__paginacion" aria-label="{{ __('finanzas.gastos.paginacion_aria') }}">
                         @if (! $gastos->onFirstPage())
-                            <x-atoms.button href="{{ $gastos->previousPageUrl() }}" variant="outline" size="sm" icon="chevron_left">
+                            <x-atoms.button :href="$gastos->previousPageUrl()" variant="outline" size="sm" icon="chevron_left">
                                 {{ __('finanzas.gastos.paginacion_anterior') }}
                             </x-atoms.button>
                         @endif
@@ -223,7 +223,7 @@
                         </span>
 
                         @if ($gastos->hasMorePages())
-                            <x-atoms.button href="{{ $gastos->nextPageUrl() }}" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
+                            <x-atoms.button :href="$gastos->nextPageUrl()" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
                                 {{ __('finanzas.gastos.paginacion_siguiente') }}
                             </x-atoms.button>
                         @endif

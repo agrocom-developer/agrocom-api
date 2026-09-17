@@ -66,13 +66,14 @@ final class CrearPropiedadRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'cliente_id.required' => 'Seleccioná un cliente.',
-            'cliente_id.exists' => 'El cliente seleccionado no es válido.',
-            'hectareas.gt' => 'Las hectáreas tienen que ser mayores a cero.',
-            'departamento_id.exists' => 'El departamento seleccionado no es válido.',
-            'provincia_id.exists' => 'La provincia seleccionada no es válida.',
-            'municipio_id.exists' => 'El municipio seleccionado no es válido.',
-            'color.in' => 'Elegí un color de la paleta disponible.',
+            'cliente_id.required' => __('comercial.contratos.error_cliente_requerido'),
+            'cliente_id.exists' => __('comercial.contratos.error_cliente_invalido'),
+            'nombre.required' => __('comercial.propiedades.error_nombre_requerido'),
+            'hectareas.gt' => __('comercial.validacion.hectareas_mayor_a_cero'),
+            'departamento_id.exists' => __('comercial.validacion.departamento_invalido'),
+            'provincia_id.exists' => __('comercial.validacion.provincia_invalida'),
+            'municipio_id.exists' => __('comercial.validacion.municipio_invalido'),
+            'color.in' => __('comercial.validacion.color_invalido'),
         ];
     }
 }

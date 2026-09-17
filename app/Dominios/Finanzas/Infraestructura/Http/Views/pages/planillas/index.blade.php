@@ -96,7 +96,7 @@
                             </span>
                             <span role="cell" class="ag-planillas__cifra">{{ __('finanzas.planillas.monto_valor', ['monto' => $planilla->total]) }}</span>
                             <span role="cell" class="ag-planillas__acciones">
-                                <x-atoms.button href="{{ route('panel.planillas.show', $planilla) }}" variant="outline" size="sm" icon="visibility">
+                                <x-atoms.button :href="route('panel.planillas.show', $planilla)" variant="outline" size="sm" icon="visibility">
                                     {{ __('finanzas.planillas.ver_accion') }}
                                 </x-atoms.button>
                             </span>
@@ -107,7 +107,7 @@
                 @if ($planillas->hasPages())
                     <nav class="ag-planillas__paginacion" aria-label="{{ __('finanzas.planillas.paginacion_aria') }}">
                         @if (! $planillas->onFirstPage())
-                            <x-atoms.button href="{{ $planillas->previousPageUrl() }}" variant="outline" size="sm" icon="chevron_left">
+                            <x-atoms.button :href="$planillas->previousPageUrl()" variant="outline" size="sm" icon="chevron_left">
                                 {{ __('finanzas.planillas.paginacion_anterior') }}
                             </x-atoms.button>
                         @endif
@@ -117,7 +117,7 @@
                         </span>
 
                         @if ($planillas->hasMorePages())
-                            <x-atoms.button href="{{ $planillas->nextPageUrl() }}" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
+                            <x-atoms.button :href="$planillas->nextPageUrl()" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
                                 {{ __('finanzas.planillas.paginacion_siguiente') }}
                             </x-atoms.button>
                         @endif

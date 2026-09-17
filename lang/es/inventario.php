@@ -46,7 +46,7 @@ return [
         'sin_costo' => '—',
         'editar' => 'Editar',
         'eliminar_accion' => 'Eliminar',
-        'confirmar_baja' => '¿Confirmás la baja de este repuesto?',
+        'confirmar_baja' => '¿Confirmas la baja de este repuesto?',
         'paginacion_aria' => 'Paginación de repuestos',
         'paginacion_anterior' => 'Anterior',
         'paginacion_siguiente' => 'Siguiente',
@@ -67,6 +67,9 @@ return [
         'actualizado' => 'Repuesto actualizado.',
         'eliminado' => 'Repuesto dado de baja.',
         'volver' => 'Volver a repuestos',
+        'error_codigo_requerido' => 'Ingresa el código del repuesto.',
+        'error_descripcion_requerida' => 'Ingresa la descripción del repuesto.',
+        'error_unidad_requerida' => 'Ingresa la unidad del repuesto.',
     ],
 
     // Pantalla de panel "Mantenimiento › Stock" (HU-36, tarea 52): stock
@@ -115,6 +118,26 @@ return [
         'campo_motivo_placeholder' => 'Obligatorio en ajuste y traslado',
         'estado_form' => 'Sin guardar',
         'volver' => 'Volver a stock',
+        'error_tipo_requerido' => 'Elige el tipo de movimiento.',
+        'error_repuesto_requerido' => 'Elige el repuesto.',
+        'error_base_requerida' => 'Elige la base.',
+        'error_cantidad_requerida' => 'Ingresa la cantidad.',
+    ],
+
+    // Mensajes de error.
+    'errores' => [
+        'stock_insuficiente' => "Stock insuficiente de ':codigo_repuesto' en la base #:base_id: disponible :disponible, solicitado :solicitada.",
+        'repuesto_duplicado' => "Ya existe un repuesto activo con el código ':codigo'.",
+        'traslado_sin_stock_destino' => 'Un traslado necesita la fila de stock de destino ya bloqueada.',
+    ],
+
+    // Mensajes de los formularios.
+    'validacion' => [
+        'base_destino_distinta' => 'La base de destino tiene que ser distinta de la base de origen.',
+        'traslado_base_destino_requerida' => 'El traslado necesita una base de destino.',
+        'ajuste_sentido_requerido' => 'El ajuste necesita indicar si suma o resta stock.',
+        'compra_costo_unitario_requerido' => 'La compra necesita el costo unitario.',
+        'motivo_requerido' => 'Este tipo de movimiento necesita un motivo.',
     ],
 
 ];

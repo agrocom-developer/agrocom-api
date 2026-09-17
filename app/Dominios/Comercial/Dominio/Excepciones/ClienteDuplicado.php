@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Comercial\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use RuntimeException;
 
 /**
@@ -16,6 +17,6 @@ final class ClienteDuplicado extends RuntimeException
 {
     public static function porNit(string $nit): self
     {
-        return new self("Ya existe un cliente activo con el NIT '{$nit}'.");
+        return new self(Texto::de('comercial.errores.cliente_nit_duplicado', ['nit' => $nit]));
     }
 }

@@ -47,7 +47,7 @@
             >
                 @puede('comercial.propiedad.crear')
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.propiedades.create') }}" variant="primary" icon="add">
+                        <x-atoms.button :href="route('panel.propiedades.create')" variant="primary" icon="add">
                             {{ __('comercial.propiedades.nuevo') }}
                         </x-atoms.button>
                     </x-slot:actions>
@@ -80,31 +80,31 @@
             @if ($hayFiltrosActivos || $propiedades->isNotEmpty())
                 <div class="ag-table-toolbar">
                     <x-organisms.filter-panel
-                        action="{{ route('panel.propiedades.index') }}"
+                        :action="route('panel.propiedades.index')"
                         :active-count="$filtrosPanelActivos"
                     >
                         <input type="hidden" name="q" value="{{ $filtros['q'] }}">
                         <x-atoms.select
                             name="cliente_id"
                             id="filtro-cliente"
-                            label="{{ __('comercial.propiedades.filtro_cliente') }}"
+                            :label="__('comercial.propiedades.filtro_cliente')"
                             :options="$clientesDisponibles"
                             :value="$filtros['cliente_id']"
-                            placeholder="{{ __('comercial.propiedades.filtro_cliente_placeholder') }}"
+                            :placeholder="__('comercial.propiedades.filtro_cliente_placeholder')"
                         />
 
                         <x-atoms.select
                             name="departamento_id"
                             id="filtro-departamento"
-                            label="{{ __('comercial.propiedades.filtro_departamento') }}"
+                            :label="__('comercial.propiedades.filtro_departamento')"
                             :options="$departamentosDisponibles"
                             :value="$filtros['departamento_id']"
-                            placeholder="{{ __('comercial.propiedades.filtro_departamento_placeholder') }}"
+                            :placeholder="__('comercial.propiedades.filtro_departamento_placeholder')"
                         />
                     </x-organisms.filter-panel>
 
                     <x-molecules.table-search
-                        action="{{ route('panel.propiedades.index') }}"
+                        :action="route('panel.propiedades.index')"
                         :value="$filtros['q']"
                         :placeholder="__('comercial.propiedades.filtro_busqueda_placeholder')"
                         :clear-label="__('ui.tabla.buscador_limpiar')"
@@ -159,7 +159,7 @@
                             <span role="cell" class="ag-propiedades__acciones">
                                 <x-organisms.row-actions>
                                     @puede('comercial.propiedad.editar')
-                                        <x-atoms.button href="{{ route('panel.propiedades.edit', $propiedad) }}" variant="warning-outline" size="sm" icon="edit">
+                                        <x-atoms.button :href="route('panel.propiedades.edit', $propiedad)" variant="warning-outline" size="sm" icon="edit">
                                             {{ __('comercial.propiedades.editar') }}
                                         </x-atoms.button>
                                     @endpuede

@@ -43,7 +43,7 @@
         :subtitle="__('mantenimiento.generadores.subtitulo_form')"
     >
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.generadores.index') }}" variant="outline" icon="arrow_back">
+            <x-atoms.button :href="route('panel.generadores.index')" variant="outline" icon="arrow_back">
                 {{ __('mantenimiento.generadores.volver') }}
             </x-atoms.button>
         </x-slot:actions>
@@ -62,28 +62,28 @@
         <x-atoms.input
             type="text"
             name="identificador"
-            label="{{ __('mantenimiento.generadores.campo_identificador') }}"
-            value="{{ $identificador }}"
+            :label="__('mantenimiento.generadores.campo_identificador')"
+            :value="$identificador"
             required
-            error="{{ $errors->first('identificador') }}"
+            :error="$errors->first('identificador')"
         />
 
         <x-atoms.input
             type="text"
             name="modelo"
-            label="{{ __('mantenimiento.generadores.campo_modelo') }}"
-            value="{{ $modelo }}"
-            error="{{ $errors->first('modelo') }}"
+            :label="__('mantenimiento.generadores.campo_modelo')"
+            :value="$modelo"
+            :error="$errors->first('modelo')"
         />
 
         <x-atoms.select
             name="base_id"
             id="base_id"
-            label="{{ __('mantenimiento.generadores.campo_base') }}"
+            :label="__('mantenimiento.generadores.campo_base')"
             :options="$basesDisponibles"
             :value="$baseId"
-            placeholder="{{ __('mantenimiento.generadores.campo_base_placeholder') }}"
-            error="{{ $errors->first('base_id') }}"
+            :placeholder="__('mantenimiento.generadores.campo_base_placeholder')"
+            :error="$errors->first('base_id')"
         />
 
         @php
@@ -94,38 +94,38 @@
         <x-atoms.select
             name="estado"
             id="estado"
-            label="{{ __('mantenimiento.generadores.campo_estado') }}"
+            :label="__('mantenimiento.generadores.campo_estado')"
             :options="$opcionesEstado"
             :value="$estado"
             required
-            error="{{ $errors->first('estado') }}"
+            :error="$errors->first('estado')"
         />
 
         <x-atoms.input
             type="number"
             name="horas_inicial"
-            label="{{ __('mantenimiento.generadores.campo_horas_inicial') }}"
-            value="{{ $horasInicial }}"
-            help="{{ __('mantenimiento.generadores.campo_horas_inicial_ayuda') }}"
+            :label="__('mantenimiento.generadores.campo_horas_inicial')"
+            :value="$horasInicial"
+            :help="__('mantenimiento.generadores.campo_horas_inicial_ayuda')"
             min="0"
             step="0.01"
-            error="{{ $errors->first('horas_inicial') }}"
+            :error="$errors->first('horas_inicial')"
         />
 
         <x-atoms.input
             type="number"
             name="horas_actual"
-            label="{{ __('mantenimiento.generadores.campo_horas_actual') }}"
-            value="{{ $horasActual }}"
+            :label="__('mantenimiento.generadores.campo_horas_actual')"
+            :value="$horasActual"
             min="0"
             step="0.01"
-            error="{{ $errors->first('horas_actual') }}"
+            :error="$errors->first('horas_actual')"
         />
     </x-molecules.form-section>
 
     <x-organisms.form-actions-bar :status="__('mantenimiento.generadores.estado_form')">
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.generadores.index') }}" variant="outline">
+            <x-atoms.button :href="route('panel.generadores.index')" variant="outline">
                 {{ __('ui.action.cancel') }}
             </x-atoms.button>
             <x-atoms.button type="submit" variant="primary">

@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Comercial\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use RuntimeException;
 
 /**
@@ -19,6 +20,6 @@ final class LoteConHistorialAsociado extends RuntimeException
 {
     public static function paraLote(string $codigo): self
     {
-        return new self("El lote '{$codigo}' tiene órdenes de aplicación o trabajos asociados y no se puede eliminar.");
+        return new self(Texto::de('comercial.errores.lote_con_historial_asociado', ['codigo' => $codigo]));
     }
 }

@@ -39,10 +39,10 @@
     <x-atoms.select
         name="contactos[{{ $indice }}][tipo]"
         id="contactos-{{ $indice }}-tipo"
-        label="{{ __('comercial.clientes.contacto_tipo') }}"
+        :label="__('comercial.clientes.contacto_tipo')"
         :options="$tiposOptions"
         :value="$contacto['tipo'] ?? null"
-        placeholder="{{ __('comercial.clientes.contacto_tipo_placeholder') }}"
+        :placeholder="__('comercial.clientes.contacto_tipo_placeholder')"
         required
         data-ag-contacto-tipo
     />
@@ -57,40 +57,40 @@
         <x-atoms.input
             type="text"
             name="contactos[{{ $indice }}][tipo_otro]"
-            label="{{ __('comercial.clientes.contacto_tipo_otro') }}"
-            value="{{ $contacto['tipo_otro'] ?? '' }}"
-            help="{{ __('comercial.clientes.contacto_tipo_otro_ayuda') }}"
+            :label="__('comercial.clientes.contacto_tipo_otro')"
+            :value="$contacto['tipo_otro'] ?? ''"
+            :help="__('comercial.clientes.contacto_tipo_otro_ayuda')"
         />
     </div>
 
     <x-atoms.input
         type="text"
         name="contactos[{{ $indice }}][nombre]"
-        label="{{ __('comercial.clientes.contacto_nombre') }}"
-        value="{{ $contacto['nombre'] ?? '' }}"
+        :label="__('comercial.clientes.contacto_nombre')"
+        :value="$contacto['nombre'] ?? ''"
         required
     />
 
     <x-atoms.input
         type="tel"
         name="contactos[{{ $indice }}][telefono]"
-        label="{{ __('comercial.clientes.contacto_telefono') }}"
-        value="{{ $contacto['telefono'] ?? '' }}"
+        :label="__('comercial.clientes.contacto_telefono')"
+        :value="$contacto['telefono'] ?? ''"
     />
 
     <x-atoms.input
         type="email"
         name="contactos[{{ $indice }}][email]"
-        label="{{ __('comercial.clientes.contacto_email') }}"
-        value="{{ $contacto['email'] ?? '' }}"
+        :label="__('comercial.clientes.contacto_email')"
+        :value="$contacto['email'] ?? ''"
     />
 
     <div class="ag-form-section__field--full">
         <x-atoms.input
             type="text"
             name="contactos[{{ $indice }}][observaciones]"
-            label="{{ __('comercial.clientes.contacto_observaciones') }}"
-            value="{{ $contacto['observaciones'] ?? '' }}"
+            :label="__('comercial.clientes.contacto_observaciones')"
+            :value="$contacto['observaciones'] ?? ''"
         />
     </div>
 

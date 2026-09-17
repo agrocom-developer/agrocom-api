@@ -130,7 +130,7 @@
 
             <div class="dropdown-menu dropdown-menu-end ag-color-swatch-field__menu">
                 <x-atoms.color-swatch-picker
-                    name="{{ $name }}"
+                    :name="$name"
                     :options="$options"
                     :value="$value"
                     :required="$required"

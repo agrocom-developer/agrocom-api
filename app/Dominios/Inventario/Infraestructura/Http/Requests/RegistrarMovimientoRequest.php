@@ -69,11 +69,15 @@ final class RegistrarMovimientoRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'base_destino_id.different' => 'La base de destino tiene que ser distinta de la base de origen.',
-            'base_destino_id.required' => 'El traslado necesita una base de destino.',
-            'sentido.required' => 'El ajuste necesita indicar si suma o resta stock.',
-            'costo_unitario.required' => 'La compra necesita el costo unitario.',
-            'motivo.required' => 'Este tipo de movimiento necesita un motivo.',
+            'tipo.required' => __('inventario.stock.error_tipo_requerido'),
+            'repuesto_id.required' => __('inventario.stock.error_repuesto_requerido'),
+            'base_id.required' => __('inventario.stock.error_base_requerida'),
+            'cantidad.required' => __('inventario.stock.error_cantidad_requerida'),
+            'base_destino_id.different' => __('inventario.validacion.base_destino_distinta'),
+            'base_destino_id.required' => __('inventario.validacion.traslado_base_destino_requerida'),
+            'sentido.required' => __('inventario.validacion.ajuste_sentido_requerido'),
+            'costo_unitario.required' => __('inventario.validacion.compra_costo_unitario_requerido'),
+            'motivo.required' => __('inventario.validacion.motivo_requerido'),
         ];
     }
 }

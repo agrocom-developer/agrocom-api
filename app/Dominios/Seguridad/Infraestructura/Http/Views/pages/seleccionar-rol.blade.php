@@ -87,7 +87,7 @@
 
                 <x-atoms.checkbox
                     name="recordar"
-                    label="{{ __('seguridad.rol.recordar') }}"
+                    :label="__('seguridad.rol.recordar')"
                     :checked="$recordarInicial"
                     data-ag-role-recordar
                 />

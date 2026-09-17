@@ -35,6 +35,7 @@ final class CrearRendicionRequest extends FormRequest
             'base_id.exists' => __('finanzas.rendiciones.error_base_invalida'),
             'jefe_campo_id.required' => __('finanzas.rendiciones.error_jefe_campo_requerido'),
             'jefe_campo_id.exists' => __('finanzas.rendiciones.error_jefe_campo_invalido'),
+            'fecha.required' => __('finanzas.rendiciones.error_fecha_requerida'),
         ];
     }
 }

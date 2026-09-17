@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Inventario\Contratos\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use RuntimeException;
 
 /**
@@ -21,7 +22,12 @@ final class StockInsuficiente extends RuntimeException
     public static function paraMovimiento(string $codigoRepuesto, int $baseId, string $disponible, string $solicitada): self
     {
         return new self(
-            "Stock insuficiente de '{$codigoRepuesto}' en la base #{$baseId}: disponible {$disponible}, solicitado {$solicitada}.",
+            Texto::de('inventario.errores.stock_insuficiente', [
+                'codigo_repuesto' => $codigoRepuesto,
+                'base_id' => $baseId,
+                'disponible' => $disponible,
+                'solicitada' => $solicitada,
+            ]),
         );
     }
 }

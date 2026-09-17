@@ -69,16 +69,20 @@ final class CrearUsuarioRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'username.unique' => 'Ya existe una cuenta activa con ese username.',
-            'email.unique' => 'Ya existe una cuenta activa con ese correo.',
-            'persona_id.exists' => 'La persona seleccionada no es válida.',
-            'persona_id.prohibited_if' => 'Una cuenta de portal no tiene persona asociada.',
-            'contrato_id.required_if' => 'Elegí el contrato de la cuenta de portal.',
-            'contrato_id.prohibited_if' => 'Una cuenta interna no tiene contrato asociado.',
-            'contrato_id.exists' => 'El contrato elegido no existe o no está vigente.',
-            'roles.present_if' => 'Falta el campo de roles.',
-            'roles.prohibited_if' => 'Una cuenta de portal no tiene roles.',
-            'roles.*.exists' => 'Uno de los roles seleccionados no es válido.',
+            'type.required' => __('seguridad.usuarios.error_type_requerido'),
+            'name.required' => __('seguridad.usuarios.error_name_requerido'),
+            'username.required' => __('seguridad.usuarios.error_username_requerido'),
+            'password.required' => __('seguridad.usuarios.error_password_requerido'),
+            'username.unique' => __('seguridad.validacion.usuario_username_unico'),
+            'email.unique' => __('seguridad.validacion.usuario_email_unico'),
+            'persona_id.exists' => __('seguridad.validacion.usuario_persona_invalida'),
+            'persona_id.prohibited_if' => __('seguridad.validacion.usuario_persona_prohibida_portal'),
+            'contrato_id.required_if' => __('seguridad.validacion.usuario_contrato_requerido'),
+            'contrato_id.prohibited_if' => __('seguridad.validacion.usuario_contrato_prohibido_interno'),
+            'contrato_id.exists' => __('seguridad.validacion.usuario_contrato_invalido'),
+            'roles.present_if' => __('seguridad.validacion.usuario_roles_requerido'),
+            'roles.prohibited_if' => __('seguridad.validacion.usuario_roles_prohibido_portal'),
+            'roles.*.exists' => __('seguridad.validacion.usuario_rol_invalido'),
         ];
     }
 }

@@ -194,7 +194,7 @@
                 title="{{ $actionLabel }}"
                 @if ($actionHidden) hidden @endif
             >
-                <x-atoms.icon name="{{ $actionIcon }}" size="md" />
+                <x-atoms.icon :name="$actionIcon" size="md" />
                 @if ($actionText)
                     <span class="ag-select__action-label">{{ $actionText }}</span>
                 @endif

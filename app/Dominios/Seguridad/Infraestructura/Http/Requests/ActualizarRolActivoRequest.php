@@ -34,4 +34,12 @@ class ActualizarRolActivoRequest extends FormRequest
             'recordar' => ['sometimes', 'boolean'],
         ];
     }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return [
+            'id_role.required' => __('seguridad.rol.error_id_role_requerido'),
+        ];
+    }
 }

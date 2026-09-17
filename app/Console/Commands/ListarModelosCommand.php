@@ -23,7 +23,7 @@ class ListarModelosCommand extends Command
         $rutaDominios = app_path('Dominios');
 
         if (! is_dir($rutaDominios)) {
-            $this->error("No existe {$rutaDominios}");
+            $this->error(__('ui.consola.listar_modelos_ruta_inexistente', ['ruta' => $rutaDominios]));
 
             return self::FAILURE;
         }
@@ -57,15 +57,18 @@ class ListarModelosCommand extends Command
         }
 
         if ($filas === []) {
-            $this->warn('No se encontró ningún modelo Eloquent bajo app/Dominios/*/Infraestructura/Eloquent.');
+            $this->warn(__('ui.consola.listar_modelos_vacio'));
 
             return self::SUCCESS;
         }
 
         usort($filas, fn ($a, $b) => [$a[0], $a[1]] <=> [$b[0], $b[1]]);
 
-        $this->table(['Módulo', 'Modelo', 'Tabla', 'Namespace'], $filas);
-        $this->info(count($filas).' modelo(s) en '.count(array_unique(array_column($filas, 0))).' módulo(s).');
+        $this->table(__('ui.consola.listar_modelos_columnas'), $filas);
+        $this->info(__('ui.consola.listar_modelos_resumen', [
+            'cantidad' => count($filas),
+            'modulos' => count(array_unique(array_column($filas, 0))),
+        ]));
 
         return self::SUCCESS;
     }

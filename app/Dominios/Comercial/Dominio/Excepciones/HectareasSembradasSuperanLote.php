@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Comercial\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use RuntimeException;
 
 /**
@@ -17,8 +18,10 @@ final class HectareasSembradasSuperanLote extends RuntimeException
 {
     public static function paraLote(string $codigoLote, string $hectareasSembradas, string $hectareasLote): self
     {
-        return new self(
-            "Las hectáreas sembradas ({$hectareasSembradas}) superan las hectáreas del lote '{$codigoLote}' ({$hectareasLote})."
-        );
+        return new self(Texto::de('comercial.errores.hectareas_sembradas_superan_lote', [
+            'sembradas' => $hectareasSembradas,
+            'codigo' => $codigoLote,
+            'hectareas' => $hectareasLote,
+        ]));
     }
 }

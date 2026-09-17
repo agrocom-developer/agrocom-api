@@ -20,7 +20,7 @@ return [
     'estado_termina_en' => 'Termina en :ultimos4',
 
     'accion_borrar' => 'Borrar',
-    'ayuda_secreto' => 'Dejalo vacío para no modificarlo. Para reemplazarlo, escribí el valor nuevo completo.',
+    'ayuda_secreto' => 'Déjalo vacío para no modificarlo. Para reemplazarlo, escribe el valor nuevo completo.',
     'ayuda_forzar_leaflet' => 'Activado: el editor de lotes usa Leaflet aunque haya una llave de Google Maps cargada. Desactivado: usa Google automáticamente si hay una llave válida.',
 
     'vacio_integraciones' => 'Todavía no hay integraciones configurables. Se agregan a medida que el sistema las necesite.',

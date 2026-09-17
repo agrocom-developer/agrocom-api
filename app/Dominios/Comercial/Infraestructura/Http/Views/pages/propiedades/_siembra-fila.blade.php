@@ -48,38 +48,38 @@
     <x-atoms.select
         name="{{ $prefijo }}[cultivo_id]"
         id="{{ $idBase }}-cultivo"
-        label="{{ __('comercial.siembra.campo_cultivo') }}"
+        :label="__('comercial.siembra.campo_cultivo')"
         :options="$cultivosDisponibles"
         :value="$cultivoId"
-        placeholder="{{ __('comercial.siembra.campo_cultivo_placeholder') }}"
-        error="{{ $errors->first($prefijo.'.cultivo_id') }}"
+        :placeholder="__('comercial.siembra.campo_cultivo_placeholder')"
+        :error="$errors->first($prefijo.'.cultivo_id')"
     />
 
     <x-atoms.input
         type="number"
         name="{{ $prefijo }}[hectareas_sembradas]"
         id="{{ $idBase }}-hectareas"
-        label="{{ __('comercial.siembra.campo_hectareas_sembradas') }}"
-        value="{{ $hectareasSembradas }}"
+        :label="__('comercial.siembra.campo_hectareas_sembradas')"
+        :value="$hectareasSembradas"
         min="0.01"
         max="{{ $lote->hectareas }}"
         step="0.01"
-        error="{{ $errors->first($prefijo.'.hectareas_sembradas') }}"
+        :error="$errors->first($prefijo.'.hectareas_sembradas')"
     />
 
     <x-atoms.date
         name="{{ $prefijo }}[fecha_siembra]"
         id="{{ $idBase }}-fecha-siembra"
-        label="{{ __('comercial.siembra.campo_fecha_siembra') }}"
-        value="{{ $fechaSiembra }}"
-        error="{{ $errors->first($prefijo.'.fecha_siembra') }}"
+        :label="__('comercial.siembra.campo_fecha_siembra')"
+        :value="$fechaSiembra"
+        :error="$errors->first($prefijo.'.fecha_siembra')"
     />
 
     <x-atoms.date
         name="{{ $prefijo }}[fecha_cosecha_estimada]"
         id="{{ $idBase }}-fecha-cosecha"
-        label="{{ __('comercial.siembra.campo_fecha_cosecha_estimada') }}"
-        value="{{ $fechaCosechaEstimada }}"
-        error="{{ $errors->first($prefijo.'.fecha_cosecha_estimada') }}"
+        :label="__('comercial.siembra.campo_fecha_cosecha_estimada')"
+        :value="$fechaCosechaEstimada"
+        :error="$errors->first($prefijo.'.fecha_cosecha_estimada')"
     />
 </div>

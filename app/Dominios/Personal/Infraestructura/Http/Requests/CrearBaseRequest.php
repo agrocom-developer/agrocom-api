@@ -26,6 +26,7 @@ final class CrearBaseRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'nombre.required' => __('personal.bases.error_nombre_requerido'),
             'latitud.required_with' => __('personal.bases.error_coordenada_incompleta'),
             'longitud.required_with' => __('personal.bases.error_coordenada_incompleta'),
         ];

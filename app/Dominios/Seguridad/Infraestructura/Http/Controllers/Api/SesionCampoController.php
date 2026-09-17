@@ -127,7 +127,7 @@ final class SesionCampoController
 
         if ($resultado->requiereSeleccionDeRol) {
             return response()->json([
-                'message' => 'Debe indicar con qué rol opera este dispositivo.',
+                'message' => __('seguridad.respuestas.rol_dispositivo_requerido'),
                 'roles' => RolActivoResource::collection($resultado->rolesDisponibles),
             ], 409);
         }
@@ -226,7 +226,7 @@ final class SesionCampoController
             || ! $usuario->state
         ) {
             throw ValidationException::withMessages([
-                'username' => ['Las credenciales no coinciden con ningún registro.'],
+                'username' => [__('seguridad.login.error_credenciales')],
             ]);
         }
 

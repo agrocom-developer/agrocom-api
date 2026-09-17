@@ -44,7 +44,7 @@
                 :subtitle="__('comercial.propiedades.lotes_generar_subtitulo')"
             >
                 <x-slot:actions>
-                    <x-atoms.button href="{{ route('panel.propiedades.edit', $propiedad) }}" variant="outline" icon="arrow_back">
+                    <x-atoms.button :href="route('panel.propiedades.edit', $propiedad)" variant="outline" icon="arrow_back">
                         {{ __('comercial.propiedades.lotes_generar_volver') }}
                     </x-atoms.button>
                 </x-slot:actions>
@@ -81,22 +81,22 @@
                     <x-atoms.input
                         type="text"
                         name="prefijo"
-                        label="{{ __('comercial.propiedades.lotes_generar_prefijo') }}"
+                        :label="__('comercial.propiedades.lotes_generar_prefijo')"
                         :help="__('comercial.propiedades.lotes_generar_prefijo_ayuda')"
-                        value="{{ old('prefijo', 'Lote ') }}"
+                        :value="old('prefijo', 'Lote ')"
                         required
-                        error="{{ $errors->first('prefijo') }}"
+                        :error="$errors->first('prefijo')"
                     />
 
                     <x-atoms.input
                         type="number"
                         name="cantidad"
-                        label="{{ __('comercial.propiedades.lotes_generar_cantidad') }}"
-                        value="{{ old('cantidad', 1) }}"
+                        :label="__('comercial.propiedades.lotes_generar_cantidad')"
+                        :value="old('cantidad', 1)"
                         min="1"
                         max="50"
                         required
-                        error="{{ $errors->first('cantidad') }}"
+                        :error="$errors->first('cantidad')"
                     />
                 </x-molecules.form-section>
 
@@ -118,7 +118,7 @@
 
                 <x-organisms.form-actions-bar :status="__('comercial.propiedades.lotes_generar_estado_form')">
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.propiedades.edit', $propiedad) }}" variant="outline">
+                        <x-atoms.button :href="route('panel.propiedades.edit', $propiedad)" variant="outline">
                             {{ __('ui.action.cancel') }}
                         </x-atoms.button>
                         <x-atoms.button type="submit" variant="primary" icon="add">

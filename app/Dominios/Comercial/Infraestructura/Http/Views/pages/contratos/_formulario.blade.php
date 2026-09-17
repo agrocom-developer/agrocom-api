@@ -116,7 +116,7 @@
         :subtitle="__('comercial.contratos.subtitulo_form')"
     >
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.contratos.index') }}" variant="outline" icon="arrow_back">
+            <x-atoms.button :href="route('panel.contratos.index')" variant="outline" icon="arrow_back">
                 {{ __('comercial.contratos.volver') }}
             </x-atoms.button>
         </x-slot:actions>
@@ -138,88 +138,88 @@
         <x-atoms.select
             name="cliente_id"
             id="cliente_id"
-            label="{{ __('comercial.contratos.campo_cliente') }}"
-            placeholder="{{ __('comercial.contratos.campo_cliente_placeholder') }}"
+            :label="__('comercial.contratos.campo_cliente')"
+            :placeholder="__('comercial.contratos.campo_cliente_placeholder')"
             :options="$clientesDisponibles"
-            value="{{ $clienteId }}"
+            :value="$clienteId"
             required
-            error="{{ $errors->first('cliente_id') }}"
+            :error="$errors->first('cliente_id')"
             action-icon="add"
-            action-href="{{ route('panel.clientes.create', ['volver_a' => route('panel.contratos.create')]) }}"
-            action-label="{{ __('comercial.contratos.crear_cliente') }}"
-            action-text="{{ __('comercial.contratos.crear_cliente_corto') }}"
+            :action-href="route('panel.clientes.create', ['volver_a' => route('panel.contratos.create')])"
+            :action-label="__('comercial.contratos.crear_cliente')"
+            :action-text="__('comercial.contratos.crear_cliente_corto')"
         />
 
 
         <x-atoms.select
             name="campania_id"
-            label="{{ __('comercial.contratos.campo_campania') }}"
-            placeholder="{{ __('comercial.contratos.campo_campania_placeholder') }}"
+            :label="__('comercial.contratos.campo_campania')"
+            :placeholder="__('comercial.contratos.campo_campania_placeholder')"
             :options="$campaniasDisponibles"
-            value="{{ $campaniaId }}"
+            :value="$campaniaId"
             required
-            help="{{ __('comercial.contratos.campo_campania_ayuda') }}"
-            error="{{ $errors->first('campania_id') }}"
+            :help="__('comercial.contratos.campo_campania_ayuda')"
+            :error="$errors->first('campania_id')"
         />
 
         <x-atoms.input
             type="number"
             name="hectareas_contratadas"
-            label="{{ __('comercial.contratos.campo_hectareas_contratadas') }}"
-            value="{{ $valor('hectareas_contratadas') }}"
+            :label="__('comercial.contratos.campo_hectareas_contratadas')"
+            :value="$valor('hectareas_contratadas')"
             min="0.01"
             step="0.01"
             required
-            error="{{ $errors->first('hectareas_contratadas') }}"
+            :error="$errors->first('hectareas_contratadas')"
         />
 
         <x-atoms.input
             type="number"
             name="aplicaciones_previstas"
-            label="{{ __('comercial.contratos.campo_aplicaciones_previstas') }}"
-            value="{{ $valor('aplicaciones_previstas') }}"
+            :label="__('comercial.contratos.campo_aplicaciones_previstas')"
+            :value="$valor('aplicaciones_previstas')"
             min="1"
             step="1"
             required
-            error="{{ $errors->first('aplicaciones_previstas') }}"
+            :error="$errors->first('aplicaciones_previstas')"
         />
 
         <x-atoms.input
             type="number"
             name="precio_ha"
-            label="{{ __('comercial.contratos.campo_precio_ha') }}"
-            value="{{ $valor('precio_ha') }}"
+            :label="__('comercial.contratos.campo_precio_ha')"
+            :value="$valor('precio_ha')"
             min="0"
             step="0.01"
             required
-            help="{{ __('comercial.contratos.campo_monto_total_ayuda') }}"
-            error="{{ $errors->first('precio_ha') }}"
+            :help="__('comercial.contratos.campo_monto_total_ayuda')"
+            :error="$errors->first('precio_ha')"
         />
 
         <x-atoms.input
             type="number"
             name="adelanto_monto"
-            label="{{ __('comercial.contratos.campo_adelanto_monto') }}"
-            value="{{ $valor('adelanto_monto') }}"
+            :label="__('comercial.contratos.campo_adelanto_monto')"
+            :value="$valor('adelanto_monto')"
             min="0"
             step="0.01"
-            error="{{ $errors->first('adelanto_monto') }}"
+            :error="$errors->first('adelanto_monto')"
         />
 
         <x-atoms.date
             name="fecha_inicio"
-            label="{{ __('comercial.contratos.campo_fecha_inicio') }}"
-            value="{{ $fechaInicio }}"
+            :label="__('comercial.contratos.campo_fecha_inicio')"
+            :value="$fechaInicio"
             required
-            error="{{ $errors->first('fecha_inicio') }}"
+            :error="$errors->first('fecha_inicio')"
         />
 
         <x-atoms.date
             name="fecha_fin"
-            label="{{ __('comercial.contratos.campo_fecha_fin') }}"
-            value="{{ $fechaFin }}"
-            help="{{ __('comercial.contratos.campo_fecha_fin_ayuda') }}"
-            error="{{ $errors->first('fecha_fin') }}"
+            :label="__('comercial.contratos.campo_fecha_fin')"
+            :value="$fechaFin"
+            :help="__('comercial.contratos.campo_fecha_fin_ayuda')"
+            :error="$errors->first('fecha_fin')"
         />
     </x-molecules.form-section>
 
@@ -231,19 +231,19 @@
         <div class="ag-form-section__field--full ag-contratos-form__logistica-switches">
             <x-atoms.switch
                 name="brinda_alimentacion"
-                label="{{ __('comercial.contratos.campo_brinda_alimentacion') }}"
+                :label="__('comercial.contratos.campo_brinda_alimentacion')"
                 :checked="$brindaAlimentacion"
             />
 
             <x-atoms.switch
                 name="brinda_hospedaje"
-                label="{{ __('comercial.contratos.campo_brinda_hospedaje') }}"
+                :label="__('comercial.contratos.campo_brinda_hospedaje')"
                 :checked="$brindaHospedaje"
             />
 
             <x-atoms.switch
                 name="brinda_combustible"
-                label="{{ __('comercial.contratos.campo_brinda_combustible') }}"
+                :label="__('comercial.contratos.campo_brinda_combustible')"
                 :checked="$brindaCombustible"
             />
         </div>
@@ -251,10 +251,10 @@
         <x-atoms.textarea
             class="ag-form-section__field--full"
             name="observaciones_logistica"
-            label="{{ __('comercial.contratos.campo_observaciones_logistica') }}"
-            placeholder="{{ __('comercial.contratos.campo_observaciones_logistica_placeholder') }}"
-            value="{{ $valor('observaciones_logistica') }}"
-            error="{{ $errors->first('observaciones_logistica') }}"
+            :label="__('comercial.contratos.campo_observaciones_logistica')"
+            :placeholder="__('comercial.contratos.campo_observaciones_logistica_placeholder')"
+            :value="$valor('observaciones_logistica')"
+            :error="$errors->first('observaciones_logistica')"
         />
     </x-molecules.form-section>
 
@@ -276,16 +276,16 @@
         <x-atoms.select
             name="propiedades_temp"
             id="propiedades_multi"
-            label="{{ __('comercial.contratos.campo_propiedad') }}"
-            placeholder="{{ __('comercial.contratos.campo_propiedad_placeholder') }}"
-            help="{{ __('comercial.contratos.campo_propiedad_ayuda') }}"
+            :label="__('comercial.contratos.campo_propiedad')"
+            :placeholder="__('comercial.contratos.campo_propiedad_placeholder')"
+            :help="__('comercial.contratos.campo_propiedad_ayuda')"
             :options="[]"
             data-ag-propiedades-select
             disabled
             action-icon="add"
-            action-href="{{ route('panel.propiedades.create') }}"
-            action-label="{{ __('comercial.contratos.crear_propiedad') }}"
-            action-text="{{ __('comercial.contratos.crear_propiedad_corto') }}"
+            :action-href="route('panel.propiedades.create')"
+            :action-label="__('comercial.contratos.crear_propiedad')"
+            :action-text="__('comercial.contratos.crear_propiedad_corto')"
             action-hidden
         />
 
@@ -317,7 +317,7 @@
 
     <x-organisms.form-actions-bar :status="__('comercial.contratos.estado_form')">
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.contratos.index') }}" variant="outline">
+            <x-atoms.button :href="route('panel.contratos.index')" variant="outline">
                 {{ __('ui.action.cancel') }}
             </x-atoms.button>
             <x-atoms.button type="submit" variant="primary">
@@ -346,7 +346,7 @@
                     >
                         @if ($resumenContrato['mostrarAccion'])
                             <x-slot:action>
-                                <x-atoms.button href="{{ $resumenContrato['accion']['href'] }}" variant="outline" icon="add">
+                                <x-atoms.button :href="$resumenContrato['accion']['href']" variant="outline" icon="add">
                                     {{ $resumenContrato['accion']['label'] }}
                                 </x-atoms.button>
                             </x-slot:action>

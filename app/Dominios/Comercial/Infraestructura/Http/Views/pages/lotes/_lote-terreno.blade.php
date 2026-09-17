@@ -16,7 +16,7 @@
 <x-atoms.select
     name="{{ $prefijo }}[desnivel]"
     id="{{ $idBase }}-desnivel"
-    label="{{ __('comercial.lotes.lote_desnivel') }}"
+    :label="__('comercial.lotes.lote_desnivel')"
     :options="[
         'ninguno' => __('comercial.lotes.lote_desnivel_ninguno'),
         'algunos' => __('comercial.lotes.lote_desnivel_algunos'),
@@ -24,8 +24,8 @@
         'empinado' => __('comercial.lotes.lote_desnivel_empinado'),
     ]"
     :value="$lote['desnivel'] ?? ''"
-    placeholder="{{ __('comercial.lotes.lote_desnivel_placeholder') }}"
-    error="{{ $errors->first($erroresPrefijo.'.desnivel') }}"
+    :placeholder="__('comercial.lotes.lote_desnivel_placeholder')"
+    :error="$errors->first($erroresPrefijo.'.desnivel')"
 />
 
 @php
@@ -69,23 +69,23 @@
     <x-atoms.select
         name="{{ $prefijo }}[grado_obstaculos]"
         id="{{ $idBase }}-grado-obstaculos"
-        label="{{ __('comercial.lotes.lote_grado_obstaculos') }}"
+        :label="__('comercial.lotes.lote_grado_obstaculos')"
         :options="[
             'pocos_obstaculos' => __('comercial.lotes.lote_limpieza_pocos_obstaculos'),
             'algunos_obstaculos' => __('comercial.lotes.lote_limpieza_algunos_obstaculos'),
             'muchos_obstaculos' => __('comercial.lotes.lote_limpieza_muchos_obstaculos'),
         ]"
         :value="$gradoObstaculos"
-        placeholder="{{ __('comercial.lotes.lote_grado_obstaculos_placeholder') }}"
-        error="{{ $errors->first($erroresPrefijo.'.grado_obstaculos') }}"
+        :placeholder="__('comercial.lotes.lote_grado_obstaculos_placeholder')"
+        :error="$errors->first($erroresPrefijo.'.grado_obstaculos')"
     />
 </div>
 
 <x-atoms.textarea
     name="{{ $prefijo }}[restricciones]"
     id="{{ $idBase }}-restricciones"
-    label="{{ __('comercial.lotes.lote_restricciones') }}"
-    value="{{ $lote['restricciones'] ?? '' }}"
-    placeholder="{{ __('comercial.lotes.lote_restricciones_placeholder') }}"
+    :label="__('comercial.lotes.lote_restricciones')"
+    :value="$lote['restricciones'] ?? ''"
+    :placeholder="__('comercial.lotes.lote_restricciones_placeholder')"
     rows="2"
 />

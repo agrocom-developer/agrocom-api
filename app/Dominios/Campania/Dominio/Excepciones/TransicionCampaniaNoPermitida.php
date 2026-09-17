@@ -3,6 +3,7 @@
 namespace App\Dominios\Campania\Dominio\Excepciones;
 
 use App\Dominios\Campania\Dominio\EstadoCampania;
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use DomainException;
 
 /**
@@ -16,7 +17,10 @@ final class TransicionCampaniaNoPermitida extends DomainException
     public static function entre(EstadoCampania $desde, EstadoCampania $hasta): self
     {
         return new self(
-            "No se puede pasar una campaña de '{$desde->value}' a '{$hasta->value}'.",
+            Texto::de('campania.errores.transicion_campania_no_permitida', [
+                'desde' => $desde->value,
+                'hasta' => $hasta->value,
+            ]),
         );
     }
 }

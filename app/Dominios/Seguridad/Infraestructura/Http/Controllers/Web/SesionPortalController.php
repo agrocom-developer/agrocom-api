@@ -2,53 +2,20 @@
 
 namespace App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web;
 
-use App\Dominios\Seguridad\Aplicacion\FijarZonaHorariaUsuario;
-use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
-use App\Dominios\Seguridad\Infraestructura\Http\Requests\IniciarSesionRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\ValidationException;
 
 /**
- * Login/logout del portal del cliente (HU-41, tarea 55), guard `cliente`.
- * Adaptador delgado (ADR 0008), mismo criterio que {@see SesionController}
- * pero sin resolución de rol activo: una cuenta de portal no tiene
- * `sec_user_role` (ADR 0004), así que no hay nada que elegir tras el login —
- * a diferencia del panel interno, acá no hace falta un caso de uso propio
- * (`IniciarSesionPanel` es del guard `interno`, no se reusa).
+ * Logout del portal del cliente (HU-41, tarea 55), guard `cliente`.
+ * Adaptador delgado (ADR 0008), mismo criterio que {@see SesionController}.
  *
- * Reusa `IniciarSesionRequest`: valida `username`+password sin conocer el
- * guard, misma forma exacta que necesita este endpoint.
+ * El INGRESO no vive acá: desde el 16/9/2026 el portal no tiene URL de login
+ * propia — `POST /login` ({@see SesionController::store()}) atiende a los dos
+ * guards. Lo que sigue siendo propio del portal es cerrar SU guard.
  */
 final class SesionPortalController
 {
-    public function store(IniciarSesionRequest $request, FijarZonaHorariaUsuario $fijarZonaHoraria): JsonResponse
-    {
-        $credenciales = $request->safe()->only(['username', 'password']);
-
-        // `state` como condición extra, mismo criterio que SesionController:
-        // rechaza una cuenta bloqueada con el mismo mensaje genérico que una
-        // credencial incorrecta.
-        // "Recordarme", mismo criterio que SesionController: la casilla del
-        // login-form (compartido con el panel, ADR 0002 punto 6) pasa a ser
-        // la cookie `remember_cliente_*` de Laravel.
-        if (! Auth::guard('cliente')->attempt([...$credenciales, 'state' => true], $request->boolean('remember'))) {
-            throw ValidationException::withMessages([
-                'username' => ['Las credenciales no coinciden con ningún registro.'],
-            ]);
-        }
-
-        $request->session()->regenerate();
-
-        /** @var SecUser $usuario */
-        $usuario = Auth::guard('cliente')->user();
-
-        $fijarZonaHoraria->ejecutarSiVacia($usuario, $request->string('zona_horaria')->toString() ?: null);
-
-        return response()->json(['message' => 'Sesión iniciada.']);
-    }
-
     public function destroy(Request $request): JsonResponse
     {
         Auth::guard('cliente')->logout();
@@ -56,6 +23,6 @@ final class SesionPortalController
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return response()->json(['message' => 'Sesión finalizada.']);
+        return response()->json(['message' => __('seguridad.respuestas.sesion_finalizada')]);
     }
 }

@@ -80,7 +80,7 @@
         :subtitle="__('comercial.lotes.subtitulo_form')"
     >
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.lotes.index') }}" variant="outline" icon="arrow_back">
+            <x-atoms.button :href="route('panel.lotes.index')" variant="outline" icon="arrow_back">
                 {{ __('comercial.lotes.volver') }}
             </x-atoms.button>
         </x-slot:actions>
@@ -99,23 +99,23 @@
         <x-atoms.select
             name="cliente_id"
             id="cliente_id"
-            label="{{ __('comercial.lotes.campo_cliente') }}"
+            :label="__('comercial.lotes.campo_cliente')"
             :options="$clientesDisponibles"
             :value="$clienteId"
-            placeholder="{{ __('comercial.lotes.campo_cliente_placeholder') }}"
-            help="{{ __('comercial.lotes.campo_cliente_ayuda') }}"
+            :placeholder="__('comercial.lotes.campo_cliente_placeholder')"
+            :help="__('comercial.lotes.campo_cliente_ayuda')"
             data-ag-lote-cliente
         />
 
         <x-atoms.select
             name="propiedad_id"
             id="propiedad_id"
-            label="{{ __('comercial.lotes.campo_propiedad') }}"
+            :label="__('comercial.lotes.campo_propiedad')"
             :options="$propiedadesOptions"
             :value="$propiedadId"
-            placeholder="{{ __('comercial.lotes.campo_propiedad_placeholder') }}"
+            :placeholder="__('comercial.lotes.campo_propiedad_placeholder')"
             required
-            error="{{ $errors->first('propiedad_id') }}"
+            :error="$errors->first('propiedad_id')"
             data-ag-lote-propiedad
             data-mapa-cliente-propiedad="{{ $mapaClientePropiedad->toJson() }}"
         />
@@ -149,7 +149,7 @@
                     {{ __('comercial.lotes.volver_a_formulario_origen') }}
                 </x-atoms.button>
             @endif
-            <x-atoms.button href="{{ route('panel.lotes.index') }}" variant="outline">
+            <x-atoms.button :href="route('panel.lotes.index')" variant="outline">
                 {{ __('ui.action.cancel') }}
             </x-atoms.button>
             <x-atoms.button type="submit" variant="primary">
@@ -166,7 +166,7 @@
                     <x-molecules.summary-card :title="$resumen['titulo']" :items="$resumen['items']">
                         @if ($resumen['mostrarAccion'])
                             <x-slot:action>
-                                <x-atoms.button href="{{ $resumen['accion']['href'] }}" variant="outline" icon="arrow_forward" block>
+                                <x-atoms.button :href="$resumen['accion']['href']" variant="outline" icon="arrow_forward" block>
                                     {{ $resumen['accion']['label'] }}
                                 </x-atoms.button>
                             </x-slot:action>
@@ -180,7 +180,7 @@
                     >
                         @if ($resumen['mostrarAccion'])
                             <x-slot:action>
-                                <x-atoms.button href="{{ $resumen['accion']['href'] }}" variant="outline" icon="arrow_forward">
+                                <x-atoms.button :href="$resumen['accion']['href']" variant="outline" icon="arrow_forward">
                                     {{ $resumen['accion']['label'] }}
                                 </x-atoms.button>
                             </x-slot:action>

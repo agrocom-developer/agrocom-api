@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Mantenimiento\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use RuntimeException;
 
 /**
@@ -17,6 +18,6 @@ final class VehiculoDuplicado extends RuntimeException
 {
     public static function porIdentificador(string $identificador): self
     {
-        return new self("Ya existe un vehículo activo con el identificador '{$identificador}'.");
+        return new self(Texto::de('mantenimiento.errores.vehiculo_duplicado', ['identificador' => $identificador]));
     }
 }

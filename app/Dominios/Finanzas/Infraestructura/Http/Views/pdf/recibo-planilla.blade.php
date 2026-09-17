@@ -10,7 +10,7 @@
 <html lang="es">
 <head>
     <meta charset="utf-8">
-    <title>Recibo de planilla — Período {{ $planilla->periodo }}</title>
+    <title>{{ __('finanzas.pdf.recibo_planilla.titulo_documento', ['periodo' => $planilla->periodo]) }}</title>
     <style>
         body { font-family: Helvetica, Arial, sans-serif; font-size: 12px; color: black; }
         h1 { font-size: 18px; margin-bottom: 4px; }
@@ -23,24 +23,24 @@
     </style>
 </head>
 <body>
-    <h1>Recibo de planilla</h1>
-    <p class="subtitulo">Período {{ $planilla->periodo }} — Persona #{{ $detalle->persona_id }}</p>
+    <h1>{{ __('finanzas.pdf.recibo_planilla.titulo') }}</h1>
+    <p class="subtitulo">{{ __('finanzas.pdf.recibo_planilla.subtitulo', ['periodo' => $planilla->periodo, 'persona_id' => $detalle->persona_id]) }}</p>
 
     <table>
         <tr>
-            <th>Devengado</th>
-            <td class="cifra">Bs {{ $detalle->devengado }}</td>
+            <th>{{ __('finanzas.pdf.recibo_planilla.devengado') }}</th>
+            <td class="cifra">{{ __('finanzas.pdf.recibo_planilla.monto_valor', ['monto' => $detalle->devengado]) }}</td>
         </tr>
         <tr>
-            <th>Anticipos</th>
-            <td class="cifra">Bs {{ $detalle->anticipos }}</td>
+            <th>{{ __('finanzas.pdf.recibo_planilla.anticipos') }}</th>
+            <td class="cifra">{{ __('finanzas.pdf.recibo_planilla.monto_valor', ['monto' => $detalle->anticipos]) }}</td>
         </tr>
         <tr class="neto">
-            <th>Neto a pagar</th>
-            <td class="cifra">Bs {{ $detalle->neto }}</td>
+            <th>{{ __('finanzas.pdf.recibo_planilla.neto') }}</th>
+            <td class="cifra">{{ __('finanzas.pdf.recibo_planilla.monto_valor', ['monto' => $detalle->neto]) }}</td>
         </tr>
         <tr>
-            <th>Fecha de aprobación</th>
+            <th>{{ __('finanzas.pdf.recibo_planilla.fecha_aprobacion') }}</th>
             <td>{{ optional($planilla->aprobada_en)->format('d/m/Y H:i') }}</td>
         </tr>
     </table>

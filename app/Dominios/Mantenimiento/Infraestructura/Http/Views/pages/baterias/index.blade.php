@@ -58,7 +58,7 @@
             >
                 @puede('mantenimiento.bateria.crear')
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.baterias.create') }}" variant="primary" icon="add">
+                        <x-atoms.button :href="route('panel.baterias.create')" variant="primary" icon="add">
                             {{ __('mantenimiento.baterias.nuevo') }}
                         </x-atoms.button>
                     </x-slot:actions>
@@ -78,7 +78,7 @@
             @if ($hayFiltrosActivos || $baterias->isNotEmpty())
                 <div class="ag-table-toolbar">
                     <x-molecules.table-search
-                        action="{{ route('panel.baterias.index') }}"
+                        :action="route('panel.baterias.index')"
                         :value="$filtros['q']"
                         :placeholder="__('mantenimiento.baterias.filtro_busqueda_placeholder')"
                         :clear-label="__('ui.tabla.buscador_limpiar')"
@@ -92,10 +92,10 @@
                     <x-atoms.select
                         name="base_id"
                         id="filtro-base"
-                        label="{{ __('mantenimiento.baterias.filtro_base') }}"
+                        :label="__('mantenimiento.baterias.filtro_base')"
                         :options="$basesDisponibles"
                         :value="$filtros['base_id']"
-                        placeholder="{{ __('mantenimiento.baterias.filtro_todos') }}"
+                        :placeholder="__('mantenimiento.baterias.filtro_todos')"
                     />
 
                     @php
@@ -106,10 +106,10 @@
                     <x-atoms.select
                         name="estado"
                         id="filtro-estado"
-                        label="{{ __('mantenimiento.baterias.filtro_estado') }}"
+                        :label="__('mantenimiento.baterias.filtro_estado')"
                         :options="$opcionesEstado"
                         :value="$filtros['estado']"
-                        placeholder="{{ __('mantenimiento.baterias.filtro_todos') }}"
+                        :placeholder="__('mantenimiento.baterias.filtro_todos')"
                     />
 
                     <div class="ag-filtros__acciones ag-baterias__filtros-acciones">
@@ -118,7 +118,7 @@
                         </x-atoms.button>
 
                         @if ($hayFiltrosActivos)
-                            <x-atoms.button href="{{ route('panel.baterias.index') }}" variant="text" size="md">
+                            <x-atoms.button :href="route('panel.baterias.index')" variant="text" size="md">
                                 {{ __('mantenimiento.baterias.limpiar_filtro') }}
                             </x-atoms.button>
                         @endif
@@ -177,7 +177,7 @@
 
                             <span role="cell" class="ag-baterias__acciones">
                                 @puede('mantenimiento.bateria.editar')
-                                    <x-atoms.button href="{{ route('panel.baterias.edit', $bateria) }}" variant="warning-outline" size="sm" icon="edit">
+                                    <x-atoms.button :href="route('panel.baterias.edit', $bateria)" variant="warning-outline" size="sm" icon="edit">
                                         {{ __('mantenimiento.baterias.editar') }}
                                     </x-atoms.button>
                                 @endpuede

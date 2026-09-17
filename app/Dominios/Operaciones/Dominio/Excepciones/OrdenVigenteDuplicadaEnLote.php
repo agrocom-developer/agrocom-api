@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Operaciones\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use RuntimeException;
 
 /**
@@ -21,6 +22,6 @@ final class OrdenVigenteDuplicadaEnLote extends RuntimeException
 {
     public static function porLote(int $loteId): self
     {
-        return new self("El lote #{$loteId} ya tiene otra orden de aplicación vigente.");
+        return new self(Texto::de('operaciones.errores.orden_vigente_duplicada_en_lote', ['lote' => $loteId]));
     }
 }

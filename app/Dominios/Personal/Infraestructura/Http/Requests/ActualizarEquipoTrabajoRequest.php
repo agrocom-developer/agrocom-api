@@ -33,7 +33,11 @@ final class ActualizarEquipoTrabajoRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'base_id.exists' => 'La base seleccionada no es válida.',
+            'codigo.required' => __('personal.equipos_trabajo.error_codigo_requerido'),
+            'base_id.required' => __('personal.equipos_trabajo.error_base_requerida'),
+            'base_id.exists' => __('personal.validacion.base_invalida'),
+            'estado.required' => __('personal.equipos_trabajo.error_estado_requerido'),
+            'desde.required' => __('personal.equipos_trabajo.error_desde_requerida'),
         ];
     }
 }

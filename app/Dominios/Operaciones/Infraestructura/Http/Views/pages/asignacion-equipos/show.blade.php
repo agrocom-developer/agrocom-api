@@ -52,7 +52,7 @@
         :vista-actual="__('operaciones.asignacion_equipos.titulo')"
     >
         <div class="ag-asignacion-equipos-ficha">
-            <x-atoms.button href="{{ route('panel.asignacion-equipos.index') }}" variant="text" size="sm" icon="arrow_back">
+            <x-atoms.button :href="route('panel.asignacion-equipos.index')" variant="text" size="sm" icon="arrow_back">
                 {{ __('operaciones.asignacion_equipos.ficha_volver') }}
             </x-atoms.button>
 

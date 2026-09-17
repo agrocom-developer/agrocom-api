@@ -43,7 +43,7 @@
             >
                 @puede('operaciones.dron.crear')
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.drones.create') }}" variant="primary" icon="add">
+                        <x-atoms.button :href="route('panel.drones.create')" variant="primary" icon="add">
                             {{ __('operaciones.drones.nuevo') }}
                         </x-atoms.button>
                     </x-slot:actions>
@@ -61,7 +61,7 @@
             @if ($hayFiltrosActivos || $drones->isNotEmpty())
                 <div class="ag-table-toolbar">
                     <x-molecules.table-search
-                        action="{{ route('panel.drones.index') }}"
+                        :action="route('panel.drones.index')"
                         :value="$filtros['q']"
                         :placeholder="__('operaciones.drones.filtro_busqueda_placeholder')"
                         :clear-label="__('ui.tabla.buscador_limpiar')"
@@ -110,7 +110,7 @@
 
                             <span role="cell" class="ag-drones__acciones">
                                 @puede('operaciones.dron.editar')
-                                    <x-atoms.button href="{{ route('panel.drones.edit', $dron) }}" variant="warning-outline" size="sm" icon="edit">
+                                    <x-atoms.button :href="route('panel.drones.edit', $dron)" variant="warning-outline" size="sm" icon="edit">
                                         {{ __('operaciones.drones.editar') }}
                                     </x-atoms.button>
                                 @endpuede

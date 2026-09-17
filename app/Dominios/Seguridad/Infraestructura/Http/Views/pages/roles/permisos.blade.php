@@ -64,7 +64,7 @@
                 :subtitle="__('seguridad.roles.permisos_subtitulo')"
             >
                 <x-slot:actions>
-                    <x-atoms.button href="{{ route('panel.roles.index') }}" variant="outline" icon="arrow_back">
+                    <x-atoms.button :href="route('panel.roles.index')" variant="outline" icon="arrow_back">
                         {{ __('seguridad.roles.permisos_volver') }}
                     </x-atoms.button>
                 </x-slot:actions>

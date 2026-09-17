@@ -41,7 +41,7 @@
         :menu-badges="$menuBadges"
         :version="$version"
     >
-        <x-atoms.button href="{{ route('panel.trabajos.show', $trabajo) }}" variant="text" size="sm" icon="arrow_back">
+        <x-atoms.button :href="route('panel.trabajos.show', $trabajo)" variant="text" size="sm" icon="arrow_back">
             {{ __('operaciones.trabajos.volver_al_detalle') }}
         </x-atoms.button>
 
@@ -64,7 +64,7 @@
                             loading="lazy"
                         >
                     </a>
-                    <x-atoms.button href="{{ route('panel.evidencias.archivo', $trabajo->imagenCampoEvidencia) }}" variant="outline" size="sm" icon="download">
+                    <x-atoms.button :href="route('panel.evidencias.archivo', $trabajo->imagenCampoEvidencia)" variant="outline" size="sm" icon="download">
                         {{ __('operaciones.trabajos.evidencias_descargar') }}
                     </x-atoms.button>
                 </div>
@@ -96,7 +96,7 @@
                             &middot;
                             {{ __('operaciones.trabajos.evidencias_capturas_rc_hectareas', ['hectareas' => $sesion->hectareas_declaradas]) }}
                         </span>
-                        <x-atoms.button href="{{ route('panel.evidencias.archivo', $sesion->capturaRc) }}" variant="outline" size="sm" icon="download">
+                        <x-atoms.button :href="route('panel.evidencias.archivo', $sesion->capturaRc)" variant="outline" size="sm" icon="download">
                             {{ __('operaciones.trabajos.evidencias_descargar') }}
                         </x-atoms.button>
                     </div>
@@ -121,7 +121,7 @@
                             loading="lazy"
                         >
                     </a>
-                    <x-atoms.button href="{{ route('panel.evidencias.archivo', $trabajo->acta->evidenciaFirma) }}" variant="outline" size="sm" icon="download">
+                    <x-atoms.button :href="route('panel.evidencias.archivo', $trabajo->acta->evidenciaFirma)" variant="outline" size="sm" icon="download">
                         {{ __('operaciones.trabajos.evidencias_descargar') }}
                     </x-atoms.button>
                 </div>
@@ -158,7 +158,7 @@
                             <span class="ag-galeria-evidencias__etiqueta">
                                 {{ __("operaciones.trabajos.incidencia_tipo.{$incidencia->tipo->value}") }}
                             </span>
-                            <x-atoms.button href="{{ route('panel.evidencias.archivo', $incidencia->evidenciaFoto) }}" variant="outline" size="sm" icon="download">
+                            <x-atoms.button :href="route('panel.evidencias.archivo', $incidencia->evidenciaFoto)" variant="outline" size="sm" icon="download">
                                 {{ __('operaciones.trabajos.evidencias_descargar') }}
                             </x-atoms.button>
                         </div>

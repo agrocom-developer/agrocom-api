@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Operaciones\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use RuntimeException;
 
 /**
@@ -14,6 +15,6 @@ final class OrdenNoVigenteParaAsignacion extends RuntimeException
 {
     public static function porOrden(int $ordenId): self
     {
-        return new self("La orden #{$ordenId} no está vigente: no admite asignación de equipos.");
+        return new self(Texto::de('operaciones.errores.orden_no_vigente_para_asignacion', ['id' => $ordenId]));
     }
 }

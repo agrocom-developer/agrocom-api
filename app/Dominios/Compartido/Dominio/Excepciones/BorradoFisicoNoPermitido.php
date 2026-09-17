@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Compartido\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use LogicException;
 
 /**
@@ -15,10 +16,6 @@ final class BorradoFisicoNoPermitido extends LogicException
 {
     public static function paraModelo(string $clase): self
     {
-        return new self(sprintf(
-            'Borrado físico bloqueado para %s: los modelos de dominio solo admiten '.
-            'borrado lógico (ADR 0007 — soft delete y bitácora de auditoría).',
-            $clase,
-        ));
+        return new self(Texto::de('ui.errores.borrado_fisico_no_permitido', ['clase' => $clase]));
     }
 }

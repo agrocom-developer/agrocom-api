@@ -508,7 +508,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const clienteId = selectCliente.value;
             const propiedades = propiedadesYLotes[clienteId] || {};
 
-            selectPropiedad.innerHTML = `<option value="">${selectPropiedad.getAttribute('placeholder') || 'Seleccioná'}</option>`;
+            selectPropiedad.innerHTML = `<option value="">${selectPropiedad.getAttribute('placeholder') || ''}</option>`;
             selectPropiedad.disabled = !clienteId;
 
             Object.entries(propiedades).forEach(([propiedadId, propiedad]) => {

@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Seguridad\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use App\Dominios\Seguridad\Aplicacion\CrearCuentaPortal;
 use RuntimeException;
 
@@ -20,6 +21,6 @@ final class ContratoNoDisponibleParaPortal extends RuntimeException
 {
     public static function porId(int $contratoId): self
     {
-        return new self("El contrato #{$contratoId} no existe o no está vigente.");
+        return new self(Texto::de('seguridad.errores.contrato_no_disponible', ['id' => $contratoId]));
     }
 }

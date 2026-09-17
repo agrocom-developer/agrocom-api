@@ -50,7 +50,7 @@
         :subtitle="__('comercial.cultivos.subtitulo_form')"
     >
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.cultivos.index') }}" variant="outline" icon="arrow_back">
+            <x-atoms.button :href="route('panel.cultivos.index')" variant="outline" icon="arrow_back">
                 {{ __('comercial.cultivos.volver') }}
             </x-atoms.button>
         </x-slot:actions>
@@ -69,43 +69,43 @@
         <x-atoms.input
             type="text"
             name="nombre_comun"
-            label="{{ __('comercial.cultivos.campo_nombre_comun') }}"
-            value="{{ $nombreComun }}"
-            help="{{ __('comercial.cultivos.campo_nombre_comun_ayuda') }}"
+            :label="__('comercial.cultivos.campo_nombre_comun')"
+            :value="$nombreComun"
+            :help="__('comercial.cultivos.campo_nombre_comun_ayuda')"
             required
-            error="{{ $errors->first('nombre_comun') }}"
+            :error="$errors->first('nombre_comun')"
         />
 
         <x-atoms.input
             type="text"
             name="nombre_cientifico"
-            label="{{ __('comercial.cultivos.campo_nombre_cientifico') }}"
-            value="{{ $nombreCientifico }}"
-            placeholder="{{ __('comercial.cultivos.campo_nombre_cientifico_placeholder') }}"
-            help="{{ __('comercial.cultivos.campo_nombre_cientifico_ayuda') }}"
-            error="{{ $errors->first('nombre_cientifico') }}"
+            :label="__('comercial.cultivos.campo_nombre_cientifico')"
+            :value="$nombreCientifico"
+            :placeholder="__('comercial.cultivos.campo_nombre_cientifico_placeholder')"
+            :help="__('comercial.cultivos.campo_nombre_cientifico_ayuda')"
+            :error="$errors->first('nombre_cientifico')"
         />
 
         <x-atoms.select
             name="tipo_cultivo"
             id="tipo_cultivo"
-            label="{{ __('comercial.cultivos.campo_tipo_cultivo') }}"
+            :label="__('comercial.cultivos.campo_tipo_cultivo')"
             :options="$tiposCultivoOptions"
             :value="$tipoCultivoValor"
-            placeholder="{{ __('comercial.cultivos.campo_tipo_cultivo_placeholder') }}"
+            :placeholder="__('comercial.cultivos.campo_tipo_cultivo_placeholder')"
             required
-            error="{{ $errors->first('tipo_cultivo') }}"
+            :error="$errors->first('tipo_cultivo')"
         />
 
         <x-atoms.select
             name="ciclo_vida"
             id="ciclo_vida"
-            label="{{ __('comercial.cultivos.campo_ciclo_vida') }}"
+            :label="__('comercial.cultivos.campo_ciclo_vida')"
             :options="$ciclosVidaOptions"
             :value="$cicloVidaValor"
-            placeholder="{{ __('comercial.cultivos.campo_ciclo_vida_placeholder') }}"
+            :placeholder="__('comercial.cultivos.campo_ciclo_vida_placeholder')"
             required
-            error="{{ $errors->first('ciclo_vida') }}"
+            :error="$errors->first('ciclo_vida')"
         />
 
         <div class="ag-form-section__field--full">
@@ -113,9 +113,9 @@
             <x-atoms.switch
                 name="activo"
                 value="1"
-                label="{{ __('comercial.cultivos.campo_activo') }}"
+                :label="__('comercial.cultivos.campo_activo')"
                 :checked="(bool) $activo"
-                help="{{ __('comercial.cultivos.campo_activo_ayuda') }}"
+                :help="__('comercial.cultivos.campo_activo_ayuda')"
             />
         </div>
     </x-molecules.form-section>
@@ -127,17 +127,17 @@
         <x-atoms.textarea
             class="ag-form-section__field--full"
             name="notas_agronomicas"
-            label="{{ __('comercial.cultivos.campo_notas_agronomicas') }}"
-            placeholder="{{ __('comercial.cultivos.campo_notas_agronomicas_placeholder') }}"
-            value="{{ $notasAgronomicas }}"
-            help="{{ __('comercial.cultivos.campo_notas_agronomicas_ayuda') }}"
-            error="{{ $errors->first('notas_agronomicas') }}"
+            :label="__('comercial.cultivos.campo_notas_agronomicas')"
+            :placeholder="__('comercial.cultivos.campo_notas_agronomicas_placeholder')"
+            :value="$notasAgronomicas"
+            :help="__('comercial.cultivos.campo_notas_agronomicas_ayuda')"
+            :error="$errors->first('notas_agronomicas')"
         />
     </x-molecules.form-section>
 
     <x-organisms.form-actions-bar :status="__('comercial.cultivos.estado_form')">
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.cultivos.index') }}" variant="outline">
+            <x-atoms.button :href="route('panel.cultivos.index')" variant="outline">
                 {{ __('ui.action.cancel') }}
             </x-atoms.button>
             <x-atoms.button type="submit" variant="primary">

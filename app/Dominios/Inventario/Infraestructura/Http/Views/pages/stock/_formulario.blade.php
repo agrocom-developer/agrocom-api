@@ -45,7 +45,7 @@
         :subtitle="__('inventario.stock.subtitulo_form')"
     >
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.stock.index') }}" variant="outline" icon="arrow_back">
+            <x-atoms.button :href="route('panel.stock.index')" variant="outline" icon="arrow_back">
                 {{ __('inventario.stock.volver') }}
             </x-atoms.button>
         </x-slot:actions>
@@ -104,12 +104,12 @@
         <x-atoms.input
             type="number"
             name="cantidad"
-            label="{{ __('inventario.stock.campo_cantidad') }}"
-            value="{{ $cantidad }}"
+            :label="__('inventario.stock.campo_cantidad')"
+            :value="$cantidad"
             min="0.01"
             step="0.01"
             required
-            error="{{ $errors->first('cantidad') }}"
+            :error="$errors->first('cantidad')"
         />
 
         <div data-ag-movimiento-campo="ajuste">
@@ -128,11 +128,11 @@
             <x-atoms.input
                 type="number"
                 name="costo_unitario"
-                label="{{ __('inventario.stock.campo_costo_unitario') }}"
-                value="{{ $costoUnitario }}"
+                :label="__('inventario.stock.campo_costo_unitario')"
+                :value="$costoUnitario"
                 min="0"
                 step="0.01"
-                error="{{ $errors->first('costo_unitario') }}"
+                :error="$errors->first('costo_unitario')"
             />
         </div>
 
@@ -140,17 +140,17 @@
             <x-atoms.input
                 type="text"
                 name="motivo"
-                label="{{ __('inventario.stock.campo_motivo') }}"
-                value="{{ $motivo }}"
-                placeholder="{{ __('inventario.stock.campo_motivo_placeholder') }}"
-                error="{{ $errors->first('motivo') }}"
+                :label="__('inventario.stock.campo_motivo')"
+                :value="$motivo"
+                :placeholder="__('inventario.stock.campo_motivo_placeholder')"
+                :error="$errors->first('motivo')"
             />
         </div>
     </x-molecules.form-section>
 
     <x-organisms.form-actions-bar :status="__('inventario.stock.estado_form')">
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.stock.index') }}" variant="outline">
+            <x-atoms.button :href="route('panel.stock.index')" variant="outline">
                 {{ __('ui.action.cancel') }}
             </x-atoms.button>
             <x-atoms.button type="submit" variant="primary">

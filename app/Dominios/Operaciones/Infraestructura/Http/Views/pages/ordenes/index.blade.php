@@ -61,7 +61,7 @@
             >
                 @puede('operaciones.orden.crear')
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.ordenes.create') }}" variant="primary" icon="add">
+                        <x-atoms.button :href="route('panel.ordenes.create')" variant="primary" icon="add">
                             {{ __('operaciones.ordenes.nueva') }}
                         </x-atoms.button>
                     </x-slot:actions>
@@ -93,7 +93,7 @@
                     <x-atoms.select
                         name="estado"
                         id="filtro-estado"
-                        label="{{ __('operaciones.ordenes.filtro_estado') }}"
+                        :label="__('operaciones.ordenes.filtro_estado')"
                         :options="$opcionesEstado"
                         :value="$filtros['estado']"
                         :placeholder="__('operaciones.ordenes.filtro_todos')"
@@ -107,7 +107,7 @@
                     <x-atoms.select
                         name="tipo_aplicacion"
                         id="filtro-tipo-aplicacion"
-                        label="{{ __('operaciones.ordenes.filtro_tipo_aplicacion') }}"
+                        :label="__('operaciones.ordenes.filtro_tipo_aplicacion')"
                         :options="$opcionesTipoAplicacion"
                         :value="$filtros['tipo_aplicacion']"
                         :placeholder="__('operaciones.ordenes.filtro_todos')"
@@ -119,7 +119,7 @@
                         </x-atoms.button>
 
                         @if ($hayFiltrosActivos)
-                            <x-atoms.button href="{{ route('panel.ordenes.index') }}" variant="text" size="md">
+                            <x-atoms.button :href="route('panel.ordenes.index')" variant="text" size="md">
                                 {{ __('operaciones.ordenes.limpiar_filtros') }}
                             </x-atoms.button>
                         @endif
@@ -183,7 +183,7 @@
                             <span role="cell" class="ag-ordenes__acciones">
                                 @puede('operaciones.orden.editar')
                                     @if ($estadoValor === 'emitida')
-                                        <x-atoms.button href="{{ route('panel.ordenes.edit', $orden) }}" variant="warning-outline" size="sm" icon="edit">
+                                        <x-atoms.button :href="route('panel.ordenes.edit', $orden)" variant="warning-outline" size="sm" icon="edit">
                                             {{ __('operaciones.ordenes.editar') }}
                                         </x-atoms.button>
                                     @endif
@@ -225,7 +225,7 @@
                 @if ($ordenes->hasPages())
                     <nav class="ag-ordenes__paginacion" aria-label="{{ __('operaciones.ordenes.paginacion_aria') }}">
                         @if (! $ordenes->onFirstPage())
-                            <x-atoms.button href="{{ $ordenes->previousPageUrl() }}" variant="outline" size="sm" icon="chevron_left">
+                            <x-atoms.button :href="$ordenes->previousPageUrl()" variant="outline" size="sm" icon="chevron_left">
                                 {{ __('operaciones.ordenes.paginacion_anterior') }}
                             </x-atoms.button>
                         @endif
@@ -235,7 +235,7 @@
                         </span>
 
                         @if ($ordenes->hasMorePages())
-                            <x-atoms.button href="{{ $ordenes->nextPageUrl() }}" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
+                            <x-atoms.button :href="$ordenes->nextPageUrl()" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
                                 {{ __('operaciones.ordenes.paginacion_siguiente') }}
                             </x-atoms.button>
                         @endif

@@ -54,7 +54,7 @@
             >
                 @puede('mantenimiento.generador.crear')
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.generadores.create') }}" variant="primary" icon="add">
+                        <x-atoms.button :href="route('panel.generadores.create')" variant="primary" icon="add">
                             {{ __('mantenimiento.generadores.nuevo') }}
                         </x-atoms.button>
                     </x-slot:actions>
@@ -74,7 +74,7 @@
             @if ($hayFiltrosActivos || $generadores->isNotEmpty())
                 <div class="ag-table-toolbar">
                     <x-molecules.table-search
-                        action="{{ route('panel.generadores.index') }}"
+                        :action="route('panel.generadores.index')"
                         :value="$filtros['q']"
                         :placeholder="__('mantenimiento.generadores.filtro_busqueda_placeholder')"
                         :clear-label="__('ui.tabla.buscador_limpiar')"
@@ -88,10 +88,10 @@
                     <x-atoms.select
                         name="base_id"
                         id="filtro-base"
-                        label="{{ __('mantenimiento.generadores.filtro_base') }}"
+                        :label="__('mantenimiento.generadores.filtro_base')"
                         :options="$basesDisponibles"
                         :value="$filtros['base_id']"
-                        placeholder="{{ __('mantenimiento.generadores.filtro_todos') }}"
+                        :placeholder="__('mantenimiento.generadores.filtro_todos')"
                     />
 
                     @php
@@ -102,10 +102,10 @@
                     <x-atoms.select
                         name="estado"
                         id="filtro-estado"
-                        label="{{ __('mantenimiento.generadores.filtro_estado') }}"
+                        :label="__('mantenimiento.generadores.filtro_estado')"
                         :options="$opcionesEstado"
                         :value="$filtros['estado']"
-                        placeholder="{{ __('mantenimiento.generadores.filtro_todos') }}"
+                        :placeholder="__('mantenimiento.generadores.filtro_todos')"
                     />
 
                     <div class="ag-filtros__acciones ag-generadores__filtros-acciones">
@@ -114,7 +114,7 @@
                         </x-atoms.button>
 
                         @if ($hayFiltrosActivos)
-                            <x-atoms.button href="{{ route('panel.generadores.index') }}" variant="text" size="md">
+                            <x-atoms.button :href="route('panel.generadores.index')" variant="text" size="md">
                                 {{ __('mantenimiento.generadores.limpiar_filtro') }}
                             </x-atoms.button>
                         @endif
@@ -163,7 +163,7 @@
 
                             <span role="cell" class="ag-generadores__acciones">
                                 @puede('mantenimiento.generador.editar')
-                                    <x-atoms.button href="{{ route('panel.generadores.edit', $generador) }}" variant="warning-outline" size="sm" icon="edit">
+                                    <x-atoms.button :href="route('panel.generadores.edit', $generador)" variant="warning-outline" size="sm" icon="edit">
                                         {{ __('mantenimiento.generadores.editar') }}
                                     </x-atoms.button>
                                 @endpuede

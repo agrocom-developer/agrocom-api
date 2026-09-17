@@ -58,7 +58,7 @@
                 <x-atoms.select
                     name="estado"
                     id="filtro-estado"
-                    label="{{ __('operaciones.alertas.filtro_estado') }}"
+                    :label="__('operaciones.alertas.filtro_estado')"
                     :options="$opcionesEstado"
                     :value="$filtros['estado']"
                     :placeholder="__('operaciones.alertas.filtro_todos')"
@@ -76,7 +76,7 @@
                 <x-atoms.select
                     name="tipo"
                     id="filtro-tipo"
-                    label="{{ __('operaciones.alertas.filtro_tipo') }}"
+                    :label="__('operaciones.alertas.filtro_tipo')"
                     :options="$opcionesTipo"
                     :value="$filtros['tipo']"
                     :placeholder="__('operaciones.alertas.filtro_todos')"
@@ -88,7 +88,7 @@
                     </x-atoms.button>
 
                     @if ($hayFiltrosActivos)
-                        <x-atoms.button href="{{ route('panel.alertas.index') }}" variant="text" size="md">
+                        <x-atoms.button :href="route('panel.alertas.index')" variant="text" size="md">
                             {{ __('operaciones.alertas.limpiar_filtros') }}
                         </x-atoms.button>
                     @endif
@@ -164,7 +164,7 @@
             @if ($alertas->hasPages())
                 <nav class="ag-alertas__paginacion" aria-label="{{ __('operaciones.alertas.paginacion_aria') }}">
                     @if (! $alertas->onFirstPage())
-                        <x-atoms.button href="{{ $alertas->previousPageUrl() }}" variant="outline" size="sm" icon="chevron_left">
+                        <x-atoms.button :href="$alertas->previousPageUrl()" variant="outline" size="sm" icon="chevron_left">
                             {{ __('operaciones.alertas.paginacion_anterior') }}
                         </x-atoms.button>
                     @endif
@@ -174,7 +174,7 @@
                     </span>
 
                     @if ($alertas->hasMorePages())
-                        <x-atoms.button href="{{ $alertas->nextPageUrl() }}" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
+                        <x-atoms.button :href="$alertas->nextPageUrl()" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
                             {{ __('operaciones.alertas.paginacion_siguiente') }}
                         </x-atoms.button>
                     @endif

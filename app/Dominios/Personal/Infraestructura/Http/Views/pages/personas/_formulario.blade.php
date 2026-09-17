@@ -42,7 +42,7 @@
         :subtitle="__('personal.personas.subtitulo_form')"
     >
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.personas.index') }}" variant="outline" icon="arrow_back">
+            <x-atoms.button :href="route('panel.personas.index')" variant="outline" icon="arrow_back">
                 {{ __('personal.personas.volver') }}
             </x-atoms.button>
         </x-slot:actions>
@@ -61,10 +61,10 @@
         <x-atoms.input
             type="text"
             name="nombre"
-            label="{{ __('personal.personas.campo_nombre') }}"
-            value="{{ $nombre }}"
+            :label="__('personal.personas.campo_nombre')"
+            :value="$nombre"
             required
-            error="{{ $errors->first('nombre') }}"
+            :error="$errors->first('nombre')"
         />
 
         @php
@@ -76,31 +76,31 @@
         <x-atoms.select
             name="rol"
             id="rol"
-            label="{{ __('personal.personas.campo_rol') }}"
+            :label="__('personal.personas.campo_rol')"
             :options="$opcionesRol"
             :value="$rol"
-            placeholder="{{ __('personal.personas.campo_rol_placeholder') }}"
-            error="{{ $errors->first('rol') }}"
+            :placeholder="__('personal.personas.campo_rol_placeholder')"
+            :error="$errors->first('rol')"
             required
         />
 
         <x-atoms.select
             name="base_id"
             id="base_id"
-            label="{{ __('personal.personas.campo_base') }}"
+            :label="__('personal.personas.campo_base')"
             :options="$basesDisponibles"
             :value="$baseId"
-            placeholder="{{ __('personal.personas.campo_base_placeholder') }}"
-            error="{{ $errors->first('base_id') }}"
+            :placeholder="__('personal.personas.campo_base_placeholder')"
+            :error="$errors->first('base_id')"
         />
 
         <x-atoms.input
             type="number"
             name="tarifa_ha"
-            label="{{ __('personal.personas.campo_tarifa') }}"
-            value="{{ $tarifaHa }}"
-            help="{{ __('personal.personas.campo_tarifa_ayuda') }}"
-            error="{{ $errors->first('tarifa_ha') }}"
+            :label="__('personal.personas.campo_tarifa')"
+            :value="$tarifaHa"
+            :help="__('personal.personas.campo_tarifa_ayuda')"
+            :error="$errors->first('tarifa_ha')"
             min="0"
             step="0.01"
         />
@@ -110,16 +110,16 @@
             <x-atoms.switch
                 name="activo"
                 value="1"
-                label="{{ __('personal.personas.campo_activo') }}"
+                :label="__('personal.personas.campo_activo')"
                 :checked="(bool) $activo"
-                help="{{ __('personal.personas.campo_activo_ayuda') }}"
+                :help="__('personal.personas.campo_activo_ayuda')"
             />
         </div>
     </x-molecules.form-section>
 
     <x-organisms.form-actions-bar :status="__('personal.personas.estado_form')">
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.personas.index') }}" variant="outline">
+            <x-atoms.button :href="route('panel.personas.index')" variant="outline">
                 {{ __('ui.action.cancel') }}
             </x-atoms.button>
             <x-atoms.button type="submit" variant="primary">

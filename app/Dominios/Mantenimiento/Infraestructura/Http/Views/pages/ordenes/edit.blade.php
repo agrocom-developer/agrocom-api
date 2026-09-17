@@ -88,7 +88,7 @@
         :vista-actual="__('mantenimiento.ordenes.titulo')"
     >
         <div class="ag-orden-mantenimiento-detalle">
-            <x-atoms.button href="{{ route('panel.ordenes-mantenimiento.index') }}" variant="text" size="sm" icon="arrow_back">
+            <x-atoms.button :href="route('panel.ordenes-mantenimiento.index')" variant="text" size="sm" icon="arrow_back">
                 {{ __('ui.action.cancel') }}
             </x-atoms.button>
 
@@ -172,11 +172,11 @@
 
                         <x-atoms.textarea
                             name="descripcion_final"
-                            label="{{ __('mantenimiento.ordenes.campo_descripcion_final') }}"
-                            help="{{ __('mantenimiento.ordenes.campo_descripcion_final_ayuda') }}"
-                            value="{{ old('descripcion_final') }}"
+                            :label="__('mantenimiento.ordenes.campo_descripcion_final')"
+                            :help="__('mantenimiento.ordenes.campo_descripcion_final_ayuda')"
+                            :value="old('descripcion_final')"
                             required
-                            error="{{ $errors->first('descripcion_final') }}"
+                            :error="$errors->first('descripcion_final')"
                             class="ag-form-section__field--full"
                         />
 
@@ -191,11 +191,11 @@
                             <x-atoms.select
                                 name="base_global"
                                 id="orden_base_global"
-                                label="{{ __('mantenimiento.ordenes.campo_base_orden') }}"
-                                help="{{ __('mantenimiento.ordenes.campo_base_orden_ayuda') }}"
+                                :label="__('mantenimiento.ordenes.campo_base_orden')"
+                                :help="__('mantenimiento.ordenes.campo_base_orden_ayuda')"
                                 :options="$basesDisponibles"
                                 :value="$baseGlobalId"
-                                placeholder="{{ __('mantenimiento.ordenes.campo_base_orden_placeholder') }}"
+                                :placeholder="__('mantenimiento.ordenes.campo_base_orden_placeholder')"
                                 data-ag-orden-base-global
                             />
 
@@ -205,7 +205,7 @@
                                  engancha directo por `name="repuestos_marcados[]"`. --}}
                             <x-atoms.checkbox-group
                                 name="repuestos_marcados"
-                                label="{{ __('mantenimiento.ordenes.campo_repuestos') }}"
+                                :label="__('mantenimiento.ordenes.campo_repuestos')"
                                 :options="$repuestosDisponibles"
                                 :value="$repuestosMarcados"
                                 :extra-por-opcion="$extraPorRepuesto"

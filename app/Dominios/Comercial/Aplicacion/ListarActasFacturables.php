@@ -4,6 +4,7 @@ namespace App\Dominios\Comercial\Aplicacion;
 
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Factura;
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use App\Dominios\Operaciones\Contratos\DatosActaConformada;
 use App\Dominios\Operaciones\Contratos\LecturaActaConformada;
 
@@ -59,7 +60,8 @@ final class ListarActasFacturables
             'actaId' => $acta->actaId,
             'contratoId' => $acta->contratoId,
             'hectareasConformadas' => $acta->hectareasConformadas,
-            'clienteNombre' => $clientesPorContrato[$acta->contratoId] ?? "Contrato #{$acta->contratoId}",
+            'clienteNombre' => $clientesPorContrato[$acta->contratoId]
+                ?? Texto::de('comercial.reportes_comerciales.tabla.contrato_valor', ['id' => $acta->contratoId]),
         ], $actasDisponibles);
     }
 }

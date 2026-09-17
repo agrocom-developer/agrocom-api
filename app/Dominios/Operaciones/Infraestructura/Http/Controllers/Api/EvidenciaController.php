@@ -84,7 +84,7 @@ final class EvidenciaController
         $datos = RegistroEvidencia::intentarDesdeArreglo($request->only(['uuid_cliente', 'tipo', 'fecha', 'hash_dispositivo']));
 
         if ($datos === null) {
-            return $this->respuesta($uuidCliente, ResultadoSincronizacion::rechazado('evidencia con datos incompletos o inválidos'));
+            return $this->respuesta($uuidCliente, ResultadoSincronizacion::rechazado(__('operaciones.errores.evidencia_datos_invalidos')));
         }
 
         $archivo = $request->file('archivo');

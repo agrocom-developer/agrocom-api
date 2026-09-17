@@ -53,7 +53,7 @@
                 :subtitle="__('comercial.propiedades.mapa_subtitulo')"
             >
                 <x-slot:actions>
-                    <x-atoms.button href="{{ route('panel.propiedades.edit', $propiedad) }}" variant="outline" icon="arrow_back">
+                    <x-atoms.button :href="route('panel.propiedades.edit', $propiedad)" variant="outline" icon="arrow_back">
                         {{ __('comercial.propiedades.mapa_volver') }}
                     </x-atoms.button>
                 </x-slot:actions>
@@ -88,6 +88,7 @@
                     data-ag-propiedad-mapa-centro-defecto="{{ $centroDefecto['lat'] }},{{ $centroDefecto['lng'] }}"
                     @if ($esGoogle)
                         data-ag-propiedad-mapa-google-key="{{ $proveedorMapa['googleMapsApiKey'] }}"
+                        data-ag-propiedad-mapa-error-google="{{ __('ui.errores.google_maps_no_disponible') }}"
                     @endif
                     @if ($propiedad->color)
                         data-ag-propiedad-mapa-color="{{ $propiedad->color }}"
@@ -249,7 +250,7 @@
 
                 <x-organisms.form-actions-bar :status="__('comercial.propiedades.estado_form')">
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.propiedades.edit', $propiedad) }}" variant="outline">
+                        <x-atoms.button :href="route('panel.propiedades.edit', $propiedad)" variant="outline">
                             {{ __('ui.action.cancel') }}
                         </x-atoms.button>
                         <x-atoms.button type="submit" variant="primary">

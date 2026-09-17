@@ -38,7 +38,7 @@ return [
         'vacio_titulo' => 'Todavía no hay campañas',
         'vacio_detalle' => 'Las campañas organizan contratos y gastos por temporada. En cuanto se dé de alta la primera, vas a verla acá.',
         'filtro_vacio_titulo' => 'Sin resultados para esta búsqueda',
-        'filtro_vacio_detalle' => 'Ninguna campaña coincide con el término buscado. Probá con otro código o nombre.',
+        'filtro_vacio_detalle' => 'Ninguna campaña coincide con el término buscado. Prueba con otro código o nombre.',
         'col_codigo' => 'Código',
         'col_nombre' => 'Nombre',
         'col_vigencia' => 'Vigencia',
@@ -69,9 +69,9 @@ return [
         'campos_contador' => ':cantidad campos',
         'campo_codigo' => 'Código',
         'campo_nombre' => 'Nombre',
-        'campo_nombre_ayuda' => 'Si lo dejás vacío, se arma solo con la estación y los años (por ejemplo, Verano/2025/2026).',
+        'campo_nombre_ayuda' => 'Si lo dejas vacío, se arma solo con la estación y los años (por ejemplo, Verano/2025/2026).',
         'campo_estacion' => 'Estación',
-        'campo_estacion_placeholder' => 'Seleccioná una estación',
+        'campo_estacion_placeholder' => 'Selecciona una estación',
         'campo_fecha_inicio' => 'Fecha de inicio',
         'campo_fecha_fin' => 'Fecha de fin',
         'estado_form' => 'Los cambios se guardan al confirmar.',
@@ -90,8 +90,18 @@ return [
         'aside_trabajo_accion' => 'Ver contratos',
 
         // Errores de validación
-        'error_codigo_requerido' => 'Ingresá un código para la campaña.',
+        'error_codigo_requerido' => 'Ingresa un código para la campaña.',
+        'error_estacion_requerida' => 'Elige la estación de la campaña.',
+        'error_fecha_inicio_requerida' => 'Elige la fecha en que empieza la campaña.',
+        'error_fecha_fin_requerida' => 'Elige la fecha en que termina la campaña.',
         'error_fechas_rango' => 'La fecha de fin tiene que ser igual o posterior a la de inicio.',
+        'error_estado_requerido' => 'Elige el estado de la campaña.',
+    ],
+
+    // Mensajes de error.
+    'errores' => [
+        'campania_duplicada' => "Ya existe una campaña activa con el código ':codigo'.",
+        'transicion_campania_no_permitida' => "No se puede pasar una campaña de ':desde' a ':hasta'.",
     ],
 
 ];

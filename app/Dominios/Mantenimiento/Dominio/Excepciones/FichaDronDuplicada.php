@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Mantenimiento\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use RuntimeException;
 
 /**
@@ -18,6 +19,6 @@ final class FichaDronDuplicada extends RuntimeException
 {
     public static function porIdentificador(string $identificadorDron): self
     {
-        return new self("Ya existe una ficha activa para el dron con identificador '{$identificadorDron}'.");
+        return new self(Texto::de('mantenimiento.errores.ficha_dron_duplicada', ['identificador_dron' => $identificadorDron]));
     }
 }

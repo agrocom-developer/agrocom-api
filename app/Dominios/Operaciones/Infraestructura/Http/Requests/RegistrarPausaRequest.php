@@ -44,6 +44,8 @@ final class RegistrarPausaRequest extends FormRequest
             'sesion_id.exists' => __('operaciones.pausas.error_sesion_invalida'),
             'causa.required' => __('operaciones.pausas.error_causa_requerida'),
             'causa.enum' => __('operaciones.pausas.error_causa_invalida'),
+            'inicio.required' => __('operaciones.pausas.error_inicio_requerido'),
+            'fin.required' => __('operaciones.pausas.error_fin_requerido'),
         ];
     }
 }

@@ -12,7 +12,7 @@ return [
 
     'versiones' => [
         'titulo' => 'Versiones del APK',
-        'subtitulo' => 'Autorizá la versión del APK que va a recibir cada dispositivo de campo. Solo puede haber una vigente a la vez.',
+        'subtitulo' => 'Autoriza la versión del APK que va a recibir cada dispositivo de campo. Solo puede haber una vigente a la vez.',
         'col_version' => 'Versión',
         'col_version_code' => 'Código',
         'col_estado' => 'Estado',
@@ -29,6 +29,20 @@ return [
         'campo_version' => 'Versión (SemVer)',
         'campo_version_code' => 'Código de versión (Android)',
         'campo_url_apk' => 'URL del release en agrocom-field',
+    ],
+
+    // Mensajes de error.
+    'errores' => [
+        'transicion_version_apk_no_permitida' => "No se puede pasar una versión de APK de ':desde' a ':hasta'.",
+    ],
+
+    // Mensajes de los formularios.
+    'validacion' => [
+        'version_formato' => 'La versión debe seguir el formato SemVer (por ejemplo: 1.4.2).',
+        'url_apk_https' => 'La URL debe ser una dirección https válida.',
+        'version_requerida' => 'Ingresa la versión del APK.',
+        'version_code_requerido' => 'Ingresa el código de versión.',
+        'url_apk_requerida' => 'Ingresa la URL del release.',
     ],
 
 ];

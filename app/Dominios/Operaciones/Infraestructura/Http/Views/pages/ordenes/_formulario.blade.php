@@ -88,7 +88,7 @@
         :subtitle="__('operaciones.ordenes.subtitulo_form')"
     >
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.ordenes.index') }}" variant="outline" icon="arrow_back">
+            <x-atoms.button :href="route('panel.ordenes.index')" variant="outline" icon="arrow_back">
                 {{ __('operaciones.ordenes.volver') }}
             </x-atoms.button>
         </x-slot:actions>
@@ -107,7 +107,7 @@
         <x-atoms.select
             name="contrato_id"
             id="contrato_id"
-            label="{{ __('operaciones.ordenes.campo_contrato') }}"
+            :label="__('operaciones.ordenes.campo_contrato')"
             :options="$contratosDisponibles"
             :value="$contratoId"
             :placeholder="__('operaciones.ordenes.campo_contrato_placeholder')"
@@ -120,29 +120,29 @@
         <x-atoms.input
             type="number"
             name="nro_aplicacion"
-            label="{{ __('operaciones.ordenes.campo_nro_aplicacion') }}"
-            value="{{ $valor('nro_aplicacion') }}"
+            :label="__('operaciones.ordenes.campo_nro_aplicacion')"
+            :value="$valor('nro_aplicacion')"
             min="1"
             step="1"
             required
-            error="{{ $errors->first('nro_aplicacion') }}"
+            :error="$errors->first('nro_aplicacion')"
         />
 
         <x-atoms.input
             type="number"
             name="cantidad_equipos_necesarios"
-            label="{{ __('operaciones.ordenes.campo_cantidad_equipos') }}"
-            value="{{ $cantidadEquiposNecesarios }}"
+            :label="__('operaciones.ordenes.campo_cantidad_equipos')"
+            :value="$cantidadEquiposNecesarios"
             min="1"
             step="1"
             required
-            error="{{ $errors->first('cantidad_equipos_necesarios') }}"
+            :error="$errors->first('cantidad_equipos_necesarios')"
         />
 
         <x-atoms.select
             name="tipo_aplicacion"
             id="tipo_aplicacion"
-            label="{{ __('operaciones.ordenes.campo_tipo_aplicacion') }}"
+            :label="__('operaciones.ordenes.campo_tipo_aplicacion')"
             :options="$opcionesTipoAplicacion"
             :value="$tipoAplicacion"
             required
@@ -159,7 +159,7 @@
         <x-atoms.select
             name="tipo_insumo_filtro"
             id="tipo_insumo_filtro"
-            label="{{ __('operaciones.ordenes.campo_tipo_insumo') }}"
+            :label="__('operaciones.ordenes.campo_tipo_insumo')"
             :options="$opcionesTipoInsumo"
             :value="$tipoInsumoSeleccionado"
             :placeholder="__('operaciones.ordenes.campo_tipo_insumo_placeholder')"
@@ -170,7 +170,7 @@
         <x-atoms.select
             name="categoria_insumo_id"
             id="categoria_insumo_id"
-            label="{{ __('operaciones.ordenes.campo_categoria_insumo') }}"
+            :label="__('operaciones.ordenes.campo_categoria_insumo')"
             :options="$categoriasInsumoOptions"
             :value="$categoriaInsumoId"
             :placeholder="__('operaciones.ordenes.campo_categoria_insumo_placeholder')"
@@ -191,11 +191,11 @@
             <x-atoms.input
                 type="number"
                 name="litros_ha"
-                label="{{ __('operaciones.ordenes.campo_litros_ha') }}"
-                value="{{ $valor('litros_ha') }}"
+                :label="__('operaciones.ordenes.campo_litros_ha')"
+                :value="$valor('litros_ha')"
                 min="0.01"
                 step="0.01"
-                error="{{ $errors->first('litros_ha') }}"
+                :error="$errors->first('litros_ha')"
             />
         </div>
 
@@ -203,18 +203,18 @@
             <x-atoms.input
                 type="number"
                 name="kilos_por_vuelo"
-                label="{{ __('operaciones.ordenes.campo_kilos_por_vuelo') }}"
-                value="{{ $valor('kilos_por_vuelo') }}"
+                :label="__('operaciones.ordenes.campo_kilos_por_vuelo')"
+                :value="$valor('kilos_por_vuelo')"
                 min="0.01"
                 step="0.01"
-                error="{{ $errors->first('kilos_por_vuelo') }}"
+                :error="$errors->first('kilos_por_vuelo')"
             />
         </div>
 
         <x-atoms.date
             name="fecha_emision"
-            label="{{ __('operaciones.ordenes.campo_fecha_emision') }}"
-            value="{{ $fechaEmision }}"
+            :label="__('operaciones.ordenes.campo_fecha_emision')"
+            :value="$fechaEmision"
             required
             :error="$errors->first('fecha_emision')"
         />
@@ -222,7 +222,7 @@
         <x-atoms.select
             name="emitida_por_contacto_id"
             id="emitida_por_contacto_id"
-            label="{{ __('operaciones.ordenes.campo_contacto') }}"
+            :label="__('operaciones.ordenes.campo_contacto')"
             :options="$contactosDisponibles"
             :value="$contactoId"
             :placeholder="__('operaciones.ordenes.campo_contacto_placeholder')"
@@ -233,9 +233,9 @@
             <x-atoms.input
                 type="text"
                 name="observaciones"
-                label="{{ __('operaciones.ordenes.campo_observaciones') }}"
-                value="{{ $valor('observaciones') }}"
-                error="{{ $errors->first('observaciones') }}"
+                :label="__('operaciones.ordenes.campo_observaciones')"
+                :value="$valor('observaciones')"
+                :error="$errors->first('observaciones')"
             />
         </div>
     </x-molecules.form-section>
@@ -287,52 +287,52 @@
         <x-atoms.input
             type="number"
             name="humedad_min_pct"
-            label="{{ __('operaciones.ordenes.campo_humedad_min_pct') }}"
-            value="{{ $valor('humedad_min_pct') }}"
+            :label="__('operaciones.ordenes.campo_humedad_min_pct')"
+            :value="$valor('humedad_min_pct')"
             min="0"
             max="100"
             step="0.01"
-            error="{{ $errors->first('humedad_min_pct') }}"
+            :error="$errors->first('humedad_min_pct')"
         />
 
         <x-atoms.input
             type="number"
             name="humedad_max_pct"
-            label="{{ __('operaciones.ordenes.campo_humedad_max_pct') }}"
-            value="{{ $valor('humedad_max_pct') }}"
+            :label="__('operaciones.ordenes.campo_humedad_max_pct')"
+            :value="$valor('humedad_max_pct')"
             min="0"
             max="100"
             step="0.01"
-            error="{{ $errors->first('humedad_max_pct') }}"
+            :error="$errors->first('humedad_max_pct')"
         />
 
         <x-atoms.input
             type="number"
             name="viento_max_kmh"
-            label="{{ __('operaciones.ordenes.campo_viento_max_kmh') }}"
-            value="{{ $valor('viento_max_kmh') }}"
+            :label="__('operaciones.ordenes.campo_viento_max_kmh')"
+            :value="$valor('viento_max_kmh')"
             min="0.01"
             step="0.01"
-            error="{{ $errors->first('viento_max_kmh') }}"
+            :error="$errors->first('viento_max_kmh')"
         />
 
         <x-atoms.input
             type="number"
             name="temperatura_max_c"
-            label="{{ __('operaciones.ordenes.campo_temperatura_max_c') }}"
-            value="{{ $valor('temperatura_max_c') }}"
+            :label="__('operaciones.ordenes.campo_temperatura_max_c')"
+            :value="$valor('temperatura_max_c')"
             step="0.01"
-            error="{{ $errors->first('temperatura_max_c') }}"
+            :error="$errors->first('temperatura_max_c')"
         />
 
         <x-atoms.input
             type="number"
             name="velocidad_max_kmh"
-            label="{{ __('operaciones.ordenes.campo_velocidad_max_kmh') }}"
-            value="{{ $valor('velocidad_max_kmh') }}"
+            :label="__('operaciones.ordenes.campo_velocidad_max_kmh')"
+            :value="$valor('velocidad_max_kmh')"
             min="0.01"
             step="0.01"
-            error="{{ $errors->first('velocidad_max_kmh') }}"
+            :error="$errors->first('velocidad_max_kmh')"
         />
     </x-molecules.form-section>
 
@@ -343,37 +343,37 @@
         <x-atoms.input
             type="number"
             name="altura_vuelo_m"
-            label="{{ __('operaciones.ordenes.campo_altura_vuelo_m') }}"
-            value="{{ $valor('altura_vuelo_m') }}"
+            :label="__('operaciones.ordenes.campo_altura_vuelo_m')"
+            :value="$valor('altura_vuelo_m')"
             min="0.01"
             step="0.01"
-            error="{{ $errors->first('altura_vuelo_m') }}"
+            :error="$errors->first('altura_vuelo_m')"
         />
 
         <x-atoms.input
             type="number"
             name="velocidad_vuelo_kmh"
-            label="{{ __('operaciones.ordenes.campo_velocidad_vuelo_kmh') }}"
-            value="{{ $valor('velocidad_vuelo_kmh') }}"
+            :label="__('operaciones.ordenes.campo_velocidad_vuelo_kmh')"
+            :value="$valor('velocidad_vuelo_kmh')"
             min="0.01"
             step="0.01"
-            error="{{ $errors->first('velocidad_vuelo_kmh') }}"
+            :error="$errors->first('velocidad_vuelo_kmh')"
         />
 
         <x-atoms.input
             type="number"
             name="ancho_pasada_m"
-            label="{{ __('operaciones.ordenes.campo_ancho_pasada_m') }}"
-            value="{{ $valor('ancho_pasada_m') }}"
+            :label="__('operaciones.ordenes.campo_ancho_pasada_m')"
+            :value="$valor('ancho_pasada_m')"
             min="0.01"
             step="0.01"
-            error="{{ $errors->first('ancho_pasada_m') }}"
+            :error="$errors->first('ancho_pasada_m')"
         />
     </x-molecules.form-section>
 
     <x-organisms.form-actions-bar :status="__('operaciones.ordenes.estado_form')">
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.ordenes.index') }}" variant="outline">
+            <x-atoms.button :href="route('panel.ordenes.index')" variant="outline">
                 {{ __('ui.action.cancel') }}
             </x-atoms.button>
             <x-atoms.button type="submit" variant="primary">

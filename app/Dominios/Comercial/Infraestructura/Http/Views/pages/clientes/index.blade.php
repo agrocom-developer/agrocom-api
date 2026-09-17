@@ -39,7 +39,7 @@
             >
                 @puede('comercial.cliente.crear')
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.clientes.create') }}" variant="primary" icon="add">
+                        <x-atoms.button :href="route('panel.clientes.create')" variant="primary" icon="add">
                             {{ __('comercial.clientes.nuevo') }}
                         </x-atoms.button>
                     </x-slot:actions>
@@ -59,7 +59,7 @@
             @if ($hayFiltrosActivos || $clientes->isNotEmpty())
                 <div class="ag-table-toolbar">
                     <x-molecules.table-search
-                        action="{{ route('panel.clientes.index') }}"
+                        :action="route('panel.clientes.index')"
                         :value="$filtros['q']"
                         :placeholder="__('comercial.clientes.filtro_busqueda_placeholder')"
                         :clear-label="__('ui.tabla.buscador_limpiar')"
@@ -103,7 +103,7 @@
                             <span role="cell" class="ag-clientes__acciones">
                                 <x-organisms.row-actions>
                                     @puede('comercial.cliente.editar')
-                                        <x-atoms.button href="{{ route('panel.clientes.edit', $cliente) }}" variant="warning-outline" size="sm" icon="edit">
+                                        <x-atoms.button :href="route('panel.clientes.edit', $cliente)" variant="warning-outline" size="sm" icon="edit">
                                             {{ __('comercial.clientes.editar') }}
                                         </x-atoms.button>
                                     @endpuede

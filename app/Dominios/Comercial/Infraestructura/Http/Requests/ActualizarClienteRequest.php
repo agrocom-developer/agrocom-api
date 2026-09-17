@@ -57,16 +57,19 @@ final class ActualizarClienteRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'tipo_persona.required' => 'Seleccioná si el cliente es persona física o jurídica.',
-            'tipo_persona.enum' => 'El tipo de persona no es válido.',
+            'razon_social.required' => __('comercial.clientes.error_razon_social_requerida'),
+            'tipo_persona.required' => __('comercial.validacion.tipo_persona_requerido'),
+            'tipo_persona.enum' => __('comercial.validacion.tipo_persona_invalido'),
             'logo.mimes' => __('comercial.clientes.error_logo_tipo'),
             'logo.max' => __('comercial.clientes.error_logo_tamano'),
             'logo.uploaded' => __('comercial.clientes.error_logo_subida'),
-            'contactos.required' => 'Agregá al menos un contacto.',
-            'contactos.min' => 'Agregá al menos un contacto.',
-            'contactos.*.id.exists' => 'Uno de los contactos enviados no pertenece a este cliente.',
-            'contactos.*.tipo.enum' => 'El tipo de contacto no es válido.',
+            'contactos.required' => __('comercial.validacion.contactos_requeridos'),
+            'contactos.min' => __('comercial.validacion.contactos_requeridos'),
+            'contactos.*.id.exists' => __('comercial.validacion.contacto_ajeno_al_cliente'),
+            'contactos.*.tipo.required' => __('comercial.clientes.error_contacto_tipo_requerido'),
+            'contactos.*.tipo.enum' => __('comercial.validacion.contacto_tipo_invalido'),
             'contactos.*.tipo_otro.required_if' => __('comercial.clientes.error_contacto_tipo_otro'),
+            'contactos.*.nombre.required' => __('comercial.clientes.error_contacto_nombre_requerido'),
         ];
     }
 }

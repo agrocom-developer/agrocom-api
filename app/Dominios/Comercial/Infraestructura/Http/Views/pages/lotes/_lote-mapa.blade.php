@@ -37,6 +37,7 @@
     data-ag-lote-mapa-proveedor="{{ $esGoogle ? 'google' : 'leaflet' }}"
     @if ($esGoogle)
         data-ag-lote-mapa-google-key="{{ $proveedorMapa['googleMapsApiKey'] }}"
+        data-ag-lote-mapa-error-google="{{ __('ui.errores.google_maps_no_disponible') }}"
     @endif
 >
     <span class="ag-input__label">{{ __('comercial.lotes.lote_geometria') }}</span>

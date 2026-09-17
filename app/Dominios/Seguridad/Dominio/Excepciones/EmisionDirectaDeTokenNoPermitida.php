@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Seguridad\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use LogicException;
 
 /**
@@ -19,9 +20,6 @@ final class EmisionDirectaDeTokenNoPermitida extends LogicException
 {
     public static function usar(string $casoDeUso): self
     {
-        return new self(
-            "Los tokens de dispositivo no se emiten con createToken(): usá {$casoDeUso}, "
-            .'que registra el dispositivo y el rol activo con el que opera.',
-        );
+        return new self(Texto::de('seguridad.errores.emision_directa_token', ['caso_uso' => $casoDeUso]));
     }
 }

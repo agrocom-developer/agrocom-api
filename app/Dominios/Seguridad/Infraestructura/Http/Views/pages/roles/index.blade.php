@@ -38,7 +38,7 @@
             >
                 @puede('seguridad.rol.crear')
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.roles.create') }}" variant="primary" icon="add">
+                        <x-atoms.button :href="route('panel.roles.create')" variant="primary" icon="add">
                             {{ __('seguridad.roles.nuevo') }}
                         </x-atoms.button>
                     </x-slot:actions>
@@ -113,13 +113,13 @@
 
                             <span role="cell" class="ag-roles__acciones">
                                 @puede('seguridad.rol.editar')
-                                    <x-atoms.button href="{{ route('panel.roles.edit', $fila['rol']) }}" variant="warning-outline" size="sm" icon="edit">
+                                    <x-atoms.button :href="route('panel.roles.edit', $fila['rol'])" variant="warning-outline" size="sm" icon="edit">
                                         {{ __('seguridad.roles.editar') }}
                                     </x-atoms.button>
                                 @endpuede
 
                                 @puede('seguridad.rol.asignar_permiso')
-                                    <x-atoms.button href="{{ route('panel.roles.permisos.edit', $fila['rol']) }}" variant="primary" size="sm" icon="tune">
+                                    <x-atoms.button :href="route('panel.roles.permisos.edit', $fila['rol'])" variant="primary" size="sm" icon="tune">
                                         {{ __('seguridad.roles.permisos') }}
                                     </x-atoms.button>
                                 @endpuede

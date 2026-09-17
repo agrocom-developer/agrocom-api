@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Finanzas\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use App\Dominios\Finanzas\Dominio\EstadoRendicion;
 use App\Dominios\Finanzas\Dominio\MaquinaEstados\TransicionesRendicion;
 use DomainException;
@@ -21,14 +22,17 @@ final class RendicionNoPresentable extends DomainException
     public static function porTransicionInvalida(int $rendicionId, EstadoRendicion $estadoActual): self
     {
         return new self(
-            "La rendición #{$rendicionId} no se puede presentar: está en '{$estadoActual->value}', no en 'abierta'.",
+            Texto::de('finanzas.errores.rendicion_no_presentable', [
+                'rendicion_id' => $rendicionId,
+                'estado_actual' => $estadoActual->value,
+            ]),
         );
     }
 
     public static function porSinGastosAsociados(int $rendicionId): self
     {
         return new self(
-            "La rendición #{$rendicionId} no se puede presentar: no tiene ningún gasto asociado.",
+            Texto::de('finanzas.errores.rendicion_sin_gastos_asociados', ['rendicion_id' => $rendicionId]),
         );
     }
 }

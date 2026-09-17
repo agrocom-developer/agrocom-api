@@ -55,7 +55,7 @@
             >
                 @puede('campania.campania.crear')
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.campanias.create') }}" variant="primary" icon="add">
+                        <x-atoms.button :href="route('panel.campanias.create')" variant="primary" icon="add">
                             {{ __('campania.campanias.nueva') }}
                         </x-atoms.button>
                     </x-slot:actions>
@@ -81,7 +81,7 @@
             @if ($hayFiltrosActivos || $campanias->isNotEmpty())
                 <div class="ag-table-toolbar">
                     <x-molecules.table-search
-                        action="{{ route('panel.campanias.index') }}"
+                        :action="route('panel.campanias.index')"
                         :value="$filtros['q']"
                         :placeholder="__('campania.campanias.filtro_busqueda_placeholder')"
                         :clear-label="__('ui.tabla.buscador_limpiar')"
@@ -171,7 +171,7 @@
 
                                 <x-organisms.row-actions>
                                     @puede('campania.campania.editar')
-                                        <x-atoms.button href="{{ route('panel.campanias.edit', $campania) }}" variant="warning-outline" size="sm" icon="edit">
+                                        <x-atoms.button :href="route('panel.campanias.edit', $campania)" variant="warning-outline" size="sm" icon="edit">
                                             {{ __('campania.campanias.editar') }}
                                         </x-atoms.button>
                                     @endpuede

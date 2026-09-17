@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Campania\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use RuntimeException;
 
 /**
@@ -16,6 +17,6 @@ final class CampaniaDuplicada extends RuntimeException
 {
     public static function porCodigo(string $codigo): self
     {
-        return new self("Ya existe una campaña activa con el código '{$codigo}'.");
+        return new self(Texto::de('campania.errores.campania_duplicada', ['codigo' => $codigo]));
     }
 }

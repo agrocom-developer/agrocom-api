@@ -28,4 +28,14 @@ final class AsignarRecursoEquipoRequest extends FormRequest
             'hasta' => ['nullable', 'date', 'after_or_equal:desde'],
         ];
     }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return [
+            'recurso_tipo.required' => __('personal.equipos_trabajo.error_recurso_tipo_requerido'),
+            'recurso_id.required' => __('personal.equipos_trabajo.error_recurso_id_requerido'),
+            'desde.required' => __('personal.equipos_trabajo.error_recurso_desde_requerida'),
+        ];
+    }
 }

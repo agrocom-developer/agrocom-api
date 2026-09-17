@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Finanzas\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use DomainException;
 
 /**
@@ -15,6 +16,6 @@ final class RendicionNoAceptaGastos extends DomainException
 {
     public static function paraRendicion(int $rendicionId): self
     {
-        return new self("La rendición #{$rendicionId} no acepta gastos: ya no está 'abierta'.");
+        return new self(Texto::de('finanzas.errores.rendicion_no_acepta_gastos', ['rendicion_id' => $rendicionId]));
     }
 }

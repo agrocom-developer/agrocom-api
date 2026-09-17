@@ -48,7 +48,7 @@
                         :subtitle="__('comercial.facturas.subtitulo_form')"
                     >
                         <x-slot:actions>
-                            <x-atoms.button href="{{ route('panel.facturas.index') }}" variant="outline" icon="arrow_back">
+                            <x-atoms.button :href="route('panel.facturas.index')" variant="outline" icon="arrow_back">
                                 {{ __('comercial.facturas.volver') }}
                             </x-atoms.button>
                         </x-slot:actions>
@@ -67,19 +67,19 @@
                             <x-atoms.select
                                 name="acta_id"
                                 id="acta_id"
-                                label="{{ __('comercial.facturas.campo_acta') }}"
+                                :label="__('comercial.facturas.campo_acta')"
                                 :options="$actasOptions"
                                 :value="$actaId"
-                                placeholder="{{ __('comercial.facturas.campo_acta_placeholder') }}"
+                                :placeholder="__('comercial.facturas.campo_acta_placeholder')"
                                 required
-                                error="{{ $errors->first('acta_id') }}"
+                                :error="$errors->first('acta_id')"
                             />
                         </div>
                     </x-molecules.form-section>
 
                     <x-organisms.form-actions-bar :status="__('comercial.facturas.estado_form')">
                         <x-slot:actions>
-                            <x-atoms.button href="{{ route('panel.facturas.index') }}" variant="outline">
+                            <x-atoms.button :href="route('panel.facturas.index')" variant="outline">
                                 {{ __('ui.action.cancel') }}
                             </x-atoms.button>
                             <x-atoms.button type="submit" variant="primary">

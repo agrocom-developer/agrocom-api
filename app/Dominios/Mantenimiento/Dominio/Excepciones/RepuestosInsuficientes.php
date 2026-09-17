@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Mantenimiento\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use RuntimeException;
 
 /**
@@ -19,7 +20,10 @@ final class RepuestosInsuficientes extends RuntimeException
     public static function paraRepuesto(int $repuestoId, string $mensajeOriginal): self
     {
         return new self(
-            "No se puede cerrar la orden: stock insuficiente para el repuesto #{$repuestoId} ({$mensajeOriginal}).",
+            Texto::de('mantenimiento.errores.repuestos_insuficientes', [
+                'repuesto_id' => $repuestoId,
+                'mensaje_original' => $mensajeOriginal,
+            ]),
         );
     }
 }

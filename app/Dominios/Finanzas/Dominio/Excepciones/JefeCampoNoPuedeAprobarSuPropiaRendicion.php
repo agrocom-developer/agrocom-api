@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Finanzas\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use Illuminate\Auth\Access\AuthorizationException;
 
 /**
@@ -19,6 +20,6 @@ final class JefeCampoNoPuedeAprobarSuPropiaRendicion extends AuthorizationExcept
 {
     public static function paraRendicion(int $rendicionId): self
     {
-        return new self("El jefe de campo de la rendición #{$rendicionId} no puede aprobar su propia rendición.");
+        return new self(Texto::de('finanzas.errores.jefe_campo_no_puede_aprobar_propia_rendicion', ['rendicion_id' => $rendicionId]));
     }
 }

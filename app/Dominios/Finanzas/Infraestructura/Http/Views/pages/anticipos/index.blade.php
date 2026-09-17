@@ -46,7 +46,7 @@
             >
                 @puede('finanzas.anticipo.crear')
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.anticipos.create') }}" variant="primary" icon="add">
+                        <x-atoms.button :href="route('panel.anticipos.create')" variant="primary" icon="add">
                             {{ __('finanzas.anticipos.nueva') }}
                         </x-atoms.button>
                     </x-slot:actions>
@@ -68,10 +68,10 @@
                 <x-atoms.select
                     name="persona_id"
                     id="filtro-persona"
-                    label="{{ __('finanzas.anticipos.filtro_persona') }}"
+                    :label="__('finanzas.anticipos.filtro_persona')"
                     :options="$personasDisponibles"
                     :value="(string) $filtros['persona_id']"
-                    placeholder="{{ __('finanzas.anticipos.filtro_persona_placeholder') }}"
+                    :placeholder="__('finanzas.anticipos.filtro_persona_placeholder')"
                 />
 
                 <div class="ag-input">
@@ -93,7 +93,7 @@
                     </x-atoms.button>
 
                     @if ($hayFiltrosActivos)
-                        <x-atoms.button href="{{ route('panel.anticipos.index') }}" variant="text" size="md">
+                        <x-atoms.button :href="route('panel.anticipos.index')" variant="text" size="md">
                             {{ __('finanzas.anticipos.limpiar_filtro') }}
                         </x-atoms.button>
                     @endif
@@ -152,7 +152,7 @@
                 @if ($anticipos->hasPages())
                     <nav class="ag-anticipos__paginacion" aria-label="{{ __('finanzas.anticipos.paginacion_aria') }}">
                         @if (! $anticipos->onFirstPage())
-                            <x-atoms.button href="{{ $anticipos->previousPageUrl() }}" variant="outline" size="sm" icon="chevron_left">
+                            <x-atoms.button :href="$anticipos->previousPageUrl()" variant="outline" size="sm" icon="chevron_left">
                                 {{ __('finanzas.anticipos.paginacion_anterior') }}
                             </x-atoms.button>
                         @endif
@@ -162,7 +162,7 @@
                         </span>
 
                         @if ($anticipos->hasMorePages())
-                            <x-atoms.button href="{{ $anticipos->nextPageUrl() }}" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
+                            <x-atoms.button :href="$anticipos->nextPageUrl()" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
                                 {{ __('finanzas.anticipos.paginacion_siguiente') }}
                             </x-atoms.button>
                         @endif

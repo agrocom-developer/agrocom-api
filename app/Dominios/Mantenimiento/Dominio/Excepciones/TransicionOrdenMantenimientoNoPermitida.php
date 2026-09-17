@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Mantenimiento\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use App\Dominios\Mantenimiento\Dominio\EstadoOrdenMantenimiento;
 use DomainException;
 
@@ -15,7 +16,10 @@ final class TransicionOrdenMantenimientoNoPermitida extends DomainException
     public static function entre(EstadoOrdenMantenimiento $desde, EstadoOrdenMantenimiento $hasta): self
     {
         return new self(
-            "No se puede pasar una orden de mantenimiento de '{$desde->value}' a '{$hasta->value}'.",
+            Texto::de('mantenimiento.errores.transicion_orden_no_permitida', [
+                'desde' => $desde->value,
+                'hasta' => $hasta->value,
+            ]),
         );
     }
 }

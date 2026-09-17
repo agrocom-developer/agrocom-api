@@ -76,7 +76,7 @@
                             <span role="cell" class="ag-asignacion-equipos__mono">{{ number_format((float) $resumen['asignadas'], 2, ',', '.') }}</span>
                             <span role="cell" class="ag-asignacion-equipos__mono">{{ number_format((float) $resumen['restantes'], 2, ',', '.') }}</span>
                             <span role="cell" class="ag-asignacion-equipos__acciones">
-                                <x-atoms.button href="{{ route('panel.asignacion-equipos.show', $orden) }}" variant="outline" size="sm" icon="groups">
+                                <x-atoms.button :href="route('panel.asignacion-equipos.show', $orden)" variant="outline" size="sm" icon="groups">
                                     {{ __('operaciones.asignacion_equipos.asignar_accion') }}
                                 </x-atoms.button>
                             </span>

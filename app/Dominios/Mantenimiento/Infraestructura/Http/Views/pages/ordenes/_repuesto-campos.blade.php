@@ -56,8 +56,8 @@
     <x-atoms.input
         type="number"
         name="repuestos[{{ $repuestoId }}][cantidad]"
-        label="{{ __('mantenimiento.ordenes.campo_cantidad') }}"
-        value="{{ $cantidadInicial }}"
+        :label="__('mantenimiento.ordenes.campo_cantidad')"
+        :value="$cantidadInicial"
         min="0.01"
         step="0.01"
         @disabled(! $marcado)
@@ -89,7 +89,7 @@
     <div class="ag-repuesto-campos__base-override-wrap" data-ag-repuesto-base-override-wrap @if (! $tieneOverride) hidden @endif>
         <x-atoms.select
             name="__repuestos_base_override[{{ $repuestoId }}]"
-            label="{{ __('mantenimiento.ordenes.campo_base') }}"
+            :label="__('mantenimiento.ordenes.campo_base')"
             :options="$basesDisponibles"
             :value="$baseLinea"
             class="ag-repuesto-campos__base-override"

@@ -35,7 +35,10 @@ final class AsignarIntegranteEquipoRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'persona_id.exists' => 'La persona seleccionada no es válida.',
+            'persona_id.required' => __('personal.equipos_trabajo.error_integrante_persona_requerida'),
+            'persona_id.exists' => __('personal.validacion.persona_invalida'),
+            'rol_equipo.required' => __('personal.equipos_trabajo.error_integrante_rol_requerido'),
+            'desde.required' => __('personal.equipos_trabajo.error_integrante_desde_requerida'),
         ];
     }
 }

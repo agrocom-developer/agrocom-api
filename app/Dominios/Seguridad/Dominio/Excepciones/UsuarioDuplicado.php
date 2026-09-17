@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Seguridad\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use RuntimeException;
 
 /**
@@ -16,16 +17,16 @@ final class UsuarioDuplicado extends RuntimeException
 {
     public static function porUsername(string $username): self
     {
-        return new self("Ya existe una cuenta activa con el username '{$username}'.");
+        return new self(Texto::de('seguridad.errores.usuario_duplicado_username', ['username' => $username]));
     }
 
     public static function porPersona(int $personaId): self
     {
-        return new self("La persona #{$personaId} ya tiene una cuenta activa — una persona operativa, una sola cuenta.");
+        return new self(Texto::de('seguridad.errores.usuario_duplicado_persona', ['persona_id' => $personaId]));
     }
 
     public static function porEmail(string $email): self
     {
-        return new self("Ya existe una cuenta activa con el correo '{$email}'.");
+        return new self(Texto::de('seguridad.errores.usuario_duplicado_email', ['email' => $email]));
     }
 }

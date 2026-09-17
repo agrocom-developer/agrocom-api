@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Operaciones\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use RuntimeException;
 
 /**
@@ -16,6 +17,6 @@ final class PausaFinAnteriorAInicio extends RuntimeException
 {
     public function __construct()
     {
-        parent::__construct('El fin de la pausa debe ser posterior a su inicio.');
+        parent::__construct(Texto::de('operaciones.errores.pausa_fin_anterior_a_inicio'));
     }
 }

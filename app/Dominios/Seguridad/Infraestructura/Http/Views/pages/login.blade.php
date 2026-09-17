@@ -1,5 +1,8 @@
 {{--
     Page: login (GET /login, login.form)
+    Único login del sistema (16/9/2026): por acá entran el personal y los
+    clientes del portal — SesionController::store() decide a qué guard
+    pertenece la cuenta.
     Estructura: layout HTML + auth-layout + login-form. El submit es interceptado
     por resources/js/pages/login.js que hace fetch a POST /login (JSON), no un
     submit tradicional.
@@ -12,7 +15,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ config('app.name', 'Agrocom') }} — Ingreso</title>
+    <title>{{ config('app.name', 'Agrocom') }} — {{ __('seguridad.login.tab_ingreso') }}</title>
 
     <x-atoms.tema-inicial />
 

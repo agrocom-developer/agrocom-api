@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Comercial\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use RuntimeException;
 
 /**
@@ -16,6 +17,6 @@ final class CultivoDuplicado extends RuntimeException
 {
     public static function porNombre(string $nombre): self
     {
-        return new self("Ya existe un cultivo activo con el nombre '{$nombre}'.");
+        return new self(Texto::de('comercial.errores.cultivo_nombre_duplicado', ['nombre' => $nombre]));
     }
 }

@@ -57,14 +57,14 @@
         @if ($esEdicion)
             <x-slot:chip>
                 <span class="ag-campanias-form__estado-chip {{ $campania->esActiva() ? 'ag-campanias-form__estado-chip--activa' : 'ag-campanias-form__estado-chip--inactiva' }}">
-                    <x-atoms.icon name="{{ $campania->esActiva() ? 'check_circle' : 'radio_button_unchecked' }}" size="sm" />
+                    <x-atoms.icon :name="$campania->esActiva() ? 'check_circle' : 'radio_button_unchecked'" size="sm" />
                     <span>{{ __($campania->esActiva() ? 'campania.campanias.actividad_activa' : 'campania.campanias.actividad_inactiva') }}</span>
                 </span>
             </x-slot:chip>
         @endif
 
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.campanias.index') }}" variant="outline" icon="arrow_back">
+            <x-atoms.button :href="route('panel.campanias.index')" variant="outline" icon="arrow_back">
                 {{ __('campania.campanias.volver') }}
             </x-atoms.button>
         </x-slot:actions>
@@ -85,53 +85,53 @@
         <x-atoms.input
             type="text"
             name="codigo"
-            label="{{ __('campania.campanias.campo_codigo') }}"
-            value="{{ $codigo }}"
+            :label="__('campania.campanias.campo_codigo')"
+            :value="$codigo"
             required
             maxlength="20"
-            error="{{ $errors->first('codigo') }}"
+            :error="$errors->first('codigo')"
         />
 
         <x-atoms.select
             name="estacion"
             id="estacion"
-            label="{{ __('campania.campanias.campo_estacion') }}"
-            placeholder="{{ __('campania.campanias.campo_estacion_placeholder') }}"
+            :label="__('campania.campanias.campo_estacion')"
+            :placeholder="__('campania.campanias.campo_estacion_placeholder')"
             :options="$opcionesEstacion"
-            value="{{ $estacion }}"
+            :value="$estacion"
             required
-            error="{{ $errors->first('estacion') }}"
+            :error="$errors->first('estacion')"
         />
 
         <x-atoms.input
             type="text"
             name="nombre"
-            label="{{ __('campania.campanias.campo_nombre') }}"
-            value="{{ $nombre }}"
-            help="{{ __('campania.campanias.campo_nombre_ayuda') }}"
-            error="{{ $errors->first('nombre') }}"
+            :label="__('campania.campanias.campo_nombre')"
+            :value="$nombre"
+            :help="__('campania.campanias.campo_nombre_ayuda')"
+            :error="$errors->first('nombre')"
         />
 
         <x-atoms.date
             name="fecha_inicio"
-            label="{{ __('campania.campanias.campo_fecha_inicio') }}"
-            value="{{ $fechaInicio }}"
+            :label="__('campania.campanias.campo_fecha_inicio')"
+            :value="$fechaInicio"
             required
-            error="{{ $errors->first('fecha_inicio') }}"
+            :error="$errors->first('fecha_inicio')"
         />
 
         <x-atoms.date
             name="fecha_fin"
-            label="{{ __('campania.campanias.campo_fecha_fin') }}"
-            value="{{ $fechaFin }}"
+            :label="__('campania.campanias.campo_fecha_fin')"
+            :value="$fechaFin"
             required
-            error="{{ $errors->first('fecha_fin') }}"
+            :error="$errors->first('fecha_fin')"
         />
     </x-molecules.form-section>
 
     <x-organisms.form-actions-bar :status="__('campania.campanias.estado_form')">
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.campanias.index') }}" variant="outline">
+            <x-atoms.button :href="route('panel.campanias.index')" variant="outline">
                 {{ __('ui.action.cancel') }}
             </x-atoms.button>
             <x-atoms.button type="submit" variant="primary">
@@ -146,7 +146,7 @@
                 @foreach ($resumenCampania ?? [] as $resumen)
                     <x-molecules.summary-card :title="$resumen['titulo']" :items="$resumen['items']">
                         <x-slot:action>
-                            <x-atoms.button href="{{ $resumen['accion']['href'] }}" variant="outline" icon="arrow_forward" block>
+                            <x-atoms.button :href="$resumen['accion']['href']" variant="outline" icon="arrow_forward" block>
                                 {{ $resumen['accion']['label'] }}
                             </x-atoms.button>
                         </x-slot:action>

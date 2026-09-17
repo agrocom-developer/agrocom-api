@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Seguridad\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use RuntimeException;
 
 /**
@@ -19,9 +20,6 @@ final class RolDuplicado extends RuntimeException
 {
     public static function porNombre(string $nombre): self
     {
-        return new self(
-            "Ya existe un rol con el nombre '{$nombre}'. ".
-            'Un rol dado de baja tampoco libera su nombre: el catálogo de roles es del sistema.'
-        );
+        return new self(Texto::de('seguridad.errores.rol_duplicado', ['nombre' => $nombre]));
     }
 }

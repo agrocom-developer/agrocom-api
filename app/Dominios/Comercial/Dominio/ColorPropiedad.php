@@ -2,6 +2,8 @@
 
 namespace App\Dominios\Comercial\Dominio;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
+
 /**
  * Paleta curada de colores para `com_propiedades.color` (adenda 16/9/2026 a
  * ADR 0018 punto 1) — pedido explícito del dueño: un conjunto FIJO de
@@ -81,31 +83,33 @@ enum ColorPropiedad: string
 
     public function etiqueta(): string
     {
-        return match ($this) {
-            self::Rojo => 'Rojo',
-            self::Naranja => 'Naranja',
-            self::Ambar => 'Ámbar',
-            self::VerdeBosque => 'Verde bosque',
-            self::VerdeAzulado => 'Verde azulado',
-            self::Turquesa => 'Turquesa',
-            self::Azul => 'Azul',
-            self::Indigo => 'Índigo',
-            self::Violeta => 'Violeta',
-            self::Purpura => 'Púrpura',
-            self::Frambuesa => 'Frambuesa',
-            self::Carmin => 'Carmín',
-            self::Marron => 'Marrón',
-            self::Pizarra => 'Pizarra',
-            self::Musgo => 'Musgo',
-            self::Malva => 'Malva',
-            self::Caqui => 'Caqui',
-            self::Salvia => 'Salvia',
-            self::Acero => 'Acero',
-            self::Aciano => 'Aciano',
-            self::Vino => 'Vino',
-            self::Terracota => 'Terracota',
-            self::Negro => 'Negro',
+        $clave = match ($this) {
+            self::Rojo => 'rojo',
+            self::Naranja => 'naranja',
+            self::Ambar => 'ambar',
+            self::VerdeBosque => 'verde_bosque',
+            self::VerdeAzulado => 'verde_azulado',
+            self::Turquesa => 'turquesa',
+            self::Azul => 'azul',
+            self::Indigo => 'indigo',
+            self::Violeta => 'violeta',
+            self::Purpura => 'purpura',
+            self::Frambuesa => 'frambuesa',
+            self::Carmin => 'carmin',
+            self::Marron => 'marron',
+            self::Pizarra => 'pizarra',
+            self::Musgo => 'musgo',
+            self::Malva => 'malva',
+            self::Caqui => 'caqui',
+            self::Salvia => 'salvia',
+            self::Acero => 'acero',
+            self::Aciano => 'aciano',
+            self::Vino => 'vino',
+            self::Terracota => 'terracota',
+            self::Negro => 'negro',
         };
+
+        return Texto::de("comercial.colores.{$clave}");
     }
 
     /** @return list<string> */
