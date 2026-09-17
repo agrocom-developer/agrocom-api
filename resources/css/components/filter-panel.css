@@ -35,7 +35,7 @@
 .ag-filter-panel__menu {
     display: block !important;
     position: fixed;
-    width: 32rem;
+    width: 30rem;
     max-width: calc(100vw - var(--ag-space-6));
     padding: var(--ag-space-4);
     background: var(--ag-color-bg-elevated);
@@ -72,31 +72,18 @@
     margin-bottom: var(--ag-space-4);
 }
 
-/* Con 4 o más CAMPOS (p. ej. Bitácora: usuario/entidad/acción/ID) el panel
-   de 32rem deja las 2 columnas angostas — un poco más de ancho evita que el
-   valor elegido de un select trunque con ellipsis. Con 3 o menos, el
-   default ya alcanza y NO cambia de dimensión (pedido directo del usuario,
-   17/9/2026 — antes se disparaba con 3 campos reales, ver la nota de
-   `div:nth-of-type` abajo).
-   `div:nth-of-type`, no `:nth-child`: todo átomo de campo (`atoms/select`,
-   `atoms/input`, `atoms/date`, `atoms/checkbox`) raíza en un `<div>`, así
-   que contar hijos `div` cuenta CAMPOS. El único hijo que no es `<div>` es
-   el `<input type="hidden" name="q">` que casi todo filtro trae para
-   preservar la búsqueda — no se renderiza, pero sigue en el DOM y `:nth-child`
-   (que cuenta TODOS los hermanos, sin importar tag) lo contaba como si
-   fuera un campo más, disparando este ensanche con solo 3 campos reales. */
-.ag-filter-panel:has(.ag-filter-panel__grid > div:nth-of-type(4)) .ag-filter-panel__menu {
+/* Dos tamaños de panel, según CAMPOS reales (pedido directo del usuario,
+   17/9/2026: no hay un tercer tamaño "chico" — con 1 campo el panel queda
+   en 30rem, con 2 o más pasa a 40rem, sea que la fila se llene o quede un
+   hueco). `div:nth-of-type`, no `:nth-child`: todo átomo de campo
+   (`atoms/select`, `atoms/input`, `atoms/date`, `atoms/checkbox`) raíza en
+   un `<div>`, así que contar hijos `div` cuenta CAMPOS. El único hijo que
+   no es `<div>` es el `<input type="hidden" name="q">` que casi todo
+   filtro trae para preservar la búsqueda — no se renderiza, pero sigue en
+   el DOM y `:nth-child` (que cuenta TODOS los hermanos, sin importar tag)
+   lo contaba como si fuera un campo más. */
+.ag-filter-panel:has(.ag-filter-panel__grid > div:nth-of-type(2)) .ag-filter-panel__menu {
     width: 40rem;
-}
-
-/* Con un solo campo real, `auto-fit` lo estira a las 2 columnas porque es
-   el único track posible — se ve "grande" cuando la idea es que solo se vea
-   grande con 2 o más campos, y chico con uno solo (pedido directo del
-   usuario, 17/9/2026). Se lo topea al mismo ancho "chico" que ocuparía
-   siendo uno de dos, en vez de `1fr`. Mismo criterio `div:nth-of-type` que
-   la regla de arriba: cuenta campos reales, no el `<input type="hidden">`. */
-.ag-filter-panel__grid:not(:has(> div:nth-of-type(2))) {
-    grid-template-columns: minmax(max(14rem, calc(50% - var(--ag-space-4) / 2)), 50%);
 }
 
 .ag-filter-panel__actions {
@@ -116,7 +103,7 @@
    dejando que seguimiento vertical (`top`) lo siga resolviendo Popper. */
 @media (max-width: 767.98px) {
     .ag-filter-panel__menu,
-    .ag-filter-panel:has(.ag-filter-panel__grid > div:nth-of-type(4)) .ag-filter-panel__menu {
+    .ag-filter-panel:has(.ag-filter-panel__grid > div:nth-of-type(2)) .ag-filter-panel__menu {
         left: var(--ag-space-4) !important;
         right: var(--ag-space-4) !important;
         width: auto !important;
