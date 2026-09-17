@@ -93,9 +93,7 @@
         :subtitle="__('comercial.clientes.subtitulo_form')"
     >
         <x-slot:actions>
-            <x-atoms.button :href="route('panel.clientes.index')" variant="outline" icon="arrow_back">
-                {{ __('comercial.clientes.volver') }}
-            </x-atoms.button>
+            <x-molecules.boton-volver :href="route('panel.clientes.index')" :label="__('comercial.clientes.volver')" />
         </x-slot:actions>
     </x-organisms.page-header>
 

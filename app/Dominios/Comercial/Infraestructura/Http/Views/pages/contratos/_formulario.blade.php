@@ -65,6 +65,15 @@
 @php
     $esEdicion = $contrato !== null;
     $accion = $esEdicion ? route('panel.contratos.update', $contrato) : route('panel.contratos.store');
+    // $urlActual/$tituloPagina (memento de navegación, 17/9/2026): la URL de
+    // ESTA pantalla (alta o edición) y su título, para que los 3 accesos
+    // directos de abajo (crear cliente/propiedad/lote) le digan a
+    // `RecordarOrigenNavegacion` adónde volver — antes `?volver_a=` estaba
+    // fijo a `route('panel.contratos.create')` acá abajo, así que un acceso
+    // directo abierto DESDE la edición de un contrato ya existente volvía
+    // igual al formulario de ALTA (bug real, corregido acá).
+    $tituloPagina = $esEdicion ? __('comercial.contratos.titulo_editar') : __('comercial.contratos.titulo_crear');
+    $urlActual = $esEdicion ? route('panel.contratos.edit', $contrato) : route('panel.contratos.create');
     $valor = fn (string $campo, mixed $porDefecto = '') => old($campo, $contrato?->{$campo} ?? $porDefecto);
     // $clienteIdPreseleccionado (tarea "resumen de cliente"): solo llega en
     // alta, desde el atajo del aside de `panel.clientes.edit` — `?? null`
@@ -157,20 +166,26 @@
     $lotesIniciales = $lotesPorDefecto;
 @endphp
 
-<form method="POST" action="{{ $accion }}" class="ag-contratos-form" novalidate data-ag-contratos-form>
+<form
+    method="POST"
+    action="{{ $accion }}"
+    class="ag-contratos-form"
+    novalidate
+    data-ag-contratos-form
+    data-url-origen="{{ $urlActual }}"
+    data-etiqueta-origen="{{ $tituloPagina }}"
+>
     @csrf
     @if ($esEdicion)
         @method('PUT')
     @endif
 
     <x-organisms.page-header
-        :title="$esEdicion ? __('comercial.contratos.titulo_editar') : __('comercial.contratos.titulo_crear')"
+        :title="$tituloPagina"
         :subtitle="__('comercial.contratos.subtitulo_form')"
     >
         <x-slot:actions>
-            <x-atoms.button :href="route('panel.contratos.index')" variant="outline" icon="arrow_back">
-                {{ __('comercial.contratos.volver') }}
-            </x-atoms.button>
+            <x-molecules.boton-volver :href="route('panel.contratos.index')" :label="__('comercial.contratos.volver')" />
         </x-slot:actions>
     </x-organisms.page-header>
 
@@ -206,7 +221,7 @@
             required
             :error="$errors->first('cliente_id')"
             action-icon="add"
-            :action-href="route('panel.clientes.create', ['volver_a' => route('panel.contratos.create')])"
+            :action-href="route('panel.clientes.create', ['volver_a' => $urlActual, 'volver_texto' => $tituloPagina])"
             :action-label="__('comercial.contratos.crear_cliente')"
             :action-text="__('comercial.contratos.crear_cliente_corto')"
         />

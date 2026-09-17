@@ -36,6 +36,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const formulario = document.querySelector('[data-ag-contratos-form]');
     if (!formulario) return;
 
+    // Memento de navegación (17/9/2026): mismos dos query params que ya arma
+    // el `action-href` server-side de "Crear cliente" — acá los necesita JS
+    // porque "Crear propiedad"/"Crear lote" arman su URL en runtime (cascade
+    // cliente→propiedad, ver `abrirModalLotes()` más abajo).
+    const urlOrigen = formulario.dataset.urlOrigen || window.location.href;
+    const etiquetaOrigen = formulario.dataset.etiquetaOrigen || '';
+    const queryOrigen = () => `volver_a=${encodeURIComponent(urlOrigen)}&volver_texto=${encodeURIComponent(etiquetaOrigen)}`;
+
     // ===== PROPIEDADES Y LOTES (estrategia 'a': datos embebidos) =====
     const selectCliente = formulario.querySelector('[name="cliente_id"]');
     const selectPropiedad = formulario.querySelector('[data-ag-propiedades-select]');
@@ -339,7 +347,7 @@ document.addEventListener('DOMContentLoaded', () => {
         accionCrearLote.addEventListener('click', (e) => {
             e.preventDefault();
             guardarBorrador();
-            window.location.href = `${urlCrearLote}?propiedad_id=${propiedadId}&volver_a=${encodeURIComponent(window.location.href)}`;
+            window.location.href = `${urlCrearLote}?propiedad_id=${propiedadId}&${queryOrigen()}`;
         });
         if (modalCrearLoteSlot) {
             modalCrearLoteSlot.innerHTML = '';
@@ -521,7 +529,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (accionCrearPropiedad) {
                 if (clienteId) {
                     const urlCrear = accionCrearPropiedad.href.split('?')[0];
-                    accionCrearPropiedad.href = `${urlCrear}?cliente_id=${clienteId}&volver_a=${encodeURIComponent(window.location.href)}`;
+                    accionCrearPropiedad.href = `${urlCrear}?cliente_id=${clienteId}&${queryOrigen()}`;
                     accionCrearPropiedad.removeAttribute('hidden');
                 } else {
                     accionCrearPropiedad.setAttribute('hidden', '');

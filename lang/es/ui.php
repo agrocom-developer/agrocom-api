@@ -81,6 +81,14 @@ return [
         'close' => 'Cerrar',
     ],
 
+    // Botón "Volver" del header de formularios (molecules/boton-volver,
+    // memento de navegación, 17/9/2026): microcopy del componente, no de
+    // cada pantalla — mismo criterio que 'action' de arriba.
+    'navegacion' => [
+        'volver' => 'Volver',
+        'volver_a' => 'Volver a :origen',
+    ],
+
     // Botón de cerrar genérico.
     'cerrar' => 'Cerrar',
 

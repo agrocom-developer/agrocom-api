@@ -44,7 +44,7 @@
         :value="$contacto['tipo'] ?? null"
         :placeholder="__('comercial.clientes.contacto_tipo_placeholder')"
         required
-        :error="$errors->first(\"contactos.{$indice}.tipo\")"
+        :error="$errors->first('contactos.'.$indice.'.tipo')"
         data-ag-contacto-tipo
     />
 
@@ -61,7 +61,7 @@
             :label="__('comercial.clientes.contacto_tipo_otro')"
             :value="$contacto['tipo_otro'] ?? ''"
             :help="__('comercial.clientes.contacto_tipo_otro_ayuda')"
-            :error="$errors->first(\"contactos.{$indice}.tipo_otro\")"
+            :error="$errors->first('contactos.'.$indice.'.tipo_otro')"
         />
     </div>
 
@@ -71,7 +71,7 @@
         :label="__('comercial.clientes.contacto_nombre')"
         :value="$contacto['nombre'] ?? ''"
         required
-        :error="$errors->first(\"contactos.{$indice}.nombre\")"
+        :error="$errors->first('contactos.'.$indice.'.nombre')"
     />
 
     <x-atoms.input
@@ -79,7 +79,7 @@
         name="contactos[{{ $indice }}][telefono]"
         :label="__('comercial.clientes.contacto_telefono')"
         :value="$contacto['telefono'] ?? ''"
-        :error="$errors->first(\"contactos.{$indice}.telefono\")"
+        :error="$errors->first('contactos.'.$indice.'.telefono')"
     />
 
     <x-atoms.input
@@ -87,7 +87,7 @@
         name="contactos[{{ $indice }}][email]"
         :label="__('comercial.clientes.contacto_email')"
         :value="$contacto['email'] ?? ''"
-        :error="$errors->first(\"contactos.{$indice}.email\")"
+        :error="$errors->first('contactos.'.$indice.'.email')"
     />
 
     <div class="ag-form-section__field--full">
@@ -96,7 +96,7 @@
             name="contactos[{{ $indice }}][observaciones]"
             :label="__('comercial.clientes.contacto_observaciones')"
             :value="$contacto['observaciones'] ?? ''"
-            :error="$errors->first(\"contactos.{$indice}.observaciones\")"
+            :error="$errors->first('contactos.'.$indice.'.observaciones')"
         />
     </div>
 

@@ -81,9 +81,7 @@
         :subtitle="__('comercial.propiedades.subtitulo_form')"
     >
         <x-slot:actions>
-            <x-atoms.button :href="route('panel.propiedades.index')" variant="outline" icon="arrow_back">
-                {{ __('comercial.propiedades.volver') }}
-            </x-atoms.button>
+            <x-molecules.boton-volver :href="route('panel.propiedades.index')" :label="__('comercial.propiedades.volver')" />
         </x-slot:actions>
     </x-organisms.page-header>
 
