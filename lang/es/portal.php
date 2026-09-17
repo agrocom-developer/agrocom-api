@@ -26,7 +26,7 @@ return [
         'card_aplicadas' => 'Hectáreas aplicadas',
         'card_facturado' => 'Monto facturado',
         'hectareas_valor' => ':cantidad ha',
-        'monto_valor' => '$ :monto',
+        'monto_valor' => 'Bs :monto',
         'vacio' => 'Todavía no hay avance registrado para tu contrato.',
     ],
 
