@@ -1,5 +1,6 @@
 <?php
 
+use App\Dominios\Compartido\Infraestructura\Http\ErroresHttpEnEspanol;
 use App\Dominios\Seguridad\Infraestructura\Http\Middleware\ResolverRolActivo;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -40,5 +41,13 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
+        );
+
+        // Los errores que arma el propio framework al responder JSON (401,
+        // 403, 404, 405, 419, 429, 5xx) salen en inglés y a veces con nombres
+        // de clases internas: se traducen acá, respetando los mensajes
+        // propios del dominio — ver ErroresHttpEnEspanol.
+        $exceptions->render(
+            fn (Throwable $excepcion, Request $request) => ErroresHttpEnEspanol::responder($excepcion, $request),
         );
     })->create();

@@ -1,0 +1,14 @@
+{
+    "The given data was invalid.": "Los datos enviados no son válidos.",
+    "(and :count more error)": "(y :count error más)",
+    "(and :count more errors)": "(y :count errores más)",
+    "Unauthorized": "Sin autorización",
+    "Payment Required": "Pago requerido",
+    "Forbidden": "Acceso denegado",
+    "Not Found": "No encontrado",
+    "Page Expired": "La página venció",
+    "Too Many Requests": "Demasiados intentos",
+    "Server Error": "Error del servidor",
+    "Service Unavailable": "En mantenimiento",
+    "Go Home": "Volver al inicio"
+}
