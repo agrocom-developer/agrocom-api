@@ -24,8 +24,9 @@
  */
 
 /* `:root`, no `.ag-row-actions`: la consume `grid-template-columns` de la
-   FILA de cada tabla (`.ag-contratos__fila` y las otras tres), que es
-   ANCESTRO de `.ag-row-actions`, no descendiente — una custom property
+   FILA de cada tabla (`.ag-index-table__row`, `molecules/index-table`, y
+   alguna tabla propia de formulario como `.ag-contratos-form__lotes-tabla`),
+   que es ANCESTRO de `.ag-row-actions`, no descendiente — una custom property
    scopeada al propio componente no llegaría hasta ahí por herencia. Vive
    acá (el archivo del componente dueño de la restricción) y no en
    `tokens/`, porque no es un token de diseño reusable en cualquier
@@ -51,9 +52,19 @@
    solo, como en `campanias/index.blade.php`, nunca se notaba). `display:
    contents` saca el wrapper del layout — el botón de adentro sigue siendo
    un ítem flex normal — sin sacarlo del árbol del DOM que `:nth-child`
-   sigue contando. El llamador lo usa envolviendo CADA `confirm-button`
-   dentro de `row-actions`; una acción simple (un solo `<x-atoms.button>` o
-   `<a>`) no lo necesita, ya cuenta como un hijo por sí sola. */
+   sigue contando.
+
+   Vale SOLO para una fila con una única acción de confirmación (hoy,
+   "Eliminar" en clientes/propiedades/lotes/cultivos/campanias — nunca
+   entra en overflow real, pero el `<div class="modal">` extra igual corre
+   el conteo si no se envuelve). Una fila con VARIAS confirmaciones que sí
+   pueden caer en el "⋮" (contratos, campanias con cambiar-estado) no usa
+   este wrapper: usa `molecules/confirm-modal` FUERA de `row-actions` (ver
+   su docblock) — la duplicación del slot también duplicaría el `id` del
+   modal, y si la copia que Bootstrap resuelve queda oculta en el `:nth-child`
+   de la otra mitad, el modal ni siquiera se ve (bug real, 17/9/2026, ver
+   docblock de `campanias/index.blade.php`). El wrapper de acá arregla el
+   CONTEO; no arregla eso. */
 .ag-row-actions__item {
     display: contents;
 }

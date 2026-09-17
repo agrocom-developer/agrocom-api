@@ -8,8 +8,12 @@
  * El editor de mapa (`.ag-lote-mapa*`) y la grilla de campos de una fila de
  * lote (`.ag-campos-form__lote*`) ya están definidos en campos.css: el
  * formulario de esta pantalla incluye el MISMO partial
- * (`campos/_lote-fila.blade.php`), así que no se repiten acá. Todo color y
- * medida por token (CLAUDE.md invariante 11).
+ * (`campos/_lote-fila.blade.php`), así que no se repiten acá. El contenedor
+ * de la tabla del listado (`molecules/index-table`) y el layout main/aside
+ * del formulario (`molecules/form-layout`) tampoco viven acá: eran una copia
+ * casi idéntica a clientes/propiedades/campanias/contratos, extraída al
+ * catálogo (ver docs/diseno/guia_pantalla_panel.md §6.2/§6.3.1). Todo color
+ * y medida por token (CLAUDE.md invariante 11).
  */
 
 .ag-lotes,
@@ -19,105 +23,22 @@
     gap: var(--ag-space-5);
 }
 
-/* Listado (index) */
-
-.ag-lotes__tabla {
-    border: 1px solid var(--ag-color-border-card);
-    border-radius: var(--ag-radius-md);
-    background-color: var(--ag-color-surface-card);
-    overflow: hidden;
-}
-
-.ag-lotes__head,
-.ag-lotes__fila {
-    display: grid;
-    grid-template-columns: 3rem 1fr 2fr 2fr 1fr var(--ag-row-actions-width);
-    gap: var(--ag-space-4);
-    align-items: center;
-    padding: var(--ag-space-3) var(--ag-space-4);
-}
-
-.ag-lotes__acciones-head {
-    text-align: right;
-}
-
-.ag-lotes__indice {
-    color: var(--ag-color-text-faint);
-    font-family: var(--ag-font-family-mono);
-    font-size: var(--ag-font-size-xs);
-}
-
-.ag-lotes__head {
-    background-color: var(--ag-color-bg-table-head);
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-xs);
-    font-weight: var(--ag-font-weight-medium);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.ag-lotes__fila {
-    border-top: 1px solid var(--ag-color-border-row);
-    color: var(--ag-color-text);
-    font-size: var(--ag-font-size-sm);
-}
+/* Listado (index): 5 columnas propias de `molecules/index-table` (índice,
+   código, propiedad, cliente, hectáreas, acciones) — el resto de la
+   anatomía de la tabla vive en el componente. */
 
 /* Formulario (create/edit) — aside "Siembra actual" en edición, mismo
-   criterio que .ag-propiedades-form__layout/__main/__aside. */
-
-.ag-lotes-form__layout {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--ag-space-5);
-}
-
-.ag-lotes-form__main {
-    flex: 1 1 32rem;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-5);
-}
-
-.ag-lotes-form__main:only-child {
-    flex-basis: 100%;
-}
+   criterio que `molecules/form-layout` en las otras 4 páginas de este
+   patrón. */
 
 /* Envuelve las secciones "Datos del lote" + "Mapa" (16/9/2026, dos
    secciones separadas que antes eran una sola) — mismo gap que el resto,
-   para que no queden pegadas por vivir un nivel más adentro que
-   `.ag-lotes-form__main`. */
+   para que no queden pegadas por vivir un nivel más adentro que el `main`
+   de `molecules/form-layout`. */
 .ag-lotes-form__ficha {
     display: flex;
     flex-direction: column;
     gap: var(--ag-space-5);
-}
-
-.ag-lotes-form__aside {
-    flex: 1 1 19rem;
-    min-width: 16rem;
-    max-width: 20rem;
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-5);
-    position: sticky;
-    top: var(--ag-space-4);
-}
-
-@media (max-width: 1199.98px) {
-    .ag-lotes-form__layout {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .ag-lotes-form__aside {
-        max-width: none;
-        position: static;
-    }
-}
-
-.ag-lotes__fila:hover {
-    background-color: var(--ag-color-bg-row-hover);
 }
 
 .ag-lotes__codigo {
@@ -146,31 +67,4 @@
 
 .ag-lotes__hectareas {
     font-family: var(--ag-font-family-mono);
-}
-
-.ag-lotes__acciones {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--ag-space-2);
-}
-
-
-@media (max-width: 992px) {
-    .ag-lotes__head {
-        display: none;
-    }
-
-    .ag-lotes__fila {
-        grid-template-columns: 1fr;
-        gap: var(--ag-space-1);
-    }
-
-    .ag-lotes__indice {
-        display: none;
-    }
-
-    .ag-lotes__acciones {
-        justify-content: flex-start;
-        margin-top: var(--ag-space-2);
-    }
 }

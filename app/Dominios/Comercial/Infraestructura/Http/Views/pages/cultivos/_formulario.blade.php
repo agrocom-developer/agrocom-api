@@ -12,14 +12,24 @@
     — mismo criterio en alta y en edición.
 
     Dos tarjetas: "Datos del cultivo" (nombre común, nombre científico,
-    tipo, ciclo de vida, activo) y "Notas agronómicas" (texto libre aparte,
-    a propósito — es sugerencia informativa de un agrónomo, no un dato
+    tipo, ciclo de vida) y "Notas agronómicas" (texto libre aparte, a
+    propósito — es sugerencia informativa de un agrónomo, no un dato
     estructurado del catálogo; memoria "la mezcla es del cliente": Agrocom
     no define ni valida la composición del caldo).
 
-    El aside pegajoso del arquetipo (summary-card/progress-meter) se omite a
-    propósito, mismo criterio que bases/clientes/campos: ningún dato de solo
-    lectura justifica hoy la columna lateral.
+    Sin campo `activo`: es una propiedad de esquema (todo registro nace
+    activo), no una decisión del formulario — §6.3.3 de
+    docs/diseno/guia_pantalla_panel.md. Se activa/desactiva desde una pieza
+    aparte, todavía sin construir.
+
+    Resumen relacionado en edición (§6.3.1 de la guía, "componente estático
+    primero"): todavía no hay contrato de lectura por cultivo (los que
+    existen, `LecturaCultivoLote`, agrupan por CAMPAÑA, no por cultivo), así
+    que el aside es un `empty-state` fijo en vez de datos reales — el botón
+    ya apunta a una ruta real (`panel.propiedades.index`, donde se carga la
+    siembra de un lote). Cuando exista el contrato, esto pasa a
+    `resumenRelacionado()` resuelto en el controlador, sin tocar esta
+    anatomía.
 --}}
 @php
     $esEdicion = $cultivo !== null;
@@ -29,7 +39,6 @@
     $tipoCultivoValor = old('tipo_cultivo', $cultivo?->tipo_cultivo?->value ?? '');
     $cicloVidaValor = old('ciclo_vida', $cultivo?->ciclo_vida?->value ?? '');
     $notasAgronomicas = old('notas_agronomicas', $cultivo?->notas_agronomicas ?? '');
-    $activo = old('activo', $cultivo?->activo ?? true);
 
     $tiposCultivoOptions = collect($tiposCultivo)->mapWithKeys(fn ($tipo) => [
         $tipo->value => __('comercial.cultivos.tipo_cultivo_opcion.'.$tipo->value),
@@ -62,9 +71,26 @@
         </x-molecules.alert-strip>
     @endif
 
+    <x-molecules.form-layout>
+    @if ($esEdicion)
+        <x-slot:aside>
+            <x-molecules.empty-state
+                icon="grass"
+                :title="__('comercial.cultivos.resumen_titulo')"
+                :detail="__('comercial.cultivos.resumen_detalle')"
+            >
+                <x-slot:action>
+                    <x-atoms.button :href="route('panel.propiedades.index')" variant="outline" icon="arrow_forward">
+                        {{ __('comercial.cultivos.resumen_accion') }}
+                    </x-atoms.button>
+                </x-slot:action>
+            </x-molecules.empty-state>
+        </x-slot:aside>
+    @endif
+
     <x-molecules.form-section
         :title="__('comercial.cultivos.seccion_datos')"
-        :count="__('comercial.cultivos.campos_contador', ['cantidad' => 5])"
+        :count="__('comercial.cultivos.campos_contador', ['cantidad' => 4])"
     >
         <x-atoms.input
             type="text"
@@ -107,17 +133,6 @@
             required
             :error="$errors->first('ciclo_vida')"
         />
-
-        <div class="ag-form-section__field--full">
-            <input type="hidden" name="activo" value="0">
-            <x-atoms.switch
-                name="activo"
-                value="1"
-                :label="__('comercial.cultivos.campo_activo')"
-                :checked="(bool) $activo"
-                :help="__('comercial.cultivos.campo_activo_ayuda')"
-            />
-        </div>
     </x-molecules.form-section>
 
     <x-molecules.form-section
@@ -145,4 +160,5 @@
             </x-atoms.button>
         </x-slot:actions>
     </x-organisms.form-actions-bar>
+    </x-molecules.form-layout>
 </form>

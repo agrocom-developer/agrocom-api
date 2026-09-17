@@ -58,7 +58,7 @@
 
             @php
                 $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
-                $filtrosActivosCount = collect(['tipo_cultivo', 'ciclo_vida', 'activo'])
+                $filtrosActivosCount = collect(['tipo_cultivo', 'ciclo_vida'])
                     ->filter(fn ($clave) => $filtros[$clave] !== '')
                     ->count();
             @endphp
@@ -86,18 +86,6 @@
                             :label="__('comercial.cultivos.filtro_ciclo_vida')"
                             :options="collect($ciclosVida)->mapWithKeys(fn ($ciclo) => [$ciclo->value => __('comercial.cultivos.ciclo_vida_opcion.'.$ciclo->value)])"
                             :value="$filtros['ciclo_vida'] !== '' ? $filtros['ciclo_vida'] : null"
-                            :placeholder="__('comercial.cultivos.filtro_todos')"
-                        />
-
-                        <x-atoms.select
-                            name="activo"
-                            id="filtro-activo"
-                            :label="__('comercial.cultivos.filtro_estado')"
-                            :options="[
-                                '1' => __('comercial.cultivos.estado_activo'),
-                                '0' => __('comercial.cultivos.estado_inactivo'),
-                            ]"
-                            :value="$filtros['activo'] !== '' ? $filtros['activo'] : null"
                             :placeholder="__('comercial.cultivos.filtro_todos')"
                         />
                     </x-organisms.filter-panel>
@@ -132,7 +120,6 @@
                         <span role="columnheader">{{ __('comercial.cultivos.col_nombre') }}</span>
                         <span role="columnheader">{{ __('comercial.cultivos.col_tipo') }}</span>
                         <span role="columnheader">{{ __('comercial.cultivos.col_ciclo_vida') }}</span>
-                        <span role="columnheader">{{ __('comercial.cultivos.col_estado') }}</span>
                         <span role="columnheader" class="ag-cultivos__acciones-head">{{ __('ui.tabla.col_acciones') }}</span>
                     </div>
 
@@ -157,13 +144,23 @@
                             <span role="cell">
                                 {{ $cultivo->ciclo_vida ? __('comercial.cultivos.ciclo_vida_opcion.'.$cultivo->ciclo_vida->value) : '—' }}
                             </span>
-                            <span role="cell">
-                                <x-atoms.badge :variant="$cultivo->activo ? 'success' : 'neutral'">
-                                    {{ __($cultivo->activo ? 'comercial.cultivos.estado_activo' : 'comercial.cultivos.estado_inactivo') }}
-                                </x-atoms.badge>
-                            </span>
 
                             <span role="cell" class="ag-cultivos__acciones">
+                                {{-- Form FUERA de row-actions a propósito: ese organism repite su
+                                     slot dos veces (visible/menú) — un <form> con id ahí adentro se
+                                     duplicaría con el mismo id, HTML inválido. El botón de
+                                     confirm-button lo envía por su atributo `form`. --}}
+                                @puede('comercial.cultivo.eliminar')
+                                    <form
+                                        id="cultivo-eliminar-{{ $cultivo->id }}"
+                                        method="POST"
+                                        action="{{ route('panel.cultivos.destroy', $cultivo) }}"
+                                    >
+                                        @csrf
+                                        @method('DELETE')
+                                    </form>
+                                @endpuede
+
                                 <x-organisms.row-actions>
                                     @puede('comercial.cultivo.editar')
                                         <x-atoms.button :href="route('panel.cultivos.edit', $cultivo)" variant="warning-outline" size="sm" icon="edit">
@@ -172,17 +169,19 @@
                                     @endpuede
 
                                     @puede('comercial.cultivo.eliminar')
-                                        <form
-                                            method="POST"
-                                            action="{{ route('panel.cultivos.destroy', $cultivo) }}"
-                                            onsubmit="return confirm('{{ __('comercial.cultivos.confirmar_baja') }}')"
-                                        >
-                                            @csrf
-                                            @method('DELETE')
-                                            <x-atoms.button type="submit" variant="danger-outline" size="sm" icon="delete">
+                                        <span class="ag-row-actions__item">
+                                            <x-molecules.confirm-button
+                                                :form-id="'cultivo-eliminar-' . $cultivo->id"
+                                                :title="__('comercial.cultivos.confirmar_eliminar_titulo')"
+                                                :message="__('comercial.cultivos.confirmar_baja')"
+                                                :confirm-label="__('comercial.cultivos.eliminar_accion')"
+                                                variant="danger-outline"
+                                                size="sm"
+                                                icon="delete"
+                                            >
                                                 {{ __('comercial.cultivos.eliminar_accion') }}
-                                            </x-atoms.button>
-                                        </form>
+                                            </x-molecules.confirm-button>
+                                        </span>
                                     @endpuede
                                 </x-organisms.row-actions>
                             </span>

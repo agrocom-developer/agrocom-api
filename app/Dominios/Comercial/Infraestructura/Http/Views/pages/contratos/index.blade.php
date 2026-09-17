@@ -40,23 +40,19 @@
     Columna de acciones (tarea "listado-contratos-acciones", 16/9/2026,
     replica el patrón de `usuarios/index.blade.php`): `organisms/row-actions`
     en vez de botones sueltos — colapsa a un menú "⋮" las que no entran en
-    la fila (nunca más de 2 sueltas, ver su docblock). Los `<form>` de cambio
-    de estado viven FUERA de `row-actions` (ese organism repite su slot dos
-    veces, un `<form>` ahí adentro se duplicaría con el mismo id) y los
-    botones lo envían por su atributo HTML `form`, igual que
-    `campanias/index.blade.php`. Las cinco transiciones usan
-    `molecules/confirm-button` (mismo patrón que "Abrir"/"Cerrar campaña") en
-    vez del `confirm()` nativo del navegador — tono por destino: `success` a
-    vigente (aprobar/reanudar), `info` a finalizado, `warning` a pausado,
-    `danger` a cancelado. Cada `confirm-button` va envuelto en un
-    `<span class="ag-row-actions__item">` (bug real, encontrado 16/9/2026 en
-    vivo: ese molecule renderiza el botón Y su modal como hermanos, no un
-    solo nodo — sin el wrapper, el modal oculto se cuela como hijo extra en
-    el `:nth-child` que `row-actions` usa para decidir el cupo visible y
-    esconde una acción real que sí entraba; ver el comentario en
-    `resources/css/components/row-actions.css`). Con un solo
-    `confirm-button` por fila (`campanias/index.blade.php`) nunca hacía
-    falta — acá una fila `vigente` llega a tener tres en simultáneo.
+    la fila (nunca más de 2 sueltas, ver su docblock). Los `<form>` Y los
+    `molecules/confirm-modal` de cambio de estado viven FUERA de
+    `row-actions` (ese organism repite su slot dos veces — un `<form>` o un
+    `<div class="modal">` con id ahí adentro se duplicaría, HTML inválido, y
+    si la acción caía en el overflow del "⋮" Bootstrap abría el PRIMER id
+    del documento, que quedaba oculto por `:nth-child` en la mitad visible:
+    pantalla oscura sin modal — bug real, encontrado 17/9/2026 en vivo en
+    `campanias/index.blade.php`, mismo síntoma que ya había obligado al
+    wrapper `ag-row-actions__item` un día antes). Dentro de `row-actions`
+    solo quedan botones disparadores normales (`data-bs-toggle="modal"
+    data-bs-target="#..."`), que se duplican sin problema porque no tienen
+    id propio — tono por destino: `success` a vigente (aprobar/reanudar),
+    `info` a finalizado, `warning` a pausado, `danger` a cancelado.
 
     Estilos en resources/css/pages/contratos.css — cero color hardcodeado
     (CLAUDE.md invariante 11).
@@ -166,16 +162,23 @@
                     />
                 @endif
             @else
-                <div class="ag-contratos__tabla" role="table">
-                    <div class="ag-contratos__head" role="row">
-                        <span role="columnheader" class="ag-contratos__indice">{{ __('ui.tabla.col_indice') }}</span>
+                {{-- La última columna (acciones) es un ancho fijo, no `auto` — mismo
+                     motivo que usuarios.css: con `auto`, el head (rótulo "Acciones") y
+                     la fila (organisms/row-actions) de `molecules/index-table` son
+                     grids separados que resuelven ese ancho cada uno por su cuenta y
+                     quedan corridos. `--ag-row-actions-width`, no un valor en rem
+                     propio: ver el comentario de resources/css/components/row-actions.css
+                     (tarea "listado-contratos-acciones", 16/9/2026). --}}
+                <x-molecules.index-table columns="3rem 2fr 1fr 1fr 1.4fr 1fr var(--ag-row-actions-width)">
+                    <x-slot:head>
+                        <span role="columnheader" class="ag-index-table__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('comercial.contratos.col_cliente') }}</span>
                         <span role="columnheader">{{ __('comercial.contratos.col_hectareas') }}</span>
                         <span role="columnheader">{{ __('comercial.contratos.col_monto_total') }}</span>
                         <span role="columnheader">{{ __('comercial.contratos.col_vigencia') }}</span>
                         <span role="columnheader">{{ __('comercial.contratos.col_estado') }}</span>
-                        <span role="columnheader" class="ag-contratos__acciones-head">{{ __('ui.tabla.col_acciones') }}</span>
-                    </div>
+                        <span role="columnheader" class="ag-index-table__acciones-head">{{ __('ui.tabla.col_acciones') }}</span>
+                    </x-slot:head>
 
                     @foreach ($contratos as $contrato)
                         @php
@@ -188,8 +191,8 @@
                             ];
                             $estadoValor = $contrato->estado->value;
                         @endphp
-                        <div class="ag-contratos__fila" role="row">
-                            <span role="cell" class="ag-contratos__indice">
+                        <div class="ag-index-table__row" role="row">
+                            <span role="cell" class="ag-index-table__indice">
                                 {{ ($contratos->currentPage() - 1) * $contratos->perPage() + $loop->iteration }}
                             </span>
                             <span role="cell" class="ag-contratos__cliente">{{ $contrato->cliente->razon_social }}</span>
@@ -208,13 +211,18 @@
                                 </x-atoms.badge>
                             </span>
 
-                            <span role="cell" class="ag-contratos__acciones">
+                            <span role="cell" class="ag-index-table__acciones">
                                 @php
                                     $formIdAprobar = "contrato-aprobar-{$contrato->id}";
                                     $formIdFinalizar = "contrato-finalizar-{$contrato->id}";
                                     $formIdPausar = "contrato-pausar-{$contrato->id}";
                                     $formIdReanudar = "contrato-reanudar-{$contrato->id}";
                                     $formIdCancelar = "contrato-cancelar-{$contrato->id}";
+                                    $modalIdAprobar = "contrato-aprobar-modal-{$contrato->id}";
+                                    $modalIdFinalizar = "contrato-finalizar-modal-{$contrato->id}";
+                                    $modalIdPausar = "contrato-pausar-modal-{$contrato->id}";
+                                    $modalIdReanudar = "contrato-reanudar-modal-{$contrato->id}";
+                                    $modalIdCancelar = "contrato-cancelar-modal-{$contrato->id}";
                                 @endphp
 
                                 {{-- Forms FUERA de row-actions a propósito (mismo motivo que
@@ -257,6 +265,76 @@
                                     @endif
                                 @endpuede
 
+                                {{-- Modales FUERA de row-actions, mismo motivo que los forms de
+                                     arriba: `confirm-button` metía su <div class="modal"> como hijo
+                                     del slot que row-actions duplica dos veces — mismo id repetido
+                                     (HTML inválido) y, si la acción caía en el overflow del menú
+                                     "⋮", Bootstrap resolvía el PRIMER id del documento (el que
+                                     quedaba oculto por :nth-child en la mitad visible): pantalla
+                                     oscura sin modal (bug real, 17/9/2026, encontrado en vivo en
+                                     campanias/index.blade.php). Los triggers viven adentro de
+                                     row-actions (botones normales, se duplican sin problema); el
+                                     modal, una sola vez, acá afuera. --}}
+                                @puede('comercial.contrato.cambiar_estado')
+                                    @if ($estadoValor === 'borrador')
+                                        <x-molecules.confirm-modal
+                                            :id="$modalIdAprobar"
+                                            :form-id="$formIdAprobar"
+                                            :title="__('comercial.contratos.confirmar_aprobar_titulo')"
+                                            :message="__('comercial.contratos.confirmar_aprobar')"
+                                            :confirm-label="__('comercial.contratos.accion_aprobar')"
+                                            tone="success"
+                                        />
+
+                                        <x-molecules.confirm-modal
+                                            :id="$modalIdCancelar"
+                                            :form-id="$formIdCancelar"
+                                            :title="__('comercial.contratos.confirmar_cancelar_titulo')"
+                                            :message="__('comercial.contratos.confirmar_cancelar')"
+                                            :confirm-label="__('comercial.contratos.accion_cancelar')"
+                                            :cancel-label="__('ui.action.close')"
+                                            tone="danger"
+                                        />
+                                    @elseif ($estadoValor === 'vigente')
+                                        <x-molecules.confirm-modal
+                                            :id="$modalIdFinalizar"
+                                            :form-id="$formIdFinalizar"
+                                            :title="__('comercial.contratos.confirmar_finalizar_titulo')"
+                                            :message="__('comercial.contratos.confirmar_finalizar')"
+                                            :confirm-label="__('comercial.contratos.accion_finalizar')"
+                                            tone="info"
+                                        />
+
+                                        <x-molecules.confirm-modal
+                                            :id="$modalIdPausar"
+                                            :form-id="$formIdPausar"
+                                            :title="__('comercial.contratos.confirmar_pausar_titulo')"
+                                            :message="__('comercial.contratos.confirmar_pausar')"
+                                            :confirm-label="__('comercial.contratos.accion_pausar')"
+                                            tone="warning"
+                                        />
+
+                                        <x-molecules.confirm-modal
+                                            :id="$modalIdCancelar"
+                                            :form-id="$formIdCancelar"
+                                            :title="__('comercial.contratos.confirmar_cancelar_titulo')"
+                                            :message="__('comercial.contratos.confirmar_cancelar')"
+                                            :confirm-label="__('comercial.contratos.accion_cancelar')"
+                                            :cancel-label="__('ui.action.close')"
+                                            tone="danger"
+                                        />
+                                    @elseif ($estadoValor === 'pausado')
+                                        <x-molecules.confirm-modal
+                                            :id="$modalIdReanudar"
+                                            :form-id="$formIdReanudar"
+                                            :title="__('comercial.contratos.confirmar_reanudar_titulo')"
+                                            :message="__('comercial.contratos.confirmar_reanudar')"
+                                            :confirm-label="__('comercial.contratos.accion_reanudar')"
+                                            tone="success"
+                                        />
+                                    @endif
+                                @endpuede
+
                                 <x-organisms.row-actions>
                                     @puede('comercial.contrato.editar')
                                         <x-atoms.button :href="route('panel.contratos.edit', $contrato)" variant="warning-outline" size="sm" icon="edit">
@@ -266,104 +344,36 @@
 
                                     @puede('comercial.contrato.cambiar_estado')
                                         @if ($estadoValor === 'borrador')
-                                            <span class="ag-row-actions__item">
-                                                <x-molecules.confirm-button
-                                                    :form-id="$formIdAprobar"
-                                                    :title="__('comercial.contratos.confirmar_aprobar_titulo')"
-                                                    :message="__('comercial.contratos.confirmar_aprobar')"
-                                                    :confirm-label="__('comercial.contratos.accion_aprobar')"
-                                                    tone="success"
-                                                    variant="outline"
-                                                    size="sm"
-                                                    icon="check_circle"
-                                                >
-                                                    {{ __('comercial.contratos.accion_aprobar') }}
-                                                </x-molecules.confirm-button>
-                                            </span>
+                                            <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#{{ $modalIdAprobar }}" variant="outline" size="sm" icon="check_circle">
+                                                {{ __('comercial.contratos.accion_aprobar') }}
+                                            </x-atoms.button>
 
-                                            <span class="ag-row-actions__item">
-                                                <x-molecules.confirm-button
-                                                    :form-id="$formIdCancelar"
-                                                    :title="__('comercial.contratos.confirmar_cancelar_titulo')"
-                                                    :message="__('comercial.contratos.confirmar_cancelar')"
-                                                    :confirm-label="__('comercial.contratos.accion_cancelar')"
-                                                    :cancel-label="__('ui.action.close')"
-                                                    tone="danger"
-                                                    variant="danger-outline"
-                                                    size="sm"
-                                                    icon="cancel"
-                                                >
-                                                    {{ __('comercial.contratos.accion_cancelar') }}
-                                                </x-molecules.confirm-button>
-                                            </span>
+                                            <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#{{ $modalIdCancelar }}" variant="danger-outline" size="sm" icon="cancel">
+                                                {{ __('comercial.contratos.accion_cancelar') }}
+                                            </x-atoms.button>
                                         @elseif ($estadoValor === 'vigente')
-                                            <span class="ag-row-actions__item">
-                                                <x-molecules.confirm-button
-                                                    :form-id="$formIdFinalizar"
-                                                    :title="__('comercial.contratos.confirmar_finalizar_titulo')"
-                                                    :message="__('comercial.contratos.confirmar_finalizar')"
-                                                    :confirm-label="__('comercial.contratos.accion_finalizar')"
-                                                    tone="info"
-                                                    variant="outline"
-                                                    size="sm"
-                                                    icon="check_circle"
-                                                >
-                                                    {{ __('comercial.contratos.accion_finalizar') }}
-                                                </x-molecules.confirm-button>
-                                            </span>
+                                            <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#{{ $modalIdFinalizar }}" variant="outline" size="sm" icon="check_circle">
+                                                {{ __('comercial.contratos.accion_finalizar') }}
+                                            </x-atoms.button>
 
-                                            <span class="ag-row-actions__item">
-                                                <x-molecules.confirm-button
-                                                    :form-id="$formIdPausar"
-                                                    :title="__('comercial.contratos.confirmar_pausar_titulo')"
-                                                    :message="__('comercial.contratos.confirmar_pausar')"
-                                                    :confirm-label="__('comercial.contratos.accion_pausar')"
-                                                    tone="warning"
-                                                    variant="warning-outline"
-                                                    size="sm"
-                                                    icon="pause_circle"
-                                                >
-                                                    {{ __('comercial.contratos.accion_pausar') }}
-                                                </x-molecules.confirm-button>
-                                            </span>
+                                            <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#{{ $modalIdPausar }}" variant="warning-outline" size="sm" icon="pause_circle">
+                                                {{ __('comercial.contratos.accion_pausar') }}
+                                            </x-atoms.button>
 
-                                            <span class="ag-row-actions__item">
-                                                <x-molecules.confirm-button
-                                                    :form-id="$formIdCancelar"
-                                                    :title="__('comercial.contratos.confirmar_cancelar_titulo')"
-                                                    :message="__('comercial.contratos.confirmar_cancelar')"
-                                                    :confirm-label="__('comercial.contratos.accion_cancelar')"
-                                                    :cancel-label="__('ui.action.close')"
-                                                    tone="danger"
-                                                    variant="danger-outline"
-                                                    size="sm"
-                                                    icon="cancel"
-                                                >
-                                                    {{ __('comercial.contratos.accion_cancelar') }}
-                                                </x-molecules.confirm-button>
-                                            </span>
+                                            <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#{{ $modalIdCancelar }}" variant="danger-outline" size="sm" icon="cancel">
+                                                {{ __('comercial.contratos.accion_cancelar') }}
+                                            </x-atoms.button>
                                         @elseif ($estadoValor === 'pausado')
-                                            <span class="ag-row-actions__item">
-                                                <x-molecules.confirm-button
-                                                    :form-id="$formIdReanudar"
-                                                    :title="__('comercial.contratos.confirmar_reanudar_titulo')"
-                                                    :message="__('comercial.contratos.confirmar_reanudar')"
-                                                    :confirm-label="__('comercial.contratos.accion_reanudar')"
-                                                    tone="success"
-                                                    variant="outline"
-                                                    size="sm"
-                                                    icon="play_circle"
-                                                >
-                                                    {{ __('comercial.contratos.accion_reanudar') }}
-                                                </x-molecules.confirm-button>
-                                            </span>
+                                            <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#{{ $modalIdReanudar }}" variant="outline" size="sm" icon="play_circle">
+                                                {{ __('comercial.contratos.accion_reanudar') }}
+                                            </x-atoms.button>
                                         @endif
                                     @endpuede
                                 </x-organisms.row-actions>
                             </span>
                         </div>
                     @endforeach
-                </div>
+                </x-molecules.index-table>
 
                 <x-molecules.pagination :paginator="$contratos" :aria-label="__('comercial.contratos.paginacion_aria')" />
             @endif

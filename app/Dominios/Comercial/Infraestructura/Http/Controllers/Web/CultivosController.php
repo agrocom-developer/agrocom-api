@@ -51,7 +51,6 @@ final class CultivosController
         $busqueda = $request->string('q')->toString();
         $tipoCultivo = $request->string('tipo_cultivo')->toString();
         $cicloVida = $request->string('ciclo_vida')->toString();
-        $activo = $request->string('activo')->toString();
 
         return view('comercial::pages.cultivos.index', [
             ...$this->autorizacion->cascara($request),
@@ -59,13 +58,11 @@ final class CultivosController
                 busqueda: $busqueda !== '' ? $busqueda : null,
                 tipoCultivo: $tipoCultivo !== '' ? $tipoCultivo : null,
                 cicloVida: $cicloVida !== '' ? $cicloVida : null,
-                activo: $activo !== '' ? $activo === '1' : null,
             ),
             'filtros' => [
                 'q' => $busqueda,
                 'tipo_cultivo' => $tipoCultivo,
                 'ciclo_vida' => $cicloVida,
-                'activo' => $activo,
             ],
             'tiposCultivo' => TipoCultivo::cases(),
             'ciclosVida' => CicloVidaCultivo::cases(),
@@ -96,7 +93,6 @@ final class CultivosController
                 (string) $datos['tipo_cultivo'],
                 (string) $datos['ciclo_vida'],
                 isset($datos['notas_agronomicas']) ? (string) $datos['notas_agronomicas'] : null,
-                (bool) ($datos['activo'] ?? true),
             );
         } catch (CultivoDuplicado $excepcion) {
             return redirect()
@@ -137,7 +133,6 @@ final class CultivosController
                 (string) $datos['tipo_cultivo'],
                 (string) $datos['ciclo_vida'],
                 isset($datos['notas_agronomicas']) ? (string) $datos['notas_agronomicas'] : null,
-                (bool) ($datos['activo'] ?? true),
             );
         } catch (CultivoDuplicado $excepcion) {
             return redirect()

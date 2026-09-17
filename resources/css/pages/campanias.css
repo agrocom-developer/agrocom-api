@@ -7,8 +7,12 @@
  *
  * El wrapper `.ag-campanias`/`.ag-campanias-form` sigue el mismo patrón que
  * `.ag-bases`/`.ag-bases-form`: flex en columna con un único `gap` en vez de
- * `margin-top` repetido en cada hijo. Todo color y medida por token
- * (CLAUDE.md invariante 11).
+ * `margin-top` repetido en cada hijo. El contenedor de la tabla del listado
+ * (`molecules/index-table`) y el layout main/aside del formulario
+ * (`molecules/form-layout`) tampoco viven acá: eran una copia casi idéntica
+ * a clientes/propiedades/lotes/contratos, extraída al catálogo (ver
+ * docs/diseno/guia_pantalla_panel.md §6.2/§6.3.1). Todo color y medida por
+ * token (CLAUDE.md invariante 11).
  */
 
 .ag-campanias,
@@ -18,79 +22,11 @@
     gap: var(--ag-space-5);
 }
 
-/* Listado (index) */
-
-.ag-campanias__tabla {
-    border: 1px solid var(--ag-color-border-card);
-    border-radius: var(--ag-radius-md);
-    background-color: var(--ag-color-surface-card);
-    overflow: hidden;
-}
-
-/* SIETE columnas, una por celda: índice · código · nombre · vigencia ·
-   estado · actividad · acciones (sin columna de cliente desde la corrección
-   del 15/9/2026, ADR 0015 — la campaña es catálogo compartido). Nacieron
-   cinco (tarea 69) y la fila siempre tuvo seis celdas, así que la de
-   acciones no entraba en el track explícito y el grid le abría una FILA
-   IMPLÍCITA: "Editar" y "Cerrar" aparecían debajo del nombre del cliente, en
-   la primera columna, con la fila al doble de alto. Reportado por el dueño
-   sobre el panel andando (9/9/2026). El resto de los listados del panel ya
-   declaraba tantas columnas como celdas.
-
-   Los tracks de dato van en `fr`, ninguno en `auto`: el encabezado y las
-   filas son grids HERMANOS, no uno solo, así que un track `auto` lo resuelve
-   cada grid contra su propio contenido — con "VIGENCIA" arriba y una fecha
-   abajo, la columna medía distinto en cada fila y los rótulos quedaban
-   corridos respecto de los datos. Con `fr` los dos grids reparten idéntico.
-   Es también lo que hacen las otras 40 páginas de listado.
-
-   La columna de acciones es la excepción: ancho fijo (§6.2 de
-   docs/diseno/guia_pantalla_panel.md), `--ag-row-actions-width` en vez de
-   un valor en rem propio — ver el comentario de
-   resources/css/components/row-actions.css. Con `fr`, el ancho de
-   `row-actions` dependería del resto de columnas y no calzaría entre el
-   head y la fila, que son grids separados. */
-.ag-campanias__head,
-.ag-campanias__fila {
-    display: grid;
-    grid-template-columns: 3rem 0.9fr 1.6fr 1.4fr 0.8fr 0.8fr var(--ag-row-actions-width);
-    gap: var(--ag-space-4);
-    align-items: center;
-    padding: var(--ag-space-3) var(--ag-space-4);
-}
-
-.ag-campanias__indice {
-    color: var(--ag-color-text-faint);
-    font-family: var(--ag-font-family-mono);
-    font-size: var(--ag-font-size-xs);
-}
-
-/* Los rótulos de estado y acciones se alinean con lo que rotulan: el badge
-   arranca a la izquierda de su celda, los botones terminan a la derecha. */
-.ag-campanias__head > :last-child,
-.ag-campanias__acciones,
-.ag-campanias__acciones-head {
-    text-align: right;
-}
-
-.ag-campanias__head {
-    background-color: var(--ag-color-bg-table-head);
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-xs);
-    font-weight: var(--ag-font-weight-medium);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.ag-campanias__fila {
-    border-top: 1px solid var(--ag-color-border-row);
-    color: var(--ag-color-text);
-    font-size: var(--ag-font-size-sm);
-}
-
-.ag-campanias__fila:hover {
-    background-color: var(--ag-color-bg-row-hover);
-}
+/* Listado (index): 7 columnas propias de `molecules/index-table` (índice,
+   código, nombre, vigencia, estado, actividad, acciones — ver el comentario
+   con el detalle histórico de esas columnas en campanias/index.blade.php,
+   junto al prop `columns`). El resto de la anatomía de la tabla vive en el
+   componente. */
 
 .ag-campanias__codigo {
     font-weight: var(--ag-font-weight-medium);
@@ -104,88 +40,17 @@
     white-space: nowrap;
 }
 
-.ag-campanias__acciones {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: var(--ag-space-2);
-}
-
-
+/* Apilado a una columna (`molecules/index-table`, <992px) hay ancho de sobra
+   para la fecha entera, pero si el viewport es muy angosto vale más que baje
+   de línea a que desborde la tarjeta. */
 @media (max-width: 992px) {
-    .ag-campanias__head {
-        display: none;
-    }
-
-    .ag-campanias__fila {
-        grid-template-columns: 1fr;
-        gap: var(--ag-space-1);
-    }
-
-    .ag-campanias__indice {
-        display: none;
-    }
-
-    .ag-campanias__acciones {
-        justify-content: flex-start;
-        margin-top: var(--ag-space-2);
-    }
-
-    /* Apilado a una columna hay ancho de sobra para la fecha entera, pero
-       si el viewport es muy angosto vale más que baje de línea a que
-       desborde la tarjeta. */
     .ag-campanias__mono {
         white-space: normal;
     }
 }
 
-/* Formulario (create/edit) */
-
-/* Layout de dos columnas (§6.3.1 de la guía de pantalla, 15/9/2026): mismo
-   patrón que `.ag-clientes-form__layout/__main/__aside` — el aside con el
-   resumen financiero/de trabajo solo existe en edición
-   (`_formulario.blade.php`); en alta `.ag-campanias-form__main` queda sin
-   hermano (`:only-child` debajo). */
-.ag-campanias-form__layout {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--ag-space-5);
-}
-
-.ag-campanias-form__main {
-    flex: 1 1 32rem;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-5);
-}
-
-.ag-campanias-form__main:only-child {
-    flex-basis: 100%;
-}
-
-.ag-campanias-form__aside {
-    flex: 1 1 19rem;
-    min-width: 16rem;
-    max-width: 20rem;
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-5);
-    position: sticky;
-    top: var(--ag-space-4);
-}
-
-@media (max-width: 1199.98px) {
-    .ag-campanias-form__layout {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .ag-campanias-form__aside {
-        max-width: none;
-        position: static;
-    }
-}
+/* Formulario (create/edit): el layout de dos columnas (§6.3.1 de la guía de
+   pantalla) es `molecules/form-layout`. */
 
 /* Chip de estado junto al subtítulo (15/9/2026, pedido directo — "que se
    note más"): vive en el slot `chip` de `organisms/page-header`, mismo

@@ -73,8 +73,7 @@
         {!! json_encode($referenciaMapa) !!}
     </script>
 
-    <div class="ag-lotes-form__layout">
-    <div class="ag-lotes-form__main">
+    <x-molecules.form-layout>
     <x-organisms.page-header
         :title="$esEdicion ? __('comercial.lotes.titulo_editar') : __('comercial.lotes.titulo_crear')"
         :subtitle="__('comercial.lotes.subtitulo_form')"
@@ -157,10 +156,9 @@
             </x-atoms.button>
         </x-slot:actions>
     </x-organisms.form-actions-bar>
-    </div>
 
     @if ($esEdicion)
-        <aside class="ag-lotes-form__aside">
+        <x-slot:aside>
             @foreach ($resumenLote ?? [] as $resumen)
                 @if ($resumen['tieneDatos'])
                     <x-molecules.summary-card :title="$resumen['titulo']" :items="$resumen['items']">
@@ -188,7 +186,7 @@
                     </x-molecules.empty-state>
                 @endif
             @endforeach
-        </aside>
+        </x-slot:aside>
     @endif
-    </div>
+    </x-molecules.form-layout>
 </form>

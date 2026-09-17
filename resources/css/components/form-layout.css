@@ -1,0 +1,67 @@
+/*
+ * Molecule: form-layout (resources/views/components/molecules/form-layout.blade.php)
+ *
+ * Layout de dos columnas del arquetipo Formulario (§6.3 regla 4 / §6.3.1 de
+ * docs/diseno/guia_pantalla_panel.md): `main` crece, `aside` es una columna
+ * angosta pegajosa que se apila debajo antes de 1200px. Antes de este
+ * componente, clientes.css/propiedades.css/campanias.css/lotes.css/
+ * contratos.css declaraban exactamente estas mismas reglas con su propio
+ * prefijo de página (`.ag-clientes-form__layout`, etc.).
+ */
+
+.ag-form-layout {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--ag-space-5);
+}
+
+.ag-form-layout__main {
+    flex: 1 1 32rem;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+/* Sin aside (alta: un registro recién creado no tiene nada relacionado
+   todavía, §6.3.1): ocupa el 100% del ancho a cualquier tamaño de pantalla,
+   sin depender de que el flex-grow le alcance a ganarle a un flex-basis
+   competidor que en alta ni siquiera existe. */
+.ag-form-layout__main:only-child {
+    flex-basis: 100%;
+}
+
+/* Columna lateral pegajosa: metadatos de la propia entidad o resumen
+   relacionado de otras — nunca campos editables (§6.3 regla 4). `min-width`
+   evita que se achique de más antes del breakpoint de abajo: `__main`
+   (flex-grow: 1, `min-width: 0`) es el que cede ancho primero. */
+.ag-form-layout__aside {
+    flex: 1 1 19rem;
+    min-width: 16rem;
+    max-width: 20rem;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+    position: sticky;
+    top: var(--ag-space-4);
+}
+
+@media (max-width: 1199.98px) {
+    .ag-form-layout {
+        /* `align-items: flex-start` de arriba es para el eje CRUZADO en fila
+           (desktop, vertical: no estirar main/aside a la misma altura). Al
+           pasar a columna el eje cruzado pasa a ser el HORIZONTAL — sin este
+           override, `flex-start` deja de significar "no estirar
+           verticalmente" y pasa a significar "no estirar el ancho", y
+           `__main` se encoge a su contenido en vez de ocupar el ancho
+           completo (bug real ya encontrado una vez en `.ag-clientes-form__layout`,
+           15/9/2026). */
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .ag-form-layout__aside {
+        max-width: none;
+        position: static;
+    }
+}

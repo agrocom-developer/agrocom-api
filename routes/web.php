@@ -296,14 +296,14 @@ Route::middleware('auth:interno')->group(function () {
         Route::post('/panel/versiones-apk/{version}/autorizar', [VersionesApkController::class, 'autorizar'])
             ->name('panel.versiones-apk.autorizar');
 
-        // ADR 0015 punto 1 (tarea 69): alta y mantenimiento de campañas. Sin
-        // `.destroy`: la baja es una transición de estado hacia `cerrada`, no
-        // un soft delete fuera de la máquina de estados (invariante 7).
-        // Cuatro permisos de grano fino
-        // (`campania.campania.ver`/`.crear`/`.editar`/`.cambiar_estado`)
+        // ADR 0015 punto 1 (tarea 69): alta y mantenimiento de campañas.
+        // Cinco permisos de grano fino
+        // (`campania.campania.ver`/`.crear`/`.editar`/`.cambiar_estado`/`.eliminar`)
         // verificados DENTRO del controlador contra el ROL ACTIVO — mismo
         // criterio que `contratos` arriba. `.cambiar_estado` es exclusivo del
-        // rol `dueno`: "solo el dueño cierra una campaña".
+        // rol `dueno`: "solo el dueño cierra una campaña". `.eliminar` (baja
+        // lógica, 17/9/2026) es independiente de `.cambiar_estado` — no hace
+        // falta poder cerrar una campaña para poder eliminarla.
         Route::get('/panel/campanias', [CampaniasController::class, 'index'])
             ->name('panel.campanias.index');
 
@@ -321,6 +321,9 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::post('/panel/campanias/{campania}/estado', [CampaniasController::class, 'cambiarEstado'])
             ->name('panel.campanias.cambiar-estado');
+
+        Route::delete('/panel/campanias/{campania}', [CampaniasController::class, 'destroy'])
+            ->name('panel.campanias.destroy');
 
         // HU-05 (tarea 13; extendida en HU-15, tarea 15): tablero de
         // trabajos/sesiones con filtros y detalle. Permiso

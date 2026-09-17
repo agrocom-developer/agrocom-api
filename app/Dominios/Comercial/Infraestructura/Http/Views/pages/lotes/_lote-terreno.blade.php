@@ -38,28 +38,26 @@
     $limpio = old($erroresPrefijo.'.limpio', $limpiezaActual === null ? true : $limpiezaActual === 'limpio');
     $gradoObstaculos = old($erroresPrefijo.'.grado_obstaculos', in_array($limpiezaActual, ['pocos_obstaculos', 'algunos_obstaculos', 'muchos_obstaculos'], true) ? $limpiezaActual : '');
 @endphp
-{{-- Rótulo al nivel de los demás campos (`ag-input__label`, arriba), no el
-     propio label inline de `atoms/switch` (a la derecha del control,
-     pensado para filas sueltas tipo "Activo") — así el switch queda a la
-     altura del INPUT de la celda, no del label. El label inline del switch
-     se reusa para la respuesta "Sí"/"No": el color solo (primario/gris) no
-     alcanza para leer el estado, hace falta el texto — `lotes-form.js`
-     (o `lotes-generar.js`) lo actualiza al togglear, con los dos textos ya
-     traducidos en los `data-*` para no hardcodear español en JS. --}}
-<div class="ag-input">
-    <span class="ag-input__label">{{ __('comercial.lotes.lote_limpio') }}</span>
-    <input type="hidden" name="{{ $prefijo }}[limpio]" value="0">
-    <x-atoms.switch
-        name="{{ $prefijo }}[limpio]"
-        id="{{ $idBase }}-limpio"
-        value="1"
-        :label="$limpio ? __('comercial.lotes.lote_limpio_si') : __('comercial.lotes.lote_limpio_no')"
-        :checked="(bool) $limpio"
-        data-ag-lote-limpio
-        data-ag-lote-limpio-texto-si="{{ __('comercial.lotes.lote_limpio_si') }}"
-        data-ag-lote-limpio-texto-no="{{ __('comercial.lotes.lote_limpio_no') }}"
-    />
-</div>
+{{-- `fieldLabel` pone el rótulo del campo arriba del control (mismo
+     renglón que el label de `atoms/select` de al lado, ver switch.blade.php)
+     — así el switch queda a la altura real del INPUT vecino, no de su
+     label. El `label` inline (a la derecha del track) se reserva para la
+     respuesta "Sí"/"No": el color solo (primario/gris) no alcanza para leer
+     el estado, hace falta el texto — `lotes-form.js` (o `lotes-generar.js`)
+     lo actualiza al togglear, con los dos textos ya traducidos en los
+     `data-*` para no hardcodear español en JS. --}}
+<input type="hidden" name="{{ $prefijo }}[limpio]" value="0">
+<x-atoms.switch
+    name="{{ $prefijo }}[limpio]"
+    id="{{ $idBase }}-limpio"
+    value="1"
+    :field-label="__('comercial.lotes.lote_limpio')"
+    :label="$limpio ? __('comercial.lotes.lote_limpio_si') : __('comercial.lotes.lote_limpio_no')"
+    :checked="(bool) $limpio"
+    data-ag-lote-limpio
+    data-ag-lote-limpio-texto-si="{{ __('comercial.lotes.lote_limpio_si') }}"
+    data-ag-lote-limpio-texto-no="{{ __('comercial.lotes.lote_limpio_no') }}"
+/>
 
 {{-- Celda propia del grid de 2 columnas (col-6), no --field--full: va al
      lado del switch. Oculto con el atributo HTML `hidden` (no CSS): así el

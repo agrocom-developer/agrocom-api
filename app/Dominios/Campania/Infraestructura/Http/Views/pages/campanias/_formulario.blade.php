@@ -76,8 +76,7 @@
         </x-molecules.alert-strip>
     @endif
 
-    <div class="ag-campanias-form__layout">
-        <div class="ag-campanias-form__main">
+    <x-molecules.form-layout>
     <x-molecules.form-section
         :title="__('campania.campanias.seccion_datos')"
         :count="__('campania.campanias.campos_contador', ['cantidad' => 5])"
@@ -139,10 +138,9 @@
             </x-atoms.button>
         </x-slot:actions>
     </x-organisms.form-actions-bar>
-        </div>
 
         @if ($esEdicion)
-            <aside class="ag-campanias-form__aside">
+            <x-slot:aside>
                 @foreach ($resumenCampania ?? [] as $resumen)
                     <x-molecules.summary-card :title="$resumen['titulo']" :items="$resumen['items']">
                         <x-slot:action>
@@ -152,7 +150,7 @@
                         </x-slot:action>
                     </x-molecules.summary-card>
                 @endforeach
-            </aside>
+            </x-slot:aside>
         @endif
-    </div>
+    </x-molecules.form-layout>
 </form>

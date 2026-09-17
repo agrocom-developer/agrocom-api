@@ -105,7 +105,7 @@ final class OrdenesMantenimientoController
 
         $datos = $request->validated();
 
-        $maquinaEstados->abrir([
+        $orden = $maquinaEstados->abrir([
             'equipo_tipo' => $datos['equipo_tipo'],
             'equipo_id' => (int) $datos['equipo_id'],
             'tipo' => $datos['tipo'],
@@ -113,7 +113,7 @@ final class OrdenesMantenimientoController
         ]);
 
         return redirect()
-            ->route('panel.ordenes-mantenimiento.index')
+            ->route('panel.ordenes-mantenimiento.edit', $orden)
             ->with('estado', __('mantenimiento.ordenes.creada'));
     }
 

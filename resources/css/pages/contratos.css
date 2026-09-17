@@ -7,8 +7,12 @@
  *
  * El wrapper `.ag-contratos`/`.ag-contratos-form` sigue el mismo patrón que
  * `.ag-clientes`/`.ag-clientes-form`: flex en columna con un único `gap` en
- * vez de `margin-top` repetido en cada hijo. Todo color y medida por token
- * (CLAUDE.md invariante 11).
+ * vez de `margin-top` repetido en cada hijo. El contenedor de la tabla del
+ * listado (`molecules/index-table`) y el layout main/aside del formulario
+ * (`molecules/form-layout`) tampoco viven acá: eran una copia casi idéntica
+ * a clientes/propiedades/campanias/lotes, extraída al catálogo (ver
+ * docs/diseno/guia_pantalla_panel.md §6.2/§6.3.1). Todo color y medida por
+ * token (CLAUDE.md invariante 11).
  */
 
 .ag-contratos,
@@ -18,62 +22,12 @@
     gap: var(--ag-space-5);
 }
 
-/* Listado (index) */
-
-.ag-contratos__tabla {
-    border: 1px solid var(--ag-color-border-card);
-    border-radius: var(--ag-radius-md);
-    background-color: var(--ag-color-surface-card);
-    overflow: hidden;
-}
-
-/* La última columna (acciones) es un ancho fijo, no `auto` — mismo motivo
-   que usuarios.css: con `auto`, el head (rótulo "Acciones") y la fila
-   (organisms/row-actions) son grids separados que resuelven ese ancho cada
-   uno por su cuenta y quedan corridos. `--ag-row-actions-width`, no un
-   valor en rem propio: ver el comentario de
-   resources/css/components/row-actions.css (tarea
-   "listado-contratos-acciones", 16/9/2026). */
-.ag-contratos__head,
-.ag-contratos__fila {
-    display: grid;
-    /* 7 columnas (era 8 hasta el 16/9/2026: "Ventanas" se retiró junto con
-       com_contrato_ventanas — el horario pasó a ser un dato de cada lote,
-       no del contrato, ver contratos/index.blade.php). */
-    grid-template-columns: 3rem 2fr 1fr 1fr 1.4fr 1fr var(--ag-row-actions-width);
-    gap: var(--ag-space-4);
-    align-items: center;
-    padding: var(--ag-space-3) var(--ag-space-4);
-}
-
-.ag-contratos__acciones-head {
-    text-align: right;
-}
-
-.ag-contratos__indice {
-    color: var(--ag-color-text-faint);
-    font-family: var(--ag-font-family-mono);
-    font-size: var(--ag-font-size-xs);
-}
-
-.ag-contratos__head {
-    background-color: var(--ag-color-bg-table-head);
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-xs);
-    font-weight: var(--ag-font-weight-medium);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.ag-contratos__fila {
-    border-top: 1px solid var(--ag-color-border-row);
-    color: var(--ag-color-text);
-    font-size: var(--ag-font-size-sm);
-}
-
-.ag-contratos__fila:hover {
-    background-color: var(--ag-color-bg-row-hover);
-}
+/* Listado (index): columnas propias de `molecules/index-table` — índice ·
+   cliente · hectáreas · monto total · vigencia · estado · acciones (7, era 8
+   hasta el 16/9/2026: "Ventanas" se retiró junto con com_contrato_ventanas —
+   el horario pasó a ser un dato de cada lote, no del contrato, ver
+   contratos/index.blade.php). El resto de la anatomía de la tabla vive en
+   el componente. */
 
 .ag-contratos__cliente {
     font-weight: var(--ag-font-weight-medium);
@@ -83,34 +37,8 @@
     font-family: var(--ag-font-family-mono);
 }
 
-.ag-contratos__acciones {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--ag-space-2);
-}
-
-
-@media (max-width: 992px) {
-    .ag-contratos__head {
-        display: none;
-    }
-
-    .ag-contratos__fila {
-        grid-template-columns: 1fr;
-        gap: var(--ag-space-1);
-    }
-
-    .ag-contratos__indice {
-        display: none;
-    }
-
-    .ag-contratos__acciones {
-        justify-content: flex-start;
-        margin-top: var(--ag-space-2);
-    }
-}
-
-/* Formulario (create/edit) */
+/* Formulario (create/edit): el layout de dos columnas es
+   `molecules/form-layout`. */
 
 .ag-contratos-form__ayuda {
     color: var(--ag-color-text-muted);
@@ -231,9 +159,11 @@
 
 /* Tabla de lotes ya agregados (tercera vuelta del rediseño: Código /
    Hectáreas / Día completo / Horario / Acciones en columnas propias — mismo
-   lenguaje visual que `.ag-contratos__tabla` del listado, con su propio
-   grid porque el número de columnas es otro. El título de propiedad es una
-   fila que ocupa el ancho completo (banda de sección), no una columna más. */
+   lenguaje visual que `molecules/index-table` del listado, con su propio
+   grid porque el número de columnas es otro (y porque no es un listado
+   paginado con acciones colapsables, no le hace falta el componente
+   entero). El título de propiedad es una fila que ocupa el ancho completo
+   (banda de sección), no una columna más. */
 .ag-contratos-form__lotes-tabla {
     border: 1px solid var(--ag-color-border-card);
     border-radius: var(--ag-radius-md);
@@ -487,57 +417,3 @@
     cursor: pointer;
 }
 
-/* Layout de dos columnas del formulario (tarea "resumen de contrato"): mismo
-   patrón que `.ag-clientes-form__layout/__main/__aside`
-   (resources/css/pages/clientes.css) — faltaba portarlo acá cuando se armó
-   el wrapper en `_formulario.blade.php` (16/9/2026): sin estas reglas
-   `.ag-contratos-form__main` queda como único hijo de `.ag-contratos-form`
-   y el `gap` de ese flex (arriba del todo en este archivo) deja de tener
-   efecto entre las tarjetas — el bug real de "secciones sin espacio entre
-   ellas" que motivó este bloque. Solo aparece un aside en edición
-   (`_formulario.blade.php`); en alta `.ag-contratos-form__main` queda sin
-   hermano (`:only-child` debajo). */
-.ag-contratos-form__layout {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--ag-space-5);
-}
-
-.ag-contratos-form__main {
-    flex: 1 1 32rem;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-5);
-}
-
-.ag-contratos-form__main:only-child {
-    flex-basis: 100%;
-}
-
-/* Columna lateral pegajosa: resumen de facturación/aplicación, de solo
-   lectura — nunca campos. `min-width` evita que se achique de más antes del
-   breakpoint de abajo: `.ag-contratos-form__main` (flex-grow: 1,
-   `min-width: 0`) es el que cede ancho primero. */
-.ag-contratos-form__aside {
-    flex: 1 1 19rem;
-    min-width: 16rem;
-    max-width: 20rem;
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-5);
-    position: sticky;
-    top: var(--ag-space-4);
-}
-
-@media (max-width: 1199.98px) {
-    .ag-contratos-form__layout {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .ag-contratos-form__aside {
-        max-width: none;
-        position: static;
-    }
-}

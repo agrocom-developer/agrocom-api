@@ -64,9 +64,6 @@
 
 @php
     $modalId = 'ag-confirm-modal-'.\Illuminate\Support\Str::random(8);
-    $tituloId = "{$modalId}-titulo";
-    $modalIcon ??= $tone === 'danger' ? 'warning' : 'check_circle';
-    $varianteBotonConfirmar = $tone === 'danger' ? 'danger' : 'primary';
 @endphp
 
 <x-atoms.button
@@ -81,24 +78,13 @@
     {{ $slot }}
 </x-atoms.button>
 
-<div class="modal fade" id="{{ $modalId }}" tabindex="-1" aria-hidden="true" aria-labelledby="{{ $tituloId }}">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content ag-confirm-modal__content">
-            <div class="ag-confirm-modal__body">
-                <span class="ag-confirm-modal__icon ag-confirm-modal__icon--{{ $tone }}">
-                    <x-atoms.icon :name="$modalIcon" size="md" />
-                </span>
-                <h2 class="ag-confirm-modal__title" id="{{ $tituloId }}">{{ $title }}</h2>
-                <p class="ag-confirm-modal__message">{{ $message }}</p>
-            </div>
-            <div class="ag-confirm-modal__footer">
-                <x-atoms.button type="button" variant="outline" data-bs-dismiss="modal">
-                    {{ $cancelLabel ?? __('ui.action.cancel') }}
-                </x-atoms.button>
-                <x-atoms.button type="submit" form="{{ $formId }}" :variant="$varianteBotonConfirmar">
-                    {{ $confirmLabel }}
-                </x-atoms.button>
-            </div>
-        </div>
-    </div>
-</div>
+<x-molecules.confirm-modal
+    :id="$modalId"
+    :form-id="$formId"
+    :title="$title"
+    :message="$message"
+    :confirm-label="$confirmLabel"
+    :cancel-label="$cancelLabel"
+    :tone="$tone"
+    :modal-icon="$modalIcon"
+/>

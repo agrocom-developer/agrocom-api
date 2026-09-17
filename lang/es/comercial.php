@@ -36,6 +36,7 @@ return [
         'contactos_cantidad' => ':cantidad contactos',
         'editar' => 'Editar',
         'eliminar_accion' => 'Eliminar',
+        'confirmar_eliminar_titulo' => 'Eliminar cliente',
         'confirmar_baja' => '¿Dar de baja este cliente? Sus contratos y campos no se ven afectados.',
         'paginacion_aria' => 'Paginación de clientes',
         'paginacion_anterior' => 'Anterior',
@@ -162,6 +163,7 @@ return [
         'hectareas_valor' => ':cantidad ha',
         'editar' => 'Editar',
         'eliminar_accion' => 'Eliminar',
+        'confirmar_eliminar_titulo' => 'Eliminar propiedad',
         'confirmar_baja' => '¿Dar de baja esta propiedad? Sus lotes no se ven afectados.',
         'paginacion_aria' => 'Paginación de propiedades',
         'paginacion_anterior' => 'Anterior',
@@ -475,6 +477,7 @@ return [
         'hectareas_valor' => ':cantidad ha',
         'editar' => 'Editar',
         'eliminar_accion' => 'Eliminar',
+        'confirmar_eliminar_titulo' => 'Eliminar lote',
         'confirmar_baja' => '¿Dar de baja este lote?',
         'paginacion_aria' => 'Paginación de lotes',
         'paginacion_anterior' => 'Anterior',
@@ -576,16 +579,13 @@ return [
         'filtro_vacio_detalle' => 'Ningún cultivo coincide con los filtros aplicados. Prueba con otro término o quita algún filtro.',
         'filtro_tipo_cultivo' => 'Tipo de cultivo',
         'filtro_ciclo_vida' => 'Ciclo de vida',
-        'filtro_estado' => 'Estado',
         'filtro_todos' => 'Todos',
         'col_nombre' => 'Cultivo',
         'col_tipo' => 'Tipo',
         'col_ciclo_vida' => 'Ciclo de vida',
-        'col_estado' => 'Estado',
-        'estado_activo' => 'Activo',
-        'estado_inactivo' => 'Inactivo',
         'editar' => 'Editar',
         'eliminar_accion' => 'Eliminar',
+        'confirmar_eliminar_titulo' => 'Eliminar cultivo',
         'confirmar_baja' => '¿Dar de baja este cultivo? Las siembras que ya lo tienen cargado no se ven afectadas.',
         'paginacion_aria' => 'Paginación de cultivos',
 
@@ -620,13 +620,18 @@ return [
         'campo_tipo_cultivo_placeholder' => 'Selecciona un tipo',
         'campo_ciclo_vida' => 'Ciclo de vida',
         'campo_ciclo_vida_placeholder' => 'Selecciona un ciclo',
-        'campo_activo' => 'Activo',
-        'campo_activo_ayuda' => 'Un cultivo inactivo deja de ofrecerse para nuevas siembras, sin afectar las ya cargadas.',
         'campo_notas_agronomicas' => 'Sugerencias para quien carga la siembra',
         'campo_notas_agronomicas_placeholder' => 'Ej. mínimo de aplicaciones recomendado por campaña, tipo de calda que tolera…',
         'campo_notas_agronomicas_ayuda' => 'Referencia informativa de un agrónomo — Agrocom no define ni valida la composición del caldo, eso es responsabilidad del cliente.',
         'estado_form' => 'Los cambios se guardan al confirmar.',
         'volver' => 'Volver a cultivos',
+
+        // Resumen relacionado (edición, §6.3.1 de guia_pantalla_panel.md):
+        // estático por ahora, pendiente de conectar a un contrato de
+        // lectura por cultivo.
+        'resumen_titulo' => 'Lotes con este cultivo',
+        'resumen_detalle' => 'Acá vas a ver cuántos lotes tienen este cultivo sembrado en la campaña vigente.',
+        'resumen_accion' => 'Ir a propiedades',
 
         // Mensajes de los campos obligatorios.
         'error_nombre_comun_requerido' => 'Ingresa el nombre común del cultivo.',
