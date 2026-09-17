@@ -1,24 +1,29 @@
 {{--
-    Molecule: boton-volver (memento de navegación, 17/9/2026)
-    Botón "Volver" del header de un formulario — reemplaza el
+    Molecule: boton-volver (memento de navegación, 17/9/2026 — pila el mismo
+    día). Botón "Volver" del header de un formulario — reemplaza el
     `<x-atoms.button :href="route('panel.X.index')">` que hasta acá repetían
     a mano ~40 pantallas del panel, siempre fijo al listado del propio
-    módulo. Si el usuario llegó por un acceso directo (crear cliente desde el
-    formulario de contrato, "Nueva orden" desde el resumen de un cliente,
-    etc.), vuelve a ESE origen y lo dice ("Volver a Nuevo contrato"); si no,
-    cae al `href`/`label` de siempre.
+    módulo. Si el usuario llegó por una cadena de accesos directos (cliente →
+    "Nueva propiedad" → propiedad → "Generar lotes" → ...), vuelve un
+    escalón hacia atrás y lo dice ("Volver a Propiedad Santa Cecilia"); si no
+    hay ningún escalón apilado, cae al `href`/`label` de siempre.
 
-    De dónde sale "el origen": `session('navegacion_origen')` —
-    `['url' => ..., 'etiqueta' => ...]|null` — leído DIRECTO de sesión acá
-    adentro, no como prop: un componente Blade NO hereda las variables de la
-    vista que lo incluye (a diferencia de un `@include`), así que pasarlo
-    como `$origenNavegacion` ambiental nunca habría llegado — bug real de la
-    primera vuelta de este componente, detectado probando el flujo completo.
-    Lo escribe `RecordarOrigenNavegacion` (middleware `origen.navegacion`) en
-    cuanto ve `?volver_a=&volver_texto=` en la URL, y sobrevive en sesión todo
-    el sub-flujo (alta → edición) sin que ningún controlador lo vuelva a
-    tocar. Se reinicia solo al visitar un listado (`*.index`) — entrar por un
-    módulo a propósito.
+    De dónde sale "el escalón": `session('navegacion_pila')` — lista de
+    `['url' => ..., 'etiqueta' => ...]`, tope = último elemento — leída
+    DIRECTO de sesión acá adentro, no como prop: un componente Blade NO
+    hereda las variables de la vista que lo incluye (a diferencia de un
+    `@include`), así que pasarla ambiental nunca habría llegado — bug real
+    de la primera vuelta de este componente, detectado probando el flujo
+    completo. La apila `RecordarOrigenNavegacion` (middleware
+    `origen.navegacion`) en cuanto ve `?volver_a=&volver_texto=` en la URL, y
+    sobrevive en sesión todo el sub-flujo (alta → edición) de CADA escalón,
+    sin que ningún controlador la vuelva a tocar.
+
+    El link que arma este átomo agrega `?_volver=1` al tope — es la marca que
+    el mismo middleware usa para sacar ESE escalón de la pila al aterrizar
+    (y redirigir a la misma URL sin la marca, para que un F5 posterior no
+    saque otro escalón de encima). Por eso "Volver" nunca es un simple
+    `<a href>` estático cuando hay pila: cada click consume un escalón.
 
     Complementario al botón "Volver al formulario origen" que ya existe en
     Clientes/Propiedades/Lotes (pie del form, solo en edición, con el id
@@ -29,19 +34,23 @@
     Props:
     - href (requerido): destino por defecto (el índice del propio módulo).
     - label (requerido): texto por defecto ya traducido (ADR 0013) — se usa
-      tal cual cuando no hay origen guardado.
+      tal cual cuando no hay ningún escalón apilado.
 --}}
 @props(['href', 'label'])
 
 @php
-    $origen = session('navegacion_origen');
+    $pila = session('navegacion_pila', []);
+    $tope = $pila === [] ? null : end($pila);
+    $destino = $tope !== null
+        ? $tope['url'].(str_contains($tope['url'], '?') ? '&' : '?').'_volver=1'
+        : $href;
 @endphp
 
 <x-atoms.button
-    :href="$origen['url'] ?? $href"
+    :href="$destino"
     variant="outline"
     icon="arrow_back"
     {{ $attributes }}
 >
-    {{ $origen !== null ? __('ui.navegacion.volver_a', ['origen' => $origen['etiqueta']]) : $label }}
+    {{ $tope !== null ? __('ui.navegacion.volver_a', ['origen' => $tope['etiqueta']]) : $label }}
 </x-atoms.button>

@@ -44,9 +44,7 @@
                 :subtitle="__('comercial.propiedades.lotes_generar_subtitulo')"
             >
                 <x-slot:actions>
-                    <x-atoms.button :href="route('panel.propiedades.edit', $propiedad)" variant="outline" icon="arrow_back">
-                        {{ __('comercial.propiedades.lotes_generar_volver') }}
-                    </x-atoms.button>
+                    <x-molecules.boton-volver :href="route('panel.propiedades.edit', $propiedad)" :label="__('comercial.propiedades.lotes_generar_volver')" />
                 </x-slot:actions>
             </x-organisms.page-header>
 

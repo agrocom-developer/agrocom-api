@@ -260,6 +260,11 @@ final class PropiedadesController
     {
         $resumen = [];
 
+        // Memento de navegación (17/9/2026): los accesos directos de este
+        // aside apilan ESTA ficha de propiedad como origen — ver el mismo
+        // comentario en ClientesController::resumenRelacionado().
+        $origenNavegacion = ['volver_a' => route('panel.propiedades.edit', $propiedad), 'volver_texto' => $propiedad->nombre];
+
         // 1) Coordenadas del mapa — mismo permiso que esta pantalla
         // (comercial.propiedad.editar), sin gating adicional.
         $tieneCoordenadas = $propiedad->geometria !== null || $propiedad->latitud !== null;
@@ -333,23 +338,26 @@ final class PropiedadesController
                 'accion' => $tieneLotes
                     ? [
                         'label' => __('comercial.propiedades.aside_lotes_accion'),
-                        'href' => route('panel.lotes.index', ['propiedad_id' => $propiedad->id]),
+                        'href' => route('panel.lotes.index', ['propiedad_id' => $propiedad->id, ...$origenNavegacion]),
                     ]
                     : [
                         'label' => __('comercial.propiedades.aside_lotes_generar'),
-                        'href' => route('panel.propiedades.lotes.generar', $propiedad),
+                        'href' => route('panel.propiedades.lotes.generar', [$propiedad, ...$origenNavegacion]),
                     ],
             ];
         }
 
         // 3) Siembra / cultivo actual — mismo permiso que esta pantalla.
-        $resumen[] = $this->resumenSiembra($propiedad);
+        $resumen[] = $this->resumenSiembra($propiedad, $origenNavegacion);
 
         return $resumen;
     }
 
-    /** @return array{titulo: string, icono: string, tieneDatos: bool, items: list<array<string, mixed>>, vacioTitulo: string, vacioDetalle: string, mostrarAccion: bool, accion: array{label: string, href: string}} */
-    private function resumenSiembra(Propiedad $propiedad): array
+    /**
+     * @param  array{volver_a: string, volver_texto: string}  $origenNavegacion  memento de navegación (17/9/2026) — ver `resumenPropiedad()`.
+     * @return array{titulo: string, icono: string, tieneDatos: bool, items: list<array<string, mixed>>, vacioTitulo: string, vacioDetalle: string, mostrarAccion: bool, accion: array{label: string, href: string}}
+     */
+    private function resumenSiembra(Propiedad $propiedad, array $origenNavegacion): array
     {
         $campaniaVigente = DB::table('cpn_campanias')
             ->whereNull('deleted_at')
@@ -395,7 +403,7 @@ final class PropiedadesController
             'mostrarAccion' => true,
             'accion' => [
                 'label' => __('comercial.propiedades.aside_siembra_accion'),
-                'href' => route('panel.propiedades.siembra', $propiedad),
+                'href' => route('panel.propiedades.siembra', [$propiedad, ...$origenNavegacion]),
             ],
         ];
     }

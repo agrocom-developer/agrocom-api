@@ -243,6 +243,10 @@ final class LotesController
      */
     private function resumenLote(Lote $lote): array
     {
+        // Memento de navegación (17/9/2026): mismo criterio que
+        // PropiedadesController::resumenPropiedad() — ver ese comentario.
+        $origenNavegacion = ['volver_a' => route('panel.lotes.edit', $lote), 'volver_texto' => $lote->codigo];
+
         $campaniaVigente = DB::table('cpn_campanias')
             ->whereNull('deleted_at')
             ->orderByDesc('fecha_inicio')
@@ -278,7 +282,7 @@ final class LotesController
             'mostrarAccion' => true,
             'accion' => [
                 'label' => __('comercial.lotes.aside_siembra_accion'),
-                'href' => route('panel.propiedades.siembra', $lote->propiedad),
+                'href' => route('panel.propiedades.siembra', [$lote->propiedad, ...$origenNavegacion]),
             ],
         ];
     }

@@ -374,7 +374,12 @@ final class ContratosController
                 'mostrarAccion' => $puedeCrearOrdenes,
                 'accion' => [
                     'label' => __('comercial.contratos.aside_vacio_accion'),
-                    'href' => route('panel.ordenes.create'),
+                    // Memento de navegación (17/9/2026): cruza a `Operaciones`
+                    // — mismo criterio que ClientesController::resumenRelacionado().
+                    'href' => route('panel.ordenes.create', [
+                        'volver_a' => route('panel.contratos.edit', $contrato),
+                        'volver_texto' => $contrato->cliente->razon_social,
+                    ]),
                 ],
             ];
         }

@@ -270,6 +270,14 @@ final class ClientesController
     {
         $resumen = [];
 
+        // Memento de navegación (17/9/2026): los 3 accesos directos de este
+        // aside apilan ESTA ficha de cliente como origen — así el "Volver"
+        // de la pantalla de destino (nuevo contrato/propiedad/orden, y de lo
+        // que esa pantalla encadene después) sabe adónde volver, en vez de
+        // caer siempre al listado de su propio módulo. Ver
+        // RecordarOrigenNavegacion.
+        $origenNavegacion = ['volver_a' => route('panel.clientes.edit', $cliente), 'volver_texto' => $cliente->razon_social];
+
         $puedeVerContratos = $this->autorizacion->tienePermiso($request, 'comercial.contrato.ver');
         $puedeCrearContratos = $this->autorizacion->tienePermiso($request, 'comercial.contrato.crear');
 
@@ -291,7 +299,7 @@ final class ClientesController
                 'mostrarAccion' => $puedeCrearContratos,
                 'accion' => [
                     'label' => __('comercial.clientes.aside_contratos_accion'),
-                    'href' => route('panel.contratos.create', ['cliente_id' => $cliente->id]),
+                    'href' => route('panel.contratos.create', ['cliente_id' => $cliente->id, ...$origenNavegacion]),
                 ],
             ];
         }
@@ -319,7 +327,7 @@ final class ClientesController
                 'mostrarAccion' => $puedeCrearPropiedades,
                 'accion' => [
                     'label' => __('comercial.clientes.aside_propiedades_accion'),
-                    'href' => route('panel.propiedades.create', ['cliente_id' => $cliente->id]),
+                    'href' => route('panel.propiedades.create', ['cliente_id' => $cliente->id, ...$origenNavegacion]),
                 ],
             ];
         }
@@ -351,7 +359,7 @@ final class ClientesController
                 'mostrarAccion' => $puedeCrearOrdenes,
                 'accion' => [
                     'label' => __('comercial.clientes.aside_ordenes_accion'),
-                    'href' => route('panel.ordenes.create'),
+                    'href' => route('panel.ordenes.create', $origenNavegacion),
                 ],
             ];
         }
