@@ -56,13 +56,16 @@ final class CampaniasController
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
         $busqueda = $request->string('q')->toString();
+        $estado = $request->string('estado')->toString() ?: null;
+        $estacion = $request->string('estacion')->toString() ?: null;
 
-        $campanias = $listarCampanias->ejecutar($busqueda !== '' ? $busqueda : null);
+        $campanias = $listarCampanias->ejecutar($busqueda !== '' ? $busqueda : null, $estado, $estacion);
 
         return view('campania::pages.campanias.index', [
             ...$this->autorizacion->cascara($request),
             'campanias' => $campanias,
-            'filtros' => ['q' => $busqueda],
+            'estadosFiltro' => EstadoCampania::cases(),
+            'filtros' => ['q' => $busqueda, 'estado' => $estado, 'estacion' => $estacion],
         ]);
     }
 

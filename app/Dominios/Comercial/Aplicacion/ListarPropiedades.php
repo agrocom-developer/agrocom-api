@@ -27,6 +27,7 @@ final class ListarPropiedades
         ?string $busqueda = null,
         ?int $clienteId = null,
         ?int $departamentoId = null,
+        ?int $municipioId = null,
         int $porPagina = 15,
     ): LengthAwarePaginator {
         return Propiedad::query()
@@ -40,6 +41,7 @@ final class ListarPropiedades
             )
             ->when($clienteId !== null, fn (Builder $consulta) => $consulta->where('cliente_id', $clienteId))
             ->when($departamentoId !== null, fn (Builder $consulta) => $consulta->where('departamento_id', $departamentoId))
+            ->when($municipioId !== null, fn (Builder $consulta) => $consulta->where('municipio_id', $municipioId))
             ->orderBy('nombre')
             ->paginate($porPagina)
             ->withQueryString();

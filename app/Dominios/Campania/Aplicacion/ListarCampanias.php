@@ -7,11 +7,12 @@ use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaTexto;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 /**
- * Caso de uso: listado de campañas con búsqueda opcional por código o
- * nombre. Solo lectura — mismo patrón de paginación que `ListarBases`. Orden
- * por `fecha_inicio` descendente: la campaña más reciente encabeza el
- * listado, mismo criterio de "lo último primero" que `ListarGastos` con
- * `fecha`.
+ * Caso de uso: listado de campañas con búsqueda y filtros opcionales por
+ * código, nombre, estado y estación (filtros agregados en la ronda de
+ * homogeneización del 17/9/2026). Solo lectura — mismo patrón de paginación
+ * que `ListarBases`. Orden por `fecha_inicio` descendente: la campaña más
+ * reciente encabeza el listado, mismo criterio de "lo último primero" que
+ * `ListarGastos` con `fecha`.
  *
  * Sin filtro por cliente (ADR 0015, corregido el 15/9/2026): la campaña es
  * un catálogo compartido, no de un cliente — quién la usa se ve desde el
@@ -20,12 +21,24 @@ use Illuminate\Pagination\LengthAwarePaginator;
 final class ListarCampanias
 {
     /** @return LengthAwarePaginator<int, Campania> */
-    public function ejecutar(?string $busqueda = null, int $porPagina = 15): LengthAwarePaginator
-    {
+    public function ejecutar(
+        ?string $busqueda = null,
+        ?string $estado = null,
+        ?string $estacion = null,
+        int $porPagina = 15,
+    ): LengthAwarePaginator {
         return Campania::query()
             ->when(
                 $busqueda !== null && $busqueda !== '',
                 fn ($consulta) => BusquedaTexto::aplicar($consulta, ['codigo', 'nombre'], $busqueda),
+            )
+            ->when(
+                $estado !== null,
+                fn ($consulta) => $consulta->where('estado', $estado),
+            )
+            ->when(
+                $estacion !== null,
+                fn ($consulta) => $consulta->where('estacion', $estacion),
             )
             ->orderByDesc('fecha_inicio')
             ->paginate($porPagina)
