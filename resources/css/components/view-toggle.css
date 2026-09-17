@@ -19,8 +19,12 @@
     place-items: center;
     width: 2.5rem;
     height: 2.5rem;
+    border: none;
     border-radius: var(--ag-radius-sm);
+    background: none;
     color: var(--ag-color-text-muted);
+    cursor: pointer;
+    font: inherit;
     transition: background-color var(--ag-transition-fast), color var(--ag-transition-fast);
 }
 

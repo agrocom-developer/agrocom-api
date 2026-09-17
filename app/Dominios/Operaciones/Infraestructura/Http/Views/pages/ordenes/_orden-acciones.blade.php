@@ -13,13 +13,23 @@
     Espera: $orden (OrdenAplicacion), $puedeActivar (bool, ya resuelto por el
     controlador) — el resto de los permisos se resuelve acá con `@puede`,
     igual que el resto del listado.
+    - $contexto (string, default ''): prefijo para los ids de forms/modales.
+      Desde la homogeneización del toggle lista/grilla a client-side
+      (17/9/2026), AMBAS vistas conviven siempre en el DOM (una oculta con
+      `hidden`, nunca desmontada) — sin este prefijo, incluir este partial
+      dos veces por orden (una en la fila de tabla, otra en la tarjeta de
+      grilla) generaría el mismo id de `<form>`/modal DOS VECES en el
+      documento, HTML inválido y el botón "Confirmar" del modal enviando
+      el form equivocado (el navegador resuelve `document.getElementById`
+      al PRIMERO, sin importar cuál está visible).
 --}}
 @php
+    $contexto ??= '';
     $estadoValor = $orden->estado->value;
-    $formIdActivar = "orden-activar-{$orden->id}";
-    $formIdEliminar = "orden-eliminar-{$orden->id}";
-    $modalIdActivar = "orden-activar-modal-{$orden->id}";
-    $modalIdEliminar = "orden-eliminar-modal-{$orden->id}";
+    $formIdActivar = "orden-activar-{$contexto}{$orden->id}";
+    $formIdEliminar = "orden-eliminar-{$contexto}{$orden->id}";
+    $modalIdActivar = "orden-activar-modal-{$contexto}{$orden->id}";
+    $modalIdEliminar = "orden-eliminar-modal-{$contexto}{$orden->id}";
 @endphp
 
 @if ($puedeActivar && $estadoValor === 'emitida')

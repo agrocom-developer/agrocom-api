@@ -26,7 +26,7 @@
             ? __('operaciones.ordenes.dosis_litros_ha', ['cantidad' => number_format((float) $orden->litros_ha, 2, ',', '.')])
             : '—');
 @endphp
-<article class="ag-ordenes-card">
+<article class="ag-ordenes-card" data-estado="{{ $variantePorEstado[$estadoValor] }}">
     <div class="ag-ordenes-card__head">
         <div class="ag-ordenes-card__identidad">
             <p class="ag-ordenes-card__codigo">{{ __('operaciones.ordenes.col_aplicacion') }} #{{ $orden->nro_aplicacion }}</p>
@@ -38,6 +38,7 @@
     </div>
 
     <div class="ag-ordenes-card__lote">
+        <span class="ag-ordenes-card__lote-punto ag-ordenes-card__lote-punto--{{ $variantePorEstado[$estadoValor] }}" aria-hidden="true"></span>
         <span>{{ $lotesTexto !== '' ? $lotesTexto : '—' }}</span>
         <span class="ag-ordenes-card__lote-hectareas">{{ $hectareasTexto }} ha</span>
     </div>
@@ -62,6 +63,6 @@
             <span class="ag-ordenes-card__pie-fecha-valor">{{ $orden->fecha_emision->format('d/m/Y') }}</span>
         </div>
 
-        @include('operaciones::pages.ordenes._orden-acciones', ['orden' => $orden])
+        @include('operaciones::pages.ordenes._orden-acciones', ['orden' => $orden, 'contexto' => 'grilla-'])
     </div>
 </article>

@@ -9,6 +9,7 @@ import './molecules/timezone-badge.js';
 import './molecules/file-field.js';
 import './molecules/color-swatch-field.js';
 import './molecules/table-search.js';
+import './molecules/view-toggle.js';
 import './organisms/login-form.js';
 import './organisms/topbar.js';
 import './organisms/role-selection.js';

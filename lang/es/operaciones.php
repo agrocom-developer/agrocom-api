@@ -504,6 +504,12 @@ return [
 
         'kpi_equipos_necesarios' => 'Equipos necesarios',
         'kpi_equipos_asignados_pie' => ':asignados de :necesarios asignados',
+
+        'seccion_vinculos' => 'Vínculos',
+        'vinculo_trabajos' => 'Órdenes de trabajo',
+        'vinculo_trabajos_meta' => ':cantidad trabajos',
+        'vinculo_asignacion' => 'Asignación de equipos',
+        'vinculo_asignacion_meta' => ':cantidad equipos',
     ],
 
     // Pantalla de panel "Operación › Asignación de equipos" (HU-70, tarea

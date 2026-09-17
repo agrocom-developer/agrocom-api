@@ -25,6 +25,23 @@
     gap: var(--ag-space-5);
 }
 
+/* Contenedores de *container queries* (17/9/2026, pedido explícito): la
+   grilla del listado y la tira de KPI del detalle tienen que reaccionar al
+   ancho REAL disponible, no al viewport — con `@media` un mismo viewport
+   siempre da el mismo resultado aunque el sidebar de módulo (nivel 2, 252px
+   → 72px colapsado, `module-sidebar.js`/`.ag-module-sidebar.is-collapsed`)
+   le haya devuelto ~180px al contenido. `container-type: inline-size` en el
+   wrapper de la página convierte su ancho en la medida que consultan los
+   `@container` de abajo — ninguna otra pantalla se ve afectada, es un
+   contexto de contención nuevo, no global. */
+.ag-ordenes {
+    container: ag-ordenes / inline-size;
+}
+
+.ag-ordenes-detalle {
+    container: ag-ordenes-detalle / inline-size;
+}
+
 /* Listado (index): columnas propias de `molecules/index-table` — índice ·
    contrato · lote · aplicación · tipo · dosis · emisión · estado · acciones.
    El resto de la anatomía de la tabla vive en el componente. */
@@ -33,24 +50,66 @@
     font-family: var(--ag-font-family-mono);
 }
 
-/* Vista en grilla del listado (toggle lista/grilla, 17/9/2026): tarjetas de
-   2 columnas — mismo techo en 50% que `.ag-form-section__body` (evita que
-   auto-fit meta 4+ columnas angostas en pantallas anchas). */
+/* Vista en grilla del listado (toggle lista/grilla, 17/9/2026): 1 columna
+   por defecto (móvil) → 2 en tableta → 3 en escritorio → 4 en pantallas
+   XXL, según el ancho REAL del contenedor `.ag-ordenes` (ver arriba) — no
+   `auto-fit`: el pedido fue una cantidad de columnas explícita por tramo,
+   no "las que entren". */
 .ag-ordenes__grilla {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(max(20rem, calc(50% - var(--ag-space-4) / 2)), 1fr));
+    grid-template-columns: 1fr;
     gap: var(--ag-space-4);
     align-items: start;
 }
 
+@container ag-ordenes (min-width: 36rem) {
+    .ag-ordenes__grilla {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@container ag-ordenes (min-width: 60rem) {
+    .ag-ordenes__grilla {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@container ag-ordenes (min-width: 84rem) {
+    .ag-ordenes__grilla {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+/* `data-estado` (mismo criterio que `[data-state]` de stat-card, §2.2 del
+   sistema de diseño): franja superior de 3px con el color del estado — así
+   la tarjeta se identifica de un vistazo sin tener que leer el badge,
+   mismo lenguaje del mockup de referencia (borde/punto de color por
+   estado) traducido a los tokens del sistema en vez de sus hex. */
 .ag-ordenes-card {
     display: flex;
     flex-direction: column;
     background-color: var(--ag-color-surface-card);
     border: 1px solid var(--ag-color-border-card);
+    border-top: 3px solid var(--ag-color-border-card);
     border-radius: var(--ag-radius-lg);
     box-shadow: var(--ag-shadow-sm);
     overflow: hidden;
+}
+
+.ag-ordenes-card[data-estado='success'] {
+    border-top-color: var(--ag-color-success);
+}
+
+.ag-ordenes-card[data-estado='warning'] {
+    border-top-color: var(--ag-color-warning);
+}
+
+.ag-ordenes-card[data-estado='danger'] {
+    border-top-color: var(--ag-color-danger);
+}
+
+.ag-ordenes-card[data-estado='info'] {
+    border-top-color: var(--ag-color-info);
 }
 
 .ag-ordenes-card__head {
@@ -94,6 +153,30 @@
     border-block: 1px solid var(--ag-color-border-row);
     font-size: var(--ag-font-size-sm);
     font-weight: var(--ag-font-weight-medium);
+}
+
+.ag-ordenes-card__lote-punto {
+    flex: none;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: var(--ag-radius-sm);
+    background-color: var(--ag-color-text-faint);
+}
+
+.ag-ordenes-card__lote-punto--success {
+    background-color: var(--ag-color-success);
+}
+
+.ag-ordenes-card__lote-punto--warning {
+    background-color: var(--ag-color-warning);
+}
+
+.ag-ordenes-card__lote-punto--danger {
+    background-color: var(--ag-color-danger);
+}
+
+.ag-ordenes-card__lote-punto--info {
+    background-color: var(--ag-color-info);
 }
 
 .ag-ordenes-card__lote-hectareas {
@@ -146,30 +229,26 @@
     font-size: var(--ag-font-size-xs);
 }
 
-@media (max-width: 576px) {
-    .ag-ordenes__grilla {
-        grid-template-columns: 1fr;
-    }
-}
-
 /* Detalle (show, 17/9/2026) — arquetipo Detalle, §6.4 de
-   docs/diseno/guia_pantalla_panel.md. */
+   docs/diseno/guia_pantalla_panel.md. Mismo criterio de container query que
+   la grilla del listado (ver arriba): reacciona al ancho real de
+   `.ag-ordenes-detalle`, sidebar colapsado incluido. */
 
 .ag-ordenes-detalle__kpis {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: 1fr;
     gap: var(--ag-space-4);
 }
 
-@media (max-width: 992px) {
+@container ag-ordenes-detalle (min-width: 36rem) {
     .ag-ordenes-detalle__kpis {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
-@media (max-width: 576px) {
+@container ag-ordenes-detalle (min-width: 60rem) {
     .ag-ordenes-detalle__kpis {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 }
 
@@ -190,6 +269,15 @@
     font-size: var(--ag-font-size-sm);
     font-weight: var(--ag-font-weight-medium);
     line-height: 1.5;
+}
+
+/* Lista de "Vínculos" (molecules/link-row): mismo tratamiento que la tabla
+   de "Lotes" — borde/radio propios, separada del padding de la tarjeta,
+   para que se lea como un bloque cohesivo en vez de filas sueltas. */
+.ag-ordenes-detalle__vinculos {
+    border: 1px solid var(--ag-color-border-row);
+    border-radius: var(--ag-radius-md);
+    overflow: hidden;
 }
 
 /* Formulario (create/edit) */

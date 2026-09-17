@@ -62,6 +62,8 @@ final class OrdenesController
 
     private const PERMISO_ASIGNAR_EQUIPOS = 'operaciones.orden.asignar_equipos';
 
+    private const PERMISO_VER_TRABAJOS = 'operaciones.trabajo.ver';
+
     public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
 
     public function index(Request $request, ListarOrdenesAplicacion $listarOrdenes): View
@@ -85,11 +87,6 @@ final class OrdenesController
         $loteIdsPorOrden = $this->loteIdsPorOrden($ordenes->pluck('id')->map(fn ($id) => (int) $id)->all());
         $todosLosLoteIds = collect($loteIdsPorOrden)->flatten()->unique()->values()->all();
 
-        // Vista lista/grilla (homogeneización 17/9/2026): solo cambia cómo se
-        // pinta la MISMA colección paginada — nunca una consulta distinta.
-        $vistaQuery = $request->string('vista')->toString();
-        $vista = in_array($vistaQuery, ['lista', 'grilla'], true) ? $vistaQuery : 'lista';
-
         return view('operaciones::pages.ordenes.index', [
             ...$this->autorizacion->cascara($request),
             'ordenes' => $ordenes,
@@ -97,7 +94,6 @@ final class OrdenesController
             'etiquetasLote' => $this->etiquetasLote($todosLosLoteIds),
             'loteIdsPorOrden' => $loteIdsPorOrden,
             'filtros' => ['q' => $busqueda, 'estado' => $estado?->value, 'tipo_aplicacion' => $tipoAplicacion?->value],
-            'vista' => $vista,
             'puedeActivar' => $this->autorizacion->tienePermiso($request, self::PERMISO_ACTIVAR),
         ]);
     }
@@ -208,10 +204,68 @@ final class OrdenesController
             'porcentajeAsignado' => $porcentajeAsignado,
             'equiposAsignados' => $this->equiposAsignadosCount($orden),
             'actividad' => $this->actividadOrden($orden),
+            'vinculos' => $this->vinculosOrden($orden, $request),
             'puedeEditar' => $this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR),
             'puedeActivar' => $this->autorizacion->tienePermiso($request, self::PERMISO_ACTIVAR),
             'puedeEliminar' => $this->autorizacion->tienePermiso($request, self::PERMISO_ELIMINAR),
         ]);
+    }
+
+    /**
+     * "Vínculos" de `show()`: accesos a información relacionada que vive en
+     * OTRA pantalla, no se duplica acá (mismo espíritu que el resumen
+     * relacionado del arquetipo Formulario, §6.3.1, pero como filas sueltas
+     * — `molecules/link-row` — en vez de tarjetas completas).
+     *
+     * Solo dos, a propósito, ambos con filtro REAL del lado del destino:
+     * - Órdenes de trabajo: `panel.trabajos.index` acepta `orden_id`
+     *   (`TrabajosController::index()`/`Aplicacion/ListarTrabajos`).
+     * - Asignación de equipos: `panel.asignacion-equipos.show` es la ficha
+     *   propia de ESTA orden.
+     *
+     * Deliberadamente NO hay un tercer vínculo a "Seguimiento de vuelos"
+     * (`panel.sesiones.validacion.index`): esa pantalla es la cola de
+     * VALIDACIÓN pendiente (`ValidacionSesionesController::index()`, sesiones
+     * `cerrado` sin validar), no un historial de vuelos de la orden — un
+     * enlace filtrado ahí se vería vacío la mayor parte del tiempo (en
+     * cuanto se validan, salen de la cola) y prometería un seguimiento que
+     * esa pantalla no da todavía (mismo criterio ya documentado para el
+     * título de esa pantalla, no se repite acá). Tampoco hay vínculo a
+     * Finanzas: `Gastos` solo filtra por `trabajo_id` (`ListarGastos`), no
+     * por `orden_id`, y una orden puede tener varios trabajos — un enlace
+     * a un solo trabajo sería arbitrario.
+     *
+     * @return list<array{href: string, icon: string, title: string, meta: ?string, tone: string}>
+     */
+    private function vinculosOrden(OrdenAplicacion $orden, Request $request): array
+    {
+        $vinculos = [];
+
+        if ($this->autorizacion->tienePermiso($request, self::PERMISO_VER_TRABAJOS)) {
+            $totalTrabajos = Trabajo::query()->where('orden_id', $orden->id)->count();
+
+            $vinculos[] = [
+                'href' => route('panel.trabajos.index', ['orden_id' => $orden->id]),
+                'icon' => 'work_history',
+                'title' => __('operaciones.ordenes.vinculo_trabajos'),
+                'meta' => __('operaciones.ordenes.vinculo_trabajos_meta', ['cantidad' => $totalTrabajos]),
+                'tone' => $totalTrabajos > 0 ? 'info' : 'neutral',
+            ];
+        }
+
+        if ($this->autorizacion->tienePermiso($request, self::PERMISO_ASIGNAR_EQUIPOS)) {
+            $equiposAsignados = $this->equiposAsignadosCount($orden);
+
+            $vinculos[] = [
+                'href' => route('panel.asignacion-equipos.show', $orden),
+                'icon' => 'groups',
+                'title' => __('operaciones.ordenes.vinculo_asignacion'),
+                'meta' => __('operaciones.ordenes.vinculo_asignacion_meta', ['cantidad' => $equiposAsignados]),
+                'tone' => $equiposAsignados > 0 ? 'success' : 'neutral',
+            ];
+        }
+
+        return $vinculos;
     }
 
     public function store(CrearOrdenRequest $request, CrearOrden $crearOrden): RedirectResponse

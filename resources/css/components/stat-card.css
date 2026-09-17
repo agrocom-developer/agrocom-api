@@ -51,8 +51,8 @@
    se colorea vía `data-state` en .ag-stat-card, ver abajo. */
 .ag-stat-card__icon-box {
     flex-shrink: 0;
-    width: 34px;
-    height: 34px;
+    width: 2.5rem;
+    height: 2.5rem;
     display: grid;
     place-items: center;
     border-radius: var(--ag-radius-md);

@@ -2,7 +2,11 @@
     Molecule: stat-card (quinta vuelta — tarjeta KPI de las maquetas
     4a/5a/5b; sexta vuelta parte 2 — ícono en contenedor + `state`,
     lenguaje visual de docs/ganadosoft-dashboard.html §2.2): rótulo
-    uppercase + ícono en contenedor 34×34 a la derecha, cifra grande en la
+    uppercase + ícono en contenedor 40×40 a la derecha (17/9/2026: subido
+    de 34×34/ícono `sm` a 40×40/ícono `md` — se veía chico apenas se
+    empezó a usar `state` de verdad, primer consumidor real
+    `ordenes/show.blade.php`; sin cambios para los consumidores existentes,
+    solo más grande), cifra grande en la
     cifra grande en sans + tabular-nums (auditoría visual externa, obs. #7 —
     ya no la fuente display, ver stat-card.css §.ag-stat-card__value; puede
     llevar un sufijo muted, "ha" o "/ 48"),
@@ -49,7 +53,7 @@
         <span class="ag-stat-card__label">{{ $label }}</span>
         @if ($icon)
             <span class="ag-stat-card__icon-box">
-                <x-atoms.icon :name="$icon" size="sm" class="ag-stat-card__icon" />
+                <x-atoms.icon :name="$icon" size="md" class="ag-stat-card__icon" />
             </span>
         @endif
     </div>

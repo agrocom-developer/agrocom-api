@@ -1,0 +1,72 @@
+/*
+ * Molecule: link-row (resources/views/components/molecules/link-row.blade.php)
+ * Fila clicable: círculo de ícono con color de estado + título + meta + flecha.
+ */
+
+.ag-link-row {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-3) var(--ag-space-4);
+    color: var(--ag-color-text);
+    text-decoration: none;
+    transition: background-color var(--ag-transition-fast);
+}
+
+.ag-link-row:hover {
+    background-color: var(--ag-color-bg-row-hover);
+    color: var(--ag-color-text);
+}
+
+.ag-link-row + .ag-link-row {
+    border-top: 1px solid var(--ag-color-border-row);
+}
+
+.ag-link-row__icon {
+    flex-shrink: 0;
+    width: 2.25rem;
+    height: 2.25rem;
+    display: grid;
+    place-items: center;
+    border-radius: var(--ag-radius-md);
+    background: var(--ag-color-neutral-subtle);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-link-row__icon--success {
+    background: var(--ag-color-success-subtle);
+    color: var(--ag-color-success-strong);
+}
+
+.ag-link-row__icon--warning {
+    background: var(--ag-color-warning-subtle);
+    color: var(--ag-color-warning-strong);
+}
+
+.ag-link-row__icon--danger {
+    background: var(--ag-color-danger-subtle);
+    color: var(--ag-color-danger-strong);
+}
+
+.ag-link-row__icon--info {
+    background: var(--ag-color-info-subtle);
+    color: var(--ag-color-info-strong);
+}
+
+.ag-link-row__title {
+    flex: 1;
+    min-width: 0;
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+}
+
+.ag-link-row__meta {
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-link-row__chevron {
+    flex-shrink: 0;
+    color: var(--ag-color-text-faint);
+}

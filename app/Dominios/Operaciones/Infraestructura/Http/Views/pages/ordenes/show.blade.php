@@ -46,6 +46,18 @@
     $modalIdActivar = "orden-activar-modal-{$orden->id}";
     $modalIdEliminar = "orden-eliminar-modal-{$orden->id}";
 
+    // Estados de color de la tira de KPI (17/9/2026, pedido explícito: se
+    // veía "plana" sin ningún `state` — ver docblock de `molecules/stat-card`).
+    // Cada uno resuelve a una condición REAL, nunca decorativo: aplicaciones
+    // y equipos pasan a "success" recién cuando la meta se cumple de verdad.
+    // "Equipos" solo pasa a "warning" (pide atención) con la orden YA
+    // `vigente` — antes de activarla, no tener equipos asignados es el
+    // estado normal (`AsignarEquiposOrden` ni lo permite todavía), no algo
+    // que reclame atención.
+    $aplicacionesCompletas = $aplicacionesPrevistas !== null && $orden->nro_aplicacion >= $aplicacionesPrevistas;
+    $equiposCompletos = $equiposAsignados >= $orden->cantidad_equipos_necesarios;
+    $equiposEstado = $equiposCompletos ? 'success' : ($estadoValor === 'vigente' ? 'warning' : 'info');
+
     $limitesItems = [
         ['label' => __('operaciones.ordenes.campo_humedad_min_pct'), 'value' => $orden->humedad_min_pct !== null ? "{$orden->humedad_min_pct} %" : __('operaciones.ordenes.limite_sin_definir')],
         ['label' => __('operaciones.ordenes.campo_humedad_max_pct'), 'value' => $orden->humedad_max_pct !== null ? "{$orden->humedad_max_pct} %" : __('operaciones.ordenes.limite_sin_definir')],
@@ -68,8 +80,6 @@
         :vista-actual="__('operaciones.ordenes.detalle_titulo', ['id' => $orden->id])"
     >
         <div class="ag-ordenes-detalle">
-            <x-molecules.boton-volver :href="route('panel.ordenes.index')" :label="__('operaciones.ordenes.volver')" />
-
             <x-organisms.page-header
                 :title="__('operaciones.ordenes.detalle_titulo', ['id' => $orden->id])"
                 :subtitle="__('operaciones.ordenes.detalle_subtitulo', ['cliente' => $contratoLabel, 'fecha' => $orden->fecha_emision->format('d/m/Y')])"
@@ -81,6 +91,8 @@
                 </x-slot:chip>
 
                 <x-slot:actions>
+                    <x-molecules.boton-volver :href="route('panel.ordenes.index')" :label="__('operaciones.ordenes.volver')" />
+
                     @if ($puedeEditar && $estadoValor === 'emitida')
                         <x-atoms.button :href="route('panel.ordenes.edit', $orden)" variant="primary" icon="edit">
                             {{ __('operaciones.ordenes.editar') }}
@@ -140,24 +152,28 @@
                     icon="landscape"
                     :value="$hectareasSolicitadas"
                     value-suffix="ha"
+                    state="info"
                 />
                 <x-molecules.stat-card
                     :label="__('operaciones.ordenes.campo_categoria_insumo')"
                     icon="science"
                     :value="$dosisTexto"
+                    state="info"
                 />
                 <x-molecules.stat-card
                     :label="__('operaciones.ordenes.kpi_aplicaciones')"
                     icon="repeat"
                     :value="$orden->nro_aplicacion"
                     :value-suffix="$aplicacionesPrevistas !== null ? __('operaciones.ordenes.kpi_aplicaciones_sufijo', ['total' => $aplicacionesPrevistas]) : null"
+                    :state="$aplicacionesCompletas ? 'success' : 'info'"
                 />
                 <x-molecules.stat-card
                     :label="__('operaciones.ordenes.kpi_equipos_necesarios')"
                     icon="groups"
                     :value="$orden->cantidad_equipos_necesarios"
                     :foot="__('operaciones.ordenes.kpi_equipos_asignados_pie', ['asignados' => $equiposAsignados, 'necesarios' => $orden->cantidad_equipos_necesarios])"
-                    :foot-tone="$equiposAsignados >= $orden->cantidad_equipos_necesarios ? 'success' : 'muted'"
+                    :foot-tone="$equiposCompletos ? 'success' : ($estadoValor === 'vigente' ? 'warning' : 'muted')"
+                    :state="$equiposEstado"
                 />
             </div>
 
@@ -218,6 +234,22 @@
                         <x-molecules.timeline :items="$actividad" />
                     </div>
                 </x-molecules.form-section>
+
+                @if (count($vinculos))
+                    <x-molecules.form-section :title="__('operaciones.ordenes.seccion_vinculos')">
+                        <div class="ag-form-section__field--full ag-ordenes-detalle__vinculos">
+                            @foreach ($vinculos as $vinculo)
+                                <x-molecules.link-row
+                                    :href="$vinculo['href']"
+                                    :icon="$vinculo['icon']"
+                                    :title="$vinculo['title']"
+                                    :meta="$vinculo['meta']"
+                                    :tone="$vinculo['tone']"
+                                />
+                            @endforeach
+                        </div>
+                    </x-molecules.form-section>
+                @endif
 
                 <x-slot:aside>
                     <x-molecules.form-section :title="__('operaciones.ordenes.seccion_limites')" :count="__('operaciones.ordenes.campos_contador', ['cantidad' => 5])">
