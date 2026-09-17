@@ -11,8 +11,12 @@
  * `gap` en vez de `margin-top` repetido en cada hijo. Las tarjetas de
  * formulario (`molecules/form-section`), la cabecera (`organisms/page-header`)
  * y la barra de acciones (`organisms/form-actions-bar`) ya traen su propio
- * chrome — acá solo el layout específico de estas pantallas. Todo color y
- * medida por token (CLAUDE.md invariante 11) — EXCEPTO el chip de
+ * chrome — acá solo el layout específico de estas pantallas. El contenedor
+ * de la tabla del listado (`molecules/index-table`) y el layout main/aside
+ * del formulario (`molecules/form-layout`) tampoco viven acá: eran una copia
+ * casi idéntica a clientes/campanias/lotes/contratos, extraída al catálogo
+ * (ver docs/diseno/guia_pantalla_panel.md §6.2/§6.3.1). Todo color y medida
+ * por token (CLAUDE.md invariante 11) — EXCEPTO el chip de
  * `.ag-propiedades__color`, que pinta un HEX de dato de negocio elegido por
  * el usuario (paleta curada, `ColorPropiedad`), no un token de theming: ver
  * su comentario puntual más abajo.
@@ -38,57 +42,9 @@
     gap: var(--ag-space-4);
 }
 
-/* Listado (index) */
-
-.ag-propiedades__tabla {
-    border: 1px solid var(--ag-color-border-card);
-    border-radius: var(--ag-radius-md);
-    background-color: var(--ag-color-surface-card);
-    overflow: hidden;
-}
-
-/* 7 columnas: índice, nombre, cliente, ubicación, lotes, hectáreas, acciones.
-   La última es un ancho fijo (`--ag-row-actions-width`), no `auto` — mismo
-   motivo que contratos.css: con `auto`, el head y la fila (organisms/row-actions)
-   son grids separados que resuelven ese ancho cada uno por su cuenta y
-   quedan corridos. */
-.ag-propiedades__head,
-.ag-propiedades__fila {
-    display: grid;
-    grid-template-columns: 3rem 2fr 1.3fr 1.3fr 0.8fr 0.8fr var(--ag-row-actions-width);
-    gap: var(--ag-space-4);
-    align-items: center;
-    padding: var(--ag-space-3) var(--ag-space-4);
-}
-
-.ag-propiedades__acciones-head {
-    text-align: right;
-}
-
-.ag-propiedades__indice {
-    color: var(--ag-color-text-faint);
-    font-family: var(--ag-font-family-mono);
-    font-size: var(--ag-font-size-xs);
-}
-
-.ag-propiedades__head {
-    background-color: var(--ag-color-bg-table-head);
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-xs);
-    font-weight: var(--ag-font-weight-medium);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.ag-propiedades__fila {
-    border-top: 1px solid var(--ag-color-border-row);
-    color: var(--ag-color-text);
-    font-size: var(--ag-font-size-sm);
-}
-
-.ag-propiedades__fila:hover {
-    background-color: var(--ag-color-bg-row-hover);
-}
+/* Listado (index): 7 columnas propias de `molecules/index-table` (índice,
+   nombre, cliente, ubicación, lotes, hectáreas, acciones) — el resto de la
+   anatomía de la tabla vive en el componente. */
 
 .ag-propiedades__nombre {
     display: flex;
@@ -119,79 +75,8 @@
     font-family: var(--ag-font-family-mono);
 }
 
-.ag-propiedades__acciones {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--ag-space-2);
-}
-
-
-@media (max-width: 992px) {
-    .ag-propiedades__head {
-        display: none;
-    }
-
-    .ag-propiedades__fila {
-        grid-template-columns: 1fr;
-        gap: var(--ag-space-1);
-    }
-
-    .ag-propiedades__indice {
-        display: none;
-    }
-
-    .ag-propiedades__acciones {
-        justify-content: flex-start;
-        margin-top: var(--ag-space-2);
-    }
-}
-
-/* Formulario (create/edit) */
-
-/* Layout de dos columnas (aside solo en edición, §6.3.1 de la guía de
-   pantalla): mismo patrón que `.ag-clientes-form__layout/__main/__aside`. */
-.ag-propiedades-form__layout {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--ag-space-5);
-}
-
-.ag-propiedades-form__main {
-    flex: 1 1 32rem;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-5);
-}
-
-/* Alta (sin aside): ocupa el 100% del ancho a cualquier tamaño de pantalla,
-   mismo criterio que `.ag-clientes-form__main:only-child`. */
-.ag-propiedades-form__main:only-child {
-    flex-basis: 100%;
-}
-
-.ag-propiedades-form__aside {
-    flex: 1 1 19rem;
-    min-width: 16rem;
-    max-width: 20rem;
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-5);
-    position: sticky;
-    top: var(--ag-space-4);
-}
-
-@media (max-width: 1199.98px) {
-    .ag-propiedades-form__layout {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .ag-propiedades-form__aside {
-        max-width: none;
-        position: static;
-    }
-}
+/* Formulario (create/edit): el layout de dos columnas (aside solo en
+   edición, §6.3.1 de la guía de pantalla) es `molecules/form-layout`. */
 
 /* Pantalla de mapa (propiedades/mapa.blade.php) */
 

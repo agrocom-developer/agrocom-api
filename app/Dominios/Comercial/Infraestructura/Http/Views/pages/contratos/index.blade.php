@@ -166,16 +166,23 @@
                     />
                 @endif
             @else
-                <div class="ag-contratos__tabla" role="table">
-                    <div class="ag-contratos__head" role="row">
-                        <span role="columnheader" class="ag-contratos__indice">{{ __('ui.tabla.col_indice') }}</span>
+                {{-- La última columna (acciones) es un ancho fijo, no `auto` — mismo
+                     motivo que usuarios.css: con `auto`, el head (rótulo "Acciones") y
+                     la fila (organisms/row-actions) de `molecules/index-table` son
+                     grids separados que resuelven ese ancho cada uno por su cuenta y
+                     quedan corridos. `--ag-row-actions-width`, no un valor en rem
+                     propio: ver el comentario de resources/css/components/row-actions.css
+                     (tarea "listado-contratos-acciones", 16/9/2026). --}}
+                <x-molecules.index-table columns="3rem 2fr 1fr 1fr 1.4fr 1fr var(--ag-row-actions-width)">
+                    <x-slot:head>
+                        <span role="columnheader" class="ag-index-table__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('comercial.contratos.col_cliente') }}</span>
                         <span role="columnheader">{{ __('comercial.contratos.col_hectareas') }}</span>
                         <span role="columnheader">{{ __('comercial.contratos.col_monto_total') }}</span>
                         <span role="columnheader">{{ __('comercial.contratos.col_vigencia') }}</span>
                         <span role="columnheader">{{ __('comercial.contratos.col_estado') }}</span>
-                        <span role="columnheader" class="ag-contratos__acciones-head">{{ __('ui.tabla.col_acciones') }}</span>
-                    </div>
+                        <span role="columnheader" class="ag-index-table__acciones-head">{{ __('ui.tabla.col_acciones') }}</span>
+                    </x-slot:head>
 
                     @foreach ($contratos as $contrato)
                         @php
@@ -188,8 +195,8 @@
                             ];
                             $estadoValor = $contrato->estado->value;
                         @endphp
-                        <div class="ag-contratos__fila" role="row">
-                            <span role="cell" class="ag-contratos__indice">
+                        <div class="ag-index-table__row" role="row">
+                            <span role="cell" class="ag-index-table__indice">
                                 {{ ($contratos->currentPage() - 1) * $contratos->perPage() + $loop->iteration }}
                             </span>
                             <span role="cell" class="ag-contratos__cliente">{{ $contrato->cliente->razon_social }}</span>
@@ -208,7 +215,7 @@
                                 </x-atoms.badge>
                             </span>
 
-                            <span role="cell" class="ag-contratos__acciones">
+                            <span role="cell" class="ag-index-table__acciones">
                                 @php
                                     $formIdAprobar = "contrato-aprobar-{$contrato->id}";
                                     $formIdFinalizar = "contrato-finalizar-{$contrato->id}";
@@ -363,7 +370,7 @@
                             </span>
                         </div>
                     @endforeach
-                </div>
+                </x-molecules.index-table>
 
                 <x-molecules.pagination :paginator="$contratos" :aria-label="__('comercial.contratos.paginacion_aria')" />
             @endif

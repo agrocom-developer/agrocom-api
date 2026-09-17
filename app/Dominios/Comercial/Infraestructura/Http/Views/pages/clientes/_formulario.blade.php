@@ -105,8 +105,7 @@
         </x-molecules.alert-strip>
     @endif
 
-    <div class="ag-clientes-form__layout">
-        <div class="ag-clientes-form__main">
+    <x-molecules.form-layout>
             <x-molecules.form-section
                 :title="__('comercial.clientes.seccion_datos')"
                 :count="__('comercial.clientes.campos_contador', ['cantidad' => 6])"
@@ -254,10 +253,9 @@
                     </x-atoms.button>
                 </x-slot:actions>
             </x-organisms.form-actions-bar>
-        </div>
 
         @if ($esEdicion)
-            <aside class="ag-clientes-form__aside">
+            <x-slot:aside>
                 {{-- `mostrarAccion` viene del permiso `.crear` de cada módulo
                      (ClientesController::resumenRelacionado) — sin él, ni
                      summary-card ni empty-state ofrecen el atajo de alta. --}}
@@ -288,7 +286,7 @@
                         </x-molecules.empty-state>
                     @endif
                 @endforeach
-            </aside>
+            </x-slot:aside>
         @endif
-    </div>
+    </x-molecules.form-layout>
 </form>

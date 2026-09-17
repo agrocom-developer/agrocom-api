@@ -82,25 +82,25 @@
                     />
                 @endif
             @else
-                <div class="ag-clientes__tabla" role="table">
-                    <div class="ag-clientes__head" role="row">
-                        <span role="columnheader" class="ag-clientes__indice">{{ __('ui.tabla.col_indice') }}</span>
+                <x-molecules.index-table columns="3rem 2fr 1fr 1fr var(--ag-row-actions-width)">
+                    <x-slot:head>
+                        <span role="columnheader" class="ag-index-table__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('comercial.clientes.col_razon_social') }}</span>
                         <span role="columnheader">{{ __('comercial.clientes.col_nit') }}</span>
                         <span role="columnheader">{{ __('comercial.clientes.col_contactos') }}</span>
-                        <span role="columnheader" class="ag-clientes__acciones-head">{{ __('ui.tabla.col_acciones') }}</span>
-                    </div>
+                        <span role="columnheader" class="ag-index-table__acciones-head">{{ __('ui.tabla.col_acciones') }}</span>
+                    </x-slot:head>
 
                     @foreach ($clientes as $cliente)
-                        <div class="ag-clientes__fila" role="row">
-                            <span role="cell" class="ag-clientes__indice">
+                        <div class="ag-index-table__row" role="row">
+                            <span role="cell" class="ag-index-table__indice">
                                 {{ ($clientes->currentPage() - 1) * $clientes->perPage() + $loop->iteration }}
                             </span>
                             <span role="cell" class="ag-clientes__razon-social">{{ $cliente->razon_social }}</span>
                             <span role="cell" class="ag-clientes__nit">{{ $cliente->nit ?? __('comercial.clientes.sin_nit') }}</span>
                             <span role="cell">{{ __('comercial.clientes.contactos_cantidad', ['cantidad' => $cliente->contactos_count]) }}</span>
 
-                            <span role="cell" class="ag-clientes__acciones">
+                            <span role="cell" class="ag-index-table__acciones">
                                 <x-organisms.row-actions>
                                     @puede('comercial.cliente.editar')
                                         <x-atoms.button :href="route('panel.clientes.edit', $cliente)" variant="warning-outline" size="sm" icon="edit">
@@ -125,7 +125,7 @@
                             </span>
                         </div>
                     @endforeach
-                </div>
+                </x-molecules.index-table>
 
                 <x-molecules.pagination :paginator="$clientes" :aria-label="__('comercial.clientes.paginacion_aria')" />
             @endif

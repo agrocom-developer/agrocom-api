@@ -122,19 +122,19 @@
                     />
                 @endif
             @else
-                <div class="ag-lotes__tabla" role="table">
-                    <div class="ag-lotes__head" role="row">
-                        <span role="columnheader" class="ag-lotes__indice">{{ __('ui.tabla.col_indice') }}</span>
+                <x-molecules.index-table columns="3rem 1fr 2fr 2fr 1fr var(--ag-row-actions-width)">
+                    <x-slot:head>
+                        <span role="columnheader" class="ag-index-table__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('comercial.lotes.col_codigo') }}</span>
                         <span role="columnheader">{{ __('comercial.lotes.col_propiedad') }}</span>
                         <span role="columnheader">{{ __('comercial.lotes.col_cliente') }}</span>
                         <span role="columnheader">{{ __('comercial.lotes.col_hectareas') }}</span>
-                        <span role="columnheader" class="ag-lotes__acciones-head">{{ __('ui.tabla.col_acciones') }}</span>
-                    </div>
+                        <span role="columnheader" class="ag-index-table__acciones-head">{{ __('ui.tabla.col_acciones') }}</span>
+                    </x-slot:head>
 
                     @foreach ($lotes as $lote)
-                        <div class="ag-lotes__fila" role="row">
-                            <span role="cell" class="ag-lotes__indice">
+                        <div class="ag-index-table__row" role="row">
+                            <span role="cell" class="ag-index-table__indice">
                                 {{ ($lotes->currentPage() - 1) * $lotes->perPage() + $loop->iteration }}
                             </span>
                             <span role="cell" class="ag-lotes__codigo">{{ $lote->codigo }}</span>
@@ -147,7 +147,7 @@
                             <span role="cell">{{ $lote->propiedad->cliente->razon_social }}</span>
                             <span role="cell" class="ag-lotes__hectareas">{{ __('comercial.lotes.hectareas_valor', ['cantidad' => number_format((float) $lote->hectareas, 2, ',', '.')]) }}</span>
 
-                            <span role="cell" class="ag-lotes__acciones">
+                            <span role="cell" class="ag-index-table__acciones">
                                 <x-organisms.row-actions>
                                     @puede('comercial.lote.editar')
                                         <x-atoms.button :href="route('panel.lotes.edit', $lote)" variant="warning-outline" size="sm" icon="edit">
@@ -172,7 +172,7 @@
                             </span>
                         </div>
                     @endforeach
-                </div>
+                </x-molecules.index-table>
 
                 <x-molecules.pagination :paginator="$lotes" :aria-label="__('comercial.lotes.paginacion_aria')" />
             @endif

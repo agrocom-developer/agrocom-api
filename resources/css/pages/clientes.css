@@ -9,8 +9,12 @@
  * `margin-top` repetido en cada hijo. Las tarjetas de formulario
  * (`molecules/form-section`), la cabecera (`organisms/page-header`) y la
  * barra de acciones (`organisms/form-actions-bar`) ya traen su propio chrome
- * — acá solo el layout específico de estas pantallas. Todo color y medida
- * por token (CLAUDE.md invariante 11).
+ * — acá solo el layout específico de estas pantallas. El contenedor de la
+ * tabla del listado (`molecules/index-table`) y el layout main/aside del
+ * formulario (`molecules/form-layout`) tampoco viven acá: eran una copia
+ * casi idéntica a propiedades/campanias/lotes/contratos, extraída al
+ * catálogo (ver docs/diseno/guia_pantalla_panel.md §6.2/§6.3.1). Todo color
+ * y medida por token (CLAUDE.md invariante 11).
  */
 
 .ag-clientes,
@@ -20,57 +24,10 @@
     gap: var(--ag-space-5);
 }
 
-/* Listado (index) */
-
-.ag-clientes__tabla {
-    border: 1px solid var(--ag-color-border-card);
-    border-radius: var(--ag-radius-md);
-    background-color: var(--ag-color-surface-card);
-    overflow: hidden;
-}
-
-/* La última columna (acciones) es un ancho fijo, no `auto` (mismo motivo
-   que usuarios.css): con `auto`, el head y la fila (organisms/row-actions)
-   son grids separados que resuelven ese ancho cada uno por su cuenta y
-   quedan corridos. `--ag-row-actions-width`, no un valor en rem propio: ver
-   el comentario de `resources/css/components/row-actions.css`. */
-.ag-clientes__head,
-.ag-clientes__fila {
-    display: grid;
-    grid-template-columns: 3rem 2fr 1fr 1fr var(--ag-row-actions-width);
-    gap: var(--ag-space-4);
-    align-items: center;
-    padding: var(--ag-space-3) var(--ag-space-4);
-}
-
-.ag-clientes__acciones-head {
-    text-align: right;
-}
-
-.ag-clientes__indice {
-    color: var(--ag-color-text-faint);
-    font-family: var(--ag-font-family-mono);
-    font-size: var(--ag-font-size-xs);
-}
-
-.ag-clientes__head {
-    background-color: var(--ag-color-bg-table-head);
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-xs);
-    font-weight: var(--ag-font-weight-medium);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.ag-clientes__fila {
-    border-top: 1px solid var(--ag-color-border-row);
-    color: var(--ag-color-text);
-    font-size: var(--ag-font-size-sm);
-}
-
-.ag-clientes__fila:hover {
-    background-color: var(--ag-color-bg-row-hover);
-}
+/* Listado (index): columnas propias de `molecules/index-table`
+   (índice · razón social · NIT · contactos · acciones) — el resto de la
+   anatomía de la tabla (borde, cabecera, hover, colapso mobile) vive en el
+   componente. */
 
 .ag-clientes__razon-social {
     font-weight: var(--ag-font-weight-medium);
@@ -78,33 +35,6 @@
 
 .ag-clientes__nit {
     font-family: var(--ag-font-family-mono);
-}
-
-.ag-clientes__acciones {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--ag-space-2);
-}
-
-
-@media (max-width: 992px) {
-    .ag-clientes__head {
-        display: none;
-    }
-
-    .ag-clientes__fila {
-        grid-template-columns: 1fr;
-        gap: var(--ag-space-1);
-    }
-
-    .ag-clientes__indice {
-        display: none;
-    }
-
-    .ag-clientes__acciones {
-        justify-content: flex-start;
-        margin-top: var(--ag-space-2);
-    }
 }
 
 /* Formulario (create/edit): "Datos del cliente" */
@@ -182,71 +112,4 @@
    acá se lo saca solo a él. */
 .ag-clientes-form__contactos-agregar {
     align-self: flex-start;
-}
-
-/* Layout de dos columnas del formulario (tarea "resumen de cliente"): mismo
-   patrón que `.ag-organizacion__layout/__main/__aside`
-   (resources/css/pages/organizacion.css) — acá solo aparece en edición
-   (`_formulario.blade.php`); en alta `.ag-clientes-form__main` queda sin
-   hermano (`:only-child` debajo). */
-.ag-clientes-form__layout {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--ag-space-5);
-}
-
-.ag-clientes-form__main {
-    flex: 1 1 32rem;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-5);
-}
-
-/* Alta (sin aside, pedido directo 15/9/2026): nada de lo que sigue —
-   flex-basis de 32rem, el breakpoint de abajo, el min-width del aside— debe
-   afectarlo. `:only-child` es la señal (el aside solo existe en edición, ver
-   `_formulario.blade.php`), no un breakpoint: ocupa el 100% del ancho a
-   cualquier tamaño de pantalla, sin depender de que el flex-grow le alcance
-   a ganarle a un flex-basis competidor que en alta ni siquiera existe. */
-.ag-clientes-form__main:only-child {
-    flex-basis: 100%;
-}
-
-/* Columna lateral pegajosa (§6.3 regla 4 de la guía de pantalla): resumen de
-   Contratos/Propiedades/Campañas, de solo lectura — nunca campos.
-   `min-width` (pedido directo 15/9/2026): en el tramo angosto ANTES del
-   breakpoint de abajo, evita que se achique de más antes de apilarse —
-   `.ag-clientes-form__main` (flex-grow: 1, `min-width: 0`) es el que cede
-   ancho primero. */
-.ag-clientes-form__aside {
-    flex: 1 1 19rem;
-    min-width: 16rem;
-    max-width: 20rem;
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-5);
-    position: sticky;
-    top: var(--ag-space-4);
-}
-
-@media (max-width: 1199.98px) {
-    .ag-clientes-form__layout {
-        /* `align-items: flex-start` de arriba es para el eje CRUZADO en
-           fila (desktop, vertical: no estirar main/aside a la misma
-           altura). Al pasar a columna el eje cruzado pasa a ser el
-           HORIZONTAL — sin este override, `flex-start` deja de significar
-           "no estirar verticalmente" y pasa a significar "no estirar el
-           ancho", y `.ag-clientes-form__main` se encoge a su contenido en
-           vez de ocupar el ancho completo (bug real, encontrado 15/9/2026
-           en vivo en `/panel/clientes/crear` — el mismo patrón sin este
-           override en organizacion.css tiene la misma falla latente). */
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .ag-clientes-form__aside {
-        max-width: none;
-        position: static;
-    }
 }

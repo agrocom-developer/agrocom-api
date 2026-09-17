@@ -1,0 +1,83 @@
+/*
+ * Molecule: index-table (resources/views/components/molecules/index-table.blade.php)
+ *
+ * Contenedor + cabecera + filas del arquetipo Listado (§6.2 de
+ * docs/diseno/guia_pantalla_panel.md). `grid-template-columns` llega por la
+ * custom property `--ag-index-table-columns` (inline, puesta por el
+ * componente desde su prop `columns`) porque es la única medida que cambia
+ * de una pantalla a otra — todo lo demás (borde, tipografía, hover, colapso
+ * mobile) era, antes de este componente, cinco copias casi idénticas en
+ * clientes.css/propiedades.css/campanias.css/lotes.css/contratos.css (ver
+ * la guía de pantalla).
+ */
+
+.ag-index-table {
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+    overflow: hidden;
+}
+
+.ag-index-table__head,
+.ag-index-table__row {
+    display: grid;
+    grid-template-columns: var(--ag-index-table-columns);
+    gap: var(--ag-space-4);
+    align-items: center;
+    padding: var(--ag-space-3) var(--ag-space-4);
+}
+
+.ag-index-table__head {
+    background-color: var(--ag-color-bg-table-head);
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ag-index-table__acciones-head {
+    text-align: right;
+}
+
+.ag-index-table__row {
+    border-top: 1px solid var(--ag-color-border-row);
+    color: var(--ag-color-text);
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-index-table__row:hover {
+    background-color: var(--ag-color-bg-row-hover);
+}
+
+.ag-index-table__indice {
+    color: var(--ag-color-text-faint);
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-xs);
+}
+
+.ag-index-table__acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--ag-space-2);
+}
+
+@media (max-width: 992px) {
+    .ag-index-table__head {
+        display: none;
+    }
+
+    .ag-index-table__row {
+        grid-template-columns: 1fr;
+        gap: var(--ag-space-1);
+    }
+
+    .ag-index-table__indice {
+        display: none;
+    }
+
+    .ag-index-table__acciones {
+        justify-content: flex-start;
+        margin-top: var(--ag-space-2);
+    }
+}

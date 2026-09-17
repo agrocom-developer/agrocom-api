@@ -104,16 +104,38 @@
                     />
                 @endif
             @else
-                <div class="ag-campanias__tabla" role="table">
-                    <div class="ag-campanias__head" role="row">
-                        <span role="columnheader" class="ag-campanias__indice">{{ __('ui.tabla.col_indice') }}</span>
+                {{-- SIETE columnas, una por celda: índice · código · nombre · vigencia ·
+                     estado · actividad · acciones (sin columna de cliente desde la
+                     corrección del 15/9/2026, ADR 0015 — la campaña es catálogo
+                     compartido). Nacieron cinco (tarea 69) y la fila siempre tuvo seis
+                     celdas, así que la de acciones no entraba en el track explícito y el
+                     grid le abría una FILA IMPLÍCITA: "Editar" y "Cerrar" aparecían debajo
+                     del nombre del cliente, en la primera columna, con la fila al doble de
+                     alto. Reportado por el dueño sobre el panel andando (9/9/2026).
+
+                     Los tracks de dato van en `fr`, ninguno en `auto`: el encabezado y las
+                     filas de `molecules/index-table` son grids HERMANOS, no uno solo, así
+                     que un track `auto` lo resuelve cada grid contra su propio contenido —
+                     con "VIGENCIA" arriba y una fecha abajo, la columna medía distinto en
+                     cada fila y los rótulos quedaban corridos respecto de los datos. Con
+                     `fr` los dos grids reparten idéntico.
+
+                     La columna de acciones es la excepción: ancho fijo (§6.2 de
+                     docs/diseno/guia_pantalla_panel.md), `--ag-row-actions-width` en vez de
+                     un valor en rem propio — ver el comentario de
+                     resources/css/components/row-actions.css. Con `fr`, el ancho de
+                     `row-actions` dependería del resto de columnas y no calzaría entre el
+                     head y la fila, que son grids separados. --}}
+                <x-molecules.index-table columns="3rem 0.9fr 1.6fr 1.4fr 0.8fr 0.8fr var(--ag-row-actions-width)">
+                    <x-slot:head>
+                        <span role="columnheader" class="ag-index-table__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('campania.campanias.col_codigo') }}</span>
                         <span role="columnheader">{{ __('campania.campanias.col_nombre') }}</span>
                         <span role="columnheader">{{ __('campania.campanias.col_vigencia') }}</span>
                         <span role="columnheader">{{ __('campania.campanias.col_estado') }}</span>
                         <span role="columnheader">{{ __('campania.campanias.col_actividad') }}</span>
-                        <span role="columnheader" class="ag-campanias__acciones-head">{{ __('ui.tabla.col_acciones') }}</span>
-                    </div>
+                        <span role="columnheader" class="ag-index-table__acciones-head">{{ __('ui.tabla.col_acciones') }}</span>
+                    </x-slot:head>
 
                     @foreach ($campanias as $campania)
                         @php
@@ -124,8 +146,8 @@
                             ];
                             $estadoValor = $campania->estado->value;
                         @endphp
-                        <div class="ag-campanias__fila" role="row">
-                            <span role="cell" class="ag-campanias__indice">
+                        <div class="ag-index-table__row" role="row">
+                            <span role="cell" class="ag-index-table__indice">
                                 {{ ($campanias->currentPage() - 1) * $campanias->perPage() + $loop->iteration }}
                             </span>
                             <span role="cell" class="ag-campanias__codigo">{{ $campania->codigo }}</span>
@@ -144,7 +166,7 @@
                                 </x-atoms.badge>
                             </span>
 
-                            <span role="cell" class="ag-campanias__acciones">
+                            <span role="cell" class="ag-index-table__acciones">
                                 @php
                                     $formIdAbrir = "campania-abrir-{$campania->id}";
                                     $formIdCerrar = "campania-cerrar-{$campania->id}";
@@ -208,7 +230,7 @@
                             </span>
                         </div>
                     @endforeach
-                </div>
+                </x-molecules.index-table>
 
                 <x-molecules.pagination :paginator="$campanias" :aria-label="__('campania.campanias.paginacion_aria')" />
             @endif

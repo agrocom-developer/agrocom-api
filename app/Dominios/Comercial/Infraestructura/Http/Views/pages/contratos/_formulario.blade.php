@@ -128,8 +128,7 @@
         </x-molecules.alert-strip>
     @endif
 
-    <div class="ag-contratos-form__layout">
-        <div class="ag-contratos-form__main">
+    <x-molecules.form-layout>
     {{-- Sección 1: Datos del contrato (8 campos, sin tocar) --}}
     <x-molecules.form-section
         :title="__('comercial.contratos.seccion_datos')"
@@ -325,7 +324,6 @@
             </x-atoms.button>
         </x-slot:actions>
     </x-organisms.form-actions-bar>
-        </div>
 
         @if ($esEdicion && $resumenContrato !== null)
             {{-- Resumen (tarea "resumen de contrato"): sin datos de
@@ -333,7 +331,7 @@
                  (mismo patrón que el aside de clientes); con datos, dos
                  tarjetas de solo lectura (facturación / aplicación) armadas
                  100% server-side en ContratosController::resumenContrato(). --}}
-            <aside class="ag-contratos-form__aside">
+            <x-slot:aside>
                 @if ($resumenContrato['tieneDatos'])
                     @foreach ($resumenContrato['tarjetas'] as $tarjeta)
                         <x-molecules.summary-card :title="$tarjeta['titulo']" :items="$tarjeta['items']" />
@@ -353,7 +351,7 @@
                         @endif
                     </x-molecules.empty-state>
                 @endif
-            </aside>
+            </x-slot:aside>
         @endif
-    </div>
+    </x-molecules.form-layout>
 </form>

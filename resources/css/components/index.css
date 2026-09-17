@@ -45,6 +45,8 @@
 @import './filter-bar.css';
 @import './table-search.css';
 @import './pagination.css';
+@import './index-table.css';
+@import './form-layout.css';
 
 /* Organisms (quinta vuelta — layout de tres niveles) */
 @import './collapsible-menu-group.css';

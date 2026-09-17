@@ -24,8 +24,9 @@
  */
 
 /* `:root`, no `.ag-row-actions`: la consume `grid-template-columns` de la
-   FILA de cada tabla (`.ag-contratos__fila` y las otras tres), que es
-   ANCESTRO de `.ag-row-actions`, no descendiente — una custom property
+   FILA de cada tabla (`.ag-index-table__row`, `molecules/index-table`, y
+   alguna tabla propia de formulario como `.ag-contratos-form__lotes-tabla`),
+   que es ANCESTRO de `.ag-row-actions`, no descendiente — una custom property
    scopeada al propio componente no llegaría hasta ahí por herencia. Vive
    acá (el archivo del componente dueño de la restricción) y no en
    `tokens/`, porque no es un token de diseño reusable en cualquier

@@ -127,20 +127,20 @@
                     />
                 @endif
             @else
-                <div class="ag-propiedades__tabla" role="table">
-                    <div class="ag-propiedades__head" role="row">
-                        <span role="columnheader" class="ag-propiedades__indice">{{ __('ui.tabla.col_indice') }}</span>
+                <x-molecules.index-table columns="3rem 2fr 1.3fr 1.3fr 0.8fr 0.8fr var(--ag-row-actions-width)">
+                    <x-slot:head>
+                        <span role="columnheader" class="ag-index-table__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('comercial.propiedades.col_nombre') }}</span>
                         <span role="columnheader">{{ __('comercial.propiedades.col_cliente') }}</span>
                         <span role="columnheader">{{ __('comercial.propiedades.col_ubicacion') }}</span>
                         <span role="columnheader">{{ __('comercial.propiedades.col_lotes') }}</span>
                         <span role="columnheader">{{ __('comercial.propiedades.col_hectareas') }}</span>
-                        <span role="columnheader" class="ag-propiedades__acciones-head">{{ __('ui.tabla.col_acciones') }}</span>
-                    </div>
+                        <span role="columnheader" class="ag-index-table__acciones-head">{{ __('ui.tabla.col_acciones') }}</span>
+                    </x-slot:head>
 
                     @foreach ($propiedades as $propiedad)
-                        <div class="ag-propiedades__fila" role="row">
-                            <span role="cell" class="ag-propiedades__indice">
+                        <div class="ag-index-table__row" role="row">
+                            <span role="cell" class="ag-index-table__indice">
                                 {{ ($propiedades->currentPage() - 1) * $propiedades->perPage() + $loop->iteration }}
                             </span>
                             <span role="cell" class="ag-propiedades__nombre">
@@ -156,7 +156,7 @@
                             <span role="cell" class="ag-propiedades__mono">{{ __('comercial.propiedades.lotes_cantidad', ['cantidad' => $propiedad->lotes_count]) }}</span>
                             <span role="cell" class="ag-propiedades__mono">{{ __('comercial.propiedades.hectareas_valor', ['cantidad' => number_format((float) ($propiedad->hectareas_totales ?? 0), 2, ',', '.')]) }}</span>
 
-                            <span role="cell" class="ag-propiedades__acciones">
+                            <span role="cell" class="ag-index-table__acciones">
                                 <x-organisms.row-actions>
                                     @puede('comercial.propiedad.editar')
                                         <x-atoms.button :href="route('panel.propiedades.edit', $propiedad)" variant="warning-outline" size="sm" icon="edit">
@@ -181,7 +181,7 @@
                             </span>
                         </div>
                     @endforeach
-                </div>
+                </x-molecules.index-table>
 
                 <x-molecules.pagination :paginator="$propiedades" :aria-label="__('comercial.propiedades.paginacion_aria')" />
             @endif

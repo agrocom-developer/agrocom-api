@@ -93,8 +93,7 @@
         </x-molecules.alert-strip>
     @endif
 
-    <div class="ag-propiedades-form__layout">
-        <div class="ag-propiedades-form__main">
+    <x-molecules.form-layout>
             <x-molecules.form-section
                 :title="__('comercial.propiedades.seccion_datos')"
                 :count="__('comercial.propiedades.campos_contador', ['cantidad' => 8])"
@@ -204,10 +203,9 @@
                     </x-atoms.button>
                 </x-slot:actions>
             </x-organisms.form-actions-bar>
-        </div>
 
         @if ($esEdicion)
-            <aside class="ag-propiedades-form__aside">
+            <x-slot:aside>
                 @foreach ($resumenPropiedad ?? [] as $resumen)
                     @if ($resumen['tieneDatos'])
                         <x-molecules.summary-card :title="$resumen['titulo']" :items="$resumen['items']">
@@ -235,7 +233,7 @@
                         </x-molecules.empty-state>
                     @endif
                 @endforeach
-            </aside>
+            </x-slot:aside>
         @endif
-    </div>
+    </x-molecules.form-layout>
 </form>
