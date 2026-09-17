@@ -26,21 +26,23 @@
     - $puedeActivar (bool): si el rol activo tiene `operaciones.orden.activar`
       — sin él, la fila no ofrece el botón (el servidor revalida igual en
       OrdenesController::activar()).
+    - $vista ('lista'|'grilla'): qué versión pintar — misma colección
+      paginada, nunca una consulta distinta (`?vista=` no toca el WHERE).
 
-    Gateada por `operaciones.orden.ver`. El botón "Editar" solo se ofrece
-    para una orden `emitida` (una `vigente` no es editable — ver
-    `Aplicacion/ActualizarOrden`); "Activar" solo para `emitida` y con el
+    Gateada por `operaciones.orden.ver`. "Ver" (a `panel.ordenes.show`, la
+    ficha de detalle) va SIEMPRE primero, para cualquier estado. "Editar"
+    solo se ofrece para una orden `emitida` (una `vigente` no es editable —
+    ver `Aplicacion/ActualizarOrden`); "Activar" solo para `emitida` y con el
     permiso; "Eliminar" para cualquier estado salvo `vigente` (ver
     `Aplicacion/EliminarOrden`). Presentación, no autorización: el servidor
-    revalida las tres reglas.
+    revalida las cuatro reglas.
 
-    Columna de acciones: `organisms/row-actions`, mismo criterio que
-    `contratos/index.blade.php` — los `<form>` de "Activar"/"Eliminar" y sus
-    `molecules/confirm-modal` viven FUERA de `row-actions` (ese organism
-    repite su slot dos veces, visible/menú; un `<form>` o un modal con `id`
-    ahí adentro se duplicaría, HTML inválido — bug real documentado en el
-    docblock de `contratos/index.blade.php`). Dentro de `row-actions` solo
-    quedan botones disparadores normales (`data-bs-toggle="modal"`).
+    Acciones (Ver/Editar/Activar/Eliminar, con sus forms+modales) viven en
+    `_orden-acciones.blade.php`, compartido por la fila de tabla y la
+    tarjeta de grilla (`_orden-card.blade.php`) — no se duplica ese bloque
+    en dos lugares. Mismo criterio que `contratos/index.blade.php` sobre por
+    qué los `<form>`/`molecules/confirm-modal` viven FUERA de `row-actions`
+    (ver el docblock de ese partial).
 
     Estilos en resources/css/pages/ordenes.css — cero color hardcodeado
     (CLAUDE.md invariante 11).
@@ -136,6 +138,12 @@
                         :placeholder="__('operaciones.ordenes.filtro_busqueda_placeholder')"
                         :clear-label="__('ui.tabla.buscador_limpiar')"
                     />
+
+                    <x-molecules.view-toggle
+                        :action="route('panel.ordenes.index')"
+                        :current="$vista"
+                        :query="request()->except('vista')"
+                    />
                 </div>
             @endif
 
@@ -153,6 +161,14 @@
                         :detail="__('operaciones.ordenes.vacio_detalle')"
                     />
                 @endif
+            @elseif ($vista === 'grilla')
+                <div class="ag-ordenes__grilla">
+                    @foreach ($ordenes as $orden)
+                        @include('operaciones::pages.ordenes._orden-card', ['orden' => $orden])
+                    @endforeach
+                </div>
+
+                <x-molecules.pagination :paginator="$ordenes" :aria-label="__('operaciones.ordenes.paginacion_aria')" />
             @else
                 <x-molecules.index-table columns="3rem 1.6fr 1.6fr 0.7fr 0.9fr 0.9fr 0.9fr 0.8fr var(--ag-row-actions-width)">
                     <x-slot:head>
@@ -181,10 +197,6 @@
                                 : ($orden->litros_ha !== null
                                     ? __('operaciones.ordenes.dosis_litros_ha', ['cantidad' => number_format((float) $orden->litros_ha, 2, ',', '.')])
                                     : '—');
-                            $formIdActivar = "orden-activar-{$orden->id}";
-                            $formIdEliminar = "orden-eliminar-{$orden->id}";
-                            $modalIdActivar = "orden-activar-modal-{$orden->id}";
-                            $modalIdEliminar = "orden-eliminar-modal-{$orden->id}";
                         @endphp
                         <div class="ag-index-table__row" role="row">
                             <span role="cell" class="ag-index-table__indice">
@@ -203,64 +215,7 @@
                             </span>
 
                             <span role="cell" class="ag-index-table__acciones">
-                                {{-- Forms + modales FUERA de row-actions a propósito — ver
-                                     docblock de cabecera de esta página. --}}
-                                @if ($puedeActivar && $estadoValor === 'emitida')
-                                    <form id="{{ $formIdActivar }}" method="POST" action="{{ route('panel.ordenes.activar', $orden) }}">
-                                        @csrf
-                                    </form>
-
-                                    <x-molecules.confirm-modal
-                                        :id="$modalIdActivar"
-                                        :form-id="$formIdActivar"
-                                        :title="__('operaciones.ordenes.confirmar_activar_titulo')"
-                                        :message="__('operaciones.ordenes.confirmar_activar')"
-                                        :confirm-label="__('operaciones.ordenes.activar_accion')"
-                                        tone="success"
-                                    />
-                                @endif
-
-                                @puede('operaciones.orden.eliminar')
-                                    @if ($estadoValor !== 'vigente')
-                                        <form id="{{ $formIdEliminar }}" method="POST" action="{{ route('panel.ordenes.destroy', $orden) }}">
-                                            @csrf
-                                            @method('DELETE')
-                                        </form>
-
-                                        <x-molecules.confirm-modal
-                                            :id="$modalIdEliminar"
-                                            :form-id="$formIdEliminar"
-                                            :title="__('operaciones.ordenes.confirmar_eliminar_titulo')"
-                                            :message="__('operaciones.ordenes.confirmar_baja')"
-                                            :confirm-label="__('operaciones.ordenes.eliminar_accion')"
-                                            tone="danger"
-                                        />
-                                    @endif
-                                @endpuede
-
-                                <x-organisms.row-actions>
-                                    @puede('operaciones.orden.editar')
-                                        @if ($estadoValor === 'emitida')
-                                            <x-atoms.button :href="route('panel.ordenes.edit', $orden)" variant="warning-outline" size="sm" icon="edit">
-                                                {{ __('operaciones.ordenes.editar') }}
-                                            </x-atoms.button>
-                                        @endif
-                                    @endpuede
-
-                                    @if ($puedeActivar && $estadoValor === 'emitida')
-                                        <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#{{ $modalIdActivar }}" variant="outline" size="sm" icon="check_circle">
-                                            {{ __('operaciones.ordenes.activar_accion') }}
-                                        </x-atoms.button>
-                                    @endif
-
-                                    @puede('operaciones.orden.eliminar')
-                                        @if ($estadoValor !== 'vigente')
-                                            <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#{{ $modalIdEliminar }}" variant="danger-outline" size="sm" icon="delete">
-                                                {{ __('operaciones.ordenes.eliminar_accion') }}
-                                            </x-atoms.button>
-                                        @endif
-                                    @endpuede
-                                </x-organisms.row-actions>
+                                @include('operaciones::pages.ordenes._orden-acciones', ['orden' => $orden])
                             </span>
                         </div>
                     @endforeach

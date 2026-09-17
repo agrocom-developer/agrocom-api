@@ -47,7 +47,7 @@ final class ListarOrdenesAplicacion
         int $porPagina = 15,
     ): LengthAwarePaginator {
         return OrdenAplicacion::query()
-            ->with('ordenLotes')
+            ->with(['ordenLotes', 'categoriaInsumo'])
             ->when($estado !== null, fn ($consulta) => $consulta->where('estado', $estado))
             ->when($soloVigentes, fn ($consulta) => $consulta->where('estado', EstadoOrdenAplicacion::Vigente))
             ->when($loteId !== null, fn ($consulta) => $consulta->whereHas(

@@ -1,0 +1,35 @@
+/*
+ * Molecule: view-toggle (resources/views/components/molecules/view-toggle.blade.php)
+ * Mismo lenguaje que el trigger de `organisms/filter-panel`: caja tenue con
+ * borde, dos celdas iguales, la activa con superficie elevada + sombra baja.
+ */
+
+.ag-view-toggle {
+    display: flex;
+    flex: none;
+    gap: var(--ag-space-1);
+    padding: var(--ag-space-1);
+    background-color: var(--ag-color-bg-surface);
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+}
+
+.ag-view-toggle__btn {
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: var(--ag-radius-sm);
+    color: var(--ag-color-text-muted);
+    transition: background-color var(--ag-transition-fast), color var(--ag-transition-fast);
+}
+
+.ag-view-toggle__btn:hover {
+    background-color: var(--ag-color-bg-row-hover);
+}
+
+.ag-view-toggle__btn.is-active {
+    background-color: var(--ag-color-surface-card);
+    color: var(--ag-color-primary);
+    box-shadow: var(--ag-shadow-sm);
+}

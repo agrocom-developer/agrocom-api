@@ -371,6 +371,39 @@ Corrección del 17/9/2026 sobre la redacción original de esta regla (quedó esc
 - Sigue sin mostrarse en el listado ni en sus filtros (regla de §6.2 "Catálogos simples con toggle activo/inactivo") — ahora por la misma razón de fondo: si no se edita desde ningún lado del panel todavía, mostrarlo en la tabla sería puro dato muerto.
 - **Pendiente, no construir todavía**: una forma de prender/apagar el `activo` de un registro puntual **sin pasar por un formulario** (acción rápida desde el listado, un endpoint dedicado, o lo que decida el dueño del proyecto). Hasta que esa pieza exista, el campo simplemente no es editable desde el panel — eso es intencional, no un olvido.
 
+### 6.4. Detalle — **la referencia canónica es `operaciones::pages.ordenes.show`**
+
+Cuarto arquetipo, agregado el 17/9/2026: una ficha de **solo lectura** para una entidad que ya no admite edición desde el listado (p. ej. una Orden de aplicación `vigente` — `Aplicacion/ActualizarOrden` exige `emitida`) o que de por sí es "información crítica para mirar", no un formulario. Antes no había ningún lugar del panel para volver a ver esos datos completos; el módulo Operaciones va a necesitar varias pantallas de este tipo, así que se arma reusando al máximo el catálogo del arquetipo Formulario — **no es un layout nuevo**.
+
+Anatomía:
+
+```
+boton-volver (memento)
+page-header (title, subtitle, slot chip=badge de estado, slot actions=[Editar/Activar/Eliminar — las mismas acciones que ya existen, ninguna inventada])
+KPI strip: 3-4× stat-card en grid (page-local, .ag-<pagina>__kpis)
+form-layout
+  main:  form-section por cada bloque de datos de solo lectura (campos como
+         <p>label</p><p>valor</p> directos, sin envolver otra tarjeta —
+         reusan el grid de 2 columnas de form-section, NUNCA anidan
+         summary-card adentro: dos superficies de tarjeta una dentro de la
+         otra duplica el chrome) + index-table para cualquier sub-lista +
+         timeline para actividad/historial
+  aside: form-section/summary-card/progress-meter para metadatos —
+         mismas piezas que ya usa el aside del Formulario (§6.3.1)
+```
+
+Reglas fijas:
+
+1. **Nunca se inventa una acción que no existe.** Las del `actions` slot son exactamente las que ya ofrece el listado de esa entidad (Editar/Activar/Eliminar, con el mismo `confirm-modal` — nunca `confirm()` nativo). Un mockup de referencia puede traer botones como "Duplicar"/"Anular" que no son funciones reales del sistema — no se agregan solo porque estaban dibujados.
+2. **Nunca se muestra un valor calculado que el sistema no sabe calcular todavía.** Si una especificación menciona una herencia/default (p. ej. "hereda del contrato o del valor por defecto del sistema") pero no hay código que la resuelva, el campo nulo se muestra como "Sin definir" — no se inventa el número.
+3. **Una "Actividad"/timeline solo lista eventos reconstruibles desde columnas reales** (`created_at`/`created_by` de la entidad y de sus hijas) — nunca una bitácora antes/después que todavía no existe (invariante 9 de CLAUDE.md, pendiente).
+4. **Mismo permiso que `index()`/`edit()`**, nunca uno de grano más fino solo para el detalle (5 de 6 pantallas `.show` ya homogeneizadas del panel — Trabajos, Devengos, Planillas, Rendiciones, EquiposTrabajo — confirman este criterio).
+5. **"Ver" es la primera row-action del listado**, antes de "Editar" — a diferencia de "Editar" (solo para el estado editable), "Ver" se ofrece siempre.
+
+#### Estado del catálogo para este arquetipo
+
+Reusa TODO lo del Formulario (§6.3) sin cambios, más dos piezas nuevas agregadas junto con este arquetipo: `molecules/timeline` (lista de eventos con fecha/autor) y `molecules/view-toggle` (alterna lista/grilla de un listado — no es del arquetipo Detalle en sí, pero nació la misma tarea para poder "ver" un resumen de tarjetas antes de entrar al detalle completo). Si una pantalla nueva de este arquetipo necesita algo que ninguna de estas dos cubre, se le pide a `design-ui`.
+
 ---
 
 ## 7. Traducción del canvas a tokens — **nunca copiar un hex del mockup**

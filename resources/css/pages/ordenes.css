@@ -18,7 +18,8 @@
  */
 
 .ag-ordenes,
-.ag-ordenes-form {
+.ag-ordenes-form,
+.ag-ordenes-detalle {
     display: flex;
     flex-direction: column;
     gap: var(--ag-space-5);
@@ -30,6 +31,165 @@
 
 .ag-ordenes__mono {
     font-family: var(--ag-font-family-mono);
+}
+
+/* Vista en grilla del listado (toggle lista/grilla, 17/9/2026): tarjetas de
+   2 columnas — mismo techo en 50% que `.ag-form-section__body` (evita que
+   auto-fit meta 4+ columnas angostas en pantallas anchas). */
+.ag-ordenes__grilla {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(max(20rem, calc(50% - var(--ag-space-4) / 2)), 1fr));
+    gap: var(--ag-space-4);
+    align-items: start;
+}
+
+.ag-ordenes-card {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--ag-color-surface-card);
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-lg);
+    box-shadow: var(--ag-shadow-sm);
+    overflow: hidden;
+}
+
+.ag-ordenes-card__head {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-4) var(--ag-space-4) var(--ag-space-3);
+}
+
+.ag-ordenes-card__identidad {
+    flex: 1;
+    min-width: 0;
+}
+
+.ag-ordenes-card__codigo {
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+    letter-spacing: 0.04em;
+}
+
+.ag-ordenes-card__cliente {
+    font-family: var(--ag-font-family-display);
+    font-size: var(--ag-font-size-lg);
+    font-weight: var(--ag-font-weight-bold);
+    line-height: 1.15;
+    margin-top: 0.125rem;
+}
+
+.ag-ordenes-card__subtitulo {
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-ordenes-card__lote {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-2) var(--ag-space-4);
+    background-color: var(--ag-color-bg-surface);
+    border-block: 1px solid var(--ag-color-border-row);
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+}
+
+.ag-ordenes-card__lote-hectareas {
+    margin-left: auto;
+    font-family: var(--ag-font-family-mono);
+}
+
+.ag-ordenes-card__datos {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1px;
+    background-color: var(--ag-color-border-row);
+}
+
+.ag-ordenes-card__dato {
+    background-color: var(--ag-color-surface-card);
+    padding: var(--ag-space-3);
+}
+
+.ag-ordenes-card__dato-label {
+    font-size: var(--ag-font-size-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-ordenes-card__dato-valor {
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+    margin-top: 0.1875rem;
+}
+
+.ag-ordenes-card__pie {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-3) var(--ag-space-4) var(--ag-space-4);
+    margin-top: auto;
+    border-top: 1px solid var(--ag-color-border-row);
+}
+
+.ag-ordenes-card__pie-fecha {
+    flex: 1;
+    min-width: 0;
+    line-height: 1.3;
+}
+
+.ag-ordenes-card__pie-fecha-valor {
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-xs);
+}
+
+@media (max-width: 576px) {
+    .ag-ordenes__grilla {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Detalle (show, 17/9/2026) — arquetipo Detalle, §6.4 de
+   docs/diseno/guia_pantalla_panel.md. */
+
+.ag-ordenes-detalle__kpis {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--ag-space-4);
+}
+
+@media (max-width: 992px) {
+    .ag-ordenes-detalle__kpis {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 576px) {
+    .ag-ordenes-detalle__kpis {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Campo de solo lectura dentro de `form-section` (etiqueta arriba, valor
+   abajo) — mismo lenguaje que las celdas del listado en grilla
+   (`.ag-ordenes-card__dato`), pero sin fondo/borde propio porque ya vive
+   dentro del grid de 2 columnas de `.ag-form-section__body`. */
+.ag-ordenes-detalle__campo-label {
+    margin: 0;
+    font-size: var(--ag-font-size-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-ordenes-detalle__campo-valor {
+    margin: 0.1875rem 0 0;
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+    line-height: 1.5;
 }
 
 /* Formulario (create/edit) */

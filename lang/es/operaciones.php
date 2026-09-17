@@ -481,6 +481,29 @@ return [
         'aside_restantes' => 'Restantes',
         'aside_equipos_asignados' => 'Equipos asignados',
         'aside_ver_asignacion' => 'Ver asignación',
+
+        // Vista de detalle de solo lectura (`show()`, homogeneización
+        // 17/9/2026) — primera pantalla del arquetipo Detalle del panel.
+        'detalle_titulo' => 'Orden de aplicación #:id',
+        'detalle_subtitulo' => ':cliente · emitida el :fecha',
+        'ver_accion' => 'Ver',
+        'kpi_aplicaciones' => 'Aplicaciones',
+        'kpi_aplicaciones_sufijo' => 'de :total',
+        'limite_sin_definir' => 'Sin definir',
+        'lotes_contador' => ':cantidad lotes · :hectareas ha',
+        'col_hectareas_lote' => 'Hectáreas',
+        'lote_estado_asignado' => 'Asignado',
+        'lote_estado_pendiente' => 'Pendiente',
+        'seccion_actividad' => 'Actividad',
+        'actividad_emitida' => 'Orden emitida',
+        'actividad_activada' => 'Orden activada — pasó a vigente',
+        'actividad_equipo_asignado' => 'Equipo :equipo asignado — :hectareas ha',
+        'actividad_meta' => ':fecha · :autor',
+        'avance_titulo' => 'Avance de asignación',
+        'avance_resumen' => ':asignadas de :solicitadas ha asignadas',
+
+        'kpi_equipos_necesarios' => 'Equipos necesarios',
+        'kpi_equipos_asignados_pie' => ':asignados de :necesarios asignados',
     ],
 
     // Pantalla de panel "Operación › Asignación de equipos" (HU-70, tarea

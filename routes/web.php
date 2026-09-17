@@ -599,6 +599,12 @@ Route::middleware('auth:interno')->group(function () {
         Route::post('/panel/ordenes', [OrdenesController::class, 'store'])
             ->name('panel.ordenes.store');
 
+        // Detalle de solo lectura (homogeneización 17/9/2026): registrada
+        // DESPUÉS de /panel/ordenes/crear (literal) para que "crear" no
+        // quede capturado por {orden} — mismo criterio que panel.trabajos.show.
+        Route::get('/panel/ordenes/{orden}', [OrdenesController::class, 'show'])
+            ->name('panel.ordenes.show');
+
         Route::get('/panel/ordenes/{orden}/editar', [OrdenesController::class, 'edit'])
             ->name('panel.ordenes.edit');
 
