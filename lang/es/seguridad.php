@@ -51,8 +51,8 @@ return [
     'login' => [
         'tabs_aria_label' => 'Opciones de acceso',
         'tab_ingreso' => 'Ingreso',
-        'tab_recuperar' => 'Recuperar acceso',
-        'titulo' => 'Ingresa a tu panel',
+        'tab_recuperar' => 'Recupera tu acceso',
+        'titulo' => 'Ingresa al panel',
         'subtitulo' => 'Usa el usuario que te asignó el administrador.',
         'campo_usuario' => 'Usuario',
         'campo_password' => 'Contraseña',
@@ -65,14 +65,14 @@ return [
     ],
 
     'recuperar' => [
-        'titulo' => 'Recuperar acceso',
+        'titulo' => 'Recupera tu acceso',
         'subtitulo' => 'Ingresa tu correo electrónico y te enviamos un enlace para elegir una contraseña nueva.',
         'campo_email' => 'Correo electrónico',
         'boton_enviar' => 'Enviar solicitud',
         'volver' => 'Volver al ingreso',
         // Misma respuesta exista o no la cuenta, esté bloqueada o no
         // (invariante de negocio de esta tarea: nunca revelar qué correos
-        // existen) — se muestra tal cual en el propio panel "Recuperar
+        // existen) — se muestra tal cual en el propio panel "Recupera tu
         // acceso" del login, nunca como redirect a otra pantalla.
         'estado_generico' => 'Si el correo existe en el sistema, vas a recibir un enlace para restablecer tu contraseña.',
 
@@ -97,7 +97,7 @@ return [
         'campo_password_confirmacion' => 'Confirmar contraseña nueva',
         'boton_confirmar' => 'Confirmar',
         'actualizada' => 'Tu contraseña se actualizó. Ya puedes ingresar con la nueva.',
-        'token_invalido' => 'Este enlace ya no es válido — pide uno nuevo desde "Recuperar acceso".',
+        'token_invalido' => 'Este enlace ya no es válido — pide uno nuevo desde "Recupera tu acceso".',
     ],
 
     // Pantalla de selección de rol (quinta vuelta, maqueta 5c) y cambio de
@@ -387,7 +387,7 @@ return [
         'campo_email' => 'Correo electrónico',
         'campo_email_ayuda' => 'Opcional. Correo de la cuenta — no el de la persona ni el del cliente.',
         'campo_password' => 'Contraseña',
-        'campo_password_ayuda_alta' => 'La asigna quien da de alta la cuenta. Con un correo cargado, la persona puede después recuperarla sola desde "Recuperar acceso".',
+        'campo_password_ayuda_alta' => 'La asigna quien da de alta la cuenta. Con un correo cargado, la persona puede después recuperarla sola desde "Recupera tu acceso".',
         'campo_password_ayuda_edicion' => 'Déjalo vacío para conservar la contraseña actual.',
         'campo_persona' => 'Persona asociada',
         'campo_persona_placeholder' => 'Sin persona asociada',

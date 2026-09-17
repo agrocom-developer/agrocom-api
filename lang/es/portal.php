@@ -20,7 +20,7 @@ return [
     ],
 
     'login' => [
-        'titulo' => 'Ingresa a tu portal',
+        'titulo' => 'Ingresa al portal',
         'subtitulo' => 'Usa el usuario que te asignó tu contacto en Agrocom.',
     ],
 

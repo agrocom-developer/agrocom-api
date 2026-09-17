@@ -14,7 +14,7 @@
     los nombres de campo correctos (`username`/`password`, los que espera
     IniciarSesionRequest) para que ese wiring no tenga que inventar nada.
 
-    Tab "Recuperar acceso" (tarea 66): `<form method="POST">` real con
+    Tab "Recupera tu acceso" (tarea 66): `<form method="POST">` real con
     `@csrf`, a `$recuperarAction` — POST clásico con redirect (a diferencia
     del panel de ingreso, que responde JSON vía fetch): no hay JS que
     intercepte este submit, así que una recarga completa de página es el
@@ -36,7 +36,7 @@
       forms (ingreso y recuperar comparten el mismo token de la página).
     - titulo / subtitulo (nullable): copy del tab de ingreso, ya traducido
       por el llamador. Sin ellos, cae a `seguridad.login.titulo`/`subtitulo`
-      ("Ingresa a tu panel") — ese default es correcto para `login.blade.php`
+      ("Ingresa al panel") — ese default es correcto para `login.blade.php`
       (panel interno) pero NO para `portal-login.blade.php`: el cliente del
       portal no tiene "panel", así que esa página pasa los suyos propios
       (`portal.login.titulo`/`subtitulo`).
