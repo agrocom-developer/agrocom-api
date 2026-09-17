@@ -34,6 +34,10 @@
     - checked (bool, default false): estado inicial.
     - disabled (bool, default false).
     - help (nullable): texto de ayuda debajo, mismo patrón que `atoms/input`.
+    - error (nullable, 17/9/2026): string ya traducido por el llamador (ADR
+      0013), mismo patrón que `atoms/checkbox` — sin esto, una falla de
+      validación sobre un switch (p. ej. la regla `boolean` contra un valor
+      que el llamador no haya normalizado) no tenía dónde mostrarse.
 --}}
 @props([
     'name',
@@ -43,11 +47,14 @@
     'checked' => false,
     'disabled' => false,
     'help' => null,
+    'error' => null,
 ])
 
 @php
     $inputId = $id ?? $name;
     $helpId = $help ? "{$inputId}-help" : null;
+    $errorId = $error ? "{$inputId}-error" : null;
+    $describedBy = trim(($helpId ?? '').' '.($errorId ?? ''));
 @endphp
 
 <div class="ag-switch">
@@ -62,7 +69,7 @@
             id="{{ $inputId }}"
             @checked($checked)
             @disabled($disabled)
-            @if ($helpId) aria-describedby="{{ $helpId }}" @endif
+            @if ($describedBy !== '') aria-describedby="{{ $describedBy }}" @endif
             {{ $attributes->class(['ag-switch__input']) }}
         >
 
@@ -77,5 +84,9 @@
 
     @if ($help)
         <p id="{{ $helpId }}" class="ag-switch__help">{{ $help }}</p>
+    @endif
+
+    @if ($error)
+        <p id="{{ $errorId }}" class="ag-switch__error" role="alert">{{ $error }}</p>
     @endif
 </div>

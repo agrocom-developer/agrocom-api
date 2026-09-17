@@ -207,6 +207,13 @@
     background-color: var(--ag-color-bg-row-hover);
 }
 
+/* Error de horario de ESTA fila (lotes.N.hora_inicio/hora_fin, ver
+   _lotes-tabla.blade.php): sexto hijo de un grid de 5 columnas — sin esto
+   cae en una fila implícita nueva angosta, pegado a la primera columna. */
+.ag-contratos-form__lote-row > .ag-input__error {
+    grid-column: 1 / -1;
+}
+
 .ag-contratos-form__lote-code {
     font-weight: var(--ag-font-weight-medium);
 }
@@ -245,7 +252,6 @@
    navegador): mismo lenguaje visual que `.ag-input__control` — outlined,
    token de borde/foco propio. */
 .ag-contratos-form__input-hora {
-    width: 6.5rem;
     padding: var(--ag-space-2) var(--ag-space-3);
     background-color: var(--ag-color-bg-elevated);
     border: 1px solid var(--ag-color-border-strong);

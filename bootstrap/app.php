@@ -1,6 +1,7 @@
 <?php
 
 use App\Dominios\Compartido\Infraestructura\Http\ErroresHttpEnEspanol;
+use App\Dominios\Compartido\Infraestructura\Http\Middleware\RecordarOrigenNavegacion;
 use App\Dominios\Seguridad\Infraestructura\Http\Middleware\ResolverRolActivo;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -31,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // agreguen después de `auth:interno` sin depender del FQCN.
         $middleware->alias([
             'rol.activo' => ResolverRolActivo::class,
+            'origen.navegacion' => RecordarOrigenNavegacion::class,
         ]);
 
         // Un solo login para todos (16/9/2026): sin sesión, sea cual sea el

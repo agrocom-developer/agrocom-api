@@ -65,6 +65,15 @@
 @php
     $esEdicion = $contrato !== null;
     $accion = $esEdicion ? route('panel.contratos.update', $contrato) : route('panel.contratos.store');
+    // $urlActual/$tituloPagina (memento de navegación, 17/9/2026): la URL de
+    // ESTA pantalla (alta o edición) y su título, para que los 3 accesos
+    // directos de abajo (crear cliente/propiedad/lote) le digan a
+    // `RecordarOrigenNavegacion` adónde volver — antes `?volver_a=` estaba
+    // fijo a `route('panel.contratos.create')` acá abajo, así que un acceso
+    // directo abierto DESDE la edición de un contrato ya existente volvía
+    // igual al formulario de ALTA (bug real, corregido acá).
+    $tituloPagina = $esEdicion ? __('comercial.contratos.titulo_editar') : __('comercial.contratos.titulo_crear');
+    $urlActual = $esEdicion ? route('panel.contratos.edit', $contrato) : route('panel.contratos.create');
     $valor = fn (string $campo, mixed $porDefecto = '') => old($campo, $contrato?->{$campo} ?? $porDefecto);
     // $clienteIdPreseleccionado (tarea "resumen de cliente"): solo llega en
     // alta, desde el atajo del aside de `panel.clientes.edit` — `?? null`
@@ -77,14 +86,64 @@
     $brindaHospedaje = (bool) $valor('brinda_hospedaje', false);
     $brindaCombustible = (bool) $valor('brinda_combustible', false);
 
-    // Lotes iniciales en edición (tarea "contratos-lotes", ampliado con
-    // horario por lote el 16/9/2026): mapear el resultado de $contrato->lotes
-    // (que son filas ContratoLote con ->lote cargado) a un array por
-    // propiedad, para mostrar el agrupamiento visual. Cada lote trae su
-    // hora_inicio/hora_fin (nullable, string `H:i` o NULL para "día completo").
+    // Lotes iniciales: dos orígenes posibles, cada uno con su propio índice
+    // por fila (`indice`, usado por `_lotes-tabla.blade.php` tanto para el
+    // `name="lotes[N][...]"` como para ubicar el error de esa fila puntual).
+    //
+    // 1) Redisplay tras una validación fallida (create O edit): reconstruye
+    //    el agrupado por propiedad desde `old('lotes')` — el array CRUDO que
+    //    manda el formulario (`lotes[N][lote_id/hora_inicio/hora_fin]`), NO
+    //    desde `old('lotes_data')` (bug real, 16/9/2026 → corregido acá): esa
+    //    clave nunca la llena ningún campo del formulario, así que la tabla
+    //    de lotes quedaba SIEMPRE vacía tras cualquier error de validación —
+    //    sin aviso, porque encima `_lotes-tabla.blade.php` solo comprueba
+    //    `$errors->has('lotes')` (la clave exacta), nunca las subclaves
+    //    `lotes.N.hora_inicio`/`lotes.N.hora_fin` que sí dispara
+    //    `CrearContratoRequest`/`ActualizarContratoRequest` para un horario
+    //    de lote inconsistente. Cruza cada `lote_id` recibido contra
+    //    `$propiedadesYLotesPorCliente` (ya cargado para el cliente elegido)
+    //    para recuperar código/hectáreas/propiedad — el POST no los manda.
+    //    Conserva el índice ORIGINAL (la clave de `old('lotes')`) para que el
+    //    error de esa fila, si lo hay, se muestre en la fila correcta.
+    //
+    // 2) Sin fallo de validación: en edición, el estado guardado
+    //    (`$contrato->lotes`, con `->lote` ya cargado); en alta, vacío.
     $lotesPorDefecto = [];
-    if ($esEdicion && $contrato->lotes->isNotEmpty()) {
-        foreach ($contrato->lotes as $contratoLote) {
+    $lotesEnviados = old('lotes');
+
+    if ($lotesEnviados !== null) {
+        $propiedadesDelCliente = $propiedadesYLotesPorCliente[(int) $clienteId] ?? [];
+
+        foreach ($lotesEnviados as $indice => $loteEnviado) {
+            $loteId = (int) ($loteEnviado['lote_id'] ?? 0);
+
+            foreach ($propiedadesDelCliente as $propiedadId => $propiedad) {
+                $loteData = collect($propiedad['lotes'])->firstWhere('id', $loteId);
+
+                if ($loteData === null) {
+                    continue;
+                }
+
+                if (!isset($lotesPorDefecto[$propiedadId])) {
+                    $lotesPorDefecto[$propiedadId] = [
+                        'propiedad_nombre' => $propiedad['nombre'],
+                        'lotes' => [],
+                    ];
+                }
+
+                $lotesPorDefecto[$propiedadId]['lotes'][] = [
+                    'indice' => $indice,
+                    'lote_id' => $loteId,
+                    'codigo' => $loteData['codigo'],
+                    'hectareas' => $loteData['hectareas'],
+                    'hora_inicio' => $loteEnviado['hora_inicio'] ?? null,
+                    'hora_fin' => $loteEnviado['hora_fin'] ?? null,
+                ];
+                break;
+            }
+        }
+    } elseif ($esEdicion && $contrato->lotes->isNotEmpty()) {
+        foreach ($contrato->lotes as $indice => $contratoLote) {
             $lote = $contratoLote->lote;
             $propiedadId = $lote->propiedad_id;
             if (!isset($lotesPorDefecto[$propiedadId])) {
@@ -94,6 +153,7 @@
                 ];
             }
             $lotesPorDefecto[$propiedadId]['lotes'][] = [
+                'indice' => $indice,
                 'lote_id' => $lote->id,
                 'codigo' => $lote->codigo,
                 'hectareas' => (string) $lote->hectareas,
@@ -102,29 +162,46 @@
             ];
         }
     }
-    $lotesIniciales = old('lotes_data', $lotesPorDefecto);
+
+    $lotesIniciales = $lotesPorDefecto;
 @endphp
 
-<form method="POST" action="{{ $accion }}" class="ag-contratos-form" novalidate data-ag-contratos-form>
+<form
+    method="POST"
+    action="{{ $accion }}"
+    class="ag-contratos-form"
+    novalidate
+    data-ag-contratos-form
+    data-url-origen="{{ $urlActual }}"
+    data-etiqueta-origen="{{ $tituloPagina }}"
+>
     @csrf
     @if ($esEdicion)
         @method('PUT')
     @endif
 
     <x-organisms.page-header
-        :title="$esEdicion ? __('comercial.contratos.titulo_editar') : __('comercial.contratos.titulo_crear')"
+        :title="$tituloPagina"
         :subtitle="__('comercial.contratos.subtitulo_form')"
     >
         <x-slot:actions>
-            <x-atoms.button :href="route('panel.contratos.index')" variant="outline" icon="arrow_back">
-                {{ __('comercial.contratos.volver') }}
-            </x-atoms.button>
+            <x-molecules.boton-volver :href="route('panel.contratos.index')" :label="__('comercial.contratos.volver')" />
         </x-slot:actions>
     </x-organisms.page-header>
 
     @if (session('estado'))
         <x-molecules.alert-strip variant="success" icon="check_circle">
             {{ session('estado') }}
+        </x-molecules.alert-strip>
+    @endif
+
+    @if ($errors->has('error'))
+        {{-- Falla no prevista del servidor (ver catch-all de
+             ContratosController::store()/update()) — nunca un campo
+             específico, por eso no vive en la sección de datos como los
+             demás `$errors->first()` de este formulario. --}}
+        <x-molecules.alert-strip variant="danger" icon="error">
+            {{ $errors->first('error') }}
         </x-molecules.alert-strip>
     @endif
 
@@ -144,7 +221,7 @@
             required
             :error="$errors->first('cliente_id')"
             action-icon="add"
-            :action-href="route('panel.clientes.create', ['volver_a' => route('panel.contratos.create')])"
+            :action-href="route('panel.clientes.create', ['volver_a' => $urlActual, 'volver_texto' => $tituloPagina])"
             :action-label="__('comercial.contratos.crear_cliente')"
             :action-text="__('comercial.contratos.crear_cliente_corto')"
         />
@@ -228,22 +305,40 @@
         :count="__('comercial.contratos.campos_contador', ['cantidad' => 4])"
     >
         <div class="ag-form-section__field--full ag-contratos-form__logistica-switches">
+            {{-- Los tres switches necesitan el hidden `value="0"` + `value="1"`
+                 propio (mismo patrón que `personas/_formulario.blade.php` y
+                 `lotes/_lote-terreno.blade.php`): sin esto, un switch tildado
+                 manda el valor nativo del checkbox ("on"), que la regla
+                 `boolean` de `CrearContratoRequest`/`ActualizarContratoRequest`
+                 rechaza — "Este campo solo admite sí o no." — y como ningún
+                 `<x-atoms.switch>` tiene prop de `error`, esa falla de
+                 validación no se veía en ningún lado: el formulario se
+                 quedaba quieto, sin aviso (bug real, 17/9/2026 → corregido). --}}
+            <input type="hidden" name="brinda_alimentacion" value="0">
             <x-atoms.switch
                 name="brinda_alimentacion"
+                value="1"
                 :label="__('comercial.contratos.campo_brinda_alimentacion')"
                 :checked="$brindaAlimentacion"
+                :error="$errors->first('brinda_alimentacion')"
             />
 
+            <input type="hidden" name="brinda_hospedaje" value="0">
             <x-atoms.switch
                 name="brinda_hospedaje"
+                value="1"
                 :label="__('comercial.contratos.campo_brinda_hospedaje')"
                 :checked="$brindaHospedaje"
+                :error="$errors->first('brinda_hospedaje')"
             />
 
+            <input type="hidden" name="brinda_combustible" value="0">
             <x-atoms.switch
                 name="brinda_combustible"
+                value="1"
                 :label="__('comercial.contratos.campo_brinda_combustible')"
                 :checked="$brindaCombustible"
+                :error="$errors->first('brinda_combustible')"
             />
         </div>
 

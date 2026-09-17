@@ -159,7 +159,7 @@ Route::middleware('auth:interno')->group(function () {
     Route::post('/panel/preferencias/zona-horaria', [PreferenciasController::class, 'actualizarZonaHoraria'])
         ->name('panel.preferencias.zona-horaria');
 
-    Route::middleware('rol.activo')->group(function () {
+    Route::middleware(['rol.activo', 'origen.navegacion'])->group(function () {
         Route::get('/panel/dashboard', [DashboardController::class, 'index'])
             ->name('panel.dashboard');
 

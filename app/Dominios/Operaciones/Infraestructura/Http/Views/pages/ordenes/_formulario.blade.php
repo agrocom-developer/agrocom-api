@@ -88,9 +88,7 @@
         :subtitle="__('operaciones.ordenes.subtitulo_form')"
     >
         <x-slot:actions>
-            <x-atoms.button :href="route('panel.ordenes.index')" variant="outline" icon="arrow_back">
-                {{ __('operaciones.ordenes.volver') }}
-            </x-atoms.button>
+            <x-molecules.boton-volver :href="route('panel.ordenes.index')" :label="__('operaciones.ordenes.volver')" />
         </x-slot:actions>
     </x-organisms.page-header>
 

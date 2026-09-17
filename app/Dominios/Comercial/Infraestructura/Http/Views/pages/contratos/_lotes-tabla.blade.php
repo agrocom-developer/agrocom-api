@@ -8,10 +8,17 @@
 
     Espera:
     - $lotesIniciales (array<int, array{propiedad_nombre: string, lotes:
-      list<array{lote_id: int, codigo: string, hectareas: string,
-      hora_inicio: ?string, hora_fin: ?string}>}>): agrupado por propiedad_id
-      — mismo shape que arma `_formulario.blade.php` desde `$contrato->lotes`
-      o repite `old('lotes_data')` tras un error de validación.
+      list<array{indice: int, lote_id: int, codigo: string, hectareas:
+      string, hora_inicio: ?string, hora_fin: ?string}>}>): agrupado por
+      propiedad_id — armado por `_formulario.blade.php` desde
+      `$contrato->lotes` o, tras un error de validación, desde `old('lotes')`
+      (ver el bloque de PHP embebido de ese archivo, corrección del
+      16/9/2026). `indice` es
+      la clave ORIGINAL del array `lotes[N][...]` que mandó el formulario —
+      se usa acá tanto para el `name="lotes[N][...]"` de la fila como para
+      ubicar el error de ESA fila (`lotes.N.hora_inicio`/`lotes.N.hora_fin`),
+      nunca un contador propio: si no coinciden, el error de una fila
+      aparecería en otra.
 
     $errors (heredado del scope de la página, Blade comparte variables con
     `@include`): `ViewErrorBag` global de Laravel, no un prop propio.
@@ -43,7 +50,6 @@
             <span>{{ __('comercial.contratos.lotes_col_acciones') }}</span>
         </div>
         <div data-ag-lotes-agrupados>
-            @php $indiceGlobal = 0; @endphp
             @foreach ($lotesIniciales as $propiedadId => $grupo)
                 <div data-ag-lote-grupo="propiedad-{{ $propiedadId }}" class="ag-contratos-form__lote-group">
                     <div class="ag-contratos-form__lote-group-title">
@@ -51,7 +57,11 @@
                     </div>
                     <div data-ag-lote-contenedor>
                         @foreach ($grupo['lotes'] as $lote)
-                            @php $esDiaCompleto = !$lote['hora_inicio'] && !$lote['hora_fin']; @endphp
+                            @php
+                                $indiceGlobal = $lote['indice'];
+                                $esDiaCompleto = !$lote['hora_inicio'] && !$lote['hora_fin'];
+                                $errorHorario = $errors->first("lotes.{$indiceGlobal}.hora_inicio") ?: $errors->first("lotes.{$indiceGlobal}.hora_fin");
+                            @endphp
                             <div class="ag-contratos-form__lote-row" data-lote-id="{{ $lote['lote_id'] }}">
                                 <input type="hidden" name="lotes[{{ $indiceGlobal }}][lote_id]" value="{{ $lote['lote_id'] }}">
                                 <strong class="ag-contratos-form__lote-code">{{ $lote['codigo'] }}</strong>
@@ -96,8 +106,10 @@
                                 >
                                     {{ __('comercial.contratos.lotes_quitar') }}
                                 </x-atoms.button>
+                                @if ($errorHorario)
+                                    <p class="ag-input__error" role="alert">{{ $errorHorario }}</p>
+                                @endif
                             </div>
-                            @php $indiceGlobal++; @endphp
                         @endforeach
                     </div>
                 </div>
