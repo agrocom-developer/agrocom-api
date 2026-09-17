@@ -22,7 +22,6 @@ final class CrearCultivo
         ?string $tipoCultivo,
         ?string $cicloVida,
         ?string $notasAgronomicas,
-        bool $activo,
     ): Cultivo {
         $cultivo = new Cultivo([
             'nombre_comun' => $nombreComun,
@@ -30,7 +29,7 @@ final class CrearCultivo
             'tipo_cultivo' => $tipoCultivo,
             'ciclo_vida' => $cicloVida,
             'notas_agronomicas' => $notasAgronomicas,
-            'activo' => $activo,
+            'activo' => true,
         ]);
 
         try {

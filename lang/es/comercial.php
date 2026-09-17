@@ -616,8 +616,6 @@ return [
         'campo_tipo_cultivo_placeholder' => 'Selecciona un tipo',
         'campo_ciclo_vida' => 'Ciclo de vida',
         'campo_ciclo_vida_placeholder' => 'Selecciona un ciclo',
-        'campo_activo' => 'Activo',
-        'campo_activo_ayuda' => 'Un cultivo inactivo deja de ofrecerse para nuevas siembras, sin afectar las ya cargadas.',
         'campo_notas_agronomicas' => 'Sugerencias para quien carga la siembra',
         'campo_notas_agronomicas_placeholder' => 'Ej. mínimo de aplicaciones recomendado por campaña, tipo de calda que tolera…',
         'campo_notas_agronomicas_ayuda' => 'Referencia informativa de un agrónomo — Agrocom no define ni valida la composición del caldo, eso es responsabilidad del cliente.',

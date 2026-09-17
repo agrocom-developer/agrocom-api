@@ -27,7 +27,6 @@ final class CrearCultivoRequest extends FormRequest
             'tipo_cultivo' => ['required', Rule::enum(TipoCultivo::class)],
             'ciclo_vida' => ['required', Rule::enum(CicloVidaCultivo::class)],
             'notas_agronomicas' => ['nullable', 'string', 'max:2000'],
-            'activo' => ['boolean'],
         ];
     }
 

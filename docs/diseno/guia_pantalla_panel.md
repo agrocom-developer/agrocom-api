@@ -361,23 +361,15 @@ return redirect()
 
 Todas las piezas de la anatomía de arriba ya existen en el catálogo — nada pendiente de pedirle a `design-ui` para este arquetipo: `molecules/form-section` (tarjeta + `section-head` con contador, evolucionado desde el `<fieldset>` original), `organisms/page-header`, `molecules/tabs`, `organisms/form-actions-bar`, `molecules/summary-card`, `molecules/progress-meter`, `molecules/file-field`. Si una pantalla nueva necesita una variante que ninguna de estas cubre, ESO es lo que se le pide a `design-ui` — no la pieza entera de nuevo.
 
-### 6.3.3. Activo/inactivo: patrón de sistema para toda entidad propia
+### 6.3.3. Activo/inactivo: patrón de sistema para toda entidad propia — y NUNCA en el formulario
 
-Regla de negocio fijada el 17/9/2026: **toda entidad propia del dominio —la que vive en su propia tabla con identidad propia, no una tabla pivote/de unión (`com_lote_campania`, `sec_user_role`…) ni un resultado calculado/concatenado (un informe, un resumen)— tiene una propiedad `activo` (boolean, default `true`).**
+Corrección del 17/9/2026 sobre la redacción original de esta regla (quedó escrita al revés y se alcanzó a aplicar a Cultivo antes de corregirse — ver commit que la revierte). Queda así:
 
-- El campo va en el formulario de **alta y de edición** (el mismo `_formulario.blade.php` compartido), nunca solo en edición — un registro puede nacer inactivo. `atoms/switch`, con este texto de referencia (adaptar el sustantivo, no la estructura):
-  ```blade
-  <x-atoms.switch
-      name="activo"
-      value="1"
-      :label="__('modulo.x.campo_activo')"
-      :checked="(bool) $activo"
-      :help="__('modulo.x.campo_activo_ayuda')"
-  />
-  ```
-  Texto de ayuda, patrón: "Un/a **{entidad}** inactivo/a deja de **{consecuencia — ofrecerse, asignarse, aparecer como opción}**, sin afectar **{lo ya cargado con esta entidad}**." Ejemplo real (Cultivo): "Un cultivo inactivo deja de ofrecerse para nuevas siembras, sin afectar las ya cargadas."
-- El campo **no** se muestra en el listado ni en sus filtros — ver la regla de §6.2 "Catálogos simples con toggle activo/inactivo" (misma fecha, misma decisión, dos caras de la misma moneda: se edita en el formulario, no se navega por él en la tabla).
-- **Pendiente, no construir todavía**: una forma de prender/apagar el `activo` de un registro puntual sin pasar por el formulario completo (acción rápida desde el listado o similar). Lo define y encarga el dueño del proyecto más adelante — no es parte del alcance de homogeneizar un módulo.
+**Toda entidad propia del dominio —la que vive en su propia tabla con identidad propia, no una tabla pivote/de unión (`com_lote_campania`, `sec_user_role`…) ni un resultado calculado/concatenado (un informe, un resumen)— tiene una columna `activo` (boolean, default `true`).** Es un patrón de esquema, no de pantalla.
+
+- **El campo `activo` NO va en el formulario de alta ni de edición.** No hay `atoms/switch` para esto en `_formulario.blade.php`, en ninguna pantalla. Un registro nuevo nace `activo = true` siempre (lo fija el caso de uso de `Aplicacion/`, no lo decide quien completa el formulario), y una edición nunca lo toca — el caso de uso de actualización ni siquiera recibe `activo` como parámetro.
+- Sigue sin mostrarse en el listado ni en sus filtros (regla de §6.2 "Catálogos simples con toggle activo/inactivo") — ahora por la misma razón de fondo: si no se edita desde ningún lado del panel todavía, mostrarlo en la tabla sería puro dato muerto.
+- **Pendiente, no construir todavía**: una forma de prender/apagar el `activo` de un registro puntual **sin pasar por un formulario** (acción rápida desde el listado, un endpoint dedicado, o lo que decida el dueño del proyecto). Hasta que esa pieza exista, el campo simplemente no es editable desde el panel — eso es intencional, no un olvido.
 
 ---
 

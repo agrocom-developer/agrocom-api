@@ -93,7 +93,6 @@ final class CultivosController
                 (string) $datos['tipo_cultivo'],
                 (string) $datos['ciclo_vida'],
                 isset($datos['notas_agronomicas']) ? (string) $datos['notas_agronomicas'] : null,
-                (bool) ($datos['activo'] ?? true),
             );
         } catch (CultivoDuplicado $excepcion) {
             return redirect()
@@ -134,7 +133,6 @@ final class CultivosController
                 (string) $datos['tipo_cultivo'],
                 (string) $datos['ciclo_vida'],
                 isset($datos['notas_agronomicas']) ? (string) $datos['notas_agronomicas'] : null,
-                (bool) ($datos['activo'] ?? true),
             );
         } catch (CultivoDuplicado $excepcion) {
             return redirect()

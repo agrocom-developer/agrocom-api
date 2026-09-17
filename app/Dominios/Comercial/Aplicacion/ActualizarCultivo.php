@@ -20,14 +20,12 @@ final class ActualizarCultivo
         ?string $tipoCultivo,
         ?string $cicloVida,
         ?string $notasAgronomicas,
-        bool $activo,
     ): Cultivo {
         $cultivo->nombre_comun = $nombreComun;
         $cultivo->nombre_cientifico = $nombreCientifico;
         $cultivo->tipo_cultivo = $tipoCultivo !== null ? TipoCultivo::from($tipoCultivo) : null;
         $cultivo->ciclo_vida = $cicloVida !== null ? CicloVidaCultivo::from($cicloVida) : null;
         $cultivo->notas_agronomicas = $notasAgronomicas;
-        $cultivo->activo = $activo;
 
         try {
             $cultivo->save();
