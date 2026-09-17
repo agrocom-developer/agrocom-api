@@ -20,9 +20,82 @@ para software de uso profesional ahí — el tuteo estándar es el término medi
 neutro, "menos intrusivo" (palabras del dueño).
 
 **Dónde vive:** `lang/es/*.php`, de todos los módulos. Nunca texto en español
-hardcodeado en `.blade.php` — si hace falta un string nuevo, es una clave
-nueva en el archivo `lang/es/<dominio>.php` que corresponda, no un literal en
-la vista. Ver `dominio-backend` para saber a qué dominio pertenece un texto.
+hardcodeado — ni en `.blade.php`, ni en un controlador, ni en un FormRequest,
+ni en una excepción, ni en JS. Si hace falta un string nuevo, es una clave
+nueva en el archivo `lang/es/<dominio>.php` que corresponda. Ver
+`dominio-backend` para saber a qué dominio pertenece un texto.
+
+## Posesivos: lo institucional no es "tuyo"
+
+No se le pone posesivo ("tu"/"mi") a un sustantivo INSTITUCIONAL o compartido
+—portal, panel, sistema—: ahí va artículo neutro ("Ingresa al sistema", "al
+panel"). Sí se deja cuando la cosa es genuinamente del usuario: tu acceso, tu
+contraseña, tu correo, tu contrato, tu contacto en Agrocom.
+
+## Dónde va cada texto y cómo se lee
+
+| Qué | Sección en `lang/es/<modulo>.php` | Cómo se lee |
+|---|---|---|
+| Pantallas (labels, botones, ayudas) | la de la pantalla (`clientes`, `ordenes`…) | `__()` en Blade |
+| Excepciones y mensajes de casos de uso | `errores` | `Texto::de()` |
+| `messages()` de FormRequests | `validacion` | `__()` |
+| Respuestas de controladores y API | `respuestas` | `__()` |
+| Documentos PDF | `pdf.<documento>` | `__()` en la vista |
+| Motivos de rechazo del sync | `sync` | `Texto::de()` |
+
+- `Texto::de()` (`App\Dominios\Compartido\Infraestructura\Idioma\Texto`) es
+  `__()` para las capas de adentro (`Dominio/`, `Aplicacion/`, servicios de
+  `Infraestructura/`): si el framework no está levantado —un test unitario
+  puro— devuelve la clave en vez de reventar.
+- Validación, dos niveles (Laravel toma el primero que exista):
+  1. `messages()` del FormRequest — **lo específico del formulario**:
+     `'codigo.required' => __('campania.campanias.error_codigo_requerido')`
+     → "Ingresa un código para la campaña.". Todo campo obligatorio de un
+     formulario del panel lleva el suyo: "Ingresa …" (se escribe), "Elige …"
+     (se elige), "Elige la fecha …", "Agrega al menos un …", nombrando el
+     campo igual que su label. Modelo: `CrearCampaniaRequest`.
+  2. `lang/es/validation.php` — el genérico de respaldo ("Este campo es
+     obligatorio.", "Escribe como máximo :max caracteres."). Es lo que ven
+     las reglas sin mensaje propio y los requests de la API.
+  `required` ya cubre nulo, vacío y solo espacios (`TrimStrings` +
+  `ConvertEmptyStringsToNull` corren antes de validar): no hace falta regla
+  extra. No usar `validation.php › custom`: cuelga el mensaje del NOMBRE del
+  campo en todo el sistema (`codigo` existe en campañas, lotes y repuestos).
+- Datos variables con `:marcador` y array de reemplazos; nunca concatenar
+  pedazos de frase traducidos.
+- **JS no traduce.** El Blade que monta el componente le entrega los textos ya
+  traducidos por `data-*` (ver `organisms/login-form.blade.php` +
+  `js/pages/login.js`).
+
+## Lo que responde el framework también es texto del sistema
+
+Los errores que arma Laravel por su cuenta salen en inglés si nadie los
+traduce, y no aparecen en ningún barrido de archivos — hay que probarlos
+contra la API real (`curl` sin token, a una ruta que no existe, etc.):
+
+- JSON (API de las apps y `fetch` del panel): 401, 403, 404, 405, 419, 429 y
+  5xx los traduce `ErroresHttpEnEspanol` (`Compartido/Infraestructura/Http`,
+  enganchado en `bootstrap/app.php`) con `lang/es/http.php`. Respeta el
+  mensaje de toda excepción propia (`App\...`): un `PermisoDenegado` sigue
+  diciendo lo suyo. De paso evita que un 404 de modelo filtre el nombre de la
+  clase.
+- Frases sueltas del framework (el "(y :count errores más)" del resumen de
+  validación, los títulos de las páginas de error): `lang/es.json`.
+
+## Pasar un texto a un componente Blade: siempre enlazado
+
+`:label="__('x')"`, `:error="$errors->first('nit')"`, `:value="$nit"` — NUNCA
+`label="{{ __('x') }}"`. Con `{{ }}` el valor se escapa al entrar a la prop y
+el componente lo vuelve a escapar al pintarlo: una comilla sale como
+`&#039;`, y un `&` en un `value` o en una URL se guarda o navega corrupto.
+
+## Compuertas automáticas (corren en `bin/verify`)
+
+- `tests/Unit/RedaccionNeutraTest.php`: falla si un valor de `lang/es/*.php`
+  trae voseo o trato de usted. Si marca una palabra legítima, se agrega a su
+  lista de excepciones con criterio — no se debilita el patrón.
+- `tests/Unit/EscapePropsBladeTest.php`: falla si una prop de componente
+  recibe su valor con `{{ }}`.
 
 ## Tabla de conversión voseo → tuteo
 
