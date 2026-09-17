@@ -97,6 +97,12 @@
                 :subtitle="__('mantenimiento.ordenes.subtitulo_detalle')"
             />
 
+            @if (session('estado'))
+                <x-molecules.alert-strip variant="success" icon="check_circle">
+                    {{ session('estado') }}
+                </x-molecules.alert-strip>
+            @endif
+
             @if ($errors->has('repuestos'))
                 <x-molecules.alert-strip variant="danger" icon="error" class="ag-orden-mantenimiento-detalle__aviso">
                     {{ $errors->first('repuestos') }}
