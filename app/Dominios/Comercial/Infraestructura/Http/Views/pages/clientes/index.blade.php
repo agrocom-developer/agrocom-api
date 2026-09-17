@@ -8,8 +8,17 @@
     CascaraPanel, más:
     - $clientes (LengthAwarePaginator<Cliente>, con `contactos_count`
       precargado): razón social ascendente.
-    - $filtros (array{q: string}): búsqueda aplicada, para dejar el campo
-      con el valor tras el submit.
+    - $tiposPersonaFiltro (list<TipoPersonaCliente>), $tiposContactoFiltro
+      (list<TipoContactoCliente>), $campaniasDisponibles (Collection<int,
+      string>, id => código): opciones de los tres <select> del filtro
+      (ronda de homogeneización del 17/9/2026 — mismo `organisms/filter-panel`
+      que ya usan Contratos/Propiedades/Lotes). `campania_id` es indirecto
+      (clientes con algún contrato en esa campaña, ver
+      `ListarClientes::ejecutar()`); `tipo_contacto` filtra por el tipo de al
+      menos un contacto del cliente.
+    - $filtros (array{q: string, tipo_persona: string|null, campania_id:
+      int|null, tipo_contacto: string|null}): filtros aplicados, para dejar
+      los campos con el valor tras el submit.
 
     Gateada por `comercial.cliente.ver`, verificado server-side en el
     controlador. Los botones "Nuevo cliente"/"Editar"/"Eliminar" se ocultan
@@ -54,10 +63,46 @@
 
             @php
                 $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
+                $filtrosPanelActivos = collect(['tipo_persona', 'campania_id', 'tipo_contacto'])
+                    ->filter(fn ($campo) => $filtros[$campo] !== null && $filtros[$campo] !== '')
+                    ->count();
             @endphp
 
             @if ($hayFiltrosActivos || $clientes->isNotEmpty())
                 <div class="ag-table-toolbar">
+                    <x-organisms.filter-panel
+                        :action="route('panel.clientes.index')"
+                        :active-count="$filtrosPanelActivos"
+                    >
+                        <input type="hidden" name="q" value="{{ $filtros['q'] }}">
+                        <x-atoms.select
+                            name="tipo_persona"
+                            id="filtro-tipo-persona"
+                            :label="__('comercial.clientes.filtro_tipo_persona')"
+                            :options="collect($tiposPersonaFiltro)->mapWithKeys(fn ($tipo) => [$tipo->value => __('comercial.clientes.tipo_persona_opcion.'.$tipo->value)])"
+                            :value="$filtros['tipo_persona']"
+                            :placeholder="__('comercial.clientes.filtro_tipo_persona_placeholder')"
+                        />
+
+                        <x-atoms.select
+                            name="campania_id"
+                            id="filtro-campania"
+                            :label="__('comercial.clientes.filtro_campania')"
+                            :options="$campaniasDisponibles"
+                            :value="$filtros['campania_id']"
+                            :placeholder="__('comercial.clientes.filtro_campania_placeholder')"
+                        />
+
+                        <x-atoms.select
+                            name="tipo_contacto"
+                            id="filtro-tipo-contacto"
+                            :label="__('comercial.clientes.filtro_tipo_contacto')"
+                            :options="collect($tiposContactoFiltro)->mapWithKeys(fn ($tipo) => [$tipo->value => __('comercial.clientes.contacto_tipo_opcion.'.$tipo->value)])"
+                            :value="$filtros['tipo_contacto']"
+                            :placeholder="__('comercial.clientes.filtro_tipo_contacto_placeholder')"
+                        />
+                    </x-organisms.filter-panel>
+
                     <x-molecules.table-search
                         :action="route('panel.clientes.index')"
                         :value="$filtros['q']"

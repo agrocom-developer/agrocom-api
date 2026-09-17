@@ -62,13 +62,15 @@ final class PropiedadesController
         $busqueda = $request->string('q')->toString();
         $clienteId = $request->integer('cliente_id') ?: null;
         $departamentoId = $request->integer('departamento_id') ?: null;
+        $municipioId = $request->integer('municipio_id') ?: null;
 
         return view('comercial::pages.propiedades.index', [
             ...$this->autorizacion->cascara($request),
-            'propiedades' => $listarPropiedades->ejecutar($busqueda !== '' ? $busqueda : null, $clienteId, $departamentoId),
-            'filtros' => ['q' => $busqueda, 'cliente_id' => $clienteId, 'departamento_id' => $departamentoId],
+            'propiedades' => $listarPropiedades->ejecutar($busqueda !== '' ? $busqueda : null, $clienteId, $departamentoId, $municipioId),
+            'filtros' => ['q' => $busqueda, 'cliente_id' => $clienteId, 'departamento_id' => $departamentoId, 'municipio_id' => $municipioId],
             'clientesDisponibles' => $this->clientesActivos(),
             'departamentosDisponibles' => $this->departamentosActivos(),
+            'municipiosDisponibles' => $this->municipiosConPropiedades(),
         ]);
     }
 
@@ -213,6 +215,34 @@ final class PropiedadesController
     private function departamentosActivos(): Collection
     {
         return Departamento::query()->orderBy('nombre')->pluck('nombre', 'id');
+    }
+
+    /**
+     * Solo los municipios que ya tienen alguna propiedad (a diferencia de
+     * `departamentosActivos()`, que trae el catálogo completo): el catálogo
+     * geográfico entero tiene ~300 municipios, muchos más que los 8 que
+     * activan el combobox buscable de `atoms/select` — acotarlo a los que
+     * están en uso evita un select gigante e inmanejable mientras ese
+     * combobox tenga el bug que obliga a `:searchable="false"` en este
+     * filtro (17/9/2026, pedido directo: "buscar propiedades por San
+     * Julián" sin saber antes su departamento).
+     *
+     * Etiqueta "municipio - provincia" (pedido directo, mismo día): hay
+     * nombres de municipio que se repiten entre provincias distintas.
+     * `com_provincias` no tiene una sigla propia (solo `nombre`), así que se
+     * usa el nombre completo de la provincia como desambiguador — una sigla
+     * inventada sería un dato que no existe en el catálogo.
+     *
+     * @return Collection<int, string>
+     */
+    private function municipiosConPropiedades(): Collection
+    {
+        return Municipio::query()
+            ->with('provincia')
+            ->whereIn('id', Propiedad::query()->whereNotNull('municipio_id')->distinct()->pluck('municipio_id'))
+            ->orderBy('nombre')
+            ->get()
+            ->mapWithKeys(fn (Municipio $municipio) => [$municipio->id => "{$municipio->nombre} - {$municipio->provincia->nombre}"]);
     }
 
     /**

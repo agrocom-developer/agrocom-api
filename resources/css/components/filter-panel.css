@@ -80,6 +80,20 @@
     width: 40rem;
 }
 
+/* Con un solo campo visible (p. ej. Usuarios, ver docblock del organism),
+   `auto-fit` lo estira a las 2 columnas porque es el único track posible —
+   se ve "grande" cuando la idea es que solo se vea grande con 2 campos
+   (pedido directo del usuario, 17/9/2026). Se lo topea al mismo ancho
+   "chico" que ocuparía siendo uno de dos, en vez de `1fr`. No es
+   `:only-child`: el slot casi siempre trae también el
+   `<input type="hidden" name="q">` que preserva la búsqueda — no se
+   renderiza, pero SIGUE siendo hijo del DOM para `:nth-child`, así que "un
+   solo campo real" son 1 o 2 hijos (el campo, más ese hidden si lo hay), y
+   "dos campos reales" ya son 3. */
+.ag-filter-panel__grid:not(:has(> :nth-child(3))) {
+    grid-template-columns: minmax(max(14rem, calc(50% - var(--ag-space-4) / 2)), 50%);
+}
+
 .ag-filter-panel__actions {
     display: flex;
     align-items: center;

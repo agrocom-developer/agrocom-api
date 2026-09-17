@@ -55,8 +55,18 @@
     mayúsculas ni tildes); con 8 o menos, no hay caja de búsqueda visible
     pero el teclado igual soporta type-ahead (saltar a la primera opción que
     empieza con la letra tipeada) — mismo comportamiento que un `<select>`
-    nativo. El umbral no es un prop: es automático (`count($options) > 8`),
-    ISP — no hay caso de uso hoy que necesite forzarlo.
+    nativo. El umbral es automático (`count($options) > 8`) salvo que
+    `searchable` lo fuerce.
+
+    - searchable (bool|null, default null): `null` deja el umbral automático
+      de arriba; `false` fuerza el modo type-ahead aunque haya más de 8
+      opciones — caso real: el filtro de departamento de
+      `comercial::pages.propiedades.index` (9 departamentos, activa el modo
+      buscable por defecto) con la caja de búsqueda del combobox que no
+      dejaba escribir texto (bug pendiente de investigar en
+      resources/js/atoms/select.js); mientras tanto, este campo se muestra
+      sin ella. `true` fuerza el modo buscable aunque haya 8 opciones o
+      menos, por si algún día hace falta.
 
     Accesibilidad: un solo elemento enfocable hace de combobox durante toda
     la interacción (el `div[role="combobox"]`, nunca el input de búsqueda),
@@ -88,6 +98,7 @@
     'actionLabel' => null,
     'actionText' => null,
     'actionHidden' => false,
+    'searchable' => null,
 ])
 
 @php
@@ -102,7 +113,7 @@
     $errorId = $error ? "{$selectId}-error" : null;
     $describedBy = trim(($helpId ?? '').' '.($errorId ?? ''));
     $listboxId = "{$selectId}-listbox";
-    $esBuscable = count($options) > 8;
+    $esBuscable = $searchable ?? (count($options) > 8);
     $etiquetaActual = $value !== null && array_key_exists($value, $options) ? $options[$value] : null;
 @endphp
 

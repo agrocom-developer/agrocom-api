@@ -3,17 +3,19 @@
     Listado de campañas (ADR 0015 punto 1, tarea 69): arquetipo Listado, §6.2
     de docs/diseno/guia_pantalla_panel.md — cabecera → toolbar → tabla →
     paginación. Migrado al patrón vigente el 15/9/2026 (mismo molde que
-    `seguridad::pages.usuarios.index`, sin `filter-panel` porque el único
-    filtro es la búsqueda): `empty-state` único para "sin datos"/"la
-    búsqueda no trae nada" (nunca `alert-strip`) y `organisms/row-actions`
-    en la celda de acciones. `comercial/contratos/index.blade.php` todavía
-    no migró — no lo copies como referencia para una pantalla nueva.
+    `seguridad::pages.usuarios.index`); `organisms/row-actions` en la celda
+    de acciones. `comercial/contratos/index.blade.php` todavía no migró — no
+    lo copies como referencia para una pantalla nueva.
+
+    Filtros (ronda de homogeneización del 17/9/2026): sí lleva
+    `organisms/filter-panel` ahora, con dos campos — estado y estación.
 
     Datos esperados (ver CampaniasController::index()): la cáscara de
     CascaraPanel, más:
     - $campanias (LengthAwarePaginator<Campania>): fecha de inicio descendente.
-    - $filtros (array{q: string}): filtros aplicados, para dejar los campos
-      con el valor tras el submit.
+    - $estadosFiltro (list<EstadoCampania>): opciones del <select> de estado.
+    - $filtros (array{q: string, estado: string|null, estacion: string|null}):
+      filtros aplicados, para dejar los campos con el valor tras el submit.
 
     Sin filtro ni columna de cliente desde la corrección del 15/9/2026: la
     campaña es un catálogo compartido, no de un cliente.
@@ -76,10 +78,41 @@
 
             @php
                 $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
+                $filtrosPanelActivos = collect(['estado', 'estacion'])
+                    ->filter(fn ($campo) => $filtros[$campo] !== null && $filtros[$campo] !== '')
+                    ->count();
+                $estacionOpciones = [
+                    'invierno' => __('campania.campania.estacion.invierno'),
+                    'verano' => __('campania.campania.estacion.verano'),
+                ];
             @endphp
 
             @if ($hayFiltrosActivos || $campanias->isNotEmpty())
                 <div class="ag-table-toolbar">
+                    <x-organisms.filter-panel
+                        :action="route('panel.campanias.index')"
+                        :active-count="$filtrosPanelActivos"
+                    >
+                        <input type="hidden" name="q" value="{{ $filtros['q'] }}">
+                        <x-atoms.select
+                            name="estado"
+                            id="filtro-estado"
+                            :label="__('campania.campanias.filtro_estado')"
+                            :options="collect($estadosFiltro)->mapWithKeys(fn ($estado) => [$estado->value => __('campania.campania.estado.'.$estado->value)])"
+                            :value="$filtros['estado']"
+                            :placeholder="__('campania.campanias.filtro_estado_placeholder')"
+                        />
+
+                        <x-atoms.select
+                            name="estacion"
+                            id="filtro-estacion"
+                            :label="__('campania.campanias.filtro_estacion')"
+                            :options="$estacionOpciones"
+                            :value="$filtros['estacion']"
+                            :placeholder="__('campania.campanias.filtro_estacion_placeholder')"
+                        />
+                    </x-organisms.filter-panel>
+
                     <x-molecules.table-search
                         :action="route('panel.campanias.index')"
                         :value="$filtros['q']"

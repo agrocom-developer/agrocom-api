@@ -15,8 +15,21 @@
     - $clientesDisponibles (Collection<int, string>): id => razón social,
       para el filtro por cliente.
     - $departamentosDisponibles (Collection<int, string>): id => nombre,
-      para el filtro por zona.
-    - $filtros (array{q: string, cliente_id: int|null, departamento_id: int|null}).
+      para el filtro por zona (catálogo completo, 9 filas).
+    - $municipiosDisponibles (Collection<int, string>): id => nombre, para
+      buscar por municipio sin saber antes su departamento (pedido directo,
+      17/9/2026: "buscar propiedades por San Julián") — solo los municipios
+      que ya tienen alguna propiedad, no el catálogo completo (~300 filas),
+      ver `PropiedadesController::municipiosConPropiedades()`.
+    - $filtros (array{q: string, cliente_id: int|null, departamento_id:
+      int|null, municipio_id: int|null}).
+
+    Los selects de departamento y municipio fuerzan `:searchable="false"`
+    (17/9/2026): con más de 8 opciones, `atoms/select` arma su combobox
+    buscable por defecto, y ese input de búsqueda no dejaba escribir texto —
+    se desactiva para estos dos campos hasta que se investigue el bug del
+    combobox. Siguen siendo `<select>` nativos funcionales, solo sin la caja
+    de búsqueda.
 
     Gateada por `comercial.propiedad.ver`, verificado server-side en el
     controlador. Los botones "Nueva propiedad"/"Editar"/"Eliminar" se ocultan
@@ -72,7 +85,7 @@
 
             @php
                 $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
-                $filtrosPanelActivos = collect(['cliente_id', 'departamento_id'])
+                $filtrosPanelActivos = collect(['cliente_id', 'departamento_id', 'municipio_id'])
                     ->filter(fn ($campo) => $filtros[$campo] !== null && $filtros[$campo] !== '')
                     ->count();
             @endphp
@@ -100,6 +113,17 @@
                             :options="$departamentosDisponibles"
                             :value="$filtros['departamento_id']"
                             :placeholder="__('comercial.propiedades.filtro_departamento_placeholder')"
+                            :searchable="false"
+                        />
+
+                        <x-atoms.select
+                            name="municipio_id"
+                            id="filtro-municipio"
+                            :label="__('comercial.propiedades.filtro_municipio')"
+                            :options="$municipiosDisponibles"
+                            :value="$filtros['municipio_id']"
+                            :placeholder="__('comercial.propiedades.filtro_municipio_placeholder')"
+                            :searchable="false"
                         />
                     </x-organisms.filter-panel>
 

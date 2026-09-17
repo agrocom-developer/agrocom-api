@@ -2,6 +2,8 @@
 
 namespace App\Dominios\Comercial\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Campania\Contratos\DatosCampania;
+use App\Dominios\Campania\Contratos\LecturaCampania;
 use App\Dominios\Comercial\Aplicacion\ActualizarCliente;
 use App\Dominios\Comercial\Aplicacion\CrearCliente;
 use App\Dominios\Comercial\Aplicacion\EliminarCliente;
@@ -18,6 +20,7 @@ use App\Dominios\Operaciones\Contratos\LecturaResumenOrdenesContrato;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
@@ -62,16 +65,22 @@ final class ClientesController
 
     public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
 
-    public function index(Request $request, ListarClientes $listarClientes): View
+    public function index(Request $request, ListarClientes $listarClientes, LecturaCampania $lecturaCampania): View
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
         $busqueda = $request->string('q')->toString();
+        $tipoPersona = $request->string('tipo_persona')->toString() ?: null;
+        $campaniaId = $request->integer('campania_id') ?: null;
+        $tipoContacto = $request->string('tipo_contacto')->toString() ?: null;
 
         return view('comercial::pages.clientes.index', [
             ...$this->autorizacion->cascara($request),
-            'clientes' => $listarClientes->ejecutar($busqueda !== '' ? $busqueda : null),
-            'filtros' => ['q' => $busqueda],
+            'clientes' => $listarClientes->ejecutar($busqueda !== '' ? $busqueda : null, $tipoPersona, $campaniaId, $tipoContacto),
+            'tiposPersonaFiltro' => TipoPersonaCliente::cases(),
+            'tiposContactoFiltro' => TipoContactoCliente::cases(),
+            'campaniasDisponibles' => $this->campaniasDisponibles($lecturaCampania),
+            'filtros' => ['q' => $busqueda, 'tipo_persona' => $tipoPersona, 'campania_id' => $campaniaId, 'tipo_contacto' => $tipoContacto],
         ]);
     }
 
@@ -226,6 +235,20 @@ final class ClientesController
     private function cadenaONull(mixed $valor): ?string
     {
         return $valor === null || $valor === '' ? null : (string) $valor;
+    }
+
+    /**
+     * Todas las campañas del catálogo, para el filtro del listado — mismo
+     * criterio que `ContratosController::campaniasDisponibles()`: vía
+     * {@see LecturaCampania::todas()} (ADR 0003 regla 2), nunca el modelo
+     * Eloquent `Campania` directo desde este módulo.
+     *
+     * @return Collection<int, string>
+     */
+    private function campaniasDisponibles(LecturaCampania $lecturaCampania): Collection
+    {
+        return collect($lecturaCampania->todas())
+            ->mapWithKeys(fn (DatosCampania $campania): array => [$campania->id => $campania->codigo]);
     }
 
     /**
