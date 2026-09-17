@@ -85,11 +85,12 @@
     color: var(--ag-color-info-strong);
 }
 
-/* Barra izquierda de atención: SOLO warning/danger (estados que requieren
-   acción) — success/info quedan sin barra, mismo criterio que el original
-   de referencia. */
-.ag-stat-card[data-state='warning']::before,
-.ag-stat-card[data-state='danger']::before {
+/* Barra izquierda de 4px, uno por `state` (17/9/2026: antes solo
+   warning/danger la pintaban — "estados que requieren atención" — pero con
+   varias tarjetas de LA MISMA fila usando distintos `state`, dejar afuera a
+   success/info se leía como inconsistencia, no como jerarquía, pedido
+   directo de parejarlo). `null` (sin `state`) sigue sin barra. */
+.ag-stat-card[data-state]::before {
     content: '';
     position: absolute;
     left: 0;
@@ -98,12 +99,20 @@
     width: 4px;
 }
 
+.ag-stat-card[data-state='success']::before {
+    background: var(--ag-color-success);
+}
+
 .ag-stat-card[data-state='warning']::before {
     background: var(--ag-color-warning);
 }
 
 .ag-stat-card[data-state='danger']::before {
     background: var(--ag-color-danger);
+}
+
+.ag-stat-card[data-state='info']::before {
+    background: var(--ag-color-info);
 }
 
 /* Sans + tabular-nums (auditoría visual externa, obs. #7 — supera la regla

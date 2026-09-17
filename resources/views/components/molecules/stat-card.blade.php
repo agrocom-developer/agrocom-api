@@ -26,10 +26,12 @@
     - footTone (success|warning|muted, default "muted"): color del pie —
       tono semántico independiente del signo (una baja de costo es éxito).
     - state (success|warning|danger|info|null, default null): tono del
-      CONTENEDOR del ícono — independiente de footTone. Solo warning/danger
-      además pintan una barra izquierda de 4px (estados que requieren
-      atención); success/info/null quedan sin barra, igual que el original
-      de referencia (no todo estado necesita gritar).
+      CONTENEDOR del ícono — independiente de footTone. Con cualquier valor
+      (17/9/2026: antes solo warning/danger, corregido — varias tarjetas de
+      la misma fila con `state` distinto y solo algunas con barra se leía
+      como inconsistencia, no como jerarquía) pinta también una barra
+      izquierda de 4px del mismo color; sin `state` (`null`, default) la
+      tarjeta queda neutra y sin barra (no todo KPI necesita un color).
     - hero (bool, default false): variante protagonista del móvil (maqueta
       5b — cifra 40px). El grid/columna lo decide el llamador.
 --}}

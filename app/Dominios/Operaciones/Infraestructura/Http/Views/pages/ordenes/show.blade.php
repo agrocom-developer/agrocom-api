@@ -48,15 +48,22 @@
 
     // Estados de color de la tira de KPI (17/9/2026, pedido explícito: se
     // veía "plana" sin ningún `state` — ver docblock de `molecules/stat-card`).
-    // Cada uno resuelve a una condición REAL, nunca decorativo: aplicaciones
-    // y equipos pasan a "success" recién cuando la meta se cumple de verdad.
-    // "Equipos" solo pasa a "warning" (pide atención) con la orden YA
-    // `vigente` — antes de activarla, no tener equipos asignados es el
-    // estado normal (`AsignarEquiposOrden` ni lo permite todavía), no algo
-    // que reclame atención.
+    // Un solo color FIJO (hectáreas=info) — "categoría de insumo" quedó
+    // sin `state` a propósito (corrección 17/9/2026: con success fijo
+    // colisionaba con "aplicaciones" cada vez que esa completaba su meta,
+    // dos verdes por casualidad, no por relación entre los datos).
+    // "Aplicaciones"/"equipos" son 100% dinámicos: arrancan neutros (sin
+    // `state`) y solo se colorean cuando hay algo real que mostrar —
+    // "success" cuando la meta se cumple de verdad (ahí SÍ pueden coincidir
+    // los dos en verde a la vez: es información real, "las dos metas se
+    // cumplieron", no una casualidad decorativa), "warning" en equipos solo
+    // con la orden YA `vigente` — antes de activarla, no tener equipos
+    // asignados es el estado normal (`AsignarEquiposOrden` ni lo permite
+    // todavía), no algo que reclame atención.
     $aplicacionesCompletas = $aplicacionesPrevistas !== null && $orden->nro_aplicacion >= $aplicacionesPrevistas;
     $equiposCompletos = $equiposAsignados >= $orden->cantidad_equipos_necesarios;
-    $equiposEstado = $equiposCompletos ? 'success' : ($estadoValor === 'vigente' ? 'warning' : 'info');
+    $aplicacionesEstado = $aplicacionesCompletas ? 'success' : null;
+    $equiposEstado = $equiposCompletos ? 'success' : ($estadoValor === 'vigente' ? 'warning' : null);
 
     $limitesItems = [
         ['label' => __('operaciones.ordenes.campo_humedad_min_pct'), 'value' => $orden->humedad_min_pct !== null ? "{$orden->humedad_min_pct} %" : __('operaciones.ordenes.limite_sin_definir')],
@@ -158,14 +165,13 @@
                     :label="__('operaciones.ordenes.campo_categoria_insumo')"
                     icon="science"
                     :value="$dosisTexto"
-                    state="info"
                 />
                 <x-molecules.stat-card
                     :label="__('operaciones.ordenes.kpi_aplicaciones')"
                     icon="repeat"
                     :value="$orden->nro_aplicacion"
                     :value-suffix="$aplicacionesPrevistas !== null ? __('operaciones.ordenes.kpi_aplicaciones_sufijo', ['total' => $aplicacionesPrevistas]) : null"
-                    :state="$aplicacionesCompletas ? 'success' : 'info'"
+                    :state="$aplicacionesEstado"
                 />
                 <x-molecules.stat-card
                     :label="__('operaciones.ordenes.kpi_equipos_necesarios')"

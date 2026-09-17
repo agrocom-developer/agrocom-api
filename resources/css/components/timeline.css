@@ -13,11 +13,30 @@
 }
 
 .ag-timeline__item {
+    position: relative;
     display: flex;
     gap: var(--ag-space-3);
 }
 
+/* Línea conectora entre puntos (17/9/2026, pedido explícito): del borde
+   inferior de ESTE punto (margin-top + alto = --ag-space-4 desde el techo
+   del item) hasta el próximo, cruzando el `gap` de `.ag-timeline` — mismo
+   truco de "línea por color de fondo" que ya usa `.ag-ordenes-card__datos`
+   (ordenes.css) para sus divisores de 1px. Sin línea después del último
+   punto: no hay nada más que conectar. */
+.ag-timeline__item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: calc(0.625rem / 2 - 0.5px);
+    top: var(--ag-space-4);
+    bottom: calc(-1 * var(--ag-space-4));
+    width: 1px;
+    background-color: var(--ag-color-border-row);
+}
+
 .ag-timeline__dot {
+    position: relative;
+    z-index: 1;
     flex: none;
     width: 0.625rem;
     height: 0.625rem;
