@@ -110,6 +110,12 @@
     color: var(--ag-color-text-muted);
 }
 
+.ag-switch__error {
+    margin: 0;
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-danger);
+}
+
 /* El estado final (thumb desplazado) sigue aplicándose bajo reduced-motion —
    solo se acorta la duración, nunca se fuerza `transform: none` (mismo
    criterio que el resto del sistema, ver sistema_diseno_panel.md §3). */

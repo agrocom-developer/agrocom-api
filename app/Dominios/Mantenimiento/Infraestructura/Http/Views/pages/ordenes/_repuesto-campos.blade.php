@@ -63,6 +63,7 @@
         @disabled(! $marcado)
         class="ag-repuesto-campos__cantidad"
         data-ag-repuesto-campo="cantidad"
+        :error="$errors->first(\"repuestos.{$repuestoId}.cantidad\")"
     />
 
     <p class="ag-repuesto-campos__disponibilidad" data-ag-repuesto-disponibilidad></p>

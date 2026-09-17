@@ -149,6 +149,20 @@ final class ContratosController
                 ->route('panel.contratos.create')
                 ->withInput()
                 ->withErrors(['lotes' => $excepcion->getMessage()]);
+        } catch (\Throwable $excepcion) {
+            // Cualquier falla no prevista (restricción de base de datos, carrera
+            // por doble clic, etc.): sin este catch, el error quedaba solo en
+            // el pipeline de excepciones del framework y el usuario se quedaba
+            // con el formulario completo pero sin contrato ni aviso — ver
+            // incidente del 16/9/2026. `report()` lo manda al log configurado
+            // (mismo canal que cualquier excepción no capturada) y el usuario
+            // ve un aviso genérico en vez de una página en blanco.
+            report($excepcion);
+
+            return redirect()
+                ->route('panel.contratos.create')
+                ->withInput()
+                ->withErrors(['error' => __('http.error_servidor')]);
         }
 
         // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
@@ -205,6 +219,14 @@ final class ContratosController
                 ->route('panel.contratos.edit', $contrato)
                 ->withInput()
                 ->withErrors(['lotes' => $excepcion->getMessage()]);
+        } catch (\Throwable $excepcion) {
+            // Mismo catch-all que store() — ver ese docblock.
+            report($excepcion);
+
+            return redirect()
+                ->route('panel.contratos.edit', $contrato)
+                ->withInput()
+                ->withErrors(['error' => __('http.error_servidor')]);
         }
 
         // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
@@ -225,6 +247,14 @@ final class ContratosController
             return redirect()
                 ->route('panel.contratos.index')
                 ->withErrors(['estado' => $excepcion->getMessage()]);
+        } catch (\Throwable $excepcion) {
+            // Mismo catch-all que store()/update() — reutiliza la clave
+            // 'estado', ya cableada en contratos/index.blade.php.
+            report($excepcion);
+
+            return redirect()
+                ->route('panel.contratos.index')
+                ->withErrors(['estado' => __('http.error_servidor')]);
         }
 
         return redirect()
