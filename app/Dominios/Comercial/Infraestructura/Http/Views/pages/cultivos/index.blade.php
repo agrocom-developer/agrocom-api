@@ -146,6 +146,21 @@
                             </span>
 
                             <span role="cell" class="ag-cultivos__acciones">
+                                {{-- Form FUERA de row-actions a propósito: ese organism repite su
+                                     slot dos veces (visible/menú) — un <form> con id ahí adentro se
+                                     duplicaría con el mismo id, HTML inválido. El botón de
+                                     confirm-button lo envía por su atributo `form`. --}}
+                                @puede('comercial.cultivo.eliminar')
+                                    <form
+                                        id="cultivo-eliminar-{{ $cultivo->id }}"
+                                        method="POST"
+                                        action="{{ route('panel.cultivos.destroy', $cultivo) }}"
+                                    >
+                                        @csrf
+                                        @method('DELETE')
+                                    </form>
+                                @endpuede
+
                                 <x-organisms.row-actions>
                                     @puede('comercial.cultivo.editar')
                                         <x-atoms.button :href="route('panel.cultivos.edit', $cultivo)" variant="warning-outline" size="sm" icon="edit">
@@ -154,17 +169,19 @@
                                     @endpuede
 
                                     @puede('comercial.cultivo.eliminar')
-                                        <form
-                                            method="POST"
-                                            action="{{ route('panel.cultivos.destroy', $cultivo) }}"
-                                            onsubmit="return confirm('{{ __('comercial.cultivos.confirmar_baja') }}')"
-                                        >
-                                            @csrf
-                                            @method('DELETE')
-                                            <x-atoms.button type="submit" variant="danger-outline" size="sm" icon="delete">
+                                        <span class="ag-row-actions__item">
+                                            <x-molecules.confirm-button
+                                                :form-id="'cultivo-eliminar-' . $cultivo->id"
+                                                :title="__('comercial.cultivos.confirmar_eliminar_titulo')"
+                                                :message="__('comercial.cultivos.confirmar_baja')"
+                                                :confirm-label="__('comercial.cultivos.eliminar_accion')"
+                                                variant="danger-outline"
+                                                size="sm"
+                                                icon="delete"
+                                            >
                                                 {{ __('comercial.cultivos.eliminar_accion') }}
-                                            </x-atoms.button>
-                                        </form>
+                                            </x-molecules.confirm-button>
+                                        </span>
                                     @endpuede
                                 </x-organisms.row-actions>
                             </span>

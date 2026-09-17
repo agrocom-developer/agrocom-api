@@ -101,6 +101,22 @@
                             <span role="cell">{{ __('comercial.clientes.contactos_cantidad', ['cantidad' => $cliente->contactos_count]) }}</span>
 
                             <span role="cell" class="ag-index-table__acciones">
+                                {{-- Form FUERA de row-actions a propósito: ese organism repite su
+                                     slot dos veces (visible/menú, ver su docblock) — un <form> con id
+                                     ahí adentro se duplicaría con el mismo id, HTML inválido. El botón
+                                     de confirm-button lo envía por su atributo `form`, sin importar
+                                     dónde viva en el documento. --}}
+                                @puede('comercial.cliente.eliminar')
+                                    <form
+                                        id="cliente-eliminar-{{ $cliente->id }}"
+                                        method="POST"
+                                        action="{{ route('panel.clientes.destroy', $cliente) }}"
+                                    >
+                                        @csrf
+                                        @method('DELETE')
+                                    </form>
+                                @endpuede
+
                                 <x-organisms.row-actions>
                                     @puede('comercial.cliente.editar')
                                         <x-atoms.button :href="route('panel.clientes.edit', $cliente)" variant="warning-outline" size="sm" icon="edit">
@@ -109,17 +125,19 @@
                                     @endpuede
 
                                     @puede('comercial.cliente.eliminar')
-                                        <form
-                                            method="POST"
-                                            action="{{ route('panel.clientes.destroy', $cliente) }}"
-                                            onsubmit="return confirm('{{ __('comercial.clientes.confirmar_baja') }}')"
-                                        >
-                                            @csrf
-                                            @method('DELETE')
-                                            <x-atoms.button type="submit" variant="danger-outline" size="sm" icon="delete">
+                                        <span class="ag-row-actions__item">
+                                            <x-molecules.confirm-button
+                                                :form-id="'cliente-eliminar-' . $cliente->id"
+                                                :title="__('comercial.clientes.confirmar_eliminar_titulo')"
+                                                :message="__('comercial.clientes.confirmar_baja')"
+                                                :confirm-label="__('comercial.clientes.eliminar_accion')"
+                                                variant="danger-outline"
+                                                size="sm"
+                                                icon="delete"
+                                            >
                                                 {{ __('comercial.clientes.eliminar_accion') }}
-                                            </x-atoms.button>
-                                        </form>
+                                            </x-molecules.confirm-button>
+                                        </span>
                                     @endpuede
                                 </x-organisms.row-actions>
                             </span>

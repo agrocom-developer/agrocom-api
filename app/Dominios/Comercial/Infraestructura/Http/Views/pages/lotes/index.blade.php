@@ -148,6 +148,21 @@
                             <span role="cell" class="ag-lotes__hectareas">{{ __('comercial.lotes.hectareas_valor', ['cantidad' => number_format((float) $lote->hectareas, 2, ',', '.')]) }}</span>
 
                             <span role="cell" class="ag-index-table__acciones">
+                                {{-- Form FUERA de row-actions a propósito: ese organism repite su
+                                     slot dos veces (visible/menú) — un <form> con id ahí adentro se
+                                     duplicaría con el mismo id, HTML inválido. El botón de
+                                     confirm-button lo envía por su atributo `form`. --}}
+                                @puede('comercial.lote.eliminar')
+                                    <form
+                                        id="lote-eliminar-{{ $lote->id }}"
+                                        method="POST"
+                                        action="{{ route('panel.lotes.destroy', $lote) }}"
+                                    >
+                                        @csrf
+                                        @method('DELETE')
+                                    </form>
+                                @endpuede
+
                                 <x-organisms.row-actions>
                                     @puede('comercial.lote.editar')
                                         <x-atoms.button :href="route('panel.lotes.edit', $lote)" variant="warning-outline" size="sm" icon="edit">
@@ -156,17 +171,19 @@
                                     @endpuede
 
                                     @puede('comercial.lote.eliminar')
-                                        <form
-                                            method="POST"
-                                            action="{{ route('panel.lotes.destroy', $lote) }}"
-                                            onsubmit="return confirm('{{ __('comercial.lotes.confirmar_baja') }}')"
-                                        >
-                                            @csrf
-                                            @method('DELETE')
-                                            <x-atoms.button type="submit" variant="danger-outline" size="sm" icon="delete">
+                                        <span class="ag-row-actions__item">
+                                            <x-molecules.confirm-button
+                                                :form-id="'lote-eliminar-' . $lote->id"
+                                                :title="__('comercial.lotes.confirmar_eliminar_titulo')"
+                                                :message="__('comercial.lotes.confirmar_baja')"
+                                                :confirm-label="__('comercial.lotes.eliminar_accion')"
+                                                variant="danger-outline"
+                                                size="sm"
+                                                icon="delete"
+                                            >
                                                 {{ __('comercial.lotes.eliminar_accion') }}
-                                            </x-atoms.button>
-                                        </form>
+                                            </x-molecules.confirm-button>
+                                        </span>
                                     @endpuede
                                 </x-organisms.row-actions>
                             </span>
