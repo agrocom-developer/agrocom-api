@@ -16,9 +16,11 @@ use App\Dominios\Operaciones\Dominio\TipoAplicacion;
 use App\Dominios\Operaciones\Dominio\TipoInsumo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\CategoriaInsumo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
 use App\Dominios\Operaciones\Infraestructura\Http\Requests\ActualizarOrdenRequest;
 use App\Dominios\Operaciones\Infraestructura\Http\Requests\CrearOrdenRequest;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
+use Brick\Math\BigDecimal;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -58,11 +60,15 @@ final class OrdenesController
 
     private const PERMISO_ELIMINAR = 'operaciones.orden.eliminar';
 
+    private const PERMISO_ASIGNAR_EQUIPOS = 'operaciones.orden.asignar_equipos';
+
     public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
 
     public function index(Request $request, ListarOrdenesAplicacion $listarOrdenes): View
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
+
+        $busqueda = $request->string('q')->toString();
 
         $estadoQuery = $request->string('estado')->toString();
         $estado = $estadoQuery !== '' ? EstadoOrdenAplicacion::tryFrom($estadoQuery) : null;
@@ -70,7 +76,11 @@ final class OrdenesController
         $tipoAplicacionQuery = $request->string('tipo_aplicacion')->toString();
         $tipoAplicacion = $tipoAplicacionQuery !== '' ? TipoAplicacion::tryFrom($tipoAplicacionQuery) : null;
 
-        $ordenes = $listarOrdenes->ejecutar(estado: $estado, tipoAplicacion: $tipoAplicacion);
+        $ordenes = $listarOrdenes->ejecutar(
+            estado: $estado,
+            tipoAplicacion: $tipoAplicacion,
+            contratoIds: $busqueda !== '' ? $this->contratoIdsPorBusqueda($busqueda) : null,
+        );
 
         $loteIdsPorOrden = $this->loteIdsPorOrden($ordenes->pluck('id')->map(fn ($id) => (int) $id)->all());
         $todosLosLoteIds = collect($loteIdsPorOrden)->flatten()->unique()->values()->all();
@@ -81,9 +91,38 @@ final class OrdenesController
             'etiquetasContrato' => $this->etiquetasContrato($ordenes->pluck('contrato_id')->map(fn ($id) => (int) $id)->unique()->values()->all()),
             'etiquetasLote' => $this->etiquetasLote($todosLosLoteIds),
             'loteIdsPorOrden' => $loteIdsPorOrden,
-            'filtros' => ['estado' => $estado?->value, 'tipo_aplicacion' => $tipoAplicacion?->value],
+            'filtros' => ['q' => $busqueda, 'estado' => $estado?->value, 'tipo_aplicacion' => $tipoAplicacion?->value],
             'puedeActivar' => $this->autorizacion->tienePermiso($request, self::PERMISO_ACTIVAR),
         ]);
+    }
+
+    /**
+     * Contratos cuyo cliente coincide con el buscador `q` del listado (mismo
+     * criterio de acentos/mayúsculas que `Compartido\Infraestructura\Busqueda\BusquedaTexto`,
+     * reescrito acá porque esa clase opera sobre un `Eloquent\Builder` y esta
+     * lectura es `DB::table` cruzando a Comercial — ADR 0003 regla 3, mismo
+     * criterio que el resto de los selects de este controlador). Un buscador
+     * sin coincidencias devuelve `[]`, que `ListarOrdenesAplicacion` traduce
+     * a "ningún resultado", nunca a "sin filtro".
+     *
+     * @return list<int>
+     */
+    private function contratoIdsPorBusqueda(string $busqueda): array
+    {
+        $patron = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $busqueda).'%';
+
+        $consulta = DB::table('com_contratos as c')
+            ->join('com_clientes as cl', 'cl.id', '=', 'c.cliente_id')
+            ->whereNull('c.deleted_at')
+            ->whereNull('cl.deleted_at');
+
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            $consulta->whereRaw('unaccent(cl.razon_social) ILIKE unaccent(?)', [$patron]);
+        } else {
+            $consulta->whereRaw('LOWER(cl.razon_social) LIKE ?', [$patron]);
+        }
+
+        return $consulta->pluck('c.id')->map(fn ($id) => (int) $id)->all();
     }
 
     /**
@@ -153,7 +192,106 @@ final class OrdenesController
             'categoriasInsumoDisponibles' => $this->categoriasInsumoDisponibles(),
             'mapaContratoCliente' => $this->mapaContratoCliente(),
             'mapaLoteCliente' => $this->mapaLoteCliente(),
+            'resumenRelacionado' => $this->resumenRelacionado($orden, $request),
         ]);
+    }
+
+    /**
+     * Resumen del aside de `edit()` (homogeneización con Comercial, 17/9/2026
+     * — mismo criterio que `ClientesController::resumenRelacionado()`, §6.3.1
+     * de docs/diseno/guia_pantalla_panel.md): UNA categoría relacionada,
+     * "Asignación de equipos" (`AsignacionEquiposController`, HU-70/HU-92).
+     * Gatea por el permiso DEL MÓDULO RELACIONADO
+     * (`operaciones.orden.asignar_equipos`), no por `.ver`/`.editar` de la
+     * orden — sin él, la categoría se omite del todo.
+     *
+     * Tres estados posibles, todos con datos REALES (no estático: el
+     * contrato de lectura ya existe, `AsignacionEquiposController`):
+     * - Orden no `vigente` todavía: no admite reparto, sin acción (repartir
+     *   antes de activar rompería la guarda de `AsignarEquiposOrden`).
+     * - Orden `vigente` sin nada asignado: `empty-state` con acceso directo a
+     *   la ficha de reparto (memento de navegación, cruza a la misma pantalla
+     *   `asignacion-equipos` — mismo criterio que
+     *   `ContratosController::resumenContrato()` cruzando a `panel.ordenes.create`).
+     * - Con reparto en curso o completo: `summary-card` con hectáreas
+     *   solicitadas/asignadas/restantes y cantidad de equipos.
+     *
+     * @return list<array{titulo: string, icono: string, tieneDatos: bool, items: list<array{label: string, value: string, mono?: bool, variant?: string}>, vacioTitulo: string, vacioDetalle: string, mostrarAccion: bool, accion: array{label: string, href: string}}>
+     */
+    private function resumenRelacionado(OrdenAplicacion $orden, Request $request): array
+    {
+        if (! $this->autorizacion->tienePermiso($request, self::PERMISO_ASIGNAR_EQUIPOS)) {
+            return [];
+        }
+
+        $volverA = [
+            'volver_a' => route('panel.ordenes.edit', $orden),
+            'volver_texto' => __('operaciones.ordenes.aside_volver_texto', ['nro' => $orden->nro_aplicacion]),
+        ];
+
+        if ($orden->estado !== EstadoOrdenAplicacion::Vigente) {
+            return [[
+                'titulo' => __('operaciones.ordenes.aside_titulo'),
+                'icono' => 'groups',
+                'tieneDatos' => false,
+                'items' => [],
+                'vacioTitulo' => __('operaciones.ordenes.aside_no_vigente_titulo'),
+                'vacioDetalle' => __('operaciones.ordenes.aside_no_vigente_detalle'),
+                'mostrarAccion' => false,
+                'accion' => ['label' => '', 'href' => ''],
+            ]];
+        }
+
+        $hectareasSolicitadas = BigDecimal::of((string) $orden->ordenLotes()->sum('hectareas_solicitadas'));
+        $hectareasAsignadas = BigDecimal::of((string) Trabajo::query()->where('orden_id', $orden->id)->sum('hectareas_declaradas'));
+        $equiposAsignados = Trabajo::query()->where('orden_id', $orden->id)->whereNotNull('equipo_trabajo_id')->distinct()->count('equipo_trabajo_id');
+
+        if ($equiposAsignados === 0) {
+            return [[
+                'titulo' => __('operaciones.ordenes.aside_titulo'),
+                'icono' => 'groups',
+                'tieneDatos' => false,
+                'items' => [],
+                'vacioTitulo' => __('operaciones.ordenes.aside_vacio_titulo'),
+                'vacioDetalle' => __('operaciones.ordenes.aside_vacio_detalle'),
+                'mostrarAccion' => true,
+                'accion' => [
+                    'label' => __('operaciones.ordenes.aside_repartir_accion'),
+                    'href' => route('panel.asignacion-equipos.show', [$orden, ...$volverA]),
+                ],
+            ]];
+        }
+
+        $restantes = $hectareasSolicitadas->minus($hectareasAsignadas);
+
+        return [[
+            'titulo' => __('operaciones.ordenes.aside_titulo'),
+            'icono' => 'groups',
+            'tieneDatos' => true,
+            'items' => [
+                ['label' => __('operaciones.ordenes.aside_hectareas_solicitadas'), 'value' => $this->aHectareas($hectareasSolicitadas), 'mono' => true],
+                ['label' => __('operaciones.ordenes.aside_asignadas'), 'value' => $this->aHectareas($hectareasAsignadas), 'mono' => true],
+                [
+                    'label' => __('operaciones.ordenes.aside_restantes'),
+                    'value' => $this->aHectareas($restantes),
+                    'mono' => true,
+                    'variant' => $restantes->isZero() ? 'success' : 'neutral',
+                ],
+                ['label' => __('operaciones.ordenes.aside_equipos_asignados'), 'value' => (string) $equiposAsignados, 'mono' => true],
+            ],
+            'vacioTitulo' => '',
+            'vacioDetalle' => '',
+            'mostrarAccion' => true,
+            'accion' => [
+                'label' => __('operaciones.ordenes.aside_ver_asignacion'),
+                'href' => route('panel.asignacion-equipos.show', [$orden, ...$volverA]),
+            ],
+        ]];
+    }
+
+    private function aHectareas(BigDecimal $valor): string
+    {
+        return number_format((float) (string) $valor, 2, ',', '.');
     }
 
     public function update(ActualizarOrdenRequest $request, OrdenAplicacion $orden, ActualizarOrden $actualizarOrden): RedirectResponse

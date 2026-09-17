@@ -44,9 +44,14 @@
     Tras un error de validación, `old()` pisa los valores del modelo/vacíos
     — mismo criterio en alta y en edición.
 
-    El aside pegajoso del arquetipo se omite a propósito, mismo criterio que
-    drones/campos: ningún dato de solo lectura justifica hoy la columna
-    lateral.
+    El aside pegajoso (§6.3.1) SÍ se usa en edición desde la homogeneización
+    del 17/9/2026 (antes se omitía: "ningún dato de solo lectura justifica
+    hoy la columna lateral" — dejó de ser cierto en cuanto existió
+    `/panel/asignacion-equipos`, con datos reales sobre esta orden). Espera
+    además:
+    - $resumenRelacionado (list<array{...}>, SOLO en edición): ver
+      `OrdenesController::resumenRelacionado()` — mismo shape que
+      `ClientesController::resumenRelacionado()`.
 --}}
 @php
     $esEdicion = $orden !== null;
@@ -98,6 +103,16 @@
         </x-molecules.alert-strip>
     @endif
 
+    <x-molecules.form-layout>
+    {{--
+        Orden de campos alineado al flujo con el que se arma una orden
+        (homogeneización 17/9/2026, pedido directo): primero CON QUIÉN
+        (contrato), después QUÉ se aplica (tipo → categoría → dosis), después
+        CUÁNTAS VECES y CON CUÁNTOS EQUIPOS, y al final los datos
+        administrativos (tipo de aplicación del ciclo, emisión, contacto,
+        observaciones) — mismos 11 campos de siempre, sin agregar ni quitar
+        ninguno.
+    --}}
     <x-molecules.form-section
         :title="__('operaciones.ordenes.seccion_datos')"
         :count="__('operaciones.ordenes.campos_contador', ['cantidad' => 11])"
@@ -113,38 +128,6 @@
             :error="$errors->first('contrato_id')"
             data-ag-orden-contrato
             data-mapa-contrato-cliente="{{ json_encode($mapaContratoCliente) }}"
-        />
-
-        <x-atoms.input
-            type="number"
-            name="nro_aplicacion"
-            :label="__('operaciones.ordenes.campo_nro_aplicacion')"
-            :value="$valor('nro_aplicacion')"
-            min="1"
-            step="1"
-            required
-            :error="$errors->first('nro_aplicacion')"
-        />
-
-        <x-atoms.input
-            type="number"
-            name="cantidad_equipos_necesarios"
-            :label="__('operaciones.ordenes.campo_cantidad_equipos')"
-            :value="$cantidadEquiposNecesarios"
-            min="1"
-            step="1"
-            required
-            :error="$errors->first('cantidad_equipos_necesarios')"
-        />
-
-        <x-atoms.select
-            name="tipo_aplicacion"
-            id="tipo_aplicacion"
-            :label="__('operaciones.ordenes.campo_tipo_aplicacion')"
-            :options="$opcionesTipoAplicacion"
-            :value="$tipoAplicacion"
-            required
-            :error="$errors->first('tipo_aplicacion')"
         />
 
         {{--
@@ -208,6 +191,38 @@
                 :error="$errors->first('kilos_por_vuelo')"
             />
         </div>
+
+        <x-atoms.input
+            type="number"
+            name="nro_aplicacion"
+            :label="__('operaciones.ordenes.campo_nro_aplicacion')"
+            :value="$valor('nro_aplicacion')"
+            min="1"
+            step="1"
+            required
+            :error="$errors->first('nro_aplicacion')"
+        />
+
+        <x-atoms.input
+            type="number"
+            name="cantidad_equipos_necesarios"
+            :label="__('operaciones.ordenes.campo_cantidad_equipos')"
+            :value="$cantidadEquiposNecesarios"
+            min="1"
+            step="1"
+            required
+            :error="$errors->first('cantidad_equipos_necesarios')"
+        />
+
+        <x-atoms.select
+            name="tipo_aplicacion"
+            id="tipo_aplicacion"
+            :label="__('operaciones.ordenes.campo_tipo_aplicacion')"
+            :options="$opcionesTipoAplicacion"
+            :value="$tipoAplicacion"
+            required
+            :error="$errors->first('tipo_aplicacion')"
+        />
 
         <x-atoms.date
             name="fecha_emision"
@@ -379,4 +394,33 @@
             </x-atoms.button>
         </x-slot:actions>
     </x-organisms.form-actions-bar>
+
+    @if ($esEdicion)
+        <x-slot:aside>
+            @foreach ($resumenRelacionado ?? [] as $resumen)
+                @if ($resumen['tieneDatos'])
+                    <x-molecules.summary-card :title="$resumen['titulo']" :items="$resumen['items']">
+                        @if ($resumen['mostrarAccion'])
+                            <x-slot:action>
+                                <x-atoms.button :href="$resumen['accion']['href']" variant="outline" icon="groups" block>
+                                    {{ $resumen['accion']['label'] }}
+                                </x-atoms.button>
+                            </x-slot:action>
+                        @endif
+                    </x-molecules.summary-card>
+                @else
+                    <x-molecules.empty-state :icon="$resumen['icono']" :title="$resumen['vacioTitulo']" :detail="$resumen['vacioDetalle']">
+                        @if ($resumen['mostrarAccion'])
+                            <x-slot:action>
+                                <x-atoms.button :href="$resumen['accion']['href']" variant="outline" icon="groups">
+                                    {{ $resumen['accion']['label'] }}
+                                </x-atoms.button>
+                            </x-slot:action>
+                        @endif
+                    </x-molecules.empty-state>
+                @endif
+            @endforeach
+        </x-slot:aside>
+    @endif
+    </x-molecules.form-layout>
 </form>
