@@ -24,15 +24,14 @@ return [
 
     'operacion' => [
         'label' => 'Operación',
-        'descripcion' => 'Órdenes, trabajos, sesiones y pausas de cada jornada de vuelo.',
+        'descripcion' => 'Órdenes, trabajos, asignación de equipos, estadías y seguimiento de vuelos de cada jornada.',
         'items' => [
             'tablero' => 'Tablero',
             'ordenes' => 'Órdenes de aplicación',
-            'trabajos' => 'Trabajos',
-            'sesiones' => 'Sesiones',
-            'pausas' => 'Pausas',
-            'estadias' => 'Estadías en hacienda',
+            'orden_trabajo' => 'Orden de Trabajo',
             'asignacion_equipos' => 'Asignación de equipos',
+            'estadias' => 'Estadías en hacienda',
+            'seguimiento_vuelos' => 'Seguimiento de vuelos',
         ],
     ],
 

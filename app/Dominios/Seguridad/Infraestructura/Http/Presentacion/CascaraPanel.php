@@ -96,6 +96,13 @@ final class CascaraPanel
      * `panel-layout.blade.php` ya tolera la ausencia de una clave
      * (`$menuBadges[$label] ?? null`).
      *
+     * Refactor de menú (17/9/2026): "Pausas" perdió su ítem propio
+     * (`SecMenuSeeder`, absorbido por "Seguimiento de vuelos") y con él su
+     * badge — `LecturaContadoresPanel::pausasDelMes()` sigue existiendo (no
+     * se sabe si otra pantalla lo va a necesitar) pero ya no se llama desde
+     * acá. El badge de "Sesiones" se re-etiqueta a
+     * `menu.operacion.items.seguimiento_vuelos`, la clave nueva de ese ítem.
+     *
      * @return array<string, array{numero: string, texto: string}>
      */
     private function menuBadges(SecUser $usuario): array
@@ -112,17 +119,9 @@ final class CascaraPanel
 
         $sesionesPendientes = $this->contadoresOperaciones->sesionesPendientesValidacion();
         if ($sesionesPendientes > 0) {
-            $badges['menu.operacion.items.sesiones'] = [
+            $badges['menu.operacion.items.seguimiento_vuelos'] = [
                 'numero' => (string) $sesionesPendientes,
                 'texto' => __('seguridad.respuestas.badge_sesiones_pendientes', ['cantidad' => $sesionesPendientes]),
-            ];
-        }
-
-        $pausas = $this->contadoresOperaciones->pausasDelMes();
-        if ($pausas['cantidad'] > 0) {
-            $badges['menu.operacion.items.pausas'] = [
-                'numero' => (string) $pausas['cantidad'],
-                'texto' => __('seguridad.respuestas.badge_pausas_mes', ['cantidad' => $pausas['cantidad']]),
             ];
         }
 

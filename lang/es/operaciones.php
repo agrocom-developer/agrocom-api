@@ -74,7 +74,7 @@ return [
     // real del ciclo de vida del TRABAJO — `sesion.estado` de arriba es el
     // de la sesión, que tiene tres valores y no dos.
     'trabajos' => [
-        'titulo' => 'Trabajos',
+        'titulo' => 'Orden de Trabajo',
         'subtitulo' => 'Trabajos sincronizados desde la app de campo, con sus sesiones.',
         'vacio_titulo' => 'Todavía no llegó ningún trabajo sincronizado',
         'vacio_detalle' => 'Los trabajos se sincronizan automáticamente desde la app de campo cuando un piloto cierra una sesión. Vuelve a esta pantalla cuando llegue el primero.',
