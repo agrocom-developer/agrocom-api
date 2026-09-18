@@ -477,7 +477,22 @@
             <x-slot:aside>
                 @if ($resumenContrato['tieneDatos'])
                     @foreach ($resumenContrato['tarjetas'] as $tarjeta)
-                        <x-molecules.summary-card :title="$tarjeta['titulo']" :items="$tarjeta['items']" />
+                        <x-molecules.summary-card :title="$tarjeta['titulo']" :items="$tarjeta['items']">
+                            @if (isset($tarjeta['accion']))
+                                <x-slot:action>
+                                    {{-- "Ver más" sin funcionalidad todavía
+                                         (tarea "resumen-contrato-completo",
+                                         18/9/2026): ni el listado de órdenes
+                                         ni el de facturas filtran por
+                                         `contrato_id` hoy — el componente
+                                         estático queda en su lugar para
+                                         cuando esa pantalla lo permita. --}}
+                                    <x-atoms.button type="button" variant="outline" size="sm" icon="open_in_new" disabled title="{{ $tarjeta['accion']['tooltip'] }}">
+                                        {{ $tarjeta['accion']['label'] }}
+                                    </x-atoms.button>
+                                </x-slot:action>
+                            @endif
+                        </x-molecules.summary-card>
                     @endforeach
                 @else
                     <x-molecules.empty-state

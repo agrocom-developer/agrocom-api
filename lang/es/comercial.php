@@ -448,20 +448,29 @@ return [
         'lotes_col_acciones' => 'Acciones',
 
         // Resumen del aside de editar contrato (tarea "resumen de contrato",
-        // sept/2026): mismo criterio que el aside de clientes/campañas —
-        // vacío con atajo a crear una orden, o dos tarjetas de solo lectura
-        // (facturación / aplicación) una vez que hay datos.
+        // sept/2026; ampliado a 4 tarjetas tarea "resumen-contrato-completo",
+        // 18/9/2026): vacío con atajo a crear una orden, o cuatro tarjetas de
+        // solo lectura (orden de aplicación / orden de trabajo / facturación
+        // / cobranza) una vez que hay datos.
         'aside_vacio_titulo' => 'Todavía no hay órdenes de aplicación',
         'aside_vacio_detalle' => 'Este contrato no tiene ninguna orden de aplicación cargada. En cuanto se registre la primera, vas a ver acá el avance de facturación y trabajos.',
         'aside_vacio_accion' => 'Nueva orden de aplicación',
+        'aside_orden_aplicacion_titulo' => 'Orden de aplicación',
+        'aside_orden_aplicacion_total' => 'Órdenes registradas',
+        'aside_orden_aplicacion_vigentes' => 'Órdenes vigentes',
+        'aside_orden_trabajo_titulo' => 'Orden de trabajo',
         'aside_facturacion_titulo' => 'Facturación',
         'aside_monto_contratado' => 'Monto contratado (Bs)',
         'aside_monto_facturado' => 'Monto facturado (Bs)',
         'aside_saldo_pendiente' => 'Saldo pendiente (Bs)',
-        'aside_aplicacion_titulo' => 'Aplicación',
         'aside_hectareas_contratadas' => 'Hectáreas contratadas',
         'aside_hectareas_aplicadas' => 'Hectáreas aplicadas',
         'aside_trabajos' => 'Trabajos realizados',
+        'aside_cobranza_titulo' => 'Cobranza',
+        'aside_cobranza_estado_label' => 'Estado',
+        'aside_cobranza_proximamente' => 'Disponible próximamente',
+        'aside_ver_mas' => 'Ver más',
+        'aside_ver_mas_proximamente' => 'Todavía no se puede filtrar este listado por contrato.',
 
         // Errores de validación
         'error_cliente_requerido' => 'Selecciona un cliente.',

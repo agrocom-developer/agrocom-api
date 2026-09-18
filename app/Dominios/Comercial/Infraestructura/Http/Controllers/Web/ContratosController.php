@@ -404,29 +404,36 @@ final class ContratosController
     }
 
     /**
-     * Resumen del aside de `edit()` (tarea "resumen de contrato", sept/2026):
-     * mismo criterio que `ClientesController::resumenRelacionado()` — sin
-     * datos de aplicación todavía, un `empty-state` con el atajo a crear una
-     * orden (idéntico al que ya ofrece el aside de cliente, misma ruta sin
+     * Resumen del aside de `edit()` (tarea "resumen de contrato", sept/2026;
+     * ampliado tarea "resumen-contrato-completo", 18/9/2026): sin datos de
+     * aplicación todavía, un `empty-state` con el atajo a crear una orden
+     * (idéntico al que ya ofrece el aside de cliente, misma ruta sin
      * preseleccionar nada: `OrdenesController::create()` no acepta
      * `contrato_id` por query, así que ninguno de los dos aside lo pasa).
-     * Con datos, dos tarjetas — mismo lenguaje que
-     * `CampaniasController::resumenCampania()` pero acotadas A UN contrato:
-     * "Facturación" (monto contratado vs. facturado, vía
-     * {@see ObtenerAvanceComercial}, ya filtrable por `contratoId`) y
-     * "Aplicación" (hectáreas aplicadas + trabajos, vía
-     * {@see LecturaTrabajosPorContrato}, mismo caso de uso que campañas con
-     * `[$contrato->id]` como único elemento).
      *
-     * Sin acción "ver más" en las tarjetas con datos: ni `panel.ordenes.index`
-     * ni `panel.facturas.index` aceptan filtrar por `contrato_id` hoy —
-     * agregar ese filtro es una tarea de esas pantallas, no de este resumen.
+     * Con datos, CUATRO tarjetas — antes eran dos ("Facturación" y una
+     * "Aplicación" que mezclaba hectáreas y trabajos):
+     * 1. "Orden de aplicación" (total/vigentes, vía
+     *    {@see LecturaResumenOrdenesContrato}) — mide documentos emitidos.
+     * 2. "Orden de trabajo" (hectáreas aplicadas + total de trabajos, vía
+     *    {@see ObtenerAvanceComercial}/{@see LecturaTrabajosPorContrato}) —
+     *    mide ejecución real en campo, separado de "Orden de aplicación".
+     * 3. "Facturación" (monto contratado vs. facturado, vía
+     *    {@see ObtenerAvanceComercial}, ya filtrable por `contratoId`).
+     * 4. "Cobranza": el módulo no existe todavía — tarjeta estática, sin
+     *    datos reales ni acción.
+     *
+     * Las primeras tres llevan una acción "ver más" DESHABILITADA (`accion`
+     * con `tooltip`, sin `href`): ni `panel.ordenes.index` ni
+     * `panel.facturas.index` aceptan filtrar por `contrato_id` hoy — agregar
+     * ese filtro es una tarea de esas pantallas, no de este resumen. El
+     * componente ya queda en su lugar para cuando exista.
      *
      * `null` si el usuario no tiene ni `.ver` ni `.crear` de órdenes (mismo
      * criterio de permisos que clientes: sin ninguno de los dos, la tarjeta
      * no aporta nada).
      *
-     * @return array{tieneDatos: false, icono: string, titulo: string, detalle: string, mostrarAccion: bool, accion: array{label: string, href: string}}|array{tieneDatos: true, tarjetas: list<array{titulo: string, items: list<array{label: string, value: string, mono: bool, variant?: string}>}>}|null
+     * @return array{tieneDatos: false, icono: string, titulo: string, detalle: string, mostrarAccion: bool, accion: array{label: string, href: string}}|array{tieneDatos: true, tarjetas: list<array{titulo: string, items: list<array{label: string, value: string, mono?: bool, variant?: string}>, accion?: array{label: string, tooltip: string}}>}|null
      */
     private function resumenContrato(
         Contrato $contrato,
@@ -442,7 +449,8 @@ final class ContratosController
             return null;
         }
 
-        $totalOrdenes = $puedeVerOrdenes ? $lecturaResumenOrdenes->resumen([$contrato->id])['total'] : 0;
+        $resumenOrdenes = $puedeVerOrdenes ? $lecturaResumenOrdenes->resumen([$contrato->id]) : ['total' => 0, 'vigentes' => 0];
+        $totalOrdenes = $resumenOrdenes['total'];
 
         if (! $puedeVerOrdenes || $totalOrdenes === 0) {
             return [
@@ -470,9 +478,36 @@ final class ContratosController
         $montoFacturado = BigDecimal::of($avance['montoFacturado'] ?? '0');
         $saldoPendiente = $montoContratado->minus($montoFacturado);
 
+        $accionVerMas = [
+            'label' => __('comercial.contratos.aside_ver_mas'),
+            'tooltip' => __('comercial.contratos.aside_ver_mas_proximamente'),
+        ];
+
         return [
             'tieneDatos' => true,
             'tarjetas' => [
+                [
+                    'titulo' => __('comercial.contratos.aside_orden_aplicacion_titulo'),
+                    'items' => [
+                        ['label' => __('comercial.contratos.aside_orden_aplicacion_total'), 'value' => (string) $totalOrdenes, 'mono' => true],
+                        [
+                            'label' => __('comercial.contratos.aside_orden_aplicacion_vigentes'),
+                            'value' => (string) $resumenOrdenes['vigentes'],
+                            'mono' => true,
+                            'variant' => $resumenOrdenes['vigentes'] > 0 ? 'success' : 'neutral',
+                        ],
+                    ],
+                    'accion' => $accionVerMas,
+                ],
+                [
+                    'titulo' => __('comercial.contratos.aside_orden_trabajo_titulo'),
+                    'items' => [
+                        ['label' => __('comercial.contratos.aside_hectareas_contratadas'), 'value' => $avance['hectareasContratadas'] ?? '0.00', 'mono' => true],
+                        ['label' => __('comercial.contratos.aside_hectareas_aplicadas'), 'value' => $avance['hectareasAplicadas'] ?? '0.00', 'mono' => true],
+                        ['label' => __('comercial.contratos.aside_trabajos'), 'value' => (string) $totalTrabajos, 'mono' => true],
+                    ],
+                    'accion' => $accionVerMas,
+                ],
                 [
                     'titulo' => __('comercial.contratos.aside_facturacion_titulo'),
                     'items' => [
@@ -485,13 +520,16 @@ final class ContratosController
                             'variant' => $saldoPendiente->isZero() ? 'success' : 'neutral',
                         ],
                     ],
+                    'accion' => $accionVerMas,
                 ],
                 [
-                    'titulo' => __('comercial.contratos.aside_aplicacion_titulo'),
+                    'titulo' => __('comercial.contratos.aside_cobranza_titulo'),
                     'items' => [
-                        ['label' => __('comercial.contratos.aside_hectareas_contratadas'), 'value' => $avance['hectareasContratadas'] ?? '0.00', 'mono' => true],
-                        ['label' => __('comercial.contratos.aside_hectareas_aplicadas'), 'value' => $avance['hectareasAplicadas'] ?? '0.00', 'mono' => true],
-                        ['label' => __('comercial.contratos.aside_trabajos'), 'value' => (string) $totalTrabajos, 'mono' => true],
+                        [
+                            'label' => __('comercial.contratos.aside_cobranza_estado_label'),
+                            'value' => __('comercial.contratos.aside_cobranza_proximamente'),
+                            'variant' => 'neutral',
+                        ],
                     ],
                 ],
             ],
