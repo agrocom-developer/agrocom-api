@@ -96,6 +96,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnPaginaSiguiente = formulario.querySelector('[data-ag-pagina-siguiente]');
     const infoPagina = formulario.querySelector('[data-ag-pagina-info]');
     const selectNroAplicacion = formulario.querySelector('[data-ag-orden-nro-aplicacion]');
+    const lotesSinContrato = formulario.querySelector('[data-ag-lotes-sin-contrato]');
+    const lotesContenido = formulario.querySelector('[data-ag-lotes-contenido]');
 
     if (!selectContrato || !scriptDatos) return;
 
@@ -161,7 +163,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (vacioBuscador) vacioBuscador.hidden = true;
-        if (paginadoLotes) paginadoLotes.hidden = false;
+        // Paginado solo si hay más de una página (+10 lotes filtrados) — con
+        // 10 o menos no aporta nada mostrar "Anterior/1 de 1/Siguiente".
+        if (paginadoLotes) paginadoLotes.hidden = lotesFiltrados.length <= lotesPerPage;
 
         // Tabla de lotes visibles en esta página.
         const inicio = (paginaActual - 1) * lotesPerPage;
@@ -177,17 +181,34 @@ document.addEventListener('DOMContentLoaded', () => {
         headRow.className = 'ag-ordenes-form__lotes-tabla-head';
         const textos = tablaLotes?.dataset || {};
         const headCells = [
-            '',
-            textos.textoColCodigo || '',
-            textos.textoColPropiedad || '',
-            textos.textoColHectareasLote || '',
-            textos.textoColHectareasSolicitadas || '',
-            textos.textoColDesnivel || '',
-            textos.textoColLimpieza || '',
+            { texto: '' },
+            { texto: textos.textoColCodigo || '' },
+            { texto: textos.textoColPropiedad || '' },
+            { texto: textos.textoColHectareasLote || '' },
+            { texto: textos.textoColHectareasSolicitadas || '', ayuda: textos.textoColHectareasSolicitadasAyuda },
+            { texto: textos.textoColDesnivel || '' },
+            { texto: textos.textoColLimpieza || '' },
         ];
-        headCells.forEach((text) => {
+        headCells.forEach(({ texto, ayuda }) => {
             const th = headRow.insertCell();
-            th.textContent = text;
+            th.append(document.createTextNode(texto));
+
+            // Tooltip Bootstrap (ya inicializado globalmente en app.js) — el
+            // significado de "Hectáreas solicitadas" no es obvio a simple
+            // vista (puede ser menos que el total del lote).
+            if (ayuda) {
+                const icono = document.createElement('span');
+                icono.className = 'material-symbols-rounded ag-icon ag-icon--sm ag-ordenes-form__lotes-ayuda-icono';
+                icono.textContent = 'info';
+                icono.setAttribute('data-bs-toggle', 'tooltip');
+                icono.setAttribute('data-bs-placement', 'top');
+                icono.setAttribute('title', ayuda);
+                icono.setAttribute('aria-hidden', 'true');
+                th.appendChild(icono);
+                if (window.bootstrap?.Tooltip) {
+                    new window.bootstrap.Tooltip(icono);
+                }
+            }
         });
 
         // Body: filas de lotes (paginadas).
@@ -198,13 +219,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const estaSeleccionado = seleccion.has(lote.lote_id);
 
+            // Mismo marcado que `atoms/checkbox-group` (checkbox-group.css):
+            // el input real va `position: absolute` e invisible — lo que se
+            // ve es el `<span class="ag-checkbox-group__box">` hermano (con
+            // el ícono de check adentro), mostrado vía `:checked ~ .box` en
+            // CSS. Sin ese span, el checkbox queda ahí pero invisible.
             const cellCheck = row.insertCell();
             cellCheck.className = 'ag-ordenes-form__lotes-tabla-checkbox';
+            const labelCheck = document.createElement('label');
+            labelCheck.className = 'ag-checkbox-group__option';
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.checked = estaSeleccionado;
             checkbox.className = 'ag-checkbox-group__input';
-            cellCheck.appendChild(checkbox);
+            const cajaCheck = document.createElement('span');
+            cajaCheck.className = 'ag-checkbox-group__box';
+            cajaCheck.setAttribute('aria-hidden', 'true');
+            const iconoCheck = document.createElement('span');
+            iconoCheck.className = 'material-symbols-rounded ag-icon ag-icon--sm ag-checkbox-group__check';
+            iconoCheck.textContent = 'check';
+            cajaCheck.appendChild(iconoCheck);
+            labelCheck.append(checkbox, cajaCheck);
+            cellCheck.appendChild(labelCheck);
 
             // Código.
             const cellCodigo = row.insertCell();
@@ -344,10 +380,16 @@ document.addEventListener('DOMContentLoaded', () => {
             if (resumenContrato) resumenContrato.hidden = true;
             if (contactoWrap) contactoWrap.hidden = true;
             if (contenedorLotes) contenedorLotes.innerHTML = '';
-            if (vacioBuscador) vacioBuscador.hidden = false;
-            if (paginadoLotes) paginadoLotes.hidden = true;
+            if (lotesSinContrato) lotesSinContrato.hidden = false;
+            if (lotesContenido) lotesContenido.hidden = true;
             return;
         }
+
+        // Hay contrato: se ve el buscador+tabla real, no la card de "elige
+        // un contrato" (mostrar un buscador para una tabla sin universo de
+        // datos confunde — pedido explícito del usuario 18/9/2026).
+        if (lotesSinContrato) lotesSinContrato.hidden = true;
+        if (lotesContenido) lotesContenido.hidden = false;
 
         // Pinta resumen.
         if (resumenContrato) {
@@ -365,14 +407,49 @@ document.addEventListener('DOMContentLoaded', () => {
             if (aplicacionesEl) {
                 aplicacionesEl.textContent = String(datos.aplicaciones_previstas);
             }
+
+            // Logo del cliente — ícono de reemplazo (`business`) si no tiene.
+            const logoEl = resumenContrato.querySelector('[data-ag-cliente-logo]');
+            const logoVacioEl = resumenContrato.querySelector('[data-ag-cliente-logo-vacio]');
+            if (logoEl && logoVacioEl) {
+                if (datos.logo_url) {
+                    logoEl.src = datos.logo_url;
+                    logoEl.hidden = false;
+                    logoVacioEl.hidden = true;
+                } else {
+                    logoEl.hidden = true;
+                    logoVacioEl.hidden = false;
+                }
+            }
         }
 
-        // Autoselecciona contacto si es único.
-        if (selectContacto && datos.contactos && datos.contactos.length === 1) {
+        // Autoselecciona contacto si es único — salvo que el campo ya venga
+        // con un error del servidor (`data-tiene-error`, ver _formulario.blade.php):
+        // ahí se deja visible para que el usuario vea POR QUÉ falló, nunca
+        // se oculta un error que el servidor mandó.
+        const contactoTieneError = contactoWrap?.hasAttribute('data-tiene-error');
+
+        if (!contactoTieneError && selectContacto && datos.contactos && datos.contactos.length === 1) {
             selectContacto.value = datos.contactos[0].id;
             if (contactoWrap) contactoWrap.hidden = true;
         } else if (contactoWrap) {
             contactoWrap.hidden = false;
+        }
+
+        // Acota las opciones de "Número de aplicación" al total pactado del
+        // contrato (1..aplicaciones_previstas) — nunca las borra del DOM
+        // (así una edición con un valor ya guardado fuera de rango, p. ej.
+        // tras una modificación del contrato, no pierde su opción real):
+        // solo oculta/deshabilita las que exceden el pacto de ESTE contrato.
+        if (selectNroAplicacion) {
+            Array.from(selectNroAplicacion.querySelectorAll('option'))
+                .filter((opcion) => opcion.value !== '')
+                .forEach((opcion) => {
+                    const numero = parseInt(opcion.value, 10);
+                    const visible = !Number.isNaN(numero) && numero <= datos.aplicaciones_previstas;
+                    opcion.hidden = !visible;
+                    opcion.disabled = !visible;
+                });
         }
 
         // Autoselecciona nro_aplicacion sugerido (SOLO en create(), NULL en edit()).

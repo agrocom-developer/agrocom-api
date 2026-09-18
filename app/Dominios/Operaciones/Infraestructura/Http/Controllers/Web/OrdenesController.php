@@ -25,6 +25,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 /**
@@ -717,6 +718,7 @@ final class OrdenesController
      *       $contratoId => [
      *         'label' => string,              // ya enriquecido para el <select> buscable: cliente + propiedad(es) + "Contrato #id"
      *         'cliente' => string,            // razón social
+     *         'logo_url' => ?string,          // URL pública del logo del cliente (com_clientes.logo_path vía disco `public`), null sin logo
      *         'propiedades' => list<string>,  // nombres de propiedad(es) que cubre el contrato — puede ser más de una (com_contrato_lotes cruza propiedades)
      *         'aplicaciones_previstas' => int,
      *         'contactos' => list<array{id: int, nombre: string, tipo: string}>,  // com_cliente_contactos del cliente DUEÑO del contrato; la vista decide autoseleccionar si hay uno solo
@@ -740,7 +742,7 @@ final class OrdenesController
      * contrato. Lectura directa por `DB::table` en las tablas de `Comercial`
      * (ADR 0003 regla 3, mismo criterio que el resto del controlador).
      *
-     * @return array<int, array{label: string, cliente: string, propiedades: list<string>, aplicaciones_previstas: int, contactos: list<array{id: int, nombre: string, tipo: string}>, lotes: list<array{lote_id: int, codigo: string, propiedad: string, hectareas: string, desnivel: ?string, desnivel_label: ?string, limpieza: ?string, limpieza_label: ?string}>, nro_aplicacion_sugerido: int|null}>
+     * @return array<int, array{label: string, cliente: string, logo_url: ?string, propiedades: list<string>, aplicaciones_previstas: int, contactos: list<array{id: int, nombre: string, tipo: string}>, lotes: list<array{lote_id: int, codigo: string, propiedad: string, hectareas: string, desnivel: ?string, desnivel_label: ?string, limpieza: ?string, limpieza_label: ?string}>, nro_aplicacion_sugerido: int|null}>
      */
     private function datosContratoParaFormulario(): array
     {
@@ -749,7 +751,7 @@ final class OrdenesController
             ->whereNull('c.deleted_at')
             ->whereNull('cl.deleted_at')
             ->orderByDesc('c.fecha_inicio')
-            ->get(['c.id', 'c.cliente_id', 'c.aplicaciones_previstas', 'cl.razon_social']);
+            ->get(['c.id', 'c.cliente_id', 'c.aplicaciones_previstas', 'cl.razon_social', 'cl.logo_path']);
 
         if ($contratos->isEmpty()) {
             return [];
@@ -794,6 +796,7 @@ final class OrdenesController
                         : "{$contrato->razon_social} (".implode(', ', $propiedades).')',
                 ]),
                 'cliente' => $contrato->razon_social,
+                'logo_url' => $this->logoUrl($contrato->logo_path),
                 'propiedades' => $propiedades,
                 'aplicaciones_previstas' => (int) $contrato->aplicaciones_previstas,
                 'contactos' => ($contactosPorCliente->get($clienteId) ?? collect())
@@ -819,6 +822,24 @@ final class OrdenesController
         }
 
         return $resultado;
+    }
+
+    /**
+     * URL pública del logo del cliente (`com_clientes.logo_path`, ruta
+     * relativa del disco `public`) — mismo criterio de resolución que
+     * `Comercial\ContratosController::logoArchivo()`/`ClientesController`
+     * (ADR 0019): `null` sin logo guardado o si el archivo ya no existe en
+     * disco, la vista ya sabe mostrar el ícono de reemplazo.
+     */
+    private function logoUrl(?string $logoPath): ?string
+    {
+        if ($logoPath === null) {
+            return null;
+        }
+
+        $disco = Storage::disk('public');
+
+        return $disco->exists($logoPath) ? $disco->url($logoPath) : null;
     }
 
     /**

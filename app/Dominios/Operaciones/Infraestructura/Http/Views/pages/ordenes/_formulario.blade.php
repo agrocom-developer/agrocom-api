@@ -37,10 +37,21 @@
     $esEdicion = $orden !== null;
     $accion = $esEdicion ? route('panel.ordenes.update', $orden) : route('panel.ordenes.store');
     $valor = fn (string $campo, mixed $porDefecto = '') => old($campo, $orden?->{$campo} ?? $porDefecto);
-    $contratoId = old('contrato_id', $orden?->contrato_id ?? '');
-    $contactoId = old('emitida_por_contacto_id', $orden?->emitida_por_contacto_id ?? '');
+    // `null`, no `''`: `atoms/select` solo marca el placeholder `selected`
+    // cuando `$value === null` (ver su docblock). Con `''` acá, ningún
+    // <option> queda `selected` en el HTML — el placeholder es `disabled`
+    // y el navegador cae por defecto al PRIMER valor real de la lista, sin
+    // que el usuario haya elegido nada. Antes de esta reforma pasaba
+    // desapercibido (un <select> plano no delata el default); ahora
+    // "Datos del contrato" pinta datos reales apenas carga la página, así
+    // que ese default silencioso es mucho más peligroso — mismo criterio
+    // para contrato y contacto.
+    $contratoId = old('contrato_id', $orden?->contrato_id);
+    $contactoId = old('emitida_por_contacto_id', $orden?->emitida_por_contacto_id);
     $nroAplicacion = old('nro_aplicacion', $orden?->nro_aplicacion ?? '');
-    $fechaEmision = old('fecha_emision', $orden?->fecha_emision?->toDateString() ?? '');
+    // Alta: hoy por defecto (el usuario la cambia si emite con fecha
+    // atrasada) — edición sigue mostrando la fecha real ya guardada.
+    $fechaEmision = old('fecha_emision', $orden?->fecha_emision?->toDateString() ?? now()->toDateString());
     $tipoAplicacion = old('tipo_aplicacion', $orden?->tipo_aplicacion?->value ?? \App\Dominios\Operaciones\Dominio\TipoAplicacion::Desarrollo->value);
     $cantidadEquiposNecesarios = old('cantidad_equipos_necesarios', $orden?->cantidad_equipos_necesarios ?? 1);
     $opcionesTipoAplicacion = collect(\App\Dominios\Operaciones\Dominio\TipoAplicacion::cases())
@@ -112,6 +123,10 @@
             {!! json_encode($datosContrato, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}
         </script>
 
+        {{--
+            Contrato + leyenda de búsqueda, una sola celda del grid (mitad de
+            ancho — el select de contacto ocupa la otra mitad, al lado).
+        --}}
         <x-atoms.select
             name="contrato_id"
             id="contrato_id"
@@ -119,30 +134,22 @@
             :options="$contratosDisponibles"
             :value="$contratoId"
             :placeholder="__('operaciones.ordenes.campo_contrato_placeholder')"
+            :help="__('operaciones.ordenes.campo_contrato_ayuda')"
             searchable
             required
             :error="$errors->first('contrato_id')"
             data-ag-orden-contrato
         />
 
-        {{-- Resumen del contrato: cliente, propiedad(es), aplicaciones previstas --}}
-        <div class="ag-ordenes-form__resumen-contrato" data-ag-resumen-contrato hidden>
-            <div class="ag-form-section__field">
-                <label class="ag-select__label">{{ __('operaciones.ordenes.campo_contrato_cliente') }}</label>
-                <div class="ag-ordenes-form__valor" data-ag-cliente-nombre>—</div>
-            </div>
-            <div class="ag-form-section__field">
-                <label class="ag-select__label">{{ __('operaciones.ordenes.campo_contrato_propiedades') }}</label>
-                <div class="ag-ordenes-form__valor" data-ag-propiedades-nombres>—</div>
-            </div>
-            <div class="ag-form-section__field">
-                <label class="ag-select__label">{{ __('operaciones.ordenes.campo_contrato_aplicaciones') }}</label>
-                <div class="ag-ordenes-form__valor" data-ag-aplicaciones-previstas>—</div>
-            </div>
-        </div>
-
-        {{-- Contacto: autoseleccionado si único, hidden si es así --}}
-        <div data-ag-contacto-wrap>
+        {{--
+            Contacto: autoseleccionado si único, hidden si es así. Si el
+            campo ya viene con un error del servidor (`emitida_por_contacto_id`
+            dejó de existir entre la carga y el submit, por ejemplo),
+            `data-tiene-error` le avisa al JS que NO lo vuelva a ocultar —
+            mismo espíritu que el fix de switches sin `:error` del PR #240:
+            un error que el servidor manda nunca puede quedar invisible.
+        --}}
+        <div data-ag-contacto-wrap @if ($errors->has('emitida_por_contacto_id')) data-tiene-error @endif>
             <x-atoms.select
                 name="emitida_por_contacto_id"
                 id="emitida_por_contacto_id"
@@ -153,6 +160,34 @@
                 :error="$errors->first('emitida_por_contacto_id')"
                 data-ag-orden-contacto
             />
+        </div>
+
+        {{--
+            Resumen del contrato — logo del cliente a la izquierda, datos
+            (cliente, propiedad(es) — un contrato puede cruzar varias — y
+            aplicaciones pactadas) como complemento a la derecha. Celda
+            completa del grid (`field--full`), no un grid propio: el grid de
+            dos columnas ya lo da `ag-form-section__body` del molecule.
+        --}}
+        <div class="ag-form-section__field--full ag-ordenes-form__resumen-contrato" data-ag-resumen-contrato hidden>
+            <img class="ag-ordenes-form__logo" data-ag-cliente-logo alt="" hidden>
+            <div class="ag-ordenes-form__logo ag-ordenes-form__logo--vacio" data-ag-cliente-logo-vacio>
+                <span class="material-symbols-rounded ag-icon" aria-hidden="true">business</span>
+            </div>
+            <div class="ag-ordenes-form__resumen-datos">
+                <div class="ag-ordenes-form__resumen-campo">
+                    <label class="ag-select__label">{{ __('operaciones.ordenes.campo_contrato_cliente') }}</label>
+                    <div class="ag-ordenes-form__valor" data-ag-cliente-nombre>—</div>
+                </div>
+                <div class="ag-ordenes-form__resumen-campo">
+                    <label class="ag-select__label">{{ __('operaciones.ordenes.campo_contrato_propiedades') }}</label>
+                    <div class="ag-ordenes-form__valor" data-ag-propiedades-nombres>—</div>
+                </div>
+                <div class="ag-ordenes-form__resumen-campo">
+                    <label class="ag-select__label">{{ __('operaciones.ordenes.campo_contrato_aplicaciones') }}</label>
+                    <div class="ag-ordenes-form__valor" data-ag-aplicaciones-previstas>—</div>
+                </div>
+            </div>
         </div>
     </x-molecules.form-section>
 
@@ -234,16 +269,34 @@
             data-ag-orden-nro-aplicacion
         />
 
-        <x-atoms.input
-            type="number"
-            name="cantidad_equipos_necesarios"
-            :label="__('operaciones.ordenes.campo_cantidad_equipos')"
-            :value="$cantidadEquiposNecesarios"
-            min="1"
-            step="1"
-            required
-            :error="$errors->first('cantidad_equipos_necesarios')"
-        />
+        {{--
+            Input-group: cantidad de equipos + atajo a "Asignar equipos".
+            Solo en edición — el atajo lleva a una ficha propia de la orden
+            (`panel.asignacion-equipos.show`) que no existe hasta guardar.
+        --}}
+        <div class="ag-ordenes-form__input-group">
+            <x-atoms.input
+                type="number"
+                name="cantidad_equipos_necesarios"
+                :label="__('operaciones.ordenes.campo_cantidad_equipos')"
+                :value="$cantidadEquiposNecesarios"
+                min="1"
+                step="1"
+                required
+                :error="$errors->first('cantidad_equipos_necesarios')"
+            />
+            @if ($esEdicion)
+                <x-atoms.button
+                    :href="route('panel.asignacion-equipos.show', $orden)"
+                    variant="outline"
+                    icon="groups"
+                    size="sm"
+                    class="ag-ordenes-form__input-group-boton"
+                >
+                    {{ __('operaciones.ordenes.campo_cantidad_equipos_asignar') }}
+                </x-atoms.button>
+            @endif
+        </div>
 
         <x-atoms.select
             name="tipo_aplicacion"
@@ -264,8 +317,7 @@
         />
 
         <div class="ag-form-section__field--full">
-            <x-atoms.input
-                type="text"
+            <x-atoms.textarea
                 name="observaciones"
                 :label="__('operaciones.ordenes.campo_observaciones')"
                 :value="$valor('observaciones')"
@@ -279,16 +331,7 @@
         Reemplaza el repetible anterior de `_lote-orden-fila.blade.php`.
     --}}
     <x-molecules.form-section :title="__('operaciones.ordenes.seccion_lotes')" class="ag-ordenes-form__lotes-seccion">
-        <div
-            class="ag-form-section__field--full ag-ordenes-form__lotes-tabla"
-            data-ag-tabla-lotes
-            data-texto-col-codigo="{{ __('operaciones.ordenes.lotes_columna_codigo') }}"
-            data-texto-col-propiedad="{{ __('operaciones.ordenes.lotes_columna_propiedad') }}"
-            data-texto-col-hectareas-lote="{{ __('operaciones.ordenes.lotes_columna_hectareas_lote') }}"
-            data-texto-col-hectareas-solicitadas="{{ __('operaciones.ordenes.campo_lote_hectareas') }}"
-            data-texto-col-desnivel="{{ __('operaciones.ordenes.lotes_columna_desnivel') }}"
-            data-texto-col-limpieza="{{ __('operaciones.ordenes.lotes_columna_limpieza') }}"
-        >
+        <div class="ag-form-section__field--full">
             {{--
                 Semilla de selección: `old('lotes')` tras un error de
                 validación, o los lotes ya guardados de la orden en edición
@@ -299,42 +342,102 @@
                 {!! json_encode($lotesIniciales, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}
             </script>
 
-            @if ($errors->has('lotes'))
-                <p class="ag-input__error" role="alert">{{ $errors->first('lotes') }}</p>
+            {{--
+                Errores de `lotes` — TODOS, no solo la clave exacta `lotes`
+                ("Agrega al menos un lote"): `withValidator()` también agrega
+                errores por fila (`lotes.N.lote_id` si es de otro cliente,
+                `lotes.N.hectareas_solicitadas` si supera el lote), y la
+                tabla se arma 100% en JS sin un lugar propio donde pintarlos
+                fila por fila. Sin este bloque, esos errores llegan al
+                servidor y vuelven en `$errors` pero no se ven en ningún
+                lado — mismo punto ciego que ya se corrigió en switches sin
+                `:error` (PR #240): la validación falla en silencio.
+            --}}
+            @php
+                $erroresLotes = collect($errors->keys())
+                    ->filter(fn (string $clave): bool => $clave === 'lotes' || str_starts_with($clave, 'lotes.'))
+                    ->map(fn (string $clave): string => $errors->first($clave))
+                    ->unique()
+                    ->values();
+            @endphp
+            @if ($erroresLotes->isNotEmpty())
+                <div class="ag-input__error" role="alert">
+                    @foreach ($erroresLotes as $mensaje)
+                        <p>{{ $mensaje }}</p>
+                    @endforeach
+                </div>
             @endif
 
-            {{-- Buscador de lotes --}}
-            <div class="ag-ordenes-form__lotes-buscador">
-                <input
-                    type="text"
-                    class="ag-input__control"
-                    placeholder="{{ __('operaciones.ordenes.lotes_buscar_placeholder') }}"
-                    data-ag-lotes-buscar
-                    aria-label="{{ __('operaciones.ordenes.lotes_buscar_aria') }}"
-                />
-            </div>
+            {{--
+                Sin contrato elegido todavía: card de estado vacío SOLA, sin
+                el borde/fondo de tabla de abajo (pedido explícito del
+                usuario 18/9/2026 — mostrar un control de búsqueda para una
+                tabla que todavía no tiene universo de datos es confuso, Y
+                una tarjeta de estado vacío dentro de otra tarjeta de tabla
+                se ve anidada de más). Arranca visible; `ordenes-form.js` la
+                oculta apenas hay contrato (elegido a mano, o ya cargado en
+                edición/redisplay).
+            --}}
+            <x-molecules.empty-state
+                icon="inventory_2"
+                :title="__('operaciones.ordenes.lotes_vacio_titulo')"
+                :detail="__('operaciones.ordenes.lotes_vacio_detalle')"
+                data-ag-lotes-sin-contrato
+            />
 
-            {{-- Tabla de lotes (todos los de datosContrato[contratoId].lotes, con checkbox) --}}
-            <div class="ag-ordenes-form__lotes-contenedor" data-ag-lotes-contenedor>
-                <!-- Rellenado por JS al elegir contrato -->
-            </div>
+            {{--
+                Contenido real (buscador + tabla + paginado): oculto hasta
+                elegir contrato. La clase/estilo de "tabla" (borde, fondo,
+                radio) vive ACÁ, no en el wrapper de arriba — solo tiene
+                sentido cuando hay una tabla real que mostrar.
+            --}}
+            <div
+                class="ag-ordenes-form__lotes-tabla"
+                data-ag-tabla-lotes
+                data-ag-lotes-contenido
+                data-texto-col-codigo="{{ __('operaciones.ordenes.lotes_columna_codigo') }}"
+                data-texto-col-propiedad="{{ __('operaciones.ordenes.lotes_columna_propiedad') }}"
+                data-texto-col-hectareas-lote="{{ __('operaciones.ordenes.lotes_columna_hectareas_lote') }}"
+                data-texto-col-hectareas-solicitadas="{{ __('operaciones.ordenes.campo_lote_hectareas') }}"
+                data-texto-col-hectareas-solicitadas-ayuda="{{ __('operaciones.ordenes.lotes_columna_hectareas_solicitadas_ayuda') }}"
+                data-texto-col-desnivel="{{ __('operaciones.ordenes.lotes_columna_desnivel') }}"
+                data-texto-col-limpieza="{{ __('operaciones.ordenes.lotes_columna_limpieza') }}"
+                hidden
+            >
+                {{-- Buscador de lotes — mismo átomo (icono + input) que el resto del panel. --}}
+                <div class="ag-ordenes-form__lotes-buscador">
+                    <x-atoms.input
+                        type="search"
+                        icon="search"
+                        id="lotes-buscar"
+                        :placeholder="__('operaciones.ordenes.lotes_buscar_placeholder')"
+                        aria-label="{{ __('operaciones.ordenes.lotes_buscar_aria') }}"
+                        data-ag-lotes-buscar
+                    />
+                </div>
 
-            {{-- Paginado (mínimo: botones anterior/siguiente) --}}
-            <div class="ag-ordenes-form__lotes-paginado" data-ag-lotes-paginado hidden>
-                <button type="button" class="ag-button ag-button--text ag-button--sm" data-ag-pagina-anterior aria-label="{{ __('operaciones.ordenes.lotes_pagina_anterior') }}">
-                    <span class="material-symbols-rounded ag-icon ag-icon--sm">chevron_left</span>
-                    {{ __('operaciones.ordenes.lotes_pagina_anterior') }}
-                </button>
-                <span class="ag-ordenes-form__paginado-info" data-ag-pagina-info>1 / 1</span>
-                <button type="button" class="ag-button ag-button--text ag-button--sm" data-ag-pagina-siguiente aria-label="{{ __('operaciones.ordenes.lotes_pagina_siguiente') }}">
-                    {{ __('operaciones.ordenes.lotes_pagina_siguiente') }}
-                    <span class="material-symbols-rounded ag-icon ag-icon--sm">chevron_right</span>
-                </button>
-            </div>
+                {{-- Tabla de lotes (todos los de datosContrato[contratoId].lotes, con checkbox) --}}
+                <div class="ag-ordenes-form__lotes-contenedor" data-ag-lotes-contenedor>
+                    <!-- Rellenado por JS al elegir contrato -->
+                </div>
 
-            {{-- Estado vacío: sin contrato elegido o sin lotes --}}
-            <div class="ag-ordenes-form__lotes-vacio" data-ag-lotes-vacio>
-                {{ __('operaciones.ordenes.lotes_tabla_vacio') }}
+                {{-- Paginado (mínimo: botones anterior/siguiente) --}}
+                <div class="ag-ordenes-form__lotes-paginado" data-ag-lotes-paginado hidden>
+                    <button type="button" class="ag-button ag-button--text ag-button--sm" data-ag-pagina-anterior aria-label="{{ __('operaciones.ordenes.lotes_pagina_anterior') }}">
+                        <span class="material-symbols-rounded ag-icon ag-icon--sm">chevron_left</span>
+                        {{ __('operaciones.ordenes.lotes_pagina_anterior') }}
+                    </button>
+                    <span class="ag-ordenes-form__paginado-info" data-ag-pagina-info>1 / 1</span>
+                    <button type="button" class="ag-button ag-button--text ag-button--sm" data-ag-pagina-siguiente aria-label="{{ __('operaciones.ordenes.lotes_pagina_siguiente') }}">
+                        {{ __('operaciones.ordenes.lotes_pagina_siguiente') }}
+                        <span class="material-symbols-rounded ag-icon ag-icon--sm">chevron_right</span>
+                    </button>
+                </div>
+
+                {{-- Estado vacío: contrato elegido, pero la búsqueda no encuentra nada (o el contrato no tiene lotes). --}}
+                <div class="ag-ordenes-form__lotes-vacio" data-ag-lotes-vacio hidden>
+                    {{ __('operaciones.ordenes.lotes_tabla_vacio') }}
+                </div>
             </div>
         </div>
     </x-molecules.form-section>

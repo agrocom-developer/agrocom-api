@@ -59,7 +59,15 @@
     </div>
 
     {{-- Subsección: Condiciones de vuelo por equipo (8 campos: humedad, viento, temperatura, velocidad, altura, ancho) --}}
-    <div class="ag-asignacion-equipos-ficha__condiciones-vuelo">
+    {{--
+        `ag-form-section__body` por composición (mismo criterio que
+        `campos/_lote-fila.blade.php` y demás filas repetibles anidadas, ver
+        docblock de esa clase en components/form-section.css): el grid de
+        dos columnas para estos 8 campos es el mismo de siempre, no uno
+        propio — evita duplicar `grid-template-columns` (compuerta en
+        tests/Unit/PulidoNavegacionPanelTest.php).
+    --}}
+    <div class="ag-form-section__body ag-asignacion-equipos-ficha__condiciones-vuelo">
         <div class="ag-form-section__field--full ag-asignacion-equipos-ficha__condiciones-titulo">
             {{ __('operaciones.asignacion_equipos.seccion_condiciones_vuelo') }}
         </div>
