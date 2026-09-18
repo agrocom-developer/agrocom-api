@@ -16,9 +16,11 @@ use App\Dominios\Operaciones\Dominio\TipoAplicacion;
 use App\Dominios\Operaciones\Dominio\TipoInsumo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\CategoriaInsumo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
 use App\Dominios\Operaciones\Infraestructura\Http\Requests\ActualizarOrdenRequest;
 use App\Dominios\Operaciones\Infraestructura\Http\Requests\CrearOrdenRequest;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
+use Brick\Math\BigDecimal;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -58,11 +60,17 @@ final class OrdenesController
 
     private const PERMISO_ELIMINAR = 'operaciones.orden.eliminar';
 
+    private const PERMISO_ASIGNAR_EQUIPOS = 'operaciones.orden.asignar_equipos';
+
+    private const PERMISO_VER_TRABAJOS = 'operaciones.trabajo.ver';
+
     public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
 
     public function index(Request $request, ListarOrdenesAplicacion $listarOrdenes): View
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
+
+        $busqueda = $request->string('q')->toString();
 
         $estadoQuery = $request->string('estado')->toString();
         $estado = $estadoQuery !== '' ? EstadoOrdenAplicacion::tryFrom($estadoQuery) : null;
@@ -70,7 +78,11 @@ final class OrdenesController
         $tipoAplicacionQuery = $request->string('tipo_aplicacion')->toString();
         $tipoAplicacion = $tipoAplicacionQuery !== '' ? TipoAplicacion::tryFrom($tipoAplicacionQuery) : null;
 
-        $ordenes = $listarOrdenes->ejecutar(estado: $estado, tipoAplicacion: $tipoAplicacion);
+        $ordenes = $listarOrdenes->ejecutar(
+            estado: $estado,
+            tipoAplicacion: $tipoAplicacion,
+            contratoIds: $busqueda !== '' ? $this->contratoIdsPorBusqueda($busqueda) : null,
+        );
 
         $loteIdsPorOrden = $this->loteIdsPorOrden($ordenes->pluck('id')->map(fn ($id) => (int) $id)->all());
         $todosLosLoteIds = collect($loteIdsPorOrden)->flatten()->unique()->values()->all();
@@ -81,9 +93,38 @@ final class OrdenesController
             'etiquetasContrato' => $this->etiquetasContrato($ordenes->pluck('contrato_id')->map(fn ($id) => (int) $id)->unique()->values()->all()),
             'etiquetasLote' => $this->etiquetasLote($todosLosLoteIds),
             'loteIdsPorOrden' => $loteIdsPorOrden,
-            'filtros' => ['estado' => $estado?->value, 'tipo_aplicacion' => $tipoAplicacion?->value],
+            'filtros' => ['q' => $busqueda, 'estado' => $estado?->value, 'tipo_aplicacion' => $tipoAplicacion?->value],
             'puedeActivar' => $this->autorizacion->tienePermiso($request, self::PERMISO_ACTIVAR),
         ]);
+    }
+
+    /**
+     * Contratos cuyo cliente coincide con el buscador `q` del listado (mismo
+     * criterio de acentos/mayúsculas que `Compartido\Infraestructura\Busqueda\BusquedaTexto`,
+     * reescrito acá porque esa clase opera sobre un `Eloquent\Builder` y esta
+     * lectura es `DB::table` cruzando a Comercial — ADR 0003 regla 3, mismo
+     * criterio que el resto de los selects de este controlador). Un buscador
+     * sin coincidencias devuelve `[]`, que `ListarOrdenesAplicacion` traduce
+     * a "ningún resultado", nunca a "sin filtro".
+     *
+     * @return list<int>
+     */
+    private function contratoIdsPorBusqueda(string $busqueda): array
+    {
+        $patron = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $busqueda).'%';
+
+        $consulta = DB::table('com_contratos as c')
+            ->join('com_clientes as cl', 'cl.id', '=', 'c.cliente_id')
+            ->whereNull('c.deleted_at')
+            ->whereNull('cl.deleted_at');
+
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            $consulta->whereRaw('unaccent(cl.razon_social) ILIKE unaccent(?)', [$patron]);
+        } else {
+            $consulta->whereRaw('LOWER(cl.razon_social) LIKE ?', [$patron]);
+        }
+
+        return $consulta->pluck('c.id')->map(fn ($id) => (int) $id)->all();
     }
 
     /**
@@ -124,6 +165,115 @@ final class OrdenesController
         ]);
     }
 
+    /**
+     * Detalle de solo lectura (homogeneización 17/9/2026): mientras una orden
+     * es `emitida`, `edit()` cumple este rol; apenas se activa, `edit()` deja
+     * de ofrecerse (`Aplicacion/ActualizarOrden` exige `emitida`) y hasta
+     * ahora no quedaba ningún lugar del panel para volver a ver sus datos
+     * completos — solo la fila resumida del listado. Mismo permiso que
+     * `index()`/`edit()` (`PERMISO_VER`), sin permiso nuevo — mismo criterio
+     * que las 5 pantallas `.show` ya homogeneizadas del panel (Trabajos,
+     * Devengos, Planillas, Rendiciones, EquiposTrabajo).
+     */
+    public function show(Request $request, OrdenAplicacion $orden): View
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
+
+        $orden->load('categoriaInsumo');
+
+        $lotes = $this->detalleLotesOrden($orden);
+        $hectareasSolicitadas = array_reduce($lotes, fn (BigDecimal $acumulado, array $lote): BigDecimal => $acumulado->plus($lote['hectareas_solicitadas']), BigDecimal::zero());
+        $hectareasAsignadas = array_reduce($lotes, fn (BigDecimal $acumulado, array $lote): BigDecimal => $acumulado->plus($lote['asignadas']), BigDecimal::zero());
+        $porcentajeAsignado = $hectareasSolicitadas->isZero()
+            ? 0
+            : (int) round(((float) (string) $hectareasAsignadas / (float) (string) $hectareasSolicitadas) * 100);
+
+        $aplicacionesPrevistas = DB::table('com_contratos')->where('id', $orden->contrato_id)->value('aplicaciones_previstas');
+
+        return view('operaciones::pages.ordenes.show', [
+            ...$this->autorizacion->cascara($request),
+            'orden' => $orden,
+            'contratoLabel' => $this->etiquetasContrato([$orden->contrato_id])[$orden->contrato_id] ?? "#{$orden->contrato_id}",
+            'contactoLabel' => $orden->emitida_por_contacto_id !== null
+                ? DB::table('com_cliente_contactos')->where('id', $orden->emitida_por_contacto_id)->value('nombre')
+                : null,
+            'aplicacionesPrevistas' => $aplicacionesPrevistas !== null ? (int) $aplicacionesPrevistas : null,
+            'lotes' => $lotes,
+            'hectareasSolicitadas' => $this->aHectareas($hectareasSolicitadas),
+            'hectareasAsignadas' => $this->aHectareas($hectareasAsignadas),
+            'porcentajeAsignado' => $porcentajeAsignado,
+            'equiposAsignados' => $this->equiposAsignadosCount($orden),
+            'actividad' => $this->actividadOrden($orden),
+            'vinculos' => $this->vinculosOrden($orden, $request),
+            'puedeEditar' => $this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR),
+            'puedeActivar' => $this->autorizacion->tienePermiso($request, self::PERMISO_ACTIVAR),
+            'puedeEliminar' => $this->autorizacion->tienePermiso($request, self::PERMISO_ELIMINAR),
+        ]);
+    }
+
+    /**
+     * "Vínculos" de `show()`: accesos a información relacionada que vive en
+     * OTRA pantalla, no se duplica acá (mismo espíritu que el resumen
+     * relacionado del arquetipo Formulario, §6.3.1, pero como filas sueltas
+     * — `molecules/link-row` — en vez de tarjetas completas).
+     *
+     * Solo dos, a propósito, ambos con filtro REAL del lado del destino:
+     * - Órdenes de trabajo: `panel.trabajos.index` acepta `orden_id`
+     *   (`TrabajosController::index()`/`Aplicacion/ListarTrabajos`).
+     * - Asignación de equipos: `panel.asignacion-equipos.show` es la ficha
+     *   propia de ESTA orden.
+     *
+     * Deliberadamente NO hay un tercer vínculo a "Seguimiento de vuelos"
+     * (`panel.sesiones.validacion.index`): esa pantalla es la cola de
+     * VALIDACIÓN pendiente (`ValidacionSesionesController::index()`, sesiones
+     * `cerrado` sin validar), no un historial de vuelos de la orden — un
+     * enlace filtrado ahí se vería vacío la mayor parte del tiempo (en
+     * cuanto se validan, salen de la cola) y prometería un seguimiento que
+     * esa pantalla no da todavía (mismo criterio ya documentado para el
+     * título de esa pantalla, no se repite acá). Tampoco hay vínculo a
+     * Finanzas: `Gastos` solo filtra por `trabajo_id` (`ListarGastos`), no
+     * por `orden_id`, y una orden puede tener varios trabajos — un enlace
+     * a un solo trabajo sería arbitrario.
+     *
+     * @return list<array{href: string, icon: string, title: string, meta: ?string, tone: string}>
+     */
+    private function vinculosOrden(OrdenAplicacion $orden, Request $request): array
+    {
+        $vinculos = [];
+
+        if ($this->autorizacion->tienePermiso($request, self::PERMISO_VER_TRABAJOS)) {
+            $totalTrabajos = Trabajo::query()->where('orden_id', $orden->id)->count();
+
+            $vinculos[] = [
+                'href' => route('panel.trabajos.index', ['orden_id' => $orden->id]),
+                'icon' => 'work_history',
+                'title' => __('operaciones.ordenes.vinculo_trabajos'),
+                'meta' => __('operaciones.ordenes.vinculo_trabajos_meta', ['cantidad' => $totalTrabajos]),
+                // Tono FIJO, no condicionado a `$totalTrabajos > 0` (18/9/2026,
+                // pedido explícito del usuario: cada vínculo de esta tarjeta
+                // lleva su propio color, no gris hasta que haya datos — a
+                // diferencia de los KPI de más arriba en show.blade.php,
+                // que sí arrancan neutros a propósito).
+                'tone' => 'info',
+            ];
+        }
+
+        if ($this->autorizacion->tienePermiso($request, self::PERMISO_ASIGNAR_EQUIPOS)) {
+            $equiposAsignados = $this->equiposAsignadosCount($orden);
+
+            $vinculos[] = [
+                'href' => route('panel.asignacion-equipos.show', $orden),
+                'icon' => 'groups',
+                'title' => __('operaciones.ordenes.vinculo_asignacion'),
+                'meta' => __('operaciones.ordenes.vinculo_asignacion_meta', ['cantidad' => $equiposAsignados]),
+                // Tono FIJO — mismo motivo que el vínculo de trabajos de arriba.
+                'tone' => 'success',
+            ];
+        }
+
+        return $vinculos;
+    }
+
     public function store(CrearOrdenRequest $request, CrearOrden $crearOrden): RedirectResponse
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_CREAR), 403);
@@ -153,7 +303,260 @@ final class OrdenesController
             'categoriasInsumoDisponibles' => $this->categoriasInsumoDisponibles(),
             'mapaContratoCliente' => $this->mapaContratoCliente(),
             'mapaLoteCliente' => $this->mapaLoteCliente(),
+            'resumenRelacionado' => $this->resumenRelacionado($orden, $request),
         ]);
+    }
+
+    /**
+     * Resumen del aside de `edit()` (homogeneización con Comercial, 17/9/2026
+     * — mismo criterio que `ClientesController::resumenRelacionado()`, §6.3.1
+     * de docs/diseno/guia_pantalla_panel.md): UNA categoría relacionada,
+     * "Asignación de equipos" (`AsignacionEquiposController`, HU-70/HU-92).
+     * Gatea por el permiso DEL MÓDULO RELACIONADO
+     * (`operaciones.orden.asignar_equipos`), no por `.ver`/`.editar` de la
+     * orden — sin él, la categoría se omite del todo.
+     *
+     * Tres estados posibles, todos con datos REALES (no estático: el
+     * contrato de lectura ya existe, `AsignacionEquiposController`):
+     * - Orden no `vigente` todavía: no admite reparto, sin acción (repartir
+     *   antes de activar rompería la guarda de `AsignarEquiposOrden`).
+     * - Orden `vigente` sin nada asignado: `empty-state` con acceso directo a
+     *   la ficha de reparto (memento de navegación, cruza a la misma pantalla
+     *   `asignacion-equipos` — mismo criterio que
+     *   `ContratosController::resumenContrato()` cruzando a `panel.ordenes.create`).
+     * - Con reparto en curso o completo: `summary-card` con hectáreas
+     *   solicitadas/asignadas/restantes y cantidad de equipos.
+     *
+     * @return list<array{titulo: string, icono: string, tieneDatos: bool, items: list<array{label: string, value: string, mono?: bool, variant?: string}>, vacioTitulo: string, vacioDetalle: string, mostrarAccion: bool, accion: array{label: string, href: string}}>
+     */
+    private function resumenRelacionado(OrdenAplicacion $orden, Request $request): array
+    {
+        if (! $this->autorizacion->tienePermiso($request, self::PERMISO_ASIGNAR_EQUIPOS)) {
+            return [];
+        }
+
+        $volverA = [
+            'volver_a' => route('panel.ordenes.edit', $orden),
+            'volver_texto' => __('operaciones.ordenes.aside_volver_texto', ['nro' => $orden->nro_aplicacion]),
+        ];
+
+        if ($orden->estado !== EstadoOrdenAplicacion::Vigente) {
+            return [[
+                'titulo' => __('operaciones.ordenes.aside_titulo'),
+                'icono' => 'groups',
+                'tieneDatos' => false,
+                'items' => [],
+                'vacioTitulo' => __('operaciones.ordenes.aside_no_vigente_titulo'),
+                'vacioDetalle' => __('operaciones.ordenes.aside_no_vigente_detalle'),
+                'mostrarAccion' => false,
+                'accion' => ['label' => '', 'href' => ''],
+            ]];
+        }
+
+        $lotes = $this->detalleLotesOrden($orden);
+        $hectareasSolicitadas = array_reduce($lotes, fn (BigDecimal $acumulado, array $lote): BigDecimal => $acumulado->plus($lote['hectareas_solicitadas']), BigDecimal::zero());
+        $hectareasAsignadas = array_reduce($lotes, fn (BigDecimal $acumulado, array $lote): BigDecimal => $acumulado->plus($lote['asignadas']), BigDecimal::zero());
+        $equiposAsignados = $this->equiposAsignadosCount($orden);
+
+        if ($equiposAsignados === 0) {
+            return [[
+                'titulo' => __('operaciones.ordenes.aside_titulo'),
+                'icono' => 'groups',
+                'tieneDatos' => false,
+                'items' => [],
+                'vacioTitulo' => __('operaciones.ordenes.aside_vacio_titulo'),
+                'vacioDetalle' => __('operaciones.ordenes.aside_vacio_detalle'),
+                'mostrarAccion' => true,
+                'accion' => [
+                    'label' => __('operaciones.ordenes.aside_repartir_accion'),
+                    'href' => route('panel.asignacion-equipos.show', [$orden, ...$volverA]),
+                ],
+            ]];
+        }
+
+        $restantes = $hectareasSolicitadas->minus($hectareasAsignadas);
+
+        return [[
+            'titulo' => __('operaciones.ordenes.aside_titulo'),
+            'icono' => 'groups',
+            'tieneDatos' => true,
+            'items' => [
+                ['label' => __('operaciones.ordenes.aside_hectareas_solicitadas'), 'value' => $this->aHectareas($hectareasSolicitadas), 'mono' => true],
+                ['label' => __('operaciones.ordenes.aside_asignadas'), 'value' => $this->aHectareas($hectareasAsignadas), 'mono' => true],
+                [
+                    'label' => __('operaciones.ordenes.aside_restantes'),
+                    'value' => $this->aHectareas($restantes),
+                    'mono' => true,
+                    'variant' => $restantes->isZero() ? 'success' : 'neutral',
+                ],
+                ['label' => __('operaciones.ordenes.aside_equipos_asignados'), 'value' => (string) $equiposAsignados, 'mono' => true],
+            ],
+            'vacioTitulo' => '',
+            'vacioDetalle' => '',
+            'mostrarAccion' => true,
+            'accion' => [
+                'label' => __('operaciones.ordenes.aside_ver_asignacion'),
+                'href' => route('panel.asignacion-equipos.show', [$orden, ...$volverA]),
+            ],
+        ]];
+    }
+
+    private function aHectareas(BigDecimal $valor): string
+    {
+        return number_format((float) (string) $valor, 2, ',', '.');
+    }
+
+    /**
+     * Detalle por lote de la orden: lo solicitado (`ope_orden_lotes`), lo ya
+     * asignado a algún equipo (`ope_trabajos` de ese par orden↔lote) y lo
+     * restante — mismo cálculo que ya hace `AsignacionEquiposController::resumenPorLote()`
+     * para su propia pantalla, reescrito acá porque `show()` necesita el
+     * detalle POR LOTE (tabla "Lotes") y `resumenRelacionado()` antes
+     * repetía las mismas consultas solo para sumar el TOTAL — ahora suma
+     * sobre esta lista.
+     *
+     * `estado`: 'asignado' cuando no queda nada restante por repartir de ese
+     * lote, 'pendiente' en cualquier otro caso (incluido un reparto parcial)
+     * — mismo criterio binario que ya usa el badge de "Lotes" del mockup de
+     * referencia, sin inventar un tercer estado "parcial" que ninguna otra
+     * pantalla del sistema usa todavía.
+     *
+     * @return list<array{lote_id: int, label: string, hectareas_solicitadas: string, asignadas: string, restantes: string, estado: string}>
+     */
+    private function detalleLotesOrden(OrdenAplicacion $orden): array
+    {
+        $ordenLotes = $orden->ordenLotes()->orderBy('lote_id')->get();
+        $etiquetas = $this->etiquetasLote($ordenLotes->pluck('lote_id')->map(fn ($id) => (int) $id)->all());
+
+        return $ordenLotes->map(function ($ordenLote) use ($orden, $etiquetas): array {
+            $solicitadas = BigDecimal::of((string) $ordenLote->hectareas_solicitadas);
+            $asignadas = BigDecimal::of((string) Trabajo::query()
+                ->where('orden_id', $orden->id)
+                ->where('lote_id', $ordenLote->lote_id)
+                ->sum('hectareas_declaradas'));
+            $restantes = $solicitadas->minus($asignadas);
+
+            return [
+                'lote_id' => $ordenLote->lote_id,
+                'label' => $etiquetas[$ordenLote->lote_id] ?? "#{$ordenLote->lote_id}",
+                'hectareas_solicitadas' => (string) $solicitadas,
+                'asignadas' => (string) $asignadas,
+                'restantes' => (string) $restantes,
+                'estado' => $restantes->isLessThanOrEqualTo(BigDecimal::zero()) ? 'asignado' : 'pendiente',
+            ];
+        })->all();
+    }
+
+    private function equiposAsignadosCount(OrdenAplicacion $orden): int
+    {
+        return Trabajo::query()
+            ->where('orden_id', $orden->id)
+            ->whereNotNull('equipo_trabajo_id')
+            ->distinct()
+            ->count('equipo_trabajo_id');
+    }
+
+    /**
+     * Nombre visible de un autor (`created_by`/`updated_by`, FK plana a
+     * `sec_user` — ningún modelo de dominio tiene relación Eloquent hacia
+     * `Seguridad`). Mismo patrón que `PlanillasController::show()`:
+     * `sec_user.name` es texto libre propio del usuario (lo setea
+     * `AsignarRolesUsuario`), no se deriva de `per_personas`. No existe hoy
+     * ningún trait/caso de uso compartido para esta resolución — cada
+     * pantalla que lo necesita repite este mismo `DB::table`.
+     *
+     * `null` si no hay autor registrado (fila de auditoría vieja, o el write
+     * corrió sin usuario autenticado); `"#id"` si el usuario ya no existe.
+     */
+    private function nombreAutor(?int $userId): ?string
+    {
+        if ($userId === null) {
+            return null;
+        }
+
+        return DB::table('sec_user')->where('id', $userId)->value('name') ?? "#{$userId}";
+    }
+
+    /**
+     * Actividad de la orden para `show()`: solo eventos RECONSTRUIBLES desde
+     * columnas reales (nunca inventados — no hay bitácora antes/después
+     * todavía, ver `docs/decisiones/0007-...`). Máximo 3 tipos:
+     *
+     * 1. Emitida — siempre, `created_at`/`created_by` de la orden.
+     * 2. Activada — solo si el estado ya avanzó de `emitida`; usa
+     *    `updated_at`/`updated_by` de la orden como proxy válido del
+     *    instante de activación: una orden `vigente` ya no admite edición
+     *    (`Aplicacion/ActualizarOrden`), así que nada vuelve a tocar esas
+     *    columnas después de `ActivarOrden::ejecutar()`.
+     * 3. Equipo asignado — uno por `equipo_trabajo_id` distinto entre los
+     *    `Trabajo` de esta orden, con la fecha/autor MÍNIMOS del grupo
+     *    (el instante en que ESE equipo entró al reparto) y la suma de
+     *    hectáreas que le tocaron.
+     *
+     * @return list<array{title: string, meta: string, tone: string}>
+     */
+    private function actividadOrden(OrdenAplicacion $orden): array
+    {
+        $eventos = [[
+            'title' => __('operaciones.ordenes.actividad_emitida'),
+            'meta' => $this->metaActividad($orden->created_at, $orden->created_by),
+            'tone' => 'neutral',
+        ]];
+
+        if ($orden->estado !== EstadoOrdenAplicacion::Emitida) {
+            $eventos[] = [
+                'title' => __('operaciones.ordenes.actividad_activada'),
+                'meta' => $this->metaActividad($orden->updated_at, $orden->updated_by),
+                'tone' => 'success',
+            ];
+        }
+
+        $trabajosPorEquipo = Trabajo::query()
+            ->where('orden_id', $orden->id)
+            ->whereNotNull('equipo_trabajo_id')
+            ->orderBy('created_at')
+            ->get(['equipo_trabajo_id', 'created_at', 'created_by', 'hectareas_declaradas'])
+            ->groupBy('equipo_trabajo_id');
+
+        if ($trabajosPorEquipo->isNotEmpty()) {
+            $etiquetasEquipo = DB::table('per_equipos_trabajo')
+                ->whereIn('id', $trabajosPorEquipo->keys()->all())
+                ->pluck('codigo', 'id');
+
+            foreach ($trabajosPorEquipo as $equipoId => $trabajos) {
+                $primero = $trabajos->first();
+                if ($primero === null) {
+                    continue;
+                }
+
+                $hectareas = array_reduce(
+                    $trabajos->all(),
+                    fn (BigDecimal $acumulado, Trabajo $trabajo): BigDecimal => $acumulado->plus((string) $trabajo->hectareas_declaradas),
+                    BigDecimal::zero(),
+                );
+
+                $eventos[] = [
+                    'title' => __('operaciones.ordenes.actividad_equipo_asignado', [
+                        'equipo' => $etiquetasEquipo[$equipoId] ?? "#{$equipoId}",
+                        'hectareas' => $this->aHectareas($hectareas),
+                    ]),
+                    'meta' => $this->metaActividad($primero->created_at, $primero->created_by),
+                    'tone' => 'info',
+                ];
+            }
+        }
+
+        return $eventos;
+    }
+
+    private function metaActividad(?\DateTimeInterface $fecha, ?int $autorId): string
+    {
+        $fechaTexto = $fecha?->format('d/m/Y H:i') ?? '—';
+        $autor = $this->nombreAutor($autorId);
+
+        return $autor !== null
+            ? __('operaciones.ordenes.actividad_meta', ['fecha' => $fechaTexto, 'autor' => $autor])
+            : $fechaTexto;
     }
 
     public function update(ActualizarOrdenRequest $request, OrdenAplicacion $orden, ActualizarOrden $actualizarOrden): RedirectResponse

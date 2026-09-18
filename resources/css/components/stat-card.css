@@ -51,8 +51,8 @@
    se colorea vía `data-state` en .ag-stat-card, ver abajo. */
 .ag-stat-card__icon-box {
     flex-shrink: 0;
-    width: 34px;
-    height: 34px;
+    width: 2.5rem;
+    height: 2.5rem;
     display: grid;
     place-items: center;
     border-radius: var(--ag-radius-md);
@@ -64,32 +64,81 @@
     flex-shrink: 0;
 }
 
-/* Tono del contenedor del ícono por estado. */
+/* Tono del contenedor del ícono por estado (segunda vuelta paleta Fiori,
+   17/9/2026): relleno SÓLIDO `-contrast-fill` + ícono blanco, no el par
+   tenue `-subtle`/`-strong` anterior — pedido explícito del usuario, esta
+   tarjeta KPI es justo donde el par tenue se leía "con poca opacity". Mismo
+   criterio y mismos tokens que atoms/badge (ver badge.css).
+   warning es la ÚNICA variante que difiere de badge.css a propósito: acá
+   el ícono es gráfico/no-texto (WCAG 1.4.11, exigencia 3:1, no 4.5:1) y
+   blanco sobre ámbar-700 da ~3.07:1 — pasa esa exigencia más laxa, y se ve
+   mejor que gris-900 (feedback directo del usuario sobre captura real,
+   "no le queda el negro", 17/9/2026). `.ag-badge--warning` NO puede copiar
+   esto: ahí el contenido SÍ es texto de verdad (exigencia 4.5:1), donde
+   blanco sobre ámbar-700 falla y por eso se queda con gris-900. */
 .ag-stat-card[data-state='success'] .ag-stat-card__icon-box {
-    background: var(--ag-color-success-subtle);
-    color: var(--ag-color-success-strong);
+    background: var(--ag-color-success-contrast-fill);
+    color: var(--ag-color-gray-0);
 }
 
 .ag-stat-card[data-state='warning'] .ag-stat-card__icon-box {
-    background: var(--ag-color-warning-subtle);
-    color: var(--ag-color-warning-strong);
+    background: var(--ag-color-warning-contrast-fill);
+    color: var(--ag-color-gray-0);
 }
 
 .ag-stat-card[data-state='danger'] .ag-stat-card__icon-box {
-    background: var(--ag-color-danger-subtle);
-    color: var(--ag-color-danger-strong);
+    background: var(--ag-color-danger-contrast-fill);
+    color: var(--ag-color-gray-0);
 }
 
 .ag-stat-card[data-state='info'] .ag-stat-card__icon-box {
-    background: var(--ag-color-info-subtle);
-    color: var(--ag-color-info-strong);
+    background: var(--ag-color-info-contrast-fill);
+    color: var(--ag-color-gray-0);
 }
 
-/* Barra izquierda de atención: SOLO warning/danger (estados que requieren
-   acción) — success/info quedan sin barra, mismo criterio que el original
-   de referencia. */
-.ag-stat-card[data-state='warning']::before,
-.ag-stat-card[data-state='danger']::before {
+/* Categóricos "distintivo" (conexión a pantalla, 18/9/2026 — primer
+   consumidor real: `ordenes/show.blade.php`, tarjeta "categoría de
+   insumo", que hasta ahora quedaba sin `state` porque `success` fijo
+   colisionaba con la tarjeta "aplicaciones" cuando esa completaba su meta.
+   Mismo `-contrast-fill` + texto/ícono blanco que success/info/danger de
+   arriba — los tres pasan ≥4.56:1 contra blanco, ver sistema_diseno_panel.md
+   §1.3, verificado para atoms/badge y válido acá también por ser el mismo
+   par color+fondo). */
+.ag-stat-card[data-state='distintivo-1'] .ag-stat-card__icon-box {
+    background: var(--ag-color-distintivo-1-contrast-fill);
+    color: var(--ag-color-gray-0);
+}
+
+.ag-stat-card[data-state='distintivo-2'] .ag-stat-card__icon-box {
+    background: var(--ag-color-distintivo-2-contrast-fill);
+    color: var(--ag-color-gray-0);
+}
+
+.ag-stat-card[data-state='distintivo-3'] .ag-stat-card__icon-box {
+    background: var(--ag-color-distintivo-3-contrast-fill);
+    color: var(--ag-color-gray-0);
+}
+
+/* primary-2/alert (18/9/2026, pedido explícito del usuario: soportar los
+   8 colores semánticos en el KPI aunque hoy solo se use un subconjunto).
+   Blanco sobre alert (`#880000`) da 10.26:1, sobre primary-2 (`#0a6ed1`)
+   5.04:1 — ambos ≥AA, ver sistema_diseno_panel.md §1.3. */
+.ag-stat-card[data-state='primary-2'] .ag-stat-card__icon-box {
+    background: var(--ag-color-primary-2-contrast-fill);
+    color: var(--ag-color-gray-0);
+}
+
+.ag-stat-card[data-state='alert'] .ag-stat-card__icon-box {
+    background: var(--ag-color-alert-contrast-fill);
+    color: var(--ag-color-gray-0);
+}
+
+/* Barra izquierda de 4px, uno por `state` (17/9/2026: antes solo
+   warning/danger la pintaban — "estados que requieren atención" — pero con
+   varias tarjetas de LA MISMA fila usando distintos `state`, dejar afuera a
+   success/info se leía como inconsistencia, no como jerarquía, pedido
+   directo de parejarlo). `null` (sin `state`) sigue sin barra. */
+.ag-stat-card[data-state]::before {
     content: '';
     position: absolute;
     left: 0;
@@ -98,12 +147,49 @@
     width: 4px;
 }
 
+/* Mismo `-contrast-fill` que el ícono, no el crudo `--ag-color-X`: en
+   tema oscuro el crudo de success/warning todavía es el tono de marca
+   (verde-400/ámbar-300, sin tocar — ver theme-dark.css), así que la barra
+   quedaba de un color y el ícono de otro. Con `-contrast-fill` (constante
+   entre temas) ambos elementos de la misma tarjeta usan siempre el mismo
+   tono, en los dos temas. */
+.ag-stat-card[data-state='success']::before {
+    background: var(--ag-color-success-contrast-fill);
+}
+
 .ag-stat-card[data-state='warning']::before {
-    background: var(--ag-color-warning);
+    background: var(--ag-color-warning-contrast-fill);
 }
 
 .ag-stat-card[data-state='danger']::before {
-    background: var(--ag-color-danger);
+    background: var(--ag-color-danger-contrast-fill);
+}
+
+.ag-stat-card[data-state='info']::before {
+    background: var(--ag-color-info-contrast-fill);
+}
+
+/* Categóricos "distintivo" — mismo criterio que arriba (18/9/2026, corrige
+   un olvido de la conexión inicial: el ícono había quedado violeta pero
+   la barra izquierda seguía sin pintarse porque faltaba esta regla). */
+.ag-stat-card[data-state='distintivo-1']::before {
+    background: var(--ag-color-distintivo-1-contrast-fill);
+}
+
+.ag-stat-card[data-state='distintivo-2']::before {
+    background: var(--ag-color-distintivo-2-contrast-fill);
+}
+
+.ag-stat-card[data-state='distintivo-3']::before {
+    background: var(--ag-color-distintivo-3-contrast-fill);
+}
+
+.ag-stat-card[data-state='primary-2']::before {
+    background: var(--ag-color-primary-2-contrast-fill);
+}
+
+.ag-stat-card[data-state='alert']::before {
+    background: var(--ag-color-alert-contrast-fill);
 }
 
 /* Sans + tabular-nums (auditoría visual externa, obs. #7 — supera la regla

@@ -185,6 +185,30 @@ Este documento **no reescribe la Fase 6** (arriba queda intacta, como registro d
 
 ---
 
+## 7. Sugerencia pendiente (18/9/2026) — badge de tendencia (campaña vs. campaña) en `molecules/stat-card`
+
+**Sin implementar todavía** — nace de una comparación visual que hizo el usuario contra una referencia externa (tarjeta KPI con borde de color, ícono en contenedor, círculos decorativos y un badge chico "↑12 %"/"↓5 %"). De esa referencia:
+
+- Borde de color lateral + ícono en contenedor con color: **ya existen** en `stat-card` (`state`, ver `sistema_diseno_panel.md` §1.4) — nada que traer de ahí.
+- Círculos decorativos translúcidos de fondo: **descartados** — pura decoración sin dato, y esta misma tarjeta ya se simplificó una vez a propósito porque una versión más cargada se sintió sobrecargada (ver docblock de `_orden-card.blade.php`). No se van a agregar.
+- Badge de tendencia (flecha + variación %): **único elemento con valor real** — es la única pieza que agrega información que hoy la tarjeta no muestra.
+
+### Alcance decidido por el usuario
+
+La comparación es **campaña vs. campaña anterior**, no semana/mes — coherente con que en este sistema la campaña es la unidad de negocio recurrente (ver ADR de Campania y `alcance-campania-por-campo`). Con ese criterio, el usuario descartó explícitamente aplicarlo a `ordenes/show.blade.php`: una orden de aplicación es de UN contrato, y un contrato pertenece a UNA sola campaña — no hay "campaña anterior" con la que comparar una orden individual, la granularidad no calza. El caso de uso real es el **dashboard general** (KPIs agregados que sí tienen sentido de comparar campaña a campaña).
+
+### Por qué no es un cálculo genérico
+
+- La parte visual (badge, flecha, color) es chica — una o dos horas, mismo alcance que el resto de los cambios de esta sesión.
+- La parte real es por KPI: cada tarjeta necesita su propia consulta "cómo estaba esto en la campaña anterior", usando las columnas de auditoría que ya existen (`created_at`/timestamps, invariante 9 de CLAUDE.md) — no hay una fórmula única reutilizable más allá de `(actual - anterior) / anterior * 100` con el caso `anterior = 0` cubierto.
+- Hoy 4 pantallas consumen `stat-card` con datos reales: `dashboard/_seccion-mis-totales.blade.php` (Seguridad), `avance/index.blade.php` (Portal), `personas/desempeno.blade.php` (Personal), y `ordenes/show.blade.php` (Operaciones, descartada arriba). El dashboard general es el candidato natural para el primer piloto.
+
+### Recomendación al retomar esto
+
+Implementar como **piloto en un único KPI del dashboard general** (a elegir con el usuario cuál) antes de replicarlo — para validar el patrón de consulta "campaña anterior" y el criterio de UX (¿qué mostrar cuando no hay campaña anterior? ¿el signo importa distinto según el KPI, p. ej. "Pendientes" bajando es bueno?) antes de tocar las otras 3 pantallas.
+
+---
+
 ## Anexo A — Sincronización de reglas ya confirmadas (login + selección de rol) — NO depende del dashboard, listo para ejecutar en cualquier momento
 
 Esta parte fue pedida aparte ("estos cambios ya se aplicaron... se tiene que actualizar en los agentes, la memoria del proyecto y la documentación"). No requiere ninguna de las fases de arriba — puede ejecutarse primero, sola, en una iteración corta. Contenido ya redactado, listo para pegar:

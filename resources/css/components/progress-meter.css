@@ -28,10 +28,16 @@
 }
 
 .ag-progress-meter__percent {
+    /* Violeta/"alternative" (18/9/2026, pedido explícito del usuario) en vez
+       de `--ag-color-text`: la cifra se leía plana, sin relación con el
+       resto de la paleta ya conectada en esta misma pantalla. Token PLANO
+       (`--ag-color-distintivo-1`, no `-contrast-fill`) — es texto grande
+       (1.5rem bold, umbral WCAG de texto GRANDE 3:1, no 4.5:1) así que
+       incluso el crudo de tema claro (~4.39:1) pasa de sobra. */
     font-family: var(--ag-font-family-mono);
     font-size: var(--ag-font-size-xl);
     font-weight: var(--ag-font-weight-bold);
-    color: var(--ag-color-text);
+    color: var(--ag-color-distintivo-1);
 }
 
 .ag-progress-meter__summary {
@@ -47,9 +53,14 @@
 }
 
 .ag-progress-meter__bar-fill {
+    /* Violeta/distintivo-1, mismo tono que `__percent` (18/9/2026, pedido
+       explícito del usuario) — antes verde de marca, sin relación con la
+       cifra que la barra representa. `-contrast-fill` (crudo, constante
+       entre temas): la barra es un relleno sólido sin texto encima, mismo
+       criterio que el ícono/barra de `stat-card`. */
     height: 100%;
     border-radius: var(--ag-radius-pill);
-    background-color: var(--ag-color-primary);
+    background-color: var(--ag-color-distintivo-1-contrast-fill);
     width: calc(var(--ag-progress-meter-percent) * 1%);
     transition: width var(--ag-transition-base);
 }

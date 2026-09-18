@@ -182,12 +182,22 @@
 
                     @foreach ($contratos as $contrato)
                         @php
+                            // 18/9/2026: se probó "borrador" ("En Aprobación")
+                            // en primary-2 (azul) y el usuario pidió revertir
+                            // — ese estado se queda en "neutral" (badge gris
+                            // secondary de siempre), a diferencia de
+                            // vigente/finalizado/cancelado/pausado, que sí
+                            // usan un color propio de la paleta de 8.
+                            // Misma vuelta, pedido siguiente: "pausado" pasa
+                            // de warning a info, "finalizado" de info a
+                            // distintivo-2 ("purple"/magenta) — reasignación
+                            // explícita del usuario, no una corrección de bug.
                             $variantePorEstado = [
                                 'borrador' => 'neutral',
                                 'vigente' => 'success',
-                                'finalizado' => 'info',
+                                'finalizado' => 'distintivo-2',
                                 'cancelado' => 'danger',
-                                'pausado' => 'warning',
+                                'pausado' => 'info',
                             ];
                             $estadoValor = $contrato->estado->value;
                         @endphp
@@ -344,7 +354,7 @@
 
                                     @puede('comercial.contrato.cambiar_estado')
                                         @if ($estadoValor === 'borrador')
-                                            <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#{{ $modalIdAprobar }}" variant="outline" size="sm" icon="check_circle">
+                                            <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#{{ $modalIdAprobar }}" variant="success-outline" size="sm" icon="check_circle">
                                                 {{ __('comercial.contratos.accion_aprobar') }}
                                             </x-atoms.button>
 
@@ -352,11 +362,11 @@
                                                 {{ __('comercial.contratos.accion_cancelar') }}
                                             </x-atoms.button>
                                         @elseif ($estadoValor === 'vigente')
-                                            <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#{{ $modalIdFinalizar }}" variant="outline" size="sm" icon="check_circle">
+                                            <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#{{ $modalIdFinalizar }}" variant="distintivo-2-outline" size="sm" icon="check_circle">
                                                 {{ __('comercial.contratos.accion_finalizar') }}
                                             </x-atoms.button>
 
-                                            <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#{{ $modalIdPausar }}" variant="warning-outline" size="sm" icon="pause_circle">
+                                            <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#{{ $modalIdPausar }}" variant="info-outline" size="sm" icon="pause_circle">
                                                 {{ __('comercial.contratos.accion_pausar') }}
                                             </x-atoms.button>
 
@@ -364,7 +374,7 @@
                                                 {{ __('comercial.contratos.accion_cancelar') }}
                                             </x-atoms.button>
                                         @elseif ($estadoValor === 'pausado')
-                                            <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#{{ $modalIdReanudar }}" variant="outline" size="sm" icon="play_circle">
+                                            <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#{{ $modalIdReanudar }}" variant="success-outline" size="sm" icon="play_circle">
                                                 {{ __('comercial.contratos.accion_reanudar') }}
                                             </x-atoms.button>
                                         @endif

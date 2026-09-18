@@ -77,6 +77,19 @@ class SecMenuSeeder extends Seeder
             ->where('label', 'menu.comercial.items.reportes_cliente')
             ->delete();
 
+        // Refactor de menú de Operación (17/9/2026, pedido directo del
+        // dueño): "Pausas" deja de tener ítem propio — es un hecho puntual
+        // DENTRO de una sesión (`Pausa.sesion_id`, nunca tuvo máquina de
+        // estados propia, ver su docblock), y el ítem "Sesiones" que se
+        // renombra a "Seguimiento de vuelos" abajo ya es donde se sigue toda
+        // la actividad del piloto. La pantalla (`panel.pausas.index`) y el
+        // permiso (`operaciones.pausa.ver`) SIGUEN vigentes — solo se retira
+        // la entrada de navegación, mismo criterio de baja que "mezclas"/
+        // "evidencias"/"reportes_cliente" arriba.
+        SecMenu::query()
+            ->where('label', 'menu.operacion.items.pausas')
+            ->delete();
+
         $operacion = $this->modulo('operacion', 'flight_takeoff', 1);
         $comercial = $this->modulo('comercial', 'handshake', 2);
         $recursos = $this->modulo('recursos', 'precision_manufacturing', 3);
@@ -106,23 +119,47 @@ class SecMenuSeeder extends Seeder
         // HU-25 (tarea 38): órdenes de aplicación con su propia máquina de
         // estados (emitida → vigente).
         $this->item($operacion, 'operacion', 'ordenes', 'assignment', 2, ruta: 'panel.ordenes.index', codigoPermiso: 'operaciones.orden.ver');
+
+        // Refactor de menú (17/9/2026, pedido directo del dueño): "Trabajos"
+        // pasaba por el mismo nombre que el Word del dueño usa para la orden
+        // que el operador emite ("Orden de Trabajo" ya está confirmado como
+        // columna del propio listado, HU-93) — acá se aclara que la
+        // ejecución en sí, la que hace el piloto en base a la orden de
+        // aplicación, se llama igual en el menú. `renombrar()` conserva la
+        // fila (id, ruta, permiso, bitácora); solo cambia a qué clave de
+        // `lang/es/menu.php` apunta.
+        $this->renombrar($operacion, 'menu.operacion.items.trabajos', 'menu.operacion.items.orden_trabajo');
         // HU-05 (tarea 13): listado mínimo de trabajos/sesiones — el jefe ve
         // qué se cerró. Detalle con evidencias y filtros llegan con HU-15.
-        $this->item($operacion, 'operacion', 'trabajos', 'fact_check', 3, ruta: 'panel.trabajos.index', codigoPermiso: 'operaciones.trabajo.ver');
+        // Orden 3: antes de "Asignación de equipos" y "Estadías" — primero
+        // se crea el trabajo, después se le asigna el equipo y recién ahí
+        // se sabe dónde se aloja (pedido directo del dueño, 17/9/2026).
+        $this->item($operacion, 'operacion', 'orden_trabajo', 'work_history', 3, ruta: 'panel.trabajos.index', codigoPermiso: 'operaciones.trabajo.ver');
+
+        // Tarea 85 (HU-70/92): reparto de equipos por orden vigente, con
+        // varios lotes por orden. Sube del orden 7 al 4 en este refactor: es
+        // el paso que sigue a crear el trabajo, no el último del grupo
+        // (pedido directo del dueño, 17/9/2026).
+        $this->item($operacion, 'operacion', 'asignacion_equipos', 'groups', 4, ruta: 'panel.asignacion-equipos.index', codigoPermiso: 'operaciones.orden.asignar_equipos');
+        // HU-51 (tarea 74): entrada y salida del equipo en cada hacienda. Se
+        // mantiene como ítem PROPIO, separado de "Asignación de equipos"
+        // (evaluado y descartado fusionarlos, 17/9/2026): el equipo se forma
+        // una sola vez por campaña, pero la estadía es por propiedad — un
+        // mismo equipo puede alojarse en varias propiedades de la misma
+        // campaña, cardinalidad distinta a la de la asignación. Baja del
+        // orden 6 al 5 en este refactor.
+        $this->item($operacion, 'operacion', 'estadias', 'holiday_village', 5, ruta: 'panel.estadias.index', codigoPermiso: 'operaciones.estadia.ver');
+
+        // Refactor de menú (17/9/2026, pedido directo del dueño): "Sesiones"
+        // apuntaba a la cola de validación, pero el uso real es más amplio —
+        // seguimiento del avance de cada vuelo, con validación como una de
+        // sus acciones, no la única razón de entrar. Absorbe también
+        // "Pausas" (dado de baja arriba): un hecho puntual DENTRO de una
+        // sesión, sin pantalla propia en el menú desde ahora. Baja del
+        // orden 4 al 6 (último del grupo) en este refactor.
+        $this->renombrar($operacion, 'menu.operacion.items.sesiones', 'menu.operacion.items.seguimiento_vuelos');
         // HU-14 (tarea 14): cola de validación de sesiones cerradas.
-        $this->item($operacion, 'operacion', 'sesiones', 'flight', 4, ruta: 'panel.sesiones.validacion.index', codigoPermiso: 'operaciones.sesion.validar');
-        // HU-44 (tarea 58): pausas con causa atribuible (DS-01) — activa el
-        // ítem que ya estaba sembrado como "botón sin link".
-        $this->item($operacion, 'operacion', 'pausas', 'pause_circle', 5, ruta: 'panel.pausas.index', codigoPermiso: 'operaciones.pausa.ver');
-        // HU-51 (tarea 74): entrada y salida del equipo en cada hacienda.
-        // Ocupa el orden 6, vacante desde que mezclas se retiró (CR-01,
-        // TE-13, tarea 59) — ítem nuevo desde el vamos, sin placeholder
-        // previo (mismo criterio que `equipos_trabajo`/`generadores`).
-        $this->item($operacion, 'operacion', 'estadias', 'holiday_village', 6, ruta: 'panel.estadias.index', codigoPermiso: 'operaciones.estadia.ver');
-        // HU-70 (tarea 85): reparto de equipos por orden vigente. Ocupa el
-        // orden 7, vacante desde que "evidencias" se retiró (tarea 62, fuga
-        // 3) — mismo criterio que "estadías" arriba al ocupar el 6.
-        $this->item($operacion, 'operacion', 'asignacion_equipos', 'groups', 7, ruta: 'panel.asignacion-equipos.index', codigoPermiso: 'operaciones.orden.asignar_equipos');
+        $this->item($operacion, 'operacion', 'seguimiento_vuelos', 'flight', 6, ruta: 'panel.sesiones.validacion.index', codigoPermiso: 'operaciones.sesion.validar');
 
         // Comercial (§4.1 + cap. 9)
         //
@@ -523,14 +560,20 @@ class SecMenuSeeder extends Seeder
         // para siempre. Este seeder es la única fuente del orden del menú (no
         // hay pantalla que lo reordene), así que pisarlo es correcto y no
         // descarta ninguna edición de nadie.
+        //
+        // `icono` se sumó el 17/9/2026 (cambio de "Orden de Trabajo" de
+        // fact_check a work_history): sin sincronizarlo, cambiar el ícono acá
+        // no se reflejaba en una base ya sembrada — mismo motivo que `orden`.
         $ajustaRequisito = $fila->requiere_persona !== $requierePersona;
         $ajustaOrden = $fila->orden !== $orden;
+        $ajustaIcono = $fila->icono !== $icono;
 
-        if ($activaRuta || $activaPermiso || $ajustaRequisito || $ajustaOrden) {
+        if ($activaRuta || $activaPermiso || $ajustaRequisito || $ajustaOrden || $ajustaIcono) {
             $fila->ruta ??= $ruta;
             $fila->permission_id ??= $permissionId;
             $fila->requiere_persona = $requierePersona;
             $fila->orden = $orden;
+            $fila->icono = $icono;
             $fila->save();
         }
 

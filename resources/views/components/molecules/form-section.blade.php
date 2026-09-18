@@ -13,6 +13,9 @@
     - title (requerido): rótulo de la sección, ya traducido por el llamador.
     - count (nullable string|int): contador de campos a la derecha del
       rótulo (p. ej. "3 campos"), ya formateado — se reenvía a `section-head`.
+    - accent (nullable, default null): se reenvía tal cual a `section-head`
+      — ver su docblock para los valores válidos. `null` mantiene el verde
+      de siempre.
 
     Slot (default): contenido de la sección. Cada hijo directo ocupa una
     celda del grid interno; un campo que necesita el ancho completo (una
@@ -22,10 +25,11 @@
 @props([
     'title',
     'count' => null,
+    'accent' => null,
 ])
 
 <div {{ $attributes->class(['ag-form-section']) }}>
-    <x-molecules.section-head :title="$title" :count="$count" class="ag-form-section__head" />
+    <x-molecules.section-head :title="$title" :count="$count" :accent="$accent" class="ag-form-section__head" />
 
     <div class="ag-form-section__body">
         {{ $slot }}

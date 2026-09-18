@@ -9,91 +9,275 @@
  *
  * El wrapper `.ag-ordenes`/`.ag-ordenes-form` sigue el mismo patrón que
  * `.ag-contratos`/`.ag-contratos-form`: flex en columna con un único `gap`
- * en vez de `margin-top` repetido en cada hijo. Todo color y medida por
- * token (CLAUDE.md invariante 11).
+ * en vez de `margin-top` repetido en cada hijo. El contenedor de la tabla
+ * del listado (`molecules/index-table`) y el layout main/aside del
+ * formulario (`molecules/form-layout`) no viven acá (homogeneización
+ * 17/9/2026 — eran una copia casi idéntica a clientes/contratos, extraída al
+ * catálogo, ver docs/diseno/guia_pantalla_panel.md §6.2/§6.3.1). Todo color y
+ * medida por token (CLAUDE.md invariante 11).
  */
 
 .ag-ordenes,
-.ag-ordenes-form {
+.ag-ordenes-form,
+.ag-ordenes-detalle {
     display: flex;
     flex-direction: column;
     gap: var(--ag-space-5);
 }
 
-/* Listado (index) */
-
-.ag-ordenes__tabla {
-    border: 1px solid var(--ag-color-border-card);
-    border-radius: var(--ag-radius-md);
-    background-color: var(--ag-color-surface-card);
-    overflow: hidden;
+/* Contenedores de *container queries* (17/9/2026, pedido explícito): la
+   grilla del listado y la tira de KPI del detalle tienen que reaccionar al
+   ancho REAL disponible, no al viewport — con `@media` un mismo viewport
+   siempre da el mismo resultado aunque el sidebar de módulo (nivel 2, 252px
+   → 72px colapsado, `module-sidebar.js`/`.ag-module-sidebar.is-collapsed`)
+   le haya devuelto ~180px al contenido. `container-type: inline-size` en el
+   wrapper de la página convierte su ancho en la medida que consultan los
+   `@container` de abajo — ninguna otra pantalla se ve afectada, es un
+   contexto de contención nuevo, no global. */
+.ag-ordenes {
+    container: ag-ordenes / inline-size;
 }
 
-.ag-ordenes__head,
-.ag-ordenes__fila {
-    display: grid;
-    grid-template-columns: 1.6fr 1.6fr 0.8fr 1fr 0.8fr 1fr 1fr auto;
-    gap: var(--ag-space-4);
-    align-items: center;
-    padding: var(--ag-space-3) var(--ag-space-4);
+.ag-ordenes-detalle {
+    container: ag-ordenes-detalle / inline-size;
 }
 
-.ag-ordenes__head {
-    background-color: var(--ag-color-bg-table-head);
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-xs);
-    font-weight: var(--ag-font-weight-medium);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.ag-ordenes__fila {
-    border-top: 1px solid var(--ag-color-border-row);
-    color: var(--ag-color-text);
-    font-size: var(--ag-font-size-sm);
-}
-
-.ag-ordenes__fila:hover {
-    background-color: var(--ag-color-bg-row-hover);
-}
+/* Listado (index): columnas propias de `molecules/index-table` — índice ·
+   contrato · lote · aplicación · tipo · dosis · emisión · estado · acciones.
+   El resto de la anatomía de la tabla vive en el componente. */
 
 .ag-ordenes__mono {
     font-family: var(--ag-font-family-mono);
 }
 
-.ag-ordenes__acciones {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: var(--ag-space-2);
+/* Vista en grilla del listado (toggle lista/grilla, 17/9/2026): 1 columna
+   por defecto (móvil) → 2 en tableta → 3 en escritorio → 4 en pantallas
+   XXL, según el ancho REAL del contenedor `.ag-ordenes` (ver arriba) — no
+   `auto-fit`: el pedido fue una cantidad de columnas explícita por tramo,
+   no "las que entren". */
+.ag-ordenes__grilla {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--ag-space-4);
+    align-items: start;
 }
 
-.ag-ordenes__paginacion {
+@container ag-ordenes (min-width: 36rem) {
+    .ag-ordenes__grilla {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@container ag-ordenes (min-width: 60rem) {
+    .ag-ordenes__grilla {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@container ag-ordenes (min-width: 84rem) {
+    .ag-ordenes__grilla {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+/* `data-estado` (mismo criterio que `[data-state]` de stat-card, §2.2 del
+   sistema de diseño): franja superior de 3px con el color del estado — así
+   la tarjeta se identifica de un vistazo sin tener que leer el badge,
+   mismo lenguaje del mockup de referencia (borde/punto de color por
+   estado) traducido a los tokens del sistema en vez de sus hex. */
+.ag-ordenes-card {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--ag-color-surface-card);
+    border: 1px solid var(--ag-color-border-card);
+    border-top: 3px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-lg);
+    box-shadow: var(--ag-shadow-sm);
+    overflow: hidden;
+}
+
+.ag-ordenes-card[data-estado='success'] {
+    border-top-color: var(--ag-color-success);
+}
+
+.ag-ordenes-card[data-estado='warning'] {
+    border-top-color: var(--ag-color-warning);
+}
+
+.ag-ordenes-card[data-estado='danger'] {
+    border-top-color: var(--ag-color-danger);
+}
+
+.ag-ordenes-card[data-estado='info'] {
+    border-top-color: var(--ag-color-info);
+}
+
+.ag-ordenes-card__head {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-4) var(--ag-space-4) var(--ag-space-3);
+}
+
+.ag-ordenes-card__identidad {
+    flex: 1;
+    min-width: 0;
+}
+
+.ag-ordenes-card__codigo {
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+    letter-spacing: 0.04em;
+}
+
+.ag-ordenes-card__cliente {
+    font-family: var(--ag-font-family-display);
+    font-size: var(--ag-font-size-lg);
+    font-weight: var(--ag-font-weight-bold);
+    line-height: 1.15;
+    margin-top: 0.125rem;
+}
+
+.ag-ordenes-card__subtitulo {
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-ordenes-card__lote {
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-2) var(--ag-space-4);
+    background-color: var(--ag-color-bg-surface);
+    border-block: 1px solid var(--ag-color-border-row);
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+}
+
+.ag-ordenes-card__lote-punto {
+    flex: none;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: var(--ag-radius-sm);
+    background-color: var(--ag-color-text-faint);
+}
+
+.ag-ordenes-card__lote-punto--success {
+    background-color: var(--ag-color-success);
+}
+
+.ag-ordenes-card__lote-punto--warning {
+    background-color: var(--ag-color-warning);
+}
+
+.ag-ordenes-card__lote-punto--danger {
+    background-color: var(--ag-color-danger);
+}
+
+.ag-ordenes-card__lote-punto--info {
+    background-color: var(--ag-color-info);
+}
+
+.ag-ordenes-card__lote-hectareas {
+    margin-left: auto;
+    font-family: var(--ag-font-family-mono);
+}
+
+.ag-ordenes-card__datos {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1px;
+    background-color: var(--ag-color-border-row);
+}
+
+.ag-ordenes-card__dato {
+    background-color: var(--ag-color-surface-card);
+    padding: var(--ag-space-3);
+}
+
+.ag-ordenes-card__dato-label {
+    font-size: var(--ag-font-size-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-ordenes-card__dato-valor {
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+    margin-top: 0.1875rem;
+}
+
+.ag-ordenes-card__pie {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-3) var(--ag-space-4) var(--ag-space-4);
+    margin-top: auto;
+    border-top: 1px solid var(--ag-color-border-row);
+}
+
+.ag-ordenes-card__pie-fecha {
+    flex: 1;
+    min-width: 0;
+    line-height: 1.3;
+}
+
+.ag-ordenes-card__pie-fecha-valor {
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-xs);
+}
+
+/* Detalle (show, 17/9/2026) — arquetipo Detalle, §6.4 de
+   docs/diseno/guia_pantalla_panel.md. Mismo criterio de container query que
+   la grilla del listado (ver arriba): reacciona al ancho real de
+   `.ag-ordenes-detalle`, sidebar colapsado incluido. */
+
+.ag-ordenes-detalle__kpis {
+    display: grid;
+    grid-template-columns: 1fr;
     gap: var(--ag-space-4);
 }
 
-.ag-ordenes__paginacion-info {
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-sm);
+@container ag-ordenes-detalle (min-width: 36rem) {
+    .ag-ordenes-detalle__kpis {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 
-@media (max-width: 992px) {
-    .ag-ordenes__head {
-        display: none;
+@container ag-ordenes-detalle (min-width: 60rem) {
+    .ag-ordenes-detalle__kpis {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
     }
+}
 
-    .ag-ordenes__fila {
-        grid-template-columns: 1fr;
-        gap: var(--ag-space-1);
-    }
+/* Campo de solo lectura dentro de `form-section` (etiqueta arriba, valor
+   abajo) — mismo lenguaje que las celdas del listado en grilla
+   (`.ag-ordenes-card__dato`), pero sin fondo/borde propio porque ya vive
+   dentro del grid de 2 columnas de `.ag-form-section__body`. */
+.ag-ordenes-detalle__campo-label {
+    margin: 0;
+    font-size: var(--ag-font-size-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ag-color-text-muted);
+}
 
-    .ag-ordenes__acciones {
-        justify-content: flex-start;
-        margin-top: var(--ag-space-2);
-    }
+.ag-ordenes-detalle__campo-valor {
+    margin: 0.1875rem 0 0;
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+    line-height: 1.5;
+}
+
+/* Lista de "Vínculos" (molecules/link-row): mismo tratamiento que la tabla
+   de "Lotes" — borde/radio propios, separada del padding de la tarjeta,
+   para que se lea como un bloque cohesivo en vez de filas sueltas. */
+.ag-ordenes-detalle__vinculos {
+    border: 1px solid var(--ag-color-border-row);
+    border-radius: var(--ag-radius-md);
+    overflow: hidden;
 }
 
 /* Formulario (create/edit) */

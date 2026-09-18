@@ -148,6 +148,9 @@ return [
         'filtros_boton' => 'Filtros',
         'filtros_aplicar' => 'Aplicar',
         'filtros_limpiar' => 'Limpiar filtros',
+        'vista_grupo' => 'Vista del listado',
+        'vista_lista' => 'Ver como lista',
+        'vista_grilla' => 'Ver como grilla',
     ],
 
     // Mensajes de error.

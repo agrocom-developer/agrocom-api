@@ -20,6 +20,43 @@
     flex-shrink: 0;
 }
 
+/* Alternancia de color (18/9/2026, pedido explícito del usuario — ver
+   docblock del componente): mismo `-contrast-fill` constante-entre-temas
+   que ya usan `atoms/badge`/`molecules/stat-card`, nunca el par tenue
+   `-subtle`/`-strong`. Sin `data-accent` (default) sigue en
+   `--ag-color-primary` — ningún consumidor existente se recolorea solo. */
+.ag-section-head[data-accent='success'] .ag-section-head__bar {
+    background: var(--ag-color-success-contrast-fill);
+}
+
+.ag-section-head[data-accent='warning'] .ag-section-head__bar {
+    background: var(--ag-color-warning-contrast-fill);
+}
+
+.ag-section-head[data-accent='danger'] .ag-section-head__bar {
+    background: var(--ag-color-danger-contrast-fill);
+}
+
+.ag-section-head[data-accent='info'] .ag-section-head__bar {
+    background: var(--ag-color-info-contrast-fill);
+}
+
+.ag-section-head[data-accent='distintivo-1'] .ag-section-head__bar {
+    background: var(--ag-color-distintivo-1-contrast-fill);
+}
+
+.ag-section-head[data-accent='distintivo-2'] .ag-section-head__bar {
+    background: var(--ag-color-distintivo-2-contrast-fill);
+}
+
+.ag-section-head[data-accent='primary-2'] .ag-section-head__bar {
+    background: var(--ag-color-primary-2-contrast-fill);
+}
+
+.ag-section-head[data-accent='alert'] .ag-section-head__bar {
+    background: var(--ag-color-alert-contrast-fill);
+}
+
 .ag-section-head__title {
     margin: 0;
     font-family: var(--ag-font-family-base);

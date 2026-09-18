@@ -172,10 +172,19 @@
 
                     @foreach ($campanias as $campania)
                         @php
+                            // 'cerrada' en alert/rojo-700 "#880000" (18/9/2026,
+                            // novena vuelta — se probó distintivo-2/magenta
+                            // primero, el usuario lo corrigió: había
+                            // confundido "magenta" con este tono). Sigue
+                            // distinto de 'danger' (rojo-600 "#bb0000", el
+                            // botón "Eliminar") a propósito: cerrar un ciclo
+                            // de negocio no es lo mismo que borrar el
+                            // registro, pero ambos son rojos — más oscuro
+                            // el de "alert".
                             $variantePorEstado = [
                                 'planificada' => 'neutral',
                                 'abierta' => 'success',
-                                'cerrada' => 'info',
+                                'cerrada' => 'alert',
                             ];
                             $estadoValor = $campania->estado->value;
                         @endphp
@@ -193,8 +202,14 @@
                                     {{ __('campania.campania.estado.'.$estadoValor) }}
                                 </x-atoms.badge>
                             </span>
+                            {{-- "Activa"/"Inactiva" en primary-2 (azul)/neutral (18/9/2026,
+                                 pedido explícito del usuario) — antes success (verde),
+                                 que competía visualmente con el badge "Abierta" de la
+                                 columna "Estado" (los dos verdes por casualidad, sin
+                                 relación entre sí: "Actividad" es derivado de "Estado",
+                                 no un segundo estado real, ver Campania::esActiva()). --}}
                             <span role="cell">
-                                <x-atoms.badge :variant="$campania->esActiva() ? 'success' : 'neutral'">
+                                <x-atoms.badge :variant="$campania->esActiva() ? 'primary-2' : 'neutral'">
                                     {{ __($campania->esActiva() ? 'campania.campanias.actividad_activa' : 'campania.campanias.actividad_inactiva') }}
                                 </x-atoms.badge>
                             </span>
@@ -304,7 +319,7 @@
                                                 type="button"
                                                 data-bs-toggle="modal"
                                                 data-bs-target="#{{ $modalIdCerrar }}"
-                                                variant="danger-outline"
+                                                variant="alert-outline"
                                                 size="sm"
                                                 icon="lock"
                                             >

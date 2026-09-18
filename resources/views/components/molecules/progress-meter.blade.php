@@ -22,7 +22,15 @@
 ])
 
 <div {{ $attributes->class(['ag-progress-meter']) }}>
-    <x-molecules.section-head :title="$title" class="ag-progress-meter__head" />
+    {{-- accent fijo en distintivo-1 (18/9/2026, pedido explícito del
+        usuario): mismo tono que `__percent`/`__bar-fill` de abajo — esta
+        tarjeta es una unidad visual propia, no una sección más de la
+        pantalla que la contiene. Antes cae en el verde por defecto de
+        `section-head`, que en `ordenes/show.blade.php` coincide por
+        casualidad con "Datos de la orden" (el usuario lo notó como "se
+        repite desde 0"). Fijo en el componente, no un prop — TODO
+        progress-meter comparte el mismo trío de colores. --}}
+    <x-molecules.section-head :title="$title" accent="distintivo-1" class="ag-progress-meter__head" />
 
     <div class="ag-progress-meter__stat">
         <span class="ag-progress-meter__percent">{{ $percent }}%</span>
