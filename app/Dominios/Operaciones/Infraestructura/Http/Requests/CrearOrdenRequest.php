@@ -26,6 +26,13 @@ use Illuminate\Validation\Rule;
  * orden nace `emitida` (nunca `vigente`), así que esa guarda no aplica al
  * alta — la ejercita `Aplicacion/MaquinaEstados/MaquinaEstadosOrden::activar()`.
  *
+ * Los 8 campos de límites climáticos y parámetros de vuelo (humedad, viento,
+ * temperatura, velocidad, altura de vuelo, ancho de pasada) YA NO se piden
+ * acá: se movieron a `Trabajo` (migración
+ * `2026_09_18_100001_mueve_clima_vuelo_de_ordenes_a_trabajos_table`) porque
+ * describen el vuelo de cada equipo, no el pedido — se cargan por equipo en
+ * `AsignarEquipoOrdenRequest`, al confirmar la asignación.
+ *
  * `contrato_id`/`emitida_por_contacto_id`/`lotes.*.lote_id` se validan por
  * `exists:` contra la tabla física, sin importar el modelo Eloquent de
  * `Comercial` (ADR 0003, regla 3, mismo criterio que el resto del módulo).
@@ -78,14 +85,6 @@ final class CrearOrdenRequest extends FormRequest
             'categoria_insumo_id' => ['required', 'integer', Rule::exists('ope_categorias_insumo', 'id')->whereNull('deleted_at')],
             'litros_ha' => ['nullable', 'numeric', 'gt:0'],
             'kilos_por_vuelo' => ['nullable', 'numeric', 'gt:0'],
-            'humedad_min_pct' => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'humedad_max_pct' => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'viento_max_kmh' => ['nullable', 'numeric', 'gt:0'],
-            'temperatura_max_c' => ['nullable', 'numeric', 'gt:-10', 'lt:60'],
-            'velocidad_max_kmh' => ['nullable', 'numeric', 'gt:0'],
-            'altura_vuelo_m' => ['nullable', 'numeric', 'gt:0'],
-            'velocidad_vuelo_kmh' => ['nullable', 'numeric', 'gt:0'],
-            'ancho_pasada_m' => ['nullable', 'numeric', 'gt:0'],
             'observaciones' => ['nullable', 'string'],
             'emitida_por_contacto_id' => ['nullable', 'integer', Rule::exists('com_cliente_contactos', 'id')->whereNull('deleted_at')],
             'fecha_emision' => ['required', 'date'],
@@ -95,13 +94,6 @@ final class CrearOrdenRequest extends FormRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator): void {
-            $minimo = $this->input('humedad_min_pct');
-            $maximo = $this->input('humedad_max_pct');
-
-            if ($minimo !== null && $minimo !== '' && $maximo !== null && $maximo !== '' && (float) $minimo > (float) $maximo) {
-                $validator->errors()->add('humedad_min_pct', __('operaciones.ordenes.error_humedad_rango'));
-            }
-
             $this->validarCampoSegunCategoriaInsumo($validator);
 
             $contratoId = $this->input('contrato_id');

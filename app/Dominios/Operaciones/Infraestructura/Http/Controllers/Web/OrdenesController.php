@@ -47,6 +47,16 @@ use Illuminate\View\View;
  * `exists:` de los Requests), no por su `Contratos/` (ese contrato de
  * lectura hoy solo expone lotes para `CalcularCoberturaTrabajo`, no listados
  * para un `<select>` del panel).
+ *
+ * `create()`/`edit()` (reforma 18/9/2026, Entrega 1): el `<select>` plano de
+ * contrato viaja junto a un blob más rico por contrato
+ * (`datosContratoParaFormulario()`) — cliente, propiedad(es), contactos y
+ * SOLO los lotes de ese contrato, para la sección "Datos del contrato" del
+ * formulario. `create()` además precarga, por cada contrato, el
+ * `nro_aplicacion` sugerido (`sugerirNroAplicacion()`) — `edit()` no, la
+ * orden ya tiene el suyo real. Los 8 campos de límites climáticos/parámetros
+ * de vuelo YA NO se piden acá (se movieron a `Trabajo`, cargados por equipo
+ * en `AsignarEquipoOrdenRequest` — ver su docblock).
  */
 final class OrdenesController
 {
@@ -154,14 +164,22 @@ final class OrdenesController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_CREAR), 403);
 
+        $datosContrato = $this->datosContratoParaFormulario();
+
+        // Sugerencia de `nro_aplicacion` SOLO acá (ver docblock de
+        // `sugerirNroAplicacion()`) — se completa por fuera del blob base
+        // porque no tiene sentido pagarla en `edit()`, donde la orden ya
+        // trae su propio valor real.
+        foreach (array_keys($datosContrato) as $contratoId) {
+            $datosContrato[$contratoId]['nro_aplicacion_sugerido'] = $this->sugerirNroAplicacion($contratoId);
+        }
+
         return view('operaciones::pages.ordenes.create', [
             ...$this->autorizacion->cascara($request),
-            'contratosDisponibles' => $this->contratosDisponibles(),
-            'lotesDisponibles' => $this->lotesDisponibles(),
+            'contratosDisponibles' => collect($datosContrato)->map(fn (array $datos): string => $datos['label']),
+            'datosContrato' => $datosContrato,
             'contactosDisponibles' => $this->contactosDisponibles(),
             'categoriasInsumoDisponibles' => $this->categoriasInsumoDisponibles(),
-            'mapaContratoCliente' => $this->mapaContratoCliente(),
-            'mapaLoteCliente' => $this->mapaLoteCliente(),
         ]);
     }
 
@@ -293,16 +311,16 @@ final class OrdenesController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
 
+        $datosContrato = $this->datosContratoParaFormulario();
+
         return view('operaciones::pages.ordenes.edit', [
             ...$this->autorizacion->cascara($request),
             'orden' => $orden,
             'lotesOrden' => $orden->ordenLotes()->orderBy('lote_id')->get(),
-            'contratosDisponibles' => $this->contratosDisponibles(),
-            'lotesDisponibles' => $this->lotesDisponibles(),
+            'contratosDisponibles' => collect($datosContrato)->map(fn (array $datos): string => $datos['label']),
+            'datosContrato' => $datosContrato,
             'contactosDisponibles' => $this->contactosDisponibles(),
             'categoriasInsumoDisponibles' => $this->categoriasInsumoDisponibles(),
-            'mapaContratoCliente' => $this->mapaContratoCliente(),
-            'mapaLoteCliente' => $this->mapaLoteCliente(),
             'resumenRelacionado' => $this->resumenRelacionado($orden, $request),
         ]);
     }
@@ -641,14 +659,6 @@ final class OrdenesController
             // corresponde siempre queda NULL, aunque el request lo mande.
             'kilos_por_vuelo' => $tipoInsumo === TipoInsumo::Solido->value ? $this->cadenaONull($datos['kilos_por_vuelo'] ?? null) : null,
             'litros_ha' => $tipoInsumo === TipoInsumo::Liquido->value ? $this->cadenaONull($datos['litros_ha'] ?? null) : null,
-            'humedad_min_pct' => $this->cadenaONull($datos['humedad_min_pct'] ?? null),
-            'humedad_max_pct' => $this->cadenaONull($datos['humedad_max_pct'] ?? null),
-            'viento_max_kmh' => $this->cadenaONull($datos['viento_max_kmh'] ?? null),
-            'temperatura_max_c' => $this->cadenaONull($datos['temperatura_max_c'] ?? null),
-            'velocidad_max_kmh' => $this->cadenaONull($datos['velocidad_max_kmh'] ?? null),
-            'altura_vuelo_m' => $this->cadenaONull($datos['altura_vuelo_m'] ?? null),
-            'velocidad_vuelo_kmh' => $this->cadenaONull($datos['velocidad_vuelo_kmh'] ?? null),
-            'ancho_pasada_m' => $this->cadenaONull($datos['ancho_pasada_m'] ?? null),
             'observaciones' => $this->cadenaONull($datos['observaciones'] ?? null),
             'emitida_por_contacto_id' => isset($datos['emitida_por_contacto_id']) && $datos['emitida_por_contacto_id'] !== ''
                 ? (int) $datos['emitida_por_contacto_id']
@@ -677,27 +687,10 @@ final class OrdenesController
         );
     }
 
-    /** @return Collection<int, string> */
-    private function contratosDisponibles(): Collection
-    {
-        return DB::table('com_contratos as c')
-            ->join('com_clientes as cl', 'cl.id', '=', 'c.cliente_id')
-            ->whereNull('c.deleted_at')
-            ->whereNull('cl.deleted_at')
-            ->orderByDesc('c.fecha_inicio')
-            ->get(['c.id', 'cl.razon_social'])
-            ->mapWithKeys(fn (object $fila): array => [
-                (int) $fila->id => __('operaciones.ordenes.campo_contrato_opcion', [
-                    'id' => $fila->id,
-                    'cliente' => $fila->razon_social,
-                ]),
-            ]);
-    }
-
     /**
      * Categorías de insumo (HU-79, tarea 110) — catálogo PROPIO de
-     * Operaciones (no de Comercial): a diferencia de `lotesDisponibles()` y
-     * el resto de abajo, se lee por el modelo Eloquent del módulo, no por
+     * Operaciones (no de Comercial): a diferencia del resto de este
+     * controlador, se lee por el modelo Eloquent del módulo, no por
      * `DB::table` (ADR 0003 regla 3 solo exige lectura directa cruzando
      * MÓDULOS). La vista arma el `<select>` y el mapa id→tipo_insumo a partir
      * de esta colección de modelos.
@@ -709,56 +702,183 @@ final class OrdenesController
         return CategoriaInsumo::query()->orderBy('nombre')->get(['id', 'nombre', 'tipo_insumo']);
     }
 
-    /** @return Collection<int, string> */
-    private function lotesDisponibles(): Collection
+    /**
+     * Reemplaza, desde la reforma 18/9/2026 (Entrega 1), a los antiguos
+     * `contratosDisponibles()`/`lotesDisponibles()`/`mapaContratoCliente()`/
+     * `mapaLoteCliente()`: hasta entonces el formulario ofrecía el UNIVERSO
+     * completo de lotes del sistema en un `<select>` aparte y filtraba en JS
+     * con un mapa contrato→cliente/lote→cliente. Acá cada contrato trae de
+     * entrada SOLO sus propios datos — ya no hace falta filtrar a ciegas
+     * contra todos los lotes del sistema.
+     *
+     * Shape devuelto, indexado por `contrato_id` (para quien arme la vista):
+     *
+     *     [
+     *       $contratoId => [
+     *         'label' => string,              // ya enriquecido para el <select> buscable: cliente + propiedad(es) + "Contrato #id"
+     *         'cliente' => string,            // razón social
+     *         'propiedades' => list<string>,  // nombres de propiedad(es) que cubre el contrato — puede ser más de una (com_contrato_lotes cruza propiedades)
+     *         'aplicaciones_previstas' => int,
+     *         'contactos' => list<array{id: int, nombre: string, tipo: string}>,  // com_cliente_contactos del cliente DUEÑO del contrato; la vista decide autoseleccionar si hay uno solo
+     *         'lotes' => list<array{lote_id: int, codigo: string, propiedad: string, hectareas: string, desnivel: ?string, desnivel_label: ?string, limpieza: ?string, limpieza_label: ?string}>,  // SOLO los lotes de `com_contrato_lotes` de ESTE contrato — desnivel/limpieza YA traducidos server-side (ADR 0013), mismo criterio que `ContratosController::propiedadesYLotesPorCliente()`
+     *         'nro_aplicacion_sugerido' => int|null,  // NULL acá siempre — solo `create()` lo completa (ver `sugerirNroAplicacion()`); `edit()` no lo toca, la orden ya tiene su valor real
+     *       ],
+     *       ...
+     *     ]
+     *
+     * `label` reutiliza la clave de traducción existente
+     * `operaciones.ordenes.campo_contrato_opcion` (":cliente — Contrato
+     * #:id") pasándole en `:cliente` el nombre YA concatenado con la(s)
+     * propiedad(es) entre paréntesis — no se agrega una clave `:propiedad`
+     * nueva a `lang/es/operaciones.php` desde acá (fuera de alcance de este
+     * cambio de backend); el combobox buscable (`x-atoms.select` con
+     * `searchable`) ya puede filtrar por cliente, propiedad o número de
+     * contrato con este único string.
+     *
+     * Tres consultas en total (contratos+cliente, lotes del contrato +
+     * propiedad, contactos del cliente), agrupadas en PHP — evita N+1 por
+     * contrato. Lectura directa por `DB::table` en las tablas de `Comercial`
+     * (ADR 0003 regla 3, mismo criterio que el resto del controlador).
+     *
+     * @return array<int, array{label: string, cliente: string, propiedades: list<string>, aplicaciones_previstas: int, contactos: list<array{id: int, nombre: string, tipo: string}>, lotes: list<array{lote_id: int, codigo: string, propiedad: string, hectareas: string, desnivel: ?string, desnivel_label: ?string, limpieza: ?string, limpieza_label: ?string}>, nro_aplicacion_sugerido: int|null}>
+     */
+    private function datosContratoParaFormulario(): array
     {
-        return DB::table('com_lotes as l')
+        $contratos = DB::table('com_contratos as c')
+            ->join('com_clientes as cl', 'cl.id', '=', 'c.cliente_id')
+            ->whereNull('c.deleted_at')
+            ->whereNull('cl.deleted_at')
+            ->orderByDesc('c.fecha_inicio')
+            ->get(['c.id', 'c.cliente_id', 'c.aplicaciones_previstas', 'cl.razon_social']);
+
+        if ($contratos->isEmpty()) {
+            return [];
+        }
+
+        $contratoIds = $contratos->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $clienteIds = $contratos->pluck('cliente_id')->map(fn ($id) => (int) $id)->unique()->values()->all();
+
+        $lotesPorContrato = DB::table('com_contrato_lotes as ccl')
+            ->join('com_lotes as l', 'l.id', '=', 'ccl.lote_id')
             ->join('com_propiedades as p', 'p.id', '=', 'l.propiedad_id')
+            ->whereIn('ccl.contrato_id', $contratoIds)
+            ->whereNull('ccl.deleted_at')
             ->whereNull('l.deleted_at')
             ->whereNull('p.deleted_at')
             ->orderBy('p.nombre')
             ->orderBy('l.codigo')
-            ->get(['l.id', 'p.nombre', 'l.codigo'])
-            ->mapWithKeys(fn (object $fila): array => [
-                (int) $fila->id => __('operaciones.ordenes.campo_lote_opcion', [
-                    'campo' => $fila->nombre,
-                    'codigo' => $fila->codigo,
-                ]),
-            ]);
-    }
+            ->get(['ccl.contrato_id', 'l.id as lote_id', 'l.codigo', 'l.hectareas', 'l.desnivel', 'l.limpieza', 'p.nombre as propiedad_nombre'])
+            ->groupBy('contrato_id');
 
-    /**
-     * De qué cliente es cada contrato — consistencia de negocio (el contrato
-     * es el QUIÉN, la orden es el CÓMO): el formulario del panel usa esto
-     * para filtrar, en JS, el universo de `lotesDisponibles()` al cliente del
-     * contrato elegido (nunca al revés — un lote no sabe de contratos). El
-     * servidor exige lo mismo en `withValidator()`; esto es solo el dato para
-     * la presentación.
-     *
-     * @return array<int, int> contrato_id => cliente_id
-     */
-    private function mapaContratoCliente(): array
-    {
-        return DB::table('com_contratos')
+        $contactosPorCliente = DB::table('com_cliente_contactos')
+            ->whereIn('cliente_id', $clienteIds)
             ->whereNull('deleted_at')
-            ->pluck('cliente_id', 'id')
-            ->all();
+            ->orderBy('nombre')
+            ->get(['id', 'cliente_id', 'tipo', 'nombre'])
+            ->groupBy('cliente_id');
+
+        $resultado = [];
+
+        foreach ($contratos as $contrato) {
+            $contratoId = (int) $contrato->id;
+            $clienteId = (int) $contrato->cliente_id;
+
+            $lotesDelContrato = $lotesPorContrato->get($contratoId) ?? collect();
+            $propiedades = $lotesDelContrato->pluck('propiedad_nombre')->unique()->values()->all();
+
+            $resultado[$contratoId] = [
+                'label' => __('operaciones.ordenes.campo_contrato_opcion', [
+                    'id' => $contratoId,
+                    'cliente' => $propiedades === []
+                        ? $contrato->razon_social
+                        : "{$contrato->razon_social} (".implode(', ', $propiedades).')',
+                ]),
+                'cliente' => $contrato->razon_social,
+                'propiedades' => $propiedades,
+                'aplicaciones_previstas' => (int) $contrato->aplicaciones_previstas,
+                'contactos' => ($contactosPorCliente->get($clienteId) ?? collect())
+                    ->map(fn (object $contacto): array => [
+                        'id' => (int) $contacto->id,
+                        'nombre' => $contacto->nombre,
+                        'tipo' => $contacto->tipo,
+                    ])
+                    ->values()
+                    ->all(),
+                'lotes' => $lotesDelContrato->map(fn (object $lote): array => [
+                    'lote_id' => (int) $lote->lote_id,
+                    'codigo' => $lote->codigo,
+                    'propiedad' => $lote->propiedad_nombre,
+                    'hectareas' => (string) $lote->hectareas,
+                    'desnivel' => $lote->desnivel,
+                    'desnivel_label' => $lote->desnivel !== null ? __("comercial.lotes.lote_desnivel_{$lote->desnivel}") : null,
+                    'limpieza' => $lote->limpieza,
+                    'limpieza_label' => $lote->limpieza !== null ? __("comercial.lotes.lote_limpieza_{$lote->limpieza}") : null,
+                ])->values()->all(),
+                'nro_aplicacion_sugerido' => null,
+            ];
+        }
+
+        return $resultado;
     }
 
     /**
-     * De qué cliente es cada lote (vía `propiedad_id` → `cliente_id`) —
-     * mismo criterio que {@see mapaContratoCliente()}.
+     * Sugerencia de `nro_aplicacion` para el formulario de ALTA (`create()`
+     * únicamente — en `edit()` la orden ya tiene su valor real, no hay nada
+     * que sugerir). Caso real que motiva el algoritmo: un contrato grande
+     * (3000ha en lotes de 40-80ha) reparte una misma "aplicación" en varias
+     * órdenes con el MISMO número porque sus hectáreas no entran en una sola
+     * orden — mientras esa ronda no cubra todos los lotes del contrato, el
+     * sugerido sigue ofreciendo ese mismo número; recién cuando la ronda
+     * queda completa sugiere el siguiente.
      *
-     * @return array<int, int> lote_id => cliente_id
+     * Algoritmo: busca, entre las órdenes no eliminadas de este contrato con
+     * sus lotes (`ope_orden_lotes` no eliminados), el `nro_aplicacion` más
+     * alto ya usado. Sin ninguna orden previa, sugiere 1. Si hay, junta el
+     * conjunto de `lote_id` ya cubiertos por TODAS las órdenes con ESE mismo
+     * número más alto; si ese conjunto no incluye todos los `lote_id` de
+     * `com_contrato_lotes` del contrato, sugiere ese mismo número (ronda
+     * incompleta); si los cubre todos, sugiere `número + 1`.
+     *
+     * Deliberadamente simple (dos consultas, sin índices ni caché
+     * especiales): es solo un valor de arranque editable en el formulario,
+     * no una regla de negocio que el servidor haga cumplir —
+     * `CrearOrdenRequest` no exige que `nro_aplicacion` coincida con esta
+     * sugerencia.
      */
-    private function mapaLoteCliente(): array
+    private function sugerirNroAplicacion(int $contratoId): int
     {
-        return DB::table('com_lotes as l')
-            ->join('com_propiedades as p', 'p.id', '=', 'l.propiedad_id')
-            ->whereNull('l.deleted_at')
-            ->whereNull('p.deleted_at')
-            ->pluck('p.cliente_id', 'l.id')
+        $nroMasAlto = DB::table('ope_ordenes_aplicacion as o')
+            ->join('ope_orden_lotes as ol', 'ol.orden_id', '=', 'o.id')
+            ->where('o.contrato_id', $contratoId)
+            ->whereNull('o.deleted_at')
+            ->whereNull('ol.deleted_at')
+            ->max('o.nro_aplicacion');
+
+        if ($nroMasAlto === null) {
+            return 1;
+        }
+
+        $loteIdsCubiertos = DB::table('ope_ordenes_aplicacion as o')
+            ->join('ope_orden_lotes as ol', 'ol.orden_id', '=', 'o.id')
+            ->where('o.contrato_id', $contratoId)
+            ->where('o.nro_aplicacion', $nroMasAlto)
+            ->whereNull('o.deleted_at')
+            ->whereNull('ol.deleted_at')
+            ->pluck('ol.lote_id')
+            ->map(fn ($id) => (int) $id)
+            ->unique()
             ->all();
+
+        $loteIdsDelContrato = DB::table('com_contrato_lotes')
+            ->where('contrato_id', $contratoId)
+            ->whereNull('deleted_at')
+            ->pluck('lote_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        $rondaCompleta = array_diff($loteIdsDelContrato, $loteIdsCubiertos) === [];
+
+        return $rondaCompleta ? (int) $nroMasAlto + 1 : (int) $nroMasAlto;
     }
 
     /**

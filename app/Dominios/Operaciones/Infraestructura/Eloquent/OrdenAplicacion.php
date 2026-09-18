@@ -27,11 +27,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * verdad sobre el mismo dato (ver docblock de la migración
  * `create_ope_orden_lotes_table`).
  *
- * Los límites por orden en NULL heredan del contrato o del parámetro por
- * defecto del sistema (RF-60). Las transiciones de `estado` (emitida →
- * vigente → consumida | vencida) pasan por
- * `Aplicacion/MaquinaEstados/MaquinaEstadosOrden` (invariante 7, HU-25, tarea
- * 38) — este modelo no ofrece atajos para mutarlas.
+ * Los límites climáticos y parámetros de vuelo (RF-60) ya NO viven acá:
+ * describen el vuelo que ejecuta cada equipo, no la orden — se movieron a
+ * `Trabajo` (`humedad_min_pct`, `viento_max_kmh`, etc., ver migración
+ * `2026_09_18_100001_mueve_clima_vuelo_de_ordenes_a_trabajos_table`). Las
+ * transiciones de `estado` (emitida → vigente → consumida | vencida) pasan
+ * por `Aplicacion/MaquinaEstados/MaquinaEstadosOrden` (invariante 7, HU-25,
+ * tarea 38) — este modelo no ofrece atajos para mutarlas.
  *
  * `RegistraBitacora` (invariante 9, HU-25): el esquema no lo marca como
  * catálogo de rol/permiso (no lo exige el gate automático de
@@ -49,14 +51,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int|null $categoria_insumo_id
  * @property string|null $kilos_por_vuelo
  * @property string|null $litros_ha
- * @property string|null $humedad_min_pct
- * @property string|null $viento_max_kmh
- * @property string|null $temperatura_max_c
- * @property string|null $humedad_max_pct
- * @property string|null $velocidad_max_kmh
- * @property string|null $altura_vuelo_m
- * @property string|null $velocidad_vuelo_kmh
- * @property string|null $ancho_pasada_m
  * @property string|null $observaciones
  * @property int|null $emitida_por_contacto_id
  * @property CarbonImmutable $fecha_emision
@@ -78,14 +72,6 @@ class OrdenAplicacion extends ModeloDominio
         'categoria_insumo_id',
         'kilos_por_vuelo',
         'litros_ha',
-        'humedad_min_pct',
-        'viento_max_kmh',
-        'temperatura_max_c',
-        'humedad_max_pct',
-        'velocidad_max_kmh',
-        'altura_vuelo_m',
-        'velocidad_vuelo_kmh',
-        'ancho_pasada_m',
         'observaciones',
         'emitida_por_contacto_id',
         'fecha_emision',
@@ -101,14 +87,6 @@ class OrdenAplicacion extends ModeloDominio
             'tipo_aplicacion' => TipoAplicacion::class,
             'kilos_por_vuelo' => 'decimal:2',
             'litros_ha' => 'decimal:2',
-            'humedad_min_pct' => 'decimal:2',
-            'viento_max_kmh' => 'decimal:2',
-            'temperatura_max_c' => 'decimal:2',
-            'humedad_max_pct' => 'decimal:2',
-            'velocidad_max_kmh' => 'decimal:2',
-            'altura_vuelo_m' => 'decimal:2',
-            'velocidad_vuelo_kmh' => 'decimal:2',
-            'ancho_pasada_m' => 'decimal:2',
             'fecha_emision' => 'immutable_date',
             'estado' => EstadoOrdenAplicacion::class,
         ];
