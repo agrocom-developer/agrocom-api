@@ -103,7 +103,8 @@
                 @if ($hayFiltrosActivos)
                     <x-molecules.empty-state
                         icon="search_off"
-                        :title="__('operaciones.ordenes_trabajo.filtro_vacio')"
+                        :title="__('operaciones.ordenes_trabajo.filtro_vacio_titulo')"
+                        :detail="__('operaciones.ordenes_trabajo.filtro_vacio_detalle')"
                     />
                 @else
                     <x-molecules.empty-state

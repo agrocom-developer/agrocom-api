@@ -358,7 +358,5 @@
                 </x-atoms.button>
             </x-organisms.form-actions-bar>
         </form>
-
-        @vite('resources/js/pages/ordenes-trabajo-form.js')
     </x-templates.panel-layout>
 </x-templates.panel-shell>
