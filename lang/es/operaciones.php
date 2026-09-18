@@ -461,6 +461,8 @@ return [
         'campo_litros_ha' => 'Litros por hectárea',
         'campo_kilos_por_vuelo' => 'Kilos por vuelo',
         'campo_fecha_emision' => 'Fecha de emisión',
+        'campo_fecha_emision_ayuda_prefijo' => 'El contrato va del',
+        'campo_fecha_emision_ayuda_conector' => 'al',
         'campo_contacto' => 'Emitida por (contacto)',
         'campo_contacto_placeholder' => 'Sin especificar',
         'campo_contacto_opcion' => ':nombre — :tipo',

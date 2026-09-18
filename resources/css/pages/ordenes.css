@@ -282,9 +282,22 @@
 
 /* Formulario (create/edit) */
 
+/* Mismo estilo que el `help` nativo de los átomos (`.ag-date__help`,
+   `.ag-select__help`, `.ag-input__help` — todos idénticos): acá va aparte
+   (no el prop `help` del átomo) porque necesita la fecha de inicio del
+   contrato destacada en rojo, algo que el prop `help` (texto plano) no
+   puede resolver. */
 .ag-ordenes-form__ayuda {
+    margin: 0;
+    font-size: var(--ag-font-size-xs);
     color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-sm);
+}
+
+/* Fecha de inicio del contrato, destacada dentro de la ayuda de "Fecha de
+   emisión" (reforma 18/9/2026) — referencia visual, no marca de error. */
+.ag-ordenes-form__fecha-destacada {
+    color: var(--ag-color-danger);
+    font-weight: var(--ag-font-weight-medium);
 }
 
 /* Lotes repetibles (HU-92, tarea 107) — mismo patrón que

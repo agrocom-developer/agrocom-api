@@ -208,7 +208,7 @@ final class OrdenesController
             ? 0
             : (int) round(((float) (string) $hectareasAsignadas / (float) (string) $hectareasSolicitadas) * 100);
 
-        $aplicacionesPrevistas = DB::table('com_contratos')->where('id', $orden->contrato_id)->value('aplicaciones_previstas');
+        $resumenContrato = $this->resumenContrato($orden->contrato_id);
 
         return view('operaciones::pages.ordenes.show', [
             ...$this->autorizacion->cascara($request),
@@ -217,7 +217,10 @@ final class OrdenesController
             'contactoLabel' => $orden->emitida_por_contacto_id !== null
                 ? DB::table('com_cliente_contactos')->where('id', $orden->emitida_por_contacto_id)->value('nombre')
                 : null,
-            'aplicacionesPrevistas' => $aplicacionesPrevistas !== null ? (int) $aplicacionesPrevistas : null,
+            'resumenContrato' => $resumenContrato,
+            // Retrocompatible: el KPI "Aplicaciones" de arriba ya usaba
+            // este dato suelto antes de que existiera `resumenContrato()`.
+            'aplicacionesPrevistas' => $resumenContrato['aplicaciones_previstas'] ?? null,
             'lotes' => $lotes,
             'hectareasSolicitadas' => $this->aHectareas($hectareasSolicitadas),
             'hectareasAsignadas' => $this->aHectareas($hectareasAsignadas),
@@ -229,6 +232,53 @@ final class OrdenesController
             'puedeActivar' => $this->autorizacion->tienePermiso($request, self::PERMISO_ACTIVAR),
             'puedeEliminar' => $this->autorizacion->tienePermiso($request, self::PERMISO_ELIMINAR),
         ]);
+    }
+
+    /**
+     * Resumen del contrato de ESTA orden, para el detalle (`show()`) — mismos
+     * campos que la sección "Datos del contrato" de `create()`/`edit()`
+     * (reforma 18/9/2026), pero para UN solo contrato: versión liviana de
+     * `datosContratoParaFormulario()`, que arma TODOS los contratos para el
+     * `<select>` buscable — acá no hace falta esa batería completa (ni los
+     * lotes/contactos del picker), solo los datos intrínsecos del contrato.
+     *
+     * `null` si el contrato ya no existe (borrado lógicamente después de
+     * emitida la orden) — la vista cae a no mostrar la sección.
+     *
+     * @return array{cliente: string, logo_url: ?string, propiedades: list<string>, aplicaciones_previstas: int, hectareas_contratadas: string, fecha_inicio: string, fecha_fin: ?string}|null
+     */
+    private function resumenContrato(int $contratoId): ?array
+    {
+        $contrato = DB::table('com_contratos as c')
+            ->join('com_clientes as cl', 'cl.id', '=', 'c.cliente_id')
+            ->where('c.id', $contratoId)
+            ->first(['c.aplicaciones_previstas', 'c.hectareas_contratadas', 'c.fecha_inicio', 'c.fecha_fin', 'cl.razon_social', 'cl.logo_path']);
+
+        if ($contrato === null) {
+            return null;
+        }
+
+        $propiedades = DB::table('com_contrato_lotes as ccl')
+            ->join('com_lotes as l', 'l.id', '=', 'ccl.lote_id')
+            ->join('com_propiedades as p', 'p.id', '=', 'l.propiedad_id')
+            ->where('ccl.contrato_id', $contratoId)
+            ->whereNull('ccl.deleted_at')
+            ->whereNull('l.deleted_at')
+            ->whereNull('p.deleted_at')
+            ->distinct()
+            ->orderBy('p.nombre')
+            ->pluck('p.nombre')
+            ->all();
+
+        return [
+            'cliente' => $contrato->razon_social,
+            'logo_url' => $this->logoUrl($contrato->logo_path),
+            'propiedades' => $propiedades,
+            'aplicaciones_previstas' => (int) $contrato->aplicaciones_previstas,
+            'hectareas_contratadas' => (string) $contrato->hectareas_contratadas,
+            'fecha_inicio' => CarbonImmutable::parse($contrato->fecha_inicio)->format('d/m/Y'),
+            'fecha_fin' => $contrato->fecha_fin !== null ? CarbonImmutable::parse($contrato->fecha_fin)->format('d/m/Y') : null,
+        ];
     }
 
     /**

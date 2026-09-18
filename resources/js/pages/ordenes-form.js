@@ -99,6 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectNroAplicacion = formulario.querySelector('[data-ag-orden-nro-aplicacion]');
     const lotesSinContrato = formulario.querySelector('[data-ag-lotes-sin-contrato]');
     const lotesContenido = formulario.querySelector('[data-ag-lotes-contenido]');
+    const fechaEmisionAyuda = formulario.querySelector('[data-ag-fecha-emision-ayuda]');
 
     if (!selectContrato || !scriptDatos) return;
 
@@ -433,6 +434,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (lotesSinContrato) lotesSinContrato.hidden = false;
             if (lotesContenido) lotesContenido.hidden = true;
             if (buscadorLotesWrap) buscadorLotesWrap.hidden = true;
+            if (fechaEmisionAyuda) fechaEmisionAyuda.hidden = true;
             return;
         }
 
@@ -442,6 +444,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (lotesSinContrato) lotesSinContrato.hidden = true;
         if (lotesContenido) lotesContenido.hidden = false;
         if (buscadorLotesWrap) buscadorLotesWrap.hidden = false;
+
+        // Ayuda de "Fecha de emisión": fecha de inicio del contrato
+        // destacada, fecha de fin solo si el contrato la tiene (nullable).
+        if (fechaEmisionAyuda) {
+            fechaEmisionAyuda.hidden = false;
+            const fechaInicioEl = fechaEmisionAyuda.querySelector('[data-ag-fecha-inicio-contrato]');
+            if (fechaInicioEl) fechaInicioEl.textContent = datos.fecha_inicio;
+
+            const fechaFinWrap = fechaEmisionAyuda.querySelector('[data-ag-fecha-fin-wrap]');
+            const fechaFinEl = fechaEmisionAyuda.querySelector('[data-ag-fecha-fin-contrato]');
+            if (fechaFinWrap) fechaFinWrap.hidden = !datos.fecha_fin;
+            if (fechaFinEl) fechaFinEl.textContent = datos.fecha_fin || '';
+        }
 
         // Pinta resumen.
         if (resumenContrato) {
@@ -540,8 +555,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
+        // Al elegir contrato (nunca en la carga inicial de edición/redisplay,
+        // que respeta lo ya guardado/tipeado): todos los lotes arrancan
+        // tildados con su hectáreas completa — pedido explícito del usuario
+        // 18/9/2026, "el caso ideal es que entre todo en la orden, el
+        // operario ve cuáles quita" — no lo contrario.
         if (resetearSeleccion) {
             seleccion.clear();
+            (datos.lotes || []).forEach((lote) => {
+                seleccion.set(lote.lote_id, String(lote.hectareas));
+            });
         }
 
         paginaActual = 1;

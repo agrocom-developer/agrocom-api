@@ -342,13 +342,31 @@
             :error="$errors->first('tipo_aplicacion')"
         />
 
-        <x-atoms.date
-            name="fecha_emision"
-            :label="__('operaciones.ordenes.campo_fecha_emision')"
-            :value="$fechaEmision"
-            required
-            :error="$errors->first('fecha_emision')"
-        />
+        <div>
+            <x-atoms.date
+                name="fecha_emision"
+                :label="__('operaciones.ordenes.campo_fecha_emision')"
+                :value="$fechaEmision"
+                required
+                :error="$errors->first('fecha_emision')"
+            />
+
+            {{--
+                Sugerencia (nunca `min`/`max` reales en el <input>, pedido
+                explícito del usuario 18/9/2026): con la fecha de inicio del
+                contrato destacada en rojo, sin llamarla "restricción" (el
+                servidor no la exige, es solo una referencia). Oculto hasta
+                elegir contrato; `ordenes-form.js` la completa.
+            --}}
+            <p class="ag-ordenes-form__ayuda" data-ag-fecha-emision-ayuda hidden>
+                {{ __('operaciones.ordenes.campo_fecha_emision_ayuda_prefijo') }}
+                <strong class="ag-ordenes-form__fecha-destacada" data-ag-fecha-inicio-contrato>—</strong>
+                <span data-ag-fecha-fin-wrap hidden>
+                    {{ __('operaciones.ordenes.campo_fecha_emision_ayuda_conector') }}
+                    <span data-ag-fecha-fin-contrato>—</span>
+                </span>
+            </p>
+        </div>
 
         <div class="ag-form-section__field--full">
             <x-atoms.textarea
