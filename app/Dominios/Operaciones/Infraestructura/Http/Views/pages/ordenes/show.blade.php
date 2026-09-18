@@ -13,8 +13,13 @@
 
     Datos esperados (ver OrdenesController::show()): la cáscara de
     CascaraPanel, más $orden (con `categoriaInsumo` cargada),
-    $contratoLabel, $contactoLabel (nullable), $aplicacionesPrevistas
-    (nullable — del contrato), $lotes (list, ver detalleLotesOrden()),
+    $contratoLabel, $contactoLabel (nullable), $resumenContrato (array
+    nullable, ver `resumenContrato()` — reforma 18/9/2026: cliente, logo,
+    propiedad(es), aplicaciones pactadas, hectáreas contratadas, fecha de
+    inicio/fin del contrato; mismos campos que "Datos del contrato" de
+    create()/edit()), $aplicacionesPrevistas (nullable, espejo de
+    `$resumenContrato['aplicaciones_previstas']` para el KPI de arriba),
+    $lotes (list, ver detalleLotesOrden()),
     $hectareasSolicitadas/$hectareasAsignadas (string, ya formateadas),
     $porcentajeAsignado (int), $equiposAsignados (int), $actividad (list,
     ver actividadOrden()), $puedeEditar/$puedeActivar/$puedeEliminar (bool).
@@ -67,14 +72,6 @@
     $equiposCompletos = $equiposAsignados >= $orden->cantidad_equipos_necesarios;
     $aplicacionesEstado = $aplicacionesCompletas ? 'success' : null;
     $equiposEstado = $equiposCompletos ? 'success' : ($estadoValor === 'vigente' ? 'warning' : null);
-
-    $limitesItems = [
-        ['label' => __('operaciones.ordenes.campo_humedad_min_pct'), 'value' => $orden->humedad_min_pct !== null ? "{$orden->humedad_min_pct} %" : __('operaciones.ordenes.limite_sin_definir')],
-        ['label' => __('operaciones.ordenes.campo_humedad_max_pct'), 'value' => $orden->humedad_max_pct !== null ? "{$orden->humedad_max_pct} %" : __('operaciones.ordenes.limite_sin_definir')],
-        ['label' => __('operaciones.ordenes.campo_viento_max_kmh'), 'value' => $orden->viento_max_kmh !== null ? "{$orden->viento_max_kmh} km/h" : __('operaciones.ordenes.limite_sin_definir')],
-        ['label' => __('operaciones.ordenes.campo_temperatura_max_c'), 'value' => $orden->temperatura_max_c !== null ? "{$orden->temperatura_max_c} °C" : __('operaciones.ordenes.limite_sin_definir')],
-        ['label' => __('operaciones.ordenes.campo_velocidad_max_kmh'), 'value' => $orden->velocidad_max_kmh !== null ? "{$orden->velocidad_max_kmh} km/h" : __('operaciones.ordenes.limite_sin_definir')],
-    ];
 @endphp
 <x-templates.panel-shell :title="__('operaciones.ordenes.detalle_titulo', ['id' => $orden->id])" :tema="$tema">
     <x-templates.panel-layout
@@ -188,35 +185,92 @@
             </div>
 
             @php
-                $datosOrden = [
+                $datosContratoOrden = [
                     ['label' => __('operaciones.ordenes.campo_contrato'), 'value' => $contratoLabel],
+                    ['label' => __('operaciones.ordenes.campo_contacto'), 'value' => $contactoLabel ?? __('operaciones.ordenes.campo_contacto_placeholder')],
+                ];
+                $datosOrden = [
                     ['label' => __('operaciones.ordenes.campo_tipo_insumo'), 'value' => $tipoInsumo !== null ? __('operaciones.tipo_insumo.'.$tipoInsumo) : '—'],
                     ['label' => __('operaciones.ordenes.campo_categoria_insumo'), 'value' => $orden->categoriaInsumo?->nombre ?? '—'],
                     ['label' => __('operaciones.ordenes.campo_tipo_aplicacion'), 'value' => __('operaciones.tipo_aplicacion.'.$orden->tipo_aplicacion->value)],
                     ['label' => __('operaciones.ordenes.campo_fecha_emision'), 'value' => $orden->fecha_emision->format('d/m/Y')],
-                    ['label' => __('operaciones.ordenes.campo_contacto'), 'value' => $contactoLabel ?? __('operaciones.ordenes.campo_contacto_placeholder')],
                 ];
             @endphp
 
             {{-- `accent` de cada form-section (18/9/2026, pedido explícito
-                del usuario, varias vueltas hasta el orden definitivo).
-                Motivo: con 7 `section-head` en esta pantalla (6
+                del usuario, varias vueltas hasta el orden definitivo;
+                reajustado el mismo día al sumar "Datos del contrato" y sacar
+                Límites climáticos/Parámetros de vuelo, que liberaron dos
+                tonos). Motivo: con 7 `section-head` en esta pantalla (6
                 `form-section` + `progress-meter`, "Avance de asignación",
-                más abajo) y solo 6 tonos sin carga de bueno/malo, alguno
-                se repetía sin importar el orden ("no se repita como se
-                ve"). El usuario dio el mapeo final, uno a uno, sin
-                repetir ninguno: `success`→Datos de la orden,
-                `info`→Lotes, `distintivo-2`→Actividad, `alert`→Vínculos
-                ("Relacionado"), `warning`→Límites climáticos,
-                `primary-2`→Parámetros de vuelo, `distintivo-1`→Avance de
-                asignación (coincide con su propio porcentaje, ver
-                `progress-meter.blade.php`). `danger` queda sin usar acá.
+                más abajo) y solo 6 tonos sin carga de bueno/malo, alguno se
+                repetía sin importar el orden ("no se repita como se ve").
+                Mapeo vigente, sin repetir ninguno: `primary-2`→Datos del
+                contrato, `success`→Datos de la orden, `info`→Lotes,
+                `distintivo-2`→Actividad, `alert`→Vínculos ("Relacionado"),
+                `distintivo-1`→Avance de asignación (coincide con su propio
+                porcentaje, ver `progress-meter.blade.php`). `warning` y
+                `danger` quedan sin usar acá.
                 Nota: `success` en "Datos de la orden" comparte tono con
                 el KPI "Aplicaciones" de esta misma pantalla cuando
                 completa su meta — decisión explícita del usuario, no un
                 descuido (se le consultó puntualmente antes de fijarlo). --}}
             <x-molecules.form-layout>
-                <x-molecules.form-section accent="success" :title="__('operaciones.ordenes.seccion_datos')" :count="__('operaciones.ordenes.campos_contador', ['cantidad' => 6])">
+                {{--
+                    "Datos del contrato" (reforma 18/9/2026): mismos campos
+                    que la sección homónima de create()/edit() — contrato,
+                    contacto, y el resumen con logo/propiedad(es)/aplicaciones
+                    pactadas/hectáreas contratadas/fechas. `$resumenContrato`
+                    puede ser `null` (contrato borrado lógicamente después de
+                    emitida la orden) — ahí se omite el resumen, quedan solo
+                    contrato/contacto.
+                --}}
+                <x-molecules.form-section accent="primary-2" :title="__('operaciones.ordenes.seccion_datos_contrato')">
+                    @foreach ($datosContratoOrden as $campo)
+                        <div class="ag-ordenes-detalle__campo">
+                            <p class="ag-ordenes-detalle__campo-label">{{ $campo['label'] }}</p>
+                            <p class="ag-ordenes-detalle__campo-valor">{{ $campo['value'] }}</p>
+                        </div>
+                    @endforeach
+
+                    @if ($resumenContrato)
+                        <div class="ag-form-section__field--full ag-ordenes-form__resumen-contrato">
+                            <img
+                                class="ag-ordenes-form__logo"
+                                src="{{ $resumenContrato['logo_url'] ?? asset('images/logo-placeholder.png') }}"
+                                alt=""
+                            >
+                            <div class="ag-form-section__body ag-ordenes-form__resumen-datos">
+                                <div class="ag-ordenes-detalle__campo">
+                                    <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato_cliente') }}</p>
+                                    <p class="ag-ordenes-detalle__campo-valor">{{ $resumenContrato['cliente'] }}</p>
+                                </div>
+                                <div class="ag-ordenes-detalle__campo">
+                                    <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato_propiedades') }}</p>
+                                    <p class="ag-ordenes-detalle__campo-valor">{{ $resumenContrato['propiedades'] === [] ? '—' : implode(', ', $resumenContrato['propiedades']) }}</p>
+                                </div>
+                                <div class="ag-ordenes-detalle__campo">
+                                    <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato_aplicaciones') }}</p>
+                                    <p class="ag-ordenes-detalle__campo-valor">{{ $resumenContrato['aplicaciones_previstas'] }}</p>
+                                </div>
+                                <div class="ag-ordenes-detalle__campo">
+                                    <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato_hectareas') }}</p>
+                                    <p class="ag-ordenes-detalle__campo-valor">{{ $resumenContrato['hectareas_contratadas'] }} ha</p>
+                                </div>
+                                <div class="ag-ordenes-detalle__campo">
+                                    <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato_fecha_inicio') }}</p>
+                                    <p class="ag-ordenes-detalle__campo-valor">{{ $resumenContrato['fecha_inicio'] }}</p>
+                                </div>
+                                <div class="ag-ordenes-detalle__campo">
+                                    <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato_fecha_fin') }}</p>
+                                    <p class="ag-ordenes-detalle__campo-valor">{{ $resumenContrato['fecha_fin'] ?? __('operaciones.ordenes.valor_sin_definir') }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+                </x-molecules.form-section>
+
+                <x-molecules.form-section accent="success" :title="__('operaciones.ordenes.seccion_datos')" :count="__('operaciones.ordenes.campos_contador', ['cantidad' => 4])">
                     @foreach ($datosOrden as $campo)
                         <div class="ag-ordenes-detalle__campo">
                             <p class="ag-ordenes-detalle__campo-label">{{ $campo['label'] }}</p>
@@ -279,34 +333,13 @@
                 @endif
 
                 <x-slot:aside>
-                    <x-molecules.form-section accent="warning" :title="__('operaciones.ordenes.seccion_limites')" :count="__('operaciones.ordenes.campos_contador', ['cantidad' => 5])">
-                        @foreach ($limitesItems as $limite)
-                            <div class="ag-ordenes-detalle__campo">
-                                <p class="ag-ordenes-detalle__campo-label">{{ $limite['label'] }}</p>
-                                <p class="ag-ordenes-detalle__campo-valor">{{ $limite['value'] }}</p>
-                            </div>
-                        @endforeach
-
-                        <div class="ag-form-section__field--full ag-ordenes-form__ayuda">
-                            {{ __('operaciones.ordenes.seccion_limites_ayuda') }}
-                        </div>
-                    </x-molecules.form-section>
-
-                    <x-molecules.form-section accent="primary-2" :title="__('operaciones.ordenes.seccion_vuelo')" :count="__('operaciones.ordenes.campos_contador', ['cantidad' => 3])">
-                        <div class="ag-ordenes-detalle__campo">
-                            <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_altura_vuelo_m') }}</p>
-                            <p class="ag-ordenes-detalle__campo-valor">{{ $orden->altura_vuelo_m !== null ? "{$orden->altura_vuelo_m} m" : __('operaciones.ordenes.limite_sin_definir') }}</p>
-                        </div>
-                        <div class="ag-ordenes-detalle__campo">
-                            <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_velocidad_vuelo_kmh') }}</p>
-                            <p class="ag-ordenes-detalle__campo-valor">{{ $orden->velocidad_vuelo_kmh !== null ? "{$orden->velocidad_vuelo_kmh} km/h" : __('operaciones.ordenes.limite_sin_definir') }}</p>
-                        </div>
-                        <div class="ag-ordenes-detalle__campo">
-                            <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_ancho_pasada_m') }}</p>
-                            <p class="ag-ordenes-detalle__campo-valor">{{ $orden->ancho_pasada_m !== null ? "{$orden->ancho_pasada_m} m" : __('operaciones.ordenes.limite_sin_definir') }}</p>
-                        </div>
-                    </x-molecules.form-section>
-
+                    {{--
+                        Límites climáticos y parámetros de vuelo (5+3 campos)
+                        se mostraban acá hasta la reforma del 18/9/2026: ya no
+                        son datos de la orden, se movieron a `Trabajo` (cargados
+                        por equipo en Asignación de equipos) — ver docblock de
+                        `OrdenAplicacion` y de `AsignarEquipoOrdenRequest`.
+                    --}}
                     <x-molecules.progress-meter
                         :title="__('operaciones.ordenes.avance_titulo')"
                         :percent="$porcentajeAsignado"

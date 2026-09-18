@@ -120,6 +120,14 @@ final class AsignacionEquiposController
                 'lote_id' => (int) $lote['lote_id'],
                 'hectareas' => (string) $lote['hectareas'],
             ], $equipo['lotes']),
+            'humedad_min_pct' => $this->cadenaONull($equipo['humedad_min_pct'] ?? null),
+            'humedad_max_pct' => $this->cadenaONull($equipo['humedad_max_pct'] ?? null),
+            'viento_max_kmh' => $this->cadenaONull($equipo['viento_max_kmh'] ?? null),
+            'temperatura_max_c' => $this->cadenaONull($equipo['temperatura_max_c'] ?? null),
+            'velocidad_max_kmh' => $this->cadenaONull($equipo['velocidad_max_kmh'] ?? null),
+            'altura_vuelo_m' => $this->cadenaONull($equipo['altura_vuelo_m'] ?? null),
+            'velocidad_vuelo_kmh' => $this->cadenaONull($equipo['velocidad_vuelo_kmh'] ?? null),
+            'ancho_pasada_m' => $this->cadenaONull($equipo['ancho_pasada_m'] ?? null),
         ], $datos['equipos']);
 
         try {
@@ -133,6 +141,12 @@ final class AsignacionEquiposController
         return redirect()
             ->route('panel.asignacion-equipos.show', $orden)
             ->with('estado', __('operaciones.asignacion_equipos.asignado'));
+    }
+
+    /** Mismo criterio que `OrdenesController::cadenaONull()`: cadena vacía del formulario es "no completado", no un `''` guardado. */
+    private function cadenaONull(mixed $valor): ?string
+    {
+        return $valor === null || $valor === '' ? null : (string) $valor;
     }
 
     /**

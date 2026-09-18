@@ -99,6 +99,16 @@ function inicializar(root) {
             const texto = document.createElement('span');
             texto.textContent = buffer || etiquetaBuscar;
             fila.append(texto);
+            // Sin foco propio (invariante de accesibilidad: un solo elemento
+            // enfocable, el trigger, ver docblock de arriba) — visualmente
+            // parece un input de texto, así que un usuario real le hace clic
+            // esperando poner el cursor ahí. Sin este `preventDefault()`, ese
+            // clic no tiene ningún control focuseable que lo reciba: el
+            // navegador termina de-enfocando el trigger, `focusout` lo toma
+            // como "foco salió de la raíz" y cierra el combobox — el bug
+            // reportado como "el select se oculta al querer buscar". Mismo
+            // mecanismo que ya usa cada `<li>` de opción de abajo.
+            fila.addEventListener('mousedown', (evento) => evento.preventDefault());
             listbox.append(fila);
         }
 

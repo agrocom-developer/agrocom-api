@@ -215,3 +215,38 @@
         gap: var(--ag-space-1);
     }
 }
+
+/* Subsección: Condiciones de vuelo (8 campos numéricos — humedad, viento,
+   temperatura, velocidad, altura, ancho) dentro de `.ag-asignacion-equipos-ficha__equipo-fila`.
+   El grid de dos columnas lo da `ag-form-section__body` (aplicada junto a
+   esta clase en el Blade) — acá solo el separador con la cabecera del
+   equipo de arriba. */
+.ag-asignacion-equipos-ficha__condiciones-vuelo {
+    padding-top: var(--ag-space-4);
+    border-top: 1px solid var(--ag-color-border-row);
+}
+
+/* Título de la subsección "Condiciones de vuelo" — etiqueta igual que los
+   labels de campo (font-size/color/peso), pero no va dentro de un <label>
+   (no hay un único control a etiquetar — hay 8). Ocupa el ancho completo
+   para que los 8 inputs de abajo, en su grid, empiecen en la fila siguiente
+   (mismo criterio que `.ag-form-section__field--full`). */
+.ag-asignacion-equipos-ficha__condiciones-titulo {
+    grid-column: 1 / -1;
+    margin: 0;
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+    color: var(--ag-color-text);
+}
+
+/* Texto de ayuda bajo el título — muted, pequeño, para aclarar qué van a
+   controlar esos 8 campos (límites/máximos del equipo según sus capacidades). */
+.ag-asignacion-equipos-ficha__condiciones-ayuda {
+    grid-column: 1 / -1;
+    margin: 0;
+    padding-top: 0;
+    padding-bottom: var(--ag-space-2);
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text-muted);
+    border-top: none;
+}

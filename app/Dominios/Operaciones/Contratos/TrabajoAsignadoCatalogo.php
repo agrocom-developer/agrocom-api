@@ -12,6 +12,17 @@ namespace App\Dominios\Operaciones\Contratos;
  * `Aplicacion/AsignarEquiposOrden`) — la app de campo lo lee de acá y lo usa
  * TAL CUAL para abrir sesiones sobre este trabajo (`abrirSesion` lo resuelve
  * por `trabajo_uuid_cliente`), sin generar uno propio.
+ *
+ * Los 8 campos de límites climáticos y parámetros de vuelo
+ * (`humedadMinPct`...`anchoPasadaM`) llegaron acá desde
+ * `OrdenAplicacionCatalogo` (migración
+ * `2026_09_18_100001_mueve_clima_vuelo_de_ordenes_a_trabajos_table`):
+ * describen el vuelo que ejecuta ESTE equipo, no la orden completa — todos
+ * `?string` (`nullable`, invariante 6 de CLAUDE.md), `null` cuando el jefe
+ * de campo no los completó al asignar. Coherente con que esta clase ya
+ * filtra `whereNotNull('equipo_trabajo_id')` (solo los `Trabajo` nacidos de
+ * `abrirPorAsignacion()`): son los únicos que tiene sentido mostrarle al
+ * piloto antes del vuelo.
  */
 final readonly class TrabajoAsignadoCatalogo
 {
@@ -22,6 +33,14 @@ final readonly class TrabajoAsignadoCatalogo
         public int $loteId,
         public string $hectareasDeclaradas,
         public int $equipoTrabajoId,
+        public ?string $humedadMinPct,
+        public ?string $vientoMaxKmh,
+        public ?string $temperaturaMaxC,
+        public ?string $humedadMaxPct,
+        public ?string $velocidadMaxKmh,
+        public ?string $alturaVueloM,
+        public ?string $velocidadVueloKmh,
+        public ?string $anchoPasadaM,
         public string $updatedAt,
     ) {}
 
@@ -35,6 +54,14 @@ final readonly class TrabajoAsignadoCatalogo
             'lote_id' => $this->loteId,
             'hectareas_declaradas' => $this->hectareasDeclaradas,
             'equipo_trabajo_id' => $this->equipoTrabajoId,
+            'humedad_min_pct' => $this->humedadMinPct,
+            'viento_max_kmh' => $this->vientoMaxKmh,
+            'temperatura_max_c' => $this->temperaturaMaxC,
+            'humedad_max_pct' => $this->humedadMaxPct,
+            'velocidad_max_kmh' => $this->velocidadMaxKmh,
+            'altura_vuelo_m' => $this->alturaVueloM,
+            'velocidad_vuelo_kmh' => $this->velocidadVueloKmh,
+            'ancho_pasada_m' => $this->anchoPasadaM,
             'updated_at' => $this->updatedAt,
         ];
     }

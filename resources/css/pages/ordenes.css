@@ -282,9 +282,22 @@
 
 /* Formulario (create/edit) */
 
+/* Mismo estilo que el `help` nativo de los átomos (`.ag-date__help`,
+   `.ag-select__help`, `.ag-input__help` — todos idénticos): acá va aparte
+   (no el prop `help` del átomo) porque necesita la fecha de inicio del
+   contrato destacada en rojo, algo que el prop `help` (texto plano) no
+   puede resolver. */
 .ag-ordenes-form__ayuda {
+    margin: 0;
+    font-size: var(--ag-font-size-xs);
     color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-sm);
+}
+
+/* Fecha de inicio del contrato, destacada dentro de la ayuda de "Fecha de
+   emisión" (reforma 18/9/2026) — referencia visual, no marca de error. */
+.ag-ordenes-form__fecha-destacada {
+    color: var(--ag-color-danger);
+    font-weight: var(--ag-font-weight-medium);
 }
 
 /* Lotes repetibles (HU-92, tarea 107) — mismo patrón que
@@ -305,4 +318,187 @@
 [data-ag-orden-lotes-lista] > .ag-ordenes-form__lote:first-child {
     padding-top: 0;
     border-top: none;
+}
+
+/* Sección "Datos del contrato" (reforma 18/9/2026) — resumen del cliente,
+   propiedades, y aplicaciones previstas una vez elegido el contrato. El
+   grid de dos columnas lo da la clase compartida `ag-form-section__body`
+   (aplicada junto a esta en el Blade, componente reutilizable — ver su
+   docblock en components/form-section.css, con compuerta automática en
+   tests/Unit/PulidoNavegacionPanelTest.php): acá solo el patrón label
+   arriba + valor abajo, ya resuelto por `.ag-select__label`/
+   `.ag-form-section__field`. */
+
+/* Resumen del contrato elegido: logo del cliente a la izquierda, datos como
+   complemento a la derecha (`ag-ordenes-detalle__campo-label`/`-valor`,
+   mismas clases que "Datos de la orden" de `ordenes/show.blade.php` —
+   pedido explícito del usuario 18/9/2026, mismo lenguaje visual en las dos
+   pantallas). Fila flex para el logo + grid; el grid interno de los campos
+   lo da `ag-form-section__body` por composición (ver el Blade), no una
+   regla propia acá. */
+.ag-ordenes-form__resumen-contrato {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--ag-space-4);
+    padding-top: var(--ag-space-4);
+    border-top: 1px solid var(--ag-color-border-row);
+}
+
+.ag-ordenes-form__resumen-datos {
+    flex: 1;
+}
+
+/* Logo del cliente — cuadrado fijo, mismo radio que una tarjeta chica. Una
+   sola `<img>`: el JS le pone el logo real o cae al placeholder del propio
+   atributo `data-logo-placeholder` (nunca dos elementos alternando `hidden`). */
+.ag-ordenes-form__logo {
+    flex: none;
+    width: 10rem;
+    height: 10rem;
+    border-radius: var(--ag-radius-md);
+    object-fit: contain;
+    background-color: var(--ag-color-surface-inset);
+    border: 1px solid var(--ag-color-border-row);
+}
+
+/* Input-group: "Cantidad de equipos necesarios" + atajo a Asignar equipos
+   (solo en edición). El input ocupa el espacio disponible, el botón queda
+   fijo al lado, alineado con la base del control (no con el label). */
+.ag-ordenes-form__input-group {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--ag-space-2);
+}
+
+.ag-ordenes-form__input-group .ag-input {
+    flex: 1;
+}
+
+.ag-ordenes-form__input-group-boton {
+    flex: none;
+}
+
+/* Ícono de ayuda (tooltip) junto a un encabezado de columna de la tabla de
+   lotes — "Hectáreas solicitadas" no es obvio a simple vista. */
+.ag-ordenes-form__lotes-ayuda-icono {
+    margin-left: var(--ag-space-1);
+    font-size: 1rem;
+    vertical-align: text-bottom;
+    color: var(--ag-color-text-muted);
+    cursor: help;
+}
+
+/* Buscador de lotes (tabla, §6.2) — input de búsqueda por código/propiedad.
+   Envuelto en div para que sea field--full sin contaminar el input atom
+   (que no se puede wrappear sin perder su grid/margin). */
+.ag-ordenes-form__lotes-buscador {
+    display: flex;
+    align-items: center;
+}
+
+.ag-ordenes-form__lotes-buscador .ag-input__control {
+    width: 100%;
+}
+
+/* Tabla de lotes con checkbox — mismo estilo que
+   `.ag-contratos-form__modal-tabla` (contratos.css, línea ~378), pero acá
+   es persistente (no en modal) y genera su propia `<table>` desde JS.
+   Contenedor: borde/radio/fondo, filas paginadas dentro. */
+.ag-ordenes-form__lotes-tabla {
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+    overflow: hidden;
+}
+
+.ag-ordenes-form__lotes-tabla table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.ag-ordenes-form__lotes-tabla thead {
+    background-color: var(--ag-color-bg-table-head);
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ag-ordenes-form__lotes-tabla thead td {
+    padding: var(--ag-space-3) var(--ag-space-4);
+    text-align: left;
+    border-bottom: 1px solid var(--ag-color-border-row);
+}
+
+.ag-ordenes-form__lotes-tabla-fila {
+    border-top: 1px solid var(--ag-color-border-row);
+    color: var(--ag-color-text);
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-ordenes-form__lotes-tabla-fila:hover {
+    background-color: var(--ag-color-bg-row-hover);
+}
+
+.ag-ordenes-form__lotes-tabla-fila td {
+    padding: var(--ag-space-3) var(--ag-space-4);
+    vertical-align: middle;
+}
+
+/* Celda de checkbox — el control real es el `<label class="ag-checkbox-group__option">`
+   que arma el JS adentro (mismo marcado que `atoms/checkbox-group`, ver
+   checkbox-group.css): esa clase ya trae `position: relative` +
+   `display: inline-flex` + `cursor: pointer`, así que acá solo se acota el
+   ancho de la celda para que el label no se estire más de lo necesario. */
+.ag-ordenes-form__lotes-tabla-checkbox {
+    width: 2.5rem;
+}
+
+/* Input de hectáreas dentro de la tabla — oculto hasta que se tilden
+   el checkbox de la fila (lógica en JS). Aunque lleva clase `.ag-input__control`
+   (por reutilización de estilos base), acá es un <input> directo en una <td>,
+   no un contenedor flex: se restituye display:inline para que funcione como
+   input nativo en su cell. */
+.ag-ordenes-form__lotes-hectareas {
+    display: inline;
+    width: 100%;
+    flex: none;
+    align-items: unset;
+}
+
+.ag-ordenes-form__lotes-hectareas:disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* Contenedor de paginado — botones anterior/siguiente + info (X / Y) en el
+   centro. Flexbox con botones a los costados y el texto en el medio. */
+.ag-ordenes-form__lotes-paginado {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-3) var(--ag-space-4);
+    border-top: 1px solid var(--ag-color-border-row);
+}
+
+/* Información de página actual — "1 / 5", texto pequeño muted. */
+.ag-ordenes-form__paginado-info {
+    flex: 1;
+    text-align: center;
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Estado vacío — cuando no hay lotes (sin contrato elegido o búsqueda sin
+   resultados). Mismo estilo que `.ag-contratos-form__modal-tabla-vacio`
+   (contratos.css línea ~412): texto faint, padding, para verse como un estado
+   de interfaz y no confundirse con error. */
+.ag-ordenes-form__lotes-vacio {
+    padding: var(--ag-space-4);
+    text-align: center;
+    color: var(--ag-color-text-faint);
+    font-size: var(--ag-font-size-sm);
 }

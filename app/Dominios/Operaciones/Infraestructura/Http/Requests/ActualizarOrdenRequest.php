@@ -18,6 +18,9 @@ use Illuminate\Validation\Rule;
  * acá: es una regla de ESTADO, no de forma, y vive en
  * `Aplicacion/ActualizarOrden` (invariante 7) para que también la respete un
  * `PUT` directo.
+ *
+ * Los 8 campos de límites climáticos y parámetros de vuelo YA NO se piden
+ * acá — ver el docblock de `CrearOrdenRequest` (misma nota, mismas reglas).
  */
 final class ActualizarOrdenRequest extends FormRequest
 {
@@ -35,14 +38,6 @@ final class ActualizarOrdenRequest extends FormRequest
             'categoria_insumo_id' => ['required', 'integer', Rule::exists('ope_categorias_insumo', 'id')->whereNull('deleted_at')],
             'litros_ha' => ['nullable', 'numeric', 'gt:0'],
             'kilos_por_vuelo' => ['nullable', 'numeric', 'gt:0'],
-            'humedad_min_pct' => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'humedad_max_pct' => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'viento_max_kmh' => ['nullable', 'numeric', 'gt:0'],
-            'temperatura_max_c' => ['nullable', 'numeric', 'gt:-10', 'lt:60'],
-            'velocidad_max_kmh' => ['nullable', 'numeric', 'gt:0'],
-            'altura_vuelo_m' => ['nullable', 'numeric', 'gt:0'],
-            'velocidad_vuelo_kmh' => ['nullable', 'numeric', 'gt:0'],
-            'ancho_pasada_m' => ['nullable', 'numeric', 'gt:0'],
             'observaciones' => ['nullable', 'string'],
             'emitida_por_contacto_id' => ['nullable', 'integer', Rule::exists('com_cliente_contactos', 'id')->whereNull('deleted_at')],
             'fecha_emision' => ['required', 'date'],
@@ -52,13 +47,6 @@ final class ActualizarOrdenRequest extends FormRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator): void {
-            $minimo = $this->input('humedad_min_pct');
-            $maximo = $this->input('humedad_max_pct');
-
-            if ($minimo !== null && $minimo !== '' && $maximo !== null && $maximo !== '' && (float) $minimo > (float) $maximo) {
-                $validator->errors()->add('humedad_min_pct', __('operaciones.ordenes.error_humedad_rango'));
-            }
-
             $this->validarCampoSegunCategoriaInsumo($validator);
 
             $contratoId = $this->input('contrato_id');

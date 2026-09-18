@@ -46,6 +46,14 @@ final class LecturaTrabajosAsignadosEloquent implements LecturaTrabajosAsignados
                 loteId: $trabajo->lote_id,
                 hectareasDeclaradas: $trabajo->hectareas_declaradas,
                 equipoTrabajoId: (int) $trabajo->equipo_trabajo_id,
+                humedadMinPct: $trabajo->humedad_min_pct,
+                vientoMaxKmh: $trabajo->viento_max_kmh,
+                temperaturaMaxC: $trabajo->temperatura_max_c,
+                humedadMaxPct: $trabajo->humedad_max_pct,
+                velocidadMaxKmh: $trabajo->velocidad_max_kmh,
+                alturaVueloM: $trabajo->altura_vuelo_m,
+                velocidadVueloKmh: $trabajo->velocidad_vuelo_kmh,
+                anchoPasadaM: $trabajo->ancho_pasada_m,
                 updatedAt: $trabajo->updated_at->toIso8601String(),
             ))
             ->all();

@@ -58,7 +58,12 @@ final class AsignarEquiposOrden
     ) {}
 
     /**
-     * @param  list<array{equipo_trabajo_id: int, lotes: list<array{lote_id: int, hectareas: string}>}>  $asignaciones
+     * Los 8 campos de límites climáticos/parámetros de vuelo (opcionales,
+     * `null` cuando el jefe de campo no los completó en este paso) son POR
+     * EQUIPO, no por lote: se replican tal cual a cada `Trabajo` que ese
+     * equipo abre en esta ejecución (ver `AsignarEquipoOrdenRequest`).
+     *
+     * @param  list<array{equipo_trabajo_id: int, lotes: list<array{lote_id: int, hectareas: string}>, humedad_min_pct: string|null, humedad_max_pct: string|null, viento_max_kmh: string|null, temperatura_max_c: string|null, velocidad_max_kmh: string|null, altura_vuelo_m: string|null, velocidad_vuelo_kmh: string|null, ancho_pasada_m: string|null}>  $asignaciones
      * @return list<Trabajo>
      *
      * @throws OrdenNoVigenteParaAsignacion
@@ -124,6 +129,14 @@ final class AsignarEquiposOrden
                     'equipo_trabajo_id' => $asignacion['equipo_trabajo_id'],
                     'nro_aplicacion' => $orden->nro_aplicacion,
                     'hectareas_declaradas' => $lote['hectareas'],
+                    'humedad_min_pct' => $asignacion['humedad_min_pct'] ?? null,
+                    'humedad_max_pct' => $asignacion['humedad_max_pct'] ?? null,
+                    'viento_max_kmh' => $asignacion['viento_max_kmh'] ?? null,
+                    'temperatura_max_c' => $asignacion['temperatura_max_c'] ?? null,
+                    'velocidad_max_kmh' => $asignacion['velocidad_max_kmh'] ?? null,
+                    'altura_vuelo_m' => $asignacion['altura_vuelo_m'] ?? null,
+                    'velocidad_vuelo_kmh' => $asignacion['velocidad_vuelo_kmh'] ?? null,
+                    'ancho_pasada_m' => $asignacion['ancho_pasada_m'] ?? null,
                 ]),
                 $asignacion['lotes'],
             ),

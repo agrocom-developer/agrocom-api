@@ -53,6 +53,16 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * tarea. FK plana a `per_equipos_trabajo` (otro módulo, ADR 0003 regla 3):
  * sin relación Eloquent, se lee por `Personal\Contratos\LecturaEquipoTrabajo`.
  *
+ * Los 8 campos de límites climáticos y parámetros de vuelo
+ * (`humedad_min_pct`...`ancho_pasada_m`) llegaron acá desde
+ * `ope_ordenes_aplicacion` (migración
+ * `2026_09_18_100001_mueve_clima_vuelo_de_ordenes_a_trabajos_table`):
+ * describen las condiciones del vuelo que hace ESE equipo ese día, no la
+ * intención/pedido que es la orden. `AsignarEquiposOrden::ejecutar()` los
+ * carga al abrir el trabajo (mismo valor para todos los `Trabajo` que un
+ * mismo equipo abre en esa asignación); `NULL` en trabajos que nacen por
+ * sync sin pasar por asignación previa.
+ *
  * @property int $id
  * @property string $uuid_cliente
  * @property int $orden_id
@@ -65,6 +75,14 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property CarbonImmutable|null $fin
  * @property string|null $cierre_uuid_cliente
  * @property string|null $litros_sobrante
+ * @property string|null $humedad_min_pct
+ * @property string|null $viento_max_kmh
+ * @property string|null $temperatura_max_c
+ * @property string|null $humedad_max_pct
+ * @property string|null $velocidad_max_kmh
+ * @property string|null $altura_vuelo_m
+ * @property string|null $velocidad_vuelo_kmh
+ * @property string|null $ancho_pasada_m
  * @property int|null $imagen_campo_evidencia_id
  */
 class Trabajo extends ModeloDominio
@@ -87,6 +105,14 @@ class Trabajo extends ModeloDominio
         'fin',
         'cierre_uuid_cliente',
         'litros_sobrante',
+        'humedad_min_pct',
+        'viento_max_kmh',
+        'temperatura_max_c',
+        'humedad_max_pct',
+        'velocidad_max_kmh',
+        'altura_vuelo_m',
+        'velocidad_vuelo_kmh',
+        'ancho_pasada_m',
         'imagen_campo_evidencia_id',
     ];
 
@@ -101,6 +127,14 @@ class Trabajo extends ModeloDominio
             'inicio' => 'immutable_datetime',
             'fin' => 'immutable_datetime',
             'litros_sobrante' => 'decimal:2',
+            'humedad_min_pct' => 'decimal:2',
+            'viento_max_kmh' => 'decimal:2',
+            'temperatura_max_c' => 'decimal:2',
+            'humedad_max_pct' => 'decimal:2',
+            'velocidad_max_kmh' => 'decimal:2',
+            'altura_vuelo_m' => 'decimal:2',
+            'velocidad_vuelo_kmh' => 'decimal:2',
+            'ancho_pasada_m' => 'decimal:2',
             'imagen_campo_evidencia_id' => 'integer',
         ];
     }
