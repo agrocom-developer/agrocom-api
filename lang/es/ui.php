@@ -148,6 +148,7 @@ return [
         'filtros_boton' => 'Filtros',
         'filtros_aplicar' => 'Aplicar',
         'filtros_limpiar' => 'Limpiar filtros',
+        'filtro_placeholder' => 'Filtrar…',
         'vista_grupo' => 'Vista del listado',
         'vista_lista' => 'Ver como lista',
         'vista_grilla' => 'Ver como grilla',
