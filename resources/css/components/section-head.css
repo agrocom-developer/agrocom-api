@@ -53,6 +53,10 @@
     background: var(--ag-color-primary-2-contrast-fill);
 }
 
+.ag-section-head[data-accent='alert'] .ag-section-head__bar {
+    background: var(--ag-color-alert-contrast-fill);
+}
+
 .ag-section-head__title {
     margin: 0;
     font-family: var(--ag-font-family-base);

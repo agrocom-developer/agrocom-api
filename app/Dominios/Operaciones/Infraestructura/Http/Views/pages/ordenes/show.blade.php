@@ -199,18 +199,24 @@
             @endphp
 
             {{-- `accent` de cada form-section (18/9/2026, pedido explícito
-                del usuario — antes las 6 secciones de esta pantalla eran
-                todas verdes): "Datos de la orden" se queda SIN accent
-                (verde `--ag-color-primary` por defecto, es la sección
-                principal); el resto rota por tokens sin carga de
-                bueno/malo (info/distintivo-1/distintivo-2/primary-2) —
-                deliberadamente sin `success`/`danger` acá, esos ya
-                significan algo real en esta misma pantalla (KPI
-                "aplicaciones" y alertas de RC) y reusarlos como decoración
-                repetiría la colisión "dos verdes por casualidad" que ya se
-                documentó para las tarjetas KPI más arriba. --}}
+                del usuario, varias vueltas hasta el orden definitivo).
+                Motivo: con 7 `section-head` en esta pantalla (6
+                `form-section` + `progress-meter`, "Avance de asignación",
+                más abajo) y solo 6 tonos sin carga de bueno/malo, alguno
+                se repetía sin importar el orden ("no se repita como se
+                ve"). El usuario dio el mapeo final, uno a uno, sin
+                repetir ninguno: `success`→Datos de la orden,
+                `info`→Lotes, `distintivo-2`→Actividad, `alert`→Vínculos
+                ("Relacionado"), `warning`→Límites climáticos,
+                `primary-2`→Parámetros de vuelo, `distintivo-1`→Avance de
+                asignación (coincide con su propio porcentaje, ver
+                `progress-meter.blade.php`). `danger` queda sin usar acá.
+                Nota: `success` en "Datos de la orden" comparte tono con
+                el KPI "Aplicaciones" de esta misma pantalla cuando
+                completa su meta — decisión explícita del usuario, no un
+                descuido (se le consultó puntualmente antes de fijarlo). --}}
             <x-molecules.form-layout>
-                <x-molecules.form-section :title="__('operaciones.ordenes.seccion_datos')" :count="__('operaciones.ordenes.campos_contador', ['cantidad' => 6])">
+                <x-molecules.form-section accent="success" :title="__('operaciones.ordenes.seccion_datos')" :count="__('operaciones.ordenes.campos_contador', ['cantidad' => 6])">
                     @foreach ($datosOrden as $campo)
                         <div class="ag-ordenes-detalle__campo">
                             <p class="ag-ordenes-detalle__campo-label">{{ $campo['label'] }}</p>
@@ -250,14 +256,14 @@
                     </div>
                 </x-molecules.form-section>
 
-                <x-molecules.form-section accent="distintivo-1" :title="__('operaciones.ordenes.seccion_actividad')">
+                <x-molecules.form-section accent="distintivo-2" :title="__('operaciones.ordenes.seccion_actividad')">
                     <div class="ag-form-section__field--full">
                         <x-molecules.timeline :items="$actividad" />
                     </div>
                 </x-molecules.form-section>
 
                 @if (count($vinculos))
-                    <x-molecules.form-section accent="distintivo-2" :title="__('operaciones.ordenes.seccion_vinculos')">
+                    <x-molecules.form-section accent="alert" :title="__('operaciones.ordenes.seccion_vinculos')">
                         <div class="ag-form-section__field--full ag-ordenes-detalle__vinculos">
                             @foreach ($vinculos as $vinculo)
                                 <x-molecules.link-row
