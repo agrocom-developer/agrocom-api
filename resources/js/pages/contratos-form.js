@@ -58,8 +58,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalLotesTitulo = formulario.querySelector('[data-ag-modal-lotes-titulo]');
     const modalCrearLoteSlot = formulario.querySelector('[data-ag-modal-crear-lote-slot]');
     const modalLotesLista = formulario.querySelector('[data-ag-modal-lotes-lista]');
+    const modalLotesAgotado = formulario.querySelector('[data-ag-modal-lotes-agotado]');
     const modalLotesGuardarBtn = formulario.querySelector('[data-ag-modal-lotes-guardar]');
     const bsModal = modalLotesEl ? bootstrap.Modal.getOrCreateInstance(modalLotesEl) : null;
+    const selectCampania = formulario.querySelector('[name="campania_id"]');
+
+    // Modal informativo del contrato en conflicto por lote (tarea
+    // "contrato-lotes-conflicto", 18/9/2026) — JSON embebido indexado por
+    // `lote_id`, mismo criterio de parseo defensivo que `propiedadesYLotes`.
+    const modalConflictoEl = formulario.querySelector('[data-ag-modal-conflicto-lote]');
+    const bsModalConflicto = modalConflictoEl ? bootstrap.Modal.getOrCreateInstance(modalConflictoEl) : null;
+    const scriptConflictos = formulario.querySelector('[data-ag-conflictos-lotes]');
+    let conflictosPorLote = {};
+    if (scriptConflictos) {
+        try {
+            conflictosPorLote = JSON.parse(scriptConflictos.textContent) || {};
+        } catch (e) {
+            console.error('Error al parsear conflictos de lotes JSON:', e);
+        }
+    }
 
     const urlCrearLote = modalLotesEl?.dataset.urlCrearLote || '';
     const textoSinLotes = modalLotesEl?.dataset.textoSinLotes || '';
@@ -358,12 +375,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const lotes = propiedad.lotes || [];
 
+        // Exclusión por conflicto (tarea "contrato-lotes-conflicto",
+        // 18/9/2026): un lote ya comprometido en OTRO contrato vigente de la
+        // MISMA campaña elegida en este formulario no se ofrece para elegir
+        // — salvo que ya esté en el contrato que se está editando (ese sigue
+        // apareciendo tildado, como siempre). Sin campaña elegida todavía,
+        // no hay nada que excluir.
+        const campaniaActual = selectCampania?.value ? String(selectCampania.value) : '';
+        const lotesVisibles = lotes.filter((lote) => {
+            if (idsYaEnContrato.has(String(lote.id))) return true;
+            if (!campaniaActual) return true;
+            const ocupadas = (lote.ocupado_en_campanias || []).map(String);
+            return !ocupadas.includes(campaniaActual);
+        });
+
+        // "Todos ocupados": la propiedad SÍ tiene lotes, pero ninguno queda
+        // disponible para esta campaña — distinto del caso de abajo (la
+        // propiedad no tiene ningún lote cargado en el catálogo).
+        if (modalLotesAgotado) {
+            modalLotesAgotado.hidden = !(lotes.length > 0 && lotesVisibles.length === 0);
+        }
+
         if (lotes.length === 0) {
+            modalLotesLista.hidden = false;
             const vacio = document.createElement('p');
             vacio.className = 'ag-contratos-form__lotes-empty-text';
             vacio.textContent = textoSinLotes;
             modalLotesLista.appendChild(vacio);
+        } else if (lotesVisibles.length === 0) {
+            modalLotesLista.hidden = true;
         } else {
+            modalLotesLista.hidden = false;
             const tabla = document.createElement('div');
             tabla.className = 'ag-contratos-form__modal-tabla';
 
@@ -410,7 +452,7 @@ document.addEventListener('DOMContentLoaded', () => {
             head.append(celdaTodos, colCodigo, colHectareas, colDesnivel, colLimpieza);
             tabla.appendChild(head);
 
-            lotes.forEach((lote) => {
+            lotesVisibles.forEach((lote) => {
                 const fila = document.createElement('div');
                 fila.className = 'ag-contratos-form__modal-tabla-fila';
 
@@ -497,6 +539,42 @@ document.addEventListener('DOMContentLoaded', () => {
                 grupo.remove();
             }
             renderizarPills();
+            return;
+        }
+
+        // Modal informativo del contrato en conflicto (tarea
+        // "contrato-lotes-conflicto", 18/9/2026) — pinta los campos desde el
+        // JSON embebido, sin pedirle nada al servidor.
+        const botonVerConflicto = e.target.closest('[data-ag-lote-conflicto-ver]');
+        if (botonVerConflicto && modalConflictoEl && bsModalConflicto) {
+            e.preventDefault();
+            const conflicto = conflictosPorLote[botonVerConflicto.dataset.loteIdConflicto];
+            if (!conflicto) return;
+
+            const setTexto = (selector, valor) => {
+                const el = modalConflictoEl.querySelector(selector);
+                if (el) el.textContent = valor;
+            };
+
+            setTexto('[data-ag-conflicto-cliente]', conflicto.cliente);
+            setTexto('[data-ag-conflicto-propiedades]', conflicto.propiedades);
+            setTexto('[data-ag-conflicto-vigencia]', conflicto.vigencia);
+            setTexto('[data-ag-conflicto-monto]', conflicto.monto_total);
+
+            const badgeEstado = modalConflictoEl.querySelector('[data-ag-conflicto-estado]');
+            if (badgeEstado) {
+                Array.from(badgeEstado.classList)
+                    .filter((clase) => clase.startsWith('ag-badge--'))
+                    .forEach((clase) => badgeEstado.classList.remove(clase));
+                badgeEstado.classList.add(`ag-badge--${conflicto.estado_variant}`);
+                const label = badgeEstado.querySelector('.ag-badge__label');
+                if (label) label.textContent = conflicto.estado_label;
+            }
+
+            const botonEditar = modalConflictoEl.querySelector('[data-ag-conflicto-editar]');
+            if (botonEditar) botonEditar.setAttribute('href', conflicto.editar_url);
+
+            bsModalConflicto.show();
         }
     });
 

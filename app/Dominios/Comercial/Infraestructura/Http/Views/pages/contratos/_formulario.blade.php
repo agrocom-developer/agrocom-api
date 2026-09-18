@@ -23,7 +23,20 @@
       el cliente ya elegido. `edit()` no lo pasa (`null` por el `??` de abajo).
     - $propiedadesYLotesPorCliente (array): estructura anidada de cliente →
       propiedad → lotes, para select dependiente del formulario (tarea
-      "contratos-lotes", estrategia 'a': datos embebidos en HTML).
+      "contratos-lotes", estrategia 'a': datos embebidos en HTML). Cada lote
+      trae `ocupado_en_campanias` (tarea "contrato-lotes-conflicto",
+      18/9/2026): campañas donde ya está comprometido por OTRO contrato
+      vigente — el modal de selección lo usa para no ofrecerlo si coincide
+      con la campaña elegida en este formulario.
+    - $loteIdsConOrdenRegistrada (list<int>): lotes de ESTE contrato que ya
+      tienen una orden de aplicación registrada — el botón "Quitar" de
+      `_lotes-tabla.blade.php` se deshabilita para ellos (sin vista "show" de
+      contrato, es la única forma de proteger un lote con historial real).
+    - $conflictosPorLote (array<int, array>): lotes de ESTE contrato que
+      TAMBIÉN están en otro contrato vigente de la misma campaña — datos del
+      otro contrato para el modal informativo de conflicto
+      (`_modal-conflicto-lote.blade.php`), armados por
+      `ContratosController::formatearConflictos()`.
 
     `estado` y `monto_total` NUNCA son campos de este formulario: el primero
     lo cambia `panel.contratos.cambiar-estado` (otra pantalla, otra
@@ -400,14 +413,29 @@
             </div>
         </div>
 
+        {{-- Datos JSON embebidos: el otro contrato en conflicto por lote
+             (tarea "contrato-lotes-conflicto") — el JS los usa para pintar
+             el modal informativo sin pedirle nada al servidor. --}}
+        <script type="application/json" data-ag-conflictos-lotes>
+            {!! json_encode($conflictosPorLote) !!}
+        </script>
+
         {{-- Lista apilada de lotes ya agregados (agrupada por propiedad) —
              partial propio, ver `_lotes-tabla.blade.php`. --}}
-        @include('comercial::pages.contratos._lotes-tabla', ['lotesIniciales' => $lotesIniciales])
+        @include('comercial::pages.contratos._lotes-tabla', [
+            'lotesIniciales' => $lotesIniciales,
+            'loteIdsConOrdenRegistrada' => $loteIdsConOrdenRegistrada,
+            'conflictosPorLote' => $conflictosPorLote,
+        ])
     </x-molecules.form-section>
 
     {{-- Modal único de selección de lotes por propiedad — partial propio,
          ver `_modal-lotes.blade.php`. --}}
     @include('comercial::pages.contratos._modal-lotes')
+
+    {{-- Modal informativo del contrato en conflicto por un lote compartido —
+         partial propio, ver `_modal-conflicto-lote.blade.php`. --}}
+    @include('comercial::pages.contratos._modal-conflicto-lote')
 
     <x-organisms.form-actions-bar :status="__('comercial.contratos.estado_form')">
         <x-slot:actions>

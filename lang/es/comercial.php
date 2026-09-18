@@ -406,6 +406,24 @@ return [
         'crear_propiedad_corto' => 'Nueva',
         'crear_lote' => 'Crear lote',
 
+        // Conflicto de lotes entre contratos (tarea "contrato-lotes-conflicto",
+        // 18/9/2026): un mismo lote puede terminar en dos contratos vigentes
+        // de la misma campaña (la guarda de guardado solo bloquea al 100% de
+        // la propiedad, nunca por lote — ver VerificadorLotesDelContrato).
+        // Estas claves avisan el caso en la UI para que se resuelva a mano.
+        'lote_en_conflicto' => 'En conflicto',
+        'lote_conflicto_ver' => 'Ver contrato',
+        'lotes_quitar_bloqueado_orden' => 'Este lote ya tiene una orden de aplicación registrada en este contrato — no se puede quitar acá.',
+        'lotes_todos_ocupados_titulo' => 'Todos los lotes ya están comprometidos',
+        'lotes_todos_ocupados_detalle' => 'Todos los lotes de esta propiedad ya forman parte de otro contrato vigente de la misma campaña. Elige otra propiedad o crea un lote nuevo.',
+        'conflicto_modal_titulo' => 'Contrato en conflicto',
+        'conflicto_modal_cliente' => 'Cliente',
+        'conflicto_modal_propiedades' => 'Propiedades',
+        'conflicto_modal_vigencia' => 'Vigencia',
+        'conflicto_modal_estado' => 'Estado',
+        'conflicto_modal_monto' => 'Monto contratado (Bs)',
+        'conflicto_modal_editar' => 'Editar contrato',
+
         // Modal de lotes por propiedad (tarea "contratos-lotes", rediseño
         // sept/2026): reemplaza al panel lateral con checkboxes siempre
         // visibles — un modal por click de pill/opción del select, con

@@ -218,6 +218,25 @@
     font-weight: var(--ag-font-weight-medium);
 }
 
+/* Envuelve código + badge de conflicto + botón "Ver contrato" (tarea
+   "contrato-lotes-conflicto") sin agregar una columna nueva al grid de la
+   fila: sigue siendo un único hijo directo de `.ag-contratos-form__lote-row`. */
+.ag-contratos-form__lote-code-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    flex-wrap: wrap;
+}
+
+/* Envuelve el botón "Quitar" para poder deshabilitarlo con `title` (lote con
+   orden de aplicación registrada) sin tocar el grid de la fila — mismo
+   criterio que `.ag-contratos-form__lote-code-cell`. */
+.ag-contratos-form__lote-acciones {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+}
+
 .ag-contratos-form__lote-hectareas {
     color: var(--ag-color-text-muted);
     font-size: var(--ag-font-size-sm);

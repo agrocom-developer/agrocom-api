@@ -182,6 +182,12 @@ final class OrdenesController
             'datosContrato' => $datosContrato,
             'contactosDisponibles' => $this->contactosDisponibles(),
             'categoriasInsumoDisponibles' => $this->categoriasInsumoDisponibles(),
+            // Acceso directo desde "Editar contrato" del estado vacío "sin
+            // lotes" (tarea "contrato-lotes-conflicto", 18/9/2026, mismo
+            // criterio que `ContratosController::create()` con
+            // `clienteIdPreseleccionado`): con `?contrato_id=`, el
+            // formulario vuelve con ese contrato ya elegido.
+            'contratoIdPreseleccionado' => $request->integer('contrato_id') ?: null,
         ]);
     }
 
@@ -796,7 +802,7 @@ final class OrdenesController
      * contrato. Lectura directa por `DB::table` en las tablas de `Comercial`
      * (ADR 0003 regla 3, mismo criterio que el resto del controlador).
      *
-     * @return array<int, array{label: string, cliente: string, logo_url: ?string, propiedades: list<string>, aplicaciones_previstas: int, hectareas_contratadas: string, fecha_inicio: string, fecha_fin: ?string, contactos: list<array{id: int, nombre: string, tipo: string}>, lotes: list<array{lote_id: int, codigo: string, propiedad: string, hectareas: string, desnivel: ?string, desnivel_label: ?string, limpieza: ?string, limpieza_label: ?string}>, nro_aplicacion_sugerido: int|null}>
+     * @return array<int, array{label: string, cliente: string, logo_url: ?string, propiedades: list<string>, aplicaciones_previstas: int, hectareas_contratadas: string, fecha_inicio: string, fecha_fin: ?string, contactos: list<array{id: int, nombre: string, tipo: string}>, lotes: list<array{lote_id: int, codigo: string, propiedad: string, hectareas: string, desnivel: ?string, desnivel_label: ?string, limpieza: ?string, limpieza_label: ?string}>, nro_aplicacion_sugerido: int|null, contrato_edit_url: string}>
      */
     private function datosContratoParaFormulario(): array
     {
@@ -879,6 +885,12 @@ final class OrdenesController
                     'limpieza_label' => $lote->limpieza !== null ? __("comercial.lotes.lote_limpieza_{$lote->limpieza}") : null,
                 ])->values()->all(),
                 'nro_aplicacion_sugerido' => null,
+                // Botón "Editar contrato" del estado vacío "este contrato no
+                // tiene lotes" (tarea "contrato-lotes-conflicto", 18/9/2026)
+                // — `route()` con el nombre del módulo Comercial, no un
+                // modelo Eloquent cruzando la frontera (ADR 0003 regla 2: una
+                // URL nombrada no es un modelo ajeno).
+                'contrato_edit_url' => route('panel.contratos.edit', $contratoId),
             ];
         }
 
