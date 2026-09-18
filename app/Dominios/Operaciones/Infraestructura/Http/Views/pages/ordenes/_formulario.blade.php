@@ -195,6 +195,53 @@
                     <label class="ag-select__label">{{ __('operaciones.ordenes.campo_contrato_aplicaciones') }}</label>
                     <div class="ag-ordenes-form__valor" data-ag-aplicaciones-previstas>—</div>
                 </div>
+                <div class="ag-ordenes-form__resumen-campo">
+                    <label class="ag-select__label">{{ __('operaciones.ordenes.campo_contrato_hectareas') }}</label>
+                    <div class="ag-ordenes-form__valor" data-ag-hectareas-contratadas>—</div>
+                </div>
+                <div class="ag-ordenes-form__resumen-campo">
+                    <label class="ag-select__label">{{ __('operaciones.ordenes.campo_contrato_fecha_inicio') }}</label>
+                    <div class="ag-ordenes-form__valor" data-ag-fecha-inicio>—</div>
+                </div>
+                <div class="ag-ordenes-form__resumen-campo">
+                    <label class="ag-select__label">{{ __('operaciones.ordenes.campo_contrato_fecha_fin') }}</label>
+                    <div
+                        class="ag-ordenes-form__valor"
+                        data-ag-fecha-fin
+                        data-texto-sin-definir="{{ __('operaciones.ordenes.valor_sin_definir') }}"
+                    >—</div>
+                </div>
+            </div>
+
+            {{--
+                Datos del contacto elegido (nombre/teléfono/correo) — aparte
+                del bloque de arriba porque depende de CUÁL contacto está
+                seleccionado, no solo de qué contrato: se actualiza en cada
+                cambio del select "Emitida por" (manual o autoselección),
+                nunca solo al elegir contrato. Oculto hasta que haya un
+                contacto realmente elegido.
+            --}}
+            <div class="ag-form-section__field--full ag-ordenes-form__resumen-contacto" data-ag-resumen-contacto hidden>
+                <div class="ag-ordenes-form__resumen-campo">
+                    <label class="ag-select__label">{{ __('operaciones.ordenes.campo_contacto_seleccionado_nombre') }}</label>
+                    <div class="ag-ordenes-form__valor" data-ag-contacto-nombre>—</div>
+                </div>
+                <div class="ag-ordenes-form__resumen-campo">
+                    <label class="ag-select__label">{{ __('operaciones.ordenes.campo_contacto_seleccionado_telefono') }}</label>
+                    <div
+                        class="ag-ordenes-form__valor"
+                        data-ag-contacto-telefono
+                        data-texto-sin-definir="{{ __('operaciones.ordenes.valor_sin_definir') }}"
+                    >—</div>
+                </div>
+                <div class="ag-ordenes-form__resumen-campo">
+                    <label class="ag-select__label">{{ __('operaciones.ordenes.campo_contacto_seleccionado_email') }}</label>
+                    <div
+                        class="ag-ordenes-form__valor"
+                        data-ag-contacto-email
+                        data-texto-sin-definir="{{ __('operaciones.ordenes.valor_sin_definir') }}"
+                    >—</div>
+                </div>
             </div>
         </div>
     </x-molecules.form-section>
@@ -340,6 +387,29 @@
         Reemplaza el repetible anterior de `_lote-orden-fila.blade.php`.
     --}}
     <x-molecules.form-section :title="__('operaciones.ordenes.seccion_lotes')" class="ag-ordenes-form__lotes-seccion">
+        {{--
+            Buscador arriba a la derecha del título — mismas clases
+            visuales que el buscador global del header (`ag-topbar__search*`,
+            ver `organisms/topbar.blade.php`), pedido explícito del usuario
+            18/9/2026. `role="search"`, no `<form>`: acá no navega a
+            ningún lado, filtra la tabla en el cliente (`ordenes-form.js`).
+            Oculto hasta elegir contrato, igual que el resto del contenido
+            (`data-ag-lotes-buscador-wrap`, ver JS).
+        --}}
+        <x-slot:actions>
+            <div class="ag-topbar__search ag-ordenes-form__lotes-buscador" role="search" data-ag-lotes-buscador-wrap hidden>
+                <span class="material-symbols-rounded ag-icon ag-icon--sm ag-topbar__search-icon" aria-hidden="true">search</span>
+                <input
+                    type="search"
+                    class="ag-topbar__search-input"
+                    placeholder="{{ __('operaciones.ordenes.lotes_buscar_placeholder') }}"
+                    aria-label="{{ __('operaciones.ordenes.lotes_buscar_aria') }}"
+                    autocomplete="off"
+                    data-ag-lotes-buscar
+                >
+            </div>
+        </x-slot:actions>
+
         <div class="ag-form-section__field--full">
             {{--
                 Semilla de selección: `old('lotes')` tras un error de
@@ -411,20 +481,9 @@
                 data-texto-col-hectareas-solicitadas-ayuda="{{ __('operaciones.ordenes.lotes_columna_hectareas_solicitadas_ayuda') }}"
                 data-texto-col-desnivel="{{ __('operaciones.ordenes.lotes_columna_desnivel') }}"
                 data-texto-col-limpieza="{{ __('operaciones.ordenes.lotes_columna_limpieza') }}"
+                data-texto-seleccionar-todos="{{ __('operaciones.ordenes.lotes_seleccionar_todos') }}"
                 hidden
             >
-                {{-- Buscador de lotes — mismo átomo (icono + input) que el resto del panel. --}}
-                <div class="ag-ordenes-form__lotes-buscador">
-                    <x-atoms.input
-                        type="search"
-                        icon="search"
-                        id="lotes-buscar"
-                        :placeholder="__('operaciones.ordenes.lotes_buscar_placeholder')"
-                        aria-label="{{ __('operaciones.ordenes.lotes_buscar_aria') }}"
-                        data-ag-lotes-buscar
-                    />
-                </div>
-
                 {{-- Tabla de lotes (todos los de datosContrato[contratoId].lotes, con checkbox) --}}
                 <div class="ag-ordenes-form__lotes-contenedor" data-ag-lotes-contenedor>
                     <!-- Rellenado por JS al elegir contrato -->

@@ -21,6 +21,7 @@ use App\Dominios\Operaciones\Infraestructura\Http\Requests\ActualizarOrdenReques
 use App\Dominios\Operaciones\Infraestructura\Http\Requests\CrearOrdenRequest;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Brick\Math\BigDecimal;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -751,7 +752,7 @@ final class OrdenesController
             ->whereNull('c.deleted_at')
             ->whereNull('cl.deleted_at')
             ->orderByDesc('c.fecha_inicio')
-            ->get(['c.id', 'c.cliente_id', 'c.aplicaciones_previstas', 'cl.razon_social', 'cl.logo_path']);
+            ->get(['c.id', 'c.cliente_id', 'c.aplicaciones_previstas', 'c.hectareas_contratadas', 'c.fecha_inicio', 'c.fecha_fin', 'cl.razon_social', 'cl.logo_path']);
 
         if ($contratos->isEmpty()) {
             return [];
@@ -776,7 +777,7 @@ final class OrdenesController
             ->whereIn('cliente_id', $clienteIds)
             ->whereNull('deleted_at')
             ->orderBy('nombre')
-            ->get(['id', 'cliente_id', 'tipo', 'nombre'])
+            ->get(['id', 'cliente_id', 'tipo', 'nombre', 'telefono', 'email'])
             ->groupBy('cliente_id');
 
         $resultado = [];
@@ -799,11 +800,26 @@ final class OrdenesController
                 'logo_url' => $this->logoUrl($contrato->logo_path),
                 'propiedades' => $propiedades,
                 'aplicaciones_previstas' => (int) $contrato->aplicaciones_previstas,
+                'hectareas_contratadas' => (string) $contrato->hectareas_contratadas,
+                // `DB::table` (no Eloquent): fecha_inicio/fecha_fin llegan
+                // como string crudo de Postgres ("Y-m-d"), no Carbon — se
+                // formatean acá, no en la vista (ADR 0013, mismo criterio
+                // que desnivel_label/limpieza_label de los lotes).
+                'fecha_inicio' => CarbonImmutable::parse($contrato->fecha_inicio)->format('d/m/Y'),
+                'fecha_fin' => $contrato->fecha_fin !== null ? CarbonImmutable::parse($contrato->fecha_fin)->format('d/m/Y') : null,
                 'contactos' => ($contactosPorCliente->get($clienteId) ?? collect())
                     ->map(fn (object $contacto): array => [
                         'id' => (int) $contacto->id,
                         'nombre' => $contacto->nombre,
                         'tipo' => $contacto->tipo,
+                        // Traducido server-side (ADR 0013), mismo criterio
+                        // que desnivel_label/limpieza_label de los lotes —
+                        // reemplaza a "cliente" como texto del <option> del
+                        // select (ya scopeado a un solo cliente, repetirlo
+                        // ahí no aporta; el tipo sí distingue quién es quién).
+                        'tipo_label' => __("comercial.clientes.contacto_tipo_opcion.{$contacto->tipo}"),
+                        'telefono' => $contacto->telefono,
+                        'email' => $contacto->email,
                     ])
                     ->values()
                     ->all(),
@@ -958,7 +974,18 @@ final class OrdenesController
             ->all();
     }
 
-    /** @return Collection<int, string> */
+    /**
+     * Universo COMPLETO de contactos para poblar el `<select>` nativo (todas
+     * las opciones existen siempre en el DOM) — `ordenes-form.js` oculta en
+     * el cliente las que no son del cliente del contrato elegido (mismo
+     * criterio que el resto de los selects dependientes de este formulario).
+     * Label `:nombre — :tipo` (reforma 18/9/2026): antes repetía el cliente,
+     * pero el select ya queda scopeado a UN cliente — el tipo (Dueño,
+     * Agrónomo, etc.) es el dato que distingue entre varios contactos del
+     * mismo cliente, ver `comercial.clientes.contacto_tipo_opcion`.
+     *
+     * @return Collection<int, string>
+     */
     private function contactosDisponibles(): Collection
     {
         return DB::table('com_cliente_contactos as cc')
@@ -966,11 +993,11 @@ final class OrdenesController
             ->whereNull('cc.deleted_at')
             ->whereNull('cl.deleted_at')
             ->orderBy('cc.nombre')
-            ->get(['cc.id', 'cc.nombre', 'cl.razon_social'])
+            ->get(['cc.id', 'cc.nombre', 'cc.tipo'])
             ->mapWithKeys(fn (object $fila): array => [
                 (int) $fila->id => __('operaciones.ordenes.campo_contacto_opcion', [
                     'nombre' => $fila->nombre,
-                    'cliente' => $fila->razon_social,
+                    'tipo' => __("comercial.clientes.contacto_tipo_opcion.{$fila->tipo}"),
                 ]),
             ]);
     }

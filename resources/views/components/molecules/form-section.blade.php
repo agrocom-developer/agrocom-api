@@ -17,10 +17,14 @@
       — ver su docblock para los valores válidos. `null` mantiene el verde
       de siempre.
 
-    Slot (default): contenido de la sección. Cada hijo directo ocupa una
-    celda del grid interno; un campo que necesita el ancho completo (una
-    dirección, un textarea, un `file-field`) agrega la clase de utilidad
-    `ag-form-section__field--full` (`grid-column: 1 / -1`).
+    Slots:
+    - default: contenido de la sección. Cada hijo directo ocupa una
+      celda del grid interno; un campo que necesita el ancho completo (una
+      dirección, un textarea, un `file-field`) agrega la clase de utilidad
+      `ag-form-section__field--full` (`grid-column: 1 / -1`).
+    - actions (opcional, reforma 18/9/2026): se reenvía tal cual a
+      `section-head` — contenido a la derecha del título (p. ej. un
+      buscador propio de la sección, ver `ordenes/_formulario.blade.php`).
 --}}
 @props([
     'title',
@@ -29,7 +33,11 @@
 ])
 
 <div {{ $attributes->class(['ag-form-section']) }}>
-    <x-molecules.section-head :title="$title" :count="$count" :accent="$accent" class="ag-form-section__head" />
+    <x-molecules.section-head :title="$title" :count="$count" :accent="$accent" class="ag-form-section__head">
+        @isset($actions)
+            <x-slot:actions>{{ $actions }}</x-slot:actions>
+        @endisset
+    </x-molecules.section-head>
 
     <div class="ag-form-section__body">
         {{ $slot }}

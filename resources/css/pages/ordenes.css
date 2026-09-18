@@ -364,6 +364,17 @@
     min-width: 10rem;
 }
 
+/* Datos del contacto elegido (nombre/teléfono/correo) — mismo criterio de
+   fila flex que `.ag-ordenes-form__resumen-datos`, separado por un borde
+   porque depende de OTRA selección (el contacto, no el contrato). */
+.ag-ordenes-form__resumen-contacto {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ag-space-5);
+    padding-top: var(--ag-space-4);
+    border-top: 1px solid var(--ag-color-border-row);
+}
+
 /* Input-group: "Cantidad de equipos necesarios" + atajo a Asignar equipos
    (solo en edición). El input ocupa el espacio disponible, el botón queda
    fijo al lado, alineado con la base del control (no con el label). */

@@ -90,6 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const tablaLotes = formulario.querySelector('[data-ag-tabla-lotes]');
     const contenedorLotes = formulario.querySelector('[data-ag-lotes-contenedor]');
     const buscadorLotes = formulario.querySelector('[data-ag-lotes-buscar]');
+    const buscadorLotesWrap = formulario.querySelector('[data-ag-lotes-buscador-wrap]');
     const paginadoLotes = formulario.querySelector('[data-ag-lotes-paginado]');
     const vacioBuscador = formulario.querySelector('[data-ag-lotes-vacio]');
     const btnPaginaAnterior = formulario.querySelector('[data-ag-pagina-anterior]');
@@ -98,6 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectNroAplicacion = formulario.querySelector('[data-ag-orden-nro-aplicacion]');
     const lotesSinContrato = formulario.querySelector('[data-ag-lotes-sin-contrato]');
     const lotesContenido = formulario.querySelector('[data-ag-lotes-contenido]');
+    const resumenContacto = formulario.querySelector('[data-ag-resumen-contacto]');
 
     if (!selectContrato || !scriptDatos) return;
 
@@ -121,6 +123,31 @@ document.addEventListener('DOMContentLoaded', () => {
             seleccion.set(parseInt(lote.lote_id, 10), String(lote.hectareas_solicitadas ?? ''));
         }
     });
+
+    /**
+     * Checkbox con el mismo marcado que `atoms/checkbox-group`
+     * (checkbox-group.css): el `<input>` real va `position: absolute` e
+     * invisible — lo que se ve es el `<span class="ag-checkbox-group__box">`
+     * hermano (con el ícono de check adentro), mostrado vía `:checked ~ .box`
+     * en CSS. Compartido entre la fila de cada lote y el "seleccionar
+     * todos" del header (mismo criterio que `_modal-lotes` de Comercial).
+     */
+    const crearCheckboxCelda = () => {
+        const label = document.createElement('label');
+        label.className = 'ag-checkbox-group__option';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'ag-checkbox-group__input';
+        const caja = document.createElement('span');
+        caja.className = 'ag-checkbox-group__box';
+        caja.setAttribute('aria-hidden', 'true');
+        const icono = document.createElement('span');
+        icono.className = 'material-symbols-rounded ag-icon ag-icon--sm ag-checkbox-group__check';
+        icono.textContent = 'check';
+        caja.appendChild(icono);
+        label.append(checkbox, caja);
+        return { label, checkbox };
+    };
 
     /**
      * Actualiza la vista: aplica buscador, paginado, renderiza tabla y form.
@@ -180,8 +207,30 @@ document.addEventListener('DOMContentLoaded', () => {
         const headRow = head.insertRow();
         headRow.className = 'ag-ordenes-form__lotes-tabla-head';
         const textos = tablaLotes?.dataset || {};
+
+        // "Seleccionar todos" — actúa sobre TODO `lotesFiltrados` (todas las
+        // páginas del filtro actual, no solo la visible): con un contrato
+        // de 3000ha en 40-75 lotes, tildar de a uno por página no tendría
+        // sentido. `checked`/`indeterminate` reflejan la selección real
+        // aunque la mayoría de esas filas no estén dibujadas ahora mismo.
+        const { label: labelTodos, checkbox: checkTodos } = crearCheckboxCelda();
+        checkTodos.setAttribute('aria-label', textos.textoSeleccionarTodos || '');
+        const marcados = lotesFiltrados.filter((l) => seleccion.has(l.lote_id)).length;
+        checkTodos.checked = lotesFiltrados.length > 0 && marcados === lotesFiltrados.length;
+        checkTodos.indeterminate = marcados > 0 && marcados < lotesFiltrados.length;
+        checkTodos.addEventListener('change', () => {
+            lotesFiltrados.forEach((lote) => {
+                if (checkTodos.checked) {
+                    seleccion.set(lote.lote_id, seleccion.get(lote.lote_id) ?? String(lote.hectareas));
+                } else {
+                    seleccion.delete(lote.lote_id);
+                }
+            });
+            renderizarContenedor(lotes);
+        });
+
         const headCells = [
-            { texto: '' },
+            { elemento: labelTodos },
             { texto: textos.textoColCodigo || '' },
             { texto: textos.textoColPropiedad || '' },
             { texto: textos.textoColHectareasLote || '' },
@@ -189,8 +238,15 @@ document.addEventListener('DOMContentLoaded', () => {
             { texto: textos.textoColDesnivel || '' },
             { texto: textos.textoColLimpieza || '' },
         ];
-        headCells.forEach(({ texto, ayuda }) => {
+        headCells.forEach(({ texto, ayuda, elemento }) => {
             const th = headRow.insertCell();
+
+            if (elemento) {
+                th.className = 'ag-ordenes-form__lotes-tabla-checkbox';
+                th.appendChild(elemento);
+                return;
+            }
+
             th.append(document.createTextNode(texto));
 
             // Tooltip Bootstrap (ya inicializado globalmente en app.js) — el
@@ -219,27 +275,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const estaSeleccionado = seleccion.has(lote.lote_id);
 
-            // Mismo marcado que `atoms/checkbox-group` (checkbox-group.css):
-            // el input real va `position: absolute` e invisible — lo que se
-            // ve es el `<span class="ag-checkbox-group__box">` hermano (con
-            // el ícono de check adentro), mostrado vía `:checked ~ .box` en
-            // CSS. Sin ese span, el checkbox queda ahí pero invisible.
             const cellCheck = row.insertCell();
             cellCheck.className = 'ag-ordenes-form__lotes-tabla-checkbox';
-            const labelCheck = document.createElement('label');
-            labelCheck.className = 'ag-checkbox-group__option';
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
+            const { label: labelCheck, checkbox } = crearCheckboxCelda();
             checkbox.checked = estaSeleccionado;
-            checkbox.className = 'ag-checkbox-group__input';
-            const cajaCheck = document.createElement('span');
-            cajaCheck.className = 'ag-checkbox-group__box';
-            cajaCheck.setAttribute('aria-hidden', 'true');
-            const iconoCheck = document.createElement('span');
-            iconoCheck.className = 'material-symbols-rounded ag-icon ag-icon--sm ag-checkbox-group__check';
-            iconoCheck.textContent = 'check';
-            cajaCheck.appendChild(iconoCheck);
-            labelCheck.append(checkbox, cajaCheck);
             cellCheck.appendChild(labelCheck);
 
             // Código.
@@ -394,6 +433,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (contenedorLotes) contenedorLotes.innerHTML = '';
             if (lotesSinContrato) lotesSinContrato.hidden = false;
             if (lotesContenido) lotesContenido.hidden = true;
+            if (buscadorLotesWrap) buscadorLotesWrap.hidden = true;
             return;
         }
 
@@ -402,6 +442,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // datos confunde — pedido explícito del usuario 18/9/2026).
         if (lotesSinContrato) lotesSinContrato.hidden = true;
         if (lotesContenido) lotesContenido.hidden = false;
+        if (buscadorLotesWrap) buscadorLotesWrap.hidden = false;
 
         // Pinta resumen.
         if (resumenContrato) {
@@ -419,6 +460,15 @@ document.addEventListener('DOMContentLoaded', () => {
             if (aplicacionesEl) {
                 aplicacionesEl.textContent = String(datos.aplicaciones_previstas);
             }
+
+            const hectareasEl = resumenContrato.querySelector('[data-ag-hectareas-contratadas]');
+            if (hectareasEl) hectareasEl.textContent = `${datos.hectareas_contratadas} ha`;
+
+            const fechaInicioEl = resumenContrato.querySelector('[data-ag-fecha-inicio]');
+            if (fechaInicioEl) fechaInicioEl.textContent = datos.fecha_inicio;
+
+            const fechaFinEl = resumenContrato.querySelector('[data-ag-fecha-fin]');
+            if (fechaFinEl) fechaFinEl.textContent = datos.fecha_fin || fechaFinEl.dataset.textoSinDefinir || '—';
 
             // Logo del cliente — cae al placeholder (`data-logo-placeholder`,
             // ver _formulario.blade.php) si el cliente no tiene uno propio.
@@ -498,6 +548,39 @@ document.addEventListener('DOMContentLoaded', () => {
         paginaActual = 1;
         actualizarVista(datos.lotes || []);
     };
+
+    /**
+     * Nombre/teléfono/correo del contacto TILDADO ahora mismo en "Emitida
+     * por" — depende de cuál está elegido, no de qué contrato (un contrato
+     * con 2+ contactos puede cambiar la selección sin recargar nada más).
+     * Oculto si todavía no hay ninguno elegido.
+     */
+    const actualizarInfoContacto = () => {
+        if (!resumenContacto || !selectContacto) return;
+
+        const datos = datosContrato[selectContrato.value];
+        const contacto = datos?.contactos?.find((c) => String(c.id) === selectContacto.value);
+
+        if (!contacto) {
+            resumenContacto.hidden = true;
+            return;
+        }
+
+        resumenContacto.hidden = false;
+
+        const nombreEl = resumenContacto.querySelector('[data-ag-contacto-nombre]');
+        if (nombreEl) nombreEl.textContent = contacto.nombre;
+
+        const telefonoEl = resumenContacto.querySelector('[data-ag-contacto-telefono]');
+        if (telefonoEl) telefonoEl.textContent = contacto.telefono || telefonoEl.dataset.textoSinDefinir || '—';
+
+        const emailEl = resumenContacto.querySelector('[data-ag-contacto-email]');
+        if (emailEl) emailEl.textContent = contacto.email || emailEl.dataset.textoSinDefinir || '—';
+    };
+
+    if (selectContacto) {
+        selectContacto.addEventListener('change', actualizarInfoContacto);
+    }
 
     selectContrato.addEventListener('change', () => {
         pintarContratoYLotes(parseInt(selectContrato.value, 10), { resetearSeleccion: true });

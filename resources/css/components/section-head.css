@@ -12,6 +12,12 @@
     margin-bottom: var(--ag-space-3);
 }
 
+/* Contenido opcional a la derecha (p. ej. un buscador propio de la
+   sección) — empuja al extremo, mismo criterio que `.ag-page-header__actions`. */
+.ag-section-head__actions {
+    margin-left: auto;
+}
+
 .ag-section-head__bar {
     width: 4px;
     height: 16px;

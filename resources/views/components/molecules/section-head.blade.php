@@ -27,6 +27,14 @@
       de esa misma pantalla, decisión suya explícita. Mapeo completo y por
       qué cada sección tiene el color que tiene: ver el comentario en
       `ordenes/show.blade.php` justo antes del primer `form-section`.
+
+    Slot con nombre (reforma 18/9/2026, mismo criterio que `actions` de
+    `organisms/page-header`):
+    - actions (opcional): contenido a la derecha del título/contador (p. ej.
+      un buscador de la propia sección) — `margin-left: auto` lo empuja al
+      extremo derecho de la barra, que ya es `display: flex`. Sin `actions`,
+      el header se ve exactamente igual que antes (compatible con las
+      ~100 pantallas que no lo usan).
 --}}
 @props([
     'title',
@@ -43,4 +51,7 @@
     @if ($count !== null)
         <span class="ag-section-head__count">{{ $count }}</span>
     @endif
+    @isset($actions)
+        <div class="ag-section-head__actions">{{ $actions }}</div>
+    @endisset
 </div>
