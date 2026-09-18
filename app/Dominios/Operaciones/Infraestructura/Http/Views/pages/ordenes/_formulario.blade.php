@@ -182,65 +182,43 @@
                 src="{{ asset('images/logo-placeholder.png') }}"
                 alt=""
             >
-            <div class="ag-ordenes-form__resumen-datos">
-                <div class="ag-ordenes-form__resumen-campo">
-                    <label class="ag-select__label">{{ __('operaciones.ordenes.campo_contrato_cliente') }}</label>
-                    <div class="ag-ordenes-form__valor" data-ag-cliente-nombre>—</div>
+            {{--
+                Mismas clases que "Datos de la orden" de `ordenes/show.blade.php`
+                (`ag-ordenes-detalle__campo-label`/`-valor`) — pedido
+                explícito del usuario 18/9/2026: que se vea igual que esa
+                pantalla, no un estilo aparte. Grid propio por composición
+                (`ag-form-section__body`, mismo criterio que "Condiciones de
+                vuelo" de Asignación de equipos) — el de afuera ya lo usan
+                el select de Contrato/Contacto de arriba.
+            --}}
+            <div class="ag-form-section__body ag-ordenes-form__resumen-datos">
+                <div class="ag-ordenes-detalle__campo">
+                    <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato_cliente') }}</p>
+                    <p class="ag-ordenes-detalle__campo-valor" data-ag-cliente-nombre>—</p>
                 </div>
-                <div class="ag-ordenes-form__resumen-campo">
-                    <label class="ag-select__label">{{ __('operaciones.ordenes.campo_contrato_propiedades') }}</label>
-                    <div class="ag-ordenes-form__valor" data-ag-propiedades-nombres>—</div>
+                <div class="ag-ordenes-detalle__campo">
+                    <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato_propiedades') }}</p>
+                    <p class="ag-ordenes-detalle__campo-valor" data-ag-propiedades-nombres>—</p>
                 </div>
-                <div class="ag-ordenes-form__resumen-campo">
-                    <label class="ag-select__label">{{ __('operaciones.ordenes.campo_contrato_aplicaciones') }}</label>
-                    <div class="ag-ordenes-form__valor" data-ag-aplicaciones-previstas>—</div>
+                <div class="ag-ordenes-detalle__campo">
+                    <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato_aplicaciones') }}</p>
+                    <p class="ag-ordenes-detalle__campo-valor" data-ag-aplicaciones-previstas>—</p>
                 </div>
-                <div class="ag-ordenes-form__resumen-campo">
-                    <label class="ag-select__label">{{ __('operaciones.ordenes.campo_contrato_hectareas') }}</label>
-                    <div class="ag-ordenes-form__valor" data-ag-hectareas-contratadas>—</div>
+                <div class="ag-ordenes-detalle__campo">
+                    <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato_hectareas') }}</p>
+                    <p class="ag-ordenes-detalle__campo-valor" data-ag-hectareas-contratadas>—</p>
                 </div>
-                <div class="ag-ordenes-form__resumen-campo">
-                    <label class="ag-select__label">{{ __('operaciones.ordenes.campo_contrato_fecha_inicio') }}</label>
-                    <div class="ag-ordenes-form__valor" data-ag-fecha-inicio>—</div>
+                <div class="ag-ordenes-detalle__campo">
+                    <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato_fecha_inicio') }}</p>
+                    <p class="ag-ordenes-detalle__campo-valor" data-ag-fecha-inicio>—</p>
                 </div>
-                <div class="ag-ordenes-form__resumen-campo">
-                    <label class="ag-select__label">{{ __('operaciones.ordenes.campo_contrato_fecha_fin') }}</label>
-                    <div
-                        class="ag-ordenes-form__valor"
+                <div class="ag-ordenes-detalle__campo">
+                    <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato_fecha_fin') }}</p>
+                    <p
+                        class="ag-ordenes-detalle__campo-valor"
                         data-ag-fecha-fin
                         data-texto-sin-definir="{{ __('operaciones.ordenes.valor_sin_definir') }}"
-                    >—</div>
-                </div>
-            </div>
-
-            {{--
-                Datos del contacto elegido (nombre/teléfono/correo) — aparte
-                del bloque de arriba porque depende de CUÁL contacto está
-                seleccionado, no solo de qué contrato: se actualiza en cada
-                cambio del select "Emitida por" (manual o autoselección),
-                nunca solo al elegir contrato. Oculto hasta que haya un
-                contacto realmente elegido.
-            --}}
-            <div class="ag-form-section__field--full ag-ordenes-form__resumen-contacto" data-ag-resumen-contacto hidden>
-                <div class="ag-ordenes-form__resumen-campo">
-                    <label class="ag-select__label">{{ __('operaciones.ordenes.campo_contacto_seleccionado_nombre') }}</label>
-                    <div class="ag-ordenes-form__valor" data-ag-contacto-nombre>—</div>
-                </div>
-                <div class="ag-ordenes-form__resumen-campo">
-                    <label class="ag-select__label">{{ __('operaciones.ordenes.campo_contacto_seleccionado_telefono') }}</label>
-                    <div
-                        class="ag-ordenes-form__valor"
-                        data-ag-contacto-telefono
-                        data-texto-sin-definir="{{ __('operaciones.ordenes.valor_sin_definir') }}"
-                    >—</div>
-                </div>
-                <div class="ag-ordenes-form__resumen-campo">
-                    <label class="ag-select__label">{{ __('operaciones.ordenes.campo_contacto_seleccionado_email') }}</label>
-                    <div
-                        class="ag-ordenes-form__valor"
-                        data-ag-contacto-email
-                        data-texto-sin-definir="{{ __('operaciones.ordenes.valor_sin_definir') }}"
-                    >—</div>
+                    >—</p>
                 </div>
             </div>
         </div>

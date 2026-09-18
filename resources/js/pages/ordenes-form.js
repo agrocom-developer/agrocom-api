@@ -99,7 +99,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectNroAplicacion = formulario.querySelector('[data-ag-orden-nro-aplicacion]');
     const lotesSinContrato = formulario.querySelector('[data-ag-lotes-sin-contrato]');
     const lotesContenido = formulario.querySelector('[data-ag-lotes-contenido]');
-    const resumenContacto = formulario.querySelector('[data-ag-resumen-contacto]');
 
     if (!selectContrato || !scriptDatos) return;
 
@@ -548,39 +547,6 @@ document.addEventListener('DOMContentLoaded', () => {
         paginaActual = 1;
         actualizarVista(datos.lotes || []);
     };
-
-    /**
-     * Nombre/teléfono/correo del contacto TILDADO ahora mismo en "Emitida
-     * por" — depende de cuál está elegido, no de qué contrato (un contrato
-     * con 2+ contactos puede cambiar la selección sin recargar nada más).
-     * Oculto si todavía no hay ninguno elegido.
-     */
-    const actualizarInfoContacto = () => {
-        if (!resumenContacto || !selectContacto) return;
-
-        const datos = datosContrato[selectContrato.value];
-        const contacto = datos?.contactos?.find((c) => String(c.id) === selectContacto.value);
-
-        if (!contacto) {
-            resumenContacto.hidden = true;
-            return;
-        }
-
-        resumenContacto.hidden = false;
-
-        const nombreEl = resumenContacto.querySelector('[data-ag-contacto-nombre]');
-        if (nombreEl) nombreEl.textContent = contacto.nombre;
-
-        const telefonoEl = resumenContacto.querySelector('[data-ag-contacto-telefono]');
-        if (telefonoEl) telefonoEl.textContent = contacto.telefono || telefonoEl.dataset.textoSinDefinir || '—';
-
-        const emailEl = resumenContacto.querySelector('[data-ag-contacto-email]');
-        if (emailEl) emailEl.textContent = contacto.email || emailEl.dataset.textoSinDefinir || '—';
-    };
-
-    if (selectContacto) {
-        selectContacto.addEventListener('change', actualizarInfoContacto);
-    }
 
     selectContrato.addEventListener('change', () => {
         pintarContratoYLotes(parseInt(selectContrato.value, 10), { resetearSeleccion: true });

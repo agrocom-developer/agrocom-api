@@ -722,6 +722,9 @@ final class OrdenesController
      *         'logo_url' => ?string,          // URL pública del logo del cliente (com_clientes.logo_path vía disco `public`), null sin logo
      *         'propiedades' => list<string>,  // nombres de propiedad(es) que cubre el contrato — puede ser más de una (com_contrato_lotes cruza propiedades)
      *         'aplicaciones_previstas' => int,
+     *         'hectareas_contratadas' => string,  // DECIMAL como string (invariante 6)
+     *         'fecha_inicio' => string,           // ya formateada "d/m/Y" (ADR 0013)
+     *         'fecha_fin' => ?string,              // ídem, null si el contrato no tiene fecha de fin
      *         'contactos' => list<array{id: int, nombre: string, tipo: string}>,  // com_cliente_contactos del cliente DUEÑO del contrato; la vista decide autoseleccionar si hay uno solo
      *         'lotes' => list<array{lote_id: int, codigo: string, propiedad: string, hectareas: string, desnivel: ?string, desnivel_label: ?string, limpieza: ?string, limpieza_label: ?string}>,  // SOLO los lotes de `com_contrato_lotes` de ESTE contrato — desnivel/limpieza YA traducidos server-side (ADR 0013), mismo criterio que `ContratosController::propiedadesYLotesPorCliente()`
      *         'nro_aplicacion_sugerido' => int|null,  // NULL acá siempre — solo `create()` lo completa (ver `sugerirNroAplicacion()`); `edit()` no lo toca, la orden ya tiene su valor real
@@ -743,7 +746,7 @@ final class OrdenesController
      * contrato. Lectura directa por `DB::table` en las tablas de `Comercial`
      * (ADR 0003 regla 3, mismo criterio que el resto del controlador).
      *
-     * @return array<int, array{label: string, cliente: string, logo_url: ?string, propiedades: list<string>, aplicaciones_previstas: int, contactos: list<array{id: int, nombre: string, tipo: string}>, lotes: list<array{lote_id: int, codigo: string, propiedad: string, hectareas: string, desnivel: ?string, desnivel_label: ?string, limpieza: ?string, limpieza_label: ?string}>, nro_aplicacion_sugerido: int|null}>
+     * @return array<int, array{label: string, cliente: string, logo_url: ?string, propiedades: list<string>, aplicaciones_previstas: int, hectareas_contratadas: string, fecha_inicio: string, fecha_fin: ?string, contactos: list<array{id: int, nombre: string, tipo: string}>, lotes: list<array{lote_id: int, codigo: string, propiedad: string, hectareas: string, desnivel: ?string, desnivel_label: ?string, limpieza: ?string, limpieza_label: ?string}>, nro_aplicacion_sugerido: int|null}>
      */
     private function datosContratoParaFormulario(): array
     {
@@ -777,7 +780,7 @@ final class OrdenesController
             ->whereIn('cliente_id', $clienteIds)
             ->whereNull('deleted_at')
             ->orderBy('nombre')
-            ->get(['id', 'cliente_id', 'tipo', 'nombre', 'telefono', 'email'])
+            ->get(['id', 'cliente_id', 'tipo', 'nombre'])
             ->groupBy('cliente_id');
 
         $resultado = [];
@@ -812,14 +815,6 @@ final class OrdenesController
                         'id' => (int) $contacto->id,
                         'nombre' => $contacto->nombre,
                         'tipo' => $contacto->tipo,
-                        // Traducido server-side (ADR 0013), mismo criterio
-                        // que desnivel_label/limpieza_label de los lotes —
-                        // reemplaza a "cliente" como texto del <option> del
-                        // select (ya scopeado a un solo cliente, repetirlo
-                        // ahí no aporta; el tipo sí distingue quién es quién).
-                        'tipo_label' => __("comercial.clientes.contacto_tipo_opcion.{$contacto->tipo}"),
-                        'telefono' => $contacto->telefono,
-                        'email' => $contacto->email,
                     ])
                     ->values()
                     ->all(),

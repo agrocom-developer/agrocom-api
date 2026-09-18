@@ -316,19 +316,13 @@
    arriba + valor abajo, ya resuelto por `.ag-select__label`/
    `.ag-form-section__field`. */
 
-/* El valor dentro del resumen (cliente, propiedades, aplicaciones) — texto
-   legible con peso y tamaño consistente con los campos de solo lectura
-   (`.ag-ordenes-detalle__campo-valor` del detalle, ver arriba). */
-.ag-ordenes-form__valor {
-    font-size: var(--ag-font-size-sm);
-    font-weight: var(--ag-font-weight-medium);
-    line-height: 1.5;
-    color: var(--ag-color-text);
-}
-
 /* Resumen del contrato elegido: logo del cliente a la izquierda, datos como
-   complemento a la derecha — fila flex, nunca un grid propio (el de la
-   sección ya lo da `ag-form-section__body`, ver arriba). */
+   complemento a la derecha (`ag-ordenes-detalle__campo-label`/`-valor`,
+   mismas clases que "Datos de la orden" de `ordenes/show.blade.php` —
+   pedido explícito del usuario 18/9/2026, mismo lenguaje visual en las dos
+   pantallas). Fila flex para el logo + grid; el grid interno de los campos
+   lo da `ag-form-section__body` por composición (ver el Blade), no una
+   regla propia acá. */
 .ag-ordenes-form__resumen-contrato {
     display: flex;
     align-items: flex-start;
@@ -337,42 +331,21 @@
     border-top: 1px solid var(--ag-color-border-row);
 }
 
+.ag-ordenes-form__resumen-datos {
+    flex: 1;
+}
+
 /* Logo del cliente — cuadrado fijo, mismo radio que una tarjeta chica. Una
    sola `<img>`: el JS le pone el logo real o cae al placeholder del propio
    atributo `data-logo-placeholder` (nunca dos elementos alternando `hidden`). */
 .ag-ordenes-form__logo {
     flex: none;
-    width: 5rem;
-    height: 5rem;
+    width: 10rem;
+    height: 10rem;
     border-radius: var(--ag-radius-md);
     object-fit: contain;
     background-color: var(--ag-color-surface-inset);
     border: 1px solid var(--ag-color-border-row);
-}
-
-/* Datos del resumen — cliente/propiedad(es)/aplicaciones, en fila y con
-   wrap (no un grid: la fila entera es UN campo del grid externo, no varias
-   columnas del mismo — evita duplicar `ag-form-section__body`). */
-.ag-ordenes-form__resumen-datos {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--ag-space-5);
-    flex: 1;
-}
-
-.ag-ordenes-form__resumen-campo {
-    min-width: 10rem;
-}
-
-/* Datos del contacto elegido (nombre/teléfono/correo) — mismo criterio de
-   fila flex que `.ag-ordenes-form__resumen-datos`, separado por un borde
-   porque depende de OTRA selección (el contacto, no el contrato). */
-.ag-ordenes-form__resumen-contacto {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--ag-space-5);
-    padding-top: var(--ag-space-4);
-    border-top: 1px solid var(--ag-color-border-row);
 }
 
 /* Input-group: "Cantidad de equipos necesarios" + atajo a Asignar equipos
