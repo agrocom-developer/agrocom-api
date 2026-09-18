@@ -96,7 +96,7 @@ final class AsignarEquipoOrdenRequest extends FormRequest
                 $maximo = $equipo['humedad_max_pct'] ?? null;
 
                 if ($minimo !== null && $minimo !== '' && $maximo !== null && $maximo !== '' && (float) $minimo > (float) $maximo) {
-                    $validator->errors()->add("equipos.{$indice}.humedad_min_pct", __('operaciones.ordenes.error_humedad_rango'));
+                    $validator->errors()->add("equipos.{$indice}.humedad_min_pct", __('operaciones.asignacion_equipos.error_humedad_rango'));
                 }
             }
         });

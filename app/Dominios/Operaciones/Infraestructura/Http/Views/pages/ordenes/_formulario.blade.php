@@ -1,57 +1,37 @@
 {{--
     Partial: formulario de orden de aplicación, compartido por
-    create.blade.php y edit.blade.php (HU-25, tarea 38) — arquetipo
-    Formulario, §6.3 de docs/diseno/guia_pantalla_panel.md. Mismo patrón que
-    `contratos/_formulario.blade.php`, sin sub-entidad repetible.
+    create.blade.php y edit.blade.php (HU-25, tarea 38; reforma 18/9/2026) —
+    arquetipo Formulario, §6.3 de docs/diseno/guia_pantalla_panel.md.
 
-    Espera:
+    Espera (reforma Entrega 1, 18/9/2026):
     - $orden (OrdenAplicacion|null): null en alta; el modelo en edición.
     - $lotesOrden (Collection<int, OrdenLote>|null, SOLO en edición): los
-      lotes ya cargados de la orden — en alta ni siquiera existe la
-      variable (`edit.blade.php` la pasa, `create.blade.php` no), por eso el
-      valor por defecto de abajo usa `?? null`.
-    - $contratosDisponibles / $lotesDisponibles / $contactosDisponibles
-      (Collection<int, string>): id => etiqueta ya resuelta por el
-      controlador (ver OrdenesController) — la vista no conoce los modelos
-      de Comercial (ADR 0003 regla 3). `$lotesDisponibles` es el universo
-      completo de lotes (HU-92, tarea 107): cada fila de la sección "Lotes"
-      elige el suyo ahí, independiente de las demás filas.
-    - $categoriasInsumoDisponibles (Collection<int, CategoriaInsumo>, HU-79,
-      tarea 110): a diferencia de las anteriores, acá SÍ llega la colección
-      de modelos (Operaciones es dueño de `ope_categorias_insumo`, ADR 0003
-      regla 3 solo exige lectura directa cruzando módulos) — la vista arma
-      el `<select>` y el mapa id→tipo_insumo para que
-      `resources/js/pages/ordenes-form.js` muestre "Litros por hectárea" o
-      "Kilos por vuelo" según la categoría elegida, mismo patrón que
-      cliente→propiedad de `campos/_formulario.blade.php`.
-    - $mapaContratoCliente (array<int, int>, contrato_id => cliente_id) /
-      $mapaLoteCliente (array<int, int>, lote_id => cliente_id): consistencia
-      de negocio (no se arma un contrato del cliente A con un lote del
-      cliente B) — el contrato es el QUIÉN, la orden es el CÓMO. JS filtra el
-      `<select>` de cada fila de lote al cliente del contrato elegido; el
-      server la exige igual en `withValidator()` — el filtro es presentación,
-      no la única guarda.
+      lotes ya cargados de la orden.
+    - $contratosDisponibles (Collection<int, string>): id => label
+      enriquecido (cliente + propiedad(es) + "Contrato #id"), resuelto por
+      el controlador.
+    - $datosContrato (array<int, array>): indexado por contrato_id, con
+      cliente, propiedades, aplicaciones_previstas, contactos (list), lotes
+      (list con desnivel_label/limpieza_label ya traducidos), y
+      nro_aplicacion_sugerido (SOLO en create(), null en edit()) — ver docblock
+      de `OrdenesController::datosContratoParaFormulario()`.
+    - $categoriasInsumoDisponibles (Collection<int, CategoriaInsumo>): para
+      armar el select de categoría y el mapa tipo_insumo.
+    - $contactosDisponibles (Collection<int, string>): valor heredado, NO se
+      usa para "Datos del contrato" (usá `datosContrato[contratoId].contactos`
+      — ya scopeado). Si terminas sin usarla, está ok.
 
     `estado` NUNCA es un campo de este formulario: lo fija la máquina de
-    estados al crear, y lo cambia `panel.ordenes.activar` (otra pantalla,
-    otra responsabilidad — invariante 7). En edición, el formulario solo se
-    ofrece con sentido para una orden `emitida` (ver docblock de
-    `Aplicacion/ActualizarOrden`) — el link para llegar acá ya queda oculto
-    para cualquier otro estado en `ordenes/index.blade.php`; si de todos
-    modos se llega con una orden no editable, el submit vuelve con el error
-    de dominio en `withErrors(['estado' => ...])`, nunca aplica el cambio.
+    estados al crear, y lo cambia `panel.ordenes.activar` (otra pantalla).
+    En edición, el formulario solo se ofrece para una orden `emitida`.
 
-    Tras un error de validación, `old()` pisa los valores del modelo/vacíos
-    — mismo criterio en alta y en edición.
+    Los 8 campos de clima/vuelo (humedad, viento, temperatura, velocidad,
+    altura, ancho) YA NO están acá (se movieron a `Trabajo`, cargados por
+    equipo en `AsignarEquipoOrdenRequest`).
 
-    El aside pegajoso (§6.3.1) SÍ se usa en edición desde la homogeneización
-    del 17/9/2026 (antes se omitía: "ningún dato de solo lectura justifica
-    hoy la columna lateral" — dejó de ser cierto en cuanto existió
-    `/panel/asignacion-equipos`, con datos reales sobre esta orden). Espera
-    además:
-    - $resumenRelacionado (list<array{...}>, SOLO en edición): ver
-      `OrdenesController::resumenRelacionado()` — mismo shape que
-      `ClientesController::resumenRelacionado()`.
+    El aside pegajoso (§6.3.1) SÍ se usa en edición. Espera además:
+    - $resumenRelacionado (list<array{...}>, SOLO en edición): asignación de
+      equipos de esta orden.
 --}}
 @php
     $esEdicion = $orden !== null;
@@ -59,6 +39,7 @@
     $valor = fn (string $campo, mixed $porDefecto = '') => old($campo, $orden?->{$campo} ?? $porDefecto);
     $contratoId = old('contrato_id', $orden?->contrato_id ?? '');
     $contactoId = old('emitida_por_contacto_id', $orden?->emitida_por_contacto_id ?? '');
+    $nroAplicacion = old('nro_aplicacion', $orden?->nro_aplicacion ?? '');
     $fechaEmision = old('fecha_emision', $orden?->fecha_emision?->toDateString() ?? '');
     $tipoAplicacion = old('tipo_aplicacion', $orden?->tipo_aplicacion?->value ?? \App\Dominios\Operaciones\Dominio\TipoAplicacion::Desarrollo->value);
     $cantidadEquiposNecesarios = old('cantidad_equipos_necesarios', $orden?->cantidad_equipos_necesarios ?? 1);
@@ -69,16 +50,26 @@
         $categoria->id => $categoria->nombre,
     ]);
     $mapaCategoriaInsumoTipo = $categoriasInsumoDisponibles->mapWithKeys(fn ($categoria) => [$categoria->id => $categoria->tipo_insumo->value]);
-    // "Tipo" (Sólido/Líquido) es un select de PRESENTACIÓN (sin `name`
-    // validado por el server): solo filtra "Categoría de insumo" — la
-    // categoría elegida es la única fuente de verdad de qué tipo es la orden
-    // (ver docblock de `create_ope_categorias_insumo_table`, no se repite acá).
     $tipoInsumoSeleccionado = old('tipo_insumo_filtro', $mapaCategoriaInsumoTipo->get((int) $categoriaInsumoId) ?? '');
     $opcionesTipoInsumo = collect(\App\Dominios\Operaciones\Dominio\TipoInsumo::cases())
         ->mapWithKeys(fn ($caso) => [$caso->value => __('operaciones.tipo_insumo.'.$caso->value)]);
+
+    // Opciones de nro_aplicacion (1-10): ordinales en tuteo neutro.
+    $opcionesNroAplicacion = array_combine(
+        range(1, 10),
+        array_map(fn ($n) => __('operaciones.ordenes.nro_aplicacion_opcion_' . $n), range(1, 10))
+    );
+
+    // Si nro_aplicacion está fuera de 1-10 (dato viejo, no debería pasar),
+    // agregarlo como opción extra.
+    if ($nroAplicacion !== '' && ((int) $nroAplicacion < 1 || (int) $nroAplicacion > 10)) {
+        $opcionesNroAplicacion[(int) $nroAplicacion] = __('operaciones.ordenes.nro_aplicacion_opcion_extra', ['n' => (int) $nroAplicacion]);
+        ksort($opcionesNroAplicacion);
+    }
+
     $lotesPorDefecto = ($lotesOrden ?? null) !== null
         ? $lotesOrden->map(fn ($lote) => ['lote_id' => $lote->lote_id, 'hectareas_solicitadas' => $lote->hectareas_solicitadas])->all()
-        : [[]];
+        : [];
     $lotesIniciales = old('lotes', $lotesPorDefecto);
 @endphp
 
@@ -105,18 +96,22 @@
 
     <x-molecules.form-layout>
     {{--
-        Orden de campos alineado al flujo con el que se arma una orden
-        (homogeneización 17/9/2026, pedido directo): primero CON QUIÉN
-        (contrato), después QUÉ se aplica (tipo → categoría → dosis), después
-        CUÁNTAS VECES y CON CUÁNTOS EQUIPOS, y al final los datos
-        administrativos (tipo de aplicación del ciclo, emisión, contacto,
-        observaciones) — mismos 11 campos de siempre, sin agregar ni quitar
-        ninguno.
+        Sección 1: Datos del contrato (nueva, reforma 18/9/2026)
+        Contrato + resumen + contacto (autoseleccionado si único)
     --}}
-    <x-molecules.form-section
-        :title="__('operaciones.ordenes.seccion_datos')"
-        :count="__('operaciones.ordenes.campos_contador', ['cantidad' => 11])"
-    >
+    <x-molecules.form-section :title="__('operaciones.ordenes.seccion_datos_contrato')">
+        {{--
+            JSON embebido: datosContrato por contrato_id para el JS. Flags
+            JSON_HEX_* (a diferencia del mismo patrón en Comercial,
+            `contratos/_formulario.blade.php`): acá el blob incluye nombres
+            libres de propiedad/lote/contacto que un operador interno puede
+            haber tipeado con `</script>` u otra secuencia — sin los flags,
+            eso corta el bloque JSON antes de tiempo.
+        --}}
+        <script type="application/json" data-ag-datos-contrato>
+            {!! json_encode($datosContrato, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}
+        </script>
+
         <x-atoms.select
             name="contrato_id"
             id="contrato_id"
@@ -124,18 +119,55 @@
             :options="$contratosDisponibles"
             :value="$contratoId"
             :placeholder="__('operaciones.ordenes.campo_contrato_placeholder')"
+            searchable
             required
             :error="$errors->first('contrato_id')"
             data-ag-orden-contrato
-            data-mapa-contrato-cliente="{{ json_encode($mapaContratoCliente) }}"
         />
+
+        {{-- Resumen del contrato: cliente, propiedad(es), aplicaciones previstas --}}
+        <div class="ag-ordenes-form__resumen-contrato" data-ag-resumen-contrato hidden>
+            <div class="ag-form-section__field">
+                <label class="ag-select__label">{{ __('operaciones.ordenes.campo_contrato_cliente') }}</label>
+                <div class="ag-ordenes-form__valor" data-ag-cliente-nombre>—</div>
+            </div>
+            <div class="ag-form-section__field">
+                <label class="ag-select__label">{{ __('operaciones.ordenes.campo_contrato_propiedades') }}</label>
+                <div class="ag-ordenes-form__valor" data-ag-propiedades-nombres>—</div>
+            </div>
+            <div class="ag-form-section__field">
+                <label class="ag-select__label">{{ __('operaciones.ordenes.campo_contrato_aplicaciones') }}</label>
+                <div class="ag-ordenes-form__valor" data-ag-aplicaciones-previstas>—</div>
+            </div>
+        </div>
+
+        {{-- Contacto: autoseleccionado si único, hidden si es así --}}
+        <div data-ag-contacto-wrap>
+            <x-atoms.select
+                name="emitida_por_contacto_id"
+                id="emitida_por_contacto_id"
+                :label="__('operaciones.ordenes.campo_contacto')"
+                :options="$contactosDisponibles"
+                :value="$contactoId"
+                :placeholder="__('operaciones.ordenes.campo_contacto_placeholder')"
+                :error="$errors->first('emitida_por_contacto_id')"
+                data-ag-orden-contacto
+            />
+        </div>
+    </x-molecules.form-section>
+
+    {{--
+        Sección 2: Datos de la orden (recortada, 9 campos)
+        Sin: contrato_id, emitida_por_contacto_id, clima/vuelo
+    --}}
+    <x-molecules.form-section
+        :title="__('operaciones.ordenes.seccion_datos')"
+        :count="__('operaciones.ordenes.campos_contador', ['cantidad' => 9])"
+    >
 
         {{--
             "Tipo" (Sólido/Líquido) es de PRESENTACIÓN: sin `name` validado
-            por el server, solo filtra "Categoría de insumo" de abajo (mismo
-            patrón cliente→propiedad de `campos/_formulario.blade.php`) y
-            decide qué campo de dosis se ve. La fuente de verdad de qué tipo
-            es la orden es SIEMPRE la categoría elegida, nunca este selector.
+            por el server, solo filtra "Categoría de insumo" de abajo.
         --}}
         <x-atoms.select
             name="tipo_insumo_filtro"
@@ -163,10 +195,7 @@
 
         {{--
             Cuál de los dos campos hace falta depende del tipo_insumo de la
-            categoría elegida (HU-79, tarea 110) — `ordenes-form.js` oculta
-            uno de los dos según `data-ag-orden-campo-tipo`. El render inicial
-            ya respeta `$tipoInsumoSeleccionado` (old()/orden existente) para
-            que no parpadee el campo equivocado antes de que cargue el JS.
+            categoría elegida (HU-79, tarea 110).
         --}}
         <div data-ag-orden-campo-tipo="liquido" @if ($tipoInsumoSeleccionado !== 'liquido') hidden @endif>
             <x-atoms.input
@@ -192,15 +221,17 @@
             />
         </div>
 
-        <x-atoms.input
-            type="number"
+        {{-- nro_aplicacion: cambió de input number a select ordinal --}}
+        <x-atoms.select
             name="nro_aplicacion"
+            id="nro_aplicacion"
             :label="__('operaciones.ordenes.campo_nro_aplicacion')"
-            :value="$valor('nro_aplicacion')"
-            min="1"
-            step="1"
+            :options="$opcionesNroAplicacion"
+            :value="$nroAplicacion"
+            :placeholder="__('operaciones.ordenes.campo_nro_aplicacion_placeholder')"
             required
             :error="$errors->first('nro_aplicacion')"
+            data-ag-orden-nro-aplicacion
         />
 
         <x-atoms.input
@@ -232,16 +263,6 @@
             :error="$errors->first('fecha_emision')"
         />
 
-        <x-atoms.select
-            name="emitida_por_contacto_id"
-            id="emitida_por_contacto_id"
-            :label="__('operaciones.ordenes.campo_contacto')"
-            :options="$contactosDisponibles"
-            :value="$contactoId"
-            :placeholder="__('operaciones.ordenes.campo_contacto_placeholder')"
-            :error="$errors->first('emitida_por_contacto_id')"
-        />
-
         <div class="ag-form-section__field--full">
             <x-atoms.input
                 type="text"
@@ -254,134 +275,68 @@
     </x-molecules.form-section>
 
     {{--
-        Lotes de la orden (HU-92, tarea 107): selección múltiple con
-        hectáreas por lote — reemplaza el `<select>` único de `lote_id`.
-        Mismo patrón repetible (agregar/quitar, plantilla clonable) que
-        `campos/_lote-fila.blade.php`, ver
-        `resources/js/pages/ordenes-form.js`.
+        Sección 3: Lotes de la orden (tabla nueva con checkbox, búsqueda, paginado)
+        Reemplaza el repetible anterior de `_lote-orden-fila.blade.php`.
     --}}
     <x-molecules.form-section :title="__('operaciones.ordenes.seccion_lotes')" class="ag-ordenes-form__lotes-seccion">
         <div
-            class="ag-form-section__field--full ag-ordenes-form__lotes"
-            data-ag-orden-lotes
-            data-mapa-lote-cliente="{{ json_encode($mapaLoteCliente) }}"
+            class="ag-form-section__field--full ag-ordenes-form__lotes-tabla"
+            data-ag-tabla-lotes
+            data-texto-col-codigo="{{ __('operaciones.ordenes.lotes_columna_codigo') }}"
+            data-texto-col-propiedad="{{ __('operaciones.ordenes.lotes_columna_propiedad') }}"
+            data-texto-col-hectareas-lote="{{ __('operaciones.ordenes.lotes_columna_hectareas_lote') }}"
+            data-texto-col-hectareas-solicitadas="{{ __('operaciones.ordenes.campo_lote_hectareas') }}"
+            data-texto-col-desnivel="{{ __('operaciones.ordenes.lotes_columna_desnivel') }}"
+            data-texto-col-limpieza="{{ __('operaciones.ordenes.lotes_columna_limpieza') }}"
         >
+            {{--
+                Semilla de selección: `old('lotes')` tras un error de
+                validación, o los lotes ya guardados de la orden en edición
+                (`$lotesOrden`) — sin esto, `ordenes-form.js` no tiene forma
+                de saber qué filas venían tildadas al cargar la página.
+            --}}
+            <script type="application/json" data-ag-lotes-iniciales>
+                {!! json_encode($lotesIniciales, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}
+            </script>
+
             @if ($errors->has('lotes'))
                 <p class="ag-input__error" role="alert">{{ $errors->first('lotes') }}</p>
             @endif
 
-            <div data-ag-orden-lotes-lista>
-                @foreach ($lotesIniciales as $indice => $lote)
-                    @include('operaciones::pages.ordenes._lote-orden-fila', ['indice' => $indice, 'lote' => $lote])
-                @endforeach
+            {{-- Buscador de lotes --}}
+            <div class="ag-ordenes-form__lotes-buscador">
+                <input
+                    type="text"
+                    class="ag-input__control"
+                    placeholder="{{ __('operaciones.ordenes.lotes_buscar_placeholder') }}"
+                    data-ag-lotes-buscar
+                    aria-label="{{ __('operaciones.ordenes.lotes_buscar_aria') }}"
+                />
             </div>
 
-            <x-atoms.button type="button" variant="outline" icon="add" data-ag-orden-lotes-agregar>
-                {{ __('operaciones.ordenes.lote_agregar') }}
-            </x-atoms.button>
+            {{-- Tabla de lotes (todos los de datosContrato[contratoId].lotes, con checkbox) --}}
+            <div class="ag-ordenes-form__lotes-contenedor" data-ag-lotes-contenedor>
+                <!-- Rellenado por JS al elegir contrato -->
+            </div>
 
-            {{-- Plantilla clonable: el índice literal se reemplaza por el
-                 próximo número al clonar (`ordenes-form.js`). Un `<template>`
-                 nunca se renderiza ni se envía con el form. --}}
-            <template data-ag-orden-lote-template>
-                @include('operaciones::pages.ordenes._lote-orden-fila', ['indice' => '__INDICE__', 'lote' => []])
-            </template>
+            {{-- Paginado (mínimo: botones anterior/siguiente) --}}
+            <div class="ag-ordenes-form__lotes-paginado" data-ag-lotes-paginado hidden>
+                <button type="button" class="ag-button ag-button--text ag-button--sm" data-ag-pagina-anterior aria-label="{{ __('operaciones.ordenes.lotes_pagina_anterior') }}">
+                    <span class="material-symbols-rounded ag-icon ag-icon--sm">chevron_left</span>
+                    {{ __('operaciones.ordenes.lotes_pagina_anterior') }}
+                </button>
+                <span class="ag-ordenes-form__paginado-info" data-ag-pagina-info>1 / 1</span>
+                <button type="button" class="ag-button ag-button--text ag-button--sm" data-ag-pagina-siguiente aria-label="{{ __('operaciones.ordenes.lotes_pagina_siguiente') }}">
+                    {{ __('operaciones.ordenes.lotes_pagina_siguiente') }}
+                    <span class="material-symbols-rounded ag-icon ag-icon--sm">chevron_right</span>
+                </button>
+            </div>
+
+            {{-- Estado vacío: sin contrato elegido o sin lotes --}}
+            <div class="ag-ordenes-form__lotes-vacio" data-ag-lotes-vacio>
+                {{ __('operaciones.ordenes.lotes_tabla_vacio') }}
+            </div>
         </div>
-    </x-molecules.form-section>
-
-    <x-molecules.form-section
-        :title="__('operaciones.ordenes.seccion_limites')"
-        :count="__('operaciones.ordenes.campos_contador', ['cantidad' => 5])"
-    >
-        <div class="ag-form-section__field--full ag-ordenes-form__ayuda">
-            {{ __('operaciones.ordenes.seccion_limites_ayuda') }}
-        </div>
-
-        <x-atoms.input
-            type="number"
-            name="humedad_min_pct"
-            :label="__('operaciones.ordenes.campo_humedad_min_pct')"
-            :value="$valor('humedad_min_pct')"
-            min="0"
-            max="100"
-            step="0.01"
-            :error="$errors->first('humedad_min_pct')"
-        />
-
-        <x-atoms.input
-            type="number"
-            name="humedad_max_pct"
-            :label="__('operaciones.ordenes.campo_humedad_max_pct')"
-            :value="$valor('humedad_max_pct')"
-            min="0"
-            max="100"
-            step="0.01"
-            :error="$errors->first('humedad_max_pct')"
-        />
-
-        <x-atoms.input
-            type="number"
-            name="viento_max_kmh"
-            :label="__('operaciones.ordenes.campo_viento_max_kmh')"
-            :value="$valor('viento_max_kmh')"
-            min="0.01"
-            step="0.01"
-            :error="$errors->first('viento_max_kmh')"
-        />
-
-        <x-atoms.input
-            type="number"
-            name="temperatura_max_c"
-            :label="__('operaciones.ordenes.campo_temperatura_max_c')"
-            :value="$valor('temperatura_max_c')"
-            step="0.01"
-            :error="$errors->first('temperatura_max_c')"
-        />
-
-        <x-atoms.input
-            type="number"
-            name="velocidad_max_kmh"
-            :label="__('operaciones.ordenes.campo_velocidad_max_kmh')"
-            :value="$valor('velocidad_max_kmh')"
-            min="0.01"
-            step="0.01"
-            :error="$errors->first('velocidad_max_kmh')"
-        />
-    </x-molecules.form-section>
-
-    <x-molecules.form-section
-        :title="__('operaciones.ordenes.seccion_vuelo')"
-        :count="__('operaciones.ordenes.campos_contador', ['cantidad' => 3])"
-    >
-        <x-atoms.input
-            type="number"
-            name="altura_vuelo_m"
-            :label="__('operaciones.ordenes.campo_altura_vuelo_m')"
-            :value="$valor('altura_vuelo_m')"
-            min="0.01"
-            step="0.01"
-            :error="$errors->first('altura_vuelo_m')"
-        />
-
-        <x-atoms.input
-            type="number"
-            name="velocidad_vuelo_kmh"
-            :label="__('operaciones.ordenes.campo_velocidad_vuelo_kmh')"
-            :value="$valor('velocidad_vuelo_kmh')"
-            min="0.01"
-            step="0.01"
-            :error="$errors->first('velocidad_vuelo_kmh')"
-        />
-
-        <x-atoms.input
-            type="number"
-            name="ancho_pasada_m"
-            :label="__('operaciones.ordenes.campo_ancho_pasada_m')"
-            :value="$valor('ancho_pasada_m')"
-            min="0.01"
-            step="0.01"
-            :error="$errors->first('ancho_pasada_m')"
-        />
     </x-molecules.form-section>
 
     <x-organisms.form-actions-bar :status="__('operaciones.ordenes.estado_form')">

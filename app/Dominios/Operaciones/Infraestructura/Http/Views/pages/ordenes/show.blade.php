@@ -67,14 +67,6 @@
     $equiposCompletos = $equiposAsignados >= $orden->cantidad_equipos_necesarios;
     $aplicacionesEstado = $aplicacionesCompletas ? 'success' : null;
     $equiposEstado = $equiposCompletos ? 'success' : ($estadoValor === 'vigente' ? 'warning' : null);
-
-    $limitesItems = [
-        ['label' => __('operaciones.ordenes.campo_humedad_min_pct'), 'value' => $orden->humedad_min_pct !== null ? "{$orden->humedad_min_pct} %" : __('operaciones.ordenes.limite_sin_definir')],
-        ['label' => __('operaciones.ordenes.campo_humedad_max_pct'), 'value' => $orden->humedad_max_pct !== null ? "{$orden->humedad_max_pct} %" : __('operaciones.ordenes.limite_sin_definir')],
-        ['label' => __('operaciones.ordenes.campo_viento_max_kmh'), 'value' => $orden->viento_max_kmh !== null ? "{$orden->viento_max_kmh} km/h" : __('operaciones.ordenes.limite_sin_definir')],
-        ['label' => __('operaciones.ordenes.campo_temperatura_max_c'), 'value' => $orden->temperatura_max_c !== null ? "{$orden->temperatura_max_c} °C" : __('operaciones.ordenes.limite_sin_definir')],
-        ['label' => __('operaciones.ordenes.campo_velocidad_max_kmh'), 'value' => $orden->velocidad_max_kmh !== null ? "{$orden->velocidad_max_kmh} km/h" : __('operaciones.ordenes.limite_sin_definir')],
-    ];
 @endphp
 <x-templates.panel-shell :title="__('operaciones.ordenes.detalle_titulo', ['id' => $orden->id])" :tema="$tema">
     <x-templates.panel-layout
@@ -279,34 +271,13 @@
                 @endif
 
                 <x-slot:aside>
-                    <x-molecules.form-section accent="warning" :title="__('operaciones.ordenes.seccion_limites')" :count="__('operaciones.ordenes.campos_contador', ['cantidad' => 5])">
-                        @foreach ($limitesItems as $limite)
-                            <div class="ag-ordenes-detalle__campo">
-                                <p class="ag-ordenes-detalle__campo-label">{{ $limite['label'] }}</p>
-                                <p class="ag-ordenes-detalle__campo-valor">{{ $limite['value'] }}</p>
-                            </div>
-                        @endforeach
-
-                        <div class="ag-form-section__field--full ag-ordenes-form__ayuda">
-                            {{ __('operaciones.ordenes.seccion_limites_ayuda') }}
-                        </div>
-                    </x-molecules.form-section>
-
-                    <x-molecules.form-section accent="primary-2" :title="__('operaciones.ordenes.seccion_vuelo')" :count="__('operaciones.ordenes.campos_contador', ['cantidad' => 3])">
-                        <div class="ag-ordenes-detalle__campo">
-                            <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_altura_vuelo_m') }}</p>
-                            <p class="ag-ordenes-detalle__campo-valor">{{ $orden->altura_vuelo_m !== null ? "{$orden->altura_vuelo_m} m" : __('operaciones.ordenes.limite_sin_definir') }}</p>
-                        </div>
-                        <div class="ag-ordenes-detalle__campo">
-                            <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_velocidad_vuelo_kmh') }}</p>
-                            <p class="ag-ordenes-detalle__campo-valor">{{ $orden->velocidad_vuelo_kmh !== null ? "{$orden->velocidad_vuelo_kmh} km/h" : __('operaciones.ordenes.limite_sin_definir') }}</p>
-                        </div>
-                        <div class="ag-ordenes-detalle__campo">
-                            <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_ancho_pasada_m') }}</p>
-                            <p class="ag-ordenes-detalle__campo-valor">{{ $orden->ancho_pasada_m !== null ? "{$orden->ancho_pasada_m} m" : __('operaciones.ordenes.limite_sin_definir') }}</p>
-                        </div>
-                    </x-molecules.form-section>
-
+                    {{--
+                        Límites climáticos y parámetros de vuelo (5+3 campos)
+                        se mostraban acá hasta la reforma del 18/9/2026: ya no
+                        son datos de la orden, se movieron a `Trabajo` (cargados
+                        por equipo en Asignación de equipos) — ver docblock de
+                        `OrdenAplicacion` y de `AsignarEquipoOrdenRequest`.
+                    --}}
                     <x-molecules.progress-meter
                         :title="__('operaciones.ordenes.avance_titulo')"
                         :percent="$porcentajeAsignado"

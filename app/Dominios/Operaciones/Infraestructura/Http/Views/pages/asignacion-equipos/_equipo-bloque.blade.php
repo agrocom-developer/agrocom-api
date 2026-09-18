@@ -35,6 +35,9 @@
     $erroresPrefijo = str_replace(['[', ']'], ['.', ''], $prefijo);
     $lotesFila = $lotesFila ?? [[]];
     $mostrarQuitarEquipo ??= true;
+
+    // Función auxiliar para recuperar valores (old() o vacío)
+    $valor = fn (string $campo, mixed $porDefecto = '') => old($campo, $porDefecto);
 @endphp
 <div class="ag-asignacion-equipos-ficha__equipo-fila" data-ag-equipo-fila>
     <div class="ag-asignacion-equipos-ficha__equipo-cabecera">
@@ -53,6 +56,105 @@
                 {{ __('operaciones.asignacion_equipos.equipo_quitar') }}
             </x-atoms.button>
         @endif
+    </div>
+
+    {{-- Subsección: Condiciones de vuelo por equipo (8 campos: humedad, viento, temperatura, velocidad, altura, ancho) --}}
+    <div class="ag-asignacion-equipos-ficha__condiciones-vuelo">
+        <div class="ag-form-section__field--full ag-asignacion-equipos-ficha__condiciones-titulo">
+            {{ __('operaciones.asignacion_equipos.seccion_condiciones_vuelo') }}
+        </div>
+        <div class="ag-form-section__field--full ag-asignacion-equipos-ficha__condiciones-ayuda">
+            {{ __('operaciones.asignacion_equipos.seccion_condiciones_vuelo_ayuda') }}
+        </div>
+
+        <x-atoms.input
+            type="number"
+            name="{{ $prefijo }}[humedad_min_pct]"
+            id="{{ $idBase }}-humedad-min"
+            :label="__('operaciones.asignacion_equipos.campo_humedad_min_pct')"
+            :value="$valor($prefijo.'.humedad_min_pct')"
+            min="0"
+            max="100"
+            step="0.01"
+            :error="$errors->first($erroresPrefijo.'.humedad_min_pct')"
+        />
+
+        <x-atoms.input
+            type="number"
+            name="{{ $prefijo }}[humedad_max_pct]"
+            id="{{ $idBase }}-humedad-max"
+            :label="__('operaciones.asignacion_equipos.campo_humedad_max_pct')"
+            :value="$valor($prefijo.'.humedad_max_pct')"
+            min="0"
+            max="100"
+            step="0.01"
+            :error="$errors->first($erroresPrefijo.'.humedad_max_pct')"
+        />
+
+        <x-atoms.input
+            type="number"
+            name="{{ $prefijo }}[viento_max_kmh]"
+            id="{{ $idBase }}-viento-max"
+            :label="__('operaciones.asignacion_equipos.campo_viento_max_kmh')"
+            :value="$valor($prefijo.'.viento_max_kmh')"
+            min="0.01"
+            step="0.01"
+            :error="$errors->first($erroresPrefijo.'.viento_max_kmh')"
+        />
+
+        <x-atoms.input
+            type="number"
+            name="{{ $prefijo }}[temperatura_max_c]"
+            id="{{ $idBase }}-temperatura-max"
+            :label="__('operaciones.asignacion_equipos.campo_temperatura_max_c')"
+            :value="$valor($prefijo.'.temperatura_max_c')"
+            step="0.01"
+            :error="$errors->first($erroresPrefijo.'.temperatura_max_c')"
+        />
+
+        <x-atoms.input
+            type="number"
+            name="{{ $prefijo }}[velocidad_max_kmh]"
+            id="{{ $idBase }}-velocidad-max"
+            :label="__('operaciones.asignacion_equipos.campo_velocidad_max_kmh')"
+            :value="$valor($prefijo.'.velocidad_max_kmh')"
+            min="0.01"
+            step="0.01"
+            :error="$errors->first($erroresPrefijo.'.velocidad_max_kmh')"
+        />
+
+        <x-atoms.input
+            type="number"
+            name="{{ $prefijo }}[altura_vuelo_m]"
+            id="{{ $idBase }}-altura-vuelo"
+            :label="__('operaciones.asignacion_equipos.campo_altura_vuelo_m')"
+            :value="$valor($prefijo.'.altura_vuelo_m')"
+            min="0.01"
+            step="0.01"
+            :error="$errors->first($erroresPrefijo.'.altura_vuelo_m')"
+        />
+
+        <x-atoms.input
+            type="number"
+            name="{{ $prefijo }}[velocidad_vuelo_kmh]"
+            id="{{ $idBase }}-velocidad-vuelo"
+            :label="__('operaciones.asignacion_equipos.campo_velocidad_vuelo_kmh')"
+            :value="$valor($prefijo.'.velocidad_vuelo_kmh')"
+            min="0.01"
+            step="0.01"
+            :error="$errors->first($erroresPrefijo.'.velocidad_vuelo_kmh')"
+        />
+
+        <x-atoms.input
+            type="number"
+            name="{{ $prefijo }}[ancho_pasada_m]"
+            id="{{ $idBase }}-ancho-pasada"
+            :label="__('operaciones.asignacion_equipos.campo_ancho_pasada_m')"
+            :value="$valor($prefijo.'.ancho_pasada_m')"
+            min="0.01"
+            step="0.01"
+            :error="$errors->first($erroresPrefijo.'.ancho_pasada_m')"
+        />
     </div>
 
     <div class="ag-asignacion-equipos-ficha__equipo-lotes" data-ag-equipo-lotes-lista>
