@@ -337,24 +337,17 @@
     border-top: 1px solid var(--ag-color-border-row);
 }
 
-/* Logo del cliente — cuadrado fijo, mismo radio que una tarjeta chica.
-   `img` real y el ícono de reemplazo (`--vacio`) comparten tamaño/posición;
-   el JS alterna cuál de los dos queda `hidden`. */
+/* Logo del cliente — cuadrado fijo, mismo radio que una tarjeta chica. Una
+   sola `<img>`: el JS le pone el logo real o cae al placeholder del propio
+   atributo `data-logo-placeholder` (nunca dos elementos alternando `hidden`). */
 .ag-ordenes-form__logo {
     flex: none;
-    width: 3.5rem;
-    height: 3.5rem;
+    width: 5rem;
+    height: 5rem;
     border-radius: var(--ag-radius-md);
     object-fit: contain;
     background-color: var(--ag-color-surface-inset);
     border: 1px solid var(--ag-color-border-row);
-}
-
-.ag-ordenes-form__logo--vacio {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--ag-color-text-muted);
 }
 
 /* Datos del resumen — cliente/propiedad(es)/aplicaciones, en fila y con

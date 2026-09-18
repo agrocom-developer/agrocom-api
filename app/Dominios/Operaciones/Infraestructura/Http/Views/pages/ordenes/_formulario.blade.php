@@ -170,10 +170,18 @@
             dos columnas ya lo da `ag-form-section__body` del molecule.
         --}}
         <div class="ag-form-section__field--full ag-ordenes-form__resumen-contrato" data-ag-resumen-contrato hidden>
-            <img class="ag-ordenes-form__logo" data-ag-cliente-logo alt="" hidden>
-            <div class="ag-ordenes-form__logo ag-ordenes-form__logo--vacio" data-ag-cliente-logo-vacio>
-                <span class="material-symbols-rounded ag-icon" aria-hidden="true">business</span>
-            </div>
+            {{--
+                Una sola imagen: el JS le pone el logo real
+                (`datos.logo_url`) o cae al placeholder de acá —
+                `data-logo-placeholder` en vez de hardcodear la ruta en el JS.
+            --}}
+            <img
+                class="ag-ordenes-form__logo"
+                data-ag-cliente-logo
+                data-logo-placeholder="{{ asset('images/logo-placeholder.png') }}"
+                src="{{ asset('images/logo-placeholder.png') }}"
+                alt=""
+            >
             <div class="ag-ordenes-form__resumen-datos">
                 <div class="ag-ordenes-form__resumen-campo">
                     <label class="ag-select__label">{{ __('operaciones.ordenes.campo_contrato_cliente') }}</label>
@@ -264,6 +272,7 @@
             :options="$opcionesNroAplicacion"
             :value="$nroAplicacion"
             :placeholder="__('operaciones.ordenes.campo_nro_aplicacion_placeholder')"
+            :searchable="false"
             required
             :error="$errors->first('nro_aplicacion')"
             data-ag-orden-nro-aplicacion

@@ -378,7 +378,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!datos) {
             if (resumenContrato) resumenContrato.hidden = true;
-            if (contactoWrap) contactoWrap.hidden = true;
+            // Sin contrato elegido no hay cliente de quién mostrar
+            // contactos: el select queda visible pero sin ninguna opción
+            // habilitada (nunca se oculta, ver docblock de más abajo).
+            if (selectContacto) {
+                Array.from(selectContacto.querySelectorAll('option'))
+                    .filter((opcion) => opcion.value !== '')
+                    .forEach((opcion) => {
+                        opcion.hidden = true;
+                        opcion.disabled = true;
+                    });
+                selectContacto.value = '';
+                selectContacto.dispatchEvent(new Event('change', { bubbles: true }));
+            }
             if (contenedorLotes) contenedorLotes.innerHTML = '';
             if (lotesSinContrato) lotesSinContrato.hidden = false;
             if (lotesContenido) lotesContenido.hidden = true;
@@ -408,32 +420,52 @@ document.addEventListener('DOMContentLoaded', () => {
                 aplicacionesEl.textContent = String(datos.aplicaciones_previstas);
             }
 
-            // Logo del cliente — ícono de reemplazo (`business`) si no tiene.
+            // Logo del cliente — cae al placeholder (`data-logo-placeholder`,
+            // ver _formulario.blade.php) si el cliente no tiene uno propio.
             const logoEl = resumenContrato.querySelector('[data-ag-cliente-logo]');
-            const logoVacioEl = resumenContrato.querySelector('[data-ag-cliente-logo-vacio]');
-            if (logoEl && logoVacioEl) {
-                if (datos.logo_url) {
-                    logoEl.src = datos.logo_url;
-                    logoEl.hidden = false;
-                    logoVacioEl.hidden = true;
-                } else {
-                    logoEl.hidden = true;
-                    logoVacioEl.hidden = false;
-                }
+            if (logoEl) {
+                logoEl.src = datos.logo_url || logoEl.dataset.logoPlaceholder;
             }
         }
 
-        // Autoselecciona contacto si es único — salvo que el campo ya venga
-        // con un error del servidor (`data-tiene-error`, ver _formulario.blade.php):
-        // ahí se deja visible para que el usuario vea POR QUÉ falló, nunca
-        // se oculta un error que el servidor mandó.
-        const contactoTieneError = contactoWrap?.hasAttribute('data-tiene-error');
+        // Contacto: el `<select>` SIEMPRE queda visible (nunca se oculta,
+        // pedido explícito del usuario 18/9/2026) — lo que cambia es qué
+        // opciones puede elegir: solo los contactos DEL CLIENTE de este
+        // contrato (`datos.contactos`, ya scopeado server-side), mismo
+        // criterio de ocultar/deshabilitar `<option>` que ya usa
+        // `filtrarPorValorPadre()` para tipo_insumo→categoría.
+        if (selectContacto) {
+            const idsDelCliente = new Set((datos.contactos || []).map((c) => String(c.id)));
+            let valorSigueVisible = false;
 
-        if (!contactoTieneError && selectContacto && datos.contactos && datos.contactos.length === 1) {
-            selectContacto.value = datos.contactos[0].id;
-            if (contactoWrap) contactoWrap.hidden = true;
-        } else if (contactoWrap) {
-            contactoWrap.hidden = false;
+            Array.from(selectContacto.querySelectorAll('option'))
+                .filter((opcion) => opcion.value !== '')
+                .forEach((opcion) => {
+                    const visible = idsDelCliente.has(opcion.value);
+                    opcion.hidden = !visible;
+                    opcion.disabled = !visible;
+                    if (visible && opcion.value === selectContacto.value) {
+                        valorSigueVisible = true;
+                    }
+                });
+
+            // Cambio REAL de contrato (no la carga inicial): el contacto ya
+            // elegido pertenecía a otro cliente, se limpia. En la carga
+            // inicial (edición/redisplay) nunca se toca un valor ya
+            // guardado, aunque `resetearSeleccion` sea false.
+            if (resetearSeleccion && !valorSigueVisible) {
+                selectContacto.value = '';
+            }
+
+            // Autoselecciona si queda uno solo disponible — salvo que el
+            // campo ya venga con un error del servidor (`data-tiene-error`):
+            // ahí se deja como está, para que el usuario vea qué falló.
+            const contactoTieneError = contactoWrap?.hasAttribute('data-tiene-error');
+            if (!contactoTieneError && datos.contactos && datos.contactos.length === 1) {
+                selectContacto.value = String(datos.contactos[0].id);
+            }
+
+            selectContacto.dispatchEvent(new Event('change', { bubbles: true }));
         }
 
         // Acota las opciones de "Número de aplicación" al total pactado del
