@@ -129,7 +129,15 @@
                                         @disabled($esDiaCompleto)
                                     >
                                 </div>
-                                @php $tieneOrdenRegistrada = in_array($lote['lote_id'], $loteIdsConOrdenRegistrada, true); @endphp
+                                @php
+                                    $tieneOrdenRegistrada = in_array($lote['lote_id'], $loteIdsConOrdenRegistrada, true);
+                                    // `@if`/`@endif` NO se puede usar dentro de la lista de
+                                    // atributos de un tag de componente Blade (rompe la
+                                    // compilación, "unexpected token endif") — se resuelve el
+                                    // valor acá y se enlaza con `:title`: Laravel omite el
+                                    // atributo solo cuando el valor es `null` (`ComponentAttributeBag::__toString()`).
+                                    $tituloQuitarBloqueado = $tieneOrdenRegistrada ? __('comercial.contratos.lotes_quitar_bloqueado_orden') : null;
+                                @endphp
                                 <div class="ag-contratos-form__lote-acciones">
                                     <x-atoms.button
                                         type="button"
@@ -139,7 +147,7 @@
                                         icon="delete"
                                         data-ag-lote-quitar
                                         @disabled($tieneOrdenRegistrada)
-                                        @if ($tieneOrdenRegistrada) title="{{ __('comercial.contratos.lotes_quitar_bloqueado_orden') }}" @endif
+                                        :title="$tituloQuitarBloqueado"
                                     >
                                         {{ __('comercial.contratos.lotes_quitar') }}
                                     </x-atoms.button>
