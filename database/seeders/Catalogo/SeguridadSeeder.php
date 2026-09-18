@@ -119,6 +119,14 @@ class SeguridadSeeder extends Seeder
         // único permiso de lectura: el detalle con evidencias y los filtros
         // llegan con HU-15.
         'operaciones.trabajo.ver' => 'Ver el listado de trabajos y sesiones en el panel',
+        // HU-93 (tarea 108; ampliado por la reforma "Orden de Trabajo" del
+        // 18/9/2026): crear una tanda (equipos + parámetros compartidos +
+        // lotes por equipo) sobre una orden vigente, y editar/eliminar un
+        // trabajo puntual mientras no esté `validado`. Grano fino, mismo
+        // criterio que `operaciones.orden.crear/.editar/.eliminar`.
+        'operaciones.trabajo.crear' => 'Crear una Orden de Trabajo (tanda de equipos) sobre una orden vigente',
+        'operaciones.trabajo.editar' => 'Editar un trabajo (lote, equipo, hectáreas, turno) mientras no esté validado',
+        'operaciones.trabajo.eliminar' => 'Dar de baja (lógica) un trabajo mientras no esté validado',
         // HU-14 (tarea 14): cola de validación — aprobar o rechazar una
         // sesión cerrada. Un único permiso gatea listar y decidir (mismo
         // criterio que `distribucion.version.autorizar`): la policy
@@ -468,6 +476,12 @@ class SeguridadSeeder extends Seeder
         // Administra órdenes y planificación (diseño §2): ve qué trabajos y
         // sesiones se cerraron en el panel, igual que el jefe de campo.
         'operaciones.trabajo.ver',
+        // HU-93 (tarea 108; reforma "Orden de Trabajo" 18/9/2026): administra
+        // también el alta de tandas y la corrección de un trabajo cargado
+        // mal — mismo criterio que `operaciones.orden.crear/.editar/.eliminar`.
+        'operaciones.trabajo.crear',
+        'operaciones.trabajo.editar',
+        'operaciones.trabajo.eliminar',
         // HU-14: administra la operación diaria, así que también puede
         // destrabar la cola de validación — mismo criterio que trabajo.ver.
         'operaciones.sesion.validar',
@@ -677,6 +691,13 @@ class SeguridadSeeder extends Seeder
         // `operaciones.orden.ver` (CRUD completo de la orden) para repartir
         // equipos.
         'operaciones.orden.asignar_equipos',
+        // Reforma "Orden de Trabajo" (18/9/2026): mismo reclamo de HU-70,
+        // ahora con tanda/turno — el jefe de campo arma la tanda igual que
+        // antes repartía equipos, así que se lleva el permiso nuevo con el
+        // mismo criterio que `operaciones.orden.asignar_equipos` arriba. Sin
+        // `.editar`/`.eliminar`: corregir un trabajo cargado mal es del
+        // encargado (`PERMISOS_ENCARGADO_OPERACIONES`), no del jefe de campo.
+        'operaciones.trabajo.crear',
         // Tarea 62 (fuga 2): coordina la cuadrilla, aterriza en el dashboard
         // tras elegir rol y necesita la ficha de la compañía.
         'seguridad.dashboard.ver',

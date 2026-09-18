@@ -29,7 +29,7 @@ return [
             'tablero' => 'Tablero',
             'ordenes' => 'Órdenes de aplicación',
             'orden_trabajo' => 'Orden de Trabajo',
-            'asignacion_equipos' => 'Asignación de equipos',
+            'asignacion_equipos' => 'Distribución de equipos',
             'estadias' => 'Estadías en hacienda',
             'seguimiento_vuelos' => 'Seguimiento de vuelos',
         ],
