@@ -131,11 +131,17 @@
                                 </div>
                                 @php
                                     $tieneOrdenRegistrada = in_array($lote['lote_id'], $loteIdsConOrdenRegistrada, true);
-                                    // `@if`/`@endif` NO se puede usar dentro de la lista de
-                                    // atributos de un tag de componente Blade (rompe la
-                                    // compilación, "unexpected token endif") — se resuelve el
-                                    // valor acá y se enlaza con `:title`: Laravel omite el
-                                    // atributo solo cuando el valor es `null` (`ComponentAttributeBag::__toString()`).
+                                    // Ni `@if`/`@endif` ni la DIRECTIVA `@disabled()` se pueden
+                                    // usar dentro de la lista de atributos de un tag de
+                                    // componente Blade (<x-...>) — su compilador de tags
+                                    // confunde el límite del tag y rompe la compilación
+                                    // ("unexpected token endif"), a diferencia de un tag HTML
+                                    // plano, donde ambas sí funcionan (ver los <input> de
+                                    // arriba). Dentro de un componente, el equivalente
+                                    // soportado es el ATRIBUTO dinámico `:disabled="..."`
+                                    // (mismo comportamiento: Laravel omite el atributo si el
+                                    // valor es `false`/`null`, `ComponentAttributeBag::__toString()`)
+                                    // — igual criterio para `:title`.
                                     $tituloQuitarBloqueado = $tieneOrdenRegistrada ? __('comercial.contratos.lotes_quitar_bloqueado_orden') : null;
                                 @endphp
                                 <div class="ag-contratos-form__lote-acciones">
@@ -146,7 +152,7 @@
                                         class="ag-contratos-form__lote-quitar-btn"
                                         icon="delete"
                                         data-ag-lote-quitar
-                                        @disabled($tieneOrdenRegistrada)
+                                        :disabled="$tieneOrdenRegistrada"
                                         :title="$tituloQuitarBloqueado"
                                     >
                                         {{ __('comercial.contratos.lotes_quitar') }}

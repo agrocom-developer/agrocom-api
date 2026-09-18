@@ -487,7 +487,7 @@
                                          `contrato_id` hoy — el componente
                                          estático queda en su lugar para
                                          cuando esa pantalla lo permita. --}}
-                                    <x-atoms.button type="button" variant="outline" size="sm" icon="open_in_new" disabled title="{{ $tarjeta['accion']['tooltip'] }}">
+                                    <x-atoms.button type="button" variant="outline" size="sm" icon="open_in_new" disabled :title="$tarjeta['accion']['tooltip']">
                                         {{ $tarjeta['accion']['label'] }}
                                     </x-atoms.button>
                                 </x-slot:action>
