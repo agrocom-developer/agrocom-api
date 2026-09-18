@@ -41,7 +41,7 @@
         :menu-badges="$menuBadges"
         :version="$version"
     >
-        <x-atoms.button :href="route('panel.trabajos.show', $trabajo)" variant="text" size="sm" icon="arrow_back">
+        <x-atoms.button :href="route('panel.trabajos.detalle', $trabajo)" variant="text" size="sm" icon="arrow_back">
             {{ __('operaciones.trabajos.volver_al_detalle') }}
         </x-atoms.button>
 

@@ -23,6 +23,7 @@ final class LecturaTrabajosAsignadosEloquent implements LecturaTrabajosAsignados
     {
         return Trabajo::query()
             ->whereNotNull('equipo_trabajo_id')
+            ->with('ordenTrabajo')
             ->when(
                 $cursorActualizadoEn !== null && $cursorId !== null,
                 fn (Builder $consulta) => $consulta->where(
@@ -46,14 +47,14 @@ final class LecturaTrabajosAsignadosEloquent implements LecturaTrabajosAsignados
                 loteId: $trabajo->lote_id,
                 hectareasDeclaradas: $trabajo->hectareas_declaradas,
                 equipoTrabajoId: (int) $trabajo->equipo_trabajo_id,
-                humedadMinPct: $trabajo->humedad_min_pct,
-                vientoMaxKmh: $trabajo->viento_max_kmh,
-                temperaturaMaxC: $trabajo->temperatura_max_c,
-                humedadMaxPct: $trabajo->humedad_max_pct,
-                velocidadMaxKmh: $trabajo->velocidad_max_kmh,
-                alturaVueloM: $trabajo->altura_vuelo_m,
-                velocidadVueloKmh: $trabajo->velocidad_vuelo_kmh,
-                anchoPasadaM: $trabajo->ancho_pasada_m,
+                humedadMinPct: $trabajo->ordenTrabajo?->humedad_min_pct,
+                vientoMaxKmh: $trabajo->ordenTrabajo?->viento_max_kmh,
+                temperaturaMaxC: $trabajo->ordenTrabajo?->temperatura_max_c,
+                humedadMaxPct: $trabajo->ordenTrabajo?->humedad_max_pct,
+                velocidadMaxKmh: $trabajo->ordenTrabajo?->velocidad_max_kmh,
+                alturaVueloM: $trabajo->ordenTrabajo?->altura_vuelo_m,
+                velocidadVueloKmh: $trabajo->ordenTrabajo?->velocidad_vuelo_kmh,
+                anchoPasadaM: $trabajo->ordenTrabajo?->ancho_pasada_m,
                 updatedAt: $trabajo->updated_at->toIso8601String(),
             ))
             ->all();
