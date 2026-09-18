@@ -31,7 +31,15 @@
     top: var(--ag-space-4);
     bottom: calc(-1 * var(--ag-space-4));
     width: 1px;
-    background-color: var(--ag-color-border-row);
+    /* `--ag-color-text` (18/9/2026, pedido explícito del usuario: "negro
+       para claro y blanco para oscuro"), no `--ag-color-border-row` — ese
+       token es un divisor SUTIL (mezcla al 65%/35% con sand-50, pensado
+       para separar filas de tabla, casi invisible a propósito) y acá hacía
+       falta una línea que se LEA como línea. `--ag-color-text` ya resuelve
+       oliva-950 (casi negro) en claro y un casi-blanco cálido en oscuro —
+       mismo par que pedía el usuario, sin introducir un negro/blanco puro
+       que desentone con el resto de la paleta tibia del sistema. */
+    background-color: var(--ag-color-text);
 }
 
 .ag-timeline__dot {

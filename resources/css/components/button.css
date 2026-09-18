@@ -76,9 +76,17 @@
 }
 
 .ag-button--outline {
+    /* Borde en `-primary-emphasis` (verde, mismo tono que el texto) — antes
+       `-border-strong` (gris neutro): igual inconsistencia que tenían
+       `--danger-outline`/`--warning-outline` antes de la segunda vuelta de
+       paleta Fiori (17/9/2026) y que ahí sí se corrigió — acá quedó
+       pendiente. Detectado 18/9/2026 al comparar "Editar" (borde ámbar
+       vívido) vs "Aprobar" (borde gris casi invisible) en la misma fila de
+       `contratos/index.blade.php`: mismo texto verde, un botón con borde a
+       tono y el otro sin él. */
     background-color: transparent;
     color: var(--ag-color-primary-emphasis);
-    border-color: var(--ag-color-border-strong);
+    border-color: var(--ag-color-primary-emphasis);
     box-shadow: none;
 }
 
@@ -119,9 +127,20 @@
    sobre el pliegue ("Programar sesión"). Mismo criterio que --outline
    (transparente + borde + hover con -subtle), con el tono de danger. */
 .ag-button--danger-outline {
+    /* Texto Y borde en `--ag-color-danger` (NO `-contrast-fill`) — cuarta
+       vuelta (18/9/2026): el usuario pidió el hex literal tal cual en vez
+       del tono oscurecido `-strong` ("no veo el cambio"), pero
+       `-contrast-fill` es CONSTANTE entre temas (rojo-600 `#bb0000` fijo,
+       pensado para relleno sólido + texto blanco, no para texto directo
+       sobre una superficie que sí cambia de tema) — contra la tarjeta
+       oscura da ~1.91:1, casi invisible. `--ag-color-danger` (plano) en
+       claro resuelve al MISMO rojo-600 literal (son el mismo primitivo,
+       cero diferencia visual con lo pedido) y en oscuro ya tiene su propio
+       aclarado (`#fc9292`, ~5.95:1 contra la tarjeta oscura) — el sistema
+       ya traía la solución, solo había que usar el token correcto. */
     background-color: transparent;
-    color: var(--ag-color-danger-strong);
-    border-color: var(--ag-color-danger-border);
+    color: var(--ag-color-danger);
+    border-color: var(--ag-color-danger);
     box-shadow: none;
 }
 
@@ -133,16 +152,123 @@
    criterio que --danger-outline (transparente + borde + hover con
    -subtle), con el tono de warning — para diferenciar la acción de
    modificar un registro del resto de los botones outline neutros de la
-   fila, sin competir con el sólido primary de la pantalla. */
+   fila, sin competir con el sólido primary de la pantalla.
+   Borde en `-contrast-fill` (ámbar-700 crudo), no `-warning-border`
+   (mismo motivo que --danger-outline de arriba: diluido, se leía "triste"
+   en captura real). Texto se queda en `-strong` (ámbar-900): el crudo
+   como texto falla AA sobre fondo claro (~3.1:1). */
 .ag-button--warning-outline {
+    /* Texto Y borde en `--ag-color-warning` (NO `-contrast-fill`) — mismo
+       motivo y misma cuarta vuelta (18/9/2026) que `--danger-outline` de
+       arriba: `-contrast-fill` (ámbar-700 `#e8720c`, constante entre
+       temas) da ~4.21:1 contra la tarjeta oscura (pasa borde 3:1, no
+       texto 4.5:1) — mejor que danger pero igual no es el tono pensado
+       para oscuro. `--ag-color-warning` (plano) en claro resuelve al
+       MISMO ámbar-700 literal pedido, y en oscuro ya tiene su propio
+       aclarado (amber-300 `#f5a623`, ~6.37:1 contra la tarjeta oscura). */
     background-color: transparent;
-    color: var(--ag-color-warning-strong);
-    border-color: var(--ag-color-warning-border);
+    color: var(--ag-color-warning);
+    border-color: var(--ag-color-warning);
     box-shadow: none;
 }
 
 .ag-button--warning-outline:hover {
     background-color: var(--ag-color-warning-subtle);
+}
+
+/* success/info-outline (18/9/2026, pedido explícito del usuario: "la idea
+   es que el mismo botón al cambiar el estado sea el mismo color de ese
+   estado" — la acción que dispara una transición usa el color del ESTADO
+   DE LLEGADA, no un verde genérico). Completa la familia -outline que ya
+   tenían danger/warning: mismo criterio (texto y borde en el token PLANO
+   del estado, nunca `-contrast-fill` — ver la trampa de tema oscuro
+   documentada en theme-light.css junto a los `-contrast-fill`). Primer
+   consumidor real: "Aprobar"/"Reanudar" (→ vigente = success) y
+   "Finalizar" (→ finalizado = info) en `contratos/index.blade.php`,
+   "Activar" (→ vigente = success) en `ordenes/_orden-acciones.blade.php`/
+   `ordenes/show.blade.php`. Antes estas tres usaban `variant="outline"`
+   (verde de marca, `-primary-emphasis`) — "Finalizar" quedaba mal: llevaba
+   a un estado "info" (teal) pero el botón se veía verde, sin relación con
+   el chip "Finalizado" al que en realidad lleva. */
+.ag-button--success-outline {
+    background-color: transparent;
+    color: var(--ag-color-success);
+    border-color: var(--ag-color-success);
+    box-shadow: none;
+}
+
+.ag-button--success-outline:hover {
+    background-color: var(--ag-color-success-subtle);
+}
+
+.ag-button--info-outline {
+    background-color: transparent;
+    color: var(--ag-color-info);
+    border-color: var(--ag-color-info);
+    box-shadow: none;
+}
+
+.ag-button--info-outline:hover {
+    background-color: var(--ag-color-info-subtle);
+}
+
+/* primary-2-outline (18/9/2026, mismo pedido): NO toda acción de una fila
+   tiene que ser success solo porque "es positiva" — pensado para acciones
+   que solo NAVEGAN (no disparan ninguna transición de máquina de estados),
+   distinguibles de un vistazo de "esto cambia de estado"
+   (success/info/warning/danger-outline, coloreados por el estado de
+   llegada). "Ver" arrancó acá pero el usuario lo pasó a info-outline
+   (misma vuelta, minutos después — "mejor cambia el ver con el tono
+   info"); el único consumidor real de azul hoy es `.ag-row-actions__more-btn`
+   (row-actions.css, override directo, no esta clase). Variante disponible
+   para la próxima acción de solo-navegación que la necesite — mismo
+   estado que tuvieron `distintivo-1/2/3` recién creados: sin conectar a
+   pantalla, pero lista. */
+.ag-button--primary-2-outline {
+    background-color: transparent;
+    color: var(--ag-color-primary-2);
+    border-color: var(--ag-color-primary-2);
+    box-shadow: none;
+}
+
+.ag-button--primary-2-outline:hover {
+    background-color: var(--ag-color-primary-2-subtle);
+}
+
+/* distintivo-2-outline ("purple"/magenta, 18/9/2026, mismo pedido que
+   success/info/primary-2-outline): "Finalizar" de Contrato pasa a este
+   tono — el usuario reasignó `finalizado` de `info` a `distintivo-2`
+   ("purple", distinto de `distintivo-1`/"violet" en su propia tabla de
+   nombres) y `pausado` de `warning` a `info`, mismo criterio de siempre
+   ("el botón usa el color del estado de llegada"). Token PLANO (no
+   `-contrast-fill`): magenta-500 `#c0399f` da 4.65:1 en claro, magenta-300
+   `#dea0cf` da 6.17:1 en oscuro contra la tarjeta — ambos AA, ya
+   verificados en sistema_diseno_panel.md §1.3. */
+.ag-button--distintivo-2-outline {
+    background-color: transparent;
+    color: var(--ag-color-distintivo-2);
+    border-color: var(--ag-color-distintivo-2);
+    box-shadow: none;
+}
+
+.ag-button--distintivo-2-outline:hover {
+    background-color: var(--ag-color-distintivo-2-subtle);
+}
+
+/* alert-outline (18/9/2026, novena vuelta): rojo-700 `#880000`, más oscuro
+   y severo que danger (rojo-600 `#bb0000`) — pedido explícito del usuario
+   para "Cerrar" de Campania (→ `cerrada`), que había pasado por magenta
+   antes de esta vuelta. Token PLANO, mismo criterio que el resto de la
+   familia (nunca `-contrast-fill` para texto/borde). */
+.ag-button--alert-outline {
+    background-color: transparent;
+    color: var(--ag-color-alert);
+    border-color: var(--ag-color-alert);
+    box-shadow: none;
+}
+
+.ag-button--alert-outline:hover {
+    background-color: var(--ag-color-alert-subtle);
 }
 
 .ag-button__spinner {

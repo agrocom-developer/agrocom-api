@@ -1,10 +1,20 @@
 /*
  * Átomo: badge (resources/views/components/atoms/badge.blade.php)
  * Chip/pill de estado (quinta vuelta — los chips de la tabla de sesiones de
- * las maquetas 4a/5a/5b). Cada variante usa el par fondo `-subtle` + texto
- * `-strong` de su estado — nunca el token crudo como texto: los `-strong`
- * están calibrados para pasar AA 4.5:1 sobre su propio tenue en ambos temas
- * (verificación en sistema_diseno_panel.md §1.3).
+ * las maquetas 4a/5a/5b).
+ *
+ * Segunda vuelta de paleta (17/9/2026): success/warning/info/danger y los
+ * tres "distintivo" dejan el par fondo `-subtle` + texto `-strong` (pedido
+ * explícito del usuario — se leía "con poca opacity", no como estado) y
+ * pasan a relleno SÓLIDO (`-contrast-fill`, constante entre temas) + texto
+ * blanco (`--ag-color-gray-0`), como los chips "Out of Stock"/"Active" de
+ * la referencia SAP Fiori "Industry-Specific Colors". Única excepción:
+ * warning usa texto oscuro (`--ag-color-gray-900`) porque blanco sobre
+ * `#e9730c`/amber-700 da 3.03:1 (bajo AA 4.5:1); gris-900 da 5.09:1. Ver el
+ * bloque "Relleno sólido chip fuerte" en theme-light.css/theme-dark.css
+ * para el resto del razonamiento y los contrastes de cada color.
+ * `neutral`/`accent` no se tocan: siguen con el par tenue/-strong de
+ * siempre (no son parte de la paleta de 8 colores de indicación).
  */
 
 .ag-badge {
@@ -35,26 +45,62 @@
 }
 
 .ag-badge--success {
-    background-color: var(--ag-color-success-subtle);
-    color: var(--ag-color-success-strong);
+    background-color: var(--ag-color-success-contrast-fill);
+    color: var(--ag-color-gray-0);
 }
 
 .ag-badge--danger {
-    background-color: var(--ag-color-danger-subtle);
-    color: var(--ag-color-danger-strong);
+    background-color: var(--ag-color-danger-contrast-fill);
+    color: var(--ag-color-gray-0);
 }
 
 .ag-badge--warning {
-    background-color: var(--ag-color-warning-subtle);
-    color: var(--ag-color-warning-strong);
+    background-color: var(--ag-color-warning-contrast-fill);
+    color: var(--ag-color-gray-900);
 }
 
 .ag-badge--info {
-    background-color: var(--ag-color-info-subtle);
-    color: var(--ag-color-info-strong);
+    background-color: var(--ag-color-info-contrast-fill);
+    color: var(--ag-color-gray-0);
 }
 
 .ag-badge--accent {
     background-color: var(--ag-color-accent-subtle);
     color: var(--ag-color-accent-link);
+}
+
+/* Categóricos "distintivo" (sin carga de bueno/malo/urgencia) — mismo
+   relleno sólido que success/warning/info/danger de arriba. Sin conectar
+   a ninguna pantalla todavía (candidato: `ope_categorias_insumo`). */
+.ag-badge--distintivo-1 {
+    background-color: var(--ag-color-distintivo-1-contrast-fill);
+    color: var(--ag-color-gray-0);
+}
+
+.ag-badge--distintivo-2 {
+    background-color: var(--ag-color-distintivo-2-contrast-fill);
+    color: var(--ag-color-gray-0);
+}
+
+.ag-badge--distintivo-3 {
+    background-color: var(--ag-color-distintivo-3-contrast-fill);
+    color: var(--ag-color-gray-0);
+}
+
+/* "primary 2" (18/9/2026, pedido explícito del usuario: cada estado real
+   de una máquina de estados usa uno de los 8 colores, no se queda en
+   "neutral" por defecto). Primer consumidor real: `borrador` ("En
+   Aprobación") de Contrato — blanco sobre el crudo da 5.04:1, AA. */
+.ag-badge--primary-2 {
+    background-color: var(--ag-color-primary-2-contrast-fill);
+    color: var(--ag-color-gray-0);
+}
+
+/* "alert" (18/9/2026, novena vuelta): rojo-700 `#880000` — más oscuro y
+   severo que `danger` (rojo-600 `#bb0000`). Blanco encima da 10.26:1
+   (AAA), de sobra. Primer consumidor: `campanias/index.blade.php`,
+   badge de estado "cerrada". */
+.ag-badge--alert {
+    background-color: var(--ag-color-alert-contrast-fill);
+    color: var(--ag-color-gray-0);
 }

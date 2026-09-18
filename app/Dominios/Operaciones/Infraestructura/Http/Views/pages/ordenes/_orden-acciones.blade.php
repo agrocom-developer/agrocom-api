@@ -66,7 +66,7 @@
 @endpuede
 
 <x-organisms.row-actions>
-    <x-atoms.button :href="route('panel.ordenes.show', $orden)" variant="outline" size="sm" icon="visibility">
+    <x-atoms.button :href="route('panel.ordenes.show', $orden)" variant="info-outline" size="sm" icon="visibility">
         {{ __('operaciones.ordenes.ver_accion') }}
     </x-atoms.button>
 
@@ -79,7 +79,7 @@
     @endpuede
 
     @if ($puedeActivar && $estadoValor === 'emitida')
-        <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#{{ $modalIdActivar }}" variant="outline" size="sm" icon="check_circle">
+        <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#{{ $modalIdActivar }}" variant="success-outline" size="sm" icon="check_circle">
             {{ __('operaciones.ordenes.activar_accion') }}
         </x-atoms.button>
     @endif

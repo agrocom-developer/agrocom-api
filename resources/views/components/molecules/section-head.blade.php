@@ -8,13 +8,28 @@
     Props:
     - title (requerido): rótulo del sector, ya traducido/resuelto.
     - count (nullable string|int): contador a la derecha, ya formateado.
+    - accent (nullable, default null): tono de la barra lateral —
+      success|warning|danger|info|distintivo-1|distintivo-2|primary-2|null.
+      `null` (default) mantiene el verde `--ag-color-primary` de siempre —
+      NINGÚN consumidor existente cambia sin pasar `accent` explícito.
+      Pensado para secciones de una misma pantalla que conviene distinguir
+      de un vistazo (18/9/2026, pedido explícito del usuario, primer
+      consumidor real: los 6 `form-section` de `ordenes/show.blade.php`) —
+      no es un indicador de estado (no reemplaza `atoms/badge`/`state` de
+      `stat-card`), así que no lleva `danger`/`success` salvo que la
+      sección realmente signifique eso (evitar la misma colisión "dos
+      verdes por casualidad" que ya se documentó en `stat-card`).
 --}}
 @props([
     'title',
     'count' => null,
+    'accent' => null,
 ])
 
-<div {{ $attributes->class(['ag-section-head']) }}>
+<div
+    {{ $attributes->class(['ag-section-head']) }}
+    @if ($accent) data-accent="{{ $accent }}" @endif
+>
     <span class="ag-section-head__bar" aria-hidden="true"></span>
     <h2 class="ag-section-head__title">{{ $title }}</h2>
     @if ($count !== null)

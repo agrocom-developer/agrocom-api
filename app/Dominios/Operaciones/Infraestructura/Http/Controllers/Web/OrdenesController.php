@@ -249,7 +249,12 @@ final class OrdenesController
                 'icon' => 'work_history',
                 'title' => __('operaciones.ordenes.vinculo_trabajos'),
                 'meta' => __('operaciones.ordenes.vinculo_trabajos_meta', ['cantidad' => $totalTrabajos]),
-                'tone' => $totalTrabajos > 0 ? 'info' : 'neutral',
+                // Tono FIJO, no condicionado a `$totalTrabajos > 0` (18/9/2026,
+                // pedido explícito del usuario: cada vínculo de esta tarjeta
+                // lleva su propio color, no gris hasta que haya datos — a
+                // diferencia de los KPI de más arriba en show.blade.php,
+                // que sí arrancan neutros a propósito).
+                'tone' => 'info',
             ];
         }
 
@@ -261,7 +266,8 @@ final class OrdenesController
                 'icon' => 'groups',
                 'title' => __('operaciones.ordenes.vinculo_asignacion'),
                 'meta' => __('operaciones.ordenes.vinculo_asignacion_meta', ['cantidad' => $equiposAsignados]),
-                'tone' => $equiposAsignados > 0 ? 'success' : 'neutral',
+                // Tono FIJO — mismo motivo que el vínculo de trabajos de arriba.
+                'tone' => 'success',
             ];
         }
 

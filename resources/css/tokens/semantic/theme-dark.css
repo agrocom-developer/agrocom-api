@@ -138,10 +138,25 @@
     --ag-color-success-subtle: rgba(198, 232, 106, 0.16);
     --ag-color-success-strong: var(--ag-color-green-200);
     --ag-color-success-border: rgba(198, 232, 106, 0.35);
-    --ag-color-danger: #ea868f;
-    --ag-color-danger-subtle: rgba(220, 53, 69, 0.2);
-    --ag-color-danger-strong: #ea868f;
-    --ag-color-danger-border: rgba(220, 53, 69, 0.35);
+    /* danger/info (tarea de tokens, 17/9/2026): antes eran literales
+       sueltos de las variantes "dark text-emphasis" de Bootstrap
+       (#ea868f/#6ea8fe, rgba(220,53,69,·)/rgba(13,110,253,·)), sin relación
+       con ningún primitivo propio del sistema. Se reemplazan por versiones
+       aclaradas (HSL) de los mismos hex literales de Fiori que ahora usa el
+       tema claro (red-600 #bb0000 / blue-600 #0a6ed1) — mismo criterio que
+       ya usa este archivo para "estados aclarados sobre fondo oscuro": el
+       crudo/-strong comparten un único stop pastel (mismo patrón que
+       success arriba), -subtle/-border son ese mismo rgb en rgba(). Opacidad
+       de -subtle bajada de 0.2 a 0.1 (rojo puro pesa poco en la fórmula de
+       luminancia WCAG — a 0.2 el `-strong` sobre su propio `-subtle` no
+       llegaba a 4.5:1 ni con el valor ANTERIOR de Bootstrap, 4.41:1, falla
+       silenciosa nunca verificada). AA verificado: danger `-strong` vs
+       `-subtle` 4.94:1, vs --ag-color-surface-card 5.95:1; info 5.09:1 /
+       6.15:1 — ver sistema_diseno_panel.md §1.3. */
+    --ag-color-danger: #fc9292;
+    --ag-color-danger-subtle: rgba(252, 146, 146, 0.1);
+    --ag-color-danger-strong: #fc9292;
+    --ag-color-danger-border: rgba(252, 146, 146, 0.35);
     /* Relleno sólido de botón "danger", constante entre temas (mismo
        criterio que --ag-color-accent-contrast-fill) — ver button.css. */
     --ag-color-danger-contrast-fill: var(--ag-color-red-600);
@@ -149,10 +164,79 @@
     --ag-color-warning-subtle: rgba(245, 166, 35, 0.16);
     --ag-color-warning-strong: var(--ag-color-amber-300);
     --ag-color-warning-border: rgba(245, 166, 35, 0.35);
-    --ag-color-info: #6ea8fe;
-    --ag-color-info-subtle: rgba(13, 110, 253, 0.2);
-    --ag-color-info-strong: #6ea8fe;
-    --ag-color-info-border: rgba(110, 168, 254, 0.35);
+    /* info (tercera vuelta, 18/9/2026): mismo cambio que theme-light.css —
+       pasa de blue-600 aclarado (#7ab8f5) a teal-300 (mismo stop pastel
+       que ya usaba `distintivo-3` en este archivo, L≈0.75 del crudo de
+       tema claro). #7ab8f5 queda libre como `primary-2` más abajo. */
+    --ag-color-info: var(--ag-color-teal-300);
+    --ag-color-info-subtle: rgba(127, 196, 203, 0.1);
+    --ag-color-info-strong: var(--ag-color-teal-300);
+    --ag-color-info-border: rgba(127, 196, 203, 0.35);
+
+    /* "Distintivo" — mismo criterio que theme-light.css: dos tonos
+       categóricos sin carga de bueno/malo, valores literales de Fiori (UI
+       Indication 7/8, ver primitives/base.css). Crudo y `-strong` reutilizan
+       el mismo stop pastel (violet-300/magenta-300, L≈0.75 del crudo de
+       tema claro) — mismo criterio que `danger`/`info` de arriba en este
+       archivo, cuyo crudo ya es lo bastante claro para servir de texto sin
+       un stop aparte. `-subtle`/`-border` en rgba() literal sobre el mismo
+       triplete RGB del primitivo, mismo idioma que el resto de este archivo.
+       Opacidad de -subtle en 0.1, no 0.16 (mismo motivo que danger/info de
+       arriba: a 0.16 violet-300 no llegaba a 4.5:1 contra su propio
+       -subtle). AA verificado en sistema_diseno_panel.md §1.3: `-strong`
+       sobre su propio `-subtle` ≥4.69:1 y sobre --ag-color-surface-card
+       ≥5.6:1 en este tema. Sin conectar a ninguna pantalla todavía. */
+    --ag-color-distintivo-1: var(--ag-color-violet-300);
+    --ag-color-distintivo-1-subtle: rgba(190, 160, 222, 0.1);
+    --ag-color-distintivo-1-strong: var(--ag-color-violet-300);
+    --ag-color-distintivo-1-border: rgba(190, 160, 222, 0.35);
+    --ag-color-distintivo-2: var(--ag-color-magenta-300);
+    --ag-color-distintivo-2-subtle: rgba(222, 160, 207, 0.1);
+    --ag-color-distintivo-2-strong: var(--ag-color-magenta-300);
+    --ag-color-distintivo-2-border: rgba(222, 160, 207, 0.35);
+    /* Tercer categórico (teal, UI Indication 6) — mismo criterio que
+       distintivo-1/2 de arriba. */
+    --ag-color-distintivo-3: var(--ag-color-teal-300);
+    --ag-color-distintivo-3-subtle: rgba(127, 196, 203, 0.1);
+    --ag-color-distintivo-3-strong: var(--ag-color-teal-300);
+    --ag-color-distintivo-3-border: rgba(127, 196, 203, 0.35);
+
+    /* "primary 2" (tercera vuelta, 18/9/2026) — ver theme-light.css: el
+       azul que hasta esta vuelta ocupaba `info`, ahora token de referencia
+       sin conectar a pantalla. Mismo stop pastel que el `info` anterior de
+       este archivo (#7ab8f5, aclarado de blue-600). */
+    --ag-color-primary-2: #7ab8f5;
+    --ag-color-primary-2-subtle: rgba(122, 184, 245, 0.1);
+    --ag-color-primary-2-strong: #7ab8f5;
+    --ag-color-primary-2-border: rgba(122, 184, 245, 0.35);
+
+    /* "alert" (18/9/2026, novena vuelta) — ver theme-light.css: mismo
+       primitivo que danger-strong (red-700, `#880000`) pero con token
+       propio. Aclarado DISTINTO del de `danger` (`#fc9292`) a propósito —
+       mismo L/S que ese cálculo daría un rojo idéntico (mismo hue=0,
+       misma fórmula), invisible la diferencia entre "alert" y "danger" en
+       oscuro. Con menos lightness (L=0.72 vs 0.78 de danger, mismo
+       método HLS) da `#fb7474`: más saturado/coral que el rosa pastel de
+       danger, sigue siendo un rojo pero se distingue a simple vista. AA:
+       4.83:1 contra `--ag-color-surface-card` (oscuro) — ver
+       sistema_diseno_panel.md §1.3. */
+    --ag-color-alert: #fb7474;
+    --ag-color-alert-subtle: rgba(251, 116, 116, 0.1);
+    --ag-color-alert-strong: #fb7474;
+    --ag-color-alert-border: rgba(251, 116, 116, 0.35);
+
+    /* Relleno sólido "chip fuerte" (segunda vuelta paleta Fiori, 17/9/2026)
+       — ver el comentario completo en theme-light.css, idéntico criterio:
+       CONSTANTE entre temas, mismos valores literales que ahí, a propósito
+       (es la marca del estado, no una superficie clara/oscura). */
+    --ag-color-success-contrast-fill: var(--ag-color-green-600);
+    --ag-color-warning-contrast-fill: var(--ag-color-amber-700);
+    --ag-color-info-contrast-fill: var(--ag-color-teal-500);
+    --ag-color-distintivo-1-contrast-fill: var(--ag-color-violet-500);
+    --ag-color-distintivo-2-contrast-fill: var(--ag-color-magenta-500);
+    --ag-color-distintivo-3-contrast-fill: var(--ag-color-teal-500);
+    --ag-color-primary-2-contrast-fill: var(--ag-color-blue-600);
+    --ag-color-alert-contrast-fill: var(--ag-color-red-700);
 
     --ag-color-focus-ring: #6ea8fe;
 

@@ -48,10 +48,13 @@
 
     // Estados de color de la tira de KPI (17/9/2026, pedido explícito: se
     // veía "plana" sin ningún `state` — ver docblock de `molecules/stat-card`).
-    // Un solo color FIJO (hectáreas=info) — "categoría de insumo" quedó
-    // sin `state` a propósito (corrección 17/9/2026: con success fijo
-    // colisionaba con "aplicaciones" cada vez que esa completaba su meta,
-    // dos verdes por casualidad, no por relación entre los datos).
+    // Dos colores FIJOS: hectáreas=info (azul), categoría de insumo=
+    // distintivo-1 (violeta, 18/9/2026 — antes quedaba sin `state` a
+    // propósito porque con success fijo colisionaba con "aplicaciones"
+    // cada vez que esa completaba su meta, dos verdes por casualidad, no
+    // por relación entre los datos; "distintivo" es justo el tono
+    // categórico sin carga de bueno/malo que resuelve eso, ver
+    // primitives/base.css).
     // "Aplicaciones"/"equipos" son 100% dinámicos: arrancan neutros (sin
     // `state`) y solo se colorean cuando hay algo real que mostrar —
     // "success" cuando la meta se cumple de verdad (ahí SÍ pueden coincidir
@@ -120,7 +123,7 @@
                             tone="success"
                         />
 
-                        <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#{{ $modalIdActivar }}" variant="outline" icon="check_circle">
+                        <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#{{ $modalIdActivar }}" variant="success-outline" icon="check_circle">
                             {{ __('operaciones.ordenes.activar_accion') }}
                         </x-atoms.button>
                     @endif
@@ -165,6 +168,7 @@
                     :label="__('operaciones.ordenes.campo_categoria_insumo')"
                     icon="science"
                     :value="$dosisTexto"
+                    state="distintivo-1"
                 />
                 <x-molecules.stat-card
                     :label="__('operaciones.ordenes.kpi_aplicaciones')"
@@ -194,6 +198,17 @@
                 ];
             @endphp
 
+            {{-- `accent` de cada form-section (18/9/2026, pedido explícito
+                del usuario — antes las 6 secciones de esta pantalla eran
+                todas verdes): "Datos de la orden" se queda SIN accent
+                (verde `--ag-color-primary` por defecto, es la sección
+                principal); el resto rota por tokens sin carga de
+                bueno/malo (info/distintivo-1/distintivo-2/primary-2) —
+                deliberadamente sin `success`/`danger` acá, esos ya
+                significan algo real en esta misma pantalla (KPI
+                "aplicaciones" y alertas de RC) y reusarlos como decoración
+                repetiría la colisión "dos verdes por casualidad" que ya se
+                documentó para las tarjetas KPI más arriba. --}}
             <x-molecules.form-layout>
                 <x-molecules.form-section :title="__('operaciones.ordenes.seccion_datos')" :count="__('operaciones.ordenes.campos_contador', ['cantidad' => 6])">
                     @foreach ($datosOrden as $campo)
@@ -211,7 +226,7 @@
                     @endif
                 </x-molecules.form-section>
 
-                <x-molecules.form-section :title="__('operaciones.ordenes.seccion_lotes')" :count="__('operaciones.ordenes.lotes_contador', ['cantidad' => count($lotes), 'hectareas' => $hectareasSolicitadas])">
+                <x-molecules.form-section accent="info" :title="__('operaciones.ordenes.seccion_lotes')" :count="__('operaciones.ordenes.lotes_contador', ['cantidad' => count($lotes), 'hectareas' => $hectareasSolicitadas])">
                     <div class="ag-form-section__field--full">
                         <x-molecules.index-table columns="1fr 8rem 9rem">
                             <x-slot:head>
@@ -235,14 +250,14 @@
                     </div>
                 </x-molecules.form-section>
 
-                <x-molecules.form-section :title="__('operaciones.ordenes.seccion_actividad')">
+                <x-molecules.form-section accent="distintivo-1" :title="__('operaciones.ordenes.seccion_actividad')">
                     <div class="ag-form-section__field--full">
                         <x-molecules.timeline :items="$actividad" />
                     </div>
                 </x-molecules.form-section>
 
                 @if (count($vinculos))
-                    <x-molecules.form-section :title="__('operaciones.ordenes.seccion_vinculos')">
+                    <x-molecules.form-section accent="distintivo-2" :title="__('operaciones.ordenes.seccion_vinculos')">
                         <div class="ag-form-section__field--full ag-ordenes-detalle__vinculos">
                             @foreach ($vinculos as $vinculo)
                                 <x-molecules.link-row
@@ -258,7 +273,7 @@
                 @endif
 
                 <x-slot:aside>
-                    <x-molecules.form-section :title="__('operaciones.ordenes.seccion_limites')" :count="__('operaciones.ordenes.campos_contador', ['cantidad' => 5])">
+                    <x-molecules.form-section accent="warning" :title="__('operaciones.ordenes.seccion_limites')" :count="__('operaciones.ordenes.campos_contador', ['cantidad' => 5])">
                         @foreach ($limitesItems as $limite)
                             <div class="ag-ordenes-detalle__campo">
                                 <p class="ag-ordenes-detalle__campo-label">{{ $limite['label'] }}</p>
@@ -271,7 +286,7 @@
                         </div>
                     </x-molecules.form-section>
 
-                    <x-molecules.form-section :title="__('operaciones.ordenes.seccion_vuelo')" :count="__('operaciones.ordenes.campos_contador', ['cantidad' => 3])">
+                    <x-molecules.form-section accent="primary-2" :title="__('operaciones.ordenes.seccion_vuelo')" :count="__('operaciones.ordenes.campos_contador', ['cantidad' => 3])">
                         <div class="ag-ordenes-detalle__campo">
                             <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_altura_vuelo_m') }}</p>
                             <p class="ag-ordenes-detalle__campo-valor">{{ $orden->altura_vuelo_m !== null ? "{$orden->altura_vuelo_m} m" : __('operaciones.ordenes.limite_sin_definir') }}</p>

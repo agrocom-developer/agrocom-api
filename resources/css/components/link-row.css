@@ -24,8 +24,8 @@
 
 .ag-link-row__icon {
     flex-shrink: 0;
-    width: 2.25rem;
-    height: 2.25rem;
+    width: 2.5rem;
+    height: 2.5rem;
     display: grid;
     place-items: center;
     border-radius: var(--ag-radius-md);
@@ -33,24 +33,50 @@
     color: var(--ag-color-text-muted);
 }
 
+/* Relleno SÓLIDO + ícono blanco (18/9/2026, pedido explícito del usuario:
+   mismo criterio que `atoms/badge`/`molecules/stat-card` — el par tenue
+   `-subtle`/`-strong` anterior se leía "con poca opacity"). `neutral`
+   (arriba) se queda con el gris tenue: no es un estado real, no tiene
+   `-contrast-fill` propio. warning usa texto/ícono oscuro, no blanco —
+   mismo motivo documentado en badge.css (blanco sobre `#e9730c` falla AA). */
 .ag-link-row__icon--success {
-    background: var(--ag-color-success-subtle);
-    color: var(--ag-color-success-strong);
+    background: var(--ag-color-success-contrast-fill);
+    color: var(--ag-color-gray-0);
 }
 
 .ag-link-row__icon--warning {
-    background: var(--ag-color-warning-subtle);
-    color: var(--ag-color-warning-strong);
+    background: var(--ag-color-warning-contrast-fill);
+    color: var(--ag-color-gray-900);
 }
 
 .ag-link-row__icon--danger {
-    background: var(--ag-color-danger-subtle);
-    color: var(--ag-color-danger-strong);
+    background: var(--ag-color-danger-contrast-fill);
+    color: var(--ag-color-gray-0);
 }
 
 .ag-link-row__icon--info {
-    background: var(--ag-color-info-subtle);
-    color: var(--ag-color-info-strong);
+    background: var(--ag-color-info-contrast-fill);
+    color: var(--ag-color-gray-0);
+}
+
+.ag-link-row__icon--distintivo-1 {
+    background: var(--ag-color-distintivo-1-contrast-fill);
+    color: var(--ag-color-gray-0);
+}
+
+.ag-link-row__icon--distintivo-2 {
+    background: var(--ag-color-distintivo-2-contrast-fill);
+    color: var(--ag-color-gray-0);
+}
+
+.ag-link-row__icon--distintivo-3 {
+    background: var(--ag-color-distintivo-3-contrast-fill);
+    color: var(--ag-color-gray-0);
+}
+
+.ag-link-row__icon--primary-2 {
+    background: var(--ag-color-primary-2-contrast-fill);
+    color: var(--ag-color-gray-0);
 }
 
 .ag-link-row__title {

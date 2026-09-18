@@ -80,6 +80,23 @@
     padding: var(--ag-space-2);
 }
 
+/* Tono NEUTRAL (gris) en vez del verde de `.ag-button--outline` (18/9/2026,
+   pedido explícito del usuario: se probó azul "primary 2" primero, pero el
+   "⋮" —que abre un MENÚ, no ejecuta una acción ni navega— se revirtió a
+   neutral). `--ag-color-neutral-strong`/`-subtle`: mismo par que
+   `.ag-badge--neutral` (badge.css), ya theme-aware (oliva-600 claro /
+   gris-200 oscuro para el texto — no hace falta la trampa `-contrast-fill`
+   de los estados reales, acá no hay versión "cruda" que oscurezca mal en
+   oscuro, ya es un gris pensado para los dos temas). */
+.ag-row-actions__more-btn.ag-button--outline {
+    color: var(--ag-color-neutral-strong);
+    border-color: var(--ag-color-neutral-strong);
+}
+
+.ag-row-actions__more-btn.ag-button--outline:hover {
+    background-color: var(--ag-color-neutral-subtle);
+}
+
 .ag-row-actions__more {
     display: none;
     position: relative;

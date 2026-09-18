@@ -25,13 +25,30 @@
     - footIcon (nullable): ícono de la línea de pie.
     - footTone (success|warning|muted, default "muted"): color del pie —
       tono semántico independiente del signo (una baja de costo es éxito).
-    - state (success|warning|danger|info|null, default null): tono del
-      CONTENEDOR del ícono — independiente de footTone. Con cualquier valor
-      (17/9/2026: antes solo warning/danger, corregido — varias tarjetas de
-      la misma fila con `state` distinto y solo algunas con barra se leía
-      como inconsistencia, no como jerarquía) pinta también una barra
-      izquierda de 4px del mismo color; sin `state` (`null`, default) la
-      tarjeta queda neutra y sin barra (no todo KPI necesita un color).
+    - state (success|warning|danger|info|distintivo-1|distintivo-2|
+      distintivo-3|primary-2|alert|null, default null): tono del
+      CONTENEDOR del ícono —
+      independiente de footTone. Con cualquier valor (17/9/2026: antes solo
+      warning/danger, corregido — varias tarjetas de la misma fila con
+      `state` distinto y solo algunas con barra se leía como
+      inconsistencia, no como jerarquía) pinta también una barra izquierda
+      de 4px del mismo color; sin `state` (`null`, default) la tarjeta
+      queda neutra y sin barra (no todo KPI necesita un color).
+      Segunda vuelta (17/9/2026): el contenedor del ícono y la barra usan
+      relleno SÓLIDO (constante entre temas) en vez del par tenue anterior
+      — ver stat-card.css.
+      distintivo-1|2|3 (18/9/2026): tono CATEGÓRICO, sin carga de
+      bueno/malo — para un KPI que muestra una clasificación (p. ej.
+      "categoría de insumo" en `ordenes/show.blade.php`), no un estado que
+      mejora o empeora. No reusar success/danger/warning/info ahí: esa
+      tarjeta ya colisionaba visualmente con "aplicaciones" cuando esta
+      completaba su meta en success (dos verdes por casualidad, sin
+      relación entre los datos).
+      primary-2/alert (18/9/2026, pedido explícito del usuario): completan
+      los 8 colores semánticos del sistema en este componente — aunque hoy
+      ningún KPI real los usa todavía, quedan disponibles con el mismo
+      criterio que el resto (relleno sólido + ícono blanco, AA verificado
+      en sistema_diseno_panel.md §1.3).
     - hero (bool, default false): variante protagonista del móvil (maqueta
       5b — cifra 40px). El grid/columna lo decide el llamador.
 --}}

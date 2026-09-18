@@ -5,17 +5,16 @@
     contenido va por el slot, ya traducido por quien lo consume (mismo
     criterio que `atoms/button`).
 
-    Cada variante resuelve fondo `-subtle` + texto `-strong` de su estado
-    (par verificado AA 4.5:1 en ambos temas — sistema_diseno_panel.md §1.3):
-    nunca el token de estado crudo como texto (amarillo sobre amarillo
-    pálido ronda 1.4:1) ni `--ag-color-text` genérico (el chip perdería el
-    color del estado, que en las maquetas ES el texto). El punto de color de
-    la versión anterior desaparece: el texto tintado ya comunica el estado.
+    success|warning|info|danger|distintivo-1|distintivo-2|distintivo-3|
+    primary-2|alert resuelven relleno SÓLIDO (`-contrast-fill`, constante
+    entre temas) + texto blanco, salvo warning que usa texto oscuro (ver
+    badge.css — blanco sobre el ámbar no pasa AA). neutral|accent siguen
+    con el par tenue `-subtle` + texto `-strong` de siempre. Contraste de
+    cada variante verificado en sistema_diseno_panel.md §1.3.
 
     Props:
-    - variant: success|warning|info|danger|neutral|accent (default
-      "neutral"). Mismo set que consumen los estados de sesión del
-      dashboard.
+    - variant: success|warning|info|danger|distintivo-1|distintivo-2|
+      distintivo-3|primary-2|alert|neutral|accent (default "neutral").
     - icon (nullable): ícono Material Symbols al inicio del pill.
 --}}
 @props([
