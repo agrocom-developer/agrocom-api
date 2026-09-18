@@ -222,7 +222,7 @@ final class ContratosController
      * que hoy solo usan dos vistas).
      *
      * @param  array<int, Contrato>  $conflictos
-     * @return array<int, array{contrato_id: int, cliente: string, propiedades: string, vigencia: string, estado_label: string, estado_variant: string, monto_total: string, editar_url: string}>
+     * @return array<int, array{contrato_id: int, cliente: string, propiedades: string, vigencia: string, estado_label: string, estado_variant: string, monto_total: string, lotes_en_conflicto: list<array{codigo: string, propiedad: string, hectareas: string}>, editar_url: string}>
      */
     private function formatearConflictos(array $conflictos, Contrato $contratoEnEdicion): array
     {
@@ -233,6 +233,11 @@ final class ContratosController
             'cancelado' => 'danger',
             'pausado' => 'info',
         ];
+
+        // Lote_ids del contrato en edición — para quedarse, de TODOS los
+        // lotes del otro contrato, solo con los que también están acá (el
+        // dato que realmente responde "qué choca", no solo "con quién").
+        $loteIdsPropios = $contratoEnEdicion->lotes->pluck('lote_id')->all();
 
         $resultado = [];
         foreach ($conflictos as $loteId => $otroContrato) {
@@ -251,6 +256,16 @@ final class ContratosController
                 ])
                 : __('comercial.contratos.vigencia_sin_fin', ['inicio' => $otroContrato->fecha_inicio->format('d/m/Y')]);
 
+            $lotesEnConflicto = $otroContrato->lotes
+                ->filter(fn ($contratoLote) => in_array($contratoLote->lote_id, $loteIdsPropios, true))
+                ->map(fn ($contratoLote) => [
+                    'codigo' => $contratoLote->lote->codigo,
+                    'propiedad' => $contratoLote->lote->propiedad->nombre,
+                    'hectareas' => number_format((float) $contratoLote->lote->hectareas, 2, ',', '.'),
+                ])
+                ->values()
+                ->all();
+
             $resultado[$loteId] = [
                 'contrato_id' => $otroContrato->id,
                 'cliente' => $otroContrato->cliente->razon_social,
@@ -259,6 +274,7 @@ final class ContratosController
                 'estado_label' => __('comercial.contrato.estado.'.$estadoValor),
                 'estado_variant' => $variantePorEstado[$estadoValor],
                 'monto_total' => $this->aMoneda(BigDecimal::of($otroContrato->monto_total)),
+                'lotes_en_conflicto' => $lotesEnConflicto,
                 'editar_url' => route('panel.contratos.edit', [
                     $otroContrato,
                     'volver_a' => route('panel.contratos.edit', $contratoEnEdicion),

@@ -574,6 +574,39 @@ document.addEventListener('DOMContentLoaded', () => {
             const botonEditar = modalConflictoEl.querySelector('[data-ag-conflicto-editar]');
             if (botonEditar) botonEditar.setAttribute('href', conflicto.editar_url);
 
+            // Lotes compartidos entre este contrato y el de arriba (pedido
+            // explícito, 18/9/2026: "no me sirve de mucho solo los datos del
+            // contrato" — hace falta ver QUÉ lotes chocan, no solo con quién).
+            // Filas armadas a mano con las mismas clases de `x-molecules.index-table`
+            // (`ag-index-table__row`, ver index-table.css) — el componente Blade
+            // ya puso la cabecera y el `--ag-index-table-columns` en el
+            // contenedor ancestro, las filas heredan esa custom property
+            // aunque vivan un nivel más adentro (`data-ag-conflicto-lotes`).
+            const contenedorLotesConflicto = modalConflictoEl.querySelector('[data-ag-conflicto-lotes]');
+            if (contenedorLotesConflicto) {
+                contenedorLotesConflicto.innerHTML = '';
+                (conflicto.lotes_en_conflicto || []).forEach((lote) => {
+                    const fila = document.createElement('div');
+                    fila.className = 'ag-index-table__row';
+                    fila.setAttribute('role', 'row');
+
+                    const celdaCodigo = document.createElement('span');
+                    celdaCodigo.setAttribute('role', 'cell');
+                    celdaCodigo.textContent = lote.codigo;
+
+                    const celdaPropiedad = document.createElement('span');
+                    celdaPropiedad.setAttribute('role', 'cell');
+                    celdaPropiedad.textContent = lote.propiedad;
+
+                    const celdaHectareas = document.createElement('span');
+                    celdaHectareas.setAttribute('role', 'cell');
+                    celdaHectareas.textContent = lote.hectareas;
+
+                    fila.append(celdaCodigo, celdaPropiedad, celdaHectareas);
+                    contenedorLotesConflicto.appendChild(fila);
+                });
+            }
+
             bsModalConflicto.show();
         }
     });

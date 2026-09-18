@@ -86,16 +86,6 @@
                                         <x-atoms.badge variant="alert" icon="warning">
                                             {{ __('comercial.contratos.lote_en_conflicto') }}
                                         </x-atoms.badge>
-                                        <x-atoms.button
-                                            type="button"
-                                            variant="text"
-                                            size="sm"
-                                            icon="visibility"
-                                            data-ag-lote-conflicto-ver
-                                            data-lote-id-conflicto="{{ $lote['lote_id'] }}"
-                                        >
-                                            {{ __('comercial.contratos.lote_conflicto_ver') }}
-                                        </x-atoms.button>
                                     @endif
                                 </span>
                                 <span class="ag-contratos-form__lote-hectareas">
@@ -145,6 +135,24 @@
                                     $tituloQuitarBloqueado = $tieneOrdenRegistrada ? __('comercial.contratos.lotes_quitar_bloqueado_orden') : null;
                                 @endphp
                                 <div class="ag-contratos-form__lote-acciones">
+                                    {{-- "Ver contrato" vive ACÁ (columna Acciones), no junto al
+                                         código/badge de la primera columna (pedido explícito del
+                                         usuario, 18/9/2026): un botón de más ancho variable ahí
+                                         deformaba el grid de 5 columnas de la fila (`1fr 1fr auto
+                                         2fr auto`, ver contratos.css) — acá la columna ya es
+                                         `auto` y ya convive con "Quitar". --}}
+                                    @if (isset($conflictosPorLote[$lote['lote_id']]))
+                                        <x-atoms.button
+                                            type="button"
+                                            variant="text"
+                                            size="sm"
+                                            icon="visibility"
+                                            data-ag-lote-conflicto-ver
+                                            data-lote-id-conflicto="{{ $lote['lote_id'] }}"
+                                        >
+                                            {{ __('comercial.contratos.lote_conflicto_ver') }}
+                                        </x-atoms.button>
+                                    @endif
                                     <x-atoms.button
                                         type="button"
                                         variant="text"

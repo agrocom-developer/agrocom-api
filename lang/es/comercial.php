@@ -430,6 +430,7 @@ return [
         'conflicto_modal_vigencia' => 'Vigencia',
         'conflicto_modal_estado' => 'Estado',
         'conflicto_modal_monto' => 'Monto contratado (Bs)',
+        'conflicto_modal_lotes_titulo' => 'Lotes en conflicto',
         'conflicto_modal_editar' => 'Editar contrato',
 
         // Modal de lotes por propiedad (tarea "contratos-lotes", rediseño
