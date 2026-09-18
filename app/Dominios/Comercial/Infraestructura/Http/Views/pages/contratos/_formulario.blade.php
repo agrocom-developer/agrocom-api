@@ -285,6 +285,23 @@
             :error="$errors->first('precio_ha')"
         />
 
+        {{-- Valor estimado a cobrar (tarea "adelanto-calculado", 18/9/2026):
+             solo lectura, sin `name` (no se postea — mismo patrón que el
+             campo de lectura de `/panel/perfil`, documentado en
+             `atoms/input.blade.php`). `monto_total` sigue sin ser un campo
+             de este formulario: esto es un preview en vivo calculado por
+             `resources/js/pages/contratos-form.js`, el valor real que se
+             guarda lo recalcula siempre `Aplicacion/CrearContrato`/
+             `ActualizarContrato` con `Brick\Math\BigDecimal` (invariante 6). --}}
+        <x-atoms.input
+            :name="null"
+            id="valor_estimado_cobrar"
+            :label="__('comercial.contratos.campo_valor_estimado_label')"
+            value="0,00"
+            readonly
+            data-ag-valor-estimado
+        />
+
         <x-atoms.input
             type="number"
             name="adelanto_monto"
@@ -292,7 +309,10 @@
             :value="$valor('adelanto_monto')"
             min="0"
             step="0.01"
+            :help="__('comercial.contratos.campo_adelanto_monto_ayuda')"
             :error="$errors->first('adelanto_monto')"
+            data-plantilla-ayuda="{{ __('comercial.contratos.campo_adelanto_monto_ayuda') }}"
+            data-plantilla-ayuda-maximo="{{ __('comercial.contratos.campo_adelanto_monto_ayuda_maximo') }}"
         />
 
         <x-atoms.date

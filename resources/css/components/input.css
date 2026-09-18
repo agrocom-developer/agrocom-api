@@ -161,6 +161,18 @@
     margin: 0;
 }
 
+/* Ayuda de "Adelanto Solicitado" (tarea "adelanto-calculado", 18/9/2026):
+   accent mientras el % pedido es normal, alert al llegar/superar el 100%
+   del valor estimado a cobrar — toggle por `contratos-form.js`, nunca color
+   fijo en el HTML (invariante 11 de CLAUDE.md). */
+.ag-input__help--accent {
+    color: var(--ag-color-accent-link);
+}
+
+.ag-input__help--alert {
+    color: var(--ag-color-alert-strong);
+}
+
 .ag-input__error {
     font-size: var(--ag-font-size-xs);
     color: var(--ag-color-danger);

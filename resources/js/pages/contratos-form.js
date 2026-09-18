@@ -743,4 +743,51 @@ document.addEventListener('DOMContentLoaded', () => {
     formulario.addEventListener('submit', () => {
         sessionStorage.removeItem('ag_contrato_borrador');
     });
+
+    // ===== Adelanto Solicitado: valor estimado a cobrar + % en vivo (tarea
+    // "adelanto-calculado", 18/9/2026) — puramente informativo, sin bloqueo
+    // de guardado nuevo. Replica en JS los mismos 3 factores de
+    // `CrearContrato::calcularMontoTotal()`/`ActualizarContrato` (hectáreas ×
+    // aplicaciones × precio por hectárea) solo para el preview en vivo — el
+    // valor real que se guarda lo sigue recalculando siempre el servidor con
+    // `Brick\Math\BigDecimal` (invariante 6): acá `Number` alcanza porque
+    // este cálculo nunca se persiste. El 100% del valor estimado es el techo
+    // MATEMÁTICO del adelanto (no se puede cobrar más de lo que vale el
+    // contrato) — no hay ningún porcentaje de negocio fijo involucrado.
+    const inputHectareas = formulario.querySelector('[name="hectareas_contratadas"]');
+    const inputAplicaciones = formulario.querySelector('[name="aplicaciones_previstas"]');
+    const inputPrecioHa = formulario.querySelector('[name="precio_ha"]');
+    const inputAdelanto = formulario.querySelector('[name="adelanto_monto"]');
+    const campoValorEstimado = formulario.querySelector('[data-ag-valor-estimado]');
+    const ayudaAdelanto = document.getElementById('adelanto_monto-help');
+
+    if (inputHectareas && inputAplicaciones && inputPrecioHa && inputAdelanto && campoValorEstimado && ayudaAdelanto) {
+        const plantillaAyuda = inputAdelanto.dataset.plantillaAyuda || '';
+        const plantillaAyudaMaximo = inputAdelanto.dataset.plantillaAyudaMaximo || '';
+
+        const formatearMonto = (valor) => valor.toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        const recalcularAdelanto = () => {
+            const hectareas = Number(inputHectareas.value) || 0;
+            const aplicaciones = Number(inputAplicaciones.value) || 0;
+            const precioHa = Number(inputPrecioHa.value) || 0;
+            const adelanto = Number(inputAdelanto.value) || 0;
+
+            const valorEstimado = hectareas * aplicaciones * precioHa;
+            campoValorEstimado.value = formatearMonto(valorEstimado);
+
+            const porcentaje = valorEstimado > 0 ? (adelanto / valorEstimado) * 100 : 0;
+            const alLimite = porcentaje >= 100;
+
+            ayudaAdelanto.textContent = (alLimite ? plantillaAyudaMaximo : plantillaAyuda).replace(':porcentaje', formatearMonto(porcentaje));
+            ayudaAdelanto.classList.toggle('ag-input__help--accent', !alLimite);
+            ayudaAdelanto.classList.toggle('ag-input__help--alert', alLimite);
+        };
+
+        [inputHectareas, inputAplicaciones, inputPrecioHa, inputAdelanto].forEach((input) => {
+            input.addEventListener('input', recalcularAdelanto);
+        });
+
+        recalcularAdelanto();
+    }
 });

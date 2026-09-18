@@ -359,7 +359,15 @@ return [
         'campo_aplicaciones_previstas' => 'Aplicaciones previstas',
         'campo_precio_ha' => 'Precio por hectárea (Bs)',
         'campo_monto_total_ayuda' => 'Se calcula automáticamente: hectáreas × aplicaciones × precio por hectárea.',
+        'campo_valor_estimado_label' => 'Valor estimado a cobrar (Bs)',
         'campo_adelanto_monto' => 'Adelanto Solicitado',
+        // Ayuda en vivo del adelanto (tarea "adelanto-calculado", 18/9/2026):
+        // ":porcentaje" lo reemplaza `contratos-form.js`, nunca Blade — llega
+        // crudo al `data-*` del input (ver `_formulario.blade.php`). Puramente
+        // informativo: no hay ningún tope de negocio fijo sobre el adelanto,
+        // el 100% es el límite matemático del valor estimado a cobrar.
+        'campo_adelanto_monto_ayuda' => 'Representa el :porcentaje % del valor estimado a cobrar de este contrato.',
+        'campo_adelanto_monto_ayuda_maximo' => 'El adelanto representa el :porcentaje % del valor estimado a cobrar — llegaste al máximo que se puede solicitar en este contrato.',
         'campo_fecha_inicio' => 'Fecha de inicio',
         'campo_fecha_fin' => 'Fecha de fin',
         'campo_fecha_fin_ayuda' => 'Opcional. Si no se define, el contrato queda abierto.',
