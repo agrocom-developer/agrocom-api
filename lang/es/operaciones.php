@@ -430,6 +430,12 @@ return [
         'lotes_vacio_titulo' => 'Elige un contrato',
         'lotes_vacio_detalle' => 'Elige un contrato arriba para ver y seleccionar sus lotes.',
         'lotes_tabla_vacio' => 'Ningún lote coincide con la búsqueda.',
+        // El contrato elegido no tiene NINGÚN lote registrado (tarea
+        // "contrato-lotes-conflicto", 18/9/2026) — caso real que motivó todo
+        // este pedido: sin esto, la orden simplemente no se podía crear.
+        'lotes_contrato_vacio_titulo' => 'Este contrato todavía no tiene lotes',
+        'lotes_contrato_vacio_detalle' => 'Agrega lotes al contrato para poder elegirlos en esta orden.',
+        'lotes_contrato_vacio_accion' => 'Editar contrato',
         'lotes_pagina_anterior' => 'Anterior',
         'lotes_pagina_siguiente' => 'Siguiente',
         'lotes_columna_codigo' => 'Código',

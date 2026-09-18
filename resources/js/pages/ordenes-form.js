@@ -98,6 +98,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const infoPagina = formulario.querySelector('[data-ag-pagina-info]');
     const selectNroAplicacion = formulario.querySelector('[data-ag-orden-nro-aplicacion]');
     const lotesSinContrato = formulario.querySelector('[data-ag-lotes-sin-contrato]');
+
+    // Estado vacío "el contrato elegido no tiene ningún lote" (tarea
+    // "contrato-lotes-conflicto", 18/9/2026) — distinto de `vacioBuscador`
+    // (hay lotes, pero la búsqueda de texto no encuentra nada). El botón
+    // "Editar contrato" arma su `href` en runtime con el memento de
+    // navegación (mismo criterio que `contratos-form.js`).
+    const vacioContratoSinLotes = formulario.querySelector('[data-ag-lotes-contrato-vacio]');
+    const botonEditarContratoVacio = formulario.querySelector('[data-ag-lotes-contrato-vacio-editar]');
+    const urlOrigen = formulario.dataset.urlOrigen || window.location.href;
+    const etiquetaOrigen = formulario.dataset.etiquetaOrigen || '';
     const lotesContenido = formulario.querySelector('[data-ag-lotes-contenido]');
     const fechaEmisionAyuda = formulario.querySelector('[data-ag-fecha-emision-ayuda]');
 
@@ -183,13 +193,35 @@ document.addEventListener('DOMContentLoaded', () => {
         contenedorLotes.innerHTML = '';
 
         if (lotesFiltrados.length === 0) {
-            if (vacioBuscador) vacioBuscador.hidden = false;
+            // "El contrato no tiene ningún lote" (tarea
+            // "contrato-lotes-conflicto", 18/9/2026 — el caso real que
+            // motivó todo este pedido) es distinto de "hay lotes, pero la
+            // búsqueda de texto no encontró nada": solo el primero ofrece
+            // ir a editar el contrato.
+            if (lotes.length === 0) {
+                if (vacioBuscador) vacioBuscador.hidden = true;
+                if (vacioContratoSinLotes) {
+                    vacioContratoSinLotes.hidden = false;
+                    const editUrl = datosContrato[selectContrato?.value]?.contrato_edit_url;
+                    if (botonEditarContratoVacio && editUrl) {
+                        const separador = editUrl.includes('?') ? '&' : '?';
+                        botonEditarContratoVacio.setAttribute(
+                            'href',
+                            `${editUrl}${separador}volver_a=${encodeURIComponent(urlOrigen)}&volver_texto=${encodeURIComponent(etiquetaOrigen)}`,
+                        );
+                    }
+                }
+            } else {
+                if (vacioBuscador) vacioBuscador.hidden = false;
+                if (vacioContratoSinLotes) vacioContratoSinLotes.hidden = true;
+            }
             if (paginadoLotes) paginadoLotes.hidden = true;
             renderizarInputsHidden(lotes);
             return;
         }
 
         if (vacioBuscador) vacioBuscador.hidden = true;
+        if (vacioContratoSinLotes) vacioContratoSinLotes.hidden = true;
         // Paginado solo si hay más de una página (+10 lotes filtrados) — con
         // 10 o menos no aporta nada mostrar "Anterior/1 de 1/Siguiente".
         if (paginadoLotes) paginadoLotes.hidden = lotesFiltrados.length <= lotesPerPage;
@@ -440,10 +472,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Hay contrato: se ve el buscador+tabla real, no la card de "elige
         // un contrato" (mostrar un buscador para una tabla sin universo de
-        // datos confunde — pedido explícito del usuario 18/9/2026).
+        // datos confunde — pedido explícito del usuario 18/9/2026). Mismo
+        // criterio si el contrato no tiene NINGÚN lote (tarea
+        // "contrato-lotes-conflicto", 18/9/2026): un buscador sobre el
+        // estado vacío "editar contrato" es igual de confuso.
         if (lotesSinContrato) lotesSinContrato.hidden = true;
         if (lotesContenido) lotesContenido.hidden = false;
-        if (buscadorLotesWrap) buscadorLotesWrap.hidden = false;
+        if (buscadorLotesWrap) buscadorLotesWrap.hidden = (datos.lotes || []).length === 0;
 
         // Ayuda de "Fecha de emisión": fecha de inicio del contrato
         // destacada, fecha de fin solo si el contrato la tiene (nullable).

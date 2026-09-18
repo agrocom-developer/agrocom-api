@@ -218,6 +218,29 @@
     font-weight: var(--ag-font-weight-medium);
 }
 
+/* Envuelve código + badge de conflicto (tarea "contrato-lotes-conflicto")
+   sin agregar una columna nueva al grid de la fila: sigue siendo un único
+   hijo directo de `.ag-contratos-form__lote-row`. El botón "Ver contrato"
+   NO va acá — deformaba la columna de código (`1fr`, angosta) — vive en
+   `.ag-contratos-form__lote-acciones`, la columna `auto` de la derecha. */
+.ag-contratos-form__lote-code-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    flex-wrap: wrap;
+}
+
+/* Envuelve "Ver contrato" (si el lote está en conflicto) + "Quitar" —
+   columna `auto` del grid de la fila, se agranda sola para lo que haga
+   falta sin desalinear las demás columnas; envuelve en dos líneas en
+   pantallas angostas en vez de desbordar. */
+.ag-contratos-form__lote-acciones {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--ag-space-2);
+}
+
 .ag-contratos-form__lote-hectareas {
     color: var(--ag-color-text-muted);
     font-size: var(--ag-font-size-sm);
@@ -421,5 +444,36 @@
     position: relative;
     display: inline-flex;
     cursor: pointer;
+}
+
+/* Modal "Contrato en conflicto" (tarea "contrato-lotes-conflicto", rediseño
+   18/9/2026): mismo lenguaje visual que `.ag-ordenes-detalle__campo-label`/
+   `-valor` de Operaciones (label chico en mayúscula muted, valor mediano) —
+   clases propias de Comercial, mismo TRATAMIENTO, cada módulo dueño de su
+   propio CSS (no se referencia `ordenes.css` desde acá). */
+.ag-contratos-form__conflicto-campo-label {
+    margin: 0;
+    font-size: var(--ag-font-size-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-contratos-form__conflicto-campo-valor {
+    margin: 0.1875rem 0 0;
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+    line-height: 1.5;
+}
+
+.ag-contratos-form__conflicto-mono {
+    font-family: var(--ag-font-family-mono);
+}
+
+.ag-contratos-form__conflicto-lotes-titulo {
+    margin: var(--ag-space-4) 0 var(--ag-space-2);
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+    color: var(--ag-color-text);
 }
 

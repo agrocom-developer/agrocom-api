@@ -6,6 +6,7 @@ use App\Dominios\Campania\Contratos\DatosCampania;
 use App\Dominios\Campania\Contratos\LecturaCampania;
 use App\Dominios\Comercial\Aplicacion\ActualizarContrato;
 use App\Dominios\Comercial\Aplicacion\CambiarEstadoContrato;
+use App\Dominios\Comercial\Aplicacion\Contrato\LecturaOcupacionLotesPorCampania;
 use App\Dominios\Comercial\Aplicacion\CrearContrato;
 use App\Dominios\Comercial\Aplicacion\ListarContratos;
 use App\Dominios\Comercial\Aplicacion\ObtenerAvanceComercial;
@@ -21,6 +22,7 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\ActualizarContratoRequest;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\CambiarEstadoContratoRequest;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\CrearContratoRequest;
+use App\Dominios\Operaciones\Contratos\LecturaLotesConOrdenPorContrato;
 use App\Dominios\Operaciones\Contratos\LecturaResumenOrdenesContrato;
 use App\Dominios\Operaciones\Contratos\LecturaTrabajosPorContrato;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
@@ -118,7 +120,9 @@ final class ContratosController
             // "resumen de cliente"): con ?cliente_id=, el formulario arranca
             // con ese cliente ya elegido — ver _formulario.blade.php.
             'clienteIdPreseleccionado' => $request->integer('cliente_id') ?: null,
-            'propiedadesYLotesPorCliente' => $this->propiedadesYLotesPorCliente(),
+            'propiedadesYLotesPorCliente' => $this->propiedadesYLotesPorCliente(null),
+            'loteIdsConOrdenRegistrada' => [],
+            'conflictosPorLote' => [],
         ]);
     }
 
@@ -177,18 +181,109 @@ final class ContratosController
         LecturaCampania $lecturaCampania,
         LecturaResumenOrdenesContrato $lecturaResumenOrdenes,
         LecturaTrabajosPorContrato $lecturaTrabajos,
+        LecturaLotesConOrdenPorContrato $lecturaLotesConOrden,
         ObtenerAvanceComercial $obtenerAvance,
     ): View {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
 
+        $contrato->load('lotes.lote');
+
+        $loteIdsConOrden = $lecturaLotesConOrden->loteIds([$contrato->id])[$contrato->id] ?? [];
+
+        $conflictosPorLote = $contrato->campania_id === null
+            ? []
+            : $this->formatearConflictos(
+                LecturaOcupacionLotesPorCampania::contratosEnConflicto(
+                    $contrato->lotes->pluck('lote_id')->all(),
+                    $contrato->campania_id,
+                    $contrato->id,
+                ),
+                $contrato,
+            );
+
         return view('comercial::pages.contratos.edit', [
             ...$this->autorizacion->cascara($request),
-            'contrato' => $contrato->load('lotes.lote'),
+            'contrato' => $contrato,
             'clientesDisponibles' => $this->clientesActivos(),
             'campaniasDisponibles' => $this->campaniasDisponibles($lecturaCampania),
-            'propiedadesYLotesPorCliente' => $this->propiedadesYLotesPorCliente(),
+            'propiedadesYLotesPorCliente' => $this->propiedadesYLotesPorCliente($contrato->id),
+            'loteIdsConOrdenRegistrada' => $loteIdsConOrden,
+            'conflictosPorLote' => $conflictosPorLote,
             'resumenContrato' => $this->resumenContrato($contrato, $request, $lecturaResumenOrdenes, $lecturaTrabajos, $obtenerAvance),
         ]);
+    }
+
+    /**
+     * Traduce el mapa `lote_id => Contrato` en conflicto (ver
+     * {@see LecturaOcupacionLotesPorCampania::contratosEnConflicto()}) al
+     * shape que consume el modal informativo del formulario — mismo criterio
+     * de textos/variant que ya usa `contratos/index.blade.php` para el badge
+     * de estado (no vale la pena extraer una abstracción nueva para 5 líneas
+     * que hoy solo usan dos vistas).
+     *
+     * @param  array<int, Contrato>  $conflictos
+     * @return array<int, array{contrato_id: int, cliente: string, propiedades: string, vigencia: string, estado_label: string, estado_variant: string, monto_total: string, lotes_en_conflicto: list<array{codigo: string, propiedad: string, hectareas: string}>, editar_url: string}>
+     */
+    private function formatearConflictos(array $conflictos, Contrato $contratoEnEdicion): array
+    {
+        $variantePorEstado = [
+            'borrador' => 'neutral',
+            'vigente' => 'success',
+            'finalizado' => 'distintivo-2',
+            'cancelado' => 'danger',
+            'pausado' => 'info',
+        ];
+
+        // Lote_ids del contrato en edición — para quedarse, de TODOS los
+        // lotes del otro contrato, solo con los que también están acá (el
+        // dato que realmente responde "qué choca", no solo "con quién").
+        $loteIdsPropios = $contratoEnEdicion->lotes->pluck('lote_id')->all();
+
+        $resultado = [];
+        foreach ($conflictos as $loteId => $otroContrato) {
+            $estadoValor = $otroContrato->estado->value;
+
+            $propiedades = $otroContrato->lotes
+                ->pluck('lote.propiedad.nombre')
+                ->filter()
+                ->unique()
+                ->implode(', ');
+
+            $vigencia = $otroContrato->fecha_fin
+                ? __('comercial.contratos.vigencia_con_fin', [
+                    'inicio' => $otroContrato->fecha_inicio->format('d/m/Y'),
+                    'fin' => $otroContrato->fecha_fin->format('d/m/Y'),
+                ])
+                : __('comercial.contratos.vigencia_sin_fin', ['inicio' => $otroContrato->fecha_inicio->format('d/m/Y')]);
+
+            $lotesEnConflicto = $otroContrato->lotes
+                ->filter(fn ($contratoLote) => in_array($contratoLote->lote_id, $loteIdsPropios, true))
+                ->map(fn ($contratoLote) => [
+                    'codigo' => $contratoLote->lote->codigo,
+                    'propiedad' => $contratoLote->lote->propiedad->nombre,
+                    'hectareas' => number_format((float) $contratoLote->lote->hectareas, 2, ',', '.'),
+                ])
+                ->values()
+                ->all();
+
+            $resultado[$loteId] = [
+                'contrato_id' => $otroContrato->id,
+                'cliente' => $otroContrato->cliente->razon_social,
+                'propiedades' => $propiedades,
+                'vigencia' => $vigencia,
+                'estado_label' => __('comercial.contrato.estado.'.$estadoValor),
+                'estado_variant' => $variantePorEstado[$estadoValor],
+                'monto_total' => $this->aMoneda(BigDecimal::of($otroContrato->monto_total)),
+                'lotes_en_conflicto' => $lotesEnConflicto,
+                'editar_url' => route('panel.contratos.edit', [
+                    $otroContrato,
+                    'volver_a' => route('panel.contratos.edit', $contratoEnEdicion),
+                    'volver_texto' => $contratoEnEdicion->cliente->razon_social,
+                ]),
+            ];
+        }
+
+        return $resultado;
     }
 
     public function update(ActualizarContratoRequest $request, Contrato $contrato, ActualizarContrato $actualizarContrato): RedirectResponse
@@ -325,29 +420,36 @@ final class ContratosController
     }
 
     /**
-     * Resumen del aside de `edit()` (tarea "resumen de contrato", sept/2026):
-     * mismo criterio que `ClientesController::resumenRelacionado()` — sin
-     * datos de aplicación todavía, un `empty-state` con el atajo a crear una
-     * orden (idéntico al que ya ofrece el aside de cliente, misma ruta sin
+     * Resumen del aside de `edit()` (tarea "resumen de contrato", sept/2026;
+     * ampliado tarea "resumen-contrato-completo", 18/9/2026): sin datos de
+     * aplicación todavía, un `empty-state` con el atajo a crear una orden
+     * (idéntico al que ya ofrece el aside de cliente, misma ruta sin
      * preseleccionar nada: `OrdenesController::create()` no acepta
      * `contrato_id` por query, así que ninguno de los dos aside lo pasa).
-     * Con datos, dos tarjetas — mismo lenguaje que
-     * `CampaniasController::resumenCampania()` pero acotadas A UN contrato:
-     * "Facturación" (monto contratado vs. facturado, vía
-     * {@see ObtenerAvanceComercial}, ya filtrable por `contratoId`) y
-     * "Aplicación" (hectáreas aplicadas + trabajos, vía
-     * {@see LecturaTrabajosPorContrato}, mismo caso de uso que campañas con
-     * `[$contrato->id]` como único elemento).
      *
-     * Sin acción "ver más" en las tarjetas con datos: ni `panel.ordenes.index`
-     * ni `panel.facturas.index` aceptan filtrar por `contrato_id` hoy —
-     * agregar ese filtro es una tarea de esas pantallas, no de este resumen.
+     * Con datos, CUATRO tarjetas — antes eran dos ("Facturación" y una
+     * "Aplicación" que mezclaba hectáreas y trabajos):
+     * 1. "Orden de aplicación" (total/vigentes, vía
+     *    {@see LecturaResumenOrdenesContrato}) — mide documentos emitidos.
+     * 2. "Orden de trabajo" (hectáreas aplicadas + total de trabajos, vía
+     *    {@see ObtenerAvanceComercial}/{@see LecturaTrabajosPorContrato}) —
+     *    mide ejecución real en campo, separado de "Orden de aplicación".
+     * 3. "Facturación" (monto contratado vs. facturado, vía
+     *    {@see ObtenerAvanceComercial}, ya filtrable por `contratoId`).
+     * 4. "Cobranza": el módulo no existe todavía — tarjeta estática, sin
+     *    datos reales ni acción.
+     *
+     * Las primeras tres llevan una acción "ver más" DESHABILITADA (`accion`
+     * con `tooltip`, sin `href`): ni `panel.ordenes.index` ni
+     * `panel.facturas.index` aceptan filtrar por `contrato_id` hoy — agregar
+     * ese filtro es una tarea de esas pantallas, no de este resumen. El
+     * componente ya queda en su lugar para cuando exista.
      *
      * `null` si el usuario no tiene ni `.ver` ni `.crear` de órdenes (mismo
      * criterio de permisos que clientes: sin ninguno de los dos, la tarjeta
      * no aporta nada).
      *
-     * @return array{tieneDatos: false, icono: string, titulo: string, detalle: string, mostrarAccion: bool, accion: array{label: string, href: string}}|array{tieneDatos: true, tarjetas: list<array{titulo: string, items: list<array{label: string, value: string, mono: bool, variant?: string}>}>}|null
+     * @return array{tieneDatos: false, icono: string, titulo: string, detalle: string, mostrarAccion: bool, accion: array{label: string, href: string}}|array{tieneDatos: true, tarjetas: list<array{titulo: string, items: list<array{label: string, value: string, mono?: bool, variant?: string}>, accion?: array{label: string, tooltip: string}}>}|null
      */
     private function resumenContrato(
         Contrato $contrato,
@@ -363,7 +465,8 @@ final class ContratosController
             return null;
         }
 
-        $totalOrdenes = $puedeVerOrdenes ? $lecturaResumenOrdenes->resumen([$contrato->id])['total'] : 0;
+        $resumenOrdenes = $puedeVerOrdenes ? $lecturaResumenOrdenes->resumen([$contrato->id]) : ['total' => 0, 'vigentes' => 0];
+        $totalOrdenes = $resumenOrdenes['total'];
 
         if (! $puedeVerOrdenes || $totalOrdenes === 0) {
             return [
@@ -391,9 +494,36 @@ final class ContratosController
         $montoFacturado = BigDecimal::of($avance['montoFacturado'] ?? '0');
         $saldoPendiente = $montoContratado->minus($montoFacturado);
 
+        $accionVerMas = [
+            'label' => __('comercial.contratos.aside_ver_mas'),
+            'tooltip' => __('comercial.contratos.aside_ver_mas_proximamente'),
+        ];
+
         return [
             'tieneDatos' => true,
             'tarjetas' => [
+                [
+                    'titulo' => __('comercial.contratos.aside_orden_aplicacion_titulo'),
+                    'items' => [
+                        ['label' => __('comercial.contratos.aside_orden_aplicacion_total'), 'value' => (string) $totalOrdenes, 'mono' => true],
+                        [
+                            'label' => __('comercial.contratos.aside_orden_aplicacion_vigentes'),
+                            'value' => (string) $resumenOrdenes['vigentes'],
+                            'mono' => true,
+                            'variant' => $resumenOrdenes['vigentes'] > 0 ? 'success' : 'neutral',
+                        ],
+                    ],
+                    'accion' => $accionVerMas,
+                ],
+                [
+                    'titulo' => __('comercial.contratos.aside_orden_trabajo_titulo'),
+                    'items' => [
+                        ['label' => __('comercial.contratos.aside_hectareas_contratadas'), 'value' => $avance['hectareasContratadas'] ?? '0.00', 'mono' => true],
+                        ['label' => __('comercial.contratos.aside_hectareas_aplicadas'), 'value' => $avance['hectareasAplicadas'] ?? '0.00', 'mono' => true],
+                        ['label' => __('comercial.contratos.aside_trabajos'), 'value' => (string) $totalTrabajos, 'mono' => true],
+                    ],
+                    'accion' => $accionVerMas,
+                ],
                 [
                     'titulo' => __('comercial.contratos.aside_facturacion_titulo'),
                     'items' => [
@@ -406,13 +536,16 @@ final class ContratosController
                             'variant' => $saldoPendiente->isZero() ? 'success' : 'neutral',
                         ],
                     ],
+                    'accion' => $accionVerMas,
                 ],
                 [
-                    'titulo' => __('comercial.contratos.aside_aplicacion_titulo'),
+                    'titulo' => __('comercial.contratos.aside_cobranza_titulo'),
                     'items' => [
-                        ['label' => __('comercial.contratos.aside_hectareas_contratadas'), 'value' => $avance['hectareasContratadas'] ?? '0.00', 'mono' => true],
-                        ['label' => __('comercial.contratos.aside_hectareas_aplicadas'), 'value' => $avance['hectareasAplicadas'] ?? '0.00', 'mono' => true],
-                        ['label' => __('comercial.contratos.aside_trabajos'), 'value' => (string) $totalTrabajos, 'mono' => true],
+                        [
+                            'label' => __('comercial.contratos.aside_cobranza_estado_label'),
+                            'value' => __('comercial.contratos.aside_cobranza_proximamente'),
+                            'variant' => 'neutral',
+                        ],
                     ],
                 ],
             ],
@@ -459,14 +592,23 @@ final class ContratosController
      * negocio) — `null` cuando el lote no tiene el dato cargado (columnas
      * nullable, ver migración `add_desnivel_limpieza_a_com_lotes_table`).
      *
-     * @return array<int, array<int, array{nombre: string, lotes: list<array{id: int, codigo: string, hectareas: string, desnivel: ?string, desnivel_label: ?string, limpieza: ?string, limpieza_label: ?string}>}>>
+     * `ocupado_en_campanias` (tarea "contrato-lotes-conflicto", 18/9/2026):
+     * campaña(s) donde ese lote ya está comprometido por OTRO contrato
+     * `vigente` — {@see LecturaOcupacionLotesPorCampania::porCampania()}, con
+     * `$contratoIdExcluido` para que un contrato no se excluya a sí mismo al
+     * editarlo. El JS del modal de selección lo usa para no ofrecer un lote
+     * ya comprometido en la campaña que el formulario tiene elegida.
+     *
+     * @return array<int, array<int, array{nombre: string, lotes: list<array{id: int, codigo: string, hectareas: string, desnivel: ?string, desnivel_label: ?string, limpieza: ?string, limpieza_label: ?string, ocupado_en_campanias: list<int>}>}>>
      */
-    private function propiedadesYLotesPorCliente(): array
+    private function propiedadesYLotesPorCliente(?int $contratoIdExcluido): array
     {
         $propiedades = Propiedad::query()
             ->with(['lotes' => fn ($query) => $query->whereNull('deleted_at')])
             ->whereNull('deleted_at')
             ->get(['id', 'cliente_id', 'nombre']);
+
+        $ocupacionPorLote = LecturaOcupacionLotesPorCampania::porCampania($contratoIdExcluido);
 
         $result = [];
         foreach ($propiedades as $propiedad) {
@@ -487,6 +629,7 @@ final class ContratosController
                     'desnivel_label' => $lote->desnivel ? __("comercial.lotes.lote_desnivel_{$lote->desnivel}") : null,
                     'limpieza' => $lote->limpieza,
                     'limpieza_label' => $lote->limpieza ? __("comercial.lotes.lote_limpieza_{$lote->limpieza}") : null,
+                    'ocupado_en_campanias' => $ocupacionPorLote[$lote->id] ?? [],
                 ])->values()->all(),
             ];
         }
