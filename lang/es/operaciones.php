@@ -112,6 +112,35 @@ return [
         'paginacion_anterior' => 'Anterior',
         'paginacion_siguiente' => 'Siguiente',
         'paginacion_info' => 'Página :actual de :total',
+        // Edición/eliminación de un trabajo puntual (HU-93, tarea 108):
+        // panel.trabajos.detalle-editar. Turno obligatorio junto con su
+        // horario cuando se carga, pero el campo en sí es opcional (un
+        // trabajo nacido por sync puro nunca lo tuvo).
+        'editar_titulo' => 'Editar trabajo #:id',
+        'editar_subtitulo' => 'Corrige el lote, el equipo, las hectáreas o el turno de este trabajo antes de que se valide.',
+        'campos_contador' => ':cantidad campos',
+        'campo_lote' => 'Lote',
+        'campo_equipo' => 'Equipo de trabajo',
+        'campo_equipo_sin_asignar' => 'Sin equipo asignado',
+        'campo_hectareas' => 'Hectáreas declaradas',
+        'campo_turno' => 'Turno',
+        'turno_manana' => 'Mañana',
+        'turno_noche' => 'Noche',
+        'turno_todo_el_dia' => 'Todo el día',
+        'campo_turno_hora_inicio' => 'Hora de inicio',
+        'campo_turno_hora_fin' => 'Hora de fin',
+        'editar' => 'Editar',
+        'eliminar_accion' => 'Eliminar',
+        'confirmar_baja' => '¿Confirmas la baja de este trabajo?',
+        'actualizado' => 'Trabajo actualizado.',
+        'eliminado' => 'Trabajo eliminado.',
+        'error_lote_requerido' => 'Elige el lote.',
+        'error_lote_no_pertenece' => 'El lote elegido no pertenece a la orden de este trabajo.',
+        'error_equipo_no_existe' => 'El equipo elegido no existe.',
+        'error_hectareas_requerido' => 'Ingresa las hectáreas declaradas.',
+        'error_hectareas_positivo' => 'Las hectáreas declaradas deben ser un número positivo.',
+        'error_turno_hora_requerida' => 'Ingresa la hora de inicio y de fin del turno.',
+        'error_turno_hora_rango' => 'La hora de fin del turno debe ser posterior a la de inicio.',
         // Detalle de un trabajo (HU-15, tarea 15): panel.trabajos.show.
         'volver' => 'Volver al tablero',
         'detalle_titulo' => 'Trabajo #:id',
@@ -366,6 +395,67 @@ return [
         'volver' => 'Volver a drones',
     ],
 
+    // Pantalla de panel "Operación › Orden de Trabajo" (reforma 18/9/2026):
+    // maestro de tandas (`OrdenTrabajo`) — una orden de aplicación puede
+    // ejecutarse en varias tandas, cada una con sus propios equipos y
+    // parámetros compartidos (clima/vuelo, Ph, calda). El detalle de cada
+    // trabajo puntual (equipo×lote) sigue en `operaciones.trabajos.*`.
+    'ordenes_trabajo' => [
+        'titulo' => 'Orden de Trabajo',
+        'subtitulo' => 'Tandas de trabajo sobre las órdenes de aplicación vigentes, con sus equipos y lotes.',
+        'vacio_titulo' => 'Todavía no se creó ninguna Orden de Trabajo',
+        'vacio_detalle' => 'Una Orden de Trabajo agrupa los equipos que trabajan juntos una tanda, con sus lotes, turnos y parámetros de vuelo. Crea la primera desde el botón de arriba.',
+        'filtro_vacio_titulo' => 'Ninguna Orden de Trabajo coincide con estos filtros.',
+        'filtro_vacio_detalle' => 'Prueba con otra orden de aplicación o número de aplicación, o limpia los filtros.',
+        'nueva_accion' => 'Nueva Orden de Trabajo',
+        'ver_accion' => 'Ver detalle',
+        'col_tanda' => 'Nro. Orden de Trabajo',
+        'col_orden' => 'Orden de aplicación',
+        'col_equipos' => 'Equipos',
+        'col_hectareas' => 'Hectáreas',
+        'col_estado' => 'Estado',
+        'filtro_orden' => 'Orden de aplicación',
+        'filtro_todos' => 'Todas',
+        'filtrar' => 'Filtrar',
+        'limpiar_filtros' => 'Limpiar filtros',
+        'paginacion_aria' => 'Paginación de Órdenes de Trabajo',
+        'paginacion_anterior' => 'Anterior',
+        'paginacion_siguiente' => 'Siguiente',
+        'paginacion_info' => 'Página :actual de :total',
+
+        // Alta (`panel.trabajos.crear`).
+        'crear_titulo' => 'Nueva Orden de Trabajo',
+        'crear_subtitulo' => 'Elige la orden de aplicación, los equipos que participan de esta tanda y sus lotes.',
+        'campo_orden' => 'Orden de aplicación',
+        'campo_orden_placeholder' => 'Selecciona una orden vigente…',
+        'campo_orden_opcion' => 'Orden #:id (aplicación :aplicacion)',
+        'error_orden_requerida' => 'Elige la orden de aplicación.',
+        'error_orden_no_vigente' => 'Esa orden no está vigente: no admite una Orden de Trabajo nueva.',
+        'seccion_parametros' => 'Parámetros compartidos de la tanda',
+        'seccion_parametros_ayuda' => 'Un límite en blanco hereda el valor del contrato o el parámetro por defecto del sistema.',
+        'campos_contador' => ':cantidad campos',
+        'seccion_equipos' => 'Equipos de esta tanda',
+        'equipo_sin_opciones' => 'No hay equipos de trabajo vigentes hoy.',
+        'equipo_crear_link' => '¿No está el equipo que necesitas? Créalo acá',
+        'equipo_agregar' => 'Agregar equipo',
+        'equipo_quitar' => 'Quitar equipo',
+        'lote_agregar' => 'Agregar lote',
+        'lote_quitar' => 'Quitar',
+        'guardar' => 'Confirmar Orden de Trabajo',
+        'volver' => 'Volver a Orden de Trabajo',
+        'creada' => 'Orden de Trabajo creada correctamente.',
+
+        // Detalle maestro-detalle (`panel.trabajos.show`).
+        'detalle_titulo' => 'Orden de Trabajo #:id',
+        'kpi_hectareas' => 'Hectáreas totales',
+        'kpi_equipos' => 'Equipos',
+        'seccion_condiciones' => 'Límites climáticos y parámetros de vuelo',
+        'seccion_ph_calda' => 'Ph y calda',
+        'seccion_trabajos' => 'Trabajos de esta tanda',
+        'trabajos_vacio' => 'Esta tanda todavía no tiene trabajos.',
+        'sin_dato' => '—',
+    ],
+
     // Pantalla de panel "Operación › Órdenes" (HU-25, tarea 38): alta y
     // seguimiento de órdenes de aplicación, con su propia máquina de estados
     // (emitida → vigente). Los estados en sí reutilizan `operaciones.estado.*`
@@ -584,6 +674,29 @@ return [
         'campo_altura_vuelo_m' => 'Altura de vuelo (m)',
         'campo_velocidad_vuelo_kmh' => 'Velocidad de vuelo (km/h)',
         'campo_ancho_pasada_m' => 'Ancho de pasada (m)',
+        // Reforma 18/9/2026 ("Orden de Trabajo"/tandas): Ph y calda son
+        // compartidos por toda la tanda, solo aplican si la orden es de
+        // insumo líquido — la vista los oculta para una orden sólida.
+        'campo_ph_agua' => 'Ph del agua',
+        'campo_ph_calda' => 'Ph de la calda',
+        'seccion_calda' => 'Calda',
+        'campo_calda_producto' => 'Producto',
+        'campo_calda_cantidad' => 'Cantidad',
+        'campo_calda_unidad' => 'Unidad',
+        'unidad_l' => 'Litros (l)',
+        'unidad_ml' => 'Mililitros (ml)',
+        'unidad_kg' => 'Kilos (kg)',
+        'unidad_g' => 'Gramos (g)',
+        'calda_agregar' => 'Agregar producto',
+        'calda_quitar' => 'Quitar',
+        // Turno (obligatorio junto con su horario, pedido explícito del
+        // dueño) — propio de cada lote de cada equipo, no de la tanda.
+        'campo_turno' => 'Turno',
+        'turno_manana' => 'Mañana',
+        'turno_noche' => 'Noche',
+        'turno_todo_el_dia' => 'Todo el día',
+        'campo_turno_hora_inicio' => 'Hora de inicio',
+        'campo_turno_hora_fin' => 'Hora de fin',
         'equipo_agregar' => 'Agregar equipo',
         'equipo_quitar' => 'Quitar equipo',
         'lote_agregar' => 'Agregar lote',
@@ -597,6 +710,10 @@ return [
         'error_lote_requerido' => 'Elige el lote.',
         'error_hectareas_requerido' => 'Ingresa las hectáreas a asignar.',
         'error_humedad_rango' => 'La humedad mínima no puede ser mayor que la máxima.',
+        'error_turno_requerido' => 'Elige el turno.',
+        'error_turno_hora_requerida' => 'Ingresa la hora de inicio y de fin del turno.',
+        'error_turno_hora_rango' => 'La hora de fin del turno debe ser posterior a la de inicio.',
+        'error_ph_solo_liquido' => 'El Ph solo aplica a una orden de insumo líquido.',
     ],
 
     // Pantalla de panel "Reportes › Técnicos" (HU-43, tarea 57):
@@ -683,6 +800,9 @@ return [
         'transicion_orden_no_permitida' => "No se puede pasar una orden de aplicación de ':desde' a ':hasta'.",
         'transicion_sesion_no_permitida' => "No se puede pasar una sesión de ':desde' a ':hasta'.",
         'transicion_trabajo_no_permitida' => "No se puede pasar un trabajo de ':desde' a ':hasta'.",
+        'trabajo_validado_no_editable' => 'El trabajo #:id ya está validado: no se puede editar.',
+        'trabajo_validado_no_eliminable' => 'El trabajo #:id ya está validado: no se puede eliminar.',
+        'calda_no_registrada' => 'No se pudo registrar la calda de la tanda de la orden #:orden.',
 
         // Avisos que aparecen en la bandeja de alertas.
         'alerta_bateria_caliente' => 'Batería a :temperatura °C en la recarga #:secuencia de la sesión #:sesion (trabajo #:trabajo).',

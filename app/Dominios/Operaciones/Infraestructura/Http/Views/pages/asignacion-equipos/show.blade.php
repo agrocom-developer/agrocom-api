@@ -142,6 +142,132 @@
                         >
                             @csrf
 
+                            <x-molecules.form-section
+                                :title="__('operaciones.asignacion_equipos.seccion_condiciones_vuelo')"
+                                :count="__('operaciones.ordenes_trabajo.campos_contador', ['cantidad' => ($orden->categoriaInsumo?->tipo_insumo?->value === 'liquido' ? 10 : 8)])"
+                            >
+                                <div class="ag-form-section__field--full">
+                                    <small style="color: var(--ag-color-text-muted)">
+                                        {{ __('operaciones.asignacion_equipos.seccion_condiciones_vuelo_ayuda') }}
+                                    </small>
+                                </div>
+
+                                <x-atoms.input
+                                    type="number"
+                                    name="parametros[humedad_min_pct]"
+                                    id="parametros-humedad-min"
+                                    :label="__('operaciones.asignacion_equipos.campo_humedad_min_pct')"
+                                    :value="old('parametros.humedad_min_pct')"
+                                    min="0"
+                                    max="100"
+                                    step="0.01"
+                                    :error="$errors->first('parametros.humedad_min_pct')"
+                                />
+
+                                <x-atoms.input
+                                    type="number"
+                                    name="parametros[humedad_max_pct]"
+                                    id="parametros-humedad-max"
+                                    :label="__('operaciones.asignacion_equipos.campo_humedad_max_pct')"
+                                    :value="old('parametros.humedad_max_pct')"
+                                    min="0"
+                                    max="100"
+                                    step="0.01"
+                                    :error="$errors->first('parametros.humedad_max_pct')"
+                                />
+
+                                <x-atoms.input
+                                    type="number"
+                                    name="parametros[viento_max_kmh]"
+                                    id="parametros-viento-max"
+                                    :label="__('operaciones.asignacion_equipos.campo_viento_max_kmh')"
+                                    :value="old('parametros.viento_max_kmh')"
+                                    min="0.01"
+                                    step="0.01"
+                                    :error="$errors->first('parametros.viento_max_kmh')"
+                                />
+
+                                <x-atoms.input
+                                    type="number"
+                                    name="parametros[temperatura_max_c]"
+                                    id="parametros-temperatura-max"
+                                    :label="__('operaciones.asignacion_equipos.campo_temperatura_max_c')"
+                                    :value="old('parametros.temperatura_max_c')"
+                                    step="0.01"
+                                    :error="$errors->first('parametros.temperatura_max_c')"
+                                />
+
+                                <x-atoms.input
+                                    type="number"
+                                    name="parametros[velocidad_max_kmh]"
+                                    id="parametros-velocidad-max"
+                                    :label="__('operaciones.asignacion_equipos.campo_velocidad_max_kmh')"
+                                    :value="old('parametros.velocidad_max_kmh')"
+                                    min="0.01"
+                                    step="0.01"
+                                    :error="$errors->first('parametros.velocidad_max_kmh')"
+                                />
+
+                                <x-atoms.input
+                                    type="number"
+                                    name="parametros[altura_vuelo_m]"
+                                    id="parametros-altura-vuelo"
+                                    :label="__('operaciones.asignacion_equipos.campo_altura_vuelo_m')"
+                                    :value="old('parametros.altura_vuelo_m')"
+                                    min="0.01"
+                                    step="0.01"
+                                    :error="$errors->first('parametros.altura_vuelo_m')"
+                                />
+
+                                <x-atoms.input
+                                    type="number"
+                                    name="parametros[velocidad_vuelo_kmh]"
+                                    id="parametros-velocidad-vuelo"
+                                    :label="__('operaciones.asignacion_equipos.campo_velocidad_vuelo_kmh')"
+                                    :value="old('parametros.velocidad_vuelo_kmh')"
+                                    min="0.01"
+                                    step="0.01"
+                                    :error="$errors->first('parametros.velocidad_vuelo_kmh')"
+                                />
+
+                                <x-atoms.input
+                                    type="number"
+                                    name="parametros[ancho_pasada_m]"
+                                    id="parametros-ancho-pasada"
+                                    :label="__('operaciones.asignacion_equipos.campo_ancho_pasada_m')"
+                                    :value="old('parametros.ancho_pasada_m')"
+                                    min="0.01"
+                                    step="0.01"
+                                    :error="$errors->first('parametros.ancho_pasada_m')"
+                                />
+
+                                @if ($orden->categoriaInsumo?->tipo_insumo?->value === 'liquido')
+                                    <x-atoms.input
+                                        type="number"
+                                        name="parametros[ph_agua]"
+                                        id="parametros-ph-agua"
+                                        :label="__('operaciones.asignacion_equipos.campo_ph_agua')"
+                                        :value="old('parametros.ph_agua')"
+                                        min="0"
+                                        max="14"
+                                        step="0.01"
+                                        :error="$errors->first('parametros.ph_agua')"
+                                    />
+
+                                    <x-atoms.input
+                                        type="number"
+                                        name="parametros[ph_calda]"
+                                        id="parametros-ph-calda"
+                                        :label="__('operaciones.asignacion_equipos.campo_ph_calda')"
+                                        :value="old('parametros.ph_calda')"
+                                        min="0"
+                                        max="14"
+                                        step="0.01"
+                                        :error="$errors->first('parametros.ph_calda')"
+                                    />
+                                @endif
+                            </x-molecules.form-section>
+
                             <div data-ag-equipos-lista>
                                 @foreach ($equiposIniciales as $indiceEquipo => $equipo)
                                     @include('operaciones::pages.asignacion-equipos._equipo-bloque', [

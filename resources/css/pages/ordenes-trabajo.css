@@ -1,0 +1,74 @@
+/* Página: Orden de Trabajo (reforma 18/9/2026) — listado, alta y detalle de tandas */
+
+.ag-ordenes-trabajo {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-6);
+}
+
+.ag-ordenes-trabajo__mono {
+    font-family: var(--ag-font-family-mono);
+}
+
+.ag-ordenes-trabajo-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-6);
+}
+
+.ag-ordenes-trabajo-form__equipo-bloque {
+    padding: var(--ag-space-4);
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+}
+
+.ag-ordenes-trabajo-form__equipo-cabecera {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: var(--ag-space-4);
+    margin-bottom: var(--ag-space-4);
+}
+
+.ag-ordenes-trabajo-form__equipo-lotes {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-4);
+    margin-bottom: var(--ag-space-4);
+}
+
+.ag-ordenes-trabajo-form__lote-fila {
+    padding: var(--ag-space-3);
+    border: 1px solid var(--ag-color-border);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-bg);
+}
+
+.ag-ordenes-trabajo-form__lote-fila-pie {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: var(--ag-space-3);
+}
+
+.ag-ordenes-trabajo-form__calda-fila {
+    padding: var(--ag-space-3);
+    border: 1px solid var(--ag-color-border);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-bg);
+}
+
+.ag-ordenes-trabajo-detalle {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-6);
+}
+
+.ag-ordenes-trabajo-detalle__kpi {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(max(12rem, calc(33.333% - var(--ag-space-4))), 1fr));
+    gap: var(--ag-space-4);
+}
+
+.ag-ordenes-trabajo-detalle__mono {
+    font-family: var(--ag-font-family-mono);
+}

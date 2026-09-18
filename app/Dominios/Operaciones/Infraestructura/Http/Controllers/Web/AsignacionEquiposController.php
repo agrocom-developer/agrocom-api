@@ -2,8 +2,9 @@
 
 namespace App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web;
 
-use App\Dominios\Operaciones\Aplicacion\AsignarEquiposOrden;
+use App\Dominios\Operaciones\Aplicacion\CrearOrdenTrabajo;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
+use App\Dominios\Operaciones\Dominio\Excepciones\CaldaNoRegistrada;
 use App\Dominios\Operaciones\Dominio\Excepciones\EquipoTrabajoNoVigente;
 use App\Dominios\Operaciones\Dominio\Excepciones\HectareasAsignadasSuperanLote;
 use App\Dominios\Operaciones\Dominio\Excepciones\LoteNoPerteneceAOrden;
@@ -108,31 +109,45 @@ final class AsignacionEquiposController
         ]);
     }
 
-    public function asignar(AsignarEquipoOrdenRequest $request, OrdenAplicacion $orden, AsignarEquiposOrden $asignarEquiposOrden): RedirectResponse
+    public function asignar(AsignarEquipoOrdenRequest $request, OrdenAplicacion $orden, CrearOrdenTrabajo $crearOrdenTrabajo): RedirectResponse
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO), 403);
 
         $datos = $request->validated();
+        $parametros = $datos['parametros'] ?? [];
 
-        $asignaciones = array_map(fn (array $equipo): array => [
+        $parametrosCompartidos = [
+            'humedad_min_pct' => $this->cadenaONull($parametros['humedad_min_pct'] ?? null),
+            'humedad_max_pct' => $this->cadenaONull($parametros['humedad_max_pct'] ?? null),
+            'viento_max_kmh' => $this->cadenaONull($parametros['viento_max_kmh'] ?? null),
+            'temperatura_max_c' => $this->cadenaONull($parametros['temperatura_max_c'] ?? null),
+            'velocidad_max_kmh' => $this->cadenaONull($parametros['velocidad_max_kmh'] ?? null),
+            'altura_vuelo_m' => $this->cadenaONull($parametros['altura_vuelo_m'] ?? null),
+            'velocidad_vuelo_kmh' => $this->cadenaONull($parametros['velocidad_vuelo_kmh'] ?? null),
+            'ancho_pasada_m' => $this->cadenaONull($parametros['ancho_pasada_m'] ?? null),
+            'ph_agua' => $this->cadenaONull($parametros['ph_agua'] ?? null),
+            'ph_calda' => $this->cadenaONull($parametros['ph_calda'] ?? null),
+            'calda' => array_map(fn (array $item): array => [
+                'producto' => (string) $item['producto'],
+                'cantidad' => (string) $item['cantidad'],
+                'unidad' => (string) $item['unidad'],
+            ], $parametros['calda'] ?? []),
+        ];
+
+        $equipos = array_map(fn (array $equipo): array => [
             'equipo_trabajo_id' => (int) $equipo['equipo_trabajo_id'],
             'lotes' => array_map(fn (array $lote): array => [
                 'lote_id' => (int) $lote['lote_id'],
                 'hectareas' => (string) $lote['hectareas'],
+                'turno' => (string) $lote['turno'],
+                'turno_hora_inicio' => (string) $lote['turno_hora_inicio'],
+                'turno_hora_fin' => (string) $lote['turno_hora_fin'],
             ], $equipo['lotes']),
-            'humedad_min_pct' => $this->cadenaONull($equipo['humedad_min_pct'] ?? null),
-            'humedad_max_pct' => $this->cadenaONull($equipo['humedad_max_pct'] ?? null),
-            'viento_max_kmh' => $this->cadenaONull($equipo['viento_max_kmh'] ?? null),
-            'temperatura_max_c' => $this->cadenaONull($equipo['temperatura_max_c'] ?? null),
-            'velocidad_max_kmh' => $this->cadenaONull($equipo['velocidad_max_kmh'] ?? null),
-            'altura_vuelo_m' => $this->cadenaONull($equipo['altura_vuelo_m'] ?? null),
-            'velocidad_vuelo_kmh' => $this->cadenaONull($equipo['velocidad_vuelo_kmh'] ?? null),
-            'ancho_pasada_m' => $this->cadenaONull($equipo['ancho_pasada_m'] ?? null),
         ], $datos['equipos']);
 
         try {
-            $asignarEquiposOrden->ejecutar($orden, $asignaciones);
-        } catch (OrdenNoVigenteParaAsignacion|EquipoTrabajoNoVigente|LoteNoPerteneceAOrden|HectareasAsignadasSuperanLote $excepcion) {
+            $crearOrdenTrabajo->ejecutar($orden, $parametrosCompartidos, $equipos);
+        } catch (OrdenNoVigenteParaAsignacion|EquipoTrabajoNoVigente|LoteNoPerteneceAOrden|HectareasAsignadasSuperanLote|CaldaNoRegistrada $excepcion) {
             return redirect()
                 ->route('panel.asignacion-equipos.show', $orden)
                 ->withErrors(['equipos' => $excepcion->getMessage()]);

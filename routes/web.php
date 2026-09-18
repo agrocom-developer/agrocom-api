@@ -31,6 +31,7 @@ use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\AsignacionEqui
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\DronesController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\EstadiasHaciendaController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\OrdenesController;
+use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\OrdenesTrabajoController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\PausasController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\ReportesTecnicosController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\TrabajosController;
@@ -325,20 +326,44 @@ Route::middleware('auth:interno')->group(function () {
         Route::delete('/panel/campanias/{campania}', [CampaniasController::class, 'destroy'])
             ->name('panel.campanias.destroy');
 
-        // HU-05 (tarea 13; extendida en HU-15, tarea 15): tablero de
-        // trabajos/sesiones con filtros y detalle. Permiso
-        // `operaciones.trabajo.ver` verificado DENTRO del controlador
-        // contra el ROL ACTIVO, mismo criterio que las rutas de arriba.
-        Route::get('/panel/trabajos', [TrabajosController::class, 'index'])
+        // Reforma 18/9/2026 ("Orden de Trabajo"/tandas, HU-93 extendida):
+        // maestro de tandas (`OrdenTrabajo`) — reemplaza al viejo tablero
+        // plano de `Trabajo` (HU-05, tarea 13; HU-15, tarea 15). El ítem de
+        // menú ya apunta a `panel.trabajos.index`, sin cambios en `sec_menu`.
+        // Permiso `operaciones.trabajo.ver`/`.crear` verificado DENTRO del
+        // controlador contra el ROL ACTIVO, mismo criterio que el resto.
+        Route::get('/panel/trabajos', [OrdenesTrabajoController::class, 'index'])
             ->name('panel.trabajos.index');
 
-        Route::get('/panel/trabajos/{trabajo}', [TrabajosController::class, 'show'])
+        Route::get('/panel/trabajos/crear', [OrdenesTrabajoController::class, 'create'])
+            ->name('panel.trabajos.create');
+
+        Route::post('/panel/trabajos', [OrdenesTrabajoController::class, 'store'])
+            ->name('panel.trabajos.store');
+
+        Route::get('/panel/trabajos/{ordenTrabajo}', [OrdenesTrabajoController::class, 'show'])
             ->name('panel.trabajos.show');
+
+        // Detalle de UN `Trabajo` puntual (equipo×lote): sesiones, acta,
+        // reporte, evidencias, editar/eliminar (HU-93). Prefijo `detalle/`
+        // para no chocar con `panel.trabajos.show` del maestro de arriba
+        // (que antes de esta reforma era este mismo detalle).
+        Route::get('/panel/trabajos/detalle/{trabajo}', [TrabajosController::class, 'show'])
+            ->name('panel.trabajos.detalle');
+
+        Route::get('/panel/trabajos/detalle/{trabajo}/editar', [TrabajosController::class, 'edit'])
+            ->name('panel.trabajos.detalle-editar');
+
+        Route::put('/panel/trabajos/detalle/{trabajo}', [TrabajosController::class, 'update'])
+            ->name('panel.trabajos.detalle-actualizar');
+
+        Route::delete('/panel/trabajos/detalle/{trabajo}', [TrabajosController::class, 'destroy'])
+            ->name('panel.trabajos.detalle-eliminar');
 
         // HU-17 (tarea 24): descarga del PDF del acta desde el panel — solo
         // lectura, mismo permiso `operaciones.trabajo.ver` que el detalle
         // (generar/firmar el acta es de `agrocom-field`, no del panel).
-        Route::get('/panel/trabajos/{trabajo}/acta/pdf', [TrabajosController::class, 'actaPdf'])
+        Route::get('/panel/trabajos/detalle/{trabajo}/acta/pdf', [TrabajosController::class, 'actaPdf'])
             ->name('panel.trabajos.acta-pdf');
 
         // HU-18 (tarea 25): descarga del reporte técnico desde el panel —
@@ -346,14 +371,14 @@ Route::middleware('auth:interno')->group(function () {
         // línea 89: jefe de campo/encargado/dueño, no piloto/auxiliar; ver
         // runs/25.md). El reporte se genera solo al firmar el acta
         // (`GenerarReporteTecnico`); esta ruta nunca lo genera.
-        Route::get('/panel/trabajos/{trabajo}/reporte/pdf', [TrabajosController::class, 'reporteTecnicoPdf'])
+        Route::get('/panel/trabajos/detalle/{trabajo}/reporte/pdf', [TrabajosController::class, 'reporteTecnicoPdf'])
             ->name('panel.trabajos.reporte-pdf');
 
         // HU-42 (tarea 56): galería de evidencias de un trabajo — solo
         // lectura, mismo permiso `operaciones.trabajo.ver` que el detalle.
         // El streaming del archivo real vive en una ruta propia porque no
         // cuelga de un `{trabajo}` (la evidencia puede venir de una sesión).
-        Route::get('/panel/trabajos/{trabajo}/evidencias', [TrabajosController::class, 'evidencias'])
+        Route::get('/panel/trabajos/detalle/{trabajo}/evidencias', [TrabajosController::class, 'evidencias'])
             ->name('panel.trabajos.evidencias');
 
         Route::get('/panel/evidencias/{evidencia}/archivo', [TrabajosController::class, 'evidenciaArchivo'])
