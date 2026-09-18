@@ -23,6 +23,18 @@
     $errors (heredado del scope de la página, Blade comparte variables con
     `@include`): `ViewErrorBag` global de Laravel, no un prop propio.
 
+    - $loteIdsConOrdenRegistrada (list<int>, default []): lotes de este
+      contrato que ya tienen una orden de aplicación registrada — su botón
+      "Quitar" se deshabilita (se queda visible, con `title` explicando por
+      qué: sin vista "show" de contrato, es la única forma de proteger un
+      lote con historial real sin ocultar información).
+    - $conflictosPorLote (array<int, array>, default []): lotes de este
+      contrato que TAMBIÉN están en otro contrato vigente de la misma
+      campaña — si el lote aparece acá, la fila suma un badge de alerta y un
+      botón que abre `_modal-conflicto-lote.blade.php` con los datos de ese
+      otro contrato (`data-ag-conflictos-lotes`, JSON embebido en
+      `_formulario.blade.php`).
+
     "Día completo" (checkbox tildado por defecto cuando el lote no trae
     horario propio) deshabilita los dos `<input type="time">` de al lado sin
     ocultarlos — visibles-pero-deshabilitados a propósito (ver comentario en
@@ -40,7 +52,11 @@
         <p class="ag-input__error" role="alert">{{ $errors->first('lotes') }}</p>
     @endif
 
-    @php $hayLotes = collect($lotesIniciales)->sum(fn ($g) => count($g['lotes'] ?? [])) > 0; @endphp
+    @php
+        $hayLotes = collect($lotesIniciales)->sum(fn ($g) => count($g['lotes'] ?? [])) > 0;
+        $loteIdsConOrdenRegistrada ??= [];
+        $conflictosPorLote ??= [];
+    @endphp
     <div class="ag-contratos-form__lotes-tabla" data-ag-lotes-tabla @if (!$hayLotes) hidden @endif>
         <div class="ag-contratos-form__lotes-tabla-head">
             <span>{{ __('comercial.lotes.lote_codigo') }}</span>
@@ -64,7 +80,14 @@
                             @endphp
                             <div class="ag-contratos-form__lote-row" data-lote-id="{{ $lote['lote_id'] }}">
                                 <input type="hidden" name="lotes[{{ $indiceGlobal }}][lote_id]" value="{{ $lote['lote_id'] }}">
-                                <strong class="ag-contratos-form__lote-code">{{ $lote['codigo'] }}</strong>
+                                <span class="ag-contratos-form__lote-code-cell">
+                                    <strong class="ag-contratos-form__lote-code">{{ $lote['codigo'] }}</strong>
+                                    @if (isset($conflictosPorLote[$lote['lote_id']]))
+                                        <x-atoms.badge variant="alert" icon="warning">
+                                            {{ __('comercial.contratos.lote_en_conflicto') }}
+                                        </x-atoms.badge>
+                                    @endif
+                                </span>
                                 <span class="ag-contratos-form__lote-hectareas">
                                     {{ number_format((float) $lote['hectareas'], 2, ',', '.') }} ha
                                 </span>
@@ -96,16 +119,53 @@
                                         @disabled($esDiaCompleto)
                                     >
                                 </div>
-                                <x-atoms.button
-                                    type="button"
-                                    variant="text"
-                                    size="sm"
-                                    class="ag-contratos-form__lote-quitar-btn"
-                                    icon="delete"
-                                    data-ag-lote-quitar
-                                >
-                                    {{ __('comercial.contratos.lotes_quitar') }}
-                                </x-atoms.button>
+                                @php
+                                    $tieneOrdenRegistrada = in_array($lote['lote_id'], $loteIdsConOrdenRegistrada, true);
+                                    // Ni `@if`/`@endif` ni la DIRECTIVA `@disabled()` se pueden
+                                    // usar dentro de la lista de atributos de un tag de
+                                    // componente Blade (<x-...>) — su compilador de tags
+                                    // confunde el límite del tag y rompe la compilación
+                                    // ("unexpected token endif"), a diferencia de un tag HTML
+                                    // plano, donde ambas sí funcionan (ver los <input> de
+                                    // arriba). Dentro de un componente, el equivalente
+                                    // soportado es el ATRIBUTO dinámico `:disabled="..."`
+                                    // (mismo comportamiento: Laravel omite el atributo si el
+                                    // valor es `false`/`null`, `ComponentAttributeBag::__toString()`)
+                                    // — igual criterio para `:title`.
+                                    $tituloQuitarBloqueado = $tieneOrdenRegistrada ? __('comercial.contratos.lotes_quitar_bloqueado_orden') : null;
+                                @endphp
+                                <div class="ag-contratos-form__lote-acciones">
+                                    {{-- "Ver contrato" vive ACÁ (columna Acciones), no junto al
+                                         código/badge de la primera columna (pedido explícito del
+                                         usuario, 18/9/2026): un botón de más ancho variable ahí
+                                         deformaba el grid de 5 columnas de la fila (`1fr 1fr auto
+                                         2fr auto`, ver contratos.css) — acá la columna ya es
+                                         `auto` y ya convive con "Quitar". --}}
+                                    @if (isset($conflictosPorLote[$lote['lote_id']]))
+                                        <x-atoms.button
+                                            type="button"
+                                            variant="text"
+                                            size="sm"
+                                            icon="visibility"
+                                            data-ag-lote-conflicto-ver
+                                            data-lote-id-conflicto="{{ $lote['lote_id'] }}"
+                                        >
+                                            {{ __('comercial.contratos.lote_conflicto_ver') }}
+                                        </x-atoms.button>
+                                    @endif
+                                    <x-atoms.button
+                                        type="button"
+                                        variant="text"
+                                        size="sm"
+                                        class="ag-contratos-form__lote-quitar-btn"
+                                        icon="delete"
+                                        data-ag-lote-quitar
+                                        :disabled="$tieneOrdenRegistrada"
+                                        :title="$tituloQuitarBloqueado"
+                                    >
+                                        {{ __('comercial.contratos.lotes_quitar') }}
+                                    </x-atoms.button>
+                                </div>
                                 @if ($errorHorario)
                                     <p class="ag-input__error" role="alert">{{ $errorHorario }}</p>
                                 @endif

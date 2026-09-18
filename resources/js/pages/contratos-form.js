@@ -58,8 +58,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalLotesTitulo = formulario.querySelector('[data-ag-modal-lotes-titulo]');
     const modalCrearLoteSlot = formulario.querySelector('[data-ag-modal-crear-lote-slot]');
     const modalLotesLista = formulario.querySelector('[data-ag-modal-lotes-lista]');
+    const modalLotesAgotado = formulario.querySelector('[data-ag-modal-lotes-agotado]');
     const modalLotesGuardarBtn = formulario.querySelector('[data-ag-modal-lotes-guardar]');
     const bsModal = modalLotesEl ? bootstrap.Modal.getOrCreateInstance(modalLotesEl) : null;
+    const selectCampania = formulario.querySelector('[name="campania_id"]');
+
+    // Modal informativo del contrato en conflicto por lote (tarea
+    // "contrato-lotes-conflicto", 18/9/2026) — JSON embebido indexado por
+    // `lote_id`, mismo criterio de parseo defensivo que `propiedadesYLotes`.
+    const modalConflictoEl = formulario.querySelector('[data-ag-modal-conflicto-lote]');
+    const bsModalConflicto = modalConflictoEl ? bootstrap.Modal.getOrCreateInstance(modalConflictoEl) : null;
+    const scriptConflictos = formulario.querySelector('[data-ag-conflictos-lotes]');
+    let conflictosPorLote = {};
+    if (scriptConflictos) {
+        try {
+            conflictosPorLote = JSON.parse(scriptConflictos.textContent) || {};
+        } catch (e) {
+            console.error('Error al parsear conflictos de lotes JSON:', e);
+        }
+    }
 
     const urlCrearLote = modalLotesEl?.dataset.urlCrearLote || '';
     const textoSinLotes = modalLotesEl?.dataset.textoSinLotes || '';
@@ -358,12 +375,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const lotes = propiedad.lotes || [];
 
+        // Exclusión por conflicto (tarea "contrato-lotes-conflicto",
+        // 18/9/2026): un lote ya comprometido en OTRO contrato vigente de la
+        // MISMA campaña elegida en este formulario no se ofrece para elegir
+        // — salvo que ya esté en el contrato que se está editando (ese sigue
+        // apareciendo tildado, como siempre). Sin campaña elegida todavía,
+        // no hay nada que excluir.
+        const campaniaActual = selectCampania?.value ? String(selectCampania.value) : '';
+        const lotesVisibles = lotes.filter((lote) => {
+            if (idsYaEnContrato.has(String(lote.id))) return true;
+            if (!campaniaActual) return true;
+            const ocupadas = (lote.ocupado_en_campanias || []).map(String);
+            return !ocupadas.includes(campaniaActual);
+        });
+
+        // "Todos ocupados": la propiedad SÍ tiene lotes, pero ninguno queda
+        // disponible para esta campaña — distinto del caso de abajo (la
+        // propiedad no tiene ningún lote cargado en el catálogo).
+        if (modalLotesAgotado) {
+            modalLotesAgotado.hidden = !(lotes.length > 0 && lotesVisibles.length === 0);
+        }
+
         if (lotes.length === 0) {
+            modalLotesLista.hidden = false;
             const vacio = document.createElement('p');
             vacio.className = 'ag-contratos-form__lotes-empty-text';
             vacio.textContent = textoSinLotes;
             modalLotesLista.appendChild(vacio);
+        } else if (lotesVisibles.length === 0) {
+            modalLotesLista.hidden = true;
         } else {
+            modalLotesLista.hidden = false;
             const tabla = document.createElement('div');
             tabla.className = 'ag-contratos-form__modal-tabla';
 
@@ -410,7 +452,7 @@ document.addEventListener('DOMContentLoaded', () => {
             head.append(celdaTodos, colCodigo, colHectareas, colDesnivel, colLimpieza);
             tabla.appendChild(head);
 
-            lotes.forEach((lote) => {
+            lotesVisibles.forEach((lote) => {
                 const fila = document.createElement('div');
                 fila.className = 'ag-contratos-form__modal-tabla-fila';
 
@@ -497,6 +539,75 @@ document.addEventListener('DOMContentLoaded', () => {
                 grupo.remove();
             }
             renderizarPills();
+            return;
+        }
+
+        // Modal informativo del contrato en conflicto (tarea
+        // "contrato-lotes-conflicto", 18/9/2026) — pinta los campos desde el
+        // JSON embebido, sin pedirle nada al servidor.
+        const botonVerConflicto = e.target.closest('[data-ag-lote-conflicto-ver]');
+        if (botonVerConflicto && modalConflictoEl && bsModalConflicto) {
+            e.preventDefault();
+            const conflicto = conflictosPorLote[botonVerConflicto.dataset.loteIdConflicto];
+            if (!conflicto) return;
+
+            const setTexto = (selector, valor) => {
+                const el = modalConflictoEl.querySelector(selector);
+                if (el) el.textContent = valor;
+            };
+
+            setTexto('[data-ag-conflicto-cliente]', conflicto.cliente);
+            setTexto('[data-ag-conflicto-propiedades]', conflicto.propiedades);
+            setTexto('[data-ag-conflicto-vigencia]', conflicto.vigencia);
+            setTexto('[data-ag-conflicto-monto]', conflicto.monto_total);
+
+            const badgeEstado = modalConflictoEl.querySelector('[data-ag-conflicto-estado]');
+            if (badgeEstado) {
+                Array.from(badgeEstado.classList)
+                    .filter((clase) => clase.startsWith('ag-badge--'))
+                    .forEach((clase) => badgeEstado.classList.remove(clase));
+                badgeEstado.classList.add(`ag-badge--${conflicto.estado_variant}`);
+                const label = badgeEstado.querySelector('.ag-badge__label');
+                if (label) label.textContent = conflicto.estado_label;
+            }
+
+            const botonEditar = modalConflictoEl.querySelector('[data-ag-conflicto-editar]');
+            if (botonEditar) botonEditar.setAttribute('href', conflicto.editar_url);
+
+            // Lotes compartidos entre este contrato y el de arriba (pedido
+            // explícito, 18/9/2026: "no me sirve de mucho solo los datos del
+            // contrato" — hace falta ver QUÉ lotes chocan, no solo con quién).
+            // Filas armadas a mano con las mismas clases de `x-molecules.index-table`
+            // (`ag-index-table__row`, ver index-table.css) — el componente Blade
+            // ya puso la cabecera y el `--ag-index-table-columns` en el
+            // contenedor ancestro, las filas heredan esa custom property
+            // aunque vivan un nivel más adentro (`data-ag-conflicto-lotes`).
+            const contenedorLotesConflicto = modalConflictoEl.querySelector('[data-ag-conflicto-lotes]');
+            if (contenedorLotesConflicto) {
+                contenedorLotesConflicto.innerHTML = '';
+                (conflicto.lotes_en_conflicto || []).forEach((lote) => {
+                    const fila = document.createElement('div');
+                    fila.className = 'ag-index-table__row';
+                    fila.setAttribute('role', 'row');
+
+                    const celdaCodigo = document.createElement('span');
+                    celdaCodigo.setAttribute('role', 'cell');
+                    celdaCodigo.textContent = lote.codigo;
+
+                    const celdaPropiedad = document.createElement('span');
+                    celdaPropiedad.setAttribute('role', 'cell');
+                    celdaPropiedad.textContent = lote.propiedad;
+
+                    const celdaHectareas = document.createElement('span');
+                    celdaHectareas.setAttribute('role', 'cell');
+                    celdaHectareas.textContent = lote.hectareas;
+
+                    fila.append(celdaCodigo, celdaPropiedad, celdaHectareas);
+                    contenedorLotesConflicto.appendChild(fila);
+                });
+            }
+
+            bsModalConflicto.show();
         }
     });
 
@@ -665,4 +776,51 @@ document.addEventListener('DOMContentLoaded', () => {
     formulario.addEventListener('submit', () => {
         sessionStorage.removeItem('ag_contrato_borrador');
     });
+
+    // ===== Adelanto Solicitado: valor estimado a cobrar + % en vivo (tarea
+    // "adelanto-calculado", 18/9/2026) — puramente informativo, sin bloqueo
+    // de guardado nuevo. Replica en JS los mismos 3 factores de
+    // `CrearContrato::calcularMontoTotal()`/`ActualizarContrato` (hectáreas ×
+    // aplicaciones × precio por hectárea) solo para el preview en vivo — el
+    // valor real que se guarda lo sigue recalculando siempre el servidor con
+    // `Brick\Math\BigDecimal` (invariante 6): acá `Number` alcanza porque
+    // este cálculo nunca se persiste. El 100% del valor estimado es el techo
+    // MATEMÁTICO del adelanto (no se puede cobrar más de lo que vale el
+    // contrato) — no hay ningún porcentaje de negocio fijo involucrado.
+    const inputHectareas = formulario.querySelector('[name="hectareas_contratadas"]');
+    const inputAplicaciones = formulario.querySelector('[name="aplicaciones_previstas"]');
+    const inputPrecioHa = formulario.querySelector('[name="precio_ha"]');
+    const inputAdelanto = formulario.querySelector('[name="adelanto_monto"]');
+    const campoValorEstimado = formulario.querySelector('[data-ag-valor-estimado]');
+    const ayudaAdelanto = document.getElementById('adelanto_monto-help');
+
+    if (inputHectareas && inputAplicaciones && inputPrecioHa && inputAdelanto && campoValorEstimado && ayudaAdelanto) {
+        const plantillaAyuda = inputAdelanto.dataset.plantillaAyuda || '';
+        const plantillaAyudaMaximo = inputAdelanto.dataset.plantillaAyudaMaximo || '';
+
+        const formatearMonto = (valor) => valor.toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        const recalcularAdelanto = () => {
+            const hectareas = Number(inputHectareas.value) || 0;
+            const aplicaciones = Number(inputAplicaciones.value) || 0;
+            const precioHa = Number(inputPrecioHa.value) || 0;
+            const adelanto = Number(inputAdelanto.value) || 0;
+
+            const valorEstimado = hectareas * aplicaciones * precioHa;
+            campoValorEstimado.value = formatearMonto(valorEstimado);
+
+            const porcentaje = valorEstimado > 0 ? (adelanto / valorEstimado) * 100 : 0;
+            const alLimite = porcentaje >= 100;
+
+            ayudaAdelanto.textContent = (alLimite ? plantillaAyudaMaximo : plantillaAyuda).replace(':porcentaje', formatearMonto(porcentaje));
+            ayudaAdelanto.classList.toggle('ag-input__help--accent', !alLimite);
+            ayudaAdelanto.classList.toggle('ag-input__help--alert', alLimite);
+        };
+
+        [inputHectareas, inputAplicaciones, inputPrecioHa, inputAdelanto].forEach((input) => {
+            input.addEventListener('input', recalcularAdelanto);
+        });
+
+        recalcularAdelanto();
+    }
 });

@@ -359,7 +359,15 @@ return [
         'campo_aplicaciones_previstas' => 'Aplicaciones previstas',
         'campo_precio_ha' => 'Precio por hectárea (Bs)',
         'campo_monto_total_ayuda' => 'Se calcula automáticamente: hectáreas × aplicaciones × precio por hectárea.',
+        'campo_valor_estimado_label' => 'Valor estimado a cobrar (Bs)',
         'campo_adelanto_monto' => 'Adelanto Solicitado',
+        // Ayuda en vivo del adelanto (tarea "adelanto-calculado", 18/9/2026):
+        // ":porcentaje" lo reemplaza `contratos-form.js`, nunca Blade — llega
+        // crudo al `data-*` del input (ver `_formulario.blade.php`). Puramente
+        // informativo: no hay ningún tope de negocio fijo sobre el adelanto,
+        // el 100% es el límite matemático del valor estimado a cobrar.
+        'campo_adelanto_monto_ayuda' => 'Representa el :porcentaje % del valor estimado a cobrar de este contrato.',
+        'campo_adelanto_monto_ayuda_maximo' => 'El adelanto representa el :porcentaje % del valor estimado a cobrar — llegaste al máximo que se puede solicitar en este contrato.',
         'campo_fecha_inicio' => 'Fecha de inicio',
         'campo_fecha_fin' => 'Fecha de fin',
         'campo_fecha_fin_ayuda' => 'Opcional. Si no se define, el contrato queda abierto.',
@@ -406,6 +414,25 @@ return [
         'crear_propiedad_corto' => 'Nueva',
         'crear_lote' => 'Crear lote',
 
+        // Conflicto de lotes entre contratos (tarea "contrato-lotes-conflicto",
+        // 18/9/2026): un mismo lote puede terminar en dos contratos vigentes
+        // de la misma campaña (la guarda de guardado solo bloquea al 100% de
+        // la propiedad, nunca por lote — ver VerificadorLotesDelContrato).
+        // Estas claves avisan el caso en la UI para que se resuelva a mano.
+        'lote_en_conflicto' => 'En conflicto',
+        'lote_conflicto_ver' => 'Ver contrato',
+        'lotes_quitar_bloqueado_orden' => 'Este lote ya tiene una orden de aplicación registrada en este contrato — no se puede quitar acá.',
+        'lotes_todos_ocupados_titulo' => 'Todos los lotes ya están comprometidos',
+        'lotes_todos_ocupados_detalle' => 'Todos los lotes de esta propiedad ya forman parte de otro contrato vigente de la misma campaña. Elige otra propiedad o crea un lote nuevo.',
+        'conflicto_modal_titulo' => 'Contrato en conflicto',
+        'conflicto_modal_cliente' => 'Cliente',
+        'conflicto_modal_propiedades' => 'Propiedades',
+        'conflicto_modal_vigencia' => 'Vigencia',
+        'conflicto_modal_estado' => 'Estado',
+        'conflicto_modal_monto' => 'Monto contratado (Bs)',
+        'conflicto_modal_lotes_titulo' => 'Lotes en conflicto',
+        'conflicto_modal_editar' => 'Editar contrato',
+
         // Modal de lotes por propiedad (tarea "contratos-lotes", rediseño
         // sept/2026): reemplaza al panel lateral con checkboxes siempre
         // visibles — un modal por click de pill/opción del select, con
@@ -422,20 +449,29 @@ return [
         'lotes_col_acciones' => 'Acciones',
 
         // Resumen del aside de editar contrato (tarea "resumen de contrato",
-        // sept/2026): mismo criterio que el aside de clientes/campañas —
-        // vacío con atajo a crear una orden, o dos tarjetas de solo lectura
-        // (facturación / aplicación) una vez que hay datos.
+        // sept/2026; ampliado a 4 tarjetas tarea "resumen-contrato-completo",
+        // 18/9/2026): vacío con atajo a crear una orden, o cuatro tarjetas de
+        // solo lectura (orden de aplicación / orden de trabajo / facturación
+        // / cobranza) una vez que hay datos.
         'aside_vacio_titulo' => 'Todavía no hay órdenes de aplicación',
         'aside_vacio_detalle' => 'Este contrato no tiene ninguna orden de aplicación cargada. En cuanto se registre la primera, vas a ver acá el avance de facturación y trabajos.',
         'aside_vacio_accion' => 'Nueva orden de aplicación',
+        'aside_orden_aplicacion_titulo' => 'Orden de aplicación',
+        'aside_orden_aplicacion_total' => 'Órdenes registradas',
+        'aside_orden_aplicacion_vigentes' => 'Órdenes vigentes',
+        'aside_orden_trabajo_titulo' => 'Orden de trabajo',
         'aside_facturacion_titulo' => 'Facturación',
         'aside_monto_contratado' => 'Monto contratado (Bs)',
         'aside_monto_facturado' => 'Monto facturado (Bs)',
         'aside_saldo_pendiente' => 'Saldo pendiente (Bs)',
-        'aside_aplicacion_titulo' => 'Aplicación',
         'aside_hectareas_contratadas' => 'Hectáreas contratadas',
         'aside_hectareas_aplicadas' => 'Hectáreas aplicadas',
         'aside_trabajos' => 'Trabajos realizados',
+        'aside_cobranza_titulo' => 'Cobranza',
+        'aside_cobranza_estado_label' => 'Estado',
+        'aside_cobranza_proximamente' => 'Disponible próximamente',
+        'aside_ver_mas' => 'Ver más',
+        'aside_ver_mas_proximamente' => 'Todavía no se puede filtrar este listado por contrato.',
 
         // Errores de validación
         'error_cliente_requerido' => 'Selecciona un cliente.',

@@ -20,6 +20,10 @@
     - $contactosDisponibles (Collection<int, string>): valor heredado, NO se
       usa para "Datos del contrato" (usá `datosContrato[contratoId].contactos`
       — ya scopeado). Si terminas sin usarla, está ok.
+    - $contratoIdPreseleccionado (int|null, SOLO en create(), tarea
+      "contrato-lotes-conflicto", 18/9/2026): desde `?contrato_id=` — el
+      botón "Editar contrato" del estado vacío "sin lotes" vuelve acá con el
+      contrato ya elegido (memento de navegación, ver `$urlActual` abajo).
 
     `estado` NUNCA es un campo de este formulario: lo fija la máquina de
     estados al crear, y lo cambia `panel.ordenes.activar` (otra pantalla).
@@ -36,6 +40,13 @@
 @php
     $esEdicion = $orden !== null;
     $accion = $esEdicion ? route('panel.ordenes.update', $orden) : route('panel.ordenes.store');
+    // $tituloPagina/$urlActual (memento de navegación, tarea
+    // "contrato-lotes-conflicto", 18/9/2026): mismo criterio que
+    // `Comercial\_formulario.blade.php` — le dicen a `RecordarOrigenNavegacion`
+    // adónde volver desde "Editar contrato" cuando el contrato elegido no
+    // tiene lotes todavía.
+    $tituloPagina = $esEdicion ? __('operaciones.ordenes.titulo_editar') : __('operaciones.ordenes.titulo_crear');
+    $urlActual = $esEdicion ? route('panel.ordenes.edit', $orden) : route('panel.ordenes.create');
     $valor = fn (string $campo, mixed $porDefecto = '') => old($campo, $orden?->{$campo} ?? $porDefecto);
     // `null`, no `''`: `atoms/select` solo marca el placeholder `selected`
     // cuando `$value === null` (ver su docblock). Con `''` acá, ningún
@@ -46,7 +57,7 @@
     // "Datos del contrato" pinta datos reales apenas carga la página, así
     // que ese default silencioso es mucho más peligroso — mismo criterio
     // para contrato y contacto.
-    $contratoId = old('contrato_id', $orden?->contrato_id);
+    $contratoId = old('contrato_id', $orden?->contrato_id ?? $contratoIdPreseleccionado ?? null);
     $contactoId = old('emitida_por_contacto_id', $orden?->emitida_por_contacto_id);
     $nroAplicacion = old('nro_aplicacion', $orden?->nro_aplicacion ?? '');
     // Alta: hoy por defecto (el usuario la cambia si emite con fecha
@@ -84,7 +95,15 @@
     $lotesIniciales = old('lotes', $lotesPorDefecto);
 @endphp
 
-<form method="POST" action="{{ $accion }}" class="ag-ordenes-form" novalidate data-ag-ordenes-form>
+<form
+    method="POST"
+    action="{{ $accion }}"
+    class="ag-ordenes-form"
+    novalidate
+    data-ag-ordenes-form
+    data-url-origen="{{ $urlActual }}"
+    data-etiqueta-origen="{{ $tituloPagina }}"
+>
     @csrf
     @if ($esEdicion)
         @method('PUT')
@@ -498,9 +517,34 @@
                     </button>
                 </div>
 
-                {{-- Estado vacío: contrato elegido, pero la búsqueda no encuentra nada (o el contrato no tiene lotes). --}}
+                {{-- Estado vacío: contrato elegido, pero la búsqueda de texto
+                     no encuentra ningún lote (el contrato SÍ tiene lotes
+                     cargados) — ver `renderizarContenedor()` en
+                     `ordenes-form.js`. Distinto del bloque de abajo, que
+                     cubre el caso "el contrato no tiene NINGÚN lote". --}}
                 <div class="ag-ordenes-form__lotes-vacio" data-ag-lotes-vacio hidden>
                     {{ __('operaciones.ordenes.lotes_tabla_vacio') }}
+                </div>
+
+                {{-- Estado vacío: el contrato elegido no tiene NINGÚN lote
+                     registrado (tarea "contrato-lotes-conflicto", 18/9/2026
+                     — caso real que motivó todo este pedido: sin esto, la
+                     orden simplemente no se podía crear, sin salida para el
+                     usuario). El botón "Editar contrato" vuelve acá con el
+                     memento de navegación (`data-url-origen`/`data-etiqueta-origen`
+                     del `<form>`) una vez que el contrato ya tenga lotes. --}}
+                <div data-ag-lotes-contrato-vacio hidden>
+                    <x-molecules.empty-state
+                        icon="assignment_add"
+                        :title="__('operaciones.ordenes.lotes_contrato_vacio_titulo')"
+                        :detail="__('operaciones.ordenes.lotes_contrato_vacio_detalle')"
+                    >
+                        <x-slot:action>
+                            <x-atoms.button href="#" variant="outline" icon="edit" data-ag-lotes-contrato-vacio-editar>
+                                {{ __('operaciones.ordenes.lotes_contrato_vacio_accion') }}
+                            </x-atoms.button>
+                        </x-slot:action>
+                    </x-molecules.empty-state>
                 </div>
             </div>
         </div>

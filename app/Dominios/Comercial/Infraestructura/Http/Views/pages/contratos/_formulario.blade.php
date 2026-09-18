@@ -23,7 +23,20 @@
       el cliente ya elegido. `edit()` no lo pasa (`null` por el `??` de abajo).
     - $propiedadesYLotesPorCliente (array): estructura anidada de cliente →
       propiedad → lotes, para select dependiente del formulario (tarea
-      "contratos-lotes", estrategia 'a': datos embebidos en HTML).
+      "contratos-lotes", estrategia 'a': datos embebidos en HTML). Cada lote
+      trae `ocupado_en_campanias` (tarea "contrato-lotes-conflicto",
+      18/9/2026): campañas donde ya está comprometido por OTRO contrato
+      vigente — el modal de selección lo usa para no ofrecerlo si coincide
+      con la campaña elegida en este formulario.
+    - $loteIdsConOrdenRegistrada (list<int>): lotes de ESTE contrato que ya
+      tienen una orden de aplicación registrada — el botón "Quitar" de
+      `_lotes-tabla.blade.php` se deshabilita para ellos (sin vista "show" de
+      contrato, es la única forma de proteger un lote con historial real).
+    - $conflictosPorLote (array<int, array>): lotes de ESTE contrato que
+      TAMBIÉN están en otro contrato vigente de la misma campaña — datos del
+      otro contrato para el modal informativo de conflicto
+      (`_modal-conflicto-lote.blade.php`), armados por
+      `ContratosController::formatearConflictos()`.
 
     `estado` y `monto_total` NUNCA son campos de este formulario: el primero
     lo cambia `panel.contratos.cambiar-estado` (otra pantalla, otra
@@ -272,6 +285,23 @@
             :error="$errors->first('precio_ha')"
         />
 
+        {{-- Valor estimado a cobrar (tarea "adelanto-calculado", 18/9/2026):
+             solo lectura, sin `name` (no se postea — mismo patrón que el
+             campo de lectura de `/panel/perfil`, documentado en
+             `atoms/input.blade.php`). `monto_total` sigue sin ser un campo
+             de este formulario: esto es un preview en vivo calculado por
+             `resources/js/pages/contratos-form.js`, el valor real que se
+             guarda lo recalcula siempre `Aplicacion/CrearContrato`/
+             `ActualizarContrato` con `Brick\Math\BigDecimal` (invariante 6). --}}
+        <x-atoms.input
+            :name="null"
+            id="valor_estimado_cobrar"
+            :label="__('comercial.contratos.campo_valor_estimado_label')"
+            value="0,00"
+            readonly
+            data-ag-valor-estimado
+        />
+
         <x-atoms.input
             type="number"
             name="adelanto_monto"
@@ -279,7 +309,10 @@
             :value="$valor('adelanto_monto')"
             min="0"
             step="0.01"
+            :help="__('comercial.contratos.campo_adelanto_monto_ayuda')"
             :error="$errors->first('adelanto_monto')"
+            data-plantilla-ayuda="{{ __('comercial.contratos.campo_adelanto_monto_ayuda') }}"
+            data-plantilla-ayuda-maximo="{{ __('comercial.contratos.campo_adelanto_monto_ayuda_maximo') }}"
         />
 
         <x-atoms.date
@@ -400,14 +433,29 @@
             </div>
         </div>
 
+        {{-- Datos JSON embebidos: el otro contrato en conflicto por lote
+             (tarea "contrato-lotes-conflicto") — el JS los usa para pintar
+             el modal informativo sin pedirle nada al servidor. --}}
+        <script type="application/json" data-ag-conflictos-lotes>
+            {!! json_encode($conflictosPorLote) !!}
+        </script>
+
         {{-- Lista apilada de lotes ya agregados (agrupada por propiedad) —
              partial propio, ver `_lotes-tabla.blade.php`. --}}
-        @include('comercial::pages.contratos._lotes-tabla', ['lotesIniciales' => $lotesIniciales])
+        @include('comercial::pages.contratos._lotes-tabla', [
+            'lotesIniciales' => $lotesIniciales,
+            'loteIdsConOrdenRegistrada' => $loteIdsConOrdenRegistrada,
+            'conflictosPorLote' => $conflictosPorLote,
+        ])
     </x-molecules.form-section>
 
     {{-- Modal único de selección de lotes por propiedad — partial propio,
          ver `_modal-lotes.blade.php`. --}}
     @include('comercial::pages.contratos._modal-lotes')
+
+    {{-- Modal informativo del contrato en conflicto por un lote compartido —
+         partial propio, ver `_modal-conflicto-lote.blade.php`. --}}
+    @include('comercial::pages.contratos._modal-conflicto-lote')
 
     <x-organisms.form-actions-bar :status="__('comercial.contratos.estado_form')">
         <x-slot:actions>
@@ -429,7 +477,22 @@
             <x-slot:aside>
                 @if ($resumenContrato['tieneDatos'])
                     @foreach ($resumenContrato['tarjetas'] as $tarjeta)
-                        <x-molecules.summary-card :title="$tarjeta['titulo']" :items="$tarjeta['items']" />
+                        <x-molecules.summary-card :title="$tarjeta['titulo']" :items="$tarjeta['items']">
+                            @if (isset($tarjeta['accion']))
+                                <x-slot:action>
+                                    {{-- "Ver más" sin funcionalidad todavía
+                                         (tarea "resumen-contrato-completo",
+                                         18/9/2026): ni el listado de órdenes
+                                         ni el de facturas filtran por
+                                         `contrato_id` hoy — el componente
+                                         estático queda en su lugar para
+                                         cuando esa pantalla lo permita. --}}
+                                    <x-atoms.button type="button" variant="outline" size="sm" icon="open_in_new" disabled :title="$tarjeta['accion']['tooltip']">
+                                        {{ $tarjeta['accion']['label'] }}
+                                    </x-atoms.button>
+                                </x-slot:action>
+                            @endif
+                        </x-molecules.summary-card>
                     @endforeach
                 @else
                     <x-molecules.empty-state

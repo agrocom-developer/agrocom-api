@@ -52,6 +52,22 @@
                     <div data-ag-modal-crear-lote-slot></div>
                 </div>
                 <div data-ag-modal-lotes-lista></div>
+
+                {{-- Todos los lotes de la propiedad ya están comprometidos
+                     en otro contrato vigente de la campaña elegida (tarea
+                     "contrato-lotes-conflicto", 18/9/2026) — distinto del
+                     caso "la propiedad no tiene ningún lote" de arriba
+                     (`data-texto-sin-lotes`, texto plano ya existente):
+                     acá SÍ hay lotes, pero ninguno queda disponible para
+                     elegir en esta campaña. Oculto por defecto, lo muestra
+                     `abrirModalLotes` en vez de la tabla. --}}
+                <div data-ag-modal-lotes-agotado hidden>
+                    <x-molecules.empty-state
+                        icon="block"
+                        :title="__('comercial.contratos.lotes_todos_ocupados_titulo')"
+                        :detail="__('comercial.contratos.lotes_todos_ocupados_detalle')"
+                    />
+                </div>
             </div>
             <div class="modal-footer">
                 <x-atoms.button type="button" variant="outline" data-bs-dismiss="modal">
