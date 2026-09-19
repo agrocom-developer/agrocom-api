@@ -69,6 +69,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property CarbonImmutable|null $cancelada_at
  * @property CausaCancelacionOrden|null $causa_cancelacion
  * @property string|null $motivo_cancelacion
+ * @property string|null $motivo_correccion
+ * @property CarbonImmutable|null $corregida_at
  */
 class OrdenAplicacion extends ModeloDominio
 {
@@ -97,6 +99,8 @@ class OrdenAplicacion extends ModeloDominio
         'cancelada_at',
         'causa_cancelacion',
         'motivo_cancelacion',
+        'motivo_correccion',
+        'corregida_at',
     ];
 
     /** @return array<string, string> */
@@ -114,6 +118,7 @@ class OrdenAplicacion extends ModeloDominio
             'reanudada_at' => 'immutable_datetime',
             'cerrada_at' => 'immutable_datetime',
             'cancelada_at' => 'immutable_datetime',
+            'corregida_at' => 'immutable_datetime',
             'causa_cancelacion' => CausaCancelacionOrden::class,
         ];
     }
