@@ -5,7 +5,7 @@ namespace App\Dominios\Comercial\Aplicacion;
 use App\Dominios\Campania\Contratos\LecturaCampania;
 use App\Dominios\Comercial\Aplicacion\Contrato\VerificadorLotesDelContrato;
 use App\Dominios\Comercial\Aplicacion\MaquinaEstados\MaquinaEstadosContrato;
-use App\Dominios\Comercial\Dominio\Excepciones\CampaniaCerrada;
+use App\Dominios\Comercial\Dominio\Excepciones\CampaniaNoAbierta;
 use App\Dominios\Comercial\Dominio\Excepciones\LoteAjenoAlCliente;
 use App\Dominios\Comercial\Dominio\Excepciones\LotesYaContratados;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
@@ -70,13 +70,13 @@ final class ActualizarContrato
      * @param  array<string, mixed>  $datosContrato  sin `estado` ni `monto_total`: este último lo recalcula esta clase.
      * @param  list<array{lote_id: int, hora_inicio: ?string, hora_fin: ?string}>  $lotes  set completo y definitivo de lotes que cubre el contrato, cada uno con su rango horario opcional
      *
-     * @throws CampaniaCerrada si la campaña elegida está `cerrada`.
+     * @throws CampaniaNoAbierta si la campaña elegida está `cerrada`, o no está `abierta` y el contrato se la asigna ahora.
      * @throws LoteAjenoAlCliente si algún lote no pertenece a una propiedad del cliente del contrato.
      * @throws LotesYaContratados si algún lote NUEVO ya lo retiene otro contrato vigente o pausado de la misma campaña.
      */
     public function ejecutar(Contrato $contrato, array $datosContrato, array $lotes): Contrato
     {
-        $this->verificarCampania((int) $datosContrato['campania_id']);
+        $this->verificarCampania((int) $datosContrato['campania_id'], $contrato);
 
         $loteIds = array_column($lotes, 'lote_id');
 
@@ -241,8 +241,15 @@ final class ActualizarContrato
         return $hora === null ? null : substr($hora, 0, 5);
     }
 
-    /** @throws CampaniaCerrada si la campaña elegida está `cerrada`. */
-    private function verificarCampania(int $campaniaId): void
+    /**
+     * Una campaña `cerrada` no admite ningún cambio. Una que no está `abierta`
+     * (la `planificada`) solo se rechaza si el contrato se la asigna AHORA: el
+     * que ya la tenía, de antes de que se exigiera `abierta`, se sigue
+     * pudiendo editar sin cambiarla.
+     *
+     * @throws CampaniaNoAbierta
+     */
+    private function verificarCampania(int $campaniaId, Contrato $contrato): void
     {
         $campania = $this->lecturaCampania->obtener($campaniaId);
 
@@ -250,8 +257,10 @@ final class ActualizarContrato
             return;
         }
 
-        if ($campania->cerrada) {
-            throw CampaniaCerrada::paraCampania($campania->codigo);
+        $seAsignaAhora = (int) $contrato->campania_id !== $campaniaId;
+
+        if ($campania->cerrada || ($seAsignaAhora && ! $campania->admiteImputaciones())) {
+            throw CampaniaNoAbierta::paraCampania($campania->codigo, $campania->cerrada);
         }
     }
 

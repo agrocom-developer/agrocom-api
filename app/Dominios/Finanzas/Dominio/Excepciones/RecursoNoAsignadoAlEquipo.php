@@ -14,7 +14,7 @@ use RuntimeException;
  * `Personal\Contratos\LecturaEquipoTrabajo::recursosAFecha()` (ADR 0003
  * regla 2: la vigencia del recurso es dato de `Personal`, esta excepción es
  * la reacción de `Finanzas` ante una lista que no lo contiene) — mismo
- * criterio que su guarda hermana {@see CampaniaCerrada}.
+ * criterio que su guarda hermana {@see CampaniaNoAbierta}.
  */
 final class RecursoNoAsignadoAlEquipo extends RuntimeException
 {

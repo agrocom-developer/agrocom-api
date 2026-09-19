@@ -53,6 +53,7 @@ final class LecturaCampaniaEloquent implements LecturaCampania
             id: $campania->id,
             codigo: $campania->codigo,
             cerrada: $campania->estado === EstadoCampania::Cerrada,
+            abierta: $campania->estado === EstadoCampania::Abierta,
         );
     }
 }

@@ -15,7 +15,7 @@ use RuntimeException;
  * a la guarda anterior, que solo saltaba cuando el 100% de los lotes de una
  * PROPIEDAD ya estaba cubierto (`LotesDePropiedadAgotados`, retirada).
  *
- * Mismo criterio que {@see CampaniaCerrada}: guarda de negocio cruzando
+ * Mismo criterio que {@see CampaniaNoAbierta}: guarda de negocio cruzando
  * tablas, no expresable en un `CHECK`/`UNIQUE INDEX` (ver el docblock de la
  * migración `create_com_contrato_lotes_table`).
  */

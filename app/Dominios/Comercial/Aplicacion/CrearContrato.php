@@ -5,7 +5,7 @@ namespace App\Dominios\Comercial\Aplicacion;
 use App\Dominios\Campania\Contratos\LecturaCampania;
 use App\Dominios\Comercial\Aplicacion\Contrato\VerificadorLotesDelContrato;
 use App\Dominios\Comercial\Aplicacion\MaquinaEstados\MaquinaEstadosContrato;
-use App\Dominios\Comercial\Dominio\Excepciones\CampaniaCerrada;
+use App\Dominios\Comercial\Dominio\Excepciones\CampaniaNoAbierta;
 use App\Dominios\Comercial\Dominio\Excepciones\LoteAjenoAlCliente;
 use App\Dominios\Comercial\Dominio\Excepciones\LotesYaContratados;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
@@ -79,7 +79,7 @@ final class CrearContrato
      * @param  array<string, mixed>  $datosContrato  sin `estado` ni `monto_total`: los fija esta clase.
      * @param  list<array{lote_id: int, hora_inicio: ?string, hora_fin: ?string}>  $lotes  lotes concretos que cubre el contrato (de una o varias propiedades del cliente), cada uno con su rango horario opcional
      *
-     * @throws CampaniaCerrada si la campaña elegida está `cerrada`.
+     * @throws CampaniaNoAbierta si la campaña elegida no está `abierta`.
      * @throws LoteAjenoAlCliente si algún lote no pertenece a una propiedad del cliente del contrato.
      * @throws LotesYaContratados si algún lote elegido ya lo retiene otro contrato vigente o pausado de la misma campaña.
      */
@@ -147,7 +147,7 @@ final class CrearContrato
         }
     }
 
-    /** @throws CampaniaCerrada si la campaña elegida está `cerrada`. */
+    /** @throws CampaniaNoAbierta si la campaña elegida no está `abierta`. */
     private function verificarCampania(int $campaniaId): void
     {
         $campania = $this->lecturaCampania->obtener($campaniaId);
@@ -156,8 +156,8 @@ final class CrearContrato
             return;
         }
 
-        if ($campania->cerrada) {
-            throw CampaniaCerrada::paraCampania($campania->codigo);
+        if (! $campania->admiteImputaciones()) {
+            throw CampaniaNoAbierta::paraCampania($campania->codigo, $campania->cerrada);
         }
     }
 

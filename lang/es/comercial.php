@@ -877,6 +877,7 @@ return [
         'acta_ya_facturada' => 'El acta #:id ya tiene una factura emitida.',
         'contrato_fecha_inicio_pasada' => "El contrato #:id tiene fecha de inicio :fecha, ya pasada — no puede pasar a 'vigente'.",
         'campania_cerrada' => "La campaña ':codigo' está cerrada: no admite nuevas imputaciones.",
+        'campania_no_abierta' => "La campaña ':codigo' todavía no está abierta: ábrela antes de asignarle contratos.",
         'cliente_nit_duplicado' => "Ya existe un cliente activo con el NIT ':nit'.",
         'cultivo_nombre_duplicado' => "Ya existe un cultivo activo con el nombre ':nombre'.",
         'informe_falta_cliente' => 'El informe de avance de contratos requiere al menos un cliente.',

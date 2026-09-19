@@ -6,7 +6,7 @@ namespace App\Dominios\Campania\Contratos;
  * Frontera de lectura de Campania hacia otros módulos (ADR 0003, regla 2):
  * `Comercial\Aplicacion\CrearContrato`/`ActualizarContrato` y
  * `Finanzas\Aplicacion\CrearGasto` necesitan saber si la campaña elegida
- * admite imputaciones (no está `cerrada`), sin importar el modelo Eloquent
+ * admite imputaciones (está `abierta`), sin importar el modelo Eloquent
  * `Campania` ni reimplementar esa lectura con `DB::table` en cada módulo
  * consumidor.
  */

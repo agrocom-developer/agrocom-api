@@ -18,5 +18,18 @@ final readonly class DatosCampania
         public int $id,
         public string $codigo,
         public bool $cerrada,
+        public bool $abierta,
     ) {}
+
+    /**
+     * ¿Admite imputaciones nuevas —contratos, gastos, combustible—? Solo la
+     * campaña `abierta` (ADR 0015 punto 1, adenda del 19/9/2026, pedido
+     * directo del dueño): una `planificada` todavía no arrancó y una
+     * `cerrada` ya se liquidó. La regla es de `Campania`; los módulos que
+     * imputan solo reaccionan a este resultado.
+     */
+    public function admiteImputaciones(): bool
+    {
+        return $this->abierta;
+    }
 }

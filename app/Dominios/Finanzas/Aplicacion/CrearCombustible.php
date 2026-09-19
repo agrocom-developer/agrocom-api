@@ -3,7 +3,7 @@
 namespace App\Dominios\Finanzas\Aplicacion;
 
 use App\Dominios\Campania\Contratos\LecturaCampania;
-use App\Dominios\Finanzas\Dominio\Excepciones\CampaniaCerrada;
+use App\Dominios\Finanzas\Dominio\Excepciones\CampaniaNoAbierta;
 use App\Dominios\Finanzas\Dominio\Excepciones\RecursoNoAsignadoAlEquipo;
 use App\Dominios\Finanzas\Infraestructura\Eloquent\Combustible;
 use App\Dominios\Personal\Contratos\LecturaEquipoTrabajo;
@@ -68,7 +68,7 @@ final class CrearCombustible
         ]);
     }
 
-    /** @throws CampaniaCerrada si la campaña elegida está `cerrada`. */
+    /** @throws CampaniaNoAbierta si la campaña elegida no está `abierta`. */
     private function verificarCampania(?int $campaniaId): void
     {
         if ($campaniaId === null) {
@@ -77,8 +77,8 @@ final class CrearCombustible
 
         $campania = $this->lecturaCampania->obtener($campaniaId);
 
-        if ($campania !== null && $campania->cerrada) {
-            throw CampaniaCerrada::paraCampania($campania->codigo);
+        if ($campania !== null && ! $campania->admiteImputaciones()) {
+            throw CampaniaNoAbierta::paraCampania($campania->codigo, $campania->cerrada);
         }
     }
 

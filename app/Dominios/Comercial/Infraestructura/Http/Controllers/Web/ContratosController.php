@@ -12,7 +12,7 @@ use App\Dominios\Comercial\Aplicacion\ListarContratos;
 use App\Dominios\Comercial\Aplicacion\ObtenerAvanceComercial;
 use App\Dominios\Comercial\Dominio\EstadoContrato;
 use App\Dominios\Comercial\Dominio\Excepciones\ActivacionContratoNoDisponible;
-use App\Dominios\Comercial\Dominio\Excepciones\CampaniaCerrada;
+use App\Dominios\Comercial\Dominio\Excepciones\CampaniaNoAbierta;
 use App\Dominios\Comercial\Dominio\Excepciones\ContratoConAplicacionAbierta;
 use App\Dominios\Comercial\Dominio\Excepciones\LoteAjenoAlCliente;
 use App\Dominios\Comercial\Dominio\Excepciones\LotesYaContratados;
@@ -146,7 +146,7 @@ final class ContratosController
                 $this->normalizarDatosContrato($datos),
                 $lotes,
             );
-        } catch (CampaniaCerrada $excepcion) {
+        } catch (CampaniaNoAbierta $excepcion) {
             return redirect()
                 ->route('panel.contratos.create')
                 ->withInput()
@@ -308,7 +308,7 @@ final class ContratosController
                 $this->normalizarDatosContrato($datos),
                 $lotes,
             );
-        } catch (CampaniaCerrada $excepcion) {
+        } catch (CampaniaNoAbierta $excepcion) {
             return redirect()
                 ->route('panel.contratos.edit', $contrato)
                 ->withInput()

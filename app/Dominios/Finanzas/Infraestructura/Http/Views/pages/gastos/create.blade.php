@@ -18,8 +18,8 @@
       $campaniasDisponibles (Collection<int, string>): id => etiqueta, para
       los <select> opcionales de imputación. `$equiposDisponibles` (tarea 73,
       HU-50) se ofrece PRIMERO — es el camino principal de imputación.
-      `$campaniasDisponibles` ya viene filtrada a campañas no `cerrada` (ADR
-      0015 punto 6) — ver GastosController::campaniasNoCerradas().
+      `$campaniasDisponibles` ya viene filtrada a campañas `abierta` (ADR 0015
+      punto 6, adenda del 19/9/2026) — ver GastosController::campaniasAbiertas().
 
     `enctype="multipart/form-data"`: primera subida de archivo humana desde
     el panel (a diferencia de `ope_evidencias`, que sube la app de campo) —
