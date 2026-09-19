@@ -9,7 +9,9 @@
     Espera:
     - $campania (Campania|null): null en alta; el modelo en edición.
     - $resumenCampania (list<array{...}>|null): solo en edición, ver
-      CampaniasController::resumenCampania(). `null`/ausente en alta.
+      CampaniasController::resumenCampania(). `null`/ausente en alta, y
+      también `null` en edición mientras la campaña sigue `planificada` —ahí
+      el aside muestra un empty-state en vez de tarjetas en cero.
     - $pasosEstado (list<array{...}>|null): solo en edición, los pasos de
       `molecules/step-arrow` (`PasosDeEstado::armar()`). `null`/ausente en alta.
     - $ayudaEstado (string|null): solo en edición, el párrafo bajo los pasos
@@ -163,15 +165,23 @@
 
         @if ($esEdicion)
             <x-slot:aside>
-                @foreach ($resumenCampania ?? [] as $resumen)
-                    <x-molecules.summary-card :title="$resumen['titulo']" :items="$resumen['items']">
-                        <x-slot:action>
-                            <x-atoms.button :href="$resumen['accion']['href']" variant="outline" icon="arrow_forward" block>
-                                {{ $resumen['accion']['label'] }}
-                            </x-atoms.button>
-                        </x-slot:action>
-                    </x-molecules.summary-card>
-                @endforeach
+                @if ($resumenCampania !== null)
+                    @foreach ($resumenCampania as $resumen)
+                        <x-molecules.summary-card :title="$resumen['titulo']" :items="$resumen['items']">
+                            <x-slot:action>
+                                <x-atoms.button :href="$resumen['accion']['href']" variant="outline" icon="arrow_forward" block>
+                                    {{ $resumen['accion']['label'] }}
+                                </x-atoms.button>
+                            </x-slot:action>
+                        </x-molecules.summary-card>
+                    @endforeach
+                @else
+                    <x-molecules.empty-state
+                        icon="calendar_month"
+                        :title="__('campania.campanias.aside_no_abierta_titulo')"
+                        :detail="__('campania.campanias.aside_no_abierta_detalle')"
+                    />
+                @endif
             </x-slot:aside>
         @endif
     </x-molecules.form-layout>

@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Seguridad\Aplicacion;
 
+use App\Dominios\Campania\Contratos\LecturaCampania;
 use App\Dominios\Comercial\Contratos\AvanceClientePanel;
 use App\Dominios\Comercial\Contratos\LecturaPanelComercial;
 use App\Dominios\Finanzas\Contratos\LecturaPanelFinanzas;
@@ -55,17 +56,20 @@ final class ArmarDashboard
 
     private const ANTICIPOS = 5;
 
+    private const PERMISO_CREAR_CAMPANIA = 'campania.campania.crear';
+
     public function __construct(
         private readonly LecturaPanelOperaciones $operaciones,
         private readonly LecturaPanelComercial $comercial,
         private readonly LecturaPanelInventario $inventario,
         private readonly LecturaPanelFinanzas $finanzas,
+        private readonly LecturaCampania $campania,
         private readonly CatalogoNombresPanel $nombres,
         private readonly ArmarMapaOperativo $mapa,
     ) {}
 
     /**
-     * @return array{secciones: array<string, mixed>, visibles: list<string>}
+     * @return array{secciones: array<string, mixed>, visibles: list<string>, hayCampaniaAbierta: bool, puedeCrearCampania: bool}
      */
     public function ejecutar(SecUser $usuario, int $idRolActivo): array
     {
@@ -89,6 +93,13 @@ final class ArmarDashboard
         return [
             'secciones' => $secciones,
             'visibles' => array_keys($secciones),
+            // Solo los usa `_sin-secciones.blade.php` cuando el tablero queda
+            // vacío, para distinguir la causa más común en una instalación
+            // nueva —ninguna campaña abierta todavía, por eso no hay
+            // contratos, órdenes ni sesiones que mostrar— del caso genérico
+            // de un rol sin secciones habilitadas.
+            'hayCampaniaAbierta' => $this->campania->abiertas() !== [],
+            'puedeCrearCampania' => $usuario->tienePermisoEnRol(self::PERMISO_CREAR_CAMPANIA, $idRolActivo),
         ];
     }
 

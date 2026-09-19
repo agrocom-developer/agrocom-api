@@ -102,6 +102,8 @@ return [
         'aside_hectareas_contratadas' => 'Hectáreas contratadas',
         'aside_trabajos' => 'Trabajos realizados',
         'aside_trabajo_accion' => 'Ver contratos',
+        'aside_no_abierta_titulo' => 'Todavía no está abierta',
+        'aside_no_abierta_detalle' => 'Mientras esté en planificación esta campaña no admite contratos ni gastos, así que acá todavía no hay nada que resumir. Ábrela desde los pasos de arriba para empezar.',
 
         // Errores de validación
         'error_codigo_requerido' => 'Ingresa un código para la campaña.',

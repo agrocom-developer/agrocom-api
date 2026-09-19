@@ -254,6 +254,13 @@ return [
         'vacio_titulo' => 'Todavía no hay nada que mostrar acá',
         'vacio_detalle' => 'Tu rol activo no tiene secciones habilitadas en el tablero, o aún no se registró actividad. Usa el menú lateral para ir a tus pantallas.',
 
+        // Estado vacío por falta de campaña abierta (causa más común en una
+        // instalación nueva: sin campaña, no hay contratos, órdenes ni
+        // sesiones que mostrar). Ver `puedeCrearCampania` en `_sin-secciones`.
+        'sin_campania_titulo' => 'Activa una campaña para empezar',
+        'sin_campania_detalle' => 'Los contratos, las órdenes de aplicación y el resto del panel dependen de que haya una campaña abierta. Crea la primera para empezar a cargar contratos.',
+        'sin_campania_accion' => 'Crear campaña',
+
         // Columnas compartidas por la tabla de sesiones (cola de validación y
         // "mis sesiones" usan el mismo parcial).
         'col_hora' => 'Fecha',

@@ -542,6 +542,8 @@ return [
         'aside_vacio_titulo' => 'Todavía no hay órdenes de aplicación',
         'aside_vacio_detalle' => 'Este contrato no tiene ninguna orden de aplicación cargada. En cuanto se registre la primera, vas a ver acá el avance de facturación y trabajos.',
         'aside_vacio_accion' => 'Nueva orden de aplicación',
+        'aside_no_vigente_titulo' => 'Sin órdenes de aplicación',
+        'aside_no_vigente_detalle' => 'Este contrato no tiene ninguna orden cargada. Un contrato admite órdenes de aplicación solo mientras está en ejecución.',
         'aside_orden_aplicacion_titulo' => 'Órdenes de aplicación',
         'aside_volver_texto' => 'Contrato #:id',
         'aside_orden_aplicacion_total' => 'Órdenes registradas',
