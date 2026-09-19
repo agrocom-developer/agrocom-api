@@ -6,11 +6,12 @@
  * mismos tokens de borde, foco y error. Tres capas dentro de `.ag-time-range`:
  * los dos `<input type="time">` nativos (siempre presentes, son los que se
  * envían), el `.ag-time-range__trigger` que arma resources/js/atoms/time-range.js
- * y el `<dialog>` con el reloj, que se abre modal en la capa superior. Sin JS
- * solo existen los nativos.
+ * y el popup con el reloj, que se abre en la capa superior junto a la casilla.
+ * Sin JS solo existen los nativos.
  *
- * El selector es una tarjeta con cabecera de color primario (la hora grande,
- * como el de Android), dial sobre superficie neutra y acciones en texto. Todo
+ * El selector es un POPUP anclado a la casilla (Popover API): una tarjeta
+ * compacta con cabecera de color primario (la hora con su «a. m.»/«p. m.» a la
+ * vista), dial de 12 horas sobre superficie neutra y acciones en texto. Todo
  * color sale de tokens: el tema claro/oscuro y el theming por usuario lo
  * reasignan sin tocar este archivo (CLAUDE.md invariante 11).
  */
@@ -163,38 +164,39 @@
     outline: none;
 }
 
-/* ===== Selector (dialog modal) ===== */
+/* ===== Popup (popover anclado a la casilla) ===== */
 
-.ag-time-range__dialog {
-    width: min(21rem, calc(100vw - 2rem));
+/* La posición (`top`/`left`) la pone time-range.js al abrirse, junto a la
+   casilla. `inset: auto` + `margin: 0` deshacen el centrado que el navegador le
+   da a un popover; sin borde extra de superficie, la sombra ya lo separa. */
+.ag-time-range__popup {
+    inset: auto;
+    margin: 0;
+    width: min(18.5rem, calc(100vw - 1rem));
     padding: 0;
     overflow: hidden;
     background-color: var(--ag-color-bg-elevated);
-    border: none;
+    border: 1px solid var(--ag-color-border);
     border-radius: var(--ag-radius-lg);
     box-shadow: var(--ag-shadow-lg);
     color: var(--ag-color-text);
     font-family: var(--ag-font-family-base);
 }
 
-.ag-time-range__dialog[open] {
+.ag-time-range__popup:popover-open {
     display: flex;
     flex-direction: column;
 }
 
-.ag-time-range__dialog::backdrop {
-    background-color: var(--ag-color-scrim);
-}
-
-/* Cabecera: la hora grande, sobre el color primario. El texto va en blanco
-   constante (`--ag-color-gray-0`) porque el relleno primario no cambia con el
-   tema; `--ag-color-text-inverse` se invierte en oscuro y no sirve acá. */
+/* Cabecera: las dos horas, cada una con su a. m./p. m., sobre el color primario.
+   El texto va en blanco constante (`--ag-color-gray-0`) porque el relleno primario
+   no cambia con el tema; `--ag-color-text-inverse` se invierte en oscuro. */
 .ag-time-range__header {
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    gap: var(--ag-space-3);
-    padding: var(--ag-space-4) var(--ag-space-4) var(--ag-space-3);
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-3) var(--ag-space-3) var(--ag-space-2);
     background-color: var(--ag-color-primary);
     color: var(--ag-color-gray-0);
 }
@@ -202,7 +204,7 @@
 .ag-time-range__par {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
 }
 
 .ag-time-range__par-etiqueta {
@@ -212,10 +214,16 @@
     opacity: 0.85;
 }
 
+.ag-time-range__par-fila {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-1);
+}
+
 .ag-time-range__par-tiempo {
     display: inline-flex;
     align-items: baseline;
-    font-size: var(--ag-font-size-2xl);
+    font-size: var(--ag-font-size-xl);
     font-weight: var(--ag-font-weight-medium);
     font-variant-numeric: tabular-nums;
     line-height: 1.15;
@@ -223,7 +231,7 @@
 
 .ag-time-range__guion {
     padding-bottom: var(--ag-space-1);
-    font-size: var(--ag-font-size-xl);
+    font-size: var(--ag-font-size-lg);
     opacity: 0.85;
 }
 
@@ -250,16 +258,51 @@
     opacity: 1;
 }
 
-.ag-time-range__seg:focus-visible {
+.ag-time-range__seg:focus-visible,
+.ag-time-range__periodo-opcion:focus-visible {
     outline: 2px solid var(--ag-color-gray-0);
     outline-offset: 1px;
+}
+
+/* a. m. / p. m.: dos opciones apiladas al lado de la hora, como el reloj de
+   Android; la elegida va rellena. Sin esto un reloj de 1 a 12 no dice si 3:00 es
+   de la madrugada o de la tarde. */
+.ag-time-range__periodo {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.ag-time-range__periodo-opcion {
+    padding: 0 var(--ag-space-1);
+    background: none;
+    border: 1px solid transparent;
+    border-radius: var(--ag-radius-sm);
+    color: inherit;
+    font: inherit;
+    font-size: var(--ag-font-size-xs);
+    line-height: 1.35;
+    white-space: nowrap;
+    opacity: 0.7;
+    cursor: pointer;
+}
+
+.ag-time-range__periodo-opcion:hover {
+    opacity: 1;
+}
+
+.ag-time-range__periodo-opcion--activo {
+    background-color: var(--ag-color-primary-hover);
+    border-color: var(--ag-color-gray-0);
+    font-weight: var(--ag-font-weight-bold);
+    opacity: 1;
 }
 
 .ag-time-range__body {
     display: flex;
     flex-direction: column;
-    gap: var(--ag-space-2);
-    padding: var(--ag-space-4) var(--ag-space-4) var(--ag-space-2);
+    gap: var(--ag-space-1);
+    padding: var(--ag-space-3) var(--ag-space-3) var(--ag-space-1);
 }
 
 .ag-time-range__reloj {
@@ -269,7 +312,7 @@
 
 .ag-time-range__dial {
     width: 100%;
-    max-width: 16.5rem;
+    max-width: 13rem;
     aspect-ratio: 1;
     border-radius: 50%;
     cursor: pointer;
@@ -288,7 +331,7 @@
 
 .ag-time-range__dial-aguja {
     stroke: var(--ag-color-primary);
-    stroke-width: 2;
+    stroke-width: 1.6;
 }
 
 .ag-time-range__dial-eje,
@@ -300,21 +343,16 @@
     fill: var(--ag-color-gray-0);
 }
 
-/* Números del dial: unidades del viewBox (240), no píxeles de pantalla — el
+/* Números del dial: unidades del viewBox (200), no píxeles de pantalla — el
    dial escala entero con su ancho. */
 .ag-time-range__dial-numero {
     fill: var(--ag-color-text);
     font-family: inherit;
-    font-size: 15px;
+    font-size: 13px;
     font-variant-numeric: tabular-nums;
     text-anchor: middle;
     dominant-baseline: central;
     pointer-events: none;
-}
-
-.ag-time-range__dial-numero--interior {
-    fill: var(--ag-color-text-muted);
-    font-size: 12px;
 }
 
 .ag-time-range__dial-numero--elegido {
@@ -325,8 +363,14 @@
 /* Modo de texto: la alternativa accesible al dial. */
 .ag-time-range__teclado {
     display: flex;
-    gap: var(--ag-space-3);
-    padding-block: var(--ag-space-3);
+    flex-direction: column;
+    gap: var(--ag-space-2);
+    padding-block: var(--ag-space-2);
+}
+
+.ag-time-range__teclado-campos {
+    display: flex;
+    gap: var(--ag-space-2);
 }
 
 .ag-time-range__teclado-campo {
@@ -340,13 +384,13 @@
 
 .ag-time-range__teclado-campo input {
     width: 100%;
-    padding: var(--ag-space-3);
+    padding: var(--ag-space-2);
     background-color: var(--ag-color-bg-elevated);
     border: 1px solid var(--ag-color-border-strong);
     border-radius: var(--ag-radius-md);
     color: var(--ag-color-text);
     font: inherit;
-    font-size: var(--ag-font-size-lg);
+    font-size: var(--ag-font-size-base);
     font-variant-numeric: tabular-nums;
     text-align: center;
 }
@@ -357,11 +401,18 @@
     box-shadow: 0 0 0 3px var(--ag-color-primary-subtle);
 }
 
+.ag-time-range__teclado-ayuda {
+    margin: 0;
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-xs);
+    text-align: center;
+}
+
 .ag-time-range__aviso {
-    min-height: 1.25rem;
+    min-height: 1.1rem;
     margin: 0;
     color: var(--ag-color-danger);
-    font-size: var(--ag-font-size-sm);
+    font-size: var(--ag-font-size-xs);
     text-align: center;
 }
 
@@ -369,16 +420,16 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: var(--ag-space-2);
-    padding: var(--ag-space-2) var(--ag-space-3) var(--ag-space-3);
+    gap: var(--ag-space-1);
+    padding: var(--ag-space-1) var(--ag-space-2) var(--ag-space-2);
 }
 
 .ag-time-range__modo {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 2.5rem;
-    height: 2.5rem;
+    width: 2.25rem;
+    height: 2.25rem;
     background: none;
     border: none;
     border-radius: var(--ag-radius-pill);
@@ -395,17 +446,17 @@
 
 .ag-time-range__acciones {
     display: flex;
-    gap: var(--ag-space-1);
+    gap: 0;
 }
 
 .ag-time-range__accion {
-    padding: var(--ag-space-2) var(--ag-space-3);
+    padding: var(--ag-space-1) var(--ag-space-2);
     background: none;
     border: none;
     border-radius: var(--ag-radius-md);
     color: var(--ag-color-primary-emphasis);
     font: inherit;
-    font-size: var(--ag-font-size-sm);
+    font-size: var(--ag-font-size-xs);
     font-weight: var(--ag-font-weight-medium);
     letter-spacing: 0.04em;
     text-transform: uppercase;
@@ -423,15 +474,15 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-    .ag-time-range__dialog[open] {
-        animation: ag-time-range-entrada 140ms ease-out;
+    .ag-time-range__popup:popover-open {
+        animation: ag-time-range-entrada 120ms ease-out;
     }
 }
 
 @keyframes ag-time-range-entrada {
     from {
         opacity: 0;
-        transform: translateY(var(--ag-space-2));
+        transform: translateY(calc(var(--ag-space-1) * -1));
     }
 
     to {

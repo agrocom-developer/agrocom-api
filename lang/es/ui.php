@@ -171,7 +171,11 @@ return [
         'fin' => 'Fin',
         'hora' => 'Hora',
         'minutos' => 'Minutos',
-        'formato' => 'HH:MM',
+        'periodo' => 'a. m. o p. m.',
+        'am' => 'a. m.',
+        'pm' => 'p. m.',
+        'formato' => '6:30 a. m.',
+        'ayuda_teclado' => 'Escribe la hora como 6:30 a. m., 6 pm o 18:30.',
         'limpiar' => 'Limpiar',
         'cancelar' => 'Cancelar',
         'aceptar' => 'Aceptar',
@@ -179,7 +183,7 @@ return [
         'usar_reloj' => 'Usar reloj',
         'error_ambas' => 'Indica la hora de inicio y la de fin.',
         'error_orden' => 'La hora de fin debe ser posterior a la de inicio.',
-        'error_formato' => 'Escribe las horas como HH:MM, en formato de 24 horas.',
+        'error_formato' => 'Escribe la hora como 6:30 a. m., 6 pm o 18:30.',
     ],
 
     // Pasos del estado de un objeto (molecules/step-arrow): la pista de los

@@ -1,45 +1,45 @@
 /**
  * Átomo: time-range (resources/views/components/atoms/time-range.blade.php)
- * Rango horario en una sola casilla, con un selector de reloj circular.
+ * Rango horario en una sola casilla, con un popup de reloj anclado a ella.
  *
  * Mejora progresiva, igual que `atoms/date`: los dos `<input type="time">`
  * nativos son los controles reales (tienen `name`, se envían con el
  * formulario). Acá se ocultan, se muestra el disparador y, al confirmar, se
- * escribe en los nativos `H:i` (24 h) más los eventos `input` y `change`.
+ * escribe en los nativos `H:i` en 24 horas más los eventos `input` y `change`.
+ * Sin Popover API no se mejora nada: quedan los dos nativos.
  *
- * El selector es un `<dialog>` modal — foco atrapado, Esc cierra y fondo
- * inerte los da el navegador. Dentro:
- *   - cabecera "HH:MM – HH:MM" con cuatro segmentos (hora y minutos de inicio,
- *     hora y minutos de fin); el activo es el que edita el dial;
- *   - dial de 24 h: anillo exterior 12·1–11, interior 00·13–23; en minutos, un
- *     anillo con marcas cada 5 y precisión de 1 minuto al arrastrar;
- *   - al soltar el dial se pasa solo al segmento siguiente (hora → minutos →
- *     hora de fin → minutos de fin);
- *   - modo de texto "HH:MM": la alternativa accesible al dial;
- *   - Limpiar (vacía y cierra), Cancelar (descarta), Aceptar (confirma).
+ * El popup es un popover (`popover="auto"`): capa superior sin recortes, cierra
+ * al hacer clic afuera o con Esc, y no oscurece la pantalla. Lo abre el propio
+ * disparador (`popovertarget`); acá se prepara el contenido en `beforetoggle` y
+ * se ubica al abrirse, debajo de la casilla o encima si no entra.
  *
- * Los textos llegan del Blade por `data-label-*` (ADR 0013); acá no hay
- * ninguno escrito. El color y la tipografía, todo por token en
+ * El reloj es de 12 horas y cada hora lleva su «a. m.»/«p. m.» a la vista: un
+ * dial de 1 a 12 solo no dice si 3:00 es de la madrugada o de la tarde. Elegir
+ * una hora pasa sola a sus minutos, luego a la hora de fin y a sus minutos; y
+ * mientras no se toque a mano, el período de la hora de fin se elige solo para
+ * que quede después del inicio (10:00 a. m. → 3 = 3:00 p. m.). El modo de texto
+ * acepta «6:30 a. m.», «6 pm» o «18:30».
+ *
+ * Los textos llegan del Blade por `data-label-*` (ADR 0013); acá no hay ninguno
+ * escrito. El color y la tipografía, todo por token en
  * resources/css/components/time-range.css.
  */
 
 const SVG = 'http://www.w3.org/2000/svg';
+const NBSP = ' ';
 
-// Geometría del dial, en unidades del viewBox (240 × 240).
-const CENTRO = 120;
-const RADIO_FONDO = 112;
-const RADIO_EXTERIOR = 88;
-const RADIO_INTERIOR = 56;
-const RADIO_SELECTOR = 17;
-// Por debajo de este radio un toque cae en el anillo interior (13–23 y 00).
-const UMBRAL_ANILLOS = (RADIO_EXTERIOR + RADIO_INTERIOR) / 2;
+// Geometría del dial, en unidades del viewBox (200 × 200).
+const CENTRO = 100;
+const RADIO_FONDO = 94;
+const RADIO_NUMEROS = 72;
+const RADIO_SELECTOR = 15;
 
 const PASOS = ['ih', 'im', 'fh', 'fm'];
 
 const pad = (numero) => String(numero).padStart(2, '0');
 
-/** `H:i` o `H:i:s` → `{h, m}`; `null` si no es una hora válida de 24 h. */
-const leerHora = (texto) => {
+/** `H:i` o `H:i:s` → `{h, m}` en 24 h; `null` si no es una hora válida. */
+const leerHora24 = (texto) => {
     const coincidencia = /^(\d{1,2}):(\d{2})/.exec(String(texto ?? '').trim());
     if (!coincidencia) return null;
 
@@ -49,13 +49,34 @@ const leerHora = (texto) => {
     return h <= 23 && m <= 59 ? { h, m } : null;
 };
 
-/** Lo que se teclea en el modo de texto: acepta `6:00`, `06:00` y `0600`. */
+/**
+ * Lo que se teclea: `6:30 a. m.`, `6 pm`, `06:30`, `18:30`, `0630`. Con «a. m.»/
+ * «p. m.» la hora es de reloj de 12; sin él, de 24. → `{h, m}` en 24 h o `null`.
+ */
 const leerTecleada = (texto) => {
-    const coincidencia = /^(\d{1,2}):?(\d{2})$/.exec(String(texto ?? '').trim());
-    return coincidencia ? leerHora(`${coincidencia[1]}:${coincidencia[2]}`) : null;
+    const coincidencia = /^\s*(\d{1,2})(?::?(\d{2}))?\s*(?:([ap])\.?\s*m\.?)?\s*$/i.exec(String(texto ?? ''));
+    if (!coincidencia) return null;
+
+    let h = Number(coincidencia[1]);
+    const m = coincidencia[2] === undefined ? 0 : Number(coincidencia[2]);
+
+    if (m > 59) return null;
+
+    if (coincidencia[3]) {
+        if (h < 1 || h > 12) return null;
+        h = (h % 12) + (coincidencia[3].toLowerCase() === 'p' ? 12 : 0);
+    } else if (h > 23) {
+        return null;
+    }
+
+    return { h, m };
 };
 
-const formatear = (h, m) => `${pad(h)}:${pad(m)}`;
+/** 12 h + período → 24 h. */
+const a24 = (h12, periodo) => (h12 % 12) + (periodo === 'pm' ? 12 : 0);
+
+/** 24 h → hora de reloj de 12 (1–12) y su período. */
+const de24 = (h) => ({ h12: h % 12 === 0 ? 12 : h % 12, periodo: h >= 12 ? 'pm' : 'am' });
 
 const svg = (nombre, atributos = {}, texto = null) => {
     const nodo = document.createElementNS(SVG, nombre);
@@ -70,63 +91,44 @@ const punto = (angulo, radio) => {
     return { x: CENTRO + radio * Math.sin(rad), y: CENTRO - radio * Math.cos(rad) };
 };
 
-/** Dónde queda una hora en el dial: 12 arriba en el anillo exterior, 00 arriba en el interior. */
-const geometriaHora = (h) => {
-    if (h === 0) return { angulo: 0, radio: RADIO_INTERIOR };
-    if (h === 12) return { angulo: 0, radio: RADIO_EXTERIOR };
-    if (h < 12) return { angulo: h * 30, radio: RADIO_EXTERIOR };
-
-    return { angulo: (h - 12) * 30, radio: RADIO_INTERIOR };
-};
-
 function pintarDial(dial, tipo, valor) {
     dial.replaceChildren();
     dial.append(svg('circle', { class: 'ag-time-range__dial-fondo', cx: CENTRO, cy: CENTRO, r: RADIO_FONDO }));
 
     if (valor !== null) {
-        const { angulo, radio } = tipo === 'hora' ? geometriaHora(valor) : { angulo: valor * 6, radio: RADIO_EXTERIOR };
-        const p = punto(angulo, radio);
+        const p = punto(tipo === 'hora' ? (valor % 12) * 30 : valor * 6, RADIO_NUMEROS);
 
         dial.append(svg('line', { class: 'ag-time-range__dial-aguja', x1: CENTRO, y1: CENTRO, x2: p.x, y2: p.y }));
-        dial.append(svg('circle', { class: 'ag-time-range__dial-eje', cx: CENTRO, cy: CENTRO, r: 3 }));
+        dial.append(svg('circle', { class: 'ag-time-range__dial-eje', cx: CENTRO, cy: CENTRO, r: 2.5 }));
         dial.append(svg('circle', { class: 'ag-time-range__dial-selector', cx: p.x, cy: p.y, r: RADIO_SELECTOR }));
 
         // Un minuto que no cae en una marca se señala con un punto: el número va en la cabecera.
         if (tipo === 'minuto' && valor % 5 !== 0) {
-            dial.append(svg('circle', { class: 'ag-time-range__dial-punto', cx: p.x, cy: p.y, r: 3 }));
+            dial.append(svg('circle', { class: 'ag-time-range__dial-punto', cx: p.x, cy: p.y, r: 2.5 }));
         }
     }
 
-    const numero = (texto, angulo, radio, esInterior, elegido) => {
-        const p = punto(angulo, radio);
-        const clases = ['ag-time-range__dial-numero'];
-        if (esInterior) clases.push('ag-time-range__dial-numero--interior');
-        if (elegido) clases.push('ag-time-range__dial-numero--elegido');
-
-        dial.append(svg('text', { class: clases.join(' '), x: p.x, y: p.y }, texto));
-    };
-
     for (let i = 0; i < 12; i += 1) {
-        if (tipo === 'hora') {
-            const exterior = i === 0 ? 12 : i;
-            const interior = i === 0 ? 0 : 12 + i;
+        const etiqueta = tipo === 'hora' ? (i === 0 ? 12 : i) : i * 5;
+        const p = punto(i * 30, RADIO_NUMEROS);
+        const clases = ['ag-time-range__dial-numero'];
+        if (valor === etiqueta) clases.push('ag-time-range__dial-numero--elegido');
 
-            numero(pad(exterior), i * 30, RADIO_EXTERIOR, false, valor === exterior);
-            numero(pad(interior), i * 30, RADIO_INTERIOR, true, valor === interior);
-        } else {
-            numero(pad(i * 5), i * 30, RADIO_EXTERIOR, false, valor === i * 5);
-        }
+        dial.append(svg('text', { class: clases.join(' '), x: p.x, y: p.y }, tipo === 'hora' ? String(etiqueta) : pad(etiqueta)));
     }
 }
 
 function iniciar(raiz) {
     if (raiz.dataset.agTimeRangoListo === '1') return;
 
+    // Sin Popover API el componente no se mejora: quedan los dos inputs nativos.
+    if (!('popover' in HTMLElement.prototype)) return;
+
     const [nativoInicio, nativoFin] = raiz.querySelectorAll('.ag-time-range__native');
     const disparador = raiz.querySelector('[data-ag-time-range-trigger]');
     const valorVisible = raiz.querySelector('[data-ag-time-range-value]');
     const botonLimpiar = raiz.querySelector('[data-ag-time-range-clear]');
-    const dialogo = raiz.querySelector('[data-ag-time-range-dialog]');
+    const popup = raiz.querySelector('[data-ag-time-range-popup]');
     const dial = raiz.querySelector('[data-ag-time-range-dial]');
     const reloj = raiz.querySelector('[data-ag-time-range-reloj]');
     const teclado = raiz.querySelector('[data-ag-time-range-teclado]');
@@ -135,12 +137,13 @@ function iniciar(raiz) {
     const iconoModo = botonModo?.querySelector('.ag-icon');
     const botonAceptar = raiz.querySelector('[data-accion="aceptar"]');
     const segmentos = raiz.querySelectorAll('[data-seg]');
+    const opcionesPeriodo = raiz.querySelectorAll('[data-periodo]');
     const camposTeclado = {
         inicio: raiz.querySelector('[data-teclado="inicio"]'),
         fin: raiz.querySelector('[data-teclado="fin"]'),
     };
 
-    if (!nativoInicio || !nativoFin || !disparador || !valorVisible || !dialogo || !dial || !reloj || !teclado || !aviso || !botonModo || !botonAceptar) {
+    if (!nativoInicio || !nativoFin || !disparador || !valorVisible || !popup || !dial || !reloj || !teclado || !aviso || !botonModo || !botonAceptar) {
         return;
     }
 
@@ -154,23 +157,37 @@ function iniciar(raiz) {
         fm: `${etiquetas.labelFin}: ${etiquetas.labelMinutos}`,
     };
 
-    let borrador = { ih: null, im: null, fh: null, fm: null };
+    /** «6:30 a. m.» — espacios sin corte para que la hora y su período no se partan. */
+    const formatear12 = (h24, m) => {
+        const { h12, periodo } = de24(h24);
+        const texto = `${h12}:${pad(m)} ${periodo === 'am' ? etiquetas.labelAm : etiquetas.labelPm}`;
+
+        return texto.replaceAll(' ', NBSP);
+    };
+
+    const formatear24 = (h24, m) => `${pad(h24)}:${pad(m)}`;
+
+    // Borrador de lo que se está eligiendo: horas en reloj de 12 (`ih`/`fh`, 1–12)
+    // con su período (`pi`/`pf`), y minutos (`im`/`fm`). `pfManual`: si ya se tocó
+    // a mano el período de la hora de fin, deja de elegirse solo.
+    let est = { ih: null, im: null, pi: 'am', fh: null, fm: null, pf: 'am', pfManual: false };
     let paso = 'ih';
     let modoTeclado = false;
     let avisoManual = '';
     let arrastrando = false;
+    let devolverFoco = false;
 
     const esMinutos = () => paso === 'im' || paso === 'fm';
 
     // ===== Disparador (lo que se ve en la casilla) =====
 
     const pintarDisparador = () => {
-        const inicio = leerHora(nativoInicio.value);
-        const fin = leerHora(nativoFin.value);
+        const inicio = leerHora24(nativoInicio.value);
+        const fin = leerHora24(nativoFin.value);
         const completo = inicio !== null && fin !== null;
         const deshabilitado = nativoInicio.disabled || nativoFin.disabled;
 
-        valorVisible.textContent = completo ? `${formatear(inicio.h, inicio.m)} – ${formatear(fin.h, fin.m)}` : etiquetas.labelPlaceholder;
+        valorVisible.textContent = completo ? `${formatear12(inicio.h, inicio.m)} – ${formatear12(fin.h, fin.m)}` : etiquetas.labelPlaceholder;
         valorVisible.classList.toggle('ag-time-range__value--placeholder', !completo);
         disparador.disabled = deshabilitado;
         raiz.classList.toggle('ag-time-range--deshabilitado', deshabilitado);
@@ -210,10 +227,12 @@ function iniciar(raiz) {
 
     // ===== Validación del borrador =====
 
-    const hayInicio = () => borrador.ih !== null && borrador.im !== null;
-    const hayFin = () => borrador.fh !== null && borrador.fm !== null;
-    const hayAlgo = () => PASOS.some((clave) => borrador[clave] !== null);
-    const finAntesDelInicio = () => hayInicio() && hayFin() && borrador.fh * 60 + borrador.fm <= borrador.ih * 60 + borrador.im;
+    const hayInicio = () => est.ih !== null && est.im !== null;
+    const hayFin = () => est.fh !== null && est.fm !== null;
+    const hayAlgo = () => PASOS.some((clave) => est[clave] !== null);
+    const minutosDelDia = (h12, periodo, m) => a24(h12, periodo) * 60 + m;
+    const finAntesDelInicio = () => hayInicio() && hayFin()
+        && minutosDelDia(est.fh, est.pf, est.fm) <= minutosDelDia(est.ih, est.pi, est.im);
 
     /** Texto del error del borrador, o `null` si se puede confirmar. */
     const errorDelBorrador = () => {
@@ -224,30 +243,57 @@ function iniciar(raiz) {
         return null;
     };
 
-    // ===== Pintado del selector =====
+    /**
+     * El período de la hora de fin se elige solo, mientras nadie lo toque: el
+     * primero (a. m., y si no p. m.) con el que el fin queda después del inicio.
+     * Con inicio 10:00 a. m., el fin «3» pasa a ser 3:00 p. m.
+     */
+    const reajustarPeriodoDeFin = () => {
+        if (est.pfManual || est.fh === null) return;
+
+        const inicio = est.ih !== null ? minutosDelDia(est.ih, est.pi, est.im ?? 0) : null;
+
+        for (const periodo of ['am', 'pm']) {
+            if (inicio === null || minutosDelDia(est.fh, periodo, est.fm ?? 0) > inicio) {
+                est.pf = periodo;
+                return;
+            }
+        }
+
+        est.pf = 'pm'; // ninguno queda después: el aviso lo dice
+    };
+
+    // ===== Pintado del popup =====
 
     const pintar = () => {
         segmentos.forEach((boton) => {
             const clave = boton.dataset.seg;
             const activo = clave === paso && !modoTeclado;
 
-            boton.textContent = borrador[clave] === null ? '--' : pad(borrador[clave]);
+            boton.textContent = est[clave] === null ? '--' : pad(est[clave]);
             boton.classList.toggle('ag-time-range__seg--activo', activo);
             boton.setAttribute('aria-pressed', String(activo));
         });
 
-        const valor = borrador[paso];
+        opcionesPeriodo.forEach((opcion) => {
+            const activa = est[opcion.dataset.periodo] === opcion.dataset.valor;
+
+            opcion.classList.toggle('ag-time-range__periodo-opcion--activo', activa);
+            opcion.setAttribute('aria-pressed', String(activa));
+        });
+
+        const valor = est[paso];
         pintarDial(dial, esMinutos() ? 'minuto' : 'hora', valor);
 
         dial.setAttribute('aria-label', nombrePaso[paso]);
-        dial.setAttribute('aria-valuemin', '0');
-        dial.setAttribute('aria-valuemax', esMinutos() ? '59' : '23');
+        dial.setAttribute('aria-valuemin', esMinutos() ? '0' : '1');
+        dial.setAttribute('aria-valuemax', esMinutos() ? '59' : '12');
         if (valor === null) {
             dial.removeAttribute('aria-valuenow');
             dial.removeAttribute('aria-valuetext');
         } else {
             dial.setAttribute('aria-valuenow', String(valor));
-            dial.setAttribute('aria-valuetext', pad(valor));
+            dial.setAttribute('aria-valuetext', esMinutos() ? pad(valor) : String(valor));
         }
 
         // Fin antes del inicio se avisa en vivo; lo demás, al intentar confirmar.
@@ -266,13 +312,14 @@ function iniciar(raiz) {
     };
 
     const fijar = (valor) => {
-        borrador[paso] = valor;
+        est[paso] = valor;
         avisoManual = '';
 
         // Elegida la hora, los minutos arrancan en 00 (como el selector de Android).
-        if (paso === 'ih' && borrador.im === null) borrador.im = 0;
-        if (paso === 'fh' && borrador.fm === null) borrador.fm = 0;
+        if (paso === 'ih' && est.im === null) est.im = 0;
+        if (paso === 'fh' && est.fm === null) est.fm = 0;
 
+        reajustarPeriodoDeFin();
         pintar();
     };
 
@@ -289,10 +336,6 @@ function iniciar(raiz) {
         if (esMinutos()) return Math.round(angulo / 6) % 60;
 
         const posicion = Math.round(angulo / 30) % 12;
-        const distancia = (Math.hypot(dx, dy) * 240) / caja.width;
-        const interior = distancia < UMBRAL_ANILLOS;
-
-        if (interior) return posicion === 0 ? 0 : 12 + posicion;
 
         return posicion === 0 ? 12 : posicion;
     };
@@ -326,8 +369,8 @@ function iniciar(raiz) {
     // ===== Dial: teclado =====
 
     dial.addEventListener('keydown', (evento) => {
-        const maximo = esMinutos() ? 59 : 23;
-        const salto = esMinutos() ? 5 : 1;
+        const minutos = esMinutos();
+        const salto = minutos ? 5 : 1;
         const cambios = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1, PageUp: salto, PageDown: -salto };
 
         if (evento.key === 'Enter' || evento.key === ' ') {
@@ -338,14 +381,19 @@ function iniciar(raiz) {
 
         if (evento.key === 'Home' || evento.key === 'End') {
             evento.preventDefault();
-            fijar(evento.key === 'Home' ? 0 : maximo);
+            fijar(evento.key === 'Home' ? (minutos ? 0 : 1) : (minutos ? 59 : 12));
             return;
         }
 
         if (!(evento.key in cambios)) return;
 
         evento.preventDefault();
-        fijar((((borrador[paso] ?? 0) + cambios[evento.key]) % (maximo + 1) + maximo + 1) % (maximo + 1));
+
+        if (minutos) {
+            fijar((((est[paso] ?? 0) + cambios[evento.key]) % 60 + 60) % 60);
+        } else {
+            fijar((((est[paso] ?? 12) - 1 + cambios[evento.key]) % 12 + 12) % 12 + 1);
+        }
     });
 
     segmentos.forEach((boton) => {
@@ -357,26 +405,49 @@ function iniciar(raiz) {
         });
     });
 
+    // a. m. / p. m. de cada hora. Tocar el de la hora de fin deja de elegirlo solo.
+    opcionesPeriodo.forEach((opcion) => {
+        opcion.addEventListener('click', () => {
+            est[opcion.dataset.periodo] = opcion.dataset.valor;
+
+            if (opcion.dataset.periodo === 'pf') est.pfManual = true;
+            else reajustarPeriodoDeFin();
+
+            avisoManual = '';
+            pintar();
+        });
+    });
+
     // ===== Modo de texto =====
 
     const llenarTeclado = () => {
-        camposTeclado.inicio.value = hayInicio() ? formatear(borrador.ih, borrador.im) : '';
-        camposTeclado.fin.value = hayFin() ? formatear(borrador.fh, borrador.fm) : '';
+        camposTeclado.inicio.value = hayInicio() ? formatear12(a24(est.ih, est.pi), est.im).replaceAll(NBSP, ' ') : '';
+        camposTeclado.fin.value = hayFin() ? formatear12(a24(est.fh, est.pf), est.fm).replaceAll(NBSP, ' ') : '';
     };
 
     /** Pasa lo tecleado al borrador. `false` (con aviso) si algo no es una hora válida. */
     const leerTeclado = () => {
-        const inicio = camposTeclado.inicio.value.trim() === '' ? null : leerTecleada(camposTeclado.inicio.value);
-        const fin = camposTeclado.fin.value.trim() === '' ? null : leerTecleada(camposTeclado.fin.value);
-        const invalido = (camposTeclado.inicio.value.trim() !== '' && inicio === null) || (camposTeclado.fin.value.trim() !== '' && fin === null);
+        const crudo = { inicio: camposTeclado.inicio.value.trim(), fin: camposTeclado.fin.value.trim() };
+        const inicio = crudo.inicio === '' ? null : leerTecleada(crudo.inicio);
+        const fin = crudo.fin === '' ? null : leerTecleada(crudo.fin);
 
-        if (invalido) {
+        if ((crudo.inicio !== '' && inicio === null) || (crudo.fin !== '' && fin === null)) {
             avisoManual = etiquetas.labelErrorFormato;
             pintar();
             return false;
         }
 
-        borrador = { ih: inicio?.h ?? null, im: inicio?.m ?? null, fh: fin?.h ?? null, fm: fin?.m ?? null };
+        const d = (hora) => (hora === null ? null : de24(hora.h));
+
+        est = {
+            ih: d(inicio)?.h12 ?? null,
+            im: inicio?.m ?? null,
+            pi: d(inicio)?.periodo ?? 'am',
+            fh: d(fin)?.h12 ?? null,
+            fm: fin?.m ?? null,
+            pf: d(fin)?.periodo ?? 'am',
+            pfManual: fin !== null,
+        };
         avisoManual = '';
 
         return true;
@@ -396,6 +467,7 @@ function iniciar(raiz) {
 
         pintar();
         (aTeclado ? camposTeclado.inicio : dial).focus({ preventScroll: true });
+        posicionar();
     }
 
     botonModo.addEventListener('click', () => ponerModo(!modoTeclado));
@@ -413,15 +485,24 @@ function iniciar(raiz) {
         });
     });
 
-    // ===== Abrir, confirmar, limpiar =====
+    // ===== Abrir, ubicar, confirmar, limpiar =====
 
-    const abrir = () => {
-        if (nativoInicio.disabled) return;
+    /** Carga lo que ya hay en los nativos como punto de partida del borrador. */
+    const cargarBorrador = () => {
+        const inicio = leerHora24(nativoInicio.value);
+        const fin = leerHora24(nativoFin.value);
+        const di = inicio ? de24(inicio.h) : null;
+        const df = fin ? de24(fin.h) : null;
 
-        const inicio = leerHora(nativoInicio.value);
-        const fin = leerHora(nativoFin.value);
-
-        borrador = { ih: inicio?.h ?? null, im: inicio?.m ?? null, fh: fin?.h ?? null, fm: fin?.m ?? null };
+        est = {
+            ih: di?.h12 ?? null,
+            im: inicio?.m ?? null,
+            pi: di?.periodo ?? 'am',
+            fh: df?.h12 ?? null,
+            fm: fin?.m ?? null,
+            pf: df?.periodo ?? 'am',
+            pfManual: fin !== null,
+        };
         paso = 'ih';
         modoTeclado = false;
         avisoManual = '';
@@ -429,11 +510,79 @@ function iniciar(raiz) {
         teclado.hidden = true;
         botonModo.setAttribute('aria-label', etiquetas.labelUsarTeclado);
         if (iconoModo) iconoModo.textContent = 'keyboard';
-
-        dialogo.showModal();
-        pintar();
-        dial.focus({ preventScroll: true });
     };
+
+    /** Debajo de la casilla, o encima si abajo no entra; siempre dentro de la ventana. */
+    function posicionar() {
+        if (!popup.matches(':popover-open')) return;
+
+        const margen = 8;
+        const caja = disparador.getBoundingClientRect();
+        const ancho = popup.offsetWidth;
+        const alto = popup.offsetHeight;
+
+        const izquierda = Math.min(Math.max(margen, caja.left), Math.max(margen, window.innerWidth - ancho - margen));
+        let arriba = caja.bottom + 6;
+
+        if (arriba + alto > window.innerHeight - margen) {
+            arriba = Math.max(margen, caja.top - alto - 6);
+        }
+
+        popup.style.left = `${izquierda}px`;
+        popup.style.top = `${arriba}px`;
+    }
+
+    // Se prepara el contenido ANTES de abrir (así entra ya pintado); si el campo
+    // está deshabilitado (día completo) no se abre.
+    popup.addEventListener('beforetoggle', (evento) => {
+        if (evento.newState !== 'open') return;
+
+        if (nativoInicio.disabled) {
+            evento.preventDefault();
+            return;
+        }
+
+        cargarBorrador();
+        pintar();
+    });
+
+    popup.addEventListener('toggle', (evento) => {
+        if (evento.newState === 'open') {
+            disparador.setAttribute('aria-expanded', 'true');
+            posicionar();
+            dial.focus({ preventScroll: true });
+            window.addEventListener('resize', posicionar);
+            window.addEventListener('scroll', posicionar, true);
+        } else {
+            disparador.setAttribute('aria-expanded', 'false');
+            window.removeEventListener('resize', posicionar);
+            window.removeEventListener('scroll', posicionar, true);
+            arrastrando = false;
+
+            // El foco vuelve a la casilla cuando se cierra con un botón o con Esc;
+            // no cuando se hizo clic en otro lado (ahí el foco ya es de esa otra cosa).
+            if (devolverFoco) disparador.focus();
+            devolverFoco = false;
+        }
+    });
+
+    const cerrar = () => {
+        devolverFoco = true;
+        if (popup.matches(':popover-open')) popup.hidePopover();
+    };
+
+    popup.addEventListener('keydown', (evento) => {
+        if (evento.key === 'Escape') devolverFoco = true;
+    });
+
+    // Con el teclado, salir del popup con Tab lo cierra (un popover no atrapa el foco).
+    popup.addEventListener('focusout', (evento) => {
+        const destino = evento.relatedTarget;
+
+        if (destino && !popup.contains(destino) && destino !== disparador && popup.matches(':popover-open')) {
+            popup.hidePopover();
+        }
+    });
 
     function aceptar() {
         if (modoTeclado && !leerTeclado()) return;
@@ -445,34 +594,26 @@ function iniciar(raiz) {
             return;
         }
 
-        escribir(hayInicio() ? formatear(borrador.ih, borrador.im) : '', hayFin() ? formatear(borrador.fh, borrador.fm) : '');
-        dialogo.close();
+        escribir(
+            hayInicio() ? formatear24(a24(est.ih, est.pi), est.im) : '',
+            hayFin() ? formatear24(a24(est.fh, est.pf), est.fm) : '',
+        );
+        cerrar();
     }
 
     const vaciar = () => {
         escribir('', '');
-        if (dialogo.open) dialogo.close();
+        cerrar();
     };
 
-    disparador.addEventListener('click', abrir);
     botonLimpiar?.addEventListener('click', () => {
-        vaciar();
+        escribir('', '');
         disparador.focus();
     });
 
-    dialogo.querySelector('[data-accion="aceptar"]').addEventListener('click', aceptar);
-    dialogo.querySelector('[data-accion="cancelar"]').addEventListener('click', () => dialogo.close());
-    dialogo.querySelector('[data-accion="limpiar"]').addEventListener('click', vaciar);
-
-    // Un clic en el fondo (el <dialog> mismo, no su contenido) descarta.
-    dialogo.addEventListener('click', (evento) => {
-        if (evento.target === dialogo) dialogo.close();
-    });
-
-    dialogo.addEventListener('close', () => {
-        arrastrando = false;
-        disparador.focus();
-    });
+    popup.querySelector('[data-accion="aceptar"]').addEventListener('click', aceptar);
+    popup.querySelector('[data-accion="cancelar"]').addEventListener('click', cerrar);
+    popup.querySelector('[data-accion="limpiar"]').addEventListener('click', vaciar);
 
     // API mínima para quien necesite releer el valor (p. ej. tras cambiarlo por código).
     raiz.agTimeRange = { refrescar: pintarDisparador };
