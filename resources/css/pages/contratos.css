@@ -171,10 +171,19 @@
        contenido MÁS ANCHO entre todas las filas y nunca se desalinean. Antes cada
        fila era su propio grid con columnas `auto`: la que traía «Ver contrato»
        ensanchaba su columna de acciones y quedaba corrida respecto de las demás
-       (19/9/2026). Horario tiene ancho fijo: cabe «10:00 a. m. – 10:00 p. m.». */
+       (19/9/2026). Horario tiene ancho fijo (cabe «10:00 a. m. – 10:00 p. m.»).
+       Ninguna columna usa `fr`: el sobrante en pantalla ancha NO se le da a una
+       columna (la de Código llegó a ocupar ~900 px para un «Lote1» y dejaba las
+       demás apretadas a la derecha) sino que se reparte ENTRE ellas con
+       `justify-content: space-between`. Además, con `fr` de proporciones
+       distintas el grid infla las columnas angostas cuando falta lugar y la tabla
+       desborda en la edición, donde el bloque es angosto. */
     display: grid;
-    grid-template-columns: minmax(7rem, 1fr) auto auto 13.5rem auto;
-    column-gap: var(--ag-space-3);
+    grid-template-columns: auto auto auto 13.5rem auto;
+    justify-content: space-between;
+    /* Angosto a propósito: en la edición el mínimo de Código lo fija el aviso «En
+       conflicto» (125 px) y con 12 px de separación la tabla desbordaba por 5 px. */
+    column-gap: var(--ag-space-2);
     border: 1px solid var(--ag-color-border-card);
     border-radius: var(--ag-radius-md);
     background-color: var(--ag-color-surface-card);
