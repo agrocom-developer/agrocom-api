@@ -154,7 +154,13 @@ final class CampaniasController
             'campania' => $campania,
             'pasosEstado' => $pasosEstado,
             'ayudaEstado' => PasosDeEstado::ayuda($pasosEstado, 'campania.campania.estado_ayuda'),
-            'resumenCampania' => $this->resumenCampania($campania, $lecturaComercial, $lecturaGasto, $lecturaTrabajos),
+            // `null` mientras la campaña sigue `planificada`: todavía no
+            // admite contratos ni gastos (invariante de negocio, no falta de
+            // datos), así que el resumen financiero/de trabajo no tiene nada
+            // real que mostrar — el formulario lo cambia por un empty-state.
+            'resumenCampania' => $campania->estado === EstadoCampania::Planificada
+                ? null
+                : $this->resumenCampania($campania, $lecturaComercial, $lecturaGasto, $lecturaTrabajos),
         ]);
     }
 

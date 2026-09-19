@@ -589,7 +589,11 @@ final class ContratosController
      * criterio de permisos que clientes: sin ninguno de los dos, la tarjeta
      * no aporta nada).
      *
-     * @return array{tieneDatos: false, icono: string, titulo: string, detalle: string, mostrarAccion: bool, accion: array{label: string, href: string}}|array{tieneDatos: true, tarjetas: list<array{titulo: string, items: list<array{label: string, value: string, mono?: bool, variant?: string}>, accion?: array{label: string, tooltip: string}}>}|null
+     * Sin órdenes y el contrato nunca en ejecución (`estado !== Vigente`):
+     * `mostrarAccion` va en `false` y `accion` en `null` — no hay un "creá la
+     * primera" que ofrecer, el contrato mismo no admite ninguna todavía.
+     *
+     * @return array{tieneDatos: false, icono: string, titulo: string, detalle: string, mostrarAccion: bool, accion: array{label: string, href: string}|null}|array{tieneDatos: true, tarjetas: list<array{titulo: string, items: list<array{label: string, value: string, mono?: bool, variant?: string}>, accion?: array{label: string, tooltip: string}}>}|null
      */
     private function resumenContrato(
         Contrato $contrato,
@@ -612,6 +616,23 @@ final class ContratosController
         // abierta y con aplicaciones por delante admite una orden nueva. Si no,
         // el botón queda deshabilitado y dice por qué.
         $nuevaOrden = $this->accionNuevaOrden($contrato, $lecturaResumenOrdenes);
+
+        // Sin órdenes y el contrato nunca llegó a "En Ejecución" (todavía en
+        // aprobación, en conflicto, pausado sin haber llegado a cargar una,
+        // o ya cerrado sin haber tenido ninguna): no es que falte cargar la
+        // primera, es que el contrato no admite ninguna en su estado actual.
+        // Un botón deshabilitado con tooltip decía lo mismo, pero solo al
+        // pasar el mouse — acá va directo en el texto.
+        if (($puedeVerOrdenes && $totalOrdenes === 0) && $contrato->estado !== EstadoContrato::Vigente) {
+            return [
+                'tieneDatos' => false,
+                'icono' => 'assignment',
+                'titulo' => __('comercial.contratos.aside_no_vigente_titulo'),
+                'detalle' => __('comercial.contratos.aside_no_vigente_detalle'),
+                'mostrarAccion' => false,
+                'accion' => null,
+            ];
+        }
 
         if (! $puedeVerOrdenes || $totalOrdenes === 0) {
             return [
