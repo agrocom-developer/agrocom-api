@@ -734,8 +734,8 @@ return [
     // entre equipos de trabajo. Ficha propia, no sub-pantalla de `ordenes`.
     // Incluye subsección "Condiciones de vuelo" (8 campos movidos de órdenes).
     'asignacion_equipos' => [
-        'titulo' => 'Asignación de equipos',
-        'subtitulo' => 'Reparte las hectáreas de cada orden vigente entre los equipos de trabajo.',
+        'titulo' => 'Escuadras',
+        'subtitulo' => 'Reparte las hectáreas de cada orden vigente entre las escuadras.',
         'vacio_titulo' => 'Sin órdenes vigentes',
         'vacio_detalle' => 'Activa una orden de aplicación para que aparezca acá. Una orden vigente es la que está lista para que los equipos comiencen a trabajar.',
         'col_orden' => 'Orden',
@@ -747,7 +747,7 @@ return [
         'asignar_accion' => 'Asignar equipos',
         'ficha_titulo' => 'Orden #:nro',
         'ficha_subtitulo' => 'Aplicación #:nro del contrato :contrato.',
-        'ficha_volver' => 'Volver a asignación de equipos',
+        'ficha_volver' => 'Volver a escuadras',
         'resumen_hectareas_lote' => 'Hectáreas del lote',
         'resumen_asignadas' => 'Asignadas',
         'resumen_restantes' => 'Restantes',
