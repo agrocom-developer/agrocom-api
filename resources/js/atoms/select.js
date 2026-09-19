@@ -389,6 +389,12 @@ function inicializar(root) {
     trigger.hidden = false;
     actualizarValorMostrado();
 
+    // Selección hecha por otro script (`nativo.value = ...` + `change`, p. ej.
+    // `contratos-form.js` al volver de crear un cliente): sin esto la etiqueta
+    // visible se quedaba con el valor anterior. La selección que hace este
+    // mismo combobox ya la refresca arriba; repetirlo acá es inofensivo.
+    nativo.addEventListener('change', actualizarValorMostrado);
+
     // Selects dependientes (p. ej. campaña según cliente en contratos-form.js,
     // subrubro según rubro en gastos-form.js) filtran el nativo marcando
     // `<option>` disabled/hidden desde afuera. `opciones` es una foto tomada

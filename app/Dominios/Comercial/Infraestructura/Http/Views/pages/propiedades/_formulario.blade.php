@@ -81,7 +81,11 @@
         :subtitle="__('comercial.propiedades.subtitulo_form')"
     >
         <x-slot:actions>
-            <x-molecules.boton-volver :href="route('panel.propiedades.index')" :label="__('comercial.propiedades.volver')" />
+            <x-molecules.boton-volver
+                :href="route('panel.propiedades.index')"
+                :label="__('comercial.propiedades.volver')"
+                :retorno="$esEdicion ? ['propiedad_id' => $propiedad->id] : []"
+            />
         </x-slot:actions>
     </x-organisms.page-header>
 

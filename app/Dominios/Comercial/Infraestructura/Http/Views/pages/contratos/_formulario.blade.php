@@ -13,10 +13,12 @@
     - $clientesDisponibles (Collection<int, string>): id => razón social,
       clientes activos (ver ContratosController::clientesActivos()) — la
       vista no conoce el modelo Cliente.
-    - $campaniasDisponibles (Collection<int, string>): id => código, TODAS
-      las campañas del catálogo (ADR 0015, corregido el 15/9/2026: la
-      campaña es compartida, no hay que filtrarla por cliente) — ver
-      ContratosController::campaniasDisponibles().
+    - $campaniasDisponibles (Collection<int, string>): id => código, solo
+      las campañas ABIERTAS (pedido directo del 19/9/2026), más — en
+      edición — la campaña del propio contrato aunque ya no esté abierta,
+      para que el select no la pierda. La campaña es compartida (ADR 0015,
+      corregido el 15/9/2026): no se filtra por cliente — ver
+      ContratosController::campaniasParaFormulario().
     - $clienteIdPreseleccionado (int|null, tarea "resumen de cliente"): solo
       en alta, desde `?cliente_id=` (ver ContratosController::create()) — el
       atajo "Nuevo contrato" del aside de `panel.clientes.edit` llega acá con

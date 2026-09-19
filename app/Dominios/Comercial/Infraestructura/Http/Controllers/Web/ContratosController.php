@@ -64,8 +64,10 @@ use Illuminate\View\View;
  * cliente" y "la propiedad no está agotada", viven en
  * `Aplicacion/CrearContrato`/`Aplicacion/ActualizarContrato`, nunca acá.
  *
- * `campaniasDisponibles()` lee el catálogo de campañas vía
- * {@see LecturaCampania::todas()} (ADR 0003 regla 2) — NO con `DB::table`
+ * `campaniasDisponibles()` (filtro del listado) y `campaniasParaFormulario()`
+ * (select del formulario: solo las abiertas) leen el catálogo de campañas
+ * vía {@see LecturaCampania} (`todas()`/`abiertas()`, ADR 0003 regla 2) — NO
+ * con `DB::table`
  * directo: esta clase vivió un tiempo con esa forma (justificada, en su
  * momento, como la regla 3 del ADR — referencias cruzadas por ID), pero es
  * exactamente el mismo agujero que encontró y corrigió
@@ -116,7 +118,7 @@ final class ContratosController
         return view('comercial::pages.contratos.create', [
             ...$this->autorizacion->cascara($request),
             'clientesDisponibles' => $this->clientesActivos(),
-            'campaniasDisponibles' => $this->campaniasDisponibles($lecturaCampania),
+            'campaniasDisponibles' => $this->campaniasParaFormulario($lecturaCampania),
             // Acceso directo desde el aside de `panel.clientes.edit` (tarea
             // "resumen de cliente"): con ?cliente_id=, el formulario arranca
             // con ese cliente ya elegido — ver _formulario.blade.php.
@@ -206,7 +208,7 @@ final class ContratosController
             ...$this->autorizacion->cascara($request),
             'contrato' => $contrato,
             'clientesDisponibles' => $this->clientesActivos(),
-            'campaniasDisponibles' => $this->campaniasDisponibles($lecturaCampania),
+            'campaniasDisponibles' => $this->campaniasParaFormulario($lecturaCampania, $contrato->campania_id),
             'propiedadesYLotesPorCliente' => $this->propiedadesYLotesPorCliente($contrato->id),
             'loteIdsConOrdenRegistrada' => $loteIdsConOrden,
             'conflictosPorLote' => $conflictosPorLote,
@@ -391,6 +393,37 @@ final class ContratosController
     private function campaniasDisponibles(LecturaCampania $lecturaCampania): Collection
     {
         return collect($lecturaCampania->todas())
+            ->mapWithKeys(fn (DatosCampania $campania): array => [$campania->id => $campania->codigo]);
+    }
+
+    /**
+     * Campañas que ofrece el select del FORMULARIO (alta y edición): solo las
+     * `abiertas` (pedido directo del 19/9/2026) — el filtro del listado sigue
+     * con todas, ver `campaniasDisponibles()`. En edición, si la campaña del
+     * contrato ya no está abierta (se cerró después de crearlo), se suma
+     * igual: sin eso el select la perdería y el formulario dejaría de mostrar
+     * a qué campaña pertenece el contrato.
+     *
+     * La regla "solo abiertas" vive en lo que se ofrece, no en el servidor:
+     * `Aplicacion/CrearContrato`/`ActualizarContrato` siguen rechazando
+     * únicamente las `cerradas`.
+     *
+     * @return Collection<int, string> id => código
+     */
+    private function campaniasParaFormulario(LecturaCampania $lecturaCampania, ?int $campaniaIdActual = null): Collection
+    {
+        $campanias = collect($lecturaCampania->abiertas());
+
+        if ($campaniaIdActual !== null && ! $campanias->contains('id', $campaniaIdActual)) {
+            $actual = $lecturaCampania->obtener($campaniaIdActual);
+
+            if ($actual !== null) {
+                $campanias->push($actual);
+            }
+        }
+
+        return $campanias
+            ->sortBy('codigo', SORT_NATURAL | SORT_FLAG_CASE)
             ->mapWithKeys(fn (DatosCampania $campania): array => [$campania->id => $campania->codigo]);
     }
 
