@@ -28,7 +28,8 @@ use Closure;
  * necesita la ruta. Una con desvíos y salidas (contrato: pausado, conflicto,
  * cancelado) usa además `$recorridos`, `$pistas` e `$iconos` de `armar()` y el
  * `$claveDestino` de `ayuda()`; todos son opcionales y, sin ellos, el
- * resultado es el de siempre.
+ * resultado es el de siempre. Una con un permiso distinto por transición y
+ * modales propios (la orden de aplicación) suma `$puedeIrA` y `$modales`.
  *
  * @phpstan-type Paso array{key: string, label: string, tone: string, status: 'completed'|'current'|'next'|'pending'|'blocked', modal: string|null, hint: string|null, icon: string|null}
  */
@@ -62,6 +63,16 @@ final class PasosDeEstado
      * @param  array<string, string>  $iconos  valor del estado → ícono con el que se dibuja el
      *                                         paso cuando queda procesado (por defecto un check):
      *                                         un estado de salida como «Cancelado» no es un éxito.
+     * @param  (Closure(T): bool)|null  $puedeIrA  ¿el usuario tiene el permiso de pasar A ese estado?
+     *                                             Sirve cuando cada transición tiene su propio permiso
+     *                                             (la orden: activar, pausar, cerrar, cancelar) y no
+     *                                             uno solo. Se suma a `$puedeCambiar`: un paso es `next`
+     *                                             si los dos lo permiten; si no, queda `pending`.
+     * @param  array<string, string>  $modales  valor del estado → `id` del modal que abre su paso
+     *                                          `next`, en vez del que arma el prefijo. Sirve cuando la
+     *                                          pantalla ya trae sus modales con otro nombre y el mismo
+     *                                          estado destino se alcanza con acciones distintas
+     *                                          (activar y reanudar llegan a «vigente»).
      * @return list<Paso>
      */
     public static function armar(
@@ -75,6 +86,8 @@ final class PasosDeEstado
         ?array $recorridos = null,
         array $pistas = [],
         array $iconos = [],
+        ?Closure $puedeIrA = null,
+        array $modales = [],
     ): array {
         $posicionActual = array_search($actual, $ruta, true);
         $posicionActual = $posicionActual === false ? -1 : $posicionActual;
@@ -99,7 +112,7 @@ final class PasosDeEstado
 
             $situacion = match (true) {
                 $estado === $actual => 'current',
-                $permitida($actual, $estado) => $puedeCambiar ? 'next' : 'pending',
+                $permitida($actual, $estado) => $puedeCambiar && ($puedeIrA === null || $puedeIrA($estado)) ? 'next' : 'pending',
                 $completado => 'completed',
                 default => 'blocked',
             };
@@ -109,7 +122,7 @@ final class PasosDeEstado
                 'label' => self::etiqueta($claveEtiqueta, $estado),
                 'tone' => $tonos[(string) $estado->value] ?? 'neutral',
                 'status' => $situacion,
-                'modal' => $situacion === 'next' ? "{$prefijoModal}-{$estado->value}" : null,
+                'modal' => $situacion === 'next' ? ($modales[(string) $estado->value] ?? "{$prefijoModal}-{$estado->value}") : null,
                 'hint' => match (true) {
                     $situacion === 'pending' => Texto::de('ui.pasos.pista_sin_permiso'),
                     $situacion === 'blocked' && isset($pistas[(string) $estado->value]) => $pistas[(string) $estado->value],
