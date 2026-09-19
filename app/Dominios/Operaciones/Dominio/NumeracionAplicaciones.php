@@ -13,9 +13,10 @@ use App\Dominios\Operaciones\Dominio\Excepciones\ContratoConOrdenAbierta;
  *
  * - Solo puede haber UNA aplicación abierta (`emitida`, `vigente`, `pausada`):
  *   mientras exista, no se numera otra.
- * - Una aplicación cancelada por `fuerza_mayor` NO consume su número (se rehace
- *   con el mismo); una cancelada por causa del `cliente` SÍ lo consume, igual
- *   que cualquier orden cerrada — ver {@see CausaCancelacionOrden::consumeNumero()}.
+ * - Una aplicación cancelada por `factor_externo` NO consume su número (se rehace
+ *   con el mismo); una cancelada por causa del `cliente` o del `dueno` SÍ lo
+ *   consume, igual que cualquier orden cerrada — ver
+ *   {@see CausaCancelacionOrden::consumeNumero()}.
  * - El siguiente número no puede pasar de las `aplicaciones_previstas` del
  *   contrato.
  *
