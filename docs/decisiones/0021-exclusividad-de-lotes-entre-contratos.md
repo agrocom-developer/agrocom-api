@@ -89,3 +89,11 @@ Esto **reemplaza** la guarda por propiedad completa: la regla pasa a ser por lot
 **Que `pausado` libere los lotes** — descartada: `pausado → vigente` no tiene guarda, así que al reanudar podrían quedar dos contratos aprobados sobre el mismo lote, un conflicto entre contratos ya en ejecución que la regla existe justamente para evitar. Una pausa es una interrupción, no una salida.
 
 **Validar solo en el cliente (JS)** — descartada: excluir del modal los lotes ocupados es comodidad de pantalla, no garantía. Un pedido directo al servidor, o dos usuarios guardando a la vez, se saltan cualquier chequeo del navegador; el rechazo tiene que ser del servidor.
+
+## Adenda (19/9/2026) — El conflicto se remarca en el panel: al aprobar y en la ficha
+
+**Contexto.** El sistema ya fijaba `conflicto` al aprobar un contrato (punto 2), pero el usuario solo lo veía después, como un estado en el listado. El dueño pidió remarcarlo en el momento de pasar un contrato a «En Ejecución» y en la ficha del contrato en conflicto, para que se decida qué hacer con él.
+
+**Decisión.** No cambia ninguna regla; cambia lo que se muestra.
+- **Al aprobar**, el modal de confirmación —el del paso «En ejecución» de la ficha y el de la acción «Aprobar» del listado— lista los contratos `borrador` de la misma campaña que comparten lotes con este y que van a pasar a «En conflicto», con los lotes compartidos y un enlace a cada uno (`LecturaOcupacionLotesPorCampania::contratosQueEntranEnConflicto()`, solo lectura: quien los mueve sigue siendo `MaquinaEstadosContrato::reconciliarConflictos()`).
+- **En la ficha de un contrato en conflicto**, un aviso arriba lista los contratos en ejecución con los que choca y los lotes compartidos, y ofrece las dos salidas del punto 2: cancelar el contrato, o revisar sus lotes y quitar los que chocan (vuelve solo a `borrador`). En los pasos, «En conflicto» ocupa el primer lugar y «En ejecución» aparece bloqueado, con la pista de por qué.

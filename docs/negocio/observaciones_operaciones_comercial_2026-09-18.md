@@ -247,3 +247,37 @@ aplicación.
 ---
 
 **Nuevo en `plan_sprints.md`:** HU-96 (Sprint 19) y HU-97 (Sprint 20).
+
+---
+
+## 5. Ronda del 19/9/2026 — contrato: estados a la vista, avisos y horario por lote (HU-98)
+
+Pedidos del dueño sobre la ficha de edición del contrato, implementados en
+`feature/contrato-pasos` (Sprint 21). **No cambian ninguna regla de negocio**
+(ADR 0021 y 0022): cambian lo que el panel muestra.
+
+| Pedido | Qué se hizo |
+|---|---|
+| Pasos con forma de flecha en la ficha de edición, como en campañas; cada paso abre el mismo alert que el listado | `molecules/step-arrow` con cinco pasos «En Aprobación → En Ejecución → Pausado → Ejecutado → Cancelado»; en un contrato en conflicto «En conflicto» ocupa el primer lugar. Solo en edición. Los tonos son los de los badges del listado; los pasos recorridos y el estado final se suavizan solos. El cambio vuelve a la ficha. |
+| Los párrafos de apoyo para aplicar el cambio de estado | `comercial.contrato.estado_ayuda.*`, un texto por estado, bajo los pasos. |
+| Con órdenes de aplicación en ejecución, un alert que explique por qué no se puede cancelar ni finalizar; primero la orden y después el contrato | Modal informativo (sin botón de confirmar) que dice qué aplicación sigue abierta, pide cerrarla o cancelarla primero y lleva a la orden. Vale en los pasos y en el listado. El servidor sigue rechazándolo (ADR 0022 punto 9). |
+| Contratos que comparten lotes al pasar a «En ejecución»: remarcar el que queda con conflictos, para decidir | Al aprobar, el modal lista los contratos que van a quedar «En conflicto» y los lotes compartidos. En la ficha del contrato en conflicto, un aviso lista con quién choca y ofrece cancelarlo o quitar los lotes en conflicto. |
+| Colores de los estados también en el alert de confirmación | El círculo del ícono lleva el color del estado al que se pasa, y dentro va «estado actual → estado destino» con los mismos badges. |
+| Cargar siempre la campaña activa en el formulario; si hay varias, la primera | El formulario ofrece elegida la primera campaña `abierta` (por código) cuando el contrato no trae una. |
+| Horario por lote: un componente moderno, con inicio y fin en la misma casilla | `atoms/time-range`: una sola casilla «06:00 – 10:00» y un selector de reloj circular estilo Material (24 h). Se envía igual que antes (`lotes[N][hora_inicio]`/`hora_fin`). |
+
+**Dos lecturas que conviene confirmar con el dueño** (se tomó la más coherente con
+lo ya decidido, y queda escrito acá para corregirla si no era esa):
+
+1. **«La restricción no es rígida, es informativa, para que el usuario indique el
+   motivo y la causa del cierre prematuro».** Se leyó junto con «primero se
+   finaliza o cancela la orden antes del contrato» (ADR 0022 punto 9): el aviso es
+   informativo —no un error después de confirmar— y lleva a la orden, donde se
+   indican causa y motivo (punto 5). El contrato **no** se cierra con la aplicación
+   abierta. Si lo que se quería era poder cerrar el contrato con la aplicación
+   abierta pidiendo el motivo ahí mismo, contradice el punto 9 y la alternativa
+   descartada de cancelar en cascada: sería una decisión nueva (ADR).
+2. **«Cancelarlo o revocar dicho contrato» (el que queda en conflicto).** Se leyó
+   como las dos salidas que ya define el ADR 0021: cancelar el contrato, o quitarle
+   los lotes en conflicto (vuelve solo a «En Aprobación»). No existe una transición
+   «revocar la aprobación» del contrato que ya está en ejecución.
