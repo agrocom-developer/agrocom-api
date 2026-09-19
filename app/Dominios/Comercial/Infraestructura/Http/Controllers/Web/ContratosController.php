@@ -564,21 +564,26 @@ final class ContratosController
      *
      * Con datos, CUATRO tarjetas — antes eran dos ("Facturación" y una
      * "Aplicación" que mezclaba hectáreas y trabajos):
-     * 1. "Orden de aplicación" (total/vigentes, vía
+     * 1. "Órdenes de aplicación" (total/vigentes, vía
      *    {@see LecturaResumenOrdenesContrato}) — mide documentos emitidos.
      * 2. "Orden de trabajo" (hectáreas aplicadas + total de trabajos, vía
      *    {@see ObtenerAvanceComercial}/{@see LecturaTrabajosPorContrato}) —
-     *    mide ejecución real en campo, separado de "Orden de aplicación".
+     *    mide ejecución real en campo, separado de las órdenes de aplicación.
+     *    Solo lleva datos de referencia, SIN «Ver más»: las órdenes de trabajo
+     *    se ven por el «Ver más» de las órdenes de aplicación (es propio de
+     *    esa pantalla).
      * 3. "Facturación" (monto contratado vs. facturado, vía
      *    {@see ObtenerAvanceComercial}, ya filtrable por `contratoId`).
      * 4. "Cobranza": el módulo no existe todavía — tarjeta estática, sin
      *    datos reales ni acción.
      *
-     * Las primeras tres llevan una acción "ver más" DESHABILITADA (`accion`
-     * con `tooltip`, sin `href`): ni `panel.ordenes.index` ni
-     * `panel.facturas.index` aceptan filtrar por `contrato_id` hoy — agregar
-     * ese filtro es una tarea de esas pantallas, no de este resumen. El
-     * componente ya queda en su lugar para cuando exista.
+     * La tarjeta de órdenes de aplicación lleva dos acciones reales: «Nueva
+     * orden» (solo cuando el contrato admite otra, ver `accionNuevaOrden()`) y
+     * «Ver más», el listado de órdenes filtrado por este contrato, con el
+     * memento de navegación para volver acá. La de facturación lleva un «ver
+     * más» DESHABILITADO (`accion` con `tooltip`, sin `href`): `panel.facturas.index`
+     * no filtra por `contrato_id` hoy — agregar ese filtro es una tarea de esa
+     * pantalla, no de este resumen.
      *
      * `null` si el usuario no tiene ni `.ver` ni `.crear` de órdenes (mismo
      * criterio de permisos que clientes: sin ninguno de los dos, la tarjeta
@@ -635,7 +640,16 @@ final class ContratosController
         // de órdenes lleva un enlace real, y "Nueva orden" cuando corresponde.
         $accionesOrdenes = array_values(array_filter([
             $puedeCrearOrdenes ? ['label' => __('comercial.contratos.aside_nueva_orden'), 'icon' => 'add', ...$nuevaOrden] : null,
-            ['label' => __('comercial.contratos.aside_ver_mas'), 'icon' => 'open_in_new', 'href' => route('panel.ordenes.index', ['contrato_id' => $contrato->id])],
+            [
+                'label' => __('comercial.contratos.aside_ver_mas'),
+                'icon' => 'open_in_new',
+                // Memento de navegación: el listado ofrece «Volver al contrato».
+                'href' => route('panel.ordenes.index', [
+                    'contrato_id' => $contrato->id,
+                    'volver_a' => route('panel.contratos.edit', $contrato),
+                    'volver_texto' => __('comercial.contratos.aside_volver_texto', ['id' => $contrato->id]),
+                ]),
+            ],
         ]));
 
         return [
@@ -661,7 +675,6 @@ final class ContratosController
                         ['label' => __('comercial.contratos.aside_hectareas_aplicadas'), 'value' => $avance['hectareasAplicadas'] ?? '0.00', 'mono' => true],
                         ['label' => __('comercial.contratos.aside_trabajos'), 'value' => (string) $totalTrabajos, 'mono' => true],
                     ],
-                    'accion' => $accionVerMas,
                 ],
                 [
                     'titulo' => __('comercial.contratos.aside_facturacion_titulo'),

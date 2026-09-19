@@ -563,9 +563,9 @@
                                     {{-- Cada acción es un enlace real (con `href`) o un botón
                                          deshabilitado con `tooltip` que dice por qué. La tarjeta
                                          de órdenes enlaza al listado filtrado por contrato y a
-                                         "Nueva orden" (ADR 0022); "Ver más" de trabajos,
-                                         facturación y cobranza sigue sin funcionalidad todavía:
-                                         esas pantallas no filtran por `contrato_id`. --}}
+                                         "Nueva orden" (ADR 0022); el "Ver más" de facturación
+                                         sigue sin funcionalidad todavía: esa pantalla no filtra
+                                         por `contrato_id`. La de trabajos no lleva acción. --}}
                                     @foreach ($accionesTarjeta as $accion)
                                         @if (! empty($accion['href']))
                                             <x-atoms.button :href="$accion['href']" variant="outline" size="sm" :icon="$accion['icon'] ?? 'open_in_new'">
