@@ -27,7 +27,7 @@ final class GenerarLotesRequest extends LotesBloqueRequest
     {
         return [
             'prefijo' => ['required', 'string', 'max:30'],
-            'cantidad' => ['required', 'integer', 'min:1', 'max:50'],
+            'cantidad' => ['required', 'integer', 'min:1', 'max:'.self::LOTES_MAXIMOS_POR_TANDA],
             'hectareas' => $this->reglasHectareas(requeridas: true),
             ...$this->reglasTerreno(),
         ];
@@ -40,7 +40,7 @@ final class GenerarLotesRequest extends LotesBloqueRequest
             'prefijo.required' => __('comercial.validacion.lotes_generar_prefijo_requerido'),
             'cantidad.required' => __('comercial.validacion.lotes_generar_cantidad_requerida'),
             'cantidad.min' => __('comercial.validacion.lotes_generar_cantidad_minima'),
-            'cantidad.max' => __('comercial.validacion.lotes_generar_cantidad_maxima'),
+            'cantidad.max' => __('comercial.validacion.lotes_generar_cantidad_maxima', ['maximo' => self::LOTES_MAXIMOS_POR_TANDA]),
             ...$this->mensajesBloque(),
         ];
     }

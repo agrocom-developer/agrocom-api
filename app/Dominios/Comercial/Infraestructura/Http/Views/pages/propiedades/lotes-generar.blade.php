@@ -63,8 +63,10 @@
                 'propiedad' => $propiedad,
                 'valores' => ['prefijo' => 'Lote ', 'cantidad' => 1, 'hectareas' => '', 'terreno' => []],
                 'lotesBase' => $lotesExistentes,
+                'hectareasAsignadas' => $hectareasAsignadas,
+                'lotesPorTanda' => $lotesPorTanda,
                 'cantidadMin' => 1,
-                'cantidadMax' => 50,
+                'cantidadMax' => $lotesPorTanda,
             ])
         </div>
     </x-templates.panel-layout>

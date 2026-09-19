@@ -9,6 +9,7 @@ use App\Dominios\Comercial\Dominio\Excepciones\LoteConHistorialAsociado;
 use App\Dominios\Comercial\Dominio\Excepciones\LotesNuevosSinHectareas;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\EditarLotesBloqueRequest;
+use App\Dominios\Comercial\Infraestructura\Http\Requests\LotesBloqueRequest;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -53,6 +54,7 @@ final class EditarLotesBloqueController
             ...$this->autorizacion->cascara($request),
             'propiedad' => $propiedad->load('cliente'),
             'resumen' => $resumen,
+            'lotesPorTanda' => LotesBloqueRequest::LOTES_MAXIMOS_POR_TANDA,
             'puedeCrear' => $this->autorizacion->tienePermiso($request, self::PERMISO_CREAR),
             'puedeEliminar' => $this->autorizacion->tienePermiso($request, self::PERMISO_ELIMINAR),
         ]);

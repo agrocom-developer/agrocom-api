@@ -20,6 +20,20 @@ abstract class LotesBloqueRequest extends FormRequest
     /** Límite de la tabla: `com_lotes.hectareas` es `DECIMAL(10,2)`. */
     protected const HECTAREAS_MAXIMAS = '99999999.99';
 
+    /**
+     * Cuántos lotes se crean por vez, en el alta y al subir la cantidad en la
+     * edición en bloque (19/9/2026: subió de 50 a 500 — con 100 lotes
+     * pedidos el formulario se negaba). No es una regla de negocio ni tiene
+     * que ver con la superficie de la propiedad: es una red contra un dedo de
+     * más. Cada lote es un alta auditada (autoría y bitácora, una fila a la
+     * vez) y todo el pedido corre en UNA transacción, así que un número
+     * enorme es un pedido lento que puede cortarse a medias. Medido en el
+     * compose: 500 lotes tardan ~3 s. No limita cuántos lotes puede tener
+     * una propiedad: quien necesite más crea otra tanda, y el número de
+     * código sigue desde el último ya usado.
+     */
+    public const int LOTES_MAXIMOS_POR_TANDA = 500;
+
     /** @return list<mixed> */
     protected function reglasHectareas(bool $requeridas): array
     {

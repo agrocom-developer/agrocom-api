@@ -5,7 +5,9 @@ namespace App\Dominios\Comercial\Infraestructura\Http\Controllers\Web;
 use App\Dominios\Comercial\Aplicacion\CrearLotesMasivo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\GenerarLotesRequest;
+use App\Dominios\Comercial\Infraestructura\Http\Requests\LotesBloqueRequest;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
+use Brick\Math\BigDecimal;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -40,6 +42,13 @@ final class GenerarLotesController
             ...$this->autorizacion->cascara($request),
             'propiedad' => $propiedad->load('cliente'),
             'lotesExistentes' => $propiedad->lotes()->count(),
+            // Lo que ya tienen los lotes de esta propiedad: la sugerencia de
+            // hectáreas de una tanda nueva reparte lo que FALTA, no toda la
+            // superficie (con tandas sucesivas, la segunda ya no parte de cero).
+            'hectareasAsignadas' => (string) $propiedad->lotes()
+                ->pluck('hectareas')
+                ->reduce(fn (BigDecimal $suma, mixed $hectareas): BigDecimal => $suma->plus((string) $hectareas), BigDecimal::zero()),
+            'lotesPorTanda' => LotesBloqueRequest::LOTES_MAXIMOS_POR_TANDA,
         ]);
     }
 
