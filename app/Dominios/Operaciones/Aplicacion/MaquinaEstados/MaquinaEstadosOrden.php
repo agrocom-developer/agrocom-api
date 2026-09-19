@@ -5,10 +5,16 @@ namespace App\Dominios\Operaciones\Aplicacion\MaquinaEstados;
 use App\Dominios\Operaciones\Contratos\Eventos\AplicacionCerrada;
 use App\Dominios\Operaciones\Dominio\CausaCancelacionOrden;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
+use App\Dominios\Operaciones\Dominio\EstadoTrabajo;
+use App\Dominios\Operaciones\Dominio\Excepciones\CierreOrdenNoPermitido;
 use App\Dominios\Operaciones\Dominio\Excepciones\MotivoRequerido;
 use App\Dominios\Operaciones\Dominio\Excepciones\TransicionOrdenNoPermitida;
 use App\Dominios\Operaciones\Dominio\MaquinaEstados\TransicionesOrden;
+use App\Dominios\Operaciones\Dominio\PoliticaCierreOrden;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenLote;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
+use Closure;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -92,16 +98,38 @@ final class MaquinaEstadosOrden
     /**
      * `vigente → consumida`: la aplicación se cumplió. Acción manual del
      * encargado, con el informe del equipo a la vista — nada la dispara sola.
+     * Guarda ({@see PoliticaCierreOrden}, ADR 0022 adenda 19/9/2026): solo se
+     * cierra si la orden tiene al menos una orden de trabajo, todas sus hectáreas
+     * asignadas a algún equipo y todos los equipos terminaron los suyos; la cuenta
+     * se hace DENTRO de la transacción, con la orden bloqueada, así un trabajo que
+     * se abre justo entonces no se cuela.
      * Anuncia {@see AplicacionCerrada} recién DESPUÉS de persistir el cierre; el
      * oyente de Comercial finaliza el contrato si era su última aplicación.
      *
      * @throws TransicionOrdenNoPermitida si `$orden` no está `vigente`.
+     * @throws CierreOrdenNoPermitido si no tiene trabajos, le faltan hectáreas por asignar o alguno sigue abierto.
      */
     public function cerrar(OrdenAplicacion $orden): OrdenAplicacion
     {
         $cerrada = $this->transicionar($orden, EstadoOrdenAplicacion::Consumida, [
             'cerrada_at' => now(),
-        ]);
+        ], function (OrdenAplicacion $actual): void {
+            $trabajos = Trabajo::query()->where('orden_id', $actual->id);
+            $total = (clone $trabajos)->count();
+            $abiertos = (clone $trabajos)->where('estado', EstadoTrabajo::Abierto)->count();
+            $solicitadas = (string) OrdenLote::query()->where('orden_id', $actual->id)->sum('hectareas_solicitadas');
+            $asignadas = (string) (clone $trabajos)->sum('hectareas_declaradas');
+
+            $impedimento = PoliticaCierreOrden::impedimento($total, $abiertos, $solicitadas, $asignadas);
+
+            if ($impedimento !== null) {
+                throw CierreOrdenNoPermitido::por(
+                    $impedimento,
+                    $abiertos,
+                    (string) PoliticaCierreOrden::hectareasSinAsignar($solicitadas, $asignadas),
+                );
+            }
+        });
 
         event(new AplicacionCerrada($cerrada->id, $cerrada->contrato_id, $cerrada->nro_aplicacion));
 
@@ -110,7 +138,7 @@ final class MaquinaEstadosOrden
 
     /**
      * `vigente → cancelada` o `pausada → cancelada`: baja anticipada, siempre
-     * por decisión del panel. Exige causa (`cliente` | `fuerza_mayor`) y motivo.
+     * por decisión del panel. Exige causa (`cliente` | `dueno` | `factor_externo`) y motivo.
      * La causa decide si la aplicación consume su número correlativo
      * ({@see CausaCancelacionOrden::consumeNumero()}). Cancelar no toca los
      * trabajos ya cargados: son horas de campo reales, con sus devengos.
@@ -135,17 +163,24 @@ final class MaquinaEstadosOrden
 
     /**
      * @param  array<string, mixed>  $extras  columnas que acompañan al cambio de estado (fecha, causa, motivo).
+     * @param  Closure(OrdenAplicacion): void|null  $guarda  regla propia de la transición: corre dentro de la
+     *                                                       transacción, con la orden bloqueada y ya validada
+     *                                                       contra la tabla; lanza si no se cumple.
      *
      * @throws TransicionOrdenNoPermitida si la transición no está en la tabla.
      */
-    private function transicionar(OrdenAplicacion $orden, EstadoOrdenAplicacion $hasta, array $extras = []): OrdenAplicacion
+    private function transicionar(OrdenAplicacion $orden, EstadoOrdenAplicacion $hasta, array $extras = [], ?Closure $guarda = null): OrdenAplicacion
     {
-        return DB::transaction(function () use ($orden, $hasta, $extras): OrdenAplicacion {
+        return DB::transaction(function () use ($orden, $hasta, $extras, $guarda): OrdenAplicacion {
             $actual = OrdenAplicacion::query()->lockForUpdate()->findOrFail($orden->id);
             $desde = $actual->estado;
 
             if (! TransicionesOrden::permitida($desde, $hasta)) {
                 throw TransicionOrdenNoPermitida::entre($desde, $hasta);
+            }
+
+            if ($guarda !== null) {
+                $guarda($actual);
             }
 
             $actual->estado = $hasta;

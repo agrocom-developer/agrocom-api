@@ -3,6 +3,7 @@
 namespace App\Dominios\Operaciones\Aplicacion;
 
 use App\Dominios\Operaciones\Aplicacion\MaquinaEstados\MaquinaEstadosOrden;
+use App\Dominios\Operaciones\Dominio\Excepciones\CierreOrdenNoPermitido;
 use App\Dominios\Operaciones\Dominio\Excepciones\TransicionOrdenNoPermitida;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 
@@ -16,7 +17,10 @@ final class CerrarOrden
 {
     public function __construct(private readonly MaquinaEstadosOrden $maquinaEstados) {}
 
-    /** @throws TransicionOrdenNoPermitida si `$orden` no está `vigente`. */
+    /**
+     * @throws TransicionOrdenNoPermitida si `$orden` no está `vigente`.
+     * @throws CierreOrdenNoPermitido si no tiene trabajos o algún equipo no terminó los suyos.
+     */
     public function ejecutar(OrdenAplicacion $orden): OrdenAplicacion
     {
         return $this->maquinaEstados->cerrar($orden);
