@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Seguridad\Infraestructura\Http\Presentacion;
 
+use App\Dominios\Comercial\Contratos\LecturaContadoresPanel as LecturaContadoresPanelComercial;
 use App\Dominios\Finanzas\Contratos\LecturaContadoresPanel as LecturaContadoresPanelFinanzas;
 use App\Dominios\Inventario\Contratos\LecturaContadoresPanel as LecturaContadoresPanelInventario;
 use App\Dominios\Operaciones\Contratos\AlertaPanel;
@@ -44,6 +45,7 @@ final class CascaraPanel
         private readonly ObtenerMenuPorRolActivo $obtenerMenu,
         private readonly ListarRolesDisponibles $listarRolesDisponibles,
         private readonly LecturaContadoresPanelOperaciones $contadoresOperaciones,
+        private readonly LecturaContadoresPanelComercial $contadoresComercial,
         private readonly LecturaPanelOperaciones $panelOperaciones,
         private readonly LecturaContadoresPanelInventario $contadoresInventario,
         private readonly LecturaContadoresPanelFinanzas $contadoresFinanzas,
@@ -114,6 +116,15 @@ final class CascaraPanel
             $badges['menu.operacion.items.ordenes'] = [
                 'numero' => (string) $ordenesVigentes,
                 'texto' => __('seguridad.respuestas.badge_ordenes_vigentes', ['cantidad' => $ordenesVigentes]),
+            ];
+        }
+
+        // Contratos «En ejecución» (`vigente`): los que hoy tienen la operación en marcha.
+        $contratosEnEjecucion = $this->contadoresComercial->contratosEnEjecucion();
+        if ($contratosEnEjecucion > 0) {
+            $badges['menu.comercial.items.contratos'] = [
+                'numero' => (string) $contratosEnEjecucion,
+                'texto' => __('seguridad.respuestas.badge_contratos_en_ejecucion', ['cantidad' => $contratosEnEjecucion]),
             ];
         }
 

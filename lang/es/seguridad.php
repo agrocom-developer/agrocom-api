@@ -707,6 +707,7 @@ return [
         'rol_dispositivo_requerido' => 'Debes indicar con qué rol opera este dispositivo.',
         'rol_activo_requerido' => 'Debes seleccionar un rol activo antes de continuar.',
         'badge_ordenes_vigentes' => ':cantidad vigentes',
+        'badge_contratos_en_ejecucion' => ':cantidad en ejecución',
         'badge_sesiones_pendientes' => ':cantidad sin validar',
         'badge_pausas_mes' => ':cantidad este mes',
         'badge_stock_bajo_minimo' => ':cantidad bajo mínimo',
