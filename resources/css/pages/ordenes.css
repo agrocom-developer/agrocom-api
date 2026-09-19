@@ -281,6 +281,15 @@
     line-height: 1.5;
 }
 
+/* Equipo y dron de un lote en el detalle de la orden: un renglón por equipo,
+   apilados, así el dron queda en la misma línea que su equipo en la celda de al
+   lado. Sin orden de trabajo, un único guion. */
+.ag-ordenes__renglones {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-1);
+}
+
 /* Lista de "Vínculos" (molecules/link-row): mismo tratamiento que la tabla
    de "Lotes" — borde/radio propios, separada del padding de la tarjeta,
    para que se lea como un bloque cohesivo en vez de filas sueltas. */
@@ -369,23 +378,6 @@
     object-fit: contain;
     background-color: var(--ag-color-surface-inset);
     border: 1px solid var(--ag-color-border-row);
-}
-
-/* Input-group: "Cantidad de equipos necesarios" + atajo a Asignar equipos
-   (solo en edición). El input ocupa el espacio disponible, el botón queda
-   fijo al lado, alineado con la base del control (no con el label). */
-.ag-ordenes-form__input-group {
-    display: flex;
-    align-items: flex-end;
-    gap: var(--ag-space-2);
-}
-
-.ag-ordenes-form__input-group .ag-input {
-    flex: 1;
-}
-
-.ag-ordenes-form__input-group-boton {
-    flex: none;
 }
 
 /* Ícono de ayuda (tooltip) junto a un encabezado de columna de la tabla de

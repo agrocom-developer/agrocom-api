@@ -25,10 +25,21 @@
       órdenes de trabajo realizadas e inconvenientes del campo. Con
       incidencias o pausas, la fila lleva el badge "Con inconvenientes" —
       informativo, nunca cambia un estado.
-    - $filtros (array{q: string, estado: ?string, tipo_aplicacion: ?string}):
-      filtros aplicados, para dejar los campos con el valor tras el submit.
-      `q` busca por razón social del cliente del contrato (resuelto en el
-      controlador vía `DB::table`, sin relación Eloquent cruzando módulos).
+    - $filtros (array{q: string, estado: ?string, tipo_aplicacion: ?string,
+      contrato_id: ?int, nro_aplicacion: ?int}): filtros aplicados, para dejar
+      los campos con el valor tras el submit. `q` busca por razón social del
+      cliente del contrato (resuelto en el controlador vía `DB::table`, sin
+      relación Eloquent cruzando módulos).
+    - $opcionesContrato (array<int, string>): opciones del filtro «Contrato»
+      — los contratos que tienen órdenes, con el cliente y el número.
+    - $opcionesAplicacion (array<int, string>): opciones del filtro
+      «Aplicación», en palabras («Primera aplicación»…), hasta la mayor cantidad
+      de aplicaciones de un contrato con órdenes.
+
+    Memento de navegación: si se llega con `volver_a`/`volver_texto` (el «Ver
+    más» de las órdenes en el formulario del contrato), la cabecera ofrece
+    «Volver a Contrato #N» (`molecules/boton-volver`, pila del middleware
+    `origen.navegacion`); sin origen, no hay botón.
     Los permisos de cada acción (activar, pausar, cerrar, cancelar, editar,
     eliminar) se resuelven en `_orden-acciones.blade.php` con `@puede`.
 
@@ -66,14 +77,10 @@
     (CLAUDE.md invariante 11).
 --}}
 @php
-    $variantePorEstado = [
-        'emitida' => 'neutral',
-        'vigente' => 'success',
-        'pausada' => 'warning',
-        'consumida' => 'info',
-        'cancelada' => 'danger',
-        'vencida' => 'danger',
-    ];
+    $variantePorEstado = \App\Dominios\Operaciones\Infraestructura\Http\PasosDeOrden::TONO_POR_ESTADO;
+    // Memento de navegación: si se llegó desde otra pantalla (p. ej. «Ver más» de las
+    // órdenes en el formulario del contrato), la cabecera ofrece volver a ella.
+    $hayOrigen = session('navegacion_pila', []) !== [];
 @endphp
 <x-templates.panel-shell :title="__('operaciones.ordenes.titulo')" :tema="$tema">
     <x-templates.panel-layout
@@ -93,13 +100,17 @@
                 :title="__('operaciones.ordenes.titulo')"
                 :subtitle="__('operaciones.ordenes.subtitulo')"
             >
-                @puede('operaciones.orden.crear')
-                    <x-slot:actions>
+                <x-slot:actions>
+                    @if ($hayOrigen)
+                        <x-molecules.boton-volver :href="route('panel.ordenes.index')" :label="__('operaciones.ordenes.titulo')" />
+                    @endif
+
+                    @puede('operaciones.orden.crear')
                         <x-atoms.button :href="route('panel.ordenes.create', array_filter(['contrato_id' => $filtros['contrato_id'] ?? null]))" variant="primary" icon="add">
                             {{ __('operaciones.ordenes.nueva') }}
                         </x-atoms.button>
-                    </x-slot:actions>
-                @endpuede
+                    @endpuede
+                </x-slot:actions>
             </x-organisms.page-header>
 
             @if (session('estado'))
@@ -116,7 +127,7 @@
 
             @php
                 $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
-                $filtrosPanelActivos = collect(['estado', 'tipo_aplicacion'])
+                $filtrosPanelActivos = collect(['contrato_id', 'nro_aplicacion', 'estado', 'tipo_aplicacion'])
                     ->filter(fn ($campo) => $filtros[$campo] !== null && $filtros[$campo] !== '')
                     ->count();
                 $opcionesEstado = collect($variantePorEstado)->mapWithKeys(fn ($variante, $valor) => [
@@ -133,6 +144,27 @@
                         :active-count="$filtrosPanelActivos"
                     >
                         <input type="hidden" name="q" value="{{ $filtros['q'] }}">
+                        {{-- Contrato (cliente y número) y aplicación en palabras: las opciones salen de
+                             todas las órdenes, no de la página, así que no cambian al filtrar. --}}
+                        <x-atoms.select
+                            name="contrato_id"
+                            id="filtro-contrato"
+                            :label="__('operaciones.ordenes.filtro_contrato')"
+                            :options="$opcionesContrato"
+                            :value="$filtros['contrato_id']"
+                            :placeholder="__('operaciones.ordenes.filtro_todos')"
+                            searchable
+                        />
+
+                        <x-atoms.select
+                            name="nro_aplicacion"
+                            id="filtro-aplicacion"
+                            :label="__('operaciones.ordenes.filtro_aplicacion')"
+                            :options="$opcionesAplicacion"
+                            :value="$filtros['nro_aplicacion']"
+                            :placeholder="__('operaciones.ordenes.filtro_todos')"
+                        />
+
                         <x-atoms.select
                             name="estado"
                             id="filtro-estado"

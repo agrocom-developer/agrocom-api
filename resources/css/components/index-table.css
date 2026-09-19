@@ -46,6 +46,13 @@
     font-size: var(--ag-font-size-sm);
 }
 
+/* Las filas de otras páginas del paginador del navegador
+   (`shared/paginador-cliente.js`) se ocultan, no se quitan; el `display: grid` de
+   arriba le gana al `[hidden]` del navegador, de ahí esta regla. */
+.ag-index-table__row[hidden] {
+    display: none;
+}
+
 .ag-index-table__row:hover {
     background-color: var(--ag-color-bg-row-hover);
 }

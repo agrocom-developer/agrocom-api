@@ -134,3 +134,32 @@ export function crearPaginador(contenedor, { porPagina, alCambiar }) {
         rango: () => [(pagina - 1) * porPagina, pagina * porPagina],
     };
 }
+
+/**
+ * Reparte en páginas las filas ya pintadas de una tabla (la de lotes de una
+ * orden): arma el paginador de `crearPaginador()` y oculta con `hidden` —nunca
+ * quita— las filas que quedan fuera de la página actual, como hace la tabla de
+ * lotes del contrato. `filas` se consulta cada vez, así que sirve aunque las
+ * filas cambien: basta volver a llamar a `actualizar()`.
+ *
+ * @param {HTMLElement} contenedor  donde se dibuja el paginador (ver `crearPaginador`).
+ * @param {{filas: () => HTMLElement[], porPagina: number}} opciones
+ */
+export function paginarFilas(contenedor, { filas, porPagina }) {
+    const mostrar = () => {
+        const [desde, hasta] = paginador.rango();
+        filas().forEach((fila, indice) => {
+            fila.hidden = indice < desde || indice >= hasta;
+        });
+    };
+
+    const paginador = crearPaginador(contenedor, { porPagina, alCambiar: mostrar });
+
+    return {
+        /** Vuelve a contar las filas y muestra `pagina` (la primera por defecto). */
+        actualizar(pagina = 1) {
+            paginador.actualizar(filas().length, pagina);
+            mostrar();
+        },
+    };
+}

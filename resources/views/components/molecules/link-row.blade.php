@@ -38,9 +38,13 @@
     <span class="ag-link-row__icon ag-link-row__icon--{{ $tone }}">
         <x-atoms.icon :name="$icon" size="md" />
     </span>
-    <span class="ag-link-row__title">{{ $title }}</span>
-    @if ($meta !== null)
-        <span class="ag-link-row__meta">{{ $meta }}</span>
-    @endif
+    {{-- Título y meta van juntos y en una fila que envuelve: si no caben lado a lado
+         (un aside angosto), la meta baja debajo del título en vez de pisarlo. --}}
+    <span class="ag-link-row__texto">
+        <span class="ag-link-row__title">{{ $title }}</span>
+        @if ($meta !== null)
+            <span class="ag-link-row__meta">{{ $meta }}</span>
+        @endif
+    </span>
     <x-atoms.icon name="chevron_right" size="sm" class="ag-link-row__chevron" />
 </a>

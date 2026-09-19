@@ -79,14 +79,26 @@
     color: var(--ag-color-gray-0);
 }
 
-.ag-link-row__title {
+/* Título y meta en una fila que envuelve (19/9/2026): en un aside angosto la meta
+   pasa debajo del título en vez de encogerlo hasta pisarse con él. */
+.ag-link-row__texto {
     flex: 1;
     min-width: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    column-gap: var(--ag-space-2);
+}
+
+.ag-link-row__title {
+    flex: 1 1 auto;
     font-size: var(--ag-font-size-sm);
     font-weight: var(--ag-font-weight-medium);
 }
 
 .ag-link-row__meta {
+    flex: 0 0 auto;
     font-family: var(--ag-font-family-mono);
     font-size: var(--ag-font-size-xs);
     color: var(--ag-color-text-muted);

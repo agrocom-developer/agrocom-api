@@ -16,18 +16,27 @@ use App\Dominios\Operaciones\Aplicacion\ResumenDeOrdenes;
 use App\Dominios\Operaciones\Dominio\CausaCancelacionOrden;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Dominio\Excepciones\AplicacionesCompletas;
+use App\Dominios\Operaciones\Dominio\Excepciones\CierreOrdenNoPermitido;
 use App\Dominios\Operaciones\Dominio\Excepciones\ContratoConOrdenAbierta;
 use App\Dominios\Operaciones\Dominio\Excepciones\ContratoNoAdmiteOrdenes;
+use App\Dominios\Operaciones\Dominio\Excepciones\CorreccionOrdenNoPermitida;
+use App\Dominios\Operaciones\Dominio\Excepciones\MotivoRequerido;
 use App\Dominios\Operaciones\Dominio\Excepciones\OrdenNoEditable;
 use App\Dominios\Operaciones\Dominio\Excepciones\OrdenNoEliminable;
 use App\Dominios\Operaciones\Dominio\Excepciones\TransicionOrdenNoPermitida;
+use App\Dominios\Operaciones\Dominio\PoliticaEdicionOrden;
 use App\Dominios\Operaciones\Dominio\TipoAplicacion;
 use App\Dominios\Operaciones\Dominio\TipoInsumo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\CategoriaInsumo;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\Dron;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenTrabajo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
+use App\Dominios\Operaciones\Infraestructura\Http\PasosDeOrden;
 use App\Dominios\Operaciones\Infraestructura\Http\Requests\ActualizarOrdenRequest;
 use App\Dominios\Operaciones\Infraestructura\Http\Requests\CrearOrdenRequest;
+use App\Dominios\Personal\Contratos\DatosRecursoEquipo;
+use App\Dominios\Personal\Contratos\LecturaEquipoTrabajo;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Brick\Math\BigDecimal;
 use Carbon\CarbonImmutable;
@@ -36,6 +45,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 /**
@@ -45,6 +55,9 @@ use Illuminate\View\View;
  * emitida → vigente ⇄ pausada; vigente → consumida; vigente|pausada →
  * cancelada. Ver `Aplicacion/MaquinaEstados/MaquinaEstadosOrden`.
  * Mismo molde que `ContratosController` (cambio de estado separado de edición).
+ * El estado se cambia desde los pasos (`molecules/step-arrow`) de la ficha de
+ * edición y del detalle — `PasosDeOrden`, que abre los modales de
+ * `_orden-modales.blade.php` —, y desde el listado.
  *
  * Ocho permisos de grano fino (`operaciones.orden.ver`/`.crear`/`.editar`
  * /`.activar`/`.pausar`/`.cerrar`/`.cancelar`/`.eliminar`), verificados
@@ -52,15 +65,17 @@ use Illuminate\View\View;
  * Ninguna regla de negocio acá: los casos de uso de `Aplicacion/` hacen el
  * trabajo.
  *
- * Los selects de `contrato_id`/`emitida_por_contacto_id` se arman con
- * consultas directas a las tablas de `Comercial` (`DB::table`, sin importar
- * sus modelos Eloquent — ADR 0003 regla 3).
+ * Los selects de `contrato_id` y los contactos se arman con consultas
+ * directas a las tablas de `Comercial` (`DB::table`, sin importar sus modelos
+ * Eloquent — ADR 0003 regla 3). De Personal (equipos y sus recursos) se lee
+ * solo por `Personal\Contratos\LecturaEquipoTrabajo`.
  *
  * `create()`: el `<select>` de contrato solo muestra contratos `vigente` sin
  * orden abierta ni aplicaciones completas (filtro por
  * `ProximaAplicacionPorContrato::disponible`). Cada contrato trae sus lotes
- * como lista de solo lectura. `edit()`: contrato/lotes fijos, solo edita
- * tipo/categoría/dosis/equipos/contacto/fecha/observaciones (no contrato).
+ * como lista de solo lectura y los contactos de SU cliente — el formulario
+ * nunca recibe los de otros clientes. `edit()`: contrato/lotes fijos, solo
+ * edita tipo/categoría/dosis/equipos/contacto/fecha/observaciones (no contrato).
  */
 final class OrdenesController
 {
@@ -84,6 +99,10 @@ final class OrdenesController
 
     private const PERMISO_VER_TRABAJOS = 'operaciones.trabajo.ver';
 
+    private const PERMISO_CREAR_TRABAJOS = 'operaciones.trabajo.crear';
+
+    private const PERMISO_EDITAR_CONTRATO = 'comercial.contrato.editar';
+
     public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
 
     public function index(Request $request, ListarOrdenesAplicacion $listarOrdenes, ResumenDeOrdenes $resumenOrdenes): View
@@ -99,9 +118,11 @@ final class OrdenesController
         $tipoAplicacion = $tipoAplicacionQuery !== '' ? TipoAplicacion::tryFrom($tipoAplicacionQuery) : null;
 
         $contratoIdQuery = $request->integer('contrato_id') ?: null;
+        $nroAplicacionQuery = $request->integer('nro_aplicacion') ?: null;
 
         $ordenes = $listarOrdenes->ejecutar(
             estado: $estado,
+            nroAplicacion: $nroAplicacionQuery,
             tipoAplicacion: $tipoAplicacion,
             contratoIds: $contratoIdQuery !== null ? [$contratoIdQuery] : ($busqueda !== '' ? $this->contratoIdsPorBusqueda($busqueda) : null),
         );
@@ -110,13 +131,19 @@ final class OrdenesController
         $resumen = $resumenOrdenes->ejecutar($ordenIds);
         $contratoIds = $ordenes->pluck('contrato_id')->map(fn ($id) => (int) $id)->unique()->values()->all();
 
+        // Las opciones de los filtros de contrato y de aplicación salen de TODAS las
+        // órdenes, no de la página que se ve: no cambian al filtrar.
+        $contratoIdsConOrdenes = OrdenAplicacion::query()->distinct()->pluck('contrato_id')->map(fn ($id) => (int) $id)->all();
+
         return view('operaciones::pages.ordenes.index', [
             ...$this->autorizacion->cascara($request),
             'ordenes' => $ordenes,
             'resumen' => $resumen,
             'etiquetasContrato' => $this->etiquetasContrato($contratoIds),
             'previstasPorContrato' => $this->previstasPorContrato($contratoIds),
-            'filtros' => ['q' => $busqueda, 'estado' => $estado?->value, 'tipo_aplicacion' => $tipoAplicacion?->value, 'contrato_id' => $contratoIdQuery],
+            'opcionesContrato' => $this->opcionesContratoParaFiltro($contratoIdsConOrdenes),
+            'opcionesAplicacion' => $this->opcionesAplicacionParaFiltro($contratoIdsConOrdenes),
+            'filtros' => ['q' => $busqueda, 'estado' => $estado?->value, 'tipo_aplicacion' => $tipoAplicacion?->value, 'contrato_id' => $contratoIdQuery, 'nro_aplicacion' => $nroAplicacionQuery],
             'puedeActivar' => $this->autorizacion->tienePermiso($request, self::PERMISO_ACTIVAR),
             'puedePausar' => $this->autorizacion->tienePermiso($request, self::PERMISO_PAUSAR),
             'puedeCerrar' => $this->autorizacion->tienePermiso($request, self::PERMISO_CERRAR),
@@ -124,6 +151,44 @@ final class OrdenesController
             'puedeEditar' => $this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR),
             'puedeEliminar' => $this->autorizacion->tienePermiso($request, self::PERMISO_ELIMINAR),
         ]);
+    }
+
+    /**
+     * Opciones del filtro «Contrato» del listado: los contratos que tienen al
+     * menos una orden, con el cliente y el número («Cliente — Contrato #35»),
+     * ordenados por esa etiqueta.
+     *
+     * @param  list<int>  $contratoIds
+     * @return array<int, string> contrato_id => etiqueta
+     */
+    private function opcionesContratoParaFiltro(array $contratoIds): array
+    {
+        return collect($this->etiquetasContrato($contratoIds))
+            ->sort(fn (string $a, string $b): int => strnatcasecmp($a, $b))
+            ->all();
+    }
+
+    /**
+     * Opciones del filtro «Aplicación» del listado, en palabras: «Primera
+     * aplicación», «Segunda aplicación»… hasta la mayor cantidad de aplicaciones
+     * que tenga un contrato con órdenes (con dos contratos, uno de 3 y otro de 2,
+     * son tres). Más allá de la décima cae a «Aplicación 11».
+     *
+     * @param  list<int>  $contratoIds
+     * @return array<int, string> número de aplicación => etiqueta
+     */
+    private function opcionesAplicacionParaFiltro(array $contratoIds): array
+    {
+        $maximo = $contratoIds === [] ? 0 : max([0, ...array_values($this->previstasPorContrato($contratoIds))]);
+        $opciones = [];
+
+        for ($nro = 1; $nro <= $maximo; $nro++) {
+            $opciones[$nro] = $nro <= 10
+                ? __("operaciones.ordenes.aplicacion_ordinal.{$nro}")
+                : __('operaciones.ordenes.aplicacion_numero', ['nro' => $nro]);
+        }
+
+        return $opciones;
     }
 
     /**
@@ -178,7 +243,6 @@ final class OrdenesController
             ...$this->autorizacion->cascara($request),
             'contratosDisponibles' => collect($datosContrato)->map(fn (array $datos): string => $datos['label']),
             'datosContrato' => $datosContrato,
-            'contactosDisponibles' => $this->contactosDisponibles(),
             'categoriasInsumoDisponibles' => $this->categoriasInsumoDisponibles(),
             'contratoIdPreseleccionado' => $request->integer('contrato_id') ?: null,
         ]);
@@ -194,13 +258,13 @@ final class OrdenesController
      * que las 5 pantallas `.show` ya homogeneizadas del panel (Trabajos,
      * Devengos, Planillas, Rendiciones, EquiposTrabajo).
      */
-    public function show(Request $request, OrdenAplicacion $orden, ResumenDeOrdenes $resumenOrdenes): View
+    public function show(Request $request, OrdenAplicacion $orden, ResumenDeOrdenes $resumenOrdenes, LecturaEquipoTrabajo $equipos): View
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
         $orden->load('categoriaInsumo');
 
-        $lotes = $this->detalleLotesOrden($orden);
+        $lotes = $this->detalleLotesOrden($orden, $equipos);
         $hectareasSolicitadas = array_reduce($lotes, fn (BigDecimal $acumulado, array $lote): BigDecimal => $acumulado->plus($lote['hectareas_solicitadas']), BigDecimal::zero());
         $hectareasAsignadas = array_reduce($lotes, fn (BigDecimal $acumulado, array $lote): BigDecimal => $acumulado->plus($lote['asignadas']), BigDecimal::zero());
         $porcentajeAsignado = $hectareasSolicitadas->isZero()
@@ -208,10 +272,13 @@ final class OrdenesController
             : (int) round(((float) (string) $hectareasAsignadas / (float) (string) $hectareasSolicitadas) * 100);
 
         $resumenContrato = $this->resumenContrato($orden->contrato_id);
+        $pasosEstado = PasosDeOrden::armar($orden->estado, $this->permisosDeEstado($request), 'detalle-'.$orden->id);
 
         return view('operaciones::pages.ordenes.show', [
             ...$this->autorizacion->cascara($request),
             'orden' => $orden,
+            'pasosEstado' => $pasosEstado,
+            'ayudaEstado' => PasosDeOrden::ayuda($pasosEstado, $orden->estado),
             'contratoLabel' => $this->etiquetasContrato([$orden->contrato_id])[$orden->contrato_id] ?? "#{$orden->contrato_id}",
             'contactoLabel' => $orden->emitida_por_contacto_id !== null
                 ? DB::table('com_cliente_contactos')->where('id', $orden->emitida_por_contacto_id)->value('nombre')
@@ -224,14 +291,9 @@ final class OrdenesController
             'porcentajeAsignado' => $porcentajeAsignado,
             'equiposAsignados' => $this->equiposAsignadosCount($orden),
             'actividad' => $this->actividadOrden($orden),
-            'vinculos' => $this->vinculosOrden($orden, $request),
+            'vinculos' => $this->vinculosOrden($orden, $request, $resumenContrato !== null),
             'inconvenientes' => $resumenOrdenes->ejecutar([$orden->id])[$orden->id],
             'puedeEditar' => $this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR),
-            'puedeActivar' => $this->autorizacion->tienePermiso($request, self::PERMISO_ACTIVAR),
-            'puedePausar' => $this->autorizacion->tienePermiso($request, self::PERMISO_PAUSAR),
-            'puedeCerrar' => $this->autorizacion->tienePermiso($request, self::PERMISO_CERRAR),
-            'puedeCancelar' => $this->autorizacion->tienePermiso($request, self::PERMISO_CANCELAR),
-            'puedeEliminar' => $this->autorizacion->tienePermiso($request, self::PERMISO_ELIMINAR),
         ]);
     }
 
@@ -288,7 +350,11 @@ final class OrdenesController
      * relacionado del arquetipo Formulario, §6.3.1, pero como filas sueltas
      * — `molecules/link-row` — en vez de tarjetas completas).
      *
-     * Solo dos, a propósito, ambos con filtro REAL del lado del destino:
+     * Tres, a propósito, cada uno con destino REAL:
+     * - Contrato (primero, tono de advertencia): la ficha del contrato de ESTA
+     *   orden, `panel.contratos.edit`. Solo si el contrato todavía existe y el
+     *   rol puede editar contratos — es la única pantalla de contrato que hay.
+     *   Se arma con el nombre de la ruta, no con nada de Comercial (ADR 0003).
      * - Órdenes de trabajo: `panel.trabajos.index` acepta `orden_id`
      *   (`TrabajosController::index()`/`Aplicacion/ListarTrabajos`).
      * - Asignación de equipos: `panel.asignacion-equipos.show` es la ficha
@@ -308,9 +374,20 @@ final class OrdenesController
      *
      * @return list<array{href: string, icon: string, title: string, meta: ?string, tone: string}>
      */
-    private function vinculosOrden(OrdenAplicacion $orden, Request $request): array
+    private function vinculosOrden(OrdenAplicacion $orden, Request $request, bool $contratoExiste): array
     {
         $vinculos = [];
+
+        if ($contratoExiste && $this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR_CONTRATO)) {
+            $vinculos[] = [
+                'href' => route('panel.contratos.edit', $orden->contrato_id),
+                'icon' => 'description',
+                'title' => __('operaciones.ordenes.vinculo_contrato'),
+                'meta' => __('operaciones.ordenes.vinculo_contrato_meta', ['id' => $orden->contrato_id]),
+                // Tono FIJO de advertencia (19/9/2026, pedido explícito del usuario).
+                'tone' => 'warning',
+            ];
+        }
 
         if ($this->autorizacion->tienePermiso($request, self::PERMISO_VER_TRABAJOS)) {
             $totalTrabajos = Trabajo::query()->where('orden_id', $orden->id)->count();
@@ -369,116 +446,149 @@ final class OrdenesController
             ->with('estado', __('operaciones.ordenes.creada'));
     }
 
-    public function edit(Request $request, OrdenAplicacion $orden): View
+    public function edit(Request $request, OrdenAplicacion $orden, ResumenDeOrdenes $resumenOrdenes): View|RedirectResponse
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
 
+        // Una orden cerrada ya es historia: se ve en el detalle, no se edita.
+        if (! PoliticaEdicionOrden::admiteEdicion($orden->estado)) {
+            return redirect()
+                ->route('panel.ordenes.show', $orden)
+                ->withErrors(['estado' => OrdenNoEditable::porEstado($orden->estado->value)->getMessage()]);
+        }
+
         $datosContrato = $this->datosContratoParaFormulario([$orden->contrato_id]);
+        $pasosEstado = PasosDeOrden::armar($orden->estado, $this->permisosDeEstado($request), 'edicion-'.$orden->id);
 
         return view('operaciones::pages.ordenes.edit', [
             ...$this->autorizacion->cascara($request),
             'orden' => $orden,
-            'lotesOrden' => $orden->ordenLotes()->orderBy('lote_id')->get(),
             'contratosDisponibles' => collect($datosContrato)->map(fn (array $datos): string => $datos['label']),
             'datosContrato' => $datosContrato,
-            'contactosDisponibles' => $this->contactosDisponibles(),
             'categoriasInsumoDisponibles' => $this->categoriasInsumoDisponibles(),
-            'resumenRelacionado' => $this->resumenRelacionado($orden, $request),
+            'pasosEstado' => $pasosEstado,
+            'ayudaEstado' => PasosDeOrden::ayuda($pasosEstado, $orden->estado),
+            'resumenOrden' => $resumenOrdenes->ejecutar([$orden->id])[$orden->id],
+            // Corregir una orden ya publicada pide motivo, y con trabajos el insumo no se toca
+            // (`PoliticaEdicionOrden`).
+            'exigeMotivo' => PoliticaEdicionOrden::exigeMotivo($orden->estado),
+            'insumoBloqueado' => PoliticaEdicionOrden::bloqueaInsumo(Trabajo::query()->where('orden_id', $orden->id)->exists()),
+            'relacionado' => $this->relacionadoDeEdicion($orden, $request),
         ]);
     }
 
     /**
-     * Resumen del aside de `edit()` (homogeneización con Comercial, 17/9/2026
-     * — mismo criterio que `ClientesController::resumenRelacionado()`, §6.3.1
-     * de docs/diseno/guia_pantalla_panel.md): UNA categoría relacionada,
-     * "Asignación de equipos" (`AsignacionEquiposController`, HU-70/HU-92).
-     * Gatea por el permiso DEL MÓDULO RELACIONADO
-     * (`operaciones.orden.asignar_equipos`), no por `.ver`/`.editar` de la
-     * orden — sin él, la categoría se omite del todo.
+     * Lo que el rol activo puede hacer con el estado de una orden — un permiso
+     * por acción, para los pasos de {@see PasosDeOrden} (reanudar usa el de
+     * pausar, como `reanudar()`).
      *
-     * Tres estados posibles, todos con datos REALES (no estático: el
-     * contrato de lectura ya existe, `AsignacionEquiposController`):
-     * - Orden no `vigente` todavía: no admite reparto, sin acción (repartir
-     *   antes de activar rompería la guarda de `AsignarEquiposOrden`).
-     * - Orden `vigente` sin nada asignado: `empty-state` con acceso directo a
-     *   la ficha de reparto (memento de navegación, cruza a la misma pantalla
-     *   `asignacion-equipos` — mismo criterio que
-     *   `ContratosController::resumenContrato()` cruzando a `panel.ordenes.create`).
-     * - Con reparto en curso o completo: `summary-card` con hectáreas
-     *   solicitadas/asignadas/restantes y cantidad de equipos.
-     *
-     * @return list<array{titulo: string, icono: string, tieneDatos: bool, items: list<array{label: string, value: string, mono?: bool, variant?: string}>, vacioTitulo: string, vacioDetalle: string, mostrarAccion: bool, accion: array{label: string, href: string}}>
+     * @return array{activar: bool, pausar: bool, cerrar: bool, cancelar: bool}
      */
-    private function resumenRelacionado(OrdenAplicacion $orden, Request $request): array
+    private function permisosDeEstado(Request $request): array
     {
-        if (! $this->autorizacion->tienePermiso($request, self::PERMISO_ASIGNAR_EQUIPOS)) {
-            return [];
-        }
-
-        $volverA = [
-            'volver_a' => route('panel.ordenes.edit', $orden),
-            'volver_texto' => __('operaciones.ordenes.aside_volver_texto', ['nro' => $orden->nro_aplicacion]),
+        return [
+            'activar' => $this->autorizacion->tienePermiso($request, self::PERMISO_ACTIVAR),
+            'pausar' => $this->autorizacion->tienePermiso($request, self::PERMISO_PAUSAR),
+            'cerrar' => $this->autorizacion->tienePermiso($request, self::PERMISO_CERRAR),
+            'cancelar' => $this->autorizacion->tienePermiso($request, self::PERMISO_CANCELAR),
         ];
+    }
 
-        if ($orden->estado !== EstadoOrdenAplicacion::Vigente) {
-            return [[
-                'titulo' => __('operaciones.ordenes.aside_titulo'),
-                'icono' => 'groups',
-                'tieneDatos' => false,
-                'items' => [],
-                'vacioTitulo' => __('operaciones.ordenes.aside_no_vigente_titulo'),
-                'vacioDetalle' => __('operaciones.ordenes.aside_no_vigente_detalle'),
-                'mostrarAccion' => false,
-                'accion' => ['label' => '', 'href' => ''],
-            ]];
-        }
-
-        $lotes = $this->detalleLotesOrden($orden);
-        $hectareasSolicitadas = array_reduce($lotes, fn (BigDecimal $acumulado, array $lote): BigDecimal => $acumulado->plus($lote['hectareas_solicitadas']), BigDecimal::zero());
-        $hectareasAsignadas = array_reduce($lotes, fn (BigDecimal $acumulado, array $lote): BigDecimal => $acumulado->plus($lote['asignadas']), BigDecimal::zero());
+    /**
+     * "Relacionado" del aside de `edit()`: accesos a lo que ya se armó — o falta
+     * armar — con ESTA orden, en dos frentes, con el mismo criterio que la
+     * sección de `show()`:
+     * - Órdenes de trabajo: las que ya tiene (cada una lleva a su detalle) o, si
+     *   no tiene ninguna, «Crear orden de trabajo».
+     * - Equipos: «Ver equipos asignados» si ya hay alguno o, si no, «Asignar
+     *   equipos» (`AsignacionEquiposController`, HU-70/HU-92).
+     *
+     * Solo se ofrece crear o asignar en una orden `vigente` (es la guarda de
+     * `CrearOrdenTrabajo`), y cada acceso pide el permiso de SU pantalla de
+     * destino (`operaciones.trabajo.ver`/`.crear`,
+     * `operaciones.orden.asignar_equipos`), no `.ver`/`.editar` de la orden. Una
+     * orden que no admite ni una cosa ni la otra y no tiene nada armado lo dice
+     * en `aviso`, en vez de dejar el aside vacío.
+     *
+     * @return array{vinculos: list<array{href: string, icon: string, title: string, meta: ?string, tone: string}>, aviso: ?array{titulo: string, detalle: string}}
+     */
+    private function relacionadoDeEdicion(OrdenAplicacion $orden, Request $request): array
+    {
+        $vigente = $orden->estado === EstadoOrdenAplicacion::Vigente;
+        $tandas = OrdenTrabajo::query()->where('orden_id', $orden->id)->with('trabajos')->orderBy('id')->get();
         $equiposAsignados = $this->equiposAsignadosCount($orden);
+        $vinculos = [];
 
-        if ($equiposAsignados === 0) {
-            return [[
-                'titulo' => __('operaciones.ordenes.aside_titulo'),
-                'icono' => 'groups',
-                'tieneDatos' => false,
-                'items' => [],
-                'vacioTitulo' => __('operaciones.ordenes.aside_vacio_titulo'),
-                'vacioDetalle' => __('operaciones.ordenes.aside_vacio_detalle'),
-                'mostrarAccion' => true,
-                'accion' => [
-                    'label' => __('operaciones.ordenes.aside_repartir_accion'),
-                    'href' => route('panel.asignacion-equipos.show', [$orden, ...$volverA]),
-                ],
-            ]];
+        if ($tandas->isNotEmpty()) {
+            if ($this->autorizacion->tienePermiso($request, self::PERMISO_VER_TRABAJOS)) {
+                foreach ($tandas as $tanda) {
+                    $equipos = $tanda->trabajos->pluck('equipo_trabajo_id')->filter()->unique()->count();
+                    $hectareas = $tanda->trabajos->reduce(
+                        fn (BigDecimal $acumulado, Trabajo $trabajo): BigDecimal => $acumulado->plus((string) $trabajo->hectareas_declaradas),
+                        BigDecimal::zero(),
+                    );
+
+                    $vinculos[] = [
+                        'href' => route('panel.trabajos.show', $tanda),
+                        'icon' => 'work_history',
+                        'title' => __('operaciones.ordenes.vinculo_trabajo_item', ['id' => $tanda->id]),
+                        'meta' => __('operaciones.ordenes.vinculo_trabajo_item_meta', [
+                            'equipos' => trans_choice('operaciones.ordenes.equipos_cantidad', $equipos, ['cantidad' => $equipos]),
+                            'hectareas' => $this->aHectareas($hectareas),
+                        ]),
+                        'tone' => 'info',
+                    ];
+                }
+            }
+        } elseif ($vigente && $this->autorizacion->tienePermiso($request, self::PERMISO_CREAR_TRABAJOS)) {
+            $vinculos[] = [
+                'href' => route('panel.trabajos.create', ['orden_id' => $orden->id]),
+                'icon' => 'add_task',
+                'title' => __('operaciones.ordenes.vinculo_trabajos_crear'),
+                'meta' => __('operaciones.ordenes.vinculo_trabajos_crear_meta'),
+                'tone' => 'info',
+            ];
         }
 
-        $restantes = $hectareasSolicitadas->minus($hectareasAsignadas);
+        if ($this->autorizacion->tienePermiso($request, self::PERMISO_ASIGNAR_EQUIPOS) && ($equiposAsignados > 0 || $vigente)) {
+            $hayEquipos = $equiposAsignados > 0;
 
-        return [[
-            'titulo' => __('operaciones.ordenes.aside_titulo'),
-            'icono' => 'groups',
-            'tieneDatos' => true,
-            'items' => [
-                ['label' => __('operaciones.ordenes.aside_hectareas_solicitadas'), 'value' => $this->aHectareas($hectareasSolicitadas), 'mono' => true],
-                ['label' => __('operaciones.ordenes.aside_asignadas'), 'value' => $this->aHectareas($hectareasAsignadas), 'mono' => true],
-                [
-                    'label' => __('operaciones.ordenes.aside_restantes'),
-                    'value' => $this->aHectareas($restantes),
-                    'mono' => true,
-                    'variant' => $restantes->isZero() ? 'success' : 'neutral',
+            $vinculos[] = [
+                // Memento de navegación: la ficha de asignación vuelve a esta edición.
+                'href' => route('panel.asignacion-equipos.show', [
+                    $orden,
+                    'volver_a' => route('panel.ordenes.edit', $orden),
+                    'volver_texto' => __('operaciones.ordenes.aside_volver_texto', ['nro' => $orden->nro_aplicacion]),
+                ]),
+                'icon' => $hayEquipos ? 'groups' : 'group_add',
+                'title' => $hayEquipos ? __('operaciones.ordenes.vinculo_ver_equipos') : __('operaciones.ordenes.vinculo_asignar_equipos'),
+                'meta' => $hayEquipos
+                    ? trans_choice('operaciones.ordenes.equipos_cantidad', $equiposAsignados, ['cantidad' => $equiposAsignados])
+                    : __('operaciones.ordenes.vinculo_asignar_equipos_meta'),
+                'tone' => 'success',
+            ];
+        }
+
+        $aviso = null;
+
+        if (! $vigente && $tandas->isEmpty() && $equiposAsignados === 0) {
+            $aviso = match ($orden->estado) {
+                EstadoOrdenAplicacion::Emitida => [
+                    'titulo' => __('operaciones.ordenes.aside_no_vigente_titulo'),
+                    'detalle' => __('operaciones.ordenes.aside_no_vigente_emitida'),
                 ],
-                ['label' => __('operaciones.ordenes.aside_equipos_asignados'), 'value' => (string) $equiposAsignados, 'mono' => true],
-            ],
-            'vacioTitulo' => '',
-            'vacioDetalle' => '',
-            'mostrarAccion' => true,
-            'accion' => [
-                'label' => __('operaciones.ordenes.aside_ver_asignacion'),
-                'href' => route('panel.asignacion-equipos.show', [$orden, ...$volverA]),
-            ],
-        ]];
+                EstadoOrdenAplicacion::Pausada => [
+                    'titulo' => __('operaciones.ordenes.aside_no_vigente_titulo'),
+                    'detalle' => __('operaciones.ordenes.aside_no_vigente_pausada'),
+                ],
+                default => [
+                    'titulo' => __('operaciones.ordenes.aside_cerrada_titulo'),
+                    'detalle' => __('operaciones.ordenes.aside_cerrada_detalle'),
+                ],
+            };
+        }
+
+        return ['vinculos' => $vinculos, 'aviso' => $aviso];
     }
 
     private function aHectareas(BigDecimal $valor): string
@@ -488,12 +598,15 @@ final class OrdenesController
 
     /**
      * Detalle por lote de la orden: lo solicitado (`ope_orden_lotes`), lo ya
-     * asignado a algún equipo (`ope_trabajos` de ese par orden↔lote) y lo
-     * restante — mismo cálculo que ya hace `AsignacionEquiposController::resumenPorLote()`
-     * para su propia pantalla, reescrito acá porque `show()` necesita el
-     * detalle POR LOTE (tabla "Lotes") y `resumenRelacionado()` antes
-     * repetía las mismas consultas solo para sumar el TOTAL — ahora suma
-     * sobre esta lista.
+     * asignado a algún equipo (`ope_trabajos` de ese par orden↔lote), lo
+     * restante y QUÉ equipo lo trabaja y con qué dron — mismo cálculo que ya
+     * hace `AsignacionEquiposController::resumenPorLote()` para su propia
+     * pantalla, reescrito acá porque `show()` necesita el detalle POR LOTE
+     * (tabla "Lotes").
+     *
+     * Van en orden natural —por propiedad y, dentro de ella, por código: L1,
+     * L2, … L10, no L1, L10, L2— y todos los trabajos de la orden se leen de
+     * una vez, no una consulta por lote.
      *
      * `estado`: 'asignado' cuando no queda nada restante por repartir de ese
      * lote, 'pendiente' en cualquier otro caso (incluido un reparto parcial)
@@ -501,30 +614,149 @@ final class OrdenesController
      * referencia, sin inventar un tercer estado "parcial" que ninguna otra
      * pantalla del sistema usa todavía.
      *
-     * @return list<array{lote_id: int, label: string, hectareas_solicitadas: string, asignadas: string, restantes: string, estado: string}>
+     * `equipos`: un renglón por equipo que trabaja el lote (puede haber más de
+     * uno si se repartió) con el dron que ese equipo tenía asignado el día que
+     * empezó el trabajo. Vacío mientras el lote no tenga orden de trabajo: la
+     * vista pinta un guion. `dron` es `null` si el equipo no tenía ninguno.
+     *
+     * @return list<array{lote_id: int, label: string, hectareas_solicitadas: string, asignadas: string, restantes: string, estado: string, equipos: list<array{equipo: string, dron: ?string}>}>
      */
-    private function detalleLotesOrden(OrdenAplicacion $orden): array
+    private function detalleLotesOrden(OrdenAplicacion $orden, LecturaEquipoTrabajo $equipos): array
     {
-        $ordenLotes = $orden->ordenLotes()->orderBy('lote_id')->get();
-        $etiquetas = $this->etiquetasLote($ordenLotes->pluck('lote_id')->map(fn ($id) => (int) $id)->all());
+        $ordenLotes = $orden->ordenLotes()->get();
+        $datosLotes = $this->datosDeLotes($ordenLotes->pluck('lote_id')->map(fn ($id) => (int) $id)->all());
 
-        return $ordenLotes->map(function ($ordenLote) use ($orden, $etiquetas): array {
-            $solicitadas = BigDecimal::of((string) $ordenLote->hectareas_solicitadas);
-            $asignadas = BigDecimal::of((string) Trabajo::query()
-                ->where('orden_id', $orden->id)
-                ->where('lote_id', $ordenLote->lote_id)
-                ->sum('hectareas_declaradas'));
-            $restantes = $solicitadas->minus($asignadas);
+        $trabajosPorLote = Trabajo::query()
+            ->where('orden_id', $orden->id)
+            ->orderBy('created_at')
+            ->orderBy('id')
+            ->get(['id', 'lote_id', 'equipo_trabajo_id', 'hectareas_declaradas', 'inicio'])
+            ->groupBy('lote_id');
 
-            return [
-                'lote_id' => $ordenLote->lote_id,
-                'label' => $etiquetas[$ordenLote->lote_id] ?? "#{$ordenLote->lote_id}",
-                'hectareas_solicitadas' => (string) $solicitadas,
-                'asignadas' => (string) $asignadas,
-                'restantes' => (string) $restantes,
-                'estado' => $restantes->isLessThanOrEqualTo(BigDecimal::zero()) ? 'asignado' : 'pendiente',
-            ];
-        })->all();
+        $equiposPorLote = $this->equiposYDronesPorLote($trabajosPorLote, $equipos);
+
+        return $ordenLotes
+            ->sort(fn ($a, $b): int => $this->compararLotes($datosLotes[$a->lote_id] ?? null, $datosLotes[$b->lote_id] ?? null))
+            ->map(function ($ordenLote) use ($datosLotes, $trabajosPorLote, $equiposPorLote): array {
+                $solicitadas = BigDecimal::of((string) $ordenLote->hectareas_solicitadas);
+                $asignadas = ($trabajosPorLote->get($ordenLote->lote_id) ?? collect())->reduce(
+                    fn (BigDecimal $acumulado, Trabajo $trabajo): BigDecimal => $acumulado->plus((string) $trabajo->hectareas_declaradas),
+                    BigDecimal::zero(),
+                );
+                $restantes = $solicitadas->minus($asignadas);
+
+                return [
+                    'lote_id' => $ordenLote->lote_id,
+                    'label' => $datosLotes[$ordenLote->lote_id]['label'] ?? "#{$ordenLote->lote_id}",
+                    'hectareas_solicitadas' => (string) $solicitadas,
+                    'asignadas' => (string) $asignadas,
+                    'restantes' => (string) $restantes,
+                    'estado' => $restantes->isLessThanOrEqualTo(BigDecimal::zero()) ? 'asignado' : 'pendiente',
+                    'equipos' => $equiposPorLote[$ordenLote->lote_id] ?? [],
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Equipo y dron de cada lote, a partir de los trabajos de la orden ya
+     * agrupados por lote. Los equipos se leen por
+     * `LecturaEquipoTrabajo::porIds()` (aunque ya no estén vigentes: un trabajo
+     * asignado sigue nombrando a su equipo) y el dron es el que ese equipo tenía
+     * asignado (`recursosAFecha()`, recurso de tipo `dron`) el día que empezó el
+     * trabajo — una lectura por par equipo/fecha, no por trabajo. El
+     * identificador legible del dron sale de `ope_drones`, tabla de este módulo.
+     *
+     * @param  iterable<int|string, iterable<int, Trabajo>>  $trabajosPorLote  lote_id => trabajos de la orden en ese lote.
+     * @return array<int, list<array{equipo: string, dron: ?string}>> lote_id => un renglón por equipo.
+     */
+    private function equiposYDronesPorLote(iterable $trabajosPorLote, LecturaEquipoTrabajo $equipos): array
+    {
+        /** @var list<Trabajo> $asignados los trabajos que ya tienen equipo */
+        $asignados = [];
+
+        foreach ($trabajosPorLote as $trabajosDelLote) {
+            foreach ($trabajosDelLote as $trabajo) {
+                if ($trabajo->equipo_trabajo_id !== null) {
+                    $asignados[] = $trabajo;
+                }
+            }
+        }
+
+        if ($asignados === []) {
+            return [];
+        }
+
+        $fechaDe = fn (Trabajo $trabajo): string => ($trabajo->inicio ?? CarbonImmutable::now())->toDateString();
+
+        $datosEquipo = $equipos->porIds(array_values(array_unique(array_map(
+            fn (Trabajo $trabajo): int => (int) $trabajo->equipo_trabajo_id,
+            $asignados,
+        ))));
+
+        /** @var array<string, list<int>> $dronesPorEquipoYFecha equipo|fecha => ids de dron */
+        $dronesPorEquipoYFecha = [];
+
+        foreach ($asignados as $trabajo) {
+            $fecha = $fechaDe($trabajo);
+
+            $dronesPorEquipoYFecha["{$trabajo->equipo_trabajo_id}|{$fecha}"] ??= collect($equipos->recursosAFecha((int) $trabajo->equipo_trabajo_id, $fecha))
+                ->filter(fn (DatosRecursoEquipo $recurso): bool => $recurso->recursoTipo === 'dron')
+                ->map(fn (DatosRecursoEquipo $recurso): int => $recurso->recursoId)
+                ->values()
+                ->all();
+        }
+
+        $identificadores = Dron::query()
+            ->withTrashed()
+            ->whereIn('id', array_unique(array_merge(...array_values($dronesPorEquipoYFecha))))
+            ->pluck('identificador', 'id');
+
+        $resultado = [];
+
+        foreach ($trabajosPorLote as $loteId => $trabajosDelLote) {
+            $renglones = [];
+
+            foreach ($trabajosDelLote as $trabajo) {
+                $equipoId = $trabajo->equipo_trabajo_id;
+
+                if ($equipoId === null || isset($renglones[$equipoId])) {
+                    continue;
+                }
+
+                $drones = collect($dronesPorEquipoYFecha["{$equipoId}|{$fechaDe($trabajo)}"] ?? [])
+                    ->map(fn (int $dronId): string => $identificadores[$dronId] ?? "#{$dronId}")
+                    ->implode(', ');
+
+                $renglones[$equipoId] = [
+                    'equipo' => isset($datosEquipo[$equipoId]) ? $datosEquipo[$equipoId]->codigo : "#{$equipoId}",
+                    'dron' => $drones !== '' ? $drones : null,
+                ];
+            }
+
+            $resultado[(int) $loteId] = array_values($renglones);
+        }
+
+        return $resultado;
+    }
+
+    /**
+     * Orden natural de dos lotes: por propiedad y, dentro de ella, por código
+     * (`strnatcasecmp`: L2 antes que L10). Un lote que ya no existe queda al
+     * final.
+     *
+     * @param  array{propiedad: string, codigo: string, label: string}|null  $a
+     * @param  array{propiedad: string, codigo: string, label: string}|null  $b
+     */
+    private function compararLotes(?array $a, ?array $b): int
+    {
+        return match (true) {
+            $a === null && $b === null => 0,
+            $a === null => 1,
+            $b === null => -1,
+            default => strnatcasecmp($a['propiedad'], $b['propiedad']) ?: strnatcasecmp($a['codigo'], $b['codigo']),
+        };
     }
 
     private function equiposAsignadosCount(OrdenAplicacion $orden): int
@@ -680,11 +912,16 @@ final class OrdenesController
         $datos = $request->validated();
 
         try {
-            $actualizarOrden->ejecutar($orden, $this->normalizarDatos($datos));
+            $actualizarOrden->ejecutar($orden, $this->normalizarDatos($datos), $datos['motivo_correccion'] ?? null);
         } catch (OrdenNoEditable $excepcion) {
             return redirect()
-                ->route('panel.ordenes.index')
+                ->route('panel.ordenes.show', $orden)
                 ->withErrors(['estado' => $excepcion->getMessage()]);
+        } catch (CorreccionOrdenNoPermitida|MotivoRequerido $excepcion) {
+            return redirect()
+                ->route('panel.ordenes.edit', $orden)
+                ->withErrors(['estado' => $excepcion->getMessage()])
+                ->withInput();
         }
 
         // Se queda en la propia ficha de edición (no vuelve al listado,
@@ -698,16 +935,19 @@ final class OrdenesController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_ACTIVAR), 403);
 
+        // Vuelve al detalle, como pausar/reanudar/cerrar/cancelar: se activa desde
+        // los pasos de la ficha de edición o del detalle, y la orden ya no es
+        // editable, así que ahí no hay a dónde volver.
         try {
             $activarOrden->ejecutar($orden);
         } catch (TransicionOrdenNoPermitida $excepcion) {
             return redirect()
-                ->route('panel.ordenes.index')
+                ->route('panel.ordenes.show', $orden)
                 ->withErrors(['estado' => $excepcion->getMessage()]);
         }
 
         return redirect()
-            ->route('panel.ordenes.index')
+            ->route('panel.ordenes.show', $orden)
             ->with('estado', __('operaciones.ordenes.activada'));
     }
 
@@ -755,7 +995,7 @@ final class OrdenesController
 
         try {
             $cerrarOrden->ejecutar($orden);
-        } catch (TransicionOrdenNoPermitida $excepcion) {
+        } catch (TransicionOrdenNoPermitida|CierreOrdenNoPermitido $excepcion) {
             return redirect()
                 ->route('panel.ordenes.show', $orden)
                 ->withErrors(['estado' => $excepcion->getMessage()]);
@@ -771,7 +1011,7 @@ final class OrdenesController
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_CANCELAR), 403);
 
         $request->validate([
-            'causa_cancelacion' => ['required', 'in:cliente,fuerza_mayor'],
+            'causa_cancelacion' => ['required', Rule::enum(CausaCancelacionOrden::class)],
             'motivo_cancelacion' => ['required', 'string', 'max:1000'],
         ]);
 
@@ -870,8 +1110,8 @@ final class OrdenesController
      *         'hectareas_contratadas' => string,  // DECIMAL como string (invariante 6)
      *         'fecha_inicio' => string,           // ya formateada "d/m/Y" (ADR 0013)
      *         'fecha_fin' => ?string,              // ídem, null si el contrato no tiene fecha de fin
-     *         'contactos' => list<array{id: int, nombre: string, tipo: string}>,  // com_cliente_contactos del cliente DUEÑO del contrato; la vista decide autoseleccionar si hay uno solo
-     *         'lotes' => list<array{lote_id: int, codigo: string, propiedad: string, hectareas: string, desnivel: ?string, desnivel_label: ?string, limpieza: ?string, limpieza_label: ?string}>,  // SOLO los lotes de `com_contrato_lotes` de ESTE contrato — desnivel/limpieza YA traducidos server-side (ADR 0013), mismo criterio que `ContratosController::propiedadesYLotesPorCliente()`
+     *         'contactos' => list<array{id: int, nombre: string, tipo: string, label: string}>,  // com_cliente_contactos del cliente DUEÑO del contrato y SOLO de ese — el formulario nunca recibe los de otros clientes; `label` ya traducido (ADR 0013); la vista decide autoseleccionar si hay uno solo
+     *         'lotes' => list<array{lote_id: int, codigo: string, propiedad: string, hectareas: string, desnivel: ?string, desnivel_label: ?string, limpieza: ?string, limpieza_label: ?string}>,  // en orden natural (propiedad y luego código: L1, L2, … L10); SOLO los lotes de `com_contrato_lotes` de ESTE contrato — desnivel/limpieza YA traducidos server-side (ADR 0013), mismo criterio que `ContratosController::propiedadesYLotesPorCliente()`
      *         'nro_aplicacion_sugerido' => int|null,  // NULL acá siempre — solo `create()` lo completa (ver `sugerirNroAplicacion()`); `edit()` no lo toca, la orden ya tiene su valor real
      *       ],
      *       ...
@@ -896,7 +1136,7 @@ final class OrdenesController
      * orden ya tiene el suyo, no hace falta serializar todos los del sistema.
      *
      * @param  list<int>|null  $soloContratoIds
-     * @return array<int, array{label: string, cliente: string, logo_url: ?string, propiedades: list<string>, aplicaciones_previstas: int, hectareas_contratadas: string, fecha_inicio: string, fecha_fin: ?string, contactos: list<array{id: int, nombre: string, tipo: string}>, lotes: list<array{lote_id: int, codigo: string, propiedad: string, hectareas: string, desnivel: ?string, desnivel_label: ?string, limpieza: ?string, limpieza_label: ?string}>, nro_aplicacion_sugerido: int|null, contrato_edit_url: string}>
+     * @return array<int, array{label: string, cliente: string, logo_url: ?string, propiedades: list<string>, aplicaciones_previstas: int, hectareas_contratadas: string, fecha_inicio: string, fecha_fin: ?string, contactos: list<array{id: int, nombre: string, tipo: string, label: string}>, lotes: list<array{lote_id: int, codigo: string, propiedad: string, hectareas: string, desnivel: ?string, desnivel_label: ?string, limpieza: ?string, limpieza_label: ?string}>, nro_aplicacion_sugerido: int|null, contrato_edit_url: string}>
      */
     private function datosContratoParaFormulario(?array $soloContratoIds = null, bool $soloVigentes = false): array
     {
@@ -923,9 +1163,10 @@ final class OrdenesController
             ->whereNull('ccl.deleted_at')
             ->whereNull('l.deleted_at')
             ->whereNull('p.deleted_at')
-            ->orderBy('p.nombre')
-            ->orderBy('l.codigo')
             ->get(['ccl.contrato_id', 'l.id as lote_id', 'l.codigo', 'l.hectareas', 'l.desnivel', 'l.limpieza', 'p.nombre as propiedad_nombre'])
+            // Orden natural, por propiedad y luego por código (L1, L2, … L10):
+            // el `ORDER BY` de la base es alfabético y dejaría L10 antes que L2.
+            ->sort(fn (object $a, object $b): int => strnatcasecmp($a->propiedad_nombre, $b->propiedad_nombre) ?: strnatcasecmp($a->codigo, $b->codigo))
             ->groupBy('contrato_id');
 
         $contactosPorCliente = DB::table('com_cliente_contactos')
@@ -967,6 +1208,10 @@ final class OrdenesController
                         'id' => (int) $contacto->id,
                         'nombre' => $contacto->nombre,
                         'tipo' => $contacto->tipo,
+                        'label' => __('operaciones.ordenes.campo_contacto_opcion', [
+                            'nombre' => $contacto->nombre,
+                            'tipo' => __("comercial.clientes.contacto_tipo_opcion.{$contacto->tipo}"),
+                        ]),
                     ])
                     ->values()
                     ->all(),
@@ -1063,13 +1308,14 @@ final class OrdenesController
     }
 
     /**
-     * Etiquetas legibles para la columna "Lote" del listado, mismo criterio
+     * Propiedad, código y etiqueta legible de cada lote pedido, para rotular y
+     * ordenar la tabla "Lotes" del detalle — mismo criterio de lectura directa
      * que `etiquetasContrato()`.
      *
      * @param  list<int>  $ids
-     * @return array<int, string>
+     * @return array<int, array{propiedad: string, codigo: string, label: string}>
      */
-    private function etiquetasLote(array $ids): array
+    private function datosDeLotes(array $ids): array
     {
         if ($ids === []) {
             return [];
@@ -1080,39 +1326,15 @@ final class OrdenesController
             ->whereIn('l.id', $ids)
             ->get(['l.id', 'p.nombre', 'l.codigo'])
             ->mapWithKeys(fn (object $fila): array => [
-                (int) $fila->id => __('operaciones.ordenes.campo_lote_opcion', [
-                    'campo' => $fila->nombre,
-                    'codigo' => $fila->codigo,
-                ]),
+                (int) $fila->id => [
+                    'propiedad' => (string) $fila->nombre,
+                    'codigo' => (string) $fila->codigo,
+                    'label' => __('operaciones.ordenes.campo_lote_opcion', [
+                        'campo' => $fila->nombre,
+                        'codigo' => $fila->codigo,
+                    ]),
+                ],
             ])
             ->all();
-    }
-
-    /**
-     * Universo COMPLETO de contactos para poblar el `<select>` nativo (todas
-     * las opciones existen siempre en el DOM) — `ordenes-form.js` oculta en
-     * el cliente las que no son del cliente del contrato elegido (mismo
-     * criterio que el resto de los selects dependientes de este formulario).
-     * Label `:nombre — :tipo` (reforma 18/9/2026): antes repetía el cliente,
-     * pero el select ya queda scopeado a UN cliente — el tipo (Dueño,
-     * Agrónomo, etc.) es el dato que distingue entre varios contactos del
-     * mismo cliente, ver `comercial.clientes.contacto_tipo_opcion`.
-     *
-     * @return Collection<int, string>
-     */
-    private function contactosDisponibles(): Collection
-    {
-        return DB::table('com_cliente_contactos as cc')
-            ->join('com_clientes as cl', 'cl.id', '=', 'cc.cliente_id')
-            ->whereNull('cc.deleted_at')
-            ->whereNull('cl.deleted_at')
-            ->orderBy('cc.nombre')
-            ->get(['cc.id', 'cc.nombre', 'cc.tipo'])
-            ->mapWithKeys(fn (object $fila): array => [
-                (int) $fila->id => __('operaciones.ordenes.campo_contacto_opcion', [
-                    'nombre' => $fila->nombre,
-                    'tipo' => __("comercial.clientes.contacto_tipo_opcion.{$fila->tipo}"),
-                ]),
-            ]);
     }
 }

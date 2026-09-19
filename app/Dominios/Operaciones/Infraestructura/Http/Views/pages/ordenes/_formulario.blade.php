@@ -8,17 +8,38 @@
     - $contratosDisponibles (Collection<int, string>): id => label.
     - $datosContrato (array<int, array>): cliente, logo_url, propiedades,
       aplicaciones_previstas, hectareas_contratadas, fecha_inicio, fecha_fin,
-      contactos, lotes, siguiente_nro, contrato_edit_url.
+      contactos (SOLO los del cliente del contrato, cada uno con su `label`),
+      lotes (en orden natural), siguiente_nro, contrato_edit_url.
     - $categoriasInsumoDisponibles (Collection<int, CategoriaInsumo>).
     - $contratoIdPreseleccionado (int|null, SOLO en create()).
-    - $resumenRelacionado (list<array>, SOLO en edición): asignación de equipos.
+    - $pasosEstado (list<array>|null), $ayudaEstado (string|null): solo en
+      edición, los pasos de `molecules/step-arrow` y el párrafo que los
+      acompaña (`PasosDeOrden`). Los modales que abren viven en
+      `_orden-modales.blade.php`, fuera de este `<form>`.
+    - $relacionado (array|null): solo en edición, los vínculos del aside a las
+      órdenes de trabajo y a los equipos de la orden.
+    - $exigeMotivo (bool, default false): solo en edición, la orden ya está
+      publicada (`vigente`/`pausada`) y corregirla pide un motivo, que queda en la
+      bitácora junto con lo que cambia.
+    - $insumoBloqueado (bool, default false): solo en edición, la orden ya tiene
+      trabajos: el tipo de insumo, la categoría y la dosis se ven pero no se
+      cambian (`PoliticaEdicionOrden`); el servidor lo exige igual.
 
     La orden cubre TODOS los lotes del contrato (no se elige cada uno).
     El número de aplicación lo calcula el servidor (correlativo por contrato).
     En edición, contrato/número/lotes son fijos (no editables).
+
+    Los datos del contrato (la tarjeta con cliente, propiedades, aplicaciones,
+    hectáreas y fechas), los contactos y los lotes salen de `$datosContrato` del
+    contrato elegido: el servidor los pinta ya en el primer render —en alta con
+    contrato preseleccionado y siempre en edición— y `ordenes-form.js` los
+    repinta al cambiar el contrato. El `<select>` de contacto nunca recibe los de
+    otros clientes.
 --}}
 @php
     $esEdicion = $orden !== null;
+    $exigeMotivo ??= false;
+    $insumoBloqueado ??= false;
     $accion = $esEdicion ? route('panel.ordenes.update', $orden) : route('panel.ordenes.store');
     $tituloPagina = $esEdicion ? __('operaciones.ordenes.titulo_editar') : __('operaciones.ordenes.titulo_crear');
     $urlActual = $esEdicion ? route('panel.ordenes.edit', $orden) : route('panel.ordenes.create');
@@ -41,14 +62,20 @@
     // Script con datos de contratos para el JS
     $datosContratoJson = json_encode($datosContrato, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 
-    // Contrato elegido (en edición, el de la orden): de acá salen los lotes que la
-    // orden cubre y el "Aplicación N de M". El JS los repinta al cambiar el contrato.
+    // Contrato elegido (en edición, el de la orden): de acá salen la tarjeta del
+    // contrato, los contactos de su cliente, los lotes que la orden cubre y el
+    // "Aplicación N de M". El JS los repinta al cambiar el contrato.
     $datosDelContrato = $datosContrato[$contratoId] ?? null;
     $lotes = $datosDelContrato['lotes'] ?? [];
+    $contactosDelContrato = collect($datosDelContrato['contactos'] ?? [])->mapWithKeys(fn (array $contacto) => [$contacto['id'] => $contacto['label']]);
     $nroAplicacion = $esEdicion ? $orden->nro_aplicacion : ($datosDelContrato['siguiente_nro'] ?? null);
     $textoNroAplicacion = $datosDelContrato !== null && $nroAplicacion !== null
         ? __('operaciones.ordenes.nro_aplicacion_display', ['nro' => $nroAplicacion, 'total' => $datosDelContrato['aplicaciones_previstas']])
         : '—';
+
+    // Lotes por página (`paginador-cliente.js`): mismas 20 filas que la tabla de
+    // lotes del contrato. Las de otras páginas van con `hidden`, no se quitan.
+    $lotesPorPagina = 20;
 @endphp
 
 <form
@@ -80,6 +107,29 @@
         </x-molecules.alert-strip>
     @endif
 
+    @if ($esEdicion)
+        {{-- Estado de la orden como pasos (`PasosDeOrden`): cada paso accionable
+             abre el mismo modal de confirmación que las acciones del listado. --}}
+        <x-molecules.step-arrow
+            :steps="$pasosEstado"
+            :label="__('operaciones.ordenes.estado_pasos_aria')"
+            :help="$ayudaEstado"
+        />
+
+        @if ($errors->has('estado'))
+            <x-molecules.alert-strip variant="danger" icon="error">
+                {{ $errors->first('estado') }}
+            </x-molecules.alert-strip>
+        @endif
+
+        @if ($exigeMotivo)
+            {{-- Corregir una orden ya publicada: pide motivo y queda en la bitácora. --}}
+            <x-molecules.alert-strip variant="warning" icon="edit_note">
+                {{ __('operaciones.ordenes.correccion_aviso', ['estado' => mb_strtolower(__('operaciones.estado.'.$orden->estado->value))]) }}
+            </x-molecules.alert-strip>
+        @endif
+    @endif
+
     <x-molecules.form-layout>
     {{-- Sección 1: Datos del contrato --}}
     <x-molecules.form-section :title="__('operaciones.ordenes.seccion_datos_contrato')">
@@ -92,7 +142,7 @@
             <div class="ag-form-section__field">
                 <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato') }}</p>
                 <p class="ag-ordenes-detalle__campo-valor">{{ $contratosDisponibles[$contratoId] ?? "#{$contratoId}" }}</p>
-                <input type="hidden" name="contrato_id" value="{{ $contratoId }}">
+                <input type="hidden" name="contrato_id" value="{{ $contratoId }}" data-ag-orden-contrato-fijo>
             </div>
         @else
             {{-- En alta, contrato es editable (select buscable) --}}
@@ -111,53 +161,56 @@
             />
         @endif
 
-        {{-- Contacto: autoseleccionado si único --}}
+        {{-- Contacto: solo los del cliente del contrato; autoseleccionado si es único --}}
         <div data-ag-contacto-wrap @if ($errors->has('emitida_por_contacto_id')) data-tiene-error @endif>
             <x-atoms.select
                 name="emitida_por_contacto_id"
                 id="emitida_por_contacto_id"
                 :label="__('operaciones.ordenes.campo_contacto')"
-                :options="$contactosDisponibles"
+                :options="$contactosDelContrato"
                 :value="$contactoId"
                 :placeholder="__('operaciones.ordenes.campo_contacto_placeholder')"
+                :help="__('operaciones.ordenes.campo_contacto_ayuda')"
+                :disabled="! $esEdicion && $datosDelContrato === null"
                 :error="$errors->first('emitida_por_contacto_id')"
                 data-ag-orden-contacto
             />
         </div>
 
-        {{-- Resumen del contrato --}}
-        <div class="ag-form-section__field--full ag-ordenes-form__resumen-contrato" data-ag-resumen-contrato hidden>
+        {{-- Resumen del contrato: ya pintado por el servidor cuando hay contrato
+             (siempre en edición); el JS lo repinta al cambiar el contrato. --}}
+        <div class="ag-form-section__field--full ag-ordenes-form__resumen-contrato" data-ag-resumen-contrato @if ($datosDelContrato === null) hidden @endif>
             <img
                 class="ag-ordenes-form__logo"
                 data-ag-cliente-logo
                 data-logo-placeholder="{{ asset('images/logo-placeholder.png') }}"
-                src="{{ asset('images/logo-placeholder.png') }}"
+                src="{{ $datosDelContrato['logo_url'] ?? asset('images/logo-placeholder.png') }}"
                 alt=""
             >
             <div class="ag-form-section__body ag-ordenes-form__resumen-datos">
                 <div class="ag-ordenes-detalle__campo">
                     <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato_cliente') }}</p>
-                    <p class="ag-ordenes-detalle__campo-valor" data-ag-cliente-nombre>—</p>
+                    <p class="ag-ordenes-detalle__campo-valor" data-ag-cliente-nombre>{{ $datosDelContrato['cliente'] ?? '—' }}</p>
                 </div>
                 <div class="ag-ordenes-detalle__campo">
                     <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato_propiedades') }}</p>
-                    <p class="ag-ordenes-detalle__campo-valor" data-ag-propiedades-nombres>—</p>
+                    <p class="ag-ordenes-detalle__campo-valor" data-ag-propiedades-nombres>{{ implode(', ', $datosDelContrato['propiedades'] ?? []) ?: '—' }}</p>
                 </div>
                 <div class="ag-ordenes-detalle__campo">
                     <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato_aplicaciones') }}</p>
-                    <p class="ag-ordenes-detalle__campo-valor" data-ag-aplicaciones-previstas>—</p>
+                    <p class="ag-ordenes-detalle__campo-valor" data-ag-aplicaciones-previstas>{{ $datosDelContrato['aplicaciones_previstas'] ?? '—' }}</p>
                 </div>
                 <div class="ag-ordenes-detalle__campo">
                     <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato_hectareas') }}</p>
-                    <p class="ag-ordenes-detalle__campo-valor" data-ag-hectareas-contratadas>—</p>
+                    <p class="ag-ordenes-detalle__campo-valor" data-ag-hectareas-contratadas>{{ $datosDelContrato !== null ? $datosDelContrato['hectareas_contratadas'].' ha' : '—' }}</p>
                 </div>
                 <div class="ag-ordenes-detalle__campo">
                     <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato_fecha_inicio') }}</p>
-                    <p class="ag-ordenes-detalle__campo-valor" data-ag-fecha-inicio>—</p>
+                    <p class="ag-ordenes-detalle__campo-valor" data-ag-fecha-inicio>{{ $datosDelContrato['fecha_inicio'] ?? '—' }}</p>
                 </div>
                 <div class="ag-ordenes-detalle__campo">
                     <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato_fecha_fin') }}</p>
-                    <p class="ag-ordenes-detalle__campo-valor" data-ag-fecha-fin data-texto-sin-definir="{{ __('operaciones.ordenes.valor_sin_definir') }}">—</p>
+                    <p class="ag-ordenes-detalle__campo-valor" data-ag-fecha-fin data-texto-sin-definir="{{ __('operaciones.ordenes.valor_sin_definir') }}">{{ $datosDelContrato !== null ? ($datosDelContrato['fecha_fin'] ?? __('operaciones.ordenes.valor_sin_definir')) : '—' }}</p>
                 </div>
             </div>
         </div>
@@ -166,7 +219,7 @@
     {{-- Sección 2: Datos de la orden --}}
     <x-molecules.form-section
         :title="__('operaciones.ordenes.seccion_datos')"
-        :count="__('operaciones.ordenes.campos_contador', ['cantidad' => 8])"
+        :count="__('operaciones.ordenes.campos_contador', ['cantidad' => 8 + ($exigeMotivo ? 1 : 0)])"
     >
         {{-- Número de aplicación: solo lectura, lo calcula el servidor (ADR 0022) --}}
         <div class="ag-form-section__field">
@@ -187,6 +240,7 @@
             :value="$tipoInsumoSeleccionado"
             :placeholder="__('operaciones.ordenes.campo_tipo_insumo_placeholder')"
             required
+            :disabled="$insumoBloqueado"
             data-ag-orden-tipo-insumo
         />
 
@@ -199,10 +253,16 @@
             :value="$categoriaInsumoId"
             :placeholder="__('operaciones.ordenes.campo_categoria_insumo_placeholder')"
             required
+            :disabled="$insumoBloqueado"
             :error="$errors->first('categoria_insumo_id')"
             data-ag-orden-categoria-insumo
             data-mapa-categoria-insumo-tipo="{{ $mapaCategoriaInsumoTipo->toJson() }}"
         />
+        @if ($insumoBloqueado)
+            {{-- Un `<select>` deshabilitado no se envía: el valor viaja aparte (y el servidor
+                 comprueba que no cambió). --}}
+            <input type="hidden" name="categoria_insumo_id" value="{{ $categoriaInsumoId }}">
+        @endif
 
         {{-- Dosis según tipo de insumo --}}
         <div data-ag-orden-campo-tipo="liquido" @if ($tipoInsumoSeleccionado !== 'liquido') hidden @endif>
@@ -213,6 +273,7 @@
                 :value="$valor('litros_ha')"
                 min="0.01"
                 step="0.01"
+                :readonly="$insumoBloqueado"
                 :error="$errors->first('litros_ha')"
             />
         </div>
@@ -225,6 +286,7 @@
                 :value="$valor('kilos_por_vuelo')"
                 min="0.01"
                 step="0.01"
+                :readonly="$insumoBloqueado"
                 :error="$errors->first('kilos_por_vuelo')"
             />
         </div>
@@ -240,30 +302,17 @@
             :error="$errors->first('tipo_aplicacion')"
         />
 
-        {{-- Cantidad de equipos con atajo a asignación --}}
-        <div class="ag-ordenes-form__input-group">
-            <x-atoms.input
-                type="number"
-                name="cantidad_equipos_necesarios"
-                :label="__('operaciones.ordenes.campo_cantidad_equipos')"
-                :value="$cantidadEquiposNecesarios"
-                min="1"
-                step="1"
-                required
-                :error="$errors->first('cantidad_equipos_necesarios')"
-            />
-            @if ($esEdicion)
-                <x-atoms.button
-                    :href="route('panel.asignacion-equipos.show', $orden)"
-                    variant="outline"
-                    icon="groups"
-                    size="sm"
-                    class="ag-ordenes-form__input-group-boton"
-                >
-                    {{ __('operaciones.ordenes.campo_cantidad_equipos_asignar') }}
-                </x-atoms.button>
-            @endif
-        </div>
+        {{-- Cantidad de equipos (la asignación de equipos se abre desde "Relacionado") --}}
+        <x-atoms.input
+            type="number"
+            name="cantidad_equipos_necesarios"
+            :label="__('operaciones.ordenes.campo_cantidad_equipos')"
+            :value="$cantidadEquiposNecesarios"
+            min="1"
+            step="1"
+            required
+            :error="$errors->first('cantidad_equipos_necesarios')"
+        />
 
         {{-- Fecha de emisión --}}
         <x-atoms.date
@@ -274,6 +323,14 @@
             :error="$errors->first('fecha_emision')"
         />
 
+        @if ($insumoBloqueado)
+            <div class="ag-form-section__field--full">
+                <x-molecules.alert-strip variant="info" icon="lock">
+                    {{ __('operaciones.ordenes.insumo_bloqueado_ayuda') }}
+                </x-molecules.alert-strip>
+            </div>
+        @endif
+
         {{-- Observaciones (ancho completo) --}}
         <div class="ag-form-section__field--full">
             <x-atoms.textarea
@@ -283,6 +340,21 @@
                 :error="$errors->first('observaciones')"
             />
         </div>
+
+        @if ($exigeMotivo)
+            {{-- Motivo de la corrección (ancho completo): obligatorio en una orden publicada. --}}
+            <div class="ag-form-section__field--full">
+                <x-atoms.textarea
+                    name="motivo_correccion"
+                    :label="__('operaciones.ordenes.campo_motivo_correccion')"
+                    :placeholder="__('operaciones.ordenes.campo_motivo_correccion_placeholder')"
+                    :value="old('motivo_correccion')"
+                    :rows="3"
+                    required
+                    :error="$errors->first('motivo_correccion')"
+                />
+            </div>
+        @endif
     </x-molecules.form-section>
 
     {{-- Sección 3: Lotes de la orden — lista de SOLO LECTURA: la orden cubre TODOS los lotes del contrato --}}
@@ -311,14 +383,27 @@
                     <span role="columnheader">{{ __('operaciones.ordenes.lotes_columna_hectareas_lote') }}</span>
                 </x-slot:head>
 
-                @foreach ($lotes as $lote)
-                    <div class="ag-index-table__row" role="row">
+                @foreach ($lotes as $indice => $lote)
+                    <div class="ag-index-table__row" role="row" @if ($indice >= $lotesPorPagina) hidden @endif>
                         <span role="cell">{{ $lote['codigo'] }}</span>
                         <span role="cell">{{ $lote['propiedad'] }}</span>
                         <span role="cell" class="ag-ordenes__mono">{{ number_format((float) $lote['hectareas'], 2, ',', '.') }}</span>
                     </div>
                 @endforeach
             </x-molecules.index-table>
+
+            {{-- Paginación de 20 lotes por página (`paginador-cliente.js`, lo maneja
+                 ordenes-form.js), igual que la tabla de lotes del contrato. --}}
+            <div
+                class="ag-paginador"
+                data-ag-lotes-paginador
+                hidden
+                data-label-aria="{{ __('operaciones.ordenes.lotes_paginacion_aria') }}"
+                data-label-anterior="{{ __('ui.paginador.anterior') }}"
+                data-label-siguiente="{{ __('ui.paginador.siguiente') }}"
+                data-label-pagina="{{ __('ui.paginador.pagina') }}"
+                data-label-resumen="{{ __('operaciones.ordenes.lotes_paginacion_resumen') }}"
+            ></div>
         </div>
     </x-molecules.form-section>
 
@@ -334,32 +419,37 @@
         </x-slot:actions>
     </x-organisms.form-actions-bar>
 
-    {{-- Aside con resumen relacionado (solo en edición) --}}
-    @if ($esEdicion)
+    {{-- Aside "Relacionado" (solo en edición): accesos a las órdenes de trabajo y a
+         los equipos de esta orden — crear/asignar si todavía no hay, o ver los que ya
+         hay. Mismas filas (`molecules/link-row`) que la sección de vínculos del detalle. --}}
+    @if ($esEdicion && ($relacionado['vinculos'] !== [] || $relacionado['aviso'] !== null))
         <x-slot:aside>
-            @foreach ($resumenRelacionado ?? [] as $resumen)
-                @if ($resumen['tieneDatos'])
-                    <x-molecules.summary-card :title="$resumen['titulo']" :items="$resumen['items']">
-                        @if ($resumen['mostrarAccion'])
-                            <x-slot:action>
-                                <x-atoms.button :href="$resumen['accion']['href']" variant="outline" icon="groups" block>
-                                    {{ $resumen['accion']['label'] }}
-                                </x-atoms.button>
-                            </x-slot:action>
-                        @endif
-                    </x-molecules.summary-card>
-                @else
-                    <x-molecules.empty-state :icon="$resumen['icono']" :title="$resumen['vacioTitulo']" :detail="$resumen['vacioDetalle']">
-                        @if ($resumen['mostrarAccion'])
-                            <x-slot:action>
-                                <x-atoms.button :href="$resumen['accion']['href']" variant="outline" icon="groups">
-                                    {{ $resumen['accion']['label'] }}
-                                </x-atoms.button>
-                            </x-slot:action>
-                        @endif
-                    </x-molecules.empty-state>
-                @endif
-            @endforeach
+            <x-molecules.form-section accent="alert" :title="__('operaciones.ordenes.seccion_vinculos')">
+                <div class="ag-form-section__field--full">
+                    @if ($relacionado['vinculos'] !== [])
+                        <div class="ag-ordenes-detalle__vinculos">
+                            @foreach ($relacionado['vinculos'] as $vinculo)
+                                <x-molecules.link-row
+                                    :href="$vinculo['href']"
+                                    :icon="$vinculo['icon']"
+                                    :title="$vinculo['title']"
+                                    :meta="$vinculo['meta']"
+                                    :tone="$vinculo['tone']"
+                                />
+                            @endforeach
+                        </div>
+                    @endif
+
+                    {{-- Sin nada armado y sin poder armarlo todavía: dice por qué, sin marco extra. --}}
+                    @if ($relacionado['aviso'] !== null)
+                        <x-molecules.empty-state
+                            icon="schedule"
+                            :title="$relacionado['aviso']['titulo']"
+                            :detail="$relacionado['aviso']['detalle']"
+                        />
+                    @endif
+                </div>
+            </x-molecules.form-section>
         </x-slot:aside>
     @endif
     </x-molecules.form-layout>
