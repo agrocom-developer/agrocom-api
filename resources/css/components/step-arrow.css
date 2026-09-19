@@ -225,8 +225,9 @@
 }
 
 /* Actual con color de estado: relleno sólido y texto que no cambia con el tema.
-   El último paso, cuando es el actual, NO pasa por acá: el componente lo dibuja
-   como `--completed` (ya no hay a dónde avanzar, está procesado). */
+   El último paso (estado final) y el primer paso, cuando son el actual, NO
+   pasan por acá: el componente los dibuja como `--completed` (el último
+   porque ya no hay a dónde avanzar; el primero porque recién arranca). */
 .ag-step-arrow__item--current[data-tone]:not([data-tone='neutral']) .ag-step-arrow__paso {
     --ag-step-relleno: var(--ag-step-solido);
     --ag-step-arrow-borde: 1px;

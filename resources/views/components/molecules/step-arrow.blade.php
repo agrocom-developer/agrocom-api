@@ -10,14 +10,20 @@
     Cada paso es un estado de la ruta principal y está en uno de cinco casos:
     - `completed`: ya se pasó por ahí (color suave del estado + ícono de check).
     - `current`: el estado actual, relleno sólido con el COLOR DEL ESTADO (el
-      mismo tono que su badge) y `aria-current="step"`. Si es un estado FINAL —
-      ya no hay a dónde avanzar: ningún paso `next` ni `pending`— se dibuja como
-      `completed` (procesado, color suave y check, sin el relleno de "activo") y
-      solo conserva `aria-current="step"` (19/9/2026, pedido del usuario). Se
-      decide por lo que la máquina ofrece, no por la posición: una ruta con dos
-      finales (contrato: «Ejecutado» y «Cancelado») suaviza el que sea, aunque
-      solo uno quede al final de la fila. En una ruta en línea recta (campaña)
-      es el último paso, como siempre.
+      mismo tono que su badge) y `aria-current="step"`. Dos excepciones se
+      dibujan suavizadas en vez de con el relleno de "activo" (las dos
+      conservan igual `aria-current="step"`, 19/9/2026, pedido del usuario):
+        - Estado FINAL — ya no hay a dónde avanzar: ningún paso `next` ni
+          `pending` — se dibuja como `completed` (procesado, color suave y
+          check). Se decide por lo que la máquina ofrece, no por la posición:
+          una ruta con dos finales (contrato: «Ejecutado» y «Cancelado»)
+          suaviza el que sea, aunque solo uno quede al final de la fila. En
+          una ruta en línea recta (campaña) es el último paso, como siempre.
+        - PRIMER paso de la fila — a diferencia del final, esta sí es
+          posicional: el primer paso recién arrancó, nada se completó
+          todavía, así que se suaviza igual que un paso procesado pero SIN
+          ícono de check (marcarlo con un tilde diría "ya terminaste esto",
+          que es lo opuesto de lo que significa estar recién empezando).
     - `next`: un estado al que se puede pasar desde el actual — es un BOTÓN que
       abre el modal de confirmación (`confirm-modal`) que la página ya trae; el
       componente no envía nada ni decide nada.
@@ -69,14 +75,18 @@
             @foreach ($steps as $paso)
                 @php
                     $estadoPaso = $paso['status'];
+                    $esPrimerPaso = $loop->first;
                     // Un estado final, cuando es el actual, ya está procesado: se dibuja
-                    // como completado. `$estadoPaso` sigue mandando en lo funcional
-                    // (botón, aria-current); `$situacion`, en lo visual.
-                    $situacion = $estadoPaso === 'current' && $esEstadoFinal ? 'completed' : $estadoPaso;
-                    $icono = match ($situacion) {
-                        'completed' => $paso['icon'] ?? 'check',
-                        'next' => 'arrow_forward',
-                        'blocked', 'pending' => 'lock',
+                    // como completado. El primer paso, cuando es el actual, recién
+                    // arranca: se suaviza igual, pero sin ícono (ver `$icono` abajo).
+                    // `$estadoPaso` sigue mandando en lo funcional (botón, aria-current);
+                    // `$situacion`, en lo visual.
+                    $situacion = $estadoPaso === 'current' && ($esEstadoFinal || $esPrimerPaso) ? 'completed' : $estadoPaso;
+                    $icono = match (true) {
+                        $situacion === 'completed' && $esPrimerPaso && ! $esEstadoFinal => null,
+                        $situacion === 'completed' => $paso['icon'] ?? 'check',
+                        $situacion === 'next' => 'arrow_forward',
+                        in_array($situacion, ['blocked', 'pending'], true) => 'lock',
                         default => null,
                     };
                     $pista = $paso['hint'] ?? null;
