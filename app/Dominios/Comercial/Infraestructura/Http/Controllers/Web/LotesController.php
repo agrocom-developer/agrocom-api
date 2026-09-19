@@ -66,6 +66,11 @@ final class LotesController
             ...$this->autorizacion->cascara($request),
             'lotes' => $listarLotes->ejecutar($clienteId, $propiedadId, $busqueda !== '' ? $busqueda : null),
             'filtros' => ['q' => $busqueda, 'cliente_id' => $clienteId, 'propiedad_id' => $propiedadId],
+            // Filtrado por una propiedad = se llegó desde su formulario (el
+            // resumen «Ver lotes» o el alta/edición de lotes en bloque): el
+            // listado ofrece volver a ella. Con el memento de navegación apilado
+            // el botón vuelve al escalón anterior; sin él, a la propiedad.
+            'propiedadFiltro' => $propiedadId !== null ? Propiedad::query()->find($propiedadId) : null,
             'clientesDisponibles' => $this->clientesActivos(),
             'propiedadesDisponibles' => $this->propiedadesActivas(),
         ]);

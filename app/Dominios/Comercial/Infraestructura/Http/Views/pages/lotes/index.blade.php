@@ -9,6 +9,8 @@
     CascaraPanel, más:
     - $lotes (LengthAwarePaginator<Lote>, con `propiedad.cliente` cargada):
       código ascendente.
+    - $propiedadFiltro (Propiedad|null): la propiedad del filtro `propiedad_id`,
+      si lo hay — habilita el botón «Volver a la propiedad» (memento).
     - $filtros (array{q: string, cliente_id: ?int, propiedad_id: ?int}): filtros
       aplicados, para dejarlos con el valor tras el submit.
     - $clientesDisponibles (Collection<int, string>), $propiedadesDisponibles
@@ -41,13 +43,23 @@
                 :title="__('comercial.lotes.titulo')"
                 :subtitle="__('comercial.lotes.subtitulo')"
             >
-                @puede('comercial.lote.crear')
-                    <x-slot:actions>
+                <x-slot:actions>
+                    {{-- Con el filtro de una propiedad se llegó desde su formulario
+                         (memento de navegación): se vuelve a ella. Si hay pila, el
+                         botón vuelve al escalón anterior y lo dice; si no, cae a la
+                         ficha de la propiedad. --}}
+                    @if ($propiedadFiltro !== null)
+                        @puede('comercial.propiedad.editar')
+                            <x-molecules.boton-volver :href="route('panel.propiedades.edit', $propiedadFiltro)" :label="__('comercial.lotes.volver_a_propiedad')" />
+                        @endpuede
+                    @endif
+
+                    @puede('comercial.lote.crear')
                         <x-atoms.button :href="route('panel.lotes.create', array_filter(['propiedad_id' => $filtros['propiedad_id']]))" variant="primary" icon="add">
                             {{ __('comercial.lotes.nuevo') }}
                         </x-atoms.button>
-                    </x-slot:actions>
-                @endpuede
+                    @endpuede
+                </x-slot:actions>
             </x-organisms.page-header>
 
             @if (session('estado'))

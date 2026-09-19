@@ -639,6 +639,7 @@ return [
 
         'estado_form' => 'Los cambios se guardan al confirmar.',
         'volver' => 'Volver a lotes',
+        'volver_a_propiedad' => 'Volver a la propiedad',
 
         // Aside "Siembra actual" (ficha de un lote, en edición)
         'aside_siembra_titulo' => 'Siembra actual',
