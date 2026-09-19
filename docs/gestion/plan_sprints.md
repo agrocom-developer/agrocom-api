@@ -519,7 +519,26 @@ cambian y de cómo se muestran.
 
 ---
 
-## Sprint 22 — Orden de aplicación: estados a la vista, lotes y equipos (ronda del dueño, 19/9/2026)
+## Sprint 22 — Lotes en bloque: la sugerencia de hectáreas es una guía (ronda del dueño, 19/9/2026)
+
+*Objetivo: que crear y editar lotes en bloque no se sienta bloqueado. Las hectáreas
+por lote sugeridas a partir de la superficie de la propiedad son informativas, no
+una restricción: una propiedad no es toda lote (tiene hacienda, agua, caminos), un
+lote irregular no impide crear los demás y muchas propiedades no tienen la
+superficie cargada. Además, el listado de lotes ordena bien sus códigos y ofrece
+volver a la propiedad de la que se llegó (memento de navegación). No cambia ninguna
+regla de negocio. La numeración sigue desde HU-98. Implementada en la rama
+`feature/lotes-bloque`.*
+
+| ID | Historia / tarea | CA esenciales | Est. |
+|---|---|---|---|
+| HU-99 | Como **encargado**, quiero crear y editar lotes en bloque sin que la suma de hectáreas me bloquee, y volver a la propiedad desde el listado de lotes, para cargar una propiedad de un tirón aunque sus lotes no cubran toda la superficie | **1) Guía, no regla:** ninguna validación compara la suma de los lotes con las hectáreas de la propiedad ni con 0 —el servidor nunca lo hizo; lo que parecía un bloqueo era un aviso en rojo—; una propiedad sin superficie cargada crea y edita lotes igual. Un test lo blinda. **2) Mensaje debajo de «Hectáreas por lote»:** siempre en el acento de marca (nunca alerta): la sugerencia (superficie ÷ lotes), y al escribir un valor cuánto suman los lotes y si son más, menos o iguales a la superficie («Son 20 ha más… es solo una guía» / «Son 320 ha menos: el resto puede ser hacienda, agua u otros usos»). Con lotes ya creados (tandas sucesivas) reparte lo que falta y suma lo que ya tienen; sin superficie dice que cargarla es opcional. **3) Tope por tanda:** 500 lotes por vez (antes 50), en una sola constante (`LotesBloqueRequest::LOTES_MAXIMOS_POR_TANDA`) que usan las dos validaciones, las dos vistas y los textos; no limita cuántos lotes tiene una propiedad (se crea otra tanda y el código sigue desde el último). **4) Orden natural:** el listado de lotes ordena L1, L2, … L10, no L1, L10, L11, L2 (`Lote::ordenadosPorCodigo()`). **5) Volver a la propiedad:** el listado de lotes filtrado por una propiedad ofrece «Volver a…» —con el memento vuelve al escalón anterior; sin pila, a la ficha de la propiedad—, así el flujo contrato → propiedad → lotes en bloque → listado no queda sin salida | 1,5 d |
+
+**Total: 1,5 d · 0 pantallas nuevas de menú**
+
+---
+
+## Sprint 23 — Orden de aplicación: estados a la vista, lotes y equipos (ronda del dueño, 19/9/2026)
 
 *Objetivo: que la orden de aplicación se opere desde su propia ficha y su detalle
 con los mismos pasos que ya tienen la campaña y el contrato, y que sus lotes, su
