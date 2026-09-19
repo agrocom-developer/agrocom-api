@@ -10,6 +10,10 @@
     - name (requerido), id (default = name).
     - label, placeholder, help, error: strings ya traducidos por el llamador
       (este átomo no decide textos, ADR 0013).
+    - helpTone (nullable): "accent" | "alert" — colorea el texto de ayuda con
+      el acento de marca o el de alerta (`ag-input__help--accent`/`--alert`),
+      para una ayuda que es una SUGERENCIA o un aviso y no una aclaración
+      neutra. Sin pasarlo, el gris de siempre.
     - icon: nombre de ícono Material Symbols para el prefijo del campo.
     - required (bool, default false).
     - variant: "boxed" (default, Material outlined — caja con borde/fondo
@@ -46,6 +50,7 @@
     'error' => null,
     'icon' => null,
     'help' => null,
+    'helpTone' => null,
     'required' => false,
     'variant' => 'boxed',
 ])
@@ -101,7 +106,7 @@
     </div>
 
     @if ($help)
-        <p id="{{ $helpId }}" class="ag-input__help">{{ $help }}</p>
+        <p id="{{ $helpId }}" @class(['ag-input__help', "ag-input__help--{$helpTone}" => $helpTone])>{{ $help }}</p>
     @endif
 
     @if ($error)

@@ -40,7 +40,9 @@
     - $colorPorDefecto (string): el HEX con el que arranca el campo color
       cuando la propiedad no tiene uno (alta, o propiedades de antes de que
       fuera obligatorio).
-    - $resumenPropiedad (list<array>, solo edición): las 3 tarjetas del aside.
+    - $resumenPropiedad (list<array>, solo edición): las 3 tarjetas del aside;
+      cada una trae `acciones`, una lista de botones (la de Lotes con lotes
+      cargados lleva dos: "Ver lista de lotes" y "Editar en bloque").
     - $clienteIdPreseleccionado (int|null, tarea "resumen de cliente"): solo
       en alta, desde `?cliente_id=` (ver PropiedadesController::create()) —
       el atajo "Nueva propiedad" del aside de `panel.clientes.edit` llega acá
@@ -220,11 +222,13 @@
                 @foreach ($resumenPropiedad ?? [] as $resumen)
                     @if ($resumen['tieneDatos'])
                         <x-molecules.summary-card :title="$resumen['titulo']" :items="$resumen['items']">
-                            @if ($resumen['mostrarAccion'])
+                            @if ($resumen['acciones'] !== [])
                                 <x-slot:action>
-                                    <x-atoms.button :href="$resumen['accion']['href']" variant="outline" icon="arrow_forward" block>
-                                        {{ $resumen['accion']['label'] }}
-                                    </x-atoms.button>
+                                    @foreach ($resumen['acciones'] as $accion)
+                                        <x-atoms.button :href="$accion['href']" variant="outline" :icon="$accion['icono'] ?? 'arrow_forward'" block>
+                                            {{ $accion['label'] }}
+                                        </x-atoms.button>
+                                    @endforeach
                                 </x-slot:action>
                             @endif
                         </x-molecules.summary-card>
@@ -234,11 +238,13 @@
                             :title="$resumen['vacioTitulo']"
                             :detail="$resumen['vacioDetalle']"
                         >
-                            @if ($resumen['mostrarAccion'])
+                            @if ($resumen['acciones'] !== [])
                                 <x-slot:action>
-                                    <x-atoms.button :href="$resumen['accion']['href']" variant="outline" icon="add">
-                                        {{ $resumen['accion']['label'] }}
-                                    </x-atoms.button>
+                                    @foreach ($resumen['acciones'] as $accion)
+                                        <x-atoms.button :href="$accion['href']" variant="outline" :icon="$accion['icono'] ?? 'add'">
+                                            {{ $accion['label'] }}
+                                        </x-atoms.button>
+                                    @endforeach
                                 </x-slot:action>
                             @endif
                         </x-molecules.empty-state>

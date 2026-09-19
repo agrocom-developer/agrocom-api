@@ -37,7 +37,27 @@ import 'leaflet/dist/leaflet.css';
 import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css';
 import L from 'leaflet';
 import '@geoman-io/leaflet-geoman-free';
+import iconoMarcadorUrl from 'leaflet/dist/images/marker-icon.png';
+import iconoMarcador2xUrl from 'leaflet/dist/images/marker-icon-2x.png';
+import sombraMarcadorUrl from 'leaflet/dist/images/marker-shadow.png';
 import { leerTokenCrudo } from '../shared/color-tokens.js';
+
+// Ícono del marcador con las imágenes que resuelve Vite (19/9/2026). Sin esto
+// el marcador salía como una imagen rota con el texto "Marker": el ícono por
+// defecto de Leaflet adivina la carpeta de sus imágenes leyendo el CSS, y con
+// los archivos empaquetados con hash pedía `/build/assets/images/marker-icon.png`
+// (404, igual que la sombra). Un `L.icon` explícito no adivina nada: medidas
+// y anclaje son los del ícono por defecto de Leaflet.
+const ICONO_MARCADOR = L.icon({
+    iconUrl: iconoMarcadorUrl,
+    iconRetinaUrl: iconoMarcador2xUrl,
+    shadowUrl: sombraMarcadorUrl,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    tooltipAnchor: [16, -28],
+    shadowSize: [41, 41],
+});
 
 /**
  * Copia intencional de `shared/cargador-google-maps.js` (el que usa
@@ -300,7 +320,96 @@ function leerConfiguracion(contenedor) {
     const [lat, lng] = (crudo ?? '').split(',').map(Number.parseFloat);
     const centroDefecto = Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : CENTRO_POR_DEFECTO;
 
-    return { colorPropiedad, centroDefecto };
+    const { agPropiedadMapaMunicipio: nombreMunicipio, agPropiedadMapaProvincia: provincia, agPropiedadMapaDepartamento: departamento } = contenedor.dataset;
+    const municipio = nombreMunicipio ? { municipio: nombreMunicipio, provincia, departamento } : null;
+
+    return { colorPropiedad, centroDefecto, municipio };
+}
+
+// ---------- Ubicar el municipio de la propiedad (19/9/2026, pedido directo):
+// con el municipio guardado el mapa arranca ahí y no en la capital del
+// departamento. `com_municipios` no guarda coordenadas, así que se le pide el
+// punto a un geocodificador: Nominatim (OpenStreetMap) con Leaflet, el
+// Geocoder de Google con Google Maps. Sin respuesta, o con un punto fuera de
+// Bolivia, el mapa se queda donde ya estaba (centro por departamento).
+
+const URL_GEOCODIFICADOR_OSM = 'https://nominatim.openstreetmap.org/search';
+const LIMITES_BOLIVIA = { latMin: -23, latMax: -9, lngMin: -70, lngMax: -57 };
+
+function dentroDeBolivia({ lat, lng }) {
+    return lat >= LIMITES_BOLIVIA.latMin && lat <= LIMITES_BOLIVIA.latMax
+        && lng >= LIMITES_BOLIVIA.lngMin && lng <= LIMITES_BOLIVIA.lngMax;
+}
+
+async function geocodificarConNominatim(consulta) {
+    try {
+        const parametros = new URLSearchParams({
+            format: 'jsonv2', limit: '1', countrycodes: 'bo', 'accept-language': 'es', q: consulta,
+        });
+        const respuesta = await fetch(`${URL_GEOCODIFICADOR_OSM}?${parametros}`, { headers: { Accept: 'application/json' } });
+
+        if (!respuesta.ok) {
+            return null;
+        }
+
+        const [resultado] = await respuesta.json();
+        const lat = Number.parseFloat(resultado?.lat);
+        const lng = Number.parseFloat(resultado?.lon);
+
+        return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
+    } catch {
+        return null;
+    }
+}
+
+async function geocodificarConGoogle(consulta, googleMapsNs) {
+    try {
+        const { Geocoder } = googleMapsNs.importLibrary ? await googleMapsNs.importLibrary('geocoding') : googleMapsNs;
+        const { results } = await new Geocoder().geocode({ address: consulta, componentRestrictions: { country: 'BO' } });
+        const ubicacion = results?.[0]?.geometry?.location;
+
+        return ubicacion ? { lat: ubicacion.lat(), lng: ubicacion.lng() } : null;
+    } catch {
+        return null;
+    }
+}
+
+/** Del más específico al más general: si el geocodificador no conoce la provincia, todavía puede dar con el municipio. */
+async function ubicarMunicipio({ municipio, provincia, departamento }, googleMapsNs) {
+    const consultas = [
+        [municipio, provincia, departamento, 'Bolivia'],
+        [municipio, departamento, 'Bolivia'],
+    ].map((partes) => partes.filter(Boolean).join(', '));
+
+    for (const consulta of consultas) {
+        const punto = googleMapsNs
+            ? await geocodificarConGoogle(consulta, googleMapsNs)
+            : await geocodificarConNominatim(consulta);
+
+        if (punto && dentroDeBolivia(punto)) {
+            return punto;
+        }
+    }
+
+    return null;
+}
+
+/** Sin marcador ni perímetro: la propiedad todavía no tiene nada puesto en el mapa. */
+function mapaSinContenido({ inputLatitud, inputGeometria }) {
+    return !Number.isFinite(Number.parseFloat(inputLatitud.value)) && leerAnillosGuardados(inputGeometria).length === 0;
+}
+
+/** Solo mueve la vista si al llegar la respuesta el usuario sigue sin haber puesto nada. */
+function centrarEnMunicipio({ municipio, refs, googleMapsNs = null, irA }) {
+    if (!municipio || !mapaSinContenido(refs)) {
+        return;
+    }
+
+    ubicarMunicipio(municipio, googleMapsNs).then((centro) => {
+        if (centro && mapaSinContenido(refs)) {
+            irA(centro);
+        }
+    });
 }
 
 function referenciasDom(contenedor) {
@@ -447,14 +556,14 @@ function inicializarLeaflet(contenedor, refs) {
         }
     };
 
-    const { colorPropiedad, centroDefecto } = leerConfiguracion(contenedor);
+    const { colorPropiedad, centroDefecto, municipio } = leerConfiguracion(contenedor);
 
     const anillosGuardados = leerAnillosGuardados(inputGeometria);
     const latInicial = Number.parseFloat(inputLatitud.value);
     const lngInicial = Number.parseFloat(inputLongitud.value);
     const tieneMarcadorInicial = Number.isFinite(latInicial) && Number.isFinite(lngInicial);
 
-    const centroInicial = tieneMarcadorInicial
+    let centroInicial = tieneMarcadorInicial
         ? { lat: latInicial, lng: lngInicial }
         : (anillosGuardados[0]?.[0] ? { lat: anillosGuardados[0][0][1], lng: anillosGuardados[0][0][0] } : centroDefecto);
 
@@ -494,7 +603,7 @@ function inicializarLeaflet(contenedor, refs) {
     };
 
     const crearMarcadorEn = (lat, lng) => {
-        marcador = L.marker([lat, lng], { draggable: true }).addTo(mapa);
+        marcador = L.marker([lat, lng], { draggable: true, icon: ICONO_MARCADOR }).addTo(mapa);
         marcador.on('dragend', () => {
             const posicion = marcador.getLatLng();
             actualizarPosicionMarcador(posicion.lat, posicion.lng);
@@ -748,6 +857,15 @@ function inicializarLeaflet(contenedor, refs) {
         mapa.setView([lat, lng], Math.max(mapa.getZoom(), ZOOM_SIN_GEOMETRIA));
     });
 
+    centrarEnMunicipio({
+        municipio,
+        refs,
+        irA: (centro) => {
+            centroInicial = centro;
+            mapa.setView([centro.lat, centro.lng], ZOOM_SIN_GEOMETRIA);
+        },
+    });
+
     requestAnimationFrame(() => mapa.invalidateSize());
 }
 
@@ -776,14 +894,14 @@ function inicializarGoogle(contenedor, refs, googleMapsNs) {
         }
     };
 
-    const { colorPropiedad, centroDefecto } = leerConfiguracion(contenedor);
+    const { colorPropiedad, centroDefecto, municipio } = leerConfiguracion(contenedor);
 
     const anillosGuardados = leerAnillosGuardados(inputGeometria);
     const latInicial = Number.parseFloat(inputLatitud.value);
     const lngInicial = Number.parseFloat(inputLongitud.value);
     const tieneMarcadorInicial = Number.isFinite(latInicial) && Number.isFinite(lngInicial);
 
-    const centroInicial = tieneMarcadorInicial
+    let centroInicial = tieneMarcadorInicial
         ? { lat: latInicial, lng: lngInicial }
         : (anillosGuardados[0]?.[0] ? { lat: anillosGuardados[0][0][1], lng: anillosGuardados[0][0][0] } : centroDefecto);
 
@@ -1114,6 +1232,17 @@ function inicializarGoogle(contenedor, refs, googleMapsNs) {
     inicializarBuscador(refs, (lat, lng) => {
         mapa.setCenter({ lat, lng });
         mapa.setZoom(Math.max(mapa.getZoom(), ZOOM_SIN_GEOMETRIA));
+    });
+
+    centrarEnMunicipio({
+        municipio,
+        refs,
+        googleMapsNs,
+        irA: (centro) => {
+            centroInicial = centro;
+            mapa.setCenter(centro);
+            mapa.setZoom(ZOOM_SIN_GEOMETRIA);
+        },
     });
 }
 

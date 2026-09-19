@@ -17,6 +17,10 @@
     - $centroDefecto (array{lat: float, lng: float}): resuelto por
       ResolverCentroReferenciaPropiedad — de dónde arranca el mapa cuando la
       propiedad todavía no tiene marcador ni perímetro.
+    - $municipioReferencia (array{municipio, provincia, departamento}|null):
+      resuelto por ResolverMunicipioPropiedad — con municipio cargado, el
+      editor lo ubica con un geocodificador y arranca ahí (el centro por
+      departamento de arriba queda de respaldo).
 
     El editor (`organisms/propiedad-mapa-editor.js`) es un módulo INDEPENDIENTE
     del de Lote (`organisms/lote-mapa-editor.js`): dibuja VARIOS polígonos
@@ -92,6 +96,11 @@
                     @endif
                     @if ($propiedad->color)
                         data-ag-propiedad-mapa-color="{{ $propiedad->color }}"
+                    @endif
+                    @if ($municipioReferencia !== null)
+                        data-ag-propiedad-mapa-municipio="{{ $municipioReferencia['municipio'] }}"
+                        data-ag-propiedad-mapa-provincia="{{ $municipioReferencia['provincia'] }}"
+                        data-ag-propiedad-mapa-departamento="{{ $municipioReferencia['departamento'] }}"
                     @endif
                 >
                     <span class="ag-input__label">{{ __('comercial.propiedades.campo_geometria') }}</span>

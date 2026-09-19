@@ -1,10 +1,10 @@
 /*
- * Page: propiedades/lotes-generar
+ * Page: propiedades/lotes-generar y propiedades/lotes-editar-bloque
  * (app/Dominios/Comercial/Infraestructura/Http/Views/pages/propiedades/) —
- * HU-72 reconstruida, 16/9/2026: "Crear Lotes" con un solo botón. CSS
- * propio de ESTA página (ver convención en resources/css/pages/index.css),
- * mismo patrón que siembra.css. Todo color y medida por token (CLAUDE.md
- * invariante 11).
+ * HU-72 reconstruida, 16/9/2026: "Crear Lotes" con un solo botón; 19/9/2026:
+ * "Editar en bloque", que comparte formulario. CSS propio de ESTAS páginas
+ * (ver convención en resources/css/pages/index.css), mismo patrón que
+ * siembra.css. Todo color y medida por token (CLAUDE.md invariante 11).
  */
 
 .ag-lotes-generar {
@@ -33,4 +33,11 @@
     margin: 0 0 var(--ag-space-2);
     color: var(--ag-color-text-muted);
     font-size: var(--ag-font-size-sm);
+}
+
+/* Aviso de los lotes que se quitan al bajar la cantidad (`lotes-generar.js`
+   lo muestra y oculta con el atributo `hidden`). La franja de alerta define
+   su propio `display`, que le gana al `hidden` del navegador. */
+.ag-lotes-generar-form .ag-alert-strip[hidden] {
+    display: none;
 }

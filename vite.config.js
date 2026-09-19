@@ -41,6 +41,15 @@ function copiaAisladaDeLeafletParaEditorDePropiedad() {
             }
 
             const importerEsCopiaAislada = importer.startsWith(PREFIJO_COPIA_AISLADA);
+
+            // Una imagen que el editor importa directo (el ícono del marcador,
+            // 19/9/2026) no tiene nada que aislar: es solo una URL, y `load`
+            // la leería como texto ("File appears to be binary"). La resuelve
+            // Vite como cualquier asset.
+            if (!importerEsCopiaAislada && /\.(png|jpe?g|gif|svg|webp)$/i.test(source)) {
+                return null;
+            }
+
             const esPuntoDeEntrada = importer.includes('organisms/propiedad-mapa-editor.js')
                 && (source === 'leaflet'
                     || source.startsWith('leaflet/')

@@ -4,6 +4,7 @@ use App\Dominios\Campania\Infraestructura\Http\Controllers\Web\CampaniasControll
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ClientesController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ContratosController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\CultivosController;
+use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\EditarLotesBloqueController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\FacturasController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\GenerarLotesController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\LotesController;
@@ -570,6 +571,17 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::post('/panel/propiedades/{propiedad}/lotes/generar', [GenerarLotesController::class, 'guardar'])
             ->name('panel.propiedades.lotes.generar.guardar');
+
+        // "Editar en bloque" (19/9/2026): la contraparte de "Crear Lotes" para
+        // lotes que ya existen — hectáreas y terreno de todos a la vez, y
+        // sumar o quitar lotes cambiando la cantidad (ver
+        // EditarLotesEnBloque). Permisos de Lote: `.editar`, más `.crear`/
+        // `.eliminar` según lo que el cambio de cantidad implique.
+        Route::get('/panel/propiedades/{propiedad}/lotes/bloque', [EditarLotesBloqueController::class, 'mostrar'])
+            ->name('panel.propiedades.lotes.bloque');
+
+        Route::put('/panel/propiedades/{propiedad}/lotes/bloque', [EditarLotesBloqueController::class, 'guardar'])
+            ->name('panel.propiedades.lotes.bloque.guardar');
 
         // Adenda 16/9/2026 a ADR 0018 / ADR 0020 ("el editor de mapa
         // multi-polígono se construye en un feature aparte"): punto de
