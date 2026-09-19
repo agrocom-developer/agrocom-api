@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Operaciones\Infraestructura;
 
+use App\Dominios\Operaciones\Aplicacion\ProximaAplicacionPorContrato;
 use App\Dominios\Operaciones\Contratos\LecturaResumenOrdenesContrato;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
@@ -14,10 +15,17 @@ use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
  */
 final class LecturaResumenOrdenesContratoEloquent implements LecturaResumenOrdenesContrato
 {
+    public function __construct(private readonly ProximaAplicacionPorContrato $proximaAplicacion) {}
+
+    public function siguienteAplicacion(int $contratoId, int $aplicacionesPrevistas): ?int
+    {
+        return $this->proximaAplicacion->ejecutar([$contratoId => $aplicacionesPrevistas])[$contratoId]['siguiente'];
+    }
+
     public function resumen(array $contratoIds): array
     {
         if ($contratoIds === []) {
-            return ['total' => 0, 'vigentes' => 0];
+            return ['total' => 0, 'vigentes' => 0, 'abiertas' => 0];
         }
 
         $consulta = OrdenAplicacion::query()->whereIn('contrato_id', $contratoIds);
@@ -25,6 +33,7 @@ final class LecturaResumenOrdenesContratoEloquent implements LecturaResumenOrden
         return [
             'total' => (clone $consulta)->count(),
             'vigentes' => (clone $consulta)->where('estado', EstadoOrdenAplicacion::Vigente)->count(),
+            'abiertas' => (clone $consulta)->whereIn('estado', EstadoOrdenAplicacion::valoresAbiertos())->count(),
         ];
     }
 }

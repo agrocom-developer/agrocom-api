@@ -12,20 +12,25 @@
     - $ordenes (LengthAwarePaginator<OrdenAplicacion>): fecha de emisión
       descendente, `withQueryString()` (preserva filtros/búsqueda entre
       páginas).
-    - $etiquetasContrato / $etiquetasLote (array<int, string>): etiquetas
-      legibles por id, ya resueltas por el controlador — la vista nunca
-      consulta Comercial (ADR 0003 regla 3, ninguna relación Eloquent desde
-      OrdenAplicacion). Un id sin etiqueta (contrato/lote borrado después)
-      cae al `#id` crudo.
-    - $loteIdsPorOrden (array<int, list<int>>): lotes de CADA orden (HU-92,
-      tarea 107 — antes un único `lote_id` por orden), clave `orden->id`.
+    - $etiquetasContrato (array<int, string>): etiqueta legible por id de
+      contrato, ya resuelta por el controlador — la vista nunca consulta
+      Comercial (ADR 0003 regla 3, ninguna relación Eloquent desde
+      OrdenAplicacion). Un id sin etiqueta (contrato borrado después) cae al
+      `#id` crudo.
+    - $previstasPorContrato (array<int, int>): `aplicaciones_previstas` de
+      cada contrato, para mostrar "N de M" en la columna Aplicación.
+    - $resumen (array<int, array{lotes, ordenes_trabajo, incidencias,
+      pausas, minutos_pausa}>): datos derivados de CADA orden (clave
+      `orden->id`, ver `Aplicacion/ResumenDeOrdenes`): cantidad de lotes,
+      órdenes de trabajo realizadas e inconvenientes del campo. Con
+      incidencias o pausas, la fila lleva el badge "Con inconvenientes" —
+      informativo, nunca cambia un estado.
     - $filtros (array{q: string, estado: ?string, tipo_aplicacion: ?string}):
       filtros aplicados, para dejar los campos con el valor tras el submit.
       `q` busca por razón social del cliente del contrato (resuelto en el
       controlador vía `DB::table`, sin relación Eloquent cruzando módulos).
-    - $puedeActivar (bool): si el rol activo tiene `operaciones.orden.activar`
-      — sin él, la fila no ofrece el botón (el servidor revalida igual en
-      OrdenesController::activar()).
+    Los permisos de cada acción (activar, pausar, cerrar, cancelar, editar,
+    eliminar) se resuelven en `_orden-acciones.blade.php` con `@puede`.
 
     Vista lista/grilla (100% client-side desde el 17/9/2026 — la primera
     versión recargaba con `?vista=`, pedido explícito de sacarlo porque esa
@@ -40,14 +45,17 @@
     del primer pintado).
 
     Gateada por `operaciones.orden.ver`. "Ver" (a `panel.ordenes.show`, la
-    ficha de detalle) va SIEMPRE primero, para cualquier estado. "Editar"
-    solo se ofrece para una orden `emitida` (una `vigente` no es editable —
-    ver `Aplicacion/ActualizarOrden`); "Activar" solo para `emitida` y con el
-    permiso; "Eliminar" para cualquier estado salvo `vigente` (ver
-    `Aplicacion/EliminarOrden`). Presentación, no autorización: el servidor
-    revalida las cuatro reglas.
+    ficha de detalle) va SIEMPRE primero, para cualquier estado. "Editar",
+    "Activar" y "Eliminar" solo para una orden `emitida` (ver
+    `Aplicacion/ActualizarOrden` y `Aplicacion/EliminarOrden`); "Pausar",
+    "Cerrar" y "Cancelar" para una `vigente`; "Reanudar" y "Cancelar" para una
+    `pausada` (ADR 0022). Presentación, no autorización: el servidor
+    revalida las reglas.
 
-    Acciones (Ver/Editar/Activar/Eliminar, con sus forms+modales) viven en
+    Columnas (ADR 0022): número de aplicación "N de M", cantidad de lotes de
+    la orden y cantidad de órdenes de trabajo realizadas.
+
+    Acciones (con sus forms+modales) viven en
     `_orden-acciones.blade.php`, compartido por la fila de tabla y la
     tarjeta de grilla (`_orden-card.blade.php`) — no se duplica ese bloque
     en dos lugares. Mismo criterio que `contratos/index.blade.php` sobre por
@@ -61,7 +69,9 @@
     $variantePorEstado = [
         'emitida' => 'neutral',
         'vigente' => 'success',
+        'pausada' => 'warning',
         'consumida' => 'info',
+        'cancelada' => 'danger',
         'vencida' => 'danger',
     ];
 @endphp
@@ -85,7 +95,7 @@
             >
                 @puede('operaciones.orden.crear')
                     <x-slot:actions>
-                        <x-atoms.button :href="route('panel.ordenes.create')" variant="primary" icon="add">
+                        <x-atoms.button :href="route('panel.ordenes.create', array_filter(['contrato_id' => $filtros['contrato_id'] ?? null]))" variant="primary" icon="add">
                             {{ __('operaciones.ordenes.nueva') }}
                         </x-atoms.button>
                     </x-slot:actions>
@@ -173,12 +183,13 @@
             @else
                 <div id="ag-ordenes-resultados">
                     <div data-ag-vista-panel="lista">
-                        <x-molecules.index-table columns="3rem 1.6fr 1.6fr 0.7fr 0.9fr 0.9fr 0.9fr 0.8fr var(--ag-row-actions-width)">
+                        <x-molecules.index-table columns="3rem 1.5fr 0.9fr 0.6fr 0.8fr 0.9fr 0.9fr 0.9fr 1.3fr var(--ag-row-actions-width)">
                             <x-slot:head>
                                 <span role="columnheader" class="ag-index-table__indice">{{ __('ui.tabla.col_indice') }}</span>
                                 <span role="columnheader">{{ __('operaciones.ordenes.col_contrato') }}</span>
-                                <span role="columnheader">{{ __('operaciones.ordenes.col_lote') }}</span>
                                 <span role="columnheader">{{ __('operaciones.ordenes.col_aplicacion') }}</span>
+                                <span role="columnheader">{{ __('operaciones.ordenes.col_lotes') }}</span>
+                                <span role="columnheader">{{ __('operaciones.ordenes.col_ordenes_trabajo') }}</span>
                                 <span role="columnheader">{{ __('operaciones.ordenes.col_tipo_aplicacion') }}</span>
                                 <span role="columnheader">{{ __('operaciones.ordenes.col_dosis') }}</span>
                                 <span role="columnheader">{{ __('operaciones.ordenes.col_fecha_emision') }}</span>
@@ -189,9 +200,9 @@
                             @foreach ($ordenes as $orden)
                                 @php
                                     $estadoValor = $orden->estado->value;
-                                    $lotesTexto = collect($loteIdsPorOrden[$orden->id] ?? [])
-                                        ->map(fn ($loteId) => $etiquetasLote[$loteId] ?? "#{$loteId}")
-                                        ->implode(', ');
+                                    $datosOrden = $resumen[$orden->id] ?? ['lotes' => 0, 'ordenes_trabajo' => 0, 'incidencias' => 0, 'pausas' => 0];
+                                    $previstas = $previstasPorContrato[$orden->contrato_id] ?? null;
+                                    $tieneInconvenientes = ($datosOrden['incidencias'] + $datosOrden['pausas']) > 0;
                                     // HU-79 (tarea 110): la orden guarda uno de los dos según la
                                     // categoría de insumo elegida, nunca ambos — ver
                                     // OrdenesController::normalizarDatos().
@@ -206,15 +217,23 @@
                                         {{ ($ordenes->currentPage() - 1) * $ordenes->perPage() + $loop->iteration }}
                                     </span>
                                     <span role="cell">{{ $etiquetasContrato[$orden->contrato_id] ?? "#{$orden->contrato_id}" }}</span>
-                                    <span role="cell">{{ $lotesTexto }}</span>
-                                    <span role="cell" class="ag-ordenes__mono">{{ $orden->nro_aplicacion }}</span>
+                                    <span role="cell" class="ag-ordenes__mono">
+                                        {{ $previstas !== null ? __('operaciones.ordenes.aplicacion_n_de_m', ['nro' => $orden->nro_aplicacion, 'total' => $previstas]) : $orden->nro_aplicacion }}
+                                    </span>
+                                    <span role="cell" class="ag-ordenes__mono">{{ $datosOrden['lotes'] }}</span>
+                                    <span role="cell" class="ag-ordenes__mono">{{ $datosOrden['ordenes_trabajo'] }}</span>
                                     <span role="cell">{{ __('operaciones.tipo_aplicacion.'.$orden->tipo_aplicacion->value) }}</span>
                                     <span role="cell" class="ag-ordenes__mono">{{ $dosisTexto }}</span>
                                     <span role="cell" class="ag-ordenes__mono">{{ $orden->fecha_emision->format('d/m/Y') }}</span>
-                                    <span role="cell">
+                                    <span role="cell" class="ag-ordenes__estados">
                                         <x-atoms.badge :variant="$variantePorEstado[$estadoValor]">
                                             {{ __('operaciones.estado.'.$estadoValor) }}
                                         </x-atoms.badge>
+                                        @if ($tieneInconvenientes)
+                                            <x-atoms.badge variant="warning" icon="warning">
+                                                {{ __('operaciones.ordenes.badge_inconvenientes') }}
+                                            </x-atoms.badge>
+                                        @endif
                                     </span>
 
                                     <span role="cell" class="ag-index-table__acciones">

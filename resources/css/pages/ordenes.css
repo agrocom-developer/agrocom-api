@@ -50,6 +50,16 @@
     font-family: var(--ag-font-family-mono);
 }
 
+/* Estado de la orden + badge "Con inconvenientes" (ADR 0022): dos badges en la
+   misma celda o cabecera de tarjeta, que se acomodan en otra línea si no
+   entran. */
+.ag-ordenes__estados {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--ag-space-1);
+}
+
 /* Vista en grilla del listado (toggle lista/grilla, 17/9/2026): 1 columna
    por defecto (móvil) → 2 en tableta → 3 en escritorio → 4 en pantallas
    XXL, según el ancho REAL del contenedor `.ag-ordenes` (ver arriba) — no
@@ -400,61 +410,6 @@
     width: 100%;
 }
 
-/* Tabla de lotes con checkbox — mismo estilo que
-   `.ag-contratos-form__modal-tabla` (contratos.css, línea ~378), pero acá
-   es persistente (no en modal) y genera su propia `<table>` desde JS.
-   Contenedor: borde/radio/fondo, filas paginadas dentro. */
-.ag-ordenes-form__lotes-tabla {
-    border: 1px solid var(--ag-color-border-card);
-    border-radius: var(--ag-radius-md);
-    background-color: var(--ag-color-surface-card);
-    overflow: hidden;
-}
-
-.ag-ordenes-form__lotes-tabla table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.ag-ordenes-form__lotes-tabla thead {
-    background-color: var(--ag-color-bg-table-head);
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-xs);
-    font-weight: var(--ag-font-weight-medium);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.ag-ordenes-form__lotes-tabla thead td {
-    padding: var(--ag-space-3) var(--ag-space-4);
-    text-align: left;
-    border-bottom: 1px solid var(--ag-color-border-row);
-}
-
-.ag-ordenes-form__lotes-tabla-fila {
-    border-top: 1px solid var(--ag-color-border-row);
-    color: var(--ag-color-text);
-    font-size: var(--ag-font-size-sm);
-}
-
-.ag-ordenes-form__lotes-tabla-fila:hover {
-    background-color: var(--ag-color-bg-row-hover);
-}
-
-.ag-ordenes-form__lotes-tabla-fila td {
-    padding: var(--ag-space-3) var(--ag-space-4);
-    vertical-align: middle;
-}
-
-/* Celda de checkbox — el control real es el `<label class="ag-checkbox-group__option">`
-   que arma el JS adentro (mismo marcado que `atoms/checkbox-group`, ver
-   checkbox-group.css): esa clase ya trae `position: relative` +
-   `display: inline-flex` + `cursor: pointer`, así que acá solo se acota el
-   ancho de la celda para que el label no se estire más de lo necesario. */
-.ag-ordenes-form__lotes-tabla-checkbox {
-    width: 2.5rem;
-}
-
 /* Input de hectáreas dentro de la tabla — oculto hasta que se tilden
    el checkbox de la fila (lógica en JS). Aunque lleva clase `.ag-input__control`
    (por reutilización de estilos base), acá es un <input> directo en una <td>,
@@ -502,3 +457,4 @@
     color: var(--ag-color-text-faint);
     font-size: var(--ag-font-size-sm);
 }
+

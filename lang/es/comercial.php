@@ -472,6 +472,10 @@ return [
         'aside_cobranza_estado_label' => 'Estado',
         'aside_cobranza_proximamente' => 'Disponible próximamente',
         'aside_ver_mas' => 'Ver más',
+        'aside_nueva_orden' => 'Nueva orden',
+        'aside_nueva_orden_no_vigente' => 'Solo un contrato En Ejecución admite órdenes de aplicación.',
+        'aside_nueva_orden_con_abierta' => 'Ya tiene una aplicación abierta: ciérrala o cancélala antes de emitir otra.',
+        'aside_nueva_orden_completas' => 'Ya tiene todas sus aplicaciones.',
         'aside_ver_mas_proximamente' => 'Todavía no se puede filtrar este listado por contrato.',
 
         // Errores de validación
@@ -886,6 +890,7 @@ return [
         'lotes_ya_contratados' => 'Estos lotes ya están en otros contratos de esta campaña: :codigos. Quítalos para poder guardar.',
         'contrato_activacion_lote_ocupado' => "No se puede aprobar el contrato #:id: el lote ':codigo' ya está en el contrato #:contrato de esta campaña.",
         'contrato_activacion_lotes_ocupados' => 'No se puede aprobar el contrato #:id: estos lotes ya están en otros contratos de esta campaña: :codigos.',
+        'contrato_con_aplicacion_abierta' => 'El contrato #:id tiene una aplicación abierta. Cierra o cancela la aplicación antes de cancelarlo o finalizarlo.',
         'propiedad_con_lotes_asociados' => "La propiedad ':nombre' tiene lotes asociados y no se puede eliminar.",
         'propiedad_nombre_duplicado' => "Ya existe una propiedad activa con el nombre ':nombre' para este cliente.",
         'siembra_duplicada' => "El lote ':codigo' ya tiene una siembra cargada para esta campaña.",

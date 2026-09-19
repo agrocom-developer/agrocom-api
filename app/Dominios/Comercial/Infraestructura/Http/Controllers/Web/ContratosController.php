@@ -13,6 +13,7 @@ use App\Dominios\Comercial\Aplicacion\ObtenerAvanceComercial;
 use App\Dominios\Comercial\Dominio\EstadoContrato;
 use App\Dominios\Comercial\Dominio\Excepciones\ActivacionContratoNoDisponible;
 use App\Dominios\Comercial\Dominio\Excepciones\CampaniaCerrada;
+use App\Dominios\Comercial\Dominio\Excepciones\ContratoConAplicacionAbierta;
 use App\Dominios\Comercial\Dominio\Excepciones\LoteAjenoAlCliente;
 use App\Dominios\Comercial\Dominio\Excepciones\LotesYaContratados;
 use App\Dominios\Comercial\Dominio\Excepciones\TransicionContratoNoPermitida;
@@ -339,7 +340,7 @@ final class ContratosController
 
         try {
             $cambiarEstadoContrato->ejecutar($contrato, $hacia);
-        } catch (TransicionContratoNoPermitida|ActivacionContratoNoDisponible $excepcion) {
+        } catch (TransicionContratoNoPermitida|ActivacionContratoNoDisponible|ContratoConAplicacionAbierta $excepcion) {
             return redirect()
                 ->route('panel.contratos.index')
                 ->withErrors(['estado' => $excepcion->getMessage()]);
@@ -391,6 +392,35 @@ final class ContratosController
     {
         return collect($lecturaCampania->todas())
             ->mapWithKeys(fn (DatosCampania $campania): array => [$campania->id => $campania->codigo]);
+    }
+
+    /**
+     * Enlace a "Nueva orden de aplicación" desde el contrato, o el motivo por el
+     * que hoy no se puede (ADR 0022): sin `href` el botón se pinta deshabilitado
+     * con `tooltip`. Memento de navegación (17/9/2026): la orden vuelve a este
+     * contrato al terminar.
+     *
+     * @return array{href?: string, tooltip?: string}
+     */
+    private function accionNuevaOrden(Contrato $contrato, LecturaResumenOrdenesContrato $lecturaResumenOrdenes): array
+    {
+        if ($contrato->estado !== EstadoContrato::Vigente) {
+            return ['tooltip' => __('comercial.contratos.aside_nueva_orden_no_vigente')];
+        }
+
+        if ($lecturaResumenOrdenes->resumen([$contrato->id])['abiertas'] > 0) {
+            return ['tooltip' => __('comercial.contratos.aside_nueva_orden_con_abierta')];
+        }
+
+        if ($lecturaResumenOrdenes->siguienteAplicacion($contrato->id, (int) $contrato->aplicaciones_previstas) === null) {
+            return ['tooltip' => __('comercial.contratos.aside_nueva_orden_completas')];
+        }
+
+        return ['href' => route('panel.ordenes.create', [
+            'contrato_id' => $contrato->id,
+            'volver_a' => route('panel.contratos.edit', $contrato),
+            'volver_texto' => $contrato->cliente->razon_social,
+        ])];
     }
 
     /**
@@ -466,8 +496,13 @@ final class ContratosController
             return null;
         }
 
-        $resumenOrdenes = $puedeVerOrdenes ? $lecturaResumenOrdenes->resumen([$contrato->id]) : ['total' => 0, 'vigentes' => 0];
+        $resumenOrdenes = $puedeVerOrdenes ? $lecturaResumenOrdenes->resumen([$contrato->id]) : ['total' => 0, 'vigentes' => 0, 'abiertas' => 0];
         $totalOrdenes = $resumenOrdenes['total'];
+
+        // "Nueva orden" (ADR 0022): solo un contrato En Ejecución, sin aplicación
+        // abierta y con aplicaciones por delante admite una orden nueva. Si no,
+        // el botón queda deshabilitado y dice por qué.
+        $nuevaOrden = $this->accionNuevaOrden($contrato, $lecturaResumenOrdenes);
 
         if (! $puedeVerOrdenes || $totalOrdenes === 0) {
             return [
@@ -476,15 +511,7 @@ final class ContratosController
                 'titulo' => __('comercial.contratos.aside_vacio_titulo'),
                 'detalle' => __('comercial.contratos.aside_vacio_detalle'),
                 'mostrarAccion' => $puedeCrearOrdenes,
-                'accion' => [
-                    'label' => __('comercial.contratos.aside_vacio_accion'),
-                    // Memento de navegación (17/9/2026): cruza a `Operaciones`
-                    // — mismo criterio que ClientesController::resumenRelacionado().
-                    'href' => route('panel.ordenes.create', [
-                        'volver_a' => route('panel.contratos.edit', $contrato),
-                        'volver_texto' => $contrato->cliente->razon_social,
-                    ]),
-                ],
+                'accion' => ['label' => __('comercial.contratos.aside_vacio_accion'), ...$nuevaOrden],
             ];
         }
 
@@ -500,6 +527,13 @@ final class ContratosController
             'tooltip' => __('comercial.contratos.aside_ver_mas_proximamente'),
         ];
 
+        // El listado de órdenes SÍ filtra por contrato desde el ADR 0022: la tarjeta
+        // de órdenes lleva un enlace real, y "Nueva orden" cuando corresponde.
+        $accionesOrdenes = array_values(array_filter([
+            $puedeCrearOrdenes ? ['label' => __('comercial.contratos.aside_nueva_orden'), 'icon' => 'add', ...$nuevaOrden] : null,
+            ['label' => __('comercial.contratos.aside_ver_mas'), 'icon' => 'open_in_new', 'href' => route('panel.ordenes.index', ['contrato_id' => $contrato->id])],
+        ]));
+
         return [
             'tieneDatos' => true,
             'tarjetas' => [
@@ -514,7 +548,7 @@ final class ContratosController
                             'variant' => $resumenOrdenes['vigentes'] > 0 ? 'success' : 'neutral',
                         ],
                     ],
-                    'accion' => $accionVerMas,
+                    'acciones' => $accionesOrdenes,
                 ],
                 [
                     'titulo' => __('comercial.contratos.aside_orden_trabajo_titulo'),

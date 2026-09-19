@@ -29,6 +29,15 @@
       estado no compite con el CTA" que ya documenta `atoms/button`).
     - modalIcon (nullable): ícono Material Symbols del círculo — sin
       pasarlo, `warning` en tono danger, `check_circle` en cualquier otro.
+
+    Slot por defecto (opcional, 19/9/2026): CAMPOS que viajan con la
+    confirmación — p. ej. el motivo de pausar o cancelar una orden. Se
+    dibujan entre el mensaje y los botones. Los controles NO están dentro del
+    `<form>` (ese vive fuera, ver `formId`): cada uno se asocia a él con el
+    atributo HTML `form="{{ $formId }}"` (los átomos `textarea`/`select`/
+    `input` lo dejan pasar a su control), y el navegador los valida y los
+    envía con el botón "Confirmar". Sin slot, el modal se ve exactamente como
+    siempre.
 --}}
 @props([
     'id',
@@ -56,6 +65,11 @@
                 </span>
                 <h2 class="ag-confirm-modal__title" id="{{ $tituloId }}">{{ $title }}</h2>
                 <p class="ag-confirm-modal__message">{{ $message }}</p>
+                @if (! $slot->isEmpty())
+                    <div class="ag-confirm-modal__campos">
+                        {{ $slot }}
+                    </div>
+                @endif
             </div>
             <div class="ag-confirm-modal__footer">
                 <x-atoms.button type="button" variant="outline" data-bs-dismiss="modal">

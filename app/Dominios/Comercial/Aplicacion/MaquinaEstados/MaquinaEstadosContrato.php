@@ -5,10 +5,12 @@ namespace App\Dominios\Comercial\Aplicacion\MaquinaEstados;
 use App\Dominios\Comercial\Aplicacion\Contrato\VerificadorLotesDelContrato;
 use App\Dominios\Comercial\Dominio\EstadoContrato;
 use App\Dominios\Comercial\Dominio\Excepciones\ActivacionContratoNoDisponible;
+use App\Dominios\Comercial\Dominio\Excepciones\ContratoConAplicacionAbierta;
 use App\Dominios\Comercial\Dominio\Excepciones\TransicionContratoNoPermitida;
 use App\Dominios\Comercial\Dominio\MaquinaEstados\TransicionesContrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\ContratoLote;
+use App\Dominios\Operaciones\Contratos\LecturaResumenOrdenesContrato;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -34,9 +36,14 @@ use Illuminate\Support\Facades\DB;
  * contratos entre `borrador` y `conflicto`, y se invoca cada vez que cambia
  * qué lotes están retenidos (aprobar, cancelar, finalizar, o editar los
  * lotes de un contrato — esto último desde `Aplicacion/ActualizarContrato`).
+ *
+ * Cancelar o finalizar exige que el contrato no tenga una aplicación abierta
+ * (ADR 0022): se lee por el contrato de `Operaciones`, nunca por su tabla.
  */
 final class MaquinaEstadosContrato
 {
+    public function __construct(private readonly LecturaResumenOrdenesContrato $lecturaOrdenes) {}
+
     /**
      * @param  array<string, mixed>  $atributos  sin `estado`: lo fija esta clase.
      */
@@ -108,13 +115,15 @@ final class MaquinaEstadosContrato
     }
 
     /**
-     * `vigente → finalizado` (HU-23, tarea 34). Sin guarda adicional: el
-     * cierre real por consumo de hectáreas es de otro dominio
-     * (`Operaciones`), que todavía no dispara esta transición. Libera los
+     * `vigente → finalizado` (HU-23, tarea 34). Lo dispara solo el cierre de la
+     * última aplicación (`FinalizarContratoPorUltimaAplicacion`, ADR 0022) o el
+     * encargado a mano — p. ej. el dueño decide finalizar en pleno proceso por
+     * falta de pago. Guarda: no puede quedar una aplicación abierta. Libera los
      * lotes que el contrato retenía: los contratos en `conflicto` que ya no
      * choquen con ninguno vuelven a `borrador`.
      *
      * @throws TransicionContratoNoPermitida si `$contrato` no está `vigente`.
+     * @throws ContratoConAplicacionAbierta si el contrato tiene una aplicación abierta.
      */
     public function finalizar(Contrato $contrato): Contrato
     {
@@ -123,12 +132,15 @@ final class MaquinaEstadosContrato
 
     /**
      * `borrador → cancelado`, `conflicto → cancelado` o `vigente → cancelado`
-     * (HU-23, tarea 34): baja anticipada. Sin guarda adicional — cancelar es
-     * siempre una salida disponible desde cualquier estado no terminal. Si el
-     * contrato retenía lotes (`vigente`), los libera: los contratos en
-     * `conflicto` que ya no choquen con ninguno vuelven a `borrador`.
+     * (HU-23, tarea 34): baja anticipada — salida disponible desde cualquier
+     * estado no terminal, salvo que tenga una aplicación abierta (ADR 0022:
+     * primero se cierra o se cancela esa aplicación; luego el contrato se puede
+     * cancelar aunque queden aplicaciones pendientes). Si el contrato retenía
+     * lotes (`vigente`), los libera: los contratos en `conflicto` que ya no
+     * choquen con ninguno vuelven a `borrador`.
      *
      * @throws TransicionContratoNoPermitida si `$contrato` ya está `finalizado` o `cancelado`.
+     * @throws ContratoConAplicacionAbierta si el contrato tiene una aplicación abierta.
      */
     public function cancelar(Contrato $contrato): Contrato
     {
@@ -179,6 +191,7 @@ final class MaquinaEstadosContrato
      *
      * @throws TransicionContratoNoPermitida si la transición no está en la tabla o el destino es del sistema.
      * @throws ActivacionContratoNoDisponible si el destino es `vigente` desde `borrador` y falta alguna guarda.
+     * @throws ContratoConAplicacionAbierta si el destino es `finalizado`/`cancelado` y el contrato tiene una aplicación abierta.
      */
     public function cambiarA(Contrato $contrato, EstadoContrato $hacia): Contrato
     {
@@ -252,12 +265,23 @@ final class MaquinaEstadosContrato
      * retenía lotes, al soltarlos se reconcilia la campaña para que los
      * contratos en `conflicto` que ya no choquen vuelvan a `borrador`. Todo
      * en una transacción: o cambia el estado Y se reconcilian los demás, o
-     * nada.
+     * nada. Antes de tocar nada verifica que no haya una aplicación abierta
+     * (ADR 0022) — después de la tabla de transiciones, para que un estado que
+     * ni siquiera admite la salida reporte eso primero.
      *
      * @throws TransicionContratoNoPermitida si la transición no está permitida.
+     * @throws ContratoConAplicacionAbierta si el contrato tiene una aplicación abierta.
      */
     private function transicionarLiberandoLotes(Contrato $contrato, EstadoContrato $hasta): Contrato
     {
+        if (! TransicionesContrato::permitida($contrato->estado, $hasta)) {
+            throw TransicionContratoNoPermitida::entre($contrato->estado, $hasta);
+        }
+
+        if ($this->lecturaOrdenes->resumen([$contrato->id])['abiertas'] > 0) {
+            throw ContratoConAplicacionAbierta::paraContrato($contrato->id);
+        }
+
         $retenia = $contrato->estado->retieneLotes();
 
         return DB::transaction(function () use ($contrato, $hasta, $retenia): Contrato {

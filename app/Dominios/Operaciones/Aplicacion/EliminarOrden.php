@@ -3,18 +3,25 @@
 namespace App\Dominios\Operaciones\Aplicacion;
 
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
-use App\Dominios\Operaciones\Dominio\Excepciones\OrdenVigenteNoEliminable;
+use App\Dominios\Operaciones\Dominio\Excepciones\OrdenNoEliminable;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Baja lógica de una orden de aplicación (HU-25, tarea 38). Soft delete,
  * nunca físico (ADR 0007).
  *
- * Decisión de esta tarea: una orden `vigente` NO se puede eliminar
- * directamente — ver `Dominio/Excepciones/OrdenVigenteNoEliminable`. Una
- * orden `emitida` (todavía no publicada al catálogo) sí se da de baja
- * libremente.
+ * Reforma 19/9/2026 (ADR 0022): solo una orden `emitida` — todavía sin
+ * publicar al catálogo de campo — se da de baja. Cualquier otra ya tiene
+ * historia (trabajos, pausas, un cierre, una cancelación con su motivo), y
+ * borrarla liberaría su número correlativo: si una aplicación no se llevó
+ * adelante, se CANCELA, no se elimina. Eliminar una `emitida` libera la
+ * "aplicación abierta" del contrato, así se puede emitir otra.
+ *
+ * La copia de lotes de la orden (`ope_orden_lotes`) se da de baja junto con
+ * ella: sin esto quedaría huérfana y seguiría contando como "lote con orden"
+ * (`LecturaLotesConOrdenPorContrato`).
  *
  * `updated_by` se fija a mano ANTES del `delete()`: el soft delete de
  * Eloquent hace un `UPDATE` por query builder que no dispara el evento
@@ -23,20 +30,25 @@ use Illuminate\Support\Facades\Auth;
  */
 final class EliminarOrden
 {
-    /** @throws OrdenVigenteNoEliminable si `$orden` está `vigente`. */
+    /** @throws OrdenNoEliminable si `$orden` no está `emitida`. */
     public function ejecutar(OrdenAplicacion $orden): void
     {
-        if ($orden->estado === EstadoOrdenAplicacion::Vigente) {
-            throw OrdenVigenteNoEliminable::porId((int) $orden->id);
-        }
+        DB::transaction(function () use ($orden): void {
+            $actual = OrdenAplicacion::query()->lockForUpdate()->findOrFail($orden->id);
 
-        $usuarioId = Auth::id();
+            if ($actual->estado !== EstadoOrdenAplicacion::Emitida) {
+                throw OrdenNoEliminable::porEstado($actual->estado->value);
+            }
 
-        if ($usuarioId !== null) {
-            $orden->updated_by = (int) $usuarioId;
-            $orden->save();
-        }
+            $usuarioId = Auth::id();
 
-        $orden->delete();
+            if ($usuarioId !== null) {
+                $actual->updated_by = (int) $usuarioId;
+                $actual->save();
+            }
+
+            $actual->ordenLotes()->delete();
+            $actual->delete();
+        });
     }
 }

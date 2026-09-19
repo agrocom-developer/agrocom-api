@@ -1,6 +1,6 @@
 # Estado y continuidad del proyecto
 
-**Última actualización: 2026-09-01.** Este documento no es la especificación (que es estable) ni el plan de sprints (que es la estrategia global con HU y fases): es la bitácora de continuidad entre iteraciones — qué se avanzó, qué falta, y qué leer primero para no releer todo `docs/` de cero en cada sesión nueva. Lo mantiene el agente `memoria-contexto` (`.claude/agents/memoria-contexto.md`) al cierre de cada sesión de trabajo relevante.
+**Última actualización: 2026-09-19.** Este documento no es la especificación (que es estable) ni el plan de sprints (que es la estrategia global con HU y fases): es la bitácora de continuidad entre iteraciones — qué se avanzó, qué falta, y qué leer primero para no releer todo `docs/` de cero en cada sesión nueva. Lo mantiene el agente `memoria-contexto` (`.claude/agents/memoria-contexto.md`) al cierre de cada sesión de trabajo relevante.
 
 ## Cómo usar este documento
 
@@ -40,6 +40,31 @@ Al empezar una iteración nueva: leé este documento completo primero (es corto)
 > El orden de ejecución cruza las dos tandas y está en
 > `docs/gestion/cola_tareas.md` ("Por qué ese orden"), no en el número de
 > sprint. Para retomar el hilo, leé eso, no la tabla de abajo.
+
+> **Nota del 19/9/2026 — la corrección del dueño del 18/9 sobre contratos,
+> lotes y órdenes de aplicación, implementada en dos ramas y sin integrar.**
+> Mirando el panel andando, el dueño desechó dos enfoques y dejó decidido el
+> reemplazo (`docs/negocio/observaciones_operaciones_comercial_2026-09-18.md`).
+> Quedó en dos ramas locales, ambas **sin push ni PR todavía**:
+>
+> - **`feature/contrato-conflicto` — exclusividad de lotes entre contratos**
+>   (HU-96, Sprint 19, **ADR 0021**): un contrato `vigente` o `pausado` retiene
+>   sus lotes para toda la campaña, y los `borrador` que compartían lote pasan
+>   solos a `conflicto` ("En conflicto").
+> - **`feature/orden-correlativa` — órdenes de aplicación** (HU-97, Sprint 20,
+>   **ADR 0022**): cada orden es una aplicación completa del contrato, con número
+>   correlativo y una sola abierta por contrato; estados nuevos `pausada` y
+>   `cancelada` (solo desde el panel); cerrar la última aplicación finaliza el
+>   contrato y libera sus lotes. Nace de `feature/contrato-conflicto`.
+>
+> **Pendiente:** la prueba manual del dueño, tras `migrate:fresh --seed` en el
+> compose (las migraciones de `feature/orden-correlativa` frenan con un mensaje
+> si la base ya trae órdenes con número repetido o varias abiertas por
+> contrato); la revisión línea por línea, posterior a la integración, de las
+> máquinas de estados de la orden y del contrato; y las limitaciones conocidas de
+> HU-97 (la app de campo no se entera de una orden pausada, cancelada o cerrada;
+> las sesiones abiertas no se frenan; un lote agregado al contrato no entra en la
+> aplicación abierta), que **no están resueltas**.
 
 
 **Sprint 1 cerrado en lo que es de este repo; sprint 2 en curso (1/9/2026).**

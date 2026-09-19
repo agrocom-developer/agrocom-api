@@ -639,6 +639,20 @@ Route::middleware('auth:interno')->group(function () {
         Route::post('/panel/ordenes/{orden}/activar', [OrdenesController::class, 'activar'])
             ->name('panel.ordenes.activar');
 
+        // ADR 0022: la ejecución de la aplicación se decide desde el panel — la
+        // app de campo nunca pausa, cierra ni cancela una orden.
+        Route::post('/panel/ordenes/{orden}/pausar', [OrdenesController::class, 'pausar'])
+            ->name('panel.ordenes.pausar');
+
+        Route::post('/panel/ordenes/{orden}/reanudar', [OrdenesController::class, 'reanudar'])
+            ->name('panel.ordenes.reanudar');
+
+        Route::post('/panel/ordenes/{orden}/cerrar', [OrdenesController::class, 'cerrar'])
+            ->name('panel.ordenes.cerrar');
+
+        Route::post('/panel/ordenes/{orden}/cancelar', [OrdenesController::class, 'cancelar'])
+            ->name('panel.ordenes.cancelar');
+
         Route::delete('/panel/ordenes/{orden}', [OrdenesController::class, 'destroy'])
             ->name('panel.ordenes.destroy');
 

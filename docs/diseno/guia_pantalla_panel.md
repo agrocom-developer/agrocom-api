@@ -387,11 +387,16 @@ form-layout
          reusan el grid de 2 columnas de form-section, NUNCA anidan
          summary-card adentro: dos superficies de tarjeta una dentro de la
          otra duplica el chrome) + index-table para cualquier sub-lista
-  aside: progress-meter/summary-card para metadatos + link-row en una
-         form-section ("Relacionado") + timeline en una form-section
-         ("Actividad/historial", siempre ÚLTIMA: es la única de largo
-         variable y no debe empujar hacia abajo a las demás) — mismas
-         piezas que ya usa el aside del Formulario (§6.3.1)
+  aside: progress-meter/summary-card para metadatos + form-section
+         condicional de avisos (p. ej. "Inconvenientes del campo", solo si
+         los hay) + link-row en una form-section ("Relacionado") + timeline
+         en una form-section ("Actividad/historial", siempre ÚLTIMA: es la
+         única de largo variable y no debe empujar hacia abajo a las demás)
+         — mismas piezas que ya usa el aside del Formulario (§6.3.1)
+acciones del header: un botón por transición que admite el estado, con el
+         color del ESTADO DE LLEGADA; los que piden datos (motivo, causa)
+         abren un `confirm-modal` con esos campos en su slot — nunca un
+         modal armado a mano
 ```
 
 Reglas fijas:

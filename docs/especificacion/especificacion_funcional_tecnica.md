@@ -73,6 +73,7 @@ Modelo de autorización: `sec_*` con permiso abstracto y multi-rol (ver ADR 0004
 | Acción | Piloto | Auxiliar | Jefe de campo | Enc. operaciones | Dueño | Agrónomo |
 |---|---|---|---|---|---|---|
 | Ver orden de aplicación | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |
+| Pausar, reanudar, cerrar o cancelar una orden de aplicación ⁶ | — | — | — | ✔ | — | — |
 | Abrir trabajo / registrar condiciones | ✔ | — | ✔ | — | — | — |
 | Registrar recarga y batería | — | ✔ | ✔ | — | — | — |
 | Preparar mezcla | — | ✔ | ✔ | — | — | — |
@@ -93,7 +94,7 @@ Modelo de autorización: `sec_*` con permiso abstracto y multi-rol (ver ADR 0004
 | Aprobar planilla | — | — | — | — | ✔ | — |
 | Gestionar usuarios | — | — | — | ✔ ⁵ | ✔ | — |
 
-¹ Solo trabajos de otros pilotos, nunca los propios (regla por registro, a nivel persona — ver ADR 0004). ² Sin acceso a la línea de ganancia. ³ Solo los lotes de su propio contrato, desde el portal. ⁴ Solo salidas de stock de su base; las entradas las carga el encargado. ⁵ No puede crear ni modificar usuarios con rol dueño.
+¹ Solo trabajos de otros pilotos, nunca los propios (regla por registro, a nivel persona — ver ADR 0004). ² Sin acceso a la línea de ganancia. ³ Solo los lotes de su propio contrato, desde el portal. ⁴ Solo salidas de stock de su base; las entradas las carga el encargado. ⁵ No puede crear ni modificar usuarios con rol dueño. ⁶ Solo desde el panel (permisos `operaciones.orden.pausar` —pausar y reanudar—, `operaciones.orden.cerrar` y `operaciones.orden.cancelar`): la app de campo nunca pausa, cierra ni cancela una orden. Lo decide el operador junto con el dueño, leyendo lo que reporta el equipo (ver §5, ADR 0022).
 
 Reglas de identidad y acceso (ver ADR 0004 para el modelo completo):
 
@@ -142,8 +143,8 @@ Llevan `campania_id` propio solo las entidades donde alguien la **elige explíci
 
 ### 4.3 Operación
 
-- `ordenes_aplicacion` — id, contrato_id, nro_aplicacion ("Número de aplicaciones"), tipo_aplicacion (siembra / desarrollo / cosecha), tipo_insumo (solido / liquido), litros_ha (líquido) o kilos por vuelo (sólido), humedad_minima, parámetros de vuelo acordados (altura_vuelo_m, velocidad_vuelo_kmh, ancho_pasada_m), observaciones, emitida_por (agrónomo), fecha_emision, estado. *`tipo_aplicacion` dice en qué momento del ciclo se fumiga: `siembra` (barbecho o presiembra), `desarrollo` (el grueso de las 6-8 aplicaciones, desde el desarrollo vegetativo) y `cosecha` (desecante previo a cosechar). Cambia qué se espera de la aplicación y cómo se agrupa el informe de avance.* *`tipo_insumo` (HU-79) separa el catálogo de productos: sólido (fertilizante, semilla de pasto) pide kilos por vuelo; líquido (insecticida, herbicida, fungicida, fertilizante, coadyuvante, antiespumante) pide litros por hectárea.*
-- `orden_lotes` — id, orden_id, lote_id, hectareas_solicitadas. *Nota del 14/9/2026 (HU-92, amplía HU-70): reemplaza el `lote_id` único que tenía `ordenes_aplicacion` — una orden pasa a cubrir N lotes de la propiedad, y "una orden vigente por lote" migra su índice único acá. El reparto por equipo (`/panel/asignacion-equipos`) elige, por equipo, qué lotes de esta lista le corresponden y sus hectáreas.*
+- `ordenes_aplicacion` — id, contrato_id, nro_aplicacion (correlativo: lo calcula el servidor, no se elige), tipo_aplicacion (siembra / desarrollo / cosecha), tipo_insumo (solido / liquido), litros_ha (líquido) o kilos por vuelo (sólido), humedad_minima, parámetros de vuelo acordados (altura_vuelo_m, velocidad_vuelo_kmh, ancho_pasada_m), observaciones, emitida_por (agrónomo), fecha_emision, estado (`emitida` / `vigente` / `pausada` / `consumida` / `cancelada` / `vencida`; máquina en §5), motivo_pausa, pausada_at, reanudada_at, cerrada_at, cancelada_at, causa_cancelacion (`cliente` / `fuerza_mayor`), motivo_cancelacion. *Reforma del 19/9/2026 (ADR 0022): una orden es UNA aplicación completa del contrato — cubre todas sus hectáreas y lotes, y sus hectáreas son las `hectareas_contratadas`; ya no se eligen lotes ni hectáreas parciales por orden. `nro_aplicacion` es correlativo (1, 2, 3…): un contrato sin órdenes parte de la aplicación 1 y no puede pasar de `aplicaciones_previstas`; el campo que HU-92 había rotulado "Número de aplicaciones" deja de elegirse. Garantías en base de datos: índice único parcial "una orden abierta por contrato" (`ope_ordenes_aplicacion (contrato_id) WHERE deleted_at IS NULL AND estado IN ('emitida','vigente','pausada')`) e índice único parcial del número por contrato (`(contrato_id, nro_aplicacion)`, sin contar las órdenes eliminadas ni las canceladas por fuerza mayor, que no consumen su número — ver §5); y `CHECK` de estado con `pausada` y `cancelada` (solo Postgres). Las migraciones fallan a propósito, con un mensaje que nombra los contratos, si la base ya trae órdenes con número repetido o varias abiertas por contrato.* *`tipo_aplicacion` dice en qué momento del ciclo se fumiga: `siembra` (barbecho o presiembra), `desarrollo` (el grueso de las 6-8 aplicaciones, desde el desarrollo vegetativo) y `cosecha` (desecante previo a cosechar). Cambia qué se espera de la aplicación y cómo se agrupa el informe de avance.* *`tipo_insumo` (HU-79) separa el catálogo de productos: sólido (fertilizante, semilla de pasto) pide kilos por vuelo; líquido (insecticida, herbicida, fungicida, fertilizante, coadyuvante, antiespumante) pide litros por hectárea.*
+- `orden_lotes` — id, orden_id, lote_id, hectareas_solicitadas. *Nota del 19/9/2026 (ADR 0022, reemplaza la del 14/9/2026 de HU-92): es la **copia automática**, tomada al emitir la orden, de TODOS los lotes del contrato, con `hectareas_solicitadas` = las hectáreas completas del lote. Ya no se eligen lotes ni hectáreas parciales por lote al crear la orden: la premisa de HU-92 —una orden que cubre N lotes elegidos, cada uno con sus hectáreas solicitadas— quedó **superada**, y con ella la guarda "una orden vigente por lote" (la reemplaza "una orden abierta por contrato", arriba; los choques de lotes se garantizan antes, entre contratos, ADR 0021). La tabla se conserva —y no se derivan los lotes en cada lectura— para que el conjunto de lotes de una orden ya emitida no cambie y para que `GET /api/sync/catalogo` mantenga su forma (`lotes[{lote_id, hectareas_solicitadas}]`). En el panel la sección "Lotes" de la orden es una lista de solo lectura (código de cada lote y su propiedad). El reparto por equipo (`/panel/asignacion-equipos`) **no cambia**: elige, por equipo, qué lotes de esta lista le corresponden y sus hectáreas.*
 - `recetas_mezcla` — id, orden_id, volumen_referencia_l, agitacion_requerida, ph_objetivo, observaciones
 - `receta_items` — id, receta_id, secuencia, producto_id, tipo (fitosanitario / coadyuvante / antiespumante / antideriva / corrector_ph / aceite / fertilizante_foliar), dosis_valor, dosis_unidad (ml/ha, g/ha, ml/100L, %v/v), pre_disolucion_requerida (bool), nota. *La receta la define el agrónomo, con su orden de incorporación; Agrocom la ejecuta y la documenta, no la modifica.*
 - `productos` — id, nombre_comercial, ingrediente_activo, formulación (WG / WP / SC / SL / EC / EW / OD / adyuvante), unidad, densidad, proveedor
@@ -232,7 +233,34 @@ planificado ──► autorizado ──► en_ejecucion ──► parcial ──
 
 **Validación de suma:** la suma de sesiones no puede superar las hectáreas del lote más una tolerancia configurable por solape. Si la excede, el trabajo queda `observado` hasta que el encargado lo resuelva.
 
-**Otras máquinas:** Orden de aplicación: `emitida → vigente → consumida | vencida`. Rendición: `pendiente → procesada | rechazada`. Contrato: ver el siguiente bloque.
+**Otras máquinas:** Rendición: `pendiente → procesada | rechazada`. Orden de aplicación y Contrato: ver los dos bloques siguientes.
+
+**Orden de aplicación** (servicio de dominio `MaquinaEstadosOrden` sobre la tabla de transiciones permitidas; ADR 0022):
+```
+emitida ──► vigente ──► consumida
+              │  ▲
+              ▼  │
+            pausada
+```
+*`cancelada` se alcanza desde `vigente` y `pausada`. `consumida`, `cancelada` y `vencida` son terminales; `vencida` sigue sin disparador de negocio (ninguna transición llega a ella).*
+
+| Desde | Transiciones permitidas |
+|---|---|
+| `emitida` | `vigente` |
+| `vigente` | `pausada`, `consumida`, `cancelada` |
+| `pausada` | `vigente`, `cancelada` |
+| `consumida`, `cancelada`, `vencida` | ninguna (sin salida) |
+
+- **Abierta y cerrada.** Una aplicación está *abierta* mientras la orden está `emitida`, `vigente` o `pausada`, y *cerrada* en `consumida`, `cancelada` o `vencida`.
+- **Cuándo se puede emitir una orden nueva.** Solo si (a) el contrato está `vigente` ("En Ejecución") —antes se permitía emitir con el contrato en cualquier estado, a propósito; esa decisión se revoca—, (b) no tiene una aplicación abierta y (c) no agotó sus `aplicaciones_previstas`. Una sola orden abierta por contrato está garantizada además por un índice único parcial (§4.3). Las órdenes ya no validan choques de lotes —la guarda "orden vigente duplicada en lote" se eliminó—: eso se garantiza antes, entre contratos (ADR 0021).
+- **Editar y eliminar.** Solo se editan y eliminan las órdenes `emitida`. Una `emitida` que ya no se quiere se **elimina** (baja lógica), no se cancela.
+- **Pausar** (`vigente → pausada`) exige un motivo escrito; **reanudar** (`pausada → vigente`) no pide nada.
+- **Cerrar** (`vigente → consumida`) es una acción **manual** del encargado, con el informe del equipo a la vista: nada cierra la orden solo.
+- **Cancelar** (`vigente | pausada → cancelada`) exige una **causa** (`cliente` o `fuerza_mayor`) y un **motivo** escrito. La falta de pago se registra como causa `cliente` más su motivo.
+- **Numeración y causa de cancelación.** El número de aplicación es correlativo y lo calcula el servidor (§4.3). Una aplicación cancelada por **fuerza mayor** (p. ej. un dron caído) **no** consume su número: se rehace con el mismo. Una cancelada por causa del **cliente** **sí** lo consume: la siguiente lleva el número que sigue.
+- **Solo el panel decide.** La app de campo nunca pausa, cierra ni cancela una orden: lo decide el operador junto con el dueño, leyendo lo que reporta el equipo. Lo que la app sí registra son las incidencias (`ope_incidencias`) y las pausas de sesión (`ope_pausas`) de los trabajos. La orden muestra un badge informativo "Con inconvenientes" (con conteo) cuando sus trabajos tienen incidencias o pausas registradas; el detalle vive en las órdenes de trabajo, y el badge no cambia ningún estado por sí solo. Motivos típicos: clima, entrega tardía de la calda, acceso complicado a la propiedad, falta de insumos o equipamiento, enfermedad o accidente, y el pago (mucho del trabajo se paga en efectivo y, si no se registra el pago, el dueño puede decidir finalizar el contrato).
+- **Cierre de la última aplicación.** Al cerrar una orden (`vigente → consumida`) se anuncia el evento de dominio `AplicacionCerrada` (Operaciones → Comercial). El oyente de Comercial `FinalizarContratoPorUltimaAplicacion` pasa el contrato a `finalizado` ("Ejecutado") y libera sus lotes cuando el número de la orden cerrada alcanza las `aplicaciones_previstas` del contrato, y solo si el contrato está `vigente`. Una aplicación **cancelada** no dispara esto.
+- **Pendientes conocidos de este tramo** (no resueltos): si se agrega un lote al contrato mientras hay una aplicación abierta, esa aplicación no lo incluye (la siguiente sí); y la app de campo no se entera de que una orden fue pausada, cancelada o cerrada, ni se frenan las sesiones ya abiertas en el campo (ver §8).
 
 **Contrato** (servicio de dominio `MaquinaEstadosContrato` sobre la tabla de transiciones permitidas; ADR 0021):
 ```
@@ -253,7 +281,8 @@ conflicto      pausado
 
 - **`borrador → conflicto` y `conflicto → borrador` las dispara solo el sistema**, al reconciliar los conflictos de lotes de la campaña (al aprobarse un contrato, al cancelarse o finalizarse el que retenía los lotes, o al quitarle el lote compartido editando el contrato en conflicto): nunca un usuario. `conflicto` no es un destino que se pueda pedir a mano desde el panel, y un contrato en `conflicto` no pasa directo a `vigente` — primero vuelve a `borrador` y desde ahí se aprueba.
 - **Estados que retienen lotes: `vigente` y `pausado`.** Los lotes de un contrato en esos estados quedan bloqueados para cualquier otro contrato de la misma campaña (exclusividad por lote, §4.1). `borrador` y `conflicto` no retienen; `finalizado` y `cancelado` liberan.
-- En este tramo `finalizar` (`vigente → finalizado`) sigue siendo una acción manual: el cierre automático del contrato al cerrarse la última aplicación llega con las órdenes de aplicación, en un tramo posterior.
+- **`finalizar` (`vigente → finalizado`) ya no es solo manual** (ADR 0022): además de la acción del encargado, lo dispara el cierre de la última aplicación del contrato, mediante el evento `AplicacionCerrada` (ver la máquina de la Orden de aplicación, arriba). Al finalizar se liberan los lotes que el contrato retenía.
+- **Guarda: un contrato no se cancela ni se finaliza mientras tenga una aplicación abierta** (una orden `emitida`, `vigente` o `pausada`): primero se cierra o se cancela esa aplicación. Con la aplicación ya cancelada, el contrato sí se puede cancelar o finalizar aunque queden aplicaciones pendientes (decide el dueño, p. ej. por falta de pago). La guarda vive en `MaquinaEstadosContrato` y lee las órdenes por el contrato de lectura de `Operaciones` (`LecturaResumenOrdenesContrato`, campo `abiertas`), nunca por su tabla.
 
 **Implementación:** las transiciones viven en una tabla de transiciones permitidas + un servicio de dominio en Laravel (enum de estados, guardas por transición, excepción si la transición no existe) — nunca un `UPDATE estado = ...` suelto en un controlador (ver ADR 0003). Cada transición escribe en la tabla de auditoría: quién, cuándo, de qué estado a cuál, motivo.
 
@@ -398,6 +427,8 @@ GET    /api/reportes/aplicacion/{n}   Reporte comercial
 GET    /api/dashboard                 Ganancia devengada, caja, costo Bs/ha
 GET    /api/version                   Versión mínima y autorizada del APK
 ```
+
+**Estados de la orden en la API (19/9/2026, ADR 0022).** El campo `estado` de una orden puede valer ahora `emitida`, `vigente`, `pausada`, `consumida`, `cancelada` o `vencida` (§5). **La app de campo nunca pausa, cierra ni cancela una orden**: no hay endpoint ni tipo de registro de `POST /api/sync` para eso, son transiciones exclusivas del panel; la app solo registra incidencias y pausas de sesión. `GET /api/sync/catalogo` sigue entregando únicamente órdenes `vigente`, y `lotes[{lote_id, hectareas_solicitadas}]` conserva su forma: es la copia automática de todos los lotes del contrato (§4.3). *Pendientes conocidos:* la app no se entera de que una orden fue pausada, cancelada o cerrada, porque el catálogo solo entrega las `vigente` y el sync no tiene forma de retirar registros; y las sesiones ya abiertas en el campo no se frenan al pausar o cancelar la orden.
 
 El contrato completo (payloads de ejemplo, códigos de respuesta) vive en `docs/api/openapi.yaml` — se agrega cuando arranca el desarrollo del motor de sync (ver `docs/gestion/plan_sprints.md`, Sprint 2). Mientras no exista, este listado es la referencia.
 

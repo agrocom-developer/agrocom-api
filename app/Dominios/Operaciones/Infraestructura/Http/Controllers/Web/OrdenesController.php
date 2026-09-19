@@ -4,13 +4,22 @@ namespace App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web;
 
 use App\Dominios\Operaciones\Aplicacion\ActivarOrden;
 use App\Dominios\Operaciones\Aplicacion\ActualizarOrden;
+use App\Dominios\Operaciones\Aplicacion\CancelarOrden;
+use App\Dominios\Operaciones\Aplicacion\CerrarOrden;
 use App\Dominios\Operaciones\Aplicacion\CrearOrden;
 use App\Dominios\Operaciones\Aplicacion\EliminarOrden;
 use App\Dominios\Operaciones\Aplicacion\ListarOrdenesAplicacion;
+use App\Dominios\Operaciones\Aplicacion\PausarOrden;
+use App\Dominios\Operaciones\Aplicacion\ProximaAplicacionPorContrato;
+use App\Dominios\Operaciones\Aplicacion\ReanudarOrden;
+use App\Dominios\Operaciones\Aplicacion\ResumenDeOrdenes;
+use App\Dominios\Operaciones\Dominio\CausaCancelacionOrden;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
+use App\Dominios\Operaciones\Dominio\Excepciones\AplicacionesCompletas;
+use App\Dominios\Operaciones\Dominio\Excepciones\ContratoConOrdenAbierta;
+use App\Dominios\Operaciones\Dominio\Excepciones\ContratoNoAdmiteOrdenes;
 use App\Dominios\Operaciones\Dominio\Excepciones\OrdenNoEditable;
-use App\Dominios\Operaciones\Dominio\Excepciones\OrdenVigenteDuplicadaEnLote;
-use App\Dominios\Operaciones\Dominio\Excepciones\OrdenVigenteNoEliminable;
+use App\Dominios\Operaciones\Dominio\Excepciones\OrdenNoEliminable;
 use App\Dominios\Operaciones\Dominio\Excepciones\TransicionOrdenNoPermitida;
 use App\Dominios\Operaciones\Dominio\TipoAplicacion;
 use App\Dominios\Operaciones\Dominio\TipoInsumo;
@@ -30,35 +39,28 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 /**
- * `GET/POST/PUT/DELETE /panel/ordenes*` (HU-25, tarea 38): alta y
- * seguimiento de órdenes de aplicación, con una máquina de estados propia
- * (`emitida → vigente`, ver `Aplicacion/MaquinaEstados/MaquinaEstadosOrden`).
- * Mismo molde que `ContratosController` (cambio de estado separado de la
- * edición), sin sub-entidad.
+ * `GET/POST/PUT/DELETE /panel/ordenes*` (HU-25 reforma Entrega 1, 18/9/2026):
+ * alta y seguimiento de órdenes de aplicación (UNA por contrato, que cubre
+ * TODOS sus lotes con aplicación completa). Máquina de estados:
+ * emitida → vigente ⇄ pausada; vigente → consumida; vigente|pausada →
+ * cancelada. Ver `Aplicacion/MaquinaEstados/MaquinaEstadosOrden`.
+ * Mismo molde que `ContratosController` (cambio de estado separado de edición).
  *
- * Cinco permisos de grano fino
- * (`operaciones.orden.ver`/`.crear`/`.editar`/`.activar`/`.eliminar`),
- * verificados DENTRO del controlador contra el ROL ACTIVO vía
- * {@see AutorizacionPanelWeb}. Ninguna regla de negocio acá: los casos de
- * uso de `Aplicacion/` hacen el trabajo, incluida la restricción de que solo
- * una orden `emitida` admite edición o baja.
+ * Ocho permisos de grano fino (`operaciones.orden.ver`/`.crear`/`.editar`
+ * /`.activar`/`.pausar`/`.cerrar`/`.cancelar`/`.eliminar`), verificados
+ * DENTRO del controlador contra el ROL ACTIVO vía {@see AutorizacionPanelWeb}.
+ * Ninguna regla de negocio acá: los casos de uso de `Aplicacion/` hacen el
+ * trabajo.
  *
- * Los selects de `contrato_id`/`lote_id`/`emitida_por_contacto_id` se arman
- * con consultas directas a las tablas de `Comercial` (`DB::table`, sin
- * importar sus modelos Eloquent — ADR 0003 regla 3, mismo criterio que el
- * `exists:` de los Requests), no por su `Contratos/` (ese contrato de
- * lectura hoy solo expone lotes para `CalcularCoberturaTrabajo`, no listados
- * para un `<select>` del panel).
+ * Los selects de `contrato_id`/`emitida_por_contacto_id` se arman con
+ * consultas directas a las tablas de `Comercial` (`DB::table`, sin importar
+ * sus modelos Eloquent — ADR 0003 regla 3).
  *
- * `create()`/`edit()` (reforma 18/9/2026, Entrega 1): el `<select>` plano de
- * contrato viaja junto a un blob más rico por contrato
- * (`datosContratoParaFormulario()`) — cliente, propiedad(es), contactos y
- * SOLO los lotes de ese contrato, para la sección "Datos del contrato" del
- * formulario. `create()` además precarga, por cada contrato, el
- * `nro_aplicacion` sugerido (`sugerirNroAplicacion()`) — `edit()` no, la
- * orden ya tiene el suyo real. Los 8 campos de límites climáticos/parámetros
- * de vuelo YA NO se piden acá (se movieron a `Trabajo`, cargados por equipo
- * en `AsignarEquipoOrdenRequest` — ver su docblock).
+ * `create()`: el `<select>` de contrato solo muestra contratos `vigente` sin
+ * orden abierta ni aplicaciones completas (filtro por
+ * `ProximaAplicacionPorContrato::disponible`). Cada contrato trae sus lotes
+ * como lista de solo lectura. `edit()`: contrato/lotes fijos, solo edita
+ * tipo/categoría/dosis/equipos/contacto/fecha/observaciones (no contrato).
  */
 final class OrdenesController
 {
@@ -70,6 +72,12 @@ final class OrdenesController
 
     private const PERMISO_ACTIVAR = 'operaciones.orden.activar';
 
+    private const PERMISO_PAUSAR = 'operaciones.orden.pausar';
+
+    private const PERMISO_CERRAR = 'operaciones.orden.cerrar';
+
+    private const PERMISO_CANCELAR = 'operaciones.orden.cancelar';
+
     private const PERMISO_ELIMINAR = 'operaciones.orden.eliminar';
 
     private const PERMISO_ASIGNAR_EQUIPOS = 'operaciones.orden.asignar_equipos';
@@ -78,7 +86,7 @@ final class OrdenesController
 
     public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
 
-    public function index(Request $request, ListarOrdenesAplicacion $listarOrdenes): View
+    public function index(Request $request, ListarOrdenesAplicacion $listarOrdenes, ResumenDeOrdenes $resumenOrdenes): View
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
@@ -90,23 +98,31 @@ final class OrdenesController
         $tipoAplicacionQuery = $request->string('tipo_aplicacion')->toString();
         $tipoAplicacion = $tipoAplicacionQuery !== '' ? TipoAplicacion::tryFrom($tipoAplicacionQuery) : null;
 
+        $contratoIdQuery = $request->integer('contrato_id') ?: null;
+
         $ordenes = $listarOrdenes->ejecutar(
             estado: $estado,
             tipoAplicacion: $tipoAplicacion,
-            contratoIds: $busqueda !== '' ? $this->contratoIdsPorBusqueda($busqueda) : null,
+            contratoIds: $contratoIdQuery !== null ? [$contratoIdQuery] : ($busqueda !== '' ? $this->contratoIdsPorBusqueda($busqueda) : null),
         );
 
-        $loteIdsPorOrden = $this->loteIdsPorOrden($ordenes->pluck('id')->map(fn ($id) => (int) $id)->all());
-        $todosLosLoteIds = collect($loteIdsPorOrden)->flatten()->unique()->values()->all();
+        $ordenIds = $ordenes->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $resumen = $resumenOrdenes->ejecutar($ordenIds);
+        $contratoIds = $ordenes->pluck('contrato_id')->map(fn ($id) => (int) $id)->unique()->values()->all();
 
         return view('operaciones::pages.ordenes.index', [
             ...$this->autorizacion->cascara($request),
             'ordenes' => $ordenes,
-            'etiquetasContrato' => $this->etiquetasContrato($ordenes->pluck('contrato_id')->map(fn ($id) => (int) $id)->unique()->values()->all()),
-            'etiquetasLote' => $this->etiquetasLote($todosLosLoteIds),
-            'loteIdsPorOrden' => $loteIdsPorOrden,
-            'filtros' => ['q' => $busqueda, 'estado' => $estado?->value, 'tipo_aplicacion' => $tipoAplicacion?->value],
+            'resumen' => $resumen,
+            'etiquetasContrato' => $this->etiquetasContrato($contratoIds),
+            'previstasPorContrato' => $this->previstasPorContrato($contratoIds),
+            'filtros' => ['q' => $busqueda, 'estado' => $estado?->value, 'tipo_aplicacion' => $tipoAplicacion?->value, 'contrato_id' => $contratoIdQuery],
             'puedeActivar' => $this->autorizacion->tienePermiso($request, self::PERMISO_ACTIVAR),
+            'puedePausar' => $this->autorizacion->tienePermiso($request, self::PERMISO_PAUSAR),
+            'puedeCerrar' => $this->autorizacion->tienePermiso($request, self::PERMISO_CERRAR),
+            'puedeCancelar' => $this->autorizacion->tienePermiso($request, self::PERMISO_CANCELAR),
+            'puedeEditar' => $this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR),
+            'puedeEliminar' => $this->autorizacion->tienePermiso($request, self::PERMISO_ELIMINAR),
         ]);
     }
 
@@ -139,41 +155,23 @@ final class OrdenesController
         return $consulta->pluck('c.id')->map(fn ($id) => (int) $id)->all();
     }
 
-    /**
-     * Lotes de CADA orden (HU-92, tarea 107: ya no es un `lote_id` único por
-     * orden) — una sola consulta para todo el listado, evita N+1.
-     *
-     * @param  list<int>  $ordenIds
-     * @return array<int, list<int>>
-     */
-    private function loteIdsPorOrden(array $ordenIds): array
-    {
-        if ($ordenIds === []) {
-            return [];
-        }
-
-        return DB::table('ope_orden_lotes')
-            ->whereIn('orden_id', $ordenIds)
-            ->whereNull('deleted_at')
-            ->orderBy('lote_id')
-            ->get(['orden_id', 'lote_id'])
-            ->groupBy('orden_id')
-            ->map(fn (Collection $filas): array => $filas->pluck('lote_id')->map(fn ($id) => (int) $id)->all())
-            ->all();
-    }
-
-    public function create(Request $request): View
+    public function create(Request $request, ProximaAplicacionPorContrato $proximaAplicacion): View
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_CREAR), 403);
 
-        $datosContrato = $this->datosContratoParaFormulario();
+        // Solo contratos `vigente` (ADR 0022) y, de esos, los que admiten una
+        // orden nueva: sin aplicación abierta y sin haber agotado las previstas.
+        $allData = $this->datosContratoParaFormulario(null, true);
 
-        // Sugerencia de `nro_aplicacion` SOLO acá (ver docblock de
-        // `sugerirNroAplicacion()`) — se completa por fuera del blob base
-        // porque no tiene sentido pagarla en `edit()`, donde la orden ya
-        // trae su propio valor real.
-        foreach (array_keys($datosContrato) as $contratoId) {
-            $datosContrato[$contratoId]['nro_aplicacion_sugerido'] = $this->sugerirNroAplicacion($contratoId);
+        $datosContrato = [];
+        $proximasAplicaciones = $proximaAplicacion->ejecutar(
+            array_map(fn (array $datos): int => $datos['aplicaciones_previstas'], $allData),
+        );
+
+        foreach ($proximasAplicaciones as $contratoId => $estado) {
+            if ($estado['estado'] === ProximaAplicacionPorContrato::DISPONIBLE && isset($allData[$contratoId])) {
+                $datosContrato[$contratoId] = [...$allData[$contratoId], 'siguiente_nro' => $estado['siguiente']];
+            }
         }
 
         return view('operaciones::pages.ordenes.create', [
@@ -182,11 +180,6 @@ final class OrdenesController
             'datosContrato' => $datosContrato,
             'contactosDisponibles' => $this->contactosDisponibles(),
             'categoriasInsumoDisponibles' => $this->categoriasInsumoDisponibles(),
-            // Acceso directo desde "Editar contrato" del estado vacío "sin
-            // lotes" (tarea "contrato-lotes-conflicto", 18/9/2026, mismo
-            // criterio que `ContratosController::create()` con
-            // `clienteIdPreseleccionado`): con `?contrato_id=`, el
-            // formulario vuelve con ese contrato ya elegido.
             'contratoIdPreseleccionado' => $request->integer('contrato_id') ?: null,
         ]);
     }
@@ -201,7 +194,7 @@ final class OrdenesController
      * que las 5 pantallas `.show` ya homogeneizadas del panel (Trabajos,
      * Devengos, Planillas, Rendiciones, EquiposTrabajo).
      */
-    public function show(Request $request, OrdenAplicacion $orden): View
+    public function show(Request $request, OrdenAplicacion $orden, ResumenDeOrdenes $resumenOrdenes): View
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
@@ -224,8 +217,6 @@ final class OrdenesController
                 ? DB::table('com_cliente_contactos')->where('id', $orden->emitida_por_contacto_id)->value('nombre')
                 : null,
             'resumenContrato' => $resumenContrato,
-            // Retrocompatible: el KPI "Aplicaciones" de arriba ya usaba
-            // este dato suelto antes de que existiera `resumenContrato()`.
             'aplicacionesPrevistas' => $resumenContrato['aplicaciones_previstas'] ?? null,
             'lotes' => $lotes,
             'hectareasSolicitadas' => $this->aHectareas($hectareasSolicitadas),
@@ -234,8 +225,12 @@ final class OrdenesController
             'equiposAsignados' => $this->equiposAsignadosCount($orden),
             'actividad' => $this->actividadOrden($orden),
             'vinculos' => $this->vinculosOrden($orden, $request),
+            'inconvenientes' => $resumenOrdenes->ejecutar([$orden->id])[$orden->id],
             'puedeEditar' => $this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR),
             'puedeActivar' => $this->autorizacion->tienePermiso($request, self::PERMISO_ACTIVAR),
+            'puedePausar' => $this->autorizacion->tienePermiso($request, self::PERMISO_PAUSAR),
+            'puedeCerrar' => $this->autorizacion->tienePermiso($request, self::PERMISO_CERRAR),
+            'puedeCancelar' => $this->autorizacion->tienePermiso($request, self::PERMISO_CANCELAR),
             'puedeEliminar' => $this->autorizacion->tienePermiso($request, self::PERMISO_ELIMINAR),
         ]);
     }
@@ -355,8 +350,17 @@ final class OrdenesController
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_CREAR), 403);
 
         $datos = $request->validated();
+        $contratoId = (int) $datos['contrato_id'];
 
-        $orden = $crearOrden->ejecutar($this->normalizarDatos($datos), $this->normalizarLotes($datos));
+        try {
+            $orden = $crearOrden->ejecutar($contratoId, $this->normalizarDatos($datos));
+        } catch (ContratoNoAdmiteOrdenes|
+                 ContratoConOrdenAbierta|
+                 AplicacionesCompletas $excepcion) {
+                     return redirect()
+                         ->route('panel.ordenes.create')
+                         ->withErrors(['contrato_id' => $excepcion->getMessage()]);
+                 }
 
         // Se queda en la propia ficha de edición (no vuelve al listado,
         // 16/9/2026 — mismo criterio que ClientesController::store()).
@@ -369,7 +373,7 @@ final class OrdenesController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
 
-        $datosContrato = $this->datosContratoParaFormulario();
+        $datosContrato = $this->datosContratoParaFormulario([$orden->contrato_id]);
 
         return view('operaciones::pages.ordenes.edit', [
             ...$this->autorizacion->cascara($request),
@@ -555,19 +559,17 @@ final class OrdenesController
 
     /**
      * Actividad de la orden para `show()`: solo eventos RECONSTRUIBLES desde
-     * columnas reales (nunca inventados — no hay bitácora antes/después
-     * todavía, ver `docs/decisiones/0007-...`). Máximo 3 tipos:
+     * columnas reales. Máximo 6 tipos:
      *
      * 1. Emitida — siempre, `created_at`/`created_by` de la orden.
      * 2. Activada — solo si el estado ya avanzó de `emitida`; usa
-     *    `updated_at`/`updated_by` de la orden como proxy válido del
-     *    instante de activación: una orden `vigente` ya no admite edición
-     *    (`Aplicacion/ActualizarOrden`), así que nada vuelve a tocar esas
-     *    columnas después de `ActivarOrden::ejecutar()`.
-     * 3. Equipo asignado — uno por `equipo_trabajo_id` distinto entre los
-     *    `Trabajo` de esta orden, con la fecha/autor MÍNIMOS del grupo
-     *    (el instante en que ESE equipo entró al reparto) y la suma de
-     *    hectáreas que le tocaron.
+     *    `updated_at`/`updated_by` como proxy (una orden vigente ya no
+     *    admite edición).
+     * 3. Pausadas — uno por pausa registrada en `pausada_at`.
+     * 4. Reanudadas — uno por reanudación en `reanudada_at`.
+     * 5. Cerrada — solo si estado es `consumida`.
+     * 6. Cancelada — solo si estado es `cancelada`.
+     * 7. Equipo asignado — uno por equipo distinto entre los `Trabajo`.
      *
      * @return list<array{title: string, meta: string, tone: string}>
      */
@@ -584,6 +586,42 @@ final class OrdenesController
                 'title' => __('operaciones.ordenes.actividad_activada'),
                 'meta' => $this->metaActividad($orden->updated_at, $orden->updated_by),
                 'tone' => 'success',
+            ];
+        }
+
+        if ($orden->pausada_at !== null && $orden->motivo_pausa !== null) {
+            $eventos[] = [
+                'title' => __('operaciones.ordenes.actividad_pausada', ['motivo' => $orden->motivo_pausa]),
+                'meta' => $this->metaActividad($orden->pausada_at, null),
+                'tone' => 'warning',
+            ];
+        }
+
+        if ($orden->reanudada_at !== null) {
+            $eventos[] = [
+                'title' => __('operaciones.ordenes.actividad_reanudada'),
+                'meta' => $this->metaActividad($orden->reanudada_at, null),
+                'tone' => 'success',
+            ];
+        }
+
+        if ($orden->estado === EstadoOrdenAplicacion::Consumida && $orden->cerrada_at !== null) {
+            $eventos[] = [
+                'title' => __('operaciones.ordenes.actividad_cerrada'),
+                'meta' => $this->metaActividad($orden->cerrada_at, null),
+                'tone' => 'info',
+            ];
+        }
+
+        if ($orden->estado === EstadoOrdenAplicacion::Cancelada && $orden->cancelada_at !== null) {
+            $causa = ($orden->causa_cancelacion !== null ? $orden->causa_cancelacion->value : '—');
+            $eventos[] = [
+                'title' => __('operaciones.ordenes.actividad_cancelada', [
+                    'causa' => __("operaciones.ordenes.causa_{$causa}"),
+                    'motivo' => $orden->motivo_cancelacion ?? '—',
+                ]),
+                'meta' => $this->metaActividad($orden->cancelada_at, null),
+                'tone' => 'danger',
             ];
         }
 
@@ -642,7 +680,7 @@ final class OrdenesController
         $datos = $request->validated();
 
         try {
-            $actualizarOrden->ejecutar($orden, $this->normalizarDatos($datos), $this->normalizarLotes($datos));
+            $actualizarOrden->ejecutar($orden, $this->normalizarDatos($datos));
         } catch (OrdenNoEditable $excepcion) {
             return redirect()
                 ->route('panel.ordenes.index')
@@ -662,7 +700,7 @@ final class OrdenesController
 
         try {
             $activarOrden->ejecutar($orden);
-        } catch (TransicionOrdenNoPermitida|OrdenVigenteDuplicadaEnLote $excepcion) {
+        } catch (TransicionOrdenNoPermitida $excepcion) {
             return redirect()
                 ->route('panel.ordenes.index')
                 ->withErrors(['estado' => $excepcion->getMessage()]);
@@ -673,13 +711,91 @@ final class OrdenesController
             ->with('estado', __('operaciones.ordenes.activada'));
     }
 
+    public function pausar(Request $request, OrdenAplicacion $orden, PausarOrden $pausarOrden): RedirectResponse
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_PAUSAR), 403);
+
+        $request->validate([
+            'motivo_pausa' => ['required', 'string', 'max:1000'],
+        ]);
+
+        try {
+            $pausarOrden->ejecutar($orden, $request->string('motivo_pausa')->toString());
+        } catch (TransicionOrdenNoPermitida $excepcion) {
+            return redirect()
+                ->route('panel.ordenes.show', $orden)
+                ->withErrors(['estado' => $excepcion->getMessage()]);
+        }
+
+        return redirect()
+            ->route('panel.ordenes.show', $orden)
+            ->with('estado', __('operaciones.ordenes.pausada'));
+    }
+
+    public function reanudar(Request $request, OrdenAplicacion $orden, ReanudarOrden $reanudarOrden): RedirectResponse
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_PAUSAR), 403);
+
+        try {
+            $reanudarOrden->ejecutar($orden);
+        } catch (TransicionOrdenNoPermitida $excepcion) {
+            return redirect()
+                ->route('panel.ordenes.show', $orden)
+                ->withErrors(['estado' => $excepcion->getMessage()]);
+        }
+
+        return redirect()
+            ->route('panel.ordenes.show', $orden)
+            ->with('estado', __('operaciones.ordenes.reanudada'));
+    }
+
+    public function cerrar(Request $request, OrdenAplicacion $orden, CerrarOrden $cerrarOrden): RedirectResponse
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_CERRAR), 403);
+
+        try {
+            $cerrarOrden->ejecutar($orden);
+        } catch (TransicionOrdenNoPermitida $excepcion) {
+            return redirect()
+                ->route('panel.ordenes.show', $orden)
+                ->withErrors(['estado' => $excepcion->getMessage()]);
+        }
+
+        return redirect()
+            ->route('panel.ordenes.show', $orden)
+            ->with('estado', __('operaciones.ordenes.cerrada'));
+    }
+
+    public function cancelar(Request $request, OrdenAplicacion $orden, CancelarOrden $cancelarOrden): RedirectResponse
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_CANCELAR), 403);
+
+        $request->validate([
+            'causa_cancelacion' => ['required', 'in:cliente,fuerza_mayor'],
+            'motivo_cancelacion' => ['required', 'string', 'max:1000'],
+        ]);
+
+        try {
+            $causa = CausaCancelacionOrden::from($request->string('causa_cancelacion')->toString());
+            $cancelarOrden->ejecutar($orden, $causa, $request->string('motivo_cancelacion')->toString());
+        } catch (TransicionOrdenNoPermitida $excepcion) {
+            return redirect()
+                ->route('panel.ordenes.show', $orden)
+                ->withErrors(['estado' => $excepcion->getMessage()]);
+        }
+
+        return redirect()
+            ->route('panel.ordenes.show', $orden)
+            ->with('estado', __('operaciones.ordenes.cancelada'));
+    }
+
     public function destroy(Request $request, OrdenAplicacion $orden, EliminarOrden $eliminarOrden): RedirectResponse
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_ELIMINAR), 403);
 
         try {
             $eliminarOrden->ejecutar($orden);
-        } catch (OrdenVigenteNoEliminable $excepcion) {
+        } catch (OrdenNoEliminable $excepcion) {
             return redirect()
                 ->route('panel.ordenes.index')
                 ->withErrors(['estado' => $excepcion->getMessage()]);
@@ -697,24 +813,12 @@ final class OrdenesController
     private function normalizarDatos(array $datos): array
     {
         $categoriaInsumoId = (int) $datos['categoria_insumo_id'];
-        // `DB::table` (no `CategoriaInsumo::query()`): un `->value()` sobre un
-        // Eloquent Builder resuelve por `first()` y devuelve el enum YA
-        // CASTEADO, no el string crudo — comparar eso contra `->value` nunca
-        // da true. Mismo criterio (y misma trampa evitada) que
-        // `CrearOrdenRequest::validarCampoSegunCategoriaInsumo()`.
         $tipoInsumo = DB::table('ope_categorias_insumo')->where('id', $categoriaInsumoId)->value('tipo_insumo');
 
         return [
-            'contrato_id' => (int) $datos['contrato_id'],
-            'nro_aplicacion' => (int) $datos['nro_aplicacion'],
             'cantidad_equipos_necesarios' => (int) $datos['cantidad_equipos_necesarios'],
             'tipo_aplicacion' => TipoAplicacion::from((string) $datos['tipo_aplicacion']),
             'categoria_insumo_id' => $categoriaInsumoId,
-            // Cuál de los dos guarda un valor depende del tipo_insumo de la
-            // categoría, no de lo que haya venido en el POST (invariante
-            // 5-ish: la fuente de verdad es la categoría elegida, nunca un
-            // campo oculto que el navegador no mandó a tiempo) — el que no
-            // corresponde siempre queda NULL, aunque el request lo mande.
             'kilos_por_vuelo' => $tipoInsumo === TipoInsumo::Solido->value ? $this->cadenaONull($datos['kilos_por_vuelo'] ?? null) : null,
             'litros_ha' => $tipoInsumo === TipoInsumo::Liquido->value ? $this->cadenaONull($datos['litros_ha'] ?? null) : null,
             'observaciones' => $this->cadenaONull($datos['observaciones'] ?? null),
@@ -728,21 +832,6 @@ final class OrdenesController
     private function cadenaONull(mixed $valor): ?string
     {
         return $valor === null || $valor === '' ? null : (string) $valor;
-    }
-
-    /**
-     * @param  array<string, mixed>  $datos  validados
-     * @return list<array{lote_id: int, hectareas_solicitadas: string}>
-     */
-    private function normalizarLotes(array $datos): array
-    {
-        return array_map(
-            static fn (array $lote): array => [
-                'lote_id' => (int) $lote['lote_id'],
-                'hectareas_solicitadas' => (string) $lote['hectareas_solicitadas'],
-            ],
-            array_values($datos['lotes']),
-        );
     }
 
     /**
@@ -802,14 +891,21 @@ final class OrdenesController
      * contrato. Lectura directa por `DB::table` en las tablas de `Comercial`
      * (ADR 0003 regla 3, mismo criterio que el resto del controlador).
      *
+     * `$soloVigentes` (alta, ADR 0022): solo contratos `vigente`, los únicos que admiten
+     * órdenes. `$soloContratoIds` (edición): restringe a esos contratos — en edición la
+     * orden ya tiene el suyo, no hace falta serializar todos los del sistema.
+     *
+     * @param  list<int>|null  $soloContratoIds
      * @return array<int, array{label: string, cliente: string, logo_url: ?string, propiedades: list<string>, aplicaciones_previstas: int, hectareas_contratadas: string, fecha_inicio: string, fecha_fin: ?string, contactos: list<array{id: int, nombre: string, tipo: string}>, lotes: list<array{lote_id: int, codigo: string, propiedad: string, hectareas: string, desnivel: ?string, desnivel_label: ?string, limpieza: ?string, limpieza_label: ?string}>, nro_aplicacion_sugerido: int|null, contrato_edit_url: string}>
      */
-    private function datosContratoParaFormulario(): array
+    private function datosContratoParaFormulario(?array $soloContratoIds = null, bool $soloVigentes = false): array
     {
         $contratos = DB::table('com_contratos as c')
             ->join('com_clientes as cl', 'cl.id', '=', 'c.cliente_id')
             ->whereNull('c.deleted_at')
             ->whereNull('cl.deleted_at')
+            ->when($soloVigentes, fn ($consulta) => $consulta->where('c.estado', 'vigente'))
+            ->when($soloContratoIds !== null, fn ($consulta) => $consulta->whereIn('c.id', $soloContratoIds))
             ->orderByDesc('c.fecha_inicio')
             ->get(['c.id', 'c.cliente_id', 'c.aplicaciones_previstas', 'c.hectareas_contratadas', 'c.fecha_inicio', 'c.fecha_fin', 'cl.razon_social', 'cl.logo_path']);
 
@@ -916,63 +1012,24 @@ final class OrdenesController
     }
 
     /**
-     * Sugerencia de `nro_aplicacion` para el formulario de ALTA (`create()`
-     * únicamente — en `edit()` la orden ya tiene su valor real, no hay nada
-     * que sugerir). Caso real que motiva el algoritmo: un contrato grande
-     * (3000ha en lotes de 40-80ha) reparte una misma "aplicación" en varias
-     * órdenes con el MISMO número porque sus hectáreas no entran en una sola
-     * orden — mientras esa ronda no cubra todos los lotes del contrato, el
-     * sugerido sigue ofreciendo ese mismo número; recién cuando la ronda
-     * queda completa sugiere el siguiente.
+     * `aplicaciones_previstas` de cada contrato, para mostrar "N de M" en el
+     * índice (ADR 0022). Lectura plana de una columna del contrato — mismo
+     * criterio que `resumenContrato()`.
      *
-     * Algoritmo: busca, entre las órdenes no eliminadas de este contrato con
-     * sus lotes (`ope_orden_lotes` no eliminados), el `nro_aplicacion` más
-     * alto ya usado. Sin ninguna orden previa, sugiere 1. Si hay, junta el
-     * conjunto de `lote_id` ya cubiertos por TODAS las órdenes con ESE mismo
-     * número más alto; si ese conjunto no incluye todos los `lote_id` de
-     * `com_contrato_lotes` del contrato, sugiere ese mismo número (ronda
-     * incompleta); si los cubre todos, sugiere `número + 1`.
-     *
-     * Deliberadamente simple (dos consultas, sin índices ni caché
-     * especiales): es solo un valor de arranque editable en el formulario,
-     * no una regla de negocio que el servidor haga cumplir —
-     * `CrearOrdenRequest` no exige que `nro_aplicacion` coincida con esta
-     * sugerencia.
+     * @param  list<int>  $contratoIds
+     * @return array<int, int> contrato_id => aplicaciones_previstas
      */
-    private function sugerirNroAplicacion(int $contratoId): int
+    private function previstasPorContrato(array $contratoIds): array
     {
-        $nroMasAlto = DB::table('ope_ordenes_aplicacion as o')
-            ->join('ope_orden_lotes as ol', 'ol.orden_id', '=', 'o.id')
-            ->where('o.contrato_id', $contratoId)
-            ->whereNull('o.deleted_at')
-            ->whereNull('ol.deleted_at')
-            ->max('o.nro_aplicacion');
-
-        if ($nroMasAlto === null) {
-            return 1;
+        if ($contratoIds === []) {
+            return [];
         }
 
-        $loteIdsCubiertos = DB::table('ope_ordenes_aplicacion as o')
-            ->join('ope_orden_lotes as ol', 'ol.orden_id', '=', 'o.id')
-            ->where('o.contrato_id', $contratoId)
-            ->where('o.nro_aplicacion', $nroMasAlto)
-            ->whereNull('o.deleted_at')
-            ->whereNull('ol.deleted_at')
-            ->pluck('ol.lote_id')
-            ->map(fn ($id) => (int) $id)
-            ->unique()
+        return DB::table('com_contratos')
+            ->whereIn('id', $contratoIds)
+            ->pluck('aplicaciones_previstas', 'id')
+            ->map(fn (mixed $previstas): int => (int) $previstas)
             ->all();
-
-        $loteIdsDelContrato = DB::table('com_contrato_lotes')
-            ->where('contrato_id', $contratoId)
-            ->whereNull('deleted_at')
-            ->pluck('lote_id')
-            ->map(fn ($id) => (int) $id)
-            ->all();
-
-        $rondaCompleta = array_diff($loteIdsDelContrato, $loteIdsCubiertos) === [];
-
-        return $rondaCompleta ? (int) $nroMasAlto + 1 : (int) $nroMasAlto;
     }
 
     /**

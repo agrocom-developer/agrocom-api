@@ -9,7 +9,7 @@ use RuntimeException;
  * Se intentó eliminar un trabajo cuyo estado de tablero ya es `validado`
  * (HU-93, tarea 108) — mismo criterio y misma fuente que
  * {@see TrabajoValidadoNoEditable}, separada para un mensaje propio (mismo
- * molde que `OrdenNoEditable`/`OrdenVigenteNoEliminable`).
+ * molde que `OrdenNoEditable`/`OrdenNoEliminable`).
  */
 final class TrabajoValidadoNoEliminable extends RuntimeException
 {
