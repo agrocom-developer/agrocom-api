@@ -10,7 +10,10 @@
     Cada paso es un estado de la ruta principal y está en uno de cinco casos:
     - `completed`: ya se pasó por ahí (color suave del estado + ícono de check).
     - `current`: el estado actual, relleno sólido con el COLOR DEL ESTADO (el
-      mismo tono que su badge) y `aria-current="step"`.
+      mismo tono que su badge) y `aria-current="step"`. Si es el ÚLTIMO paso de
+      la ruta ya no hay a dónde avanzar: se dibuja como `completed` (procesado,
+      color suave y check, sin el relleno de "activo") y solo conserva
+      `aria-current="step"` (19/9/2026, pedido del usuario).
     - `next`: un estado al que se puede pasar desde el actual — es un BOTÓN que
       abre el modal de confirmación (`confirm-modal`) que la página ya trae; el
       componente no envía nada ni decide nada.
@@ -55,7 +58,11 @@
             @foreach ($steps as $paso)
                 @php
                     $estadoPaso = $paso['status'];
-                    $icono = match ($estadoPaso) {
+                    // El último paso, cuando es el actual, ya está procesado: se dibuja
+                    // como completado. `$estadoPaso` sigue mandando en lo funcional
+                    // (botón, aria-current); `$situacion`, en lo visual.
+                    $situacion = $estadoPaso === 'current' && $loop->last ? 'completed' : $estadoPaso;
+                    $icono = match ($situacion) {
                         'completed' => 'check',
                         'next' => 'arrow_forward',
                         'blocked', 'pending' => 'lock',
@@ -63,7 +70,7 @@
                     };
                     $pista = $paso['hint'] ?? null;
                 @endphp
-                <li class="ag-step-arrow__item ag-step-arrow__item--{{ $estadoPaso }}" data-tone="{{ $paso['tone'] }}">
+                <li class="ag-step-arrow__item ag-step-arrow__item--{{ $situacion }}" data-tone="{{ $paso['tone'] }}">
                     @if ($estadoPaso === 'next')
                         <button
                             type="button"
@@ -85,11 +92,11 @@
                             @if ($pista) title="{{ $pista }}" @endif
                         >
                             <span class="ag-step-arrow__contenido">
-                                @if ($icono && $estadoPaso === 'completed')
+                                @if ($icono && $situacion === 'completed')
                                     <x-atoms.icon :name="$icono" size="sm" />
                                 @endif
                                 <span class="ag-step-arrow__etiqueta">{{ $paso['label'] }}</span>
-                                @if ($icono && $estadoPaso !== 'completed')
+                                @if ($icono && $situacion !== 'completed')
                                     <x-atoms.icon :name="$icono" size="sm" />
                                 @endif
                             </span>
