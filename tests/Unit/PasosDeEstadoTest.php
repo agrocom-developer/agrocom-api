@@ -139,3 +139,57 @@ test('ayuda: cada estado de la campaña tiene su etiqueta y su texto de ayuda en
             ->and($lang['campania']['estado_ayuda'])->toHaveKey($estado->value);
     }
 });
+
+/*
+ * Opciones para una máquina con desvíos y salidas (contrato): todas son
+ * opcionales y, sin ellas, el resultado es el de la campaña de arriba. El
+ * caso real de cada una se prueba en `PasosDeContratoTest`.
+ */
+function pasosDeCampaniaCon(EstadoCampania $actual, mixed ...$opciones): array
+{
+    return PasosDeEstado::armar(...[
+        'ruta' => [EstadoCampania::Planificada, EstadoCampania::Abierta, EstadoCampania::Cerrada],
+        'actual' => $actual,
+        'permitida' => TransicionesCampania::permitida(...),
+        'tonos' => [],
+        'claveEtiqueta' => 'campania.campania.estado',
+        'prefijoModal' => 'm',
+        'puedeCambiar' => true,
+        ...$opciones,
+    ]);
+}
+
+test('pasos: los recorridos explícitos reemplazan a la posición para decidir qué está completado', function () {
+    // Por posición, cerrada deja planificada y abierta completadas; diciendo que
+    // no se recorrió ninguna, quedan bloqueadas.
+    expect(situaciones(pasosDeCampaniaCon(EstadoCampania::Cerrada)))->toBe(['completed', 'completed', 'current'])
+        ->and(situaciones(pasosDeCampaniaCon(EstadoCampania::Cerrada, recorridos: [])))->toBe(['blocked', 'blocked', 'current'])
+        ->and(situaciones(pasosDeCampaniaCon(EstadoCampania::Cerrada, recorridos: [EstadoCampania::Planificada])))->toBe(['completed', 'blocked', 'current']);
+});
+
+test('pasos: una pista propia reemplaza al «pasa antes por…» del paso bloqueado, y solo a ese', function () {
+    $pasos = pasosDeCampaniaCon(EstadoCampania::Planificada, pistas: ['cerrada' => 'Motivo propio', 'abierta' => 'No se usa']);
+
+    expect($pasos[2]['hint'])->toBe('Motivo propio')
+        // `abierta` no está bloqueado: la pista no le corresponde.
+        ->and($pasos[1]['hint'])->toBeNull();
+});
+
+test('pasos: el ícono de un paso se toma de la lista y por defecto no hay', function () {
+    $pasos = pasosDeCampaniaCon(EstadoCampania::Abierta, iconos: ['cerrada' => 'cancel']);
+
+    expect(array_column($pasos, 'icon'))->toBe([null, null, 'cancel']);
+});
+
+test('pasos: el «pasa antes por…» nombra el primer paso al que sí se puede ir', function () {
+    // Desde planificada solo se puede ir a abierta: es el que hay que dar antes de llegar a cerrada.
+    expect(pasosDeCampania(EstadoCampania::Planificada)[2]['hint'])->toBe('ui.pasos.pista_bloqueado');
+});
+
+test('ayuda: el paso del cierre puede nombrarse aparte del primero accionable', function () {
+    $pasos = pasosDeCampania(EstadoCampania::Planificada);
+
+    // `abierta` es accionable: el cierre lo nombra. `cerrada` está bloqueado: el párrafo no invita a hacer clic.
+    expect(PasosDeEstado::ayuda($pasos, 'campania.campania.estado_ayuda', 'abierta'))->toBe('campania.campania.estado_ayuda.planificada ui.pasos.ayuda_accion')
+        ->and(PasosDeEstado::ayuda($pasos, 'campania.campania.estado_ayuda', 'cerrada'))->toBe('campania.campania.estado_ayuda.planificada');
+});

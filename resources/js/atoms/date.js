@@ -448,6 +448,11 @@ function inicializar(root) {
     nativo.tabIndex = -1;
     trigger.hidden = false;
     actualizarValorMostrado();
+
+    // Como `atoms/select`: si otro código cambia el valor del nativo (restaurar
+    // un borrador, p. ej.), la casilla se repinta en vez de seguir mostrando lo
+    // anterior. El propio selector ya repinta al elegir; repetirlo es inocuo.
+    nativo.addEventListener('change', actualizarValorMostrado);
 }
 
 document.addEventListener('DOMContentLoaded', () => {

@@ -499,6 +499,26 @@ aplicación completa la liberación que allí quedó manual.
 
 ---
 
+## Sprint 21 — Contrato: estados a la vista, avisos y horario por lote (ronda del dueño, 19/9/2026)
+
+*Objetivo: que el estado del contrato se vea y se cambie desde su propia ficha,
+con los mismos pasos que ya tiene la campaña, y que el panel explique lo que
+hasta ahora solo rechazaba: por qué un contrato no se puede finalizar o cancelar
+todavía (aplicación abierta, ADR 0022) y qué contratos quedan en conflicto al
+aprobar (ADR 0021). No cambia ninguna regla de negocio: cambia lo que se ve. La
+numeración sigue desde HU-98. Implementada en la rama `feature/contrato-pasos`.*
+
+| ID | Historia / tarea | CA esenciales | Est. |
+|---|---|---|---|
+| HU-98 | Como **encargado**, quiero ver y cambiar el estado del contrato desde su ficha con pasos que me guíen, y que el panel me avise por qué todavía no puedo finalizarlo o cancelarlo y qué contratos quedan en conflicto, para decidir con la información delante | **1) Pasos:** en la ficha de EDICIÓN (nunca en el alta) `molecules/step-arrow` con cinco pasos «En Aprobación → En Ejecución → Pausado → Ejecutado → Cancelado»; en un contrato en conflicto «En conflicto» ocupa el primer lugar y «En Ejecución» aparece bloqueado con su pista. Cada paso accionable es un botón que abre el mismo modal de confirmación que las acciones del listado; el cambio vuelve a la ficha, no al listado. Lo que se ofrece sale de `TransicionesContrato` menos `borrador` y `conflicto`, que fija solo el sistema. **2) Color:** los tonos son los de los badges del listado (una sola definición, `PasosDeContrato::TONO_POR_ESTADO`); un paso recorrido se dibuja con el color suave de su estado y un estado final (Ejecutado, Cancelado) se suaviza solo, como la campaña cerrada. **3) Ayuda:** un párrafo de apoyo por estado (`comercial.contrato.estado_ayuda.*`) bajo los pasos; un test vigila que cada estado tenga el suyo. **4) Aplicación abierta:** con una aplicación abierta (ADR 0022), «Ejecutado» y «Cancelado» —en los pasos y en el listado— abren un modal informativo (`molecules/info-modal`), sin botón de confirmar, que dice qué aplicación sigue abierta, pide cerrarla o cancelarla primero (ahí se indican causa y motivo) y ofrece ir a la orden; el servidor sigue rechazándolo ante un pedido directo. **5) Conflicto:** al aprobar, el modal lista los contratos `borrador` de la campaña que pasarán a «En conflicto» con los lotes compartidos; en la ficha de un contrato en conflicto un aviso lista con quién choca y ofrece las dos salidas (cancelarlo, o quitar los lotes en conflicto). **6) Modales:** el círculo del ícono lleva el color del estado al que se pasa y dentro va la ficha «estado actual → destino» con los mismos badges (`confirm-modal` acepta toda la paleta de `atoms/badge`). **7) Campaña por defecto:** el formulario ofrece elegida la primera campaña activa (`abierta`, por código) cuando el contrato no trae una; la campaña del contrato y el `old()` de un guardado fallido ganan. **8) Horario por lote:** en la tabla de lotes, un solo campo compacto con la hora de inicio y la de fin (`atoms/time-range`) en lugar de dos `<input type="time">` nativos; un popup anclado a la casilla —no un modal— con reloj de 12 horas y «a. m.»/«p. m.» explícitos junto a cada hora, y el período de la hora de fin se elige solo para que quede después del inicio; se envía igual (`lotes[N][hora_inicio]`/`hora_fin`, `H:i` en 24 h). **8b) Lotes en páginas de 20:** el modal de lotes de una propiedad y la tabla de lotes del contrato se paginan de a 20 (paginador en el navegador, las filas de otras páginas se ocultan sin quitarse, así lo marcado y lo que se envía se conserva; «seleccionar todos» abarca todas las páginas y el modal cuenta «12 de 33 seleccionados»); la tabla comparte una cuadrícula (`subgrid`) para que sus columnas queden alineadas aunque una fila traiga «Ver contrato», que en un bloque angosto pasa a solo ícono. **9) Fronteras:** Comercial lee la aplicación abierta por `Operaciones\Contratos\LecturaResumenOrdenesContrato::aplicacionesAbiertas()` (DTO `DatosAplicacionAbierta`), nunca por la tabla ni el modelo (ADR 0003 regla 2); `PasosDeEstado` (plataforma) suma `recorridos`, `pistas`, `iconos` y el paso de cierre de `ayuda()`, todas opcionales y con campaña sin cambios; tests en `PasosDeEstadoTest` y `PasosDeContratoTest` | 3,0 d |
+
+**Total: 3,0 d · 0 pantallas nuevas de menú (amplía la ficha de Contratos)**
+
+Adendas a los ADR 0021 y 0022 (19/9/2026) dejan constancia de que las reglas no
+cambian y de cómo se muestran.
+
+---
+
 ## Alcance total del sistema
 
 | Bloque | Días | Pantallas de menú | Estado |

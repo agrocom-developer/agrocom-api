@@ -47,3 +47,29 @@
     min-height: calc(var(--bs-pagination-font-size) * 2.5);
     line-height: 1;
 }
+
+/*
+ * Paginador en el navegador (`resources/js/shared/paginador-cliente.js`,
+ * 19/9/2026): mismos botones de arriba, pero con el resumen «1–20 de 33» a la
+ * izquierda y los números a la derecha, en una sola fila. Va pegado bajo la
+ * lista que pagina (el modal de lotes, la tabla de lotes de un contrato).
+ */
+.ag-paginador {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ag-space-2) var(--ag-space-4);
+    margin-top: var(--ag-space-3);
+}
+
+.ag-paginador[hidden] {
+    display: none;
+}
+
+.ag-paginador__resumen {
+    margin: 0;
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-sm);
+}
+

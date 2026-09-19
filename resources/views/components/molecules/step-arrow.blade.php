@@ -10,10 +10,14 @@
     Cada paso es un estado de la ruta principal y está en uno de cinco casos:
     - `completed`: ya se pasó por ahí (color suave del estado + ícono de check).
     - `current`: el estado actual, relleno sólido con el COLOR DEL ESTADO (el
-      mismo tono que su badge) y `aria-current="step"`. Si es el ÚLTIMO paso de
-      la ruta ya no hay a dónde avanzar: se dibuja como `completed` (procesado,
-      color suave y check, sin el relleno de "activo") y solo conserva
-      `aria-current="step"` (19/9/2026, pedido del usuario).
+      mismo tono que su badge) y `aria-current="step"`. Si es un estado FINAL —
+      ya no hay a dónde avanzar: ningún paso `next` ni `pending`— se dibuja como
+      `completed` (procesado, color suave y check, sin el relleno de "activo") y
+      solo conserva `aria-current="step"` (19/9/2026, pedido del usuario). Se
+      decide por lo que la máquina ofrece, no por la posición: una ruta con dos
+      finales (contrato: «Ejecutado» y «Cancelado») suaviza el que sea, aunque
+      solo uno quede al final de la fila. En una ruta en línea recta (campaña)
+      es el último paso, como siempre.
     - `next`: un estado al que se puede pasar desde el actual — es un BOTÓN que
       abre el modal de confirmación (`confirm-modal`) que la página ya trae; el
       componente no envía nada ni decide nada.
@@ -25,10 +29,13 @@
     Props:
     - steps (requerido): list<array{key: string, label: string, tone: string,
       status: 'completed'|'current'|'next'|'pending'|'blocked', modal: ?string,
-      hint: ?string}>. `label`/`hint` ya traducidos. `tone` es el mismo valor
-      que `atoms/badge` (neutral|success|warning|danger|info|alert|
-      distintivo-1|2|3|primary-2). `modal` es el `id` del confirm-modal que
-      abre un paso `next`.
+      hint: ?string, icon?: ?string}>. `label`/`hint` ya traducidos. `tone` es el
+      mismo valor que `atoms/badge` (neutral|success|warning|danger|info|alert|
+      distintivo-1|2|3|primary-2). `modal` es el `id` del modal que abre un paso
+      `next` (de confirmación, o informativo si la pantalla sabe que ese paso
+      todavía no se puede dar). `icon` (opcional) reemplaza al check con el que
+      se dibuja un paso procesado: un estado de salida como «Cancelado» no es
+      un éxito.
     - label (requerido): `aria-label` del `<nav>`, ya traducido.
     - help (nullable): párrafo bajo los pasos, a todo el ancho, que dice qué
       significa el estado actual y por qué conviene avanzar, ya traducido. Lo
@@ -50,6 +57,10 @@
 
 @php
     $ayudaId = ($attributes->get('id') ?? 'ag-step-arrow').'-ayuda';
+    // Estado final: no queda ningún paso al que ir (ni con permiso ni sin él).
+    $esEstadoFinal = collect($steps)->doesntContain(
+        fn (array $paso): bool => in_array($paso['status'], ['next', 'pending'], true),
+    );
 @endphp
 
 <div {{ $attributes->class(['ag-step-arrow']) }}>
@@ -58,12 +69,12 @@
             @foreach ($steps as $paso)
                 @php
                     $estadoPaso = $paso['status'];
-                    // El último paso, cuando es el actual, ya está procesado: se dibuja
+                    // Un estado final, cuando es el actual, ya está procesado: se dibuja
                     // como completado. `$estadoPaso` sigue mandando en lo funcional
                     // (botón, aria-current); `$situacion`, en lo visual.
-                    $situacion = $estadoPaso === 'current' && $loop->last ? 'completed' : $estadoPaso;
+                    $situacion = $estadoPaso === 'current' && $esEstadoFinal ? 'completed' : $estadoPaso;
                     $icono = match ($situacion) {
-                        'completed' => 'check',
+                        'completed' => $paso['icon'] ?? 'check',
                         'next' => 'arrow_forward',
                         'blocked', 'pending' => 'lock',
                         default => null,

@@ -25,6 +25,12 @@
     - $filtros (array{q: string, campania_id: int|null, cliente_id: int|null,
       propiedad_id: int|null}): filtros aplicados, para dejar los campos con
       el valor tras el submit.
+    - $tonoPorEstado (array<string, string>): estado → tono del badge, el mismo
+      mapa que usan los pasos de la ficha de edición (`PasosDeContrato`).
+    - $aplicacionesAbiertas (array<int, DatosAplicacionAbierta>): contrato →
+      aplicación en curso (ADR 0022). Sus filas no se finalizan ni se cancelan
+      todavía: esas dos acciones abren un aviso (`_modal-aplicacion-abierta`)
+      en vez de la confirmación. $puedeVerOrden: si se ofrece el enlace a la orden.
 
     Gateada por `comercial.contrato.ver`, verificado server-side en el
     controlador. El botón "Nuevo contrato" y las acciones de cambio de
@@ -54,8 +60,11 @@
     wrapper `ag-row-actions__item` un día antes). Dentro de `row-actions`
     solo quedan botones disparadores normales (`data-bs-toggle="modal"
     data-bs-target="#..."`), que se duplican sin problema porque no tienen
-    id propio — tono por destino: `success` a vigente (aprobar/reanudar),
-    `info` a finalizado, `warning` a pausado, `danger` a cancelado.
+    id propio. El tono de cada modal es el del estado al que se pasa —el de
+    su badge, `$tonoPorEstado`: `success` a vigente (aprobar/reanudar),
+    `distintivo-2` a finalizado, `info` a pausado, `danger` a cancelado— y
+    dentro lleva la ficha «estado actual → destino» (`_estado-transicion`),
+    para ver antes de confirmar a cuál se pasa.
 
     Estilos en resources/css/pages/contratos.css — cero color hardcodeado
     (CLAUDE.md invariante 11).
@@ -195,15 +204,16 @@
                             // de warning a info, "finalizado" de info a
                             // distintivo-2 ("purple"/magenta) — reasignación
                             // explícita del usuario, no una corrección de bug.
-                            $variantePorEstado = [
-                                'borrador' => 'neutral',
-                                'vigente' => 'success',
-                                'finalizado' => 'distintivo-2',
-                                'cancelado' => 'danger',
-                                'pausado' => 'info',
-                                'conflicto' => 'alert',
-                            ];
+                            // 19/9/2026: el mapa estado → tono vive en
+                            // `PasosDeContrato::TONO_POR_ESTADO` y llega por
+                            // `$tonoPorEstado` — lo comparten este badge, los
+                            // pasos de la ficha de edición y el aviso de
+                            // conflicto, para que los tres hablen con el mismo
+                            // color.
                             $estadoValor = $contrato->estado->value;
+                            // Aplicación en curso (ADR 0022): con una abierta, finalizar
+                            // y cancelar abren un aviso en vez de la confirmación.
+                            $aplicacionAbierta = $aplicacionesAbiertas[$contrato->id] ?? null;
                         @endphp
                         <div class="ag-index-table__row" role="row">
                             <span role="cell" class="ag-index-table__indice">
@@ -220,7 +230,7 @@
                                 @endif
                             </span>
                             <span role="cell">
-                                <x-atoms.badge :variant="$variantePorEstado[$estadoValor]">
+                                <x-atoms.badge :variant="$tonoPorEstado[$estadoValor]">
                                     {{ __('comercial.contrato.estado.'.$estadoValor) }}
                                 </x-atoms.badge>
                             </span>
@@ -257,20 +267,24 @@
                                             <input type="hidden" name="estado" value="cancelado">
                                         </form>
                                     @elseif ($estadoValor === 'vigente')
-                                        <form id="{{ $formIdFinalizar }}" method="POST" action="{{ route('panel.contratos.cambiar-estado', $contrato) }}">
-                                            @csrf
-                                            <input type="hidden" name="estado" value="finalizado">
-                                        </form>
+                                        @if ($aplicacionAbierta === null)
+                                            <form id="{{ $formIdFinalizar }}" method="POST" action="{{ route('panel.contratos.cambiar-estado', $contrato) }}">
+                                                @csrf
+                                                <input type="hidden" name="estado" value="finalizado">
+                                            </form>
+                                        @endif
 
                                         <form id="{{ $formIdPausar }}" method="POST" action="{{ route('panel.contratos.cambiar-estado', $contrato) }}">
                                             @csrf
                                             <input type="hidden" name="estado" value="pausado">
                                         </form>
 
-                                        <form id="{{ $formIdCancelar }}" method="POST" action="{{ route('panel.contratos.cambiar-estado', $contrato) }}">
-                                            @csrf
-                                            <input type="hidden" name="estado" value="cancelado">
-                                        </form>
+                                        @if ($aplicacionAbierta === null)
+                                            <form id="{{ $formIdCancelar }}" method="POST" action="{{ route('panel.contratos.cambiar-estado', $contrato) }}">
+                                                @csrf
+                                                <input type="hidden" name="estado" value="cancelado">
+                                            </form>
+                                        @endif
                                     @elseif ($estadoValor === 'conflicto')
                                         <form id="{{ $formIdCancelar }}" method="POST" action="{{ route('panel.contratos.cambiar-estado', $contrato) }}">
                                             @csrf
@@ -302,8 +316,10 @@
                                             :title="__('comercial.contratos.confirmar_aprobar_titulo')"
                                             :message="__('comercial.contratos.confirmar_aprobar')"
                                             :confirm-label="__('comercial.contratos.accion_aprobar')"
-                                            tone="success"
-                                        />
+                                            :tone="$tonoPorEstado['vigente']"
+                                        >
+                                            @include('comercial::pages.contratos._estado-transicion', ['desde' => $estadoValor, 'hacia' => 'vigente'])
+                                        </x-molecules.confirm-modal>
 
                                         <x-molecules.confirm-modal
                                             :id="$modalIdCancelar"
@@ -312,17 +328,36 @@
                                             :message="__('comercial.contratos.confirmar_cancelar')"
                                             :confirm-label="__('comercial.contratos.accion_cancelar')"
                                             :cancel-label="__('ui.action.close')"
-                                            tone="danger"
-                                        />
+                                            :tone="$tonoPorEstado['cancelado']"
+                                        >
+                                            @include('comercial::pages.contratos._estado-transicion', ['desde' => $estadoValor, 'hacia' => 'cancelado'])
+                                        </x-molecules.confirm-modal>
                                     @elseif ($estadoValor === 'vigente')
-                                        <x-molecules.confirm-modal
-                                            :id="$modalIdFinalizar"
-                                            :form-id="$formIdFinalizar"
-                                            :title="__('comercial.contratos.confirmar_finalizar_titulo')"
-                                            :message="__('comercial.contratos.confirmar_finalizar')"
-                                            :confirm-label="__('comercial.contratos.accion_finalizar')"
-                                            tone="info"
-                                        />
+                                        {{-- Con una aplicación abierta, finalizar y cancelar no
+                                             piden confirmación sino que avisan (mismos ids: los
+                                             botones de la fila siguen apuntando a estos modales). --}}
+                                        @if ($aplicacionAbierta !== null)
+                                            @include('comercial::pages.contratos._modal-aplicacion-abierta', [
+                                                'modalId' => $modalIdFinalizar,
+                                                'contrato' => $contrato,
+                                                'aplicacion' => $aplicacionAbierta,
+                                                'accion' => 'finalizar',
+                                                'puedeVerOrden' => $puedeVerOrden,
+                                                'volverA' => route('panel.contratos.index'),
+                                                'volverTexto' => __('comercial.contratos.titulo'),
+                                            ])
+                                        @else
+                                            <x-molecules.confirm-modal
+                                                :id="$modalIdFinalizar"
+                                                :form-id="$formIdFinalizar"
+                                                :title="__('comercial.contratos.confirmar_finalizar_titulo')"
+                                                :message="__('comercial.contratos.confirmar_finalizar')"
+                                                :confirm-label="__('comercial.contratos.accion_finalizar')"
+                                                :tone="$tonoPorEstado['finalizado']"
+                                            >
+                                                @include('comercial::pages.contratos._estado-transicion', ['desde' => $estadoValor, 'hacia' => 'finalizado'])
+                                            </x-molecules.confirm-modal>
+                                        @endif
 
                                         <x-molecules.confirm-modal
                                             :id="$modalIdPausar"
@@ -330,18 +365,35 @@
                                             :title="__('comercial.contratos.confirmar_pausar_titulo')"
                                             :message="__('comercial.contratos.confirmar_pausar')"
                                             :confirm-label="__('comercial.contratos.accion_pausar')"
-                                            tone="warning"
-                                        />
+                                            :tone="$tonoPorEstado['pausado']"
+                                            modal-icon="pause_circle"
+                                        >
+                                            @include('comercial::pages.contratos._estado-transicion', ['desde' => $estadoValor, 'hacia' => 'pausado'])
+                                        </x-molecules.confirm-modal>
 
-                                        <x-molecules.confirm-modal
-                                            :id="$modalIdCancelar"
-                                            :form-id="$formIdCancelar"
-                                            :title="__('comercial.contratos.confirmar_cancelar_titulo')"
-                                            :message="__('comercial.contratos.confirmar_cancelar')"
-                                            :confirm-label="__('comercial.contratos.accion_cancelar')"
-                                            :cancel-label="__('ui.action.close')"
-                                            tone="danger"
-                                        />
+                                        @if ($aplicacionAbierta !== null)
+                                            @include('comercial::pages.contratos._modal-aplicacion-abierta', [
+                                                'modalId' => $modalIdCancelar,
+                                                'contrato' => $contrato,
+                                                'aplicacion' => $aplicacionAbierta,
+                                                'accion' => 'cancelar',
+                                                'puedeVerOrden' => $puedeVerOrden,
+                                                'volverA' => route('panel.contratos.index'),
+                                                'volverTexto' => __('comercial.contratos.titulo'),
+                                            ])
+                                        @else
+                                            <x-molecules.confirm-modal
+                                                :id="$modalIdCancelar"
+                                                :form-id="$formIdCancelar"
+                                                :title="__('comercial.contratos.confirmar_cancelar_titulo')"
+                                                :message="__('comercial.contratos.confirmar_cancelar')"
+                                                :confirm-label="__('comercial.contratos.accion_cancelar')"
+                                                :cancel-label="__('ui.action.close')"
+                                                :tone="$tonoPorEstado['cancelado']"
+                                            >
+                                                @include('comercial::pages.contratos._estado-transicion', ['desde' => $estadoValor, 'hacia' => 'cancelado'])
+                                            </x-molecules.confirm-modal>
+                                        @endif
                                     @elseif ($estadoValor === 'conflicto')
                                         <x-molecules.confirm-modal
                                             :id="$modalIdCancelar"
@@ -350,8 +402,10 @@
                                             :message="__('comercial.contratos.confirmar_cancelar')"
                                             :confirm-label="__('comercial.contratos.accion_cancelar')"
                                             :cancel-label="__('ui.action.close')"
-                                            tone="danger"
-                                        />
+                                            :tone="$tonoPorEstado['cancelado']"
+                                        >
+                                            @include('comercial::pages.contratos._estado-transicion', ['desde' => $estadoValor, 'hacia' => 'cancelado'])
+                                        </x-molecules.confirm-modal>
                                     @elseif ($estadoValor === 'pausado')
                                         <x-molecules.confirm-modal
                                             :id="$modalIdReanudar"
@@ -359,8 +413,11 @@
                                             :title="__('comercial.contratos.confirmar_reanudar_titulo')"
                                             :message="__('comercial.contratos.confirmar_reanudar')"
                                             :confirm-label="__('comercial.contratos.accion_reanudar')"
-                                            tone="success"
-                                        />
+                                            :tone="$tonoPorEstado['vigente']"
+                                            modal-icon="play_circle"
+                                        >
+                                            @include('comercial::pages.contratos._estado-transicion', ['desde' => $estadoValor, 'hacia' => 'vigente'])
+                                        </x-molecules.confirm-modal>
                                     @endif
                                 @endpuede
 

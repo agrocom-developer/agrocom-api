@@ -27,7 +27,10 @@
  * las que arma este JS al guardar una selección del modal.
  *
  * SessionStorage (guardar/restaurar el estado del formulario al navegar a
- * "Crear cliente/propiedad/lote" y volver, clave `ag_contrato_borrador`).
+ * "Crear cliente/propiedad/lote" y volver, clave `ag_contrato_borrador`). El
+ * borrador anota la ruta del formulario que lo guardó y solo se restaura ahí;
+ * restaurarlo nunca pisa con un valor vacío lo que el formulario ya trae —
+ * p. ej. la campaña activa que el alta ofrece elegida (19/9/2026).
  *
  * Al volver, lo recién creado llega por la URL (`cliente_id`, `propiedad_id`,
  * `lote_id`, ver el prop `retorno` de `molecules/boton-volver`) y se deja ya
@@ -39,6 +42,15 @@
  * Guard de presencia en el DOM (mismo criterio que `login.js`): en cualquier
  * página sin `[data-ag-contratos-form]` este módulo no hace nada.
  */
+import { initTimeRanges } from '../atoms/time-range.js';
+import { crearPaginador } from '../shared/paginador-cliente.js';
+
+// Lotes por página, en el modal de una propiedad y en la tabla del contrato.
+const LOTES_POR_PAGINA = 20;
+
+// Clave con la que un borrador anota de qué formulario es (la ruta).
+const CLAVE_ORIGEN_BORRADOR = '__origen';
+
 document.addEventListener('DOMContentLoaded', () => {
     const formulario = document.querySelector('[data-ag-contratos-form]');
     if (!formulario) return;
@@ -65,6 +77,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalLotesTitulo = formulario.querySelector('[data-ag-modal-lotes-titulo]');
     const modalCrearLoteSlot = formulario.querySelector('[data-ag-modal-crear-lote-slot]');
     const modalLotesLista = formulario.querySelector('[data-ag-modal-lotes-lista]');
+    const modalLotesSeleccionados = formulario.querySelector('[data-ag-modal-lotes-seleccionados]');
+    const contenedorPaginadorModal = formulario.querySelector('[data-ag-modal-paginador]');
     const modalLotesAgotado = formulario.querySelector('[data-ag-modal-lotes-agotado]');
     const modalLotesGuardarBtn = formulario.querySelector('[data-ag-modal-lotes-guardar]');
     const bsModal = modalLotesEl ? bootstrap.Modal.getOrCreateInstance(modalLotesEl) : null;
@@ -167,22 +181,17 @@ document.addEventListener('DOMContentLoaded', () => {
         boxDiaCompleto.appendChild(crearIcono('check', 'sm', 'ag-checkbox-group__check'));
         celdaDiaCompleto.append(checkDiaCompleto, boxDiaCompleto);
 
+        // Horario del lote: se clona el molde que trae el servidor
+        // (`<template data-ag-time-range-molde>`), con el índice de esta fila en
+        // los `name` y en el `id`, y se inicializa el componente. Nace
+        // deshabilitado: el lote arranca en "día completo".
         const celdaRango = document.createElement('div');
         celdaRango.className = 'ag-contratos-form__lote-rango-horas';
-        const inputHoraInicio = document.createElement('input');
-        inputHoraInicio.type = 'time';
-        inputHoraInicio.className = 'ag-contratos-form__input-hora';
-        inputHoraInicio.name = `lotes[${indiceGlobal}][hora_inicio]`;
-        inputHoraInicio.disabled = true;
-        const separador = document.createElement('span');
-        separador.setAttribute('aria-hidden', 'true');
-        separador.textContent = '–';
-        const inputHoraFin = document.createElement('input');
-        inputHoraFin.type = 'time';
-        inputHoraFin.className = 'ag-contratos-form__input-hora';
-        inputHoraFin.name = `lotes[${indiceGlobal}][hora_fin]`;
-        inputHoraFin.disabled = true;
-        celdaRango.append(inputHoraInicio, separador, inputHoraFin);
+        const molde = formulario.querySelector('template[data-ag-time-range-molde]');
+        if (molde) {
+            celdaRango.innerHTML = molde.innerHTML.replaceAll('__INDICE__', String(indiceGlobal));
+            initTimeRanges(celdaRango);
+        }
 
         const botonQuitar = crearBotonAccion('delete', textoQuitarLote);
         botonQuitar.setAttribute('data-ag-lote-quitar', '');
@@ -262,11 +271,56 @@ document.addEventListener('DOMContentLoaded', () => {
         return (lote.ocupado_en_campanias || []).map(String).includes(campaniaActual);
     };
 
+    // Paginación de la tabla de lotes (20 por página, contando de corrido a
+    // través de los grupos de propiedad). Se ocultan las filas de otras páginas
+    // con `hidden`, no se quitan: sus campos siguen en el formulario y se envían.
+    // El título de una propiedad solo se ve si alguna de sus filas está en la
+    // página. Al cargar, si alguna fila trae un error de validación se abre la
+    // página donde está, para que no quede escondido.
+    const contenedorPaginadorLotes = formulario.querySelector('[data-ag-lotes-paginador]');
+    const paginadorLotes = contenedorPaginadorLotes
+        ? crearPaginador(contenedorPaginadorLotes, { porPagina: LOTES_POR_PAGINA, alCambiar: () => mostrarPaginaLotes() })
+        : null;
+    let primeraCargaTabla = true;
+
+    const filasDeLotes = () => Array.from(contenedorGrupos?.querySelectorAll('.ag-contratos-form__lote-row') ?? []);
+
+    function mostrarPaginaLotes() {
+        if (!paginadorLotes || !contenedorGrupos) return;
+
+        const [desde, hasta] = paginadorLotes.rango();
+        filasDeLotes().forEach((fila, indice) => {
+            fila.hidden = indice < desde || indice >= hasta;
+        });
+
+        contenedorGrupos.querySelectorAll('[data-ag-lote-grupo]').forEach((grupo) => {
+            const hayFilaVisible = Array.from(grupo.querySelectorAll('.ag-contratos-form__lote-row')).some((fila) => !fila.hidden);
+            grupo.querySelector('.ag-contratos-form__lote-group-title')?.toggleAttribute('hidden', !hayFilaVisible);
+        });
+    }
+
+    const paginarTablaLotes = () => {
+        if (!paginadorLotes) return;
+
+        const filas = filasDeLotes();
+        let pagina = paginadorLotes.pagina();
+
+        if (primeraCargaTabla) {
+            const conError = filas.findIndex((fila) => fila.querySelector('.ag-input__error'));
+            if (conError >= 0) pagina = Math.floor(conError / LOTES_POR_PAGINA) + 1;
+            primeraCargaTabla = false;
+        }
+
+        paginadorLotes.actualizar(filas.length, pagina);
+        mostrarPaginaLotes();
+    };
+
     // Muestra la tabla de lotes agregados solo si hay al menos un grupo —
     // evita el cascarón vacío (solo encabezado) en un contrato nuevo.
     const actualizarVisibilidadTablaLotes = () => {
         if (!tablaLotes || !contenedorGrupos) return;
         tablaLotes.toggleAttribute('hidden', contenedorGrupos.children.length === 0);
+        paginarTablaLotes();
     };
 
     // ===== Pills de propiedades seleccionadas =====
@@ -341,6 +395,38 @@ document.addEventListener('DOMContentLoaded', () => {
         checkTodos.indeterminate = algunosMarcados && !todosMarcados;
     }
 
+    // «12 de 33 lotes seleccionados»: con la lista en páginas, lo marcado puede
+    // estar en una que no se ve.
+    function actualizarContadorModal() {
+        if (!modalLotesSeleccionados) return;
+
+        const checkboxes = modalLotesLista.querySelectorAll('[data-ag-modal-lote-checkbox]');
+        const marcados = modalLotesLista.querySelectorAll('[data-ag-modal-lote-checkbox]:checked').length;
+
+        modalLotesSeleccionados.textContent = checkboxes.length === 0
+            ? ''
+            : (modalLotesEl?.dataset.textoSeleccionados ?? '').replace(':cantidad', String(marcados)).replace(':total', String(checkboxes.length));
+    }
+
+    // Paginación del modal: se ocultan las filas de otras páginas (`hidden`),
+    // no se quitan — lo marcado en ellas se guarda igual.
+    let filasModal = [];
+    const paginadorModal = contenedorPaginadorModal
+        ? crearPaginador(contenedorPaginadorModal, {
+            porPagina: LOTES_POR_PAGINA,
+            alCambiar: () => mostrarPaginaModal(),
+        })
+        : null;
+
+    function mostrarPaginaModal() {
+        if (!paginadorModal) return;
+
+        const [desde, hasta] = paginadorModal.rango();
+        filasModal.forEach((fila, indice) => {
+            fila.hidden = indice < desde || indice >= hasta;
+        });
+    }
+
     const abrirModalLotes = (propiedadId) => {
         if (!modalLotesEl || !bsModal) return;
 
@@ -362,6 +448,9 @@ document.addEventListener('DOMContentLoaded', () => {
         );
 
         modalLotesLista.innerHTML = '';
+        filasModal = [];
+        paginadorModal?.actualizar(0);
+        actualizarContadorModal();
 
         // Acción "Crear lote", siempre visible arriba de la tabla (con o sin
         // lotes cargados todavía) — antes solo existía dentro del estado
@@ -448,10 +537,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const head = document.createElement('div');
             head.className = 'ag-contratos-form__modal-tabla-head';
             const { celda: celdaTodos, checkbox: checkTodos } = crearCeldaCheckbox(true);
+            // «Todos» son los de la propiedad entera, no solo los de la página que se ve.
             checkTodos.addEventListener('change', () => {
                 modalLotesLista.querySelectorAll('[data-ag-modal-lote-checkbox]').forEach((cb) => {
                     cb.checked = checkTodos.checked;
                 });
+                actualizarContadorModal();
             });
             const colCodigo = document.createElement('span');
             colCodigo.textContent = textoColCodigo;
@@ -470,7 +561,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const { celda: celdaCheck, checkbox } = crearCeldaCheckbox(false, lote.id);
                 checkbox.checked = idsYaEnContrato.has(String(lote.id));
-                checkbox.addEventListener('change', sincronizarSeleccionarTodosModal);
+                checkbox.addEventListener('change', () => {
+                    sincronizarSeleccionarTodosModal();
+                    actualizarContadorModal();
+                });
 
                 const celdaCodigo = document.createElement('strong');
                 celdaCodigo.textContent = lote.codigo;
@@ -502,6 +596,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             modalLotesLista.appendChild(tabla);
             sincronizarSeleccionarTodosModal();
+
+            filasModal = Array.from(tabla.querySelectorAll('.ag-contratos-form__modal-tabla-fila'));
+            paginadorModal?.actualizar(filasModal.length, 1);
+            mostrarPaginaModal();
+            actualizarContadorModal();
         }
 
         bsModal.show();
@@ -532,12 +631,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const checkDiaCompleto = e.target.closest('[data-ag-lote-dia-completo]');
         if (!checkDiaCompleto) return;
 
+        // "Día completo" deshabilita y vacía el horario de la fila. Basta con
+        // tocar los inputs nativos: el componente `atoms/time-range` observa su
+        // `disabled` y se vuelve a leer solo.
         const fila = checkDiaCompleto.closest('.ag-contratos-form__lote-row');
-        const inputs = fila?.querySelectorAll('.ag-contratos-form__input-hora') || [];
-        inputs.forEach((input) => {
+        fila?.querySelectorAll('.ag-time-range__native').forEach((input) => {
             input.disabled = checkDiaCompleto.checked;
             if (checkDiaCompleto.checked) input.value = '';
         });
+
+        // Al destildar, el foco pasa al horario (sin abrirlo) para que se cargue
+        // enseguida. Va en un `setTimeout`: el componente habilita su disparador al
+        // observar el cambio de `disabled`, que ocurre después de este oyente.
+        if (!checkDiaCompleto.checked) {
+            setTimeout(() => fila?.querySelector('[data-ag-time-range-trigger]')?.focus(), 0);
+        }
     });
 
     listaApilada?.addEventListener('click', (e) => {
@@ -712,7 +820,40 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        // De QUÉ formulario es: el alta y la edición de cada contrato son
+        // formularios distintos, y un borrador solo vale para el que lo guardó.
+        bor[CLAVE_ORIGEN_BORRADOR] = window.location.pathname;
+
         sessionStorage.setItem('ag_contrato_borrador', JSON.stringify(bor));
+    }
+
+    // Lo que el borrador NO devuelve al formulario: el token de seguridad y el
+    // método (los tiene ya la página nueva; el guardado viejo podría estar
+    // vencido) y la marca de origen.
+    const CLAVES_QUE_NO_SE_RESTAURAN = new Set(['_token', '_method', CLAVE_ORIGEN_BORRADOR]);
+
+    /**
+     * Devuelve al campo lo que tenía. Tres cuidados: un valor vacío no pisa el
+     * que el formulario ya trae (p. ej. la campaña activa que ofrece elegida);
+     * un select solo acepta una opción que este formulario ofrece; y después de
+     * escribir se avisa al campo (`input`/`change`) para que los controles
+     * propios —el select con su etiqueta, la fecha con su disparador, el valor
+     * estimado— se repinten en vez de quedar mostrando otra cosa que su valor.
+     * `cliente_id` se avisa aparte, más abajo: mueve propiedades y pills.
+     */
+    function aplicarValorDelBorrador(input, valor) {
+        const texto = valor === null || valor === undefined ? '' : String(valor);
+
+        if (texto === '' && input.value !== '') return;
+        if (input.tagName === 'SELECT' && !Array.from(input.options).some((opcion) => opcion.value === texto)) return;
+        if (input.value === texto) return;
+
+        input.value = texto;
+
+        if (input.name !== 'cliente_id') {
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+        }
     }
 
     function restaurarBorrador() {
@@ -728,27 +869,38 @@ document.addEventListener('DOMContentLoaded', () => {
         if (bor) {
             try {
                 const datos = JSON.parse(bor);
-                Object.entries(datos).forEach(([key, value]) => {
-                    if (Array.isArray(value)) {
-                        value.forEach((v) => {
+
+                // Un borrador de otro formulario (o de una versión anterior, que
+                // no anotaba de cuál era) se descarta: si no, un «Nuevo cliente»
+                // que no volvió por su botón dejaba un contrato a medias que
+                // reaparecía —y pisaba lo que el formulario trae— en el siguiente
+                // alta, o en la edición de OTRO contrato.
+                if (datos[CLAVE_ORIGEN_BORRADOR] === window.location.pathname) {
+                    Object.entries(datos).forEach(([key, value]) => {
+                        if (CLAVES_QUE_NO_SE_RESTAURAN.has(key)) return;
+
+                        if (Array.isArray(value)) {
+                            value.forEach((v) => {
+                                const input = formulario.querySelector(`[name="${key}"]`);
+                                if (input) input.value = v;
+                            });
+                        } else {
                             const input = formulario.querySelector(`[name="${key}"]`);
-                            if (input) input.value = v;
-                        });
-                    } else {
-                        const input = formulario.querySelector(`[name="${key}"]`);
-                        if (input) {
+                            if (!input) return;
+
                             if (input.type === 'checkbox') {
                                 input.checked = value === 'on' || value === '1';
                             } else {
-                                input.value = value;
+                                aplicarValorDelBorrador(input, value);
                             }
                         }
-                    }
-                });
+                    });
+                }
 
                 sessionStorage.removeItem('ag_contrato_borrador');
             } catch (e) {
                 console.error('Error al restaurar borrador:', e);
+                sessionStorage.removeItem('ag_contrato_borrador');
             }
         }
 

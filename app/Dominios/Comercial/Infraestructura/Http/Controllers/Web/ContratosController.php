@@ -20,6 +20,7 @@ use App\Dominios\Comercial\Dominio\Excepciones\TransicionContratoNoPermitida;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
+use App\Dominios\Comercial\Infraestructura\Http\PasosDeContrato;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\ActualizarContratoRequest;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\CambiarEstadoContratoRequest;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\CrearContratoRequest;
@@ -90,8 +91,12 @@ final class ContratosController
 
     public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
 
-    public function index(Request $request, ListarContratos $listarContratos, LecturaCampania $lecturaCampania): View
-    {
+    public function index(
+        Request $request,
+        ListarContratos $listarContratos,
+        LecturaCampania $lecturaCampania,
+        LecturaResumenOrdenesContrato $lecturaResumenOrdenes,
+    ): View {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
         $busqueda = $request->string('q')->toString();
@@ -107,6 +112,14 @@ final class ContratosController
             'campaniasDisponibles' => $this->campaniasDisponibles($lecturaCampania),
             'clientesDisponibles' => $this->clientesActivos(),
             'propiedadesDisponibles' => $this->propiedadesActivas(),
+            'tonoPorEstado' => PasosDeContrato::TONO_POR_ESTADO,
+            // Las filas con una aplicación abierta no se pueden finalizar ni
+            // cancelar todavía (ADR 0022): sus acciones abren un aviso en vez de
+            // una confirmación. Una lectura por página, no una por fila.
+            'aplicacionesAbiertas' => $lecturaResumenOrdenes->aplicacionesAbiertas(
+                $contratos->getCollection()->pluck('id')->map(fn (mixed $id): int => (int) $id)->all(),
+            ),
+            'puedeVerOrden' => $this->autorizacion->tienePermiso($request, 'operaciones.orden.ver'),
             'filtros' => ['q' => $busqueda, 'campania_id' => $campaniaId, 'cliente_id' => $clienteId, 'propiedad_id' => $propiedadId],
         ]);
     }
@@ -119,6 +132,7 @@ final class ContratosController
             ...$this->autorizacion->cascara($request),
             'clientesDisponibles' => $this->clientesActivos(),
             'campaniasDisponibles' => $this->campaniasParaFormulario($lecturaCampania),
+            'campaniaIdPredeterminada' => $this->campaniaActivaPredeterminada($lecturaCampania),
             // Acceso directo desde el aside de `panel.clientes.edit` (tarea
             // "resumen de cliente"): con ?cliente_id=, el formulario arranca
             // con ese cliente ya elegido — ver _formulario.blade.php.
@@ -204,16 +218,60 @@ final class ContratosController
                 $contrato,
             );
 
+        $pasosEstado = PasosDeContrato::armar(
+            $contrato->estado,
+            $this->autorizacion->tienePermiso($request, self::PERMISO_CAMBIAR_ESTADO),
+        );
+
         return view('comercial::pages.contratos.edit', [
             ...$this->autorizacion->cascara($request),
             'contrato' => $contrato,
             'clientesDisponibles' => $this->clientesActivos(),
             'campaniasDisponibles' => $this->campaniasParaFormulario($lecturaCampania, $contrato->campania_id),
+            'campaniaIdPredeterminada' => $this->campaniaActivaPredeterminada($lecturaCampania),
             'propiedadesYLotesPorCliente' => $this->propiedadesYLotesPorCliente($contrato->id),
             'loteIdsConOrdenRegistrada' => $loteIdsConOrden,
             'conflictosPorLote' => $conflictosPorLote,
             'resumenContrato' => $this->resumenContrato($contrato, $request, $lecturaResumenOrdenes, $lecturaTrabajos, $obtenerAvance),
+            'pasosEstado' => $pasosEstado,
+            'ayudaEstado' => PasosDeContrato::ayuda($pasosEstado, $contrato->estado),
+            // Lo que los modales de cambio de estado necesitan saber antes de
+            // dejar confirmar (ver `_cambio-estado.blade.php`): la aplicación
+            // que sigue abierta (ADR 0022) y los contratos que este dejaría en
+            // conflicto al aprobarse (ADR 0021).
+            'aplicacionAbierta' => $lecturaResumenOrdenes->aplicacionesAbiertas([$contrato->id])[$contrato->id] ?? null,
+            'puedeVerOrden' => $this->autorizacion->tienePermiso($request, 'operaciones.orden.ver'),
+            'contratosQueEntranEnConflicto' => $this->contratosQueEntranEnConflicto($contrato),
         ]);
+    }
+
+    /**
+     * Los contratos que pasarían a `conflicto` si `$contrato` se aprobara ahora
+     * (ADR 0021), con el cliente, los lotes que comparten y el enlace para
+     * revisarlos. Solo tiene sentido para un `borrador`: es el que puede
+     * aprobarse. Los pinta el modal de aprobación para que quien aprueba lo
+     * sepa antes de confirmar.
+     *
+     * @return list<array{cliente: string, lotes: string, editar_url: string}>
+     */
+    private function contratosQueEntranEnConflicto(Contrato $contrato): array
+    {
+        if ($contrato->estado !== EstadoContrato::Borrador) {
+            return [];
+        }
+
+        return array_map(
+            fn (array $fila): array => [
+                'cliente' => $fila['contrato']->cliente->razon_social,
+                'lotes' => implode(', ', $fila['lotes']),
+                'editar_url' => route('panel.contratos.edit', [
+                    $fila['contrato'],
+                    'volver_a' => route('panel.contratos.edit', $contrato),
+                    'volver_texto' => $contrato->cliente->razon_social,
+                ]),
+            ],
+            LecturaOcupacionLotesPorCampania::contratosQueEntranEnConflicto($contrato),
+        );
     }
 
     /**
@@ -229,15 +287,6 @@ final class ContratosController
      */
     private function formatearConflictos(array $conflictos, Contrato $contratoEnEdicion): array
     {
-        $variantePorEstado = [
-            'borrador' => 'neutral',
-            'vigente' => 'success',
-            'finalizado' => 'distintivo-2',
-            'cancelado' => 'danger',
-            'pausado' => 'info',
-            'conflicto' => 'alert',
-        ];
-
         // Lote_ids del contrato en edición — para quedarse, de TODOS los
         // lotes del otro contrato, solo con los que también están acá (el
         // dato que realmente responde "qué choca", no solo "con quién").
@@ -276,7 +325,7 @@ final class ContratosController
                 'propiedades' => $propiedades,
                 'vigencia' => $vigencia,
                 'estado_label' => __('comercial.contrato.estado.'.$estadoValor),
-                'estado_variant' => $variantePorEstado[$estadoValor],
+                'estado_variant' => PasosDeContrato::TONO_POR_ESTADO[$estadoValor],
                 'monto_total' => $this->aMoneda(BigDecimal::of($otroContrato->monto_total)),
                 'lotes_en_conflicto' => $lotesEnConflicto,
                 'editar_url' => route('panel.contratos.edit', [
@@ -340,24 +389,28 @@ final class ContratosController
 
         $hacia = EstadoContrato::from((string) $request->validated('estado'));
 
+        // Vuelve a la pantalla de la que vino — el listado (con sus filtros) o
+        // los pasos de la ficha de edición — en vez de mandar siempre al
+        // listado: cambiar el estado desde el formulario no debería sacarte
+        // de él (mismo criterio que `CampaniasController::cambiarEstado()`).
         try {
             $cambiarEstadoContrato->ejecutar($contrato, $hacia);
         } catch (TransicionContratoNoPermitida|ActivacionContratoNoDisponible|ContratoConAplicacionAbierta $excepcion) {
             return redirect()
-                ->route('panel.contratos.index')
+                ->back(fallback: route('panel.contratos.index'))
                 ->withErrors(['estado' => $excepcion->getMessage()]);
         } catch (\Throwable $excepcion) {
             // Mismo catch-all que store()/update() — reutiliza la clave
-            // 'estado', ya cableada en contratos/index.blade.php.
+            // 'estado', ya cableada en el listado y en la ficha de edición.
             report($excepcion);
 
             return redirect()
-                ->route('panel.contratos.index')
+                ->back(fallback: route('panel.contratos.index'))
                 ->withErrors(['estado' => __('http.error_servidor')]);
         }
 
         return redirect()
-            ->route('panel.contratos.index')
+            ->back(fallback: route('panel.contratos.index'))
             ->with('estado', __('comercial.contratos.estado_cambiado'));
     }
 
@@ -425,6 +478,24 @@ final class ContratosController
         return $campanias
             ->sortBy('codigo', SORT_NATURAL | SORT_FLAG_CASE)
             ->mapWithKeys(fn (DatosCampania $campania): array => [$campania->id => $campania->codigo]);
+    }
+
+    /**
+     * La campaña que el formulario ofrece ya elegida: la primera campaña
+     * ACTIVA (`abierta`, ver `Campania::esActiva()`) por código — la misma que
+     * queda arriba en el select. Se procura tener una sola abierta a la vez;
+     * si hay más, alcanza con la primera. `null` si no hay ninguna: el select
+     * queda en su placeholder y el usuario elige (o no puede guardar).
+     *
+     * Solo es el valor inicial: un contrato que ya trae campaña, o el
+     * `old()` de un guardado fallido, siempre gana (ver `_formulario`).
+     */
+    private function campaniaActivaPredeterminada(LecturaCampania $lecturaCampania): ?int
+    {
+        return collect($lecturaCampania->abiertas())
+            ->sortBy('codigo', SORT_NATURAL | SORT_FLAG_CASE)
+            ->first()
+            ?->id;
     }
 
     /**

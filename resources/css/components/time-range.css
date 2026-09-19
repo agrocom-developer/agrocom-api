@@ -1,0 +1,492 @@
+/*
+ * Átomo: time-range (resources/views/components/atoms/time-range.blade.php)
+ * Rango horario en una sola casilla con un selector de reloj circular.
+ *
+ * Misma base visual que `atoms/date`/`atoms/input`: caja "outlined" con los
+ * mismos tokens de borde, foco y error. Tres capas dentro de `.ag-time-range`:
+ * los dos `<input type="time">` nativos (siempre presentes, son los que se
+ * envían), el `.ag-time-range__trigger` que arma resources/js/atoms/time-range.js
+ * y el popup con el reloj, que se abre en la capa superior junto a la casilla.
+ * Sin JS solo existen los nativos.
+ *
+ * El selector es un POPUP anclado a la casilla (Popover API): una tarjeta
+ * compacta con cabecera de color primario (la hora con su «a. m.»/«p. m.» a la
+ * vista), dial de 12 horas sobre superficie neutra y acciones en texto. Todo
+ * color sale de tokens: el tema claro/oscuro y el theming por usuario lo
+ * reasignan sin tocar este archivo (CLAUDE.md invariante 11).
+ */
+
+.ag-time-range {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-1);
+    margin-bottom: var(--ag-space-4);
+    font-family: var(--ag-font-family-base);
+}
+
+.ag-time-range__label {
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+    color: var(--ag-color-text);
+}
+
+.ag-time-range__control {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background-color: var(--ag-color-bg-elevated);
+    border: 1px solid var(--ag-color-border-strong);
+    border-radius: var(--ag-radius-md);
+    transition:
+        border-color var(--ag-transition-fast),
+        box-shadow var(--ag-transition-fast);
+}
+
+.ag-time-range__control:focus-within {
+    border-color: var(--ag-color-primary);
+    box-shadow: 0 0 0 3px var(--ag-color-primary-subtle);
+}
+
+.ag-time-range__control--error {
+    border-color: var(--ag-color-danger);
+}
+
+.ag-time-range__control--error:focus-within {
+    box-shadow: 0 0 0 3px var(--ag-color-danger-subtle);
+}
+
+.ag-time-range__help {
+    margin: 0;
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+}
+
+/* Los <input type="time"> nativos: controles reales mientras JS no cargó. */
+.ag-time-range__native {
+    flex: 1;
+    min-width: 0;
+    padding: var(--ag-space-2) var(--ag-space-3);
+    border: none;
+    background: transparent;
+    color: var(--ag-color-text);
+    font-family: inherit;
+    font-size: var(--ag-font-size-sm);
+    outline: none;
+}
+
+.ag-time-range__native:disabled {
+    color: var(--ag-color-text-faint);
+    cursor: not-allowed;
+}
+
+/* Con JS siguen en el DOM (es lo que viaja con el formulario) pero no se ven —
+   mismo truco que `.ag-date__native--enhanced`: ni `display:none` ni
+   `visibility:hidden`, para no romper el envío ni el foco programático. */
+.ag-time-range__native--enhanced {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.ag-time-range__trigger {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: var(--ag-space-2);
+    width: 100%;
+    min-width: 0;
+    padding: var(--ag-space-2) var(--ag-space-3);
+    background: none;
+    border: none;
+    color: inherit;
+    font: inherit;
+    font-size: var(--ag-font-size-sm);
+    text-align: start;
+    cursor: pointer;
+    outline: none;
+}
+
+.ag-time-range__trigger[hidden],
+.ag-time-range__clear[hidden],
+.ag-time-range__reloj[hidden],
+.ag-time-range__teclado[hidden] {
+    display: none;
+}
+
+.ag-time-range__trigger:disabled {
+    cursor: not-allowed;
+}
+
+.ag-time-range__value {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--ag-color-text);
+    font-variant-numeric: tabular-nums;
+}
+
+.ag-time-range__value--placeholder {
+    color: var(--ag-color-text-muted);
+}
+
+.ag-time-range--deshabilitado .ag-time-range__value,
+.ag-time-range--deshabilitado .ag-time-range__icon {
+    color: var(--ag-color-text-faint);
+}
+
+.ag-time-range__icon {
+    flex-shrink: 0;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-time-range__clear {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-inline-end: var(--ag-space-1);
+    padding: var(--ag-space-1);
+    background: none;
+    border: none;
+    border-radius: var(--ag-radius-pill);
+    color: var(--ag-color-text-muted);
+    cursor: pointer;
+}
+
+.ag-time-range__clear:hover,
+.ag-time-range__clear:focus-visible {
+    color: var(--ag-color-primary-emphasis);
+    background-color: var(--ag-color-primary-subtle);
+    outline: none;
+}
+
+/* ===== Popup (popover anclado a la casilla) ===== */
+
+/* La posición (`top`/`left`) la pone time-range.js al abrirse, junto a la
+   casilla. `inset: auto` + `margin: 0` deshacen el centrado que el navegador le
+   da a un popover; sin borde extra de superficie, la sombra ya lo separa. */
+.ag-time-range__popup {
+    inset: auto;
+    margin: 0;
+    width: min(18.5rem, calc(100vw - 1rem));
+    padding: 0;
+    overflow: hidden;
+    background-color: var(--ag-color-bg-elevated);
+    border: 1px solid var(--ag-color-border);
+    border-radius: var(--ag-radius-lg);
+    box-shadow: var(--ag-shadow-lg);
+    color: var(--ag-color-text);
+    font-family: var(--ag-font-family-base);
+}
+
+.ag-time-range__popup:popover-open {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Cabecera: las dos horas, cada una con su a. m./p. m., sobre el color primario.
+   El texto va en blanco constante (`--ag-color-gray-0`) porque el relleno primario
+   no cambia con el tema; `--ag-color-text-inverse` se invierte en oscuro. */
+.ag-time-range__header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-3) var(--ag-space-3) var(--ag-space-2);
+    background-color: var(--ag-color-primary);
+    color: var(--ag-color-gray-0);
+}
+
+.ag-time-range__par {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.ag-time-range__par-etiqueta {
+    font-size: var(--ag-font-size-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    opacity: 0.85;
+}
+
+.ag-time-range__par-fila {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-1);
+}
+
+.ag-time-range__par-tiempo {
+    display: inline-flex;
+    align-items: baseline;
+    font-size: var(--ag-font-size-xl);
+    font-weight: var(--ag-font-weight-medium);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.15;
+}
+
+.ag-time-range__guion {
+    padding-bottom: var(--ag-space-1);
+    font-size: var(--ag-font-size-lg);
+    opacity: 0.85;
+}
+
+.ag-time-range__seg {
+    padding: 0 var(--ag-space-1);
+    background: none;
+    border: none;
+    border-radius: var(--ag-radius-sm);
+    color: inherit;
+    font: inherit;
+    opacity: 0.65;
+    cursor: pointer;
+    transition:
+        opacity var(--ag-transition-fast),
+        background-color var(--ag-transition-fast);
+}
+
+.ag-time-range__seg:hover {
+    opacity: 1;
+}
+
+.ag-time-range__seg--activo {
+    background-color: var(--ag-color-primary-hover);
+    opacity: 1;
+}
+
+.ag-time-range__seg:focus-visible,
+.ag-time-range__periodo-opcion:focus-visible {
+    outline: 2px solid var(--ag-color-gray-0);
+    outline-offset: 1px;
+}
+
+/* a. m. / p. m.: dos opciones apiladas al lado de la hora, como el reloj de
+   Android; la elegida va rellena. Sin esto un reloj de 1 a 12 no dice si 3:00 es
+   de la madrugada o de la tarde. */
+.ag-time-range__periodo {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.ag-time-range__periodo-opcion {
+    padding: 0 var(--ag-space-1);
+    background: none;
+    border: 1px solid transparent;
+    border-radius: var(--ag-radius-sm);
+    color: inherit;
+    font: inherit;
+    font-size: var(--ag-font-size-xs);
+    line-height: 1.35;
+    white-space: nowrap;
+    opacity: 0.7;
+    cursor: pointer;
+}
+
+.ag-time-range__periodo-opcion:hover {
+    opacity: 1;
+}
+
+.ag-time-range__periodo-opcion--activo {
+    background-color: var(--ag-color-primary-hover);
+    border-color: var(--ag-color-gray-0);
+    font-weight: var(--ag-font-weight-bold);
+    opacity: 1;
+}
+
+.ag-time-range__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-1);
+    padding: var(--ag-space-3) var(--ag-space-3) var(--ag-space-1);
+}
+
+.ag-time-range__reloj {
+    display: flex;
+    justify-content: center;
+}
+
+.ag-time-range__dial {
+    width: 100%;
+    max-width: 13rem;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    cursor: pointer;
+    outline: none;
+    touch-action: none;
+    user-select: none;
+}
+
+.ag-time-range__dial:focus-visible {
+    box-shadow: 0 0 0 3px var(--ag-color-primary-subtle);
+}
+
+.ag-time-range__dial-fondo {
+    fill: var(--ag-color-bg-input-chrome);
+}
+
+.ag-time-range__dial-aguja {
+    stroke: var(--ag-color-primary);
+    stroke-width: 1.6;
+}
+
+.ag-time-range__dial-eje,
+.ag-time-range__dial-selector {
+    fill: var(--ag-color-primary);
+}
+
+.ag-time-range__dial-punto {
+    fill: var(--ag-color-gray-0);
+}
+
+/* Números del dial: unidades del viewBox (200), no píxeles de pantalla — el
+   dial escala entero con su ancho. */
+.ag-time-range__dial-numero {
+    fill: var(--ag-color-text);
+    font-family: inherit;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    text-anchor: middle;
+    dominant-baseline: central;
+    pointer-events: none;
+}
+
+.ag-time-range__dial-numero--elegido {
+    fill: var(--ag-color-gray-0);
+    font-weight: var(--ag-font-weight-bold);
+}
+
+/* Modo de texto: la alternativa accesible al dial. */
+.ag-time-range__teclado {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-2);
+    padding-block: var(--ag-space-2);
+}
+
+.ag-time-range__teclado-campos {
+    display: flex;
+    gap: var(--ag-space-2);
+}
+
+.ag-time-range__teclado-campo {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--ag-space-1);
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-time-range__teclado-campo input {
+    width: 100%;
+    padding: var(--ag-space-2);
+    background-color: var(--ag-color-bg-elevated);
+    border: 1px solid var(--ag-color-border-strong);
+    border-radius: var(--ag-radius-md);
+    color: var(--ag-color-text);
+    font: inherit;
+    font-size: var(--ag-font-size-base);
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+}
+
+.ag-time-range__teclado-campo input:focus-visible {
+    outline: none;
+    border-color: var(--ag-color-primary);
+    box-shadow: 0 0 0 3px var(--ag-color-primary-subtle);
+}
+
+.ag-time-range__teclado-ayuda {
+    margin: 0;
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-xs);
+    text-align: center;
+}
+
+.ag-time-range__aviso {
+    min-height: 1.1rem;
+    margin: 0;
+    color: var(--ag-color-danger);
+    font-size: var(--ag-font-size-xs);
+    text-align: center;
+}
+
+.ag-time-range__pie {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ag-space-1);
+    padding: var(--ag-space-1) var(--ag-space-2) var(--ag-space-2);
+}
+
+.ag-time-range__modo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    background: none;
+    border: none;
+    border-radius: var(--ag-radius-pill);
+    color: var(--ag-color-text-muted);
+    cursor: pointer;
+}
+
+.ag-time-range__modo:hover,
+.ag-time-range__modo:focus-visible {
+    background-color: var(--ag-color-primary-subtle);
+    color: var(--ag-color-primary-emphasis);
+    outline: none;
+}
+
+.ag-time-range__acciones {
+    display: flex;
+    gap: 0;
+}
+
+.ag-time-range__accion {
+    padding: var(--ag-space-1) var(--ag-space-2);
+    background: none;
+    border: none;
+    border-radius: var(--ag-radius-md);
+    color: var(--ag-color-primary-emphasis);
+    font: inherit;
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-medium);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.ag-time-range__accion:hover,
+.ag-time-range__accion:focus-visible {
+    background-color: var(--ag-color-primary-subtle);
+    outline: none;
+}
+
+.ag-time-range__accion--primaria {
+    font-weight: var(--ag-font-weight-bold);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .ag-time-range__popup:popover-open {
+        animation: ag-time-range-entrada 120ms ease-out;
+    }
+}
+
+@keyframes ag-time-range-entrada {
+    from {
+        opacity: 0;
+        transform: translateY(calc(var(--ag-space-1) * -1));
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}

@@ -154,6 +154,38 @@ return [
         'vista_grilla' => 'Ver como grilla',
     ],
 
+    // Paginador de listas que ya están completas en la página (modal de
+    // lotes, tabla de lotes de un contrato).
+    'paginador' => [
+        'anterior' => 'Página anterior',
+        'siguiente' => 'Página siguiente',
+        'pagina' => 'Página :numero',
+    ],
+
+    // Selector de horario (inicio y fin en una sola casilla).
+    'time_range' => [
+        'placeholder' => '--:-- – --:--',
+        'elegir_horario' => 'Elegir horario',
+        'limpiar_horario' => 'Limpiar horario',
+        'inicio' => 'Inicio',
+        'fin' => 'Fin',
+        'hora' => 'Hora',
+        'minutos' => 'Minutos',
+        'periodo' => 'a. m. o p. m.',
+        'am' => 'a. m.',
+        'pm' => 'p. m.',
+        'formato' => '6:30 a. m.',
+        'ayuda_teclado' => 'Escribe la hora como 6:30 a. m., 6 pm o 18:30.',
+        'limpiar' => 'Limpiar',
+        'cancelar' => 'Cancelar',
+        'aceptar' => 'Aceptar',
+        'usar_teclado' => 'Usar teclado',
+        'usar_reloj' => 'Usar reloj',
+        'error_ambas' => 'Indica la hora de inicio y la de fin.',
+        'error_orden' => 'La hora de fin debe ser posterior a la de inicio.',
+        'error_formato' => 'Escribe la hora como 6:30 a. m., 6 pm o 18:30.',
+    ],
+
     // Pasos del estado de un objeto (molecules/step-arrow): la pista de los
     // pasos que no se pueden usar y el cierre del párrafo de ayuda. El texto
     // de cada estado lo define el propio objeto en su archivo de idioma.

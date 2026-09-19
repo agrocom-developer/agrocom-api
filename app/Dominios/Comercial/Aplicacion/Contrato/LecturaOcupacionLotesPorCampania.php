@@ -62,6 +62,52 @@ final class LecturaOcupacionLotesPorCampania
     }
 
     /**
+     * Los contratos que pasarían a `conflicto` si `$contrato` se aprobara ahora
+     * (ADR 0021): los `borrador` de su misma campaña que comparten al menos un
+     * lote con él, cada uno con los códigos de los lotes que comparten. Es lo
+     * que el panel muestra ANTES de confirmar la aprobación, para que quien
+     * aprueba sepa qué contratos van a quedar en conflicto y decida después si
+     * los cancela o les quita esos lotes. Solo lectura: quien los mueve de
+     * estado, al aprobar, es `MaquinaEstadosContrato::reconciliarConflictos()`.
+     *
+     * Los `conflicto` que ya chocan con otro contrato aprobado no se listan:
+     * ya están marcados y no cambian por esta aprobación.
+     *
+     * @return list<array{contrato: Contrato, lotes: list<string>}>
+     */
+    public static function contratosQueEntranEnConflicto(Contrato $contrato): array
+    {
+        if ($contrato->campania_id === null) {
+            return [];
+        }
+
+        $propios = $contrato->lotes()->pluck('lote_id')->all();
+
+        if ($propios === []) {
+            return [];
+        }
+
+        $filas = ContratoLote::query()
+            ->whereIn('lote_id', $propios)
+            ->whereHas('contrato', function (Builder $query) use ($contrato): void {
+                $query->where('campania_id', $contrato->campania_id)
+                    ->where('estado', EstadoContrato::Borrador->value)
+                    ->whereKeyNot($contrato->id);
+            })
+            ->with(['contrato.cliente', 'lote:id,codigo'])
+            ->orderBy('contrato_id')
+            ->get(['id', 'contrato_id', 'lote_id']);
+
+        $porContrato = [];
+        foreach ($filas as $fila) {
+            $porContrato[$fila->contrato_id] ??= ['contrato' => $fila->contrato, 'lotes' => []];
+            $porContrato[$fila->contrato_id]['lotes'][] = (string) $fila->lote?->codigo;
+        }
+
+        return array_values($porContrato);
+    }
+
+    /**
      * Para los lotes que YA están en el contrato que se edita: el OTRO
      * contrato que los retiene (`vigente` o `pausado`) en la misma campaña,
      * con sus relaciones cargadas para armar el modal informativo de

@@ -21,12 +21,15 @@
     - cancelLabel (nullable): texto del botón que cierra sin hacer nada —
       sin pasarlo, cae en `ui.action.cancel` (mismo chrome genérico en toda
       pantalla).
-    - tone: danger|success|warning|info|neutral (default "danger" — la
-      mayoría de las confirmaciones son sobre algo que no se puede deshacer).
-      Colorea el círculo del ícono Y el botón "Confirmar" (danger → botón
-      `danger` sólido; cualquier otro tono → botón `primary`, nunca un
-      color de estado en un botón de acción — mismo criterio de "el color de
-      estado no compite con el CTA" que ya documenta `atoms/button`).
+    - tone: danger|success|warning|info|neutral|alert|distintivo-1|2|3|
+      primary-2 (default "danger" — la mayoría de las confirmaciones son sobre
+      algo que no se puede deshacer). Son los tonos de `atoms/badge`: un modal
+      que confirma un cambio de ESTADO pasa el tono de ese estado, así se ve
+      antes de confirmar a cuál se pasa (19/9/2026). Colorea el círculo del
+      ícono Y el botón "Confirmar" (danger → botón `danger` sólido; cualquier
+      otro tono → botón `primary`, nunca un color de estado en un botón de
+      acción — mismo criterio de "el color de estado no compite con el CTA"
+      que ya documenta `atoms/button`).
     - modalIcon (nullable): ícono Material Symbols del círculo — sin
       pasarlo, `warning` en tono danger, `check_circle` en cualquier otro.
 
