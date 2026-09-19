@@ -3,6 +3,7 @@
 namespace App\Dominios\Comercial\Aplicacion;
 
 use App\Dominios\Comercial\Aplicacion\Propiedad\ValidadorUbicacionGeografica;
+use App\Dominios\Comercial\Dominio\ColorPropiedad;
 use App\Dominios\Comercial\Dominio\Excepciones\PropiedadDuplicada;
 use App\Dominios\Comercial\Dominio\Excepciones\UbicacionGeograficaInconsistente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
@@ -52,7 +53,7 @@ final class CrearPropiedad
             'provincia_id' => $provinciaId,
             'municipio_id' => $municipioId,
             'localidad' => $localidad,
-            'color' => $color,
+            'color' => $color ?? ColorPropiedad::porDefecto()->value,
         ]);
 
         try {

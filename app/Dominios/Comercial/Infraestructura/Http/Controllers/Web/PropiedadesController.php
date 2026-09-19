@@ -84,6 +84,7 @@ final class PropiedadesController
             'departamentosDisponibles' => $this->departamentosActivos(),
             'geografia' => $this->geografiaEmbebida(),
             'coloresDisponibles' => $this->coloresDisponibles(),
+            'colorPorDefecto' => ColorPropiedad::porDefecto()->value,
             // Acceso directo desde el aside de `panel.clientes.edit` (tarea
             // "resumen de cliente"): con ?cliente_id=, el formulario arranca
             // con ese cliente ya elegido — ver _formulario.blade.php.
@@ -146,6 +147,7 @@ final class PropiedadesController
             'departamentosDisponibles' => $this->departamentosActivos(),
             'geografia' => $this->geografiaEmbebida(),
             'coloresDisponibles' => $this->coloresDisponibles(),
+            'colorPorDefecto' => ColorPropiedad::porDefecto()->value,
             'volverA' => session('volverA'),
             'resumenPropiedad' => $this->resumenPropiedad($propiedad, $request),
         ]);

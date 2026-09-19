@@ -7,11 +7,16 @@
     los valores iniciales.
 
     Ubicación estructurada (adenda 16/9/2026 a ADR 0018 punto 1):
-    Departamento → Provincia → Municipio es catálogo cerrado con selects en
-    cascada (`propiedades-form.js`, datos embebidos vía `$geografia` — sin
-    AJAX). Localidad sigue siendo texto libre, justo después de Municipio
-    ("una localidad dentro del municipio"). `color` es paleta curada (ver
-    `ColorPropiedad`). Latitud/longitud/geometría NO viven acá: se editan en
+    Departamento → Provincia → Municipio es catálogo cerrado (`propiedades-form.js`,
+    datos embebidos vía `$geografia` — sin AJAX). Departamento filtra las
+    provincias, pero MUNICIPIO ya no depende de la provincia (19/9/2026, pedido
+    directo): es un select con búsqueda sobre TODOS los municipios, con la
+    etiqueta "Municipio - Departamento", y al elegir uno se completan solos el
+    departamento y la provincia — sirve cuando solo se sabe el municipio, o se
+    eligió un departamento equivocado. Localidad sigue siendo texto libre,
+    justo después de Municipio ("una localidad dentro del municipio"). `color`
+    es paleta curada (ver `ColorPropiedad`) y SIEMPRE tiene uno elegido: el
+    verde por defecto (`$colorPorDefecto`). Latitud/longitud/geometría NO viven acá: se editan en
     `/panel/propiedades/{propiedad}/mapa` (summary "Coordenadas del mapa" del
     aside, solo edición).
 
@@ -32,6 +37,9 @@
       select.
     - $geografia (array{departamentos: list, provincias: list, municipios: list}):
       los 3 niveles del catálogo, embebidos para la cascada de selects.
+    - $colorPorDefecto (string): el HEX con el que arranca el campo color
+      cuando la propiedad no tiene uno (alta, o propiedades de antes de que
+      fuera obligatorio).
     - $resumenPropiedad (list<array>, solo edición): las 3 tarjetas del aside.
     - $clienteIdPreseleccionado (int|null, tarea "resumen de cliente"): solo
       en alta, desde `?cliente_id=` (ver PropiedadesController::create()) —
@@ -54,7 +62,7 @@
     $provinciaId = old('provincia_id', $propiedad?->provincia_id ?? '');
     $municipioId = old('municipio_id', $propiedad?->municipio_id ?? '');
     $localidad = old('localidad', $propiedad?->localidad ?? '');
-    $color = old('color', $propiedad?->color ?? '');
+    $color = old('color', $propiedad?->color ?: $colorPorDefecto);
 @endphp
 
 <form method="POST" action="{{ $accion }}" class="ag-propiedades-form" novalidate data-ag-propiedades-form>
@@ -163,7 +171,8 @@
                     data-valor-inicial="{{ $municipioId }}"
                     data-placeholder="{{ __('comercial.propiedades.campo_municipio_placeholder') }}"
                     :placeholder="__('comercial.propiedades.campo_municipio_placeholder')"
-                    :disabled="empty($provinciaId)"
+                    :help="__('comercial.propiedades.campo_municipio_ayuda')"
+                    :searchable="true"
                     :error="$errors->first('municipio_id')"
                 />
 

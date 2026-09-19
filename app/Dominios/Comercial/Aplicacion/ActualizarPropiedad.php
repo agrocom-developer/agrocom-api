@@ -3,6 +3,7 @@
 namespace App\Dominios\Comercial\Aplicacion;
 
 use App\Dominios\Comercial\Aplicacion\Propiedad\ValidadorUbicacionGeografica;
+use App\Dominios\Comercial\Dominio\ColorPropiedad;
 use App\Dominios\Comercial\Dominio\Excepciones\PropiedadDuplicada;
 use App\Dominios\Comercial\Dominio\Excepciones\UbicacionGeograficaInconsistente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
@@ -46,7 +47,9 @@ final class ActualizarPropiedad
         $propiedad->provincia_id = $provinciaId;
         $propiedad->municipio_id = $municipioId;
         $propiedad->localidad = $localidad;
-        $propiedad->color = $color;
+        // Sin color en el pedido conserva el que ya tenía; una propiedad de antes
+        // de que el color fuera obligatorio recibe el de por defecto.
+        $propiedad->color = $color ?? $propiedad->color ?? ColorPropiedad::porDefecto()->value;
 
         try {
             $propiedad->save();
