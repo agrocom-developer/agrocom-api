@@ -27,7 +27,10 @@
  * las que arma este JS al guardar una selección del modal.
  *
  * SessionStorage (guardar/restaurar el estado del formulario al navegar a
- * "Crear cliente/propiedad/lote" y volver, clave `ag_contrato_borrador`).
+ * "Crear cliente/propiedad/lote" y volver, clave `ag_contrato_borrador`). El
+ * borrador anota la ruta del formulario que lo guardó y solo se restaura ahí;
+ * restaurarlo nunca pisa con un valor vacío lo que el formulario ya trae —
+ * p. ej. la campaña activa que el alta ofrece elegida (19/9/2026).
  *
  * Al volver, lo recién creado llega por la URL (`cliente_id`, `propiedad_id`,
  * `lote_id`, ver el prop `retorno` de `molecules/boton-volver`) y se deja ya
@@ -40,6 +43,9 @@
  * página sin `[data-ag-contratos-form]` este módulo no hace nada.
  */
 import { initTimeRanges } from '../atoms/time-range.js';
+
+// Clave con la que un borrador anota de qué formulario es (la ruta).
+const CLAVE_ORIGEN_BORRADOR = '__origen';
 
 document.addEventListener('DOMContentLoaded', () => {
     const formulario = document.querySelector('[data-ag-contratos-form]');
@@ -718,7 +724,40 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        // De QUÉ formulario es: el alta y la edición de cada contrato son
+        // formularios distintos, y un borrador solo vale para el que lo guardó.
+        bor[CLAVE_ORIGEN_BORRADOR] = window.location.pathname;
+
         sessionStorage.setItem('ag_contrato_borrador', JSON.stringify(bor));
+    }
+
+    // Lo que el borrador NO devuelve al formulario: el token de seguridad y el
+    // método (los tiene ya la página nueva; el guardado viejo podría estar
+    // vencido) y la marca de origen.
+    const CLAVES_QUE_NO_SE_RESTAURAN = new Set(['_token', '_method', CLAVE_ORIGEN_BORRADOR]);
+
+    /**
+     * Devuelve al campo lo que tenía. Tres cuidados: un valor vacío no pisa el
+     * que el formulario ya trae (p. ej. la campaña activa que ofrece elegida);
+     * un select solo acepta una opción que este formulario ofrece; y después de
+     * escribir se avisa al campo (`input`/`change`) para que los controles
+     * propios —el select con su etiqueta, la fecha con su disparador, el valor
+     * estimado— se repinten en vez de quedar mostrando otra cosa que su valor.
+     * `cliente_id` se avisa aparte, más abajo: mueve propiedades y pills.
+     */
+    function aplicarValorDelBorrador(input, valor) {
+        const texto = valor === null || valor === undefined ? '' : String(valor);
+
+        if (texto === '' && input.value !== '') return;
+        if (input.tagName === 'SELECT' && !Array.from(input.options).some((opcion) => opcion.value === texto)) return;
+        if (input.value === texto) return;
+
+        input.value = texto;
+
+        if (input.name !== 'cliente_id') {
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+        }
     }
 
     function restaurarBorrador() {
@@ -734,27 +773,38 @@ document.addEventListener('DOMContentLoaded', () => {
         if (bor) {
             try {
                 const datos = JSON.parse(bor);
-                Object.entries(datos).forEach(([key, value]) => {
-                    if (Array.isArray(value)) {
-                        value.forEach((v) => {
+
+                // Un borrador de otro formulario (o de una versión anterior, que
+                // no anotaba de cuál era) se descarta: si no, un «Nuevo cliente»
+                // que no volvió por su botón dejaba un contrato a medias que
+                // reaparecía —y pisaba lo que el formulario trae— en el siguiente
+                // alta, o en la edición de OTRO contrato.
+                if (datos[CLAVE_ORIGEN_BORRADOR] === window.location.pathname) {
+                    Object.entries(datos).forEach(([key, value]) => {
+                        if (CLAVES_QUE_NO_SE_RESTAURAN.has(key)) return;
+
+                        if (Array.isArray(value)) {
+                            value.forEach((v) => {
+                                const input = formulario.querySelector(`[name="${key}"]`);
+                                if (input) input.value = v;
+                            });
+                        } else {
                             const input = formulario.querySelector(`[name="${key}"]`);
-                            if (input) input.value = v;
-                        });
-                    } else {
-                        const input = formulario.querySelector(`[name="${key}"]`);
-                        if (input) {
+                            if (!input) return;
+
                             if (input.type === 'checkbox') {
                                 input.checked = value === 'on' || value === '1';
                             } else {
-                                input.value = value;
+                                aplicarValorDelBorrador(input, value);
                             }
                         }
-                    }
-                });
+                    });
+                }
 
                 sessionStorage.removeItem('ag_contrato_borrador');
             } catch (e) {
                 console.error('Error al restaurar borrador:', e);
+                sessionStorage.removeItem('ag_contrato_borrador');
             }
         }
 
