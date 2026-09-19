@@ -10,16 +10,19 @@
     vuelo — esa es información de la ficha de detalle (`show.blade.php`,
     a un click de "Ver"), no del resumen en grilla.
 
-    Espera: $orden (con `ordenLotes`/`categoriaInsumo` cargadas, ver
+    Espera: $orden (con `categoriaInsumo` cargada, ver
     `ListarOrdenesAplicacion::ejecutar()`), $etiquetasContrato,
-    $etiquetasLote, $loteIdsPorOrden, $variantePorEstado, $puedeActivar —
-    mismas variables que ya arma `index.blade.php` para la fila de tabla.
+    $previstasPorContrato, $resumen, $variantePorEstado — mismas variables que
+    ya arma `index.blade.php` para la fila de tabla. La banda del medio
+    muestra cuántos lotes tiene la orden y cuántas órdenes de trabajo se
+    hicieron; con incidencias o pausas en el campo, el badge "Con
+    inconvenientes" (informativo, ADR 0022).
 --}}
 @php
     $estadoValor = $orden->estado->value;
-    $loteIds = $loteIdsPorOrden[$orden->id] ?? [];
-    $lotesTexto = collect($loteIds)->map(fn ($loteId) => $etiquetasLote[$loteId] ?? "#{$loteId}")->implode(', ');
-    $hectareasTexto = number_format((float) $orden->ordenLotes->sum('hectareas_solicitadas'), 2, ',', '.');
+    $datosOrden = $resumen[$orden->id] ?? ['lotes' => 0, 'ordenes_trabajo' => 0, 'incidencias' => 0, 'pausas' => 0];
+    $previstas = $previstasPorContrato[$orden->contrato_id] ?? null;
+    $tieneInconvenientes = ($datosOrden['incidencias'] + $datosOrden['pausas']) > 0;
     $dosisTexto = $orden->kilos_por_vuelo !== null
         ? __('operaciones.ordenes.dosis_kilos_por_vuelo', ['cantidad' => number_format((float) $orden->kilos_por_vuelo, 2, ',', '.')])
         : ($orden->litros_ha !== null
@@ -29,18 +32,27 @@
 <article class="ag-ordenes-card" data-estado="{{ $variantePorEstado[$estadoValor] }}">
     <div class="ag-ordenes-card__head">
         <div class="ag-ordenes-card__identidad">
-            <p class="ag-ordenes-card__codigo">{{ __('operaciones.ordenes.col_aplicacion') }} #{{ $orden->nro_aplicacion }}</p>
+            <p class="ag-ordenes-card__codigo">
+                {{ $previstas !== null ? __('operaciones.ordenes.nro_aplicacion_display', ['nro' => $orden->nro_aplicacion, 'total' => $previstas]) : __('operaciones.ordenes.col_aplicacion').' #'.$orden->nro_aplicacion }}
+            </p>
             <p class="ag-ordenes-card__cliente">{{ $etiquetasContrato[$orden->contrato_id] ?? "#{$orden->contrato_id}" }}</p>
         </div>
-        <x-atoms.badge :variant="$variantePorEstado[$estadoValor]">
-            {{ __('operaciones.estado.'.$estadoValor) }}
-        </x-atoms.badge>
+        <div class="ag-ordenes__estados">
+            <x-atoms.badge :variant="$variantePorEstado[$estadoValor]">
+                {{ __('operaciones.estado.'.$estadoValor) }}
+            </x-atoms.badge>
+            @if ($tieneInconvenientes)
+                <x-atoms.badge variant="warning" icon="warning">
+                    {{ __('operaciones.ordenes.badge_inconvenientes') }}
+                </x-atoms.badge>
+            @endif
+        </div>
     </div>
 
     <div class="ag-ordenes-card__lote">
         <span class="ag-ordenes-card__lote-punto ag-ordenes-card__lote-punto--{{ $variantePorEstado[$estadoValor] }}" aria-hidden="true"></span>
-        <span>{{ $lotesTexto !== '' ? $lotesTexto : '—' }}</span>
-        <span class="ag-ordenes-card__lote-hectareas">{{ $hectareasTexto }} ha</span>
+        <span>{{ trans_choice('operaciones.ordenes.lotes_cantidad', $datosOrden['lotes'], ['cantidad' => $datosOrden['lotes']]) }}</span>
+        <span class="ag-ordenes-card__lote-hectareas">{{ trans_choice('operaciones.ordenes.ordenes_trabajo_cantidad', $datosOrden['ordenes_trabajo'], ['cantidad' => $datosOrden['ordenes_trabajo']]) }}</span>
     </div>
 
     <div class="ag-ordenes-card__datos">

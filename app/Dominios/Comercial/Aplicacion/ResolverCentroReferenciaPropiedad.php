@@ -17,6 +17,11 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
  * departamento ya evitan que el mapa arranque siempre en el mismo punto del
  * país; el usuario ajusta con el buscador de coordenadas o el marcador.
  *
+ * Si la propiedad tiene municipio, el editor afina este punto (19/9/2026):
+ * ubica el municipio con un geocodificador a partir de sus nombres
+ * ({@see ResolverMunicipioPropiedad}) y este centroide queda de respaldo por
+ * si no lo encuentra.
+ *
  * IDs fijos de `GeografiaBoliviaSeeder` (database/seeders/Catalogo/) — "mismos
  * IDs que el dump de origen del dueño", documentado en la migración que crea
  * `com_departamentos`.

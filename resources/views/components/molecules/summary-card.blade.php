@@ -28,7 +28,9 @@
       `variant`) no cambia nada — mismo texto de siempre.
 
     Slot con nombre:
-    - action: botón al pie (`atoms/button`), p. ej. "Ver facturación".
+    - action: botón al pie (`atoms/button`), p. ej. "Ver facturación". Puede
+      llevar VARIOS botones (19/9/2026, "Ver lista de lotes" + "Editar en
+      bloque"): el contenedor los apila con un espacio entre sí.
 --}}
 @props([
     'title',

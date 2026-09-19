@@ -4,9 +4,10 @@ namespace App\Dominios\Comercial\Aplicacion;
 
 use App\Dominios\Campania\Contratos\LecturaCampania;
 use App\Dominios\Comercial\Aplicacion\Contrato\VerificadorLotesDelContrato;
-use App\Dominios\Comercial\Dominio\Excepciones\CampaniaCerrada;
+use App\Dominios\Comercial\Aplicacion\MaquinaEstados\MaquinaEstadosContrato;
+use App\Dominios\Comercial\Dominio\Excepciones\CampaniaNoAbierta;
 use App\Dominios\Comercial\Dominio\Excepciones\LoteAjenoAlCliente;
-use App\Dominios\Comercial\Dominio\Excepciones\LotesDePropiedadAgotados;
+use App\Dominios\Comercial\Dominio\Excepciones\LotesYaContratados;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\ContratoLote;
 use Brick\Math\BigDecimal;
@@ -45,38 +46,48 @@ use Illuminate\Support\Facades\DB;
  * docblock para el criterio de lectura vía `LecturaCampania`.
  *
  * Mismas dos guardas de lotes que `CrearContrato` (ver su docblock), vía
- * {@see VerificadorLotesDelContrato} — con una diferencia: la guarda de
- * "propiedad agotada" excluye acá al propio `$contrato` (invariante de la
- * tarea: "en edición, el propio contrato no se cuenta contra sí mismo"), así
- * que un contrato `vigente` puede reordenar sus propios lotes sin chocar
- * contra la superficie que él mismo ya tiene reservada. Mismo criterio que
+ * {@see VerificadorLotesDelContrato} — con dos diferencias. La guarda de lotes
+ * ocupados excluye al propio `$contrato` ("en edición, el propio contrato no
+ * se cuenta contra sí mismo") y solo mira los lotes NUEVOS (o todos, si
+ * cambió la campaña): un contrato en `conflicto` puede guardarse mientras
+ * arrastra los lotes que lo tienen en conflicto — lo que no puede es sumar
+ * otro ocupado. Y después de guardar reconcilia los conflictos de la campaña
+ * ({@see MaquinaEstadosContrato::reconciliarConflictos()}): al quitar un
+ * lote, el contrato puede salir de `conflicto`; al agregar uno a un contrato
+ * que retiene lotes (`vigente`/`pausado`), los `borrador` que lo comparten
+ * pasan a `conflicto` (ADR 0021). Mismo criterio que
  * `CrearContrato` sobre no re-validar acá la consistencia de
  * `hora_inicio`/`hora_fin`: eso queda en `ActualizarContratoRequest`.
  */
 final class ActualizarContrato
 {
-    public function __construct(private readonly LecturaCampania $lecturaCampania) {}
+    public function __construct(
+        private readonly LecturaCampania $lecturaCampania,
+        private readonly MaquinaEstadosContrato $maquinaEstados,
+    ) {}
 
     /**
      * @param  array<string, mixed>  $datosContrato  sin `estado` ni `monto_total`: este último lo recalcula esta clase.
      * @param  list<array{lote_id: int, hora_inicio: ?string, hora_fin: ?string}>  $lotes  set completo y definitivo de lotes que cubre el contrato, cada uno con su rango horario opcional
      *
-     * @throws CampaniaCerrada si la campaña elegida está `cerrada`.
+     * @throws CampaniaNoAbierta si la campaña elegida está `cerrada`, o no está `abierta` y el contrato se la asigna ahora.
      * @throws LoteAjenoAlCliente si algún lote no pertenece a una propiedad del cliente del contrato.
-     * @throws LotesDePropiedadAgotados si alguna propiedad de los lotes elegidos ya está 100% cubierta por OTROS contratos vigentes de la misma campaña.
+     * @throws LotesYaContratados si algún lote NUEVO ya lo retiene otro contrato vigente o pausado de la misma campaña.
      */
     public function ejecutar(Contrato $contrato, array $datosContrato, array $lotes): Contrato
     {
-        $this->verificarCampania((int) $datosContrato['campania_id']);
+        $this->verificarCampania((int) $datosContrato['campania_id'], $contrato);
 
-        $this->verificarLotes(
-            array_column($lotes, 'lote_id'),
-            (int) $datosContrato['cliente_id'],
-            (int) $datosContrato['campania_id'],
-            $contrato->id,
-        );
+        $loteIds = array_column($lotes, 'lote_id');
 
-        return DB::transaction(function () use ($contrato, $datosContrato, $lotes): Contrato {
+        $this->verificarLotesDelCliente($loteIds, (int) $datosContrato['cliente_id']);
+
+        return DB::transaction(function () use ($contrato, $datosContrato, $lotes, $loteIds): Contrato {
+            $campaniaId = (int) $datosContrato['campania_id'];
+            $campaniaAnterior = $contrato->campania_id;
+
+            $this->verificarLotesNuevosLibres($contrato, $loteIds, $campaniaId, $campaniaAnterior);
+
             $datosContrato['monto_total'] = $this->calcularMontoTotal(
                 (string) $datosContrato['hectareas_contratadas'],
                 (int) $datosContrato['aplicaciones_previstas'],
@@ -88,6 +99,12 @@ final class ActualizarContrato
 
             $this->sincronizarLotes($contrato, $lotes);
 
+            $this->maquinaEstados->reconciliarConflictos($campaniaId);
+
+            if ($campaniaAnterior !== null && $campaniaAnterior !== $campaniaId) {
+                $this->maquinaEstados->reconciliarConflictos($campaniaAnterior);
+            }
+
             return $contrato->refresh();
         });
     }
@@ -96,21 +113,49 @@ final class ActualizarContrato
      * @param  list<int>  $loteIds
      *
      * @throws LoteAjenoAlCliente si algún lote no pertenece a una propiedad del cliente.
-     * @throws LotesDePropiedadAgotados si alguna propiedad involucrada quedó 100% cubierta por otros contratos vigentes.
      */
-    private function verificarLotes(array $loteIds, int $clienteId, int $campaniaId, ?int $contratoIdExcluido): void
+    private function verificarLotesDelCliente(array $loteIds, int $clienteId): void
     {
         $loteAjeno = VerificadorLotesDelContrato::loteAjenoAlCliente($loteIds, $clienteId);
 
         if ($loteAjeno !== null) {
             throw LoteAjenoAlCliente::paraLote($loteAjeno);
         }
+    }
 
-        $propiedadAgotada = VerificadorLotesDelContrato::propiedadAgotada($loteIds, $campaniaId, $contratoIdExcluido);
+    /**
+     * Solo los lotes que el contrato NO tenía todavía (los que ya tenía no
+     * se re-juzgan: si hoy están en `conflicto` es justamente por ellos y el
+     * usuario tiene que poder guardar para quitarlos). Si cambió la campaña,
+     * todos cuentan como nuevos: se comparan contra otro ciclo productivo.
+     * Bajo candado de campaña, como en `CrearContrato`.
+     *
+     * @param  list<int>  $loteIds
+     *
+     * @throws LotesYaContratados si algún lote nuevo ya lo retiene otro contrato de la campaña.
+     */
+    private function verificarLotesNuevosLibres(Contrato $contrato, array $loteIds, int $campaniaId, ?int $campaniaAnterior): void
+    {
+        VerificadorLotesDelContrato::bloquearCampania($campaniaId);
 
-        if ($propiedadAgotada !== null) {
-            throw LotesDePropiedadAgotados::paraPropiedad($propiedadAgotada['nombre']);
+        $candidatos = $campaniaAnterior === $campaniaId
+            ? array_values(array_diff($loteIds, $this->loteIdsActualesDe($contrato)))
+            : $loteIds;
+
+        $ocupados = VerificadorLotesDelContrato::lotesOcupados($candidatos, $campaniaId, $contrato->id);
+
+        if ($ocupados !== []) {
+            throw LotesYaContratados::paraLotes($ocupados);
         }
+    }
+
+    /** @return list<int> */
+    private function loteIdsActualesDe(Contrato $contrato): array
+    {
+        return array_values(array_map(
+            static fn (mixed $id): int => (int) $id,
+            $contrato->lotes()->pluck('lote_id')->all(),
+        ));
     }
 
     /**
@@ -196,8 +241,15 @@ final class ActualizarContrato
         return $hora === null ? null : substr($hora, 0, 5);
     }
 
-    /** @throws CampaniaCerrada si la campaña elegida está `cerrada`. */
-    private function verificarCampania(int $campaniaId): void
+    /**
+     * Una campaña `cerrada` no admite ningún cambio. Una que no está `abierta`
+     * (la `planificada`) solo se rechaza si el contrato se la asigna AHORA: el
+     * que ya la tenía, de antes de que se exigiera `abierta`, se sigue
+     * pudiendo editar sin cambiarla.
+     *
+     * @throws CampaniaNoAbierta
+     */
+    private function verificarCampania(int $campaniaId, Contrato $contrato): void
     {
         $campania = $this->lecturaCampania->obtener($campaniaId);
 
@@ -205,8 +257,10 @@ final class ActualizarContrato
             return;
         }
 
-        if ($campania->cerrada) {
-            throw CampaniaCerrada::paraCampania($campania->codigo);
+        $seAsignaAhora = (int) $contrato->campania_id !== $campaniaId;
+
+        if ($campania->cerrada || ($seAsignaAhora && ! $campania->admiteImputaciones())) {
+            throw CampaniaNoAbierta::paraCampania($campania->codigo, $campania->cerrada);
         }
     }
 

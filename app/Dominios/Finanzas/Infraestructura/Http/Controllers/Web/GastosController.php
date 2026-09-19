@@ -5,7 +5,7 @@ namespace App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web;
 use App\Dominios\Finanzas\Aplicacion\CrearGasto;
 use App\Dominios\Finanzas\Aplicacion\EliminarGasto;
 use App\Dominios\Finanzas\Aplicacion\ListarGastos;
-use App\Dominios\Finanzas\Dominio\Excepciones\CampaniaCerrada;
+use App\Dominios\Finanzas\Dominio\Excepciones\CampaniaNoAbierta;
 use App\Dominios\Finanzas\Infraestructura\Eloquent\Gasto;
 use App\Dominios\Finanzas\Infraestructura\Eloquent\Rubro;
 use App\Dominios\Finanzas\Infraestructura\Http\Requests\CrearGastoRequest;
@@ -99,7 +99,7 @@ final class GastosController
             'equiposDisponibles' => $this->equiposDisponibles(),
             'basesDisponibles' => $this->basesDisponibles(),
             'trabajosDisponibles' => $this->trabajosDisponibles(),
-            'campaniasDisponibles' => $this->campaniasNoCerradas(),
+            'campaniasDisponibles' => $this->campaniasAbiertas(),
         ]);
     }
 
@@ -122,7 +122,7 @@ final class GastosController
                 comprobante: $request->file('comprobante'),
                 equipoTrabajoId: isset($datos['equipo_trabajo_id']) ? (int) $datos['equipo_trabajo_id'] : null,
             );
-        } catch (CampaniaCerrada $excepcion) {
+        } catch (CampaniaNoAbierta $excepcion) {
             return redirect()
                 ->route('panel.gastos.create')
                 ->withInput()
@@ -213,11 +213,11 @@ final class GastosController
      *
      * @return Collection<int, non-falsy-string>
      */
-    private function campaniasNoCerradas(): Collection
+    private function campaniasAbiertas(): Collection
     {
         return DB::table('cpn_campanias')
             ->whereNull('deleted_at')
-            ->where('estado', '!=', 'cerrada')
+            ->where('estado', 'abierta')
             ->orderBy('codigo')
             ->pluck('codigo', 'id');
     }
@@ -225,12 +225,12 @@ final class GastosController
     /**
      * TODAS las campañas (activas), sin filtrar por estado (tarea 73, punto
      * 5: "por campaña, opcional, dentro de un cliente") — a diferencia de
-     * `campaniasNoCerradas()` (solo para el formulario de alta), acá el
+     * `campaniasAbiertas()` (solo para el formulario de alta), acá el
      * filtro del LISTADO tiene que poder encontrar gastos de una campaña ya
      * `cerrada`: cerrarla no borra su historial de costo.
      *
      * Sin `cliente_id`/`com_clientes` (ADR 0015, corregido el 15/9/2026):
-     * mismo motivo que {@see self::campaniasNoCerradas()}.
+     * mismo motivo que {@see self::campaniasAbiertas()}.
      *
      * @return Collection<int, non-falsy-string>
      */

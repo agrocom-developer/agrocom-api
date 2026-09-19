@@ -28,21 +28,32 @@
     Complementario al botón "Volver al formulario origen" que ya existe en
     Clientes/Propiedades/Lotes (pie del form, solo en edición, con el id
     recién creado precargado en la URL) — ESE sigue con su propio mecanismo
-    `volverA`/`volver_a` por ahora; este átomo cubre el botón de CABECERA, en
-    alta Y edición, sin precarga de id.
+    `volverA`/`volver_a`; este átomo cubre el botón de CABECERA, en alta Y
+    edición.
+
+    Lo recién creado viaja de vuelta (19/9/2026, pedido directo): la ficha
+    de un cliente/propiedad/lote recién dado de alta pasa `retorno` con su
+    id, y el escalón al que se vuelve lo recibe en la URL — el formulario de
+    contratos lo lee y deja lo nuevo ya seleccionado
+    (`resources/js/pages/contratos-form.js`). Solo aplica cuando se vuelve a
+    un escalón de la pila; con el `href` por defecto no se agrega nada.
 
     Props:
     - href (requerido): destino por defecto (el índice del propio módulo).
     - label (requerido): texto por defecto ya traducido (ADR 0013) — se usa
       tal cual cuando no hay ningún escalón apilado.
+    - retorno (array<string, int|string>, default []): parámetros de query
+      que se suman a la URL del escalón (p. ej. `['cliente_id' => 7]`); si la
+      URL ya trae uno con ese nombre, gana este. Vacío en el alta (todavía no
+      hay nada creado que devolver).
 --}}
-@props(['href', 'label'])
+@props(['href', 'label', 'retorno' => []])
 
 @php
     $pila = session('navegacion_pila', []);
     $tope = $pila === [] ? null : end($pila);
     $destino = $tope !== null
-        ? $tope['url'].(str_contains($tope['url'], '?') ? '&' : '?').'_volver=1'
+        ? \Illuminate\Support\Uri::of($tope['url'])->withQuery([...$retorno, '_volver' => 1])->value()
         : $href;
 @endphp
 

@@ -24,4 +24,29 @@ final class ActivacionContratoNoDisponible extends DomainException
             'fecha' => $fechaInicio->toDateString(),
         ]));
     }
+
+    /**
+     * Red de seguridad de la exclusividad de lotes (ADR 0021): un contrato
+     * `borrador` no debería tener lotes retenidos por otro (el barrido de
+     * `reconciliarConflictos()` lo pasa a `conflicto` antes), pero la guarda
+     * real vive acá, en el momento de aprobar, por si el barrido no llegó a
+     * correr (datos previos al ADR, carrera entre dos aprobaciones).
+     *
+     * @param  non-empty-list<array{lote_id: int, codigo: string, contrato_id: int}>  $ocupados
+     */
+    public static function porLotesOcupados(int $contratoId, array $ocupados): self
+    {
+        if (count($ocupados) === 1) {
+            return new self(Texto::de('comercial.errores.contrato_activacion_lote_ocupado', [
+                'id' => $contratoId,
+                'codigo' => $ocupados[0]['codigo'],
+                'contrato' => $ocupados[0]['contrato_id'],
+            ]));
+        }
+
+        return new self(Texto::de('comercial.errores.contrato_activacion_lotes_ocupados', [
+            'id' => $contratoId,
+            'codigos' => implode(', ', array_column($ocupados, 'codigo')),
+        ]));
+    }
 }

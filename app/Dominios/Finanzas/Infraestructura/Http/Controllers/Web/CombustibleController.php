@@ -5,7 +5,7 @@ namespace App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web;
 use App\Dominios\Finanzas\Aplicacion\CrearCombustible;
 use App\Dominios\Finanzas\Aplicacion\EliminarCombustible;
 use App\Dominios\Finanzas\Aplicacion\ListarCombustibles;
-use App\Dominios\Finanzas\Dominio\Excepciones\CampaniaCerrada;
+use App\Dominios\Finanzas\Dominio\Excepciones\CampaniaNoAbierta;
 use App\Dominios\Finanzas\Dominio\Excepciones\RecursoNoAsignadoAlEquipo;
 use App\Dominios\Finanzas\Infraestructura\Eloquent\Combustible;
 use App\Dominios\Finanzas\Infraestructura\Http\Requests\CrearCombustibleRequest;
@@ -115,7 +115,7 @@ final class CombustibleController
             ...$this->autorizacion->cascara($request),
             'basesDisponibles' => $this->basesDisponibles(),
             'equiposDisponibles' => $this->equiposDisponibles(),
-            'campaniasDisponibles' => $this->campaniasNoCerradas(),
+            'campaniasDisponibles' => $this->campaniasAbiertas(),
             'equipoTrabajoIdSeleccionado' => $equipoTrabajoId,
             'fechaSeleccionada' => $fecha,
             'recursosDisponibles' => $equipoTrabajoId !== null
@@ -143,7 +143,7 @@ final class CombustibleController
                 monto: (string) $datos['monto'],
                 descripcion: $datos['descripcion'] ?? null,
             );
-        } catch (CampaniaCerrada $excepcion) {
+        } catch (CampaniaNoAbierta $excepcion) {
             return redirect()
                 ->route('panel.combustible.create', $this->parametrosCascada($datos))
                 ->withInput()
@@ -213,7 +213,7 @@ final class CombustibleController
 
     /**
      * Campañas no cerradas (ADR 0015 punto 6): mismo criterio que
-     * `GastosController::campaniasNoCerradas()` — imputar a una cerrada lo
+     * `GastosController::campaniasAbiertas()` — imputar a una cerrada lo
      * rechaza igual `Aplicacion/CrearCombustible`, esto es solo para no
      * ofrecerla en el formulario.
      *
@@ -222,23 +222,23 @@ final class CombustibleController
      *
      * @return Collection<int, non-falsy-string>
      */
-    private function campaniasNoCerradas(): Collection
+    private function campaniasAbiertas(): Collection
     {
         return DB::table('cpn_campanias')
             ->whereNull('deleted_at')
-            ->where('estado', '!=', 'cerrada')
+            ->where('estado', 'abierta')
             ->orderBy('codigo')
             ->pluck('codigo', 'id');
     }
 
     /**
      * TODAS las campañas (activas), sin filtrar por estado — a diferencia
-     * de `campaniasNoCerradas()` (solo para el formulario de alta), el
+     * de `campaniasAbiertas()` (solo para el formulario de alta), el
      * filtro del LISTADO tiene que poder encontrar cargas de una campaña ya
      * `cerrada`: mismo criterio que `GastosController::todasLasCampanias()`.
      *
      * Sin `cliente_id`/`com_clientes` (ADR 0015, corregido el 15/9/2026):
-     * mismo motivo que {@see self::campaniasNoCerradas()}.
+     * mismo motivo que {@see self::campaniasAbiertas()}.
      *
      * @return Collection<int, non-falsy-string>
      */

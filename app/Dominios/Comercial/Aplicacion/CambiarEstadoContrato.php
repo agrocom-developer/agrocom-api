@@ -5,6 +5,7 @@ namespace App\Dominios\Comercial\Aplicacion;
 use App\Dominios\Comercial\Aplicacion\MaquinaEstados\MaquinaEstadosContrato;
 use App\Dominios\Comercial\Dominio\EstadoContrato;
 use App\Dominios\Comercial\Dominio\Excepciones\ActivacionContratoNoDisponible;
+use App\Dominios\Comercial\Dominio\Excepciones\ContratoConAplicacionAbierta;
 use App\Dominios\Comercial\Dominio\Excepciones\TransicionContratoNoPermitida;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 
@@ -20,6 +21,7 @@ final class CambiarEstadoContrato
     /**
      * @throws TransicionContratoNoPermitida si la transición no está permitida.
      * @throws ActivacionContratoNoDisponible si `$hacia` es `vigente` y falta alguna guarda.
+     * @throws ContratoConAplicacionAbierta si `$hacia` es `finalizado`/`cancelado` y el contrato tiene una aplicación abierta.
      */
     public function ejecutar(Contrato $contrato, EstadoContrato $hacia): Contrato
     {

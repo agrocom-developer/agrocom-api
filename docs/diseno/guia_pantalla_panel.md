@@ -329,6 +329,8 @@ Alta y edición comparten el MISMO partial y la misma anatomía de §6.3 — dif
 @endif
 ```
 
+**Más de un acceso directo en una misma tarjeta (19/9/2026).** El molde de arriba trae un solo botón por tarjeta (`accion`). Cuando la tarjeta necesita más —la de Lotes de una propiedad con lotes cargados lleva "Ver lista de lotes" y "Editar en bloque"— el resumen trae `acciones`, una lista de `['label', 'href', 'icono']`, en vez de `mostrarAccion`/`accion`, y el Blade la recorre dentro del slot `action` (el contenedor apila los botones con un espacio entre sí). Cada botón se gatea por el permiso de la cosa que hace, no por el de la tarjeta. Referencia viva: `PropiedadesController::resumenPropiedad()` y `comercial::pages.propiedades._formulario`.
+
 No confundir con la columna lateral del canvas "Registro de la compañía" (regla 4 de arriba: progreso de completitud, resumen del plan). Esa es de METADATOS de la propia entidad; el resumen relacionado es de OTRAS entidades que cuelgan de esta. Una pantalla usa la que le corresponda según lo que la entidad realmente necesita mostrar — decidilo por eso, no por copiar la que ya existe en otra pantalla.
 
 **Componente estático primero, funcionalidad después (17/9/2026).** Toda pantalla con arquetipo Formulario que tenga `edit()` lleva la pieza del resumen relacionado — aunque todavía no exista el contrato de lectura que la resuelva de verdad. Mientras ese contrato no esté armado, el aside se construye con datos de ejemplo/estáticos (misma anatomía de arriba, con sus accesos directos ya apuntando a la ruta real), y queda anotado en el reporte de la tarea como pendiente de conectar. Lo que no está permitido es omitir la pieza entera "porque no hay tiempo de escribir la consulta" — eso fue lo que pasó con Cultivo y quedó descubierto recién en revisión. Cuando el contrato de lectura se escriba, la pantalla pasa de estático a `resumenRelacionado()` real sin cambiar la anatomía Blade.
@@ -371,6 +373,15 @@ Corrección del 17/9/2026 sobre la redacción original de esta regla (quedó esc
 - Sigue sin mostrarse en el listado ni en sus filtros (regla de §6.2 "Catálogos simples con toggle activo/inactivo") — ahora por la misma razón de fondo: si no se edita desde ningún lado del panel todavía, mostrarlo en la tabla sería puro dato muerto.
 - **Pendiente, no construir todavía**: una forma de prender/apagar el `activo` de un registro puntual **sin pasar por un formulario** (acción rápida desde el listado, un endpoint dedicado, o lo que decida el dueño del proyecto). Hasta que esa pieza exista, el campo simplemente no es editable desde el panel — eso es intencional, no un olvido.
 
+### 6.3.4. Formulario de un objeto con máquina de estados: `step-arrow` bajo la cabecera
+
+Referencia viva: `campania::pages.campanias._formulario` + `_cambio-estado` + `CampaniasController::edit()` (19/9/2026). Solo en EDICIÓN (un registro que recién nace está siempre en su estado inicial, no hay a dónde ir).
+
+- **Los pasos van entre la cabecera y el `form-layout`, a todo el ancho** (col-12, por encima del main y del aside), con el párrafo de ayuda debajo, también a todo el ancho. Lo arma el controlador: `PasosDeEstado::armar()` con la ruta principal, la tabla de transiciones de la máquina (`TransicionesX::permitida(...)`), el tono de cada estado y si el rol tiene el permiso de cambiar el estado; y `PasosDeEstado::ayuda()` para el párrafo.
+- **El objeto solo define sus estados y sus textos**, en su archivo de idioma: `<objeto>.estado.<valor>` (etiqueta) y `<objeto>.estado_ayuda.<valor>` (qué significa y por qué conviene pasar al siguiente; admite `:actual` y `:paso`). El cierre del párrafo ("Para avanzar, haz clic en «:paso»" / "Con tu rol no puedes cambiar el estado") es genérico, de `ui.pasos`. Un test vigila que cada estado tenga su texto.
+- **El paso no cambia el estado**: un paso `next` abre el `confirm-modal` de la página, y el modal envía un `<form>` que va a la ruta de cambio de estado del objeto (invariante 7). Esos `<form>` y modales van en un partial APARTE (`_cambio-estado`), después del formulario y no adentro: un `<form>` no puede anidarse en otro. El cambio de estado vuelve a la pantalla de origen (`redirect()->back()`), no al listado.
+- **El tono de cada estado se define una sola vez** (`TONO_POR_ESTADO` del controlador) y lo comparten el badge del listado y el paso: los dos hablan con el mismo color.
+
 ### 6.4. Detalle — **la referencia canónica es `operaciones::pages.ordenes.show`**
 
 Cuarto arquetipo, agregado el 17/9/2026: una ficha de **solo lectura** para una entidad que ya no admite edición desde el listado (p. ej. una Orden de aplicación `vigente` — `Aplicacion/ActualizarOrden` exige `emitida`) o que de por sí es "información crítica para mirar", no un formulario. Antes no había ningún lugar del panel para volver a ver esos datos completos; el módulo Operaciones va a necesitar varias pantallas de este tipo, así que se arma reusando al máximo el catálogo del arquetipo Formulario — **no es un layout nuevo**.
@@ -386,10 +397,17 @@ form-layout
          <p>label</p><p>valor</p> directos, sin envolver otra tarjeta —
          reusan el grid de 2 columnas de form-section, NUNCA anidan
          summary-card adentro: dos superficies de tarjeta una dentro de la
-         otra duplica el chrome) + index-table para cualquier sub-lista +
-         timeline para actividad/historial
-  aside: form-section/summary-card/progress-meter para metadatos —
-         mismas piezas que ya usa el aside del Formulario (§6.3.1)
+         otra duplica el chrome) + index-table para cualquier sub-lista
+  aside: progress-meter/summary-card para metadatos + form-section
+         condicional de avisos (p. ej. "Inconvenientes del campo", solo si
+         los hay) + link-row en una form-section ("Relacionado") + timeline
+         en una form-section ("Actividad/historial", siempre ÚLTIMA: es la
+         única de largo variable y no debe empujar hacia abajo a las demás)
+         — mismas piezas que ya usa el aside del Formulario (§6.3.1)
+acciones del header: un botón por transición que admite el estado, con el
+         color del ESTADO DE LLEGADA; los que piden datos (motivo, causa)
+         abren un `confirm-modal` con esos campos en su slot — nunca un
+         modal armado a mano
 ```
 
 Reglas fijas:

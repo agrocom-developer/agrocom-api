@@ -39,7 +39,7 @@ use OpenApi\Attributes as OA;
 #[OA\Schema(
     schema: 'OrdenAplicacion',
     title: 'Orden de aplicación',
-    description: 'Orden de aplicación emitida por el cliente, cubriendo uno o varios lotes de la propiedad (espec §4.3, ampliada HU-92 tarea 107). '
+    description: 'Una aplicación completa de un contrato: cubre TODOS los lotes del contrato (espec §4.3, ADR 0022). '
         .'Los valores DECIMAL (dosis) viajan como string. '
         .'Los límites climáticos y parámetros de vuelo ya no viajan acá: son del trabajo (equipo↔lote), ver el catálogo de sincronización.',
     required: [
@@ -61,17 +61,17 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'contrato_id', description: 'Contrato al que pertenece la orden (módulo Comercial, solo ID).', type: 'integer', example: 1),
         new OA\Property(
             property: 'lotes',
-            description: 'Lotes que cubre la orden (módulo Comercial, solo ID) con las hectáreas solicitadas a cada uno.',
+            description: 'Lotes que cubre la orden (módulo Comercial, solo ID): copia automática, tomada al emitirla, de todos los lotes del contrato con las hectáreas completas de cada uno.',
             type: 'array',
             items: new OA\Items(ref: '#/components/schemas/LoteDeOrdenCatalogo'),
         ),
-        new OA\Property(property: 'nro_aplicacion', description: 'Número de aplicación dentro del contrato (1..n).', type: 'integer', example: 1),
+        new OA\Property(property: 'nro_aplicacion', description: 'Número de aplicación dentro del contrato (1..n), correlativo y calculado por el servidor: una cancelada por fuerza mayor no consume su número.', type: 'integer', example: 1),
         new OA\Property(property: 'litros_ha', description: 'Dosis en litros por hectárea (insumo líquido). DECIMAL como string; null si la categoría de insumo es sólida (HU-79, tarea 110).', type: 'string', example: '10.00', nullable: true),
         new OA\Property(property: 'kilos_por_vuelo', description: 'Dosis en kilos por vuelo (insumo sólido). DECIMAL como string; null si la categoría de insumo es líquida (HU-79, tarea 110).', type: 'string', example: '8.50', nullable: true),
         new OA\Property(property: 'observaciones', description: 'Observaciones libres del emisor.', type: 'string', example: 'Aplicar en horas de la mañana.', nullable: true),
         new OA\Property(property: 'emitida_por_contacto_id', description: 'Contacto del cliente que emitió la orden (módulo Comercial, solo ID).', type: 'integer', example: 2, nullable: true),
         new OA\Property(property: 'fecha_emision', description: 'Fecha de emisión de la orden.', type: 'string', format: 'date', example: '2026-08-26'),
-        new OA\Property(property: 'estado', description: 'Estado de la orden (espec §5: emitida → vigente → consumida | vencida).', type: 'string', enum: EstadoOrdenAplicacion::class),
+        new OA\Property(property: 'estado', description: 'Estado de la orden (espec §5, ADR 0022): emitida → vigente ⇄ pausada; vigente → consumida (cierre manual) o cancelada (con causa y motivo, decisión del panel). La app de campo solo recibe las vigentes y nunca pausa, cierra ni cancela.', type: 'string', enum: EstadoOrdenAplicacion::class),
         new OA\Property(property: 'created_at', type: 'string', format: 'date-time', example: '2026-08-26T12:00:00+00:00', nullable: true),
         new OA\Property(property: 'updated_at', type: 'string', format: 'date-time', example: '2026-08-26T12:00:00+00:00', nullable: true),
     ],

@@ -8,14 +8,14 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\ContratoLote;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
- * Lectura pura sobre qué lotes ya están comprometidos en OTROS contratos
- * `vigente` (pedido del dueño, tarea "contrato-lotes-conflicto", 18/9/2026)
- * — para pintar la UI (excluir del modal de selección, marcar en alert
- * dentro del contrato en edición), nunca para decidir si un guardado se
- * bloquea: esa guarda sigue siendo, únicamente,
- * {@see VerificadorLotesDelContrato::propiedadAgotada()} (a nivel de
- * propiedad, no de lote — cambiar ese criterio podría invalidar contratos ya
- * guardados así en producción, fuera de alcance de esta clase).
+ * Lectura pura sobre qué lotes ya están retenidos por OTROS contratos
+ * (`vigente` o `pausado`, ver `EstadoContrato::retieneLotes()`; pedido del
+ * dueño, tarea "contrato-lotes-conflicto", 18/9/2026) — para pintar la UI
+ * (excluir del modal de selección, marcar en alert dentro del contrato en
+ * edición), nunca para decidir si un guardado se bloquea: esa guarda es,
+ * únicamente, {@see VerificadorLotesDelContrato::lotesOcupados()} (ADR 0021).
+ * Las dos leen el MISMO criterio de "retenido", así que el modal nunca
+ * ofrece un lote que el servidor va a rechazar.
  *
  * Clase hermana de `VerificadorLotesDelContrato`, no una ampliación de ella:
  * esa gobierna el guardado, esta es de solo lectura para la UI — separarlas
@@ -24,8 +24,8 @@ use Illuminate\Database\Eloquent\Builder;
 final class LecturaOcupacionLotesPorCampania
 {
     /**
-     * Por cada lote, en qué campañas ya está comprometido por OTRO contrato
-     * `vigente` (excluyendo `$contratoIdExcluido` — el propio contrato en
+     * Por cada lote, en qué campañas ya está retenido por OTRO contrato
+     * `vigente` o `pausado` (excluyendo `$contratoIdExcluido` — el propio contrato en
      * edición, o `null` en un alta).
      *
      * @return array<int, list<int>> lote_id => campania_ids
@@ -34,7 +34,7 @@ final class LecturaOcupacionLotesPorCampania
     {
         $filas = ContratoLote::query()
             ->whereHas('contrato', function (Builder $query) use ($contratoIdExcluido): void {
-                $query->where('estado', EstadoContrato::Vigente);
+                $query->whereIn('estado', EstadoContrato::valoresQueRetienenLotes());
 
                 if ($contratoIdExcluido !== null) {
                     $query->whereKeyNot($contratoIdExcluido);
@@ -63,11 +63,10 @@ final class LecturaOcupacionLotesPorCampania
 
     /**
      * Para los lotes que YA están en el contrato que se edita: el OTRO
-     * contrato `vigente` de la misma campaña que también los tiene, con sus
-     * relaciones cargadas para armar el modal informativo de conflicto. Si
-     * un lote choca con más de un contrato ajeno (caso raro: requeriría dos
-     * contratos vigentes de la misma campaña compartiendo el mismo lote), se
-     * queda con el primero.
+     * contrato que los retiene (`vigente` o `pausado`) en la misma campaña,
+     * con sus relaciones cargadas para armar el modal informativo de
+     * conflicto. Si un lote choca con más de un contrato ajeno (caso raro:
+     * datos previos al ADR 0021), se queda con el primero.
      *
      * @param  list<int>  $loteIds
      * @return array<int, Contrato> lote_id => el otro contrato en conflicto
@@ -82,7 +81,7 @@ final class LecturaOcupacionLotesPorCampania
         $filas = ContratoLote::query()
             ->whereIn('lote_id', $loteIds)
             ->whereHas('contrato', function (Builder $query) use ($campaniaId, $contratoIdExcluido): void {
-                $query->where('estado', EstadoContrato::Vigente)
+                $query->whereIn('estado', EstadoContrato::valoresQueRetienenLotes())
                     ->where('campania_id', $campaniaId)
                     ->whereKeyNot($contratoIdExcluido);
             })

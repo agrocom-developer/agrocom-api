@@ -37,12 +37,23 @@ final class LecturaCampaniaEloquent implements LecturaCampania
             ->all();
     }
 
+    public function abiertas(): array
+    {
+        return Campania::query()
+            ->where('estado', EstadoCampania::Abierta->value)
+            ->orderBy('codigo')
+            ->get()
+            ->map($this->aDato(...))
+            ->all();
+    }
+
     private function aDato(Campania $campania): DatosCampania
     {
         return new DatosCampania(
             id: $campania->id,
             codigo: $campania->codigo,
             cerrada: $campania->estado === EstadoCampania::Cerrada,
+            abierta: $campania->estado === EstadoCampania::Abierta,
         );
     }
 }

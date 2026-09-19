@@ -29,7 +29,7 @@ detiene en la primera que falla.
 |---|---|---|---|
 | Estilo | `vendor/bin/pint --test` | Formato PSR-12 + preset Laravel | `vendor/bin/pint` (sin `--test`) lo arregla solo |
 | Análisis estático | Larastan **nivel 6** (`phpstan.neon`) | Tipos, propiedades inexistentes, retornos | Se corrige tipando de verdad — no con `@phpstan-ignore` |
-| Tests | Pest 4 | +1600 tests (datasets incluidos), SQLite en memoria | Ver abajo |
+| Tests | Pest 4 | `tests/Unit`: arquitectura de módulos, máquinas de estado, bitácora y reglas de dominio puras — sin base de datos | Ver abajo |
 | Assets | `npm run build` (Vite) | Que el CSS/JS compile | Suele ser un import o un token CSS inexistente |
 
 Nivel 6 es exigente: exige tipos en parámetros y retornos, y detecta accesos a
@@ -38,16 +38,24 @@ no silenciándola.
 
 ## Los tests no tocan la base de desarrollo
 
-`phpunit.xml` fuerza `DB_CONNECTION=sqlite` y `DB_DATABASE=:memory:`. Correr la
-suite **no** afecta al Postgres del compose ni al seed demo del panel. Por eso
-nunca hace falta `migrate:fresh` para "limpiar antes de probar" — y por eso ese
-comando está bloqueado por el guardarraíl (`.claude/hooks/guardarrail-bash.sh`).
+`tests/Unit` es Pest puro, **sin base de datos**: Pest solo extiende `TestCase`
+para `tests/Feature`, que ya no existe. Correr la suite **no** afecta al Postgres
+del compose ni al seed demo del panel. Por eso nunca hace falta `migrate:fresh`
+para "limpiar antes de probar" — y por eso ese comando está bloqueado por el
+guardarraíl (`.claude/hooks/guardarrail-bash.sh`).
 
-Consecuencia a tener presente: un test que pasa en SQLite puede fallar en CI
-contra Postgres 16. Las migraciones ya contemplan esto (los `ALTER TABLE ... ADD
-CONSTRAINT` van dentro de `if (DB::getDriverName() === 'pgsql')`). Si tu cambio
-depende de una función específica de Postgres, el test tiene que saltarse en
-SQLite explícitamente, no asumir el motor.
+Consecuencia a tener presente: como ningún test toca una base, la cascada **no
+prueba migraciones ni SQL de Postgres**, y las migraciones tampoco corren en
+SQLite (un `drop column` con índice en `cpn_campanias`, por ejemplo, falla ahí).
+Los `ALTER TABLE ... ADD CONSTRAINT` siguen yendo dentro de la guarda
+`DB::getDriverName() === 'pgsql'`. Para ver el comportamiento contra Postgres
+sin dejar rastro: un script temporal en `storage/app/` (git-ignorado), ejecutado
+dentro del contenedor (`docker exec agrocom-api-app-1 php storage/app/<script>.php`),
+envuelto en `DB::beginTransaction()` y `try { ... } finally { DB::rollBack(); }`.
+Postgres revierte también el DDL, así que incluso una migración nueva se puede
+aplicar adentro (`Artisan::call('migrate')`) y validar sin que quede nada; al
+final se comprueba que la base quedó intacta y se borra el script (detalle en el
+skill [modelo-datos]).
 
 ## Los datos demo de la base del compose no se borran
 
@@ -61,9 +69,10 @@ Concretamente: nada de `migrate:fresh`, `migrate:refresh`, `db:wipe`,
 `.claude/hooks/guardarrail-bash.sh` los deniega, y por esto). Tampoco un
 `delete()` de limpieza al final de un script de prueba.
 
-No hace falta limpiar para probar: la suite corre contra SQLite en memoria y no
-toca esa base. Si un dato demo nuevo estorba, se agrega uno distinto, no se
-borra el anterior.
+No hace falta limpiar para probar: la suite no toca esa base, y lo que se quiera
+comprobar contra Postgres se hace dentro de una transacción que se revierte (ver
+arriba). Si un dato demo nuevo estorba, se agrega uno distinto, no se borra el
+anterior.
 
 ## Lo que no se hace para que la cascada pase
 

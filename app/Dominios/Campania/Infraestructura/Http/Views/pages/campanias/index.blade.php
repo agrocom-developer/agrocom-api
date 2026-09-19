@@ -14,6 +14,9 @@
     CascaraPanel, más:
     - $campanias (LengthAwarePaginator<Campania>): fecha de inicio descendente.
     - $estadosFiltro (list<EstadoCampania>): opciones del <select> de estado.
+    - $tonoPorEstado (array<string, string>): tono del badge de cada estado
+      (`CampaniasController::TONO_POR_ESTADO`, el mismo que usa el paso del
+      formulario de edición).
     - $filtros (array{q: string, estado: string|null, estacion: string|null}):
       filtros aplicados, para dejar los campos con el valor tras el submit.
 
@@ -35,7 +38,9 @@
 
     Columna "Actividad" (HU-77, tarea 93): "Activa"/"Inactiva" derivada de
     `Campania::esActiva()`, presentación pura — no reemplaza a "Estado", que
-    sigue mostrando los tres valores reales de la máquina de estados.
+    sigue mostrando los tres valores reales de la máquina de estados. Solo
+    está "Activa" la campaña `abierta`: la `planificada` todavía no arrancó y
+    la `cerrada` ya terminó (corregido el 19/9/2026).
 --}}
 <x-templates.panel-shell :title="__('campania.campanias.titulo')" :tema="$tema">
     <x-templates.panel-layout
@@ -172,20 +177,6 @@
 
                     @foreach ($campanias as $campania)
                         @php
-                            // 'cerrada' en alert/rojo-700 "#880000" (18/9/2026,
-                            // novena vuelta — se probó distintivo-2/magenta
-                            // primero, el usuario lo corrigió: había
-                            // confundido "magenta" con este tono). Sigue
-                            // distinto de 'danger' (rojo-600 "#bb0000", el
-                            // botón "Eliminar") a propósito: cerrar un ciclo
-                            // de negocio no es lo mismo que borrar el
-                            // registro, pero ambos son rojos — más oscuro
-                            // el de "alert".
-                            $variantePorEstado = [
-                                'planificada' => 'neutral',
-                                'abierta' => 'success',
-                                'cerrada' => 'alert',
-                            ];
                             $estadoValor = $campania->estado->value;
                         @endphp
                         <div class="ag-index-table__row" role="row">
@@ -198,7 +189,7 @@
                                 {{ __('campania.campanias.vigencia', ['inicio' => $campania->fecha_inicio->format('d/m/Y'), 'fin' => $campania->fecha_fin->format('d/m/Y')]) }}
                             </span>
                             <span role="cell">
-                                <x-atoms.badge :variant="$variantePorEstado[$estadoValor]">
+                                <x-atoms.badge :variant="$tonoPorEstado[$estadoValor]">
                                     {{ __('campania.campania.estado.'.$estadoValor) }}
                                 </x-atoms.badge>
                             </span>

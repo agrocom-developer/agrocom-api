@@ -13,24 +13,26 @@ use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
  * `emitida` es el único estado de alta — lo fija
  * `Aplicacion/MaquinaEstados/MaquinaEstadosOrden::crear()` directamente,
  * nunca es destino de una transición (mismo criterio que `TransicionesContrato`
- * con `borrador`). Desde `emitida`, la única salida es `vigente` (con la
- * guarda de "única orden vigente por lote", ver `MaquinaEstadosOrden::activar()`).
+ * con `borrador`). Desde `emitida` la única salida es `vigente`; una orden
+ * `emitida` que ya no se quiere se ELIMINA (baja lógica), no se cancela.
  *
- * `consumida` y `vencida` NO aparecen como destino de ninguna transición acá
- * a propósito: no tienen ningún disparador de negocio definido todavía —
- * ninguna otra tarea los setea, no hay evento de dominio ni cierre de trabajo
- * que los dispare hoy (verificado: un `grep` de "consumida"/"vencida" en
- * `app/` solo devuelve el propio enum y sus docblocks). Agregarlos sin una
- * regla real que los dispare sería inventar comportamiento — queda para la
- * tarea futura que sí tenga esa regla de negocio.
+ * Reforma 19/9/2026 (ADR 0022): una vez `vigente`, la aplicación puede
+ * `pausarse` a la espera de resolver un problema y volver a `vigente`, cerrarse
+ * (`consumida`: cumplida) o `cancelarse` (con causa y motivo, desde `vigente` o
+ * `pausada`). `consumida` solo sale de `vigente`: para cerrar hay que estar
+ * en ejecución, no detenida. `consumida`, `cancelada` y `vencida` no tienen
+ * salida. `vencida` sigue sin ningún disparador de negocio: no es destino de
+ * ninguna transición.
  */
 final class TransicionesOrden
 {
     /** @var array<string, list<string>> */
     private const array PERMITIDAS = [
         'emitida' => ['vigente'],
-        'vigente' => [],
+        'vigente' => ['pausada', 'consumida', 'cancelada'],
+        'pausada' => ['vigente', 'cancelada'],
         'consumida' => [],
+        'cancelada' => [],
         'vencida' => [],
     ];
 

@@ -79,7 +79,11 @@
         :subtitle="__('comercial.lotes.subtitulo_form')"
     >
         <x-slot:actions>
-            <x-molecules.boton-volver :href="route('panel.lotes.index')" :label="__('comercial.lotes.volver')" />
+            <x-molecules.boton-volver
+                :href="route('panel.lotes.index')"
+                :label="__('comercial.lotes.volver')"
+                :retorno="$esEdicion ? ['propiedad_id' => $lote->propiedad_id, 'lote_id' => $lote->id] : []"
+            />
         </x-slot:actions>
     </x-organisms.page-header>
 
@@ -142,7 +146,7 @@
     <x-organisms.form-actions-bar :status="__('comercial.lotes.estado_form')">
         <x-slot:actions>
             @if ($esEdicion && ! empty($volverA))
-                <x-atoms.button href="{{ $volverA }}{{ str_contains($volverA, '?') ? '&' : '?' }}lote_id={{ $lote->id }}" variant="outline" icon="arrow_back">
+                <x-atoms.button href="{{ $volverA }}{{ str_contains($volverA, '?') ? '&' : '?' }}propiedad_id={{ $lote->propiedad_id }}&lote_id={{ $lote->id }}" variant="outline" icon="arrow_back">
                     {{ __('comercial.lotes.volver_a_formulario_origen') }}
                 </x-atoms.button>
             @endif

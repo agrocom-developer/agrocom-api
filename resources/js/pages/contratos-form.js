@@ -29,6 +29,13 @@
  * SessionStorage (guardar/restaurar el estado del formulario al navegar a
  * "Crear cliente/propiedad/lote" y volver, clave `ag_contrato_borrador`).
  *
+ * Al volver, lo recién creado llega por la URL (`cliente_id`, `propiedad_id`,
+ * `lote_id`, ver el prop `retorno` de `molecules/boton-volver`) y se deja ya
+ * seleccionado en `restaurarBorrador()`. Cada id se valida contra lo que este
+ * formulario ofrece (clientes del select, propiedades del cliente elegido,
+ * lotes de esa propiedad no ocupados en la campaña elegida): uno que no
+ * corresponde —ajeno, borrado, inventado— se ignora sin tocar nada más.
+ *
  * Guard de presencia en el DOM (mismo criterio que `login.js`): en cualquier
  * página sin `[data-ag-contratos-form]` este módulo no hace nada.
  */
@@ -244,6 +251,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    // ¿El lote ya está comprometido en OTRO contrato vigente de la campaña
+    // elegida en este formulario? (`ocupado_en_campanias`, ver
+    // `ContratosController::propiedadesYLotesPorCliente()`). Sin campaña
+    // elegida todavía no hay nada que excluir. Lo usan el modal de lotes y el
+    // regreso desde "Crear lote".
+    const loteOcupadoEnCampaniaActual = (lote) => {
+        const campaniaActual = selectCampania?.value ? String(selectCampania.value) : '';
+        if (!campaniaActual) return false;
+        return (lote.ocupado_en_campanias || []).map(String).includes(campaniaActual);
+    };
+
     // Muestra la tabla de lotes agregados solo si hay al menos un grupo —
     // evita el cascarón vacío (solo encabezado) en un contrato nuevo.
     const actualizarVisibilidadTablaLotes = () => {
@@ -381,13 +399,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // — salvo que ya esté en el contrato que se está editando (ese sigue
         // apareciendo tildado, como siempre). Sin campaña elegida todavía,
         // no hay nada que excluir.
-        const campaniaActual = selectCampania?.value ? String(selectCampania.value) : '';
-        const lotesVisibles = lotes.filter((lote) => {
-            if (idsYaEnContrato.has(String(lote.id))) return true;
-            if (!campaniaActual) return true;
-            const ocupadas = (lote.ocupado_en_campanias || []).map(String);
-            return !ocupadas.includes(campaniaActual);
-        });
+        const lotesVisibles = lotes.filter((lote) => idsYaEnContrato.has(String(lote.id)) || !loteOcupadoEnCampaniaActual(lote));
 
         // "Todos ocupados": la propiedad SÍ tiene lotes, pero ninguno queda
         // disponible para esta campaña — distinto del caso de abajo (la
@@ -710,6 +722,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const propiedadIdUrl = urlParams.get('propiedad_id');
         const loteIdUrl = urlParams.get('lote_id');
 
+        const clienteAntes = selectCliente?.value;
+
         const bor = sessionStorage.getItem('ag_contrato_borrador');
         if (bor) {
             try {
@@ -738,23 +752,44 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Aplicar valores de URL (ganan sobre el borrador)
-        if (clienteIdUrl && !urlParams.has('_limpiar_cliente')) {
-            if (selectCliente) {
-                selectCliente.value = clienteIdUrl;
-                selectCliente.dispatchEvent(new Event('change'));
-            }
+        // El borrador pudo cambiar el cliente sin avisarle al resto del
+        // formulario (propiedades, pills, etiqueta del select): se avisa acá.
+        if (selectCliente && selectCliente.value !== clienteAntes) {
+            selectCliente.dispatchEvent(new Event('change'));
+        }
+
+        // Aplicar valores de URL (ganan sobre el borrador). Cada id se acepta
+        // solo si es una opción real de lo que este formulario ofrece.
+        const opcionDelSelect = (select, valor) => Boolean(valor)
+            && Array.from(select?.options || []).some((opcion) => opcion.value === valor);
+
+        // Volver de "Crear cliente": queda elegido el cliente nuevo. Solo se
+        // avisa del cambio si de verdad cambió — un `change` vacía las
+        // propiedades elegidas, y con el mismo cliente no hay por qué.
+        if (clienteIdUrl && !urlParams.has('_limpiar_cliente') && opcionDelSelect(selectCliente, clienteIdUrl)
+            && selectCliente.value !== clienteIdUrl) {
+            selectCliente.value = clienteIdUrl;
+            selectCliente.dispatchEvent(new Event('change'));
+
+            // Los lotes que ya estaban cargados (edición de un contrato) eran
+            // de propiedades del cliente anterior: no valen para el nuevo.
+            contenedorGrupos?.querySelectorAll('[data-ag-lote-grupo]').forEach((grupo) => grupo.remove());
+            renderizarPills();
         }
 
         // Volver de "Crear propiedad" (con o sin lote): agregar la propiedad
         // y, si ya viene con un lote recién creado, sumarlo directo a la
         // lista apilada (mismo resultado que tildarlo en el modal y guardar).
+        // La propiedad tiene que ser del cliente elegido y el lote de esa
+        // propiedad y libre en la campaña elegida — si no, se ignoran.
         if (propiedadIdUrl && selectCliente && selectCliente.value) {
-            propiedadesSeleccionadas.add(propiedadIdUrl);
+            const propiedad = (propiedadesYLotes[selectCliente.value] || {})[propiedadIdUrl];
 
-            if (loteIdUrl) {
-                const propiedad = (propiedadesYLotes[selectCliente.value] || {})[propiedadIdUrl];
-                if (propiedad) {
+            if (propiedad) {
+                propiedadesSeleccionadas.add(propiedadIdUrl);
+
+                const lote = loteIdUrl ? (propiedad.lotes || []).find((l) => String(l.id) === loteIdUrl) : null;
+                if (lote && !loteOcupadoEnCampaniaActual(lote)) {
                     const idsActuales = new Set(
                         Array.from(
                             contenedorGrupos?.querySelectorAll(`[data-ag-lote-grupo="propiedad-${propiedadIdUrl}"] [data-lote-id]`) || [],
@@ -763,9 +798,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     idsActuales.add(loteIdUrl);
                     sincronizarLotesDePropiedad(propiedadIdUrl, propiedad, idsActuales);
                 }
-            }
 
-            renderizarPills();
+                renderizarPills();
+            }
         }
     }
 

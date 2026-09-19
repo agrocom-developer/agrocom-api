@@ -13,10 +13,12 @@
     - $clientesDisponibles (Collection<int, string>): id => razón social,
       clientes activos (ver ContratosController::clientesActivos()) — la
       vista no conoce el modelo Cliente.
-    - $campaniasDisponibles (Collection<int, string>): id => código, TODAS
-      las campañas del catálogo (ADR 0015, corregido el 15/9/2026: la
-      campaña es compartida, no hay que filtrarla por cliente) — ver
-      ContratosController::campaniasDisponibles().
+    - $campaniasDisponibles (Collection<int, string>): id => código, solo
+      las campañas ABIERTAS (pedido directo del 19/9/2026), más — en
+      edición — la campaña del propio contrato aunque ya no esté abierta,
+      para que el select no la pierda. La campaña es compartida (ADR 0015,
+      corregido el 15/9/2026): no se filtra por cliente — ver
+      ContratosController::campaniasParaFormulario().
     - $clienteIdPreseleccionado (int|null, tarea "resumen de cliente"): solo
       en alta, desde `?cliente_id=` (ver ContratosController::create()) — el
       atajo "Nuevo contrato" del aside de `panel.clientes.edit` llega acá con
@@ -478,18 +480,28 @@
                 @if ($resumenContrato['tieneDatos'])
                     @foreach ($resumenContrato['tarjetas'] as $tarjeta)
                         <x-molecules.summary-card :title="$tarjeta['titulo']" :items="$tarjeta['items']">
-                            @if (isset($tarjeta['accion']))
+                            @php
+                                $accionesTarjeta = $tarjeta['acciones'] ?? (isset($tarjeta['accion']) ? [$tarjeta['accion']] : []);
+                            @endphp
+                            @if ($accionesTarjeta !== [])
                                 <x-slot:action>
-                                    {{-- "Ver más" sin funcionalidad todavía
-                                         (tarea "resumen-contrato-completo",
-                                         18/9/2026): ni el listado de órdenes
-                                         ni el de facturas filtran por
-                                         `contrato_id` hoy — el componente
-                                         estático queda en su lugar para
-                                         cuando esa pantalla lo permita. --}}
-                                    <x-atoms.button type="button" variant="outline" size="sm" icon="open_in_new" disabled :title="$tarjeta['accion']['tooltip']">
-                                        {{ $tarjeta['accion']['label'] }}
-                                    </x-atoms.button>
+                                    {{-- Cada acción es un enlace real (con `href`) o un botón
+                                         deshabilitado con `tooltip` que dice por qué. La tarjeta
+                                         de órdenes enlaza al listado filtrado por contrato y a
+                                         "Nueva orden" (ADR 0022); "Ver más" de trabajos,
+                                         facturación y cobranza sigue sin funcionalidad todavía:
+                                         esas pantallas no filtran por `contrato_id`. --}}
+                                    @foreach ($accionesTarjeta as $accion)
+                                        @if (! empty($accion['href']))
+                                            <x-atoms.button :href="$accion['href']" variant="outline" size="sm" :icon="$accion['icon'] ?? 'open_in_new'">
+                                                {{ $accion['label'] }}
+                                            </x-atoms.button>
+                                        @else
+                                            <x-atoms.button type="button" variant="outline" size="sm" :icon="$accion['icon'] ?? 'open_in_new'" disabled :title="$accion['tooltip'] ?? null">
+                                                {{ $accion['label'] }}
+                                            </x-atoms.button>
+                                        @endif
+                                    @endforeach
                                 </x-slot:action>
                             @endif
                         </x-molecules.summary-card>
@@ -502,9 +514,15 @@
                     >
                         @if ($resumenContrato['mostrarAccion'])
                             <x-slot:action>
-                                <x-atoms.button :href="$resumenContrato['accion']['href']" variant="outline" icon="add">
-                                    {{ $resumenContrato['accion']['label'] }}
-                                </x-atoms.button>
+                                @if (! empty($resumenContrato['accion']['href']))
+                                    <x-atoms.button :href="$resumenContrato['accion']['href']" variant="outline" icon="add">
+                                        {{ $resumenContrato['accion']['label'] }}
+                                    </x-atoms.button>
+                                @else
+                                    <x-atoms.button type="button" variant="outline" icon="add" disabled :title="$resumenContrato['accion']['tooltip'] ?? null">
+                                        {{ $resumenContrato['accion']['label'] }}
+                                    </x-atoms.button>
+                                @endif
                             </x-slot:action>
                         @endif
                     </x-molecules.empty-state>

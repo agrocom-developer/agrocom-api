@@ -14,10 +14,11 @@ use Illuminate\View\View;
  * `GET/POST /panel/propiedades/{propiedad}/lotes/generar` (HU-72
  * reconstruida, 16/9/2026 — la original vivía en `CrearCampo`/
  * `CamposController`, borrados enteros al colapsar `Campo`, ADR 0020).
- * "Crear Lotes" con un solo botón: cuántos, con qué prefijo de código y
- * con qué atributos de terreno (los mismos para todos) — SIN cultivo/
- * campaña (eso es siembra, vive en `propiedades/siembra`, no acá; ver
- * docblock de `CrearLotesMasivo`). Entra desde la ficha de la propiedad,
+ * "Crear Lotes" con un solo botón: cuántos, con qué prefijo de código, con
+ * cuántas hectáreas y con qué atributos de terreno (los mismos para todos) —
+ * SIN cultivo/campaña (eso es siembra, vive en `propiedades/siembra`, no
+ * acá; ver docblock de `CrearLotesMasivo`). Corregir después lo de todos los
+ * lotes de una vez es `EditarLotesBloqueController`. Entra desde la ficha de la propiedad,
  * mismo molde que `SiembraController`/`PropiedadMapaController` —
  * pantalla propia sin listado, sin ABM propio.
  *
@@ -38,6 +39,7 @@ final class GenerarLotesController
         return view('comercial::pages.propiedades.lotes-generar', [
             ...$this->autorizacion->cascara($request),
             'propiedad' => $propiedad->load('cliente'),
+            'lotesExistentes' => $propiedad->lotes()->count(),
         ]);
     }
 
@@ -46,26 +48,17 @@ final class GenerarLotesController
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO), 403);
 
         $datos = $request->validated();
-        $terreno = $datos['terreno'] ?? [];
 
         $lotes = $crearLotesMasivo->ejecutar(
             $propiedad,
             $datos['prefijo'],
             (int) $datos['cantidad'],
-            [
-                'desnivel' => $this->cadenaONull($terreno['desnivel'] ?? null),
-                'limpieza' => ! empty($terreno['limpio']) ? 'limpio' : $this->cadenaONull($terreno['grado_obstaculos'] ?? null),
-                'restricciones' => $this->cadenaONull($terreno['restricciones'] ?? null),
-            ],
+            (string) $datos['hectareas'],
+            $request->atributosTerreno(),
         );
 
         return redirect()
             ->route('panel.lotes.index', ['propiedad_id' => $propiedad->id])
             ->with('estado', __('comercial.propiedades.lotes_generados', ['cantidad' => count($lotes)]));
-    }
-
-    private function cadenaONull(mixed $valor): ?string
-    {
-        return $valor === null || $valor === '' ? null : (string) $valor;
     }
 }

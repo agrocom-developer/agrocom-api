@@ -12,9 +12,10 @@ use App\Dominios\Comercial\Aplicacion\ListarContratos;
 use App\Dominios\Comercial\Aplicacion\ObtenerAvanceComercial;
 use App\Dominios\Comercial\Dominio\EstadoContrato;
 use App\Dominios\Comercial\Dominio\Excepciones\ActivacionContratoNoDisponible;
-use App\Dominios\Comercial\Dominio\Excepciones\CampaniaCerrada;
+use App\Dominios\Comercial\Dominio\Excepciones\CampaniaNoAbierta;
+use App\Dominios\Comercial\Dominio\Excepciones\ContratoConAplicacionAbierta;
 use App\Dominios\Comercial\Dominio\Excepciones\LoteAjenoAlCliente;
-use App\Dominios\Comercial\Dominio\Excepciones\LotesDePropiedadAgotados;
+use App\Dominios\Comercial\Dominio\Excepciones\LotesYaContratados;
 use App\Dominios\Comercial\Dominio\Excepciones\TransicionContratoNoPermitida;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
@@ -63,8 +64,10 @@ use Illuminate\View\View;
  * cliente" y "la propiedad no está agotada", viven en
  * `Aplicacion/CrearContrato`/`Aplicacion/ActualizarContrato`, nunca acá.
  *
- * `campaniasDisponibles()` lee el catálogo de campañas vía
- * {@see LecturaCampania::todas()} (ADR 0003 regla 2) — NO con `DB::table`
+ * `campaniasDisponibles()` (filtro del listado) y `campaniasParaFormulario()`
+ * (select del formulario: solo las abiertas) leen el catálogo de campañas
+ * vía {@see LecturaCampania} (`todas()`/`abiertas()`, ADR 0003 regla 2) — NO
+ * con `DB::table`
  * directo: esta clase vivió un tiempo con esa forma (justificada, en su
  * momento, como la regla 3 del ADR — referencias cruzadas por ID), pero es
  * exactamente el mismo agujero que encontró y corrigió
@@ -115,7 +118,7 @@ final class ContratosController
         return view('comercial::pages.contratos.create', [
             ...$this->autorizacion->cascara($request),
             'clientesDisponibles' => $this->clientesActivos(),
-            'campaniasDisponibles' => $this->campaniasDisponibles($lecturaCampania),
+            'campaniasDisponibles' => $this->campaniasParaFormulario($lecturaCampania),
             // Acceso directo desde el aside de `panel.clientes.edit` (tarea
             // "resumen de cliente"): con ?cliente_id=, el formulario arranca
             // con ese cliente ya elegido — ver _formulario.blade.php.
@@ -143,12 +146,12 @@ final class ContratosController
                 $this->normalizarDatosContrato($datos),
                 $lotes,
             );
-        } catch (CampaniaCerrada $excepcion) {
+        } catch (CampaniaNoAbierta $excepcion) {
             return redirect()
                 ->route('panel.contratos.create')
                 ->withInput()
                 ->withErrors(['campania_id' => $excepcion->getMessage()]);
-        } catch (LoteAjenoAlCliente|LotesDePropiedadAgotados $excepcion) {
+        } catch (LoteAjenoAlCliente|LotesYaContratados $excepcion) {
             return redirect()
                 ->route('panel.contratos.create')
                 ->withInput()
@@ -205,7 +208,7 @@ final class ContratosController
             ...$this->autorizacion->cascara($request),
             'contrato' => $contrato,
             'clientesDisponibles' => $this->clientesActivos(),
-            'campaniasDisponibles' => $this->campaniasDisponibles($lecturaCampania),
+            'campaniasDisponibles' => $this->campaniasParaFormulario($lecturaCampania, $contrato->campania_id),
             'propiedadesYLotesPorCliente' => $this->propiedadesYLotesPorCliente($contrato->id),
             'loteIdsConOrdenRegistrada' => $loteIdsConOrden,
             'conflictosPorLote' => $conflictosPorLote,
@@ -232,6 +235,7 @@ final class ContratosController
             'finalizado' => 'distintivo-2',
             'cancelado' => 'danger',
             'pausado' => 'info',
+            'conflicto' => 'alert',
         ];
 
         // Lote_ids del contrato en edición — para quedarse, de TODOS los
@@ -304,12 +308,12 @@ final class ContratosController
                 $this->normalizarDatosContrato($datos),
                 $lotes,
             );
-        } catch (CampaniaCerrada $excepcion) {
+        } catch (CampaniaNoAbierta $excepcion) {
             return redirect()
                 ->route('panel.contratos.edit', $contrato)
                 ->withInput()
                 ->withErrors(['campania_id' => $excepcion->getMessage()]);
-        } catch (LoteAjenoAlCliente|LotesDePropiedadAgotados $excepcion) {
+        } catch (LoteAjenoAlCliente|LotesYaContratados $excepcion) {
             return redirect()
                 ->route('panel.contratos.edit', $contrato)
                 ->withInput()
@@ -338,7 +342,7 @@ final class ContratosController
 
         try {
             $cambiarEstadoContrato->ejecutar($contrato, $hacia);
-        } catch (TransicionContratoNoPermitida|ActivacionContratoNoDisponible $excepcion) {
+        } catch (TransicionContratoNoPermitida|ActivacionContratoNoDisponible|ContratoConAplicacionAbierta $excepcion) {
             return redirect()
                 ->route('panel.contratos.index')
                 ->withErrors(['estado' => $excepcion->getMessage()]);
@@ -390,6 +394,66 @@ final class ContratosController
     {
         return collect($lecturaCampania->todas())
             ->mapWithKeys(fn (DatosCampania $campania): array => [$campania->id => $campania->codigo]);
+    }
+
+    /**
+     * Campañas que ofrece el select del FORMULARIO (alta y edición): solo las
+     * `abiertas` (pedido directo del 19/9/2026) — el filtro del listado sigue
+     * con todas, ver `campaniasDisponibles()`. En edición, si la campaña del
+     * contrato ya no está abierta (se cerró después de crearlo), se suma
+     * igual: sin eso el select la perdería y el formulario dejaría de mostrar
+     * a qué campaña pertenece el contrato.
+     *
+     * La regla "solo abiertas" vive en lo que se ofrece, no en el servidor:
+     * `Aplicacion/CrearContrato`/`ActualizarContrato` siguen rechazando
+     * únicamente las `cerradas`.
+     *
+     * @return Collection<int, string> id => código
+     */
+    private function campaniasParaFormulario(LecturaCampania $lecturaCampania, ?int $campaniaIdActual = null): Collection
+    {
+        $campanias = collect($lecturaCampania->abiertas());
+
+        if ($campaniaIdActual !== null && ! $campanias->contains('id', $campaniaIdActual)) {
+            $actual = $lecturaCampania->obtener($campaniaIdActual);
+
+            if ($actual !== null) {
+                $campanias->push($actual);
+            }
+        }
+
+        return $campanias
+            ->sortBy('codigo', SORT_NATURAL | SORT_FLAG_CASE)
+            ->mapWithKeys(fn (DatosCampania $campania): array => [$campania->id => $campania->codigo]);
+    }
+
+    /**
+     * Enlace a "Nueva orden de aplicación" desde el contrato, o el motivo por el
+     * que hoy no se puede (ADR 0022): sin `href` el botón se pinta deshabilitado
+     * con `tooltip`. Memento de navegación (17/9/2026): la orden vuelve a este
+     * contrato al terminar.
+     *
+     * @return array{href?: string, tooltip?: string}
+     */
+    private function accionNuevaOrden(Contrato $contrato, LecturaResumenOrdenesContrato $lecturaResumenOrdenes): array
+    {
+        if ($contrato->estado !== EstadoContrato::Vigente) {
+            return ['tooltip' => __('comercial.contratos.aside_nueva_orden_no_vigente')];
+        }
+
+        if ($lecturaResumenOrdenes->resumen([$contrato->id])['abiertas'] > 0) {
+            return ['tooltip' => __('comercial.contratos.aside_nueva_orden_con_abierta')];
+        }
+
+        if ($lecturaResumenOrdenes->siguienteAplicacion($contrato->id, (int) $contrato->aplicaciones_previstas) === null) {
+            return ['tooltip' => __('comercial.contratos.aside_nueva_orden_completas')];
+        }
+
+        return ['href' => route('panel.ordenes.create', [
+            'contrato_id' => $contrato->id,
+            'volver_a' => route('panel.contratos.edit', $contrato),
+            'volver_texto' => $contrato->cliente->razon_social,
+        ])];
     }
 
     /**
@@ -465,8 +529,13 @@ final class ContratosController
             return null;
         }
 
-        $resumenOrdenes = $puedeVerOrdenes ? $lecturaResumenOrdenes->resumen([$contrato->id]) : ['total' => 0, 'vigentes' => 0];
+        $resumenOrdenes = $puedeVerOrdenes ? $lecturaResumenOrdenes->resumen([$contrato->id]) : ['total' => 0, 'vigentes' => 0, 'abiertas' => 0];
         $totalOrdenes = $resumenOrdenes['total'];
+
+        // "Nueva orden" (ADR 0022): solo un contrato En Ejecución, sin aplicación
+        // abierta y con aplicaciones por delante admite una orden nueva. Si no,
+        // el botón queda deshabilitado y dice por qué.
+        $nuevaOrden = $this->accionNuevaOrden($contrato, $lecturaResumenOrdenes);
 
         if (! $puedeVerOrdenes || $totalOrdenes === 0) {
             return [
@@ -475,15 +544,7 @@ final class ContratosController
                 'titulo' => __('comercial.contratos.aside_vacio_titulo'),
                 'detalle' => __('comercial.contratos.aside_vacio_detalle'),
                 'mostrarAccion' => $puedeCrearOrdenes,
-                'accion' => [
-                    'label' => __('comercial.contratos.aside_vacio_accion'),
-                    // Memento de navegación (17/9/2026): cruza a `Operaciones`
-                    // — mismo criterio que ClientesController::resumenRelacionado().
-                    'href' => route('panel.ordenes.create', [
-                        'volver_a' => route('panel.contratos.edit', $contrato),
-                        'volver_texto' => $contrato->cliente->razon_social,
-                    ]),
-                ],
+                'accion' => ['label' => __('comercial.contratos.aside_vacio_accion'), ...$nuevaOrden],
             ];
         }
 
@@ -499,6 +560,13 @@ final class ContratosController
             'tooltip' => __('comercial.contratos.aside_ver_mas_proximamente'),
         ];
 
+        // El listado de órdenes SÍ filtra por contrato desde el ADR 0022: la tarjeta
+        // de órdenes lleva un enlace real, y "Nueva orden" cuando corresponde.
+        $accionesOrdenes = array_values(array_filter([
+            $puedeCrearOrdenes ? ['label' => __('comercial.contratos.aside_nueva_orden'), 'icon' => 'add', ...$nuevaOrden] : null,
+            ['label' => __('comercial.contratos.aside_ver_mas'), 'icon' => 'open_in_new', 'href' => route('panel.ordenes.index', ['contrato_id' => $contrato->id])],
+        ]));
+
         return [
             'tieneDatos' => true,
             'tarjetas' => [
@@ -513,7 +581,7 @@ final class ContratosController
                             'variant' => $resumenOrdenes['vigentes'] > 0 ? 'success' : 'neutral',
                         ],
                     ],
-                    'accion' => $accionVerMas,
+                    'acciones' => $accionesOrdenes,
                 ],
                 [
                     'titulo' => __('comercial.contratos.aside_orden_trabajo_titulo'),

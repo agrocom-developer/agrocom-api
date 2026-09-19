@@ -93,7 +93,11 @@
         :subtitle="__('comercial.clientes.subtitulo_form')"
     >
         <x-slot:actions>
-            <x-molecules.boton-volver :href="route('panel.clientes.index')" :label="__('comercial.clientes.volver')" />
+            <x-molecules.boton-volver
+                :href="route('panel.clientes.index')"
+                :label="__('comercial.clientes.volver')"
+                :retorno="$esEdicion ? ['cliente_id' => $cliente->id] : []"
+            />
         </x-slot:actions>
     </x-organisms.page-header>
 

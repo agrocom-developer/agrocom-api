@@ -226,6 +226,14 @@ class SeguridadSeeder extends Seeder
         'operaciones.orden.editar' => 'Editar los datos de una orden de aplicación',
         'operaciones.orden.activar' => 'Activar una orden de aplicación (emitida → vigente)',
         'operaciones.orden.eliminar' => 'Dar de baja (lógica) una orden de aplicación',
+        // ADR 0022 (19/9/2026): la aplicación se pausa, se cierra o se cancela
+        // desde el panel — nunca desde la app de campo. Grano propio por
+        // acción, mismo criterio que `.activar` arriba: son decisiones de
+        // ejecución (del operador, junto con el dueño), no correcciones de un
+        // dato.
+        'operaciones.orden.pausar' => 'Pausar una orden de aplicación vigente y reanudarla',
+        'operaciones.orden.cerrar' => 'Cerrar una orden de aplicación cumplida (vigente → consumida)',
+        'operaciones.orden.cancelar' => 'Cancelar una orden de aplicación, con su causa y su motivo',
         // HU-70 (tarea 85): "dónde asignarle el trabajo al piloto" — repartir
         // las hectáreas de una orden vigente entre equipos de trabajo. Grano
         // propio, no parte de `.editar`: no corrige la orden, reparte su
@@ -546,6 +554,11 @@ class SeguridadSeeder extends Seeder
         'operaciones.orden.editar',
         'operaciones.orden.activar',
         'operaciones.orden.eliminar',
+        // ADR 0022: pausar/cerrar/cancelar una aplicación — el encargado
+        // administra la ejecución diaria, mismo criterio que `.activar`.
+        'operaciones.orden.pausar',
+        'operaciones.orden.cerrar',
+        'operaciones.orden.cancelar',
         // HU-70 (tarea 85): administra también el reparto de equipos por
         // orden — mismo criterio que el resto de `operaciones.orden.*` arriba.
         'operaciones.orden.asignar_equipos',

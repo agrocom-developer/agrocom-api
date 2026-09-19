@@ -64,8 +64,11 @@ Laravel se aplica solo en Eloquent y el schema builder, no dentro de un
 
 ## Postgres sí, SQLite no
 
-Los tests corren en SQLite en memoria (ver [verificacion]) y SQLite no soporta
-`ALTER TABLE ... ADD CONSTRAINT`. Los CHECK van dentro de una guarda:
+SQLite no soporta `ALTER TABLE ... ADD CONSTRAINT`, y las migraciones **no corren
+en SQLite**: `tests/Unit` es Pest puro, sin base de datos (ver [verificacion]), y
+una migración que funciona en Postgres puede fallar ahí (un `drop column` con
+índice en `cpn_campanias`, por ejemplo). Los CHECK siguen yendo dentro de una
+guarda, como en las migraciones ya escritas:
 
 ```php
 if (DB::getDriverName() === 'pgsql') {
@@ -77,15 +80,27 @@ if (DB::getDriverName() === 'pgsql') {
 }
 ```
 
-Consecuencia: **un CHECK así no está cubierto por la suite local**. Si la regla es
-importante, además del CHECK va validada en el caso de uso, que sí se testea.
+Consecuencia: **ningún test automático cubre un CHECK así**. Si la regla es
+importante, además del CHECK va validada en el caso de uso o en una regla de
+dominio pura (esta última sí se cubre en `tests/Unit`), y se comprueba contra
+Postgres como se explica a continuación.
 
-## Cada migración lleva su test de esquema
+## Cada migración se verifica contra Postgres, sin dejar rastro
 
-El patrón ya existe: `tests/Feature/EsquemaNucleoComercialTest.php`,
-`EsquemaSeguridadPersonalTest.php`, `Modelos/BorradoLogicoTest.php`. Verifican que
-las columnas existen, que el soft delete está, y que no se puede borrar físico.
-Una migración nueva sin su test no está terminada.
+Ya no hay tests de esquema: `tests/Feature/` no existe (Pest solo extiende
+`TestCase` para esa carpeta) y `tests/Unit` no toca ninguna base. La forma de ver
+una migración o su comportamiento andando contra Postgres es un **script temporal
+en `storage/app/`** (git-ignorado), ejecutado dentro del contenedor:
+
+```
+docker exec agrocom-api-app-1 php storage/app/<script>.php
+```
+
+El script envuelve todo en `DB::beginTransaction()` y en un
+`try { ... } finally { DB::rollBack(); }`. Postgres revierte también el DDL, así
+que incluso una migración nueva se puede aplicar adentro (`Artisan::call('migrate')`)
+y validar —columnas, índices parciales, CHECK, el caso de uso— sin que quede nada.
+Al final se comprueba que la base quedó intacta y se borra el script.
 
 ## Lecturas complejas
 
@@ -95,4 +110,5 @@ No se arman con SQL crudo disperso: van por vistas `vw_*` (ADR 0012).
 
 `migrate:fresh`, `migrate:refresh`, `migrate:reset` y `db:wipe` están bloqueados
 por el guardarraíl: vacían la base del compose, que tiene el seed demo del panel.
-Para probar una migración desde cero, la suite ya la corre entera en SQLite.
+Para probar una migración sin dejar rastro, se aplica dentro de una transacción
+que se revierte (ver «Cada migración se verifica contra Postgres», arriba).

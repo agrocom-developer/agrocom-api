@@ -31,9 +31,12 @@
     estado se ocultan con `@puede` (presentación, no autorización — el
     servidor revalida en ContratosController). Las acciones de cambio de
     estado disponibles dependen del estado ACTUAL de cada fila: un contrato
-    `borrador` solo ofrece "Aprobar" o "Cancelar"; uno `vigente`, "Finalizar",
-    "Pausar" o "Cancelar"; uno `pausado`, "Reanudar"; uno `finalizado`/
-    `cancelado`, ninguna (son terminales) — ver `TransicionesContrato`, que
+    `borrador` solo ofrece "Aprobar" o "Cancelar"; uno `conflicto` (comparte
+    un lote con un contrato ya aprobado, ADR 0021), solo "Cancelar": no se
+    aprueba hasta que el choque desaparezca, y sale solo de ahí; uno
+    `vigente`, "Finalizar", "Pausar" o "Cancelar"; uno `pausado`,
+    "Reanudar"; uno `finalizado`/`cancelado`, ninguna (son terminales) —
+    ver `TransicionesContrato`, que
     es la fuente real de esta regla; acá solo se refleja para no ofrecer un
     botón que el servidor va a rechazar.
 
@@ -198,6 +201,7 @@
                                 'finalizado' => 'distintivo-2',
                                 'cancelado' => 'danger',
                                 'pausado' => 'info',
+                                'conflicto' => 'alert',
                             ];
                             $estadoValor = $contrato->estado->value;
                         @endphp
@@ -263,6 +267,11 @@
                                             <input type="hidden" name="estado" value="pausado">
                                         </form>
 
+                                        <form id="{{ $formIdCancelar }}" method="POST" action="{{ route('panel.contratos.cambiar-estado', $contrato) }}">
+                                            @csrf
+                                            <input type="hidden" name="estado" value="cancelado">
+                                        </form>
+                                    @elseif ($estadoValor === 'conflicto')
                                         <form id="{{ $formIdCancelar }}" method="POST" action="{{ route('panel.contratos.cambiar-estado', $contrato) }}">
                                             @csrf
                                             <input type="hidden" name="estado" value="cancelado">
@@ -333,6 +342,16 @@
                                             :cancel-label="__('ui.action.close')"
                                             tone="danger"
                                         />
+                                    @elseif ($estadoValor === 'conflicto')
+                                        <x-molecules.confirm-modal
+                                            :id="$modalIdCancelar"
+                                            :form-id="$formIdCancelar"
+                                            :title="__('comercial.contratos.confirmar_cancelar_titulo')"
+                                            :message="__('comercial.contratos.confirmar_cancelar')"
+                                            :confirm-label="__('comercial.contratos.accion_cancelar')"
+                                            :cancel-label="__('ui.action.close')"
+                                            tone="danger"
+                                        />
                                     @elseif ($estadoValor === 'pausado')
                                         <x-molecules.confirm-modal
                                             :id="$modalIdReanudar"
@@ -370,6 +389,10 @@
                                                 {{ __('comercial.contratos.accion_pausar') }}
                                             </x-atoms.button>
 
+                                            <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#{{ $modalIdCancelar }}" variant="danger-outline" size="sm" icon="cancel">
+                                                {{ __('comercial.contratos.accion_cancelar') }}
+                                            </x-atoms.button>
+                                        @elseif ($estadoValor === 'conflicto')
                                             <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#{{ $modalIdCancelar }}" variant="danger-outline" size="sm" icon="cancel">
                                                 {{ __('comercial.contratos.accion_cancelar') }}
                                             </x-atoms.button>

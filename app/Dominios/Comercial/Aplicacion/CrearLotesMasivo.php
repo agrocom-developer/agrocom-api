@@ -16,12 +16,13 @@ use RuntimeException;
  * `CrearCampo`/`CamposController`, borrados enteros al colapsar `Campo`,
  * ADR 0020, sin que nadie la migrara al modelo nuevo).
  *
- * Solo crea ESTRUCTURA: `$cantidad` lotes con los MISMOS atributos de
- * terreno (desnivel/limpieza/restricciones) — pedido directo, 16/9/2026:
- * una sola carga, aplicada a todos, no una fila por lote (si un lote
- * particular necesita algo distinto, se ajusta después desde su propia
- * ficha). `hectareas` queda en un placeholder (a corregir después
- * dibujando el polígono y usando "usar superficie").
+ * Solo crea ESTRUCTURA: `$cantidad` lotes con las MISMAS hectáreas y los
+ * MISMOS atributos de terreno (desnivel/limpieza/restricciones) — pedido
+ * directo, 16/9/2026: una sola carga, aplicada a todos, no una fila por lote
+ * (si un lote particular necesita algo distinto, se ajusta después desde su
+ * propia ficha). Las hectáreas dejaron de ser un placeholder de 1 ha el
+ * 19/9/2026: se piden en la misma pantalla, para no corregirlas lote por
+ * lote.
  *
  * SIN cultivo ni campaña a propósito (16/9/2026, corregido tras confundir
  * los dos conceptos): eso es SIEMBRA, no estructura del lote — vive en
@@ -35,22 +36,20 @@ use RuntimeException;
  */
 final class CrearLotesMasivo
 {
-    private const HECTAREAS_PLACEHOLDER = '1.00';
-
     private const INTENTOS_MAXIMOS = 200;
 
     /**
      * @param  array{desnivel: string|null, limpieza: string|null, restricciones: string|null}  $atributosTerreno  aplicados a TODOS los lotes generados.
      * @return list<Lote>
      */
-    public function ejecutar(Propiedad $propiedad, string $prefijo, int $cantidad, array $atributosTerreno): array
+    public function ejecutar(Propiedad $propiedad, string $prefijo, int $cantidad, string $hectareas, array $atributosTerreno): array
     {
-        return DB::transaction(function () use ($propiedad, $prefijo, $cantidad, $atributosTerreno): array {
+        return DB::transaction(function () use ($propiedad, $prefijo, $cantidad, $hectareas, $atributosTerreno): array {
             $lotes = [];
             $siguienteNumero = $this->siguienteNumero($propiedad, $prefijo);
 
             for ($i = 0; $i < $cantidad; $i++) {
-                [$lote, $siguienteNumero] = $this->crearConCodigoLibre($propiedad, $prefijo, $siguienteNumero, $atributosTerreno);
+                [$lote, $siguienteNumero] = $this->crearConCodigoLibre($propiedad, $prefijo, $siguienteNumero, $hectareas, $atributosTerreno);
                 $lotes[] = $lote;
             }
 
@@ -84,13 +83,13 @@ final class CrearLotesMasivo
      * @throws RuntimeException si se agotan los intentos (defensivo: no
      *                          debería pasar con la numeración correlativa).
      */
-    private function crearConCodigoLibre(Propiedad $propiedad, string $prefijo, int $numero, array $atributosTerreno): array
+    private function crearConCodigoLibre(Propiedad $propiedad, string $prefijo, int $numero, string $hectareas, array $atributosTerreno): array
     {
         for ($intento = 0; $intento < self::INTENTOS_MAXIMOS; $intento++) {
             try {
                 $lote = GuardadoLote::guardar($propiedad->lotes()->make(), [
                     'codigo' => $prefijo.$numero,
-                    'hectareas' => self::HECTAREAS_PLACEHOLDER,
+                    'hectareas' => $hectareas,
                     'geometria' => null,
                     'restricciones' => $atributosTerreno['restricciones'],
                     'desnivel' => $atributosTerreno['desnivel'],

@@ -112,6 +112,17 @@ enum ColorPropiedad: string
         return Texto::de("comercial.colores.{$clave}");
     }
 
+    /**
+     * El color con el que nace una propiedad que no eligió ninguno (pedido
+     * directo del 19/9/2026: "siempre tener un color seleccionado", verde por
+     * defecto). Una propiedad nunca queda sin color — el formulario lo
+     * preselecciona y los casos de uso lo completan si llega vacío.
+     */
+    public static function porDefecto(): self
+    {
+        return self::VerdeBosque;
+    }
+
     /** @return list<string> */
     public static function valores(): array
     {

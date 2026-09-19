@@ -16,7 +16,7 @@ Reglas de trabajo:
 1. **Toda migración de tabla de dominio incluye `deleted_at`** (soft delete) y como mínimo `created_by`/`updated_by` — sin excepción salvo que la justifiques explícitamente en el PR.
 2. **`UNIQUE (uuid_cliente)`** en toda tabla operativa que se sincroniza desde la app de campo — es el mecanismo real de idempotencia, no una validación de aplicación.
 3. Usá `CHECK` constraints para rangos y enums donde la especificación los define (viento ≤ 17 km/h, temperatura ≤ 30 °C, humedad < 90%, estados válidos) — no confíes esas reglas solo a la capa de aplicación.
-4. Índices parciales donde la especificación lo pide (por ejemplo, una única orden vigente por lote, colas filtradas por `estado`).
+4. Índices parciales donde la especificación lo pide (por ejemplo, una única orden abierta por contrato —índice único parcial sobre `ope_ordenes_aplicacion`—, colas filtradas por `estado`).
 5. Dinero y hectáreas: `DECIMAL(12,2)` / `DECIMAL(10,2)` — nunca `float` ni `double`.
 6. Geometría de lotes: `JSONB` (GeoJSON), sin PostGIS en v1.
 7. Cada migración nueva revisa si rompe una regla de módulo (una tabla pertenece a un solo módulo de dominio — ADR 0003); si tenés dudas de a qué módulo pertenece una tabla, consultá con `arquitectura` antes de crearla.

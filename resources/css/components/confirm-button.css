@@ -66,6 +66,18 @@
     line-height: 1.5;
 }
 
+/* Campos opcionales del modal (slot por defecto de confirm-modal): ancho
+   completo y alineados a la izquierda aunque el resto del cuerpo esté
+   centrado. */
+.ag-confirm-modal__campos {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-3);
+    width: 100%;
+    margin-top: var(--ag-space-4);
+    text-align: left;
+}
+
 .ag-confirm-modal__footer {
     display: flex;
     justify-content: flex-end;

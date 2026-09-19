@@ -84,6 +84,7 @@ final class PropiedadesController
             'departamentosDisponibles' => $this->departamentosActivos(),
             'geografia' => $this->geografiaEmbebida(),
             'coloresDisponibles' => $this->coloresDisponibles(),
+            'colorPorDefecto' => ColorPropiedad::porDefecto()->value,
             // Acceso directo desde el aside de `panel.clientes.edit` (tarea
             // "resumen de cliente"): con ?cliente_id=, el formulario arranca
             // con ese cliente ya elegido — ver _formulario.blade.php.
@@ -146,6 +147,7 @@ final class PropiedadesController
             'departamentosDisponibles' => $this->departamentosActivos(),
             'geografia' => $this->geografiaEmbebida(),
             'coloresDisponibles' => $this->coloresDisponibles(),
+            'colorPorDefecto' => ColorPropiedad::porDefecto()->value,
             'volverA' => session('volverA'),
             'resumenPropiedad' => $this->resumenPropiedad($propiedad, $request),
         ]);
@@ -288,7 +290,7 @@ final class PropiedadesController
      * módulo AJENO que describe (no el de Propiedad, que ya se verificó
      * arriba para poder estar en esta pantalla).
      *
-     * @return list<array{titulo: string, icono: string, tieneDatos: bool, items: list<array<string, mixed>>, vacioTitulo: string, vacioDetalle: string, mostrarAccion: bool, accion: array{label: string, href: string}}>
+     * @return list<array{titulo: string, icono: string, tieneDatos: bool, items: list<array<string, mixed>>, vacioTitulo: string, vacioDetalle: string, acciones: list<array{label: string, href: string, icono?: string}>}>
      */
     private function resumenPropiedad(Propiedad $propiedad, Request $request): array
     {
@@ -327,18 +329,18 @@ final class PropiedadesController
             'items' => $itemsMapa,
             'vacioTitulo' => __('comercial.propiedades.aside_mapa_vacio_titulo'),
             'vacioDetalle' => __('comercial.propiedades.aside_mapa_vacio_detalle'),
-            'mostrarAccion' => true,
-            'accion' => [
+            'acciones' => [[
                 'label' => $tieneCoordenadas
                     ? __('comercial.propiedades.aside_mapa_accion_editar')
                     : __('comercial.propiedades.aside_mapa_accion_agregar'),
                 'href' => route('panel.propiedades.mapa', $propiedad),
-            ],
+            ]],
         ];
 
         // 2) Lotes — gateado por los permisos de Lote, no de Propiedad.
         $puedeVerLotes = $this->autorizacion->tienePermiso($request, 'comercial.lote.ver');
         $puedeCrearLotes = $this->autorizacion->tienePermiso($request, 'comercial.lote.crear');
+        $puedeEditarLotes = $this->autorizacion->tienePermiso($request, 'comercial.lote.editar');
 
         if ($puedeVerLotes || $puedeCrearLotes) {
             $totalLotes = $puedeVerLotes ? $propiedad->lotes()->count() : 0;
@@ -361,23 +363,16 @@ final class PropiedadesController
                 ],
                 'vacioTitulo' => __('comercial.propiedades.aside_lotes_vacio_titulo'),
                 'vacioDetalle' => __('comercial.propiedades.aside_lotes_vacio_detalle'),
-                // Un solo botón, según haya o no lotes (16/9/2026, pedido
-                // directo): con lotes, a la LISTA filtrada por esta
+                // Según haya o no lotes (16/9/2026, pedido directo): con
+                // lotes, dos botones (19/9/2026) — la LISTA filtrada por esta
                 // propiedad (de ahí "Nuevo lote" ya arrastra el mismo
                 // propiedad_id, con cliente resuelto, ver
-                // lotes/_formulario.blade.php); sin lotes todavía, directo
-                // al generador masivo (CrearLotesMasivo) — es la vía rápida
-                // para la primera tanda, no el alta de uno por uno.
-                'mostrarAccion' => $tieneLotes ? $puedeVerLotes : $puedeCrearLotes,
-                'accion' => $tieneLotes
-                    ? [
-                        'label' => __('comercial.propiedades.aside_lotes_accion'),
-                        'href' => route('panel.lotes.index', ['propiedad_id' => $propiedad->id, ...$origenNavegacion]),
-                    ]
-                    : [
-                        'label' => __('comercial.propiedades.aside_lotes_generar'),
-                        'href' => route('panel.propiedades.lotes.generar', [$propiedad, ...$origenNavegacion]),
-                    ],
+                // lotes/_formulario.blade.php) y la EDICIÓN EN BLOQUE, que
+                // corrige hectáreas y terreno de todos y suma o quita lotes;
+                // sin lotes todavía, directo al generador masivo
+                // (CrearLotesMasivo) — es la vía rápida para la primera tanda,
+                // no el alta de uno por uno.
+                'acciones' => $this->accionesLotes($propiedad, $origenNavegacion, $tieneLotes, $puedeVerLotes, $puedeEditarLotes, $puedeCrearLotes),
             ];
         }
 
@@ -389,7 +384,7 @@ final class PropiedadesController
 
     /**
      * @param  array{volver_a: string, volver_texto: string}  $origenNavegacion  memento de navegación (17/9/2026) — ver `resumenPropiedad()`.
-     * @return array{titulo: string, icono: string, tieneDatos: bool, items: list<array<string, mixed>>, vacioTitulo: string, vacioDetalle: string, mostrarAccion: bool, accion: array{label: string, href: string}}
+     * @return array{titulo: string, icono: string, tieneDatos: bool, items: list<array<string, mixed>>, vacioTitulo: string, vacioDetalle: string, acciones: list<array{label: string, href: string, icono?: string}>}
      */
     private function resumenSiembra(Propiedad $propiedad, array $origenNavegacion): array
     {
@@ -434,12 +429,51 @@ final class PropiedadesController
             'items' => $items,
             'vacioTitulo' => __('comercial.propiedades.aside_siembra_vacio_titulo'),
             'vacioDetalle' => __('comercial.propiedades.aside_siembra_vacio_detalle'),
-            'mostrarAccion' => true,
-            'accion' => [
+            'acciones' => [[
                 'label' => __('comercial.propiedades.aside_siembra_accion'),
                 'href' => route('panel.propiedades.siembra', [$propiedad, ...$origenNavegacion]),
-            ],
+            ]],
         ];
+    }
+
+    /**
+     * Botones de la tarjeta "Lotes" del aside, cada uno gateado por el permiso
+     * de la cosa que hace.
+     *
+     * @param  array{volver_a: string, volver_texto: string}  $origenNavegacion  memento de navegación — ver `resumenPropiedad()`.
+     * @return list<array{label: string, href: string, icono: string}>
+     */
+    private function accionesLotes(Propiedad $propiedad, array $origenNavegacion, bool $tieneLotes, bool $puedeVer, bool $puedeEditar, bool $puedeCrear): array
+    {
+        if (! $tieneLotes) {
+            return $puedeCrear
+                ? [[
+                    'label' => __('comercial.propiedades.aside_lotes_generar'),
+                    'href' => route('panel.propiedades.lotes.generar', [$propiedad, ...$origenNavegacion]),
+                    'icono' => 'add',
+                ]]
+                : [];
+        }
+
+        $acciones = [];
+
+        if ($puedeVer) {
+            $acciones[] = [
+                'label' => __('comercial.propiedades.aside_lotes_accion'),
+                'href' => route('panel.lotes.index', ['propiedad_id' => $propiedad->id, ...$origenNavegacion]),
+                'icono' => 'list',
+            ];
+        }
+
+        if ($puedeEditar) {
+            $acciones[] = [
+                'label' => __('comercial.propiedades.aside_lotes_editar_bloque'),
+                'href' => route('panel.propiedades.lotes.bloque', [$propiedad, ...$origenNavegacion]),
+                'icono' => 'edit',
+            ];
+        }
+
+        return $acciones;
     }
 
     /** @param  array<string, mixed>  $geometria  GeoJSON MultiPolygon */

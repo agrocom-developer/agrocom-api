@@ -5,9 +5,9 @@ namespace App\Dominios\Comercial\Aplicacion;
 use App\Dominios\Campania\Contratos\LecturaCampania;
 use App\Dominios\Comercial\Aplicacion\Contrato\VerificadorLotesDelContrato;
 use App\Dominios\Comercial\Aplicacion\MaquinaEstados\MaquinaEstadosContrato;
-use App\Dominios\Comercial\Dominio\Excepciones\CampaniaCerrada;
+use App\Dominios\Comercial\Dominio\Excepciones\CampaniaNoAbierta;
 use App\Dominios\Comercial\Dominio\Excepciones\LoteAjenoAlCliente;
-use App\Dominios\Comercial\Dominio\Excepciones\LotesDePropiedadAgotados;
+use App\Dominios\Comercial\Dominio\Excepciones\LotesYaContratados;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\ContratoLote;
 use Brick\Math\BigDecimal;
@@ -50,9 +50,11 @@ use Illuminate\Support\Facades\DB;
  * docblock de la migración `create_com_contrato_lotes_table`):
  * - cada lote elegido tiene que ser de una propiedad del `cliente_id` del
  *   contrato ({@see LoteAjenoAlCliente} si no);
- * - ninguna propiedad involucrada puede quedar con el 100% de sus lotes
- *   cubiertos por OTROS contratos `vigente` de la misma campaña
- *   ({@see LotesDePropiedadAgotados} si alguna lo está).
+ * - ningún lote elegido puede estar retenido por OTRO contrato `vigente` o
+ *   `pausado` de la misma campaña ({@see LotesYaContratados} si alguno lo
+ *   está; ADR 0021, reemplaza a la guarda anterior por propiedad agotada).
+ *   Esta se verifica ADENTRO de la transacción y bajo candado de campaña,
+ *   para no cruzarse con una aprobación simultánea de otro contrato.
  *
  * La consistencia de `hora_inicio`/`hora_fin` de cada lote ("las dos juntas
  * o ninguna", "`hora_fin` > `hora_inicio`") NO se re-valida acá: es una
@@ -60,7 +62,7 @@ use Illuminate\Support\Facades\DB;
  * criterio que ya rige en esta misma clase para
  * `hectareas_contratadas`/`aplicaciones_previstas`/`precio_ha`, ninguno de
  * los cuales se re-verifica en `Aplicacion` tampoco). Los dos guardas que SÍ
- * viven acá (`LoteAjenoAlCliente`, `LotesDePropiedadAgotados`) son,
+ * viven acá (`LoteAjenoAlCliente`, `LotesYaContratados`) son,
  * justamente, los que cruzan tablas y que ningún `Request` puede expresar; un
  * horario inconsistente que sorteara el `Request` (un caller que no pase por
  * él) caería en el `CHECK` de Postgres, ni mejor ni peor que lo que ya le
@@ -77,22 +79,21 @@ final class CrearContrato
      * @param  array<string, mixed>  $datosContrato  sin `estado` ni `monto_total`: los fija esta clase.
      * @param  list<array{lote_id: int, hora_inicio: ?string, hora_fin: ?string}>  $lotes  lotes concretos que cubre el contrato (de una o varias propiedades del cliente), cada uno con su rango horario opcional
      *
-     * @throws CampaniaCerrada si la campaña elegida está `cerrada`.
+     * @throws CampaniaNoAbierta si la campaña elegida no está `abierta`.
      * @throws LoteAjenoAlCliente si algún lote no pertenece a una propiedad del cliente del contrato.
-     * @throws LotesDePropiedadAgotados si alguna propiedad de los lotes elegidos ya está 100% cubierta por otros contratos vigentes de la misma campaña.
+     * @throws LotesYaContratados si algún lote elegido ya lo retiene otro contrato vigente o pausado de la misma campaña.
      */
     public function ejecutar(array $datosContrato, array $lotes): Contrato
     {
         $this->verificarCampania((int) $datosContrato['campania_id']);
 
-        $this->verificarLotes(
-            array_column($lotes, 'lote_id'),
-            (int) $datosContrato['cliente_id'],
-            (int) $datosContrato['campania_id'],
-            null,
-        );
+        $loteIds = array_column($lotes, 'lote_id');
 
-        return DB::transaction(function () use ($datosContrato, $lotes): Contrato {
+        $this->verificarLotesDelCliente($loteIds, (int) $datosContrato['cliente_id']);
+
+        return DB::transaction(function () use ($datosContrato, $lotes, $loteIds): Contrato {
+            $this->verificarLotesLibres($loteIds, (int) $datosContrato['campania_id']);
+
             $datosContrato['monto_total'] = $this->calcularMontoTotal(
                 (string) $datosContrato['hectareas_contratadas'],
                 (int) $datosContrato['aplicaciones_previstas'],
@@ -117,24 +118,36 @@ final class CrearContrato
      * @param  list<int>  $loteIds
      *
      * @throws LoteAjenoAlCliente si algún lote no pertenece a una propiedad del cliente.
-     * @throws LotesDePropiedadAgotados si alguna propiedad involucrada quedó 100% cubierta por otros contratos vigentes.
      */
-    private function verificarLotes(array $loteIds, int $clienteId, int $campaniaId, ?int $contratoIdExcluido): void
+    private function verificarLotesDelCliente(array $loteIds, int $clienteId): void
     {
         $loteAjeno = VerificadorLotesDelContrato::loteAjenoAlCliente($loteIds, $clienteId);
 
         if ($loteAjeno !== null) {
             throw LoteAjenoAlCliente::paraLote($loteAjeno);
         }
+    }
 
-        $propiedadAgotada = VerificadorLotesDelContrato::propiedadAgotada($loteIds, $campaniaId, $contratoIdExcluido);
+    /**
+     * Bajo candado de campaña: si otra transacción está aprobando un contrato
+     * con alguno de estos lotes, se espera a que termine y se ve su resultado.
+     *
+     * @param  list<int>  $loteIds
+     *
+     * @throws LotesYaContratados si algún lote ya lo retiene otro contrato de la campaña.
+     */
+    private function verificarLotesLibres(array $loteIds, int $campaniaId): void
+    {
+        VerificadorLotesDelContrato::bloquearCampania($campaniaId);
 
-        if ($propiedadAgotada !== null) {
-            throw LotesDePropiedadAgotados::paraPropiedad($propiedadAgotada['nombre']);
+        $ocupados = VerificadorLotesDelContrato::lotesOcupados($loteIds, $campaniaId, null);
+
+        if ($ocupados !== []) {
+            throw LotesYaContratados::paraLotes($ocupados);
         }
     }
 
-    /** @throws CampaniaCerrada si la campaña elegida está `cerrada`. */
+    /** @throws CampaniaNoAbierta si la campaña elegida no está `abierta`. */
     private function verificarCampania(int $campaniaId): void
     {
         $campania = $this->lecturaCampania->obtener($campaniaId);
@@ -143,8 +156,8 @@ final class CrearContrato
             return;
         }
 
-        if ($campania->cerrada) {
-            throw CampaniaCerrada::paraCampania($campania->codigo);
+        if (! $campania->admiteImputaciones()) {
+            throw CampaniaNoAbierta::paraCampania($campania->codigo, $campania->cerrada);
         }
     }
 
