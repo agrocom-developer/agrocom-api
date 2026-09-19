@@ -143,6 +143,9 @@
                                             variant="text"
                                             size="sm"
                                             icon="visibility"
+                                            class="ag-contratos-form__lote-ver-contrato"
+                                            :title="__('comercial.contratos.lote_conflicto_ver')"
+                                            :aria-label="__('comercial.contratos.lote_conflicto_ver')"
                                             data-ag-lote-conflicto-ver
                                             data-lote-id-conflicto="{{ $lote['lote_id'] }}"
                                         >
@@ -172,6 +175,20 @@
             @endforeach
         </div>
     </div>
+
+    {{-- Paginación de 20 lotes por página (`paginador-cliente.js`, lo maneja
+         contratos-form.js): las filas de otras páginas se ocultan, no se quitan,
+         así que sus campos siguen en el formulario y se envían igual. --}}
+    <div
+        class="ag-paginador"
+        data-ag-lotes-paginador
+        hidden
+        data-label-aria="{{ __('comercial.contratos.lotes_paginacion_aria') }}"
+        data-label-anterior="{{ __('ui.paginador.anterior') }}"
+        data-label-siguiente="{{ __('ui.paginador.siguiente') }}"
+        data-label-pagina="{{ __('ui.paginador.pagina') }}"
+        data-label-resumen="{{ __('comercial.contratos.lotes_paginacion_resumen') }}"
+    ></div>
 
     {{-- Molde de la casilla de horario de un lote NUEVO: `crearFilaLote()`
          (contratos-form.js) lo clona cambiando `__INDICE__` por el índice de la

@@ -43,6 +43,10 @@
  * página sin `[data-ag-contratos-form]` este módulo no hace nada.
  */
 import { initTimeRanges } from '../atoms/time-range.js';
+import { crearPaginador } from '../shared/paginador-cliente.js';
+
+// Lotes por página, en el modal de una propiedad y en la tabla del contrato.
+const LOTES_POR_PAGINA = 20;
 
 // Clave con la que un borrador anota de qué formulario es (la ruta).
 const CLAVE_ORIGEN_BORRADOR = '__origen';
@@ -73,6 +77,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalLotesTitulo = formulario.querySelector('[data-ag-modal-lotes-titulo]');
     const modalCrearLoteSlot = formulario.querySelector('[data-ag-modal-crear-lote-slot]');
     const modalLotesLista = formulario.querySelector('[data-ag-modal-lotes-lista]');
+    const modalLotesSeleccionados = formulario.querySelector('[data-ag-modal-lotes-seleccionados]');
+    const contenedorPaginadorModal = formulario.querySelector('[data-ag-modal-paginador]');
     const modalLotesAgotado = formulario.querySelector('[data-ag-modal-lotes-agotado]');
     const modalLotesGuardarBtn = formulario.querySelector('[data-ag-modal-lotes-guardar]');
     const bsModal = modalLotesEl ? bootstrap.Modal.getOrCreateInstance(modalLotesEl) : null;
@@ -265,11 +271,56 @@ document.addEventListener('DOMContentLoaded', () => {
         return (lote.ocupado_en_campanias || []).map(String).includes(campaniaActual);
     };
 
+    // Paginación de la tabla de lotes (20 por página, contando de corrido a
+    // través de los grupos de propiedad). Se ocultan las filas de otras páginas
+    // con `hidden`, no se quitan: sus campos siguen en el formulario y se envían.
+    // El título de una propiedad solo se ve si alguna de sus filas está en la
+    // página. Al cargar, si alguna fila trae un error de validación se abre la
+    // página donde está, para que no quede escondido.
+    const contenedorPaginadorLotes = formulario.querySelector('[data-ag-lotes-paginador]');
+    const paginadorLotes = contenedorPaginadorLotes
+        ? crearPaginador(contenedorPaginadorLotes, { porPagina: LOTES_POR_PAGINA, alCambiar: () => mostrarPaginaLotes() })
+        : null;
+    let primeraCargaTabla = true;
+
+    const filasDeLotes = () => Array.from(contenedorGrupos?.querySelectorAll('.ag-contratos-form__lote-row') ?? []);
+
+    function mostrarPaginaLotes() {
+        if (!paginadorLotes || !contenedorGrupos) return;
+
+        const [desde, hasta] = paginadorLotes.rango();
+        filasDeLotes().forEach((fila, indice) => {
+            fila.hidden = indice < desde || indice >= hasta;
+        });
+
+        contenedorGrupos.querySelectorAll('[data-ag-lote-grupo]').forEach((grupo) => {
+            const hayFilaVisible = Array.from(grupo.querySelectorAll('.ag-contratos-form__lote-row')).some((fila) => !fila.hidden);
+            grupo.querySelector('.ag-contratos-form__lote-group-title')?.toggleAttribute('hidden', !hayFilaVisible);
+        });
+    }
+
+    const paginarTablaLotes = () => {
+        if (!paginadorLotes) return;
+
+        const filas = filasDeLotes();
+        let pagina = paginadorLotes.pagina();
+
+        if (primeraCargaTabla) {
+            const conError = filas.findIndex((fila) => fila.querySelector('.ag-input__error'));
+            if (conError >= 0) pagina = Math.floor(conError / LOTES_POR_PAGINA) + 1;
+            primeraCargaTabla = false;
+        }
+
+        paginadorLotes.actualizar(filas.length, pagina);
+        mostrarPaginaLotes();
+    };
+
     // Muestra la tabla de lotes agregados solo si hay al menos un grupo —
     // evita el cascarón vacío (solo encabezado) en un contrato nuevo.
     const actualizarVisibilidadTablaLotes = () => {
         if (!tablaLotes || !contenedorGrupos) return;
         tablaLotes.toggleAttribute('hidden', contenedorGrupos.children.length === 0);
+        paginarTablaLotes();
     };
 
     // ===== Pills de propiedades seleccionadas =====
@@ -344,6 +395,38 @@ document.addEventListener('DOMContentLoaded', () => {
         checkTodos.indeterminate = algunosMarcados && !todosMarcados;
     }
 
+    // «12 de 33 lotes seleccionados»: con la lista en páginas, lo marcado puede
+    // estar en una que no se ve.
+    function actualizarContadorModal() {
+        if (!modalLotesSeleccionados) return;
+
+        const checkboxes = modalLotesLista.querySelectorAll('[data-ag-modal-lote-checkbox]');
+        const marcados = modalLotesLista.querySelectorAll('[data-ag-modal-lote-checkbox]:checked').length;
+
+        modalLotesSeleccionados.textContent = checkboxes.length === 0
+            ? ''
+            : (modalLotesEl?.dataset.textoSeleccionados ?? '').replace(':cantidad', String(marcados)).replace(':total', String(checkboxes.length));
+    }
+
+    // Paginación del modal: se ocultan las filas de otras páginas (`hidden`),
+    // no se quitan — lo marcado en ellas se guarda igual.
+    let filasModal = [];
+    const paginadorModal = contenedorPaginadorModal
+        ? crearPaginador(contenedorPaginadorModal, {
+            porPagina: LOTES_POR_PAGINA,
+            alCambiar: () => mostrarPaginaModal(),
+        })
+        : null;
+
+    function mostrarPaginaModal() {
+        if (!paginadorModal) return;
+
+        const [desde, hasta] = paginadorModal.rango();
+        filasModal.forEach((fila, indice) => {
+            fila.hidden = indice < desde || indice >= hasta;
+        });
+    }
+
     const abrirModalLotes = (propiedadId) => {
         if (!modalLotesEl || !bsModal) return;
 
@@ -365,6 +448,9 @@ document.addEventListener('DOMContentLoaded', () => {
         );
 
         modalLotesLista.innerHTML = '';
+        filasModal = [];
+        paginadorModal?.actualizar(0);
+        actualizarContadorModal();
 
         // Acción "Crear lote", siempre visible arriba de la tabla (con o sin
         // lotes cargados todavía) — antes solo existía dentro del estado
@@ -451,10 +537,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const head = document.createElement('div');
             head.className = 'ag-contratos-form__modal-tabla-head';
             const { celda: celdaTodos, checkbox: checkTodos } = crearCeldaCheckbox(true);
+            // «Todos» son los de la propiedad entera, no solo los de la página que se ve.
             checkTodos.addEventListener('change', () => {
                 modalLotesLista.querySelectorAll('[data-ag-modal-lote-checkbox]').forEach((cb) => {
                     cb.checked = checkTodos.checked;
                 });
+                actualizarContadorModal();
             });
             const colCodigo = document.createElement('span');
             colCodigo.textContent = textoColCodigo;
@@ -473,7 +561,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const { celda: celdaCheck, checkbox } = crearCeldaCheckbox(false, lote.id);
                 checkbox.checked = idsYaEnContrato.has(String(lote.id));
-                checkbox.addEventListener('change', sincronizarSeleccionarTodosModal);
+                checkbox.addEventListener('change', () => {
+                    sincronizarSeleccionarTodosModal();
+                    actualizarContadorModal();
+                });
 
                 const celdaCodigo = document.createElement('strong');
                 celdaCodigo.textContent = lote.codigo;
@@ -505,6 +596,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             modalLotesLista.appendChild(tabla);
             sincronizarSeleccionarTodosModal();
+
+            filasModal = Array.from(tabla.querySelectorAll('.ag-contratos-form__modal-tabla-fila'));
+            paginadorModal?.actualizar(filasModal.length, 1);
+            mostrarPaginaModal();
+            actualizarContadorModal();
         }
 
         bsModal.show();

@@ -39,8 +39,12 @@
     data-texto-col-hectareas="{{ __('comercial.lotes.lote_hectareas') }}"
     data-texto-col-desnivel="{{ __('comercial.lotes.lote_desnivel') }}"
     data-texto-col-limpieza="{{ __('comercial.lotes.lote_limpieza') }}"
+    data-texto-seleccionados="{{ __('comercial.contratos.lotes_modal_seleccionados') }}"
 >
-    <div class="modal-dialog modal-dialog-centered modal-lg">
+    {{-- `modal-dialog-scrollable`: si el modal no entra en la pantalla, el
+         cuerpo se desplaza y el pie con «Guardar selección» queda siempre a la
+         vista, en vez de tener que bajar hasta el final de la página. --}}
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 class="modal-title ag-page-header__title" id="ag-modal-lotes-propiedad-titulo" data-ag-modal-lotes-titulo></h2>
@@ -52,6 +56,20 @@
                     <div data-ag-modal-crear-lote-slot></div>
                 </div>
                 <div data-ag-modal-lotes-lista></div>
+
+                {{-- Paginación de 20 lotes por página (`paginador-cliente.js`): las
+                     filas de otras páginas quedan ocultas, no quitadas, así que lo
+                     marcado en ellas se conserva al guardar. --}}
+                <div
+                    class="ag-paginador"
+                    data-ag-modal-paginador
+                    hidden
+                    data-label-aria="{{ __('comercial.contratos.lotes_modal_paginacion_aria') }}"
+                    data-label-anterior="{{ __('ui.paginador.anterior') }}"
+                    data-label-siguiente="{{ __('ui.paginador.siguiente') }}"
+                    data-label-pagina="{{ __('ui.paginador.pagina') }}"
+                    data-label-resumen="{{ __('comercial.contratos.lotes_paginacion_resumen') }}"
+                ></div>
 
                 {{-- Todos los lotes de la propiedad ya están comprometidos
                      en otro contrato vigente de la campaña elegida (tarea
@@ -70,6 +88,7 @@
                 </div>
             </div>
             <div class="modal-footer">
+                <span class="ag-contratos-form__modal-seleccionados me-auto" data-ag-modal-lotes-seleccionados aria-live="polite"></span>
                 <x-atoms.button type="button" variant="outline" data-bs-dismiss="modal">
                     {{ __('ui.action.cancel') }}
                 </x-atoms.button>

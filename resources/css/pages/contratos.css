@@ -165,19 +165,61 @@
    entero). El título de propiedad es una fila que ocupa el ancho completo
    (banda de sección), no una columna más. */
 .ag-contratos-form__lotes-tabla {
+    /* Código / Hectáreas / Día completo / Horario / Acciones. UNA sola cuadrícula
+       para toda la tabla: la cabecera, los grupos de propiedad y cada fila la
+       heredan con `subgrid`, así las columnas `auto` toman el ancho de su
+       contenido MÁS ANCHO entre todas las filas y nunca se desalinean. Antes cada
+       fila era su propio grid con columnas `auto`: la que traía «Ver contrato»
+       ensanchaba su columna de acciones y quedaba corrida respecto de las demás
+       (19/9/2026). Horario tiene ancho fijo: cabe «10:00 a. m. – 10:00 p. m.». */
+    display: grid;
+    grid-template-columns: minmax(7rem, 1fr) auto auto 13.5rem auto;
+    column-gap: var(--ag-space-3);
     border: 1px solid var(--ag-color-border-card);
     border-radius: var(--ag-radius-md);
     background-color: var(--ag-color-surface-card);
-    overflow: hidden;
+    /* Si ni así entra (contenedor muy angosto), se desplaza de lado en vez de cortarse. */
+    overflow-x: auto;
+    container-type: inline-size;
+}
+
+.ag-contratos-form__lotes-tabla[hidden] {
+    display: none;
+}
+
+/* Cabecera, contenedor de grupos, cada grupo y su lista de filas: todos ocupan el
+   ancho completo y pasan las mismas columnas hacia adentro. */
+.ag-contratos-form__lotes-tabla-head,
+[data-ag-lotes-agrupados],
+.ag-contratos-form__lote-group,
+[data-ag-lote-contenedor],
+.ag-contratos-form__lote-row {
+    display: grid;
+    grid-template-columns: subgrid;
+    grid-column: 1 / -1;
 }
 
 .ag-contratos-form__lotes-tabla-head,
 .ag-contratos-form__lote-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr auto 2fr auto;
-    gap: var(--ag-space-4);
     align-items: center;
     padding: var(--ag-space-3) var(--ag-space-4);
+}
+
+/* Las filas de otras páginas (`paginador-cliente.js`) se ocultan, no se
+   quitan: sus campos siguen en el formulario y se envían igual. `display: grid`
+   de arriba le gana al `[hidden]` del navegador, de ahí esta regla. */
+.ag-contratos-form__lote-row[hidden],
+.ag-contratos-form__lote-group-title[hidden] {
+    display: none;
+}
+
+/* «Día completo» va centrado en su columna; «Acciones», pegado a la derecha. */
+.ag-contratos-form__lotes-tabla-head > :nth-child(3) {
+    text-align: center;
+}
+
+.ag-contratos-form__lotes-tabla-head > :nth-child(5) {
+    text-align: right;
 }
 
 .ag-contratos-form__lotes-tabla-head {
@@ -190,6 +232,7 @@
 }
 
 .ag-contratos-form__lote-group-title {
+    grid-column: 1 / -1;
     padding: var(--ag-space-2) var(--ag-space-4);
     background-color: var(--ag-color-bg-surface);
     border-top: 1px solid var(--ag-color-border-row);
@@ -237,8 +280,16 @@
 .ag-contratos-form__lote-acciones {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
+    justify-content: flex-end;
     gap: var(--ag-space-2);
+}
+
+/* En una tabla angosta (la ficha de edición, con su columna lateral) «Ver
+   contrato» queda solo con su ícono; el texto sigue en el `title`/`aria-label`. */
+@container (max-width: 46rem) {
+    .ag-contratos-form__lote-ver-contrato .ag-button__label {
+        display: none;
+    }
 }
 
 .ag-contratos-form__lote-hectareas {
@@ -257,6 +308,7 @@
 .ag-contratos-form__lote-dia-completo-celda {
     position: relative;
     display: inline-flex;
+    justify-self: center;
     cursor: pointer;
 }
 
@@ -392,7 +444,18 @@
     grid-template-columns: 2.5rem 1.2fr 1fr 1fr 1fr;
     gap: var(--ag-space-3);
     align-items: center;
-    padding: var(--ag-space-3);
+    /* Compacta: con 20 lotes por página el modal entra en una pantalla normal. */
+    padding: var(--ag-space-1) var(--ag-space-3);
+}
+
+/* Página de 20 lotes (`paginador-cliente.js`): las de otras páginas se ocultan. */
+.ag-contratos-form__modal-tabla-fila[hidden] {
+    display: none;
+}
+
+.ag-contratos-form__modal-seleccionados {
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-sm);
 }
 
 .ag-contratos-form__modal-tabla-head {

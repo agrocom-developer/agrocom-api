@@ -520,6 +520,12 @@ return [
         // (segunda vuelta del rediseño, mismo mes): checkbox + atributos del
         // lote en columnas, en vez de una lista con meta-línea.
         'lotes_modal_ayuda' => 'Marca los lotes que forman parte de este contrato.',
+        // Paginación de lotes (20 por página): el modal de una propiedad y la
+        // tabla de lotes del contrato.
+        'lotes_modal_paginacion_aria' => 'Paginación de los lotes de la propiedad',
+        'lotes_modal_seleccionados' => ':cantidad de :total lotes seleccionados',
+        'lotes_paginacion_aria' => 'Paginación de los lotes del contrato',
+        'lotes_paginacion_resumen' => 'Lotes :desde–:hasta de :total',
         'lotes_modal_guardar' => 'Guardar selección',
 
         // Tabla de lotes ya agregados (bajo el select de Propiedad): una

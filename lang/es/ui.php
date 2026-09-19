@@ -154,6 +154,14 @@ return [
         'vista_grilla' => 'Ver como grilla',
     ],
 
+    // Paginador de listas que ya están completas en la página (modal de
+    // lotes, tabla de lotes de un contrato).
+    'paginador' => [
+        'anterior' => 'Página anterior',
+        'siguiente' => 'Página siguiente',
+        'pagina' => 'Página :numero',
+    ],
+
     // Selector de horario (inicio y fin en una sola casilla).
     'time_range' => [
         'placeholder' => '--:-- – --:--',
