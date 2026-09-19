@@ -60,11 +60,13 @@ class Campania extends ModeloDominio
     /**
      * "Activa"/"Inactiva" (HU-77, tarea 93): etiqueta de presentación pedida
      * por el dueño para el panel — nunca una columna propia. Deriva de
-     * `estado`: `planificada`/`abierta` son actividad en curso o por venir,
-     * `cerrada` es terminal (ADR 0015 punto 1) y no vuelve atrás.
+     * `estado` y solo es activa mientras la campaña está `abierta`
+     * (corregido el 19/9/2026, pedido directo: antes también lo era
+     * `planificada`): la planificada todavía no arrancó y la `cerrada` es
+     * terminal (ADR 0015 punto 1), ninguna de las dos es actividad en curso.
      */
     public function esActiva(): bool
     {
-        return $this->estado !== EstadoCampania::Cerrada;
+        return $this->estado === EstadoCampania::Abierta;
     }
 }

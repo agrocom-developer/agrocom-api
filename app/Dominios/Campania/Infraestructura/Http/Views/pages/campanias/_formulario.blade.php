@@ -10,10 +10,18 @@
     - $campania (Campania|null): null en alta; el modelo en edición.
     - $resumenCampania (list<array{...}>|null): solo en edición, ver
       CampaniasController::resumenCampania(). `null`/ausente en alta.
+    - $pasosEstado (list<array{...}>|null): solo en edición, los pasos de
+      `molecules/step-arrow` (`PasosDeEstado::armar()`). `null`/ausente en alta.
+    - $ayudaEstado (string|null): solo en edición, el párrafo bajo los pasos
+      (qué se puede hacer ahora). `null`/ausente en alta.
 
     `estado` NUNCA es un campo de este formulario: lo cambia
     `panel.campanias.cambiar-estado` (otra pantalla, otra responsabilidad —
-    invariante 7) — ver docblock de `CampaniasController`.
+    invariante 7) — ver docblock de `CampaniasController`. Los pasos de
+    `step-arrow` solo MUESTRAN el estado y abren el modal de confirmación;
+    los `<form>` de ese cambio y sus modales viven en
+    `_cambio-estado.blade.php`, FUERA de este `<form>` (un `<form>` no puede
+    anidarse en otro).
 
     `estacion` (HU-77, tarea 93) sí es un campo, catálogo cerrado
     invierno/verano. `nombre` queda opcional con ayuda: vacío autogenera al
@@ -74,6 +82,20 @@
         <x-molecules.alert-strip variant="success" icon="check_circle">
             {{ session('estado') }}
         </x-molecules.alert-strip>
+    @endif
+
+    @if ($esEdicion)
+        @if ($errors->has('estado'))
+            <x-molecules.alert-strip variant="danger" icon="error">
+                {{ $errors->first('estado') }}
+            </x-molecules.alert-strip>
+        @endif
+
+        <x-molecules.step-arrow
+            :steps="$pasosEstado"
+            :label="__('campania.campanias.estado_pasos_aria')"
+            :help="$ayudaEstado"
+        />
     @endif
 
     <x-molecules.form-layout>

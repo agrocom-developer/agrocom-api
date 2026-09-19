@@ -10,11 +10,13 @@ use App\Dominios\Campania\Aplicacion\ListarCampanias;
 use App\Dominios\Campania\Dominio\EstadoCampania;
 use App\Dominios\Campania\Dominio\Excepciones\CampaniaDuplicada;
 use App\Dominios\Campania\Dominio\Excepciones\TransicionCampaniaNoPermitida;
+use App\Dominios\Campania\Dominio\MaquinaEstados\TransicionesCampania;
 use App\Dominios\Campania\Infraestructura\Eloquent\Campania;
 use App\Dominios\Campania\Infraestructura\Http\Requests\ActualizarCampaniaRequest;
 use App\Dominios\Campania\Infraestructura\Http\Requests\CambiarEstadoCampaniaRequest;
 use App\Dominios\Campania\Infraestructura\Http\Requests\CrearCampaniaRequest;
 use App\Dominios\Comercial\Contratos\LecturaResumenComercialCampania;
+use App\Dominios\Compartido\Infraestructura\Http\PasosDeEstado;
 use App\Dominios\Finanzas\Contratos\LecturaGastoPorCampania;
 use App\Dominios\Operaciones\Contratos\LecturaTrabajosPorContrato;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
@@ -49,6 +51,25 @@ final class CampaniasController
 
     private const PERMISO_ELIMINAR = 'campania.campania.eliminar';
 
+    /**
+     * Tono de cada estado (mismo valor que `atoms/badge`): lo comparten el
+     * badge de la columna "Estado" del listado y el paso de
+     * `molecules/step-arrow` de la ficha de edición, para que los dos hablen
+     * con el mismo color.
+     *
+     * 'cerrada' en alert/rojo-700 "#880000" (18/9/2026, novena vuelta — se
+     * probó distintivo-2/magenta primero, el usuario lo corrigió: había
+     * confundido "magenta" con este tono). Sigue distinto de 'danger' (rojo-600
+     * "#bb0000", el botón "Eliminar") a propósito: cerrar un ciclo de negocio
+     * no es lo mismo que borrar el registro, pero ambos son rojos — más oscuro
+     * el de "alert".
+     */
+    private const array TONO_POR_ESTADO = [
+        'planificada' => 'neutral',
+        'abierta' => 'success',
+        'cerrada' => 'alert',
+    ];
+
     public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
 
     public function index(Request $request, ListarCampanias $listarCampanias): View
@@ -65,6 +86,7 @@ final class CampaniasController
             ...$this->autorizacion->cascara($request),
             'campanias' => $campanias,
             'estadosFiltro' => EstadoCampania::cases(),
+            'tonoPorEstado' => self::TONO_POR_ESTADO,
             'filtros' => ['q' => $busqueda, 'estado' => $estado, 'estacion' => $estacion],
         ]);
     }
@@ -117,9 +139,21 @@ final class CampaniasController
     ): View {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
 
+        $pasosEstado = PasosDeEstado::armar(
+            ruta: [EstadoCampania::Planificada, EstadoCampania::Abierta, EstadoCampania::Cerrada],
+            actual: $campania->estado,
+            permitida: TransicionesCampania::permitida(...),
+            tonos: self::TONO_POR_ESTADO,
+            claveEtiqueta: 'campania.campania.estado',
+            prefijoModal: 'campania-estado-modal',
+            puedeCambiar: $this->autorizacion->tienePermiso($request, self::PERMISO_CAMBIAR_ESTADO),
+        );
+
         return view('campania::pages.campanias.edit', [
             ...$this->autorizacion->cascara($request),
             'campania' => $campania,
+            'pasosEstado' => $pasosEstado,
+            'ayudaEstado' => PasosDeEstado::ayuda($pasosEstado, 'campania.campania.estado_ayuda'),
             'resumenCampania' => $this->resumenCampania($campania, $lecturaComercial, $lecturaGasto, $lecturaTrabajos),
         ]);
     }
@@ -161,16 +195,19 @@ final class CampaniasController
 
         $hacia = EstadoCampania::from((string) $request->validated('estado'));
 
+        // Vuelve a la pantalla de la que vino — el listado (con sus filtros) o
+        // los pasos de la ficha de edición — en vez de mandar siempre al
+        // listado: cambiar el estado desde el formulario no debería sacarte de él.
         try {
             $cambiarEstadoCampania->ejecutar($campania, $hacia);
         } catch (TransicionCampaniaNoPermitida $excepcion) {
             return redirect()
-                ->route('panel.campanias.index')
+                ->back(fallback: route('panel.campanias.index'))
                 ->withErrors(['estado' => $excepcion->getMessage()]);
         }
 
         return redirect()
-            ->route('panel.campanias.index')
+            ->back(fallback: route('panel.campanias.index'))
             ->with('estado', __('campania.campanias.estado_cambiado'));
     }
 

@@ -1,0 +1,321 @@
+/*
+ * Molecule: step-arrow (resources/views/components/molecules/step-arrow.blade.php)
+ * Pasos de una máquina de estados con forma de flecha. Todo el color sale de
+ * los tokens `--ag-color-<tono>-*` (los mismos que el badge del estado), así
+ * que respeta el tema claro/oscuro y el theming por usuario.
+ *
+ * Cada paso se dibuja con dos capas: el elemento (el "borde", con `clip-path`
+ * en forma de flecha) y un `::before` inseteado con el relleno — `clip-path`
+ * recorta cualquier `border` real, así que el borde es el fondo de afuera
+ * asomando por el margen de `--ag-step-arrow-borde`.
+ *
+ * Tema: el relleno sólido del paso actual (`-contrast-fill`) es CONSTANTE entre
+ * temas, así que su texto también lo es (`--ag-color-gray-0`, como
+ * `atoms/badge`) — `--ag-color-text-inverse` se invierte en oscuro y dejaba
+ * texto oscuro sobre verde/rojo sólido. El paso actual en tono neutro no
+ * lleva relleno, solo contorno (pedido del 19/9/2026).
+ *
+ * Tamaño: ocupa todo el ancho de su fila y reacciona al ancho REAL del
+ * componente (`container`), no al del viewport — con el sidebar del módulo
+ * abierto o colapsado el mismo viewport da un contenido de otro ancho, mismo
+ * criterio que `.ag-ordenes`. Tres escalas: cómoda, compacta (< 48rem) y
+ * apilada sin puntas (< 32rem). Pensado para 3 a 4 pasos.
+ */
+
+.ag-step-arrow {
+    container: ag-step-arrow / inline-size;
+    width: 100%;
+}
+
+.ag-step-arrow__lista {
+    --ag-step-arrow-punta: 1.1rem;
+    --ag-step-arrow-borde: 1px;
+    --ag-step-arrow-relleno-x: var(--ag-space-2);
+    --ag-step-arrow-forma: polygon(
+        0 0,
+        calc(100% - var(--ag-step-arrow-punta)) 0,
+        100% 50%,
+        calc(100% - var(--ag-step-arrow-punta)) 100%,
+        0 100%,
+        var(--ag-step-arrow-punta) 50%
+    );
+
+    display: flex;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ag-step-arrow__item {
+    flex: 1 1 0;
+    min-width: 0;
+
+    /* Tono por defecto (neutral): cuatro colores del mismo estado — sólido
+       (paso actual), suave (completado), fuerte (texto/borde de lo
+       accionable) y borde. Cada `data-tone` de abajo los redefine. */
+    --ag-step-solido: var(--ag-color-neutral-strong);
+    --ag-step-suave: var(--ag-color-neutral-subtle);
+    --ag-step-fuerte: var(--ag-color-neutral-strong);
+    --ag-step-borde: var(--ag-color-border);
+    --ag-step-sobre-solido: var(--ag-color-gray-0);
+}
+
+/* Una punta se mete en la muesca del paso siguiente; el espacio de --ag-space-1
+   deja ver una franja de fondo entre las dos. */
+.ag-step-arrow__item + .ag-step-arrow__item {
+    margin-left: calc(var(--ag-space-1) - var(--ag-step-arrow-punta));
+}
+
+.ag-step-arrow__item[data-tone='success'] {
+    --ag-step-solido: var(--ag-color-success-contrast-fill);
+    --ag-step-suave: var(--ag-color-success-subtle);
+    --ag-step-fuerte: var(--ag-color-success-strong);
+    --ag-step-borde: var(--ag-color-success-border);
+}
+
+.ag-step-arrow__item[data-tone='warning'] {
+    --ag-step-solido: var(--ag-color-warning-contrast-fill);
+    --ag-step-suave: var(--ag-color-warning-subtle);
+    --ag-step-fuerte: var(--ag-color-warning-strong);
+    --ag-step-borde: var(--ag-color-warning-border);
+    /* Mismo criterio que `atoms/badge`: texto oscuro sobre el ámbar sólido. */
+    --ag-step-sobre-solido: var(--ag-color-gray-900);
+}
+
+.ag-step-arrow__item[data-tone='danger'] {
+    --ag-step-solido: var(--ag-color-danger-contrast-fill);
+    --ag-step-suave: var(--ag-color-danger-subtle);
+    --ag-step-fuerte: var(--ag-color-danger-strong);
+    --ag-step-borde: var(--ag-color-danger-border);
+}
+
+.ag-step-arrow__item[data-tone='info'] {
+    --ag-step-solido: var(--ag-color-info-contrast-fill);
+    --ag-step-suave: var(--ag-color-info-subtle);
+    --ag-step-fuerte: var(--ag-color-info-strong);
+    --ag-step-borde: var(--ag-color-info-border);
+}
+
+.ag-step-arrow__item[data-tone='alert'] {
+    --ag-step-solido: var(--ag-color-alert-contrast-fill);
+    --ag-step-suave: var(--ag-color-alert-subtle);
+    --ag-step-fuerte: var(--ag-color-alert-strong);
+    --ag-step-borde: var(--ag-color-alert-border);
+}
+
+.ag-step-arrow__item[data-tone='distintivo-1'] {
+    --ag-step-solido: var(--ag-color-distintivo-1-contrast-fill);
+    --ag-step-suave: var(--ag-color-distintivo-1-subtle);
+    --ag-step-fuerte: var(--ag-color-distintivo-1-strong);
+    --ag-step-borde: var(--ag-color-distintivo-1-border);
+}
+
+.ag-step-arrow__item[data-tone='distintivo-2'] {
+    --ag-step-solido: var(--ag-color-distintivo-2-contrast-fill);
+    --ag-step-suave: var(--ag-color-distintivo-2-subtle);
+    --ag-step-fuerte: var(--ag-color-distintivo-2-strong);
+    --ag-step-borde: var(--ag-color-distintivo-2-border);
+}
+
+.ag-step-arrow__item[data-tone='distintivo-3'] {
+    --ag-step-solido: var(--ag-color-distintivo-3-contrast-fill);
+    --ag-step-suave: var(--ag-color-distintivo-3-subtle);
+    --ag-step-fuerte: var(--ag-color-distintivo-3-strong);
+    --ag-step-borde: var(--ag-color-distintivo-3-border);
+}
+
+.ag-step-arrow__item[data-tone='primary-2'] {
+    --ag-step-solido: var(--ag-color-primary-2-contrast-fill);
+    --ag-step-suave: var(--ag-color-primary-2-subtle);
+    --ag-step-fuerte: var(--ag-color-primary-2-strong);
+    --ag-step-borde: var(--ag-color-primary-2-border);
+}
+
+.ag-step-arrow__paso {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    /* 44px: alto mínimo de un objetivo táctil. */
+    min-height: 2.75rem;
+    margin: 0;
+    padding: var(--ag-space-2) calc(var(--ag-step-arrow-punta) + var(--ag-step-arrow-relleno-x));
+    border: 0;
+    background: var(--ag-step-borde);
+    color: var(--ag-step-fuerte);
+    font-family: inherit;
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+    line-height: 1.2;
+    text-decoration: none;
+    clip-path: var(--ag-step-arrow-forma);
+    --ag-step-relleno: var(--ag-color-surface-card);
+}
+
+.ag-step-arrow__paso::before {
+    content: '';
+    position: absolute;
+    inset: var(--ag-step-arrow-borde);
+    background: var(--ag-step-relleno);
+    clip-path: var(--ag-step-arrow-forma);
+    transition: background-color var(--ag-transition-fast);
+}
+
+/* Extremos: el primero es plano a la izquierda; el último, plano a la derecha. */
+.ag-step-arrow__item:first-child .ag-step-arrow__paso,
+.ag-step-arrow__item:first-child .ag-step-arrow__paso::before {
+    --ag-step-arrow-forma: polygon(
+        0 0,
+        calc(100% - var(--ag-step-arrow-punta)) 0,
+        100% 50%,
+        calc(100% - var(--ag-step-arrow-punta)) 100%,
+        0 100%
+    );
+}
+
+.ag-step-arrow__item:first-child .ag-step-arrow__paso {
+    padding-left: var(--ag-space-4);
+}
+
+.ag-step-arrow__item:last-child .ag-step-arrow__paso,
+.ag-step-arrow__item:last-child .ag-step-arrow__paso::before {
+    --ag-step-arrow-forma: polygon(0 0, 100% 0, 100% 100%, 0 100%, var(--ag-step-arrow-punta) 50%);
+}
+
+.ag-step-arrow__item:last-child .ag-step-arrow__paso {
+    padding-right: var(--ag-space-4);
+}
+
+.ag-step-arrow__item:first-child:last-child .ag-step-arrow__paso,
+.ag-step-arrow__item:first-child:last-child .ag-step-arrow__paso::before {
+    --ag-step-arrow-forma: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+}
+
+.ag-step-arrow__contenido {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    min-width: 0;
+}
+
+.ag-step-arrow__etiqueta {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Completado: color suave del estado, ya recorrido. */
+.ag-step-arrow__item--completed .ag-step-arrow__paso {
+    --ag-step-relleno: var(--ag-step-suave);
+}
+
+/* Actual: contorno grueso del estado sobre la superficie, sin relleno — es lo
+   que le toca al tono neutro (p. ej. "Planificada"), que no es un color de
+   estado sino la ausencia de uno. Va en negrita y sin ícono, que es lo que lo
+   separa del paso accionable (borde fino, ícono de flecha). */
+.ag-step-arrow__item--current .ag-step-arrow__paso {
+    --ag-step-relleno: var(--ag-color-surface-card);
+    --ag-step-arrow-borde: 2px;
+    background: var(--ag-step-fuerte);
+    color: var(--ag-step-fuerte);
+    font-weight: var(--ag-font-weight-bold);
+}
+
+/* Actual con color de estado: relleno sólido y texto que no cambia con el tema. */
+.ag-step-arrow__item--current[data-tone]:not([data-tone='neutral']) .ag-step-arrow__paso {
+    --ag-step-relleno: var(--ag-step-solido);
+    --ag-step-arrow-borde: 1px;
+    background: var(--ag-step-solido);
+    color: var(--ag-step-sobre-solido);
+}
+
+/* Siguiente (acción): borde y texto del estado, sobre la superficie. */
+.ag-step-arrow__item--next .ag-step-arrow__paso {
+    --ag-step-borde: var(--ag-step-fuerte);
+    background: var(--ag-step-fuerte);
+    cursor: pointer;
+}
+
+.ag-step-arrow__item--next .ag-step-arrow__paso:hover,
+.ag-step-arrow__item--next .ag-step-arrow__paso:focus-visible {
+    --ag-step-relleno: var(--ag-step-suave);
+}
+
+/* Foco visible: `clip-path` recorta el `outline`, así que el foco engrosa el
+   borde propio del paso. */
+.ag-step-arrow__item--next .ag-step-arrow__paso:focus-visible {
+    --ag-step-arrow-borde: 3px;
+    outline: none;
+}
+
+/* Deshabilitados: no accionables. `pending` = falta permiso; `blocked` = no se
+   llega sin pasar antes por otro estado. */
+.ag-step-arrow__item--pending .ag-step-arrow__paso,
+.ag-step-arrow__item--blocked .ag-step-arrow__paso {
+    --ag-step-borde: var(--ag-color-border);
+    --ag-step-relleno: var(--ag-color-surface-card);
+    color: var(--ag-color-text-muted);
+    cursor: not-allowed;
+}
+
+/* Qué hacer ahora: el párrafo que acompaña a los pasos. Ocupa todo el ancho de
+   la fila, igual que ellos (pedido del 19/9/2026). */
+.ag-step-arrow__ayuda {
+    width: 100%;
+    margin: var(--ag-space-3) 0 0;
+    color: var(--ag-color-text);
+    font-size: var(--ag-font-size-sm);
+    line-height: 1.5;
+}
+
+/* Compacto: puntas más chicas, menos aire y letra menor, para que tres o
+   cuatro etiquetas entren sin cortarse. */
+@container ag-step-arrow (max-width: 47.99rem) {
+    .ag-step-arrow__lista {
+        --ag-step-arrow-punta: 0.8rem;
+        --ag-step-arrow-relleno-x: var(--ag-space-1);
+    }
+
+    .ag-step-arrow__paso {
+        font-size: var(--ag-font-size-xs);
+    }
+
+    .ag-step-arrow__contenido {
+        gap: var(--ag-space-1);
+    }
+}
+
+/* Angosto: sin puntas, un paso debajo del otro y a todo el ancho. */
+@container ag-step-arrow (max-width: 31.99rem) {
+    .ag-step-arrow__lista {
+        flex-direction: column;
+        gap: var(--ag-space-1);
+    }
+
+    .ag-step-arrow__item + .ag-step-arrow__item {
+        margin-left: 0;
+    }
+
+    .ag-step-arrow__paso,
+    .ag-step-arrow__paso::before,
+    .ag-step-arrow__item:first-child .ag-step-arrow__paso,
+    .ag-step-arrow__item:first-child .ag-step-arrow__paso::before,
+    .ag-step-arrow__item:last-child .ag-step-arrow__paso,
+    .ag-step-arrow__item:last-child .ag-step-arrow__paso::before {
+        --ag-step-arrow-forma: none;
+        clip-path: none;
+    }
+
+    .ag-step-arrow__paso {
+        padding-inline: var(--ag-space-4);
+        border-radius: var(--ag-radius-md);
+        font-size: var(--ag-font-size-sm);
+    }
+
+    .ag-step-arrow__paso::before {
+        border-radius: calc(var(--ag-radius-md) - var(--ag-step-arrow-borde));
+    }
+}

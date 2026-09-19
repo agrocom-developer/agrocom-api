@@ -154,6 +154,16 @@ return [
         'vista_grilla' => 'Ver como grilla',
     ],
 
+    // Pasos del estado de un objeto (molecules/step-arrow): la pista de los
+    // pasos que no se pueden usar y el cierre del párrafo de ayuda. El texto
+    // de cada estado lo define el propio objeto en su archivo de idioma.
+    'pasos' => [
+        'pista_sin_permiso' => 'No tienes permiso para cambiar el estado.',
+        'pista_bloqueado' => 'Primero debe pasar por «:paso».',
+        'ayuda_accion' => 'Para avanzar, haz clic en «:paso».',
+        'ayuda_sin_permiso' => 'Con tu rol no puedes cambiar el estado.',
+    ],
+
     // Mensajes de error.
     'errores' => [
         'borrado_fisico_no_permitido' => 'Borrado físico bloqueado para :clase: los modelos de dominio solo admiten borrado lógico (ADR 0007 — soft delete y bitácora de auditoría).',

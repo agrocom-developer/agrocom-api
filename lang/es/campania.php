@@ -15,6 +15,11 @@ return [
             'abierta' => 'Abierta',
             'cerrada' => 'Cerrada',
         ],
+        'estado_ayuda' => [
+            'planificada' => 'La campaña está planificada y todavía no admite contratos ni gastos. Al abrirla, empieza a recibirlos.',
+            'abierta' => 'La campaña está abierta y admite contratos y gastos. Al cerrarla, deja de admitir contratos y gastos nuevos y ya no se puede volver a abrir.',
+            'cerrada' => 'La campaña está cerrada: ya no admite contratos ni gastos nuevos y no se puede volver a abrir.',
+        ],
         'estacion' => [
             'invierno' => 'Invierno',
             'verano' => 'Verano',
@@ -83,6 +88,7 @@ return [
         'campo_fecha_inicio' => 'Fecha de inicio',
         'campo_fecha_fin' => 'Fecha de fin',
         'estado_form' => 'Los cambios se guardan al confirmar.',
+        'estado_pasos_aria' => 'Estado de la campaña',
         'volver' => 'Volver a campañas',
 
         // Resumen (aside, solo edición)
