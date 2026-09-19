@@ -39,6 +39,8 @@
  * Guard de presencia en el DOM (mismo criterio que `login.js`): en cualquier
  * página sin `[data-ag-contratos-form]` este módulo no hace nada.
  */
+import { initTimeRanges } from '../atoms/time-range.js';
+
 document.addEventListener('DOMContentLoaded', () => {
     const formulario = document.querySelector('[data-ag-contratos-form]');
     if (!formulario) return;
@@ -167,22 +169,17 @@ document.addEventListener('DOMContentLoaded', () => {
         boxDiaCompleto.appendChild(crearIcono('check', 'sm', 'ag-checkbox-group__check'));
         celdaDiaCompleto.append(checkDiaCompleto, boxDiaCompleto);
 
+        // Horario del lote: se clona el molde que trae el servidor
+        // (`<template data-ag-time-range-molde>`), con el índice de esta fila en
+        // los `name` y en el `id`, y se inicializa el componente. Nace
+        // deshabilitado: el lote arranca en "día completo".
         const celdaRango = document.createElement('div');
         celdaRango.className = 'ag-contratos-form__lote-rango-horas';
-        const inputHoraInicio = document.createElement('input');
-        inputHoraInicio.type = 'time';
-        inputHoraInicio.className = 'ag-contratos-form__input-hora';
-        inputHoraInicio.name = `lotes[${indiceGlobal}][hora_inicio]`;
-        inputHoraInicio.disabled = true;
-        const separador = document.createElement('span');
-        separador.setAttribute('aria-hidden', 'true');
-        separador.textContent = '–';
-        const inputHoraFin = document.createElement('input');
-        inputHoraFin.type = 'time';
-        inputHoraFin.className = 'ag-contratos-form__input-hora';
-        inputHoraFin.name = `lotes[${indiceGlobal}][hora_fin]`;
-        inputHoraFin.disabled = true;
-        celdaRango.append(inputHoraInicio, separador, inputHoraFin);
+        const molde = formulario.querySelector('template[data-ag-time-range-molde]');
+        if (molde) {
+            celdaRango.innerHTML = molde.innerHTML.replaceAll('__INDICE__', String(indiceGlobal));
+            initTimeRanges(celdaRango);
+        }
 
         const botonQuitar = crearBotonAccion('delete', textoQuitarLote);
         botonQuitar.setAttribute('data-ag-lote-quitar', '');
@@ -532,12 +529,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const checkDiaCompleto = e.target.closest('[data-ag-lote-dia-completo]');
         if (!checkDiaCompleto) return;
 
+        // "Día completo" deshabilita y vacía el horario de la fila. Basta con
+        // tocar los inputs nativos: el componente `atoms/time-range` observa su
+        // `disabled` y se vuelve a leer solo.
         const fila = checkDiaCompleto.closest('.ag-contratos-form__lote-row');
-        const inputs = fila?.querySelectorAll('.ag-contratos-form__input-hora') || [];
-        inputs.forEach((input) => {
+        fila?.querySelectorAll('.ag-time-range__native').forEach((input) => {
             input.disabled = checkDiaCompleto.checked;
             if (checkDiaCompleto.checked) input.value = '';
         });
+
+        // Al destildar, el foco pasa al horario (sin abrirlo) para que se cargue
+        // enseguida. Va en un `setTimeout`: el componente habilita su disparador al
+        // observar el cambio de `disabled`, que ocurre después de este oyente.
+        if (!checkDiaCompleto.checked) {
+            setTimeout(() => fila?.querySelector('[data-ag-time-range-trigger]')?.focus(), 0);
+        }
     });
 
     listaApilada?.addEventListener('click', (e) => {

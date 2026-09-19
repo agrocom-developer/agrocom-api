@@ -36,10 +36,10 @@
       `_formulario.blade.php`).
 
     "Día completo" (checkbox tildado por defecto cuando el lote no trae
-    horario propio) deshabilita los dos `<input type="time">` de al lado sin
-    ocultarlos — visibles-pero-deshabilitados a propósito (ver comentario en
+    horario propio) deshabilita el componente atoms/time-range de al lado sin
+    ocultarlo — visible-pero-deshabilitado a propósito (ver comentario en
     `resources/css/pages/contratos.css` sobre `.ag-contratos-form__lote-rango-horas`):
-    si se ocultaran, esa fila perdería el ancho de columna y la tabla
+    si se ocultara, esa fila perdería el ancho de columna y la tabla
     quedaría dentada entre filas con/sin horario propio. El toggle vive en
     `resources/js/pages/contratos-form.js`.
 --}}
@@ -103,21 +103,17 @@
                                     </span>
                                 </label>
                                 <div class="ag-contratos-form__lote-rango-horas">
-                                    <input
-                                        type="time"
-                                        class="ag-contratos-form__input-hora"
-                                        name="lotes[{{ $indiceGlobal }}][hora_inicio]"
-                                        value="{{ $lote['hora_inicio'] ?? '' }}"
-                                        @disabled($esDiaCompleto)
-                                    >
-                                    <span aria-hidden="true">–</span>
-                                    <input
-                                        type="time"
-                                        class="ag-contratos-form__input-hora"
-                                        name="lotes[{{ $indiceGlobal }}][hora_fin]"
-                                        value="{{ $lote['hora_fin'] ?? '' }}"
-                                        @disabled($esDiaCompleto)
-                                    >
+                                    {{-- Horario del lote: inicio y fin en una sola casilla. El error de
+                                         la fila lo pinta la propia fila (más abajo); acá solo el borde. --}}
+                                    <x-atoms.time-range
+                                        id="lote-horario-{{ $indiceGlobal }}"
+                                        name-start="lotes[{{ $indiceGlobal }}][hora_inicio]"
+                                        name-end="lotes[{{ $indiceGlobal }}][hora_fin]"
+                                        :value-start="$lote['hora_inicio'] ?? null"
+                                        :value-end="$lote['hora_fin'] ?? null"
+                                        :disabled="$esDiaCompleto"
+                                        :invalid="(bool) $errorHorario"
+                                    />
                                 </div>
                                 @php
                                     $tieneOrdenRegistrada = in_array($lote['lote_id'], $loteIdsConOrdenRegistrada, true);
@@ -176,4 +172,19 @@
             @endforeach
         </div>
     </div>
+
+    {{-- Molde de la casilla de horario de un lote NUEVO: `crearFilaLote()`
+         (contratos-form.js) lo clona cambiando `__INDICE__` por el índice de la
+         fila — en los `name` y en el `id`, que no puede repetirse — y lo
+         inicializa con `initTimeRanges`. Nace deshabilitado: un lote nuevo
+         arranca en "día completo". Un `<template>` no está en el DOM vivo, así
+         que sus controles no se envían ni se inicializan solos. --}}
+    <template data-ag-time-range-molde>
+        <x-atoms.time-range
+            id="lote-horario-__INDICE__"
+            name-start="lotes[__INDICE__][hora_inicio]"
+            name-end="lotes[__INDICE__][hora_fin]"
+            disabled
+        />
+    </template>
 </div>

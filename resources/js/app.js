@@ -3,6 +3,7 @@ import './shared/barra-acciones-dirty.js';
 import './atoms/input.js';
 import './atoms/select.js';
 import './atoms/date.js';
+import './atoms/time-range.js';
 import './atoms/checkbox-group.js';
 import './molecules/theme-toggle.js';
 import './molecules/timezone-badge.js';

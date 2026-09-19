@@ -154,6 +154,26 @@ return [
         'vista_grilla' => 'Ver como grilla',
     ],
 
+    // Selector de horario (inicio y fin en una sola casilla).
+    'time_range' => [
+        'placeholder' => '--:-- – --:--',
+        'elegir_horario' => 'Elegir horario',
+        'limpiar_horario' => 'Limpiar horario',
+        'inicio' => 'Inicio',
+        'fin' => 'Fin',
+        'hora' => 'Hora',
+        'minutos' => 'Minutos',
+        'formato' => 'HH:MM',
+        'limpiar' => 'Limpiar',
+        'cancelar' => 'Cancelar',
+        'aceptar' => 'Aceptar',
+        'usar_teclado' => 'Usar teclado',
+        'usar_reloj' => 'Usar reloj',
+        'error_ambas' => 'Indica la hora de inicio y la de fin.',
+        'error_orden' => 'La hora de fin debe ser posterior a la de inicio.',
+        'error_formato' => 'Escribe las horas como HH:MM, en formato de 24 horas.',
+    ],
+
     // Pasos del estado de un objeto (molecules/step-arrow): la pista de los
     // pasos que no se pueden usar y el cierre del párrafo de ayuda. El texto
     // de cada estado lo define el propio objeto en su archivo de idioma.

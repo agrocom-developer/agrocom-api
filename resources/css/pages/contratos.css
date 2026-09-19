@@ -260,41 +260,23 @@
     cursor: pointer;
 }
 
-/* Siempre visible aunque esté deshabilitada (día completo tildado): si se
-   ocultara, esa fila pierde el ancho de columna y la tabla queda dentada
+/* Celda del horario de un lote: `atoms/time-range` (inicio y fin en una sola
+   casilla). Siempre visible aunque esté deshabilitada (día completo tildado): si
+   se ocultara, esa fila pierde el ancho de columna y la tabla queda dentada
    entre filas con/sin horario propio (pedido explícito, revertido tras
-   probarlo oculto). */
+   probarlo oculto). Sin margen de apilado: es un campo dentro de una fila de
+   tabla, no de un formulario. */
 .ag-contratos-form__lote-rango-horas {
     display: flex;
     align-items: center;
-    gap: var(--ag-space-2);
+    min-width: 0;
     color: var(--ag-color-text-muted);
 }
 
-/* Input de hora pulido (reemplaza el <input type="time"> crudo del
-   navegador): mismo lenguaje visual que `.ag-input__control` — outlined,
-   token de borde/foco propio. */
-.ag-contratos-form__input-hora {
-    padding: var(--ag-space-2) var(--ag-space-3);
-    background-color: var(--ag-color-bg-elevated);
-    border: 1px solid var(--ag-color-border-strong);
-    border-radius: var(--ag-radius-md);
-    color: var(--ag-color-text);
-    font-family: inherit;
-    font-size: var(--ag-font-size-sm);
-    transition: border-color var(--ag-transition-fast), box-shadow var(--ag-transition-fast);
-}
-
-.ag-contratos-form__input-hora:focus-visible {
-    outline: none;
-    border-color: var(--ag-color-primary);
-    box-shadow: 0 0 0 3px var(--ag-color-primary-subtle);
-}
-
-.ag-contratos-form__input-hora:disabled {
-    background-color: var(--ag-color-bg-surface);
-    color: var(--ag-color-text-faint);
-    cursor: not-allowed;
+.ag-contratos-form__lote-rango-horas .ag-time-range {
+    flex: 1;
+    min-width: 0;
+    margin-bottom: 0;
 }
 
 /* "Quitar" de la tabla de lotes: mismo `ag-button--text` (transparente,
