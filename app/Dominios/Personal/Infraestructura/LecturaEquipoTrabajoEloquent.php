@@ -38,6 +38,28 @@ final class LecturaEquipoTrabajoEloquent implements LecturaEquipoTrabajo
             ->all();
     }
 
+    public function porIds(array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        return EquipoTrabajo::query()
+            ->withTrashed()
+            ->whereIn('id', $ids)
+            ->get()
+            ->mapWithKeys(fn (EquipoTrabajo $equipo): array => [$equipo->id => new DatosEquipoTrabajo(
+                id: $equipo->id,
+                codigo: $equipo->codigo,
+                nombre: $equipo->nombre,
+                baseId: $equipo->base_id,
+                estado: $equipo->estado->value,
+                desde: $equipo->desde->toDateString(),
+                hasta: $equipo->hasta?->toDateString(),
+            )])
+            ->all();
+    }
+
     public function integrantesAFecha(int $equipoTrabajoId, string $fecha): array
     {
         return EquipoIntegrante::query()
