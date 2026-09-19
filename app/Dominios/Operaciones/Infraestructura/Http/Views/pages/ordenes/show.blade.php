@@ -10,13 +10,21 @@
 
     Reforma 19/9/2026 (ADR 0022): la orden es UNA aplicación completa del
     contrato — la lista de Lotes es de solo lectura (todos los del contrato) y
-    los KPI hablan de las hectáreas contratadas y de "N de M" aplicaciones. El
-    encabezado ofrece las acciones que admite el estado: emitida → Editar,
-    Activar, Eliminar; vigente → Pausar, Cerrar, Cancelar; pausada → Reanudar,
-    Cancelar; consumida/cancelada → ninguna. Pausar y Cancelar piden su motivo
-    (y la causa) dentro del modal — ver `_orden-modales.blade.php`. Nada de
-    esto lo dispara la app de campo: decide el operador con el informe del
+    los KPI hablan de las hectáreas contratadas y de "N de M" aplicaciones.
+
+    El estado se cambia desde los pasos (`molecules/step-arrow`, `PasosDeOrden`)
+    bajo la cabecera, con su párrafo de ayuda: activar, pausar, reanudar, cerrar
+    o cancelar según lo que admita el estado y el rol. Cada paso abre el modal de
+    `_orden-modales.blade.php`; Pausar y Cancelar piden su motivo (y la causa)
+    dentro del modal. La cabecera solo lleva «Volver» y «Editar» (esta última
+    mientras la orden está abierta: `emitida`, `vigente` o `pausada`, ver
+    `PoliticaEdicionOrden`); dar de baja es una acción del listado. Nada
+    de esto lo dispara la app de campo: decide el operador con el informe del
     equipo a la vista.
+
+    La tabla de Lotes va en páginas de 20 (`ordenes-detalle.js`) y trae, después
+    de las hectáreas, el equipo que trabaja cada lote y su dron — un guion
+    mientras el lote no tenga orden de trabajo.
 
     Distribución (18/9/2026, pedido explícito): la columna principal lleva lo
     que se lee de corrido — Datos del contrato, Datos de la orden, Lotes; el
@@ -24,15 +32,15 @@
     Inconvenientes del campo (solo si los hay), Relacionado y Actividad.
 
     Datos esperados (ver OrdenesController::show()): la cáscara de
-    CascaraPanel, más $orden (con `categoriaInsumo` cargada), $contratoLabel,
+    CascaraPanel, más $orden (con `categoriaInsumo` cargada), $pasosEstado /
+    $ayudaEstado (los pasos de estado y su párrafo), $contratoLabel,
     $contactoLabel (nullable), $resumenContrato (array nullable),
-    $aplicacionesPrevistas (nullable), $lotes (list), $hectareasSolicitadas /
+    $aplicacionesPrevistas (nullable), $lotes (list, en orden natural y con sus
+    `equipos`: equipo y dron de cada uno), $hectareasSolicitadas /
     $hectareasAsignadas (string, ya formateadas), $porcentajeAsignado (int),
     $equiposAsignados (int), $actividad (list), $vinculos (list),
     $inconvenientes (array{incidencias: int, pausas: int, ...}, ver
-    `Aplicacion/ResumenDeOrdenes`) y los permisos $puedeEditar / $puedeActivar
-    / $puedePausar (pausar y reanudar) / $puedeCerrar / $puedeCancelar /
-    $puedeEliminar (bool).
+    `Aplicacion/ResumenDeOrdenes`) y $puedeEditar (bool).
 
     Gateada por `operaciones.orden.ver` — mismo permiso que `index()`/`edit()`.
 
@@ -41,14 +49,7 @@
 --}}
 @php
     $estadoValor = $orden->estado->value;
-    $variantePorEstado = [
-        'emitida' => 'neutral',
-        'vigente' => 'success',
-        'pausada' => 'warning',
-        'consumida' => 'info',
-        'cancelada' => 'danger',
-        'vencida' => 'danger',
-    ];
+    $variantePorEstado = \App\Dominios\Operaciones\Infraestructura\Http\PasosDeOrden::TONO_POR_ESTADO;
     $tipoInsumo = $orden->categoriaInsumo?->tipo_insumo?->value;
     $dosisTexto = $orden->kilos_por_vuelo !== null
         ? __('operaciones.ordenes.dosis_kilos_por_vuelo', ['cantidad' => number_format((float) $orden->kilos_por_vuelo, 2, ',', '.')])
@@ -56,7 +57,8 @@
             ? __('operaciones.ordenes.dosis_litros_ha', ['cantidad' => number_format((float) $orden->litros_ha, 2, ',', '.')])
             : '—');
     $tieneInconvenientes = ($inconvenientes['incidencias'] + $inconvenientes['pausas']) > 0;
-    $sufijoAcciones = 'detalle-'.$orden->id;
+    // Lotes por página (`ordenes-detalle.js`); las filas de otras páginas van con `hidden`.
+    $lotesPorPagina = 20;
     $aplicacionesCompletas = $aplicacionesPrevistas !== null && $orden->nro_aplicacion >= $aplicacionesPrevistas;
     $equiposCompletos = $equiposAsignados >= $orden->cantidad_equipos_necesarios;
     $aplicacionesEstado = $aplicacionesCompletas ? 'success' : null;
@@ -94,53 +96,17 @@
                 <x-slot:actions>
                     <x-molecules.boton-volver :href="route('panel.ordenes.index')" :label="__('operaciones.ordenes.volver')" />
 
-                    @if ($puedeEditar && $estadoValor === 'emitida')
-                        <x-atoms.button :href="route('panel.ordenes.edit', $orden)" variant="primary" icon="edit">
+                    @if ($puedeEditar && \App\Dominios\Operaciones\Dominio\PoliticaEdicionOrden::admiteEdicion($orden->estado))
+                        <x-atoms.button :href="route('panel.ordenes.edit', $orden)" variant="warning-outline" icon="edit">
                             {{ __('operaciones.ordenes.editar') }}
-                        </x-atoms.button>
-                    @endif
-
-                    @if ($puedeActivar && $estadoValor === 'emitida')
-                        <x-atoms.button type="button" data-bs-toggle="modal" :data-bs-target="'#orden-activar-modal-'.$sufijoAcciones" variant="success-outline" icon="check_circle">
-                            {{ __('operaciones.ordenes.activar_accion') }}
-                        </x-atoms.button>
-                    @endif
-
-                    @if ($puedePausar && $estadoValor === 'vigente')
-                        <x-atoms.button type="button" data-bs-toggle="modal" :data-bs-target="'#orden-pausar-modal-'.$sufijoAcciones" variant="warning-outline" icon="pause_circle">
-                            {{ __('operaciones.ordenes.pausar_accion') }}
-                        </x-atoms.button>
-                    @endif
-
-                    @if ($puedePausar && $estadoValor === 'pausada')
-                        <x-atoms.button type="button" data-bs-toggle="modal" :data-bs-target="'#orden-reanudar-modal-'.$sufijoAcciones" variant="success-outline" icon="play_circle">
-                            {{ __('operaciones.ordenes.reanudar_accion') }}
-                        </x-atoms.button>
-                    @endif
-
-                    @if ($puedeCerrar && $estadoValor === 'vigente')
-                        <x-atoms.button type="button" data-bs-toggle="modal" :data-bs-target="'#orden-cerrar-modal-'.$sufijoAcciones" variant="info-outline" icon="done_all">
-                            {{ __('operaciones.ordenes.cerrar_accion') }}
-                        </x-atoms.button>
-                    @endif
-
-                    @if ($puedeCancelar && ($estadoValor === 'vigente' || $estadoValor === 'pausada'))
-                        <x-atoms.button type="button" data-bs-toggle="modal" :data-bs-target="'#orden-cancelar-modal-'.$sufijoAcciones" variant="danger-outline" icon="cancel">
-                            {{ __('operaciones.ordenes.cancelar_accion') }}
-                        </x-atoms.button>
-                    @endif
-
-                    @if ($puedeEliminar && $estadoValor === 'emitida')
-                        <x-atoms.button type="button" data-bs-toggle="modal" :data-bs-target="'#orden-eliminar-modal-'.$sufijoAcciones" variant="danger-outline" icon="delete">
-                            {{ __('operaciones.ordenes.eliminar_accion') }}
                         </x-atoms.button>
                     @endif
                 </x-slot:actions>
             </x-organisms.page-header>
 
-            {{-- Forms + modales de las acciones (fuera del page-header, ver el
-                 docblock de `_orden-modales.blade.php`). --}}
-            @include('operaciones::pages.ordenes._orden-modales', ['orden' => $orden, 'contexto' => 'detalle-'])
+            {{-- Forms + modales de los pasos de estado (fuera del page-header, ver el
+                 docblock de `_orden-modales.blade.php`). Eliminar no va: es del listado. --}}
+            @include('operaciones::pages.ordenes._orden-modales', ['orden' => $orden, 'contexto' => 'detalle-', 'conEliminar' => false, 'resumenOrden' => $inconvenientes])
 
             @if ($errors->any())
                 <x-molecules.alert-strip variant="danger" icon="error">
@@ -153,6 +119,14 @@
                     {{ session('estado') }}
                 </x-molecules.alert-strip>
             @endif
+
+            {{-- Estado de la orden como pasos (`PasosDeOrden`): cada paso accionable
+                 abre el modal de confirmación de arriba. --}}
+            <x-molecules.step-arrow
+                :steps="$pasosEstado"
+                :label="__('operaciones.ordenes.estado_pasos_aria')"
+                :help="$ayudaEstado"
+            />
 
             <div class="ag-ordenes-detalle__kpis">
                 <x-molecules.stat-card
@@ -247,18 +221,49 @@
 
                 <x-molecules.form-section accent="info" :title="__('operaciones.ordenes.seccion_lotes')" :count="__('operaciones.ordenes.lotes_contador', ['cantidad' => count($lotes), 'hectareas' => $hectareasSolicitadas])">
                     <div class="ag-form-section__field--full">
-                        <x-molecules.index-table columns="1fr 8rem">
+                        <x-molecules.index-table columns="2fr 8rem 1fr 1fr" data-ag-lotes-detalle>
                             <x-slot:head>
                                 <span role="columnheader">{{ __('operaciones.ordenes.col_lote') }}</span>
                                 <span role="columnheader">{{ __('operaciones.ordenes.col_hectareas_lote') }}</span>
+                                <span role="columnheader">{{ __('operaciones.ordenes.col_equipo') }}</span>
+                                <span role="columnheader">{{ __('operaciones.ordenes.col_dron') }}</span>
                             </x-slot:head>
-                            @foreach ($lotes as $lote)
-                                <div class="ag-index-table__row" role="row">
+                            @foreach ($lotes as $indice => $lote)
+                                <div class="ag-index-table__row" role="row" @if ($indice >= $lotesPorPagina) hidden @endif>
                                     <span role="cell">{{ $lote['label'] }}</span>
                                     <span role="cell" class="ag-ordenes__mono">{{ number_format((float) $lote['hectareas_solicitadas'], 2, ',', '.') }}</span>
+                                    {{-- Equipo y dron: un renglón por equipo, en la misma línea en las dos
+                                         celdas; un guion si el lote todavía no tiene orden de trabajo. --}}
+                                    <span role="cell" class="ag-ordenes__renglones">
+                                        @forelse ($lote['equipos'] as $asignacion)
+                                            <span>{{ $asignacion['equipo'] }}</span>
+                                        @empty
+                                            <span>—</span>
+                                        @endforelse
+                                    </span>
+                                    <span role="cell" class="ag-ordenes__renglones">
+                                        @forelse ($lote['equipos'] as $asignacion)
+                                            <span>{{ $asignacion['dron'] ?? '—' }}</span>
+                                        @empty
+                                            <span>—</span>
+                                        @endforelse
+                                    </span>
                                 </div>
                             @endforeach
                         </x-molecules.index-table>
+
+                        {{-- Paginación de 20 lotes por página (`ordenes-detalle.js`), igual que la
+                             tabla de lotes del contrato. --}}
+                        <div
+                            class="ag-paginador"
+                            data-ag-lotes-detalle-paginador
+                            hidden
+                            data-label-aria="{{ __('operaciones.ordenes.lotes_paginacion_aria') }}"
+                            data-label-anterior="{{ __('ui.paginador.anterior') }}"
+                            data-label-siguiente="{{ __('ui.paginador.siguiente') }}"
+                            data-label-pagina="{{ __('ui.paginador.pagina') }}"
+                            data-label-resumen="{{ __('operaciones.ordenes.lotes_paginacion_resumen') }}"
+                        ></div>
                     </div>
                 </x-molecules.form-section>
 

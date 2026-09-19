@@ -2,8 +2,11 @@
 
 namespace App\Dominios\Operaciones\Infraestructura\Http\Requests;
 
+use App\Dominios\Operaciones\Dominio\PoliticaEdicionOrden;
 use App\Dominios\Operaciones\Dominio\TipoAplicacion;
 use App\Dominios\Operaciones\Dominio\TipoInsumo;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
+use App\Dominios\Operaciones\Infraestructura\Http\Requests\Concerns\ValidaContactoDelCliente;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
@@ -15,12 +18,17 @@ use Illuminate\Validation\Rule;
  * tipo, categoría de insumo, dosis, cantidad de equipos, contacto, fecha
  * de emisión, observaciones.
  *
+ * El contacto tiene que ser de un contacto del cliente del contrato de ESTA
+ * orden ({@see ValidaContactoDelCliente}).
+ *
  * Que la orden siga siendo editable (solo `emitida`) no se valida acá: es una
  * regla de ESTADO, no de forma, y vive en `Aplicacion/ActualizarOrden`
  * (invariante 7).
  */
 final class ActualizarOrdenRequest extends FormRequest
 {
+    use ValidaContactoDelCliente;
+
     /** @return array<string, mixed> */
     public function rules(): array
     {
@@ -31,9 +39,18 @@ final class ActualizarOrdenRequest extends FormRequest
             'litros_ha' => ['nullable', 'numeric', 'gt:0'],
             'kilos_por_vuelo' => ['nullable', 'numeric', 'gt:0'],
             'observaciones' => ['nullable', 'string', 'max:1000'],
-            'emitida_por_contacto_id' => ['nullable', 'integer', Rule::exists('com_cliente_contactos', 'id')->whereNull('deleted_at')],
+            'emitida_por_contacto_id' => $this->reglasContactoDelCliente($this->route('orden') instanceof OrdenAplicacion ? $this->route('orden')->contrato_id : null),
             'fecha_emision' => ['required', 'date'],
+            'motivo_correccion' => [Rule::requiredIf($this->exigeMotivo()), 'nullable', 'string', 'max:1000'],
         ];
+    }
+
+    /** Una orden ya publicada (no `emitida`) se corrige con un motivo ({@see PoliticaEdicionOrden}). */
+    private function exigeMotivo(): bool
+    {
+        $orden = $this->route('orden');
+
+        return $orden instanceof OrdenAplicacion && PoliticaEdicionOrden::exigeMotivo($orden->estado);
     }
 
     public function withValidator(Validator $validator): void
@@ -79,6 +96,7 @@ final class ActualizarOrdenRequest extends FormRequest
             'categoria_insumo_id.required' => __('operaciones.ordenes.error_categoria_insumo_requerida'),
             'categoria_insumo_id.exists' => __('operaciones.ordenes.error_categoria_insumo_invalida'),
             'emitida_por_contacto_id.exists' => __('operaciones.ordenes.error_contacto_invalido'),
+            'motivo_correccion.required' => __('operaciones.ordenes.error_motivo_correccion_requerido'),
         ];
     }
 }

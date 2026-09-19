@@ -4,6 +4,7 @@ namespace App\Dominios\Comercial\Infraestructura;
 
 use App\Dominios\Comercial\Aplicacion\FinalizarContratoPorUltimaAplicacion;
 use App\Dominios\Comercial\Contratos\LecturaAvanceComercial;
+use App\Dominios\Comercial\Contratos\LecturaContadoresPanel;
 use App\Dominios\Comercial\Contratos\LecturaContrato;
 use App\Dominios\Comercial\Contratos\LecturaCultivoLote;
 use App\Dominios\Comercial\Contratos\LecturaLotes;
@@ -39,6 +40,7 @@ final class ComercialServiceProvider extends ServiceProvider
     {
         $this->app->bind(LecturaLotes::class, LecturaLotesEloquent::class);
         $this->app->bind(LecturaContrato::class, LecturaContratoEloquent::class);
+        $this->app->bind(LecturaContadoresPanel::class, LecturaContadoresPanelEloquent::class);
         $this->app->bind(LecturaPanelComercial::class, LecturaPanelComercialEloquent::class);
         $this->app->bind(LecturaCultivoLote::class, LecturaCultivoLoteEloquent::class);
         $this->app->bind(LecturaAvanceComercial::class, LecturaAvanceComercialEloquent::class);

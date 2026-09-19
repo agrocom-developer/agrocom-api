@@ -135,3 +135,25 @@ Columnas nuevas en `ope_ordenes_aplicacion`: `motivo_pausa`, `pausada_at`, `rean
 **Cómo se lee entre módulos.** Comercial obtiene la aplicación abierta por `Operaciones\Contratos\LecturaResumenOrdenesContrato::aplicacionesAbiertas()` (DTO `DatosAplicacionAbierta`), nunca por la tabla de órdenes ni por su modelo (ADR 0003, regla 2). El enlace a la orden se arma con el nombre de la ruta.
 
 **Alternativa descartada.** Dejar cancelar o finalizar el contrato con la aplicación abierta pidiendo el motivo en el propio modal: contradice el punto 9 y la alternativa ya descartada de cancelar en cascada — la causa y el motivo son de la orden, no del contrato.
+
+## Adenda (19/9/2026, segunda) — Cerrar una orden exige trabajo registrado y terminado
+
+**Contexto.** El punto 6 deja el cierre (`vigente → consumida`) como acción manual del encargado, con el informe del equipo a la vista, y descartó que nada la dispare sola. Al llevar el estado de la orden a los pasos de su ficha, el dueño precisó cuándo se puede pedir: solo cuando todos los equipos terminaron sus trabajos, y por supuesto tiene que haber una orden de trabajo registrada. Y, a su elección, además con todas las hectáreas de la orden asignadas a algún equipo: no se cierra una aplicación a medias.
+
+**Decisión.** `MaquinaEstadosOrden::cerrar()` suma una guarda a la tabla de transiciones: la orden tiene que tener **al menos un trabajo** (equipo×lote), **todas sus hectáreas asignadas** (lo asignado a equipos cubre lo solicitado) y **ningún trabajo abierto**. Si no, lanza `CierreOrdenNoPermitido` (sin órdenes de trabajo / hectáreas sin asignar / trabajos sin terminar, en ese orden) y la orden sigue `vigente`. La cuenta se hace dentro de la transacción, con la orden bloqueada, así un trabajo que se abre en ese momento no se cuela. La regla vive una sola vez en `Dominio/PoliticaCierreOrden` (pura); el servidor y el panel la leen. El cierre sigue siendo manual: la guarda solo dice si ya se puede pedir, no lo dispara.
+
+**En el panel.** Con la regla sin cumplir, el paso «Consumida» de la ficha y del detalle —y «Cerrar» del listado— abren un aviso (`molecules/info-modal`) que dice qué falta y a dónde ir (asignar equipos, o ver las órdenes de trabajo), en lugar de la confirmación. La restricción es informativa ahí y firme en el servidor, también ante un pedido directo.
+
+**Alternativa descartada.** Cerrar automáticamente cuando el último trabajo termina: contradice el punto 6 — el dueño quiere decidirlo, con el informe a la vista.
+
+## Adenda (19/9/2026, tercera) — Causas de cancelación con «dueño» y corrección de una orden publicada
+
+**Contexto.** Al probar los pasos de la orden, el dueño pidió dos precisiones sobre las reglas de los puntos 5 y 6 y sobre la edición: (1) el modal de cancelar debe registrar quién pidió la cancelación —cliente, dueño o un factor externo—, no solo «cliente» y «fuerza mayor»; (2) la edición no puede terminar con la orden `emitida`: una persona se equivoca en el tipo, la categoría, la dosis o la fecha, y hasta ahora la única salida era cancelar, lo que consume una aplicación del contrato (causa del cliente) o falsea la causa (fuerza mayor solo para no gastarla).
+
+**Decisión — causas.** `CausaCancelacionOrden` pasa a `cliente`, `dueno` y `factor_externo` (lo que era `fuerza_mayor`, renombrado para hablar un solo idioma con el negocio). **Cliente y dueño consumen** el número de aplicación; **el factor externo no** (se rehace con el mismo). Migración `amplia_causas_de_cancelacion_de_ope_ordenes_aplicacion`: reemplaza el `CHECK`, pasa los datos `fuerza_mayor → factor_externo` y recrea el índice único parcial del número excluyendo la causa nueva que no lo consume. Sustituye la causa `fuerza_mayor` de los puntos 5 y 6.
+
+**Decisión — corrección.** Se corrige una orden **abierta** (`emitida`, `vigente` o `pausada`); una cerrada no. Sobre una ya publicada (`vigente`/`pausada`) la corrección exige un **motivo** (`motivo_correccion`, `corregida_at`) y queda, con los valores antes y después, en la bitácora (`RegistraBitacora`, invariante 9). En cuanto la orden **tiene trabajos**, el **insumo** —categoría, y con ella el tipo, y la dosis— no se cambia: ya hay equipos operando (y, en líquidos, Ph y calda cargados); ahí la salida sigue siendo cancelar y emitir otra. Las reglas viven en `Dominio/PoliticaEdicionOrden` y las aplica `Aplicacion/ActualizarOrden`, no solo la vista (invariante 7). Editar no es una transición: `estado` no se toca.
+
+**Cómo llega al campo.** Una orden `vigente` puede estar en el catálogo de la app de campo. La corrección cambia `updated_at`, así que la app la recibe en su siguiente sincronización; un vuelo en curso sigue con la copia anterior. Por eso el motivo es obligatorio y el insumo se bloquea cuando ya hay trabajo: lo que se corrige es un dato de la aplicación, no lo que un equipo ya está ejecutando.
+
+**Alternativa descartada.** Dejar la edición abierta también sobre el insumo con trabajos en curso: permitiría cambiar la dosis o de líquido a sólido con Ph y calda ya registrados, y con la app de campo operando sobre la copia vieja hasta la próxima sincronización.

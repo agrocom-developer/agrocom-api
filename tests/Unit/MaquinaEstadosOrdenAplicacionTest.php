@@ -65,9 +65,13 @@ test('orden: solo emitida, vigente y pausada están abiertas', function () {
         ->and(EstadoOrdenAplicacion::valoresAbiertos())->toBe(['emitida', 'vigente', 'pausada']);
 });
 
-test('orden: la causa del cliente consume el número y la fuerza mayor no', function () {
+test('orden: la causa del cliente y la del dueño consumen el número; el factor externo no', function () {
     expect(CausaCancelacionOrden::Cliente->consumeNumero())->toBeTrue()
-        ->and(CausaCancelacionOrden::FuerzaMayor->consumeNumero())->toBeFalse();
+        ->and(CausaCancelacionOrden::Dueno->consumeNumero())->toBeTrue()
+        ->and(CausaCancelacionOrden::FactorExterno->consumeNumero())->toBeFalse()
+        // Los valores que guarda la base (el CHECK y el índice de numeración los repiten).
+        ->and(array_map(fn (CausaCancelacionOrden $causa): string => $causa->value, CausaCancelacionOrden::cases()))
+        ->toBe(['cliente', 'dueno', 'factor_externo']);
 });
 
 /*
@@ -99,20 +103,20 @@ test('numeración: una cancelada por causa del cliente consume su número', func
     expect(NumeracionAplicaciones::siguiente($ordenes, 3, 1))->toBe(3);
 });
 
-test('numeración: una cancelada por fuerza mayor se rehace con el mismo número', function () {
+test('numeración: una cancelada por factor externo se rehace con el mismo número', function () {
     $ordenes = [
         ordenDeNumeracion(1, EstadoOrdenAplicacion::Consumida),
-        ordenDeNumeracion(2, EstadoOrdenAplicacion::Cancelada, CausaCancelacionOrden::FuerzaMayor),
+        ordenDeNumeracion(2, EstadoOrdenAplicacion::Cancelada, CausaCancelacionOrden::FactorExterno),
     ];
 
     expect(NumeracionAplicaciones::siguiente($ordenes, 3, 1))->toBe(2);
 });
 
-test('numeración: varias canceladas por fuerza mayor del mismo número no lo consumen', function () {
+test('numeración: varias canceladas por factor externo del mismo número no lo consumen', function () {
     $ordenes = [
         ordenDeNumeracion(1, EstadoOrdenAplicacion::Consumida),
-        ordenDeNumeracion(2, EstadoOrdenAplicacion::Cancelada, CausaCancelacionOrden::FuerzaMayor),
-        ordenDeNumeracion(2, EstadoOrdenAplicacion::Cancelada, CausaCancelacionOrden::FuerzaMayor),
+        ordenDeNumeracion(2, EstadoOrdenAplicacion::Cancelada, CausaCancelacionOrden::FactorExterno),
+        ordenDeNumeracion(2, EstadoOrdenAplicacion::Cancelada, CausaCancelacionOrden::FactorExterno),
     ];
 
     expect(NumeracionAplicaciones::siguiente($ordenes, 2, 1))->toBe(2);
@@ -147,10 +151,10 @@ test('numeración: la última cancelada por el cliente agota las previstas', fun
     expect(fn () => NumeracionAplicaciones::siguiente($ordenes, 2, 1))->toThrow(AplicacionesCompletas::class);
 });
 
-test('numeración: la última cancelada por fuerza mayor deja rehacerla', function () {
+test('numeración: la última cancelada por factor externo deja rehacerla', function () {
     $ordenes = [
         ordenDeNumeracion(1, EstadoOrdenAplicacion::Consumida),
-        ordenDeNumeracion(2, EstadoOrdenAplicacion::Cancelada, CausaCancelacionOrden::FuerzaMayor),
+        ordenDeNumeracion(2, EstadoOrdenAplicacion::Cancelada, CausaCancelacionOrden::FactorExterno),
     ];
 
     expect(NumeracionAplicaciones::siguiente($ordenes, 2, 1))->toBe(2);

@@ -35,7 +35,7 @@
     $sufijo = "{$contexto}{$orden->id}";
 @endphp
 
-@include('operaciones::pages.ordenes._orden-modales', ['orden' => $orden, 'contexto' => $contexto])
+@include('operaciones::pages.ordenes._orden-modales', ['orden' => $orden, 'contexto' => $contexto, 'resumenOrden' => $resumen[$orden->id] ?? null])
 
 <x-organisms.row-actions>
     <x-atoms.button :href="route('panel.ordenes.show', $orden)" variant="info-outline" size="sm" icon="visibility">
@@ -43,7 +43,7 @@
     </x-atoms.button>
 
     @puede('operaciones.orden.editar')
-        @if ($estadoValor === 'emitida')
+        @if (\App\Dominios\Operaciones\Dominio\PoliticaEdicionOrden::admiteEdicion($orden->estado))
             <x-atoms.button :href="route('panel.ordenes.edit', $orden)" variant="warning-outline" size="sm" icon="edit">
                 {{ __('operaciones.ordenes.editar') }}
             </x-atoms.button>

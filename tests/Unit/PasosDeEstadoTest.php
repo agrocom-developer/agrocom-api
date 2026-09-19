@@ -186,6 +186,28 @@ test('pasos: el «pasa antes por…» nombra el primer paso al que sí se puede 
     expect(pasosDeCampania(EstadoCampania::Planificada)[2]['hint'])->toBe('ui.pasos.pista_bloqueado');
 });
 
+test('pasos: el permiso por destino se suma al general, y sin él el paso queda pendiente', function () {
+    // Puede cambiar de estado en general, pero no ir a «cerrada»: solo ese paso queda pendiente.
+    $sinCerrar = fn (EstadoCampania $hacia): bool => $hacia !== EstadoCampania::Cerrada;
+
+    expect(situaciones(pasosDeCampaniaCon(EstadoCampania::Abierta, puedeIrA: $sinCerrar)))->toBe(['completed', 'current', 'pending'])
+        ->and(pasosDeCampaniaCon(EstadoCampania::Abierta, puedeIrA: $sinCerrar)[2]['hint'])->toBe('ui.pasos.pista_sin_permiso')
+        ->and(pasosDeCampaniaCon(EstadoCampania::Abierta, puedeIrA: $sinCerrar)[2]['modal'])->toBeNull();
+
+    // Sin el permiso general, ningún permiso por destino lo devuelve.
+    expect(situaciones(pasosDeCampaniaCon(EstadoCampania::Abierta, puedeCambiar: false, puedeIrA: fn (): bool => true)))->toBe(['completed', 'current', 'pending']);
+});
+
+test('pasos: un modal propio reemplaza al «prefijo-valor» del paso accionable, y solo a ese', function () {
+    $pasos = pasosDeCampaniaCon(EstadoCampania::Planificada, modales: ['abierta' => 'modal-propio', 'cerrada' => 'no-se-usa']);
+
+    expect($pasos[1]['modal'])->toBe('modal-propio')
+        // `cerrada` está bloqueado: no abre ningún modal aunque figure en la lista.
+        ->and($pasos[2]['modal'])->toBeNull()
+        // Sin entrada en la lista, vale el prefijo de siempre.
+        ->and(pasosDeCampaniaCon(EstadoCampania::Planificada, modales: [])[1]['modal'])->toBe('m-abierta');
+});
+
 test('ayuda: el paso del cierre puede nombrarse aparte del primero accionable', function () {
     $pasos = pasosDeCampania(EstadoCampania::Planificada);
 

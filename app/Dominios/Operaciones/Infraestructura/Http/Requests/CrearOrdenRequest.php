@@ -4,6 +4,7 @@ namespace App\Dominios\Operaciones\Infraestructura\Http\Requests;
 
 use App\Dominios\Operaciones\Dominio\TipoAplicacion;
 use App\Dominios\Operaciones\Dominio\TipoInsumo;
+use App\Dominios\Operaciones\Infraestructura\Http\Requests\Concerns\ValidaContactoDelCliente;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
@@ -22,8 +23,9 @@ use Illuminate\Validation\Rule;
  * ve un error de validación de Laravel, nunca el `QueryException` crudo de
  * Postgres.
  *
- * `contrato_id`/`emitida_por_contacto_id` se validan por `exists:` contra la
- * tabla física (ADR 0003, regla 3).
+ * `contrato_id` se valida por `exists:` contra la tabla física (ADR 0003, regla
+ * 3). `emitida_por_contacto_id` además tiene que ser de un contacto del cliente
+ * de ese contrato ({@see ValidaContactoDelCliente}).
  *
  * `tipo_aplicacion` es `required` en el formulario porque el usuario elige a
  * propósito, no por omisión.
@@ -35,6 +37,8 @@ use Illuminate\Validation\Rule;
  */
 final class CrearOrdenRequest extends FormRequest
 {
+    use ValidaContactoDelCliente;
+
     /** @return array<string, mixed> */
     public function rules(): array
     {
@@ -46,7 +50,7 @@ final class CrearOrdenRequest extends FormRequest
             'litros_ha' => ['nullable', 'numeric', 'gt:0'],
             'kilos_por_vuelo' => ['nullable', 'numeric', 'gt:0'],
             'observaciones' => ['nullable', 'string', 'max:1000'],
-            'emitida_por_contacto_id' => ['nullable', 'integer', Rule::exists('com_cliente_contactos', 'id')->whereNull('deleted_at')],
+            'emitida_por_contacto_id' => $this->reglasContactoDelCliente($this->integer('contrato_id') ?: null),
             'fecha_emision' => ['required', 'date'],
         ];
     }
