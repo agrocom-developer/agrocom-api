@@ -115,9 +115,14 @@ Llevan `campania_id` propio solo las entidades donde alguien la **elige explíci
 ### 4.1 Comercial
 
 - `clientes` — id, razón social, nit, tipo_persona (física / jurídica), contacto dueño, contacto agrónomo. *El dueño, cuando el cliente es una sociedad, se registra como contacto tipo `dueno` — no como cliente propio (ADR 0018).*
-- `contratos` — id, campania_id, cliente_id, hectáreas_contratadas, aplicaciones_previstas, precio_ha, monto_total, adelanto_monto ("Adelanto Solicitado"), fecha_inicio, fecha_fin, estado. *Nota del 14/9/2026 (HU-91): sin `adelanto_pct` ni parámetros de vuelo/límites de condiciones propios — esos campos (`altura_vuelo_m`, `velocidad_max_kmh`, `viento_max_kmh`, `temperatura_max_c`, `humedad_min_pct`, `humedad_max_pct`, `umbral_reporte_avance_ha`) se sacan del contrato; hereda de la Orden o del valor por defecto del sistema (RF-60). `contrato_ventanas` no cambia (ADR 0015 punto 5 sigue vigente).*
+- `contratos` — id, campania_id, cliente_id, hectáreas_contratadas, aplicaciones_previstas, precio_ha, monto_total, adelanto_monto ("Adelanto Solicitado"), fecha_inicio, fecha_fin, estado (`borrador` / `conflicto` / `vigente` / `pausado` / `finalizado` / `cancelado`; máquina en §5). *En el panel: `borrador` = "En Aprobación", `conflicto` = "En conflicto", `vigente` = "En Ejecución", `finalizado` = "Ejecutado". Los lotes que cubre viven en `contrato_lotes`, con exclusividad por lote dentro de la campaña (18/9/2026, ADR 0021).* *Nota del 14/9/2026 (HU-91): sin `adelanto_pct` ni parámetros de vuelo/límites de condiciones propios — esos campos (`altura_vuelo_m`, `velocidad_max_kmh`, `viento_max_kmh`, `temperatura_max_c`, `humedad_min_pct`, `humedad_max_pct`, `umbral_reporte_avance_ha`) se sacan del contrato; hereda de la Orden o del valor por defecto del sistema (RF-60). `contrato_ventanas` no cambia (ADR 0015 punto 5 sigue vigente).*
 - `contrato_ventanas` — id, contrato_id, hora_inicio, hora_fin. *N por contrato y **opcionales**: sin ninguna ventana cargada, el contrato aplica a cualquier hora ("todo el día"). No hay booleano de "todo el día" — la ausencia de filas es el dato (ADR 0015).*
-- `contrato_alcances` — id, contrato_id, propiedad_id, hectareas. *Qué propiedad cubre el contrato — N filas por contrato, así se modela una mezcla de varias propiedades, y la suma no puede superar `hectareas_contratadas` (ADR 0020).*
+- `contrato_alcances` — id, contrato_id, propiedad_id, hectareas. *Qué propiedad cubre el contrato — N filas por contrato, así se modela una mezcla de varias propiedades, y la suma no puede superar `hectareas_contratadas` (ADR 0020). **Reemplazada por `contrato_lotes`** (migraciones del 16/9/2026): la tabla ya no existe.*
+- `contrato_lotes` — id, contrato_id, lote_id. *Qué lotes concretos, de las propiedades del cliente, cubre el contrato — N filas por contrato; la propiedad se deriva de `lotes.propiedad_id`. Sin hectáreas propias por fila: el agregado sigue siendo `contratos.hectareas_contratadas`.*
+  *Exclusividad por lote dentro de la campaña (18/9/2026, ADR 0021).* Un contrato `vigente` o `pausado` —los estados que **retienen lotes**, ver §5— bloquea sus lotes para cualquier otro contrato de la **misma campaña**, hasta que se ejecute la última aplicación (el contrato pasa a `finalizado`, "Ejecutado") o se cancele. Un contrato `pausado` conserva sus lotes: solo cancelar o finalizar los libera. Mientras un contrato no está aprobado (`borrador`, "En Aprobación") sí se puede repetir el mismo lote en varios contratos.
+  - **Al registrar o editar** un contrato no se le puede agregar un lote ya retenido por otro contrato (`vigente` o `pausado`) de la misma campaña: el servidor rechaza el guardado con un mensaje que nombra el lote y el contrato que lo tiene. En edición solo se validan los lotes **nuevos** agregados: un contrato en `conflicto` puede guardarse mientras arrastra lotes ya ocupados.
+  - **Al aprobarse** un contrato (`borrador → vigente`), los otros contratos de la misma campaña que están en `borrador` y comparten al menos un lote con él pasan a `conflicto` ("En conflicto"). Un contrato en `conflicto` no se puede aprobar. Vuelve solo a `borrador` cuando ya no comparte ningún lote con un contrato que retenga lotes —porque se quitó el lote editando el contrato, o porque el otro se canceló o finalizó—. También puede cancelarse (`conflicto → cancelado`).
+  - **`conflicto` no se pide a mano:** lo fijan y lo levantan solo el sistema (reconciliación de conflictos por campaña en `MaquinaEstadosContrato`, §5); ningún usuario puede elegirlo como destino desde el panel.
 - `propiedades` — id, cliente_id, nombre, ubicación (departamento, provincia, municipio o pueblo — ej. Cuatro Cañadas, Roboré, San Matías), geometría (GeoJSON `MultiPolygon` nullable: terrenos físicos de la propiedad, uno o más — la propiedad puede tener porciones de terreno separadas geográficamente sin dejar de ser una sola fila). *Un cliente tiene varias propiedades — el nivel de negocio y también el nivel de terreno: no hay una entidad intermedia entre la propiedad y sus lotes (ADR 0020, reemplaza a ADR 0018).*
 - `lotes` — id, propiedad_id, código, hectáreas, geometría (GeoJSON), restricciones (texto: cables, viviendas, colmenas, vecinos sensibles)
 - `cultivos` — id, nombre (soya, maíz, girasol, trigo, sorgo…), activo. *Catálogo.*
@@ -227,7 +232,28 @@ planificado ──► autorizado ──► en_ejecucion ──► parcial ──
 
 **Validación de suma:** la suma de sesiones no puede superar las hectáreas del lote más una tolerancia configurable por solape. Si la excede, el trabajo queda `observado` hasta que el encargado lo resuelva.
 
-**Otras máquinas:** Orden de aplicación: `emitida → vigente → consumida | vencida`. Rendición: `pendiente → procesada | rechazada`.
+**Otras máquinas:** Orden de aplicación: `emitida → vigente → consumida | vencida`. Rendición: `pendiente → procesada | rechazada`. Contrato: ver el siguiente bloque.
+
+**Contrato** (servicio de dominio `MaquinaEstadosContrato` sobre la tabla de transiciones permitidas; ADR 0021):
+```
+borrador ──► vigente ──► finalizado
+   │  ▲        │  ▲
+   ▼  │        ▼  │
+conflicto      pausado
+```
+*`cancelado` se alcanza desde `borrador`, `conflicto` y `vigente`; `finalizado`, solo desde `vigente`. Ambos son terminales.*
+
+| Desde | Transiciones permitidas |
+|---|---|
+| `borrador` | `vigente`, `cancelado`, `conflicto` |
+| `conflicto` | `borrador`, `cancelado` |
+| `vigente` | `finalizado`, `cancelado`, `pausado` |
+| `pausado` | `vigente` |
+| `finalizado`, `cancelado` | ninguna (sin salida) |
+
+- **`borrador → conflicto` y `conflicto → borrador` las dispara solo el sistema**, al reconciliar los conflictos de lotes de la campaña (al aprobarse un contrato, al cancelarse o finalizarse el que retenía los lotes, o al quitarle el lote compartido editando el contrato en conflicto): nunca un usuario. `conflicto` no es un destino que se pueda pedir a mano desde el panel, y un contrato en `conflicto` no pasa directo a `vigente` — primero vuelve a `borrador` y desde ahí se aprueba.
+- **Estados que retienen lotes: `vigente` y `pausado`.** Los lotes de un contrato en esos estados quedan bloqueados para cualquier otro contrato de la misma campaña (exclusividad por lote, §4.1). `borrador` y `conflicto` no retienen; `finalizado` y `cancelado` liberan.
+- En este tramo `finalizar` (`vigente → finalizado`) sigue siendo una acción manual: el cierre automático del contrato al cerrarse la última aplicación llega con las órdenes de aplicación, en un tramo posterior.
 
 **Implementación:** las transiciones viven en una tabla de transiciones permitidas + un servicio de dominio en Laravel (enum de estados, guardas por transición, excepción si la transición no existe) — nunca un `UPDATE estado = ...` suelto en un controlador (ver ADR 0003). Cada transición escribe en la tabla de auditoría: quién, cuándo, de qué estado a cuál, motivo.
 

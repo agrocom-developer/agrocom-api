@@ -30,12 +30,11 @@ use Illuminate\Validation\Rule;
  * `lotes` (pedido del dueño, tarea "contratos-lotes", 16/9/2026): al menos un
  * lote concreto, cada uno existente entre `com_lotes` activos — igual que
  * `campania_id`, solo se valida ACÁ que el ID exista, nunca que sea de una
- * propiedad del cliente elegido ni que esa propiedad tenga superficie libre
- * en la campaña: ambas cruzan varias tablas y son guardas de negocio, viven
- * en `Aplicacion/CrearContrato` vía
- * `Aplicacion/Contrato/VerificadorLotesDelContrato` ({@see
- * \App\Dominios\Comercial\Dominio\Excepciones\LoteAjenoAlCliente}, {@see
- * \App\Dominios\Comercial\Dominio\Excepciones\LotesDePropiedadAgotados}).
+ * propiedad del cliente elegido ni que el lote esté libre en la campaña
+ * (que no lo retenga otro contrato vigente o pausado, ADR 0021): ambas cruzan
+ * varias tablas y son guardas de negocio, viven en `Aplicacion/CrearContrato`
+ * vía `Aplicacion/Contrato/VerificadorLotesDelContrato` (excepciones
+ * `LoteAjenoAlCliente` y `LotesYaContratados`).
  *
  * `lotes.*.hora_inicio`/`lotes.*.hora_fin` (reemplazo del 16/9/2026 de las
  * ventanas de contrato: el rango horario para fumigar pasó de ser un dato

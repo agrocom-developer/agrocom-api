@@ -70,5 +70,48 @@ test('contrato: ningún estado se transiciona a sí mismo', function () {
         ->and(TransicionesContrato::permitida(EstadoContrato::Vigente, EstadoContrato::Vigente))->toBeFalse()
         ->and(TransicionesContrato::permitida(EstadoContrato::Finalizado, EstadoContrato::Finalizado))->toBeFalse()
         ->and(TransicionesContrato::permitida(EstadoContrato::Cancelado, EstadoContrato::Cancelado))->toBeFalse()
-        ->and(TransicionesContrato::permitida(EstadoContrato::Pausado, EstadoContrato::Pausado))->toBeFalse();
+        ->and(TransicionesContrato::permitida(EstadoContrato::Pausado, EstadoContrato::Pausado))->toBeFalse()
+        ->and(TransicionesContrato::permitida(EstadoContrato::Conflicto, EstadoContrato::Conflicto))->toBeFalse();
+});
+
+/*
+ * `conflicto` (ADR 0021): borrador que comparte lote con un contrato que ya
+ * retiene lotes. Lo mueve solo el sistema al reconciliar la campaña; un
+ * contrato en conflicto nunca se aprueba directo — vuelve a `borrador` y
+ * desde ahí se aprueba.
+ */
+
+test('contrato: borrador pasa a conflicto y conflicto vuelve a borrador', function () {
+    expect(TransicionesContrato::permitida(EstadoContrato::Borrador, EstadoContrato::Conflicto))->toBeTrue()
+        ->and(TransicionesContrato::permitida(EstadoContrato::Conflicto, EstadoContrato::Borrador))->toBeTrue();
+});
+
+test('contrato: conflicto puede cancelarse', function () {
+    expect(TransicionesContrato::permitida(EstadoContrato::Conflicto, EstadoContrato::Cancelado))->toBeTrue();
+});
+
+test('contrato: conflicto no se aprueba directo ni pasa a otro estado operativo', function () {
+    expect(TransicionesContrato::permitida(EstadoContrato::Conflicto, EstadoContrato::Vigente))->toBeFalse()
+        ->and(TransicionesContrato::permitida(EstadoContrato::Conflicto, EstadoContrato::Finalizado))->toBeFalse()
+        ->and(TransicionesContrato::permitida(EstadoContrato::Conflicto, EstadoContrato::Pausado))->toBeFalse();
+});
+
+test('contrato: solo un borrador puede caer en conflicto', function () {
+    expect(TransicionesContrato::permitida(EstadoContrato::Vigente, EstadoContrato::Conflicto))->toBeFalse()
+        ->and(TransicionesContrato::permitida(EstadoContrato::Pausado, EstadoContrato::Conflicto))->toBeFalse()
+        ->and(TransicionesContrato::permitida(EstadoContrato::Finalizado, EstadoContrato::Conflicto))->toBeFalse()
+        ->and(TransicionesContrato::permitida(EstadoContrato::Cancelado, EstadoContrato::Conflicto))->toBeFalse();
+});
+
+test('contrato: solo vigente y pausado retienen lotes', function () {
+    expect(EstadoContrato::Vigente->retieneLotes())->toBeTrue()
+        ->and(EstadoContrato::Pausado->retieneLotes())->toBeTrue()
+        ->and(EstadoContrato::Borrador->retieneLotes())->toBeFalse()
+        ->and(EstadoContrato::Conflicto->retieneLotes())->toBeFalse()
+        ->and(EstadoContrato::Finalizado->retieneLotes())->toBeFalse()
+        ->and(EstadoContrato::Cancelado->retieneLotes())->toBeFalse();
+});
+
+test('contrato: los valores que retienen lotes salen del propio enum', function () {
+    expect(EstadoContrato::valoresQueRetienenLotes())->toBe(['vigente', 'pausado']);
 });

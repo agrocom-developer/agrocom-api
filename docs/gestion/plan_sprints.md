@@ -428,6 +428,45 @@ tocan en su lógica.
 
 ---
 
+## Sprint 19 — Exclusividad de lotes entre contratos (ronda del dueño, 18/9/2026)
+
+*Objetivo: que un lote no quede comprometido dos veces en la misma campaña. El
+contrato elige lotes de las propiedades del cliente, y al aprobarse los
+bloquea para los demás contratos de esa campaña; los que competían por el
+mismo lote pasan solos a "En conflicto". Reemplaza la guarda anterior por
+propiedad completa. Detalle de la corrección del dueño en
+`docs/negocio/observaciones_operaciones_comercial_2026-09-18.md`; el porqué de
+la decisión, en el ADR 0021. La numeración sigue desde HU-96: HU-95 (resumen
+económico de campaña, especificación §9.2) ya está integrada.*
+
+| ID | Historia / tarea | CA esenciales | Est. |
+|---|---|---|---|
+| HU-96 | Como **encargado**, quiero que al aprobar un contrato sus lotes queden bloqueados para otros contratos de la campaña y que los que compartían lote pasen a "En conflicto", para no comprometer dos veces la misma superficie | **1) Retención:** un contrato `vigente` ("En Ejecución") o `pausado` retiene sus lotes y los bloquea para cualquier otro contrato de la **misma campaña**, hasta que pase a `finalizado` ("Ejecutado") o `cancelado`; pausar **no** libera los lotes. **2) Borrador libre:** mientras un contrato está en `borrador` ("En Aprobación") el mismo lote se puede repetir en varios contratos. **3) Conflicto:** al aprobarse un contrato, los otros `borrador` de la misma campaña que comparten al menos un lote con él pasan automáticamente al estado nuevo `conflicto` ("En conflicto"); un contrato en `conflicto` no se puede aprobar. **4) Salida:** vuelve solo a `borrador` cuando ya no comparte ningún lote con un contrato que retenga lotes (se quitó el lote editando, o el otro contrato se canceló o finalizó); también puede cancelarse (`conflicto → cancelado`); nadie puede pedir `conflicto` a mano desde el panel. **5) Guardado:** registrar o editar un contrato agregándole un lote ya retenido por otro contrato (`vigente` o `pausado`) de la misma campaña se rechaza en el servidor con un mensaje que nombra el lote y el contrato que lo tiene; en edición solo se validan los lotes nuevos agregados (un contrato en `conflicto` puede guardarse arrastrando lotes ya ocupados). **6) Reemplaza** la guarda por propiedad completa ("propiedad agotada", `LotesDePropiedadAgotados`, PR #233): la regla pasa a ser por **lote**. **7) Máquina (invariante 7):** tabla `borrador → vigente \| cancelado \| conflicto`, `conflicto → borrador \| cancelado`, `vigente → finalizado \| cancelado \| pausado`, `pausado → vigente`, `finalizado` y `cancelado` sin salida; `borrador ↔ conflicto` solo los dispara la reconciliación de conflictos por campaña dentro de `MaquinaEstadosContrato`, nunca un usuario; la tabla queda cubierta en `tests/Unit/MaquinaEstadosComercialTest.php`. **8) Datos:** migración que agrega `conflicto` al `CHECK` `com_contratos_estado_chk` (solo Postgres). **9) UI:** la lectura para el panel (`LecturaOcupacionLotesPorCampania`) usa los mismos estados que retienen lotes que la guarda del servidor (`vigente` y `pausado`). **10)** `finalizar` sigue siendo manual en este tramo | 3,0 d |
+
+**Total: 3,0 d · 0 pantallas nuevas de menú (amplía Contratos)**
+
+**Es crítica**: toca el servicio de la máquina de estados del contrato y
+reemplaza una guarda de negocio ya existente — se implementa y se integra
+igual; la revisión línea por línea es posterior, anotada en
+`runs/revision-pendiente.txt` (regla de `CLAUDE.md` y
+`automatizacion_desarrollo.md` §5).
+
+**Relación con HUs existentes.** HU-71 (estados del contrato) se **extiende**,
+no se reemplaza: la máquina gana `conflicto`, y `pausado` conserva sus lotes.
+
+**Tramo siguiente, sin HU todavía (pendiente de implementar).** El cierre
+automático del contrato al cerrarse su última aplicación, y la reforma de la
+Orden de Aplicación que el dueño dejó decidida el mismo día —la orden pasa a
+ser siempre por toda la aplicación del contrato, sin elegir lotes ni
+hectáreas parciales por lote— llegan en un tramo posterior, que se numerará
+cuando se planifique. Esa reforma supera parcialmente a HU-92 (lo de "orden
+con N lotes y hectáreas solicitadas por lote") y no cambia el reparto por
+equipo y lote de la Orden de Trabajo (HU-70). Está registrada en
+`docs/negocio/observaciones_operaciones_comercial_2026-09-18.md`, no como ya
+implementada.
+
+---
+
 ## Alcance total del sistema
 
 | Bloque | Días | Pantallas de menú | Estado |

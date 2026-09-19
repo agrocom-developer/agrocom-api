@@ -3,25 +3,27 @@
 namespace App\Dominios\Comercial\Aplicacion\Contrato;
 
 use App\Dominios\Comercial\Dominio\EstadoContrato;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\ContratoLote;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
-use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
- * Dos guardas sobre el conjunto de lotes que un contrato está por tener
- * (pedido del dueño, tarea "contratos-lotes", 16/9/2026): que cada lote sea
- * de una propiedad del mismo cliente del contrato, y que ninguna propiedad
- * involucrada quede "sobre-comprometida" (100% de sus lotes activos ya
- * cubiertos por OTROS contratos `vigente` de la misma campaña). Colaborador
- * compartido entre `Aplicacion/CrearContrato` y `Aplicacion/ActualizarContrato`
- * — mismo criterio que `Aplicacion/Lote/VerificadorHistorialLote`: un único
- * lugar para que ninguno de los dos casos de uso lo duplique ni lo olvide.
+ * Dos guardas sobre el conjunto de lotes que un contrato está por tener: que
+ * cada lote sea de una propiedad del mismo cliente del contrato (pedido del
+ * dueño, tarea "contratos-lotes", 16/9/2026), y que ningún lote esté ya
+ * retenido por OTRO contrato `vigente` o `pausado` de la misma campaña
+ * (pedido del dueño, 18/9/2026, ADR 0021 — reemplaza a la guarda por
+ * PROPIEDAD agotada, que solo saltaba con el 100% de sus lotes cubiertos).
+ * Colaborador compartido entre `Aplicacion/CrearContrato`,
+ * `Aplicacion/ActualizarContrato` y `MaquinaEstadosContrato::activar()` —
+ * mismo criterio que `Aplicacion/Lote/VerificadorHistorialLote`: un único
+ * lugar para que ninguno lo duplique ni lo olvide.
  *
- * Usa los modelos Eloquent `Lote`/`Propiedad`/`ContratoLote` directo, no
- * `DB::table`: los tres son del mismo módulo Comercial que `Contrato`, sin
- * frontera de `Contratos/` de por medio (ADR 0003 solo exige contrato/evento
- * ENTRE módulos, no dentro del mismo).
+ * Usa los modelos Eloquent `Lote`/`ContratoLote`/`Contrato` directo, no
+ * `DB::table`: son del mismo módulo Comercial, sin frontera de `Contratos/`
+ * de por medio (ADR 0003 solo exige contrato/evento ENTRE módulos, no
+ * dentro del mismo).
  */
 final class VerificadorLotesDelContrato
 {
@@ -46,50 +48,69 @@ final class VerificadorLotesDelContrato
     }
 
     /**
-     * Primera propiedad (entre las de `$loteIds`) que ya tiene el 100% de
-     * sus lotes activos cubiertos por OTROS contratos `vigente` de
-     * `$campaniaId`, o `null` si ninguna quedó agotada.
+     * Lotes de `$loteIds` que YA están retenidos (contrato `vigente` o
+     * `pausado`, ver {@see EstadoContrato::retieneLotes()}) por OTRO contrato
+     * de `$campaniaId`, cada uno con el primer contrato que lo retiene.
+     * Lista vacía si ninguno está ocupado.
      *
      * `$contratoIdExcluido` es el propio contrato en edición — se recalcula
      * sin contarlo contra sí mismo — o `null` en un alta, donde el contrato
      * todavía no existe.
      *
      * @param  list<int>  $loteIds
-     * @return array{id: int, nombre: string}|null
+     * @return list<array{lote_id: int, codigo: string, contrato_id: int}>
      */
-    public static function propiedadAgotada(array $loteIds, int $campaniaId, ?int $contratoIdExcluido): ?array
+    public static function lotesOcupados(array $loteIds, int $campaniaId, ?int $contratoIdExcluido): array
     {
         if ($loteIds === []) {
-            return null;
+            return [];
         }
 
-        $propiedadIds = Lote::query()->whereIn('id', $loteIds)->pluck('propiedad_id')->unique();
+        $filas = ContratoLote::query()
+            ->whereIn('lote_id', $loteIds)
+            ->whereHas('contrato', function (Builder $query) use ($campaniaId, $contratoIdExcluido): void {
+                $query->whereIn('estado', EstadoContrato::valoresQueRetienenLotes())
+                    ->where('campania_id', $campaniaId);
 
-        foreach ($propiedadIds as $propiedadId) {
-            $loteIdsDeLaPropiedad = Lote::query()->where('propiedad_id', $propiedadId)->pluck('id');
+                if ($contratoIdExcluido !== null) {
+                    $query->whereKeyNot($contratoIdExcluido);
+                }
+            })
+            ->orderBy('contrato_id')
+            ->get(['id', 'contrato_id', 'lote_id']);
 
-            $ocupados = ContratoLote::query()
-                ->whereIn('lote_id', $loteIdsDeLaPropiedad)
-                ->whereHas('contrato', function (Builder $query) use ($campaniaId, $contratoIdExcluido): void {
-                    $query->where('estado', EstadoContrato::Vigente)
-                        ->where('campania_id', $campaniaId);
-
-                    if ($contratoIdExcluido !== null) {
-                        $query->whereKeyNot($contratoIdExcluido);
-                    }
-                })
-                ->pluck('lote_id')
-                ->unique()
-                ->count();
-
-            if ($ocupados >= $loteIdsDeLaPropiedad->count()) {
-                $propiedad = Propiedad::query()->find($propiedadId);
-                $nombre = $propiedad === null ? (string) $propiedadId : $propiedad->nombre;
-
-                return ['id' => (int) $propiedadId, 'nombre' => $nombre];
-            }
+        if ($filas->isEmpty()) {
+            return [];
         }
 
-        return null;
+        $codigos = Lote::query()
+            ->withTrashed()
+            ->whereIn('id', $filas->pluck('lote_id')->unique()->all())
+            ->pluck('codigo', 'id');
+
+        $ocupados = [];
+        foreach ($filas as $fila) {
+            $ocupados[$fila->lote_id] ??= [
+                'lote_id' => $fila->lote_id,
+                'codigo' => (string) ($codigos[$fila->lote_id] ?? $fila->lote_id),
+                'contrato_id' => $fila->contrato_id,
+            ];
+        }
+
+        return array_values($ocupados);
+    }
+
+    /**
+     * Serializa, dentro de la transacción en curso, toda operación que decide
+     * qué contrato retiene qué lote de `$campaniaId`: dos aprobaciones
+     * simultáneas de contratos que comparten un lote se turnan en vez de
+     * ver ambas "el lote está libre". Bloquea las filas de los contratos de
+     * la campaña (`SELECT ... FOR UPDATE`); en SQLite (tests) no hace nada.
+     * Llamar SIEMPRE adentro de un `DB::transaction()`, antes de consultar
+     * {@see self::lotesOcupados()}.
+     */
+    public static function bloquearCampania(int $campaniaId): void
+    {
+        Contrato::query()->where('campania_id', $campaniaId)->lockForUpdate()->pluck('id');
     }
 }

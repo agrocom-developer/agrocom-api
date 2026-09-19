@@ -14,7 +14,7 @@ use App\Dominios\Comercial\Dominio\EstadoContrato;
 use App\Dominios\Comercial\Dominio\Excepciones\ActivacionContratoNoDisponible;
 use App\Dominios\Comercial\Dominio\Excepciones\CampaniaCerrada;
 use App\Dominios\Comercial\Dominio\Excepciones\LoteAjenoAlCliente;
-use App\Dominios\Comercial\Dominio\Excepciones\LotesDePropiedadAgotados;
+use App\Dominios\Comercial\Dominio\Excepciones\LotesYaContratados;
 use App\Dominios\Comercial\Dominio\Excepciones\TransicionContratoNoPermitida;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
@@ -148,7 +148,7 @@ final class ContratosController
                 ->route('panel.contratos.create')
                 ->withInput()
                 ->withErrors(['campania_id' => $excepcion->getMessage()]);
-        } catch (LoteAjenoAlCliente|LotesDePropiedadAgotados $excepcion) {
+        } catch (LoteAjenoAlCliente|LotesYaContratados $excepcion) {
             return redirect()
                 ->route('panel.contratos.create')
                 ->withInput()
@@ -232,6 +232,7 @@ final class ContratosController
             'finalizado' => 'distintivo-2',
             'cancelado' => 'danger',
             'pausado' => 'info',
+            'conflicto' => 'alert',
         ];
 
         // Lote_ids del contrato en edición — para quedarse, de TODOS los
@@ -309,7 +310,7 @@ final class ContratosController
                 ->route('panel.contratos.edit', $contrato)
                 ->withInput()
                 ->withErrors(['campania_id' => $excepcion->getMessage()]);
-        } catch (LoteAjenoAlCliente|LotesDePropiedadAgotados $excepcion) {
+        } catch (LoteAjenoAlCliente|LotesYaContratados $excepcion) {
             return redirect()
                 ->route('panel.contratos.edit', $contrato)
                 ->withInput()
