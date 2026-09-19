@@ -4,12 +4,17 @@
 // combobox accesible y lo oculta visualmente. Si este archivo no carga, el
 // nativo queda como único control — visible y usable.
 //
-// Un solo elemento enfocable durante toda la interacción: el
-// `[data-ag-select-trigger]` (role="combobox"). Nunca se mueve el foco a un
-// hijo, así `aria-activedescendant` siempre tiene un dueño inequívoco. El
-// texto tipeado (búsqueda o type-ahead) se captura por `keydown` sobre ese
-// mismo elemento y se refleja en una fila decorativa dentro del listbox
-// (buscable) o simplemente mueve la opción activa (no buscable).
+// Select NO buscable (8 opciones o menos): un solo elemento enfocable durante
+// toda la interacción, el `[data-ag-select-trigger]` (role="combobox"); el
+// texto tipeado (type-ahead) se captura por `keydown` sobre ese elemento y
+// mueve la opción activa.
+//
+// Select BUSCABLE: al abrir, el foco pasa a un `<input>` real dentro del
+// desplegable (19/9/2026). Antes era una fila decorativa sin foco: pulsarla no
+// hacía nada, el placeholder no se iba, no había teclado en el celular y ni el
+// pegado ni los acentos compuestos entraban. Ese input es el dueño de
+// `aria-activedescendant` mientras el desplegable está abierto; al cerrar, el
+// foco vuelve al trigger.
 //
 // Sin dependencias externas — mismo criterio que atoms/input.js.
 
@@ -21,6 +26,17 @@ function normalizar(texto) {
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
         .trim();
+}
+
+// Búsqueda por PALABRAS (19/9/2026): cada palabra escrita tiene que aparecer en
+// la etiqueta, en cualquier orden y posición — "cotoca santa" encuentra
+// "Cotoca - Santa Cruz". Sin distinguir mayúsculas ni acentos (`normalizar`).
+function palabrasDeBusqueda(texto) {
+    return normalizar(texto).split(/\s+/).filter(Boolean);
+}
+
+function coincide(etiquetaNormalizada, palabras) {
+    return palabras.every((palabra) => etiquetaNormalizada.includes(palabra));
 }
 
 function crearIcono(nombre, claseExtra) {
@@ -49,6 +65,40 @@ function inicializar(root) {
     const etiquetaPlaceholder = root.dataset.labelPlaceholder || '';
     const idPrefijoOpcion = `${listbox.id}-opt-`;
 
+    // Fila de búsqueda: se crea UNA vez y se conserva entre repintados de las
+    // opciones — si se reconstruyera en cada tecla, el input perdería el foco.
+    let filaBusqueda = null;
+    let inputBusqueda = null;
+
+    if (buscable) {
+        filaBusqueda = document.createElement('li');
+        filaBusqueda.className = 'ag-select__search-row';
+        filaBusqueda.setAttribute('role', 'presentation');
+        filaBusqueda.append(crearIcono('search'));
+
+        inputBusqueda = document.createElement('input');
+        inputBusqueda.type = 'text';
+        inputBusqueda.className = 'ag-select__search-input';
+        inputBusqueda.placeholder = etiquetaBuscar;
+        inputBusqueda.autocomplete = 'off';
+        inputBusqueda.spellcheck = false;
+        inputBusqueda.setAttribute('role', 'searchbox');
+        inputBusqueda.setAttribute('aria-label', etiquetaBuscar);
+        inputBusqueda.setAttribute('aria-controls', listbox.id);
+        inputBusqueda.setAttribute('aria-autocomplete', 'list');
+        filaBusqueda.append(inputBusqueda);
+
+        // Un clic en el ícono o en el margen de la fila no debe sacar el foco
+        // del input: el `focusout` lo tomaría como "salió del combobox" y
+        // cerraría el desplegable.
+        filaBusqueda.addEventListener('mousedown', (evento) => {
+            if (evento.target !== inputBusqueda) {
+                evento.preventDefault();
+                inputBusqueda.focus();
+            }
+        });
+    }
+
     let opciones = [];
     let filtradas = [];
     let indiceActivo = -1;
@@ -59,7 +109,13 @@ function inicializar(root) {
     function leerOpciones() {
         opciones = Array.from(nativo.querySelectorAll('option'))
             .filter((opt) => !opt.disabled)
-            .map((opt) => ({ value: opt.value, label: opt.textContent ?? '' }));
+            .map((opt) => {
+                const label = opt.textContent ?? '';
+
+                // `normalizada` se calcula acá, una sola vez: con ~365 municipios
+                // normalizar en cada tecla sería trabajo repetido.
+                return { value: opt.value, label, normalizada: normalizar(label) };
+            });
     }
 
     function etiquetaSeleccionActual() {
@@ -81,35 +137,30 @@ function inicializar(root) {
     }
 
     function actualizarActiveDescendant() {
+        // Lo tiene quien tiene el foco: el input de búsqueda si hay, si no el trigger.
+        const dueno = inputBusqueda ?? trigger;
+
         if (indiceActivo >= 0 && filtradas[indiceActivo]) {
-            trigger.setAttribute('aria-activedescendant', `${idPrefijoOpcion}${indiceActivo}`);
+            dueno.setAttribute('aria-activedescendant', `${idPrefijoOpcion}${indiceActivo}`);
         } else {
-            trigger.removeAttribute('aria-activedescendant');
+            dueno.removeAttribute('aria-activedescendant');
         }
     }
 
-    function pintarListbox() {
-        listbox.innerHTML = '';
+    // Quita las opciones pintadas, conservando la fila de búsqueda (y su foco).
+    function limpiarOpciones() {
+        Array.from(listbox.children).forEach((hijo) => {
+            if (hijo !== filaBusqueda) {
+                hijo.remove();
+            }
+        });
+    }
 
-        if (buscable) {
-            const fila = document.createElement('li');
-            fila.className = 'ag-select__search-row';
-            fila.setAttribute('role', 'presentation');
-            fila.append(crearIcono('search'));
-            const texto = document.createElement('span');
-            texto.textContent = buffer || etiquetaBuscar;
-            fila.append(texto);
-            // Sin foco propio (invariante de accesibilidad: un solo elemento
-            // enfocable, el trigger, ver docblock de arriba) — visualmente
-            // parece un input de texto, así que un usuario real le hace clic
-            // esperando poner el cursor ahí. Sin este `preventDefault()`, ese
-            // clic no tiene ningún control focuseable que lo reciba: el
-            // navegador termina de-enfocando el trigger, `focusout` lo toma
-            // como "foco salió de la raíz" y cierra el combobox — el bug
-            // reportado como "el select se oculta al querer buscar". Mismo
-            // mecanismo que ya usa cada `<li>` de opción de abajo.
-            fila.addEventListener('mousedown', (evento) => evento.preventDefault());
-            listbox.append(fila);
+    function pintarListbox() {
+        limpiarOpciones();
+
+        if (filaBusqueda && filaBusqueda.parentNode !== listbox) {
+            listbox.prepend(filaBusqueda);
         }
 
         if (filtradas.length === 0) {
@@ -165,8 +216,8 @@ function inicializar(root) {
             return;
         }
 
-        const termino = normalizar(buffer);
-        filtradas = termino === '' ? opciones : opciones.filter((opt) => normalizar(opt.label).includes(termino));
+        const palabras = palabrasDeBusqueda(buffer);
+        filtradas = palabras.length === 0 ? opciones : opciones.filter((opt) => coincide(opt.normalizada, palabras));
         indiceActivo = filtradas.length > 0 ? 0 : -1;
     }
 
@@ -186,7 +237,13 @@ function inicializar(root) {
 
         trigger.setAttribute('aria-expanded', 'true');
         listbox.hidden = false;
+
+        if (inputBusqueda) {
+            inputBusqueda.value = '';
+        }
+
         pintarListbox();
+        inputBusqueda?.focus({ preventScroll: true });
     }
 
     function cerrar() {
@@ -199,8 +256,13 @@ function inicializar(root) {
         indiceActivo = -1;
         trigger.setAttribute('aria-expanded', 'false');
         trigger.removeAttribute('aria-activedescendant');
+        inputBusqueda?.removeAttribute('aria-activedescendant');
         listbox.hidden = true;
-        listbox.innerHTML = '';
+        limpiarOpciones();
+
+        if (inputBusqueda) {
+            inputBusqueda.value = '';
+        }
     }
 
     function seleccionar(opcion) {
@@ -242,7 +304,7 @@ function inicializar(root) {
 
     function saltarAPrimeraCoincidencia(caracterBuffer) {
         const termino = normalizar(caracterBuffer);
-        const indice = opciones.findIndex((opt) => normalizar(opt.label).startsWith(termino));
+        const indice = opciones.findIndex((opt) => opt.normalizada.startsWith(termino));
 
         if (indice === -1) {
             return;
@@ -254,7 +316,10 @@ function inicializar(root) {
 
     function manejarTipeo(caracter) {
         if (buscable) {
-            buffer += caracter;
+            // `abrir()` ya pasó el foco al input: el carácter que abrió el
+            // desplegable se vuelca ahí como primer texto de la búsqueda.
+            inputBusqueda.value += caracter;
+            buffer = inputBusqueda.value;
             filtrar();
             pintarListbox();
             return;
@@ -342,17 +407,20 @@ function inicializar(root) {
                 return;
             case 'Backspace':
             case 'Delete':
-                if (buscable && abierto && buffer.length > 0) {
-                    evento.preventDefault();
-                    buffer = buffer.slice(0, -1);
-                    filtrar();
-                    pintarListbox();
-                } else if (!abierto) {
+                // Con el desplegable abierto y búsqueda, el foco está en el input
+                // y borra por su cuenta; acá solo llega el trigger.
+                if (!abierto) {
                     limpiar();
                 }
                 return;
             default:
                 if (evento.key.length === 1 && !evento.ctrlKey && !evento.altKey && !evento.metaKey) {
+                    if (buscable) {
+                        // El foco se muda al input dentro de `abrir()`: sin esto el
+                        // carácter se insertaría ahí por segunda vez.
+                        evento.preventDefault();
+                    }
+
                     if (!abierto) {
                         abrir();
                     }
@@ -361,7 +429,47 @@ function inicializar(root) {
         }
     });
 
-    trigger.addEventListener('focusout', (evento) => {
+    if (inputBusqueda) {
+        inputBusqueda.addEventListener('input', () => {
+            buffer = inputBusqueda.value;
+            filtrar();
+            pintarListbox();
+        });
+
+        // Home/End quedan para el cursor del texto; el resto navega la lista.
+        inputBusqueda.addEventListener('keydown', (evento) => {
+            switch (evento.key) {
+                case 'ArrowDown':
+                    evento.preventDefault();
+                    moverActivo(1);
+                    return;
+                case 'ArrowUp':
+                    evento.preventDefault();
+                    moverActivo(-1);
+                    return;
+                case 'Enter':
+                    // Sin `preventDefault` el Enter enviaría el formulario entero.
+                    evento.preventDefault();
+                    if (indiceActivo >= 0 && filtradas[indiceActivo]) {
+                        seleccionar(filtradas[indiceActivo]);
+                    } else {
+                        cerrar();
+                    }
+                    return;
+                case 'Escape':
+                    evento.preventDefault();
+                    cerrar();
+                    trigger.focus();
+                    return;
+                case 'Tab':
+                    cerrar();
+            }
+        });
+    }
+
+    // En la raíz y no en el trigger: con búsqueda el foco vive en el input del
+    // desplegable, y sus `focusout` no pasan por el trigger.
+    root.addEventListener('focusout', (evento) => {
         if (!root.contains(evento.relatedTarget)) {
             cerrar();
         }

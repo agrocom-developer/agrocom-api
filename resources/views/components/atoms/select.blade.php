@@ -51,29 +51,33 @@
       criterio que el `disabled` del `<select>`).
 
     Búsqueda automática: con más de 8 opciones el combobox arma un filtro de
-    texto dentro del propio desplegable (substring, sin distinguir
-    mayúsculas ni tildes); con 8 o menos, no hay caja de búsqueda visible
-    pero el teclado igual soporta type-ahead (saltar a la primera opción que
-    empieza con la letra tipeada) — mismo comportamiento que un `<select>`
-    nativo. El umbral es automático (`count($options) > 8`) salvo que
-    `searchable` lo fuerce.
+    texto dentro del propio desplegable — por PALABRAS: cada palabra escrita
+    debe aparecer en la etiqueta, en cualquier orden ("cotoca santa" encuentra
+    "Cotoca - Santa Cruz"), sin distinguir mayúsculas, minúsculas ni tildes —
+    un `<input>` REAL que recibe el foco al abrir (19/9/2026;
+    antes era una fila decorativa que no tomaba foco: pulsarla no hacía nada, no
+    aparecía el teclado en el celular y el placeholder no se iba). Con 8 o menos,
+    no hay caja de búsqueda visible pero el teclado igual soporta type-ahead
+    (saltar a la primera opción que empieza con la letra tipeada) — mismo
+    comportamiento que un `<select>` nativo. El umbral es automático
+    (`count($options) > 8`) salvo que `searchable` lo fuerce. OJO: si las
+    opciones las llena JS después de renderizar (selects en cascada), el conteo
+    del servidor es 0 — hay que pasar `searchable` a mano.
 
     - searchable (bool|null, default null): `null` deja el umbral automático
       de arriba; `false` fuerza el modo type-ahead aunque haya más de 8
-      opciones — caso real: el filtro de departamento de
-      `comercial::pages.propiedades.index` (9 departamentos, activa el modo
-      buscable por defecto) con la caja de búsqueda del combobox que no
-      dejaba escribir texto (bug pendiente de investigar en
-      resources/js/atoms/select.js); mientras tanto, este campo se muestra
-      sin ella. `true` fuerza el modo buscable aunque haya 8 opciones o
-      menos, por si algún día hace falta.
+      opciones — lo usa el filtro de departamento de
+      `comercial::pages.propiedades.index`, desde cuando la caja de búsqueda no
+      dejaba escribir texto (corregido el 19/9/2026 con el `<input>` real; ese
+      filtro se dejó como estaba). `true` fuerza el modo buscable aunque haya 8
+      opciones o menos, o si las opciones las llena JS luego.
 
-    Accesibilidad: un solo elemento enfocable hace de combobox durante toda
-    la interacción (el `div[role="combobox"]`, nunca el input de búsqueda),
-    para que `aria-activedescendant` tenga siempre un dueño inequívoco — ver
-    resources/js/atoms/select.js. El texto tipeado (búsqueda o type-ahead) se
-    captura por `keydown` sobre ese mismo elemento, nunca movió el foco a un
-    input hijo.
+    Accesibilidad: sin búsqueda, un solo elemento enfocable hace de combobox
+    durante toda la interacción (el `div[role="combobox"]`) y el type-ahead se
+    captura por `keydown` sobre él. Con búsqueda, al abrir el foco pasa al
+    `<input role="searchbox">` del desplegable, que es el dueño de
+    `aria-activedescendant` mientras está abierto; al cerrar, el foco vuelve
+    al combobox — ver resources/js/atoms/select.js.
 
     LSP (`$attributes`, ver docs/diseno/guia_pantalla_panel.md §3): mismo
     criterio partido que `atoms/input` — la raíz (`<div class="ag-select">`)
@@ -150,7 +154,12 @@
             {{ $attributes->except('class') }}
         >
             @if ($placeholder)
-                <option value="" @selected($value === null) disabled hidden>{{ $placeholder }}</option>
+                {{-- Placeholder seleccionado cuando NO hay valor: `null` o `''` (los
+                     formularios de alta pasan `old('campo', '')`). Con solo `=== null`,
+                     un `''` dejaba el placeholder sin marcar y el navegador elegía la
+                     PRIMERA opción real — el select mostraba "Beni" sin que nadie lo
+                     hubiera elegido. --}}
+                <option value="" @selected($value === null || $value === '') disabled hidden>{{ $placeholder }}</option>
             @endif
             @foreach ($options as $optValue => $optLabel)
                 <option value="{{ $optValue }}" @selected((string) $value === (string) $optValue)>{{ $optLabel }}</option>

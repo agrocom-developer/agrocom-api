@@ -87,12 +87,16 @@
    deja de verse: ocupa el mismo cuadro que el trigger, invisible pero sin
    `display:none`/`visibility:hidden` — mismo criterio que un input file
    custom, para no romper foco programático ni el envío del form. */
-.ag-select__native--enhanced {
+.ag-select__native.ag-select__native--enhanced {
     position: absolute;
     inset: 0;
     opacity: 0;
     pointer-events: none;
 }
+/* Doble clase a propósito (19/9/2026): el reboot de Bootstrap trae
+   `select:disabled { opacity: 1 }` (especificidad 0,1,1) y le ganaba a
+   `.ag-select__native--enhanced` (0,1,0) — un select DESHABILITADO mostraba su
+   texto y su flecha nativos debajo de los del combobox, todo duplicado. */
 
 .ag-select__trigger {
     display: flex;
@@ -237,11 +241,31 @@
     font-size: var(--ag-font-size-base);
 }
 
-.ag-select__search-row span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+/* El campo de búsqueda es un <input> real (antes una fila decorativa). Sin
+   caja propia: la fila ya tiene el ícono y el borde inferior. */
+.ag-select__search-input {
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
     color: var(--ag-color-text);
+    font: inherit;
+}
+
+.ag-select__search-input::placeholder {
+    color: var(--ag-color-text-muted);
+}
+
+/* El placeholder se va apenas el campo tiene foco (pedido del 19/9/2026): con
+   el cursor ya no hace falta la pista, y no se encima con lo que se escribe. */
+.ag-select__search-input:focus::placeholder {
+    color: transparent;
+}
+
+.ag-select__search-row:focus-within {
+    border-bottom-color: var(--ag-color-focus-ring);
 }
 
 .ag-select__option {
