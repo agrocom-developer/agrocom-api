@@ -52,6 +52,34 @@
     color: var(--ag-color-neutral-strong);
 }
 
+/* Resto de la paleta de `atoms/badge` (19/9/2026): un modal que confirma un
+   cambio de estado lleva el color de ESE estado, el mismo de su badge, para
+   ver antes de confirmar a cuál se pasa. */
+.ag-confirm-modal__icon--alert {
+    background-color: var(--ag-color-alert-subtle);
+    color: var(--ag-color-alert-strong);
+}
+
+.ag-confirm-modal__icon--distintivo-1 {
+    background-color: var(--ag-color-distintivo-1-subtle);
+    color: var(--ag-color-distintivo-1-strong);
+}
+
+.ag-confirm-modal__icon--distintivo-2 {
+    background-color: var(--ag-color-distintivo-2-subtle);
+    color: var(--ag-color-distintivo-2-strong);
+}
+
+.ag-confirm-modal__icon--distintivo-3 {
+    background-color: var(--ag-color-distintivo-3-subtle);
+    color: var(--ag-color-distintivo-3-strong);
+}
+
+.ag-confirm-modal__icon--primary-2 {
+    background-color: var(--ag-color-primary-2-subtle);
+    color: var(--ag-color-primary-2-strong);
+}
+
 .ag-confirm-modal__title {
     margin: 0;
     font-family: var(--ag-font-family-display);

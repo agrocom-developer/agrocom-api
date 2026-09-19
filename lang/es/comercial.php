@@ -134,6 +134,19 @@ return [
             'pausado' => 'Pausado',
             'conflicto' => 'En conflicto',
         ],
+        // Párrafo de apoyo bajo los pasos de la ficha de edición: qué
+        // significa cada estado y qué conviene hacer. Admite :actual y :paso.
+        'estado_ayuda' => [
+            'borrador' => 'El contrato está en aprobación: todavía es una propuesta, no bloquea sus lotes ni admite órdenes de aplicación. Al aprobarlo pasa a «:paso», sus lotes quedan bloqueados para los demás contratos de la campaña y ya puedes emitir órdenes. Si ya no va a seguir, cancélalo.',
+            'conflicto' => 'El contrato comparte al menos un lote con otro contrato de la campaña que ya está en ejecución, por eso no se puede aprobar. Decide qué hacer: cancélalo, o quita de su lista los lotes en conflicto para que vuelva a estar en aprobación y puedas aprobarlo.',
+            'vigente' => 'El contrato está en ejecución: mantiene bloqueados sus lotes y admite una orden de aplicación a la vez. Al cerrarse la última aplicación pasa solo a «:paso»; también puedes finalizarlo tú. Pausarlo interrumpe la ejecución sin cancelarla. Para finalizarlo o cancelarlo antes de tiempo, primero cierra o cancela la orden que tenga abierta.',
+            'pausado' => 'El contrato está pausado: la ejecución está interrumpida, no admite órdenes nuevas y sus lotes siguen bloqueados. Al reanudarlo vuelve a «:paso».',
+            'finalizado' => 'El contrato está ejecutado: ya no admite cambios de estado ni órdenes nuevas, y sus lotes quedaron liberados.',
+            'cancelado' => 'El contrato está cancelado: ya no admite cambios de estado ni órdenes nuevas, y sus lotes quedaron liberados.',
+        ],
+        'pasos' => [
+            'pista_conflicto' => 'No se puede aprobar mientras comparta lotes con un contrato en ejecución.',
+        ],
     ],
 
     // ADR 0018 (tarea x): nivel de terreno entre cliente y campo.
@@ -371,7 +384,7 @@ return [
         // (aprobar/reanudar), info a finalizado, warning a pausado, danger a
         // cancelado (irreversible desde el panel).
         'confirmar_aprobar_titulo' => 'Aprobar contrato',
-        'confirmar_aprobar' => '¿Aprobar este contrato? Pasa a vigente.',
+        'confirmar_aprobar' => '¿Aprobar este contrato? Pasa a «En Ejecución» y sus lotes quedan bloqueados para los demás contratos de la campaña.',
         'confirmar_finalizar_titulo' => 'Finalizar contrato',
         'confirmar_finalizar' => '¿Dar este contrato por finalizado?',
         'confirmar_cancelar_titulo' => 'Cancelar contrato',
@@ -380,6 +393,26 @@ return [
         'confirmar_pausar' => '¿Pausar este contrato? Se interrumpe la ejecución sin cancelarlo.',
         'confirmar_reanudar_titulo' => 'Reanudar contrato',
         'confirmar_reanudar' => '¿Reanudar este contrato?',
+
+        // Aprobar un contrato que comparte lotes con otros en aprobación: se
+        // avisa antes de confirmar a cuáles va a dejar «En conflicto».
+        'aprobar_conflictos_aviso' => 'Al aprobarlo, los contratos que comparten lotes con este pasarán a «En conflicto» y no se podrán aprobar hasta que decidas qué hacer con ellos: cancelarlos o quitarles esos lotes.',
+        'aprobar_conflictos_item' => ':cliente · lotes :lotes',
+        'aprobar_conflictos_ver' => 'Ver contrato',
+
+        // Con una aplicación abierta el contrato todavía no se puede finalizar
+        // ni cancelar: primero se cierra o se cancela esa orden.
+        'aviso_aplicacion_titulo_finalizar' => 'Aún no puedes finalizar el contrato',
+        'aviso_aplicacion_titulo_cancelar' => 'Aún no puedes cancelar el contrato',
+        'aviso_aplicacion_mensaje_finalizar' => 'Este contrato tiene abierta la aplicación :nro de :total (orden «:estado»). Antes de finalizarlo, cierra o cancela esa orden.',
+        'aviso_aplicacion_mensaje_cancelar' => 'Este contrato tiene abierta la aplicación :nro de :total (orden «:estado»). Antes de cancelarlo, cierra o cancela esa orden.',
+        'aviso_aplicacion_motivo' => 'Si vas a cerrar el contrato antes de tiempo, cancela la orden e indica la causa y el motivo: así queda registrado por qué se interrumpió.',
+        'aviso_aplicacion_ir' => 'Ir a la orden',
+        'aviso_aplicacion_entendido' => 'Entendido',
+
+        // Pasos del estado, en la ficha de edición.
+        'estado_pasos_aria' => 'Estado del contrato',
+        'estado_cambio_de_a' => 'Cambio de estado: de «:desde» a «:hacia»',
 
         // Formulario (create/edit)
         'titulo_crear' => 'Nuevo contrato',
@@ -471,6 +504,14 @@ return [
         'conflicto_modal_monto' => 'Monto contratado (Bs)',
         'conflicto_modal_lotes_titulo' => 'Lotes en conflicto',
         'conflicto_modal_editar' => 'Editar contrato',
+
+        // Aviso en la ficha de un contrato «En conflicto».
+        'conflicto_aviso_titulo' => 'Este contrato está en conflicto',
+        'conflicto_aviso_detalle' => 'Comparte lotes con contratos que ya están en ejecución en la misma campaña, por eso no se puede aprobar. Decide qué hacer: cancela este contrato o quita de su lista los lotes en conflicto.',
+        'conflicto_aviso_con' => 'Contrato de :cliente (:estado) · lotes :lotes',
+        'conflicto_aviso_ver' => 'Ver contrato',
+        'conflicto_aviso_cancelar' => 'Cancelar contrato',
+        'conflicto_aviso_revisar' => 'Revisar lotes',
 
         // Modal de lotes por propiedad (tarea "contratos-lotes", rediseño
         // sept/2026): reemplaza al panel lateral con checkboxes siempre

@@ -30,4 +30,15 @@ interface LecturaResumenOrdenesContrato
      * Comercial.
      */
     public function siguienteAplicacion(int $contratoId, int $aplicacionesPrevistas): ?int;
+
+    /**
+     * La aplicación abierta de cada contrato que la tenga (ADR 0022: una sola
+     * por contrato, garantizada por un índice de la base). Sirve para explicar
+     * por qué un contrato no se puede cancelar ni finalizar todavía y llevar al
+     * usuario a esa orden; los contratos sin aplicación abierta no aparecen.
+     *
+     * @param  list<int>  $contratoIds
+     * @return array<int, DatosAplicacionAbierta> contrato_id => su aplicación abierta
+     */
+    public function aplicacionesAbiertas(array $contratoIds): array;
 }

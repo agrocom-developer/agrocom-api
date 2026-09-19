@@ -24,7 +24,13 @@ use Closure;
  * de ayuda de cada uno; cómo se compone el párrafo con el paso siguiente y el
  * permiso es de acá, así se reutiliza en cualquier pantalla.
  *
- * @phpstan-type Paso array{key: string, label: string, tone: string, status: 'completed'|'current'|'next'|'pending'|'blocked', modal: string|null, hint: string|null}
+ * Una máquina en línea recta (campaña: planificada → abierta → cerrada) solo
+ * necesita la ruta. Una con desvíos y salidas (contrato: pausado, conflicto,
+ * cancelado) usa además `$recorridos`, `$pistas` e `$iconos` de `armar()` y el
+ * `$claveDestino` de `ayuda()`; todos son opcionales y, sin ellos, el
+ * resultado es el de siempre.
+ *
+ * @phpstan-type Paso array{key: string, label: string, tone: string, status: 'completed'|'current'|'next'|'pending'|'blocked', modal: string|null, hint: string|null, icon: string|null}
  */
 final class PasosDeEstado
 {
@@ -34,6 +40,8 @@ final class PasosDeEstado
      * @param  list<T>  $ruta  estados de la ruta principal, en el orden en que se recorren.
      * @param  T  $actual  estado actual del objeto.
      * @param  Closure(T, T): bool  $permitida  ¿la máquina admite pasar del primero al segundo?
+     *                                          Un paso `next` puede quedar ANTES del actual (volver de
+     *                                          una pausa): lo que manda es esta tabla, no la posición.
      * @param  array<string, string>  $tonos  valor del estado → tono de `atoms/badge`
      *                                        (sin entrada cae en `neutral`).
      * @param  string  $claveEtiqueta  prefijo de idioma: la etiqueta de cada paso es
@@ -41,6 +49,19 @@ final class PasosDeEstado
      * @param  string  $prefijoModal  el `id` del `confirm-modal` que abre un paso `next`
      *                                es `"{$prefijoModal}-{valor del estado}"`.
      * @param  bool  $puedeCambiar  si el usuario tiene el permiso de cambiar el estado.
+     * @param  list<T>|null  $recorridos  estados por los que el objeto YA pasó para llegar al
+     *                                    actual. `null` (lo habitual) los deduce de la posición
+     *                                    en la ruta: todo lo que queda antes del actual. Hay que
+     *                                    pasarlos cuando la ruta mezcla desvíos y salidas: un
+     *                                    contrato cancelado no completó «Ejecutado» aunque
+     *                                    quede antes de «Cancelado» en la fila.
+     * @param  array<string, string>  $pistas  valor del estado → texto (ya traducido) para un
+     *                                         paso `blocked`, en lugar del genérico «pasa antes
+     *                                         por…». Sirve cuando el motivo del bloqueo no es de
+     *                                         orden sino de negocio (p. ej. un conflicto de lotes).
+     * @param  array<string, string>  $iconos  valor del estado → ícono con el que se dibuja el
+     *                                         paso cuando queda procesado (por defecto un check):
+     *                                         un estado de salida como «Cancelado» no es un éxito.
      * @return list<Paso>
      */
     public static function armar(
@@ -51,20 +72,36 @@ final class PasosDeEstado
         string $claveEtiqueta,
         string $prefijoModal,
         bool $puedeCambiar,
+        ?array $recorridos = null,
+        array $pistas = [],
+        array $iconos = [],
     ): array {
         $posicionActual = array_search($actual, $ruta, true);
         $posicionActual = $posicionActual === false ? -1 : $posicionActual;
-        $siguiente = $ruta[$posicionActual + 1] ?? null;
+
+        // El primer estado de la ruta al que se puede pasar desde el actual: es
+        // por el que hay que pasar antes para llegar a uno bloqueado.
+        $primerAlcanzable = null;
+
+        foreach ($ruta as $estado) {
+            if ($estado !== $actual && $permitida($actual, $estado)) {
+                $primerAlcanzable = $estado;
+                break;
+            }
+        }
 
         $pasos = [];
 
         foreach ($ruta as $posicion => $estado) {
+            $completado = $recorridos === null
+                ? $posicion < $posicionActual
+                : in_array($estado, $recorridos, true);
+
             $situacion = match (true) {
                 $estado === $actual => 'current',
-                $posicion < $posicionActual => 'completed',
-                ! $permitida($actual, $estado) => 'blocked',
-                $puedeCambiar => 'next',
-                default => 'pending',
+                $permitida($actual, $estado) => $puedeCambiar ? 'next' : 'pending',
+                $completado => 'completed',
+                default => 'blocked',
             };
 
             $pasos[] = [
@@ -75,14 +112,14 @@ final class PasosDeEstado
                 'modal' => $situacion === 'next' ? "{$prefijoModal}-{$estado->value}" : null,
                 'hint' => match (true) {
                     $situacion === 'pending' => Texto::de('ui.pasos.pista_sin_permiso'),
-                    // Se pide pasar antes por el paso que sigue al actual; si ese es
-                    // el mismo paso bloqueado, no hay nada intermedio que nombrar.
-                    $situacion === 'blocked' && $siguiente !== null && $siguiente !== $estado => Texto::de(
+                    $situacion === 'blocked' && isset($pistas[(string) $estado->value]) => $pistas[(string) $estado->value],
+                    $situacion === 'blocked' && $primerAlcanzable !== null => Texto::de(
                         'ui.pasos.pista_bloqueado',
-                        ['paso' => self::etiqueta($claveEtiqueta, $siguiente)],
+                        ['paso' => self::etiqueta($claveEtiqueta, $primerAlcanzable)],
                     ),
                     default => null,
                 },
+                'icon' => $iconos[(string) $estado->value] ?? null,
             ];
         }
 
@@ -101,10 +138,18 @@ final class PasosDeEstado
      * del siguiente). Que cada estado de la ruta tenga su texto lo vigila
      * `tests/Unit/PasosDeEstadoTest.php`.
      *
+     * El «siguiente» es, por defecto, el primer paso al que se puede pasar. En
+     * una máquina con desvíos ese no siempre es el natural (desde «En
+     * ejecución» el primero es «Pausado», no «Ejecutado»): `$claveDestino`
+     * nombra el paso que va en el cierre. Si ese paso no es accionable (está
+     * bloqueado, p. ej. un contrato en conflicto que no se puede aprobar), el
+     * párrafo lleva solo el texto del objeto, sin invitar a hacer clic.
+     *
      * @param  list<Paso>  $pasos  los que devolvió {@see self::armar()}.
      * @param  string  $claveAyuda  prefijo de idioma del texto de cada estado.
+     * @param  string|null  $claveDestino  valor del estado que se nombra como paso siguiente.
      */
-    public static function ayuda(array $pasos, string $claveAyuda): ?string
+    public static function ayuda(array $pasos, string $claveAyuda, ?string $claveDestino = null): ?string
     {
         $actual = null;
         $destino = null;
@@ -112,6 +157,10 @@ final class PasosDeEstado
         foreach ($pasos as $paso) {
             if ($paso['status'] === 'current') {
                 $actual = $paso;
+            } elseif ($claveDestino !== null) {
+                if ($paso['key'] === $claveDestino) {
+                    $destino = $paso;
+                }
             } elseif ($destino === null && in_array($paso['status'], ['next', 'pending'], true)) {
                 $destino = $paso;
             }

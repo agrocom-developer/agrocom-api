@@ -38,7 +38,16 @@
       TAMBIÉN están en otro contrato vigente de la misma campaña — datos del
       otro contrato para el modal informativo de conflicto
       (`_modal-conflicto-lote.blade.php`), armados por
-      `ContratosController::formatearConflictos()`.
+      `ContratosController::formatearConflictos()`. Si el propio contrato está
+      «En conflicto», además alimentan el aviso de arriba de la ficha.
+    - $campaniaIdPredeterminada (int|null): la primera campaña activa
+      (`abierta`), que el select de campaña ofrece ya elegida cuando el
+      contrato todavía no trae una (alta) — ver
+      `ContratosController::campaniaActivaPredeterminada()`.
+    - $pasosEstado (list<array>|null), $ayudaEstado (string|null): solo en
+      edición, los pasos de `molecules/step-arrow` y el párrafo que los
+      acompaña (`PasosDeContrato`). Los modales que abren viven en
+      `_cambio-estado.blade.php`, fuera de este `<form>`.
 
     `estado` y `monto_total` NUNCA son campos de este formulario: el primero
     lo cambia `panel.contratos.cambiar-estado` (otra pantalla, otra
@@ -94,7 +103,9 @@
     // alta, desde el atajo del aside de `panel.clientes.edit` — `?? null`
     // porque `edit()` no lo pasa (no aplica editando un contrato existente).
     $clienteId = old('cliente_id', $contrato?->cliente_id ?? $clienteIdPreseleccionado ?? '');
-    $campaniaId = old('campania_id', $contrato?->campania_id ?? '');
+    // La campaña del contrato manda; sin una (alta), la primera campaña activa.
+    // `old()` gana sobre las dos: tras un guardado fallido se conserva lo elegido.
+    $campaniaId = old('campania_id', $contrato?->campania_id ?? $campaniaIdPredeterminada ?? '');
     $fechaInicio = old('fecha_inicio', $contrato?->fecha_inicio?->toDateString() ?? '');
     $fechaFin = old('fecha_fin', $contrato?->fecha_fin?->toDateString() ?? '');
     $brindaAlimentacion = (bool) $valor('brinda_alimentacion', false);
@@ -218,6 +229,69 @@
         <x-molecules.alert-strip variant="danger" icon="error">
             {{ $errors->first('error') }}
         </x-molecules.alert-strip>
+    @endif
+
+    @if ($esEdicion)
+        @if ($errors->has('estado'))
+            <x-molecules.alert-strip variant="danger" icon="error">
+                {{ $errors->first('estado') }}
+            </x-molecules.alert-strip>
+        @endif
+
+        <x-molecules.step-arrow
+            :steps="$pasosEstado"
+            :label="__('comercial.contratos.estado_pasos_aria')"
+            :help="$ayudaEstado"
+        />
+
+        @if ($contrato->estado->value === 'conflicto')
+            {{-- Contrato «En conflicto» (ADR 0021): comparte lotes con otro que ya
+                 está en ejecución. Se remarca arriba —no solo en la fila de cada
+                 lote— para que se decida ahora: cancelarlo, o quitarle esos lotes
+                 y que vuelva solo a aprobación. Un lote choca con un solo
+                 contrato, así que el otro contrato se repite por cada lote
+                 compartido y acá se junta por contrato. --}}
+            @php
+                $contratosEnConflicto = [];
+                foreach ($conflictosPorLote ?? [] as $conflicto) {
+                    $contratosEnConflicto[$conflicto['contrato_id']] ??= $conflicto;
+                }
+                // El modal de cancelar lo trae `_cambio-estado.blade.php`, con el
+                // mismo id que el paso «Cancelado» de la fila de arriba.
+                $modalIdCancelar = \App\Dominios\Comercial\Infraestructura\Http\PasosDeContrato::PREFIJO_MODAL.'-cancelado';
+            @endphp
+
+            <x-molecules.alert-strip variant="warning" icon="warning" class="ag-contratos-estado__conflicto">
+                <p class="ag-contratos-estado__conflicto-titulo">{{ __('comercial.contratos.conflicto_aviso_titulo') }}</p>
+                <p class="ag-contratos-estado__nota">{{ __('comercial.contratos.conflicto_aviso_detalle') }}</p>
+
+                @if ($contratosEnConflicto !== [])
+                    <ul class="ag-contratos-estado__lista">
+                        @foreach ($contratosEnConflicto as $otro)
+                            <li class="ag-contratos-estado__item">
+                                <span>{{ __('comercial.contratos.conflicto_aviso_con', [
+                                    'cliente' => $otro['cliente'],
+                                    'estado' => $otro['estado_label'],
+                                    'lotes' => collect($otro['lotes_en_conflicto'])->pluck('codigo')->implode(', '),
+                                ]) }}</span>
+                                <a class="ag-contratos-estado__enlace" href="{{ $otro['editar_url'] }}">{{ __('comercial.contratos.conflicto_aviso_ver') }}</a>
+                            </li>
+                        @endforeach
+                    </ul>
+                @endif
+
+                <x-slot:action>
+                    <x-atoms.button :href="'#contrato-lotes'" variant="outline" size="sm" icon="list">
+                        {{ __('comercial.contratos.conflicto_aviso_revisar') }}
+                    </x-atoms.button>
+                    @puede('comercial.contrato.cambiar_estado')
+                        <x-atoms.button type="button" variant="danger-outline" size="sm" icon="cancel" data-bs-toggle="modal" data-bs-target="#{{ $modalIdCancelar }}">
+                            {{ __('comercial.contratos.conflicto_aviso_cancelar') }}
+                        </x-atoms.button>
+                    @endpuede
+                </x-slot:action>
+            </x-molecules.alert-strip>
+        @endif
     @endif
 
     <x-molecules.form-layout>
@@ -389,6 +463,7 @@
 
     {{-- Sección 3: Propiedad y lotes (nueva, tarea "contratos-lotes") --}}
     <x-molecules.form-section
+        id="contrato-lotes"
         :title="__('comercial.contratos.seccion_lotes')"
         :count="__('comercial.contratos.lotes_contador', ['cantidad' => collect($lotesIniciales)->sum(fn ($g) => count($g['lotes'] ?? []))])"
     >
