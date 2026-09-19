@@ -386,10 +386,12 @@ form-layout
          <p>label</p><p>valor</p> directos, sin envolver otra tarjeta —
          reusan el grid de 2 columnas de form-section, NUNCA anidan
          summary-card adentro: dos superficies de tarjeta una dentro de la
-         otra duplica el chrome) + index-table para cualquier sub-lista +
-         timeline para actividad/historial
-  aside: form-section/summary-card/progress-meter para metadatos —
-         mismas piezas que ya usa el aside del Formulario (§6.3.1)
+         otra duplica el chrome) + index-table para cualquier sub-lista
+  aside: progress-meter/summary-card para metadatos + link-row en una
+         form-section ("Relacionado") + timeline en una form-section
+         ("Actividad/historial", siempre ÚLTIMA: es la única de largo
+         variable y no debe empujar hacia abajo a las demás) — mismas
+         piezas que ya usa el aside del Formulario (§6.3.1)
 ```
 
 Reglas fijas:

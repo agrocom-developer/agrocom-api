@@ -24,6 +24,13 @@
     $porcentajeAsignado (int), $equiposAsignados (int), $actividad (list,
     ver actividadOrden()), $puedeEditar/$puedeActivar/$puedeEliminar (bool).
 
+    Distribución (reforma 18/9/2026, pedido explícito): la columna principal
+    lleva lo que se lee de corrido — Datos del contrato, Datos de la orden,
+    Lotes; el aside pegajoso lleva lo que la acompaña — Avance de asignación,
+    Relacionado (vínculos) y Actividad. Actividad va al final a propósito: es
+    la única de largo variable (un evento por equipo asignado), y así, si
+    crece, no empuja hacia abajo los accesos de "Relacionado".
+
     Gateada por `operaciones.orden.ver` — mismo permiso que `index()`/`edit()`,
     sin permiso nuevo (mismo criterio que las 5 pantallas `.show` ya
     homogeneizadas del panel: Trabajos, Devengos, Planillas, Rendiciones,
@@ -201,16 +208,17 @@
                 del usuario, varias vueltas hasta el orden definitivo;
                 reajustado el mismo día al sumar "Datos del contrato" y sacar
                 Límites climáticos/Parámetros de vuelo, que liberaron dos
-                tonos). Motivo: con 7 `section-head` en esta pantalla (6
-                `form-section` + `progress-meter`, "Avance de asignación",
-                más abajo) y solo 6 tonos sin carga de bueno/malo, alguno se
+                tonos). Motivo: con muchos `section-head` en la misma
+                pantalla y pocos tonos sin carga de bueno/malo, alguno se
                 repetía sin importar el orden ("no se repita como se ve").
-                Mapeo vigente, sin repetir ninguno: `primary-2`→Datos del
-                contrato, `success`→Datos de la orden, `info`→Lotes,
-                `distintivo-2`→Actividad, `alert`→Vínculos ("Relacionado"),
+                Hoy son 6 `section-head` (5 `form-section` + `progress-meter`)
+                repartidos en dos columnas. Mapeo vigente, sin repetir
+                ninguno — columna principal: `primary-2`→Datos del contrato,
+                `success`→Datos de la orden, `info`→Lotes; aside:
                 `distintivo-1`→Avance de asignación (coincide con su propio
-                porcentaje, ver `progress-meter.blade.php`). `warning` y
-                `danger` quedan sin usar acá.
+                porcentaje, ver `progress-meter.blade.php`), `alert`→
+                Vínculos ("Relacionado"), `distintivo-2`→Actividad. `warning`
+                y `danger` quedan sin usar acá.
                 Nota: `success` en "Datos de la orden" comparte tono con
                 el KPI "Aplicaciones" de esta misma pantalla cuando
                 completa su meta — decisión explícita del usuario, no un
@@ -310,28 +318,6 @@
                     </div>
                 </x-molecules.form-section>
 
-                <x-molecules.form-section accent="distintivo-2" :title="__('operaciones.ordenes.seccion_actividad')">
-                    <div class="ag-form-section__field--full">
-                        <x-molecules.timeline :items="$actividad" />
-                    </div>
-                </x-molecules.form-section>
-
-                @if (count($vinculos))
-                    <x-molecules.form-section accent="alert" :title="__('operaciones.ordenes.seccion_vinculos')">
-                        <div class="ag-form-section__field--full ag-ordenes-detalle__vinculos">
-                            @foreach ($vinculos as $vinculo)
-                                <x-molecules.link-row
-                                    :href="$vinculo['href']"
-                                    :icon="$vinculo['icon']"
-                                    :title="$vinculo['title']"
-                                    :meta="$vinculo['meta']"
-                                    :tone="$vinculo['tone']"
-                                />
-                            @endforeach
-                        </div>
-                    </x-molecules.form-section>
-                @endif
-
                 <x-slot:aside>
                     {{--
                         Límites climáticos y parámetros de vuelo (5+3 campos)
@@ -345,6 +331,28 @@
                         :percent="$porcentajeAsignado"
                         :summary-label="__('operaciones.ordenes.avance_resumen', ['asignadas' => $hectareasAsignadas, 'solicitadas' => $hectareasSolicitadas])"
                     />
+
+                    @if (count($vinculos))
+                        <x-molecules.form-section accent="alert" :title="__('operaciones.ordenes.seccion_vinculos')">
+                            <div class="ag-form-section__field--full ag-ordenes-detalle__vinculos">
+                                @foreach ($vinculos as $vinculo)
+                                    <x-molecules.link-row
+                                        :href="$vinculo['href']"
+                                        :icon="$vinculo['icon']"
+                                        :title="$vinculo['title']"
+                                        :meta="$vinculo['meta']"
+                                        :tone="$vinculo['tone']"
+                                    />
+                                @endforeach
+                            </div>
+                        </x-molecules.form-section>
+                    @endif
+
+                    <x-molecules.form-section accent="distintivo-2" :title="__('operaciones.ordenes.seccion_actividad')">
+                        <div class="ag-form-section__field--full">
+                            <x-molecules.timeline :items="$actividad" />
+                        </div>
+                    </x-molecules.form-section>
                 </x-slot:aside>
             </x-molecules.form-layout>
         </div>
