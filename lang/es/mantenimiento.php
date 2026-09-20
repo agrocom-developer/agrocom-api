@@ -317,13 +317,19 @@ return [
         'aside_planes_accion_crear' => 'Crear plan',
     ],
 
-    // Estado de una orden de mantenimiento (EstadoOrdenMantenimiento) —
-    // namespace propio, mismo criterio que 'estado_bateria': solo dos
-    // valores, gobernados por la máquina de estados (a diferencia de
-    // 'estado'/'estado_bateria', que son descriptivos libres).
-    'estado_orden' => [
-        'abierta' => 'Abierta',
-        'cerrada' => 'Cerrada',
+    // La orden de mantenimiento como objeto: los dos estados de su máquina y
+    // qué significa cada uno. Lo comparten el badge del listado, los pasos de
+    // la ficha y el modal de cierre.
+    'orden' => [
+        'estado' => [
+            'abierta' => 'Abierta',
+            'cerrada' => 'Cerrada',
+        ],
+
+        'estado_ayuda' => [
+            'abierta' => 'La orden está abierta: el trabajo sobre el equipo todavía no se dio por terminado. Al cerrarla se descuenta el stock de los repuestos que se usaron y se genera el gasto con lo que costaron.',
+            'cerrada' => 'La orden está cerrada: quedó registrado qué se hizo, se descontó el stock de los repuestos y se generó el gasto. Una orden cerrada no se reabre; si aparece algo nuevo, abre otra orden para el mismo equipo.',
+        ],
     ],
 
     // Tipo de orden de mantenimiento (man_ordenes_mantenimiento.tipo).

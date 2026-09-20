@@ -121,7 +121,7 @@
                 <span class="ag-orden-mantenimiento-detalle__campo">
                     <strong>{{ __('mantenimiento.ordenes.detalle_estado') }}</strong>
                     <x-atoms.badge :variant="$orden->estado->value === 'abierta' ? 'neutral' : 'success'">
-                        {{ __('mantenimiento.estado_orden.'.$orden->estado->value) }}
+                        {{ __('mantenimiento.orden.estado.'.$orden->estado->value) }}
                     </x-atoms.badge>
                 </span>
                 <span class="ag-orden-mantenimiento-detalle__campo">

@@ -76,7 +76,7 @@
                 <form method="GET" action="{{ route('panel.ordenes-mantenimiento.index') }}" class="ag-filtros ag-ordenes-mantenimiento__filtros">
                     @php
                         $opcionesEstado = collect($variantePorEstado)->mapWithKeys(fn ($_, $valor) => [
-                            $valor => __('mantenimiento.estado_orden.'.$valor)
+                            $valor => __('mantenimiento.orden.estado.'.$valor)
                         ])->all();
                     @endphp
                     <x-atoms.select
@@ -148,7 +148,7 @@
                             <span role="cell">{{ __('mantenimiento.tipo_orden.'.$orden->tipo) }}</span>
                             <span role="cell">
                                 <x-atoms.badge :variant="$variantePorEstado[$orden->estado->value]">
-                                    {{ __('mantenimiento.estado_orden.'.$orden->estado->value) }}
+                                    {{ __('mantenimiento.orden.estado.'.$orden->estado->value) }}
                                 </x-atoms.badge>
                             </span>
                             <span role="cell">{{ $orden->fecha_apertura->format('d/m/Y') }}</span>
