@@ -90,6 +90,17 @@ interface LecturaPanelOperaciones
     public function pausasPorCausaDelMes(): array;
 
     /**
+     * Días efectivos en hacienda del mes en curso, por cuadrilla y por
+     * propiedad, con las MISMAS cuentas que el listado de estadías (estadías
+     * ya finalizadas cuya entrada cae en el mes), más cuántas siguen en curso.
+     * Las claves son ids de `per_equipos_trabajo` y de `com_propiedades`: los
+     * nombres los resuelve quien llama, por el contrato de cada módulo.
+     *
+     * @return array{total_dias: float, en_curso: int, por_cuadrilla: array<int, float>, por_propiedad: array<int, float>}
+     */
+    public function diasEnHaciendaDelMes(): array;
+
+    /**
      * Drones que la persona operó en el mes en curso, del más usado al
      * menos: "de qué equipos respondo" resuelto desde las sesiones, que es
      * el único registro que liga persona y dron.

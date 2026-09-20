@@ -81,15 +81,4 @@
     color: var(--ag-color-text);
 }
 
-/* «Estado actual → estado destino» dentro del modal de un cambio de estado: los
-   mismos badges del listado, para ver a cuál se pasa antes de confirmar. */
-.ag-contratos-estado__transicion {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--ag-space-2);
-}
-
-.ag-contratos-estado__flecha {
-    color: var(--ag-color-text-muted);
-}
+/* La ficha «estado actual → estado destino» es `molecules/state-transition`. */

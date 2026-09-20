@@ -198,12 +198,14 @@ const RUTAS_ESTADO_DESCRIPTIVO_SIN_MAQUINA = [
     // dominio (ver docblock de la migración y `EstadoGenerador`).
     'app/Dominios/Mantenimiento/Aplicacion/CrearGenerador.php',
     'app/Dominios/Mantenimiento/Aplicacion/ActualizarGenerador.php',
-    // Tarea 72 (HU-49, ADR 0015 punto 3): mismo criterio que
-    // Vehiculo/Bateria/Generador arriba — `per_equipos_trabajo.estado` es
-    // descriptivo (`activo`/`inactivo`), sin tabla de transiciones ni guarda
-    // de dominio (ver docblock de la migración y `EstadoEquipoTrabajo`).
-    'app/Dominios/Personal/Aplicacion/CrearEquipoTrabajo.php',
-    'app/Dominios/Personal/Aplicacion/ActualizarEquipoTrabajo.php',
+    // `per_equipos_trabajo.estado` DEJÓ de ser descriptivo sin máquina el
+    // 19/9/2026 (tarea "cuadrillas-estadias", pedido del dueño): ahora es una
+    // máquina real `activo ⇄ inactivo`, gobernada por
+    // `Personal\Aplicacion\MaquinaEstados\MaquinaEstadosEquipoTrabajo` (que ya
+    // cae en la PRIMERA excepción, `estadosEsServicioDeEstados()`, por vivir
+    // en `Aplicacion/MaquinaEstados/`). `CrearEquipoTrabajo`/
+    // `ActualizarEquipoTrabajo` ya no escriben `estado` en absoluto, así que
+    // no necesitan (ni les corresponde) esta segunda excepción.
 ];
 
 /**

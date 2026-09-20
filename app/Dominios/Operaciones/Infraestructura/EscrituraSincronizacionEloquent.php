@@ -638,6 +638,12 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
      * `salida IS NULL`) rechaza un `estadia_entrada` si el equipo ya tiene
      * una estadía abierta — sin verificarlo antes, mismo criterio que el
      * resto del contrato.
+     *
+     * `tipo_alojamiento` (19/9/2026): se persiste tal cual llega del DTO —
+     * `null` si la app de campo no lo trae todavía, ya validado contra el
+     * catálogo cerrado por `AperturaEstadiaHacienda::intentarDesdeArreglo()`
+     * (un valor desconocido nunca llega hasta acá, el registro se rechazó
+     * antes). Nada más del motor de sync cambia con este campo.
      */
     public function abrirEstadia(AperturaEstadiaHacienda $datos): ResultadoSincronizacion
     {
@@ -649,6 +655,7 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
                     'propiedad_id' => $datos->propiedadId,
                     'entrada' => self::normalizarUtc($datos->entrada),
                     'vehiculo_id' => $datos->vehiculoId,
+                    'tipo_alojamiento' => $datos->tipoAlojamiento,
                     'observacion' => $datos->observacion,
                 ]);
             });

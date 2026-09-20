@@ -154,7 +154,7 @@
                     @if ($impedimentoCierre !== \App\Dominios\Operaciones\Dominio\ImpedimentoCierreOrden::TrabajosAbiertos)
                         {{-- Sin trabajos o con hectáreas sin asignar: lo que falta es repartir equipos. --}}
                         @puede('operaciones.orden.asignar_equipos')
-                            <x-atoms.button :href="route('panel.asignacion-equipos.show', $orden)" variant="outline" icon="groups">
+                            <x-atoms.button :href="route('panel.reparto-cuadrillas.show', $orden)" variant="outline" icon="groups">
                                 {{ __('operaciones.ordenes.vinculo_asignar_equipos') }}
                             </x-atoms.button>
                         @endpuede

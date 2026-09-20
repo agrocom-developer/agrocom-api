@@ -33,6 +33,13 @@ Documentadas completas en `docs/diseno/sistema_diseno_panel.md` §8. Resumen:
    `.ag-checkbox`), no solo al que la pantalla use hoy. El margen de apilado alinea el botón contra un
    borde fantasma 16px más abajo.
 
+8. Sobre un relleno de estado (`-contrast-fill`: badge, paso actual de
+   `step-arrow`, ícono de `link-row`/`stat-card`) el texto y el ícono son
+   SIEMPRE blancos (`--ag-color-gray-0`), **también en `warning`**. La
+   excepción de texto oscuro sobre el ámbar se retiró el 19/9/2026 por
+   decisión del dueño; no reintroducirla «por contraste» (el costo está
+   anotado en `sistema_diseno_panel.md` §1.3).
+
 ## Explorar diseño antes de implementarlo
 
 Cuando lo que hace falta es **decidir cómo se ve algo** —una pantalla nueva, un

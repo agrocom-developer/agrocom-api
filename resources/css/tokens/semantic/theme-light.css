@@ -223,12 +223,12 @@
        arriba: relleno CONSTANTE entre temas (idéntico en theme-dark.css), no
        se aclara/oscurece por tema — es la marca del estado, no una superficie
        que dependa de fondo claro/oscuro.
-       Texto/ícono encima es SIEMPRE blanco (`--ag-color-gray-0`) salvo
-       warning: `#e9730c`/amber-700 da 3.03:1 contra blanco (bajo AA) pero
-       5.09:1 contra gris-900 — por eso `.ag-badge--warning` y el ícono de
-       `stat-card[data-state="warning"]` usan texto oscuro, no blanco (ver
-       badge.css/stat-card.css). Resto ≥4.56:1 contra blanco (verificado
-       sistema_diseno_panel.md §1.3).
+       Texto/ícono encima es SIEMPRE blanco (`--ag-color-gray-0`), SIN
+       excepciones (19/9/2026, decisión del dueño): warning también. Blanco
+       sobre `#e9730c`/amber-700 da 3.03:1 —bajo el 4.5:1 de AA para texto
+       chico— y es un costo asumido a cambio de que todos los estados se lean
+       como una sola familia (ver badge.css). Resto ≥4.56:1 contra blanco
+       (verificado sistema_diseno_panel.md §1.3).
        Alcance deliberadamente ACOTADO a chips de estado y KPI — los
        controles de formulario (checkbox/input/switch/select/etc.) siguen
        con el par tenue/-subtle existente, que ahí sigue siendo el patrón
@@ -241,7 +241,7 @@
        superficie que cambia de tema (`.ag-button--danger-outline` lo usó
        así un rato y contra la tarjeta oscura daba ~1.91:1, casi
        invisible) — es SOLO para relleno sólido con su propio texto/ícono
-       fijo encima (blanco o gris-900, ver arriba), que es constante
+       fijo encima (blanco, ver arriba), que es constante
        porque el texto que va ENCIMA también lo es. Para texto/borde
        DIRECTO sobre `--ag-color-surface-card`/`-bg` (que sí cambia), usar
        el token PLANO (`--ag-color-danger`, `-warning`, `-info`,

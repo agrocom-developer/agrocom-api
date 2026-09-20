@@ -1,0 +1,18 @@
+/*
+ * Molecule: state-transition
+ * (resources/views/components/molecules/state-transition.blade.php)
+ *
+ * Ficha «estado actual → estado destino» de un confirm-modal de cambio de
+ * estado. Los colores los ponen los `atoms/badge`; acá solo va la fila.
+ */
+
+.ag-state-transition {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--ag-space-2);
+}
+
+.ag-state-transition__arrow {
+    color: var(--ag-color-text-muted);
+}

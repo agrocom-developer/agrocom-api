@@ -237,7 +237,7 @@ class SeguridadSeeder extends Seeder
         // HU-70 (tarea 85): "dónde asignarle el trabajo al piloto" — repartir
         // las hectáreas de una orden vigente entre equipos de trabajo. Grano
         // propio, no parte de `.editar`: no corrige la orden, reparte su
-        // trabajo; una ficha propia (`panel.asignacion-equipos.*`), no la
+        // trabajo; una ficha propia (`panel.reparto-cuadrillas.*`), no la
         // ficha de la orden, así que no depende de `operaciones.orden.ver`.
         'operaciones.orden.asignar_equipos' => 'Asignar equipos de trabajo (con sus hectáreas) a una orden vigente',
         // HU-44 (tarea 58): pausas de sesión con causa atribuible (DS-01).
@@ -246,11 +246,17 @@ class SeguridadSeeder extends Seeder
         // responsabilidad.
         'operaciones.pausa.ver' => 'Ver el listado de pausas y su agregado por causa',
         'operaciones.pausa.registrar' => 'Registrar una pausa de sesión con su causa',
-        // HU-51 (tarea 74): entrada y salida del equipo en cada hacienda,
-        // cargada desde la app de campo. Un único permiso de solo lectura —
-        // el panel nunca abre ni cierra una estadía (ver "Qué NO hacer" del
-        // prompt de la tarea).
+        // HU-51 (tarea 74): entrada y salida del equipo en cada hacienda.
+        // Reforma 19/9/2026: la oficina también registra, edita, finaliza y
+        // da de baja estadías desde el panel (antes el panel solo las leía,
+        // cargadas desde la app de campo). `.editar` cubre también finalizar
+        // (pasar a "finalizada" con su fecha de salida) — mismo criterio que
+        // `personal.equipo_trabajo.editar`, que cubre asignar/finalizar
+        // integrantes: no es un permiso aparte, es parte de mantener el dato.
         'operaciones.estadia.ver' => 'Ver el listado de estadías del equipo en cada hacienda',
+        'operaciones.estadia.crear' => 'Registrar una estadía del equipo en una hacienda',
+        'operaciones.estadia.editar' => 'Editar una estadía en curso y finalizarla (registrar su salida)',
+        'operaciones.estadia.eliminar' => 'Dar de baja (lógica) una estadía en hacienda',
         // HU-26 (tarea 37): administración de personas y bases, con su rol
         // operativo y tarifa. Dos recursos, cada uno con su grano fino
         // (ver/crear/editar/eliminar) — mismo criterio que
@@ -570,8 +576,14 @@ class SeguridadSeeder extends Seeder
         'operaciones.pausa.registrar',
         // HU-51 (tarea 74): administra la operación diaria, así que también
         // puede ver dónde y cuántos días estuvo cada equipo — mismo criterio
-        // que trabajo.ver/pausa.ver arriba.
+        // que trabajo.ver/pausa.ver arriba. Reforma 19/9/2026: administra
+        // también el alta, edición y baja de estadías — mismo criterio que
+        // el resto de `operaciones.orden.*`/`operaciones.dron.*` arriba
+        // (`.eliminar` incluido, a diferencia del jefe de campo).
         'operaciones.estadia.ver',
+        'operaciones.estadia.crear',
+        'operaciones.estadia.editar',
+        'operaciones.estadia.eliminar',
         // HU-26 (tarea 37): "Como encargado, quiero administrar personas y
         // bases" — la HU lo dice literal, mismo criterio que clientes,
         // contratos, campos y drones arriba.
@@ -700,7 +712,7 @@ class SeguridadSeeder extends Seeder
         // HU-70 (tarea 85): "dónde asignarle el trabajo al piloto" — el
         // reclamo del dueño (audio del 13/9/2026) es literalmente del jefe
         // de campo, que hoy avisa por WhatsApp. Ficha propia
-        // (`panel.asignacion-equipos.*`), no la de la orden: no necesita
+        // (`panel.reparto-cuadrillas.*`), no la de la orden: no necesita
         // `operaciones.orden.ver` (CRUD completo de la orden) para repartir
         // equipos.
         'operaciones.orden.asignar_equipos',
@@ -728,8 +740,13 @@ class SeguridadSeeder extends Seeder
         'operaciones.pausa.registrar',
         // HU-51 (tarea 74): coordina la cuadrilla, así que necesita ver
         // dónde y cuántos días estuvo el equipo — mismo criterio que
-        // trabajo.ver/pausa.ver arriba.
+        // trabajo.ver/pausa.ver arriba. Reforma 19/9/2026: también registra y
+        // edita las estadías de sus cuadrillas — mismo criterio que
+        // `operaciones.trabajo.crear` arriba (sin `.eliminar`, exclusivo de
+        // los roles de gestión, ver `PERMISOS_ENCARGADO_OPERACIONES`).
         'operaciones.estadia.ver',
+        'operaciones.estadia.crear',
+        'operaciones.estadia.editar',
     ];
 
     /**

@@ -102,7 +102,7 @@
  * Ficha de desempeño (personas/desempeno) — HU-58, tarea 81: sesiones,
  * rechazos e incidencias de una persona, por sesión (nunca por equipo de
  * trabajo). Mismo molde de tabla que `.ag-personas__tabla` arriba y de lista
- * de filas que `.ag-equipos-trabajo-ficha__lista` (equipos-trabajo.css),
+ * de filas que `.ag-cuadrillas-ficha__lista` (cuadrillas.css),
  * sumando la tarjeta de rechazo (fecha/cliente/motivo/quién) como bloque
  * propio en vez de fila de grilla — el motivo es texto libre y no entra en
  * una columna angosta.

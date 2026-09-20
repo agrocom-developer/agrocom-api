@@ -12,7 +12,7 @@ use Illuminate\Validation\Rule;
  * controlador, contra el rol activo.
  *
  * `cantidad` es el TOTAL de lotes que debe tener la propiedad al terminar:
- * más que hoy crea los que faltan (hasta 50 de una vez, mismo tope que
+ * más que hoy crea los que faltan (hasta `LOTES_MAXIMOS_POR_TANDA` de una vez, mismo tope que
  * generar), menos quita los últimos, y nunca menos de uno — dar de baja todos
  * los lotes se hace desde el listado, no por un número en un formulario.
  *
@@ -22,8 +22,6 @@ use Illuminate\Validation\Rule;
  */
 final class EditarLotesBloqueRequest extends LotesBloqueRequest
 {
-    private const MAXIMO_LOTES_NUEVOS = 50;
-
     /** @return array<string, mixed> */
     public function rules(): array
     {
@@ -36,7 +34,7 @@ final class EditarLotesBloqueRequest extends LotesBloqueRequest
                 'string',
                 'max:30',
             ],
-            'cantidad' => ['required', 'integer', 'min:1', 'max:'.($actuales + self::MAXIMO_LOTES_NUEVOS)],
+            'cantidad' => ['required', 'integer', 'min:1', 'max:'.($actuales + self::LOTES_MAXIMOS_POR_TANDA)],
             'hectareas' => $this->reglasHectareas(requeridas: false),
             ...$this->reglasTerreno(),
         ];
@@ -49,7 +47,7 @@ final class EditarLotesBloqueRequest extends LotesBloqueRequest
             'prefijo.required' => __('comercial.validacion.lotes_generar_prefijo_requerido'),
             'cantidad.required' => __('comercial.validacion.lotes_bloque_cantidad_requerida'),
             'cantidad.min' => __('comercial.validacion.lotes_bloque_cantidad_minima'),
-            'cantidad.max' => __('comercial.validacion.lotes_bloque_cantidad_maxima'),
+            'cantidad.max' => __('comercial.validacion.lotes_bloque_cantidad_maxima', ['maximo' => self::LOTES_MAXIMOS_POR_TANDA]),
             ...$this->mensajesBloque(),
         ];
     }

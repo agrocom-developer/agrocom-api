@@ -6,7 +6,7 @@
     exclusiva). SIN puntaje, ranking ni semáforo (ver "Qué NO hacer" del
     prompt de la tarea) — la pantalla muestra hechos y sus fuentes, la
     decisión de a quién contratar es de una persona. Arquetipo Detalle, mismo
-    molde de filtros por GET que `equipos-trabajo/show.blade.php`.
+    molde de filtros por GET que `cuadrillas/show.blade.php`.
 
     Datos esperados (ver PersonasController::desempenio()): la cáscara de
     CascaraPanel, más:

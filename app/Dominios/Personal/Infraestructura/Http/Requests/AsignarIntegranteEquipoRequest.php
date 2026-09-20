@@ -7,7 +7,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 /**
- * `POST /panel/equipos-trabajo/{equipoTrabajo}/integrantes` (tarea 72,
+ * `POST /panel/cuadrillas/{equipoTrabajo}/integrantes` (tarea 72,
  * HU-49). La autorización (permiso `personal.equipo_trabajo.editar`) se
  * verifica en el controlador. El solapamiento con OTROS equipos NO se valida
  * acá (no es un error de formulario, es un aviso de negocio que igual se

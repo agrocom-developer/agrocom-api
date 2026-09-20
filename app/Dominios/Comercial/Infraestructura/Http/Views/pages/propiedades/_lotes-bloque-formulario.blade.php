@@ -15,6 +15,12 @@
     - $lotesBase (int): lotes que se suman a `cantidad` para el total sobre el
       que se reparte la superficie — en "crear" los que la propiedad ya tiene;
       en "editar", 0 (allí `cantidad` ya es el total).
+    - $hectareasAsignadas (string, decimal): lo que ya suman las hectáreas de
+      los lotes que la propiedad tiene — en "crear"; en "editar", '0' (allí lo
+      que se escribe se aplica a todos). Con tandas sucesivas, la sugerencia
+      reparte lo que falta, no toda la superficie.
+    - $lotesPorTanda (int): cuántos lotes se crean por vez (el tope que
+      valida `LotesBloqueRequest`); se dice en la ayuda de la cantidad.
     - $cantidadMin, $cantidadMax (int).
     - Solo "editar": $codigos (list<string>, en orden de alta: los últimos son
       los que se quitan al bajar la cantidad) y $variables (list<string>,
@@ -22,11 +28,14 @@
 
     Las hectáreas por lote llevan una ayuda en vivo, mismo patrón que
     "Adelanto Solicitado" de contratos (`data-plantilla-ayuda*` en el propio
-    input, `lotes-generar.js` la recalcula al escribir): en el acento de marca
-    propone la superficie de la propiedad repartida entre el total de lotes, y
-    pasa al color de alerta si lo escrito, por el total de lotes, supera esa
-    superficie. Solo informa, no bloquea el guardado. Sin superficie cargada
-    avisa que hace falta. Al bajar la cantidad en "editar", el mismo script
+    input, `lotes-generar.js` la recalcula al escribir): propone la superficie
+    de la propiedad repartida entre los lotes y, al escribir un valor, dice
+    cuánto suman y si es más o menos que la superficie declarada. Es una GUÍA,
+    nunca una regla (19/9/2026, pedido directo): una propiedad no es toda
+    lote —tiene hacienda, agua, caminos— y un lote de otro tamaño no impide
+    crear los demás; por eso siempre va en el acento de marca, jamás en
+    alerta, y el servidor no compara la suma con la superficie. Sin superficie
+    cargada dice que cargarla es opcional. Al bajar la cantidad en "editar", el mismo script
     muestra qué lotes se quitan y pide confirmación en el modal del panel antes
     de enviar.
 --}}
@@ -63,6 +72,7 @@
     data-ag-lotes-base="{{ $lotesBase }}"
     @if ($superficie !== null)
         data-ag-lotes-superficie="{{ $superficie }}"
+        data-ag-lotes-asignadas="{{ $hectareasAsignadas ?? '0' }}"
     @endif
     @if ($esEdicion)
         data-ag-lotes-codigos="{{ json_encode($codigos) }}"
@@ -110,7 +120,7 @@
             type="number"
             name="cantidad"
             :label="__('comercial.propiedades.lotes_generar_cantidad')"
-            :help="$esEdicion ? __('comercial.propiedades.lotes_bloque_cantidad_ayuda') : null"
+            :help="$esEdicion ? __('comercial.propiedades.lotes_bloque_cantidad_ayuda', ['maximo' => $lotesPorTanda]) : __('comercial.propiedades.lotes_generar_cantidad_ayuda', ['maximo' => $lotesPorTanda])"
             :value="old('cantidad', $valores['cantidad'])"
             :min="$cantidadMin"
             :max="$cantidadMax"
@@ -128,8 +138,13 @@
             help-tone="accent"
             data-plantilla-ayuda="{{ __('comercial.propiedades.lotes_bloque_hectareas_sugerido') }}"
             data-plantilla-ayuda-uno="{{ __('comercial.propiedades.lotes_bloque_hectareas_sugerido_uno') }}"
-            data-plantilla-ayuda-exceso="{{ __('comercial.propiedades.lotes_bloque_hectareas_exceso') }}"
-            data-plantilla-ayuda-exceso-uno="{{ __('comercial.propiedades.lotes_bloque_hectareas_exceso_uno') }}"
+            data-plantilla-ayuda-restante="{{ __('comercial.propiedades.lotes_bloque_hectareas_sugerido_restante') }}"
+            data-plantilla-ayuda-sin-restante="{{ __('comercial.propiedades.lotes_bloque_hectareas_sin_restante') }}"
+            data-plantilla-suma="{{ __('comercial.propiedades.lotes_bloque_hectareas_suma') }}"
+            data-plantilla-suma-con-existentes="{{ __('comercial.propiedades.lotes_bloque_hectareas_suma_con_existentes') }}"
+            data-plantilla-suma-menos="{{ __('comercial.propiedades.lotes_bloque_hectareas_suma_menos') }}"
+            data-plantilla-suma-mas="{{ __('comercial.propiedades.lotes_bloque_hectareas_suma_mas') }}"
+            data-plantilla-suma-igual="{{ __('comercial.propiedades.lotes_bloque_hectareas_suma_igual') }}"
             :value="old('hectareas', $valores['hectareas'])"
             min="0.01"
             step="0.01"

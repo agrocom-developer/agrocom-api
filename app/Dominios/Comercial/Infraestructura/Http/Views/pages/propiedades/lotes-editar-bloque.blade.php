@@ -76,8 +76,10 @@
                 'propiedad' => $propiedad,
                 'valores' => $valores,
                 'lotesBase' => 0,
+                'hectareasAsignadas' => '0',
+                'lotesPorTanda' => $lotesPorTanda,
                 'cantidadMin' => $puedeEliminar ? 1 : $total,
-                'cantidadMax' => $puedeCrear ? $total + 50 : $total,
+                'cantidadMax' => $puedeCrear ? $total + $lotesPorTanda : $total,
                 'codigos' => $resumen->codigos,
                 'variables' => $resumen->variables,
             ])

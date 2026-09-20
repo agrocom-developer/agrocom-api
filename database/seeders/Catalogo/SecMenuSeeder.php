@@ -136,11 +136,24 @@ class SecMenuSeeder extends Seeder
         // se sabe dónde se aloja (pedido directo del dueño, 17/9/2026).
         $this->item($operacion, 'operacion', 'orden_trabajo', 'work_history', 3, ruta: 'panel.trabajos.index', codigoPermiso: 'operaciones.trabajo.ver');
 
-        // Tarea 85 (HU-70/92): reparto de equipos por orden vigente, con
-        // varios lotes por orden. Sube del orden 7 al 4 en este refactor: es
-        // el paso que sigue a crear el trabajo, no el último del grupo
-        // (pedido directo del dueño, 17/9/2026).
-        $this->item($operacion, 'operacion', 'asignacion_equipos', 'groups', 4, ruta: 'panel.asignacion-equipos.index', codigoPermiso: 'operaciones.orden.asignar_equipos');
+        // Cuadrillas (19/9/2026, pedido directo del dueño). El ítem que ocupaba
+        // este lugar ("Asignación de equipos", después "Escuadras") abría el
+        // reparto de hectáreas de una orden (tarea 85, HU-70/92), que el alta
+        // de Orden de Trabajo ya cubre: sale del menú y esa pantalla queda
+        // solo como ficha de cada orden (`panel.reparto-cuadrillas.*`, desde
+        // la orden de aplicación). En su lugar entra la pantalla donde la
+        // cuadrilla SE ARMA —piloto, ayudante y dron—, que vivía en Recursos
+        // como "Equipos de trabajo": se mueve la MISMA fila (id, permiso y
+        // bitácora intactos) y se reapunta a su ruta nueva. El backend sigue
+        // en `Personal` (`per_equipos_trabajo`); agruparlo bajo Operación es
+        // de layout, no una frontera de módulo (ADR 0011, extensión del
+        // 26/8/2026, punto 3). "Cuadrilla" es el término del agro para el
+        // grupo que sale junto al campo; en el código sigue siendo
+        // `equipo_trabajo` (ADR 0015).
+        $this->retirarItemReparto($operacion);
+        $this->mover('menu.recursos.items.equipos_trabajo', 'menu.operacion.items.cuadrillas', $operacion, 4);
+        $this->reapuntar('panel.equipos-trabajo.index', 'panel.cuadrillas.index');
+        $this->item($operacion, 'operacion', 'cuadrillas', 'groups', 4, ruta: 'panel.cuadrillas.index', codigoPermiso: 'personal.equipo_trabajo.ver');
         // HU-51 (tarea 74): entrada y salida del equipo en cada hacienda. Se
         // mantiene como ítem PROPIO, separado de "Asignación de equipos"
         // (evaluado y descartado fusionarlos, 17/9/2026): el equipo se forma
@@ -264,13 +277,8 @@ class SecMenuSeeder extends Seeder
         // `vehiculos` (ADR 0011, extensión 26/8/2026, punto 3).
         $this->item($recursos, 'recursos', 'generadores', 'bolt', 6, ruta: 'panel.generadores.index', codigoPermiso: 'mantenimiento.generador.ver');
 
-        // Tarea 72 (HU-49, ADR 0015 punto 3): equipos de trabajo — el piloto
-        // y su auxiliar, con el equipamiento asignado. ABM mínimo nuevo, sin
-        // placeholder previo, mismo criterio que `generadores` arriba. El
-        // backend vive en `Personal` (`per_equipos_trabajo`) aunque el ítem
-        // quede agrupado bajo "Recursos": misma agrupación de layout que
-        // `bases`/`personal` abajo (ADR 0011, extensión 26/8/2026, punto 3).
-        $this->item($recursos, 'recursos', 'equipos_trabajo', 'groups', 7, ruta: 'panel.equipos-trabajo.index', codigoPermiso: 'personal.equipo_trabajo.ver');
+        // Los equipos de trabajo (tarea 72, HU-49) ya no se siembran acá: el
+        // ítem se movió a Operación como "Cuadrillas" (19/9/2026, ver arriba).
 
         // HU-82 (tarea 97): ficha de inventario del dron (serie, chasis,
         // versión de software, región, serie del control, accesorios). ABM
@@ -462,6 +470,50 @@ class SecMenuSeeder extends Seeder
             ->where('padre_id', $padre->id)
             ->where('ruta', 'panel.campos.index')
             ->delete();
+    }
+
+    /**
+     * Saca del menú el reparto de hectáreas por orden (tarea 85, HU-70/92): el
+     * alta de Orden de Trabajo ya lo cubre y la pantalla queda solo como ficha
+     * de cada orden, a la que se llega desde la orden de aplicación.
+     *
+     * Filtra por `padre_id` + permiso y no por `label` ni por `ruta`: la fila
+     * se llamó "Asignación de equipos" y después "Escuadras", y su ruta cambió
+     * de nombre, pero el permiso fue siempre el mismo. `delete()` es soft
+     * (invariante 8) y `SecMenu::query()` ya excluye lo borrado: correr esto
+     * dos veces no hace nada. El permiso sigue vigente, gatea la ficha.
+     */
+    private function retirarItemReparto(SecMenu $padre): void
+    {
+        $permisoId = SecPermission::query()->where('code', 'operaciones.orden.asignar_equipos')->value('id');
+
+        if ($permisoId === null) {
+            return;
+        }
+
+        SecMenu::query()
+            ->where('padre_id', $padre->id)
+            ->where('permission_id', $permisoId)
+            ->get()
+            ->each(fn (SecMenu $fila) => $fila->delete());
+    }
+
+    /**
+     * Cambia la ruta de los ítems que apuntaban a una ruta que se renombró.
+     * Hace falta porque {@see item()} nunca pisa una `ruta` ya sembrada: sin
+     * esto, una base existente seguiría enlazando a un nombre de ruta que ya
+     * no existe. Se guarda con `save()` para que pase por la bitácora
+     * (invariante 9); sin filas con la ruta vieja, no hace nada.
+     */
+    private function reapuntar(string $rutaVieja, string $rutaNueva): void
+    {
+        SecMenu::query()
+            ->where('ruta', $rutaVieja)
+            ->get()
+            ->each(function (SecMenu $fila) use ($rutaNueva): void {
+                $fila->ruta = $rutaNueva;
+                $fila->save();
+            });
     }
 
     /**

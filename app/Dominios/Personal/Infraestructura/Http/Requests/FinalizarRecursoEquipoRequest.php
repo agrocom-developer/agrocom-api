@@ -6,7 +6,7 @@ use App\Dominios\Personal\Infraestructura\Eloquent\EquipoRecurso;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
- * `DELETE /panel/equipos-trabajo/{equipoTrabajo}/recursos/{recurso}` (tarea
+ * `DELETE /panel/cuadrillas/{equipoTrabajo}/recursos/{recurso}` (tarea
  * 72, HU-49): finaliza la vigencia del recurso asignado, no borra la fila —
  * mismo criterio que `FinalizarIntegranteEquipoRequest`.
  */

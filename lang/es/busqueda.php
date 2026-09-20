@@ -37,7 +37,7 @@ return [
         'lotes' => 'Lotes',
         'campanias' => 'Campañas',
         'cultivos' => 'Cultivos',
-        'equipos_trabajo' => 'Equipos de trabajo',
+        'equipos_trabajo' => 'Cuadrillas',
         'bases' => 'Bases',
         'baterias' => 'Baterías',
         'vehiculos' => 'Vehículos',

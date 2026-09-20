@@ -52,6 +52,7 @@
 @import './view-toggle.css';
 @import './link-row.css';
 @import './step-arrow.css';
+@import './state-transition.css';
 
 /* Organisms (quinta vuelta — layout de tres niveles) */
 @import './collapsible-menu-group.css';

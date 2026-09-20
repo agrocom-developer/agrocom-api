@@ -79,6 +79,22 @@ return [
         'cancel' => 'Cancelar',
         'continue' => 'Continuar',
         'close' => 'Cerrar',
+        'add' => 'Agregar',
+        'confirm' => 'Confirmar',
+    ],
+
+    // Datos faltantes, genéricos del panel.
+    'sin_datos' => '—',
+
+    // Complementos para texto (segundo, tercero, etc.).
+    'complemento' => [
+        'segundo' => '(segundo)',
+    ],
+
+    // Estados genéricos de vigor.
+    'estado' => [
+        'vigente' => 'Vigente',
+        'finalizado' => 'Finalizado',
     ],
 
     // Botón "Volver" del header de formularios (molecules/boton-volver,
@@ -143,6 +159,10 @@ return [
     'tabla' => [
         'col_indice' => '#',
         'col_acciones' => 'Acciones',
+        'col_integrantes' => 'Integrantes',
+        'col_dron' => 'Dron',
+        'col_recurso' => 'Recurso',
+        'col_estado' => 'Estado',
         'buscador_limpiar' => 'Limpiar búsqueda',
         'mas_acciones' => 'Más acciones',
         'filtros_boton' => 'Filtros',

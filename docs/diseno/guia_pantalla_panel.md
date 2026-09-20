@@ -178,6 +178,8 @@ Hasta el 15/9/2026 eran dos piezas (`alert-strip` para "el filtro no trae nada",
 @endif
 ```
 
+**El vacío de un listado no lleva botón (19/9/2026, criterio del dueño sobre Estadías en hacienda).** En una página `index`, el `empty-state` es solo ícono, título y detalle, en sus dos variantes: la acción de alta ya está en la cabecera —el único botón sólido sobre el pliegue— y repetirla dentro del vacío rompe la pieza. Que el componente tenga el slot `action` no lo habilita acá: ese slot existe para el vacío COMPACTO del resumen relacionado de una ficha de edición (§6.3.1), que no tiene cabecera propia donde poner esa acción.
+
 Migrado en `seguridad::pages.usuarios.index` y `seguridad::pages.bitacora.index` (piloto, 15/9/2026); las pantallas que todavía usan `alert-strip` para este caso (`comercial::pages.reportes-comerciales.index`, `personal::pages.personas.desempeno`, y cualquier otra del rollout de filtros) migran al mismo patrón cuando les toque su pasada.
 
 ---
@@ -228,6 +230,14 @@ Orden fijo de secciones: cabecera → toolbar (buscador + filtros) → tabla →
 ```
 
 `collect($filtros)->contains(...)` funciona igual sea cual sea la forma del array de filtros de cada página (mezcla de `null` y `''` como default entre distintos campos). Las páginas sin barra de filtros propia (universo acotado, lo dice cada una en su comentario de cabecera) no necesitan `$hayFiltrosActivos`: `isEmpty()` ya solo puede significar el segundo caso de §5.1.
+
+**Franja de KPI en un listado (19/9/2026, criterio del dueño; primera referencia viva: `operaciones::pages.estadias.index`).** Un listado puede llevar una franja de cifras de cabecera; es el estilo a replicar en los demás `index` en próximas iteraciones. Reglas:
+
+- **Dónde:** inmediatamente bajo la cabecera y los avisos, ANTES de la toolbar. **Nunca entre los filtros y la tabla**: filtros y tabla van pegados, son una sola unidad de trabajo.
+- **Con qué:** `molecules/stat-card` (ícono, `value`, `valueSuffix`, `foot`, `state`), en una grilla de página `.ag-<pagina>__kpis` que consulta el ancho de SU contenedor (1 → 2 → 4 columnas), igual que `.ag-ordenes-detalle__kpis`. Nada de cajas armadas a mano.
+- **Cuántas:** hasta cuatro, fijas. Una lista que crece con los datos (un total por cuadrilla, por propiedad, por cliente) NO es un KPI: es un desglose, y su lugar es el dashboard —por sección y por rol—, no el listado. Debajo de una tabla paginada queda escondido, y como suma todo el filtro y no la página, confunde.
+- **Qué cuentan:** responden al MISMO filtro que la tabla (las resuelve el caso de uso del listado, p. ej. `ListarEstadiasHacienda::resumen()`; la vista solo formatea). Una cifra en cero va con `state` nulo, no con color.
+- **Cuándo no:** si el listado está vacío sin filtros, no se dibuja (igual que la toolbar).
 
 **Columna de acciones: header con texto, ancho fijo, `organisms/row-actions`.** El `role="columnheader"` de acciones lleva `{{ __('ui.tabla.col_acciones') }}` (nunca `aria-hidden` vacío) y la celda envuelve sus botones en `<x-organisms.row-actions>` — el componente colapsa a un menú "⋮" las acciones que no entran (más de 3 en desktop, más de 2 en tablet, todas en mobile), siempre con ícono + texto (nunca solo-ícono). La última columna del `grid-template-columns` de esa página (head y fila comparten la MISMA declaración, ver `.ag-usuarios__head, .ag-usuarios__fila` en `usuarios.css`) es un **ancho fijo en rem calculado a mano para los botones reales de esa página** (`24rem` en Usuarios: 3 acciones con texto), nunca `auto` — con `auto`, el head (antes vacío) y la fila (con botones) son grids separados que resuelven ese ancho cada uno por su cuenta y el header queda corrido respecto al resto de columnas. Páginas sin celda de acciones (solo lectura, o un único control con su propio header ya con texto) no usan `row-actions`.
 

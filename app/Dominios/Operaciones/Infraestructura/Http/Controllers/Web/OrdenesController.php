@@ -357,7 +357,7 @@ final class OrdenesController
      *   Se arma con el nombre de la ruta, no con nada de Comercial (ADR 0003).
      * - Órdenes de trabajo: `panel.trabajos.index` acepta `orden_id`
      *   (`TrabajosController::index()`/`Aplicacion/ListarTrabajos`).
-     * - Asignación de equipos: `panel.asignacion-equipos.show` es la ficha
+     * - Asignación de equipos: `panel.reparto-cuadrillas.show` es la ficha
      *   propia de ESTA orden.
      *
      * Deliberadamente NO hay un tercer vínculo a "Seguimiento de vuelos"
@@ -410,7 +410,7 @@ final class OrdenesController
             $equiposAsignados = $this->equiposAsignadosCount($orden);
 
             $vinculos[] = [
-                'href' => route('panel.asignacion-equipos.show', $orden),
+                'href' => route('panel.reparto-cuadrillas.show', $orden),
                 'icon' => 'groups',
                 'title' => __('operaciones.ordenes.vinculo_asignacion'),
                 'meta' => __('operaciones.ordenes.vinculo_asignacion_meta', ['cantidad' => $equiposAsignados]),
@@ -501,7 +501,7 @@ final class OrdenesController
      * - Órdenes de trabajo: las que ya tiene (cada una lleva a su detalle) o, si
      *   no tiene ninguna, «Crear orden de trabajo».
      * - Equipos: «Ver equipos asignados» si ya hay alguno o, si no, «Asignar
-     *   equipos» (`AsignacionEquiposController`, HU-70/HU-92).
+     *   equipos» (`RepartoCuadrillasController`, HU-70/HU-92).
      *
      * Solo se ofrece crear o asignar en una orden `vigente` (es la guarda de
      * `CrearOrdenTrabajo`), y cada acceso pide el permiso de SU pantalla de
@@ -555,7 +555,7 @@ final class OrdenesController
 
             $vinculos[] = [
                 // Memento de navegación: la ficha de asignación vuelve a esta edición.
-                'href' => route('panel.asignacion-equipos.show', [
+                'href' => route('panel.reparto-cuadrillas.show', [
                     $orden,
                     'volver_a' => route('panel.ordenes.edit', $orden),
                     'volver_texto' => __('operaciones.ordenes.aside_volver_texto', ['nro' => $orden->nro_aplicacion]),
@@ -600,7 +600,7 @@ final class OrdenesController
      * Detalle por lote de la orden: lo solicitado (`ope_orden_lotes`), lo ya
      * asignado a algún equipo (`ope_trabajos` de ese par orden↔lote), lo
      * restante y QUÉ equipo lo trabaja y con qué dron — mismo cálculo que ya
-     * hace `AsignacionEquiposController::resumenPorLote()` para su propia
+     * hace `RepartoCuadrillasController::resumenPorLote()` para su propia
      * pantalla, reescrito acá porque `show()` necesita el detalle POR LOTE
      * (tabla "Lotes").
      *

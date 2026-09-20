@@ -20,9 +20,20 @@ namespace App\Dominios\Operaciones\Contratos;
  * `propiedad_id` (ADR 0020): contrato externo con `agrocom-field`, renombrado
  * de `campo_id` en conjunto con esa app (rama `feature/sync-propiedad`) — sin
  * APK distribuido todavía, sin ventana de compatibilidad que cuidar.
+ *
+ * `tipo_alojamiento` (19/9/2026, ver el docblock de
+ * `Infraestructura/Eloquent/EstadiaHacienda`): OPCIONAL — una app de campo
+ * vieja, sin este campo en su payload, sigue sincronizando igual (`null`
+ * cuando está ausente). Si SÍ viene, se valida contra el catálogo cerrado
+ * (`Dominio\TipoAlojamiento`): un valor desconocido rechaza el registro
+ * completo, mismo criterio que `CierreSesion::$motivoCierre` contra su
+ * catálogo — nunca se persiste un dato mal formado.
  */
 final readonly class AperturaEstadiaHacienda
 {
+    /** Catálogo cerrado — ver `Dominio\TipoAlojamiento`. */
+    private const array TIPOS_ALOJAMIENTO = ['hacienda', 'pueblo', 'camping'];
+
     private function __construct(
         public string $uuidCliente,
         public int $equipoTrabajoId,
@@ -30,6 +41,7 @@ final readonly class AperturaEstadiaHacienda
         public string $entrada,
         public ?int $vehiculoId,
         public ?string $observacion,
+        public ?string $tipoAlojamiento,
     ) {}
 
     /** @param  array<string, mixed>  $datos */
@@ -41,6 +53,7 @@ final readonly class AperturaEstadiaHacienda
             || ! self::esStringNoVacio($datos['entrada'] ?? null)
             || ! self::esEnteroOAusente($datos['vehiculo_id'] ?? null)
             || ! self::esStringOAusente($datos['observacion'] ?? null)
+            || ! self::esTipoAlojamientoOAusente($datos['tipo_alojamiento'] ?? null)
         ) {
             return null;
         }
@@ -52,12 +65,18 @@ final readonly class AperturaEstadiaHacienda
             entrada: (string) $datos['entrada'],
             vehiculoId: isset($datos['vehiculo_id']) ? (int) $datos['vehiculo_id'] : null,
             observacion: isset($datos['observacion']) ? (string) $datos['observacion'] : null,
+            tipoAlojamiento: isset($datos['tipo_alojamiento']) ? (string) $datos['tipo_alojamiento'] : null,
         );
     }
 
     private static function esStringNoVacio(mixed $valor): bool
     {
         return is_string($valor) && $valor !== '';
+    }
+
+    private static function esTipoAlojamientoOAusente(mixed $valor): bool
+    {
+        return $valor === null || (is_string($valor) && in_array($valor, self::TIPOS_ALOJAMIENTO, true));
     }
 
     private static function esStringOAusente(mixed $valor): bool

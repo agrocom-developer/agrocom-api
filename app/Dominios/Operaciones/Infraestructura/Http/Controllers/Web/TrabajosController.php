@@ -246,7 +246,7 @@ final class TrabajosController
 
     /**
      * Equipos vigentes hoy para el `<select>` de `edit()` — mismo criterio y
-     * mismo formato de etiqueta que `AsignacionEquiposController::equiposDisponibles()`.
+     * mismo formato de etiqueta que `RepartoCuadrillasController::equiposDisponibles()`.
      *
      * @return Collection<int, string>
      */
@@ -262,7 +262,7 @@ final class TrabajosController
 
     /**
      * Etiquetas legibles de equipo por id — mismo criterio que
-     * `AsignacionEquiposController::etiquetasEquipo()`.
+     * `RepartoCuadrillasController::etiquetasEquipo()`.
      *
      * @param  list<int>  $ids
      * @return array<int, string>

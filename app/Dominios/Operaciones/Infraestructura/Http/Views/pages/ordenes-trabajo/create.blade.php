@@ -35,9 +35,9 @@
       restantes_total, lotes}>): por cada orden, sus lotes con hectáreas
       restantes.
     - $ordenPreseleccionadaId (?int): si se llega con ?orden_id=X en la URL.
-    - $equiposDisponibles (Collection<int, string>): escuadras vigentes hoy.
-    - $puedeCrearEscuadra (bool): permiso `personal.equipo_trabajo.crear` del
-      rol activo, para ofrecer o no el acceso rápido «Crear escuadra».
+    - $equiposDisponibles (Collection<int, string>): cuadrillas vigentes hoy.
+    - $puedeCrearCuadrilla (bool): permiso `personal.equipo_trabajo.crear` del
+      rol activo, para ofrecer o no el acceso rápido «Crear cuadrilla».
 
     Gateada por `operaciones.trabajo.crear`. Estilos en
     resources/css/pages/ordenes-trabajo.css — cero color hardcodeado
@@ -48,7 +48,7 @@
     $ordenesDisponibles = $ordenesDisponibles ?? collect();
     $datosOrden = $datosOrden ?? [];
     $equiposDisponibles = $equiposDisponibles ?? collect();
-    $puedeCrearEscuadra = $puedeCrearEscuadra ?? false;
+    $puedeCrearCuadrilla = $puedeCrearCuadrilla ?? false;
 
     $ordenId = old('orden_id', $ordenPreseleccionadaId ?? '');
     $ordenElegida = $ordenId !== '' && isset($datosOrden[$ordenId]) ? $datosOrden[$ordenId] : null;
@@ -70,11 +70,11 @@
         : [];
     $equiposAntiguos = old('equipos', $equiposPorDefecto);
 
-    // Memento de navegación: el acceso rápido «Crear escuadra» le dice a
+    // Memento de navegación: el acceso rápido «Crear cuadrilla» le dice a
     // `RecordarOrigenNavegacion` que se vuelve a ESTA pantalla, con la orden
     // ya elegida.
     $urlActual = route('panel.trabajos.create', array_filter(['orden_id' => $ordenId]));
-    $urlCrearEscuadra = route('panel.equipos-trabajo.create', [
+    $urlCrearCuadrilla = route('panel.cuadrillas.create', [
         'volver_a' => $urlActual,
         'volver_texto' => __('operaciones.ordenes_trabajo.crear_titulo'),
     ]);
@@ -272,8 +272,8 @@
                     @if ($equiposDisponibles->isEmpty())
                         <x-molecules.alert-strip variant="warning" icon="groups" class="ag-form-section__field--full">
                             {{ __('operaciones.ordenes_trabajo.equipo_sin_opciones') }}
-                            @if ($puedeCrearEscuadra)
-                                <a href="{{ $urlCrearEscuadra }}" data-ag-link-accent>{{ __('operaciones.ordenes_trabajo.escuadra_crear') }}</a>
+                            @if ($puedeCrearCuadrilla)
+                                <a href="{{ $urlCrearCuadrilla }}" data-ag-link-accent>{{ __('operaciones.ordenes_trabajo.cuadrilla_crear') }}</a>
                             @endif
                         </x-molecules.alert-strip>
                     @endif
@@ -282,7 +282,7 @@
                         {{-- Reparto de hectáreas (pedido del dueño, 19/9/2026): en vez de
                              cargar a mano lotes y hectáreas de cada equipo, se elige un
                              criterio y el formulario los completa — queda solo elegir la
-                             escuadra. Es una ayuda de carga: lo repartido se puede ajustar
+                             cuadrilla. Es una ayuda de carga: lo repartido se puede ajustar
                              y el servidor valida igual. No viaja en el POST que se guarda. --}}
                         <x-atoms.radio-group
                             name="reparto_modo"
@@ -312,8 +312,8 @@
                                 'obligatorio' => $indiceEquipo === 0,
                                 'lotesOrden' => $ordenElegida['lotes'],
                                 'equiposDisponibles' => $equiposDisponibles,
-                                'urlCrearEscuadra' => $urlCrearEscuadra,
-                                'puedeCrearEscuadra' => $puedeCrearEscuadra,
+                                'urlCrearCuadrilla' => $urlCrearCuadrilla,
+                                'puedeCrearCuadrilla' => $puedeCrearCuadrilla,
                             ])
                         @endfor
                     </div>

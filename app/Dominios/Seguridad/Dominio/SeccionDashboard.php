@@ -29,6 +29,7 @@ enum SeccionDashboard: string
     case ResumenPorLote = 'resumen_por_lote';
     case Multimedia = 'multimedia';
     case Pausas = 'pausas';
+    case DiasEnHacienda = 'dias_en_hacienda';
     case Stock = 'stock';
     case AvanceClientes = 'avance_clientes';
     case Alertas = 'alertas';
@@ -53,6 +54,7 @@ enum SeccionDashboard: string
             self::Multimedia => 'operaciones.trabajo.ver',
             self::ColaValidacion => 'operaciones.sesion.validar',
             self::Pausas => 'operaciones.pausa.ver',
+            self::DiasEnHacienda => 'operaciones.estadia.ver',
             self::Stock => 'inventario.movimiento.ver',
             self::AvanceClientes => 'comercial.contrato.ver',
             self::Alertas => 'operaciones.alerta.ver',

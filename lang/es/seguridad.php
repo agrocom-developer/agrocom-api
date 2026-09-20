@@ -311,6 +311,12 @@ return [
 
         'pausas_titulo' => 'Pausas por causa',
         'pausas_minutos' => ':minutos min',
+        // Días efectivos en hacienda del mes, por cuadrilla y por propiedad.
+        'dias_hacienda_cuadrilla_titulo' => 'Días en hacienda por cuadrilla',
+        'dias_hacienda_propiedad_titulo' => 'Días en hacienda por propiedad',
+        'dias_hacienda_valor' => ':dias días',
+        'dias_hacienda_en_curso' => '{0} ninguna en curso|{1} :cantidad en curso|[2,*] :cantidad en curso',
+        'dias_hacienda_solo_en_curso' => '{1} Hay :cantidad estadía en curso; sus días se suman al finalizarla.|[2,*] Hay :cantidad estadías en curso; sus días se suman al finalizarlas.',
 
         'stock_titulo' => 'Stock bajo mínimo',
         'stock_nivel' => ':cantidad / :minimo',
@@ -658,7 +664,7 @@ return [
             'per_bases' => 'Bases',
             'per_equipo_integrantes' => 'Integrantes de equipo',
             'per_equipo_recursos' => 'Recursos de equipo',
-            'per_equipos_trabajo' => 'Equipos de trabajo',
+            'per_equipos_trabajo' => 'Cuadrillas',
             'per_personas' => 'Personas',
             'plt_configuraciones' => 'Configuración del sistema',
             'sec_datos_fiscales' => 'Datos fiscales',

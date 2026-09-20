@@ -7,10 +7,10 @@
  * - Recargar la pantalla con `?orden_id=` al elegir otra orden — equipos,
  *   lotes y calda dependen todos de ella — sin perder lo ya cargado en
  *   calda, clima y vuelo (p. ej. al pasar de una orden a otra).
- * - Que una escuadra elegida en un equipo deje de ofrecerse en los demás.
+ * - Que una cuadrilla elegida en un equipo deje de ofrecerse en los demás.
  * - Las filas repetibles de lote dentro de cada equipo.
  * - El reparto automático de hectáreas entre los equipos (parejo o por
- *   dificultad de los lotes), para que solo quede elegir la escuadra.
+ *   dificultad de los lotes), para que solo quede elegir la cuadrilla.
  * - El resumen de hectáreas repartidas contra lo que le queda a la orden.
  *
  * Vanilla, sin librerías. Los textos llegan traducidos por `data-*`.
@@ -32,7 +32,7 @@ class OrdenesTrabajoForm {
         if (!this.lista) return;
 
         this.bindLotes();
-        this.bindEscuadras();
+        this.bindCuadrillas();
         this.bindReparto();
         this.bindRepartoAutomatico();
     }
@@ -326,20 +326,20 @@ class OrdenesTrabajoForm {
     }
 
     /**
-     * Una escuadra cubre un solo equipo de la tanda: la elegida en un bloque
+     * Una cuadrilla cubre un solo equipo de la tanda: la elegida en un bloque
      * se deshabilita en los demás. `atoms/select.js` observa el `disabled` de
      * cada `<option>` y refresca su lista sola.
      */
-    bindEscuadras() {
+    bindCuadrillas() {
         this.lista.addEventListener('change', (evento) => {
             if (evento.target.matches('[data-ag-equipo-selector]')) {
-                this.actualizarEscuadras();
+                this.actualizarCuadrillas();
             }
         });
-        this.actualizarEscuadras();
+        this.actualizarCuadrillas();
     }
 
-    actualizarEscuadras() {
+    actualizarCuadrillas() {
         const selectores = [...this.lista.querySelectorAll('[data-ag-equipo-selector]')];
 
         selectores.forEach((selector) => {

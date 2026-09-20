@@ -78,8 +78,8 @@
     --ag-step-suave: var(--ag-color-warning-subtle);
     --ag-step-fuerte: var(--ag-color-warning-strong);
     --ag-step-borde: var(--ag-color-warning-border);
-    /* Mismo criterio que `atoms/badge`: texto oscuro sobre el ámbar sólido. */
-    --ag-step-sobre-solido: var(--ag-color-gray-900);
+    /* Sin `--ag-step-sobre-solido` propio: como `atoms/badge`, el texto sobre
+       el ámbar sólido es blanco, igual que en los demás tonos (19/9/2026). */
 }
 
 .ag-step-arrow__item[data-tone='danger'] {

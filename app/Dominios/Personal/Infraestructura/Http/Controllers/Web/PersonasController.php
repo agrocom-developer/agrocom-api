@@ -68,6 +68,11 @@ final class PersonasController
             ...$this->autorizacion->cascara($request),
             'roles' => RolOperativoPersona::cases(),
             'basesDisponibles' => $this->basesActivas(),
+            // Alta rápida desde otro formulario (tarea "cuadrillas-estadias",
+            // 19/9/2026 — mismo criterio que `PropiedadesController::create()`):
+            // con ?volver_a=, al guardar se ofrece un botón para volver a esa
+            // URL con esta persona ya disponible en el select que la pidió.
+            'volverA' => $request->query('volver_a'),
         ]);
     }
 
@@ -86,9 +91,12 @@ final class PersonasController
         );
 
         // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
+        // `volverA` viaja igual que en `PropiedadesController::store()` para
+        // el caso de alta rápida desde otro formulario.
         return redirect()
             ->route('panel.personas.edit', $persona)
-            ->with('estado', __('personal.personas.creado'));
+            ->with('estado', __('personal.personas.creado'))
+            ->with('volverA', $request->input('volver_a'));
     }
 
     public function edit(Request $request, PerPersona $persona): View
@@ -100,6 +108,7 @@ final class PersonasController
             'persona' => $persona,
             'roles' => RolOperativoPersona::cases(),
             'basesDisponibles' => $this->basesActivas(),
+            'volverA' => session('volverA'),
         ]);
     }
 
@@ -139,7 +148,7 @@ final class PersonasController
      * Ficha de desempeño (HU-58, tarea 81): "¿qué hizo esta persona esta
      * campaña?", por sesión y no por equipo de trabajo (ADR 0015 punto 3).
      * Filtros por `GET` con querystring, mismo criterio que
-     * `EquiposTrabajoController::show()` — rango de fechas (default los
+     * `CuadrillasController::show()` — rango de fechas (default los
      * últimos 12 meses) y cliente/campaña, esta última dependiente del
      * cliente elegido (JS, presentación — el caso de uso ya filtra en
      * PHP sin importar lo que el navegador haya mostrado u ocultado).

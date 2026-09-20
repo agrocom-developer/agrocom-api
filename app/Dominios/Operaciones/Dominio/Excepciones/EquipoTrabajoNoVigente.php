@@ -10,6 +10,11 @@ use RuntimeException;
  * recibir trabajo si está vigente HOY (`Personal\Contratos\LecturaEquipoTrabajo::vigentesAFecha()`)
  * — un equipo dado de baja o que todavía no arrancó su vigencia no es una
  * cuadrilla real a la que repartirle hectáreas.
+ *
+ * Reutilizada por `Aplicacion/RegistrarEstadiaHacienda` (reforma 19/9/2026):
+ * misma guarda, aplicada a la fecha de ENTRADA de la estadía en vez de hoy —
+ * una cuadrilla que todavía no existía o ya se dio de baja ese día no pudo
+ * alojarse en ninguna hacienda.
  */
 final class EquipoTrabajoNoVigente extends RuntimeException
 {

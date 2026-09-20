@@ -7,7 +7,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 /**
- * `POST /panel/equipos-trabajo/{equipoTrabajo}/recursos` (tarea 72, HU-49).
+ * `POST /panel/cuadrillas/{equipoTrabajo}/recursos` (tarea 72, HU-49).
  * Sin `Rule::exists` para `recurso_id`: la tabla de destino depende de
  * `recurso_tipo` (`ope_drones`/`man_vehiculos`/`man_generadores`, tres
  * tablas de dos módulos distintos) y esta clase no resuelve esa

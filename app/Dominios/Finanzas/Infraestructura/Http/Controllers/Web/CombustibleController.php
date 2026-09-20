@@ -36,7 +36,7 @@ use Illuminate\View\View;
  * `equipo_trabajo_id`/`fecha` viajan como query string en el formulario de
  * alta (`GET /panel/combustible/crear?equipo_trabajo_id=...&fecha=...`),
  * mismo patrón de recarga completa que
- * `Personal\Infraestructura\Http\Controllers\Web\EquiposTrabajoController::show()`
+ * `Personal\Infraestructura\Http\Controllers\Web\CuadrillasController::show()`
  * (la ficha del equipo, que también responde "quién/qué tenía este equipo
  * ese día" recargando la página con `fecha` en la URL): al elegir equipo y
  * fecha, la página se recarga y el `<select>` de recurso se puebla SOLO con
@@ -297,7 +297,7 @@ final class CombustibleController
     /**
      * Resuelve `"{tipo}:{id}"` => identificador legible, por tipo en un
      * único `whereIn` por tabla (mismo criterio de agrupación que
-     * `Personal\Infraestructura\Http\Controllers\Web\EquiposTrabajoController::etiquetasRecurso()`).
+     * `Personal\Infraestructura\Http\Controllers\Web\CuadrillasController::etiquetasRecurso()`).
      *
      * @param  list<DatosRecursoEquipo>  $recursos
      * @return array<string, string>
