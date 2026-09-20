@@ -4,7 +4,8 @@
     `_formulario.blade.php`, compartido con `create.blade.php`.
 
     Datos esperados (ver BasesController::edit()): la cáscara de
-    CascaraPanel, más $base (PerBase).
+    CascaraPanel, más $base (PerBase) y $resumenRelacionado (el aside del
+    formulario, que el `@include` hereda tal cual).
 
     Gateada por `personal.base.editar`, verificado server-side en el
     controlador.
