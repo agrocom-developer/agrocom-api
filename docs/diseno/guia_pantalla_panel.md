@@ -511,6 +511,9 @@ Y el aviso que ya cobró dos veces: un canvas es un mockup, no la implementació
 - [ ] Contraste AA (4.5:1) verificado en las combinaciones nuevas, y anotado en `sistema_diseno_panel.md` §1.3 si el par no estaba.
 - [ ] `bin/verify` en verde (ver skill `verificacion`).
 
+**Homogeneización** (plan `docs/gestion/plan_homogeneizacion_panel.md`)
+- [ ] La pantalla no figura en `docs/diseno/panel_homogeneo_pendientes.txt`: sigue el patrón de las referencias y `PanelHomogeneoTest` se lo exige sin perdón.
+
 **Documentación**
 - [ ] Si se agregó o renombró un componente, la tabla de `sistema_diseno_panel.md` §3 quedó al día. Verificable:
   ```sh
