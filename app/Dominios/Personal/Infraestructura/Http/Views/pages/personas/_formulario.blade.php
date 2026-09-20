@@ -26,7 +26,8 @@
     $accion = $esEdicion ? route('panel.personas.update', $persona) : route('panel.personas.store');
     $nombre = old('nombre', $persona?->nombre ?? '');
     $rol = old('rol', $persona?->rol?->value ?? '');
-    $baseId = old('base_id', $persona?->base_id ?? '');
+    // En el alta, `?base_id=` (atajo «Nueva persona» de la ficha de una base) deja esa base elegida.
+    $baseId = old('base_id', $persona?->base_id ?? ($baseIdInicial ?? ''));
     $tarifaHa = old('tarifa_ha', $persona?->tarifa_ha ?? '');
     $activo = old('activo', $persona?->activo ?? true);
 @endphp
@@ -42,9 +43,11 @@
         :subtitle="__('personal.personas.subtitulo_form')"
     >
         <x-slot:actions>
-            <x-atoms.button :href="route('panel.personas.index')" variant="outline" icon="arrow_back">
-                {{ __('personal.personas.volver') }}
-            </x-atoms.button>
+            <x-molecules.boton-volver
+                :href="route('panel.personas.index')"
+                :label="__('personal.personas.volver')"
+                :retorno="$esEdicion ? ['persona_id' => $persona->id] : []"
+            />
         </x-slot:actions>
     </x-organisms.page-header>
 

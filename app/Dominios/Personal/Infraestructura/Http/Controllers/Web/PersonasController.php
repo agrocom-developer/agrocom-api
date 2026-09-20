@@ -68,6 +68,9 @@ final class PersonasController
             ...$this->autorizacion->cascara($request),
             'roles' => RolOperativoPersona::cases(),
             'basesDisponibles' => $this->basesActivas(),
+            // Atajo «Nueva persona» de la ficha de una base: llega con
+            // `?base_id=` y el formulario la deja elegida.
+            'baseIdInicial' => $request->string('base_id')->toString(),
             // Alta rápida desde otro formulario (tarea "cuadrillas-estadias",
             // 19/9/2026 — mismo criterio que `PropiedadesController::create()`):
             // con ?volver_a=, al guardar se ofrece un botón para volver a esa
