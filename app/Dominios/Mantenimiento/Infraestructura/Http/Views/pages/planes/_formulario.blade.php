@@ -8,13 +8,16 @@
 
     Espera:
     - $plan (PlanMantenimiento|null): null en alta; el modelo en edición.
+    - $resumenRelacionado (list<array>|null): tarjetas del aside, resueltas
+      por `ResumenRelacionadoDePlan`; null/ausente en alta.
 
     Tras un error de validación, `old()` pisa los valores del modelo/vacíos
     — mismo criterio en alta y en edición.
 
-    El aside pegajoso del arquetipo (summary-card/progress-meter) se omite a
-    propósito, mismo criterio que baterias/vehiculos: ningún dato de solo
-    lectura justifica hoy la columna lateral.
+    Aside solo en edición (tarea 116, plan §3.4): un plan recién creado no
+    tiene nada que resumir, y en alta el modelo todavía no está elegido —
+    justamente el dato del que cuelga todo el resumen. El plan no tiene
+    máquina de estados, así que no lleva pasos.
 --}}
 @php
     $esEdicion = $plan !== null;
@@ -35,9 +38,7 @@
         :subtitle="__('mantenimiento.planes.subtitulo_form')"
     >
         <x-slot:actions>
-            <x-atoms.button :href="route('panel.planes-mantenimiento.index')" variant="outline" icon="arrow_back">
-                {{ __('mantenimiento.planes.volver') }}
-            </x-atoms.button>
+            <x-molecules.boton-volver :href="route('panel.planes-mantenimiento.index')" :label="__('mantenimiento.planes.volver')" />
         </x-slot:actions>
     </x-organisms.page-header>
 
@@ -47,49 +48,57 @@
         </x-molecules.alert-strip>
     @endif
 
-    <x-molecules.form-section
-        :title="__('mantenimiento.planes.seccion_datos')"
-        :count="__('mantenimiento.planes.campos_contador', ['cantidad' => 3])"
-    >
-        <x-atoms.input
-            type="text"
-            name="modelo"
-            :label="__('mantenimiento.planes.campo_modelo')"
-            :value="$modelo"
-            :help="__('mantenimiento.planes.campo_modelo_ayuda')"
-            required
-            :error="$errors->first('modelo')"
-        />
+    <x-molecules.form-layout>
+        <x-molecules.form-section
+            :title="__('mantenimiento.planes.seccion_datos')"
+            :count="__('mantenimiento.planes.campos_contador', ['cantidad' => 3])"
+        >
+            <x-atoms.input
+                type="text"
+                name="modelo"
+                :label="__('mantenimiento.planes.campo_modelo')"
+                :value="$modelo"
+                :help="__('mantenimiento.planes.campo_modelo_ayuda')"
+                required
+                :error="$errors->first('modelo')"
+            />
 
-        <x-atoms.input
-            type="text"
-            name="tarea"
-            :label="__('mantenimiento.planes.campo_tarea')"
-            :value="$tarea"
-            required
-            :error="$errors->first('tarea')"
-        />
+            <x-atoms.input
+                type="text"
+                name="tarea"
+                :label="__('mantenimiento.planes.campo_tarea')"
+                :value="$tarea"
+                required
+                :error="$errors->first('tarea')"
+            />
 
-        <x-atoms.input
-            type="number"
-            name="horas_umbral"
-            :label="__('mantenimiento.planes.campo_horas_umbral')"
-            :value="$horasUmbral"
-            min="0.01"
-            step="0.01"
-            required
-            :error="$errors->first('horas_umbral')"
-        />
-    </x-molecules.form-section>
+            <x-atoms.input
+                type="number"
+                name="horas_umbral"
+                :label="__('mantenimiento.planes.campo_horas_umbral')"
+                :value="$horasUmbral"
+                min="0.01"
+                step="0.01"
+                required
+                :error="$errors->first('horas_umbral')"
+            />
+        </x-molecules.form-section>
 
-    <x-organisms.form-actions-bar :status="__('mantenimiento.planes.estado_form')">
-        <x-slot:actions>
-            <x-atoms.button :href="route('panel.planes-mantenimiento.index')" variant="outline">
-                {{ __('ui.action.cancel') }}
-            </x-atoms.button>
-            <x-atoms.button type="submit" variant="primary">
-                {{ __('ui.action.save') }}
-            </x-atoms.button>
-        </x-slot:actions>
-    </x-organisms.form-actions-bar>
+        <x-organisms.form-actions-bar :status="__('mantenimiento.planes.estado_form')">
+            <x-slot:actions>
+                <x-atoms.button :href="route('panel.planes-mantenimiento.index')" variant="outline">
+                    {{ __('ui.action.cancel') }}
+                </x-atoms.button>
+                <x-atoms.button type="submit" variant="primary">
+                    {{ __('ui.action.save') }}
+                </x-atoms.button>
+            </x-slot:actions>
+        </x-organisms.form-actions-bar>
+
+        @if ($esEdicion)
+            <x-slot:aside>
+                @include('mantenimiento::pages._resumen-relacionado', ['resumenRelacionado' => $resumenRelacionado ?? null])
+            </x-slot:aside>
+        @endif
+    </x-molecules.form-layout>
 </form>
