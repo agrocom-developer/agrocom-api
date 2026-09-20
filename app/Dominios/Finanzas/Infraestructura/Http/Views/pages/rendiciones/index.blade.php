@@ -270,7 +270,7 @@
                                             type="button"
                                             data-bs-toggle="modal"
                                             :data-bs-target="'#'.$modalIdPresentar"
-                                            variant="info-outline"
+                                            variant="success-outline"
                                             size="sm"
                                             icon="send"
                                         >

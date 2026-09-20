@@ -55,15 +55,16 @@ final class RendicionesController
      * Tono de cada estado, definido UNA vez (plan de homogeneización §3.1):
      * lo comparten el badge del listado, las acciones de fila que cambian de
      * estado y sus modales, para que los tres hablen con el mismo color.
-     * `abierta` y `aprobada` conservan el gris y el verde que el listado ya
-     * tenía; `presentada` estrena tono propio (el ternario anterior la
-     * pintaba igual que `aprobada`, que es justo lo que hay que distinguir).
+     * Son los tonos con los que el listado ya venía pintando el badge — no se
+     * reeligen: `presentada` y `aprobada` siguen en verde, como en la ficha de
+     * detalle, y `abierta` pasa del `secondary` que `atoms/badge` no tiene al
+     * `neutral`, que es el gris real del catálogo.
      *
      * @var array<string, string>
      */
     public const array TONO_POR_ESTADO = [
         'abierta' => 'neutral',
-        'presentada' => 'info',
+        'presentada' => 'success',
         'aprobada' => 'success',
     ];
 
