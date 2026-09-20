@@ -695,7 +695,7 @@ test('el descubrimiento encuentra las pantallas de referencia y deja afuera las 
         ->toContain('Comercial/clientes/index.blade.php')
         ->toContain('Comercial/clientes/_formulario.blade.php')
         ->toContain('Operaciones/ordenes-trabajo/create.blade.php')
-        ->toContain('Mantenimiento/ordenes/edit.blade.php')
+        ->toContain('Mantenimiento/ordenes/_formulario.blade.php')
         ->toContain('Operaciones/trabajos/edit.blade.php')
         ->not->toContain('Seguridad/roles/index.blade.php')
         ->not->toContain('Seguridad/usuarios/create.blade.php')

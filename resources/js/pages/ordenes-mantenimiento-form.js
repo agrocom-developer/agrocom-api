@@ -11,20 +11,18 @@
  *    envía). Es presentación, no validación — el servidor revalida en
  *    `CrearOrdenMantenimientoRequest`.
  *
- * 2. Cierre (ordenes/edit.blade.php, HU-57 tarea 80): selector de repuestos
- *    por casillas — reemplaza la fila repetible de dos selects + cantidad
- *    de la tarea 53. Cada repuesto del catálogo YA tiene sus campos
- *    (`_repuesto-campos.blade.php`, inyectados por `extraPorOpcion` de
- *    `x-atoms.checkbox-group`) deshabilitados de fábrica: acá se
- *    habilitan/deshabilitan según la casilla hermana, se sincroniza
- *    `base_id` con la base global de la orden (salvo override propio de la
- *    línea), se calcula la disponibilidad/aviso de stock (presentación — la
- *    guarda real sigue en el servidor, `CerrarOrdenMantenimientoRequest` +
- *    `MaquinaEstadosOrdenMantenimiento::cerrar()`) y se arma el resumen
- *    siempre visible. Sin reindexado de nombres: cada línea ya nace como
+ * 2. Cierre (ordenes/_repuestos-seccion.blade.php, HU-57 tarea 80; pasado a
+ *    tabla de detalle en la tarea 116): una fila por repuesto del catálogo,
+ *    con su casilla, su cantidad y su base. Los campos de cada fila nacen
+ *    deshabilitados —un control `disabled` no viaja en el POST—, así que acá
+ *    se habilitan/deshabilitan según la casilla de esa fila, se sincroniza
+ *    `base_id` con la base de la orden mientras la fila no tenga una propia,
+ *    se calcula la disponibilidad/aviso de stock (presentación — la guarda
+ *    real sigue en el servidor, `CerrarOrdenMantenimientoRequest` +
+ *    `MaquinaEstadosOrdenMantenimiento::cerrar()`) y se lleva el contador de
+ *    elegidos. Sin reindexado de nombres: cada línea ya nace como
  *    `repuestos[{repuesto_id}][...]`, así que no hace falta reescribir
- *    `name` al marcar/desmarcar (a diferencia de la tarea 53, que reindexaba
- *    0..n-1 al agregar una fila).
+ *    `name` al marcar/desmarcar.
  */
 document.addEventListener('DOMContentLoaded', () => {
     const selectEquipoTipo = document.querySelector('[data-ag-orden-equipo-tipo]');
@@ -63,7 +61,6 @@ function inicializarSelectorRepuestos() {
     const textoSinBase = contenedor.dataset.textoSinBase || '';
 
     const selectBaseGlobal = document.querySelector('[data-ag-orden-base-global]');
-    const resumenLista = document.querySelector('[data-ag-repuestos-resumen-lista]');
     const resumenVacio = document.querySelector('[data-ag-repuestos-resumen-vacio]');
     const resumenContador = document.querySelector('[data-ag-repuestos-resumen-contador]');
     const plantillaContador = document.querySelector('[data-ag-repuestos-resumen]')?.dataset.plantillaContador || '';
@@ -80,8 +77,6 @@ function inicializarSelectorRepuestos() {
             disponibilidad: bloque.querySelector('[data-ag-repuesto-disponibilidad]'),
             aviso: bloque.querySelector('[data-ag-repuesto-aviso]'),
             avisoTexto: bloque.querySelector('[data-ag-repuesto-aviso-texto]'),
-            botonCambiarBase: bloque.querySelector('[data-ag-repuesto-cambiar-base]'),
-            baseOverrideWrap: bloque.querySelector('[data-ag-repuesto-base-override-wrap]'),
             baseOverride: bloque.querySelector('[data-ag-repuesto-base-override]'),
         };
     }
@@ -121,12 +116,29 @@ function inicializarSelectorRepuestos() {
         return bloque.dataset.basePropia === '1';
     }
 
+    /**
+     * Copia la base de la orden a la línea, salvo que esa fila ya haya
+     * elegido la suya. Al mover el `<select>` de la fila hay que avisarle con
+     * un `change`, que es lo que escucha el combobox de `atoms/select` para
+     * repintar su texto visible; `data-sincronizando` distingue ese cambio
+     * programático del que hace el usuario, para no marcar la fila como si
+     * hubiera elegido base propia.
+     */
     function sincronizarConBaseGlobal(bloque) {
         const campos = camposDe(bloque);
         if (!campos.baseId) return;
 
         if (!tieneBasePropia(bloque)) {
-            campos.baseId.value = selectBaseGlobal?.value ?? '';
+            const base = selectBaseGlobal?.value ?? '';
+
+            campos.baseId.value = base;
+
+            if (campos.baseOverride && campos.baseOverride.value !== base) {
+                bloque.dataset.sincronizando = '1';
+                campos.baseOverride.value = base;
+                campos.baseOverride.dispatchEvent(new Event('change', { bubbles: true }));
+                delete bloque.dataset.sincronizando;
+            }
         }
 
         actualizarDisponibilidad(bloque);
@@ -140,34 +152,18 @@ function inicializarSelectorRepuestos() {
             resumenContador.hidden = elegidos.length === 0;
             resumenContador.textContent = plantillaContador.replace('__CANTIDAD__', String(elegidos.length));
         }
-
-        if (!resumenLista) return;
-
-        resumenLista.replaceChildren(
-            ...elegidos.map((casilla) => {
-                const bloque = bloqueDe(casilla.value);
-                const campos = bloque ? camposDe(bloque) : null;
-                const etiqueta = casilla.closest('label')?.querySelector('.ag-checkbox-group__option-label')?.textContent ?? '';
-                const cantidad = campos?.cantidad?.value || '0';
-
-                const item = document.createElement('li');
-                item.className = 'ag-repuestos-resumen__item';
-                item.textContent = `${etiqueta}: ${cantidad}`;
-                return item;
-            }),
-        );
     }
 
     // Separado de `alternarCampos` (el handler de `change`) porque también
-    // hace falta al cargar la página: `_repuesto-campos.blade.php` ya nace
-    // habilitado cuando el repuesto viene de un repintado tras un error de
-    // validación (prop `marcado`, mismo booleano que tilda la casilla), pero
+    // hace falta al cargar la página: la fila de `_repuestos-seccion.blade.php`
+    // ya nace habilitada cuando el repuesto viene de un repintado tras un
+    // error de validación (`$marcado`, el mismo booleano que tilda la casilla),
     // sin este paso en la inicialización el `base_id` de esa línea no se
     // sincronizaría con la base global recién elegida en esta carga.
     function aplicarEstadoMarcado(bloque, marcado) {
         const campos = camposDe(bloque);
 
-        [campos.repuestoId, campos.baseId, campos.cantidad].forEach((campo) => {
+        [campos.repuestoId, campos.baseId, campos.cantidad, campos.baseOverride].forEach((campo) => {
             if (campo) campo.disabled = !marcado;
         });
 
@@ -191,24 +187,24 @@ function inicializarSelectorRepuestos() {
     function inicializarBloque(bloque) {
         const campos = camposDe(bloque);
 
-        bloque.dataset.basePropia = campos.baseOverrideWrap && !campos.baseOverrideWrap.hidden ? '1' : '0';
-
-        campos.botonCambiarBase?.addEventListener('click', () => {
-            campos.botonCambiarBase.hidden = true;
-            if (campos.baseOverrideWrap) campos.baseOverrideWrap.hidden = false;
-            campos.baseOverride?.focus();
-            bloque.dataset.basePropia = '1';
-        });
+        // `data-base-propia` ya viene del Blade: tras un error de validación,
+        // una línea que había elegido una base distinta de la de la orden se
+        // repinta con la suya.
+        bloque.dataset.basePropia ??= '0';
 
         campos.baseOverride?.addEventListener('change', () => {
+            // Elegir la base de esta fila a mano la desengancha de la base de
+            // la orden; el eco de `sincronizarConBaseGlobal` no cuenta.
+            if (bloque.dataset.sincronizando !== '1') {
+                bloque.dataset.basePropia = '1';
+            }
+
             if (campos.baseId) campos.baseId.value = campos.baseOverride.value;
             actualizarDisponibilidad(bloque);
-            actualizarResumen();
         });
 
         campos.cantidad?.addEventListener('input', () => {
             actualizarDisponibilidad(bloque);
-            actualizarResumen();
         });
     }
 

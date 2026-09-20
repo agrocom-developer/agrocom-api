@@ -13,13 +13,6 @@
 # Medida el 20/9/2026 sobre `develop` en `5f699ce4` (tarea 111): 46 pantallas,
 # 26 listados y 20 formularios. Las referencias del plan (§1) no pueden figurar.
 
-# 116 · feature/panel-ordenes-mantenimiento
-Mantenimiento/ordenes/index.blade.php
-Mantenimiento/ordenes/create.blade.php
-Mantenimiento/ordenes/edit.blade.php
-Mantenimiento/planes/index.blade.php
-Mantenimiento/planes/_formulario.blade.php
-
 # 117 · feature/panel-inventario
 Inventario/repuestos/index.blade.php
 Inventario/repuestos/_formulario.blade.php
