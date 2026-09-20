@@ -1,9 +1,14 @@
 {{--
     Page: drones/index (GET /panel/drones, panel.drones.index)
     Listado de la flota de drones (HU-27, tarea 36): arquetipo Listado, §6.2
-    de docs/diseno/guia_pantalla_panel.md — cabecera → filtros → tabla →
-    paginación. Mismo molde que campos/index.blade.php (tarea 35), sin
-    sub-entidad: un dron no tiene lotes ni contactos.
+    de docs/diseno/guia_pantalla_panel.md — cabecera → toolbar → tabla →
+    paginación. Homogeneizado con el patrón de Clientes y Bases (tarea 113):
+    tabla en `molecules/index-table`, acciones en `organisms/row-actions` y la
+    baja con `molecules/confirm-modal`. Un dron es catálogo simple
+    (identificador, modelo, capacidad): sin filtros más que el buscador, así
+    que no lleva `filter-panel` (mismo criterio que Campañas y Bases), y sin
+    columna de estado ni KPI — el caso de uso del listado no calcula
+    ninguna cifra.
 
     Columna "Capacidad de carga" (HU-81, tarea 96): un dron puede tener
     litros, kilos, ambos o ninguno — se muestran las dos cifras que existan
@@ -51,12 +56,14 @@
             </x-organisms.page-header>
 
             @if (session('estado'))
-                <x-molecules.alert-strip variant="success" icon="check_circle" class="ag-drones__aviso">
+                <x-molecules.alert-strip variant="success" icon="check_circle">
                     {{ session('estado') }}
                 </x-molecules.alert-strip>
             @endif
 
-            @php $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== ''); @endphp
+            @php
+                $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
+            @endphp
 
             @if ($hayFiltrosActivos || $drones->isNotEmpty())
                 <div class="ag-table-toolbar">
@@ -71,10 +78,14 @@
 
             @if ($drones->isEmpty())
                 @if ($hayFiltrosActivos)
-                    <x-molecules.alert-strip variant="info" icon="airplanemode_active" class="ag-drones__aviso">
-                        {{ __('operaciones.drones.filtro_vacio') }}
-                    </x-molecules.alert-strip>
+                    <x-molecules.empty-state
+                        icon="search_off"
+                        :title="__('operaciones.drones.filtro_vacio_titulo')"
+                        :detail="__('operaciones.drones.filtro_vacio_detalle')"
+                    />
                 @else
+                    {{-- Sin botón adentro: el vacío de un listado solo explica. El
+                         alta ya está en la cabecera, y es el único botón sólido. --}}
                     <x-molecules.empty-state
                         icon="airplanemode_active"
                         :title="__('operaciones.drones.vacio_titulo')"
@@ -82,18 +93,18 @@
                     />
                 @endif
             @else
-                <div class="ag-drones__tabla" role="table">
-                    <div class="ag-drones__head" role="row">
-                        <span role="columnheader" class="ag-drones__indice">{{ __('ui.tabla.col_indice') }}</span>
+                <x-molecules.index-table columns="3rem minmax(0, 1.5fr) minmax(0, 1.5fr) minmax(0, 1fr) var(--ag-row-actions-width)">
+                    <x-slot:head>
+                        <span role="columnheader" class="ag-index-table__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('operaciones.drones.col_identificador') }}</span>
                         <span role="columnheader">{{ __('operaciones.drones.col_modelo') }}</span>
                         <span role="columnheader">{{ __('operaciones.drones.col_capacidad') }}</span>
-                        <span role="columnheader" aria-hidden="true"></span>
-                    </div>
+                        <span role="columnheader" class="ag-index-table__acciones-head">{{ __('ui.tabla.col_acciones') }}</span>
+                    </x-slot:head>
 
                     @foreach ($drones as $dron)
-                        <div class="ag-drones__fila" role="row">
-                            <span role="cell" class="ag-drones__indice">
+                        <div class="ag-index-table__row" role="row">
+                            <span role="cell" class="ag-index-table__indice">
                                 {{ ($drones->currentPage() - 1) * $drones->perPage() + $loop->iteration }}
                             </span>
                             <span role="cell" class="ag-drones__identificador">{{ $dron->identificador }}</span>
@@ -108,30 +119,58 @@
                                 {{ $capacidades !== [] ? implode(' · ', $capacidades) : __('operaciones.drones.sin_capacidad') }}
                             </span>
 
-                            <span role="cell" class="ag-drones__acciones">
-                                @puede('operaciones.dron.editar')
-                                    <x-atoms.button :href="route('panel.drones.edit', $dron)" variant="warning-outline" size="sm" icon="edit">
-                                        {{ __('operaciones.drones.editar') }}
-                                    </x-atoms.button>
-                                @endpuede
+                            <span role="cell" class="ag-index-table__acciones">
+                                @php
+                                    $formIdEliminar = "dron-eliminar-{$dron->id}";
+                                    $modalIdEliminar = "dron-eliminar-modal-{$dron->id}";
+                                @endphp
 
+                                {{-- Form y modal FUERA de row-actions a propósito: ese organism
+                                     repite su slot dos veces (visible/menú, ver su docblock), así que
+                                     un <form> o un modal con id ahí adentro se duplicaría — y el que
+                                     cae dentro del menú ⋮ queda oculto con él y nunca abre. El
+                                     disparador vive adentro (es un botón sin id propio, se duplica sin
+                                     problema); el modal y el form, una sola vez, acá. Mismo criterio
+                                     que campanias/index y bases/index. --}}
                                 @puede('operaciones.dron.eliminar')
-                                    <form
-                                        method="POST"
-                                        action="{{ route('panel.drones.destroy', $dron) }}"
-                                        onsubmit="return confirm('{{ __('operaciones.drones.confirmar_baja') }}')"
-                                    >
+                                    <form id="{{ $formIdEliminar }}" method="POST" action="{{ route('panel.drones.destroy', $dron) }}">
                                         @csrf
                                         @method('DELETE')
-                                        <x-atoms.button type="submit" variant="danger-outline" size="sm" icon="delete">
+                                    </form>
+
+                                    <x-molecules.confirm-modal
+                                        :id="$modalIdEliminar"
+                                        :form-id="$formIdEliminar"
+                                        :title="__('operaciones.drones.confirmar_eliminar_titulo')"
+                                        :message="__('operaciones.drones.confirmar_baja')"
+                                        :confirm-label="__('operaciones.drones.eliminar_accion')"
+                                    />
+                                @endpuede
+
+                                <x-organisms.row-actions>
+                                    @puede('operaciones.dron.editar')
+                                        <x-atoms.button :href="route('panel.drones.edit', $dron)" variant="warning-outline" size="sm" icon="edit">
+                                            {{ __('operaciones.drones.editar') }}
+                                        </x-atoms.button>
+                                    @endpuede
+
+                                    @puede('operaciones.dron.eliminar')
+                                        <x-atoms.button
+                                            type="button"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#{{ $modalIdEliminar }}"
+                                            variant="danger-outline"
+                                            size="sm"
+                                            icon="delete"
+                                        >
                                             {{ __('operaciones.drones.eliminar_accion') }}
                                         </x-atoms.button>
-                                    </form>
-                                @endpuede
+                                    @endpuede
+                                </x-organisms.row-actions>
                             </span>
                         </div>
                     @endforeach
-                </div>
+                </x-molecules.index-table>
 
                 <x-molecules.pagination :paginator="$drones" :aria-label="__('operaciones.drones.paginacion_aria')" />
             @endif
