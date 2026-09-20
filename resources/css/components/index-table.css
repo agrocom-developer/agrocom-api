@@ -69,6 +69,24 @@
     gap: var(--ag-space-2);
 }
 
+/* Cifra o monto: en mono y a la derecha, para que los decimales queden en
+   columna. El encabezado de esa columna lleva `__cifra-head` para alinearse
+   con lo que tiene debajo. */
+.ag-index-table__cifra {
+    font-family: var(--ag-font-family-mono);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+.ag-index-table__cifra-head {
+    text-align: right;
+}
+
+/* Dato técnico corto (una fecha, un código): en mono, alineado a la izquierda. */
+.ag-index-table__mono {
+    font-family: var(--ag-font-family-mono);
+}
+
 @media (max-width: 992px) {
     .ag-index-table__head {
         display: none;
@@ -81,6 +99,12 @@
 
     .ag-index-table__indice {
         display: none;
+    }
+
+    /* Sin cabecera ni columnas, una cifra a la derecha queda suelta al borde
+       de la tarjeta: vuelve a alinearse con el resto de la fila. */
+    .ag-index-table__cifra {
+        text-align: left;
     }
 
     .ag-index-table__acciones {
