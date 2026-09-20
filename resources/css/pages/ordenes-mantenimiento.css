@@ -16,24 +16,35 @@
     gap: var(--ag-space-5);
 }
 
-/* Listado: franja de KPI bajo la cabecera, igual que estadias.css. */
+/*
+ * Listado: franja de KPI bajo la cabecera, mismo patrón que `estadias.css`.
+ * El contenedor consultado es el WRAPPER de la página, no la propia grilla:
+ * una `@container` pregunta por el ancestro más cercano, así que declarar
+ * `container-type` en el mismo elemento que se consulta no matchea nunca y la
+ * franja se queda en una columna (medido en navegador el 20/9/2026).
+ * Se consulta el ancho del contenido del panel, que cambia con el sidebar, no
+ * el del viewport.
+ */
+
+.ag-ordenes-mantenimiento {
+    container: ag-ordenes-mantenimiento / inline-size;
+}
 
 .ag-ordenes-mantenimiento__kpis {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--ag-space-4);
-    container-type: inline-size;
 }
 
-@container (min-width: 32rem) {
+@container ag-ordenes-mantenimiento (min-width: 36rem) {
     .ag-ordenes-mantenimiento__kpis {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
-@container (min-width: 60rem) {
+@container ag-ordenes-mantenimiento (min-width: 60rem) {
     .ag-ordenes-mantenimiento__kpis {
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 }
 

@@ -65,7 +65,11 @@
                     :detail="__('mantenimiento.ordenes.catalogo_vacio_detalle')"
                 />
             @else
-                <x-molecules.index-table columns="3rem minmax(0, 2.2fr) minmax(0, 1.2fr) 8rem minmax(0, 1.2fr)">
+                {{-- La columna de la base pide ancho propio: es un combobox, y a su
+                     texto le compiten adentro el botón de limpiar y la flecha —con
+                     menos de 14rem el nombre elegido («Base Santa Cruz») sale
+                     recortado (medido en navegador el 20/9/2026). --}}
+                <x-molecules.index-table columns="3rem minmax(0, 1.6fr) minmax(0, 1fr) 6.5rem minmax(14rem, 1.9fr)">
                     <x-slot:head>
                         <span role="columnheader" class="ag-index-table__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('mantenimiento.ordenes.col_repuesto') }}</span>
@@ -131,6 +135,13 @@
                             </span>
 
                             <span role="cell">
+                                {{-- `:disabled`, no la directiva `@ disabled()` (sin el
+                                     espacio): dentro de la lista de atributos de un tag de
+                                     componente, el compilador de tags de Blade se come el
+                                     límite del tag y lo deja SIN COMPILAR —el `<x-atoms.input>`
+                                     sale crudo al HTML—. En un `<input>` plano, como los
+                                     hidden de arriba, sí funciona. Misma nota que
+                                     `comercial::pages.contratos._lotes-tabla`. --}}
                                 <x-atoms.input
                                     type="number"
                                     :name="'repuestos['.$repuestoId.'][cantidad]'"
@@ -139,7 +150,7 @@
                                     :value="$lineasOld[$repuestoId]['cantidad'] ?? null"
                                     min="0.01"
                                     step="0.01"
-                                    @disabled(! $marcado)
+                                    :disabled="! $marcado"
                                     data-ag-repuesto-campo="cantidad"
                                     :error="$errors->first('repuestos.'.$repuestoId.'.cantidad')"
                                 />
@@ -149,7 +160,16 @@
                                 {{-- Nombre transitorio (`__repuestos_base_override`,
                                      no `repuestos.*`): el request lo ignora.
                                      Su valor lo copia el JS al `base_id` real
-                                     de la línea, nunca viaja él mismo. --}}
+                                     de la línea, nunca viaja él mismo.
+
+                                     Nace habilitado aunque la fila no esté
+                                     marcada, y lo deshabilita el JS: el combobox
+                                     de `atoms/select` pinta `tabindex`/
+                                     `aria-disabled` una sola vez, al renderizar,
+                                     así que nacer deshabilitado dejaría el
+                                     disparador fuera del foco de teclado incluso
+                                     después de marcar la fila. `nativo.disabled`
+                                     sí lo relee en cada interacción. --}}
                                 <x-atoms.select
                                     :name="'__repuestos_base_override['.$repuestoId.']'"
                                     :id="'repuesto-base-'.$repuestoId"
