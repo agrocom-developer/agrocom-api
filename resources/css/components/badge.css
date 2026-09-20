@@ -8,11 +8,16 @@
  * explícito del usuario — se leía "con poca opacity", no como estado) y
  * pasan a relleno SÓLIDO (`-contrast-fill`, constante entre temas) + texto
  * blanco (`--ag-color-gray-0`), como los chips "Out of Stock"/"Active" de
- * la referencia SAP Fiori "Industry-Specific Colors". Única excepción:
- * warning usa texto oscuro (`--ag-color-gray-900`) porque blanco sobre
- * `#e9730c`/amber-700 da 3.03:1 (bajo AA 4.5:1); gris-900 da 5.09:1. Ver el
- * bloque "Relleno sólido chip fuerte" en theme-light.css/theme-dark.css
- * para el resto del razonamiento y los contrastes de cada color.
+ * la referencia SAP Fiori "Industry-Specific Colors". SIN excepciones
+ * (19/9/2026, decisión del dueño): warning también lleva texto blanco. Hasta
+ * ese día usaba gris-900 porque blanco sobre `#e9730c`/amber-700 da 3.03:1
+ * (bajo el 4.5:1 de AA para texto chico); el dueño lo descartó dos veces
+ * —"no le queda el negro" (17/9) y sobre el badge «En curso» (19/9)—: un
+ * chip de estado se reconoce por su color, y el texto oscuro lo hacía leer
+ * como otra familia. El contraste queda anotado como costo asumido en
+ * sistema_diseno_panel.md §1.3; NO volver a poner texto oscuro sobre un
+ * relleno de estado. Ver el bloque "Relleno sólido chip fuerte" en
+ * theme-light.css/theme-dark.css para los contrastes de cada color.
  * `neutral`/`accent` no se tocan: siguen con el par tenue/-strong de
  * siempre (no son parte de la paleta de 8 colores de indicación).
  */
@@ -56,7 +61,7 @@
 
 .ag-badge--warning {
     background-color: var(--ag-color-warning-contrast-fill);
-    color: var(--ag-color-gray-900);
+    color: var(--ag-color-gray-0);
 }
 
 .ag-badge--info {

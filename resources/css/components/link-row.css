@@ -37,8 +37,8 @@
    mismo criterio que `atoms/badge`/`molecules/stat-card` — el par tenue
    `-subtle`/`-strong` anterior se leía "con poca opacity"). `neutral`
    (arriba) se queda con el gris tenue: no es un estado real, no tiene
-   `-contrast-fill` propio. warning usa texto/ícono oscuro, no blanco —
-   mismo motivo documentado en badge.css (blanco sobre `#e9730c` falla AA). */
+   `-contrast-fill` propio. warning lleva el ícono blanco como
+   los demás: ningún relleno de estado usa texto/ícono oscuro (badge.css, 19/9/2026). */
 .ag-link-row__icon--success {
     background: var(--ag-color-success-contrast-fill);
     color: var(--ag-color-gray-0);
@@ -46,7 +46,7 @@
 
 .ag-link-row__icon--warning {
     background: var(--ag-color-warning-contrast-fill);
-    color: var(--ag-color-gray-900);
+    color: var(--ag-color-gray-0);
 }
 
 .ag-link-row__icon--danger {

@@ -69,13 +69,11 @@
    tenue `-subtle`/`-strong` anterior — pedido explícito del usuario, esta
    tarjeta KPI es justo donde el par tenue se leía "con poca opacity". Mismo
    criterio y mismos tokens que atoms/badge (ver badge.css).
-   warning es la ÚNICA variante que difiere de badge.css a propósito: acá
-   el ícono es gráfico/no-texto (WCAG 1.4.11, exigencia 3:1, no 4.5:1) y
-   blanco sobre ámbar-700 da ~3.07:1 — pasa esa exigencia más laxa, y se ve
-   mejor que gris-900 (feedback directo del usuario sobre captura real,
-   "no le queda el negro", 17/9/2026). `.ag-badge--warning` NO puede copiar
-   esto: ahí el contenido SÍ es texto de verdad (exigencia 4.5:1), donde
-   blanco sobre ámbar-700 falla y por eso se queda con gris-900. */
+   warning también va en blanco, como todos: acá el ícono es gráfico/no-texto
+   (WCAG 1.4.11, exigencia 3:1) y blanco sobre ámbar-700 da ~3.07:1. Fue el
+   primer lugar donde el dueño descartó el gris-900 ("no le queda el negro",
+   17/9/2026); desde el 19/9/2026 `.ag-badge--warning` sigue la misma regla
+   y ningún relleno de estado lleva texto o ícono oscuro (ver badge.css). */
 .ag-stat-card[data-state='success'] .ag-stat-card__icon-box {
     background: var(--ag-color-success-contrast-fill);
     color: var(--ag-color-gray-0);
