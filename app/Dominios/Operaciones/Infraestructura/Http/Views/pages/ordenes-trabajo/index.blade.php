@@ -148,7 +148,7 @@
                                 <x-organisms.row-actions>
                                     <x-atoms.button
                                         :href="route('panel.trabajos.show', $tanda)"
-                                        variant="text"
+                                        variant="info-outline"
                                         size="sm"
                                         icon="visibility"
                                     >
