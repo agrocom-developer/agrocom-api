@@ -129,13 +129,17 @@
                 />
             </x-molecules.form-section>
 
+            {{-- Slot `actions`: el organismo no pinta el slot por defecto — con los
+                 botones sueltos, «Guardar» no se dibujaba (corregido el 19/9/2026). --}}
             <x-organisms.form-actions-bar>
-                <x-atoms.button :href="route('panel.trabajos.detalle', $trabajo)" variant="outline" icon="arrow_back">
-                    {{ __('operaciones.trabajos.volver') }}
-                </x-atoms.button>
-                <x-atoms.button type="submit" variant="primary" icon="check">
-                    {{ __('operaciones.trabajos.editar') }}
-                </x-atoms.button>
+                <x-slot:actions>
+                    <x-atoms.button :href="route('panel.trabajos.detalle', $trabajo)" variant="outline">
+                        {{ __('ui.action.cancel') }}
+                    </x-atoms.button>
+                    <x-atoms.button type="submit" variant="primary" icon="check">
+                        {{ __('operaciones.trabajos.editar') }}
+                    </x-atoms.button>
+                </x-slot:actions>
             </x-organisms.form-actions-bar>
         </form>
     </x-templates.panel-layout>
