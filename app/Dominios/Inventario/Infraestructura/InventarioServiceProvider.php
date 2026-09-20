@@ -5,6 +5,7 @@ namespace App\Dominios\Inventario\Infraestructura;
 use App\Dominios\Inventario\Contratos\EscrituraConsumoStock;
 use App\Dominios\Inventario\Contratos\LecturaContadoresPanel;
 use App\Dominios\Inventario\Contratos\LecturaPanelInventario;
+use App\Dominios\Inventario\Contratos\LecturaStockPorBase;
 use App\Dominios\Inventario\Infraestructura\Busqueda\BusquedaRepuestos;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -31,6 +32,7 @@ final class InventarioServiceProvider extends ServiceProvider
         $this->app->bind(EscrituraConsumoStock::class, EscrituraConsumoStockEloquent::class);
         $this->app->bind(LecturaContadoresPanel::class, LecturaContadoresPanelEloquent::class);
         $this->app->bind(LecturaPanelInventario::class, LecturaPanelInventarioEloquent::class);
+        $this->app->bind(LecturaStockPorBase::class, LecturaStockPorBaseEloquent::class);
 
         // Buscador global (`busqueda.proveedores`): el agregador de Seguridad
         // no conoce estas clases, las recibe por tag. Sumar una entidad al

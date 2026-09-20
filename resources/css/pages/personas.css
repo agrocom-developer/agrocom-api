@@ -2,14 +2,18 @@
  * Pages: personas/index, personas/create, personas/edit
  * (app/Dominios/Personal/Infraestructura/Http/Views/pages/personas/) —
  * HU-26, tarea 37: administración de personas operativas. CSS propio de
- * ESTAS páginas (ver convención en resources/css/pages/index.css) — mismo
- * patrón que bases.css (misma tarea), con dos columnas más (rol, base) y
- * un estado. Sin sub-entidad repetible.
+ * ESTAS páginas (ver convención en resources/css/pages/index.css).
  *
- * El wrapper `.ag-personas`/`.ag-personas-form` sigue el mismo patrón que
- * `.ag-bases`/`.ag-bases-form`: flex en columna con un único `gap` en vez
- * de `margin-top` repetido en cada hijo. Todo color y medida por token
- * (CLAUDE.md invariante 11).
+ * El wrapper `.ag-personas`/`.ag-personas-form` es flex en columna con un
+ * único `gap` en vez de `margin-top` repetido en cada hijo. La tabla del
+ * listado (`molecules/index-table`) y el layout main/aside del formulario
+ * (`molecules/form-layout`) no viven acá: son del catálogo (tarea 112, ver
+ * docs/diseno/guia_pantalla_panel.md §6.2/§6.3.1). Todo color y medida por
+ * token (CLAUDE.md invariante 11).
+ *
+ * La ficha de desempeño (`personas/desempeno`, al final) es un detalle, fuera
+ * de la homogeneización (plan_homogeneizacion_panel.md §1.1): conserva su
+ * propia tabla y sus propias reglas.
  */
 
 .ag-personas,
@@ -19,48 +23,10 @@
     gap: var(--ag-space-5);
 }
 
-/* Listado (index) */
-
-.ag-personas__tabla {
-    border: 1px solid var(--ag-color-border-card);
-    border-radius: var(--ag-radius-md);
-    background-color: var(--ag-color-surface-card);
-    overflow: hidden;
-}
-
-.ag-personas__head,
-.ag-personas__fila {
-    display: grid;
-    grid-template-columns: 3rem 1.6fr 1.2fr 1.2fr 1fr 1fr auto;
-    gap: var(--ag-space-4);
-    align-items: center;
-    padding: var(--ag-space-3) var(--ag-space-4);
-}
-
-.ag-personas__indice {
-    color: var(--ag-color-text-faint);
-    font-family: var(--ag-font-family-mono);
-    font-size: var(--ag-font-size-xs);
-}
-
-.ag-personas__head {
-    background-color: var(--ag-color-bg-table-head);
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-xs);
-    font-weight: var(--ag-font-weight-medium);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.ag-personas__fila {
-    border-top: 1px solid var(--ag-color-border-row);
-    color: var(--ag-color-text);
-    font-size: var(--ag-font-size-sm);
-}
-
-.ag-personas__fila:hover {
-    background-color: var(--ag-color-bg-row-hover);
-}
+/* Listado (index): columnas propias de `molecules/index-table`
+   (índice · nombre · rol · base · tarifa · acciones) — el resto de la
+   anatomía de la tabla (borde, cabecera, hover, colapso mobile) vive en el
+   componente. */
 
 .ag-personas__nombre {
     font-weight: var(--ag-font-weight-medium);
@@ -70,42 +36,14 @@
     font-family: var(--ag-font-family-mono);
 }
 
-.ag-personas__acciones {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--ag-space-2);
-}
-
-
-@media (max-width: 992px) {
-    .ag-personas__head {
-        display: none;
-    }
-
-    .ag-personas__fila {
-        grid-template-columns: 1fr;
-        gap: var(--ag-space-1);
-    }
-
-    .ag-personas__indice {
-        display: none;
-    }
-
-    .ag-personas__acciones {
-        justify-content: flex-start;
-        margin-top: var(--ag-space-2);
-        flex-wrap: wrap;
-    }
-}
-
 /*
  * Ficha de desempeño (personas/desempeno) — HU-58, tarea 81: sesiones,
  * rechazos e incidencias de una persona, por sesión (nunca por equipo de
- * trabajo). Mismo molde de tabla que `.ag-personas__tabla` arriba y de lista
- * de filas que `.ag-cuadrillas-ficha__lista` (cuadrillas.css),
- * sumando la tarjeta de rechazo (fecha/cliente/motivo/quién) como bloque
- * propio en vez de fila de grilla — el motivo es texto libre y no entra en
- * una columna angosta.
+ * trabajo). Tabla propia (`.ag-persona-desempeno__tabla`, no
+ * `molecules/index-table`: es un detalle, no un listado) y lista de filas
+ * como `.ag-cuadrillas-ficha__lista` (cuadrillas.css), sumando la tarjeta de
+ * rechazo (fecha/cliente/motivo/quién) como bloque propio en vez de fila de
+ * grilla — el motivo es texto libre y no entra en una columna angosta.
  */
 
 .ag-persona-desempeno {

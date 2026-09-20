@@ -2,17 +2,21 @@
 
 namespace App\Dominios\Personal\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Finanzas\Contratos\LecturaAnticiposPorPersona;
+use App\Dominios\Operaciones\Contratos\LecturaSesionesPorPersona;
 use App\Dominios\Personal\Aplicacion\ActualizarPersona;
 use App\Dominios\Personal\Aplicacion\CrearPersona;
 use App\Dominios\Personal\Aplicacion\EliminarPersona;
 use App\Dominios\Personal\Aplicacion\ListarPersonas;
 use App\Dominios\Personal\Aplicacion\ObtenerDesempenioPersona;
 use App\Dominios\Personal\Dominio\RolOperativoPersona;
+use App\Dominios\Personal\Infraestructura\Eloquent\EquipoIntegrante;
 use App\Dominios\Personal\Infraestructura\Eloquent\PerBase;
 use App\Dominios\Personal\Infraestructura\Eloquent\PerPersona;
 use App\Dominios\Personal\Infraestructura\Http\Requests\ActualizarPersonaRequest;
 use App\Dominios\Personal\Infraestructura\Http\Requests\CrearPersonaRequest;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
+use App\Dominios\Seguridad\Contratos\LecturaUsuarioDePersona;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -66,13 +70,19 @@ final class PersonasController
 
         return view('personal::pages.personas.create', [
             ...$this->autorizacion->cascara($request),
-            'roles' => RolOperativoPersona::cases(),
+            // `rolesOperativos`, no `roles`: `roles` ya es de la cáscara (los
+            // roles del USUARIO, que el panel usa para ofrecer «Cambiar de rol»)
+            // y pisarlo con los del enum lo dejaba siempre en «varios roles».
+            'rolesOperativos' => RolOperativoPersona::cases(),
             'basesDisponibles' => $this->basesActivas(),
+            // Atajo «Nueva persona» de la ficha de una base: llega con
+            // `?base_id=` y el formulario la deja elegida.
+            'baseIdInicial' => $request->string('base_id')->toString(),
             // Alta rápida desde otro formulario (tarea "cuadrillas-estadias",
             // 19/9/2026 — mismo criterio que `PropiedadesController::create()`):
             // con ?volver_a=, al guardar se ofrece un botón para volver a esa
             // URL con esta persona ya disponible en el select que la pidió.
-            'volverA' => $request->query('volver_a'),
+            'volverA' => $this->origenLocal($request->query('volver_a')),
         ]);
     }
 
@@ -96,19 +106,25 @@ final class PersonasController
         return redirect()
             ->route('panel.personas.edit', $persona)
             ->with('estado', __('personal.personas.creado'))
-            ->with('volverA', $request->input('volver_a'));
+            ->with('volverA', $this->origenLocal($request->input('volver_a')));
     }
 
-    public function edit(Request $request, PerPersona $persona): View
-    {
+    public function edit(
+        Request $request,
+        PerPersona $persona,
+        LecturaUsuarioDePersona $lecturaUsuario,
+        LecturaSesionesPorPersona $lecturaSesiones,
+        LecturaAnticiposPorPersona $lecturaAnticipos,
+    ): View {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
 
         return view('personal::pages.personas.edit', [
             ...$this->autorizacion->cascara($request),
             'persona' => $persona,
-            'roles' => RolOperativoPersona::cases(),
+            'rolesOperativos' => RolOperativoPersona::cases(),
             'basesDisponibles' => $this->basesActivas(),
             'volverA' => session('volverA'),
+            'resumenRelacionado' => $this->resumenRelacionado($persona, $request, $lecturaUsuario, $lecturaSesiones, $lecturaAnticipos),
         ]);
     }
 
@@ -179,10 +195,229 @@ final class PersonasController
         ]);
     }
 
+    /**
+     * Resumen relacionado del aside de `edit()` (solo edición, §6.3.1 de la
+     * guía de pantalla): una persona recién creada no puede tener todavía
+     * cuadrillas, usuario, sesiones ni anticipos. Cuatro tarjetas, cada una
+     * gateada por el permiso de LO QUE MUESTRA contra el ROL ACTIVO
+     * (invariante 10), no por `personal.persona.*`: ver los anticipos de una
+     * persona es ver anticipos. Una categoría sin `.ver` NI `.crear` se omite
+     * del todo; con `.crear` pero sin `.ver` se ofrece el atajo sin revelar
+     * cifras. Cuadrillas y sesiones no tienen atajo de alta: una persona entra
+     * a una cuadrilla desde la ficha de la cuadrilla y las sesiones llegan por
+     * la app de campo.
+     *
+     * Cuadrillas es del mismo módulo (Eloquent directo). Usuario, sesiones y
+     * anticipos son de Seguridad, Operaciones y Finanzas: llegan por sus
+     * contratos de lectura (ADR 0003, regla 2), nunca por sus tablas. Los
+     * devengos NO se muestran: cada persona ve los suyos
+     * (`finanzas.devengo.ver`) y no existe un permiso para verlos desde otra
+     * ficha.
+     *
+     * @return list<array{titulo: string, icono: string, tieneDatos: bool, items: list<array<string, mixed>>, vacioTitulo: string, vacioDetalle: string, acciones: list<array{label: string, href: string, icono?: string}>}>
+     */
+    private function resumenRelacionado(
+        PerPersona $persona,
+        Request $request,
+        LecturaUsuarioDePersona $lecturaUsuario,
+        LecturaSesionesPorPersona $lecturaSesiones,
+        LecturaAnticiposPorPersona $lecturaAnticipos,
+    ): array {
+        $resumen = [];
+
+        // Memento de navegación: los atajos de alta apilan ESTA ficha como
+        // origen, así el "Volver" de la pantalla de destino regresa acá y no
+        // al listado de su propio módulo. Ver RecordarOrigenNavegacion.
+        $origenNavegacion = ['volver_a' => route('panel.personas.edit', $persona), 'volver_texto' => $persona->nombre];
+
+        // 1) Cuadrillas que integra (mismo módulo). «Vigente» es lo mismo que
+        // en el listado de cuadrillas: `desde` ya pasó y `hasta` no venció. Una
+        // cuadrilla dada de baja no cuenta (`whereHas` respeta su soft delete).
+        if ($this->autorizacion->tienePermiso($request, 'personal.equipo_trabajo.ver')) {
+            $hoy = now()->toDateString();
+            $integraciones = EquipoIntegrante::query()->where('persona_id', $persona->id)->whereHas('equipoTrabajo');
+            $totalCuadrillas = (clone $integraciones)->distinct()->count('equipo_trabajo_id');
+            $vigentes = (clone $integraciones)
+                ->where('desde', '<=', $hoy)
+                ->where(fn ($consulta) => $consulta->whereNull('hasta')->orWhere('hasta', '>=', $hoy))
+                ->with('equipoTrabajo')
+                ->get()
+                ->unique('equipo_trabajo_id');
+
+            $items = [
+                [
+                    'label' => __('personal.personas.aside_cuadrillas_vigentes'),
+                    'value' => (string) $vigentes->count(),
+                    'mono' => true,
+                    'variant' => $vigentes->isNotEmpty() ? 'success' : 'neutral',
+                ],
+                ['label' => __('personal.personas.aside_cuadrillas_historial'), 'value' => (string) $totalCuadrillas, 'mono' => true],
+            ];
+
+            if ($vigentes->isNotEmpty()) {
+                $items[] = [
+                    'label' => __('personal.personas.aside_cuadrillas_actual'),
+                    'value' => $vigentes->map(fn (EquipoIntegrante $integrante): string => $integrante->equipoTrabajo->codigo)->implode(', '),
+                    'mono' => true,
+                ];
+            }
+
+            $resumen[] = [
+                'titulo' => __('personal.personas.aside_cuadrillas_titulo'),
+                'icono' => 'groups',
+                'tieneDatos' => $totalCuadrillas > 0,
+                'items' => $items,
+                'vacioTitulo' => __('personal.personas.aside_cuadrillas_vacio_titulo'),
+                'vacioDetalle' => __('personal.personas.aside_cuadrillas_vacio_detalle'),
+                'acciones' => $totalCuadrillas > 0 ? [[
+                    'label' => __('personal.personas.aside_cuadrillas_accion_ver'),
+                    'href' => route('panel.cuadrillas.index'),
+                    'icono' => 'list',
+                ]] : [],
+            ];
+        }
+
+        // 2) Usuario vinculado (Seguridad, por contrato).
+        $puedeVerUsuario = $this->autorizacion->tienePermiso($request, 'seguridad.usuario.ver');
+        $puedeCrearUsuario = $this->autorizacion->tienePermiso($request, 'seguridad.usuario.crear');
+
+        if ($puedeVerUsuario || $puedeCrearUsuario) {
+            $usuario = $puedeVerUsuario ? $lecturaUsuario->dePersona($persona->id) : null;
+            $acciones = [];
+
+            if ($usuario !== null && $this->autorizacion->tienePermiso($request, 'seguridad.usuario.editar')) {
+                $acciones[] = [
+                    'label' => __('personal.personas.aside_usuario_accion_ver'),
+                    'href' => route('panel.usuarios.edit', $usuario->id),
+                    'icono' => 'arrow_forward',
+                ];
+            }
+
+            if ($usuario === null && $puedeCrearUsuario) {
+                $acciones[] = [
+                    'label' => __('personal.personas.aside_usuario_accion_crear'),
+                    'href' => route('panel.usuarios.create', $origenNavegacion),
+                    'icono' => 'add',
+                ];
+            }
+
+            $resumen[] = [
+                'titulo' => __('personal.personas.aside_usuario_titulo'),
+                'icono' => 'manage_accounts',
+                'tieneDatos' => $usuario !== null,
+                'items' => $usuario === null ? [] : [
+                    ['label' => __('personal.personas.aside_usuario_usuario'), 'value' => $usuario->username, 'mono' => true],
+                    [
+                        'label' => __('personal.personas.aside_usuario_estado'),
+                        'value' => __($usuario->activo ? 'personal.personas.aside_usuario_activo' : 'personal.personas.aside_usuario_bloqueado'),
+                        'badge' => true,
+                        'variant' => $usuario->activo ? 'success' : 'danger',
+                    ],
+                    ['label' => __('personal.personas.aside_usuario_roles'), 'value' => (string) $usuario->roles, 'mono' => true],
+                ],
+                'vacioTitulo' => __('personal.personas.aside_usuario_vacio_titulo'),
+                'vacioDetalle' => __('personal.personas.aside_usuario_vacio_detalle'),
+                'acciones' => $acciones,
+            ];
+        }
+
+        // 3) Sesiones de vuelo (Operaciones, por contrato). Los permisos de
+        // `operaciones.trabajo.*` cubren «trabajos y sesiones»; no hay atajo de
+        // alta, pero sí el paso natural a la ficha de desempeño.
+        if ($this->autorizacion->tienePermiso($request, 'operaciones.trabajo.ver')) {
+            $sesiones = $lecturaSesiones->dePersona($persona->id);
+
+            $resumen[] = [
+                'titulo' => __('personal.personas.aside_sesiones_titulo'),
+                'icono' => 'flight',
+                'tieneDatos' => $sesiones->total > 0,
+                'items' => [
+                    ['label' => __('personal.personas.aside_sesiones_total'), 'value' => (string) $sesiones->total, 'mono' => true],
+                    [
+                        'label' => __('personal.personas.aside_sesiones_validadas'),
+                        'value' => (string) $sesiones->validadas,
+                        'mono' => true,
+                        'variant' => $sesiones->validadas > 0 ? 'success' : 'neutral',
+                    ],
+                ],
+                'vacioTitulo' => __('personal.personas.aside_sesiones_vacio_titulo'),
+                'vacioDetalle' => __('personal.personas.aside_sesiones_vacio_detalle'),
+                'acciones' => $sesiones->total > 0 && $this->autorizacion->tienePermiso($request, self::PERMISO_DESEMPENIO) ? [[
+                    'label' => __('personal.personas.aside_sesiones_accion_desempenio'),
+                    'href' => route('panel.personas.desempenio', $persona),
+                    'icono' => 'insights',
+                ]] : [],
+            ];
+        }
+
+        // 4) Anticipos (Finanzas, por contrato).
+        $puedeVerAnticipos = $this->autorizacion->tienePermiso($request, 'finanzas.anticipo.ver');
+        $puedeCrearAnticipos = $this->autorizacion->tienePermiso($request, 'finanzas.anticipo.crear');
+
+        if ($puedeVerAnticipos || $puedeCrearAnticipos) {
+            $anticipos = $puedeVerAnticipos ? $lecturaAnticipos->dePersona($persona->id) : null;
+            $cantidad = $anticipos->cantidad ?? 0;
+            $acciones = [];
+
+            if ($puedeVerAnticipos && $cantidad > 0) {
+                $acciones[] = [
+                    'label' => __('personal.personas.aside_anticipos_accion_ver'),
+                    'href' => route('panel.anticipos.index', ['persona_id' => $persona->id]),
+                    'icono' => 'list',
+                ];
+            }
+
+            if ($puedeCrearAnticipos) {
+                $acciones[] = [
+                    'label' => __('personal.personas.aside_anticipos_accion_registrar'),
+                    'href' => route('panel.anticipos.create', ['persona_id' => $persona->id, ...$origenNavegacion]),
+                    'icono' => 'add',
+                ];
+            }
+
+            $resumen[] = [
+                'titulo' => __('personal.personas.aside_anticipos_titulo'),
+                'icono' => 'payments',
+                'tieneDatos' => $cantidad > 0,
+                'items' => [
+                    ['label' => __('personal.personas.aside_anticipos_cantidad'), 'value' => (string) $cantidad, 'mono' => true],
+                    [
+                        'label' => __('personal.personas.aside_anticipos_total'),
+                        'value' => __('personal.personas.aside_anticipos_valor', ['monto' => $anticipos->montoTotal ?? '0.00']),
+                        'mono' => true,
+                    ],
+                ],
+                'vacioTitulo' => __('personal.personas.aside_anticipos_vacio_titulo'),
+                'vacioDetalle' => __('personal.personas.aside_anticipos_vacio_detalle'),
+                'acciones' => $acciones,
+            ];
+        }
+
+        return $resumen;
+    }
+
     /** @return Collection<int, string> */
     private function basesActivas(): Collection
     {
         return PerBase::query()->orderBy('nombre')->pluck('nombre', 'id');
+    }
+
+    /**
+     * El `volver_a` de una alta rápida termina como `href` del botón «Volver al
+     * formulario de origen»: solo se acepta una ruta de este mismo sitio (relativa,
+     * o absoluta bajo la URL de la app) y sin espacios, controles ni barras
+     * invertidas — el navegador los descarta o normaliza y `/\ /otro.com` acaba
+     * siendo otro dominio. Cualquier otra cosa (`javascript:`, otro host) se ignora.
+     */
+    private function origenLocal(mixed $url): ?string
+    {
+        if (! is_string($url) || preg_match('/[\x00-\x20\x7f\\\\]/', $url) === 1) {
+            return null;
+        }
+
+        $esRutaLocal = str_starts_with($url, '/') && ! str_starts_with($url, '//');
+
+        return $esRutaLocal || str_starts_with($url, url('/').'/') ? $url : null;
     }
 
     private function cadenaONull(mixed $valor): ?string
