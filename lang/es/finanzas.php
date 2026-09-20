@@ -171,7 +171,7 @@ return [
         'imputacion_base' => 'Base: :base',
         'imputacion_general' => 'General',
         'comprobante_adjunto' => 'Adjunto',
-        'comprobante_ver' => 'Ver comprobante',
+        'comprobante_ver' => 'Comprobante',
         'comprobante_sin' => 'Sin comprobante',
         'eliminar_accion' => 'Eliminar',
         'confirmar_baja_titulo' => '¿Dar de baja este gasto?',
