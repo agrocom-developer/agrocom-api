@@ -1,4 +1,4 @@
-<!-- ciclo: critica=si turno-noche=1 rama=feature/panel-trabajos-reparto etapas=4 descongela=tests -->
+<!-- ciclo: critica=si turno-noche=1 rama=feature/panel-trabajos-reparto etapas=4 descongela=tests modelo=opus -->
 
 # Tarea 114 — panel homogéneo: Trabajo, Reparto de cuadrillas, Reportes técnicos y Validación
 

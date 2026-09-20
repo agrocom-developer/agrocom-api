@@ -203,20 +203,20 @@ rama, y hace esto en orden:
 Una tarea = una rama = un PR contra `develop`, integrado por `auto-merge` con CI
 en verde. Corren en fila (`bin/ciclo`), cada una desde un `develop` al día.
 
-| Id | Rama | Alcance | Etapas | Crítica |
-|---|---|---|---|---|
-| 111 | `feature/compuerta-panel-homogeneo` | `PanelHomogeneoTest` + lista de pendientes + variantes de botón que falten + «Ver» en `info-outline` en las referencias | 2 | no |
-| 112 | `feature/panel-personal` | Bases, Personas | 3 | no |
-| 113 | `feature/panel-drones-pausas` | Drones, Pausas, Alertas | 3 | no |
-| 114 | `feature/panel-trabajos-reparto` | Trabajo (edición con pasos), Reparto de cuadrillas (listado), Reportes técnicos, Validación de sesiones (solo listado) | 4 | **sí** |
-| 115 | `feature/panel-equipos-mantenimiento` | Baterías, Generadores, Vehículos, Fichas de dron | 4 | no |
-| 116 | `feature/panel-ordenes-mantenimiento` | Órdenes de mantenimiento (pasos + aviso de estado), Planes | 4 | no |
-| 117 | `feature/panel-inventario` | Repuestos, Stock | 3 | no |
-| 118 | `feature/panel-registros-finanzas` | Anticipos, Combustible, Gastos | 3 | no |
-| 119 | `feature/panel-liquidacion-finanzas` | Planillas y Rendiciones (listados + alta de rendición); Devengos es un detalle y queda afuera | 3 | **sí** |
-| 120 | `feature/panel-comercial-restante` | Cultivos (tabla + resumen), Facturas, Reportes comerciales | 3 | no |
-| 121 | `feature/panel-usuarios-dispositivos` | Usuarios, Dispositivos, Versiones de APK | 3 | no |
-| 122 | `feature/cierre-panel-homogeneo` | Lista de pendientes vacía, CSS muerto, guía y estado del proyecto al día | 2 | no |
+| Id | Rama | Alcance | Etapas | Crítica | Modelo |
+|---|---|---|---|---|---|
+| 111 | `feature/compuerta-panel-homogeneo` | `PanelHomogeneoTest` + lista de pendientes + variantes de botón que falten + «Ver» en `info-outline` en las referencias | 2 | no | `sonnet` |
+| 112 | `feature/panel-personal` | Bases, Personas | 3 | no | `sonnet` |
+| 113 | `feature/panel-drones-pausas` | Drones, Pausas, Alertas | 3 | no | `sonnet` |
+| 114 | `feature/panel-trabajos-reparto` | Trabajo (edición con pasos), Reparto de cuadrillas (listado), Reportes técnicos, Validación de sesiones (solo listado) | 4 | **sí** | `opus` |
+| 115 | `feature/panel-equipos-mantenimiento` | Baterías, Generadores, Vehículos, Fichas de dron | 4 | no | `sonnet` |
+| 116 | `feature/panel-ordenes-mantenimiento` | Órdenes de mantenimiento (pasos + aviso de estado), Planes | 4 | no | `opus` |
+| 117 | `feature/panel-inventario` | Repuestos, Stock | 3 | no | `sonnet` |
+| 118 | `feature/panel-registros-finanzas` | Anticipos, Combustible, Gastos | 3 | no | `sonnet` |
+| 119 | `feature/panel-liquidacion-finanzas` | Planillas y Rendiciones (listados + alta de rendición); Devengos es un detalle y queda afuera | 3 | **sí** | `opus` |
+| 120 | `feature/panel-comercial-restante` | Cultivos (tabla + resumen), Facturas, Reportes comerciales | 3 | no | `sonnet` |
+| 121 | `feature/panel-usuarios-dispositivos` | Usuarios, Dispositivos, Versiones de APK | 3 | no | `sonnet` |
+| 122 | `feature/cierre-panel-homogeneo` | Lista de pendientes vacía, CSS muerto, guía y estado del proyecto al día | 2 | no | `sonnet` |
 
 **Por qué ese orden.** La 111 va primero porque convierte «quedó igual que
 Comercial» en un comando con exit code: sin ella cada tarea se cerraría por
@@ -224,6 +224,15 @@ criterio propio. Después, de lo más simple a lo más delicado: catálogos sin
 máquina (112, 113), la primera pantalla con pasos (114), Mantenimiento e
 Inventario, y al final Finanzas —que muestra dinero— y Seguridad. La 122 no
 depende de decisiones: barre lo que quedó.
+
+**Modelo por tarea.** El ciclo ya reparte por fase (`sonnet` para implementar,
+verificar, corregir y planificar; `haiku` para arreglar un CI en rojo; Fable en
+ninguna). Encima de eso, `modelo=opus` en la implementación de las tres tareas
+donde hay más criterio que receta: la 114 y la 116 escriben un presentador de
+pasos sobre una máquina de estados, y la 119 pinta dinero. Las demás aplican la
+receta sobre catálogos y la compuerta de la 111 las frena si se desvían. Ninguna
+baja a `haiku`: una pantalla «reportada como hecha» que no lo está es justo el
+fallo que un modelo más chico agrava.
 
 **Críticas.** La 114 toca la pantalla de validación de sesiones (invariante 4) y
 la ficha de un Trabajo; la 119 pinta montos de planilla y devengo. Ninguna
@@ -248,7 +257,7 @@ ciclo sigue con la próxima, porque ninguna depende de otra salvo de la 111.
 
 | Id | Estado | PR |
 |---|---|---|
-| 111 | pendiente | |
+| 111 | **hecha** (20/9/2026) | #254 |
 | 112 | pendiente | |
 | 113 | pendiente | |
 | 114 | pendiente | |

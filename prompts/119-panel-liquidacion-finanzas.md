@@ -1,4 +1,4 @@
-<!-- ciclo: critica=si turno-noche=1 rama=feature/panel-liquidacion-finanzas etapas=3 -->
+<!-- ciclo: critica=si turno-noche=1 rama=feature/panel-liquidacion-finanzas etapas=3 modelo=opus -->
 
 # Tarea 119 — panel homogéneo: Planillas y Rendiciones
 
