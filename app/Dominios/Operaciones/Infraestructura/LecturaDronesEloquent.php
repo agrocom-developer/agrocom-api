@@ -44,6 +44,13 @@ final class LecturaDronesEloquent implements LecturaDrones
         return $drones;
     }
 
+    public function porIdentificador(string $identificador): ?DronCatalogo
+    {
+        $dron = Dron::query()->where('identificador', $identificador)->first();
+
+        return $dron === null ? null : self::aCatalogo($dron);
+    }
+
     public function estaDisponible(int $id): bool
     {
         return Dron::query()->whereKey($id)->exists();

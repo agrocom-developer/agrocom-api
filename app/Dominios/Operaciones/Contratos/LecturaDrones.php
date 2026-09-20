@@ -23,6 +23,14 @@ interface LecturaDrones
     public function porIds(array $ids): array;
 
     /**
+     * El dron cuyo identificador es exactamente `$identificador`, o `null` si
+     * no hay ninguno vivo. Es el cruce de la ficha de inventario de
+     * `Mantenimiento` (`man_drones.identificador_dron`), que se correlaciona
+     * por el TEXTO del identificador y no por FK.
+     */
+    public function porIdentificador(string $identificador): ?DronCatalogo;
+
+    /**
      * ¿Existe y no está dado de baja? Es la guarda que reemplaza a la FK que
      * `per_equipo_recursos.recurso_id` no puede tener.
      */
