@@ -4,11 +4,11 @@
     Listado, §6.2 de docs/diseno/guia_pantalla_panel.md — cabecera → toolbar →
     tabla → paginación. Homogeneizado con el patrón de Drones (tarea 115):
     tabla en `molecules/index-table`, acciones en `organisms/row-actions` y la
-    baja con `molecules/confirm-modal` (antes tabla propia y `confirm()`
-    nativo). Una ficha es un ABM plano —serie, chasis, software, región y
-    accesorios—: sin columna de estado ni KPI, y sin más filtro que el
-    buscador, así que no lleva `filter-panel` (mismo criterio que Drones,
-    Campañas y Bases).
+    baja con `molecules/confirm-modal` (antes tabla propia y confirmación
+    nativa del navegador). Una ficha es un ABM plano —serie, chasis,
+    software, región y accesorios—: sin columna de estado ni KPI, y sin más
+    filtro que el buscador, así que no lleva `filter-panel` (mismo criterio
+    que Drones, Campañas y Bases).
 
     Datos esperados (ver FichasDronController::index()): la cáscara de
     CascaraPanel, más:
@@ -90,7 +90,7 @@
                     />
                 @endif
             @else
-                <x-molecules.index-table columns="3rem minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.8fr) minmax(0, 1.4fr) var(--ag-row-actions-width)">
+                <x-molecules.index-table columns="3rem minmax(0, 0.9fr) minmax(0, 1fr) minmax(0, 0.9fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.5fr) var(--ag-row-actions-width)">
                     <x-slot:head>
                         <span role="columnheader" class="ag-index-table__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('mantenimiento.fichas_dron.col_identificador') }}</span>

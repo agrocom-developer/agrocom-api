@@ -5,8 +5,8 @@
     paginación. Homogeneizado con el patrón de Propiedades y Drones (tarea
     115): base y estado en `organisms/filter-panel` junto al buscador, tabla en
     `molecules/index-table`, acciones en `organisms/row-actions` y la baja con
-    `molecules/confirm-modal` (antes filtros viejos, tabla propia y `confirm()`
-    nativo).
+    `molecules/confirm-modal` (antes filtros viejos, tabla propia y confirmación
+    nativa del navegador).
 
     El estado (activo / en taller / en pausa / de baja) es información
     operativa pero un dato descriptivo, no una máquina de estados: badge con

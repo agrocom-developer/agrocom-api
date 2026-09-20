@@ -207,8 +207,10 @@ final class FichasDronController
         $dron = $lecturaDrones->porIdentificador($ficha->identificador_dron);
 
         // 1) El dron (Operaciones, por contrato). El alta de dron no acepta el
-        // identificador precargado: el texto del vacío lo dice.
-        if ($puedeVerDron || $puedeCrearDron) {
+        // identificador precargado: el texto del vacío lo dice. Con `.crear` pero
+        // sin `.ver` la tarjeta solo tiene sentido si el dron NO existe (ofrece
+        // crearlo): si existe y no se puede ver, «sin dron en el catálogo» sería falso.
+        if ($puedeVerDron || ($puedeCrearDron && $dron === null)) {
             $verDron = $puedeVerDron ? $dron : null;
             $sinDato = __('mantenimiento.fichas_dron.aside_dron_sin_dato');
             $acciones = [];
