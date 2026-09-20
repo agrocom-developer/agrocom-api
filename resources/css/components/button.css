@@ -271,6 +271,22 @@
     background-color: var(--ag-color-alert-subtle);
 }
 
+/* neutral-outline (20/9/2026, tarea 111): cierra la familia para el tono
+   `neutral` de los `TONO_POR_ESTADO` (borrador, planificada, emitida,
+   inactivo) — la acción que lleva a un estado inicial o inactivo se pinta del
+   gris de su chip, no del verde de `outline`. Token PLANO `-strong`, el mismo
+   par de texto que `atoms/badge` variante neutral. */
+.ag-button--neutral-outline {
+    background-color: transparent;
+    color: var(--ag-color-neutral-strong);
+    border-color: var(--ag-color-neutral-strong);
+    box-shadow: none;
+}
+
+.ag-button--neutral-outline:hover {
+    background-color: var(--ag-color-neutral-subtle);
+}
+
 .ag-button__spinner {
     width: 1em;
     height: 1em;

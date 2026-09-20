@@ -7,7 +7,7 @@
     Props:
     - variant: primary|accent|outline|text|danger|danger-outline|
       warning-outline|success-outline|info-outline|distintivo-2-outline|
-      alert-outline (default "primary").
+      alert-outline|neutral-outline|primary-2-outline (default "primary").
       danger-outline (auditoría visual externa, obs. #4): mismo tono
       semántico que "danger" pero sin relleno — para acciones dentro de una
       franja de alerta, donde un botón sólido compite con el CTA primario
@@ -34,6 +34,10 @@
       estado de llegada). "outline" a secas se queda para acciones que NO
       cambian de estado (navegación, "más acciones", etc.) — sigue siendo
       el default neutro de marca.
+      neutral-outline (20/9/2026): la transición que lleva a un estado de
+      tono `neutral` (borrador, planificada, emitida, inactivo). Hay una
+      variante `<tono>-outline` por cada tono que usa algún
+      `TONO_POR_ESTADO` del repo; si aparece un tono nuevo, se agrega la suya.
     - size: sm|md|lg (default "md").
     - type: button|submit|reset (default "button"), ignorado si se pasa `href`.
     - href: si se pasa, renderiza <a> en vez de <button>.
