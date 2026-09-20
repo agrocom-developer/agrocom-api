@@ -435,7 +435,6 @@ return [
         'error_orden_no_vigente' => 'Esa orden no está vigente: no admite una Orden de Trabajo nueva.',
         'seccion_orden' => 'Orden de aplicación',
         'campo_orden_ayuda' => 'Al elegirla se cargan sus equipos y sus lotes.',
-        'sin_orden_aviso' => 'Elige una orden de aplicación para cargar sus equipos y sus lotes.',
         'seccion_clima' => 'Límites climáticos',
         'seccion_vuelo' => 'Parámetros de vuelo',
         'seccion_parametros_ayuda' => 'Un límite en blanco hereda el valor del contrato o el parámetro por defecto del sistema.',
@@ -450,6 +449,7 @@ return [
             'agua' => 'Agua',
         ],
         'calda_litros' => 'Litros',
+        'calda_sin_orden' => 'Al elegir la orden se agregan el Ph y los litros por hectárea si es de insumo líquido, o los kilos por hectárea si es de sólido.',
         'campo_litros_ha' => 'Litros por hectárea',
         'campo_kilos_ha' => 'Kilos por hectárea',
         'error_litros_solo_liquido' => 'Los litros por hectárea solo aplican a una orden de insumo líquido.',
@@ -457,7 +457,9 @@ return [
 
         // Equipos de la tanda.
         'seccion_equipos' => 'Equipos de esta tanda',
-        'equipos_contador' => '{1} :cantidad equipo|[2,*] :cantidad equipos',
+        'equipos_contador' => '{0} Sin equipos|{1} :cantidad equipo|[2,*] :cantidad equipos',
+        'equipos_vacio_titulo' => 'Todavía no hay equipos para repartir',
+        'equipos_vacio_detalle' => 'Elige la orden de aplicación: de ella salen cuántos equipos lleva la tanda y qué lotes se reparten.',
         'seccion_equipos_ayuda' => '{1} La orden se definió con un solo equipo: ejecuta el total de las hectáreas.|[2,*] La cantidad de equipos se definió en la orden de aplicación. Reparte los lotes y las hectáreas entre ellos.',
         'equipo_titulo' => 'Equipo :numero',
         'equipo_opcional' => 'Opcional: déjalo en blanco si esta tanda no lo usa.',

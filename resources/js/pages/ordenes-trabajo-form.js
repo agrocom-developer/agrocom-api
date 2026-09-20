@@ -5,7 +5,8 @@
  * define la orden de aplicación (`cantidad_equipos_necesarios`) y los dibuja
  * el servidor. Este script se ocupa de:
  * - Recargar la pantalla con `?orden_id=` al elegir otra orden — equipos,
- *   lotes y calda dependen todos de ella.
+ *   lotes y calda dependen todos de ella — sin perder lo ya cargado en
+ *   clima, vuelo y calda (esas secciones se pueden llenar antes de elegirla).
  * - Que una escuadra elegida en un equipo deje de ofrecerse en los demás.
  * - Las filas repetibles de lote dentro de cada equipo.
  * - El reparto automático de hectáreas entre los equipos (parejo o por
@@ -17,6 +18,8 @@
  */
 
 class OrdenesTrabajoForm {
+    static CLAVE_PARAMETROS = 'ag:orden-trabajo:parametros';
+
     constructor(formEl) {
         this.form = formEl;
         this.lista = formEl.querySelector('[data-ag-equipos-lista]');
@@ -24,6 +27,7 @@ class OrdenesTrabajoForm {
     }
 
     init() {
+        this.restaurarParametros();
         this.bindOrdenSelector();
         this.bindCalda();
 
@@ -52,7 +56,56 @@ class OrdenesTrabajoForm {
             if (selector.value !== '') {
                 destino.searchParams.set('orden_id', selector.value);
             }
+            this.guardarParametros();
             window.location.assign(destino.toString());
+        });
+    }
+
+    /**
+     * Clima, vuelo y calda se pueden cargar antes de elegir la orden, y elegirla
+     * recarga la pantalla: lo tipeado viaja por `sessionStorage` y se repone al
+     * volver. Los equipos NO viajan — sus lotes son de la orden anterior. Es de
+     * un solo uso: se borra al leerlo, así no reaparece en un alta posterior.
+     */
+    guardarParametros() {
+        const valores = {};
+
+        this.form.querySelectorAll('[name^="parametros["]').forEach((campo) => {
+            if (campo.type === 'checkbox') {
+                if (campo.checked) valores[campo.name] = true;
+            } else if (campo.type !== 'hidden' && campo.value !== '') {
+                valores[campo.name] = campo.value;
+            }
+        });
+
+        try {
+            sessionStorage.setItem(OrdenesTrabajoForm.CLAVE_PARAMETROS, JSON.stringify(valores));
+        } catch {
+            // Sin sessionStorage (modo privado estricto) solo se pierde la comodidad.
+        }
+    }
+
+    restaurarParametros() {
+        let valores = null;
+
+        try {
+            valores = JSON.parse(sessionStorage.getItem(OrdenesTrabajoForm.CLAVE_PARAMETROS) ?? 'null');
+            sessionStorage.removeItem(OrdenesTrabajoForm.CLAVE_PARAMETROS);
+        } catch {
+            return;
+        }
+        if (valores === null || typeof valores !== 'object') return;
+
+        Object.entries(valores).forEach(([nombre, valor]) => {
+            const campo = [...this.form.querySelectorAll('[name^="parametros["]')].find((c) => c.name === nombre && c.type !== 'hidden');
+            if (!campo) return;
+
+            if (campo.type === 'checkbox') {
+                campo.checked = valor === true;
+            } else {
+                campo.value = String(valor);
+            }
+            campo.dispatchEvent(new Event('change', { bubbles: true }));
         });
     }
 

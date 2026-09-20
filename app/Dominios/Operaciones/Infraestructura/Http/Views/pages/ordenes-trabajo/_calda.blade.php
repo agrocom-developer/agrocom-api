@@ -16,8 +16,12 @@
     - líquido: Ph del agua, Ph de la calda y litros por hectárea.
     - sólido: kilos por hectárea.
 
+    Sin orden elegida el tipo de insumo todavía no se sabe: las casillas se
+    ofrecen igual (no dependen de la orden) y, en lugar de los campos por
+    tipo, va una línea que dice qué se agrega al elegirla.
+
     Espera:
-    - $esLiquido (bool).
+    - $esLiquido (?bool): `null` si todavía no hay orden elegida.
     - $parametrosAntiguos (array): `old('parametros')`.
     - $litrosHaOrden (?string): litros por hectárea de la orden de
       aplicación, como valor inicial.
@@ -35,7 +39,7 @@
 @endphp
 <x-molecules.form-section
     :title="__('operaciones.asignacion_equipos.seccion_calda')"
-    :count="__('operaciones.ordenes_trabajo.campos_contador', ['cantidad' => $esLiquido ? 7 : 5])"
+    :count="__('operaciones.ordenes_trabajo.campos_contador', ['cantidad' => match ($esLiquido) { true => 7, false => 5, null => 4 }])"
 >
     <p class="ag-form-section__field--full ag-ordenes-trabajo-form__ayuda">
         {{ __('operaciones.ordenes_trabajo.calda_ayuda') }}
@@ -94,7 +98,11 @@
         @endforeach
     </div>
 
-    @if ($esLiquido)
+    @if ($esLiquido === null)
+        <p class="ag-form-section__field--full ag-ordenes-trabajo-form__ayuda">
+            {{ __('operaciones.ordenes_trabajo.calda_sin_orden') }}
+        </p>
+    @elseif ($esLiquido)
         <x-atoms.input
             type="number"
             name="parametros[ph_agua]"
