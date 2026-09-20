@@ -32,6 +32,19 @@
 --}}
 @php
     $turnoActual = $trabajo->turno?->value;
+
+    // `turno_hora_inicio`/`turno_hora_fin` vienen casteados a fecha
+    // (`datetime:H:i` en `Trabajo`), y un `<input type="time">` solo acepta
+    // «HH:MM»: sin recortarlo, el navegador descarta el valor y el campo se
+    // dibuja vacío aunque el trabajo tenga su horario cargado — así, guardar
+    // sin tocar nada rebotaba contra «Ingresa la hora de inicio y de fin».
+    $horaTurno = function (mixed $valor): ?string {
+        if ($valor instanceof DateTimeInterface) {
+            return $valor->format('H:i');
+        }
+
+        return $valor === null || $valor === '' ? null : substr((string) $valor, 0, 5);
+    };
 @endphp
 <x-templates.panel-shell :title="__('operaciones.trabajos.editar_titulo', ['id' => $trabajo->id])" :tema="$tema">
     <x-templates.panel-layout
@@ -170,7 +183,7 @@
                         name="turno_hora_inicio"
                         id="turno_hora_inicio"
                         :label="__('operaciones.asignacion_equipos.campo_turno_hora_inicio')"
-                        :value="old('turno_hora_inicio', $trabajo->turno_hora_inicio)"
+                        :value="old('turno_hora_inicio', $horaTurno($trabajo->turno_hora_inicio))"
                         :error="$errors->first('turno_hora_inicio')"
                     />
 
@@ -179,7 +192,7 @@
                         name="turno_hora_fin"
                         id="turno_hora_fin"
                         :label="__('operaciones.asignacion_equipos.campo_turno_hora_fin')"
-                        :value="old('turno_hora_fin', $trabajo->turno_hora_fin)"
+                        :value="old('turno_hora_fin', $horaTurno($trabajo->turno_hora_fin))"
                         :error="$errors->first('turno_hora_fin')"
                     />
                 </x-molecules.form-section>
