@@ -120,12 +120,17 @@ return [
         // trabajo nacido por sync puro nunca lo tuvo).
         'editar_titulo' => 'Editar trabajo #:id',
         'editar_subtitulo' => 'Corrige el lote, el equipo, las hectáreas o el turno de este trabajo antes de que se valide.',
+        'seccion_datos' => 'Datos del trabajo',
         'campos_contador' => ':cantidad campos',
         'campo_lote' => 'Lote',
+        'campo_lote_ayuda' => 'Solo los lotes de la orden a la que pertenece este trabajo.',
         'campo_equipo' => 'Cuadrilla',
         'campo_equipo_sin_asignar' => 'Sin equipo asignado',
+        'campo_equipo_ayuda' => 'La cuadrilla que vuela este lote. Sin asignar, el trabajo queda esperando el reparto.',
         'campo_hectareas' => 'Hectáreas declaradas',
+        'campo_hectareas_ayuda' => 'Las que se le reparten a esta cuadrilla en el lote; no pueden superar las del lote.',
         'campo_turno' => 'Turno',
+        'campo_turno_ayuda' => 'Si eliges un turno, indica también su hora de inicio y de fin.',
         'turno_manana' => 'Mañana',
         'turno_noche' => 'Noche',
         'turno_todo_el_dia' => 'Todo el día',
@@ -180,6 +185,41 @@ return [
             // estado de TABLERO del trabajo (Trabajo::estadoTablero()).
             'validado' => 'Validado',
         ],
+        // Pasos de estado de la ficha de edición (tarea 114). El panel no
+        // cierra un trabajo: eso lo hace el piloto desde la app de campo, así
+        // que los pasos solo dicen dónde está.
+        'estado_pasos_aria' => 'Estado del trabajo',
+        'estado_pista_cierre_en_campo' => 'El cierre lo registra el piloto desde la app de campo, no el panel.',
+        'estado_ayuda' => [
+            'abierto' => 'El trabajo está en curso: el equipo todavía puede sumar sesiones desde la app de campo. Mientras siga abierto puedes corregir su lote, su cuadrilla, sus hectáreas y su turno.',
+            'cerrado' => 'El piloto ya cerró el trabajo en campo. Sus sesiones pasan a la cola de validación y, cuando estén todas validadas, el trabajo deja de admitir cambios.',
+        ],
+        // Resumen relacionado del aside de la ficha de edición: sus dos
+        // órdenes, lo registrado en campo y la cuadrilla asignada.
+        'aside_abierto_titulo' => 'Todavía no hay nada que resumir',
+        'aside_abierto_detalle' => 'El trabajo sigue abierto. Cuando el piloto lo cierre desde la app de campo vas a ver acá sus sesiones, sus órdenes y la cuadrilla que lo voló.',
+        'aside_orden_titulo' => 'Orden de aplicación',
+        'aside_orden_nro' => 'Aplicación',
+        'aside_orden_tipo' => 'Tipo',
+        'aside_orden_estado' => 'Estado',
+        'aside_orden_accion' => 'Ver la orden',
+        'aside_tanda_titulo' => 'Orden de trabajo',
+        'aside_tanda_id' => 'Orden',
+        'aside_tanda_trabajos' => 'Trabajos',
+        'aside_tanda_cuadrillas' => 'Cuadrillas',
+        'aside_tanda_accion' => 'Ver la orden de trabajo',
+        'aside_campo_titulo' => 'Registro en campo',
+        'aside_campo_sesiones' => 'Sesiones',
+        'aside_campo_validadas' => 'Validadas',
+        'aside_campo_hectareas' => 'Hectáreas voladas',
+        'aside_campo_accion_detalle' => 'Ver el detalle',
+        'aside_campo_accion_evidencias' => 'Ver evidencias',
+        'aside_cuadrilla_titulo' => 'Cuadrilla asignada',
+        'aside_cuadrilla_codigo' => 'Código',
+        'aside_cuadrilla_nombre' => 'Nombre',
+        'aside_cuadrilla_sin_nombre' => 'Sin nombre',
+        'aside_cuadrilla_integrantes' => 'Integrantes',
+        'aside_cuadrilla_accion' => 'Ver la cuadrilla',
         // Catálogo espec §4.3.
         'motivo_cierre' => [
             'completado' => 'Completado',
@@ -237,14 +277,19 @@ return [
         'col_motivo_cierre' => 'Motivo de cierre',
         'validar' => 'Validar',
         'rechazar' => 'Rechazar',
+        'confirmar_validar_titulo' => 'Validar sesión',
+        'confirmar_validar' => '¿Confirmas la sesión #:id? Al validarla se registra el devengo del piloto y ya no admite cambios.',
+        'confirmar_rechazar_titulo' => 'Rechazar sesión',
+        'confirmar_rechazar' => 'La sesión #:id vuelve al piloto con el motivo que indiques. Es obligatorio.',
         'motivo_label' => 'Motivo del rechazo',
         'motivo_placeholder' => 'Por qué se rechaza esta sesión…',
-        // El campo vive en la tarjeta junto a los dos botones: la ayuda
-        // aclara que solo lo pide "Rechazar", no "Validar".
-        'motivo_ayuda' => 'Obligatorio solo para rechazar.',
+        // El campo vive dentro de la confirmación del rechazo: la ayuda
+        // aclara a quién le llega lo que se escriba.
+        'motivo_ayuda' => 'El piloto lo ve al recibir la sesión de vuelta.',
         // Invariante 4: el piloto de la sesión no puede decidir sobre su
         // propio vuelo, ni para aprobar ni para rechazar.
         'propia' => 'Eres el piloto de esta sesión: no puedes validarla ni rechazarla.',
+        'propia_corto' => 'Tu sesión',
         'validada' => 'Sesión validada correctamente.',
         'rechazada' => 'Sesión rechazada: se registró la corrección con el motivo indicado.',
         'error_motivo_requerido' => 'Ingresa el motivo del rechazo.',
@@ -808,6 +853,11 @@ return [
         'subtitulo' => 'Reparte las hectáreas de cada orden vigente entre las cuadrillas.',
         'vacio_titulo' => 'Sin órdenes vigentes',
         'vacio_detalle' => 'Activa una orden de aplicación para que aparezca acá. Una orden vigente es la que está lista para que los equipos comiencen a trabajar.',
+        'filtro_vacio_titulo' => 'Ninguna orden coincide con el filtro',
+        'filtro_vacio_detalle' => 'Prueba con otro contrato o quita el filtro para ver todas las órdenes vigentes.',
+        'filtro_contrato' => 'Contrato',
+        'filtro_todos' => 'Todos los contratos',
+        'ver_accion' => 'Ver',
         'col_orden' => 'Orden',
         'col_contrato' => 'Contrato',
         'col_lote' => 'Lote',
@@ -892,11 +942,10 @@ return [
         'filtro_cliente_placeholder' => 'Todos los clientes',
         'filtro_desde' => 'Desde',
         'filtro_hasta' => 'Hasta',
-        'filtrar' => 'Filtrar',
-        'limpiar_filtro' => 'Limpiar filtros',
         'vacio_titulo' => 'Todavía no se generó ningún reporte técnico',
         'vacio_detalle' => 'Los reportes técnicos se generan por lote a medida que se cierran y conforman trabajos. En cuanto se genere el primero, vas a verlo acá.',
-        'filtro_vacio' => 'Ningún reporte coincide con estos filtros.',
+        'filtro_vacio_titulo' => 'Ningún reporte coincide con estos filtros',
+        'filtro_vacio_detalle' => 'Prueba con otro cliente, amplía el rango de fechas o quita los filtros para ver todos los reportes.',
         'col_trabajo' => 'Trabajo',
         'col_cliente' => 'Cliente',
         'col_generado' => 'Generado',
