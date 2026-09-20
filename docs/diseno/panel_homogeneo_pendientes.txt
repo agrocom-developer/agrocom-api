@@ -18,8 +18,6 @@ Finanzas/anticipos/index.blade.php
 Finanzas/anticipos/create.blade.php
 Finanzas/combustible/index.blade.php
 Finanzas/combustible/create.blade.php
-Finanzas/gastos/index.blade.php
-Finanzas/gastos/create.blade.php
 
 # 119 · feature/panel-liquidacion-finanzas
 Finanzas/planillas/index.blade.php
