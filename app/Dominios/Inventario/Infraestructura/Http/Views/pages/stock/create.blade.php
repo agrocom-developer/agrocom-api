@@ -5,8 +5,9 @@
 
     Datos esperados (ver StockController::create()): la cáscara de
     CascaraPanel, más $repuestosDisponibles (Collection<int, string>),
-    $basesDisponibles (Collection<int, string>), $tipos
-    (list<TipoMovimientoInventario>) y $sentidos (list<SentidoAjusteInventario>).
+    $basesDisponibles (array<int, string>), $tipos
+    (list<TipoMovimientoInventario>), $sentidos (list<SentidoAjusteInventario>)
+    y $repuestoIdInicial (int|null, el repuesto que ya llega elegido).
 
     Gateada por `inventario.movimiento.crear`, verificado server-side en el
     controlador.
@@ -29,6 +30,7 @@
             'basesDisponibles' => $basesDisponibles,
             'tipos' => $tipos,
             'sentidos' => $sentidos,
+            'repuestoIdInicial' => $repuestoIdInicial,
         ])
     </x-templates.panel-layout>
 </x-templates.panel-shell>

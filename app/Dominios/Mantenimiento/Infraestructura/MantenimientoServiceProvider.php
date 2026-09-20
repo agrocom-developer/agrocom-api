@@ -7,6 +7,7 @@ use App\Dominios\Mantenimiento\Contratos\LecturaCiclosBateria;
 use App\Dominios\Mantenimiento\Contratos\LecturaEquipamiento;
 use App\Dominios\Mantenimiento\Contratos\LecturaEquipamientoPorBase;
 use App\Dominios\Mantenimiento\Contratos\LecturaMantenimientoPorDron;
+use App\Dominios\Mantenimiento\Contratos\LecturaResumenOrdenesMantenimiento;
 use App\Dominios\Mantenimiento\Infraestructura\Busqueda\BusquedaBaterias;
 use App\Dominios\Mantenimiento\Infraestructura\Busqueda\BusquedaGeneradores;
 use App\Dominios\Mantenimiento\Infraestructura\Busqueda\BusquedaVehiculos;
@@ -42,6 +43,7 @@ final class MantenimientoServiceProvider extends ServiceProvider
         $this->app->bind(LecturaEquipamiento::class, LecturaEquipamientoEloquent::class);
         $this->app->bind(LecturaEquipamientoPorBase::class, LecturaEquipamientoPorBaseEloquent::class);
         $this->app->bind(LecturaMantenimientoPorDron::class, LecturaMantenimientoPorDronEloquent::class);
+        $this->app->bind(LecturaResumenOrdenesMantenimiento::class, LecturaResumenOrdenesMantenimientoEloquent::class);
 
         // Buscador global (`busqueda.proveedores`): el agregador de Seguridad
         // no conoce estas clases, las recibe por tag. Sumar una entidad al

@@ -4,7 +4,8 @@
     `_formulario.blade.php`, compartido con `create.blade.php`.
 
     Datos esperados (ver RepuestosController::edit()): la cáscara de
-    CascaraPanel, más $repuesto (Repuesto).
+    CascaraPanel, más $repuesto (Repuesto) y $resumenRelacionado (las tarjetas
+    del aside, que el partial toma del ámbito de esta vista).
 
     Gateada por `inventario.repuesto.editar`, verificado server-side en el
     controlador.

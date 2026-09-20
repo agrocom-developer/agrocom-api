@@ -36,4 +36,12 @@ final class LecturaPanelPersonalEloquent implements LecturaPanelPersonal
             ->pluck('nombre', 'id')
             ->all();
     }
+
+    public function basesDisponibles(): array
+    {
+        return PerBase::query()
+            ->orderBy('nombre')
+            ->pluck('nombre', 'id')
+            ->all();
+    }
 }

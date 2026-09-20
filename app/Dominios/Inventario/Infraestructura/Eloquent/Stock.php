@@ -30,8 +30,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $base_id
  * @property string $cantidad
  * @property string $stock_minimo
- * @property bool $alerta atributo NO persistido, calculado y asignado por
- *                        `ListarStock` — ausente fuera de ese caso de uso.
+ * @property bool $alerta atributo NO persistido: queda algo pero ya alcanzó el
+ *                        mínimo. Lo calcula y asigna `ListarStock` — ausente
+ *                        fuera de ese caso de uso.
+ * @property bool $sin_existencias atributo NO persistido: la fila está en cero.
+ *                                 Ídem `alerta`.
  */
 class Stock extends ModeloDominio
 {

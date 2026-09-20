@@ -10,6 +10,7 @@ use App\Dominios\Inventario\Dominio\Excepciones\RepuestoDuplicado;
 use App\Dominios\Inventario\Infraestructura\Eloquent\Repuesto;
 use App\Dominios\Inventario\Infraestructura\Http\Requests\ActualizarRepuestoRequest;
 use App\Dominios\Inventario\Infraestructura\Http\Requests\CrearRepuestoRequest;
+use App\Dominios\Inventario\Infraestructura\Http\ResumenRelacionadoDeRepuesto;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,6 +26,11 @@ use Illuminate\View\View;
  * DENTRO del controlador contra el ROL ACTIVO vía {@see AutorizacionPanelWeb}
  * — mismo criterio que el resto del panel. Ninguna regla de negocio acá: los
  * casos de uso de `Aplicacion/` hacen el trabajo.
+ *
+ * La ficha de edición lleva el resumen relacionado de la tarea 117
+ * ({@see ResumenRelacionadoDeRepuesto}): existencias, últimos movimientos y
+ * órdenes de mantenimiento que lo consumieron, cada tarjeta gateada por el
+ * permiso de lo que muestra.
  */
 final class RepuestosController
 {
@@ -88,13 +94,17 @@ final class RepuestosController
             ->with('estado', __('inventario.repuestos.creado'));
     }
 
-    public function edit(Request $request, Repuesto $repuesto): View
+    public function edit(Request $request, Repuesto $repuesto, ResumenRelacionadoDeRepuesto $resumenRelacionado): View
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
 
+        $cascara = $this->autorizacion->cascara($request);
+        $zonaHoraria = $cascara['zonaHoraria'] ?? null;
+
         return view('inventario::pages.repuestos.edit', [
-            ...$this->autorizacion->cascara($request),
+            ...$cascara,
             'repuesto' => $repuesto,
+            'resumenRelacionado' => $resumenRelacionado->tarjetas($request, $repuesto, is_string($zonaHoraria) ? $zonaHoraria : null),
         ]);
     }
 
