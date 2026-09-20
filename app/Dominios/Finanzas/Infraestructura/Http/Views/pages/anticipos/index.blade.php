@@ -4,7 +4,7 @@
     docs/diseno/guia_pantalla_panel.md — cabecera → KPI → toolbar → tabla →
     paginación. Homogeneizado en la tarea 118 con el patrón de Estadías:
     franja de KPI, `filter-panel`, `index-table`, `row-actions` y
-    `confirm-modal` para la baja (antes era el `confirm()` nativo del
+    `confirm-modal` para la baja (antes era la confirmación nativa del
     navegador y el `<form class="ag-filtros">` anterior).
 
     Sin acción de editar (invariante de esta tarea: un anticipo es inmutable
