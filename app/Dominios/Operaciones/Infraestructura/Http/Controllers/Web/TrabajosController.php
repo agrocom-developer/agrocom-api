@@ -4,17 +4,24 @@ namespace App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web;
 
 use App\Dominios\Operaciones\Aplicacion\ActualizarTrabajo;
 use App\Dominios\Operaciones\Aplicacion\EliminarTrabajo;
+use App\Dominios\Operaciones\Dominio\EstadoSesion;
+use App\Dominios\Operaciones\Dominio\EstadoTrabajo;
 use App\Dominios\Operaciones\Dominio\Excepciones\EquipoTrabajoNoVigente;
 use App\Dominios\Operaciones\Dominio\Excepciones\HectareasAsignadasSuperanLote;
 use App\Dominios\Operaciones\Dominio\Excepciones\LoteNoPerteneceAOrden;
 use App\Dominios\Operaciones\Dominio\Excepciones\TrabajoValidadoNoEditable;
 use App\Dominios\Operaciones\Dominio\Excepciones\TrabajoValidadoNoEliminable;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Evidencia;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenTrabajo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
+use App\Dominios\Operaciones\Infraestructura\Http\PasosDeOrden;
+use App\Dominios\Operaciones\Infraestructura\Http\PasosDeTrabajo;
 use App\Dominios\Operaciones\Infraestructura\Http\Requests\ActualizarTrabajoRequest;
 use App\Dominios\Personal\Contratos\DatosEquipoTrabajo;
 use App\Dominios\Personal\Contratos\LecturaEquipoTrabajo;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
+use Brick\Math\BigDecimal;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -53,6 +60,15 @@ final class TrabajosController
 
     /** HU-18 (tarea 25): gatea solo el botón/ruta del reporte técnico, no toda la pantalla — ver runs/25.md. */
     private const PERMISO_REPORTE = 'operaciones.reporte.ver';
+
+    /**
+     * Tarea 114: cada tarjeta del resumen relacionado se gatea por el permiso
+     * del módulo de lo que MUESTRA, no por el de esta pantalla — ver
+     * {@see self::relacionadoDeEdicion()}.
+     */
+    private const PERMISO_VER_ORDEN = 'operaciones.orden.ver';
+
+    private const PERMISO_VER_CUADRILLA = 'personal.equipo_trabajo.ver';
 
     public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
 
@@ -165,11 +181,16 @@ final class TrabajosController
             }
         }
 
+        $pasosEstado = PasosDeTrabajo::armar($trabajo->estado);
+
         return view('operaciones::pages.trabajos.edit', [
             ...$this->autorizacion->cascara($request),
             'trabajo' => $trabajo,
             'lotesDisponibles' => $this->lotesDeLaOrden($trabajo->orden_id),
             'equiposDisponibles' => $equiposDisponibles,
+            'pasosEstado' => $pasosEstado,
+            'ayudaEstado' => PasosDeTrabajo::ayuda($pasosEstado),
+            'relacionado' => $this->relacionadoDeEdicion($request, $trabajo, $equipos),
         ]);
     }
 
@@ -201,8 +222,11 @@ final class TrabajosController
                 ->withInput();
         }
 
+        // Se queda en la ficha de edición, no vuelve al detalle (§6.3.2 de
+        // docs/diseno/guia_pantalla_panel.md): corregir un trabajo es seguir
+        // trabajando sobre ÉL. El aviso de éxito lo pinta el propio formulario.
         return redirect()
-            ->route('panel.trabajos.detalle', $trabajo)
+            ->route('panel.trabajos.detalle-editar', $trabajo)
             ->with('estado', __('operaciones.trabajos.actualizado'));
     }
 
@@ -221,6 +245,229 @@ final class TrabajosController
         return redirect()
             ->route('panel.trabajos.index')
             ->with('estado', __('operaciones.trabajos.eliminado'));
+    }
+
+    /**
+     * Resumen relacionado del aside de la ficha de edición (§6.3.1 de
+     * docs/diseno/guia_pantalla_panel.md): las relaciones más cercanas del
+     * trabajo, derivadas de sus FK reales — sus dos padres (la orden de
+     * aplicación por `orden_id`, la orden de trabajo por `orden_trabajo_id`),
+     * lo que el trabajo produjo en campo (sus sesiones) y la cuadrilla que lo
+     * tiene asignado (`equipo_trabajo_id`).
+     *
+     * Cada tarjeta se gatea por el permiso del módulo de LO QUE MUESTRA contra
+     * el rol activo, no por el de la pantalla: ver la cuadrilla pide
+     * `personal.equipo_trabajo.ver`, no `operaciones.trabajo.editar`. La
+     * cuadrilla, que es de otro módulo, llega por `Personal\Contratos\
+     * LecturaEquipoTrabajo` con su DTO — nunca por `EquipoTrabajo` ni por un
+     * `join` a `per_*` (ADR 0003, regla 3).
+     *
+     * Mientras el trabajo siga `abierto` el aside no dibuja tarjetas: muestra
+     * una sola sección informativa con el paso que falta (plan §3.5) — hasta
+     * que el piloto no cierra el trabajo desde la app de campo no hay
+     * sesiones cerradas, ni acta, ni reporte que resumir.
+     *
+     * @return array{aviso: array{titulo: string, detalle: string}|null, tarjetas: list<array{titulo: string, items: list<array{label: string, value: string, mono?: bool, badge?: bool, variant?: string}>, acciones: list<array{label: string, href: string, icono: string}>}>}
+     */
+    private function relacionadoDeEdicion(Request $request, Trabajo $trabajo, LecturaEquipoTrabajo $equipos): array
+    {
+        if ($trabajo->estado === EstadoTrabajo::Abierto) {
+            return [
+                'aviso' => [
+                    'titulo' => __('operaciones.trabajos.aside_abierto_titulo'),
+                    'detalle' => __('operaciones.trabajos.aside_abierto_detalle'),
+                ],
+                'tarjetas' => [],
+            ];
+        }
+
+        $tarjetas = [];
+
+        if ($this->autorizacion->tienePermiso($request, self::PERMISO_VER_ORDEN)) {
+            $tarjetas[] = $this->tarjetaOrden($trabajo);
+        }
+
+        if ($this->autorizacion->tienePermiso($request, self::PERMISO)) {
+            if ($trabajo->orden_trabajo_id !== null) {
+                $tarjetas[] = $this->tarjetaOrdenTrabajo($trabajo);
+            }
+
+            $tarjetas[] = $this->tarjetaRegistroEnCampo($trabajo);
+        }
+
+        if ($trabajo->equipo_trabajo_id !== null && $this->autorizacion->tienePermiso($request, self::PERMISO_VER_CUADRILLA)) {
+            $tarjetas[] = $this->tarjetaCuadrilla($trabajo, $equipos);
+        }
+
+        return ['aviso' => null, 'tarjetas' => array_values(array_filter($tarjetas))];
+    }
+
+    /**
+     * La orden de aplicación de la que cuelga el trabajo. El estado va con el
+     * mismo tono que ya usa su badge en el listado de órdenes
+     * ({@see PasosDeOrden::TONO_POR_ESTADO}), para que los dos hablen con el
+     * mismo color.
+     *
+     * @return array{titulo: string, items: list<array{label: string, value: string, mono?: bool, badge?: bool, variant?: string}>, acciones: list<array{label: string, href: string, icono: string}>}
+     */
+    private function tarjetaOrden(Trabajo $trabajo): array
+    {
+        $orden = OrdenAplicacion::query()->find($trabajo->orden_id);
+
+        return [
+            'titulo' => __('operaciones.trabajos.aside_orden_titulo'),
+            'items' => $orden === null ? [] : [
+                [
+                    'label' => __('operaciones.trabajos.aside_orden_nro'),
+                    'value' => '#'.$orden->nro_aplicacion,
+                    'mono' => true,
+                ],
+                [
+                    'label' => __('operaciones.trabajos.aside_orden_tipo'),
+                    'value' => __('operaciones.tipo_aplicacion.'.$orden->tipo_aplicacion->value),
+                ],
+                [
+                    'label' => __('operaciones.trabajos.aside_orden_estado'),
+                    'value' => __('operaciones.estado.'.$orden->estado->value),
+                    'badge' => true,
+                    'variant' => PasosDeOrden::TONO_POR_ESTADO[$orden->estado->value],
+                ],
+            ],
+            'acciones' => $orden === null ? [] : [[
+                'label' => __('operaciones.trabajos.aside_orden_accion'),
+                'href' => route('panel.ordenes.show', $orden),
+                'icono' => 'assignment',
+            ]],
+        ];
+    }
+
+    /**
+     * La tanda (orden de trabajo) en la que se repartió este trabajo: cuántos
+     * trabajos la componen y cuántas cuadrillas distintas cubre.
+     *
+     * @return array{titulo: string, items: list<array{label: string, value: string, mono?: bool, badge?: bool, variant?: string}>, acciones: list<array{label: string, href: string, icono: string}>}
+     */
+    private function tarjetaOrdenTrabajo(Trabajo $trabajo): array
+    {
+        $tanda = OrdenTrabajo::query()->with('trabajos')->find($trabajo->orden_trabajo_id);
+        $cuadrillas = $tanda?->trabajos->pluck('equipo_trabajo_id')->filter()->unique()->count() ?? 0;
+
+        return [
+            'titulo' => __('operaciones.trabajos.aside_tanda_titulo'),
+            'items' => $tanda === null ? [] : [
+                [
+                    'label' => __('operaciones.trabajos.aside_tanda_id'),
+                    'value' => '#'.$tanda->id,
+                    'mono' => true,
+                ],
+                [
+                    'label' => __('operaciones.trabajos.aside_tanda_trabajos'),
+                    'value' => (string) $tanda->trabajos->count(),
+                    'mono' => true,
+                ],
+                [
+                    'label' => __('operaciones.trabajos.aside_tanda_cuadrillas'),
+                    'value' => (string) $cuadrillas,
+                    'mono' => true,
+                ],
+            ],
+            'acciones' => $tanda === null ? [] : [[
+                'label' => __('operaciones.trabajos.aside_tanda_accion'),
+                'href' => route('panel.trabajos.show', $tanda),
+                'icono' => 'work_history',
+            ]],
+        ];
+    }
+
+    /**
+     * Lo que el trabajo registró en campo: sus sesiones vigentes (las anuladas
+     * no cuentan, invariante 2), cuántas ya pasaron por la cola de validación y
+     * cuántas hectáreas suman. Las cifras se recalculan desde las sesiones, no
+     * se cachean (invariante 6).
+     *
+     * @return array{titulo: string, items: list<array{label: string, value: string, mono?: bool, badge?: bool, variant?: string}>, acciones: list<array{label: string, href: string, icono: string}>}
+     */
+    private function tarjetaRegistroEnCampo(Trabajo $trabajo): array
+    {
+        $vigentes = $trabajo->sesiones()->whereNull('anulada_en');
+        $hectareas = BigDecimal::of((string) $vigentes->clone()->sum('hectareas_declaradas'))->toScale(2);
+
+        return [
+            'titulo' => __('operaciones.trabajos.aside_campo_titulo'),
+            'items' => [
+                [
+                    'label' => __('operaciones.trabajos.aside_campo_sesiones'),
+                    'value' => (string) $vigentes->clone()->count(),
+                    'mono' => true,
+                ],
+                [
+                    'label' => __('operaciones.trabajos.aside_campo_validadas'),
+                    'value' => (string) $vigentes->clone()->where('estado', EstadoSesion::Validado)->count(),
+                    'mono' => true,
+                ],
+                [
+                    'label' => __('operaciones.trabajos.aside_campo_hectareas'),
+                    'value' => number_format((float) (string) $hectareas, 2, ',', '.'),
+                    'mono' => true,
+                ],
+            ],
+            'acciones' => [
+                [
+                    'label' => __('operaciones.trabajos.aside_campo_accion_detalle'),
+                    'href' => route('panel.trabajos.detalle', $trabajo),
+                    'icono' => 'flight',
+                ],
+                [
+                    'label' => __('operaciones.trabajos.aside_campo_accion_evidencias'),
+                    'href' => route('panel.trabajos.evidencias', $trabajo),
+                    'icono' => 'photo_library',
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * La cuadrilla asignada, leída por el contrato de `Personal` a la fecha de
+     * inicio del trabajo: es la que lo cubría ese día, no la que el equipo
+     * tenga hoy.
+     *
+     * @return array{titulo: string, items: list<array{label: string, value: string, mono?: bool, badge?: bool, variant?: string}>, acciones: list<array{label: string, href: string, icono: string}>}|null
+     */
+    private function tarjetaCuadrilla(Trabajo $trabajo, LecturaEquipoTrabajo $equipos): ?array
+    {
+        $equipoId = (int) $trabajo->equipo_trabajo_id;
+        $equipo = $equipos->porIds([$equipoId])[$equipoId] ?? null;
+
+        if ($equipo === null) {
+            return null;
+        }
+
+        $fecha = $trabajo->inicio->toDateString();
+
+        return [
+            'titulo' => __('operaciones.trabajos.aside_cuadrilla_titulo'),
+            'items' => [
+                [
+                    'label' => __('operaciones.trabajos.aside_cuadrilla_codigo'),
+                    'value' => $equipo->codigo,
+                    'mono' => true,
+                ],
+                [
+                    'label' => __('operaciones.trabajos.aside_cuadrilla_nombre'),
+                    'value' => $equipo->nombre ?? __('operaciones.trabajos.aside_cuadrilla_sin_nombre'),
+                ],
+                [
+                    'label' => __('operaciones.trabajos.aside_cuadrilla_integrantes'),
+                    'value' => (string) count($equipos->integrantesAFecha($equipoId, $fecha)),
+                    'mono' => true,
+                ],
+            ],
+            'acciones' => [[
+                'label' => __('operaciones.trabajos.aside_cuadrilla_accion'),
+                'href' => route('panel.cuadrillas.show', $equipoId),
+                'icono' => 'groups',
+            ]],
+        ];
     }
 
     /**
