@@ -16,7 +16,6 @@
 # 113 · feature/panel-drones-pausas
 Operaciones/pausas/index.blade.php
 Operaciones/pausas/create.blade.php
-Operaciones/alertas/index.blade.php
 
 # 114 · feature/panel-trabajos-reparto
 Operaciones/trabajos/edit.blade.php
