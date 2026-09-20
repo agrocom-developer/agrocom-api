@@ -66,7 +66,10 @@ final class PersonasController
 
         return view('personal::pages.personas.create', [
             ...$this->autorizacion->cascara($request),
-            'roles' => RolOperativoPersona::cases(),
+            // `rolesOperativos`, no `roles`: `roles` ya es de la cáscara (los
+            // roles del USUARIO, que el panel usa para ofrecer «Cambiar de rol»)
+            // y pisarlo con los del enum lo dejaba siempre en «varios roles».
+            'rolesOperativos' => RolOperativoPersona::cases(),
             'basesDisponibles' => $this->basesActivas(),
             // Atajo «Nueva persona» de la ficha de una base: llega con
             // `?base_id=` y el formulario la deja elegida.
@@ -75,7 +78,7 @@ final class PersonasController
             // 19/9/2026 — mismo criterio que `PropiedadesController::create()`):
             // con ?volver_a=, al guardar se ofrece un botón para volver a esa
             // URL con esta persona ya disponible en el select que la pidió.
-            'volverA' => $request->query('volver_a'),
+            'volverA' => $this->origenLocal($request->query('volver_a')),
         ]);
     }
 
@@ -99,7 +102,7 @@ final class PersonasController
         return redirect()
             ->route('panel.personas.edit', $persona)
             ->with('estado', __('personal.personas.creado'))
-            ->with('volverA', $request->input('volver_a'));
+            ->with('volverA', $this->origenLocal($request->input('volver_a')));
     }
 
     public function edit(Request $request, PerPersona $persona): View
@@ -109,7 +112,7 @@ final class PersonasController
         return view('personal::pages.personas.edit', [
             ...$this->autorizacion->cascara($request),
             'persona' => $persona,
-            'roles' => RolOperativoPersona::cases(),
+            'rolesOperativos' => RolOperativoPersona::cases(),
             'basesDisponibles' => $this->basesActivas(),
             'volverA' => session('volverA'),
         ]);
@@ -186,6 +189,24 @@ final class PersonasController
     private function basesActivas(): Collection
     {
         return PerBase::query()->orderBy('nombre')->pluck('nombre', 'id');
+    }
+
+    /**
+     * El `volver_a` de una alta rápida termina como `href` del botón «Volver al
+     * formulario de origen»: solo se acepta una ruta de este mismo sitio (relativa,
+     * o absoluta bajo la URL de la app) y sin espacios, controles ni barras
+     * invertidas — el navegador los descarta o normaliza y `/\ /otro.com` acaba
+     * siendo otro dominio. Cualquier otra cosa (`javascript:`, otro host) se ignora.
+     */
+    private function origenLocal(mixed $url): ?string
+    {
+        if (! is_string($url) || preg_match('/[\x00-\x20\x7f\\\\]/', $url) === 1) {
+            return null;
+        }
+
+        $esRutaLocal = str_starts_with($url, '/') && ! str_starts_with($url, '//');
+
+        return $esRutaLocal || str_starts_with($url, url('/').'/') ? $url : null;
     }
 
     private function cadenaONull(mixed $valor): ?string

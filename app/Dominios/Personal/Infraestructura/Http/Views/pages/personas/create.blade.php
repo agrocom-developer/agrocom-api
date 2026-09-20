@@ -4,8 +4,9 @@
     en `_formulario.blade.php`, compartido con `edit.blade.php`.
 
     Datos esperados (ver PersonasController::create()): la cáscara de
-    CascaraPanel, más `$roles` (list<RolOperativoPersona>) y
-    `$basesDisponibles` (Collection<int, string>).
+    CascaraPanel, más `$rolesOperativos` (list<RolOperativoPersona>),
+    `$basesDisponibles` (Collection<int, string>), `$baseIdInicial` y
+    `$volverA` (los dos del alta rápida desde otra pantalla).
 
     Gateada por `personal.persona.crear`, verificado server-side en el
     controlador.

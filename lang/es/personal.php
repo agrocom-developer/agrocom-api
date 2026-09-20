@@ -135,21 +135,20 @@ return [
         'filtro_busqueda_placeholder' => 'Nombre…',
         'filtrar' => 'Filtrar',
         'limpiar_filtro' => 'Limpiar filtro',
-        'filtro_vacio' => 'Ninguna persona coincide con esta búsqueda.',
+        'filtro_vacio_titulo' => 'Sin resultados para esta búsqueda',
+        'filtro_vacio_detalle' => 'Ninguna persona coincide con el nombre buscado. Prueba con otro nombre.',
         'vacio_titulo' => 'Todavía no hay personas registradas',
         'vacio_detalle' => 'Las personas operativas se registran con su rol (piloto, auxiliar, jefe de campo) y su tarifa. Se da de alta una nueva desde el formulario arriba.',
         'col_nombre' => 'Nombre',
         'col_rol' => 'Rol',
         'col_base' => 'Base',
         'col_tarifa' => 'Tarifa/ha',
-        'col_estado' => 'Estado',
         'sin_base' => 'Sin base asignada',
         'sin_tarifa' => '—',
         'tarifa_valor' => 'Bs :monto',
-        'estado_activo' => 'Activa',
-        'estado_inactivo' => 'Inactiva',
         'editar' => 'Editar',
         'eliminar_accion' => 'Eliminar',
+        'confirmar_eliminar_titulo' => 'Eliminar persona',
         'confirmar_baja' => '¿Confirmas la baja de esta persona?',
         'paginacion_aria' => 'Paginación de personas',
         'paginacion_anterior' => 'Anterior',
@@ -160,7 +159,7 @@ return [
         // desempeño — gateado por `personal.persona.desempenio`, permiso
         // aparte de `.ver` (información sensible sobre la persona).
         'desempenio' => [
-            'ver' => 'Ver desempeño',
+            'ver' => 'Desempeño',
         ],
 
         // Formulario
@@ -182,6 +181,7 @@ return [
         'error_rol_requerido' => 'Elige el rol de la persona.',
         'estado_form' => 'Los cambios se guardan al confirmar.',
         'volver' => 'Volver a personas',
+        'volver_a_formulario_origen' => 'Volver al formulario de origen',
     ],
 
     // Tarea 72 (HU-49, ADR 0015 punto 3), pasada a «cuadrilla» y ampliada con
