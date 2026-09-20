@@ -14,8 +14,6 @@
 # 26 listados y 20 formularios. Las referencias del plan (§1) no pueden figurar.
 
 # 117 · feature/panel-inventario
-Inventario/repuestos/index.blade.php
-Inventario/repuestos/_formulario.blade.php
 Inventario/stock/index.blade.php
 Inventario/stock/_formulario.blade.php
 
