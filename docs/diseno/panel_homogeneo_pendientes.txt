@@ -14,7 +14,6 @@
 # 26 listados y 20 formularios. Las referencias del plan (§1) no pueden figurar.
 
 # 119 · feature/panel-liquidacion-finanzas
-Finanzas/planillas/index.blade.php
 Finanzas/rendiciones/index.blade.php
 Finanzas/rendiciones/create.blade.php
 
