@@ -51,11 +51,14 @@ final class AnticiposController
         $personaId = $request->integer('persona_id') ?: null;
         $periodo = $request->string('periodo')->toString();
 
-        $anticipos = $listarAnticipos->ejecutar($personaId, $periodo !== '' ? $periodo : null);
+        $periodoFiltro = $periodo !== '' ? $periodo : null;
+
+        $anticipos = $listarAnticipos->ejecutar($personaId, $periodoFiltro);
 
         return view('finanzas::pages.anticipos.index', [
             ...$this->autorizacion->cascara($request),
             'anticipos' => $anticipos,
+            'resumen' => $listarAnticipos->resumen($personaId, $periodoFiltro),
             'etiquetasPersona' => $this->etiquetasPersona($anticipos->pluck('persona_id')->map(fn ($id) => (int) $id)->unique()->values()->all()),
             'personasDisponibles' => $this->personasDisponibles(),
             'filtros' => ['persona_id' => $personaId, 'periodo' => $periodo],
