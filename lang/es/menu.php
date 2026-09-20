@@ -24,12 +24,12 @@ return [
 
     'operacion' => [
         'label' => 'Operación',
-        'descripcion' => 'Órdenes, trabajos, escuadras, estadías y seguimiento de vuelos de cada jornada.',
+        'descripcion' => 'Órdenes, trabajos, cuadrillas, estadías y seguimiento de vuelos de cada jornada.',
         'items' => [
             'tablero' => 'Tablero',
             'ordenes' => 'Órdenes de aplicación',
             'orden_trabajo' => 'Orden de Trabajo',
-            'asignacion_equipos' => 'Escuadras',
+            'cuadrillas' => 'Cuadrillas',
             'estadias' => 'Estadías en hacienda',
             'seguimiento_vuelos' => 'Seguimiento de vuelos',
         ],
@@ -51,7 +51,7 @@ return [
 
     'recursos' => [
         'label' => 'Recursos',
-        'descripcion' => 'Drones, baterías, vehículos, generadores, bases, personal, equipos de trabajo y fichas de inventario de dron.',
+        'descripcion' => 'Drones, baterías, vehículos, generadores, bases, personal y fichas de inventario de dron.',
         'items' => [
             'drones' => 'Drones',
             'baterias' => 'Baterías',
@@ -59,7 +59,6 @@ return [
             'generadores' => 'Generadores',
             'bases' => 'Bases',
             'personal' => 'Personal',
-            'equipos_trabajo' => 'Equipos de trabajo',
             'fichas_dron' => 'Fichas de dron',
         ],
     ],

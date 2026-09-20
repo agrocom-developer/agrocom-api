@@ -1,6 +1,6 @@
 {{--
     Partial: fila de lote dentro de un equipo en la Orden de Trabajo (reforma
-    18/9/2026). Basada en `asignacion-equipos/_lote-equipo-fila.blade.php` +
+    18/9/2026). Basada en `reparto-cuadrillas/_lote-equipo-fila.blade.php` +
     agregado de turno + horas de inicio/fin (cada fila necesita estos campos).
 
     Espera:
@@ -15,7 +15,7 @@
     - $mostrarQuitar (bool): la primera fila de cada equipo no se quita (todo
       equipo que participa lleva al menos un lote); las agregadas sí. Dice
       «Quitar lote», no «Quitar» a secas: lo que sale es el lote del reparto,
-      nunca una persona de la escuadra.
+      nunca una persona de la cuadrilla.
 --}}
 @php
     $prefijo = "equipos[{$indiceEquipo}][lotes][{$indiceLote}]";

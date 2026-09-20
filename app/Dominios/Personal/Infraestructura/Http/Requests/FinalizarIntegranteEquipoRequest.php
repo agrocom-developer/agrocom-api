@@ -6,7 +6,7 @@ use App\Dominios\Personal\Infraestructura\Eloquent\EquipoIntegrante;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
- * `DELETE /panel/equipos-trabajo/{equipoTrabajo}/integrantes/{integrante}`
+ * `DELETE /panel/cuadrillas/{equipoTrabajo}/integrantes/{integrante}`
  * (tarea 72, HU-49): finaliza la vigencia del integrante, no borra la fila
  * (ver `DesasignarIntegranteEquipo`). `hasta` tiene que ser posterior o
  * igual a la fecha `desde` YA guardada de esa fila — `after_or_equal` con un

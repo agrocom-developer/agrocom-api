@@ -42,7 +42,7 @@ final class CrearOrdenTrabajoRequest extends FormRequest
     /**
      * El formulario dibuja tantos bloques de equipo como definió la orden
      * (`cantidad_equipos_necesarios`), pero una tanda puede salir con menos
-     * —"al menos uno"—: un bloque que llega ENTERO en blanco (sin escuadra y
+     * —"al menos uno"—: un bloque que llega ENTERO en blanco (sin cuadrilla y
      * sin ningún dato de lote) no es un error, es un equipo que esta tanda no
      * usa, y se descarta acá. El primero nunca se descarta: si viene vacío,
      * que responda la validación normal con sus mensajes.
@@ -112,8 +112,8 @@ final class CrearOrdenTrabajoRequest extends FormRequest
             'orden_id.required' => __('operaciones.ordenes_trabajo.error_orden_requerida'),
             'orden_id.exists' => __('operaciones.ordenes_trabajo.error_orden_no_vigente'),
             'equipos.required' => __('operaciones.asignacion_equipos.error_equipos_requerido'),
-            'equipos.*.equipo_trabajo_id.required' => __('operaciones.ordenes_trabajo.error_escuadra_requerida'),
-            'equipos.*.equipo_trabajo_id.distinct' => __('operaciones.ordenes_trabajo.error_escuadra_repetida'),
+            'equipos.*.equipo_trabajo_id.required' => __('operaciones.ordenes_trabajo.error_cuadrilla_requerida'),
+            'equipos.*.equipo_trabajo_id.distinct' => __('operaciones.ordenes_trabajo.error_cuadrilla_repetida'),
             'equipos.*.lotes.required' => __('operaciones.asignacion_equipos.error_lotes_requerido'),
             'equipos.*.lotes.*.lote_id.required' => __('operaciones.asignacion_equipos.error_lote_requerido'),
             'equipos.*.lotes.*.hectareas.required' => __('operaciones.asignacion_equipos.error_hectareas_requerido'),

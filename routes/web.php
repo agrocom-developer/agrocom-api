@@ -28,7 +28,7 @@ use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\OrdenesMante
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\PlanesMantenimientoController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\VehiculosController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\AlertasController;
-use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\AsignacionEquiposController;
+use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\RepartoCuadrillasController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\DronesController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\EstadiasHaciendaController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\OrdenesController;
@@ -38,7 +38,7 @@ use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\ReportesTecnic
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\TrabajosController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\ValidacionSesionesController;
 use App\Dominios\Personal\Infraestructura\Http\Controllers\Web\BasesController;
-use App\Dominios\Personal\Infraestructura\Http\Controllers\Web\EquiposTrabajoController;
+use App\Dominios\Personal\Infraestructura\Http\Controllers\Web\CuadrillasController;
 use App\Dominios\Personal\Infraestructura\Http\Controllers\Web\PersonasController;
 use App\Dominios\Portal\Infraestructura\Http\Controllers\Web\ActasPortalController;
 use App\Dominios\Portal\Infraestructura\Http\Controllers\Web\AvancePortalController;
@@ -670,16 +670,16 @@ Route::middleware('auth:interno')->group(function () {
 
         // HU-70 (tarea 85): reparto de una orden vigente entre equipos de
         // trabajo — ficha propia, no sub-recurso de `ordenes` (ver docblock
-        // de `AsignacionEquiposController`). Un único permiso
+        // de `RepartoCuadrillasController`). Un único permiso
         // (`operaciones.orden.asignar_equipos`) gatea las tres rutas.
-        Route::get('/panel/asignacion-equipos', [AsignacionEquiposController::class, 'index'])
-            ->name('panel.asignacion-equipos.index');
+        Route::get('/panel/reparto-cuadrillas', [RepartoCuadrillasController::class, 'index'])
+            ->name('panel.reparto-cuadrillas.index');
 
-        Route::get('/panel/asignacion-equipos/{orden}', [AsignacionEquiposController::class, 'mostrar'])
-            ->name('panel.asignacion-equipos.show');
+        Route::get('/panel/reparto-cuadrillas/{orden}', [RepartoCuadrillasController::class, 'mostrar'])
+            ->name('panel.reparto-cuadrillas.show');
 
-        Route::post('/panel/asignacion-equipos/{orden}', [AsignacionEquiposController::class, 'asignar'])
-            ->name('panel.asignacion-equipos.store');
+        Route::post('/panel/reparto-cuadrillas/{orden}', [RepartoCuadrillasController::class, 'asignar'])
+            ->name('panel.reparto-cuadrillas.store');
 
         // HU-26 (tarea 37): administración de bases y personas operativas,
         // dos ABMs INDEPENDIENTES (una base es catálogo simple; una persona
@@ -816,38 +816,38 @@ Route::middleware('auth:interno')->group(function () {
         // (`show`) y las rutas de integrantes/recursos exigen `.editar` para
         // mutar — asignar o finalizar una vigencia es mantener el equipo,
         // no un permiso aparte.
-        Route::get('/panel/equipos-trabajo', [EquiposTrabajoController::class, 'index'])
-            ->name('panel.equipos-trabajo.index');
+        Route::get('/panel/cuadrillas', [CuadrillasController::class, 'index'])
+            ->name('panel.cuadrillas.index');
 
-        Route::get('/panel/equipos-trabajo/crear', [EquiposTrabajoController::class, 'create'])
-            ->name('panel.equipos-trabajo.create');
+        Route::get('/panel/cuadrillas/crear', [CuadrillasController::class, 'create'])
+            ->name('panel.cuadrillas.create');
 
-        Route::post('/panel/equipos-trabajo', [EquiposTrabajoController::class, 'store'])
-            ->name('panel.equipos-trabajo.store');
+        Route::post('/panel/cuadrillas', [CuadrillasController::class, 'store'])
+            ->name('panel.cuadrillas.store');
 
-        Route::get('/panel/equipos-trabajo/{equipoTrabajo}', [EquiposTrabajoController::class, 'show'])
-            ->name('panel.equipos-trabajo.show');
+        Route::get('/panel/cuadrillas/{equipoTrabajo}', [CuadrillasController::class, 'show'])
+            ->name('panel.cuadrillas.show');
 
-        Route::get('/panel/equipos-trabajo/{equipoTrabajo}/editar', [EquiposTrabajoController::class, 'edit'])
-            ->name('panel.equipos-trabajo.edit');
+        Route::get('/panel/cuadrillas/{equipoTrabajo}/editar', [CuadrillasController::class, 'edit'])
+            ->name('panel.cuadrillas.edit');
 
-        Route::put('/panel/equipos-trabajo/{equipoTrabajo}', [EquiposTrabajoController::class, 'update'])
-            ->name('panel.equipos-trabajo.update');
+        Route::put('/panel/cuadrillas/{equipoTrabajo}', [CuadrillasController::class, 'update'])
+            ->name('panel.cuadrillas.update');
 
-        Route::delete('/panel/equipos-trabajo/{equipoTrabajo}', [EquiposTrabajoController::class, 'destroy'])
-            ->name('panel.equipos-trabajo.destroy');
+        Route::delete('/panel/cuadrillas/{equipoTrabajo}', [CuadrillasController::class, 'destroy'])
+            ->name('panel.cuadrillas.destroy');
 
-        Route::post('/panel/equipos-trabajo/{equipoTrabajo}/integrantes', [EquiposTrabajoController::class, 'asignarIntegrante'])
-            ->name('panel.equipos-trabajo.integrantes.store');
+        Route::post('/panel/cuadrillas/{equipoTrabajo}/integrantes', [CuadrillasController::class, 'asignarIntegrante'])
+            ->name('panel.cuadrillas.integrantes.store');
 
-        Route::delete('/panel/equipos-trabajo/{equipoTrabajo}/integrantes/{integrante}', [EquiposTrabajoController::class, 'desasignarIntegrante'])
-            ->name('panel.equipos-trabajo.integrantes.destroy');
+        Route::delete('/panel/cuadrillas/{equipoTrabajo}/integrantes/{integrante}', [CuadrillasController::class, 'desasignarIntegrante'])
+            ->name('panel.cuadrillas.integrantes.destroy');
 
-        Route::post('/panel/equipos-trabajo/{equipoTrabajo}/recursos', [EquiposTrabajoController::class, 'asignarRecurso'])
-            ->name('panel.equipos-trabajo.recursos.store');
+        Route::post('/panel/cuadrillas/{equipoTrabajo}/recursos', [CuadrillasController::class, 'asignarRecurso'])
+            ->name('panel.cuadrillas.recursos.store');
 
-        Route::delete('/panel/equipos-trabajo/{equipoTrabajo}/recursos/{recurso}', [EquiposTrabajoController::class, 'desasignarRecurso'])
-            ->name('panel.equipos-trabajo.recursos.destroy');
+        Route::delete('/panel/cuadrillas/{equipoTrabajo}/recursos/{recurso}', [CuadrillasController::class, 'desasignarRecurso'])
+            ->name('panel.cuadrillas.recursos.destroy');
 
         // HU-36 (tarea 52): catálogo de repuestos con stock por base y
         // alerta de mínimo. Módulo nuevo `Inventario` (ADR 0011, extensión

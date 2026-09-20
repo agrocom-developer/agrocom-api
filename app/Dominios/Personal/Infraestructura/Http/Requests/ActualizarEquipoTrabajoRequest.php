@@ -7,7 +7,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 /**
- * `PUT /panel/equipos-trabajo/{equipoTrabajo}` (tarea 72, HU-49). Mismas
+ * `PUT /panel/cuadrillas/{equipoTrabajo}` (tarea 72, HU-49). Mismas
  * reglas que `CrearEquipoTrabajoRequest` — ver su docblock.
  */
 final class ActualizarEquipoTrabajoRequest extends FormRequest

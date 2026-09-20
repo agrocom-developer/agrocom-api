@@ -38,9 +38,9 @@ use Illuminate\View\View;
  * incluidas las cuatro guardas (orden vigente, equipo vigente, lote de la
  * orden, tope de hectáreas por lote).
  *
- * Mismo caso de uso que la pantalla vieja `/panel/asignacion-equipos`
- * (`AsignacionEquiposController`, que sigue viva bajo el nombre de menú
- * "Escuadras") — ahí la orden viene por ruta; acá se elige
+ * Mismo caso de uso que la pantalla vieja `/panel/reparto-cuadrillas`
+ * (`RepartoCuadrillasController`, que sigue viva bajo el nombre de menú
+ * "Cuadrillas") — ahí la orden viene por ruta; acá se elige
  * dentro del formulario (`CrearOrdenTrabajoRequest`), porque `/panel/trabajos`
  * no cuelga de una orden puntual.
  */
@@ -50,8 +50,8 @@ final class OrdenesTrabajoController
 
     private const PERMISO_CREAR = 'operaciones.trabajo.crear';
 
-    /** Solo para OFRECER el acceso rápido «Crear escuadra»: el alta la autoriza Personal. */
-    private const PERMISO_CREAR_ESCUADRA = 'personal.equipo_trabajo.crear';
+    /** Solo para OFRECER el acceso rápido «Crear cuadrilla»: el alta la autoriza Personal. */
+    private const PERMISO_CREAR_CUADRILLA = 'personal.equipo_trabajo.crear';
 
     public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
 
@@ -92,7 +92,7 @@ final class OrdenesTrabajoController
             'datosOrden' => $this->datosOrdenParaFormulario($lotes),
             'ordenPreseleccionadaId' => $ordenPreseleccionadaId,
             'equiposDisponibles' => $this->equiposDisponibles($equipos),
-            'puedeCrearEscuadra' => $this->autorizacion->tienePermiso($request, self::PERMISO_CREAR_ESCUADRA),
+            'puedeCrearCuadrilla' => $this->autorizacion->tienePermiso($request, self::PERMISO_CREAR_CUADRILLA),
         ]);
     }
 
@@ -160,7 +160,7 @@ final class OrdenesTrabajoController
 
     /**
      * Por cada orden vigente: sus lotes con hectáreas restantes por repartir
-     * (mismo cálculo que `AsignacionEquiposController::resumenPorLote()`), si
+     * (mismo cálculo que `RepartoCuadrillasController::resumenPorLote()`), si
      * es de insumo líquido (para que la vista muestre Ph/calda solo ahí), y
      * cuántos equipos definió la orden (`cantidad_equipos_necesarios`, HU-92):
      * el formulario dibuja ESA cantidad de bloques — no se agregan ni se

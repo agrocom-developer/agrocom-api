@@ -139,7 +139,7 @@ final class PersonasController
      * Ficha de desempeño (HU-58, tarea 81): "¿qué hizo esta persona esta
      * campaña?", por sesión y no por equipo de trabajo (ADR 0015 punto 3).
      * Filtros por `GET` con querystring, mismo criterio que
-     * `EquiposTrabajoController::show()` — rango de fechas (default los
+     * `CuadrillasController::show()` — rango de fechas (default los
      * últimos 12 meses) y cliente/campaña, esta última dependiente del
      * cliente elegido (JS, presentación — el caso de uso ya filtra en
      * PHP sin importar lo que el navegador haya mostrado u ocultado).

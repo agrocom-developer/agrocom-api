@@ -8,10 +8,10 @@
  * nivel de lotes.
  *
  * Guard de presencia en el DOM (mismo criterio que `login.js`): en cualquier
- * página sin `[data-ag-asignacion-equipos-form]` este módulo no hace nada.
+ * página sin `[data-ag-reparto-cuadrillas-form]` este módulo no hace nada.
  */
 document.addEventListener('DOMContentLoaded', () => {
-    const formulario = document.querySelector('[data-ag-asignacion-equipos-form]');
+    const formulario = document.querySelector('[data-ag-reparto-cuadrillas-form]');
     if (!formulario) return;
 
     const listaEquipos = formulario.querySelector('[data-ag-equipos-lista]');

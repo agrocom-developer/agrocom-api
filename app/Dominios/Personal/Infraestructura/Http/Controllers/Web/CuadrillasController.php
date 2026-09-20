@@ -37,7 +37,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 /**
- * `GET/POST/PUT/DELETE /panel/equipos-trabajo*` (tarea 72, HU-49, ADR 0015
+ * `GET/POST/PUT/DELETE /panel/cuadrillas*` (tarea 72, HU-49, ADR 0015
  * punto 3): alta y mantenimiento de equipos de trabajo, con su ficha de
  * integrantes y recursos vigentes a una fecha elegida.
  *
@@ -54,7 +54,7 @@ use Illuminate\View\View;
  * `OrdenesMantenimientoController`), sin importar los modelos Eloquent de
  * `Operaciones`/`Mantenimiento`.
  */
-final class EquiposTrabajoController
+final class CuadrillasController
 {
     private const PERMISO_VER = 'personal.equipo_trabajo.ver';
 
@@ -82,7 +82,7 @@ final class EquiposTrabajoController
             estado: $estado?->value,
         );
 
-        return view('personal::pages.equipos-trabajo.index', [
+        return view('personal::pages.cuadrillas.index', [
             ...$this->autorizacion->cascara($request),
             'equipos' => $equipos,
             'etiquetasBase' => $this->etiquetasBase($equipos->pluck('base_id')->unique()->values()->all()),
@@ -95,7 +95,7 @@ final class EquiposTrabajoController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_CREAR), 403);
 
-        return view('personal::pages.equipos-trabajo.create', [
+        return view('personal::pages.cuadrillas.create', [
             ...$this->autorizacion->cascara($request),
             'basesDisponibles' => $this->basesDisponibles(),
             'estados' => EstadoEquipoTrabajo::cases(),
@@ -119,14 +119,14 @@ final class EquiposTrabajoController
             );
         } catch (EquipoTrabajoDuplicado $excepcion) {
             return redirect()
-                ->route('panel.equipos-trabajo.create')
+                ->route('panel.cuadrillas.create')
                 ->withInput()
                 ->withErrors(['codigo' => $excepcion->getMessage()]);
         }
 
         // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
         return redirect()
-            ->route('panel.equipos-trabajo.edit', $equipoTrabajo)
+            ->route('panel.cuadrillas.edit', $equipoTrabajo)
             ->with('estado', __('personal.equipos_trabajo.creado'));
     }
 
@@ -134,7 +134,7 @@ final class EquiposTrabajoController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
 
-        return view('personal::pages.equipos-trabajo.edit', [
+        return view('personal::pages.cuadrillas.edit', [
             ...$this->autorizacion->cascara($request),
             'equipo' => $equipoTrabajo,
             'basesDisponibles' => $this->basesDisponibles(),
@@ -160,14 +160,14 @@ final class EquiposTrabajoController
             );
         } catch (EquipoTrabajoDuplicado $excepcion) {
             return redirect()
-                ->route('panel.equipos-trabajo.edit', $equipoTrabajo)
+                ->route('panel.cuadrillas.edit', $equipoTrabajo)
                 ->withInput()
                 ->withErrors(['codigo' => $excepcion->getMessage()]);
         }
 
         // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
         return redirect()
-            ->route('panel.equipos-trabajo.edit', $equipoTrabajo)
+            ->route('panel.cuadrillas.edit', $equipoTrabajo)
             ->with('estado', __('personal.equipos_trabajo.actualizado'));
     }
 
@@ -178,7 +178,7 @@ final class EquiposTrabajoController
         $eliminarEquipoTrabajo->ejecutar($equipoTrabajo);
 
         return redirect()
-            ->route('panel.equipos-trabajo.index')
+            ->route('panel.cuadrillas.index')
             ->with('estado', __('personal.equipos_trabajo.eliminado'));
     }
 
@@ -200,7 +200,7 @@ final class EquiposTrabajoController
 
         $recursos = $lectura->recursosAFecha($equipoTrabajo->id, $fecha);
 
-        return view('personal::pages.equipos-trabajo.show', [
+        return view('personal::pages.cuadrillas.show', [
             ...$this->autorizacion->cascara($request),
             'equipo' => $equipoTrabajo,
             'nombreBase' => $equipoTrabajo->base->nombre,
@@ -234,7 +234,7 @@ final class EquiposTrabajoController
             );
         } catch (VigenciaEquipoSolapada $excepcion) {
             return redirect()
-                ->route('panel.equipos-trabajo.show', $equipoTrabajo)
+                ->route('panel.cuadrillas.show', $equipoTrabajo)
                 ->withErrors(['persona_id' => $excepcion->getMessage()]);
         }
 
@@ -277,7 +277,7 @@ final class EquiposTrabajoController
             );
         } catch (RecursoEquipoInvalido|VigenciaEquipoSolapada $excepcion) {
             return redirect()
-                ->route('panel.equipos-trabajo.show', $equipoTrabajo)
+                ->route('panel.cuadrillas.show', $equipoTrabajo)
                 ->withErrors(['recurso_id' => $excepcion->getMessage()]);
         }
 
@@ -308,7 +308,7 @@ final class EquiposTrabajoController
     {
         $fecha = $request->string('fecha')->toString();
 
-        return redirect()->route('panel.equipos-trabajo.show', array_filter([
+        return redirect()->route('panel.cuadrillas.show', array_filter([
             'equipoTrabajo' => $equipoTrabajo->id,
             'fecha' => $fecha !== '' ? $fecha : null,
         ]));

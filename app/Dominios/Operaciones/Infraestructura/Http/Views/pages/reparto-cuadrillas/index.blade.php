@@ -1,11 +1,11 @@
 {{--
-    Page: asignacion-equipos/index (GET /panel/asignacion-equipos, panel.asignacion-equipos.index)
+    Page: reparto-cuadrillas/index (GET /panel/reparto-cuadrillas, panel.reparto-cuadrillas.index)
     Listado de órdenes VIGENTES con su resumen de reparto (HU-70, tarea 85):
     arquetipo Listado, §6.2 de docs/diseno/guia_pantalla_panel.md — cabecera →
     tabla, sin filtros (universo acotado: solo hay una orden vigente por lote
     a la vez, invariante de `ope_ordenes_aplicacion_lote_vigente_unico`).
 
-    Datos esperados (ver AsignacionEquiposController::index()): la cáscara de
+    Datos esperados (ver RepartoCuadrillasController::index()): la cáscara de
     CascaraPanel, más:
     - $ordenes (Collection<int, OrdenAplicacion>): vigentes, emisión
       descendente.
@@ -19,9 +19,9 @@
       tarea 107 — antes un único `lote_id` por orden), clave `orden->id`.
 
     Gateada por `operaciones.orden.asignar_equipos` (ficha propia, ver
-    docblock de `AsignacionEquiposController` — no depende de
+    docblock de `RepartoCuadrillasController` — no depende de
     `operaciones.orden.ver`). Estilos en
-    resources/css/pages/asignacion-equipos.css — cero color hardcodeado
+    resources/css/pages/reparto-cuadrillas.css — cero color hardcodeado
     (CLAUDE.md invariante 11).
 --}}
 <x-templates.panel-shell :title="__('operaciones.asignacion_equipos.titulo')" :tema="$tema">
@@ -37,7 +37,7 @@
         :version="$version"
         :vista-actual="__('operaciones.asignacion_equipos.titulo')"
     >
-        <div class="ag-asignacion-equipos">
+        <div class="ag-reparto-cuadrillas">
             <x-organisms.page-header
                 :title="__('operaciones.asignacion_equipos.titulo')"
                 :subtitle="__('operaciones.asignacion_equipos.subtitulo')"
@@ -50,8 +50,8 @@
                     :detail="__('operaciones.asignacion_equipos.vacio_detalle')"
                 />
             @else
-                <div class="ag-asignacion-equipos__tabla" role="table">
-                    <div class="ag-asignacion-equipos__head" role="row">
+                <div class="ag-reparto-cuadrillas__tabla" role="table">
+                    <div class="ag-reparto-cuadrillas__head" role="row">
                         <span role="columnheader">{{ __('operaciones.asignacion_equipos.col_orden') }}</span>
                         <span role="columnheader">{{ __('operaciones.asignacion_equipos.col_contrato') }}</span>
                         <span role="columnheader">{{ __('operaciones.asignacion_equipos.col_lote') }}</span>
@@ -68,15 +68,15 @@
                                 ->map(fn ($loteId) => $etiquetasLote[$loteId] ?? "#{$loteId}")
                                 ->implode(', ');
                         @endphp
-                        <div class="ag-asignacion-equipos__fila" role="row">
-                            <span role="cell" class="ag-asignacion-equipos__mono">#{{ $orden->nro_aplicacion }}</span>
+                        <div class="ag-reparto-cuadrillas__fila" role="row">
+                            <span role="cell" class="ag-reparto-cuadrillas__mono">#{{ $orden->nro_aplicacion }}</span>
                             <span role="cell">{{ $etiquetasContrato[$orden->contrato_id] ?? "#{$orden->contrato_id}" }}</span>
                             <span role="cell">{{ $lotesTexto }}</span>
-                            <span role="cell" class="ag-asignacion-equipos__mono">{{ number_format((float) $resumen['hectareas_lote'], 2, ',', '.') }}</span>
-                            <span role="cell" class="ag-asignacion-equipos__mono">{{ number_format((float) $resumen['asignadas'], 2, ',', '.') }}</span>
-                            <span role="cell" class="ag-asignacion-equipos__mono">{{ number_format((float) $resumen['restantes'], 2, ',', '.') }}</span>
-                            <span role="cell" class="ag-asignacion-equipos__acciones">
-                                <x-atoms.button :href="route('panel.asignacion-equipos.show', $orden)" variant="outline" size="sm" icon="groups">
+                            <span role="cell" class="ag-reparto-cuadrillas__mono">{{ number_format((float) $resumen['hectareas_lote'], 2, ',', '.') }}</span>
+                            <span role="cell" class="ag-reparto-cuadrillas__mono">{{ number_format((float) $resumen['asignadas'], 2, ',', '.') }}</span>
+                            <span role="cell" class="ag-reparto-cuadrillas__mono">{{ number_format((float) $resumen['restantes'], 2, ',', '.') }}</span>
+                            <span role="cell" class="ag-reparto-cuadrillas__acciones">
+                                <x-atoms.button :href="route('panel.reparto-cuadrillas.show', $orden)" variant="outline" size="sm" icon="groups">
                                     {{ __('operaciones.asignacion_equipos.asignar_accion') }}
                                 </x-atoms.button>
                             </span>

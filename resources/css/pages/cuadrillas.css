@@ -1,6 +1,6 @@
 /*
- * Pages: equipos-trabajo/index, create, edit, show
- * (app/Dominios/Personal/Infraestructura/Http/Views/pages/equipos-trabajo/)
+ * Pages: cuadrillas/index, create, edit, show
+ * (app/Dominios/Personal/Infraestructura/Http/Views/pages/cuadrillas/)
  * — tarea 72, HU-49. Listado y formulario mismo molde que
  * generadores.css/vehiculos.css. La ficha (`show`) suma dos secciones de
  * "vigencias" (integrantes/recursos), cada una con su mini-formulario de
@@ -10,9 +10,9 @@
  * Todo color y medida por token (CLAUDE.md invariante 11).
  */
 
-.ag-equipos-trabajo,
-.ag-equipos-trabajo-form,
-.ag-equipos-trabajo-ficha {
+.ag-cuadrillas,
+.ag-cuadrillas-form,
+.ag-cuadrillas-ficha {
     display: flex;
     flex-direction: column;
     gap: var(--ag-space-5);
@@ -20,15 +20,15 @@
 
 /* Listado (index) */
 
-.ag-equipos-trabajo__tabla {
+.ag-cuadrillas__tabla {
     border: 1px solid var(--ag-color-border-card);
     border-radius: var(--ag-radius-md);
     background-color: var(--ag-color-surface-card);
     overflow: hidden;
 }
 
-.ag-equipos-trabajo__head,
-.ag-equipos-trabajo__fila {
+.ag-cuadrillas__head,
+.ag-cuadrillas__fila {
     display: grid;
     grid-template-columns: 3rem 1fr 1.3fr 1.3fr 1.3fr 1fr auto;
     gap: var(--ag-space-4);
@@ -36,13 +36,13 @@
     padding: var(--ag-space-3) var(--ag-space-4);
 }
 
-.ag-equipos-trabajo__indice {
+.ag-cuadrillas__indice {
     color: var(--ag-color-text-faint);
     font-family: var(--ag-font-family-mono);
     font-size: var(--ag-font-size-xs);
 }
 
-.ag-equipos-trabajo__head {
+.ag-cuadrillas__head {
     background-color: var(--ag-color-bg-table-head);
     color: var(--ag-color-text-muted);
     font-size: var(--ag-font-size-xs);
@@ -51,21 +51,21 @@
     letter-spacing: 0.04em;
 }
 
-.ag-equipos-trabajo__fila {
+.ag-cuadrillas__fila {
     border-top: 1px solid var(--ag-color-border-row);
     color: var(--ag-color-text);
     font-size: var(--ag-font-size-sm);
 }
 
-.ag-equipos-trabajo__fila:hover {
+.ag-cuadrillas__fila:hover {
     background-color: var(--ag-color-bg-row-hover);
 }
 
-.ag-equipos-trabajo__codigo {
+.ag-cuadrillas__codigo {
     font-weight: var(--ag-font-weight-medium);
 }
 
-.ag-equipos-trabajo__acciones {
+.ag-cuadrillas__acciones {
     display: flex;
     justify-content: flex-end;
     gap: var(--ag-space-2);
@@ -73,20 +73,20 @@
 
 
 @media (max-width: 992px) {
-    .ag-equipos-trabajo__head {
+    .ag-cuadrillas__head {
         display: none;
     }
 
-    .ag-equipos-trabajo__fila {
+    .ag-cuadrillas__fila {
         grid-template-columns: 1fr;
         gap: var(--ag-space-1);
     }
 
-    .ag-equipos-trabajo__indice {
+    .ag-cuadrillas__indice {
         display: none;
     }
 
-    .ag-equipos-trabajo__acciones {
+    .ag-cuadrillas__acciones {
         justify-content: flex-start;
         margin-top: var(--ag-space-2);
     }
@@ -94,7 +94,7 @@
 
 /* Ficha (show) */
 
-.ag-equipos-trabajo-ficha__resumen {
+.ag-cuadrillas-ficha__resumen {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
     gap: var(--ag-space-4);
@@ -104,7 +104,7 @@
     background-color: var(--ag-color-surface-card);
 }
 
-.ag-equipos-trabajo-ficha__campo strong {
+.ag-cuadrillas-ficha__campo strong {
     display: block;
     color: var(--ag-color-text-muted);
     font-size: var(--ag-font-size-xs);
@@ -113,7 +113,7 @@
     margin-bottom: var(--ag-space-1);
 }
 
-.ag-equipos-trabajo-ficha__selector-fecha {
+.ag-cuadrillas-ficha__selector-fecha {
     display: flex;
     align-items: flex-end;
     gap: var(--ag-space-3);
@@ -122,24 +122,24 @@
 /* Fila de controles en línea, no formulario apilado: el margen inferior
    del átomo empujaría el botón por debajo del campo (mismo motivo que
    documenta components/filter-bar.css). */
-.ag-equipos-trabajo-ficha__selector-fecha .ag-date {
+.ag-cuadrillas-ficha__selector-fecha .ag-date {
     margin-bottom: 0;
 }
 
-.ag-equipos-trabajo-ficha__seccion {
+.ag-cuadrillas-ficha__seccion {
     display: flex;
     flex-direction: column;
     gap: var(--ag-space-4);
 }
 
-.ag-equipos-trabajo-ficha__lista {
+.ag-cuadrillas-ficha__lista {
     border: 1px solid var(--ag-color-border-card);
     border-radius: var(--ag-radius-md);
     background-color: var(--ag-color-surface-card);
     overflow: hidden;
 }
 
-.ag-equipos-trabajo-ficha__fila {
+.ag-cuadrillas-ficha__fila {
     display: grid;
     grid-template-columns: 1.3fr 1fr 1.3fr auto;
     gap: var(--ag-space-4);
@@ -149,11 +149,11 @@
     font-size: var(--ag-font-size-sm);
 }
 
-.ag-equipos-trabajo-ficha__fila:first-child {
+.ag-cuadrillas-ficha__fila:first-child {
     border-top: none;
 }
 
-.ag-equipos-trabajo-ficha__finalizar {
+.ag-cuadrillas-ficha__finalizar {
     display: flex;
     align-items: center;
     gap: var(--ag-space-2);
@@ -162,14 +162,14 @@
 /* Fila de controles en línea, no formulario apilado: el margen inferior
    del átomo empujaría el botón por debajo del campo (mismo motivo que
    documenta components/filter-bar.css). */
-.ag-equipos-trabajo-ficha__finalizar .ag-input,
-.ag-equipos-trabajo-ficha__finalizar .ag-select,
-.ag-equipos-trabajo-ficha__finalizar .ag-date {
+.ag-cuadrillas-ficha__finalizar .ag-input,
+.ag-cuadrillas-ficha__finalizar .ag-select,
+.ag-cuadrillas-ficha__finalizar .ag-date {
     min-width: 9rem;
     margin-bottom: 0;
 }
 
-.ag-equipos-trabajo-ficha__alta {
+.ag-cuadrillas-ficha__alta {
     display: flex;
     flex-wrap: wrap;
     align-items: flex-end;
@@ -182,15 +182,15 @@
 /* Fila de controles en línea, no formulario apilado: el margen inferior
    del átomo empujaría el botón por debajo del campo (mismo motivo que
    documenta components/filter-bar.css). */
-.ag-equipos-trabajo-ficha__alta .ag-input,
-.ag-equipos-trabajo-ficha__alta .ag-select,
-.ag-equipos-trabajo-ficha__alta .ag-date {
+.ag-cuadrillas-ficha__alta .ag-input,
+.ag-cuadrillas-ficha__alta .ag-select,
+.ag-cuadrillas-ficha__alta .ag-date {
     min-width: 12rem;
     margin-bottom: 0;
 }
 
 @media (max-width: 992px) {
-    .ag-equipos-trabajo-ficha__fila {
+    .ag-cuadrillas-ficha__fila {
         grid-template-columns: 1fr;
         gap: var(--ag-space-1);
     }

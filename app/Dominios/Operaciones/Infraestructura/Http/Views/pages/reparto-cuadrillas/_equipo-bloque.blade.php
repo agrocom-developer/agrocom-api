@@ -11,7 +11,7 @@
     "toda fila repetible de un formulario comparte la clase
     ag-form-section__body"). Repetible (agregar/quitar) reusando el mismo
     patrón vanilla de `campos/_lote-fila.blade.php` — ver
-    `resources/js/pages/asignacion-equipos-form.js`.
+    `resources/js/pages/reparto-cuadrillas-form.js`.
 
     Espera:
     - $indiceEquipo (int|string): posición dentro de `equipos[]` —
@@ -19,7 +19,7 @@
     - $lotesFila (list<array{lote_id?: int|string, hectareas?: string}>): las
       filas de lote ya cargadas para este equipo (por defecto, todos los
       lotes de la orden con sus hectáreas restantes — ver
-      `AsignacionEquiposController::mostrar()` — o `old()` tras un error).
+      `RepartoCuadrillasController::mostrar()` — o `old()` tras un error).
     - $equiposDisponibles / $etiquetasLote (Collection|array): opciones ya
       resueltas por el controlador.
     - $mostrarQuitarEquipo (bool, opcional): `true` por defecto — el primer
@@ -39,8 +39,8 @@
     // Función auxiliar para recuperar valores (old() o vacío)
     $valor = fn (string $campo, mixed $porDefecto = '') => old($campo, $porDefecto);
 @endphp
-<div class="ag-asignacion-equipos-ficha__equipo-fila" data-ag-equipo-fila>
-    <div class="ag-asignacion-equipos-ficha__equipo-cabecera">
+<div class="ag-reparto-cuadrillas-ficha__equipo-fila" data-ag-equipo-fila>
+    <div class="ag-reparto-cuadrillas-ficha__equipo-cabecera">
         <x-atoms.select
             name="{{ $prefijo }}[equipo_trabajo_id]"
             id="{{ $idBase }}-equipo"
@@ -59,9 +59,9 @@
     </div>
 
 
-    <div class="ag-asignacion-equipos-ficha__equipo-lotes" data-ag-equipo-lotes-lista>
+    <div class="ag-reparto-cuadrillas-ficha__equipo-lotes" data-ag-equipo-lotes-lista>
         @foreach ($lotesFila as $indiceLote => $lote)
-            @include('operaciones::pages.asignacion-equipos._lote-equipo-fila', [
+            @include('operaciones::pages.reparto-cuadrillas._lote-equipo-fila', [
                 'indiceEquipo' => $indiceEquipo,
                 'indiceLote' => $indiceLote,
                 'lote' => $lote,
@@ -75,12 +75,12 @@
 
     {{-- Plantilla clonable del NIVEL INTERNO (lotes de este equipo): el
          índice literal `__INDICE_LOTE__` lo reemplaza
-         `asignacion-equipos-form.js` al clonar. Un `<template>` nunca se
+         `reparto-cuadrillas-form.js` al clonar. Un `<template>` nunca se
          renderiza ni se envía con el form — sobrevive intacto también
          cuando ESTE equipo-fila es, a su vez, clonado desde la plantilla
          externa (`__INDICE_EQUIPO__` no colisiona con `__INDICE_LOTE__`). --}}
     <template data-ag-equipo-lote-template>
-        @include('operaciones::pages.asignacion-equipos._lote-equipo-fila', [
+        @include('operaciones::pages.reparto-cuadrillas._lote-equipo-fila', [
             'indiceEquipo' => $indiceEquipo,
             'indiceLote' => '__INDICE_LOTE__',
             'lote' => [],

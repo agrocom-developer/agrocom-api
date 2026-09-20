@@ -7,7 +7,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 /**
- * `POST /panel/equipos-trabajo` (tarea 72, HU-49). La autorización (permiso
+ * `POST /panel/cuadrillas` (tarea 72, HU-49). La autorización (permiso
  * `personal.equipo_trabajo.crear`) se verifica en el controlador, contra el
  * rol activo — no acá, mismo criterio que el resto del panel.
  *

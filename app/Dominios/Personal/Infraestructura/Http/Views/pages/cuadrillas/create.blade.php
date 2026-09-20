@@ -1,9 +1,9 @@
 {{--
-    Page: equipos-trabajo/create (GET /panel/equipos-trabajo/crear, panel.equipos-trabajo.create)
+    Page: cuadrillas/create (GET /panel/cuadrillas/crear, panel.cuadrillas.create)
     Alta de un equipo de trabajo (tarea 72, HU-49): el formulario real vive
     en `_formulario.blade.php`, compartido con `edit.blade.php`.
 
-    Datos esperados (ver EquiposTrabajoController::create()): la cáscara de
+    Datos esperados (ver CuadrillasController::create()): la cáscara de
     CascaraPanel, más $basesDisponibles y $estados.
 
     Gateada por `personal.equipo_trabajo.crear`, verificado server-side en el
@@ -22,6 +22,6 @@
         :version="$version"
         :vista-actual="__('personal.equipos_trabajo.titulo')"
     >
-        @include('personal::pages.equipos-trabajo._formulario', ['equipo' => null])
+        @include('personal::pages.cuadrillas._formulario', ['equipo' => null])
     </x-templates.panel-layout>
 </x-templates.panel-shell>

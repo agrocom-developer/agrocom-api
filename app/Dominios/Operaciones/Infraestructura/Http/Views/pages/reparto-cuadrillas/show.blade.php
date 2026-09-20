@@ -1,5 +1,5 @@
 {{--
-    Page: asignacion-equipos/show (GET /panel/asignacion-equipos/{orden}, panel.asignacion-equipos.show)
+    Page: reparto-cuadrillas/show (GET /panel/reparto-cuadrillas/{orden}, panel.reparto-cuadrillas.show)
     Ficha de reparto de una orden vigente (HU-70, tarea 85; rediseñada por
     HU-92, tarea 107 para N lotes/N equipos): resumen por lote (solicitadas /
     asignadas / restantes), equipos ya asignados y un ÚNICO formulario que
@@ -9,7 +9,7 @@
     (selección múltiple) y sus hectáreas. Arquetipo Detalle, §6 de
     docs/diseno/guia_pantalla_panel.md.
 
-    Datos esperados (ver AsignacionEquiposController::mostrar()): la cáscara
+    Datos esperados (ver RepartoCuadrillasController::mostrar()): la cáscara
     de CascaraPanel, más:
     - $orden (OrdenAplicacion), $contratoLabel (string).
     - $resumenTotal (array{hectareas_lote: string, asignadas: string, restantes: string}):
@@ -32,7 +32,7 @@
     de cualquier forma).
 
     Gateada por `operaciones.orden.asignar_equipos`. Estilos en
-    resources/css/pages/asignacion-equipos.css — cero color hardcodeado
+    resources/css/pages/reparto-cuadrillas.css — cero color hardcodeado
     (CLAUDE.md invariante 11).
 --}}
 @php
@@ -51,8 +51,8 @@
         :version="$version"
         :vista-actual="__('operaciones.asignacion_equipos.titulo')"
     >
-        <div class="ag-asignacion-equipos-ficha">
-            <x-atoms.button :href="route('panel.asignacion-equipos.index')" variant="text" size="sm" icon="arrow_back">
+        <div class="ag-reparto-cuadrillas-ficha">
+            <x-atoms.button :href="route('panel.reparto-cuadrillas.index')" variant="text" size="sm" icon="arrow_back">
                 {{ __('operaciones.asignacion_equipos.ficha_volver') }}
             </x-atoms.button>
 
@@ -62,54 +62,54 @@
             />
 
             @if (session('estado'))
-                <x-molecules.alert-strip variant="success" icon="check_circle" class="ag-asignacion-equipos-ficha__aviso">
+                <x-molecules.alert-strip variant="success" icon="check_circle" class="ag-reparto-cuadrillas-ficha__aviso">
                     {{ session('estado') }}
                 </x-molecules.alert-strip>
             @endif
 
             @if ($errors->has('equipos'))
-                <x-molecules.alert-strip variant="danger" icon="error" class="ag-asignacion-equipos-ficha__aviso">
+                <x-molecules.alert-strip variant="danger" icon="error" class="ag-reparto-cuadrillas-ficha__aviso">
                     {{ $errors->first('equipos') }}
                 </x-molecules.alert-strip>
             @endif
 
             @unless ($esVigente)
-                <x-molecules.alert-strip variant="warning" icon="warning" class="ag-asignacion-equipos-ficha__aviso">
+                <x-molecules.alert-strip variant="warning" icon="warning" class="ag-reparto-cuadrillas-ficha__aviso">
                     {{ __('operaciones.asignacion_equipos.orden_no_vigente') }}
                 </x-molecules.alert-strip>
             @endunless
 
-            <div class="ag-asignacion-equipos-ficha__resumen">
-                <span class="ag-asignacion-equipos-ficha__campo">
+            <div class="ag-reparto-cuadrillas-ficha__resumen">
+                <span class="ag-reparto-cuadrillas-ficha__campo">
                     <strong>{{ __('operaciones.asignacion_equipos.resumen_hectareas_lote') }}</strong>
                     {{ number_format((float) $resumenTotal['hectareas_lote'], 2, ',', '.') }}
                 </span>
-                <span class="ag-asignacion-equipos-ficha__campo">
+                <span class="ag-reparto-cuadrillas-ficha__campo">
                     <strong>{{ __('operaciones.asignacion_equipos.resumen_asignadas') }}</strong>
                     {{ number_format((float) $resumenTotal['asignadas'], 2, ',', '.') }}
                 </span>
-                <span class="ag-asignacion-equipos-ficha__campo">
+                <span class="ag-reparto-cuadrillas-ficha__campo">
                     <strong>{{ __('operaciones.asignacion_equipos.resumen_restantes') }}</strong>
                     {{ number_format((float) $resumenTotal['restantes'], 2, ',', '.') }}
                 </span>
             </div>
 
-            <div class="ag-asignacion-equipos-ficha__seccion">
+            <div class="ag-reparto-cuadrillas-ficha__seccion">
                 <h2>{{ __('operaciones.asignacion_equipos.seccion_lotes') }}</h2>
 
-                <div class="ag-asignacion-equipos-ficha__lote-lista">
+                <div class="ag-reparto-cuadrillas-ficha__lote-lista">
                     @foreach ($resumenPorLote as $fila)
-                        <div class="ag-asignacion-equipos-ficha__lote-linea">
+                        <div class="ag-reparto-cuadrillas-ficha__lote-linea">
                             <span>{{ $etiquetasLote[$fila['lote_id']] ?? "#{$fila['lote_id']}" }}</span>
-                            <span class="ag-asignacion-equipos-ficha__mono">{{ number_format((float) $fila['hectareas_solicitadas'], 2, ',', '.') }}</span>
-                            <span class="ag-asignacion-equipos-ficha__mono">{{ number_format((float) $fila['asignadas'], 2, ',', '.') }}</span>
-                            <span class="ag-asignacion-equipos-ficha__mono">{{ number_format((float) $fila['restantes'], 2, ',', '.') }}</span>
+                            <span class="ag-reparto-cuadrillas-ficha__mono">{{ number_format((float) $fila['hectareas_solicitadas'], 2, ',', '.') }}</span>
+                            <span class="ag-reparto-cuadrillas-ficha__mono">{{ number_format((float) $fila['asignadas'], 2, ',', '.') }}</span>
+                            <span class="ag-reparto-cuadrillas-ficha__mono">{{ number_format((float) $fila['restantes'], 2, ',', '.') }}</span>
                         </div>
                     @endforeach
                 </div>
             </div>
 
-            <div class="ag-asignacion-equipos-ficha__seccion">
+            <div class="ag-reparto-cuadrillas-ficha__seccion">
                 <h2>{{ __('operaciones.asignacion_equipos.seccion_equipos') }}</h2>
 
                 @if ($trabajosAsignados->isEmpty())
@@ -117,12 +117,12 @@
                         {{ __('operaciones.asignacion_equipos.equipos_vacio') }}
                     </x-molecules.alert-strip>
                 @else
-                    <div class="ag-asignacion-equipos-ficha__lista">
+                    <div class="ag-reparto-cuadrillas-ficha__lista">
                         @foreach ($trabajosAsignados as $trabajo)
-                            <div class="ag-asignacion-equipos-ficha__fila">
+                            <div class="ag-reparto-cuadrillas-ficha__fila">
                                 <span>{{ $etiquetasEquipo[$trabajo->equipo_trabajo_id] ?? "#{$trabajo->equipo_trabajo_id}" }}</span>
                                 <span>{{ $etiquetasLote[$trabajo->lote_id] ?? "#{$trabajo->lote_id}" }}</span>
-                                <span class="ag-asignacion-equipos-ficha__mono">{{ number_format((float) $trabajo->hectareas_declaradas, 2, ',', '.') }}</span>
+                                <span class="ag-reparto-cuadrillas-ficha__mono">{{ number_format((float) $trabajo->hectareas_declaradas, 2, ',', '.') }}</span>
                             </div>
                         @endforeach
                     </div>
@@ -136,9 +136,9 @@
                     @else
                         <form
                             method="POST"
-                            action="{{ route('panel.asignacion-equipos.store', $orden) }}"
-                            class="ag-asignacion-equipos-ficha__alta"
-                            data-ag-asignacion-equipos-form
+                            action="{{ route('panel.reparto-cuadrillas.store', $orden) }}"
+                            class="ag-reparto-cuadrillas-ficha__alta"
+                            data-ag-reparto-cuadrillas-form
                         >
                             @csrf
 
@@ -270,7 +270,7 @@
 
                             <div data-ag-equipos-lista>
                                 @foreach ($equiposIniciales as $indiceEquipo => $equipo)
-                                    @include('operaciones::pages.asignacion-equipos._equipo-bloque', [
+                                    @include('operaciones::pages.reparto-cuadrillas._equipo-bloque', [
                                         'indiceEquipo' => $indiceEquipo,
                                         'lotesFila' => $equipo['lotes'] ?? [[]],
                                         'mostrarQuitarEquipo' => count($equiposIniciales) > 1,
@@ -283,12 +283,12 @@
                             </x-atoms.button>
 
                             {{-- Plantilla clonable del NIVEL EXTERNO (equipos):
-                                 `asignacion-equipos-form.js` reemplaza
+                                 `reparto-cuadrillas-form.js` reemplaza
                                  `__INDICE_EQUIPO__` al clonar, y arranca sin
                                  lotes pre-cargados (el jefe de campo elige a
                                  mano en un reparto de 2+ equipos). --}}
                             <template data-ag-equipo-template>
-                                @include('operaciones::pages.asignacion-equipos._equipo-bloque', [
+                                @include('operaciones::pages.reparto-cuadrillas._equipo-bloque', [
                                     'indiceEquipo' => '__INDICE_EQUIPO__',
                                     'lotesFila' => [[]],
                                     'mostrarQuitarEquipo' => true,

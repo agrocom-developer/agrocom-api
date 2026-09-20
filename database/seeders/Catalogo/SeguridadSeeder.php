@@ -237,7 +237,7 @@ class SeguridadSeeder extends Seeder
         // HU-70 (tarea 85): "dónde asignarle el trabajo al piloto" — repartir
         // las hectáreas de una orden vigente entre equipos de trabajo. Grano
         // propio, no parte de `.editar`: no corrige la orden, reparte su
-        // trabajo; una ficha propia (`panel.asignacion-equipos.*`), no la
+        // trabajo; una ficha propia (`panel.reparto-cuadrillas.*`), no la
         // ficha de la orden, así que no depende de `operaciones.orden.ver`.
         'operaciones.orden.asignar_equipos' => 'Asignar equipos de trabajo (con sus hectáreas) a una orden vigente',
         // HU-44 (tarea 58): pausas de sesión con causa atribuible (DS-01).
@@ -700,7 +700,7 @@ class SeguridadSeeder extends Seeder
         // HU-70 (tarea 85): "dónde asignarle el trabajo al piloto" — el
         // reclamo del dueño (audio del 13/9/2026) es literalmente del jefe
         // de campo, que hoy avisa por WhatsApp. Ficha propia
-        // (`panel.asignacion-equipos.*`), no la de la orden: no necesita
+        // (`panel.reparto-cuadrillas.*`), no la de la orden: no necesita
         // `operaciones.orden.ver` (CRUD completo de la orden) para repartir
         // equipos.
         'operaciones.orden.asignar_equipos',

@@ -1,10 +1,10 @@
 {{--
-    Page: equipos-trabajo/index (GET /panel/equipos-trabajo, panel.equipos-trabajo.index)
+    Page: cuadrillas/index (GET /panel/cuadrillas, panel.cuadrillas.index)
     Listado de equipos de trabajo (tarea 72, HU-49): arquetipo Listado, §6.2
     de docs/diseno/guia_pantalla_panel.md — cabecera → filtros → tabla →
     paginación. Mismo molde que generadores/index.blade.php.
 
-    Datos esperados (ver EquiposTrabajoController::index()): la cáscara de
+    Datos esperados (ver CuadrillasController::index()): la cáscara de
     CascaraPanel, más:
     - $equipos (LengthAwarePaginator<EquipoTrabajo>): código ascendente.
     - $etiquetasBase (array<int, string>): nombre de base por id.
@@ -17,7 +17,7 @@
     solo exige `.ver` (ya verificado para entrar acá), así que no lleva
     `@puede` propio.
 
-    Estilos en resources/css/pages/equipos-trabajo.css — cero color
+    Estilos en resources/css/pages/cuadrillas.css — cero color
     hardcodeado (CLAUDE.md invariante 11).
 --}}
 @php
@@ -39,14 +39,14 @@
         :version="$version"
         :vista-actual="__('personal.equipos_trabajo.titulo')"
     >
-        <div class="ag-equipos-trabajo">
+        <div class="ag-cuadrillas">
             <x-organisms.page-header
                 :title="__('personal.equipos_trabajo.titulo')"
                 :subtitle="__('personal.equipos_trabajo.subtitulo')"
             >
                 @puede('personal.equipo_trabajo.crear')
                     <x-slot:actions>
-                        <x-atoms.button :href="route('panel.equipos-trabajo.create')" variant="primary" icon="add">
+                        <x-atoms.button :href="route('panel.cuadrillas.create')" variant="primary" icon="add">
                             {{ __('personal.equipos_trabajo.nuevo') }}
                         </x-atoms.button>
                     </x-slot:actions>
@@ -54,7 +54,7 @@
             </x-organisms.page-header>
 
             @if (session('estado'))
-                <x-molecules.alert-strip variant="success" icon="check_circle" class="ag-equipos-trabajo__aviso">
+                <x-molecules.alert-strip variant="success" icon="check_circle" class="ag-cuadrillas__aviso">
                     {{ session('estado') }}
                 </x-molecules.alert-strip>
             @endif
@@ -66,7 +66,7 @@
             @if ($hayFiltrosActivos || $equipos->isNotEmpty())
                 <div class="ag-table-toolbar">
                     <x-molecules.table-search
-                        :action="route('panel.equipos-trabajo.index')"
+                        :action="route('panel.cuadrillas.index')"
                         :value="$filtros['q']"
                         :placeholder="__('personal.equipos_trabajo.filtro_busqueda_placeholder')"
                         :clear-label="__('ui.tabla.buscador_limpiar')"
@@ -75,7 +75,7 @@
             @endif
 
             @if ($hayFiltrosActivos || $equipos->isNotEmpty())
-                <form method="GET" action="{{ route('panel.equipos-trabajo.index') }}" class="ag-filtros ag-equipos-trabajo__filtros">
+                <form method="GET" action="{{ route('panel.cuadrillas.index') }}" class="ag-filtros ag-cuadrillas__filtros">
                     <input type="hidden" name="q" value="{{ $filtros['q'] }}">
                     <x-atoms.select
                         name="base_id"
@@ -100,13 +100,13 @@
                         :placeholder="__('personal.equipos_trabajo.filtro_todos')"
                     />
 
-                    <div class="ag-filtros__acciones ag-equipos-trabajo__filtros-acciones">
+                    <div class="ag-filtros__acciones ag-cuadrillas__filtros-acciones">
                         <x-atoms.button type="submit" variant="primary" size="md" icon="search">
                             {{ __('personal.equipos_trabajo.filtrar') }}
                         </x-atoms.button>
 
                         @if ($filtros['base_id'] !== null || $filtros['estado'] !== null)
-                            <x-atoms.button :href="route('panel.equipos-trabajo.index')" variant="text" size="md">
+                            <x-atoms.button :href="route('panel.cuadrillas.index')" variant="text" size="md">
                                 {{ __('personal.equipos_trabajo.limpiar_filtro') }}
                             </x-atoms.button>
                         @endif
@@ -116,7 +116,7 @@
 
             @if ($equipos->isEmpty())
                 @if ($hayFiltrosActivos)
-                    <x-molecules.alert-strip variant="info" icon="groups" class="ag-equipos-trabajo__aviso">
+                    <x-molecules.alert-strip variant="info" icon="groups" class="ag-cuadrillas__aviso">
                         {{ __('personal.equipos_trabajo.filtro_vacio') }}
                     </x-molecules.alert-strip>
                 @else
@@ -127,9 +127,9 @@
                     />
                 @endif
             @else
-                <div class="ag-equipos-trabajo__tabla" role="table">
-                    <div class="ag-equipos-trabajo__head" role="row">
-                        <span role="columnheader" class="ag-equipos-trabajo__indice">{{ __('ui.tabla.col_indice') }}</span>
+                <div class="ag-cuadrillas__tabla" role="table">
+                    <div class="ag-cuadrillas__head" role="row">
+                        <span role="columnheader" class="ag-cuadrillas__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('personal.equipos_trabajo.col_codigo') }}</span>
                         <span role="columnheader">{{ __('personal.equipos_trabajo.col_nombre') }}</span>
                         <span role="columnheader">{{ __('personal.equipos_trabajo.col_base') }}</span>
@@ -139,11 +139,11 @@
                     </div>
 
                     @foreach ($equipos as $equipo)
-                        <div class="ag-equipos-trabajo__fila" role="row">
-                            <span role="cell" class="ag-equipos-trabajo__indice">
+                        <div class="ag-cuadrillas__fila" role="row">
+                            <span role="cell" class="ag-cuadrillas__indice">
                                 {{ ($equipos->currentPage() - 1) * $equipos->perPage() + $loop->iteration }}
                             </span>
-                            <span role="cell" class="ag-equipos-trabajo__codigo">{{ $equipo->codigo }}</span>
+                            <span role="cell" class="ag-cuadrillas__codigo">{{ $equipo->codigo }}</span>
                             <span role="cell">{{ $equipo->nombre ?? __('personal.equipos_trabajo.sin_nombre') }}</span>
                             <span role="cell">{{ $etiquetasBase[$equipo->base_id] ?? "#{$equipo->base_id}" }}</span>
                             <span role="cell">
@@ -155,13 +155,13 @@
                                 </x-atoms.badge>
                             </span>
 
-                            <span role="cell" class="ag-equipos-trabajo__acciones">
-                                <x-atoms.button :href="route('panel.equipos-trabajo.show', $equipo)" variant="outline" size="sm" icon="visibility">
+                            <span role="cell" class="ag-cuadrillas__acciones">
+                                <x-atoms.button :href="route('panel.cuadrillas.show', $equipo)" variant="outline" size="sm" icon="visibility">
                                     {{ __('personal.equipos_trabajo.ver') }}
                                 </x-atoms.button>
 
                                 @puede('personal.equipo_trabajo.editar')
-                                    <x-atoms.button :href="route('panel.equipos-trabajo.edit', $equipo)" variant="warning-outline" size="sm" icon="edit">
+                                    <x-atoms.button :href="route('panel.cuadrillas.edit', $equipo)" variant="warning-outline" size="sm" icon="edit">
                                         {{ __('personal.equipos_trabajo.editar') }}
                                     </x-atoms.button>
                                 @endpuede
@@ -169,7 +169,7 @@
                                 @puede('personal.equipo_trabajo.eliminar')
                                     <form
                                         method="POST"
-                                        action="{{ route('panel.equipos-trabajo.destroy', $equipo) }}"
+                                        action="{{ route('panel.cuadrillas.destroy', $equipo) }}"
                                         onsubmit="return confirm('{{ __('personal.equipos_trabajo.confirmar_baja') }}')"
                                     >
                                         @csrf

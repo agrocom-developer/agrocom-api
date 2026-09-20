@@ -9,7 +9,7 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Validation\Rule;
 
 /**
- * Reglas compartidas por `AsignarEquipoOrdenRequest` (`/panel/asignacion-equipos/{orden}`,
+ * Reglas compartidas por `AsignarEquipoOrdenRequest` (`/panel/reparto-cuadrillas/{orden}`,
  * pantalla vieja — HU-70/92) y `CrearOrdenTrabajoRequest` (`/panel/trabajos`,
  * pantalla nueva de la reforma 18/9/2026): ambas terminan llamando a
  * `Aplicacion/AsignarEquiposOrden::ejecutar()` con la MISMA forma de datos

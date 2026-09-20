@@ -23,7 +23,7 @@
     $idBase = str_replace(['[', ']'], ['-', ''], $prefijo);
     $erroresPrefijo = str_replace(['[', ']'], ['.', ''], $prefijo);
 @endphp
-<div class="ag-form-section__body ag-asignacion-equipos-ficha__lote-fila" data-ag-lote-equipo-fila>
+<div class="ag-form-section__body ag-reparto-cuadrillas-ficha__lote-fila" data-ag-lote-equipo-fila>
     <x-atoms.select
         name="{{ $prefijo }}[lote_id]"
         id="{{ $idBase }}-lote"
@@ -82,7 +82,7 @@
         :error="$errors->first($erroresPrefijo.'.turno_hora_fin')"
     />
 
-    <div class="ag-form-section__field--full ag-asignacion-equipos-ficha__lote-fila-pie">
+    <div class="ag-form-section__field--full ag-reparto-cuadrillas-ficha__lote-fila-pie">
         <x-atoms.button type="button" variant="text" size="sm" icon="delete" data-ag-lote-equipo-quitar>
             {{ __('operaciones.asignacion_equipos.lote_quitar') }}
         </x-atoms.button>

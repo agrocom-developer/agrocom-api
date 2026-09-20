@@ -7,7 +7,7 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
- * `POST /panel/asignacion-equipos/{orden}` (HU-70, tarea 85; rediseñado por
+ * `POST /panel/reparto-cuadrillas/{orden}` (HU-70, tarea 85; rediseñado por
  * HU-92, tarea 107; reforma 18/9/2026 — "Orden de Trabajo"/tandas): esta
  * pantalla queda como la vía RÁPIDA de repartir una orden entre equipos, sin
  * el paso explícito de tanda que ofrece `/panel/trabajos` (pantalla nueva,

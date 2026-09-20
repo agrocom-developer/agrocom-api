@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 /**
- * `GET/POST /panel/asignacion-equipos*` (HU-70, tarea 85; rediseñado por
+ * `GET/POST /panel/reparto-cuadrillas*` (HU-70, tarea 85; rediseñado por
  * HU-92, tarea 107 para N lotes/N equipos): "dónde asignarle el trabajo al
  * piloto" — reparto de los lotes de una orden vigente entre equipos de
  * trabajo, cada par equipo↔lote abriendo un `Trabajo` propio desde el panel
@@ -47,7 +47,7 @@ use Illuminate\View\View;
  * tope de hectáreas por lote sale de `ope_orden_lotes`, dato propio de
  * Operaciones (ADR 0003 regla 1).
  */
-final class AsignacionEquiposController
+final class RepartoCuadrillasController
 {
     private const PERMISO = 'operaciones.orden.asignar_equipos';
 
@@ -72,7 +72,7 @@ final class AsignacionEquiposController
             return [$orden->id => $this->resumenTotal($orden)];
         });
 
-        return view('operaciones::pages.asignacion-equipos.index', [
+        return view('operaciones::pages.reparto-cuadrillas.index', [
             ...$this->autorizacion->cascara($request),
             'ordenes' => $ordenes,
             'resumenes' => $resumenes,
@@ -95,7 +95,7 @@ final class AsignacionEquiposController
         $resumenPorLote = $this->resumenPorLote($orden);
         $loteIds = array_column($resumenPorLote, 'lote_id');
 
-        return view('operaciones::pages.asignacion-equipos.show', [
+        return view('operaciones::pages.reparto-cuadrillas.show', [
             ...$this->autorizacion->cascara($request),
             'orden' => $orden,
             'contratoLabel' => $this->etiquetasContrato([$orden->contrato_id])[$orden->contrato_id] ?? "#{$orden->contrato_id}",
@@ -149,12 +149,12 @@ final class AsignacionEquiposController
             $crearOrdenTrabajo->ejecutar($orden, $parametrosCompartidos, $equipos);
         } catch (OrdenNoVigenteParaAsignacion|EquipoTrabajoNoVigente|LoteNoPerteneceAOrden|HectareasAsignadasSuperanLote|CaldaNoRegistrada $excepcion) {
             return redirect()
-                ->route('panel.asignacion-equipos.show', $orden)
+                ->route('panel.reparto-cuadrillas.show', $orden)
                 ->withErrors(['equipos' => $excepcion->getMessage()]);
         }
 
         return redirect()
-            ->route('panel.asignacion-equipos.show', $orden)
+            ->route('panel.reparto-cuadrillas.show', $orden)
             ->with('estado', __('operaciones.asignacion_equipos.asignado'));
     }
 

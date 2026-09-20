@@ -1,11 +1,11 @@
 {{--
-    Page: equipos-trabajo/edit (GET /panel/equipos-trabajo/{equipoTrabajo}/editar, panel.equipos-trabajo.edit)
+    Page: cuadrillas/edit (GET /panel/cuadrillas/{equipoTrabajo}/editar, panel.cuadrillas.edit)
     Edición de los datos descriptivos de un equipo de trabajo (tarea 72,
     HU-49): el formulario real vive en `_formulario.blade.php`, compartido
     con `create.blade.php`. Integrantes y recursos se editan en la ficha
-    (`panel.equipos-trabajo.show`), no acá.
+    (`panel.cuadrillas.show`), no acá.
 
-    Datos esperados (ver EquiposTrabajoController::edit()): la cáscara de
+    Datos esperados (ver CuadrillasController::edit()): la cáscara de
     CascaraPanel, más $equipo, $basesDisponibles y $estados.
 
     Gateada por `personal.equipo_trabajo.editar`, verificado server-side en
@@ -24,6 +24,6 @@
         :version="$version"
         :vista-actual="__('personal.equipos_trabajo.titulo')"
     >
-        @include('personal::pages.equipos-trabajo._formulario', ['equipo' => $equipo])
+        @include('personal::pages.cuadrillas._formulario', ['equipo' => $equipo])
     </x-templates.panel-layout>
 </x-templates.panel-shell>

@@ -658,7 +658,7 @@ return [
             'per_bases' => 'Bases',
             'per_equipo_integrantes' => 'Integrantes de equipo',
             'per_equipo_recursos' => 'Recursos de equipo',
-            'per_equipos_trabajo' => 'Equipos de trabajo',
+            'per_equipos_trabajo' => 'Cuadrillas',
             'per_personas' => 'Personas',
             'plt_configuraciones' => 'Configuración del sistema',
             'sec_datos_fiscales' => 'Datos fiscales',

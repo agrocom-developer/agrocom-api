@@ -1,13 +1,13 @@
 {{--
     Partial: bloque de equipo del formulario de Orden de Trabajo (reforma
     18/9/2026; ajustado el 19/9/2026). Un "equipo" acá es un casillero de la
-    orden —"Equipo 1", "Equipo 2"— que se cubre con una ESCUADRA: el piloto, su
+    orden —"Equipo 1", "Equipo 2"— que se cubre con una CUADRILLA: el piloto, su
     ayudante y el dron que ya se armaron de antemano. Por eso el bloque no se
     agrega ni se quita: cuántos hay lo definió la orden de aplicación, y lo
-    único que se decide acá es qué escuadra lo cubre y qué lotes le tocan.
+    único que se decide acá es qué cuadrilla lo cubre y qué lotes le tocan.
 
     Cada bloque contiene:
-    - Select de escuadra, con acceso rápido «Crear escuadra» (mismo criterio
+    - Select de cuadrilla, con acceso rápido «Crear cuadrilla» (mismo criterio
       que «Nuevo cliente» en el formulario de contratos) para cuando ninguna
       vigente sirve. La que se elige en un bloque deja de ofrecerse en los
       demás (`ordenes-trabajo-form.js`; el servidor igual exige `distinct`).
@@ -20,10 +20,10 @@
     - $obligatorio (bool): solo el primero lo es; el resto puede quedar en
       blanco si la tanda sale con menos equipos.
     - $lotesOrden (list<array{lote_id, label, restantes}>): lotes de la orden.
-    - $equiposDisponibles (Collection<int, string>): escuadras vigentes hoy.
-    - $urlCrearEscuadra (string): alta de escuadra, con retorno a esta pantalla.
-    - $puedeCrearEscuadra (bool): si el rol activo puede dar de alta una
-      escuadra — sin el permiso, el acceso rápido no se dibuja.
+    - $equiposDisponibles (Collection<int, string>): cuadrillas vigentes hoy.
+    - $urlCrearCuadrilla (string): alta de cuadrilla, con retorno a esta pantalla.
+    - $puedeCrearCuadrilla (bool): si el rol activo puede dar de alta una
+      cuadrilla — sin el permiso, el acceso rápido no se dibuja.
 --}}
 @php
     $prefijo = "equipos[{$indiceEquipo}]";
@@ -50,16 +50,16 @@
     <x-atoms.select
         name="{{ $prefijo }}[equipo_trabajo_id]"
         id="{{ $idBase }}-equipo"
-        :label="__('operaciones.ordenes_trabajo.campo_escuadra')"
+        :label="__('operaciones.ordenes_trabajo.campo_cuadrilla')"
         :options="$equiposDisponibles"
         :value="$equipo['equipo_trabajo_id'] ?? ''"
-        :placeholder="__('operaciones.ordenes_trabajo.campo_escuadra_placeholder')"
+        :placeholder="__('operaciones.ordenes_trabajo.campo_cuadrilla_placeholder')"
         :required="$obligatorio"
         :error="$errors->first($erroresPrefijo.'.equipo_trabajo_id')"
-        :action-icon="$puedeCrearEscuadra ? 'add' : null"
-        :action-href="$puedeCrearEscuadra ? $urlCrearEscuadra : null"
-        :action-label="__('operaciones.ordenes_trabajo.escuadra_crear')"
-        :action-text="__('operaciones.ordenes_trabajo.escuadra_crear_corto')"
+        :action-icon="$puedeCrearCuadrilla ? 'add' : null"
+        :action-href="$puedeCrearCuadrilla ? $urlCrearCuadrilla : null"
+        :action-label="__('operaciones.ordenes_trabajo.cuadrilla_crear')"
+        :action-text="__('operaciones.ordenes_trabajo.cuadrilla_crear_corto')"
         data-ag-equipo-selector
     />
 

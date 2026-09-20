@@ -19,7 +19,7 @@
 --}}
 @php
     $esEdicion = $equipo !== null;
-    $accion = $esEdicion ? route('panel.equipos-trabajo.update', $equipo) : route('panel.equipos-trabajo.store');
+    $accion = $esEdicion ? route('panel.cuadrillas.update', $equipo) : route('panel.cuadrillas.store');
     $codigo = old('codigo', $equipo?->codigo ?? '');
     $nombre = old('nombre', $equipo?->nombre ?? '');
     $baseId = old('base_id', $equipo?->base_id ?? '');
@@ -28,7 +28,7 @@
     $hasta = old('hasta', $equipo?->hasta?->toDateString() ?? '');
 @endphp
 
-<form method="POST" action="{{ $accion }}" class="ag-equipos-trabajo-form" novalidate data-ag-equipos-trabajo-form>
+<form method="POST" action="{{ $accion }}" class="ag-cuadrillas-form" novalidate data-ag-cuadrillas-form>
     @csrf
     @if ($esEdicion)
         @method('PUT')
@@ -40,9 +40,9 @@
     >
         <x-slot:actions>
             {{-- Memento de navegación: si se llegó desde el acceso rápido «Crear
-                 escuadra» del alta de Orden de Trabajo, vuelve ahí. --}}
+                 cuadrilla» del alta de Orden de Trabajo, vuelve ahí. --}}
             <x-molecules.boton-volver
-                :href="route('panel.equipos-trabajo.index')"
+                :href="route('panel.cuadrillas.index')"
                 :label="__('personal.equipos_trabajo.volver')"
             />
         </x-slot:actions>
@@ -121,7 +121,7 @@
 
     <x-organisms.form-actions-bar :status="__('personal.equipos_trabajo.estado_form')">
         <x-slot:actions>
-            <x-atoms.button :href="route('panel.equipos-trabajo.index')" variant="outline">
+            <x-atoms.button :href="route('panel.cuadrillas.index')" variant="outline">
                 {{ __('ui.action.cancel') }}
             </x-atoms.button>
             <x-atoms.button type="submit" variant="primary">
