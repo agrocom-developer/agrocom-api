@@ -58,6 +58,12 @@ function inicializar(root) {
         return;
     }
 
+    // Un mismo select no se arma dos veces (ver `ag:select:inicializar` abajo).
+    if (root.dataset.agSelectListo === '1') {
+        return;
+    }
+    root.dataset.agSelectListo = '1';
+
     const buscable = root.dataset.agSelectBuscable === '1';
     const etiquetaBuscar = root.dataset.labelSearch || '';
     const etiquetaSinResultados = root.dataset.labelNoResults || '';
@@ -529,4 +535,19 @@ function inicializar(root) {
 
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-ag-select]').forEach(inicializar);
+});
+
+// Selects que llegan DESPUÉS de la carga — una fila clonada de un `<template>`
+// (p. ej. «Agregar lote» en `ordenes-trabajo-form.js`). Quien la inserta avisa
+// con este evento sobre el nodo nuevo; sin eso el select quedaba nativo, sin
+// buscador y con otro aspecto que el resto del formulario.
+document.addEventListener('ag:select:inicializar', (evento) => {
+    const nodo = evento.target;
+    if (!(nodo instanceof Element)) {
+        return;
+    }
+    if (nodo.matches('[data-ag-select]')) {
+        inicializar(nodo);
+    }
+    nodo.querySelectorAll('[data-ag-select]').forEach(inicializar);
 });
