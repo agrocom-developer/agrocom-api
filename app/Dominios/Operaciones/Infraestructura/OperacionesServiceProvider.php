@@ -7,11 +7,13 @@ use App\Dominios\Operaciones\Contratos\LecturaActaConformada;
 use App\Dominios\Operaciones\Contratos\LecturaAlertasTemperaturaBateria;
 use App\Dominios\Operaciones\Contratos\LecturaContadoresPanel;
 use App\Dominios\Operaciones\Contratos\LecturaDesempenioPersona;
+use App\Dominios\Operaciones\Contratos\LecturaDrones;
 use App\Dominios\Operaciones\Contratos\LecturaHorasVueloPorModelo;
 use App\Dominios\Operaciones\Contratos\LecturaLotesConOrdenPorContrato;
 use App\Dominios\Operaciones\Contratos\LecturaOrdenesVigentes;
 use App\Dominios\Operaciones\Contratos\LecturaPanelOperaciones;
 use App\Dominios\Operaciones\Contratos\LecturaReporteTecnico;
+use App\Dominios\Operaciones\Contratos\LecturaResumenCuadrilla;
 use App\Dominios\Operaciones\Contratos\LecturaResumenOrdenesContrato;
 use App\Dominios\Operaciones\Contratos\LecturaSesionValidada;
 use App\Dominios\Operaciones\Contratos\LecturaTrabajos;
@@ -50,6 +52,8 @@ final class OperacionesServiceProvider extends ServiceProvider
         $this->app->bind(LecturaResumenOrdenesContrato::class, LecturaResumenOrdenesContratoEloquent::class);
         $this->app->bind(LecturaTrabajosPorContrato::class, LecturaTrabajosPorContratoEloquent::class);
         $this->app->bind(LecturaLotesConOrdenPorContrato::class, LecturaLotesConOrdenPorContratoEloquent::class);
+        $this->app->bind(LecturaDrones::class, LecturaDronesEloquent::class);
+        $this->app->bind(LecturaResumenCuadrilla::class, LecturaResumenCuadrillaEloquent::class);
 
         // Buscador global (`busqueda.proveedores`): el agregador de Seguridad
         // no conoce estas clases, las recibe por tag. Sumar una entidad al

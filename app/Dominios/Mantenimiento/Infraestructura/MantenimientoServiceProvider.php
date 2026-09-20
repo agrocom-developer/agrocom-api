@@ -4,6 +4,7 @@ namespace App\Dominios\Mantenimiento\Infraestructura;
 
 use App\Dominios\Mantenimiento\Aplicacion\IncrementarCiclosBateria;
 use App\Dominios\Mantenimiento\Contratos\LecturaCiclosBateria;
+use App\Dominios\Mantenimiento\Contratos\LecturaEquipamiento;
 use App\Dominios\Mantenimiento\Infraestructura\Busqueda\BusquedaBaterias;
 use App\Dominios\Mantenimiento\Infraestructura\Busqueda\BusquedaGeneradores;
 use App\Dominios\Mantenimiento\Infraestructura\Busqueda\BusquedaVehiculos;
@@ -36,6 +37,7 @@ final class MantenimientoServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(LecturaCiclosBateria::class, LecturaCiclosBateriaEloquent::class);
+        $this->app->bind(LecturaEquipamiento::class, LecturaEquipamientoEloquent::class);
 
         // Buscador global (`busqueda.proveedores`): el agregador de Seguridad
         // no conoce estas clases, las recibe por tag. Sumar una entidad al
