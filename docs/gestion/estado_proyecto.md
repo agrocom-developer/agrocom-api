@@ -1,6 +1,6 @@
 # Estado y continuidad del proyecto
 
-**Última actualización: 2026-09-19.** Este documento no es la especificación (que es estable) ni el plan de sprints (que es la estrategia global con HU y fases): es la bitácora de continuidad entre iteraciones — qué se avanzó, qué falta, y qué leer primero para no releer todo `docs/` de cero en cada sesión nueva. Lo mantiene el agente `memoria-contexto` (`.claude/agents/memoria-contexto.md`) al cierre de cada sesión de trabajo relevante.
+**Última actualización: 2026-09-20.** Este documento no es la especificación (que es estable) ni el plan de sprints (que es la estrategia global con HU y fases): es la bitácora de continuidad entre iteraciones — qué se avanzó, qué falta, y qué leer primero para no releer todo `docs/` de cero en cada sesión nueva. Lo mantiene el agente `memoria-contexto` (`.claude/agents/memoria-contexto.md`) al cierre de cada sesión de trabajo relevante.
 
 ## Cómo usar este documento
 
@@ -40,6 +40,17 @@ Al empezar una iteración nueva: leé este documento completo primero (es corto)
 > El orden de ejecución cruza las dos tandas y está en
 > `docs/gestion/cola_tareas.md` ("Por qué ese orden"), no en el número de
 > sprint. Para retomar el hilo, leé eso, no la tabla de abajo.
+
+> **Nota del 20/9/2026 — homogeneización del panel, por ciclos.** El dueño pidió
+> llevar todos los listados y formularios al patrón de Comercial y de las
+> órdenes de Operaciones (filtros, buscador, acciones de fila con color por
+> estado, modales, campos del catálogo, secciones, tablas de detalle, pasos de
+> estado y resumen relacionado en edición). Quedan afuera roles, organización,
+> bitácora, dashboard, las páginas de detalle (`show`) y el portal. El
+> diagnóstico pantalla por pantalla, las reglas y las doce tareas del ciclo
+> (111 a 122, una rama y un PR por grupo de pantallas) están en
+> [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md); el avance se
+> sigue en su §7. Se ejecuta con `bin/ciclo --fondo`.
 
 > **Nota del 19/9/2026 — la corrección del dueño del 18/9 sobre contratos,
 > lotes y órdenes de aplicación, implementada en dos ramas y sin integrar.**
