@@ -68,6 +68,11 @@ final class PersonasController
             ...$this->autorizacion->cascara($request),
             'roles' => RolOperativoPersona::cases(),
             'basesDisponibles' => $this->basesActivas(),
+            // Alta rápida desde otro formulario (tarea "cuadrillas-estadias",
+            // 19/9/2026 — mismo criterio que `PropiedadesController::create()`):
+            // con ?volver_a=, al guardar se ofrece un botón para volver a esa
+            // URL con esta persona ya disponible en el select que la pidió.
+            'volverA' => $request->query('volver_a'),
         ]);
     }
 
@@ -86,9 +91,12 @@ final class PersonasController
         );
 
         // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
+        // `volverA` viaja igual que en `PropiedadesController::store()` para
+        // el caso de alta rápida desde otro formulario.
         return redirect()
             ->route('panel.personas.edit', $persona)
-            ->with('estado', __('personal.personas.creado'));
+            ->with('estado', __('personal.personas.creado'))
+            ->with('volverA', $request->input('volver_a'));
     }
 
     public function edit(Request $request, PerPersona $persona): View
@@ -100,6 +108,7 @@ final class PersonasController
             'persona' => $persona,
             'roles' => RolOperativoPersona::cases(),
             'basesDisponibles' => $this->basesActivas(),
+            'volverA' => session('volverA'),
         ]);
     }
 

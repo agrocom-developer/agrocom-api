@@ -16,8 +16,8 @@
       identificador, ya resuelto por el controlador (`DB::table`, ADR 0003
       regla 3 — un recurso cruza a `Operaciones`/`Mantenimiento`).
     - $personasDisponibles, $dronesDisponibles, $vehiculosDisponibles,
-      $generadoresDisponibles (Collection<int, string>): opciones de los
-      selects de alta.
+      $generadoresDisponibles, $bateriasDisponibles (Collection<int, string>):
+      opciones de los selects de alta.
     - $roles (list<RolEquipo>), $tiposRecurso (list<RecursoTipoEquipo>).
     - $puedeEditar (bool): gatea los formularios de alta/finalizar
       (presentación, no autorización — el servidor revalida en el
@@ -42,6 +42,9 @@
         'dron' => $dronesDisponibles,
         'vehiculo' => $vehiculosDisponibles,
         'generador' => $generadoresDisponibles,
+        // Batería agregada por la tarea "cuadrillas-estadias" (19/9/2026):
+        // ver RecursoTipoEquipo::Bateria.
+        'bateria' => $bateriasDisponibles,
     ];
     $opcionesRol = collect($roles)->mapWithKeys(
         fn ($opcion) => [$opcion->value => __('personal.rol_equipo.'.$opcion->value)]
@@ -61,26 +64,17 @@
         :vista-actual="__('personal.equipos_trabajo.titulo')"
     >
         <div class="ag-cuadrillas-ficha">
-            @if (session('navegacion_pila', []) !== [])
-                {{-- Memento de navegación: la ficha es donde se arma la cuadrilla
-                     recién creada (piloto, ayudante, dron); desde acá se vuelve
-                     al alta de Orden de Trabajo que la pidió. --}}
-                <div>
+            <x-organisms.page-header
+                :title="__('personal.equipos_trabajo.ficha_titulo', ['codigo' => $equipo->codigo])"
+                :subtitle="__('personal.equipos_trabajo.ficha_subtitulo')"
+            >
+                <x-slot:actions>
                     <x-molecules.boton-volver
                         :href="route('panel.cuadrillas.index')"
                         :label="__('personal.equipos_trabajo.ficha_volver')"
                     />
-                </div>
-            @else
-                <x-atoms.button :href="route('panel.cuadrillas.index')" variant="text" size="sm" icon="arrow_back">
-                    {{ __('personal.equipos_trabajo.ficha_volver') }}
-                </x-atoms.button>
-            @endif
-
-            <x-organisms.page-header
-                :title="__('personal.equipos_trabajo.ficha_titulo', ['codigo' => $equipo->codigo])"
-                :subtitle="__('personal.equipos_trabajo.ficha_subtitulo')"
-            />
+                </x-slot:actions>
+            </x-organisms.page-header>
 
             @if (session('estado'))
                 <x-molecules.alert-strip variant="success" icon="check_circle" class="ag-cuadrillas-ficha__aviso">

@@ -31,6 +31,7 @@ import './pages/ordenes-form.js';
 import './pages/ordenes-detalle.js';
 import './pages/ordenes-trabajo-form.js';
 import './pages/reparto-cuadrillas-form.js';
+import './pages/cuadrillas-form.js';
 import './pages/roles-permisos.js';
 import './pages/configuracion-form.js';
 import './pages/reportes-comerciales.js';

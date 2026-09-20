@@ -1,11 +1,12 @@
 /*
  * Pages: cuadrillas/index, create, edit, show
  * (app/Dominios/Personal/Infraestructura/Http/Views/pages/cuadrillas/)
- * — tarea 72, HU-49. Listado y formulario mismo molde que
- * generadores.css/vehiculos.css. La ficha (`show`) suma dos secciones de
- * "vigencias" (integrantes/recursos), cada una con su mini-formulario de
- * alta y su lista de filas con acción "finalizar" — mismo patrón visual que
- * la tabla del listado, reutilizado adentro de una tarjeta.
+ * — tarea "cuadrillas-estadias", 19/9/2026. Listado y formulario siguen
+ * el patrón del módulo Comercial (§6 de docs/diseno/guia_pantalla_panel.md):
+ * - index: molecules/index-table + organisms/filter-panel + row-actions
+ * - create/edit: molecules/form-layout + form-section + aside (solo edición)
+ * - show: ficha histórica con formularios inline de asignación
+ * La ficha «estado actual → destino» de los modales es `molecules/state-transition`.
  *
  * Todo color y medida por token (CLAUDE.md invariante 11).
  */
@@ -18,78 +19,25 @@
     gap: var(--ag-space-5);
 }
 
-/* Listado (index) */
+/* Listado y tablas de detalle: la tabla es `molecules/index-table`; acá solo
+   lo que va DENTRO de una celda propia de esta página. */
 
-.ag-cuadrillas__tabla {
-    border: 1px solid var(--ag-color-border-card);
-    border-radius: var(--ag-radius-md);
-    background-color: var(--ag-color-surface-card);
-    overflow: hidden;
-}
-
-.ag-cuadrillas__head,
-.ag-cuadrillas__fila {
-    display: grid;
-    grid-template-columns: 3rem 1fr 1.3fr 1.3fr 1.3fr 1fr auto;
-    gap: var(--ag-space-4);
-    align-items: center;
-    padding: var(--ag-space-3) var(--ag-space-4);
-}
-
-.ag-cuadrillas__indice {
-    color: var(--ag-color-text-faint);
+/* Cifras y datos técnicos (código, fechas, placa, cantidad) en mono, para que
+   aliñen en columna — regla 6 del arquetipo Formulario. */
+.ag-cuadrillas__mono {
     font-family: var(--ag-font-family-mono);
-    font-size: var(--ag-font-size-xs);
 }
 
-.ag-cuadrillas__head {
-    background-color: var(--ag-color-bg-table-head);
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-xs);
-    font-weight: var(--ag-font-weight-medium);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.ag-cuadrillas__fila {
-    border-top: 1px solid var(--ag-color-border-row);
-    color: var(--ag-color-text);
-    font-size: var(--ag-font-size-sm);
-}
-
-.ag-cuadrillas__fila:hover {
-    background-color: var(--ag-color-bg-row-hover);
-}
-
-.ag-cuadrillas__codigo {
-    font-weight: var(--ag-font-weight-medium);
-}
-
-.ag-cuadrillas__acciones {
+/* Celda «Integrantes»: el piloto arriba y los ayudantes debajo, atenuados. */
+.ag-cuadrillas__integrantes {
     display: flex;
-    justify-content: flex-end;
-    gap: var(--ag-space-2);
+    flex-direction: column;
+    gap: var(--ag-space-1);
 }
 
-
-@media (max-width: 992px) {
-    .ag-cuadrillas__head {
-        display: none;
-    }
-
-    .ag-cuadrillas__fila {
-        grid-template-columns: 1fr;
-        gap: var(--ag-space-1);
-    }
-
-    .ag-cuadrillas__indice {
-        display: none;
-    }
-
-    .ag-cuadrillas__acciones {
-        justify-content: flex-start;
-        margin-top: var(--ag-space-2);
-    }
+.ag-cuadrillas__atenuado {
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-sm);
 }
 
 /* Ficha (show) */
