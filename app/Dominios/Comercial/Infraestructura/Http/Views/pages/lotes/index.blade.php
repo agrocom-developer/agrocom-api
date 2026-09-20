@@ -9,6 +9,8 @@
     CascaraPanel, más:
     - $lotes (LengthAwarePaginator<Lote>, con `propiedad.cliente` cargada):
       código ascendente.
+    - $propiedadFiltro (Propiedad|null): la propiedad del filtro `propiedad_id`,
+      si lo hay — habilita el botón «Volver a la propiedad» (memento).
     - $filtros (array{q: string, cliente_id: ?int, propiedad_id: ?int}): filtros
       aplicados, para dejarlos con el valor tras el submit.
     - $clientesDisponibles (Collection<int, string>), $propiedadesDisponibles
@@ -55,7 +57,16 @@
                 :subtitle="__('comercial.lotes.subtitulo')"
             >
                 <x-slot:actions>
-                    @if ($hayOrigen)
+                    {{-- Con el filtro de una propiedad se llegó desde su formulario
+                         (memento de navegación): se vuelve a ella. Si hay pila, el
+                         botón vuelve al escalón anterior y lo dice; si no, cae a la
+                         ficha de la propiedad. Sin ese filtro, el botón solo aparece
+                         si se llegó desde otra pantalla (hay pila a la que volver). --}}
+                    @if ($propiedadFiltro !== null)
+                        @puede('comercial.propiedad.editar')
+                            <x-molecules.boton-volver :href="route('panel.propiedades.edit', $propiedadFiltro)" :label="__('comercial.lotes.volver_a_propiedad')" />
+                        @endpuede
+                    @elseif ($hayOrigen)
                         <x-molecules.boton-volver :href="route('panel.lotes.index')" :label="__('comercial.lotes.titulo')" />
                     @endif
 

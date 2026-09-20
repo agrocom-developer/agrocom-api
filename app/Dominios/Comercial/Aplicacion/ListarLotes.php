@@ -26,6 +26,7 @@ final class ListarLotes
         int $porPagina = 15,
     ): LengthAwarePaginator {
         return Lote::query()
+            ->ordenadosPorCodigo()
             ->with('propiedad.cliente')
             ->when(
                 $propiedadId !== null,
@@ -39,7 +40,6 @@ final class ListarLotes
                 $busqueda !== null && $busqueda !== '',
                 fn (Builder $consulta) => BusquedaTexto::aplicar($consulta, ['codigo'], $busqueda),
             )
-            ->orderBy('codigo')
             ->paginate($porPagina)
             ->withQueryString();
     }
