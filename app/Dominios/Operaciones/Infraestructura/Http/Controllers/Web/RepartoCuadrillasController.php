@@ -58,19 +58,30 @@ final class RepartoCuadrillasController
      * lotes: hectáreas solicitadas, ya asignadas, restantes) — la lista de
      * partida para elegir a cuál repartirle equipos. El detalle por lote
      * vive en la ficha (`mostrar()`).
+     *
+     * Un único filtro (tarea 114): el contrato. Las opciones son los contratos
+     * que HOY tienen alguna orden vigente, no el catálogo entero — mismo
+     * criterio que el filtro de contrato del listado de órdenes.
      */
     public function index(Request $request): View
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO), 403);
 
-        $ordenes = OrdenAplicacion::query()
-            ->where('estado', EstadoOrdenAplicacion::Vigente)
+        $contratoId = $request->integer('contrato_id') ?: null;
+
+        $vigentes = OrdenAplicacion::query()->where('estado', EstadoOrdenAplicacion::Vigente);
+
+        $ordenes = $vigentes->clone()
+            ->when($contratoId !== null, fn ($consulta) => $consulta->where('contrato_id', $contratoId))
             ->orderByDesc('fecha_emision')
             ->get();
 
         $resumenes = $ordenes->mapWithKeys(function (OrdenAplicacion $orden): array {
             return [$orden->id => $this->resumenTotal($orden)];
         });
+
+        $contratosConOrdenes = $vigentes->clone()->distinct()->pluck('contrato_id')
+            ->map(fn ($id): int => (int) $id)->all();
 
         return view('operaciones::pages.reparto-cuadrillas.index', [
             ...$this->autorizacion->cascara($request),
@@ -79,6 +90,10 @@ final class RepartoCuadrillasController
             'etiquetasContrato' => $this->etiquetasContrato($ordenes->pluck('contrato_id')->unique()->values()->all()),
             'etiquetasLote' => $this->etiquetasLote($this->loteIdsDeOrdenes($ordenes)),
             'loteIdsPorOrden' => $this->loteIdsPorOrden($ordenes),
+            'opcionesContrato' => collect($this->etiquetasContrato($contratosConOrdenes))
+                ->sort(fn (string $a, string $b): int => strnatcasecmp($a, $b))
+                ->all(),
+            'filtros' => ['contrato_id' => $contratoId],
         ]);
     }
 

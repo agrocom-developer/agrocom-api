@@ -13,10 +13,6 @@
 # Medida el 20/9/2026 sobre `develop` en `5f699ce4` (tarea 111): 46 pantallas,
 # 26 listados y 20 formularios. Las referencias del plan (§1) no pueden figurar.
 
-# 114 · feature/panel-trabajos-reparto
-Operaciones/reparto-cuadrillas/index.blade.php
-Operaciones/reportes-tecnicos/index.blade.php
-
 # 115 · feature/panel-equipos-mantenimiento
 Mantenimiento/baterias/index.blade.php
 Mantenimiento/baterias/_formulario.blade.php
