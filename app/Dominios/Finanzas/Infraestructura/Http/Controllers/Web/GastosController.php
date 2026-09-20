@@ -82,9 +82,7 @@ final class GastosController
                 'campania_id' => $campaniaId,
                 'periodo' => $periodo,
             ],
-            'total' => $equipoTrabajoId !== null
-                ? $listarGastos->total($rubroId, $baseId, $trabajoId, $periodoFiltro, $equipoTrabajoId, $campaniaId)
-                : null,
+            'resumen' => $listarGastos->resumen($rubroId, $baseId, $trabajoId, $periodoFiltro, $equipoTrabajoId, $campaniaId),
             'puedeEliminar' => $this->autorizacion->tienePermiso($request, self::PERMISO_ELIMINAR),
         ]);
     }

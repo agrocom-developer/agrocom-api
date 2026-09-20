@@ -85,6 +85,7 @@ final class CombustibleController
             ...$this->autorizacion->cascara($request),
             'combustibles' => $combustibles,
             'etiquetasBase' => $basesDisponibles->all(),
+            'etiquetasEquipo' => $equiposDisponibles->all(),
             'etiquetasRecurso' => $this->etiquetasRecursoDeCombustibles($combustibles->getCollection()),
             'basesDisponibles' => $basesDisponibles,
             'equiposDisponibles' => $equiposDisponibles,
@@ -96,9 +97,7 @@ final class CombustibleController
                 'equipo_trabajo_id' => $equipoTrabajoId,
                 'campania_id' => $campaniaId,
             ],
-            'total' => $equipoTrabajoId !== null
-                ? $listarCombustibles->total($baseId, $desdeFiltro, $hastaFiltro, $equipoTrabajoId, $campaniaId)
-                : null,
+            'resumen' => $listarCombustibles->resumen($baseId, $desdeFiltro, $hastaFiltro, $equipoTrabajoId, $campaniaId),
             'puedeEliminar' => $this->autorizacion->tienePermiso($request, self::PERMISO_ELIMINAR),
         ]);
     }

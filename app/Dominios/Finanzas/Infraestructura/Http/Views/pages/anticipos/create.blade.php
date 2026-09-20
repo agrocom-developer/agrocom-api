@@ -1,10 +1,17 @@
 {{--
     Page: anticipos/create (GET /panel/anticipos/crear, panel.anticipos.create)
     Alta de un anticipo (HU-29, tarea 41) — arquetipo Formulario, §6.3 de
-    docs/diseno/guia_pantalla_panel.md. Sin partial `_formulario` compartido
-    con una edición: no existe caso de uso de edición (invariante de esta
-    tarea, ver `Aplicacion/RegistrarAnticipo`) — este archivo ES el
-    formulario completo.
+    docs/diseno/guia_pantalla_panel.md. Homogeneizado en la tarea 118 con
+    `form-layout` (sin aside: ver más abajo), dos `form-section` y el monto
+    con su moneda dentro del campo. Sin partial `_formulario` compartido con
+    una edición: no existe caso de uso de edición (invariante de esta tarea,
+    ver `Aplicacion/RegistrarAnticipo`) — este archivo ES el formulario
+    completo.
+
+    Sin aside: un anticipo, una vez registrado, es un asiento inmutable, y un
+    registro que todavía no existe no tiene nada relacionado que resumir
+    (guía §6.3.1). Sin `edit()` no hay a dónde quedarse: tras guardar se vuelve
+    al listado con su aviso (guía §6.3.2).
 
     Datos esperados (ver AnticiposController::create()): la cáscara de
     CascaraPanel, más:
@@ -12,14 +19,16 @@
       <select> de persona (compartido por la consulta y el alta).
     - $consultaDisponible (array{personaId: int, personaNombre: string,
       disponible: string}|null): resultado de la consulta de disponible de
-      abajo, `null` si todavía no se consultó nada.
+      abajo, `null` si todavía no se consultó nada. `disponible` es DECIMAL:
+      la vista solo lo formatea (`FormatoMonto`, sin `float`).
 
-    La caja "Consultar disponible" es un <form method="GET"> propio (mismo
+    La sección «Consultar disponible» es un <form method="GET"> propio (mismo
     action que esta página, con `?persona_id=`) que recarga la pantalla — no
     hace falta un endpoint ni JS aparte, mismo patrón que los filtros de
-    `anticipos/index.blade.php` y `devengos/show.blade.php`. No es parte del
-    criterio de aceptación (el servidor SIEMPRE revalida el tope al enviar el
-    alta real, vía AnticipoExcedeTope) — es solo para que el encargado no
+    `anticipos/index.blade.php` y `devengos/show.blade.php`. Es un formulario
+    aparte del de alta porque un <form> no puede anidarse en otro. No es parte
+    del criterio de aceptación (el servidor SIEMPRE revalida el tope al enviar
+    el alta real, vía AnticipoExcedeTope) — es solo para que el encargado no
     descubra el tope recién al rechazo.
 
     Tras un error de validación (incluido el rechazo por tope, capturado en
@@ -28,6 +37,7 @@
     Estilos en resources/css/pages/anticipos.css — cero color hardcodeado
     (CLAUDE.md invariante 11).
 --}}
+@use('App\Dominios\Finanzas\Infraestructura\Http\FormatoMonto')
 @php
     // Si se llegó acá vía "Consultar disponible" (GET ?persona_id=), esa
     // misma persona queda preseleccionada en el formulario real — evita que
@@ -53,90 +63,93 @@
         :version="$version"
         :vista-actual="__('finanzas.anticipos.titulo_crear')"
     >
-        <div class="ag-anticipos-form-page">
-            <div class="ag-anticipos-form-page__consulta">
-                <form method="GET" action="{{ route('panel.anticipos.create') }}" class="ag-anticipos-consulta">
-                    <div class="ag-anticipos-consulta__texto">
-                        <p class="ag-anticipos-consulta__titulo">{{ __('finanzas.anticipos.consulta_titulo') }}</p>
-                        <p class="ag-anticipos-consulta__ayuda">{{ __('finanzas.anticipos.consulta_ayuda') }}</p>
-                    </div>
+        <div class="ag-anticipos-form">
+            <x-organisms.page-header
+                :title="__('finanzas.anticipos.titulo_crear')"
+                :subtitle="__('finanzas.anticipos.subtitulo_form')"
+            >
+                <x-slot:actions>
+                    <x-molecules.boton-volver :href="route('panel.anticipos.index')" :label="__('finanzas.anticipos.volver')" />
+                </x-slot:actions>
+            </x-organisms.page-header>
 
-                    <x-atoms.select
-                        name="persona_id"
-                        id="consulta-persona"
-                        :label="__('finanzas.anticipos.campo_persona')"
-                        :options="$personasDisponibles"
-                        :value="$consultaDisponible !== null ? (string) $consultaDisponible['personaId'] : ''"
-                        :placeholder="__('finanzas.anticipos.campo_persona_placeholder')"
-                    />
+            @if (session('estado'))
+                <x-molecules.alert-strip variant="success" icon="check_circle">
+                    {{ session('estado') }}
+                </x-molecules.alert-strip>
+            @endif
 
-                    <x-atoms.button type="submit" variant="outline" size="md" icon="search">
-                        {{ __('finanzas.anticipos.consulta_boton') }}
-                    </x-atoms.button>
+            @if ($errors->has('estado'))
+                <x-molecules.alert-strip variant="danger" icon="error">
+                    {{ $errors->first('estado') }}
+                </x-molecules.alert-strip>
+            @endif
+
+            <x-molecules.form-layout>
+                <form method="GET" action="{{ route('panel.anticipos.create') }}" class="ag-anticipos-form">
+                    <x-molecules.form-section :title="__('finanzas.anticipos.consulta_titulo')">
+                        <x-slot:actions>
+                            <x-atoms.button type="submit" variant="outline" size="sm" icon="search">
+                                {{ __('finanzas.anticipos.consulta_boton') }}
+                            </x-atoms.button>
+                        </x-slot:actions>
+
+                        <x-atoms.select
+                            name="persona_id"
+                            id="consulta-persona"
+                            :label="__('finanzas.anticipos.campo_persona')"
+                            :options="$personasDisponibles"
+                            :value="$consultaDisponible !== null ? (string) $consultaDisponible['personaId'] : ''"
+                            :placeholder="__('finanzas.anticipos.campo_persona_placeholder')"
+                            :help="__('finanzas.anticipos.consulta_ayuda')"
+                        />
+                    </x-molecules.form-section>
                 </form>
 
                 @if ($consultaDisponible !== null)
-                    <x-molecules.alert-strip variant="info" icon="payments" class="ag-anticipos-form-page__resultado">
-                        {{ __('finanzas.anticipos.consulta_resultado', ['persona' => $consultaDisponible['personaNombre'], 'monto' => $consultaDisponible['disponible']]) }}
-                    </x-molecules.alert-strip>
-                @endif
-            </div>
-
-            <form method="POST" action="{{ route('panel.anticipos.store') }}" class="ag-anticipos-form" novalidate data-ag-anticipos-form>
-                @csrf
-
-                <x-organisms.page-header
-                    :title="__('finanzas.anticipos.titulo_crear')"
-                    :subtitle="__('finanzas.anticipos.subtitulo_form')"
-                >
-                    <x-slot:actions>
-                        <x-atoms.button :href="route('panel.anticipos.index')" variant="outline" icon="arrow_back">
-                            {{ __('finanzas.anticipos.volver') }}
-                        </x-atoms.button>
-                    </x-slot:actions>
-                </x-organisms.page-header>
-
-                @if ($errors->has('estado'))
-                    <x-molecules.alert-strip variant="danger" icon="error" class="ag-anticipos-form-page__resultado">
-                        {{ $errors->first('estado') }}
+                    <x-molecules.alert-strip variant="info" icon="payments">
+                        {{ __('finanzas.anticipos.consulta_resultado', ['persona' => $consultaDisponible['personaNombre'], 'monto' => FormatoMonto::decimal($consultaDisponible['disponible'])]) }}
                     </x-molecules.alert-strip>
                 @endif
 
-                <x-molecules.form-section
-                    :title="__('finanzas.anticipos.seccion_datos')"
-                    :count="__('finanzas.anticipos.campos_contador', ['cantidad' => 4])"
-                >
-                    <x-atoms.select
-                        name="persona_id"
-                        id="persona_id"
-                        :label="__('finanzas.anticipos.campo_persona')"
-                        :options="$personasDisponibles"
-                        :value="(string) $personaId"
-                        :placeholder="__('finanzas.anticipos.campo_persona_placeholder')"
-                        :error="$errors->first('persona_id')"
-                        required
-                    />
+                <form method="POST" action="{{ route('panel.anticipos.store') }}" class="ag-anticipos-form" novalidate data-ag-anticipos-form>
+                    @csrf
 
-                    <x-atoms.input
-                        type="number"
-                        name="monto"
-                        :label="__('finanzas.anticipos.campo_monto')"
-                        :value="$monto"
-                        min="0.01"
-                        step="0.01"
-                        required
-                        :error="$errors->first('monto')"
-                    />
+                    <x-molecules.form-section
+                        :title="__('finanzas.anticipos.seccion_datos')"
+                        :count="trans_choice('finanzas.anticipos.campos_contador', 4, ['cantidad' => 4])"
+                    >
+                        <x-atoms.select
+                            name="persona_id"
+                            id="persona_id"
+                            :label="__('finanzas.anticipos.campo_persona')"
+                            :options="$personasDisponibles"
+                            :value="(string) $personaId"
+                            :placeholder="__('finanzas.anticipos.campo_persona_placeholder')"
+                            :error="$errors->first('persona_id')"
+                            required
+                        />
 
-                    <x-atoms.date
-                        name="fecha"
-                        :label="__('finanzas.anticipos.campo_fecha')"
-                        :value="$fecha"
-                        required
-                        :error="$errors->first('fecha')"
-                    />
+                        <x-atoms.input
+                            type="number"
+                            name="monto"
+                            :label="__('finanzas.anticipos.campo_monto')"
+                            :value="$monto"
+                            :suffix="__('finanzas.anticipos.unidad_moneda')"
+                            min="0.01"
+                            step="0.01"
+                            required
+                            :error="$errors->first('monto')"
+                        />
 
-                    <div class="ag-form-section__field--full">
+                        <x-atoms.date
+                            name="fecha"
+                            :label="__('finanzas.anticipos.campo_fecha')"
+                            :value="$fecha"
+                            required
+                            :error="$errors->first('fecha')"
+                        />
+
                         <x-atoms.input
                             type="text"
                             name="motivo"
@@ -144,20 +157,20 @@
                             :value="$motivo"
                             :error="$errors->first('motivo')"
                         />
-                    </div>
-                </x-molecules.form-section>
+                    </x-molecules.form-section>
 
-                <x-organisms.form-actions-bar :status="__('finanzas.anticipos.estado_form')">
-                    <x-slot:actions>
-                        <x-atoms.button :href="route('panel.anticipos.index')" variant="outline">
-                            {{ __('ui.action.cancel') }}
-                        </x-atoms.button>
-                        <x-atoms.button type="submit" variant="primary">
-                            {{ __('ui.action.save') }}
-                        </x-atoms.button>
-                    </x-slot:actions>
-                </x-organisms.form-actions-bar>
-            </form>
+                    <x-organisms.form-actions-bar :status="__('finanzas.anticipos.estado_form')">
+                        <x-slot:actions>
+                            <x-atoms.button :href="route('panel.anticipos.index')" variant="outline">
+                                {{ __('ui.action.cancel') }}
+                            </x-atoms.button>
+                            <x-atoms.button type="submit" variant="primary">
+                                {{ __('ui.action.save') }}
+                            </x-atoms.button>
+                        </x-slot:actions>
+                    </x-organisms.form-actions-bar>
+                </form>
+            </x-molecules.form-layout>
         </div>
     </x-templates.panel-layout>
 </x-templates.panel-shell>

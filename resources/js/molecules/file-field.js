@@ -12,9 +12,15 @@
 // No hay forma de previsualizar un archivo local sin JS (no existe
 // equivalente HTML/CSS puro a `URL.createObjectURL`), así que esta vista
 // previa no puede ser tan "sin JS" como el resto del control.
+//
+// Además de la imagen, el campo muestra el nombre y el peso del archivo recién
+// elegido (tarea 118): un PDF no tiene vista previa, y sin esto el usuario no
+// tendría ninguna señal de que el campo lo tomó. Al quitar la elección vuelve
+// lo que había (el archivo ya guardado, o nada).
 
 const urlsPorPreview = new WeakMap();
 const contenidoOriginalPorPreview = new WeakMap();
+const metaOriginalPorMeta = new WeakMap();
 
 function esImagen(archivo) {
     return archivo.type.startsWith('image/');
@@ -37,6 +43,36 @@ function restaurarPreview(preview) {
     if (original !== undefined) {
         preview.innerHTML = original;
     }
+}
+
+// Mismo criterio que `pesoLegible()` de los controladores que lo pintan del
+// lado del servidor: bytes por debajo de 1 KB, KB redondeados por encima.
+function pesoLegible(bytes) {
+    return bytes < 1024 ? `${bytes} B` : `${Math.round(bytes / 1024)} KB`;
+}
+
+function restaurarMeta(meta) {
+    const original = metaOriginalPorMeta.get(meta);
+
+    if (original !== undefined) {
+        meta.innerHTML = original;
+    }
+}
+
+function mostrarMeta(meta, archivo) {
+    if (!metaOriginalPorMeta.has(meta)) {
+        metaOriginalPorMeta.set(meta, meta.innerHTML);
+    }
+
+    const nombre = document.createElement('span');
+    nombre.className = 'ag-file-field__name';
+    nombre.textContent = archivo.name;
+
+    const peso = document.createElement('span');
+    peso.className = 'ag-file-field__size';
+    peso.textContent = pesoLegible(archivo.size);
+
+    meta.replaceChildren(nombre, peso);
 }
 
 function mostrarPreview(preview, archivo) {
@@ -65,13 +101,21 @@ document.addEventListener('change', (event) => {
         return;
     }
 
-    const preview = input.closest('.ag-file-field')?.querySelector('.ag-file-field__preview');
+    const campo = input.closest('.ag-file-field');
+    const preview = campo?.querySelector('.ag-file-field__preview');
+    const meta = campo?.querySelector('.ag-file-field__meta');
 
     if (!preview) {
         return;
     }
 
     const archivo = input.files?.[0];
+
+    if (meta && archivo) {
+        mostrarMeta(meta, archivo);
+    } else if (meta) {
+        restaurarMeta(meta);
+    }
 
     if (!archivo || !esImagen(archivo)) {
         restaurarPreview(preview);

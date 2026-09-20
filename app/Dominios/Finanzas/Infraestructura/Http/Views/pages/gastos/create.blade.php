@@ -1,10 +1,17 @@
 {{--
     Page: gastos/create (GET /panel/gastos/crear, panel.gastos.create)
     Alta de un gasto (HU-33, tarea 47) — arquetipo Formulario, §6.3 de
-    docs/diseno/guia_pantalla_panel.md. Sin partial `_formulario` compartido
-    con una edición: no existe caso de uso de edición (invariante de esta
-    tarea, ver `Aplicacion/CrearGasto`) — este archivo ES el formulario
-    completo.
+    docs/diseno/guia_pantalla_panel.md. Homogeneizado en la tarea 118 con
+    `form-layout` (sin aside: ver más abajo), tres `form-section`, el precio
+    unitario con su moneda dentro del campo y el comprobante en `file-field`.
+    Sin partial `_formulario` compartido con una edición: no existe caso de
+    uso de edición (invariante de esta tarea, ver `Aplicacion/CrearGasto`) —
+    este archivo ES el formulario completo.
+
+    Sin aside: un gasto, una vez cargado, es un asiento inmutable, y un
+    registro que todavía no existe no tiene nada relacionado que resumir
+    (guía §6.3.1). Sin `edit()` no hay a dónde quedarse: tras guardar se vuelve
+    al listado con su aviso (guía §6.3.2).
 
     Datos esperados (ver GastosController::create()): la cáscara de
     CascaraPanel, más:
@@ -12,8 +19,8 @@
       el <select> de rubro y la lista completa de subrubros, que
       `resources/js/pages/gastos-form.js` filtra en cliente según el rubro
       elegido usando el mapa subrubro→rubro que viaja como
-      `data-mapa-rubro-subrubro` (JSON) en el propio `<select>` de subrubro
-      (tarea 76: `x-atoms.select` no soporta atributos por `<option>`).
+      `data-mapa-rubro-subrubro` (JSON) en el propio <select> de subrubro
+      (tarea 76: `x-atoms.select` no soporta atributos por <option>).
     - $equiposDisponibles / $basesDisponibles / $trabajosDisponibles /
       $campaniasDisponibles (Collection<int, string>): id => etiqueta, para
       los <select> opcionales de imputación. `$equiposDisponibles` (tarea 73,
@@ -60,31 +67,35 @@
         :version="$version"
         :vista-actual="__('finanzas.gastos.titulo_crear')"
     >
-        <div class="ag-gastos-form-page">
-            <form
-                method="POST"
-                action="{{ route('panel.gastos.store') }}"
-                enctype="multipart/form-data"
-                class="ag-gastos-form"
-                novalidate
-                data-ag-gastos-form
+        <form
+            method="POST"
+            action="{{ route('panel.gastos.store') }}"
+            enctype="multipart/form-data"
+            class="ag-gastos-form"
+            novalidate
+            data-ag-gastos-form
+        >
+            @csrf
+
+            <x-organisms.page-header
+                :title="__('finanzas.gastos.titulo_crear')"
+                :subtitle="__('finanzas.gastos.subtitulo_form')"
             >
-                @csrf
+                <x-slot:actions>
+                    <x-molecules.boton-volver :href="route('panel.gastos.index')" :label="__('finanzas.gastos.volver')" />
+                </x-slot:actions>
+            </x-organisms.page-header>
 
-                <x-organisms.page-header
-                    :title="__('finanzas.gastos.titulo_crear')"
-                    :subtitle="__('finanzas.gastos.subtitulo_form')"
-                >
-                    <x-slot:actions>
-                        <x-atoms.button :href="route('panel.gastos.index')" variant="outline" icon="arrow_back">
-                            {{ __('finanzas.gastos.volver') }}
-                        </x-atoms.button>
-                    </x-slot:actions>
-                </x-organisms.page-header>
+            @if (session('estado'))
+                <x-molecules.alert-strip variant="success" icon="check_circle">
+                    {{ session('estado') }}
+                </x-molecules.alert-strip>
+            @endif
 
+            <x-molecules.form-layout>
                 <x-molecules.form-section
                     :title="__('finanzas.gastos.seccion_datos')"
-                    :count="__('finanzas.gastos.campos_contador', ['cantidad' => 10])"
+                    :count="trans_choice('finanzas.gastos.campos_contador', 5, ['cantidad' => 5])"
                 >
                     <x-atoms.date
                         name="fecha"
@@ -132,12 +143,19 @@
                         name="precio_unitario"
                         :label="__('finanzas.gastos.campo_precio_unitario')"
                         :value="$precioUnitario"
+                        :suffix="__('finanzas.gastos.unidad_moneda')"
+                        :help="__('finanzas.gastos.campo_precio_unitario_ayuda')"
                         min="0.01"
                         step="0.01"
                         required
                         :error="$errors->first('precio_unitario')"
                     />
+                </x-molecules.form-section>
 
+                <x-molecules.form-section
+                    :title="__('finanzas.gastos.seccion_imputacion')"
+                    :count="trans_choice('finanzas.gastos.campos_contador', 4, ['cantidad' => 4])"
+                >
                     <x-atoms.select
                         name="equipo_trabajo_id"
                         :label="__('finanzas.gastos.campo_equipo')"
@@ -174,17 +192,23 @@
                         :help="__('finanzas.gastos.campo_campania_ayuda')"
                         :error="$errors->first('campania_id')"
                     />
+                </x-molecules.form-section>
 
-                    <div class="ag-form-section__field--full">
-                        <x-atoms.input
-                            type="file"
-                            name="comprobante"
-                            :label="__('finanzas.gastos.campo_comprobante')"
-                            accept="image/jpeg,image/png,application/pdf"
-                            :help="__('finanzas.gastos.campo_comprobante_ayuda')"
-                            :error="$errors->first('comprobante')"
-                        />
-                    </div>
+                <x-molecules.form-section
+                    :title="__('finanzas.gastos.seccion_comprobante')"
+                    :count="trans_choice('finanzas.gastos.campos_contador', 1, ['cantidad' => 1])"
+                >
+                    <x-molecules.file-field
+                        class="ag-form-section__field--full"
+                        name="comprobante"
+                        accept="image/jpeg,image/png,application/pdf"
+                        :label="__('finanzas.gastos.campo_comprobante')"
+                        :help="__('finanzas.gastos.campo_comprobante_ayuda')"
+                        :replace-label="__('finanzas.gastos.campo_comprobante_elegir')"
+                        :error="$errors->first('comprobante')"
+                    >
+                        <x-atoms.icon name="receipt_long" size="lg" />
+                    </x-molecules.file-field>
                 </x-molecules.form-section>
 
                 <x-organisms.form-actions-bar :status="__('finanzas.gastos.estado_form')">
@@ -197,7 +221,7 @@
                         </x-atoms.button>
                     </x-slot:actions>
                 </x-organisms.form-actions-bar>
-            </form>
-        </div>
+            </x-molecules.form-layout>
+        </form>
     </x-templates.panel-layout>
 </x-templates.panel-shell>
