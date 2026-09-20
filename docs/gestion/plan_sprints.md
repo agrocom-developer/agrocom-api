@@ -555,6 +555,25 @@ en la rama `feature/orden-ficha`.*
 
 ---
 
+## Sprint 24 — Cuadrillas y estadías en hacienda (ronda del dueño, 19/9/2026)
+
+*Objetivo: que las dos pantallas de Operación que solo mostraban su vacío —«Escuadras»
+(mal llamada) y «Estadías en hacienda»— tengan listado y formulario con el mismo
+patrón del módulo Comercial, y que la oficina pueda armar una cuadrilla completa y
+registrar dónde estuvo y dónde durmió. Cambia tres reglas (adenda del ADR 0015): el
+término visible pasa a ser **cuadrilla**, el estado de la cuadrilla deja de ser un
+campo del formulario y pasa por su tabla de transiciones, y la estadía también la
+registra la oficina. Implementada en la rama `feature/cuadrillas-estadias`.*
+
+| ID | Historia / tarea | CA esenciales | Est. |
+|---|---|---|---|
+| HU-101 | Como **encargado**, quiero armar cada cuadrilla con su piloto, su ayudante, su dron y todo lo que lleva al campo, para saber quién sale con qué y asignarla a órdenes de trabajo y estadías | **1) Término y menú:** «Cuadrillas» reemplaza a «Escuadras»/«Equipos de trabajo» en todo lo visible; URL `/panel/cuadrillas` (`panel.cuadrillas.*`); el ítem vive en Operación (se MUEVE la fila de Recursos) y el reparto por orden sale del menú (`panel.reparto-cuadrillas.*`, queda como ficha de la orden). En el código sigue siendo `equipo_trabajo`. **2) Listado** (§6.2): filtros Base y Estado en `filter-panel`, buscador, `index-table` con #, código, nombre, integrantes (piloto y ayudantes), dron, base, vigencia, estado y `row-actions` (Ver, Editar, Eliminar con confirmación). **3) Alta de una sola vez** (`ArmarCuadrilla`, una transacción): secciones Identificación, Vigencia, Integrantes (piloto y ayudante obligatorios, segundo ayudante opcional, nadie en dos puestos), Equipamiento (dron obligatorio; camioneta, generador y baterías opcionales) y Accesorios (vacío explicativo). Cada select es un input-group con acceso rápido «Nuevo» y memento de retorno; el borrador no se pierde al ir y volver. **4) Ficha de edición:** pasos de estado Activa ⇄ Inactiva (`TransicionesEquipoTrabajo`, `estado` nunca es un campo); Integrantes, Equipamiento y Accesorios como tablas de detalle paginadas dentro de su sección, con «Agregar» por diálogo (equipamiento: tipo → recurso del sistema; accesorio: del catálogo o nuevo) y «Finalizar»/«Quitar» por fila; resumen relacionado con Estadías, Órdenes de trabajo y Base. **5) Datos:** baterías como cuarto tipo de recurso (la cantidad es cuántas tiene vigentes); catálogo `per_accesorios` + `per_equipo_accesorios`. **6) Entre módulos solo por contrato:** `Operaciones\Contratos\LecturaDrones`, `LecturaResumenCuadrilla` y `Mantenimiento\Contratos\LecturaEquipamiento` reemplazan al `DB::table` ajeno. | 3 d |
+| HU-102 | Como **encargado**, quiero registrar y cerrar desde el panel la estadía de cada cuadrilla en cada hacienda, con dónde se alojó, para justificar los días y el viático sin esperar a la app de campo | **1) Regla nueva:** la estadía ya no es solo lectura en el panel — alta, edición (solo en curso), finalización y baja, con `uuid_cliente` generado en el servidor; el sync sigue igual y acepta `tipo_alojamiento` opcional. **2) Tipo de alojamiento:** en la hacienda / en el pueblo más cercano / camping en la propiedad; obligatorio desde el panel. **3) Listado** (§6.2): KPI de cabecera con `stat-card` (en curso, cuadrillas en hacienda, finalizadas, días efectivos) que responden al filtro; filtros (fechas, cuadrilla, propiedad, estado, alojamiento) pegados a la tabla; columnas con alojamiento, días y estado; acciones Editar/Ver, Finalizar (diálogo con fecha de salida) y Eliminar; desglose de días por cuadrilla y por propiedad DEBAJO de la tabla en `summary-card`. El vacío no lleva botón. **4) Formulario:** secciones Cuadrilla y lugar / Fechas / Alojamiento y traslado; accesos rápidos «Nueva» a cuadrilla y propiedad; precarga por `?equipo_trabajo_id=`/`?propiedad_id=`; la cuadrilla no se cambia en edición. **5) Estado derivado de `salida`** (En curso → Finalizada, `TransicionesEstadia`): pasos `step-arrow`, el paso abre el diálogo con la salida; una finalizada queda de solo lectura. **6) Guardas:** cuadrilla vigente a la entrada, salida posterior a la entrada, una sola estadía en curso por cuadrilla. **7) Permisos nuevos** `operaciones.estadia.crear/.editar/.eliminar`. | 2 d |
+
+**Total: 5 d · 0 pantallas nuevas de menú (rehace Cuadrillas y Estadías; crea la molécula `state-transition`)**
+
+---
+
 ## Alcance total del sistema
 
 | Bloque | Días | Pantallas de menú | Estado |

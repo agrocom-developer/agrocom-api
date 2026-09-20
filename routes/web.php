@@ -28,12 +28,12 @@ use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\OrdenesMante
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\PlanesMantenimientoController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\VehiculosController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\AlertasController;
-use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\RepartoCuadrillasController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\DronesController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\EstadiasHaciendaController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\OrdenesController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\OrdenesTrabajoController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\PausasController;
+use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\RepartoCuadrillasController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\ReportesTecnicosController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\TrabajosController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\ValidacionSesionesController;
@@ -412,12 +412,32 @@ Route::middleware('auth:interno')->group(function () {
         Route::post('/panel/pausas', [PausasController::class, 'store'])
             ->name('panel.pausas.store');
 
-        // HU-51 (tarea 74): estadías del equipo en cada hacienda, solo
-        // lectura — se cargan desde la app de campo, nunca desde el panel.
-        // Permiso `operaciones.estadia.ver` verificado DENTRO del
-        // controlador, mismo criterio que las rutas de arriba.
+        // HU-51 (tarea 74): estadías del equipo en cada hacienda. Reforma
+        // 19/9/2026: la oficina también registra, edita, finaliza y da de
+        // baja estadías desde el panel (antes era de solo lectura). Permisos
+        // `operaciones.estadia.ver`/`.crear`/`.editar`/`.eliminar`
+        // verificados DENTRO del controlador, mismo criterio que las rutas
+        // de arriba.
         Route::get('/panel/estadias', [EstadiasHaciendaController::class, 'index'])
             ->name('panel.estadias.index');
+
+        Route::get('/panel/estadias/crear', [EstadiasHaciendaController::class, 'create'])
+            ->name('panel.estadias.create');
+
+        Route::post('/panel/estadias', [EstadiasHaciendaController::class, 'store'])
+            ->name('panel.estadias.store');
+
+        Route::get('/panel/estadias/{estadia}/editar', [EstadiasHaciendaController::class, 'edit'])
+            ->name('panel.estadias.edit');
+
+        Route::put('/panel/estadias/{estadia}', [EstadiasHaciendaController::class, 'update'])
+            ->name('panel.estadias.update');
+
+        Route::post('/panel/estadias/{estadia}/finalizar', [EstadiasHaciendaController::class, 'finalizar'])
+            ->name('panel.estadias.finalizar');
+
+        Route::delete('/panel/estadias/{estadia}', [EstadiasHaciendaController::class, 'destroy'])
+            ->name('panel.estadias.destroy');
 
         // HU-19 (tarea 26): bandeja de alertas por excepción. Permiso
         // `operaciones.alerta.ver` gatea la pantalla,
@@ -834,6 +854,12 @@ Route::middleware('auth:interno')->group(function () {
         Route::put('/panel/cuadrillas/{equipoTrabajo}', [CuadrillasController::class, 'update'])
             ->name('panel.cuadrillas.update');
 
+        // Tarea "cuadrillas-estadias" (19/9/2026): máquina de estados
+        // `activo ⇄ inactivo` (`step-arrow` en la ficha de edición) — pasa por
+        // `CambiarEstadoEquipoTrabajo`, nunca un `estado = ...` suelto.
+        Route::post('/panel/cuadrillas/{equipoTrabajo}/estado', [CuadrillasController::class, 'cambiarEstado'])
+            ->name('panel.cuadrillas.cambiar-estado');
+
         Route::delete('/panel/cuadrillas/{equipoTrabajo}', [CuadrillasController::class, 'destroy'])
             ->name('panel.cuadrillas.destroy');
 
@@ -848,6 +874,15 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::delete('/panel/cuadrillas/{equipoTrabajo}/recursos/{recurso}', [CuadrillasController::class, 'desasignarRecurso'])
             ->name('panel.cuadrillas.recursos.destroy');
+
+        // Tarea "cuadrillas-estadias" (19/9/2026): accesorios (machete,
+        // palas, linternas…) que lleva la cuadrilla, con cantidad — sin
+        // vigencia propia, a diferencia de integrantes/recursos.
+        Route::post('/panel/cuadrillas/{equipoTrabajo}/accesorios', [CuadrillasController::class, 'agregarAccesorio'])
+            ->name('panel.cuadrillas.accesorios.store');
+
+        Route::delete('/panel/cuadrillas/{equipoTrabajo}/accesorios/{accesorio}', [CuadrillasController::class, 'quitarAccesorio'])
+            ->name('panel.cuadrillas.accesorios.destroy');
 
         // HU-36 (tarea 52): catálogo de repuestos con stock por base y
         // alerta de mínimo. Módulo nuevo `Inventario` (ADR 0011, extensión

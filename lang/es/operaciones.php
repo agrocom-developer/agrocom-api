@@ -877,45 +877,181 @@ return [
     ],
 
     // Pantalla de panel "Operación › Estadías en hacienda" (HU-51, tarea 74):
-    // consulta de estadías del equipo en cada hacienda — entrada/salida del
-    // equipo cargada desde la app de campo vía POST /api/sync, con filtro por
-    // rango de fechas, equipo de trabajo y campo. Totales de días efectivos
-    // por equipo y por propiedad. Solo lectura.
+    // consulta de estadías del equipo en cada hacienda, con filtro por rango
+    // de fechas, equipo de trabajo, propiedad, estado y tipo de alojamiento.
+    // Totales de días efectivos por equipo y por propiedad. Reforma
+    // 19/9/2026: la oficina también registra, edita, finaliza y da de baja
+    // estadías desde el panel (antes era de solo lectura).
     'estadias' => [
         'titulo' => 'Estadías en hacienda',
         'subtitulo' => 'Entrada y salida de cada cuadrilla en cada propiedad, con sus tiempos efectivos.',
+        'nuevo' => 'Registrar estadía',
         'vacio_titulo' => 'Sin estadías registradas',
-        'vacio_detalle' => 'Las estadías se registran automáticamente desde la app de campo cuando el equipo entra o sale de una propiedad. Vuelve a esta pantalla cuando se complete el primer registro.',
-        'filtro_vacio' => 'Ninguna estadía coincide con estos filtros.',
+        'vacio_detalle' => 'Una estadía dice qué cuadrilla estuvo en qué propiedad, desde cuándo, hasta cuándo y dónde se alojó. Registra la primera cuando una cuadrilla llegue a una hacienda.',
+        'filtro_vacio_titulo' => 'Sin resultados',
+        'filtro_vacio_detalle' => 'Ninguna estadía coincide con estos filtros.',
         'filtro_desde' => 'Desde',
         'filtro_placeholder_desde' => 'Fecha de inicio…',
         'filtro_hasta' => 'Hasta',
         'filtro_placeholder_hasta' => 'Fecha de fin…',
         'filtro_equipo' => 'Cuadrilla',
-        'filtro_campo' => 'Propiedad',
+        'filtro_propiedad' => 'Propiedad',
+        'filtro_estado' => 'Estado',
+        'filtro_alojamiento' => 'Alojamiento',
         'filtro_todos' => 'Todos',
+        'filtro_busqueda_placeholder' => 'Buscar por cuadrilla, propiedad u observación…',
         'filtrar' => 'Filtrar',
         'limpiar_filtros' => 'Limpiar filtros',
-        'col_equipo' => 'Equipo',
-        'col_campo' => 'Propiedad',
-        'col_vehiculo' => 'Vehículo',
+        'col_indice' => 'Nro',
+        'col_cuadrilla' => 'Cuadrilla',
+        'col_propiedad' => 'Propiedad',
+        'col_alojamiento' => 'Alojamiento',
         'col_entrada' => 'Entrada',
         'col_salida' => 'Salida',
-        'en_curso' => 'En curso',
-        'sin_vehiculo' => '—',
-        'totales_equipo' => 'Días efectivos por equipo',
-        'totales_campo' => 'Días efectivos por propiedad',
-        'dias' => 'días',
+        'col_dias' => 'Días',
+        'col_estado' => 'Estado',
+        'col_acciones' => 'Acciones',
+        // Forma corta de cada alojamiento, para la columna de la tabla.
+        'alojamiento_corto' => [
+            'hacienda' => 'Hacienda',
+            'pueblo' => 'Pueblo',
+            'camping' => 'Camping',
+        ],
+        'alojamiento_sin_registrar' => 'Sin registrar',
+        // Cifras de cabecera del listado.
+        'kpi_en_curso' => 'Estadías en curso',
+        'kpi_cuadrillas_en_campo' => 'Cuadrillas en hacienda',
+        'kpi_finalizadas' => 'Estadías finalizadas',
+        'kpi_dias_efectivos' => 'Días efectivos',
+        'kpi_dias_sufijo' => 'días',
+        'kpi_dias_pie' => 'Suma de las estadías finalizadas',
+        'totales_equipo' => 'Días efectivos por cuadrilla',
+        'totales_propiedad' => 'Días efectivos por propiedad',
+        'dias_valor' => ':cantidad días',
+        'editar_accion' => 'Editar',
+        'ver_accion' => 'Ver',
+        'finalizar_accion' => 'Finalizar',
+        'eliminar_accion' => 'Eliminar',
+        'confirmar_eliminar_titulo' => 'Eliminar estadía',
+        'confirmar_baja' => '¿Confirmas la baja de esta estadía?',
         'paginacion_aria' => 'Paginación de estadías',
         'paginacion_anterior' => 'Anterior',
         'paginacion_siguiente' => 'Siguiente',
         'paginacion_info' => 'Página :actual de :total',
+
+        // Alta (`panel.estadias.create`).
+        'titulo_crear' => 'Registrar estadía',
+        'subtitulo_form' => 'Entrada de la cuadrilla en la propiedad, alojamiento y observaciones.',
+        'seccion_cuadrilla_lugar' => 'Cuadrilla y lugar',
+        'seccion_fechas' => 'Fechas',
+        'seccion_alojamiento' => 'Alojamiento y traslado',
+        'campos_contador' => ':cantidad campos',
+        'campo_cuadrilla' => 'Cuadrilla',
+        'campo_cuadrilla_placeholder' => 'Elige una cuadrilla…',
+        'campo_cuadrilla_ayuda' => 'Solo figuran las cuadrillas vigentes. Una cuadrilla no puede tener dos estadías en curso a la vez.',
+        'campo_cuadrilla_nueva' => 'Nueva cuadrilla',
+        'campo_propiedad' => 'Propiedad',
+        'campo_propiedad_placeholder' => 'Elige una propiedad…',
+        'campo_propiedad_nueva' => 'Nueva propiedad',
+        'campo_propiedad_ayuda' => 'La hacienda del cliente a la que llegó la cuadrilla.',
+        'accion_nueva_corto' => 'Nueva',
+        'campo_entrada' => 'Entrada',
+        'campo_entrada_ayuda' => 'Fecha y hora de llegada de la cuadrilla.',
+        'campo_salida' => 'Salida',
+        'campo_salida_ayuda' => 'Déjala vacía si la cuadrilla sigue en la hacienda; la cierras después con el paso «Finalizada».',
+        'campo_alojamiento' => 'Tipo de alojamiento',
+        'campo_alojamiento_placeholder' => 'Elige dónde se alojó…',
+        'campo_alojamiento_ayuda' => 'Dónde duerme la cuadrilla esos días: explica el viático de la estadía.',
+        'campo_vehiculo' => 'Vehículo',
+        'campo_vehiculo_placeholder' => 'Elige un vehículo…',
+        'campo_vehiculo_ayuda' => 'Camioneta con la que llegó.',
+        'campo_observacion' => 'Observación',
+        'campo_observacion_placeholder' => 'Nombre del pueblo u hospedaje, comidas incluidas…',
+        'campo_observacion_ayuda' => 'Detalles sobre dónde se alojó la cuadrilla.',
+        'volver' => 'Volver a estadías',
+        'estado_form' => 'Los cambios se guardan al confirmar.',
+        'estado_form_solo_lectura' => 'Estadía finalizada: solo lectura.',
+        'creada' => 'Estadía registrada correctamente.',
+
+        // Edición (`panel.estadias.edit`).
+        'titulo_editar' => 'Editar estadía',
+        'actualizada' => 'Estadía actualizada correctamente.',
+        'campo_cuadrilla_deshabilitada_ayuda' => 'La cuadrilla de una estadía no se cambia.',
+        'solo_lectura_titulo' => 'Estadía finalizada',
+        'solo_lectura_detalle' => 'Una estadía finalizada ya no se edita. Si hay un error, dala de baja y regístrala de nuevo.',
+
+        // Finalización (`panel.estadias.finalizar`).
+        'confirmar_finalizar_titulo' => 'Finalizar estadía',
+        'confirmar_finalizar' => 'Indica cuándo se retiró la cuadrilla de la propiedad. Una estadía finalizada ya no se edita.',
+        'campo_salida_finalizar_ayuda' => 'Tiene que ser posterior a la entrada.',
+        'estado_cambio_de_a' => 'Cambio de estado: de :desde a :hacia',
+        'estado_pasos_aria' => 'Estado de la estadía',
+        'campo_salida_finalizar' => 'Fecha y hora de salida',
+        'finalizada' => 'Estadía finalizada correctamente.',
+
+        // Mensajes de validación de los formularios de alta/edición/cierre.
+        'error_equipo_requerido' => 'Elige la cuadrilla.',
+        'error_equipo_invalido' => 'La cuadrilla elegida no existe.',
+        'error_propiedad_requerida' => 'Elige la propiedad.',
+        'error_propiedad_invalida' => 'La propiedad elegida no existe.',
+        'error_entrada_requerida' => 'Indica la fecha y hora de entrada.',
+        'error_alojamiento_requerido' => 'Elige dónde se alojó la cuadrilla.',
+        'error_alojamiento_invalido' => 'El tipo de alojamiento elegido no existe.',
+        'error_vehiculo_invalido' => 'El vehículo elegido no existe.',
+        'error_salida_requerida' => 'Indica la fecha y hora de salida.',
+        'eliminada' => 'Estadía eliminada correctamente.',
+
+        // Estado (`Dominio\EstadoEstadia`, derivado de `salida`), para los
+        // pasos de `molecules/step-arrow` de la ficha de edición (§6.3.4 de
+        // la guía de pantalla) y el badge del listado.
+        'estado' => [
+            'en_curso' => 'En curso',
+            'finalizada' => 'Finalizada',
+        ],
+        'estado_ayuda' => [
+            'en_curso' => 'La estadía está en curso: la cuadrilla sigue en la propiedad. Puedes corregir sus datos, y cuando se retire, regístrale la salida para pasarla a «:paso».',
+            'finalizada' => 'La estadía está finalizada: sus días ya cuentan para justificar gastos, así que no admite más cambios. Si hay un error, dala de baja y regístrala de nuevo.',
+        ],
+
+        // Dónde se aloja la cuadrilla (`Dominio\TipoAlojamiento`).
+        'alojamiento' => [
+            'hacienda' => 'En la hacienda',
+            'pueblo' => 'En el pueblo más cercano',
+            'camping' => 'Camping en la propiedad',
+        ],
+
+        // Resumen relacionado del aside de la ficha de edición (§6.3.1 de la
+        // guía de pantalla): cuadrilla, propiedad y duración.
+        'aside_cuadrilla_titulo' => 'Cuadrilla',
+        'aside_cuadrilla_codigo' => 'Cuadrilla',
+        'aside_cuadrilla_vacio_titulo' => 'Cuadrilla no encontrada',
+        'aside_cuadrilla_vacio_detalle' => 'La cuadrilla de esta estadía ya no está disponible.',
+        'aside_cuadrilla_accion' => 'Ver cuadrilla',
+        'aside_cuadrilla_rol' => [
+            'piloto' => 'Piloto',
+            'auxiliar' => 'Ayudante',
+        ],
+        'aside_propiedad_titulo' => 'Propiedad',
+        'aside_propiedad_nombre' => 'Propiedad',
+        'aside_propiedad_cliente' => 'Cliente',
+        'aside_propiedad_vacio_titulo' => 'Propiedad no encontrada',
+        'aside_propiedad_vacio_detalle' => 'La propiedad de esta estadía ya no está disponible.',
+        'aside_propiedad_accion' => 'Ver propiedad',
+        'aside_duracion_titulo' => 'Duración',
+        'aside_duracion_entrada' => 'Entrada',
+        'aside_duracion_salida' => 'Salida',
+        'aside_duracion_dias' => 'Días efectivos',
+        'aside_duracion_en_curso' => 'En curso desde hace',
+        'aside_duracion_en_curso_valor' => '{0} hoy|{1} :dias día|[2,*] :dias días',
     ],
 
     // Mensajes de error.
     'errores' => [
         'dron_duplicado' => "Ya existe un dron activo con el identificador ':identificador'.",
         'equipo_trabajo_no_vigente' => 'La cuadrilla #:id no está vigente hoy.',
+        'estadia_abierta_existente' => 'La cuadrilla #:id ya tiene una estadía en curso. Finalízala antes de registrar una nueva.',
+        'estadia_salida_anterior_a_entrada' => 'La salida de la estadía debe ser posterior a su entrada.',
+        'estadia_ya_finalizada' => 'La estadía #:id ya está finalizada: no se edita ni se vuelve a finalizar. Si hay un error, dala de baja y regístrala de nuevo.',
         'firma_evidencia_invalida' => 'La evidencia de firma no existe o no es del tipo firma_acta.',
         'firma_evidencia_reutilizada' => 'La evidencia #:id ya respalda la firma de otra acta.',
         'acta_ya_firmada_con_otra_evidencia' => 'El acta #:id ya está firmada con otra evidencia.',

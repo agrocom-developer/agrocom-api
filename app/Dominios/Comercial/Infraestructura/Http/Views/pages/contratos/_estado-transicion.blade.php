@@ -14,15 +14,13 @@
     $tonoPorEstado ??= \App\Dominios\Comercial\Infraestructura\Http\PasosDeContrato::TONO_POR_ESTADO;
 @endphp
 
-<div
-    class="ag-contratos-estado__transicion"
-    role="group"
-    aria-label="{{ __('comercial.contratos.estado_cambio_de_a', [
+<x-molecules.state-transition
+    :from-label="__('comercial.contrato.estado.'.$desde)"
+    :from-tone="$tonoPorEstado[$desde]"
+    :to-label="__('comercial.contrato.estado.'.$hacia)"
+    :to-tone="$tonoPorEstado[$hacia]"
+    :label="__('comercial.contratos.estado_cambio_de_a', [
         'desde' => __('comercial.contrato.estado.'.$desde),
         'hacia' => __('comercial.contrato.estado.'.$hacia),
-    ]) }}"
->
-    <x-atoms.badge :variant="$tonoPorEstado[$desde]">{{ __('comercial.contrato.estado.'.$desde) }}</x-atoms.badge>
-    <x-atoms.icon name="arrow_forward" size="sm" class="ag-contratos-estado__flecha" />
-    <x-atoms.badge :variant="$tonoPorEstado[$hacia]">{{ __('comercial.contrato.estado.'.$hacia) }}</x-atoms.badge>
-</div>
+    ])"
+/>

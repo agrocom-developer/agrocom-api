@@ -4,6 +4,8 @@ namespace App\Dominios\Operaciones\Infraestructura\Eloquent;
 
 use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
 use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
+use App\Dominios\Operaciones\Dominio\EstadoEstadia;
+use App\Dominios\Operaciones\Dominio\TipoAlojamiento;
 use Carbon\CarbonImmutable;
 
 /**
@@ -19,12 +21,28 @@ use Carbon\CarbonImmutable;
  * FK + entero plano (ADR 0003, regla 3) — sin relaciones Eloquent cruzadas.
  *
  * Sin columna `estado`: `salida === null` significa "en curso" (ver docblock
- * de la migración) — no hay máquina de estados de negocio acá (invariante 7
- * de CLAUDE.md no aplica, mismo criterio que `man_vehiculos.estado`).
+ * de la migración) — no hay máquina de estados FÍSICA acá (mismo criterio
+ * descriptivo que `man_vehiculos.estado`, sin CHECK ni columna propia). Desde
+ * la reforma del 19/9/2026 (la oficina también registra/edita/finaliza/da de
+ * baja estadías desde el panel, no solo la app de campo) SÍ hay una máquina
+ * de estados de NEGOCIO sobre ese valor derivado — invariante 7 de
+ * CLAUDE.md, ver {@see EstadoEstadia} y
+ * `Dominio\MaquinaEstados\TransicionesEstadia` — resuelta por
+ * `Aplicacion/FinalizarEstadiaHacienda`, nunca por un `$estadia->salida = ...`
+ * suelto en un controller.
+ *
+ * `tipo_alojamiento` (mismo pedido del dueño, 19/9/2026): dónde se aloja la
+ * cuadrilla — ver {@see TipoAlojamiento}. Nullable porque lo que llega por
+ * sync de una app de campo vieja no lo trae todavía (ver docblock de la
+ * migración `add_tipo_alojamiento_a_ope_estadias_hacienda_table`); desde el
+ * panel es obligatorio (`Aplicacion/RegistrarEstadiaHacienda`).
  *
  * `cierre_uuid_cliente`: `uuid_cliente` del EVENTO de salida, distinto del de
  * entrada — mismo mecanismo de idempotencia de una mutación sobre fila
  * existente que `Trabajo::$cierre_uuid_cliente`/`Sesion::$cierre_uuid_cliente`.
+ * Una estadía registrada o finalizada desde el panel también genera el suyo
+ * (`(string) Str::uuid()`), mismo criterio que `CrearOrdenTrabajo` para los
+ * trabajos que nacen en el panel — no hay dispositivo que lo traiga.
  *
  * `RegistraBitacora` (invariante 9 de CLAUDE.md): igual que `Trabajo`/`Sesion`,
  * la entrada y la salida de un equipo son mutaciones de negocio auditables.
@@ -36,6 +54,7 @@ use Carbon\CarbonImmutable;
  * @property CarbonImmutable $entrada
  * @property CarbonImmutable|null $salida
  * @property int|null $vehiculo_id
+ * @property TipoAlojamiento|null $tipo_alojamiento
  * @property string|null $observacion
  * @property string|null $cierre_uuid_cliente
  */
@@ -54,6 +73,7 @@ class EstadiaHacienda extends ModeloDominio
         'entrada',
         'salida',
         'vehiculo_id',
+        'tipo_alojamiento',
         'observacion',
         'cierre_uuid_cliente',
     ];
@@ -64,6 +84,13 @@ class EstadiaHacienda extends ModeloDominio
         return [
             'entrada' => 'immutable_datetime',
             'salida' => 'immutable_datetime',
+            'tipo_alojamiento' => TipoAlojamiento::class,
         ];
+    }
+
+    /** Estado derivado de `salida` (ver docblock de la clase) — nunca una columna propia. */
+    public function estado(): EstadoEstadia
+    {
+        return $this->salida === null ? EstadoEstadia::EnCurso : EstadoEstadia::Finalizada;
     }
 }

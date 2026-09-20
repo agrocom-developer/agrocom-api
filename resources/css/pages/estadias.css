@@ -1,143 +1,55 @@
 /*
- * Page: estadias/index (app/Dominios/Operaciones/Infraestructura/Http/Views/pages/estadias/index.blade.php)
- * CSS propio de ESTA página (ver convención en resources/css/pages/index.css).
- * Cada fila de estadía es una grilla de 5 columnas. La sección de totales
- * (días efectivos por equipo y por campo) es una grilla bidimensional. Todo
- * color y medida por token (CLAUDE.md invariante 11).
+ * Pages: estadias/index, create, edit
+ * (app/Dominios/Operaciones/Infraestructura/Http/Views/pages/estadias/)
+ *
+ * El grueso viene del catálogo (index-table, filter-panel, stat-card,
+ * pagination, form-section, state-transition). Acá solo lo propio de la
+ * página: la grilla de totales de días efectivos. Ninguna regla de esta hoja
+ * toca por dentro a un componente del catálogo (§3 de la guía de pantalla):
+ * todo el CSS va en un mismo bundle, así que hacerlo cambia el componente en
+ * TODAS las pantallas, no solo en esta. Todo por token (invariante 11).
  */
 
-.ag-estadias__aviso {
-    margin-top: var(--ag-space-4);
+.ag-estadias,
+.ag-estadias-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ag-space-5);
 }
 
-.ag-estadias__filtros {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--ag-space-4);
-    align-items: flex-end;
-    margin-top: var(--ag-space-4);
+.ag-estadias__atenuado {
+  color: var(--ag-color-text-muted);
+  font-size: var(--ag-font-size-sm);
 }
 
-.ag-estadias__totales {
-    margin-top: var(--ag-space-5);
-    padding: var(--ag-space-4);
-    border: 1px solid var(--ag-color-border-card);
-    border-radius: var(--ag-radius-md);
-    background-color: var(--ag-color-surface-card);
+.ag-estadias__mono {
+  font-family: var(--ag-font-family-mono);
 }
 
-.ag-estadias__totales-seccion {
-    margin-bottom: var(--ag-space-4);
+/* KPI del listado: franja fija bajo la cabecera, mismo patrón que
+   `.ag-ordenes-detalle__kpis`. Las tarjetas son `molecules/stat-card`; acá
+   solo va la grilla. Consulta el ancho de SU contenedor, no el del viewport:
+   el contenido del panel cambia de ancho con el sidebar. */
+.ag-estadias {
+  container: ag-estadias / inline-size;
 }
 
-.ag-estadias__totales-seccion:last-child {
-    margin-bottom: 0;
+.ag-estadias__kpis,
+.ag-estadias__desglose {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--ag-space-4);
 }
 
-.ag-estadias__totales-titulo {
-    margin: 0 0 var(--ag-space-3) 0;
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-sm);
-    font-weight: var(--ag-font-weight-medium);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+@container ag-estadias (min-width: 36rem) {
+  .ag-estadias__kpis,
+  .ag-estadias__desglose {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
-.ag-estadias__totales-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
-    gap: var(--ag-space-3);
-}
-
-.ag-estadias__total-item {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-2);
-    padding: var(--ag-space-3);
-    border: 1px solid var(--ag-color-border-row);
-    border-radius: var(--ag-radius-sm);
-    background-color: var(--ag-color-surface-default);
-}
-
-.ag-estadias__total-etiqueta {
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-xs);
-    font-weight: var(--ag-font-weight-medium);
-}
-
-.ag-estadias__total-valor {
-    color: var(--ag-color-text);
-    font-size: var(--ag-font-size-lg);
-    font-weight: var(--ag-font-weight-medium);
-    font-family: var(--ag-font-family-mono);
-}
-
-.ag-estadias__total-unidad {
-    color: var(--ag-color-text-faint);
-    font-size: var(--ag-font-size-xs);
-}
-
-.ag-estadias__tabla {
-    margin-top: var(--ag-space-5);
-    border: 1px solid var(--ag-color-border-card);
-    border-radius: var(--ag-radius-md);
-    background-color: var(--ag-color-surface-card);
-    overflow: hidden;
-}
-
-.ag-estadias__head,
-.ag-estadias__fila {
-    display: grid;
-    grid-template-columns: 1.2fr 1.2fr 1fr 1.3fr 1.3fr;
-    gap: var(--ag-space-4);
-    align-items: center;
-    padding: var(--ag-space-3) var(--ag-space-4);
-}
-
-.ag-estadias__head {
-    background-color: var(--ag-color-bg-table-head);
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-xs);
-    font-weight: var(--ag-font-weight-medium);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.ag-estadias__fila {
-    border-top: 1px solid var(--ag-color-border-row);
-    color: var(--ag-color-text);
-    font-size: var(--ag-font-size-sm);
-}
-
-.ag-estadias__equipo {
-    font-family: var(--ag-font-family-mono);
-    font-weight: var(--ag-font-weight-medium);
-}
-
-.ag-estadias__paginacion {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--ag-space-4);
-    margin-top: var(--ag-space-4);
-}
-
-.ag-estadias__paginacion-info {
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-sm);
-}
-
-@media (max-width: 992px) {
-    .ag-estadias__head {
-        display: none;
-    }
-
-    .ag-estadias__fila {
-        grid-template-columns: 1fr;
-        gap: var(--ag-space-1);
-    }
-
-    .ag-estadias__totales-grid {
-        grid-template-columns: 1fr;
-    }
+@container ag-estadias (min-width: 60rem) {
+  .ag-estadias__kpis {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }

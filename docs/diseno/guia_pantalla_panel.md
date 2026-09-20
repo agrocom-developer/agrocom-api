@@ -178,6 +178,8 @@ Hasta el 15/9/2026 eran dos piezas (`alert-strip` para "el filtro no trae nada",
 @endif
 ```
 
+**El vacío de un listado no lleva botón (19/9/2026, criterio del dueño sobre Estadías en hacienda).** En una página `index`, el `empty-state` es solo ícono, título y detalle, en sus dos variantes: la acción de alta ya está en la cabecera —el único botón sólido sobre el pliegue— y repetirla dentro del vacío rompe la pieza. Que el componente tenga el slot `action` no lo habilita acá: ese slot existe para el vacío COMPACTO del resumen relacionado de una ficha de edición (§6.3.1), que no tiene cabecera propia donde poner esa acción.
+
 Migrado en `seguridad::pages.usuarios.index` y `seguridad::pages.bitacora.index` (piloto, 15/9/2026); las pantallas que todavía usan `alert-strip` para este caso (`comercial::pages.reportes-comerciales.index`, `personal::pages.personas.desempeno`, y cualquier otra del rollout de filtros) migran al mismo patrón cuando les toque su pasada.
 
 ---
