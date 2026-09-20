@@ -2,10 +2,23 @@
     Page: combustible/create (GET /panel/combustible/crear, panel.combustible.create)
     Alta de una carga de combustible (HU-35, tarea 49; reescrita por la tarea
     73, HU-50) — arquetipo Formulario, §6.3 de
-    docs/diseno/guia_pantalla_panel.md. Sin partial `_formulario` compartido
-    con una edición: no existe caso de uso de edición (invariante de esta
-    tarea, ver `Aplicacion/CrearCombustible`) — este archivo ES el
+    docs/diseno/guia_pantalla_panel.md. Homogeneizado en la tarea 118 con
+    `form-layout` (sin aside: ver más abajo), dos `form-section` y litros y
+    monto con su unidad dentro del campo. Sin partial `_formulario`
+    compartido con una edición: no existe caso de uso de edición (invariante
+    de esta tarea, ver `Aplicacion/CrearCombustible`) — este archivo ES el
     formulario completo.
+
+    Sin aside: una carga, una vez registrada, es un asiento inmutable, y un
+    registro que todavía no existe no tiene nada relacionado que resumir
+    (guía §6.3.1). Sin `edit()` no hay a dónde quedarse: tras guardar se vuelve
+    al listado con su aviso (guía §6.3.2).
+
+    La primera sección reúne lo que decide qué recurso se ofrece (fecha y
+    cuadrilla, que recargan la pantalla) y el recurso mismo, pegado a ellos:
+    una sección que depende de un dato va junto a él (guía §6.3.5). La base
+    va después del recurso para que la recarga no le borre lo que ya se
+    eligió.
 
     Datos esperados (ver CombustibleController::create()): la cáscara de
     CascaraPanel, más:
@@ -53,31 +66,35 @@
         :version="$version"
         :vista-actual="__('finanzas.combustible.titulo_crear')"
     >
-        <div class="ag-combustible-form-page">
-            <form
-                method="POST"
-                action="{{ route('panel.combustible.store') }}"
-                class="ag-combustible-form"
-                novalidate
-                data-ag-combustible-form
-                data-ag-combustible-create-url="{{ route('panel.combustible.create') }}"
+        <form
+            method="POST"
+            action="{{ route('panel.combustible.store') }}"
+            class="ag-combustible-form"
+            novalidate
+            data-ag-combustible-form
+            data-ag-combustible-create-url="{{ route('panel.combustible.create') }}"
+        >
+            @csrf
+
+            <x-organisms.page-header
+                :title="__('finanzas.combustible.titulo_crear')"
+                :subtitle="__('finanzas.combustible.subtitulo_form')"
             >
-                @csrf
+                <x-slot:actions>
+                    <x-molecules.boton-volver :href="route('panel.combustible.index')" :label="__('finanzas.combustible.volver')" />
+                </x-slot:actions>
+            </x-organisms.page-header>
 
-                <x-organisms.page-header
-                    :title="__('finanzas.combustible.titulo_crear')"
-                    :subtitle="__('finanzas.combustible.subtitulo_form')"
-                >
-                    <x-slot:actions>
-                        <x-atoms.button :href="route('panel.combustible.index')" variant="outline" icon="arrow_back">
-                            {{ __('finanzas.combustible.volver') }}
-                        </x-atoms.button>
-                    </x-slot:actions>
-                </x-organisms.page-header>
+            @if (session('estado'))
+                <x-molecules.alert-strip variant="success" icon="check_circle">
+                    {{ session('estado') }}
+                </x-molecules.alert-strip>
+            @endif
 
+            <x-molecules.form-layout>
                 <x-molecules.form-section
-                    :title="__('finanzas.combustible.seccion_datos')"
-                    :count="__('finanzas.combustible.campos_contador', ['cantidad' => 8])"
+                    :title="__('finanzas.combustible.seccion_origen')"
+                    :count="trans_choice('finanzas.combustible.campos_contador', 4, ['cantidad' => 4])"
                 >
                     <x-atoms.date
                         name="fecha"
@@ -87,17 +104,6 @@
                         required
                         :error="$errors->first('fecha')"
                         data-ag-combustible-fecha
-                    />
-
-                    <x-atoms.select
-                        name="base_id"
-                        id="base_id"
-                        :label="__('finanzas.combustible.campo_base')"
-                        :options="$basesDisponibles"
-                        :value="(string) $baseId"
-                        :placeholder="__('finanzas.combustible.campo_base_placeholder')"
-                        :error="$errors->first('base_id')"
-                        required
                     />
 
                     <x-atoms.select
@@ -113,16 +119,6 @@
                     />
 
                     <x-atoms.select
-                        name="campania_id"
-                        :label="__('finanzas.combustible.campo_campania')"
-                        :placeholder="__('finanzas.combustible.campo_campania_placeholder')"
-                        :options="$campaniasDisponibles"
-                        :value="$campaniaId"
-                        :help="__('finanzas.combustible.campo_campania_ayuda')"
-                        :error="$errors->first('campania_id')"
-                    />
-
-                    <x-atoms.select
                         name="recurso"
                         id="recurso"
                         :label="__('finanzas.combustible.campo_recurso')"
@@ -135,11 +131,28 @@
                         required
                     />
 
+                    <x-atoms.select
+                        name="base_id"
+                        id="base_id"
+                        :label="__('finanzas.combustible.campo_base')"
+                        :options="$basesDisponibles"
+                        :value="(string) $baseId"
+                        :placeholder="__('finanzas.combustible.campo_base_placeholder')"
+                        :error="$errors->first('base_id')"
+                        required
+                    />
+                </x-molecules.form-section>
+
+                <x-molecules.form-section
+                    :title="__('finanzas.combustible.seccion_carga')"
+                    :count="trans_choice('finanzas.combustible.campos_contador', 4, ['cantidad' => 4])"
+                >
                     <x-atoms.input
                         type="number"
                         name="litros"
                         :label="__('finanzas.combustible.campo_litros')"
                         :value="$litros"
+                        :suffix="__('finanzas.combustible.unidad_litros')"
                         min="0.01"
                         step="0.01"
                         required
@@ -151,21 +164,30 @@
                         name="monto"
                         :label="__('finanzas.combustible.campo_monto')"
                         :value="$monto"
+                        :suffix="__('finanzas.combustible.unidad_moneda')"
                         min="0.01"
                         step="0.01"
                         required
                         :error="$errors->first('monto')"
                     />
 
-                    <div class="ag-form-section__field--full">
-                        <x-atoms.input
-                            type="text"
-                            name="descripcion"
-                            :label="__('finanzas.combustible.campo_descripcion')"
-                            :value="$descripcion"
-                            :error="$errors->first('descripcion')"
-                        />
-                    </div>
+                    <x-atoms.select
+                        name="campania_id"
+                        :label="__('finanzas.combustible.campo_campania')"
+                        :placeholder="__('finanzas.combustible.campo_campania_placeholder')"
+                        :options="$campaniasDisponibles"
+                        :value="$campaniaId"
+                        :help="__('finanzas.combustible.campo_campania_ayuda')"
+                        :error="$errors->first('campania_id')"
+                    />
+
+                    <x-atoms.input
+                        type="text"
+                        name="descripcion"
+                        :label="__('finanzas.combustible.campo_descripcion')"
+                        :value="$descripcion"
+                        :error="$errors->first('descripcion')"
+                    />
                 </x-molecules.form-section>
 
                 <x-organisms.form-actions-bar :status="__('finanzas.combustible.estado_form')">
@@ -178,7 +200,7 @@
                         </x-atoms.button>
                     </x-slot:actions>
                 </x-organisms.form-actions-bar>
-            </form>
-        </div>
+            </x-molecules.form-layout>
+        </form>
     </x-templates.panel-layout>
 </x-templates.panel-shell>
