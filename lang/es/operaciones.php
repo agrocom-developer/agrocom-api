@@ -277,14 +277,19 @@ return [
         'col_motivo_cierre' => 'Motivo de cierre',
         'validar' => 'Validar',
         'rechazar' => 'Rechazar',
+        'confirmar_validar_titulo' => 'Validar sesión',
+        'confirmar_validar' => '¿Confirmas la sesión #:id? Al validarla se registra el devengo del piloto y ya no admite cambios.',
+        'confirmar_rechazar_titulo' => 'Rechazar sesión',
+        'confirmar_rechazar' => 'La sesión #:id vuelve al piloto con el motivo que indiques. Es obligatorio.',
         'motivo_label' => 'Motivo del rechazo',
         'motivo_placeholder' => 'Por qué se rechaza esta sesión…',
-        // El campo vive en la tarjeta junto a los dos botones: la ayuda
-        // aclara que solo lo pide "Rechazar", no "Validar".
-        'motivo_ayuda' => 'Obligatorio solo para rechazar.',
+        // El campo vive dentro de la confirmación del rechazo: la ayuda
+        // aclara a quién le llega lo que se escriba.
+        'motivo_ayuda' => 'El piloto lo ve al recibir la sesión de vuelta.',
         // Invariante 4: el piloto de la sesión no puede decidir sobre su
         // propio vuelo, ni para aprobar ni para rechazar.
         'propia' => 'Eres el piloto de esta sesión: no puedes validarla ni rechazarla.',
+        'propia_corto' => 'Tu sesión',
         'validada' => 'Sesión validada correctamente.',
         'rechazada' => 'Sesión rechazada: se registró la corrección con el motivo indicado.',
         'error_motivo_requerido' => 'Ingresa el motivo del rechazo.',
