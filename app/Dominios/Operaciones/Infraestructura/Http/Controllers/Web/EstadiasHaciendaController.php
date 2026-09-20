@@ -125,22 +125,17 @@ final class EstadiasHaciendaController
         $propiedadIdsPagina = $estadias->pluck('propiedad_id')->unique()->values()->all();
         $vehiculoIdsPagina = $estadias->pluck('vehiculo_id')->filter()->unique()->values()->all();
 
-        $diasPorEquipo = $listarEstadias->diasEfectivosPorEquipo($desde, $hasta, $equipoTrabajoId, $propiedadId, $estado, $tipoAlojamiento, $busqueda, $equipoIdsCoincidentes, $propiedadIdsCoincidentes);
-        $diasPorPropiedad = $listarEstadias->diasEfectivosPorPropiedad($desde, $hasta, $equipoTrabajoId, $propiedadId, $estado, $tipoAlojamiento, $busqueda, $equipoIdsCoincidentes, $propiedadIdsCoincidentes);
-
         return view('operaciones::pages.estadias.index', [
             ...$this->autorizacion->cascara($request),
             'estadias' => $estadias,
-            // Etiquetas SOLO para los ids que se pintan —los de la página y los del
-            // desglose de días—, nunca el catálogo entero (§6.2 de la guía de pantalla).
-            'etiquetasEquipo' => $this->etiquetasEquipoPorIds(array_values(array_unique([...$equipoIdsPagina, ...array_keys($diasPorEquipo)]))),
-            'etiquetasPropiedad' => $this->etiquetasPropiedadPorIds(array_values(array_unique([...$propiedadIdsPagina, ...array_keys($diasPorPropiedad)]))),
+            // Etiquetas SOLO para los ids de la página (§6.2 de la guía de
+            // pantalla): nunca el catálogo entero para pintar una tabla de 15 filas.
+            'etiquetasEquipo' => $this->etiquetasEquipoPorIds($equipoIdsPagina),
+            'etiquetasPropiedad' => $this->etiquetasPropiedadPorIds($propiedadIdsPagina),
             'etiquetasVehiculo' => $this->etiquetasVehiculoPorIds($vehiculoIdsPagina),
             'equiposDisponibles' => $this->equiposDisponibles(),
             'propiedadesDisponibles' => $this->propiedadesDisponiblesMapa(),
             'resumen' => $listarEstadias->resumen($desde, $hasta, $equipoTrabajoId, $propiedadId, $estado, $tipoAlojamiento, $busqueda, $equipoIdsCoincidentes, $propiedadIdsCoincidentes),
-            'diasPorEquipo' => $diasPorEquipo,
-            'diasPorPropiedad' => $diasPorPropiedad,
             'filtros' => [
                 'q' => $busqueda,
                 'desde' => $desde,

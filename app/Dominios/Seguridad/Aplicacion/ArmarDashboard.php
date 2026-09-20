@@ -5,6 +5,7 @@ namespace App\Dominios\Seguridad\Aplicacion;
 use App\Dominios\Campania\Contratos\LecturaCampania;
 use App\Dominios\Comercial\Contratos\AvanceClientePanel;
 use App\Dominios\Comercial\Contratos\LecturaPanelComercial;
+use App\Dominios\Comercial\Contratos\LecturaPropiedades;
 use App\Dominios\Finanzas\Contratos\LecturaPanelFinanzas;
 use App\Dominios\Inventario\Contratos\LecturaPanelInventario;
 use App\Dominios\Inventario\Contratos\StockPanel;
@@ -14,6 +15,7 @@ use App\Dominios\Operaciones\Contratos\EvidenciaPanel;
 use App\Dominios\Operaciones\Contratos\LecturaPanelOperaciones;
 use App\Dominios\Operaciones\Contratos\ResumenLotePanel;
 use App\Dominios\Operaciones\Contratos\SesionPanel;
+use App\Dominios\Personal\Contratos\LecturaEquipoTrabajo;
 use App\Dominios\Seguridad\Dominio\SeccionDashboard;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 
@@ -66,6 +68,8 @@ final class ArmarDashboard
         private readonly LecturaCampania $campania,
         private readonly CatalogoNombresPanel $nombres,
         private readonly ArmarMapaOperativo $mapa,
+        private readonly LecturaEquipoTrabajo $cuadrillas,
+        private readonly LecturaPropiedades $propiedades,
     ) {}
 
     /**
@@ -124,6 +128,7 @@ final class ArmarDashboard
             SeccionDashboard::ResumenPorLote => $this->resumenPorLote(),
             SeccionDashboard::Multimedia => $this->multimedia(),
             SeccionDashboard::Pausas => $this->pausas(),
+            SeccionDashboard::DiasEnHacienda => $this->diasEnHacienda(),
             SeccionDashboard::Stock => $this->stock(),
             SeccionDashboard::AvanceClientes => $this->avanceClientes(),
             SeccionDashboard::Alertas => $this->alertas(),
@@ -352,6 +357,47 @@ final class ArmarDashboard
         $pausas = $this->operaciones->pausasPorCausaDelMes();
 
         return $pausas['total_minutos'] > 0 ? $pausas : null;
+    }
+
+    /**
+     * Días efectivos en hacienda del mes, por cuadrilla y por propiedad, de
+     * mayor a menor. Las cuentas son de Operaciones; los nombres, de Personal
+     * y de Comercial, cada uno por su contrato. Sin estadías en el mes la
+     * sección se omite, como las demás.
+     *
+     * @return array{total_dias: float, en_curso: int, por_cuadrilla: list<array{nombre: string, dias: float}>, por_propiedad: list<array{nombre: string, dias: float}>}|null
+     */
+    private function diasEnHacienda(): ?array
+    {
+        $dias = $this->operaciones->diasEnHaciendaDelMes();
+
+        if ($dias['por_cuadrilla'] === [] && $dias['por_propiedad'] === [] && $dias['en_curso'] === 0) {
+            return null;
+        }
+
+        $cuadrillas = $this->cuadrillas->porIds(array_keys($dias['por_cuadrilla']));
+        $propiedades = $this->propiedades->porIds(array_keys($dias['por_propiedad']));
+
+        $filas = static fn (array $porId, callable $nombre): array => collect($porId)
+            ->sortDesc()
+            ->map(fn (float $cantidad, int $id): array => ['nombre' => $nombre($id), 'dias' => round($cantidad, 1)])
+            ->values()
+            ->all();
+
+        return [
+            'total_dias' => $dias['total_dias'],
+            'en_curso' => $dias['en_curso'],
+            'por_cuadrilla' => $filas($dias['por_cuadrilla'], function (int $id) use ($cuadrillas): string {
+                $cuadrilla = $cuadrillas[$id] ?? null;
+
+                return match (true) {
+                    $cuadrilla === null => "#{$id}",
+                    $cuadrilla->nombre === null || $cuadrilla->nombre === '' => $cuadrilla->codigo,
+                    default => "{$cuadrilla->codigo} — {$cuadrilla->nombre}",
+                };
+            }),
+            'por_propiedad' => $filas($dias['por_propiedad'], fn (int $id): string => isset($propiedades[$id]) ? $propiedades[$id]->etiqueta() : "#{$id}"),
+        ];
     }
 
     /** @return list<array<string, mixed>>|null */

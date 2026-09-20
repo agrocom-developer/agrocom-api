@@ -45,6 +45,10 @@
         </div>
     @endif
 
+    @isset($secciones['dias_en_hacienda'])
+        @include('seguridad::pages.dashboard._seccion-dias-hacienda', ['diasHacienda' => $secciones['dias_en_hacienda']])
+    @endisset
+
     {{-- Bloque personal, SIEMPRE al final y bajo su propio encabezado.
          Suelto arriba, un "0 sesiones del mes" del dueño —que no vuela— se
          leía como si la operación entera estuviera parada. Para un piloto,

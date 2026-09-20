@@ -4,7 +4,7 @@
  *
  * El grueso viene del catálogo (index-table, filter-panel, stat-card,
  * pagination, form-section, state-transition). Acá solo lo propio de la
- * página: la grilla de totales de días efectivos. Ninguna regla de esta hoja
+ * página: la grilla de la franja de KPI. Ninguna regla de esta hoja
  * toca por dentro a un componente del catálogo (§3 de la guía de pantalla):
  * todo el CSS va en un mismo bundle, así que hacerlo cambia el componente en
  * TODAS las pantallas, no solo en esta. Todo por token (invariante 11).
@@ -34,16 +34,14 @@
   container: ag-estadias / inline-size;
 }
 
-.ag-estadias__kpis,
-.ag-estadias__desglose {
+.ag-estadias__kpis {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--ag-space-4);
 }
 
 @container ag-estadias (min-width: 36rem) {
-  .ag-estadias__kpis,
-  .ag-estadias__desglose {
+  .ag-estadias__kpis {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

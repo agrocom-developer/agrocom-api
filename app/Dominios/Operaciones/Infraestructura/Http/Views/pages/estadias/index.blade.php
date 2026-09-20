@@ -14,7 +14,10 @@
     - $equiposDisponibles, $propiedadesDisponibles (array<int,string>).
     - $estadosFiltro, $tiposAlojamientoFiltro (enum cases).
     - $tonoPorEstado (array<string,string>).
-    - $diasPorEquipo, $diasPorPropiedad (array<int,float>).
+    - $resumen (array{en_curso, finalizadas, dias_efectivos, cuadrillas_en_campo}):
+      cifras de la franja de KPI, dentro del mismo filtro que la tabla. El
+      desglose por cuadrilla y por propiedad NO va acá: vive en el dashboard
+      (`seguridad::pages.dashboard._seccion-dias-hacienda`).
     - $puedeCrear, $puedeEditar, $puedeEliminar (bool).
 
     Gateada por `operaciones.estadia.ver`, verificado en el controlador.
@@ -330,31 +333,6 @@
                 </x-molecules.index-table>
 
                 <x-molecules.pagination :paginator="$estadias" :aria-label="__('operaciones.estadias.paginacion_aria')" />
-
-                {{-- Desglose de días efectivos, DEBAJO de la tabla: una tarjeta por
-                     cuadrilla y otra por propiedad, con `molecules/summary-card`. --}}
-                @if ($diasPorEquipo !== [] || $diasPorPropiedad !== [])
-                    <div class="ag-estadias__desglose">
-                        @if ($diasPorEquipo !== [])
-                            <x-molecules.summary-card
-                                :title="__('operaciones.estadias.totales_equipo')"
-                                :items="collect($diasPorEquipo)->map(fn ($dias, $id) => [
-                                    'label' => $etiquetasEquipo[$id] ?? '—',
-                                    'value' => __('operaciones.estadias.dias_valor', ['cantidad' => number_format($dias, 1, ',', '.')]),
-                                ])->values()->all()"
-                            />
-                        @endif
-                        @if ($diasPorPropiedad !== [])
-                            <x-molecules.summary-card
-                                :title="__('operaciones.estadias.totales_propiedad')"
-                                :items="collect($diasPorPropiedad)->map(fn ($dias, $id) => [
-                                    'label' => $etiquetasPropiedad[$id] ?? '—',
-                                    'value' => __('operaciones.estadias.dias_valor', ['cantidad' => number_format($dias, 1, ',', '.')]),
-                                ])->values()->all()"
-                            />
-                        @endif
-                    </div>
-                @endif
             @endif
         </div>
     </x-templates.panel-layout>
