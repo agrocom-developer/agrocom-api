@@ -1,10 +1,16 @@
 {{--
     Page: rendiciones/create (GET /panel/rendiciones/crear, panel.rendiciones.create)
     Alta de una rendición (HU-34, tarea 48) — arquetipo Formulario, §6.3 de
-    docs/diseno/guia_pantalla_panel.md. Sin partial `_formulario` compartido
-    con una edición: no existe caso de uso de edición (invariante de esta
-    tarea, ver `Aplicacion/CrearRendicion`) — este archivo ES el formulario
-    completo.
+    docs/diseno/guia_pantalla_panel.md. Homogeneizado en la tarea 119 con
+    `form-layout` (sin aside: ver más abajo), `form-section` y el "Volver" del
+    catálogo. Sin partial `_formulario` compartido con una edición: no existe
+    caso de uso de edición (ver `Aplicacion/CrearRendicion`) — este archivo ES
+    el formulario completo.
+
+    Sin aside: un registro que todavía no existe no tiene nada relacionado que
+    resumir (guía §6.3.1). Sin `edit()` no hay a dónde quedarse: tras guardar
+    se vuelve al listado con su aviso (guía §6.3.2) — la nueva rendición queda
+    primera, y desde su «Ver» se le asocian los gastos.
 
     Datos esperados (ver RendicionesController::create()): la cáscara de
     CascaraPanel, más:
@@ -34,26 +40,30 @@
         :version="$version"
         :vista-actual="__('finanzas.rendiciones.titulo_crear')"
     >
-        <div class="ag-rendiciones-form-page">
-            <form
-                method="POST"
-                action="{{ route('panel.rendiciones.store') }}"
-                class="ag-rendiciones-form"
-                novalidate
+        <form
+            method="POST"
+            action="{{ route('panel.rendiciones.store') }}"
+            class="ag-rendiciones-form"
+            novalidate
+        >
+            @csrf
+
+            <x-organisms.page-header
+                :title="__('finanzas.rendiciones.titulo_crear')"
+                :subtitle="__('finanzas.rendiciones.subtitulo_form')"
             >
-                @csrf
+                <x-slot:actions>
+                    <x-molecules.boton-volver :href="route('panel.rendiciones.index')" :label="__('finanzas.rendiciones.volver')" />
+                </x-slot:actions>
+            </x-organisms.page-header>
 
-                <x-organisms.page-header
-                    :title="__('finanzas.rendiciones.titulo_crear')"
-                    :subtitle="__('finanzas.rendiciones.subtitulo_form')"
-                >
-                    <x-slot:actions>
-                        <x-atoms.button :href="route('panel.rendiciones.index')" variant="outline" icon="arrow_back">
-                            {{ __('finanzas.rendiciones.volver') }}
-                        </x-atoms.button>
-                    </x-slot:actions>
-                </x-organisms.page-header>
+            @if (session('estado'))
+                <x-molecules.alert-strip variant="success" icon="check_circle">
+                    {{ session('estado') }}
+                </x-molecules.alert-strip>
+            @endif
 
+            <x-molecules.form-layout>
                 <x-molecules.form-section
                     :title="__('finanzas.rendiciones.seccion_datos')"
                     :count="__('finanzas.rendiciones.campos_contador', ['cantidad' => 4])"
@@ -88,14 +98,13 @@
                         :error="$errors->first('fecha')"
                     />
 
-                    <div class="ag-form-section__field--full">
-                        <x-atoms.textarea
-                            name="descripcion"
-                            :label="__('finanzas.rendiciones.campo_descripcion')"
-                            :value="$descripcion"
-                            :error="$errors->first('descripcion')"
-                        />
-                    </div>
+                    <x-atoms.textarea
+                        class="ag-form-section__field--full"
+                        name="descripcion"
+                        :label="__('finanzas.rendiciones.campo_descripcion')"
+                        :value="$descripcion"
+                        :error="$errors->first('descripcion')"
+                    />
                 </x-molecules.form-section>
 
                 <x-organisms.form-actions-bar :status="__('finanzas.rendiciones.estado_form')">
@@ -108,7 +117,7 @@
                         </x-atoms.button>
                     </x-slot:actions>
                 </x-organisms.form-actions-bar>
-            </form>
-        </div>
+            </x-molecules.form-layout>
+        </form>
     </x-templates.panel-layout>
 </x-templates.panel-shell>

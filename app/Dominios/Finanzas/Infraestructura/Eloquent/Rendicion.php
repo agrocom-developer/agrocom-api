@@ -40,6 +40,7 @@ use Illuminate\Support\Carbon;
  * @property string $monto
  * @property EstadoRendicion $estado
  * @property int|null $aprobado_por
+ * @property int|null $gastos_count cargado por `withCount('gastos')` (listado)
  */
 final class Rendicion extends ModeloDominio
 {

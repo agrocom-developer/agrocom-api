@@ -51,6 +51,22 @@ use Illuminate\View\View;
  */
 final class RendicionesController
 {
+    /**
+     * Tono de cada estado, definido UNA vez (plan de homogeneización §3.1):
+     * lo comparten el badge del listado, las acciones de fila que cambian de
+     * estado y sus modales, para que los tres hablen con el mismo color.
+     * `abierta` y `aprobada` conservan el gris y el verde que el listado ya
+     * tenía; `presentada` estrena tono propio (el ternario anterior la
+     * pintaba igual que `aprobada`, que es justo lo que hay que distinguir).
+     *
+     * @var array<string, string>
+     */
+    public const array TONO_POR_ESTADO = [
+        'abierta' => 'neutral',
+        'presentada' => 'info',
+        'aprobada' => 'success',
+    ];
+
     private const PERMISO_VER = 'finanzas.rendicion.ver';
 
     private const PERMISO_CREAR = 'finanzas.rendicion.crear';
@@ -66,18 +82,23 @@ final class RendicionesController
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
         $baseId = $request->integer('base_id') ?: null;
-        $estado = $request->string('estado')->toString();
+        $estado = EstadoRendicion::tryFrom($request->string('estado')->toString())?->value;
 
-        $rendiciones = $listarRendiciones->ejecutar($baseId, $estado !== '' ? $estado : null);
+        $rendiciones = $listarRendiciones->ejecutar($baseId, $estado);
 
         return view('finanzas::pages.rendiciones.index', [
             ...$this->autorizacion->cascara($request),
             'rendiciones' => $rendiciones,
+            'resumen' => $listarRendiciones->resumen($baseId, $estado),
             'basesDisponibles' => $this->basesDisponibles(),
             'etiquetasBase' => $this->etiquetasBase($rendiciones->pluck('base_id')->map(fn ($id) => (int) $id)->unique()->values()->all()),
             'etiquetasJefeCampo' => $this->etiquetasPersona($rendiciones->pluck('jefe_campo_id')->map(fn ($id) => (int) $id)->unique()->values()->all()),
             'filtros' => ['base_id' => $baseId, 'estado' => $estado],
+            'tonoPorEstado' => self::TONO_POR_ESTADO,
+            'personaId' => $this->autorizacion->personaId($request),
             'puedeCrear' => $this->autorizacion->tienePermiso($request, self::PERMISO_CREAR),
+            'puedePresentar' => $this->autorizacion->tienePermiso($request, self::PERMISO_PRESENTAR),
+            'puedeAprobar' => $this->autorizacion->tienePermiso($request, self::PERMISO_APROBAR),
         ]);
     }
 
@@ -98,15 +119,20 @@ final class RendicionesController
 
         $datos = $request->validated();
 
-        $rendicion = $crearRendicion->ejecutar(
+        $crearRendicion->ejecutar(
             (int) $datos['base_id'],
             (int) $datos['jefe_campo_id'],
             (string) $datos['fecha'],
             isset($datos['descripcion']) && $datos['descripcion'] !== '' ? (string) $datos['descripcion'] : null,
         );
 
+        // Al listado, no al detalle (tarea 119): una rendición no tiene ficha
+        // de edición a la que quedarse, así que el alta vuelve a la pantalla
+        // desde donde se la pidió, con su aviso — guía §6.3.2. La nueva queda
+        // primera en la tabla (orden por fecha) con su acción «Ver» para
+        // seguir asociándole gastos.
         return redirect()
-            ->route('panel.rendiciones.show', $rendicion)
+            ->route('panel.rendiciones.index')
             ->with('estado', __('finanzas.rendiciones.creada'));
     }
 

@@ -1,99 +1,53 @@
 /*
  * Pages: rendiciones/index, rendiciones/create, rendiciones/show
  * (app/Dominios/Finanzas/Infraestructura/Http/Views/pages/rendiciones/) —
- * HU-34, tarea 48: rendiciones de campo presentadas y aprobadas. Mismo molde
- * de grid que gastos.css/planilla.css. Todo color y medida por token
+ * HU-34, tarea 48: rendiciones de campo presentadas y aprobadas; el listado
+ * y el alta se homogeneizaron en la tarea 119. Todo color y medida por token
  * (CLAUDE.md invariante 11).
+ *
+ * La tabla, el filtro, la paginación, el layout del formulario y las
+ * tarjetas de KPI los resuelve el catálogo (`index-table`, `filter-panel`,
+ * `pagination`, `form-layout`, `stat-card`): de esas dos pantallas queda acá
+ * solo la grilla de la franja de KPI y el apilado del formulario. El detalle
+ * (show) mantiene su grid propio — el arquetipo Detalle todavía no se
+ * homogeneizó (plan §1.1).
+ */
+
+/*
+ * Listado: franja de KPI bajo la cabecera, mismo patrón que `gastos.css` y
+ * `estadias.css`. El contenedor consultado es el WRAPPER de la página, no la
+ * propia grilla: una `@container` pregunta por el ancestro más cercano, así
+ * que declarar `container-type` en el mismo elemento que se consulta no
+ * matchea nunca y la franja se queda en una columna. Se consulta el ancho del
+ * contenido del panel, que cambia con el sidebar, no el del viewport.
  */
 
 .ag-rendiciones {
     display: flex;
     flex-direction: column;
     gap: var(--ag-space-5);
+    container: ag-rendiciones / inline-size;
 }
 
-/* Listado (index) */
-
-.ag-rendiciones__tabla {
-    border: 1px solid var(--ag-color-border-card);
-    border-radius: var(--ag-radius-md);
-    background-color: var(--ag-color-surface-card);
-    overflow: hidden;
-}
-
-.ag-rendiciones__head,
-.ag-rendiciones__fila {
+.ag-rendiciones__kpis {
     display: grid;
-    grid-template-columns: 1fr 1.2fr 1.2fr 1fr 1fr auto;
-    gap: var(--ag-space-4);
-    align-items: center;
-    padding: var(--ag-space-3) var(--ag-space-4);
-}
-
-.ag-rendiciones__head {
-    background-color: var(--ag-color-bg-table-head);
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-xs);
-    font-weight: var(--ag-font-weight-medium);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.ag-rendiciones__fila {
-    border-top: 1px solid var(--ag-color-border-row);
-    color: var(--ag-color-text);
-    font-size: var(--ag-font-size-sm);
-}
-
-.ag-rendiciones__fila:hover {
-    background-color: var(--ag-color-bg-row-hover);
-}
-
-.ag-rendiciones__cifra {
-    font-family: var(--ag-font-family-mono);
-}
-
-.ag-rendiciones__acciones {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--ag-space-2);
-}
-
-.ag-rendiciones__paginacion {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--ag-space-4);
 }
 
-.ag-rendiciones__paginacion-info {
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-sm);
+@container ag-rendiciones (min-width: 36rem) {
+    .ag-rendiciones__kpis {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 
-@media (max-width: 992px) {
-    .ag-rendiciones__head {
-        display: none;
-    }
-
-    .ag-rendiciones__fila {
-        grid-template-columns: 1fr;
-        gap: var(--ag-space-1);
-    }
-
-    .ag-rendiciones__acciones {
-        justify-content: flex-start;
-        margin-top: var(--ag-space-2);
+@container ag-rendiciones (min-width: 60rem) {
+    .ag-rendiciones__kpis {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 }
 
 /* Formulario (create) */
-
-.ag-rendiciones-form-page {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-5);
-}
 
 .ag-rendiciones-form {
     display: flex;
