@@ -2,19 +2,22 @@
 
 namespace App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web;
 
-use App\Dominios\Finanzas\Contratos\EscrituraGastoMantenimiento;
-use App\Dominios\Finanzas\Contratos\LecturaGastoMantenimiento;
+use App\Dominios\Inventario\Contratos\DatosConsumoOrden;
+use App\Dominios\Inventario\Contratos\LecturaConsumosPorOrden;
 use App\Dominios\Mantenimiento\Aplicacion\ListarOrdenesMantenimiento;
 use App\Dominios\Mantenimiento\Aplicacion\MaquinaEstados\MaquinaEstadosOrdenMantenimiento;
 use App\Dominios\Mantenimiento\Dominio\EstadoOrdenMantenimiento;
 use App\Dominios\Mantenimiento\Dominio\Excepciones\RepuestosInsuficientes;
 use App\Dominios\Mantenimiento\Dominio\Excepciones\TransicionOrdenMantenimientoNoPermitida;
 use App\Dominios\Mantenimiento\Infraestructura\Eloquent\OrdenMantenimiento;
+use App\Dominios\Mantenimiento\Infraestructura\Http\PasosDeOrdenMantenimiento;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Requests\CerrarOrdenMantenimientoRequest;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Requests\CrearOrdenMantenimientoRequest;
+use App\Dominios\Mantenimiento\Infraestructura\Http\ResumenRelacionadoDeOrden;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -46,11 +49,13 @@ use Illuminate\View\View;
  * 0003 regla 3, mismo criterio que `VehiculosController`/`StockController`),
  * sin importar los modelos Eloquent de `Operaciones`/`Inventario`/`Personal`.
  *
- * `edit()` también pasa el precio final real de una orden cerrada (HU-88,
- * tarea 103), leído vía {@see LecturaGastoMantenimiento} — nunca
- * `Gasto::query()` directo (ADR 0003 regla 2, mismo criterio que
- * `MaquinaEstadosOrdenMantenimiento` con {@see EscrituraGastoMantenimiento}
- * en sentido contrario).
+ * `edit()` arma además lo que la ficha necesita para pintarse (tarea 116):
+ * los pasos de la máquina de estados ({@see PasosDeOrdenMantenimiento}), los
+ * repuestos que el cierre consumió —por el contrato de lectura de Inventario,
+ * {@see LecturaConsumosPorOrden}, nunca `MovimientoStock::query()` directo— y
+ * el resumen relacionado del aside ({@see ResumenRelacionadoDeOrden}). El
+ * precio final real de la orden cerrada (HU-88, tarea 103) vive ahora en ese
+ * resumen, siempre por el contrato de lectura de Finanzas.
  */
 final class OrdenesMantenimientoController
 {
@@ -60,9 +65,13 @@ final class OrdenesMantenimientoController
 
     private const PERMISO_CERRAR = 'mantenimiento.orden.cerrar';
 
+    /** Nombre de página de la tabla de repuestos consumidos de la ficha. */
+    private const PAGINA_REPUESTOS = 'repuestos';
+
     public function __construct(
         private readonly AutorizacionPanelWeb $autorizacion,
-        private readonly LecturaGastoMantenimiento $lecturaGastoMantenimiento,
+        private readonly LecturaConsumosPorOrden $lecturaConsumos,
+        private readonly ResumenRelacionadoDeOrden $resumenRelacionadoDeOrden,
     ) {}
 
     public function index(Request $request, ListarOrdenesMantenimiento $listarOrdenesMantenimiento): View
@@ -121,15 +130,29 @@ final class OrdenesMantenimientoController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
+        $puedeCerrar = $this->autorizacion->tienePermiso($request, self::PERMISO_CERRAR);
+        $pasos = PasosDeOrdenMantenimiento::armar($orden->estado, $puedeCerrar);
+        $estaCerrada = $orden->estado === EstadoOrdenMantenimiento::Cerrada;
+        $bases = $this->basesDisponibles();
+
         return view('mantenimiento::pages.ordenes.edit', [
             ...$this->autorizacion->cascara($request),
             'orden' => $orden,
             'etiquetaEquipo' => $this->etiquetaEquipo($orden->equipo_tipo, $orden->equipo_id),
             'repuestosDisponibles' => $this->repuestosDisponibles(),
-            'basesDisponibles' => $this->basesDisponibles(),
+            'basesDisponibles' => $bases,
+            'nombresBase' => $bases->all(),
             'stockPorRepuesto' => $this->stockPorRepuesto(),
-            'puedeCerrar' => $this->autorizacion->tienePermiso($request, self::PERMISO_CERRAR),
-            'montoGasto' => $orden->gasto_id !== null ? $this->lecturaGastoMantenimiento->montoDe($orden->gasto_id) : null,
+            // Una orden abierta todavía no consumió nada: lo que se ve es el
+            // selector del cierre, no una lista de consumos.
+            'consumos' => $estaCerrada ? $this->consumosPaginados($request, $orden) : null,
+            'puedeCerrar' => $puedeCerrar,
+            'pasosEstado' => $pasos,
+            'ayudaEstado' => PasosDeOrdenMantenimiento::ayuda($pasos),
+            // Plan §3.5: mientras la orden no llegó al estado donde hay algo
+            // que resumir, el aside muestra una sola sección informativa en
+            // lugar de tarjetas vacías — ver `_formulario.blade.php`.
+            'resumenRelacionado' => $estaCerrada ? $this->resumenRelacionadoDeOrden->tarjetas($request, $orden) : null,
         ]);
     }
 
@@ -159,9 +182,37 @@ final class OrdenesMantenimientoController
             throw ValidationException::withMessages(['repuestos' => $excepcion->getMessage()]);
         }
 
+        // Vuelve a la ficha, no al listado (§6.3.4 de la guía de pantalla): el
+        // cierre se pide desde los pasos de la propia ficha, y ahí queda lo
+        // que el cierre acaba de producir — los repuestos consumidos y el
+        // gasto del resumen relacionado.
         return redirect()
-            ->route('panel.ordenes-mantenimiento.index')
+            ->route('panel.ordenes-mantenimiento.edit', $orden)
             ->with('estado', __('mantenimiento.ordenes.cerrada'));
+    }
+
+    /**
+     * Los repuestos que el cierre descontó, paginados para la tabla de
+     * detalle de la ficha. Llegan como lista por el contrato de Inventario
+     * (una orden consume pocas líneas, no hace falta paginar en la base), y
+     * el paginador se arma acá con su propio nombre de página para no chocar
+     * con ningún otro listado de la pantalla.
+     *
+     * @return LengthAwarePaginator<int, DatosConsumoOrden>
+     */
+    private function consumosPaginados(Request $request, OrdenMantenimiento $orden): LengthAwarePaginator
+    {
+        $lineas = collect($this->lecturaConsumos->deOrden($orden->id));
+        $porPagina = 10;
+        $pagina = LengthAwarePaginator::resolveCurrentPage(self::PAGINA_REPUESTOS);
+
+        return new LengthAwarePaginator(
+            $lineas->forPage($pagina, $porPagina)->values(),
+            $lineas->count(),
+            $porPagina,
+            $pagina,
+            ['path' => $request->url(), 'query' => $request->query(), 'pageName' => self::PAGINA_REPUESTOS],
+        );
     }
 
     /** @return Collection<int, string> */

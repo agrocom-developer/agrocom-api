@@ -15,8 +15,6 @@
 
 # 116 · feature/panel-ordenes-mantenimiento
 Mantenimiento/ordenes/index.blade.php
-Mantenimiento/ordenes/create.blade.php
-Mantenimiento/ordenes/edit.blade.php
 Mantenimiento/planes/index.blade.php
 Mantenimiento/planes/_formulario.blade.php
 

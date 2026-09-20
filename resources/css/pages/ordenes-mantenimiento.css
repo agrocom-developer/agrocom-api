@@ -1,9 +1,12 @@
 /*
  * Pages: ordenes/index, ordenes/create, ordenes/edit
  * (app/Dominios/Mantenimiento/Infraestructura/Http/Views/pages/ordenes/) —
- * HU-37, tarea 53: apertura y cierre de órdenes de mantenimiento. Mismo
- * molde de grid que vehiculos.css/rendiciones.css. Todo color y medida por
+ * HU-37, tarea 53; homogeneizadas en la tarea 116. Todo color y medida por
  * token (CLAUDE.md invariante 11).
+ *
+ * La tabla, los filtros, el layout del formulario, el aside y la paginación
+ * los resuelve el catálogo (`index-table`, `filter-panel`, `form-layout`,
+ * `pagination`): acá queda solo lo que es propio de estas pantallas.
  */
 
 .ag-ordenes-mantenimiento,
@@ -13,225 +16,78 @@
     gap: var(--ag-space-5);
 }
 
-/* Listado (index) */
+/* Listado: franja de KPI bajo la cabecera, igual que estadias.css. */
 
-.ag-ordenes-mantenimiento__tabla {
-    border: 1px solid var(--ag-color-border-card);
-    border-radius: var(--ag-radius-md);
-    background-color: var(--ag-color-surface-card);
-    overflow: hidden;
-}
-
-.ag-ordenes-mantenimiento__head,
-.ag-ordenes-mantenimiento__fila {
+.ag-ordenes-mantenimiento__kpis {
     display: grid;
-    grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr auto;
+    grid-template-columns: 1fr;
     gap: var(--ag-space-4);
-    align-items: center;
-    padding: var(--ag-space-3) var(--ag-space-4);
+    container-type: inline-size;
 }
 
-.ag-ordenes-mantenimiento__head {
-    background-color: var(--ag-color-bg-table-head);
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-xs);
-    font-weight: var(--ag-font-weight-medium);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+@container (min-width: 32rem) {
+    .ag-ordenes-mantenimiento__kpis {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
-.ag-ordenes-mantenimiento__fila {
-    border-top: 1px solid var(--ag-color-border-row);
-    color: var(--ag-color-text);
-    font-size: var(--ag-font-size-sm);
+@container (min-width: 60rem) {
+    .ag-ordenes-mantenimiento__kpis {
+        grid-template-columns: repeat(4, 1fr);
+    }
 }
 
-.ag-ordenes-mantenimiento__fila:hover {
-    background-color: var(--ag-color-bg-row-hover);
-}
+/* Ficha: sección de repuestos */
 
-.ag-ordenes-mantenimiento__equipo {
-    font-weight: var(--ag-font-weight-medium);
-}
-
-.ag-ordenes-mantenimiento__acciones {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--ag-space-2);
-}
-
-.ag-ordenes-mantenimiento__paginacion {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--ag-space-4);
-}
-
-.ag-ordenes-mantenimiento__paginacion-info {
+.ag-ordenes-mantenimiento-form__ayuda {
+    margin: 0;
     color: var(--ag-color-text-muted);
     font-size: var(--ag-font-size-sm);
 }
 
-@media (max-width: 992px) {
-    .ag-ordenes-mantenimiento__head {
-        display: none;
-    }
-
-    .ag-ordenes-mantenimiento__fila {
-        grid-template-columns: 1fr;
-        gap: var(--ag-space-1);
-    }
-
-    .ag-ordenes-mantenimiento__acciones {
-        justify-content: flex-start;
-        margin-top: var(--ag-space-2);
-    }
-}
-
-/* Detalle + cierre (edit) */
-
-.ag-orden-mantenimiento-detalle {
+.ag-ordenes-mantenimiento-form__repuestos {
     display: flex;
     flex-direction: column;
-    gap: var(--ag-space-5);
+    gap: var(--ag-space-4);
 }
 
-.ag-orden-mantenimiento-detalle__resumen {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--ag-space-4) var(--ag-space-6);
-    padding: var(--ag-space-4);
-    border: 1px solid var(--ag-color-border-card);
-    border-radius: var(--ag-radius-md);
-    background-color: var(--ag-color-surface-card);
+/*
+ * Los campos que viven dentro de una celda de la tabla no apilan: sin esto,
+ * el margen de apilado del átomo desalinea la fila contra un borde fantasma
+ * (regla 7 de pulido, `sistema_diseno_panel.md` §8).
+ */
+.ag-ordenes-mantenimiento-form__repuestos .ag-index-table .ag-input,
+.ag-ordenes-mantenimiento-form__repuestos .ag-index-table .ag-select,
+.ag-ordenes-mantenimiento-form__repuestos .ag-index-table .ag-checkbox {
+    margin-block-end: 0;
 }
 
-.ag-orden-mantenimiento-detalle__campo {
+.ag-ordenes-mantenimiento-form__disponible {
     display: flex;
     flex-direction: column;
     gap: var(--ag-space-1);
-    color: var(--ag-color-text);
-    font-size: var(--ag-font-size-sm);
 }
 
-.ag-orden-mantenimiento-detalle__campo--full {
-    flex-basis: 100%;
-}
-
-.ag-orden-mantenimiento-detalle__ayuda {
-    margin: 0;
+.ag-ordenes-mantenimiento-form__disponible-texto {
     color: var(--ag-color-text-muted);
     font-size: var(--ag-font-size-sm);
+    font-family: var(--ag-font-family-mono);
 }
 
-.ag-orden-mantenimiento-detalle__repuestos {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-4);
-}
-
-/* Selector de repuestos por casillas (HU-57, tarea 80) */
-
-.ag-repuesto-campos {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    gap: var(--ag-space-3) var(--ag-space-4);
-}
-
-.ag-repuesto-campos .ag-input {
-    max-width: 12rem;
-    margin: 0;
-}
-
-.ag-repuesto-campos__disponibilidad {
-    margin: 0;
-    padding-block-start: 1.75rem;
-    font-size: var(--ag-font-size-sm);
-    color: var(--ag-color-text-muted);
-}
-
-.ag-repuesto-campos__aviso {
+.ag-ordenes-mantenimiento-form__aviso {
     display: flex;
     align-items: center;
     gap: var(--ag-space-1);
-    flex-basis: 100%;
-    margin: 0;
-    font-size: var(--ag-font-size-sm);
     color: var(--ag-color-danger);
-}
-
-.ag-repuesto-campos__cambiar-base {
-    align-self: center;
-    margin-block-start: 1.75rem;
-    padding: 0;
-    border: none;
-    background: none;
-    color: var(--ag-color-primary);
     font-size: var(--ag-font-size-xs);
-    text-decoration: underline;
-    cursor: pointer;
 }
 
-.ag-repuesto-campos__base-override-wrap {
-    max-width: 12rem;
-}
-
-.ag-repuesto-campos__base-override-wrap .ag-select {
+.ag-ordenes-mantenimiento-form__contador {
     margin: 0;
-}
-
-/* Resumen siempre visible de lo elegido */
-
-.ag-repuestos-resumen {
-    padding: var(--ag-space-4);
-    border: 1px solid var(--ag-color-border-card);
-    border-radius: var(--ag-radius-md);
-    background-color: var(--ag-color-bg-elevated);
-}
-
-.ag-repuestos-resumen__titulo {
-    margin: 0 0 var(--ag-space-1);
-    font-size: var(--ag-font-size-sm);
-    font-weight: var(--ag-font-weight-medium);
-    color: var(--ag-color-text);
-}
-
-.ag-repuestos-resumen__contador,
-.ag-repuestos-resumen__vacio {
-    margin: 0;
-    font-size: var(--ag-font-size-xs);
     color: var(--ag-color-text-muted);
-}
-
-.ag-repuestos-resumen__lista {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-1);
-    margin: var(--ag-space-2) 0 0;
-    padding: 0;
-    list-style: none;
-}
-
-.ag-repuestos-resumen__item {
     font-size: var(--ag-font-size-sm);
-    color: var(--ag-color-text);
 }
 
-@media (max-width: 992px) {
-    .ag-repuesto-campos {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .ag-repuesto-campos .ag-input,
-    .ag-repuesto-campos__base-override-wrap {
-        max-width: none;
-    }
-
-    .ag-repuesto-campos__disponibilidad,
-    .ag-repuesto-campos__cambiar-base {
-        padding-block-start: 0;
-        margin-block-start: 0;
-    }
+.ag-ordenes-mantenimiento-form__mono {
+    font-family: var(--ag-font-family-mono);
 }
