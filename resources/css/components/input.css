@@ -110,6 +110,21 @@
     color: var(--ag-color-text-muted);
 }
 
+/* Sufijo de unidad (prop `suffix`: "km", "h", "ciclos"): texto al final del
+   control, dentro del mismo borde. El padding derecho del `<input>` ya lo
+   separa del número; acá solo se cierra el margen contra el borde. Mono,
+   como toda cifra del panel, y muted: la unidad acompaña al valor, no
+   compite con él. */
+.ag-input__suffix {
+    flex: none;
+    padding-inline-end: var(--ag-space-4);
+    color: var(--ag-color-text-muted);
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-sm);
+    white-space: nowrap;
+    user-select: none;
+}
+
 /* Oculta los controles nativos que algunos navegadores (Chrome/Edge/Safari)
    inyectan automáticamente en `<input type="password">` (el "ojo" de
    revelar contraseña, el botón de limpiar de Edge) — sin esto se veían DOS

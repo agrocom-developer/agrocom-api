@@ -4,8 +4,9 @@
     `_formulario.blade.php`, compartido con `create.blade.php`.
 
     Datos esperados (ver BateriasController::edit()): la cáscara de
-    CascaraPanel, más $bateria (Bateria) y $basesDisponibles
-    (Collection<int, string>).
+    CascaraPanel, más $bateria (Bateria), $basesDisponibles
+    (Collection<int, string>), $estados (list<EstadoBateria>) y
+    $resumenRelacionado (tarjetas del aside, resueltas por el controlador).
 
     Gateada por `mantenimiento.bateria.editar`, verificado server-side en el
     controlador.
@@ -23,6 +24,6 @@
         :version="$version"
         :vista-actual="__('mantenimiento.baterias.titulo_editar')"
     >
-        @include('mantenimiento::pages.baterias._formulario', ['bateria' => $bateria, 'basesDisponibles' => $basesDisponibles, 'estados' => $estados])
+        @include('mantenimiento::pages.baterias._formulario', ['bateria' => $bateria, 'basesDisponibles' => $basesDisponibles, 'estados' => $estados, 'resumenRelacionado' => $resumenRelacionado])
     </x-templates.panel-layout>
 </x-templates.panel-shell>

@@ -2,14 +2,13 @@
  * Pages: baterias/index, baterias/create, baterias/edit
  * (app/Dominios/Mantenimiento/Infraestructura/Http/Views/pages/baterias/) —
  * HU-39, tarea 51: catálogo de baterías con ciclos y estado. CSS propio de
- * ESTAS páginas (ver convención en resources/css/pages/index.css) — mismo
- * patrón que vehiculos.css (tarea 50): una batería no tiene sub-entidad
- * repetible, así que el formulario no necesita CSS propio más allá del
- * layout compartido con el listado.
+ * ESTAS páginas (ver convención en resources/css/pages/index.css).
  *
- * El wrapper `.ag-baterias`/`.ag-baterias-form` sigue el mismo patrón que
- * `.ag-vehiculos`/`.ag-vehiculos-form`: flex en columna con un único `gap`
- * en vez de `margin-top` repetido en cada hijo. Todo color y medida por
+ * El wrapper `.ag-baterias`/`.ag-baterias-form` es flex en columna con un
+ * único `gap` en vez de `margin-top` repetido en cada hijo. La tabla del
+ * listado (`molecules/index-table`) y el layout main/aside del formulario
+ * (`molecules/form-layout`) no viven acá: son del catálogo (tarea 115, ver
+ * docs/diseno/guia_pantalla_panel.md §6.2/§6.3.1). Todo color y medida por
  * token (CLAUDE.md invariante 11).
  */
 
@@ -20,77 +19,16 @@
     gap: var(--ag-space-5);
 }
 
-/* Listado (index) */
-
-.ag-baterias__tabla {
-    border: 1px solid var(--ag-color-border-card);
-    border-radius: var(--ag-radius-md);
-    background-color: var(--ag-color-surface-card);
-    overflow: hidden;
-}
-
-.ag-baterias__head,
-.ag-baterias__fila {
-    display: grid;
-    grid-template-columns: 3rem 1.2fr 1fr 0.7fr 0.9fr 0.9fr auto;
-    gap: var(--ag-space-4);
-    align-items: center;
-    padding: var(--ag-space-3) var(--ag-space-4);
-}
-
-.ag-baterias__head {
-    background-color: var(--ag-color-bg-table-head);
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-xs);
-    font-weight: var(--ag-font-weight-medium);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.ag-baterias__fila {
-    border-top: 1px solid var(--ag-color-border-row);
-    color: var(--ag-color-text);
-    font-size: var(--ag-font-size-sm);
-}
-
-.ag-baterias__fila:hover {
-    background-color: var(--ag-color-bg-row-hover);
-}
+/* Listado (index): columnas propias de `molecules/index-table`
+   (índice · identificador · base · ciclos · estado · alerta · acciones) — el
+   resto de la anatomía de la tabla (borde, cabecera, hover, colapso mobile)
+   vive en el componente. */
 
 .ag-baterias__identificador {
     font-weight: var(--ag-font-weight-medium);
 }
 
-.ag-baterias__indice {
-    color: var(--ag-color-text-faint);
+/* Ciclos: contador que sube solo con cada recarga, en mono para que alinee. */
+.ag-baterias__ciclos {
     font-family: var(--ag-font-family-mono);
-    font-size: var(--ag-font-size-xs);
-}
-
-.ag-baterias__acciones {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--ag-space-2);
-}
-
-@media (max-width: 992px) {
-    .ag-baterias__head {
-        display: none;
-    }
-
-    .ag-baterias__fila {
-        grid-template-columns: 1fr;
-        gap: var(--ag-space-1);
-    }
-
-    /* El índice numérico solo ordena filas de una tabla — en tarjeta
-       apilada no aporta. */
-    .ag-baterias__indice {
-        display: none;
-    }
-
-    .ag-baterias__acciones {
-        justify-content: flex-start;
-        margin-top: var(--ag-space-2);
-    }
 }

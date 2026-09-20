@@ -1,9 +1,13 @@
 {{--
     Partial: formulario de batería, compartido por create.blade.php y
     edit.blade.php (HU-39, tarea 51) — arquetipo Formulario, §6.3 de
-    docs/diseno/guia_pantalla_panel.md. Mismo patrón que
-    `vehiculos/_formulario.blade.php`, con dos campos numéricos adicionales
-    (ciclos inicial y acumulados).
+    docs/diseno/guia_pantalla_panel.md.
+
+    Homogeneizado con el patrón de Propiedades y Drones (tarea 115): el cuerpo
+    va en `molecules/form-layout` y, SOLO en edición, el aside con el resumen
+    relacionado (§6.3.1) — una batería recién creada no puede tener todavía
+    cuadrillas ni recargas. Dos secciones: los datos de la batería y sus
+    ciclos, con la unidad («ciclos») como sufijo del campo.
 
     Espera:
     - $bateria (Bateria|null): null en alta; el modelo en edición.
@@ -13,6 +17,8 @@
       BateriasController) — la vista no importa el enum de dominio, solo
       recorre `->value`/`->name`, mismo criterio que `$estados` en
       `vehiculos/_formulario.blade.php`.
+    - $resumenRelacionado (list<array{...}>|null): solo en edición, ver
+      BateriasController::resumenRelacionado(). `null`/ausente en alta.
 
     Tras un error de validación, `old()` pisa los valores del modelo/vacíos
     — mismo criterio en alta y en edición. `ciclos_acumulados` arranca en 0
@@ -34,10 +40,6 @@
     condicionalmente al detectar una baja: mostrarlo/ocultarlo con JS según
     lo que el usuario tipea en otro campo es más frágil que dejarlo fijo y
     opcional, y la ayuda ya aclara cuándo es obligatorio.
-
-    El aside pegajoso del arquetipo (summary-card/progress-meter) se omite a
-    propósito, mismo criterio que vehiculos/personas: ningún dato de solo
-    lectura justifica hoy la columna lateral.
 --}}
 @php
     $esEdicion = $bateria !== null;
@@ -61,9 +63,10 @@
         :subtitle="__('mantenimiento.baterias.subtitulo_form')"
     >
         <x-slot:actions>
-            <x-atoms.button :href="route('panel.baterias.index')" variant="outline" icon="arrow_back">
-                {{ __('mantenimiento.baterias.volver') }}
-            </x-atoms.button>
+            <x-molecules.boton-volver
+                :href="route('panel.baterias.index')"
+                :label="__('mantenimiento.baterias.volver')"
+            />
         </x-slot:actions>
     </x-organisms.page-header>
 
@@ -73,101 +76,118 @@
         </x-molecules.alert-strip>
     @endif
 
-    <x-molecules.form-section
-        :title="__('mantenimiento.baterias.seccion_datos')"
-        :count="__('mantenimiento.baterias.campos_contador', ['cantidad' => $esEdicion ? 6 : 5])"
-    >
-        <x-atoms.input
-            type="text"
-            name="identificador"
-            :label="__('mantenimiento.baterias.campo_identificador')"
-            :value="$identificador"
-            required
-            :error="$errors->first('identificador')"
-        />
-
-        @if ($esEdicion)
-            {{-- Sin `name`: no viaja en el POST, mismo criterio que el
-                 campo "Nombre" de seguridad/perfil/index.blade.php.
-                 `readonly` y no `disabled` para que siga siendo enfocable,
-                 copiable y legible por un lector de pantalla. --}}
-            <x-atoms.input
-                type="number"
-                id="ciclos_inicial"
-                :label="__('mantenimiento.baterias.campo_ciclos_inicial')"
-                :value="$ciclosInicial"
-                :help="__('mantenimiento.baterias.campo_ciclos_inicial_ayuda')"
-                readonly
-            />
-        @else
-            <x-atoms.input
-                type="number"
-                name="ciclos_inicial"
-                :label="__('mantenimiento.baterias.campo_ciclos_inicial')"
-                :value="$ciclosInicial"
-                :help="__('mantenimiento.baterias.campo_ciclos_inicial_ayuda')"
-                min="0"
-                required
-                :error="$errors->first('ciclos_inicial')"
-            />
-        @endif
-
-        <x-atoms.input
-            type="number"
-            name="ciclos_acumulados"
-            :label="__('mantenimiento.baterias.campo_ciclos')"
-            :value="$ciclosAcumulados"
-            :help="$esEdicion ? __('mantenimiento.baterias.campo_ciclos_correccion_ayuda') : null"
-            min="0"
-            required
-            :error="$errors->first('ciclos_acumulados')"
-        />
-
-        @if ($esEdicion)
+    <x-molecules.form-layout>
+        <x-molecules.form-section
+            :title="__('mantenimiento.baterias.seccion_datos')"
+            :count="__('mantenimiento.baterias.campos_contador', ['cantidad' => 3])"
+        >
             <x-atoms.input
                 type="text"
-                name="motivo_correccion"
-                :label="__('mantenimiento.baterias.campo_motivo_correccion')"
-                :value="$motivoCorreccion"
-                :help="__('mantenimiento.baterias.campo_motivo_correccion_ayuda')"
-                :error="$errors->first('motivo_correccion')"
+                name="identificador"
+                :label="__('mantenimiento.baterias.campo_identificador')"
+                :value="$identificador"
+                required
+                :error="$errors->first('identificador')"
             />
+
+            <x-atoms.select
+                name="base_id"
+                id="base_id"
+                :label="__('mantenimiento.baterias.campo_base')"
+                :options="$basesDisponibles"
+                :value="$baseId"
+                :placeholder="__('mantenimiento.baterias.campo_base_placeholder')"
+                :error="$errors->first('base_id')"
+            />
+
+            @php
+                $opcionesEstado = collect($estados)->mapWithKeys(fn ($opcion) => [
+                    $opcion->value => __('mantenimiento.estado_bateria.'.$opcion->value),
+                ])->all();
+            @endphp
+            <x-atoms.select
+                name="estado"
+                id="estado"
+                :label="__('mantenimiento.baterias.campo_estado')"
+                :options="$opcionesEstado"
+                :value="$estado"
+                required
+                :error="$errors->first('estado')"
+            />
+        </x-molecules.form-section>
+
+        <x-molecules.form-section
+            :title="__('mantenimiento.baterias.seccion_ciclos')"
+            :count="__('mantenimiento.baterias.campos_contador', ['cantidad' => $esEdicion ? 3 : 2])"
+        >
+            @if ($esEdicion)
+                {{-- Sin `name`: no viaja en el POST, mismo criterio que el
+                     campo "Nombre" de seguridad/perfil/index.blade.php.
+                     `readonly` y no `disabled` para que siga siendo enfocable,
+                     copiable y legible por un lector de pantalla. --}}
+                <x-atoms.input
+                    type="number"
+                    id="ciclos_inicial"
+                    :label="__('mantenimiento.baterias.campo_ciclos_inicial')"
+                    :value="$ciclosInicial"
+                    :suffix="__('mantenimiento.baterias.unidad_ciclos')"
+                    :help="__('mantenimiento.baterias.campo_ciclos_inicial_ayuda')"
+                    readonly
+                />
+            @else
+                <x-atoms.input
+                    type="number"
+                    name="ciclos_inicial"
+                    :label="__('mantenimiento.baterias.campo_ciclos_inicial')"
+                    :value="$ciclosInicial"
+                    :suffix="__('mantenimiento.baterias.unidad_ciclos')"
+                    :help="__('mantenimiento.baterias.campo_ciclos_inicial_ayuda')"
+                    min="0"
+                    required
+                    :error="$errors->first('ciclos_inicial')"
+                />
+            @endif
+
+            <x-atoms.input
+                type="number"
+                name="ciclos_acumulados"
+                :label="__('mantenimiento.baterias.campo_ciclos')"
+                :value="$ciclosAcumulados"
+                :suffix="__('mantenimiento.baterias.unidad_ciclos')"
+                :help="$esEdicion ? __('mantenimiento.baterias.campo_ciclos_correccion_ayuda') : null"
+                min="0"
+                required
+                :error="$errors->first('ciclos_acumulados')"
+            />
+
+            @if ($esEdicion)
+                <x-atoms.input
+                    type="text"
+                    name="motivo_correccion"
+                    class="ag-form-section__field--full"
+                    :label="__('mantenimiento.baterias.campo_motivo_correccion')"
+                    :value="$motivoCorreccion"
+                    :help="__('mantenimiento.baterias.campo_motivo_correccion_ayuda')"
+                    :error="$errors->first('motivo_correccion')"
+                />
+            @endif
+        </x-molecules.form-section>
+
+        <x-organisms.form-actions-bar :status="__('mantenimiento.baterias.estado_form')">
+            <x-slot:actions>
+                <x-atoms.button :href="route('panel.baterias.index')" variant="outline">
+                    {{ __('ui.action.cancel') }}
+                </x-atoms.button>
+                <x-atoms.button type="submit" variant="primary">
+                    {{ __('ui.action.save') }}
+                </x-atoms.button>
+            </x-slot:actions>
+        </x-organisms.form-actions-bar>
+
+        @if ($esEdicion)
+            <x-slot:aside>
+                @include('mantenimiento::pages._resumen-relacionado', ['resumenRelacionado' => $resumenRelacionado ?? []])
+            </x-slot:aside>
         @endif
-
-        <x-atoms.select
-            name="base_id"
-            id="base_id"
-            :label="__('mantenimiento.baterias.campo_base')"
-            :options="$basesDisponibles"
-            :value="$baseId"
-            :placeholder="__('mantenimiento.baterias.campo_base_placeholder')"
-            :error="$errors->first('base_id')"
-        />
-
-        @php
-            $opcionesEstado = collect($estados)->mapWithKeys(fn ($opcion) => [
-                $opcion->value => __('mantenimiento.estado_bateria.'.$opcion->value)
-            ])->all();
-        @endphp
-        <x-atoms.select
-            name="estado"
-            id="estado"
-            :label="__('mantenimiento.baterias.campo_estado')"
-            :options="$opcionesEstado"
-            :value="$estado"
-            required
-            :error="$errors->first('estado')"
-        />
-    </x-molecules.form-section>
-
-    <x-organisms.form-actions-bar :status="__('mantenimiento.baterias.estado_form')">
-        <x-slot:actions>
-            <x-atoms.button :href="route('panel.baterias.index')" variant="outline">
-                {{ __('ui.action.cancel') }}
-            </x-atoms.button>
-            <x-atoms.button type="submit" variant="primary">
-                {{ __('ui.action.save') }}
-            </x-atoms.button>
-        </x-slot:actions>
-    </x-organisms.form-actions-bar>
+    </x-molecules.form-layout>
 </form>
