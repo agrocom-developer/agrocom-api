@@ -17,7 +17,8 @@ use Illuminate\Validation\Rule;
  *
  * Solo valida FORMA: que cada equipo/lote exista, que las hectáreas sean
  * positivas, que el turno sea uno de los tres valores y traiga sus horas, y
- * que Ph/calda solo vengan si la orden es de insumo líquido. La vigencia del
+ * que Ph y litros por hectárea solo vengan si la orden es de insumo líquido
+ * (y kilos por hectárea, solo si es de sólido). La vigencia del
  * equipo, el tope de hectáreas por lote y que la orden esté vigente NO se
  * validan acá: son las guardas de negocio de `AsignarEquiposOrden`.
  */
@@ -37,6 +38,8 @@ trait ValidaTandaDeTrabajo
             'parametros.ancho_pasada_m' => ['nullable', 'numeric', 'gt:0'],
             'parametros.ph_agua' => ['nullable', 'numeric', 'min:0', 'max:14'],
             'parametros.ph_calda' => ['nullable', 'numeric', 'min:0', 'max:14'],
+            'parametros.litros_ha' => ['nullable', 'numeric', 'gt:0'],
+            'parametros.kilos_ha' => ['nullable', 'numeric', 'gt:0'],
             'parametros.calda' => ['nullable', 'array'],
             'parametros.calda.*.producto' => ['required_with:parametros.calda', 'string', 'max:120'],
             'parametros.calda.*.cantidad' => ['required_with:parametros.calda', 'numeric', 'gt:0'],
@@ -103,6 +106,15 @@ trait ValidaTandaDeTrabajo
 
         if (! $esLiquido && ($parametros['ph_calda'] ?? null) !== null && $parametros['ph_calda'] !== '') {
             $validator->errors()->add('parametros.ph_calda', __('operaciones.asignacion_equipos.error_ph_solo_liquido'));
+        }
+
+        // Litros por hectárea es de insumo líquido; kilos por hectárea, de sólido.
+        if (! $esLiquido && ($parametros['litros_ha'] ?? null) !== null && $parametros['litros_ha'] !== '') {
+            $validator->errors()->add('parametros.litros_ha', __('operaciones.ordenes_trabajo.error_litros_solo_liquido'));
+        }
+
+        if ($esLiquido && ($parametros['kilos_ha'] ?? null) !== null && $parametros['kilos_ha'] !== '') {
+            $validator->errors()->add('parametros.kilos_ha', __('operaciones.ordenes_trabajo.error_kilos_solo_solido'));
         }
     }
 }

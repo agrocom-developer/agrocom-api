@@ -67,7 +67,7 @@ final class CrearOrdenTrabajo
     ) {}
 
     /**
-     * @param  array{humedad_min_pct: string|null, viento_max_kmh: string|null, temperatura_max_c: string|null, humedad_max_pct: string|null, velocidad_max_kmh: string|null, altura_vuelo_m: string|null, velocidad_vuelo_kmh: string|null, ancho_pasada_m: string|null, ph_agua: string|null, ph_calda: string|null, calda: list<array{producto: string, cantidad: string, unidad: string}>}  $parametrosCompartidos  de TODA la tanda
+     * @param  array{humedad_min_pct: string|null, viento_max_kmh: string|null, temperatura_max_c: string|null, humedad_max_pct: string|null, velocidad_max_kmh: string|null, altura_vuelo_m: string|null, velocidad_vuelo_kmh: string|null, ancho_pasada_m: string|null, ph_agua: string|null, ph_calda: string|null, litros_ha?: string|null, kilos_ha?: string|null, calda: list<array{producto: string, cantidad: string, unidad: string}>}  $parametrosCompartidos  de TODA la tanda
      * @param  list<array{equipo_trabajo_id: int, lotes: list<array{lote_id: int, hectareas: string, turno: string, turno_hora_inicio: string, turno_hora_fin: string}>}>  $equipos
      *
      * @throws OrdenNoVigenteParaAsignacion
@@ -139,6 +139,8 @@ final class CrearOrdenTrabajo
                 'ancho_pasada_m' => $parametrosCompartidos['ancho_pasada_m'] ?? null,
                 'ph_agua' => $parametrosCompartidos['ph_agua'] ?? null,
                 'ph_calda' => $parametrosCompartidos['ph_calda'] ?? null,
+                'litros_ha' => $parametrosCompartidos['litros_ha'] ?? null,
+                'kilos_ha' => $parametrosCompartidos['kilos_ha'] ?? null,
             ]);
 
             foreach ($equipos as $equipo) {

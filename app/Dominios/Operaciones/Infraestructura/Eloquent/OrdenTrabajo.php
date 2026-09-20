@@ -38,6 +38,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $ancho_pasada_m
  * @property string|null $ph_agua
  * @property string|null $ph_calda
+ * @property string|null $litros_ha
+ * @property string|null $kilos_ha
  */
 class OrdenTrabajo extends ModeloDominio
 {
@@ -60,6 +62,8 @@ class OrdenTrabajo extends ModeloDominio
         'ancho_pasada_m',
         'ph_agua',
         'ph_calda',
+        'litros_ha',
+        'kilos_ha',
     ];
 
     /** @return array<string, string> */
@@ -77,6 +81,8 @@ class OrdenTrabajo extends ModeloDominio
             'ancho_pasada_m' => 'decimal:2',
             'ph_agua' => 'decimal:2',
             'ph_calda' => 'decimal:2',
+            'litros_ha' => 'decimal:2',
+            'kilos_ha' => 'decimal:2',
         ];
     }
 
