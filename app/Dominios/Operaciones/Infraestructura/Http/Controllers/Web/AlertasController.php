@@ -36,6 +36,19 @@ final class AlertasController
 
     private const PERMISO_ATENDER = 'operaciones.alerta.atender';
 
+    /**
+     * Tono de cada estado, definido UNA vez (§6.3.4 de la guía de pantalla):
+     * lo comparten el badge del listado, la tarjeta de KPI, la acción de la
+     * fila y el modal de confirmación de «Atender». Los tonos son los que la
+     * bandeja ya tenía: no se reeligen acá.
+     *
+     * @var array<string, string>
+     */
+    public const array TONO_POR_ESTADO = [
+        'pendiente' => 'warning',
+        'atendida' => 'success',
+    ];
+
     public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
 
     public function index(Request $request, ListarAlertas $listarAlertas): View
@@ -50,6 +63,10 @@ final class AlertasController
         return view('operaciones::pages.alertas.index', [
             ...$this->autorizacion->cascara($request),
             'alertas' => $listarAlertas->ejecutar($estado, $tipo),
+            'resumen' => $listarAlertas->resumen($estado, $tipo),
+            'tonoPorEstado' => self::TONO_POR_ESTADO,
+            'estadosFiltro' => EstadoAlerta::cases(),
+            'tiposFiltro' => TipoAlerta::cases(),
             'filtros' => [
                 'estado' => $estado?->value,
                 'tipo' => $tipo?->value,

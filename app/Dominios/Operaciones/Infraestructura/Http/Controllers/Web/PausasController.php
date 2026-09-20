@@ -63,6 +63,9 @@ final class PausasController
         return view('operaciones::pages.pausas.create', [
             ...$this->autorizacion->cascara($request),
             'sesionesDisponibles' => $this->sesionesDisponibles(),
+            'opcionesCausa' => collect(CausaPausa::cases())
+                ->mapWithKeys(fn (CausaPausa $causa): array => [$causa->value => __('operaciones.pausas.causa.'.$causa->value)])
+                ->all(),
         ]);
     }
 
@@ -76,8 +79,8 @@ final class PausasController
             $registrarPausa->ejecutar(
                 (int) $datos['sesion_id'],
                 CausaPausa::from((string) $datos['causa']),
-                (string) $datos['inicio'],
-                (string) $datos['fin'],
+                $request->inicio(),
+                $request->fin(),
             );
         } catch (PausaFinAnteriorAInicio $excepcion) {
             return redirect()->back()->withInput()->withErrors(['estado' => $excepcion->getMessage()]);

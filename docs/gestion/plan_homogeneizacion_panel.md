@@ -259,7 +259,7 @@ ciclo sigue con la próxima, porque ninguna depende de otra salvo de la 111.
 |---|---|---|
 | 111 | **hecha** (20/9/2026) | #254 |
 | 112 | **hecha** (20/9/2026) | |
-| 113 | pendiente | |
+| 113 | **hecha** (20/9/2026) | |
 | 114 | pendiente | |
 | 115 | pendiente | |
 | 116 | pendiente | |

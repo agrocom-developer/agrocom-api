@@ -2,12 +2,22 @@
     Page: pausas/index (GET /panel/pausas, panel.pausas.index)
     Listado de pausas + tablero agregado por causa (HU-44, tarea 58):
     arquetipo Listado, §6.2 de docs/diseno/guia_pantalla_panel.md — cabecera
-    → tablero agregado → filtro de período → tabla → paginación. Mismo
-    molde que gastos/index.blade.php, con el agregado por causa como CA
-    propio de esta HU (mismo shape que la maqueta del dashboard,
-    ahora con datos reales — adaptado a tabla en vez de barras, más robusto
-    frente a un total variable de causas y minutos que las barras fijas del
-    dashboard).
+    → tablero agregado → toolbar (filtro de período) → tabla → paginación.
+    Homogeneizado con el patrón de Estadías (tarea 113): `filter-panel` +
+    `index-table` + `pagination`, y el tablero en `molecules/summary-card`
+    (antes una tarjeta armada con clases del CSS del dashboard).
+
+    Una pausa no se edita ni se da de baja (se registra de nuevo, ver
+    PausasController): la tabla no tiene columna de acciones, y por eso no
+    hay `row-actions` ni modal. Tampoco lleva buscador (el caso de uso solo
+    filtra por período) ni columna de estado.
+
+    El tablero suma TODAS las causas del catálogo, 0 incluido (ver
+    AgregarPausasPorCausa): dice de un vistazo dónde se concentra el tiempo
+    perdido. Con el total del período en 0 no hay nada que comparar entre
+    causas, así que no se dibuja. No es una franja de KPI: son cinco causas
+    de texto largo, que no caben en una tarjeta de cifra; el desglose gráfico
+    vive además en el dashboard.
 
     Datos esperados (ver PausasController::index()): la cáscara de
     CascaraPanel, más:
@@ -25,10 +35,20 @@
     (CLAUDE.md invariante 11).
 --}}
 @php
-    $formatearDuracion = fn (int $minutos): string => __('operaciones.pausas.duracion_valor', [
+    // Espacios sin corte: «0 h 45 min» no se parte en dos líneas en una columna angosta.
+    $formatearDuracion = fn (int $minutos): string => str_replace(' ', "\u{00A0}", __('operaciones.pausas.duracion_valor', [
         'horas' => intdiv($minutos, 60),
         'minutos' => $minutos % 60,
-    ]);
+    ]));
+
+    // Filas del tablero: el total del período primero y una fila por causa.
+    $filasTablero = [
+        ['label' => __('operaciones.pausas.tablero_total'), 'value' => $formatearDuracion($agregado['total_minutos']), 'mono' => true, 'variant' => 'warning'],
+        ...collect($agregado['por_causa'])
+            ->map(fn (int $minutos, string $causa) => ['label' => __('operaciones.pausas.causa.'.$causa), 'value' => $formatearDuracion($minutos), 'mono' => true])
+            ->values()
+            ->all(),
+    ];
 @endphp
 <x-templates.panel-shell :title="__('operaciones.pausas.titulo')" :tema="$tema">
     <x-templates.panel-layout
@@ -58,72 +78,47 @@
             </x-organisms.page-header>
 
             @if (session('estado'))
-                <x-molecules.alert-strip variant="success" icon="check_circle" class="ag-pausas__aviso">
+                <x-molecules.alert-strip variant="success" icon="check_circle">
                     {{ session('estado') }}
                 </x-molecules.alert-strip>
             @endif
 
-            {{-- El tablero suma TODAS las causas del catálogo, 0 incluido
-                 (ver ObtenerAgregadoPausas) — útil para ver de un vistazo
-                 dónde se concentra el tiempo perdido, inútil cuando el total
-                 del período es 0: ahí no hay nada que comparar entre causas. --}}
             @if ($agregado['total_minutos'] > 0)
-                <div class="ag-card ag-card--padded ag-pausas__tablero">
-                    <div class="ag-card__head ag-card__head--flush">
-                        <h2 class="ag-card__title">{{ __('operaciones.pausas.tablero_titulo') }}</h2>
-                        <span class="ag-pausas__tablero-total">
-                            {{ __('operaciones.pausas.tablero_total') }}: {{ $formatearDuracion($agregado['total_minutos']) }}
-                        </span>
-                    </div>
-
-                    <div class="ag-pausas__tablero-tabla" role="table">
-                        @foreach ($agregado['por_causa'] as $causa => $minutos)
-                            <div class="ag-pausas__tablero-fila" role="row">
-                                <span role="cell">{{ __('operaciones.pausas.causa.'.$causa) }}</span>
-                                <span role="cell" class="ag-pausas__cifra">{{ $formatearDuracion($minutos) }}</span>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
+                <x-molecules.summary-card :title="__('operaciones.pausas.tablero_titulo')" :items="$filasTablero" />
             @endif
 
-            @php $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== ''); @endphp
+            @php
+                $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
+                $filtrosActivosCount = collect($filtros)->filter(fn ($valor) => $valor !== null && $valor !== '')->count();
+            @endphp
 
             @if ($hayFiltrosActivos || $pausas->isNotEmpty())
-                <form method="GET" action="{{ route('panel.pausas.index') }}" class="ag-filtros ag-pausas__filtros">
-                    <div class="ag-input">
-                        <label for="filtro-periodo" class="ag-input__label">{{ __('operaciones.pausas.filtro_periodo') }}</label>
-                        <div class="ag-input__control">
-                            <input
-                                type="month"
-                                name="periodo"
-                                id="filtro-periodo"
-                                class="ag-input__field"
-                                value="{{ $filtros['periodo'] }}"
-                            >
-                        </div>
-                    </div>
-
-                    <div class="ag-filtros__acciones ag-pausas__filtros-acciones">
-                        <x-atoms.button type="submit" variant="outline" size="md" icon="search">
-                            {{ __('operaciones.pausas.filtrar') }}
-                        </x-atoms.button>
-
-                        @if ($hayFiltrosActivos)
-                            <x-atoms.button :href="route('panel.pausas.index')" variant="text" size="md">
-                                {{ __('operaciones.pausas.limpiar_filtro') }}
-                            </x-atoms.button>
-                        @endif
-                    </div>
-                </form>
+                <div class="ag-table-toolbar">
+                    <x-organisms.filter-panel
+                        :action="route('panel.pausas.index')"
+                        :active-count="$filtrosActivosCount"
+                    >
+                        <x-atoms.input
+                            type="month"
+                            name="periodo"
+                            id="filtro-periodo"
+                            :label="__('operaciones.pausas.filtro_periodo')"
+                            :value="$filtros['periodo']"
+                        />
+                    </x-organisms.filter-panel>
+                </div>
             @endif
 
             @if ($pausas->isEmpty())
                 @if ($hayFiltrosActivos)
-                    <x-molecules.alert-strip variant="info" icon="pause_circle" class="ag-pausas__aviso">
-                        {{ __('operaciones.pausas.filtro_vacio') }}
-                    </x-molecules.alert-strip>
+                    <x-molecules.empty-state
+                        icon="search_off"
+                        :title="__('operaciones.pausas.filtro_vacio_titulo')"
+                        :detail="__('operaciones.pausas.filtro_vacio_detalle')"
+                    />
                 @else
+                    {{-- Sin botón adentro: el vacío de un listado solo explica. El
+                         alta ya está en la cabecera, y es el único botón sólido. --}}
                     <x-molecules.empty-state
                         icon="pause_circle"
                         :title="__('operaciones.pausas.vacio_titulo')"
@@ -131,17 +126,21 @@
                     />
                 @endif
             @else
-                <div class="ag-pausas__tabla" role="table">
-                    <div class="ag-pausas__head" role="row">
+                <x-molecules.index-table columns="3rem minmax(0, 2fr) minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr)">
+                    <x-slot:head>
+                        <span role="columnheader" class="ag-index-table__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('operaciones.pausas.col_sesion') }}</span>
                         <span role="columnheader">{{ __('operaciones.pausas.col_causa') }}</span>
                         <span role="columnheader">{{ __('operaciones.pausas.col_inicio') }}</span>
                         <span role="columnheader">{{ __('operaciones.pausas.col_fin') }}</span>
                         <span role="columnheader">{{ __('operaciones.pausas.col_duracion') }}</span>
-                    </div>
+                    </x-slot:head>
 
                     @foreach ($pausas as $pausa)
-                        <div class="ag-pausas__fila" role="row">
+                        <div class="ag-index-table__row" role="row">
+                            <span role="cell" class="ag-index-table__indice">
+                                {{ ($pausas->currentPage() - 1) * $pausas->perPage() + $loop->iteration }}
+                            </span>
                             <span role="cell">{{ __('operaciones.pausas.sesion_etiqueta', ['id' => $pausa->sesion_id, 'trabajo' => $pausa->sesion->trabajo_id, 'secuencia' => $pausa->sesion->secuencia]) }}</span>
                             <span role="cell">{{ __('operaciones.pausas.causa.'.$pausa->causa->value) }}</span>
                             <span role="cell" class="ag-pausas__cifra">{{ $pausa->inicio->format('d/m/Y H:i') }}</span>
@@ -149,27 +148,9 @@
                             <span role="cell" class="ag-pausas__cifra">{{ $formatearDuracion($pausa->duracion_minutos) }}</span>
                         </div>
                     @endforeach
-                </div>
+                </x-molecules.index-table>
 
-                @if ($pausas->hasPages())
-                    <nav class="ag-pausas__paginacion" aria-label="{{ __('operaciones.pausas.paginacion_aria') }}">
-                        @if (! $pausas->onFirstPage())
-                            <x-atoms.button :href="$pausas->previousPageUrl()" variant="outline" size="sm" icon="chevron_left">
-                                {{ __('operaciones.pausas.paginacion_anterior') }}
-                            </x-atoms.button>
-                        @endif
-
-                        <span class="ag-pausas__paginacion-info">
-                            {{ __('operaciones.pausas.paginacion_info', ['actual' => $pausas->currentPage(), 'total' => $pausas->lastPage()]) }}
-                        </span>
-
-                        @if ($pausas->hasMorePages())
-                            <x-atoms.button :href="$pausas->nextPageUrl()" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
-                                {{ __('operaciones.pausas.paginacion_siguiente') }}
-                            </x-atoms.button>
-                        @endif
-                    </nav>
-                @endif
+                <x-molecules.pagination :paginator="$pausas" :aria-label="__('operaciones.pausas.paginacion_aria')" />
             @endif
         </div>
     </x-templates.panel-layout>

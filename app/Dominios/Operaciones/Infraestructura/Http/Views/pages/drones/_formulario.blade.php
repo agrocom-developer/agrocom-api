@@ -1,20 +1,22 @@
 {{--
     Partial: formulario de dron, compartido por create.blade.php y
     edit.blade.php (HU-27, tarea 36) — arquetipo Formulario, §6.3 de
-    docs/diseno/guia_pantalla_panel.md. Mismo patrón que
-    `clientes/_formulario.blade.php`, pero sin sub-entidad repetible ni
+    docs/diseno/guia_pantalla_panel.md. Sin sub-entidad repetible ni
     selects: un dron es cuatro campos planos (identificador, modelo,
     capacidad_l, capacidad_kg — HU-81, tarea 96).
 
+    Homogeneizado con el patrón de Clientes y Bases (tarea 113): el cuerpo va
+    en `molecules/form-layout` y, SOLO en edición, el aside con el resumen
+    relacionado (§6.3.1) — un dron recién creado no puede tener todavía ficha
+    de inventario, órdenes de mantenimiento, cuadrillas ni sesiones.
+
     Espera:
     - $dron (Dron|null): null en alta; el modelo en edición.
+    - $resumenRelacionado (list<array{...}>|null): solo en edición, ver
+      DronesController::resumenRelacionado(). `null`/ausente en alta.
 
     Tras un error de validación, `old()` pisa los valores del modelo/vacíos
     — mismo criterio en alta y en edición.
-
-    El aside pegajoso del arquetipo (summary-card/progress-meter) se omite a
-    propósito, mismo criterio que clientes/campos: ningún dato de solo
-    lectura justifica hoy la columna lateral.
 --}}
 @php
     $esEdicion = $dron !== null;
@@ -36,9 +38,11 @@
         :subtitle="__('operaciones.drones.subtitulo_form')"
     >
         <x-slot:actions>
-            <x-atoms.button :href="route('panel.drones.index')" variant="outline" icon="arrow_back">
-                {{ __('operaciones.drones.volver') }}
-            </x-atoms.button>
+            <x-molecules.boton-volver
+                :href="route('panel.drones.index')"
+                :label="__('operaciones.drones.volver')"
+                :retorno="$esEdicion ? ['dron_id' => $dron->id] : []"
+            />
         </x-slot:actions>
     </x-organisms.page-header>
 
@@ -48,60 +52,94 @@
         </x-molecules.alert-strip>
     @endif
 
-    <x-molecules.form-section
-        :title="__('operaciones.drones.seccion_datos')"
-        :count="__('operaciones.drones.campos_contador', ['cantidad' => 4])"
-    >
-        <x-atoms.input
-            type="text"
-            name="identificador"
-            :label="__('operaciones.drones.campo_identificador')"
-            :value="$identificador"
-            required
-            :error="$errors->first('identificador')"
-        />
+    <x-molecules.form-layout>
+        <x-molecules.form-section
+            :title="__('operaciones.drones.seccion_datos')"
+            :count="__('operaciones.drones.campos_contador', ['cantidad' => 4])"
+        >
+            <x-atoms.input
+                type="text"
+                name="identificador"
+                :label="__('operaciones.drones.campo_identificador')"
+                :value="$identificador"
+                required
+                :error="$errors->first('identificador')"
+            />
 
-        <x-atoms.input
-            type="text"
-            name="modelo"
-            :label="__('operaciones.drones.campo_modelo')"
-            :value="$modelo"
-            :help="__('operaciones.drones.campo_modelo_ayuda')"
-            :error="$errors->first('modelo')"
-        />
+            <x-atoms.input
+                type="text"
+                name="modelo"
+                :label="__('operaciones.drones.campo_modelo')"
+                :value="$modelo"
+                :help="__('operaciones.drones.campo_modelo_ayuda')"
+                :error="$errors->first('modelo')"
+            />
 
-        <x-atoms.input
-            type="number"
-            name="capacidad_l"
-            :label="__('operaciones.drones.campo_capacidad')"
-            :value="$capacidadL"
-            :help="__('operaciones.drones.campo_capacidad_ayuda')"
-            :error="$errors->first('capacidad_l')"
-            min="30"
-            max="60"
-            step="1"
-        />
+            <x-atoms.input
+                type="number"
+                name="capacidad_l"
+                :label="__('operaciones.drones.campo_capacidad')"
+                :value="$capacidadL"
+                :help="__('operaciones.drones.campo_capacidad_ayuda')"
+                :error="$errors->first('capacidad_l')"
+                min="30"
+                max="60"
+                step="1"
+            />
 
-        <x-atoms.input
-            type="number"
-            name="capacidad_kg"
-            :label="__('operaciones.drones.campo_capacidad_kg')"
-            :value="$capacidadKg"
-            :help="__('operaciones.drones.campo_capacidad_kg_ayuda')"
-            :error="$errors->first('capacidad_kg')"
-            min="0"
-            step="0.01"
-        />
-    </x-molecules.form-section>
+            <x-atoms.input
+                type="number"
+                name="capacidad_kg"
+                :label="__('operaciones.drones.campo_capacidad_kg')"
+                :value="$capacidadKg"
+                :help="__('operaciones.drones.campo_capacidad_kg_ayuda')"
+                :error="$errors->first('capacidad_kg')"
+                min="0"
+                step="0.01"
+            />
+        </x-molecules.form-section>
 
-    <x-organisms.form-actions-bar :status="__('operaciones.drones.estado_form')">
-        <x-slot:actions>
-            <x-atoms.button :href="route('panel.drones.index')" variant="outline">
-                {{ __('ui.action.cancel') }}
-            </x-atoms.button>
-            <x-atoms.button type="submit" variant="primary">
-                {{ __('ui.action.save') }}
-            </x-atoms.button>
-        </x-slot:actions>
-    </x-organisms.form-actions-bar>
+        <x-organisms.form-actions-bar :status="__('operaciones.drones.estado_form')">
+            <x-slot:actions>
+                <x-atoms.button :href="route('panel.drones.index')" variant="outline">
+                    {{ __('ui.action.cancel') }}
+                </x-atoms.button>
+                <x-atoms.button type="submit" variant="primary">
+                    {{ __('ui.action.save') }}
+                </x-atoms.button>
+            </x-slot:actions>
+        </x-organisms.form-actions-bar>
+
+        @if ($esEdicion)
+            <x-slot:aside>
+                @foreach ($resumenRelacionado ?? [] as $resumen)
+                    @if ($resumen['tieneDatos'])
+                        <x-molecules.summary-card :title="$resumen['titulo']" :items="$resumen['items']">
+                            @if ($resumen['acciones'] !== [])
+                                <x-slot:action>
+                                    @foreach ($resumen['acciones'] as $accionResumen)
+                                        <x-atoms.button :href="$accionResumen['href']" variant="outline" :icon="$accionResumen['icono'] ?? 'arrow_forward'" block>
+                                            {{ $accionResumen['label'] }}
+                                        </x-atoms.button>
+                                    @endforeach
+                                </x-slot:action>
+                            @endif
+                        </x-molecules.summary-card>
+                    @else
+                        <x-molecules.empty-state :icon="$resumen['icono']" :title="$resumen['vacioTitulo']" :detail="$resumen['vacioDetalle']">
+                            @if ($resumen['acciones'] !== [])
+                                <x-slot:action>
+                                    @foreach ($resumen['acciones'] as $accionResumen)
+                                        <x-atoms.button :href="$accionResumen['href']" variant="outline" :icon="$accionResumen['icono'] ?? 'add'">
+                                            {{ $accionResumen['label'] }}
+                                        </x-atoms.button>
+                                    @endforeach
+                                </x-slot:action>
+                            @endif
+                        </x-molecules.empty-state>
+                    @endif
+                @endforeach
+            </x-slot:aside>
+        @endif
+    </x-molecules.form-layout>
 </form>

@@ -48,6 +48,9 @@
     - invalid (bool, default false): solo el borde de error, sin texto — para cuando
       el mensaje lo pinta el contenedor (una fila de tabla, p. ej.).
     - disabled (bool, default false).
+    - required (bool, default false): marca el campo como obligatorio — el asterisco
+      junto al rótulo (el mismo de `atoms/input`) y el atributo `required` en los
+      dos nativos. Sin rótulo no pinta asterisco.
 
     LSP (`$attributes`): la raíz solo fusiona `class`; el resto de atributos va a
     los dos nativos.
@@ -63,6 +66,7 @@
     'error' => null,
     'invalid' => false,
     'disabled' => false,
+    'required' => false,
 ])
 
 @php
@@ -106,7 +110,12 @@
     data-label-error-formato="{{ __('ui.time_range.error_formato') }}"
 >
     @if ($label)
-        <label for="{{ $campoId }}-trigger" class="ag-time-range__label">{{ $label }}</label>
+        <label for="{{ $campoId }}-trigger" class="ag-time-range__label">
+            {{ $label }}
+            @if ($required)
+                <span class="ag-input__required" aria-hidden="true">*</span>
+            @endif
+        </label>
     @endif
 
     <div class="ag-time-range__control {{ $error || $invalid ? 'ag-time-range__control--error' : '' }}">
@@ -118,6 +127,7 @@
             class="ag-time-range__native"
             aria-label="{{ __('ui.time_range.inicio') }}"
             @if ($disabled) disabled @endif
+            @if ($required) required @endif
             @if ($describedBy !== '') aria-describedby="{{ $describedBy }}" @endif
             {{ $attributes->except('class') }}
         >
@@ -128,6 +138,7 @@
             class="ag-time-range__native"
             aria-label="{{ __('ui.time_range.fin') }}"
             @if ($disabled) disabled @endif
+            @if ($required) required @endif
             @if ($describedBy !== '') aria-describedby="{{ $describedBy }}" @endif
             {{ $attributes->except('class') }}
         >
