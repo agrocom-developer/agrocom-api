@@ -24,4 +24,13 @@ interface LecturaPanelPersonal
      * @return array<int, string>
      */
     public function nombresDeBases(array $ids): array;
+
+    /**
+     * Las bases vivas, por nombre: `id => nombre`, para un filtro o un
+     * `<select>` de otro módulo (`inv_stock.base_id`, `inv_movimientos.base_id`).
+     * Lo dado de baja no aparece.
+     *
+     * @return array<int, string>
+     */
+    public function basesDisponibles(): array;
 }
