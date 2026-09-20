@@ -68,7 +68,10 @@ final class PlanillasController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
-        $estado = EstadoPlanilla::tryFrom($request->string('estado')->toString())?->value;
+        // `?estado[]=x` llega como arreglo: `->string()` lo convertiría a texto y
+        // rompería con un 500, así que solo se acepta un texto.
+        $estadoQuery = $request->query('estado');
+        $estado = is_string($estadoQuery) ? EstadoPlanilla::tryFrom($estadoQuery)?->value : null;
 
         return view('finanzas::pages.planillas.index', [
             ...$this->autorizacion->cascara($request),

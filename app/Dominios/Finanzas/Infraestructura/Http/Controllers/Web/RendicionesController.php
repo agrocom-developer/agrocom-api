@@ -83,7 +83,10 @@ final class RendicionesController
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
         $baseId = $request->integer('base_id') ?: null;
-        $estado = EstadoRendicion::tryFrom($request->string('estado')->toString())?->value;
+        // `?estado[]=x` llega como arreglo: `->string()` lo convertiría a texto y
+        // rompería con un 500, así que solo se acepta un texto.
+        $estadoQuery = $request->query('estado');
+        $estado = is_string($estadoQuery) ? EstadoRendicion::tryFrom($estadoQuery)?->value : null;
 
         $rendiciones = $listarRendiciones->ejecutar($baseId, $estado);
 
