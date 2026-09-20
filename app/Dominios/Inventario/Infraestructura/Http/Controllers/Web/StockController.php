@@ -9,11 +9,11 @@ use App\Dominios\Inventario\Dominio\SentidoAjusteInventario;
 use App\Dominios\Inventario\Dominio\TipoMovimientoInventario;
 use App\Dominios\Inventario\Infraestructura\Eloquent\Repuesto;
 use App\Dominios\Inventario\Infraestructura\Http\Requests\RegistrarMovimientoRequest;
+use App\Dominios\Personal\Contratos\LecturaPanelPersonal;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 /**
@@ -30,9 +30,14 @@ use Illuminate\View\View;
  * Ninguna regla de negocio acá: `RegistrarMovimientoStock` hace el trabajo,
  * incluida la guarda de "nunca negativo".
  *
- * El select de `base_id`/`base_destino_id` se arma con `DB::table('per_bases')`
- * (ADR 0003 regla 3, mismo criterio que `BateriasController`), sin importar
- * el modelo Eloquent `PerBase` de `Personal`.
+ * Las bases son de `Personal`: el filtro, los selectores del alta y el nombre de
+ * la columna «Base» llegan por {@see LecturaPanelPersonal} (ADR 0003, regla 2),
+ * sin leer `per_bases` ni importar el modelo `PerBase`.
+ *
+ * La franja de KPI del listado la resuelve `ListarStock::resumen()` con el
+ * mismo filtro que la tabla; el movimiento de stock no se edita ni se borra
+ * —es un asiento—, así que la fila no lleva acciones y `store()` vuelve al
+ * listado con su aviso (no hay `edit()` al que volver).
  */
 final class StockController
 {
@@ -40,7 +45,10 @@ final class StockController
 
     private const PERMISO_CREAR = 'inventario.movimiento.crear';
 
-    public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
+    public function __construct(
+        private readonly AutorizacionPanelWeb $autorizacion,
+        private readonly LecturaPanelPersonal $lecturaPersonal,
+    ) {}
 
     public function index(Request $request, ListarStock $listarStock): View
     {
@@ -49,17 +57,16 @@ final class StockController
         $busqueda = $request->string('q')->toString();
         $baseQuery = $request->string('base_id')->toString();
         $baseId = $baseQuery !== '' ? (int) $baseQuery : null;
+        $textoBusqueda = $busqueda !== '' ? $busqueda : null;
 
-        $stock = $listarStock->ejecutar(
-            busqueda: $busqueda !== '' ? $busqueda : null,
-            baseId: $baseId,
-        );
+        $stock = $listarStock->ejecutar(busqueda: $textoBusqueda, baseId: $baseId);
 
         return view('inventario::pages.stock.index', [
             ...$this->autorizacion->cascara($request),
             'stock' => $stock,
-            'etiquetasBase' => $this->etiquetasBase($stock->pluck('base_id')->unique()->values()->all()),
-            'basesDisponibles' => $this->basesDisponibles(),
+            'resumen' => $listarStock->resumen(busqueda: $textoBusqueda, baseId: $baseId),
+            'etiquetasBase' => $this->lecturaPersonal->nombresDeBases($stock->pluck('base_id')->unique()->values()->all()),
+            'basesDisponibles' => $this->lecturaPersonal->basesDisponibles(),
             'filtros' => ['q' => $busqueda, 'base_id' => $baseId],
         ]);
     }
@@ -68,12 +75,17 @@ final class StockController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_CREAR), 403);
 
+        // `?repuesto_id=` llega desde el resumen de la ficha de un repuesto: solo
+        // deja ese repuesto ya elegido, el resto del formulario sigue igual.
+        $repuestoIdInicial = $request->integer('repuesto_id');
+
         return view('inventario::pages.stock.create', [
             ...$this->autorizacion->cascara($request),
             'repuestosDisponibles' => $this->repuestosDisponibles(),
-            'basesDisponibles' => $this->basesDisponibles(),
+            'basesDisponibles' => $this->lecturaPersonal->basesDisponibles(),
             'tipos' => TipoMovimientoInventario::cases(),
             'sentidos' => SentidoAjusteInventario::cases(),
+            'repuestoIdInicial' => $repuestoIdInicial > 0 ? $repuestoIdInicial : null,
         ]);
     }
 
@@ -124,15 +136,6 @@ final class StockController
     }
 
     /** @return Collection<int, string> */
-    private function basesDisponibles(): Collection
-    {
-        return DB::table('per_bases')
-            ->whereNull('deleted_at')
-            ->orderBy('nombre')
-            ->pluck('nombre', 'id');
-    }
-
-    /** @return Collection<int, string> */
     private function repuestosDisponibles(): Collection
     {
         return Repuesto::query()
@@ -151,25 +154,5 @@ final class StockController
     private function etiquetaRepuesto(Repuesto $repuesto): string
     {
         return "{$repuesto->codigo} — {$repuesto->descripcion}";
-    }
-
-    /**
-     * Etiquetas legibles para la columna "Base" del listado (mismo criterio
-     * de lectura directa por `DB::table` que `basesDisponibles()`).
-     *
-     * @param  list<int>  $ids
-     * @return array<int, string>
-     */
-    private function etiquetasBase(array $ids): array
-    {
-        if ($ids === []) {
-            return [];
-        }
-
-        return DB::table('per_bases')
-            ->whereIn('id', $ids)
-            ->pluck('nombre', 'id')
-            ->map(fn ($nombre) => (string) $nombre)
-            ->all();
     }
 }

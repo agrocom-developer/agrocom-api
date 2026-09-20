@@ -2,13 +2,13 @@
  * Pages: stock/index, stock/create
  * (app/Dominios/Inventario/Infraestructura/Http/Views/pages/stock/) —
  * HU-36, tarea 52: stock agregado por (repuesto, base) y alta de
- * movimientos. CSS propio de ESTAS páginas (ver convención en
- * resources/css/pages/index.css) — mismo patrón que repuestos.css/baterias.css.
+ * movimientos; homogeneizadas en la tarea 117. Todo color y medida por token
+ * (CLAUDE.md invariante 11).
  *
- * El wrapper `.ag-stock`/`.ag-stock-form` sigue el mismo patrón que
- * `.ag-repuestos`/`.ag-repuestos-form`: flex en columna con un único `gap`
- * en vez de `margin-top` repetido en cada hijo. Todo color y medida por
- * token (CLAUDE.md invariante 11).
+ * La tabla, el filtro, el buscador, el layout del formulario y la paginación
+ * los resuelve el catálogo (`index-table`, `filter-panel`, `table-search`,
+ * `form-layout`, `pagination`, `stat-card`): acá queda solo lo que es propio de
+ * estas pantallas — la grilla de la franja de KPI y el aspecto de las celdas.
  */
 
 .ag-stock,
@@ -18,66 +18,62 @@
     gap: var(--ag-space-5);
 }
 
-/* Listado (index) */
+/*
+ * Listado: franja de KPI bajo la cabecera, mismo patrón que `estadias.css` y
+ * `ordenes-mantenimiento.css`. El contenedor consultado es el WRAPPER de la
+ * página, no la propia grilla: una `@container` pregunta por el ancestro más
+ * cercano, así que declarar `container-type` en el mismo elemento que se
+ * consulta no matchea nunca y la franja se queda en una columna. Se consulta
+ * el ancho del contenido del panel, que cambia con el sidebar, no el del
+ * viewport.
+ */
 
-.ag-stock__tabla {
-    border: 1px solid var(--ag-color-border-card);
-    border-radius: var(--ag-radius-md);
-    background-color: var(--ag-color-surface-card);
-    overflow: hidden;
+.ag-stock {
+    container: ag-stock / inline-size;
 }
 
-.ag-stock__head,
-.ag-stock__fila {
+.ag-stock__kpis {
     display: grid;
-    grid-template-columns: 3rem 2fr 1fr 0.7fr 0.7fr 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--ag-space-4);
-    align-items: center;
-    padding: var(--ag-space-3) var(--ag-space-4);
 }
 
-.ag-stock__indice {
-    color: var(--ag-color-text-faint);
-    font-family: var(--ag-font-family-mono);
-    font-size: var(--ag-font-size-xs);
+@container ag-stock (min-width: 36rem) {
+    .ag-stock__kpis {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 
-.ag-stock__head {
-    background-color: var(--ag-color-bg-table-head);
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-xs);
-    font-weight: var(--ag-font-weight-medium);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+@container ag-stock (min-width: 60rem) {
+    .ag-stock__kpis {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
 }
 
-.ag-stock__fila {
-    border-top: 1px solid var(--ag-color-border-row);
-    color: var(--ag-color-text);
-    font-size: var(--ag-font-size-sm);
-}
+/* Celdas del listado */
 
-.ag-stock__fila:hover {
-    background-color: var(--ag-color-bg-row-hover);
+.ag-stock__repuesto {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-1);
+    min-width: 0;
 }
 
 .ag-stock__codigo {
     font-weight: var(--ag-font-weight-medium);
 }
 
-@media (max-width: 992px) {
-    .ag-stock__head {
-        display: none;
-    }
+.ag-stock__descripcion {
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-xs);
+}
 
-    .ag-stock__fila {
-        grid-template-columns: 1fr;
-        gap: var(--ag-space-1);
-    }
+/* Las cantidades son cifras: en mono para que alineen en columna. */
+.ag-stock__cantidad {
+    font-family: var(--ag-font-family-mono);
+}
 
-    /* El índice numérico solo ordena filas de una tabla — en tarjeta
-       apilada no aporta. */
-    .ag-stock__indice {
-        display: none;
-    }
+.ag-stock__unidad {
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-xs);
 }
