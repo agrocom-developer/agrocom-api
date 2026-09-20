@@ -40,6 +40,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $ph_calda
  * @property string|null $litros_ha
  * @property string|null $kilos_ha
+ * @property list<string>|null $calda_productos
  */
 class OrdenTrabajo extends ModeloDominio
 {
@@ -64,6 +65,7 @@ class OrdenTrabajo extends ModeloDominio
         'ph_calda',
         'litros_ha',
         'kilos_ha',
+        'calda_productos',
     ];
 
     /** @return array<string, string> */
@@ -83,6 +85,7 @@ class OrdenTrabajo extends ModeloDominio
             'ph_calda' => 'decimal:2',
             'litros_ha' => 'decimal:2',
             'kilos_ha' => 'decimal:2',
+            'calda_productos' => 'array',
         ];
     }
 

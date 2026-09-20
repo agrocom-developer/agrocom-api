@@ -393,8 +393,9 @@ Referencias vivas (19/9/2026): `campania::pages.campanias._formulario` + `_cambi
 Criterio del dueño (19/9/2026, sobre el alta de Orden de Trabajo, que ocultaba todo hasta elegir la orden de aplicación). Referencia viva: `operaciones::pages.ordenes-trabajo.create`.
 
 - **Todas las secciones se dibujan siempre.** Que falte elegir un dato del que otras dependen (la orden, el cliente, el contrato) no es motivo para esconder el resto del formulario ni para reemplazarlo por un aviso: el formulario simplemente **no deja guardar**, y quien responde es la validación del campo obligatorio ("Elige la orden de aplicación."), como con cualquier otro.
-- **Lo que no depende de ese dato se puede cargar antes** (en el ejemplo: límites climáticos, parámetros de vuelo y las casillas de la calda).
-- **La sección que sí depende muestra el vacío** (`molecules/empty-state`, §5.1) diciendo qué falta elegir y qué va a aparecer ahí — igual que la sección de propiedades y lotes del formulario de contratos cuando todavía no hay ninguno. Un campo suelto que depende del dato se reemplaza por una línea de ayuda que dice qué se agrega, no por nada.
+- **Lo que no depende de ese dato se puede cargar antes** (en el ejemplo: límites climáticos y parámetros de vuelo).
+- **La sección que sí depende muestra el vacío** (`molecules/empty-state`, §5.1) diciendo qué falta elegir y qué va a aparecer ahí (en el ejemplo: «Calda», cuyos campos cambian según la orden sea de insumo líquido o sólido, y «Equipos») — igual que la sección de propiedades y lotes del formulario de contratos cuando todavía no hay ninguno.
+- **Una sección que depende del dato va pegada a él**, no al final: en el ejemplo, «Calda» es la segunda sección, justo después de la orden de aplicación.
 - **Si elegir el dato recarga la pantalla, lo ya cargado no se pierde** (`sessionStorage` de un solo uso, como `ordenes-trabajo-form.js`, o `old()` si viaja por el servidor).
 
 ### 6.4. Detalle — **la referencia canónica es `operaciones::pages.ordenes.show`**

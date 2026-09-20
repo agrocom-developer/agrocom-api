@@ -49,8 +49,6 @@ final class CrearOrdenTrabajoRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
-        $this->descartarCaldaSinMarcar();
-
         $equipos = $this->input('equipos');
 
         if (! is_array($equipos)) {
@@ -84,29 +82,6 @@ final class CrearOrdenTrabajoRequest extends FormRequest
                 ]));
             }
         });
-    }
-
-    /**
-     * La calda llega como casillas: un producto sin marcar no debería enviar
-     * nada (sus campos van `disabled`), pero si igual llega su unidad o su
-     * cantidad sin el `producto`, ese renglón no existe.
-     */
-    private function descartarCaldaSinMarcar(): void
-    {
-        $parametros = $this->input('parametros');
-
-        if (! is_array($parametros) || ! is_array($parametros['calda'] ?? null)) {
-            return;
-        }
-
-        // Sin reindexar: la clave del producto (`glifosato`, `agua`…) es la que
-        // la vista usa para volver a marcar la casilla tras un error.
-        $parametros['calda'] = array_filter(
-            $parametros['calda'],
-            fn (mixed $renglon): bool => is_array($renglon) && ($renglon['producto'] ?? null) !== null && $renglon['producto'] !== '',
-        );
-
-        $this->merge(['parametros' => $parametros]);
     }
 
     private function bloqueEnBlanco(mixed $equipo): bool

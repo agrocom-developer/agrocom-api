@@ -5,18 +5,22 @@
     ella — cuántos equipos lleva, qué lotes, si es de insumo líquido —, así que
     el formulario se dibuja en el servidor para la orden elegida: al cambiarla,
     `ordenes-trabajo-form.js` recarga esta misma pantalla con `?orden_id=`
-    (conservando lo ya cargado en clima, vuelo y calda).
+    (conservando lo ya cargado en calda, clima y vuelo).
 
     Sin orden elegida NADA se oculta (criterio del dueño, 19/9/2026: ningún
     formulario del panel esconde secciones por falta de un dato previo —
-    simplemente no deja guardar). Clima, vuelo y las casillas de la calda no
-    dependen de la orden y se pueden cargar antes; «Equipos» muestra el
+    simplemente no deja guardar). Clima y vuelo no dependen de la orden y se
+    pueden cargar antes; «Calda» y «Equipos» sí dependen, y muestran el
     componente de vacío, igual que la sección de lotes del formulario de
     contratos; y confirmar sin orden responde "Elige la orden de aplicación".
 
+    Orden de las secciones: orden de aplicación → calda → límites climáticos →
+    parámetros de vuelo → equipos.
+
+    - Calda (`_calda.blade.php`): casillas simples de lo que lleva, más Ph y
+      litros por hectárea (insumo líquido) o kilos por hectárea (sólido).
     - Límites climáticos y parámetros de vuelo: dos secciones separadas,
       compartidas por toda la tanda.
-    - Ph y calda: solo si la orden es de insumo líquido.
     - Equipos: tantos bloques como `cantidad_equipos_necesarios` de la orden.
       Acá no se agregan ni se quitan equipos — esa cantidad se decidió al
       emitir la orden. El primero es obligatorio; los demás pueden quedar en
@@ -133,6 +137,12 @@
                 />
             </x-molecules.form-section>
 
+            @include('operaciones::pages.ordenes-trabajo._calda', [
+                'esLiquido' => $ordenElegida === null ? null : $esLiquido,
+                'parametrosAntiguos' => $parametrosAntiguos,
+                'litrosHaOrden' => $ordenElegida['litros_ha'] ?? null,
+            ])
+
             <x-molecules.form-section
                 :title="__('operaciones.ordenes_trabajo.seccion_clima')"
                 :count="__('operaciones.ordenes_trabajo.campos_contador', ['cantidad' => 4])"
@@ -235,12 +245,6 @@
                     :error="$errors->first('parametros.velocidad_max_kmh')"
                 />
             </x-molecules.form-section>
-
-            @include('operaciones::pages.ordenes-trabajo._calda', [
-                'esLiquido' => $ordenElegida === null ? null : $esLiquido,
-                'parametrosAntiguos' => $parametrosAntiguos,
-                'litrosHaOrden' => $ordenElegida['litros_ha'] ?? null,
-            ])
 
             <x-molecules.form-section
                 :title="__('operaciones.ordenes_trabajo.seccion_equipos')"

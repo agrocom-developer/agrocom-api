@@ -100,49 +100,13 @@
     font-weight: var(--ag-font-weight-medium);
 }
 
-/* Calda: una fila por producto — casilla, cantidad y unidad. Sin marcar, la
-   cantidad y la unidad se atenúan: están deshabilitadas y no se envían. */
-.ag-ordenes-trabajo-form__calda {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-3);
-}
-
-.ag-ordenes-trabajo-form__calda-fila {
-    display: grid;
-    grid-template-columns: minmax(9rem, 1fr) minmax(8rem, 1fr) minmax(10rem, 1fr);
-    gap: var(--ag-space-4);
-    align-items: end;
-    padding: var(--ag-space-3);
-    border: 1px solid var(--ag-color-border);
-    border-radius: var(--ag-radius-md);
-    background-color: var(--ag-color-bg);
-}
-
-.ag-ordenes-trabajo-form__calda-fila .ag-input,
-.ag-ordenes-trabajo-form__calda-fila .ag-select,
-.ag-ordenes-trabajo-form__calda-fila .ag-checkbox {
-    margin-bottom: 0;
-}
-
-.ag-ordenes-trabajo-form__calda-fila .ag-checkbox {
-    align-self: center;
-}
-
-.ag-ordenes-trabajo-form__calda-fila:not(.ag-ordenes-trabajo-form__calda-fila--activa) .ag-input,
-.ag-ordenes-trabajo-form__calda-fila:not(.ag-ordenes-trabajo-form__calda-fila--activa) .ag-select {
-    opacity: 0.5;
-    pointer-events: none;
-}
-
-.ag-ordenes-trabajo-form__calda-fila--activa {
-    border-color: var(--ag-color-primary-border-subtle);
-}
-
-@media (max-width: 40rem) {
-    .ag-ordenes-trabajo-form__calda-fila {
-        grid-template-columns: 1fr;
-    }
+/* Calda: cuatro casillas simples, en una línea mientras entren. */
+.ag-ordenes-trabajo-form__calda .ag-checkbox-group__options {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--ag-space-2) var(--ag-space-6);
+    max-height: none;
+    overflow: visible;
 }
 
 .ag-ordenes-trabajo-detalle {

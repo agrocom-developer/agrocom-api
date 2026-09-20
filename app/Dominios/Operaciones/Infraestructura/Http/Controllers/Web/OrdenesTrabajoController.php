@@ -251,13 +251,11 @@ final class OrdenesTrabajoController
             'ph_calda' => $cadena($parametros['ph_calda'] ?? null),
             'litros_ha' => $cadena($parametros['litros_ha'] ?? null),
             'kilos_ha' => $cadena($parametros['kilos_ha'] ?? null),
-            // `array_values`: la calda llega indexada por producto (`glifosato`,
-            // `agua`…) y el caso de uso espera una lista.
-            'calda' => array_values(array_map(fn (array $item): array => [
-                'producto' => (string) $item['producto'],
-                'cantidad' => (string) $item['cantidad'],
-                'unidad' => (string) $item['unidad'],
-            ], $parametros['calda'] ?? [])),
+            // Casillas sin cantidades: quedan en la cabecera de la tanda. Esta
+            // pantalla no registra productos por `Mezclas` (que exige cantidad
+            // y unidad), así que `calda` va siempre vacía.
+            'calda_productos' => array_values(array_unique(array_map('strval', $parametros['calda_productos'] ?? []))),
+            'calda' => [],
         ];
     }
 

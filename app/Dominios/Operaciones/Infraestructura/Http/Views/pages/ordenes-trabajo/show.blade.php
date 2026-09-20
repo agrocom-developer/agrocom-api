@@ -92,10 +92,14 @@
             </x-molecules.form-section>
 
             @php
-                // Ph y caudal de la tanda: solo los datos que efectivamente se
-                // cargaron (una tanda de sólido no trae Ph ni litros; una de
+                // Calda de la tanda: qué lleva, Ph y caudal — solo los datos que
+                // efectivamente se cargaron (una tanda de sólido no trae Ph ni litros; una de
                 // líquido no trae kilos).
+                $llevaCalda = collect($ordenTrabajo->calda_productos ?? [])
+                    ->map(fn (string $producto): string => __('operaciones.ordenes_trabajo.calda_productos.'.$producto))
+                    ->implode(', ');
                 $datosCalda = array_filter([
+                    __('operaciones.ordenes_trabajo.detalle_calda_productos') => $llevaCalda !== '' ? $llevaCalda : null,
                     __('operaciones.asignacion_equipos.campo_ph_agua') => $ordenTrabajo->ph_agua,
                     __('operaciones.asignacion_equipos.campo_ph_calda') => $ordenTrabajo->ph_calda,
                     __('operaciones.ordenes_trabajo.campo_litros_ha') => $ordenTrabajo->litros_ha,

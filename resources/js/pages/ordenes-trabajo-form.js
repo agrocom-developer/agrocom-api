@@ -6,12 +6,11 @@
  * el servidor. Este script se ocupa de:
  * - Recargar la pantalla con `?orden_id=` al elegir otra orden — equipos,
  *   lotes y calda dependen todos de ella — sin perder lo ya cargado en
- *   clima, vuelo y calda (esas secciones se pueden llenar antes de elegirla).
+ *   calda, clima y vuelo (p. ej. al pasar de una orden a otra).
  * - Que una escuadra elegida en un equipo deje de ofrecerse en los demás.
  * - Las filas repetibles de lote dentro de cada equipo.
  * - El reparto automático de hectáreas entre los equipos (parejo o por
  *   dificultad de los lotes), para que solo quede elegir la escuadra.
- * - Habilitar la cantidad de cada producto de la calda al marcar su casilla.
  * - El resumen de hectáreas repartidas contra lo que le queda a la orden.
  *
  * Vanilla, sin librerías. Los textos llegan traducidos por `data-*`.
@@ -29,7 +28,6 @@ class OrdenesTrabajoForm {
     init() {
         this.restaurarParametros();
         this.bindOrdenSelector();
-        this.bindCalda();
 
         if (!this.lista) return;
 
@@ -62,8 +60,8 @@ class OrdenesTrabajoForm {
     }
 
     /**
-     * Clima, vuelo y calda se pueden cargar antes de elegir la orden, y elegirla
-     * recarga la pantalla: lo tipeado viaja por `sessionStorage` y se repone al
+     * Clima y vuelo se pueden cargar antes de elegir la orden, y elegirla (o
+     * cambiarla) recarga la pantalla: lo tipeado viaja por `sessionStorage` y se repone al
      * volver. Los equipos NO viajan — sus lotes son de la orden anterior. Es de
      * un solo uso: se borra al leerlo, así no reaparece en un alta posterior.
      */
@@ -72,7 +70,8 @@ class OrdenesTrabajoForm {
 
         this.form.querySelectorAll('[name^="parametros["]').forEach((campo) => {
             if (campo.type === 'checkbox') {
-                if (campo.checked) valores[campo.name] = true;
+                // Las casillas de la calda comparten nombre: se distinguen por valor.
+                if (campo.checked) valores[`${campo.name}::${campo.value}`] = true;
             } else if (campo.type !== 'hidden' && campo.value !== '') {
                 valores[campo.name] = campo.value;
             }
@@ -96,8 +95,10 @@ class OrdenesTrabajoForm {
         }
         if (valores === null || typeof valores !== 'object') return;
 
-        Object.entries(valores).forEach(([nombre, valor]) => {
-            const campo = [...this.form.querySelectorAll('[name^="parametros["]')].find((c) => c.name === nombre && c.type !== 'hidden');
+        const campos = [...this.form.querySelectorAll('[name^="parametros["]')].filter((c) => c.type !== 'hidden');
+
+        Object.entries(valores).forEach(([clave, valor]) => {
+            const campo = campos.find((c) => (c.type === 'checkbox' ? `${c.name}::${c.value}` : c.name) === clave);
             if (!campo) return;
 
             if (campo.type === 'checkbox') {
@@ -106,32 +107,6 @@ class OrdenesTrabajoForm {
                 campo.value = String(valor);
             }
             campo.dispatchEvent(new Event('change', { bubbles: true }));
-        });
-    }
-
-    /**
-     * Una casilla de la calda sin marcar no envía nada: sus campos quedan
-     * deshabilitados hasta que se marca.
-     */
-    bindCalda() {
-        this.form.querySelectorAll('[data-ag-calda-fila]').forEach((fila) => {
-            const casilla = fila.querySelector('[data-ag-calda-casilla]');
-            if (!casilla) return;
-
-            const sincronizar = () => {
-                fila.querySelectorAll('[data-ag-calda-campo]').forEach((campo) => {
-                    campo.disabled = !casilla.checked;
-                });
-                fila.classList.toggle('ag-ordenes-trabajo-form__calda-fila--activa', casilla.checked);
-            };
-
-            casilla.addEventListener('change', () => {
-                sincronizar();
-                if (casilla.checked) {
-                    fila.querySelector('input[data-ag-calda-campo][type="number"]')?.focus();
-                }
-            });
-            sincronizar();
         });
     }
 

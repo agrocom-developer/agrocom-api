@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Operaciones\Infraestructura\Http\Requests\Concerns;
 
+use App\Dominios\Operaciones\Dominio\ProductoCalda;
 use App\Dominios\Operaciones\Dominio\TipoInsumo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use Illuminate\Contracts\Validation\Validator;
@@ -40,6 +41,8 @@ trait ValidaTandaDeTrabajo
             'parametros.ph_calda' => ['nullable', 'numeric', 'min:0', 'max:14'],
             'parametros.litros_ha' => ['nullable', 'numeric', 'gt:0'],
             'parametros.kilos_ha' => ['nullable', 'numeric', 'gt:0'],
+            'parametros.calda_productos' => ['nullable', 'array'],
+            'parametros.calda_productos.*' => ['distinct', Rule::enum(ProductoCalda::class)],
             'parametros.calda' => ['nullable', 'array'],
             'parametros.calda.*.producto' => ['required_with:parametros.calda', 'string', 'max:120'],
             'parametros.calda.*.cantidad' => ['required_with:parametros.calda', 'numeric', 'gt:0'],
