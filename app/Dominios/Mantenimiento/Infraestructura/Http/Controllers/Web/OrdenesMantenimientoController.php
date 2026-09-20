@@ -49,6 +49,10 @@ use Illuminate\View\View;
  * 0003 regla 3, mismo criterio que `VehiculosController`/`StockController`),
  * sin importar los modelos Eloquent de `Operaciones`/`Inventario`/`Personal`.
  *
+ * `index()` suma en la tarea 116 la búsqueda libre y las cifras de la franja
+ * de KPI: las dos salen del mismo caso de uso y con el mismo filtro que la
+ * tabla, así lo que se ve arriba cuenta las filas que se ven abajo.
+ *
  * `edit()` arma además lo que la ficha necesita para pintarse (tarea 116):
  * los pasos de la máquina de estados ({@see PasosDeOrdenMantenimiento}), los
  * repuestos que el cierre consumió —por el contrato de lectura de Inventario,
@@ -82,18 +86,29 @@ final class OrdenesMantenimientoController
         $estado = $estadoQuery !== '' ? EstadoOrdenMantenimiento::tryFrom($estadoQuery) : null;
         $equipoTipoQuery = $request->string('equipo_tipo')->toString();
         $equipoTipo = in_array($equipoTipoQuery, ['dron', 'vehiculo'], true) ? $equipoTipoQuery : null;
+        $busqueda = trim($request->string('q')->toString());
+        $equipoIdsCoincidentes = $busqueda === '' ? [] : $this->equipoIdsCoincidentes($busqueda);
 
         $ordenes = $listarOrdenesMantenimiento->ejecutar(
             estado: $estado?->value,
             equipoTipo: $equipoTipo,
+            q: $busqueda,
+            equipoIdsCoincidentes: $equipoIdsCoincidentes,
         );
 
         return view('mantenimiento::pages.ordenes.index', [
             ...$this->autorizacion->cascara($request),
             'ordenes' => $ordenes,
             'etiquetasEquipo' => $this->etiquetasEquipo($ordenes->getCollection()),
-            'filtros' => ['estado' => $estado?->value, 'equipo_tipo' => $equipoTipo],
+            'resumen' => $listarOrdenesMantenimiento->resumen(
+                estado: $estado?->value,
+                equipoTipo: $equipoTipo,
+                q: $busqueda,
+                equipoIdsCoincidentes: $equipoIdsCoincidentes,
+            ),
+            'filtros' => ['estado' => $estado?->value, 'equipo_tipo' => $equipoTipo, 'q' => $busqueda],
             'puedeCrear' => $this->autorizacion->tienePermiso($request, self::PERMISO_CREAR),
+            'puedeCerrar' => $this->autorizacion->tienePermiso($request, self::PERMISO_CERRAR),
         ]);
     }
 
@@ -289,6 +304,33 @@ final class OrdenesMantenimientoController
         $identificador = DB::table($tabla)->where('id', $equipoId)->value('identificador');
 
         return $identificador !== null ? (string) $identificador : "#{$equipoId}";
+    }
+
+    /**
+     * Ids de equipo cuyo identificador coincide con la búsqueda libre del
+     * listado, por tipo. El identificador del dron vive en `ope_drones` y el
+     * del vehículo en `man_vehiculos`: la orden solo guarda el id, así que
+     * la coincidencia se resuelve acá y el caso de uso recibe ids, nunca un
+     * join a una tabla de otro prefijo (ADR 0003 regla 3, mismo criterio que
+     * `etiquetasEquipo()`).
+     *
+     * @return array<string, list<int>> claves `dron`/`vehiculo`.
+     */
+    private function equipoIdsCoincidentes(string $busqueda): array
+    {
+        $patron = '%'.mb_strtolower($busqueda).'%';
+        $ids = [];
+
+        foreach (['dron' => 'ope_drones', 'vehiculo' => 'man_vehiculos'] as $tipo => $tabla) {
+            $ids[$tipo] = DB::table($tabla)
+                ->whereNull('deleted_at')
+                ->whereRaw('LOWER(identificador) LIKE ?', [$patron])
+                ->pluck('id')
+                ->map(fn ($id): int => (int) $id)
+                ->all();
+        }
+
+        return $ids;
     }
 
     /**

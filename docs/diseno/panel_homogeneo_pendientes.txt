@@ -14,7 +14,6 @@
 # 26 listados y 20 formularios. Las referencias del plan (§1) no pueden figurar.
 
 # 116 · feature/panel-ordenes-mantenimiento
-Mantenimiento/ordenes/index.blade.php
 Mantenimiento/planes/index.blade.php
 Mantenimiento/planes/_formulario.blade.php
 

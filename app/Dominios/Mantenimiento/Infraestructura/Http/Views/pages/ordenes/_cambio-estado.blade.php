@@ -26,8 +26,8 @@
 
     El TONO de cada modal es el del estado al que se pasa —el de su badge, ver
     `PasosDeOrdenMantenimiento::TONO_POR_ESTADO`— y dentro va la ficha «estado
-    actual → estado destino» (`molecules/state-transition`), para ver antes de
-    confirmar a cuál se pasa.
+    actual → estado destino» (`_estado-transicion`, compartida con el listado),
+    para ver antes de confirmar a cuál se pasa.
 --}}
 @php
     $tonoPorEstado = \App\Dominios\Mantenimiento\Infraestructura\Http\PasosDeOrdenMantenimiento::TONO_POR_ESTADO;
@@ -45,15 +45,9 @@
         :tone="$tonoPorEstado[$paso['key']]"
         modal-icon="build"
     >
-        <x-molecules.state-transition
-            :from-label="__('mantenimiento.orden.estado.'.$orden->estado->value)"
-            :from-tone="$tonoPorEstado[$orden->estado->value]"
-            :to-label="__('mantenimiento.orden.estado.'.$paso['key'])"
-            :to-tone="$tonoPorEstado[$paso['key']]"
-            :label="__('mantenimiento.ordenes.estado_cambio_de_a', [
-                'desde' => __('mantenimiento.orden.estado.'.$orden->estado->value),
-                'hacia' => __('mantenimiento.orden.estado.'.$paso['key']),
-            ])"
-        />
+        @include('mantenimiento::pages.ordenes._estado-transicion', [
+            'desde' => $orden->estado->value,
+            'hacia' => $paso['key'],
+        ])
     </x-molecules.confirm-modal>
 @endforeach
