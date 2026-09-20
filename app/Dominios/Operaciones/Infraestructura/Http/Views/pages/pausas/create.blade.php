@@ -6,10 +6,18 @@
     edición — este archivo ES el formulario completo (mismo criterio que
     `gastos/create.blade.php`).
 
+    Homogeneizado con el patrón de Estadías (tarea 113): `form-layout` sin
+    aside (no hay ficha de edición, así que no hay resumen relacionado),
+    fecha con `atoms/date` y el rango horario con `atoms/time-range`. Tras
+    guardar vuelve al LISTADO con su aviso (no hay `edit()` al que volver,
+    §6.3.2); el aviso de éxito se pinta igual acá por si el formulario
+    vuelve a mostrarse con uno.
+
     Datos esperados (ver PausasController::create()): la cáscara de
     CascaraPanel, más:
     - $sesionesDisponibles (Collection<int, string>): id => etiqueta, para
-      el <select> de sesión (últimas 100).
+      el selector de sesión (últimas 100).
+    - $opcionesCausa (array<string, string>): valor => etiqueta de cada causa.
 
     Estilos en resources/css/pages/pausas.css — cero color hardcodeado
     (CLAUDE.md invariante 11).
@@ -17,8 +25,9 @@
 @php
     $sesionId = old('sesion_id', '');
     $causa = old('causa', '');
-    $inicio = old('inicio', '');
-    $fin = old('fin', '');
+    $fecha = old('fecha', '');
+    $horaInicio = old('hora_inicio', '');
+    $horaFin = old('hora_fin', '');
 @endphp
 
 <x-templates.panel-shell :title="__('operaciones.pausas.titulo_crear')" :tema="$tema">
@@ -34,32 +43,39 @@
         :version="$version"
         :vista-actual="__('operaciones.pausas.titulo_crear')"
     >
-        <div class="ag-pausas-form-page">
-            <form
-                method="POST"
-                action="{{ route('panel.pausas.store') }}"
-                class="ag-pausas-form"
-                novalidate
+        <form
+            method="POST"
+            action="{{ route('panel.pausas.store') }}"
+            class="ag-pausas-form"
+            novalidate
+        >
+            @csrf
+
+            <x-organisms.page-header
+                :title="__('operaciones.pausas.titulo_crear')"
+                :subtitle="__('operaciones.pausas.subtitulo_form')"
             >
-                @csrf
+                <x-slot:actions>
+                    <x-molecules.boton-volver
+                        :href="route('panel.pausas.index')"
+                        :label="__('operaciones.pausas.volver')"
+                    />
+                </x-slot:actions>
+            </x-organisms.page-header>
 
-                <x-organisms.page-header
-                    :title="__('operaciones.pausas.titulo_crear')"
-                    :subtitle="__('operaciones.pausas.subtitulo_form')"
-                >
-                    <x-slot:actions>
-                        <x-atoms.button :href="route('panel.pausas.index')" variant="outline" icon="arrow_back">
-                            {{ __('operaciones.pausas.volver') }}
-                        </x-atoms.button>
-                    </x-slot:actions>
-                </x-organisms.page-header>
+            @if (session('estado'))
+                <x-molecules.alert-strip variant="success" icon="check_circle">
+                    {{ session('estado') }}
+                </x-molecules.alert-strip>
+            @endif
 
-                @if ($errors->has('estado'))
-                    <x-molecules.alert-strip variant="danger" icon="error" class="ag-pausas-form__aviso">
-                        {{ $errors->first('estado') }}
-                    </x-molecules.alert-strip>
-                @endif
+            @if ($errors->has('estado'))
+                <x-molecules.alert-strip variant="danger" icon="error">
+                    {{ $errors->first('estado') }}
+                </x-molecules.alert-strip>
+            @endif
 
+            <x-molecules.form-layout>
                 <x-molecules.form-section
                     :title="__('operaciones.pausas.seccion_datos')"
                     :count="__('operaciones.pausas.campos_contador', ['cantidad' => 4])"
@@ -75,13 +91,6 @@
                         :error="$errors->first('sesion_id')"
                     />
 
-                    @php
-                        $opcionesCausa = collect(\App\Dominios\Operaciones\Dominio\CausaPausa::cases())
-                            ->mapWithKeys(fn ($opcion) => [
-                                $opcion->value => __('operaciones.pausas.causa.'.$opcion->value)
-                            ])->all();
-                    @endphp
-
                     <x-atoms.select
                         name="causa"
                         id="causa"
@@ -93,20 +102,26 @@
                         :error="$errors->first('causa')"
                     />
 
-                    <x-atoms.datetime
-                        name="inicio"
-                        :label="__('operaciones.pausas.campo_inicio')"
-                        :value="$inicio"
+                    <x-atoms.date
+                        name="fecha"
+                        id="fecha"
+                        :label="__('operaciones.pausas.campo_fecha')"
+                        :value="$fecha"
+                        :placeholder="__('operaciones.pausas.campo_fecha_placeholder')"
                         required
-                        :error="$errors->first('inicio')"
+                        :error="$errors->first('fecha')"
                     />
 
-                    <x-atoms.datetime
-                        name="fin"
-                        :label="__('operaciones.pausas.campo_fin')"
-                        :value="$fin"
+                    <x-atoms.time-range
+                        name-start="hora_inicio"
+                        name-end="hora_fin"
+                        id="horario"
+                        :label="__('operaciones.pausas.campo_horario')"
+                        :value-start="$horaInicio"
+                        :value-end="$horaFin"
+                        :help="__('operaciones.pausas.campo_horario_ayuda')"
+                        :error="$errors->first('hora_inicio') ?: $errors->first('hora_fin')"
                         required
-                        :error="$errors->first('fin')"
                     />
                 </x-molecules.form-section>
 
@@ -120,7 +135,7 @@
                         </x-atoms.button>
                     </x-slot:actions>
                 </x-organisms.form-actions-bar>
-            </form>
-        </div>
+            </x-molecules.form-layout>
+        </form>
     </x-templates.panel-layout>
 </x-templates.panel-shell>
