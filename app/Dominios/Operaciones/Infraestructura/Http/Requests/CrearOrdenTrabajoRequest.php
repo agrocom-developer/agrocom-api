@@ -39,6 +39,33 @@ final class CrearOrdenTrabajoRequest extends FormRequest
         ];
     }
 
+    /**
+     * El formulario dibuja tantos bloques de equipo como definió la orden
+     * (`cantidad_equipos_necesarios`), pero una tanda puede salir con menos
+     * —"al menos uno"—: un bloque que llega ENTERO en blanco (sin escuadra y
+     * sin ningún dato de lote) no es un error, es un equipo que esta tanda no
+     * usa, y se descarta acá. El primero nunca se descarta: si viene vacío,
+     * que responda la validación normal con sus mensajes.
+     */
+    protected function prepareForValidation(): void
+    {
+        $equipos = $this->input('equipos');
+
+        if (! is_array($equipos)) {
+            return;
+        }
+
+        $primero = array_key_first($equipos);
+
+        $conDatos = array_filter(
+            $equipos,
+            fn (mixed $equipo, int|string $indice): bool => $indice === $primero || ! $this->bloqueEnBlanco($equipo),
+            ARRAY_FILTER_USE_BOTH,
+        );
+
+        $this->merge(['equipos' => array_values($conDatos)]);
+    }
+
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator): void {
@@ -46,7 +73,36 @@ final class CrearOrdenTrabajoRequest extends FormRequest
             $orden = $ordenId !== 0 ? OrdenAplicacion::query()->find($ordenId) : null;
 
             $this->validarParametrosYEquipos($validator, $orden);
+
+            $equipos = (array) $this->input('equipos', []);
+
+            if ($orden !== null && count($equipos) > max(1, (int) $orden->cantidad_equipos_necesarios)) {
+                $validator->errors()->add('equipos', __('operaciones.ordenes_trabajo.error_equipos_superan_orden', [
+                    'cantidad' => max(1, (int) $orden->cantidad_equipos_necesarios),
+                ]));
+            }
         });
+    }
+
+    private function bloqueEnBlanco(mixed $equipo): bool
+    {
+        if (! is_array($equipo)) {
+            return true;
+        }
+
+        if (($equipo['equipo_trabajo_id'] ?? null) !== null && $equipo['equipo_trabajo_id'] !== '') {
+            return false;
+        }
+
+        foreach ((array) ($equipo['lotes'] ?? []) as $lote) {
+            foreach ((array) $lote as $valor) {
+                if ($valor !== null && $valor !== '') {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     /** @return array<string, string> */
@@ -56,7 +112,8 @@ final class CrearOrdenTrabajoRequest extends FormRequest
             'orden_id.required' => __('operaciones.ordenes_trabajo.error_orden_requerida'),
             'orden_id.exists' => __('operaciones.ordenes_trabajo.error_orden_no_vigente'),
             'equipos.required' => __('operaciones.asignacion_equipos.error_equipos_requerido'),
-            'equipos.*.equipo_trabajo_id.required' => __('operaciones.asignacion_equipos.error_equipo_requerido'),
+            'equipos.*.equipo_trabajo_id.required' => __('operaciones.ordenes_trabajo.error_escuadra_requerida'),
+            'equipos.*.equipo_trabajo_id.distinct' => __('operaciones.ordenes_trabajo.error_escuadra_repetida'),
             'equipos.*.lotes.required' => __('operaciones.asignacion_equipos.error_lotes_requerido'),
             'equipos.*.lotes.*.lote_id.required' => __('operaciones.asignacion_equipos.error_lote_requerido'),
             'equipos.*.lotes.*.hectareas.required' => __('operaciones.asignacion_equipos.error_hectareas_requerido'),

@@ -50,7 +50,12 @@ use Illuminate\Support\Str;
  *      supera `ope_orden_lotes.hectareas_solicitadas` de ese lote. Comparado
  *      con `Brick\Math\BigDecimal` (invariante 6 de CLAUDE.md).
  *
- * La calda (si se cargó) se registra vía `Mezclas\Contratos\EscrituraMezclas`
+ * La calda tiene dos formas. La pantalla "Orden de Trabajo" la manda como
+ * casillas sin cantidades (`calda_productos`, valores de
+ * `Dominio\ProductoCalda`) y queda en la cabecera de la tanda. La pantalla
+ * vieja de reparto todavía la manda como lista de productos con cantidad y
+ * unidad (`calda`), y esa —si se cargó— se registra vía
+ * `Mezclas\Contratos\EscrituraMezclas`
  * — cruce de módulo por contrato (ADR 0003 regla 2, mismo criterio que
  * `LecturaEquipoTrabajo` de Personal) — una vez POR CADA `Trabajo` creado,
  * con los mismos productos replicados: el esquema de `Mezclas` sigue atado a
@@ -67,7 +72,7 @@ final class CrearOrdenTrabajo
     ) {}
 
     /**
-     * @param  array{humedad_min_pct: string|null, viento_max_kmh: string|null, temperatura_max_c: string|null, humedad_max_pct: string|null, velocidad_max_kmh: string|null, altura_vuelo_m: string|null, velocidad_vuelo_kmh: string|null, ancho_pasada_m: string|null, ph_agua: string|null, ph_calda: string|null, calda: list<array{producto: string, cantidad: string, unidad: string}>}  $parametrosCompartidos  de TODA la tanda
+     * @param  array{humedad_min_pct: string|null, viento_max_kmh: string|null, temperatura_max_c: string|null, humedad_max_pct: string|null, velocidad_max_kmh: string|null, altura_vuelo_m: string|null, velocidad_vuelo_kmh: string|null, ancho_pasada_m: string|null, ph_agua: string|null, ph_calda: string|null, litros_ha?: string|null, kilos_ha?: string|null, calda_productos?: list<string>, calda: list<array{producto: string, cantidad: string, unidad: string}>}  $parametrosCompartidos  de TODA la tanda
      * @param  list<array{equipo_trabajo_id: int, lotes: list<array{lote_id: int, hectareas: string, turno: string, turno_hora_inicio: string, turno_hora_fin: string}>}>  $equipos
      *
      * @throws OrdenNoVigenteParaAsignacion
@@ -139,6 +144,9 @@ final class CrearOrdenTrabajo
                 'ancho_pasada_m' => $parametrosCompartidos['ancho_pasada_m'] ?? null,
                 'ph_agua' => $parametrosCompartidos['ph_agua'] ?? null,
                 'ph_calda' => $parametrosCompartidos['ph_calda'] ?? null,
+                'litros_ha' => $parametrosCompartidos['litros_ha'] ?? null,
+                'kilos_ha' => $parametrosCompartidos['kilos_ha'] ?? null,
+                'calda_productos' => ($parametrosCompartidos['calda_productos'] ?? []) === [] ? null : $parametrosCompartidos['calda_productos'],
             ]);
 
             foreach ($equipos as $equipo) {

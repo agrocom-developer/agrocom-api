@@ -24,12 +24,12 @@ return [
 
     'operacion' => [
         'label' => 'Operación',
-        'descripcion' => 'Órdenes, trabajos, asignación de equipos, estadías y seguimiento de vuelos de cada jornada.',
+        'descripcion' => 'Órdenes, trabajos, escuadras, estadías y seguimiento de vuelos de cada jornada.',
         'items' => [
             'tablero' => 'Tablero',
             'ordenes' => 'Órdenes de aplicación',
             'orden_trabajo' => 'Orden de Trabajo',
-            'asignacion_equipos' => 'Distribución de equipos',
+            'asignacion_equipos' => 'Escuadras',
             'estadias' => 'Estadías en hacienda',
             'seguimiento_vuelos' => 'Seguimiento de vuelos',
         ],

@@ -20,9 +20,22 @@
     `@puede` (presentación, no autorización — el servidor revalida en
     LotesController).
 
+    Memento de navegación (19/9/2026, mismo criterio que
+    `ordenes/index.blade.php`): si se llega con una pila apilada — el «Ver
+    lista de lotes» del resumen de una propiedad, o el «Generar lotes» que
+    redirige acá tras la alta en bloque — la cabecera ofrece «Volver»
+    (`molecules/boton-volver`); sin origen, no hay botón. Antes de esto la
+    cadena contrato → «Nuevo cliente» → «Nueva propiedad» → «Generar lotes»
+    no tenía por dónde seguir volviendo desde acá, y lo cargado en el
+    formulario de origen (sessionStorage, `contratos-form.js`) quedaba sin
+    forma de recuperarse.
+
     Estilos en resources/css/pages/lotes.css — cero color hardcodeado
     (CLAUDE.md invariante 11).
 --}}
+@php
+    $hayOrigen = session('navegacion_pila', []) !== [];
+@endphp
 <x-templates.panel-shell :title="__('comercial.lotes.titulo')" :tema="$tema">
     <x-templates.panel-layout
         :menu="$menu"
@@ -41,13 +54,17 @@
                 :title="__('comercial.lotes.titulo')"
                 :subtitle="__('comercial.lotes.subtitulo')"
             >
-                @puede('comercial.lote.crear')
-                    <x-slot:actions>
+                <x-slot:actions>
+                    @if ($hayOrigen)
+                        <x-molecules.boton-volver :href="route('panel.lotes.index')" :label="__('comercial.lotes.titulo')" />
+                    @endif
+
+                    @puede('comercial.lote.crear')
                         <x-atoms.button :href="route('panel.lotes.create', array_filter(['propiedad_id' => $filtros['propiedad_id']]))" variant="primary" icon="add">
                             {{ __('comercial.lotes.nuevo') }}
                         </x-atoms.button>
-                    </x-slot:actions>
-                @endpuede
+                    @endpuede
+                </x-slot:actions>
             </x-organisms.page-header>
 
             @if (session('estado'))

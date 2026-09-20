@@ -9,11 +9,20 @@
     - $lote (array{lote_id?, hectareas?, turno?, turno_hora_inicio?, turno_hora_fin?}):
       vacío en una fila nueva.
     - $etiquetasLote (array<int, string>): opciones de lote para este equipo.
+    - $obligatorio (bool): falso en los bloques de equipo que pueden quedar en
+      blanco — ahí ningún campo lleva `required`, o el navegador no dejaría
+      enviar el formulario con ese bloque vacío.
+    - $mostrarQuitar (bool): la primera fila de cada equipo no se quita (todo
+      equipo que participa lleva al menos un lote); las agregadas sí. Dice
+      «Quitar lote», no «Quitar» a secas: lo que sale es el lote del reparto,
+      nunca una persona de la escuadra.
 --}}
 @php
     $prefijo = "equipos[{$indiceEquipo}][lotes][{$indiceLote}]";
     $idBase = str_replace(['[', ']'], ['-', ''], $prefijo);
     $erroresPrefijo = str_replace(['[', ']'], ['.', ''], $prefijo);
+    $obligatorio ??= true;
+    $mostrarQuitar ??= true;
 @endphp
 <div class="ag-form-section__body ag-ordenes-trabajo-form__lote-fila" data-ag-lote-equipo-fila>
     <x-atoms.select
@@ -23,7 +32,7 @@
         :options="$etiquetasLote"
         :value="$lote['lote_id'] ?? ''"
         :placeholder="__('operaciones.asignacion_equipos.campo_lote_placeholder')"
-        required
+        :required="$obligatorio"
         :error="$errors->first($erroresPrefijo.'.lote_id')"
     />
 
@@ -35,8 +44,9 @@
         :value="$lote['hectareas'] ?? ''"
         min="0.01"
         step="0.01"
-        required
+        :required="$obligatorio"
         :error="$errors->first($erroresPrefijo.'.hectareas')"
+        data-ag-lote-hectareas
     />
 
     <x-atoms.select
@@ -50,7 +60,7 @@
         ]"
         :value="$lote['turno'] ?? ''"
         :placeholder="__('operaciones.asignacion_equipos.campo_turno')"
-        required
+        :required="$obligatorio"
         :error="$errors->first($erroresPrefijo.'.turno')"
     />
 
@@ -60,7 +70,7 @@
         id="{{ $idBase }}-turno-inicio"
         :label="__('operaciones.asignacion_equipos.campo_turno_hora_inicio')"
         :value="$lote['turno_hora_inicio'] ?? ''"
-        required
+        :required="$obligatorio"
         :error="$errors->first($erroresPrefijo.'.turno_hora_inicio')"
     />
 
@@ -70,13 +80,15 @@
         id="{{ $idBase }}-turno-fin"
         :label="__('operaciones.asignacion_equipos.campo_turno_hora_fin')"
         :value="$lote['turno_hora_fin'] ?? ''"
-        required
+        :required="$obligatorio"
         :error="$errors->first($erroresPrefijo.'.turno_hora_fin')"
     />
 
-    <div class="ag-form-section__field--full ag-ordenes-trabajo-form__lote-fila-pie">
-        <x-atoms.button type="button" variant="text" size="sm" icon="delete" data-ag-lote-equipo-quitar>
-            {{ __('operaciones.ordenes_trabajo.lote_quitar') }}
-        </x-atoms.button>
-    </div>
+    @if ($mostrarQuitar)
+        <div class="ag-form-section__field--full ag-ordenes-trabajo-form__lote-fila-pie">
+            <x-atoms.button type="button" variant="text" size="sm" icon="delete" data-ag-lote-equipo-quitar>
+                {{ __('operaciones.ordenes_trabajo.lote_quitar') }}
+            </x-atoms.button>
+        </div>
+    @endif
 </div>

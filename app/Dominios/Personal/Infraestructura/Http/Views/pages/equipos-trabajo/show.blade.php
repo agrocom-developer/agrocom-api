@@ -61,9 +61,21 @@
         :vista-actual="__('personal.equipos_trabajo.titulo')"
     >
         <div class="ag-equipos-trabajo-ficha">
-            <x-atoms.button :href="route('panel.equipos-trabajo.index')" variant="text" size="sm" icon="arrow_back">
-                {{ __('personal.equipos_trabajo.ficha_volver') }}
-            </x-atoms.button>
+            @if (session('navegacion_pila', []) !== [])
+                {{-- Memento de navegación: la ficha es donde se arma la escuadra
+                     recién creada (piloto, ayudante, dron); desde acá se vuelve
+                     al alta de Orden de Trabajo que la pidió. --}}
+                <div>
+                    <x-molecules.boton-volver
+                        :href="route('panel.equipos-trabajo.index')"
+                        :label="__('personal.equipos_trabajo.ficha_volver')"
+                    />
+                </div>
+            @else
+                <x-atoms.button :href="route('panel.equipos-trabajo.index')" variant="text" size="sm" icon="arrow_back">
+                    {{ __('personal.equipos_trabajo.ficha_volver') }}
+                </x-atoms.button>
+            @endif
 
             <x-organisms.page-header
                 :title="__('personal.equipos_trabajo.ficha_titulo', ['codigo' => $equipo->codigo])"

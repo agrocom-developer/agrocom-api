@@ -91,28 +91,32 @@
                 </div>
             </x-molecules.form-section>
 
-            @if ($ordenTrabajo->ph_agua !== null || $ordenTrabajo->ph_calda !== null)
+            @php
+                // Calda de la tanda: qué lleva, Ph y caudal — solo los datos que
+                // efectivamente se cargaron (una tanda de sólido no trae Ph ni litros; una de
+                // líquido no trae kilos).
+                $llevaCalda = collect($ordenTrabajo->calda_productos ?? [])
+                    ->map(fn (string $producto): string => __('operaciones.ordenes_trabajo.calda_productos.'.$producto))
+                    ->implode(', ');
+                $datosCalda = array_filter([
+                    __('operaciones.ordenes_trabajo.detalle_calda_productos') => $llevaCalda !== '' ? $llevaCalda : null,
+                    __('operaciones.asignacion_equipos.campo_ph_agua') => $ordenTrabajo->ph_agua,
+                    __('operaciones.asignacion_equipos.campo_ph_calda') => $ordenTrabajo->ph_calda,
+                    __('operaciones.ordenes_trabajo.campo_litros_ha') => $ordenTrabajo->litros_ha,
+                    __('operaciones.ordenes_trabajo.campo_kilos_ha') => $ordenTrabajo->kilos_ha,
+                ], fn ($valor): bool => $valor !== null);
+            @endphp
+            @if ($datosCalda !== [])
                 <x-molecules.form-section
                     :title="__('operaciones.ordenes_trabajo.seccion_ph_calda')"
-                    :count="__('operaciones.ordenes_trabajo.campos_contador', ['cantidad' => 2])"
+                    :count="__('operaciones.ordenes_trabajo.campos_contador', ['cantidad' => count($datosCalda)])"
                 >
-                    <div>
-                        <p style="margin: 0 0 0.25rem 0; font-size: var(--ag-font-size-sm); color: var(--ag-color-text-muted); font-weight: 500">
-                            {{ __('operaciones.asignacion_equipos.campo_ph_agua') }}
-                        </p>
-                        <p style="margin: 0; font-family: var(--ag-font-family-mono); font-size: var(--ag-font-size-base)">
-                            {{ $ordenTrabajo->ph_agua ?? __('operaciones.ordenes_trabajo.sin_dato') }}
-                        </p>
-                    </div>
-
-                    <div>
-                        <p style="margin: 0 0 0.25rem 0; font-size: var(--ag-font-size-sm); color: var(--ag-color-text-muted); font-weight: 500">
-                            {{ __('operaciones.asignacion_equipos.campo_ph_calda') }}
-                        </p>
-                        <p style="margin: 0; font-family: var(--ag-font-family-mono); font-size: var(--ag-font-size-base)">
-                            {{ $ordenTrabajo->ph_calda ?? __('operaciones.ordenes_trabajo.sin_dato') }}
-                        </p>
-                    </div>
+                    @foreach ($datosCalda as $etiqueta => $valor)
+                        <div>
+                            <p class="ag-ordenes-trabajo-detalle__dato-etiqueta">{{ $etiqueta }}</p>
+                            <p class="ag-ordenes-trabajo-detalle__dato-valor">{{ $valor }}</p>
+                        </div>
+                    @endforeach
                 </x-molecules.form-section>
             @endif
 
