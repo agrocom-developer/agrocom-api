@@ -180,6 +180,15 @@ return [
             // estado de TABLERO del trabajo (Trabajo::estadoTablero()).
             'validado' => 'Validado',
         ],
+        // Pasos de estado de la ficha de edición (tarea 114). El panel no
+        // cierra un trabajo: eso lo hace el piloto desde la app de campo, así
+        // que los pasos solo dicen dónde está.
+        'estado_pasos_aria' => 'Estado del trabajo',
+        'estado_pista_cierre_en_campo' => 'El cierre lo registra el piloto desde la app de campo, no el panel.',
+        'estado_ayuda' => [
+            'abierto' => 'El trabajo está en curso: el equipo todavía puede sumar sesiones desde la app de campo. Mientras siga abierto puedes corregir su lote, su cuadrilla, sus hectáreas y su turno.',
+            'cerrado' => 'El piloto ya cerró el trabajo en campo. Sus sesiones pasan a la cola de validación y, cuando estén todas validadas, el trabajo deja de admitir cambios.',
+        ],
         // Catálogo espec §4.3.
         'motivo_cierre' => [
             'completado' => 'Completado',
