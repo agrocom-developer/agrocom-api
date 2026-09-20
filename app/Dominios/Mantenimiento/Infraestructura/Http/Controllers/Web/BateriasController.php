@@ -12,6 +12,9 @@ use App\Dominios\Mantenimiento\Dominio\Excepciones\CorreccionCiclosNoAutorizada;
 use App\Dominios\Mantenimiento\Infraestructura\Eloquent\Bateria;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Requests\ActualizarBateriaRequest;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Requests\CrearBateriaRequest;
+use App\Dominios\Mantenimiento\Infraestructura\Http\ResumenRelacionadoDeEquipo;
+use App\Dominios\Operaciones\Contratos\LecturaRecargasPorBateria;
+use App\Dominios\Personal\Contratos\LecturaCuadrillasPorRecurso;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -46,6 +49,21 @@ final class BateriasController
 
     private const PERMISO_ELIMINAR = 'mantenimiento.bateria.eliminar';
 
+    /**
+     * Tono de cada estado, definido UNA vez (§6.3.4 de la guía de pantalla):
+     * lo lee el badge del listado. Eje gris↔verde: `activa` es el estado sano
+     * y `retirada`/`mantenimiento` son bajas (definitiva y temporal) que no
+     * son un problema en sí. El ámbar queda reservado a la columna de alerta.
+     * Los tonos son los que la pantalla ya tenía: no se reeligen acá.
+     *
+     * @var array<string, string>
+     */
+    public const array TONO_POR_ESTADO = [
+        'activa' => 'success',
+        'retirada' => 'neutral',
+        'mantenimiento' => 'neutral',
+    ];
+
     public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
 
     public function index(Request $request, ListarBaterias $listarBaterias): View
@@ -69,6 +87,8 @@ final class BateriasController
             'baterias' => $baterias,
             'etiquetasBase' => $this->etiquetasBase($baterias->pluck('base_id')->filter()->map(fn ($id) => (int) $id)->unique()->values()->all()),
             'basesDisponibles' => $this->basesDisponibles(),
+            'tonoPorEstado' => self::TONO_POR_ESTADO,
+            'estadosFiltro' => EstadoBateria::cases(),
             'filtros' => ['q' => $busqueda, 'base_id' => $baseId, 'estado' => $estado?->value],
         ]);
     }
@@ -111,8 +131,12 @@ final class BateriasController
             ->with('estado', __('mantenimiento.baterias.creado'));
     }
 
-    public function edit(Request $request, Bateria $bateria): View
-    {
+    public function edit(
+        Request $request,
+        Bateria $bateria,
+        ResumenRelacionadoDeEquipo $tarjetas,
+        LecturaRecargasPorBateria $lecturaRecargas,
+    ): View {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
 
         return view('mantenimiento::pages.baterias.edit', [
@@ -120,6 +144,7 @@ final class BateriasController
             'bateria' => $bateria,
             'basesDisponibles' => $this->basesDisponibles(),
             'estados' => EstadoBateria::cases(),
+            'resumenRelacionado' => $this->resumenRelacionado($bateria, $request, $tarjetas, $lecturaRecargas),
         ]);
     }
 
@@ -165,6 +190,73 @@ final class BateriasController
         return redirect()
             ->route('panel.baterias.index')
             ->with('estado', __('mantenimiento.baterias.eliminado'));
+    }
+
+    /**
+     * Resumen relacionado del aside de `edit()` (solo edición, §6.3.1 de la
+     * guía de pantalla): una batería recién creada no puede tener todavía
+     * cuadrillas ni recargas. Dos tarjetas, cada una gateada por el permiso de
+     * LO QUE MUESTRA contra el ROL ACTIVO (invariante 10), no por
+     * `mantenimiento.bateria.*`.
+     *
+     * No hay órdenes de mantenimiento ni planes: `man_ordenes_mantenimiento`
+     * solo admite `dron` y `vehiculo` como equipo (CHECK de la migración) y los
+     * planes se cruzan por el modelo de un dron. Inventar esas tarjetas sería
+     * mostrar una relación que el esquema no tiene.
+     *
+     * Las cuadrillas llegan por el contrato de Personal (compartido con el
+     * generador y el vehículo, ver `ResumenRelacionadoDeEquipo`); las recargas
+     * por el de Operaciones, que las cruza por el TEXTO del identificador
+     * (`ope_recargas.bateria_saliente_id`, sin FK). Las recargas no tienen
+     * atajo de alta: llegan desde la app de campo cuando el piloto cambia la
+     * batería.
+     *
+     * @return list<array{titulo: string, icono: string, tieneDatos: bool, items: list<array<string, mixed>>, vacioTitulo: string, vacioDetalle: string, acciones: list<array{label: string, href: string, icono?: string}>}>
+     */
+    private function resumenRelacionado(
+        Bateria $bateria,
+        Request $request,
+        ResumenRelacionadoDeEquipo $tarjetas,
+        LecturaRecargasPorBateria $lecturaRecargas,
+    ): array {
+        $resumen = [];
+
+        $cuadrillas = $tarjetas->cuadrillas(
+            $request,
+            LecturaCuadrillasPorRecurso::TIPO_BATERIA,
+            $bateria->id,
+            __('mantenimiento.baterias.aside_cuadrillas_vacio_detalle'),
+        );
+
+        if ($cuadrillas !== null) {
+            $resumen[] = $cuadrillas;
+        }
+
+        // Las recargas son parte de las sesiones de vuelo: los permisos de
+        // `operaciones.trabajo.*` cubren «trabajos y sesiones».
+        if ($this->autorizacion->tienePermiso($request, 'operaciones.trabajo.ver')) {
+            $recargas = $lecturaRecargas->deBateria($bateria->identificador);
+
+            $resumen[] = [
+                'titulo' => __('mantenimiento.baterias.aside_recargas_titulo'),
+                'icono' => 'bolt',
+                'tieneDatos' => $recargas->total > 0,
+                'items' => [
+                    ['label' => __('mantenimiento.baterias.aside_recargas_total'), 'value' => (string) $recargas->total, 'mono' => true],
+                    [
+                        'label' => __('mantenimiento.baterias.aside_recargas_alertas'),
+                        'value' => (string) $recargas->conAlertaTemperatura,
+                        'mono' => true,
+                        'variant' => $recargas->conAlertaTemperatura > 0 ? 'warning' : 'neutral',
+                    ],
+                ],
+                'vacioTitulo' => __('mantenimiento.baterias.aside_recargas_vacio_titulo'),
+                'vacioDetalle' => __('mantenimiento.baterias.aside_recargas_vacio_detalle'),
+                'acciones' => [],
+            ];
+        }
+
+        return $resumen;
     }
 
     private function enteroONull(mixed $valor): ?int
