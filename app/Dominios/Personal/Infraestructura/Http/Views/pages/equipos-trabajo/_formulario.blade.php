@@ -39,9 +39,12 @@
         :subtitle="__('personal.equipos_trabajo.subtitulo_form')"
     >
         <x-slot:actions>
-            <x-atoms.button :href="route('panel.equipos-trabajo.index')" variant="outline" icon="arrow_back">
-                {{ __('personal.equipos_trabajo.volver') }}
-            </x-atoms.button>
+            {{-- Memento de navegación: si se llegó desde el acceso rápido «Crear
+                 escuadra» del alta de Orden de Trabajo, vuelve ahí. --}}
+            <x-molecules.boton-volver
+                :href="route('panel.equipos-trabajo.index')"
+                :label="__('personal.equipos_trabajo.volver')"
+            />
         </x-slot:actions>
     </x-organisms.page-header>
 
