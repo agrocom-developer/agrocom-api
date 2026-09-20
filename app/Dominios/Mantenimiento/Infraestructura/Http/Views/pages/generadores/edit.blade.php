@@ -4,8 +4,9 @@
     `_formulario.blade.php`, compartido con `create.blade.php`.
 
     Datos esperados (ver GeneradoresController::edit()): la cáscara de
-    CascaraPanel, más $generador (Generador) y $basesDisponibles
-    (Collection<int, string>) y $estados (list<EstadoGenerador>).
+    CascaraPanel, más $generador (Generador), $basesDisponibles
+    (Collection<int, string>), $estados (list<EstadoGenerador>) y
+    $resumenRelacionado (tarjetas del aside, resueltas por el controlador).
 
     Gateada por `mantenimiento.generador.editar`, verificado server-side en
     el controlador.
@@ -23,6 +24,6 @@
         :version="$version"
         :vista-actual="__('mantenimiento.generadores.titulo_editar')"
     >
-        @include('mantenimiento::pages.generadores._formulario', ['generador' => $generador, 'basesDisponibles' => $basesDisponibles, 'estados' => $estados])
+        @include('mantenimiento::pages.generadores._formulario', ['generador' => $generador, 'basesDisponibles' => $basesDisponibles, 'estados' => $estados, 'resumenRelacionado' => $resumenRelacionado])
     </x-templates.panel-layout>
 </x-templates.panel-shell>
