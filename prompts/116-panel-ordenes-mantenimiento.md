@@ -1,4 +1,4 @@
-<!-- ciclo: critica=no turno-noche=1 rama=feature/panel-ordenes-mantenimiento etapas=4 descongela=tests -->
+<!-- ciclo: critica=no turno-noche=1 rama=feature/panel-ordenes-mantenimiento etapas=4 descongela=tests modelo=opus -->
 
 # Tarea 116 — panel homogéneo: Órdenes de mantenimiento y Planes
 

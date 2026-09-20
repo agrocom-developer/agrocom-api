@@ -297,7 +297,7 @@
                                         {{-- Una finalizada ya no se edita: su ficha es de solo lectura. --}}
                                         <x-atoms.button
                                             :href="route('panel.estadias.edit', $estadia)"
-                                            :variant="$enCurso ? 'warning-outline' : 'outline'"
+                                            :variant="$enCurso ? 'warning-outline' : 'info-outline'"
                                             size="sm"
                                             :icon="$enCurso ? 'edit' : 'visibility'"
                                         >

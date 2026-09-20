@@ -16,6 +16,10 @@ Este skill es un mapa de dónde vive el sistema de diseño y qué reglas ya est�
 - **ADR de arquitectura del panel**: `docs/decisiones/0002-panel-web-adminlte-livewire-atomic-design.md` (Bootstrap/AdminLTE + Material + Atomic Design). No se reabre sin un ADR nuevo.
 - **Layout de 3 niveles** (riel de módulos + sidebar del módulo + header): `docs/diseno/sistema_diseno_panel.md` §7 y `docs/gestion/plan_dashboard_rediseno.md` §1.1 para el estado exacto del código.
 
+## Homogeneización en curso (desde el 20/9/2026)
+
+Los listados y formularios se están llevando al patrón de las pantallas de referencia (Campaña, Cliente, Propiedad, Lote, Contrato, Orden de aplicación, Orden de trabajo, Estadías, Cuadrillas). El alcance y las reglas están en `docs/gestion/plan_homogeneizacion_panel.md`; lo que falta, en `docs/diseno/panel_homogeneo_pendientes.txt`. `tests/Unit/PanelHomogeneoTest.php` (parte de `bin/verify`) exige el patrón a toda pantalla que no figure en esa lista: al terminar una, sácala de ahí; nunca sumes una para que el test pase.
+
 ## Reglas fijas de pulido UI (no redescubrir por prueba y error)
 
 Documentadas completas en `docs/diseno/sistema_diseno_panel.md` §8. Resumen:

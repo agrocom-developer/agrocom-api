@@ -119,6 +119,7 @@
                 </x-molecules.alert-strip>
             @endif
 
+            <x-molecules.form-layout>
             <x-molecules.form-section
                 :title="__('operaciones.ordenes_trabajo.seccion_orden')"
                 :count="__('operaciones.ordenes_trabajo.campos_contador', ['cantidad' => 1])"
@@ -342,6 +343,7 @@
                     </x-atoms.button>
                 </x-slot:actions>
             </x-organisms.form-actions-bar>
+            </x-molecules.form-layout>
         </form>
     </x-templates.panel-layout>
 </x-templates.panel-shell>

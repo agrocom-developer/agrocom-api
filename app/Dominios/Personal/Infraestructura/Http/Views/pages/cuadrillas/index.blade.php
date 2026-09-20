@@ -189,7 +189,7 @@
                                 @endif
 
                                 <x-organisms.row-actions>
-                                    <x-atoms.button :href="route('panel.cuadrillas.show', $equipo)" variant="outline" size="sm" icon="visibility">
+                                    <x-atoms.button :href="route('panel.cuadrillas.show', $equipo)" variant="info-outline" size="sm" icon="visibility">
                                         {{ __('personal.equipos_trabajo.ver') }}
                                     </x-atoms.button>
 

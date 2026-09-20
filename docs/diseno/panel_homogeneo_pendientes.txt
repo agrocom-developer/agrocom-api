@@ -1,0 +1,80 @@
+# Pantallas del panel que todavía no siguen el patrón de las referencias.
+#
+# Las lee tests/Unit/PanelHomogeneoTest.php: perdona a las que figuran acá y
+# exige el patrón (plan docs/gestion/plan_homogeneizacion_panel.md, receta
+# docs/diseno/guia_pantalla_panel.md) a todas las demás. Una ruta por línea,
+# relativa a `<Módulo>/<carpeta>/<archivo>`; `#` abre un comentario.
+#
+# La lista no puede mentir: el test falla si una ruta no existe o si esa
+# pantalla ya cumple todas las reglas (hay que sacarla). Por eso cada tarea
+# solo puede ACHICARLA — sacar las líneas de lo que terminó — y nunca sumar una
+# pantalla para que el test pase. La tarea 122 la deja vacía.
+#
+# Medida el 20/9/2026 sobre `develop` en `5f699ce4` (tarea 111): 46 pantallas,
+# 26 listados y 20 formularios. Las referencias del plan (§1) no pueden figurar.
+
+# 112 · feature/panel-personal
+Personal/bases/index.blade.php
+Personal/bases/_formulario.blade.php
+Personal/personas/index.blade.php
+Personal/personas/_formulario.blade.php
+
+# 113 · feature/panel-drones-pausas
+Operaciones/drones/index.blade.php
+Operaciones/drones/_formulario.blade.php
+Operaciones/pausas/index.blade.php
+Operaciones/pausas/create.blade.php
+Operaciones/alertas/index.blade.php
+
+# 114 · feature/panel-trabajos-reparto
+Operaciones/trabajos/edit.blade.php
+Operaciones/reparto-cuadrillas/index.blade.php
+Operaciones/reportes-tecnicos/index.blade.php
+
+# 115 · feature/panel-equipos-mantenimiento
+Mantenimiento/baterias/index.blade.php
+Mantenimiento/baterias/_formulario.blade.php
+Mantenimiento/generadores/index.blade.php
+Mantenimiento/generadores/_formulario.blade.php
+Mantenimiento/vehiculos/index.blade.php
+Mantenimiento/vehiculos/_formulario.blade.php
+Mantenimiento/fichas-dron/index.blade.php
+Mantenimiento/fichas-dron/_formulario.blade.php
+
+# 116 · feature/panel-ordenes-mantenimiento
+Mantenimiento/ordenes/index.blade.php
+Mantenimiento/ordenes/create.blade.php
+Mantenimiento/ordenes/edit.blade.php
+Mantenimiento/planes/index.blade.php
+Mantenimiento/planes/_formulario.blade.php
+
+# 117 · feature/panel-inventario
+Inventario/repuestos/index.blade.php
+Inventario/repuestos/_formulario.blade.php
+Inventario/stock/index.blade.php
+Inventario/stock/_formulario.blade.php
+
+# 118 · feature/panel-registros-finanzas
+Finanzas/anticipos/index.blade.php
+Finanzas/anticipos/create.blade.php
+Finanzas/combustible/index.blade.php
+Finanzas/combustible/create.blade.php
+Finanzas/gastos/index.blade.php
+Finanzas/gastos/create.blade.php
+
+# 119 · feature/panel-liquidacion-finanzas
+Finanzas/planillas/index.blade.php
+Finanzas/rendiciones/index.blade.php
+Finanzas/rendiciones/create.blade.php
+
+# 120 · feature/panel-comercial-restante
+Comercial/cultivos/index.blade.php
+Comercial/facturas/index.blade.php
+Comercial/facturas/create.blade.php
+Comercial/reportes-comerciales/index.blade.php
+
+# 121 · feature/panel-usuarios-dispositivos
+Seguridad/usuarios/index.blade.php
+Seguridad/usuarios/_formulario.blade.php
+Seguridad/dispositivos/index.blade.php
+Distribucion/versiones-apk/index.blade.php
