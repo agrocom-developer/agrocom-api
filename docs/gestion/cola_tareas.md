@@ -371,6 +371,18 @@ exista el módulo `Mezclas`).
 | 103 | HU-88 — ocultar del menú del encargado Plan de Mantenimiento/Repuestos/Stock Base (siguen funcionando por debajo) y mostrar "Precio de Mantenimiento Final" como el monto real del gasto vinculado a la orden cerrada | `./bin/verify` = 0, con test de que el rol `encargado` ya no ve esos 3 ítems en su menú, test de que un rol con el permiso sigue accediendo por URL directa, y test de que el total mostrado coincide con `fin_gastos.monto` del gasto generado al cerrar (regresión de HU-37/tarea 53) | `app/Dominios/Mantenimiento/**`, `SecMenuSeeder`, `lang/es/mantenimiento.php`, tests | no | 2 | **escrita** (`prompts/103-menu-precio-mantenimiento.md`) |
 | 104 | HU-89 — descripción de mantenimiento final al cerrar la orden, separada de la descripción de apertura | `./bin/verify` = 0, con test de que `MaquinaEstadosOrdenMantenimiento::cerrar()` rechaza sin `descripcion_final`, y de que la `descripcion` de apertura no se pisa | `app/Dominios/Mantenimiento/**`, migración `ALTER man_ordenes_mantenimiento`, `lang/es/mantenimiento.php`, tests | no | 1 | **escrita** (`prompts/104-descripcion-cierre-orden.md`) |
 | 105 | HU-90 — tipo de vehículo (catálogo cerrado, incluye "chata") en `man_vehiculos`; complementa la tarea 99 (Sprint 17), misma tabla, sin bloquearla | `./bin/verify` = 0, con test de valor fuera de catálogo rechazado y de que un vehículo `chata` opera igual que cualquier otro en las pantallas ya existentes | `app/Dominios/Mantenimiento/**`, migración `ALTER man_vehiculos`, `lang/es/mantenimiento.php`, tests | no | 2 | **escrita** (`prompts/105-tipo-vehiculo.md`) |
+| 111 | Compuerta de la homogeneización del panel: `PanelHomogeneoTest` + lista de pendientes | `./bin/verify` = 0, y el test falla al sacar una pantalla pendiente de la lista | `tests/Unit/PanelHomogeneoTest.php`, `docs/diseno/**`, `atoms/button`, skill `panel-design-ui` | no | 2 | **escrita** (`prompts/111-compuerta-panel-homogeneo.md`) — plan: [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
+| 112 | Panel homogéneo — Personal: Bases y Personas | `./bin/verify` = 0 + pantallas fuera de la lista de pendientes + prueba Playwright en `runs/` | `app/Dominios/Personal/**` (vistas, controlador web (solo armado de datos para pintar), `Contratos/` de lectura, `lang/es`, `resources/css/pages/**`) | no | 3 | **escrita** (`prompts/112-panel-personal.md`) — plan: [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
+| 113 | Panel homogéneo — Operaciones: Drones, Pausas y Alertas | ídem 112 | `app/Dominios/Operaciones/**` (solo esas pantallas) | no | 3 | **escrita** (`prompts/113-panel-drones-pausas.md`) — plan: [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
+| 114 | Panel homogéneo — Operaciones: ficha de Trabajo con pasos, Reparto, Reportes técnicos y listado de Validación | ídem 112, con test unitario de `PasosDeTrabajo` | `app/Dominios/Operaciones/**` (presentación; nada de máquinas de estado ni sync), `tests/Unit/**` (solo el test nuevo) | **sí** | 4 | **escrita** (`prompts/114-panel-trabajos-reparto.md`) — plan: [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
+| 115 | Panel homogéneo — Mantenimiento: Baterías, Generadores, Vehículos y Fichas de dron | ídem 112 | `app/Dominios/Mantenimiento/**` | no | 4 | **escrita** (`prompts/115-panel-equipos-mantenimiento.md`) — plan: [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
+| 116 | Panel homogéneo — Mantenimiento: Órdenes (pasos + aviso de estado) y Planes | ídem 112, con test unitario de `PasosDeOrdenMantenimiento` | `app/Dominios/Mantenimiento/**`, `tests/Unit/**` (solo el test nuevo) | no | 4 | **escrita** (`prompts/116-panel-ordenes-mantenimiento.md`) — plan: [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
+| 117 | Panel homogéneo — Inventario: Repuestos y Stock | ídem 112 | `app/Dominios/Inventario/**` | no | 3 | **escrita** (`prompts/117-panel-inventario.md`) — plan: [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
+| 118 | Panel homogéneo — Finanzas: Anticipos, Combustible y Gastos | ídem 112 | `app/Dominios/Finanzas/**` (solo esas pantallas) | no | 3 | **escrita** (`prompts/118-panel-registros-finanzas.md`) — plan: [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
+| 119 | Panel homogéneo — Finanzas: Planillas y Rendiciones | ídem 112 | `app/Dominios/Finanzas/**` (presentación; nada que genere dinero) | **sí** | 3 | **escrita** (`prompts/119-panel-liquidacion-finanzas.md`) — plan: [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
+| 120 | Panel homogéneo — Comercial: Cultivos (tabla + resumen), Facturas y Reportes comerciales | ídem 112 | `app/Dominios/Comercial/**` (solo esas pantallas) | no | 3 | **escrita** (`prompts/120-panel-comercial-restante.md`) — plan: [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
+| 121 | Panel homogéneo — Seguridad y Distribución: Usuarios, Dispositivos y Versiones de APK (roles, organización, bitácora y dashboard excluidos) | ídem 112 | `app/Dominios/Seguridad/**` (usuarios, dispositivos), `app/Dominios/Distribucion/**` | no | 3 | **escrita** (`prompts/121-panel-usuarios-dispositivos.md`) — plan: [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
+| 122 | Cierre de la homogeneización: pendientes, CSS muerto, guía y estado al día, barrido visual | `./bin/verify` = 0 + barrido Playwright de todos los `index` con exit 0 | `resources/css/pages/**`, `docs/**` | no | 2 | **escrita** (`prompts/122-cierre-panel-homogeneo.md`) — plan: [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
 
 ### El bug de la 24 — ya pasó dos veces, sigue sin arreglarse
 
@@ -1000,3 +1012,16 @@ el ciclo se detuvo apenas se advirtió, con la 82 recién empezada. Las tres se
 hicieron igual —el usuario decidió hacerlas— pero en un PR único de cierre, no
 como tres vueltas del ciclo. La regla que faltaba ya está en
 `prompts/plantillas/planificar.md`.
+
+
+### Las 111 a 122, agregadas el 20/9/2026 — homogeneización del panel
+
+No salen de una HU del plan de sprints: las pidió el dueño el 20/9/2026 y las
+escribió una sesión interactiva con él, no la planificación del ciclo (la regla
+«el ciclo no se autoasigna trabajo» sigue intacta). El alcance, el diagnóstico
+pantalla por pantalla, las reglas del dueño y el porqué del orden están en
+[plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md). La 111 va
+primero porque es la que les da a las otras once un criterio con exit code;
+entre la 112 y la 121 no hay dependencias, así que una `BLOQUEADA` no frena a la
+siguiente. Agotada la 122, la planificación no tiene de dónde sacar trabajo y
+corresponde `runs/DETENER`.
