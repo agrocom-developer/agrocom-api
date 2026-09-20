@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Comercial\Contratos\LecturaLotes;
 use App\Dominios\Operaciones\Aplicacion\CrearOrdenTrabajo;
 use App\Dominios\Operaciones\Aplicacion\ListarOrdenesTrabajo;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
@@ -39,7 +40,7 @@ use Illuminate\View\View;
  *
  * Mismo caso de uso que la pantalla vieja `/panel/asignacion-equipos`
  * (`AsignacionEquiposController`, que sigue viva bajo el nombre de menú
- * "Distribución de equipos") — ahí la orden viene por ruta; acá se elige
+ * "Escuadras") — ahí la orden viene por ruta; acá se elige
  * dentro del formulario (`CrearOrdenTrabajoRequest`), porque `/panel/trabajos`
  * no cuelga de una orden puntual.
  */
@@ -48,6 +49,9 @@ final class OrdenesTrabajoController
     private const PERMISO_VER = 'operaciones.trabajo.ver';
 
     private const PERMISO_CREAR = 'operaciones.trabajo.crear';
+
+    /** Solo para OFRECER el acceso rápido «Crear escuadra»: el alta la autoriza Personal. */
+    private const PERMISO_CREAR_ESCUADRA = 'personal.equipo_trabajo.crear';
 
     public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
 
@@ -76,7 +80,7 @@ final class OrdenesTrabajoController
         ]);
     }
 
-    public function create(Request $request, LecturaEquipoTrabajo $equipos): View
+    public function create(Request $request, LecturaEquipoTrabajo $equipos, LecturaLotes $lotes): View
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_CREAR), 403);
 
@@ -85,9 +89,10 @@ final class OrdenesTrabajoController
         return view('operaciones::pages.ordenes-trabajo.create', [
             ...$this->autorizacion->cascara($request),
             'ordenesDisponibles' => $this->ordenesVigentesDisponibles(),
-            'datosOrden' => $this->datosOrdenParaFormulario(),
+            'datosOrden' => $this->datosOrdenParaFormulario($lotes),
             'ordenPreseleccionadaId' => $ordenPreseleccionadaId,
             'equiposDisponibles' => $this->equiposDisponibles($equipos),
+            'puedeCrearEscuadra' => $this->autorizacion->tienePermiso($request, self::PERMISO_CREAR_ESCUADRA),
         ]);
     }
 
@@ -155,12 +160,15 @@ final class OrdenesTrabajoController
 
     /**
      * Por cada orden vigente: sus lotes con hectáreas restantes por repartir
-     * (mismo cálculo que `AsignacionEquiposController::resumenPorLote()`) y
-     * si es de insumo líquido (para que la vista muestre Ph/calda solo ahí).
+     * (mismo cálculo que `AsignacionEquiposController::resumenPorLote()`), si
+     * es de insumo líquido (para que la vista muestre Ph/calda solo ahí), y
+     * cuántos equipos definió la orden (`cantidad_equipos_necesarios`, HU-92):
+     * el formulario dibuja ESA cantidad de bloques — no se agregan ni se
+     * quitan equipos a mano (pedido del dueño, 19/9/2026).
      *
-     * @return array<int, array{es_liquido: bool, lotes: list<array{lote_id: int, label: string, restantes: string}>}>
+     * @return array<int, array{es_liquido: bool, cantidad_equipos: int, restantes_total: string, litros_ha: string|null, lotes: list<array{lote_id: int, label: string, restantes: string, pendiente: bool, limpieza: string|null}>}>
      */
-    private function datosOrdenParaFormulario(): array
+    private function datosOrdenParaFormulario(LecturaLotes $lecturaLotes): array
     {
         $ordenes = OrdenAplicacion::query()
             ->where('estado', EstadoOrdenAplicacion::Vigente)
@@ -171,25 +179,41 @@ final class OrdenesTrabajoController
 
         foreach ($ordenes as $orden) {
             $ordenLotes = $orden->ordenLotes()->orderBy('lote_id')->get();
-            $etiquetas = $this->etiquetasLote($ordenLotes->pluck('lote_id')->map(fn ($id) => (int) $id)->all());
+            $idsLote = $ordenLotes->pluck('lote_id')->map(fn ($id) => (int) $id)->all();
+            $etiquetas = $this->etiquetasLote($idsLote);
+            // Estado del terreno de cada lote (dato de Comercial, por contrato):
+            // el formulario lo usa para repartir las hectáreas por dificultad.
+            $limpiezas = $lecturaLotes->limpiezaPorIds($idsLote);
 
-            $lotes = $ordenLotes->map(function ($ordenLote) use ($orden, $etiquetas): array {
+            $lotes = $ordenLotes->map(function ($ordenLote) use ($orden, $etiquetas, $limpiezas): array {
                 $asignadas = BigDecimal::of((string) DB::table('ope_trabajos')
                     ->where('orden_id', $orden->id)
                     ->where('lote_id', $ordenLote->lote_id)
                     ->whereNull('deleted_at')
                     ->sum('hectareas_declaradas'));
                 $solicitadas = BigDecimal::of((string) $ordenLote->hectareas_solicitadas);
+                $restantes = $solicitadas->minus($asignadas);
 
                 return [
                     'lote_id' => $ordenLote->lote_id,
                     'label' => $etiquetas[$ordenLote->lote_id] ?? "#{$ordenLote->lote_id}",
-                    'restantes' => (string) $solicitadas->minus($asignadas),
+                    'restantes' => (string) $restantes,
+                    'pendiente' => $restantes->isPositive(),
+                    'limpieza' => $limpiezas[(int) $ordenLote->lote_id] ?? null,
                 ];
             })->values()->all();
 
+            $restantesTotal = array_reduce(
+                $lotes,
+                fn (BigDecimal $acumulado, array $lote): BigDecimal => $acumulado->plus($lote['restantes']),
+                BigDecimal::zero(),
+            );
+
             $resultado[$orden->id] = [
                 'es_liquido' => $orden->categoriaInsumo?->tipo_insumo === TipoInsumo::Liquido,
+                'cantidad_equipos' => max(1, (int) $orden->cantidad_equipos_necesarios),
+                'restantes_total' => (string) $restantesTotal,
+                'litros_ha' => $orden->litros_ha !== null ? (string) $orden->litros_ha : null,
                 'lotes' => $lotes,
             ];
         }
@@ -225,11 +249,15 @@ final class OrdenesTrabajoController
             'ancho_pasada_m' => $cadena($parametros['ancho_pasada_m'] ?? null),
             'ph_agua' => $cadena($parametros['ph_agua'] ?? null),
             'ph_calda' => $cadena($parametros['ph_calda'] ?? null),
-            'calda' => array_map(fn (array $item): array => [
+            'litros_ha' => $cadena($parametros['litros_ha'] ?? null),
+            'kilos_ha' => $cadena($parametros['kilos_ha'] ?? null),
+            // `array_values`: la calda llega indexada por producto (`glifosato`,
+            // `agua`…) y el caso de uso espera una lista.
+            'calda' => array_values(array_map(fn (array $item): array => [
                 'producto' => (string) $item['producto'],
                 'cantidad' => (string) $item['cantidad'],
                 'unidad' => (string) $item['unidad'],
-            ], $parametros['calda'] ?? []),
+            ], $parametros['calda'] ?? [])),
         ];
     }
 

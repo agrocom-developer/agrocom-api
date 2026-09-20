@@ -1,52 +1,67 @@
 {{--
     Partial: bloque de equipo del formulario de Orden de Trabajo (reforma
-    18/9/2026). Similar a `asignacion-equipos/_equipo-bloque.blade.php` pero
-    sin los 8 campos de clima/vuelo (que ahora son compartidos en
-    `create.blade.php`). Cada bloque contiene:
-    - Select de equipo.
-    - Lista repetible de lotes+hectáreas+turno+horas.
+    18/9/2026; ajustado el 19/9/2026). Un "equipo" acá es un casillero de la
+    orden —"Equipo 1", "Equipo 2"— que se cubre con una ESCUADRA: el piloto, su
+    ayudante y el dron que ya se armaron de antemano. Por eso el bloque no se
+    agrega ni se quita: cuántos hay lo definió la orden de aplicación, y lo
+    único que se decide acá es qué escuadra lo cubre y qué lotes le tocan.
+
+    Cada bloque contiene:
+    - Select de escuadra, con acceso rápido «Crear escuadra» (mismo criterio
+      que «Nuevo cliente» en el formulario de contratos) para cuando ninguna
+      vigente sirve. La que se elige en un bloque deja de ofrecerse en los
+      demás (`ordenes-trabajo-form.js`; el servidor igual exige `distinct`).
+    - Lista repetible de lotes + hectáreas + turno + horas.
 
     Espera:
-    - $indiceEquipo (int|string): posición dentro de `equipos[]`.
-    - $equipo (array{lotes?: list<array>>}): vacío en un bloque nuevo.
-    - $mostrarQuitarEquipo (bool): si se puede quitar este bloque.
-    - $datosOrden, $ordenId, $equiposDisponibles: pasados por create.blade.php.
+    - $indiceEquipo (int): posición dentro de `equipos[]`.
+    - $equipo (array{equipo_trabajo_id?, lotes?: list<array>}): vacío en un
+      bloque sin datos previos.
+    - $obligatorio (bool): solo el primero lo es; el resto puede quedar en
+      blanco si la tanda sale con menos equipos.
+    - $lotesOrden (list<array{lote_id, label, restantes}>): lotes de la orden.
+    - $equiposDisponibles (Collection<int, string>): escuadras vigentes hoy.
+    - $urlCrearEscuadra (string): alta de escuadra, con retorno a esta pantalla.
+    - $puedeCrearEscuadra (bool): si el rol activo puede dar de alta una
+      escuadra — sin el permiso, el acceso rápido no se dibuja.
 --}}
 @php
     $prefijo = "equipos[{$indiceEquipo}]";
     $idBase = str_replace(['[', ']'], ['-', ''], $prefijo);
     $erroresPrefijo = str_replace(['[', ']'], ['.', ''], $prefijo);
     $lotesFila = $equipo['lotes'] ?? [[]];
-    $mostrarQuitarEquipo ??= true;
+    $lotesFila = $lotesFila === [] ? [[]] : $lotesFila;
 
-    // Lotes disponibles de la orden elegida
-    $lotesDisponibles = $datosOrden[$ordenId]['lotes'] ?? [];
-    $etiquetasLote = collect($lotesDisponibles)->mapWithKeys(fn ($lote) => [
-        $lote['lote_id'] => $lote['label']
+    $etiquetasLote = collect($lotesOrden)->mapWithKeys(fn (array $lote): array => [
+        $lote['lote_id'] => __('operaciones.ordenes_trabajo.lote_opcion', [
+            'lote' => $lote['label'],
+            'restantes' => number_format((float) $lote['restantes'], 2, ',', '.'),
+        ]),
     ])->all();
-
-    // Función auxiliar para recuperar valores
-    $valor = fn (string $campo, mixed $porDefecto = '') => old($campo, $porDefecto);
 @endphp
-<div class="ag-ordenes-trabajo-form__equipo-bloque" data-ag-equipo-bloque>
-    <div class="ag-ordenes-trabajo-form__equipo-cabecera">
-        <x-atoms.select
-            name="{{ $prefijo }}[equipo_trabajo_id]"
-            id="{{ $idBase }}-equipo"
-            :label="__('operaciones.asignacion_equipos.campo_equipo')"
-            :options="$equiposDisponibles"
-            :placeholder="__('operaciones.asignacion_equipos.campo_equipo_placeholder')"
-            required
-            :error="$errors->first($erroresPrefijo.'.equipo_trabajo_id')"
-            data-ag-equipo-selector
-        />
+<fieldset class="ag-ordenes-trabajo-form__equipo-bloque" data-ag-equipo-bloque>
+    <legend class="ag-ordenes-trabajo-form__equipo-titulo">
+        {{ __('operaciones.ordenes_trabajo.equipo_titulo', ['numero' => $indiceEquipo + 1]) }}
+        @unless ($obligatorio)
+            <span class="ag-ordenes-trabajo-form__equipo-opcional">{{ __('operaciones.ordenes_trabajo.equipo_opcional') }}</span>
+        @endunless
+    </legend>
 
-        @if ($mostrarQuitarEquipo)
-            <x-atoms.button type="button" variant="text" size="sm" icon="delete" data-ag-equipo-quitar>
-                {{ __('operaciones.ordenes_trabajo.equipo_quitar') }}
-            </x-atoms.button>
-        @endif
-    </div>
+    <x-atoms.select
+        name="{{ $prefijo }}[equipo_trabajo_id]"
+        id="{{ $idBase }}-equipo"
+        :label="__('operaciones.ordenes_trabajo.campo_escuadra')"
+        :options="$equiposDisponibles"
+        :value="$equipo['equipo_trabajo_id'] ?? ''"
+        :placeholder="__('operaciones.ordenes_trabajo.campo_escuadra_placeholder')"
+        :required="$obligatorio"
+        :error="$errors->first($erroresPrefijo.'.equipo_trabajo_id')"
+        :action-icon="$puedeCrearEscuadra ? 'add' : null"
+        :action-href="$puedeCrearEscuadra ? $urlCrearEscuadra : null"
+        :action-label="__('operaciones.ordenes_trabajo.escuadra_crear')"
+        :action-text="__('operaciones.ordenes_trabajo.escuadra_crear_corto')"
+        data-ag-equipo-selector
+    />
 
     <div class="ag-ordenes-trabajo-form__equipo-lotes" data-ag-equipo-lotes-lista>
         @foreach ($lotesFila as $indiceLote => $lote)
@@ -55,6 +70,8 @@
                 'indiceLote' => $indiceLote,
                 'lote' => $lote,
                 'etiquetasLote' => $etiquetasLote,
+                'obligatorio' => $obligatorio,
+                'mostrarQuitar' => $indiceLote > 0,
             ])
         @endforeach
     </div>
@@ -69,6 +86,8 @@
             'indiceLote' => '__INDICE_LOTE__',
             'lote' => [],
             'etiquetasLote' => $etiquetasLote,
+            'obligatorio' => $obligatorio,
+            'mostrarQuitar' => true,
         ])
     </template>
-</div>
+</fieldset>
