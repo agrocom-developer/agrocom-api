@@ -5,7 +5,8 @@
     `create.blade.php`.
 
     Datos esperados (ver FichasDronController::edit()): la cáscara de
-    CascaraPanel, más $ficha (FichaDron).
+    CascaraPanel, más $ficha (FichaDron) y $resumenRelacionado (tarjetas del
+    aside, resueltas por el controlador).
 
     Gateada por `mantenimiento.ficha_dron.editar`, verificado server-side en
     el controlador.
@@ -23,6 +24,6 @@
         :version="$version"
         :vista-actual="__('mantenimiento.fichas_dron.titulo_editar')"
     >
-        @include('mantenimiento::pages.fichas-dron._formulario', ['ficha' => $ficha])
+        @include('mantenimiento::pages.fichas-dron._formulario', ['ficha' => $ficha, 'resumenRelacionado' => $resumenRelacionado])
     </x-templates.panel-layout>
 </x-templates.panel-shell>

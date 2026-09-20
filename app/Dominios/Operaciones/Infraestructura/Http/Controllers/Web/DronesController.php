@@ -188,8 +188,8 @@ final class DronesController
             ? $lecturaMantenimiento->deDron($dron->id, $dron->identificador)
             : null;
 
-        // 1) Ficha de inventario (Mantenimiento, por contrato). El destino no
-        // acepta el identificador precargado: el texto del vacío lo dice.
+        // 1) Ficha de inventario (Mantenimiento, por contrato). El alta de la ficha
+        // recibe el identificador de este dron y lo precarga.
         if ($puedeVerFicha || $puedeCrearFicha) {
             $fichaId = $puedeVerFicha ? $mantenimiento?->fichaId : null;
             $acciones = [];
@@ -205,7 +205,7 @@ final class DronesController
             if ($fichaId === null && $puedeCrearFicha) {
                 $acciones[] = [
                     'label' => __('operaciones.drones.aside_ficha_accion_crear'),
-                    'href' => route('panel.fichas-dron.create', $origenNavegacion),
+                    'href' => route('panel.fichas-dron.create', [...$origenNavegacion, 'identificador_dron' => $dron->identificador]),
                     'icono' => 'add',
                 ];
             }
