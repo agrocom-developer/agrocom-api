@@ -132,9 +132,9 @@ final class RendicionesController
 
         // Al listado, no al detalle (tarea 119): una rendición no tiene ficha
         // de edición a la que quedarse, así que el alta vuelve a la pantalla
-        // desde donde se la pidió, con su aviso — guía §6.3.2. La nueva queda
-        // primera en la tabla (orden por fecha) con su acción «Ver» para
-        // seguir asociándole gastos.
+        // desde donde se la pidió, con su aviso — guía §6.3.2. Para seguirle
+        // asociando gastos se entra a su detalle con «Ver»; el listado se ordena
+        // por fecha, así que la nueva no siempre queda primera.
         return redirect()
             ->route('panel.rendiciones.index')
             ->with('estado', __('finanzas.rendiciones.creada'));

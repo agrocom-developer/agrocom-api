@@ -84,12 +84,6 @@
                 </x-molecules.alert-strip>
             @endif
 
-            @if ($errors->has('estado'))
-                <x-molecules.alert-strip variant="danger" icon="error">
-                    {{ $errors->first('estado') }}
-                </x-molecules.alert-strip>
-            @endif
-
             @php
                 $filtrosActivos = collect($filtros)->filter(fn ($valor) => $valor !== null && $valor !== '')->count();
             @endphp
