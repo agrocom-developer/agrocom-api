@@ -4,7 +4,7 @@
     §6.2 de docs/diseno/guia_pantalla_panel.md — cabecera → toolbar → tabla →
     paginación. Homogeneizado en la tarea 117 con el patrón de Planes de
     mantenimiento: `index-table`, `row-actions`, `confirm-modal` para la baja
-    (antes era el `confirm()` del navegador) y `pagination`.
+    (antes era la confirmación nativa del navegador) y `pagination`.
 
     Solo buscador, sin `filter-panel`: el catálogo se busca por texto (código o
     descripción) y no tiene otra dimensión por la que filtrar. Un catálogo
