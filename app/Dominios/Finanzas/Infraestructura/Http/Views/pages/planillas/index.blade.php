@@ -131,7 +131,7 @@
                         icon="payments"
                         :value="FormatoMonto::decimal($resumen['total'])"
                         :value-suffix="__('finanzas.planillas.unidad_moneda')"
-                        :state="$resumen['cantidad'] > 0 ? 'info' : null"
+                        :state="$resumen['total'] !== '0.00' ? 'info' : null"
                     />
                     <x-molecules.stat-card
                         :label="__('finanzas.planillas.kpi_cantidad')"
