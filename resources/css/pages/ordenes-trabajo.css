@@ -160,3 +160,16 @@
 .ag-ordenes-trabajo-detalle__mono {
     font-family: var(--ag-font-family-mono);
 }
+
+.ag-ordenes-trabajo-detalle__dato-etiqueta {
+    margin: 0 0 var(--ag-space-1);
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-ordenes-trabajo-detalle__dato-valor {
+    margin: 0;
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-base);
+}

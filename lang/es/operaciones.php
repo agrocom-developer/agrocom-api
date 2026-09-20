@@ -488,7 +488,7 @@ return [
         'kpi_hectareas' => 'Hectáreas totales',
         'kpi_equipos' => 'Equipos',
         'seccion_condiciones' => 'Límites climáticos y parámetros de vuelo',
-        'seccion_ph_calda' => 'Ph y calda',
+        'seccion_ph_calda' => 'Ph y caudal de la calda',
         'seccion_trabajos' => 'Trabajos de esta tanda',
         'trabajos_vacio' => 'Esta tanda todavía no tiene trabajos.',
         'sin_dato' => '—',
