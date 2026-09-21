@@ -1,83 +1,45 @@
 /*
  * Page: dispositivos/index (app/Dominios/Seguridad/Infraestructura/Http/Views/pages/dispositivos/index.blade.php)
  * CSS propio de ESTA página (ver convención en resources/css/pages/index.css).
- * La grilla no reusa `.ag-table` del dashboard: aquella fija sus columnas
- * para HORA/LOTE/PILOTO/DRON/HA/ESTADO y no es un componente del catálogo.
+ * La tabla del listado (`molecules/index-table`) no vive acá: es del catálogo.
  * Todo color y medida por token (CLAUDE.md invariante 11).
  */
 
-.ag-dispositivos__aviso {
-    margin-top: var(--ag-space-4);
+.ag-dispositivos {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
 }
 
-.ag-dispositivos__tabla {
-    margin-top: var(--ag-space-5);
-    border: 1px solid var(--ag-color-border-card);
-    border-radius: var(--ag-radius-md);
-    background-color: var(--ag-color-surface-card);
-    overflow: hidden;
+/* Listado (index): columnas propias de `molecules/index-table`
+   (índice · usuario · dispositivo · rol · último uso · acciones). Con
+   `minmax(0, …)` una celda no crece con su contenido, así que el nombre del
+   dueño y el identificador del equipo se parten en vez de pisar a la
+   columna vecina. */
+.ag-dispositivos__listado [role="cell"] {
+    min-width: 0;
 }
 
-.ag-dispositivos__head,
-.ag-dispositivos__fila {
-    display: grid;
-    grid-template-columns: 1.2fr 2fr 1fr 1fr auto;
-    gap: var(--ag-space-4);
-    align-items: center;
-    padding: var(--ag-space-3) var(--ag-space-4);
-}
-
-.ag-dispositivos__head {
-    background-color: var(--ag-color-bg-table-head);
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-xs);
-    font-weight: var(--ag-font-weight-medium);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.ag-dispositivos__fila {
-    border-top: 1px solid var(--ag-color-border-row);
-    color: var(--ag-color-text);
-    font-size: var(--ag-font-size-sm);
-}
-
-.ag-dispositivos__fila:hover {
-    background-color: var(--ag-color-bg-row-hover);
+/* El chip de un rol largo («Encargado de operaciones») no cabe en una línea de
+   su columna: se parte en vez de pisar el «último uso» de al lado. */
+.ag-dispositivos__listado .ag-badge {
+    max-width: 100%;
+    white-space: normal;
 }
 
 .ag-dispositivos__equipo {
     display: block;
     font-weight: var(--ag-font-weight-medium);
+    overflow-wrap: anywhere;
 }
 
 /* El UUID es un identificador, no prosa: monoespaciado y apagado, para que
-   se pueda cotejar con el que muestra la app sin competir con el nombre. */
+   se pueda cotejar con el que muestra la app sin competir con el nombre. Son
+   36 caracteres sin un espacio donde partirse: se parte donde haga falta. */
 .ag-dispositivos__uuid {
     display: block;
     font-family: var(--ag-font-family-mono);
     font-size: var(--ag-font-size-xs);
     color: var(--ag-color-text-faint);
-}
-
-.ag-dispositivos__accion {
-    justify-self: end;
-}
-
-/* Tablet y abajo: la grilla de 5 columnas no entra — cada fila pasa a ser un
-   bloque de dos líneas con la acción debajo, mismo criterio que la lista de
-   sesiones del dashboard. */
-@media (max-width: 992px) {
-    .ag-dispositivos__head {
-        display: none;
-    }
-
-    .ag-dispositivos__fila {
-        grid-template-columns: 1fr;
-        gap: var(--ag-space-2);
-    }
-
-    .ag-dispositivos__accion {
-        justify-self: start;
-    }
+    overflow-wrap: anywhere;
 }

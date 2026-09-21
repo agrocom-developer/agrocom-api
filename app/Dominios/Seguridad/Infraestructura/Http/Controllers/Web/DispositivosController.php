@@ -4,11 +4,14 @@ namespace App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web;
 
 use App\Dominios\Seguridad\Aplicacion\ListarDispositivosRegistrados;
 use App\Dominios\Seguridad\Aplicacion\RevocarTokenDispositivo;
+use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecTokenDispositivo;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use App\Dominios\Seguridad\Infraestructura\Http\Presentacion\CascaraPanel;
+use App\Dominios\Seguridad\Infraestructura\Http\Presentacion\PresentadorRol;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 /**
@@ -51,9 +54,14 @@ final class DispositivosController
 
         abort_unless($usuario->tienePermisoEnRol(self::PERMISO_VER, $idRolActivo), 403);
 
+        $busqueda = $request->string('q')->toString();
+        $rolId = $request->integer('rol_id') ?: null;
+
         return view('seguridad::pages.dispositivos.index', [
             ...$cascara->para($usuario, $idRolActivo),
-            'dispositivos' => $listarDispositivos->ejecutar(),
+            'dispositivos' => $listarDispositivos->ejecutar($busqueda !== '' ? $busqueda : null, $rolId),
+            'rolesDisponibles' => $this->rolesConDispositivos(),
+            'filtros' => ['q' => $busqueda, 'rol_id' => $rolId],
         ]);
     }
 
@@ -78,5 +86,20 @@ final class DispositivosController
         return redirect()
             ->route('panel.dispositivos.index')
             ->with('estado', __('seguridad.dispositivos.revocado'));
+    }
+
+    /**
+     * Solo los roles con los que opera algún dispositivo con sesión: el filtro
+     * no ofrece un rol que no traería nada.
+     *
+     * @return Collection<int, string> id => nombre legible del rol
+     */
+    private function rolesConDispositivos(): Collection
+    {
+        return SecRole::query()
+            ->whereIn('id', SecTokenDispositivo::query()->select('role_id'))
+            ->orderBy('name')
+            ->get()
+            ->mapWithKeys(fn (SecRole $rol): array => [$rol->id => PresentadorRol::nombreLegible($rol)]);
     }
 }

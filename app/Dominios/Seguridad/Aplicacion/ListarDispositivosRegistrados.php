@@ -2,8 +2,10 @@
 
 namespace App\Dominios\Seguridad\Aplicacion;
 
+use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaTexto;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecTokenDispositivo;
-use Illuminate\Support\Collection;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 /**
  * Todos los dispositivos con sesión viva, para la pantalla de revocación del
@@ -18,17 +20,33 @@ use Illuminate\Support\Collection;
  * Con `$incluirRevocados` se agregan los borrados lógicos, que es el
  * histórico de auditoría (ADR 0007): qué dispositivo perdió el acceso y
  * cuándo.
+ *
+ * `$busqueda` mira el nombre y el identificador del equipo y el nombre o el
+ * usuario de su dueño; `$rolId`, el rol con el que opera el dispositivo. La
+ * flota crece con cada teléfono, así que el listado se pagina.
  */
 final class ListarDispositivosRegistrados
 {
-    /** @return Collection<int, SecTokenDispositivo> */
-    public function ejecutar(bool $incluirRevocados = false): Collection
+    /** @return LengthAwarePaginator<int, SecTokenDispositivo> */
+    public function ejecutar(?string $busqueda = null, ?int $rolId = null, bool $incluirRevocados = false, int $porPagina = 15): LengthAwarePaginator
     {
         return SecTokenDispositivo::query()
-            ->when($incluirRevocados, fn ($consulta) => $consulta->withTrashed())
+            ->when($incluirRevocados, fn (Builder $consulta) => $consulta->withTrashed())
+            ->when($rolId !== null, fn (Builder $consulta) => $consulta->where('role_id', $rolId))
+            ->when(
+                $busqueda !== null && $busqueda !== '',
+                fn (Builder $consulta) => $consulta->where(function (Builder $grupo) use ($busqueda): void {
+                    $grupo
+                        ->where(function (Builder $propios) use ($busqueda): void {
+                            BusquedaTexto::aplicar($propios, ['nombre_dispositivo', 'uuid_dispositivo'], (string) $busqueda);
+                        })
+                        ->orWhereHas('tokenable', fn (Builder $dueno) => BusquedaTexto::aplicar($dueno, ['name', 'username'], (string) $busqueda));
+                }),
+            )
             ->with(['rol', 'tokenable'])
             ->orderByDesc('last_used_at')
             ->orderByDesc('id')
-            ->get();
+            ->paginate($porPagina)
+            ->withQueryString();
     }
 }

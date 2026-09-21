@@ -14,5 +14,4 @@
 # 26 listados y 20 formularios. Las referencias del plan (§1) no pueden figurar.
 
 # 121 · feature/panel-usuarios-dispositivos
-Seguridad/dispositivos/index.blade.php
 Distribucion/versiones-apk/index.blade.php
