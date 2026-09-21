@@ -287,7 +287,8 @@ final class LotesController
             'mostrarAccion' => true,
             'accion' => [
                 'label' => __('comercial.lotes.aside_siembra_accion'),
-                'href' => route('panel.propiedades.siembra', [$lote->propiedad, ...$origenNavegacion]),
+                // La siembra de ESTE lote (21/9/2026): un solo sector, sin elegir lotes.
+                'href' => route('panel.lotes.siembra', ['lote' => $lote, 'campania_id' => $campaniaVigente?->id, ...$origenNavegacion]),
             ],
         ];
     }

@@ -1,7 +1,9 @@
 /*
- * Page: campos/siembra
- * (app/Dominios/Comercial/Infraestructura/Http/Views/pages/campos/) — HU-48,
- * tarea 71, etapa 3: qué se sembró en cada lote del campo, por campaña. CSS
+ * Page: propiedades/siembra
+ * (app/Dominios/Comercial/Infraestructura/Http/Views/pages/propiedades/) —
+ * HU-48, tarea 71, etapa 3: qué cultivo tiene cada lote de la propiedad, por
+ * campaña; 21/9/2026: arquetipo Formulario de la guía (§6.3). La comparte
+ * `lotes/siembra` (la siembra de un solo lote), que usa las mismas piezas. CSS
  * propio de ESTA página (ver convención en resources/css/pages/index.css) —
  * mismo patrón que campos.css. Todo color y medida por token (CLAUDE.md
  * invariante 11).
@@ -19,44 +21,186 @@
     gap: var(--ag-space-5);
 }
 
-.ag-siembra-form__lotes {
+/* Cliente/Propiedad de solo lectura: mismo criterio que
+   `.ag-lotes-generar__solo-lectura` — valor con el tamaño de un input real,
+   sin chrome de campo editable. */
+.ag-siembra__solo-lectura {
+    margin: 0;
+    padding: var(--ag-space-2) 0;
+    color: var(--ag-color-text);
+    font-size: var(--ag-font-size-base);
+}
+
+/* Dato que acompaña a un valor de solo lectura (las hectáreas junto al código
+   del lote): más chico, apagado y en mono, como toda cifra del panel. */
+.ag-siembra__dato-secundario {
+    margin-left: var(--ag-space-2);
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-siembra__ayuda {
+    margin: 0;
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-sm);
+}
+
+/* Ayuda de la sección y, a la derecha, cuántos lotes siguen libres. */
+.ag-siembra__intro {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-2);
+}
+
+.ag-siembra__libres {
+    margin: 0;
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text);
+}
+
+.ag-siembra-form__sectores {
     display: flex;
     flex-direction: column;
     gap: var(--ag-space-4);
 }
 
 /* El grid de dos columnas es el de `.ag-form-section__body`
-   (components/form-section.css) — la fila lo comparte por clase en vez de
-   redeclararlo (ver §8 regla 12 de sistema_diseno_panel.md); acá solo lo que
-   es propio de ESTA fila: `align-items: end` (en vez del `start` del
-   componente) para que `.ag-siembra-form__lote-info`, que no tiene label,
-   quede a la misma altura que el pie de los campos de al lado; y el
-   separador entre una fila y la siguiente. */
-.ag-siembra-form__lote {
-    align-items: end;
-    padding-top: var(--ag-space-4);
-    border-top: 1px solid var(--ag-color-border-row);
+   (components/form-section.css) — el sector lo comparte por clase en vez de
+   redeclararlo (§8 regla 12 de sistema_diseno_panel.md); acá solo lo propio:
+   cada sector es una tarjeta dentro de la tarjeta de la sección, para que se
+   lea como un bloque cuando hay varios. */
+.ag-siembra-form__sector {
+    padding: var(--ag-space-4);
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
 }
 
-/* La primera fila no necesita separador: no hay nada arriba de qué separarla. */
-.ag-siembra-form__lotes > .ag-siembra-form__lote:first-child {
-    padding-top: 0;
-    border-top: none;
-}
-
-.ag-siembra-form__lote-info {
+.ag-siembra-form__sector-cabecera {
     display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-1);
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ag-space-3);
 }
 
-.ag-siembra-form__lote-codigo {
+.ag-siembra-form__sector-titulo {
+    margin: 0;
+    font-family: var(--ag-font-family-display);
+    font-size: var(--ag-font-size-lg);
     font-weight: var(--ag-font-weight-medium);
     color: var(--ag-color-text);
 }
 
-.ag-siembra-form__lote-hectareas {
+.ag-siembra-form__sector-lotes {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-2);
+}
+
+.ag-siembra-form__sector-lotes-cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--ag-space-2);
+}
+
+.ag-siembra-form__sector-resumen {
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text-muted);
+}
+
+/* Códigos de los lotes del sector: los primeros, y «y N más» si no entran. */
+.ag-siembra-form__fichas {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--ag-space-1);
+}
+
+.ag-siembra-form__fichas[hidden] {
+    display: none;
+}
+
+.ag-siembra-form__fichas-mas {
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text-muted);
+}
+
+/* Código de un lote del sector: borde y texto en el acento de marca, con su
+   ícono delante. Es un dato que se repite por sector pero no fila a fila de
+   una tabla, así que admite el naranja (sistema_diseno_panel.md §8 regla 2). */
+.ag-siembra-form__ficha {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ag-space-1);
+    padding: 0 var(--ag-space-2);
+    border: 1px solid var(--ag-color-accent-link);
+    border-radius: var(--ag-radius-pill);
+    color: var(--ag-color-accent-link);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-medium);
+    line-height: 1.75;
+}
+
+/* Modal «Elegir lotes»: «Marcar todos» a la izquierda, sobre la grilla —
+   alineado con la primera columna de casillas. */
+.ag-siembra-modal__herramientas {
+    display: flex;
+    justify-content: flex-start;
+    margin: var(--ag-space-3) 0 var(--ag-space-2);
+}
+
+.ag-siembra-modal__herramientas[hidden] {
+    display: none;
+}
+
+.ag-siembra-modal__herramientas .ag-checkbox {
+    margin-bottom: 0;
+}
+
+/* Cuatro columnas que se llenan DE ARRIBA ABAJO: `grid-auto-flow: column` con
+   las filas que pone `siembra-form.js` en `--ag-siembra-filas` (los lotes de
+   la página repartidos en 4). En pantallas angostas pasan a dos columnas; el
+   JS recalcula las filas con `--ag-siembra-columnas`. */
+.ag-siembra-modal__grilla {
+    --ag-siembra-columnas: 4;
+
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-rows: repeat(var(--ag-siembra-filas, 10), auto);
+    grid-auto-columns: minmax(0, 1fr);
+    gap: var(--ag-space-1) var(--ag-space-3);
+    margin-bottom: var(--ag-space-3);
+}
+
+@media (max-width: 576px) {
+    .ag-siembra-modal__grilla {
+        --ag-siembra-columnas: 2;
+    }
+}
+
+.ag-siembra-modal__grilla[hidden] {
+    display: none;
+}
+
+/* Mayús + clic no debe seleccionar el texto de los rótulos. */
+.ag-siembra-modal__lote {
+    margin-bottom: 0;
+    user-select: none;
+}
+
+.ag-siembra-modal__lote-hectareas {
+    margin-left: var(--ag-space-2);
     font-family: var(--ag-font-family-mono);
     font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-siembra-modal__seleccionados {
+    font-size: var(--ag-font-size-sm);
     color: var(--ag-color-text-muted);
 }

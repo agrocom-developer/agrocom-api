@@ -21,6 +21,7 @@ import './pages/clientes-form.js';
 import './pages/contratos-form.js';
 import './pages/lotes-form.js';
 import './pages/lotes-generar.js';
+import './pages/siembra-form.js';
 import './pages/propiedades-form.js';
 import './pages/usuarios-form.js';
 import './pages/gastos-form.js';
