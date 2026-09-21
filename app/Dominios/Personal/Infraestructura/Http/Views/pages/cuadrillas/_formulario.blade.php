@@ -6,20 +6,23 @@
     resumen relacionado) y que `campania::pages.campanias._formulario` (pasos
     de estado).
 
-    Cinco secciones, cada una con un propósito: Identificación, Vigencia,
-    Integrantes, Equipamiento y Accesorios. Las dos primeras son campos en
-    alta y en edición. Las otras tres cambian de forma:
+    Cuatro secciones, cada una con un propósito: Identificación, Vigencia,
+    Integrantes y Equipamiento. Las dos primeras son campos en alta y en
+    edición. Las otras dos cambian de forma:
+
+    (Accesorios salió del formulario el 21/9/2026, pedido del dueño: hoy solo
+    interesa quiénes integran la cuadrilla y con qué dron trabajan. Tablas,
+    rutas y casos de uso de accesorios quedan, sin pantalla que los use.)
 
     - ALTA: la cuadrilla se arma de una sola vez (`ArmarCuadrilla`). Piloto,
       ayudante y dron son obligatorios; segundo ayudante, camioneta, generador
       y baterías, opcionales. Cada select de persona o de recurso es un
       input-group: lleva pegado el acceso rápido «Nuevo» (props `action*` de
       `atoms/select`) para dar de alta lo que falte sin perder lo ya escrito
-      (`shared/borrador-formulario.js` guarda el borrador). Accesorios se dibuja igual
-      (§6.3.5: un formulario no esconde secciones) y explica que se cargan
-      con la cuadrilla ya guardada.
+      (`shared/borrador-formulario.js` guarda el borrador). Las baterías son
+      casillas en fila, como «¿Qué lleva la calda?» de la Orden de Trabajo.
     - EDICIÓN: son tablas de detalle paginadas (`integrantes_page`,
-      `equipamiento_page`, `accesorios_page`), cada una con su botón
+      `equipamiento_page`), cada una con su botón
       «Agregar» en la cabecera de la sección, que abre un diálogo. Los
       `<form>` y los diálogos de esas acciones viven en
       `_detalle-modales.blade.php`, DESPUÉS de este formulario: un `<form>`
@@ -35,8 +38,8 @@
     - Alta: $pilotosDisponibles, $ayudantesDisponibles, $dronesDisponibles,
       $vehiculosDisponibles, $generadoresDisponibles, $bateriasDisponibles,
       $puedeCrearPersona/Dron/Vehiculo/Generador, $volverA.
-    - Edición: $pasosEstado, $ayudaEstado, paginadores $integrantes,
-      $equipamiento y $accesorios, contadores, $tonoPorEstado y
+    - Edición: $pasosEstado, $ayudaEstado, paginadores $integrantes y
+      $equipamiento, contadores, $tonoPorEstado y
       $resumenRelacionado (aside, §6.3.1).
     - $puedeCrearBase (bool): acceso rápido «Nueva» del select de base.
 
@@ -106,7 +109,7 @@
     {{-- Los diálogos de detalle viven fuera de este formulario: si lo que se
          cargó en uno no valida, el aviso se pinta acá para que no pase inadvertido. --}}
     @if ($esEdicion)
-        @foreach (['estado', 'persona_id', 'rol_equipo', 'recurso_tipo', 'recurso_id', 'accesorio_id', 'nombre_nuevo', 'cantidad'] as $campoDetalle)
+        @foreach (['estado', 'persona_id', 'rol_equipo', 'recurso_tipo', 'recurso_id'] as $campoDetalle)
             @if ($errors->has($campoDetalle))
                 <x-molecules.alert-strip variant="danger" icon="error">
                     {{ $errors->first($campoDetalle) }}
@@ -256,6 +259,7 @@
                     @else
                         <x-atoms.checkbox-group
                             name="bateria_ids"
+                            class="ag-cuadrillas-form__baterias"
                             :label="__('personal.equipos_trabajo.campo_baterias')"
                             :options="$bateriasDisponibles"
                             :value="old('bateria_ids', [])"
@@ -263,18 +267,6 @@
                             :error="$errors->first('bateria_ids')"
                         />
                     @endif
-                </div>
-            </x-molecules.form-section>
-
-            {{-- §6.3.5: la sección se dibuja igual; los accesorios se cargan con
-                 la cuadrilla ya guardada, desde su tabla de detalle. --}}
-            <x-molecules.form-section :title="__('personal.equipos_trabajo.seccion_accesorios')">
-                <div class="ag-form-section__field--full">
-                    <x-molecules.empty-state
-                        icon="handyman"
-                        :title="__('personal.equipos_trabajo.accesorios_alta_titulo')"
-                        :detail="__('personal.equipos_trabajo.accesorios_alta_detalle')"
-                    />
                 </div>
             </x-molecules.form-section>
         @else
@@ -397,68 +389,6 @@
                     @endif
                 </div>
             </x-molecules.form-section>
-
-            {{-- ACCESORIOS: machete, palas, linternas… con su cantidad. --}}
-            <x-molecules.form-section
-                :title="__('personal.equipos_trabajo.seccion_accesorios')"
-                :count="trans_choice('personal.equipos_trabajo.contador_accesorios', $contadorAccesorios, ['cantidad' => $contadorAccesorios])"
-            >
-                <x-slot:actions>
-                    <x-atoms.button variant="outline" size="sm" icon="add" data-bs-toggle="modal" data-bs-target="#cuadrilla-accesorio-modal">
-                        {{ __('personal.equipos_trabajo.ficha_agregar_accesorio') }}
-                    </x-atoms.button>
-                </x-slot:actions>
-
-                <div class="ag-form-section__field--full">
-                    @if ($accesorios->isEmpty())
-                        <x-molecules.empty-state
-                            icon="handyman"
-                            :title="__('personal.equipos_trabajo.detalle_accesorios_vacio_titulo')"
-                            :detail="__('personal.equipos_trabajo.detalle_accesorios_vacio_detalle')"
-                        />
-                    @else
-                        <x-molecules.index-table columns="3rem minmax(0, 2fr) minmax(0, 0.8fr) minmax(0, 2fr) 9rem">
-                            <x-slot:head>
-                                <span role="columnheader" class="ag-index-table__indice">{{ __('ui.tabla.col_indice') }}</span>
-                                <span role="columnheader">{{ __('personal.equipos_trabajo.ficha_campo_accesorio') }}</span>
-                                <span role="columnheader">{{ __('personal.equipos_trabajo.ficha_campo_cantidad') }}</span>
-                                <span role="columnheader">{{ __('personal.equipos_trabajo.ficha_campo_observacion') }}</span>
-                                <span role="columnheader" class="ag-index-table__acciones-head">{{ __('ui.tabla.col_acciones') }}</span>
-                            </x-slot:head>
-
-                            @foreach ($accesorios as $accesorio)
-                                <div class="ag-index-table__row" role="row">
-                                    <span role="cell" class="ag-index-table__indice">
-                                        {{ ($accesorios->currentPage() - 1) * $accesorios->perPage() + $loop->iteration }}
-                                    </span>
-                                    <span role="cell">{{ $accesorio->accesorio?->nombre ?? '—' }}</span>
-                                    <span role="cell" class="ag-cuadrillas__mono">{{ $accesorio->cantidad }}</span>
-                                    <span role="cell">{{ $accesorio->observacion ?? '—' }}</span>
-                                    <span role="cell" class="ag-index-table__acciones">
-                                        <x-organisms.row-actions>
-                                            <span class="ag-row-actions__item">
-                                                <x-molecules.confirm-button
-                                                    :form-id="'cuadrilla-accesorio-quitar-'.$accesorio->id"
-                                                    :title="__('personal.equipos_trabajo.confirmar_quitar_accesorio_titulo')"
-                                                    :message="__('personal.equipos_trabajo.confirmar_quitar_accesorio')"
-                                                    :confirm-label="__('personal.equipos_trabajo.ficha_quitar')"
-                                                    variant="danger-outline"
-                                                    size="sm"
-                                                    icon="delete"
-                                                >
-                                                    {{ __('personal.equipos_trabajo.ficha_quitar') }}
-                                                </x-molecules.confirm-button>
-                                            </span>
-                                        </x-organisms.row-actions>
-                                    </span>
-                                </div>
-                            @endforeach
-                        </x-molecules.index-table>
-
-                        <x-molecules.pagination :paginator="$accesorios" :aria-label="__('personal.equipos_trabajo.detalle_accesorios_paginacion')" />
-                    @endif
-                </div>
-            </x-molecules.form-section>
         @endif
 
         <x-organisms.form-actions-bar :status="__('personal.equipos_trabajo.estado_form')">
@@ -468,9 +398,7 @@
                         {{ __('personal.equipos_trabajo.volver_a_formulario_origen') }}
                     </x-atoms.button>
                 @endif
-                <x-atoms.button :href="route('panel.cuadrillas.index')" variant="outline">
-                    {{ __('ui.action.cancel') }}
-                </x-atoms.button>
+                <x-molecules.boton-volver :href="route('panel.cuadrillas.index')" :retorno="$esEdicion ? ['equipo_trabajo_id' => $equipo->id] : []" cancelar />
                 <x-atoms.button type="submit" variant="primary">
                     {{ __('ui.action.save') }}
                 </x-atoms.button>

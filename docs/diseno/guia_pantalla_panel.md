@@ -381,6 +381,10 @@ return redirect()
 
 - **Checklist para una pantalla nueva**: si el arquetipo Formulario que estás armando tiene `edit()`, andá derecho por los dos puntos de arriba — no lo redescubras mirando qué hizo la pantalla anterior, porque durante meses la mayoría hizo lo viejo (volver a `index()`, sin flash en el form).
 
+### 6.3.2 bis. «Cancelar» vuelve adonde vuelve «Volver»
+
+Hallazgo del dueño (21/9/2026, alta de Cuadrillas abierta desde la Orden de Trabajo): el «Volver» de la cabecera respetaba la pila del memento y el «Cancelar» del pie caía siempre al listado del propio módulo, así que cancelar un alta rápida perdía el formulario de origen. Los dos botones son la misma salida: el del pie es `<x-molecules.boton-volver :href="route('panel.x.index')" :retorno="…" cancelar />` — mismo `href` por defecto y mismo `retorno` que el de la cabecera, texto fijo «Cancelar». Nunca un `atoms/button` con la ruta del listado escrita a mano.
+
 #### Estado del catálogo para este arquetipo
 
 Todas las piezas de la anatomía de arriba ya existen en el catálogo — nada pendiente de pedirle a `design-ui` para este arquetipo: `molecules/form-section` (tarjeta + `section-head` con contador, evolucionado desde el `<fieldset>` original), `organisms/page-header`, `molecules/tabs`, `organisms/form-actions-bar`, `molecules/summary-card`, `molecules/progress-meter`, `molecules/file-field`, `molecules/form-layout` (el layout main + aside pegajoso de la regla 4 — 17/9/2026, antes declarado a mano por página con su propio prefijo de clase, `.ag-clientes-form__layout/__main/__aside` y equivalentes). Si una pantalla nueva necesita una variante que ninguna de estas cubre, ESO es lo que se le pide a `design-ui` — no la pieza entera de nuevo.

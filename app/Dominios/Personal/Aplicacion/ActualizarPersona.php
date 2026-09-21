@@ -2,7 +2,6 @@
 
 namespace App\Dominios\Personal\Aplicacion;
 
-use App\Dominios\Personal\Dominio\RolOperativoPersona;
 use App\Dominios\Personal\Infraestructura\Eloquent\PerPersona;
 
 /**
@@ -16,19 +15,9 @@ use App\Dominios\Personal\Infraestructura\Eloquent\PerPersona;
  */
 final class ActualizarPersona
 {
-    public function ejecutar(
-        PerPersona $persona,
-        string $nombre,
-        RolOperativoPersona $rol,
-        ?int $baseId,
-        ?string $tarifaHa,
-        bool $activo,
-    ): PerPersona {
-        $persona->nombre = $nombre;
-        $persona->rol = $rol;
-        $persona->base_id = $baseId;
-        $persona->tarifa_ha = $tarifaHa;
-        $persona->activo = $activo;
+    public function ejecutar(PerPersona $persona, DatosPersona $datos): PerPersona
+    {
+        $persona->fill($datos->atributos());
         $persona->save();
 
         return $persona->refresh();

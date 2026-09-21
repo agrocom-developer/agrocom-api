@@ -223,9 +223,7 @@
 
         <x-organisms.form-actions-bar :status="$soloLectura ? __('operaciones.estadias.estado_form_solo_lectura') : __('operaciones.estadias.estado_form')">
             <x-slot:actions>
-                <x-atoms.button :href="route('panel.estadias.index')" variant="outline">
-                    {{ $soloLectura ? __('operaciones.estadias.volver') : __('ui.action.cancel') }}
-                </x-atoms.button>
+                <x-molecules.boton-volver :href="route('panel.estadias.index')" :label="$soloLectura ? __('operaciones.estadias.volver') : __('ui.action.cancel')" cancelar />
                 @if (! $soloLectura)
                     <x-atoms.button type="submit" variant="primary">
                         {{ __('ui.action.save') }}

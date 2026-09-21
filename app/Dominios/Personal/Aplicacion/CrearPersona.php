@@ -2,31 +2,19 @@
 
 namespace App\Dominios\Personal\Aplicacion;
 
-use App\Dominios\Personal\Dominio\RolOperativoPersona;
 use App\Dominios\Personal\Infraestructura\Eloquent\PerPersona;
 
 /**
- * Alta de una persona operativa (HU-26, tarea 37): nombre, rol, base
- * opcional y tarifa por hectárea. Sin restricción de unicidad (la migración
- * no la declara).
+ * Alta de una persona de campo (HU-26, tarea 37; ampliada el 21/9/2026 con
+ * datos personales y de referencia — ver `DatosPersona`). `nombre` se compone
+ * acá, nunca lo escribe el formulario. La unicidad del `ci` entre personas
+ * vivas la validan el request y el índice parcial de la tabla.
  */
 final class CrearPersona
 {
-    public function ejecutar(
-        string $nombre,
-        RolOperativoPersona $rol,
-        ?int $baseId,
-        ?string $tarifaHa,
-        bool $activo,
-    ): PerPersona {
-        $persona = new PerPersona([
-            'nombre' => $nombre,
-            'rol' => $rol,
-            'base_id' => $baseId,
-            'tarifa_ha' => $tarifaHa,
-            'activo' => $activo,
-        ]);
-
+    public function ejecutar(DatosPersona $datos): PerPersona
+    {
+        $persona = new PerPersona($datos->atributos());
         $persona->save();
 
         return $persona->refresh();

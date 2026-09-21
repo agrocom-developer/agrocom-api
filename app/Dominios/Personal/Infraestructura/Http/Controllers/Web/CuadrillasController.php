@@ -31,7 +31,6 @@ use App\Dominios\Personal\Dominio\MaquinaEstados\TransicionesEquipoTrabajo;
 use App\Dominios\Personal\Dominio\RecursoTipoEquipo;
 use App\Dominios\Personal\Dominio\RolEquipo;
 use App\Dominios\Personal\Dominio\RolOperativoPersona;
-use App\Dominios\Personal\Infraestructura\Eloquent\Accesorio;
 use App\Dominios\Personal\Infraestructura\Eloquent\EquipoAccesorio;
 use App\Dominios\Personal\Infraestructura\Eloquent\EquipoIntegrante;
 use App\Dominios\Personal\Infraestructura\Eloquent\EquipoRecurso;
@@ -252,13 +251,6 @@ final class CuadrillasController
             'vigente' => $recurso->hasta === null || $recurso->hasta->toDateString() >= $hoy,
         ]);
 
-        $accesorios = EquipoAccesorio::query()
-            ->where('equipo_trabajo_id', $equipoTrabajo->id)
-            ->with('accesorio')
-            ->orderBy('id')
-            ->paginate(self::PORPAGINA_DETALLE, ['*'], 'accesorios_page')
-            ->withQueryString();
-
         $pasosEstado = PasosDeEstado::armar(
             ruta: [EstadoEquipoTrabajo::Activo, EstadoEquipoTrabajo::Inactivo],
             actual: $equipoTrabajo->estado,
@@ -286,15 +278,12 @@ final class CuadrillasController
                 RecursoTipoEquipo::Generador->value => $this->generadoresDisponibles()->all(),
                 RecursoTipoEquipo::Bateria->value => $this->bateriasDisponibles()->all(),
             ],
-            'accesoriosDisponibles' => $this->accesoriosActivos(),
             'pasosEstado' => $pasosEstado,
             'ayudaEstado' => PasosDeEstado::ayuda($pasosEstado, 'personal.equipos_trabajo.estado_ayuda'),
             'integrantes' => $integrantes,
             'equipamiento' => $equipamiento,
-            'accesorios' => $accesorios,
             'contadorIntegrantesVigentes' => $this->contarIntegrantesVigentes($equipoTrabajo->id, $hoy),
             'contadorBateriasVigentes' => $this->contarRecursosVigentes($equipoTrabajo->id, $hoy, RecursoTipoEquipo::Bateria),
-            'contadorAccesorios' => EquipoAccesorio::query()->where('equipo_trabajo_id', $equipoTrabajo->id)->count(),
             'resumenRelacionado' => $this->resumenRelacionado($equipoTrabajo, $request, $lecturaResumenCuadrilla),
         ]);
     }
@@ -918,12 +907,6 @@ final class CuadrillasController
     {
         return collect($this->lecturaEquipamiento->bateriasDisponibles())
             ->mapWithKeys(fn (RecursoCatalogo $recurso): array => [$recurso->id => $recurso->etiqueta()]);
-    }
-
-    /** @return Collection<int, string> */
-    private function accesoriosActivos(): Collection
-    {
-        return Accesorio::query()->where('activo', true)->orderBy('nombre')->pluck('nombre', 'id');
     }
 
     private function enteroONull(mixed $valor): ?int

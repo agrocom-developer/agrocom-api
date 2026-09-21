@@ -46,8 +46,14 @@
       que se suman a la URL del escalón (p. ej. `['cliente_id' => 7]`); si la
       URL ya trae uno con ese nombre, gana este. Vacío en el alta (todavía no
       hay nada creado que devolver).
+    - cancelar (bool, default false): el «Cancelar» del pie del formulario
+      (21/9/2026, hallazgo del dueño en Cuadrillas: «Volver» respetaba la pila
+      y «Cancelar» caía siempre al listado del módulo). Mismo destino y mismo
+      consumo del escalón que «Volver», pero el texto queda fijo en «Cancelar»
+      y no lleva flecha. `label` es opcional en este modo: solo para un pie
+      que dice otra cosa («Cerrar» en una ficha de solo lectura).
 --}}
-@props(['href', 'label', 'retorno' => []])
+@props(['href', 'label' => null, 'retorno' => [], 'cancelar' => false])
 
 @php
     $pila = session('navegacion_pila', []);
@@ -60,8 +66,12 @@
 <x-atoms.button
     :href="$destino"
     variant="outline"
-    icon="arrow_back"
+    :icon="$cancelar ? null : 'arrow_back'"
     {{ $attributes }}
 >
-    {{ $tope !== null ? __('ui.navegacion.volver_a', ['origen' => $tope['etiqueta']]) : $label }}
+    @if ($cancelar)
+        {{ $label ?? __('ui.action.cancel') }}
+    @else
+        {{ $tope !== null ? __('ui.navegacion.volver_a', ['origen' => $tope['etiqueta']]) : $label }}
+    @endif
 </x-atoms.button>

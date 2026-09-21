@@ -136,7 +136,6 @@ final class RepartoCuadrillasController
             'humedad_max_pct' => $this->cadenaONull($parametros['humedad_max_pct'] ?? null),
             'viento_max_kmh' => $this->cadenaONull($parametros['viento_max_kmh'] ?? null),
             'temperatura_max_c' => $this->cadenaONull($parametros['temperatura_max_c'] ?? null),
-            'velocidad_max_kmh' => $this->cadenaONull($parametros['velocidad_max_kmh'] ?? null),
             'altura_vuelo_m' => $this->cadenaONull($parametros['altura_vuelo_m'] ?? null),
             'velocidad_vuelo_kmh' => $this->cadenaONull($parametros['velocidad_vuelo_kmh'] ?? null),
             'ancho_pasada_m' => $this->cadenaONull($parametros['ancho_pasada_m'] ?? null),

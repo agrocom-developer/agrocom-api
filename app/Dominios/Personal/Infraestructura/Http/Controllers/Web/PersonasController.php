@@ -90,15 +90,7 @@ final class PersonasController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_CREAR), 403);
 
-        $datos = $request->validated();
-
-        $persona = $crearPersona->ejecutar(
-            (string) $datos['nombre'],
-            RolOperativoPersona::from((string) $datos['rol']),
-            isset($datos['base_id']) && $datos['base_id'] !== '' ? (int) $datos['base_id'] : null,
-            $this->cadenaONull($datos['tarifa_ha'] ?? null),
-            (bool) ($datos['activo'] ?? false),
-        );
+        $persona = $crearPersona->ejecutar($request->datosPersona());
 
         // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
         // `volverA` viaja igual que en `PropiedadesController::store()` para
@@ -132,16 +124,7 @@ final class PersonasController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
 
-        $datos = $request->validated();
-
-        $actualizarPersona->ejecutar(
-            $persona,
-            (string) $datos['nombre'],
-            RolOperativoPersona::from((string) $datos['rol']),
-            isset($datos['base_id']) && $datos['base_id'] !== '' ? (int) $datos['base_id'] : null,
-            $this->cadenaONull($datos['tarifa_ha'] ?? null),
-            (bool) ($datos['activo'] ?? false),
-        );
+        $actualizarPersona->ejecutar($persona, $request->datosPersona());
 
         // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
         return redirect()
@@ -418,10 +401,5 @@ final class PersonasController
         $esRutaLocal = str_starts_with($url, '/') && ! str_starts_with($url, '//');
 
         return $esRutaLocal || str_starts_with($url, url('/').'/') ? $url : null;
-    }
-
-    private function cadenaONull(mixed $valor): ?string
-    {
-        return $valor === null || $valor === '' ? null : (string) $valor;
     }
 }

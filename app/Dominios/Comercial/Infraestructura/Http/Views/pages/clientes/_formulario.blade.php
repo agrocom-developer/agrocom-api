@@ -247,9 +247,7 @@
                             {{ __('comercial.clientes.volver_a_formulario_origen') }}
                         </x-atoms.button>
                     @endif
-                    <x-atoms.button :href="route('panel.clientes.index')" variant="outline">
-                        {{ __('ui.action.cancel') }}
-                    </x-atoms.button>
+                    <x-molecules.boton-volver :href="route('panel.clientes.index')" :retorno="$esEdicion ? ['cliente_id' => $cliente->id] : []" cancelar />
                     <x-atoms.button type="submit" variant="primary">
                         {{ __('ui.action.save') }}
                     </x-atoms.button>

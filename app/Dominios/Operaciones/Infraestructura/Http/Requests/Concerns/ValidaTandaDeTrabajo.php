@@ -34,7 +34,6 @@ trait ValidaTandaDeTrabajo
             'parametros.humedad_max_pct' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'parametros.viento_max_kmh' => ['nullable', 'numeric', 'gt:0'],
             'parametros.temperatura_max_c' => ['nullable', 'numeric', 'gt:-10', 'lt:60'],
-            'parametros.velocidad_max_kmh' => ['nullable', 'numeric', 'gt:0'],
             'parametros.altura_vuelo_m' => ['nullable', 'numeric', 'gt:0'],
             'parametros.velocidad_vuelo_kmh' => ['nullable', 'numeric', 'gt:0'],
             'parametros.ancho_pasada_m' => ['nullable', 'numeric', 'gt:0'],

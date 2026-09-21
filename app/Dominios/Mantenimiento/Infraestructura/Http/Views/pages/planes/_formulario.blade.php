@@ -86,9 +86,7 @@
 
         <x-organisms.form-actions-bar :status="__('mantenimiento.planes.estado_form')">
             <x-slot:actions>
-                <x-atoms.button :href="route('panel.planes-mantenimiento.index')" variant="outline">
-                    {{ __('ui.action.cancel') }}
-                </x-atoms.button>
+                <x-molecules.boton-volver :href="route('panel.planes-mantenimiento.index')" cancelar />
                 <x-atoms.button type="submit" variant="primary">
                     {{ __('ui.action.save') }}
                 </x-atoms.button>
