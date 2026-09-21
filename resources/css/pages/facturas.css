@@ -1,94 +1,54 @@
 /*
  * Pages: facturas/index, facturas/create
  * (app/Dominios/Comercial/Infraestructura/Http/Views/pages/facturas/) —
- * HU-31, tarea 45: facturación desde acta conformada. Mismo molde de grid
- * que anticipos.css/contratos.css, con seis columnas en el listado (cliente,
- * acta, hectáreas, precio/ha, monto, fecha de emisión) y sin columna de
+ * HU-31, tarea 45: facturación desde acta conformada. Sin columna de
  * acciones: una factura emitida es un snapshot inmutable, sin editar ni
- * eliminar. Todo color y medida por token (CLAUDE.md invariante 11).
+ * eliminar. La tabla (`molecules/index-table`), la paginación
+ * (`molecules/pagination`) y el layout del formulario (`molecules/form-layout`)
+ * son del catálogo (tarea 120, homogeneización del panel): acá solo la
+ * grilla de KPI y lo propio de la celda de cliente. Todo color y medida por
+ * token (CLAUDE.md invariante 11).
  */
 
+/* KPI del listado: franja fija bajo la cabecera, mismo patrón que
+   `.ag-estadias__kpis`. Las tarjetas son `molecules/stat-card`; acá solo va
+   la grilla. Consulta el ancho de SU contenedor, no el del viewport: el
+   contenido del panel cambia de ancho con el sidebar. Son tres tarjetas, así
+   que salta de 2 a 3 columnas sin dejar una cuarta vacía. */
 .ag-facturas {
+    container: ag-facturas / inline-size;
     display: flex;
     flex-direction: column;
     gap: var(--ag-space-5);
 }
 
-/* Listado (index) */
-
-.ag-facturas__tabla {
-    border: 1px solid var(--ag-color-border-card);
-    border-radius: var(--ag-radius-md);
-    background-color: var(--ag-color-surface-card);
-    overflow: hidden;
-}
-
-.ag-facturas__head,
-.ag-facturas__fila {
+.ag-facturas__kpis {
     display: grid;
-    grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--ag-space-4);
-    align-items: center;
-    padding: var(--ag-space-3) var(--ag-space-4);
 }
 
-.ag-facturas__head {
-    background-color: var(--ag-color-bg-table-head);
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-xs);
-    font-weight: var(--ag-font-weight-medium);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+@container ag-facturas (min-width: 36rem) {
+    .ag-facturas__kpis {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 
-.ag-facturas__fila {
-    border-top: 1px solid var(--ag-color-border-row);
-    color: var(--ag-color-text);
-    font-size: var(--ag-font-size-sm);
+@container ag-facturas (min-width: 52rem) {
+    .ag-facturas__kpis {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
 }
 
-.ag-facturas__fila:hover {
-    background-color: var(--ag-color-bg-row-hover);
-}
+/* Listado (index): columnas propias de `molecules/index-table`
+   (índice · cliente · contrato · acta · hectáreas · precio/ha · monto ·
+   emisión). */
 
 .ag-facturas__cliente {
     font-weight: var(--ag-font-weight-medium);
 }
 
-.ag-facturas__cifra {
-    font-family: var(--ag-font-family-mono);
-}
-
-.ag-facturas__paginacion {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--ag-space-4);
-}
-
-.ag-facturas__paginacion-info {
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-sm);
-}
-
-@media (max-width: 992px) {
-    .ag-facturas__head {
-        display: none;
-    }
-
-    .ag-facturas__fila {
-        grid-template-columns: 1fr;
-        gap: var(--ag-space-1);
-    }
-}
-
 /* Formulario (create) */
-
-.ag-facturas-form-page {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-5);
-}
 
 .ag-facturas-form {
     display: flex;
