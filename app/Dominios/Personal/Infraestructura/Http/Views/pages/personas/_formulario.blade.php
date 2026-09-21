@@ -4,7 +4,7 @@
     docs/diseno/guia_pantalla_panel.md. Sin sub-entidad repetible. Tres
     secciones (21/9/2026, pedido del dueño): Datos personales (nombres,
     apellidos y cédula), Datos de referencia (celular, correo y dirección) y
-    Trabajo en campo (puesto, base, tarifa y activo). El nombre completo que
+    Trabajo en campo (puesto, base y tarifa). El nombre completo que
     muestra el resto del sistema lo compone el servidor.
 
     «Puesto» es `per_personas.rol`, la clasificación de campo que decide en
@@ -36,10 +36,9 @@
     Tras un error de validación, `old()` pisa los valores del modelo/vacíos
     — mismo criterio en alta y en edición.
 
-    `activo` sigue siendo un campo del formulario (con su `hidden` para que un
-    switch apagado viaje como 0): es la única forma de dejar a una persona
-    inactiva desde el panel, y `PersonasController::update()` lo lee tal cual —
-    quitarlo la dejaría inactiva en cada edición. Ver runs/112.md.
+    `activo` NO es un campo (guía §6.3.3; Personas era la que faltaba, corregida
+    el 21/9/2026 a pedido del dueño). Una persona nace activa y editarla no
+    toca ese dato.
 --}}
 @php
     $esEdicion = $persona !== null;
@@ -55,7 +54,6 @@
     // En el alta, `?base_id=` (atajo «Nueva persona» de la ficha de una base) deja esa base elegida.
     $baseId = old('base_id', $persona?->base_id ?? ($baseIdInicial ?? ''));
     $tarifaHa = old('tarifa_ha', $persona?->tarifa_ha ?? '');
-    $activo = old('activo', $persona?->activo ?? true);
     $opcionesRol = collect($rolesOperativos)->mapWithKeys(
         fn ($opcionRol) => [$opcionRol->value => __('personal.roles.'.$opcionRol->value)]
     );
@@ -189,7 +187,7 @@
 
         <x-molecules.form-section
             :title="__('personal.personas.seccion_trabajo')"
-            :count="__('personal.personas.campos_contador', ['cantidad' => 4])"
+            :count="__('personal.personas.campos_contador', ['cantidad' => 3])"
         >
             <x-atoms.select
                 name="rol"
@@ -223,17 +221,6 @@
                 min="0"
                 step="0.01"
             />
-
-            <div class="ag-form-section__field--full">
-                <input type="hidden" name="activo" value="0">
-                <x-atoms.switch
-                    name="activo"
-                    value="1"
-                    :label="__('personal.personas.campo_activo')"
-                    :checked="(bool) $activo"
-                    :help="__('personal.personas.campo_activo_ayuda')"
-                />
-            </div>
         </x-molecules.form-section>
 
         <x-organisms.form-actions-bar :status="__('personal.personas.estado_form')">

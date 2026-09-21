@@ -9,6 +9,9 @@ use App\Dominios\Personal\Dominio\RolOperativoPersona;
  * (21/9/2026): datos personales, datos de referencia y su trabajo en campo.
  * Mismo objeto para `CrearPersona` y `ActualizarPersona`, que ya no reciben
  * una docena de parámetros sueltos.
+ *
+ * `activo` no viaja acá: no es un campo del formulario. La persona nace activa
+ * (default de la tabla) y editarla no lo toca.
  */
 final readonly class DatosPersona
 {
@@ -23,7 +26,6 @@ final readonly class DatosPersona
         public RolOperativoPersona $rol,
         public ?int $baseId,
         public ?string $tarifaHa,
-        public bool $activo,
     ) {}
 
     /**
@@ -53,7 +55,6 @@ final readonly class DatosPersona
             'rol' => $this->rol,
             'base_id' => $this->baseId,
             'tarifa_ha' => $this->tarifaHa,
-            'activo' => $this->activo,
         ];
     }
 }

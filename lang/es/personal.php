@@ -186,8 +186,6 @@ return [
         'campo_base_placeholder' => 'Sin base asignada',
         'campo_tarifa' => 'Tarifa por hectárea',
         'campo_tarifa_ayuda' => 'Se usa para calcular el devengo de cada sesión validada. Cambiarla no altera los devengos ya generados.',
-        'campo_activo' => 'Persona activa',
-        'campo_activo_ayuda' => 'Una persona inactiva no puede asignarse a sesiones nuevas.',
         'error_nombres_requerido' => 'Ingresa los nombres de la persona.',
         'error_apellido_paterno_requerido' => 'Ingresa el apellido paterno.',
         'error_ci_requerido' => 'Ingresa la cédula de identidad.',

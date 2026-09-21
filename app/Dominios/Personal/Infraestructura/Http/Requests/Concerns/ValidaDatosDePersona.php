@@ -44,7 +44,6 @@ trait ValidaDatosDePersona
                 Rule::exists('per_bases', 'id')->whereNull('deleted_at'),
             ],
             'tarifa_ha' => ['nullable', 'numeric', 'min:0'],
-            'activo' => ['boolean'],
         ];
     }
 
@@ -86,7 +85,6 @@ trait ValidaDatosDePersona
             rol: RolOperativoPersona::from((string) $datos['rol']),
             baseId: isset($datos['base_id']) && $datos['base_id'] !== '' ? (int) $datos['base_id'] : null,
             tarifaHa: $texto('tarifa_ha'),
-            activo: (bool) ($datos['activo'] ?? false),
         );
     }
 }
