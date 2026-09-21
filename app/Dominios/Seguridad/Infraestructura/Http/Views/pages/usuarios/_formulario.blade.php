@@ -33,6 +33,20 @@
       precarga equivalente para el camino interno: `per_personas` no tiene
       correo ni teléfono (decisión de la tarea 66).
 
+    - $resumenRelacionado (list<array>, solo edición): las tarjetas del aside
+      (`titulo`, `icono`, `tieneDatos`, `items`, `vacioTitulo`,
+      `vacioDetalle`, `acciones`), armadas por
+      UsuariosController::resumenRelacionado() y ya gateadas por el permiso
+      `.ver` del módulo de cada una; un rol sin ninguno no tiene aside. En el
+      alta no hay aside: una cuenta que todavía no existe no tiene nada
+      relacionado.
+
+    Las dos secciones según el tipo (persona y roles / contrato del portal)
+    son alternativas excluyentes de una misma cuenta, no un dato previo que
+    falta: una cuenta es interna O de portal, así que solo una aplica y la
+    otra se esconde (§6.3.5 habla de secciones que dependen de un dato aún no
+    elegido, no de esto).
+
     Tras un error de validación, `old()` pisa los valores del modelo/vacíos
     — mismo criterio en alta y en edición. `password` NUNCA se repuebla con
     `old()`.
@@ -75,9 +89,10 @@
         :subtitle="__('seguridad.usuarios.subtitulo_form')"
     >
         <x-slot:actions>
-            <x-atoms.button :href="route('panel.usuarios.index')" variant="outline" icon="arrow_back">
-                {{ __('seguridad.usuarios.volver') }}
-            </x-atoms.button>
+            <x-molecules.boton-volver
+                :href="route('panel.usuarios.index')"
+                :label="__('seguridad.usuarios.volver')"
+            />
         </x-slot:actions>
     </x-organisms.page-header>
 
@@ -87,141 +102,185 @@
         </x-molecules.alert-strip>
     @endif
 
-    <x-molecules.form-section :title="__('seguridad.usuarios.seccion_datos')">
-        <x-atoms.input
-            type="text"
-            name="name"
-            :label="__('seguridad.usuarios.campo_name')"
-            :value="$name"
-            required
-            :error="$errors->first('name')"
-        />
+    {{-- Los casos de uso rechazan un usuario o una persona duplicados con este
+         error y el controlador vuelve al formulario: sin pintarlo, guardar no
+         mostraba nada. --}}
+    @if ($errors->has('estado'))
+        <x-molecules.alert-strip variant="danger" icon="error">
+            {{ $errors->first('estado') }}
+        </x-molecules.alert-strip>
+    @endif
 
-        <x-atoms.input
-            type="text"
-            name="username"
-            :label="__('seguridad.usuarios.campo_username')"
-            :value="$username"
-            required
-            :error="$errors->first('username')"
-        />
+    <x-molecules.form-layout>
+        <x-molecules.form-section
+            :title="__('seguridad.usuarios.seccion_datos')"
+            :count="__('seguridad.usuarios.campos_contador', ['cantidad' => 5])"
+        >
+            <x-atoms.input
+                type="text"
+                name="name"
+                :label="__('seguridad.usuarios.campo_name')"
+                :value="$name"
+                required
+                :error="$errors->first('name')"
+            />
 
-        <x-atoms.input
-            type="email"
-            name="email"
-            :label="__('seguridad.usuarios.campo_email')"
-            :value="$email"
-            :help="__('seguridad.usuarios.campo_email_ayuda')"
-            :error="$errors->first('email')"
-            data-ag-usuario-email
-            data-mapa-cliente-email="{{ json_encode($emailPorCliente ?? []) }}"
-        />
+            <x-atoms.input
+                type="text"
+                name="username"
+                :label="__('seguridad.usuarios.campo_username')"
+                :value="$username"
+                required
+                :error="$errors->first('username')"
+            />
 
-        <x-atoms.input
-            type="password"
-            name="password"
-            :label="__('seguridad.usuarios.campo_password')"
-            :help="$esEdicion ? __('seguridad.usuarios.campo_password_ayuda_edicion') : __('seguridad.usuarios.campo_password_ayuda_alta')"
-            :required="! $esEdicion"
-            :error="$errors->first('password')"
-        />
+            <x-atoms.input
+                type="email"
+                name="email"
+                :label="__('seguridad.usuarios.campo_email')"
+                :value="$email"
+                :help="__('seguridad.usuarios.campo_email_ayuda')"
+                :error="$errors->first('email')"
+                data-ag-usuario-email
+                data-mapa-cliente-email="{{ json_encode($emailPorCliente ?? []) }}"
+            />
+
+            <x-atoms.input
+                type="password"
+                name="password"
+                :label="__('seguridad.usuarios.campo_password')"
+                :help="$esEdicion ? __('seguridad.usuarios.campo_password_ayuda_edicion') : __('seguridad.usuarios.campo_password_ayuda_alta')"
+                :required="! $esEdicion"
+                :error="$errors->first('password')"
+            />
+
+            @if ($esEdicion)
+                {{-- Sin `name`: no viaja en el POST (la cuenta no cambia de tipo) y
+                     no hay nada que `old()` repueble, así que el `id` va explícito.
+                     `readonly` y no `disabled`, como el nombre en /panel/perfil. --}}
+                <x-atoms.input
+                    type="text"
+                    id="tipo_cuenta"
+                    :label="__('seguridad.usuarios.campo_tipo')"
+                    :value="__($esCliente ? 'seguridad.usuarios.tipo_cliente' : 'seguridad.usuarios.tipo_interno')"
+                    :help="__('seguridad.usuarios.campo_tipo_ayuda_edicion')"
+                    readonly
+                />
+            @else
+                <x-atoms.select
+                    name="type"
+                    id="type"
+                    :label="__('seguridad.usuarios.campo_tipo')"
+                    :options="[
+                        'interno' => __('seguridad.usuarios.tipo_interno'),
+                        ...($puedeCrearPortal ? ['cliente' => __('seguridad.usuarios.tipo_cliente')] : []),
+                    ]"
+                    :value="$tipoActual"
+                    required
+                    :error="$errors->first('type')"
+                    data-ag-usuario-tipo
+                />
+            @endif
+        </x-molecules.form-section>
+
+        <x-molecules.form-section
+            :title="__('seguridad.usuarios.seccion_interno')"
+            :count="__('seguridad.usuarios.campos_contador', ['cantidad' => 2])"
+            data-ag-usuario-seccion-interno
+            :hidden="$esCliente"
+        >
+            <x-atoms.select
+                name="persona_id"
+                id="persona_id"
+                :label="__('seguridad.usuarios.campo_persona')"
+                :options="$personasDisponibles"
+                :value="$personaId"
+                :placeholder="__('seguridad.usuarios.campo_persona_placeholder')"
+                :error="$errors->first('persona_id')"
+                :disabled="$esCliente"
+            />
+
+            <x-atoms.checkbox-group
+                name="roles"
+                id="roles"
+                :label="__('seguridad.usuarios.campo_roles')"
+                :options="$opcionesRoles"
+                :value="$rolesSeleccionados"
+                :help="__('seguridad.usuarios.campo_roles_ayuda')"
+                :error="$errors->first('roles')"
+                class="ag-form-section__field--full"
+                :disabled="$esCliente"
+            />
+        </x-molecules.form-section>
+
+        <x-molecules.form-section
+            :title="__('seguridad.usuarios.seccion_portal')"
+            :count="__('seguridad.usuarios.campos_contador', ['cantidad' => 2])"
+            data-ag-usuario-seccion-cliente
+            :hidden="! $esCliente"
+        >
+            <x-atoms.select
+                name="cliente_id"
+                id="cliente_id"
+                :label="__('seguridad.usuarios.campo_cliente')"
+                :options="$clientesDisponibles"
+                :value="$clienteId"
+                :placeholder="__('seguridad.usuarios.campo_cliente_placeholder')"
+                :help="__('seguridad.usuarios.campo_cliente_ayuda')"
+                :disabled="! $esCliente"
+                data-ag-usuario-cliente
+            />
+
+            <x-atoms.select
+                name="contrato_id"
+                id="contrato_id"
+                :label="__('seguridad.usuarios.campo_contrato')"
+                :options="$opcionesContrato"
+                :value="$contratoId"
+                :placeholder="__('seguridad.usuarios.campo_contrato_placeholder')"
+                :required="$esCliente"
+                :error="$errors->first('contrato_id')"
+                :disabled="! $esCliente"
+                data-ag-usuario-contrato
+                data-mapa-cliente-contrato="{{ $mapaClienteContrato->toJson() }}"
+            />
+        </x-molecules.form-section>
+
+        <x-organisms.form-actions-bar :status="__('seguridad.usuarios.estado_form')">
+            <x-slot:actions>
+                <x-atoms.button :href="route('panel.usuarios.index')" variant="outline">
+                    {{ __('ui.action.cancel') }}
+                </x-atoms.button>
+                <x-atoms.button type="submit" variant="primary">
+                    {{ __('ui.action.save') }}
+                </x-atoms.button>
+            </x-slot:actions>
+        </x-organisms.form-actions-bar>
 
         @if ($esEdicion)
-            <div class="ag-input">
-                <span class="ag-input__label">{{ __('seguridad.usuarios.campo_tipo') }}</span>
-                <div class="ag-input__control">
-                    <x-atoms.badge variant="neutral">
-                        {{ __($esCliente ? 'seguridad.usuarios.tipo_cliente' : 'seguridad.usuarios.tipo_interno') }}
-                    </x-atoms.badge>
-                </div>
-                <p class="ag-select__help">{{ __('seguridad.usuarios.campo_tipo_ayuda_edicion') }}</p>
-            </div>
-        @else
-            <x-atoms.select
-                name="type"
-                id="type"
-                :label="__('seguridad.usuarios.campo_tipo')"
-                :options="[
-                    'interno' => __('seguridad.usuarios.tipo_interno'),
-                    ...($puedeCrearPortal ? ['cliente' => __('seguridad.usuarios.tipo_cliente')] : []),
-                ]"
-                :value="$tipoActual"
-                required
-                :error="$errors->first('type')"
-                data-ag-usuario-tipo
-            />
+            <x-slot:aside>
+                @foreach ($resumenRelacionado ?? [] as $resumen)
+                    @if ($resumen['tieneDatos'])
+                        <x-molecules.summary-card :title="$resumen['titulo']" :items="$resumen['items']">
+                            @if ($resumen['acciones'] !== [])
+                                <x-slot:action>
+                                    @foreach ($resumen['acciones'] as $accionResumen)
+                                        <x-atoms.button :href="$accionResumen['href']" variant="outline" :icon="$accionResumen['icono'] ?? 'arrow_forward'" block>
+                                            {{ $accionResumen['label'] }}
+                                        </x-atoms.button>
+                                    @endforeach
+                                </x-slot:action>
+                            @endif
+                        </x-molecules.summary-card>
+                    @else
+                        <x-molecules.empty-state
+                            :icon="$resumen['icono']"
+                            :title="$resumen['vacioTitulo']"
+                            :detail="$resumen['vacioDetalle']"
+                        />
+                    @endif
+                @endforeach
+            </x-slot:aside>
         @endif
-    </x-molecules.form-section>
-
-    <x-molecules.form-section
-        :title="__('seguridad.usuarios.seccion_interno')"
-        data-ag-usuario-seccion-interno
-        :hidden="$esCliente"
-    >
-        <x-atoms.select
-            name="persona_id"
-            id="persona_id"
-            :label="__('seguridad.usuarios.campo_persona')"
-            :options="$personasDisponibles"
-            :value="$personaId"
-            :placeholder="__('seguridad.usuarios.campo_persona_placeholder')"
-            :error="$errors->first('persona_id')"
-            :disabled="$esCliente"
-        />
-
-        <x-atoms.checkbox-group
-            name="roles"
-            id="roles"
-            :label="__('seguridad.usuarios.campo_roles')"
-            :options="$opcionesRoles"
-            :value="$rolesSeleccionados"
-            :help="__('seguridad.usuarios.campo_roles_ayuda')"
-            :error="$errors->first('roles')"
-            class="ag-form-section__field--full"
-            :disabled="$esCliente"
-        />
-    </x-molecules.form-section>
-
-    <x-molecules.form-section
-        :title="__('seguridad.usuarios.seccion_portal')"
-        data-ag-usuario-seccion-cliente
-        :hidden="! $esCliente"
-    >
-        <x-atoms.select
-            name="cliente_id"
-            id="cliente_id"
-            :label="__('seguridad.usuarios.campo_cliente')"
-            :options="$clientesDisponibles"
-            :value="$clienteId"
-            :placeholder="__('seguridad.usuarios.campo_cliente_placeholder')"
-            :help="__('seguridad.usuarios.campo_cliente_ayuda')"
-            :disabled="! $esCliente"
-            data-ag-usuario-cliente
-        />
-
-        <x-atoms.select
-            name="contrato_id"
-            id="contrato_id"
-            :label="__('seguridad.usuarios.campo_contrato')"
-            :options="$opcionesContrato"
-            :value="$contratoId"
-            :placeholder="__('seguridad.usuarios.campo_contrato_placeholder')"
-            :required="$esCliente"
-            :error="$errors->first('contrato_id')"
-            :disabled="! $esCliente"
-            data-ag-usuario-contrato
-            data-mapa-cliente-contrato="{{ $mapaClienteContrato->toJson() }}"
-        />
-    </x-molecules.form-section>
-
-    <x-organisms.form-actions-bar :status="__('seguridad.usuarios.estado_form')">
-        <x-slot:actions>
-            <x-atoms.button :href="route('panel.usuarios.index')" variant="outline">
-                {{ __('ui.action.cancel') }}
-            </x-atoms.button>
-            <x-atoms.button type="submit" variant="primary">
-                {{ __('ui.action.save') }}
-            </x-atoms.button>
-        </x-slot:actions>
-    </x-organisms.form-actions-bar>
+    </x-molecules.form-layout>
 </form>
