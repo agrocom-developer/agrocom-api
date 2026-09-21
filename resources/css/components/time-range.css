@@ -62,16 +62,18 @@
     color: var(--ag-color-text-muted);
 }
 
+/* Mismo relleno y cuerpo de letra que `.ag-input__field` y `.ag-select__trigger`:
+   en una fila de formulario el horario mide lo mismo que sus vecinos. */
 /* Los <input type="time"> nativos: controles reales mientras JS no cargó. */
 .ag-time-range__native {
     flex: 1;
     min-width: 0;
-    padding: var(--ag-space-2) var(--ag-space-3);
+    padding: var(--ag-space-3) var(--ag-space-4);
     border: none;
     background: transparent;
     color: var(--ag-color-text);
     font-family: inherit;
-    font-size: var(--ag-font-size-sm);
+    font-size: var(--ag-font-size-base);
     outline: none;
 }
 
@@ -97,12 +99,12 @@
     gap: var(--ag-space-2);
     width: 100%;
     min-width: 0;
-    padding: var(--ag-space-2) var(--ag-space-3);
+    padding: var(--ag-space-3) var(--ag-space-4);
     background: none;
     border: none;
     color: inherit;
     font: inherit;
-    font-size: var(--ag-font-size-sm);
+    font-size: var(--ag-font-size-base);
     text-align: start;
     cursor: pointer;
     outline: none;

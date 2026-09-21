@@ -14,8 +14,8 @@
     - $exigeMotivo (bool: la orden ya está publicada, la corrección pide motivo) y
       $insumoBloqueado (bool: la orden ya tiene trabajos, el insumo y la dosis no
       se cambian), de `PoliticaEdicionOrden`.
-    - $relacionado (vínculos a las órdenes de trabajo y a los equipos de la
-      orden, para el aside).
+    - $resumenRelacionado (tarjetas del aside: órdenes de trabajo, asignación
+      de equipos y estadías en hacienda).
 
     Gateada por `operaciones.orden.editar`, verificado server-side en el
     controlador. Que la orden siga siendo editable lo

@@ -73,7 +73,7 @@ final class CrearOrdenTrabajo
 
     /**
      * @param  array{humedad_min_pct: string|null, viento_max_kmh: string|null, temperatura_max_c: string|null, humedad_max_pct: string|null, velocidad_max_kmh: string|null, altura_vuelo_m: string|null, velocidad_vuelo_kmh: string|null, ancho_pasada_m: string|null, ph_agua: string|null, ph_calda: string|null, litros_ha?: string|null, kilos_ha?: string|null, calda_productos?: list<string>, calda: list<array{producto: string, cantidad: string, unidad: string}>}  $parametrosCompartidos  de TODA la tanda
-     * @param  list<array{equipo_trabajo_id: int, lotes: list<array{lote_id: int, hectareas: string, turno: string, turno_hora_inicio: string, turno_hora_fin: string}>}>  $equipos
+     * @param  list<array{equipo_trabajo_id: int, lotes: list<array{lote_id: int, hectareas: string, turno: string, turno_hora_inicio: string|null, turno_hora_fin: string|null}>}>  $equipos
      *
      * @throws OrdenNoVigenteParaAsignacion
      * @throws EquipoTrabajoNoVigente

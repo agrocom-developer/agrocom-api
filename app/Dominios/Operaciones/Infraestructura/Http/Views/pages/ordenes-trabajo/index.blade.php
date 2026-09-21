@@ -53,7 +53,7 @@
             >
                 @puede('operaciones.trabajo.crear')
                     <x-slot:actions>
-                        <x-atoms.button :href="route('panel.trabajos.create')" variant="primary" icon="add">
+                        <x-atoms.button :href="route('panel.trabajos.create', array_filter(['orden_id' => $filtros['orden_id'] ?? null]))" variant="primary" icon="add">
                             {{ __('operaciones.ordenes_trabajo.nueva_accion') }}
                         </x-atoms.button>
                     </x-slot:actions>

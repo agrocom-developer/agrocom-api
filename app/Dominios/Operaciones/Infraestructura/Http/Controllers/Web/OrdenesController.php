@@ -31,6 +31,7 @@ use App\Dominios\Operaciones\Dominio\TipoAplicacion;
 use App\Dominios\Operaciones\Dominio\TipoInsumo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\CategoriaInsumo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Dron;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\EstadiaHacienda;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenTrabajo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
@@ -105,6 +106,10 @@ final class OrdenesController
 
     private const PERMISO_EDITAR_CONTRATO = 'comercial.contrato.editar';
 
+    private const PERMISO_VER_ESTADIAS = 'operaciones.estadia.ver';
+
+    private const PERMISO_CREAR_ESTADIAS = 'operaciones.estadia.crear';
+
     public function __construct(
         private readonly AutorizacionPanelWeb $autorizacion,
         private readonly LecturaCultivoLote $lecturaCultivoLote,
@@ -149,6 +154,8 @@ final class OrdenesController
             'opcionesContrato' => $this->opcionesContratoParaFiltro($contratoIdsConOrdenes),
             'opcionesAplicacion' => $this->opcionesAplicacionParaFiltro($contratoIdsConOrdenes),
             'filtros' => ['q' => $busqueda, 'estado' => $estado?->value, 'tipo_aplicacion' => $tipoAplicacion?->value, 'contrato_id' => $contratoIdQuery, 'nro_aplicacion' => $nroAplicacionQuery],
+            'puedeVerTrabajos' => $this->autorizacion->tienePermiso($request, self::PERMISO_VER_TRABAJOS),
+            'puedeCrearTrabajos' => $this->autorizacion->tienePermiso($request, self::PERMISO_CREAR_TRABAJOS),
             'puedeActivar' => $this->autorizacion->tienePermiso($request, self::PERMISO_ACTIVAR),
             'puedePausar' => $this->autorizacion->tienePermiso($request, self::PERMISO_PAUSAR),
             'puedeCerrar' => $this->autorizacion->tienePermiso($request, self::PERMISO_CERRAR),
@@ -361,7 +368,8 @@ final class OrdenesController
      *   rol puede editar contratos — es la única pantalla de contrato que hay.
      *   Se arma con el nombre de la ruta, no con nada de Comercial (ADR 0003).
      * - Órdenes de trabajo: `panel.trabajos.index` acepta `orden_id`
-     *   (`TrabajosController::index()`/`Aplicacion/ListarTrabajos`).
+     *   (`TrabajosController::index()`/`Aplicacion/ListarTrabajos`). Si la orden
+     *   vigente todavía no tiene ninguna, va al alta con la orden ya elegida.
      * - Asignación de equipos: `panel.reparto-cuadrillas.show` es la ficha
      *   propia de ESTA orden.
      *
@@ -394,7 +402,19 @@ final class OrdenesController
             ];
         }
 
-        if ($this->autorizacion->tienePermiso($request, self::PERMISO_VER_TRABAJOS)) {
+        $sinOrdenesTrabajo = ! OrdenTrabajo::query()->where('orden_id', $orden->id)->exists();
+
+        if ($sinOrdenesTrabajo && $orden->estado === EstadoOrdenAplicacion::Vigente && $this->autorizacion->tienePermiso($request, self::PERMISO_CREAR_TRABAJOS)) {
+            // Sin ninguna todavía, el listado filtrado saldría vacío: el vínculo lleva
+            // DIRECTO al alta, con esta orden ya elegida (pedido del dueño, 21/9/2026).
+            $vinculos[] = [
+                'href' => route('panel.trabajos.create', ['orden_id' => $orden->id]),
+                'icon' => 'add_task',
+                'title' => __('operaciones.ordenes.vinculo_trabajos_crear'),
+                'meta' => __('operaciones.ordenes.vinculo_trabajos_crear_meta'),
+                'tone' => 'info',
+            ];
+        } elseif ($this->autorizacion->tienePermiso($request, self::PERMISO_VER_TRABAJOS)) {
             $totalTrabajos = Trabajo::query()->where('orden_id', $orden->id)->count();
 
             $vinculos[] = [
@@ -478,7 +498,7 @@ final class OrdenesController
             // (`PoliticaEdicionOrden`).
             'exigeMotivo' => PoliticaEdicionOrden::exigeMotivo($orden->estado),
             'insumoBloqueado' => PoliticaEdicionOrden::bloqueaInsumo(Trabajo::query()->where('orden_id', $orden->id)->exists()),
-            'relacionado' => $this->relacionadoDeEdicion($orden, $request),
+            'resumenRelacionado' => $this->resumenRelacionado($orden, $request),
         ]);
     }
 
@@ -500,100 +520,130 @@ final class OrdenesController
     }
 
     /**
-     * "Relacionado" del aside de `edit()`: accesos a lo que ya se armó — o falta
-     * armar — con ESTA orden, en dos frentes, con el mismo criterio que la
-     * sección de `show()`:
-     * - Órdenes de trabajo: las que ya tiene (cada una lleva a su detalle) o, si
-     *   no tiene ninguna, «Crear orden de trabajo».
-     * - Equipos: «Ver equipos asignados» si ya hay alguno o, si no, «Asignar
-     *   equipos» (`RepartoCuadrillasController`, HU-70/HU-92).
+     * Resumen relacionado de la ficha de EDICIÓN (arquetipo Formulario, §6.3.1
+     * de la guía; mismo molde que `ClientesController::resumenRelacionado()`,
+     * pedido del dueño, 21/9/2026 — antes eran filas `link-row`, que son del
+     * detalle). Una tarjeta por cada cosa que cuelga de la orden:
      *
-     * Solo se ofrece crear o asignar en una orden `vigente` (es la guarda de
-     * `CrearOrdenTrabajo`), y cada acceso pide el permiso de SU pantalla de
-     * destino (`operaciones.trabajo.ver`/`.crear`,
-     * `operaciones.orden.asignar_equipos`), no `.ver`/`.editar` de la orden. Una
-     * orden que no admite ni una cosa ni la otra y no tiene nada armado lo dice
-     * en `aviso`, en vez de dejar el aside vacío.
+     * - Órdenes de trabajo: cuántas tiene, sus trabajos y las hectáreas ya
+     *   repartidas. Sin ninguna, el acceso va DIRECTO al alta con esta orden ya
+     *   elegida; con alguna, a las suyas.
+     * - Asignación de equipos: equipos asignados contra los que pidió la orden
+     *   (`RepartoCuadrillasController`, HU-70/HU-92).
+     * - Estadías en hacienda: las de las propiedades donde se aplica esta orden.
      *
-     * @return array{vinculos: list<array{href: string, icon: string, title: string, meta: ?string, tone: string}>, aviso: ?array{titulo: string, detalle: string}}
+     * Cada categoría pide el permiso de SU pantalla de destino (nunca el de la
+     * orden); `tieneDatos` decide `summary-card` o el vacío compacto, y una sin
+     * permiso de ver ni de crear se omite. Crear una Orden de Trabajo o asignar
+     * equipos solo se ofrece en una orden `vigente` (guarda de
+     * `CrearOrdenTrabajo`): si no lo está, el vacío dice por qué.
+     *
+     * @return list<array{titulo: string, icono: string, tieneDatos: bool, items: list<array<string, mixed>>, vacioTitulo: string, vacioDetalle: string, mostrarAccion: bool, accion: array{label: string, href: string, icono: string}}>
      */
-    private function relacionadoDeEdicion(OrdenAplicacion $orden, Request $request): array
+    private function resumenRelacionado(OrdenAplicacion $orden, Request $request): array
     {
         $vigente = $orden->estado === EstadoOrdenAplicacion::Vigente;
-        $tandas = OrdenTrabajo::query()->where('orden_id', $orden->id)->with('trabajos')->orderBy('id')->get();
-        $equiposAsignados = $this->equiposAsignadosCount($orden);
-        $vinculos = [];
+        $origen = [
+            'volver_a' => route('panel.ordenes.edit', $orden),
+            'volver_texto' => __('operaciones.ordenes.aside_volver_texto', ['nro' => $orden->nro_aplicacion]),
+        ];
+        $porQueNo = match ($orden->estado) {
+            EstadoOrdenAplicacion::Vigente => null,
+            EstadoOrdenAplicacion::Emitida => __('operaciones.ordenes.aside_no_vigente_emitida'),
+            EstadoOrdenAplicacion::Pausada => __('operaciones.ordenes.aside_no_vigente_pausada'),
+            default => __('operaciones.ordenes.aside_cerrada_detalle'),
+        };
+        $resumen = [];
 
-        if ($tandas->isNotEmpty()) {
-            if ($this->autorizacion->tienePermiso($request, self::PERMISO_VER_TRABAJOS)) {
-                foreach ($tandas as $tanda) {
-                    $equipos = $tanda->trabajos->pluck('equipo_trabajo_id')->filter()->unique()->count();
-                    $hectareas = $tanda->trabajos->reduce(
-                        fn (BigDecimal $acumulado, Trabajo $trabajo): BigDecimal => $acumulado->plus((string) $trabajo->hectareas_declaradas),
-                        BigDecimal::zero(),
-                    );
+        $puedeVerTrabajos = $this->autorizacion->tienePermiso($request, self::PERMISO_VER_TRABAJOS);
+        $puedeCrearTrabajos = $this->autorizacion->tienePermiso($request, self::PERMISO_CREAR_TRABAJOS);
 
-                    $vinculos[] = [
-                        'href' => route('panel.trabajos.show', $tanda),
-                        'icon' => 'work_history',
-                        'title' => __('operaciones.ordenes.vinculo_trabajo_item', ['id' => $tanda->id]),
-                        'meta' => __('operaciones.ordenes.vinculo_trabajo_item_meta', [
-                            'equipos' => trans_choice('operaciones.ordenes.equipos_cantidad', $equipos, ['cantidad' => $equipos]),
-                            'hectareas' => $this->aHectareas($hectareas),
-                        ]),
-                        'tone' => 'info',
-                    ];
-                }
-            }
-        } elseif ($vigente && $this->autorizacion->tienePermiso($request, self::PERMISO_CREAR_TRABAJOS)) {
-            $vinculos[] = [
-                'href' => route('panel.trabajos.create', ['orden_id' => $orden->id]),
-                'icon' => 'add_task',
-                'title' => __('operaciones.ordenes.vinculo_trabajos_crear'),
-                'meta' => __('operaciones.ordenes.vinculo_trabajos_crear_meta'),
-                'tone' => 'info',
+        if ($puedeVerTrabajos || $puedeCrearTrabajos) {
+            $ordenesTrabajo = OrdenTrabajo::query()->where('orden_id', $orden->id)->count();
+            $trabajos = Trabajo::query()->where('orden_id', $orden->id)->get(['hectareas_declaradas']);
+            $repartidas = $trabajos->reduce(
+                fn (BigDecimal $acumulado, Trabajo $trabajo): BigDecimal => $acumulado->plus((string) $trabajo->hectareas_declaradas),
+                BigDecimal::zero(),
+            );
+            $hayOrdenesTrabajo = $ordenesTrabajo > 0;
+
+            $resumen[] = [
+                'titulo' => __('operaciones.ordenes.aside_trabajos_titulo'),
+                'icono' => 'work_history',
+                'tieneDatos' => $puedeVerTrabajos && $hayOrdenesTrabajo,
+                'items' => [
+                    ['label' => __('operaciones.ordenes.aside_trabajos_ordenes'), 'value' => (string) $ordenesTrabajo, 'mono' => true],
+                    ['label' => __('operaciones.ordenes.aside_trabajos_trabajos'), 'value' => (string) $trabajos->count(), 'mono' => true],
+                    ['label' => __('operaciones.ordenes.aside_trabajos_hectareas'), 'value' => $this->aHectareas($repartidas).' ha', 'mono' => true],
+                ],
+                'vacioTitulo' => __('operaciones.ordenes.aside_trabajos_vacio_titulo'),
+                'vacioDetalle' => $porQueNo ?? __('operaciones.ordenes.aside_trabajos_vacio_detalle'),
+                'mostrarAccion' => $hayOrdenesTrabajo ? $puedeVerTrabajos : ($vigente && $puedeCrearTrabajos),
+                'accion' => $hayOrdenesTrabajo
+                    ? ['label' => __('operaciones.ordenes.aside_trabajos_ver'), 'href' => route('panel.trabajos.index', ['orden_id' => $orden->id]), 'icono' => 'visibility']
+                    : ['label' => __('operaciones.ordenes.vinculo_trabajos_crear'), 'href' => route('panel.trabajos.create', ['orden_id' => $orden->id]), 'icono' => 'add'],
             ];
         }
 
-        if ($this->autorizacion->tienePermiso($request, self::PERMISO_ASIGNAR_EQUIPOS) && ($equiposAsignados > 0 || $vigente)) {
-            $hayEquipos = $equiposAsignados > 0;
+        if ($this->autorizacion->tienePermiso($request, self::PERMISO_ASIGNAR_EQUIPOS)) {
+            $equiposAsignados = $this->equiposAsignadosCount($orden);
 
-            $vinculos[] = [
-                // Memento de navegación: la ficha de asignación vuelve a esta edición.
-                'href' => route('panel.reparto-cuadrillas.show', [
-                    $orden,
-                    'volver_a' => route('panel.ordenes.edit', $orden),
-                    'volver_texto' => __('operaciones.ordenes.aside_volver_texto', ['nro' => $orden->nro_aplicacion]),
-                ]),
-                'icon' => $hayEquipos ? 'groups' : 'group_add',
-                'title' => $hayEquipos ? __('operaciones.ordenes.vinculo_ver_equipos') : __('operaciones.ordenes.vinculo_asignar_equipos'),
-                'meta' => $hayEquipos
-                    ? trans_choice('operaciones.ordenes.equipos_cantidad', $equiposAsignados, ['cantidad' => $equiposAsignados])
-                    : __('operaciones.ordenes.vinculo_asignar_equipos_meta'),
-                'tone' => 'success',
+            $resumen[] = [
+                'titulo' => __('operaciones.ordenes.aside_equipos_titulo'),
+                'icono' => 'groups',
+                'tieneDatos' => $equiposAsignados > 0,
+                'items' => [
+                    ['label' => __('operaciones.ordenes.aside_equipos_asignados'), 'value' => (string) $equiposAsignados, 'mono' => true],
+                    ['label' => __('operaciones.ordenes.aside_equipos_necesarios'), 'value' => (string) $orden->cantidad_equipos_necesarios, 'mono' => true],
+                ],
+                'vacioTitulo' => __('operaciones.ordenes.aside_equipos_vacio_titulo'),
+                'vacioDetalle' => $porQueNo ?? __('operaciones.ordenes.aside_equipos_vacio_detalle'),
+                'mostrarAccion' => $equiposAsignados > 0 || $vigente,
+                'accion' => [
+                    'label' => $equiposAsignados > 0 ? __('operaciones.ordenes.vinculo_ver_equipos') : __('operaciones.ordenes.vinculo_asignar_equipos'),
+                    'href' => route('panel.reparto-cuadrillas.show', [$orden, ...$origen]),
+                    'icono' => $equiposAsignados > 0 ? 'visibility' : 'group_add',
+                ],
             ];
         }
 
-        $aviso = null;
+        $puedeVerEstadias = $this->autorizacion->tienePermiso($request, self::PERMISO_VER_ESTADIAS);
+        $puedeCrearEstadias = $this->autorizacion->tienePermiso($request, self::PERMISO_CREAR_ESTADIAS);
 
-        if (! $vigente && $tandas->isEmpty() && $equiposAsignados === 0) {
-            $aviso = match ($orden->estado) {
-                EstadoOrdenAplicacion::Emitida => [
-                    'titulo' => __('operaciones.ordenes.aside_no_vigente_titulo'),
-                    'detalle' => __('operaciones.ordenes.aside_no_vigente_emitida'),
+        if ($puedeVerEstadias || $puedeCrearEstadias) {
+            // Las estadías son por propiedad: las de esta orden son las de las
+            // propiedades de sus lotes (lectura directa, como `datosDeLotes()`).
+            $propiedadIds = DB::table('ope_orden_lotes as ol')
+                ->join('com_lotes as l', 'l.id', '=', 'ol.lote_id')
+                ->where('ol.orden_id', $orden->id)
+                ->whereNull('ol.deleted_at')
+                ->distinct()
+                ->pluck('l.propiedad_id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+            $estadias = EstadiaHacienda::query()->whereIn('propiedad_id', $propiedadIds)->get(['salida']);
+            $enCurso = $estadias->whereNull('salida')->count();
+            // El listado filtra por UNA propiedad: con varias, se abre sin filtro.
+            $filtro = count($propiedadIds) === 1 ? ['propiedad_id' => $propiedadIds[0]] : [];
+
+            $resumen[] = [
+                'titulo' => __('operaciones.ordenes.aside_estadias_titulo'),
+                'icono' => 'holiday_village',
+                'tieneDatos' => $puedeVerEstadias && $estadias->isNotEmpty(),
+                'items' => [
+                    ['label' => __('operaciones.ordenes.aside_estadias_total'), 'value' => (string) $estadias->count(), 'mono' => true],
+                    ['label' => __('operaciones.ordenes.aside_estadias_en_curso'), 'value' => (string) $enCurso, 'mono' => true, 'variant' => $enCurso > 0 ? 'success' : 'neutral'],
                 ],
-                EstadoOrdenAplicacion::Pausada => [
-                    'titulo' => __('operaciones.ordenes.aside_no_vigente_titulo'),
-                    'detalle' => __('operaciones.ordenes.aside_no_vigente_pausada'),
-                ],
-                default => [
-                    'titulo' => __('operaciones.ordenes.aside_cerrada_titulo'),
-                    'detalle' => __('operaciones.ordenes.aside_cerrada_detalle'),
-                ],
-            };
+                'vacioTitulo' => __('operaciones.ordenes.aside_estadias_vacio_titulo'),
+                'vacioDetalle' => __('operaciones.ordenes.aside_estadias_vacio_detalle'),
+                'mostrarAccion' => $estadias->isNotEmpty() ? $puedeVerEstadias : $puedeCrearEstadias,
+                'accion' => $estadias->isNotEmpty()
+                    ? ['label' => __('operaciones.ordenes.aside_estadias_ver'), 'href' => route('panel.estadias.index', $filtro), 'icono' => 'visibility']
+                    : ['label' => __('operaciones.ordenes.aside_estadias_crear'), 'href' => route('panel.estadias.create', [...$filtro, ...$origen]), 'icono' => 'add'],
+            ];
         }
 
-        return ['vinculos' => $vinculos, 'aviso' => $aviso];
+        return $resumen;
     }
 
     private function aHectareas(BigDecimal $valor): string

@@ -53,6 +53,25 @@
 /* Celda de dos líneas de la tabla de lotes del formulario: cultivo y, debajo,
    su etapa; desnivel y limpieza del terreno. El detalle va apagado y más
    chico — también cuando es lo único de la celda («Sin cultivo registrado»). */
+/* Columna «Órdenes de trabajo»: la cuenta (o «Crear», si la orden vigente todavía no
+   tiene ninguna) es el acceso directo a ese paso. Hover con fondo sutil (§8.5). */
+.ag-ordenes__crear-trabajo {
+    display: inline-block;
+    padding: var(--ag-space-1) var(--ag-space-2);
+    border-radius: var(--ag-radius-sm);
+    color: var(--ag-color-info-strong);
+    font-weight: var(--ag-font-weight-medium);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+    transition: background-color 120ms ease;
+}
+
+.ag-ordenes__crear-trabajo:hover,
+.ag-ordenes__crear-trabajo:focus-visible {
+    background-color: var(--ag-color-info-subtle);
+    color: var(--ag-color-info-strong);
+}
+
 .ag-ordenes__celda-doble {
     display: flex;
     flex-direction: column;
@@ -372,6 +391,9 @@
    regla propia acá. */
 .ag-ordenes-form__resumen-contrato {
     display: flex;
+    /* En un ancho de teléfono el logo y los datos no entran lado a lado: los datos
+       bajan en vez de empujar la página hacia la derecha. */
+    flex-wrap: wrap;
     align-items: flex-start;
     gap: var(--ag-space-4);
     padding-top: var(--ag-space-4);
@@ -379,7 +401,8 @@
 }
 
 .ag-ordenes-form__resumen-datos {
-    flex: 1;
+    flex: 1 1 14rem;
+    min-width: 0;
 }
 
 /* Logo del cliente — cuadrado fijo, mismo radio que una tarjeta chica. Una
