@@ -20,7 +20,7 @@ final class ListarPersonas
             ->with('base')
             ->when(
                 $busqueda !== null && $busqueda !== '',
-                fn ($consulta) => BusquedaTexto::aplicar($consulta, ['nombre'], $busqueda),
+                fn ($consulta) => BusquedaTexto::aplicar($consulta, ['nombre', 'ci'], $busqueda),
             )
             ->orderBy('nombre')
             ->paginate($porPagina)

@@ -269,7 +269,6 @@
                     @endif
                 </div>
             </x-molecules.form-section>
-            </x-molecules.form-section>
         @else
             {{-- INTEGRANTES: quién es piloto y quién ayudante, con su vigencia. --}}
             <x-molecules.form-section

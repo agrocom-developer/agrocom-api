@@ -1,8 +1,15 @@
 {{--
     Partial: formulario de persona, compartido por create.blade.php y
     edit.blade.php (HU-26, tarea 37) — arquetipo Formulario, §6.3 de
-    docs/diseno/guia_pantalla_panel.md. Sin sub-entidad repetible: dos
-    selects (rol, base) + tres campos planos (nombre, tarifa_ha, activo).
+    docs/diseno/guia_pantalla_panel.md. Sin sub-entidad repetible. Tres
+    secciones (21/9/2026, pedido del dueño): Datos personales (nombres,
+    apellidos y cédula), Datos de referencia (celular, correo y dirección) y
+    Trabajo en campo (puesto, base, tarifa y activo). El nombre completo que
+    muestra el resto del sistema lo compone el servidor.
+
+    «Puesto» es `per_personas.rol`, la clasificación de campo que decide en
+    qué select de la cuadrilla aparece la persona. No es el acceso al sistema:
+    eso es el usuario vinculado, que se ve en el resumen de la derecha.
 
     Homogeneizado con el patrón de Clientes y Cuadrillas (tarea 112): el
     cuerpo va en `molecules/form-layout` y, SOLO en edición, el aside con el
@@ -37,7 +44,13 @@
 @php
     $esEdicion = $persona !== null;
     $accion = $esEdicion ? route('panel.personas.update', $persona) : route('panel.personas.store');
-    $nombre = old('nombre', $persona?->nombre ?? '');
+    $nombres = old('nombres', $persona?->nombres ?? '');
+    $apellidoPaterno = old('apellido_paterno', $persona?->apellido_paterno ?? '');
+    $apellidoMaterno = old('apellido_materno', $persona?->apellido_materno ?? '');
+    $ci = old('ci', $persona?->ci ?? '');
+    $celular = old('celular', $persona?->celular ?? '');
+    $correo = old('correo', $persona?->correo ?? '');
+    $direccion = old('direccion', $persona?->direccion ?? '');
     $rol = old('rol', $persona?->rol?->value ?? '');
     // En el alta, `?base_id=` (atajo «Nueva persona» de la ficha de una base) deja esa base elegida.
     $baseId = old('base_id', $persona?->base_id ?? ($baseIdInicial ?? ''));
@@ -86,17 +99,98 @@
     <x-molecules.form-layout>
         <x-molecules.form-section
             :title="__('personal.personas.seccion_datos')"
-            :count="__('personal.personas.campos_contador', ['cantidad' => 5])"
+            :count="__('personal.personas.campos_contador', ['cantidad' => 4])"
         >
+            <div class="ag-form-section__field--full">
+                <x-atoms.input
+                    type="text"
+                    name="nombres"
+                    :label="__('personal.personas.campo_nombres')"
+                    :value="$nombres"
+                    required
+                    maxlength="80"
+                    autocomplete="off"
+                    :error="$errors->first('nombres')"
+                />
+            </div>
+
             <x-atoms.input
                 type="text"
-                name="nombre"
-                :label="__('personal.personas.campo_nombre')"
-                :value="$nombre"
+                name="apellido_paterno"
+                :label="__('personal.personas.campo_apellido_paterno')"
+                :value="$apellidoPaterno"
                 required
-                :error="$errors->first('nombre')"
+                maxlength="80"
+                autocomplete="off"
+                :error="$errors->first('apellido_paterno')"
             />
 
+            <x-atoms.input
+                type="text"
+                name="apellido_materno"
+                :label="__('personal.personas.campo_apellido_materno')"
+                :value="$apellidoMaterno"
+                maxlength="80"
+                autocomplete="off"
+                :error="$errors->first('apellido_materno')"
+            />
+
+            <x-atoms.input
+                type="text"
+                name="ci"
+                :label="__('personal.personas.campo_ci')"
+                :value="$ci"
+                :help="__('personal.personas.campo_ci_ayuda')"
+                required
+                maxlength="20"
+                autocomplete="off"
+                :error="$errors->first('ci')"
+            />
+        </x-molecules.form-section>
+
+        <x-molecules.form-section
+            :title="__('personal.personas.seccion_referencia')"
+            :count="__('personal.personas.campos_contador', ['cantidad' => 3])"
+        >
+            <x-atoms.input
+                type="tel"
+                name="celular"
+                :label="__('personal.personas.campo_celular')"
+                :value="$celular"
+                required
+                maxlength="20"
+                autocomplete="off"
+                :error="$errors->first('celular')"
+            />
+
+            <x-atoms.input
+                type="email"
+                name="correo"
+                :label="__('personal.personas.campo_correo')"
+                :value="$correo"
+                maxlength="150"
+                autocomplete="off"
+                :error="$errors->first('correo')"
+            />
+
+            <div class="ag-form-section__field--full">
+                <x-atoms.input
+                    type="text"
+                    name="direccion"
+                    :label="__('personal.personas.campo_direccion')"
+                    :value="$direccion"
+                    :help="__('personal.personas.campo_direccion_ayuda')"
+                    maxlength="255"
+                    autocomplete="off"
+                    :error="$errors->first('direccion')"
+                />
+            </div>
+        </x-molecules.form-section>
+
+        <x-molecules.form-section
+            :title="__('personal.personas.seccion_trabajo')"
+            :count="__('personal.personas.campos_contador', ['cantidad' => 4])"
+        >
             <x-atoms.select
                 name="rol"
                 id="rol"
@@ -104,6 +198,7 @@
                 :options="$opcionesRol"
                 :value="$rol"
                 :placeholder="__('personal.personas.campo_rol_placeholder')"
+                :help="__('personal.personas.campo_rol_ayuda')"
                 :error="$errors->first('rol')"
                 required
             />
