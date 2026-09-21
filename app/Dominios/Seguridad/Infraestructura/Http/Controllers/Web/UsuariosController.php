@@ -87,9 +87,12 @@ final class UsuariosController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
-        $busqueda = $request->string('q')->toString();
-        $tipoFiltro = $request->string('tipo')->toString();
-        $tipo = TipoUsuario::tryFrom($tipoFiltro);
+        // Un arreglo en la query (`?q[]=x`, `?tipo[]=interno`) no es un filtro: `string()` lo
+        // convertiría a texto y Laravel eleva esa conversión a excepción (500). Solo se acepta un texto.
+        $busquedaCruda = $request->query('q');
+        $busqueda = is_string($busquedaCruda) ? $busquedaCruda : '';
+        $tipoCrudo = $request->query('tipo');
+        $tipo = is_string($tipoCrudo) ? TipoUsuario::tryFrom($tipoCrudo) : null;
         $usuarios = $listarUsuarios->ejecutar($busqueda !== '' ? $busqueda : null, $tipo);
 
         $idsUsuario = $usuarios->pluck('id')->map(fn ($id) => (int) $id)->all();

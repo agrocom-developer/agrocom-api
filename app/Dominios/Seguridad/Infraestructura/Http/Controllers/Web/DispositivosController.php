@@ -54,7 +54,10 @@ final class DispositivosController
 
         abort_unless($usuario->tienePermisoEnRol(self::PERMISO_VER, $idRolActivo), 403);
 
-        $busqueda = $request->string('q')->toString();
+        // Un arreglo en la query (`?q[]=x`) no es una búsqueda: `string()` lo convertiría a texto y
+        // Laravel eleva esa conversión a excepción (500). Solo se acepta un texto.
+        $busquedaCruda = $request->query('q');
+        $busqueda = is_string($busquedaCruda) ? $busquedaCruda : '';
         $rolId = $request->integer('rol_id') ?: null;
 
         return view('seguridad::pages.dispositivos.index', [
