@@ -5,6 +5,7 @@ namespace App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web;
 use App\Dominios\Finanzas\Aplicacion\AprobarPlanilla;
 use App\Dominios\Finanzas\Aplicacion\GenerarPlanilla;
 use App\Dominios\Finanzas\Aplicacion\ListarPlanillas;
+use App\Dominios\Finanzas\Dominio\EstadoPlanilla;
 use App\Dominios\Finanzas\Dominio\Excepciones\PlanillaNoAprobable;
 use App\Dominios\Finanzas\Infraestructura\Eloquent\Planilla;
 use App\Dominios\Finanzas\Infraestructura\Eloquent\PlanillaDetalle;
@@ -29,6 +30,11 @@ use Illuminate\View\View;
  * Ninguna regla de negocio acá: `Aplicacion/GenerarPlanilla` y
  * `Aplicacion/AprobarPlanilla` hacen el trabajo.
  *
+ * `index()` (tarea 119) filtra por estado y arma la franja de KPI con
+ * `ListarPlanillas::resumen()`, el mismo filtro que la tabla; el listado
+ * ofrece por fila la única transición de la máquina (borrador → aprobada),
+ * contra la misma ruta `panel.planillas.aprobar` que ya usaba el detalle.
+ *
  * `aprobar()` toma el id del usuario autenticado con
  * `$request->user('interno')->id` (mismo guard que
  * `AutorizacionPanelWebSesion`, sin depender de un método propio del
@@ -37,6 +43,19 @@ use Illuminate\View\View;
  */
 final class PlanillasController
 {
+    /**
+     * Tono de cada estado, definido UNA vez (plan de homogeneización §3.1):
+     * lo comparten el badge del listado, la acción de fila que aprueba y su
+     * modal, para que los tres hablen con el mismo color. Son los tonos con
+     * los que el listado ya venía pintando el badge — no se reeligen.
+     *
+     * @var array<string, string>
+     */
+    public const array TONO_POR_ESTADO = [
+        'borrador' => 'warning',
+        'aprobada' => 'success',
+    ];
+
     private const PERMISO_VER = 'finanzas.planilla.ver';
 
     private const PERMISO_GENERAR = 'finanzas.planilla.generar';
@@ -49,10 +68,19 @@ final class PlanillasController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
+        // `?estado[]=x` llega como arreglo: `->string()` lo convertiría a texto y
+        // rompería con un 500, así que solo se acepta un texto.
+        $estadoQuery = $request->query('estado');
+        $estado = is_string($estadoQuery) ? EstadoPlanilla::tryFrom($estadoQuery)?->value : null;
+
         return view('finanzas::pages.planillas.index', [
             ...$this->autorizacion->cascara($request),
-            'planillas' => $listarPlanillas->ejecutar(),
+            'planillas' => $listarPlanillas->ejecutar($estado),
+            'resumen' => $listarPlanillas->resumen($estado),
+            'filtros' => ['estado' => $estado],
+            'tonoPorEstado' => self::TONO_POR_ESTADO,
             'puedeGenerar' => $this->autorizacion->tienePermiso($request, self::PERMISO_GENERAR),
+            'puedeAprobar' => $this->autorizacion->tienePermiso($request, self::PERMISO_APROBAR),
         ]);
     }
 
