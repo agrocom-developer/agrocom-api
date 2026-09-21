@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Operaciones\Aplicacion;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use App\Dominios\Operaciones\Contratos\RegistroEvidencia;
 use App\Dominios\Operaciones\Contratos\ResultadoSincronizacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Evidencia;
@@ -52,19 +53,19 @@ final class RegistrarEvidencia
     public function ejecutar(RegistroEvidencia $datos, ?UploadedFile $archivo, ?int $subidoPor): ResultadoSincronizacion
     {
         if ($archivo === null || ! $archivo->isValid() || $archivo->getSize() === 0) {
-            return ResultadoSincronizacion::rechazado('archivo ausente o vacío');
+            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.errores.evidencia_archivo_ausente'));
         }
 
         try {
             $momento = Carbon::parse($datos->fecha);
         } catch (InvalidArgumentException) {
-            return ResultadoSincronizacion::rechazado('fecha inválida');
+            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.errores.evidencia_fecha_invalida'));
         }
 
         $hash = hash_file('sha256', $archivo->getRealPath());
 
         if ($datos->hashDispositivo !== null && ! hash_equals($datos->hashDispositivo, $hash)) {
-            return ResultadoSincronizacion::rechazado('el hash declarado no coincide con el contenido recibido');
+            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.errores.evidencia_hash_no_coincide'));
         }
 
         $extension = $archivo->extension() ?: 'bin';
@@ -93,7 +94,7 @@ final class RegistrarEvidencia
                 $guardado = Storage::disk('r2')->put($ruta, file_get_contents($archivo->getRealPath()));
 
                 if (! $guardado) {
-                    throw new RuntimeException("no se pudo guardar la evidencia en el disco r2: {$ruta}");
+                    throw new RuntimeException(Texto::de('operaciones.errores.evidencia_guardado_disco_fallido', ['ruta' => $ruta]));
                 }
 
                 $evidencia->update(['archivo_url' => $ruta]);
@@ -103,7 +104,7 @@ final class RegistrarEvidencia
         } catch (QueryException $excepcion) {
             return $this->resultadoDesdeExcepcion($excepcion);
         } catch (RuntimeException) {
-            return ResultadoSincronizacion::rechazado('no se pudo guardar el archivo');
+            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.errores.evidencia_archivo_no_guardado'));
         }
     }
 
@@ -120,6 +121,6 @@ final class RegistrarEvidencia
             return ResultadoSincronizacion::duplicado();
         }
 
-        return ResultadoSincronizacion::rechazado('no se pudo aplicar el registro: referencia o dato inválido');
+        return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.registro_invalido'));
     }
 }

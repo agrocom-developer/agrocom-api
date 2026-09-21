@@ -28,6 +28,17 @@ interface LecturaEquipoTrabajo
     /** @return list<DatosEquipoTrabajo> equipos cuya vigencia propia contiene `$fecha`. */
     public function vigentesAFecha(string $fecha): array;
 
+    /**
+     * Los equipos pedidos, vigentes o no, indexados por id — para rotular un
+     * trabajo ya asignado, que debe seguir nombrando a su equipo aunque este
+     * haya terminado su vigencia o se haya dado de baja después. Un id que no
+     * existe simplemente no aparece.
+     *
+     * @param  list<int>  $ids
+     * @return array<int, DatosEquipoTrabajo>
+     */
+    public function porIds(array $ids): array;
+
     /** @return list<DatosIntegranteEquipo> integrantes del equipo cuya vigencia contiene `$fecha`. */
     public function integrantesAFecha(int $equipoTrabajoId, string $fecha): array;
 

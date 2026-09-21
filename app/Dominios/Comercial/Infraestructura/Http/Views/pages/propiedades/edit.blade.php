@@ -7,6 +7,10 @@
     CascaraPanel, más:
     - $propiedad (Propiedad).
     - $clientesDisponibles (Collection<int, string>).
+    - $geografia (array de los 3 niveles del catálogo cerrado, embebido para
+      la cascada de selects — adenda 16/9/2026 a ADR 0018 punto 1).
+    - $resumenPropiedad (list<array>): las 3 tarjetas del aside (§6.3.1),
+      ver `PropiedadesController::resumenPropiedad()`.
 
     Gateada por `comercial.propiedad.editar`, verificado server-side en el
     controlador.
@@ -24,6 +28,6 @@
         :version="$version"
         :vista-actual="__('comercial.propiedades.titulo_editar')"
     >
-        @include('comercial::pages.propiedades._formulario', ['propiedad' => $propiedad])
+        @include('comercial::pages.propiedades._formulario', ['propiedad' => $propiedad, 'volverA' => $volverA ?? null])
     </x-templates.panel-layout>
 </x-templates.panel-shell>

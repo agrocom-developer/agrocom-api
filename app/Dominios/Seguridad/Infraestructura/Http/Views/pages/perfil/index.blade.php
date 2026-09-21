@@ -64,18 +64,18 @@
                 <x-atoms.input
                     type="text"
                     id="perfil-nombre"
-                    label="{{ __('seguridad.perfil.campo_name') }}"
-                    value="{{ $usuario->name }}"
-                    help="{{ __('seguridad.perfil.campo_name_ayuda') }}"
+                    :label="__('seguridad.perfil.campo_name')"
+                    :value="$usuario->name"
+                    :help="__('seguridad.perfil.campo_name_ayuda')"
                     readonly
                 />
 
                 <x-atoms.input
                     type="email"
                     name="email"
-                    label="{{ __('seguridad.perfil.campo_email') }}"
-                    value="{{ $email }}"
-                    error="{{ $errors->first('email') }}"
+                    :label="__('seguridad.perfil.campo_email')"
+                    :value="$email"
+                    :error="$errors->first('email')"
                 />
             </x-molecules.form-section>
 
@@ -85,22 +85,22 @@
                 <x-atoms.input
                     type="password"
                     name="password_actual"
-                    label="{{ __('seguridad.perfil.campo_password_actual') }}"
-                    error="{{ $errors->first('password_actual') }}"
+                    :label="__('seguridad.perfil.campo_password_actual')"
+                    :error="$errors->first('password_actual')"
                 />
 
                 <x-atoms.input
                     type="password"
                     name="password"
-                    label="{{ __('seguridad.perfil.campo_password_nueva') }}"
-                    help="{{ __('seguridad.perfil.campo_password_nueva_ayuda') }}"
-                    error="{{ $errors->first('password') }}"
+                    :label="__('seguridad.perfil.campo_password_nueva')"
+                    :help="__('seguridad.perfil.campo_password_nueva_ayuda')"
+                    :error="$errors->first('password')"
                 />
 
                 <x-atoms.input
                     type="password"
                     name="password_confirmation"
-                    label="{{ __('seguridad.perfil.campo_password_confirmacion') }}"
+                    :label="__('seguridad.perfil.campo_password_confirmacion')"
                 />
             </x-molecules.form-section>
 

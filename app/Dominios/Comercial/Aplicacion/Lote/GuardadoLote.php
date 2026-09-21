@@ -8,20 +8,19 @@ use Illuminate\Database\QueryException;
 
 /**
  * Guardado de un lote con traducción del índice único parcial
- * `com_lotes_codigo_unico` a {@see LoteDuplicado} (tarea 77, HU-54).
+ * `com_lotes_codigo_unico` a {@see LoteDuplicado} (tarea 77, HU-54; ADR
+ * 0020 — el índice pasó a ser `(propiedad_id, codigo)`).
  *
- * Colaborador compartido: antes de esta tarea, `CrearCampo` y `ActualizarCampo`
- * tenían cada uno su propia copia de este mismo try/catch. Se extrae acá para
- * que los casos de uso de lote suelto (`CrearLote`/`ActualizarLote`, ficha
- * propia) lo reusen sin duplicarlo de nuevo — mismo caso de uso de guardado,
- * lo llame quien lo llame (prompt de la tarea, punto "Qué NO hacer").
+ * Colaborador compartido: `CrearLote` y `ActualizarLote` (ficha propia del
+ * lote) lo reusan sin duplicar el try/catch — mismo caso de uso de
+ * guardado, lo llame quien lo llame.
  */
 final class GuardadoLote
 {
     /**
      * @param  array{codigo: string, hectareas: string, geometria: array<string, mixed>|null, restricciones: string|null, desnivel: string|null, limpieza: string|null}  $datos
      *
-     * @throws LoteDuplicado si el código ya pertenece a otro lote activo del mismo campo.
+     * @throws LoteDuplicado si el código ya pertenece a otro lote activo de la misma propiedad.
      */
     public static function guardar(Lote $lote, array $datos): Lote
     {

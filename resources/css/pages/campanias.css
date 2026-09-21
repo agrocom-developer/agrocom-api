@@ -7,8 +7,12 @@
  *
  * El wrapper `.ag-campanias`/`.ag-campanias-form` sigue el mismo patrón que
  * `.ag-bases`/`.ag-bases-form`: flex en columna con un único `gap` en vez de
- * `margin-top` repetido en cada hijo. Todo color y medida por token
- * (CLAUDE.md invariante 11).
+ * `margin-top` repetido en cada hijo. El contenedor de la tabla del listado
+ * (`molecules/index-table`) y el layout main/aside del formulario
+ * (`molecules/form-layout`) tampoco viven acá: eran una copia casi idéntica
+ * a clientes/propiedades/lotes/contratos, extraída al catálogo (ver
+ * docs/diseno/guia_pantalla_panel.md §6.2/§6.3.1). Todo color y medida por
+ * token (CLAUDE.md invariante 11).
  */
 
 .ag-campanias,
@@ -18,75 +22,11 @@
     gap: var(--ag-space-5);
 }
 
-/* Listado (index) */
-
-.ag-campanias__filtros .ag-input,
-.ag-campanias__filtros .ag-select,
-.ag-campanias__filtros .ag-date {
-    min-width: 16rem;
-}
-
-.ag-campanias__tabla {
-    border: 1px solid var(--ag-color-border-card);
-    border-radius: var(--ag-radius-md);
-    background-color: var(--ag-color-surface-card);
-    overflow: hidden;
-}
-
-/* SEIS columnas, una por celda: cliente · código · nombre · vigencia ·
-   estado · acciones. Nacieron cinco (tarea 69) y la fila siempre tuvo seis
-   celdas, así que la de acciones no entraba en el track explícito y el grid
-   le abría una FILA IMPLÍCITA: "Editar" y "Cerrar" aparecían debajo del
-   nombre del cliente, en la primera columna, con la fila al doble de alto.
-   Reportado por el dueño sobre el panel andando (9/9/2026). El resto de los
-   listados del panel ya declaraba tantas columnas como celdas.
-
-   Los siete tracks van en `fr`, ninguno en `auto`: el encabezado y las filas
-   son grids HERMANOS, no uno solo, así que un track `auto` lo resuelve cada
-   grid contra su propio contenido — con "VIGENCIA" arriba y una fecha
-   abajo, la columna medía distinto en cada fila y los rótulos quedaban
-   corridos respecto de los datos. Con `fr` los dos grids reparten idéntico.
-   Es también lo que hacen las otras 40 páginas de listado. */
-.ag-campanias__head,
-.ag-campanias__fila {
-    display: grid;
-    grid-template-columns: 1.7fr 0.75fr 0.7fr 1.5fr 0.7fr 0.7fr 1.7fr;
-    gap: var(--ag-space-4);
-    align-items: center;
-    padding: var(--ag-space-3) var(--ag-space-4);
-}
-
-/* El encabezado de acciones va vacío (`aria-hidden`) pero ocupa su columna:
-   sin él, "ESTADO" se leería como rótulo de los botones. */
-.ag-campanias__head > [aria-hidden] {
-    min-width: 0;
-}
-
-/* Los rótulos de estado y acciones se alinean con lo que rotulan: el badge
-   arranca a la izquierda de su celda, los botones terminan a la derecha. */
-.ag-campanias__head > :last-child,
-.ag-campanias__acciones {
-    text-align: right;
-}
-
-.ag-campanias__head {
-    background-color: var(--ag-color-bg-table-head);
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-xs);
-    font-weight: var(--ag-font-weight-medium);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.ag-campanias__fila {
-    border-top: 1px solid var(--ag-color-border-row);
-    color: var(--ag-color-text);
-    font-size: var(--ag-font-size-sm);
-}
-
-.ag-campanias__fila:hover {
-    background-color: var(--ag-color-bg-row-hover);
-}
+/* Listado (index): 7 columnas propias de `molecules/index-table` (índice,
+   código, nombre, vigencia, estado, actividad, acciones — ver el comentario
+   con el detalle histórico de esas columnas en campanias/index.blade.php,
+   junto al prop `columns`). El resto de la anatomía de la tabla vive en el
+   componente. */
 
 .ag-campanias__codigo {
     font-weight: var(--ag-font-weight-medium);
@@ -100,44 +40,47 @@
     white-space: nowrap;
 }
 
-.ag-campanias__acciones {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: var(--ag-space-2);
-}
-
-.ag-campanias__paginacion {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--ag-space-4);
-}
-
-.ag-campanias__paginacion-info {
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-sm);
-}
-
+/* Apilado a una columna (`molecules/index-table`, <992px) hay ancho de sobra
+   para la fecha entera, pero si el viewport es muy angosto vale más que baje
+   de línea a que desborde la tarjeta. */
 @media (max-width: 992px) {
-    .ag-campanias__head {
-        display: none;
-    }
-
-    .ag-campanias__fila {
-        grid-template-columns: 1fr;
-        gap: var(--ag-space-1);
-    }
-
-    .ag-campanias__acciones {
-        justify-content: flex-start;
-        margin-top: var(--ag-space-2);
-    }
-
-    /* Apilado a una columna hay ancho de sobra para la fecha entera, pero
-       si el viewport es muy angosto vale más que baje de línea a que
-       desborde la tarjeta. */
     .ag-campanias__mono {
         white-space: normal;
     }
+}
+
+/* Formulario (create/edit): el layout de dos columnas (§6.3.1 de la guía de
+   pantalla) es `molecules/form-layout`. */
+
+/* Chip de estado junto al subtítulo (15/9/2026, pedido directo — "que se
+   note más"): vive en el slot `chip` de `organisms/page-header`, mismo
+   patrón que `.ag-dash__ventana-chip` de `pages/dashboard/_encabezado`
+   ("Viendo como X rol") — acá con el eje gris↔verde de
+   `color-estado-seleccion-vs-etiquetas` en vez del warning fijo del
+   dashboard, porque esto es un estado de dos valores, no una alerta. */
+.ag-campanias-form__estado-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-1) var(--ag-space-3);
+    border-radius: var(--ag-radius-pill);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-medium);
+    white-space: nowrap;
+}
+
+.ag-campanias-form__estado-chip--activa {
+    background: var(--ag-color-success-subtle);
+    border: 1px solid var(--ag-color-success-border);
+    color: var(--ag-color-success-strong);
+}
+
+.ag-campanias-form__estado-chip--inactiva {
+    background: var(--ag-color-neutral-subtle);
+    border: 1px solid var(--ag-color-border-card);
+    color: var(--ag-color-neutral-strong);
+}
+
+.ag-campanias-form__estado-chip .ag-icon {
+    color: inherit;
 }

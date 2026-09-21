@@ -11,25 +11,25 @@ use Illuminate\Validation\Rule;
  * `comercial.lote.crear`) se verifica en el controlador, contra el rol
  * activo — no acá, mismo criterio que el resto del panel.
  *
- * `campo_id` es la propiedad dueña del lote: el select de cliente de la
+ * `propiedad_id` es la propiedad dueña del lote: el select de cliente de la
  * ficha es solo para filtrar el select de propiedad en el cliente (JS,
  * `resources/js/pages/lotes-form.js`), no viaja como columna propia — un
- * lote no tiene `cliente_id`, lo hereda de su campo.
+ * lote no tiene `cliente_id`, lo hereda de su propiedad.
  *
  * `codigo`/`hectareas`/`geometria`/`restricciones` viajan anidados bajo
- * `lote[...]`: el formulario reusa `campos/_lote-fila.blade.php` con
+ * `lote[...]`: el formulario reusa `lotes/_lote-fila.blade.php` con
  * `prefijo: 'lote'` (ver su docblock) en vez de envolver un único lote en
  * un array de uno, así que las reglas tienen que validar `lote.codigo`,
  * no `codigo` suelto — de lo contrario el `required` nunca encuentra el
  * dato y el guardado falla en silencio.
  *
  * El código no lleva regla `unique` a propósito: el índice único real es
- * PARCIAL (`com_lotes_codigo_unico`, solo entre lotes activos del mismo
- * campo) — la violación se atrapa en `CrearLote` (vía `GuardadoLote`) y se
- * traduce ahí, mismo criterio que `CrearCampoRequest`.
+ * PARCIAL (`com_lotes_codigo_unico`, solo entre lotes activos de la misma
+ * propiedad) — la violación se atrapa en `CrearLote` (vía `GuardadoLote`) y se
+ * traduce ahí, mismo criterio que `CrearPropiedadRequest`.
  *
  * `geometria` y su regla de forma mínima de GeoJSON `Polygon`: mismo criterio
- * que `CrearCampoRequest`.
+ * que `CrearPropiedadRequest`.
  */
 final class CrearLoteRequest extends FormRequest
 {
@@ -37,17 +37,26 @@ final class CrearLoteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'campo_id' => [
+            'propiedad_id' => [
                 'required',
                 'integer',
-                Rule::exists('com_campos', 'id')->whereNull('deleted_at'),
+                Rule::exists('com_propiedades', 'id')->whereNull('deleted_at'),
             ],
             'lote.codigo' => ['required', 'string', 'max:50'],
             'lote.hectareas' => ['required', 'numeric', 'gt:0'],
             'lote.geometria' => ['nullable', 'string', $this->reglaGeometriaValida()],
             'lote.restricciones' => ['nullable', 'string'],
             'lote.desnivel' => ['nullable', Rule::in(['ninguno', 'algunos', 'varios', 'empinado'])],
-            'lote.limpieza' => ['nullable', Rule::in(['limpio', 'algunos_obstaculos', 'muchos_obstaculos'])],
+            // `limpieza` ya no viaja directo: el formulario manda un switch
+            // (`lote.limpio`) + el grado de obstáculos si no está marcado
+            // (16/9/2026) — LotesController::normalizarDatos() los combina
+            // en el único valor que persiste el modelo.
+            'lote.limpio' => ['boolean'],
+            'lote.grado_obstaculos' => [
+                Rule::requiredIf(fn () => ! $this->boolean('lote.limpio')),
+                'nullable',
+                Rule::in(['pocos_obstaculos', 'algunos_obstaculos', 'muchos_obstaculos']),
+            ],
         ];
     }
 
@@ -55,9 +64,12 @@ final class CrearLoteRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'campo_id.required' => 'Seleccioná una propiedad.',
-            'campo_id.exists' => 'La propiedad seleccionada no es válida.',
-            'lote.hectareas.gt' => 'Las hectáreas tienen que ser mayores a cero.',
+            'propiedad_id.required' => __('comercial.validacion.propiedad_requerida'),
+            'propiedad_id.exists' => __('comercial.validacion.propiedad_invalida'),
+            'lote.codigo.required' => __('comercial.lotes.error_codigo_requerido'),
+            'lote.hectareas.required' => __('comercial.lotes.error_hectareas_requeridas'),
+            'lote.hectareas.gt' => __('comercial.validacion.hectareas_mayor_a_cero'),
+            'lote.grado_obstaculos.required' => __('comercial.lotes.error_grado_obstaculos_requerido'),
         ];
     }
 

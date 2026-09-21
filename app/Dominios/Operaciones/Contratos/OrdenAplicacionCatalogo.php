@@ -23,6 +23,12 @@ namespace App\Dominios\Operaciones\Contratos;
  * obligatorio con esta tarea — una orden sólida no tiene litros por
  * hectárea, y forzar un valor acá habría sido inventar un dato que no
  * existe.
+ *
+ * Los 8 campos de límites climáticos y parámetros de vuelo
+ * (`humedadMinPct`...`anchoPasadaM`) YA NO viajan acá (migración
+ * `2026_09_18_100001_mueve_clima_vuelo_de_ordenes_a_trabajos_table`):
+ * describen el vuelo de cada equipo, no la orden — la app de campo los lee
+ * ahora de {@see TrabajoAsignadoCatalogo}.
  */
 final readonly class OrdenAplicacionCatalogo
 {
@@ -34,14 +40,6 @@ final readonly class OrdenAplicacionCatalogo
         public int $nroAplicacion,
         public ?string $litrosHa,
         public ?string $kilosPorVuelo,
-        public ?string $humedadMinPct,
-        public ?string $vientoMaxKmh,
-        public ?string $temperaturaMaxC,
-        public ?string $humedadMaxPct,
-        public ?string $velocidadMaxKmh,
-        public ?string $alturaVueloM,
-        public ?string $velocidadVueloKmh,
-        public ?string $anchoPasadaM,
         public ?string $observaciones,
         public ?int $emitidaPorContactoId,
         public string $fechaEmision,
@@ -59,14 +57,6 @@ final readonly class OrdenAplicacionCatalogo
             'nro_aplicacion' => $this->nroAplicacion,
             'litros_ha' => $this->litrosHa,
             'kilos_por_vuelo' => $this->kilosPorVuelo,
-            'humedad_min_pct' => $this->humedadMinPct,
-            'viento_max_kmh' => $this->vientoMaxKmh,
-            'temperatura_max_c' => $this->temperaturaMaxC,
-            'humedad_max_pct' => $this->humedadMaxPct,
-            'velocidad_max_kmh' => $this->velocidadMaxKmh,
-            'altura_vuelo_m' => $this->alturaVueloM,
-            'velocidad_vuelo_kmh' => $this->velocidadVueloKmh,
-            'ancho_pasada_m' => $this->anchoPasadaM,
             'observaciones' => $this->observaciones,
             'emitida_por_contacto_id' => $this->emitidaPorContactoId,
             'fecha_emision' => $this->fechaEmision,

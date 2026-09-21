@@ -99,9 +99,21 @@ class Contrato extends ModeloDominio
         return $this->belongsTo(Cliente::class, 'cliente_id');
     }
 
-    /** @return HasMany<ContratoVentana, $this> */
-    public function ventanas(): HasMany
+    /**
+     * Lotes concretos del cliente que cubre este contrato (pedido del dueño:
+     * elegir una propiedad y uno o más lotes de ella, no solo un número
+     * suelto de hectáreas). Devuelve filas {@see ContratoLote}, NO `Lote`
+     * directo: es `HasMany` hacia el pivote propio, no `belongsToMany` hacia
+     * `Lote` — ver el docblock de `ContratoLote` para el porqué (soft delete
+     * + auditoría propia del pivote, mismo criterio que
+     * `\App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion::ordenLotes()`).
+     * Para llegar al `Lote` real: `$contrato->lotes->pluck('lote')` (eager
+     * loading `lotes.lote`), nunca asumir que la colección ya son `Lote`.
+     *
+     * @return HasMany<ContratoLote, $this>
+     */
+    public function lotes(): HasMany
     {
-        return $this->hasMany(ContratoVentana::class, 'contrato_id');
+        return $this->hasMany(ContratoLote::class, 'contrato_id');
     }
 }

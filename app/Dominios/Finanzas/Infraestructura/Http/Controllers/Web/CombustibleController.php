@@ -5,7 +5,7 @@ namespace App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web;
 use App\Dominios\Finanzas\Aplicacion\CrearCombustible;
 use App\Dominios\Finanzas\Aplicacion\EliminarCombustible;
 use App\Dominios\Finanzas\Aplicacion\ListarCombustibles;
-use App\Dominios\Finanzas\Dominio\Excepciones\CampaniaCerrada;
+use App\Dominios\Finanzas\Dominio\Excepciones\CampaniaNoAbierta;
 use App\Dominios\Finanzas\Dominio\Excepciones\RecursoNoAsignadoAlEquipo;
 use App\Dominios\Finanzas\Infraestructura\Eloquent\Combustible;
 use App\Dominios\Finanzas\Infraestructura\Http\Requests\CrearCombustibleRequest;
@@ -36,7 +36,7 @@ use Illuminate\View\View;
  * `equipo_trabajo_id`/`fecha` viajan como query string en el formulario de
  * alta (`GET /panel/combustible/crear?equipo_trabajo_id=...&fecha=...`),
  * mismo patrón de recarga completa que
- * `Personal\Infraestructura\Http\Controllers\Web\EquiposTrabajoController::show()`
+ * `Personal\Infraestructura\Http\Controllers\Web\CuadrillasController::show()`
  * (la ficha del equipo, que también responde "quién/qué tenía este equipo
  * ese día" recargando la página con `fecha` en la URL): al elegir equipo y
  * fecha, la página se recarga y el `<select>` de recurso se puebla SOLO con
@@ -85,6 +85,7 @@ final class CombustibleController
             ...$this->autorizacion->cascara($request),
             'combustibles' => $combustibles,
             'etiquetasBase' => $basesDisponibles->all(),
+            'etiquetasEquipo' => $equiposDisponibles->all(),
             'etiquetasRecurso' => $this->etiquetasRecursoDeCombustibles($combustibles->getCollection()),
             'basesDisponibles' => $basesDisponibles,
             'equiposDisponibles' => $equiposDisponibles,
@@ -96,9 +97,7 @@ final class CombustibleController
                 'equipo_trabajo_id' => $equipoTrabajoId,
                 'campania_id' => $campaniaId,
             ],
-            'total' => $equipoTrabajoId !== null
-                ? $listarCombustibles->total($baseId, $desdeFiltro, $hastaFiltro, $equipoTrabajoId, $campaniaId)
-                : null,
+            'resumen' => $listarCombustibles->resumen($baseId, $desdeFiltro, $hastaFiltro, $equipoTrabajoId, $campaniaId),
             'puedeEliminar' => $this->autorizacion->tienePermiso($request, self::PERMISO_ELIMINAR),
         ]);
     }
@@ -115,7 +114,7 @@ final class CombustibleController
             ...$this->autorizacion->cascara($request),
             'basesDisponibles' => $this->basesDisponibles(),
             'equiposDisponibles' => $this->equiposDisponibles(),
-            'campaniasDisponibles' => $this->campaniasNoCerradas(),
+            'campaniasDisponibles' => $this->campaniasAbiertas(),
             'equipoTrabajoIdSeleccionado' => $equipoTrabajoId,
             'fechaSeleccionada' => $fecha,
             'recursosDisponibles' => $equipoTrabajoId !== null
@@ -143,7 +142,7 @@ final class CombustibleController
                 monto: (string) $datos['monto'],
                 descripcion: $datos['descripcion'] ?? null,
             );
-        } catch (CampaniaCerrada $excepcion) {
+        } catch (CampaniaNoAbierta $excepcion) {
             return redirect()
                 ->route('panel.combustible.create', $this->parametrosCascada($datos))
                 ->withInput()
@@ -213,41 +212,41 @@ final class CombustibleController
 
     /**
      * Campañas no cerradas (ADR 0015 punto 6): mismo criterio que
-     * `GastosController::campaniasNoCerradas()` — imputar a una cerrada lo
+     * `GastosController::campaniasAbiertas()` — imputar a una cerrada lo
      * rechaza igual `Aplicacion/CrearCombustible`, esto es solo para no
      * ofrecerla en el formulario.
      *
+     * Sin `cliente_id`/`com_clientes` (ADR 0015, corregido el 15/9/2026): la
+     * campaña es un catálogo compartido, sin cliente propio.
+     *
      * @return Collection<int, non-falsy-string>
      */
-    private function campaniasNoCerradas(): Collection
+    private function campaniasAbiertas(): Collection
     {
         return DB::table('cpn_campanias')
-            ->join('com_clientes', 'com_clientes.id', '=', 'cpn_campanias.cliente_id')
-            ->whereNull('cpn_campanias.deleted_at')
-            ->where('cpn_campanias.estado', '!=', 'cerrada')
-            ->orderBy('com_clientes.razon_social')
-            ->orderBy('cpn_campanias.codigo')
-            ->get(['cpn_campanias.id', 'cpn_campanias.codigo', 'com_clientes.razon_social'])
-            ->mapWithKeys(fn (object $fila): array => [(int) $fila->id => sprintf('%s — %s', $fila->codigo, $fila->razon_social)]);
+            ->whereNull('deleted_at')
+            ->where('estado', 'abierta')
+            ->orderBy('codigo')
+            ->pluck('codigo', 'id');
     }
 
     /**
      * TODAS las campañas (activas), sin filtrar por estado — a diferencia
-     * de `campaniasNoCerradas()` (solo para el formulario de alta), el
+     * de `campaniasAbiertas()` (solo para el formulario de alta), el
      * filtro del LISTADO tiene que poder encontrar cargas de una campaña ya
      * `cerrada`: mismo criterio que `GastosController::todasLasCampanias()`.
+     *
+     * Sin `cliente_id`/`com_clientes` (ADR 0015, corregido el 15/9/2026):
+     * mismo motivo que {@see self::campaniasAbiertas()}.
      *
      * @return Collection<int, non-falsy-string>
      */
     private function todasLasCampanias(): Collection
     {
         return DB::table('cpn_campanias')
-            ->join('com_clientes', 'com_clientes.id', '=', 'cpn_campanias.cliente_id')
-            ->whereNull('cpn_campanias.deleted_at')
-            ->orderBy('com_clientes.razon_social')
-            ->orderBy('cpn_campanias.codigo')
-            ->get(['cpn_campanias.id', 'cpn_campanias.codigo', 'com_clientes.razon_social'])
-            ->mapWithKeys(fn (object $fila): array => [(int) $fila->id => sprintf('%s — %s', $fila->codigo, $fila->razon_social)]);
+            ->whereNull('deleted_at')
+            ->orderBy('codigo')
+            ->pluck('codigo', 'id');
     }
 
     /**
@@ -297,7 +296,7 @@ final class CombustibleController
     /**
      * Resuelve `"{tipo}:{id}"` => identificador legible, por tipo en un
      * único `whereIn` por tabla (mismo criterio de agrupación que
-     * `Personal\Infraestructura\Http\Controllers\Web\EquiposTrabajoController::etiquetasRecurso()`).
+     * `Personal\Infraestructura\Http\Controllers\Web\CuadrillasController::etiquetasRecurso()`).
      *
      * @param  list<DatosRecursoEquipo>  $recursos
      * @return array<string, string>

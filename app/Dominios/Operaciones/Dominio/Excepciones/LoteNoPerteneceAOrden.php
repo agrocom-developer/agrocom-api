@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Operaciones\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use RuntimeException;
 
 /**
@@ -16,6 +17,6 @@ final class LoteNoPerteneceAOrden extends RuntimeException
 {
     public static function porLote(int $loteId, int $ordenId): self
     {
-        return new self("El lote #{$loteId} no pertenece a la orden #{$ordenId}.");
+        return new self(Texto::de('operaciones.errores.lote_no_pertenece_a_orden', ['lote' => $loteId, 'orden' => $ordenId]));
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Dominios\Operaciones\Infraestructura;
 
 use App\Dominios\Operaciones\Aplicacion\AgregarPausasPorCausa;
+use App\Dominios\Operaciones\Aplicacion\ListarEstadiasHacienda;
 use App\Dominios\Operaciones\Contratos\AlertaPanel;
 use App\Dominios\Operaciones\Contratos\EquipoPersonaPanel;
 use App\Dominios\Operaciones\Contratos\EvidenciaPanel;
@@ -40,7 +41,10 @@ use Illuminate\Support\Carbon;
  */
 final class LecturaPanelOperacionesEloquent implements LecturaPanelOperaciones
 {
-    public function __construct(private readonly AgregarPausasPorCausa $pausasPorCausa) {}
+    public function __construct(
+        private readonly AgregarPausasPorCausa $pausasPorCausa,
+        private readonly ListarEstadiasHacienda $estadias,
+    ) {}
 
     public function sesionesRecientes(int $limite, ?int $pilotoId = null): array
     {
@@ -284,6 +288,25 @@ final class LecturaPanelOperacionesEloquent implements LecturaPanelOperaciones
         // y el catálogo completo de causas (incluidas las que están en cero)
         // ya lo resuelve ese caso de uso.
         return $this->pausasPorCausa->ejecutar(Carbon::now()->format('Y-m'));
+    }
+
+    public function diasEnHaciendaDelMes(): array
+    {
+        // Delega en el caso de uso del listado en vez de volver a sumar: el
+        // tablero y `/panel/estadias` tienen que contar los mismos días —
+        // mismo criterio que `pausasPorCausaDelMes()`.
+        $desde = Carbon::now()->startOfMonth()->toDateString();
+        $hasta = Carbon::now()->endOfMonth()->toDateString();
+
+        $porCuadrilla = $this->estadias->diasEfectivosPorEquipo($desde, $hasta);
+        $resumen = $this->estadias->resumen($desde, $hasta);
+
+        return [
+            'total_dias' => round((float) array_sum($porCuadrilla), 1),
+            'en_curso' => $resumen['en_curso'],
+            'por_cuadrilla' => $porCuadrilla,
+            'por_propiedad' => $this->estadias->diasEfectivosPorPropiedad($desde, $hasta),
+        ];
     }
 
     public function equiposDePersonaDelMes(int $personaId): array

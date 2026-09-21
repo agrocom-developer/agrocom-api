@@ -21,6 +21,7 @@
         ['id' => 'resumen', 'label' => __('seguridad.dashboard.tab_resumen'), 'visible' => (bool) array_intersect($visibles, [
             'alertas', 'distribucion_sesiones', 'hectareas_por_dia', 'cola_validacion',
             'mis_sesiones', 'mis_equipos', 'mi_liquidacion', 'pausas', 'stock', 'avance_clientes',
+            'dias_en_hacienda',
         ])],
         ['id' => 'mapa', 'label' => __('seguridad.dashboard.tab_mapa'), 'visible' => isset($secciones['mapa'])],
         ['id' => 'lotes', 'label' => __('seguridad.dashboard.tab_resumen_lote'), 'visible' => isset($secciones['resumen_por_lote'])],

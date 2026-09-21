@@ -1,0 +1,139 @@
+/* Página: Orden de Trabajo (reforma 18/9/2026) — listado, alta y detalle de tandas */
+
+.ag-ordenes-trabajo {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-6);
+}
+
+.ag-ordenes-trabajo__mono {
+    font-family: var(--ag-font-family-mono);
+}
+
+.ag-ordenes-trabajo-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-6);
+}
+
+.ag-ordenes-trabajo-form__ayuda {
+    margin: 0;
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text-muted);
+}
+
+/* Equipos: tantos bloques como definió la orden de aplicación. */
+.ag-ordenes-trabajo-form__equipos {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-4);
+}
+
+/* `fieldset` trae borde, padding y `min-width: min-content` de fábrica — este
+   último desborda el grid del formulario en pantallas angostas. */
+.ag-ordenes-trabajo-form__equipo-bloque {
+    min-width: 0;
+    margin: 0;
+    padding: var(--ag-space-4);
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-4);
+}
+
+/* `float` saca al legend del borde del fieldset y lo deja como un título
+   normal dentro del bloque, alineado con el resto del contenido. */
+.ag-ordenes-trabajo-form__equipo-titulo {
+    float: left;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--ag-space-2);
+    font-family: var(--ag-font-family-display);
+    font-size: var(--ag-font-size-base);
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-color-text);
+}
+
+.ag-ordenes-trabajo-form__equipo-opcional {
+    font-family: var(--ag-font-family-base);
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-regular);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-ordenes-trabajo-form__equipo-lotes {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-4);
+}
+
+.ag-ordenes-trabajo-form__equipo-bloque > .ag-button {
+    align-self: flex-start;
+}
+
+.ag-ordenes-trabajo-form__lote-fila {
+    padding: var(--ag-space-3);
+    border: 1px solid var(--ag-color-border);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-bg);
+}
+
+.ag-ordenes-trabajo-form__lote-fila-pie {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.ag-ordenes-trabajo-form__reparto {
+    margin: 0;
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-ordenes-trabajo-form__reparto--excedido {
+    color: var(--ag-color-danger-strong);
+    font-weight: var(--ag-font-weight-medium);
+}
+
+/* Calda: cuatro casillas simples, en una línea mientras entren. */
+.ag-ordenes-trabajo-form__calda .ag-checkbox-group__options {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--ag-space-2) var(--ag-space-6);
+    max-height: none;
+    overflow: visible;
+}
+
+.ag-ordenes-trabajo-detalle {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-6);
+}
+
+.ag-ordenes-trabajo-detalle__kpi {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(max(12rem, calc(33.333% - var(--ag-space-4))), 1fr));
+    gap: var(--ag-space-4);
+}
+
+.ag-ordenes-trabajo-detalle__mono {
+    font-family: var(--ag-font-family-mono);
+}
+
+.ag-ordenes-trabajo-detalle__dato-etiqueta {
+    margin: 0 0 var(--ag-space-1);
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-ordenes-trabajo-detalle__dato-valor {
+    margin: 0;
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-base);
+}

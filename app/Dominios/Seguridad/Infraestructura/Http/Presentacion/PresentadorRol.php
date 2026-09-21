@@ -32,6 +32,7 @@ final class PresentadorRol
         'auxiliar' => 'engineering',
         'jefe_campo' => 'supervisor_account',
         'encargado_operaciones' => 'inventory_2',
+        'admin_plataforma' => 'admin_panel_settings',
     ];
 
     /**

@@ -45,7 +45,7 @@ final class BusquedaEquiposTrabajo extends BusquedaEloquent
 
     protected function rutaListado(): string
     {
-        return 'panel.equipos-trabajo.index';
+        return 'panel.cuadrillas.index';
     }
 
     /** @param EquipoTrabajo $modelo */
@@ -54,7 +54,7 @@ final class BusquedaEquiposTrabajo extends BusquedaEloquent
         return new ResultadoBusqueda(
             titulo: (string) $modelo->codigo,
             detalle: $modelo->nombre,
-            href: route('panel.equipos-trabajo.show', $modelo),
+            href: route('panel.cuadrillas.show', $modelo),
         );
     }
 }

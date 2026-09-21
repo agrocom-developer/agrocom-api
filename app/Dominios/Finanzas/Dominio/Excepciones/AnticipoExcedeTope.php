@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Finanzas\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use RuntimeException;
 
 /**
@@ -15,6 +16,6 @@ final class AnticipoExcedeTope extends RuntimeException
 {
     public static function paraDisponible(string $disponible): self
     {
-        return new self("El anticipo excede el tope disponible: el máximo que se puede adelantar ahora es Bs {$disponible}.");
+        return new self(Texto::de('finanzas.errores.anticipo_excede_tope', ['disponible' => $disponible]));
     }
 }

@@ -88,7 +88,7 @@ function pantallasBladeDelPanel(string $raizProyecto): array
 // protegen nada (p. ej. porque se movió una carpeta de vistas).
 test('el descubrimiento encuentra las pantallas Blade del panel', function () use ($raizProyecto) {
     expect(pantallasBladeDelPanel($raizProyecto))
-        ->toContain('app/Dominios/Operaciones/Infraestructura/Http/Views/pages/trabajos/index.blade.php')
+        ->toContain('app/Dominios/Operaciones/Infraestructura/Http/Views/pages/trabajos/show.blade.php')
         ->toContain('resources/views/components/organisms/page-header.blade.php')
         ->not->toContain('app/Dominios/Operaciones/Infraestructura/Http/Views/pdf/acta.blade.php');
 });

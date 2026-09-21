@@ -38,7 +38,7 @@
         :vista-actual="__('finanzas.rendiciones.titulo')"
     >
         <div class="ag-rendicion-detalle">
-            <x-atoms.button href="{{ route('panel.rendiciones.index') }}" variant="text" size="sm" icon="arrow_back">
+            <x-atoms.button :href="route('panel.rendiciones.index')" variant="text" size="sm" icon="arrow_back">
                 {{ __('finanzas.rendiciones.volver') }}
             </x-atoms.button>
 

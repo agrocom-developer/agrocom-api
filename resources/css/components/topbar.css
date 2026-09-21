@@ -73,7 +73,7 @@
    fijo; sigue pudiendo encoger bajo presión real de espacio. */
 .ag-topbar__search {
     flex: 0 1 480px;
-    min-width: 220px;
+    min-width: 320px;
     max-width: 480px;
     height: 36px;
     display: flex;
@@ -86,9 +86,13 @@
     cursor: text;
 }
 
+/* Es un campo de texto, no un elemento genérico enfocable: sigue el mismo
+   criterio de foco que `.ag-input__control` (input.css) — borde + halo con
+   el token primary — en vez de `--ag-color-focus-ring` (azul a propósito,
+   reservado para anillos de foco de elementos no-input). */
 .ag-topbar__search:focus-within {
-    outline: 2px solid var(--ag-color-focus-ring);
-    outline-offset: 1px;
+    border-color: var(--ag-color-primary);
+    box-shadow: 0 0 0 3px var(--ag-color-primary-subtle);
 }
 
 .ag-topbar__search-icon {
@@ -277,11 +281,19 @@
  * Popovers (dropdown-menu de Bootstrap con skin propio). `display: block`
  * con `!important` es deliberado: pisa el `display: none` por defecto de
  * Bootstrap para animar con opacity/transform/visibility — misma técnica
- * que el propio Bootstrap usa con `.show`.
+ * que el propio Bootstrap usa con `.show`. `position: fixed` en la regla
+ * base (no solo la que Popper aplica inline al abrir, ver app.js) — con
+ * `display:block` siempre puesto, antes del primer open el popover cerrado
+ * vive con el `position: absolute` por defecto de Bootstrap: invisible pero
+ * ocupando layout real, contando para el scroll interno de
+ * `.ag-panel__content`/`.ag-topbar` aunque nadie lo vea, hasta que el foco
+ * de un control de adentro lo "revela" con scroll (mismo bug diagnosticado
+ * en color-swatch-field.css, ahí con más detalle).
  */
 .ag-notifications-popover,
 .ag-user-menu {
     display: block !important;
+    position: fixed;
     background: var(--ag-color-bg-elevated);
     border: 1px solid var(--ag-color-border);
     border-radius: var(--ag-radius-lg);

@@ -7,24 +7,64 @@
 
     Datos esperados (ver ContratosController::index()): la cáscara de
     CascaraPanel, más:
-    - $contratos (LengthAwarePaginator<Contrato>, con `cliente` y `ventanas`
-      precargadas): fecha de inicio descendente. La columna "Ventanas"
-      muestra "Día completo" (HU-47, tarea 70) cuando la relación viene
-      vacía — cero ventanas ya significa eso, sin booleano propio.
-    - $campaniasDisponibles (Collection<int, string>): id => "código —
-      cliente", para el <select> del filtro por campaña (ADR 0015 punto 1).
-    - $filtros (array{q: string, campania_id: int|null}): filtros aplicados,
-      para dejar los campos con el valor tras el submit.
+    - $contratos (LengthAwarePaginator<Contrato>, con `cliente` precargada):
+      fecha de inicio descendente. Sin columna "Ventanas" (retirada el
+      16/9/2026 junto con `com_contrato_ventanas`: el horario para fumigar
+      pasó a ser un dato de cada lote, no del contrato — ver el detalle por
+      lote en la ficha de edición, `_formulario.blade.php`; una vista
+      agregada a nivel de fila del listado queda pendiente de una tarea de
+      diseño de UI aparte).
+    - $campaniasDisponibles (Collection<int, string>): id => código, para el
+      <select> del filtro por campaña (ADR 0015 punto 1).
+    - $clientesDisponibles (Collection<int, string>): id => razón social,
+      para el <select> del filtro por cliente (tarea
+      "listado-contratos-acciones", 16/9/2026).
+    - $propiedadesDisponibles (Collection<int, string>): id => nombre, para
+      el <select> del filtro por propiedad — filtra contratos que tienen al
+      menos un lote de esa propiedad (misma tarea).
+    - $filtros (array{q: string, campania_id: int|null, cliente_id: int|null,
+      propiedad_id: int|null}): filtros aplicados, para dejar los campos con
+      el valor tras el submit.
+    - $tonoPorEstado (array<string, string>): estado → tono del badge, el mismo
+      mapa que usan los pasos de la ficha de edición (`PasosDeContrato`).
+    - $aplicacionesAbiertas (array<int, DatosAplicacionAbierta>): contrato →
+      aplicación en curso (ADR 0022). Sus filas no se finalizan ni se cancelan
+      todavía: esas dos acciones abren un aviso (`_modal-aplicacion-abierta`)
+      en vez de la confirmación. $puedeVerOrden: si se ofrece el enlace a la orden.
 
     Gateada por `comercial.contrato.ver`, verificado server-side en el
     controlador. El botón "Nuevo contrato" y las acciones de cambio de
     estado se ocultan con `@puede` (presentación, no autorización — el
     servidor revalida en ContratosController). Las acciones de cambio de
     estado disponibles dependen del estado ACTUAL de cada fila: un contrato
-    `borrador` solo ofrece "Activar" o "Cancelar"; uno `vigente`, "Finalizar"
-    o "Cancelar"; uno `finalizado`/`cancelado`, ninguna (son terminales) —
-    ver `TransicionesContrato`, que es la fuente real de esta regla; acá solo
-    se refleja para no ofrecer un botón que el servidor va a rechazar.
+    `borrador` solo ofrece "Aprobar" o "Cancelar"; uno `conflicto` (comparte
+    un lote con un contrato ya aprobado, ADR 0021), solo "Cancelar": no se
+    aprueba hasta que el choque desaparezca, y sale solo de ahí; uno
+    `vigente`, "Finalizar", "Pausar" o "Cancelar"; uno `pausado`,
+    "Reanudar"; uno `finalizado`/`cancelado`, ninguna (son terminales) —
+    ver `TransicionesContrato`, que
+    es la fuente real de esta regla; acá solo se refleja para no ofrecer un
+    botón que el servidor va a rechazar.
+
+    Columna de acciones (tarea "listado-contratos-acciones", 16/9/2026,
+    replica el patrón de `usuarios/index.blade.php`): `organisms/row-actions`
+    en vez de botones sueltos — colapsa a un menú "⋮" las que no entran en
+    la fila (nunca más de 2 sueltas, ver su docblock). Los `<form>` Y los
+    `molecules/confirm-modal` de cambio de estado viven FUERA de
+    `row-actions` (ese organism repite su slot dos veces — un `<form>` o un
+    `<div class="modal">` con id ahí adentro se duplicaría, HTML inválido, y
+    si la acción caía en el overflow del "⋮" Bootstrap abría el PRIMER id
+    del documento, que quedaba oculto por `:nth-child` en la mitad visible:
+    pantalla oscura sin modal — bug real, encontrado 17/9/2026 en vivo en
+    `campanias/index.blade.php`, mismo síntoma que ya había obligado al
+    wrapper `ag-row-actions__item` un día antes). Dentro de `row-actions`
+    solo quedan botones disparadores normales (`data-bs-toggle="modal"
+    data-bs-target="#..."`), que se duplican sin problema porque no tienen
+    id propio. El tono de cada modal es el del estado al que se pasa —el de
+    su badge, `$tonoPorEstado`: `success` a vigente (aprobar/reanudar),
+    `distintivo-2` a finalizado, `info` a pausado, `danger` a cancelado— y
+    dentro lleva la ficha «estado actual → destino» (`_estado-transicion`),
+    para ver antes de confirmar a cuál se pasa.
 
     Estilos en resources/css/pages/contratos.css — cero color hardcodeado
     (CLAUDE.md invariante 11).
@@ -49,7 +89,7 @@
             >
                 @puede('comercial.contrato.crear')
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.contratos.create') }}" variant="primary" icon="add">
+                        <x-atoms.button :href="route('panel.contratos.create')" variant="primary" icon="add">
                             {{ __('comercial.contratos.nuevo') }}
                         </x-atoms.button>
                     </x-slot:actions>
@@ -68,71 +108,117 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <form method="GET" action="{{ route('panel.contratos.index') }}" class="ag-filtros ag-contratos__filtros">
-                <div class="ag-input">
-                    <label for="filtro-q" class="ag-input__label">{{ __('comercial.contratos.filtro_busqueda') }}</label>
-                    <div class="ag-input__control">
-                        <input
-                            type="search"
-                            name="q"
-                            id="filtro-q"
-                            class="ag-input__field"
-                            value="{{ $filtros['q'] }}"
-                            placeholder="{{ __('comercial.contratos.filtro_busqueda_placeholder') }}"
-                        >
-                    </div>
+            @php
+                $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
+                $filtrosPanelActivos = collect(['campania_id', 'cliente_id', 'propiedad_id'])
+                    ->filter(fn ($campo) => $filtros[$campo] !== null && $filtros[$campo] !== '')
+                    ->count();
+            @endphp
+
+            @if ($hayFiltrosActivos || $contratos->isNotEmpty())
+                <div class="ag-table-toolbar">
+                    <x-organisms.filter-panel
+                        :action="route('panel.contratos.index')"
+                        :active-count="$filtrosPanelActivos"
+                    >
+                        <input type="hidden" name="q" value="{{ $filtros['q'] }}">
+                        <x-atoms.select
+                            name="campania_id"
+                            id="filtro-campania"
+                            :label="__('comercial.contratos.filtro_campania')"
+                            :options="$campaniasDisponibles"
+                            :value="$filtros['campania_id']"
+                            :placeholder="__('comercial.contratos.filtro_campania_placeholder')"
+                        />
+
+                        <x-atoms.select
+                            name="cliente_id"
+                            id="filtro-cliente"
+                            :label="__('comercial.contratos.filtro_cliente')"
+                            :options="$clientesDisponibles"
+                            :value="$filtros['cliente_id']"
+                            :placeholder="__('comercial.contratos.filtro_cliente_placeholder')"
+                        />
+
+                        <x-atoms.select
+                            name="propiedad_id"
+                            id="filtro-propiedad"
+                            :label="__('comercial.contratos.filtro_propiedad')"
+                            :options="$propiedadesDisponibles"
+                            :value="$filtros['propiedad_id']"
+                            :placeholder="__('comercial.contratos.filtro_propiedad_placeholder')"
+                        />
+                    </x-organisms.filter-panel>
+
+                    <x-molecules.table-search
+                        :action="route('panel.contratos.index')"
+                        :value="$filtros['q']"
+                        :placeholder="__('comercial.contratos.filtro_busqueda_placeholder')"
+                        :clear-label="__('ui.tabla.buscador_limpiar')"
+                    />
                 </div>
-
-                <x-atoms.select
-                    name="campania_id"
-                    id="filtro-campania"
-                    label="{{ __('comercial.contratos.filtro_campania') }}"
-                    :options="$campaniasDisponibles"
-                    :value="$filtros['campania_id']"
-                    placeholder="{{ __('comercial.contratos.filtro_campania_placeholder') }}"
-                />
-
-                <div class="ag-filtros__acciones ag-contratos__filtros-acciones">
-                    <x-atoms.button type="submit" variant="outline" size="md" icon="search">
-                        {{ __('comercial.contratos.filtrar') }}
-                    </x-atoms.button>
-
-                    @if ($filtros['q'] !== '' || $filtros['campania_id'] !== null)
-                        <x-atoms.button href="{{ route('panel.contratos.index') }}" variant="text" size="md">
-                            {{ __('comercial.contratos.limpiar_filtro') }}
-                        </x-atoms.button>
-                    @endif
-                </div>
-            </form>
+            @endif
 
             @if ($contratos->isEmpty())
-                <x-molecules.alert-strip variant="info" icon="description" class="ag-contratos__aviso">
-                    {{ __(($filtros['q'] !== '' || $filtros['campania_id'] !== null) ? 'comercial.contratos.filtro_vacio' : 'comercial.contratos.vacio') }}
-                </x-molecules.alert-strip>
+                @if ($hayFiltrosActivos)
+                    <x-molecules.empty-state
+                        icon="search_off"
+                        :title="__('comercial.contratos.filtro_vacio_titulo')"
+                        :detail="__('comercial.contratos.filtro_vacio_detalle')"
+                    />
+                @else
+                    <x-molecules.empty-state
+                        icon="description"
+                        :title="__('comercial.contratos.vacio_titulo')"
+                        :detail="__('comercial.contratos.vacio_detalle')"
+                    />
+                @endif
             @else
-                <div class="ag-contratos__tabla" role="table">
-                    <div class="ag-contratos__head" role="row">
+                {{-- La última columna (acciones) es un ancho fijo, no `auto` — mismo
+                     motivo que usuarios.css: con `auto`, el head (rótulo "Acciones") y
+                     la fila (organisms/row-actions) de `molecules/index-table` son
+                     grids separados que resuelven ese ancho cada uno por su cuenta y
+                     quedan corridos. `--ag-row-actions-width`, no un valor en rem
+                     propio: ver el comentario de resources/css/components/row-actions.css
+                     (tarea "listado-contratos-acciones", 16/9/2026). --}}
+                <x-molecules.index-table columns="3rem 2fr 1fr 1fr 1.4fr 1fr var(--ag-row-actions-width)">
+                    <x-slot:head>
+                        <span role="columnheader" class="ag-index-table__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('comercial.contratos.col_cliente') }}</span>
                         <span role="columnheader">{{ __('comercial.contratos.col_hectareas') }}</span>
                         <span role="columnheader">{{ __('comercial.contratos.col_monto_total') }}</span>
                         <span role="columnheader">{{ __('comercial.contratos.col_vigencia') }}</span>
-                        <span role="columnheader">{{ __('comercial.contratos.col_ventanas') }}</span>
                         <span role="columnheader">{{ __('comercial.contratos.col_estado') }}</span>
-                        <span role="columnheader" aria-hidden="true"></span>
-                    </div>
+                        <span role="columnheader" class="ag-index-table__acciones-head">{{ __('ui.tabla.col_acciones') }}</span>
+                    </x-slot:head>
 
                     @foreach ($contratos as $contrato)
                         @php
-                            $variantePorEstado = [
-                                'borrador' => 'neutral',
-                                'vigente' => 'success',
-                                'finalizado' => 'info',
-                                'cancelado' => 'danger',
-                                'pausado' => 'warning',
-                            ];
+                            // 18/9/2026: se probó "borrador" ("En Aprobación")
+                            // en primary-2 (azul) y el usuario pidió revertir
+                            // — ese estado se queda en "neutral" (badge gris
+                            // secondary de siempre), a diferencia de
+                            // vigente/finalizado/cancelado/pausado, que sí
+                            // usan un color propio de la paleta de 8.
+                            // Misma vuelta, pedido siguiente: "pausado" pasa
+                            // de warning a info, "finalizado" de info a
+                            // distintivo-2 ("purple"/magenta) — reasignación
+                            // explícita del usuario, no una corrección de bug.
+                            // 19/9/2026: el mapa estado → tono vive en
+                            // `PasosDeContrato::TONO_POR_ESTADO` y llega por
+                            // `$tonoPorEstado` — lo comparten este badge, los
+                            // pasos de la ficha de edición y el aviso de
+                            // conflicto, para que los tres hablen con el mismo
+                            // color.
                             $estadoValor = $contrato->estado->value;
+                            // Aplicación en curso (ADR 0022): con una abierta, finalizar
+                            // y cancelar abren un aviso en vez de la confirmación.
+                            $aplicacionAbierta = $aplicacionesAbiertas[$contrato->id] ?? null;
                         @endphp
-                        <div class="ag-contratos__fila" role="row">
+                        <div class="ag-index-table__row" role="row">
+                            <span role="cell" class="ag-index-table__indice">
+                                {{ ($contratos->currentPage() - 1) * $contratos->perPage() + $loop->iteration }}
+                            </span>
                             <span role="cell" class="ag-contratos__cliente">{{ $contrato->cliente->razon_social }}</span>
                             <span role="cell" class="ag-contratos__mono">{{ number_format((float) $contrato->hectareas_contratadas, 2, ',', '.') }}</span>
                             <span role="cell" class="ag-contratos__mono">{{ number_format((float) $contrato->monto_total, 2, ',', '.') }}</span>
@@ -144,131 +230,242 @@
                                 @endif
                             </span>
                             <span role="cell">
-                                @if ($contrato->ventanas->isEmpty())
-                                    <x-atoms.badge variant="neutral">
-                                        {{ __('comercial.contratos.ventana_dia_completo') }}
-                                    </x-atoms.badge>
-                                @else
-                                    @foreach ($contrato->ventanas as $ventana)
-                                        <div class="ag-contratos__mono">
-                                            {{ __('comercial.contratos.ventana_rango', ['inicio' => substr((string) $ventana->hora_inicio, 0, 5), 'fin' => substr((string) $ventana->hora_fin, 0, 5)]) }}
-                                        </div>
-                                    @endforeach
-                                @endif
-                            </span>
-
-                            <span role="cell">
-                                <x-atoms.badge :variant="$variantePorEstado[$estadoValor]">
+                                <x-atoms.badge :variant="$tonoPorEstado[$estadoValor]">
                                     {{ __('comercial.contrato.estado.'.$estadoValor) }}
                                 </x-atoms.badge>
                             </span>
 
-                            <span role="cell" class="ag-contratos__acciones">
-                                @puede('comercial.contrato.editar')
-                                    <x-atoms.button href="{{ route('panel.contratos.edit', $contrato) }}" variant="warning-outline" size="sm" icon="edit">
-                                        {{ __('comercial.contratos.editar') }}
-                                    </x-atoms.button>
-                                @endpuede
+                            <span role="cell" class="ag-index-table__acciones">
+                                @php
+                                    $formIdAprobar = "contrato-aprobar-{$contrato->id}";
+                                    $formIdFinalizar = "contrato-finalizar-{$contrato->id}";
+                                    $formIdPausar = "contrato-pausar-{$contrato->id}";
+                                    $formIdReanudar = "contrato-reanudar-{$contrato->id}";
+                                    $formIdCancelar = "contrato-cancelar-{$contrato->id}";
+                                    $modalIdAprobar = "contrato-aprobar-modal-{$contrato->id}";
+                                    $modalIdFinalizar = "contrato-finalizar-modal-{$contrato->id}";
+                                    $modalIdPausar = "contrato-pausar-modal-{$contrato->id}";
+                                    $modalIdReanudar = "contrato-reanudar-modal-{$contrato->id}";
+                                    $modalIdCancelar = "contrato-cancelar-modal-{$contrato->id}";
+                                @endphp
 
+                                {{-- Forms FUERA de row-actions a propósito (mismo motivo que
+                                     campanias/index.blade.php): ese organism repite su slot dos
+                                     veces (visible/menú, ver su docblock) — un <form> ahí adentro
+                                     se duplicaría con el mismo id, HTML inválido. Los botones que
+                                     sí pueden duplicarse envían estos forms por su atributo HTML
+                                     `form`, sin importar dónde vivan en el documento. --}}
                                 @puede('comercial.contrato.cambiar_estado')
                                     @if ($estadoValor === 'borrador')
-                                        <form
-                                            method="POST"
-                                            action="{{ route('panel.contratos.cambiar-estado', $contrato) }}"
-                                            onsubmit="return confirm('{{ __('comercial.contratos.confirmar_activar') }}')"
-                                        >
+                                        <form id="{{ $formIdAprobar }}" method="POST" action="{{ route('panel.contratos.cambiar-estado', $contrato) }}">
                                             @csrf
                                             <input type="hidden" name="estado" value="vigente">
-                                            <x-atoms.button type="submit" variant="outline" size="sm" icon="check_circle">
-                                                {{ __('comercial.contratos.accion_activar') }}
-                                            </x-atoms.button>
                                         </form>
 
-                                        <form
-                                            method="POST"
-                                            action="{{ route('panel.contratos.cambiar-estado', $contrato) }}"
-                                            onsubmit="return confirm('{{ __('comercial.contratos.confirmar_cancelar') }}')"
-                                        >
+                                        <form id="{{ $formIdCancelar }}" method="POST" action="{{ route('panel.contratos.cambiar-estado', $contrato) }}">
                                             @csrf
                                             <input type="hidden" name="estado" value="cancelado">
-                                            <x-atoms.button type="submit" variant="danger-outline" size="sm" icon="cancel">
-                                                {{ __('comercial.contratos.accion_cancelar') }}
-                                            </x-atoms.button>
                                         </form>
                                     @elseif ($estadoValor === 'vigente')
-                                        <form
-                                            method="POST"
-                                            action="{{ route('panel.contratos.cambiar-estado', $contrato) }}"
-                                            onsubmit="return confirm('{{ __('comercial.contratos.confirmar_finalizar') }}')"
-                                        >
-                                            @csrf
-                                            <input type="hidden" name="estado" value="finalizado">
-                                            <x-atoms.button type="submit" variant="outline" size="sm" icon="check_circle">
-                                                {{ __('comercial.contratos.accion_finalizar') }}
-                                            </x-atoms.button>
-                                        </form>
+                                        @if ($aplicacionAbierta === null)
+                                            <form id="{{ $formIdFinalizar }}" method="POST" action="{{ route('panel.contratos.cambiar-estado', $contrato) }}">
+                                                @csrf
+                                                <input type="hidden" name="estado" value="finalizado">
+                                            </form>
+                                        @endif
 
-                                        <form
-                                            method="POST"
-                                            action="{{ route('panel.contratos.cambiar-estado', $contrato) }}"
-                                            onsubmit="return confirm('{{ __('comercial.contratos.confirmar_pausar') }}')"
-                                        >
+                                        <form id="{{ $formIdPausar }}" method="POST" action="{{ route('panel.contratos.cambiar-estado', $contrato) }}">
                                             @csrf
                                             <input type="hidden" name="estado" value="pausado">
-                                            <x-atoms.button type="submit" variant="warning-outline" size="sm" icon="pause_circle">
-                                                {{ __('comercial.contratos.accion_pausar') }}
-                                            </x-atoms.button>
                                         </form>
 
-                                        <form
-                                            method="POST"
-                                            action="{{ route('panel.contratos.cambiar-estado', $contrato) }}"
-                                            onsubmit="return confirm('{{ __('comercial.contratos.confirmar_cancelar') }}')"
-                                        >
+                                        @if ($aplicacionAbierta === null)
+                                            <form id="{{ $formIdCancelar }}" method="POST" action="{{ route('panel.contratos.cambiar-estado', $contrato) }}">
+                                                @csrf
+                                                <input type="hidden" name="estado" value="cancelado">
+                                            </form>
+                                        @endif
+                                    @elseif ($estadoValor === 'conflicto')
+                                        <form id="{{ $formIdCancelar }}" method="POST" action="{{ route('panel.contratos.cambiar-estado', $contrato) }}">
                                             @csrf
                                             <input type="hidden" name="estado" value="cancelado">
-                                            <x-atoms.button type="submit" variant="danger-outline" size="sm" icon="cancel">
-                                                {{ __('comercial.contratos.accion_cancelar') }}
-                                            </x-atoms.button>
                                         </form>
                                     @elseif ($estadoValor === 'pausado')
-                                        <form
-                                            method="POST"
-                                            action="{{ route('panel.contratos.cambiar-estado', $contrato) }}"
-                                            onsubmit="return confirm('{{ __('comercial.contratos.confirmar_reanudar') }}')"
-                                        >
+                                        <form id="{{ $formIdReanudar }}" method="POST" action="{{ route('panel.contratos.cambiar-estado', $contrato) }}">
                                             @csrf
                                             <input type="hidden" name="estado" value="vigente">
-                                            <x-atoms.button type="submit" variant="outline" size="sm" icon="play_circle">
-                                                {{ __('comercial.contratos.accion_reanudar') }}
-                                            </x-atoms.button>
                                         </form>
                                     @endif
                                 @endpuede
+
+                                {{-- Modales FUERA de row-actions, mismo motivo que los forms de
+                                     arriba: `confirm-button` metía su <div class="modal"> como hijo
+                                     del slot que row-actions duplica dos veces — mismo id repetido
+                                     (HTML inválido) y, si la acción caía en el overflow del menú
+                                     "⋮", Bootstrap resolvía el PRIMER id del documento (el que
+                                     quedaba oculto por :nth-child en la mitad visible): pantalla
+                                     oscura sin modal (bug real, 17/9/2026, encontrado en vivo en
+                                     campanias/index.blade.php). Los triggers viven adentro de
+                                     row-actions (botones normales, se duplican sin problema); el
+                                     modal, una sola vez, acá afuera. --}}
+                                @puede('comercial.contrato.cambiar_estado')
+                                    @if ($estadoValor === 'borrador')
+                                        <x-molecules.confirm-modal
+                                            :id="$modalIdAprobar"
+                                            :form-id="$formIdAprobar"
+                                            :title="__('comercial.contratos.confirmar_aprobar_titulo')"
+                                            :message="__('comercial.contratos.confirmar_aprobar')"
+                                            :confirm-label="__('comercial.contratos.accion_aprobar')"
+                                            :tone="$tonoPorEstado['vigente']"
+                                        >
+                                            @include('comercial::pages.contratos._estado-transicion', ['desde' => $estadoValor, 'hacia' => 'vigente'])
+                                        </x-molecules.confirm-modal>
+
+                                        <x-molecules.confirm-modal
+                                            :id="$modalIdCancelar"
+                                            :form-id="$formIdCancelar"
+                                            :title="__('comercial.contratos.confirmar_cancelar_titulo')"
+                                            :message="__('comercial.contratos.confirmar_cancelar')"
+                                            :confirm-label="__('comercial.contratos.accion_cancelar')"
+                                            :cancel-label="__('ui.action.close')"
+                                            :tone="$tonoPorEstado['cancelado']"
+                                        >
+                                            @include('comercial::pages.contratos._estado-transicion', ['desde' => $estadoValor, 'hacia' => 'cancelado'])
+                                        </x-molecules.confirm-modal>
+                                    @elseif ($estadoValor === 'vigente')
+                                        {{-- Con una aplicación abierta, finalizar y cancelar no
+                                             piden confirmación sino que avisan (mismos ids: los
+                                             botones de la fila siguen apuntando a estos modales). --}}
+                                        @if ($aplicacionAbierta !== null)
+                                            @include('comercial::pages.contratos._modal-aplicacion-abierta', [
+                                                'modalId' => $modalIdFinalizar,
+                                                'contrato' => $contrato,
+                                                'aplicacion' => $aplicacionAbierta,
+                                                'accion' => 'finalizar',
+                                                'puedeVerOrden' => $puedeVerOrden,
+                                                'volverA' => route('panel.contratos.index'),
+                                                'volverTexto' => __('comercial.contratos.titulo'),
+                                            ])
+                                        @else
+                                            <x-molecules.confirm-modal
+                                                :id="$modalIdFinalizar"
+                                                :form-id="$formIdFinalizar"
+                                                :title="__('comercial.contratos.confirmar_finalizar_titulo')"
+                                                :message="__('comercial.contratos.confirmar_finalizar')"
+                                                :confirm-label="__('comercial.contratos.accion_finalizar')"
+                                                :tone="$tonoPorEstado['finalizado']"
+                                            >
+                                                @include('comercial::pages.contratos._estado-transicion', ['desde' => $estadoValor, 'hacia' => 'finalizado'])
+                                            </x-molecules.confirm-modal>
+                                        @endif
+
+                                        <x-molecules.confirm-modal
+                                            :id="$modalIdPausar"
+                                            :form-id="$formIdPausar"
+                                            :title="__('comercial.contratos.confirmar_pausar_titulo')"
+                                            :message="__('comercial.contratos.confirmar_pausar')"
+                                            :confirm-label="__('comercial.contratos.accion_pausar')"
+                                            :tone="$tonoPorEstado['pausado']"
+                                            modal-icon="pause_circle"
+                                        >
+                                            @include('comercial::pages.contratos._estado-transicion', ['desde' => $estadoValor, 'hacia' => 'pausado'])
+                                        </x-molecules.confirm-modal>
+
+                                        @if ($aplicacionAbierta !== null)
+                                            @include('comercial::pages.contratos._modal-aplicacion-abierta', [
+                                                'modalId' => $modalIdCancelar,
+                                                'contrato' => $contrato,
+                                                'aplicacion' => $aplicacionAbierta,
+                                                'accion' => 'cancelar',
+                                                'puedeVerOrden' => $puedeVerOrden,
+                                                'volverA' => route('panel.contratos.index'),
+                                                'volverTexto' => __('comercial.contratos.titulo'),
+                                            ])
+                                        @else
+                                            <x-molecules.confirm-modal
+                                                :id="$modalIdCancelar"
+                                                :form-id="$formIdCancelar"
+                                                :title="__('comercial.contratos.confirmar_cancelar_titulo')"
+                                                :message="__('comercial.contratos.confirmar_cancelar')"
+                                                :confirm-label="__('comercial.contratos.accion_cancelar')"
+                                                :cancel-label="__('ui.action.close')"
+                                                :tone="$tonoPorEstado['cancelado']"
+                                            >
+                                                @include('comercial::pages.contratos._estado-transicion', ['desde' => $estadoValor, 'hacia' => 'cancelado'])
+                                            </x-molecules.confirm-modal>
+                                        @endif
+                                    @elseif ($estadoValor === 'conflicto')
+                                        <x-molecules.confirm-modal
+                                            :id="$modalIdCancelar"
+                                            :form-id="$formIdCancelar"
+                                            :title="__('comercial.contratos.confirmar_cancelar_titulo')"
+                                            :message="__('comercial.contratos.confirmar_cancelar')"
+                                            :confirm-label="__('comercial.contratos.accion_cancelar')"
+                                            :cancel-label="__('ui.action.close')"
+                                            :tone="$tonoPorEstado['cancelado']"
+                                        >
+                                            @include('comercial::pages.contratos._estado-transicion', ['desde' => $estadoValor, 'hacia' => 'cancelado'])
+                                        </x-molecules.confirm-modal>
+                                    @elseif ($estadoValor === 'pausado')
+                                        <x-molecules.confirm-modal
+                                            :id="$modalIdReanudar"
+                                            :form-id="$formIdReanudar"
+                                            :title="__('comercial.contratos.confirmar_reanudar_titulo')"
+                                            :message="__('comercial.contratos.confirmar_reanudar')"
+                                            :confirm-label="__('comercial.contratos.accion_reanudar')"
+                                            :tone="$tonoPorEstado['vigente']"
+                                            modal-icon="play_circle"
+                                        >
+                                            @include('comercial::pages.contratos._estado-transicion', ['desde' => $estadoValor, 'hacia' => 'vigente'])
+                                        </x-molecules.confirm-modal>
+                                    @endif
+                                @endpuede
+
+                                <x-organisms.row-actions>
+                                    @puede('comercial.contrato.editar')
+                                        <x-atoms.button :href="route('panel.contratos.edit', $contrato)" variant="warning-outline" size="sm" icon="edit">
+                                            {{ __('comercial.contratos.editar') }}
+                                        </x-atoms.button>
+                                    @endpuede
+
+                                    @puede('comercial.contrato.cambiar_estado')
+                                        @if ($estadoValor === 'borrador')
+                                            <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#{{ $modalIdAprobar }}" variant="success-outline" size="sm" icon="check_circle">
+                                                {{ __('comercial.contratos.accion_aprobar') }}
+                                            </x-atoms.button>
+
+                                            <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#{{ $modalIdCancelar }}" variant="danger-outline" size="sm" icon="cancel">
+                                                {{ __('comercial.contratos.accion_cancelar') }}
+                                            </x-atoms.button>
+                                        @elseif ($estadoValor === 'vigente')
+                                            <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#{{ $modalIdFinalizar }}" variant="distintivo-2-outline" size="sm" icon="check_circle">
+                                                {{ __('comercial.contratos.accion_finalizar') }}
+                                            </x-atoms.button>
+
+                                            <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#{{ $modalIdPausar }}" variant="info-outline" size="sm" icon="pause_circle">
+                                                {{ __('comercial.contratos.accion_pausar') }}
+                                            </x-atoms.button>
+
+                                            <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#{{ $modalIdCancelar }}" variant="danger-outline" size="sm" icon="cancel">
+                                                {{ __('comercial.contratos.accion_cancelar') }}
+                                            </x-atoms.button>
+                                        @elseif ($estadoValor === 'conflicto')
+                                            <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#{{ $modalIdCancelar }}" variant="danger-outline" size="sm" icon="cancel">
+                                                {{ __('comercial.contratos.accion_cancelar') }}
+                                            </x-atoms.button>
+                                        @elseif ($estadoValor === 'pausado')
+                                            <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#{{ $modalIdReanudar }}" variant="success-outline" size="sm" icon="play_circle">
+                                                {{ __('comercial.contratos.accion_reanudar') }}
+                                            </x-atoms.button>
+                                        @endif
+                                    @endpuede
+                                </x-organisms.row-actions>
                             </span>
                         </div>
                     @endforeach
-                </div>
+                </x-molecules.index-table>
 
-                @if ($contratos->hasPages())
-                    <nav class="ag-contratos__paginacion" aria-label="{{ __('comercial.contratos.paginacion_aria') }}">
-                        @if (! $contratos->onFirstPage())
-                            <x-atoms.button href="{{ $contratos->previousPageUrl() }}" variant="outline" size="sm" icon="chevron_left">
-                                {{ __('comercial.contratos.paginacion_anterior') }}
-                            </x-atoms.button>
-                        @endif
-
-                        <span class="ag-contratos__paginacion-info">
-                            {{ __('comercial.contratos.paginacion_info', ['actual' => $contratos->currentPage(), 'total' => $contratos->lastPage()]) }}
-                        </span>
-
-                        @if ($contratos->hasMorePages())
-                            <x-atoms.button href="{{ $contratos->nextPageUrl() }}" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
-                                {{ __('comercial.contratos.paginacion_siguiente') }}
-                            </x-atoms.button>
-                        @endif
-                    </nav>
-                @endif
+                <x-molecules.pagination :paginator="$contratos" :aria-label="__('comercial.contratos.paginacion_aria')" />
             @endif
         </div>
     </x-templates.panel-layout>

@@ -26,10 +26,21 @@ final class ListarPlanesMantenimiento
 {
     public function __construct(private readonly LecturaHorasVueloPorModelo $lecturaHorasVuelo) {}
 
-    /** @return LengthAwarePaginator<int, PlanMantenimiento> */
-    public function ejecutar(int $porPagina = 15): LengthAwarePaginator
+    /**
+     * @param  string|null  $q  búsqueda libre sobre modelo y tarea, las dos columnas de texto del plan.
+     * @return LengthAwarePaginator<int, PlanMantenimiento>
+     */
+    public function ejecutar(?string $q = null, int $porPagina = 15): LengthAwarePaginator
     {
         $paginador = PlanMantenimiento::query()
+            ->when($q !== null && $q !== '', function ($consulta) use ($q): void {
+                $patron = '%'.mb_strtolower((string) $q).'%';
+
+                $consulta->where(function ($grupo) use ($patron): void {
+                    $grupo->whereRaw('LOWER(modelo) LIKE ?', [$patron])
+                        ->orWhereRaw('LOWER(tarea) LIKE ?', [$patron]);
+                });
+            })
             ->orderBy('modelo')
             ->orderBy('horas_umbral')
             ->paginate($porPagina)

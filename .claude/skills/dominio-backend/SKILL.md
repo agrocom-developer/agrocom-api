@@ -46,6 +46,10 @@ y `Personal` hoy son solo `Dominio` + `Infraestructura/Eloquent`.
 - **Cero relaciones Eloquent cruzando módulos.** La referencia se guarda como FK
   de base de datos + atributo entero plano. Ejemplo vigente: `sec_user.persona_id`
   apunta a `per_personas.id` por FK, sin `belongsTo`.
+- **Eventos de dominio vigentes entre módulos** (viven en `Operaciones/Contratos/Eventos/`,
+  el oyente en el módulo que reacciona): `SesionValidada` (Operaciones → Finanzas,
+  genera el devengo) y `AplicacionCerrada` (Operaciones → Comercial, finaliza el
+  contrato al cerrarse su última aplicación).
 - `tests/Unit/ArquitecturaModulosTest.php` descubre los módulos recorriendo
   `app/Dominios/` — un módulo nuevo queda protegido sin editar el test.
 

@@ -4,7 +4,8 @@
     real vive en `_formulario.blade.php`, compartido con `edit.blade.php`.
 
     Datos esperados (ver FichasDronController::create()): la cáscara de
-    CascaraPanel, sin datos propios de la pantalla.
+    CascaraPanel, más $identificadorSugerido (string): el identificador del dron
+    cuando se llega por el atajo «Crear ficha» de su ficha; vacío si no.
 
     Gateada por `mantenimiento.ficha_dron.crear`, verificado server-side en
     el controlador.
@@ -22,6 +23,6 @@
         :version="$version"
         :vista-actual="__('mantenimiento.fichas_dron.titulo_crear')"
     >
-        @include('mantenimiento::pages.fichas-dron._formulario', ['ficha' => null])
+        @include('mantenimiento::pages.fichas-dron._formulario', ['ficha' => null, 'identificadorSugerido' => $identificadorSugerido])
     </x-templates.panel-layout>
 </x-templates.panel-shell>

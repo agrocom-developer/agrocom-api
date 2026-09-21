@@ -75,7 +75,15 @@
    debajo del formulario. */
 @media (max-width: 1199.98px) {
     .ag-organizacion__layout {
+        /* `align-items: flex-start` de arriba es el eje CRUZADO en fila
+           (desktop, vertical). Al pasar a columna el eje cruzado pasa a ser
+           el HORIZONTAL, y sin este override `.ag-organizacion__main` se
+           encoge a su contenido en vez de ocupar el ancho completo — bug
+           real encontrado 15/9/2026 en el mismo patrón sobre
+           `.ag-clientes-form__layout` (tarea "resumen de cliente"), corregido
+           acá también por ser la misma causa. */
         flex-direction: column;
+        align-items: stretch;
     }
 
     .ag-organizacion__aside {

@@ -8,9 +8,9 @@ use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaEloquent;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Campañas por código ("2025-2026") y por nombre. Muchas comparten código
- * —cada cliente abre la suya—, así que el estado va en la fila para poder
- * distinguirlas de un vistazo.
+ * Campañas por código ("2025-2026") y por nombre — catálogo compartido (ADR
+ * 0015, corregido el 15/9/2026), así que el estado va en la fila para poder
+ * distinguir de un vistazo si sigue admitiendo contratos.
  *
  * @extends BusquedaEloquent<Campania>
  */

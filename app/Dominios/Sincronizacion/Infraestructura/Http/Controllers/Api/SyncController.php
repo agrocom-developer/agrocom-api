@@ -165,7 +165,7 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'hora_retraso', description: '`recarga`, opcional: cuándo ocurrió el retraso/rechazo por caldo.', type: 'string', format: 'date-time', nullable: true, example: null),
         new OA\Property(property: 'litros_combustible_generador', description: '`recarga`, opcional: litros de combustible cargados al generador en ese ciclo. Informativo, sin costeo (Fase 3). DECIMAL como string.', type: 'string', nullable: true, example: null),
         new OA\Property(property: 'equipo_trabajo_id', description: '`estadia_entrada`: id de servidor del equipo de trabajo (del pull de catálogo).', type: 'integer', nullable: true, example: null),
-        new OA\Property(property: 'campo_id', description: '`estadia_entrada`: id de servidor del campo (del pull de catálogo).', type: 'integer', nullable: true, example: null),
+        new OA\Property(property: 'propiedad_id', description: '`estadia_entrada`: id de servidor de la propiedad (del pull de catálogo).', type: 'integer', nullable: true, example: null),
         new OA\Property(property: 'entrada', description: '`estadia_entrada`: cuándo llegó el equipo.', type: 'string', format: 'date-time', nullable: true, example: null),
         new OA\Property(property: 'vehiculo_id', description: '`estadia_entrada`, opcional: id de servidor del vehículo declarado.', type: 'integer', nullable: true, example: null),
         new OA\Property(property: 'observacion', description: '`estadia_entrada`, opcional: texto libre.', type: 'string', nullable: true, example: null),

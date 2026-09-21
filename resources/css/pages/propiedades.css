@@ -1,17 +1,25 @@
 /*
- * Pages: propiedades/index, propiedades/create, propiedades/edit
+ * Pages: propiedades/index, propiedades/create, propiedades/edit, propiedades/mapa
  * (app/Dominios/Comercial/Infraestructura/Http/Views/pages/propiedades/) —
- * ADR 0018: nivel de terreno nuevo entre Cliente y Campo. CSS propio de
- * ESTAS páginas (ver convención en resources/css/pages/index.css), mismo
- * patrón que campos.css/clientes.css.
+ * ADR 0018/0020: nivel de terreno entre Cliente y Lote. Rediseño al patrón
+ * vigente (adenda 16/9/2026 a ADR 0018 punto 1): mismo molde que
+ * contratos.css/clientes.css — cabecera → filtros → tabla → paginación en el
+ * índice, layout de dos columnas (main/aside) en el formulario.
  *
  * El wrapper `.ag-propiedades`/`.ag-propiedades-form` sigue el mismo patrón
- * que `.ag-campos`/`.ag-campos-form`: flex en columna con un único `gap` en
- * vez de `margin-top` repetido en cada hijo. Las tarjetas de formulario
- * (`molecules/form-section`), la cabecera (`organisms/page-header`) y la
- * barra de acciones (`organisms/form-actions-bar`) ya traen su propio chrome
- * — acá solo el layout específico de estas pantallas. Todo color y medida
- * por token (CLAUDE.md invariante 11).
+ * que `.ag-contratos`/`.ag-contratos-form`: flex en columna con un único
+ * `gap` en vez de `margin-top` repetido en cada hijo. Las tarjetas de
+ * formulario (`molecules/form-section`), la cabecera (`organisms/page-header`)
+ * y la barra de acciones (`organisms/form-actions-bar`) ya traen su propio
+ * chrome — acá solo el layout específico de estas pantallas. El contenedor
+ * de la tabla del listado (`molecules/index-table`) y el layout main/aside
+ * del formulario (`molecules/form-layout`) tampoco viven acá: eran una copia
+ * casi idéntica a clientes/campanias/lotes/contratos, extraída al catálogo
+ * (ver docs/diseno/guia_pantalla_panel.md §6.2/§6.3.1). Todo color y medida
+ * por token (CLAUDE.md invariante 11) — EXCEPTO el chip de
+ * `.ag-propiedades__color`, que pinta un HEX de dato de negocio elegido por
+ * el usuario (paleta curada, `ColorPropiedad`), no un token de theming: ver
+ * su comentario puntual más abajo.
  */
 
 .ag-propiedades,
@@ -21,82 +29,345 @@
     gap: var(--ag-space-5);
 }
 
-/* Listado (index) */
-
-.ag-propiedades__filtros .ag-input,
-.ag-propiedades__filtros .ag-select {
-    min-width: 16rem;
-}
-
-.ag-propiedades__tabla {
-    border: 1px solid var(--ag-color-border-card);
-    border-radius: var(--ag-radius-md);
-    background-color: var(--ag-color-surface-card);
-    overflow: hidden;
-}
-
-.ag-propiedades__head,
-.ag-propiedades__fila {
-    display: grid;
-    grid-template-columns: 2fr 1.5fr 1fr auto;
+/* La pantalla de mapa es la única de las tres que ocupa TODO el alto
+   disponible del contenedor sin scroll propio (pedido directo del dueño,
+   16/9/2026): `flex:1` + `min-height:0` en cascada hasta el lienzo, mismo
+   truco que ya usa `.ag-panel` (panel-layout.css) para que el chrome no
+   scrollee y solo el contenido lo haga. */
+.ag-propiedad-mapa-pagina {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
     gap: var(--ag-space-4);
-    align-items: center;
-    padding: var(--ag-space-3) var(--ag-space-4);
 }
 
-.ag-propiedades__head {
-    background-color: var(--ag-color-bg-table-head);
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-xs);
-    font-weight: var(--ag-font-weight-medium);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.ag-propiedades__fila {
-    border-top: 1px solid var(--ag-color-border-row);
-    color: var(--ag-color-text);
-    font-size: var(--ag-font-size-sm);
-}
-
-.ag-propiedades__fila:hover {
-    background-color: var(--ag-color-bg-row-hover);
-}
+/* Listado (index): 7 columnas propias de `molecules/index-table` (índice,
+   nombre, cliente, ubicación, lotes, hectáreas, acciones) — el resto de la
+   anatomía de la tabla vive en el componente. */
 
 .ag-propiedades__nombre {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
     font-weight: var(--ag-font-weight-medium);
 }
 
-.ag-propiedades__acciones {
+/* Chip de color de la propiedad (pedido directo del dueño): separa
+   visualmente propiedades de distintos clientes en el listado — sus lotes
+   heredan el mismo color leyendo `propiedad->color`. El HEX es dato de
+   negocio elegido por el usuario entre la paleta curada (`ColorPropiedad`),
+   no un token de theming del panel — por eso viaja como `style` inline
+   desde el Blade en vez de una clase de color, sin que esto sea la
+   excepción "color hardcodeado" de la invariante 11 (esa invariante rige
+   colores de la INTERFAZ, no datos de negocio por registro). El tamaño/forma
+   sí son del sistema de diseño — token acá, hex solo en el `style` inline. */
+.ag-propiedades__color {
+    display: inline-block;
+    width: var(--ag-space-3);
+    height: var(--ag-space-3);
+    border-radius: var(--ag-radius-full, 50%);
+    border: 1px solid var(--ag-color-border-card);
+    flex-shrink: 0;
+}
+
+.ag-propiedades__mono {
+    font-family: var(--ag-font-family-mono);
+}
+
+/* Formulario (create/edit): el layout de dos columnas (aside solo en
+   edición, §6.3.1 de la guía de pantalla) es `molecules/form-layout`. */
+
+/* Pantalla de mapa (propiedades/mapa.blade.php) */
+
+/* El `<form>` es el segundo escalón de la cascada full-height: crece para
+   llenar `.ag-propiedad-mapa-pagina` y deja que `.ag-propiedad-mapa` (el
+   lienzo) se lleve todo el espacio que sobra después de los inputs ocultos
+   y de `form-actions-bar` (que ya es `position:sticky` al pie, así que
+   queda flotando sin más CSS acá — ver components/form-actions-bar.css). */
+.ag-propiedad-mapa-form {
     display: flex;
-    justify-content: flex-end;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    gap: var(--ag-space-4);
+}
+
+/* La card (`molecules/form-section`, mismo chrome título+contador que el
+   resto del panel — pedido directo del dueño: "como si el mapa fuera un
+   field", "cantidad de fields totales como en los sectores normales") es el
+   tercer escalón de la cascada full-height. Su body normalmente es un grid
+   de dos columnas (form-section.css) — acá hay un único campo de ancho
+   completo, así que pasa a columna flex para poder estirarse. */
+.ag-propiedad-mapa-seccion {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.ag-propiedad-mapa-seccion .ag-form-section__body {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.ag-propiedad-mapa {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+    min-height: 320px;
     gap: var(--ag-space-2);
 }
 
-.ag-propiedades__paginacion {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--ag-space-4);
+/* El lienzo se lleva TODO el alto restante — ya no un alto fijo. Las
+   acciones (`.ag-mapa-accion` de components/mapa-pantalla-completa.css,
+   reusada tal cual) viven DENTRO como overlay, así el mapa ocupa el
+   contenedor completo sin barra externa (pedido directo del dueño,
+   16/9/2026). `position:relative` es lo que ancla los overlays hijos. */
+.ag-propiedad-mapa__lienzo {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 320px;
+    border-radius: var(--ag-radius-md);
+    border: 1px solid var(--ag-color-border);
+    overflow: hidden;
+    z-index: 0;
 }
 
-.ag-propiedades__paginacion-info {
+/* El div real que Leaflet/Google Maps controlan — nunca le agregues hijos
+   propios acá, Google Maps los borra al inicializarse (ver comentario en el
+   blade). Llena el marco por completo vía `inset:0` sobre `position:relative`
+   del padre. */
+.ag-propiedad-mapa__mapa {
+    position: absolute;
+    inset: 0;
+}
+
+/* Cursor de "click para colocar" mientras el modo Colocar marcador está
+   activo (rama Leaflet — la rama Google lo resuelve con `draggableCursor`
+   nativo de la API). */
+.ag-propiedad-mapa__lienzo--colocando {
+    cursor: crosshair;
+}
+
+/* Pantalla completa del LIENZO mismo (no de un `.ag-mapa-marco` aparte:
+   acá no hay barra externa que envolver) — mismo mecanismo que el editor de
+   Lote (`shared/mapa-pantalla-completa.js`), aplicado directo sobre este
+   selector. */
+.ag-propiedad-mapa__lienzo:fullscreen,
+.ag-propiedad-mapa__lienzo.ag-mapa--pantalla-completa-respaldo {
+    position: fixed;
+    inset: 0;
+    z-index: 1040;
+    height: 100dvh;
+    width: 100vw;
+    border-radius: 0;
+}
+
+/* Columna de acciones flotante — por encima de los controles nativos de
+   Leaflet/Google (que rondan z-index 1000). */
+.ag-propiedad-mapa__acciones {
+    position: absolute;
+    top: var(--ag-space-3);
+    right: var(--ag-space-3);
+    z-index: 1010;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-1);
+    padding: var(--ag-space-1);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+    box-shadow: var(--ag-shadow-overlay-mapa);
+}
+
+/* El color base queda el gris neutro de `.ag-mapa-accion` (sin tocar) — el
+   anaranjado (token de acento de marca, ya reasignado por tema) es
+   exclusivo del estado ACTIVO (`aria-pressed="true"`: dibujando, colocando
+   marcador, capa de calles, expandido), pedido directo del dueño: resalta
+   la acción en curso, no todos los íconos por igual. Pisa el verde
+   `--ag-color-primary` que usa ese mismo estado en Lote/mapa operativo —
+   scopeado a esta columna, no los toca. */
+.ag-propiedad-mapa__acciones .ag-mapa-accion[aria-pressed="true"] {
+    background-color: var(--ag-color-accent-subtle);
+    color: var(--ag-color-accent);
+}
+
+/* Tooltip visual propio para las acciones del mapa y el buscador — el
+   `title` nativo del navegador tarda en aparecer y casi no se nota sobre el
+   mapa (pedido directo del dueño: "no veo los tooltips"). Siempre oscuro
+   con texto claro en los dos temas, mismo criterio que cualquier tooltip:
+   no es una superficie del panel que deba seguir el theming, es un overlay
+   momentáneo. Scopeado por atributo — no toca `.ag-mapa-accion` en Lote ni
+   en el mapa operativo del tablero. */
+[data-ag-propiedad-mapa-tooltip] {
+    position: relative;
+}
+
+[data-ag-propiedad-mapa-tooltip]::after {
+    content: attr(data-ag-propiedad-mapa-tooltip);
+    position: absolute;
+    padding: var(--ag-space-1) var(--ag-space-2);
+    border-radius: var(--ag-radius-sm);
+    background-color: var(--ag-color-gray-1000);
+    color: var(--ag-color-gray-0);
+    font-family: var(--ag-font-family-base);
+    font-size: var(--ag-font-size-xs);
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 120ms ease, visibility 120ms ease;
+    pointer-events: none;
+    z-index: 1030;
+}
+
+[data-ag-propiedad-mapa-tooltip]:hover::after,
+[data-ag-propiedad-mapa-tooltip]:focus-visible::after {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Columna de acciones: el tooltip abre hacia la izquierda del botón. */
+.ag-propiedad-mapa__acciones [data-ag-propiedad-mapa-tooltip]::after {
+    right: calc(100% + var(--ag-space-2));
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* Buscador: el tooltip abre hacia abajo del botón. */
+.ag-propiedad-mapa__buscador [data-ag-propiedad-mapa-tooltip]::after {
+    top: calc(100% + var(--ag-space-2));
+    left: 0;
+}
+
+/* Mismo chrome que `.ag-propiedad-mapa__acciones` a propósito (radio,
+   fondo, sombra, alto de 2.25rem vía el botón `.ag-mapa-accion`-like) — el
+   buscador es la misma familia de control flotante sobre el mapa, no un
+   input de formulario suelto (pedido directo del dueño, 16/9/2026). */
+.ag-propiedad-mapa__buscador {
+    position: absolute;
+    top: var(--ag-space-3);
+    left: var(--ag-space-3);
+    z-index: 1010;
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-1);
+    padding: var(--ag-space-1);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+    box-shadow: var(--ag-shadow-overlay-mapa);
+    overflow: hidden;
+    width: min(28rem, calc(100% - var(--ag-space-3) * 2));
+}
+
+/* Mismas medidas/color que `.ag-mapa-accion` (components/mapa-pantalla-completa.css) */
+.ag-propiedad-mapa__buscador-boton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    border: none;
+    border-radius: var(--ag-radius-sm);
+    background: transparent;
     color: var(--ag-color-text-muted);
+    cursor: pointer;
+}
+
+.ag-propiedad-mapa__buscador-boton:hover {
+    background-color: var(--ag-color-bg-row-hover);
+    color: var(--ag-color-text);
+}
+
+.ag-propiedad-mapa__buscador-boton:focus-visible {
+    outline: 2px solid var(--ag-color-accent);
+    outline-offset: -2px;
+}
+
+/* `appearance:none` + radio/fondo/borde en cero: sin esto, algunos
+   navegadores (Safari en particular) le dan a un `<input type="text">` su
+   propio radio/relleno nativo, que se ve como una píldora superpuesta al
+   contenedor en vez de fundirse con él. */
+.ag-propiedad-mapa__buscador-input {
+    appearance: none;
+    width: 100%;
+    min-width: 0;
+    height: 2.25rem;
+    margin: 0;
+    padding: 0 var(--ag-space-2) 0 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    color: var(--ag-color-text);
+    font-family: inherit;
     font-size: var(--ag-font-size-sm);
 }
 
-@media (max-width: 992px) {
-    .ag-propiedades__head {
-        display: none;
+.ag-propiedad-mapa__buscador-input:focus {
+    outline: none;
+}
+
+.ag-propiedad-mapa__buscador-error {
+    position: absolute;
+    top: calc(100% + var(--ag-space-1));
+    left: 0;
+    margin: 0;
+    padding: var(--ag-space-1) var(--ag-space-2);
+    border-radius: var(--ag-radius-sm);
+    background-color: var(--ag-color-danger-subtle);
+    color: var(--ag-color-danger);
+    font-size: var(--ag-font-size-xs);
+    white-space: nowrap;
+}
+
+/* Abajo a la izquierda (pedido directo del dueño, confirmado dos veces:
+   "es abajo, izquierda inferior") — pegado al borde igual que el buscador
+   lo está de SU borde (mismo `--ag-space-3` base), no apilado arriba de los
+   controles de zoom (eso lo alejaba demasiado del borde y quedaba "muy
+   alto"/flotando). En cambio, desplazado a la DERECHA de esos controles
+   (+/-, ~2.5rem de ancho con su propio margen) para no superponerse. */
+.ag-propiedad-mapa__info {
+    position: absolute;
+    bottom: calc(var(--ag-space-3) + 1.25rem);
+    left: calc(var(--ag-space-3) + 0.15rem);
+    z-index: 1010;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    padding: var(--ag-space-1) var(--ag-space-2);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+    box-shadow: var(--ag-shadow-overlay-mapa);
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-propiedad-mapa__ayuda {
+    margin: 0;
+    flex: 0 0 auto;
+}
+
+@media (max-width: 767.98px) {
+    .ag-propiedad-mapa__acciones {
+        top: var(--ag-space-2);
+        right: var(--ag-space-2);
     }
 
-    .ag-propiedades__fila {
-        grid-template-columns: 1fr;
-        gap: var(--ag-space-1);
+    .ag-propiedad-mapa__buscador {
+        top: var(--ag-space-2);
+        left: var(--ag-space-2);
+        max-width: calc(100% - var(--ag-space-2) * 2);
     }
 
-    .ag-propiedades__acciones {
-        justify-content: flex-start;
-        margin-top: var(--ag-space-2);
+    .ag-propiedad-mapa__info {
+        bottom: calc(var(--ag-space-2) + 1.25rem);
+        left: var(--ag-space-2);
     }
 }

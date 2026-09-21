@@ -10,7 +10,18 @@
     - name (requerido), id (default = name).
     - label, placeholder, help, error: strings ya traducidos por el llamador
       (este átomo no decide textos, ADR 0013).
+    - helpTone (nullable): "accent" | "alert" — colorea el texto de ayuda con
+      el acento de marca o el de alerta (`ag-input__help--accent`/`--alert`),
+      para una ayuda que es una SUGERENCIA o un aviso y no una aclaración
+      neutra. Sin pasarlo, el gris de siempre.
     - icon: nombre de ícono Material Symbols para el prefijo del campo.
+    - suffix (nullable, 20/9/2026): unidad del valor ("km", "h", "kg",
+      "ciclos"), ya traducida por el llamador. Se pinta al final del control,
+      DENTRO del mismo borde, en mono y muted (`ag-input__suffix`): así la
+      unidad es parte del campo y no un rótulo suelto ni un paréntesis en el
+      label. Es texto de lectura, no un control: no recibe foco ni viaja en
+      el POST. Su id entra en `aria-describedby` para que el lector de
+      pantalla diga "1200, km".
     - required (bool, default false).
     - variant: "boxed" (default, Material outlined — caja con borde/fondo
       propios, la de siempre) | "line" (línea editorial: sin caja, solo
@@ -45,7 +56,9 @@
     'placeholder' => null,
     'error' => null,
     'icon' => null,
+    'suffix' => null,
     'help' => null,
+    'helpTone' => null,
     'required' => false,
     'variant' => 'boxed',
 ])
@@ -53,9 +66,10 @@
 @php
     $inputId = $id ?? $name;
     $isPassword = $type === 'password';
+    $suffixId = $suffix ? "{$inputId}-suffix" : null;
     $helpId = $help ? "{$inputId}-help" : null;
     $errorId = $error ? "{$inputId}-error" : null;
-    $describedBy = trim(($helpId ?? '').' '.($errorId ?? ''));
+    $describedBy = trim(($suffixId ?? '').' '.($helpId ?? '').' '.($errorId ?? ''));
 @endphp
 
 <div {{ $attributes->class(['ag-input', 'ag-input--line' => $variant === 'line'])->only('class') }}>
@@ -85,6 +99,10 @@
             {{ $attributes->except('class') }}
         >
 
+        @if ($suffix)
+            <span id="{{ $suffixId }}" class="ag-input__suffix">{{ $suffix }}</span>
+        @endif
+
         @if ($isPassword)
             <button
                 type="button"
@@ -101,7 +119,7 @@
     </div>
 
     @if ($help)
-        <p id="{{ $helpId }}" class="ag-input__help">{{ $help }}</p>
+        <p id="{{ $helpId }}" @class(['ag-input__help', "ag-input__help--{$helpTone}" => $helpTone])>{{ $help }}</p>
     @endif
 
     @if ($error)

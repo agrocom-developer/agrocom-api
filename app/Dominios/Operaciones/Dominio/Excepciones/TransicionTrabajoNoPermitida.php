@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Operaciones\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use App\Dominios\Operaciones\Dominio\EstadoTrabajo;
 use DomainException;
 
@@ -14,8 +15,9 @@ final class TransicionTrabajoNoPermitida extends DomainException
 {
     public static function entre(EstadoTrabajo $desde, EstadoTrabajo $hasta): self
     {
-        return new self(
-            "No se puede pasar un trabajo de '{$desde->value}' a '{$hasta->value}'.",
-        );
+        return new self(Texto::de('operaciones.errores.transicion_trabajo_no_permitida', [
+            'desde' => $desde->value,
+            'hasta' => $hasta->value,
+        ]));
     }
 }

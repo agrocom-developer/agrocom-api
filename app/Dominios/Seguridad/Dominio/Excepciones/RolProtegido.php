@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Seguridad\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use App\Dominios\Seguridad\Aplicacion\AsignarPermisosRol;
 use DomainException;
 
@@ -32,10 +33,7 @@ final class RolProtegido extends DomainException
      */
     public static function porUltimaLlave(string $codigoPermiso): self
     {
-        return new self(
-            "No se puede dejar el sistema sin ningún rol activo que tenga '{$codigoPermiso}': ".
-            'sería la última llave, y nadie podría volver a otorgarla desde el panel.'
-        );
+        return new self(Texto::de('seguridad.errores.rol_protegido_ultima_llave', ['permiso' => $codigoPermiso]));
     }
 
     /**
@@ -46,10 +44,7 @@ final class RolProtegido extends DomainException
      */
     public static function porRolActivoPropio(string $codigoPermiso): self
     {
-        return new self(
-            "No podés quitarle '{$codigoPermiso}' al rol con el que estás operando: ".
-            'perderías el acceso a esta pantalla en el próximo clic.'
-        );
+        return new self(Texto::de('seguridad.errores.rol_protegido_rol_activo_propio', ['permiso' => $codigoPermiso]));
     }
 
     /**
@@ -62,26 +57,22 @@ final class RolProtegido extends DomainException
      */
     public static function porUltimoPortadorDelPermiso(string $codigoPermiso): self
     {
-        return new self(
-            "'{$codigoPermiso}' quedaría sin ningún rol activo que lo tenga. ".
-            'Otorgáselo antes a otro rol: nadie puede conceder un permiso que no tiene, '.
-            'así que un permiso huérfano no se recupera desde el panel.'
-        );
+        return new self(Texto::de('seguridad.errores.rol_protegido_ultimo_portador', ['permiso' => $codigoPermiso]));
     }
 
     /** Roles con cuentas vivas detrás: dar de baja el rol las dejaría sin él. */
     public static function porTenerUsuarios(string $nombreRol, int $cantidad): self
     {
-        return new self(
-            "El rol '{$nombreRol}' tiene {$cantidad} ".
-            ($cantidad === 1 ? 'usuario asignado' : 'usuarios asignados').
-            '. Reasignálos antes de darlo de baja.'
-        );
+        $clave = $cantidad === 1
+            ? 'seguridad.errores.rol_protegido_tiene_usuarios_uno'
+            : 'seguridad.errores.rol_protegido_tiene_usuarios_varios';
+
+        return new self(Texto::de($clave, ['rol' => $nombreRol, 'cantidad' => $cantidad]));
     }
 
     /** Dar de baja o desactivar el rol con el que se está operando. */
     public static function porSerElRolActivo(string $nombreRol): self
     {
-        return new self("No podés dar de baja ni desactivar '{$nombreRol}': es el rol con el que estás operando.");
+        return new self(Texto::de('seguridad.errores.rol_protegido_es_rol_activo', ['rol' => $nombreRol]));
     }
 }

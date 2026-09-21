@@ -87,8 +87,8 @@ final class ReportesComercialesController
                 ->get(['id', 'razon_social']),
             'cultivosDisponibles' => Cultivo::query()
                 ->where('activo', true)
-                ->orderBy('nombre')
-                ->get(['id', 'nombre']),
+                ->orderBy('nombre_comun')
+                ->get(['id', 'nombre_comun']),
             'campaniasDisponibles' => $this->campaniasDe($clienteIds),
             'estadosDisponibles' => EstadoContrato::cases(),
             'saldosDisponibles' => SaldoContrato::cases(),
@@ -110,14 +110,14 @@ final class ReportesComercialesController
     }
 
     /**
-     * Campañas de los clientes ya elegidos (ADR 0015: la campaña es del
-     * cliente, no hay campaña global) — `DB::table` directo sobre
-     * `cpn_campanias`, mismo criterio que `ContratosController::campaniasParaFormulario()`
-     * (ADR 0003 regla 3, `Campania` es de otro módulo). Trae `razon_social`
-     * (join, mismo criterio que `campaniasParaFiltro()` de ese controlador):
-     * con más de un cliente elegido, dos campañas del mismo `codigo`
-     * "2025-2026" (una por cliente, nace así de la migración de la tarea 69)
-     * son indistinguibles en la lista sin el nombre del cliente al lado.
+     * Campañas con al menos un contrato de alguno de los clientes ya
+     * elegidos. Corrección del 15/9/2026 (ADR 0015): la campaña dejó de
+     * tener `cliente_id` propio — el vínculo cliente↔campaña vive en
+     * `com_contratos`, así que el filtro pasa a un join contra esa tabla en
+     * vez de `cpn_campanias.cliente_id` directo. `DB::table`/`distinct()`
+     * directo (ADR 0003 regla 3, `Campania` es de otro módulo): con varios
+     * clientes elegidos, más de uno puede compartir la misma fila de
+     * campaña — `distinct()` evita repetirla en el selector.
      *
      * @param  list<int>  $clienteIds
      * @return Collection<int, \stdClass>
@@ -129,12 +129,13 @@ final class ReportesComercialesController
         }
 
         return DB::table('cpn_campanias')
-            ->join('com_clientes', 'com_clientes.id', '=', 'cpn_campanias.cliente_id')
-            ->whereIn('cpn_campanias.cliente_id', $clienteIds)
+            ->join('com_contratos', 'com_contratos.campania_id', '=', 'cpn_campanias.id')
+            ->whereIn('com_contratos.cliente_id', $clienteIds)
             ->whereNull('cpn_campanias.deleted_at')
-            ->orderBy('com_clientes.razon_social')
+            ->whereNull('com_contratos.deleted_at')
+            ->distinct()
             ->orderBy('cpn_campanias.codigo')
-            ->get(['cpn_campanias.id', 'cpn_campanias.codigo', 'cpn_campanias.cliente_id', 'com_clientes.razon_social']);
+            ->get(['cpn_campanias.id', 'cpn_campanias.codigo']);
     }
 
     /**

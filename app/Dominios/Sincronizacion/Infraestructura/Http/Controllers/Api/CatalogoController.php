@@ -36,12 +36,13 @@ use OpenApi\Attributes as OA;
     title: 'Orden de aplicación (catálogo)',
     description: 'Orden vigente para el pull de catálogo (espec §4.3, ampliada HU-92 tarea 107: '
         .'`lotes` reemplaza el `lote_id` único de antes; HU-79 tarea 110: `litros_ha`/`kilos_por_vuelo` '
-        .'son mutuamente excluyentes según la categoría de insumo). Los DECIMAL viajan como string (invariante 6).',
+        .'son mutuamente excluyentes según la categoría de insumo). Los DECIMAL viajan como string (invariante 6). '
+        .'Los límites climáticos y parámetros de vuelo YA NO viajan acá (migración '
+        .'`2026_09_18_100001_mueve_clima_vuelo_de_ordenes_a_trabajos_table`): son del trabajo '
+        .'(equipo↔lote), ver `TrabajoCatalogo`.',
     required: [
-        'id', 'contrato_id', 'lotes', 'nro_aplicacion', 'litros_ha', 'kilos_por_vuelo', 'humedad_min_pct',
-        'viento_max_kmh', 'temperatura_max_c', 'humedad_max_pct', 'velocidad_max_kmh',
-        'altura_vuelo_m', 'velocidad_vuelo_kmh', 'ancho_pasada_m', 'observaciones',
-        'emitida_por_contacto_id', 'fecha_emision', 'estado', 'updated_at',
+        'id', 'contrato_id', 'lotes', 'nro_aplicacion', 'litros_ha', 'kilos_por_vuelo',
+        'observaciones', 'emitida_por_contacto_id', 'fecha_emision', 'estado', 'updated_at',
     ],
     properties: [
         new OA\Property(property: 'id', type: 'integer', example: 1),
@@ -54,14 +55,6 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'nro_aplicacion', type: 'integer', example: 1),
         new OA\Property(property: 'litros_ha', description: 'Dosis en litros por hectárea (insumo líquido); null si la categoría es sólida.', type: 'string', example: '10.00', nullable: true),
         new OA\Property(property: 'kilos_por_vuelo', description: 'Dosis en kilos por vuelo (insumo sólido); null si la categoría es líquida.', type: 'string', example: '8.50', nullable: true),
-        new OA\Property(property: 'humedad_min_pct', type: 'string', example: '60.00', nullable: true),
-        new OA\Property(property: 'viento_max_kmh', type: 'string', example: '15.00', nullable: true),
-        new OA\Property(property: 'temperatura_max_c', type: 'string', example: '32.00', nullable: true),
-        new OA\Property(property: 'humedad_max_pct', type: 'string', example: '90.00', nullable: true),
-        new OA\Property(property: 'velocidad_max_kmh', type: 'string', example: '25.00', nullable: true),
-        new OA\Property(property: 'altura_vuelo_m', type: 'string', example: '3.00', nullable: true),
-        new OA\Property(property: 'velocidad_vuelo_kmh', type: 'string', example: '18.00', nullable: true),
-        new OA\Property(property: 'ancho_pasada_m', type: 'string', example: '7.00', nullable: true),
         new OA\Property(property: 'observaciones', type: 'string', example: 'Aplicar en horas de la mañana.', nullable: true),
         new OA\Property(property: 'emitida_por_contacto_id', type: 'integer', example: 2, nullable: true),
         new OA\Property(property: 'fecha_emision', type: 'string', format: 'date', example: '2026-08-26'),
@@ -73,11 +66,13 @@ use OpenApi\Attributes as OA;
 #[OA\Schema(
     schema: 'LoteCatalogo',
     title: 'Lote (catálogo)',
-    description: 'Lote vigente (no borrado) para el pull de catálogo (espec §4.1). `hectareas` es DECIMAL como string (invariante 6).',
-    required: ['id', 'campo_id', 'codigo', 'hectareas', 'geometria', 'restricciones', 'updated_at'],
+    description: 'Lote vigente (no borrado) para el pull de catálogo (espec §4.1; ADR 0020: cuelga '
+        .'directo de la propiedad, sin el nivel intermedio Campo). `hectareas` es DECIMAL como string '
+        .'(invariante 6).',
+    required: ['id', 'propiedad_id', 'codigo', 'hectareas', 'geometria', 'restricciones', 'updated_at'],
     properties: [
         new OA\Property(property: 'id', type: 'integer', example: 3),
-        new OA\Property(property: 'campo_id', type: 'integer', example: 1),
+        new OA\Property(property: 'propiedad_id', description: 'Id de servidor de la propiedad.', type: 'integer', example: 1),
         new OA\Property(property: 'codigo', type: 'string', example: 'L-01'),
         new OA\Property(property: 'hectareas', type: 'string', example: '120.50'),
         new OA\Property(property: 'geometria', description: 'GeoJSON del lote, o null si no está cargado.', type: 'object', nullable: true),
@@ -107,8 +102,16 @@ use OpenApi\Attributes as OA;
     description: 'Trabajo abierto por el jefe de campo al repartir una orden vigente entre equipos '
         .'(HU-70, tarea 85) — nunca los que nacen por sync (`equipo_trabajo_id` siempre presente acá). '
         .'`uuid_cliente` es el que generó el panel al confirmar la asignación: la app lo usa TAL CUAL '
-        .'para abrir sesiones sobre este trabajo. `hectareas_declaradas` es DECIMAL como string (invariante 6).',
-    required: ['id', 'uuid_cliente', 'orden_id', 'lote_id', 'hectareas_declaradas', 'equipo_trabajo_id', 'updated_at'],
+        .'para abrir sesiones sobre este trabajo. `hectareas_declaradas` es DECIMAL como string (invariante 6). '
+        .'Los 8 campos de límites climáticos y parámetros de vuelo llegaron acá desde `OrdenCatalogo` '
+        .'(migración `2026_09_18_100001_mueve_clima_vuelo_de_ordenes_a_trabajos_table`): son condiciones '
+        .'del vuelo de ESTE equipo, cargadas al asignar (ver `AsignarEquipoOrdenRequest`) — nullable, '
+        .'`null` cuando el jefe de campo no las completó en ese paso.',
+    required: [
+        'id', 'uuid_cliente', 'orden_id', 'lote_id', 'hectareas_declaradas', 'equipo_trabajo_id',
+        'humedad_min_pct', 'viento_max_kmh', 'temperatura_max_c', 'humedad_max_pct', 'velocidad_max_kmh',
+        'altura_vuelo_m', 'velocidad_vuelo_kmh', 'ancho_pasada_m', 'updated_at',
+    ],
     properties: [
         new OA\Property(property: 'id', type: 'integer', example: 42),
         new OA\Property(property: 'uuid_cliente', type: 'string', example: '9a1b7e3e-2f7a-4b3d-8c1e-6f2a1d9c4b0a'),
@@ -116,6 +119,14 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'lote_id', type: 'integer', example: 3),
         new OA\Property(property: 'hectareas_declaradas', type: 'string', example: '300.00'),
         new OA\Property(property: 'equipo_trabajo_id', type: 'integer', example: 7),
+        new OA\Property(property: 'humedad_min_pct', type: 'string', example: '60.00', nullable: true),
+        new OA\Property(property: 'viento_max_kmh', type: 'string', example: '15.00', nullable: true),
+        new OA\Property(property: 'temperatura_max_c', type: 'string', example: '32.00', nullable: true),
+        new OA\Property(property: 'humedad_max_pct', type: 'string', example: '90.00', nullable: true),
+        new OA\Property(property: 'velocidad_max_kmh', type: 'string', example: '25.00', nullable: true),
+        new OA\Property(property: 'altura_vuelo_m', type: 'string', example: '3.00', nullable: true),
+        new OA\Property(property: 'velocidad_vuelo_kmh', type: 'string', example: '18.00', nullable: true),
+        new OA\Property(property: 'ancho_pasada_m', type: 'string', example: '7.00', nullable: true),
         new OA\Property(property: 'updated_at', type: 'string', format: 'date-time', example: '2026-09-13T12:00:00+00:00'),
     ],
     type: 'object',

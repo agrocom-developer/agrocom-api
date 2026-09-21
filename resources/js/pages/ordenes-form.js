@@ -1,45 +1,28 @@
 /**
- * Manejo del formulario de orden de aplicación:
+ * Formulario de Órdenes de Aplicación (reforma Entrega 1, 18/9/2026):
+ * Ahora la orden cubre TODOS los lotes del contrato (no se elige cada uno).
+ * El número de aplicación lo calcula el servidor (correlativo).
  *
- * 1. Lotes dinámicos (HU-92, tarea 107): agregar y quitar filas de `lotes[]`
- *    sin recargar la página. Mismo patrón vanilla que
- *    `resources/js/pages/campos-form.js` (clona el `<template>` que ya trae
- *    el partial `_lote-orden-fila.blade.php` con el placeholder `__INDICE__`,
- *    sin reindexar al quitar una fila).
- *
- * 2. Tipo → categoría de insumo (HU-79, tarea 110): el usuario elige primero
- *    "Tipo" (Sólido/Líquido, campo de PRESENTACIÓN, sin `name` validado por el
- *    server — nunca se envía como tal) y ese valor filtra el `<select>` de
- *    "Categoría de insumo" (mismo patrón cliente→propiedad de
- *    `campos-form.js`, vía `data-mapa-categoria-insumo-tipo`, id→tipo). El
- *    tipo elegido también decide si se ve "Litros por hectárea" o "Kilos por
- *    vuelo"; al ocultar uno se limpia su valor — es presentación, no la única
- *    guarda: el servidor (`CrearOrdenRequest::validarCampoSegunCategoriaInsumo()`)
- *    exige el que corresponda según la categoría que de verdad llegó al POST,
- *    sin importar qué haya mostrado el JS.
- *
- * 3. Contrato → lotes (consistencia de negocio: el contrato es el QUIÉN, la
- *    orden es el CÓMO — no se arma una orden del contrato del cliente A con
- *    un lote del cliente B): a diferencia de tipo→categoría, acá el
- *    `<select>` dependiente se repite una vez por fila y las filas se crean
- *    dinámicamente, así que no alcanza `filtrarPorValorPadre()` (pensada para
- *    UN dependiente fijo) — `aplicarFiltroLotesPorContrato()` recorre TODAS
- *    las filas presentes cada vez que se llama, y se llama de nuevo al
- *    agregar una fila nueva. Mismo respaldo servidor que el resto: es
- *    presentación, `withValidator()` la exige igual.
- *
- * Guard de presencia en el DOM (mismo criterio que `login.js`): en cualquier
- * página sin `[data-ag-ordenes-form]` este módulo no hace nada.
+ * 1. Selección de contrato (alta): repinta la tarjeta del contrato (cliente,
+ *    propiedades, aplicaciones, hectáreas y fechas), los contactos y los lotes.
+ *    En edición el contrato es fijo y el servidor ya pintó todo ese bloque; acá
+ *    solo se pagina la lista de lotes.
+ * 2. Contactos: el `<select>` solo tiene los del cliente del contrato elegido —
+ *    se arma con los que trae `datosContrato`, nunca con los de otros clientes—
+ *    y se autoselecciona si es único.
+ * 3. Lista de lotes de solo lectura (código + propiedad + hectáreas), de 20 en
+ *    20 con el paginador de la tabla de lotes del contrato.
+ * 4. Tipo → categoría de insumo: filtro de presentación.
+ * 5. Mostrar/ocultar campos de dosis según categoría elegida.
  */
+
+import { paginarFilas } from '../shared/paginador-cliente.js';
+
+const LOTES_POR_PAGINA = 20;
+
 /**
- * Filtra las `<option>` de `selectDependiente` según el valor de
- * `selectPadre`, usando `mapa` (valor de la opción => valor del padre). Mismo
- * patrón que `filtrarPorCliente()` de `campos-form.js`, generalizado al
- * nombre del padre (acá es "tipo", no "cliente").
- *
- * @param {HTMLSelectElement} selectPadre
- * @param {HTMLSelectElement} selectDependiente
- * @param {Record<string, string>} mapa
+ * Filtra las `<option>` de `selectDependiente` según el valor de `selectPadre`,
+ * usando `mapa` (valor de la opción => valor del padre).
  */
 function filtrarPorValorPadre(selectPadre, selectDependiente, mapa) {
     const opciones = Array.from(selectDependiente.querySelectorAll('option')).filter((opcion) => opcion.value !== '');
@@ -70,6 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const formulario = document.querySelector('[data-ag-ordenes-form]');
     if (!formulario) return;
 
+    // ===== Filtro Tipo → Categoría de insumo =====
     const selectTipoInsumo = formulario.querySelector('[data-ag-orden-tipo-insumo]');
     const selectCategoriaInsumo = formulario.querySelector('[data-ag-orden-categoria-insumo]');
 
@@ -84,76 +68,191 @@ document.addEventListener('DOMContentLoaded', () => {
             const tipo = selectTipoInsumo.value;
 
             if (campoLiquido) {
-                campoLiquido.hidden = tipo !== 'liquido';
-                if (tipo !== 'liquido') campoLiquido.querySelector('input').value = '';
+                if (tipo !== 'liquido') {
+                    campoLiquido.setAttribute('hidden', '');
+                    const input = campoLiquido.querySelector('input');
+                    if (input) input.value = '';
+                } else {
+                    campoLiquido.removeAttribute('hidden');
+                }
             }
 
             if (campoSolido) {
-                campoSolido.hidden = tipo !== 'solido';
-                if (tipo !== 'solido') campoSolido.querySelector('input').value = '';
+                if (tipo !== 'solido') {
+                    campoSolido.setAttribute('hidden', '');
+                    const input = campoSolido.querySelector('input');
+                    if (input) input.value = '';
+                } else {
+                    campoSolido.removeAttribute('hidden');
+                }
             }
         };
 
+        selectCategoriaInsumo.addEventListener('change', mostrarSegunTipo);
         selectTipoInsumo.addEventListener('change', mostrarSegunTipo);
         mostrarSegunTipo();
     }
 
-    const contenedor = formulario.querySelector('[data-ag-orden-lotes]');
-    const lista = formulario.querySelector('[data-ag-orden-lotes-lista]');
-    const plantilla = formulario.querySelector('[data-ag-orden-lote-template]');
-    const botonAgregar = formulario.querySelector('[data-ag-orden-lotes-agregar]');
+    // ===== Contrato + tarjeta del contrato + contactos + lista de lotes de solo lectura =====
+    const scriptDatos = formulario.querySelector('[data-ag-datos-contrato]');
+    if (!scriptDatos) return;
 
-    if (!contenedor || !lista || !plantilla || !botonAgregar) return;
+    const datosContrato = JSON.parse(scriptDatos.textContent || '{}');
 
+    // En el alta el contrato es un `<select>`; en la edición, un campo oculto fijo.
     const selectContrato = formulario.querySelector('[data-ag-orden-contrato]');
-    let aplicarFiltroLotesPorContrato = () => {};
+    const contratoFijo = formulario.querySelector('[data-ag-orden-contrato-fijo]');
+    const resumenContrato = formulario.querySelector('[data-ag-resumen-contrato]');
+    const contactoWrap = formulario.querySelector('[data-ag-contacto-wrap]');
+    const selectContacto = formulario.querySelector('[data-ag-orden-contacto]');
 
-    if (selectContrato) {
-        const mapaContratoCliente = JSON.parse(selectContrato.dataset.mapaContratoCliente || '{}');
-        const mapaLoteCliente = JSON.parse(contenedor.dataset.mapaLoteCliente || '{}');
+    // Número de aplicación y lista de lotes (solo lectura): la orden cubre TODOS
+    // los lotes del contrato, así que al elegir contrato se repintan tal cual
+    // vienen. Los textos con plural llegan del Blade por data-* (el JS no traduce).
+    const nroAplicacion = formulario.querySelector('[data-ag-nro-aplicacion]');
+    const seccionLotes = formulario.querySelector('[data-ag-lotes-seccion]');
+    const tablaLotes = formulario.querySelector('[data-ag-lotes-tabla]');
+    const vacioLotes = formulario.querySelector('[data-ag-lotes-vacio]');
+    const contenedorPaginador = formulario.querySelector('[data-ag-lotes-paginador]');
+    const formatoHectareas = new Intl.NumberFormat('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-        aplicarFiltroLotesPorContrato = () => {
-            const clienteId = mapaContratoCliente[selectContrato.value];
+    // Paginación de la tabla de lotes (20 por página): se ocultan las filas de otras
+    // páginas con `hidden`, no se quitan.
+    const filasDeLotes = () => Array.from(tablaLotes?.querySelectorAll('.ag-index-table__row') ?? []);
+    const paginadorLotes = tablaLotes && contenedorPaginador
+        ? paginarFilas(contenedorPaginador, { filas: filasDeLotes, porPagina: LOTES_POR_PAGINA })
+        : null;
 
-            contenedor.querySelectorAll('select[name$="[lote_id]"]').forEach((selectLote) => {
-                const opciones = Array.from(selectLote.querySelectorAll('option')).filter((opcion) => opcion.value !== '');
-                let valorSigueVisible = false;
+    const pintarNroAplicacion = (datos) => {
+        if (!nroAplicacion) return;
+        const nro = datos?.siguiente_nro;
+        nroAplicacion.textContent = nro === undefined || nro === null
+            ? '—'
+            : (nroAplicacion.dataset.textoPlantilla || ':nro de :total')
+                .replace(':nro', String(nro))
+                .replace(':total', String(datos.aplicaciones_previstas));
+    };
 
-                opciones.forEach((opcion) => {
-                    const visible = clienteId === undefined || String(mapaLoteCliente[opcion.value]) === String(clienteId);
-                    opcion.hidden = !visible;
-                    opcion.disabled = !visible;
-                    if (visible && opcion.value === selectLote.value) valorSigueVisible = true;
-                });
+    const pintarLotes = (lotes) => {
+        if (!tablaLotes) return;
 
-                if (!valorSigueVisible) selectLote.value = '';
+        tablaLotes.querySelectorAll('.ag-index-table__row').forEach((fila) => fila.remove());
+
+        lotes.forEach((lote) => {
+            const fila = document.createElement('div');
+            fila.className = 'ag-index-table__row';
+            fila.setAttribute('role', 'row');
+
+            [
+                [lote.codigo, ''],
+                [lote.propiedad, ''],
+                [formatoHectareas.format(Number(lote.hectareas)), 'ag-ordenes__mono'],
+            ].forEach(([texto, clase]) => {
+                const celda = document.createElement('span');
+                celda.setAttribute('role', 'cell');
+                if (clase) celda.className = clase;
+                celda.textContent = texto;
+                fila.appendChild(celda);
             });
+
+            tablaLotes.appendChild(fila);
+        });
+
+        tablaLotes.toggleAttribute('hidden', lotes.length === 0);
+        if (vacioLotes) vacioLotes.toggleAttribute('hidden', lotes.length > 0);
+        paginadorLotes?.actualizar(1);
+
+        const contador = seccionLotes?.querySelector('.ag-section-head__count');
+        if (contador) {
+            const clave = lotes.length === 0 ? 'textoLotesCero' : (lotes.length === 1 ? 'textoLotesUno' : 'textoLotesVarios');
+            contador.textContent = (seccionLotes.dataset[clave] || '').replace(':cantidad', String(lotes.length));
+        }
+    };
+
+    // Contactos del cliente del contrato: se reemplazan las opciones del `<select>` por
+    // las de ESTE contrato (`datos.contactos`, ya con su etiqueta traducida). Nunca hay
+    // opciones de otros clientes, ni siquiera ocultas.
+    const pintarContactos = (datos, { resetearSeleccion }) => {
+        if (!selectContacto) return;
+
+        const contactos = datos?.contactos || [];
+        const valorPrevio = selectContacto.value;
+
+        selectContacto.querySelectorAll('option').forEach((opcion) => {
+            if (opcion.value !== '') opcion.remove();
+        });
+
+        contactos.forEach((contacto) => {
+            const opcion = document.createElement('option');
+            opcion.value = String(contacto.id);
+            opcion.textContent = contacto.label;
+            selectContacto.appendChild(opcion);
+        });
+
+        const sigueElegido = !resetearSeleccion && contactos.some((contacto) => String(contacto.id) === valorPrevio);
+        selectContacto.value = sigueElegido ? valorPrevio : '';
+
+        // Autoselecciona si el cliente tiene un solo contacto
+        const contactoTieneError = contactoWrap?.hasAttribute('data-tiene-error');
+        if (!sigueElegido && !contactoTieneError && contactos.length === 1) {
+            selectContacto.value = String(contactos[0].id);
+        }
+
+        // Sin contrato elegido (alta) no hay de quién listar contactos.
+        if (selectContrato) selectContacto.disabled = !datos;
+
+        selectContacto.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+
+    const pintarResumen = (datos) => {
+        if (!resumenContrato) return;
+
+        if (!datos) {
+            resumenContrato.setAttribute('hidden', '');
+            return;
+        }
+
+        resumenContrato.removeAttribute('hidden');
+
+        const poner = (selector, texto) => {
+            const nodo = resumenContrato.querySelector(selector);
+            if (nodo) nodo.textContent = texto;
         };
 
-        selectContrato.addEventListener('change', aplicarFiltroLotesPorContrato);
-        aplicarFiltroLotesPorContrato();
-    }
+        poner('[data-ag-cliente-nombre]', datos.cliente);
+        poner('[data-ag-propiedades-nombres]', datos.propiedades.join(', ') || '—');
+        poner('[data-ag-aplicaciones-previstas]', String(datos.aplicaciones_previstas));
+        poner('[data-ag-hectareas-contratadas]', `${datos.hectareas_contratadas} ha`);
+        poner('[data-ag-fecha-inicio]', datos.fecha_inicio);
+        poner('[data-ag-fecha-fin]', datos.fecha_fin || resumenContrato.querySelector('[data-ag-fecha-fin]')?.dataset.textoSinDefinir || '—');
 
-    let proximoIndice = lista.querySelectorAll('[data-ag-orden-lote-fila]').length;
+        const logoEl = resumenContrato.querySelector('[data-ag-cliente-logo]');
+        if (logoEl) logoEl.src = datos.logo_url || logoEl.dataset.logoPlaceholder;
+    };
 
-    botonAgregar.addEventListener('click', () => {
-        const html = plantilla.innerHTML.replaceAll('__INDICE__', String(proximoIndice));
-        proximoIndice += 1;
+    const pintarContratoYLotes = (contratoId, { resetearSeleccion }) => {
+        const datos = datosContrato[contratoId];
 
-        const envoltorio = document.createElement('div');
-        envoltorio.innerHTML = html.trim();
+        pintarNroAplicacion(datos);
+        pintarLotes(datos?.lotes || []);
+        pintarResumen(datos);
+        pintarContactos(datos, { resetearSeleccion });
+    };
 
-        const fila = envoltorio.firstElementChild;
-        if (fila) {
-            lista.appendChild(fila);
-            aplicarFiltroLotesPorContrato();
+    if (selectContrato) {
+        selectContrato.addEventListener('change', () => {
+            pintarContratoYLotes(parseInt(selectContrato.value, 10), { resetearSeleccion: true });
+        });
+
+        // Carga inicial del alta: si ya hay un contrato (preseleccionado, o redisplay tras error)
+        if (selectContrato.value) {
+            pintarContratoYLotes(parseInt(selectContrato.value, 10), { resetearSeleccion: false });
+        } else {
+            paginadorLotes?.actualizar(1);
         }
-    });
-
-    contenedor.addEventListener('click', (evento) => {
-        const botonQuitar = evento.target.closest('[data-ag-orden-lote-quitar]');
-        if (!botonQuitar) return;
-
-        botonQuitar.closest('[data-ag-orden-lote-fila]')?.remove();
-    });
+    } else if (contratoFijo) {
+        // Edición: el servidor ya pintó la tarjeta, los contactos del cliente y los lotes;
+        // solo falta repartir los lotes en páginas.
+        paginadorLotes?.actualizar(1);
+    }
 });

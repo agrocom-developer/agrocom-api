@@ -1,8 +1,7 @@
 {{--
     Page: contratos/create (GET /panel/contratos/crear, panel.contratos.create)
-    Alta de un contrato con sus ventanas de aplicación (HU-23, tarea 34): el
-    formulario real vive en `_formulario.blade.php`, compartido con
-    `edit.blade.php`.
+    Alta de un contrato con sus lotes (HU-23, tarea 34): el formulario real
+    vive en `_formulario.blade.php`, compartido con `edit.blade.php`.
 
     Datos esperados (ver ContratosController::create()): la cáscara de
     CascaraPanel, más `$clientesDisponibles` (Collection<int, string>).

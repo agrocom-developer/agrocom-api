@@ -2,10 +2,14 @@
     Partial: formulario de vehículo, compartido por create.blade.php y
     edit.blade.php (HU-40, tarea 50; ficha completa y estado `pausa` HU-84,
     tarea 99) — arquetipo Formulario, §6.3 de
-    docs/diseno/guia_pantalla_panel.md. Mismo patrón que
-    `personas/_formulario.blade.php`: selects nativos (base, combustible,
-    ambos opcionales) + campos planos — sin sub-entidad ni átomo `select` en
-    el catálogo.
+    docs/diseno/guia_pantalla_panel.md.
+
+    Homogeneizado con el patrón de Propiedades y Drones (tarea 115): el cuerpo
+    va en `molecules/form-layout` y, SOLO en edición, el aside con el resumen
+    relacionado (§6.3.1) — un vehículo recién creado no puede tener todavía
+    órdenes, cuadrillas, estadías ni combustible. Tres secciones: los datos del
+    vehículo, su ficha (marca, modelo, año, combustible, 4x4) y el
+    kilometraje, con la unidad («km») como sufijo del campo.
 
     Espera:
     - $vehiculo (Vehiculo|null): null en alta; el modelo en edición.
@@ -19,15 +23,16 @@
       combustible.
     - $tipos (list<TipoVehiculo>): ídem, para el select de tipo (HU-90,
       tarea 105) — catálogo cerrado, incluye "chata".
+    - $resumenRelacionado (list<array{...}>|null): solo en edición, ver
+      VehiculosController::resumenRelacionado(). `null`/ausente en alta.
 
     Tras un error de validación, `old()` pisa los valores del modelo/vacíos
     — mismo criterio en alta y en edición. `kilometraje_inicial` es editable
     en alta y en edición por igual (a diferencia de `ciclos_inicial` en
     `baterias/_formulario.blade.php`): la HU no lo pide inmutable.
 
-    El aside pegajoso del arquetipo (summary-card/progress-meter) se omite a
-    propósito, mismo criterio que drones/personas: ningún dato de solo
-    lectura justifica hoy la columna lateral.
+    El único control escrito a mano es el `hidden` de `es_4x4`: manda el `0`
+    cuando la casilla queda sin marcar (un checkbox desmarcado no viaja).
 --}}
 @php
     $esEdicion = $vehiculo !== null;
@@ -56,143 +61,170 @@
         :subtitle="__('mantenimiento.vehiculos.subtitulo_form')"
     >
         <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.vehiculos.index') }}" variant="outline" icon="arrow_back">
-                {{ __('mantenimiento.vehiculos.volver') }}
-            </x-atoms.button>
+            <x-molecules.boton-volver
+                :href="route('panel.vehiculos.index')"
+                :label="__('mantenimiento.vehiculos.volver')"
+            />
         </x-slot:actions>
     </x-organisms.page-header>
 
-    <x-molecules.form-section
-        :title="__('mantenimiento.vehiculos.seccion_datos')"
-        :count="__('mantenimiento.vehiculos.campos_contador', ['cantidad' => 11])"
-    >
-        <x-atoms.input
-            type="text"
-            name="identificador"
-            label="{{ __('mantenimiento.vehiculos.campo_identificador') }}"
-            value="{{ $identificador }}"
-            required
-            error="{{ $errors->first('identificador') }}"
-        />
+    @if (session('estado'))
+        <x-molecules.alert-strip variant="success" icon="check_circle">
+            {{ session('estado') }}
+        </x-molecules.alert-strip>
+    @endif
 
-        @php
-            $opcionesTipo = collect($tipos)->mapWithKeys(fn ($opcion) => [
-                $opcion->value => __('mantenimiento.vehiculos.tipo.'.$opcion->value)
-            ])->all();
-        @endphp
-        <x-atoms.select
-            name="tipo"
-            id="tipo"
-            label="{{ __('mantenimiento.vehiculos.campo_tipo') }}"
-            :options="$opcionesTipo"
-            :value="$tipo"
-            placeholder="{{ __('mantenimiento.vehiculos.campo_tipo_placeholder') }}"
-            error="{{ $errors->first('tipo') }}"
-        />
+    <x-molecules.form-layout>
+        <x-molecules.form-section
+            :title="__('mantenimiento.vehiculos.seccion_datos')"
+            :count="__('mantenimiento.vehiculos.campos_contador', ['cantidad' => 4])"
+        >
+            <x-atoms.input
+                type="text"
+                name="identificador"
+                :label="__('mantenimiento.vehiculos.campo_identificador')"
+                :value="$identificador"
+                required
+                :error="$errors->first('identificador')"
+            />
 
-        <x-atoms.input
-            type="text"
-            name="marca"
-            label="{{ __('mantenimiento.vehiculos.campo_marca') }}"
-            value="{{ $marca }}"
-            error="{{ $errors->first('marca') }}"
-        />
+            @php
+                $opcionesTipo = collect($tipos)->mapWithKeys(fn ($opcion) => [
+                    $opcion->value => __('mantenimiento.vehiculos.tipo.'.$opcion->value),
+                ])->all();
+            @endphp
+            <x-atoms.select
+                name="tipo"
+                id="tipo"
+                :label="__('mantenimiento.vehiculos.campo_tipo')"
+                :options="$opcionesTipo"
+                :value="$tipo"
+                :placeholder="__('mantenimiento.vehiculos.campo_tipo_placeholder')"
+                :error="$errors->first('tipo')"
+            />
 
-        <x-atoms.input
-            type="text"
-            name="modelo"
-            label="{{ __('mantenimiento.vehiculos.campo_modelo') }}"
-            value="{{ $modelo }}"
-            error="{{ $errors->first('modelo') }}"
-        />
+            <x-atoms.select
+                name="base_id"
+                id="base_id"
+                :label="__('mantenimiento.vehiculos.campo_base')"
+                :options="$basesDisponibles"
+                :value="$baseId"
+                :placeholder="__('mantenimiento.vehiculos.campo_base_placeholder')"
+                :error="$errors->first('base_id')"
+            />
 
-        <x-atoms.input
-            type="number"
-            name="anio"
-            label="{{ __('mantenimiento.vehiculos.campo_anio') }}"
-            value="{{ $anio }}"
-            error="{{ $errors->first('anio') }}"
-            step="1"
-        />
+            @php
+                $opcionesEstado = collect($estados)->mapWithKeys(fn ($opcion) => [
+                    $opcion->value => __('mantenimiento.estado.'.$opcion->value),
+                ])->all();
+            @endphp
+            <x-atoms.select
+                name="estado"
+                id="estado"
+                :label="__('mantenimiento.vehiculos.campo_estado')"
+                :options="$opcionesEstado"
+                :value="$estado"
+                required
+                :error="$errors->first('estado')"
+            />
+        </x-molecules.form-section>
 
-        @php
-            $opcionesCombustible = collect($combustibles)->mapWithKeys(fn ($opcion) => [
-                $opcion->value => __('mantenimiento.vehiculos.combustible.'.$opcion->value)
-            ])->all();
-        @endphp
-        <x-atoms.select
-            name="combustible"
-            id="combustible"
-            label="{{ __('mantenimiento.vehiculos.campo_combustible') }}"
-            :options="$opcionesCombustible"
-            :value="$combustible"
-            placeholder="{{ __('mantenimiento.vehiculos.campo_combustible_placeholder') }}"
-            error="{{ $errors->first('combustible') }}"
-        />
+        <x-molecules.form-section
+            :title="__('mantenimiento.vehiculos.seccion_ficha')"
+            :count="__('mantenimiento.vehiculos.campos_contador', ['cantidad' => 5])"
+        >
+            <x-atoms.input
+                type="text"
+                name="marca"
+                :label="__('mantenimiento.vehiculos.campo_marca')"
+                :value="$marca"
+                :error="$errors->first('marca')"
+            />
 
-        <input type="hidden" name="es_4x4" value="0">
-        <x-atoms.checkbox
-            name="es_4x4"
-            value="1"
-            label="{{ __('mantenimiento.vehiculos.campo_es_4x4') }}"
-            :checked="$es4x4"
-        />
+            <x-atoms.input
+                type="text"
+                name="modelo"
+                :label="__('mantenimiento.vehiculos.campo_modelo')"
+                :value="$modelo"
+                :error="$errors->first('modelo')"
+            />
 
-        <x-atoms.input
-            type="number"
-            name="kilometraje_inicial"
-            label="{{ __('mantenimiento.vehiculos.campo_kilometraje_inicial') }}"
-            value="{{ $kilometrajeInicial }}"
-            help="{{ __('mantenimiento.vehiculos.campo_kilometraje_inicial_ayuda') }}"
-            error="{{ $errors->first('kilometraje_inicial') }}"
-            min="0"
-            step="0.01"
-        />
+            <x-atoms.input
+                type="number"
+                name="anio"
+                :label="__('mantenimiento.vehiculos.campo_anio')"
+                :value="$anio"
+                :error="$errors->first('anio')"
+                step="1"
+            />
 
-        <x-atoms.input
-            type="number"
-            name="kilometraje_actual"
-            label="{{ __('mantenimiento.vehiculos.campo_kilometraje_actual') }}"
-            value="{{ $kilometrajeActual }}"
-            error="{{ $errors->first('kilometraje_actual') }}"
-            min="0"
-            step="0.01"
-        />
+            @php
+                $opcionesCombustible = collect($combustibles)->mapWithKeys(fn ($opcion) => [
+                    $opcion->value => __('mantenimiento.vehiculos.combustible.'.$opcion->value),
+                ])->all();
+            @endphp
+            <x-atoms.select
+                name="combustible"
+                id="combustible"
+                :label="__('mantenimiento.vehiculos.campo_combustible')"
+                :options="$opcionesCombustible"
+                :value="$combustible"
+                :placeholder="__('mantenimiento.vehiculos.campo_combustible_placeholder')"
+                :error="$errors->first('combustible')"
+            />
 
-        <x-atoms.select
-            name="base_id"
-            id="base_id"
-            label="{{ __('mantenimiento.vehiculos.campo_base') }}"
-            :options="$basesDisponibles"
-            :value="$baseId"
-            placeholder="{{ __('mantenimiento.vehiculos.campo_base_placeholder') }}"
-            error="{{ $errors->first('base_id') }}"
-        />
+            <input type="hidden" name="es_4x4" value="0">
+            <x-atoms.checkbox
+                name="es_4x4"
+                value="1"
+                :label="__('mantenimiento.vehiculos.campo_es_4x4')"
+                :checked="$es4x4"
+            />
+        </x-molecules.form-section>
 
-        @php
-            $opcionesEstado = collect($estados)->mapWithKeys(fn ($opcion) => [
-                $opcion->value => __('mantenimiento.estado.'.$opcion->value)
-            ])->all();
-        @endphp
-        <x-atoms.select
-            name="estado"
-            id="estado"
-            label="{{ __('mantenimiento.vehiculos.campo_estado') }}"
-            :options="$opcionesEstado"
-            :value="$estado"
-            required
-            error="{{ $errors->first('estado') }}"
-        />
-    </x-molecules.form-section>
+        <x-molecules.form-section
+            :title="__('mantenimiento.vehiculos.seccion_kilometraje')"
+            :count="__('mantenimiento.vehiculos.campos_contador', ['cantidad' => 2])"
+        >
+            <x-atoms.input
+                type="number"
+                name="kilometraje_inicial"
+                :label="__('mantenimiento.vehiculos.campo_kilometraje_inicial')"
+                :value="$kilometrajeInicial"
+                :suffix="__('mantenimiento.vehiculos.unidad_km')"
+                :help="__('mantenimiento.vehiculos.campo_kilometraje_inicial_ayuda')"
+                :error="$errors->first('kilometraje_inicial')"
+                min="0"
+                step="0.01"
+            />
 
-    <x-organisms.form-actions-bar :status="__('mantenimiento.vehiculos.estado_form')">
-        <x-slot:actions>
-            <x-atoms.button href="{{ route('panel.vehiculos.index') }}" variant="outline">
-                {{ __('ui.action.cancel') }}
-            </x-atoms.button>
-            <x-atoms.button type="submit" variant="primary">
-                {{ __('ui.action.save') }}
-            </x-atoms.button>
-        </x-slot:actions>
-    </x-organisms.form-actions-bar>
+            <x-atoms.input
+                type="number"
+                name="kilometraje_actual"
+                :label="__('mantenimiento.vehiculos.campo_kilometraje_actual')"
+                :value="$kilometrajeActual"
+                :suffix="__('mantenimiento.vehiculos.unidad_km')"
+                :error="$errors->first('kilometraje_actual')"
+                min="0"
+                step="0.01"
+            />
+        </x-molecules.form-section>
+
+        <x-organisms.form-actions-bar :status="__('mantenimiento.vehiculos.estado_form')">
+            <x-slot:actions>
+                <x-atoms.button :href="route('panel.vehiculos.index')" variant="outline">
+                    {{ __('ui.action.cancel') }}
+                </x-atoms.button>
+                <x-atoms.button type="submit" variant="primary">
+                    {{ __('ui.action.save') }}
+                </x-atoms.button>
+            </x-slot:actions>
+        </x-organisms.form-actions-bar>
+
+        @if ($esEdicion)
+            <x-slot:aside>
+                @include('mantenimiento::pages._resumen-relacionado', ['resumenRelacionado' => $resumenRelacionado ?? []])
+            </x-slot:aside>
+        @endif
+    </x-molecules.form-layout>
 </form>

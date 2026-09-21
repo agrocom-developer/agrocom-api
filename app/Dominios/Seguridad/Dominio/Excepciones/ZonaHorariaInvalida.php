@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Seguridad\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use App\Dominios\Seguridad\Aplicacion\ActualizarPreferenciaUsuario;
 use App\Dominios\Seguridad\Dominio\ZonaHoraria;
 use RuntimeException;
@@ -19,6 +20,6 @@ final class ZonaHorariaInvalida extends RuntimeException
 {
     public static function paraIdentificador(string $identificador): self
     {
-        return new self("'{$identificador}' no es un identificador de zona horaria IANA válido.");
+        return new self(Texto::de('seguridad.errores.zona_horaria_invalida', ['identificador' => $identificador]));
     }
 }

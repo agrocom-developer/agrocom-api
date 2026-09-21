@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Inventario\Aplicacion;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use App\Dominios\Inventario\Contratos\Excepciones\StockInsuficiente;
 use App\Dominios\Inventario\Dominio\SentidoAjusteInventario;
 use App\Dominios\Inventario\Dominio\TipoMovimientoInventario;
@@ -132,7 +133,7 @@ final class RegistrarMovimientoStock
     private function trasladar(Stock $stockOrigen, ?Stock $stockDestino, BigDecimal $magnitud, string $codigoRepuesto, int $baseId): void
     {
         if ($stockDestino === null) {
-            throw new LogicException('Un traslado necesita la fila de stock de destino ya bloqueada.');
+            throw new LogicException(Texto::de('inventario.errores.traslado_sin_stock_destino'));
         }
 
         $this->decrementar($stockOrigen, $magnitud, $codigoRepuesto, $baseId);

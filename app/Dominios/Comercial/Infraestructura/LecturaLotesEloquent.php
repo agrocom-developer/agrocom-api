@@ -48,11 +48,24 @@ final class LecturaLotesEloquent implements LecturaLotes
         return $lote === null ? null : self::aCatalogo($lote);
     }
 
+    public function limpiezaPorIds(array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        return Lote::query()
+            ->whereIn('id', $ids)
+            ->pluck('limpieza', 'id')
+            ->map(fn (mixed $limpieza): ?string => $limpieza === null ? null : (string) $limpieza)
+            ->all();
+    }
+
     private static function aCatalogo(Lote $lote): LoteCatalogo
     {
         return new LoteCatalogo(
             id: $lote->id,
-            campoId: $lote->campo_id,
+            propiedadId: $lote->propiedad_id,
             codigo: $lote->codigo,
             hectareas: $lote->hectareas,
             geometria: $lote->geometria,

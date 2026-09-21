@@ -38,8 +38,9 @@ return [
 
         // Portal del cliente (ADR 0002 punto 6, ADR 0004 — scoping por
         // contrato, invariante 5 de CLAUDE.md). Consumido desde HU-41
-        // (tarea 55): SesionPortalController + rutas /portal/* en
-        // routes/web.php.
+        // (tarea 55): rutas /portal/* en routes/web.php. No tiene login
+        // propio: entra por `POST /login` (SesionController), igual que el
+        // guard `interno`.
         'cliente' => [
             'driver' => 'session',
             'provider' => 'usuarios_cliente',

@@ -6,7 +6,7 @@
     exclusiva). SIN puntaje, ranking ni semáforo (ver "Qué NO hacer" del
     prompt de la tarea) — la pantalla muestra hechos y sus fuentes, la
     decisión de a quién contratar es de una persona. Arquetipo Detalle, mismo
-    molde de filtros por GET que `equipos-trabajo/show.blade.php`.
+    molde de filtros por GET que `cuadrillas/show.blade.php`.
 
     Datos esperados (ver PersonasController::desempenio()): la cáscara de
     CascaraPanel, más:
@@ -59,7 +59,7 @@
         :vista-actual="__('personal.personas.titulo')"
     >
         <div class="ag-persona-desempeno">
-            <x-atoms.button href="{{ route('panel.personas.index') }}" variant="text" size="sm" icon="arrow_back">
+            <x-atoms.button :href="route('panel.personas.index')" variant="text" size="sm" icon="arrow_back">
                 {{ __('personal.desempenio.volver') }}
             </x-atoms.button>
 
@@ -74,24 +74,24 @@
                 class="ag-filtros ag-persona-desempeno__filtros"
                 data-ag-desempenio-filtros
             >
-                <x-atoms.date name="desde" label="{{ __('personal.desempenio.filtro_desde') }}" :value="$filtros['desde']" required />
-                <x-atoms.date name="hasta" label="{{ __('personal.desempenio.filtro_hasta') }}" :value="$filtros['hasta']" required />
+                <x-atoms.date name="desde" :label="__('personal.desempenio.filtro_desde')" :value="$filtros['desde']" required />
+                <x-atoms.date name="hasta" :label="__('personal.desempenio.filtro_hasta')" :value="$filtros['hasta']" required />
 
                 <x-atoms.select
                     name="cliente_id"
-                    label="{{ __('personal.desempenio.filtro_cliente') }}"
+                    :label="__('personal.desempenio.filtro_cliente')"
                     :options="$opcionesCliente"
                     :value="$filtros['cliente_id']"
-                    placeholder="{{ __('personal.desempenio.filtro_cliente_placeholder') }}"
+                    :placeholder="__('personal.desempenio.filtro_cliente_placeholder')"
                     data-ag-desempenio-cliente
                 />
 
                 <x-atoms.select
                     name="campania_id"
-                    label="{{ __('personal.desempenio.filtro_campania') }}"
+                    :label="__('personal.desempenio.filtro_campania')"
                     :options="$opcionesCampania"
                     :value="$filtros['campania_id']"
-                    placeholder="{{ __('personal.desempenio.filtro_campania_placeholder') }}"
+                    :placeholder="__('personal.desempenio.filtro_campania_placeholder')"
                     data-ag-desempenio-campania
                     data-mapa-cliente-campania="{{ json_encode($resultado->clientePorCampania) }}"
                 />
@@ -101,7 +101,7 @@
                         {{ __('personal.desempenio.filtrar') }}
                     </x-atoms.button>
 
-                    <x-atoms.button href="{{ route('panel.personas.desempenio', $persona) }}" variant="text" size="md">
+                    <x-atoms.button :href="route('panel.personas.desempenio', $persona)" variant="text" size="md">
                         {{ __('personal.desempenio.limpiar_filtro') }}
                     </x-atoms.button>
                 </div>
@@ -116,16 +116,13 @@
                     opcionesDeFiltro) sin aplicar el filtro de cliente/
                     campaña, así que si está vacío las tres secciones de
                     abajo también lo estarían. Un único bloque en vez de tres
-                    alert-strip repitiendo "no hay nada" — mismo criterio que
-                    `seguridad::pages.dashboard._sin-secciones` (tarjeta +
-                    ícono grande + título + detalle), único precedente real
-                    de "estado vacío" prominente en el panel.
+                    alert-strip repitiendo "no hay nada" — molecules/empty-state.
                 --}}
-                <div class="ag-persona-desempeno__vacio">
-                    <x-atoms.icon name="flight_takeoff" size="lg" />
-                    <h2 class="ag-persona-desempeno__vacio-titulo">{{ __('personal.desempenio.vacio_titulo') }}</h2>
-                    <p class="ag-persona-desempeno__vacio-detalle">{{ __('personal.desempenio.vacio_detalle') }}</p>
-                </div>
+                <x-molecules.empty-state
+                    icon="flight_takeoff"
+                    :title="__('personal.desempenio.vacio_titulo')"
+                    :detail="__('personal.desempenio.vacio_detalle')"
+                />
             @else
             <section class="ag-persona-desempeno__totales">
                 <x-molecules.stat-card
@@ -177,7 +174,7 @@
                                 <span role="cell">{{ __('personal.rol_equipo.'.$sesion->rol) }}</span>
                                 <span role="cell">{{ $sesion->clienteNombre }}</span>
                                 <span role="cell">{{ $sesion->campaniaCodigo ?? __('personal.desempenio.sin_campania') }}</span>
-                                <span role="cell">{{ $sesion->loteCodigo }} — {{ $sesion->campoNombre }}</span>
+                                <span role="cell">{{ $sesion->loteCodigo }} — {{ $sesion->propiedadNombre }}</span>
                                 <span role="cell">{{ number_format((float) $sesion->hectareasDeclaradas, 2, ',', '.') }}</span>
                                 <span role="cell">
                                     <x-atoms.badge :variant="$sesion->estado === 'validado' ? 'success' : 'warning'">
@@ -207,7 +204,7 @@
                                     <span>{{ __('personal.rol_equipo.'.$rechazo->rol) }}</span>
                                     <span>{{ $rechazo->clienteNombre }}</span>
                                     <span>{{ $rechazo->campaniaCodigo ?? __('personal.desempenio.sin_campania') }}</span>
-                                    <span>{{ $rechazo->loteCodigo }} — {{ $rechazo->campoNombre }}</span>
+                                    <span>{{ $rechazo->loteCodigo }} — {{ $rechazo->propiedadNombre }}</span>
                                     <span>{{ number_format((float) $rechazo->hectareasDeclaradas, 2, ',', '.') }} ha</span>
                                 </div>
                                 <p class="ag-persona-desempeno__rechazo-motivo">

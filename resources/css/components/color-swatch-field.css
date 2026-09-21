@@ -1,0 +1,199 @@
+/*
+ * Molecule: color-swatch-field (resources/views/components/molecules/color-swatch-field.blade.php)
+ * Control compacto de una sola fila: swatch chico + hex + botón "Cambiar".
+ * Misma caja "outlined" que `.ag-input__control` (mismos tokens: fondo
+ * elevado, borde `-border-strong`, radio `-radius-md`) para que se lea como
+ * un campo más del formulario, pero SIN los focus-within/estados de un
+ * input real — el único elemento interactivo de la fila es el botón
+ * "Cambiar" (`atoms/button`), que ya trae su propio estado de foco.
+ *
+ * El custom property `--ag-color-swatch-fill` es EL MISMO nombre que usa
+ * `atoms/color-swatch-picker` (color-swatch-picker.css) para su swatch —
+ * mismo mecanismo (HEX como dato del llamador, nunca un literal acá
+ * adentro, CLAUDE.md invariante 11), dos componentes de catálogo distintos
+ * que comparten la convención de nombre por legibilidad, no una regla
+ * compartida entre archivos.
+ */
+
+.ag-color-swatch-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-1);
+    margin-bottom: var(--ag-space-4);
+    font-family: var(--ag-font-family-base);
+}
+
+.ag-color-swatch-field__label {
+    margin: 0;
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+    color: var(--ag-color-text);
+}
+
+.ag-color-swatch-field__control {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-2) var(--ag-space-3);
+    background-color: var(--ag-color-bg-elevated);
+    border: 1px solid var(--ag-color-border-strong);
+    border-radius: var(--ag-radius-md);
+}
+
+.ag-color-swatch-field__control--error {
+    border-color: var(--ag-color-danger);
+}
+
+.ag-color-swatch-field__swatch {
+    flex-shrink: 0;
+    width: var(--ag-space-6);
+    height: var(--ag-space-6);
+    background-color: var(--ag-color-swatch-fill);
+    border: 2px solid var(--ag-color-border-strong);
+    border-radius: 50%;
+    transition: background-color var(--ag-transition-fast);
+}
+
+/* Estado sin color elegido (alta, antes de la primera selección): anillo
+   punteado en vez de relleno — distinto tanto de "hay un color" como de un
+   simple círculo vacío que podría leerse como blanco/transparente elegido a
+   propósito. */
+.ag-color-swatch-field__swatch--empty {
+    background-color: transparent;
+    border-style: dashed;
+}
+
+.ag-color-swatch-field__hex,
+.ag-color-swatch-field__placeholder {
+    flex: 1;
+    min-width: 0;
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-color-swatch-field__hex {
+    color: var(--ag-color-text);
+    /* Dato técnico (código hex), no prosa — mismo criterio que teléfonos,
+       fechas y códigos de sesión (guia_pantalla_panel.md §6.3 regla 6). */
+    font-family: var(--ag-font-family-mono);
+}
+
+.ag-color-swatch-field__placeholder {
+    color: var(--ag-color-text-muted);
+}
+
+/* Nombre accesible del color actual (el `colorName` que pasa el llamador):
+   texto real en el DOM, oculto solo visualmente — mismo técnica que
+   `.ag-color-swatch-picker__sr-label`, nunca `display:none`. */
+.ag-color-swatch-field__sr-name {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.ag-color-swatch-field__dropdown {
+    flex-shrink: 0;
+    /* El botón "Cambiar" mide su propio foco - el .dropdown solo posiciona
+       el popup, no participa del layout en fila más que como ancla. */
+    display: inline-flex;
+}
+
+/* Popup de la paleta (corrección 16/9/2026: no es un modal, es un dropdown
+   anclado al botón "Cambiar") — mismo lenguaje visual que
+   `organisms/filter-panel` (`.ag-filter-panel__menu`): `display: block
+   !important` porque Bootstrap wire `display: none` inline hasta que Popper
+   lo posiciona, transición de opacity/scale en vez del display nativo.
+   `position: fixed` acá en la regla base (no solo la que Popper aplica
+   inline al abrir, ver app.js) — corrección 16/9/2026: con `display:block`
+   siempre puesto, ANTES del primer open (Popper recién crea/posiciona en
+   `show()`) este menú vivía con el `position: absolute` por defecto de
+   Bootstrap, invisible pero ocupando layout real — y `position: absolute`
+   SÍ cuenta para el scroll interno de `.ag-panel__content` aunque el
+   elemento esté con `opacity: 0`. En Propiedades (grilla de 23 swatches,
+   botón "Cambiar" cerca del borde derecho) ese menú cerrado desbordaba
+   ~200px por fuera del panel; al elegir un swatch, el foco nativo del
+   navegador sobre el radio (oculto pero real) scrolleaba `.ag-panel__content`
+   para "mostrarlo", dejando la página corrida y un espacio vacío a la
+   derecha tras cerrar el popup. `position: fixed` desde el primer render
+   saca al menú del cálculo de overflow del contenedor en TODO momento,
+   abierto o cerrado — no solo mientras Popper lo repositiona. */
+.ag-color-swatch-field__menu {
+    display: block !important;
+    position: fixed;
+    width: 22rem;
+    max-width: calc(100vw - var(--ag-space-6));
+    padding: var(--ag-space-4);
+    background: var(--ag-color-bg-elevated);
+    border: 1px solid var(--ag-color-border);
+    border-radius: var(--ag-radius-lg);
+    box-shadow: var(--ag-shadow-lg);
+    margin-top: var(--ag-space-2) !important;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: scale(0.95);
+    transform-origin: top right;
+    transition:
+        opacity 180ms var(--ag-ease-emphasized),
+        transform 180ms var(--ag-ease-emphasized),
+        visibility 0s linear 180ms;
+}
+
+/* El picker de adentro trae su propio margen inferior (pensado para vivir
+   suelto en una fila de formulario) — sobra dentro del popup, que ya tiene
+   su propio padding. */
+.ag-color-swatch-field__menu .ag-color-swatch-picker {
+    margin-bottom: 0;
+}
+
+/* Grilla pareja en vez del flex-wrap por defecto del átomo (pedido directo,
+   16/9/2026: "no es necesario que sea una fila única, podemos convertirlo
+   en una grilla") — adentro de un popup con ancho fijo tiene sentido fijar
+   columnas en vez de dejar que el navegador decida cuántas entran por fila;
+   afuera del popup (fila suelta de formulario) el átomo sigue con su
+   flex-wrap normal, este override es específico de este contenedor. */
+.ag-color-swatch-field__menu .ag-color-swatch-picker__options {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    justify-items: center;
+}
+
+.ag-color-swatch-field__menu.show {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: scale(1);
+    transition:
+        opacity 180ms var(--ag-ease-emphasized),
+        transform 180ms var(--ag-ease-emphasized),
+        visibility 0s linear 0s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ag-color-swatch-field__menu {
+        transition-duration: 0.01ms !important;
+    }
+}
+
+.ag-color-swatch-field__help {
+    margin: 0;
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-color-swatch-field__error {
+    margin: 0;
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-danger);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ag-color-swatch-field__swatch {
+        transition-duration: 0.01ms !important;
+    }
+}

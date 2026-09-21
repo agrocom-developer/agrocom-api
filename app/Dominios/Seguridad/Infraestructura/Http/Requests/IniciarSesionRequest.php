@@ -36,4 +36,13 @@ class IniciarSesionRequest extends FormRequest
             'remember' => ['nullable', 'boolean'],
         ];
     }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return [
+            'username.required' => __('seguridad.login.error_username_requerido'),
+            'password.required' => __('seguridad.login.error_password_requerido'),
+        ];
+    }
 }

@@ -78,7 +78,7 @@
             @if ($cambiarRolHref)
                 <li>
                     <a href="{{ $cambiarRolHref }}" class="dropdown-item ag-user-menu__item">
-                        <x-atoms.icon name="swap_horiz" size="sm" class="ag-user-menu__icon" />
+                        <x-atoms.icon name="swap_horiz" size="md" class="ag-user-menu__icon" />
                         {{ __('seguridad.rol.switch_trigger') }}
                     </a>
                 </li>

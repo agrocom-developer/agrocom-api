@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Inventario\Aplicacion;
 
+use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaTexto;
 use App\Dominios\Inventario\Infraestructura\Eloquent\Repuesto;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -22,9 +23,7 @@ final class ListarRepuestos
         return Repuesto::query()
             ->when(
                 $busqueda !== null && $busqueda !== '',
-                fn ($consulta) => $consulta->where(fn ($sub) => $sub
-                    ->where('codigo', 'like', "%{$busqueda}%")
-                    ->orWhere('descripcion', 'like', "%{$busqueda}%")),
+                fn ($consulta) => BusquedaTexto::aplicar($consulta, ['codigo', 'descripcion'], $busqueda),
             )
             ->orderBy('codigo')
             ->paginate($porPagina)

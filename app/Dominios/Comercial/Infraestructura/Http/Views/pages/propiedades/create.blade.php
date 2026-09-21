@@ -4,7 +4,9 @@
     `_formulario.blade.php`, compartido con `edit.blade.php`.
 
     Datos esperados (ver PropiedadesController::create()): la cáscara de
-    CascaraPanel, más `$clientesDisponibles` (Collection<int, string>).
+    CascaraPanel, más `$clientesDisponibles` (Collection<int, string>) y
+    `$geografia` (array de los 3 niveles del catálogo cerrado, embebido para
+    la cascada de selects — adenda 16/9/2026 a ADR 0018 punto 1).
 
     Gateada por `comercial.propiedad.crear`, verificado server-side en el
     controlador.
@@ -22,6 +24,6 @@
         :version="$version"
         :vista-actual="__('comercial.propiedades.titulo_crear')"
     >
-        @include('comercial::pages.propiedades._formulario', ['propiedad' => null])
+        @include('comercial::pages.propiedades._formulario', ['propiedad' => null, 'volverA' => $volverA ?? null])
     </x-templates.panel-layout>
 </x-templates.panel-shell>

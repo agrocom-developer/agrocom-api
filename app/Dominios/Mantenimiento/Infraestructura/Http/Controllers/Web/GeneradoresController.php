@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Finanzas\Contratos\LecturaCombustiblePorRecurso;
 use App\Dominios\Mantenimiento\Aplicacion\ActualizarGenerador;
 use App\Dominios\Mantenimiento\Aplicacion\CrearGenerador;
 use App\Dominios\Mantenimiento\Aplicacion\EliminarGenerador;
@@ -11,6 +12,8 @@ use App\Dominios\Mantenimiento\Dominio\Excepciones\GeneradorDuplicado;
 use App\Dominios\Mantenimiento\Infraestructura\Eloquent\Generador;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Requests\ActualizarGeneradorRequest;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Requests\CrearGeneradorRequest;
+use App\Dominios\Mantenimiento\Infraestructura\Http\ResumenRelacionadoDeEquipo;
+use App\Dominios\Personal\Contratos\LecturaCuadrillasPorRecurso;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -43,6 +46,21 @@ final class GeneradoresController
 
     private const PERMISO_ELIMINAR = 'mantenimiento.generador.eliminar';
 
+    /**
+     * Tono de cada estado, definido UNA vez (§6.3.4 de la guía de pantalla):
+     * lo lee el badge del listado. Eje gris↔verde, y rojo para la baja
+     * definitiva: `activo` es el estado sano, `taller` una baja temporal que
+     * no es un problema en sí. Los tonos son los que la pantalla ya tenía: no
+     * se reeligen acá.
+     *
+     * @var array<string, string>
+     */
+    public const array TONO_POR_ESTADO = [
+        'activo' => 'success',
+        'taller' => 'neutral',
+        'de_baja' => 'danger',
+    ];
+
     public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
 
     public function index(Request $request, ListarGeneradores $listarGeneradores): View
@@ -66,6 +84,8 @@ final class GeneradoresController
             'generadores' => $generadores,
             'etiquetasBase' => $this->etiquetasBase($generadores->pluck('base_id')->filter()->map(fn ($id) => (int) $id)->unique()->values()->all()),
             'basesDisponibles' => $this->basesDisponibles(),
+            'tonoPorEstado' => self::TONO_POR_ESTADO,
+            'estadosFiltro' => EstadoGenerador::cases(),
             'filtros' => ['q' => $busqueda, 'base_id' => $baseId, 'estado' => $estado?->value],
         ]);
     }
@@ -88,7 +108,7 @@ final class GeneradoresController
         $datos = $request->validated();
 
         try {
-            $crearGenerador->ejecutar(
+            $generador = $crearGenerador->ejecutar(
                 (string) $datos['identificador'],
                 $this->stringONull($datos['modelo'] ?? null),
                 $this->enteroONull($datos['base_id'] ?? null),
@@ -103,12 +123,13 @@ final class GeneradoresController
                 ->withErrors(['identificador' => $excepcion->getMessage()]);
         }
 
+        // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
         return redirect()
-            ->route('panel.generadores.index')
+            ->route('panel.generadores.edit', $generador)
             ->with('estado', __('mantenimiento.generadores.creado'));
     }
 
-    public function edit(Request $request, Generador $generador): View
+    public function edit(Request $request, Generador $generador, ResumenRelacionadoDeEquipo $tarjetas): View
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
 
@@ -117,6 +138,7 @@ final class GeneradoresController
             'generador' => $generador,
             'basesDisponibles' => $this->basesDisponibles(),
             'estados' => EstadoGenerador::cases(),
+            'resumenRelacionado' => $this->resumenRelacionado($generador, $request, $tarjetas),
         ]);
     }
 
@@ -143,8 +165,9 @@ final class GeneradoresController
                 ->withErrors(['identificador' => $excepcion->getMessage()]);
         }
 
+        // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
         return redirect()
-            ->route('panel.generadores.index')
+            ->route('panel.generadores.edit', $generador)
             ->with('estado', __('mantenimiento.generadores.actualizado'));
     }
 
@@ -157,6 +180,45 @@ final class GeneradoresController
         return redirect()
             ->route('panel.generadores.index')
             ->with('estado', __('mantenimiento.generadores.eliminado'));
+    }
+
+    /**
+     * Resumen relacionado del aside de `edit()` (solo edición, §6.3.1 de la
+     * guía de pantalla): un generador recién creado no puede tener todavía
+     * cuadrillas ni cargas de combustible. Dos tarjetas, cada una gateada por
+     * el permiso de LO QUE MUESTRA contra el ROL ACTIVO (invariante 10), no por
+     * `mantenimiento.generador.*`; las arma `ResumenRelacionadoDeEquipo` con los
+     * contratos de Personal y de Finanzas (ADR 0003, regla 2).
+     *
+     * No hay órdenes de mantenimiento ni planes: `man_ordenes_mantenimiento`
+     * solo admite `dron` y `vehiculo` como equipo (CHECK de la migración) y los
+     * planes se cruzan por el modelo de un dron. Inventar esas tarjetas sería
+     * mostrar una relación que el esquema no tiene.
+     *
+     * @return list<array{titulo: string, icono: string, tieneDatos: bool, items: list<array<string, mixed>>, vacioTitulo: string, vacioDetalle: string, acciones: list<array{label: string, href: string, icono?: string}>}>
+     */
+    private function resumenRelacionado(Generador $generador, Request $request, ResumenRelacionadoDeEquipo $tarjetas): array
+    {
+        // Memento de navegación: los atajos de alta apilan ESTA ficha como
+        // origen, así el "Volver" de la pantalla de destino regresa acá y no
+        // al listado de su propio módulo. Ver RecordarOrigenNavegacion.
+        $origenNavegacion = ['volver_a' => route('panel.generadores.edit', $generador), 'volver_texto' => $generador->identificador];
+
+        return array_values(array_filter([
+            $tarjetas->cuadrillas(
+                $request,
+                LecturaCuadrillasPorRecurso::TIPO_GENERADOR,
+                $generador->id,
+                __('mantenimiento.generadores.aside_cuadrillas_vacio_detalle'),
+            ),
+            $tarjetas->combustible(
+                $request,
+                LecturaCombustiblePorRecurso::TIPO_GENERADOR,
+                $generador->id,
+                $origenNavegacion,
+                __('mantenimiento.generadores.aside_combustible_vacio_detalle'),
+            ),
+        ]));
     }
 
     private function enteroONull(mixed $valor): ?int

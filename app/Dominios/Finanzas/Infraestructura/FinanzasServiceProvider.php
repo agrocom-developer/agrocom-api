@@ -4,8 +4,11 @@ namespace App\Dominios\Finanzas\Infraestructura;
 
 use App\Dominios\Finanzas\Aplicacion\GenerarDevengosSesion;
 use App\Dominios\Finanzas\Contratos\EscrituraGastoMantenimiento;
+use App\Dominios\Finanzas\Contratos\LecturaAnticiposPorPersona;
+use App\Dominios\Finanzas\Contratos\LecturaCombustiblePorRecurso;
 use App\Dominios\Finanzas\Contratos\LecturaContadoresPanel;
 use App\Dominios\Finanzas\Contratos\LecturaGastoMantenimiento;
+use App\Dominios\Finanzas\Contratos\LecturaGastoPorCampania;
 use App\Dominios\Finanzas\Contratos\LecturaPanelFinanzas;
 use App\Dominios\Operaciones\Contratos\Eventos\SesionValidada;
 use Illuminate\Support\Facades\Event;
@@ -39,6 +42,9 @@ final class FinanzasServiceProvider extends ServiceProvider
         $this->app->bind(LecturaGastoMantenimiento::class, LecturaGastoMantenimientoEloquent::class);
         $this->app->bind(LecturaContadoresPanel::class, LecturaContadoresPanelEloquent::class);
         $this->app->bind(LecturaPanelFinanzas::class, LecturaPanelFinanzasEloquent::class);
+        $this->app->bind(LecturaGastoPorCampania::class, LecturaGastoPorCampaniaEloquent::class);
+        $this->app->bind(LecturaAnticiposPorPersona::class, LecturaAnticiposPorPersonaEloquent::class);
+        $this->app->bind(LecturaCombustiblePorRecurso::class, LecturaCombustiblePorRecursoEloquent::class);
     }
 
     public function boot(): void

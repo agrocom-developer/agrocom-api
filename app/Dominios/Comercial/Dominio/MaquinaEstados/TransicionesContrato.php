@@ -21,12 +21,20 @@ use App\Dominios\Comercial\Dominio\EstadoContrato;
  * (`finalizado`, `cancelado`) no admiten ninguna salida. `pausado` solo
  * vuelve a `vigente` — el CA de HU-71 pide únicamente el ida y vuelta con
  * `vigente`, no `pausado → cancelado` ni `pausado → finalizado`.
+ *
+ * `conflicto` (18/9/2026, ADR 0021): `borrador ↔ conflicto` las dispara solo
+ * el sistema, al reconciliar los lotes de una campaña — ver
+ * `MaquinaEstadosContrato::reconciliarConflictos()`. Un contrato en
+ * `conflicto` nunca pasa directo a `vigente`: primero vuelve a `borrador`
+ * (cuando ya no comparte lotes con un contrato que los retenga) y desde ahí
+ * se aprueba. Sí puede cancelarse.
  */
 final class TransicionesContrato
 {
     /** @var array<string, list<string>> */
     private const array PERMITIDAS = [
-        'borrador' => ['vigente', 'cancelado'],
+        'borrador' => ['vigente', 'cancelado', 'conflicto'],
+        'conflicto' => ['borrador', 'cancelado'],
         'vigente' => ['finalizado', 'cancelado', 'pausado'],
         'finalizado' => [],
         'cancelado' => [],

@@ -23,4 +23,12 @@ final class GenerarPlanillaRequest extends FormRequest
             'periodo' => ['required', 'regex:/^\d{4}-(0[1-9]|1[0-2])$/'],
         ];
     }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return [
+            'periodo.required' => __('finanzas.planillas.error_periodo_requerido'),
+        ];
+    }
 }

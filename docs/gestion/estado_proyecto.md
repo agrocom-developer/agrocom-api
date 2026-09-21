@@ -1,6 +1,6 @@
 # Estado y continuidad del proyecto
 
-**Última actualización: 2026-09-01.** Este documento no es la especificación (que es estable) ni el plan de sprints (que es la estrategia global con HU y fases): es la bitácora de continuidad entre iteraciones — qué se avanzó, qué falta, y qué leer primero para no releer todo `docs/` de cero en cada sesión nueva. Lo mantiene el agente `memoria-contexto` (`.claude/agents/memoria-contexto.md`) al cierre de cada sesión de trabajo relevante.
+**Última actualización: 2026-09-20.** Este documento no es la especificación (que es estable) ni el plan de sprints (que es la estrategia global con HU y fases): es la bitácora de continuidad entre iteraciones — qué se avanzó, qué falta, y qué leer primero para no releer todo `docs/` de cero en cada sesión nueva. Lo mantiene el agente `memoria-contexto` (`.claude/agents/memoria-contexto.md`) al cierre de cada sesión de trabajo relevante.
 
 ## Cómo usar este documento
 
@@ -41,6 +41,76 @@ Al empezar una iteración nueva: leé este documento completo primero (es corto)
 > `docs/gestion/cola_tareas.md` ("Por qué ese orden"), no en el número de
 > sprint. Para retomar el hilo, leé eso, no la tabla de abajo.
 
+> **Nota del 20/9/2026 — homogeneización del panel, por ciclos.** El dueño pidió
+> llevar todos los listados y formularios al patrón de Comercial y de las
+> órdenes de Operaciones (filtros, buscador, acciones de fila con color por
+> estado, modales, campos del catálogo, secciones, tablas de detalle, pasos de
+> estado y resumen relacionado en edición). Quedan afuera roles, organización,
+> bitácora, dashboard, las páginas de detalle (`show`) y el portal. El
+> diagnóstico pantalla por pantalla, las reglas y las doce tareas del ciclo
+> (111 a 122, una rama y un PR por grupo de pantallas) están en
+> [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md); el avance se
+> sigue en su §7. Se ejecuta con `bin/ciclo --fondo`.
+
+> **Nota del 20/9/2026 (cierre, tarea 122) — homogeneización del panel: qué
+> quedó y qué no.** **Integrado a `develop`** (PR #254 a #263, todos del
+> 20/9/2026): la compuerta `PanelHomogeneoTest` (111, #254) y los listados y
+> formularios de Personal (112, #255), Operaciones —Drones, Pausas y Alertas
+> (113, #256); ficha de Trabajo con pasos, Reparto de cuadrillas, Reportes
+> técnicos y Validación de sesiones (114, #257, crítica)—, Mantenimiento
+> —Baterías, Generadores, Vehículos y Fichas de dron (115, #258); Órdenes con
+> pasos y Planes (116, #259)—, Inventario (117, #260), Finanzas —Anticipos,
+> Combustible y Gastos (118, #261); Planillas y Rendiciones (119, #262,
+> crítica)— y Comercial —Cultivos, Facturas y Reportes comerciales (120, #263).
+> El barrido final (`runs/122-barrido.cjs`) recorrió las 39 pantallas del menú
+> de `miguelo` más Pausas y Reparto de cuadrillas (fuera del menú por diseño), en
+> tema claro y oscuro: ninguna responde 500, ninguna desborda
+> `.ag-panel__content` en horizontal y ningún `index` conserva un `.ag-filtros`.
+> Se borró el CSS de tablas y listados que ninguna vista usa (`campos.css`,
+> `trabajos.css`).
+>
+> **Integrada después: la tarea 121** (Usuarios, Dispositivos y Versiones de APK).
+> Quedó hecha y verificada en la rama local `feature/panel-usuarios-dispositivos`,
+> pero el push se cortó, el ciclo no pudo abrir el PR y siguió con la 122 —aunque
+> `runs/121.estado` dijera `OK`—. La tarea 123 la trajo a una rama nueva nacida de
+> `develop` (`feature/usuarios-dispositivos-panel`), resolvió los dos conflictos
+> de docs y dejó vacía `docs/diseno/panel_homogeneo_pendientes.txt`: con eso las 46
+> pantallas que midió la 111 siguen el patrón y `PanelHomogeneoTest` ya no perdona
+> ninguna.
+>
+> **Fuera del rollout por decisión del dueño** (plan §1.1), sin tocar: Roles,
+> Organización, Bitácora, Dashboard, las páginas de detalle (`show`), el portal y
+> lo que no es listado ni formulario de un objeto. Los hallazgos de paso (500 con
+> `?q[]=x`, CSS y JS huérfanos, `confirm()` nativo en pantallas de detalle) están
+> en «Deuda técnica detectada» de [cola_tareas.md](cola_tareas.md).
+
+> **Nota del 19/9/2026 — la corrección del dueño del 18/9 sobre contratos,
+> lotes y órdenes de aplicación, implementada en dos ramas e integrada después
+> (PR #244 y #246).**
+> Mirando el panel andando, el dueño desechó dos enfoques y dejó decidido el
+> reemplazo (`docs/negocio/observaciones_operaciones_comercial_2026-09-18.md`).
+> Se implementó en dos ramas que el 19/9 eran locales, sin push ni PR (hoy ya
+> entraron a `develop`, HU-96 con el #244 y HU-97 con el #246):
+>
+> - **`feature/contrato-conflicto` — exclusividad de lotes entre contratos**
+>   (HU-96, Sprint 19, **ADR 0021**): un contrato `vigente` o `pausado` retiene
+>   sus lotes para toda la campaña, y los `borrador` que compartían lote pasan
+>   solos a `conflicto` ("En conflicto").
+> - **`feature/orden-correlativa` — órdenes de aplicación** (HU-97, Sprint 20,
+>   **ADR 0022**): cada orden es una aplicación completa del contrato, con número
+>   correlativo y una sola abierta por contrato; estados nuevos `pausada` y
+>   `cancelada` (solo desde el panel); cerrar la última aplicación finaliza el
+>   contrato y libera sus lotes. Nace de `feature/contrato-conflicto`.
+>
+> **Pendiente:** la prueba manual del dueño, tras `migrate:fresh --seed` en el
+> compose (las migraciones de `feature/orden-correlativa` frenan con un mensaje
+> si la base ya trae órdenes con número repetido o varias abiertas por
+> contrato); la revisión línea por línea, posterior a la integración, de las
+> máquinas de estados de la orden y del contrato; y las limitaciones conocidas de
+> HU-97 (la app de campo no se entera de una orden pausada, cancelada o cerrada;
+> las sesiones abiertas no se frenan; un lote agregado al contrato no entra en la
+> aplicación abierta), que **no están resueltas**.
+
 
 **Sprint 1 cerrado en lo que es de este repo; sprint 2 en curso (1/9/2026).**
 
@@ -77,50 +147,34 @@ y 9 ya tienen gate propio (`tests/Unit/TransicionesEstadoTest.php`,
 - **Respuestas de campo procesadas (26/8/2026)**: los 5 CSV del banco de preguntas clasificados en CONFIRMADO/CORREGIDO/DESCUBIERTO con matriz de límites (`docs/gestion/respuestas_campo/analisis_clasificacion.md`), 7 documentos de políticas por rol (`docs/negocio/politicas/` — incluye dueño y cliente, derivados), flujo base y excepciones, automatización/sistematización, alcance y objetivos, requerimientos de sistema (RF/RNF) e insumos para el modelo de datos. Hallazgos mayores: la mezcla la prepara hoy el cliente (CR-01), las pausas atribuibles nunca se registran (DS-01), el actor "encargado de la propiedad" (DS-02), límites de clima como parámetros por contrato, y T30 en la flota real. Supuestos §16 cerrados: ±5% aceptado, firma en cualquier formato, vuelo nocturno confirmado.
 - **Auditoría SOLID/Clean Code de HU-01 y TE-03 (27/8/2026)**, hecha por `estandares-programacion` a pedido explícito del usuario (quedó sin argumentar al tomar las decisiones de código, y quería la constancia antes de seguir a HU-02): **cumple**, con evidencia archivo:línea para los 5 principios SOLID y para las convenciones de CLAUDE.md — casos de uso con responsabilidad única (`AsignarRolesUsuario`, `ListarOrdenesAplicacion`), controladores delgados (`OrdenAplicacionController`, comentario explícito "ninguna regla de negocio vive acá"), subtipos sin romper el contrato del padre (`SecUsuarioInterno`/`SecUsuarioCliente` sobre `SecUser`), inyección de dependencias y cero relaciones Eloquent cruzando módulos (solo FK por ID). Dos huecos reales pero no causados por mal diseño, sino por alcance aún no llegado — ver gaps abajo. No bloquean HU-02 (login/menú/tema no tocan estados de contrato/orden ni mutan dinero/hectáreas).
 
-## Datos demo (cuentas para probar a mano)
+## Cuenta de arranque (tarea 100)
 
-Sembrados por `database/seeders/Demo/` — corren solo en `local`/`staging`
-(`DatabaseSeeder`), nunca en producción. Contraseña única para todas:
-**`password`**. Esta sección reemplaza cualquier referencia vieja a
-`camila.rojas` (retirada; ver docblock de `PersonalDemoSeeder`) — la lista
-de abajo es la vigente, actualizarla si un seeder demo cambia usernames.
+Decisión directa del usuario: la familia `database/seeders/Demo/` se retiró
+completa (11 seeders), junto con `tests/Feature/` (157 tests que dependían
+de sus datos) — ya no se confía en que la suite automática refleje que el
+sistema hace lo que se pide, y se prueba todo a mano, en vivo, contra el
+compose real. Esta sección reemplaza a la vieja "Datos demo (cuentas para
+probar a mano)", que documentaba `carlos.ferrufino`, `cliente.sanjorge` y el
+resto de la cuadrilla/cartera de ejemplo.
 
-**Cuentas internas** (`PersonalDemoSeeder`, guard `interno`), todas sobre
-el mismo cliente de `NucleoComercialSeeder` (Agropecuaria San Jorge
-S.R.L.):
+Una instalación nueva de `local`/`staging` arranca con menú, roles y
+permisos (`CatalogoSeeder`) más una única cuenta, sembrada por
+`AdminPlataformaSeeder` (gateado igual que corría `Demo/` antes — nunca en
+producción):
 
-| Usuario | Roles | Persona |
-|---|---|---|
-| `carlos.ferrufino` | dueño, encargado de operaciones, jefe de campo, piloto | Autor (`created_by`) de todo lo demás sembrado por la demo |
-| `jorge.scheidel` | encargado de operaciones | — |
-| `abraham.gutierrez` | jefe de campo, auxiliar | — |
-| `josue.haenke` | piloto | — |
-| `miguelito.justiniano` | piloto, auxiliar | — |
-| `david.rios` | auxiliar | — |
-
-**Cuentas de portal** (`PortalDemoSeeder`, tarea 65/HU-41, guard `cliente`,
-encadenado desde `DemostracionSeeder` — no desde `DemoSeeder`, que se
-mantiene deliberadamente mínimo para no romper los tests que afirman sobre
-su tamaño; ver el docblock del seeder para el porqué). Sin roles ni
-persona: una cuenta de portal solo tiene contrato.
-
-| Usuario | Cliente | Contrato | Qué tiene para mostrar |
+| Usuario | Password | Rol | Persona |
 |---|---|---|---|
-| `cliente.sanjorge` | Agropecuaria San Jorge S.R.L. (4.000 ha, 65 Bs/ha) | El de `NucleoComercialSeeder` | Una sesión validada, un acta firmada y su reporte técnico, sobre el lote L-01 |
-| `cliente.esperanza` | Estancia La Esperanza S.A. (850 ha, 48 Bs/ha) | Propio, creado por este seeder | Idem, sobre su propio lote LE-01 |
+| `miguelo` | `0000` | `admin_plataforma` | — (`persona_id` null: cuenta técnica, no gente de campo) |
 
-Guion de prueba manual paso a paso: [prueba_portal.md](prueba_portal.md).
+`admin_plataforma` recibe el catálogo de permisos completo, sin excepción
+— mismo criterio que `dueno` (`SeguridadSeeder`): acceso total sobre
+cualquier instalación, incluida la gestión de dueños. Es un rol técnico de
+plataforma, no del negocio del cliente, y su seeder es dato de catálogo
+puro que corre en todos los entornos (un rol sin usuarios asignados no daña
+nada en producción).
 
-**Correo de la cuenta (tarea 66, ADR 0004 ampliación 9/9/2026):** todas las
-cuentas internas de la tabla de arriba tienen `<username>@agrocom.example`
-(p. ej. `carlos.ferrufino@agrocom.example`); las de portal, el correo del
-contacto real de su cliente (`cliente.sanjorge` → `jantelo@sanjorge.example`,
-`cliente.esperanza` → `manez@laesperanza.example`). Los correos que salgan
-del entorno local (`docker compose up`, `MAIL_MAILER=smtp` en
-`.env.example`) se leen en Mailpit: **http://localhost:8025** — nunca salen
-a una casilla real. `/panel/perfil` y `/portal/perfil` (autoservicio) y
-"Recuperar acceso"/`/restablecer` (por correo) ya son flujos reales, no
-maqueta.
+El resto de los datos —clientes, contratos, personas, órdenes, sesiones—
+los carga el usuario a mano desde el panel, con esta cuenta.
 
 ## Ramas y remoto (estado real, no solo local)
 

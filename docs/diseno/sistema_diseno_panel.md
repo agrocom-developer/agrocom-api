@@ -14,7 +14,7 @@ Ubicación: `resources/css/tokens/`. Import único desde `resources/css/app.css`
 
 1. **Primitivos** (`tokens/primitives/`) — valores literales (hex). Ningún componente los usa directamente.
    - `brand.css`: **solo** las rampas verde/ámbar de Agrocom. Es la única pieza del sistema atada a la identidad visual de esta marca — ver §1.4.
-   - `base.css`: escala neutra (grises), colores de estado universales (rojo/amarillo/azul — la marca no define un rojo), y las escalas de espaciado/tipografía/radio/elevación/transición. No tiene nada de marca.
+   - `base.css`: escala neutra (grises), colores de estado universales (rojo/amarillo/azul — la marca no define un rojo — más la extensión categórica violeta/magenta de "distintivo", ver §1.4), y las escalas de espaciado/tipografía/radio/elevación/transición. No tiene nada de marca.
 2. **Semánticos** (`tokens/semantic/theme-light.css`, `theme-dark.css`) — los tokens que de verdad referencian los componentes (`--ag-color-bg`, `--ag-color-text`, `--ag-color-primary`, etc.), resueltos sobre los primitivos de ambos archivos de la capa 1. El tema activo se resuelve reasignando **estos** tokens vía el atributo nativo de Bootstrap 5.3 `[data-bs-theme="light"|"dark"]` en el `<html>` — nunca duplicando una regla de componente por tema.
 
 Por qué la separación brand/base dentro de la capa 1 (pedido explícito, no implementado, solo organizativo): hoy el panel es de una sola marca. Si en el futuro el sistema se vendiera como SaaS multi-tenant (cada cliente con su logo/colores propios), el único archivo que un tenant nuevo necesitaría sobreescribir es `primitives/brand.css` — ningún componente, ninguna vista, ni `base.css`, ni la capa semántica cambiarían, porque nada fuera de `semantic/` referencia un hex directamente. **Esto no implementa multi-tenant**: no hay tabla, no hay resolución por tenant, no hay selector de marca — es solo el criterio de organización del archivo de tokens que de todos modos había que escribir para HU-02.
@@ -56,6 +56,35 @@ Los tonos "300" y "700" son los dos extremos exactos del degradado leído en cad
 | `--ag-color-text-muted` (gris-500) sobre `--ag-color-bg-auth` (tema oscuro) | ~7.6:1 | Pasa AAA (con menos margen que antes) | El muted global sigue pasando cómodo en oscuro — `--ag-color-text-muted-auth` reutiliza el mismo valor. Bajó de ~8.2:1 (el nuevo fondo es más luminoso), pero se mantiene por encima del piso AAA (7:1) |
 | `--ag-color-accent-link` (ámbar-300) sobre `--ag-color-bg-auth` (tema oscuro) | ~7.8:1 | Pasa AAA | Link "¿Olvidaste tu contraseña?", tema oscuro. Bajó de ~8.4:1, sigue AAA |
 | `--ag-color-primary-emphasis` (verde-300) sobre `--ag-color-bg-auth` (tema oscuro) | ~7.7:1 | Pasa AAA | Link "Volver al ingreso", tema oscuro. Bajó de ~8.3:1, sigue AAA |
+| `--ag-color-distintivo-1-strong` (violeta-700) sobre `--ag-color-distintivo-1-subtle` (tema claro) | ~7.88:1 | Pasa AAA | Chip categórico "distintivo-1" (violeta), tema claro. Recalculado 17/9/2026 (violeta pasa a hex literal de Fiori, ver más abajo) |
+| `--ag-color-distintivo-1-strong` (violeta-700) sobre `--ag-color-surface-card` (tema claro) | ~9.65:1 | Pasa AAA | Ídem, texto de chip directo sobre la tarjeta (sin el fondo `-subtle` de por medio) |
+| `--ag-color-distintivo-2-strong` (magenta-700) sobre `--ag-color-distintivo-2-subtle` (tema claro) | ~7.57:1 | Pasa AAA | Chip categórico "distintivo-2" (magenta), tema claro |
+| `--ag-color-distintivo-2-strong` (magenta-700) sobre `--ag-color-surface-card` (tema claro) | ~9.47:1 | Pasa AAA | Ídem, texto de chip directo sobre la tarjeta |
+| `--ag-color-distintivo-1-strong` (violeta-300) sobre `--ag-color-distintivo-1-subtle` (tema oscuro) | ~4.69:1 | Pasa AA | Chip categórico "distintivo-1" (violeta), tema oscuro. Opacidad de `-subtle` bajada de 0.16 a 0.1 (17/9/2026) — a 0.16 no llegaba a 4.5:1 |
+| `--ag-color-distintivo-1-strong` (violeta-300) sobre `--ag-color-surface-card` (tema oscuro) | ~5.63:1 | Pasa AA | Ídem, texto de chip directo sobre la tarjeta |
+| `--ag-color-distintivo-2-strong` (magenta-300) sobre `--ag-color-distintivo-2-subtle` (tema oscuro) | ~5.06:1 | Pasa AA | Chip categórico "distintivo-2" (magenta), tema oscuro |
+| `--ag-color-distintivo-2-strong` (magenta-300) sobre `--ag-color-surface-card` (tema oscuro) | ~6.13:1 | Pasa AA | Ídem, texto de chip directo sobre la tarjeta |
+| `--ag-color-success-strong` (`color-mix(green-600 30%, green-900 70%)`) sobre `--ag-color-success-subtle` (tema claro) | ~7.36:1 | Pasa AAA | Chip "Validada", tema claro. Recalculado 17/9/2026: `success` pasa de green-500 a green-600 (Fiori "positive" `#107e3e`, literal — ver `primitives/base.css`) |
+| `--ag-color-danger-strong` (red-700, `#880000`) sobre `--ag-color-danger-subtle` (tema claro) | ~7.26:1 | Pasa AAA | Alerta de RC, tema claro. `danger` pasa a los hex literales de Fiori (`#bb0000` crudo / `#880000` texto, UI Indication 2/1) |
+| Texto blanco sobre `--ag-color-danger-contrast-fill` (red-600, `#bb0000`) | ~6.75:1 | Pasa AAA | Relleno sólido de `.ag-button--danger`, ambos temas |
+| `--ag-color-warning-strong` (amber-900) sobre `--ag-color-warning-subtle` (tema claro) | ~7.25:1 | Pasa AAA | Chip "Sin evidencia", tema claro. `warning` pasa a amber-700 (coincide casi exacto con Fiori "critical" `#e9730c`); `-strong` sube de amber-800 a amber-900 porque contra el `-subtle` nuevo amber-800 caía a 4.29:1 (bajo AA) |
+| `--ag-color-info-strong` (teal-700) sobre `--ag-color-info-subtle` (tema claro) | ~7.1:1 | Pasa AAA | Chip "En vuelo", tema claro. Tercera vuelta (18/9/2026, tabla de 8 nombres del usuario): `info` pasa de blue-600 a teal-500 (Fiori "UI Indication 6" `#0f828f`, literal); blue-600 queda libre como `--ag-color-primary-2` (ver §1.4), sin conectar a pantalla. `--ag-color-focus-ring` se queda en blue-500, sin tocar |
+| `--ag-color-danger-strong` (`#fc9292`) sobre `--ag-color-danger-subtle` (tema oscuro) | ~4.94:1 | Pasa AA | Alerta de RC, tema oscuro. Opacidad de `-subtle` bajada de 0.2 a 0.1 — a 0.2 ni el valor nuevo ni el anterior de Bootstrap (`#ea868f`) llegaban a 4.5:1 (el anterior daba 4.41:1, nunca verificado) |
+| `--ag-color-info-strong` (teal-300, `#7fc4cb`) sobre `--ag-color-info-subtle` (tema oscuro) | ~5.33:1 | Pasa AA | Chip "En vuelo", tema oscuro. Tercera vuelta (18/9/2026): mismo stop pastel que ya usaba `distintivo-3` en este archivo (`#7ab8f5` anterior queda libre como `--ag-color-primary-2`) |
+| Texto blanco sobre `--ag-color-success-contrast-fill` (green-600, `#107e3e`) | ~5.15:1 | Pasa AA | `.ag-badge--success` y `stat-card[data-state="success"]`, ambos temas (segunda vuelta paleta Fiori, 17/9/2026 — relleno sólido constante entre temas, ver §1.4) |
+| Texto blanco sobre `--ag-color-info-contrast-fill` (teal-500, `#0f828f`) | ~4.56:1 | Pasa AA (al filo) | Ídem, variante info. Tercera vuelta (18/9/2026): mismo valor que `--ag-color-distintivo-3-contrast-fill` (ver fila de abajo) — ambos tokens comparten hoy el mismo primitivo, ver §1.4 |
+| Texto blanco sobre `--ag-color-warning-contrast-fill` (amber-700, `#e8720c`) | ~3.03:1 | **No llega a AA para texto chico (4.5:1); pasa 3:1** | **Es la regla vigente desde el 19/9/2026 (decisión del dueño): `.ag-badge--warning`, el paso `warning` de `step-arrow` y el ícono `warning` de `link-row` llevan texto/ícono BLANCO, como todos los demás tonos.** Costo de contraste asumido a cambio de que los estados se lean como una sola familia: el dueño descartó el gris-900 dos veces («no le queda el negro», 17/9; badge «En curso» de Estadías, 19/9). No volver a introducir texto oscuro sobre un relleno de estado |
+| ~~Texto gris-900 sobre `--ag-color-warning-contrast-fill` (amber-700, `#e8720c`)~~ | ~5.09:1 | Pasaba AA | **Retirado el 19/9/2026** — era la única excepción al texto blanco sobre relleno de estado (ver fila de arriba). Queda como historial de por qué existió |
+| Ícono blanco (gráfico, no-texto) sobre `--ag-color-warning-contrast-fill` (amber-700, `#e8720c`) | ~3.07:1 | Pasa WCAG 1.4.11 (no-texto, 3:1 — NO el 4.5:1 de texto) | `stat-card[data-state="warning"] .ag-stat-card__icon-box`, ambos temas (17/9/2026, segunda vuelta: gris-900 pasaba AA pero "no quedaba", feedback directo del usuario sobre captura real — el ícono es gráfico, no texto, así que aplica el umbral más laxo de 1.4.11, no el de texto). `.ag-badge--warning` de arriba NO puede copiar esto: ahí el contenido es texto real |
+| Borde `--ag-color-danger-contrast-fill`/`--ag-color-warning-contrast-fill` (crudo, no diluido) sobre `--ag-color-surface-card`/`-bg-auth` (sand-50) | ~6.75:1 / ~3.07:1 | Pasa 3:1 (borde, no-texto) | `.ag-button--danger-outline`/`.ag-button--warning-outline` (17/9/2026, segunda vuelta): antes usaban `-danger-border`/`-warning-border` (diluido con sand-50 al 70%), se leía "triste" en captura real |
+| Texto/borde `--ag-color-danger`/`--ag-color-warning` (plano, NO `-contrast-fill`) sobre `--ag-color-surface-card`, tema claro | ~6.75:1 / ~3.07:1 | Danger pasa AAA; warning pasa 3:1 (borde) pero no 4.5:1 (texto normal) | `.ag-button--danger-outline`/`.ag-button--warning-outline`, tercera vuelta (18/9/2026): texto pasó de `-strong` al hex literal (pedido explícito del usuario). En tema claro `--ag-color-danger`/`-warning` resuelven al MISMO hex que `-contrast-fill` (son el mismo primitivo ahí), sin diferencia visual con lo pedido |
+| Texto/borde `--ag-color-danger`/`--ag-color-warning`/`--ag-color-primary-2` (plano) sobre `--ag-color-surface-card`, tema oscuro | ~5.95:1 / ~6.37:1 / ~6.15:1 | Los tres pasan AAA | Cuarta vuelta (18/9/2026, aviso del usuario: "esos hexas funcionan solo para el tema claro"): el crudo `-contrast-fill` (constante entre temas) daba ~1.91:1/~4.21:1/~2.56:1 contra la tarjeta oscura — casi invisible en danger, por debajo del piso 3:1 en los tres. Se cambió `.ag-button--danger-outline`/`.ag-button--warning-outline` (button.css) y `.ag-row-actions__more-btn` (row-actions.css) del token `-contrast-fill` al token PLANO (`--ag-color-danger`/`-warning`/`-primary-2`), que ya traía su propio aclarado por tema (`#fc9292`/amber-300 `#f5a623`/`#7ab8f5`) — no hizo falta inventar un valor nuevo, solo usar el token correcto para texto/borde DIRECTO sobre una superficie que cambia de tema (a diferencia de un relleno sólido + texto blanco, que sí debe quedar constante) |
+| Texto/borde `--ag-color-distintivo-1`/`--ag-color-distintivo-2` (plano) sobre `--ag-color-surface-card`, ambos temas | claro ~4.39:1/~4.65:1 · oscuro (violet-300/magenta-300) ~5.7:1/~6.17:1 | Pasan AA (claro violeta al filo del umbral de texto) | Mismo aviso del usuario extendido a todos los semánticos ("hasta el purple, azul y violet"). `distintivo-2` SÍ tiene un `-outline` real desde la octava vuelta: `.ag-button--distintivo-2-outline`, "Finalizar" en `contratos/index.blade.php`. `distintivo-1` sigue sin `-outline` en pantalla (solo relleno `-contrast-fill` en `atoms/badge`/`molecules/stat-card`) |
+| Texto/borde `--ag-color-alert` (plano) sobre `--ag-color-surface-card`, ambos temas | claro (red-700, `#880000`) ~9.82:1 · oscuro (`#fb7474`) ~4.83:1 | Pasan AAA/AA | Novena vuelta (18/9/2026): "alert" es UI Indication 1 (`#880000`), mismo primitivo que ya usaba `danger-strong` como texto, ahora con token propio. El aclarado de oscuro NO reutiliza el mismo cálculo que `danger` (`#fc9292`) — misma fórmula HLS con el mismo hue/saturación daría un rojo idéntico, invisible la diferencia entre "alert" y "danger" — se usó menos lightness (L=0.72 vs 0.78) para un coral más saturado, distinto a simple vista del rosa pastel de danger. `.ag-button--alert-outline`, "Cerrar" en `campanias/index.blade.php` |
+| Texto blanco sobre `--ag-color-alert-contrast-fill` (red-700, `#880000`) | ~10.26:1 | Pasa AAA | `.ag-badge--alert`, badge de estado "cerrada" en `campanias/index.blade.php`, ambos temas (constante) |
+| Texto blanco sobre `--ag-color-distintivo-1-contrast-fill` (violeta-500, `#925ace`) | ~4.59:1 | Pasa AA (al filo) | `.ag-badge--distintivo-1` y `stat-card[data-state="distintivo-1"]` (18/9/2026: tarjeta KPI "categoría de insumo" de `ordenes/show.blade.php`, primer consumidor real), ambos temas |
+| Texto blanco sobre `--ag-color-distintivo-2-contrast-fill` (magenta-500, `#c0399f`) | ~4.85:1 | Pasa AA | `.ag-badge--distintivo-2`, ambos temas |
+| Texto blanco sobre `--ag-color-distintivo-3-contrast-fill` (teal-500, `#0f828f`, UI Indication 6 — nuevo 17/9/2026) | ~4.56:1 | Pasa AA (al filo) | `.ag-badge--distintivo-3`, ambos temas. Sin conectar a ninguna pantalla todavía |
 
 Consecuencia de diseño explícita: **el relleno sólido de marca (botones) es constante entre temas** (identidad de marca no cambia); lo que sí se reasigna por tema son los tonos usados como *texto/ícono sobre una superficie* (`-emphasis`) y los fondos tenues (`-subtle`), porque esos sí dependen de si están sobre blanco o sobre negro. El mismo criterio se extiende (HU-02, refinamiento editorial de `auth-layout`) a `--ag-color-scrim*`/`--ag-color-text-on-scrim`: la fotografía de fondo no reasigna por tema, así que el overlay y el texto que van montados sobre ella tampoco — usar `--ag-color-text-inverse` ahí sería un bug real en tema oscuro (resuelve a gris-900, casi invisible sobre la foto oscurecida).
 
@@ -71,6 +100,17 @@ Consecuencia de diseño explícita: **el relleno sólido de marca (botones) es c
 | `--ag-color-success|danger|warning|info(-subtle)` | Estados de formulario/alertas |
 | `--ag-color-avance-bajo|medio|alto|cumplido|excedido` (nuevo, 9/9/2026, tarea 75) | Los 5 tramos de `molecules/tiered-progress-bar` (0-33/34-66/67-99/100/>100%, informe de avance de contratos HU-52). Alias de success/danger/warning/info/primary-emphasis — no rampa de color nueva. `excedido` usa `primary-emphasis` y no `primary` a secas: green-700 crudo sobre el track oscuro del tema oscuro ronda 2:1, insuficiente (mismo motivo que `--ag-color-primary-emphasis`, ver fila de abajo) |
 | `--ag-color-neutral-subtle` (nuevo, mockup de dashboard 2026-08-28) | Gris "sin estado" para `atoms/badge`/`molecules/stat-card` variante "neutral" — un peldaño más marcado que `--ag-color-bg`/`-bg-elevated` (gray-200 claro / gray-800 oscuro) para que el pill/chip se distinga de la superficie sin necesitar tinte de color |
+| `--ag-color-distintivo-1\|2\|3(-subtle\|-strong\|-border)` (17/9/2026, tarea de tokens; distintivo-3 agregado en la segunda vuelta el mismo día) | Extensión CATEGÓRICA de la familia de estados universales — tres tonos (violeta/magenta/teal, `primitives/base.css`) sin carga de "bueno"/"malo"/urgencia, a diferencia de success/warning/danger/info. Cubren el hueco de más de 4 valores a distinguir sin pisarse (p. ej. las 6 categorías de `ope_categorias_insumo`, o un estado con más de 4 pasos). Valores literales de la paleta "Indication Colors" de SAP Fiori (UI Indication 7/8/6, `#925ace`/`#c0399f`/`#0f828f`). Este trío `-subtle`/`-strong`/`-border` queda como estaba (par tenue, sin conectar a pantalla); el uso real como chip es vía `-contrast-fill`, ver fila de abajo. `distintivo-1` (violeta) SÍ está conectado desde el 18/9/2026: tarjeta KPI "categoría de insumo" de `ordenes/show.blade.php` (ver `molecules/stat-card`). `distintivo-3` (teal) comparte desde la tercera vuelta el mismo primitivo crudo que `--ag-color-info` (ver fila de abajo) — duplicado documentado a propósito, no fusionado porque `distintivo-3` en sí sigue sin conectar a ninguna pantalla |
+| `--ag-color-success\|danger\|warning\|info` (actualizado, 17/9/2026 y tercera vuelta 18/9/2026, tarea de tokens) | Los cuatro estados usan los valores LITERALES de "Indication Colors" de SAP Fiori — pedido explícito y repetido del usuario ("que un documento no te limite si yo toy autorizando"), porque los tonos anteriores se veían "demasiado claros, como si les faltara opacity". Es la única excepción documentada a "nunca copiar el hex de una referencia externa" (`guia_pantalla_panel.md` §7) — no aplica al resto del sistema. `danger` usa 2 tonos (crudo `#bb0000` / texto `-strong` `#880000`, UI Indication 2/1); `warning` no suma primitivo nuevo porque `#e9730c` (UI Indication 3) coincide casi exacto con el amber-700 de marca ya existente; `success` es `#107e3e` (UI Indication 4). **`info` cambió dos veces**: 17/9 pasó de azul Bootstrap a blue-600 (`#0a6ed1`, UI Indication 5); 18/9 (tercera vuelta, tabla de 8 nombres del usuario) pasó de blue-600 a teal-500 (`#0f828f`, UI Indication 6) — blue-600 quedó libre como `--ag-color-primary-2` nuevo, ver fila de abajo. AA de cada par recalculado y verificado en §1.3. Detalle completo del porqué de cada valor en el comentario de cabecera de `primitives/base.css` |
+| `--ag-color-primary-2(-subtle\|-strong\|-border\|-contrast-fill)` (nuevo, 18/9/2026, tercera vuelta; conectado y revertido varias veces, conectado de nuevo en la octava) | blue-600 (`#0a6ed1`, UI Indication 5) — el tono que ocupaba `info` hasta la segunda vuelta. Nombre asignado explícitamente por el usuario en su tabla de 8 colores/8 nombres. Se probó en Contrato/Órdenes (badge `borrador`, botón "Ver", "⋮") y el usuario revirtió los tres. Conexión vigente hoy: `.ag-badge--primary-2` para "Activa" de Campania (`campanias/index.blade.php`, columna "Actividad" — antes `success`, verde, que competía con el badge "Abierta" de la columna "Estado" al lado; "Inactiva" se queda en `neutral`). `--ag-color-focus-ring` sigue en blue-500 (primitivo distinto), sin tocar |
+| `--ag-color-alert(-subtle\|-strong\|-border\|-contrast-fill)` (nuevo, 18/9/2026, novena vuelta) | UI Indication 1 de Fiori (`#880000`, red-700) — mismo primitivo que ya alimentaba `--ag-color-danger-strong` (texto de danger), ahora con nombre y token PROPIOS a pedido del usuario. `-strong` queda igual al crudo (red-700 ya es el escalón más oscuro de la rampa roja, no hay un cuarto tono de dónde derivar uno más oscuro). Conectado desde que se creó: `.ag-badge--alert`/`.ag-button--alert-outline` para "Cerrar"/estado `cerrada` de Campania — más oscuro y severo que `danger` (rojo-600, el botón "Eliminar"), a propósito distinto para no confundir cerrar un ciclo de negocio con borrar el registro |
+| `.ag-button--success-outline`/`.ag-button--info-outline`/`.ag-button--primary-2-outline`/`.ag-button--distintivo-2-outline`/`.ag-button--alert-outline` (nuevo, 18/9/2026, quinta a novena vuelta) | Completa la familia `-outline` (antes solo danger/warning): texto y borde en el token PLANO del estado (nunca `-contrast-fill`, ver la trampa documentada junto a esos tokens en theme-light.css). Principio del usuario: "el mismo botón al cambiar el estado sea el mismo color de ese estado" — la acción que dispara una transición usa el color del ESTADO DE LLEGADA. La asignación estado↔color en `contratos/index.blade.php` no es fija, es una decisión de negocio que el usuario reasignó más de una vez en la misma sesión: `vigente`=success (Aprobar/Reanudar), `pausado`=info (Pausar, antes warning), `finalizado`=distintivo-2/"purple" (Finalizar, antes info) — el CRITERIO no cambió, solo qué color le toca a cada estado. `primary-2-outline` es la excepción: no representa ningún estado, pensado para acciones que solo NAVEGAN — probado en "Ver"/"⋮" y revertido en los dos (ver fila de `--ag-color-primary-2` más arriba), hoy sin conectar como botón. Octava vuelta: `campanias/index.blade.php` — "Cerrar" (→ `cerrada`) pasa de `danger-outline` a `distintivo-2-outline` (magenta), pedido explícito del usuario para distinguirlo de "Eliminar" (borrado real, se queda en `danger-outline`). Novena vuelta, minutos después: el usuario aclaró que había confundido "magenta" con `#880000` (que en realidad es "alert", no `distintivo-2`) y pidió "Cerrar" en alert-outline en su lugar — `$variantePorEstado['cerrada']` acompaña el cambio (`distintivo-2`→`alert`); "Eliminar" sigue en `danger-outline` (rojo-600) sin tocar, dos rojos distintos para dos acciones de gravedad distinta |
+| Estado `conflicto` de Contrato (19/9/2026, ADR 0021) | Badge `alert` en `contratos/index.blade.php` y en el modal de conflicto (`ContratosController::formatearConflictos`) — el mismo tono que ya tenía la marca "En conflicto" de un lote dentro del formulario de contrato (#244), así que el estado persistido y la marca visual se leen como lo mismo. Su única acción en el listado es "Cancelar" (`danger-outline`, color del estado de llegada, `cancelado`): un contrato en conflicto no se aprueba ni se pide a mano hasta que se resuelva el choque de lotes. |
+| `molecules/progress-meter` `__percent`/`__bar-fill`/`section-head` propio (18/9/2026, sexta y novena vuelta) | La cifra grande pasa de `--ag-color-text` (plano, sin relación con la paleta) a `--ag-color-distintivo-1` (violeta) — pedido explícito del usuario. Texto GRANDE (1.5rem bold, umbral WCAG 3:1), así que el crudo de tema claro (~4.39:1) pasa de sobra. Novena vuelta: `__bar-fill` (antes `--ag-color-primary`, verde) y el `accent` del `section-head` propio de esta tarjeta (antes sin `accent`, caía en el verde por defecto — colisionaba con "Datos de la orden" en `ordenes/show.blade.php`, el usuario lo notó como "se repite desde 0") pasan TAMBIÉN a distintivo-1 — toda la tarjeta comparte un único tono, fijo en el componente (no un prop, todo `progress-meter` es igual) |
+| `ordenes/show.blade.php`: mapeo final de `accent` por sección (18/9/2026, novena vuelta, tras varias iteraciones) | Con 7 `section-head` en la pantalla (6 `form-section` + `progress-meter`) y solo 6 tonos sin carga de bueno/malo, el usuario dio el mapeo uno a uno para que ninguno se repita: `success`→Datos de la orden, `info`→Lotes, `distintivo-2`→Actividad, `alert`→Vínculos/"Relacionado", `warning`→Límites climáticos, `primary-2`→Parámetros de vuelo, `distintivo-1`→Avance de asignación. `danger` queda sin usar en esta pantalla. `success` en "Datos de la orden" comparte tono con el KPI "Aplicaciones" cuando completa su meta — decisión explícita del usuario, consultada antes de fijarla, no un descuido |
+| `molecules/timeline` línea conectora (18/9/2026, sexta vuelta) | Pasa de `--ag-color-border-row` (divisor sutil, casi invisible en claro — nunca pensado para leerse como línea) a `--ag-color-text` (pedido explícito: "negro para claro y blanco para oscuro" — `--ag-color-text` ya resuelve oliva-950/casi-blanco cálido, el mismo par sin introducir un negro/blanco puro que desentone con la paleta tibia del resto del sistema) |
+| `molecules/link-row` `__icon--*` (18/9/2026, sexta vuelta) | Mismo salto que `atoms/badge`/`stat-card`: relleno SÓLIDO `-contrast-fill` + ícono blanco (antes par tenue `-subtle`/`-strong`), ícono en `md` (antes `sm`, contenedor 2.25rem→2.5rem, igual que `stat-card__icon-box`). Suma variantes `distintivo-1\|2\|3`/`primary-2` a las 4 que ya tenía. Primer consumidor (`ordenes/show.blade.php`, sección "Relacionado"): tono pasa de condicional (`neutral` si el conteo es 0) a FIJO por vínculo (`info` trabajos / `success` equipos) — pedido explícito: "un diferente por cada elemento", no gris hasta que haya datos (a diferencia de los KPI de la misma pantalla, que sí arrancan neutros a propósito, ver el bloque de comentario sobre `$aplicacionesEstado`/`$equiposEstado`) |
+| `--ag-color-success\|warning\|info\|distintivo-1\|2\|3\|primary-2\|alert-contrast-fill` (17/9/2026, segunda vuelta; `primary-2`/`alert` sumados 18/9/2026) | Relleno SÓLIDO de cada estado, constante entre temas (mismo criterio que `--ag-color-danger-contrast-fill`, que ya existía) — pedido explícito del usuario: el par tenue `-subtle`/texto `-strong` de `atoms/badge` y `molecules/stat-card` se leía "con poca opacity", no como estado. `atoms/badge` (variantes success/warning/info/danger/distintivo-1/2/3/primary-2/alert) y el ícono+barra de `molecules/stat-card` (`data-state`, las 8 variantes completas desde la novena vuelta — pedido explícito: "tiene que tener para los 8 colores semánticos aunque ahorita solo se ocupe 4") pasan a este relleno + texto blanco, salvo warning (texto gris-900 — blanco sobre `#e9730c`/amber-700 falla AA, ver §1.3). **Alcance deliberadamente acotado**: los controles de formulario (`checkbox`, `input`, `switch`, `select`, `radio-group`, etc.) siguen con el par tenue de siempre — ese sigue siendo el patrón correcto ahí (un input de error con relleno sólido rojo se lee como roto, no como aviso), no se tocaron |
 | `--ag-color-focus-ring` | Contorno de foco de teclado (accesibilidad) |
 | `--ag-space-1`…`--ag-space-8` | Espaciado, escala de 8px |
 | `--ag-font-family-base|mono`, `--ag-font-size-*`, `--ag-line-height-*`, `--ag-font-weight-*` | Tipografía de texto/cifras |
@@ -137,9 +177,9 @@ Consecuencia de diseño explícita: **el relleno sólido de marca (botones) es c
 | Organism | `page-header` | `resources/views/components/organisms/page-header.blade.php` | Implementado (2/9/2026, tarea 31 — arquetipo formulario, ver §14) |
 | Molecule | `tabs` | `resources/views/components/molecules/tabs.blade.php` | Implementado (2/9/2026, tarea 31 — el CSS ya existía desde el rediseño del dashboard, faltaba el componente) |
 | Organism | `form-actions-bar` | `resources/views/components/organisms/form-actions-bar.blade.php` | Implementado (2/9/2026, tarea 31) |
-| Molecule | `summary-card` | `resources/views/components/molecules/summary-card.blade.php` | Implementado (2/9/2026, tarea 31) |
+| Molecule | `summary-card` | `resources/views/components/molecules/summary-card.blade.php` | Implementado (2/9/2026, tarea 31). 19/9/2026: el slot `action` admite varios botones — el contenedor (`.ag-summary-card__action`) es una columna con `gap`, un solo botón se ve igual que antes |
 | Molecule | `progress-meter` | `resources/views/components/molecules/progress-meter.blade.php` | Implementado (2/9/2026, tarea 31) |
-| Molecule | `file-field` | `resources/views/components/molecules/file-field.blade.php` | Implementado (2/9/2026, tarea 31 — antes markup suelto en `organizacion.css`) |
+| Molecule | `file-field` | `resources/views/components/molecules/file-field.blade.php` | Implementado (2/9/2026, tarea 31 — antes markup suelto en `organizacion.css`). 20/9/2026 (tarea 118): al elegir un archivo el campo muestra también su nombre y su peso (`resources/js/molecules/file-field.js`), no solo la vista previa de una imagen — un PDF no tiene vista previa y sin esto no había ninguna señal de que el campo lo tomó (primer uso con un comprobante: `finanzas::pages.gastos.create`). Al quitar la elección vuelve lo que había. Además `.ag-file-field` es `position: relative`: el input nativo (visually-hidden, `position: absolute`) no tenía ancestro posicionado y, con el campo bajo el pliegue de un formulario largo, estiraba el documento y la ventana scrolleaba (guía §4.1; en Clientes no se notaba porque el campo queda arriba). |
 | Template | `portal-layout` | `resources/views/components/templates/portal-layout.blade.php` | Implementado (3/9/2026, tarea 55 — cáscara del portal del cliente, header de una fila con 3 links fijos en vez del layout de tres niveles de `panel-layout`, ver §4.10). Faltaba en esta tabla; se agrega en la corrección de la tarea 55. |
 | Atom | `select` | `resources/views/components/atoms/select.blade.php` | Implementado (8/9/2026, tarea 76 — ver §16) |
 | Atom | `date` | `resources/views/components/atoms/date.blade.php` | Implementado (8/9/2026, tarea 76 — ver §16) |
@@ -149,6 +189,21 @@ Consecuencia de diseño explícita: **el relleno sólido de marca (botones) es c
 | Atom | `textarea` | `resources/views/components/atoms/textarea.blade.php` | Implementado (8/9/2026, tarea 76 — ver §16) |
 | Molecule | `tiered-progress-bar` | `resources/views/components/molecules/tiered-progress-bar.blade.php` | Implementado (9/9/2026, tarea 75 — informe de avance de contratos, HU-52). Barra de un solo relleno con color por tramo (5 tokens `--ag-color-avance-*`, ver §1.4) en vez del relleno fijo `--ag-color-primary` de `progress-meter` — se necesitaba distinguir 0-33/34-66/67-99/100/>100% a simple vista. `percent`/`tramo` ya resueltos por el llamador (`TramoAvance::desde()`), `tramo` viaja como string (`->value`), nunca el enum: el catálogo no importa clases de `App\Dominios\*` |
 | Atom | `datetime` | `resources/views/components/atoms/datetime.blade.php` | Implementado (11/9/2026 — reemplaza `<x-atoms.input type="datetime-local">` nativo en `pausas` inicio/fin, el mismo problema que ya se había resuelto para `atoms/date` sin hora). Única excepción del catálogo que envuelve una librería de terceros (flatpickr) en vez de construirse desde cero: un selector de hora accesible a mano es mucho más trabajo que el calendario de días de `atoms/date`, y esto solo tiene dos usos hoy — decisión explícita del usuario. Retematizado completo a tokens en `resources/css/components/datetime.css` (CLAUDE.md invariante 11); CSS estructural de flatpickr importado como vendor en `app.css`, mismo criterio que Bootstrap. Progressive enhancement distinto al resto del catálogo: el control real es `<input type="text">`, no un `type="datetime-local"` nativo oculto (ese tipo exige el formato exacto `YYYY-MM-DDTHH:mm` incluso seteado por JS) — sin JS el campo es texto plano editable a mano, que el backend acepta igual (`RegistrarPausaRequest` valida solo `'date'`, sin formato estricto). 24h siempre (`H:i`), nunca a.m./p.m. — mismo criterio que la columna HORA del dashboard. Carga diferida vía `data-ag-datetime` (mismo patrón que dashboard-charts/dashboard-map), no entra en el bundle de pantallas que no lo usan. |
+| Atom | `time-range` | `resources/views/components/atoms/time-range.blade.php` | Implementado (19/9/2026 — primer uso: horario por lote en `contratos/_lotes-tabla`, reemplaza a los dos `<input type="time">` nativos). Rango horario en UNA casilla compacta (~14 rem) con un POPUP de reloj anclado a ella (Popover API: capa superior sin recortes, cierra con clic afuera o Esc, sin fondo oscuro; debajo de la casilla o encima si no entra). El reloj es de **12 horas con «a. m.»/«p. m.» explícitos** junto a cada hora en la cabecera —un dial de 1 a 12 sin período no dice si 3:00 es de la madrugada o de la tarde—; dial de una sola vuelta (minutos con marcas cada 5 y precisión de 1 al arrastrar); elegir una hora pasa sola a sus minutos, luego a la hora de fin y a sus minutos; **el período de la hora de fin se elige solo** para que quede después del inicio (10:00 a. m. → «3» = 3:00 p. m.) mientras no se toque a mano. Modo de texto que acepta «6:30 a. m.», «6 pm» o «18:30»; valida que ambas horas estén y que el fin sea posterior. Lo que se guarda es siempre `H:i` en 24 horas (el que espera `date_format:H:i`); la casilla muestra «10:00 a. m. – 3:30 p. m.». Props `nameStart`, `nameEnd`, `id` (único), `valueStart`, `valueEnd`, `label`, `help`, `error`, `invalid`, `disabled`, `required` (20/9/2026, tarea 113: asterisco junto al rótulo, el de `atoms/input`, y `required` en los dos nativos; segundo consumidor: la hora de la pausa en `pausas/create`). Mejora progresiva de `atoms/date`: los dos nativos son los controles reales y se ocultan con `--enhanced`; sin Popover API no se mejora y quedan los nativos. Cualquier código puede deshabilitarlo cambiando `disabled` en los nativos (el componente lo observa). Las filas que nacen después de cargar la página se inicializan con `initTimeRanges(raiz)` (idempotente) y se clonan de un `<template>` con `__INDICE__` en `name` e `id`. Tokens: cabecera `--ag-color-primary` con texto `--ag-color-gray-0` (constante, como el paso actual de `step-arrow`), dial `--ag-color-bg-input-chrome`. Verificado en claro y oscuro y a 360 px. |
+| Molecule | `paginador-cliente` (JS + `.ag-paginador`) | `resources/js/shared/paginador-cliente.js`, `resources/css/components/pagination.css` | Implementado (19/9/2026 — usos: modal de lotes de un contrato y su tabla de lotes, la tabla de lotes de una orden de aplicación en su formulario y en su detalle, 20 por página). Gemelo en el navegador de `molecules/pagination` para listas que YA están completas en la página: mismo markup de `.pagination`/`.page-link` de Bootstrap, con el resumen «Lotes 1–20 de 33» a la izquierda. Solo dibuja los controles (`crearPaginador(contenedor, {porPagina, alCambiar})`, `actualizar(total, pagina)`, `rango()`); quien lo usa oculta las filas de otras páginas con `hidden` —nunca las quita ni deshabilita sus campos— para que lo marcado y lo que se envía con el formulario se conserve. Textos por `data-label-*` del contenedor (`ui.paginador.*`). Se oculta solo si todo cabe en una página. Para una tabla cuyas filas ya están pintadas, `paginarFilas(contenedor, {filas, porPagina})` arma el paginador y oculta las filas de otras páginas (`actualizar(pagina)` cuando las filas cambian): es lo que usan las órdenes. |
+| Molecule | `empty-state` | `resources/views/components/molecules/empty-state.blade.php` | Implementado (15/9/2026 — tercera repetición del patrón "tarjeta grande, no hay NADA que mostrar" (`dashboard/_sin-secciones`, `personas/desempeno`), promovido al catálogo per `guia_pantalla_panel.md` §5.1. Complementa a `alert-strip` (banda delgada, "el filtro no trae nada") sin depender de él ni de `.ag-card` (local a `dashboard.css`, no compartida) — tarjeta propia con los tokens que ya usaba `personas.css`. |
+| Atom | `color-swatch-picker` | `resources/views/components/atoms/color-swatch-picker.blade.php` | Implementado (16/9/2026 — paleta curada de color de `Propiedad`, Comercial, ver §21). Independiente de `atoms/radio-group` (mismo mecanismo nativo, marcado propio: un atom no compone otro del catálogo). Sin cambios en esta pieza en la segunda vuelta (16/9/2026, §21.4): ahora vive DENTRO de `molecules/color-palette-modal` en vez de suelta en la fila del formulario — sin conectar todavía al formulario real de Propiedad, lo arma `frontend`. |
+| Molecule | `color-swatch-field` | `resources/views/components/molecules/color-swatch-field.blade.php` | Implementado (16/9/2026, segunda vuelta — control compacto de una fila (swatch + hex + botón "Cambiar") que reemplaza a los círculos sueltos en el formulario, ver §21.4). Sin conectar todavía a ningún formulario. |
+| Molecule | `color-palette-modal` | `resources/views/components/molecules/color-palette-modal.blade.php` | Implementado (16/9/2026, segunda vuelta — modal Bootstrap que aloja `atoms/color-swatch-picker`, pareja de `color-swatch-field`, ver §21.4). Sin conectar todavía a ningún formulario. |
+| Molecule | `index-table` | `resources/views/components/molecules/index-table.blade.php` | Implementado (17/9/2026 — tarea "panel homogéneo": clientes/propiedades/campanias/lotes/contratos.css declaraban la misma tabla de listado (borde/cabecera/hover/colapso mobile) letra por letra, solo cambiando el nombre de clase por página — ver `guia_pantalla_panel.md` §6.2. `columns` (prop) viaja como custom property inline (`--ag-index-table-columns`), mismo mecanismo que `progress-meter`. Molecule y no organism: no orquesta nada propio, la cabecera/filas son contenido del llamador — mismo criterio que `form-section`. Una fila con `hidden` (paginador del navegador) se oculta: `.ag-index-table__row[hidden]` lo declara porque el `display: grid` de la fila le gana al `[hidden]` del navegador. 20/9/2026 (tarea 118): dos variantes de celda para las cifras — `.ag-index-table__cifra` (mono, a la derecha, `tabular-nums`; su encabezado lleva `.ag-index-table__cifra-head`) para montos y cantidades, y `.ag-index-table__mono` (mono, a la izquierda) para una fecha o un código. En móvil, sin cabecera, la cifra vuelve a alinearse a la izquierda. Nacieron de Anticipos, Combustible y Gastos, que las repetían en tres CSS de página. |
+| Molecule | `form-layout` | `resources/views/components/molecules/form-layout.blade.php` | Implementado (17/9/2026, misma tarea) — layout main + aside pegajoso del arquetipo Formulario (§6.3 regla 4/§6.3.1), antes declarado idéntico en las mismas cinco páginas (`.ag-clientes-form__layout/__main/__aside`, etc.). Slot por defecto = main; slot nombrado `aside` (opcional, se puede envolver en `@if` en el sitio de la llamada). |
+| Molecule | `timeline` | `resources/views/components/molecules/timeline.blade.php` | Implementado (17/9/2026 — arquetipo Detalle §6.4, primer consumidor `ordenes/show.blade.php`). Lista vertical de eventos reales (punto de color + título + meta fecha·autor, ya resueltos por el llamador) — nunca inventa un evento que el controlador no pudo reconstruir desde columnas reales. |
+| Molecule | `confirm-modal` | `resources/views/components/molecules/confirm-modal.blade.php` | Implementado. Modal de confirmación standalone: el llamador pone el `<form>` afuera (fuera de `row-actions` y de cualquier otro form) y el botón "Confirmar" lo envía por su atributo `form`. **Slot por defecto opcional (19/9/2026, ADR 0022):** campos que viajan con la confirmación (p. ej. el motivo de pausar, o causa + motivo de cancelar una orden). Se dibujan entre el mensaje y los botones y NO están dentro del form: cada control se asocia con `form="<formId>"` (los átomos `textarea`/`select`/`input` lo dejan pasar a su control), así el navegador los valida y los envía con el botón, sin JS. Sin slot, se ve igual que siempre. Un modal de cancelación usa `cancel-label` = "Cerrar" para no chocar con un "Cancelar" de acción. **`tone` con toda la paleta de `atoms/badge` (19/9/2026):** además de danger/success/warning/info/neutral acepta alert, distintivo-1/2/3 y primary-2 (círculo del ícono en `-subtle`/`-strong` de ese tono), para que un modal que confirma un cambio de ESTADO lleve el color de ese estado; el botón de confirmar sigue en `primary` (o `danger`): el color de estado no compite con el CTA. |
+
+| Molecule | `info-modal` | `resources/views/components/molecules/info-modal.blade.php` | Implementado (19/9/2026 — primer uso: contratos, aviso de aplicación abierta). Hermano de `confirm-modal` para cuando una acción todavía NO se puede hacer: mismo aspecto (reusa `ag-confirm-modal__*`, mismos tonos) pero sin `<form>` ni botón de confirmar. Props `id`, `title`, `message`, `closeLabel`, `tone` (default `warning`), `modalIcon` (default `info`); slot por defecto para un detalle y slot `actions` para enlaces previos al botón de cerrar (p. ej. "Ir a la orden"). No decide nada: lo abre un botón con `data-bs-toggle="modal"`, como cualquier modal. El servidor sigue rechazando la acción aunque alguien se salte la pantalla. |
+| Molecule | `view-toggle` | `resources/views/components/molecules/view-toggle.blade.php` | Implementado (17/9/2026 — alterna lista/grilla de un listado, primer consumidor `ordenes/index.blade.php`). Dos links GET a `?vista=lista\|grilla`, sin JS propio ni estado de cliente — mismo criterio "sin Livewire" del resto del panel. |
+| Molecule | `step-arrow` | `resources/views/components/molecules/step-arrow.blade.php` | Implementado (19/9/2026 — consumidores `campanias/edit`, `contratos/edit` y `ordenes/edit` + `ordenes/show`, vía `_formulario` + `_cambio-estado` / `_orden-modales`). La máquina de estados de un objeto como pasos con forma de flecha, COMPARTIDO: los pasos los arma `Compartido\Infraestructura\Http\PasosDeEstado::armar()` leyendo la tabla de transiciones de la propia máquina (`completed`/`current`/`next`/`pending`/`blocked`), y `PasosDeEstado::ayuda()` compone el párrafo (`help`) con el texto que el objeto define en su `lang` por estado (`<modulo>.<objeto>.estado_ayuda.<valor>`, el porqué de avanzar) más el cierre genérico de `ui.pasos.*`. Una máquina con desvíos y salidas (contrato) usa además las opciones de `armar()` `recorridos`, `pistas` e `iconos` y el paso de cierre de `ayuda()` — todas opcionales, ver `guia_pantalla_panel.md` §6.3.4. Un paso `next` es un botón que abre el modal de la página (de confirmación, o `info-modal` si una regla de negocio lo impide); puede quedar antes del actual (reanudar una pausa): manda la tabla de transiciones. El componente no envía ni decide nada. Tema: el paso actual lleva relleno sólido del color del estado con texto `--ag-color-gray-0` (constante, como `atoms/badge`; `--ag-color-text-inverse` se invierte en oscuro y NO sirve sobre un `-contrast-fill`), salvo el tono `neutral`, que va solo con contorno de 2px, y salvo cuando es un estado FINAL (la máquina ya no ofrece ningún paso `next` ni `pending`; en una línea recta es el último): ahí se dibuja como procesado (color suave + check —o el `icon` del paso—, igual que un paso completado) y solo conserva `aria-current`. Un paso recorrido lleva el color suave de SU estado. Tamaño: ocupa todo el ancho de su fila (col-12) y consulta el ancho de su propio contenedor (`container: ag-step-arrow`), no el del viewport — compacto bajo 48rem y apilado sin puntas bajo 32rem; pensado para 3 a 5 pasos (el contrato dibuja 5). |
+| Molecule | `state-transition` | `resources/views/components/molecules/state-transition.blade.php` | Implementado (19/9/2026 — consumidores `contratos/_estado-transicion`, `cuadrillas/_cambio-estado`, `estadias/_cambio-estado` y el diálogo «Finalizar» de `estadias/index`). La ficha «estado actual → estado destino» que va dentro del `confirm-modal` de un cambio de estado: dos `atoms/badge` con el tono de cada estado y una flecha (`atoms/icon`) en medio, para ver antes de confirmar cuál cambio se está haciendo (`guia_pantalla_panel.md` §6.3.4). Nació al aparecer el mismo marcado en tres pantallas —era CSS de página de Contratos (`.ag-contratos-estado__transicion`), que se retiró—: un patrón repetido es del catálogo. Es molecule porque compone dos átomos; no es el modal, no decide ninguna transición y no conoce enums ni archivos de idioma: recibe `fromLabel`/`toLabel` ya traducidos, `fromTone`/`toTone` (los mismos tonos del badge del listado y del paso de `step-arrow`) y `label` (nombre accesible del grupo). Sin color propio: los colores los ponen los badges; la flecha va en `--ag-color-text-muted`. |
 
 Por qué solo los átomos estaban implementados en el pase anterior: era el límite de alcance fijado para la primera entrega de HU-02 (tokens + piezas de más bajo nivel, sin lógica de negocio). Este pase (27/8/2026) implementa el resto del catálogo, a pedido explícito de HU-02 (el usuario vio un prototipo interactivo aparte y pidió la construcción real). Decisiones de composición que no estaban 100% cerradas en la especificación de §4 y se resolvieron acá:
 
@@ -175,7 +230,10 @@ Por qué solo los átomos estaban implementados en el pase anterior: era el lím
 - **`--ag-color-bg-auth`, `--ag-color-text-muted-auth`, `--ag-color-accent-link`** (nuevos tokens semánticos, `theme-{light,dark}.css`): fondo propio del panel de formulario de login (reemplaza `--ag-color-bg-elevated` ahí, quita la tarjeta blanca elevada de vueltas anteriores), su variante de texto muted (el muted global falla AA sobre el nuevo fondo tintado en claro), y un ámbar seguro para texto de enlace. Ver §1.3/§1.4 para la verificación de contraste completa y §1.4 para el detalle de cada token.
 - **`--ag-color-wordmark-accent`, `--ag-color-chip-icon`** (nuevos tokens semánticos, `theme-{light,dark}.css`, mismo valor exacto en ambos archivos a propósito): constantes entre temas para el branding tipográfico editorial de `auth-layout` (wordmark bicromía "AGRO"/"COM" + chip de ícono). Criterio idéntico que `--ag-color-scrim*`: la foto no reasigna por tema, así que lo que va montado sobre ella tampoco. Ambos temas usan ámbar-300 (wordmark-accent) y verde-300 (chip-icon), identidad de marca fija.
 - **`atoms/input` — prop `variant`** (`'boxed'` default | `'line'`): variante de línea editorial (sin caja, solo `border-bottom`, label uppercase) para el nuevo diseño de login. Mismo Blade, mismo marcado/accesibilidad — el modificador es una clase CSS (`ag-input--line`) resuelta en `resources/css/components/input.css`, no un componente nuevo. El resto del panel sigue usando `'boxed'` (default) sin cambios. El color muted propio de auth (`--ag-color-text-muted-auth`) es responsabilidad de quien consume el átomo (el organism/template de login), no del átomo compartido — este no conoce "auth" como concepto.
+- **`atoms/input` — prop `helpTone`** (`null` default | `'accent'` | `'alert'`, 19/9/2026): colorea el texto de ayuda con el acento de marca o el de alerta (`ag-input__help--accent` / `--alert`, ya definidos en `input.css`) para una ayuda que es una SUGERENCIA o un aviso y no una aclaración neutra — sin pasarlo, el gris de siempre. Sirve para el primer pintado; la ayuda que cambia de tono según lo escrito (`contratos-form.js`, "Adelanto Solicitado"; `lotes-generar.js`, hectáreas por lote) alterna las mismas dos clases desde JS con sus plantillas en `data-plantilla-ayuda*` del propio input. Texto siempre sobre `--ag-color-accent-link`/`--ag-color-alert-strong` (contraste medido 5,11:1 y 9,82:1 en claro, 10,35:1 y 7,84:1 en oscuro sobre la tarjeta).
+- **`atoms/input` — prop `suffix`** (`null` default, 20/9/2026, tarea 115): unidad del valor ("km", "h", "kg", "ciclos") al final del control, DENTRO del mismo borde, en `--ag-font-family-mono` y `--ag-color-text-muted` (`ag-input__suffix`, en `input.css`). Reemplaza al paréntesis en el rótulo ("Kilometraje (km)") y a un texto suelto al lado del campo: la unidad es parte del campo. Es texto de lectura —no recibe foco ni viaja en el POST— y su id entra en `aria-describedby`. Primeros usos: ciclos de batería, horas de generador y kilometraje de vehículo (Mantenimiento). Verificado en claro y oscuro y a 390 px.
 - **`atoms/button` — prop `iconPosition`** (`'start'` default | `'end'`): permite el ícono después del texto (p. ej. `arrow_forward` al final de "Iniciar sesión"). Sin cambios de CSS (el `gap` del flex ya aplica en cualquier orden de hijos); 100% compatible con los consumidores existentes, que no pasan la prop y siguen viendo el ícono al inicio.
+- **`atoms/button` — variantes `<tono>-outline` (20/9/2026, tarea 111)**: la acción de fila que cambia de estado lleva el tono del estado al que lleva (plan de homogeneización §3.1), así que hace falta una variante por cada tono de los `TONO_POR_ESTADO` del repo: `neutral`, `success`, `info`, `warning`, `danger`, `alert` y `distintivo-2`. Las seis últimas ya existían; se agregó `neutral-outline` (`--ag-color-neutral-strong` en texto y borde, `-subtle` al pasar el mouse: el mismo par que el chip neutral). Ver, Editar y Eliminar son fijos (`info-`, `warning-` y `danger-outline`) y `PanelHomogeneoTest` los exige en las filas.
 - **`molecules/theme-toggle` — rediseño completo del marcado/CSS interno**: el switch track+thumb deslizante se reemplaza por una pastilla "segmented" de dos celdas fijas (`light_mode`/`dark_mode`), la del tema activo con fondo elevado + color de acento. Sigue siendo UN control accesible (`role="switch"`, `aria-checked`) — no dos botones independientes — y `resources/js/molecules/theme-toggle.js` no cambia una línea (solo lee/escribe `data-bs-theme` y sincroniza `aria-checked`, ninguna de esas dos cosas depende del marcado interno). Este cambio aplica a los TRES consumidores actuales (login vía `auth-layout`, topbar, pie de `sidebar-nav`) a propósito: es el mismo molecule, no hay bifurcación visual por pantalla.
 - **`templates/auth-layout` — redesarrollo completo**: header (logo + theme-toggle), footer (copyright + versión) ahora viven en el template (no en `login-form`) para que `seleccionar-rol.blade.php` los herede sin duplicación. Panel visual: 55%/45% split-screen foto/formulario en desktop (quita el `max-width` fijo de antes, flex ratios en su lugar para mayor flexibilidad); ~240px altura en tablet; solo formulario en mobile. Editorial: wordmark tipográfico en dos colores (texto "AGRO" + ámbar "COM"), chip verde con ícono `flight_takeoff` arriba a la derecha, regla de gradiente 64×3px verde→ámbar, headline con subheadline de 14.5px al 80% opacidad. Panel: fondo `--ag-color-bg-auth` (tintado, no blanca elevada), sin `box-shadow`.
 - **`organisms/login-form` — estructura de tabs rediseñada**: dos tabs (Ingreso / Recuperar acceso) que togglean entre dos paneles. **Panel "Ingreso"**: contiene el `<form>` real de autenticación (username/password inputs en `variant="line"`, checkbox "Recordarme", link "¿Olvidaste tu contraseña?" que cambia de tab, botón submit con ícono al final). **Panel "Recuperar acceso"**: presentacional (fuera de alcance, backend no existe todavía), SIN `<form>` envuelto (esto es deliberado: `resources/js/pages/login.js` busca `[data-ag-login-form] form`, que sigue resolviendo a UN ÚNICO form porque no hay `<form>` en el panel "recuperar"). Inputs de `variant="line"`. Línea "¿No tenés cuenta?" al pie (siempre visible, fuera de tabs). Botones de cambio de tab (`[data-ag-login-switch-tab]`) estilizados sin fondo/borde, con colores de enlace (`--ag-color-accent-link` para "¿Olvidaste?", `--ag-color-primary-emphasis` para "Volver"). **Claves nuevas** en `lang/es/seguridad.php`: `auth.tagline|subheadline|sin_alta_publica`, `login.recordarme|olvido_password` (actualizar `boton_ingresando` a "Verificando acceso…"), `recuperar.*` (titulo|subtitulo|boton_enviar|volver).
@@ -627,6 +685,50 @@ pantalla ya hecha, se anota acá.
     declararlo nunca más en una página), y la otra recorre las filas
     repetibles (`pages/**/_*-fila.blade.php`) y exige que su elemento raíz
     lleve la clase `ag-form-section__body`.
+
+13. **Un popover/dropdown-menu con `display: block !important` (animado por
+    opacity/transform, no por el `display` nativo) fija `position: fixed`
+    en su propia regla base, no solo la que Popper aplica al abrir
+    (16/9/2026).** Los cinco popovers del panel que usan esta técnica
+    (`.ag-notifications-popover`, `.ag-user-menu` en `topbar.css`,
+    `.ag-row-actions__menu`, `.ag-filter-panel__menu`,
+    `.ag-color-swatch-field__menu`) la comparten para poder animar con
+    transición en vez del salto de `display: none → block` — pero al forzar
+    `display: block` SIEMPRE, el menú queda maquetado en el DOM incluso
+    cerrado/invisible (`opacity: 0; visibility: hidden`), y antes del primer
+    `show()` de Bootstrap (que es cuando recién se crea el Popper y se le
+    aplica `position: fixed` inline, ver `app.js`) el menú vive con el
+    `position: absolute` por defecto de Bootstrap. Un elemento
+    `position: absolute` SÍ cuenta para el `scrollWidth`/`scrollHeight` del
+    ancestro con overflow (`.ag-panel__content`, que por CSS solo declara
+    `overflow-y: auto` pero la spec fuerza el otro eje también a `auto`
+    cuando no es `visible` en ambos) aunque esté invisible — deja un
+    desborde LATENTE, invisible hasta que algo lo revela.
+
+    Se encontró en Propiedades: con la grilla de 23 swatches y el botón
+    "Cambiar" cerca del borde derecho del formulario, ese desborde latente
+    rondaba ~200px. Al elegir un color, el navegador enfoca el
+    `<input type="radio">` real (visualmente oculto pero interactivo) y
+    dispara su scroll-into-view nativo sobre `.ag-panel__content`, que salta
+    al máximo scroll posible — exactamente el tamaño del desborde latente —
+    y ese `scrollLeft` NO se resetea al cerrar el popup: la página queda
+    corrida a la izquierda con una franja vacía a la derecha. Mismo
+    mecanismo con el que Cliente/Contrato ya se habían topado antes (ahí en
+    el eje vertical, con `filter-panel`/`row-actions`), aunque el fix
+    anterior (pre-instanciar con `strategy: 'fixed'` en `app.js`, 15/9/2026)
+    solo corrige la posición MIENTRAS el Popper está activo — no evita el
+    desborde latente del estado cerrado, que es una causa distinta y
+    anterior en el tiempo.
+
+    Regla: todo popover/dropdown-menu de este catálogo que use
+    `display: block !important` para animarse declara `position: fixed`
+    en su propia regla base (no solo en la config de Popper) — así queda
+    excluido del cálculo de overflow del contenedor en TODO momento, abierto
+    o cerrado, y no solo mientras Popper lo reposiciona. Sin compuerta
+    automática todavía (es un caso de `tests/Visual/`, que no corre —
+    ver skill `verificacion`, "Qué NO cubre la cascada"); verificado a mano
+    con Playwright contra el compose real, los 5 popovers, antes y después
+    del fix.
 
 ## 9. Sexta vuelta — parte 2 (28/8/2026): rediseño del dashboard
 
@@ -1279,7 +1381,8 @@ panel) y migra las 88+ apariciones reales encontradas.
 | Un texto/número/fecha-hora/contraseña/archivo de una línea | `atoms/input` | Sin cambios en esta tarea. |
 | Un texto de varias líneas | `atoms/textarea` | Mismo contrato que `input`, sin `type`/`icon`/toggle de password (no aplican a multilínea), con `rows` en su lugar. |
 | Elegir UNA fecha | `atoms/date` | Nunca el `<input type="date">` nativo (diagnóstico de la tarea: se ve distinto por navegador/SO, ignora `es`). Reemplaza también a `<x-atoms.input type="date">`, que era el patrón real en la mayoría de los formularios (no HTML crudo). |
-| Elegir UNA opción de una lista (con o sin búsqueda) | `atoms/select` | Combobox propio con label/placeholder/ícono/error/help y `options` como `valor => etiqueta` ya traducida. Con más de 8 opciones agrega búsqueda por texto automáticamente — no es un prop, es `count($options) > 8`. |
+| Elegir UN rango horario (hora de inicio y de fin de un mismo día) | `atoms/time-range` | Nunca dos `<input type="time">` sueltos (cada navegador los dibuja distinto, no respetan los tokens ni el tema oscuro, y son dos casillas para un solo dato). Una sola casilla "06:00 – 10:00" que abre un selector de reloj circular estilo Material. Propio, sin librería: flatpickr (el de `atoms/datetime`) no maneja un rango horario en una casilla. Mejora progresiva como `atoms/date`: sin JS quedan los dos `<input type="time">` nativos, que son los que se envían. |
+| Elegir UNA opción de una lista (con o sin búsqueda) | `atoms/select` | Combobox propio con label/placeholder/ícono/error/help y `options` como `valor => etiqueta` ya traducida. Con más de 8 opciones agrega búsqueda por texto automáticamente — `count($options) > 8`, o el prop `searchable` cuando las opciones las llena JS después (selects en cascada, cuyo conteo del servidor es 0). La búsqueda (19/9/2026) es un `<input>` REAL que toma el foco al abrir — antes era una fila decorativa: pulsarla no hacía nada, el placeholder no se iba y no había teclado en el celular — y es por PALABRAS: cada palabra escrita debe aparecer en la etiqueta, en cualquier orden, sin distinguir mayúsculas ni acentos ("cotoca santa" encuentra "Cotoca - Santa Cruz"). El placeholder del input se oculta apenas tiene foco. Con 8 opciones o menos no hay caja de búsqueda pero el teclado soporta type-ahead. El `<select>` nativo deshabilitado sigue oculto (doble clase en el CSS: el reboot de Bootstrap trae `select:disabled { opacity: 1 }`), y el placeholder queda seleccionado cuando el valor es `null` o `''` (antes un `''` dejaba elegida la primera opción real sin que nadie la eligiera). |
 | Prender/apagar UNA opción booleana suelta (ítem de lista, "aceptar términos") | `atoms/checkbox` | Casilla cuadrada con check de Material Symbols. Distinta de `atoms/switch` (pastilla con thumb, pensada para "prender/apagar una preferencia", no para "marcar un ítem" — criterio ya fijado en la sexta vuelta, §8). |
 | Elegir VARIAS opciones de una lista (con o sin búsqueda) | `atoms/checkbox-group` | Selección múltiple con `name[]`, cada opción es un `<input type="checkbox">` real (teclado gratis del navegador). Con más de 8 opciones agrega el mismo filtro de texto que `select`. Reemplaza tanto varios `type="checkbox"` sueltos con el mismo `name[]` como un `<select multiple>` nativo (ver ejemplo de `usuarios/_formulario.blade.php` abajo). |
 | Elegir UNA opción entre pocas, todas visibles a la vez (sin necesidad de desplegable) | `atoms/radio-group` | `<input type="radio">` reales agrupados por `name`, sin JS propio (el navegador ya mueve el foco con las flechas). Poco usado hoy en el panel — existe para cuando aparezca el caso, no se forzó ningún `select` a convertirse en esto. |
@@ -1575,7 +1678,7 @@ request.
    sistema y tiene que serlo: todo lo que entra por `@vite` se carga como
    `type="module"`, diferido por definición, y nunca llega antes del primer
    pintado. Va en `templates/panel-shell` y en las tres páginas públicas que
-   arman su propio `<html>` (login, portal-login, restablecer).
+   arman su propio `<html>` (login, restablecer).
 2. `theme-toggle.js` deja de aplicar el tema al cargar y, en su lugar,
    **cierra la divergencia**: si el tema del navegador no es el que sirvió el
    servidor (anotado en `data-ag-tema-servidor` por el script de arriba),
@@ -1589,3 +1692,430 @@ desincronización intacta.
 usar `panel-shell`) lleva `<x-atoms.tema-inicial />` en el `<head>`. Cubierto
 por test en `tests/Feature/Seguridad/PantallaLoginTest.php` y
 `TemaPersistidoPanelTest.php`.
+
+## 21. Paleta curada de color de `Propiedad` (16/9/2026, ampliada dos veces la misma sesión) — dato de negocio, no theming
+
+`Comercial` agrega un campo `color` al objeto `Propiedad` (terreno de un
+cliente): lo elige el usuario para distinguir visualmente sus propiedades en
+listados y en el mapa (los lotes de una propiedad heredan visualmente el
+mismo color). Pedido explícito del dueño: **paleta curada**, no un input de
+color libre (hex picker) — así dos propiedades nunca terminan con tonos
+casi indistinguibles.
+
+**Por qué está acá y no en §1 (tokens):** esto NO es un token de theming del
+panel. Un token de theming se reasigna según `[data-bs-theme]` (claro/oscuro
+cambian su valor); el color de una propiedad es un dato elegido por el
+usuario que tiene que verse **igual en los dos temas** — es lo opuesto de un
+token semántico. Vive documentado acá porque de todos modos es este agente
+quien cura los valores (para que sean distinguibles entre sí, legibles como
+swatch en ambos temas y visibles sobre capa satelital) — pero la
+migración/constraint de Postgres y el array de constantes PHP los escribe
+`backend` en el módulo `Comercial`, no `design-ui`. Ver el comentario de
+cabecera de `atoms/color-swatch-picker.blade.php` sobre por qué esto no
+viola CLAUDE.md invariante 11 (el HEX es dato pasado por el llamador, nunca
+un literal dentro de un archivo CSS del catálogo).
+
+**Ampliada la misma sesión (16/9/2026, segunda vuelta):** el dueño vio el
+control de 13 círculos en fila dentro del formulario real y pidió moverlo a
+un modal (§21.4) — y, con más espacio disponible ahí adentro, "aumentar los
+colores para escoger". §21.1 documenta la paleta resultante de **13 a 16**
+colores y, en la propia tabla de abajo, por qué el techo quedó en 16 y no
+más arriba.
+
+**Ampliada una segunda vez la misma sesión (16/9/2026, tercera vuelta):**
+con el campo ya reestructurado como popup anclado al botón "Cambiar" (no
+un modal — corrección directa del dueño, ver la cabecera de
+`molecules/color-swatch-field.blade.php`) y sin la limitación de espacio de
+una fila de formulario, el dueño pidió otra vez más colores, esta vez sin
+acotar un número exacto ("cierto quiero más colores"), aceptando ~24 al
+preguntársele. Mientras se armaba esta ronda llegó además un pedido
+puntual: sumar negro (o un casi-negro, si el puro trae problemas de
+legibilidad) a la mezcla. §21.1 documenta con qué técnica se llegó de 16 a
+**23** — por qué no 22 a secas (ahí quedaba antes del negro) ni 24 exactos
+— con el mismo rigor de las dos vueltas anteriores.
+
+### 21.1. La paleta final: 23 colores (13 → 16 → 23, tres vueltas)
+
+Elegidos con separación deliberada de matiz (HSL, ~27-28° entre colores
+saturados consecutivos, saltando a propósito la franja 60-140° — amarillo-
+verde — que es la del cultivo en una vista satelital, para que ninguna
+propiedad se confunda con el propio terreno) y luminosidad media (ni pastel
+—se funde en tema claro— ni casi negro —se funde en tema oscuro—). El verde
+de la paleta (`#218349`) es deliberadamente más azulado que el verde de
+marca (`--ag-color-green-700` = `#1E7A34`) y que el verde de cultivo típico:
+bajo deuteranopia/protanopia, un canal de azul más alto ayuda a separarlo
+del rojo (el eje que esos dos tipos de daltonismo comprometen). Diez colores
+(los cuatro de la segunda vuelta — Marrón, Pizarra, Musgo, Malva — y los
+seis de la tercera — Caqui, Salvia, Acero, Aciano, Vino, Terracota) son
+deliberadamente desaturados: se distinguen del resto por CROMA, no por
+matiz, así no compiten por el mismo eje de confusión que los doce
+saturados. Un color más, Negro, no pertenece a ninguno de los dos anillos:
+es la única pieza NEUTRA (croma cero) de la paleta — pedido explícito del
+dueño, llegado después de encargada esta misma ronda ("no tenga miedo de
+usar también el color negro en la combi") — ver el bloque dedicado al final
+de esta sección.
+
+**Primera y segunda vuelta (13 → 16): resumen — historial completo en el
+propio control de versiones del documento.** La primera vuelta fijó 11
+tonos saturados con ~27° de separación entre consecutivos (una excepción
+aceptada, Rojo→Naranja, documentada entonces en ~17°) más Marrón y Pizarra
+(desaturados). La segunda sumó Carmín (partiendo en dos el mayor hueco
+suelto del anillo, entre Frambuesa y Rojo) y Musgo/Malva (las dos familias
+de matiz — verde y violeta/púrpura — que todavía no tenían versión
+desaturada), para totalizar 12 saturados + 4 desaturados = 16. Esa vuelta ya
+advertía que el margen de matiz puro estaba prácticamente agotado.
+
+**Tercera vuelta (16/9/2026): de 16 a 22 con una técnica nueva, más el
+negro aparte hasta 23.**
+
+Antes de decidir cómo estirar la paleta, se recalcularon los 16 HSL exactos
+con la fórmula completa sRGB→HSL (las dos vueltas anteriores estimaban a
+ojo/mentalmente; esta vez con el cálculo cifra por cifra). El resultado
+corrige una cifra de la vuelta anterior: el hueco real entre Carmín
+(`#B82343`, H≈347°) y Rojo (`#B6202D`, H≈355°) es de solo **~8°**, no los
+~17-18° que asumía el texto anterior de esta sección (que ubicaba a Rojo en
+"5°/365°" en vez de sus ~355° reales — un desvío de cálculo, no un cambio
+de HEX). Con el dato correcto, el anillo saturado de 12 colores no tiene
+ningún margen real: su hueco mínimo (~8°) ya está por debajo del piso de
+17° que la propia paleta venía aceptando como límite. **Conclusión: cero
+colores saturados nuevos en el anillo** — no es que no convenga sumar más,
+es que ya no cabe ninguno sin bajar del piso ya aceptado, y esta vez no en
+un punto aislado sino en el hueco más comprometido de todo el círculo.
+
+Se evaluaron dos técnicas para los colores que hacían falta para acercarse
+a ~24:
+
+- **Segunda banda de luminosidad (más clara o más oscura del mismo matiz).**
+  Descartada para el grueso de la ampliación. §21.2 ya medía que el
+  contraste de los 16 anteriores contra los dos extremos del panel
+  (`--ag-color-bg-elevated` casi blanco en tema claro,
+  `--ag-color-surface-card` casi negro en tema oscuro) ronda 2.7-2.8:1 — la
+  banda de luminosidad actual (L≈32-48%) ya es el punto medio que mejor
+  sirve a los dos temas a la vez. Una banda más clara ganaría legibilidad en
+  tema oscuro pero la perdería en tema claro (se acercaría a pastel, el
+  mismo problema que el criterio original de "ni pastel ni casi negro" ya
+  prohibía); una banda más oscura, lo simétrico al revés. Escalar esto a
+  6-8 colores nuevos dejaría a la mitad fallando contra uno de los dos
+  temas — inseguro como técnica de volumen, aunque como se ve más abajo
+  hay una única excepción deliberada al final de esta ronda.
+- **Segunda banda de croma (colores desaturados adicionales), la misma
+  técnica de Marrón/Pizarra/Musgo/Malva, llevada a fondo.** Elegida. La
+  segunda vuelta la usó dos veces (2 familias de matiz sin versión
+  desaturada todavía); la tercera completa el resto del anillo — pero NO
+  matiz por matiz 1:1: eso hubiera exigido un desaturado también para
+  Carmín y para Rojo, hoy a solo ~8° de distancia entre sí, y dos versiones
+  desaturadas ahí serían casi indistinguibles ENTRE ELLAS, más que sus
+  contrapartes saturadas — porque separar matices por percepción es más
+  difícil cuanto menos croma tiene el color (es la razón de fondo por la
+  que ninguna técnica de "más colores por matiz" puede tratar igual a un
+  tono vívido que a uno apagado). En cambio, el conjunto de desaturados se
+  trató como un anillo PROPIO, con su propio piso de separación —
+  deliberadamente más alto que el 17° aceptado para saturados, porque le
+  falta el canal de croma como ayuda — repartido en el espacio de matiz
+  disponible (los mismos 360° menos la franja 60-140° que ya evita el
+  anillo saturado), sin exigir que cada desaturado caiga exactamente sobre
+  el matiz de un saturado particular.
+
+Con los 4 desaturados existentes (Marrón H≈26°, Musgo H≈150°, Pizarra
+H≈205°, Malva H≈294°) como punto de partida, se repartieron 6 posiciones
+nuevas en los huecos más anchos del anillo desaturado, siempre evitando la
+franja 60-140°:
+
+| Hueco (desaturado → desaturado) | Ancho | Color(es) nuevo(s) insertado(s) |
+|---|---|---|
+| Marrón (26°) → Musgo (150°) | 124° (mayormente franja prohibida) | Caqui, H≈48° — único tramo libre del hueco (26°-60°), a 22° de Marrón |
+| Musgo (150°) → Pizarra (205°) | 55° | Salvia, H≈172° — a 22° de Musgo, 33° de Pizarra |
+| Pizarra (205°) → Malva (294°) | 89° | Acero (H≈226°) y Aciano (H≈258°) — a 21°, 32° y 36° entre sí y de los vecinos |
+| Malva (294°) → Marrón (386°=26°) | 92° | Vino (H≈325°) y Terracota (H≈355°) — a 31°, 30° y 31° entre sí y de los vecinos |
+
+El hueco mínimo resultante entre dos desaturados es **21°** (Pizarra→Acero)
+— por encima del piso de 17° ya aceptado para saturados, con el margen
+extra deliberado explicado arriba. S y L de los 6 nuevos se mantuvieron
+dentro del mismo rango ya validado por los 4 desaturados existentes (S
+20-35%, L 34-42%) — no hizo falta remedir contraste pieza por pieza, mismo
+criterio que ya usó la segunda vuelta para Carmín/Musgo/Malva (§21.2). Sobre
+daltonismo: dos de los seis (Vino, Terracota) caen del lado cálido del
+anillo, cerca de Carmín/Rojo — se les subió levemente el canal de azul
+relativo al verde (mismo recurso ya usado en Verde bosque para separarse
+del rojo bajo deuteranopia/protanopia), y al ser colores de croma bajo, la
+distancia perceptual que un simulador de daltonismo puede "comerse" es
+menor de entrada que en un color vívido — la desaturación ayuda un poco en
+vez de sumar riesgo en este eje específico.
+
+**Por qué 22 (matiz) y no 24 exactos:** se podría llegar a 23 desde acá
+rompiendo el propio piso de 21° recién argumentado para desaturados y
+bajándolo al piso de 17° ya aceptado para saturados — partiendo el hueco
+Aciano→Malva (36°) en dos de ~18°. Se decidió no hacerlo: ese piso más alto
+para desaturados no es un capricho de esta vuelta, es la razón por la que
+la técnica funciona (croma bajo = matiz más difícil de distinguir), y
+romperlo para ganar un solo color contradice el propio argumento que
+sostiene toda la ampliación. Llegar a 24 exactos por esta vía exigiría dos
+excepciones así, no una — el mismo tipo de riesgo que la segunda vuelta ya
+había rechazado para el anillo saturado. 22 es el techo defendible con la
+técnica de matiz/croma ya validada.
+
+**Negro (fuera de presupuesto de matiz): de 22 a 23.** Mientras se armaba
+esta ronda llegó el pedido directo de sumar negro (o un casi-negro si el
+puro trae problemas). Esta pieza no compite con el razonamiento de arriba
+porque no es ni un tono saturado ni un desaturado de un matiz — es NEUTRA
+(S=0%), la única croma-cero de la paleta, así que no reabre ni el piso del
+anillo saturado ni el del desaturado.
+
+Sobre el propio pedido ("no ser puro `#000000` si eso trae problemas de
+legibilidad"): sí los trae, y son los mismos dos que el criterio original
+("ni pastel ni casi negro") ya señalaba para el resto de la paleta, más
+agudos en el extremo: (1) contra `--ag-color-surface-card` en tema oscuro
+(≈`#2E3236`, L≈20%) un negro puro tiene contraste de relleno prácticamente
+nulo; (2) sobre una imagen satelital real, un negro puro se confunde con
+sombra profunda o asfalto, más que cualquier otro tono de la paleta. Por
+eso el valor elegido es **`#121212`** (L≈7%, S=0%) — no pastel del lado
+oscuro, sino la convención de "negro profundo" que ya usa el propio sistema
+(coincide con `--ag-color-gray-950`, y con el "casi negro" que Material
+Design recomienda para superficies oscuras en vez de `#000000` puro, mismo
+criterio: dureza de contraste y de sombreado, no solo estética).
+
+Por qué esto no contradice el rechazo de la "segunda banda de luminosidad"
+de más arriba: ahí el problema era escalar la técnica a 6-8 colores nuevos,
+la mitad de los cuales fallaría contra alguno de los dos temas a la vez.
+Acá es **una sola pieza**, de una categoría aparte (neutra, no matiz),
+pedida explícitamente pese al criterio general — y su legibilidad no
+depende del contraste de relleno sino del mismo mecanismo que ya sostenía
+los 22 anteriores (§21.2): el anillo de 2px en `--ag-color-border-strong`
+(≈`#5B5E61`, L≈37% en tema oscuro) contrasta con claridad tanto contra el
+relleno casi negro (L≈7%) como contra la tarjeta oscura de fondo (L≈20%) —
+un salto de luminosidad real a los dos lados del anillo, el caso límite
+para el que ese mecanismo se diseñó. Nota para cuando `frontend` pinte este
+color sobre el mapa (polígono de lote/propiedad): si "Negro" se pierde
+contra sombra o asfalto en la imagen satelital, la solución es un halo/trazo
+de contorno claro alrededor del polígono (igual que el anillo del swatch en
+el panel) — no aclarar el HEX, que dejaría de leerse como negro.
+
+**Por qué 23 y no 24 exactos, ahora con el negro adentro:** llegar a 24
+exigiría además un neutro simétrico del otro extremo (un blanco/casi-blanco
+— la misma pieza que Negro, del lado claro). Nadie lo pidió: el pedido fue
+puntualmente "negro", no "un neutro en cada punta". Agregarlo por cuenta
+propia para cerrar el número sería inventar alcance no pedido, lo mismo que
+este documento evita hacer con las pantallas de negocio. 23 es el resultado
+real de dos técnicas defendidas con rigor (matiz/croma hasta 22, más un
+neutro pedido explícitamente) — más cerca de 24 que 22 a secas, sin
+forzar ninguna de las dos.
+
+### 21.1.1. Los 23 colores
+
+| # | HEX | Nombre (es) | Constante PHP sugerida | Categoría / vuelta |
+|---|-----|-------------|-------------------------|---|
+| 1 | `#B6202D` | Rojo | `ROJO` | Saturado, 1ª |
+| 2 | `#CD5E1D` | Naranja | `NARANJA` | Saturado, 1ª |
+| 3 | `#AA8C18` | Ámbar / mostaza | `AMBAR` | Saturado, 1ª |
+| 4 | `#218349` | Verde bosque | `VERDE_BOSQUE` | Saturado, 1ª |
+| 5 | `#1E8F80` | Verde azulado | `VERDE_AZULADO` | Saturado, 1ª |
+| 6 | `#1F80AD` | Turquesa | `TURQUESA` | Saturado, 1ª |
+| 7 | `#2B50CA` | Azul | `AZUL` | Saturado, 1ª |
+| 8 | `#4A30A6` | Índigo | `INDIGO` | Saturado, 1ª |
+| 9 | `#9331C4` | Violeta | `VIOLETA` | Saturado, 1ª |
+| 10 | `#A32995` | Púrpura | `PURPURA` | Saturado, 1ª |
+| 11 | `#B92770` | Frambuesa | `FRAMBUESA` | Saturado, 1ª |
+| 12 | `#B82343` | Carmín | `CARMIN` | Saturado, 2ª |
+| 13 | `#755238` | Marrón | `MARRON` | Desaturado, 1ª |
+| 14 | `#566F81` | Pizarra | `PIZARRA` | Desaturado, 1ª |
+| 15 | `#467C61` | Musgo | `MUSGO` | Desaturado, 2ª |
+| 16 | `#7B4D80` | Malva | `MALVA` | Desaturado, 2ª |
+| 17 | `#766B42` | Caqui | `CAQUI` | Desaturado, 3ª |
+| 18 | `#487A73` | Salvia | `SALVIA` | Desaturado, 3ª |
+| 19 | `#4E597E` | Acero | `ACERO` | Desaturado, 3ª |
+| 20 | `#5B4B81` | Aciano | `ACIANO` | Desaturado, 3ª |
+| 21 | `#7C4665` | Vino | `VINO` | Desaturado, 3ª |
+| 22 | `#7E4449` | Terracota | `TERRACOTA` | Desaturado, 3ª |
+| 23 | `#121212` | Negro | `NEGRO` | Neutro, 3ª (pedido del dueño) |
+
+Formato listo para copiar:
+
+```php
+// PHP — array de constantes (nombre de la clase, namespace y ubicación
+// exacta dentro de app/Dominios/Comercial/ quedan a criterio de backend)
+public const ROJO = '#B6202D';
+public const NARANJA = '#CD5E1D';
+public const AMBAR = '#AA8C18';
+public const VERDE_BOSQUE = '#218349';
+public const VERDE_AZULADO = '#1E8F80';
+public const TURQUESA = '#1F80AD';
+public const AZUL = '#2B50CA';
+public const INDIGO = '#4A30A6';
+public const VIOLETA = '#9331C4';
+public const PURPURA = '#A32995';
+public const FRAMBUESA = '#B92770';
+public const CARMIN = '#B82343';
+public const MARRON = '#755238';
+public const PIZARRA = '#566F81';
+public const MUSGO = '#467C61';
+public const MALVA = '#7B4D80';
+public const CAQUI = '#766B42';
+public const SALVIA = '#487A73';
+public const ACERO = '#4E597E';
+public const ACIANO = '#5B4B81';
+public const VINO = '#7C4665';
+public const TERRACOTA = '#7E4449';
+public const NEGRO = '#121212';
+```
+
+```sql
+-- Postgres CHECK (mayúsculas — si el backend normaliza a minúsculas antes
+-- de guardar, ajustar la lista, pero SIEMPRE la misma capitalización en
+-- los dos lugares: CHECK y constantes PHP no pueden divergir en el string
+-- exacto o el `IN` rechaza valores que la constante sí produce)
+CHECK (color IN (
+    '#B6202D', '#CD5E1D', '#AA8C18', '#218349', '#1E8F80',
+    '#1F80AD', '#2B50CA', '#4A30A6', '#9331C4', '#A32995',
+    '#B92770', '#B82343', '#755238', '#566F81', '#467C61', '#7B4D80',
+    '#766B42', '#487A73', '#4E597E', '#5B4B81', '#7C4665', '#7E4449',
+    '#121212'
+))
+```
+
+Si `backend` ya había aplicado la migración/constraint con los 16
+anteriores, actualizar a los 23 es otra vez un `ALTER TABLE ... DROP
+CONSTRAINT` + `ADD CONSTRAINT` con la lista nueva — sigue sin hacer falta
+tocar filas existentes, porque ningún HEX de los 16 anteriores cambió en
+esta vuelta tampoco (los 6 desaturados y el negro son estrictamente
+aditivos).
+
+### 21.2. Por qué la legibilidad del swatch depende del anillo, no del hex exacto
+
+Medido (aprox., sRGB con gamma 2.2, no el método exacto de WCAG pero
+suficiente para la decisión de diseño): un rojo de la paleta contra
+`--ag-color-surface-card` en tema oscuro ronda **2.7:1**; el ámbar/mostaza
+—el más "claro" perceptualmente— contra `--ag-color-bg-elevated` en tema
+claro ronda **2.8:1**. Ninguno de los 22 tonos de matiz/croma llega a 3:1
+contra los DOS extremos de fondo del panel a la vez (uno casi blanco,
+`--ag-color-bg-elevated` claro; el otro casi negro, `--ag-color-surface-card`
+oscuro) sin dejar de ser un color medio reconocible — los tres colores de la
+segunda vuelta y los seis de la tercera (Carmín, Musgo, Malva, Caqui,
+Salvia, Acero, Aciano, Vino, Terracota) se diseñaron dentro del mismo rango
+de luminosidad que los 11 saturados originales (§21.1), así que esta
+medición no cambia con ellos, no hizo falta remedirla pieza por pieza. El
+color 23, Negro, es la única pieza que se diseña a propósito FUERA de ese
+rango — ver el bloque dedicado en §21.1 sobre por qué ahí el anillo, no el
+relleno, sigue siendo el mecanismo real, llevado a su caso límite. Por eso
+`atoms/color-swatch-picker`
+no confía en el relleno para la separación del fondo: cada swatch lleva un
+anillo de 2px con `--ag-color-border-strong` (el token que ya significa
+"borde de control interactivo" en el resto del catálogo) en reposo y
+`--ag-color-primary` cuando está seleccionado — el mecanismo de legibilidad
+es el token del anillo, no el ajuste fino de cada hex. Cualquier pieza de
+solo-lectura que más adelante pinte estos mismos colores como chip de tabla
+o relleno de polígono en el mapa (`frontend`, cuando conecte la pantalla de
+`Propiedad`) **debería reusar el mismo anillo** en vez de redescubrir el
+problema — y de todos modos verificarlo a ojo (checklist de
+`guia_pantalla_panel.md` §8: "el cálculo en papel no alcanza"), en los dos
+temas y sobre una imagen satelital real, antes de darlo por cerrado.
+
+### 21.3. El átomo: `atoms/color-swatch-picker`
+
+Ver el comentario de cabecera del propio archivo
+(`resources/views/components/atoms/color-swatch-picker.blade.php`) para el
+contrato completo de props y accesibilidad. Resumen de las decisiones que no
+son obvias del código:
+
+- **Independiente de `atoms/radio-group`**, no wrapper ni extensión: mismo
+  mecanismo nativo (fieldset + radios reales + técnica visually-hidden),
+  marcado propio — un atom no compone otro componente del catálogo
+  (`guia_pantalla_panel.md` §2).
+- **`options` es `hex => etiqueta`, no un id que resuelva contra otra
+  tabla**: el HEX es tanto la clave que viaja en el `value` del radio como
+  el color a pintar — coincide 1:1 con cómo vive el dato en Postgres (columna
+  `color`, el HEX crudo, no una FK a una tabla de paleta).
+- **La selección nunca depende solo del color**: estado real en el
+  `:checked` nativo: insignia con ícono de check que APARECE (no solo
+  cambia de color) sobre fondo `--ag-color-primary` fijo (nunca el color de
+  la opción — así el check se lee igual sobre los 16 tonos) + anillo que
+  pasa a `--ag-color-primary`. Nombre accesible del radio = nombre del color
+  ("Verde bosque"), no el HEX ni "opción 4" — `<span>` visualmente oculto
+  dentro del `<label>`.
+- **No conecta a ningún formulario todavía** — lo arma `frontend` al
+  construir la pantalla de alta/edición de `Propiedad`, con `options`
+  resuelto desde las constantes PHP de §21.1 (traducidas vía `lang/es/`, el
+  átomo no hardcodea ningún nombre de color).
+- **Segunda vuelta (16/9/2026): cambió DÓNDE vive, no qué es.** El átomo en
+  sí no se tocó ni una línea — sigue siendo el mismo fieldset de 16 radios
+  con la misma accesibilidad. Lo que cambió es que ya no se pinta suelto en
+  la fila del formulario: ahora vive dentro de `molecules/color-palette-modal`
+  (§21.4), y la fila del formulario muestra en su lugar el control compacto
+  `molecules/color-swatch-field`.
+
+### 21.4. El control compacto y el modal: `molecules/color-swatch-field` + `molecules/color-palette-modal`
+
+Pedido directo del dueño tras ver el resultado real en el navegador (los 13
+círculos en fila de la primera vuelta competían por espacio en el
+formulario): mover la elección
+a un modal y dejar en la fila un control compacto — *"en input tendrá el
+color, su hex y botón para cambiar, similar al input file de las fotos solo
+que sin la altura del mismo input file image"*. Dos piezas nuevas de
+catálogo, ambas molecule (ninguna puede ser atom: las dos componen
+`atoms/button`, y un atom no compone otro átomo del catálogo,
+`guia_pantalla_panel.md` §2):
+
+- **`molecules/color-swatch-field`** — el control de la fila: swatch chico +
+  HEX en texto (mono, nunca solo color — `guia_pantalla_panel.md` §6.3 regla
+  6 para el hex, y la propia regla de accesibilidad de este átomo/molécula
+  para "nunca solo color") + botón "Cambiar". Inspirado en la anatomía de
+  `molecules/file-field` (preview + meta + acción) pero de UNA sola línea
+  compacta — a propósito no repite la caja alta de preview de un archivo,
+  que es justo lo que el dueño pidió evitar. No lleva `name`: no somete
+  nada al formulario, es DISPLAY del valor actual + TRIGGER del modal
+  (`data-bs-toggle="modal" data-bs-target="#{modalId}"` en el botón).
+- **`molecules/color-palette-modal`** — el modal Bootstrap (mismo patrón
+  `.modal.fade` + header/body/footer que ya usa el catálogo en
+  `atoms/image-modal` y el partial `pages/contratos/_modal-lotes.blade.php`,
+  título con `.ag-page-header__title`, footer con dos acciones) que aloja
+  adentro a `atoms/color-swatch-picker` sin cambiarlo — acá SÍ vive el
+  `name` real que somete el color al POST. Reutilizable por cualquier campo
+  futuro de paleta curada, no solo `Propiedad.color`: es un passthrough casi
+  directo de props hacia el átomo.
+
+**Contrato de sincronización (el marcado ya lo soporta; el JS que lo
+conecta lo escribe `frontend`, no esta pieza):**
+
+| Pieza | Hook | Qué hace |
+|---|---|---|
+| `color-swatch-field` (raíz) | `data-ag-color-swatch-field` + `data-ag-color-swatch-field-modal="{modalId}"` | Identifica el control y a qué modal corresponde |
+| `color-swatch-field` (swatch) | `data-ag-color-swatch-field-swatch` | JS setea `style.setProperty('--ag-color-swatch-fill', hex)` y quita `--empty` al elegir |
+| `color-swatch-field` (texto) | `data-ag-color-swatch-field-hex` | JS setea `textContent` con el hex nuevo |
+| `color-swatch-field` (nombre accesible) | `data-ag-color-swatch-field-name` | JS setea `textContent` con la etiqueta del color elegido |
+| `color-palette-modal` (cada radio) | `data-ag-color-palette-modal-input` | Hook directo para `change` — llega a cada `<input>` porque `atoms/color-swatch-picker` reenvía `$attributes->except('class')` a los radios, no al `<fieldset>` (ver su comentario de cabecera) |
+
+No hay hidden input duplicado ni segunda fuente de verdad: el único
+`<input type="radio" name="color">` real es el de adentro del modal: al
+elegir un swatch, su `:checked` ya queda committeado en el DOM aunque el
+modal se cierre después (Bootstrap oculta el modal con CSS, no lo
+desmonta) — el submit del formulario funciona aunque el JS de
+sincronización visual todavía no exista. El botón "Aplicar" del footer del
+modal solo cierra (`data-bs-dismiss="modal"`, igual que "Cancelar"): no hay
+nada que descartar, la selección ya es inmediata al clickear un swatch.
+
+Ejemplo de uso previsto (referencia para `frontend`, no conectado todavía —
+ver la tarea que encargó estas piezas):
+
+```blade
+<x-molecules.color-swatch-field
+    id="ag-propiedad-color-field"
+    modal-id="ag-propiedad-color-modal"
+    label="{{ __('comercial.propiedades.campo_color') }}"
+    :value="$color ?: null"
+    :color-name="$color ? \App\Dominios\Comercial\Dominio\ColorPropiedad::from($color)->etiqueta() : null"
+    change-label="{{ __('comercial.propiedades.campo_color_cambiar') }}"
+    placeholder-label="{{ __('comercial.propiedades.campo_color_vacio') }}"
+    help="{{ __('comercial.propiedades.campo_color_ayuda') }}"
+    error="{{ $errors->first('color') }}"
+    class="ag-form-section__field--full"
+/>
+
+<x-molecules.color-palette-modal
+    id="ag-propiedad-color-modal"
+    title="{{ __('comercial.propiedades.campo_color_modal_titulo') }}"
+    name="color"
+    :options="$coloresDisponibles"
+    :value="$color"
+    cancel-label="{{ __('ui.action.cancel') }}"
+    confirm-label="{{ __('comercial.propiedades.campo_color_modal_aplicar') }}"
+/>
+```

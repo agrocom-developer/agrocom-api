@@ -81,7 +81,7 @@ final class ArmarMapaOperativo
         return [
             'type' => 'Feature',
             'properties' => [
-                'nombre' => "{$lote->codigo} — {$lote->campoNombre}",
+                'nombre' => "{$lote->codigo} — {$lote->propiedadNombre}",
                 'cliente' => $lote->clienteNombre,
                 'hectareas' => $lote->hectareas,
                 'hectareasAplicadas' => $resumen->hectareasAplicadas ?? '0.00',

@@ -1,120 +1,17 @@
 /*
- * Pages: campos/index, campos/create, campos/edit
- * (app/Dominios/Comercial/Infraestructura/Http/Views/pages/campos/) — HU-24,
- * tarea 35: administración de campos con sus lotes. CSS propio de ESTAS
- * páginas (ver convención en resources/css/pages/index.css) — mismo patrón
- * que clientes.css (tarea 33).
+ * Piezas compartidas de los formularios de lotes
+ * (app/Dominios/Comercial/Infraestructura/Http/Views/pages/lotes/):
+ * la fila repetible de un lote (`.ag-campos-form__lote*`, `_lote-fila`) y el
+ * editor del perímetro (`.ag-lote-mapa*`, `_lote-mapa`). Ver la convención de
+ * CSS de página en resources/css/pages/index.css.
  *
- * El wrapper `.ag-campos`/`.ag-campos-form` sigue el mismo patrón que
- * `.ag-clientes`/`.ag-clientes-form`: flex en columna con un único `gap` en
- * vez de `margin-top` repetido en cada hijo. Las tarjetas de formulario
- * (`molecules/form-section`), la cabecera (`organisms/page-header`) y la
- * barra de acciones (`organisms/form-actions-bar`) ya traen su propio chrome
- * — acá solo el layout específico de estas pantallas. Todo color y medida
- * por token (CLAUDE.md invariante 11).
+ * El listado y el formulario de Propiedades (antes «Campos») ya usan el
+ * catálogo (`index-table`, `filter-panel`, `form-layout`), así que su tabla,
+ * sus wrappers y su generador propios se borraron en la tarea 122. Todo color
+ * y medida por token (CLAUDE.md invariante 11).
  */
 
-.ag-campos,
-.ag-campos-form {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-5);
-}
-
-/* Listado (index) */
-
-
-.ag-campos__filtros .ag-input,
-.ag-campos__filtros .ag-select,
-.ag-campos__filtros .ag-date {
-    min-width: 16rem;
-}
-
-
-.ag-campos__tabla {
-    border: 1px solid var(--ag-color-border-card);
-    border-radius: var(--ag-radius-md);
-    background-color: var(--ag-color-surface-card);
-    overflow: hidden;
-}
-
-.ag-campos__head,
-.ag-campos__fila {
-    display: grid;
-    grid-template-columns: 2fr 1.5fr 1fr 1fr auto;
-    gap: var(--ag-space-4);
-    align-items: center;
-    padding: var(--ag-space-3) var(--ag-space-4);
-}
-
-.ag-campos__head {
-    background-color: var(--ag-color-bg-table-head);
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-xs);
-    font-weight: var(--ag-font-weight-medium);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.ag-campos__fila {
-    border-top: 1px solid var(--ag-color-border-row);
-    color: var(--ag-color-text);
-    font-size: var(--ag-font-size-sm);
-}
-
-.ag-campos__fila:hover {
-    background-color: var(--ag-color-bg-row-hover);
-}
-
-.ag-campos__nombre {
-    font-weight: var(--ag-font-weight-medium);
-}
-
-.ag-campos__hectareas {
-    font-family: var(--ag-font-family-mono);
-}
-
-.ag-campos__acciones {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--ag-space-2);
-}
-
-.ag-campos__paginacion {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--ag-space-4);
-}
-
-.ag-campos__paginacion-info {
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-sm);
-}
-
-@media (max-width: 992px) {
-    .ag-campos__head {
-        display: none;
-    }
-
-    .ag-campos__fila {
-        grid-template-columns: 1fr;
-        gap: var(--ag-space-1);
-    }
-
-    .ag-campos__acciones {
-        justify-content: flex-start;
-        margin-top: var(--ag-space-2);
-    }
-}
-
 /* Formulario (create/edit): lotes repetibles */
-
-.ag-campos-form__lotes {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-4);
-}
 
 /* El grid de dos columnas es el de `.ag-form-section__body`
    (components/form-section.css) — la fila lo comparte por clase en vez de
@@ -144,23 +41,102 @@
     gap: var(--ag-space-2);
 }
 
+/* `position:relative` ancla las acciones flotantes y el div del mapa
+   (`-mapa`, absoluto) — mismo patrón que `.ag-propiedad-mapa__lienzo`
+   (16/9/2026, pedido directo: mismo componente visual que Propiedad, no
+   una barra externa aparte). El `.ag-mapa-accion` de adentro sigue siendo
+   el mismo átomo compartido con el mapa operativo del tablero — ver
+   `components/mapa-pantalla-completa.css`. */
 .ag-lote-mapa__lienzo {
-    height: 340px;
+    position: relative;
+    height: 520px;
     border-radius: var(--ag-radius-md);
     border: 1px solid var(--ag-color-border);
     overflow: hidden;
     z-index: 0;
 }
 
-/* El marco (`.ag-mapa-marco`) y la barra de acciones (`.ag-mapa-barra`/
-   `.ag-mapa-accion`) son compartidos con el mapa operativo del tablero —
-   ver `components/mapa-pantalla-completa.css`. Acá solo el tamaño del
-   LIENZO propio de este editor cuando el marco pasa a pantalla completa
-   (nativa o de respaldo). */
+/* El div real que Leaflet/Google Maps controlan — nunca le agregues hijos
+   propios acá, Google Maps los borra al inicializarse. Llena el marco por
+   completo vía `inset:0` sobre `position:relative` del padre. */
+.ag-lote-mapa__mapa {
+    position: absolute;
+    inset: 0;
+}
+
+/* Columna de acciones flotante, por encima de los controles nativos de
+   Leaflet/Google — mismo chrome que `.ag-propiedad-mapa__acciones`
+   (radio, fondo, sombra), escalado a esta clase para no acoplar los dos
+   editores por CSS compartido (ver vite.config.js: compartir JS entre
+   ellos ya rompió la carga en producción — el CSS se duplica a propósito
+   por el mismo criterio de precaución). */
+.ag-lote-mapa__acciones {
+    position: absolute;
+    top: var(--ag-space-3);
+    right: var(--ag-space-3);
+    z-index: 1010;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-1);
+    padding: var(--ag-space-1);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+    box-shadow: var(--ag-shadow-overlay-mapa);
+}
+
+.ag-lote-mapa__acciones .ag-mapa-accion[aria-pressed="true"] {
+    background-color: var(--ag-color-primary-subtle);
+    color: var(--ag-color-primary);
+}
+
+/* Tooltip propio (el `title` nativo tarda en aparecer y casi no se nota
+   sobre el mapa) — mismo mecanismo que `[data-ag-propiedad-mapa-tooltip]`,
+   escalado a este editor. */
+[data-ag-lote-mapa-tooltip] {
+    position: relative;
+}
+
+[data-ag-lote-mapa-tooltip]::after {
+    content: attr(data-ag-lote-mapa-tooltip);
+    position: absolute;
+    top: 50%;
+    right: calc(100% + var(--ag-space-2));
+    transform: translateY(-50%);
+    padding: var(--ag-space-1) var(--ag-space-2);
+    border-radius: var(--ag-radius-sm);
+    background-color: var(--ag-color-gray-1000);
+    color: var(--ag-color-gray-0);
+    font-family: var(--ag-font-family-base);
+    font-size: var(--ag-font-size-xs);
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 120ms ease, visibility 120ms ease;
+    pointer-events: none;
+    z-index: 1030;
+}
+
+[data-ag-lote-mapa-tooltip]:hover::after,
+[data-ag-lote-mapa-tooltip]:focus-visible::after {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* El marco (`.ag-mapa-marco`) es compartido con el mapa operativo del
+   tablero — ver `components/mapa-pantalla-completa.css`. Acá solo el
+   tamaño del LIENZO propio de este editor cuando el marco pasa a pantalla
+   completa (nativa o de respaldo). */
 .ag-mapa-marco:fullscreen .ag-lote-mapa__lienzo,
 .ag-mapa-marco.ag-mapa--pantalla-completa-respaldo .ag-lote-mapa__lienzo {
     flex: 1 1 auto;
     height: auto;
+}
+
+@media (max-width: 767.98px) {
+    .ag-lote-mapa__acciones {
+        top: var(--ag-space-2);
+        right: var(--ag-space-2);
+    }
 }
 
 .ag-lote-mapa__pie {
@@ -176,29 +152,35 @@
     flex: 1 1 260px;
 }
 
-.ag-lote-mapa__medida {
-    display: flex;
-    align-items: center;
-    gap: var(--ag-space-2);
+/* Cuadro flotante con la superficie dibujada, abajo a la izquierda — mismo
+   lugar y chrome que `.ag-propiedad-mapa__info` (16/9/2026, pedido
+   directo), sin coordenadas: el lote no tiene marcador de referencia.
+   Desplazado del borde igual que Propiedad: el control nativo de zoom
+   (+/-) vive en esa misma esquina (`L.control.zoom`/`zoomControlOptions`,
+   ambos reposicionados a `bottomleft` para dejar la esquina superior
+   derecha libre para `.ag-lote-mapa__acciones`). */
+.ag-lote-mapa__info {
+    position: absolute;
+    bottom: calc(var(--ag-space-3) + 1.25rem);
+    left: calc(var(--ag-space-3) + 0.15rem);
+    z-index: 1010;
+    padding: var(--ag-space-1) var(--ag-space-2);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-surface-card);
+    box-shadow: var(--ag-shadow-overlay-mapa);
     font-family: var(--ag-font-family-mono);
     font-size: var(--ag-font-size-xs);
     color: var(--ag-color-text-muted);
 }
 
+@media (max-width: 767.98px) {
+    .ag-lote-mapa__info {
+        bottom: calc(var(--ag-space-2) + 1.25rem);
+        left: var(--ag-space-2);
+    }
+}
+
 .ag-campos-form__lote-pie {
     display: flex;
     justify-content: flex-end;
-}
-
-/* Generador de alta masiva (HU-72, tarea 88): botón + ayuda en la misma
-   línea cuando entra, apilados si no — mismo patrón que `.ag-lote-mapa__pie`. */
-.ag-campos-form__generador-pie {
-    display: flex;
-    align-items: center;
-    gap: var(--ag-space-3);
-    flex-wrap: wrap;
-}
-
-.ag-campos-form__generador-pie .ag-input__help {
-    margin: 0;
 }

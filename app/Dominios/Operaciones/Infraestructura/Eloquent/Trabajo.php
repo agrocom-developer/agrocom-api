@@ -7,6 +7,7 @@ use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
 use App\Dominios\Operaciones\Dominio\EstadoSesion;
 use App\Dominios\Operaciones\Dominio\EstadoTableroTrabajo;
 use App\Dominios\Operaciones\Dominio\EstadoTrabajo;
+use App\Dominios\Operaciones\Dominio\Turno;
 use Brick\Math\BigDecimal;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
@@ -53,14 +54,38 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * tarea. FK plana a `per_equipos_trabajo` (otro módulo, ADR 0003 regla 3):
  * sin relación Eloquent, se lee por `Personal\Contratos\LecturaEquipoTrabajo`.
  *
+ * `orden_trabajo_id` (reforma 18/9/2026, "Orden de Trabajo"/tandas): la tanda
+ * a la que pertenece este trabajo — `NULL` en trabajos que nacen por sync sin
+ * pasar por `AsignarEquiposOrden`. `OrdenTrabajo` es del mismo módulo →
+ * relación Eloquent real (`ordenTrabajo()`, ADR 0003 regla 1), a diferencia
+ * de `equipo_trabajo_id` (otro módulo, FK plana).
+ *
+ * Los 8 campos de límites climáticos y parámetros de vuelo vivieron acá muy
+ * brevemente (migración `2026_09_18_100001_mueve_clima_vuelo_de_ordenes_a_trabajos_table`,
+ * el mismo día): describían el vuelo de ESE equipo ese día. La reforma
+ * `create_ope_ordenes_trabajo_table` (mismo día) los mueve una vez más, esta
+ * vez a `OrdenTrabajo` — son compartidos por TODA la tanda (que puede cubrir
+ * varios equipos), no por cada `Trabajo` individual. Se leen vía
+ * `$trabajo->ordenTrabajo?->humedad_min_pct` etc.
+ *
+ * `turno`/`turno_hora_inicio`/`turno_hora_fin` (misma reforma): qué turno
+ * cubre ESTE equipo en ESTE lote dentro de la tanda — mañana, noche o todo
+ * el día, con su horario. Propio de cada fila (mismo nivel que `lote_id`),
+ * no de la cabecera. `NULL` en trabajos que nacen por sync sin pasar por
+ * `AsignarEquiposOrden`, donde los tres son obligatorios juntos.
+ *
  * @property int $id
  * @property string $uuid_cliente
  * @property int $orden_id
  * @property int $lote_id
+ * @property int|null $orden_trabajo_id
  * @property int|null $equipo_trabajo_id
  * @property int $nro_aplicacion
  * @property string $hectareas_declaradas
  * @property EstadoTrabajo $estado
+ * @property Turno|null $turno
+ * @property string|null $turno_hora_inicio
+ * @property string|null $turno_hora_fin
  * @property CarbonImmutable $inicio
  * @property CarbonImmutable|null $fin
  * @property string|null $cierre_uuid_cliente
@@ -79,10 +104,14 @@ class Trabajo extends ModeloDominio
         'uuid_cliente',
         'orden_id',
         'lote_id',
+        'orden_trabajo_id',
         'equipo_trabajo_id',
         'nro_aplicacion',
         'hectareas_declaradas',
         'estado',
+        'turno',
+        'turno_hora_inicio',
+        'turno_hora_fin',
         'inicio',
         'fin',
         'cierre_uuid_cliente',
@@ -95,14 +124,24 @@ class Trabajo extends ModeloDominio
     {
         return [
             'nro_aplicacion' => 'integer',
+            'orden_trabajo_id' => 'integer',
             'equipo_trabajo_id' => 'integer',
             'hectareas_declaradas' => 'decimal:2',
             'estado' => EstadoTrabajo::class,
+            'turno' => Turno::class,
+            'turno_hora_inicio' => 'datetime:H:i',
+            'turno_hora_fin' => 'datetime:H:i',
             'inicio' => 'immutable_datetime',
             'fin' => 'immutable_datetime',
             'litros_sobrante' => 'decimal:2',
             'imagen_campo_evidencia_id' => 'integer',
         ];
+    }
+
+    /** @return BelongsTo<OrdenTrabajo, $this> */
+    public function ordenTrabajo(): BelongsTo
+    {
+        return $this->belongsTo(OrdenTrabajo::class, 'orden_trabajo_id');
     }
 
     /** @return HasMany<Sesion, $this> */

@@ -4,8 +4,10 @@
     vive en `_formulario.blade.php`, compartido con `create.blade.php`.
 
     Datos esperados (ver PersonasController::edit()): la cáscara de
-    CascaraPanel, más $persona (PerPersona), $roles (list<RolOperativoPersona>)
-    y $basesDisponibles (Collection<int, string>).
+    CascaraPanel, más $persona (PerPersona), $rolesOperativos
+    (list<RolOperativoPersona>), $basesDisponibles (Collection<int, string>),
+    $volverA y $resumenRelacionado (el aside del formulario, que el
+    `@include` hereda tal cual).
 
     Gateada por `personal.persona.editar`, verificado server-side en el
     controlador.

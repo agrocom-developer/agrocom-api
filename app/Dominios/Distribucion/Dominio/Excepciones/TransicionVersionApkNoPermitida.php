@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Distribucion\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use App\Dominios\Distribucion\Dominio\EstadoVersionApk;
 use DomainException;
 
@@ -15,7 +16,10 @@ final class TransicionVersionApkNoPermitida extends DomainException
     public static function entre(EstadoVersionApk $desde, EstadoVersionApk $hasta): self
     {
         return new self(
-            "No se puede pasar una versión de APK de '{$desde->value}' a '{$hasta->value}'.",
+            Texto::de('distribucion.errores.transicion_version_apk_no_permitida', [
+                'desde' => $desde->value,
+                'hasta' => $hasta->value,
+            ]),
         );
     }
 }

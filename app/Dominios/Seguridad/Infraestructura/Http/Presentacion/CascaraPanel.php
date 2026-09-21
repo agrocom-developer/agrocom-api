@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Seguridad\Infraestructura\Http\Presentacion;
 
+use App\Dominios\Comercial\Contratos\LecturaContadoresPanel as LecturaContadoresPanelComercial;
 use App\Dominios\Finanzas\Contratos\LecturaContadoresPanel as LecturaContadoresPanelFinanzas;
 use App\Dominios\Inventario\Contratos\LecturaContadoresPanel as LecturaContadoresPanelInventario;
 use App\Dominios\Operaciones\Contratos\AlertaPanel;
@@ -44,6 +45,7 @@ final class CascaraPanel
         private readonly ObtenerMenuPorRolActivo $obtenerMenu,
         private readonly ListarRolesDisponibles $listarRolesDisponibles,
         private readonly LecturaContadoresPanelOperaciones $contadoresOperaciones,
+        private readonly LecturaContadoresPanelComercial $contadoresComercial,
         private readonly LecturaPanelOperaciones $panelOperaciones,
         private readonly LecturaContadoresPanelInventario $contadoresInventario,
         private readonly LecturaContadoresPanelFinanzas $contadoresFinanzas,
@@ -96,6 +98,13 @@ final class CascaraPanel
      * `panel-layout.blade.php` ya tolera la ausencia de una clave
      * (`$menuBadges[$label] ?? null`).
      *
+     * Refactor de menú (17/9/2026): "Pausas" perdió su ítem propio
+     * (`SecMenuSeeder`, absorbido por "Seguimiento de vuelos") y con él su
+     * badge — `LecturaContadoresPanel::pausasDelMes()` sigue existiendo (no
+     * se sabe si otra pantalla lo va a necesitar) pero ya no se llama desde
+     * acá. El badge de "Sesiones" se re-etiqueta a
+     * `menu.operacion.items.seguimiento_vuelos`, la clave nueva de ese ítem.
+     *
      * @return array<string, array{numero: string, texto: string}>
      */
     private function menuBadges(SecUser $usuario): array
@@ -103,36 +112,47 @@ final class CascaraPanel
         $badges = [];
 
         $ordenesVigentes = $this->contadoresOperaciones->ordenesVigentes();
-        $badges['menu.operacion.items.ordenes'] = [
-            'numero' => (string) $ordenesVigentes,
-            'texto' => "{$ordenesVigentes} vigentes",
-        ];
+        if ($ordenesVigentes > 0) {
+            $badges['menu.operacion.items.ordenes'] = [
+                'numero' => (string) $ordenesVigentes,
+                'texto' => __('seguridad.respuestas.badge_ordenes_vigentes', ['cantidad' => $ordenesVigentes]),
+            ];
+        }
+
+        // Contratos «En ejecución» (`vigente`): los que hoy tienen la operación en marcha.
+        $contratosEnEjecucion = $this->contadoresComercial->contratosEnEjecucion();
+        if ($contratosEnEjecucion > 0) {
+            $badges['menu.comercial.items.contratos'] = [
+                'numero' => (string) $contratosEnEjecucion,
+                'texto' => __('seguridad.respuestas.badge_contratos_en_ejecucion', ['cantidad' => $contratosEnEjecucion]),
+            ];
+        }
 
         $sesionesPendientes = $this->contadoresOperaciones->sesionesPendientesValidacion();
-        $badges['menu.operacion.items.sesiones'] = [
-            'numero' => (string) $sesionesPendientes,
-            'texto' => "{$sesionesPendientes} sin validar",
-        ];
-
-        $pausas = $this->contadoresOperaciones->pausasDelMes();
-        $badges['menu.operacion.items.pausas'] = [
-            'numero' => (string) $pausas['cantidad'],
-            'texto' => "{$pausas['cantidad']} este mes",
-        ];
+        if ($sesionesPendientes > 0) {
+            $badges['menu.operacion.items.seguimiento_vuelos'] = [
+                'numero' => (string) $sesionesPendientes,
+                'texto' => __('seguridad.respuestas.badge_sesiones_pendientes', ['cantidad' => $sesionesPendientes]),
+            ];
+        }
 
         $stockBajoMinimo = $this->contadoresInventario->stockBajoMinimo();
-        $badges['menu.mantenimiento.items.stock'] = [
-            'numero' => (string) $stockBajoMinimo,
-            'texto' => "{$stockBajoMinimo} bajo mínimo",
-        ];
+        if ($stockBajoMinimo > 0) {
+            $badges['menu.mantenimiento.items.stock'] = [
+                'numero' => (string) $stockBajoMinimo,
+                'texto' => __('seguridad.respuestas.badge_stock_bajo_minimo', ['cantidad' => $stockBajoMinimo]),
+            ];
+        }
 
         if ($usuario->persona_id !== null) {
             $devengado = $this->contadoresFinanzas->devengadoDelMes($usuario->persona_id);
-            $devengadoFormateado = number_format((float) $devengado, 0, ',', '.');
-            $badges['menu.financiero.items.devengos'] = [
-                'numero' => $devengadoFormateado,
-                'texto' => "Bs {$devengadoFormateado}",
-            ];
+            if ((float) $devengado > 0) {
+                $devengadoFormateado = number_format((float) $devengado, 0, ',', '.');
+                $badges['menu.financiero.items.devengos'] = [
+                    'numero' => $devengadoFormateado,
+                    'texto' => __('seguridad.dashboard.liquidacion_total', ['monto' => $devengadoFormateado]),
+                ];
+            }
         }
 
         return $badges;

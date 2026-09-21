@@ -9,106 +9,314 @@
  *
  * El wrapper `.ag-ordenes`/`.ag-ordenes-form` sigue el mismo patrón que
  * `.ag-contratos`/`.ag-contratos-form`: flex en columna con un único `gap`
- * en vez de `margin-top` repetido en cada hijo. Todo color y medida por
- * token (CLAUDE.md invariante 11).
+ * en vez de `margin-top` repetido en cada hijo. El contenedor de la tabla
+ * del listado (`molecules/index-table`) y el layout main/aside del
+ * formulario (`molecules/form-layout`) no viven acá (homogeneización
+ * 17/9/2026 — eran una copia casi idéntica a clientes/contratos, extraída al
+ * catálogo, ver docs/diseno/guia_pantalla_panel.md §6.2/§6.3.1). Todo color y
+ * medida por token (CLAUDE.md invariante 11).
  */
 
 .ag-ordenes,
-.ag-ordenes-form {
+.ag-ordenes-form,
+.ag-ordenes-detalle {
     display: flex;
     flex-direction: column;
     gap: var(--ag-space-5);
 }
 
-/* Listado (index) */
-
-
-.ag-ordenes__filtros .ag-input,
-.ag-ordenes__filtros .ag-select,
-.ag-ordenes__filtros .ag-date {
-    min-width: 16rem;
+/* Contenedores de *container queries* (17/9/2026, pedido explícito): la
+   grilla del listado y la tira de KPI del detalle tienen que reaccionar al
+   ancho REAL disponible, no al viewport — con `@media` un mismo viewport
+   siempre da el mismo resultado aunque el sidebar de módulo (nivel 2, 252px
+   → 72px colapsado, `module-sidebar.js`/`.ag-module-sidebar.is-collapsed`)
+   le haya devuelto ~180px al contenido. `container-type: inline-size` en el
+   wrapper de la página convierte su ancho en la medida que consultan los
+   `@container` de abajo — ninguna otra pantalla se ve afectada, es un
+   contexto de contención nuevo, no global. */
+.ag-ordenes {
+    container: ag-ordenes / inline-size;
 }
 
-
-.ag-ordenes__tabla {
-    border: 1px solid var(--ag-color-border-card);
-    border-radius: var(--ag-radius-md);
-    background-color: var(--ag-color-surface-card);
-    overflow: hidden;
+.ag-ordenes-detalle {
+    container: ag-ordenes-detalle / inline-size;
 }
 
-.ag-ordenes__head,
-.ag-ordenes__fila {
-    display: grid;
-    grid-template-columns: 1.6fr 1.6fr 0.8fr 1fr 0.8fr 1fr 1fr auto;
-    gap: var(--ag-space-4);
-    align-items: center;
-    padding: var(--ag-space-3) var(--ag-space-4);
-}
-
-.ag-ordenes__head {
-    background-color: var(--ag-color-bg-table-head);
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-xs);
-    font-weight: var(--ag-font-weight-medium);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.ag-ordenes__fila {
-    border-top: 1px solid var(--ag-color-border-row);
-    color: var(--ag-color-text);
-    font-size: var(--ag-font-size-sm);
-}
-
-.ag-ordenes__fila:hover {
-    background-color: var(--ag-color-bg-row-hover);
-}
+/* Listado (index): columnas propias de `molecules/index-table` — índice ·
+   contrato · lote · aplicación · tipo · dosis · emisión · estado · acciones.
+   El resto de la anatomía de la tabla vive en el componente. */
 
 .ag-ordenes__mono {
     font-family: var(--ag-font-family-mono);
 }
 
-.ag-ordenes__acciones {
+/* Estado de la orden + badge "Con inconvenientes" (ADR 0022): dos badges en la
+   misma celda o cabecera de tarjeta, que se acomodan en otra línea si no
+   entran. */
+.ag-ordenes__estados {
     display: flex;
     flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: var(--ag-space-2);
+    align-items: center;
+    gap: var(--ag-space-1);
 }
 
-.ag-ordenes__paginacion {
+/* Vista en grilla del listado (toggle lista/grilla, 17/9/2026): 1 columna
+   por defecto (móvil) → 2 en tableta → 3 en escritorio → 4 en pantallas
+   XXL, según el ancho REAL del contenedor `.ag-ordenes` (ver arriba) — no
+   `auto-fit`: el pedido fue una cantidad de columnas explícita por tramo,
+   no "las que entren". */
+.ag-ordenes__grilla {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--ag-space-4);
+    align-items: start;
+}
+
+@container ag-ordenes (min-width: 36rem) {
+    .ag-ordenes__grilla {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@container ag-ordenes (min-width: 60rem) {
+    .ag-ordenes__grilla {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@container ag-ordenes (min-width: 84rem) {
+    .ag-ordenes__grilla {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+/* `data-estado` (mismo criterio que `[data-state]` de stat-card, §2.2 del
+   sistema de diseño): franja superior de 3px con el color del estado — así
+   la tarjeta se identifica de un vistazo sin tener que leer el badge,
+   mismo lenguaje del mockup de referencia (borde/punto de color por
+   estado) traducido a los tokens del sistema en vez de sus hex. */
+.ag-ordenes-card {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--ag-color-surface-card);
+    border: 1px solid var(--ag-color-border-card);
+    border-top: 3px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-lg);
+    box-shadow: var(--ag-shadow-sm);
+    overflow: hidden;
+}
+
+.ag-ordenes-card[data-estado='success'] {
+    border-top-color: var(--ag-color-success);
+}
+
+.ag-ordenes-card[data-estado='warning'] {
+    border-top-color: var(--ag-color-warning);
+}
+
+.ag-ordenes-card[data-estado='danger'] {
+    border-top-color: var(--ag-color-danger);
+}
+
+.ag-ordenes-card[data-estado='info'] {
+    border-top-color: var(--ag-color-info);
+}
+
+.ag-ordenes-card__head {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-4) var(--ag-space-4) var(--ag-space-3);
+}
+
+.ag-ordenes-card__identidad {
+    flex: 1;
+    min-width: 0;
+}
+
+.ag-ordenes-card__codigo {
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+    letter-spacing: 0.04em;
+}
+
+.ag-ordenes-card__cliente {
+    font-family: var(--ag-font-family-display);
+    font-size: var(--ag-font-size-lg);
+    font-weight: var(--ag-font-weight-bold);
+    line-height: 1.15;
+    margin-top: 0.125rem;
+}
+
+.ag-ordenes-card__subtitulo {
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-ordenes-card__lote {
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-2) var(--ag-space-4);
+    background-color: var(--ag-color-bg-surface);
+    border-block: 1px solid var(--ag-color-border-row);
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+}
+
+.ag-ordenes-card__lote-punto {
+    flex: none;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: var(--ag-radius-sm);
+    background-color: var(--ag-color-text-faint);
+}
+
+.ag-ordenes-card__lote-punto--success {
+    background-color: var(--ag-color-success);
+}
+
+.ag-ordenes-card__lote-punto--warning {
+    background-color: var(--ag-color-warning);
+}
+
+.ag-ordenes-card__lote-punto--danger {
+    background-color: var(--ag-color-danger);
+}
+
+.ag-ordenes-card__lote-punto--info {
+    background-color: var(--ag-color-info);
+}
+
+.ag-ordenes-card__lote-hectareas {
+    margin-left: auto;
+    font-family: var(--ag-font-family-mono);
+}
+
+.ag-ordenes-card__datos {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1px;
+    background-color: var(--ag-color-border-row);
+}
+
+.ag-ordenes-card__dato {
+    background-color: var(--ag-color-surface-card);
+    padding: var(--ag-space-3);
+}
+
+.ag-ordenes-card__dato-label {
+    font-size: var(--ag-font-size-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-ordenes-card__dato-valor {
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+    margin-top: 0.1875rem;
+}
+
+.ag-ordenes-card__pie {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-3) var(--ag-space-4) var(--ag-space-4);
+    margin-top: auto;
+    border-top: 1px solid var(--ag-color-border-row);
+}
+
+.ag-ordenes-card__pie-fecha {
+    flex: 1;
+    min-width: 0;
+    line-height: 1.3;
+}
+
+.ag-ordenes-card__pie-fecha-valor {
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-xs);
+}
+
+/* Detalle (show, 17/9/2026) — arquetipo Detalle, §6.4 de
+   docs/diseno/guia_pantalla_panel.md. Mismo criterio de container query que
+   la grilla del listado (ver arriba): reacciona al ancho real de
+   `.ag-ordenes-detalle`, sidebar colapsado incluido. */
+
+.ag-ordenes-detalle__kpis {
+    display: grid;
+    grid-template-columns: 1fr;
     gap: var(--ag-space-4);
 }
 
-.ag-ordenes__paginacion-info {
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-sm);
+@container ag-ordenes-detalle (min-width: 36rem) {
+    .ag-ordenes-detalle__kpis {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 
-@media (max-width: 992px) {
-    .ag-ordenes__head {
-        display: none;
+@container ag-ordenes-detalle (min-width: 60rem) {
+    .ag-ordenes-detalle__kpis {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
     }
+}
 
-    .ag-ordenes__fila {
-        grid-template-columns: 1fr;
-        gap: var(--ag-space-1);
-    }
+/* Campo de solo lectura dentro de `form-section` (etiqueta arriba, valor
+   abajo) — mismo lenguaje que las celdas del listado en grilla
+   (`.ag-ordenes-card__dato`), pero sin fondo/borde propio porque ya vive
+   dentro del grid de 2 columnas de `.ag-form-section__body`. */
+.ag-ordenes-detalle__campo-label {
+    margin: 0;
+    font-size: var(--ag-font-size-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ag-color-text-muted);
+}
 
-    .ag-ordenes__acciones {
-        justify-content: flex-start;
-        margin-top: var(--ag-space-2);
-    }
+.ag-ordenes-detalle__campo-valor {
+    margin: 0.1875rem 0 0;
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+    line-height: 1.5;
+}
+
+/* Equipo y dron de un lote en el detalle de la orden: un renglón por equipo,
+   apilados, así el dron queda en la misma línea que su equipo en la celda de al
+   lado. Sin orden de trabajo, un único guion. */
+.ag-ordenes__renglones {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-1);
+}
+
+/* Lista de "Vínculos" (molecules/link-row): mismo tratamiento que la tabla
+   de "Lotes" — borde/radio propios, separada del padding de la tarjeta,
+   para que se lea como un bloque cohesivo en vez de filas sueltas. */
+.ag-ordenes-detalle__vinculos {
+    border: 1px solid var(--ag-color-border-row);
+    border-radius: var(--ag-radius-md);
+    overflow: hidden;
 }
 
 /* Formulario (create/edit) */
 
+/* Mismo estilo que el `help` nativo de los átomos (`.ag-date__help`,
+   `.ag-select__help`, `.ag-input__help` — todos idénticos): acá va aparte
+   (no el prop `help` del átomo) porque necesita la fecha de inicio del
+   contrato destacada en rojo, algo que el prop `help` (texto plano) no
+   puede resolver. */
 .ag-ordenes-form__ayuda {
+    margin: 0;
+    font-size: var(--ag-font-size-xs);
     color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-sm);
+}
+
+/* Fecha de inicio del contrato, destacada dentro de la ayuda de "Fecha de
+   emisión" (reforma 18/9/2026) — referencia visual, no marca de error. */
+.ag-ordenes-form__fecha-destacada {
+    color: var(--ag-color-danger);
+    font-weight: var(--ag-font-weight-medium);
 }
 
 /* Lotes repetibles (HU-92, tarea 107) — mismo patrón que
@@ -130,3 +338,115 @@
     padding-top: 0;
     border-top: none;
 }
+
+/* Sección "Datos del contrato" (reforma 18/9/2026) — resumen del cliente,
+   propiedades, y aplicaciones previstas una vez elegido el contrato. El
+   grid de dos columnas lo da la clase compartida `ag-form-section__body`
+   (aplicada junto a esta en el Blade, componente reutilizable — ver su
+   docblock en components/form-section.css, con compuerta automática en
+   tests/Unit/PulidoNavegacionPanelTest.php): acá solo el patrón label
+   arriba + valor abajo, ya resuelto por `.ag-select__label`/
+   `.ag-form-section__field`. */
+
+/* Resumen del contrato elegido: logo del cliente a la izquierda, datos como
+   complemento a la derecha (`ag-ordenes-detalle__campo-label`/`-valor`,
+   mismas clases que "Datos de la orden" de `ordenes/show.blade.php` —
+   pedido explícito del usuario 18/9/2026, mismo lenguaje visual en las dos
+   pantallas). Fila flex para el logo + grid; el grid interno de los campos
+   lo da `ag-form-section__body` por composición (ver el Blade), no una
+   regla propia acá. */
+.ag-ordenes-form__resumen-contrato {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--ag-space-4);
+    padding-top: var(--ag-space-4);
+    border-top: 1px solid var(--ag-color-border-row);
+}
+
+.ag-ordenes-form__resumen-datos {
+    flex: 1;
+}
+
+/* Logo del cliente — cuadrado fijo, mismo radio que una tarjeta chica. Una
+   sola `<img>`: el JS le pone el logo real o cae al placeholder del propio
+   atributo `data-logo-placeholder` (nunca dos elementos alternando `hidden`). */
+.ag-ordenes-form__logo {
+    flex: none;
+    width: 10rem;
+    height: 10rem;
+    border-radius: var(--ag-radius-md);
+    object-fit: contain;
+    background-color: var(--ag-color-surface-inset);
+    border: 1px solid var(--ag-color-border-row);
+}
+
+/* Ícono de ayuda (tooltip) junto a un encabezado de columna de la tabla de
+   lotes — "Hectáreas solicitadas" no es obvio a simple vista. */
+.ag-ordenes-form__lotes-ayuda-icono {
+    margin-left: var(--ag-space-1);
+    font-size: 1rem;
+    vertical-align: text-bottom;
+    color: var(--ag-color-text-muted);
+    cursor: help;
+}
+
+/* Buscador de lotes (tabla, §6.2) — input de búsqueda por código/propiedad.
+   Envuelto en div para que sea field--full sin contaminar el input atom
+   (que no se puede wrappear sin perder su grid/margin). */
+.ag-ordenes-form__lotes-buscador {
+    display: flex;
+    align-items: center;
+}
+
+.ag-ordenes-form__lotes-buscador .ag-input__control {
+    width: 100%;
+}
+
+/* Input de hectáreas dentro de la tabla — oculto hasta que se tilden
+   el checkbox de la fila (lógica en JS). Aunque lleva clase `.ag-input__control`
+   (por reutilización de estilos base), acá es un <input> directo en una <td>,
+   no un contenedor flex: se restituye display:inline para que funcione como
+   input nativo en su cell. */
+.ag-ordenes-form__lotes-hectareas {
+    display: inline;
+    width: 100%;
+    flex: none;
+    align-items: unset;
+}
+
+.ag-ordenes-form__lotes-hectareas:disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* Contenedor de paginado — botones anterior/siguiente + info (X / Y) en el
+   centro. Flexbox con botones a los costados y el texto en el medio. */
+.ag-ordenes-form__lotes-paginado {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-3) var(--ag-space-4);
+    border-top: 1px solid var(--ag-color-border-row);
+}
+
+/* Información de página actual — "1 / 5", texto pequeño muted. */
+.ag-ordenes-form__paginado-info {
+    flex: 1;
+    text-align: center;
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Estado vacío — cuando no hay lotes (sin contrato elegido o búsqueda sin
+   resultados). Mismo estilo que `.ag-contratos-form__modal-tabla-vacio`
+   (contratos.css línea ~412): texto faint, padding, para verse como un estado
+   de interfaz y no confundirse con error. */
+.ag-ordenes-form__lotes-vacio {
+    padding: var(--ag-space-4);
+    text-align: center;
+    color: var(--ag-color-text-faint);
+    font-size: var(--ag-font-size-sm);
+}
+

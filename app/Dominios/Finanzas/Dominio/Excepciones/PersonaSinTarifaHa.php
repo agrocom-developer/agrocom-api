@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Finanzas\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use RuntimeException;
 
 /**
@@ -22,6 +23,6 @@ final class PersonaSinTarifaHa extends RuntimeException
 {
     public static function paraPersona(int $personaId): self
     {
-        return new self("La persona {$personaId} no tiene tarifa_ha configurada: no se puede calcular su devengo.");
+        return new self(Texto::de('finanzas.errores.persona_sin_tarifa_ha', ['persona_id' => $personaId]));
     }
 }

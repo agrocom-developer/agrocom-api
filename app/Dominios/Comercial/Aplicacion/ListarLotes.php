@@ -3,44 +3,43 @@
 namespace App\Dominios\Comercial\Aplicacion;
 
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
+use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaTexto;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 /**
- * Caso de uso: listado de lotes con filtro por cliente, por campo y
- * búsqueda por código (tarea 77, HU-54, etapa 2; filtro por cliente
- * actualizado a ADR 0018, salta el hop nuevo vía `campo.propiedad`). Mismo
- * patrón de paginación que `ListarCampos`.
+ * Caso de uso: listado de lotes con filtro por cliente, por propiedad y
+ * búsqueda por código (tarea 77, HU-54, etapa 2; ADR 0020 — el lote cuelga
+ * directo de `Propiedad`, un salto menos que bajo ADR 0018).
  *
- * El código de un lote es único por CAMPO, no globalmente (índice parcial
- * `com_lotes_codigo_unico`): la búsqueda por código puede traer varios lotes
- * de distintos campos con el mismo código, mismo criterio que `ListarCampos`
- * con el nombre.
+ * El código de un lote es único por PROPIEDAD, no globalmente (índice
+ * parcial `com_lotes_codigo_unico`): la búsqueda por código puede traer
+ * varios lotes de distintas propiedades con el mismo código.
  */
 final class ListarLotes
 {
     /** @return LengthAwarePaginator<int, Lote> */
     public function ejecutar(
         ?int $clienteId = null,
-        ?int $campoId = null,
+        ?int $propiedadId = null,
         ?string $busqueda = null,
         int $porPagina = 15,
     ): LengthAwarePaginator {
         return Lote::query()
-            ->with('campo.propiedad.cliente')
+            ->ordenadosPorCodigo()
+            ->with('propiedad.cliente')
             ->when(
-                $campoId !== null,
-                fn (Builder $consulta) => $consulta->where('campo_id', $campoId),
+                $propiedadId !== null,
+                fn (Builder $consulta) => $consulta->where('propiedad_id', $propiedadId),
             )
             ->when(
                 $clienteId !== null,
-                fn (Builder $consulta) => $consulta->whereHas('campo.propiedad', fn (Builder $propiedad) => $propiedad->where('cliente_id', $clienteId)),
+                fn (Builder $consulta) => $consulta->whereHas('propiedad', fn (Builder $propiedad) => $propiedad->where('cliente_id', $clienteId)),
             )
             ->when(
                 $busqueda !== null && $busqueda !== '',
-                fn (Builder $consulta) => $consulta->where('codigo', 'like', "%{$busqueda}%"),
+                fn (Builder $consulta) => BusquedaTexto::aplicar($consulta, ['codigo'], $busqueda),
             )
-            ->orderBy('codigo')
             ->paginate($porPagina)
             ->withQueryString();
     }

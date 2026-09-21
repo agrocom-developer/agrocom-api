@@ -24,6 +24,16 @@ final class ListarOrdenesAplicacion
      *                              AND con `estado`; si se contradicen, el
      *                              resultado es vacío (a propósito: no hay
      *                              prevalencia silenciosa entre filtros).
+     * @param  ?list<int>  $contratoIds  Buscador `q` del listado del panel
+     *                                   (17/9/2026, homogeneización): el
+     *                                   controlador ya resolvió qué contratos
+     *                                   coinciden por razón social del
+     *                                   cliente (Comercial, ADR 0003 regla 3)
+     *                                   y entrega la lista de ids acá — un
+     *                                   array vacío (búsqueda sin coincidencias)
+     *                                   filtra a "ningún resultado", nunca a
+     *                                   "sin filtro" (`whereIn` con `[]` de
+     *                                   Eloquent ya se comporta así).
      * @return LengthAwarePaginator<int, OrdenAplicacion>
      */
     public function ejecutar(
@@ -33,10 +43,11 @@ final class ListarOrdenesAplicacion
         ?int $nroAplicacion = null,
         ?TipoAplicacion $tipoAplicacion = null,
         bool $soloVigentes = false,
+        ?array $contratoIds = null,
         int $porPagina = 15,
     ): LengthAwarePaginator {
         return OrdenAplicacion::query()
-            ->with('ordenLotes')
+            ->with(['ordenLotes', 'categoriaInsumo'])
             ->when($estado !== null, fn ($consulta) => $consulta->where('estado', $estado))
             ->when($soloVigentes, fn ($consulta) => $consulta->where('estado', EstadoOrdenAplicacion::Vigente))
             ->when($loteId !== null, fn ($consulta) => $consulta->whereHas(
@@ -46,8 +57,10 @@ final class ListarOrdenesAplicacion
             ->when($contratoId !== null, fn ($consulta) => $consulta->where('contrato_id', $contratoId))
             ->when($nroAplicacion !== null, fn ($consulta) => $consulta->where('nro_aplicacion', $nroAplicacion))
             ->when($tipoAplicacion !== null, fn ($consulta) => $consulta->where('tipo_aplicacion', $tipoAplicacion))
+            ->when($contratoIds !== null, fn ($consulta) => $consulta->whereIn('contrato_id', $contratoIds))
             ->orderByDesc('fecha_emision')
             ->orderByDesc('id')
-            ->paginate($porPagina);
+            ->paginate($porPagina)
+            ->withQueryString();
     }
 }

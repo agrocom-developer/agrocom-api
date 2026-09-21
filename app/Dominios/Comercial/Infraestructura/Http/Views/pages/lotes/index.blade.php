@@ -1,29 +1,43 @@
 {{--
     Page: lotes/index (GET /panel/lotes, panel.lotes.index)
-    Listado de lotes (tarea 77, HU-54, etapa 2; actualizado ADR 0018): arquetipo
+    Listado de lotes (tarea 77, HU-54, etapa 2; actualizado ADR 0020): arquetipo
     Listado, §6.2 de docs/diseno/guia_pantalla_panel.md — cabecera → filtros →
     tabla → paginación. Antes de esta tarea un lote solo se podía ver entrando
-    por su campo (`campos/index.blade.php`); esta pantalla es su ficha propia.
+    por su propiedad; esta pantalla es su ficha propia.
 
     Datos esperados (ver LotesController::index()): la cáscara de
     CascaraPanel, más:
-    - $lotes (LengthAwarePaginator<Lote>, con `campo.propiedad.cliente` cargada):
+    - $lotes (LengthAwarePaginator<Lote>, con `propiedad.cliente` cargada):
       código ascendente.
-    - $filtros (array{q: string, cliente_id: ?int, campo_id: ?int}): filtros
+    - $propiedadFiltro (Propiedad|null): la propiedad del filtro `propiedad_id`,
+      si lo hay — habilita el botón «Volver a la propiedad» (memento).
+    - $filtros (array{q: string, cliente_id: ?int, propiedad_id: ?int}): filtros
       aplicados, para dejarlos con el valor tras el submit.
     - $clientesDisponibles (Collection<int, string>), $propiedadesDisponibles
-      (Collection<int, Propiedad>), $camposDisponibles (Collection<int, Campo>):
-      opciones de los selects de filtro (ADR 0018: cascade cliente → propiedad
-      → campo).
+      (Collection<int, Propiedad>): opciones de los selects de filtro (ADR 0020:
+      cascade cliente → propiedad).
 
     Gateada por `comercial.lote.ver`, verificado server-side en el
     controlador. Los botones "Nuevo lote"/"Editar"/"Eliminar" se ocultan con
     `@puede` (presentación, no autorización — el servidor revalida en
     LotesController).
 
+    Memento de navegación (19/9/2026, mismo criterio que
+    `ordenes/index.blade.php`): si se llega con una pila apilada — el «Ver
+    lista de lotes» del resumen de una propiedad, o el «Generar lotes» que
+    redirige acá tras la alta en bloque — la cabecera ofrece «Volver»
+    (`molecules/boton-volver`); sin origen, no hay botón. Antes de esto la
+    cadena contrato → «Nuevo cliente» → «Nueva propiedad» → «Generar lotes»
+    no tenía por dónde seguir volviendo desde acá, y lo cargado en el
+    formulario de origen (sessionStorage, `contratos-form.js`) quedaba sin
+    forma de recuperarse.
+
     Estilos en resources/css/pages/lotes.css — cero color hardcodeado
     (CLAUDE.md invariante 11).
 --}}
+@php
+    $hayOrigen = session('navegacion_pila', []) !== [];
+@endphp
 <x-templates.panel-shell :title="__('comercial.lotes.titulo')" :tema="$tema">
     <x-templates.panel-layout
         :menu="$menu"
@@ -42,13 +56,26 @@
                 :title="__('comercial.lotes.titulo')"
                 :subtitle="__('comercial.lotes.subtitulo')"
             >
-                @puede('comercial.lote.crear')
-                    <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.lotes.create') }}" variant="primary" icon="add">
+                <x-slot:actions>
+                    {{-- Con el filtro de una propiedad se llegó desde su formulario
+                         (memento de navegación): se vuelve a ella. Si hay pila, el
+                         botón vuelve al escalón anterior y lo dice; si no, cae a la
+                         ficha de la propiedad. Sin ese filtro, el botón solo aparece
+                         si se llegó desde otra pantalla (hay pila a la que volver). --}}
+                    @if ($propiedadFiltro !== null)
+                        @puede('comercial.propiedad.editar')
+                            <x-molecules.boton-volver :href="route('panel.propiedades.edit', $propiedadFiltro)" :label="__('comercial.lotes.volver_a_propiedad')" />
+                        @endpuede
+                    @elseif ($hayOrigen)
+                        <x-molecules.boton-volver :href="route('panel.lotes.index')" :label="__('comercial.lotes.titulo')" />
+                    @endif
+
+                    @puede('comercial.lote.crear')
+                        <x-atoms.button :href="route('panel.lotes.create', array_filter(['propiedad_id' => $filtros['propiedad_id']]))" variant="primary" icon="add">
                             {{ __('comercial.lotes.nuevo') }}
                         </x-atoms.button>
-                    </x-slot:actions>
-                @endpuede
+                    @endpuede
+                </x-slot:actions>
             </x-organisms.page-header>
 
             @if (session('estado'))
@@ -64,123 +91,135 @@
             @endif
 
             @php
-                $hayFiltrosActivos = $filtros['q'] !== '' || $filtros['cliente_id'] !== null || $filtros['campo_id'] !== null;
-                $camposOptions = $camposDisponibles->mapWithKeys(fn ($campo) => [
-                    $campo->id => $campo->nombre,
+                $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
+                $propiedadesOptions = $propiedadesDisponibles->mapWithKeys(fn ($propiedad) => [
+                    $propiedad->id => $propiedad->nombre,
                 ]);
+                $filtrosPanelActivos = collect(['cliente_id', 'propiedad_id'])
+                    ->filter(fn ($campo) => $filtros[$campo] !== null && $filtros[$campo] !== '')
+                    ->count();
             @endphp
 
-            <form method="GET" action="{{ route('panel.lotes.index') }}" class="ag-filtros ag-lotes__filtros">
-                <div class="ag-input">
-                    <label for="filtro-q" class="ag-input__label">{{ __('comercial.lotes.filtro_busqueda') }}</label>
-                    <div class="ag-input__control">
-                        <input
-                            type="search"
-                            name="q"
-                            id="filtro-q"
-                            class="ag-input__field"
-                            value="{{ $filtros['q'] }}"
-                            placeholder="{{ __('comercial.lotes.filtro_busqueda_placeholder') }}"
-                        >
-                    </div>
+            @if ($hayFiltrosActivos || $lotes->isNotEmpty())
+                <div class="ag-table-toolbar">
+                    <x-organisms.filter-panel
+                        :action="route('panel.lotes.index')"
+                        :active-count="$filtrosPanelActivos"
+                    >
+                        <input type="hidden" name="q" value="{{ $filtros['q'] }}">
+                        <x-atoms.select
+                            name="cliente_id"
+                            id="filtro-cliente"
+                            :label="__('comercial.lotes.filtro_cliente')"
+                            :options="$clientesDisponibles"
+                            :value="$filtros['cliente_id']"
+                            :placeholder="__('comercial.lotes.filtro_todos')"
+                        />
+
+                        <x-atoms.select
+                            name="propiedad_id"
+                            id="filtro-propiedad"
+                            :label="__('comercial.lotes.filtro_propiedad')"
+                            :options="$propiedadesOptions"
+                            :value="$filtros['propiedad_id']"
+                            :placeholder="__('comercial.lotes.filtro_todos')"
+                        />
+                    </x-organisms.filter-panel>
+
+                    <x-molecules.table-search
+                        :action="route('panel.lotes.index')"
+                        :value="$filtros['q']"
+                        :placeholder="__('comercial.lotes.filtro_busqueda_placeholder')"
+                        :clear-label="__('ui.tabla.buscador_limpiar')"
+                    />
                 </div>
-
-                <x-atoms.select
-                    name="cliente_id"
-                    id="filtro-cliente"
-                    label="{{ __('comercial.lotes.filtro_cliente') }}"
-                    :options="$clientesDisponibles"
-                    :value="$filtros['cliente_id']"
-                    placeholder="{{ __('comercial.lotes.filtro_todos') }}"
-                />
-
-                <x-atoms.select
-                    name="campo_id"
-                    id="filtro-campo"
-                    label="{{ __('comercial.lotes.filtro_campo') }}"
-                    :options="$camposOptions"
-                    :value="$filtros['campo_id']"
-                    placeholder="{{ __('comercial.lotes.filtro_todos') }}"
-                />
-
-                <div class="ag-filtros__acciones ag-lotes__filtros-acciones">
-                    <x-atoms.button type="submit" variant="outline" size="md" icon="search">
-                        {{ __('comercial.lotes.filtrar') }}
-                    </x-atoms.button>
-
-                    @if ($hayFiltrosActivos)
-                        <x-atoms.button href="{{ route('panel.lotes.index') }}" variant="text" size="md">
-                            {{ __('comercial.lotes.limpiar_filtro') }}
-                        </x-atoms.button>
-                    @endif
-                </div>
-            </form>
+            @endif
 
             @if ($lotes->isEmpty())
-                <x-molecules.alert-strip variant="info" icon="grid_view" class="ag-lotes__aviso">
-                    {{ __($hayFiltrosActivos ? 'comercial.lotes.filtro_vacio' : 'comercial.lotes.vacio') }}
-                </x-molecules.alert-strip>
+                @if ($hayFiltrosActivos)
+                    <x-molecules.empty-state
+                        icon="search_off"
+                        :title="__('comercial.lotes.filtro_vacio_titulo')"
+                        :detail="__('comercial.lotes.filtro_vacio_detalle')"
+                    />
+                @else
+                    <x-molecules.empty-state
+                        icon="grid_view"
+                        :title="__('comercial.lotes.vacio_titulo')"
+                        :detail="__('comercial.lotes.vacio_detalle')"
+                    />
+                @endif
             @else
-                <div class="ag-lotes__tabla" role="table">
-                    <div class="ag-lotes__head" role="row">
+                <x-molecules.index-table columns="3rem 1fr 2fr 2fr 1fr var(--ag-row-actions-width)">
+                    <x-slot:head>
+                        <span role="columnheader" class="ag-index-table__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('comercial.lotes.col_codigo') }}</span>
                         <span role="columnheader">{{ __('comercial.lotes.col_propiedad') }}</span>
                         <span role="columnheader">{{ __('comercial.lotes.col_cliente') }}</span>
                         <span role="columnheader">{{ __('comercial.lotes.col_hectareas') }}</span>
-                        <span role="columnheader" aria-hidden="true"></span>
-                    </div>
+                        <span role="columnheader" class="ag-index-table__acciones-head">{{ __('ui.tabla.col_acciones') }}</span>
+                    </x-slot:head>
 
                     @foreach ($lotes as $lote)
-                        <div class="ag-lotes__fila" role="row">
+                        <div class="ag-index-table__row" role="row">
+                            <span role="cell" class="ag-index-table__indice">
+                                {{ ($lotes->currentPage() - 1) * $lotes->perPage() + $loop->iteration }}
+                            </span>
                             <span role="cell" class="ag-lotes__codigo">{{ $lote->codigo }}</span>
-                            <span role="cell">{{ $lote->campo->nombre }}</span>
-                            <span role="cell">{{ $lote->campo->propiedad->cliente->razon_social }}</span>
+                            <span role="cell" class="ag-lotes__propiedad">
+                                @if ($lote->propiedad->color)
+                                    <span class="ag-lotes__color" style="background-color: {{ $lote->propiedad->color }}" aria-hidden="true"></span>
+                                @endif
+                                {{ $lote->propiedad->nombre }}
+                            </span>
+                            <span role="cell">{{ $lote->propiedad->cliente->razon_social }}</span>
                             <span role="cell" class="ag-lotes__hectareas">{{ __('comercial.lotes.hectareas_valor', ['cantidad' => number_format((float) $lote->hectareas, 2, ',', '.')]) }}</span>
 
-                            <span role="cell" class="ag-lotes__acciones">
-                                @puede('comercial.lote.editar')
-                                    <x-atoms.button href="{{ route('panel.lotes.edit', $lote) }}" variant="warning-outline" size="sm" icon="edit">
-                                        {{ __('comercial.lotes.editar') }}
-                                    </x-atoms.button>
-                                @endpuede
-
+                            <span role="cell" class="ag-index-table__acciones">
+                                {{-- Form FUERA de row-actions a propósito: ese organism repite su
+                                     slot dos veces (visible/menú) — un <form> con id ahí adentro se
+                                     duplicaría con el mismo id, HTML inválido. El botón de
+                                     confirm-button lo envía por su atributo `form`. --}}
                                 @puede('comercial.lote.eliminar')
                                     <form
+                                        id="lote-eliminar-{{ $lote->id }}"
                                         method="POST"
                                         action="{{ route('panel.lotes.destroy', $lote) }}"
-                                        onsubmit="return confirm('{{ __('comercial.lotes.confirmar_baja') }}')"
                                     >
                                         @csrf
                                         @method('DELETE')
-                                        <x-atoms.button type="submit" variant="danger-outline" size="sm" icon="delete">
-                                            {{ __('comercial.lotes.eliminar_accion') }}
-                                        </x-atoms.button>
                                     </form>
                                 @endpuede
+
+                                <x-organisms.row-actions>
+                                    @puede('comercial.lote.editar')
+                                        <x-atoms.button :href="route('panel.lotes.edit', $lote)" variant="warning-outline" size="sm" icon="edit">
+                                            {{ __('comercial.lotes.editar') }}
+                                        </x-atoms.button>
+                                    @endpuede
+
+                                    @puede('comercial.lote.eliminar')
+                                        <span class="ag-row-actions__item">
+                                            <x-molecules.confirm-button
+                                                :form-id="'lote-eliminar-' . $lote->id"
+                                                :title="__('comercial.lotes.confirmar_eliminar_titulo')"
+                                                :message="__('comercial.lotes.confirmar_baja')"
+                                                :confirm-label="__('comercial.lotes.eliminar_accion')"
+                                                variant="danger-outline"
+                                                size="sm"
+                                                icon="delete"
+                                            >
+                                                {{ __('comercial.lotes.eliminar_accion') }}
+                                            </x-molecules.confirm-button>
+                                        </span>
+                                    @endpuede
+                                </x-organisms.row-actions>
                             </span>
                         </div>
                     @endforeach
-                </div>
+                </x-molecules.index-table>
 
-                @if ($lotes->hasPages())
-                    <nav class="ag-lotes__paginacion" aria-label="{{ __('comercial.lotes.paginacion_aria') }}">
-                        @if (! $lotes->onFirstPage())
-                            <x-atoms.button href="{{ $lotes->previousPageUrl() }}" variant="outline" size="sm" icon="chevron_left">
-                                {{ __('comercial.lotes.paginacion_anterior') }}
-                            </x-atoms.button>
-                        @endif
-
-                        <span class="ag-lotes__paginacion-info">
-                            {{ __('comercial.lotes.paginacion_info', ['actual' => $lotes->currentPage(), 'total' => $lotes->lastPage()]) }}
-                        </span>
-
-                        @if ($lotes->hasMorePages())
-                            <x-atoms.button href="{{ $lotes->nextPageUrl() }}" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
-                                {{ __('comercial.lotes.paginacion_siguiente') }}
-                            </x-atoms.button>
-                        @endif
-                    </nav>
-                @endif
+                <x-molecules.pagination :paginator="$lotes" :aria-label="__('comercial.lotes.paginacion_aria')" />
             @endif
         </div>
     </x-templates.panel-layout>

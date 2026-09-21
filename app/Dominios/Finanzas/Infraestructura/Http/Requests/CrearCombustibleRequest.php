@@ -63,6 +63,9 @@ final class CrearCombustibleRequest extends FormRequest
             'equipo_trabajo_id.exists' => __('finanzas.combustible.error_equipo_invalido'),
             'recurso.required' => __('finanzas.combustible.error_recurso_requerido'),
             'recurso.regex' => __('finanzas.combustible.error_recurso_invalido'),
+            'fecha.required' => __('finanzas.combustible.error_fecha_requerida'),
+            'litros.required' => __('finanzas.combustible.error_litros_requerido'),
+            'monto.required' => __('finanzas.combustible.error_monto_requerido'),
         ];
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Comercial\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use DomainException;
 
 /**
@@ -19,16 +20,16 @@ final class ActaNoFacturable extends DomainException
 {
     public static function porNoExistir(int $actaId): self
     {
-        return new self("El acta #{$actaId} no existe.");
+        return new self(Texto::de('comercial.errores.acta_no_existe', ['id' => $actaId]));
     }
 
     public static function porNoEstarFirmada(int $actaId): self
     {
-        return new self("El acta #{$actaId} debe estar firmada para poder facturarse.");
+        return new self(Texto::de('comercial.errores.acta_no_firmada', ['id' => $actaId]));
     }
 
     public static function porYaFacturada(int $actaId): self
     {
-        return new self("El acta #{$actaId} ya tiene una factura emitida.");
+        return new self(Texto::de('comercial.errores.acta_ya_facturada', ['id' => $actaId]));
     }
 }

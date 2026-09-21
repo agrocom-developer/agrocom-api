@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Mantenimiento\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use RuntimeException;
 
 /**
@@ -17,6 +18,6 @@ final class BateriaDuplicada extends RuntimeException
 {
     public static function porIdentificador(string $identificador): self
     {
-        return new self("Ya existe una batería activa con el identificador '{$identificador}'.");
+        return new self(Texto::de('mantenimiento.errores.bateria_duplicada', ['identificador' => $identificador]));
     }
 }

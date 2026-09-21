@@ -1,15 +1,21 @@
 {{--
     Page: reportes-comerciales/index (GET /panel/reportes/comercial, panel.reportes.comercial.index)
-    Informe de avance de contratos (HU-52, tarea 75, espec §9.1): agrupado por
-    cultivo y por cliente, con filtros opcionales en un offcanvas y chips de
-    filtros aplicados en la pantalla principal. Reemplaza a HU-32 (tarea 46)
-    en la misma ruta y permiso (`comercial.reporte.ver`, exclusivo del dueño).
+    Informe de avance de contratos (HU-52, tarea 75, espec §9.1; homogeneizado
+    en la tarea 120): agrupado por cultivo y por cliente. Reemplaza a HU-32
+    (tarea 46) en la misma ruta y permiso (`comercial.reporte.ver`, exclusivo
+    del dueño). Solo lectura y sin descarga: el informe no se exporta (ver
+    ReportesComercialesController).
 
-    Entrada obligatoria: al menos un cliente y un cultivo — sin ellos, ni se
-    habilita la pantalla de filtros ni la generación; el selector que falta
-    muestra error bajo su propio campo. El marcador `consultado` (hidden en el
-    formulario de entrada) distingue "primera visita" (sin error, solo estado
-    vacío) de "intento sin completar entrada" (con error).
+    Dos estados, según `consultado`:
+    - Entrada: al menos un cliente y un cultivo, sin los cuales no se genera.
+      El selector que falta muestra su error bajo su propio campo. El marcador
+      `consultado` (hidden) distingue "primera visita" (sin error) de "intento
+      sin completar la entrada" (con error).
+    - Resultados: toolbar con `organisms/filter-panel` —los filtros opcionales—
+      y, a la derecha, qué incluye el informe con «Cambiar selección» (vuelve a
+      la entrada con todo premarcado); debajo, las pestañas «Por cultivo» /
+      «Por cliente» con sus tablas (`molecules/index-table`). Un informe sin
+      filas es un `empty-state` de filtro sin resultados, sin botón.
 
     Datos esperados (ver ReportesComercialesController::index()):
     - consultado (bool)
@@ -23,12 +29,17 @@
     - incluirDeshabilitados (bool)
     - clientesDisponibles (Collection<Cliente>)
     - cultivosDisponibles (Collection<Cultivo>)
-    - campaniasDisponibles (Collection<stdClass{id,codigo,cliente_id,razon_social}>)
+    - campaniasDisponibles (Collection<stdClass{id,codigo}>): sin cliente_id/
+      razon_social desde el 15/9/2026 (ADR 0015) — la campaña ya no es de un
+      cliente, el código alcanza como etiqueta.
     - estadosDisponibles (list<EstadoContrato>)
     - saldosDisponibles (list<SaldoContrato>)
 
     Gateada por `comercial.reporte.ver`, verificado server-side en el
     controlador.
+
+    El JS de la entrada (`resources/js/pages/reportes-comerciales.js`) entra
+    por el bundle de `app.js`: acá no se enlaza aparte.
 
     Estilos en resources/css/pages/reportes-comerciales.css — cero color
     hardcodeado (CLAUDE.md invariante 11).
@@ -53,12 +64,24 @@
                 :subtitle="__('comercial.reportes_comerciales.subtitulo')"
             ></x-organisms.page-header>
 
-            {{-- Pantalla de entrada: checkbox-group de cliente y cultivo --}}
-            @if (!$consultado || !empty($erroresEntrada))
+            {{-- Sin clientes o sin cultivos no hay nada que elegir: la
+                 pantalla de entrada quedaría con un checkbox-group vacío,
+                 imposible de completar. --}}
+            @if ($clientesDisponibles->isEmpty() || $cultivosDisponibles->isEmpty())
+                <x-molecules.empty-state
+                    icon="insert_chart"
+                    :title="__('comercial.reportes_comerciales.sin_datos_titulo')"
+                    :detail="__('comercial.reportes_comerciales.sin_datos_detalle')"
+                />
+            {{-- Entrada: checkbox-group de cliente y de cultivo --}}
+            @elseif (!$consultado || !empty($erroresEntrada))
                 <form method="GET" action="{{ route('panel.reportes.comercial.index') }}" class="ag-reportes-comerciales__entrada">
                     <input type="hidden" name="consultado" value="1">
 
-                    <div class="ag-reportes-comerciales__selectores">
+                    <x-molecules.form-section
+                        :title="__('comercial.reportes_comerciales.entrada.titulo')"
+                        :count="__('comercial.reportes_comerciales.entrada.campos_contador', ['cantidad' => 2])"
+                    >
                         <x-atoms.checkbox-group
                             name="cliente_ids"
                             id="entrada-clientes"
@@ -72,23 +95,13 @@
                             name="cultivo_ids"
                             id="entrada-cultivos"
                             :label="__('comercial.reportes_comerciales.entrada.cultivo')"
-                            :options="$cultivosDisponibles->mapWithKeys(fn($c) => [$c->id => $c->nombre])"
+                            :options="$cultivosDisponibles->mapWithKeys(fn($c) => [$c->id => $c->nombre_comun])"
                             :value="$cultivoIds"
                             :error="$erroresEntrada['cultivo_ids'] ?? null"
                         />
-                    </div>
+                    </x-molecules.form-section>
 
                     <div class="ag-reportes-comerciales__acciones-entrada">
-                        <x-atoms.button
-                            type="button"
-                            variant="outline"
-                            data-bs-toggle="offcanvas"
-                            data-bs-target="#filtros-offcanvas"
-                            icon="filter_alt"
-                        >
-                            {{ __('comercial.reportes_comerciales.entrada.filtros') }}
-                        </x-atoms.button>
-
                         <x-atoms.button
                             type="submit"
                             variant="primary"
@@ -99,103 +112,112 @@
                         </x-atoms.button>
                     </div>
                 </form>
-
-                {{-- Estado vacío en pantalla de entrada (sin consulta o con error) --}}
-                @if (!$consultado)
-                    <x-molecules.alert-strip
-                        variant="info"
-                        icon="insert_chart"
-                        class="ag-reportes-comerciales__estado-vacio"
-                    >
-                        {{ __('comercial.reportes_comerciales.estado.primera_visita') }}
-                    </x-molecules.alert-strip>
-                @endif
             @else
-                {{-- Pantalla de resultados --}}
+                {{-- Resultados --}}
+                @php
+                    // Cliente y cultivo son la entrada obligatoria: siempre hay, así que no
+                    // cuentan como filtros activos. Cuenta lo opcional que se sumó encima.
+                    $filtrosActivos = collect([
+                        ! empty($campaniaIds),
+                        $fechaDesde !== null,
+                        $fechaHasta !== null,
+                        $estado !== null,
+                        $saldo !== null,
+                        $incluirDeshabilitados,
+                    ])->filter()->count();
+                @endphp
 
-                {{-- Chips de filtros aplicados (carrusel horizontal) --}}
-                <div class="ag-reportes-comerciales__chips">
-                    {{-- Chip: Cliente (N) --}}
-                    <a href="{{ route('panel.reportes.comercial.index', array_merge(request()->except('cliente_ids'), ['consultado' => 1])) }}" class="ag-reportes-comerciales__chip">
-                        <x-atoms.badge>
-                            {{ __('comercial.reportes_comerciales.chips.cliente', ['cantidad' => count($clienteIds)]) }}
-                        </x-atoms.badge>
-                        <x-atoms.icon name="close" size="sm" />
-                    </a>
+                <div class="ag-table-toolbar">
+                    {{-- Solo los filtros OPCIONALES: la selección de clientes y cultivos es la
+                         entrada del informe, no un filtro, y en el panel ocuparía más alto que la
+                         pantalla. Viaja oculta para no perderse al aplicar. «Limpiar» del organism
+                         vuelve a esta misma URL: conserva esa selección y quita solo lo opcional. --}}
+                    <x-organisms.filter-panel
+                        :action="route('panel.reportes.comercial.index', ['consultado' => 1, 'cliente_ids' => $clienteIds, 'cultivo_ids' => $cultivoIds])"
+                        :active-count="$filtrosActivos"
+                    >
+                        <input type="hidden" name="consultado" value="1">
+                        <input type="hidden" name="tab" value="{{ $tabActiva }}">
+                        @foreach ($clienteIds as $clienteId)
+                            <input type="hidden" name="cliente_ids[]" value="{{ $clienteId }}">
+                        @endforeach
+                        @foreach ($cultivoIds as $cultivoId)
+                            <input type="hidden" name="cultivo_ids[]" value="{{ $cultivoId }}">
+                        @endforeach
 
-                    {{-- Chip: Cultivo (N) --}}
-                    <a href="{{ route('panel.reportes.comercial.index', array_merge(request()->except('cultivo_ids'), ['consultado' => 1])) }}" class="ag-reportes-comerciales__chip">
-                        <x-atoms.badge>
-                            {{ __('comercial.reportes_comerciales.chips.cultivo', ['cantidad' => count($cultivoIds)]) }}
-                        </x-atoms.badge>
-                        <x-atoms.icon name="close" size="sm" />
-                    </a>
+                        @if (! $campaniasDisponibles->isEmpty())
+                            <x-atoms.checkbox-group
+                                class="ag-form-section__field--full"
+                                name="campania_ids"
+                                id="filtros-campanias"
+                                :label="__('comercial.reportes_comerciales.filtros.campania')"
+                                :options="$campaniasDisponibles->mapWithKeys(fn($c) => [$c->id => $c->codigo])"
+                                :value="$campaniaIds"
+                            />
+                        @endif
 
-                    {{-- Chip: Campaña (N) — solo si hay seleccionadas --}}
-                    @if (!empty($campaniaIds))
-                        <a href="{{ route('panel.reportes.comercial.index', array_merge(request()->except('campania_ids'), ['consultado' => 1])) }}" class="ag-reportes-comerciales__chip">
-                            <x-atoms.badge>
-                                {{ __('comercial.reportes_comerciales.chips.campania', ['cantidad' => count($campaniaIds)]) }}
-                            </x-atoms.badge>
-                            <x-atoms.icon name="close" size="sm" />
-                        </a>
-                    @endif
+                        <x-atoms.date
+                            name="fecha_desde"
+                            id="filtros-fecha-desde"
+                            :label="__('comercial.reportes_comerciales.filtros.fecha_desde')"
+                            :value="$fechaDesde"
+                        />
 
-                    {{-- Chip: Rango de fechas — solo si alguna está presente --}}
-                    @if ($fechaDesde !== null || $fechaHasta !== null)
-                        @php
-                            $textoFechas = match (true) {
-                                $fechaDesde !== null && $fechaHasta !== null => __('comercial.reportes_comerciales.chips.rango_fechas', ['desde' => $fechaDesde, 'hasta' => $fechaHasta]),
-                                $fechaDesde !== null => __('comercial.reportes_comerciales.chips.fecha_desde', ['fecha' => $fechaDesde]),
-                                default => __('comercial.reportes_comerciales.chips.fecha_hasta', ['fecha' => $fechaHasta]),
-                            };
-                        @endphp
-                        <a href="{{ route('panel.reportes.comercial.index', array_merge(request()->except(['fecha_desde', 'fecha_hasta']), ['consultado' => 1])) }}" class="ag-reportes-comerciales__chip">
-                            <x-atoms.badge>
-                                {{ $textoFechas }}
-                            </x-atoms.badge>
-                            <x-atoms.icon name="close" size="sm" />
-                        </a>
-                    @endif
+                        <x-atoms.date
+                            name="fecha_hasta"
+                            id="filtros-fecha-hasta"
+                            :label="__('comercial.reportes_comerciales.filtros.fecha_hasta')"
+                            :value="$fechaHasta"
+                        />
 
-                    {{-- Chip: Estado — solo si está elegido --}}
-                    @if ($estado !== null)
-                        <a href="{{ route('panel.reportes.comercial.index', array_merge(request()->except('estado'), ['consultado' => 1])) }}" class="ag-reportes-comerciales__chip">
-                            <x-atoms.badge>
-                                {{ __('comercial.reportes_comerciales.chips.estado', ['estado' => __("comercial.contrato.estado.{$estado->value}")]) }}
-                            </x-atoms.badge>
-                            <x-atoms.icon name="close" size="sm" />
-                        </a>
-                    @endif
+                        <x-atoms.select
+                            name="estado"
+                            id="filtros-estado"
+                            :label="__('comercial.reportes_comerciales.filtros.estado')"
+                            :options="collect($estadosDisponibles)->mapWithKeys(fn($e) => [$e->value => __('comercial.contrato.estado.' . $e->value)])"
+                            :value="$estado?->value"
+                            :placeholder="__('comercial.reportes_comerciales.filtros.seleccionar')"
+                        />
 
-                    {{-- Chip: Saldo — solo si está elegido --}}
-                    @if ($saldo !== null)
-                        <a href="{{ route('panel.reportes.comercial.index', array_merge(request()->except('saldo'), ['consultado' => 1])) }}" class="ag-reportes-comerciales__chip">
-                            <x-atoms.badge>
-                                {{ __('comercial.reportes_comerciales.chips.saldo', ['saldo' => __("comercial.saldo.{$saldo->value}")]) }}
-                            </x-atoms.badge>
-                            <x-atoms.icon name="close" size="sm" />
-                        </a>
-                    @endif
+                        <x-atoms.select
+                            name="saldo"
+                            id="filtros-saldo"
+                            :label="__('comercial.reportes_comerciales.filtros.saldo')"
+                            :options="collect($saldosDisponibles)->mapWithKeys(fn($s) => [$s->value => __('comercial.saldo.' . $s->value)])"
+                            :value="$saldo?->value"
+                            :placeholder="__('comercial.reportes_comerciales.filtros.seleccionar')"
+                        />
 
-                    {{-- Chip: Incluir deshabilitados — solo si está activo --}}
-                    @if ($incluirDeshabilitados)
-                        <a href="{{ route('panel.reportes.comercial.index', array_merge(request()->except('incluir_deshabilitados'), ['consultado' => 1])) }}" class="ag-reportes-comerciales__chip">
-                            <x-atoms.badge>
-                                {{ __('comercial.reportes_comerciales.chips.incluir_deshabilitados') }}
-                            </x-atoms.badge>
-                            <x-atoms.icon name="close" size="sm" />
-                        </a>
-                    @endif
+                        <x-atoms.switch
+                            class="ag-form-section__field--full"
+                            name="incluir_deshabilitados"
+                            id="filtros-incluir-deshabilitados"
+                            :label="__('comercial.reportes_comerciales.filtros.incluir_deshabilitados')"
+                            value="1"
+                            :checked="$incluirDeshabilitados"
+                        />
+                    </x-organisms.filter-panel>
 
-                    {{-- Botón "Filtros" para reabrir el offcanvas --}}
-                    <button type="button" class="ag-reportes-comerciales__filtros-boton" data-bs-toggle="offcanvas" data-bs-target="#filtros-offcanvas">
-                        <x-atoms.icon name="filter_alt" size="sm" />
-                        <span>{{ __('comercial.reportes_comerciales.chips.filtros') }}</span>
-                    </button>
+                    {{-- Qué incluye el informe y cómo cambiarlo: vuelve a la entrada con la
+                         selección actual ya marcada (el controlador la lee aunque no haya
+                         `consultado`). --}}
+                    <div class="ag-reportes-comerciales__seleccion">
+                        <span class="ag-reportes-comerciales__seleccion-resumen">
+                            {{ trans_choice('comercial.reportes_comerciales.seleccion.clientes', count($clienteIds), ['cantidad' => count($clienteIds)]) }}
+                            ·
+                            {{ trans_choice('comercial.reportes_comerciales.seleccion.cultivos', count($cultivoIds), ['cantidad' => count($cultivoIds)]) }}
+                        </span>
+                        <x-atoms.button
+                            :href="route('panel.reportes.comercial.index', ['cliente_ids' => $clienteIds, 'cultivo_ids' => $cultivoIds])"
+                            variant="outline"
+                            icon="tune"
+                        >
+                            {{ __('comercial.reportes_comerciales.seleccion.cambiar') }}
+                        </x-atoms.button>
+                    </div>
                 </div>
 
-                {{-- Informe o estado vacío (sin resultados) --}}
+                {{-- Informe o vacío de filtro sin resultados --}}
                 @if ($informe !== null && !empty($informe->porCultivo))
                     {{--
                         molecules/tabs SOLO pinta el nav (recibe `items`, ver su
@@ -230,46 +252,10 @@
                                         />
                                     </div>
 
-                                    {{-- Tabla de contratos por cultivo --}}
-                                    <table class="ag-reportes-comerciales__tabla">
-                                        <thead>
-                                            <tr>
-                                                <th>{{ __('comercial.reportes_comerciales.tabla.contrato') }}</th>
-                                                <th class="ag-reportes-comerciales__celda-numero">{{ __('comercial.reportes_comerciales.tabla.hectareas_contratadas') }}</th>
-                                                <th class="ag-reportes-comerciales__celda-numero">{{ __('comercial.reportes_comerciales.tabla.hectareas_aplicadas') }}</th>
-                                                <th class="ag-reportes-comerciales__celda-numero">{{ __('comercial.reportes_comerciales.tabla.hectareas_a_aplicar') }}</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach ($grupoCultivo->contratos as $fila)
-                                                <tr>
-                                                    <td>{{ \Illuminate\Support\Str::limit(__('comercial.reportes_comerciales.tabla.contrato_valor', ['id' => $fila->contratoId]), 12) }}</td>
-                                                    <td class="ag-reportes-comerciales__celda-numero">
-                                                        {{ number_format((float) $fila->hectareasContratadas, 2, ',', '.') }}
-                                                    </td>
-                                                    <td class="ag-reportes-comerciales__celda-numero">
-                                                        {{ number_format((float) $fila->hectareasAplicadas, 2, ',', '.') }}
-                                                    </td>
-                                                    <td class="ag-reportes-comerciales__celda-numero">
-                                                        {{ number_format((float) $fila->hectareasAAplicar, 2, ',', '.') }}
-                                                    </td>
-                                                </tr>
-                                            @endforeach
-                                            {{-- Totalizador al pie --}}
-                                            <tr class="ag-reportes-comerciales__fila-totales">
-                                                <td><strong>{{ __('comercial.reportes_comerciales.tabla.total') }}</strong></td>
-                                                <td class="ag-reportes-comerciales__celda-numero">
-                                                    <strong>{{ number_format((float) $grupoCultivo->hectareasContratadas, 2, ',', '.') }}</strong>
-                                                </td>
-                                                <td class="ag-reportes-comerciales__celda-numero">
-                                                    <strong>{{ number_format((float) $grupoCultivo->hectareasAplicadas, 2, ',', '.') }}</strong>
-                                                </td>
-                                                <td class="ag-reportes-comerciales__celda-numero">
-                                                    <strong>{{ number_format((float) $grupoCultivo->hectareasAAplicar, 2, ',', '.') }}</strong>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
+                                    @include('comercial::pages.reportes-comerciales._tabla-contratos', [
+                                        'contratos' => $grupoCultivo->contratos,
+                                        'totales' => $grupoCultivo,
+                                    ])
                                 </div>
                             @endforeach
                         </div>
@@ -292,18 +278,21 @@
                                         />
                                     </div>
 
-                                    {{-- Accordion de clientes dentro de cada cultivo --}}
+                                    {{-- Acordeón de clientes dentro de cada cultivo. Un mismo cliente
+                                         puede estar en varios cultivos: el id del panel lleva también
+                                         el del cultivo, o el segundo abriría el primero. --}}
                                     <div class="accordion ag-reportes-comerciales__accordion" id="grupo-clientes-{{ $grupoCultivo->cultivoId }}">
                                         @foreach ($grupoCultivo->clientes as $grupoCliente)
+                                            @php $panelId = "collapse-{$grupoCultivo->cultivoId}-cliente-{$grupoCliente->clienteId}"; @endphp
                                             <div class="accordion-item">
                                                 <h3 class="accordion-header">
                                                     <button
                                                         type="button"
                                                         class="accordion-button collapsed"
                                                         data-bs-toggle="collapse"
-                                                        data-bs-target="#collapse-cliente-{{ $grupoCliente->clienteId }}"
+                                                        data-bs-target="#{{ $panelId }}"
                                                         aria-expanded="false"
-                                                        aria-controls="collapse-cliente-{{ $grupoCliente->clienteId }}"
+                                                        aria-controls="{{ $panelId }}"
                                                     >
                                                         <span>{{ $grupoCliente->clienteNombre }}</span>
                                                         <x-molecules.tiered-progress-bar
@@ -314,50 +303,15 @@
                                                     </button>
                                                 </h3>
                                                 <div
-                                                    id="collapse-cliente-{{ $grupoCliente->clienteId }}"
+                                                    id="{{ $panelId }}"
                                                     class="accordion-collapse collapse"
                                                     data-bs-parent="#grupo-clientes-{{ $grupoCultivo->cultivoId }}"
                                                 >
                                                     <div class="accordion-body">
-                                                        <table class="ag-reportes-comerciales__tabla">
-                                                            <thead>
-                                                                <tr>
-                                                                    <th>{{ __('comercial.reportes_comerciales.tabla.contrato') }}</th>
-                                                                    <th class="ag-reportes-comerciales__celda-numero">{{ __('comercial.reportes_comerciales.tabla.hectareas_contratadas') }}</th>
-                                                                    <th class="ag-reportes-comerciales__celda-numero">{{ __('comercial.reportes_comerciales.tabla.hectareas_aplicadas') }}</th>
-                                                                    <th class="ag-reportes-comerciales__celda-numero">{{ __('comercial.reportes_comerciales.tabla.hectareas_a_aplicar') }}</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                @foreach ($grupoCliente->contratos as $fila)
-                                                                    <tr>
-                                                                        <td>{{ \Illuminate\Support\Str::limit(__('comercial.reportes_comerciales.tabla.contrato_valor', ['id' => $fila->contratoId]), 12) }}</td>
-                                                                        <td class="ag-reportes-comerciales__celda-numero">
-                                                                            {{ number_format((float) $fila->hectareasContratadas, 2, ',', '.') }}
-                                                                        </td>
-                                                                        <td class="ag-reportes-comerciales__celda-numero">
-                                                                            {{ number_format((float) $fila->hectareasAplicadas, 2, ',', '.') }}
-                                                                        </td>
-                                                                        <td class="ag-reportes-comerciales__celda-numero">
-                                                                            {{ number_format((float) $fila->hectareasAAplicar, 2, ',', '.') }}
-                                                                        </td>
-                                                                    </tr>
-                                                                @endforeach
-                                                                {{-- Totalizador al pie --}}
-                                                                <tr class="ag-reportes-comerciales__fila-totales">
-                                                                    <td><strong>{{ __('comercial.reportes_comerciales.tabla.total') }}</strong></td>
-                                                                    <td class="ag-reportes-comerciales__celda-numero">
-                                                                        <strong>{{ number_format((float) $grupoCliente->hectareasContratadas, 2, ',', '.') }}</strong>
-                                                                    </td>
-                                                                    <td class="ag-reportes-comerciales__celda-numero">
-                                                                        <strong>{{ number_format((float) $grupoCliente->hectareasAplicadas, 2, ',', '.') }}</strong>
-                                                                    </td>
-                                                                    <td class="ag-reportes-comerciales__celda-numero">
-                                                                        <strong>{{ number_format((float) $grupoCliente->hectareasAAplicar, 2, ',', '.') }}</strong>
-                                                                    </td>
-                                                                </tr>
-                                                            </tbody>
-                                                        </table>
+                                                        @include('comercial::pages.reportes-comerciales._tabla-contratos', [
+                                                            'contratos' => $grupoCliente->contratos,
+                                                            'totales' => $grupoCliente,
+                                                        ])
                                                     </div>
                                                 </div>
                                             </div>
@@ -368,133 +322,13 @@
                         </div>
                     </div>
                 @else
-                    {{-- Estado vacío: sin resultados coincidentes --}}
-                    <x-molecules.alert-strip
-                        variant="info"
-                        icon="insert_chart"
-                        class="ag-reportes-comerciales__estado-vacio"
-                    >
-                        {{ __('comercial.reportes_comerciales.estado.sin_resultados') }}
-                    </x-molecules.alert-strip>
+                    <x-molecules.empty-state
+                        icon="search_off"
+                        :title="__('comercial.reportes_comerciales.estado.sin_resultados_titulo')"
+                        :detail="__('comercial.reportes_comerciales.estado.sin_resultados_detalle')"
+                    />
                 @endif
             @endif
-
-            {{-- Offcanvas de filtros avanzados --}}
-            <div
-                class="offcanvas offcanvas-end"
-                id="filtros-offcanvas"
-                tabindex="-1"
-                aria-labelledby="filtros-offcanvas-label"
-            >
-                <div class="offcanvas-header">
-                    <h2 class="offcanvas-title" id="filtros-offcanvas-label">
-                        {{ __('comercial.reportes_comerciales.filtros.titulo') }}
-                    </h2>
-                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="{{ __('ui.cerrar') }}"></button>
-                </div>
-
-                <div class="offcanvas-body">
-                    <form method="GET" action="{{ route('panel.reportes.comercial.index') }}" class="ag-reportes-comerciales__form-filtros">
-                        <input type="hidden" name="consultado" value="1">
-                        <input type="hidden" name="tab" value="{{ $tabActiva }}">
-
-                        {{-- Cliente (duplicado acá para que sea editable en la pantalla de filtros) --}}
-                        <x-atoms.checkbox-group
-                            name="cliente_ids"
-                            id="filtros-clientes"
-                            :label="__('comercial.reportes_comerciales.filtros.cliente')"
-                            :options="$clientesDisponibles->mapWithKeys(fn($c) => [$c->id => $c->razon_social])"
-                            :value="$clienteIds"
-                        />
-
-                        {{-- Cultivo (duplicado acá) --}}
-                        <x-atoms.checkbox-group
-                            name="cultivo_ids"
-                            id="filtros-cultivos"
-                            :label="__('comercial.reportes_comerciales.filtros.cultivo')"
-                            :options="$cultivosDisponibles->mapWithKeys(fn($c) => [$c->id => $c->nombre])"
-                            :value="$cultivoIds"
-                        />
-
-                        {{-- Campaña (solo si hay clientes elegidos) --}}
-                        @if (!empty($clienteIds) && !$campaniasDisponibles->isEmpty())
-                            <x-atoms.checkbox-group
-                                name="campania_ids"
-                                id="filtros-campanias"
-                                :label="__('comercial.reportes_comerciales.filtros.campania')"
-                                :options="$campaniasDisponibles->mapWithKeys(fn($c) => [$c->id => __('comercial.reportes_comerciales.filtros.campania_opcion', ['codigo' => $c->codigo, 'cliente' => $c->razon_social])])"
-                                :value="$campaniaIds"
-                            />
-                        @elseif (empty($clienteIds))
-                            <div class="ag-reportes-comerciales__filtro-deshabilitado">
-                                <p>{{ __('comercial.reportes_comerciales.filtros.campania_sin_cliente') }}</p>
-                            </div>
-                        @endif
-
-                        {{-- Rango de fechas --}}
-                        <x-atoms.date
-                            name="fecha_desde"
-                            id="filtros-fecha-desde"
-                            :label="__('comercial.reportes_comerciales.filtros.fecha_desde')"
-                            :value="$fechaDesde"
-                        />
-
-                        <x-atoms.date
-                            name="fecha_hasta"
-                            id="filtros-fecha-hasta"
-                            :label="__('comercial.reportes_comerciales.filtros.fecha_hasta')"
-                            :value="$fechaHasta"
-                        />
-
-                        {{-- Estado del contrato --}}
-                        <x-atoms.select
-                            name="estado"
-                            id="filtros-estado"
-                            :label="__('comercial.reportes_comerciales.filtros.estado')"
-                            :options="collect($estadosDisponibles)->mapWithKeys(fn($e) => [$e->value => __('comercial.contrato.estado.' . $e->value)])"
-                            :value="$estado?->value"
-                            :placeholder="__('comercial.reportes_comerciales.filtros.seleccionar')"
-                        />
-
-                        {{-- Saldo del contrato --}}
-                        <x-atoms.select
-                            name="saldo"
-                            id="filtros-saldo"
-                            :label="__('comercial.reportes_comerciales.filtros.saldo')"
-                            :options="collect($saldosDisponibles)->mapWithKeys(fn($s) => [$s->value => __('comercial.saldo.' . $s->value)])"
-                            :value="$saldo?->value"
-                            :placeholder="__('comercial.reportes_comerciales.filtros.seleccionar')"
-                        />
-
-                        {{-- Incluir deshabilitados --}}
-                        <x-atoms.switch
-                            name="incluir_deshabilitados"
-                            id="filtros-incluir-deshabilitados"
-                            :label="__('comercial.reportes_comerciales.filtros.incluir_deshabilitados')"
-                            value="1"
-                            :checked="$incluirDeshabilitados"
-                        />
-
-                        {{-- Botones de acción --}}
-                        <div class="ag-reportes-comerciales__filtros-acciones-offcanvas">
-                            <x-atoms.button type="submit" variant="primary" class="w-100">
-                                {{ __('comercial.reportes_comerciales.filtros.aplicar') }}
-                            </x-atoms.button>
-
-                            <button type="button" class="btn btn-outline-secondary w-100" data-bs-dismiss="offcanvas">
-                                {{ __('comercial.reportes_comerciales.filtros.cancelar') }}
-                            </button>
-
-                            <a href="{{ route('panel.reportes.comercial.index', ['cliente_ids' => $clienteIds, 'cultivo_ids' => $cultivoIds, 'consultado' => 1]) }}" class="btn btn-link w-100">
-                                {{ __('comercial.reportes_comerciales.filtros.limpiar') }}
-                            </a>
-                        </div>
-                    </form>
-                </div>
-            </div>
         </div>
     </x-templates.panel-layout>
 </x-templates.panel-shell>
-
-{{-- JS para validación cliente de entrada (deshabilitar botones mientras falten selectores) --}}
-<script src="{{ asset('js/pages/reportes-comerciales.js') }}" defer></script>

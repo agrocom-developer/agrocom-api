@@ -22,4 +22,15 @@ final class ActualizarDatosFiscalesRequest extends FormRequest
             'leyenda_pie' => ['nullable', 'string', 'max:1000'],
         ];
     }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return [
+            'razon_social_fiscal.required' => __('seguridad.organizacion.error_razon_social_fiscal_requerida'),
+            'nit.required' => __('seguridad.organizacion.error_nit_requerido'),
+            'domicilio_fiscal.required' => __('seguridad.organizacion.error_domicilio_fiscal_requerido'),
+            'actividad_economica.required' => __('seguridad.organizacion.error_actividad_economica_requerida'),
+        ];
+    }
 }

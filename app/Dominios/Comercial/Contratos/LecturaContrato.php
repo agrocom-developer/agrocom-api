@@ -14,4 +14,11 @@ interface LecturaContrato
 {
     /** `null` si el contrato no existe o está borrado (soft delete). */
     public function obtenerResumen(int $contratoId): ?DatosResumenContrato;
+
+    /**
+     * Lo necesario para emitir una orden de aplicación sobre el contrato (ADR
+     * 0022): estado, aplicaciones previstas, hectáreas contratadas y sus lotes.
+     * `null` si el contrato no existe o está borrado (soft delete).
+     */
+    public function obtenerParaOrden(int $contratoId): ?DatosContratoParaOrden;
 }

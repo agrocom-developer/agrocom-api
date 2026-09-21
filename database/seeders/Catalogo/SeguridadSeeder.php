@@ -29,6 +29,14 @@ class SeguridadSeeder extends Seeder
         'jefe_campo' => 'Jefe de campo: coordina la cuadrilla y valida sesiones ajenas.',
         'encargado_operaciones' => 'Encargado de operaciones: administra usuarios, órdenes y planificación.',
         'dueno' => 'Dueño de Agrocom SRL: acceso total, incluida la gestión de otros dueños.',
+        // Descripción recortada a propósito: `sec_role.description` es
+        // `varchar(150)` (migración `2026_08_27_100003`) y el texto original
+        // del pedido (168 caracteres) no entra — SQLite no lo detecta (sin
+        // límite de longitud), Postgres sí lo rechazó en la corrida real
+        // contra el compose (`value too long for type character
+        // varying(150)`). Se preserva el sentido: acceso total incluida la
+        // gestión de dueños, y que es un rol técnico, no del negocio.
+        'admin_plataforma' => 'Administrador de la plataforma Agrocom: acceso total, incluida la gestión de dueños — rol técnico, no del negocio del cliente.',
     ];
 
     /** @var array<string, string> */
@@ -111,6 +119,14 @@ class SeguridadSeeder extends Seeder
         // único permiso de lectura: el detalle con evidencias y los filtros
         // llegan con HU-15.
         'operaciones.trabajo.ver' => 'Ver el listado de trabajos y sesiones en el panel',
+        // HU-93 (tarea 108; ampliado por la reforma "Orden de Trabajo" del
+        // 18/9/2026): crear una tanda (equipos + parámetros compartidos +
+        // lotes por equipo) sobre una orden vigente, y editar/eliminar un
+        // trabajo puntual mientras no esté `validado`. Grano fino, mismo
+        // criterio que `operaciones.orden.crear/.editar/.eliminar`.
+        'operaciones.trabajo.crear' => 'Crear una Orden de Trabajo (tanda de equipos) sobre una orden vigente',
+        'operaciones.trabajo.editar' => 'Editar un trabajo (lote, equipo, hectáreas, turno) mientras no esté validado',
+        'operaciones.trabajo.eliminar' => 'Dar de baja (lógica) un trabajo mientras no esté validado',
         // HU-14 (tarea 14): cola de validación — aprobar o rechazar una
         // sesión cerrada. Un único permiso gatea listar y decidir (mismo
         // criterio que `distribucion.version.autorizar`): la policy
@@ -165,21 +181,21 @@ class SeguridadSeeder extends Seeder
         'comercial.contrato.crear' => 'Dar de alta un contrato con sus ventanas de aplicación',
         'comercial.contrato.editar' => 'Editar los datos y ventanas de un contrato',
         'comercial.contrato.cambiar_estado' => 'Cambiar el estado de un contrato (vigente, finalizado, cancelado)',
-        // HU-24 (tarea 35): administración de campos con sus lotes. Grano
-        // fino, mismo criterio que `comercial.cliente.*`. Hasta la tarea 77
-        // los lotes no tenían permiso propio (solo se tocaban dentro del
-        // formulario del campo); `comercial.lote.*` abajo abre la entrada
-        // directa por lote, sin reemplazar esta.
-        'comercial.campo.ver' => 'Ver el listado y detalle de campos con sus lotes',
-        'comercial.campo.crear' => 'Dar de alta un campo con sus lotes',
-        'comercial.campo.editar' => 'Editar los datos y lotes de un campo',
-        'comercial.campo.eliminar' => 'Dar de baja (lógica) un campo',
+        // ADR 0020 (15/9/2026): `Campo` se elimina como entidad — `Lote`
+        // cuelga directo de `Propiedad`. Los cuatro permisos
+        // `comercial.campo.*` que administraban "campos con sus lotes"
+        // (HU-24, tarea 35) quedan huérfanos: ningún controlador los
+        // verifica ya (`CamposController` no existe). Se retiran del
+        // catálogo — ver `retirarPermiso()`, llamado desde `run()`, que
+        // además soft-deletea las filas ya sembradas en una base existente
+        // (sacar la línea de acá solo evita que una instalación NUEVA vuelva
+        // a crearlas).
         // HU-54 (tarea 77): pantalla propia de lotes — listado con filtro
         // por cliente/propiedad y ficha con alta, edición y baja lógica de
-        // un lote suelto. Grano fino, mismo criterio que `comercial.campo.*`;
+        // un lote suelto. Grano fino, mismo criterio que `comercial.cliente.*`;
         // el alta de una propiedad con sus lotes en la misma transacción
-        // sigue siendo un único caso de uso (`CrearCampo`), llamado desde
-        // cualquiera de los dos formularios.
+        // sigue siendo un único caso de uso, llamado desde cualquiera de los
+        // dos formularios.
         'comercial.lote.ver' => 'Ver el listado y detalle de lotes',
         'comercial.lote.crear' => 'Dar de alta un lote suelto',
         'comercial.lote.editar' => 'Editar los datos y el perímetro de un lote',
@@ -210,10 +226,18 @@ class SeguridadSeeder extends Seeder
         'operaciones.orden.editar' => 'Editar los datos de una orden de aplicación',
         'operaciones.orden.activar' => 'Activar una orden de aplicación (emitida → vigente)',
         'operaciones.orden.eliminar' => 'Dar de baja (lógica) una orden de aplicación',
+        // ADR 0022 (19/9/2026): la aplicación se pausa, se cierra o se cancela
+        // desde el panel — nunca desde la app de campo. Grano propio por
+        // acción, mismo criterio que `.activar` arriba: son decisiones de
+        // ejecución (del operador, junto con el dueño), no correcciones de un
+        // dato.
+        'operaciones.orden.pausar' => 'Pausar una orden de aplicación vigente y reanudarla',
+        'operaciones.orden.cerrar' => 'Cerrar una orden de aplicación cumplida (vigente → consumida)',
+        'operaciones.orden.cancelar' => 'Cancelar una orden de aplicación, con su causa y su motivo',
         // HU-70 (tarea 85): "dónde asignarle el trabajo al piloto" — repartir
         // las hectáreas de una orden vigente entre equipos de trabajo. Grano
         // propio, no parte de `.editar`: no corrige la orden, reparte su
-        // trabajo; una ficha propia (`panel.asignacion-equipos.*`), no la
+        // trabajo; una ficha propia (`panel.reparto-cuadrillas.*`), no la
         // ficha de la orden, así que no depende de `operaciones.orden.ver`.
         'operaciones.orden.asignar_equipos' => 'Asignar equipos de trabajo (con sus hectáreas) a una orden vigente',
         // HU-44 (tarea 58): pausas de sesión con causa atribuible (DS-01).
@@ -222,11 +246,17 @@ class SeguridadSeeder extends Seeder
         // responsabilidad.
         'operaciones.pausa.ver' => 'Ver el listado de pausas y su agregado por causa',
         'operaciones.pausa.registrar' => 'Registrar una pausa de sesión con su causa',
-        // HU-51 (tarea 74): entrada y salida del equipo en cada hacienda,
-        // cargada desde la app de campo. Un único permiso de solo lectura —
-        // el panel nunca abre ni cierra una estadía (ver "Qué NO hacer" del
-        // prompt de la tarea).
+        // HU-51 (tarea 74): entrada y salida del equipo en cada hacienda.
+        // Reforma 19/9/2026: la oficina también registra, edita, finaliza y
+        // da de baja estadías desde el panel (antes el panel solo las leía,
+        // cargadas desde la app de campo). `.editar` cubre también finalizar
+        // (pasar a "finalizada" con su fecha de salida) — mismo criterio que
+        // `personal.equipo_trabajo.editar`, que cubre asignar/finalizar
+        // integrantes: no es un permiso aparte, es parte de mantener el dato.
         'operaciones.estadia.ver' => 'Ver el listado de estadías del equipo en cada hacienda',
+        'operaciones.estadia.crear' => 'Registrar una estadía del equipo en una hacienda',
+        'operaciones.estadia.editar' => 'Editar una estadía en curso y finalizarla (registrar su salida)',
+        'operaciones.estadia.eliminar' => 'Dar de baja (lógica) una estadía en hacienda',
         // HU-26 (tarea 37): administración de personas y bases, con su rol
         // operativo y tarifa. Dos recursos, cada uno con su grano fino
         // (ver/crear/editar/eliminar) — mismo criterio que
@@ -383,19 +413,21 @@ class SeguridadSeeder extends Seeder
         'mantenimiento.plan.eliminar' => 'Dar de baja (lógica) un plan de mantenimiento preventivo',
         // HU-46 (tarea 69, ADR 0015 punto 1): la campaña como eje transversal
         // del sistema. Grano fino, mismo criterio que `comercial.contrato.*`
-        // — `.cambiar_estado` separado de `.editar`. A diferencia de
-        // `comercial.contrato.cambiar_estado` (compartido con
+        // — `.cambiar_estado` y `.eliminar` separados de `.editar`. A
+        // diferencia de `comercial.contrato.cambiar_estado` (compartido con
         // `encargado_operaciones`), `.cambiar_estado` NO entra en
         // PERMISOS_ENCARGADO_OPERACIONES (ver más abajo): "solo el dueño
         // cierra una campaña" (pedido explícito del 7/9/2026) — con una
         // única apertura/cierre por campaña al año no hay costo operativo en
         // concentrarla en el dueño, a diferencia de `.ver`/`.crear`/`.editar`,
         // que sí comparte con el encargado (arma la campaña, el dueño decide
-        // cuándo abrirla y cerrarla).
+        // cuándo abrirla y cerrarla). `.eliminar` es soft delete sin guarda
+        // de "tiene contratos asociados", mismo criterio que `comercial.cultivo.eliminar`.
         'campania.campania.ver' => 'Ver el listado de campañas',
         'campania.campania.crear' => 'Dar de alta una campaña',
         'campania.campania.editar' => 'Editar los datos de una campaña',
         'campania.campania.cambiar_estado' => 'Cambiar el estado de una campaña (abrir, cerrar) — exclusivo del dueño',
+        'campania.campania.eliminar' => 'Dar de baja (lógica) una campaña',
     ];
 
     /**
@@ -458,6 +490,12 @@ class SeguridadSeeder extends Seeder
         // Administra órdenes y planificación (diseño §2): ve qué trabajos y
         // sesiones se cerraron en el panel, igual que el jefe de campo.
         'operaciones.trabajo.ver',
+        // HU-93 (tarea 108; reforma "Orden de Trabajo" 18/9/2026): administra
+        // también el alta de tandas y la corrección de un trabajo cargado
+        // mal — mismo criterio que `operaciones.orden.crear/.editar/.eliminar`.
+        'operaciones.trabajo.crear',
+        'operaciones.trabajo.editar',
+        'operaciones.trabajo.eliminar',
         // HU-14: administra la operación diaria, así que también puede
         // destrabar la cola de validación — mismo criterio que trabajo.ver.
         'operaciones.sesion.validar',
@@ -491,13 +529,12 @@ class SeguridadSeeder extends Seeder
         'comercial.contrato.cambiar_estado',
         // HU-24 (tarea 35): "Como encargado, quiero administrar campos y sus
         // lotes" — la HU lo dice literal, mismo criterio que clientes y
-        // contratos arriba.
-        'comercial.campo.ver',
-        'comercial.campo.crear',
-        'comercial.campo.editar',
-        'comercial.campo.eliminar',
+        // contratos arriba. ADR 0020 retira `comercial.campo.*` (entidad
+        // eliminada, ver el comentario en PERMISOS de arriba); el encargado
+        // ya tiene `comercial.propiedad.*` asignado arriba, así que retirar
+        // estos cuatro no le saca ninguna capacidad real.
         // HU-54 (tarea 77): administra también la entrada directa por
-        // lote — mismo criterio que campos arriba.
+        // lote — mismo criterio que propiedades arriba.
         'comercial.lote.ver',
         'comercial.lote.crear',
         'comercial.lote.editar',
@@ -523,6 +560,11 @@ class SeguridadSeeder extends Seeder
         'operaciones.orden.editar',
         'operaciones.orden.activar',
         'operaciones.orden.eliminar',
+        // ADR 0022: pausar/cerrar/cancelar una aplicación — el encargado
+        // administra la ejecución diaria, mismo criterio que `.activar`.
+        'operaciones.orden.pausar',
+        'operaciones.orden.cerrar',
+        'operaciones.orden.cancelar',
         // HU-70 (tarea 85): administra también el reparto de equipos por
         // orden — mismo criterio que el resto de `operaciones.orden.*` arriba.
         'operaciones.orden.asignar_equipos',
@@ -534,8 +576,14 @@ class SeguridadSeeder extends Seeder
         'operaciones.pausa.registrar',
         // HU-51 (tarea 74): administra la operación diaria, así que también
         // puede ver dónde y cuántos días estuvo cada equipo — mismo criterio
-        // que trabajo.ver/pausa.ver arriba.
+        // que trabajo.ver/pausa.ver arriba. Reforma 19/9/2026: administra
+        // también el alta, edición y baja de estadías — mismo criterio que
+        // el resto de `operaciones.orden.*`/`operaciones.dron.*` arriba
+        // (`.eliminar` incluido, a diferencia del jefe de campo).
         'operaciones.estadia.ver',
+        'operaciones.estadia.crear',
+        'operaciones.estadia.editar',
+        'operaciones.estadia.eliminar',
         // HU-26 (tarea 37): "Como encargado, quiero administrar personas y
         // bases" — la HU lo dice literal, mismo criterio que clientes,
         // contratos, campos y drones arriba.
@@ -648,6 +696,7 @@ class SeguridadSeeder extends Seeder
         'campania.campania.ver',
         'campania.campania.crear',
         'campania.campania.editar',
+        'campania.campania.eliminar',
     ];
 
     /**
@@ -663,10 +712,17 @@ class SeguridadSeeder extends Seeder
         // HU-70 (tarea 85): "dónde asignarle el trabajo al piloto" — el
         // reclamo del dueño (audio del 13/9/2026) es literalmente del jefe
         // de campo, que hoy avisa por WhatsApp. Ficha propia
-        // (`panel.asignacion-equipos.*`), no la de la orden: no necesita
+        // (`panel.reparto-cuadrillas.*`), no la de la orden: no necesita
         // `operaciones.orden.ver` (CRUD completo de la orden) para repartir
         // equipos.
         'operaciones.orden.asignar_equipos',
+        // Reforma "Orden de Trabajo" (18/9/2026): mismo reclamo de HU-70,
+        // ahora con tanda/turno — el jefe de campo arma la tanda igual que
+        // antes repartía equipos, así que se lleva el permiso nuevo con el
+        // mismo criterio que `operaciones.orden.asignar_equipos` arriba. Sin
+        // `.editar`/`.eliminar`: corregir un trabajo cargado mal es del
+        // encargado (`PERMISOS_ENCARGADO_OPERACIONES`), no del jefe de campo.
+        'operaciones.trabajo.crear',
         // Tarea 62 (fuga 2): coordina la cuadrilla, aterriza en el dashboard
         // tras elegir rol y necesita la ficha de la compañía.
         'seguridad.dashboard.ver',
@@ -684,12 +740,37 @@ class SeguridadSeeder extends Seeder
         'operaciones.pausa.registrar',
         // HU-51 (tarea 74): coordina la cuadrilla, así que necesita ver
         // dónde y cuántos días estuvo el equipo — mismo criterio que
-        // trabajo.ver/pausa.ver arriba.
+        // trabajo.ver/pausa.ver arriba. Reforma 19/9/2026: también registra y
+        // edita las estadías de sus cuadrillas — mismo criterio que
+        // `operaciones.trabajo.crear` arriba (sin `.eliminar`, exclusivo de
+        // los roles de gestión, ver `PERMISOS_ENCARGADO_OPERACIONES`).
         'operaciones.estadia.ver',
+        'operaciones.estadia.crear',
+        'operaciones.estadia.editar',
+    ];
+
+    /**
+     * ADR 0020 (15/9/2026) retira `Campo` como entidad; los cuatro permisos
+     * `comercial.campo.*` que administraban su ABM quedan huérfanos. Se
+     * retiran acá, antes de la siembra normal de abajo — el orden no
+     * importa, porque opera sobre datos que ya existen (o no existen) en la
+     * base, no sobre lo que la siembra está por crear.
+     *
+     * @var list<string>
+     */
+    private const PERMISOS_RETIRADOS = [
+        'comercial.campo.ver',
+        'comercial.campo.crear',
+        'comercial.campo.editar',
+        'comercial.campo.eliminar',
     ];
 
     public function run(): void
     {
+        foreach (self::PERMISOS_RETIRADOS as $codigoRetirado) {
+            $this->retirarPermiso($codigoRetirado);
+        }
+
         $roles = collect(self::ROLES)->mapWithKeys(
             fn (string $description, string $name) => [$name => $this->rol($name, $description)],
         );
@@ -700,6 +781,13 @@ class SeguridadSeeder extends Seeder
 
         // dueno: todos los permisos del catálogo, sin excepción (diseño §2).
         $this->asignar($roles['dueno'], $permisos->values()->all());
+
+        // admin_plataforma (tarea 100): mismo criterio que dueno, sin
+        // excepción — es dato de catálogo puro, corre en TODOS los entornos
+        // (un rol sin usuarios asignados no daña nada en producción). Quien
+        // recibe usuarios asignados a este rol es AdminPlataformaSeeder, que
+        // sí está gateado a local/staging.
+        $this->asignar($roles['admin_plataforma'], $permisos->values()->all());
 
         // encargado_operaciones: todo salvo asignar_rol_dueno.
         $this->asignar(
@@ -772,5 +860,37 @@ class SeguridadSeeder extends Seeder
                 'id_permission' => $permiso->id,
             ]))->save();
         }
+    }
+
+    /**
+     * Inversa de {@see asignar()}: ahí "sembrar es otorgar si nunca se
+     * otorgó, nunca reponer lo que alguien quitó"; acá es "retirar lo que ya
+     * no debería estar", así que no se reusa ese método. Sacar la línea del
+     * array `PERMISOS` (con `firstOrCreate`, que solo agrega) evita que una
+     * instalación NUEVA cree el permiso, pero una base YA sembrada conserva
+     * la fila y sus asignaciones en `sec_role_permission` — hay que
+     * retirarlas de manera explícita.
+     *
+     * Soft delete (invariante 8 de CLAUDE.md): la fila de `sec_permission` y
+     * cada `sec_role_permission` que la referencia se borran una por una (no
+     * un `update()` masivo), para que cada `delete()` pase por el observer
+     * de bitácora. Idempotente: si el permiso ya está soft-deleteado (o
+     * nunca existió, instalación nueva), `SecPermission::query()` no lo
+     * encuentra y no hace nada.
+     */
+    private function retirarPermiso(string $code): void
+    {
+        $permiso = SecPermission::query()->where('code', $code)->first();
+
+        if ($permiso === null) {
+            return;
+        }
+
+        SecRolePermission::query()
+            ->where('id_permission', $permiso->id)
+            ->get()
+            ->each(fn (SecRolePermission $asignacion) => $asignacion->delete());
+
+        $permiso->delete();
     }
 }

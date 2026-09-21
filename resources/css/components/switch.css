@@ -40,6 +40,18 @@
     opacity: 0.6;
 }
 
+/* `fieldLabel` (17/9/2026): mismo tratamiento tipográfico que
+   `.ag-input__label`, deliberadamente duplicado en vez de compartido — cada
+   átomo es dueño de su propio CSS (§3 de guia_pantalla_panel.md, DIP: un
+   componente del catálogo no depende del selector de otro). Es lo que
+   alinea el switch con el input/select de al lado en una fila de
+   `form-section`: mismo alto de renglón de label arriba del control. */
+.ag-switch__field-label {
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+    color: var(--ag-color-text);
+}
+
 .ag-switch__input {
     position: absolute;
     width: 1px;
@@ -96,6 +108,12 @@
     margin: 0;
     font-size: var(--ag-font-size-xs);
     color: var(--ag-color-text-muted);
+}
+
+.ag-switch__error {
+    margin: 0;
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-danger);
 }
 
 /* El estado final (thumb desplazado) sigue aplicándose bajo reduced-motion —

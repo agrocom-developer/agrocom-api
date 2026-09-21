@@ -1,19 +1,27 @@
 {{--
     Page: campanias/index (GET /panel/campanias, panel.campanias.index)
     Listado de campañas (ADR 0015 punto 1, tarea 69): arquetipo Listado, §6.2
-    de docs/diseno/guia_pantalla_panel.md — cabecera → filtros → tabla →
-    paginación. Mismo molde que `comercial/contratos/index.blade.php`, con
-    una máquina de estados más simple (dos transiciones, no cuatro).
+    de docs/diseno/guia_pantalla_panel.md — cabecera → toolbar → tabla →
+    paginación. Migrado al patrón vigente el 15/9/2026 (mismo molde que
+    `seguridad::pages.usuarios.index`); `organisms/row-actions` en la celda
+    de acciones. `comercial/contratos/index.blade.php` todavía no migró — no
+    lo copies como referencia para una pantalla nueva.
+
+    Filtros (ronda de homogeneización del 17/9/2026): sí lleva
+    `organisms/filter-panel` ahora, con dos campos — estado y estación.
 
     Datos esperados (ver CampaniasController::index()): la cáscara de
     CascaraPanel, más:
     - $campanias (LengthAwarePaginator<Campania>): fecha de inicio descendente.
-    - $clientesDisponibles (Collection<int, string>): id => razón social,
-      para el <select> del filtro por cliente.
-    - $etiquetasCliente (array<int, string>): id => razón social, acotado a
-      los clientes de la página actual — evita un N+1 al pintar la tabla.
-    - $filtros (array{q: string, cliente_id: int|null}): filtros aplicados,
-      para dejar los campos con el valor tras el submit.
+    - $estadosFiltro (list<EstadoCampania>): opciones del <select> de estado.
+    - $tonoPorEstado (array<string, string>): tono del badge de cada estado
+      (`CampaniasController::TONO_POR_ESTADO`, el mismo que usa el paso del
+      formulario de edición).
+    - $filtros (array{q: string, estado: string|null, estacion: string|null}):
+      filtros aplicados, para dejar los campos con el valor tras el submit.
+
+    Sin filtro ni columna de cliente desde la corrección del 15/9/2026: la
+    campaña es un catálogo compartido, no de un cliente.
 
     Gateada por `campania.campania.ver`, verificado server-side en el
     controlador. El botón "Nueva campaña" y las acciones de cambio de estado
@@ -30,7 +38,9 @@
 
     Columna "Actividad" (HU-77, tarea 93): "Activa"/"Inactiva" derivada de
     `Campania::esActiva()`, presentación pura — no reemplaza a "Estado", que
-    sigue mostrando los tres valores reales de la máquina de estados.
+    sigue mostrando los tres valores reales de la máquina de estados. Solo
+    está "Activa" la campaña `abierta`: la `planificada` todavía no arrancó y
+    la `cerrada` ya terminó (corregido el 19/9/2026).
 --}}
 <x-templates.panel-shell :title="__('campania.campanias.titulo')" :tema="$tema">
     <x-templates.panel-layout
@@ -52,7 +62,7 @@
             >
                 @puede('campania.campania.crear')
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.campanias.create') }}" variant="primary" icon="add">
+                        <x-atoms.button :href="route('panel.campanias.create')" variant="primary" icon="add">
                             {{ __('campania.campanias.nueva') }}
                         </x-atoms.button>
                     </x-slot:actions>
@@ -71,144 +81,263 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <form method="GET" action="{{ route('panel.campanias.index') }}" class="ag-filtros ag-campanias__filtros">
-                <div class="ag-input">
-                    <label for="filtro-q" class="ag-input__label">{{ __('campania.campanias.filtro_busqueda') }}</label>
-                    <div class="ag-input__control">
-                        <input
-                            type="search"
-                            name="q"
-                            id="filtro-q"
-                            class="ag-input__field"
-                            value="{{ $filtros['q'] }}"
-                            placeholder="{{ __('campania.campanias.filtro_busqueda_placeholder') }}"
-                        >
-                    </div>
+            @php
+                $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
+                $filtrosPanelActivos = collect(['estado', 'estacion'])
+                    ->filter(fn ($campo) => $filtros[$campo] !== null && $filtros[$campo] !== '')
+                    ->count();
+                $estacionOpciones = [
+                    'invierno' => __('campania.campania.estacion.invierno'),
+                    'verano' => __('campania.campania.estacion.verano'),
+                ];
+            @endphp
+
+            @if ($hayFiltrosActivos || $campanias->isNotEmpty())
+                <div class="ag-table-toolbar">
+                    <x-organisms.filter-panel
+                        :action="route('panel.campanias.index')"
+                        :active-count="$filtrosPanelActivos"
+                    >
+                        <input type="hidden" name="q" value="{{ $filtros['q'] }}">
+                        <x-atoms.select
+                            name="estado"
+                            id="filtro-estado"
+                            :label="__('campania.campanias.filtro_estado')"
+                            :options="collect($estadosFiltro)->mapWithKeys(fn ($estado) => [$estado->value => __('campania.campania.estado.'.$estado->value)])"
+                            :value="$filtros['estado']"
+                            :placeholder="__('campania.campanias.filtro_estado_placeholder')"
+                        />
+
+                        <x-atoms.select
+                            name="estacion"
+                            id="filtro-estacion"
+                            :label="__('campania.campanias.filtro_estacion')"
+                            :options="$estacionOpciones"
+                            :value="$filtros['estacion']"
+                            :placeholder="__('campania.campanias.filtro_estacion_placeholder')"
+                        />
+                    </x-organisms.filter-panel>
+
+                    <x-molecules.table-search
+                        :action="route('panel.campanias.index')"
+                        :value="$filtros['q']"
+                        :placeholder="__('campania.campanias.filtro_busqueda_placeholder')"
+                        :clear-label="__('ui.tabla.buscador_limpiar')"
+                    />
                 </div>
-
-                <x-atoms.select
-                    name="cliente_id"
-                    id="filtro-cliente"
-                    label="{{ __('campania.campanias.filtro_cliente') }}"
-                    placeholder="{{ __('campania.campanias.filtro_cliente_placeholder') }}"
-                    :options="$clientesDisponibles"
-                    value="{{ $filtros['cliente_id'] }}"
-                />
-
-                <div class="ag-filtros__acciones ag-campanias__filtros-acciones">
-                    <x-atoms.button type="submit" variant="outline" size="md" icon="search">
-                        {{ __('campania.campanias.filtrar') }}
-                    </x-atoms.button>
-
-                    @if ($filtros['q'] !== '' || $filtros['cliente_id'] !== null)
-                        <x-atoms.button href="{{ route('panel.campanias.index') }}" variant="text" size="md">
-                            {{ __('campania.campanias.limpiar_filtro') }}
-                        </x-atoms.button>
-                    @endif
-                </div>
-            </form>
+            @endif
 
             @if ($campanias->isEmpty())
-                <x-molecules.alert-strip variant="info" icon="calendar_month" class="ag-campanias__aviso">
-                    {{ __(($filtros['q'] !== '' || $filtros['cliente_id'] !== null) ? 'campania.campanias.filtro_vacio' : 'campania.campanias.vacio') }}
-                </x-molecules.alert-strip>
+                @if ($hayFiltrosActivos)
+                    <x-molecules.empty-state
+                        icon="search_off"
+                        :title="__('campania.campanias.filtro_vacio_titulo')"
+                        :detail="__('campania.campanias.filtro_vacio_detalle')"
+                    />
+                @else
+                    <x-molecules.empty-state
+                        icon="calendar_month"
+                        :title="__('campania.campanias.vacio_titulo')"
+                        :detail="__('campania.campanias.vacio_detalle')"
+                    />
+                @endif
             @else
-                <div class="ag-campanias__tabla" role="table">
-                    <div class="ag-campanias__head" role="row">
-                        <span role="columnheader">{{ __('campania.campanias.col_cliente') }}</span>
+                {{-- SIETE columnas, una por celda: índice · código · nombre · vigencia ·
+                     estado · actividad · acciones (sin columna de cliente desde la
+                     corrección del 15/9/2026, ADR 0015 — la campaña es catálogo
+                     compartido). Nacieron cinco (tarea 69) y la fila siempre tuvo seis
+                     celdas, así que la de acciones no entraba en el track explícito y el
+                     grid le abría una FILA IMPLÍCITA: "Editar" y "Cerrar" aparecían debajo
+                     del nombre del cliente, en la primera columna, con la fila al doble de
+                     alto. Reportado por el dueño sobre el panel andando (9/9/2026).
+
+                     Los tracks de dato van en `fr`, ninguno en `auto`: el encabezado y las
+                     filas de `molecules/index-table` son grids HERMANOS, no uno solo, así
+                     que un track `auto` lo resuelve cada grid contra su propio contenido —
+                     con "VIGENCIA" arriba y una fecha abajo, la columna medía distinto en
+                     cada fila y los rótulos quedaban corridos respecto de los datos. Con
+                     `fr` los dos grids reparten idéntico.
+
+                     La columna de acciones es la excepción: ancho fijo (§6.2 de
+                     docs/diseno/guia_pantalla_panel.md), `--ag-row-actions-width` en vez de
+                     un valor en rem propio — ver el comentario de
+                     resources/css/components/row-actions.css. Con `fr`, el ancho de
+                     `row-actions` dependería del resto de columnas y no calzaría entre el
+                     head y la fila, que son grids separados. --}}
+                <x-molecules.index-table columns="3rem 0.9fr 1.6fr 1.4fr 0.8fr 0.8fr var(--ag-row-actions-width)">
+                    <x-slot:head>
+                        <span role="columnheader" class="ag-index-table__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('campania.campanias.col_codigo') }}</span>
                         <span role="columnheader">{{ __('campania.campanias.col_nombre') }}</span>
                         <span role="columnheader">{{ __('campania.campanias.col_vigencia') }}</span>
                         <span role="columnheader">{{ __('campania.campanias.col_estado') }}</span>
                         <span role="columnheader">{{ __('campania.campanias.col_actividad') }}</span>
-                        <span role="columnheader" aria-hidden="true"></span>
-                    </div>
+                        <span role="columnheader" class="ag-index-table__acciones-head">{{ __('ui.tabla.col_acciones') }}</span>
+                    </x-slot:head>
 
                     @foreach ($campanias as $campania)
                         @php
-                            $variantePorEstado = [
-                                'planificada' => 'neutral',
-                                'abierta' => 'success',
-                                'cerrada' => 'info',
-                            ];
                             $estadoValor = $campania->estado->value;
                         @endphp
-                        <div class="ag-campanias__fila" role="row">
-                            <span role="cell">{{ $etiquetasCliente[$campania->cliente_id] ?? '—' }}</span>
+                        <div class="ag-index-table__row" role="row">
+                            <span role="cell" class="ag-index-table__indice">
+                                {{ ($campanias->currentPage() - 1) * $campanias->perPage() + $loop->iteration }}
+                            </span>
                             <span role="cell" class="ag-campanias__codigo">{{ $campania->codigo }}</span>
                             <span role="cell">{{ $campania->nombre ?? '—' }}</span>
                             <span role="cell" class="ag-campanias__mono">
                                 {{ __('campania.campanias.vigencia', ['inicio' => $campania->fecha_inicio->format('d/m/Y'), 'fin' => $campania->fecha_fin->format('d/m/Y')]) }}
                             </span>
                             <span role="cell">
-                                <x-atoms.badge :variant="$variantePorEstado[$estadoValor]">
+                                <x-atoms.badge :variant="$tonoPorEstado[$estadoValor]">
                                     {{ __('campania.campania.estado.'.$estadoValor) }}
                                 </x-atoms.badge>
                             </span>
+                            {{-- "Activa"/"Inactiva" en primary-2 (azul)/neutral (18/9/2026,
+                                 pedido explícito del usuario) — antes success (verde),
+                                 que competía visualmente con el badge "Abierta" de la
+                                 columna "Estado" (los dos verdes por casualidad, sin
+                                 relación entre sí: "Actividad" es derivado de "Estado",
+                                 no un segundo estado real, ver Campania::esActiva()). --}}
                             <span role="cell">
-                                <x-atoms.badge :variant="$campania->esActiva() ? 'success' : 'neutral'">
+                                <x-atoms.badge :variant="$campania->esActiva() ? 'primary-2' : 'neutral'">
                                     {{ __($campania->esActiva() ? 'campania.campanias.actividad_activa' : 'campania.campanias.actividad_inactiva') }}
                                 </x-atoms.badge>
                             </span>
 
-                            <span role="cell" class="ag-campanias__acciones">
-                                @puede('campania.campania.editar')
-                                    <x-atoms.button href="{{ route('panel.campanias.edit', $campania) }}" variant="warning-outline" size="sm" icon="edit">
-                                        {{ __('campania.campanias.editar') }}
-                                    </x-atoms.button>
-                                @endpuede
+                            <span role="cell" class="ag-index-table__acciones">
+                                @php
+                                    $formIdAbrir = "campania-abrir-{$campania->id}";
+                                    $formIdCerrar = "campania-cerrar-{$campania->id}";
+                                    $formIdEliminar = "campania-eliminar-{$campania->id}";
+                                    $modalIdAbrir = "campania-abrir-modal-{$campania->id}";
+                                    $modalIdCerrar = "campania-cerrar-modal-{$campania->id}";
+                                    $modalIdEliminar = "campania-eliminar-modal-{$campania->id}";
+                                @endphp
 
+                                {{-- Forms FUERA de row-actions a propósito: ese organism repite su
+                                     slot dos veces (visible/menú, ver su docblock) — un <form> ahí
+                                     adentro se duplicaría con el mismo id, HTML inválido. Los botones
+                                     que sí pueden duplicarse envían estos forms por su atributo `form`,
+                                     sin importar dónde vivan en el documento. --}}
                                 @puede('campania.campania.cambiar_estado')
                                     @if ($estadoValor === 'planificada')
-                                        <form
-                                            method="POST"
-                                            action="{{ route('panel.campanias.cambiar-estado', $campania) }}"
-                                            onsubmit="return confirm('{{ __('campania.campanias.confirmar_abrir') }}')"
-                                        >
+                                        <form id="{{ $formIdAbrir }}" method="POST" action="{{ route('panel.campanias.cambiar-estado', $campania) }}">
                                             @csrf
                                             <input type="hidden" name="estado" value="abierta">
-                                            <x-atoms.button type="submit" variant="outline" size="sm" icon="check_circle">
-                                                {{ __('campania.campanias.accion_abrir') }}
-                                            </x-atoms.button>
                                         </form>
                                     @elseif ($estadoValor === 'abierta')
-                                        <form
-                                            method="POST"
-                                            action="{{ route('panel.campanias.cambiar-estado', $campania) }}"
-                                            onsubmit="return confirm('{{ __('campania.campanias.confirmar_cerrar') }}')"
-                                        >
+                                        <form id="{{ $formIdCerrar }}" method="POST" action="{{ route('panel.campanias.cambiar-estado', $campania) }}">
                                             @csrf
                                             <input type="hidden" name="estado" value="cerrada">
-                                            <x-atoms.button type="submit" variant="danger-outline" size="sm" icon="lock">
-                                                {{ __('campania.campanias.accion_cerrar') }}
-                                            </x-atoms.button>
                                         </form>
                                     @endif
                                 @endpuede
+
+                                @puede('campania.campania.eliminar')
+                                    <form id="{{ $formIdEliminar }}" method="POST" action="{{ route('panel.campanias.destroy', $campania) }}">
+                                        @csrf
+                                        @method('DELETE')
+                                    </form>
+                                @endpuede
+
+                                {{-- Modales FUERA de row-actions: ese organism repite su slot dos
+                                     veces (visible/menú), un <div class="modal"> ahí adentro se
+                                     duplicaría con el mismo id, HTML inválido, y además Bootstrap no
+                                     encontraría el modal correcto al clickear el trigger en una mitad
+                                     (querySelector devuelve el primero del documento, que puede estar
+                                     oculto en el :nth-child overflow de la otra mitad) — ver
+                                     resources/css/components/row-actions.css comentario "Forms
+                                     FUERA de row-actions a propósito", mismo criterio. Los triggers
+                                     viven adentro (se duplican sin problema, son botones normales sin
+                                     id propio); el modal una sola vez, junto a los <form> que ya viven
+                                     acá afuera. --}}
+                                @puede('campania.campania.cambiar_estado')
+                                    @if ($estadoValor === 'planificada')
+                                        <x-molecules.confirm-modal
+                                            :id="$modalIdAbrir"
+                                            :form-id="$formIdAbrir"
+                                            :title="__('campania.campanias.confirmar_abrir_titulo')"
+                                            :message="__('campania.campanias.confirmar_abrir')"
+                                            :confirm-label="__('campania.campanias.accion_abrir')"
+                                            tone="success"
+                                        />
+                                    @elseif ($estadoValor === 'abierta')
+                                        <x-molecules.confirm-modal
+                                            :id="$modalIdCerrar"
+                                            :form-id="$formIdCerrar"
+                                            :title="__('campania.campanias.confirmar_cerrar_titulo')"
+                                            :message="__('campania.campanias.confirmar_cerrar')"
+                                            :confirm-label="__('campania.campanias.accion_cerrar')"
+                                        />
+                                    @endif
+                                @endpuede
+
+                                {{-- Independiente del permiso/estado de arriba: la baja lógica no
+                                     depende de poder cambiar el estado (invariante 8, mismo criterio
+                                     sin guarda que EliminarCultivo). --}}
+                                @puede('campania.campania.eliminar')
+                                    <x-molecules.confirm-modal
+                                        :id="$modalIdEliminar"
+                                        :form-id="$formIdEliminar"
+                                        :title="__('campania.campanias.confirmar_eliminar_titulo')"
+                                        :message="__('campania.campanias.confirmar_eliminar')"
+                                        :confirm-label="__('campania.campanias.eliminar_accion')"
+                                    />
+                                @endpuede
+
+                                <x-organisms.row-actions>
+                                    @puede('campania.campania.editar')
+                                        <x-atoms.button :href="route('panel.campanias.edit', $campania)" variant="warning-outline" size="sm" icon="edit">
+                                            {{ __('campania.campanias.editar') }}
+                                        </x-atoms.button>
+                                    @endpuede
+
+                                    @puede('campania.campania.cambiar_estado')
+                                        @if ($estadoValor === 'planificada')
+                                            <x-atoms.button
+                                                type="button"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#{{ $modalIdAbrir }}"
+                                                variant="outline"
+                                                size="sm"
+                                                icon="check_circle"
+                                            >
+                                                {{ __('campania.campanias.accion_abrir') }}
+                                            </x-atoms.button>
+                                        @elseif ($estadoValor === 'abierta')
+                                            <x-atoms.button
+                                                type="button"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#{{ $modalIdCerrar }}"
+                                                variant="alert-outline"
+                                                size="sm"
+                                                icon="lock"
+                                            >
+                                                {{ __('campania.campanias.accion_cerrar') }}
+                                            </x-atoms.button>
+                                        @endif
+                                    @endpuede
+
+                                    @puede('campania.campania.eliminar')
+                                        <x-atoms.button
+                                            type="button"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#{{ $modalIdEliminar }}"
+                                            variant="danger-outline"
+                                            size="sm"
+                                            icon="delete"
+                                        >
+                                            {{ __('campania.campanias.eliminar_accion') }}
+                                        </x-atoms.button>
+                                    @endpuede
+                                </x-organisms.row-actions>
                             </span>
                         </div>
                     @endforeach
-                </div>
+                </x-molecules.index-table>
 
-                @if ($campanias->hasPages())
-                    <nav class="ag-campanias__paginacion" aria-label="{{ __('campania.campanias.paginacion_aria') }}">
-                        @if (! $campanias->onFirstPage())
-                            <x-atoms.button href="{{ $campanias->previousPageUrl() }}" variant="outline" size="sm" icon="chevron_left">
-                                {{ __('campania.campanias.paginacion_anterior') }}
-                            </x-atoms.button>
-                        @endif
-
-                        <span class="ag-campanias__paginacion-info">
-                            {{ __('campania.campanias.paginacion_info', ['actual' => $campanias->currentPage(), 'total' => $campanias->lastPage()]) }}
-                        </span>
-
-                        @if ($campanias->hasMorePages())
-                            <x-atoms.button href="{{ $campanias->nextPageUrl() }}" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
-                                {{ __('campania.campanias.paginacion_siguiente') }}
-                            </x-atoms.button>
-                        @endif
-                    </nav>
-                @endif
+                <x-molecules.pagination :paginator="$campanias" :aria-label="__('campania.campanias.paginacion_aria')" />
             @endif
         </div>
     </x-templates.panel-layout>

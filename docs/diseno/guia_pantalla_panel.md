@@ -10,7 +10,7 @@ Este documento es la **receta reproducible** para construir una pantalla nueva d
 | `diseno-laravel.md` | Checklist genérico de gobernanza importado de otro proyecto. Sus valores son de ejemplo y **no** son los de este panel | Como checklist de proceso, nunca como fuente de valores |
 | **este archivo** | Receta: dónde va cada archivo, en qué nivel de Atomic Design entra cada pieza, cómo se aplican SOLID y clean code en Blade, con qué se arma cada arquetipo de pantalla, y qué verificar antes de cerrar | **Cada vez que construís una pantalla** |
 
-Quedan 25 pantallas por construir (`SecMenuSeeder` siembra 7 módulos y 33 ítems de menú; 8 tienen ruta). Esta guía existe para que las 25 salgan iguales sin revisarlas una por una.
+Ya no quedan pantallas del menú por construir: el menú de `miguelo` (administrador de plataforma) trae 7 módulos y 39 ítems, los 39 con ruta (medido el 20/9/2026 por el barrido final de la tarea 122; «Devengos» exige una persona vinculada y no aparece para él, y «Pausas» se retiró del menú el 17/9/2026 aunque su pantalla sigue vigente). Desde ese día cada listado y cada formulario se lleva al mismo patrón y `tests/Unit/PanelHomogeneoTest.php` lo exige (alcance y reglas en `docs/gestion/plan_homogeneizacion_panel.md`; lo que todavía falta, en `docs/diseno/panel_homogeneo_pendientes.txt`). Esta guía existe para que las pantallas nuevas —y las que se corrijan— salgan iguales sin revisarlas una por una.
 
 ---
 
@@ -155,14 +155,32 @@ Reglas fijas:
 - **El título es `h1` y hay exactamente uno.** Los rótulos de sector son `h2` vía `molecules/section-head`.
 - **Cero texto literal en Blade** — todo por `__('modulo.pantalla.clave')` (ADR 0013).
 
-### 5.1. Estado vacío: dos casos distintos, dos piezas distintas
+### 5.1. Estado vacío: dos situaciones, una sola pieza (`molecules/empty-state`)
 
-No es una sola pieza con variantes — son dos situaciones distintas que se leen distinto:
+Hasta el 15/9/2026 eran dos piezas (`alert-strip` para "el filtro no trae nada", `empty-state` para "no hay nada todavía") — pedido directo del usuario: una sola pieza, tarjeta centrada siempre, cambiando `icon`/`title`/`detail` según el caso. El criterio para elegir el mensaje sigue siendo el mismo `$hayFiltrosActivos` que gatea la barra de filtros (§6.2):
 
-- **La sección tiene datos en general, pero el filtro elegido no trae nada** (p. ej. "sin sesiones de este cliente" habiendo sesiones de otros). Sigue siendo `molecules/alert-strip variant="info"` con ícono, en línea con el resto del contenido — precedente: `comercial::pages.reportes-comerciales.index` ("sin resultados coincidentes"), `personal::pages.personas.desempeno` (sección "Sesiones" filtrada).
-- **La pantalla (o un bloque completo suyo) no tiene NADA que mostrar**, más allá de cualquier filtro — p. ej. un rol recién creado sin permisos, o una persona sin ninguna sesión registrada. Ahí no alcanza un alert-strip: es una tarjeta centrada con ícono grande (`atoms/icon size="lg"`), título (`h2`) y una línea de detalle que explica qué hace falta para que deje de estar vacío. Precedente: `seguridad::pages.dashboard._sin-secciones`, `personal::pages.personas.desempeno` (bloque `.ag-persona-desempeno__vacio`, cuando `$sinDatosEnRango`).
+- **La sección tiene datos en general, pero el filtro/búsqueda elegido no trae nada** (p. ej. "sin sesiones de este cliente" habiendo sesiones de otros). `icon="search_off"` (no el ícono propio de la pantalla — así se distingue de un vacío real) + título/detalle que invitan a probar otro término o quitar el filtro.
+- **La pantalla (o un bloque completo suyo) no tiene NADA que mostrar**, más allá de cualquier filtro — p. ej. un rol recién creado sin permisos, o una persona sin ninguna sesión registrada. Ahí el ícono es el propio de esa entidad (`atoms/icon size="lg"`), título (`h2`) y una línea de detalle que explica qué hace falta para que deje de estar vacío. Cuando este es el caso, la barra de filtros tampoco se muestra: no tiene sentido filtrar algo que todavía no existe.
 
-Esta segunda pieza **todavía no es del catálogo** — cada página la arma con su propia clase BEM (`.ag-dash__vacio`, `.ag-persona-desempeno__vacio`), sin `.ag-card` compartida porque esa clase hoy es local a `dashboard.css`. Si una tercera pantalla necesita este patrón, ya son tres repeticiones: se lo pedís a `design-ui` como `molecules/empty-state` (ícono + título + detalle + slot de acción opcional) en vez de copiar la clase una cuarta vez.
+```blade
+@if ($hayFiltrosActivos)
+    <x-molecules.empty-state
+        icon="search_off"
+        :title="__('finanzas.combustible.filtro_vacio_titulo')"
+        :detail="__('finanzas.combustible.filtro_vacio_detalle')"
+    />
+@else
+    <x-molecules.empty-state
+        icon="local_gas_station"
+        :title="__('finanzas.combustible.vacio_titulo')"
+        :detail="__('finanzas.combustible.vacio_detalle')"
+    />
+@endif
+```
+
+**El vacío de un listado no lleva botón (19/9/2026, criterio del dueño sobre Estadías en hacienda).** En una página `index`, el `empty-state` es solo ícono, título y detalle, en sus dos variantes: la acción de alta ya está en la cabecera —el único botón sólido sobre el pliegue— y repetirla dentro del vacío rompe la pieza. Que el componente tenga el slot `action` no lo habilita acá: ese slot existe para el vacío COMPACTO del resumen relacionado de una ficha de edición (§6.3.1), que no tiene cabecera propia donde poner esa acción.
+
+Estado al cerrar la homogeneización (tareas 122 y 123, 20/9/2026): todo `index` que cumple `PanelHomogeneoTest` resuelve el vacío con `empty-state` —el test exige la pieza y prohíbe que lleve `<x-slot:action>`—, y `personal::pages.personas.desempeno` también migró (tarea 81). Siguen resolviendo el vacío con un `alert-strip` solo pantallas que el rollout dejó afuera: las páginas de detalle (`show` de Devengos, Planilla, Rendición, Orden de trabajo, Trabajo y Reparto de cuadrillas), la galería `operaciones::pages.trabajos.evidencias` y `comercial::pages.propiedades.siembra`. Migran al mismo patrón si el dueño decide adoptar el arquetipo Detalle en todo el sistema (§6.4); no es una deuda de esas pantallas sueltas. Las tres pantallas de la tarea 121 (Usuarios, Dispositivos y Versiones de APK) ya cumplen el patrón y no figuran en `docs/diseno/panel_homogeneo_pendientes.txt`: su rama se integró con la tarea 123, porque el push de la 121 se había cortado.
 
 ---
 
@@ -176,9 +194,62 @@ Cabecera → tabs → por cada sector: `molecules/section-head` (barra de color 
 
 ### 6.2. Listado
 
-Referencia viva: la tabla "Clientes" del dashboard y `operaciones::pages.trabajos.index`.
+Referencia viva (patrón vigente desde el 15/9/2026): `comercial::pages.clientes.index` (buscador + filtros + acciones de fila), `seguridad::pages.bitacora.index` (4+ filtros, sin acciones) y `campania::pages.campanias.index` (solo buscador, sin `filter-panel` — una página sin filtros extra no lo agrega solo para tener el chrome).
 
-Orden fijo de secciones: cabecera → filtros → tabla → paginación. La tabla usa `--ag-color-bg-table-head`, `--ag-color-border-row` y `--ag-color-bg-row-hover`; los estados por fila son `atoms/badge`, y las cifras van en `--ag-font-family-mono` para que aliñen en columna.
+**Estado del rollout (20/9/2026, tareas 111 a 123).** Todos los listados del menú siguen ya este patrón —barra de filtros + buscador, `index-table`, `row-actions`, `confirm-modal`, `empty-state`, paginación— y `docs/diseno/panel_homogeneo_pendientes.txt` está vacía (Usuarios, Dispositivos y Versiones de APK, la tarea 121, entraron con la 123); quedan aparte solo las pantallas que el plan dejó fuera (`docs/gestion/plan_homogeneizacion_panel.md` §1.1). El patrón anterior (`molecules/table-search` + `<form class="ag-filtros">` suelto debajo) ya no lo usa ningún listado del rollout: `PanelHomogeneoTest` lo prohíbe (`filtros-viejos`) y el barrido final no encontró un `.ag-filtros` en ningún `index` del menú. Sobrevive en tres páginas que no son listados del rollout (Desempeño de persona, el detalle de Devengos y la siembra de una propiedad); no lo copies para una pantalla nueva.
+
+**Catálogos simples con toggle activo/inactivo (17/9/2026):** Los catálogos que tienen un campo `activo` (soft-enable, no una máquina de estados de dominio — Cultivo, Base, etc.) **nunca muestran ese estado como columna de tabla ni como filtro en el listado.** El campo sigue siendo editable en el formulario de alta/edición (ahí sí tiene sentido), simplemente no se expone en la consulta pública. La distinción es clara: **catálogos simples con on/off no lo muestran**; **máquinas de estados de dominio reales (Contrato, Orden de aplicación, Sesión, Trabajo) sí muestran su columna y filtro** porque el estado es información central del negocio, no un catálogo on/off. Esto NO aplica a entidades con máquina de estados de dominio real (ver invariante 7 de CLAUDE.md) — esas siguen mostrando estado normalmente.
+
+Orden fijo de secciones: cabecera → toolbar (buscador + filtros) → tabla → paginación. La tabla (contenedor + cabecera + filas + colapso mobile) es `molecules/index-table` (17/9/2026: antes cada página redeclaraba el mismo borde/cabecera/hover/colapso con su propio prefijo de clase — `.ag-clientes__tabla`, `.ag-contratos__tabla`, etc. — ver `sistema_diseno_panel.md` §3); solo el prop `columns` (el `grid-template-columns`) cambia de una pantalla a otra. La tabla usa `--ag-color-bg-table-head`, `--ag-color-border-row` y `--ag-color-bg-row-hover`; los estados por fila son `atoms/badge`, y las cifras van en `--ag-font-family-mono` para que aliñen en columna.
+
+**Toolbar: `organisms/filter-panel` (izquierda) + `molecules/table-search` (derecha), en ese orden en el Blade.** Ya no hay un `<form class="ag-filtros">` visible permanentemente — todos los campos de filtro (`select`/`date`/`input`) van dentro del slot de `filter-panel`, que los agrupa en un panel desplegable (botón "Filtros" + contador) sin importar si son 1 o 6. El buscador queda afuera, siempre visible, con su propio auto-submit. Una página sin buscador solo pone `filter-panel` (queda igual de pegado a la izquierda). En mobile el buscador pasa a su propia línea, ancho completo — es automático por CSS (`table-search.css`), no hace falta tocar nada en el Blade.
+
+```blade
+@php
+    $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
+    $filtrosActivosCount = collect($filtros)->filter(fn ($valor) => $valor !== null && $valor !== '')->count();
+@endphp
+
+@if ($hayFiltrosActivos || $coleccion->isNotEmpty())
+    <div class="ag-table-toolbar">
+        <x-organisms.filter-panel action="{{ route('panel.x.index') }}" :active-count="$filtrosActivosCount">
+            {{-- <x-atoms.select>/<x-atoms.date>/<x-atoms.input> de esta página --}}
+        </x-organisms.filter-panel>
+
+        <x-molecules.table-search action="{{ route('panel.x.index') }}" :value="$filtros['q']" ... />
+    </div>
+@endif
+
+@if ($coleccion->isEmpty())
+    @if ($hayFiltrosActivos)
+        <x-molecules.empty-state icon="search_off" :title="__('...filtro_vacio_titulo')" :detail="__('...filtro_vacio_detalle')" />
+    @else
+        <x-molecules.empty-state icon="..." :title="__('...vacio_titulo')" :detail="__('...vacio_detalle')" />
+    @endif
+@else
+    {{-- tabla + paginación --}}
+@endif
+```
+
+`collect($filtros)->contains(...)` funciona igual sea cual sea la forma del array de filtros de cada página (mezcla de `null` y `''` como default entre distintos campos). Las páginas sin barra de filtros propia (universo acotado, lo dice cada una en su comentario de cabecera) no necesitan `$hayFiltrosActivos`: `isEmpty()` ya solo puede significar el segundo caso de §5.1.
+
+**Informe con entrada obligatoria (20/9/2026, tarea 120; referencia viva: `comercial::pages.reportes-comerciales.index`).** Un informe que exige elegir algo antes de generarse (clientes y cultivos) tiene dos estados: la entrada —una `form-section` con los selectores y un único botón primario— y los resultados. Esa selección **no es un filtro**: no va dentro del `filter-panel` (dos listas de casillas lo dejan más alto que la pantalla y el botón «Aplicar» queda bajo el pliegue) y no cuenta en su contador. El panel lleva solo los filtros opcionales; la selección viaja en `<input type="hidden">` para no perderse al aplicar, y un acceso «Cambiar selección» (a la derecha de la toolbar, con el resumen de qué incluye) vuelve a la entrada con todo premarcado. El «Limpiar» del organism apunta a su `action`: con la selección en la query de ese `action`, limpia lo opcional y conserva lo elegido. Sin filas, el informe es un `empty-state` `search_off` sin botón (§5.1). Las tablas de un desglose son `index-table` sin columna de índice ni de acciones, con la fila de totales como última fila de la misma tabla.
+
+**Cifras en una tabla que colapsa (móvil).** Por debajo de 992 px `index-table` oculta la cabecera y una fila queda como una pila de valores sin rótulo. Si la fila tiene varias cifras, cada una tiene que decir qué es: o lleva su unidad en el valor (`180,00 ha`, `Bs 85,00/ha`, como Facturas) o un rótulo delante que solo se ve ahí (`.ag-reportes-comerciales__etiqueta`, oculto en escritorio, donde ya están los encabezados).
+
+**Franja de KPI en un listado (19/9/2026, criterio del dueño; primera referencia viva: `operaciones::pages.estadias.index`).** Un listado puede llevar una franja de cifras de cabecera; es el estilo a replicar en los demás `index` en próximas iteraciones. Reglas:
+
+- **Dónde:** inmediatamente bajo la cabecera y los avisos, ANTES de la toolbar. **Nunca entre los filtros y la tabla**: filtros y tabla van pegados, son una sola unidad de trabajo.
+- **Con qué:** `molecules/stat-card` (ícono, `value`, `valueSuffix`, `foot`, `state`), en una grilla de página `.ag-<pagina>__kpis` que consulta el ancho de SU contenedor (1 → 2 → 4 columnas), igual que `.ag-ordenes-detalle__kpis`. Nada de cajas armadas a mano.
+- **Cuántas:** hasta cuatro, fijas. Una lista que crece con los datos (un total por cuadrilla, por propiedad, por cliente) NO es un KPI: es un desglose, y su lugar es el dashboard —por sección y por rol—, no el listado. Debajo de una tabla paginada queda escondido, y como suma todo el filtro y no la página, confunde.
+- **Qué cuentan:** responden al MISMO filtro que la tabla (las resuelve el caso de uso del listado, p. ej. `ListarEstadiasHacienda::resumen()`; la vista solo formatea). Una cifra en cero va con `state` nulo, no con color.
+- **Cuándo no:** si el listado está vacío sin filtros, no se dibuja (igual que la toolbar).
+
+**Columna de acciones: header con texto, ancho fijo, `organisms/row-actions`.** El `role="columnheader"` de acciones lleva `{{ __('ui.tabla.col_acciones') }}` (nunca `aria-hidden` vacío) y la celda envuelve sus botones en `<x-organisms.row-actions>` — el componente colapsa a un menú "⋮" las acciones que no entran (más de 3 en desktop, más de 2 en tablet, todas en mobile), siempre con ícono + texto (nunca solo-ícono). La última columna del `grid-template-columns` de esa página (head y fila comparten la MISMA declaración, ver `.ag-usuarios__head, .ag-usuarios__fila` en `usuarios.css`) es un **ancho fijo en rem calculado a mano para los botones reales de esa página** (`24rem` en Usuarios: 3 acciones con texto), nunca `auto` — con `auto`, el head (antes vacío) y la fila (con botones) son grids separados que resuelven ese ancho cada uno por su cuenta y el header queda corrido respecto al resto de columnas. Páginas sin celda de acciones (solo lectura, o un único control con su propio header ya con texto) no usan `row-actions`.
+
+**Color de las acciones de una fila y confirmaciones (20/9/2026, criterio del dueño; plan `docs/gestion/plan_homogeneizacion_panel.md` §3.1 y §3.2).** Tres colores son fijos en todo el panel, sea cual sea la pantalla: **Ver = `info-outline`**, **Editar = `warning-outline`**, **Eliminar = `danger-outline`**. Toda otra acción de una fila es un cambio de estado y lleva **el tono del estado al que lleva** (`<tono>-outline`) —el mismo de su badge y del `tone` de su `confirm-modal`—, y ese mapa vive **una sola vez**, en el `TONO_POR_ESTADO` del controlador o del presentador de pasos, que leen el badge, el botón y el modal (nunca un color escrito en cada uno). Referencias vivas: `finanzas::pages.planillas.index` (Ver `info-outline`, Aprobar `success-outline`, con `PlanillasController::TONO_POR_ESTADO`), `comercial::pages.contratos.index` (varios cambios de estado con `PasosDeContrato::TONO_POR_ESTADO`) y `comercial::pages.clientes.index` (Editar y Eliminar). Ninguna confirmación es un `confirm()` de navegador: un cambio de estado o una baja confirman en `molecules/confirm-modal`, y un aviso que no confirma nada es un `molecules/info-modal`. Los `<form>` y los modales van **fuera** de `row-actions` (el organism renderiza su slot dos veces, en la fila visible y en el menú «⋮», y decide cuál se ve; un `<form>` o un modal ahí adentro se duplicaría con el mismo id), y el botón de la fila los abre con `data-bs-toggle="modal"`; `PanelHomogeneoTest` falla ante un color de acción que no corresponde (`color-accion`) o un `confirm()` nativo (`confirm-nativo`).
+
+**Listado filtrado por su padre (19/9/2026).** Un listado al que se llega con el filtro de su padre —`lotes?propiedad_id=`, desde «Ver lista de lotes» del resumen de la propiedad o al terminar de crear lotes en bloque— se llegó desde la ficha de ese padre, así que ofrece «Volver a…» en el slot `actions` del header (`molecules/boton-volver`, con el permiso de editar al padre): con la pila del memento vuelve al escalón anterior y lo dice («Volver a Santa Cecilia»); sin pila cae a la ficha del padre («Volver a la propiedad»). Sin filtro no hay botón. Los códigos de lote se ordenan en orden natural —L1, L2, … L10, no L1, L10, L11, L2— con `Lote::ordenadosPorCodigo()`.
 
 Responsive: la tabla no scrollea horizontalmente en móvil — colapsa. El dashboard ya tiene el patrón resuelto en tres variantes (`_tabla-sesiones` / lista de dos líneas en tablet / `_fichas-sesiones` en móvil); copiá ese patrón, no inventes uno nuevo.
 
@@ -239,19 +310,153 @@ Las seis reglas que salen de ahí:
 5. **Barra de acciones pegajosa al pie**, con el estado de guardado en texto ("Sin cambios pendientes" / "Cambios sin guardar") y las mismas dos acciones de la cabecera. En un formulario largo, el usuario no debería scrollear para guardar.
 6. **Cifras y datos técnicos en `--ag-font-family-mono`** (teléfono, fechas, "6 / 10"); prosa y labels en la familia base.
 
-#### Qué falta en el catálogo para armar esto
+### 6.3.1. Alta vs. edición: el resumen relacionado (`molecules/summary-card`) solo en edición
 
-Ninguna de estas piezas se construye suelta dentro de una página: se le piden a `design-ui`.
+Referencia viva: `comercial::pages.clientes._formulario` + `ClientesController::resumenRelacionado()` (tarea "resumen de cliente", 15/9/2026).
 
-| Pieza | Nivel | Estado |
-|---|---|---|
-| `form-section` como **tarjeta** con `section-head` de header | molecule | **Existe, hay que evolucionarlo** — hoy es `<fieldset>`+`<legend>` sin chrome ni grid de dos columnas |
-| `page-header` (h1 + bajada + acciones) | organism | **Falta** — hoy cada página repite el markup (`ag-dash__header`, `ag-organizacion__intro`…) |
-| `tabs` | molecule | **Falta como componente** — el CSS (`tabs.css`) existe y el dashboard lo usa a mano con `data-bs-toggle` |
-| `form-actions-bar` pegajosa con estado dirty | organism | **Falta** |
-| `summary-card` (lista etiqueta→valor + acción al pie) | molecule | **Falta** — es la tarjeta de "Suscripción" |
-| `progress-meter` (porcentaje + barra + checklist) | molecule | **Falta** — es "Perfil completo" |
-| `file-field` (preview + reemplazar/quitar) | molecule | **Falta** — hoy es markup suelto en `organizacion.css` |
+Alta y edición comparten el MISMO partial y la misma anatomía de §6.3 — difieren solo en la columna lateral pegajosa (regla 4):
+
+- **Alta**: sin columna lateral. Un registro que todavía no existe no puede tener nada relacionado (contratos, propiedades, órdenes…) — mostrarla vacía sería puro relleno. Las secciones ocupan el ancho completo.
+- **Edición**: la columna se llena con una tarjeta por cada tipo de entidad relacionada, resuelta SERVER-SIDE por un método `resumenRelacionado()` del controlador (nunca calculado en el Blade). Por categoría: gatea por el permiso `.ver`/`.crear` de CADA módulo relacionado (no el permiso de la entidad que se edita — ver el resumen de contratos de un cliente exige `comercial.contrato.ver`, no `comercial.cliente.ver`); `tieneDatos` decide `summary-card` (con conteos) vs `empty-state` compacto (con acceso directo de alta, con el id de esta entidad precargado en la URL cuando la pantalla destino lo acepta); nunca las dos piezas a la vez; una categoría sin `.ver` NI `.crear` se omite del todo.
+
+```blade
+@if ($esEdicion)
+    <aside class="ag-x-form__aside">
+        @foreach ($resumenRelacionado ?? [] as $resumen)
+            @if ($resumen['tieneDatos'])
+                <x-molecules.summary-card :title="$resumen['titulo']" :items="$resumen['items']">
+                    @if ($resumen['mostrarAccion'])
+                        <x-slot:action>
+                            <x-atoms.button href="{{ $resumen['accion']['href'] }}" variant="outline" icon="add" block>
+                                {{ $resumen['accion']['label'] }}
+                            </x-atoms.button>
+                        </x-slot:action>
+                    @endif
+                </x-molecules.summary-card>
+            @else
+                <x-molecules.empty-state :icon="$resumen['icono']" :title="$resumen['vacioTitulo']" :detail="$resumen['vacioDetalle']">
+                    @if ($resumen['mostrarAccion'])
+                        <x-slot:action>
+                            <x-atoms.button href="{{ $resumen['accion']['href'] }}" variant="outline" icon="add">
+                                {{ $resumen['accion']['label'] }}
+                            </x-atoms.button>
+                        </x-slot:action>
+                    @endif
+                </x-molecules.empty-state>
+            @endif
+        @endforeach
+    </aside>
+@endif
+```
+
+**Más de un acceso directo en una misma tarjeta (19/9/2026).** El molde de arriba trae un solo botón por tarjeta (`accion`). Cuando la tarjeta necesita más —la de Lotes de una propiedad con lotes cargados lleva "Ver lista de lotes" y "Editar en bloque"— el resumen trae `acciones`, una lista de `['label', 'href', 'icono']`, en vez de `mostrarAccion`/`accion`, y el Blade la recorre dentro del slot `action` (el contenedor apila los botones con un espacio entre sí). Cada botón se gatea por el permiso de la cosa que hace, no por el de la tarjeta. Referencia viva: `PropiedadesController::resumenPropiedad()` y `comercial::pages.propiedades._formulario`.
+
+No confundir con la columna lateral del canvas "Registro de la compañía" (regla 4 de arriba: progreso de completitud, resumen del plan). Esa es de METADATOS de la propia entidad; el resumen relacionado es de OTRAS entidades que cuelgan de esta. Una pantalla usa la que le corresponda según lo que la entidad realmente necesita mostrar — decidilo por eso, no por copiar la que ya existe en otra pantalla.
+
+**Componente estático primero, funcionalidad después (17/9/2026).** Toda pantalla con arquetipo Formulario que tenga `edit()` lleva la pieza del resumen relacionado — aunque todavía no exista el contrato de lectura que la resuelva de verdad. Mientras ese contrato no esté armado, el aside se construye con datos de ejemplo/estáticos (misma anatomía de arriba, con sus accesos directos ya apuntando a la ruta real), y queda anotado en el reporte de la tarea como pendiente de conectar. Lo que no está permitido es omitir la pieza entera "porque no hay tiempo de escribir la consulta" — eso fue lo que pasó con Cultivo y quedó descubierto recién en revisión (ya conectado en la tarea 120: `CultivosController::resumenRelacionado()` sobre `Aplicacion/ResumirSiembraDeCultivo`, con la campaña vigente pedida a `Campania` por `LecturaCampania`). Cuando el contrato de lectura se escriba, la pantalla pasa de estático a `resumenRelacionado()` real sin cambiar la anatomía Blade.
+
+**Objeto con máquina de estados que todavía no está operativo: un solo aviso, no tarjetas vacías (20/9/2026, criterio del dueño; plan `docs/gestion/plan_homogeneizacion_panel.md` §3.5).** Mientras el objeto no llegó a su estado operativo —una campaña abierta, un contrato vigente, una orden vigente, una orden de mantenimiento cerrada— el aside de la edición **no** dibuja una tarjeta por cada relación con «0» ni un `empty-state` compacto por categoría: muestra **una sola sección informativa** (`molecules/empty-state`) que dice que todavía no hay nada que resumir y qué paso hay que dar para que lo haya. Cuando el estado previo cambia lo que hay que hacer, el texto cambia con él (la orden de aplicación distingue emitida de pausada: activar o reanudar). En cuanto el objeto llega a su estado operativo, el aside vuelve a ser el resumen de este apartado. Referencias vivas: `campania::pages.campanias._formulario` (claves `aside_no_abierta_*`, en el Blade), `comercial::pages.contratos._formulario` (`aside_no_vigente_*`, armado por `ContratosController::resumenRelacionado()`), `operaciones::pages.ordenes` (`aside_no_vigente_*`, por `OrdenesController`) y `mantenimiento::pages.ordenes._formulario` (`aside_abierta_*`: sus repuestos y su gasto los escribe el propio cierre).
+
+### 6.3.2. Tras guardar, el formulario se queda en `edit()` — nunca vuelve a `index()`
+
+Corrección de convención (16/9/2026): hasta ahora esto NO estaba escrito en ningún lado y cada controlador lo resolvía por su cuenta — `ClientesController`/`CampaniasController` ya volvían siempre a `edit()`, pero 17 controladores más volvían a `index()` en `store()`/`update()` (dos, `PropiedadesController`/`LotesController`, solo a medias: a `edit()` nada más en el flujo de alta rápida `?volver_a=`). Regla fija a partir de ahora, para toda pantalla con arquetipo Formulario (§6.3) que tenga `edit()`:
+
+```php
+// store(): igual que update(), reemplazando `route('panel.x.index')`
+return redirect()
+    ->route('panel.x.edit', $modelo)
+    ->with('estado', __('modulo.x.creado'));
+```
+
+- **Por qué**: crear o editar un registro es CONTINUAR trabajando sobre ÉL — el siguiente paso natural casi siempre es seguir completando ese mismo registro (agregar un lote, revisar el resumen relacionado del §6.3.1, corregir algo), no volver a buscarlo en el listado. Los controladores sin ningún `edit()` (altas simples tipo bitácora — Gastos, Anticipos, Combustible, Facturas, Pausas, Stock, Planillas, Rendiciones, VersionesApk) quedan afuera: no hay a qué volver. Las transiciones de estado (`activar()`, `cerrar()`, `destroy()`) TAMPOCO cambian — siguen yendo a `index()`, porque ahí sí no queda nada editable a lo que quedarse. Única excepción, desde el 19/9/2026: el cambio de estado que se pide desde los pasos de la ficha de edición (§6.3.4) vuelve a la ficha.
+- **El mensaje de confirmación viaja con el redirect, pero HAY QUE PINTARLO en el propio `_formulario.blade.php`** — no alcanza con el `->with('estado', ...)` del controlador. El flash `session('estado')` normalmente solo se renderiza en `index.blade.php` de cada módulo; si el formulario no lo pinta también, el usuario guarda y no ve ningún aviso. Bloque exacto, inmediatamente después del `</x-organisms.page-header>` de cierre (antes de cualquier otro contenido, incluido un `@if ($errors->has('estado'))` de error si la pantalla ya tuviera uno):
+
+  ```blade
+  @if (session('estado'))
+      <x-molecules.alert-strip variant="success" icon="check_circle">
+          {{ session('estado') }}
+      </x-molecules.alert-strip>
+  @endif
+  ```
+
+- **Checklist para una pantalla nueva**: si el arquetipo Formulario que estás armando tiene `edit()`, andá derecho por los dos puntos de arriba — no lo redescubras mirando qué hizo la pantalla anterior, porque durante meses la mayoría hizo lo viejo (volver a `index()`, sin flash en el form).
+
+#### Estado del catálogo para este arquetipo
+
+Todas las piezas de la anatomía de arriba ya existen en el catálogo — nada pendiente de pedirle a `design-ui` para este arquetipo: `molecules/form-section` (tarjeta + `section-head` con contador, evolucionado desde el `<fieldset>` original), `organisms/page-header`, `molecules/tabs`, `organisms/form-actions-bar`, `molecules/summary-card`, `molecules/progress-meter`, `molecules/file-field`, `molecules/form-layout` (el layout main + aside pegajoso de la regla 4 — 17/9/2026, antes declarado a mano por página con su propio prefijo de clase, `.ag-clientes-form__layout/__main/__aside` y equivalentes). Si una pantalla nueva necesita una variante que ninguna de estas cubre, ESO es lo que se le pide a `design-ui` — no la pieza entera de nuevo.
+
+### 6.3.3. Activo/inactivo: patrón de sistema para toda entidad propia — y NUNCA en el formulario
+
+Corrección del 17/9/2026 sobre la redacción original de esta regla (quedó escrita al revés y se alcanzó a aplicar a Cultivo antes de corregirse — ver commit que la revierte). Queda así:
+
+**Toda entidad propia del dominio —la que vive en su propia tabla con identidad propia, no una tabla pivote/de unión (`com_lote_campania`, `sec_user_role`…) ni un resultado calculado/concatenado (un informe, un resumen)— tiene una columna `activo` (boolean, default `true`).** Es un patrón de esquema, no de pantalla.
+
+- **El campo `activo` NO va en el formulario de alta ni de edición.** No hay `atoms/switch` para esto en `_formulario.blade.php`, en ninguna pantalla. Un registro nuevo nace `activo = true` siempre (lo fija el caso de uso de `Aplicacion/`, no lo decide quien completa el formulario), y una edición nunca lo toca — el caso de uso de actualización ni siquiera recibe `activo` como parámetro.
+- Sigue sin mostrarse en el listado ni en sus filtros (regla de §6.2 "Catálogos simples con toggle activo/inactivo") — ahora por la misma razón de fondo: si no se edita desde ningún lado del panel todavía, mostrarlo en la tabla sería puro dato muerto.
+- **Pendiente, no construir todavía**: una forma de prender/apagar el `activo` de un registro puntual **sin pasar por un formulario** (acción rápida desde el listado, un endpoint dedicado, o lo que decida el dueño del proyecto). Hasta que esa pieza exista, el campo simplemente no es editable desde el panel — eso es intencional, no un olvido.
+
+### 6.3.4. Formulario de un objeto con máquina de estados: `step-arrow` bajo la cabecera
+
+Referencias vivas (19/9/2026): `campania::pages.campanias._formulario` + `_cambio-estado` + `CampaniasController::edit()` —una ruta en línea recta— y `comercial::pages.contratos._formulario` + `_cambio-estado` + `PasosDeContrato` —una máquina con desvíos y salidas—; y `operaciones::pages.ordenes._formulario` + `show` + `_orden-modales` + `PasosDeOrden` —una máquina con un permiso distinto por transición, y también en el detalle—. Solo en EDICIÓN (un registro que recién nace está siempre en su estado inicial, no hay a dónde ir).
+
+- **Los pasos van entre la cabecera y el `form-layout`, a todo el ancho** (col-12, por encima del main y del aside), con el párrafo de ayuda debajo, también a todo el ancho. Lo arma el controlador: `PasosDeEstado::armar()` con la ruta principal, la tabla de transiciones de la máquina (`TransicionesX::permitida(...)`), el tono de cada estado y si el rol tiene el permiso de cambiar el estado; y `PasosDeEstado::ayuda()` para el párrafo. Si el armado tiene reglas propias (contrato), se junta en un presentador del módulo (`PasosDeContrato`) que el controlador solo llama y que un test unitario puede recorrer sin base de datos.
+- **El objeto solo define sus estados y sus textos**, en su archivo de idioma: `<objeto>.estado.<valor>` (etiqueta) y `<objeto>.estado_ayuda.<valor>` (qué significa y por qué conviene pasar al siguiente; admite `:actual` y `:paso`). El cierre del párrafo ("Para avanzar, haz clic en «:paso»" / "Con tu rol no puedes cambiar el estado") es genérico, de `ui.pasos`. Un test vigila que cada estado tenga su texto.
+- **El paso no cambia el estado**: un paso `next` abre el modal de la página, y el modal de confirmación envía un `<form>` que va a la ruta de cambio de estado del objeto (invariante 7). Esos `<form>` y modales van en un partial APARTE (`_cambio-estado`), después del formulario y no adentro: un `<form>` no puede anidarse en otro. El cambio de estado vuelve a la pantalla de origen (`redirect()->back()`), no al listado.
+- **El tono de cada estado se define una sola vez** (`TONO_POR_ESTADO`, en el controlador o en el presentador) y lo comparten el badge del listado, el paso y el modal: los tres hablan con el mismo color.
+- **Suavizado.** Un paso ya recorrido se dibuja con el color suave de SU estado y un check. El estado actual va con relleno sólido, salvo que sea **final** —la máquina ya no ofrece ningún paso al que ir—: ahí se dibuja suavizado, como procesado. Lo decide lo que la máquina ofrece, no la posición en la fila, así una ruta con dos finales (contrato: «Ejecutado» y «Cancelado») suaviza el que sea.
+- **Máquinas que no son una línea recta** (desvío que vuelve, estado que fija solo el sistema, salida sin vuelta). `PasosDeEstado::armar()` acepta, todas opcionales: `recorridos` (por qué estados pasó el objeto, en vez de deducirlo de la posición: un contrato cancelado no completó «Ejecutado» aunque quede antes), `pistas` (texto propio para un paso bloqueado por una regla de negocio y no por orden, p. ej. un conflicto de lotes) e `iconos` (un estado de salida como «Cancelado» no se dibuja con el check de un éxito); `ayuda()` acepta la clave del paso que nombra el cierre del párrafo. Un paso puede quedar antes del actual y ser accionable (reanudar una pausa): manda la tabla de transiciones, no la posición. Lo que el panel deja pedir es la tabla menos los estados que fija solo el sistema. Cuando cada transición tiene SU permiso (la orden: activar, pausar —también reanudar—, cerrar, cancelar) y la pantalla ya trae sus modales con el nombre de la acción, `armar()` acepta además `puedeIrA` (permiso por estado destino; un paso sin él queda `pending`) y `modales` (id del modal por estado destino: activar y reanudar llegan al mismo estado con acciones distintas). Un paso cuya regla de negocio todavía no se cumple (cerrar una orden sin órdenes de trabajo o con trabajos abiertos) sigue siendo `next` y abre un aviso en lugar de la confirmación — la regla la comparten el servidor y la pantalla (`PoliticaCierreOrden`).
+- **El modal lleva el color del estado al que se pasa**, el mismo de su badge (`tone` de `confirm-modal`), y dentro la ficha «estado actual → estado destino» con los mismos badges, para ver antes de confirmar cuál cambio se está haciendo. El botón de confirmar no cambia de color: el color de estado no compite con el CTA.
+- **Si una regla de negocio impide el paso, el modal avisa en lugar de confirmar** (`molecules/info-modal`): sin `<form>` ni botón de confirmar, dice qué lo impide y a dónde ir (contrato con una aplicación abierta: primero se cierra o se cancela la orden). El servidor sigue rechazándolo aunque alguien se salte la pantalla; el aviso solo evita que el usuario confirme algo que se le va a negar. Los datos para armarlo entre módulos llegan por el `Contratos/` del módulo dueño (ADR 0003), nunca por su tabla.
+
+### 6.3.5. Un formulario no esconde secciones por falta de un dato previo
+
+Criterio del dueño (19/9/2026, sobre el alta de Orden de Trabajo, que ocultaba todo hasta elegir la orden de aplicación). Referencia viva: `operaciones::pages.ordenes-trabajo.create`.
+
+- **Todas las secciones se dibujan siempre.** Que falte elegir un dato del que otras dependen (la orden, el cliente, el contrato) no es motivo para esconder el resto del formulario ni para reemplazarlo por un aviso: el formulario simplemente **no deja guardar**, y quien responde es la validación del campo obligatorio ("Elige la orden de aplicación."), como con cualquier otro.
+- **Lo que no depende de ese dato se puede cargar antes** (en el ejemplo: límites climáticos y parámetros de vuelo).
+- **La sección que sí depende muestra el vacío** (`molecules/empty-state`, §5.1) diciendo qué falta elegir y qué va a aparecer ahí (en el ejemplo: «Calda», cuyos campos cambian según la orden sea de insumo líquido o sólido, y «Equipos») — igual que la sección de propiedades y lotes del formulario de contratos cuando todavía no hay ninguno.
+- **Una sección que depende del dato va pegada a él**, no al final: en el ejemplo, «Calda» es la segunda sección, justo después de la orden de aplicación.
+- **Si elegir el dato recarga la pantalla, lo ya cargado no se pierde** (`sessionStorage` de un solo uso, como `ordenes-trabajo-form.js`, o `old()` si viaja por el servidor).
+
+### 6.4. Detalle — **la referencia canónica es `operaciones::pages.ordenes.show`**
+
+Cuarto arquetipo, agregado el 17/9/2026: una ficha de **solo lectura** para una entidad que ya no admite edición desde el listado (p. ej. una Orden de aplicación `vigente` — `Aplicacion/ActualizarOrden` exige `emitida`) o que de por sí es "información crítica para mirar", no un formulario. Antes no había ningún lugar del panel para volver a ver esos datos completos; el módulo Operaciones va a necesitar varias pantallas de este tipo, así que se arma reusando al máximo el catálogo del arquetipo Formulario — **no es un layout nuevo**.
+
+Anatomía:
+
+```
+boton-volver (memento)
+page-header (title, subtitle, slot chip=badge de estado, slot actions=[Editar/Activar/Eliminar — las mismas acciones que ya existen, ninguna inventada])
+KPI strip: 3-4× stat-card en grid (page-local, .ag-<pagina>__kpis)
+form-layout
+  main:  form-section por cada bloque de datos de solo lectura (campos como
+         <p>label</p><p>valor</p> directos, sin envolver otra tarjeta —
+         reusan el grid de 2 columnas de form-section, NUNCA anidan
+         summary-card adentro: dos superficies de tarjeta una dentro de la
+         otra duplica el chrome) + index-table para cualquier sub-lista
+  aside: progress-meter/summary-card para metadatos + form-section
+         condicional de avisos (p. ej. "Inconvenientes del campo", solo si
+         los hay) + link-row en una form-section ("Relacionado") + timeline
+         en una form-section ("Actividad/historial", siempre ÚLTIMA: es la
+         única de largo variable y no debe empujar hacia abajo a las demás)
+         — mismas piezas que ya usa el aside del Formulario (§6.3.1)
+acciones del header: un botón por transición que admite el estado, con el
+         color del ESTADO DE LLEGADA; los que piden datos (motivo, causa)
+         abren un `confirm-modal` con esos campos en su slot — nunca un
+         modal armado a mano
+```
+
+Reglas fijas:
+
+1. **Nunca se inventa una acción que no existe.** Las del `actions` slot son exactamente las que ya ofrece el listado de esa entidad (Editar/Activar/Eliminar, con el mismo `confirm-modal` — nunca `confirm()` nativo). Un mockup de referencia puede traer botones como "Duplicar"/"Anular" que no son funciones reales del sistema — no se agregan solo porque estaban dibujados.
+2. **Nunca se muestra un valor calculado que el sistema no sabe calcular todavía.** Si una especificación menciona una herencia/default (p. ej. "hereda del contrato o del valor por defecto del sistema") pero no hay código que la resuelva, el campo nulo se muestra como "Sin definir" — no se inventa el número.
+3. **Una "Actividad"/timeline solo lista eventos reconstruibles desde columnas reales** (`created_at`/`created_by` de la entidad y de sus hijas) — nunca una bitácora antes/después que todavía no existe (invariante 9 de CLAUDE.md, pendiente).
+4. **Mismo permiso que `index()`/`edit()`**, nunca uno de grano más fino solo para el detalle (5 de 6 pantallas `.show` ya homogeneizadas del panel — Trabajos, Devengos, Planillas, Rendiciones, EquiposTrabajo — confirman este criterio).
+5. **"Ver" es la primera row-action del listado**, antes de "Editar" — a diferencia de "Editar" (solo para el estado editable), "Ver" se ofrece siempre.
+
+#### Estado del catálogo para este arquetipo
+
+Reusa TODO lo del Formulario (§6.3) sin cambios, más dos piezas nuevas agregadas junto con este arquetipo: `molecules/timeline` (lista de eventos con fecha/autor) y `molecules/view-toggle` (alterna lista/grilla de un listado — no es del arquetipo Detalle en sí, pero nació la misma tarea para poder "ver" un resumen de tarjetas antes de entrar al detalle completo). Si una pantalla nueva de este arquetipo necesita algo que ninguna de estas dos cubre, se le pide a `design-ui`.
 
 ---
 
@@ -312,9 +517,12 @@ Y el aviso que ya cobró dos veces: un canvas es un mockup, no la implementació
 - [ ] Se ve bien en los tres breakpoints: ≥1200, 768–1199, <768.
 
 **Verificación visual** (obligatoria, el cálculo en papel no alcanza)
-- [ ] Vista en navegador real, **en tema claro y en tema oscuro**, logueado con `carlos.ferrufino` / `password`.
+- [ ] Vista en navegador real, **en tema claro y en tema oscuro**, logueado con `miguelo` / `0000` (el único usuario que siembra `AdminPlataformaSeeder`; los datos demo de la base del compose no se borran).
 - [ ] Contraste AA (4.5:1) verificado en las combinaciones nuevas, y anotado en `sistema_diseno_panel.md` §1.3 si el par no estaba.
 - [ ] `bin/verify` en verde (ver skill `verificacion`).
+
+**Homogeneización** (plan `docs/gestion/plan_homogeneizacion_panel.md`)
+- [ ] La pantalla no figura en `docs/diseno/panel_homogeneo_pendientes.txt`: sigue el patrón de las referencias y `PanelHomogeneoTest` se lo exige sin perdón.
 
 **Documentación**
 - [ ] Si se agregó o renombró un componente, la tabla de `sistema_diseno_panel.md` §3 quedó al día. Verificable:

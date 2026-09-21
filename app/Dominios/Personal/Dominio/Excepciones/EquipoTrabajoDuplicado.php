@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Personal\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use RuntimeException;
 
 /**
@@ -17,6 +18,6 @@ final class EquipoTrabajoDuplicado extends RuntimeException
 {
     public static function porCodigo(string $codigo): self
     {
-        return new self("Ya existe un equipo de trabajo activo con el código '{$codigo}'.");
+        return new self(Texto::de('personal.errores.equipo_trabajo_duplicado', ['codigo' => $codigo]));
     }
 }

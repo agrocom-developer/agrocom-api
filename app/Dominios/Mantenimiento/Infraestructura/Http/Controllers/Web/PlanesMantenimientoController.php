@@ -9,6 +9,7 @@ use App\Dominios\Mantenimiento\Aplicacion\ListarPlanesMantenimiento;
 use App\Dominios\Mantenimiento\Infraestructura\Eloquent\PlanMantenimiento;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Requests\ActualizarPlanMantenimientoRequest;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Requests\CrearPlanMantenimientoRequest;
+use App\Dominios\Mantenimiento\Infraestructura\Http\ResumenRelacionadoDePlan;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -30,6 +31,9 @@ use Illuminate\View\View;
  * umbral (fuera de alcance de esta HU, ver docblock de
  * `ListarPlanesMantenimiento`): la alerta es solo informativa, la acción de
  * abrir la orden queda manual en la pantalla de `OrdenesMantenimientoController`.
+ * Por eso el resumen relacionado de la ficha ({@see ResumenRelacionadoDePlan},
+ * tarea 116) habla de los drones del modelo y de SUS órdenes, nunca de
+ * «órdenes generadas por el plan»: esa trazabilidad no existe en el esquema.
  */
 final class PlanesMantenimientoController
 {
@@ -47,11 +51,12 @@ final class PlanesMantenimientoController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
-        $planes = $listarPlanesMantenimiento->ejecutar();
+        $busqueda = trim($request->string('q')->toString());
 
         return view('mantenimiento::pages.planes.index', [
             ...$this->autorizacion->cascara($request),
-            'planes' => $planes,
+            'planes' => $listarPlanesMantenimiento->ejecutar($busqueda),
+            'filtros' => ['q' => $busqueda],
         ]);
     }
 
@@ -70,24 +75,26 @@ final class PlanesMantenimientoController
 
         $datos = $request->validated();
 
-        $crearPlan->ejecutar(
+        $plan = $crearPlan->ejecutar(
             (string) $datos['modelo'],
             (string) $datos['tarea'],
             (string) $datos['horas_umbral'],
         );
 
+        // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
         return redirect()
-            ->route('panel.planes-mantenimiento.index')
+            ->route('panel.planes-mantenimiento.edit', $plan)
             ->with('estado', __('mantenimiento.planes.creado'));
     }
 
-    public function edit(Request $request, PlanMantenimiento $plan): View
+    public function edit(Request $request, PlanMantenimiento $plan, ResumenRelacionadoDePlan $resumenRelacionado): View
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
 
         return view('mantenimiento::pages.planes.edit', [
             ...$this->autorizacion->cascara($request),
             'plan' => $plan,
+            'resumenRelacionado' => $resumenRelacionado->tarjetas($request, $plan),
         ]);
     }
 
@@ -104,8 +111,9 @@ final class PlanesMantenimientoController
             (string) $datos['horas_umbral'],
         );
 
+        // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
         return redirect()
-            ->route('panel.planes-mantenimiento.index')
+            ->route('panel.planes-mantenimiento.edit', $plan)
             ->with('estado', __('mantenimiento.planes.actualizado'));
     }
 

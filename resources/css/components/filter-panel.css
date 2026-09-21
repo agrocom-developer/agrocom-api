@@ -1,0 +1,118 @@
+/*
+ * Organism: filter-panel (resources/views/components/organisms/filter-panel.blade.php)
+ * Mismo lenguaje visual que los popovers del header (`.ag-user-menu`,
+ * `.ag-notifications-popover` en topbar.css): dropdown-menu de Bootstrap con
+ * skin propio, `.show` anima con opacity/transform en vez del `display`
+ * nativo — ver el docblock de ese archivo para el porqué de `!important`.
+ * `position: fixed` en la regla base (no solo la que Popper aplica inline al
+ * abrir) por el mismo motivo documentado en color-swatch-field.css: con
+ * `display:block` siempre puesto, antes del primer open el menú cerrado
+ * vive con el `position: absolute` por defecto de Bootstrap y SÍ cuenta
+ * para el scroll interno de `.ag-panel__content` aunque esté invisible —
+ * deja un desborde latente que el navegador puede "revelar" con scroll al
+ * enfocar un control de adentro.
+ */
+
+/* Wrapper: trigger + link "Limpiar" afuera del panel — mismo patrón que
+   `.ag-table-search-wrap` (molecules/table-search), reusa su misma clase
+   `.ag-table-search__clear` para el link. */
+.ag-filter-panel-wrap {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+}
+
+.ag-filter-panel__trigger {
+    position: relative;
+}
+
+.ag-filter-panel__count {
+    padding: 0 var(--ag-space-2);
+    min-width: 1.25rem;
+    justify-content: center;
+}
+
+.ag-filter-panel__menu {
+    display: block !important;
+    position: fixed;
+    width: 30rem;
+    max-width: calc(100vw - var(--ag-space-6));
+    padding: var(--ag-space-4);
+    background: var(--ag-color-bg-elevated);
+    border: 1px solid var(--ag-color-border);
+    border-radius: var(--ag-radius-lg);
+    box-shadow: var(--ag-shadow-lg);
+    margin-top: var(--ag-space-2) !important;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: scale(0.95);
+    transform-origin: top right;
+    transition:
+        opacity 180ms var(--ag-ease-emphasized),
+        transform 180ms var(--ag-ease-emphasized),
+        visibility 0s linear 180ms;
+}
+
+.ag-filter-panel__menu.show {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: scale(1);
+    transition:
+        opacity 180ms var(--ag-ease-emphasized),
+        transform 180ms var(--ag-ease-emphasized),
+        visibility 0s linear 0s;
+}
+
+/* El grid de 2 columnas ya lo trae `.ag-form-section__body` por composición
+   (ver docblock del componente) — acá solo el gap entre esa grilla y el pie
+   de acciones. */
+.ag-filter-panel__grid {
+    margin-bottom: var(--ag-space-4);
+}
+
+/* Dos tamaños de panel, según CAMPOS reales (pedido directo del usuario,
+   17/9/2026: no hay un tercer tamaño "chico" — con 1 campo el panel queda
+   en 30rem, con 2 o más pasa a 40rem, sea que la fila se llene o quede un
+   hueco). `div:nth-of-type`, no `:nth-child`: todo átomo de campo
+   (`atoms/select`, `atoms/input`, `atoms/date`, `atoms/checkbox`) raíza en
+   un `<div>`, así que contar hijos `div` cuenta CAMPOS. El único hijo que
+   no es `<div>` es el `<input type="hidden" name="q">` que casi todo
+   filtro trae para preservar la búsqueda — no se renderiza, pero sigue en
+   el DOM y `:nth-child` (que cuenta TODOS los hermanos, sin importar tag)
+   lo contaba como si fuera un campo más. */
+.ag-filter-panel:has(.ag-filter-panel__grid > div:nth-of-type(2)) .ag-filter-panel__menu {
+    width: 40rem;
+}
+
+.ag-filter-panel__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    padding-top: var(--ag-space-4);
+    border-top: 1px solid var(--ag-color-border);
+}
+
+/* Mobile: el trigger vive pegado al borde izquierdo de la toolbar, así que
+   anclar el panel a SU posición (lo que hace Popper por default,
+   `dropdown-menu-end` incluido) deja casi todo el ancho de pantalla vacío a
+   la derecha del panel. Se ancla directo al viewport con `left`/`right`
+   simétricos — `!important` porque Popper sigue escribiendo `top`/`left`
+   inline (ver app.js), y acá solo queremos pisarle el `left` horizontal,
+   dejando que seguimiento vertical (`top`) lo siga resolviendo Popper. */
+@media (max-width: 767.98px) {
+    .ag-filter-panel__menu,
+    .ag-filter-panel:has(.ag-filter-panel__grid > div:nth-of-type(2)) .ag-filter-panel__menu {
+        left: var(--ag-space-4) !important;
+        right: var(--ag-space-4) !important;
+        width: auto !important;
+        max-width: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ag-filter-panel__menu {
+        transition-duration: 0.01ms !important;
+    }
+}

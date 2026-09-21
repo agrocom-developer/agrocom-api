@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Operaciones\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use DomainException;
 
 /**
@@ -27,16 +28,16 @@ final class TrabajoNoListoParaActa extends DomainException
 {
     public static function porNoEstarCerrado(int $trabajoId): self
     {
-        return new self("El trabajo #{$trabajoId} debe estar cerrado para generar su acta.");
+        return new self(Texto::de('operaciones.errores.trabajo_no_cerrado_para_acta', ['id' => $trabajoId]));
     }
 
     public static function porSesionesSinValidar(int $trabajoId): self
     {
-        return new self("El trabajo #{$trabajoId} tiene sesiones vigentes sin validar: el acta certifica datos ya validados.");
+        return new self(Texto::de('operaciones.errores.trabajo_con_sesiones_sin_validar', ['id' => $trabajoId]));
     }
 
     public static function porConflictoDeUuidCliente(int $trabajoId): self
     {
-        return new self("El uuid_cliente pedido para el acta del trabajo #{$trabajoId} ya está en uso por otra acta.");
+        return new self(Texto::de('operaciones.errores.acta_uuid_cliente_en_uso', ['id' => $trabajoId]));
     }
 }

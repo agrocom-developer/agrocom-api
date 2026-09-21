@@ -3,6 +3,7 @@
 namespace App\Dominios\Comercial\Dominio\Excepciones;
 
 use App\Dominios\Comercial\Dominio\EstadoContrato;
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use DomainException;
 
 /**
@@ -15,8 +16,9 @@ final class TransicionContratoNoPermitida extends DomainException
 {
     public static function entre(EstadoContrato $desde, EstadoContrato $hasta): self
     {
-        return new self(
-            "No se puede pasar un contrato de '{$desde->value}' a '{$hasta->value}'.",
-        );
+        return new self(Texto::de('comercial.errores.contrato_transicion_no_permitida', [
+            'desde' => $desde->value,
+            'hasta' => $hasta->value,
+        ]));
     }
 }

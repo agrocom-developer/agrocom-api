@@ -40,7 +40,11 @@ final class CrearOrdenMantenimientoRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'equipo_id.exists' => 'El equipo seleccionado no es válido.',
+            'equipo_tipo.required' => __('mantenimiento.validacion.equipo_tipo_requerido'),
+            'equipo_id.required' => __('mantenimiento.validacion.equipo_requerido'),
+            'equipo_id.exists' => __('mantenimiento.validacion.equipo_invalido'),
+            'tipo.required' => __('mantenimiento.validacion.tipo_orden_requerido'),
+            'descripcion.required' => __('mantenimiento.validacion.descripcion_orden_requerida'),
         ];
     }
 }

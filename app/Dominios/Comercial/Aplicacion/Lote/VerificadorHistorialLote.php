@@ -11,10 +11,8 @@ use Illuminate\Support\Facades\DB;
  * se da de baja (tarea 77, HU-54; decisión original de la tarea 35, ver
  * {@see LoteConHistorialAsociado}).
  *
- * Colaborador compartido: antes de esta tarea, el chequeo vivía como método
- * privado de `ActualizarCampo` (el único lugar donde un lote se podía quitar).
- * Se extrae acá para que `EliminarLote` (baja de un lote suelto, ficha propia)
- * lo reuse sin duplicarlo.
+ * Colaborador compartido: `EliminarLote` (baja de un lote, ficha propia) lo
+ * reusa sin duplicar el chequeo.
  *
  * Vía `DB::table(...)->exists()`, no los modelos Eloquent `Trabajo`/
  * `OrdenAplicacion` de `Operaciones`: ADR 0003 prohíbe relaciones Eloquent

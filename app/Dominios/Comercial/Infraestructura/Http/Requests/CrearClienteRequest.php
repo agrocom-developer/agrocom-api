@@ -28,12 +28,14 @@ final class CrearClienteRequest extends FormRequest
     {
         return [
             'razon_social' => ['required', 'string', 'max:200'],
+            'nombre_comercial' => ['nullable', 'string', 'max:200'],
             'nit' => ['nullable', 'string', 'max:20'],
             'tipo_persona' => ['required', Rule::enum(TipoPersonaCliente::class)],
             'ubicacion_oficina' => ['nullable', 'string', 'max:255'],
-            'logo' => ['nullable', 'file', 'mimes:png,svg', 'max:2048'],
+            'logo' => ['nullable', 'file', 'mimes:png,svg,jpg,jpeg,webp,gif', 'max:20480'],
             'contactos' => ['required', 'array', 'min:1'],
             'contactos.*.tipo' => ['required', Rule::enum(TipoContactoCliente::class)],
+            'contactos.*.tipo_otro' => ['nullable', 'string', 'max:100', 'required_if:contactos.*.tipo,otro'],
             'contactos.*.nombre' => ['required', 'string', 'max:150'],
             'contactos.*.telefono' => ['nullable', 'string', 'max:30'],
             'contactos.*.email' => ['nullable', 'email', 'max:150'],
@@ -45,13 +47,18 @@ final class CrearClienteRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'tipo_persona.required' => 'Seleccioná si el cliente es persona física o jurídica.',
-            'tipo_persona.enum' => 'El tipo de persona no es válido.',
+            'razon_social.required' => __('comercial.clientes.error_razon_social_requerida'),
+            'tipo_persona.required' => __('comercial.validacion.tipo_persona_requerido'),
+            'tipo_persona.enum' => __('comercial.validacion.tipo_persona_invalido'),
             'logo.mimes' => __('comercial.clientes.error_logo_tipo'),
             'logo.max' => __('comercial.clientes.error_logo_tamano'),
-            'contactos.required' => 'Agregá al menos un contacto.',
-            'contactos.min' => 'Agregá al menos un contacto.',
-            'contactos.*.tipo.enum' => 'El tipo de contacto no es válido.',
+            'logo.uploaded' => __('comercial.clientes.error_logo_subida'),
+            'contactos.required' => __('comercial.validacion.contactos_requeridos'),
+            'contactos.min' => __('comercial.validacion.contactos_requeridos'),
+            'contactos.*.tipo.required' => __('comercial.clientes.error_contacto_tipo_requerido'),
+            'contactos.*.tipo.enum' => __('comercial.validacion.contacto_tipo_invalido'),
+            'contactos.*.tipo_otro.required_if' => __('comercial.clientes.error_contacto_tipo_otro'),
+            'contactos.*.nombre.required' => __('comercial.clientes.error_contacto_nombre_requerido'),
         ];
     }
 }

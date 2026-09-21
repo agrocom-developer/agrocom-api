@@ -3,8 +3,10 @@
 namespace App\Dominios\Comercial\Aplicacion;
 
 use App\Dominios\Comercial\Dominio\Excepciones\ClienteDuplicado;
+use App\Dominios\Comercial\Dominio\TipoPersonaCliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\ClienteContacto;
+use App\Dominios\Compartido\Aplicacion\OptimizarImagenSubida;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
@@ -31,21 +33,29 @@ use Illuminate\Support\Facades\Storage;
  * índice parcial del NIT — tocar el archivo antes dejaría el disco
  * desincronizado (archivo borrado o huérfano) si el `save()` termina
  * rechazado por `ClienteDuplicado`.
+ *
+ * El contenido pasa por {@see OptimizarImagenSubida} antes de guardarse
+ * (15/9/2026): el Form Request solo valida tipo y un tope técnico de subida,
+ * el peso final liviano lo garantiza esta conversión, no un rechazo al
+ * usuario.
  */
 final class ActualizarCliente
 {
+    public function __construct(private readonly OptimizarImagenSubida $optimizarImagen) {}
+
     /**
-     * @param  list<array{id: int|null, tipo: string, nombre: string, telefono: string|null, email: string|null, observaciones: string|null}>  $contactos
+     * @param  list<array{id: int|null, tipo: string, tipo_otro: string|null, nombre: string, telefono: string|null, email: string|null, observaciones: string|null}>  $contactos
      *
      * @throws ClienteDuplicado si el NIT ya pertenece a otro cliente activo
      *                          (índice parcial `com_clientes_nit_unico`).
      */
-    public function ejecutar(Cliente $cliente, string $razonSocial, ?string $nit, string $tipoPersona, ?string $ubicacionOficina, array $contactos, ?UploadedFile $logo = null, bool $eliminarLogo = false): Cliente
+    public function ejecutar(Cliente $cliente, string $razonSocial, ?string $nombreComercial, ?string $nit, string $tipoPersona, ?string $ubicacionOficina, array $contactos, ?UploadedFile $logo = null, bool $eliminarLogo = false): Cliente
     {
-        return DB::transaction(function () use ($cliente, $razonSocial, $nit, $tipoPersona, $ubicacionOficina, $contactos, $logo, $eliminarLogo): Cliente {
+        return DB::transaction(function () use ($cliente, $razonSocial, $nombreComercial, $nit, $tipoPersona, $ubicacionOficina, $contactos, $logo, $eliminarLogo): Cliente {
             $cliente->razon_social = $razonSocial;
+            $cliente->nombre_comercial = $nombreComercial;
             $cliente->nit = $nit;
-            $cliente->tipo_persona = $tipoPersona;
+            $cliente->tipo_persona = TipoPersonaCliente::from($tipoPersona);
             $cliente->ubicacion_oficina = $ubicacionOficina;
 
             try {
@@ -74,10 +84,10 @@ final class ActualizarCliente
             Storage::disk('public')->delete($cliente->logo_path);
         }
 
-        $extension = $logo->extension() ?: 'bin';
+        ['contenido' => $contenido, 'extension' => $extension] = $this->optimizarImagen->ejecutar($logo);
         $ruta = sprintf('logos/clientes/logo-%d.%s', now()->timestamp, $extension);
 
-        Storage::disk('public')->put($ruta, (string) file_get_contents($logo->getRealPath()));
+        Storage::disk('public')->put($ruta, $contenido);
 
         $cliente->logo_path = $ruta;
     }

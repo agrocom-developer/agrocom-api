@@ -22,7 +22,7 @@ final class ActualizarDatosEmpresaRequest extends FormRequest
         return [
             'nombre' => ['required', 'string', 'max:255'],
             'rubro' => ['required', 'string', 'max:255'],
-            'logo' => ['nullable', 'file', 'mimes:png,svg', 'max:2048'],
+            'logo' => ['nullable', 'file', 'mimes:png,svg,jpg,jpeg,webp,gif', 'max:20480'],
             'logo_eliminar' => ['nullable', 'boolean'],
             'email' => ['nullable', 'string', 'email', 'max:255'],
             'telefono' => ['nullable', 'string', 'max:50'],
@@ -36,6 +36,9 @@ final class ActualizarDatosEmpresaRequest extends FormRequest
         return [
             'logo.mimes' => __('seguridad.organizacion.error_logo_tipo'),
             'logo.max' => __('seguridad.organizacion.error_logo_tamano'),
+            'logo.uploaded' => __('seguridad.organizacion.error_logo_subida'),
+            'nombre.required' => __('seguridad.organizacion.error_nombre_requerido'),
+            'rubro.required' => __('seguridad.organizacion.error_rubro_requerido'),
         ];
     }
 }

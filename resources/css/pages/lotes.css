@@ -8,8 +8,12 @@
  * El editor de mapa (`.ag-lote-mapa*`) y la grilla de campos de una fila de
  * lote (`.ag-campos-form__lote*`) ya están definidos en campos.css: el
  * formulario de esta pantalla incluye el MISMO partial
- * (`campos/_lote-fila.blade.php`), así que no se repiten acá. Todo color y
- * medida por token (CLAUDE.md invariante 11).
+ * (`campos/_lote-fila.blade.php`), así que no se repiten acá. El contenedor
+ * de la tabla del listado (`molecules/index-table`) y el layout main/aside
+ * del formulario (`molecules/form-layout`) tampoco viven acá: eran una copia
+ * casi idéntica a clientes/propiedades/campanias/contratos, extraída al
+ * catálogo (ver docs/diseno/guia_pantalla_panel.md §6.2/§6.3.1). Todo color
+ * y medida por token (CLAUDE.md invariante 11).
  */
 
 .ag-lotes,
@@ -19,47 +23,22 @@
     gap: var(--ag-space-5);
 }
 
-/* Listado (index) */
+/* Listado (index): 5 columnas propias de `molecules/index-table` (índice,
+   código, propiedad, cliente, hectáreas, acciones) — el resto de la
+   anatomía de la tabla vive en el componente. */
 
-.ag-lotes__filtros .ag-input,
-.ag-lotes__filtros .ag-select,
-.ag-lotes__filtros .ag-date {
-    min-width: 14rem;
-}
+/* Formulario (create/edit) — aside "Siembra actual" en edición, mismo
+   criterio que `molecules/form-layout` en las otras 4 páginas de este
+   patrón. */
 
-.ag-lotes__tabla {
-    border: 1px solid var(--ag-color-border-card);
-    border-radius: var(--ag-radius-md);
-    background-color: var(--ag-color-surface-card);
-    overflow: hidden;
-}
-
-.ag-lotes__head,
-.ag-lotes__fila {
-    display: grid;
-    grid-template-columns: 1fr 2fr 2fr 1fr auto;
-    gap: var(--ag-space-4);
-    align-items: center;
-    padding: var(--ag-space-3) var(--ag-space-4);
-}
-
-.ag-lotes__head {
-    background-color: var(--ag-color-bg-table-head);
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-xs);
-    font-weight: var(--ag-font-weight-medium);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.ag-lotes__fila {
-    border-top: 1px solid var(--ag-color-border-row);
-    color: var(--ag-color-text);
-    font-size: var(--ag-font-size-sm);
-}
-
-.ag-lotes__fila:hover {
-    background-color: var(--ag-color-bg-row-hover);
+/* Envuelve las secciones "Datos del lote" + "Mapa" (16/9/2026, dos
+   secciones separadas que antes eran una sola) — mismo gap que el resto,
+   para que no queden pegadas por vivir un nivel más adentro que el `main`
+   de `molecules/form-layout`. */
+.ag-lotes-form__ficha {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
 }
 
 .ag-lotes__codigo {
@@ -67,40 +46,25 @@
     font-family: var(--ag-font-family-mono);
 }
 
-.ag-lotes__hectareas {
-    font-family: var(--ag-font-family-mono);
-}
-
-.ag-lotes__acciones {
+.ag-lotes__propiedad {
     display: flex;
-    justify-content: flex-end;
+    align-items: center;
     gap: var(--ag-space-2);
 }
 
-.ag-lotes__paginacion {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--ag-space-4);
+/* Color heredado de la propiedad (adenda 16/9/2026 a ADR 0018 punto 1):
+   mismo chip que `.ag-propiedades__color` — dato de negocio (HEX de la
+   paleta curada elegido en la propiedad), no token de theming, ver el
+   comentario completo en resources/css/pages/propiedades.css. */
+.ag-lotes__color {
+    display: inline-block;
+    width: var(--ag-space-3);
+    height: var(--ag-space-3);
+    border-radius: var(--ag-radius-full, 50%);
+    border: 1px solid var(--ag-color-border-card);
+    flex-shrink: 0;
 }
 
-.ag-lotes__paginacion-info {
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-sm);
-}
-
-@media (max-width: 992px) {
-    .ag-lotes__head {
-        display: none;
-    }
-
-    .ag-lotes__fila {
-        grid-template-columns: 1fr;
-        gap: var(--ag-space-1);
-    }
-
-    .ag-lotes__acciones {
-        justify-content: flex-start;
-        margin-top: var(--ag-space-2);
-    }
+.ag-lotes__hectareas {
+    font-family: var(--ag-font-family-mono);
 }

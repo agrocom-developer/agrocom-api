@@ -28,4 +28,17 @@ interface LecturaLotes
      * borrado (soft delete).
      */
     public function obtenerPorId(int $id): ?LoteCatalogo;
+
+    /**
+     * Estado del terreno de varios lotes a la vez: `limpio`, un grado de
+     * obstáculos (`pocos_obstaculos`, `algunos_obstaculos`,
+     * `muchos_obstaculos`) o `null` si el lote no lo tiene cargado. Lo usa el
+     * alta de Orden de Trabajo de `Operaciones` para repartir las hectáreas
+     * entre los equipos según la dificultad de cada lote. Un id que no existe
+     * o está borrado no aparece en el resultado.
+     *
+     * @param  list<int>  $ids
+     * @return array<int, string|null> id del lote → limpieza
+     */
+    public function limpiezaPorIds(array $ids): array;
 }

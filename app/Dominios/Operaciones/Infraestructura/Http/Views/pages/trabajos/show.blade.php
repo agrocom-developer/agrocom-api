@@ -1,18 +1,25 @@
 {{--
-    Page: trabajos/show (GET /panel/trabajos/{trabajo}, panel.trabajos.show)
-    Detalle de un trabajo (HU-15, tarea 15): sus datos, sus sesiones (piloto,
-    hectáreas, estado, motivo de cierre, y el motivo del rechazo cuando una
-    sesión fue anulada por HU-14) y una sección de evidencias que hoy está
-    siempre vacía — TE-07/HU-08/HU-09 (compresión, fotos, captura del RC)
-    son sprint 3 y no están implementadas. No se inventan datos ni tablas
-    de evidencias para llenarla: la ausencia se muestra con normalidad.
+    Page: trabajos/show (GET /panel/trabajos/detalle/{trabajo}, panel.trabajos.detalle)
+    Detalle de un trabajo (HU-15, tarea 15; ruta renombrada en la reforma
+    18/9/2026 — "Orden de Trabajo", ver docblock de `TrabajosController`):
+    sus datos, sus sesiones (piloto, hectáreas, estado, motivo de cierre, y
+    el motivo del rechazo cuando una sesión fue anulada por HU-14) y una
+    sección de evidencias que hoy está siempre vacía — TE-07/HU-08/HU-09
+    (compresión, fotos, captura del RC) son sprint 3 y no están
+    implementadas. No se inventan datos ni tablas de evidencias para
+    llenarla: la ausencia se muestra con normalidad.
 
     Datos esperados (ver TrabajosController::show()): la cáscara de
     CascaraPanel, más:
-    - $trabajo (Trabajo, con `sesiones.rechazo` precargada).
+    - $trabajo (Trabajo, con `sesiones.rechazo`, `acta`, `reporteTecnico` y
+      `ordenTrabajo` precargadas).
 
-    Solo lectura: sin acciones de validar/rechazar/cerrar (eso es la cola de
-    HU-14, pantalla distinta — panel.sesiones.validacion.*).
+    Sin acciones de validar/rechazar/cerrar (eso es la cola de HU-14,
+    pantalla distinta — panel.sesiones.validacion.*). SÍ tiene editar/eliminar
+    (HU-93) mientras el trabajo no esté `validado` — mismas guardas que
+    `Aplicacion/ActualizarTrabajo`/`EliminarTrabajo`, acá solo ocultas tras
+    `@puede` + el estado de tablero (defensa en superficie: la guarda real
+    vive en el caso de uso, no acá).
 
     Gateada por el permiso `operaciones.trabajo.ver`, verificado
     server-side en el controlador.
@@ -33,11 +40,35 @@
         :menu-badges="$menuBadges"
         :version="$version"
     >
-        <x-atoms.button href="{{ route('panel.trabajos.index') }}" variant="text" size="sm" icon="arrow_back">
+        <x-atoms.button :href="route('panel.trabajos.index')" variant="text" size="sm" icon="arrow_back">
             {{ __('operaciones.trabajos.volver') }}
         </x-atoms.button>
 
-        <x-organisms.page-header :title="__('operaciones.trabajos.detalle_titulo', ['id' => $trabajo->id])" />
+        <x-organisms.page-header :title="__('operaciones.trabajos.detalle_titulo', ['id' => $trabajo->id])">
+            @if ($estadoTablero->value !== 'validado')
+                <x-slot:actions>
+                    @puede('operaciones.trabajo.editar')
+                        <x-atoms.button :href="route('panel.trabajos.detalle-editar', $trabajo)" variant="warning-outline" size="sm" icon="edit">
+                            {{ __('operaciones.trabajos.editar') }}
+                        </x-atoms.button>
+                    @endpuede
+
+                    @puede('operaciones.trabajo.eliminar')
+                        <form
+                            method="POST"
+                            action="{{ route('panel.trabajos.detalle-eliminar', $trabajo) }}"
+                            onsubmit="return confirm('{{ __('operaciones.trabajos.confirmar_baja') }}')"
+                        >
+                            @csrf
+                            @method('DELETE')
+                            <x-atoms.button type="submit" variant="danger-outline" size="sm" icon="delete">
+                                {{ __('operaciones.trabajos.eliminar_accion') }}
+                            </x-atoms.button>
+                        </form>
+                    @endpuede
+                </x-slot:actions>
+            @endif
+        </x-organisms.page-header>
 
         <div class="ag-trabajo-detalle__resumen">
             <span class="ag-trabajo-detalle__campo">
@@ -147,7 +178,7 @@
             </div>
 
             @if ($trabajo->acta->pdf_path !== null)
-                <x-atoms.button href="{{ route('panel.trabajos.acta-pdf', $trabajo) }}" variant="outline" size="sm" icon="picture_as_pdf">
+                <x-atoms.button :href="route('panel.trabajos.acta-pdf', $trabajo)" variant="outline" size="sm" icon="picture_as_pdf">
                     {{ __('operaciones.trabajos.acta_descargar_pdf') }}
                 </x-atoms.button>
             @endif
@@ -161,7 +192,7 @@
                     {{ __('operaciones.trabajos.detalle_reporte_vacio') }}
                 </x-molecules.alert-strip>
             @else
-                <x-atoms.button href="{{ route('panel.trabajos.reporte-pdf', $trabajo) }}" variant="outline" size="sm" icon="picture_as_pdf">
+                <x-atoms.button :href="route('panel.trabajos.reporte-pdf', $trabajo)" variant="outline" size="sm" icon="picture_as_pdf">
                     {{ __('operaciones.trabajos.reporte_descargar_pdf') }}
                 </x-atoms.button>
             @endif
@@ -173,7 +204,7 @@
             {{ __('operaciones.trabajos.detalle_evidencias_vacio') }}
         </x-molecules.alert-strip>
 
-        <x-atoms.button href="{{ route('panel.trabajos.evidencias', $trabajo) }}" variant="outline" size="sm" icon="photo_library">
+        <x-atoms.button :href="route('panel.trabajos.evidencias', $trabajo)" variant="outline" size="sm" icon="photo_library">
             {{ __('operaciones.trabajos.evidencias_ver_galeria') }}
         </x-atoms.button>
     </x-templates.panel-layout>

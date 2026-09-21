@@ -37,9 +37,9 @@
         <div class="ag-table__row" role="row">
             <span class="ag-table__mono" role="cell">{{ \Illuminate\Support\Carbon::parse($sesion['inicio'])->format('d/m H:i') }}</span>
             <span class="ag-table__strong" role="cell">
-                <a class="ag-dash__link" href="{{ route('panel.trabajos.show', $sesion['trabajoId']) }}">{{ $sesion['lote'] }}</a>
-                @if ($sesion['campo'])
-                    <span class="ag-table__sub">{{ $sesion['campo'] }}</span>
+                <a class="ag-dash__link" href="{{ route('panel.trabajos.detalle', $sesion['trabajoId']) }}">{{ $sesion['lote'] }}</a>
+                @if ($sesion['propiedad'])
+                    <span class="ag-table__sub">{{ $sesion['propiedad'] }}</span>
                 @endif
             </span>
             <span role="cell">{{ $sesion['piloto'] ?? '—' }}</span>

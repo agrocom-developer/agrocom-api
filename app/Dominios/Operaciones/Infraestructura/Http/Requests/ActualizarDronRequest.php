@@ -22,4 +22,12 @@ final class ActualizarDronRequest extends FormRequest
             'capacidad_kg' => ['nullable', 'numeric', 'min:0.01'],
         ];
     }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return [
+            'identificador.required' => __('operaciones.drones.error_identificador_requerido'),
+        ];
+    }
 }

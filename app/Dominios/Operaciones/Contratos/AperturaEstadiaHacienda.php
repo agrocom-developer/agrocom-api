@@ -5,7 +5,7 @@ namespace App\Dominios\Operaciones\Contratos;
 /**
  * DTO primitivo de entrada del contrato de escritura de `Operaciones` (ADR
  * 0003, regla 2; HU-51, tarea 74): la forma de un registro `estadia_entrada`
- * en el lote de `POST /api/sync`. `equipo_trabajo_id`, `campo_id` y
+ * en el lote de `POST /api/sync`. `equipo_trabajo_id`, `propiedad_id` y
  * `vehiculo_id` ya vienen resueltos a id de servidor (el cliente los trae del
  * pull de catálogo), mismo criterio que `AperturaTrabajo::$ordenId`/`$loteId`.
  *
@@ -15,17 +15,33 @@ namespace App\Dominios\Operaciones\Contratos;
  * rechazo no frena el resto del lote.
  *
  * Sin `campania_id` (ver docblock de la migración de `ope_estadias_hacienda`):
- * la estadía es del campo, no de una campaña.
+ * la estadía es de la propiedad, no de una campaña.
+ *
+ * `propiedad_id` (ADR 0020): contrato externo con `agrocom-field`, renombrado
+ * de `campo_id` en conjunto con esa app (rama `feature/sync-propiedad`) — sin
+ * APK distribuido todavía, sin ventana de compatibilidad que cuidar.
+ *
+ * `tipo_alojamiento` (19/9/2026, ver el docblock de
+ * `Infraestructura/Eloquent/EstadiaHacienda`): OPCIONAL — una app de campo
+ * vieja, sin este campo en su payload, sigue sincronizando igual (`null`
+ * cuando está ausente). Si SÍ viene, se valida contra el catálogo cerrado
+ * (`Dominio\TipoAlojamiento`): un valor desconocido rechaza el registro
+ * completo, mismo criterio que `CierreSesion::$motivoCierre` contra su
+ * catálogo — nunca se persiste un dato mal formado.
  */
 final readonly class AperturaEstadiaHacienda
 {
+    /** Catálogo cerrado — ver `Dominio\TipoAlojamiento`. */
+    private const array TIPOS_ALOJAMIENTO = ['hacienda', 'pueblo', 'camping'];
+
     private function __construct(
         public string $uuidCliente,
         public int $equipoTrabajoId,
-        public int $campoId,
+        public int $propiedadId,
         public string $entrada,
         public ?int $vehiculoId,
         public ?string $observacion,
+        public ?string $tipoAlojamiento,
     ) {}
 
     /** @param  array<string, mixed>  $datos */
@@ -33,10 +49,11 @@ final readonly class AperturaEstadiaHacienda
     {
         if (! self::esStringNoVacio($datos['uuid_cliente'] ?? null)
             || ! self::esEntero($datos['equipo_trabajo_id'] ?? null)
-            || ! self::esEntero($datos['campo_id'] ?? null)
+            || ! self::esEntero($datos['propiedad_id'] ?? null)
             || ! self::esStringNoVacio($datos['entrada'] ?? null)
             || ! self::esEnteroOAusente($datos['vehiculo_id'] ?? null)
             || ! self::esStringOAusente($datos['observacion'] ?? null)
+            || ! self::esTipoAlojamientoOAusente($datos['tipo_alojamiento'] ?? null)
         ) {
             return null;
         }
@@ -44,16 +61,22 @@ final readonly class AperturaEstadiaHacienda
         return new self(
             uuidCliente: (string) $datos['uuid_cliente'],
             equipoTrabajoId: (int) $datos['equipo_trabajo_id'],
-            campoId: (int) $datos['campo_id'],
+            propiedadId: (int) $datos['propiedad_id'],
             entrada: (string) $datos['entrada'],
             vehiculoId: isset($datos['vehiculo_id']) ? (int) $datos['vehiculo_id'] : null,
             observacion: isset($datos['observacion']) ? (string) $datos['observacion'] : null,
+            tipoAlojamiento: isset($datos['tipo_alojamiento']) ? (string) $datos['tipo_alojamiento'] : null,
         );
     }
 
     private static function esStringNoVacio(mixed $valor): bool
     {
         return is_string($valor) && $valor !== '';
+    }
+
+    private static function esTipoAlojamientoOAusente(mixed $valor): bool
+    {
+        return $valor === null || (is_string($valor) && in_array($valor, self::TIPOS_ALOJAMIENTO, true));
     }
 
     private static function esStringOAusente(mixed $valor): bool

@@ -13,9 +13,9 @@
         <span class="ag-dash__rc-detalle">{{ $alerta->mensaje }}</span>
         <x-slot:action>
             <x-atoms.button
-                variant="{{ $alerta->pendiente ? 'danger-outline' : 'outline' }}"
+                :variant="$alerta->pendiente ? 'danger-outline' : 'outline'"
                 size="sm"
-                href="{{ route('panel.alertas.index') }}"
+                :href="route('panel.alertas.index')"
             >{{ __('seguridad.dashboard.alertas_ver') }}</x-atoms.button>
         </x-slot:action>
     </x-molecules.alert-strip>

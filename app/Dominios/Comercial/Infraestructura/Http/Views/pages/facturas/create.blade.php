@@ -1,26 +1,14 @@
 {{--
     Page: facturas/create (GET /panel/facturas/crear, panel.facturas.create)
-    Emisión de una factura (HU-31, tarea 45) — arquetipo Formulario, §6.3 de
-    docs/diseno/guia_pantalla_panel.md. Un solo campo: el acta a facturar. El
-    monto no se pide ni se muestra acá — lo calcula el servidor al confirmar
-    (hectáreas conformadas del acta × precio/ha del contrato).
+    Emisión de una factura (HU-31, tarea 45): el formulario real vive en
+    `_formulario.blade.php`.
 
     Datos esperados (ver FacturasController::create()): la cáscara de
-    CascaraPanel, más:
-    - $actasDisponibles (list<array{actaId: int, contratoId: int,
-      hectareasConformadas: string, clienteNombre: string}>): actas firmadas
-      sin factura, ya resueltas por `Aplicacion/ListarActasFacturables`.
+    CascaraPanel, más $actasDisponibles (ver el partial).
 
-    Tras un error de validación (incluido el rechazo por `ActaNoFacturable`,
-    capturado en FacturasController::store()), `old()` pisa el valor vacío.
-
-    Estilos en resources/css/pages/facturas.css — cero color hardcodeado
-    (CLAUDE.md invariante 11).
+    Gateada por `comercial.factura.crear`, verificado server-side en el
+    controlador.
 --}}
-@php
-    $actaId = old('acta_id', '');
-@endphp
-
 <x-templates.panel-shell :title="__('comercial.facturas.titulo_crear')" :tema="$tema">
     <x-templates.panel-layout
         :menu="$menu"
@@ -34,61 +22,6 @@
         :version="$version"
         :vista-actual="__('comercial.facturas.titulo_crear')"
     >
-        <div class="ag-facturas-form-page">
-            @if (count($actasDisponibles) === 0)
-                <x-molecules.alert-strip variant="info" icon="receipt_long" class="ag-facturas-form-page__aviso">
-                    {{ __('comercial.facturas.sin_actas_disponibles') }}
-                </x-molecules.alert-strip>
-            @else
-                <form method="POST" action="{{ route('panel.facturas.store') }}" class="ag-facturas-form" novalidate>
-                    @csrf
-
-                    <x-organisms.page-header
-                        :title="__('comercial.facturas.titulo_crear')"
-                        :subtitle="__('comercial.facturas.subtitulo_form')"
-                    >
-                        <x-slot:actions>
-                            <x-atoms.button href="{{ route('panel.facturas.index') }}" variant="outline" icon="arrow_back">
-                                {{ __('comercial.facturas.volver') }}
-                            </x-atoms.button>
-                        </x-slot:actions>
-                    </x-organisms.page-header>
-
-                    <x-molecules.form-section
-                        :title="__('comercial.facturas.seccion_datos')"
-                        :count="__('comercial.facturas.campos_contador', ['cantidad' => 1])"
-                    >
-                        <div class="ag-form-section__field--full">
-                            @php
-                                $actasOptions = collect($actasDisponibles)->mapWithKeys(fn ($acta) => [
-                                    $acta['actaId'] => __('comercial.facturas.campo_acta_opcion', ['cliente' => $acta['clienteNombre'], 'id' => $acta['actaId'], 'hectareas' => number_format((float) $acta['hectareasConformadas'], 2, ',', '.')])
-                                ]);
-                            @endphp
-                            <x-atoms.select
-                                name="acta_id"
-                                id="acta_id"
-                                label="{{ __('comercial.facturas.campo_acta') }}"
-                                :options="$actasOptions"
-                                :value="$actaId"
-                                placeholder="{{ __('comercial.facturas.campo_acta_placeholder') }}"
-                                required
-                                error="{{ $errors->first('acta_id') }}"
-                            />
-                        </div>
-                    </x-molecules.form-section>
-
-                    <x-organisms.form-actions-bar :status="__('comercial.facturas.estado_form')">
-                        <x-slot:actions>
-                            <x-atoms.button href="{{ route('panel.facturas.index') }}" variant="outline">
-                                {{ __('ui.action.cancel') }}
-                            </x-atoms.button>
-                            <x-atoms.button type="submit" variant="primary">
-                                {{ __('ui.action.save') }}
-                            </x-atoms.button>
-                        </x-slot:actions>
-                    </x-organisms.form-actions-bar>
-                </form>
-            @endif
-        </div>
+        @include('comercial::pages.facturas._formulario')
     </x-templates.panel-layout>
 </x-templates.panel-shell>

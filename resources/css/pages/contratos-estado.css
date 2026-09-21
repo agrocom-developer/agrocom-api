@@ -1,0 +1,84 @@
+
+/*
+ * Avisos del estado de un contrato (ficha de edición y listado): el detalle que
+ * acompaña a un modal de confirmación o informativo (`_cambio-estado`,
+ * `_modal-aplicacion-abierta`) y el aviso de un contrato «En conflicto»
+ * (`_formulario`). Cero color hardcodeado, todo por token (CLAUDE.md
+ * invariante 11).
+ */
+
+.ag-contratos-estado__nota {
+    margin: 0;
+    font-size: var(--ag-font-size-sm);
+    line-height: 1.45;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-contratos-estado__aviso {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-3);
+    width: 100%;
+}
+
+.ag-contratos-estado__lista {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-2);
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ag-contratos-estado__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-2) var(--ag-space-3);
+    background-color: var(--ag-color-bg-elevated);
+    border: 1px solid var(--ag-color-border);
+    border-radius: var(--ag-radius-md);
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text);
+}
+
+.ag-contratos-estado__enlace {
+    flex-shrink: 0;
+    font-weight: var(--ag-font-weight-medium);
+    color: var(--ag-color-primary-emphasis);
+    text-decoration: none;
+}
+
+.ag-contratos-estado__enlace:hover,
+.ag-contratos-estado__enlace:focus-visible {
+    text-decoration: underline;
+}
+
+/* Aviso de contrato en conflicto: el título, el detalle y la lista de los
+   contratos con los que choca van apilados, y las dos decisiones (revisar los
+   lotes o cancelar) quedan juntas a la derecha. */
+.ag-contratos-estado__conflicto {
+    align-items: flex-start;
+}
+
+.ag-contratos-estado__conflicto .ag-alert-strip__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-2);
+}
+
+.ag-contratos-estado__conflicto .ag-alert-strip__action {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ag-space-2);
+}
+
+.ag-contratos-estado__conflicto-titulo {
+    margin: 0;
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-color-text);
+}
+
+/* La ficha «estado actual → estado destino» es `molecules/state-transition`. */

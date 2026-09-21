@@ -6,32 +6,14 @@
  * Inicialización guardada por DOMContentLoaded — no se ejecuta si no está presente.
  */
 
-// Pedido directo del usuario (28/8/2026): el popover de notificaciones/menú de
-// usuario quedaba invisible al abrirse — recortado por `overflow: hidden` de
-// `.ag-topbar` (evita que su propio contenido rompa el alto fijo de 62px) y de
-// `.ag-panel` (contiene el layout de tres niveles), ambos ancestros del
-// `.dropdown-menu`. Bootstrap posiciona el menú con Popper en `position:
-// absolute` respecto de esos ancestros por defecto — cualquiera de los dos
-// `overflow: hidden` lo recorta apenas se abre. La solución NO es quitar esos
-// `overflow: hidden` (existen por un motivo real, contener el layout fijo) sino
-// pre-instanciar el Dropdown con `popperConfig: { strategy: 'fixed' }`: pasa a
-// posicionarse respecto del viewport, fuera de cualquier contexto de recorte.
-// Se pre-instancia ANTES de que la data-api de Bootstrap cree su propia
-// instancia por defecto al primer click — `Dropdown.getOrCreateInstance()`
-// (que usa la data-api internamente) encuentra esta instancia ya configurada.
+// La pre-instanciación de dropdowns con `strategy: 'fixed'` (necesaria para
+// que no se recorten contra el `overflow` de `.ag-topbar`/`.ag-panel`, ver
+// el pedido directo del usuario del 28/8/2026) vive desde el 15/9/2026 en
+// resources/js/app.js — dejó de ser exclusiva del header cuando
+// organisms/filter-panel y organisms/row-actions sumaron sus propios
+// dropdowns, así que un solo `DOMContentLoaded` cubre a todos en vez de que
+// cada organism repita su propio `querySelectorAll('[data-bs-toggle="dropdown"]')`.
 document.addEventListener('DOMContentLoaded', function () {
-    // `.ag-mobile-topbar` sumado el 11/9/2026: sus dos dropdowns
-    // (notificaciones/usuario, `molecules/notifications-menu` y
-    // `molecules/user-menu`) sufren el mismo recorte que los de escritorio
-    // — están en el DOM a la vez, uno por breakpoint, así que ambos
-    // contenedores necesitan la misma pre-instanciación.
-    document.querySelectorAll('.ag-topbar [data-bs-toggle="dropdown"], .ag-mobile-topbar [data-bs-toggle="dropdown"]').forEach((el) => {
-        // window.bootstrap: ver comentario en app.js ("Bootstrap components
-        // are now available globally via window") — mismo criterio que el
-        // resto del proyecto para no re-importar el paquete por archivo.
-        new window.bootstrap.Dropdown(el, { popperConfig: { strategy: 'fixed' } });
-    });
-
     // `querySelectorAll`, no `querySelector` (fix 11/9/2026): topbar y
     // mobile-topbar están los dos en el DOM a la vez, cada uno con su
     // propio botón de logout — con `querySelector` (uno solo) el de mobile
@@ -39,8 +21,8 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('[data-ag-logout]').forEach((logoutButton) => {
         // Defaults preservan el comportamiento histórico del panel interno; el
         // portal del cliente (HU-41, tarea 55) reusa este mismo botón/script con
-        // `data-ag-logout-url="/portal/logout"` y `data-ag-logout-redirect="/portal/login"`
-        // (guard `cliente`, sin selector de rol al volver a loguearse).
+        // `data-ag-logout-url="/portal/logout"` (guard `cliente`). Los dos vuelven
+        // al mismo `/login`: hay una sola URL de ingreso para todos (16/9/2026).
         const logoutUrl = logoutButton.dataset.agLogoutUrl || '/logout';
         const redirectUrl = logoutButton.dataset.agLogoutRedirect || '/login';
 

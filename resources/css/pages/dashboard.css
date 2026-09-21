@@ -17,49 +17,12 @@
     gap: var(--ag-space-4);
 }
 
-.ag-dash__header {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: var(--ag-space-4);
-    flex-wrap: wrap;
-}
-
-.ag-dash__heading {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-1);
-}
-
-/* Misma receta que `organisms/page-header` — el h1 de una pantalla se ve
-   igual en todo el panel (tokens `--ag-title-page-*`). */
-.ag-dash__title {
-    margin: 0;
-    font-family: var(--ag-font-family-display);
-    font-optical-sizing: auto;
-    font-weight: var(--ag-title-page-weight);
-    font-size: var(--ag-title-page-size);
-    line-height: var(--ag-title-page-line-height);
-    color: var(--ag-color-text);
-}
-
-.ag-dash__subtitle {
-    margin: 0;
-    font-size: 0.84375rem;
-    color: var(--ag-color-text-muted);
-}
-
 /* Auditoría visual externa, obs. #3: la ventana volable dejó de ser un
    segundo alert-strip de igual peso que el aviso de RC — ahora es una tira
    compacta junto al subtítulo, mismo tono warning sin la anatomía completa
-   de franja/banner. */
-.ag-dash__subtitle-row {
-    display: flex;
-    align-items: center;
-    gap: var(--ag-space-3);
-    flex-wrap: wrap;
-}
-
+   de franja/banner. Vive dentro del slot `chip` de organisms/page-header
+   (ver pages/dashboard/_encabezado.blade.php) — el título/subtítulo en sí
+   ya son ese componente compartido, sin CSS propio acá. */
 .ag-dash__ventana-chip {
     display: inline-flex;
     align-items: center;
@@ -315,17 +278,6 @@
 .ag-dash__mi-actividad {
     padding-top: var(--ag-space-4);
     border-top: 1px solid var(--ag-color-border);
-}
-
-/* Estado vacío del tablero completo: el rol entró pero no tiene secciones. */
-.ag-dash__vacio {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--ag-space-2);
-    padding: var(--ag-space-6) var(--ag-space-4);
-    text-align: center;
-    color: var(--ag-color-text-muted);
 }
 
 .ag-table-scroll {
@@ -671,20 +623,11 @@
     .ag-session-list {
         display: block;
     }
-
-    .ag-dash__title {
-        font-size: 1.75rem;
-    }
 }
 
 /* ---------- Móvil (maqueta 5b) ---------- */
 
 @media (max-width: 767.98px) {
-    /* El título vive en la banda de breadcrumb; las acciones desaparecen. */
-    .ag-dash__header {
-        display: none;
-    }
-
     .ag-dash__cards-grid {
         grid-template-columns: 1fr;
     }

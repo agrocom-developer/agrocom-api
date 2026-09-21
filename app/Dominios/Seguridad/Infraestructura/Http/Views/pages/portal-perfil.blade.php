@@ -3,8 +3,7 @@
     Tarea 66: mismo formulario que `pages/perfil/index.blade.php`, para el
     guard `cliente` — sobre `portal-layout` (sin menú de módulos: una cuenta
     de portal no tiene `sec_user_role`). Vive en Seguridad (no en Portal):
-    toca `sec_user`, la tabla del módulo dueño (mismo criterio que
-    `portal-login.blade.php`).
+    toca `sec_user`, la tabla del módulo dueño.
 
     Datos esperados (ver PerfilPortalController::edit()): $userName, $tema
     (AutorizacionPortalCliente::cascara()) más $usuario (SecUser).
@@ -41,18 +40,18 @@
                 <x-atoms.input
                     type="text"
                     name="name"
-                    label="{{ __('seguridad.perfil.campo_name') }}"
-                    value="{{ $name }}"
+                    :label="__('seguridad.perfil.campo_name')"
+                    :value="$name"
                     required
-                    error="{{ $errors->first('name') }}"
+                    :error="$errors->first('name')"
                 />
 
                 <x-atoms.input
                     type="email"
                     name="email"
-                    label="{{ __('seguridad.perfil.campo_email') }}"
-                    value="{{ $email }}"
-                    error="{{ $errors->first('email') }}"
+                    :label="__('seguridad.perfil.campo_email')"
+                    :value="$email"
+                    :error="$errors->first('email')"
                 />
             </x-molecules.form-section>
 
@@ -62,22 +61,22 @@
                 <x-atoms.input
                     type="password"
                     name="password_actual"
-                    label="{{ __('seguridad.perfil.campo_password_actual') }}"
-                    error="{{ $errors->first('password_actual') }}"
+                    :label="__('seguridad.perfil.campo_password_actual')"
+                    :error="$errors->first('password_actual')"
                 />
 
                 <x-atoms.input
                     type="password"
                     name="password"
-                    label="{{ __('seguridad.perfil.campo_password_nueva') }}"
-                    help="{{ __('seguridad.perfil.campo_password_nueva_ayuda') }}"
-                    error="{{ $errors->first('password') }}"
+                    :label="__('seguridad.perfil.campo_password_nueva')"
+                    :help="__('seguridad.perfil.campo_password_nueva_ayuda')"
+                    :error="$errors->first('password')"
                 />
 
                 <x-atoms.input
                     type="password"
                     name="password_confirmation"
-                    label="{{ __('seguridad.perfil.campo_password_confirmacion') }}"
+                    :label="__('seguridad.perfil.campo_password_confirmacion')"
                 />
             </x-molecules.form-section>
 

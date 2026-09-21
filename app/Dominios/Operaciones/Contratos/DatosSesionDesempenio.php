@@ -5,7 +5,7 @@ namespace App\Dominios\Operaciones\Contratos;
 /**
  * Una sesión VIGENTE de la persona consultada (tarea 81, HU-58), con cliente
  * y campaña ya resueltos vía `Trabajo → OrdenAplicacion → LecturaContrato`
- * (ADR 0015 punto 1) y lote/campo vía `Comercial\Contratos\LecturaPanelComercial`
+ * (ADR 0015 punto 1) y lote/propiedad vía `Comercial\Contratos\LecturaPanelComercial`
  * — ninguno de los dos cruces lo hace el consumidor (`Personal`).
  *
  * `rol`: `'piloto'` o `'auxiliar'`, según cuál columna de `ope_sesiones`
@@ -26,7 +26,7 @@ final readonly class DatosSesionDesempenio
         public int $trabajoId,
         public int $loteId,
         public string $loteCodigo,
-        public string $campoNombre,
+        public string $propiedadNombre,
         public int $clienteId,
         public string $clienteNombre,
         public ?int $campaniaId,

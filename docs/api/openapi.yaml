@@ -310,7 +310,9 @@ paths:
             enum:
               - emitida
               - vigente
+              - pausada
               - consumida
+              - cancelada
               - vencida
         -
           name: lote_id
@@ -888,12 +890,12 @@ components:
           type: integer
           example: 1
         lotes:
-          description: 'Lotes que cubre la orden (módulo Comercial, solo ID) con las hectáreas solicitadas a cada uno.'
+          description: 'Lotes que cubre la orden (módulo Comercial, solo ID) con las hectáreas solicitadas a cada uno. Desde ADR 0022 es la copia automática, tomada al emitir la orden, de TODOS los lotes del contrato.'
           type: array
           items:
             $ref: '#/components/schemas/LoteDeOrdenCatalogo'
         nro_aplicacion:
-          description: 'Número de aplicación dentro del contrato (1..n).'
+          description: 'Número de aplicación dentro del contrato (1..n): correlativo, lo calcula el servidor (ADR 0022).'
           type: integer
           example: 1
         litros_ha:
@@ -962,12 +964,14 @@ components:
           format: date
           example: '2026-08-26'
         estado:
-          description: 'Estado de la orden (espec §5: emitida → vigente → consumida | vencida).'
+          description: 'Estado de la orden (espec §5, ADR 0022: emitida → vigente; vigente → pausada | consumida | cancelada; pausada → vigente | cancelada; consumida, cancelada y vencida sin salida). La app de campo nunca pausa, cierra ni cancela una orden: son transiciones exclusivas del panel.'
           type: string
           enum:
             - emitida
             - vigente
+            - pausada
             - consumida
+            - cancelada
             - vencida
         created_at:
           type: string
@@ -1068,7 +1072,7 @@ components:
       type: object
     LoteDeOrdenCatalogo:
       title: 'Lote de una orden (catálogo)'
-      description: 'Uno de los lotes que cubre una orden, con las hectáreas que le pidió a ESE lote (HU-92, tarea 107 — una orden puede cubrir varios lotes de la propiedad). DECIMAL como string (invariante 6).'
+      description: 'Uno de los lotes que cubre una orden, con las hectáreas que le pidió a ESE lote (HU-92, tarea 107 — una orden puede cubrir varios lotes de la propiedad). Desde ADR 0022 (19/9/2026) la lista `lotes` de una orden es la copia automática, tomada al emitirla, de TODOS los lotes del contrato, y `hectareas_solicitadas` son las hectáreas completas de cada lote; ya no se eligen lotes ni hectáreas por orden. DECIMAL como string (invariante 6).'
       required:
         - lote_id
         - hectareas_solicitadas
@@ -1084,7 +1088,7 @@ components:
       type: object
     OrdenCatalogo:
       title: 'Orden de aplicación (catálogo)'
-      description: 'Orden vigente para el pull de catálogo (espec §4.3, ampliada HU-92 tarea 107: `lotes` reemplaza el `lote_id` único de antes; HU-79 tarea 110: `litros_ha`/`kilos_por_vuelo` son mutuamente excluyentes según la categoría de insumo). Los DECIMAL viajan como string (invariante 6).'
+      description: 'Orden vigente para el pull de catálogo (espec §4.3, ampliada HU-92 tarea 107: `lotes` reemplaza el `lote_id` único de antes, y desde ADR 0022 es la copia automática de todos los lotes del contrato; HU-79 tarea 110: `litros_ha`/`kilos_por_vuelo` son mutuamente excluyentes según la categoría de insumo). Solo se entregan órdenes `vigente`: la app no se entera de una orden pausada, cancelada o cerrada (pendiente conocido, ADR 0022). Los DECIMAL viajan como string (invariante 6).'
       required:
         - id
         - contrato_id
@@ -1183,10 +1187,10 @@ components:
       type: object
     LoteCatalogo:
       title: 'Lote (catálogo)'
-      description: 'Lote vigente (no borrado) para el pull de catálogo (espec §4.1). `hectareas` es DECIMAL como string (invariante 6).'
+      description: 'Lote vigente (no borrado) para el pull de catálogo (espec §4.1; ADR 0020: cuelga directo de la propiedad, sin el nivel intermedio Campo). `hectareas` es DECIMAL como string (invariante 6).'
       required:
         - id
-        - campo_id
+        - propiedad_id
         - codigo
         - hectareas
         - geometria
@@ -1196,7 +1200,8 @@ components:
         id:
           type: integer
           example: 3
-        campo_id:
+        propiedad_id:
+          description: 'Id de servidor de la propiedad.'
           type: integer
           example: 1
         codigo:
@@ -1530,8 +1535,8 @@ components:
           type: integer
           example: null
           nullable: true
-        campo_id:
-          description: '`estadia_entrada`: id de servidor del campo (del pull de catálogo).'
+        propiedad_id:
+          description: '`estadia_entrada`: id de servidor de la propiedad (del pull de catálogo).'
           type: integer
           example: null
           nullable: true

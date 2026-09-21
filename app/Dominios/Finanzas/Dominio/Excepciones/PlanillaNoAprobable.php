@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Finanzas\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use App\Dominios\Finanzas\Dominio\EstadoPlanilla;
 use App\Dominios\Finanzas\Dominio\MaquinaEstados\TransicionesPlanilla;
 use DomainException;
@@ -18,7 +19,10 @@ final class PlanillaNoAprobable extends DomainException
     public static function porNoEstarEnBorrador(int $planillaId, EstadoPlanilla $estadoActual): self
     {
         return new self(
-            "La planilla #{$planillaId} no se puede aprobar: está en '{$estadoActual->value}', no en 'borrador'.",
+            Texto::de('finanzas.errores.planilla_no_aprobable', [
+                'planilla_id' => $planillaId,
+                'estado_actual' => $estadoActual->value,
+            ]),
         );
     }
 }

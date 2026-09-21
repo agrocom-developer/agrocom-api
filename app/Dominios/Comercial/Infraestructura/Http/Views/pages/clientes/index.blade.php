@@ -8,8 +8,17 @@
     CascaraPanel, más:
     - $clientes (LengthAwarePaginator<Cliente>, con `contactos_count`
       precargado): razón social ascendente.
-    - $filtros (array{q: string}): búsqueda aplicada, para dejar el campo
-      con el valor tras el submit.
+    - $tiposPersonaFiltro (list<TipoPersonaCliente>), $tiposContactoFiltro
+      (list<TipoContactoCliente>), $campaniasDisponibles (Collection<int,
+      string>, id => código): opciones de los tres <select> del filtro
+      (ronda de homogeneización del 17/9/2026 — mismo `organisms/filter-panel`
+      que ya usan Contratos/Propiedades/Lotes). `campania_id` es indirecto
+      (clientes con algún contrato en esa campaña, ver
+      `ListarClientes::ejecutar()`); `tipo_contacto` filtra por el tipo de al
+      menos un contacto del cliente.
+    - $filtros (array{q: string, tipo_persona: string|null, campania_id:
+      int|null, tipo_contacto: string|null}): filtros aplicados, para dejar
+      los campos con el valor tras el submit.
 
     Gateada por `comercial.cliente.ver`, verificado server-side en el
     controlador. Los botones "Nuevo cliente"/"Editar"/"Eliminar" se ocultan
@@ -39,7 +48,7 @@
             >
                 @puede('comercial.cliente.crear')
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.clientes.create') }}" variant="primary" icon="add">
+                        <x-atoms.button :href="route('panel.clientes.create')" variant="primary" icon="add">
                             {{ __('comercial.clientes.nuevo') }}
                         </x-atoms.button>
                     </x-slot:actions>
@@ -52,99 +61,136 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <form method="GET" action="{{ route('panel.clientes.index') }}" class="ag-filtros ag-clientes__filtros">
-                <div class="ag-input">
-                    <label for="filtro-q" class="ag-input__label">{{ __('comercial.clientes.filtro_busqueda') }}</label>
-                    <div class="ag-input__control">
-                        <input
-                            type="search"
-                            name="q"
-                            id="filtro-q"
-                            class="ag-input__field"
-                            value="{{ $filtros['q'] }}"
-                            placeholder="{{ __('comercial.clientes.filtro_busqueda_placeholder') }}"
-                        >
-                    </div>
-                </div>
+            @php
+                $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
+                $filtrosPanelActivos = collect(['tipo_persona', 'campania_id', 'tipo_contacto'])
+                    ->filter(fn ($campo) => $filtros[$campo] !== null && $filtros[$campo] !== '')
+                    ->count();
+            @endphp
 
-                <div class="ag-filtros__acciones ag-clientes__filtros-acciones">
-                    {{-- outline, no primary: "Nuevo cliente" ya es el único botón
-                         sólido del pliegue (§5 de la guía de pantalla). --}}
-                    <x-atoms.button type="submit" variant="outline" size="md" icon="search">
-                        {{ __('comercial.clientes.filtrar') }}
-                    </x-atoms.button>
+            @if ($hayFiltrosActivos || $clientes->isNotEmpty())
+                <div class="ag-table-toolbar">
+                    <x-organisms.filter-panel
+                        :action="route('panel.clientes.index')"
+                        :active-count="$filtrosPanelActivos"
+                    >
+                        <input type="hidden" name="q" value="{{ $filtros['q'] }}">
+                        <x-atoms.select
+                            name="tipo_persona"
+                            id="filtro-tipo-persona"
+                            :label="__('comercial.clientes.filtro_tipo_persona')"
+                            :options="collect($tiposPersonaFiltro)->mapWithKeys(fn ($tipo) => [$tipo->value => __('comercial.clientes.tipo_persona_opcion.'.$tipo->value)])"
+                            :value="$filtros['tipo_persona']"
+                            :placeholder="__('comercial.clientes.filtro_tipo_persona_placeholder')"
+                        />
 
-                    @if ($filtros['q'] !== '')
-                        <x-atoms.button href="{{ route('panel.clientes.index') }}" variant="text" size="md">
-                            {{ __('comercial.clientes.limpiar_filtro') }}
-                        </x-atoms.button>
-                    @endif
+                        <x-atoms.select
+                            name="campania_id"
+                            id="filtro-campania"
+                            :label="__('comercial.clientes.filtro_campania')"
+                            :options="$campaniasDisponibles"
+                            :value="$filtros['campania_id']"
+                            :placeholder="__('comercial.clientes.filtro_campania_placeholder')"
+                        />
+
+                        <x-atoms.select
+                            name="tipo_contacto"
+                            id="filtro-tipo-contacto"
+                            :label="__('comercial.clientes.filtro_tipo_contacto')"
+                            :options="collect($tiposContactoFiltro)->mapWithKeys(fn ($tipo) => [$tipo->value => __('comercial.clientes.contacto_tipo_opcion.'.$tipo->value)])"
+                            :value="$filtros['tipo_contacto']"
+                            :placeholder="__('comercial.clientes.filtro_tipo_contacto_placeholder')"
+                        />
+                    </x-organisms.filter-panel>
+
+                    <x-molecules.table-search
+                        :action="route('panel.clientes.index')"
+                        :value="$filtros['q']"
+                        :placeholder="__('comercial.clientes.filtro_busqueda_placeholder')"
+                        :clear-label="__('ui.tabla.buscador_limpiar')"
+                    />
                 </div>
-            </form>
+            @endif
 
             @if ($clientes->isEmpty())
-                <x-molecules.alert-strip variant="info" icon="contact_page" class="ag-clientes__aviso">
-                    {{ __($filtros['q'] !== '' ? 'comercial.clientes.filtro_vacio' : 'comercial.clientes.vacio') }}
-                </x-molecules.alert-strip>
+                @if ($hayFiltrosActivos)
+                    <x-molecules.empty-state
+                        icon="search_off"
+                        :title="__('comercial.clientes.filtro_vacio_titulo')"
+                        :detail="__('comercial.clientes.filtro_vacio_detalle')"
+                    />
+                @else
+                    <x-molecules.empty-state
+                        icon="contact_page"
+                        :title="__('comercial.clientes.vacio_titulo')"
+                        :detail="__('comercial.clientes.vacio_detalle')"
+                    />
+                @endif
             @else
-                <div class="ag-clientes__tabla" role="table">
-                    <div class="ag-clientes__head" role="row">
+                <x-molecules.index-table columns="3rem 2fr 1fr 1fr var(--ag-row-actions-width)">
+                    <x-slot:head>
+                        <span role="columnheader" class="ag-index-table__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('comercial.clientes.col_razon_social') }}</span>
                         <span role="columnheader">{{ __('comercial.clientes.col_nit') }}</span>
                         <span role="columnheader">{{ __('comercial.clientes.col_contactos') }}</span>
-                        <span role="columnheader" aria-hidden="true"></span>
-                    </div>
+                        <span role="columnheader" class="ag-index-table__acciones-head">{{ __('ui.tabla.col_acciones') }}</span>
+                    </x-slot:head>
 
                     @foreach ($clientes as $cliente)
-                        <div class="ag-clientes__fila" role="row">
+                        <div class="ag-index-table__row" role="row">
+                            <span role="cell" class="ag-index-table__indice">
+                                {{ ($clientes->currentPage() - 1) * $clientes->perPage() + $loop->iteration }}
+                            </span>
                             <span role="cell" class="ag-clientes__razon-social">{{ $cliente->razon_social }}</span>
                             <span role="cell" class="ag-clientes__nit">{{ $cliente->nit ?? __('comercial.clientes.sin_nit') }}</span>
                             <span role="cell">{{ __('comercial.clientes.contactos_cantidad', ['cantidad' => $cliente->contactos_count]) }}</span>
 
-                            <span role="cell" class="ag-clientes__acciones">
-                                @puede('comercial.cliente.editar')
-                                    <x-atoms.button href="{{ route('panel.clientes.edit', $cliente) }}" variant="warning-outline" size="sm" icon="edit">
-                                        {{ __('comercial.clientes.editar') }}
-                                    </x-atoms.button>
-                                @endpuede
-
+                            <span role="cell" class="ag-index-table__acciones">
+                                {{-- Form FUERA de row-actions a propósito: ese organism repite su
+                                     slot dos veces (visible/menú, ver su docblock) — un <form> con id
+                                     ahí adentro se duplicaría con el mismo id, HTML inválido. El botón
+                                     de confirm-button lo envía por su atributo `form`, sin importar
+                                     dónde viva en el documento. --}}
                                 @puede('comercial.cliente.eliminar')
                                     <form
+                                        id="cliente-eliminar-{{ $cliente->id }}"
                                         method="POST"
                                         action="{{ route('panel.clientes.destroy', $cliente) }}"
-                                        onsubmit="return confirm('{{ __('comercial.clientes.confirmar_baja') }}')"
                                     >
                                         @csrf
                                         @method('DELETE')
-                                        <x-atoms.button type="submit" variant="danger-outline" size="sm" icon="delete">
-                                            {{ __('comercial.clientes.eliminar_accion') }}
-                                        </x-atoms.button>
                                     </form>
                                 @endpuede
+
+                                <x-organisms.row-actions>
+                                    @puede('comercial.cliente.editar')
+                                        <x-atoms.button :href="route('panel.clientes.edit', $cliente)" variant="warning-outline" size="sm" icon="edit">
+                                            {{ __('comercial.clientes.editar') }}
+                                        </x-atoms.button>
+                                    @endpuede
+
+                                    @puede('comercial.cliente.eliminar')
+                                        <span class="ag-row-actions__item">
+                                            <x-molecules.confirm-button
+                                                :form-id="'cliente-eliminar-' . $cliente->id"
+                                                :title="__('comercial.clientes.confirmar_eliminar_titulo')"
+                                                :message="__('comercial.clientes.confirmar_baja')"
+                                                :confirm-label="__('comercial.clientes.eliminar_accion')"
+                                                variant="danger-outline"
+                                                size="sm"
+                                                icon="delete"
+                                            >
+                                                {{ __('comercial.clientes.eliminar_accion') }}
+                                            </x-molecules.confirm-button>
+                                        </span>
+                                    @endpuede
+                                </x-organisms.row-actions>
                             </span>
                         </div>
                     @endforeach
-                </div>
+                </x-molecules.index-table>
 
-                @if ($clientes->hasPages())
-                    <nav class="ag-clientes__paginacion" aria-label="{{ __('comercial.clientes.paginacion_aria') }}">
-                        @if (! $clientes->onFirstPage())
-                            <x-atoms.button href="{{ $clientes->previousPageUrl() }}" variant="outline" size="sm" icon="chevron_left">
-                                {{ __('comercial.clientes.paginacion_anterior') }}
-                            </x-atoms.button>
-                        @endif
-
-                        <span class="ag-clientes__paginacion-info">
-                            {{ __('comercial.clientes.paginacion_info', ['actual' => $clientes->currentPage(), 'total' => $clientes->lastPage()]) }}
-                        </span>
-
-                        @if ($clientes->hasMorePages())
-                            <x-atoms.button href="{{ $clientes->nextPageUrl() }}" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
-                                {{ __('comercial.clientes.paginacion_siguiente') }}
-                            </x-atoms.button>
-                        @endif
-                    </nav>
-                @endif
+                <x-molecules.pagination :paginator="$clientes" :aria-label="__('comercial.clientes.paginacion_aria')" />
             @endif
         </div>
     </x-templates.panel-layout>

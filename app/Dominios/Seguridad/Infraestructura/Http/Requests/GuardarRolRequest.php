@@ -58,8 +58,10 @@ final class GuardarRolRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'name.required' => __('seguridad.roles.error_nombre_requerido'),
             'name.regex' => __('seguridad.roles.error_nombre_formato'),
             'name.unique' => __('seguridad.roles.error_nombre_duplicado'),
+            'description.required' => __('seguridad.roles.error_descripcion_requerida'),
         ];
     }
 }

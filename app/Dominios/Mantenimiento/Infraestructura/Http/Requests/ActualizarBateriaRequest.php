@@ -42,7 +42,10 @@ final class ActualizarBateriaRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'base_id.exists' => 'La base seleccionada no es válida.',
+            'identificador.required' => __('mantenimiento.validacion.bateria_identificador_requerido'),
+            'ciclos_acumulados.required' => __('mantenimiento.validacion.ciclos_acumulados_requerido'),
+            'estado.required' => __('mantenimiento.validacion.bateria_estado_requerido'),
+            'base_id.exists' => __('mantenimiento.validacion.base_invalida'),
         ];
     }
 }

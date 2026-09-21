@@ -31,8 +31,11 @@ final class RegistrarVersionApkRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'version.regex' => 'La versión debe seguir el formato SemVer (por ejemplo: 1.4.2).',
-            'url_apk.url' => 'La URL debe ser una dirección https válida.',
+            'version.required' => __('distribucion.validacion.version_requerida'),
+            'version.regex' => __('distribucion.validacion.version_formato'),
+            'version_code.required' => __('distribucion.validacion.version_code_requerido'),
+            'url_apk.required' => __('distribucion.validacion.url_apk_requerida'),
+            'url_apk.url' => __('distribucion.validacion.url_apk_https'),
         ];
     }
 }

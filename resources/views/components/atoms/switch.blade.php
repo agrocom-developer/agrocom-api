@@ -14,28 +14,54 @@
     Props:
     - name (requerido).
     - id (nullable, default = name).
-    - label (nullable): texto ya traducido, a la derecha del control. Sin
-      label, quien lo use debe pasar `aria-label` vía atributos adicionales
-      (`$attributes` se reenvía al `<input>`).
+    - label (nullable): texto ya traducido, a la derecha del control —
+      pensado para una fila suelta tipo "Activo", o para una respuesta que
+      cambia con el estado ("Sí"/"No"), no para el nombre del campo cuando
+      el switch comparte fila de grid con un `atoms/input`/`atoms/select`
+      (ver `fieldLabel`). Sin ningún label, quien lo use debe pasar
+      `aria-label` vía atributos adicionales (`$attributes` se reenvía al
+      `<input>`).
+    - fieldLabel (nullable, 17/9/2026): rótulo del campo, en la misma
+      posición que `atoms/input__label` (arriba del control, no al lado) —
+      así el switch queda a la altura real del control de sus vecinos de
+      fila, no de su label. Antes de este prop cada pantalla lo resolvía
+      envolviendo el átomo en un `<div class="ag-input"><span
+      class="ag-input__label">` a mano (ver `lotes/_lote-terreno.blade.php`,
+      commit antes de este) — reaparecía la clase de un átomo ajeno por
+      fuera de su componente. `fieldLabel` y `label` no son excluyentes: se
+      puede tener el rótulo del campo arriba y una respuesta Sí/No al lado
+      del track.
     - checked (bool, default false): estado inicial.
     - disabled (bool, default false).
     - help (nullable): texto de ayuda debajo, mismo patrón que `atoms/input`.
+    - error (nullable, 17/9/2026): string ya traducido por el llamador (ADR
+      0013), mismo patrón que `atoms/checkbox` — sin esto, una falla de
+      validación sobre un switch (p. ej. la regla `boolean` contra un valor
+      que el llamador no haya normalizado) no tenía dónde mostrarse.
 --}}
 @props([
     'name',
     'id' => null,
     'label' => null,
+    'fieldLabel' => null,
     'checked' => false,
     'disabled' => false,
     'help' => null,
+    'error' => null,
 ])
 
 @php
     $inputId = $id ?? $name;
     $helpId = $help ? "{$inputId}-help" : null;
+    $errorId = $error ? "{$inputId}-error" : null;
+    $describedBy = trim(($helpId ?? '').' '.($errorId ?? ''));
 @endphp
 
 <div class="ag-switch">
+    @if ($fieldLabel)
+        <label for="{{ $inputId }}" class="ag-switch__field-label">{{ $fieldLabel }}</label>
+    @endif
+
     <label for="{{ $inputId }}" class="ag-switch__control">
         <input
             type="checkbox"
@@ -43,7 +69,7 @@
             id="{{ $inputId }}"
             @checked($checked)
             @disabled($disabled)
-            @if ($helpId) aria-describedby="{{ $helpId }}" @endif
+            @if ($describedBy !== '') aria-describedby="{{ $describedBy }}" @endif
             {{ $attributes->class(['ag-switch__input']) }}
         >
 
@@ -58,5 +84,9 @@
 
     @if ($help)
         <p id="{{ $helpId }}" class="ag-switch__help">{{ $help }}</p>
+    @endif
+
+    @if ($error)
+        <p id="{{ $errorId }}" class="ag-switch__error" role="alert">{{ $error }}</p>
     @endif
 </div>

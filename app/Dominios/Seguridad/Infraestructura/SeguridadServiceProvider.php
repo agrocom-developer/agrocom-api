@@ -6,6 +6,7 @@ use App\Dominios\Seguridad\Aplicacion\BuscarEnElPanel;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use App\Dominios\Seguridad\Contratos\AutorizacionPortalCliente;
 use App\Dominios\Seguridad\Contratos\IdentidadOperarioToken;
+use App\Dominios\Seguridad\Contratos\LecturaUsuarioDePersona;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecTokenDispositivo;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUsuarioInterno;
 use App\Dominios\Seguridad\Infraestructura\Http\AutorizacionPanelWebSesion;
@@ -62,6 +63,10 @@ final class SeguridadServiceProvider extends ServiceProvider
         // necesita saber qué persona de `Personal` firma el token sin
         // importar `SecUser`.
         $this->app->bind(IdentidadOperarioToken::class, IdentidadOperarioTokenSanctum::class);
+
+        // Misma frontera, para la ficha de una persona (tarea 112): `Personal`
+        // muestra la cuenta vinculada sin importar `SecUser`.
+        $this->app->bind(LecturaUsuarioDePersona::class, LecturaUsuarioDePersonaEloquent::class);
 
         // Buscador global: el agregador recibe TODOS los proveedores que cada
         // módulo taggeó, sin conocer ninguno (ADR 0003, regla 2 — acá el

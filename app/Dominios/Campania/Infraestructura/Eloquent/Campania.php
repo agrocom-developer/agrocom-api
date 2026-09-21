@@ -8,14 +8,14 @@ use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
 use Carbon\CarbonImmutable;
 
 /**
- * Campaña **del cliente** (ADR 0015 punto 1, corregido el 8/9/2026, tabla
- * `cpn_campanias`): el eje transversal del que cuelgan
- * `com_contratos.campania_id` y `fin_gastos.campania_id`. Las transiciones de
- * `estado` pasan por `Aplicacion/MaquinaEstados/MaquinaEstadosCampania`
- * (invariante 7 de CLAUDE.md).
- *
- * `cliente_id` es FK real + entero plano (ADR 0003 regla 3): sin `belongsTo`
- * hacia `Comercial\Infraestructura\Eloquent\Cliente`, que es de otro módulo.
+ * Campaña (ADR 0015, corregida el 15/9/2026, tabla `cpn_campanias`):
+ * catálogo COMPARTIDO — la temporada ("Verano 2026-2027"), no la de un
+ * cliente en particular. El vínculo con el cliente vive en
+ * `com_contratos.campania_id` + `com_contratos.cliente_id`, nunca acá.
+ * Es el eje transversal del que cuelgan `com_contratos.campania_id` y
+ * `fin_gastos.campania_id`. Las transiciones de `estado` pasan por
+ * `Aplicacion/MaquinaEstados/MaquinaEstadosCampania` (invariante 7 de
+ * CLAUDE.md) y afectan a TODOS los contratos que la usan a la vez.
  *
  * `RegistraBitacora` (invariante 9): el esquema no la marca como catálogo de
  * rol/permiso (no lo exige el gate automático de
@@ -24,7 +24,6 @@ use Carbon\CarbonImmutable;
  * \App\Dominios\Comercial\Infraestructura\Eloquent\Contrato}.
  *
  * @property int $id
- * @property int $cliente_id
  * @property string $codigo
  * @property string|null $nombre
  * @property string $estacion
@@ -40,7 +39,6 @@ class Campania extends ModeloDominio
 
     /** @var list<string> */
     protected $fillable = [
-        'cliente_id',
         'codigo',
         'nombre',
         'estacion',
@@ -62,11 +60,13 @@ class Campania extends ModeloDominio
     /**
      * "Activa"/"Inactiva" (HU-77, tarea 93): etiqueta de presentación pedida
      * por el dueño para el panel — nunca una columna propia. Deriva de
-     * `estado`: `planificada`/`abierta` son actividad en curso o por venir,
-     * `cerrada` es terminal (ADR 0015 punto 1) y no vuelve atrás.
+     * `estado` y solo es activa mientras la campaña está `abierta`
+     * (corregido el 19/9/2026, pedido directo: antes también lo era
+     * `planificada`): la planificada todavía no arrancó y la `cerrada` es
+     * terminal (ADR 0015 punto 1), ninguna de las dos es actividad en curso.
      */
     public function esActiva(): bool
     {
-        return $this->estado !== EstadoCampania::Cerrada;
+        return $this->estado === EstadoCampania::Abierta;
     }
 }

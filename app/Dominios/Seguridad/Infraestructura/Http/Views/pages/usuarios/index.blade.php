@@ -2,8 +2,9 @@
     Page: usuarios/index (GET /panel/usuarios, panel.usuarios.index)
     Listado de cuentas internas del panel (HU-45, tarea 39): arquetipo
     Listado, §6.2 de docs/diseno/guia_pantalla_panel.md — cabecera →
-    filtros → tabla → paginación. Mismo molde que personas/index.blade.php,
-    con una columna de roles (chips) y persona asociada en vez de rol/base.
+    filtros → tabla → paginación. Mismo molde que clientes/index.blade.php,
+    con una columna de roles (chips) y persona asociada, y con el estado de
+    acceso de la cuenta (activo/bloqueado).
 
     Datos esperados (ver UsuariosController::index()):
     - $usuarios (LengthAwarePaginator<SecUser>): nombre ascendente, internas
@@ -14,6 +15,13 @@
       persona_id.
     - $filtros (array{q: string, tipo: string}): búsqueda y tipo aplicados
       (`tipo` es `''`/`interno`/`cliente`).
+    - $tonoPorEstado (array<string, string>): estado de acceso → tono, el mismo
+      mapa para el badge, el botón de la fila y el modal
+      (`UsuariosController::TONO_POR_ESTADO`).
+
+    El estado (activo/bloqueado) SÍ se muestra, a diferencia de un catálogo con
+    `activo` sin editor: bloquear es una acción de esta misma fila, con su
+    propio permiso, y sin verlo el botón «Desbloquear» no tendría contexto.
 
     Gateada por `seguridad.usuario.ver`. Los botones "Nuevo usuario"/
     "Editar"/bloqueo/"Eliminar" se ocultan con `@puede` (presentación, no
@@ -42,7 +50,7 @@
             >
                 @puede('seguridad.usuario.crear')
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.usuarios.create') }}" variant="primary" icon="add">
+                        <x-atoms.button :href="route('panel.usuarios.create')" variant="primary" icon="add">
                             {{ __('seguridad.usuarios.nueva') }}
                         </x-atoms.button>
                     </x-slot:actions>
@@ -61,66 +69,91 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <form method="GET" action="{{ route('panel.usuarios.index') }}" class="ag-filtros ag-usuarios__filtros">
-                <div class="ag-input">
-                    <label for="filtro-q" class="ag-input__label">{{ __('seguridad.usuarios.filtro_busqueda') }}</label>
-                    <div class="ag-input__control">
-                        <input
-                            type="search"
-                            name="q"
-                            id="filtro-q"
-                            class="ag-input__field"
-                            value="{{ $filtros['q'] }}"
-                            placeholder="{{ __('seguridad.usuarios.filtro_busqueda_placeholder') }}"
-                        >
-                    </div>
+            @php
+                $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
+            @endphp
+
+            @if ($hayFiltrosActivos || $usuarios->isNotEmpty())
+                <div class="ag-table-toolbar">
+                    <x-organisms.filter-panel
+                        :action="route('panel.usuarios.index')"
+                        :active-count="$filtros['tipo'] !== '' ? 1 : 0"
+                    >
+                        <input type="hidden" name="q" value="{{ $filtros['q'] }}">
+                        <x-atoms.select
+                            name="tipo"
+                            id="filtro-tipo"
+                            :label="__('seguridad.usuarios.filtro_tipo')"
+                            :options="[
+                                'interno' => __('seguridad.usuarios.tipo_interno'),
+                                'cliente' => __('seguridad.usuarios.tipo_cliente'),
+                            ]"
+                            :value="$filtros['tipo']"
+                            :placeholder="__('seguridad.usuarios.filtro_tipo_todos')"
+                        />
+                    </x-organisms.filter-panel>
+
+                    <x-molecules.table-search
+                        :action="route('panel.usuarios.index')"
+                        :value="$filtros['q']"
+                        :placeholder="__('seguridad.usuarios.filtro_busqueda_placeholder')"
+                        :clear-label="__('ui.tabla.buscador_limpiar')"
+                    />
                 </div>
-
-                <x-atoms.select
-                    name="tipo"
-                    id="filtro-tipo"
-                    label="{{ __('seguridad.usuarios.filtro_tipo') }}"
-                    :options="[
-                        'interno' => __('seguridad.usuarios.tipo_interno'),
-                        'cliente' => __('seguridad.usuarios.tipo_cliente'),
-                    ]"
-                    :value="$filtros['tipo']"
-                    placeholder="{{ __('seguridad.usuarios.filtro_tipo_todos') }}"
-                />
-
-                <div class="ag-filtros__acciones ag-usuarios__filtros-acciones">
-                    <x-atoms.button type="submit" variant="outline" size="md" icon="search">
-                        {{ __('seguridad.usuarios.filtrar') }}
-                    </x-atoms.button>
-
-                    @if ($filtros['q'] !== '' || $filtros['tipo'] !== '')
-                        <x-atoms.button href="{{ route('panel.usuarios.index') }}" variant="text" size="md">
-                            {{ __('seguridad.usuarios.limpiar_filtro') }}
-                        </x-atoms.button>
-                    @endif
-                </div>
-            </form>
+            @endif
 
             @if ($usuarios->isEmpty())
-                <x-molecules.alert-strip variant="info" icon="badge" class="ag-usuarios__aviso">
-                    {{ __($filtros['q'] !== '' ? 'seguridad.usuarios.filtro_vacio' : 'seguridad.usuarios.vacio') }}
-                </x-molecules.alert-strip>
+                @if ($hayFiltrosActivos)
+                    <x-molecules.empty-state
+                        icon="search_off"
+                        :title="__('seguridad.usuarios.filtro_vacio_titulo')"
+                        :detail="__('seguridad.usuarios.filtro_vacio_detalle')"
+                    />
+                @else
+                    <x-molecules.empty-state
+                        icon="badge"
+                        :title="__('seguridad.usuarios.vacio_titulo')"
+                        :detail="__('seguridad.usuarios.vacio_detalle')"
+                    />
+                @endif
             @else
-                <div class="ag-usuarios__tabla" role="table">
-                    <div class="ag-usuarios__head" role="row">
-                        <span role="columnheader">{{ __('seguridad.usuarios.col_nombre') }}</span>
-                        <span role="columnheader">{{ __('seguridad.usuarios.col_username') }}</span>
+                {{-- Las columnas de un badge (tipo, estado) y la de acciones son de ancho
+                     fijo —nunca `auto`: ver el comentario de
+                     resources/css/components/row-actions.css—; el usuario va bajo el
+                     nombre en vez de en su propia columna, porque con ~1050 px útiles
+                     (1440 con el menú lateral) ocho columnas no dejan sitio al texto. --}}
+                <x-molecules.index-table
+                    class="ag-usuarios__listado"
+                    columns="3rem minmax(0, 1.8fr) 7.5rem minmax(0, 1.5fr) minmax(0, 1.2fr) 6rem var(--ag-row-actions-width)"
+                >
+                    <x-slot:head>
+                        <span role="columnheader" class="ag-index-table__indice">{{ __('ui.tabla.col_indice') }}</span>
+                        <span role="columnheader">{{ __('seguridad.usuarios.col_nombre_usuario') }}</span>
                         <span role="columnheader">{{ __('seguridad.usuarios.col_tipo') }}</span>
                         <span role="columnheader">{{ __('seguridad.usuarios.col_roles') }}</span>
                         <span role="columnheader">{{ __('seguridad.usuarios.col_persona') }}</span>
                         <span role="columnheader">{{ __('seguridad.usuarios.col_estado') }}</span>
-                        <span role="columnheader" aria-hidden="true"></span>
-                    </div>
+                        <span role="columnheader" class="ag-index-table__acciones-head">{{ __('ui.tabla.col_acciones') }}</span>
+                    </x-slot:head>
 
                     @foreach ($usuarios as $usuario)
-                        <div class="ag-usuarios__fila" role="row">
-                            <span role="cell" class="ag-usuarios__nombre">{{ $usuario->name }}</span>
-                            <span role="cell" class="ag-usuarios__username">{{ $usuario->username }}</span>
+                        @php
+                            $estadoValor = $usuario->state ? 'activo' : 'bloqueado';
+                            $estadoDestino = $usuario->state ? 'bloqueado' : 'activo';
+                            $formIdBloqueo = "usuario-bloqueo-{$usuario->id}";
+                            $formIdEliminar = "usuario-eliminar-{$usuario->id}";
+                            $modalIdBloqueo = "usuario-bloqueo-modal-{$usuario->id}";
+                            $modalIdEliminar = "usuario-eliminar-modal-{$usuario->id}";
+                        @endphp
+
+                        <div class="ag-index-table__row" role="row">
+                            <span role="cell" class="ag-index-table__indice">
+                                {{ ($usuarios->currentPage() - 1) * $usuarios->perPage() + $loop->iteration }}
+                            </span>
+                            <span role="cell">
+                                <span class="ag-usuarios__nombre">{{ $usuario->name }}</span>
+                                <span class="ag-usuarios__username">{{ $usuario->username }}</span>
+                            </span>
                             <span role="cell">
                                 <x-atoms.badge variant="neutral">
                                     {{ __($usuario->type->value === 'cliente' ? 'seguridad.usuarios.tipo_cliente' : 'seguridad.usuarios.tipo_interno') }}
@@ -135,69 +168,90 @@
                             </span>
                             <span role="cell">{{ $usuario->persona_id !== null ? ($etiquetasPersona[$usuario->persona_id] ?? __('seguridad.usuarios.sin_persona')) : __('seguridad.usuarios.sin_persona') }}</span>
                             <span role="cell">
-                                <x-atoms.badge :variant="$usuario->state ? 'success' : 'danger'">
-                                    {{ __($usuario->state ? 'seguridad.usuarios.estado_activo' : 'seguridad.usuarios.estado_bloqueado') }}
+                                <x-atoms.badge :variant="$tonoPorEstado[$estadoValor]">
+                                    {{ __('seguridad.usuarios.estado_'.$estadoValor) }}
                                 </x-atoms.badge>
                             </span>
 
-                            <span role="cell" class="ag-usuarios__acciones">
-                                @puede('seguridad.usuario.editar')
-                                    <x-atoms.button href="{{ route('panel.usuarios.edit', $usuario) }}" variant="warning-outline" size="sm" icon="edit">
-                                        {{ __('seguridad.usuarios.editar') }}
-                                    </x-atoms.button>
+                            <span role="cell" class="ag-index-table__acciones">
+                                {{-- Forms y modales FUERA de row-actions a propósito: ese
+                                     organism repite su slot dos veces (visible/menú, ver su
+                                     docblock), así que un <form> o un modal con id ahí adentro
+                                     se duplicaría — y el que cae dentro del menú ⋮ queda oculto
+                                     con él y nunca abre. Los disparadores sí van adentro (son
+                                     botones sin id propio). Mismo criterio que contratos/index. --}}
+                                @puede('seguridad.usuario.bloquear')
+                                    <form id="{{ $formIdBloqueo }}" method="POST" action="{{ route('panel.usuarios.bloqueo', $usuario) }}">
+                                        @csrf
+                                    </form>
+
+                                    <x-molecules.confirm-modal
+                                        :id="$modalIdBloqueo"
+                                        :form-id="$formIdBloqueo"
+                                        :title="__($usuario->state ? 'seguridad.usuarios.confirmar_bloquear_titulo' : 'seguridad.usuarios.confirmar_desbloquear_titulo')"
+                                        :message="__($usuario->state ? 'seguridad.usuarios.confirmar_bloquear' : 'seguridad.usuarios.confirmar_desbloquear')"
+                                        :confirm-label="__($usuario->state ? 'seguridad.usuarios.bloquear' : 'seguridad.usuarios.desbloquear')"
+                                        :tone="$tonoPorEstado[$estadoDestino]"
+                                        :modal-icon="$usuario->state ? 'lock' : 'lock_open'"
+                                    >
+                                        @include('seguridad::pages.usuarios._estado-transicion', ['desde' => $estadoValor, 'hacia' => $estadoDestino])
+                                    </x-molecules.confirm-modal>
                                 @endpuede
 
-                                @puede('seguridad.usuario.bloquear')
-                                    <form method="POST" action="{{ route('panel.usuarios.bloqueo', $usuario) }}">
+                                @puede('seguridad.usuario.eliminar')
+                                    <form id="{{ $formIdEliminar }}" method="POST" action="{{ route('panel.usuarios.destroy', $usuario) }}">
                                         @csrf
+                                        @method('DELETE')
+                                    </form>
+
+                                    <x-molecules.confirm-modal
+                                        :id="$modalIdEliminar"
+                                        :form-id="$formIdEliminar"
+                                        :title="__('seguridad.usuarios.confirmar_eliminar_titulo')"
+                                        :message="__('seguridad.usuarios.confirmar_baja')"
+                                        :confirm-label="__('seguridad.usuarios.eliminar_accion')"
+                                    />
+                                @endpuede
+
+                                <x-organisms.row-actions>
+                                    @puede('seguridad.usuario.editar')
+                                        <x-atoms.button :href="route('panel.usuarios.edit', $usuario)" variant="warning-outline" size="sm" icon="edit">
+                                            {{ __('seguridad.usuarios.editar') }}
+                                        </x-atoms.button>
+                                    @endpuede
+
+                                    @puede('seguridad.usuario.bloquear')
                                         <x-atoms.button
-                                            type="submit"
-                                            variant="outline"
+                                            type="button"
+                                            data-bs-toggle="modal"
+                                            :data-bs-target="'#'.$modalIdBloqueo"
+                                            :variant="$tonoPorEstado[$estadoDestino].'-outline'"
                                             size="sm"
                                             :icon="$usuario->state ? 'lock' : 'lock_open'"
                                         >
                                             {{ __($usuario->state ? 'seguridad.usuarios.bloquear' : 'seguridad.usuarios.desbloquear') }}
                                         </x-atoms.button>
-                                    </form>
-                                @endpuede
+                                    @endpuede
 
-                                @puede('seguridad.usuario.eliminar')
-                                    <form
-                                        method="POST"
-                                        action="{{ route('panel.usuarios.destroy', $usuario) }}"
-                                        onsubmit="return confirm('{{ __('seguridad.usuarios.confirmar_baja') }}')"
-                                    >
-                                        @csrf
-                                        @method('DELETE')
-                                        <x-atoms.button type="submit" variant="danger-outline" size="sm" icon="delete">
+                                    @puede('seguridad.usuario.eliminar')
+                                        <x-atoms.button
+                                            type="button"
+                                            data-bs-toggle="modal"
+                                            :data-bs-target="'#'.$modalIdEliminar"
+                                            variant="danger-outline"
+                                            size="sm"
+                                            icon="delete"
+                                        >
                                             {{ __('seguridad.usuarios.eliminar_accion') }}
                                         </x-atoms.button>
-                                    </form>
-                                @endpuede
+                                    @endpuede
+                                </x-organisms.row-actions>
                             </span>
                         </div>
                     @endforeach
-                </div>
+                </x-molecules.index-table>
 
-                @if ($usuarios->hasPages())
-                    <nav class="ag-usuarios__paginacion" aria-label="{{ __('seguridad.usuarios.paginacion_aria') }}">
-                        @if (! $usuarios->onFirstPage())
-                            <x-atoms.button href="{{ $usuarios->previousPageUrl() }}" variant="outline" size="sm" icon="chevron_left">
-                                {{ __('seguridad.usuarios.paginacion_anterior') }}
-                            </x-atoms.button>
-                        @endif
-
-                        <span class="ag-usuarios__paginacion-info">
-                            {{ __('seguridad.usuarios.paginacion_info', ['actual' => $usuarios->currentPage(), 'total' => $usuarios->lastPage()]) }}
-                        </span>
-
-                        @if ($usuarios->hasMorePages())
-                            <x-atoms.button href="{{ $usuarios->nextPageUrl() }}" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
-                                {{ __('seguridad.usuarios.paginacion_siguiente') }}
-                            </x-atoms.button>
-                        @endif
-                    </nav>
-                @endif
+                <x-molecules.pagination :paginator="$usuarios" :aria-label="__('seguridad.usuarios.paginacion_aria')" />
             @endif
         </div>
     </x-templates.panel-layout>

@@ -16,6 +16,10 @@ Este skill es un mapa de dónde vive el sistema de diseño y qué reglas ya est�
 - **ADR de arquitectura del panel**: `docs/decisiones/0002-panel-web-adminlte-livewire-atomic-design.md` (Bootstrap/AdminLTE + Material + Atomic Design). No se reabre sin un ADR nuevo.
 - **Layout de 3 niveles** (riel de módulos + sidebar del módulo + header): `docs/diseno/sistema_diseno_panel.md` §7 y `docs/gestion/plan_dashboard_rediseno.md` §1.1 para el estado exacto del código.
 
+## Homogeneización en curso (desde el 20/9/2026)
+
+Los listados y formularios se están llevando al patrón de las pantallas de referencia (Campaña, Cliente, Propiedad, Lote, Contrato, Orden de aplicación, Orden de trabajo, Estadías, Cuadrillas). El alcance y las reglas están en `docs/gestion/plan_homogeneizacion_panel.md`; lo que falta, en `docs/diseno/panel_homogeneo_pendientes.txt`. `tests/Unit/PanelHomogeneoTest.php` (parte de `bin/verify`) exige el patrón a toda pantalla que no figure en esa lista: al terminar una, sácala de ahí; nunca sumes una para que el test pase.
+
 ## Reglas fijas de pulido UI (no redescubrir por prueba y error)
 
 Documentadas completas en `docs/diseno/sistema_diseno_panel.md` §8. Resumen:
@@ -28,10 +32,17 @@ Documentadas completas en `docs/diseno/sistema_diseno_panel.md` §8. Resumen:
 6. Transición nativa entre navegaciones del mismo flujo: `@view-transition { navigation: auto; }` una sola vez en `app.css`, con `prefers-reduced-motion` sobre `::view-transition-*`.
 7. En una fila de controles (barra de filtros, formulario horizontal) los
    átomos de campo van con `margin-bottom: 0` y todos con el mismo
-   `min-width` — nombrando a los seis (`.ag-input`, `.ag-select`,
-   `.ag-textarea`, `.ag-date`, `.ag-switch`, `.ag-checkbox`), no solo al
-   que la pantalla use hoy. El margen de apilado alinea el botón contra un
+   `min-width` — nombrando a los siete (`.ag-input`, `.ag-select`,
+   `.ag-textarea`, `.ag-date`, `.ag-time-range`, `.ag-switch`,
+   `.ag-checkbox`), no solo al que la pantalla use hoy. El margen de apilado alinea el botón contra un
    borde fantasma 16px más abajo.
+
+8. Sobre un relleno de estado (`-contrast-fill`: badge, paso actual de
+   `step-arrow`, ícono de `link-row`/`stat-card`) el texto y el ícono son
+   SIEMPRE blancos (`--ag-color-gray-0`), **también en `warning`**. La
+   excepción de texto oscuro sobre el ámbar se retiró el 19/9/2026 por
+   decisión del dueño; no reintroducirla «por contraste» (el costo está
+   anotado en `sistema_diseno_panel.md` §1.3).
 
 ## Explorar diseño antes de implementarlo
 
@@ -64,7 +75,7 @@ El cálculo de contraste en papel no alcanza — hay que ver el resultado real e
 Procedimiento usado en la sesión del 28/8/2026 (login + selección de rol):
 
 1. Levantar el panel local (`php artisan serve` o el server ya corriendo en `localhost:8000`).
-2. Loguear con el usuario demo multirol: `carlos.ferrufino` / `password` (seeded por `Demo/PersonalDemoSeeder`; es el dueño real, con los cuatro roles que contestó en las encuestas de campo). **Los datos demo de la base del compose no se borran nunca** — ver el skill [verificacion].
+2. Loguear con el único usuario sembrado en `local`/`staging`: `miguelo` / `0000` (`AdminPlataformaSeeder`, tarea 100 — la familia `Demo/` con `carlos.ferrufino` se retiró; el resto de los datos se carga a mano desde el panel). **Los datos demo de la base del compose no se borran nunca** — ver el skill [verificacion].
 3. Correr un script Playwright headless con el binario ya instalado como dependencia del repo (no hace falta `npm install -g` ni un nuevo `package.json`):
    ```
    NODE_PATH=<repo>/node_modules node <script>.js

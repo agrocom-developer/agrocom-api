@@ -4,8 +4,9 @@
     `_formulario.blade.php`, compartido con `create.blade.php`.
 
     Datos esperados (ver VehiculosController::edit()): la cáscara de
-    CascaraPanel, más $vehiculo (Vehiculo) y $basesDisponibles
-    (Collection<int, string>).
+    CascaraPanel, más $vehiculo (Vehiculo), $basesDisponibles
+    (Collection<int, string>), $estados, $combustibles, $tipos y
+    $resumenRelacionado (tarjetas del aside, resueltas por el controlador).
 
     Gateada por `mantenimiento.vehiculo.editar`, verificado server-side en el
     controlador.
@@ -23,6 +24,6 @@
         :version="$version"
         :vista-actual="__('mantenimiento.vehiculos.titulo_editar')"
     >
-        @include('mantenimiento::pages.vehiculos._formulario', ['vehiculo' => $vehiculo, 'basesDisponibles' => $basesDisponibles, 'estados' => $estados])
+        @include('mantenimiento::pages.vehiculos._formulario', ['vehiculo' => $vehiculo, 'basesDisponibles' => $basesDisponibles, 'estados' => $estados, 'resumenRelacionado' => $resumenRelacionado])
     </x-templates.panel-layout>
 </x-templates.panel-shell>

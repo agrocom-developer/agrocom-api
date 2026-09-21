@@ -1,59 +1,26 @@
 /*
  * Page: alertas/index (app/Dominios/Operaciones/Infraestructura/Http/Views/pages/alertas/index.blade.php)
  * CSS propio de ESTA página (ver convención en resources/css/pages/index.css).
- * Mismo patrón de grilla que trabajos.css. Todo color y medida por token
- * (CLAUDE.md invariante 11).
+ *
+ * El grueso viene del catálogo (index-table, filter-panel, stat-card,
+ * pagination, confirm-modal, state-transition). Acá solo lo propio de la
+ * página: el wrapper, la grilla de la franja de KPI y dos detalles de celda.
+ * Ninguna regla de esta hoja toca por dentro a un componente del catálogo
+ * (§3 de la guía de pantalla). Todo por token (invariante 11).
  */
 
-.ag-alertas__aviso {
-    margin-top: var(--ag-space-4);
-}
-
-.ag-alertas__filtros {
-    margin-top: var(--ag-space-4);
-}
-
-.ag-alertas__filtros .ag-input,
-.ag-alertas__filtros .ag-select,
-.ag-alertas__filtros .ag-date {
-    min-width: 12rem;
-}
-
-
-.ag-alertas__tabla {
-    margin-top: var(--ag-space-5);
-    border: 1px solid var(--ag-color-border-card);
-    border-radius: var(--ag-radius-md);
-    background-color: var(--ag-color-surface-card);
-    overflow: hidden;
-}
-
-.ag-alertas__head,
-.ag-alertas__fila {
-    display: grid;
-    grid-template-columns: 1fr 2fr 0.7fr 1.2fr 1fr 1fr;
-    gap: var(--ag-space-4);
-    align-items: center;
-    padding: var(--ag-space-3) var(--ag-space-4);
-}
-
-.ag-alertas__head {
-    background-color: var(--ag-color-bg-table-head);
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-xs);
-    font-weight: var(--ag-font-weight-medium);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.ag-alertas__fila {
-    border-top: 1px solid var(--ag-color-border-row);
-    color: var(--ag-color-text);
-    font-size: var(--ag-font-size-sm);
+.ag-alertas {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
 }
 
 .ag-alertas__mensaje {
     color: var(--ag-color-text-muted);
+}
+
+.ag-alertas__mono {
+    font-family: var(--ag-font-family-mono);
 }
 
 .ag-alertas__atendida-por {
@@ -63,26 +30,28 @@
     margin-top: var(--ag-space-1);
 }
 
-.ag-alertas__paginacion {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+/* KPI del listado: franja fija bajo la cabecera, mismo patrón que
+   `.ag-estadias__kpis`. Las tarjetas son `molecules/stat-card`; acá solo va la
+   grilla. Consulta el ancho de SU contenedor, no el del viewport: el
+   contenido del panel cambia de ancho con el sidebar. */
+.ag-alertas {
+    container: ag-alertas / inline-size;
+}
+
+.ag-alertas__kpis {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--ag-space-4);
-    margin-top: var(--ag-space-4);
 }
 
-.ag-alertas__paginacion-info {
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-sm);
-}
-
-@media (max-width: 992px) {
-    .ag-alertas__head {
-        display: none;
+@container ag-alertas (min-width: 36rem) {
+    .ag-alertas__kpis {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+}
 
-    .ag-alertas__fila {
-        grid-template-columns: 1fr;
-        gap: var(--ag-space-1);
+@container ag-alertas (min-width: 60rem) {
+    .ag-alertas__kpis {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 }

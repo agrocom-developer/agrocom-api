@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Seguridad\Aplicacion;
 
+use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaTexto;
 use App\Dominios\Seguridad\Dominio\TipoUsuario;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -25,10 +26,7 @@ final class ListarUsuarios
             ->when($tipo !== null, fn ($consulta) => $consulta->where('type', $tipo))
             ->when(
                 $busqueda !== null && $busqueda !== '',
-                fn ($consulta) => $consulta->where(
-                    fn ($sub) => $sub->where('name', 'like', "%{$busqueda}%")
-                        ->orWhere('username', 'like', "%{$busqueda}%")
-                ),
+                fn ($consulta) => BusquedaTexto::aplicar($consulta, ['name', 'username'], $busqueda),
             )
             ->orderBy('name')
             ->paginate($porPagina)

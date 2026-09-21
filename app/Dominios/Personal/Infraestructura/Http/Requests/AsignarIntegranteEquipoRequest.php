@@ -7,7 +7,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 /**
- * `POST /panel/equipos-trabajo/{equipoTrabajo}/integrantes` (tarea 72,
+ * `POST /panel/cuadrillas/{equipoTrabajo}/integrantes` (tarea 72,
  * HU-49). La autorización (permiso `personal.equipo_trabajo.editar`) se
  * verifica en el controlador. El solapamiento con OTROS equipos NO se valida
  * acá (no es un error de formulario, es un aviso de negocio que igual se
@@ -35,7 +35,10 @@ final class AsignarIntegranteEquipoRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'persona_id.exists' => 'La persona seleccionada no es válida.',
+            'persona_id.required' => __('personal.equipos_trabajo.error_integrante_persona_requerida'),
+            'persona_id.exists' => __('personal.validacion.persona_invalida'),
+            'rol_equipo.required' => __('personal.equipos_trabajo.error_integrante_rol_requerido'),
+            'desde.required' => __('personal.equipos_trabajo.error_integrante_desde_requerida'),
         ];
     }
 }

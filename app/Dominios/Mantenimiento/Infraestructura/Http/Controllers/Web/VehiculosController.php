@@ -2,7 +2,9 @@
 
 namespace App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Finanzas\Contratos\LecturaCombustiblePorRecurso;
 use App\Dominios\Mantenimiento\Aplicacion\ActualizarVehiculo;
+use App\Dominios\Mantenimiento\Aplicacion\ContarOrdenesDeEquipo;
 use App\Dominios\Mantenimiento\Aplicacion\CrearVehiculo;
 use App\Dominios\Mantenimiento\Aplicacion\EliminarVehiculo;
 use App\Dominios\Mantenimiento\Aplicacion\ListarVehiculos;
@@ -13,6 +15,9 @@ use App\Dominios\Mantenimiento\Dominio\TipoVehiculo;
 use App\Dominios\Mantenimiento\Infraestructura\Eloquent\Vehiculo;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Requests\ActualizarVehiculoRequest;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Requests\CrearVehiculoRequest;
+use App\Dominios\Mantenimiento\Infraestructura\Http\ResumenRelacionadoDeEquipo;
+use App\Dominios\Operaciones\Contratos\LecturaEstadiasPorVehiculo;
+use App\Dominios\Personal\Contratos\LecturaCuadrillasPorRecurso;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -51,6 +56,23 @@ final class VehiculosController
 
     private const PERMISO_ELIMINAR = 'mantenimiento.vehiculo.eliminar';
 
+    /**
+     * Tono de cada estado, definido UNA vez (§6.3.4 de la guía de pantalla):
+     * lo lee el badge del listado. Eje gris↔verde, y rojo para la baja
+     * definitiva: `activo` es el estado sano; `taller` (en reparación) y
+     * `pausa` (baja temporal de servicio, HU-84) no son un problema en sí. Los
+     * tonos son los que la pantalla ya tenía —`pausa` toma el de las otras
+     * bajas temporales—: no se reeligen acá.
+     *
+     * @var array<string, string>
+     */
+    public const array TONO_POR_ESTADO = [
+        'activo' => 'success',
+        'taller' => 'neutral',
+        'pausa' => 'neutral',
+        'de_baja' => 'danger',
+    ];
+
     public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
 
     public function index(Request $request, ListarVehiculos $listarVehiculos): View
@@ -74,6 +96,8 @@ final class VehiculosController
             'vehiculos' => $vehiculos,
             'etiquetasBase' => $this->etiquetasBase($vehiculos->pluck('base_id')->filter()->map(fn ($id) => (int) $id)->unique()->values()->all()),
             'basesDisponibles' => $this->basesDisponibles(),
+            'tonoPorEstado' => self::TONO_POR_ESTADO,
+            'estadosFiltro' => EstadoVehiculo::cases(),
             'filtros' => ['q' => $busqueda, 'base_id' => $baseId, 'estado' => $estado?->value],
         ]);
     }
@@ -98,7 +122,7 @@ final class VehiculosController
         $datos = $request->validated();
 
         try {
-            $crearVehiculo->ejecutar(
+            $vehiculo = $crearVehiculo->ejecutar(
                 (string) $datos['identificador'],
                 $this->enteroONull($datos['base_id'] ?? null),
                 EstadoVehiculo::from((string) $datos['estado']),
@@ -118,13 +142,19 @@ final class VehiculosController
                 ->withErrors(['identificador' => $excepcion->getMessage()]);
         }
 
+        // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
         return redirect()
-            ->route('panel.vehiculos.index')
+            ->route('panel.vehiculos.edit', $vehiculo)
             ->with('estado', __('mantenimiento.vehiculos.creado'));
     }
 
-    public function edit(Request $request, Vehiculo $vehiculo): View
-    {
+    public function edit(
+        Request $request,
+        Vehiculo $vehiculo,
+        ResumenRelacionadoDeEquipo $tarjetas,
+        ContarOrdenesDeEquipo $contarOrdenes,
+        LecturaEstadiasPorVehiculo $lecturaEstadias,
+    ): View {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
 
         return view('mantenimiento::pages.vehiculos.edit', [
@@ -134,6 +164,7 @@ final class VehiculosController
             'estados' => EstadoVehiculo::cases(),
             'combustibles' => TipoCombustibleVehiculo::cases(),
             'tipos' => TipoVehiculo::cases(),
+            'resumenRelacionado' => $this->resumenRelacionado($vehiculo, $request, $tarjetas, $contarOrdenes, $lecturaEstadias),
         ]);
     }
 
@@ -165,8 +196,9 @@ final class VehiculosController
                 ->withErrors(['identificador' => $excepcion->getMessage()]);
         }
 
+        // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
         return redirect()
-            ->route('panel.vehiculos.index')
+            ->route('panel.vehiculos.edit', $vehiculo)
             ->with('estado', __('mantenimiento.vehiculos.actualizado'));
     }
 
@@ -179,6 +211,139 @@ final class VehiculosController
         return redirect()
             ->route('panel.vehiculos.index')
             ->with('estado', __('mantenimiento.vehiculos.eliminado'));
+    }
+
+    /**
+     * Resumen relacionado del aside de `edit()` (solo edición, §6.3.1 de la
+     * guía de pantalla): un vehículo recién creado no puede tener todavía
+     * órdenes, cuadrillas, estadías ni combustible. Cuatro tarjetas, cada una
+     * gateada por el permiso de LO QUE MUESTRA contra el ROL ACTIVO
+     * (invariante 10), no por `mantenimiento.vehiculo.*`. Una categoría sin
+     * `.ver` NI `.crear` se omite del todo; con `.crear` pero sin `.ver` se
+     * ofrece el atajo sin revelar cifras.
+     *
+     * Las órdenes son del mismo módulo (`ContarOrdenesDeEquipo`); cuadrillas,
+     * estadías y combustible llegan por el `Contratos/` de Personal, Operaciones
+     * y Finanzas (ADR 0003, regla 2). Ninguno de los tres destinos de alta
+     * acepta el vehículo precargado, así que los atajos llevan al formulario y
+     * el vacío dice qué elegir.
+     *
+     * @return list<array{titulo: string, icono: string, tieneDatos: bool, items: list<array<string, mixed>>, vacioTitulo: string, vacioDetalle: string, acciones: list<array{label: string, href: string, icono?: string}>}>
+     */
+    private function resumenRelacionado(
+        Vehiculo $vehiculo,
+        Request $request,
+        ResumenRelacionadoDeEquipo $tarjetas,
+        ContarOrdenesDeEquipo $contarOrdenes,
+        LecturaEstadiasPorVehiculo $lecturaEstadias,
+    ): array {
+        $resumen = [];
+
+        // Memento de navegación: los atajos de alta apilan ESTA ficha como
+        // origen, así el "Volver" de la pantalla de destino regresa acá y no
+        // al listado de su propio módulo. Ver RecordarOrigenNavegacion.
+        $origenNavegacion = ['volver_a' => route('panel.vehiculos.edit', $vehiculo), 'volver_texto' => $vehiculo->identificador];
+
+        // 1) Órdenes de mantenimiento (mismo módulo). El listado de órdenes no
+        // filtra por equipo, así que no hay «Ver órdenes»: llevaría a las de
+        // todos los equipos.
+        $puedeVerOrdenes = $this->autorizacion->tienePermiso($request, 'mantenimiento.orden.ver');
+        $puedeAbrirOrden = $this->autorizacion->tienePermiso($request, 'mantenimiento.orden.crear');
+
+        if ($puedeVerOrdenes || $puedeAbrirOrden) {
+            $ordenes = $puedeVerOrdenes ? $contarOrdenes->ejecutar(ContarOrdenesDeEquipo::TIPO_VEHICULO, $vehiculo->id) : ['abiertas' => 0, 'total' => 0];
+
+            $resumen[] = [
+                'titulo' => __('mantenimiento.vehiculos.aside_ordenes_titulo'),
+                'icono' => 'build',
+                'tieneDatos' => $ordenes['total'] > 0,
+                'items' => [
+                    [
+                        'label' => __('mantenimiento.vehiculos.aside_ordenes_abiertas'),
+                        'value' => (string) $ordenes['abiertas'],
+                        'mono' => true,
+                        'variant' => $ordenes['abiertas'] > 0 ? 'warning' : 'neutral',
+                    ],
+                    ['label' => __('mantenimiento.vehiculos.aside_ordenes_total'), 'value' => (string) $ordenes['total'], 'mono' => true],
+                ],
+                'vacioTitulo' => __('mantenimiento.vehiculos.aside_ordenes_vacio_titulo'),
+                'vacioDetalle' => __('mantenimiento.vehiculos.aside_ordenes_vacio_detalle'),
+                'acciones' => $puedeAbrirOrden ? [[
+                    'label' => __('mantenimiento.vehiculos.aside_ordenes_accion_abrir'),
+                    'href' => route('panel.ordenes-mantenimiento.create', $origenNavegacion),
+                    'icono' => 'add',
+                ]] : [],
+            ];
+        }
+
+        // 2) Cuadrillas que lo tienen asignado (Personal, por contrato).
+        $cuadrillas = $tarjetas->cuadrillas(
+            $request,
+            LecturaCuadrillasPorRecurso::TIPO_VEHICULO,
+            $vehiculo->id,
+            __('mantenimiento.vehiculos.aside_cuadrillas_vacio_detalle'),
+        );
+
+        if ($cuadrillas !== null) {
+            $resumen[] = $cuadrillas;
+        }
+
+        // 3) Estadías en hacienda donde se usó (Operaciones, por contrato).
+        $puedeVerEstadias = $this->autorizacion->tienePermiso($request, 'operaciones.estadia.ver');
+        $puedeRegistrarEstadia = $this->autorizacion->tienePermiso($request, 'operaciones.estadia.crear');
+
+        if ($puedeVerEstadias || $puedeRegistrarEstadia) {
+            $estadias = $puedeVerEstadias ? $lecturaEstadias->deVehiculo($vehiculo->id) : null;
+            $totalEstadias = $estadias->total ?? 0;
+            $enCurso = $estadias->enCurso ?? 0;
+
+            $acciones = [];
+
+            if ($totalEstadias > 0) {
+                $acciones[] = ['label' => __('mantenimiento.vehiculos.aside_estadias_accion_ver'), 'href' => route('panel.estadias.index'), 'icono' => 'list'];
+            }
+
+            if ($puedeRegistrarEstadia) {
+                $acciones[] = [
+                    'label' => __('mantenimiento.vehiculos.aside_estadias_accion_registrar'),
+                    'href' => route('panel.estadias.create', $origenNavegacion),
+                    'icono' => 'add',
+                ];
+            }
+
+            $resumen[] = [
+                'titulo' => __('mantenimiento.vehiculos.aside_estadias_titulo'),
+                'icono' => 'holiday_village',
+                'tieneDatos' => $totalEstadias > 0,
+                'items' => [
+                    [
+                        'label' => __('mantenimiento.vehiculos.aside_estadias_en_curso'),
+                        'value' => (string) $enCurso,
+                        'mono' => true,
+                        'variant' => $enCurso > 0 ? 'success' : 'neutral',
+                    ],
+                    ['label' => __('mantenimiento.vehiculos.aside_estadias_total'), 'value' => (string) $totalEstadias, 'mono' => true],
+                ],
+                'vacioTitulo' => __('mantenimiento.vehiculos.aside_estadias_vacio_titulo'),
+                'vacioDetalle' => __('mantenimiento.vehiculos.aside_estadias_vacio_detalle'),
+                'acciones' => $acciones,
+            ];
+        }
+
+        // 4) Combustible cargado (Finanzas, por contrato).
+        $combustible = $tarjetas->combustible(
+            $request,
+            LecturaCombustiblePorRecurso::TIPO_VEHICULO,
+            $vehiculo->id,
+            $origenNavegacion,
+            __('mantenimiento.vehiculos.aside_combustible_vacio_detalle'),
+        );
+
+        if ($combustible !== null) {
+            $resumen[] = $combustible;
+        }
+
+        return $resumen;
     }
 
     private function enteroONull(mixed $valor): ?int

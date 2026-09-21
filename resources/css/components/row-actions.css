@@ -1,0 +1,205 @@
+/*
+ * Organism: row-actions (resources/views/components/organisms/row-actions.blade.php)
+ *
+ * El slot llega renderizado DOS VECES desde el Blade (ver su docblock):
+ * `.ag-row-actions__visible` y `.ag-row-actions__menu` tienen exactamente
+ * los mismos hijos, en el mismo orden. Acá se decide, por breakpoint, cuáles
+ * hijos se ven en cada mitad — nunca los dos a la vez para el mismo botón.
+ *
+ * Las acciones visibles conservan ícono + texto (nunca solo-ícono — pedido
+ * explícito del usuario, 15/9/2026): la celda de acciones de cada tabla fija
+ * su ancho en rem (mismo criterio que el resto de columnas del grid) en vez
+ * de un ancho universal — con `auto`, el head (celda vacía o con solo el
+ * rótulo "Acciones") y la fila (celda con botones) son grids separados que
+ * resuelven ese ancho cada uno por su cuenta y el header queda corrido; un
+ * valor fijo, igual en los dos, es la única forma de que calcen.
+ *
+ * Cupo de 2 sueltas en TODAS las pantallas ≥768px (pedido explícito,
+ * 16/9/2026: quería simetría de ancho entre páginas sin importar cuántos
+ * estados tenga cada una) — por eso `--ag-row-actions-width` de abajo es
+ * UNA sola variable, no un valor en rem repetido en cada
+ * `resources/css/pages/*.css`: factorizarlo evita que las cuatro páginas
+ * que usan este organism (usuarios/clientes/campanias/contratos) diverjan
+ * con el tiempo si el cupo visible vuelve a cambiar.
+ */
+
+/* `:root`, no `.ag-row-actions`: la consume `grid-template-columns` de la
+   FILA de cada tabla (`.ag-index-table__row`, `molecules/index-table`, y
+   alguna tabla propia de formulario como `.ag-contratos-form__lotes-tabla`),
+   que es ANCESTRO de `.ag-row-actions`, no descendiente — una custom property
+   scopeada al propio componente no llegaría hasta ahí por herencia. Vive
+   acá (el archivo del componente dueño de la restricción) y no en
+   `tokens/`, porque no es un token de diseño reusable en cualquier
+   contexto — es una medida de layout de ESTE organism en particular. */
+:root {
+    --ag-row-actions-width: 16rem;
+}
+
+.ag-row-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--ag-space-2);
+}
+
+/* Envuelve una acción COMPUESTA (p. ej. `molecules/confirm-button`, que
+   renderiza el botón disparador y su `<div class="modal">` como hermanos,
+   no un solo nodo) para que cuente como UN hijo en el `:nth-child` de más
+   abajo — sin esto, el modal oculto de cada confirm-button se cuela como
+   posición extra, corre el índice y esconde una acción real que sí entraba
+   en el cupo visible (bug real, encontrado 16/9/2026 en vivo con dos
+   confirm-button en la misma fila de `contratos/index.blade.php`; con uno
+   solo, como en `campanias/index.blade.php`, nunca se notaba). `display:
+   contents` saca el wrapper del layout — el botón de adentro sigue siendo
+   un ítem flex normal — sin sacarlo del árbol del DOM que `:nth-child`
+   sigue contando.
+
+   Vale SOLO para una fila con una única acción de confirmación (hoy,
+   "Eliminar" en clientes/propiedades/lotes/cultivos/campanias — nunca
+   entra en overflow real, pero el `<div class="modal">` extra igual corre
+   el conteo si no se envuelve). Una fila con VARIAS confirmaciones que sí
+   pueden caer en el "⋮" (contratos, campanias con cambiar-estado) no usa
+   este wrapper: usa `molecules/confirm-modal` FUERA de `row-actions` (ver
+   su docblock) — la duplicación del slot también duplicaría el `id` del
+   modal, y si la copia que Bootstrap resuelve queda oculta en el `:nth-child`
+   de la otra mitad, el modal ni siquiera se ve (bug real, 17/9/2026, ver
+   docblock de `campanias/index.blade.php`). El wrapper de acá arregla el
+   CONTEO; no arregla eso. */
+.ag-row-actions__item {
+    display: contents;
+}
+
+.ag-row-actions__visible {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+}
+
+.ag-row-actions__more-btn {
+    aspect-ratio: 1;
+    padding: var(--ag-space-2);
+}
+
+/* Tono NEUTRAL (gris) en vez del verde de `.ag-button--outline` (18/9/2026,
+   pedido explícito del usuario: se probó azul "primary 2" primero, pero el
+   "⋮" —que abre un MENÚ, no ejecuta una acción ni navega— se revirtió a
+   neutral). `--ag-color-neutral-strong`/`-subtle`: mismo par que
+   `.ag-badge--neutral` (badge.css), ya theme-aware (oliva-600 claro /
+   gris-200 oscuro para el texto — no hace falta la trampa `-contrast-fill`
+   de los estados reales, acá no hay versión "cruda" que oscurezca mal en
+   oscuro, ya es un gris pensado para los dos temas). */
+.ag-row-actions__more-btn.ag-button--outline {
+    color: var(--ag-color-neutral-strong);
+    border-color: var(--ag-color-neutral-strong);
+}
+
+.ag-row-actions__more-btn.ag-button--outline:hover {
+    background-color: var(--ag-color-neutral-subtle);
+}
+
+.ag-row-actions__more {
+    display: none;
+    position: relative;
+}
+
+/* Mismo popover skin que `.ag-user-menu` (topbar.css): dropdown-menu de
+   Bootstrap con `.show` animado por opacity/transform en vez del `display`
+   nativo. `position: fixed` en la regla base — mismo motivo documentado en
+   color-swatch-field.css: `display:block` siempre puesto deja el menú
+   cerrado ocupando layout real (position:absolute por defecto de Bootstrap
+   hasta el primer open de Popper), lo que puede desbordar `.ag-panel__content`
+   sin que se note por estar invisible, hasta que algo lo scrollea a la
+   vista. */
+.ag-row-actions__menu {
+    display: block !important;
+    position: fixed;
+    min-width: 12rem;
+    padding: var(--ag-space-2);
+    background: var(--ag-color-bg-elevated);
+    border: 1px solid var(--ag-color-border);
+    border-radius: var(--ag-radius-lg);
+    box-shadow: var(--ag-shadow-lg);
+    margin-top: var(--ag-space-2) !important;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: scale(0.95);
+    transform-origin: top right;
+    transition:
+        opacity 180ms var(--ag-ease-emphasized),
+        transform 180ms var(--ag-ease-emphasized),
+        visibility 0s linear 180ms;
+}
+
+.ag-row-actions__menu.show {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: scale(1);
+    transition:
+        opacity 180ms var(--ag-ease-emphasized),
+        transform 180ms var(--ag-ease-emphasized),
+        visibility 0s linear 0s;
+}
+
+/* Dentro del menú cada acción se ve como ítem de lista (ancho completo,
+   texto completo), no como el botón pill de la celda — mismo lenguaje que
+   `.ag-user-menu__item`, conservando el color propio de cada variante
+   (ámbar en warning, rojo en danger) para no perder la pista semántica. */
+.ag-row-actions__menu .ag-button {
+    display: flex;
+    width: 100%;
+    justify-content: flex-start;
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+    border-radius: var(--ag-radius-md);
+    padding: var(--ag-space-2) var(--ag-space-3);
+}
+
+.ag-row-actions__menu .ag-button:hover {
+    background: var(--ag-color-primary-subtle);
+}
+
+.ag-row-actions__menu form {
+    display: block;
+}
+
+/* ≥768px ("pantallas normales", pedido explícito del usuario 16/9/2026):
+   hasta 2 acciones sueltas en la celda, SIEMPRE — antes eran 3 desde
+   1200px y 2 en el tramo tablet, un cupo que variaba con el breakpoint Y
+   con cuántos estados tuviera cada página (usuarios/contratos con 24rem
+   fijo para 3, clientes/campanias con 14rem para 2 — la celda no calzaba
+   igual de una página a otra). Un cupo único da un ancho de columna único
+   en `resources/css/pages/*.css`, sin importar cuántas acciones tenga la
+   fila más cargada de cada pantalla. */
+@media (min-width: 768px) {
+    .ag-row-actions__visible > :nth-child(n + 3) {
+        display: none;
+    }
+
+    .ag-row-actions__menu > :nth-child(-n + 2) {
+        display: none;
+    }
+
+    .ag-row-actions:has(.ag-row-actions__visible > :nth-child(3)) .ag-row-actions__more {
+        display: block;
+    }
+}
+
+/* Mobile: ninguna suelta — todas al menú. */
+@media (max-width: 767.98px) {
+    .ag-row-actions__visible {
+        display: none;
+    }
+
+    .ag-row-actions:has(.ag-row-actions__visible > :nth-child(1)) .ag-row-actions__more {
+        display: block;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ag-row-actions__menu {
+        transition-duration: 0.01ms !important;
+    }
+}

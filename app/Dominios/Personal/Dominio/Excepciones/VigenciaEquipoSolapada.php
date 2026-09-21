@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Personal\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use App\Dominios\Personal\Dominio\ResultadoSolapamientoVigencias;
 use App\Dominios\Personal\Dominio\ValidadorSolapamientoVigencias;
 use RuntimeException;
@@ -15,30 +16,29 @@ use RuntimeException;
  * {@see ResultadoSolapamientoVigencias}). El
  * caso de uso que asigna el integrante o el recurso la atrapa y la traduce a
  * un error de validación legible, nunca deja propagarse un 500. Mismo
- * criterio que `VentanasContratoSolapadas` en Comercial.
+ * criterio que usaba `VentanasContratoSolapadas` en Comercial (retirada el
+ * 16/9/2026 junto con las ventanas de contrato).
  */
 final class VigenciaEquipoSolapada extends RuntimeException
 {
     public static function integrante(string $nombrePersona, string $desde, ?string $hasta): self
     {
-        return new self(sprintf(
-            '%s ya integra este equipo en una vigencia que se superpone con %s.',
-            $nombrePersona,
-            self::rango($desde, $hasta),
-        ));
+        return new self(Texto::de('personal.errores.vigencia_integrante_solapada', [
+            'persona' => $nombrePersona,
+            'rango' => self::rango($desde, $hasta),
+        ]));
     }
 
     public static function recurso(string $etiquetaRecurso, string $desde, ?string $hasta): self
     {
-        return new self(sprintf(
-            '%s ya está asignado a este equipo en una vigencia que se superpone con %s.',
-            $etiquetaRecurso,
-            self::rango($desde, $hasta),
-        ));
+        return new self(Texto::de('personal.errores.vigencia_recurso_solapada', [
+            'recurso' => $etiquetaRecurso,
+            'rango' => self::rango($desde, $hasta),
+        ]));
     }
 
     private static function rango(string $desde, ?string $hasta): string
     {
-        return $desde.'–'.($hasta ?? 'vigente');
+        return $desde.'–'.($hasta ?? Texto::de('personal.errores.vigencia_indefinida'));
     }
 }

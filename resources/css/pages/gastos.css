@@ -1,115 +1,55 @@
 /*
  * Pages: gastos/index, gastos/create
  * (app/Dominios/Finanzas/Infraestructura/Http/Views/pages/gastos/) —
- * HU-33, tarea 47: gastos con categoría y comprobante. Mismo molde de grid
- * que anticipos.css, con seis columnas en el listado (fecha, rubro,
- * imputación, monto, comprobante, acciones). Todo color y medida por token
- * (CLAUDE.md invariante 11).
+ * HU-33, tarea 47: gastos con categoría y comprobante; homogeneizadas en la
+ * tarea 118. Todo color y medida por token (CLAUDE.md invariante 11).
+ *
+ * La tabla, el filtro, el layout del formulario, el campo de archivo y la
+ * paginación los resuelve el catálogo (`index-table`, `filter-panel`,
+ * `form-layout`, `file-field`, `pagination`, `stat-card`): acá queda solo lo
+ * que es propio de estas pantallas — la grilla de la franja de KPI y el
+ * aspecto de una celda.
  */
 
-.ag-gastos {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-5);
-}
-
-/* Listado (index) */
-
-
-.ag-gastos__filtros .ag-input,
-.ag-gastos__filtros .ag-select,
-.ag-gastos__filtros .ag-date {
-    min-width: 14rem;
-}
-
-
-.ag-gastos__tabla {
-    border: 1px solid var(--ag-color-border-card);
-    border-radius: var(--ag-radius-md);
-    background-color: var(--ag-color-surface-card);
-    overflow: hidden;
-}
-
-.ag-gastos__head,
-.ag-gastos__fila {
-    display: grid;
-    grid-template-columns: 1fr 1.2fr 1.4fr 1fr 1fr auto;
-    gap: var(--ag-space-4);
-    align-items: center;
-    padding: var(--ag-space-3) var(--ag-space-4);
-}
-
-.ag-gastos__head {
-    background-color: var(--ag-color-bg-table-head);
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-xs);
-    font-weight: var(--ag-font-weight-medium);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.ag-gastos__fila {
-    border-top: 1px solid var(--ag-color-border-row);
-    color: var(--ag-color-text);
-    font-size: var(--ag-font-size-sm);
-}
-
-.ag-gastos__fila:hover {
-    background-color: var(--ag-color-bg-row-hover);
-}
-
-.ag-gastos__cifra {
-    font-family: var(--ag-font-family-mono);
-}
-
-.ag-gastos__sin-comprobante {
-    color: var(--ag-color-text-muted);
-}
-
-.ag-gastos__acciones {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--ag-space-2);
-}
-
-.ag-gastos__paginacion {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--ag-space-4);
-}
-
-.ag-gastos__paginacion-info {
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-sm);
-}
-
-@media (max-width: 992px) {
-    .ag-gastos__head {
-        display: none;
-    }
-
-    .ag-gastos__fila {
-        grid-template-columns: 1fr;
-        gap: var(--ag-space-1);
-    }
-
-    .ag-gastos__acciones {
-        justify-content: flex-start;
-        margin-top: var(--ag-space-2);
-    }
-}
-
-/* Formulario (create) */
-
-.ag-gastos-form-page {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-5);
-}
-
+.ag-gastos,
 .ag-gastos-form {
     display: flex;
     flex-direction: column;
     gap: var(--ag-space-5);
+}
+
+/*
+ * Listado: franja de KPI bajo la cabecera, mismo patrón que `estadias.css` y
+ * `stock.css`. El contenedor consultado es el WRAPPER de la página, no la
+ * propia grilla: una `@container` pregunta por el ancestro más cercano, así
+ * que declarar `container-type` en el mismo elemento que se consulta no
+ * matchea nunca y la franja se queda en una columna. Se consulta el ancho del
+ * contenido del panel, que cambia con el sidebar, no el del viewport.
+ */
+
+.ag-gastos {
+    container: ag-gastos / inline-size;
+}
+
+.ag-gastos__kpis {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--ag-space-4);
+}
+
+@container ag-gastos (min-width: 36rem) {
+    .ag-gastos__kpis {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@container ag-gastos (min-width: 60rem) {
+    .ag-gastos__kpis {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+/* Un gasto sin archivo adjunto: no es un estado, se atenúa en vez de rotularse. */
+.ag-gastos__atenuado {
+    color: var(--ag-color-text-muted);
 }

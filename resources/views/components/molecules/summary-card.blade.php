@@ -16,8 +16,21 @@
       `badge` renderiza el valor como `atoms/badge` (variant = `variant`,
       default "neutral") en vez de texto plano — el caso "Estado: Vigente".
 
+      `variant` SIN `badge` (15/9/2026, pedido directo): colorea el texto
+      plano con el mismo token `-strong` que usaría el badge de esa variante
+      (`ag-summary-card__value--success`/`--danger`/etc.), sin la píldora.
+      Es el caso de una CIFRA que tiene que seguir alineada en columna con
+      otras cifras de la misma tarjeta (p. ej. un balance en Bs.) — el badge
+      tiene padding interno propio, así que el dígito queda corrido a la
+      izquierda del resto de la columna aunque la píldora sí calce con el
+      borde derecho (bug real, encontrado 15/9/2026 sobre el panel andando:
+      el borde alineaba, el número no). Con `variant: 'neutral'` (o sin
+      `variant`) no cambia nada — mismo texto de siempre.
+
     Slot con nombre:
-    - action: botón al pie (`atoms/button`), p. ej. "Ver facturación".
+    - action: botón al pie (`atoms/button`), p. ej. "Ver facturación". Puede
+      llevar VARIOS botones (19/9/2026, "Ver lista de lotes" + "Editar en
+      bloque"): el contenedor los apila con un espacio entre sí.
 --}}
 @props([
     'title',
@@ -35,7 +48,15 @@
                     @if ($item['badge'] ?? false)
                         <x-atoms.badge :variant="$item['variant'] ?? 'neutral'">{{ $item['value'] }}</x-atoms.badge>
                     @else
-                        <span class="{{ ($item['mono'] ?? false) ? 'ag-summary-card__value--mono' : '' }}">{{ $item['value'] }}</span>
+                        @php
+                            $variante = $item['variant'] ?? 'neutral';
+                            $clases = trim(
+                                (($item['mono'] ?? false) ? 'ag-summary-card__value--mono' : '')
+                                .' '
+                                .($variante !== 'neutral' ? "ag-summary-card__value--{$variante}" : ''),
+                            );
+                        @endphp
+                        <span class="{{ $clases }}">{{ $item['value'] }}</span>
                     @endif
                 </dd>
             </div>

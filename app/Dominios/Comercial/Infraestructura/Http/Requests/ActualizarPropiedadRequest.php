@@ -2,13 +2,16 @@
 
 namespace App\Dominios\Comercial\Infraestructura\Http\Requests;
 
+use App\Dominios\Comercial\Dominio\ColorPropiedad;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 /**
- * `PUT /panel/propiedades/{propiedad}` (ADR 0018). Mismo criterio que
+ * `PUT /panel/propiedades/{propiedad}` (ADR 0018; ubicación estructurada —
+ * adenda 16/9/2026 a ADR 0018 punto 1). Mismo criterio que
  * `CrearPropiedadRequest` para el nombre (sin regla `unique`, ver su
- * docblock).
+ * docblock) y para la cadena geográfica (la consistencia real la valida el
+ * caso de uso, no este Request).
  */
 final class ActualizarPropiedadRequest extends FormRequest
 {
@@ -22,12 +25,24 @@ final class ActualizarPropiedadRequest extends FormRequest
                 Rule::exists('com_clientes', 'id')->whereNull('deleted_at'),
             ],
             'nombre' => ['required', 'string', 'max:150'],
-            'ubicacion' => ['nullable', 'string', 'max:255'],
-            'departamento' => ['nullable', 'string', 'max:100'],
-            'municipio' => ['nullable', 'string', 'max:100'],
+            'hectareas' => ['nullable', 'numeric', 'gt:0'],
+            'departamento_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('com_departamentos', 'id')->whereNull('deleted_at'),
+            ],
+            'provincia_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('com_provincias', 'id')->whereNull('deleted_at'),
+            ],
+            'municipio_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('com_municipios', 'id')->whereNull('deleted_at'),
+            ],
             'localidad' => ['nullable', 'string', 'max:150'],
-            'latitud' => ['nullable', 'required_with:longitud', 'numeric', 'between:-90,90'],
-            'longitud' => ['nullable', 'required_with:latitud', 'numeric', 'between:-180,180'],
+            'color' => ['nullable', 'string', Rule::in(ColorPropiedad::valores())],
         ];
     }
 
@@ -35,10 +50,14 @@ final class ActualizarPropiedadRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'cliente_id.required' => 'Seleccioná un cliente.',
-            'cliente_id.exists' => 'El cliente seleccionado no es válido.',
-            'latitud.required_with' => __('comercial.propiedades.error_coordenada_incompleta'),
-            'longitud.required_with' => __('comercial.propiedades.error_coordenada_incompleta'),
+            'cliente_id.required' => __('comercial.contratos.error_cliente_requerido'),
+            'cliente_id.exists' => __('comercial.contratos.error_cliente_invalido'),
+            'nombre.required' => __('comercial.propiedades.error_nombre_requerido'),
+            'hectareas.gt' => __('comercial.validacion.hectareas_mayor_a_cero'),
+            'departamento_id.exists' => __('comercial.validacion.departamento_invalido'),
+            'provincia_id.exists' => __('comercial.validacion.provincia_invalida'),
+            'municipio_id.exists' => __('comercial.validacion.municipio_invalido'),
+            'color.in' => __('comercial.validacion.color_invalido'),
         ];
     }
 }

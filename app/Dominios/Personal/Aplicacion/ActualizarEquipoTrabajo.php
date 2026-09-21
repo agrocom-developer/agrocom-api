@@ -2,7 +2,6 @@
 
 namespace App\Dominios\Personal\Aplicacion;
 
-use App\Dominios\Personal\Dominio\EstadoEquipoTrabajo;
 use App\Dominios\Personal\Dominio\Excepciones\EquipoTrabajoDuplicado;
 use App\Dominios\Personal\Infraestructura\Eloquent\EquipoTrabajo;
 use Illuminate\Database\QueryException;
@@ -13,6 +12,10 @@ use Illuminate\Database\QueryException;
  * casos de uso, cada asignación es una fila con su propia vigencia (ADR 0015
  * punto 3: un gasto de marzo se atribuye a la formación de marzo, editar acá
  * no puede reescribir esa historia).
+ *
+ * Ya NO recibe `estado` (corrección 19/9/2026, invariante 7 de CLAUDE.md):
+ * editar los datos de una cuadrilla nunca toca su estado — el cambio de
+ * estado tiene su propio caso de uso, `CambiarEstadoEquipoTrabajo`.
  */
 final class ActualizarEquipoTrabajo
 {
@@ -26,7 +29,6 @@ final class ActualizarEquipoTrabajo
         string $codigo,
         ?string $nombre,
         int $baseId,
-        EstadoEquipoTrabajo $estado,
         string $desde,
         ?string $hasta,
     ): EquipoTrabajo {
@@ -34,7 +36,6 @@ final class ActualizarEquipoTrabajo
             'codigo' => $codigo,
             'nombre' => $nombre,
             'base_id' => $baseId,
-            'estado' => $estado->value,
             'desde' => $desde,
             'hasta' => $hasta,
         ]);

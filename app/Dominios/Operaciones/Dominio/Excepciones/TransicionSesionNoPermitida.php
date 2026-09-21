@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Operaciones\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use App\Dominios\Operaciones\Dominio\EstadoSesion;
 use DomainException;
 
@@ -14,8 +15,9 @@ final class TransicionSesionNoPermitida extends DomainException
 {
     public static function entre(EstadoSesion $desde, EstadoSesion $hasta): self
     {
-        return new self(
-            "No se puede pasar una sesión de '{$desde->value}' a '{$hasta->value}'.",
-        );
+        return new self(Texto::de('operaciones.errores.transicion_sesion_no_permitida', [
+            'desde' => $desde->value,
+            'hasta' => $hasta->value,
+        ]));
     }
 }

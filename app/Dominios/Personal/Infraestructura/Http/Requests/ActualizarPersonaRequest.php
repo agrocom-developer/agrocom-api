@@ -32,7 +32,9 @@ final class ActualizarPersonaRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'base_id.exists' => 'La base seleccionada no es válida.',
+            'nombre.required' => __('personal.personas.error_nombre_requerido'),
+            'rol.required' => __('personal.personas.error_rol_requerido'),
+            'base_id.exists' => __('personal.validacion.base_invalida'),
         ];
     }
 }

@@ -10,6 +10,7 @@ use App\Dominios\Inventario\Dominio\Excepciones\RepuestoDuplicado;
 use App\Dominios\Inventario\Infraestructura\Eloquent\Repuesto;
 use App\Dominios\Inventario\Infraestructura\Http\Requests\ActualizarRepuestoRequest;
 use App\Dominios\Inventario\Infraestructura\Http\Requests\CrearRepuestoRequest;
+use App\Dominios\Inventario\Infraestructura\Http\ResumenRelacionadoDeRepuesto;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,6 +26,11 @@ use Illuminate\View\View;
  * DENTRO del controlador contra el ROL ACTIVO vía {@see AutorizacionPanelWeb}
  * — mismo criterio que el resto del panel. Ninguna regla de negocio acá: los
  * casos de uso de `Aplicacion/` hacen el trabajo.
+ *
+ * La ficha de edición lleva el resumen relacionado de la tarea 117
+ * ({@see ResumenRelacionadoDeRepuesto}): existencias, últimos movimientos y
+ * órdenes de mantenimiento que lo consumieron, cada tarjeta gateada por el
+ * permiso de lo que muestra.
  */
 final class RepuestosController
 {
@@ -69,7 +75,7 @@ final class RepuestosController
         $datos = $request->validated();
 
         try {
-            $crearRepuesto->ejecutar(
+            $repuesto = $crearRepuesto->ejecutar(
                 (string) $datos['codigo'],
                 (string) $datos['descripcion'],
                 (string) $datos['unidad'],
@@ -82,18 +88,23 @@ final class RepuestosController
                 ->withErrors(['codigo' => $excepcion->getMessage()]);
         }
 
+        // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
         return redirect()
-            ->route('panel.repuestos.index')
+            ->route('panel.repuestos.edit', $repuesto)
             ->with('estado', __('inventario.repuestos.creado'));
     }
 
-    public function edit(Request $request, Repuesto $repuesto): View
+    public function edit(Request $request, Repuesto $repuesto, ResumenRelacionadoDeRepuesto $resumenRelacionado): View
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
 
+        $cascara = $this->autorizacion->cascara($request);
+        $zonaHoraria = $cascara['zonaHoraria'] ?? null;
+
         return view('inventario::pages.repuestos.edit', [
-            ...$this->autorizacion->cascara($request),
+            ...$cascara,
             'repuesto' => $repuesto,
+            'resumenRelacionado' => $resumenRelacionado->tarjetas($request, $repuesto, is_string($zonaHoraria) ? $zonaHoraria : null),
         ]);
     }
 
@@ -118,8 +129,9 @@ final class RepuestosController
                 ->withErrors(['codigo' => $excepcion->getMessage()]);
         }
 
+        // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
         return redirect()
-            ->route('panel.repuestos.index')
+            ->route('panel.repuestos.edit', $repuesto)
             ->with('estado', __('inventario.repuestos.actualizado'));
     }
 

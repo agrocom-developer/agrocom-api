@@ -4,7 +4,8 @@
     `_formulario.blade.php`, compartido con `create.blade.php`.
 
     Datos esperados (ver DronesController::edit()): la cáscara de
-    CascaraPanel, más $dron (Dron).
+    CascaraPanel, más $dron (Dron) y $resumenRelacionado (el aside del
+    formulario, que el `@include` hereda tal cual).
 
     Gateada por `operaciones.dron.editar`, verificado server-side en el
     controlador.

@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Seguridad\Dominio\Excepciones;
 
+use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use RuntimeException;
 
 /**
@@ -14,6 +15,6 @@ final class ContrasenaActualIncorrecta extends RuntimeException
 {
     public static function porIntento(): self
     {
-        return new self('La contraseña actual no es correcta.');
+        return new self(Texto::de('seguridad.errores.contrasena_actual_incorrecta'));
     }
 }

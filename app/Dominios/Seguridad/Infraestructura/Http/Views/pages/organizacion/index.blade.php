@@ -60,12 +60,6 @@
                 :subtitle="__('seguridad.organizacion.subtitulo')"
             />
 
-            @if ($tabActiva === 'organizacion')
-                <x-molecules.alert-strip variant="info" icon="visibility">
-                    {{ __('seguridad.organizacion.alerta_vista_previa') }}
-                </x-molecules.alert-strip>
-            @endif
-
             @if (session('estado'))
                 <x-molecules.alert-strip variant="success" icon="check_circle">
                     {{ session('estado') }}
@@ -92,9 +86,9 @@
                                     <x-atoms.input
                                         type="text"
                                         name="nombre"
-                                        label="{{ __('seguridad.organizacion.campo_nombre') }}"
-                                        value="{{ old('nombre', $datosEmpresa?->nombre) }}"
-                                        error="{{ $errors->first('nombre') }}"
+                                        :label="__('seguridad.organizacion.campo_nombre')"
+                                        :value="old('nombre', $datosEmpresa?->nombre)"
+                                        :error="$errors->first('nombre')"
                                         required
                                         :disabled="! $puedeEditarOrganizacion"
                                     />
@@ -102,9 +96,9 @@
                                     <x-atoms.input
                                         type="text"
                                         name="rubro"
-                                        label="{{ __('seguridad.organizacion.campo_rubro') }}"
-                                        value="{{ old('rubro', $datosEmpresa?->rubro) }}"
-                                        error="{{ $errors->first('rubro') }}"
+                                        :label="__('seguridad.organizacion.campo_rubro')"
+                                        :value="old('rubro', $datosEmpresa?->rubro)"
+                                        :error="$errors->first('rubro')"
                                         required
                                         :disabled="! $puedeEditarOrganizacion"
                                     />
@@ -113,7 +107,7 @@
                                         class="ag-form-section__field--full"
                                         name="logo"
                                         size="lg"
-                                        accept=".png,.svg"
+                                        accept=".png,.svg,.jpg,.jpeg,.webp,.gif"
                                         remove-name="logo_eliminar"
                                         :label="__('seguridad.organizacion.campo_logo')"
                                         :file-name="$logoArchivo['nombre'] ?? null"
@@ -123,7 +117,7 @@
                                         :replace-label="__('seguridad.organizacion.campo_logo_reemplazar')"
                                         :remove-label="$logoArchivo ? __('seguridad.organizacion.campo_logo_quitar') : null"
                                         :disabled="! $puedeEditarOrganizacion"
-                                        error="{{ $errors->first('logo') }}"
+                                        :error="$errors->first('logo')"
                                     >
                                         <x-atoms.logo size="md" />
                                     </x-molecules.file-field>
@@ -136,18 +130,18 @@
                                     <x-atoms.input
                                         type="email"
                                         name="email"
-                                        label="{{ __('seguridad.organizacion.campo_email') }}"
-                                        value="{{ old('email', $datosEmpresa?->email) }}"
-                                        error="{{ $errors->first('email') }}"
+                                        :label="__('seguridad.organizacion.campo_email')"
+                                        :value="old('email', $datosEmpresa?->email)"
+                                        :error="$errors->first('email')"
                                         :disabled="! $puedeEditarOrganizacion"
                                     />
 
                                     <x-atoms.input
                                         type="tel"
                                         name="telefono"
-                                        label="{{ __('seguridad.organizacion.campo_telefono') }}"
-                                        value="{{ old('telefono', $datosEmpresa?->telefono) }}"
-                                        error="{{ $errors->first('telefono') }}"
+                                        :label="__('seguridad.organizacion.campo_telefono')"
+                                        :value="old('telefono', $datosEmpresa?->telefono)"
+                                        :error="$errors->first('telefono')"
                                         :disabled="! $puedeEditarOrganizacion"
                                     />
 
@@ -155,9 +149,9 @@
                                         class="ag-form-section__field--full"
                                         type="text"
                                         name="direccion"
-                                        label="{{ __('seguridad.organizacion.campo_direccion') }}"
-                                        value="{{ old('direccion', $datosEmpresa?->direccion) }}"
-                                        error="{{ $errors->first('direccion') }}"
+                                        :label="__('seguridad.organizacion.campo_direccion')"
+                                        :value="old('direccion', $datosEmpresa?->direccion)"
+                                        :error="$errors->first('direccion')"
                                         :disabled="! $puedeEditarOrganizacion"
                                     />
                                 </x-molecules.form-section>
@@ -187,9 +181,9 @@
                                         <x-molecules.plan-card
                                             name="plan"
                                             value="basico"
-                                            plan-name="{{ __('seguridad.organizacion.plan_basico_nombre') }}"
-                                            price="{{ __('seguridad.organizacion.plan_basico_precio') }}"
-                                            period="{{ __('seguridad.organizacion.plan_period') }}"
+                                            :plan-name="__('seguridad.organizacion.plan_basico_nombre')"
+                                            :price="__('seguridad.organizacion.plan_basico_precio')"
+                                            :period="__('seguridad.organizacion.plan_period')"
                                             :features="[
                                                 __('seguridad.organizacion.plan_basico_feat_1'),
                                                 __('seguridad.organizacion.plan_basico_feat_2'),
@@ -201,9 +195,9 @@
                                         <x-molecules.plan-card
                                             name="plan"
                                             value="profesional"
-                                            plan-name="{{ __('seguridad.organizacion.plan_profesional_nombre') }}"
-                                            price="{{ __('seguridad.organizacion.plan_profesional_precio') }}"
-                                            period="{{ __('seguridad.organizacion.plan_period') }}"
+                                            :plan-name="__('seguridad.organizacion.plan_profesional_nombre')"
+                                            :price="__('seguridad.organizacion.plan_profesional_precio')"
+                                            :period="__('seguridad.organizacion.plan_period')"
                                             :features="[
                                                 __('seguridad.organizacion.plan_profesional_feat_1'),
                                                 __('seguridad.organizacion.plan_profesional_feat_2'),
@@ -212,15 +206,15 @@
                                             ]"
                                             selected
                                             disabled
-                                            highlighted-label="{{ __('seguridad.organizacion.plan_destacado') }}"
+                                            :highlighted-label="__('seguridad.organizacion.plan_destacado')"
                                         />
 
                                         <x-molecules.plan-card
                                             name="plan"
                                             value="enterprise"
-                                            plan-name="{{ __('seguridad.organizacion.plan_enterprise_nombre') }}"
-                                            price="{{ __('seguridad.organizacion.plan_enterprise_precio') }}"
-                                            period="{{ __('seguridad.organizacion.plan_period') }}"
+                                            :plan-name="__('seguridad.organizacion.plan_enterprise_nombre')"
+                                            :price="__('seguridad.organizacion.plan_enterprise_precio')"
+                                            :period="__('seguridad.organizacion.plan_period')"
                                             :features="[
                                                 __('seguridad.organizacion.plan_enterprise_feat_1'),
                                                 __('seguridad.organizacion.plan_enterprise_feat_2'),
@@ -239,7 +233,7 @@
                                 >
                                     <x-atoms.switch
                                         name="multi_sucursal"
-                                        label="{{ __('seguridad.organizacion.switch_multi_sucursal') }}"
+                                        :label="__('seguridad.organizacion.switch_multi_sucursal')"
                                         :checked="false"
                                         :help="__('seguridad.organizacion.switch_multi_sucursal_help')"
                                         disabled
@@ -284,9 +278,9 @@
                             <x-atoms.input
                                 type="text"
                                 name="razon_social_fiscal"
-                                label="{{ __('seguridad.organizacion.campo_razon_social_fiscal') }}"
-                                value="{{ old('razon_social_fiscal', $datosFiscales?->razon_social_fiscal) }}"
-                                error="{{ $errors->first('razon_social_fiscal') }}"
+                                :label="__('seguridad.organizacion.campo_razon_social_fiscal')"
+                                :value="old('razon_social_fiscal', $datosFiscales?->razon_social_fiscal)"
+                                :error="$errors->first('razon_social_fiscal')"
                                 required
                                 :disabled="! $puedeEditarOrganizacion"
                             />
@@ -294,9 +288,9 @@
                             <x-atoms.input
                                 type="text"
                                 name="nit"
-                                label="{{ __('seguridad.organizacion.campo_nit') }}"
-                                value="{{ old('nit', $datosFiscales?->nit) }}"
-                                error="{{ $errors->first('nit') }}"
+                                :label="__('seguridad.organizacion.campo_nit')"
+                                :value="old('nit', $datosFiscales?->nit)"
+                                :error="$errors->first('nit')"
                                 required
                                 :disabled="! $puedeEditarOrganizacion"
                             />
@@ -305,9 +299,9 @@
                                 class="ag-form-section__field--full"
                                 type="text"
                                 name="domicilio_fiscal"
-                                label="{{ __('seguridad.organizacion.campo_domicilio_fiscal') }}"
-                                value="{{ old('domicilio_fiscal', $datosFiscales?->domicilio_fiscal) }}"
-                                error="{{ $errors->first('domicilio_fiscal') }}"
+                                :label="__('seguridad.organizacion.campo_domicilio_fiscal')"
+                                :value="old('domicilio_fiscal', $datosFiscales?->domicilio_fiscal)"
+                                :error="$errors->first('domicilio_fiscal')"
                                 required
                                 :disabled="! $puedeEditarOrganizacion"
                             />
@@ -316,9 +310,9 @@
                                 class="ag-form-section__field--full"
                                 type="text"
                                 name="actividad_economica"
-                                label="{{ __('seguridad.organizacion.campo_actividad_economica') }}"
-                                value="{{ old('actividad_economica', $datosFiscales?->actividad_economica) }}"
-                                error="{{ $errors->first('actividad_economica') }}"
+                                :label="__('seguridad.organizacion.campo_actividad_economica')"
+                                :value="old('actividad_economica', $datosFiscales?->actividad_economica)"
+                                :error="$errors->first('actividad_economica')"
                                 required
                                 :disabled="! $puedeEditarOrganizacion"
                             />
@@ -326,9 +320,9 @@
                             <x-atoms.textarea
                                 class="ag-form-section__field--full"
                                 name="leyenda_pie"
-                                label="{{ __('seguridad.organizacion.campo_leyenda_pie') }}"
-                                value="{{ old('leyenda_pie', $datosFiscales?->leyenda_pie) }}"
-                                help="{{ __('seguridad.organizacion.campo_leyenda_pie_ayuda') }}"
+                                :label="__('seguridad.organizacion.campo_leyenda_pie')"
+                                :value="old('leyenda_pie', $datosFiscales?->leyenda_pie)"
+                                :help="__('seguridad.organizacion.campo_leyenda_pie_ayuda')"
                                 :disabled="! $puedeEditarOrganizacion"
                             />
                         </x-molecules.form-section>

@@ -99,31 +99,166 @@
     /* success (auditoría visual externa, obs. #2): antes era literalmente
        igual a primary en los tres tonos (green-700 crudo, green-100 subtle)
        — un chip "Validada" competía visualmente con el botón "Programar
-       sesión". Ahora usa el escalón green-500 (ni el primitivo de primary
-       ni el de success-strong), sin reutilizar green-700 en ningún punto de
-       la cadena. success-strong ya no deriva de green-700+green-900 sino de
-       green-500+green-900 — AA verificado: 6.61:1 contra el nuevo
-       success-subtle (antes 7.08:1 contra green-100, margen equivalente). */
-    --ag-color-success: var(--ag-color-green-500);
-    --ag-color-success-subtle: color-mix(in srgb, var(--ag-color-green-500) 16%, var(--ag-color-sand-50) 84%);
-    --ag-color-success-strong: color-mix(in srgb, var(--ag-color-green-500) 30%, var(--ag-color-green-900) 70%);
-    --ag-color-success-border: color-mix(in srgb, var(--ag-color-green-500) 30%, var(--ag-color-sand-50) 70%);
+       sesión". Usa green-600 (ver primitives/base.css — Fiori "positive"
+       literal, no el green-500/700 de la rampa de marca), sin reutilizar
+       green-700 (primary) en ningún punto de la cadena. success-strong
+       sigue derivando por fórmula de green-900 como ancla oscura — AA
+       verificado: 7.36:1 contra el nuevo success-subtle (antes 6.61:1). */
+    --ag-color-success: var(--ag-color-green-600);
+    --ag-color-success-subtle: color-mix(in srgb, var(--ag-color-green-600) 16%, var(--ag-color-sand-50) 84%);
+    --ag-color-success-strong: color-mix(in srgb, var(--ag-color-green-600) 30%, var(--ag-color-green-900) 70%);
+    --ag-color-success-border: color-mix(in srgb, var(--ag-color-green-600) 30%, var(--ag-color-sand-50) 70%);
+    /* danger (tarea de tokens, 17/9/2026): red-600/-700 son ahora las UI
+       Indication 2/1 de Fiori (#bb0000/#880000, literales) — crudo/ícono
+       y texto `-strong` respectivamente, ver primitives/base.css. */
     --ag-color-danger: var(--ag-color-red-600);
     --ag-color-danger-subtle: var(--ag-color-red-50);
-    --ag-color-danger-strong: var(--ag-color-red-900);
+    --ag-color-danger-strong: var(--ag-color-red-700);
     --ag-color-danger-border: var(--ag-color-red-200);
     /* Relleno sólido de botón "danger", constante entre temas (mismo
        criterio que --ag-color-accent-contrast-fill) — ver button.css. Mismo
-       valor que --ag-color-danger en este tema, a propósito. */
+       valor que --ag-color-danger en este tema, a propósito. AA 6.75:1
+       contra texto blanco (ver sistema_diseno_panel.md §1.3). */
     --ag-color-danger-contrast-fill: var(--ag-color-red-600);
-    --ag-color-warning: var(--ag-color-amber-500);
-    --ag-color-warning-subtle: var(--ag-color-amber-100);
-    --ag-color-warning-strong: var(--ag-color-amber-800);
-    --ag-color-warning-border: color-mix(in srgb, var(--ag-color-amber-500) 30%, var(--ag-color-sand-50) 70%);
-    --ag-color-info: var(--ag-color-blue-500);
-    --ag-color-info-subtle: var(--ag-color-blue-50);
-    --ag-color-info-strong: var(--ag-color-blue-700);
-    --ag-color-info-border: color-mix(in srgb, var(--ag-color-blue-500) 30%, var(--ag-color-sand-50) 70%);
+    /* warning (tarea de tokens, 17/9/2026): pasa de amber-500 a amber-700
+       (marca) — coincide casi exacto con la UI Indication 3 de Fiori
+       (#e9730c/#e8720c, literalmente el mismo tono a simple vista, ver
+       primitives/base.css) sin sumar un primitivo nuevo. warning-subtle deja
+       de ser el primitivo fijo amber-100 (compartido con accent-subtle/
+       bg-auth — no se puede oscurecer sin arrastrar esas superficies) y pasa
+       a fórmula color-mix, mismo criterio que success/distintivo.
+       warning-strong pasa de amber-800 a amber-900: contra el warning-subtle
+       nuevo (más saturado), amber-800 cae a 4.29:1 (bajo AA); amber-900 da
+       7.25:1. amber-900 ya es primitivo existente (--ag-color-accent-hover
+       en oscuro), no es un valor nuevo. */
+    --ag-color-warning: var(--ag-color-amber-700);
+    --ag-color-warning-subtle: color-mix(in srgb, var(--ag-color-amber-700) 16%, var(--ag-color-sand-50) 84%);
+    --ag-color-warning-strong: var(--ag-color-amber-900);
+    --ag-color-warning-border: color-mix(in srgb, var(--ag-color-amber-700) 30%, var(--ag-color-sand-50) 70%);
+    /* info (tarea de tokens, tercera vuelta, 18/9/2026 — reasignación
+       explícita del usuario, con su propia tabla de nombres): pasa de
+       blue-600 a teal-500 (UI Indication 6 de Fiori, #0f828f, literal). El
+       azul (blue-600, #0a6ed1, UI Indication 5) que hasta ahora era `info`
+       queda libre — el usuario lo nombró "primary 2", ver el bloque nuevo
+       más abajo, token de referencia sin conectar a pantalla todavía.
+       info-subtle/-strong pasan a la misma fórmula que ya usaba
+       `distintivo-3` (mismo primitivo teal-500/700, ver primitives/base.css)
+       — nota: `--ag-color-distintivo-3` (abajo) queda con el MISMO valor
+       crudo que `info` a partir de esta vuelta, duplicado a propósito
+       porque la tabla de 8 nombres que dio el usuario no tiene una novena
+       posición para el categórico "teal" — no se retiró `distintivo-3`
+       porque hoy no está conectado a ninguna pantalla (a diferencia de
+       `info`, que sí), pero es candidato a fusionarse/retirarse si esto
+       genera confusión visual real en el futuro. --ag-color-focus-ring
+       (más abajo) sigue en blue-500, sin tocar — no es parte de este
+       cambio. */
+    --ag-color-info: var(--ag-color-teal-500);
+    --ag-color-info-subtle: color-mix(in srgb, var(--ag-color-teal-500) 16%, var(--ag-color-sand-50) 84%);
+    --ag-color-info-strong: var(--ag-color-teal-700);
+    --ag-color-info-border: color-mix(in srgb, var(--ag-color-teal-500) 30%, var(--ag-color-sand-50) 70%);
+
+    /* "Distintivo" (tarea de tokens, 17/9/2026, ver primitives/base.css):
+       dos tonos puramente CATEGÓRICOS (violeta/magenta), sin carga de
+       "bueno"/"malo" a diferencia de los cuatro estados de arriba — para
+       diferenciar más de 4 valores sin pisarse (seis categorías de
+       insumo, un estado con más de cuatro pasos). Valores literales de
+       Fiori (UI Indication 7/8, pedido explícito del usuario). Mismo trío
+       crudo/-subtle/-strong que los estados de arriba, mismo criterio de
+       fórmula que `success` (color-mix del crudo sobre sand-50, nunca un
+       primitivo -subtle aparte). AA verificado en sistema_diseno_panel.md
+       §1.3: `-strong` sobre su propio `-subtle` ≥7.5:1 y sobre
+       `--ag-color-surface-card` ≥8.6:1 (AAA) en este tema. Sin conectar a
+       ninguna pantalla todavía. */
+    --ag-color-distintivo-1: var(--ag-color-violet-500);
+    --ag-color-distintivo-1-subtle: color-mix(in srgb, var(--ag-color-violet-500) 16%, var(--ag-color-sand-50) 84%);
+    --ag-color-distintivo-1-strong: var(--ag-color-violet-700);
+    --ag-color-distintivo-1-border: color-mix(in srgb, var(--ag-color-violet-500) 30%, var(--ag-color-sand-50) 70%);
+    --ag-color-distintivo-2: var(--ag-color-magenta-500);
+    --ag-color-distintivo-2-subtle: color-mix(in srgb, var(--ag-color-magenta-500) 16%, var(--ag-color-sand-50) 84%);
+    --ag-color-distintivo-2-strong: var(--ag-color-magenta-700);
+    --ag-color-distintivo-2-border: color-mix(in srgb, var(--ag-color-magenta-500) 30%, var(--ag-color-sand-50) 70%);
+    /* Tercer categórico (teal, UI Indication 6) — mismo criterio que
+       distintivo-1/2 de arriba. Ver nota en el bloque `info` más arriba:
+       desde la tercera vuelta (18/9/2026) comparte el mismo primitivo
+       crudo que `--ag-color-info`. */
+    --ag-color-distintivo-3: var(--ag-color-teal-500);
+    --ag-color-distintivo-3-subtle: color-mix(in srgb, var(--ag-color-teal-500) 16%, var(--ag-color-sand-50) 84%);
+    --ag-color-distintivo-3-strong: var(--ag-color-teal-700);
+    --ag-color-distintivo-3-border: color-mix(in srgb, var(--ag-color-teal-500) 30%, var(--ag-color-sand-50) 70%);
+
+    /* "primary 2" (tarea de tokens, tercera vuelta, 18/9/2026): blue-600
+       (UI Indication 5 de Fiori, #0a6ed1) — el tono que hasta esta vuelta
+       ocupaba `info`. El usuario lo renombró explícitamente "primary 2" en
+       su tabla de 8 colores/8 nombres; queda como token de referencia, SIN
+       conectar a ningún componente ni pantalla todavía (mismo estado que
+       `distintivo-1/2/3` cuando se crearon el 17/9). Mismo trío
+       crudo/-subtle/-strong/-border que el resto de esta familia —
+       info-strong anterior (blue-700, "acero") se reutiliza acá como
+       -strong, ya estaba AA-verificado (§1.3). */
+    --ag-color-primary-2: var(--ag-color-blue-600);
+    --ag-color-primary-2-subtle: var(--ag-color-blue-50);
+    --ag-color-primary-2-strong: var(--ag-color-blue-700);
+    --ag-color-primary-2-border: color-mix(in srgb, var(--ag-color-blue-600) 30%, var(--ag-color-sand-50) 70%);
+
+    /* "alert" (18/9/2026, novena vuelta): UI Indication 1 de Fiori
+       (`#880000`, red-700) — el mismo primitivo que ya usa `danger-strong`
+       como texto, ahora con nombre y token PROPIOS porque el usuario lo
+       necesita como color independiente (campanias/index.blade.php,
+       "Cerrar" → estado `cerrada`, para diferenciarlo del rojo de
+       "Eliminar", que es `danger`/red-600). `-strong` se queda igual al
+       crudo: red-700 ya es el escalón más oscuro de la rampa roja, no hay
+       un cuarto tono más oscuro para derivar. AA: 9.82:1 contra
+       `--ag-color-surface-card` (claro) — ver sistema_diseno_panel.md
+       §1.3. */
+    --ag-color-alert: var(--ag-color-red-700);
+    --ag-color-alert-subtle: color-mix(in srgb, var(--ag-color-red-700) 16%, var(--ag-color-sand-50) 84%);
+    --ag-color-alert-strong: var(--ag-color-red-700);
+    --ag-color-alert-border: color-mix(in srgb, var(--ag-color-red-700) 30%, var(--ag-color-sand-50) 70%);
+
+    /* Relleno sólido "chip fuerte" (segunda vuelta paleta Fiori, 17/9/2026):
+       pedido explícito del usuario de dejar el par tenue `-subtle` + texto
+       `-strong` en `atoms/badge` y en las tarjetas KPI (`molecules/stat-card`)
+       — se leía "con poca opacity", no como estado. Mismo criterio que
+       `--ag-color-danger-contrast-fill`/`--ag-color-accent-contrast-fill` de
+       arriba: relleno CONSTANTE entre temas (idéntico en theme-dark.css), no
+       se aclara/oscurece por tema — es la marca del estado, no una superficie
+       que dependa de fondo claro/oscuro.
+       Texto/ícono encima es SIEMPRE blanco (`--ag-color-gray-0`), SIN
+       excepciones (19/9/2026, decisión del dueño): warning también. Blanco
+       sobre `#e9730c`/amber-700 da 3.03:1 —bajo el 4.5:1 de AA para texto
+       chico— y es un costo asumido a cambio de que todos los estados se lean
+       como una sola familia (ver badge.css). Resto ≥4.56:1 contra blanco
+       (verificado sistema_diseno_panel.md §1.3).
+       Alcance deliberadamente ACOTADO a chips de estado y KPI — los
+       controles de formulario (checkbox/input/switch/select/etc.) siguen
+       con el par tenue/-subtle existente, que ahí sigue siendo el patrón
+       correcto (un campo de error con relleno sólido rojo se lee como roto,
+       no como aviso). danger ya tenía su -contrast-fill (red-600, arriba);
+       acá se completan los estados que faltaban.
+
+       TRAMPA encontrada 18/9/2026 (aviso del usuario, cuarta vuelta): un
+       `-contrast-fill` NUNCA es texto/borde de un elemento sobre una
+       superficie que cambia de tema (`.ag-button--danger-outline` lo usó
+       así un rato y contra la tarjeta oscura daba ~1.91:1, casi
+       invisible) — es SOLO para relleno sólido con su propio texto/ícono
+       fijo encima (blanco, ver arriba), que es constante
+       porque el texto que va ENCIMA también lo es. Para texto/borde
+       DIRECTO sobre `--ag-color-surface-card`/`-bg` (que sí cambia), usar
+       el token PLANO (`--ag-color-danger`, `-warning`, `-info`,
+       `-primary-2`, `-distintivo-1`, `-distintivo-2`) — ya tiene su propio
+       aclarado por tema, AA verificado en oscuro contra la tarjeta:
+       danger ~5.95:1, warning ~6.37:1, primary-2 ~6.15:1, distintivo-1
+       (violeta) ~5.7:1, distintivo-2 (magenta) ~6.17:1 — los seis pasan
+       AA/AAA. success no tiene esta trampa: no existe (todavía) ningún
+       `-outline` de success. Ver sistema_diseno_panel.md §1.3. */
+    --ag-color-success-contrast-fill: var(--ag-color-green-600);
+    --ag-color-warning-contrast-fill: var(--ag-color-amber-700);
+    --ag-color-info-contrast-fill: var(--ag-color-teal-500);
+    --ag-color-distintivo-1-contrast-fill: var(--ag-color-violet-500);
+    --ag-color-distintivo-2-contrast-fill: var(--ag-color-magenta-500);
+    --ag-color-distintivo-3-contrast-fill: var(--ag-color-teal-500);
+    --ag-color-primary-2-contrast-fill: var(--ag-color-blue-600);
+    --ag-color-alert-contrast-fill: var(--ag-color-red-700);
 
     /* Foco (accesibilidad) */
     --ag-color-focus-ring: var(--ag-color-blue-500);
@@ -278,6 +413,14 @@
        de role-card.css, que es exactamente lo que prohíbe la invariante 11 de
        CLAUDE.md; el color resultante es idéntico (green-700 = #1e7a34 al 14%). */
     --ag-shadow-selected: 0 4px 14px color-mix(in srgb, var(--ag-color-green-700) 14%, transparent);
+
+    /* Segunda sombra reasignada por tema (mismo motivo que --ag-shadow-selected
+       arriba): los overlays flotantes del editor de mapa de propiedad
+       (acciones, buscador, coordenadas) viven SOBRE una imagen satelital, no
+       sobre --ag-color-bg — una sombra negra los separa bien en claro, pero
+       en oscuro el mapa ya es oscuro y esa misma sombra se vuelve invisible
+       (pedido directo del dueño, 16/9/2026: "sombra casi clara" en oscuro). */
+    --ag-shadow-overlay-mapa: var(--ag-shadow-md);
 
     /* Bootstrap 5 hereda la marca reasignando sus propias variables nativas
        — así `.btn-primary`, `.alert-success`, el sidebar de AdminLTE, etc.

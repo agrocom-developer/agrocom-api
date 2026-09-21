@@ -34,7 +34,7 @@
         :vista-actual="__('finanzas.planillas.titulo')"
     >
         <div class="ag-planilla-detalle">
-            <x-atoms.button href="{{ route('panel.planillas.index') }}" variant="text" size="sm" icon="arrow_back">
+            <x-atoms.button :href="route('panel.planillas.index')" variant="text" size="sm" icon="arrow_back">
                 {{ __('finanzas.planillas.volver') }}
             </x-atoms.button>
 
@@ -114,7 +114,7 @@
                             <span role="cell" class="ag-planilla-detalle__cifra">{{ __('finanzas.planillas.monto_valor', ['monto' => $detalle->neto]) }}</span>
                             <span role="cell">
                                 @if ($detalle->pdf_path !== null)
-                                    <x-atoms.button href="{{ route('panel.planillas.recibo', [$planilla, $detalle]) }}" variant="outline" size="sm" icon="picture_as_pdf">
+                                    <x-atoms.button :href="route('panel.planillas.recibo', [$planilla, $detalle])" variant="outline" size="sm" icon="picture_as_pdf">
                                         {{ __('finanzas.planillas.ver_recibo') }}
                                     </x-atoms.button>
                                 @else

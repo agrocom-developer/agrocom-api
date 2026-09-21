@@ -19,11 +19,14 @@
 @import './alertas.css';
 @import './clientes.css';
 @import './contratos.css';
+@import './contratos-estado.css';
 @import './campos.css';
 @import './propiedades.css';
 @import './lotes.css';
+@import './lotes-generar.css';
 @import './drones.css';
 @import './ordenes.css';
+@import './ordenes-trabajo.css';
 @import './bases.css';
 @import './personas.css';
 @import './usuarios.css';
@@ -50,8 +53,8 @@
 @import './campanias.css';
 @import './cultivos.css';
 @import './siembra.css';
-@import './equipos-trabajo.css';
+@import './cuadrillas.css';
 @import './configuracion.css';
 @import './busqueda.css';
 @import './fichas-dron.css';
-@import './asignacion-equipos.css';
+@import './reparto-cuadrillas.css';

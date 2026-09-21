@@ -15,7 +15,7 @@
 <html lang="es">
 <head>
     <meta charset="utf-8">
-    <title>Reporte técnico — Trabajo #{{ $trabajo->id }}</title>
+    <title>{{ __('operaciones.pdf.reporte_tecnico.titulo_documento', ['id' => $trabajo->id]) }}</title>
     <style>
         body { font-family: Helvetica, Arial, sans-serif; font-size: 12px; color: black; }
         h1 { font-size: 18px; margin-bottom: 4px; }
@@ -32,77 +32,77 @@
     </style>
 </head>
 <body>
-    <h1>Reporte técnico</h1>
-    <p class="subtitulo">Lote #{{ $trabajo->lote_id }} — Orden #{{ $trabajo->orden_id }} (aplicación {{ $trabajo->nro_aplicacion }})</p>
-    <p class="subtitulo">Emitido el {{ $reporte->generado_en->format('d/m/Y H:i') }}</p>
+    <h1>{{ __('operaciones.pdf.reporte_tecnico.titulo') }}</h1>
+    <p class="subtitulo">{{ __('operaciones.pdf.comun.subtitulo_lote_orden', ['lote' => $trabajo->lote_id, 'orden' => $trabajo->orden_id, 'aplicacion' => $trabajo->nro_aplicacion]) }}</p>
+    <p class="subtitulo">{{ __('operaciones.pdf.reporte_tecnico.emitido_el', ['fecha' => $reporte->generado_en->format('d/m/Y H:i')]) }}</p>
 
-    <h2>Imagen del campo</h2>
+    <h2>{{ __('operaciones.pdf.reporte_tecnico.imagen_campo_titulo') }}</h2>
     {{-- `archivo_url` es una clave del bucket, no una URL: dompdf no puede
          resolverla. Se incrustan los bytes. Ver EvidenciaIncrustada. --}}
     @php($imagenCampo = \App\Dominios\Operaciones\Infraestructura\Http\Presentacion\EvidenciaIncrustada::dataUri($datos['imagen_campo_url']))
     @if ($imagenCampo !== null)
-        <img class="campo" src="{{ $imagenCampo }}" alt="Imagen del campo">
+        <img class="campo" src="{{ $imagenCampo }}" alt="{{ __('operaciones.pdf.reporte_tecnico.imagen_campo_titulo') }}">
     @else
-        <p>Sin imagen del campo registrada.</p>
+        <p>{{ __('operaciones.pdf.reporte_tecnico.imagen_campo_vacio') }}</p>
     @endif
 
-    <h2>Horas de la aplicación</h2>
+    <h2>{{ __('operaciones.pdf.reporte_tecnico.horas_aplicacion_titulo') }}</h2>
     <table>
         <tr>
-            <th>Inicio</th>
-            <td>{{ optional($datos['hora_inicio'])->format('d/m/Y H:i') ?? '—' }}</td>
+            <th>{{ __('operaciones.trabajos.col_inicio') }}</th>
+            <td>{{ optional($datos['hora_inicio'])->format('d/m/Y H:i') ?? __('operaciones.pdf.comun.sin_dato') }}</td>
         </tr>
         <tr>
-            <th>Fin</th>
-            <td>{{ optional($datos['hora_fin'])->format('d/m/Y H:i') ?? '—' }}</td>
+            <th>{{ __('operaciones.trabajos.col_fin') }}</th>
+            <td>{{ optional($datos['hora_fin'])->format('d/m/Y H:i') ?? __('operaciones.pdf.comun.sin_dato') }}</td>
         </tr>
     </table>
 
-    <h2>Acta de conformidad</h2>
+    <h2>{{ __('operaciones.pdf.reporte_tecnico.acta_titulo') }}</h2>
     @if ($datos['acta'] !== null)
         <table>
             <tr>
-                <th>Acta</th>
+                <th>{{ __('operaciones.pdf.reporte_tecnico.acta_columna') }}</th>
                 <td>#{{ $datos['acta']['id'] }}</td>
             </tr>
             <tr>
-                <th>Firmante</th>
-                <td>{{ $datos['acta']['firmante'] ?? '—' }}</td>
+                <th>{{ __('operaciones.pdf.reporte_tecnico.firmante') }}</th>
+                <td>{{ $datos['acta']['firmante'] ?? __('operaciones.pdf.comun.sin_dato') }}</td>
             </tr>
             <tr>
-                <th>Fecha de firma</th>
-                <td>{{ optional($datos['acta']['fecha_firma'])->format('d/m/Y H:i') ?? '—' }}</td>
+                <th>{{ __('operaciones.pdf.reporte_tecnico.fecha_firma') }}</th>
+                <td>{{ optional($datos['acta']['fecha_firma'])->format('d/m/Y H:i') ?? __('operaciones.pdf.comun.sin_dato') }}</td>
             </tr>
         </table>
     @else
-        <p>Sin acta registrada.</p>
+        <p>{{ __('operaciones.pdf.reporte_tecnico.acta_vacio') }}</p>
     @endif
 
-    <h2>Resumen</h2>
+    <h2>{{ __('operaciones.pdf.reporte_tecnico.resumen_titulo') }}</h2>
     <table>
         <tr>
-            <th>Hectáreas declaradas</th>
+            <th>{{ __('operaciones.pdf.reporte_tecnico.hectareas_declaradas') }}</th>
             <td>{{ $datos['resumen']['hectareas_declaradas'] }}</td>
         </tr>
         <tr>
-            <th>Litros de caldo por hectárea</th>
-            <td>{{ $datos['resumen']['litros_por_hectarea'] ?? '—' }}</td>
+            <th>{{ __('operaciones.pdf.reporte_tecnico.litros_por_hectarea') }}</th>
+            <td>{{ $datos['resumen']['litros_por_hectarea'] ?? __('operaciones.pdf.comun.sin_dato') }}</td>
         </tr>
         <tr>
-            <th>Cobertura</th>
-            <td>{{ $datos['resumen']['cobertura'] ?? 'en curso' }}</td>
+            <th>{{ __('operaciones.pdf.reporte_tecnico.cobertura') }}</th>
+            <td>{{ $datos['resumen']['cobertura'] ?? __('operaciones.pdf.reporte_tecnico.cobertura_en_curso') }}</td>
         </tr>
     </table>
 
     @if (count($datos['condiciones']) > 0)
-        <h2>Condiciones de vuelo</h2>
+        <h2>{{ __('operaciones.pdf.reporte_tecnico.condiciones_titulo') }}</h2>
         <table>
             <tr>
-                <th>Sesión</th>
-                <th>Viento (km/h)</th>
-                <th>Temperatura (°C)</th>
-                <th>Humedad (%)</th>
-                <th>Resultado</th>
+                <th>{{ __('operaciones.sesiones_validacion.col_sesion') }}</th>
+                <th>{{ __('operaciones.pdf.reporte_tecnico.viento') }}</th>
+                <th>{{ __('operaciones.pdf.reporte_tecnico.temperatura') }}</th>
+                <th>{{ __('operaciones.pdf.reporte_tecnico.humedad') }}</th>
+                <th>{{ __('operaciones.pdf.reporte_tecnico.resultado') }}</th>
             </tr>
             @foreach ($datos['condiciones'] as $condicion)
                 <tr>
@@ -110,27 +110,27 @@
                     <td>{{ $condicion['viento_kmh'] }}</td>
                     <td>{{ $condicion['temperatura_c'] }}</td>
                     <td>{{ $condicion['humedad_pct'] }}</td>
-                    <td>{{ $condicion['resultado'] }}</td>
+                    <td>{{ __("operaciones.pdf.reporte_tecnico.resultado_valor.{$condicion['resultado']}") }}</td>
                 </tr>
             @endforeach
         </table>
     @endif
 
     @if ($datos['superficie_no_aplicada'] !== null)
-        <h2>Superficie no aplicada</h2>
+        <h2>{{ __('operaciones.pdf.reporte_tecnico.superficie_no_aplicada_titulo') }}</h2>
         <table>
             <tr>
-                <th>Hectáreas sin aplicar</th>
+                <th>{{ __('operaciones.pdf.reporte_tecnico.hectareas_sin_aplicar') }}</th>
                 <td>{{ $datos['superficie_no_aplicada']['hectareas'] }}</td>
             </tr>
             <tr>
-                <th>Motivo</th>
-                <td>{{ $datos['superficie_no_aplicada']['motivo'] ?? '—' }}</td>
+                <th>{{ __('operaciones.pdf.reporte_tecnico.motivo') }}</th>
+                <td>{{ $datos['superficie_no_aplicada']['motivo'] ?? __('operaciones.pdf.comun.sin_dato') }}</td>
             </tr>
         </table>
     @endif
 
-    <h2>Capturas del control remoto</h2>
+    <h2>{{ __('operaciones.pdf.reporte_tecnico.capturas_titulo') }}</h2>
     {{-- Espec §4.3: cada sesión se cierra con su captura de RC. Es la
          evidencia de rendimiento del vuelo —hectáreas, tiempo, litros— que
          sostiene el número que se factura, así que va en el reporte que
@@ -140,56 +140,56 @@
             @php($imagenCaptura = \App\Dominios\Operaciones\Infraestructura\Http\Presentacion\EvidenciaIncrustada::dataUri($captura['evidencia_url']))
             <div class="captura">
                 @if ($imagenCaptura !== null)
-                    <img src="{{ $imagenCaptura }}" alt="Captura del control remoto de la sesión {{ $captura['secuencia'] }}">
+                    <img src="{{ $imagenCaptura }}" alt="{{ __('operaciones.pdf.reporte_tecnico.captura_alt', ['secuencia' => $captura['secuencia']]) }}">
                 @endif
-                <span>Sesión {{ $captura['secuencia'] }} — {{ $captura['hectareas_declaradas'] }} ha</span>
+                <span>{{ __('operaciones.pdf.reporte_tecnico.captura_leyenda', ['secuencia' => $captura['secuencia'], 'hectareas' => $captura['hectareas_declaradas']]) }}</span>
             </div>
         @endforeach
     @else
-        <p>Ninguna sesión de este trabajo registró su captura del control remoto.</p>
+        <p>{{ __('operaciones.pdf.reporte_tecnico.capturas_vacio') }}</p>
     @endif
 
-    <h2>Incidencias</h2>
+    <h2>{{ __('operaciones.pdf.reporte_tecnico.incidencias_titulo') }}</h2>
     @if (count($datos['incidencias']) > 0)
         <table>
             <tr>
-                <th>Tipo</th>
-                <th>Evidencia</th>
+                <th>{{ __('operaciones.alertas.col_tipo') }}</th>
+                <th>{{ __('operaciones.pdf.reporte_tecnico.evidencia') }}</th>
             </tr>
             @foreach ($datos['incidencias'] as $incidencia)
                 <tr>
-                    <td>{{ $incidencia['tipo'] }}</td>
+                    <td>{{ __("operaciones.trabajos.incidencia_tipo.{$incidencia['tipo']}") }}</td>
                     <td>{{ $incidencia['evidencia_url'] }}</td>
                 </tr>
             @endforeach
         </table>
     @else
-        <p>Sin incidencias registradas.</p>
+        <p>{{ __('operaciones.pdf.reporte_tecnico.incidencias_vacio') }}</p>
     @endif
 
     @if (count($datos['sesiones_detalle']) > 0)
-        <h2>Detalle de sesiones (relevo de piloto o cambio de dron)</h2>
+        <h2>{{ __('operaciones.pdf.reporte_tecnico.sesiones_detalle_titulo') }}</h2>
         <table>
             <tr>
-                <th>Sesión</th>
-                <th>Piloto</th>
-                <th>Dron</th>
-                <th>Hectáreas</th>
-                <th>Motivo de cierre</th>
+                <th>{{ __('operaciones.sesiones_validacion.col_sesion') }}</th>
+                <th>{{ __('operaciones.trabajos.col_piloto') }}</th>
+                <th>{{ __('operaciones.pdf.reporte_tecnico.dron') }}</th>
+                <th>{{ __('operaciones.sesiones_validacion.col_hectareas') }}</th>
+                <th>{{ __('operaciones.sesiones_validacion.col_motivo_cierre') }}</th>
             </tr>
             @foreach ($datos['sesiones_detalle'] as $sesion)
                 <tr>
                     <td>#{{ $sesion['sesion_id'] }}</td>
                     <td>#{{ $sesion['piloto_id'] }}</td>
-                    <td>{{ $sesion['dron_id'] !== null ? '#'.$sesion['dron_id'] : '—' }}</td>
+                    <td>{{ $sesion['dron_id'] !== null ? '#'.$sesion['dron_id'] : __('operaciones.pdf.comun.sin_dato') }}</td>
                     <td>{{ $sesion['hectareas_declaradas'] }}</td>
-                    <td>{{ $sesion['motivo_cierre'] ?? '—' }}</td>
+                    <td>{{ $sesion['motivo_cierre'] !== null ? __("operaciones.trabajos.motivo_cierre.{$sesion['motivo_cierre']}") : __('operaciones.pdf.comun.sin_dato') }}</td>
                 </tr>
             @endforeach
         </table>
     @endif
 
-    <h2>Productos cargados en el caldo</h2>
+    <h2>{{ __('operaciones.pdf.reporte_tecnico.productos_titulo') }}</h2>
     {{-- Espec §7 (HU-78, tarea 94, revierte CR-01): lo que el piloto
          transcribió al crear la aplicación — nunca dosis, orden de
          incorporación ni compatibilidad entre productos (§7.1 sigue
@@ -197,9 +197,9 @@
     @if (count($datos['productos_mezcla']) > 0)
         <table>
             <tr>
-                <th>Producto</th>
-                <th>Cantidad</th>
-                <th>Unidad</th>
+                <th>{{ __('operaciones.pdf.reporte_tecnico.producto') }}</th>
+                <th>{{ __('operaciones.pdf.reporte_tecnico.cantidad') }}</th>
+                <th>{{ __('operaciones.pdf.reporte_tecnico.unidad') }}</th>
             </tr>
             @foreach ($datos['productos_mezcla'] as $producto)
                 <tr>
@@ -210,10 +210,10 @@
             @endforeach
         </table>
     @else
-        <p class="nota">Sin productos registrados para este trabajo.</p>
+        <p class="nota">{{ __('operaciones.pdf.reporte_tecnico.productos_vacio') }}</p>
     @endif
 
-    <h2>Reporte de Equipos</h2>
+    <h2>{{ __('operaciones.pdf.reporte_tecnico.equipos_titulo') }}</h2>
     {{-- "Reporte de Equipos" (ronda del dueño, 13/9/2026; HU-80): ciclos de
          batería reales (Mantenimiento), horas de vuelo declaradas del dron y
          las tres fotos de chequeo. --}}
@@ -221,38 +221,38 @@
         @if (count($datos['equipo']['ciclos_bateria']) > 0)
             <table>
                 <tr>
-                    <th>Batería</th>
-                    <th>Ciclos acumulados</th>
+                    <th>{{ __('operaciones.pdf.reporte_tecnico.bateria') }}</th>
+                    <th>{{ __('operaciones.pdf.reporte_tecnico.ciclos_acumulados') }}</th>
                 </tr>
                 @foreach ($datos['equipo']['ciclos_bateria'] as $bateria)
                     <tr>
                         <td>{{ $bateria['identificador'] }}</td>
-                        <td>{{ $bateria['ciclos_acumulados'] ?? 'sin dato' }}</td>
+                        <td>{{ $bateria['ciclos_acumulados'] ?? __('operaciones.pdf.reporte_tecnico.ciclos_sin_dato') }}</td>
                     </tr>
                 @endforeach
             </table>
         @endif
         <table>
             <tr>
-                <th>Horas de vuelo del dron</th>
-                <td>{{ $datos['equipo']['horas_vuelo_dron'] ?? '—' }}</td>
+                <th>{{ __('operaciones.pdf.reporte_tecnico.horas_vuelo_dron') }}</th>
+                <td>{{ $datos['equipo']['horas_vuelo_dron'] ?? __('operaciones.pdf.comun.sin_dato') }}</td>
             </tr>
         </table>
         @foreach ([
-            'foto_control_url' => 'Control',
-            'foto_ciclo_bateria_balanceo_url' => 'Ciclo de batería y balanceo',
-            'foto_dron_limpio_url' => 'Dron limpio',
+            'foto_control_url' => __('operaciones.pdf.reporte_tecnico.equipo_foto_control'),
+            'foto_ciclo_bateria_balanceo_url' => __('operaciones.pdf.reporte_tecnico.equipo_foto_ciclo_bateria'),
+            'foto_dron_limpio_url' => __('operaciones.pdf.reporte_tecnico.equipo_foto_dron_limpio'),
         ] as $clave => $etiqueta)
             @php($imagenEquipo = \App\Dominios\Operaciones\Infraestructura\Http\Presentacion\EvidenciaIncrustada::dataUri($datos['equipo'][$clave]))
             <div class="captura">
                 @if ($imagenEquipo !== null)
-                    <img src="{{ $imagenEquipo }}" alt="Foto de {{ $etiqueta }}">
+                    <img src="{{ $imagenEquipo }}" alt="{{ __('operaciones.pdf.reporte_tecnico.foto_de', ['etiqueta' => $etiqueta]) }}">
                 @endif
                 <span>{{ $etiqueta }}</span>
             </div>
         @endforeach
     @else
-        <p>Sin "Reporte de Equipos" registrado para este trabajo.</p>
+        <p>{{ __('operaciones.pdf.reporte_tecnico.equipos_vacio') }}</p>
     @endif
 </body>
 </html>

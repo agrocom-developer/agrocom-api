@@ -36,7 +36,8 @@ final class ActualizarFichaDronRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'identificador_dron.exists' => 'El dron seleccionado no es válido.',
+            'identificador_dron.required' => __('mantenimiento.validacion.identificador_dron_requerido'),
+            'identificador_dron.exists' => __('mantenimiento.validacion.dron_invalido'),
         ];
     }
 }

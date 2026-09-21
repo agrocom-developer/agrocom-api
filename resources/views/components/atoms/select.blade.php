@@ -27,21 +27,57 @@
       contraseña de `atoms/input`).
     - icon: ícono Material Symbols de prefijo, igual que `atoms/input`.
     - required, disabled (bool, default false).
+    - actionIcon/actionHref/actionLabel (nullable, los tres van juntos):
+      sufijo del control — un botón-ícono dentro del mismo borde del select
+      (mismo lugar que `ag-select__clear`, no un elemento aparte), pensado
+      para "crear nuevo" sin salir del combobox (p. ej. `cliente_id` del
+      formulario de contrato). Relleno naranja de marca (`--ag-color-accent`,
+      ídem `ag-button--accent`), navega de página completa a `actionHref`
+      (nunca abre modal — mismo criterio que el resto del panel) y lleva
+      `data-ag-link-accent`, el mismo hook que ya usan los links de alta
+      rápida de propiedad/lote para que `contratos-form.js` (si la página lo
+      trae) guarde el borrador del formulario antes de navegar. `actionLabel`
+      es el tooltip (Bootstrap, `data-bs-toggle="tooltip"`, ya inicializado
+      globalmente en `resources/js/app.js`) y siempre el `aria-label`
+      (nombre accesible completo, aunque haya `actionText` visible — mismo
+      criterio que un botón con ícono+texto corto pero descripción más larga
+      para el lector de pantalla). `actionText` (nullable): texto corto
+      opcional junto al ícono (p. ej. "Nuevo"); sin él, el botón es solo-
+      ícono. Sin `actionIcon`+`actionHref` no se renderiza nada nuevo: los
+      ~70 usos existentes del átomo quedan igual. `actionHidden` (bool,
+      default false): arranca con `hidden` en el sufijo — para el caso de
+      "Propiedad" del formulario de contrato, deshabilitado hasta elegir
+      cliente, donde el JS de la página saca el `hidden` a mano (mismo
+      criterio que el `disabled` del `<select>`).
 
     Búsqueda automática: con más de 8 opciones el combobox arma un filtro de
-    texto dentro del propio desplegable (substring, sin distinguir
-    mayúsculas ni tildes); con 8 o menos, no hay caja de búsqueda visible
-    pero el teclado igual soporta type-ahead (saltar a la primera opción que
-    empieza con la letra tipeada) — mismo comportamiento que un `<select>`
-    nativo. El umbral no es un prop: es automático (`count($options) > 8`),
-    ISP — no hay caso de uso hoy que necesite forzarlo.
+    texto dentro del propio desplegable — por PALABRAS: cada palabra escrita
+    debe aparecer en la etiqueta, en cualquier orden ("cotoca santa" encuentra
+    "Cotoca - Santa Cruz"), sin distinguir mayúsculas, minúsculas ni tildes —
+    un `<input>` REAL que recibe el foco al abrir (19/9/2026;
+    antes era una fila decorativa que no tomaba foco: pulsarla no hacía nada, no
+    aparecía el teclado en el celular y el placeholder no se iba). Con 8 o menos,
+    no hay caja de búsqueda visible pero el teclado igual soporta type-ahead
+    (saltar a la primera opción que empieza con la letra tipeada) — mismo
+    comportamiento que un `<select>` nativo. El umbral es automático
+    (`count($options) > 8`) salvo que `searchable` lo fuerce. OJO: si las
+    opciones las llena JS después de renderizar (selects en cascada), el conteo
+    del servidor es 0 — hay que pasar `searchable` a mano.
 
-    Accesibilidad: un solo elemento enfocable hace de combobox durante toda
-    la interacción (el `div[role="combobox"]`, nunca el input de búsqueda),
-    para que `aria-activedescendant` tenga siempre un dueño inequívoco — ver
-    resources/js/atoms/select.js. El texto tipeado (búsqueda o type-ahead) se
-    captura por `keydown` sobre ese mismo elemento, nunca movió el foco a un
-    input hijo.
+    - searchable (bool|null, default null): `null` deja el umbral automático
+      de arriba; `false` fuerza el modo type-ahead aunque haya más de 8
+      opciones — lo usa el filtro de departamento de
+      `comercial::pages.propiedades.index`, desde cuando la caja de búsqueda no
+      dejaba escribir texto (corregido el 19/9/2026 con el `<input>` real; ese
+      filtro se dejó como estaba). `true` fuerza el modo buscable aunque haya 8
+      opciones o menos, o si las opciones las llena JS luego.
+
+    Accesibilidad: sin búsqueda, un solo elemento enfocable hace de combobox
+    durante toda la interacción (el `div[role="combobox"]`) y el type-ahead se
+    captura por `keydown` sobre él. Con búsqueda, al abrir el foco pasa al
+    `<input role="searchbox">` del desplegable, que es el dueño de
+    `aria-activedescendant` mientras está abierto; al cerrar, el foco vuelve
+    al combobox — ver resources/js/atoms/select.js.
 
     LSP (`$attributes`, ver docs/diseno/guia_pantalla_panel.md §3): mismo
     criterio partido que `atoms/input` — la raíz (`<div class="ag-select">`)
@@ -61,6 +97,12 @@
     'help' => null,
     'required' => false,
     'disabled' => false,
+    'actionIcon' => null,
+    'actionHref' => null,
+    'actionLabel' => null,
+    'actionText' => null,
+    'actionHidden' => false,
+    'searchable' => null,
 ])
 
 @php
@@ -75,7 +117,7 @@
     $errorId = $error ? "{$selectId}-error" : null;
     $describedBy = trim(($helpId ?? '').' '.($errorId ?? ''));
     $listboxId = "{$selectId}-listbox";
-    $esBuscable = count($options) > 8;
+    $esBuscable = $searchable ?? (count($options) > 8);
     $etiquetaActual = $value !== null && array_key_exists($value, $options) ? $options[$value] : null;
 @endphp
 
@@ -112,7 +154,12 @@
             {{ $attributes->except('class') }}
         >
             @if ($placeholder)
-                <option value="" @selected($value === null) disabled hidden>{{ $placeholder }}</option>
+                {{-- Placeholder seleccionado cuando NO hay valor: `null` o `''` (los
+                     formularios de alta pasan `old('campo', '')`). Con solo `=== null`,
+                     un `''` dejaba el placeholder sin marcar y el navegador elegía la
+                     PRIMERA opción real — el select mostraba "Beni" sin que nadie lo
+                     hubiera elegido. --}}
+                <option value="" @selected($value === null || $value === '') disabled hidden>{{ $placeholder }}</option>
             @endif
             @foreach ($options as $optValue => $optLabel)
                 <option value="{{ $optValue }}" @selected((string) $value === (string) $optValue)>{{ $optLabel }}</option>
@@ -155,6 +202,24 @@
 
             <x-atoms.icon name="arrow_drop_down" size="sm" class="ag-select__arrow" />
         </div>
+
+        @if ($actionIcon && $actionHref)
+            <a
+                href="{{ $actionHref }}"
+                class="ag-select__action"
+                data-bs-toggle="tooltip"
+                data-bs-placement="top"
+                data-ag-link-accent
+                aria-label="{{ $actionLabel }}"
+                title="{{ $actionLabel }}"
+                @if ($actionHidden) hidden @endif
+            >
+                <x-atoms.icon :name="$actionIcon" size="md" />
+                @if ($actionText)
+                    <span class="ag-select__action-label">{{ $actionText }}</span>
+                @endif
+            </a>
+        @endif
     </div>
 
     <ul

@@ -1,9 +1,14 @@
 {{--
     Page: fichas-dron/index (GET /panel/fichas-dron, panel.fichas-dron.index)
     Listado de fichas de inventario de dron (HU-82, tarea 97): arquetipo
-    Listado, §6.2 de docs/diseno/guia_pantalla_panel.md — cabecera → filtros
-    → tabla → paginación. Mismo molde que baterias/index.blade.php (tarea
-    51), sin columna de estado ni alerta: es un ABM plano.
+    Listado, §6.2 de docs/diseno/guia_pantalla_panel.md — cabecera → toolbar →
+    tabla → paginación. Homogeneizado con el patrón de Drones (tarea 115):
+    tabla en `molecules/index-table`, acciones en `organisms/row-actions` y la
+    baja con `molecules/confirm-modal` (antes tabla propia y confirmación
+    nativa del navegador). Una ficha es un ABM plano —serie, chasis,
+    software, región y accesorios—: sin columna de estado ni KPI, y sin más
+    filtro que el buscador, así que no lleva `filter-panel` (mismo criterio
+    que Drones, Campañas y Bases).
 
     Datos esperados (ver FichasDronController::index()): la cáscara de
     CascaraPanel, más:
@@ -40,7 +45,7 @@
             >
                 @puede('mantenimiento.ficha_dron.crear')
                     <x-slot:actions>
-                        <x-atoms.button href="{{ route('panel.fichas-dron.create') }}" variant="primary" icon="add">
+                        <x-atoms.button :href="route('panel.fichas-dron.create')" variant="primary" icon="add">
                             {{ __('mantenimiento.fichas_dron.nuevo') }}
                         </x-atoms.button>
                     </x-slot:actions>
@@ -48,60 +53,63 @@
             </x-organisms.page-header>
 
             @if (session('estado'))
-                <x-molecules.alert-strip variant="success" icon="check_circle" class="ag-fichas-dron__aviso">
+                <x-molecules.alert-strip variant="success" icon="check_circle">
                     {{ session('estado') }}
                 </x-molecules.alert-strip>
             @endif
 
-            <form method="GET" action="{{ route('panel.fichas-dron.index') }}" class="ag-filtros ag-fichas-dron__filtros">
-                <div class="ag-input">
-                    <label for="filtro-q" class="ag-input__label">{{ __('mantenimiento.fichas_dron.filtro_busqueda') }}</label>
-                    <div class="ag-input__control">
-                        <input
-                            type="search"
-                            name="q"
-                            id="filtro-q"
-                            class="ag-input__field"
-                            value="{{ $filtros['q'] }}"
-                            placeholder="{{ __('mantenimiento.fichas_dron.filtro_busqueda_placeholder') }}"
-                        >
-                    </div>
-                </div>
+            @php
+                $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
+            @endphp
 
-                <div class="ag-filtros__acciones ag-fichas-dron__filtros-acciones">
-                    <x-atoms.button type="submit" variant="outline" size="md" icon="search">
-                        {{ __('mantenimiento.fichas_dron.filtrar') }}
-                    </x-atoms.button>
-
-                    @if ($filtros['q'] !== '')
-                        <x-atoms.button href="{{ route('panel.fichas-dron.index') }}" variant="text" size="md">
-                            {{ __('mantenimiento.fichas_dron.limpiar_filtro') }}
-                        </x-atoms.button>
-                    @endif
+            @if ($hayFiltrosActivos || $fichas->isNotEmpty())
+                <div class="ag-table-toolbar">
+                    <x-molecules.table-search
+                        :action="route('panel.fichas-dron.index')"
+                        :value="$filtros['q']"
+                        :placeholder="__('mantenimiento.fichas_dron.filtro_busqueda_placeholder')"
+                        :clear-label="__('ui.tabla.buscador_limpiar')"
+                    />
                 </div>
-            </form>
+            @endif
 
             @if ($fichas->isEmpty())
-                <x-molecules.alert-strip variant="info" icon="memory" class="ag-fichas-dron__aviso">
-                    {{ __($filtros['q'] !== '' ? 'mantenimiento.fichas_dron.filtro_vacio' : 'mantenimiento.fichas_dron.vacio') }}
-                </x-molecules.alert-strip>
+                @if ($hayFiltrosActivos)
+                    <x-molecules.empty-state
+                        icon="search_off"
+                        :title="__('mantenimiento.fichas_dron.filtro_vacio_titulo')"
+                        :detail="__('mantenimiento.fichas_dron.filtro_vacio_detalle')"
+                    />
+                @else
+                    {{-- Sin botón adentro: el vacío de un listado solo explica. El
+                         alta ya está en la cabecera, y es el único botón sólido. --}}
+                    <x-molecules.empty-state
+                        icon="memory"
+                        :title="__('mantenimiento.fichas_dron.vacio_titulo')"
+                        :detail="__('mantenimiento.fichas_dron.vacio_detalle')"
+                    />
+                @endif
             @else
-                <div class="ag-fichas-dron__tabla" role="table">
-                    <div class="ag-fichas-dron__head" role="row">
+                <x-molecules.index-table columns="3rem minmax(0, 0.9fr) minmax(0, 1fr) minmax(0, 0.9fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.5fr) var(--ag-row-actions-width)">
+                    <x-slot:head>
+                        <span role="columnheader" class="ag-index-table__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('mantenimiento.fichas_dron.col_identificador') }}</span>
                         <span role="columnheader">{{ __('mantenimiento.fichas_dron.col_numero_serie') }}</span>
                         <span role="columnheader">{{ __('mantenimiento.fichas_dron.col_chasis') }}</span>
                         <span role="columnheader">{{ __('mantenimiento.fichas_dron.col_version_software') }}</span>
                         <span role="columnheader">{{ __('mantenimiento.fichas_dron.col_region') }}</span>
                         <span role="columnheader">{{ __('mantenimiento.fichas_dron.col_accesorios') }}</span>
-                        <span role="columnheader" aria-hidden="true"></span>
-                    </div>
+                        <span role="columnheader" class="ag-index-table__acciones-head">{{ __('ui.tabla.col_acciones') }}</span>
+                    </x-slot:head>
 
                     @foreach ($fichas as $ficha)
-                        <div class="ag-fichas-dron__fila" role="row">
+                        <div class="ag-index-table__row" role="row">
+                            <span role="cell" class="ag-index-table__indice">
+                                {{ ($fichas->currentPage() - 1) * $fichas->perPage() + $loop->iteration }}
+                            </span>
                             <span role="cell" class="ag-fichas-dron__identificador">{{ $ficha->identificador_dron }}</span>
-                            <span role="cell">{{ $ficha->numero_serie ?? __('mantenimiento.fichas_dron.sin_dato') }}</span>
-                            <span role="cell">{{ $ficha->chasis ?? __('mantenimiento.fichas_dron.sin_dato') }}</span>
+                            <span role="cell" class="ag-fichas-dron__serie">{{ $ficha->numero_serie ?? __('mantenimiento.fichas_dron.sin_dato') }}</span>
+                            <span role="cell" class="ag-fichas-dron__serie">{{ $ficha->chasis ?? __('mantenimiento.fichas_dron.sin_dato') }}</span>
                             <span role="cell">{{ $ficha->version_software ?? __('mantenimiento.fichas_dron.sin_dato') }}</span>
                             <span role="cell">{{ $ficha->region ?? __('mantenimiento.fichas_dron.sin_dato') }}</span>
                             <span role="cell" class="ag-fichas-dron__accesorios">
@@ -119,50 +127,60 @@
                                 @endif
                             </span>
 
-                            <span role="cell" class="ag-fichas-dron__acciones">
-                                @puede('mantenimiento.ficha_dron.editar')
-                                    <x-atoms.button href="{{ route('panel.fichas-dron.edit', $ficha) }}" variant="warning-outline" size="sm" icon="edit">
-                                        {{ __('mantenimiento.fichas_dron.editar') }}
-                                    </x-atoms.button>
-                                @endpuede
+                            <span role="cell" class="ag-index-table__acciones">
+                                @php
+                                    $formIdEliminar = "ficha-dron-eliminar-{$ficha->id}";
+                                    $modalIdEliminar = "ficha-dron-eliminar-modal-{$ficha->id}";
+                                @endphp
 
+                                {{-- Form y modal FUERA de row-actions a propósito: ese organism
+                                     repite su slot dos veces (visible/menú, ver su docblock), así que
+                                     un <form> o un modal con id ahí adentro se duplicaría — y el que
+                                     cae dentro del menú ⋮ queda oculto con él y nunca abre. El
+                                     disparador vive adentro (es un botón sin id propio, se duplica sin
+                                     problema); el modal y el form, una sola vez, acá. Mismo criterio
+                                     que campanias/index, bases/index y drones/index. --}}
                                 @puede('mantenimiento.ficha_dron.eliminar')
-                                    <form
-                                        method="POST"
-                                        action="{{ route('panel.fichas-dron.destroy', $ficha) }}"
-                                        onsubmit="return confirm('{{ __('mantenimiento.fichas_dron.confirmar_baja') }}')"
-                                    >
+                                    <form id="{{ $formIdEliminar }}" method="POST" action="{{ route('panel.fichas-dron.destroy', $ficha) }}">
                                         @csrf
                                         @method('DELETE')
-                                        <x-atoms.button type="submit" variant="danger-outline" size="sm" icon="delete">
+                                    </form>
+
+                                    <x-molecules.confirm-modal
+                                        :id="$modalIdEliminar"
+                                        :form-id="$formIdEliminar"
+                                        :title="__('mantenimiento.fichas_dron.confirmar_eliminar_titulo')"
+                                        :message="__('mantenimiento.fichas_dron.confirmar_baja')"
+                                        :confirm-label="__('mantenimiento.fichas_dron.eliminar_accion')"
+                                    />
+                                @endpuede
+
+                                <x-organisms.row-actions>
+                                    @puede('mantenimiento.ficha_dron.editar')
+                                        <x-atoms.button :href="route('panel.fichas-dron.edit', $ficha)" variant="warning-outline" size="sm" icon="edit">
+                                            {{ __('mantenimiento.fichas_dron.editar') }}
+                                        </x-atoms.button>
+                                    @endpuede
+
+                                    @puede('mantenimiento.ficha_dron.eliminar')
+                                        <x-atoms.button
+                                            type="button"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#{{ $modalIdEliminar }}"
+                                            variant="danger-outline"
+                                            size="sm"
+                                            icon="delete"
+                                        >
                                             {{ __('mantenimiento.fichas_dron.eliminar_accion') }}
                                         </x-atoms.button>
-                                    </form>
-                                @endpuede
+                                    @endpuede
+                                </x-organisms.row-actions>
                             </span>
                         </div>
                     @endforeach
-                </div>
+                </x-molecules.index-table>
 
-                @if ($fichas->hasPages())
-                    <nav class="ag-fichas-dron__paginacion" aria-label="{{ __('mantenimiento.fichas_dron.paginacion_aria') }}">
-                        @if (! $fichas->onFirstPage())
-                            <x-atoms.button href="{{ $fichas->previousPageUrl() }}" variant="outline" size="sm" icon="chevron_left">
-                                {{ __('mantenimiento.fichas_dron.paginacion_anterior') }}
-                            </x-atoms.button>
-                        @endif
-
-                        <span class="ag-fichas-dron__paginacion-info">
-                            {{ __('mantenimiento.fichas_dron.paginacion_info', ['actual' => $fichas->currentPage(), 'total' => $fichas->lastPage()]) }}
-                        </span>
-
-                        @if ($fichas->hasMorePages())
-                            <x-atoms.button href="{{ $fichas->nextPageUrl() }}" variant="outline" size="sm" icon="chevron_right" iconPosition="end">
-                                {{ __('mantenimiento.fichas_dron.paginacion_siguiente') }}
-                            </x-atoms.button>
-                        @endif
-                    </nav>
-                @endif
+                <x-molecules.pagination :paginator="$fichas" :aria-label="__('mantenimiento.fichas_dron.paginacion_aria')" />
             @endif
         </div>
     </x-templates.panel-layout>

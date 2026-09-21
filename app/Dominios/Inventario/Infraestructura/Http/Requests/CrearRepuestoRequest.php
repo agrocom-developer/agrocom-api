@@ -24,4 +24,14 @@ final class CrearRepuestoRequest extends FormRequest
             'costo_unitario' => ['nullable', 'numeric', 'min:0'],
         ];
     }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return [
+            'codigo.required' => __('inventario.repuestos.error_codigo_requerido'),
+            'descripcion.required' => __('inventario.repuestos.error_descripcion_requerida'),
+            'unidad.required' => __('inventario.repuestos.error_unidad_requerida'),
+        ];
+    }
 }

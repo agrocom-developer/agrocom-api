@@ -1,0 +1,110 @@
+/*
+ * Molecule: link-row (resources/views/components/molecules/link-row.blade.php)
+ * Fila clicable: círculo de ícono con color de estado + título + meta + flecha.
+ */
+
+.ag-link-row {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-3) var(--ag-space-4);
+    color: var(--ag-color-text);
+    text-decoration: none;
+    transition: background-color var(--ag-transition-fast);
+}
+
+.ag-link-row:hover {
+    background-color: var(--ag-color-bg-row-hover);
+    color: var(--ag-color-text);
+}
+
+.ag-link-row + .ag-link-row {
+    border-top: 1px solid var(--ag-color-border-row);
+}
+
+.ag-link-row__icon {
+    flex-shrink: 0;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: grid;
+    place-items: center;
+    border-radius: var(--ag-radius-md);
+    background: var(--ag-color-neutral-subtle);
+    color: var(--ag-color-text-muted);
+}
+
+/* Relleno SÓLIDO + ícono blanco (18/9/2026, pedido explícito del usuario:
+   mismo criterio que `atoms/badge`/`molecules/stat-card` — el par tenue
+   `-subtle`/`-strong` anterior se leía "con poca opacity"). `neutral`
+   (arriba) se queda con el gris tenue: no es un estado real, no tiene
+   `-contrast-fill` propio. warning lleva el ícono blanco como
+   los demás: ningún relleno de estado usa texto/ícono oscuro (badge.css, 19/9/2026). */
+.ag-link-row__icon--success {
+    background: var(--ag-color-success-contrast-fill);
+    color: var(--ag-color-gray-0);
+}
+
+.ag-link-row__icon--warning {
+    background: var(--ag-color-warning-contrast-fill);
+    color: var(--ag-color-gray-0);
+}
+
+.ag-link-row__icon--danger {
+    background: var(--ag-color-danger-contrast-fill);
+    color: var(--ag-color-gray-0);
+}
+
+.ag-link-row__icon--info {
+    background: var(--ag-color-info-contrast-fill);
+    color: var(--ag-color-gray-0);
+}
+
+.ag-link-row__icon--distintivo-1 {
+    background: var(--ag-color-distintivo-1-contrast-fill);
+    color: var(--ag-color-gray-0);
+}
+
+.ag-link-row__icon--distintivo-2 {
+    background: var(--ag-color-distintivo-2-contrast-fill);
+    color: var(--ag-color-gray-0);
+}
+
+.ag-link-row__icon--distintivo-3 {
+    background: var(--ag-color-distintivo-3-contrast-fill);
+    color: var(--ag-color-gray-0);
+}
+
+.ag-link-row__icon--primary-2 {
+    background: var(--ag-color-primary-2-contrast-fill);
+    color: var(--ag-color-gray-0);
+}
+
+/* Título y meta en una fila que envuelve (19/9/2026): en un aside angosto la meta
+   pasa debajo del título en vez de encogerlo hasta pisarse con él. */
+.ag-link-row__texto {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    column-gap: var(--ag-space-2);
+}
+
+.ag-link-row__title {
+    flex: 1 1 auto;
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+}
+
+.ag-link-row__meta {
+    flex: 0 0 auto;
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-link-row__chevron {
+    flex-shrink: 0;
+    color: var(--ag-color-text-faint);
+}

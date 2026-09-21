@@ -19,9 +19,11 @@ let llaveEnCurso = null;
 
 /**
  * @param {string} llave - `mapas.google_maps_api_key` ya resuelta por el servidor.
+ * @param {string} [mensajeError] - texto ya traducido por Blade (`data-*` del
+ *   contenedor que llama a esta función); nunca un literal en este archivo.
  * @returns {Promise<typeof google.maps>} el namespace `google.maps`, listo para usar.
  */
-export function cargarGoogleMaps(llave) {
+export function cargarGoogleMaps(llave, mensajeError = '') {
     if (cargaEnCurso && llaveEnCurso === llave) {
         return cargaEnCurso;
     }
@@ -39,10 +41,16 @@ export function cargarGoogleMaps(llave) {
             resolve(window.google.maps);
         };
 
+        // Sin `libraries=drawing`: `google.maps.drawing.DrawingManager` (el
+        // único motivo para pedirla) ya no existe en la API (retirada en la
+        // v3.65, confirmado en vivo el 15/9/2026) — el dibujo del polígono
+        // se arma a mano sobre `Polygon` en `organisms/lote-mapa-editor.js`.
+        // `loading=async` saca el warning de rendimiento de Google
+        // ("loaded directly without loading=async").
         const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(llave)}&libraries=drawing&callback=${NOMBRE_CALLBACK_GLOBAL}`;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(llave)}&loading=async&callback=${NOMBRE_CALLBACK_GLOBAL}`;
         script.async = true;
-        script.onerror = () => reject(new Error('No se pudo cargar el SDK de Google Maps'));
+        script.onerror = () => reject(new Error(mensajeError));
         document.head.appendChild(script);
     });
 
