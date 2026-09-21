@@ -96,6 +96,22 @@
                 <x-slot:actions>
                     <x-molecules.boton-volver :href="route('panel.ordenes.index')" :label="__('operaciones.ordenes.volver')" />
 
+                    {{-- El paso siguiente de una orden vigente: sin Orden de Trabajo, directo
+                         al alta con esta orden ya elegida; si ya tiene, a las suyas. --}}
+                    @if ($inconvenientes['ordenes_trabajo'] > 0)
+                        @puede('operaciones.trabajo.ver')
+                            <x-atoms.button :href="route('panel.trabajos.index', ['orden_id' => $orden->id])" variant="primary" icon="work_history">
+                                {{ __('operaciones.ordenes.ordenes_trabajo_accion') }}
+                            </x-atoms.button>
+                        @endpuede
+                    @elseif ($estadoValor === 'vigente')
+                        @puede('operaciones.trabajo.crear')
+                            <x-atoms.button :href="route('panel.trabajos.create', ['orden_id' => $orden->id])" variant="primary" icon="add_task">
+                                {{ __('operaciones.ordenes.orden_trabajo_crear_accion') }}
+                            </x-atoms.button>
+                        @endpuede
+                    @endif
+
                     @if ($puedeEditar && \App\Dominios\Operaciones\Dominio\PoliticaEdicionOrden::admiteEdicion($orden->estado))
                         <x-atoms.button :href="route('panel.ordenes.edit', $orden)" variant="warning-outline" icon="edit">
                             {{ __('operaciones.ordenes.editar') }}

@@ -209,6 +209,12 @@ function iniciar(raiz) {
     const observador = new MutationObserver(pintarDisparador);
     [nativoInicio, nativoFin].forEach((nativo) => observador.observe(nativo, { attributes: true, attributeFilter: ['disabled'] }));
 
+    // Valor escrito por otro script (`nativo.value = …` + `change`: el borrador de
+    // formulario al volver de un alta rápida): sin esto la casilla seguía mostrando
+    // el horario anterior. Mismo criterio que `atoms/select.js`; cuando escribe este
+    // mismo componente, repintar de nuevo es inofensivo.
+    [nativoInicio, nativoFin].forEach((nativo) => nativo.addEventListener('change', pintarDisparador));
+
     // ===== Escritura en los nativos =====
 
     const escribir = (inicio, fin) => {

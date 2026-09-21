@@ -17,6 +17,12 @@
     Pausar → warning (pausada), Cerrar → info (consumida), Cancelar → danger
     (cancelada).
 
+    «Orden de trabajo» (21/9/2026) no es un cambio de estado sino el paso
+    siguiente de una orden vigente: sin ninguna Orden de Trabajo lleva DIRECTO
+    al alta con esta orden ya elegida (`?orden_id=`); si ya tiene, al listado
+    de las suyas. Por eso lleva un tono propio (`primary-2-outline`), no el de
+    un estado.
+
     Espera: $orden (OrdenAplicacion). Los permisos se resuelven acá con
     `@puede`, igual que el resto del listado.
     - $contexto (string, default ''): prefijo para los ids de forms/modales.
@@ -33,6 +39,7 @@
     $contexto ??= '';
     $estadoValor = $orden->estado->value;
     $sufijo = "{$contexto}{$orden->id}";
+    $ordenesTrabajo = (int) ($resumen[$orden->id]['ordenes_trabajo'] ?? 0);
 @endphp
 
 @include('operaciones::pages.ordenes._orden-modales', ['orden' => $orden, 'contexto' => $contexto, 'resumenOrden' => $resumen[$orden->id] ?? null])
@@ -49,6 +56,20 @@
             </x-atoms.button>
         @endif
     @endpuede
+
+    @if ($ordenesTrabajo > 0)
+        @puede('operaciones.trabajo.ver')
+            <x-atoms.button :href="route('panel.trabajos.index', ['orden_id' => $orden->id])" variant="primary-2-outline" size="sm" icon="work_history">
+                {{ __('operaciones.ordenes.ordenes_trabajo_accion') }}
+            </x-atoms.button>
+        @endpuede
+    @elseif ($estadoValor === 'vigente')
+        @puede('operaciones.trabajo.crear')
+            <x-atoms.button :href="route('panel.trabajos.create', ['orden_id' => $orden->id])" variant="primary-2-outline" size="sm" icon="add_task">
+                {{ __('operaciones.ordenes.orden_trabajo_crear_accion') }}
+            </x-atoms.button>
+        @endpuede
+    @endif
 
     @puede('operaciones.orden.activar')
         @if ($estadoValor === 'emitida')
