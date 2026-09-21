@@ -371,18 +371,18 @@ exista el módulo `Mezclas`).
 | 103 | HU-88 — ocultar del menú del encargado Plan de Mantenimiento/Repuestos/Stock Base (siguen funcionando por debajo) y mostrar "Precio de Mantenimiento Final" como el monto real del gasto vinculado a la orden cerrada | `./bin/verify` = 0, con test de que el rol `encargado` ya no ve esos 3 ítems en su menú, test de que un rol con el permiso sigue accediendo por URL directa, y test de que el total mostrado coincide con `fin_gastos.monto` del gasto generado al cerrar (regresión de HU-37/tarea 53) | `app/Dominios/Mantenimiento/**`, `SecMenuSeeder`, `lang/es/mantenimiento.php`, tests | no | 2 | **escrita** (`prompts/103-menu-precio-mantenimiento.md`) |
 | 104 | HU-89 — descripción de mantenimiento final al cerrar la orden, separada de la descripción de apertura | `./bin/verify` = 0, con test de que `MaquinaEstadosOrdenMantenimiento::cerrar()` rechaza sin `descripcion_final`, y de que la `descripcion` de apertura no se pisa | `app/Dominios/Mantenimiento/**`, migración `ALTER man_ordenes_mantenimiento`, `lang/es/mantenimiento.php`, tests | no | 1 | **escrita** (`prompts/104-descripcion-cierre-orden.md`) |
 | 105 | HU-90 — tipo de vehículo (catálogo cerrado, incluye "chata") en `man_vehiculos`; complementa la tarea 99 (Sprint 17), misma tabla, sin bloquearla | `./bin/verify` = 0, con test de valor fuera de catálogo rechazado y de que un vehículo `chata` opera igual que cualquier otro en las pantallas ya existentes | `app/Dominios/Mantenimiento/**`, migración `ALTER man_vehiculos`, `lang/es/mantenimiento.php`, tests | no | 2 | **escrita** (`prompts/105-tipo-vehiculo.md`) |
-| 111 | Compuerta de la homogeneización del panel: `PanelHomogeneoTest` + lista de pendientes | `./bin/verify` = 0, y el test falla al sacar una pantalla pendiente de la lista | `tests/Unit/PanelHomogeneoTest.php`, `docs/diseno/**`, `atoms/button`, skill `panel-design-ui` | no | 2 | **escrita** (`prompts/111-compuerta-panel-homogeneo.md`) — plan: [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
-| 112 | Panel homogéneo — Personal: Bases y Personas | `./bin/verify` = 0 + pantallas fuera de la lista de pendientes + prueba Playwright en `runs/` | `app/Dominios/Personal/**` (vistas, controlador web (solo armado de datos para pintar), `Contratos/` de lectura, `lang/es`, `resources/css/pages/**`) | no | 3 | **escrita** (`prompts/112-panel-personal.md`) — plan: [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
-| 113 | Panel homogéneo — Operaciones: Drones, Pausas y Alertas | ídem 112 | `app/Dominios/Operaciones/**` (solo esas pantallas) | no | 3 | **escrita** (`prompts/113-panel-drones-pausas.md`) — plan: [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
-| 114 | Panel homogéneo — Operaciones: ficha de Trabajo con pasos, Reparto, Reportes técnicos y listado de Validación | ídem 112, con test unitario de `PasosDeTrabajo` | `app/Dominios/Operaciones/**` (presentación; nada de máquinas de estado ni sync), `tests/Unit/**` (solo el test nuevo) | **sí** | 4 | **escrita** (`prompts/114-panel-trabajos-reparto.md`) — plan: [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
-| 115 | Panel homogéneo — Mantenimiento: Baterías, Generadores, Vehículos y Fichas de dron | ídem 112 | `app/Dominios/Mantenimiento/**` | no | 4 | **escrita** (`prompts/115-panel-equipos-mantenimiento.md`) — plan: [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
-| 116 | Panel homogéneo — Mantenimiento: Órdenes (pasos + aviso de estado) y Planes | ídem 112, con test unitario de `PasosDeOrdenMantenimiento` | `app/Dominios/Mantenimiento/**`, `tests/Unit/**` (solo el test nuevo) | no | 4 | **escrita** (`prompts/116-panel-ordenes-mantenimiento.md`) — plan: [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
-| 117 | Panel homogéneo — Inventario: Repuestos y Stock | ídem 112 | `app/Dominios/Inventario/**` | no | 3 | **escrita** (`prompts/117-panel-inventario.md`) — plan: [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
-| 118 | Panel homogéneo — Finanzas: Anticipos, Combustible y Gastos | ídem 112 | `app/Dominios/Finanzas/**` (solo esas pantallas) | no | 3 | **escrita** (`prompts/118-panel-registros-finanzas.md`) — plan: [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
-| 119 | Panel homogéneo — Finanzas: Planillas y Rendiciones | ídem 112 | `app/Dominios/Finanzas/**` (presentación; nada que genere dinero) | **sí** | 3 | **escrita** (`prompts/119-panel-liquidacion-finanzas.md`) — plan: [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
-| 120 | Panel homogéneo — Comercial: Cultivos (tabla + resumen), Facturas y Reportes comerciales | ídem 112 | `app/Dominios/Comercial/**` (solo esas pantallas) | no | 3 | **escrita** (`prompts/120-panel-comercial-restante.md`) — plan: [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
-| 121 | Panel homogéneo — Seguridad y Distribución: Usuarios, Dispositivos y Versiones de APK (roles, organización, bitácora y dashboard excluidos) | ídem 112 | `app/Dominios/Seguridad/**` (usuarios, dispositivos), `app/Dominios/Distribucion/**` | no | 3 | **escrita** (`prompts/121-panel-usuarios-dispositivos.md`) — plan: [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
-| 122 | Cierre de la homogeneización: pendientes, CSS muerto, guía y estado al día, barrido visual | `./bin/verify` = 0 + barrido Playwright de todos los `index` con exit 0 | `resources/css/pages/**`, `docs/**` | no | 2 | **escrita** (`prompts/122-cierre-panel-homogeneo.md`) — plan: [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
+| 111 | Compuerta de la homogeneización del panel: `PanelHomogeneoTest` + lista de pendientes | `./bin/verify` = 0, y el test falla al sacar una pantalla pendiente de la lista | `tests/Unit/PanelHomogeneoTest.php`, `docs/diseno/**`, `atoms/button`, skill `panel-design-ui` | no | 2 | **hecha** (PR #254, mergeado 20/9/2026) — plan: [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
+| 112 | Panel homogéneo — Personal: Bases y Personas | `./bin/verify` = 0 + pantallas fuera de la lista de pendientes + prueba Playwright en `runs/` | `app/Dominios/Personal/**` (vistas, controlador web (solo armado de datos para pintar), `Contratos/` de lectura, `lang/es`, `resources/css/pages/**`) | no | 3 | **hecha** (PR #255, mergeado 20/9/2026) — plan: [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
+| 113 | Panel homogéneo — Operaciones: Drones, Pausas y Alertas | ídem 112 | `app/Dominios/Operaciones/**` (solo esas pantallas) | no | 3 | **hecha** (PR #256, mergeado 20/9/2026) — plan: [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
+| 114 | Panel homogéneo — Operaciones: ficha de Trabajo con pasos, Reparto, Reportes técnicos y listado de Validación | ídem 112, con test unitario de `PasosDeTrabajo` | `app/Dominios/Operaciones/**` (presentación; nada de máquinas de estado ni sync), `tests/Unit/**` (solo el test nuevo) | **sí** | 4 | **hecha** (PR #257, mergeado 20/9/2026) — plan: [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
+| 115 | Panel homogéneo — Mantenimiento: Baterías, Generadores, Vehículos y Fichas de dron | ídem 112 | `app/Dominios/Mantenimiento/**` | no | 4 | **hecha** (PR #258, mergeado 20/9/2026) — plan: [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
+| 116 | Panel homogéneo — Mantenimiento: Órdenes (pasos + aviso de estado) y Planes | ídem 112, con test unitario de `PasosDeOrdenMantenimiento` | `app/Dominios/Mantenimiento/**`, `tests/Unit/**` (solo el test nuevo) | no | 4 | **hecha** (PR #259, mergeado 20/9/2026) — plan: [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
+| 117 | Panel homogéneo — Inventario: Repuestos y Stock | ídem 112 | `app/Dominios/Inventario/**` | no | 3 | **hecha** (PR #260, mergeado 20/9/2026) — plan: [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
+| 118 | Panel homogéneo — Finanzas: Anticipos, Combustible y Gastos | ídem 112 | `app/Dominios/Finanzas/**` (solo esas pantallas) | no | 3 | **hecha** (PR #261, mergeado 20/9/2026) — plan: [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
+| 119 | Panel homogéneo — Finanzas: Planillas y Rendiciones | ídem 112 | `app/Dominios/Finanzas/**` (presentación; nada que genere dinero) | **sí** | 3 | **hecha** (PR #262, mergeado 20/9/2026) — plan: [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
+| 120 | Panel homogéneo — Comercial: Cultivos (tabla + resumen), Facturas y Reportes comerciales | ídem 112 | `app/Dominios/Comercial/**` (solo esas pantallas) | no | 3 | **hecha** (PR #263, mergeado 20/9/2026) — plan: [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
+| 121 | Panel homogéneo — Seguridad y Distribución: Usuarios, Dispositivos y Versiones de APK (roles, organización, bitácora y dashboard excluidos) | ídem 112 | `app/Dominios/Seguridad/**` (usuarios, dispositivos), `app/Dominios/Distribucion/**` | no | 3 | **sin integrar** (rama local `feature/panel-usuarios-dispositivos`, sin PR: el push se cortó; ver `runs/121.md`) — plan: [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
+| 122 | Cierre de la homogeneización: pendientes, CSS muerto, guía y estado al día, barrido visual | `./bin/verify` = 0 + barrido Playwright de todos los `index` con exit 0 | `resources/css/pages/**`, `docs/**` | no | 2 | **hecha** (20/9/2026, en el PR que abre el ciclo con esta rama) — plan: [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
 
 ### El bug de la 24 — ya pasó dos veces, sigue sin arreglarse
 
@@ -490,6 +490,47 @@ el bug — pero los PR #189/#190 siguen trabados y bloquean HU-79 (tarea 95),
 que depende de HU-70 integrada. Sin fila propia: decisión del usuario —
 corregir la plantilla, y decidir si pasa los PR #189/#190 a "ready for
 review" a mano para destrabar la 95.
+
+**Pendiente al 20/9/2026** (hallazgos de la tarea 122, cierre de la
+homogeneización del panel; el detalle y cómo se midió cada uno están en
+`runs/122.md`). Ninguno tiene fila propia ni prompt: decide el usuario.
+
+- **La tarea 121 no está integrada, aunque `runs/121.estado` diga `OK`.**
+  Usuarios, Dispositivos y Versiones de APK están hechos en la rama local
+  `feature/panel-usuarios-dispositivos` (seis commits sobre `develop`, `bin/verify`
+  en verde según su sesión), pero el push se cortó («unexpected disconnect»), el
+  ciclo no pudo abrir el PR y siguió con la 122. Para integrarla: `git push -u
+  origin feature/panel-usuarios-dispositivos` y abrir el PR con `runs/121.pr.md`.
+  Va a chocar con la 122 en tres puntos de `docs/`, todos triviales: su fila en
+  `plan_homogeneizacion_panel.md` §7, su fila en esta cola y su bloque en
+  `panel_homogeneo_pendientes.txt` (que ahí debe quedar vacío).
+- **`?q[]=x` da 500 en casi todos los listados.** Medido sobre `develop`: Clientes,
+  Personas, Bases, Contratos, Cultivos, Repuestos, Usuarios, Campañas y Lotes
+  (Dispositivos responde 200). `$request->string('q')` convierte el arreglo en
+  texto y Laravel lo eleva a excepción; la tarea 121 lo arregla solo en Usuarios y
+  Dispositivos, y cuenta 22 controladores más con ese patrón (`runs/121.md`).
+- **CSS muerto que la 122 no tocó por estar fuera de su alcance** (33 clases sin
+  ningún uso en `app/`, `resources/views/`, `resources/js/` ni en otro CSS):
+  `dashboard.css` (5), `organizacion.css` (1) y `seleccionar-rol.css` (2) —
+  pantallas excluidas—, `contratos.css` (11), `ordenes.css` (11) y
+  `reparto-cuadrillas.css` (3) —referencias «conformes» y una ficha—. Se listan con
+  `python3 runs/122-css-muerto.py`.
+- **`resources/js/pages/campos-form.js` está huérfano**: 169 líneas que no importa
+  `app.js` ni nadie, y ningún Blade emite su gancho `data-ag-campos-form`.
+- **Pantallas fuera del rollout que conservan el diseño anterior**: `.ag-filtros`
+  sigue vivo en Desempeño de persona, en el detalle de Devengos y en la siembra de
+  una propiedad (por eso `filter-bar.css` no es CSS muerto), y hay `confirm()`
+  nativo en Roles y en el `show` de Planilla, Rendición y Trabajo. Dependen de la
+  decisión pendiente sobre el arquetipo Detalle (plan §1.1).
+- **`molecules/confirm-button` y `molecules/state-transition` siguen en uso**
+  (seis y ocho Blade), así que no se borraron. El primero está en el listado de
+  cinco pantallas de referencia (Clientes, Propiedades, Lotes, Estadías,
+  Cuadrillas) y en el formulario de Cuadrillas; migrarlo a `confirm-modal`, como el
+  resto, es una decisión del dueño.
+- **Textos con el usuario viejo**: `sistema_diseno_panel.md` (líneas 524 y 738) y
+  el skill `seguridad-roles` (línea 69) todavía dicen `carlos.ferrufino` /
+  `password`; el vigente es `miguelo` / `0000`. El skill vive en `.claude/`, que el
+  ciclo no edita.
 
 ### Fuera del ciclo automático
 
