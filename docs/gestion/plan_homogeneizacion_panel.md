@@ -258,16 +258,25 @@ ciclo sigue con la próxima, porque ninguna depende de otra salvo de la 111.
 | Id | Estado | PR |
 |---|---|---|
 | 111 | **hecha** (20/9/2026) | #254 |
-| 112 | **hecha** (20/9/2026) | |
-| 113 | **hecha** (20/9/2026) | |
-| 114 | **hecha** (20/9/2026) | |
-| 115 | **hecha** (20/9/2026) | |
-| 116 | **hecha** (20/9/2026) | |
-| 117 | **hecha** (20/9/2026) | |
-| 118 | **hecha** (20/9/2026) | |
-| 119 | **hecha** (20/9/2026) | |
-| 120 | **hecha** (20/9/2026) | |
-| 121 | pendiente | |
-| 122 | pendiente | |
+| 112 | **hecha** (20/9/2026) | #255 |
+| 113 | **hecha** (20/9/2026) | #256 |
+| 114 | **hecha** (20/9/2026) | #257 |
+| 115 | **hecha** (20/9/2026) | #258 |
+| 116 | **hecha** (20/9/2026) | #259 |
+| 117 | **hecha** (20/9/2026) | #260 |
+| 118 | **hecha** (20/9/2026) | #261 |
+| 119 | **hecha** (20/9/2026) | #262 |
+| 120 | **hecha** (20/9/2026) | #263 |
+| 121 | **sin integrar** — implementada y verificada en la rama local `feature/panel-usuarios-dispositivos`, sin PR | — |
+| 122 | **hecha** (20/9/2026) | el que abre el ciclo con esta rama |
 
 Cada tarea actualiza su fila al cerrar con `OK`.
+
+**Cierre (tarea 122, 20/9/2026).** La columna PR sale de `gh pr list --state merged`,
+no de lo que declaró cada sesión. La 121 dejó `runs/121.estado` en `OK` y sus seis
+commits en la rama local `feature/panel-usuarios-dispositivos`, pero el push se cortó
+(«unexpected disconnect»), el ciclo no pudo abrir el PR y siguió con la 122. Sin PR
+mergeado no está hecha: sus cuatro pantallas (Usuarios —listado y formulario—,
+Dispositivos y Versiones de APK) siguen en `docs/diseno/panel_homogeneo_pendientes.txt`,
+que es lo único que `PanelHomogeneoTest` perdona. Al integrarla, esta fila pasa a
+`hecha` con su número de PR y su bloque sale de esa lista.

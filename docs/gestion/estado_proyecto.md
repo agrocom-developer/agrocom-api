@@ -52,6 +52,36 @@ Al empezar una iteración nueva: leé este documento completo primero (es corto)
 > [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md); el avance se
 > sigue en su §7. Se ejecuta con `bin/ciclo --fondo`.
 
+> **Nota del 20/9/2026 (cierre, tarea 122) — homogeneización del panel: qué
+> quedó y qué no.** **Integrado a `develop`** (PR #254 a #263, todos del
+> 20/9/2026): la compuerta `PanelHomogeneoTest` (111, #254) y los listados y
+> formularios de Personal (112, #255), Operaciones —Drones, Pausas y Alertas
+> (113, #256); ficha de Trabajo con pasos, Reparto de cuadrillas, Reportes
+> técnicos y Validación de sesiones (114, #257, crítica)—, Mantenimiento
+> —Baterías, Generadores, Vehículos y Fichas de dron (115, #258); Órdenes con
+> pasos y Planes (116, #259)—, Inventario (117, #260), Finanzas —Anticipos,
+> Combustible y Gastos (118, #261); Planillas y Rendiciones (119, #262,
+> crítica)— y Comercial —Cultivos, Facturas y Reportes comerciales (120, #263).
+> El barrido final (`runs/122-barrido.cjs`) recorrió las 39 pantallas del menú
+> de `miguelo` más Pausas y Reparto de cuadrillas (fuera del menú por diseño), en
+> tema claro y oscuro: ninguna responde 500, ninguna desborda
+> `.ag-panel__content` en horizontal y ningún `index` conserva un `.ag-filtros`.
+> Se borró el CSS de tablas y listados que ninguna vista usa (`campos.css`,
+> `trabajos.css`).
+>
+> **Sin integrar: la tarea 121** (Usuarios, Dispositivos y Versiones de APK).
+> Está hecha y verificada en la rama local `feature/panel-usuarios-dispositivos`,
+> pero el push se cortó, el ciclo no pudo abrir el PR y siguió con la 122 —aunque
+> `runs/121.estado` diga `OK`—. Sus cuatro pantallas siguen en
+> `docs/diseno/panel_homogeneo_pendientes.txt`, y esa lista es lo único que
+> separa hoy al panel de quedar del todo homogéneo.
+>
+> **Fuera del rollout por decisión del dueño** (plan §1.1), sin tocar: Roles,
+> Organización, Bitácora, Dashboard, las páginas de detalle (`show`), el portal y
+> lo que no es listado ni formulario de un objeto. Los hallazgos de paso (500 con
+> `?q[]=x`, CSS y JS huérfanos, `confirm()` nativo en pantallas de detalle) están
+> en «Deuda técnica detectada» de [cola_tareas.md](cola_tareas.md).
+
 > **Nota del 19/9/2026 — la corrección del dueño del 18/9 sobre contratos,
 > lotes y órdenes de aplicación, implementada en dos ramas y sin integrar.**
 > Mirando el panel andando, el dueño desechó dos enfoques y dejó decidido el

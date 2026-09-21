@@ -8,12 +8,17 @@
 # La lista no puede mentir: el test falla si una ruta no existe o si esa
 # pantalla ya cumple todas las reglas (hay que sacarla). Por eso cada tarea
 # solo puede ACHICARLA — sacar las líneas de lo que terminó — y nunca sumar una
-# pantalla para que el test pase. La tarea 122 la deja vacía.
+# pantalla para que el test pase. La tarea 122 la dejó con lo que NO se integró.
 #
 # Medida el 20/9/2026 sobre `develop` en `5f699ce4` (tarea 111): 46 pantallas,
 # 26 listados y 20 formularios. Las referencias del plan (§1) no pueden figurar.
+# Al cerrar la tarea 122 (20/9/2026, `develop` en `a3644f6c`) quedan 4: las otras
+# 42 salieron con los PR #255 a #263.
 
-# 121 · feature/panel-usuarios-dispositivos
+# 121 · feature/panel-usuarios-dispositivos — implementada y verificada (6
+# commits, bin/verify en verde), pero sin integrar: el push de la rama se cortó
+# («unexpected disconnect»), el ciclo no pudo abrir el PR y la rama existe solo
+# en local. Al integrarla, sacar estas cuatro rutas y este comentario.
 Seguridad/usuarios/index.blade.php
 Seguridad/usuarios/_formulario.blade.php
 Seguridad/dispositivos/index.blade.php
