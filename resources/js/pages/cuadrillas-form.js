@@ -3,62 +3,20 @@
  * (tarea "cuadrillas-estadias", 19/9/2026)
  *
  * Funcionalidades:
- * 1. Guardado automático en sessionStorage (borrador de una sola vez)
- * 2. Validación de integrantes no repetidos (piloto, ayudante, ayudante2)
- * 3. Cambio dinámico de opciones de equipamiento por tipo (similar a contratos-form.js)
+ * 1. Validación de integrantes no repetidos (piloto, ayudante, ayudante2)
+ * 2. Cambio dinámico de opciones de equipamiento por tipo (similar a contratos-form.js)
+ *
+ * Lo cargado no se pierde al salir a crear una base, una persona o un equipo y
+ * volver: eso lo hace `shared/borrador-formulario.js` para todo formulario con
+ * un botón de alta rápida, en el alta y en la edición (21/9/2026; antes este
+ * módulo llevaba un guardado propio, solo en el alta).
  */
 
 (() => {
     const form = document.querySelector('[data-ag-cuadrillas-form]');
     if (!form) return;
 
-    const isEdit = form.method === 'PUT';
-    const storageKey = `cuadrillas-form-borrador-${window.location.pathname}`;
-
-    // === 1. Guardado/restauración de borrador en sessionStorage ===
-
-    if (!isEdit) {
-        // ALTA: guardar al cambiar cualquier campo
-        form.addEventListener('change', guardarBorrador);
-
-        // Restaurar borrador si existe
-        restaurarBorrador();
-    }
-
-    function guardarBorrador() {
-        const datos = new FormData(form);
-        const objeto = Object.fromEntries(datos);
-        sessionStorage.setItem(storageKey, JSON.stringify(objeto));
-    }
-
-    function restaurarBorrador() {
-        const json = sessionStorage.getItem(storageKey);
-        if (!json) return;
-
-        const datos = JSON.parse(json);
-        Object.entries(datos).forEach(([clave, valor]) => {
-            const control = form.querySelector(`[name="${clave}"]`);
-            if (!control) return;
-
-            if (control.type === 'checkbox' || control.type === 'radio') {
-                control.checked = control.value === valor;
-            } else if (control.tagName === 'SELECT') {
-                control.value = valor;
-            } else {
-                control.value = valor;
-            }
-        });
-
-        // Trigger change para actualizar selects dependientes (equipamiento)
-        form.dispatchEvent(new Event('change', { bubbles: true }));
-    }
-
-    // Limpiar borrador al enviar
-    form.addEventListener('submit', () => {
-        sessionStorage.removeItem(storageKey);
-    });
-
-    // === 2. Validación de integrantes no repetidos ===
+    // === 1. Validación de integrantes no repetidos ===
 
     const selectPiloto = form.querySelector('[data-ag-select-integrante="piloto"]');
     const selectAyudante = form.querySelector('[data-ag-select-integrante="ayudante"]');
@@ -109,7 +67,7 @@
         validar(); // Validar al cargar
     }
 
-    // === 3. Cambio dinámico de equipamiento por tipo ===
+    // === 2. Cambio dinámico de equipamiento por tipo ===
 
     const selectTipo = document.querySelector('[data-ag-select-tipo-recurso]');
     const selectRecurso = document.querySelector('[data-ag-select-recurso-id]');
