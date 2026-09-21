@@ -453,20 +453,6 @@ return [
         'campo_fecha_fin' => 'Fecha de fin',
         'campo_fecha_fin_ayuda' => 'Opcional. Si no se define, el contrato queda abierto.',
 
-        // Orden de aplicación (antes "Ventanas de aplicación", HU-23 tarea 34,
-        // renombrada en tarea "contratos-lotes"). "Día completo" convive con las
-        // filas cargadas, nunca un booleano en la base (ADR 0015 punto 5) — el
-        // interruptor es puramente de presentación, arranca encendido sin ventanas
-        // cargadas y las filas se muestran/ocultan según su estado
-        // (resources/js/pages/contratos-form.js).
-        'seccion_ventanas' => 'Orden de aplicación',
-        'ventana_dia_completo' => 'Día completo',
-        'ventana_dia_completo_ayuda' => 'Sin restricción de horario. Apágalo para cargar franjas horarias.',
-        'ventana_agregar' => 'Agregar ventana',
-        'ventana_quitar' => 'Quitar',
-        'ventana_hora_inicio' => 'Desde',
-        'ventana_hora_fin' => 'Hasta',
-
         // Acomodaciones logísticas (HU-74, tarea 90): lo que Agrocom cubre
         // para el equipo de campo durante la ejecución del contrato. Solo se
         // registra el dato — el costeo en Finanzas es alcance de una tarea
@@ -488,7 +474,6 @@ return [
         'campo_propiedad_placeholder' => 'Selecciona una propiedad',
         'campo_propiedad_ayuda' => 'Del cliente ya elegido arriba. Carga una si no figura en la lista.',
         'lote_seleccionar_todos' => 'Seleccionar todos',
-        'lote_personalizar_horario' => 'Personalizar horario',
         'lotes_sin_datos' => 'Esta propiedad todavía no tiene lotes cargados.',
         'lotes_quitar' => 'Quitar',
         'crear_propiedad' => 'Crear propiedad',
@@ -540,8 +525,15 @@ return [
         // Tabla de lotes ya agregados (bajo el select de Propiedad): una
         // columna por dato, "Horario" refleja "Día completo" o el rango
         // cargado — ver contratos-form.js.
-        'lotes_col_horario' => 'Horario',
         'lotes_col_acciones' => 'Acciones',
+        'lotes_resumen_uno' => '1 lote elegido, :suma ha.',
+        'lotes_resumen_varios' => ':cantidad lotes elegidos, que suman :suma ha.',
+        'lotes_resumen_sin_contratadas' => 'Carga las hectáreas contratadas para compararlas con este total.',
+        'lotes_resumen_igual' => 'Coincide con las :contratadas ha contratadas.',
+        'lotes_resumen_mas' => 'Son :resaltado que las :contratadas ha contratadas. Es solo una guía: puedes guardar igual.',
+        'lotes_resumen_mas_resaltado' => ':diferencia ha más',
+        'lotes_resumen_menos' => 'Son :resaltado que las :contratadas ha contratadas. Es solo una guía: puedes guardar igual.',
+        'lotes_resumen_menos_resaltado' => ':diferencia ha menos',
 
         // Resumen del aside de editar contrato (tarea "resumen de contrato",
         // sept/2026; ampliado a 4 tarjetas tarea "resumen-contrato-completo",
@@ -582,8 +574,6 @@ return [
         'error_campania_invalida' => 'La campaña seleccionada no es válida.',
         'error_lotes_requeridos' => 'Selecciona al menos un lote.',
         'error_lote_invalido' => 'Uno de los lotes seleccionados no es válido.',
-        'error_lote_horario_incompleto' => 'Completa la hora de inicio y la hora de fin del lote.',
-        'error_lote_horario_invalido' => 'La hora de fin del lote tiene que ser posterior a la hora de inicio.',
         'error_hectareas_contratadas_requeridas' => 'Ingresa las hectáreas contratadas.',
         'error_aplicaciones_previstas_requeridas' => 'Ingresa las aplicaciones previstas.',
         'error_precio_ha_requerido' => 'Ingresa el precio por hectárea.',

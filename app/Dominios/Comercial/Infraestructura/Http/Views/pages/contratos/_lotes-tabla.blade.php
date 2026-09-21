@@ -2,23 +2,32 @@
     Partial: tabla de lotes ya agregados al contrato (tarea "contratos-lotes"),
     dentro de la sección "Propiedad y lotes" de `_formulario.blade.php` —
     extraído de ahí (16/9/2026) para que ese archivo no cargue con el detalle
-    de cada fila. Agrupada por propiedad (una banda de título por grupo, no
-    una columna más), con Código / Hectáreas / Día completo / Horario /
-    Acciones por fila.
+    de cada fila: Código / Propiedad / Hectáreas / Acciones. Las filas siguen
+    agrupadas por propiedad en el DOM (`data-ag-lote-grupo`, de ahí salen las
+    pills y el modal), pero la propiedad se lee en su columna, no en una banda
+    de título por grupo (21/9/2026, pedido directo).
+
+    El contrato solo dice QUÉ lotes entran (21/9/2026): el día completo y el
+    horario de cada lote se cargan en la orden de trabajo. Arriba de la tabla,
+    un aviso informativo compara las hectáreas que suman los lotes elegidos con
+    las hectáreas contratadas — orienta, no bloquea el guardado. El texto lo
+    arma `contratos-form.js` (`actualizarResumenHectareas`) con las plantillas
+    que recibe por `data-*`, porque cambia al agregar o quitar lotes y al
+    escribir las hectáreas contratadas. Lo único que va en color alert es la
+    diferencia («50,00 ha menos»); el resto del aviso conserva su color.
 
     Espera:
     - $lotesIniciales (array<int, array{propiedad_nombre: string, lotes:
       list<array{indice: int, lote_id: int, codigo: string, hectareas:
-      string, hora_inicio: ?string, hora_fin: ?string}>}>): agrupado por
-      propiedad_id — armado por `_formulario.blade.php` desde
+      string}>}>): agrupado por
+      propiedad_id y, dentro de cada propiedad, en orden natural por código
+      (L1, L2, … L10) — armado por `_formulario.blade.php` desde
       `$contrato->lotes` o, tras un error de validación, desde `old('lotes')`
       (ver el bloque de PHP embebido de ese archivo, corrección del
       16/9/2026). `indice` es
       la clave ORIGINAL del array `lotes[N][...]` que mandó el formulario —
-      se usa acá tanto para el `name="lotes[N][...]"` de la fila como para
-      ubicar el error de ESA fila (`lotes.N.hora_inicio`/`lotes.N.hora_fin`),
-      nunca un contador propio: si no coinciden, el error de una fila
-      aparecería en otra.
+      se usa acá para el `name="lotes[N][lote_id]"` de la fila, nunca un
+      contador propio.
 
     $errors (heredado del scope de la página, Blade comparte variables con
     `@include`): `ViewErrorBag` global de Laravel, no un prop propio.
@@ -34,14 +43,6 @@
       botón que abre `_modal-conflicto-lote.blade.php` con los datos de ese
       otro contrato (`data-ag-conflictos-lotes`, JSON embebido en
       `_formulario.blade.php`).
-
-    "Día completo" (checkbox tildado por defecto cuando el lote no trae
-    horario propio) deshabilita el componente atoms/time-range de al lado sin
-    ocultarlo — visible-pero-deshabilitado a propósito (ver comentario en
-    `resources/css/pages/contratos.css` sobre `.ag-contratos-form__lote-rango-horas`):
-    si se ocultara, esa fila perdería el ancho de columna y la tabla
-    quedaría dentada entre filas con/sin horario propio. El toggle vive en
-    `resources/js/pages/contratos-form.js`.
 --}}
 <div
     data-ag-lotes-lista-apilada
@@ -57,28 +58,41 @@
         $loteIdsConOrdenRegistrada ??= [];
         $conflictosPorLote ??= [];
     @endphp
+    {{-- Hectáreas de los lotes elegidos contra las contratadas: solo informa. --}}
+    <x-molecules.alert-strip
+        variant="info"
+        icon="straighten"
+        :hidden="! $hayLotes"
+        data-ag-lotes-resumen
+        :data-texto-contador="__('comercial.contratos.lotes_contador')"
+        :data-texto-lotes-uno="__('comercial.contratos.lotes_resumen_uno')"
+        :data-texto-lotes-varios="__('comercial.contratos.lotes_resumen_varios')"
+        :data-texto-sin-contratadas="__('comercial.contratos.lotes_resumen_sin_contratadas')"
+        :data-texto-igual="__('comercial.contratos.lotes_resumen_igual')"
+        :data-texto-mas="__('comercial.contratos.lotes_resumen_mas')"
+        :data-texto-mas-resaltado="__('comercial.contratos.lotes_resumen_mas_resaltado')"
+        :data-texto-menos="__('comercial.contratos.lotes_resumen_menos')"
+        :data-texto-menos-resaltado="__('comercial.contratos.lotes_resumen_menos_resaltado')"
+    >
+        <span data-ag-lotes-resumen-texto></span>
+    </x-molecules.alert-strip>
+
     <div class="ag-contratos-form__lotes-tabla" data-ag-lotes-tabla @if (!$hayLotes) hidden @endif>
         <div class="ag-contratos-form__lotes-tabla-head">
             <span>{{ __('comercial.lotes.lote_codigo') }}</span>
+            <span>{{ __('comercial.contratos.campo_propiedad') }}</span>
             <span>{{ __('comercial.lotes.lote_hectareas') }}</span>
-            <span>{{ __('comercial.contratos.ventana_dia_completo') }}</span>
-            <span>{{ __('comercial.contratos.lotes_col_horario') }}</span>
             <span>{{ __('comercial.contratos.lotes_col_acciones') }}</span>
         </div>
         <div data-ag-lotes-agrupados>
             @foreach ($lotesIniciales as $propiedadId => $grupo)
                 <div data-ag-lote-grupo="propiedad-{{ $propiedadId }}" class="ag-contratos-form__lote-group">
-                    <div class="ag-contratos-form__lote-group-title">
-                        {{ $grupo['propiedad_nombre'] }}
-                    </div>
                     <div data-ag-lote-contenedor>
                         @foreach ($grupo['lotes'] as $lote)
                             @php
                                 $indiceGlobal = $lote['indice'];
-                                $esDiaCompleto = !$lote['hora_inicio'] && !$lote['hora_fin'];
-                                $errorHorario = $errors->first("lotes.{$indiceGlobal}.hora_inicio") ?: $errors->first("lotes.{$indiceGlobal}.hora_fin");
                             @endphp
-                            <div class="ag-contratos-form__lote-row" data-lote-id="{{ $lote['lote_id'] }}">
+                            <div class="ag-contratos-form__lote-row" data-lote-id="{{ $lote['lote_id'] }}" data-hectareas="{{ $lote['hectareas'] }}">
                                 <input type="hidden" name="lotes[{{ $indiceGlobal }}][lote_id]" value="{{ $lote['lote_id'] }}">
                                 <span class="ag-contratos-form__lote-code-cell">
                                     <strong class="ag-contratos-form__lote-code">{{ $lote['codigo'] }}</strong>
@@ -88,33 +102,10 @@
                                         </x-atoms.badge>
                                     @endif
                                 </span>
+                                <span class="ag-contratos-form__lote-propiedad">{{ $grupo['propiedad_nombre'] }}</span>
                                 <span class="ag-contratos-form__lote-hectareas">
                                     {{ number_format((float) $lote['hectareas'], 2, ',', '.') }} ha
                                 </span>
-                                <label class="ag-contratos-form__lote-dia-completo-celda">
-                                    <input
-                                        type="checkbox"
-                                        class="ag-checkbox-group__input"
-                                        data-ag-lote-dia-completo="{{ $lote['lote_id'] }}"
-                                        @checked($esDiaCompleto)
-                                    >
-                                    <span class="ag-checkbox-group__box" aria-hidden="true">
-                                        <span class="material-symbols-rounded ag-icon ag-icon--sm ag-checkbox-group__check">check</span>
-                                    </span>
-                                </label>
-                                <div class="ag-contratos-form__lote-rango-horas">
-                                    {{-- Horario del lote: inicio y fin en una sola casilla. El error de
-                                         la fila lo pinta la propia fila (más abajo); acá solo el borde. --}}
-                                    <x-atoms.time-range
-                                        id="lote-horario-{{ $indiceGlobal }}"
-                                        name-start="lotes[{{ $indiceGlobal }}][hora_inicio]"
-                                        name-end="lotes[{{ $indiceGlobal }}][hora_fin]"
-                                        :value-start="$lote['hora_inicio'] ?? null"
-                                        :value-end="$lote['hora_fin'] ?? null"
-                                        :disabled="$esDiaCompleto"
-                                        :invalid="(bool) $errorHorario"
-                                    />
-                                </div>
                                 @php
                                     $tieneOrdenRegistrada = in_array($lote['lote_id'], $loteIdsConOrdenRegistrada, true);
                                     // Ni `@if`/`@endif` ni la DIRECTIVA `@disabled()` se pueden
@@ -134,9 +125,8 @@
                                     {{-- "Ver contrato" vive ACÁ (columna Acciones), no junto al
                                          código/badge de la primera columna (pedido explícito del
                                          usuario, 18/9/2026): un botón de más ancho variable ahí
-                                         deformaba el grid de 5 columnas de la fila (`1fr 1fr auto
-                                         2fr auto`, ver contratos.css) — acá la columna ya es
-                                         `auto` y ya convive con "Quitar". --}}
+                                         deformaba el grid de la fila (ver contratos.css) — acá
+                                         la columna ya es `auto` y ya convive con "Quitar". --}}
                                     @if (isset($conflictosPorLote[$lote['lote_id']]))
                                         <x-atoms.button
                                             type="button"
@@ -159,15 +149,13 @@
                                         class="ag-contratos-form__lote-quitar-btn"
                                         icon="delete"
                                         data-ag-lote-quitar
+                                        :aria-label="__('comercial.contratos.lotes_quitar')"
                                         :disabled="$tieneOrdenRegistrada"
                                         :title="$tituloQuitarBloqueado"
                                     >
                                         {{ __('comercial.contratos.lotes_quitar') }}
                                     </x-atoms.button>
                                 </div>
-                                @if ($errorHorario)
-                                    <p class="ag-input__error" role="alert">{{ $errorHorario }}</p>
-                                @endif
                             </div>
                         @endforeach
                     </div>
@@ -189,19 +177,4 @@
         data-label-pagina="{{ __('ui.paginador.pagina') }}"
         data-label-resumen="{{ __('comercial.contratos.lotes_paginacion_resumen') }}"
     ></div>
-
-    {{-- Molde de la casilla de horario de un lote NUEVO: `crearFilaLote()`
-         (contratos-form.js) lo clona cambiando `__INDICE__` por el índice de la
-         fila — en los `name` y en el `id`, que no puede repetirse — y lo
-         inicializa con `initTimeRanges`. Nace deshabilitado: un lote nuevo
-         arranca en "día completo". Un `<template>` no está en el DOM vivo, así
-         que sus controles no se envían ni se inicializan solos. --}}
-    <template data-ag-time-range-molde>
-        <x-atoms.time-range
-            id="lote-horario-__INDICE__"
-            name-start="lotes[__INDICE__][hora_inicio]"
-            name-end="lotes[__INDICE__][hora_fin]"
-            disabled
-        />
-    </template>
 </div>

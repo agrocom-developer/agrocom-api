@@ -12,25 +12,29 @@
  * cerrar de la pill saca la propiedad ENTERA (con todos sus lotes) del
  * contrato — `quitarGrupoDeLista`.
  *
- * Horario por lote (16/9/2026, reemplazo completo de com_contrato_ventanas):
- * cada lote tiene su propio rango horario (nullable, string `H:i`). Arranca
- * como "día completo" (sin inputs visibles) con un botón "Personalizar
- * horario" que despliega dos campos. Se guarda en `lotes[N][hora_inicio]` y
- * `lotes[N][hora_fin]`. El índice N es un contador monotónico
- * (`contadorIndiceLote`, nunca se reutiliza) para que agregar/quitar lotes
- * en cualquier orden no choque índices entre filas.
+ * El contrato solo dice QUÉ lotes entran (21/9/2026): el día completo y el
+ * horario de cada lote se cargan en la orden de trabajo, no acá. Cada fila
+ * manda `lotes[N][lote_id]`; N es un contador monotónico
+ * (`contadorIndiceLote`, nunca se reutiliza) para que agregar/quitar lotes en
+ * cualquier orden no choque índices entre filas. Las filas de cada propiedad
+ * van en el orden en que el servidor manda sus lotes (natural por código: L1,
+ * L2, … L10 — `Lote::scopeOrdenadosPorCodigo()`), se agreguen cuando se agreguen.
  *
- * "Personalizar horario" y "Quitar" de una fila de la lista apilada se
- * manejan por DELEGACIÓN sobre `listaApilada` (un solo listener), no por
- * listener individual al crear cada fila — así funcionan igual para las
- * filas que ya vienen renderizadas por el servidor (modo edición) que para
- * las que arma este JS al guardar una selección del modal.
+ * Arriba de la tabla, un aviso informativo compara las hectáreas que suman los
+ * lotes elegidos con las hectáreas contratadas (`actualizarResumenHectareas`):
+ * orienta, no bloquea el guardado.
  *
- * SessionStorage (guardar/restaurar el estado del formulario al navegar a
- * "Crear cliente/propiedad/lote" y volver, clave `ag_contrato_borrador`). El
- * borrador anota la ruta del formulario que lo guardó y solo se restaura ahí;
- * restaurarlo nunca pisa con un valor vacío lo que el formulario ya trae —
- * p. ej. la campaña activa que el alta ofrece elegida (19/9/2026).
+ * "Quitar" de una fila se maneja por DELEGACIÓN sobre `listaApilada` (un solo
+ * listener), no por listener individual al crear cada fila — así funciona
+ * igual para las filas que ya vienen renderizadas por el servidor (modo
+ * edición) que para las que arma este JS al guardar una selección del modal.
+ *
+ * Borrador (guardar/restaurar el formulario al navegar a "Crear
+ * cliente/propiedad/lote" y volver): los campos los guarda y repone
+ * `shared/borrador-formulario.js` —switches, casillas y radios incluidos—; este
+ * módulo suma lo suyo, que no es un campo: qué propiedades y qué lotes estaban
+ * elegidos. Reponerlo nunca pisa con un valor vacío lo que el formulario ya trae
+ * —p. ej. la campaña activa que el alta ofrece elegida (19/9/2026).
  *
  * Al volver, lo recién creado llega por la URL (`cliente_id`, `propiedad_id`,
  * `lote_id`, ver el prop `retorno` de `molecules/boton-volver`) y se deja ya
@@ -42,14 +46,11 @@
  * Guard de presencia en el DOM (mismo criterio que `login.js`): en cualquier
  * página sin `[data-ag-contratos-form]` este módulo no hace nada.
  */
-import { initTimeRanges } from '../atoms/time-range.js';
+import { descartarBorrador, guardarBorrador as guardarBorradorCompartido, leerBorrador, restaurarCampos } from '../shared/borrador-formulario.js';
 import { crearPaginador } from '../shared/paginador-cliente.js';
 
 // Lotes por página, en el modal de una propiedad y en la tabla del contrato.
 const LOTES_POR_PAGINA = 20;
-
-// Clave con la que un borrador anota de qué formulario es (la ruta).
-const CLAVE_ORIGEN_BORRADOR = '__origen';
 
 document.addEventListener('DOMContentLoaded', () => {
     const formulario = document.querySelector('[data-ag-contratos-form]');
@@ -146,16 +147,15 @@ document.addEventListener('DOMContentLoaded', () => {
         return input;
     };
 
-    // ===== Lista apilada: fila de lote (Código | Hectáreas | Día completo |
-    // Horario | Acciones). Un lote recién agregado desde el modal arranca en
-    // "día completo" (sin horario propio, mismo criterio que regía antes a
-    // nivel de todo el contrato) — el checkbox habilita/deshabilita el par
-    // de inputs de hora vía delegación (ver más abajo, cubre esta fila y las
-    // que ya vienen renderizadas por el servidor en modo edición). =====
-    const crearFilaLote = (loteId, loteData) => {
+    // ===== Lista apilada: fila de lote (Código | Propiedad | Hectáreas |
+    // Acciones). La propiedad va en su columna, no en una banda por grupo. Las
+    // hectáreas viajan también en `data-hectareas`: de ahí las suma el aviso de
+    // arriba de la tabla, igual para estas filas que para las del servidor. =====
+    const crearFilaLote = (loteId, loteData, nombrePropiedad) => {
         const fila = document.createElement('div');
         fila.className = 'ag-contratos-form__lote-row';
         fila.setAttribute('data-lote-id', loteId);
+        fila.setAttribute('data-hectareas', String(loteData.hectareas));
 
         const indiceGlobal = contadorIndiceLote++;
         const inputLoteId = crearInputHidden(`lotes[${indiceGlobal}][lote_id]`, loteId);
@@ -164,40 +164,24 @@ document.addEventListener('DOMContentLoaded', () => {
         codigo.className = 'ag-contratos-form__lote-code';
         codigo.textContent = loteData.codigo;
 
+        const propiedad = document.createElement('span');
+        propiedad.className = 'ag-contratos-form__lote-propiedad';
+        propiedad.textContent = nombrePropiedad;
+
         const hectareas = document.createElement('span');
         hectareas.className = 'ag-contratos-form__lote-hectareas';
-        hectareas.textContent = `${Number(loteData.hectareas).toFixed(2)} ha`;
-
-        const celdaDiaCompleto = document.createElement('label');
-        celdaDiaCompleto.className = 'ag-contratos-form__lote-dia-completo-celda';
-        const checkDiaCompleto = document.createElement('input');
-        checkDiaCompleto.type = 'checkbox';
-        checkDiaCompleto.className = 'ag-checkbox-group__input';
-        checkDiaCompleto.checked = true;
-        checkDiaCompleto.setAttribute('data-ag-lote-dia-completo', loteId);
-        const boxDiaCompleto = document.createElement('span');
-        boxDiaCompleto.className = 'ag-checkbox-group__box';
-        boxDiaCompleto.setAttribute('aria-hidden', 'true');
-        boxDiaCompleto.appendChild(crearIcono('check', 'sm', 'ag-checkbox-group__check'));
-        celdaDiaCompleto.append(checkDiaCompleto, boxDiaCompleto);
-
-        // Horario del lote: se clona el molde que trae el servidor
-        // (`<template data-ag-time-range-molde>`), con el índice de esta fila en
-        // los `name` y en el `id`, y se inicializa el componente. Nace
-        // deshabilitado: el lote arranca en "día completo".
-        const celdaRango = document.createElement('div');
-        celdaRango.className = 'ag-contratos-form__lote-rango-horas';
-        const molde = formulario.querySelector('template[data-ag-time-range-molde]');
-        if (molde) {
-            celdaRango.innerHTML = molde.innerHTML.replaceAll('__INDICE__', String(indiceGlobal));
-            initTimeRanges(celdaRango);
-        }
+        hectareas.textContent = `${formatearHectareas(centesimas(loteData.hectareas))} ha`;
 
         const botonQuitar = crearBotonAccion('delete', textoQuitarLote);
         botonQuitar.setAttribute('data-ag-lote-quitar', '');
+        botonQuitar.setAttribute('aria-label', textoQuitarLote);
         botonQuitar.classList.add('ag-contratos-form__lote-quitar-btn');
 
-        fila.append(inputLoteId, codigo, hectareas, celdaDiaCompleto, celdaRango, botonQuitar);
+        const acciones = document.createElement('div');
+        acciones.className = 'ag-contratos-form__lote-acciones';
+        acciones.appendChild(botonQuitar);
+
+        fila.append(inputLoteId, codigo, propiedad, hectareas, acciones);
         return fila;
     };
 
@@ -209,7 +193,9 @@ document.addEventListener('DOMContentLoaded', () => {
     /**
      * Reconcilia los lotes marcados en el modal con la lista apilada: agrega
      * los nuevos, quita los desmarcados, y NO TOCA los que ya estaban (para
-     * no perder su horario personalizado ni el índice de su fila).
+     * no perder el índice de su fila). Al final reacomoda las filas en el orden
+     * de `propiedad.lotes` (natural por código): un L3 que se suma después de
+     * L10 queda en su lugar, no al final.
      */
     const sincronizarLotesDePropiedad = (propiedadId, propiedad, idsSeleccionados) => {
         if (!contenedorGrupos) return;
@@ -234,15 +220,10 @@ document.addEventListener('DOMContentLoaded', () => {
             grupo.setAttribute('data-ag-lote-grupo', `propiedad-${propiedadId}`);
             grupo.className = 'ag-contratos-form__lote-group';
 
-            const titulo = document.createElement('h4');
-            titulo.className = 'ag-contratos-form__lote-group-title';
-            titulo.textContent = propiedad.nombre;
-
             const contenedorLotes = document.createElement('div');
             contenedorLotes.className = 'ag-contratos-form__lote-group-items';
             contenedorLotes.setAttribute('data-ag-lote-contenedor', '');
 
-            grupo.appendChild(titulo);
             grupo.appendChild(contenedorLotes);
             contenedorGrupos.appendChild(grupo);
         }
@@ -251,12 +232,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
         idsSeleccionados.forEach((loteId) => {
             if (contenedorLotes.querySelector(`[data-lote-id="${loteId}"]`)) {
-                return; // ya estaba: no se toca (preserva horario)
+                return; // ya estaba: no se toca
             }
             const loteData = propiedad.lotes.find((l) => String(l.id) === loteId);
             if (loteData) {
-                contenedorLotes.appendChild(crearFilaLote(loteId, loteData));
+                contenedorLotes.appendChild(crearFilaLote(loteId, loteData, propiedad.nombre));
             }
+        });
+
+        // `appendChild` de un nodo que ya está lo MUEVE: recorrer en el orden
+        // del servidor deja las filas ordenadas sin recrear ninguna. Una fila
+        // cuyo lote ya no figura en el catálogo se queda donde estaba, arriba.
+        propiedad.lotes.forEach((lote) => {
+            const fila = contenedorLotes.querySelector(`:scope > [data-lote-id="${lote.id}"]`);
+            if (fila) contenedorLotes.appendChild(fila);
         });
     };
 
@@ -274,8 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Paginación de la tabla de lotes (20 por página, contando de corrido a
     // través de los grupos de propiedad). Se ocultan las filas de otras páginas
     // con `hidden`, no se quitan: sus campos siguen en el formulario y se envían.
-    // El título de una propiedad solo se ve si alguna de sus filas está en la
-    // página. Al cargar, si alguna fila trae un error de validación se abre la
+    // Al cargar, si alguna fila trae un error de validación se abre la
     // página donde está, para que no quede escondido.
     const contenedorPaginadorLotes = formulario.querySelector('[data-ag-lotes-paginador]');
     const paginadorLotes = contenedorPaginadorLotes
@@ -291,11 +279,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const [desde, hasta] = paginadorLotes.rango();
         filasDeLotes().forEach((fila, indice) => {
             fila.hidden = indice < desde || indice >= hasta;
-        });
-
-        contenedorGrupos.querySelectorAll('[data-ag-lote-grupo]').forEach((grupo) => {
-            const hayFilaVisible = Array.from(grupo.querySelectorAll('.ag-contratos-form__lote-row')).some((fila) => !fila.hidden);
-            grupo.querySelector('.ag-contratos-form__lote-group-title')?.toggleAttribute('hidden', !hayFilaVisible);
         });
     }
 
@@ -315,12 +298,78 @@ document.addEventListener('DOMContentLoaded', () => {
         mostrarPaginaLotes();
     };
 
+    // ===== Aviso de hectáreas: lo que suman los lotes elegidos contra las
+    // hectáreas contratadas (21/9/2026). Informativo: sirve para notar que se
+    // eligieron lotes de más o de menos, no impide guardar. Se suma en
+    // centésimas enteras para que 0,1 + 0,2 no aparezca como 0,30000000000000004;
+    // nada de esto se persiste (invariante 6: lo que vale es lo del servidor). =====
+    const resumenHectareas = formulario.querySelector('[data-ag-lotes-resumen]');
+    const textoResumenHectareas = resumenHectareas?.querySelector('[data-ag-lotes-resumen-texto]');
+    const inputHectareasContratadas = formulario.querySelector('[name="hectareas_contratadas"]');
+
+    const centesimas = (valor) => Math.round((Number(valor) || 0) * 100);
+    const formatearHectareas = (enCentesimas) => (enCentesimas / 100)
+        .toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    // El contador de la cabecera de la sección («5 lotes») lo pinta el servidor
+    // al cargar; acá se mantiene al día al agregar o quitar lotes.
+    const contadorSeccionLotes = resumenHectareas?.closest('.ag-form-section')?.querySelector('.ag-section-head__count');
+
+    const actualizarResumenHectareas = () => {
+        if (!resumenHectareas || !textoResumenHectareas) return;
+
+        const filas = filasDeLotes();
+        if (contadorSeccionLotes) {
+            contadorSeccionLotes.textContent = (resumenHectareas.dataset.textoContador || '').replace(':cantidad', String(filas.length));
+        }
+        resumenHectareas.toggleAttribute('hidden', filas.length === 0);
+        if (filas.length === 0) return;
+
+        const suma = filas.reduce((total, fila) => total + centesimas(fila.getAttribute('data-hectareas')), 0);
+        const contratadas = centesimas(inputHectareasContratadas?.value);
+
+        let comparacion = 'sinContratadas';
+        if (contratadas > 0) {
+            comparacion = suma === contratadas ? 'igual' : (suma > contratadas ? 'mas' : 'menos');
+        }
+
+        const datos = resumenHectareas.dataset;
+        const plantillaLotes = filas.length === 1 ? datos.textoLotesUno : datos.textoLotesVarios;
+        const plantillaComparacion = {
+            sinContratadas: datos.textoSinContratadas,
+            igual: datos.textoIgual,
+            mas: datos.textoMas,
+            menos: datos.textoMenos,
+        }[comparacion];
+        const plantillaResaltado = { mas: datos.textoMasResaltado, menos: datos.textoMenosResaltado }[comparacion] ?? '';
+
+        const completar = (plantilla) => (plantilla || '')
+            .replace(':cantidad', String(filas.length))
+            .replace(':suma', formatearHectareas(suma))
+            .replace(':contratadas', formatearHectareas(contratadas))
+            .replace(':diferencia', formatearHectareas(Math.abs(suma - contratadas)));
+
+        // Solo la diferencia («50,00 ha menos») va resaltada: la frase se parte
+        // en `:resaltado` y esa parte entra como elemento, nunca como HTML.
+        const [antes, despues = ''] = `${plantillaLotes} ${plantillaComparacion}`.split(':resaltado');
+        textoResumenHectareas.replaceChildren(completar(antes));
+        if (plantillaResaltado) {
+            const resaltado = document.createElement('strong');
+            resaltado.className = 'ag-contratos-form__lotes-resumen-diferencia';
+            resaltado.textContent = completar(plantillaResaltado);
+            textoResumenHectareas.append(resaltado, completar(despues));
+        }
+    };
+
+    inputHectareasContratadas?.addEventListener('input', actualizarResumenHectareas);
+
     // Muestra la tabla de lotes agregados solo si hay al menos un grupo —
     // evita el cascarón vacío (solo encabezado) en un contrato nuevo.
     const actualizarVisibilidadTablaLotes = () => {
         if (!tablaLotes || !contenedorGrupos) return;
         tablaLotes.toggleAttribute('hidden', contenedorGrupos.children.length === 0);
         paginarTablaLotes();
+        actualizarResumenHectareas();
     };
 
     // ===== Pills de propiedades seleccionadas =====
@@ -570,7 +619,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 celdaCodigo.textContent = lote.codigo;
 
                 const celdaHectareas = document.createElement('span');
-                celdaHectareas.textContent = `${Number(lote.hectareas).toFixed(2)} ha`;
+                celdaHectareas.textContent = `${formatearHectareas(centesimas(lote.hectareas))} ha`;
 
                 const celdaDesnivel = document.createElement('span');
                 celdaDesnivel.textContent = lote.desnivel_label || '—';
@@ -625,29 +674,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     modalLotesGuardarBtn?.addEventListener('click', guardarSeleccionModal);
 
-    // ===== Día completo, horario y quitar (delegación — cubre filas del
-    // servidor y del JS con un solo listener cada una) =====
-    listaApilada?.addEventListener('change', (e) => {
-        const checkDiaCompleto = e.target.closest('[data-ag-lote-dia-completo]');
-        if (!checkDiaCompleto) return;
-
-        // "Día completo" deshabilita y vacía el horario de la fila. Basta con
-        // tocar los inputs nativos: el componente `atoms/time-range` observa su
-        // `disabled` y se vuelve a leer solo.
-        const fila = checkDiaCompleto.closest('.ag-contratos-form__lote-row');
-        fila?.querySelectorAll('.ag-time-range__native').forEach((input) => {
-            input.disabled = checkDiaCompleto.checked;
-            if (checkDiaCompleto.checked) input.value = '';
-        });
-
-        // Al destildar, el foco pasa al horario (sin abrirlo) para que se cargue
-        // enseguida. Va en un `setTimeout`: el componente habilita su disparador al
-        // observar el cambio de `disabled`, que ocurre después de este oyente.
-        if (!checkDiaCompleto.checked) {
-            setTimeout(() => fila?.querySelector('[data-ag-time-range-trigger]')?.focus(), 0);
-        }
-    });
-
+    // ===== Quitar y ver conflicto (delegación — cubre filas del servidor y
+    // del JS con un solo listener) =====
     listaApilada?.addEventListener('click', (e) => {
         const botonQuitar = e.target.closest('[data-ag-lote-quitar]');
         if (botonQuitar) {
@@ -798,62 +826,71 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ===== SESSIONSTORAGE (guarda/restaura estado formulario) =====
-    // Guardar borrador en sessionStorage antes de navegar (tarea "contratos-lotes", punto 5)
-    const linksAltaRapida = formulario.querySelectorAll('[data-ag-link-accent]');
-    linksAltaRapida.forEach((link) => {
-        link.addEventListener('click', () => {
-            guardarBorrador();
-        });
+    // ===== BORRADOR (guarda/restaura el formulario al salir a un alta rápida) =====
+    // Los campos van por `shared/borrador-formulario.js`; acá se suma lo que no
+    // es un campo: el cliente con el que se eligieron las propiedades, y qué
+    // lotes de cada una estaban en la tabla. Se guarda al salir por cualquier
+    // enlace de alta rápida —los del servidor y el «Crear lote» del modal.
+    formulario.addEventListener('click', (e) => {
+        if (e.target.closest('[data-ag-link-accent]')) guardarBorrador();
     });
 
     function guardarBorrador() {
-        const datos = new FormData(formulario);
-        const bor = {};
-
-        datos.forEach((value, key) => {
-            if (key.startsWith('lotes[')) {
-                if (!bor[key]) bor[key] = [];
-                bor[key].push(value);
-            } else if (!bor[key]) {
-                bor[key] = value;
-            }
+        const lotesPorPropiedad = {};
+        propiedadesSeleccionadas.forEach((propiedadId) => {
+            lotesPorPropiedad[propiedadId] = [];
+        });
+        contenedorGrupos?.querySelectorAll('[data-ag-lote-grupo]').forEach((grupo) => {
+            const coincidencia = grupo.getAttribute('data-ag-lote-grupo')?.match(/^propiedad-(\d+)$/);
+            if (!coincidencia) return;
+            lotesPorPropiedad[coincidencia[1]] = Array.from(grupo.querySelectorAll('[data-lote-id]'))
+                .map((fila) => fila.getAttribute('data-lote-id'));
         });
 
-        // De QUÉ formulario es: el alta y la edición de cada contrato son
-        // formularios distintos, y un borrador solo vale para el que lo guardó.
-        bor[CLAVE_ORIGEN_BORRADOR] = window.location.pathname;
-
-        sessionStorage.setItem('ag_contrato_borrador', JSON.stringify(bor));
+        guardarBorradorCompartido(formulario, { clienteId: selectCliente?.value ?? '', lotesPorPropiedad });
     }
 
-    // Lo que el borrador NO devuelve al formulario: el token de seguridad y el
-    // método (los tiene ya la página nueva; el guardado viejo podría estar
-    // vencido) y la marca de origen.
-    const CLAVES_QUE_NO_SE_RESTAURAN = new Set(['_token', '_method', CLAVE_ORIGEN_BORRADOR]);
-
     /**
-     * Devuelve al campo lo que tenía. Tres cuidados: un valor vacío no pisa el
-     * que el formulario ya trae (p. ej. la campaña activa que ofrece elegida);
-     * un select solo acepta una opción que este formulario ofrece; y después de
-     * escribir se avisa al campo (`input`/`change`) para que los controles
-     * propios —el select con su etiqueta, la fecha con su disparador, el valor
-     * estimado— se repinten en vez de quedar mostrando otra cosa que su valor.
-     * `cliente_id` se avisa aparte, más abajo: mueve propiedades y pills.
+     * Devuelve a la tabla las propiedades y los lotes que tenía, si el cliente
+     * sigue siendo el mismo (los de otro cliente no valen). Cada id se valida
+     * contra lo que este formulario ofrece HOY: una propiedad o un lote que ya
+     * no está, o que entretanto quedó comprometido en otro contrato de la
+     * campaña, se ignora. `sincronizarLotesDePropiedad` no toca las filas que
+     * ya vinieron del servidor (edición) y saca las que se habían quitado.
      */
-    function aplicarValorDelBorrador(input, valor) {
-        const texto = valor === null || valor === undefined ? '' : String(valor);
+    function restaurarLotesDelBorrador(extra) {
+        if (!extra || typeof extra !== 'object' || !selectCliente?.value) return;
+        if (String(extra.clienteId ?? '') !== selectCliente.value) return;
 
-        if (texto === '' && input.value !== '') return;
-        if (input.tagName === 'SELECT' && !Array.from(input.options).some((opcion) => opcion.value === texto)) return;
-        if (input.value === texto) return;
+        const propiedades = propiedadesYLotes[selectCliente.value] || {};
+        const lotesPorPropiedad = extra.lotesPorPropiedad && typeof extra.lotesPorPropiedad === 'object' ? extra.lotesPorPropiedad : {};
 
-        input.value = texto;
+        // Una propiedad que el borrador ya no trae se había quitado entera.
+        contenedorGrupos?.querySelectorAll('[data-ag-lote-grupo]').forEach((grupo) => {
+            const coincidencia = grupo.getAttribute('data-ag-lote-grupo')?.match(/^propiedad-(\d+)$/);
+            if (coincidencia && !(coincidencia[1] in lotesPorPropiedad)) grupo.remove();
+        });
+        propiedadesSeleccionadas.clear();
 
-        if (input.name !== 'cliente_id') {
-            input.dispatchEvent(new Event('input', { bubbles: true }));
-            input.dispatchEvent(new Event('change', { bubbles: true }));
-        }
+        Object.entries(lotesPorPropiedad).forEach(([propiedadId, loteIds]) => {
+            const propiedad = propiedades[propiedadId];
+            if (!propiedad || !Array.isArray(loteIds)) return;
+
+            const yaEnTabla = new Set(
+                Array.from(
+                    contenedorGrupos?.querySelectorAll(`[data-ag-lote-grupo="propiedad-${propiedadId}"] [data-lote-id]`) || [],
+                ).map((fila) => fila.getAttribute('data-lote-id')),
+            );
+            const validos = new Set(loteIds.map(String).filter((loteId) => {
+                const lote = (propiedad.lotes || []).find((l) => String(l.id) === loteId);
+                return lote && (yaEnTabla.has(loteId) || !loteOcupadoEnCampaniaActual(lote));
+            }));
+
+            propiedadesSeleccionadas.add(propiedadId);
+            sincronizarLotesDePropiedad(propiedadId, propiedad, validos);
+        });
+
+        renderizarPills();
     }
 
     function restaurarBorrador() {
@@ -865,43 +902,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const clienteAntes = selectCliente?.value;
 
-        const bor = sessionStorage.getItem('ag_contrato_borrador');
-        if (bor) {
-            try {
-                const datos = JSON.parse(bor);
-
-                // Un borrador de otro formulario (o de una versión anterior, que
-                // no anotaba de cuál era) se descarta: si no, un «Nuevo cliente»
-                // que no volvió por su botón dejaba un contrato a medias que
-                // reaparecía —y pisaba lo que el formulario trae— en el siguiente
-                // alta, o en la edición de OTRO contrato.
-                if (datos[CLAVE_ORIGEN_BORRADOR] === window.location.pathname) {
-                    Object.entries(datos).forEach(([key, value]) => {
-                        if (CLAVES_QUE_NO_SE_RESTAURAN.has(key)) return;
-
-                        if (Array.isArray(value)) {
-                            value.forEach((v) => {
-                                const input = formulario.querySelector(`[name="${key}"]`);
-                                if (input) input.value = v;
-                            });
-                        } else {
-                            const input = formulario.querySelector(`[name="${key}"]`);
-                            if (!input) return;
-
-                            if (input.type === 'checkbox') {
-                                input.checked = value === 'on' || value === '1';
-                            } else {
-                                aplicarValorDelBorrador(input, value);
-                            }
-                        }
-                    });
-                }
-
-                sessionStorage.removeItem('ag_contrato_borrador');
-            } catch (e) {
-                console.error('Error al restaurar borrador:', e);
-                sessionStorage.removeItem('ag_contrato_borrador');
-            }
+        // De un solo uso y propio de ESTA ruta (el alta y la edición de cada
+        // contrato tienen cada una el suyo): un «Nuevo cliente» que no volvió
+        // por su botón no deja un contrato a medias en la edición de OTRO.
+        // `cliente_id` se avisa aparte, más abajo: mueve propiedades y pills.
+        const borrador = leerBorrador();
+        if (borrador) {
+            restaurarCampos(formulario, borrador.campos, { silenciar: (control) => control.name === 'cliente_id' });
         }
 
         // El borrador pudo cambiar el cliente sin avisarle al resto del
@@ -909,6 +916,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (selectCliente && selectCliente.value !== clienteAntes) {
             selectCliente.dispatchEvent(new Event('change'));
         }
+
+        // Con el cliente ya en su lugar (su `change` vacía las propiedades
+        // elegidas), vuelven las propiedades y los lotes que había.
+        if (borrador) restaurarLotesDelBorrador(borrador.extra);
 
         // Aplicar valores de URL (ganan sobre el borrador). Cada id se acepta
         // solo si es una opción real de lo que este formulario ofrece.
@@ -959,10 +970,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Restaurar al cargar
     restaurarBorrador();
 
-    // Guardar al enviar (limpiar después)
-    formulario.addEventListener('submit', () => {
-        sessionStorage.removeItem('ag_contrato_borrador');
-    });
+    // Al enviar, el borrador ya no hace falta.
+    formulario.addEventListener('submit', descartarBorrador);
 
     // ===== Adelanto Solicitado: valor estimado a cobrar + % en vivo (tarea
     // "adelanto-calculado", 18/9/2026) — puramente informativo, sin bloqueo

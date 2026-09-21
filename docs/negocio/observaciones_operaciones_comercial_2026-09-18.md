@@ -283,3 +283,17 @@ lo ya decidido, y queda escrito acá para corregirla si no era esa):
    como las dos salidas que ya define el ADR 0021: cancelar el contrato, o quitarle
    los lotes en conflicto (vuelve solo a «En Aprobación»). No existe una transición
    «revocar la aprobación» del contrato que ya está en ejecución.
+
+## 6. Ronda del 21/9/2026 — contrato: solo qué lotes entran (HU-103)
+
+Pedidos del dueño sobre el formulario de contrato, implementados en
+`feature/contrato-lotes-borrador` (Sprint 25). **Cambia una regla de negocio**:
+el horario por lote deja de ser un dato del contrato.
+
+| Pedido | Qué se hizo |
+|---|---|
+| «Día completo» y «Horario» están adelantados en el contrato: esa información va directo a la orden de trabajo; el contrato solo elige qué lotes entran | Se quitaron las dos columnas de la tabla de lotes, las reglas de `CrearContratoRequest`/`ActualizarContratoRequest` y la escritura en `CrearContrato`/`ActualizarContrato`. Las columnas `com_contrato_lotes.hora_inicio`/`hora_fin` quedan en la tabla (nullable) con lo que ya tuvieran; nada las lee. Operaciones nunca las leyó: el turno de cada lote ya se carga en la orden de trabajo (`turno`, `turno_hora_inicio`, `turno_hora_fin`). Reemplaza la fila «Horario por lote» de la ronda del 19/9 (§5): `atoms/time-range` sigue en el catálogo, lo usa Pausas. |
+| Los lotes se ordenan L1, L10, L11…; tiene que ser 1, 2, 3, … como números, respetando el orden literal de lo que el código lleve delante — en la tabla y en el modal | Orden natural por código en los dos lados: el servidor manda los lotes de cada propiedad con `Lote::scopeOrdenadosPorCodigo()` (el mismo del listado de Lotes), el modal los recorre en ese orden y la tabla reacomoda sus filas al agregar; al cargar la edición se ordena con `Dominio/OrdenCodigoLote` (misma regla, en memoria). |
+| Un mensaje arriba de la tabla con la suma de hectáreas de los lotes y las que encarga el contrato; no es una restricción | Aviso `info` sobre la tabla: «15 lotes elegidos, que suman 900,00 ha. Son 50,00 ha menos que las 950,00 ha contratadas. Es solo una guía: puedes guardar igual.» Se actualiza al agregar o quitar lotes y al escribir las hectáreas contratadas. Solo la diferencia va en color alert; el resto conserva el color del aviso. Sin hectáreas contratadas todavía, pide cargarlas; si coincide, lo dice. |
+| El nombre de la propiedad como columna de la tabla | Columna «Propiedad» entre Código y Hectáreas; se retiró la banda de título por grupo (las filas siguen agrupadas por propiedad en el DOM, de ahí salen las pills y el modal). |
+| Al salir por un input group a crear lo que falta y volver, los switch vuelven apagados («Brinda alimentación»); que se consideren también radio, casilla y `range`, en todos los formularios | La causa: el borrador se armaba con `FormData` y reponía por nombre, así que escribía sobre el `<input type="hidden" value="0">` que acompaña a cada switch y nunca sobre el switch. Ahora lo hace `resources/js/shared/borrador-formulario.js` para todo formulario con un enlace `data-ag-link-accent`: cada control se guarda por lo que es (tildado o no, cuál radio, valor). En contratos vuelven además las propiedades y los lotes elegidos, que antes se perdían en el alta. |

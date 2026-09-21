@@ -15,7 +15,7 @@
       y baterías, opcionales. Cada select de persona o de recurso es un
       input-group: lleva pegado el acceso rápido «Nuevo» (props `action*` de
       `atoms/select`) para dar de alta lo que falte sin perder lo ya escrito
-      (`cuadrillas-form.js` guarda el borrador). Accesorios se dibuja igual
+      (`shared/borrador-formulario.js` guarda el borrador). Accesorios se dibuja igual
       (§6.3.5: un formulario no esconde secciones) y explica que se cargan
       con la cuadrilla ya guardada.
     - EDICIÓN: son tablas de detalle paginadas (`integrantes_page`,

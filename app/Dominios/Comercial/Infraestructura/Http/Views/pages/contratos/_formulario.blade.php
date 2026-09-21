@@ -113,24 +113,19 @@
     $brindaCombustible = (bool) $valor('brinda_combustible', false);
 
     // Lotes iniciales: dos orígenes posibles, cada uno con su propio índice
-    // por fila (`indice`, usado por `_lotes-tabla.blade.php` tanto para el
-    // `name="lotes[N][...]"` como para ubicar el error de esa fila puntual).
+    // por fila (`indice`, usado por `_lotes-tabla.blade.php` para el
+    // `name="lotes[N][lote_id]"`).
     //
     // 1) Redisplay tras una validación fallida (create O edit): reconstruye
     //    el agrupado por propiedad desde `old('lotes')` — el array CRUDO que
-    //    manda el formulario (`lotes[N][lote_id/hora_inicio/hora_fin]`), NO
+    //    manda el formulario (`lotes[N][lote_id]`), NO
     //    desde `old('lotes_data')` (bug real, 16/9/2026 → corregido acá): esa
     //    clave nunca la llena ningún campo del formulario, así que la tabla
-    //    de lotes quedaba SIEMPRE vacía tras cualquier error de validación —
-    //    sin aviso, porque encima `_lotes-tabla.blade.php` solo comprueba
-    //    `$errors->has('lotes')` (la clave exacta), nunca las subclaves
-    //    `lotes.N.hora_inicio`/`lotes.N.hora_fin` que sí dispara
-    //    `CrearContratoRequest`/`ActualizarContratoRequest` para un horario
-    //    de lote inconsistente. Cruza cada `lote_id` recibido contra
+    //    de lotes quedaba SIEMPRE vacía tras cualquier error de validación.
+    //    Cruza cada `lote_id` recibido contra
     //    `$propiedadesYLotesPorCliente` (ya cargado para el cliente elegido)
     //    para recuperar código/hectáreas/propiedad — el POST no los manda.
-    //    Conserva el índice ORIGINAL (la clave de `old('lotes')`) para que el
-    //    error de esa fila, si lo hay, se muestre en la fila correcta.
+    //    Conserva el índice ORIGINAL (la clave de `old('lotes')`).
     //
     // 2) Sin fallo de validación: en edición, el estado guardado
     //    (`$contrato->lotes`, con `->lote` ya cargado); en alta, vacío.
@@ -162,8 +157,6 @@
                     'lote_id' => $loteId,
                     'codigo' => $loteData['codigo'],
                     'hectareas' => $loteData['hectareas'],
-                    'hora_inicio' => $loteEnviado['hora_inicio'] ?? null,
-                    'hora_fin' => $loteEnviado['hora_fin'] ?? null,
                 ];
                 break;
             }
@@ -183,10 +176,15 @@
                 'lote_id' => $lote->id,
                 'codigo' => $lote->codigo,
                 'hectareas' => (string) $lote->hectareas,
-                'hora_inicio' => $contratoLote->hora_inicio,
-                'hora_fin' => $contratoLote->hora_fin,
             ];
         }
+    }
+
+    // Dentro de cada propiedad, orden natural por código (L1, L2, … L10), el
+    // mismo del listado de lotes. El `indice` de cada fila no cambia al ordenar.
+    foreach ($lotesPorDefecto as $propiedadId => $grupo) {
+        usort($grupo['lotes'], fn (array $a, array $b): int => \App\Dominios\Comercial\Dominio\OrdenCodigoLote::comparar($a['codigo'], $b['codigo']));
+        $lotesPorDefecto[$propiedadId]['lotes'] = $grupo['lotes'];
     }
 
     $lotesIniciales = $lotesPorDefecto;
@@ -198,6 +196,7 @@
     class="ag-contratos-form"
     novalidate
     data-ag-contratos-form
+    data-ag-borrador="propio"
     data-url-origen="{{ $urlActual }}"
     data-etiqueta-origen="{{ $tituloPagina }}"
 >

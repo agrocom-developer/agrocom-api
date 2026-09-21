@@ -23,9 +23,8 @@ use Illuminate\Validation\Rule;
  * `Aplicacion/Contrato/VerificadorLotesDelContrato`, si pertenecen al
  * cliente y si hay superficie libre en la propiedad.
  *
- * `lotes.*.hora_inicio`/`lotes.*.hora_fin`: mismo criterio que
- * `CrearContratoRequest` — ver su docblock para el porqué de
- * `required_with` mutuo y `after:lotes.*.hora_inicio`.
+ * De cada lote solo se valida `lote_id` (sin horario desde el 21/9/2026, ver
+ * `CrearContratoRequest`).
  */
 final class ActualizarContratoRequest extends FormRequest
 {
@@ -47,8 +46,6 @@ final class ActualizarContratoRequest extends FormRequest
             'observaciones_logistica' => ['nullable', 'string'],
             'lotes' => ['required', 'array', 'min:1'],
             'lotes.*.lote_id' => ['required', 'integer', Rule::exists('com_lotes', 'id')->whereNull('deleted_at')],
-            'lotes.*.hora_inicio' => ['nullable', 'date_format:H:i', 'required_with:lotes.*.hora_fin'],
-            'lotes.*.hora_fin' => ['nullable', 'date_format:H:i', 'required_with:lotes.*.hora_inicio', 'after:lotes.*.hora_inicio'],
         ];
     }
 
@@ -67,9 +64,6 @@ final class ActualizarContratoRequest extends FormRequest
             'lotes.required' => __('comercial.contratos.error_lotes_requeridos'),
             'lotes.*.lote_id.required' => __('comercial.contratos.error_lote_invalido'),
             'lotes.*.lote_id.exists' => __('comercial.contratos.error_lote_invalido'),
-            'lotes.*.hora_inicio.required_with' => __('comercial.contratos.error_lote_horario_incompleto'),
-            'lotes.*.hora_fin.required_with' => __('comercial.contratos.error_lote_horario_incompleto'),
-            'lotes.*.hora_fin.after' => __('comercial.contratos.error_lote_horario_invalido'),
         ];
     }
 }

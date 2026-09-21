@@ -418,6 +418,15 @@ Criterio del dueño (19/9/2026, sobre el alta de Orden de Trabajo, que ocultaba 
 - **Una sección que depende del dato va pegada a él**, no al final: en el ejemplo, «Calda» es la segunda sección, justo después de la orden de aplicación.
 - **Si elegir el dato recarga la pantalla, lo ya cargado no se pierde** (`sessionStorage` de un solo uso, como `ordenes-trabajo-form.js`, o `old()` si viaja por el servidor).
 
+### 6.3.6. Salir a crear lo que falta no pierde lo cargado (borrador de formulario)
+
+Criterio del dueño (21/9/2026). Un select cuyo objeto puede no existir todavía lleva pegado su botón de alta rápida (props `action*` de `atoms/select`, o cualquier enlace con `data-ag-link-accent`); se sale a crear el cliente, la propiedad o la cuadrilla y se vuelve por `molecules/boton-volver`, con lo recién creado ya elegido.
+
+- **No hay que hacer nada para tenerlo.** `resources/js/shared/borrador-formulario.js` guarda el formulario al hacer clic en ese enlace y lo repone al volver a la misma ruta, en el alta y en la edición. Es de un solo uso (se borra al leerlo y al enviar) y vive en `sessionStorage`, con una clave por ruta.
+- **Cada control se guarda por lo que es**: switch y casilla, tildados o no, uno por uno; radio, cuál del grupo; el resto (texto, número, fecha, `range`, select, textarea), su valor. **Nunca con `FormData` ni reponiendo por `name`**: una casilla sin tildar no viaja y el `<input type="hidden" value="0">` que la acompaña sí, así que se terminaba escribiendo sobre el oculto y el switch volvía siempre apagado (el bug que originó este módulo).
+- **Los ocultos no se guardan ni se pisan.** Un valor vacío no pisa lo que el formulario ya ofrece elegido, y un select solo acepta una opción que el formulario de hoy ofrece.
+- **Lo que no es un campo lo repone la pantalla.** Filas dinámicas, pills y demás estado que arma el JS de la página: el `<form>` se declara `data-ag-borrador="propio"` y su módulo usa `guardarBorrador(formulario, extra)` / `leerBorrador()` / `restaurarCampos()`. Referencia viva: `contratos-form.js`, que suma las propiedades y los lotes elegidos.
+
 ### 6.4. Detalle — **la referencia canónica es `operaciones::pages.ordenes.show`**
 
 Cuarto arquetipo, agregado el 17/9/2026: una ficha de **solo lectura** para una entidad que ya no admite edición desde el listado (p. ej. una Orden de aplicación `vigente` — `Aplicacion/ActualizarOrden` exige `emitida`) o que de por sí es "información crítica para mirar", no un formulario. Antes no había ningún lugar del panel para volver a ver esos datos completos; el módulo Operaciones va a necesitar varias pantallas de este tipo, así que se arma reusando al máximo el catálogo del arquetipo Formulario — **no es un layout nuevo**.

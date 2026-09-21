@@ -574,6 +574,23 @@ registra la oficina. Implementada en la rama `feature/cuadrillas-estadias`.*
 
 ---
 
+## Sprint 25 — Contrato: solo qué lotes entran, y formularios que no pierden lo cargado (ronda del dueño, 21/9/2026)
+
+*Objetivo: que el contrato deje de pedir lo que todavía no se sabe —el día
+completo y el horario de cada lote son de la orden de trabajo— y que ningún
+formulario con botón de alta rápida pierda lo cargado al salir a crear lo que
+falta. **Cambia una regla de negocio**: el horario por lote deja de ser un dato
+del contrato (revierte la parte de horario del Sprint 21). Rama
+`feature/contrato-lotes-borrador`.*
+
+| ID | Historia / tarea | CA esenciales | Est. |
+|---|---|---|---|
+| HU-103 | Como **encargado**, quiero que en el contrato solo elija qué lotes entran, verlos en orden y saber cuántas hectáreas suman contra las contratadas, y que lo que ya cargué no se pierda al salir a crear un cliente o una propiedad, para armar el contrato sin rehacer nada | La tabla de lotes del contrato es Código / Propiedad / Hectáreas / Acciones: sin «Día completo» ni «Horario»; el contrato no escribe `hora_inicio`/`hora_fin` (las columnas quedan, nullable, con lo que tuvieran). Modal y tabla en orden natural por código (L1, L2, … L10; el prefijo conserva su orden literal) — `Dominio/OrdenCodigoLote` en memoria, `Lote::scopeOrdenadosPorCodigo()` en SQL. Aviso informativo sobre la tabla: cuántos lotes, cuántas hectáreas suman y la diferencia contra las contratadas, con solo esa diferencia en color alert; no bloquea el guardado. Borrador de formulario compartido (`shared/borrador-formulario.js`) para todo formulario con botón de alta rápida —Contratos, Cuadrillas, Estadías, Orden de trabajo—: guarda switch, casilla, radio, `range` y el resto por lo que son; en contratos vuelven además las propiedades y los lotes elegidos | 1,0 d |
+
+**Total: 1 d · 0 pantallas nuevas de menú**
+
+---
+
 ## Alcance total del sistema
 
 | Bloque | Días | Pantallas de menú | Estado |

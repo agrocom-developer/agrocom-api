@@ -21,11 +21,11 @@ use Illuminate\Support\Facades\DB;
  * criterio que `ActualizarCliente` — una sola transacción para contrato y
  * lotes.
  *
- * Sin ventanas de contrato (retiradas el 16/9/2026, reemplazo completo: ver
- * el docblock de {@see ContratoLote}):
- * el rango horario para fumigar ya no es un dato del contrato completo, es
- * un dato de CADA LOTE (`hora_inicio`/`hora_fin`, ambos NULL = día
- * completo).
+ * El contrato solo dice QUÉ lotes entran: sin ventanas horarias (retiradas
+ * el 16/9/2026) y sin horario por lote (retirado del contrato el 21/9/2026,
+ * se carga en la orden de trabajo — ver `CrearContrato`). Las columnas
+ * `hora_inicio`/`hora_fin` de {@see ContratoLote} quedan con lo que tuvieran;
+ * esta clase no las escribe.
  *
  * El set de `$lotes` recibido es el COMPLETO y definitivo, no un delta: los
  * que faltan respecto a los actuales se dan de baja (soft delete), los que
@@ -55,9 +55,7 @@ use Illuminate\Support\Facades\DB;
  * ({@see MaquinaEstadosContrato::reconciliarConflictos()}): al quitar un
  * lote, el contrato puede salir de `conflicto`; al agregar uno a un contrato
  * que retiene lotes (`vigente`/`pausado`), los `borrador` que lo comparten
- * pasan a `conflicto` (ADR 0021). Mismo criterio que
- * `CrearContrato` sobre no re-validar acá la consistencia de
- * `hora_inicio`/`hora_fin`: eso queda en `ActualizarContratoRequest`.
+ * pasan a `conflicto` (ADR 0021).
  */
 final class ActualizarContrato
 {
@@ -68,7 +66,7 @@ final class ActualizarContrato
 
     /**
      * @param  array<string, mixed>  $datosContrato  sin `estado` ni `monto_total`: este último lo recalcula esta clase.
-     * @param  list<array{lote_id: int, hora_inicio: ?string, hora_fin: ?string}>  $lotes  set completo y definitivo de lotes que cubre el contrato, cada uno con su rango horario opcional
+     * @param  list<array{lote_id: int}>  $lotes  set completo y definitivo de lotes que cubre el contrato, cada uno con su rango horario opcional
      *
      * @throws CampaniaNoAbierta si la campaña elegida está `cerrada`, o no está `abierta` y el contrato se la asigna ahora.
      * @throws LoteAjenoAlCliente si algún lote no pertenece a una propiedad del cliente del contrato.
@@ -162,30 +160,12 @@ final class ActualizarContrato
      * Reconcilia el set completo y definitivo de `$lotes` contra
      * `$contrato->lotes()` actual, por `lote_id`: da de baja (soft delete)
      * las filas {@see ContratoLote} cuyo `lote_id` ya no está en el set
-     * nuevo, crea las que faltan, y para las que siguen en ambos lados
-     * decide si tocarlas comparando su horario.
+     * nuevo, crea las que faltan, y a las que siguen en ambos lados NO las
+     * toca: un lote-en-contrato no tiene más dato propio que el lote, así que
+     * no hay nada que pueda haber cambiado — y la bitácora no se ensucia con
+     * lo que no cambió.
      *
-     * Cambio de criterio respecto a la versión de este método previa a la
-     * tarea "contratos-lotes" de horario por lote (16/9/2026): cuando un
-     * lote era solo un `lote_id` sin datos propios, "seguir en ambos lados"
-     * alcanzaba para dejar la fila intacta — no había nada más en la fila
-     * que pudiera cambiar sin que el conjunto de lotes elegidos cambiara.
-     * Ahora un lote-en-contrato SÍ tiene datos propios
-     * (`hora_inicio`/`hora_fin`) que el usuario puede editar sin agregar ni
-     * quitar lotes (por ejemplo: el mismo lote, pero le corrige el horario),
-     * así que "seguir en ambos lados" ya no basta para decidir "no tocar":
-     * hace falta comparar el horario actual contra el nuevo. Si cambió,
-     * `fill()+save()` (toca `updated_at`, es un cambio real que la bitácora
-     * tiene que ver); si no cambió, la fila queda intacta — mismo espíritu
-     * de "no ensuciar auditoría de lo que no cambió" que ya regía acá, solo
-     * que el criterio de "cambió" pasa de ser "existencia" a ser "horario".
-     *
-     * Comparación por `substr(..., 0, 5)`: la columna `TIME` de Postgres
-     * puede devolver `HH:MM:SS`, mientras que lo que llega en `$lotes` viene
-     * en `HH:MM` (formato `date_format:H:i` del Request) — mismo recorte que
-     * ya usaban las vistas para mostrar una hora sin segundos.
-     *
-     * @param  list<array{lote_id: int, hora_inicio: ?string, hora_fin: ?string}>  $lotes
+     * @param  list<array{lote_id: int}>  $lotes
      */
     private function sincronizarLotes(Contrato $contrato, array $lotes): void
     {
@@ -210,35 +190,13 @@ final class ActualizarContrato
                 $contratoLote->delete();
             });
 
-        $existentes = $contrato->lotes()->get()->keyBy('lote_id');
+        $existentes = $contrato->lotes()->pluck('lote_id')->map(static fn (mixed $id): int => (int) $id)->all();
 
         foreach ($lotes as $datos) {
-            $existente = $existentes->get($datos['lote_id']);
-
-            if ($existente === null) {
-                $contrato->lotes()->create($datos);
-
-                continue;
+            if (! in_array($datos['lote_id'], $existentes, true)) {
+                $contrato->lotes()->create(['lote_id' => $datos['lote_id']]);
             }
-
-            $horarioCambio = $this->horaCorta($existente->hora_inicio) !== $datos['hora_inicio']
-                || $this->horaCorta($existente->hora_fin) !== $datos['hora_fin'];
-
-            if (! $horarioCambio) {
-                continue;
-            }
-
-            $existente->fill([
-                'hora_inicio' => $datos['hora_inicio'],
-                'hora_fin' => $datos['hora_fin'],
-            ]);
-            $existente->save();
         }
-    }
-
-    private function horaCorta(?string $hora): ?string
-    {
-        return $hora === null ? null : substr($hora, 0, 5);
     }
 
     /**
