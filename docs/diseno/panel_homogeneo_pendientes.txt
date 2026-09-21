@@ -12,5 +12,3 @@
 #
 # Medida el 20/9/2026 sobre `develop` en `5f699ce4` (tarea 111): 46 pantallas,
 # 26 listados y 20 formularios. Las referencias del plan (§1) no pueden figurar.
-
-# 121 · feature/panel-usuarios-dispositivos

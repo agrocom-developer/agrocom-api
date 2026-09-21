@@ -267,7 +267,7 @@ ciclo sigue con la próxima, porque ninguna depende de otra salvo de la 111.
 | 118 | **hecha** (20/9/2026) | |
 | 119 | **hecha** (20/9/2026) | |
 | 120 | **hecha** (20/9/2026) | |
-| 121 | pendiente | |
+| 121 | **hecha** (20/9/2026) | |
 | 122 | pendiente | |
 
 Cada tarea actualiza su fila al cerrar con `OK`.
