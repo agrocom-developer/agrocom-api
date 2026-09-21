@@ -103,11 +103,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const urlCrearLote = modalLotesEl?.dataset.urlCrearLote || '';
     const textoSinLotes = modalLotesEl?.dataset.textoSinLotes || '';
     const textoCrearLote = modalLotesEl?.dataset.textoCrearLote || '';
+    const urlSiembra = modalLotesEl?.dataset.urlSiembra || '';
+    const textoSiembra = modalLotesEl?.dataset.textoSiembra || '';
     const textoSeleccionarTodos = modalLotesEl?.dataset.textoSeleccionarTodos || '';
     const textoColCodigo = modalLotesEl?.dataset.textoColCodigo || '';
     const textoColHectareas = modalLotesEl?.dataset.textoColHectareas || '';
     const textoColDesnivel = modalLotesEl?.dataset.textoColDesnivel || '';
     const textoColLimpieza = modalLotesEl?.dataset.textoColLimpieza || '';
+    const textoColCultivo = modalLotesEl?.dataset.textoColCultivo || '';
+    const textoSinEtapa = modalLotesEl?.dataset.textoSinEtapa || '';
     const textoQuitarLote = listaApilada?.dataset.textoQuitarLote || '';
     const textoQuitarPropiedadPrefijo = contenedorPropiedadesPills?.dataset.textoQuitar || '';
 
@@ -522,8 +526,32 @@ document.addEventListener('DOMContentLoaded', () => {
             guardarBorrador();
             window.location.href = `${urlCrearLote}?propiedad_id=${propiedadId}&${queryOrigen()}`;
         });
+        // «Registrar siembra»: mismo viaje de ida y vuelta que «Crear lote»
+        // (borrador + memento), a la siembra de ESTA propiedad y con la campaña
+        // elegida en el formulario. Es donde la siembra entra en el flujo: acá se
+        // decide qué lotes van juntos, y la columna «Cultivo y etapa» sale de ahí.
+        // Sin permiso de editar la propiedad el Blade no manda la URL y no se dibuja.
+        let accionSiembra = null;
+        if (urlSiembra && (propiedad.lotes || []).length > 0) {
+            accionSiembra = document.createElement('a');
+            accionSiembra.href = '#';
+            accionSiembra.className = 'ag-button ag-button--outline ag-button--sm';
+            accionSiembra.appendChild(crearIcono('eco', 'sm', 'ag-button__icon'));
+            const etiquetaSiembra = document.createElement('span');
+            etiquetaSiembra.className = 'ag-button__label';
+            etiquetaSiembra.textContent = textoSiembra;
+            accionSiembra.appendChild(etiquetaSiembra);
+            accionSiembra.addEventListener('click', (e) => {
+                e.preventDefault();
+                guardarBorrador();
+                const campania = selectCampania?.value ? `campania_id=${encodeURIComponent(selectCampania.value)}&` : '';
+                window.location.href = `${urlSiembra.replace('__PROPIEDAD__', propiedadId)}?${campania}${queryOrigen()}`;
+            });
+        }
+
         if (modalCrearLoteSlot) {
             modalCrearLoteSlot.innerHTML = '';
+            if (accionSiembra) modalCrearLoteSlot.appendChild(accionSiembra);
             modalCrearLoteSlot.appendChild(accionCrearLote);
         } else {
             modalLotesLista.appendChild(accionCrearLote);
@@ -601,7 +629,9 @@ document.addEventListener('DOMContentLoaded', () => {
             colDesnivel.textContent = textoColDesnivel;
             const colLimpieza = document.createElement('span');
             colLimpieza.textContent = textoColLimpieza;
-            head.append(celdaTodos, colCodigo, colHectareas, colDesnivel, colLimpieza);
+            const colCultivo = document.createElement('span');
+            colCultivo.textContent = textoColCultivo;
+            head.append(celdaTodos, colCodigo, colHectareas, colCultivo, colDesnivel, colLimpieza);
             tabla.appendChild(head);
 
             lotesVisibles.forEach((lote) => {
@@ -621,6 +651,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 const celdaHectareas = document.createElement('span');
                 celdaHectareas.textContent = `${formatearHectareas(centesimas(lote.hectareas))} ha`;
 
+                // Cultivo y etapa del lote EN LA CAMPAÑA ELEGIDA en el formulario
+                // (`siembras`, ver `ContratosController::propiedadesYLotesPorCliente()`):
+                // es lo que dice qué lotes van juntos en un contrato. Sin campaña
+                // elegida o sin siembra registrada, la celda queda vacía («—»).
+                const siembra = (lote.siembras || {})[selectCampania?.value || ''];
+                const celdaCultivo = document.createElement('span');
+                celdaCultivo.textContent = siembra ? `${siembra.cultivo} · ${siembra.etapa_label || textoSinEtapa}` : '—';
+                celdaCultivo.classList.toggle('ag-contratos-form__modal-tabla-vacio', !siembra);
+
                 const celdaDesnivel = document.createElement('span');
                 celdaDesnivel.textContent = lote.desnivel_label || '—';
                 celdaDesnivel.classList.toggle('ag-contratos-form__modal-tabla-vacio', !lote.desnivel_label);
@@ -629,7 +668,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 celdaLimpieza.textContent = lote.limpieza_label || '—';
                 celdaLimpieza.classList.toggle('ag-contratos-form__modal-tabla-vacio', !lote.limpieza_label);
 
-                fila.append(celdaCheck, celdaCodigo, celdaHectareas, celdaDesnivel, celdaLimpieza);
+                fila.append(celdaCheck, celdaCodigo, celdaHectareas, celdaCultivo, celdaDesnivel, celdaLimpieza);
 
                 // Clickear cualquier parte de la fila marca/desmarca — salvo
                 // la propia celda de checkbox, que ya lo hace nativo (label

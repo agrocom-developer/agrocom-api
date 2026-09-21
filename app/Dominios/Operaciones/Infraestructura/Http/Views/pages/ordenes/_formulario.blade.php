@@ -376,10 +376,26 @@
                 />
             </div>
 
-            <x-molecules.index-table columns="1fr 1fr 9rem" data-ag-lotes-tabla :hidden="empty($lotes)">
+            {{-- Cultivo, etapa y terreno (21/9/2026): lo que dice qué trabajo pide cada
+                 lote. Un lote sin cultivo registrado no es un error —es lo normal con
+                 el terreno limpio, antes de una aplicación de sólidos—, por eso va en
+                 texto apagado y no como aviso. `ordenes-form.js` redibuja estas mismas
+                 celdas al cambiar de contrato; los textos le llegan por `data-texto-*`. --}}
+            <x-molecules.index-table
+                columns="minmax(4rem, 0.6fr) 1fr 1.2fr 1.2fr 9rem"
+                data-ag-lotes-tabla
+                data-texto-sin-cultivo="{{ __('operaciones.ordenes.lotes_sin_cultivo') }}"
+                data-texto-sin-etapa="{{ __('operaciones.ordenes.lotes_sin_etapa') }}"
+                data-texto-desnivel="{{ __('operaciones.ordenes.lotes_terreno_desnivel') }}"
+                data-texto-limpieza="{{ __('operaciones.ordenes.lotes_terreno_limpieza') }}"
+                data-texto-sin-terreno="{{ __('operaciones.ordenes.lotes_sin_terreno') }}"
+                :hidden="empty($lotes)"
+            >
                 <x-slot:head>
                     <span role="columnheader">{{ __('operaciones.ordenes.lotes_columna_codigo') }}</span>
                     <span role="columnheader">{{ __('operaciones.ordenes.lotes_columna_propiedad') }}</span>
+                    <span role="columnheader">{{ __('operaciones.ordenes.lotes_columna_cultivo') }}</span>
+                    <span role="columnheader">{{ __('operaciones.ordenes.lotes_columna_terreno') }}</span>
                     <span role="columnheader">{{ __('operaciones.ordenes.lotes_columna_hectareas_lote') }}</span>
                 </x-slot:head>
 
@@ -387,6 +403,26 @@
                     <div class="ag-index-table__row" role="row" @if ($indice >= $lotesPorPagina) hidden @endif>
                         <span role="cell">{{ $lote['codigo'] }}</span>
                         <span role="cell">{{ $lote['propiedad'] }}</span>
+                        <span role="cell" class="ag-ordenes__celda-doble">
+                            @if (($lote['cultivo'] ?? null) !== null)
+                                <span>{{ $lote['cultivo'] }}</span>
+                                <span class="ag-ordenes__celda-detalle">{{ $lote['etapa_label'] ?? __('operaciones.ordenes.lotes_sin_etapa') }}</span>
+                            @else
+                                <span class="ag-ordenes__celda-detalle">{{ __('operaciones.ordenes.lotes_sin_cultivo') }}</span>
+                            @endif
+                        </span>
+                        <span role="cell" class="ag-ordenes__celda-doble">
+                            @if (($lote['desnivel_label'] ?? null) === null && ($lote['limpieza_label'] ?? null) === null)
+                                <span class="ag-ordenes__celda-detalle">{{ __('operaciones.ordenes.lotes_sin_terreno') }}</span>
+                            @else
+                                @if (($lote['desnivel_label'] ?? null) !== null)
+                                    <span class="ag-ordenes__celda-detalle">{{ __('operaciones.ordenes.lotes_terreno_desnivel', ['valor' => $lote['desnivel_label']]) }}</span>
+                                @endif
+                                @if (($lote['limpieza_label'] ?? null) !== null)
+                                    <span class="ag-ordenes__celda-detalle">{{ __('operaciones.ordenes.lotes_terreno_limpieza', ['valor' => $lote['limpieza_label']]) }}</span>
+                                @endif
+                            @endif
+                        </span>
                         <span role="cell" class="ag-ordenes__mono">{{ number_format((float) $lote['hectareas'], 2, ',', '.') }}</span>
                     </div>
                 @endforeach

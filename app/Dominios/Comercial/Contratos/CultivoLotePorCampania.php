@@ -10,6 +10,12 @@ namespace App\Dominios\Comercial\Contratos;
  * hacerse desde fuera de `Comercial` sin tocar sus modelos.
  *
  * `hectareasSembradas` viaja como string (invariante 6).
+ *
+ * `campaniaId` y `etapa` (21/9/2026): la orden de aplicación muestra, por
+ * lote, qué cultivo tiene en la campaña de su contrato y en qué etapa está.
+ * `etapa` es el valor de `Dominio\EtapaCultivo` como string plano —quien lo
+ * muestra lo traduce con `comercial.siembra.etapa_opcion.*`— o `null` si no
+ * se registró.
  */
 final readonly class CultivoLotePorCampania
 {
@@ -19,5 +25,7 @@ final readonly class CultivoLotePorCampania
         public int $cultivoId,
         public string $cultivoNombre,
         public string $hectareasSembradas,
+        public int $campaniaId = 0,
+        public ?string $etapa = null,
     ) {}
 }
