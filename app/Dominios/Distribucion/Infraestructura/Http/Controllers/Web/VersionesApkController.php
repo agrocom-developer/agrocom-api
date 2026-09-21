@@ -4,11 +4,14 @@ namespace App\Dominios\Distribucion\Infraestructura\Http\Controllers\Web;
 
 use App\Dominios\Distribucion\Aplicacion\MaquinaEstados\MaquinaEstadosVersionApk;
 use App\Dominios\Distribucion\Aplicacion\RegistrarVersionApk;
+use App\Dominios\Distribucion\Dominio\EstadoVersionApk;
+use App\Dominios\Distribucion\Dominio\TransicionesVersionApk;
 use App\Dominios\Distribucion\Infraestructura\Eloquent\VersionApk;
 use App\Dominios\Distribucion\Infraestructura\Http\Requests\RegistrarVersionApkRequest;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 /**
@@ -29,6 +32,17 @@ use Illuminate\View\View;
  */
 final class VersionesApkController
 {
+    /**
+     * Estado de la versión → tono. Se define una sola vez y lo comparten el
+     * badge del listado, el botón que lleva a ese estado y el modal de
+     * confirmación: los tres hablan con el mismo color.
+     */
+    public const TONO_POR_ESTADO = [
+        'pendiente' => 'warning',
+        'autorizada' => 'success',
+        'rechazada' => 'danger',
+    ];
+
     private const PERMISO = 'distribucion.version.autorizar';
 
     public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
@@ -37,9 +51,13 @@ final class VersionesApkController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO), 403);
 
+        $versiones = VersionApk::query()->orderByDesc('version_code')->paginate(15)->withQueryString();
+
         return view('distribucion::pages.versiones-apk.index', [
             ...$this->autorizacion->cascara($request),
-            'versiones' => VersionApk::query()->orderByDesc('version_code')->get(),
+            'versiones' => $versiones,
+            'tonoPorEstado' => self::TONO_POR_ESTADO,
+            'autorizables' => $this->autorizables($versiones->getCollection()),
         ]);
     }
 
@@ -72,5 +90,23 @@ final class VersionesApkController
         return redirect()
             ->route('panel.versiones-apk.index')
             ->with('estado', __('distribucion.versiones.autorizada'));
+    }
+
+    /**
+     * Qué versiones admite «Autorizar» según la tabla de transiciones: solo
+     * las que la máquina deja pasar a `autorizada`. Una rechazada no —hoy
+     * tendría que volver a `pendiente` antes— y ofrecer el botón sería ofrecer
+     * algo que el servidor va a negar.
+     *
+     * @param  Collection<int, VersionApk>  $versiones
+     * @return array<int, bool> id de versión => si se puede autorizar
+     */
+    private function autorizables(Collection $versiones): array
+    {
+        return $versiones
+            ->mapWithKeys(fn (VersionApk $version): array => [
+                $version->id => TransicionesVersionApk::permitida($version->estado, EstadoVersionApk::Autorizada),
+            ])
+            ->all();
     }
 }

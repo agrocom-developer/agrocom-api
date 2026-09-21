@@ -267,8 +267,8 @@ ciclo sigue con la próxima, porque ninguna depende de otra salvo de la 111.
 | 118 | **hecha** (20/9/2026) | #261 |
 | 119 | **hecha** (20/9/2026) | #262 |
 | 120 | **hecha** (20/9/2026) | #263 |
-| 121 | **sin integrar** — implementada y verificada en la rama local `feature/panel-usuarios-dispositivos`, sin PR | — |
-| 122 | **hecha** (20/9/2026) | el que abre el ciclo con esta rama |
+| 121 | **hecha** (20/9/2026) | el que abre el ciclo con esta rama (tarea 123) |
+| 122 | **hecha** (20/9/2026) | #264 |
 
 Cada tarea actualiza su fila al cerrar con `OK`.
 
@@ -276,7 +276,13 @@ Cada tarea actualiza su fila al cerrar con `OK`.
 no de lo que declaró cada sesión. La 121 dejó `runs/121.estado` en `OK` y sus seis
 commits en la rama local `feature/panel-usuarios-dispositivos`, pero el push se cortó
 («unexpected disconnect»), el ciclo no pudo abrir el PR y siguió con la 122. Sin PR
-mergeado no está hecha: sus cuatro pantallas (Usuarios —listado y formulario—,
-Dispositivos y Versiones de APK) siguen en `docs/diseno/panel_homogeneo_pendientes.txt`,
-que es lo único que `PanelHomogeneoTest` perdona. Al integrarla, esta fila pasa a
-`hecha` con su número de PR y su bloque sale de esa lista.
+mergeado no estaba hecha: sus cuatro pantallas (Usuarios —listado y formulario—,
+Dispositivos y Versiones de APK) siguieron en `docs/diseno/panel_homogeneo_pendientes.txt`,
+que es lo único que `PanelHomogeneoTest` perdona.
+
+**Integración de la 121 (tarea 123, 20/9/2026).** La 121 se integró después, con la
+tarea 123: trajo la rama local a una rama nueva nacida de `develop`
+(`feature/usuarios-dispositivos-panel`; la vieja no se podía retomar porque
+`cola_tareas.md` difería entre ella y `develop`), resolvió los dos únicos conflictos
+—los dos de `docs/`— y sacó ese bloque de la lista de pendientes, que quedó vacía. La
+fila 121 pasa a `hecha`; su número de PR es el de esa rama.

@@ -69,12 +69,14 @@ Al empezar una iteración nueva: leé este documento completo primero (es corto)
 > Se borró el CSS de tablas y listados que ninguna vista usa (`campos.css`,
 > `trabajos.css`).
 >
-> **Sin integrar: la tarea 121** (Usuarios, Dispositivos y Versiones de APK).
-> Está hecha y verificada en la rama local `feature/panel-usuarios-dispositivos`,
+> **Integrada después: la tarea 121** (Usuarios, Dispositivos y Versiones de APK).
+> Quedó hecha y verificada en la rama local `feature/panel-usuarios-dispositivos`,
 > pero el push se cortó, el ciclo no pudo abrir el PR y siguió con la 122 —aunque
-> `runs/121.estado` diga `OK`—. Sus cuatro pantallas siguen en
-> `docs/diseno/panel_homogeneo_pendientes.txt`, y esa lista es lo único que
-> separa hoy al panel de quedar del todo homogéneo.
+> `runs/121.estado` dijera `OK`—. La tarea 123 la trajo a una rama nueva nacida de
+> `develop` (`feature/usuarios-dispositivos-panel`), resolvió los dos conflictos
+> de docs y dejó vacía `docs/diseno/panel_homogeneo_pendientes.txt`: con eso las 46
+> pantallas que midió la 111 siguen el patrón y `PanelHomogeneoTest` ya no perdona
+> ninguna.
 >
 > **Fuera del rollout por decisión del dueño** (plan §1.1), sin tocar: Roles,
 > Organización, Bitácora, Dashboard, las páginas de detalle (`show`), el portal y
@@ -83,10 +85,12 @@ Al empezar una iteración nueva: leé este documento completo primero (es corto)
 > en «Deuda técnica detectada» de [cola_tareas.md](cola_tareas.md).
 
 > **Nota del 19/9/2026 — la corrección del dueño del 18/9 sobre contratos,
-> lotes y órdenes de aplicación, implementada en dos ramas y sin integrar.**
+> lotes y órdenes de aplicación, implementada en dos ramas e integrada después
+> (PR #244 y #246).**
 > Mirando el panel andando, el dueño desechó dos enfoques y dejó decidido el
 > reemplazo (`docs/negocio/observaciones_operaciones_comercial_2026-09-18.md`).
-> Quedó en dos ramas locales, ambas **sin push ni PR todavía**:
+> Se implementó en dos ramas que el 19/9 eran locales, sin push ni PR (hoy ya
+> entraron a `develop`, HU-96 con el #244 y HU-97 con el #246):
 >
 > - **`feature/contrato-conflicto` — exclusividad de lotes entre contratos**
 >   (HU-96, Sprint 19, **ADR 0021**): un contrato `vigente` o `pausado` retiene
