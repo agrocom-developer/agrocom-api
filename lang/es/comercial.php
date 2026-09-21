@@ -901,49 +901,37 @@ return [
 
         // Entrada (pantalla inicial, con formulario de selección obligatoria)
         'entrada' => [
+            'titulo' => 'Qué incluir en el informe',
+            'campos_contador' => ':cantidad campos',
             'cliente' => 'Clientes',
             'cultivo' => 'Cultivos',
-            'filtros' => 'Filtros',
             'generar' => 'Generar informe',
             'error_cliente' => 'Selecciona al menos un cliente.',
             'error_cultivo' => 'Selecciona al menos un cultivo.',
         ],
 
-        // Estado vacío
+        // Informe sin filas
         'estado' => [
-            'sin_resultados' => 'Ningún contrato coincide con el filtro aplicado.',
+            'sin_resultados_titulo' => 'Sin resultados para este filtro',
+            'sin_resultados_detalle' => 'Ningún contrato coincide con los filtros aplicados. Prueba con otra selección o quita algún filtro.',
         ],
 
-        // Chips de filtros (carrusel horizontal)
-        'chips' => [
-            'cliente' => 'Cliente (:cantidad)',
-            'cultivo' => 'Cultivo (:cantidad)',
-            'campania' => 'Campaña (:cantidad)',
-            'rango_fechas' => ':desde – :hasta',
-            'fecha_desde' => 'Desde :fecha',
-            'fecha_hasta' => 'Hasta :fecha',
-            'estado' => 'Estado: :estado',
-            'saldo' => 'Saldo: :saldo',
-            'incluir_deshabilitados' => 'Incluye deshabilitados',
-            'filtros' => 'Filtros',
+        // Qué incluye el informe (toolbar de resultados)
+        'seleccion' => [
+            'clientes' => '{1} :cantidad cliente|[2,*] :cantidad clientes',
+            'cultivos' => '{1} :cantidad cultivo|[2,*] :cantidad cultivos',
+            'cambiar' => 'Cambiar selección',
         ],
 
-        // Filtros (offcanvas)
+        // Filtros opcionales (panel de la toolbar)
         'filtros' => [
-            'titulo' => 'Filtros avanzados',
-            'cliente' => 'Clientes',
-            'cultivo' => 'Cultivos',
             'campania' => 'Campañas',
-            'campania_sin_cliente' => 'Selecciona clientes para filtrar campañas.',
             'fecha_desde' => 'Desde (fecha)',
             'fecha_hasta' => 'Hasta (fecha)',
             'estado' => 'Estado del contrato',
             'saldo' => 'Saldo',
             'incluir_deshabilitados' => 'Incluir contratos deshabilitados',
             'seleccionar' => 'Seleccionar',
-            'aplicar' => 'Aplicar',
-            'cancelar' => 'Cancelar',
-            'limpiar' => 'Limpiar a valores por defecto',
         ],
 
         // Pestañas
