@@ -184,7 +184,7 @@
                             <span role="cell" class="ag-facturas__cliente">{{ $factura->contrato->cliente->razon_social }}</span>
                             <span role="cell">{{ __('comercial.facturas.contrato_valor', ['id' => $factura->contrato_id]) }}</span>
                             <span role="cell">{{ __('comercial.facturas.acta_valor', ['id' => $factura->acta_id]) }}</span>
-                            <span role="cell" class="ag-index-table__cifra">{{ FormatoMonto::decimal($factura->hectareas_facturadas) }}</span>
+                            <span role="cell" class="ag-index-table__cifra">{{ __('comercial.facturas.hectareas_valor', ['cantidad' => FormatoMonto::decimal($factura->hectareas_facturadas)]) }}</span>
                             <span role="cell" class="ag-index-table__cifra">{{ __('comercial.facturas.precio_ha_valor', ['monto' => FormatoMonto::decimal($factura->precio_ha)]) }}</span>
                             <span role="cell" class="ag-index-table__cifra">{{ __('comercial.facturas.monto_valor', ['monto' => FormatoMonto::decimal($factura->monto)]) }}</span>
                             <span role="cell" class="ag-index-table__mono">{{ $factura->fecha_emision->format('d/m/Y') }}</span>

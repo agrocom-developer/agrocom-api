@@ -866,8 +866,9 @@ return [
         'contrato_valor' => 'Contrato #:id',
         'contrato_opcion' => 'Contrato #:id — :cliente',
         'acta_valor' => 'Acta #:id',
+        'hectareas_valor' => ':cantidad ha',
         'monto_valor' => 'Bs :monto',
-        'precio_ha_valor' => 'Bs :monto',
+        'precio_ha_valor' => 'Bs :monto/ha',
         'paginacion_aria' => 'Paginación de facturas',
 
         // Formulario (create)
