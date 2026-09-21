@@ -2,10 +2,14 @@
 
 namespace App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Comercial\Contratos\LecturaContrato;
+use App\Dominios\Personal\Contratos\LecturaFichaPersona;
 use App\Dominios\Seguridad\Aplicacion\AlternarBloqueoUsuario;
 use App\Dominios\Seguridad\Aplicacion\AsignarRolesUsuario;
 use App\Dominios\Seguridad\Aplicacion\CrearCuentaPortal;
 use App\Dominios\Seguridad\Aplicacion\EliminarUsuario;
+use App\Dominios\Seguridad\Aplicacion\ListarBitacora;
+use App\Dominios\Seguridad\Aplicacion\ListarDispositivosDeUsuario;
 use App\Dominios\Seguridad\Aplicacion\ListarUsuarios;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use App\Dominios\Seguridad\Dominio\Excepciones\ContratoNoDisponibleParaPortal;
@@ -53,6 +57,16 @@ use Illuminate\View\View;
  */
 final class UsuariosController
 {
+    /**
+     * Estado de acceso de la cuenta → tono. Se define una sola vez y lo
+     * comparten el badge del listado, el botón que lleva a ese estado y el
+     * modal de confirmación: los tres hablan con el mismo color.
+     */
+    public const TONO_POR_ESTADO = [
+        'activo' => 'success',
+        'bloqueado' => 'danger',
+    ];
+
     private const PERMISO_VER = 'seguridad.usuario.ver';
 
     private const PERMISO_CREAR = 'seguridad.usuario.crear';
@@ -87,6 +101,7 @@ final class UsuariosController
             'rolesPorUsuario' => $this->rolesPorUsuario($idsUsuario),
             'etiquetasPersona' => $this->etiquetasPersona($idsPersona),
             'filtros' => ['q' => $busqueda, 'tipo' => $tipo->value ?? ''],
+            'tonoPorEstado' => self::TONO_POR_ESTADO,
         ]);
     }
 
@@ -164,12 +179,20 @@ final class UsuariosController
             ->with('estado', __('seguridad.usuarios.creado'));
     }
 
-    public function edit(Request $request, SecUser $usuario): View
-    {
+    public function edit(
+        Request $request,
+        SecUser $usuario,
+        LecturaFichaPersona $lecturaPersona,
+        LecturaContrato $lecturaContrato,
+        ListarDispositivosDeUsuario $listarDispositivos,
+        ListarBitacora $listarBitacora,
+    ): View {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
 
+        $cascara = $this->autorizacion->cascara($request);
+
         return view('seguridad::pages.usuarios.edit', [
-            ...$this->autorizacion->cascara($request),
+            ...$cascara,
             'usuario' => $usuario,
             'rolesAsignados' => $usuario->idsDeRoles(),
             'rolesDisponibles' => $this->rolesDisponibles($request),
@@ -177,6 +200,15 @@ final class UsuariosController
             'clientesDisponibles' => $this->clientesDisponibles(),
             'contratosVigentesDisponibles' => $this->contratosVigentesDisponibles(),
             'emailPorCliente' => $this->emailPorCliente(),
+            'resumenRelacionado' => $this->resumenRelacionado(
+                $usuario,
+                $request,
+                (string) ($cascara['zonaHoraria'] ?? config('app.timezone')),
+                $lecturaPersona,
+                $lecturaContrato,
+                $listarDispositivos,
+                $listarBitacora,
+            ),
         ]);
     }
 
@@ -270,6 +302,186 @@ final class UsuariosController
         return redirect()
             ->route('panel.usuarios.index')
             ->with('estado', __('seguridad.usuarios.bloqueo_actualizado'));
+    }
+
+    /**
+     * Resumen relacionado del aside (solo edición, §6.3.1 de la guía de
+     * pantalla): hasta cuatro tarjetas con las relaciones más cercanas de la
+     * cuenta, derivadas de sus FK reales — roles (`sec_user_role`), persona
+     * (`persona_id`), dispositivos (`sec_token_dispositivo.user_id`) y, en
+     * una cuenta de portal, contrato (`contrato_id`); la bitácora de la propia
+     * cuenta cierra la lista. Una cuenta de portal no tiene roles, persona ni
+     * dispositivos (no autentica en la API de campo), así que solo le quedan
+     * contrato y bitácora.
+     *
+     * Cada tarjeta se gatea por el permiso `.ver` del módulo de LO QUE MUESTRA
+     * contra el ROL ACTIVO (invariante 10 de CLAUDE.md), no por el de
+     * usuarios, que ya se verificó arriba; sin él, la tarjeta se omite del
+     * todo. Lo de otro módulo (persona, contrato) llega por su `Contratos/`
+     * (ADR 0003, regla 2), nunca con SQL ni modelos ajenos. Los datos los
+     * resuelve este método, nunca la vista.
+     *
+     * @return list<array{titulo: string, icono: string, tieneDatos: bool, items: list<array<string, mixed>>, vacioTitulo: string, vacioDetalle: string, acciones: list<array{label: string, href: string, icono?: string}>}>
+     */
+    private function resumenRelacionado(
+        SecUser $usuario,
+        Request $request,
+        string $zonaQueVe,
+        LecturaFichaPersona $lecturaPersona,
+        LecturaContrato $lecturaContrato,
+        ListarDispositivosDeUsuario $listarDispositivos,
+        ListarBitacora $listarBitacora,
+    ): array {
+        $resumen = [];
+        $esInterno = $usuario->type === TipoUsuario::Interno;
+
+        if ($esInterno && $this->autorizacion->tienePermiso($request, 'seguridad.rol.ver')) {
+            $resumen[] = $this->tarjetaRoles($usuario);
+        }
+
+        if ($esInterno && $this->autorizacion->tienePermiso($request, 'personal.persona.ver')) {
+            $resumen[] = $this->tarjetaPersona($usuario, $lecturaPersona);
+        }
+
+        if ($esInterno && $this->autorizacion->tienePermiso($request, 'seguridad.dispositivo.ver')) {
+            $resumen[] = $this->tarjetaDispositivos($usuario, $listarDispositivos);
+        }
+
+        if (! $esInterno && $this->autorizacion->tienePermiso($request, 'comercial.contrato.ver')) {
+            $resumen[] = $this->tarjetaContrato($usuario, $lecturaContrato);
+        }
+
+        if ($this->autorizacion->tienePermiso($request, 'seguridad.bitacora.ver')) {
+            $resumen[] = $this->tarjetaBitacora($usuario, $zonaQueVe, $listarBitacora);
+        }
+
+        return $resumen;
+    }
+
+    /** @return array{titulo: string, icono: string, tieneDatos: bool, items: list<array<string, mixed>>, vacioTitulo: string, vacioDetalle: string, acciones: list<array{label: string, href: string, icono?: string}>} */
+    private function tarjetaRoles(SecUser $usuario): array
+    {
+        $roles = $this->rolesPorUsuario([(int) $usuario->id])[(int) $usuario->id] ?? [];
+
+        return [
+            'titulo' => __('seguridad.usuarios.aside_roles_titulo'),
+            'icono' => 'shield_person',
+            'tieneDatos' => $roles !== [],
+            'items' => [
+                ['label' => __('seguridad.usuarios.aside_roles_total'), 'value' => (string) count($roles), 'mono' => true],
+                ['label' => __('seguridad.usuarios.aside_roles_nombres'), 'value' => implode(', ', $roles)],
+            ],
+            'vacioTitulo' => __('seguridad.usuarios.aside_roles_vacio_titulo'),
+            'vacioDetalle' => __('seguridad.usuarios.aside_roles_vacio_detalle'),
+            'acciones' => $roles !== []
+                ? [['label' => __('seguridad.usuarios.aside_roles_accion'), 'href' => route('panel.roles.index'), 'icono' => 'list']]
+                : [],
+        ];
+    }
+
+    /** @return array{titulo: string, icono: string, tieneDatos: bool, items: list<array<string, mixed>>, vacioTitulo: string, vacioDetalle: string, acciones: list<array{label: string, href: string, icono?: string}>} */
+    private function tarjetaPersona(SecUser $usuario, LecturaFichaPersona $lecturaPersona): array
+    {
+        $ficha = $usuario->persona_id !== null ? $lecturaPersona->dePersona($usuario->persona_id) : null;
+
+        return [
+            'titulo' => __('seguridad.usuarios.aside_persona_titulo'),
+            'icono' => 'badge',
+            'tieneDatos' => $ficha !== null,
+            'items' => $ficha === null ? [] : [
+                ['label' => __('seguridad.usuarios.aside_persona_nombre'), 'value' => $ficha->nombre],
+                ['label' => __('seguridad.usuarios.aside_persona_rol'), 'value' => __('personal.roles.'.$ficha->rol)],
+                ['label' => __('seguridad.usuarios.aside_persona_base'), 'value' => $ficha->baseNombre ?? __('seguridad.usuarios.aside_persona_sin_base')],
+            ],
+            // Sin persona_id, o con una persona dada de baja, la tarjeta dice cuál de las dos es.
+            'vacioTitulo' => $usuario->persona_id === null
+                ? __('seguridad.usuarios.aside_persona_vacio_titulo')
+                : __('seguridad.usuarios.aside_persona_baja_titulo'),
+            'vacioDetalle' => $usuario->persona_id === null
+                ? __('seguridad.usuarios.aside_persona_vacio_detalle')
+                : __('seguridad.usuarios.aside_persona_baja_detalle'),
+            'acciones' => $ficha !== null
+                ? [['label' => __('seguridad.usuarios.aside_persona_accion'), 'href' => route('panel.personas.index', ['q' => $ficha->nombre]), 'icono' => 'list']]
+                : [],
+        ];
+    }
+
+    /** @return array{titulo: string, icono: string, tieneDatos: bool, items: list<array<string, mixed>>, vacioTitulo: string, vacioDetalle: string, acciones: list<array{label: string, href: string, icono?: string}>} */
+    private function tarjetaDispositivos(SecUser $usuario, ListarDispositivosDeUsuario $listarDispositivos): array
+    {
+        $dispositivos = $listarDispositivos->ejecutar($usuario);
+        $ultimoUso = $dispositivos->max('last_used_at');
+
+        return [
+            'titulo' => __('seguridad.usuarios.aside_dispositivos_titulo'),
+            'icono' => 'smartphone',
+            'tieneDatos' => $dispositivos->isNotEmpty(),
+            'items' => [
+                ['label' => __('seguridad.usuarios.aside_dispositivos_total'), 'value' => (string) $dispositivos->count(), 'mono' => true],
+                ['label' => __('seguridad.usuarios.aside_dispositivos_ultimo_uso'), 'value' => $ultimoUso !== null ? $ultimoUso->diffForHumans() : __('seguridad.dispositivos.sin_uso')],
+            ],
+            'vacioTitulo' => __('seguridad.usuarios.aside_dispositivos_vacio_titulo'),
+            'vacioDetalle' => __('seguridad.usuarios.aside_dispositivos_vacio_detalle'),
+            // La lista de dispositivos se acota a esta cuenta con su usuario en el buscador.
+            'acciones' => $dispositivos->isNotEmpty()
+                ? [['label' => __('seguridad.usuarios.aside_dispositivos_accion'), 'href' => route('panel.dispositivos.index', ['q' => $usuario->username]), 'icono' => 'list']]
+                : [],
+        ];
+    }
+
+    /** @return array{titulo: string, icono: string, tieneDatos: bool, items: list<array<string, mixed>>, vacioTitulo: string, vacioDetalle: string, acciones: list<array{label: string, href: string, icono?: string}>} */
+    private function tarjetaContrato(SecUser $usuario, LecturaContrato $lecturaContrato): array
+    {
+        $contrato = $usuario->contrato_id !== null ? $lecturaContrato->obtenerResumen($usuario->contrato_id) : null;
+
+        return [
+            'titulo' => __('seguridad.usuarios.aside_contrato_titulo'),
+            'icono' => 'description',
+            'tieneDatos' => $contrato !== null,
+            'items' => $contrato === null ? [] : [
+                ['label' => __('seguridad.usuarios.aside_contrato_cliente'), 'value' => $contrato->clienteNombre],
+                ['label' => __('seguridad.usuarios.aside_contrato_campania'), 'value' => $contrato->campaniaCodigo ?? __('seguridad.usuarios.aside_contrato_sin_campania'), 'mono' => true],
+            ],
+            'vacioTitulo' => __('seguridad.usuarios.aside_contrato_vacio_titulo'),
+            'vacioDetalle' => __('seguridad.usuarios.aside_contrato_vacio_detalle'),
+            'acciones' => $contrato !== null
+                ? [['label' => __('seguridad.usuarios.aside_contrato_accion'), 'href' => route('panel.contratos.index', ['cliente_id' => $contrato->clienteId]), 'icono' => 'list']]
+                : [],
+        ];
+    }
+
+    /**
+     * Últimos movimientos de la propia cuenta en la bitácora: lee con
+     * {@see ListarBitacora} —el mismo caso de uso de `/panel/bitacora`, acotado
+     * a `sec_user` y a esta cuenta— sin tocar la bitácora.
+     *
+     * @return array{titulo: string, icono: string, tieneDatos: bool, items: list<array<string, mixed>>, vacioTitulo: string, vacioDetalle: string, acciones: list<array{label: string, href: string, icono?: string}>}
+     */
+    private function tarjetaBitacora(SecUser $usuario, string $zonaQueVe, ListarBitacora $listarBitacora): array
+    {
+        $filas = $listarBitacora->ejecutar(
+            zonaQueVe: $zonaQueVe,
+            tabla: 'sec_user',
+            registroId: (int) $usuario->id,
+            porPagina: 3,
+        )->items();
+
+        return [
+            'titulo' => __('seguridad.usuarios.aside_bitacora_titulo'),
+            'icono' => 'history',
+            'tieneDatos' => $filas !== [],
+            // Acción y fecha: una línea por movimiento. Quién lo hizo y el detalle del cambio están en la bitácora.
+            'items' => array_map(fn ($fila): array => [
+                'label' => __('seguridad.bitacora.acciones.'.$fila->accion->value),
+                'value' => $fila->instante->format('d/m/Y H:i'),
+                'mono' => true,
+            ], $filas),
+            'vacioTitulo' => __('seguridad.usuarios.aside_bitacora_vacio_titulo'),
+            'vacioDetalle' => __('seguridad.usuarios.aside_bitacora_vacio_detalle'),
+            'acciones' => $filas !== []
+                ? [['label' => __('seguridad.usuarios.aside_bitacora_accion'), 'href' => route('panel.bitacora.index', ['tabla' => 'sec_user', 'registro_id' => $usuario->id]), 'icono' => 'history']]
+                : [],
+        ];
     }
 
     /**
