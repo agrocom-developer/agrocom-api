@@ -1,112 +1,17 @@
 /*
- * Pages: campos/index, campos/create, campos/edit
- * (app/Dominios/Comercial/Infraestructura/Http/Views/pages/campos/) — HU-24,
- * tarea 35: administración de campos con sus lotes. CSS propio de ESTAS
- * páginas (ver convención en resources/css/pages/index.css) — mismo patrón
- * que clientes.css (tarea 33).
+ * Piezas compartidas de los formularios de lotes
+ * (app/Dominios/Comercial/Infraestructura/Http/Views/pages/lotes/):
+ * la fila repetible de un lote (`.ag-campos-form__lote*`, `_lote-fila`) y el
+ * editor del perímetro (`.ag-lote-mapa*`, `_lote-mapa`). Ver la convención de
+ * CSS de página en resources/css/pages/index.css.
  *
- * El wrapper `.ag-campos`/`.ag-campos-form` sigue el mismo patrón que
- * `.ag-clientes`/`.ag-clientes-form`: flex en columna con un único `gap` en
- * vez de `margin-top` repetido en cada hijo. Las tarjetas de formulario
- * (`molecules/form-section`), la cabecera (`organisms/page-header`) y la
- * barra de acciones (`organisms/form-actions-bar`) ya traen su propio chrome
- * — acá solo el layout específico de estas pantallas. Todo color y medida
- * por token (CLAUDE.md invariante 11).
+ * El listado y el formulario de Propiedades (antes «Campos») ya usan el
+ * catálogo (`index-table`, `filter-panel`, `form-layout`), así que su tabla,
+ * sus wrappers y su generador propios se borraron en la tarea 122. Todo color
+ * y medida por token (CLAUDE.md invariante 11).
  */
 
-.ag-campos,
-.ag-campos-form {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-5);
-}
-
-/* Listado (index) */
-
-.ag-campos__tabla {
-    border: 1px solid var(--ag-color-border-card);
-    border-radius: var(--ag-radius-md);
-    background-color: var(--ag-color-surface-card);
-    overflow: hidden;
-}
-
-.ag-campos__head,
-.ag-campos__fila {
-    display: grid;
-    grid-template-columns: 2fr 1.5fr 1fr 1fr auto;
-    gap: var(--ag-space-4);
-    align-items: center;
-    padding: var(--ag-space-3) var(--ag-space-4);
-}
-
-.ag-campos__head {
-    background-color: var(--ag-color-bg-table-head);
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-xs);
-    font-weight: var(--ag-font-weight-medium);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.ag-campos__fila {
-    border-top: 1px solid var(--ag-color-border-row);
-    color: var(--ag-color-text);
-    font-size: var(--ag-font-size-sm);
-}
-
-.ag-campos__fila:hover {
-    background-color: var(--ag-color-bg-row-hover);
-}
-
-.ag-campos__nombre {
-    font-weight: var(--ag-font-weight-medium);
-}
-
-.ag-campos__hectareas {
-    font-family: var(--ag-font-family-mono);
-}
-
-.ag-campos__acciones {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--ag-space-2);
-}
-
-.ag-campos__paginacion {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--ag-space-4);
-}
-
-.ag-campos__paginacion-info {
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-sm);
-}
-
-@media (max-width: 992px) {
-    .ag-campos__head {
-        display: none;
-    }
-
-    .ag-campos__fila {
-        grid-template-columns: 1fr;
-        gap: var(--ag-space-1);
-    }
-
-    .ag-campos__acciones {
-        justify-content: flex-start;
-        margin-top: var(--ag-space-2);
-    }
-}
-
 /* Formulario (create/edit): lotes repetibles */
-
-.ag-campos-form__lotes {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-4);
-}
 
 /* El grid de dos columnas es el de `.ag-form-section__body`
    (components/form-section.css) — la fila lo comparte por clase en vez de
@@ -278,17 +183,4 @@
 .ag-campos-form__lote-pie {
     display: flex;
     justify-content: flex-end;
-}
-
-/* Generador de alta masiva (HU-72, tarea 88): botón + ayuda en la misma
-   línea cuando entra, apilados si no — mismo patrón que `.ag-lote-mapa__pie`. */
-.ag-campos-form__generador-pie {
-    display: flex;
-    align-items: center;
-    gap: var(--ag-space-3);
-    flex-wrap: wrap;
-}
-
-.ag-campos-form__generador-pie .ag-input__help {
-    margin: 0;
 }
