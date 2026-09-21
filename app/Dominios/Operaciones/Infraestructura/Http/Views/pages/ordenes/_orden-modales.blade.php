@@ -68,7 +68,9 @@
             :message="__('operaciones.ordenes.confirmar_activar')"
             :confirm-label="__('operaciones.ordenes.activar_accion')"
             tone="success"
-        />
+        >
+            @include('operaciones::pages.ordenes._estado-transicion', ['desde' => $estadoValor, 'hacia' => 'vigente'])
+        </x-molecules.confirm-modal>
     @endif
 @endpuede
 
@@ -88,6 +90,8 @@
             tone="warning"
             modal-icon="pause_circle"
         >
+            @include('operaciones::pages.ordenes._estado-transicion', ['desde' => $estadoValor, 'hacia' => 'pausada'])
+
             <x-atoms.textarea
                 name="motivo_pausa"
                 :id="'motivo-pausa-'.$sufijo"
@@ -113,7 +117,9 @@
             :confirm-label="__('operaciones.ordenes.reanudar_accion')"
             tone="success"
             modal-icon="play_circle"
-        />
+        >
+            @include('operaciones::pages.ordenes._estado-transicion', ['desde' => $estadoValor, 'hacia' => 'vigente'])
+        </x-molecules.confirm-modal>
     @endif
 @endpuede
 
@@ -180,7 +186,9 @@
                 :confirm-label="__('operaciones.ordenes.cerrar_accion')"
                 tone="info"
                 modal-icon="done_all"
-            />
+            >
+                @include('operaciones::pages.ordenes._estado-transicion', ['desde' => $estadoValor, 'hacia' => 'consumida'])
+            </x-molecules.confirm-modal>
         @endif
     @endif
 @endpuede
@@ -200,6 +208,8 @@
             :cancel-label="__('ui.action.close')"
             tone="danger"
         >
+            @include('operaciones::pages.ordenes._estado-transicion', ['desde' => $estadoValor, 'hacia' => 'cancelada'])
+
             <x-atoms.select
                 name="causa_cancelacion"
                 :id="'causa-cancelacion-'.$sufijo"

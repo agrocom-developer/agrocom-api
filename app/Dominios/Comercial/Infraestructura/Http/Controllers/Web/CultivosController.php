@@ -202,11 +202,26 @@ final class CultivosController
                 'vacioDetalle' => $siembra->hayCampania()
                     ? __('comercial.cultivos.aside_lotes_vacio_detalle')
                     : __('comercial.cultivos.aside_sin_campania_detalle'),
-                'acciones' => $siembra->tieneSiembra()
-                    ? [['label' => __('comercial.cultivos.aside_lotes_accion'), 'href' => route('panel.lotes.index'), 'icono' => 'list']]
-                    : ($puedeCargarSiembra && $siembra->hayCampania()
-                        ? [['label' => __('comercial.cultivos.aside_lotes_accion_siembra'), 'href' => route('panel.propiedades.index'), 'icono' => 'arrow_forward']]
+                // «Sembrar este cultivo» (21/9/2026): a la pantalla de siembra sin
+                // propiedad elegida —cliente y propiedad se eligen ahí— y con este
+                // cultivo ya puesto en el sector. Antes mandaba al listado de
+                // propiedades y había que encontrar el camino a mano.
+                'acciones' => [
+                    ...($siembra->tieneSiembra()
+                        ? [['label' => __('comercial.cultivos.aside_lotes_accion'), 'href' => route('panel.lotes.index'), 'icono' => 'list']]
                         : []),
+                    ...($puedeCargarSiembra && $siembra->hayCampania()
+                        ? [[
+                            'label' => __('comercial.cultivos.aside_lotes_accion_siembra'),
+                            'href' => route('panel.siembra', [
+                                'cultivo_id' => $cultivo->id,
+                                'volver_a' => route('panel.cultivos.edit', $cultivo),
+                                'volver_texto' => $cultivo->nombre_comun,
+                            ]),
+                            'icono' => 'eco',
+                        ]]
+                        : []),
+                ],
             ];
         }
 

@@ -16,4 +16,15 @@ interface LecturaCultivoLote
      * @return list<CultivoLotePorCampania>
      */
     public function porCampania(int $campaniaId): array;
+
+    /**
+     * Siembras vigentes de ESOS lotes en ESAS campañas (21/9/2026): lo que
+     * necesita una pantalla que ya sabe qué lotes va a dibujar —la orden de
+     * aplicación, con los lotes de su contrato— sin traerse la campaña entera.
+     *
+     * @param  list<int>  $loteIds
+     * @param  list<int>  $campaniaIds
+     * @return list<CultivoLotePorCampania>
+     */
+    public function deLotes(array $loteIds, array $campaniaIds): array;
 }

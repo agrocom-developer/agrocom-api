@@ -409,6 +409,16 @@
     flex-shrink: 0;
 }
 
+/* Las acciones de la cabecera del modal («Registrar siembra» y «Crear lote»)
+   van juntas a la derecha, y bajan de línea en pantallas angostas. */
+.ag-contratos-form__modal-header-row > [data-ag-modal-crear-lote-slot] {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--ag-space-2);
+    flex-shrink: 0;
+}
+
 /* Tabla de lotes del modal: checkbox + Código + Hectáreas + Desnivel +
    Limpieza en columnas, mismo lenguaje que `.ag-contratos-form__lotes-tabla`
    de la página (borde/radio/cabecera muted uppercase). */
@@ -421,7 +431,7 @@
 .ag-contratos-form__modal-tabla-head,
 .ag-contratos-form__modal-tabla-fila {
     display: grid;
-    grid-template-columns: 2.5rem 1.2fr 1fr 1fr 1fr;
+    grid-template-columns: 2.5rem 0.8fr 0.8fr 1.6fr 1fr 1fr;
     gap: var(--ag-space-3);
     align-items: center;
     /* Compacta: con 20 lotes por página el modal entra en una pantalla normal. */

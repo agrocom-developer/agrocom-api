@@ -64,7 +64,7 @@ final class CampaniasController
      * no es lo mismo que borrar el registro, pero ambos son rojos — más oscuro
      * el de "alert".
      */
-    private const array TONO_POR_ESTADO = [
+    public const array TONO_POR_ESTADO = [
         'planificada' => 'neutral',
         'abierta' => 'success',
         'cerrada' => 'alert',

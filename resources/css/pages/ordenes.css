@@ -50,6 +50,21 @@
     font-family: var(--ag-font-family-mono);
 }
 
+/* Celda de dos líneas de la tabla de lotes del formulario: cultivo y, debajo,
+   su etapa; desnivel y limpieza del terreno. El detalle va apagado y más
+   chico — también cuando es lo único de la celda («Sin cultivo registrado»). */
+.ag-ordenes__celda-doble {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-1);
+    min-width: 0;
+}
+
+.ag-ordenes__celda-detalle {
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-sm);
+}
+
 /* Estado de la orden + badge "Con inconvenientes" (ADR 0022): dos badges en la
    misma celda o cabecera de tarjeta, que se acomodan en otra línea si no
    entran. */

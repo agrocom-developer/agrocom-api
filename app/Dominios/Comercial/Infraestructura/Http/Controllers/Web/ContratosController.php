@@ -19,6 +19,7 @@ use App\Dominios\Comercial\Dominio\Excepciones\LotesYaContratados;
 use App\Dominios\Comercial\Dominio\Excepciones\TransicionContratoNoPermitida;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
+use App\Dominios\Comercial\Infraestructura\Eloquent\LoteCampania;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Comercial\Infraestructura\Http\PasosDeContrato;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\ActualizarContratoRequest;
@@ -128,13 +129,13 @@ final class ContratosController
         return view('comercial::pages.contratos.create', [
             ...$this->autorizacion->cascara($request),
             'clientesDisponibles' => $this->clientesActivos(),
-            'campaniasDisponibles' => $this->campaniasParaFormulario($lecturaCampania),
+            'campaniasDisponibles' => $campaniasDisponibles = $this->campaniasParaFormulario($lecturaCampania),
             'campaniaIdPredeterminada' => $this->campaniaActivaPredeterminada($lecturaCampania),
             // Acceso directo desde el aside de `panel.clientes.edit` (tarea
             // "resumen de cliente"): con ?cliente_id=, el formulario arranca
             // con ese cliente ya elegido — ver _formulario.blade.php.
             'clienteIdPreseleccionado' => $request->integer('cliente_id') ?: null,
-            'propiedadesYLotesPorCliente' => $this->propiedadesYLotesPorCliente(null),
+            'propiedadesYLotesPorCliente' => $this->propiedadesYLotesPorCliente(null, $campaniasDisponibles->keys()->all()),
             'loteIdsConOrdenRegistrada' => [],
             'conflictosPorLote' => [],
         ]);
@@ -224,9 +225,9 @@ final class ContratosController
             ...$this->autorizacion->cascara($request),
             'contrato' => $contrato,
             'clientesDisponibles' => $this->clientesActivos(),
-            'campaniasDisponibles' => $this->campaniasParaFormulario($lecturaCampania, $contrato->campania_id),
+            'campaniasDisponibles' => $campaniasDisponibles = $this->campaniasParaFormulario($lecturaCampania, $contrato->campania_id),
             'campaniaIdPredeterminada' => $this->campaniaActivaPredeterminada($lecturaCampania),
-            'propiedadesYLotesPorCliente' => $this->propiedadesYLotesPorCliente($contrato->id),
+            'propiedadesYLotesPorCliente' => $this->propiedadesYLotesPorCliente($contrato->id, $campaniasDisponibles->keys()->all()),
             'loteIdsConOrdenRegistrada' => $loteIdsConOrden,
             'conflictosPorLote' => $conflictosPorLote,
             'resumenContrato' => $this->resumenContrato($contrato, $request, $lecturaResumenOrdenes, $lecturaTrabajos, $obtenerAvance),
@@ -764,9 +765,18 @@ final class ContratosController
      * editarlo. El JS del modal de selección lo usa para no ofrecer un lote
      * ya comprometido en la campaña que el formulario tiene elegida.
      *
-     * @return array<int, array<int, array{nombre: string, lotes: list<array{id: int, codigo: string, hectareas: string, desnivel: ?string, desnivel_label: ?string, limpieza: ?string, limpieza_label: ?string, ocupado_en_campanias: list<int>}>}>>
+     * `siembras` (21/9/2026, pedido directo): qué cultivo tiene el lote y en
+     * qué etapa está, por cada campaña que el formulario ofrece —
+     * `{ [campania_id]: { cultivo, etapa_label } }`. Un contrato junta los
+     * lotes que comparten cultivo y etapa (cada etapa pide un trabajo
+     * distinto; en la caña conviven todas a la vez), y el modal de selección
+     * lo muestra para la campaña elegida. Sin siembra registrada no hay
+     * entrada: es un dato que ayuda a elegir, no una regla que impida nada.
+     *
+     * @param  list<int>  $campaniaIds  las campañas que ofrece el select del formulario.
+     * @return array<int, array<int, array{nombre: string, lotes: list<array{id: int, codigo: string, hectareas: string, desnivel: ?string, desnivel_label: ?string, limpieza: ?string, limpieza_label: ?string, ocupado_en_campanias: list<int>, siembras: array<int, array{cultivo: string, etapa_label: ?string}>}>}>>
      */
-    private function propiedadesYLotesPorCliente(?int $contratoIdExcluido): array
+    private function propiedadesYLotesPorCliente(?int $contratoIdExcluido, array $campaniaIds): array
     {
         $propiedades = Propiedad::query()
             // Orden natural por código (L1, L2, … L10): es el orden en que el
@@ -776,6 +786,20 @@ final class ContratosController
             ->get(['id', 'cliente_id', 'nombre']);
 
         $ocupacionPorLote = LecturaOcupacionLotesPorCampania::porCampania($contratoIdExcluido);
+
+        $siembrasPorLote = LoteCampania::query()
+            ->whereIn('campania_id', $campaniaIds)
+            ->with('cultivo')
+            ->get()
+            ->groupBy('lote_id')
+            ->map(fn ($siembras) => $siembras->mapWithKeys(fn (LoteCampania $siembra): array => [
+                $siembra->campania_id => [
+                    'cultivo' => $siembra->cultivo->nombre_comun,
+                    'etapa_label' => $siembra->etapa_cultivo !== null
+                        ? __("comercial.siembra.etapa_opcion.{$siembra->etapa_cultivo->value}")
+                        : null,
+                ],
+            ])->all());
 
         $result = [];
         foreach ($propiedades as $propiedad) {
@@ -797,6 +821,10 @@ final class ContratosController
                     'limpieza' => $lote->limpieza,
                     'limpieza_label' => $lote->limpieza ? __("comercial.lotes.lote_limpieza_{$lote->limpieza}") : null,
                     'ocupado_en_campanias' => $ocupacionPorLote[$lote->id] ?? [],
+                    // Sin siembras viaja como `[]` y con ellas como objeto
+                    // (las claves son ids de campaña, nunca 0): el JS lee
+                    // `siembras[campania_id]` y las dos formas le sirven.
+                    'siembras' => $siembrasPorLote->get($lote->id) ?? [],
                 ])->values()->all(),
             ];
         }

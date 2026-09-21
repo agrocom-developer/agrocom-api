@@ -39,7 +39,9 @@
             :message="__('campania.campanias.confirmar_abrir')"
             :confirm-label="__('campania.campanias.accion_abrir')"
             tone="success"
-        />
+        >
+            @include('campania::pages.campanias._estado-transicion', ['desde' => $campania->estado->value, 'hacia' => 'abierta'])
+        </x-molecules.confirm-modal>
     @elseif ($paso['key'] === 'cerrada')
         <x-molecules.confirm-modal
             :id="$paso['modal']"
@@ -47,6 +49,9 @@
             :title="__('campania.campanias.confirmar_cerrar_titulo')"
             :message="__('campania.campanias.confirmar_cerrar')"
             :confirm-label="__('campania.campanias.accion_cerrar')"
-        />
+            tone="alert"
+        >
+            @include('campania::pages.campanias._estado-transicion', ['desde' => $campania->estado->value, 'hacia' => 'cerrada'])
+        </x-molecules.confirm-modal>
     @endif
 @endforeach

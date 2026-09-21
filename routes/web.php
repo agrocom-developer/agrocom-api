@@ -12,6 +12,7 @@ use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\PropiedadesContr
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\PropiedadMapaController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ReportesComercialesController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\SiembraController;
+use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\SiembraLoteController;
 use App\Dominios\Distribucion\Infraestructura\Http\Controllers\Web\VersionesApkController;
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\AnticiposController;
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\CombustibleController;
@@ -581,6 +582,19 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::post('/panel/propiedades/{propiedad}/siembra', [SiembraController::class, 'guardar'])
             ->name('panel.propiedades.siembra.guardar');
+
+        // La misma pantalla sin propiedad elegida (21/9/2026): entrada desde la
+        // ficha de un cultivo. Cliente y propiedad se eligen ahí mismo.
+        Route::get('/panel/siembra', [SiembraController::class, 'elegir'])
+            ->name('panel.siembra');
+
+        // La siembra de UN lote, desde su ficha (21/9/2026): el formulario de
+        // un sector sin elegir lotes, con propiedad y campaña de solo lectura.
+        Route::get('/panel/lotes/{lote}/siembra', [SiembraLoteController::class, 'mostrar'])
+            ->name('panel.lotes.siembra');
+
+        Route::post('/panel/lotes/{lote}/siembra', [SiembraLoteController::class, 'guardar'])
+            ->name('panel.lotes.siembra.guardar');
 
         // "Crear Lotes" con un solo botón (HU-72 reconstruida, 16/9/2026 —
         // ver CrearLotesMasivo): entra desde la ficha de la propiedad,

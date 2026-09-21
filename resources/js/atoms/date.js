@@ -458,3 +458,18 @@ function inicializar(root) {
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-ag-date]').forEach(inicializar);
 });
+
+// Fechas que llegan DESPUÉS de la carga — una fila clonada de un `<template>`
+// (p. ej. «Agregar sector» en `siembra-form.js`). Mismo aviso que ya escucha
+// `atoms/select.js` con `ag:select:inicializar`: quien inserta el nodo lo
+// despacha sobre él; sin eso el campo quedaba con el selector del navegador.
+document.addEventListener('ag:date:inicializar', (evento) => {
+    const nodo = evento.target;
+    if (!(nodo instanceof Element)) {
+        return;
+    }
+    if (nodo.matches('[data-ag-date]')) {
+        inicializar(nodo);
+    }
+    nodo.querySelectorAll('[data-ag-date]').forEach(inicializar);
+});

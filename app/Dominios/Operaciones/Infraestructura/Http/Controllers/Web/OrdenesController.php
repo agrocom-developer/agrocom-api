@@ -2,6 +2,8 @@
 
 namespace App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Comercial\Contratos\CultivoLotePorCampania;
+use App\Dominios\Comercial\Contratos\LecturaCultivoLote;
 use App\Dominios\Operaciones\Aplicacion\ActivarOrden;
 use App\Dominios\Operaciones\Aplicacion\ActualizarOrden;
 use App\Dominios\Operaciones\Aplicacion\CancelarOrden;
@@ -103,7 +105,10 @@ final class OrdenesController
 
     private const PERMISO_EDITAR_CONTRATO = 'comercial.contrato.editar';
 
-    public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
+    public function __construct(
+        private readonly AutorizacionPanelWeb $autorizacion,
+        private readonly LecturaCultivoLote $lecturaCultivoLote,
+    ) {}
 
     public function index(Request $request, ListarOrdenesAplicacion $listarOrdenes, ResumenDeOrdenes $resumenOrdenes): View
     {
@@ -1111,7 +1116,7 @@ final class OrdenesController
      *         'fecha_inicio' => string,           // ya formateada "d/m/Y" (ADR 0013)
      *         'fecha_fin' => ?string,              // ídem, null si el contrato no tiene fecha de fin
      *         'contactos' => list<array{id: int, nombre: string, tipo: string, label: string}>,  // com_cliente_contactos del cliente DUEÑO del contrato y SOLO de ese — el formulario nunca recibe los de otros clientes; `label` ya traducido (ADR 0013); la vista decide autoseleccionar si hay uno solo
-     *         'lotes' => list<array{lote_id: int, codigo: string, propiedad: string, hectareas: string, desnivel: ?string, desnivel_label: ?string, limpieza: ?string, limpieza_label: ?string}>,  // en orden natural (propiedad y luego código: L1, L2, … L10); SOLO los lotes de `com_contrato_lotes` de ESTE contrato — desnivel/limpieza YA traducidos server-side (ADR 0013), mismo criterio que `ContratosController::propiedadesYLotesPorCliente()`
+     *         'lotes' => list<array{lote_id: int, codigo: string, propiedad: string, hectareas: string, desnivel: ?string, desnivel_label: ?string, limpieza: ?string, limpieza_label: ?string, cultivo: ?string, etapa: ?string, etapa_label: ?string}>,  // en orden natural (propiedad y luego código: L1, L2, … L10); SOLO los lotes de `com_contrato_lotes` de ESTE contrato — desnivel/limpieza YA traducidos server-side (ADR 0013), mismo criterio que `ContratosController::propiedadesYLotesPorCliente()`
      *         'nro_aplicacion_sugerido' => int|null,  // NULL acá siempre — solo `create()` lo completa (ver `sugerirNroAplicacion()`); `edit()` no lo toca, la orden ya tiene su valor real
      *       ],
      *       ...
@@ -1136,7 +1141,7 @@ final class OrdenesController
      * orden ya tiene el suyo, no hace falta serializar todos los del sistema.
      *
      * @param  list<int>|null  $soloContratoIds
-     * @return array<int, array{label: string, cliente: string, logo_url: ?string, propiedades: list<string>, aplicaciones_previstas: int, hectareas_contratadas: string, fecha_inicio: string, fecha_fin: ?string, contactos: list<array{id: int, nombre: string, tipo: string, label: string}>, lotes: list<array{lote_id: int, codigo: string, propiedad: string, hectareas: string, desnivel: ?string, desnivel_label: ?string, limpieza: ?string, limpieza_label: ?string}>, nro_aplicacion_sugerido: int|null, contrato_edit_url: string}>
+     * @return array<int, array{label: string, cliente: string, logo_url: ?string, propiedades: list<string>, aplicaciones_previstas: int, hectareas_contratadas: string, fecha_inicio: string, fecha_fin: ?string, contactos: list<array{id: int, nombre: string, tipo: string, label: string}>, lotes: list<array{lote_id: int, codigo: string, propiedad: string, hectareas: string, desnivel: ?string, desnivel_label: ?string, limpieza: ?string, limpieza_label: ?string, cultivo: ?string, etapa: ?string, etapa_label: ?string}>, nro_aplicacion_sugerido: int|null, contrato_edit_url: string}>
      */
     private function datosContratoParaFormulario(?array $soloContratoIds = null, bool $soloVigentes = false): array
     {
@@ -1147,7 +1152,7 @@ final class OrdenesController
             ->when($soloVigentes, fn ($consulta) => $consulta->where('c.estado', 'vigente'))
             ->when($soloContratoIds !== null, fn ($consulta) => $consulta->whereIn('c.id', $soloContratoIds))
             ->orderByDesc('c.fecha_inicio')
-            ->get(['c.id', 'c.cliente_id', 'c.aplicaciones_previstas', 'c.hectareas_contratadas', 'c.fecha_inicio', 'c.fecha_fin', 'cl.razon_social', 'cl.logo_path']);
+            ->get(['c.id', 'c.cliente_id', 'c.campania_id', 'c.aplicaciones_previstas', 'c.hectareas_contratadas', 'c.fecha_inicio', 'c.fecha_fin', 'cl.razon_social', 'cl.logo_path']);
 
         if ($contratos->isEmpty()) {
             return [];
@@ -1168,6 +1173,15 @@ final class OrdenesController
             // el `ORDER BY` de la base es alfabético y dejaría L10 antes que L2.
             ->sort(fn (object $a, object $b): int => strnatcasecmp($a->propiedad_nombre, $b->propiedad_nombre) ?: strnatcasecmp($a->codigo, $b->codigo))
             ->groupBy('contrato_id');
+
+        // Qué cultivo tiene cada lote en la campaña de SU contrato, y en qué
+        // etapa está (21/9/2026) — por el contrato de lectura de Comercial,
+        // no por su tabla. Un lote sin siembra es normal (terreno limpio
+        // antes de una aplicación de sólidos): queda con `cultivo` en null.
+        $siembras = collect($this->lecturaCultivoLote->deLotes(
+            $lotesPorContrato->flatten(1)->pluck('lote_id')->map(fn ($id) => (int) $id)->unique()->values()->all(),
+            $contratos->pluck('campania_id')->filter()->map(fn ($id) => (int) $id)->unique()->values()->all(),
+        ))->keyBy(fn (CultivoLotePorCampania $siembra): string => "{$siembra->campaniaId}:{$siembra->loteId}");
 
         $contactosPorCliente = DB::table('com_cliente_contactos')
             ->whereIn('cliente_id', $clienteIds)
@@ -1216,6 +1230,7 @@ final class OrdenesController
                     ->values()
                     ->all(),
                 'lotes' => $lotesDelContrato->map(fn (object $lote): array => [
+                    ...$this->cultivoDelLote($siembras->get("{$contrato->campania_id}:{$lote->lote_id}")),
                     'lote_id' => (int) $lote->lote_id,
                     'codigo' => $lote->codigo,
                     'propiedad' => $lote->propiedad_nombre,
@@ -1236,6 +1251,21 @@ final class OrdenesController
         }
 
         return $resultado;
+    }
+
+    /**
+     * Cultivo y etapa de un lote, ya traducidos (ADR 0013), para la tabla de
+     * lotes del formulario. Sin siembra registrada, todo en null.
+     *
+     * @return array{cultivo: ?string, etapa: ?string, etapa_label: ?string}
+     */
+    private function cultivoDelLote(?CultivoLotePorCampania $siembra): array
+    {
+        return [
+            'cultivo' => $siembra?->cultivoNombre,
+            'etapa' => $siembra?->etapa,
+            'etapa_label' => $siembra?->etapa !== null ? __("comercial.siembra.etapa_opcion.{$siembra->etapa}") : null,
+        ];
     }
 
     /**

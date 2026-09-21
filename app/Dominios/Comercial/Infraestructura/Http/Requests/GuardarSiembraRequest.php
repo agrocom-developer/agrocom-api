@@ -2,29 +2,31 @@
 
 namespace App\Dominios\Comercial\Infraestructura\Http\Requests;
 
+use App\Dominios\Comercial\Dominio\EtapaCultivo;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 /**
  * `POST /panel/propiedades/{propiedad}/siembra` (HU-48, tarea 71, etapa 3;
- * ruta y permiso renombrados por ADR 0020 — antes
- * `panel.campos.{campo}.siembra` / `comercial.campo.editar`, `Campo` ya no
- * existe como entidad). La autorización (permiso `comercial.propiedad.editar`)
- * se verifica en el controlador, contra el rol activo — no acá.
+ * ruta y permiso renombrados por ADR 0020). La autorización (permiso
+ * `comercial.propiedad.editar`) se verifica en el controlador, contra el rol
+ * activo — no acá.
  *
- * `lotes.*.cultivo_id` en blanco es válido a propósito: no todos los lotes
- * de un campo se siembran en la misma campaña. Cuando viene en blanco, el
- * resto de la fila también puede venir vacío (`GuardarSiembraCampania` la
- * interpreta como "sin siembra" y da de baja la que hubiera). Cuando SÍ
- * viene, `hectareas_sembradas` pasa a ser obligatoria: no hay siembra sin
- * superficie.
+ * La siembra se carga por SECTORES (21/9/2026, pedido directo: una fila con
+ * cinco campos por lote no sirve para una propiedad de mil lotes): un sector
+ * es un cultivo, su etapa y sus fechas, más los lotes que lo comparten. El
+ * controlador lo expande a una fila por lote para `GuardarSiembraCampania`.
  *
- * El tope contra las hectáreas del propio lote NO se valida acá (depende de
- * a qué lote pertenece cada fila, dato que este Request no resuelve): lo
- * hace `Aplicacion/Siembra/GuardarSiembra` con `Brick\Math\BigDecimal`
- * (invariante 6), y su excepción se traduce en el controlador — mismo
- * criterio que `CrearCampoRequest` deja el código de lote duplicado para el
- * caso de uso.
+ * `sectores.*.lotes` viaja como UNA cadena de ids separados por coma y no
+ * como un arreglo: mil lotes serían mil campos, y PHP corta el formulario en
+ * `max_input_vars` (1000 por defecto) sin avisar.
+ *
+ * `sectores` puede venir vacío: quitar todos los sectores y guardar es la
+ * forma de dejar la propiedad sin siembra en esa campaña. Lo que no se admite
+ * es un sector a medias (sin cultivo o sin lotes), ni un lote en dos sectores,
+ * ni un lote de otra propiedad.
  */
 final class GuardarSiembraRequest extends FormRequest
 {
@@ -37,21 +39,61 @@ final class GuardarSiembraRequest extends FormRequest
                 'integer',
                 Rule::exists('cpn_campanias', 'id')->whereNull('deleted_at'),
             ],
-            'lotes' => ['required', 'array', 'min:1'],
-            'lotes.*.lote_id' => [
+            'sectores' => ['nullable', 'array'],
+            'sectores.*.cultivo_id' => [
                 'required',
-                'integer',
-                Rule::exists('com_lotes', 'id')->whereNull('deleted_at'),
-            ],
-            'lotes.*.cultivo_id' => [
-                'nullable',
                 'integer',
                 Rule::exists('com_cultivos', 'id')->whereNull('deleted_at'),
             ],
-            'lotes.*.hectareas_sembradas' => ['nullable', 'numeric', 'gt:0', 'required_with:lotes.*.cultivo_id'],
-            'lotes.*.fecha_siembra' => ['nullable', 'date'],
-            'lotes.*.fecha_cosecha_estimada' => ['nullable', 'date', 'after_or_equal:lotes.*.fecha_siembra'],
+            'sectores.*.etapa_cultivo' => ['nullable', Rule::enum(EtapaCultivo::class)],
+            'sectores.*.fecha_siembra' => ['nullable', 'date'],
+            'sectores.*.fecha_cosecha_estimada' => ['nullable', 'date', 'after_or_equal:sectores.*.fecha_siembra'],
+            'sectores.*.lotes' => ['required', 'string', 'regex:/^\d+(,\d+)*$/'],
         ];
+    }
+
+    /** @return list<\Closure(Validator): void> */
+    public function after(): array
+    {
+        return [function (Validator $validador): void {
+            if ($validador->errors()->isNotEmpty()) {
+                return;
+            }
+
+            $propiedad = $this->route('propiedad');
+            $lotesDeLaPropiedad = $propiedad instanceof Propiedad
+                ? $propiedad->lotes()->pluck('id')->map(fn ($id): int => (int) $id)->flip()
+                : collect();
+            $vistos = [];
+
+            foreach ((array) $this->input('sectores', []) as $indice => $sector) {
+                foreach (self::idsDeLotes($sector['lotes'] ?? '') as $loteId) {
+                    if (! $lotesDeLaPropiedad->has($loteId)) {
+                        $validador->errors()->add("sectores.{$indice}.lotes", __('comercial.validacion.siembra_lote_ajeno'));
+
+                        continue 2;
+                    }
+
+                    if (isset($vistos[$loteId])) {
+                        $validador->errors()->add("sectores.{$indice}.lotes", __('comercial.validacion.siembra_lote_repetido'));
+
+                        continue 2;
+                    }
+
+                    $vistos[$loteId] = true;
+                }
+            }
+        }];
+    }
+
+    /**
+     * "3,7,12" → [3, 7, 12].
+     *
+     * @return list<int>
+     */
+    public static function idsDeLotes(mixed $cadena): array
+    {
+        return array_values(array_map(intval(...), array_filter(explode(',', (string) $cadena), fn (string $id): bool => $id !== '')));
     }
 
     /** @return array<string, string> */
@@ -60,11 +102,11 @@ final class GuardarSiembraRequest extends FormRequest
         return [
             'campania_id.required' => __('comercial.validacion.siembra_campania_requerida'),
             'campania_id.exists' => __('comercial.contratos.error_campania_invalida'),
-            'lotes.required' => __('comercial.siembra.error_lotes_requeridos'),
-            'lotes.*.lote_id.required' => __('comercial.siembra.error_lote_id_requerido'),
-            'lotes.*.hectareas_sembradas.gt' => __('comercial.validacion.siembra_hectareas_sembradas_mayor_a_cero'),
-            'lotes.*.hectareas_sembradas.required_with' => __('comercial.validacion.siembra_hectareas_sembradas_requeridas'),
-            'lotes.*.fecha_cosecha_estimada.after_or_equal' => __('comercial.validacion.siembra_cosecha_estimada_invalida'),
+            'sectores.*.cultivo_id.required' => __('comercial.validacion.siembra_cultivo_requerido'),
+            'sectores.*.etapa_cultivo.enum' => __('comercial.validacion.siembra_etapa_invalida'),
+            'sectores.*.fecha_cosecha_estimada.after_or_equal' => __('comercial.validacion.siembra_cosecha_estimada_invalida'),
+            'sectores.*.lotes.required' => __('comercial.validacion.siembra_lotes_requeridos'),
+            'sectores.*.lotes.regex' => __('comercial.validacion.siembra_lotes_requeridos'),
         ];
     }
 }

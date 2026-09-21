@@ -33,12 +33,23 @@
     data-ag-modal-lotes
     data-url-crear-lote="{{ route('panel.lotes.create') }}"
     data-texto-crear-lote="{{ __('comercial.contratos.crear_lote') }}"
+    {{-- «Registrar siembra» (21/9/2026): el paso del flujo donde la siembra
+         importa es este, al elegir qué lotes van juntos. Sale a la siembra de
+         la propiedad con la campaña del formulario y vuelve acá con lo
+         cargado intacto, como «Crear lote». Solo con permiso de editar la
+         propiedad; sin la URL, el JS no dibuja el botón. --}}
+    @puede('comercial.propiedad.editar')
+        data-url-siembra="{{ route('panel.propiedades.siembra', '__PROPIEDAD__') }}"
+        data-texto-siembra="{{ __('comercial.contratos.registrar_siembra') }}"
+    @endpuede
     data-texto-sin-lotes="{{ __('comercial.contratos.lotes_sin_datos') }}"
     data-texto-seleccionar-todos="{{ __('comercial.contratos.lote_seleccionar_todos') }}"
     data-texto-col-codigo="{{ __('comercial.lotes.lote_codigo') }}"
     data-texto-col-hectareas="{{ __('comercial.lotes.lote_hectareas') }}"
     data-texto-col-desnivel="{{ __('comercial.lotes.lote_desnivel') }}"
     data-texto-col-limpieza="{{ __('comercial.lotes.lote_limpieza') }}"
+    data-texto-col-cultivo="{{ __('comercial.contratos.lotes_modal_col_cultivo') }}"
+    data-texto-sin-etapa="{{ __('comercial.contratos.lotes_modal_sin_etapa') }}"
     data-texto-seleccionados="{{ __('comercial.contratos.lotes_modal_seleccionados') }}"
 >
     {{-- `modal-dialog-scrollable`: si el modal no entra en la pantalla, el
