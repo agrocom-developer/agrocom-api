@@ -114,18 +114,18 @@
                     />
                 @endif
             @else
-                <div class="ag-cultivos__tabla" role="table">
-                    <div class="ag-cultivos__head" role="row">
-                        <span role="columnheader" class="ag-cultivos__indice">{{ __('ui.tabla.col_indice') }}</span>
+                <x-molecules.index-table columns="3rem 1.8fr 1fr 0.9fr var(--ag-row-actions-width)">
+                    <x-slot:head>
+                        <span role="columnheader" class="ag-index-table__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('comercial.cultivos.col_nombre') }}</span>
                         <span role="columnheader">{{ __('comercial.cultivos.col_tipo') }}</span>
                         <span role="columnheader">{{ __('comercial.cultivos.col_ciclo_vida') }}</span>
-                        <span role="columnheader" class="ag-cultivos__acciones-head">{{ __('ui.tabla.col_acciones') }}</span>
-                    </div>
+                        <span role="columnheader" class="ag-index-table__acciones-head">{{ __('ui.tabla.col_acciones') }}</span>
+                    </x-slot:head>
 
                     @foreach ($cultivos as $cultivo)
-                        <div class="ag-cultivos__fila" role="row">
-                            <span role="cell" class="ag-cultivos__indice">
+                        <div class="ag-index-table__row" role="row">
+                            <span role="cell" class="ag-index-table__indice">
                                 {{ ($cultivos->currentPage() - 1) * $cultivos->perPage() + $loop->iteration }}
                             </span>
                             <span role="cell" class="ag-cultivos__nombre-celda">
@@ -145,11 +145,13 @@
                                 {{ $cultivo->ciclo_vida ? __('comercial.cultivos.ciclo_vida_opcion.'.$cultivo->ciclo_vida->value) : '—' }}
                             </span>
 
-                            <span role="cell" class="ag-cultivos__acciones">
-                                {{-- Form FUERA de row-actions a propósito: ese organism repite su
-                                     slot dos veces (visible/menú) — un <form> con id ahí adentro se
-                                     duplicaría con el mismo id, HTML inválido. El botón de
-                                     confirm-button lo envía por su atributo `form`. --}}
+                            <span role="cell" class="ag-index-table__acciones">
+                                {{-- Form y modal FUERA de row-actions a propósito: ese organism repite
+                                     su slot dos veces (visible/menú). Un <form> o un modal con id ahí
+                                     adentro se duplicaría (HTML inválido) y, con el modal dentro del
+                                     menú ⋮, se abriría oculto con él. El disparador vive adentro (se
+                                     duplica sin problema: es un botón sin id) y apunta al modal por
+                                     `data-bs-target`; el modal envía el form por su atributo `form`. --}}
                                 @puede('comercial.cultivo.eliminar')
                                     <form
                                         id="cultivo-eliminar-{{ $cultivo->id }}"
@@ -159,6 +161,14 @@
                                         @csrf
                                         @method('DELETE')
                                     </form>
+
+                                    <x-molecules.confirm-modal
+                                        :id="'cultivo-eliminar-modal-' . $cultivo->id"
+                                        :form-id="'cultivo-eliminar-' . $cultivo->id"
+                                        :title="__('comercial.cultivos.confirmar_eliminar_titulo')"
+                                        :message="__('comercial.cultivos.confirmar_baja')"
+                                        :confirm-label="__('comercial.cultivos.eliminar_accion')"
+                                    />
                                 @endpuede
 
                                 <x-organisms.row-actions>
@@ -169,25 +179,22 @@
                                     @endpuede
 
                                     @puede('comercial.cultivo.eliminar')
-                                        <span class="ag-row-actions__item">
-                                            <x-molecules.confirm-button
-                                                :form-id="'cultivo-eliminar-' . $cultivo->id"
-                                                :title="__('comercial.cultivos.confirmar_eliminar_titulo')"
-                                                :message="__('comercial.cultivos.confirmar_baja')"
-                                                :confirm-label="__('comercial.cultivos.eliminar_accion')"
-                                                variant="danger-outline"
-                                                size="sm"
-                                                icon="delete"
-                                            >
-                                                {{ __('comercial.cultivos.eliminar_accion') }}
-                                            </x-molecules.confirm-button>
-                                        </span>
+                                        <x-atoms.button
+                                            type="button"
+                                            data-bs-toggle="modal"
+                                            :data-bs-target="'#cultivo-eliminar-modal-' . $cultivo->id"
+                                            variant="danger-outline"
+                                            size="sm"
+                                            icon="delete"
+                                        >
+                                            {{ __('comercial.cultivos.eliminar_accion') }}
+                                        </x-atoms.button>
                                     @endpuede
                                 </x-organisms.row-actions>
                             </span>
                         </div>
                     @endforeach
-                </div>
+                </x-molecules.index-table>
 
                 <x-molecules.pagination :paginator="$cultivos" :aria-label="__('comercial.cultivos.paginacion_aria')" />
             @endif

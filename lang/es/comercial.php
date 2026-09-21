@@ -773,12 +773,23 @@ return [
         'estado_form' => 'Los cambios se guardan al confirmar.',
         'volver' => 'Volver a cultivos',
 
-        // Resumen relacionado (edición, §6.3.1 de guia_pantalla_panel.md):
-        // estático por ahora, pendiente de conectar a un contrato de
-        // lectura por cultivo.
-        'resumen_titulo' => 'Lotes con este cultivo',
-        'resumen_detalle' => 'Acá vas a ver cuántos lotes tienen este cultivo sembrado en la campaña vigente.',
-        'resumen_accion' => 'Ir a propiedades',
+        // Resumen relacionado (edición)
+        'aside_campania' => 'Campaña',
+        'aside_sin_campania_titulo' => 'Sin campaña abierta',
+        'aside_sin_campania_detalle' => 'Este resumen se arma con la campaña abierta y hoy no hay ninguna.',
+        'aside_lotes_titulo' => 'Lotes sembrados',
+        'aside_lotes_total' => 'Lotes',
+        'aside_lotes_hectareas' => 'Hectáreas sembradas',
+        'aside_lotes_vacio_titulo' => 'Sin lotes sembrados',
+        'aside_lotes_vacio_detalle' => 'Ningún lote tiene este cultivo sembrado en la campaña abierta. La siembra se carga desde la propiedad.',
+        'aside_lotes_accion' => 'Ver lista de lotes',
+        'aside_lotes_accion_siembra' => 'Ir a propiedades',
+        'aside_propiedades_titulo' => 'Propiedades',
+        'aside_propiedades_total' => 'Propiedades con este cultivo',
+        'aside_propiedades_hectareas_valor' => ':cantidad ha',
+        'aside_propiedades_vacio_titulo' => 'Sin propiedades',
+        'aside_propiedades_vacio_detalle' => 'Este cultivo todavía no aparece en ninguna propiedad en la campaña abierta.',
+        'aside_propiedades_accion' => 'Ver lista de propiedades',
 
         // Mensajes de los campos obligatorios.
         'error_nombre_comun_requerido' => 'Ingresa el nombre común del cultivo.',
@@ -829,19 +840,36 @@ return [
         'nueva' => 'Emitir factura',
         'vacio_titulo' => 'Todavía no hay facturas',
         'vacio_detalle' => 'Las facturas se emiten a partir de actas de conformidad ya firmadas. En cuanto se firme la primera acta, vas a poder emitir su factura y verla en este listado.',
+        'filtro_vacio_titulo' => 'Sin resultados para este filtro',
+        'filtro_vacio_detalle' => 'Ninguna factura coincide con los filtros aplicados. Prueba con otro término o quita algún filtro.',
+        'filtro_busqueda_placeholder' => 'Buscar por cliente o número de acta…',
+        'filtro_cliente' => 'Cliente',
+        'filtro_cliente_placeholder' => 'Todos los clientes',
+        'filtro_contrato' => 'Contrato',
+        'filtro_contrato_placeholder' => 'Todos los contratos',
+        'filtro_desde' => 'Emitida desde',
+        'filtro_placeholder_desde' => 'Fecha de inicio…',
+        'filtro_hasta' => 'Emitida hasta',
+        'filtro_placeholder_hasta' => 'Fecha de fin…',
+        'kpi_facturado' => 'Facturado',
+        'kpi_cantidad' => 'Facturas emitidas',
+        'kpi_hectareas' => 'Hectáreas facturadas',
+        'unidad_moneda' => 'Bs',
+        'unidad_hectareas' => 'ha',
         'col_cliente' => 'Cliente',
+        'col_contrato' => 'Contrato',
         'col_acta' => 'Acta',
         'col_hectareas' => 'Hectáreas facturadas',
         'col_precio_ha' => 'Precio/ha',
         'col_monto' => 'Monto',
         'col_fecha_emision' => 'Fecha de emisión',
+        'contrato_valor' => 'Contrato #:id',
+        'contrato_opcion' => 'Contrato #:id — :cliente',
         'acta_valor' => 'Acta #:id',
+        'hectareas_valor' => ':cantidad ha',
         'monto_valor' => 'Bs :monto',
-        'precio_ha_valor' => 'Bs :monto',
+        'precio_ha_valor' => 'Bs :monto/ha',
         'paginacion_aria' => 'Paginación de facturas',
-        'paginacion_anterior' => 'Anterior',
-        'paginacion_siguiente' => 'Siguiente',
-        'paginacion_info' => 'Página :actual de :total',
 
         // Formulario (create)
         'titulo_crear' => 'Emitir factura',
@@ -851,7 +879,8 @@ return [
         'campo_acta' => 'Acta conformada',
         'campo_acta_placeholder' => 'Selecciona un acta firmada',
         'campo_acta_opcion' => ':cliente — Acta #:id (:hectareas ha)',
-        'sin_actas_disponibles' => 'No hay actas firmadas pendientes de facturar.',
+        'sin_actas_titulo' => 'No hay actas pendientes de facturar',
+        'sin_actas_detalle' => 'Las facturas se emiten desde actas de conformidad ya firmadas. Cuando se firme una, la vas a encontrar aquí para emitir su factura.',
         'estado_form' => 'El monto se calcula al confirmar.',
         'error_acta_requerida' => 'Selecciona un acta conformada.',
         'error_acta_invalida' => 'El acta seleccionada no está disponible para facturar.',
@@ -872,49 +901,37 @@ return [
 
         // Entrada (pantalla inicial, con formulario de selección obligatoria)
         'entrada' => [
+            'titulo' => 'Qué incluir en el informe',
+            'campos_contador' => ':cantidad campos',
             'cliente' => 'Clientes',
             'cultivo' => 'Cultivos',
-            'filtros' => 'Filtros',
             'generar' => 'Generar informe',
             'error_cliente' => 'Selecciona al menos un cliente.',
             'error_cultivo' => 'Selecciona al menos un cultivo.',
         ],
 
-        // Estado vacío
+        // Informe sin filas
         'estado' => [
-            'sin_resultados' => 'Ningún contrato coincide con el filtro aplicado.',
+            'sin_resultados_titulo' => 'Sin resultados para este filtro',
+            'sin_resultados_detalle' => 'Ningún contrato coincide con los filtros aplicados. Prueba con otra selección o quita algún filtro.',
         ],
 
-        // Chips de filtros (carrusel horizontal)
-        'chips' => [
-            'cliente' => 'Cliente (:cantidad)',
-            'cultivo' => 'Cultivo (:cantidad)',
-            'campania' => 'Campaña (:cantidad)',
-            'rango_fechas' => ':desde – :hasta',
-            'fecha_desde' => 'Desde :fecha',
-            'fecha_hasta' => 'Hasta :fecha',
-            'estado' => 'Estado: :estado',
-            'saldo' => 'Saldo: :saldo',
-            'incluir_deshabilitados' => 'Incluye deshabilitados',
-            'filtros' => 'Filtros',
+        // Qué incluye el informe (toolbar de resultados)
+        'seleccion' => [
+            'clientes' => '{1} :cantidad cliente|[2,*] :cantidad clientes',
+            'cultivos' => '{1} :cantidad cultivo|[2,*] :cantidad cultivos',
+            'cambiar' => 'Cambiar selección',
         ],
 
-        // Filtros (offcanvas)
+        // Filtros opcionales (panel de la toolbar)
         'filtros' => [
-            'titulo' => 'Filtros avanzados',
-            'cliente' => 'Clientes',
-            'cultivo' => 'Cultivos',
             'campania' => 'Campañas',
-            'campania_sin_cliente' => 'Selecciona clientes para filtrar campañas.',
             'fecha_desde' => 'Desde (fecha)',
             'fecha_hasta' => 'Hasta (fecha)',
             'estado' => 'Estado del contrato',
             'saldo' => 'Saldo',
             'incluir_deshabilitados' => 'Incluir contratos deshabilitados',
             'seleccionar' => 'Seleccionar',
-            'aplicar' => 'Aplicar',
-            'cancelar' => 'Cancelar',
-            'limpiar' => 'Limpiar a valores por defecto',
         ],
 
         // Pestañas

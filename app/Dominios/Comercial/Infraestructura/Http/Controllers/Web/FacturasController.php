@@ -6,6 +6,9 @@ use App\Dominios\Comercial\Aplicacion\EmitirFactura;
 use App\Dominios\Comercial\Aplicacion\ListarActasFacturables;
 use App\Dominios\Comercial\Aplicacion\ListarFacturas;
 use App\Dominios\Comercial\Dominio\Excepciones\ActaNoFacturable;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Factura;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\EmitirFacturaRequest;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\RedirectResponse;
@@ -37,9 +40,20 @@ final class FacturasController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
+        $busqueda = $request->string('q')->toString();
+        $busqueda = $busqueda !== '' ? $busqueda : null;
+        $clienteId = $request->integer('cliente_id') ?: null;
+        $contratoId = $request->integer('contrato_id') ?: null;
+        $desde = $this->fecha($request, 'desde');
+        $hasta = $this->fecha($request, 'hasta');
+
         return view('comercial::pages.facturas.index', [
             ...$this->autorizacion->cascara($request),
-            'facturas' => $listarFacturas->ejecutar(),
+            'facturas' => $listarFacturas->ejecutar($busqueda, $clienteId, $contratoId, $desde, $hasta),
+            'resumen' => $listarFacturas->resumen($busqueda, $clienteId, $contratoId, $desde, $hasta),
+            'filtros' => ['q' => $busqueda ?? '', 'cliente_id' => $clienteId, 'contrato_id' => $contratoId, 'desde' => $desde, 'hasta' => $hasta],
+            'clientesDisponibles' => $this->clientesConFacturas(),
+            'contratosDisponibles' => $this->contratosConFacturas(),
         ]);
     }
 
@@ -71,5 +85,48 @@ final class FacturasController
         return redirect()
             ->route('panel.facturas.index')
             ->with('estado', __('comercial.facturas.creada'));
+    }
+
+    /** Una fecha de filtro `Y-m-d` real (el 31/02 no lo es); cualquier otra cosa se ignora en vez de romper el listado. */
+    private function fecha(Request $request, string $clave): ?string
+    {
+        $valor = $request->string($clave)->toString();
+        $fecha = $valor !== '' ? \DateTimeImmutable::createFromFormat('!Y-m-d', $valor) : false;
+
+        return $fecha !== false && $fecha->format('Y-m-d') === $valor ? $valor : null;
+    }
+
+    /**
+     * Opciones del filtro «Cliente»: solo los que tienen alguna factura —uno
+     * sin facturas devolvería siempre el listado vacío—.
+     *
+     * @return array<int, string> id => razón social
+     */
+    private function clientesConFacturas(): array
+    {
+        return Cliente::query()
+            ->whereIn('id', Contrato::query()->whereIn('id', Factura::query()->select('contrato_id'))->select('cliente_id'))
+            ->orderBy('razon_social')
+            ->pluck('razon_social', 'id')
+            ->all();
+    }
+
+    /**
+     * Opciones del filtro «Contrato»: los que tienen alguna factura, rotulados
+     * con su cliente (un contrato no tiene nombre propio).
+     *
+     * @return array<int, string> id => «Contrato #N — cliente»
+     */
+    private function contratosConFacturas(): array
+    {
+        return Contrato::query()
+            ->with('cliente:id,razon_social')
+            ->whereIn('id', Factura::query()->select('contrato_id'))
+            ->orderBy('id')
+            ->get()
+            ->mapWithKeys(fn (Contrato $contrato): array => [
+                $contrato->id => __('comercial.facturas.contrato_opcion', ['id' => $contrato->id, 'cliente' => $contrato->cliente->razon_social]),
+            ])
+            ->all();
     }
 }
