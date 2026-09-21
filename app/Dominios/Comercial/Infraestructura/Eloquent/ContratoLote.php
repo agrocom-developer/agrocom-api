@@ -46,6 +46,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * que las mantenía el modelo que reemplazan: son columnas TIME sin fecha,
  * castearlas a datetime inventaría un día.
  *
+ * Desde el 21/9/2026 el contrato ya no las carga ni las muestra: el día
+ * completo y el horario de cada lote se definen en la orden de trabajo, que es
+ * donde se sabe cuándo se va a volar. Las columnas siguen en la tabla
+ * (nullable) con lo que ya tuvieran; nada las lee.
+ *
  * @property int $id
  * @property int $contrato_id
  * @property int $lote_id
