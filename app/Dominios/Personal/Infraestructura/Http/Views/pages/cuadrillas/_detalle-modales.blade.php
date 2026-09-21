@@ -1,6 +1,6 @@
 {{--
     Partial: formularios + diálogos de las tablas de detalle de UNA cuadrilla
-    (integrantes, equipamiento y accesorios), para la ficha de edición.
+    (integrantes y equipamiento), para la ficha de edición.
 
     Va FUERA del `<form>` de `_formulario.blade.php` a propósito — un `<form>`
     no puede anidarse en otro — y cada `<form>` va con `hidden` para no sumar
@@ -17,9 +17,8 @@
     servidor. Por eso ese select lleva `searchable` a mano (sus opciones las
     llena JS, ver docblock de `atoms/select`).
 
-    Espera: $equipo, $integrantes, $equipamiento, $accesorios (paginadores),
-    $personasDisponibles, $roles, $opcionesEquipamiento, $accesoriosDisponibles,
-    $puedeCrearPersona.
+    Espera: $equipo, $integrantes, $equipamiento (paginadores),
+    $personasDisponibles, $roles, $opcionesEquipamiento, $puedeCrearPersona.
 --}}
 @php
     $hoy = now()->toDateString();
@@ -159,68 +158,4 @@
     >
         <x-atoms.date name="hasta" :id="'cuadrilla-recurso-finalizar-hasta-'.$recurso['id']" :form="'cuadrilla-recurso-finalizar-form-'.$recurso['id']" :label="__('personal.equipos_trabajo.detalle_campo_hasta_cierre')" :value="$hoy" required />
     </x-molecules.confirm-modal>
-@endforeach
-
-{{-- Agregar accesorio: del catálogo, o uno nuevo que queda en el catálogo --}}
-<form id="cuadrilla-accesorio-form" method="POST" action="{{ route('panel.cuadrillas.accesorios.store', $equipo) }}" hidden>
-    @csrf
-    <input type="hidden" name="origen" value="edit">
-</form>
-
-<x-molecules.confirm-modal
-    id="cuadrilla-accesorio-modal"
-    form-id="cuadrilla-accesorio-form"
-    :title="__('personal.equipos_trabajo.ficha_agregar_accesorio')"
-    :message="__('personal.equipos_trabajo.detalle_agregar_accesorio_mensaje')"
-    :confirm-label="__('personal.equipos_trabajo.detalle_agregar')"
-    tone="info"
-    modal-icon="handyman"
->
-    <x-atoms.select
-        name="accesorio_id"
-        id="cuadrilla-accesorio-catalogo"
-        form="cuadrilla-accesorio-form"
-        icon="handyman"
-        :label="__('personal.equipos_trabajo.detalle_accesorio_catalogo')"
-        :options="$accesoriosDisponibles"
-        :placeholder="__('personal.equipos_trabajo.detalle_accesorio_catalogo_placeholder')"
-    />
-    <x-atoms.input
-        type="text"
-        name="nombre_nuevo"
-        id="cuadrilla-accesorio-nuevo"
-        form="cuadrilla-accesorio-form"
-        maxlength="80"
-        :label="__('personal.equipos_trabajo.detalle_accesorio_nuevo')"
-        :placeholder="__('personal.equipos_trabajo.detalle_accesorio_nuevo_placeholder')"
-        :help="__('personal.equipos_trabajo.detalle_accesorio_nuevo_ayuda')"
-    />
-    <x-atoms.input
-        type="number"
-        name="cantidad"
-        id="cuadrilla-accesorio-cantidad"
-        form="cuadrilla-accesorio-form"
-        min="1"
-        step="1"
-        value="1"
-        :label="__('personal.equipos_trabajo.ficha_campo_cantidad')"
-        required
-    />
-    <x-atoms.input
-        type="text"
-        name="observacion"
-        id="cuadrilla-accesorio-observacion"
-        form="cuadrilla-accesorio-form"
-        :label="__('personal.equipos_trabajo.ficha_campo_observacion')"
-        :placeholder="__('personal.equipos_trabajo.ficha_campo_observacion_placeholder')"
-    />
-</x-molecules.confirm-modal>
-
-{{-- Quitar accesorio: el botón de la fila (`confirm-button`) envía este formulario --}}
-@foreach ($accesorios as $accesorio)
-    <form id="cuadrilla-accesorio-quitar-{{ $accesorio->id }}" method="POST" action="{{ route('panel.cuadrillas.accesorios.destroy', [$equipo, $accesorio]) }}" hidden>
-        @csrf
-        @method('DELETE')
-        <input type="hidden" name="origen" value="edit">
-    </form>
 @endforeach
