@@ -948,7 +948,6 @@ return [
         'campo_humedad_max_pct' => 'Humedad máxima (%)',
         'campo_viento_max_kmh' => 'Viento máximo (km/h)',
         'campo_temperatura_max_c' => 'Temperatura máxima (°C)',
-        'campo_velocidad_max_kmh' => 'Velocidad máxima (km/h)',
         'campo_altura_vuelo_m' => 'Altura de vuelo (m)',
         'campo_velocidad_vuelo_kmh' => 'Velocidad de vuelo (km/h)',
         'campo_ancho_pasada_m' => 'Ancho de pasada (m)',

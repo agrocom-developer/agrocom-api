@@ -144,7 +144,7 @@
 
                             <x-molecules.form-section
                                 :title="__('operaciones.asignacion_equipos.seccion_condiciones_vuelo')"
-                                :count="__('operaciones.ordenes_trabajo.campos_contador', ['cantidad' => ($orden->categoriaInsumo?->tipo_insumo?->value === 'liquido' ? 10 : 8)])"
+                                :count="__('operaciones.ordenes_trabajo.campos_contador', ['cantidad' => ($orden->categoriaInsumo?->tipo_insumo?->value === 'liquido' ? 9 : 7)])"
                             >
                                 <div class="ag-form-section__field--full">
                                     <small style="color: var(--ag-color-text-muted)">
@@ -195,17 +195,6 @@
                                     :value="old('parametros.temperatura_max_c')"
                                     step="0.01"
                                     :error="$errors->first('parametros.temperatura_max_c')"
-                                />
-
-                                <x-atoms.input
-                                    type="number"
-                                    name="parametros[velocidad_max_kmh]"
-                                    id="parametros-velocidad-max"
-                                    :label="__('operaciones.asignacion_equipos.campo_velocidad_max_kmh')"
-                                    :value="old('parametros.velocidad_max_kmh')"
-                                    min="0.01"
-                                    step="0.01"
-                                    :error="$errors->first('parametros.velocidad_max_kmh')"
                                 />
 
                                 <x-atoms.input

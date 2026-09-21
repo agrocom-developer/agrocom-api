@@ -18,7 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  *
  * `equipo_trabajo_id` NO vive acá — cada `Trabajo` (equipo×lote) se queda
  * con el suyo, porque una tanda cubre varios equipos (ver docblock de la
- * migración). Lo que sí es compartido por toda la tanda son los 8 campos de
+ * migración). Lo que sí es compartido por toda la tanda son los 7 campos de
  * clima/vuelo y los 2 de Ph — se leen una sola vez por tanda, nunca
  * repetidos por fila de `Trabajo` como antes de esta reforma.
  *
@@ -32,7 +32,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $viento_max_kmh
  * @property string|null $temperatura_max_c
  * @property string|null $humedad_max_pct
- * @property string|null $velocidad_max_kmh
  * @property string|null $altura_vuelo_m
  * @property string|null $velocidad_vuelo_kmh
  * @property string|null $ancho_pasada_m
@@ -57,7 +56,6 @@ class OrdenTrabajo extends ModeloDominio
         'viento_max_kmh',
         'temperatura_max_c',
         'humedad_max_pct',
-        'velocidad_max_kmh',
         'altura_vuelo_m',
         'velocidad_vuelo_kmh',
         'ancho_pasada_m',
@@ -77,7 +75,6 @@ class OrdenTrabajo extends ModeloDominio
             'viento_max_kmh' => 'decimal:2',
             'temperatura_max_c' => 'decimal:2',
             'humedad_max_pct' => 'decimal:2',
-            'velocidad_max_kmh' => 'decimal:2',
             'altura_vuelo_m' => 'decimal:2',
             'velocidad_vuelo_kmh' => 'decimal:2',
             'ancho_pasada_m' => 'decimal:2',

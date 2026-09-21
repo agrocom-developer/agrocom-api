@@ -65,7 +65,7 @@ Prioridad: **[C]** crítico para la primera campaña con sistema (fases 1–2 de
 
 ### Parámetros de negocio (configuración, no código)
 
-- **RF-60 [C]** Límites de condiciones (viento, temperatura, humedad), ventanas horarias y velocidad máxima **por contrato y por orden** — los clientes los modulan (caso real: velocidad ≤15 km/h impuesta).
+- **RF-60 [C]** Límites de condiciones (viento, temperatura, humedad), ventanas horarias y velocidad máxima **por contrato y por orden** — los clientes los modulan (caso real: velocidad ≤15 km/h impuesta). *Nota del 21/9/2026: la velocidad máxima dejó de ser un campo aparte; la Orden de Trabajo lleva una sola velocidad, la de vuelo, y el tope del cliente se carga ahí.*
 - **RF-61 [A]** Tarifas por rol, topes de anticipo, umbral de reporte, montos de autorización, tolerancia de solape y desvío de mezcla (±5% aceptado en campo): todos parámetros.
 
 ## 2. Requerimientos no funcionales

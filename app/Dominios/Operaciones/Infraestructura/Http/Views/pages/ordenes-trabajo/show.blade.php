@@ -60,7 +60,6 @@
         __('operaciones.asignacion_equipos.campo_altura_vuelo_m') => $ordenTrabajo->altura_vuelo_m,
         __('operaciones.asignacion_equipos.campo_velocidad_vuelo_kmh') => $ordenTrabajo->velocidad_vuelo_kmh,
         __('operaciones.asignacion_equipos.campo_ancho_pasada_m') => $ordenTrabajo->ancho_pasada_m,
-        __('operaciones.asignacion_equipos.campo_velocidad_max_kmh') => $ordenTrabajo->velocidad_max_kmh,
     ];
 
     $todosTerminados = $cantidadTrabajos > 0 && $cantidadTerminados === $cantidadTrabajos;

@@ -13,7 +13,7 @@ namespace App\Dominios\Operaciones\Contratos;
  * TAL CUAL para abrir sesiones sobre este trabajo (`abrirSesion` lo resuelve
  * por `trabajo_uuid_cliente`), sin generar uno propio.
  *
- * Los 8 campos de límites climáticos y parámetros de vuelo
+ * Los 7 campos de límites climáticos y parámetros de vuelo
  * (`humedadMinPct`...`anchoPasadaM`) llegaron acá desde
  * `OrdenAplicacionCatalogo` (migración
  * `2026_09_18_100001_mueve_clima_vuelo_de_ordenes_a_trabajos_table`):
@@ -37,7 +37,6 @@ final readonly class TrabajoAsignadoCatalogo
         public ?string $vientoMaxKmh,
         public ?string $temperaturaMaxC,
         public ?string $humedadMaxPct,
-        public ?string $velocidadMaxKmh,
         public ?string $alturaVueloM,
         public ?string $velocidadVueloKmh,
         public ?string $anchoPasadaM,
@@ -58,7 +57,6 @@ final readonly class TrabajoAsignadoCatalogo
             'viento_max_kmh' => $this->vientoMaxKmh,
             'temperatura_max_c' => $this->temperaturaMaxC,
             'humedad_max_pct' => $this->humedadMaxPct,
-            'velocidad_max_kmh' => $this->velocidadMaxKmh,
             'altura_vuelo_m' => $this->alturaVueloM,
             'velocidad_vuelo_kmh' => $this->velocidadVueloKmh,
             'ancho_pasada_m' => $this->anchoPasadaM,

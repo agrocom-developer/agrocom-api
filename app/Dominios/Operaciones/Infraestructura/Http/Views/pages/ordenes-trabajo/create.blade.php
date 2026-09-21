@@ -253,7 +253,7 @@
 
             <x-molecules.form-section
                 :title="__('operaciones.ordenes_trabajo.seccion_vuelo')"
-                :count="__('operaciones.ordenes_trabajo.campos_contador', ['cantidad' => 4])"
+                :count="__('operaciones.ordenes_trabajo.campos_contador', ['cantidad' => 3])"
             >
                 <x-atoms.input
                     type="number"
@@ -286,17 +286,6 @@
                     min="0.01"
                     step="0.01"
                     :error="$errors->first('parametros.ancho_pasada_m')"
-                />
-
-                <x-atoms.input
-                    type="number"
-                    name="parametros[velocidad_max_kmh]"
-                    id="parametros-velocidad-max"
-                    :label="__('operaciones.asignacion_equipos.campo_velocidad_max_kmh')"
-                    :value="$parametrosAntiguos['velocidad_max_kmh'] ?? ''"
-                    min="0.01"
-                    step="0.01"
-                    :error="$errors->first('parametros.velocidad_max_kmh')"
                 />
             </x-molecules.form-section>
 

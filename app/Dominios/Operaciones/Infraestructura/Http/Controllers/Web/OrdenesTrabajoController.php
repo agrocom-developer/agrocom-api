@@ -476,7 +476,6 @@ final class OrdenesTrabajoController
             'viento_max_kmh' => $cadena($parametros['viento_max_kmh'] ?? null),
             'temperatura_max_c' => $cadena($parametros['temperatura_max_c'] ?? null),
             'humedad_max_pct' => $cadena($parametros['humedad_max_pct'] ?? null),
-            'velocidad_max_kmh' => $cadena($parametros['velocidad_max_kmh'] ?? null),
             'altura_vuelo_m' => $cadena($parametros['altura_vuelo_m'] ?? null),
             'velocidad_vuelo_kmh' => $cadena($parametros['velocidad_vuelo_kmh'] ?? null),
             'ancho_pasada_m' => $cadena($parametros['ancho_pasada_m'] ?? null),
