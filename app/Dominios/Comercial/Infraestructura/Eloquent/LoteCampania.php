@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Comercial\Infraestructura\Eloquent;
 
+use App\Dominios\Comercial\Dominio\EtapaCultivo;
 use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
 use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -24,6 +25,7 @@ use Illuminate\Support\Carbon;
  * @property int $lote_id
  * @property int $campania_id
  * @property int $cultivo_id
+ * @property EtapaCultivo|null $etapa_cultivo
  * @property string $hectareas_sembradas
  * @property Carbon|null $fecha_siembra
  * @property Carbon|null $fecha_cosecha_estimada
@@ -39,6 +41,7 @@ class LoteCampania extends ModeloDominio
         'lote_id',
         'campania_id',
         'cultivo_id',
+        'etapa_cultivo',
         'hectareas_sembradas',
         'fecha_siembra',
         'fecha_cosecha_estimada',
@@ -48,6 +51,7 @@ class LoteCampania extends ModeloDominio
     protected function casts(): array
     {
         return [
+            'etapa_cultivo' => EtapaCultivo::class,
             'hectareas_sembradas' => 'decimal:2',
             'fecha_siembra' => 'date',
             'fecha_cosecha_estimada' => 'date',

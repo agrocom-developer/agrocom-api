@@ -20,7 +20,7 @@ use Illuminate\Database\QueryException;
 final class GuardarSiembra
 {
     /**
-     * @param  array{cultivo_id: int, hectareas_sembradas: string, fecha_siembra: string|null, fecha_cosecha_estimada: string|null}  $datos
+     * @param  array{cultivo_id: int, etapa_cultivo: string|null, hectareas_sembradas: string, fecha_siembra: string|null, fecha_cosecha_estimada: string|null}  $datos
      *
      * @throws HectareasSembradasSuperanLote si las hectáreas sembradas superan las del lote.
      * @throws SiembraDuplicada si el lote ya tiene una siembra vigente en esa campaña.

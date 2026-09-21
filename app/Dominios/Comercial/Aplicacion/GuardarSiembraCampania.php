@@ -26,7 +26,7 @@ use Illuminate\Support\Facades\DB;
 final class GuardarSiembraCampania
 {
     /**
-     * @param  list<array{lote_id: int, cultivo_id: int|null, hectareas_sembradas: string|null, fecha_siembra: string|null, fecha_cosecha_estimada: string|null}>  $filas
+     * @param  list<array{lote_id: int, cultivo_id: int|null, etapa_cultivo: string|null, hectareas_sembradas: string|null, fecha_siembra: string|null, fecha_cosecha_estimada: string|null}>  $filas
      */
     public function ejecutar(Propiedad $propiedad, int $campaniaId, array $filas): void
     {
@@ -67,6 +67,7 @@ final class GuardarSiembraCampania
 
                 GuardarSiembra::guardar($siembra, $lote, [
                     'cultivo_id' => $fila['cultivo_id'],
+                    'etapa_cultivo' => $fila['etapa_cultivo'],
                     'hectareas_sembradas' => (string) $fila['hectareas_sembradas'],
                     'fecha_siembra' => $fila['fecha_siembra'],
                     'fecha_cosecha_estimada' => $fila['fecha_cosecha_estimada'],
