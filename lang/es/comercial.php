@@ -773,12 +773,23 @@ return [
         'estado_form' => 'Los cambios se guardan al confirmar.',
         'volver' => 'Volver a cultivos',
 
-        // Resumen relacionado (edición, §6.3.1 de guia_pantalla_panel.md):
-        // estático por ahora, pendiente de conectar a un contrato de
-        // lectura por cultivo.
-        'resumen_titulo' => 'Lotes con este cultivo',
-        'resumen_detalle' => 'Acá vas a ver cuántos lotes tienen este cultivo sembrado en la campaña vigente.',
-        'resumen_accion' => 'Ir a propiedades',
+        // Resumen relacionado (edición)
+        'aside_campania' => 'Campaña',
+        'aside_sin_campania_titulo' => 'Sin campaña abierta',
+        'aside_sin_campania_detalle' => 'Este resumen se arma con la campaña abierta y hoy no hay ninguna.',
+        'aside_lotes_titulo' => 'Lotes sembrados',
+        'aside_lotes_total' => 'Lotes',
+        'aside_lotes_hectareas' => 'Hectáreas sembradas',
+        'aside_lotes_vacio_titulo' => 'Sin lotes sembrados',
+        'aside_lotes_vacio_detalle' => 'Ningún lote tiene este cultivo sembrado en la campaña abierta. La siembra se carga desde la propiedad.',
+        'aside_lotes_accion' => 'Ver lista de lotes',
+        'aside_lotes_accion_siembra' => 'Ir a propiedades',
+        'aside_propiedades_titulo' => 'Propiedades',
+        'aside_propiedades_total' => 'Propiedades con este cultivo',
+        'aside_propiedades_hectareas_valor' => ':cantidad ha',
+        'aside_propiedades_vacio_titulo' => 'Sin propiedades',
+        'aside_propiedades_vacio_detalle' => 'Este cultivo todavía no aparece en ninguna propiedad en la campaña abierta.',
+        'aside_propiedades_accion' => 'Ver lista de propiedades',
 
         // Mensajes de los campos obligatorios.
         'error_nombre_comun_requerido' => 'Ingresa el nombre común del cultivo.',

@@ -22,14 +22,17 @@
     docs/diseno/guia_pantalla_panel.md. Se activa/desactiva desde una pieza
     aparte, todavía sin construir.
 
-    Resumen relacionado en edición (§6.3.1 de la guía, "componente estático
-    primero"): todavía no hay contrato de lectura por cultivo (los que
-    existen, `LecturaCultivoLote`, agrupan por CAMPAÑA, no por cultivo), así
-    que el aside es un `empty-state` fijo en vez de datos reales — el botón
-    ya apunta a una ruta real (`panel.propiedades.index`, donde se carga la
-    siembra de un lote). Cuando exista el contrato, esto pasa a
-    `resumenRelacionado()` resuelto en el controlador, sin tocar esta
-    anatomía.
+    Resumen relacionado en edición (§6.3.1 de la guía): dos tarjetas —lotes
+    sembrados con este cultivo y propiedades donde aparece— sobre la campaña
+    vigente, armadas server-side por `CultivosController::resumenRelacionado()`
+    con `Aplicacion/ResumirSiembraDeCultivo`. Cada una viene gateada por el
+    permiso `.ver` de lote/propiedad; un rol sin ninguno de los dos no tiene
+    aside. En el alta no hay aside: un cultivo que todavía no existe no está
+    sembrado en ningún lado.
+
+    - $resumenCultivo (list<array>, solo edición): las tarjetas del aside, con
+      la forma de `resumenPropiedad` (`titulo`, `icono`, `tieneDatos`,
+      `items`, `vacioTitulo`, `vacioDetalle`, `acciones`).
 --}}
 @php
     $esEdicion = $cultivo !== null;
@@ -72,19 +75,39 @@
     @endif
 
     <x-molecules.form-layout>
-    @if ($esEdicion)
+    @if ($esEdicion && ($resumenCultivo ?? []) !== [])
         <x-slot:aside>
-            <x-molecules.empty-state
-                icon="grass"
-                :title="__('comercial.cultivos.resumen_titulo')"
-                :detail="__('comercial.cultivos.resumen_detalle')"
-            >
-                <x-slot:action>
-                    <x-atoms.button :href="route('panel.propiedades.index')" variant="outline" icon="arrow_forward">
-                        {{ __('comercial.cultivos.resumen_accion') }}
-                    </x-atoms.button>
-                </x-slot:action>
-            </x-molecules.empty-state>
+            @foreach ($resumenCultivo as $resumen)
+                @if ($resumen['tieneDatos'])
+                    <x-molecules.summary-card :title="$resumen['titulo']" :items="$resumen['items']">
+                        @if ($resumen['acciones'] !== [])
+                            <x-slot:action>
+                                @foreach ($resumen['acciones'] as $accion)
+                                    <x-atoms.button :href="$accion['href']" variant="outline" :icon="$accion['icono'] ?? 'arrow_forward'" block>
+                                        {{ $accion['label'] }}
+                                    </x-atoms.button>
+                                @endforeach
+                            </x-slot:action>
+                        @endif
+                    </x-molecules.summary-card>
+                @else
+                    <x-molecules.empty-state
+                        :icon="$resumen['icono']"
+                        :title="$resumen['vacioTitulo']"
+                        :detail="$resumen['vacioDetalle']"
+                    >
+                        @if ($resumen['acciones'] !== [])
+                            <x-slot:action>
+                                @foreach ($resumen['acciones'] as $accion)
+                                    <x-atoms.button :href="$accion['href']" variant="outline" :icon="$accion['icono'] ?? 'add'">
+                                        {{ $accion['label'] }}
+                                    </x-atoms.button>
+                                @endforeach
+                            </x-slot:action>
+                        @endif
+                    </x-molecules.empty-state>
+                @endif
+            @endforeach
         </x-slot:aside>
     @endif
 

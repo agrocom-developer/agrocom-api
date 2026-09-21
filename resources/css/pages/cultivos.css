@@ -3,13 +3,15 @@
  * (app/Dominios/Comercial/Infraestructura/Http/Views/pages/cultivos/) —
  * HU-48, tarea 71 (columnas y filtro agronómicos, ampliación 16/9/2026):
  * catálogo de cultivos. CSS propio de ESTAS páginas (ver convención en
- * resources/css/pages/index.css) — mismo patrón que usuarios.css/bases.css,
- * con columnas de tipo/ciclo de vida en vez de rol/base.
+ * resources/css/pages/index.css).
  *
  * El wrapper `.ag-cultivos`/`.ag-cultivos-form` sigue el mismo patrón que
  * `.ag-bases`/`.ag-bases-form`: flex en columna con un único `gap` en vez de
- * `margin-top` repetido en cada hijo. Todo color y medida por token
- * (CLAUDE.md invariante 11).
+ * `margin-top` repetido en cada hijo. La tabla del listado
+ * (`molecules/index-table`) y el layout main/aside del formulario
+ * (`molecules/form-layout`) ya no viven acá: son del catálogo (tarea 120,
+ * homogeneización del panel). Todo color y medida por token (CLAUDE.md
+ * invariante 11).
  */
 
 .ag-cultivos,
@@ -19,57 +21,7 @@
     gap: var(--ag-space-5);
 }
 
-/* Listado (index) */
-
-.ag-cultivos__tabla {
-    border: 1px solid var(--ag-color-border-card);
-    border-radius: var(--ag-radius-md);
-    background-color: var(--ag-color-surface-card);
-    overflow: hidden;
-}
-
-/* La última columna (acciones) es un ancho fijo, no `auto`: con `auto`,
-   `.ag-cultivos__head` y `.ag-cultivos__fila` son grids separados que
-   resuelven ese ancho cada uno según su propio contenido y el header queda
-   corrido. `--ag-row-actions-width`, no un valor en rem propio: ver el
-   comentario de resources/css/components/row-actions.css. */
-.ag-cultivos__head,
-.ag-cultivos__fila {
-    display: grid;
-    grid-template-columns: 3rem 1.8fr 1fr 0.9fr var(--ag-row-actions-width);
-    gap: var(--ag-space-4);
-    align-items: center;
-    padding: var(--ag-space-3) var(--ag-space-4);
-}
-
-.ag-cultivos__indice {
-    color: var(--ag-color-text-faint);
-    font-family: var(--ag-font-family-mono);
-    font-size: var(--ag-font-size-xs);
-}
-
-.ag-cultivos__head {
-    background-color: var(--ag-color-bg-table-head);
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-xs);
-    font-weight: var(--ag-font-weight-medium);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.ag-cultivos__acciones-head {
-    text-align: right;
-}
-
-.ag-cultivos__fila {
-    border-top: 1px solid var(--ag-color-border-row);
-    color: var(--ag-color-text);
-    font-size: var(--ag-font-size-sm);
-}
-
-.ag-cultivos__fila:hover {
-    background-color: var(--ag-color-bg-row-hover);
-}
+/* Listado (index): solo la celda del nombre, que apila el común y el científico. */
 
 .ag-cultivos__nombre-celda {
     display: flex;
@@ -87,31 +39,4 @@
     color: var(--ag-color-text-muted);
     font-size: var(--ag-font-size-xs);
     font-style: italic;
-}
-
-.ag-cultivos__acciones {
-    display: flex;
-    justify-content: flex-end;
-}
-
-@media (max-width: 992px) {
-    .ag-cultivos__head {
-        display: none;
-    }
-
-    .ag-cultivos__fila {
-        grid-template-columns: 1fr;
-        gap: var(--ag-space-1);
-    }
-
-    /* El índice numérico solo ordena filas de una tabla — en tarjeta
-       apilada no aporta. */
-    .ag-cultivos__indice {
-        display: none;
-    }
-
-    .ag-cultivos__acciones {
-        justify-content: flex-start;
-        margin-top: var(--ag-space-2);
-    }
 }

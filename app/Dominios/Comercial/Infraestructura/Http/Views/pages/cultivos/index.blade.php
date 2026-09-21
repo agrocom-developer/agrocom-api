@@ -114,18 +114,18 @@
                     />
                 @endif
             @else
-                <div class="ag-cultivos__tabla" role="table">
-                    <div class="ag-cultivos__head" role="row">
-                        <span role="columnheader" class="ag-cultivos__indice">{{ __('ui.tabla.col_indice') }}</span>
+                <x-molecules.index-table columns="3rem 1.8fr 1fr 0.9fr var(--ag-row-actions-width)">
+                    <x-slot:head>
+                        <span role="columnheader" class="ag-index-table__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('comercial.cultivos.col_nombre') }}</span>
                         <span role="columnheader">{{ __('comercial.cultivos.col_tipo') }}</span>
                         <span role="columnheader">{{ __('comercial.cultivos.col_ciclo_vida') }}</span>
-                        <span role="columnheader" class="ag-cultivos__acciones-head">{{ __('ui.tabla.col_acciones') }}</span>
-                    </div>
+                        <span role="columnheader" class="ag-index-table__acciones-head">{{ __('ui.tabla.col_acciones') }}</span>
+                    </x-slot:head>
 
                     @foreach ($cultivos as $cultivo)
-                        <div class="ag-cultivos__fila" role="row">
-                            <span role="cell" class="ag-cultivos__indice">
+                        <div class="ag-index-table__row" role="row">
+                            <span role="cell" class="ag-index-table__indice">
                                 {{ ($cultivos->currentPage() - 1) * $cultivos->perPage() + $loop->iteration }}
                             </span>
                             <span role="cell" class="ag-cultivos__nombre-celda">
@@ -145,7 +145,7 @@
                                 {{ $cultivo->ciclo_vida ? __('comercial.cultivos.ciclo_vida_opcion.'.$cultivo->ciclo_vida->value) : '—' }}
                             </span>
 
-                            <span role="cell" class="ag-cultivos__acciones">
+                            <span role="cell" class="ag-index-table__acciones">
                                 {{-- Form FUERA de row-actions a propósito: ese organism repite su
                                      slot dos veces (visible/menú) — un <form> con id ahí adentro se
                                      duplicaría con el mismo id, HTML inválido. El botón de
@@ -187,7 +187,7 @@
                             </span>
                         </div>
                     @endforeach
-                </div>
+                </x-molecules.index-table>
 
                 <x-molecules.pagination :paginator="$cultivos" :aria-label="__('comercial.cultivos.paginacion_aria')" />
             @endif

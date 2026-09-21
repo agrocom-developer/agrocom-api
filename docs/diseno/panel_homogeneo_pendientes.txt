@@ -14,7 +14,6 @@
 # 26 listados y 20 formularios. Las referencias del plan (§1) no pueden figurar.
 
 # 120 · feature/panel-comercial-restante
-Comercial/cultivos/index.blade.php
 Comercial/facturas/index.blade.php
 Comercial/facturas/create.blade.php
 Comercial/reportes-comerciales/index.blade.php
