@@ -109,9 +109,7 @@
 
                 <x-organisms.form-actions-bar :status="__('finanzas.rendiciones.estado_form')">
                     <x-slot:actions>
-                        <x-atoms.button :href="route('panel.rendiciones.index')" variant="outline">
-                            {{ __('ui.action.cancel') }}
-                        </x-atoms.button>
+                        <x-molecules.boton-volver :href="route('panel.rendiciones.index')" cancelar />
                         <x-atoms.button type="submit" variant="primary">
                             {{ __('ui.action.save') }}
                         </x-atoms.button>

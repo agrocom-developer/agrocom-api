@@ -101,9 +101,7 @@
 
         <x-organisms.form-actions-bar :status="__('operaciones.drones.estado_form')">
             <x-slot:actions>
-                <x-atoms.button :href="route('panel.drones.index')" variant="outline">
-                    {{ __('ui.action.cancel') }}
-                </x-atoms.button>
+                <x-molecules.boton-volver :href="route('panel.drones.index')" :retorno="$esEdicion ? ['dron_id' => $dron->id] : []" cancelar />
                 <x-atoms.button type="submit" variant="primary">
                     {{ __('ui.action.save') }}
                 </x-atoms.button>

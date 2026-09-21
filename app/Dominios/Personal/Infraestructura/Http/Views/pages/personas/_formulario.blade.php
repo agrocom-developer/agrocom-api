@@ -148,9 +148,7 @@
                         {{ __('personal.personas.volver_a_formulario_origen') }}
                     </x-atoms.button>
                 @endif
-                <x-atoms.button :href="route('panel.personas.index')" variant="outline">
-                    {{ __('ui.action.cancel') }}
-                </x-atoms.button>
+                <x-molecules.boton-volver :href="route('panel.personas.index')" :retorno="$esEdicion ? ['persona_id' => $persona->id] : []" cancelar />
                 <x-atoms.button type="submit" variant="primary">
                     {{ __('ui.action.save') }}
                 </x-atoms.button>
