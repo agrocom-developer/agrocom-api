@@ -21,7 +21,6 @@
 # referencias (Operaciones/ordenes/show, Operaciones/ordenes-trabajo/show) NO
 # entran acá: ya cumplen el patrón desde el 17/9 y el 21/9/2026.
 
-Operaciones/trabajos/show.blade.php # tarea 124, en curso
 Operaciones/reparto-cuadrillas/show.blade.php # tarea 124, en curso
 Personal/cuadrillas/show.blade.php # tarea 125
 Personal/personas/desempeno.blade.php # tarea 125
