@@ -1,0 +1,544 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * Consolida las migraciones: lee el esquema REAL de la base (la del compose,
+ * con todas las migraciones aplicadas) y emite una migración `create` por
+ * tabla, con el estado final de sus columnas, claves foráneas, índices y
+ * CHECK. ADR 0024 (22/9/2026). Se corre dentro del contenedor:
+ *
+ *   docker exec agrocom-api-app-1 php bin/consolidar-migraciones [carpeta_salida] [fecha]
+ *
+ * Deja los archivos en `carpeta_salida` (por defecto storage/app/migraciones-limpias)
+ * numerados en orden de dependencia de claves foráneas, cada uno con la
+ * lista de migraciones legadas de las que proviene. No toca database/migrations:
+ * el reemplazo se hace a mano después de revisar y de comparar el esquema
+ * (ver docs/decisiones/0024-migraciones-consolidadas.md).
+ */
+
+use Illuminate\Contracts\Console\Kernel;
+use Illuminate\Support\Facades\DB;
+
+require __DIR__.'/../vendor/autoload.php';
+$app = require __DIR__.'/../bootstrap/app.php';
+$app->make(Kernel::class)->bootstrap();
+
+$salida = $argv[1] ?? storage_path('app/migraciones-limpias');
+$fecha = $argv[2] ?? '2026_09_23';
+$raiz = dirname(__DIR__);
+
+@mkdir($salida, 0o755, true);
+
+$omitidas = ['migrations'];
+$laravelPropias = ['cache', 'cache_locks', 'sessions', 'jobs', 'job_batches', 'failed_jobs']; // password_reset_tokens la creó una migración propia: se consolida como las demás
+
+$tablas = array_map(fn ($f) => $f->tablename, DB::select("select tablename from pg_tables where schemaname = 'public' order by tablename"));
+$tablas = array_values(array_diff($tablas, $omitidas, $laravelPropias));
+
+// ---------- lectura del catálogo ----------
+$columnas = fn (string $t) => DB::select(<<<'SQL'
+    select c.column_name, c.data_type, c.character_maximum_length, c.numeric_precision, c.numeric_scale,
+           c.is_nullable, c.column_default, c.is_identity, c.datetime_precision, c.udt_name
+    from information_schema.columns c
+    where c.table_schema = 'public' and c.table_name = ?
+    order by c.ordinal_position
+SQL, [$t]);
+
+$restricciones = fn (string $t) => DB::select(<<<'SQL'
+    select con.conname, con.contype, pg_get_constraintdef(con.oid) as def,
+           (select array_agg(a.attname order by k.ord) from unnest(con.conkey) with ordinality k(attnum, ord)
+              join pg_attribute a on a.attrelid = con.conrelid and a.attnum = k.attnum) as cols,
+           cref.relname as ref_tabla,
+           (select array_agg(a.attname order by k.ord) from unnest(con.confkey) with ordinality k(attnum, ord)
+              join pg_attribute a on a.attrelid = con.confrelid and a.attnum = k.attnum) as ref_cols,
+           con.confdeltype, con.confupdtype
+    from pg_constraint con
+    join pg_class c on c.oid = con.conrelid
+    join pg_namespace n on n.oid = c.relnamespace
+    left join pg_class cref on cref.oid = con.confrelid
+    where n.nspname = 'public' and c.relname = ?
+    order by con.contype, con.conname
+SQL, [$t]);
+
+$indices = fn (string $t) => DB::select(<<<'SQL'
+    select i.relname as nombre, pg_get_indexdef(i.oid) as def, ix.indisunique, ix.indisprimary,
+           (ix.indpred is not null) as parcial, (ix.indexprs is not null) as con_expresion,
+           (select array_agg(a.attname order by k.ord) from unnest(ix.indkey) with ordinality k(attnum, ord)
+              join pg_attribute a on a.attrelid = ix.indrelid and a.attnum = k.attnum where k.attnum > 0) as cols,
+           exists (select 1 from pg_constraint con where con.conindid = i.oid) as de_restriccion
+    from pg_index ix
+    join pg_class i on i.oid = ix.indexrelid
+    join pg_class c on c.oid = ix.indrelid
+    join pg_namespace n on n.oid = c.relnamespace
+    where n.nspname = 'public' and c.relname = ?
+    order by i.relname
+SQL, [$t]);
+
+$aArreglo = fn (?string $pg): array => $pg === null ? [] : array_map('trim', explode(',', trim($pg, '{}')));
+
+// ---------- orden topológico por claves foráneas ----------
+$deps = [];
+foreach ($tablas as $t) {
+    $deps[$t] = [];
+    foreach ($restricciones($t) as $r) {
+        if ($r->contype === 'f' && in_array(trim($r->cols, '{}'), ['created_by', 'updated_by'], true)) {
+            continue; // autoría: va en una migración final, como la legada add_fk_autoria_a_tablas_dominio
+        }
+        if ($r->contype === 'f' && $r->ref_tabla !== $t && in_array($r->ref_tabla, $tablas, true)) {
+            $deps[$t][] = $r->ref_tabla;
+        }
+    }
+}
+$orden = [];
+$visitando = [];
+$diferidas = []; // [tabla][] = restricción FK que cierra un ciclo: se agrega con Schema::table al final
+$visitar = function (string $t) use (&$visitar, &$orden, &$visitando, &$deps, &$diferidas): void {
+    if (in_array($t, $orden, true)) {
+        return;
+    }
+    if (isset($visitando[$t])) {
+        return; // ciclo: la FK que lo cierra se difiere (se detecta abajo)
+    }
+    $visitando[$t] = true;
+    foreach ($deps[$t] as $d) {
+        $visitar($d);
+    }
+    unset($visitando[$t]);
+    $orden[] = $t;
+};
+foreach ($tablas as $t) {
+    $visitar($t);
+}
+$posicion = array_flip($orden);
+
+// ---------- migraciones legadas que tocaron cada tabla ----------
+$legadas = [];
+foreach (glob($raiz.'/database/migrations/*.php') as $archivo) {
+    $contenido = (string) file_get_contents($archivo);
+    foreach ($tablas as $t) {
+        if (preg_match('/Schema::(?:create|table)\(\s*[\'"]'.preg_quote($t, '/').'[\'"]/', $contenido) === 1
+            || preg_match('/\{\$prefijo\}'.preg_quote($t, '/').'\b/', $contenido) === 1
+            || preg_match('/DB::table\(\s*[\'"]'.preg_quote($t, '/').'[\'"]/', $contenido) === 1
+            || preg_match('/^\s*[\'"]'.preg_quote($t, '/').'[\'"],?\s*$/m', $contenido) === 1) {
+            $legadas[$t][] = basename($archivo, '.php');
+        }
+    }
+}
+
+// ---------- emisión ----------
+$exportar = fn (string $s): string => "'".str_replace(['\\', "'"], ['\\\\', "\\'"], $s)."'";
+
+$defaultBlueprint = function (?string $def, string $tipo): ?string {
+    if ($def === null) {
+        return null;
+    }
+    if (str_starts_with($def, 'nextval(')) {
+        return null;
+    }
+    if (preg_match('/^\'(.*)\'::[a-z ]+(\[\])?$/s', $def, $m) === 1) {
+        $valor = str_replace("''", "'", $m[1]);
+        if (in_array($tipo, ['numeric', 'int8', 'int4', 'int2', 'float8'], true) && is_numeric($valor)) {
+            return "->default({$valor})";
+        }
+        if (in_array($tipo, ['jsonb', 'json'], true)) {
+            return '->default(new \\Illuminate\\Database\\Query\\Expression('.var_export("'".$valor."'::jsonb", true).'))';
+        }
+
+        return '->default('.var_export($valor, true).')';
+    }
+    if ($def === 'true' || $def === 'false') {
+        return "->default({$def})";
+    }
+    if (is_numeric($def)) {
+        return "->default({$def})";
+    }
+    if (in_array($def, ['now()', 'CURRENT_TIMESTAMP'], true)) {
+        return '->useCurrent()';
+    }
+
+    return '->default(DB::raw('.var_export($def, true).'))';
+};
+
+$contador = 0;
+$resumen = [];
+$autoria = [];
+
+// Postgres guarda el CHECK ya normalizado (`(col)::text = ANY (ARRAY[...])`);
+// se vuelve a la forma que escribió el desarrollador (`col IN (...)`,
+// `x >= 0`): Postgres la normaliza igual al volver a crearla, y el archivo
+// queda legible. Se verifica comparando esquemas (ADR 0024).
+$simplificarCheck = function (string $def): string {
+    $def = preg_replace('/\(\((\w+)\)::text = ANY \(\(ARRAY\[(.*?)\]\)::text\[\]\)\)/', '$1 IN ($2)', $def);
+    $def = preg_replace('/\(\((\w+)\)::text = ANY \(ARRAY\[(.*?)\]\)\)/', '$1 IN ($2)', $def);
+    $def = str_replace(['::character varying', '::text', '::numeric', '::integer', '::bigint', '::smallint', '::date', '::timestamp without time zone'], '', $def);
+    $def = preg_replace('/\((\w+) = ANY \(ARRAY\[(.*?)\]\)\)/', '$1 IN ($2)', $def);
+    $def = preg_replace('/\(\'(-?\d+(?:\.\d+)?)\'\)/', '$1', $def); // ('-90') → -90: el número se escribió sin comillas
+    $def = preg_replace('/\((\'[^\']*\'|-?\d+(?:\.\d+)?)\)/', '$1', $def); // ('a') → 'a', (0) → 0
+    $def = preg_replace('/\((\w+)\)/', '$1', $def);                         // (col) → col
+    $def = preg_replace('/^CHECK \(\((.*)\)\)$/s', 'CHECK ($1)', $def);     // CHECK ((x)) → CHECK (x)
+
+    return $def;
+};
+
+foreach ($orden as $t) {
+    $cols = $columnas($t);
+    $rest = $restricciones($t);
+    $idx = $indices($t);
+
+    $fks = [];
+    $pk = null;
+    $unicos = [];
+    $checks = [];
+    foreach ($rest as $r) {
+        match ($r->contype) {
+            'f' => $fks[] = $r,
+            'p' => $pk = $r,
+            'u' => $unicos[] = $r,
+            'c' => $checks[] = $r,
+            default => null,
+        };
+    }
+    $fkPorColumna = [];
+    $autoria[$t] = [];
+    foreach ($fks as $fk) {
+        $c = $aArreglo($fk->cols);
+        if (count($c) === 1 && in_array($c[0], ['created_by', 'updated_by'], true)) {
+            $autoria[$t][] = $c[0];
+
+            continue;
+        }
+        if (count($c) === 1) {
+            $fkPorColumna[$c[0]] = $fk;
+        }
+    }
+    $fks = array_values(array_filter($fks, fn ($fk) => ! in_array(trim($fk->cols, '{}'), ['created_by', 'updated_by'], true)));
+    $pkCols = $pk !== null ? $aArreglo($pk->cols) : [];
+    $nombres = array_map(fn ($c) => $c->column_name, $cols);
+    $tieneTimestamps = in_array('created_at', $nombres, true) && in_array('updated_at', $nombres, true);
+    $tieneSoftDeletes = in_array('deleted_at', $nombres, true);
+
+    $lineas = [];
+    $fkDiferidas = [];
+    $alFinal = ['created_by' => 0, 'updated_by' => 1, 'created_at' => 2, 'updated_at' => 3, 'deleted_at' => 4];
+    usort($cols, function ($a, $b) use ($alFinal): int {
+        $pa = $alFinal[$a->column_name] ?? -1;
+        $pb = $alFinal[$b->column_name] ?? -1;
+        if ($pa === -1 && $pb === -1) {
+            return 0;
+        }
+
+        return $pa <=> $pb;
+    });
+    foreach ($cols as $c) {
+        $n = $c->column_name;
+        $nulo = $c->is_nullable === 'YES';
+        $tipo = $c->data_type;
+        $udt = $c->udt_name;
+
+        if ($n === 'id' && $pkCols === ['id'] && ($c->is_identity === 'YES' || str_starts_with((string) $c->column_default, 'nextval'))) {
+            $lineas[] = $udt === 'int8' ? '$table->id();' : '$table->increments(\'id\');';
+
+            continue;
+        }
+        if ($tieneTimestamps && in_array($n, ['created_at', 'updated_at'], true)) {
+            if ($n === 'created_at') {
+                $lineas[] = '$table->timestamps();';
+            }
+
+            continue;
+        }
+        if ($tieneSoftDeletes && $n === 'deleted_at') {
+            $lineas[] = '$table->softDeletes();';
+
+            continue;
+        }
+
+        $sufijo = '';
+        if (isset($fkPorColumna[$n]) && $udt === 'int8') {
+            $fk = $fkPorColumna[$n];
+            $refCols = $aArreglo($fk->ref_cols);
+            $refTabla = $fk->ref_tabla;
+            $nombreDefault = "{$t}_{$n}_foreign";
+            $args = $exportar($refTabla);
+            if ($refCols !== ['id'] || $fk->conname !== $nombreDefault) {
+                $args .= ', '.$exportar($refCols[0] ?? 'id').', '.$exportar($fk->conname);
+            }
+            $accion = match ($fk->confdeltype) {
+                'c' => '->cascadeOnDelete()', 'n' => '->nullOnDelete()', 'r' => '->restrictOnDelete()', default => ''
+            };
+            $accionUpd = match ($fk->confupdtype) {
+                'c' => '->cascadeOnUpdate()', default => ''
+            };
+            $cicloDiferido = $refTabla !== $t && ($posicion[$refTabla] ?? -1) > $posicion[$t];
+            $base = "\$table->foreignId({$exportar($n)})".($nulo ? '->nullable()' : '');
+            $def = $defaultBlueprint($c->column_default, $udt);
+            if ($cicloDiferido) {
+                $lineas[] = $base.($def ?? '').';';
+                $fkDiferidas[] = "\$table->foreign({$exportar($n)}, {$exportar($fk->conname)})->references({$exportar($refCols[0] ?? 'id')})->on({$exportar($refTabla)})".str_replace(['->restrictOnDelete()', '->cascadeOnDelete()', '->nullOnDelete()', '->cascadeOnUpdate()'], ["->onDelete('restrict')", "->onDelete('cascade')", "->onDelete('set null')", "->onUpdate('cascade')"], $accion.$accionUpd).';';
+            } else {
+                $lineas[] = $base.($def ?? '')."->constrained({$args}){$accion}{$accionUpd};";
+            }
+            unset($fkPorColumna[$n]);
+
+            continue;
+        }
+
+        $decl = match (true) {
+            $udt === 'int8' => "\$table->unsignedBigInteger({$exportar($n)})",
+            $udt === 'int4' => "\$table->integer({$exportar($n)})",
+            $udt === 'int2' => "\$table->smallInteger({$exportar($n)})",
+            $udt === 'varchar' => "\$table->string({$exportar($n)}".($c->character_maximum_length !== null && (int) $c->character_maximum_length !== 255 ? ', '.$c->character_maximum_length : '').')',
+            $udt === 'bpchar' => "\$table->char({$exportar($n)}, {$c->character_maximum_length})",
+            $udt === 'text' => "\$table->text({$exportar($n)})",
+            $udt === 'numeric' => "\$table->decimal({$exportar($n)}, {$c->numeric_precision}, {$c->numeric_scale})",
+            $udt === 'bool' => "\$table->boolean({$exportar($n)})",
+            $udt === 'date' => "\$table->date({$exportar($n)})",
+            $udt === 'timestamp' => "\$table->dateTime({$exportar($n)})",
+            $udt === 'timestamptz' => "\$table->timestampTz({$exportar($n)})",
+            $udt === 'time' => "\$table->time({$exportar($n)})",
+            $udt === 'jsonb' => "\$table->jsonb({$exportar($n)})",
+            $udt === 'json' => "\$table->json({$exportar($n)})",
+            $udt === 'uuid' => "\$table->uuid({$exportar($n)})",
+            $udt === 'float8' => "\$table->double({$exportar($n)})",
+            $udt === 'float4' => "\$table->float({$exportar($n)})",
+            $udt === 'bytea' => "\$table->binary({$exportar($n)})",
+            default => "\$table->addColumn('".$udt."', {$exportar($n)}) /* revisar tipo {$tipo} */",
+        };
+        $def = $defaultBlueprint($c->column_default, $udt);
+        $lineas[] = $decl.($nulo ? '->nullable()' : '').($def ?? '').';';
+    }
+
+    // FK compuestas o sobre columnas no int8
+    foreach ($fks as $fk) {
+        $c = $aArreglo($fk->cols);
+        if (count($c) === 1 && ! isset($fkPorColumna[$c[0]])) {
+            continue;
+        }
+        $refCols = $aArreglo($fk->ref_cols);
+        $accion = match ($fk->confdeltype) {
+            'c' => "->onDelete('cascade')", 'n' => "->onDelete('set null')", 'r' => "->onDelete('restrict')", default => ''
+        };
+        $linea = '$table->foreign('.(count($c) === 1 ? $exportar($c[0]) : '['.implode(', ', array_map($exportar, $c)).']').", {$exportar($fk->conname)})->references(".(count($refCols) === 1 ? $exportar($refCols[0]) : '['.implode(', ', array_map($exportar, $refCols)).']').")->on({$exportar($fk->ref_tabla)}){$accion};";
+        if ($fk->ref_tabla !== $t && ($posicion[$fk->ref_tabla] ?? -1) > $posicion[$t]) {
+            $fkDiferidas[] = $linea;
+        } else {
+            $lineas[] = $linea;
+        }
+    }
+
+    if ($pk !== null && $pkCols !== ['id']) {
+        $lineas[] = '$table->primary(['.implode(', ', array_map($exportar, $pkCols)).'], '.$exportar($pk->conname).');';
+    }
+    foreach ($unicos as $u) {
+        $lineas[] = '$table->unique(['.implode(', ', array_map($exportar, $aArreglo($u->cols))).'], '.$exportar($u->conname).');';
+    }
+    $crudos = [];
+    foreach ($idx as $i) {
+        if ($i->indisprimary || $i->de_restriccion) {
+            continue;
+        }
+        if (! $i->parcial && ! $i->con_expresion && ! $i->indisunique && preg_match('/USING btree/', $i->def) === 1) {
+            $lineas[] = '$table->index(['.implode(', ', array_map($exportar, $aArreglo($i->cols))).'], '.$exportar($i->nombre).');';
+
+            continue;
+        }
+        if (! $i->parcial && ! $i->con_expresion && $i->indisunique && preg_match('/USING btree/', $i->def) === 1) {
+            $lineas[] = '$table->unique(['.implode(', ', array_map($exportar, $aArreglo($i->cols))).'], '.$exportar($i->nombre).');';
+
+            continue;
+        }
+        // Parciales, con expresión o GIN: SQL crudo con el prefijo interpolado.
+        $def = preg_replace('/^CREATE (UNIQUE )?INDEX (\S+) ON public\.(\S+) /', 'CREATE $1INDEX {$prefijo}$2 ON {$prefijo}$3 ', $i->def);
+        if (preg_match('/^(.*? WHERE )(.*)$/s', $def, $m) === 1) {
+            $def = $m[1].substr($simplificarCheck('CHECK ('.$m[2].')'), 7, -1);
+        }
+        $crudos[] = $def;
+    }
+    $checksSql = [];
+    foreach ($checks as $ch) {
+        $checksSql[] = "ADD CONSTRAINT {\$prefijo}{$ch->conname} ".$simplificarCheck($ch->def);
+    }
+
+    $contador++;
+    $numero = str_pad((string) $contador, 6, '0', STR_PAD_LEFT);
+    $archivo = "{$fecha}_{$numero}_create_{$t}_table.php";
+    $modulo = strtoupper(substr($t, 0, strpos($t, '_') ?: 3));
+    $origen = $legadas[$t] ?? [];
+    $origenTexto = $origen === [] ? ' * (sin migración legada: tabla nueva)' : implode("\n", array_map(fn ($l) => " *   - {$l}", $origen));
+
+    $cuerpo = implode("\n", array_map(fn ($l) => '            '.$l, $lineas));
+    $crudoTexto = '';
+    if ($crudos !== []) {
+        $crudoTexto = "\n        \$prefijo = DB::getTablePrefix();\n";
+        foreach ($crudos as $sql) {
+            $crudoTexto .= "\n        DB::statement(<<<SQL\n            {$sql}\n        SQL);\n";
+        }
+    }
+    $checkTexto = '';
+    if ($checksSql !== []) {
+        $prefijoLinea = $crudos === [] ? "            \$prefijo = DB::getTablePrefix();\n\n" : '';
+        $checkTexto = "\n        // Solo pgsql: SQLite no soporta ADD CONSTRAINT (tests/Unit no migran).\n        if (DB::getDriverName() === 'pgsql') {\n{$prefijoLinea}            DB::statement(<<<SQL\n                ALTER TABLE {\$prefijo}{$t}\n                ".implode(",\n                ", $checksSql)."\n            SQL);\n        }\n";
+    }
+    $diferidoTexto = '';
+    if ($fkDiferidas !== []) {
+        $diferidas[$t] = $fkDiferidas;
+    }
+
+    $php = <<<PHP
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+
+/**
+ * `{$t}` — estado consolidado del esquema al {$fecha} (ADR 0024). Módulo {$modulo}.
+ * Reemplaza a las migraciones legadas que la crearon y modificaron:
+{$origenTexto}
+ *
+ * Una base que ya pasó por esas migraciones tiene la tabla: la guarda de
+ * `hasTable` la deja como está y solo registra esta migración como aplicada.
+ */
+return new class extends Migration
+{
+    public function up(): void
+    {
+        if (Schema::hasTable('{$t}')) {
+            return;
+        }
+
+        Schema::create('{$t}', function (Blueprint \$table) {
+{$cuerpo}
+        });
+{$crudoTexto}{$checkTexto}    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('{$t}');
+    }
+};
+
+PHP;
+    file_put_contents("{$salida}/{$archivo}", $php);
+    $resumen[] = "{$archivo}  (".count($lineas).' líneas, '.count($origen).' legadas)';
+}
+
+// Autoría: created_by/updated_by → sec_user, en una sola migración final (como la legada).
+$contador++;
+$numero = str_pad((string) $contador, 6, '0', STR_PAD_LEFT);
+$listaAutoria = '';
+foreach ($orden as $t) {
+    if (($autoria[$t] ?? []) !== []) {
+        $listaAutoria .= "        '{$t}' => [".implode(', ', array_map($exportar, $autoria[$t]))."],\n";
+    }
+}
+file_put_contents("{$salida}/{$fecha}_{$numero}_agrega_claves_foraneas_de_autoria.php", <<<PHP
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+
+/**
+ * Claves foráneas de autoría (`created_by` / `updated_by` → `sec_user.id`,
+ * `ON DELETE SET NULL`) de todas las tablas de dominio, consolidadas al
+ * {$fecha} (ADR 0024). Van al final, y no en cada `create`, porque
+ * `sec_user` apunta a `per_personas` y `per_personas` tiene autoría: el ciclo
+ * solo se cierra después de crear todas las tablas — mismo criterio que la
+ * legada `2026_09_02_100003_add_fk_autoria_a_tablas_dominio`. Las tablas sin
+ * fila acá todavía no tienen la FK (retrofit pendiente, ver skill modelo-datos).
+ *
+ * En una base legada las restricciones ya existen: se saltea cada una que exista.
+ */
+return new class extends Migration
+{
+    /** @var array<string, list<string>> tabla => columnas con FK de autoría */
+    private array \$tablas = [
+{$listaAutoria}    ];
+
+    public function up(): void
+    {
+        foreach (\$this->tablas as \$tabla => \$columnas) {
+            foreach (\$columnas as \$columna) {
+                if (\$this->existe("{\$tabla}_{\$columna}_foreign")) {
+                    continue;
+                }
+
+                Schema::table(\$tabla, function (Blueprint \$table) use (\$columna): void {
+                    \$table->foreign(\$columna)->references('id')->on('sec_user')->nullOnDelete();
+                });
+            }
+        }
+    }
+
+    public function down(): void
+    {
+        foreach (\$this->tablas as \$tabla => \$columnas) {
+            Schema::table(\$tabla, function (Blueprint \$table) use (\$columnas): void {
+                foreach (\$columnas as \$columna) {
+                    \$table->dropForeign([\$columna]);
+                }
+            });
+        }
+    }
+
+    private function existe(string \$restriccion): bool
+    {
+        if (DB::getDriverName() !== 'pgsql') {
+            return false;
+        }
+
+        return DB::table('pg_constraint')->where('conname', DB::getTablePrefix().\$restriccion)->exists();
+    }
+};
+
+PHP);
+$resumen[] = 'autoría: '.count(array_filter($autoria)).' tablas';
+
+// FK que cierran ciclos: una migración final con Schema::table por tabla.
+if ($diferidas !== []) {
+    $contador++;
+    $numero = str_pad((string) $contador, 6, '0', STR_PAD_LEFT);
+    $cuerpo = '';
+    foreach ($diferidas as $t => $lineasFk) {
+        $cuerpo .= "        if (! Schema::hasTable('{$t}')) {\n            return;\n        }\n\n";
+    }
+    $cuerpo = '';
+    foreach ($diferidas as $t => $lineasFk) {
+        $cuerpo .= "        Schema::table('{$t}', function (Blueprint \$table) {\n".implode("\n", array_map(fn ($l) => '            '.$l, $lineasFk))."\n        });\n\n";
+    }
+    file_put_contents("{$salida}/{$fecha}_{$numero}_agrega_claves_foraneas_cruzadas.php", <<<PHP
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+/**
+ * Claves foráneas que cierran un ciclo entre tablas (ADR 0024): no pueden
+ * declararse en el `create` de la tabla porque la referenciada se crea
+ * después. En una base legada ya existen y la guarda las deja.
+ */
+return new class extends Migration
+{
+    public function up(): void
+    {
+        if (Schema::hasTable('migrations') && DB::table('migrations')->where('migration', 'like', '2026_08_%')->exists()) {
+            return;
+        }
+
+{$cuerpo}    }
+
+    public function down(): void
+    {
+        // Se revierten con el drop de las tablas.
+    }
+};
+
+PHP);
+    $resumen[] = 'claves foráneas cruzadas: '.json_encode(array_map('array_values', $diferidas));
+}
+
+echo implode("\n", $resumen), "\n", count($orden), " tablas\n";
