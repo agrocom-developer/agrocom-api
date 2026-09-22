@@ -18,8 +18,7 @@
  */
 
 .ag-ordenes,
-.ag-ordenes-form,
-.ag-ordenes-detalle {
+.ag-ordenes-form {
     display: flex;
     flex-direction: column;
     gap: var(--ag-space-5);
@@ -36,10 +35,6 @@
    contexto de contención nuevo, no global. */
 .ag-ordenes {
     container: ag-ordenes / inline-size;
-}
-
-.ag-ordenes-detalle {
-    container: ag-ordenes-detalle / inline-size;
 }
 
 /* Listado (index): columnas propias de `molecules/index-table` — índice ·
@@ -273,47 +268,11 @@
     font-size: var(--ag-font-size-xs);
 }
 
-/* Detalle (show, 17/9/2026) — arquetipo Detalle, §6.4 de
-   docs/diseno/guia_pantalla_panel.md. Mismo criterio de container query que
-   la grilla del listado (ver arriba): reacciona al ancho real de
-   `.ag-ordenes-detalle`, sidebar colapsado incluido. */
-
-.ag-ordenes-detalle__kpis {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--ag-space-4);
-}
-
-@container ag-ordenes-detalle (min-width: 36rem) {
-    .ag-ordenes-detalle__kpis {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-
-@container ag-ordenes-detalle (min-width: 60rem) {
-    .ag-ordenes-detalle__kpis {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-}
-
-/* Campo de solo lectura dentro de `form-section` (etiqueta arriba, valor
-   abajo) — mismo lenguaje que las celdas del listado en grilla
-   (`.ag-ordenes-card__dato`), pero sin fondo/borde propio porque ya vive
-   dentro del grid de 2 columnas de `.ag-form-section__body`. */
-.ag-ordenes-detalle__campo-label {
-    margin: 0;
-    font-size: var(--ag-font-size-xs);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--ag-color-text-muted);
-}
-
-.ag-ordenes-detalle__campo-valor {
-    margin: 0.1875rem 0 0;
-    font-size: var(--ag-font-size-sm);
-    font-weight: var(--ag-font-weight-medium);
-    line-height: 1.5;
-}
+/* El wrapper de la ficha (`.ag-detalle`), la tira de KPI, el par
+   campo-label/campo-valor y la lista de "Vínculos" viven en
+   resources/css/pages/detalle.css desde la tarea 124 (arquetipo Detalle,
+   nombre neutro — antes eran `.ag-ordenes-detalle*` acá, aunque ya las
+   reusaban pantallas que no son de Órdenes). */
 
 /* Equipo y dron de un lote en el detalle de la orden: un renglón por equipo,
    apilados, así el dron queda en la misma línea que su equipo en la celda de al
@@ -322,15 +281,6 @@
     display: flex;
     flex-direction: column;
     gap: var(--ag-space-1);
-}
-
-/* Lista de "Vínculos" (molecules/link-row): mismo tratamiento que la tabla
-   de "Lotes" — borde/radio propios, separada del padding de la tarjeta,
-   para que se lea como un bloque cohesivo en vez de filas sueltas. */
-.ag-ordenes-detalle__vinculos {
-    border: 1px solid var(--ag-color-border-row);
-    border-radius: var(--ag-radius-md);
-    overflow: hidden;
 }
 
 /* Formulario (create/edit) */

@@ -180,9 +180,9 @@
                             'insumo' => __('operaciones.ordenes.campo_categoria_insumo'),
                             'por_repartir' => __('operaciones.ordenes_trabajo.campo_por_repartir'),
                         ] as $dato => $etiqueta)
-                            <div class="ag-ordenes-detalle__campo">
-                                <p class="ag-ordenes-detalle__campo-label">{{ $etiqueta }}</p>
-                                <p class="ag-ordenes-detalle__campo-valor" data-ag-dato-orden="{{ $dato }}">{{ $ordenElegida[$dato] ?? '—' }}</p>
+                            <div class="ag-detalle__campo">
+                                <p class="ag-detalle__campo-label">{{ $etiqueta }}</p>
+                                <p class="ag-detalle__campo-valor" data-ag-dato-orden="{{ $dato }}">{{ $ordenElegida[$dato] ?? '—' }}</p>
                             </div>
                         @endforeach
                     </div>

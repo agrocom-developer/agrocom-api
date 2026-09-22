@@ -146,7 +146,7 @@
     overflow: visible;
 }
 
-/* Ficha: la distribución es la de la orden de aplicación (`ag-ordenes-detalle*`,
+/* Ficha: la distribución es la de la orden de aplicación (`ag-detalle*`,
    en ordenes.css). Acá solo va lo propio: los trabajos agrupados por equipo. */
 .ag-ordenes-trabajo-detalle__equipo {
     display: flex;

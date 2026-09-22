@@ -13,6 +13,7 @@ use App\Dominios\Operaciones\Dominio\Excepciones\OrdenNoVigenteParaAsignacion;
 use App\Dominios\Operaciones\Dominio\Excepciones\TarifaNoDisponible;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenLote;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenTrabajo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
 use App\Dominios\Operaciones\Infraestructura\Http\Requests\AsignarEquipoOrdenRequest;
 use App\Dominios\Personal\Contratos\DatosEquipoTrabajo;
@@ -52,6 +53,13 @@ use Illuminate\View\View;
 final class RepartoCuadrillasController
 {
     private const PERMISO = 'operaciones.orden.asignar_equipos';
+
+    /** Tarea 124: cada vínculo del aside se gatea por el permiso del módulo de lo que MUESTRA, no por el de esta pantalla. */
+    private const PERMISO_VER_ORDEN = 'operaciones.orden.ver';
+
+    private const PERMISO_EDITAR_CONTRATO = 'comercial.contrato.editar';
+
+    private const PERMISO_VER_TRABAJOS = 'operaciones.trabajo.ver';
 
     public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
 
@@ -110,20 +118,77 @@ final class RepartoCuadrillasController
             ->get();
 
         $resumenPorLote = $this->resumenPorLote($orden);
+        $resumenTotal = $this->totalizar($resumenPorLote);
         $loteIds = array_column($resumenPorLote, 'lote_id');
+
+        $hectareasLote = (float) $resumenTotal['hectareas_lote'];
+        $porcentajeAsignado = $hectareasLote <= 0.0
+            ? 0
+            : (int) round(((float) $resumenTotal['asignadas'] / $hectareasLote) * 100);
 
         return view('operaciones::pages.reparto-cuadrillas.show', [
             ...$this->autorizacion->cascara($request),
             'orden' => $orden,
             'contratoLabel' => $this->etiquetasContrato([$orden->contrato_id])[$orden->contrato_id] ?? "#{$orden->contrato_id}",
-            'resumenTotal' => $this->totalizar($resumenPorLote),
+            'resumenTotal' => $resumenTotal,
+            'porcentajeAsignado' => min(100, $porcentajeAsignado),
             'resumenPorLote' => $resumenPorLote,
             'trabajosAsignados' => $trabajosAsignados,
+            'equiposAsignadosCount' => $trabajosAsignados->pluck('equipo_trabajo_id')->unique()->count(),
             'etiquetasEquipo' => $this->etiquetasEquipo($trabajosAsignados->pluck('equipo_trabajo_id')->unique()->values()->all()),
             'etiquetasLote' => $this->etiquetasLote($loteIds),
             'equiposDisponibles' => $this->equiposDisponibles($equipos),
             'equiposIniciales' => old('equipos', $this->equipoInicialPorDefecto($resumenPorLote)),
+            'vinculos' => $this->vinculosDeReparto($orden, $request),
         ]);
+    }
+
+    /**
+     * "Vínculos" del aside (arquetipo Detalle, tarea 124): la orden de
+     * aplicación, su contrato (leído como el resto del panel lee Comercial
+     * — `DB::table`, ADR 0003 regla 3, mismo `etiquetasContrato()` de acá
+     * abajo) y las Órdenes de Trabajo que ya salieron de este reparto. Cada
+     * uno gatea por el permiso del módulo de lo que muestra.
+     *
+     * @return list<array{href: string, icon: string, title: string, meta: ?string, tone: string}>
+     */
+    private function vinculosDeReparto(OrdenAplicacion $orden, Request $request): array
+    {
+        $vinculos = [];
+
+        if ($this->autorizacion->tienePermiso($request, self::PERMISO_VER_ORDEN)) {
+            $vinculos[] = [
+                'href' => route('panel.ordenes.show', $orden),
+                'icon' => 'assignment',
+                'title' => __('operaciones.asignacion_equipos.vinculo_orden'),
+                'meta' => __('operaciones.asignacion_equipos.vinculo_orden_meta', ['aplicacion' => $orden->nro_aplicacion]),
+                'tone' => 'info',
+            ];
+        }
+
+        if ($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR_CONTRATO)) {
+            $vinculos[] = [
+                'href' => route('panel.contratos.edit', $orden->contrato_id),
+                'icon' => 'description',
+                'title' => __('operaciones.asignacion_equipos.vinculo_contrato'),
+                'meta' => __('operaciones.asignacion_equipos.vinculo_contrato_meta', ['id' => $orden->contrato_id]),
+                'tone' => 'warning',
+            ];
+        }
+
+        if ($this->autorizacion->tienePermiso($request, self::PERMISO_VER_TRABAJOS)) {
+            $totalOt = OrdenTrabajo::query()->where('orden_id', $orden->id)->count();
+
+            $vinculos[] = [
+                'href' => route('panel.trabajos.index', ['orden_id' => $orden->id]),
+                'icon' => 'work_history',
+                'title' => __('operaciones.asignacion_equipos.vinculo_ot'),
+                'meta' => __('operaciones.asignacion_equipos.vinculo_ot_meta', ['cantidad' => $totalOt]),
+                'tone' => 'primary-2',
+            ];
+        }
+
+        return $vinculos;
     }
 
     public function asignar(AsignarEquipoOrdenRequest $request, OrdenAplicacion $orden, CrearOrdenTrabajo $crearOrdenTrabajo, LecturaTarifasPago $tarifas): RedirectResponse

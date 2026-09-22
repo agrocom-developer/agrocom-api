@@ -1,33 +1,60 @@
 {{--
     Page: trabajos/show (GET /panel/trabajos/detalle/{trabajo}, panel.trabajos.detalle)
-    Detalle de un trabajo (HU-15, tarea 15; ruta renombrada en la reforma
-    18/9/2026 — "Orden de Trabajo", ver docblock de `TrabajosController`):
-    sus datos, sus sesiones (piloto, hectáreas, estado, motivo de cierre, y
-    el motivo del rechazo cuando una sesión fue anulada por HU-14) y una
-    sección de evidencias que hoy está siempre vacía — TE-07/HU-08/HU-09
-    (compresión, fotos, captura del RC) son sprint 3 y no están
-    implementadas. No se inventan datos ni tablas de evidencias para
-    llenarla: la ausencia se muestra con normalidad.
+    Detalle de UN trabajo (equipo×lote) — HU-15, tarea 15; homogeneizada a
+    arquetipo Detalle en la tarea 124 (§6.4 de docs/diseno/guia_pantalla_panel.md,
+    misma anatomía que `ordenes-trabajo/show.blade.php`, con Editar/Eliminar en
+    la cabecera como ya tenía esta ficha — HU-93, tarea 108).
+
+    Sus sesiones (piloto, dron, hectáreas, estado, motivo de cierre y el motivo
+    del rechazo cuando una sesión fue anulada por HU-14) van como
+    `index-table`. Evidencias: TE-07/HU-08/HU-09 (compresión, fotos, captura
+    del RC) son sprint 3 y no están implementadas — la sección solo enlaza a
+    la galería, sin inventar datos. El acta y el reporte técnico, cuando
+    existen, son un vínculo en PDF en el aside (no una sección propia en el
+    cuerpo): su estado de firma ya lo cuenta la "Actividad" de abajo.
+
+    Sin acciones de validar/rechazar/cerrar (eso es la cola de HU-14, pantalla
+    distinta — panel.sesiones.validacion.*). SÍ tiene editar/eliminar (HU-93)
+    mientras el trabajo no esté `validado` — mismas guardas que
+    `Aplicacion/ActualizarTrabajo`/`EliminarTrabajo`, acá solo ocultas tras
+    `@puede` + el estado de tablero (defensa en superficie: la guarda real
+    vive en el caso de uso, no acá). El aviso nativo del navegador
+    desaparece: `confirm-modal`, con su `<form>`, fuera del `page-header`.
 
     Datos esperados (ver TrabajosController::show()): la cáscara de
     CascaraPanel, más:
-    - $trabajo (Trabajo, con `sesiones.rechazo`, `acta`, `reporteTecnico` y
-      `ordenTrabajo` precargadas).
+    - $trabajo (Trabajo, con `sesiones.rechazo`, `sesiones.dron`, `acta`,
+      `reporteTecnico` y `ordenTrabajo.equipos` precargadas).
+    - $loteLabel (string), $cuadrillaLabel (?string, null si no tiene equipo
+      asignado), $pagoEquipo (array{modalidad, monto_piloto, monto_auxiliar,
+      negociado, motivo}|null — misma forma que arma la ficha de la OT).
+    - $hectareasAplicadas (string, ya formateada), $porcentajeCobertura (int,
+      0-100), $sesionesValidadas / $sesionesTotal (int).
+    - $puedeEditar / $puedeEliminar (bool, ya cruzados con "no validado"),
+      $puedeVerReporte (bool).
+    - $vinculos (list), $actividad (list).
 
-    Sin acciones de validar/rechazar/cerrar (eso es la cola de HU-14,
-    pantalla distinta — panel.sesiones.validacion.*). SÍ tiene editar/eliminar
-    (HU-93) mientras el trabajo no esté `validado` — mismas guardas que
-    `Aplicacion/ActualizarTrabajo`/`EliminarTrabajo`, acá solo ocultas tras
-    `@puede` + el estado de tablero (defensa en superficie: la guarda real
-    vive en el caso de uso, no acá).
+    Gateada por `operaciones.trabajo.ver`, verificado server-side en el
+    controlador.
 
-    Gateada por el permiso `operaciones.trabajo.ver`, verificado
-    server-side en el controlador.
-
-    Estilos en resources/css/pages/trabajos.css — cero color hardcodeado
-    (CLAUDE.md invariante 11).
+    Estilos en resources/css/pages/trabajos.css y
+    resources/css/pages/detalle.css (arquetipo Detalle) — cero color
+    hardcodeado (CLAUDE.md invariante 11).
 --}}
-@php $estadoTablero = $trabajo->estadoTablero(); @endphp
+@php
+    $variantePorEstadoTablero = [
+        'abierto' => 'neutral',
+        'cerrado' => 'info',
+        'validado' => 'success',
+    ];
+    $estadoTablero = $trabajo->estadoTablero();
+    $coberturaCompleta = $porcentajeCobertura >= 100;
+    $sesionesCompletas = $sesionesTotal > 0 && $sesionesValidadas === $sesionesTotal;
+    $turnoTexto = $trabajo->turno ? __('operaciones.asignacion_equipos.turno_'.$trabajo->turno->value) : __('operaciones.trabajos.turno_sin_definir');
+    $horarioTexto = $trabajo->turno_hora_inicio && $trabajo->turno_hora_fin
+        ? $trabajo->turno_hora_inicio->format('H:i').' – '.$trabajo->turno_hora_fin->format('H:i')
+        : null;
+@endphp
 <x-templates.panel-shell :title="__('operaciones.trabajos.detalle_titulo', ['id' => $trabajo->id])" :tema="$tema">
     <x-templates.panel-layout
         :menu="$menu"
@@ -39,173 +66,236 @@
         :notifications="$notifications"
         :menu-badges="$menuBadges"
         :version="$version"
+        :vista-actual="__('operaciones.trabajos.detalle_titulo', ['id' => $trabajo->id])"
     >
-        <x-atoms.button :href="route('panel.trabajos.index')" variant="text" size="sm" icon="arrow_back">
-            {{ __('operaciones.trabajos.volver') }}
-        </x-atoms.button>
+        <div class="ag-detalle">
+            <x-organisms.page-header
+                :title="__('operaciones.trabajos.detalle_titulo', ['id' => $trabajo->id])"
+                :subtitle="__('operaciones.trabajos.detalle_subtitulo', ['lote' => $loteLabel, 'cuadrilla' => $cuadrillaLabel ?? __('operaciones.trabajos.campo_equipo_sin_asignar')])"
+            >
+                <x-slot:chip>
+                    <x-atoms.badge :variant="$variantePorEstadoTablero[$estadoTablero->value] ?? 'neutral'">
+                        {{ __('operaciones.trabajos.estado.'.$estadoTablero->value) }}
+                    </x-atoms.badge>
+                </x-slot:chip>
 
-        <x-organisms.page-header :title="__('operaciones.trabajos.detalle_titulo', ['id' => $trabajo->id])">
-            @if ($estadoTablero->value !== 'validado')
                 <x-slot:actions>
-                    @puede('operaciones.trabajo.editar')
-                        <x-atoms.button :href="route('panel.trabajos.detalle-editar', $trabajo)" variant="warning-outline" size="sm" icon="edit">
+                    @if ($trabajo->ordenTrabajo !== null)
+                        <x-molecules.boton-volver :href="route('panel.trabajos.show', $trabajo->ordenTrabajo)" :label="__('operaciones.trabajos.volver_a_ot', ['id' => $trabajo->orden_trabajo_id])" />
+                    @else
+                        <x-molecules.boton-volver :href="route('panel.trabajos.index')" :label="__('operaciones.trabajos.volver_al_listado')" />
+                    @endif
+
+                    @if ($puedeEditar)
+                        <x-atoms.button :href="route('panel.trabajos.detalle-editar', $trabajo)" variant="warning-outline" icon="edit">
                             {{ __('operaciones.trabajos.editar') }}
                         </x-atoms.button>
-                    @endpuede
+                    @endif
 
-                    @puede('operaciones.trabajo.eliminar')
-                        <form
-                            method="POST"
-                            action="{{ route('panel.trabajos.detalle-eliminar', $trabajo) }}"
-                            onsubmit="return confirm('{{ __('operaciones.trabajos.confirmar_baja') }}')"
+                    @if ($puedeEliminar)
+                        <x-atoms.button
+                            type="button"
+                            data-bs-toggle="modal"
+                            data-bs-target="#trabajo-eliminar-modal"
+                            variant="danger-outline"
+                            icon="delete"
                         >
-                            @csrf
-                            @method('DELETE')
-                            <x-atoms.button type="submit" variant="danger-outline" size="sm" icon="delete">
-                                {{ __('operaciones.trabajos.eliminar_accion') }}
-                            </x-atoms.button>
-                        </form>
-                    @endpuede
+                            {{ __('operaciones.trabajos.eliminar_accion') }}
+                        </x-atoms.button>
+                    @endif
                 </x-slot:actions>
+            </x-organisms.page-header>
+
+            @if ($puedeEliminar)
+                <form id="trabajo-eliminar" method="POST" action="{{ route('panel.trabajos.detalle-eliminar', $trabajo) }}" hidden>
+                    @csrf
+                    @method('DELETE')
+                </form>
+
+                <x-molecules.confirm-modal
+                    id="trabajo-eliminar-modal"
+                    form-id="trabajo-eliminar"
+                    :title="__('operaciones.ordenes_trabajo.baja_trabajo_titulo', ['id' => $trabajo->id])"
+                    :message="__('operaciones.trabajos.confirmar_baja')"
+                    :confirm-label="__('operaciones.trabajos.eliminar_accion')"
+                    tone="danger"
+                />
             @endif
-        </x-organisms.page-header>
 
-        <div class="ag-trabajo-detalle__resumen">
-            <span class="ag-trabajo-detalle__campo">
-                <strong>{{ __('operaciones.trabajos.col_estado') }}</strong>
-                <x-atoms.badge :variant="match ($estadoTablero->value) {
-                    'validado' => 'success',
-                    'cerrado' => 'info',
-                    default => 'warning',
-                }">
-                    {{ __("operaciones.trabajos.estado.{$estadoTablero->value}") }}
-                </x-atoms.badge>
-            </span>
-            <span class="ag-trabajo-detalle__campo">
-                <strong>{{ __('operaciones.trabajos.filtro_lote') }}</strong>
-                {{ __('operaciones.trabajos.filtro_lote_opcion', ['id' => $trabajo->lote_id]) }}
-            </span>
-            <span class="ag-trabajo-detalle__campo">
-                <strong>{{ __('operaciones.trabajos.filtro_orden') }}</strong>
-                {{ __('operaciones.trabajos.filtro_orden_opcion', ['id' => $trabajo->orden_id, 'aplicacion' => $trabajo->nro_aplicacion]) }}
-            </span>
-            <span class="ag-trabajo-detalle__campo">
-                <strong>{{ __('operaciones.trabajos.col_hectareas') }}</strong>
-                {{ $trabajo->hectareas_declaradas }}
-            </span>
-            <span class="ag-trabajo-detalle__campo">
-                <strong>{{ __('operaciones.trabajos.col_inicio') }}</strong>
-                {{ $trabajo->inicio->format('d/m/Y H:i') }}
-            </span>
-            <span class="ag-trabajo-detalle__campo">
-                <strong>{{ __('operaciones.trabajos.col_fin') }}</strong>
-                {{ $trabajo->fin?->format('d/m/Y H:i') ?? __('operaciones.trabajos.sin_fin') }}
-            </span>
-        </div>
-
-        <x-molecules.section-head :title="__('operaciones.trabajos.detalle_sesiones_titulo')" class="ag-trabajo-detalle__seccion" />
-
-        @if ($trabajo->sesiones->isEmpty())
-            <x-molecules.alert-strip variant="info" icon="flight" class="ag-trabajos__aviso">
-                {{ __('operaciones.trabajos.sesiones_vacio') }}
-            </x-molecules.alert-strip>
-        @else
-            <div class="ag-trabajos__sesiones-tabla" role="table">
-                <div class="ag-trabajos__sesiones-head" role="row">
-                    <span role="columnheader">{{ __('operaciones.trabajos.col_piloto') }}</span>
-                    <span role="columnheader">{{ __('operaciones.trabajos.col_estado') }}</span>
-                    <span role="columnheader">{{ __('operaciones.trabajos.col_hectareas') }}</span>
-                    <span role="columnheader">{{ __('operaciones.trabajos.col_inicio') }}</span>
-                    <span role="columnheader">{{ __('operaciones.trabajos.col_fin') }}</span>
-                </div>
-
-                @foreach ($trabajo->sesiones as $sesion)
-                    <div class="ag-trabajos__sesiones-fila" role="row">
-                        <span role="cell">{{ __('operaciones.trabajos.sesion_piloto', ['id' => $sesion->piloto_id]) }}</span>
-
-                        <span role="cell">
-                            <x-atoms.badge :variant="$sesion->anulada_en !== null ? 'danger' : ($sesion->estado->value === 'validado' ? 'success' : 'warning')">
-                                {{ $sesion->anulada_en !== null
-                                    ? __('operaciones.trabajos.sesion_rechazada')
-                                    : __("operaciones.trabajos.estado.{$sesion->estado->value}") }}
-                            </x-atoms.badge>
-
-                            @if ($sesion->motivo_cierre !== null)
-                                <span class="ag-trabajos__motivo-cierre">
-                                    {{ __("operaciones.trabajos.motivo_cierre.{$sesion->motivo_cierre}") }}
-                                </span>
-                            @endif
-
-                            @if ($sesion->rechazo !== null)
-                                <span class="ag-trabajos__motivo-cierre">
-                                    {{ __('operaciones.trabajos.sesion_motivo_rechazo', ['motivo' => $sesion->rechazo->motivo]) }}
-                                </span>
-                            @endif
-                        </span>
-
-                        <span role="cell">{{ $sesion->hectareas_declaradas }}</span>
-                        <span role="cell">{{ $sesion->inicio->format('d/m/Y H:i') }}</span>
-                        <span role="cell">{{ $sesion->fin?->format('d/m/Y H:i') ?? __('operaciones.trabajos.sin_fin') }}</span>
-                    </div>
-                @endforeach
-            </div>
-        @endif
-
-        <x-molecules.section-head :title="__('operaciones.trabajos.detalle_acta_titulo')" class="ag-trabajo-detalle__seccion" />
-
-        @if ($trabajo->acta === null)
-            <x-molecules.alert-strip variant="info" icon="description" class="ag-trabajos__aviso">
-                {{ __('operaciones.trabajos.detalle_acta_vacio') }}
-            </x-molecules.alert-strip>
-        @else
-            <div class="ag-trabajo-detalle__resumen">
-                <span class="ag-trabajo-detalle__campo">
-                    <strong>{{ __('operaciones.trabajos.col_estado') }}</strong>
-                    <x-atoms.badge :variant="$trabajo->acta->estado->value === 'firmada' ? 'success' : 'warning'">
-                        {{ __("operaciones.trabajos.acta_estado.{$trabajo->acta->estado->value}") }}
-                    </x-atoms.badge>
-                </span>
-                <span class="ag-trabajo-detalle__campo">
-                    <strong>{{ __('operaciones.trabajos.col_hectareas') }}</strong>
-                    {{ $trabajo->acta->hectareas_conformadas }}
-                </span>
-                @if ($trabajo->acta->estado->value === 'firmada')
-                    <span class="ag-trabajo-detalle__campo">
-                        <strong>{{ __('operaciones.trabajos.acta_firmante') }}</strong>
-                        {{ $trabajo->acta->firmante }}
-                    </span>
-                @endif
-            </div>
-
-            @if ($trabajo->acta->pdf_path !== null)
-                <x-atoms.button :href="route('panel.trabajos.acta-pdf', $trabajo)" variant="outline" size="sm" icon="picture_as_pdf">
-                    {{ __('operaciones.trabajos.acta_descargar_pdf') }}
-                </x-atoms.button>
-            @endif
-        @endif
-
-        @if ($puedeVerReporte)
-            <x-molecules.section-head :title="__('operaciones.trabajos.detalle_reporte_titulo')" class="ag-trabajo-detalle__seccion" />
-
-            @if ($trabajo->reporteTecnico === null || $trabajo->reporteTecnico->pdf_path === null)
-                <x-molecules.alert-strip variant="info" icon="summarize" class="ag-trabajos__aviso">
-                    {{ __('operaciones.trabajos.detalle_reporte_vacio') }}
+            @if ($errors->any())
+                <x-molecules.alert-strip variant="danger" icon="error">
+                    {{ $errors->first() }}
                 </x-molecules.alert-strip>
-            @else
-                <x-atoms.button :href="route('panel.trabajos.reporte-pdf', $trabajo)" variant="outline" size="sm" icon="picture_as_pdf">
-                    {{ __('operaciones.trabajos.reporte_descargar_pdf') }}
-                </x-atoms.button>
             @endif
-        @endif
 
-        <x-molecules.section-head :title="__('operaciones.trabajos.detalle_evidencias_titulo')" class="ag-trabajo-detalle__seccion" />
+            @if (session('estado'))
+                <x-molecules.alert-strip variant="success" icon="check_circle">
+                    {{ session('estado') }}
+                </x-molecules.alert-strip>
+            @endif
 
-        <x-molecules.alert-strip variant="info" icon="photo_library" class="ag-trabajos__aviso">
-            {{ __('operaciones.trabajos.detalle_evidencias_vacio') }}
-        </x-molecules.alert-strip>
+            <div class="ag-detalle__kpis">
+                <x-molecules.stat-card
+                    :label="__('operaciones.trabajos.col_hectareas')"
+                    icon="landscape"
+                    :value="number_format((float) $trabajo->hectareas_declaradas, 2, ',', '.')"
+                    value-suffix="ha"
+                    state="info"
+                />
+                <x-molecules.stat-card
+                    :label="__('operaciones.trabajos.kpi_hectareas_aplicadas')"
+                    icon="flight"
+                    :value="number_format((float) $hectareasAplicadas, 2, ',', '.')"
+                    value-suffix="ha"
+                    :state="$coberturaCompleta ? 'success' : null"
+                />
+                <x-molecules.stat-card
+                    :label="__('operaciones.trabajos.kpi_sesiones')"
+                    icon="fact_check"
+                    :value="$sesionesTotal"
+                    :foot="__('operaciones.trabajos.kpi_sesiones_pie', ['validadas' => $sesionesValidadas, 'total' => $sesionesTotal])"
+                    :foot-tone="$sesionesCompletas ? 'success' : 'muted'"
+                    :state="$sesionesCompletas ? 'success' : null"
+                />
+                <x-molecules.stat-card
+                    :label="__('operaciones.trabajos.kpi_turno')"
+                    icon="schedule"
+                    :value="$turnoTexto"
+                    :foot="$horarioTexto"
+                    state="distintivo-1"
+                />
+            </div>
 
-        <x-atoms.button :href="route('panel.trabajos.evidencias', $trabajo)" variant="outline" size="sm" icon="photo_library">
-            {{ __('operaciones.trabajos.evidencias_ver_galeria') }}
-        </x-atoms.button>
+            <x-molecules.form-layout>
+                <x-molecules.form-section accent="primary-2" :title="__('operaciones.trabajos.seccion_datos')" :count="__('operaciones.trabajos.campos_contador', ['cantidad' => 6])">
+                    <div class="ag-detalle__campo">
+                        <p class="ag-detalle__campo-label">{{ __('operaciones.trabajos.campo_orden_aplicacion') }}</p>
+                        <p class="ag-detalle__campo-valor">{{ __('operaciones.trabajos.filtro_orden_opcion', ['id' => $trabajo->orden_id, 'aplicacion' => $trabajo->nro_aplicacion]) }}</p>
+                    </div>
+                    <div class="ag-detalle__campo">
+                        <p class="ag-detalle__campo-label">{{ __('operaciones.trabajos.campo_orden_trabajo') }}</p>
+                        <p class="ag-detalle__campo-valor">{{ $trabajo->orden_trabajo_id !== null ? "#{$trabajo->orden_trabajo_id}" : __('operaciones.ordenes_trabajo.sin_dato') }}</p>
+                    </div>
+                    <div class="ag-detalle__campo">
+                        <p class="ag-detalle__campo-label">{{ __('operaciones.trabajos.campo_lote') }}</p>
+                        <p class="ag-detalle__campo-valor">{{ $loteLabel }}</p>
+                    </div>
+                    <div class="ag-detalle__campo">
+                        <p class="ag-detalle__campo-label">{{ __('operaciones.trabajos.campo_equipo') }}</p>
+                        <p class="ag-detalle__campo-valor">{{ $cuadrillaLabel ?? __('operaciones.trabajos.campo_equipo_sin_asignar') }}</p>
+                    </div>
+                    <div class="ag-detalle__campo">
+                        <p class="ag-detalle__campo-label">{{ __('operaciones.trabajos.campo_turno') }}</p>
+                        <p class="ag-detalle__campo-valor">{{ $turnoTexto }}</p>
+                    </div>
+                    <div class="ag-detalle__campo">
+                        <p class="ag-detalle__campo-label">{{ __('operaciones.trabajos.campo_horario') }}</p>
+                        <p class="ag-detalle__campo-valor">{{ $horarioTexto ?? __('operaciones.ordenes_trabajo.sin_dato') }}</p>
+                    </div>
+
+                    @if ($pagoEquipo !== null)
+                        <div class="ag-form-section__field--full ag-detalle__campo">
+                            <p class="ag-detalle__campo-label">{{ __('operaciones.trabajos.campo_pago') }}</p>
+                            <p class="ag-detalle__campo-valor">
+                                {{ __('operaciones.ordenes_trabajo.pago_resumen', [
+                                    'modalidad' => $pagoEquipo['modalidad'],
+                                    'piloto' => number_format((float) $pagoEquipo['monto_piloto'], 2, ',', '.'),
+                                    'auxiliar' => number_format((float) $pagoEquipo['monto_auxiliar'], 2, ',', '.'),
+                                ]) }}
+                                @if ($pagoEquipo['negociado'])
+                                    · {{ __('operaciones.ordenes_trabajo.pago_negociado') }}
+                                @endif
+                            </p>
+                        </div>
+                    @elseif ($trabajo->ordenTrabajo !== null)
+                        <div class="ag-form-section__field--full ag-detalle__campo">
+                            <p class="ag-detalle__campo-label">{{ __('operaciones.trabajos.campo_pago') }}</p>
+                            <p class="ag-detalle__campo-valor">{{ __('operaciones.ordenes_trabajo.pago_sin_condicion') }}</p>
+                        </div>
+                    @endif
+                </x-molecules.form-section>
+
+                <x-molecules.form-section accent="info" :title="__('operaciones.trabajos.detalle_sesiones_titulo')" :count="(string) $trabajo->sesiones->count()">
+                    @if ($trabajo->sesiones->isEmpty())
+                        <div class="ag-form-section__field--full">
+                            <x-molecules.empty-state
+                                icon="flight"
+                                :title="__('operaciones.trabajos.sesiones_vacio')"
+                            />
+                        </div>
+                    @else
+                        <div class="ag-form-section__field--full">
+                            <x-molecules.index-table columns="1fr 6rem 6rem 8rem 1fr 1fr">
+                                <x-slot:head>
+                                    <span role="columnheader">{{ __('operaciones.trabajos.col_piloto') }}</span>
+                                    <span role="columnheader">{{ __('operaciones.trabajos.col_dron') }}</span>
+                                    <span role="columnheader">{{ __('operaciones.trabajos.col_hectareas') }}</span>
+                                    <span role="columnheader">{{ __('operaciones.trabajos.col_estado') }}</span>
+                                    <span role="columnheader">{{ __('operaciones.trabajos.col_motivo_cierre') }}</span>
+                                    <span role="columnheader">{{ __('operaciones.trabajos.col_motivo_rechazo') }}</span>
+                                </x-slot:head>
+
+                                @foreach ($trabajo->sesiones as $sesion)
+                                    <div class="ag-index-table__row" role="row">
+                                        <span role="cell">{{ __('operaciones.trabajos.sesion_piloto', ['id' => $sesion->piloto_id]) }}</span>
+                                        <span role="cell">{{ $sesion->dron?->identificador ?? '—' }}</span>
+                                        <span role="cell" class="ag-ordenes__mono">{{ number_format((float) $sesion->hectareas_declaradas, 2, ',', '.') }}</span>
+                                        <span role="cell">
+                                            <x-atoms.badge :variant="$sesion->anulada_en !== null ? 'danger' : ($sesion->estado->value === 'validado' ? 'success' : 'warning')">
+                                                {{ $sesion->anulada_en !== null
+                                                    ? __('operaciones.trabajos.sesion_rechazada')
+                                                    : __('operaciones.trabajos.estado.'.$sesion->estado->value) }}
+                                            </x-atoms.badge>
+                                        </span>
+                                        <span role="cell">{{ $sesion->motivo_cierre !== null ? __('operaciones.trabajos.motivo_cierre.'.$sesion->motivo_cierre) : '—' }}</span>
+                                        <span role="cell">{{ $sesion->rechazo?->motivo ?? '—' }}</span>
+                                    </div>
+                                @endforeach
+                            </x-molecules.index-table>
+                        </div>
+                    @endif
+                </x-molecules.form-section>
+
+                <x-molecules.form-section accent="distintivo-2" :title="__('operaciones.trabajos.detalle_evidencias_titulo')">
+                    <div class="ag-form-section__field--full">
+                        <p class="ag-detalle__campo-valor">{{ __('operaciones.trabajos.detalle_evidencias_vacio') }}</p>
+
+                        <x-atoms.button :href="route('panel.trabajos.evidencias', $trabajo)" variant="outline" icon="photo_library">
+                            {{ __('operaciones.trabajos.evidencias_ver_galeria') }}
+                        </x-atoms.button>
+                    </div>
+                </x-molecules.form-section>
+
+                <x-slot:aside>
+                    <x-molecules.progress-meter
+                        :title="__('operaciones.trabajos.avance_titulo')"
+                        :percent="$porcentajeCobertura"
+                        :summary-label="__('operaciones.trabajos.avance_resumen', ['aplicadas' => number_format((float) $hectareasAplicadas, 2, ',', '.'), 'declaradas' => number_format((float) $trabajo->hectareas_declaradas, 2, ',', '.')])"
+                    />
+
+                    @if (count($vinculos))
+                        <x-molecules.form-section accent="alert" :title="__('operaciones.ordenes.seccion_vinculos')">
+                            <div class="ag-form-section__field--full ag-detalle__vinculos">
+                                @foreach ($vinculos as $vinculo)
+                                    <x-molecules.link-row
+                                        :href="$vinculo['href']"
+                                        :icon="$vinculo['icon']"
+                                        :title="$vinculo['title']"
+                                        :meta="$vinculo['meta']"
+                                        :tone="$vinculo['tone']"
+                                    />
+                                @endforeach
+                            </div>
+                        </x-molecules.form-section>
+                    @endif
+
+                    <x-molecules.form-section accent="distintivo-2" :title="__('operaciones.ordenes.seccion_actividad')">
+                        <div class="ag-form-section__field--full">
+                            <x-molecules.timeline :items="$actividad" />
+                        </div>
+                    </x-molecules.form-section>
+                </x-slot:aside>
+            </x-molecules.form-layout>
+        </div>
     </x-templates.panel-layout>
 </x-templates.panel-shell>

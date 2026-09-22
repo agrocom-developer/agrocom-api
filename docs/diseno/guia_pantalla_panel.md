@@ -240,7 +240,7 @@ Orden fijo de secciones: cabecera → toolbar (buscador + filtros) → tabla →
 **Franja de KPI en un listado (19/9/2026, criterio del dueño; primera referencia viva: `operaciones::pages.estadias.index`).** Un listado puede llevar una franja de cifras de cabecera; es el estilo a replicar en los demás `index` en próximas iteraciones. Reglas:
 
 - **Dónde:** inmediatamente bajo la cabecera y los avisos, ANTES de la toolbar. **Nunca entre los filtros y la tabla**: filtros y tabla van pegados, son una sola unidad de trabajo.
-- **Con qué:** `molecules/stat-card` (ícono, `value`, `valueSuffix`, `foot`, `state`), en una grilla de página `.ag-<pagina>__kpis` que consulta el ancho de SU contenedor (1 → 2 → 4 columnas), igual que `.ag-ordenes-detalle__kpis`. Nada de cajas armadas a mano.
+- **Con qué:** `molecules/stat-card` (ícono, `value`, `valueSuffix`, `foot`, `state`), en una grilla de página `.ag-<pagina>__kpis` que consulta el ancho de SU contenedor (1 → 2 → 4 columnas), igual que `.ag-detalle__kpis` (`resources/css/pages/detalle.css`, arquetipo Detalle, §6.4). Nada de cajas armadas a mano.
 - **Cuántas:** hasta cuatro, fijas. Una lista que crece con los datos (un total por cuadrilla, por propiedad, por cliente) NO es un KPI: es un desglose, y su lugar es el dashboard —por sección y por rol—, no el listado. Debajo de una tabla paginada queda escondido, y como suma todo el filtro y no la página, confunde.
 - **Qué cuentan:** responden al MISMO filtro que la tabla (las resuelve el caso de uso del listado, p. ej. `ListarEstadiasHacienda::resumen()`; la vista solo formatea). Una cifra en cero va con `state` nulo, no con color.
 - **Cuándo no:** si el listado está vacío sin filtros, no se dibuja (igual que la toolbar).
@@ -432,6 +432,12 @@ Criterio del dueño (21/9/2026). Un select cuyo objeto puede no existir todavía
 - **Lo que no es un campo lo repone la pantalla.** Filas dinámicas, pills y demás estado que arma el JS de la página: el `<form>` se declara `data-ag-borrador="propio"` y su módulo usa `guardarBorrador(formulario, extra)` / `leerBorrador()` / `restaurarCampos()`. Referencia viva: `contratos-form.js`, que suma las propiedades y los lotes elegidos.
 
 ### 6.4. Detalle — **la referencia canónica es `operaciones::pages.ordenes.show`**
+
+**Decisión del dueño (22/9/2026): este arquetipo es para todo el sistema, no
+solo para objetos transaccionales especiales** — cierra la pregunta que
+`docs/gestion/plan_homogeneizacion_panel.md` §1.1 dejaba abierta. La ronda de
+fichas (tareas 124 a 126, tabla en §8 de ese plan) lleva las páginas de detalle
+que existían a esa fecha al patrón de abajo.
 
 Cuarto arquetipo, agregado el 17/9/2026: una ficha de **solo lectura** para una entidad que ya no admite edición desde el listado (p. ej. una Orden de aplicación `vigente` — `Aplicacion/ActualizarOrden` exige `emitida`) o que de por sí es "información crítica para mirar", no un formulario. Antes no había ningún lugar del panel para volver a ver esos datos completos; el módulo Operaciones va a necesitar varias pantallas de este tipo, así que se arma reusando al máximo el catálogo del arquetipo Formulario — **no es un layout nuevo**.
 

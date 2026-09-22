@@ -69,15 +69,17 @@ function panelHomogeneoVistas(string $raiz): array
 
 /**
  * Exclusiones permanentes (plan §1.1): las cuatro pantallas que el dueño dejó
- * afuera por nombre, lo que no es listado ni formulario de un objeto, el portal
- * del cliente (otro público, otro layout, el scoping de la invariante 5) y toda
- * página de detalle.
+ * afuera por nombre, lo que no es listado ni formulario de un objeto, y el
+ * portal del cliente (otro público, otro layout, el scoping de la invariante
+ * 5). Las páginas de detalle (`show`) NO están acá desde el 22/9/2026 (tarea
+ * 124): el arquetipo Detalle se adopta en todo el sistema — ver
+ * `panelHomogeneoPantallas()` y `panelHomogeneoViolacionesFicha()`.
  *
  * @param  array{ruta: string, modulo: string, directorio: string, archivo: string, absoluta: string}  $vista
  */
 function panelHomogeneoExcluida(array $vista): bool
 {
-    if ($vista['archivo'] === 'show.blade.php' || $vista['modulo'] === 'Portal') {
+    if ($vista['modulo'] === 'Portal') {
         return true;
     }
 
@@ -92,11 +94,27 @@ function panelHomogeneoExcluida(array $vista): bool
 }
 
 /**
+ * Fichas que no se llaman `show.blade.php` (plan §8): hoy solo
+ * `Personal/personas/desempeno.blade.php`, la ficha de desempeño de una
+ * persona — mismo papel que un `show`, nombre de ruta propio
+ * (`panel.personas.desempenio`). Una lista explícita, no una adivinanza por
+ * patrón de nombre: agregar acá una pantalla nueva es una decisión, no un
+ * efecto colateral de cómo se llame el archivo.
+ *
+ * @return list<string>
+ */
+function panelHomogeneoFichasSinNombreShow(): array
+{
+    return ['Personal/personas/desempeno.blade.php'];
+}
+
+/**
  * Las pantallas que este test evalúa: cada `index` es un listado; el formulario
  * de un directorio es su `_formulario`, o —si no hay partial— su `create` y su
- * `edit` por separado.
+ * `edit` por separado; cada `show` (o lo que liste
+ * `panelHomogeneoFichasSinNombreShow()`) es una ficha del arquetipo Detalle.
  *
- * @return list<array{ruta: string, modulo: string, directorio: string, archivo: string, absoluta: string, tipo: 'listado'|'formulario'}>
+ * @return list<array{ruta: string, modulo: string, directorio: string, archivo: string, absoluta: string, tipo: 'listado'|'formulario'|'ficha'}>
  */
 function panelHomogeneoPantallas(string $raiz): array
 {
@@ -115,6 +133,8 @@ function panelHomogeneoPantallas(string $raiz): array
         }
     }
 
+    $fichasSinNombreShow = panelHomogeneoFichasSinNombreShow();
+
     $pantallas = [];
     foreach ($vistas as $vista) {
         $sinPartial = ! isset($conPartial[$vista['modulo'].'/'.$vista['directorio']]);
@@ -123,6 +143,8 @@ function panelHomogeneoPantallas(string $raiz): array
             $vista['archivo'] === 'index.blade.php' => 'listado',
             $vista['archivo'] === '_formulario.blade.php' => 'formulario',
             $sinPartial && in_array($vista['archivo'], ['create.blade.php', 'edit.blade.php'], true) => 'formulario',
+            $vista['archivo'] === 'show.blade.php' => 'ficha',
+            in_array($vista['ruta'], $fichasSinNombreShow, true) => 'ficha',
             default => null,
         };
 
@@ -196,8 +218,12 @@ function panelHomogeneoMaquinasExistentes(string $raiz): array
 }
 
 /**
- * Directorios de las pantallas de referencia (plan §1). Ninguna de sus
- * pantallas puede esconderse en la lista de pendientes.
+ * Directorios cuyo LISTADO y/o FORMULARIO es la pantalla de referencia (plan
+ * §1). Un directorio puede ser referencia de esto sin serlo de su ficha
+ * (arquetipo Detalle) — `Personal/cuadrillas` es la referencia de "tabla de
+ * detalle con paginación dentro del formulario", pero su `show.blade.php`
+ * todavía no sigue el arquetipo Detalle (tarea 125): ver
+ * `panelHomogeneoReferenciasFicha()`, que es la lista aparte para eso.
  *
  * @return list<string>
  */
@@ -213,6 +239,22 @@ function panelHomogeneoReferencias(): array
         'Operaciones/ordenes-trabajo',
         'Operaciones/estadias',
         'Personal/cuadrillas',
+    ];
+}
+
+/**
+ * Directorios cuya FICHA (arquetipo Detalle, plan §8) es la referencia: hoy
+ * las dos que ya lo seguían antes de la decisión del 22/9/2026 — la orden de
+ * aplicación (17/9/2026) y la orden de trabajo (21/9/2026). Ninguna ficha de
+ * estos directorios puede esconderse en la lista de pendientes.
+ *
+ * @return list<string>
+ */
+function panelHomogeneoReferenciasFicha(): array
+{
+    return [
+        'Operaciones/ordenes',
+        'Operaciones/ordenes-trabajo',
     ];
 }
 
@@ -663,6 +705,44 @@ function panelHomogeneoViolacionesFormulario(string $raiz, array $pantalla): arr
     return $violaciones;
 }
 
+/**
+ * Reglas de una ficha (arquetipo Detalle, plan §8, guía §6.4): solo lo
+ * verificable por texto del patrón, sin exigirle a una ficha nada propio de
+ * un listado o de un formulario — `index-table` puede aparecer (una ficha
+ * suele traer una sub-lista) pero no es obligatorio, y tampoco se exige
+ * `form-section`/`form-actions-bar`/flash, que dependen de cada ficha.
+ *
+ * @param  array{ruta: string, modulo: string, directorio: string, archivo: string, absoluta: string}  $pantalla
+ * @return list<string>
+ */
+function panelHomogeneoViolacionesFicha(string $raiz, array $pantalla): array
+{
+    $vista = panelHomogeneoVista($raiz, $pantalla['absoluta']);
+    $blade = $vista['contenido'];
+    $violaciones = [];
+
+    foreach ([
+        'page-header' => 'x-organisms.page-header',
+        'boton-volver' => 'x-molecules.boton-volver',
+        'form-layout' => 'x-molecules.form-layout',
+        'stat-card' => 'x-molecules.stat-card',
+    ] as $regla => $componente) {
+        if (! panelHomogeneoUsa($blade, $componente)) {
+            $violaciones[] = sprintf('[%s] falta <%s>.', $regla, $componente);
+        }
+    }
+
+    if (preg_match('/class="[^"]*\bag-filtros(?![\w-])/', $blade) === 1) {
+        $violaciones[] = '[filtros-viejos] queda el <form class="ag-filtros"> anterior: una ficha no filtra.';
+    }
+
+    if (preg_match('/style="[^"]*(?:color|background)\s*:/i', $blade) === 1 || preg_match('/#[0-9a-fA-F]{3,8}\b/', $blade) === 1) {
+        $violaciones[] = '[color-literal] la ficha tiene un color literal (style="…color…" o un hex): usa una clase de página con un token --ag-color-*.';
+    }
+
+    return [...$violaciones, ...panelHomogeneoViolacionesConfirm($raiz, $pantalla, $vista['archivos'], false)];
+}
+
 /** Si alguna vista de la ficha de edición de la carpeta (edit, partial y parciales) usa `step-arrow`. */
 function panelHomogeneoFichaUsaPasos(string $raiz, string $carpeta): bool
 {
@@ -676,14 +756,16 @@ function panelHomogeneoFichaUsaPasos(string $raiz, string $carpeta): bool
 }
 
 /**
- * @param  array{ruta: string, modulo: string, directorio: string, archivo: string, absoluta: string, tipo: 'listado'|'formulario'}  $pantalla
+ * @param  array{ruta: string, modulo: string, directorio: string, archivo: string, absoluta: string, tipo: 'listado'|'formulario'|'ficha'}  $pantalla
  * @return list<string>
  */
 function panelHomogeneoViolaciones(string $raiz, array $pantalla): array
 {
-    return $pantalla['tipo'] === 'listado'
-        ? panelHomogeneoViolacionesListado($raiz, $pantalla)
-        : panelHomogeneoViolacionesFormulario($raiz, $pantalla);
+    return match ($pantalla['tipo']) {
+        'listado' => panelHomogeneoViolacionesListado($raiz, $pantalla),
+        'formulario' => panelHomogeneoViolacionesFormulario($raiz, $pantalla),
+        'ficha' => panelHomogeneoViolacionesFicha($raiz, $pantalla),
+    };
 }
 
 // Red de seguridad del descubrimiento: si esto falla, las reglas de abajo no
@@ -697,10 +779,11 @@ test('el descubrimiento encuentra las pantallas de referencia y deja afuera las 
         ->toContain('Operaciones/ordenes-trabajo/create.blade.php')
         ->toContain('Mantenimiento/ordenes/_formulario.blade.php')
         ->toContain('Operaciones/trabajos/edit.blade.php')
+        ->toContain('Operaciones/ordenes/show.blade.php')
+        ->toContain('Personal/personas/desempeno.blade.php')
         ->not->toContain('Seguridad/roles/index.blade.php')
         ->not->toContain('Seguridad/usuarios/create.blade.php')
         ->not->toContain('Portal/actas/index.blade.php')
-        ->not->toContain('Operaciones/ordenes/show.blade.php')
         ->not->toContain('Operaciones/ordenes/create.blade.php');
 });
 
@@ -800,13 +883,24 @@ test('ninguna pantalla de referencia se esconde en la lista de pendientes', func
     $pendientes = panelHomogeneoPendientes($raizProyecto);
     $escondidas = [];
 
-    foreach (panelHomogeneoReferencias() as $carpeta) {
+    // Cada entrada es una referencia PARA CIERTOS TIPOS de pantalla: un
+    // directorio puede ser la referencia de su listado/formulario sin serlo
+    // (todavía) de su ficha, y viceversa — un mismo directorio puede aparecer
+    // en las dos listas (Operaciones/ordenes y ordenes-trabajo lo son de
+    // las tres cosas).
+    $referencias = [
+        ...array_map(fn (string $carpeta): array => ['carpeta' => $carpeta, 'tipos' => ['listado', 'formulario']], panelHomogeneoReferencias()),
+        ...array_map(fn (string $carpeta): array => ['carpeta' => $carpeta, 'tipos' => ['ficha']], panelHomogeneoReferenciasFicha()),
+    ];
+
+    foreach ($referencias as $referencia) {
         $delDirectorio = array_filter(
             panelHomogeneoPantallas($raizProyecto),
-            fn (array $pantalla): bool => $carpeta === $pantalla['modulo'].'/'.$pantalla['directorio'],
+            fn (array $pantalla): bool => $referencia['carpeta'] === $pantalla['modulo'].'/'.$pantalla['directorio']
+                && in_array($pantalla['tipo'], $referencia['tipos'], true),
         );
 
-        expect($delDirectorio)->not->toBe([], "La referencia $carpeta no tiene pantallas evaluadas: ¿se movió la carpeta?");
+        expect($delDirectorio)->not->toBe([], sprintf('La referencia %s no tiene pantallas evaluadas de tipo %s: ¿se movió la carpeta?', $referencia['carpeta'], implode('/', $referencia['tipos'])));
 
         foreach ($delDirectorio as $pantalla) {
             if (in_array($pantalla['ruta'], $pendientes, true)) {
@@ -815,7 +909,7 @@ test('ninguna pantalla de referencia se esconde en la lista de pendientes', func
         }
     }
 
-    expect($escondidas)->toBe([], "Las referencias del plan (§1) tienen que pasar las reglas sin perdón. Si una regla les falla, corrige la pantalla o —si la regla está mal escrita— la regla.\n".implode("\n", $escondidas));
+    expect($escondidas)->toBe([], "Las referencias del plan (§1 y §8) tienen que pasar las reglas sin perdón. Si una regla les falla, corrige la pantalla o —si la regla está mal escrita— la regla.\n".implode("\n", $escondidas));
 });
 
 /**
@@ -855,13 +949,17 @@ function panelHomogeneoBorrar(string $raiz): void
  * es el archivo evaluado (`index` o `_formulario`); `$extras`, sus hermanos
  * y parciales, ya con su ruta bajo `pages/<carpeta>/`.
  *
- * @param  'listado'|'formulario'  $tipo
+ * @param  'listado'|'formulario'|'ficha'  $tipo
  * @param  array<string, string>  $extras
  * @return list<string>
  */
 function panelHomogeneoReglasSinteticas(string $tipo, string $principal, array $extras = [], string $modulo = 'Prueba', string $carpeta = 'cosas'): array
 {
-    $archivo = $tipo === 'listado' ? 'index.blade.php' : '_formulario.blade.php';
+    $archivo = match ($tipo) {
+        'listado' => 'index.blade.php',
+        'formulario' => '_formulario.blade.php',
+        'ficha' => 'show.blade.php',
+    };
     $paginas = "app/Dominios/$modulo/Infraestructura/Http/Views/pages/$carpeta";
     $arbol = [$paginas.'/'.$archivo => $principal];
 
@@ -1037,6 +1135,49 @@ test('un objeto con máquina de estados y ficha de edición debe mostrar los pas
     $conParcial = str_replace('<x-molecules.form-layout>', "@include('comercial::pages.contratos._pasos')\n<x-molecules.form-layout>", PANEL_HOMOGENEO_FORMULARIO_CONFORME);
 
     expect(panelHomogeneoReglasSinteticas('formulario', $conParcial, ['edit.blade.php' => '', '_pasos.blade.php' => '<x-molecules.step-arrow :steps="$pasos" />'], 'Comercial', 'contratos'))->toBe([]);
+});
+
+const PANEL_HOMOGENEO_FICHA_CONFORME = <<<'BLADE'
+<x-molecules.boton-volver :href="route('x.index')" :label="__('x.volver')" />
+<x-organisms.page-header :title="__('x.titulo')" />
+<div class="ag-x-detalle__kpis">
+    <x-molecules.stat-card :label="__('x.a')" :value="3" />
+</div>
+<x-molecules.form-layout>
+    <x-molecules.form-section :title="__('x.s')"></x-molecules.form-section>
+</x-molecules.form-layout>
+BLADE;
+
+test('las reglas de ficha dejan pasar una ficha conforme', function () {
+    expect(panelHomogeneoReglasSinteticas('ficha', PANEL_HOMOGENEO_FICHA_CONFORME))->toBe([]);
+});
+
+test('las reglas de ficha detectan cada incumplimiento', function () {
+    $defectuosa = <<<'BLADE'
+<form class="ag-filtros" method="GET" onsubmit="return confirm('¿Seguro?')"></form>
+<small style="color: var(--ag-color-text-muted)">x</small>
+BLADE;
+
+    expect(panelHomogeneoReglasSinteticas('ficha', $defectuosa))
+        ->toBe(['boton-volver', 'color-literal', 'confirm-nativo', 'filtros-viejos', 'form-layout', 'page-header', 'stat-card']);
+
+    // Un hex literal (sin `style=`) también cuenta.
+    expect(panelHomogeneoReglasSinteticas('ficha', str_replace('style="color: var(--ag-color-text-muted)"', '', $defectuosa).' <span>#3fae2c</span>'))
+        ->toContain('color-literal');
+});
+
+test('una ficha no le pide reglas de listado ni de formulario', function () {
+    // `index-table` puede faltar (no toda ficha trae una sub-lista) y no hace
+    // falta `form-section`/`form-actions-bar`/flash: eso es del arquetipo
+    // Formulario, no del Detalle.
+    $reglas = panelHomogeneoReglasSinteticas('ficha', PANEL_HOMOGENEO_FICHA_CONFORME);
+
+    expect($reglas)->not->toContain('index-table')
+        ->not->toContain('form-section')
+        ->not->toContain('form-actions-bar')
+        ->not->toContain('flash')
+        ->not->toContain('aside')
+        ->not->toContain('empty-state');
 });
 
 test('el lector de etiquetas no se corta en un -> ni confunde componentes con el mismo prefijo', function () {

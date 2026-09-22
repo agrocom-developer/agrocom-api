@@ -1,6 +1,30 @@
 # Cola de tareas automatizables
 
-**Última actualización: 20/9/2026 (planificación tras la tarea 122 — tarea 123
+**Última actualización: 22/9/2026 (ronda dirigida por el dueño — tareas 124 a
+129 escritas).** La cola 111–123 quedó entera (la 123 entró con el PR #265,
+mergeado el 21/9) y el ciclo se había detenido a pedido del dueño (cuota de uso).
+El dueño reabre la cola con lo que quedaba pendiente y dos pedidos nuevos:
+
+- **El arquetipo Detalle se adopta en todo el sistema** (decisión del 22/9/2026):
+  referencias `/panel/ordenes/1` y `/panel/trabajos/1`. Con eso deja de estar
+  abierta la pregunta de `plan_homogeneizacion_panel.md` §1.1 y las siete
+  fichas que ese plan dejó afuera entran en tres tareas por módulo: 124
+  (Operaciones: Trabajo y Reparto de cuadrillas, más la compuerta y la hoja
+  `detalle.css`), 125 (Personal: Cuadrilla y Desempeño) y 126 (Finanzas:
+  Planilla, Rendición y Devengos).
+- **La Orden de Trabajo se puede editar** (127): indicaciones compartidas y
+  condición de pago por equipo mientras la política lo admita; el reparto sigue
+  editándose por trabajo.
+- De «Pendiente al 20/9/2026»: el 500 con `?q[]=x` en ~30 listados (128) y la
+  limpieza de CSS muerto y `campos-form.js` (129). El resto de esa lista sigue
+  siendo decisión del dueño.
+
+Los datos demo para probar las fichas ya están en el compose: `Demo\DemoSeeder`
+sembraba solo personas y cartera porque le faltaba la base «CENTRAL SANTA CRUZ»
+y la tarifa predeterminada corría después de la operación; corregido en el PR
+#276 (`TarifasDemoSeeder` nuevo).
+
+**Última actualización anterior: 20/9/2026 (planificación tras la tarea 122 — tarea 123
 escrita; detrás de ella el plan queda agotado).** La 122 cerró la
 homogeneización del panel (PR #264). Lo único del plan que seguía sin entregar
 era la 121: hecha y verificada en la rama local `feature/panel-usuarios-dispositivos`,
@@ -398,6 +422,12 @@ exista el módulo `Mezclas`).
 | 121 | Panel homogéneo — Seguridad y Distribución: Usuarios, Dispositivos y Versiones de APK (roles, organización, bitácora y dashboard excluidos) | ídem 112 | `app/Dominios/Seguridad/**` (usuarios, dispositivos), `app/Dominios/Distribucion/**` | no | 3 | **hecha** (20/9/2026, en el PR que abre el ciclo con la rama de la 123, `feature/usuarios-dispositivos-panel`: el push original de la rama `feature/panel-usuarios-dispositivos` se cortó; ver `runs/121.md`) — plan: [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
 | 122 | Cierre de la homogeneización: pendientes, CSS muerto, guía y estado al día, barrido visual | `./bin/verify` = 0 + barrido Playwright de todos los `index` con exit 0 | `resources/css/pages/**`, `docs/**` | no | 2 | **hecha** (PR #264, mergeado 20/9/2026) — plan: [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
 | 123 | Integrar la 121: trae la rama local del panel de Usuarios, Dispositivos y Versiones de APK a una rama nueva desde `develop`, resuelve los dos conflictos de docs y corrige los textos que la daban por no integrada | `./bin/verify` = 0, la rama contiene a la 121 y a `develop`, la lista de pendientes queda vacía y el barrido `runs/122-barrido.cjs` sale con 0 | `docs/**`, `resources/css/pages/{usuarios,dispositivos,versiones-apk}.css` (solo clases muertas) | no | 2 | **hecha** (20/9/2026, en el PR que abre el ciclo con esta rama) — cierra la fila 121 del plan [plan_homogeneizacion_panel.md](plan_homogeneizacion_panel.md) |
+| 124 | Fichas de Operaciones al arquetipo Detalle (decisión del dueño 22/9/2026): Detalle de Trabajo y Reparto de cuadrillas; abre la ronda con la compuerta para fichas en `PanelHomogeneoTest`, la hoja `detalle.css` y la §8 del plan | `./bin/verify` = 0 con la compuerta exigiendo el arquetipo a las fichas, `grep -c 'confirm('` = 0 en `trabajos/show`, Playwright `runs/124-navegador.cjs` con 200 y sin desborde | `Operaciones/**` (vistas, controladores solo para pintar), `resources/css/pages/**`, `lang/es/operaciones.php`, `docs/gestion/plan_homogeneizacion_panel.md`, `docs/diseno/**`, `tests/Unit/PanelHomogeneoTest.php` | no | 3 | pendiente |
+| 125 | Fichas de Personal al arquetipo Detalle: Cuadrilla (solo lectura si `edit` ya tiene los diálogos) y Desempeño de persona (filtros a `filter-panel`) | `./bin/verify` = 0, `grep -c 'ag-filtros'` = 0 en `personas/desempeno`, Playwright `runs/125-navegador.cjs` | `Personal/**` (vistas, controladores solo para pintar), `resources/css/pages/**`, `lang/es/personal.php`, `docs/**` | no | 2 | pendiente |
+| 126 | Fichas de Finanzas al arquetipo Detalle: Planilla, Rendición (sin `confirm()` nativo) y Devengos (sin `.ag-filtros`); la lista de pendientes queda vacía y `filter-bar.css` se retira | `./bin/verify` = 0 con `panel_homogeneo_pendientes.txt` vacío, `grep 'ag-filtros'` vacío en `app`/`resources`, Playwright `runs/126-navegador.cjs` (incluye 404/403 de `/panel/devengos/4` con otro usuario) | `Finanzas/**` (vistas, controladores solo para pintar), `resources/css/pages/**`, `lang/es/finanzas.php`, `docs/**`, tests | no | 3 | pendiente |
+| 127 | La Orden de Trabajo se puede editar (pedido del dueño 22/9/2026): indicaciones compartidas y condición de pago por equipo con `PoliticaEdicionOrdenTrabajo` (nada validado; motivo si hay cerrados; condición solo con todos abiertos); el reparto sigue por trabajo | `./bin/verify` = 0 con `PoliticaEdicionOrdenTrabajoTest`, script de rollback `storage/app/verifica-edicion-ot.php`, Playwright `runs/127-navegador.cjs` | `Operaciones/**`, migración add (`motivo_correccion`, `corregida_at`), `routes/web.php`, `lang/es/operaciones.php`, tests, `runs/revision-pendiente.txt` | no | 3 | pendiente |
+| 128 | `?q[]=x` (y `?estado[]=x`) deja de dar 500 en todos los listados: un helper de Plataforma, patrón de la 121 | `./bin/verify` = 0, `runs/128-sondas.log` sin 500 en todos los `index`, `grep "string('q')"` vacío en controladores | `Plataforma/**` (helper), controladores web de listado de todos los módulos (solo cómo leen el parámetro), tests | no | 2 | pendiente |
+| 129 | Limpieza tras la homogeneización: CSS muerto fuera de las pantallas excluidas, `campos-form.js` huérfano, usuario viejo en `sistema_diseno_panel.md` | `./bin/verify` = 0 y barrido `runs/129-barrido.cjs` con 0 | `resources/css/pages/**`, `resources/js/pages/campos-form.js`, `docs/diseno/sistema_diseno_panel.md` | no | 1 | pendiente |
 
 ### El bug de la 24 — ya pasó dos veces, sigue sin arreglarse
 
@@ -519,25 +549,26 @@ homogeneización del panel; el detalle y cómo se midió cada uno están en
   archivos de `docs/` (su fila en `plan_homogeneizacion_panel.md` §7 y su bloque en
   `panel_homogeneo_pendientes.txt`, que quedó vacío), y la fila de esta cola y los
   textos que la daban por no integrada los corrigió la propia 123.
-- **`?q[]=x` da 500 en casi todos los listados.** Medido sobre `develop` por la 122:
+- **`?q[]=x` da 500 en casi todos los listados** → tarea 128 (22/9/2026). Medido sobre `develop` por la 122:
   Clientes, Personas, Bases, Contratos, Cultivos, Repuestos, Campañas y Lotes
   (Usuarios lo daba también, y ya no: la 121 lo arregla, integrada con la 123;
   Dispositivos respondía 200). `$request->string('q')` convierte el arreglo en texto
   y Laravel lo eleva a excepción; la 121 lo arregló solo en Usuarios y Dispositivos,
   y cuenta 22 controladores más con ese patrón (`runs/121.md`).
-- **CSS muerto que la 122 no tocó por estar fuera de su alcance** (33 clases sin
+- **CSS muerto que la 122 no tocó por estar fuera de su alcance** → tarea 129 (22/9/2026) (33 clases sin
   ningún uso en `app/`, `resources/views/`, `resources/js/` ni en otro CSS):
   `dashboard.css` (5), `organizacion.css` (1) y `seleccionar-rol.css` (2) —
   pantallas excluidas—, `contratos.css` (11), `ordenes.css` (11) y
   `reparto-cuadrillas.css` (3) —referencias «conformes» y una ficha—. Se listan con
   `python3 runs/122-css-muerto.py`.
-- **`resources/js/pages/campos-form.js` está huérfano**: 169 líneas que no importa
+- **`resources/js/pages/campos-form.js` está huérfano** → tarea 129 (22/9/2026): 169 líneas que no importa
   `app.js` ni nadie, y ningún Blade emite su gancho `data-ag-campos-form`.
 - **Pantallas fuera del rollout que conservan el diseño anterior**: `.ag-filtros`
   sigue vivo en Desempeño de persona, en el detalle de Devengos y en la siembra de
   una propiedad (por eso `filter-bar.css` no es CSS muerto), y hay `confirm()`
-  nativo en Roles y en el `show` de Planilla, Rendición y Trabajo. Dependen de la
-  decisión pendiente sobre el arquetipo Detalle (plan §1.1).
+  nativo en Roles y en el `show` de Planilla, Rendición y Trabajo. **Resuelto el
+  22/9/2026:** el arquetipo Detalle se adopta en todo el sistema → tareas 124 a
+  126. Roles sigue excluido por el dueño.
 - **`molecules/confirm-button` y `molecules/state-transition` siguen en uso**
   (seis y ocho Blade), así que no se borraron. El primero está en el listado de
   cinco pantallas de referencia (Clientes, Propiedades, Lotes, Estadías,

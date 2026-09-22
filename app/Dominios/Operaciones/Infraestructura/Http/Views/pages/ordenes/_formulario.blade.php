@@ -140,8 +140,8 @@
         {{-- En edición, contrato es fijo (no editable) --}}
         @if ($esEdicion)
             <div class="ag-form-section__field">
-                <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato') }}</p>
-                <p class="ag-ordenes-detalle__campo-valor">{{ $contratosDisponibles[$contratoId] ?? "#{$contratoId}" }}</p>
+                <p class="ag-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato') }}</p>
+                <p class="ag-detalle__campo-valor">{{ $contratosDisponibles[$contratoId] ?? "#{$contratoId}" }}</p>
                 <input type="hidden" name="contrato_id" value="{{ $contratoId }}" data-ag-orden-contrato-fijo>
             </div>
         @else
@@ -188,29 +188,29 @@
                 alt=""
             >
             <div class="ag-form-section__body ag-ordenes-form__resumen-datos">
-                <div class="ag-ordenes-detalle__campo">
-                    <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato_cliente') }}</p>
-                    <p class="ag-ordenes-detalle__campo-valor" data-ag-cliente-nombre>{{ $datosDelContrato['cliente'] ?? '—' }}</p>
+                <div class="ag-detalle__campo">
+                    <p class="ag-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato_cliente') }}</p>
+                    <p class="ag-detalle__campo-valor" data-ag-cliente-nombre>{{ $datosDelContrato['cliente'] ?? '—' }}</p>
                 </div>
-                <div class="ag-ordenes-detalle__campo">
-                    <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato_propiedades') }}</p>
-                    <p class="ag-ordenes-detalle__campo-valor" data-ag-propiedades-nombres>{{ implode(', ', $datosDelContrato['propiedades'] ?? []) ?: '—' }}</p>
+                <div class="ag-detalle__campo">
+                    <p class="ag-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato_propiedades') }}</p>
+                    <p class="ag-detalle__campo-valor" data-ag-propiedades-nombres>{{ implode(', ', $datosDelContrato['propiedades'] ?? []) ?: '—' }}</p>
                 </div>
-                <div class="ag-ordenes-detalle__campo">
-                    <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato_aplicaciones') }}</p>
-                    <p class="ag-ordenes-detalle__campo-valor" data-ag-aplicaciones-previstas>{{ $datosDelContrato['aplicaciones_previstas'] ?? '—' }}</p>
+                <div class="ag-detalle__campo">
+                    <p class="ag-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato_aplicaciones') }}</p>
+                    <p class="ag-detalle__campo-valor" data-ag-aplicaciones-previstas>{{ $datosDelContrato['aplicaciones_previstas'] ?? '—' }}</p>
                 </div>
-                <div class="ag-ordenes-detalle__campo">
-                    <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato_hectareas') }}</p>
-                    <p class="ag-ordenes-detalle__campo-valor" data-ag-hectareas-contratadas>{{ $datosDelContrato !== null ? $datosDelContrato['hectareas_contratadas'].' ha' : '—' }}</p>
+                <div class="ag-detalle__campo">
+                    <p class="ag-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato_hectareas') }}</p>
+                    <p class="ag-detalle__campo-valor" data-ag-hectareas-contratadas>{{ $datosDelContrato !== null ? $datosDelContrato['hectareas_contratadas'].' ha' : '—' }}</p>
                 </div>
-                <div class="ag-ordenes-detalle__campo">
-                    <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato_fecha_inicio') }}</p>
-                    <p class="ag-ordenes-detalle__campo-valor" data-ag-fecha-inicio>{{ $datosDelContrato['fecha_inicio'] ?? '—' }}</p>
+                <div class="ag-detalle__campo">
+                    <p class="ag-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato_fecha_inicio') }}</p>
+                    <p class="ag-detalle__campo-valor" data-ag-fecha-inicio>{{ $datosDelContrato['fecha_inicio'] ?? '—' }}</p>
                 </div>
-                <div class="ag-ordenes-detalle__campo">
-                    <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato_fecha_fin') }}</p>
-                    <p class="ag-ordenes-detalle__campo-valor" data-ag-fecha-fin data-texto-sin-definir="{{ __('operaciones.ordenes.valor_sin_definir') }}">{{ $datosDelContrato !== null ? ($datosDelContrato['fecha_fin'] ?? __('operaciones.ordenes.valor_sin_definir')) : '—' }}</p>
+                <div class="ag-detalle__campo">
+                    <p class="ag-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato_fecha_fin') }}</p>
+                    <p class="ag-detalle__campo-valor" data-ag-fecha-fin data-texto-sin-definir="{{ __('operaciones.ordenes.valor_sin_definir') }}">{{ $datosDelContrato !== null ? ($datosDelContrato['fecha_fin'] ?? __('operaciones.ordenes.valor_sin_definir')) : '—' }}</p>
                 </div>
             </div>
         </div>
@@ -223,9 +223,9 @@
     >
         {{-- Número de aplicación: solo lectura, lo calcula el servidor (ADR 0022) --}}
         <div class="ag-form-section__field">
-            <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_nro_aplicacion') }}</p>
+            <p class="ag-detalle__campo-label">{{ __('operaciones.ordenes.campo_nro_aplicacion') }}</p>
             <p
-                class="ag-ordenes-detalle__campo-valor"
+                class="ag-detalle__campo-valor"
                 data-ag-nro-aplicacion
                 data-texto-plantilla="{{ __('operaciones.ordenes.nro_aplicacion_display', ['nro' => ':nro', 'total' => ':total']) }}"
             >{{ $textoNroAplicacion }}</p>
