@@ -56,6 +56,7 @@ class DemoSeeder extends Seeder
         $this->call(FlotaDemoSeeder::class);
         $this->call(CuadrillasDemoSeeder::class);
         $this->call(CarteraDemoSeeder::class);
+        $this->call(TarifasDemoSeeder::class);
         $this->call(OperacionDemoSeeder::class);
         $this->call(FinanzasDemoSeeder::class);
     }
