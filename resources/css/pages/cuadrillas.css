@@ -1,19 +1,20 @@
 /*
  * Pages: cuadrillas/index, create, edit, show
  * (app/Dominios/Personal/Infraestructura/Http/Views/pages/cuadrillas/)
- * — tarea "cuadrillas-estadias", 19/9/2026. Listado y formulario siguen
- * el patrón del módulo Comercial (§6 de docs/diseno/guia_pantalla_panel.md):
+ * — tarea "cuadrillas-estadias", 19/9/2026; `show` homogeneizada al
+ * arquetipo Detalle en la tarea 125. Listado y formulario siguen el patrón
+ * del módulo Comercial (§6 de docs/diseno/guia_pantalla_panel.md):
  * - index: molecules/index-table + organisms/filter-panel + row-actions
  * - create/edit: molecules/form-layout + form-section + aside (solo edición)
- * - show: ficha histórica con formularios inline de asignación
+ * - show: ficha de solo lectura (`.ag-detalle`, resources/css/pages/detalle.css)
+ *   — los formularios de alta/finalizar viven en `edit`, no acá.
  * La ficha «estado actual → destino» de los modales es `molecules/state-transition`.
  *
  * Todo color y medida por token (CLAUDE.md invariante 11).
  */
 
 .ag-cuadrillas,
-.ag-cuadrillas-form,
-.ag-cuadrillas-ficha {
+.ag-cuadrillas-form {
     display: flex;
     flex-direction: column;
     gap: var(--ag-space-5);
@@ -38,110 +39,6 @@
 .ag-cuadrillas__atenuado {
     color: var(--ag-color-text-muted);
     font-size: var(--ag-font-size-sm);
-}
-
-/* Ficha (show) */
-
-.ag-cuadrillas-ficha__resumen {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
-    gap: var(--ag-space-4);
-    padding: var(--ag-space-4);
-    border: 1px solid var(--ag-color-border-card);
-    border-radius: var(--ag-radius-md);
-    background-color: var(--ag-color-surface-card);
-}
-
-.ag-cuadrillas-ficha__campo strong {
-    display: block;
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-xs);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    margin-bottom: var(--ag-space-1);
-}
-
-.ag-cuadrillas-ficha__selector-fecha {
-    display: flex;
-    align-items: flex-end;
-    gap: var(--ag-space-3);
-}
-
-/* Fila de controles en línea, no formulario apilado: el margen inferior
-   del átomo empujaría el botón por debajo del campo (mismo motivo que
-   documenta components/filter-bar.css). */
-.ag-cuadrillas-ficha__selector-fecha .ag-date {
-    margin-bottom: 0;
-}
-
-.ag-cuadrillas-ficha__seccion {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-4);
-}
-
-.ag-cuadrillas-ficha__lista {
-    border: 1px solid var(--ag-color-border-card);
-    border-radius: var(--ag-radius-md);
-    background-color: var(--ag-color-surface-card);
-    overflow: hidden;
-}
-
-.ag-cuadrillas-ficha__fila {
-    display: grid;
-    grid-template-columns: 1.3fr 1fr 1.3fr auto;
-    gap: var(--ag-space-4);
-    align-items: center;
-    padding: var(--ag-space-3) var(--ag-space-4);
-    border-top: 1px solid var(--ag-color-border-row);
-    font-size: var(--ag-font-size-sm);
-}
-
-.ag-cuadrillas-ficha__fila:first-child {
-    border-top: none;
-}
-
-.ag-cuadrillas-ficha__finalizar {
-    display: flex;
-    align-items: center;
-    gap: var(--ag-space-2);
-}
-
-/* Fila de controles en línea, no formulario apilado: el margen inferior
-   del átomo empujaría el botón por debajo del campo (mismo motivo que
-   documenta components/filter-bar.css). */
-.ag-cuadrillas-ficha__finalizar .ag-input,
-.ag-cuadrillas-ficha__finalizar .ag-select,
-.ag-cuadrillas-ficha__finalizar .ag-date {
-    min-width: 9rem;
-    margin-bottom: 0;
-}
-
-.ag-cuadrillas-ficha__alta {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    gap: var(--ag-space-3);
-    padding: var(--ag-space-4);
-    border: 1px dashed var(--ag-color-border-card);
-    border-radius: var(--ag-radius-md);
-}
-
-/* Fila de controles en línea, no formulario apilado: el margen inferior
-   del átomo empujaría el botón por debajo del campo (mismo motivo que
-   documenta components/filter-bar.css). */
-.ag-cuadrillas-ficha__alta .ag-input,
-.ag-cuadrillas-ficha__alta .ag-select,
-.ag-cuadrillas-ficha__alta .ag-date {
-    min-width: 12rem;
-    margin-bottom: 0;
-}
-
-@media (max-width: 992px) {
-    .ag-cuadrillas-ficha__fila {
-        grid-template-columns: 1fr;
-        gap: var(--ag-space-1);
-    }
 }
 
 /* Alta: las baterías son casillas en fila, como «¿Qué lleva la calda?» de la

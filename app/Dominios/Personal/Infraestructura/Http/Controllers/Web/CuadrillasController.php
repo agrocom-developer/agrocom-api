@@ -353,46 +353,66 @@ final class CuadrillasController
     }
 
     /**
-     * Ficha histórica (HU-49, punto 6): integrantes y recursos vigentes a
-     * una fecha elegida (selector, default hoy) — tiene que poder responder
-     * "quiénes lo integraban el 14 de marzo", no solo "quiénes lo integran
-     * hoy". Usa el propio contrato de lectura `LecturaEquipoTrabajo`
-     * (aunque esté DENTRO del mismo módulo que lo implementa) porque es
-     * exactamente la pregunta que ese contrato existe para responder — nada
-     * distinto de lo que necesitan otros módulos desde afuera.
+     * Ficha histórica (HU-49, punto 6; homogeneizada al arquetipo Detalle en
+     * la tarea 125, §6.4 de docs/diseno/guia_pantalla_panel.md): integrantes
+     * y recursos vigentes a una fecha elegida (selector, default hoy) —
+     * tiene que poder responder "quiénes lo integraban el 14 de marzo", no
+     * solo "quiénes lo integran hoy". Usa el propio contrato de lectura
+     * `LecturaEquipoTrabajo` (aunque esté DENTRO del mismo módulo que lo
+     * implementa) porque es exactamente la pregunta que ese contrato existe
+     * para responder — nada distinto de lo que necesitan otros módulos desde
+     * afuera.
+     *
+     * Los formularios de alta/finalizar de integrantes y recursos (HU-101
+     * punto 4) viven en `edit()`, no acá: esta ficha es de SOLO LECTURA desde
+     * la tarea 125 — enlaza a Editar para mutar. Suma «Integrantes
+     * históricos» (todos los que alguna vez pasaron por la cuadrilla, sin
+     * filtrar por `$fecha`) para responder "quién integró esto alguna vez",
+     * pregunta que la vigencia-a-fecha no contesta sola.
      */
-    public function show(Request $request, EquipoTrabajo $equipoTrabajo, LecturaEquipoTrabajo $lectura): View
+    public function show(Request $request, EquipoTrabajo $equipoTrabajo, LecturaEquipoTrabajo $lectura, LecturaResumenCuadrilla $lecturaResumenCuadrilla): View
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
         $fechaQuery = $request->string('fecha')->toString();
         $fecha = $fechaQuery !== '' ? $fechaQuery : now()->toDateString();
 
+        $integrantes = $lectura->integrantesAFecha($equipoTrabajo->id, $fecha);
         $recursos = $lectura->recursosAFecha($equipoTrabajo->id, $fecha);
+
+        $puedeVerEstadias = $this->autorizacion->tienePermiso($request, 'operaciones.estadia.ver');
+        $puedeVerTrabajos = $this->autorizacion->tienePermiso($request, 'operaciones.trabajo.ver');
+        $datosResumen = $puedeVerEstadias || $puedeVerTrabajos
+            ? $lecturaResumenCuadrilla->deCuadrilla($equipoTrabajo->id)
+            : null;
 
         return view('personal::pages.cuadrillas.show', [
             ...$this->autorizacion->cascara($request),
             'equipo' => $equipoTrabajo,
             'nombreBase' => $equipoTrabajo->base->nombre,
             'fecha' => $fecha,
-            'integrantes' => $lectura->integrantesAFecha($equipoTrabajo->id, $fecha),
+            'fechaEsHoy' => $fecha === now()->toDateString(),
+            'integrantes' => $integrantes,
+            'integrantesHistoricos' => $this->integrantesHistoricos($equipoTrabajo->id),
             'recursos' => $recursos,
             'etiquetasRecurso' => $this->etiquetasRecurso($recursos),
-            'bateriasVigentes' => collect($recursos)->filter(
-                fn (DatosRecursoEquipo $recurso): bool => $recurso->recursoTipo === RecursoTipoEquipo::Bateria->value,
-            )->count(),
             'accesorios' => EquipoAccesorio::query()
                 ->where('equipo_trabajo_id', $equipoTrabajo->id)
                 ->with('accesorio')
                 ->orderBy('id')
                 ->get(),
-            'personasDisponibles' => $this->personasDisponibles(),
-            'roles' => RolEquipo::cases(),
-            'tiposRecurso' => RecursoTipoEquipo::cases(),
-            'dronesDisponibles' => $this->dronesDisponibles(),
-            'vehiculosDisponibles' => $this->vehiculosDisponibles(),
-            'generadoresDisponibles' => $this->generadoresDisponibles(),
-            'bateriasDisponibles' => $this->bateriasDisponibles(),
+            'tonoPorEstado' => self::TONO_POR_ESTADO,
+            'diasVigencia' => (int) $equipoTrabajo->desde->diffInDays($equipoTrabajo->hasta ?? now()),
+            'estadiasEnCurso' => $puedeVerEstadias && $datosResumen instanceof DatosResumenCuadrilla ? $datosResumen->estadiasEnCurso : null,
+            'creadaPor' => $this->nombreAutor($equipoTrabajo->created_by),
+            'vinculos' => $this->vinculosDeCuadrilla(
+                $equipoTrabajo,
+                $this->autorizacion->tienePermiso($request, 'personal.base.editar'),
+                $puedeVerEstadias,
+                $puedeVerTrabajos,
+                $datosResumen,
+            ),
+            'actividad' => $this->actividadDeCuadrilla($equipoTrabajo),
             'puedeEditar' => $this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR),
         ]);
     }
@@ -823,6 +843,175 @@ final class CuadrillasController
         }
 
         return $resumen;
+    }
+
+    /**
+     * Historial COMPLETO de integrantes de `show()` (arquetipo Detalle, tarea
+     * 125): a diferencia de `LecturaEquipoTrabajo::integrantesAFecha()`, no
+     * filtra por `$fecha` — responde "quién integró esto alguna vez", no
+     * solo "quién lo integraba tal día". Eloquent directo: es la propia
+     * tabla de este módulo.
+     *
+     * @return Collection<int, EquipoIntegrante>
+     */
+    private function integrantesHistoricos(int $equipoId): Collection
+    {
+        return EquipoIntegrante::query()
+            ->where('equipo_trabajo_id', $equipoId)
+            ->with('persona')
+            ->orderByDesc('desde')
+            ->get();
+    }
+
+    /**
+     * "Vínculos" de `show()` (arquetipo Detalle, tarea 125): base, órdenes de
+     * trabajo y estadías de la cuadrilla, como filas sueltas — mismo
+     * espíritu que `TrabajosController::vinculosDeTrabajo()`. Lo de
+     * Operaciones llega por `LecturaResumenCuadrilla` (Contratos/ de
+     * Operaciones, ADR 0003 regla 2), la misma que ya usa
+     * `resumenRelacionado()` de `edit()` — nunca un modelo ajeno. Cada uno
+     * gatea por el permiso del módulo de LO QUE MUESTRA.
+     *
+     * @return list<array{href: string, icon: string, title: string, meta: ?string, tone: string}>
+     */
+    private function vinculosDeCuadrilla(
+        EquipoTrabajo $equipoTrabajo,
+        bool $puedeEditarBase,
+        bool $puedeVerEstadias,
+        bool $puedeVerTrabajos,
+        ?DatosResumenCuadrilla $datos,
+    ): array {
+        $vinculos = [];
+
+        if ($puedeEditarBase) {
+            $vinculos[] = [
+                'href' => route('panel.bases.edit', $equipoTrabajo->base),
+                'icon' => 'location_on',
+                'title' => __('personal.equipos_trabajo.vinculo_base'),
+                'meta' => $equipoTrabajo->base->nombre,
+                'tone' => 'neutral',
+            ];
+        }
+
+        if ($puedeVerTrabajos && $datos instanceof DatosResumenCuadrilla) {
+            $vinculos[] = [
+                'href' => route('panel.trabajos.index'),
+                'icon' => 'agriculture',
+                'title' => __('personal.equipos_trabajo.vinculo_trabajos'),
+                'meta' => __('personal.equipos_trabajo.vinculo_trabajos_meta', ['total' => $datos->trabajosTotal, 'abiertos' => $datos->trabajosAbiertos]),
+                'tone' => 'distintivo-1',
+            ];
+        }
+
+        if ($puedeVerEstadias && $datos instanceof DatosResumenCuadrilla && Route::has('panel.estadias.index')) {
+            $vinculos[] = [
+                'href' => route('panel.estadias.index', ['equipo_trabajo_id' => $equipoTrabajo->id]),
+                'icon' => 'holiday_village',
+                'title' => __('personal.equipos_trabajo.vinculo_estadias'),
+                'meta' => __('personal.equipos_trabajo.vinculo_estadias_meta', ['total' => $datos->estadiasTotal, 'enCurso' => $datos->estadiasEnCurso]),
+                'tone' => 'info',
+            ];
+        }
+
+        return $vinculos;
+    }
+
+    /**
+     * "Actividad" de `show()` (arquetipo Detalle, tarea 125): solo eventos
+     * RECONSTRUIBLES desde columnas reales (guía §6.4 regla 3; invariante 9
+     * de CLAUDE.md, pendiente) — creación de la cuadrilla y altas/bajas de
+     * integrantes y recursos, por sus propios `desde`/`hasta`.
+     *
+     * @return list<array{title: string, meta: string, tone: string}>
+     */
+    private function actividadDeCuadrilla(EquipoTrabajo $equipoTrabajo): array
+    {
+        $eventos = [[
+            'title' => __('personal.equipos_trabajo.actividad_creada'),
+            'meta' => $this->metaActividadCuadrilla($equipoTrabajo->created_at, $equipoTrabajo->created_by),
+            'tone' => 'neutral',
+        ]];
+
+        $integrantes = EquipoIntegrante::query()
+            ->where('equipo_trabajo_id', $equipoTrabajo->id)
+            ->with('persona')
+            ->orderBy('desde')
+            ->get();
+
+        foreach ($integrantes as $integrante) {
+            $nombre = $integrante->persona->nombre;
+
+            $eventos[] = [
+                'title' => __('personal.equipos_trabajo.actividad_integrante_alta', ['persona' => $nombre, 'rol' => __('personal.rol_equipo.'.$integrante->rol_equipo->value)]),
+                'meta' => $this->metaFechaCuadrilla($integrante->desde),
+                'tone' => 'info',
+            ];
+
+            if ($integrante->hasta !== null) {
+                $eventos[] = [
+                    'title' => __('personal.equipos_trabajo.actividad_integrante_baja', ['persona' => $nombre]),
+                    'meta' => $this->metaFechaCuadrilla($integrante->hasta),
+                    'tone' => 'warning',
+                ];
+            }
+        }
+
+        $recursos = EquipoRecurso::query()
+            ->where('equipo_trabajo_id', $equipoTrabajo->id)
+            ->orderBy('desde')
+            ->get();
+
+        $etiquetasRecursos = $this->etiquetasRecursoDeFilas($recursos);
+
+        foreach ($recursos as $recurso) {
+            $etiqueta = $etiquetasRecursos["{$recurso->recurso_tipo->value}:{$recurso->recurso_id}"] ?? "#{$recurso->recurso_id}";
+
+            $eventos[] = [
+                'title' => __('personal.equipos_trabajo.actividad_recurso_alta', ['recurso' => $etiqueta]),
+                'meta' => $this->metaFechaCuadrilla($recurso->desde),
+                'tone' => 'info',
+            ];
+
+            if ($recurso->hasta !== null) {
+                $eventos[] = [
+                    'title' => __('personal.equipos_trabajo.actividad_recurso_baja', ['recurso' => $etiqueta]),
+                    'meta' => $this->metaFechaCuadrilla($recurso->hasta),
+                    'tone' => 'warning',
+                ];
+            }
+        }
+
+        return $eventos;
+    }
+
+    private function metaFechaCuadrilla(?\DateTimeInterface $fecha): string
+    {
+        return $fecha?->format('d/m/Y') ?? '—';
+    }
+
+    private function metaActividadCuadrilla(?\DateTimeInterface $fecha, ?int $autorId): string
+    {
+        $fechaTexto = $fecha?->format('d/m/Y H:i') ?? '—';
+        $autor = $this->nombreAutor($autorId);
+
+        return $autor !== null
+            ? __('personal.equipos_trabajo.actividad_meta', ['fecha' => $fechaTexto, 'autor' => $autor])
+            : $fechaTexto;
+    }
+
+    /**
+     * Nombre visible de un autor (`created_by`, FK plana a `sec_user` —
+     * ningún modelo de dominio tiene relación Eloquent hacia `Seguridad`).
+     * Mismo patrón que `OrdenesController::nombreAutor()`. `null` sin autor
+     * registrado; `"#id"` si el usuario ya no existe.
+     */
+    private function nombreAutor(?int $userId): ?string
+    {
+        if ($userId === null) {
+            return null;
+        }
+
+        return DB::table('sec_user')->where('id', $userId)->value('name') ?? "#{$userId}";
     }
 
     /** @return Collection<int, string> */
