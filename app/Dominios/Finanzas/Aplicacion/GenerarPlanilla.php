@@ -72,6 +72,7 @@ final class GenerarPlanilla
         $finMes = $inicioMes->copy()->endOfMonth();
 
         $personaIds = DevengoPersonal::query()
+            ->pagables()
             ->whereBetween('fecha', [$inicioMes->toDateString(), $finMes->toDateString()])
             ->distinct()
             ->pluck('persona_id');

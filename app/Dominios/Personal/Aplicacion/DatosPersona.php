@@ -25,7 +25,6 @@ final readonly class DatosPersona
         public ?string $direccion,
         public RolOperativoPersona $rol,
         public ?int $baseId,
-        public ?string $tarifaHa,
     ) {}
 
     /**
@@ -54,7 +53,6 @@ final readonly class DatosPersona
             'direccion' => $this->direccion,
             'rol' => $this->rol,
             'base_id' => $this->baseId,
-            'tarifa_ha' => $this->tarifaHa,
         ];
     }
 }

@@ -41,10 +41,26 @@
       cuadrilla — sin el permiso, el acceso rápido no se dibuja.
 --}}
 @php
+    $tarifasDisponibles = $tarifasDisponibles ?? [];
+    $tarifaPredeterminadaId = $tarifaPredeterminadaId ?? null;
+    $modalidadesPago = $modalidadesPago ?? [];
     $prefijo = "equipos[{$indiceEquipo}]";
     $idBase = str_replace(['[', ']'], ['-', ''], $prefijo);
     $erroresPrefijo = str_replace(['[', ']'], ['.', ''], $prefijo);
     $primerLote = $equipo['lotes'][0] ?? [];
+    if (! isset($equipo['pago'])) {
+        $equipo['pago'] = ['negociado' => false];
+    }
+    // Opciones del select de tarifa: nombre, modalidad (en etiqueta) y montos.
+    $opcionesTarifa = [];
+    foreach ($tarifasDisponibles as $tarifa) {
+        $opcionesTarifa[$tarifa['id']] = __('operaciones.ordenes_trabajo.campo_tarifa_opcion', [
+            'nombre' => $tarifa['nombre'],
+            'modalidad' => $modalidadesPago[$tarifa['modalidad']] ?? $tarifa['modalidad'],
+            'piloto' => number_format((float) $tarifa['monto_piloto'], 2, ',', '.'),
+            'auxiliar' => number_format((float) $tarifa['monto_auxiliar'], 2, ',', '.'),
+        ]);
+    }
 @endphp
 <fieldset class="ag-ordenes-trabajo-form__equipo-bloque" data-ag-equipo-bloque data-ag-equipo-prefijo="{{ $prefijo }}">
     <legend class="ag-ordenes-trabajo-form__equipo-titulo">
@@ -116,6 +132,103 @@
     <p class="ag-ordenes-trabajo-form__ayuda" data-ag-equipo-sin-cuadrilla hidden>
         {{ __('operaciones.ordenes_trabajo.equipo_sin_cuadrilla') }}
     </p>
+
+    {{-- Condición de pago por equipo (ADR 0023): tarifa del catálogo o
+         negociación para este trabajo. --}}
+    <div class="ag-ordenes-trabajo-form__pago-bloque">
+        <h3 class="ag-ordenes-trabajo-form__pago-titulo">
+            {{ __('operaciones.ordenes_trabajo.pago_titulo') }}
+        </h3>
+
+        <div class="ag-ordenes-trabajo-form__pago-campos">
+            @if (count($tarifasDisponibles) > 0)
+                <x-atoms.select
+                    name="{{ $prefijo }}[pago][tarifa_id]"
+                    id="{{ $idBase }}-tarifa"
+                    class="ag-ordenes-trabajo-form__campo-ancho"
+                    :label="__('operaciones.ordenes_trabajo.campo_tarifa')"
+                    :placeholder="__('operaciones.ordenes_trabajo.campo_tarifa_placeholder')"
+                    :value="$equipo['pago']['tarifa_id'] ?? $tarifaPredeterminadaId ?? ''"
+                    :options="$opcionesTarifa"
+                    :required="!($equipo['pago']['negociado'] ?? false)"
+                    :error="$errors->first($erroresPrefijo.'.pago.tarifa_id')"
+                    data-ag-equipo-tarifa
+                />
+            @else
+                <div class="ag-ordenes-trabajo-form__tarifa-aviso">
+                    {{ __('operaciones.ordenes_trabajo.campo_tarifa_sin_catalogo') }}
+                </div>
+            @endif
+
+            <div class="ag-ordenes-trabajo-form__pago-negociado">
+                <input type="hidden" name="{{ $prefijo }}[pago][negociado]" value="0">
+                <x-atoms.checkbox
+                    name="{{ $prefijo }}[pago][negociado]"
+                    id="{{ $idBase }}-negociado"
+                    :label="__('operaciones.ordenes_trabajo.campo_pago_negociado')"
+                    :value="1"
+                    :checked="$equipo['pago']['negociado'] ?? false"
+                    :help="__('operaciones.ordenes_trabajo.campo_pago_negociado_ayuda')"
+                    data-ag-equipo-negociado
+                />
+            </div>
+
+            {{-- Campos de negociación: siempre dibujados pero deshabilitados mientras
+                 no se marque "Negociado". Rellenados con los montos de la tarifa elegida. --}}
+            <x-atoms.select
+                name="{{ $prefijo }}[pago][modalidad]"
+                id="{{ $idBase }}-modalidad"
+                class="ag-ordenes-trabajo-form__campo-ancho"
+                :label="__('operaciones.ordenes_trabajo.campo_pago_modalidad')"
+                :placeholder="__('operaciones.ordenes_trabajo.campo_pago_modalidad_placeholder')"
+                :value="$equipo['pago']['modalidad'] ?? ''"
+                :options="$modalidadesPago"
+                :disabled="!($equipo['pago']['negociado'] ?? false)"
+                :error="$errors->first($erroresPrefijo.'.pago.modalidad')"
+                data-ag-equipo-modalidad
+            />
+
+            <x-atoms.input
+                type="number"
+                name="{{ $prefijo }}[pago][monto_piloto]"
+                id="{{ $idBase }}-monto-piloto"
+                :label="__('operaciones.ordenes_trabajo.campo_pago_monto_piloto')"
+                :value="$equipo['pago']['monto_piloto'] ?? ''"
+                min="0"
+                step="0.01"
+                :disabled="!($equipo['pago']['negociado'] ?? false)"
+                :error="$errors->first($erroresPrefijo.'.pago.monto_piloto')"
+                data-ag-equipo-monto-piloto
+            />
+
+            <x-atoms.input
+                type="number"
+                name="{{ $prefijo }}[pago][monto_auxiliar]"
+                id="{{ $idBase }}-monto-auxiliar"
+                :label="__('operaciones.ordenes_trabajo.campo_pago_monto_auxiliar')"
+                :value="$equipo['pago']['monto_auxiliar'] ?? ''"
+                min="0"
+                step="0.01"
+                :disabled="!($equipo['pago']['negociado'] ?? false)"
+                :error="$errors->first($erroresPrefijo.'.pago.monto_auxiliar')"
+                data-ag-equipo-monto-auxiliar
+            />
+
+            <x-atoms.input
+                type="text"
+                name="{{ $prefijo }}[pago][motivo]"
+                id="{{ $idBase }}-motivo"
+                class="ag-ordenes-trabajo-form__campo-ancho"
+                :label="__('operaciones.ordenes_trabajo.campo_pago_motivo')"
+                :placeholder="__('operaciones.ordenes_trabajo.campo_pago_motivo_placeholder')"
+                :value="$equipo['pago']['motivo'] ?? ''"
+                maxlength="255"
+                :disabled="!($equipo['pago']['negociado'] ?? false)"
+                :error="$errors->first($erroresPrefijo.'.pago.motivo')"
+                data-ag-equipo-motivo
+            />
+        </div>
+    </div>
 
     {{-- `equipos[i][lotes][j][…]`: los arma el JS con el reparto. --}}
     <div data-ag-equipo-ocultos hidden></div>

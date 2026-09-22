@@ -2,6 +2,9 @@
 
 namespace App\Dominios\Operaciones\Aplicacion;
 
+use App\Dominios\Finanzas\Contratos\CondicionPago;
+use App\Dominios\Finanzas\Contratos\LecturaTarifasPago;
+use App\Dominios\Finanzas\Contratos\ModalidadPago;
 use App\Dominios\Mezclas\Contratos\EscrituraMezclas;
 use App\Dominios\Mezclas\Contratos\RegistroMezcla;
 use App\Dominios\Operaciones\Aplicacion\MaquinaEstados\MaquinaEstadosTrabajo;
@@ -11,9 +14,11 @@ use App\Dominios\Operaciones\Dominio\Excepciones\EquipoTrabajoNoVigente;
 use App\Dominios\Operaciones\Dominio\Excepciones\HectareasAsignadasSuperanLote;
 use App\Dominios\Operaciones\Dominio\Excepciones\LoteNoPerteneceAOrden;
 use App\Dominios\Operaciones\Dominio\Excepciones\OrdenNoVigenteParaAsignacion;
+use App\Dominios\Operaciones\Dominio\Excepciones\TarifaNoDisponible;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenLote;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenTrabajo;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenTrabajoEquipo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
 use App\Dominios\Personal\Contratos\DatosEquipoTrabajo;
 use App\Dominios\Personal\Contratos\LecturaEquipoTrabajo;
@@ -69,13 +74,21 @@ final class CrearOrdenTrabajo
         private readonly LecturaEquipoTrabajo $equipos,
         private readonly MaquinaEstadosTrabajo $maquinaTrabajo,
         private readonly EscrituraMezclas $mezclas,
+        private readonly LecturaTarifasPago $tarifas,
     ) {}
 
     /**
      * @param  array{humedad_min_pct: string|null, viento_max_kmh: string|null, temperatura_max_c: string|null, humedad_max_pct: string|null, altura_vuelo_m: string|null, velocidad_vuelo_kmh: string|null, ancho_pasada_m: string|null, ph_agua: string|null, ph_calda: string|null, litros_ha?: string|null, kilos_ha?: string|null, calda_productos?: list<string>, calda: list<array{producto: string, cantidad: string, unidad: string}>}  $parametrosCompartidos  de TODA la tanda
-     * @param  list<array{equipo_trabajo_id: int, lotes: list<array{lote_id: int, hectareas: string, turno: string, turno_hora_inicio: string|null, turno_hora_fin: string|null}>}>  $equipos
+     * @param  list<array{equipo_trabajo_id: int, pago: array{tarifa_id: int|null, negociado: bool, modalidad: string|null, monto_piloto: string|null, monto_auxiliar: string|null, motivo: string|null}, lotes: list<array{lote_id: int, hectareas: string, turno: string, turno_hora_inicio: string|null, turno_hora_fin: string|null}>}>  $equipos
+     *
+     * La condición de pago de cada equipo (ADR 0023): con `negociado`
+     * falso se COPIAN modalidad y montos de la tarifa elegida; con
+     * `negociado` verdadero valen los del formulario y la tarifa queda solo
+     * como referencia de dónde se partió. En ambos casos lo guardado es una
+     * copia congelada: cambiar la tarifa después no toca esta orden.
      *
      * @throws OrdenNoVigenteParaAsignacion
+     * @throws TarifaNoDisponible
      * @throws EquipoTrabajoNoVigente
      * @throws LoteNoPerteneceAOrden
      * @throws HectareasAsignadasSuperanLote
@@ -96,6 +109,13 @@ final class CrearOrdenTrabajo
             if (! in_array($equipo['equipo_trabajo_id'], $idsVigentes, true)) {
                 throw EquipoTrabajoNoVigente::porId($equipo['equipo_trabajo_id']);
             }
+        }
+
+        /** @var array<int, CondicionPago> $condiciones equipo_trabajo_id => condición */
+        $condiciones = [];
+
+        foreach ($equipos as $equipo) {
+            $condiciones[$equipo['equipo_trabajo_id']] = $this->resolverCondicion($equipo['pago']);
         }
 
         /** @var Collection<int, OrdenLote> $lotesOrden */
@@ -130,7 +150,7 @@ final class CrearOrdenTrabajo
             }
         }
 
-        return DB::transaction(function () use ($orden, $parametrosCompartidos, $equipos): OrdenTrabajo {
+        return DB::transaction(function () use ($orden, $parametrosCompartidos, $equipos, $condiciones): OrdenTrabajo {
             $ordenTrabajo = OrdenTrabajo::create([
                 'orden_id' => $orden->id,
                 'nro_aplicacion' => $orden->nro_aplicacion,
@@ -149,6 +169,19 @@ final class CrearOrdenTrabajo
             ]);
 
             foreach ($equipos as $equipo) {
+                $condicion = $condiciones[$equipo['equipo_trabajo_id']];
+
+                OrdenTrabajoEquipo::create([
+                    'orden_trabajo_id' => $ordenTrabajo->id,
+                    'equipo_trabajo_id' => $equipo['equipo_trabajo_id'],
+                    'tarifa_id' => $condicion->tarifaId,
+                    'modalidad_pago' => $condicion->modalidad,
+                    'monto_piloto' => $condicion->montoPiloto,
+                    'monto_auxiliar' => $condicion->montoAuxiliar,
+                    'negociado' => $condicion->negociada,
+                    'motivo_negociacion' => $condicion->negociada ? $equipo['pago']['motivo'] : null,
+                ]);
+
                 foreach ($equipo['lotes'] as $lote) {
                     $trabajo = $this->maquinaTrabajo->abrirPorAsignacion([
                         'uuid_cliente' => (string) Str::uuid(),
@@ -169,6 +202,36 @@ final class CrearOrdenTrabajo
 
             return $ordenTrabajo->refresh()->load('trabajos');
         });
+    }
+
+    /**
+     * @param  array{tarifa_id: int|null, negociado: bool, modalidad: string|null, monto_piloto: string|null, monto_auxiliar: string|null, motivo: string|null}  $pago
+     *
+     * @throws TarifaNoDisponible
+     */
+    private function resolverCondicion(array $pago): CondicionPago
+    {
+        $tarifa = $pago['tarifa_id'] !== null ? $this->tarifas->porId($pago['tarifa_id']) : null;
+
+        if ($pago['tarifa_id'] !== null && $tarifa === null) {
+            throw TarifaNoDisponible::porId($pago['tarifa_id']);
+        }
+
+        if (! $pago['negociado']) {
+            if ($tarifa === null) {
+                throw TarifaNoDisponible::porId((int) $pago['tarifa_id']);
+            }
+
+            return $tarifa->comoCondicion();
+        }
+
+        return new CondicionPago(
+            modalidad: ModalidadPago::from((string) $pago['modalidad']),
+            montoPiloto: (string) $pago['monto_piloto'],
+            montoAuxiliar: (string) $pago['monto_auxiliar'],
+            tarifaId: $tarifa?->id,
+            negociada: true,
+        );
     }
 
     /**

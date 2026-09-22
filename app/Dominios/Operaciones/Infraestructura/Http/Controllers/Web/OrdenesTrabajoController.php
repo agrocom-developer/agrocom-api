@@ -3,6 +3,9 @@
 namespace App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web;
 
 use App\Dominios\Comercial\Contratos\LecturaLotes;
+use App\Dominios\Finanzas\Contratos\LecturaTarifasPago;
+use App\Dominios\Finanzas\Contratos\ModalidadPago;
+use App\Dominios\Finanzas\Contratos\TarifaPago;
 use App\Dominios\Operaciones\Aplicacion\CrearOrdenTrabajo;
 use App\Dominios\Operaciones\Aplicacion\ListarOrdenesTrabajo;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
@@ -12,9 +15,11 @@ use App\Dominios\Operaciones\Dominio\Excepciones\EquipoTrabajoNoVigente;
 use App\Dominios\Operaciones\Dominio\Excepciones\HectareasAsignadasSuperanLote;
 use App\Dominios\Operaciones\Dominio\Excepciones\LoteNoPerteneceAOrden;
 use App\Dominios\Operaciones\Dominio\Excepciones\OrdenNoVigenteParaAsignacion;
+use App\Dominios\Operaciones\Dominio\Excepciones\TarifaNoDisponible;
 use App\Dominios\Operaciones\Dominio\TipoInsumo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenTrabajo;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenTrabajoEquipo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
 use App\Dominios\Operaciones\Infraestructura\Http\Requests\CrearOrdenTrabajoRequest;
 use App\Dominios\Personal\Contratos\DatosEquipoTrabajo;
@@ -86,12 +91,20 @@ final class OrdenesTrabajoController
         ]);
     }
 
-    public function create(Request $request, LecturaEquipoTrabajo $equipos, LecturaLotes $lotes): View
+    public function create(Request $request, LecturaEquipoTrabajo $equipos, LecturaLotes $lotes, LecturaTarifasPago $tarifas): View
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_CREAR), 403);
 
         $ordenPreseleccionadaId = $request->filled('orden_id') ? $request->integer('orden_id') : null;
         $datosOrden = $this->datosOrdenParaFormulario($lotes);
+        $tarifasDisponibles = array_map(fn (TarifaPago $tarifa): array => [
+            'id' => $tarifa->id,
+            'nombre' => $tarifa->nombre,
+            'modalidad' => $tarifa->modalidad->value,
+            'monto_piloto' => $tarifa->montoPiloto,
+            'monto_auxiliar' => $tarifa->montoAuxiliar,
+            'predeterminada' => $tarifa->predeterminada,
+        ], $tarifas->vigentes());
 
         return view('operaciones::pages.ordenes-trabajo.create', [
             ...$this->autorizacion->cascara($request),
@@ -103,6 +116,12 @@ final class OrdenesTrabajoController
             'ordenSinPendiente' => $ordenPreseleccionadaId !== null && ! isset($datosOrden[$ordenPreseleccionadaId]),
             'equiposDisponibles' => $this->equiposDisponibles($equipos),
             'puedeCrearCuadrilla' => $this->autorizacion->tienePermiso($request, self::PERMISO_CREAR_CUADRILLA),
+            // Condición de pago por equipo (ADR 0023): el catálogo de tarifas
+            // de Finanzas para el select de cada bloque (la predeterminada
+            // primero) y las modalidades para cuando se negocia.
+            'tarifasDisponibles' => $tarifasDisponibles,
+            'tarifaPredeterminadaId' => $tarifas->predeterminada()?->id,
+            'modalidadesPago' => ModalidadPago::opciones(),
         ]);
     }
 
@@ -119,7 +138,7 @@ final class OrdenesTrabajoController
                 $this->normalizarParametros($datos['parametros'] ?? []),
                 $this->normalizarEquipos($datos['equipos']),
             );
-        } catch (OrdenNoVigenteParaAsignacion|EquipoTrabajoNoVigente|LoteNoPerteneceAOrden|HectareasAsignadasSuperanLote|CaldaNoRegistrada $excepcion) {
+        } catch (OrdenNoVigenteParaAsignacion|EquipoTrabajoNoVigente|LoteNoPerteneceAOrden|HectareasAsignadasSuperanLote|CaldaNoRegistrada|TarifaNoDisponible $excepcion) {
             return redirect()
                 ->route('panel.trabajos.create', ['orden_id' => $orden->id])
                 ->withErrors(['equipos' => $excepcion->getMessage()])
@@ -145,7 +164,10 @@ final class OrdenesTrabajoController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
-        $ordenTrabajo->load(['orden.categoriaInsumo', 'trabajos.sesiones']);
+        $ordenTrabajo->load(['orden.categoriaInsumo', 'trabajos.sesiones', 'equipos']);
+
+        /** @var array<int, OrdenTrabajoEquipo> $condiciones */
+        $condiciones = $ordenTrabajo->equipos->keyBy('equipo_trabajo_id')->all();
 
         $trabajos = $ordenTrabajo->trabajos->sortBy('id')->values();
         $sumar = fn (Collection $grupo): BigDecimal => $grupo->reduce(
@@ -167,6 +189,7 @@ final class OrdenesTrabajoController
                 'etiqueta' => $etiquetasEquipo[$equipoId] ?? ($equipoId !== 0 ? "#{$equipoId}" : __('operaciones.trabajos.campo_equipo_sin_asignar')),
                 'hectareas' => $this->aHectareas($sumar($grupo)),
                 'trabajos' => $grupo->values(),
+                'pago' => $this->pagoDeEquipo($condiciones[$equipoId] ?? null),
             ])
             ->values()
             ->all();
@@ -268,6 +291,28 @@ final class OrdenesTrabajoController
         }
 
         return $eventos;
+    }
+
+    /**
+     * Condición de pago del equipo para la ficha (ADR 0023). `null` si la
+     * orden es anterior a la reforma: entonces el devengo usa la tarifa
+     * predeterminada del catálogo, y la ficha lo dice así.
+     *
+     * @return array{modalidad: string, monto_piloto: string, monto_auxiliar: string, negociado: bool, motivo: string|null}|null
+     */
+    private function pagoDeEquipo(?OrdenTrabajoEquipo $condicion): ?array
+    {
+        if ($condicion === null) {
+            return null;
+        }
+
+        return [
+            'modalidad' => $condicion->modalidad_pago->etiqueta(),
+            'monto_piloto' => (string) $condicion->monto_piloto,
+            'monto_auxiliar' => (string) $condicion->monto_auxiliar,
+            'negociado' => $condicion->negociado,
+            'motivo' => $condicion->motivo_negociacion,
+        ];
     }
 
     private function aHectareas(BigDecimal $valor): string
@@ -493,12 +538,22 @@ final class OrdenesTrabajoController
 
     /**
      * @param  list<array<string, mixed>>  $equipos
-     * @return list<array{equipo_trabajo_id: int, lotes: list<array{lote_id: int, hectareas: string, turno: string, turno_hora_inicio: string|null, turno_hora_fin: string|null}>}>
+     * @return list<array{equipo_trabajo_id: int, pago: array{tarifa_id: int|null, negociado: bool, modalidad: string|null, monto_piloto: string|null, monto_auxiliar: string|null, motivo: string|null}, lotes: list<array{lote_id: int, hectareas: string, turno: string, turno_hora_inicio: string|null, turno_hora_fin: string|null}>}>
      */
     private function normalizarEquipos(array $equipos): array
     {
+        $texto = static fn (mixed $valor): ?string => ($valor ?? '') === '' ? null : (string) $valor;
+
         return array_map(fn (array $equipo): array => [
             'equipo_trabajo_id' => (int) $equipo['equipo_trabajo_id'],
+            'pago' => [
+                'tarifa_id' => ($equipo['pago']['tarifa_id'] ?? '') === '' ? null : (int) $equipo['pago']['tarifa_id'],
+                'negociado' => filter_var($equipo['pago']['negociado'] ?? false, FILTER_VALIDATE_BOOL),
+                'modalidad' => $texto($equipo['pago']['modalidad'] ?? null),
+                'monto_piloto' => $texto($equipo['pago']['monto_piloto'] ?? null),
+                'monto_auxiliar' => $texto($equipo['pago']['monto_auxiliar'] ?? null),
+                'motivo' => $texto($equipo['pago']['motivo'] ?? null),
+            ],
             'lotes' => array_map(fn (array $lote): array => [
                 'lote_id' => (int) $lote['lote_id'],
                 'hectareas' => (string) $lote['hectareas'],

@@ -22,7 +22,7 @@
 .ag-devengos__head,
 .ag-devengos__fila {
     display: grid;
-    grid-template-columns: 1.2fr 1fr 1fr 1fr;
+    grid-template-columns: 1.2fr 1fr 1.2fr 1fr 1fr;
     gap: var(--ag-space-4);
     align-items: center;
     padding: var(--ag-space-3) var(--ag-space-4);

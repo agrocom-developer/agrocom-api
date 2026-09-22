@@ -91,13 +91,13 @@ final class MaquinaEstadosSesion
      * (HU-16, tarea 16): el oyente real de `SesionValidada`
      * (`Finanzas\Aplicacion\GenerarDevengosSesion`) corre síncrono, dentro de
      * ese `event()`, y puede lanzar
-     * `Finanzas\Dominio\Excepciones\PersonaSinTarifaHa` si el piloto o su
-     * auxiliar no tienen tarifa configurada. Sin la transacción, esa
+     * `Finanzas\Dominio\Excepciones\TrabajoSinCondicionDePago` si ni el
+     * trabajo ni el catálogo dan una condición de pago. Sin la transacción, esa
      * excepción dejaría la sesión ya guardada como `validado` pero sin su
      * devengo — exactamente el estado a medias que la invariante 6 de
      * CLAUDE.md prohíbe. Con ella, la validación entera se revierte: la
      * sesión sigue `cerrado`, y quien la validó puede reintentar una vez
-     * completada la tarifa. Esta clase no importa nada de `Finanzas` (no
+     * definida la tarifa predeterminada. Esta clase no importa nada de `Finanzas` (no
      * hace falta: no atrapa la excepción, solo se asegura de que su efecto
      * sea atómico).
      *

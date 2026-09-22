@@ -40,10 +40,14 @@ final class ListarDevengosPersona
             ->orderBy('fecha')
             ->get();
 
-        $total = $devengos->reduce(
-            fn (BigDecimal $acumulado, DevengoPersonal $devengo) => $acumulado->plus($devengo->monto),
-            BigDecimal::of('0.00'),
-        );
+        // El listado muestra también los absorbidos por un jornal (ADR 0023),
+        // pero el total solo suma los que se pagan.
+        $total = $devengos
+            ->reject(fn (DevengoPersonal $devengo): bool => $devengo->estaAbsorbido())
+            ->reduce(
+                fn (BigDecimal $acumulado, DevengoPersonal $devengo) => $acumulado->plus($devengo->monto),
+                BigDecimal::of('0.00'),
+            );
 
         return [
             'devengos' => $devengos,

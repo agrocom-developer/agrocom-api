@@ -20,6 +20,7 @@ use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\DevengosControlle
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\GastosController;
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\PlanillasController;
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\RendicionesController;
+use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\TarifasController;
 use App\Dominios\Inventario\Infraestructura\Http\Controllers\Web\RepuestosController;
 use App\Dominios\Inventario\Infraestructura\Http\Controllers\Web\StockController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\BateriasController;
@@ -1045,6 +1046,28 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::delete('/panel/anticipos/{anticipo}', [AnticiposController::class, 'destroy'])
             ->name('panel.anticipos.destroy');
+
+        // ADR 0023 (22/9/2026): tarifas de pago al personal — catálogo de
+        // Finanzas (la configuración de pago base). Cuatro permisos de grano
+        // fino (`finanzas.tarifa.ver`/`.crear`/`.editar`/`.eliminar`),
+        // verificados DENTRO del controlador contra el ROL ACTIVO.
+        Route::get('/panel/tarifas', [TarifasController::class, 'index'])
+            ->name('panel.tarifas.index');
+
+        Route::get('/panel/tarifas/crear', [TarifasController::class, 'create'])
+            ->name('panel.tarifas.create');
+
+        Route::post('/panel/tarifas', [TarifasController::class, 'store'])
+            ->name('panel.tarifas.store');
+
+        Route::get('/panel/tarifas/{tarifa}/editar', [TarifasController::class, 'edit'])
+            ->name('panel.tarifas.edit');
+
+        Route::put('/panel/tarifas/{tarifa}', [TarifasController::class, 'update'])
+            ->name('panel.tarifas.update');
+
+        Route::delete('/panel/tarifas/{tarifa}', [TarifasController::class, 'destroy'])
+            ->name('panel.tarifas.destroy');
 
         // HU-33 (tarea 47): "como encargado, quiero cargar gastos con su
         // categoría y comprobante, para que la campaña tenga costo real" —

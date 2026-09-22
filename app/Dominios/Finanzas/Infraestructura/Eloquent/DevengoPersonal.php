@@ -4,42 +4,33 @@ namespace App\Dominios\Finanzas\Infraestructura\Eloquent;
 
 use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
 use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
+use App\Dominios\Finanzas\Contratos\ModalidadPago;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 
 /**
- * Devengo de una persona por una sesión (espec §4.4, tabla
- * `devengos_personal`; HU-16, tarea 16): "se calcula por sesión, no por
- * lote... se genera automáticamente al validar un trabajo, nunca al
- * cerrarlo" (invariante 3 de CLAUDE.md). Lo crea únicamente
- * `Finanzas/Aplicacion/GenerarDevengosSesion.php`, en respuesta al evento
- * `App\Dominios\Operaciones\Contratos\Eventos\SesionValidada`.
+ * Devengo de una persona por una sesión validada (`fin_devengos_personal`,
+ * espec §4.4; ADR 0023 desde el 22/9/2026). `hectareas`, `tarifa` y `monto`
+ * son copia congelada al validar: el registro de lo que se pagó y con qué
+ * condición, no una referencia recalculable.
  *
- * `sesion_id`/`persona_id` referencian `ope_sesiones`/`per_personas` solo por
- * FK + entero plano (ADR 0003, regla 3) — sin `belongsTo` cross-módulo.
- *
- * `hectareas`/`tarifa_ha`/`monto` son una copia congelada al momento de
- * validar (ver el docblock de la migración `create_fin_devengos_personal_table`),
- * no una referencia recalculable contra el estado actual de `per_personas`
- * ni de `ope_sesiones`.
- *
- * `RegistraBitacora` (invariante 9 de CLAUDE.md): `tests/Unit/BitacoraAuditoriaTest.php`
- * (aduana desde la tarea 06) todavía no detecta "dinero" como señal
- * automática — su propio comentario deja esa categoría diferida
- * explícitamente a "la tarea que implemente la máquina de
- * estados/devengos" (ADR 0007, nota 31/8/2026). Esta es esa tarea, y este
- * modelo es, literalmente, el que crea dinero: se declara el trait acá, en
- * el modelo nuevo que le corresponde, sin extender la aduana automática a
- * TODAS las tablas de dinero del esquema (`com_contratos`, `com_lotes`
- * incluidas) — ese es un cambio de alcance mucho mayor, fuera de lo que esta
- * tarea puede tocar, y queda anotado en runs/16.md para no perderse.
+ * `modalidad`: `por_ha` (monto = hectáreas × tarifa) o `por_dia` (jornal:
+ * monto = tarifa, uno por persona y fecha). `absorbido_por_id`: un devengo
+ * por hectárea que ese mismo día quedó cubierto por un jornal de la misma
+ * persona (decisión del dueño: el día por jornal absorbe todo lo del día).
+ * No se paga, pero se conserva; {@see self::scopePagables()} es lo que
+ * suman planilla, anticipos y el panel.
  *
  * @property int $id
  * @property int $sesion_id
+ * @property int|null $trabajo_id
  * @property int $persona_id
+ * @property ModalidadPago $modalidad
  * @property string $hectareas
- * @property string $tarifa_ha
+ * @property string $tarifa
  * @property string $monto
  * @property Carbon $fecha
+ * @property int|null $absorbido_por_id
  */
 class DevengoPersonal extends ModeloDominio
 {
@@ -47,24 +38,42 @@ class DevengoPersonal extends ModeloDominio
 
     protected $table = 'fin_devengos_personal';
 
-    /** @var list<string> */
     protected $fillable = [
         'sesion_id',
+        'trabajo_id',
         'persona_id',
+        'modalidad',
         'hectareas',
-        'tarifa_ha',
+        'tarifa',
         'monto',
         'fecha',
+        'absorbido_por_id',
     ];
 
-    /** @return array<string, string> */
     protected function casts(): array
     {
         return [
+            'modalidad' => ModalidadPago::class,
             'hectareas' => 'decimal:2',
-            'tarifa_ha' => 'decimal:2',
+            'tarifa' => 'decimal:2',
             'monto' => 'decimal:2',
             'fecha' => 'date',
         ];
+    }
+
+    /**
+     * Los que efectivamente se pagan: excluye los absorbidos por un jornal.
+     *
+     * @param  Builder<DevengoPersonal>  $consulta
+     * @return Builder<DevengoPersonal>
+     */
+    public function scopePagables(Builder $consulta): Builder
+    {
+        return $consulta->whereNull('absorbido_por_id');
+    }
+
+    public function estaAbsorbido(): bool
+    {
+        return $this->absorbido_por_id !== null;
     }
 }

@@ -478,6 +478,30 @@ return [
     // parámetros compartidos (clima/vuelo, Ph, calda). El detalle de cada
     // trabajo puntual (equipo×lote) sigue en `operaciones.trabajos.*`.
     'ordenes_trabajo' => [
+        // Condición de pago por equipo (ADR 0023): tarifa del catálogo o
+        // negociación para este trabajo puntual.
+        'pago_titulo' => 'Pago del equipo',
+        'campo_tarifa' => 'Tarifa',
+        'campo_tarifa_placeholder' => 'Selecciona una tarifa',
+        'campo_tarifa_opcion' => ':nombre · :modalidad · piloto Bs :piloto · ayudante Bs :auxiliar',
+        'campo_tarifa_sin_catalogo' => 'No hay tarifas cargadas en Financiero → Tarifas: negocia la condición de pago de este equipo.',
+        'campo_pago_negociado' => 'Negociar otra condición para este trabajo',
+        'campo_pago_negociado_ayuda' => 'Cuando la cuadrilla no acepta la tarifa (terreno difícil, voleo…). Lo negociado vale solo para esta orden.',
+        'campo_pago_modalidad' => 'Modalidad',
+        'campo_pago_modalidad_placeholder' => 'Selecciona la modalidad',
+        'campo_pago_monto_piloto' => 'Monto para el piloto',
+        'campo_pago_monto_auxiliar' => 'Monto para el ayudante',
+        'campo_pago_motivo' => 'Motivo de la negociación',
+        'campo_pago_motivo_placeholder' => 'Por qué se pactó otra condición',
+        'pago_resumen' => ':modalidad · piloto Bs :piloto · ayudante Bs :auxiliar',
+        'pago_negociado' => 'Negociado',
+        'pago_negociado_motivo' => 'Motivo: :motivo',
+        'pago_sin_condicion' => 'Sin condición propia: se paga con la tarifa predeterminada vigente al validar.',
+        'error_tarifa_requerida' => 'Elige una tarifa o negocia la condición de pago del equipo.',
+        'error_tarifa_no_disponible' => 'La tarifa elegida ya no está disponible.',
+        'error_pago_modalidad_requerida' => 'Elige la modalidad del pago negociado.',
+        'error_pago_monto_requerido' => 'Ingresa el monto negociado.',
+        'error_pago_motivo_requerido' => 'Explica el motivo de la negociación.',
         'titulo' => 'Orden de Trabajo',
         'subtitulo' => 'Las indicaciones de cada aplicación —calda, clima y vuelo— y los trabajos de los equipos que la ejecutan.',
         'vacio_titulo' => 'Todavía no se creó ninguna Orden de Trabajo',
@@ -1183,6 +1207,7 @@ return [
 
     // Mensajes de error.
     'errores' => [
+        'tarifa_no_disponible' => 'La tarifa #:tarifa_id ya no está disponible: elige otra o negocia la condición de pago.',
         'dron_duplicado' => "Ya existe un dron activo con el identificador ':identificador'.",
         'equipo_trabajo_no_vigente' => 'La cuadrilla #:id no está vigente hoy.',
         'estadia_abierta_existente' => 'La cuadrilla #:id ya tiene una estadía en curso. Finalízala antes de registrar una nueva.',

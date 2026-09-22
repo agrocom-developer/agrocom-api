@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Finanzas\Contratos\LecturaTarifasPago;
 use App\Dominios\Operaciones\Aplicacion\CrearOrdenTrabajo;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Dominio\Excepciones\CaldaNoRegistrada;
@@ -9,6 +10,7 @@ use App\Dominios\Operaciones\Dominio\Excepciones\EquipoTrabajoNoVigente;
 use App\Dominios\Operaciones\Dominio\Excepciones\HectareasAsignadasSuperanLote;
 use App\Dominios\Operaciones\Dominio\Excepciones\LoteNoPerteneceAOrden;
 use App\Dominios\Operaciones\Dominio\Excepciones\OrdenNoVigenteParaAsignacion;
+use App\Dominios\Operaciones\Dominio\Excepciones\TarifaNoDisponible;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenLote;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
@@ -124,7 +126,7 @@ final class RepartoCuadrillasController
         ]);
     }
 
-    public function asignar(AsignarEquipoOrdenRequest $request, OrdenAplicacion $orden, CrearOrdenTrabajo $crearOrdenTrabajo): RedirectResponse
+    public function asignar(AsignarEquipoOrdenRequest $request, OrdenAplicacion $orden, CrearOrdenTrabajo $crearOrdenTrabajo, LecturaTarifasPago $tarifas): RedirectResponse
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO), 403);
 
@@ -148,20 +150,34 @@ final class RepartoCuadrillasController
             ], $parametros['calda'] ?? []),
         ];
 
+        // Pantalla anterior a la condición de pago por equipo (ADR 0023): no
+        // la pide, así que cada equipo parte de la tarifa predeterminada del
+        // catálogo. Sin predeterminada, `CrearOrdenTrabajo` lo rechaza con
+        // `TarifaNoDisponible` y se muestra como error del formulario.
+        $pago = [
+            'tarifa_id' => $tarifas->predeterminada()?->id,
+            'negociado' => false,
+            'modalidad' => null,
+            'monto_piloto' => null,
+            'monto_auxiliar' => null,
+            'motivo' => null,
+        ];
+
         $equipos = array_map(fn (array $equipo): array => [
             'equipo_trabajo_id' => (int) $equipo['equipo_trabajo_id'],
-            'lotes' => array_map(fn (array $lote): array => [
+            'pago' => $pago,
+            'lotes' => array_values(array_map(fn (array $lote): array => [
                 'lote_id' => (int) $lote['lote_id'],
                 'hectareas' => (string) $lote['hectareas'],
                 'turno' => (string) $lote['turno'],
                 'turno_hora_inicio' => ($lote['turno_hora_inicio'] ?? '') === '' ? null : (string) $lote['turno_hora_inicio'],
                 'turno_hora_fin' => ($lote['turno_hora_fin'] ?? '') === '' ? null : (string) $lote['turno_hora_fin'],
-            ], $equipo['lotes']),
-        ], $datos['equipos']);
+            ], $equipo['lotes'])),
+        ], array_values($datos['equipos']));
 
         try {
             $crearOrdenTrabajo->ejecutar($orden, $parametrosCompartidos, $equipos);
-        } catch (OrdenNoVigenteParaAsignacion|EquipoTrabajoNoVigente|LoteNoPerteneceAOrden|HectareasAsignadasSuperanLote|CaldaNoRegistrada $excepcion) {
+        } catch (OrdenNoVigenteParaAsignacion|EquipoTrabajoNoVigente|LoteNoPerteneceAOrden|HectareasAsignadasSuperanLote|CaldaNoRegistrada|TarifaNoDisponible $excepcion) {
             return redirect()
                 ->route('panel.reparto-cuadrillas.show', $orden)
                 ->withErrors(['equipos' => $excepcion->getMessage()]);

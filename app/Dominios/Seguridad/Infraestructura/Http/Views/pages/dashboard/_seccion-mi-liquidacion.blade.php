@@ -40,6 +40,7 @@
                 <div class="ag-table__head" role="row">
                     <span role="columnheader">{{ __('seguridad.dashboard.liquidacion_col_fecha') }}</span>
                     <span role="columnheader" class="ag-table__ha">{{ __('seguridad.dashboard.col_ha') }}</span>
+                    <span role="columnheader">{{ __('seguridad.dashboard.liquidacion_col_modalidad') }}</span>
                     <span role="columnheader" class="ag-table__ha">{{ __('seguridad.dashboard.liquidacion_col_tarifa') }}</span>
                     <span role="columnheader" class="ag-table__ha">{{ __('seguridad.dashboard.liquidacion_col_monto') }}</span>
                 </div>
@@ -47,8 +48,9 @@
                     <div class="ag-table__row" role="row">
                         <span class="ag-table__mono" role="cell">{{ \Illuminate\Support\Carbon::parse($devengo->fecha)->format('d/m/Y') }}</span>
                         <span role="cell" class="ag-table__ha">{{ number_format((float) $devengo->hectareas, 2, ',', '.') }}</span>
-                        <span role="cell" class="ag-table__ha">{{ number_format((float) $devengo->tarifaHa, 2, ',', '.') }}</span>
-                        <span role="cell" class="ag-table__ha ag-table__strong">{{ number_format((float) $devengo->monto, 2, ',', '.') }}</span>
+                        <span role="cell">{{ $devengo->absorbido ? __('seguridad.dashboard.liquidacion_absorbido') : $devengo->modalidad }}</span>
+                        <span role="cell" class="ag-table__ha">{{ number_format((float) $devengo->tarifa, 2, ',', '.') }}</span>
+                        <span role="cell" class="ag-table__ha ag-table__strong">{{ $devengo->absorbido ? '—' : number_format((float) $devengo->monto, 2, ',', '.') }}</span>
                     </div>
                 @endforeach
             </div>

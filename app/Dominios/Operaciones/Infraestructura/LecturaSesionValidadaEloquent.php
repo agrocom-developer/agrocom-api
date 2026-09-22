@@ -4,31 +4,37 @@ namespace App\Dominios\Operaciones\Infraestructura;
 
 use App\Dominios\Operaciones\Contratos\DatosSesionValidada;
 use App\Dominios\Operaciones\Contratos\LecturaSesionValidada;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenTrabajoEquipo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
 
-/**
- * Implementación Eloquent del contrato de lectura de sesión validada. Vive
- * fuera de `Infraestructura/Eloquent/` a propósito, mismo criterio que
- * `LecturaOrdenesVigentesEloquent`: esa subcarpeta está reservada a modelos
- * que extienden `ModeloDominio` (`tests/Unit/ArquitecturaModulosTest.php` lo
- * exige), y esta clase no es un modelo — es el adaptador que el
- * `ServiceProvider` del módulo liga a {@see LecturaSesionValidada}.
- */
 final class LecturaSesionValidadaEloquent implements LecturaSesionValidada
 {
     public function obtener(int $sesionId): ?DatosSesionValidada
     {
-        $sesion = Sesion::query()->find($sesionId);
+        $sesion = Sesion::query()->with('trabajo')->find($sesionId);
 
         if ($sesion === null) {
             return null;
         }
 
+        $trabajo = $sesion->trabajo;
+
+        $condicion = ($trabajo?->orden_trabajo_id !== null && $trabajo->equipo_trabajo_id !== null)
+            ? OrdenTrabajoEquipo::query()
+                ->where('orden_trabajo_id', $trabajo->orden_trabajo_id)
+                ->where('equipo_trabajo_id', $trabajo->equipo_trabajo_id)
+                ->first()
+                ?->comoCondicion()
+            : null;
+
         return new DatosSesionValidada(
             sesionId: $sesion->id,
+            trabajoId: (int) $sesion->trabajo_id,
             pilotoId: $sesion->piloto_id,
             auxiliarId: $sesion->auxiliar_id,
             hectareasDeclaradas: $sesion->hectareas_declaradas,
+            fecha: $sesion->inicio->toDateString(),
+            condicionPago: $condicion,
         );
     }
 }
