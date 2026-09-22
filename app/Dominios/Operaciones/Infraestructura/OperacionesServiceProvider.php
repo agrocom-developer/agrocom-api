@@ -22,6 +22,7 @@ use App\Dominios\Operaciones\Contratos\LecturaSesionValidada;
 use App\Dominios\Operaciones\Contratos\LecturaTrabajos;
 use App\Dominios\Operaciones\Contratos\LecturaTrabajosAsignados;
 use App\Dominios\Operaciones\Contratos\LecturaTrabajosPorContrato;
+use App\Dominios\Operaciones\Contratos\LecturaUsoDeTarifa;
 use App\Dominios\Operaciones\Infraestructura\Busqueda\BusquedaDrones;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -42,6 +43,7 @@ final class OperacionesServiceProvider extends ServiceProvider
     {
         $this->app->bind(LecturaOrdenesVigentes::class, LecturaOrdenesVigentesEloquent::class);
         $this->app->bind(LecturaTrabajosAsignados::class, LecturaTrabajosAsignadosEloquent::class);
+        $this->app->bind(LecturaUsoDeTarifa::class, LecturaUsoDeTarifaEloquent::class);
         $this->app->bind(EscrituraSincronizacion::class, EscrituraSincronizacionEloquent::class);
         $this->app->bind(LecturaSesionValidada::class, LecturaSesionValidadaEloquent::class);
         $this->app->bind(LecturaActaConformada::class, LecturaActaConformadaEloquent::class);

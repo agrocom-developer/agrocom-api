@@ -249,6 +249,35 @@
                             </p>
                         </div>
 
+                        {{-- Resumen de pago del equipo (ADR 0023) --}}
+                        @if (array_key_exists('pago', $equipo))
+                            <div class="ag-ordenes-trabajo-detalle__pago">
+                                @if ($equipo['pago'] !== null)
+                                    <p class="ag-ordenes-trabajo-detalle__pago-texto">
+                                        {{ __('operaciones.ordenes_trabajo.pago_resumen', [
+                                            'modalidad' => $equipo['pago']['modalidad'] ?? '—',
+                                            'piloto' => number_format($equipo['pago']['monto_piloto'] ?? 0, 2, ',', '.'),
+                                            'auxiliar' => number_format($equipo['pago']['monto_auxiliar'] ?? 0, 2, ',', '.'),
+                                        ]) }}
+                                    </p>
+                                    @if ($equipo['pago']['negociado'] ?? false)
+                                        <x-atoms.badge variant="success" tone="success">
+                                            {{ __('operaciones.ordenes_trabajo.pago_negociado') }}
+                                        </x-atoms.badge>
+                                    @endif
+                                    @if ($equipo['pago']['motivo'] ?? null)
+                                        <p class="ag-ordenes-trabajo-detalle__pago-motivo">
+                                            {{ __('operaciones.ordenes_trabajo.pago_negociado_motivo', ['motivo' => $equipo['pago']['motivo']]) }}
+                                        </p>
+                                    @endif
+                                @else
+                                    <p class="ag-ordenes-trabajo-detalle__pago-texto">
+                                        {{ __('operaciones.ordenes_trabajo.pago_sin_condicion') }}
+                                    </p>
+                                @endif
+                            </div>
+                        @endif
+
                         <x-molecules.index-table columns="6rem minmax(0, 2fr) 7rem minmax(0, 1.2fr) 7rem var(--ag-row-actions-width)">
                             <x-slot:head>
                                 <span role="columnheader">{{ __('operaciones.ordenes_trabajo.col_nro_trabajo') }}</span>

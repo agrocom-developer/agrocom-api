@@ -24,7 +24,7 @@ use Illuminate\View\View;
 
 /**
  * `GET/POST/PUT/DELETE /panel/personas*` (HU-26, tarea 37): alta y
- * mantenimiento de personas operativas, con su rol y tarifa por hectárea.
+ * mantenimiento de personas operativas, con su rol y base.
  * Mismo molde que `BasesController` (misma tarea), pero con un `select`
  * adicional de base (opcional) — mismo criterio que `cliente_id` en
  * `CamposController`.
@@ -33,9 +33,8 @@ use Illuminate\View\View;
  * (`personal.persona.ver`/`.crear`/`.editar`/`.eliminar`), verificados
  * DENTRO del controlador contra el ROL ACTIVO vía {@see AutorizacionPanelWeb}
  * — mismo criterio que el resto del panel. Ninguna regla de negocio acá: los
- * casos de uso de `Aplicacion/` hacen el trabajo. Editar `tarifa_ha` acá NO
- * afecta devengos ya generados — `Finanzas/GenerarDevengosSesion` congela su
- * propia copia al validarse la sesión (ver `ActualizarPersona`).
+ * casos de uso de `Aplicacion/` hacen el trabajo. La tarifa ya no se edita
+ * acá (ADR 0023): es del trabajo, no de la persona.
  */
 final class PersonasController
 {

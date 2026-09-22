@@ -293,6 +293,13 @@ class SeguridadSeeder extends Seeder
         // validando el tope, para no adelantar más de lo devengado". Grano
         // fino sin `.editar`: un anticipo, una vez creado, es inmutable
         // salvo baja (ver `Aplicacion/RegistrarAnticipo`).
+        // ADR 0023 (22/9/2026): tarifas de pago al personal — la configuración
+        // de pago base de Finanzas (por día o por hectárea, montos por
+        // puesto). Grano fino completo: es un catálogo que se edita.
+        'finanzas.tarifa.ver' => 'Ver el catálogo de tarifas de pago al personal',
+        'finanzas.tarifa.crear' => 'Crear una tarifa de pago',
+        'finanzas.tarifa.editar' => 'Editar una tarifa de pago',
+        'finanzas.tarifa.eliminar' => 'Dar de baja (lógica) una tarifa de pago',
         'finanzas.anticipo.ver' => 'Ver el listado de anticipos',
         'finanzas.anticipo.crear' => 'Registrar un anticipo, validado contra el tope del mes',
         'finanzas.anticipo.eliminar' => 'Dar de baja (lógica) un anticipo registrado por error',
@@ -610,6 +617,12 @@ class SeguridadSeeder extends Seeder
         'finanzas.anticipo.ver',
         'finanzas.anticipo.crear',
         'finanzas.anticipo.eliminar',
+        // ADR 0023: el encargado arma las órdenes de trabajo y mantiene el
+        // catálogo de tarifas del que parten.
+        'finanzas.tarifa.ver',
+        'finanzas.tarifa.crear',
+        'finanzas.tarifa.editar',
+        'finanzas.tarifa.eliminar',
         // HU-30 (tarea 44): "como dueño, quiero generar la planilla..." — el
         // encargado genera y consulta, pero NO aprueba: `.aprobar` queda
         // fuera de esta lista a propósito (exclusivo del rol `dueno`, ver

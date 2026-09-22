@@ -13,12 +13,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * rol, base_id, activo. `sueldo_mensual` (jefe/encargado) sigue diferido a
  * planilla — fuera de alcance de HU-16.
  *
- * `tarifa_ha` (HU-16, tarea 16): agregada por `ALTER TABLE`, nullable y sin
- * default de negocio — las `per_personas` de antes de esta migración no
- * tienen tarifa. Qué pasa si una persona sin `tarifa_ha` termina siendo
- * `piloto_id`/`auxiliar_id` de una sesión que se valida es una decisión de
- * `Finanzas/Aplicacion/GenerarDevengosSesion.php`, no de este modelo — ver
- * runs/16.md.
+ * Sin tarifa (ADR 0023, 22/9/2026): `tarifa_ha` vivió acá desde HU-16 y se
+ * retiró — lo que cobra una persona depende del trabajo (condición de pago
+ * por equipo en la Orden de Trabajo, tarifas del catálogo de Finanzas), no
+ * de quién es.
  *
  * `PerBase` es del mismo módulo (Personal), así que el `belongsTo` es
  * legítimo — lo que está prohibido es cruzar hacia modelos Eloquent de
@@ -26,9 +24,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * `RegistraBitacora` (HU-26, tarea 37): mismo criterio que {@see PerBase} —
  * el alta, edición y baja de una persona es una mutación de negocio con
- * autor y momento auditables. No altera cómo `Finanzas/GenerarDevengosSesion`
- * congela `tarifa_ha` en el devengo: ese caso de uso copia el valor al
- * generarse, nunca lo relee de esta tabla después.
+ * autor y momento auditables.
  *
  * Datos personales y de referencia (21/9/2026): `nombres`,
  * `apellido_paterno`, `apellido_materno`, `ci`, `celular`, `correo` y
@@ -47,7 +43,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $correo
  * @property string|null $direccion
  * @property RolOperativoPersona $rol
- * @property string|null $tarifa_ha
  * @property int|null $base_id
  * @property bool $activo
  */
@@ -68,7 +63,6 @@ class PerPersona extends ModeloDominio
         'correo',
         'direccion',
         'rol',
-        'tarifa_ha',
         'base_id',
         'activo',
     ];
@@ -78,7 +72,6 @@ class PerPersona extends ModeloDominio
     {
         return [
             'rol' => RolOperativoPersona::class,
-            'tarifa_ha' => 'decimal:2',
             'activo' => 'boolean',
         ];
     }

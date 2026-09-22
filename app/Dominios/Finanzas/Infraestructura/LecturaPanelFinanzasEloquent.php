@@ -43,8 +43,10 @@ final class LecturaPanelFinanzasEloquent implements LecturaPanelFinanzas
                 sesionId: $devengo->sesion_id,
                 fecha: $devengo->fecha->toDateString(),
                 hectareas: (string) $devengo->hectareas,
-                tarifaHa: (string) $devengo->tarifa_ha,
+                tarifa: (string) $devengo->tarifa,
                 monto: (string) $devengo->monto,
+                modalidad: $devengo->modalidad->etiqueta(),
+                absorbido: $devengo->estaAbsorbido(),
             ))
             ->values()
             ->all();

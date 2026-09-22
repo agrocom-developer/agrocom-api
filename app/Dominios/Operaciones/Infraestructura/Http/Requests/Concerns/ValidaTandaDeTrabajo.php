@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Operaciones\Infraestructura\Http\Requests\Concerns;
 
+use App\Dominios\Finanzas\Contratos\ModalidadPago;
 use App\Dominios\Operaciones\Dominio\ProductoCalda;
 use App\Dominios\Operaciones\Dominio\TipoInsumo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
@@ -55,6 +56,20 @@ trait ValidaTandaDeTrabajo
                 'distinct',
                 Rule::exists('per_equipos_trabajo', 'id')->whereNull('deleted_at'),
             ],
+            // Condición de pago del equipo (ADR 0023): una tarifa del catálogo,
+            // o —si se negoció para este trabajo— modalidad, montos y motivo.
+            'equipos.*.pago' => ['required', 'array'],
+            'equipos.*.pago.negociado' => ['nullable', 'boolean'],
+            'equipos.*.pago.tarifa_id' => [
+                'nullable',
+                'integer',
+                'required_unless:equipos.*.pago.negociado,1',
+                Rule::exists('fin_tarifas', 'id')->whereNull('deleted_at'),
+            ],
+            'equipos.*.pago.modalidad' => ['nullable', 'required_if:equipos.*.pago.negociado,1', Rule::enum(ModalidadPago::class)],
+            'equipos.*.pago.monto_piloto' => ['nullable', 'required_if:equipos.*.pago.negociado,1', 'numeric', 'min:0'],
+            'equipos.*.pago.monto_auxiliar' => ['nullable', 'required_if:equipos.*.pago.negociado,1', 'numeric', 'min:0'],
+            'equipos.*.pago.motivo' => ['nullable', 'required_if:equipos.*.pago.negociado,1', 'string', 'max:255'],
             'equipos.*.lotes' => ['required', 'array', 'min:1'],
             'equipos.*.lotes.*.lote_id' => [
                 'required',

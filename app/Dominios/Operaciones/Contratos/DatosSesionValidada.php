@@ -2,19 +2,26 @@
 
 namespace App\Dominios\Operaciones\Contratos;
 
+use App\Dominios\Finanzas\Contratos\CondicionPago;
+
 /**
- * Forma de dato primitiva de una sesión para quien necesita calcular algo
- * sobre ella sin importar el modelo Eloquent `Sesion` (ADR 0003, regla 2):
- * hoy, `Finanzas` (HU-16, tarea 16) para generar el devengo del piloto y su
- * auxiliar. Solo los tres campos que ese cálculo necesita — no es un
- * duplicado de `Sesion`, es el recorte que le corresponde a este contrato.
+ * Lo que Finanzas necesita de una sesión validada para devengar (ADR 0023):
+ * quiénes trabajaron, cuántas hectáreas, qué día, y con qué condición de
+ * pago —la del equipo en la Orden de Trabajo del trabajo de la sesión, o
+ * `null` si ese trabajo no la tiene (Finanzas cae a la tarifa predeterminada).
+ *
+ * `fecha` es el día de la sesión (`inicio`), en `Y-m-d`: es la clave del
+ * jornal, no el día en que alguien la validó.
  */
 final readonly class DatosSesionValidada
 {
     public function __construct(
         public int $sesionId,
+        public int $trabajoId,
         public int $pilotoId,
         public ?int $auxiliarId,
         public string $hectareasDeclaradas,
+        public string $fecha,
+        public ?CondicionPago $condicionPago,
     ) {}
 }

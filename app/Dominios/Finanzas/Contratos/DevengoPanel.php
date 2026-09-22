@@ -14,7 +14,9 @@ final readonly class DevengoPanel
         public int $sesionId,
         public string $fecha,
         public string $hectareas,
-        public string $tarifaHa,
+        public string $tarifa,
         public string $monto,
+        public string $modalidad,
+        public bool $absorbido,
     ) {}
 }

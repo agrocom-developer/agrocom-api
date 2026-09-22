@@ -67,6 +67,9 @@
     $equiposDisponibles = $equiposDisponibles ?? collect();
     $puedeCrearCuadrilla = $puedeCrearCuadrilla ?? false;
     $ordenSinPendiente = $ordenSinPendiente ?? false;
+    $tarifasDisponibles = $tarifasDisponibles ?? [];
+    $tarifaPredeterminadaId = $tarifaPredeterminadaId ?? null;
+    $modalidadesPago = $modalidadesPago ?? [];
 
     $ordenId = old('orden_id', $ordenPreseleccionadaId ?? '');
     $ordenElegida = $ordenId !== '' && isset($datosOrden[$ordenId]) ? $datosOrden[$ordenId] : null;
@@ -109,6 +112,9 @@
             data-ag-url-cuadrilla="{{ route('panel.cuadrillas.create') }}"
             data-ag-volver-texto="{{ __('operaciones.ordenes_trabajo.crear_titulo') }}"
             data-ag-ordenes="{{ json_encode($datosOrden) }}"
+            data-ag-tarifas="{{ json_encode($tarifasDisponibles) }}"
+            data-ag-tarifa-predeterminada="{{ $tarifaPredeterminadaId }}"
+            data-ag-modalidades-pago="{{ json_encode($modalidadesPago) }}"
             novalidate
         >
             @csrf
@@ -375,6 +381,9 @@
                                 'equiposDisponibles' => $equiposDisponibles,
                                 'urlCrearCuadrilla' => $urlCrearCuadrilla,
                                 'puedeCrearCuadrilla' => $puedeCrearCuadrilla,
+                                'tarifasDisponibles' => $tarifasDisponibles,
+                                'tarifaPredeterminadaId' => $tarifaPredeterminadaId,
+                                'modalidadesPago' => $modalidadesPago,
                             ])
                         @endfor
                     </div>
@@ -399,6 +408,9 @@
                             'equiposDisponibles' => $equiposDisponibles,
                             'urlCrearCuadrilla' => $urlCrearCuadrilla,
                             'puedeCrearCuadrilla' => $puedeCrearCuadrilla,
+                            'tarifasDisponibles' => $tarifasDisponibles,
+                            'tarifaPredeterminadaId' => $tarifaPredeterminadaId,
+                            'modalidadesPago' => $modalidadesPago,
                         ])
                     </template>
                 @endforeach

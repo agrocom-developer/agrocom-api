@@ -2,43 +2,62 @@
 
 namespace App\Dominios\Finanzas\Aplicacion;
 
-use App\Dominios\Finanzas\Dominio\Excepciones\PersonaSinTarifaHa;
+use App\Dominios\Finanzas\Contratos\LecturaTarifasPago;
+use App\Dominios\Finanzas\Contratos\ModalidadPago;
+use App\Dominios\Finanzas\Dominio\Excepciones\TrabajoSinCondicionDePago;
 use App\Dominios\Finanzas\Infraestructura\Eloquent\DevengoPersonal;
 use App\Dominios\Operaciones\Contratos\DatosSesionValidada;
 use App\Dominios\Operaciones\Contratos\LecturaSesionValidada;
-use App\Dominios\Personal\Contratos\LecturaTarifaPersona;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
 use Illuminate\Database\QueryException;
-use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Caso de uso "generar el devengo de una sesión validada" (espec §4.4, §5;
- * HU-16, tarea 16): lo invoca el listener de `SesionValidada` — nunca nada
- * relacionado con `cerrar()` (invariante 3 de CLAUDE.md, literal).
+ * HU-16; ADR 0023 desde el 22/9/2026): lo invoca el listener de
+ * `SesionValidada` — nunca nada relacionado con `cerrar()` (invariante 3 de
+ * CLAUDE.md, literal).
+ *
+ * La condición de pago viene CON la sesión (`DatosSesionValidada::$condicionPago`):
+ * la resolvió Operaciones desde la Orden de Trabajo del trabajo de la sesión
+ * (tarifa elegida o negociada por equipo). Si el trabajo no la tiene —nació
+ * antes de la reforma, o fuera de una Orden de Trabajo— se usa la tarifa
+ * predeterminada del catálogo; sin ninguna de las dos no hay cómo calcular y
+ * se lanza {@see TrabajoSinCondicionDePago}, que revierte la validación
+ * entera (ver `MaquinaEstadosSesion::validar()`).
  *
  * Genera el devengo del piloto SIEMPRE, y el del auxiliar solo si
- * `auxiliarId` no es `null` (espec §5: "Genera el devengo de ese piloto y su
- * auxiliar").
+ * `auxiliarId` no es `null` (espec §5), cada uno con el monto de su puesto.
  *
- * `monto` con aritmética decimal exacta, nunca `float` (invariante 6 de
- * CLAUDE.md): ver {@see self::calcularMonto()} para por qué es
- * `Brick\Math\BigDecimal` y no la extensión `bcmath` que el prompt de la
- * tarea nombraba — documentado en runs/16.md.
+ * Dos modalidades:
+ * - **Por hectárea**: `monto = hectareas × tarifa`, una fila por sesión y
+ *   persona (`UNIQUE (sesion_id, persona_id)`).
+ * - **Por día (jornal)**: `monto = tarifa`, UNA fila por persona y fecha
+ *   (`fin_devengos_personal_jornal_unico`); la segunda sesión del día no
+ *   suma nada.
+ *
+ * Día mixto (decisión del dueño, 22/9/2026: «solo el jornal»): si la persona
+ * tiene jornal ese día, lo por hectárea de esa fecha queda `absorbido_por_id`
+ * → el jornal, en cualquier orden en que lleguen las validaciones. La fila
+ * absorbida no se borra ni cambia su monto (invariante 6: sigue siendo
+ * recalculable); solo deja de sumar (`DevengoPersonal::pagables()`).
+ *
+ * Aritmética decimal exacta con `Brick\Math\BigDecimal`, nunca `float`
+ * (invariante 6; ver [[bcmath-no-instalado-usar-brick-math]]).
  */
 final class GenerarDevengosSesion
 {
     public function __construct(
         private readonly LecturaSesionValidada $lecturaSesion,
-        private readonly LecturaTarifaPersona $lecturaTarifa,
+        private readonly LecturaTarifasPago $tarifas,
     ) {}
 
     /**
      * No hace nada si `$sesionId` no resuelve a una sesión (defensivo: el
      * evento solo debería dispararse tras persistir la fila).
      *
-     * @throws PersonaSinTarifaHa si el piloto, o el auxiliar cuando existe,
-     *                            no tiene `tarifa_ha` configurada.
+     * @throws TrabajoSinCondicionDePago si ni el trabajo ni el catálogo dan una condición de pago.
      */
     public function ejecutar(int $sesionId): void
     {
@@ -48,71 +67,129 @@ final class GenerarDevengosSesion
             return;
         }
 
-        $this->generarPara($sesion, $sesion->pilotoId);
+        $condicion = $sesion->condicionPago ?? $this->tarifas->predeterminada()?->comoCondicion();
+
+        if ($condicion === null) {
+            throw TrabajoSinCondicionDePago::paraSesion($sesionId);
+        }
+
+        $this->generarPara($sesion, $sesion->pilotoId, $condicion->montoPiloto, $condicion->modalidad);
 
         if ($sesion->auxiliarId !== null) {
-            $this->generarPara($sesion, $sesion->auxiliarId);
+            $this->generarPara($sesion, $sesion->auxiliarId, $condicion->montoAuxiliar, $condicion->modalidad);
         }
+    }
+
+    private function generarPara(DatosSesionValidada $sesion, int $personaId, string $tarifa, ModalidadPago $modalidad): void
+    {
+        match ($modalidad) {
+            ModalidadPago::PorDia => $this->generarJornal($sesion, $personaId, $tarifa),
+            ModalidadPago::PorHa => $this->generarPorHectarea($sesion, $personaId, $tarifa),
+        };
     }
 
     /**
      * Idempotente por `UNIQUE (sesion_id, persona_id)` (invariante 3,
      * literal): intenta crear, y si la base rechaza por duplicado —segunda
      * capa, detrás de la que ya garantiza `MaquinaEstadosSesion::validar()`
-     * no repitiendo el evento— lo trata como "ya aplicado", mismo criterio
-     * que `EscrituraSincronizacionEloquent::abrirSesion()` con
-     * `uuid_cliente`. Cualquier otra `QueryException` se relanza: no es el
-     * caso que este método sabe resolver.
+     * no repitiendo el evento— lo trata como "ya aplicado". Cualquier otra
+     * `QueryException` se relanza.
+     *
+     * Si ese día la persona ya cobró jornal, la fila nace absorbida.
      */
-    private function generarPara(DatosSesionValidada $sesion, int $personaId): void
+    private function generarPorHectarea(DatosSesionValidada $sesion, int $personaId, string $tarifa): void
     {
-        $tarifaHa = $this->lecturaTarifa->tarifaHaDe($personaId);
+        $jornal = $this->jornalDelDia($personaId, $sesion->fecha);
 
-        if ($tarifaHa === null) {
-            throw PersonaSinTarifaHa::paraPersona($personaId);
+        $this->crear([
+            'sesion_id' => $sesion->sesionId,
+            'trabajo_id' => $sesion->trabajoId,
+            'persona_id' => $personaId,
+            'modalidad' => ModalidadPago::PorHa,
+            'hectareas' => $sesion->hectareasDeclaradas,
+            'tarifa' => $tarifa,
+            'monto' => $this->calcularMonto($sesion->hectareasDeclaradas, $tarifa),
+            'fecha' => $sesion->fecha,
+            'absorbido_por_id' => $jornal?->id,
+        ]);
+    }
+
+    /**
+     * Un jornal por persona y fecha: si ya existe, la sesión no agrega nada.
+     * El índice único parcial es la segunda capa detrás de esta consulta. Al
+     * crearlo, absorbe lo que esa persona ya tuviera por hectárea ese día.
+     */
+    private function generarJornal(DatosSesionValidada $sesion, int $personaId, string $tarifa): void
+    {
+        if ($this->jornalDelDia($personaId, $sesion->fecha) !== null) {
+            return;
         }
 
+        $jornal = $this->crear([
+            'sesion_id' => $sesion->sesionId,
+            'trabajo_id' => $sesion->trabajoId,
+            'persona_id' => $personaId,
+            'modalidad' => ModalidadPago::PorDia,
+            'hectareas' => $sesion->hectareasDeclaradas,
+            'tarifa' => $tarifa,
+            'monto' => BigDecimal::of($tarifa)->toScale(2, RoundingMode::HalfUp)->__toString(),
+            'fecha' => $sesion->fecha,
+            'absorbido_por_id' => null,
+        ]);
+
+        if ($jornal === null) {
+            return;
+        }
+
+        DevengoPersonal::query()
+            ->pagables()
+            ->where('persona_id', $personaId)
+            ->whereDate('fecha', $sesion->fecha)
+            ->where('modalidad', ModalidadPago::PorHa->value)
+            ->get()
+            ->each(fn (DevengoPersonal $devengo) => $devengo->forceFill(['absorbido_por_id' => $jornal->id])->save());
+    }
+
+    private function jornalDelDia(int $personaId, string $fecha): ?DevengoPersonal
+    {
+        return DevengoPersonal::query()
+            ->where('persona_id', $personaId)
+            ->whereDate('fecha', $fecha)
+            ->where('modalidad', ModalidadPago::PorDia->value)
+            ->first();
+    }
+
+    /**
+     * @param  array<string, mixed>  $atributos
+     * @return DevengoPersonal|null `null` si la base lo rechazó por duplicado (ya aplicado).
+     */
+    private function crear(array $atributos): ?DevengoPersonal
+    {
         try {
-            DevengoPersonal::create([
-                'sesion_id' => $sesion->sesionId,
-                'persona_id' => $personaId,
-                'hectareas' => $sesion->hectareasDeclaradas,
-                'tarifa_ha' => $tarifaHa,
-                'monto' => $this->calcularMonto($sesion->hectareasDeclaradas, $tarifaHa),
-                'fecha' => Carbon::now()->toDateString(),
-            ]);
+            // Transacción anidada = SAVEPOINT: si la base rechaza el INSERT,
+            // se vuelve al savepoint y la transacción de la validación (que
+            // envuelve a este listener) sigue viva en Postgres; sin él, un
+            // duplicado atrapado dejaría la transacción abortada (25P02).
+            return DB::transaction(fn (): DevengoPersonal => DevengoPersonal::create($atributos));
         } catch (QueryException $excepcion) {
             if (! $this->esViolacionDeUnicidad($excepcion)) {
                 throw $excepcion;
             }
+
+            return null;
         }
     }
 
     /**
-     * El prompt de esta tarea pedía `bcmath` (`bcmul`, escala 2) — la
-     * extensión `ext-bcmath` no está instalada ni en el `Dockerfile` local ni
-     * en `.github/workflows/ci.yml` (`shivammathur/setup-php` solo agrega
-     * `pgsql, pdo_pgsql`), y ese workflow es zona congelada del turno noche
-     * que esta tarea no declaró descongelar (`descongela=tests`, no
-     * `=github`). `Brick\Math\BigDecimal` cumple el mismo objetivo —
-     * aritmética decimal exacta, nunca `float`— sin esa dependencia externa:
-     * ya es una dependencia real del propio Laravel (`HasAttributes::asDecimal()`,
-     * el método detrás de cada cast `decimal:N` de este proyecto, incluido
-     * `DevengoPersonal::casts()`, ya la usa). Documentado en runs/16.md.
-     *
-     * `hectareas`/`tarifa_ha` son `DECIMAL(*, 2)`: su producto exacto tiene
-     * como mucho 4 decimales, sin pérdida en `multipliedBy()`. El redondeo al
-     * centavo (`toScale(2, RoundingMode::HalfUp)`) es deliberado: truncar en
-     * vez de redondear significa que el piloto cobra sistemáticamente de
-     * menos por fracciones de centavo — sesgado, no "exacto". Con
-     * `hectareas = 3.33`, `tarifa_ha = 12.35` (el caso de la tarea): el
-     * producto exacto es `41.1255`; el monto correcto es `41.13`, no un
-     * `41.12` truncado.
+     * `hectareas`/`tarifa` son `DECIMAL(*, 2)`: su producto exacto tiene como
+     * mucho 4 decimales. Se redondea al centavo (`HalfUp`), no se trunca:
+     * truncar haría que el piloto cobre sistemáticamente de menos. Con
+     * `3.33 × 12.35 = 41.1255` el monto correcto es `41.13`.
      */
-    private function calcularMonto(string $hectareas, string $tarifaHa): string
+    private function calcularMonto(string $hectareas, string $tarifa): string
     {
         return (string) BigDecimal::of($hectareas)
-            ->multipliedBy($tarifaHa)
+            ->multipliedBy($tarifa)
             ->toScale(2, RoundingMode::HalfUp);
     }
 
@@ -121,6 +198,7 @@ final class GenerarDevengosSesion
         $mensaje = $excepcion->getMessage();
 
         return str_contains($mensaje, 'fin_devengos_personal_sesion_persona_unico')
+            || str_contains($mensaje, 'fin_devengos_personal_jornal_unico')
             || str_contains($mensaje, 'fin_devengos_personal.sesion_id');
     }
 }

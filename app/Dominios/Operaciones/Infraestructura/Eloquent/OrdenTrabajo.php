@@ -97,4 +97,14 @@ class OrdenTrabajo extends ModeloDominio
     {
         return $this->hasMany(Trabajo::class, 'orden_trabajo_id');
     }
+
+    /**
+     * Condición de pago de cada equipo de la orden (ADR 0023).
+     *
+     * @return HasMany<OrdenTrabajoEquipo, $this>
+     */
+    public function equipos(): HasMany
+    {
+        return $this->hasMany(OrdenTrabajoEquipo::class, 'orden_trabajo_id');
+    }
 }

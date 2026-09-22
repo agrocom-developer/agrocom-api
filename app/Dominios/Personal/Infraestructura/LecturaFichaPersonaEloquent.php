@@ -9,7 +9,7 @@ use App\Dominios\Personal\Infraestructura\Eloquent\PerPersona;
 /**
  * Implementación Eloquent del contrato de ficha de persona. Vive fuera de
  * `Infraestructura/Eloquent/` a propósito, mismo criterio que
- * `LecturaTarifaPersonaEloquent`: esa subcarpeta es de modelos.
+ * `LecturaPersonasEloquent`: esa subcarpeta es de modelos.
  */
 final class LecturaFichaPersonaEloquent implements LecturaFichaPersona
 {

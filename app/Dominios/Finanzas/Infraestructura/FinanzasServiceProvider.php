@@ -10,6 +10,7 @@ use App\Dominios\Finanzas\Contratos\LecturaContadoresPanel;
 use App\Dominios\Finanzas\Contratos\LecturaGastoMantenimiento;
 use App\Dominios\Finanzas\Contratos\LecturaGastoPorCampania;
 use App\Dominios\Finanzas\Contratos\LecturaPanelFinanzas;
+use App\Dominios\Finanzas\Contratos\LecturaTarifasPago;
 use App\Dominios\Operaciones\Contratos\Eventos\SesionValidada;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\View;
@@ -45,6 +46,7 @@ final class FinanzasServiceProvider extends ServiceProvider
         $this->app->bind(LecturaGastoPorCampania::class, LecturaGastoPorCampaniaEloquent::class);
         $this->app->bind(LecturaAnticiposPorPersona::class, LecturaAnticiposPorPersonaEloquent::class);
         $this->app->bind(LecturaCombustiblePorRecurso::class, LecturaCombustiblePorRecursoEloquent::class);
+        $this->app->bind(LecturaTarifasPago::class, LecturaTarifasPagoEloquent::class);
     }
 
     public function boot(): void
