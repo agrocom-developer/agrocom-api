@@ -56,6 +56,39 @@
                 </x-molecules.alert-strip>
             @endif
 
+            {{-- Franja fija de KPI (22/9/2026): el catálogo y qué hay sembrado en
+                 las campañas abiertas. Lo que crece con los datos va al tablero. --}}
+            @if ($cultivos->isNotEmpty() || $resumen['cultivos'] > 0)
+                <div class="ag-cultivos__kpis">
+                    <x-molecules.stat-card
+                        :label="__('comercial.cultivos.kpi_cultivos')"
+                        icon="eco"
+                        :value="$resumen['cultivos']"
+                        :state="$resumen['cultivos'] > 0 ? 'info' : null"
+                    />
+                    <x-molecules.stat-card
+                        :label="__('comercial.cultivos.kpi_sembrados')"
+                        icon="grass"
+                        :value="$resumen['sembrados']"
+                        :foot="$resumen['campanias'] !== [] ? __('comercial.cultivos.kpi_campanias_pie', ['campanias' => implode(', ', $resumen['campanias'])]) : __('comercial.cultivos.kpi_sin_campania_pie')"
+                        :state="$resumen['sembrados'] > 0 ? 'success' : null"
+                    />
+                    <x-molecules.stat-card
+                        :label="__('comercial.cultivos.kpi_lotes')"
+                        icon="grid_view"
+                        :value="$resumen['lotes']"
+                        :state="$resumen['lotes'] > 0 ? 'distintivo-1' : null"
+                    />
+                    <x-molecules.stat-card
+                        :label="__('comercial.cultivos.kpi_hectareas')"
+                        icon="landscape"
+                        :value="number_format((float) $resumen['hectareas'], 2, ',', '.')"
+                        :value-suffix="__('comercial.cultivos.kpi_unidad_ha')"
+                        :state="$resumen['hectareas'] !== '0.00' ? 'distintivo-2' : null"
+                    />
+                </div>
+            @endif
+
             @php
                 $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
                 $filtrosActivosCount = collect(['tipo_cultivo', 'ciclo_vida'])

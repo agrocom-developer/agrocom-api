@@ -15,6 +15,7 @@ use App\Dominios\Comercial\Dominio\Excepciones\ActivacionContratoNoDisponible;
 use App\Dominios\Comercial\Dominio\Excepciones\CampaniaNoAbierta;
 use App\Dominios\Comercial\Dominio\Excepciones\ContratoConAplicacionAbierta;
 use App\Dominios\Comercial\Dominio\Excepciones\LoteAjenoAlCliente;
+use App\Dominios\Comercial\Dominio\Excepciones\LotesDeDistintoCultivo;
 use App\Dominios\Comercial\Dominio\Excepciones\LotesYaContratados;
 use App\Dominios\Comercial\Dominio\Excepciones\TransicionContratoNoPermitida;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
@@ -163,7 +164,7 @@ final class ContratosController
                 ->route('panel.contratos.create')
                 ->withInput()
                 ->withErrors(['campania_id' => $excepcion->getMessage()]);
-        } catch (LoteAjenoAlCliente|LotesYaContratados $excepcion) {
+        } catch (LoteAjenoAlCliente|LotesYaContratados|LotesDeDistintoCultivo $excepcion) {
             return redirect()
                 ->route('panel.contratos.create')
                 ->withInput()
@@ -360,7 +361,7 @@ final class ContratosController
                 ->route('panel.contratos.edit', $contrato)
                 ->withInput()
                 ->withErrors(['campania_id' => $excepcion->getMessage()]);
-        } catch (LoteAjenoAlCliente|LotesYaContratados $excepcion) {
+        } catch (LoteAjenoAlCliente|LotesYaContratados|LotesDeDistintoCultivo $excepcion) {
             return redirect()
                 ->route('panel.contratos.edit', $contrato)
                 ->withInput()
