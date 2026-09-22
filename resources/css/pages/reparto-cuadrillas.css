@@ -1,17 +1,17 @@
 /*
  * Pages: reparto-cuadrillas/index, show
  * (app/Dominios/Operaciones/Infraestructura/Http/Views/pages/reparto-cuadrillas/)
- * — tarea 85, HU-70; ampliado a N lotes/N equipos por HU-92, tarea 107.
- * Listado mismo molde que ordenes.css; la ficha (`show`) suma resumen de
- * hectáreas + lista de lotes + lista de equipos asignados + formulario de
- * reparto en bloque (repetible anidado equipos→lotes), mismo patrón visual
- * que cuadrillas.css.
+ * — tarea 85, HU-70; ampliado a N lotes/N equipos por HU-92, tarea 107; la
+ * ficha (`show`) pasó al arquetipo Detalle en la tarea 124 — su resumen de
+ * hectáreas, la lista de lotes y la de equipos asignados ya los resuelve el
+ * catálogo (`molecules/stat-card`, `molecules/index-table`,
+ * `resources/css/pages/detalle.css`); acá solo queda lo propio del
+ * formulario de reparto en bloque (repetible anidado equipos→lotes).
  *
  * Todo color y medida por token (CLAUDE.md invariante 11).
  */
 
-.ag-reparto-cuadrillas,
-.ag-reparto-cuadrillas-ficha {
+.ag-reparto-cuadrillas {
     display: flex;
     flex-direction: column;
     gap: var(--ag-space-5);
@@ -19,100 +19,23 @@
 
 /* Listado (index) — la tabla, su cabecera, el hover y el colapso mobile los
    pone `molecules/index-table` (tarea 114); acá solo queda la alineación de
-   las cifras en columna. */
-
+   las cifras en columna. También la usan las tablas de solo lectura de la
+   ficha (lotes, equipos asignados). */
 .ag-reparto-cuadrillas__mono {
     font-variant-numeric: tabular-nums;
 }
 
-/* Ficha (show) */
-
-.ag-reparto-cuadrillas-ficha__resumen {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
-    gap: var(--ag-space-4);
-    padding: var(--ag-space-4);
-    border: 1px solid var(--ag-color-border-card);
-    border-radius: var(--ag-radius-md);
-    background-color: var(--ag-color-surface-card);
-}
-
-.ag-reparto-cuadrillas-ficha__campo strong {
-    display: block;
-    color: var(--ag-color-text-muted);
+/* Ficha (show): texto de ayuda de "Condiciones de vuelo" — mismo criterio
+   que `.ag-ordenes-form__ayuda` (ordenes.css): acá va aparte del prop `help`
+   del átomo porque no cuelga de un único campo, sino de la sección entera. */
+.ag-reparto-cuadrillas-ficha__ayuda {
+    margin: 0;
     font-size: var(--ag-font-size-xs);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    margin-bottom: var(--ag-space-1);
-}
-
-.ag-reparto-cuadrillas-ficha__seccion {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-4);
-}
-
-.ag-reparto-cuadrillas-ficha__lista {
-    border: 1px solid var(--ag-color-border-card);
-    border-radius: var(--ag-radius-md);
-    background-color: var(--ag-color-surface-card);
-    overflow: hidden;
-}
-
-.ag-reparto-cuadrillas-ficha__fila {
-    display: grid;
-    grid-template-columns: 1fr 1fr auto;
-    gap: var(--ag-space-4);
-    align-items: center;
-    padding: var(--ag-space-3) var(--ag-space-4);
-    border-top: 1px solid var(--ag-color-border-row);
-    font-size: var(--ag-font-size-sm);
-}
-
-.ag-reparto-cuadrillas-ficha__fila:first-child {
-    border-top: none;
-}
-
-.ag-reparto-cuadrillas-ficha__mono {
-    font-variant-numeric: tabular-nums;
-}
-
-/* Lista "Lotes de la orden" (HU-92, tarea 107): cuatro columnas — lote,
-   solicitadas, asignadas, restantes — mismo molde de tarjeta que
-   `__lista`/`__fila`, con su propia clase por tener otra cantidad de
-   columnas. */
-.ag-reparto-cuadrillas-ficha__lote-lista {
-    border: 1px solid var(--ag-color-border-card);
-    border-radius: var(--ag-radius-md);
-    background-color: var(--ag-color-surface-card);
-    overflow: hidden;
-}
-
-.ag-reparto-cuadrillas-ficha__lote-linea {
-    display: grid;
-    grid-template-columns: 1fr repeat(3, minmax(6rem, auto));
-    gap: var(--ag-space-4);
-    align-items: center;
-    padding: var(--ag-space-3) var(--ag-space-4);
-    border-top: 1px solid var(--ag-color-border-row);
-    font-size: var(--ag-font-size-sm);
-}
-
-.ag-reparto-cuadrillas-ficha__lote-linea:first-child {
-    border-top: none;
+    color: var(--ag-color-text-muted);
 }
 
 /* Formulario de reparto en bloque (HU-92, tarea 107): repetible anidado —
    N equipos, cada uno con su propia lista repetible de lotes+hectáreas. */
-.ag-reparto-cuadrillas-ficha__alta {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-4);
-    padding: var(--ag-space-4);
-    border: 1px dashed var(--ag-color-border-card);
-    border-radius: var(--ag-radius-md);
-}
-
 .ag-reparto-cuadrillas-ficha__equipo-fila {
     display: flex;
     flex-direction: column;
@@ -152,47 +75,4 @@
 .ag-reparto-cuadrillas-ficha__lote-fila .ag-select {
     min-width: 14rem;
     margin-bottom: 0;
-}
-
-@media (max-width: 992px) {
-    .ag-reparto-cuadrillas-ficha__fila,
-    .ag-reparto-cuadrillas-ficha__lote-linea {
-        grid-template-columns: 1fr;
-        gap: var(--ag-space-1);
-    }
-}
-
-/* Subsección: Condiciones de vuelo (8 campos numéricos — humedad, viento,
-   temperatura, velocidad, altura, ancho) dentro de `.ag-reparto-cuadrillas-ficha__equipo-fila`.
-   El grid de dos columnas lo da `ag-form-section__body` (aplicada junto a
-   esta clase en el Blade) — acá solo el separador con la cabecera del
-   equipo de arriba. */
-.ag-reparto-cuadrillas-ficha__condiciones-vuelo {
-    padding-top: var(--ag-space-4);
-    border-top: 1px solid var(--ag-color-border-row);
-}
-
-/* Título de la subsección "Condiciones de vuelo" — etiqueta igual que los
-   labels de campo (font-size/color/peso), pero no va dentro de un <label>
-   (no hay un único control a etiquetar — hay 8). Ocupa el ancho completo
-   para que los 8 inputs de abajo, en su grid, empiecen en la fila siguiente
-   (mismo criterio que `.ag-form-section__field--full`). */
-.ag-reparto-cuadrillas-ficha__condiciones-titulo {
-    grid-column: 1 / -1;
-    margin: 0;
-    font-size: var(--ag-font-size-sm);
-    font-weight: var(--ag-font-weight-medium);
-    color: var(--ag-color-text);
-}
-
-/* Texto de ayuda bajo el título — muted, pequeño, para aclarar qué van a
-   controlar esos 8 campos (límites/máximos del equipo según sus capacidades). */
-.ag-reparto-cuadrillas-ficha__condiciones-ayuda {
-    grid-column: 1 / -1;
-    margin: 0;
-    padding-top: 0;
-    padding-bottom: var(--ag-space-2);
-    font-size: var(--ag-font-size-sm);
-    color: var(--ag-color-text-muted);
-    border-top: none;
 }
