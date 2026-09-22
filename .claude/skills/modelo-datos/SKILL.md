@@ -102,6 +102,25 @@ que incluso una migración nueva se puede aplicar adentro (`Artisan::call('migra
 y validar —columnas, índices parciales, CHECK, el caso de uso— sin que quede nada.
 Al final se comprueba que la base quedó intacta y se borra el script.
 
+## Migraciones consolidadas (ADR 0024, 22/9/2026)
+
+`database/migrations` tiene **una migración `create_<tabla>_table` por tabla con su
+estado final** (76 tablas = 76 archivos `2026_09_23_0000NN`, en orden de claves
+foráneas), más `create_extension_unaccent`, `agrega_claves_foraneas_de_autoria`
+(todas las FK `created_by`/`updated_by` → `sec_user`, al final por el ciclo con
+`per_personas`) y `retira_migraciones_legadas`. Contar tablas = contar `create`.
+
+- Tabla nueva → `create_<tabla>_table` nuevo, con las columnas obligatorias de arriba.
+- Cambio a una tabla existente → migración `add_*`/`drop_*` normal. **No se edita el
+  `create`** de una tabla que ya vive en alguna base.
+- Cada `create` empieza con `if (Schema::hasTable(...)) return;`: así una base ya
+  migrada registra la tanda sin tocar nada. Mantener esa guarda al escribir uno a mano.
+- Cuando las alteraciones vuelvan a superar a los `create`, se reconsolida con
+  `docker exec agrocom-api-app-1 php bin/consolidar-migraciones <carpeta>` (lee el
+  esquema real de Postgres) y se verifica migrando una base vacía
+  (`docker exec -e DB_DATABASE=agrocom_verifN ... migrate --force`) y comparando el
+  volcado normalizado con la base legada: la diferencia tiene que ser cero.
+
 ## Lecturas complejas
 
 No se arman con SQL crudo disperso: van por vistas `vw_*` (ADR 0012).
