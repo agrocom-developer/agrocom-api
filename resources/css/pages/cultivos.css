@@ -14,6 +14,30 @@
  * invariante 11).
  */
 
+.ag-cultivos {
+    container: ag-cultivos / inline-size;
+}
+
+/* Franja de KPI bajo la cabecera: mismo patrón que `gastos.css` (la
+   @container consulta el wrapper, no la propia grilla). */
+.ag-cultivos__kpis {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--ag-space-4);
+}
+
+@container ag-cultivos (min-width: 36rem) {
+    .ag-cultivos__kpis {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@container ag-cultivos (min-width: 60rem) {
+    .ag-cultivos__kpis {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
 .ag-cultivos,
 .ag-cultivos-form {
     display: flex;

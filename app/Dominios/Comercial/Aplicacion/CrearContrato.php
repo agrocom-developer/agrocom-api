@@ -3,10 +3,12 @@
 namespace App\Dominios\Comercial\Aplicacion;
 
 use App\Dominios\Campania\Contratos\LecturaCampania;
+use App\Dominios\Comercial\Aplicacion\Contrato\VerificadorCultivoDelContrato;
 use App\Dominios\Comercial\Aplicacion\Contrato\VerificadorLotesDelContrato;
 use App\Dominios\Comercial\Aplicacion\MaquinaEstados\MaquinaEstadosContrato;
 use App\Dominios\Comercial\Dominio\Excepciones\CampaniaNoAbierta;
 use App\Dominios\Comercial\Dominio\Excepciones\LoteAjenoAlCliente;
+use App\Dominios\Comercial\Dominio\Excepciones\LotesDeDistintoCultivo;
 use App\Dominios\Comercial\Dominio\Excepciones\LotesYaContratados;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\ContratoLote;
@@ -72,6 +74,7 @@ final class CrearContrato
      *
      * @throws CampaniaNoAbierta si la campaña elegida no está `abierta`.
      * @throws LoteAjenoAlCliente si algún lote no pertenece a una propiedad del cliente del contrato.
+     * @throws LotesDeDistintoCultivo si los lotes sembrados mezclan cultivos o etapas en la campaña.
      * @throws LotesYaContratados si algún lote elegido ya lo retiene otro contrato vigente o pausado de la misma campaña.
      */
     public function ejecutar(array $datosContrato, array $lotes): Contrato
@@ -81,6 +84,8 @@ final class CrearContrato
         $loteIds = array_column($lotes, 'lote_id');
 
         $this->verificarLotesDelCliente($loteIds, (int) $datosContrato['cliente_id']);
+        // Un contrato agrupa lotes del mismo cultivo y la misma etapa (22/9/2026).
+        VerificadorCultivoDelContrato::verificar($loteIds, (int) $datosContrato['campania_id']);
 
         return DB::transaction(function () use ($datosContrato, $lotes, $loteIds): Contrato {
             $this->verificarLotesLibres($loteIds, (int) $datosContrato['campania_id']);

@@ -7,6 +7,7 @@ use App\Dominios\Comercial\Aplicacion\CrearCultivo;
 use App\Dominios\Comercial\Aplicacion\EliminarCultivo;
 use App\Dominios\Comercial\Aplicacion\ListarCultivos;
 use App\Dominios\Comercial\Aplicacion\ResumirSiembraDeCultivo;
+use App\Dominios\Comercial\Aplicacion\ResumirSiembraDeCultivos;
 use App\Dominios\Comercial\Dominio\CicloVidaCultivo;
 use App\Dominios\Comercial\Dominio\Excepciones\CultivoDuplicado;
 use App\Dominios\Comercial\Dominio\TipoCultivo;
@@ -45,7 +46,7 @@ final class CultivosController
 
     public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
 
-    public function index(Request $request, ListarCultivos $listarCultivos): View
+    public function index(Request $request, ListarCultivos $listarCultivos, ResumirSiembraDeCultivos $resumirSiembra): View
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
@@ -67,6 +68,9 @@ final class CultivosController
             ],
             'tiposCultivo' => TipoCultivo::cases(),
             'ciclosVida' => CicloVidaCultivo::cases(),
+            // Franja fija de KPI bajo la cabecera (22/9/2026): catálogo y
+            // siembra en las campañas abiertas. Sin filtro: es la foto global.
+            'resumen' => $resumirSiembra->ejecutar(),
         ]);
     }
 
