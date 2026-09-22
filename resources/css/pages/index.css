@@ -7,6 +7,7 @@
  * token de ../tokens/" que el resto del sistema (CLAUDE.md invariante 11).
  */
 
+@import './detalle.css';
 @import './dashboard.css';
 @import './multimedia.css';
 @import './organizacion.css';

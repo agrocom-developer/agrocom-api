@@ -3,7 +3,7 @@
     Ficha de una Orden de Trabajo. Replica la distribución de la ficha de la
     orden de aplicación (`ordenes/show.blade.php`, pedido del dueño, 21/9/2026;
     arquetipo Detalle, §6.4 de docs/diseno/guia_pantalla_panel.md) y reusa sus
-    clases `ag-ordenes-detalle*` (resources/css/pages/ordenes.css): KPI bajo la
+    clases `ag-detalle*` (resources/css/pages/ordenes.css): KPI bajo la
     cabecera; columna principal con lo que se lee de corrido; aside pegajoso con
     avance, relacionado y actividad; y debajo, a todo el ancho, los trabajos.
 
@@ -78,7 +78,7 @@
         :version="$version"
         :vista-actual="__('operaciones.ordenes_trabajo.detalle_titulo', ['id' => $ordenTrabajo->id])"
     >
-        <div class="ag-ordenes-detalle">
+        <div class="ag-detalle">
             <x-organisms.page-header
                 :title="__('operaciones.ordenes_trabajo.detalle_titulo', ['id' => $ordenTrabajo->id])"
                 :subtitle="__('operaciones.ordenes_trabajo.detalle_subtitulo', ['cliente' => $clienteLabel ?? '—', 'fecha' => $ordenTrabajo->created_at?->format('d/m/Y') ?? '—'])"
@@ -106,7 +106,7 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <div class="ag-ordenes-detalle__kpis">
+            <div class="ag-detalle__kpis">
                 <x-molecules.stat-card
                     :label="__('operaciones.ordenes_trabajo.kpi_hectareas')"
                     icon="landscape"
@@ -137,51 +137,51 @@
 
             <x-molecules.form-layout>
                 <x-molecules.form-section accent="primary-2" :title="__('operaciones.ordenes_trabajo.seccion_orden')">
-                    <div class="ag-ordenes-detalle__campo">
-                        <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes_trabajo.campo_orden') }}</p>
-                        <p class="ag-ordenes-detalle__campo-valor">{{ __('operaciones.ordenes_trabajo.detalle_orden', ['id' => $ordenTrabajo->orden_id, 'aplicacion' => $ordenTrabajo->nro_aplicacion]) }}</p>
+                    <div class="ag-detalle__campo">
+                        <p class="ag-detalle__campo-label">{{ __('operaciones.ordenes_trabajo.campo_orden') }}</p>
+                        <p class="ag-detalle__campo-valor">{{ __('operaciones.ordenes_trabajo.detalle_orden', ['id' => $ordenTrabajo->orden_id, 'aplicacion' => $ordenTrabajo->nro_aplicacion]) }}</p>
                     </div>
-                    <div class="ag-ordenes-detalle__campo">
-                        <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes_trabajo.campo_cliente') }}</p>
-                        <p class="ag-ordenes-detalle__campo-valor">{{ $valor($clienteLabel) }}</p>
+                    <div class="ag-detalle__campo">
+                        <p class="ag-detalle__campo-label">{{ __('operaciones.ordenes_trabajo.campo_cliente') }}</p>
+                        <p class="ag-detalle__campo-valor">{{ $valor($clienteLabel) }}</p>
                     </div>
-                    <div class="ag-ordenes-detalle__campo">
-                        <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_tipo_insumo') }}</p>
-                        <p class="ag-ordenes-detalle__campo-valor">{{ $tipoInsumo !== null ? __('operaciones.tipo_insumo.'.$tipoInsumo) : '—' }}</p>
+                    <div class="ag-detalle__campo">
+                        <p class="ag-detalle__campo-label">{{ __('operaciones.ordenes.campo_tipo_insumo') }}</p>
+                        <p class="ag-detalle__campo-valor">{{ $tipoInsumo !== null ? __('operaciones.tipo_insumo.'.$tipoInsumo) : '—' }}</p>
                     </div>
-                    <div class="ag-ordenes-detalle__campo">
-                        <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_categoria_insumo') }}</p>
-                        <p class="ag-ordenes-detalle__campo-valor">{{ $valor($orden?->categoriaInsumo?->nombre) }}</p>
+                    <div class="ag-detalle__campo">
+                        <p class="ag-detalle__campo-label">{{ __('operaciones.ordenes.campo_categoria_insumo') }}</p>
+                        <p class="ag-detalle__campo-valor">{{ $valor($orden?->categoriaInsumo?->nombre) }}</p>
                     </div>
                 </x-molecules.form-section>
 
                 <x-molecules.form-section accent="success" :title="__('operaciones.asignacion_equipos.seccion_calda')" :count="__('operaciones.ordenes_trabajo.indicacion_contador')">
-                    <div class="ag-form-section__field--full ag-ordenes-detalle__campo">
-                        <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes_trabajo.detalle_calda_productos') }}</p>
-                        <p class="ag-ordenes-detalle__campo-valor">{{ $valor($llevaCalda) }}</p>
+                    <div class="ag-form-section__field--full ag-detalle__campo">
+                        <p class="ag-detalle__campo-label">{{ __('operaciones.ordenes_trabajo.detalle_calda_productos') }}</p>
+                        <p class="ag-detalle__campo-valor">{{ $valor($llevaCalda) }}</p>
                     </div>
                     @foreach ($datosCalda as $etiqueta => $dato)
-                        <div class="ag-ordenes-detalle__campo">
-                            <p class="ag-ordenes-detalle__campo-label">{{ $etiqueta }}</p>
-                            <p class="ag-ordenes-detalle__campo-valor ag-ordenes__mono">{{ $dato }}</p>
+                        <div class="ag-detalle__campo">
+                            <p class="ag-detalle__campo-label">{{ $etiqueta }}</p>
+                            <p class="ag-detalle__campo-valor ag-ordenes__mono">{{ $dato }}</p>
                         </div>
                     @endforeach
                 </x-molecules.form-section>
 
                 <x-molecules.form-section accent="warning" :title="__('operaciones.ordenes_trabajo.seccion_clima')" :count="__('operaciones.ordenes_trabajo.indicacion_contador')">
                     @foreach ($datosClima as $etiqueta => $dato)
-                        <div class="ag-ordenes-detalle__campo">
-                            <p class="ag-ordenes-detalle__campo-label">{{ $etiqueta }}</p>
-                            <p class="ag-ordenes-detalle__campo-valor ag-ordenes__mono">{{ $valor($dato) }}</p>
+                        <div class="ag-detalle__campo">
+                            <p class="ag-detalle__campo-label">{{ $etiqueta }}</p>
+                            <p class="ag-detalle__campo-valor ag-ordenes__mono">{{ $valor($dato) }}</p>
                         </div>
                     @endforeach
                 </x-molecules.form-section>
 
                 <x-molecules.form-section accent="distintivo-1" :title="__('operaciones.ordenes_trabajo.seccion_vuelo')" :count="__('operaciones.ordenes_trabajo.indicacion_contador')">
                     @foreach ($datosVuelo as $etiqueta => $dato)
-                        <div class="ag-ordenes-detalle__campo">
-                            <p class="ag-ordenes-detalle__campo-label">{{ $etiqueta }}</p>
-                            <p class="ag-ordenes-detalle__campo-valor ag-ordenes__mono">{{ $valor($dato) }}</p>
+                        <div class="ag-detalle__campo">
+                            <p class="ag-detalle__campo-label">{{ $etiqueta }}</p>
+                            <p class="ag-detalle__campo-valor ag-ordenes__mono">{{ $valor($dato) }}</p>
                         </div>
                     @endforeach
                 </x-molecules.form-section>
@@ -194,7 +194,7 @@
                     />
 
                     <x-molecules.form-section accent="alert" :title="__('operaciones.ordenes.seccion_vinculos')">
-                        <div class="ag-form-section__field--full ag-ordenes-detalle__vinculos">
+                        <div class="ag-form-section__field--full ag-detalle__vinculos">
                             @foreach ($vinculos as $vinculo)
                                 <x-molecules.link-row
                                     :href="$vinculo['href']"

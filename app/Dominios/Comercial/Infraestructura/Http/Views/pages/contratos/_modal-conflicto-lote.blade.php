@@ -13,7 +13,7 @@
     (`.ag-form-section__body`, componente compartido, no propio de
     Operaciones) + `x-molecules.index-table` para los lotes, en vez del
     `dl`/`dt`/`dd` a mano de la primera versión. Clases propias
-    `.ag-contratos-form__conflicto-*` (no las `ag-ordenes-detalle__*` de
+    `.ag-contratos-form__conflicto-*` (no las `ag-detalle__*` de
     Operaciones): mismo TRATAMIENTO visual, cada módulo dueño de su propio
     CSS — ver `resources/css/pages/contratos.css`.
 

@@ -28,11 +28,6 @@ orden** y **cómo se comprueba**.
 - **Cuatro pantallas que el dueño excluyó por nombre:** `/panel/roles` (con su
   alta, edición y permisos), `/panel/organizacion`, `/panel/bitacora`,
   `/panel/dashboard`.
-- **Las páginas de detalle (`show`)**: Orden de aplicación, Orden de trabajo,
-  Trabajo, Cuadrilla, Reparto, Planilla, Rendición, Devengos, Desempeño de
-  persona. Falta decidir si el arquetipo Detalle queda para objetos
-  transaccionales especiales o se adopta en todo el sistema. No se tocan, ni se
-  crean nuevas.
 - **Lo que no es ni listado ni formulario de un objeto:** login, selección de
   rol, perfil, configuración, búsqueda global, mapa de propiedad.
 - **El portal del cliente** (`Portal/`): otro público, otro layout y el scoping
@@ -41,6 +36,14 @@ orden** y **cómo se comprueba**.
   estados, un caso de uso de escritura, una migración o un permiso. Es capa de
   presentación: Blade, CSS de página, `lang/es`, y en el controlador solo lo que
   arma datos para pintar (`resumenRelacionado()`, `PasosDeEstado::armar()`).
+
+**Decisión del dueño (22/9/2026): las páginas de detalle SÍ entran.** La
+pregunta que dejaba afuera al arquetipo Detalle (§6.4 de
+`docs/diseno/guia_pantalla_panel.md`) — si es para objetos transaccionales
+especiales o para todo el sistema — se cierra: es para todo el sistema. La
+tarea 124 abre la ronda de fichas (124, 125, 126) sobre las nueve pantallas
+`show`/`desempeno` que existían a esa fecha; el detalle de alcance, ruta y
+estado de cada una está en §8.
 
 ## 2. Diagnóstico (medido el 20/9/2026 sobre `develop` en `903c4608`)
 
@@ -286,3 +289,30 @@ tarea 123: trajo la rama local a una rama nueva nacida de `develop`
 `cola_tareas.md` difería entre ella y `develop`), resolvió los dos únicos conflictos
 —los dos de `docs/`— y sacó ese bloque de la lista de pendientes, que quedó vacía. La
 fila 121 pasa a `hecha`; su número de PR es el de esa rama.
+
+## 8. Fichas (arquetipo Detalle, decisión 22/9/2026)
+
+Las nueve pantallas de detalle que existían a la fecha de la decisión — ocho
+`show.blade.php` más `personas/desempeno.blade.php`, que no sigue ese nombre de
+archivo pero cumple el mismo papel — se homogeneízan al arquetipo Detalle
+(§6.4 de `docs/diseno/guia_pantalla_panel.md`) en tres tareas. Las dos
+referencias, `Operaciones/ordenes/show` y `Operaciones/ordenes-trabajo/show`,
+ya lo eran desde el 17/9 y el 21/9/2026 respectivamente: la ronda no las toca,
+solo se apoya en ellas.
+
+| Ficha | Ruta | Módulo/carpeta | Tarea | Estado |
+|---|---|---|---|---|
+| Orden de aplicación | `GET /panel/ordenes/{orden}` | `Operaciones/ordenes` | — (referencia, ya hecha 17/9/2026) | hecha |
+| Orden de trabajo | `GET /panel/trabajos/{ordenTrabajo}` | `Operaciones/ordenes-trabajo` | — (referencia, ya hecha 21/9/2026) | hecha |
+| Trabajo | `GET /panel/trabajos/detalle/{trabajo}` | `Operaciones/trabajos` | 124 | en curso |
+| Reparto de cuadrillas | `GET /panel/reparto-cuadrillas/{orden}` | `Operaciones/reparto-cuadrillas` | 124 | en curso |
+| Cuadrilla | `GET /panel/cuadrillas/{equipoTrabajo}` | `Personal/cuadrillas` | 125 | pendiente |
+| Desempeño de persona | `GET /panel/personas/{persona}/desempeno` | `Personal/personas` | 125 | pendiente |
+| Planilla | `GET /panel/planillas/{planilla}` | `Finanzas/planillas` | 126 | pendiente |
+| Rendición | `GET /panel/rendiciones/{rendicion}` | `Finanzas/rendiciones` | 126 | pendiente |
+| Devengos | `GET /panel/devengos/{devengo}` | `Finanzas/devengos` | 126 | pendiente |
+
+Las siete filas sin "hecha" viven en `docs/diseno/panel_homogeneo_pendientes.txt`
+hasta que su tarea las cierra; la lista solo se achica (mismo criterio que el
+resto del panel, §4.6). Reglas propias de este arquetipo (no las de listado ni
+las de formulario) en `tests/Unit/PanelHomogeneoTest.php`.

@@ -1,0 +1,72 @@
+/*
+ * Cualquier ficha del arquetipo Detalle (docs/diseno/guia_pantalla_panel.md
+ * §6.4; decisión del dueño 22/9/2026 de adoptarlo en todo el sistema, ver
+ * docs/gestion/plan_homogeneizacion_panel.md §8) — no una página concreta.
+ *
+ * Nace en la tarea 124 renombrando lo que `ordenes/show.blade.php`
+ * (17/9/2026) y `ordenes-trabajo/show.blade.php`/`ordenes-trabajo/create.blade.php`/
+ * `ordenes/_formulario.blade.php` (18-21/9/2026) tenían como `.ag-ordenes-detalle*`
+ * dentro de ordenes.css: un nombre que decía "ordenes" para algo que ya
+ * reusaban pantallas que no son de Órdenes. Es un renombre — mismo markup,
+ * mismos valores, mismo resultado visual — para que cualquier ficha nueva
+ * (Trabajo, Reparto, y las de las tareas 125/126) lo use sin pedir prestada
+ * una clase de otro módulo. Todo color y medida por token (CLAUDE.md
+ * invariante 11).
+ */
+
+.ag-detalle {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+    /* *container queries* (17/9/2026, pedido explícito): la tira de KPI
+       reacciona al ancho REAL disponible, no al viewport — con `@media` un
+       mismo viewport siempre da el mismo resultado aunque el sidebar de
+       módulo colapsado (72px) le haya devuelto ~180px al contenido. */
+    container: ag-detalle / inline-size;
+}
+
+.ag-detalle__kpis {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--ag-space-4);
+}
+
+@container ag-detalle (min-width: 36rem) {
+    .ag-detalle__kpis {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@container ag-detalle (min-width: 60rem) {
+    .ag-detalle__kpis {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+/* Campo de solo lectura dentro de `form-section` (etiqueta arriba, valor
+   abajo) — sin fondo/borde propio porque ya vive dentro del grid de 2
+   columnas de `.ag-form-section__body`. `.ag-detalle__campo` (el wrapper de
+   cada par label+valor) no lleva regla propia: es solo la unidad del grid. */
+.ag-detalle__campo-label {
+    margin: 0;
+    font-size: var(--ag-font-size-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-detalle__campo-valor {
+    margin: 0.1875rem 0 0;
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+    line-height: 1.5;
+}
+
+/* Lista de "Vínculos" (molecules/link-row): borde/radio propios, separada
+   del padding de la tarjeta, para que se lea como un bloque cohesivo en vez
+   de filas sueltas. */
+.ag-detalle__vinculos {
+    border: 1px solid var(--ag-color-border-row);
+    border-radius: var(--ag-radius-md);
+    overflow: hidden;
+}
