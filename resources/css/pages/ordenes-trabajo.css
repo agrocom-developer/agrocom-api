@@ -185,3 +185,64 @@
     font-size: var(--ag-font-size-sm);
     color: var(--ag-color-text-muted);
 }
+
+/* Bloque de pago del equipo (ADR 0023): tarifa, negociación y montos. */
+.ag-ordenes-trabajo-form__pago-bloque {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-3);
+    padding-top: var(--ag-space-2);
+    border-top: 1px solid var(--ag-color-border-card);
+}
+
+.ag-ordenes-trabajo-form__pago-titulo {
+    margin: 0;
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-color-text);
+}
+
+.ag-ordenes-trabajo-form__pago-campos {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--ag-space-3);
+}
+
+.ag-ordenes-trabajo-form__pago-campos > * {
+    min-width: 0;
+    margin-bottom: 0;
+}
+
+.ag-ordenes-trabajo-form__pago-negociado {
+    grid-column: 1 / -1;
+}
+
+.ag-ordenes-trabajo-form__tarifa-aviso {
+    padding: var(--ag-space-2);
+    background-color: var(--ag-color-warning-contrast-fill);
+    border-radius: var(--ag-radius-md);
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text);
+}
+
+/* Ficha: resumen de pago del equipo. */
+.ag-ordenes-trabajo-detalle__pago {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--ag-space-2);
+    margin: var(--ag-space-2) 0 0;
+}
+
+.ag-ordenes-trabajo-detalle__pago-texto {
+    margin: 0;
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-ordenes-trabajo-detalle__pago-motivo {
+    margin: 0;
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text-muted);
+}

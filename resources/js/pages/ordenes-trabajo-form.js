@@ -69,6 +69,14 @@ class OrdenesTrabajoForm {
         this.cuotas = new Map();
         this.firma = null;
 
+        try {
+            this.tarifas = JSON.parse(this.form.dataset.agTarifas || '[]') ?? [];
+            this.modalidadesPago = JSON.parse(this.form.dataset.agModalidadesPago || '{}') ?? {};
+        } catch {
+            this.tarifas = [];
+            this.modalidadesPago = {};
+        }
+
         // Cuadrilla, turno, horario, hectáreas o criterio: cualquier cambio rehace
         // el reparto. Si lo que cambió son las hectáreas de un equipo, antes se
         // ajustan las de los demás.
@@ -76,9 +84,17 @@ class OrdenesTrabajoForm {
             if (evento.target.matches('[data-ag-equipo-hectareas]')) {
                 this.ajustarCuotas(evento.target.closest('[data-ag-equipo-bloque]'), evento.target.value);
             }
+            if (evento.target.matches('[data-ag-equipo-tarifa]')) {
+                this.actualizarMontosDelEquipo(evento.target.closest('[data-ag-equipo-bloque]'));
+            }
             this.repartir();
         });
-        this.lista.addEventListener('change', () => this.repartir());
+        this.lista.addEventListener('change', (evento) => {
+            if (evento.target.matches('[data-ag-equipo-negociado]')) {
+                this.alternarNegociado(evento.target.closest('[data-ag-equipo-bloque]'));
+            }
+            this.repartir();
+        });
 
         this.form.addEventListener('click', (evento) => {
             if (evento.target.closest('[data-ag-link-accent]')) {
@@ -89,6 +105,10 @@ class OrdenesTrabajoForm {
         this.form.querySelectorAll('[data-ag-reparto-modo]').forEach((opcion) => {
             opcion.addEventListener('change', () => this.repartir());
         });
+
+        // Bloques que vinieron del servidor: montos de la tarifa a la vista y
+        // campos de negociación según la casilla.
+        this.lista.querySelectorAll('[data-ag-equipo-bloque]').forEach((bloque) => this.alternarNegociado(bloque));
 
         this.repartir();
         this.reponerBorrador();
@@ -112,6 +132,11 @@ class OrdenesTrabajoForm {
         }
 
         restaurarCampos(this.form, borrador.campos, { silenciar: (control) => control === this.selector });
+
+        // Después de reponer los campos, inicializar el estado de pago de cada equipo.
+        this.lista.querySelectorAll('[data-ag-equipo-bloque]').forEach((bloque) => {
+            this.alternarNegociado(bloque);
+        });
 
         this.restaurando = false;
         this.firma = null;
@@ -260,6 +285,9 @@ class OrdenesTrabajoForm {
 
             bloque.dispatchEvent(new CustomEvent('ag:select:inicializar', { bubbles: true }));
             initTimeRanges(bloque);
+
+            // Inicializar el estado de pago del bloque nuevo.
+            this.alternarNegociado(bloque);
         }
 
         // Equipos nuevos, orden nueva: las hectáreas vuelven a arrancar parejas.
@@ -574,6 +602,54 @@ class OrdenesTrabajoForm {
         this.reparto.textContent = (this.reparto.dataset.agRepartoPlantilla ?? '')
             .replace(':repartidas', formatoHa.format(repartidas / 100))
             .replace(':total', formatoHa.format(total / 100));
+    }
+
+    /**
+     * Condición de pago: al cambiar de tarifa, rellena los montos del piloto y
+     * el ayudante en los campos deshabilitados (para que se vea qué se va a
+     * pagar), mientras no se marque "Negociar".
+     */
+    actualizarMontosDelEquipo(bloque) {
+        if (this.restaurando) return;
+
+        const selectTarifa = bloque.querySelector('[data-ag-equipo-tarifa]');
+        const negociado = bloque.querySelector('[data-ag-equipo-negociado]')?.checked ?? false;
+        if (!selectTarifa || negociado) return;
+
+        const tarifaId = selectTarifa.value;
+        const tarifa = this.tarifas.find((t) => t.id === Number(tarifaId));
+        if (!tarifa) return;
+
+        const montoPiloto = bloque.querySelector('[data-ag-equipo-monto-piloto]');
+        const montoAuxiliar = bloque.querySelector('[data-ag-equipo-monto-auxiliar]');
+        const modalidad = bloque.querySelector('[data-ag-equipo-modalidad]');
+
+        if (montoPiloto) montoPiloto.value = tarifa.monto_piloto;
+        if (montoAuxiliar) montoAuxiliar.value = tarifa.monto_auxiliar;
+        if (modalidad) modalidad.value = tarifa.modalidad;
+    }
+
+    /**
+     * Marcar «Negociar» habilita los campos de negociación (modalidad, montos,
+     * motivo); desmarcar los deshabilita y rellena con los valores de la tarifa
+     * elegida.
+     */
+    alternarNegociado(bloque) {
+        const negociado = bloque.querySelector('[data-ag-equipo-negociado]')?.checked ?? false;
+        const campos = [
+            bloque.querySelector('[data-ag-equipo-modalidad]'),
+            bloque.querySelector('[data-ag-equipo-monto-piloto]'),
+            bloque.querySelector('[data-ag-equipo-monto-auxiliar]'),
+            bloque.querySelector('[data-ag-equipo-motivo]'),
+        ];
+
+        campos.forEach((campo) => {
+            if (campo) campo.disabled = !negociado;
+        });
+
+        if (!negociado) {
+            this.actualizarMontosDelEquipo(bloque);
+        }
     }
 }
 

@@ -71,6 +71,7 @@
                     <div class="ag-devengos__head" role="row">
                         <span role="columnheader">{{ __('finanzas.devengos.col_fecha') }}</span>
                         <span role="columnheader">{{ __('finanzas.devengos.col_hectareas') }}</span>
+                        <span role="columnheader">{{ __('finanzas.devengos.col_modalidad') }}</span>
                         <span role="columnheader">{{ __('finanzas.devengos.col_tarifa') }}</span>
                         <span role="columnheader">{{ __('finanzas.devengos.col_monto') }}</span>
                     </div>
@@ -79,13 +80,15 @@
                         <div class="ag-devengos__fila" role="row">
                             <span role="cell">{{ $devengo->fecha->format('d/m/Y') }}</span>
                             <span role="cell" class="ag-devengos__cifra">{{ $devengo->hectareas }}</span>
-                            <span role="cell" class="ag-devengos__cifra">{{ __('finanzas.devengos.monto_valor', ['monto' => $devengo->tarifa_ha]) }}</span>
-                            <span role="cell" class="ag-devengos__cifra">{{ __('finanzas.devengos.monto_valor', ['monto' => $devengo->monto]) }}</span>
+                            <span role="cell">{{ $devengo->estaAbsorbido() ? __('finanzas.devengos.absorbido') : $devengo->modalidad->etiqueta() }}</span>
+                            <span role="cell" class="ag-devengos__cifra">{{ __('finanzas.devengos.monto_valor', ['monto' => $devengo->tarifa]) }}</span>
+                            <span role="cell" class="ag-devengos__cifra">{{ $devengo->estaAbsorbido() ? '—' : __('finanzas.devengos.monto_valor', ['monto' => $devengo->monto]) }}</span>
                         </div>
                     @endforeach
 
                     <div class="ag-devengos__fila ag-devengos__fila--total" role="row">
                         <span role="cell" class="ag-devengos__total-etiqueta">{{ __('finanzas.devengos.total') }}</span>
+                        <span role="cell" aria-hidden="true"></span>
                         <span role="cell" aria-hidden="true"></span>
                         <span role="cell" aria-hidden="true"></span>
                         <span role="cell" class="ag-devengos__cifra ag-devengos__total-valor">{{ __('finanzas.devengos.monto_valor', ['monto' => $total]) }}</span>

@@ -195,7 +195,7 @@
    numéricas alineadas a la derecha. */
 .ag-table--liquidacion .ag-table__head,
 .ag-table--liquidacion .ag-table__row {
-    grid-template-columns: 1fr 90px 110px 120px;
+    grid-template-columns: 1fr 90px minmax(0, 1fr) 110px 120px;
 }
 
 /* Equipos operados por la persona en el mes. */

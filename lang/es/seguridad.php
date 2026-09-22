@@ -297,7 +297,9 @@ return [
         'liquidacion_saldo' => 'Saldo',
         'liquidacion_anticipos_detalle' => 'Anticipos del período',
         'liquidacion_col_fecha' => 'Fecha',
-        'liquidacion_col_tarifa' => 'Tarifa/ha',
+        'liquidacion_col_modalidad' => 'Pago',
+        'liquidacion_col_tarifa' => 'Tarifa',
+        'liquidacion_absorbido' => 'Cubierto por el jornal',
         'liquidacion_col_monto' => 'Monto',
 
         'seccion_sesiones_estado' => 'Sesiones por estado',

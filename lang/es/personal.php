@@ -120,8 +120,9 @@ return [
     ],
 
     // HU-26 (tarea 37): alta y mantenimiento de personas operativas, con su
-    // rol y tarifa por hectárea. `base_id` es opcional — mismo criterio de
-    // select nativo que `cliente_id` en comercial.campos.
+    // puesto y base. `base_id` es opcional — mismo criterio de select nativo
+    // que `cliente_id` en comercial.campos. La tarifa ya no es de la persona
+    // (ADR 0023): vive en Financiero → Tarifas y en cada Orden de Trabajo.
     'personas' => [
         'creado' => 'La persona se dio de alta correctamente.',
         'actualizado' => 'Los datos de la persona se actualizaron correctamente.',
@@ -129,7 +130,7 @@ return [
 
         // Listado
         'titulo' => 'Personas',
-        'subtitulo' => 'Personas de campo registradas, con su puesto y tarifa por hectárea.',
+        'subtitulo' => 'Personas de campo registradas, con su puesto y su base.',
         'nueva' => 'Nueva persona',
         'filtro_busqueda' => 'Buscar',
         'filtro_busqueda_placeholder' => 'Nombre o cédula…',
@@ -142,10 +143,7 @@ return [
         'col_nombre' => 'Nombre',
         'col_rol' => 'Puesto',
         'col_base' => 'Base',
-        'col_tarifa' => 'Tarifa/ha',
         'sin_base' => 'Sin base asignada',
-        'sin_tarifa' => '—',
-        'tarifa_valor' => 'Bs :monto',
         'editar' => 'Editar',
         'eliminar_accion' => 'Eliminar',
         'confirmar_eliminar_titulo' => 'Eliminar persona',
@@ -184,8 +182,6 @@ return [
         'campo_rol_ayuda' => 'Lo que hace en campo. No da acceso al sistema: eso lo define el usuario vinculado a la persona.',
         'campo_base' => 'Base',
         'campo_base_placeholder' => 'Sin base asignada',
-        'campo_tarifa' => 'Tarifa por hectárea',
-        'campo_tarifa_ayuda' => 'Se usa para calcular el devengo de cada sesión validada. Cambiarla no altera los devengos ya generados.',
         'error_nombres_requerido' => 'Ingresa los nombres de la persona.',
         'error_apellido_paterno_requerido' => 'Ingresa el apellido paterno.',
         'error_ci_requerido' => 'Ingresa la cédula de identidad.',
