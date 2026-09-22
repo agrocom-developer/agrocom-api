@@ -11,6 +11,20 @@ la hoja compartida `resources/css/pages/detalle.css` y la sección §8 «Fichas�
 `docs/gestion/plan_homogeneizacion_panel.md`. Si algo de eso no está en
 `develop`, `runs/125.estado` = `BLOQUEADA` y explicalo en `runs/125.md`.
 
+**Confirmado con captura (22/9/2026, dueño en `/panel/cuadrillas/1`, que hoy
+es la ruta `show`):** la sección "Recursos asignados" de `show` mezcla, sin
+ninguna separación visual, la lista de recursos vigentes (con su input de
+fecha y botón "Finalizar vigencia" por fila) y, debajo, un `form-section` de
+alta por cada tipo de recurso (Dron, Vehículo, Generador…) con su propio
+"Agregar equipamiento" — un único título "Recursos asignados" para las dos
+cosas, ver y editar mezclados en el mismo bloque. Esto confirma exactamente
+el caso que el punto siguiente ya anticipaba ("si `edit` no los tiene, quedan
+en `show`"): hoy están en `show`. Priorizá moverlos a `edit` (el criterio
+principal del punto); si por algo quedan en `show`, como mínimo separalos en
+un `confirm-modal` propio por acción de alta, disparado desde un botón — NO
+un `form-section` suelto a continuación de la lista, que es lo que hoy los
+hace ilegibles como una sola cosa.
+
 Cargá los skills `verificacion`, `panel-design-ui`, `redaccion-neutra` y
 `dominio-backend`. Leé el plan §3 y §4, la guía §6.4, `runs/124.md` y las dos
 fichas de referencia.
