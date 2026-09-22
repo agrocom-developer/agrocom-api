@@ -66,6 +66,7 @@ class PersonalDemoSeeder extends Seeder
      * @var array<string, array{string, string, string}>
      */
     private const BASES = [
+        self::BASE_CENTRAL => ['Av. Cristo Redentor km 8, Santa Cruz de la Sierra, Bolivia', '-17.729800', '-63.184600'],
         self::BASE_PAILON => ['Carretera Bioceánica km 52, Pailón, Santa Cruz, Bolivia', '-16.847600', '-62.752300'],
         self::BASE_SAN_JULIAN => ['Km 130 carretera a San Julián, Santa Cruz, Bolivia', '-16.931400', '-62.611200'],
     ];
@@ -163,6 +164,13 @@ class PersonalDemoSeeder extends Seeder
                     rol: $rol,
                     baseId: $this->basePorNombre($base)?->id,
                 ));
+            }
+
+            // Una corrida anterior pudo crear la persona sin base (la base
+            // central faltaba en el catálogo): se completa, no se pisa.
+            if ($persona->base_id === null && ($baseId = $this->basePorNombre($base)?->id) !== null) {
+                $persona->base_id = $baseId;
+                $persona->save();
             }
 
             if ($username !== null) {

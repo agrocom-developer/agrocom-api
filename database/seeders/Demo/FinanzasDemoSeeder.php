@@ -12,12 +12,9 @@ use App\Dominios\Finanzas\Aplicacion\AsociarGastoARendicion;
 use App\Dominios\Finanzas\Aplicacion\CrearCombustible;
 use App\Dominios\Finanzas\Aplicacion\CrearGasto;
 use App\Dominios\Finanzas\Aplicacion\CrearRendicion;
-use App\Dominios\Finanzas\Aplicacion\CrearTarifa;
-use App\Dominios\Finanzas\Aplicacion\DatosTarifa;
 use App\Dominios\Finanzas\Aplicacion\GenerarPlanilla;
 use App\Dominios\Finanzas\Aplicacion\PresentarRendicion;
 use App\Dominios\Finanzas\Aplicacion\RegistrarAnticipo;
-use App\Dominios\Finanzas\Contratos\ModalidadPago;
 use App\Dominios\Finanzas\Dominio\EstadoPlanilla;
 use App\Dominios\Finanzas\Dominio\Excepciones\AnticipoExcedeTope;
 use App\Dominios\Finanzas\Infraestructura\Eloquent\Anticipo;
@@ -27,7 +24,6 @@ use App\Dominios\Finanzas\Infraestructura\Eloquent\Planilla;
 use App\Dominios\Finanzas\Infraestructura\Eloquent\Rendicion;
 use App\Dominios\Finanzas\Infraestructura\Eloquent\Rubro;
 use App\Dominios\Finanzas\Infraestructura\Eloquent\Subrubro;
-use App\Dominios\Finanzas\Infraestructura\Eloquent\Tarifa;
 use App\Dominios\Mantenimiento\Infraestructura\Eloquent\Generador;
 use App\Dominios\Mantenimiento\Infraestructura\Eloquent\Vehiculo;
 use App\Dominios\Operaciones\Dominio\EstadoActa;
@@ -38,7 +34,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Auth;
 
 /**
- * Financiero: tarifas, combustible, gastos con sus rendiciones (abierta,
+ * Financiero: combustible, gastos con sus rendiciones (abierta,
  * presentada y aprobada), anticipos a cuenta de lo devengado, planillas
  * (agosto aprobada con recibos, septiembre en borrador) y facturas de las
  * actas firmadas.
@@ -53,7 +49,6 @@ class FinanzasDemoSeeder extends Seeder
     use SoporteDemo;
 
     public function __construct(
-        private readonly CrearTarifa $crearTarifa,
         private readonly CrearCombustible $crearCombustible,
         private readonly CrearGasto $crearGasto,
         private readonly CrearRendicion $crearRendicion,
@@ -68,28 +63,11 @@ class FinanzasDemoSeeder extends Seeder
 
     public function run(): void
     {
-        $this->tarifas();
         $this->combustible();
         $this->gastosYRendiciones();
         $this->anticipos();
         $this->planillas();
         $this->facturas();
-    }
-
-    private function tarifas(): void
-    {
-        $catalogo = [
-            ['Cosecha con desecante', ModalidadPago::PorDia, '170.00', '110.00', 'Jornada larga: se paga por día con plus por el desecante.'],
-            ['Siembra al voleo', ModalidadPago::PorHa, '9.80', '6.50', 'Sólidos por hectárea sembrada.'],
-        ];
-
-        foreach ($catalogo as [$nombre, $modalidad, $piloto, $auxiliar, $descripcion]) {
-            $existe = Tarifa::query()->whereRaw('lower(nombre) = ?', [mb_strtolower($nombre)])->exists();
-
-            if (! $existe) {
-                $this->crearTarifa->ejecutar(new DatosTarifa($nombre, $modalidad, $piloto, $auxiliar, false, $descripcion));
-            }
-        }
     }
 
     private function combustible(): void
