@@ -48,6 +48,9 @@ final class PersonasController
 
     private const PERMISO_DESEMPENIO = 'personal.persona.desempenio';
 
+    /** Del módulo Finanzas (ADR 0003 regla 2): solo para decidir si se ofrece el enlace "sus devengos" del aside de `desempenio()`. */
+    private const PERMISO_DEVENGO = 'finanzas.devengo.ver';
+
     public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
 
     public function index(Request $request, ListarPersonas $listarPersonas): View
@@ -143,13 +146,14 @@ final class PersonasController
     }
 
     /**
-     * Ficha de desempeño (HU-58, tarea 81): "¿qué hizo esta persona esta
-     * campaña?", por sesión y no por equipo de trabajo (ADR 0015 punto 3).
-     * Filtros por `GET` con querystring, mismo criterio que
-     * `CuadrillasController::show()` — rango de fechas (default los
-     * últimos 12 meses) y cliente/campaña, esta última dependiente del
-     * cliente elegido (JS, presentación — el caso de uso ya filtra en
-     * PHP sin importar lo que el navegador haya mostrado u ocultado).
+     * Ficha de desempeño (HU-58, tarea 81; homogeneizada al arquetipo
+     * Detalle en la tarea 125): "¿qué hizo esta persona esta campaña?", por
+     * sesión y no por equipo de trabajo (ADR 0015 punto 3). Filtros por
+     * `GET` con querystring, mismo criterio que `CuadrillasController::show()`
+     * — rango de fechas (default los últimos 12 meses) y cliente/campaña,
+     * esta última dependiente del cliente elegido (JS, presentación — el
+     * caso de uso ya filtra en PHP sin importar lo que el navegador haya
+     * mostrado u ocultado).
      */
     public function desempenio(Request $request, PerPersona $persona, ObtenerDesempenioPersona $obtenerDesempenio): View
     {
@@ -174,7 +178,68 @@ final class PersonasController
             'persona' => $persona,
             'resultado' => $resultado,
             'filtros' => ['desde' => $desde, 'hasta' => $hasta, 'cliente_id' => $clienteId, 'campania_id' => $campaniaId],
+            'vinculos' => $this->vinculosDeDesempenio($persona, $request),
         ]);
+    }
+
+    /**
+     * "Relacionado" del aside de `desempenio()` (arquetipo Detalle, tarea
+     * 125): la ficha de la persona, las cuadrillas que integra hoy y, solo
+     * si `$persona` ES la propia persona del usuario autenticado, sus
+     * devengos — `DevengosController::show()` hace 404 ante cualquier otra
+     * `persona_id`, sin importar el permiso del actor (identidad, no
+     * permiso — ver su docblock). No se inventa un contrato de lectura
+     * cruzado para ver los devengos de OTRA persona: `AutorizacionPanelWeb::personaId()`
+     * (ya usado en el resto del panel) es suficiente para decidir si
+     * corresponde ofrecer el enlace.
+     *
+     * @return list<array{href: string, icon: string, title: string, meta: ?string, tone: string}>
+     */
+    private function vinculosDeDesempenio(PerPersona $persona, Request $request): array
+    {
+        $vinculos = [[
+            'href' => route('panel.personas.edit', $persona),
+            'icon' => 'badge',
+            'title' => __('personal.desempenio.vinculo_persona'),
+            'meta' => $persona->nombre,
+            'tone' => 'neutral',
+        ]];
+
+        if ($this->autorizacion->tienePermiso($request, 'personal.equipo_trabajo.ver')) {
+            $hoy = now()->toDateString();
+            $vigentes = EquipoIntegrante::query()
+                ->where('persona_id', $persona->id)
+                ->where('desde', '<=', $hoy)
+                ->where(fn ($consulta) => $consulta->whereNull('hasta')->orWhere('hasta', '>=', $hoy))
+                ->whereHas('equipoTrabajo')
+                ->with('equipoTrabajo')
+                ->get()
+                ->unique('equipo_trabajo_id');
+
+            foreach ($vigentes as $integrante) {
+                $vinculos[] = [
+                    'href' => route('panel.cuadrillas.show', $integrante->equipo_trabajo_id),
+                    'icon' => 'groups',
+                    'title' => $integrante->equipoTrabajo->codigo,
+                    'meta' => __('personal.rol_equipo.'.$integrante->rol_equipo->value),
+                    'tone' => 'distintivo-1',
+                ];
+            }
+        }
+
+        $personaIdAutenticada = $this->autorizacion->personaId($request);
+
+        if ($personaIdAutenticada === $persona->id && $this->autorizacion->tienePermiso($request, self::PERMISO_DEVENGO)) {
+            $vinculos[] = [
+                'href' => route('panel.devengos.show', $persona->id),
+                'icon' => 'payments',
+                'title' => __('personal.desempenio.vinculo_devengos'),
+                'meta' => null,
+                'tone' => 'success',
+            ];
+        }
+
+        return $vinculos;
     }
 
     /**

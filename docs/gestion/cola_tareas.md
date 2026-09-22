@@ -1,6 +1,54 @@
 # Cola de tareas automatizables
 
-**Última actualización: 22/9/2026 (ronda dirigida por el dueño — tareas 124 a
+**Última actualización: 22/9/2026, misma noche (el dueño recorre el compose
+mientras corre la tarea 124 — tareas 130 a 134 escritas).** Con la 124 en
+curso (etapa 1/3, rama `feature/fichas-operaciones`), el dueño fue mirando
+pantalla por pantalla en una sesión interactiva aparte y reportó seis
+hallazgos con captura. Uno (la Orden de Trabajo editable) ya estaba cubierto
+por la 127, escrita en la ronda anterior — no generó fila nueva. El resto:
+
+- **130**: la grilla de Órdenes de aplicación corta el título en tableta
+  cuando hay dos badges en la cabecera (diagnóstico completo en el prompt —
+  es `.ag-ordenes__estados` compitiendo por ancho con
+  `.ag-ordenes-card__identidad`); de paso, "Con inconvenientes" pasa de
+  `warning` a `danger` y baja a una línea propia debajo del título.
+- **131**: la cola de Validación de sesiones (`/panel/sesiones/validacion`)
+  solo mostraba ids crudos (`#3`, `Piloto #4`) sin ninguna referencia; ahora
+  enlaza el trabajo a su ficha (la que arma la 124) y resuelve el nombre real
+  del piloto — la misma deuda que tiene hoy `trabajos/show.blade.php`, así
+  que el prompt pide resolverla una sola vez para las dos pantallas.
+- **132**: `/panel/bases/{id}/editar` pedía latitud/longitud a mano; pasa a
+  un mapa con marcador, reusando el editor de Propiedad que ya existe
+  (`propiedad-mapa-editor.js`, solo la pieza de marcador, sin polígonos). El
+  dueño también preguntó por un desglose departamento/provincia/municipio/
+  localidad — eso queda **fuera** de esta tarea, anotado como pregunta
+  abierta: es una decisión de modelo de datos, no de UI.
+- **133**: `/panel/stock` no tenía forma de ver los movimientos ya
+  registrados (solo registrar uno nuevo) — el dueño lo leyó como "faltan
+  acciones de fila", pero el propio código ya documenta que un movimiento no
+  se edita ni se borra (es un asiento, invariante 2/6). La tarea agrega el
+  listado de solo lectura que faltaba, sin tocar esa regla.
+- **134**: "todo Finanzas se crea y queda en el limbo" — confirmado en
+  `routes/web.php`: Gastos, Combustible, Rendición, Planilla y Factura no
+  tienen `update`. Pero no es lo mismo en los cinco: Factura ya es
+  deliberadamente inmutable (el propio comentario de la ruta lo dice) y
+  Planilla se genera de los devengos, así que probablemente tampoco se
+  "edita" — la tarea exige clasificar cada una con código a la vista antes
+  de tocar nada, y solo agregar edición donde el riesgo de dinero lo permite
+  (Gastos/Combustible simple, Rendición con política tipo la 127). Marcada
+  **crítica** por tocar el límite de "listeners que generan dinero" de
+  `CLAUDE.md`. "Cobranza" no se encontró como pantalla propia — queda a
+  verificar en la propia tarea, no se le inventó alcance.
+
+Los cinco viajan sin commitear en el mismo working tree donde corre la 124
+(`bin/ciclo` los tolera: `sucio_ajeno()` ya perdona `prompts/*.md` y este
+archivo mientras una tarea está en curso — ver "El bug de la 24" más abajo
+antes de tocar la cola a mano). De paso se sumó una nota concreta al prompt
+de la 125 (Cuadrilla): la captura de `/panel/cuadrillas/1` confirma en vivo
+el caso "formularios de alta en `show`" que el prompt ya preveía como
+condicional — ver el prompt, no hizo falta una tarea nueva.
+
+**Última actualización anterior: 22/9/2026 (ronda dirigida por el dueño — tareas 124 a
 129 escritas).** La cola 111–123 quedó entera (la 123 entró con el PR #265,
 mergeado el 21/9) y el ciclo se había detenido a pedido del dueño (cuota de uso).
 El dueño reabre la cola con lo que quedaba pendiente y dos pedidos nuevos:
@@ -428,6 +476,11 @@ exista el módulo `Mezclas`).
 | 127 | La Orden de Trabajo se puede editar (pedido del dueño 22/9/2026): indicaciones compartidas y condición de pago por equipo con `PoliticaEdicionOrdenTrabajo` (nada validado; motivo si hay cerrados; condición solo con todos abiertos); el reparto sigue por trabajo | `./bin/verify` = 0 con `PoliticaEdicionOrdenTrabajoTest`, script de rollback `storage/app/verifica-edicion-ot.php`, Playwright `runs/127-navegador.cjs` | `Operaciones/**`, migración add (`motivo_correccion`, `corregida_at`), `routes/web.php`, `lang/es/operaciones.php`, tests, `runs/revision-pendiente.txt` | no | 3 | pendiente |
 | 128 | `?q[]=x` (y `?estado[]=x`) deja de dar 500 en todos los listados: un helper de Plataforma, patrón de la 121 | `./bin/verify` = 0, `runs/128-sondas.log` sin 500 en todos los `index`, `grep "string('q')"` vacío en controladores | `Plataforma/**` (helper), controladores web de listado de todos los módulos (solo cómo leen el parámetro), tests | no | 2 | pendiente |
 | 129 | Limpieza tras la homogeneización: CSS muerto fuera de las pantallas excluidas, `campos-form.js` huérfano, usuario viejo en `sistema_diseno_panel.md` | `./bin/verify` = 0 y barrido `runs/129-barrido.cjs` con 0 | `resources/css/pages/**`, `resources/js/pages/campos-form.js`, `docs/diseno/sistema_diseno_panel.md` | no | 1 | pendiente |
+| 130 | Grilla de Órdenes de aplicación: el título se corta en tableta cuando hay dos badges en la cabecera de la tarjeta (identidad se queda sin ancho); "Con inconvenientes" pasa a `danger` y a una línea propia debajo del título, fuera de la fila de estados | `./bin/verify` = 0, sin `variant="warning"` en el badge de inconvenientes en las tres vistas, Playwright `runs/130-capturas/` con el título completo en `?vista=grilla` | `Operaciones/**` (vistas de `ordenes`), `resources/css/pages/ordenes.css` | no | 1 | pendiente |
+| 131 | La cola de Validación de sesiones muestra el piloto real (no `Piloto #:id`) y enlaza el trabajo a su ficha (tarea 124) en vez de un `#id` suelto | `./bin/verify` = 0, `grep` sin `sesion_piloto', ['id'` en la vista, Playwright con el enlace al detalle del trabajo | `Operaciones/**` (vista y controlador de `sesiones/validacion`), `Personal/Contratos/**` (contrato de lectura si hace falta) | no | 1 | pendiente |
+| 132 | La ficha de Base reemplaza los inputs numéricos de latitud/longitud por un mapa con marcador arrastrable, reusando el patrón del editor de mapa de Propiedad | `./bin/verify` = 0, los dos inputs pasan a `hidden`, Playwright con alta y edición moviendo el marcador | `Personal/**` (vista y JS de `bases`), `resources/js/organisms/base-mapa-marcador.js`, `resources/css/pages/bases.css` | no | 2 | pendiente |
+| 133 | `/panel/stock` gana un listado de solo lectura de los movimientos (hoy solo se puede registrar, nunca ver la lista); editar/eliminar un movimiento sigue sin existir, a propósito (es un asiento contable) | `./bin/verify` = 0, sin `row-actions` en el nuevo listado, Playwright filtrando por repuesto/base | `Inventario/**` (vista, controlador, `Aplicacion/ListarMovimientosStock`), `lang/es/inventario.php` | no | 2 | pendiente |
+| 134 | Finanzas: clasificar cada objeto (Gastos/Combustible sin estado → edición simple; Rendición con máquina de estados → corrección con motivo; Planilla y Factura inmutables por diseño → no se tocan) y agregar edición solo donde el dominio lo permite | `./bin/verify` = 0 con `PoliticaEdicionRendicionTest`, `runs/134.md` con la clasificación de las seis, Playwright confirmando qué edita y qué no | `Finanzas/**`, `routes/web.php`, `lang/es/finanzas.php`, tests, `runs/revision-pendiente.txt` | sí | 3 | pendiente |
 
 ### El bug de la 24 — ya pasó dos veces, sigue sin arreglarse
 

@@ -485,6 +485,37 @@ return [
         'aside_base_nombre' => 'Nombre',
         'aside_base_ubicacion' => 'Ubicación',
         'aside_base_accion' => 'Ver base',
+
+        // Ficha (show, arquetipo Detalle, tarea 125): KPI, resumen de datos,
+        // vínculos y actividad — la ficha pasó a ser de solo lectura, los
+        // formularios de alta/finalizar viven en edit() (HU-101 punto 4).
+        'kpi_integrantes' => 'Integrantes vigentes',
+        'kpi_recursos' => 'Recursos vigentes',
+        'kpi_vigencia' => 'Vigencia de la cuadrilla',
+        'kpi_vigencia_sufijo' => 'días',
+        'kpi_estadias' => 'Estadías en curso',
+        'ficha_historico_titulo' => 'Integrantes históricos',
+        'ficha_historico_vacio_titulo' => 'Sin historial',
+        'ficha_historico_vacio_detalle' => 'Esta cuadrilla todavía no tuvo integrantes.',
+        'ficha_integrantes_vacio_titulo' => 'Sin integrantes en esta fecha',
+        'ficha_recursos_vacio_titulo' => 'Sin recursos en esta fecha',
+        'aside_datos_titulo' => 'Datos de la cuadrilla',
+        'aside_datos_base' => 'Base',
+        'aside_datos_vigencia' => 'Vigencia',
+        'aside_datos_creada_por' => 'Creada por',
+        'aside_relacionado_titulo' => 'Relacionado',
+        'aside_actividad_titulo' => 'Actividad',
+        'vinculo_base' => 'Base',
+        'vinculo_trabajos' => 'Órdenes de trabajo',
+        'vinculo_trabajos_meta' => ':total en total, :abiertos abiertos',
+        'vinculo_estadias' => 'Estadías en hacienda',
+        'vinculo_estadias_meta' => ':total en total, :enCurso en curso',
+        'actividad_creada' => 'Cuadrilla creada',
+        'actividad_integrante_alta' => ':persona se suma como :rol',
+        'actividad_integrante_baja' => ':persona deja la cuadrilla',
+        'actividad_recurso_alta' => ':recurso se asigna a la cuadrilla',
+        'actividad_recurso_baja' => ':recurso deja de estar asignado',
+        'actividad_meta' => ':fecha · :autor',
     ],
 
     // Ficha de desempeño de una persona (HU-58, tarea 81): "¿qué hizo esta
@@ -494,7 +525,12 @@ return [
     'desempenio' => [
         'titulo' => 'Desempeño de :nombre',
         'subtitulo' => 'Sesiones, rechazos e incidencias de la persona en el rango elegido — hechos, no un puntaje.',
-        'volver' => 'Volver a personas',
+        'volver' => 'Volver a la persona',
+
+        // Aside "Relacionado" (arquetipo Detalle, tarea 125).
+        'aside_relacionado_titulo' => 'Relacionado',
+        'vinculo_persona' => 'Ficha de la persona',
+        'vinculo_devengos' => 'Ver mis devengos',
 
         'filtro_desde' => 'Desde',
         'filtro_hasta' => 'Hasta',
@@ -518,6 +554,7 @@ return [
         'vacio_detalle' => 'Esta persona no tiene sesiones en el rango elegido. Prueba ampliar las fechas, o vuelve cuando haya volado su primera aplicación.',
 
         'seccion_sesiones' => 'Sesiones',
+        'sesiones_vacio_titulo' => 'Sin sesiones con este filtro',
         'sesiones_vacio' => 'No hay sesiones de esta persona con estos filtros.',
         'col_fecha' => 'Fecha',
         'col_rol' => 'Rol',
@@ -529,11 +566,13 @@ return [
         'sin_campania' => '—',
 
         'seccion_rechazos' => 'Sesiones rechazadas',
+        'rechazos_vacio_titulo' => 'Sin rechazos con este filtro',
         'rechazos_vacio' => 'Ninguna sesión rechazada con estos filtros.',
         'col_motivo' => 'Motivo',
         'col_rechazado_por' => 'Rechazado por',
 
         'seccion_incidencias' => 'Incidencias',
+        'incidencias_vacio_titulo' => 'Sin incidencias con este filtro',
         'incidencias_vacio' => 'Sin incidencias registradas con estos filtros.',
         'col_tipo' => 'Tipo',
         'col_descripcion' => 'Descripción',
