@@ -304,8 +304,8 @@ solo se apoya en ellas.
 |---|---|---|---|---|
 | Orden de aplicación | `GET /panel/ordenes/{orden}` | `Operaciones/ordenes` | — (referencia, ya hecha 17/9/2026) | hecha |
 | Orden de trabajo | `GET /panel/trabajos/{ordenTrabajo}` | `Operaciones/ordenes-trabajo` | — (referencia, ya hecha 21/9/2026) | hecha |
-| Trabajo | `GET /panel/trabajos/detalle/{trabajo}` | `Operaciones/trabajos` | 124 | en curso |
-| Reparto de cuadrillas | `GET /panel/reparto-cuadrillas/{orden}` | `Operaciones/reparto-cuadrillas` | 124 | en curso |
+| Trabajo | `GET /panel/trabajos/detalle/{trabajo}` | `Operaciones/trabajos` | 124 | hecha (22/9/2026) |
+| Reparto de cuadrillas | `GET /panel/reparto-cuadrillas/{orden}` | `Operaciones/reparto-cuadrillas` | 124 | hecha (22/9/2026) |
 | Cuadrilla | `GET /panel/cuadrillas/{equipoTrabajo}` | `Personal/cuadrillas` | 125 | pendiente |
 | Desempeño de persona | `GET /panel/personas/{persona}/desempeno` | `Personal/personas` | 125 | pendiente |
 | Planilla | `GET /panel/planillas/{planilla}` | `Finanzas/planillas` | 126 | pendiente |
