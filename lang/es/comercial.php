@@ -453,20 +453,6 @@ return [
         'campo_fecha_fin' => 'Fecha de fin',
         'campo_fecha_fin_ayuda' => 'Opcional. Si no se define, el contrato queda abierto.',
 
-        // Orden de aplicación (antes "Ventanas de aplicación", HU-23 tarea 34,
-        // renombrada en tarea "contratos-lotes"). "Día completo" convive con las
-        // filas cargadas, nunca un booleano en la base (ADR 0015 punto 5) — el
-        // interruptor es puramente de presentación, arranca encendido sin ventanas
-        // cargadas y las filas se muestran/ocultan según su estado
-        // (resources/js/pages/contratos-form.js).
-        'seccion_ventanas' => 'Orden de aplicación',
-        'ventana_dia_completo' => 'Día completo',
-        'ventana_dia_completo_ayuda' => 'Sin restricción de horario. Apágalo para cargar franjas horarias.',
-        'ventana_agregar' => 'Agregar ventana',
-        'ventana_quitar' => 'Quitar',
-        'ventana_hora_inicio' => 'Desde',
-        'ventana_hora_fin' => 'Hasta',
-
         // Acomodaciones logísticas (HU-74, tarea 90): lo que Agrocom cubre
         // para el equipo de campo durante la ejecución del contrato. Solo se
         // registra el dato — el costeo en Finanzas es alcance de una tarea
@@ -488,7 +474,6 @@ return [
         'campo_propiedad_placeholder' => 'Selecciona una propiedad',
         'campo_propiedad_ayuda' => 'Del cliente ya elegido arriba. Carga una si no figura en la lista.',
         'lote_seleccionar_todos' => 'Seleccionar todos',
-        'lote_personalizar_horario' => 'Personalizar horario',
         'lotes_sin_datos' => 'Esta propiedad todavía no tiene lotes cargados.',
         'lotes_quitar' => 'Quitar',
         'crear_propiedad' => 'Crear propiedad',
@@ -533,6 +518,9 @@ return [
         // tabla de lotes del contrato.
         'lotes_modal_paginacion_aria' => 'Paginación de los lotes de la propiedad',
         'lotes_modal_seleccionados' => ':cantidad de :total lotes seleccionados',
+        'lotes_modal_col_cultivo' => 'Cultivo y etapa',
+        'registrar_siembra' => 'Registrar siembra',
+        'lotes_modal_sin_etapa' => 'etapa sin especificar',
         'lotes_paginacion_aria' => 'Paginación de los lotes del contrato',
         'lotes_paginacion_resumen' => 'Lotes :desde–:hasta de :total',
         'lotes_modal_guardar' => 'Guardar selección',
@@ -540,8 +528,15 @@ return [
         // Tabla de lotes ya agregados (bajo el select de Propiedad): una
         // columna por dato, "Horario" refleja "Día completo" o el rango
         // cargado — ver contratos-form.js.
-        'lotes_col_horario' => 'Horario',
         'lotes_col_acciones' => 'Acciones',
+        'lotes_resumen_uno' => '1 lote elegido, :suma ha.',
+        'lotes_resumen_varios' => ':cantidad lotes elegidos, que suman :suma ha.',
+        'lotes_resumen_sin_contratadas' => 'Carga las hectáreas contratadas para compararlas con este total.',
+        'lotes_resumen_igual' => 'Coincide con las :contratadas ha contratadas.',
+        'lotes_resumen_mas' => 'Son :resaltado que las :contratadas ha contratadas. Es solo una guía: puedes guardar igual.',
+        'lotes_resumen_mas_resaltado' => ':diferencia ha más',
+        'lotes_resumen_menos' => 'Son :resaltado que las :contratadas ha contratadas. Es solo una guía: puedes guardar igual.',
+        'lotes_resumen_menos_resaltado' => ':diferencia ha menos',
 
         // Resumen del aside de editar contrato (tarea "resumen de contrato",
         // sept/2026; ampliado a 4 tarjetas tarea "resumen-contrato-completo",
@@ -582,8 +577,6 @@ return [
         'error_campania_invalida' => 'La campaña seleccionada no es válida.',
         'error_lotes_requeridos' => 'Selecciona al menos un lote.',
         'error_lote_invalido' => 'Uno de los lotes seleccionados no es válido.',
-        'error_lote_horario_incompleto' => 'Completa la hora de inicio y la hora de fin del lote.',
-        'error_lote_horario_invalido' => 'La hora de fin del lote tiene que ser posterior a la hora de inicio.',
         'error_hectareas_contratadas_requeridas' => 'Ingresa las hectáreas contratadas.',
         'error_aplicaciones_previstas_requeridas' => 'Ingresa las aplicaciones previstas.',
         'error_precio_ha_requerido' => 'Ingresa el precio por hectárea.',
@@ -781,9 +774,9 @@ return [
         'aside_lotes_total' => 'Lotes',
         'aside_lotes_hectareas' => 'Hectáreas sembradas',
         'aside_lotes_vacio_titulo' => 'Sin lotes sembrados',
-        'aside_lotes_vacio_detalle' => 'Ningún lote tiene este cultivo sembrado en la campaña abierta. La siembra se carga desde la propiedad.',
+        'aside_lotes_vacio_detalle' => 'Ningún lote tiene este cultivo sembrado en la campaña abierta. Elige la propiedad y reparte sus lotes en sectores.',
         'aside_lotes_accion' => 'Ver lista de lotes',
-        'aside_lotes_accion_siembra' => 'Ir a propiedades',
+        'aside_lotes_accion_siembra' => 'Sembrar este cultivo',
         'aside_propiedades_titulo' => 'Propiedades',
         'aside_propiedades_total' => 'Propiedades con este cultivo',
         'aside_propiedades_hectareas_valor' => ':cantidad ha',
@@ -802,29 +795,98 @@ return [
     'siembra' => [
         'guardado' => 'La siembra se guardó correctamente.',
 
+        // Cabecera
         'titulo' => 'Siembra — :propiedad',
-        'subtitulo' => 'Qué se sembró en cada lote de esta propiedad, por campaña.',
-        'volver' => 'Volver a propiedades',
+        'titulo_sin_propiedad' => 'Siembra',
+        'subtitulo' => 'Qué cultivo tiene cada lote de esta propiedad en la campaña y en qué etapa está.',
+        'volver' => 'Volver a la propiedad',
+        'volver_listado' => 'Volver a propiedades',
+        'error_general' => 'Revisa los sectores marcados: hay datos que corregir antes de guardar.',
 
-        'sin_campanias' => 'Este cliente todavía no tiene ninguna campaña cargada.',
-        'crear_campania' => 'Crear una campaña',
-
+        // Sección de propiedad y campaña
+        'seccion_campania' => 'Propiedad y campaña',
+        'campos_contador' => ':cantidad campos',
+        'campo_cliente' => 'Cliente',
+        'campo_cliente_placeholder' => 'Selecciona un cliente',
+        'campo_propiedad' => 'Propiedad',
+        'campo_propiedad_placeholder' => 'Selecciona una propiedad',
+        'campo_propiedad_sin_cliente' => 'Elige primero el cliente para ver sus propiedades.',
+        'campo_propiedad_vacio' => 'Este cliente todavía no tiene propiedades.',
         'campo_campania' => 'Campaña',
-        'ver' => 'Ver',
+        'campo_campania_placeholder' => 'Selecciona una campaña',
+        'campo_campania_ayuda' => 'Cada campaña guarda su propia siembra. Al cambiar de cliente, de propiedad o de campaña se carga la siembra que corresponde: guarda antes lo que hayas modificado.',
+        'sin_campanias' => 'Todavía no hay ninguna campaña. La siembra se registra dentro de una campaña ya creada.',
 
-        'seccion_lotes' => 'Lotes',
+        // Sección de sectores
+        'seccion_sectores' => 'Sectores de siembra',
         'lotes_contador' => ':cantidad lotes',
+        'sectores_ayuda' => 'Un sector reúne los lotes que comparten cultivo, etapa y fechas. Si el mismo cultivo está en varias etapas a la vez, como la caña, arma un sector por cada etapa. Los lotes que no queden en ningún sector se guardan sin cultivo en esta campaña.',
+        'lotes_libres' => ':libres de :total lotes siguen libres.',
+        'sector_titulo' => 'Sector :numero',
+        'sector_agregar' => 'Agregar sector',
+        'sector_quitar' => 'Quitar sector',
+        'sector_lotes' => 'Lotes del sector',
+        'sector_elegir_lotes' => 'Elegir lotes',
+        'sector_resumen' => ':cantidad lotes · :hectareas ha',
+        'sector_resumen_uno' => '1 lote · :hectareas ha',
+        'sector_sin_lotes' => 'Todavía sin lotes',
+        'sector_fichas_mas' => 'y :cantidad más',
         'lote_hectareas_valor' => ':cantidad ha',
         'campo_cultivo' => 'Cultivo',
-        'campo_cultivo_placeholder' => 'Sin sembrar esta campaña',
-        'campo_hectareas_sembradas' => 'Hectáreas sembradas',
+        'campo_cultivo_placeholder' => 'Selecciona un cultivo',
+        'campo_etapa' => 'Etapa del cultivo',
+        'campo_etapa_placeholder' => 'Sin especificar',
+        'campo_etapa_ayuda' => 'En qué momento del ciclo están hoy estos lotes.',
         'campo_fecha_siembra' => 'Fecha de siembra',
         'campo_fecha_cosecha_estimada' => 'Cosecha estimada',
+        'etapa_opcion' => [
+            'preparacion' => 'Preparación del terreno',
+            'germinacion' => 'Germinación',
+            'crecimiento' => 'Crecimiento vegetativo',
+            'floracion' => 'Floración',
+            'fructificacion' => 'Fructificación',
+            'cosecha' => 'Cosecha o madurez',
+        ],
+
+        // Ventana para elegir los lotes de un sector
+        'modal_titulo' => 'Lotes del sector :numero',
+        'modal_ayuda' => 'Solo aparecen los lotes libres y los que este sector ya tiene. Con Mayús + clic marcas todo el tramo entre dos lotes.',
+        'modal_marcar_todos' => 'Marcar todos',
+        'modal_seleccionados' => ':cantidad de :total lotes marcados',
+        'modal_guardar' => 'Guardar selección',
+        'modal_agotado_titulo' => 'No quedan lotes libres',
+        'modal_agotado_detalle' => 'Todos los lotes de la propiedad ya están en otro sector. Quita alguno de su sector para poder elegirlo en este.',
+        'modal_paginacion_aria' => 'Páginas de lotes',
+        'modal_paginacion_resumen' => 'Lotes :desde a :hasta de :total',
+
+        'sin_propiedad_titulo' => 'Falta elegir la propiedad',
+        'sin_propiedad_detalle' => 'Elige el cliente y la propiedad. Aquí aparecerán los sectores de siembra, con los lotes de esa propiedad para repartir.',
+        'sin_lotes_titulo' => 'Esta propiedad todavía no tiene lotes',
+        'sin_lotes_detalle' => 'La siembra se registra lote por lote. Crea primero los lotes de la propiedad y vuelve a esta pantalla.',
+        'sin_lotes_accion' => 'Crear lotes',
+        'sin_campania_titulo' => 'Falta elegir la campaña',
+        'sin_campania_detalle' => 'Aquí aparecerán los sectores de siembra: cada uno con su cultivo, su etapa y los lotes que lo comparten.',
         'estado_form' => 'Los cambios se guardan al confirmar.',
 
-        // Mensajes de los campos obligatorios.
-        'error_lotes_requeridos' => 'Agrega al menos un lote.',
-        'error_lote_id_requerido' => 'Selecciona un lote.',
+        // Siembra de un solo lote
+        'lote_titulo' => 'Siembra — Lote :lote',
+        'lote_subtitulo' => 'Qué cultivo tiene este lote en la campaña y en qué etapa está.',
+        'lote_volver' => 'Volver al lote',
+        'lote_ver_propiedad' => 'Siembra de la propiedad',
+        'lote_sin_campania' => 'Sin campaña',
+        'lote_seccion' => 'Siembra del lote',
+        'campo_lote' => 'Lote',
+        'campo_hectareas_sembradas' => 'Hectáreas sembradas',
+        'lote_cultivo_placeholder' => 'Sin cultivo en esta campaña',
+        'lote_cultivo_ayuda' => 'Déjalo en blanco y guarda para quitar la siembra de este lote en la campaña.',
+        'lote_etapa_ayuda' => 'En qué momento del ciclo está hoy este lote.',
+        'lote_hectareas_ayuda' => 'El lote tiene :cantidad ha. Indica menos si solo se sembró una parte.',
+
+        // Resumen lateral
+        'resumen_titulo' => 'Siembra de la campaña',
+        'resumen_lotes' => 'Lotes con cultivo',
+        'resumen_lotes_valor' => ':sembrados de :total',
+        'resumen_hectareas' => 'Hectáreas sembradas',
     ],
 
     // HU-31 (tarea 45): "como encargado, quiero emitir la factura de un
@@ -1044,6 +1106,11 @@ return [
         'lotes_bloque_cantidad_maxima' => 'Puedes sumar hasta :maximo lotes por vez. Si necesitas más, guarda y suma otra tanda.',
         'siembra_campania_requerida' => 'Selecciona la campaña.',
         'siembra_hectareas_sembradas_mayor_a_cero' => 'Las hectáreas sembradas tienen que ser mayores a cero.',
+        'siembra_etapa_invalida' => 'La etapa del cultivo no es válida.',
+        'siembra_cultivo_requerido' => 'Selecciona el cultivo del sector.',
+        'siembra_lotes_requeridos' => 'Elige al menos un lote, o quita el sector.',
+        'siembra_lote_repetido' => 'Hay un lote que ya está en otro sector.',
+        'siembra_lote_ajeno' => 'Hay un lote que no es de esta propiedad.',
         'siembra_hectareas_sembradas_requeridas' => 'Indica las hectáreas sembradas de ese lote.',
         'siembra_cosecha_estimada_invalida' => 'La cosecha estimada no puede ser anterior a la siembra.',
     ],

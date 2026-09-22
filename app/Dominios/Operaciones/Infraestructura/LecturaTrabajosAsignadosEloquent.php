@@ -51,7 +51,6 @@ final class LecturaTrabajosAsignadosEloquent implements LecturaTrabajosAsignados
                 vientoMaxKmh: $trabajo->ordenTrabajo?->viento_max_kmh,
                 temperaturaMaxC: $trabajo->ordenTrabajo?->temperatura_max_c,
                 humedadMaxPct: $trabajo->ordenTrabajo?->humedad_max_pct,
-                velocidadMaxKmh: $trabajo->ordenTrabajo?->velocidad_max_kmh,
                 alturaVueloM: $trabajo->ordenTrabajo?->altura_vuelo_m,
                 velocidadVueloKmh: $trabajo->ordenTrabajo?->velocidad_vuelo_kmh,
                 anchoPasadaM: $trabajo->ordenTrabajo?->ancho_pasada_m,

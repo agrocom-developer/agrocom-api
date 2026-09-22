@@ -174,9 +174,7 @@
 
         <x-organisms.form-actions-bar :status="__('inventario.stock.estado_form')">
             <x-slot:actions>
-                <x-atoms.button :href="route('panel.stock.index')" variant="outline">
-                    {{ __('ui.action.cancel') }}
-                </x-atoms.button>
+                <x-molecules.boton-volver :href="route('panel.stock.index')" cancelar />
                 <x-atoms.button type="submit" variant="primary">
                     {{ __('ui.action.save') }}
                 </x-atoms.button>

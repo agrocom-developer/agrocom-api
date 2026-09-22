@@ -129,12 +129,20 @@ function inicializar(root) {
         return seleccionada ? seleccionada.label : null;
     }
 
+    // Un select obligatorio no ofrece la «×»: vaciarlo lo dejaría inválido. Salvo
+    // que la página lo pida con `data-ag-select-clearable` — un obligatorio donde
+    // quitar lo elegido es parte de la carga (la cuadrilla del Equipo 1 de la
+    // Orden de Trabajo libera esa cuadrilla para otro equipo).
+    function seLimpia() {
+        return !nativo.required || nativo.dataset.agSelectClearable !== undefined;
+    }
+
     function actualizarValorMostrado() {
         const etiqueta = etiquetaSeleccionActual();
         valorSpan.textContent = etiqueta ?? etiquetaPlaceholder;
         valorSpan.classList.toggle('ag-select__value--placeholder', !etiqueta);
 
-        const puedeLimpiar = Boolean(etiqueta) && !nativo.required;
+        const puedeLimpiar = Boolean(etiqueta) && seLimpia();
         if (botonLimpiar) {
             botonLimpiar.hidden = !puedeLimpiar;
             botonLimpiar.setAttribute('aria-hidden', puedeLimpiar ? 'false' : 'true');
@@ -283,7 +291,7 @@ function inicializar(root) {
     }
 
     function limpiar() {
-        if (nativo.required || nativo.value === '') {
+        if (!seLimpia() || nativo.value === '') {
             return;
         }
 

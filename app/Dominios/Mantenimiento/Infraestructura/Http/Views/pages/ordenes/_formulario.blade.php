@@ -320,9 +320,7 @@
 
         <x-organisms.form-actions-bar :status="$esEdicion ? __('mantenimiento.ordenes.estado_ficha') : __('mantenimiento.ordenes.estado_form')">
             <x-slot:actions>
-                <x-atoms.button :href="route('panel.ordenes-mantenimiento.index')" variant="outline">
-                    {{ $esEdicion ? __('ui.action.close') : __('ui.action.cancel') }}
-                </x-atoms.button>
+                <x-molecules.boton-volver :href="route('panel.ordenes-mantenimiento.index')" :label="$esEdicion ? __('ui.action.close') : __('ui.action.cancel')" cancelar />
 
                 @if ($esEdicion)
                     @if ($puedeElegirRepuestos)

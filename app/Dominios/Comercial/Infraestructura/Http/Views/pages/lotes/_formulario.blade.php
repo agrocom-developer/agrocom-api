@@ -150,9 +150,7 @@
                     {{ __('comercial.lotes.volver_a_formulario_origen') }}
                 </x-atoms.button>
             @endif
-            <x-atoms.button :href="route('panel.lotes.index')" variant="outline">
-                {{ __('ui.action.cancel') }}
-            </x-atoms.button>
+            <x-molecules.boton-volver :href="route('panel.lotes.index')" :retorno="$esEdicion ? ['propiedad_id' => $lote->propiedad_id, 'lote_id' => $lote->id] : []" cancelar />
             <x-atoms.button type="submit" variant="primary">
                 {{ __('ui.action.save') }}
             </x-atoms.button>

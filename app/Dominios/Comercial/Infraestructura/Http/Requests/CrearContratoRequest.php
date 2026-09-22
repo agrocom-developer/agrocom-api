@@ -36,26 +36,9 @@ use Illuminate\Validation\Rule;
  * vía `Aplicacion/Contrato/VerificadorLotesDelContrato` (excepciones
  * `LoteAjenoAlCliente` y `LotesYaContratados`).
  *
- * `lotes.*.hora_inicio`/`lotes.*.hora_fin` (reemplazo del 16/9/2026 de las
- * ventanas de contrato: el rango horario para fumigar pasó de ser un dato
- * del contrato completo a ser un dato de CADA LOTE — ver el docblock de
- * `ContratoLote`, `com_contrato_ventanas` ya no existe): ambas son
- * opcionales, "las dos NULL" significa "ese lote, día completo" (mismo
- * criterio de "cero ventana = día completo" que regía a nivel contrato,
- * HU-47, trasladado a nivel de lote). Ninguna es requerida por sí sola:
- * `required_with` mutuo exige que, si el lote trae UNA hora, traiga las dos
- * — evita una fila a medias que rompería el `NOT NULL AND NOT NULL` del
- * `CHECK` de `com_contrato_lotes` — y `hora_fin` usa además
- * `after:lotes.*.hora_inicio` (Laravel resuelve el wildcard contra el MISMO
- * índice de fila) para replicar `CHECK (hora_fin > hora_inicio)` SOLO cuando
- * el lote está completo: con `hora_inicio` ausente, `after` no tiene contra
- * qué comparar y Laravel la da por cumplida (ver
- * `ValidatesAttributes::checkDateTimeOrder()`), así que la completitud del
- * lote la sigue garantizando el `required_with`. A diferencia de las
- * ventanas viejas (N filas por contrato, podían solaparse entre sí), acá
- * cada lote tiene A LO SUMO un rango horario propio: no hay nada que
- * solapar dentro de la misma fila, así que no hace falta ningún validador
- * de solapamiento del lado de `Aplicacion/CrearContrato`.
+ * De cada lote solo se valida `lote_id`: el día completo y el horario de
+ * cada lote salieron del contrato el 21/9/2026 y se cargan en la orden de
+ * trabajo (antes, `lotes.*.hora_inicio`/`lotes.*.hora_fin`).
  */
 final class CrearContratoRequest extends FormRequest
 {
@@ -77,8 +60,6 @@ final class CrearContratoRequest extends FormRequest
             'observaciones_logistica' => ['nullable', 'string'],
             'lotes' => ['required', 'array', 'min:1'],
             'lotes.*.lote_id' => ['required', 'integer', Rule::exists('com_lotes', 'id')->whereNull('deleted_at')],
-            'lotes.*.hora_inicio' => ['nullable', 'date_format:H:i', 'required_with:lotes.*.hora_fin'],
-            'lotes.*.hora_fin' => ['nullable', 'date_format:H:i', 'required_with:lotes.*.hora_inicio', 'after:lotes.*.hora_inicio'],
         ];
     }
 
@@ -97,9 +78,6 @@ final class CrearContratoRequest extends FormRequest
             'lotes.required' => __('comercial.contratos.error_lotes_requeridos'),
             'lotes.*.lote_id.required' => __('comercial.contratos.error_lote_invalido'),
             'lotes.*.lote_id.exists' => __('comercial.contratos.error_lote_invalido'),
-            'lotes.*.hora_inicio.required_with' => __('comercial.contratos.error_lote_horario_incompleto'),
-            'lotes.*.hora_fin.required_with' => __('comercial.contratos.error_lote_horario_incompleto'),
-            'lotes.*.hora_fin.after' => __('comercial.contratos.error_lote_horario_invalido'),
         ];
     }
 }

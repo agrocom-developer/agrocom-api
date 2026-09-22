@@ -101,6 +101,11 @@
 .ag-select__trigger {
     display: flex;
     flex: 1;
+    /* Sin esto el ítem flex no baja de su contenido: con el acceso rápido al lado
+       (`__action`) y un valor largo, el control se salía de un contenedor angosto
+       (bloque de equipo de la Orden de Trabajo en móvil) en vez de recortar con
+       puntos suspensivos, que es lo que pide `__value`. */
+    min-width: 0;
     align-items: center;
     gap: var(--ag-space-2);
     width: 100%;
@@ -117,6 +122,7 @@
 
 .ag-select__value {
     flex: 1;
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

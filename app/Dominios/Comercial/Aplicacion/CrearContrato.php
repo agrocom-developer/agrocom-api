@@ -20,15 +20,12 @@ use Illuminate\Support\Facades\DB;
  * que `CrearCliente` — el formulario es uno solo, así que el contrato y sus
  * lotes nacen en la misma transacción.
  *
- * Sin ventanas de contrato (retiradas el 16/9/2026, reemplazo completo: ver
- * el docblock de {@see ContratoLote}):
- * el rango horario para fumigar ya no es un dato del contrato completo, es
- * un dato de CADA LOTE (`hora_inicio`/`hora_fin`, ambos NULL = día
- * completo). Como cada lote tiene A LO SUMO un rango (una columna, no una
- * lista por fila), no hay "solapamiento entre horarios del mismo lote" que
- * validar — el `ValidadorSolapamientoVentanas` que existía para las
- * ventanas del contrato (N filas por contrato) no tiene equivalente acá y
- * se eliminó sin reemplazo.
+ * El contrato solo dice QUÉ lotes entran. Las ventanas horarias del contrato
+ * se retiraron el 16/9/2026 y el horario por lote que las reemplazó, el
+ * 21/9/2026: el día completo y el horario de cada lote se cargan en la orden
+ * de trabajo, que es donde se sabe cuándo se va a volar. Las columnas
+ * `hora_inicio`/`hora_fin` de {@see ContratoLote} quedan en la tabla (nullable)
+ * con lo que ya tuvieran; esta clase no las escribe.
  *
  * El estado inicial (`borrador`) lo fija
  * {@see MaquinaEstadosContrato::crear()}, nunca esta clase directamente
@@ -56,17 +53,11 @@ use Illuminate\Support\Facades\DB;
  *   Esta se verifica ADENTRO de la transacción y bajo candado de campaña,
  *   para no cruzarse con una aprobación simultánea de otro contrato.
  *
- * La consistencia de `hora_inicio`/`hora_fin` de cada lote ("las dos juntas
- * o ninguna", "`hora_fin` > `hora_inicio`") NO se re-valida acá: es una
- * regla de una sola fila, ya replicada en `CrearContratoRequest` (mismo
- * criterio que ya rige en esta misma clase para
- * `hectareas_contratadas`/`aplicaciones_previstas`/`precio_ha`, ninguno de
- * los cuales se re-verifica en `Aplicacion` tampoco). Los dos guardas que SÍ
- * viven acá (`LoteAjenoAlCliente`, `LotesYaContratados`) son,
- * justamente, los que cruzan tablas y que ningún `Request` puede expresar; un
- * horario inconsistente que sorteara el `Request` (un caller que no pase por
- * él) caería en el `CHECK` de Postgres, ni mejor ni peor que lo que ya le
- * pasaría hoy a una hectárea negativa en la misma situación.
+ * Las dos guardas que viven acá (`LoteAjenoAlCliente`, `LotesYaContratados`)
+ * son, justamente, las que cruzan tablas y que ningún `Request` puede
+ * expresar; las reglas de una sola fila (`hectareas_contratadas`,
+ * `aplicaciones_previstas`, `precio_ha`) quedan en `CrearContratoRequest` y
+ * no se re-verifican acá.
  */
 final class CrearContrato
 {
@@ -77,7 +68,7 @@ final class CrearContrato
 
     /**
      * @param  array<string, mixed>  $datosContrato  sin `estado` ni `monto_total`: los fija esta clase.
-     * @param  list<array{lote_id: int, hora_inicio: ?string, hora_fin: ?string}>  $lotes  lotes concretos que cubre el contrato (de una o varias propiedades del cliente), cada uno con su rango horario opcional
+     * @param  list<array{lote_id: int}>  $lotes  lotes concretos que cubre el contrato (de una o varias propiedades del cliente), cada uno con su rango horario opcional
      *
      * @throws CampaniaNoAbierta si la campaña elegida no está `abierta`.
      * @throws LoteAjenoAlCliente si algún lote no pertenece a una propiedad del cliente del contrato.
@@ -103,11 +94,7 @@ final class CrearContrato
             $contrato = $this->maquinaEstados->crear($datosContrato);
 
             foreach ($lotes as $lote) {
-                $contrato->lotes()->create([
-                    'lote_id' => $lote['lote_id'],
-                    'hora_inicio' => $lote['hora_inicio'],
-                    'hora_fin' => $lote['hora_fin'],
-                ]);
+                $contrato->lotes()->create(['lote_id' => $lote['lote_id']]);
             }
 
             return $contrato->refresh();

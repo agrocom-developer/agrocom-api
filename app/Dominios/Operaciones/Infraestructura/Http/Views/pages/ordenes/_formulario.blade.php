@@ -16,8 +16,8 @@
       edición, los pasos de `molecules/step-arrow` y el párrafo que los
       acompaña (`PasosDeOrden`). Los modales que abren viven en
       `_orden-modales.blade.php`, fuera de este `<form>`.
-    - $relacionado (array|null): solo en edición, los vínculos del aside a las
-      órdenes de trabajo y a los equipos de la orden.
+    - $resumenRelacionado (list|null): solo en edición, las tarjetas del aside
+      (órdenes de trabajo, asignación de equipos y estadías en hacienda).
     - $exigeMotivo (bool, default false): solo en edición, la orden ya está
       publicada (`vigente`/`pausada`) y corregirla pide un motivo, que queda en la
       bitácora junto con lo que cambia.
@@ -376,10 +376,26 @@
                 />
             </div>
 
-            <x-molecules.index-table columns="1fr 1fr 9rem" data-ag-lotes-tabla :hidden="empty($lotes)">
+            {{-- Cultivo, etapa y terreno (21/9/2026): lo que dice qué trabajo pide cada
+                 lote. Un lote sin cultivo registrado no es un error —es lo normal con
+                 el terreno limpio, antes de una aplicación de sólidos—, por eso va en
+                 texto apagado y no como aviso. `ordenes-form.js` redibuja estas mismas
+                 celdas al cambiar de contrato; los textos le llegan por `data-texto-*`. --}}
+            <x-molecules.index-table
+                columns="minmax(4rem, 0.6fr) 1fr 1.2fr 1.2fr 9rem"
+                data-ag-lotes-tabla
+                data-texto-sin-cultivo="{{ __('operaciones.ordenes.lotes_sin_cultivo') }}"
+                data-texto-sin-etapa="{{ __('operaciones.ordenes.lotes_sin_etapa') }}"
+                data-texto-desnivel="{{ __('operaciones.ordenes.lotes_terreno_desnivel') }}"
+                data-texto-limpieza="{{ __('operaciones.ordenes.lotes_terreno_limpieza') }}"
+                data-texto-sin-terreno="{{ __('operaciones.ordenes.lotes_sin_terreno') }}"
+                :hidden="empty($lotes)"
+            >
                 <x-slot:head>
                     <span role="columnheader">{{ __('operaciones.ordenes.lotes_columna_codigo') }}</span>
                     <span role="columnheader">{{ __('operaciones.ordenes.lotes_columna_propiedad') }}</span>
+                    <span role="columnheader">{{ __('operaciones.ordenes.lotes_columna_cultivo') }}</span>
+                    <span role="columnheader">{{ __('operaciones.ordenes.lotes_columna_terreno') }}</span>
                     <span role="columnheader">{{ __('operaciones.ordenes.lotes_columna_hectareas_lote') }}</span>
                 </x-slot:head>
 
@@ -387,6 +403,26 @@
                     <div class="ag-index-table__row" role="row" @if ($indice >= $lotesPorPagina) hidden @endif>
                         <span role="cell">{{ $lote['codigo'] }}</span>
                         <span role="cell">{{ $lote['propiedad'] }}</span>
+                        <span role="cell" class="ag-ordenes__celda-doble">
+                            @if (($lote['cultivo'] ?? null) !== null)
+                                <span>{{ $lote['cultivo'] }}</span>
+                                <span class="ag-ordenes__celda-detalle">{{ $lote['etapa_label'] ?? __('operaciones.ordenes.lotes_sin_etapa') }}</span>
+                            @else
+                                <span class="ag-ordenes__celda-detalle">{{ __('operaciones.ordenes.lotes_sin_cultivo') }}</span>
+                            @endif
+                        </span>
+                        <span role="cell" class="ag-ordenes__celda-doble">
+                            @if (($lote['desnivel_label'] ?? null) === null && ($lote['limpieza_label'] ?? null) === null)
+                                <span class="ag-ordenes__celda-detalle">{{ __('operaciones.ordenes.lotes_sin_terreno') }}</span>
+                            @else
+                                @if (($lote['desnivel_label'] ?? null) !== null)
+                                    <span class="ag-ordenes__celda-detalle">{{ __('operaciones.ordenes.lotes_terreno_desnivel', ['valor' => $lote['desnivel_label']]) }}</span>
+                                @endif
+                                @if (($lote['limpieza_label'] ?? null) !== null)
+                                    <span class="ag-ordenes__celda-detalle">{{ __('operaciones.ordenes.lotes_terreno_limpieza', ['valor' => $lote['limpieza_label']]) }}</span>
+                                @endif
+                            @endif
+                        </span>
                         <span role="cell" class="ag-ordenes__mono">{{ number_format((float) $lote['hectareas'], 2, ',', '.') }}</span>
                     </div>
                 @endforeach
@@ -410,46 +446,43 @@
     {{-- Acciones --}}
     <x-organisms.form-actions-bar :status="__('operaciones.ordenes.estado_form')">
         <x-slot:actions>
-            <x-atoms.button :href="route('panel.ordenes.index')" variant="outline">
-                {{ __('ui.action.cancel') }}
-            </x-atoms.button>
+            <x-molecules.boton-volver :href="route('panel.ordenes.index')" cancelar />
             <x-atoms.button type="submit" variant="primary">
                 {{ __('ui.action.save') }}
             </x-atoms.button>
         </x-slot:actions>
     </x-organisms.form-actions-bar>
 
-    {{-- Aside "Relacionado" (solo en edición): accesos a las órdenes de trabajo y a
-         los equipos de esta orden — crear/asignar si todavía no hay, o ver los que ya
-         hay. Mismas filas (`molecules/link-row`) que la sección de vínculos del detalle. --}}
-    @if ($esEdicion && ($relacionado['vinculos'] !== [] || $relacionado['aviso'] !== null))
+    {{-- Resumen relacionado (solo en edición; arquetipo Formulario, §6.3.1 de la guía,
+         mismo molde que `clientes/_formulario`): una tarjeta por cada cosa que cuelga
+         de la orden —órdenes de trabajo, asignación de equipos, estadías en hacienda—,
+         con sus conteos (`summary-card`) o su vacío compacto, y el acceso a su
+         pantalla. Lo resuelve `OrdenesController::resumenRelacionado()`. --}}
+    @if ($esEdicion && ($resumenRelacionado ?? []) !== [])
         <x-slot:aside>
-            <x-molecules.form-section accent="alert" :title="__('operaciones.ordenes.seccion_vinculos')">
-                <div class="ag-form-section__field--full">
-                    @if ($relacionado['vinculos'] !== [])
-                        <div class="ag-ordenes-detalle__vinculos">
-                            @foreach ($relacionado['vinculos'] as $vinculo)
-                                <x-molecules.link-row
-                                    :href="$vinculo['href']"
-                                    :icon="$vinculo['icon']"
-                                    :title="$vinculo['title']"
-                                    :meta="$vinculo['meta']"
-                                    :tone="$vinculo['tone']"
-                                />
-                            @endforeach
-                        </div>
-                    @endif
-
-                    {{-- Sin nada armado y sin poder armarlo todavía: dice por qué, sin marco extra. --}}
-                    @if ($relacionado['aviso'] !== null)
-                        <x-molecules.empty-state
-                            icon="schedule"
-                            :title="$relacionado['aviso']['titulo']"
-                            :detail="$relacionado['aviso']['detalle']"
-                        />
-                    @endif
-                </div>
-            </x-molecules.form-section>
+            @foreach ($resumenRelacionado as $resumen)
+                @if ($resumen['tieneDatos'])
+                    <x-molecules.summary-card :title="$resumen['titulo']" :items="$resumen['items']">
+                        @if ($resumen['mostrarAccion'])
+                            <x-slot:action>
+                                <x-atoms.button :href="$resumen['accion']['href']" variant="outline" :icon="$resumen['accion']['icono']" block>
+                                    {{ $resumen['accion']['label'] }}
+                                </x-atoms.button>
+                            </x-slot:action>
+                        @endif
+                    </x-molecules.summary-card>
+                @else
+                    <x-molecules.empty-state :icon="$resumen['icono']" :title="$resumen['vacioTitulo']" :detail="$resumen['vacioDetalle']">
+                        @if ($resumen['mostrarAccion'])
+                            <x-slot:action>
+                                <x-atoms.button :href="$resumen['accion']['href']" variant="outline" :icon="$resumen['accion']['icono']">
+                                    {{ $resumen['accion']['label'] }}
+                                </x-atoms.button>
+                            </x-slot:action>
+                        @endif
+                    </x-molecules.empty-state>
+                @endif
+            @endforeach
         </x-slot:aside>
     @endif
     </x-molecules.form-layout>

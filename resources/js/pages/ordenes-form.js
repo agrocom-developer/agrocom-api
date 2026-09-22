@@ -10,8 +10,9 @@
  * 2. Contactos: el `<select>` solo tiene los del cliente del contrato elegido —
  *    se arma con los que trae `datosContrato`, nunca con los de otros clientes—
  *    y se autoselecciona si es único.
- * 3. Lista de lotes de solo lectura (código + propiedad + hectáreas), de 20 en
- *    20 con el paginador de la tabla de lotes del contrato.
+ * 3. Lista de lotes de solo lectura (código, propiedad, cultivo con su etapa,
+ *    terreno y hectáreas), de 20 en 20 con el paginador de la tabla de lotes
+ *    del contrato.
  * 4. Tipo → categoría de insumo: filtro de presentación.
  * 5. Mostrar/ocultar campos de dosis según categoría elegida.
  */
@@ -143,15 +144,38 @@ document.addEventListener('DOMContentLoaded', () => {
             fila.className = 'ag-index-table__row';
             fila.setAttribute('role', 'row');
 
+            // Mismas celdas que pinta el Blade: cada una es una lista de líneas
+            // `[texto, esDetalle]`; con más de una, la celda las apila.
+            const textos = tablaLotes.dataset;
+            const terreno = [
+                lote.desnivel_label ? [textos.textoDesnivel.replace(':valor', lote.desnivel_label), true] : null,
+                lote.limpieza_label ? [textos.textoLimpieza.replace(':valor', lote.limpieza_label), true] : null,
+            ].filter(Boolean);
+
             [
-                [lote.codigo, ''],
-                [lote.propiedad, ''],
-                [formatoHectareas.format(Number(lote.hectareas)), 'ag-ordenes__mono'],
-            ].forEach(([texto, clase]) => {
+                [[[lote.codigo, false]], ''],
+                [[[lote.propiedad, false]], ''],
+                [lote.cultivo
+                    ? [[lote.cultivo, false], [lote.etapa_label || textos.textoSinEtapa, true]]
+                    : [[textos.textoSinCultivo, true]], 'ag-ordenes__celda-doble'],
+                [terreno.length > 0 ? terreno : [[textos.textoSinTerreno, true]], 'ag-ordenes__celda-doble'],
+                [[[formatoHectareas.format(Number(lote.hectareas)), false]], 'ag-ordenes__mono'],
+            ].forEach(([lineas, clase]) => {
                 const celda = document.createElement('span');
                 celda.setAttribute('role', 'cell');
                 if (clase) celda.className = clase;
-                celda.textContent = texto;
+
+                if (clase === 'ag-ordenes__celda-doble') {
+                    lineas.forEach(([texto, esDetalle]) => {
+                        const linea = document.createElement('span');
+                        if (esDetalle) linea.className = 'ag-ordenes__celda-detalle';
+                        linea.textContent = texto;
+                        celda.appendChild(linea);
+                    });
+                } else {
+                    celda.textContent = lineas[0][0];
+                }
+
                 fila.appendChild(celda);
             });
 

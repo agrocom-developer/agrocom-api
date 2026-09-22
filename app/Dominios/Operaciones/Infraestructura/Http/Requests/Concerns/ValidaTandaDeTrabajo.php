@@ -17,7 +17,8 @@ use Illuminate\Validation\Rule;
  * evita repetir el mismo bloque de reglas en los dos Requests.
  *
  * Solo valida FORMA: que cada equipo/lote exista, que las hectáreas sean
- * positivas, que el turno sea uno de los tres valores y traiga sus horas, y
+ * positivas, que el turno sea uno de los tres valores (sus horas son
+ * opcionales, pero si vienen las dos el fin es posterior al inicio), y
  * que Ph y litros por hectárea solo vengan si la orden es de insumo líquido
  * (y kilos por hectárea, solo si es de sólido). La vigencia del
  * equipo, el tope de hectáreas por lote y que la orden esté vigente NO se
@@ -33,7 +34,6 @@ trait ValidaTandaDeTrabajo
             'parametros.humedad_max_pct' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'parametros.viento_max_kmh' => ['nullable', 'numeric', 'gt:0'],
             'parametros.temperatura_max_c' => ['nullable', 'numeric', 'gt:-10', 'lt:60'],
-            'parametros.velocidad_max_kmh' => ['nullable', 'numeric', 'gt:0'],
             'parametros.altura_vuelo_m' => ['nullable', 'numeric', 'gt:0'],
             'parametros.velocidad_vuelo_kmh' => ['nullable', 'numeric', 'gt:0'],
             'parametros.ancho_pasada_m' => ['nullable', 'numeric', 'gt:0'],
@@ -63,8 +63,10 @@ trait ValidaTandaDeTrabajo
             ],
             'equipos.*.lotes.*.hectareas' => ['required', 'numeric', 'gt:0'],
             'equipos.*.lotes.*.turno' => ['required', Rule::in(['manana', 'noche', 'todo_el_dia'])],
-            'equipos.*.lotes.*.turno_hora_inicio' => ['required', 'date_format:H:i'],
-            'equipos.*.lotes.*.turno_hora_fin' => ['required', 'date_format:H:i'],
+            // Las horas son una referencia opcional (pedido del dueño, 21/9/2026):
+            // lo que se exige es el turno; el horario real lo registra el equipo.
+            'equipos.*.lotes.*.turno_hora_inicio' => ['nullable', 'date_format:H:i'],
+            'equipos.*.lotes.*.turno_hora_fin' => ['nullable', 'date_format:H:i'],
         ];
     }
 

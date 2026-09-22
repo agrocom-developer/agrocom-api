@@ -21,6 +21,7 @@ import './pages/clientes-form.js';
 import './pages/contratos-form.js';
 import './pages/lotes-form.js';
 import './pages/lotes-generar.js';
+import './pages/siembra-form.js';
 import './pages/propiedades-form.js';
 import './pages/usuarios-form.js';
 import './pages/gastos-form.js';
@@ -36,6 +37,9 @@ import './pages/roles-permisos.js';
 import './pages/configuracion-form.js';
 import './pages/reportes-comerciales.js';
 import './pages/personas-desempeno.js';
+// Al final: repone campos y avisa con `change`, así que los átomos y las páginas
+// de arriba ya tienen que estar escuchando.
+import './shared/borrador-formulario.js';
 
 // Bootstrap components are now available globally via window
 window.bootstrap = bootstrap;

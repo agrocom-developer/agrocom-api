@@ -136,7 +136,6 @@ final class RepartoCuadrillasController
             'humedad_max_pct' => $this->cadenaONull($parametros['humedad_max_pct'] ?? null),
             'viento_max_kmh' => $this->cadenaONull($parametros['viento_max_kmh'] ?? null),
             'temperatura_max_c' => $this->cadenaONull($parametros['temperatura_max_c'] ?? null),
-            'velocidad_max_kmh' => $this->cadenaONull($parametros['velocidad_max_kmh'] ?? null),
             'altura_vuelo_m' => $this->cadenaONull($parametros['altura_vuelo_m'] ?? null),
             'velocidad_vuelo_kmh' => $this->cadenaONull($parametros['velocidad_vuelo_kmh'] ?? null),
             'ancho_pasada_m' => $this->cadenaONull($parametros['ancho_pasada_m'] ?? null),
@@ -155,8 +154,8 @@ final class RepartoCuadrillasController
                 'lote_id' => (int) $lote['lote_id'],
                 'hectareas' => (string) $lote['hectareas'],
                 'turno' => (string) $lote['turno'],
-                'turno_hora_inicio' => (string) $lote['turno_hora_inicio'],
-                'turno_hora_fin' => (string) $lote['turno_hora_fin'],
+                'turno_hora_inicio' => ($lote['turno_hora_inicio'] ?? '') === '' ? null : (string) $lote['turno_hora_inicio'],
+                'turno_hora_fin' => ($lote['turno_hora_fin'] ?? '') === '' ? null : (string) $lote['turno_hora_fin'],
             ], $equipo['lotes']),
         ], $datos['equipos']);
 

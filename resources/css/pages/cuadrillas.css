@@ -143,3 +143,14 @@
         gap: var(--ag-space-1);
     }
 }
+
+/* Alta: las baterías son casillas en fila, como «¿Qué lleva la calda?» de la
+   Orden de Trabajo (`.ag-ordenes-trabajo-form__calda`) — no una lista con
+   scroll propio. */
+.ag-cuadrillas-form__baterias .ag-checkbox-group__options {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--ag-space-2) var(--ag-space-6);
+    max-height: none;
+    overflow: visible;
+}

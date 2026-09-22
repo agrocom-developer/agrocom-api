@@ -54,12 +54,12 @@
         :menu-badges="$menuBadges"
         :version="$version"
         :vista-actual="__('campania.campanias.titulo')"
-    >
+  >
         <div class="ag-campanias">
             <x-organisms.page-header
                 :title="__('campania.campanias.titulo')"
                 :subtitle="__('campania.campanias.subtitulo')"
-            >
+      >
                 @puede('campania.campania.crear')
                     <x-slot:actions>
                         <x-atoms.button :href="route('panel.campanias.create')" variant="primary" icon="add">
@@ -97,7 +97,7 @@
                     <x-organisms.filter-panel
                         :action="route('panel.campanias.index')"
                         :active-count="$filtrosPanelActivos"
-                    >
+          >
                         <input type="hidden" name="q" value="{{ $filtros['q'] }}">
                         <x-atoms.select
                             name="estado"
@@ -261,7 +261,9 @@
                                             :message="__('campania.campanias.confirmar_abrir')"
                                             :confirm-label="__('campania.campanias.accion_abrir')"
                                             tone="success"
-                                        />
+                                        >
+                                            @include('campania::pages.campanias._estado-transicion', ['desde' => $estadoValor, 'hacia' => 'abierta'])
+                                        </x-molecules.confirm-modal>
                                     @elseif ($estadoValor === 'abierta')
                                         <x-molecules.confirm-modal
                                             :id="$modalIdCerrar"
@@ -269,7 +271,10 @@
                                             :title="__('campania.campanias.confirmar_cerrar_titulo')"
                                             :message="__('campania.campanias.confirmar_cerrar')"
                                             :confirm-label="__('campania.campanias.accion_cerrar')"
-                                        />
+                                            tone="alert"
+                                        >
+                                            @include('campania::pages.campanias._estado-transicion', ['desde' => $estadoValor, 'hacia' => 'cerrada'])
+                                        </x-molecules.confirm-modal>
                                     @endif
                                 @endpuede
 
@@ -302,7 +307,7 @@
                                                 variant="outline"
                                                 size="sm"
                                                 icon="check_circle"
-                                            >
+                      >
                                                 {{ __('campania.campanias.accion_abrir') }}
                                             </x-atoms.button>
                                         @elseif ($estadoValor === 'abierta')
@@ -313,7 +318,7 @@
                                                 variant="alert-outline"
                                                 size="sm"
                                                 icon="lock"
-                                            >
+                      >
                                                 {{ __('campania.campanias.accion_cerrar') }}
                                             </x-atoms.button>
                                         @endif
@@ -327,7 +332,7 @@
                                             variant="danger-outline"
                                             size="sm"
                                             icon="delete"
-                                        >
+                    >
                                             {{ __('campania.campanias.eliminar_accion') }}
                                         </x-atoms.button>
                                     @endpuede

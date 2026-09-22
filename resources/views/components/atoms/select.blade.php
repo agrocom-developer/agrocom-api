@@ -79,6 +79,11 @@
     `aria-activedescendant` mientras está abierto; al cerrar, el foco vuelve
     al combobox — ver resources/js/atoms/select.js.
 
+    Limpiar («×»): la ofrece todo select NO obligatorio con un valor elegido. Un
+    obligatorio no, salvo que el llamador pase `data-ag-select-clearable` (va al
+    nativo, como todo `data-*`): para cuando quitar lo elegido es parte de la
+    carga y el vacío lo frena la validación al guardar.
+
     LSP (`$attributes`, ver docs/diseno/guia_pantalla_panel.md §3): mismo
     criterio partido que `atoms/input` — la raíz (`<div class="ag-select">`)
     solo fusiona `class` (`->only('class')`), el `<select>` nativo recibe el

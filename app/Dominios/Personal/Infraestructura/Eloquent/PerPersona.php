@@ -30,8 +30,22 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * congela `tarifa_ha` en el devengo: ese caso de uso copia el valor al
  * generarse, nunca lo relee de esta tabla después.
  *
+ * Datos personales y de referencia (21/9/2026): `nombres`,
+ * `apellido_paterno`, `apellido_materno`, `ci`, `celular`, `correo` y
+ * `direccion`. `nombre` sigue siendo el nombre completo que lee todo el
+ * resto del sistema; lo compone `Aplicacion/DatosPersona`, no se escribe a
+ * mano. Las personas anteriores a esa fecha tienen el nombre entero en
+ * `nombres` y lo demás vacío, hasta que se las edite.
+ *
  * @property int $id
  * @property string $nombre
+ * @property string|null $nombres
+ * @property string|null $apellido_paterno
+ * @property string|null $apellido_materno
+ * @property string|null $ci
+ * @property string|null $celular
+ * @property string|null $correo
+ * @property string|null $direccion
  * @property RolOperativoPersona $rol
  * @property string|null $tarifa_ha
  * @property int|null $base_id
@@ -46,6 +60,13 @@ class PerPersona extends ModeloDominio
     /** @var list<string> */
     protected $fillable = [
         'nombre',
+        'nombres',
+        'apellido_paterno',
+        'apellido_materno',
+        'ci',
+        'celular',
+        'correo',
+        'direccion',
         'rol',
         'tarifa_ha',
         'base_id',

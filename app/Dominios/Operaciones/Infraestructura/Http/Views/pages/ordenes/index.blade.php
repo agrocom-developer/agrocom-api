@@ -253,7 +253,17 @@
                                         {{ $previstas !== null ? __('operaciones.ordenes.aplicacion_n_de_m', ['nro' => $orden->nro_aplicacion, 'total' => $previstas]) : $orden->nro_aplicacion }}
                                     </span>
                                     <span role="cell" class="ag-ordenes__mono">{{ $datosOrden['lotes'] }}</span>
-                                    <span role="cell" class="ag-ordenes__mono">{{ $datosOrden['ordenes_trabajo'] }}</span>
+                                    {{-- La cuenta lleva a las órdenes de trabajo de ESTA orden; una vigente que
+                                         todavía no tiene ninguna, directo al alta con la orden ya elegida. --}}
+                                    <span role="cell" class="ag-ordenes__mono">
+                                        @if ($datosOrden['ordenes_trabajo'] > 0 && $puedeVerTrabajos)
+                                            <a href="{{ route('panel.trabajos.index', ['orden_id' => $orden->id]) }}" class="ag-ordenes__crear-trabajo">{{ $datosOrden['ordenes_trabajo'] }}</a>
+                                        @elseif ($datosOrden['ordenes_trabajo'] === 0 && $orden->estado->value === 'vigente' && $puedeCrearTrabajos)
+                                            <a href="{{ route('panel.trabajos.create', ['orden_id' => $orden->id]) }}" class="ag-ordenes__crear-trabajo">{{ __('operaciones.ordenes.orden_trabajo_crear_corto') }}</a>
+                                        @else
+                                            {{ $datosOrden['ordenes_trabajo'] }}
+                                        @endif
+                                    </span>
                                     <span role="cell">{{ __('operaciones.tipo_aplicacion.'.$orden->tipo_aplicacion->value) }}</span>
                                     <span role="cell" class="ag-ordenes__mono">{{ $dosisTexto }}</span>
                                     <span role="cell" class="ag-ordenes__mono">{{ $orden->fecha_emision->format('d/m/Y') }}</span>

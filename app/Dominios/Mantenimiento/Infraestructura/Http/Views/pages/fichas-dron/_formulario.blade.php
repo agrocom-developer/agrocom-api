@@ -154,9 +154,7 @@
 
         <x-organisms.form-actions-bar :status="__('mantenimiento.fichas_dron.estado_form')">
             <x-slot:actions>
-                <x-atoms.button :href="route('panel.fichas-dron.index')" variant="outline">
-                    {{ __('ui.action.cancel') }}
-                </x-atoms.button>
+                <x-molecules.boton-volver :href="route('panel.fichas-dron.index')" cancelar />
                 <x-atoms.button type="submit" variant="primary">
                     {{ __('ui.action.save') }}
                 </x-atoms.button>

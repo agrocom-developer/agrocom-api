@@ -103,13 +103,13 @@ use OpenApi\Attributes as OA;
         .'(HU-70, tarea 85) — nunca los que nacen por sync (`equipo_trabajo_id` siempre presente acá). '
         .'`uuid_cliente` es el que generó el panel al confirmar la asignación: la app lo usa TAL CUAL '
         .'para abrir sesiones sobre este trabajo. `hectareas_declaradas` es DECIMAL como string (invariante 6). '
-        .'Los 8 campos de límites climáticos y parámetros de vuelo llegaron acá desde `OrdenCatalogo` '
+        .'Los 7 campos de límites climáticos y parámetros de vuelo llegaron acá desde `OrdenCatalogo` '
         .'(migración `2026_09_18_100001_mueve_clima_vuelo_de_ordenes_a_trabajos_table`): son condiciones '
         .'del vuelo de ESTE equipo, cargadas al asignar (ver `AsignarEquipoOrdenRequest`) — nullable, '
         .'`null` cuando el jefe de campo no las completó en ese paso.',
     required: [
         'id', 'uuid_cliente', 'orden_id', 'lote_id', 'hectareas_declaradas', 'equipo_trabajo_id',
-        'humedad_min_pct', 'viento_max_kmh', 'temperatura_max_c', 'humedad_max_pct', 'velocidad_max_kmh',
+        'humedad_min_pct', 'viento_max_kmh', 'temperatura_max_c', 'humedad_max_pct',
         'altura_vuelo_m', 'velocidad_vuelo_kmh', 'ancho_pasada_m', 'updated_at',
     ],
     properties: [
@@ -123,7 +123,6 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'viento_max_kmh', type: 'string', example: '15.00', nullable: true),
         new OA\Property(property: 'temperatura_max_c', type: 'string', example: '32.00', nullable: true),
         new OA\Property(property: 'humedad_max_pct', type: 'string', example: '90.00', nullable: true),
-        new OA\Property(property: 'velocidad_max_kmh', type: 'string', example: '25.00', nullable: true),
         new OA\Property(property: 'altura_vuelo_m', type: 'string', example: '3.00', nullable: true),
         new OA\Property(property: 'velocidad_vuelo_kmh', type: 'string', example: '18.00', nullable: true),
         new OA\Property(property: 'ancho_pasada_m', type: 'string', example: '7.00', nullable: true),

@@ -157,21 +157,39 @@
     gap: var(--ag-space-3);
 }
 
-/* Tabla de lotes ya agregados (tercera vuelta del rediseño: Código /
-   Hectáreas / Día completo / Horario / Acciones en columnas propias — mismo
+/* Aviso de hectáreas de arriba de la tabla (`data-ag-lotes-resumen`): sin lotes
+   no hay nada que comparar. `display: flex` de `molecules/alert-strip` le gana al
+   `[hidden]` del navegador, de ahí esta regla. */
+.ag-contratos-form__lotes-list > .ag-alert-strip[hidden] {
+    display: none;
+}
+
+/* La diferencia contra lo contratado («50,00 ha menos») es lo único que se
+   resalta del aviso, en color alert; el resto conserva el color del aviso. Va con
+   el contenedor delante porque `molecules/alert-strip` ya pinta sus `<strong>`
+   con el tono de la variante (`.ag-alert-strip--info strong`) y le ganaría. */
+.ag-contratos-form__lotes-list .ag-contratos-form__lotes-resumen-diferencia {
+    color: var(--ag-color-alert-strong);
+    font-weight: var(--ag-font-weight-medium);
+}
+
+/* Tabla de lotes ya agregados (Código / Propiedad / Hectáreas / Acciones en
+   columnas propias; la propiedad pasó de banda de título por grupo a columna,
+   y el día completo y el horario de cada lote se fueron a la orden de
+   trabajo el 21/9/2026 — mismo
    lenguaje visual que `molecules/index-table` del listado, con su propio
    grid porque el número de columnas es otro (y porque no es un listado
    paginado con acciones colapsables, no le hace falta el componente
    entero). El título de propiedad es una fila que ocupa el ancho completo
    (banda de sección), no una columna más. */
 .ag-contratos-form__lotes-tabla {
-    /* Código / Hectáreas / Día completo / Horario / Acciones. UNA sola cuadrícula
+    /* Código / Propiedad / Hectáreas / Acciones. UNA sola cuadrícula
        para toda la tabla: la cabecera, los grupos de propiedad y cada fila la
        heredan con `subgrid`, así las columnas `auto` toman el ancho de su
        contenido MÁS ANCHO entre todas las filas y nunca se desalinean. Antes cada
        fila era su propio grid con columnas `auto`: la que traía «Ver contrato»
        ensanchaba su columna de acciones y quedaba corrida respecto de las demás
-       (19/9/2026). Horario tiene ancho fijo (cabe «10:00 a. m. – 10:00 p. m.»).
+       (19/9/2026).
        Ninguna columna usa `fr`: el sobrante en pantalla ancha NO se le da a una
        columna (la de Código llegó a ocupar ~900 px para un «Lote1» y dejaba las
        demás apretadas a la derecha) sino que se reparte ENTRE ellas con
@@ -179,7 +197,7 @@
        distintas el grid infla las columnas angostas cuando falta lugar y la tabla
        desborda en la edición, donde el bloque es angosto. */
     display: grid;
-    grid-template-columns: auto auto auto 13.5rem auto;
+    grid-template-columns: auto auto auto auto;
     justify-content: space-between;
     /* Angosto a propósito: en la edición el mínimo de Código lo fija el aviso «En
        conflicto» (125 px) y con 12 px de separación la tabla desbordaba por 5 px. */
@@ -217,17 +235,12 @@
 /* Las filas de otras páginas (`paginador-cliente.js`) se ocultan, no se
    quitan: sus campos siguen en el formulario y se envían igual. `display: grid`
    de arriba le gana al `[hidden]` del navegador, de ahí esta regla. */
-.ag-contratos-form__lote-row[hidden],
-.ag-contratos-form__lote-group-title[hidden] {
+.ag-contratos-form__lote-row[hidden] {
     display: none;
 }
 
-/* «Día completo» va centrado en su columna; «Acciones», pegado a la derecha. */
-.ag-contratos-form__lotes-tabla-head > :nth-child(3) {
-    text-align: center;
-}
-
-.ag-contratos-form__lotes-tabla-head > :nth-child(5) {
+/* «Acciones» va pegado a la derecha. */
+.ag-contratos-form__lotes-tabla-head > :nth-child(4) {
     text-align: right;
 }
 
@@ -240,16 +253,6 @@
     letter-spacing: 0.04em;
 }
 
-.ag-contratos-form__lote-group-title {
-    grid-column: 1 / -1;
-    padding: var(--ag-space-2) var(--ag-space-4);
-    background-color: var(--ag-color-bg-surface);
-    border-top: 1px solid var(--ag-color-border-row);
-    font-size: var(--ag-font-size-sm);
-    font-weight: var(--ag-font-weight-medium);
-    color: var(--ag-color-text-muted);
-}
-
 .ag-contratos-form__lote-row {
     border-top: 1px solid var(--ag-color-border-row);
     font-size: var(--ag-font-size-sm);
@@ -257,13 +260,6 @@
 
 .ag-contratos-form__lote-row:hover {
     background-color: var(--ag-color-bg-row-hover);
-}
-
-/* Error de horario de ESTA fila (lotes.N.hora_inicio/hora_fin, ver
-   _lotes-tabla.blade.php): sexto hijo de un grid de 5 columnas — sin esto
-   cae en una fila implícita nueva angosta, pegado a la primera columna. */
-.ag-contratos-form__lote-row > .ag-input__error {
-    grid-column: 1 / -1;
 }
 
 .ag-contratos-form__lote-code {
@@ -301,43 +297,18 @@
     }
 }
 
+/* En el teléfono, con Código / Propiedad / Hectáreas a la vista, «Quitar» también
+   queda solo con su ícono (rojo, de papelera): el texto sigue en `aria-label`. */
+@container (max-width: 30rem) {
+    .ag-contratos-form__lote-quitar-btn .ag-button__label {
+        display: none;
+    }
+}
+
+.ag-contratos-form__lote-propiedad,
 .ag-contratos-form__lote-hectareas {
     color: var(--ag-color-text-muted);
     font-size: var(--ag-font-size-sm);
-}
-
-/* `position: relative` no es decorativo: sin un ancestro posicionado, el
-   `position: absolute` de `.ag-checkbox-group__input` (técnica
-   visually-hidden) usa el viewport como bloque contenedor y desborda el
-   layout — mismo bug ya documentado y corregido en `.ag-switch__control`
-   (switch.css), `.ag-checkbox__control` (checkbox.css) y
-   `.ag-checkbox-group__option` (checkbox-group.css). Acá se repitió porque
-   esta celda arma el checkbox a mano en vez de reusar el átomo completo
-   (columna propia de la tabla, no una lista de opciones). */
-.ag-contratos-form__lote-dia-completo-celda {
-    position: relative;
-    display: inline-flex;
-    justify-self: center;
-    cursor: pointer;
-}
-
-/* Celda del horario de un lote: `atoms/time-range` (inicio y fin en una sola
-   casilla). Siempre visible aunque esté deshabilitada (día completo tildado): si
-   se ocultara, esa fila pierde el ancho de columna y la tabla queda dentada
-   entre filas con/sin horario propio (pedido explícito, revertido tras
-   probarlo oculto). Sin margen de apilado: es un campo dentro de una fila de
-   tabla, no de un formulario. */
-.ag-contratos-form__lote-rango-horas {
-    display: flex;
-    align-items: center;
-    min-width: 0;
-    color: var(--ag-color-text-muted);
-}
-
-.ag-contratos-form__lote-rango-horas .ag-time-range {
-    flex: 1;
-    min-width: 0;
-    margin-bottom: 0;
 }
 
 /* "Quitar" de la tabla de lotes: mismo `ag-button--text` (transparente,
@@ -438,6 +409,16 @@
     flex-shrink: 0;
 }
 
+/* Las acciones de la cabecera del modal («Registrar siembra» y «Crear lote»)
+   van juntas a la derecha, y bajan de línea en pantallas angostas. */
+.ag-contratos-form__modal-header-row > [data-ag-modal-crear-lote-slot] {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--ag-space-2);
+    flex-shrink: 0;
+}
+
 /* Tabla de lotes del modal: checkbox + Código + Hectáreas + Desnivel +
    Limpieza en columnas, mismo lenguaje que `.ag-contratos-form__lotes-tabla`
    de la página (borde/radio/cabecera muted uppercase). */
@@ -450,7 +431,7 @@
 .ag-contratos-form__modal-tabla-head,
 .ag-contratos-form__modal-tabla-fila {
     display: grid;
-    grid-template-columns: 2.5rem 1.2fr 1fr 1fr 1fr;
+    grid-template-columns: 2.5rem 0.8fr 0.8fr 1.6fr 1fr 1fr;
     gap: var(--ag-space-3);
     align-items: center;
     /* Compacta: con 20 lotes por página el modal entra en una pantalla normal. */
@@ -490,10 +471,13 @@
     color: var(--ag-color-text-faint);
 }
 
-/* Mismo bug que `.ag-contratos-form__lote-dia-completo-celda` de arriba
-   (ver ese comentario): esta celda también arma el checkbox a mano, con el
-   mismo `.ag-checkbox-group__input` crudo — necesita el mismo
-   `position: relative`. */
+/* `position: relative` no es decorativo: sin un ancestro posicionado, el
+   `position: absolute` de `.ag-checkbox-group__input` (técnica
+   visually-hidden) usa el viewport como bloque contenedor y desborda el
+   layout — mismo bug ya documentado y corregido en `.ag-switch__control`
+   (switch.css), `.ag-checkbox__control` (checkbox.css) y
+   `.ag-checkbox-group__option` (checkbox-group.css). Acá se repite porque
+   esta celda arma el checkbox a mano en vez de reusar el átomo completo. */
 .ag-contratos-form__modal-checkbox-celda {
     position: relative;
     display: inline-flex;

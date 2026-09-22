@@ -19,6 +19,7 @@ use App\Dominios\Comercial\Dominio\Excepciones\LotesYaContratados;
 use App\Dominios\Comercial\Dominio\Excepciones\TransicionContratoNoPermitida;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
+use App\Dominios\Comercial\Infraestructura\Eloquent\LoteCampania;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Comercial\Infraestructura\Http\PasosDeContrato;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\ActualizarContratoRequest;
@@ -49,19 +50,16 @@ use Illuminate\View\View;
  * uso de `Aplicacion/` hacen el trabajo, incluido el cálculo de
  * `monto_total` y el upsert de contrato+lotes en una sola transacción.
  *
- * Sin ventanas de contrato (retiradas el 16/9/2026, reemplazo completo por
- * horario a nivel de lote: ver el docblock de `Aplicacion/CrearContrato`):
- * ya no hay `ventanas` en el request ni `VentanasContratoSolapadas` que
- * atrapar.
+ * Sin ventanas de contrato (retiradas el 16/9/2026) y sin horario por lote
+ * (retirado del contrato el 21/9/2026: el día completo y el horario de cada
+ * lote se cargan en la orden de trabajo). El contrato solo dice QUÉ lotes
+ * entran.
  *
- * `normalizarLotes()` (lotes agregados en la tarea "contratos-lotes",
- * 16/9/2026, ampliado con horario por lote el mismo día): transforma el
- * array crudo `lotes` del request — `[['lote_id' => '5', 'hora_inicio' =>
- * '06:00', 'hora_fin' => '10:00'], ...]`, ya validado por
+ * `normalizarLotes()`: transforma el array crudo `lotes` del request —
+ * `[['lote_id' => '5'], ...]`, ya validado por
  * `CrearContratoRequest`/`ActualizarContratoRequest` — al shape tipado que
  * espera `Aplicacion/CrearContrato`/`ActualizarContrato::ejecutar()`
- * (`lote_id` a `int`, `hora_inicio`/`hora_fin` a `?string`, cadena vacía
- * tratada como `null`). Las dos guardas de negocio, "el lote es del
+ * (`lote_id` a `int`). Las dos guardas de negocio, "el lote es del
  * cliente" y "la propiedad no está agotada", viven en
  * `Aplicacion/CrearContrato`/`Aplicacion/ActualizarContrato`, nunca acá.
  *
@@ -131,13 +129,13 @@ final class ContratosController
         return view('comercial::pages.contratos.create', [
             ...$this->autorizacion->cascara($request),
             'clientesDisponibles' => $this->clientesActivos(),
-            'campaniasDisponibles' => $this->campaniasParaFormulario($lecturaCampania),
+            'campaniasDisponibles' => $campaniasDisponibles = $this->campaniasParaFormulario($lecturaCampania),
             'campaniaIdPredeterminada' => $this->campaniaActivaPredeterminada($lecturaCampania),
             // Acceso directo desde el aside de `panel.clientes.edit` (tarea
             // "resumen de cliente"): con ?cliente_id=, el formulario arranca
             // con ese cliente ya elegido — ver _formulario.blade.php.
             'clienteIdPreseleccionado' => $request->integer('cliente_id') ?: null,
-            'propiedadesYLotesPorCliente' => $this->propiedadesYLotesPorCliente(null),
+            'propiedadesYLotesPorCliente' => $this->propiedadesYLotesPorCliente(null, $campaniasDisponibles->keys()->all()),
             'loteIdsConOrdenRegistrada' => [],
             'conflictosPorLote' => [],
         ]);
@@ -227,9 +225,9 @@ final class ContratosController
             ...$this->autorizacion->cascara($request),
             'contrato' => $contrato,
             'clientesDisponibles' => $this->clientesActivos(),
-            'campaniasDisponibles' => $this->campaniasParaFormulario($lecturaCampania, $contrato->campania_id),
+            'campaniasDisponibles' => $campaniasDisponibles = $this->campaniasParaFormulario($lecturaCampania, $contrato->campania_id),
             'campaniaIdPredeterminada' => $this->campaniaActivaPredeterminada($lecturaCampania),
-            'propiedadesYLotesPorCliente' => $this->propiedadesYLotesPorCliente($contrato->id),
+            'propiedadesYLotesPorCliente' => $this->propiedadesYLotesPorCliente($contrato->id, $campaniasDisponibles->keys()->all()),
             'loteIdsConOrdenRegistrada' => $loteIdsConOrden,
             'conflictosPorLote' => $conflictosPorLote,
             'resumenContrato' => $this->resumenContrato($contrato, $request, $lecturaResumenOrdenes, $lecturaTrabajos, $obtenerAvance),
@@ -732,23 +730,18 @@ final class ContratosController
 
     /**
      * Transforma el array crudo `lotes` del request — ya validado por
-     * `CrearContratoRequest`/`ActualizarContratoRequest` (cada fila trae
-     * `lote_id` y, opcionalmente, `hora_inicio`/`hora_fin`) — al shape
-     * tipado que espera
-     * `Aplicacion/CrearContrato`/`ActualizarContrato::ejecutar()`: castea
-     * `lote_id` a `int`, y `hora_inicio`/`hora_fin` a `?string`, tratando
-     * cadena vacía como `null` (mismo criterio que `cadenaONull()` para el
-     * resto del formulario).
+     * `CrearContratoRequest`/`ActualizarContratoRequest` — al shape tipado que
+     * espera `Aplicacion/CrearContrato`/`ActualizarContrato::ejecutar()`. El
+     * contrato solo dice QUÉ lotes entran (21/9/2026): el día completo y el
+     * horario de cada lote se cargan en la orden de trabajo.
      *
      * @param  list<array<string, mixed>>  $lotesCrudos
-     * @return list<array{lote_id: int, hora_inicio: ?string, hora_fin: ?string}>
+     * @return list<array{lote_id: int}>
      */
     private function normalizarLotes(array $lotesCrudos): array
     {
         return array_map(fn (array $lote): array => [
             'lote_id' => (int) $lote['lote_id'],
-            'hora_inicio' => $this->cadenaONull($lote['hora_inicio'] ?? null),
-            'hora_fin' => $this->cadenaONull($lote['hora_fin'] ?? null),
         ], $lotesCrudos);
     }
 
@@ -772,16 +765,41 @@ final class ContratosController
      * editarlo. El JS del modal de selección lo usa para no ofrecer un lote
      * ya comprometido en la campaña que el formulario tiene elegida.
      *
-     * @return array<int, array<int, array{nombre: string, lotes: list<array{id: int, codigo: string, hectareas: string, desnivel: ?string, desnivel_label: ?string, limpieza: ?string, limpieza_label: ?string, ocupado_en_campanias: list<int>}>}>>
+     * `siembras` (21/9/2026, pedido directo): qué cultivo tiene el lote y en
+     * qué etapa está, por cada campaña que el formulario ofrece —
+     * `{ [campania_id]: { cultivo, etapa_label } }`. Un contrato junta los
+     * lotes que comparten cultivo y etapa (cada etapa pide un trabajo
+     * distinto; en la caña conviven todas a la vez), y el modal de selección
+     * lo muestra para la campaña elegida. Sin siembra registrada no hay
+     * entrada: es un dato que ayuda a elegir, no una regla que impida nada.
+     *
+     * @param  list<int>  $campaniaIds  las campañas que ofrece el select del formulario.
+     * @return array<int, array<int, array{nombre: string, lotes: list<array{id: int, codigo: string, hectareas: string, desnivel: ?string, desnivel_label: ?string, limpieza: ?string, limpieza_label: ?string, ocupado_en_campanias: list<int>, siembras: array<int, array{cultivo: string, etapa_label: ?string}>}>}>>
      */
-    private function propiedadesYLotesPorCliente(?int $contratoIdExcluido): array
+    private function propiedadesYLotesPorCliente(?int $contratoIdExcluido, array $campaniaIds): array
     {
         $propiedades = Propiedad::query()
-            ->with(['lotes' => fn ($query) => $query->whereNull('deleted_at')])
+            // Orden natural por código (L1, L2, … L10): es el orden en que el
+            // modal ofrece los lotes y en el que quedan las filas de la tabla.
+            ->with(['lotes' => fn ($query) => $query->whereNull('deleted_at')->ordenadosPorCodigo()])
             ->whereNull('deleted_at')
             ->get(['id', 'cliente_id', 'nombre']);
 
         $ocupacionPorLote = LecturaOcupacionLotesPorCampania::porCampania($contratoIdExcluido);
+
+        $siembrasPorLote = LoteCampania::query()
+            ->whereIn('campania_id', $campaniaIds)
+            ->with('cultivo')
+            ->get()
+            ->groupBy('lote_id')
+            ->map(fn ($siembras) => $siembras->mapWithKeys(fn (LoteCampania $siembra): array => [
+                $siembra->campania_id => [
+                    'cultivo' => $siembra->cultivo->nombre_comun,
+                    'etapa_label' => $siembra->etapa_cultivo !== null
+                        ? __("comercial.siembra.etapa_opcion.{$siembra->etapa_cultivo->value}")
+                        : null,
+                ],
+            ])->all());
 
         $result = [];
         foreach ($propiedades as $propiedad) {
@@ -803,6 +821,10 @@ final class ContratosController
                     'limpieza' => $lote->limpieza,
                     'limpieza_label' => $lote->limpieza ? __("comercial.lotes.lote_limpieza_{$lote->limpieza}") : null,
                     'ocupado_en_campanias' => $ocupacionPorLote[$lote->id] ?? [],
+                    // Sin siembras viaja como `[]` y con ellas como objeto
+                    // (las claves son ids de campaña, nunca 0): el JS lee
+                    // `siembras[campania_id]` y las dos formas le sirven.
+                    'siembras' => $siembrasPorLote->get($lote->id) ?? [],
                 ])->values()->all(),
             ];
         }

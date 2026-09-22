@@ -44,7 +44,8 @@ final class CrearOrdenTrabajoRequest extends FormRequest
      * (`cantidad_equipos_necesarios`), pero una tanda puede salir con menos
      * —"al menos uno"—: un bloque que llega ENTERO en blanco (sin cuadrilla y
      * sin ningún dato de lote) no es un error, es un equipo que esta tanda no
-     * usa, y se descarta acá. El primero nunca se descarta: si viene vacío,
+     * usa, y se descarta acá. El turno no cuenta como dato: el formulario lo
+     * trae elegido de entrada («Todo el día»). El primero nunca se descarta: si viene vacío,
      * que responda la validación normal con sus mensajes.
      */
     protected function prepareForValidation(): void
@@ -95,8 +96,8 @@ final class CrearOrdenTrabajoRequest extends FormRequest
         }
 
         foreach ((array) ($equipo['lotes'] ?? []) as $lote) {
-            foreach ((array) $lote as $valor) {
-                if ($valor !== null && $valor !== '') {
+            foreach ((array) $lote as $campo => $valor) {
+                if ($campo !== 'turno' && $valor !== null && $valor !== '') {
                     return false;
                 }
             }
@@ -118,8 +119,6 @@ final class CrearOrdenTrabajoRequest extends FormRequest
             'equipos.*.lotes.*.lote_id.required' => __('operaciones.asignacion_equipos.error_lote_requerido'),
             'equipos.*.lotes.*.hectareas.required' => __('operaciones.asignacion_equipos.error_hectareas_requerido'),
             'equipos.*.lotes.*.turno.required' => __('operaciones.asignacion_equipos.error_turno_requerido'),
-            'equipos.*.lotes.*.turno_hora_inicio.required' => __('operaciones.asignacion_equipos.error_turno_hora_requerida'),
-            'equipos.*.lotes.*.turno_hora_fin.required' => __('operaciones.asignacion_equipos.error_turno_hora_requerida'),
         ];
     }
 }

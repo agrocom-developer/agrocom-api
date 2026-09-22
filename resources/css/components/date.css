@@ -113,6 +113,10 @@
 
 .ag-date__value {
     flex: 1;
+    /* Sin fecha y sin placeholder este span no tiene texto y medía 0: el
+       control se quedaba con la altura del ícono (40px) al lado de un select
+       de 48px. Una línea de alto siempre, tenga o no contenido. */
+    min-height: 1lh;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

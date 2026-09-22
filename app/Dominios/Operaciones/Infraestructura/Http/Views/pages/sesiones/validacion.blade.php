@@ -140,7 +140,21 @@
                                         :confirm-label="__('operaciones.sesiones_validacion.validar')"
                                         tone="success"
                                         modal-icon="check_circle"
-                                    />
+                                    >
+                                        {{-- «Estado actual → estado destino», la misma simbología de todo
+                                             objeto con máquina de estados (21/9/2026). El rechazo no la
+                                             lleva: no cambia el estado de la sesión, la anula. --}}
+                                        <x-molecules.state-transition
+                                            :from-label="__('operaciones.sesion.estado.'.$sesion->estado->value)"
+                                            :from-tone="\App\Dominios\Operaciones\Dominio\TonoEstadoSesion::deSesion($sesion->estado)->value"
+                                            :to-label="__('operaciones.sesion.estado.validado')"
+                                            :to-tone="\App\Dominios\Operaciones\Dominio\TonoEstadoSesion::deSesion(\App\Dominios\Operaciones\Dominio\EstadoSesion::Validado)->value"
+                                            :label="__('operaciones.sesiones_validacion.estado_cambio_de_a', [
+                                                'desde' => __('operaciones.sesion.estado.'.$sesion->estado->value),
+                                                'hacia' => __('operaciones.sesion.estado.validado'),
+                                            ])"
+                                        />
+                                    </x-molecules.confirm-modal>
 
                                     <x-molecules.confirm-modal
                                         :id="$modalIdRechazar"

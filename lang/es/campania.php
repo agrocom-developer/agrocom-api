@@ -70,6 +70,7 @@ return [
         'confirmar_abrir_titulo' => 'Abrir campaña',
         'confirmar_abrir' => '¿Abrir esta campaña? Desde ese momento admite contratos y gastos.',
         'confirmar_cerrar_titulo' => 'Cerrar campaña',
+        'estado_cambio_de_a' => 'Cambio de estado: de :desde a :hacia',
         'confirmar_cerrar' => '¿Cerrar esta campaña? No se puede volver a abrir desde el panel.',
         'confirmar_eliminar_titulo' => 'Eliminar campaña',
         'confirmar_eliminar' => '¿Eliminar esta campaña? Esta acción no se puede deshacer.',
