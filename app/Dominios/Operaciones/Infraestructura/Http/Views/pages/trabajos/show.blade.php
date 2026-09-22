@@ -18,8 +18,8 @@
     mientras el trabajo no esté `validado` — mismas guardas que
     `Aplicacion/ActualizarTrabajo`/`EliminarTrabajo`, acá solo ocultas tras
     `@puede` + el estado de tablero (defensa en superficie: la guarda real
-    vive en el caso de uso, no acá). El `confirm()` nativo desaparece:
-    `confirm-modal`, con su `<form>`, fuera del `page-header`.
+    vive en el caso de uso, no acá). El aviso nativo del navegador
+    desaparece: `confirm-modal`, con su `<form>`, fuera del `page-header`.
 
     Datos esperados (ver TrabajosController::show()): la cáscara de
     CascaraPanel, más:
