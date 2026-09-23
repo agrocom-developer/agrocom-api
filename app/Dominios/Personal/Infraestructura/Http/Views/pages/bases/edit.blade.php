@@ -4,8 +4,9 @@
     `_formulario.blade.php`, compartido con `create.blade.php`.
 
     Datos esperados (ver BasesController::edit()): la cáscara de
-    CascaraPanel, más $base (PerBase) y $resumenRelacionado (el aside del
-    formulario, que el `@include` hereda tal cual).
+    CascaraPanel, más $base (PerBase), $resumenRelacionado (el aside del
+    formulario) y $proveedorMapa (ver _formulario.blade.php) — todo lo que el
+    `@include` hereda tal cual.
 
     Gateada por `personal.base.editar`, verificado server-side en el
     controlador.
@@ -23,6 +24,6 @@
         :version="$version"
         :vista-actual="__('personal.bases.titulo_editar')"
     >
-        @include('personal::pages.bases._formulario', ['base' => $base])
+        @include('personal::pages.bases._formulario', ['base' => $base, 'proveedorMapa' => $proveedorMapa])
     </x-templates.panel-layout>
 </x-templates.panel-shell>
