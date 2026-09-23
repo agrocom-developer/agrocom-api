@@ -1,0 +1,133 @@
+/*
+ * Organism: vista-como-banner (resources/views/components/organisms/vista-como-banner.blade.php)
+ * Franja persistente de la vista "como otro usuario" (tarea 140). Relleno de
+ * estado `warning` con texto BLANCO (regla §8.8 del catálogo: sobre todo
+ * relleno de estado el texto y el ícono son `--ag-color-gray-0`, también en
+ * warning) — tiene que leerse como un modo especial, nunca como un aviso más
+ * del contenido. Es el primer hijo de `.ag-panel__main` y de `.ag-portal`:
+ * ocupa su alto natural y no participa del scroll interno del contenido.
+ */
+
+.ag-vista-como {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    column-gap: var(--ag-space-3);
+    row-gap: var(--ag-space-1);
+    padding: var(--ag-space-2) var(--ag-space-5);
+    background: var(--ag-color-warning-contrast-fill);
+    color: var(--ag-color-gray-0);
+    font-size: var(--ag-font-size-sm);
+    line-height: 1.35;
+}
+
+.ag-vista-como__icono {
+    flex: 0 0 auto;
+    color: inherit;
+}
+
+.ag-vista-como__texto {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+}
+
+.ag-vista-como__nombre {
+    font-weight: var(--ag-font-weight-bold);
+}
+
+.ag-vista-como__modo {
+    flex: 0 1 auto;
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-medium);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.ag-vista-como__admin {
+    font-weight: var(--ag-font-weight-regular);
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.ag-vista-como__salir {
+    flex: 0 0 auto;
+    margin: 0;
+}
+
+/* Botón claro sobre el relleno: borde y texto del mismo blanco, hover con un
+   velo del mismo blanco — nada de un color de estado dentro de otro. */
+.ag-vista-como__boton {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ag-space-1);
+    padding: var(--ag-space-1) var(--ag-space-3);
+    border: 1px solid var(--ag-color-gray-0);
+    border-radius: var(--ag-radius-md);
+    background: transparent;
+    color: var(--ag-color-gray-0);
+    font-family: inherit;
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+    cursor: pointer;
+    transition: background-color var(--ag-transition-fast);
+}
+
+.ag-vista-como__boton:hover {
+    background: color-mix(in srgb, var(--ag-color-gray-0) 20%, transparent);
+}
+
+.ag-vista-como__boton:focus-visible {
+    outline: 2px solid var(--ag-color-gray-0);
+    outline-offset: 2px;
+}
+
+/* Aviso de un solo uso cuando la vista se cerró sola. Neutro: informa, no
+   alarma — la franja de arriba es la que usa el relleno de estado. */
+.ag-vista-como-fin {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-2) var(--ag-space-5);
+    background: var(--ag-color-info-subtle);
+    border-bottom: 1px solid var(--ag-color-info-border);
+    color: var(--ag-color-info-strong);
+    font-size: var(--ag-font-size-sm);
+}
+
+/* Aviso breve cuando se intenta guardar durante la vista (ver el .js). Fijo,
+   abajo al centro; superficie de aviso `info`, no un relleno de estado. */
+.ag-vista-como-aviso {
+    position: fixed;
+    inset-inline: var(--ag-space-4);
+    bottom: var(--ag-space-5);
+    z-index: 1090;
+    max-width: 34rem;
+    margin-inline: auto;
+    padding: var(--ag-space-3) var(--ag-space-4);
+    border: 1px solid var(--ag-color-info-border);
+    border-radius: var(--ag-radius-md);
+    /* El `-subtle` de info es translúcido en tema oscuro: sobre un aviso que flota
+       encima del contenido se le pone una base opaca, para que no se lea lo de atrás. */
+    background:
+        linear-gradient(var(--ag-color-info-subtle), var(--ag-color-info-subtle)),
+        var(--ag-color-bg-chrome);
+    color: var(--ag-color-info-strong);
+    font-size: var(--ag-font-size-sm);
+    line-height: 1.4;
+    box-shadow: var(--ag-shadow-md);
+}
+
+@media (max-width: 767.98px) {
+    .ag-vista-como {
+        padding-inline: var(--ag-space-4);
+    }
+
+    /* En móvil el texto ocupa su fila y la marca + el botón bajan a la
+       siguiente: cuatro elementos no entran en una línea de 360 px. */
+    .ag-vista-como__texto {
+        flex-basis: calc(100% - var(--ag-space-6));
+    }
+}

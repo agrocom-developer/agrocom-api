@@ -66,6 +66,7 @@ El seeder `SeguridadSeeder` carga el catálogo base (5 roles, 6 permisos).
 | Menú por rol activo | `Aplicacion/ObtenerMenuPorRolActivo`, `SecMenu` |
 | Asignar roles a un usuario | `Aplicacion/AsignarRolesUsuario` |
 | Tema e idioma por usuario | `Aplicacion/ActualizarPreferenciaUsuario`, `SecUserPreferencia` |
+| Ver como otro usuario (solo lectura) | `Aplicacion/IniciarVistaComo` / `TerminarVistaComo` / `ResolverVistaComo`, `Middleware/AplicarVistaComo`, `SecVistaComo` |
 | Usuario demo multirol | `carlos.ferrufino` / `password` (seeder `Demo/PersonalDemoSeeder`) |
 
 Excepciones de dominio disponibles: `RolNoAsignado`, `PermisoDenegado`,
@@ -79,6 +80,30 @@ autenticado**, nunca desde la tabla global con un `where` agregado después
 de cliente B → **404**, no 403.
 
 Esto está en la lista de "no delegar sin revisión línea por línea" de CLAUDE.md.
+
+## Ver como otro usuario (tarea 140)
+
+El administrador de plataforma (`seguridad.usuario.ver_como`, solo `admin_plataforma`)
+mira el panel o el portal tal como lo ve otra cuenta, **en solo lectura**. Detalle y
+porqué: ADR 0004, extensión del 23/9/2026. Lo que hay que respetar al tocar seguridad:
+
+- **No hay un login como el otro.** Una bandera de sesión (`vista_como`,
+  `Dominio/VistaComoActiva`) más `AplicarVistaComo`, que pone la cuenta observada en el
+  guard `interno` o `cliente` con `setUser()` y la devuelve en un `finally`. La sesión
+  de autenticación del administrador no se toca; no existe un tercer guard.
+- **El portal no cambia:** `AutorizacionPortalCliente::contratoId()` sigue leyendo
+  `user('cliente')->contrato_id`. Nada de un `where` aparte para «el administrador
+  mirando» (invariante 5).
+- **Se rechaza, no se esconde:** con la bandera, todo método distinto de GET/HEAD/OPTIONS
+  da 403 antes del controlador (salvo `POST /vista-como/salir`), y `ModoSoloLectura`
+  impide que un modelo de dominio guarde, borre o restaure durante el request. Una ruta
+  nueva con sesión queda cubierta sola por estar en el grupo `web`; una ruta que
+  autentique `interno` o `cliente` **fuera** de ese grupo se saltaría la vista como.
+- **El permiso se evalúa contra el rol activo** con el que el administrador entró
+  (`tienePermisoEnRol`), nunca la unión de sus roles (invariante 10), y se revalida en
+  cada request.
+- **La bitácora sale del modelo:** `SecVistaComo` lleva `RegistraBitacora`; la salida
+  corre con el guard `interno` siendo el administrador real para que el actor sea él.
 
 ## Antes de cerrar
 

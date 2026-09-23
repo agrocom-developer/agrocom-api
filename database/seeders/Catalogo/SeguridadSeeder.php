@@ -53,6 +53,11 @@ class SeguridadSeeder extends Seeder
         // a dueño y encargado_operaciones (ver PERMISOS_ENCARGADO_OPERACIONES
         // más abajo; dueño lo recibe con el resto del catálogo).
         'seguridad.usuario.portal' => 'Crear/editar cuentas de portal del cliente (además de crear/editar)',
+        // Tarea 140: mirar el panel o el portal COMO otro usuario, en solo
+        // lectura. Permiso propio y a propósito fuera de `dueno` (ver
+        // PERMISOS_SOLO_ADMIN_PLATAFORMA más abajo): es una herramienta de
+        // soporte de la plataforma, no del negocio del cliente.
+        'seguridad.usuario.ver_como' => 'Ver el panel o el portal como otro usuario (solo lectura)',
         // Administración del catálogo de roles y de la matriz rol↔permiso.
         // Era lo último del modelo `sec_*` sin pantalla: roles, permisos y
         // sus asignaciones solo se tocaban editando este archivo. Los cinco
@@ -442,6 +447,20 @@ class SeguridadSeeder extends Seeder
     ];
 
     /**
+     * Permisos que el catálogo entrega ÚNICAMENTE a `admin_plataforma`, no a
+     * `dueno` (que por lo demás recibe "todo el catálogo, sin excepción"):
+     * capacidades de soporte técnico de la plataforma. Un dueño puede
+     * otorgárselos a otro rol a propósito desde la matriz de permisos
+     * (`seguridad.rol.asignar_permiso`), pero ninguna siembra los activa por
+     * defecto (tarea 140).
+     *
+     * @var list<string>
+     */
+    private const PERMISOS_SOLO_ADMIN_PLATAFORMA = [
+        'seguridad.usuario.ver_como',
+    ];
+
+    /**
      * Piloto: lo que ejecuta desde `agrocom-field` (HU-17, tarea 24) más su
      * primer permiso de panel (HU-28, tarea 40) — ver sus propios devengos.
      *
@@ -805,11 +824,16 @@ class SeguridadSeeder extends Seeder
             fn (string $description, string $code) => [$code => $this->permiso($code, $description)],
         );
 
-        // dueno: todos los permisos del catálogo, sin excepción (diseño §2).
-        $this->asignar($roles['dueno'], $permisos->values()->all());
+        // dueno: todos los permisos del catálogo (diseño §2), salvo los que
+        // son solo de la plataforma (tarea 140).
+        $this->asignar(
+            $roles['dueno'],
+            $permisos->except(self::PERMISOS_SOLO_ADMIN_PLATAFORMA)->values()->all(),
+        );
 
-        // admin_plataforma (tarea 100): mismo criterio que dueno, sin
-        // excepción — es dato de catálogo puro, corre en TODOS los entornos
+        // admin_plataforma (tarea 100): TODO el catálogo, sin excepción — a
+        // diferencia de dueno, recibe también PERMISOS_SOLO_ADMIN_PLATAFORMA
+        // (tarea 140). Es dato de catálogo puro, corre en TODOS los entornos
         // (un rol sin usuarios asignados no daña nada en producción). Quien
         // recibe usuarios asignados a este rol es AdminPlataformaSeeder, que
         // sí está gateado a local/staging.

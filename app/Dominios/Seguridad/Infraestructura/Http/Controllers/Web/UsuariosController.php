@@ -82,6 +82,8 @@ final class UsuariosController
 
     private const PERMISO_PORTAL = 'seguridad.usuario.portal';
 
+    private const PERMISO_VER_COMO = 'seguridad.usuario.ver_como';
+
     public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
 
     public function index(Request $request, ListarUsuarios $listarUsuarios): View
@@ -100,6 +102,9 @@ final class UsuariosController
             ...$this->autorizacion->cascara($request),
             'usuarios' => $usuarios,
             'rolesPorUsuario' => $this->rolesPorUsuario($idsUsuario),
+            'rolesVerComoPorUsuario' => $this->autorizacion->tienePermiso($request, self::PERMISO_VER_COMO)
+                ? $this->rolesVivosPorUsuario($idsUsuario)
+                : [],
             'etiquetasPersona' => $this->etiquetasPersona($idsPersona),
             'filtros' => ['q' => $busqueda, 'tipo' => $tipo->value ?? ''],
             'tonoPorEstado' => self::TONO_POR_ESTADO,
@@ -647,6 +652,38 @@ final class UsuariosController
             ->get(['ur.id_user', 'r.name'])
             ->groupBy(fn (object $fila): int => (int) $fila->id_user)
             ->map(fn (Collection $filas) => $filas->map(fn (object $fila) => $this->nombreLegibleRol((string) $fila->name))->all())
+            ->all();
+    }
+
+    /**
+     * Roles VIVOS y habilitados de cada cuenta, con su id, para el selector de
+     * «Ver como» (tarea 140): quien mira elige uno de los roles con los que esa
+     * cuenta podría estar operando. Mismos criterios que
+     * {@see SecUser::idsDeRolesActivos()} — asignación no revocada y rol
+     * habilitado en el catálogo — pero en una sola consulta para todo el
+     * listado.
+     *
+     * @param  list<int>  $idsUsuario
+     * @return array<int, array<int, string>> `id de usuario => [id de rol => nombre legible]`
+     */
+    private function rolesVivosPorUsuario(array $idsUsuario): array
+    {
+        if ($idsUsuario === []) {
+            return [];
+        }
+
+        return DB::table('sec_user_role as ur')
+            ->join('sec_role as r', 'r.id', '=', 'ur.id_role')
+            ->whereIn('ur.id_user', $idsUsuario)
+            ->whereNull('ur.deleted_at')
+            ->whereNull('r.deleted_at')
+            ->where('r.state', true)
+            ->orderBy('r.name')
+            ->get(['ur.id_user', 'r.id', 'r.name'])
+            ->groupBy(fn (object $fila): int => (int) $fila->id_user)
+            ->map(fn (Collection $filas) => $filas
+                ->mapWithKeys(fn (object $fila): array => [(int) $fila->id => $this->nombreLegibleRol((string) $fila->name)])
+                ->all())
             ->all();
     }
 

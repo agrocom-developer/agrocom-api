@@ -64,6 +64,7 @@ use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\RolesController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\SesionController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\SesionPortalController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\UsuariosController;
+use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\VistaComoController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -146,6 +147,16 @@ Route::middleware('auth:interno')->group(function () {
     Route::post('/panel/rol-activo', [RolActivoController::class, 'update'])
         ->name('panel.rol-activo.actualizar');
 
+    // Salida de la vista "como otro usuario" (tarea 140). Sin `rol.activo` por
+    // la misma razón que el cambio de rol: mientras hay una vista abierta, la
+    // sesión guarda el rol activo de la cuenta OBSERVADA, que no es un rol del
+    // administrador — con ese middleware la salida rebotaría al selector. Es
+    // además la única escritura que `AplicarVistaComo` deja pasar en ese modo,
+    // y la única ruta donde ese middleware NO sustituye el guard: la bitácora
+    // tiene que firmar el regreso con el administrador real.
+    Route::post('/vista-como/salir', [VistaComoController::class, 'salir'])
+        ->name('vista-como.salir');
+
     // Selector de rol (GET): misma vía de escape que la ruta de arriba,
     // deliberadamente sin `rol.activo` — ver RolActivoController::create().
     Route::get('/panel/seleccionar-rol', [RolActivoController::class, 'create'])
@@ -202,6 +213,14 @@ Route::middleware('auth:interno')->group(function () {
         // bloquear NO es una baja, sigue vivo — ver AlternarBloqueoUsuario.
         Route::post('/panel/usuarios/{usuario}/bloqueo', [UsuariosController::class, 'alternarBloqueo'])
             ->name('panel.usuarios.bloqueo');
+
+        // Tarea 140: mirar el panel o el portal COMO esta cuenta, en solo
+        // lectura. Permiso propio `seguridad.usuario.ver_como` (solo
+        // `admin_plataforma`), verificado dentro del controlador contra el ROL
+        // ACTIVO. No cambia nada de la cuenta observada: abre una bandera de
+        // sesión y una fila de bitácora — ver IniciarVistaComo.
+        Route::post('/panel/usuarios/{usuario}/ver-como', [VistaComoController::class, 'iniciar'])
+            ->name('panel.usuarios.ver-como');
 
         // Administración del catálogo de roles y de la matriz rol↔permiso.
         // Es lo último del modelo `sec_*` que solo existía como seeder: los

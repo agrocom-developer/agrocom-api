@@ -172,6 +172,79 @@ del cliente: la única cosa que `CLAUDE.md` nombra explícitamente como que
 `runs/revision-pendiente.txt` apenas se integre, sin esperar a que alguien
 la encuentre.
 
+### 6.1 Resuelto (tarea 140, 23/9/2026)
+
+Se hizo completo, los dos casos, sin un tercer guard. Lo que quedó y por qué:
+
+- **No hay un login como el otro.** La sesión de autenticación del administrador no se toca. Una
+  bandera de sesión `vista_como` (`Seguridad/Dominio/VistaComoActiva`: administrador real, su rol
+  activo al entrar, cuenta observada y, si es interna, el rol bajo el que se la ve) le dice a
+  `AplicarVistaComo` a quién evaluar. Ese middleware va en el grupo `web`, **antes** de `auth:*`
+  (lista de prioridad de `bootstrap/app.php`), pone la cuenta observada en el guard `interno` o
+  `cliente` con `setUser()` —que no escribe la sesión— y la devuelve en un `finally`. Así el panel
+  arma menú, permisos y dashboard del rol observado, y el portal resuelve el contrato desde la misma
+  cuenta de portal que en una sesión real: `AutorizacionPortalCliente::contratoId()` sigue leyendo
+  `user('cliente')->contrato_id`, sin un `where` aparte para «el administrador mirando»
+  (invariante 5). El rol activo observado se fija con `ElegirRolActivo::fijarParaVistaComo()`, que a
+  diferencia de `ejecutar()` no registra el «último rol usado» de la cuenta observada.
+- **Solo lectura, rechazada y no escondida.** Con la bandera presente, todo método distinto de
+  GET/HEAD/OPTIONS responde 403 antes de llegar a un controlador (se mira el método real y el
+  resuelto), salvo `POST /vista-como/salir`. Además, defensa en profundidad: `ModoSoloLectura` +
+  `RespetaModoSoloLectura` (en `ModeloDominio`) hacen que un modelo de dominio no se guarde, borre ni
+  restaure durante el request —si una ruta GET escribiera por descuido, quedaría firmada por la
+  cuenta observada—. No cubre `saveQuietly()` ni las escrituras masivas del query builder (el repo no
+  usa SQL crudo de mutación, ADR 0012).
+- **Revalidación en cada request** (`ResolverVistaComo`): el administrador sigue habilitado y con el
+  permiso en el rol con el que entró, la cuenta observada existe, no está bloqueada y conserva el
+  rol (o el contrato). Si algo falla, la vista se cierra con motivo `invalidada` y el request sigue
+  como el administrador.
+- **Alcance:** una vista de portal solo recorre `/portal/*`; una interna, solo `/panel/*` (sin el
+  selector de rol). Fuera de eso se desvía. No se ofrece «Cerrar sesión» ni «Cambiar de rol» durante
+  la vista; se sale con «Volver a mi vista» del banner.
+- **Bitácora (invariante 9):** tabla `sec_vistas_como` (migración `2026_09_23_000101`) con
+  `RegistraBitacora`: la entrada es un `creado` y la salida un `actualizado` con `finalizada_at` y
+  `motivo_fin`, ambos a nombre del administrador real (la ruta de salida no sustituye el guard, justo
+  para eso). Una vista que muere con la sesión (navegador cerrado, sesión vencida) no tiene ningún
+  request que la cierre: queda con la entrada y sin salida.
+- **Permiso propio** `seguridad.usuario.ver_como`, sembrado solo a `admin_plataforma`
+  (`PERMISOS_SOLO_ADMIN_PLATAFORMA` en `SeguridadSeeder`; el dueño **no** lo recibe). Un dueño puede
+  otorgárselo a otro rol desde la matriz de permisos; ninguna siembra lo hace. El deploy no siembra:
+  en producción rige recién al correr `SeguridadSeeder`.
+- **Dónde se usa:** listado de usuarios, acción «Ver como» en el menú ⋮ de la fila (modal con el
+  selector de rol si la cuenta tiene más de uno).
+
+**Cómo se verificó** (contra el compose, con el administrador de plataforma):
+
+- Como una cuenta con dos roles (piloto y jefe de campo) bajo el rol **Jefe de campo**: el
+  dashboard de la tarea 138 con sus tres tabs, sin «Cerrar sesión» ni «Cambiar de rol»; bajo el rol
+  **Piloto** de la misma cuenta, ninguna de esas tabs (el rol activo manda, no la unión). «Volver a
+  mi vista» devuelve al listado de usuarios con su propio menú.
+- Como cada cuenta de portal: el listado de actas es exactamente el de su contrato; pedir por id un
+  acta o un reporte de otro contrato da 404 (nunca 403 ni el archivo); `/panel/*` desvía al portal.
+- Barrido de escritura: las 132 rutas de escritura del grupo `web` (según `route:list`), con
+  variantes JSON, HTML, `_method` y un POST disfrazado de GET, dieron 403 o 405 —ninguna 2xx, 3xx ni
+  5xx— y la base quedó idéntica.
+- Bitácora: dos filas por vista (`creado` y `actualizado`), ambas con el administrador real como
+  actor y ninguna a nombre de la cuenta observada.
+
+**Decisiones abiertas y límites conocidos**
+
+- **Delegar `ver_como`.** Quien administra la matriz de permisos (el dueño tiene
+  `seguridad.rol.asignar_permiso`) puede otorgar el permiso a cualquier otro rol, y
+  `IniciarVistaComo` solo exige el permiso: no compara a quien mira con la cuenta mirada, así que ese
+  rol podría ver como un `dueno` y leer finanzas. Ninguna siembra lo hace y el pedido solo exigía que
+  no estuviera activo por defecto, así que no se cerró. Si se quiere impedir la delegación, la guarda
+  va en `AsignarPermisosRol` (rechazar este código para todo rol distinto de `admin_plataforma`); si
+  se quiere permitirla con tope, en `IniciarVistaComo`.
+- **Una vista que muere con la sesión queda sin salida** en la bitácora (arriba). Cerrarla «al
+  siguiente ingreso» daría falsos positivos con dos sesiones abiertas. Si algún día importa, el
+  camino es guardar el id de sesión en `sec_vistas_como` y cerrar por barrido de sesiones vencidas.
+- **`POST /login` y `POST /logout` dan 403 mientras hay una bandera colgada** (hasta que vence la
+  sesión): falla cerrado y es consecuencia de rechazar toda escritura. El administrador sale con
+  «Volver a mi vista», disponible en cualquier pantalla del panel.
+- **No se pueden mirar** las cuentas bloqueadas (no hay sesión real que reproducir) ni una cuenta de
+  portal sin contrato (no hay nada que ver).
+
 ## 7. Motor de notificaciones (141) — por qué es su propia tarea, y por qué al final
 
 Es la pieza más nueva arquitectónicamente: ningún módulo `Notificaciones`

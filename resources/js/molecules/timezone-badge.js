@@ -52,6 +52,12 @@ function sincronizarZonaHoraria() {
         return; // página sin usuario autenticado — nada que persistir
     }
 
+    // Vista "como otro usuario" (tarea 140): solo lectura. La zona del
+    // navegador se pinta en el badge, pero no se guarda en la cuenta observada.
+    if (document.documentElement.hasAttribute('data-ag-vista-como')) {
+        return;
+    }
+
     fetch(url, {
         method: 'POST',
         headers: {
