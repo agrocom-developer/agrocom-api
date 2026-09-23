@@ -19,6 +19,7 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Provincia;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\ActualizarPropiedadRequest;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\CrearPropiedadRequest;
+use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -59,7 +60,7 @@ final class PropiedadesController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
-        $busqueda = $request->string('q')->toString();
+        $busqueda = TextoDeFiltro::de($request, 'q');
         $clienteId = $request->integer('cliente_id') ?: null;
         $departamentoId = $request->integer('departamento_id') ?: null;
         $municipioId = $request->integer('municipio_id') ?: null;

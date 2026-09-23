@@ -16,6 +16,7 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\ActualizarClienteRequest;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\CrearClienteRequest;
+use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Operaciones\Contratos\LecturaResumenOrdenesContrato;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\RedirectResponse;
@@ -69,10 +70,10 @@ final class ClientesController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
-        $busqueda = $request->string('q')->toString();
-        $tipoPersona = $request->string('tipo_persona')->toString() ?: null;
+        $busqueda = TextoDeFiltro::de($request, 'q');
+        $tipoPersona = TextoDeFiltro::de($request, 'tipo_persona') ?: null;
         $campaniaId = $request->integer('campania_id') ?: null;
-        $tipoContacto = $request->string('tipo_contacto')->toString() ?: null;
+        $tipoContacto = TextoDeFiltro::de($request, 'tipo_contacto') ?: null;
 
         return view('comercial::pages.clientes.index', [
             ...$this->autorizacion->cascara($request),
