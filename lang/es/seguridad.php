@@ -377,6 +377,27 @@ return [
         'progreso_campania_kpi_pct' => 'Completado',
         'progreso_campania_unidad_hectareas' => 'ha',
         'progreso_campania_lotes' => '{0} sin lotes con actividad|{1} :cantidad lote con actividad|[2,*] :cantidad lotes con actividad',
+
+        // Tabs del encargado de operaciones (tarea 136): cómo van las órdenes
+        // de aplicación, el proceso de los trabajos y el resumen de vuelos.
+        'tab_estado_aplicaciones' => 'Estados de las aplicaciones',
+        'tab_proceso_trabajos' => 'Proceso de los trabajos',
+        'tab_resumen_vuelos' => 'Resumen de vuelos',
+
+        'seccion_ordenes_estado' => 'Órdenes de aplicación por estado',
+        'ordenes_estado_total' => 'Órdenes en total',
+        'ordenes_estado_ver' => 'Ver órdenes',
+
+        'seccion_resumen_vuelos' => 'Hectáreas aplicadas',
+        'vuelos_granularidad_aria' => 'Agrupar las hectáreas por',
+        'vuelos_dia' => 'Diario',
+        'vuelos_semana' => 'Semanal',
+        'vuelos_mes' => 'Mensual',
+        'vuelos_serie' => 'Hectáreas validadas',
+        'vuelos_periodo_dia' => 'Últimos :cantidad días',
+        'vuelos_periodo_semana' => 'Últimas :cantidad semanas',
+        'vuelos_periodo_mes' => 'Últimos :cantidad meses',
+        'vuelos_nota_semana' => 'Cada punto es una semana, de lunes a domingo; la fecha es la del lunes.',
     ],
 
     // HU-45 (tarea 39): alta y mantenimiento de usuarios internos del panel,
