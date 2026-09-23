@@ -5,7 +5,8 @@ namespace App\Dominios\Seguridad\Infraestructura\Http\Presentacion;
 use App\Dominios\Comercial\Contratos\LecturaContadoresPanel as LecturaContadoresPanelComercial;
 use App\Dominios\Finanzas\Contratos\LecturaContadoresPanel as LecturaContadoresPanelFinanzas;
 use App\Dominios\Inventario\Contratos\LecturaContadoresPanel as LecturaContadoresPanelInventario;
-use App\Dominios\Operaciones\Contratos\AlertaPanel;
+use App\Dominios\Notificaciones\Contratos\LecturaNotificaciones;
+use App\Dominios\Notificaciones\Contratos\NotificacionPanel;
 use App\Dominios\Operaciones\Contratos\LecturaContadoresPanel as LecturaContadoresPanelOperaciones;
 use App\Dominios\Operaciones\Contratos\LecturaPanelOperaciones;
 use App\Dominios\Seguridad\Aplicacion\ListarRolesDisponibles;
@@ -25,7 +26,9 @@ use Illuminate\Support\Carbon;
  *
  * Desde la tarea 67 no queda nada de maqueta acá: las notificaciones de la
  * campana son las alertas por excepción reales (HU-19) y la versión del pie
- * sale de `config('app.version')`.
+ * sale de `config('app.version')`. Desde la tarea 141 la campana mezcla dos
+ * fuentes (ver {@see notificaciones()}): esas alertas técnicas y los avisos
+ * de flujo de negocio del módulo `Notificaciones`.
  *
  * El 9/9/2026 el header se quedó además sin contexto de negocio, mirando el
  * panel andando: cayeron el chip de campaña (ADR 0015 — la campaña es del
@@ -41,6 +44,9 @@ final class CascaraPanel
 {
     private const ALERTAS_NOTIFICACION = 5;
 
+    /** Tope de avisos que muestra la campana, sumadas las dos fuentes. */
+    private const MAXIMO_EN_CAMPANA = 10;
+
     public function __construct(
         private readonly ObtenerMenuPorRolActivo $obtenerMenu,
         private readonly ListarRolesDisponibles $listarRolesDisponibles,
@@ -49,6 +55,7 @@ final class CascaraPanel
         private readonly LecturaPanelOperaciones $panelOperaciones,
         private readonly LecturaContadoresPanelInventario $contadoresInventario,
         private readonly LecturaContadoresPanelFinanzas $contadoresFinanzas,
+        private readonly LecturaNotificaciones $notificacionesDelMotor,
     ) {}
 
     /**
@@ -159,24 +166,73 @@ final class CascaraPanel
     }
 
     /**
-     * Campana del header: las alertas por excepción reales (HU-19), no los
-     * tres avisos inventados que devolvía la maqueta. Gateadas
-     * por `operaciones.alerta.ver` contra el ROL ACTIVO: un rol que no puede
-     * entrar a `/panel/alertas` tampoco las lee por la campana.
+     * Campana del header: mezcla DOS fuentes que conviven (tarea 141, ADR 0025
+     * punto 7), en vez de absorber una en la otra.
      *
-     * @return list<array{icon: string, title: string, time: string, unread: bool}>
+     * - Los avisos de flujo de negocio del módulo `Notificaciones`, repartidos
+     *   por cuenta: contrato creado, orden de trabajo creada, trabajo cerrado.
+     *   Solo los de quien mira (su id sale de la sesión, nunca de la petición).
+     *   Cada uno lleva a `panel.notificaciones.abrir`, que lo marca leído y
+     *   resuelve el destino contra el rol activo.
+     * - Las alertas por excepción reales (HU-19), como antes: gateadas por
+     *   `operaciones.alerta.ver` contra el ROL ACTIVO (un rol que no puede
+     *   entrar a `/panel/alertas` tampoco las lee por la campana), y ahora con
+     *   enlace a esa pantalla — hasta acá eran texto plano.
+     *
+     * La lista prioriza lo no leído: entran primero todos los avisos sin leer
+     * (hasta el tope) y se completa con los leídos más recientes, del más
+     * nuevo al más viejo. Así el badge de la campana —que cuenta lo no leído de
+     * la lista que recibe— sigue siendo exacto hasta «9+».
+     *
+     * @return list<array{id: int|null, icon: string, title: string, time: string, unread: bool, href: string}>
      */
     private function notificaciones(SecUser $usuario, int $idRolActivo): array
     {
-        if (! $usuario->tienePermisoEnRol('operaciones.alerta.ver', $idRolActivo)) {
-            return [];
+        $candidatas = array_map(fn (NotificacionPanel $aviso): array => [
+            'id' => $aviso->id,
+            'icon' => $aviso->icono,
+            'title' => $aviso->titulo,
+            'momento' => Carbon::parse($aviso->creadaEn),
+            'unread' => ! $aviso->leida,
+            'href' => route('panel.notificaciones.abrir', $aviso->id),
+        ], $this->notificacionesDelMotor->recientesDe($usuario->id, self::MAXIMO_EN_CAMPANA));
+
+        if ($usuario->tienePermisoEnRol('operaciones.alerta.ver', $idRolActivo)) {
+            $hrefAlertas = route('panel.alertas.index');
+
+            foreach ($this->panelOperaciones->alertasRecientes(self::ALERTAS_NOTIFICACION) as $alerta) {
+                $candidatas[] = [
+                    'id' => null,
+                    'icon' => 'warning',
+                    'title' => $alerta->mensaje,
+                    'momento' => Carbon::parse($alerta->creadaEn),
+                    'unread' => $alerta->pendiente,
+                    'href' => $hrefAlertas,
+                ];
+            }
         }
 
-        return array_map(fn (AlertaPanel $alerta) => [
-            'icon' => 'warning',
-            'title' => $alerta->mensaje,
-            'time' => Carbon::parse($alerta->creadaEn)->diffForHumans(),
-            'unread' => $alerta->pendiente,
-        ], $this->panelOperaciones->alertasRecientes(self::ALERTAS_NOTIFICACION));
+        $masNuevoPrimero = static fn (array $a, array $b): int => $b['momento'] <=> $a['momento'];
+
+        usort($candidatas, $masNuevoPrimero);
+
+        $sinLeer = array_values(array_filter($candidatas, static fn (array $item): bool => $item['unread']));
+        $leidas = array_values(array_filter($candidatas, static fn (array $item): bool => ! $item['unread']));
+
+        $elegidas = [
+            ...array_slice($sinLeer, 0, self::MAXIMO_EN_CAMPANA),
+            ...array_slice($leidas, 0, max(0, self::MAXIMO_EN_CAMPANA - count($sinLeer))),
+        ];
+
+        usort($elegidas, $masNuevoPrimero);
+
+        return array_map(static fn (array $item): array => [
+            'id' => $item['id'],
+            'icon' => $item['icon'],
+            'title' => $item['title'],
+            'time' => $item['momento']->diffForHumans(),
+            'unread' => $item['unread'],
+            'href' => $item['href'],
+        ], $elegidas);
     }
 }
