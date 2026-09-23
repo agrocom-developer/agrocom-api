@@ -349,6 +349,34 @@ return [
         'lote_col_litros' => 'Litros',
         'lote_col_litros_ha' => 'L/ha',
         'lote_col_tiempo' => 'Vuelo',
+
+        // Tabs del dueño (tarea 135): estado de cuentas, trabajos actuales
+        // por equipo y progreso de toda la campaña.
+        'tab_estado_cuentas' => 'Estado de cuentas',
+        'tab_trabajos_equipo' => 'Trabajos por equipo',
+        'tab_progreso_campania' => 'Progreso de campaña',
+
+        'seccion_estado_cuentas' => 'Estado de cuenta por contrato',
+        'cuentas_col_cliente' => 'Cliente',
+        'cuentas_col_contratado' => 'Contratado',
+        'cuentas_col_facturado' => 'Facturado',
+        'cuentas_col_adelanto' => 'Adelanto',
+        'cuentas_col_saldo' => 'Saldo pendiente',
+
+        'seccion_trabajos_equipo' => 'Trabajos abiertos por equipo',
+        'trabajos_equipo_col_equipo' => 'Equipo',
+        'trabajos_equipo_col_abiertos' => 'Abiertos',
+        'trabajos_equipo_col_hectareas' => 'Hectáreas',
+        'trabajos_equipo_col_lotes' => 'Lotes',
+        'trabajos_equipo_col_ultimo' => 'Último inicio',
+
+        'seccion_progreso_campania' => 'Progreso de la campaña',
+        'progreso_campania_kpi_totales' => 'Hectáreas totales',
+        'progreso_campania_kpi_aplicadas' => 'Hectáreas aplicadas',
+        'progreso_campania_kpi_pendientes' => 'Hectáreas pendientes',
+        'progreso_campania_kpi_pct' => 'Completado',
+        'progreso_campania_unidad_hectareas' => 'ha',
+        'progreso_campania_lotes' => '{0} sin lotes con actividad|{1} :cantidad lote con actividad|[2,*] :cantidad lotes con actividad',
     ],
 
     // HU-45 (tarea 39): alta y mantenimiento de usuarios internos del panel,
