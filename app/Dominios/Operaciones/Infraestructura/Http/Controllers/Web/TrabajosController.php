@@ -23,6 +23,7 @@ use App\Dominios\Operaciones\Infraestructura\Http\PasosDeTrabajo;
 use App\Dominios\Operaciones\Infraestructura\Http\Requests\ActualizarTrabajoRequest;
 use App\Dominios\Personal\Contratos\DatosEquipoTrabajo;
 use App\Dominios\Personal\Contratos\LecturaEquipoTrabajo;
+use App\Dominios\Personal\Contratos\LecturaPanelPersonal;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Brick\Math\BigDecimal;
 use Illuminate\Http\RedirectResponse;
@@ -83,7 +84,7 @@ final class TrabajosController
      * que ya existían (mismo permiso y misma guarda de "no validado" que
      * `edit()`/`destroy()`), ninguna acción nueva.
      */
-    public function show(Request $request, Trabajo $trabajo): View
+    public function show(Request $request, Trabajo $trabajo, LecturaPanelPersonal $lecturaPersonal): View
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO), 403);
 
@@ -115,6 +116,11 @@ final class TrabajosController
             'puedeVerReporte' => $this->autorizacion->tienePermiso($request, self::PERMISO_REPORTE),
             'vinculos' => $this->vinculosDeTrabajo($trabajo, $request),
             'actividad' => $this->actividadDeTrabajo($trabajo),
+            // Tarea 131: nombre real del piloto por sesión, en lote — mismo
+            // contrato cruzado de módulos que usa ahora ValidacionSesionesController.
+            'etiquetasPiloto' => $lecturaPersonal->nombresDePersonas(
+                $trabajo->sesiones->pluck('piloto_id')->unique()->values()->all()
+            ),
         ]);
     }
 

@@ -95,7 +95,6 @@ return [
         'ver_detalle' => 'Ver detalle',
         'sesiones_ver' => 'Ver sesiones (:cantidad)',
         'sesiones_vacio' => 'Sin sesiones todavía.',
-        'sesion_piloto' => 'Piloto #:id',
         'sin_fin' => '—',
         // HU-15 (tarea 15): filtros del tablero — estado de TABLERO
         // (Trabajo::estadoTablero(), no la columna cruda), lote y orden de
