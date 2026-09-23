@@ -7,19 +7,23 @@ use App\Dominios\Operaciones\Aplicacion\ListarEstadiasHacienda;
 use App\Dominios\Operaciones\Contratos\AlertaPanel;
 use App\Dominios\Operaciones\Contratos\EquipoPersonaPanel;
 use App\Dominios\Operaciones\Contratos\EvidenciaPanel;
+use App\Dominios\Operaciones\Contratos\GranularidadVuelos;
 use App\Dominios\Operaciones\Contratos\LecturaPanelOperaciones;
 use App\Dominios\Operaciones\Contratos\ResumenEquipoTrabajoPanel;
 use App\Dominios\Operaciones\Contratos\ResumenLotePanel;
 use App\Dominios\Operaciones\Contratos\SesionPanel;
 use App\Dominios\Operaciones\Dominio\EstadoAlerta;
+use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Dominio\EstadoSesion;
 use App\Dominios\Operaciones\Dominio\EstadoTrabajo;
 use App\Dominios\Operaciones\Dominio\TonoEstadoSesion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Alerta;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Dron;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Evidencia;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
+use App\Dominios\Operaciones\Infraestructura\Http\PasosDeOrden;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
 use Illuminate\Support\Carbon;
@@ -102,14 +106,41 @@ final class LecturaPanelOperacionesEloquent implements LecturaPanelOperaciones
         return $distribucion;
     }
 
-    public function hectareasPorDia(int $dias, ?int $pilotoId = null): array
+    public function distribucionOrdenesPorEstado(): array
     {
-        $desde = Carbon::today()->subDays($dias - 1)->startOfDay();
+        $conteos = OrdenAplicacion::query()
+            ->selectRaw('estado, COUNT(*) as total')
+            ->groupBy('estado')
+            ->pluck('total', 'estado');
+
+        $distribucion = [];
+
+        foreach (EstadoOrdenAplicacion::cases() as $estado) {
+            $distribucion[] = [
+                'estado' => $estado->value,
+                // El tono lo define UNA vez `PasosDeOrden` para el badge del
+                // listado, la ficha y los pasos: acá se lee, no se repite. Un
+                // estado nuevo sin tono falla fuerte en vez de pintarse gris.
+                'tono' => PasosDeOrden::TONO_POR_ESTADO[$estado->value],
+                'valor' => (int) ($conteos[$estado->value] ?? 0),
+            ];
+        }
+
+        return $distribucion;
+    }
+
+    public function hectareasPorPeriodo(GranularidadVuelos $granularidad, int $periodos, ?int $pilotoId = null): array
+    {
+        // Cambia la granularidad, no la consulta: la sesión se atribuye al
+        // período que la contiene y ahí se suma. Agrupar con `GROUP BY` en SQL
+        // (`DATE_TRUNC`) daría la misma cuenta, pero sumaría las hectáreas en
+        // SQL y no con BigDecimal — ver el docblock de la clase.
+        $primero = $granularidad->desplazar($granularidad->inicioDelPeriodo(Carbon::today()), -($periodos - 1));
 
         $sesiones = Sesion::query()
             ->where('estado', EstadoSesion::Validado)
             ->whereNull('anulada_en')
-            ->where('inicio', '>=', $desde)
+            ->where('inicio', '>=', $primero)
             ->when($pilotoId !== null, fn ($consulta) => $consulta->where(
                 fn ($anidada) => $anidada->where('piloto_id', $pilotoId)->orWhere('auxiliar_id', $pilotoId)
             ))
@@ -118,17 +149,17 @@ final class LecturaPanelOperacionesEloquent implements LecturaPanelOperaciones
         $acumulado = [];
 
         foreach ($sesiones as $sesion) {
-            $dia = $sesion->inicio->format('Y-m-d');
-            $acumulado[$dia] = ($acumulado[$dia] ?? BigDecimal::zero())
+            $periodo = $granularidad->inicioDelPeriodo($sesion->inicio)->format('Y-m-d');
+            $acumulado[$periodo] = ($acumulado[$periodo] ?? BigDecimal::zero())
                 ->plus(BigDecimal::of($sesion->hectareas_declaradas));
         }
 
-        // Los días sin vuelo van en cero y no se saltean: un área que omite
-        // un día comprime el eje y dibuja una pendiente que no existió.
+        // Los períodos sin vuelo van en cero y no se saltean: un área que
+        // omite uno comprime el eje y dibuja una pendiente que no existió.
         $serie = [];
 
-        for ($i = 0; $i < $dias; $i++) {
-            $fecha = $desde->copy()->addDays($i)->format('Y-m-d');
+        for ($i = 0; $i < $periodos; $i++) {
+            $fecha = $granularidad->desplazar($primero, $i)->format('Y-m-d');
             $serie[] = [
                 'fecha' => $fecha,
                 'hectareas' => $this->aEscalaDos($acumulado[$fecha] ?? BigDecimal::zero()),

@@ -16,13 +16,22 @@
       labels ya traducidos por el llamador. `id` es el id del `tab-pane`
       correspondiente (sin el `#`).
     - ariaLabel (nullable): rótulo del `role="tablist"` para lectores de pantalla.
+    - variant ('underline'|'segmented', default 'underline'): 'underline' es la
+      fila de pestañas de la página (subrayado ámbar en la activa);
+      'segmented' (tarea 136) es el mismo mecanismo con la piel de un
+      selector — caja con borde y la opción activa elevada, como
+      `molecules/view-toggle` pero con texto — para elegir entre vistas del
+      MISMO dato dentro de una tarjeta (p. ej. diario/semanal/mensual). Así no
+      compite en jerarquía con las pestañas de la página, que van con
+      subrayado.
 --}}
 @props([
     'items' => [],
     'ariaLabel' => null,
+    'variant' => 'underline',
 ])
 
-<div {{ $attributes->class(['ag-tabs']) }} role="tablist" @if ($ariaLabel) aria-label="{{ $ariaLabel }}" @endif>
+<div {{ $attributes->class(['ag-tabs', 'ag-tabs--segmented' => $variant === 'segmented']) }} role="tablist" @if ($ariaLabel) aria-label="{{ $ariaLabel }}" @endif>
     @foreach ($items as $item)
         @php $active = $item['active'] ?? false; @endphp
         <button

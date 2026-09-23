@@ -42,13 +42,33 @@ interface LecturaPanelOperaciones
     public function distribucionPorEstado(?int $pilotoId = null): array;
 
     /**
-     * Hectáreas validadas por día de los últimos `$dias` días, incluidos los
-     * días sin vuelo (en `'0.00'`), en orden cronológico: el área del
-     * gráfico no puede saltarse un día o la curva miente.
+     * Conteo de órdenes de aplicación por estado, para el donut del
+     * encargado (tarea 136). Devuelve SIEMPRE los seis estados de
+     * `EstadoOrdenAplicacion`, incluidos los que están en cero, en el
+     * orden del ciclo de vida. `tono` es el mismo que pinta el badge del
+     * listado de órdenes: un estado, un color en toda la app.
+     *
+     * No es la {@see distribucionPorEstado()} de las sesiones: las órdenes
+     * tienen su propia máquina de estados (ADR 0022) y son otra tabla.
+     *
+     * @return list<array{estado: string, tono: string, valor: int}>
+     */
+    public function distribucionOrdenesPorEstado(): array;
+
+    /**
+     * Hectáreas validadas por período: los últimos `$periodos` períodos de la
+     * granularidad pedida (el actual incluido, aunque venga a medias), con
+     * los períodos sin vuelo en `'0.00'`, en orden cronológico — el área del
+     * gráfico no puede saltarse uno o la curva miente. La misma consulta
+     * sirve a las tres granularidades: solo cambia a qué período se atribuye
+     * cada sesión.
+     *
+     * `fecha` es el primer día del período (`Y-m-d`): el propio día, el lunes
+     * de la semana o el día 1 del mes.
      *
      * @return list<array{fecha: string, hectareas: string}>
      */
-    public function hectareasPorDia(int $dias, ?int $pilotoId = null): array;
+    public function hectareasPorPeriodo(GranularidadVuelos $granularidad, int $periodos, ?int $pilotoId = null): array;
 
     /**
      * Avance operativo por lote, indexado por `loteId` — el consumidor lo

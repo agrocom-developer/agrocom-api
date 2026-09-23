@@ -13,6 +13,7 @@ use App\Dominios\Inventario\Contratos\StockPanel;
 use App\Dominios\Operaciones\Contratos\AlertaPanel;
 use App\Dominios\Operaciones\Contratos\EquipoPersonaPanel;
 use App\Dominios\Operaciones\Contratos\EvidenciaPanel;
+use App\Dominios\Operaciones\Contratos\GranularidadVuelos;
 use App\Dominios\Operaciones\Contratos\LecturaPanelOperaciones;
 use App\Dominios\Operaciones\Contratos\ResumenEquipoTrabajoPanel;
 use App\Dominios\Operaciones\Contratos\ResumenLotePanel;
@@ -21,6 +22,8 @@ use App\Dominios\Personal\Contratos\DatosEquipoTrabajo;
 use App\Dominios\Personal\Contratos\LecturaEquipoTrabajo;
 use App\Dominios\Seguridad\Dominio\SeccionDashboard;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
+use Brick\Math\BigDecimal;
+use Brick\Math\RoundingMode;
 
 /**
  * Caso de uso: armar el dashboard del ROL ACTIVO (tarea 67).
@@ -62,6 +65,10 @@ final class ArmarDashboard
     private const ANTICIPOS = 5;
 
     private const ESTADO_CUENTAS = 5;
+
+    private const SEMANAS_RESUMEN_VUELOS = 8;
+
+    private const MESES_RESUMEN_VUELOS = 6;
 
     private const PERMISO_CREAR_CAMPANIA = 'campania.campania.crear';
 
@@ -143,6 +150,8 @@ final class ArmarDashboard
             SeccionDashboard::EstadoCuentas => $this->estadoCuentas(),
             SeccionDashboard::TrabajosPorEquipo => $this->trabajosPorEquipo(),
             SeccionDashboard::ProgresoCampania => $this->progresoCampania(),
+            SeccionDashboard::EstadoOrdenesAplicacion => $this->estadoOrdenesAplicacion(),
+            SeccionDashboard::ResumenVuelos => $this->resumenVuelos(),
         };
     }
 
@@ -156,7 +165,7 @@ final class ArmarDashboard
      *
      * El caso `default` es el agrupamiento original de la tarea 67
      * (resumen/mapa/lotes/multimedia): sigue siendo el de cualquier rol que
-     * todavía no tenga el suyo propio (136 a 139 lo agregan cada uno por su
+     * todavía no tenga el suyo propio (137 a 139 lo agregan cada uno por su
      * cuenta).
      *
      * @return list<array{id: string, label: string, claves: list<string>}>
@@ -179,6 +188,23 @@ final class ArmarDashboard
                     'id' => 'progreso-campania',
                     'label' => __('seguridad.dashboard.tab_progreso_campania'),
                     'claves' => [SeccionDashboard::ProgresoCampania->value],
+                ],
+            ],
+            'encargado_operaciones' => [
+                [
+                    'id' => 'estado-aplicaciones',
+                    'label' => __('seguridad.dashboard.tab_estado_aplicaciones'),
+                    'claves' => [SeccionDashboard::EstadoOrdenesAplicacion->value],
+                ],
+                [
+                    'id' => 'proceso-trabajos',
+                    'label' => __('seguridad.dashboard.tab_proceso_trabajos'),
+                    'claves' => [SeccionDashboard::ColaValidacion->value, SeccionDashboard::Pausas->value],
+                ],
+                [
+                    'id' => 'resumen-vuelos',
+                    'label' => __('seguridad.dashboard.tab_resumen_vuelos'),
+                    'claves' => [SeccionDashboard::ResumenVuelos->value],
                 ],
             ],
             default => [
@@ -214,7 +240,7 @@ final class ArmarDashboard
     /** @return array{fechas: list<string>, valores: list<string>}|null */
     private function hectareasPorDia(): ?array
     {
-        $serie = $this->operaciones->hectareasPorDia(self::DIAS_SERIE_HECTAREAS);
+        $serie = $this->operaciones->hectareasPorPeriodo(GranularidadVuelos::Dia, self::DIAS_SERIE_HECTAREAS);
 
         $huboVuelo = array_filter($serie, fn (array $dia) => $dia['hectareas'] !== '0.00');
 
@@ -226,6 +252,68 @@ final class ArmarDashboard
             'fechas' => array_column($serie, 'fecha'),
             'valores' => array_column($serie, 'hectareas'),
         ];
+    }
+
+    /**
+     * Órdenes de aplicación por estado (tab del encargado, tarea 136). Son
+     * las ÓRDENES, con su propia máquina de estados (ADR 0022), no las
+     * sesiones de vuelo de {@see distribucion()}: son otra tabla y otros
+     * estados. Sin ninguna orden la sección se omite, como las demás.
+     *
+     * @return array{total: int, estados: list<array{estado: string, tono: string, valor: int}>}|null
+     */
+    private function estadoOrdenesAplicacion(): ?array
+    {
+        $estados = $this->operaciones->distribucionOrdenesPorEstado();
+
+        $total = array_sum(array_column($estados, 'valor'));
+
+        return $total > 0 ? ['total' => $total, 'estados' => $estados] : null;
+    }
+
+    /**
+     * Hectáreas validadas de los vuelos, con las tres granularidades ya
+     * calculadas (tab del encargado, tarea 136): el selector de la vista
+     * alterna entre ellas sin volver al servidor. Cada una es la MISMA
+     * consulta de {@see hectareasPorDia()} con otra agrupación; el total del
+     * período se suma acá con BigDecimal (invariante 6), no en la vista.
+     *
+     * @return array<string, array{fechas: list<string>, valores: list<string>, total: string}>|null
+     */
+    private function resumenVuelos(): ?array
+    {
+        $resumen = [];
+        $huboVuelo = false;
+
+        foreach (GranularidadVuelos::cases() as $granularidad) {
+            $serie = $this->operaciones->hectareasPorPeriodo($granularidad, $this->periodosDeVentana($granularidad));
+
+            $total = BigDecimal::zero();
+
+            foreach ($serie as $periodo) {
+                $total = $total->plus(BigDecimal::of($periodo['hectareas']));
+            }
+
+            $huboVuelo = $huboVuelo || $total->isPositive();
+
+            $resumen[$granularidad->value] = [
+                'fechas' => array_column($serie, 'fecha'),
+                'valores' => array_column($serie, 'hectareas'),
+                'total' => (string) $total->toScale(2, RoundingMode::HalfUp),
+            ];
+        }
+
+        return $huboVuelo ? $resumen : null;
+    }
+
+    /** Cuántos períodos muestra el resumen de vuelos en cada granularidad. */
+    private function periodosDeVentana(GranularidadVuelos $granularidad): int
+    {
+        return match ($granularidad) {
+            GranularidadVuelos::Dia => self::DIAS_SERIE_HECTAREAS,
+            GranularidadVuelos::Semana => self::SEMANAS_RESUMEN_VUELOS,
+            GranularidadVuelos::Mes => self::MESES_RESUMEN_VUELOS,
+        };
     }
 
     /** @return list<array<string, mixed>>|null */

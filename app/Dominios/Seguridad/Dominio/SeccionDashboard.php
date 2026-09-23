@@ -39,6 +39,8 @@ enum SeccionDashboard: string
     case EstadoCuentas = 'estado_cuentas';
     case TrabajosPorEquipo = 'trabajos_por_equipo';
     case ProgresoCampania = 'progreso_campania';
+    case EstadoOrdenesAplicacion = 'estado_ordenes_aplicacion';
+    case ResumenVuelos = 'resumen_vuelos';
 
     /**
      * El mapa se gatea con `operaciones.trabajo.ver` y no con
@@ -59,7 +61,10 @@ enum SeccionDashboard: string
             // trabajos (Operaciones), agrupada distinto — por equipo en vez
             // de por lote, y totalizada en vez de fila por fila.
             self::TrabajosPorEquipo,
-            self::ProgresoCampania => 'operaciones.trabajo.ver',
+            self::ProgresoCampania,
+            // Mismo permiso que HectareasPorDia: es la MISMA serie de
+            // hectáreas validadas, con selector de granularidad (tarea 136).
+            self::ResumenVuelos => 'operaciones.trabajo.ver',
             self::ColaValidacion => 'operaciones.sesion.validar',
             self::Pausas => 'operaciones.pausa.ver',
             self::DiasEnHacienda => 'operaciones.estadia.ver',
@@ -69,6 +74,9 @@ enum SeccionDashboard: string
             self::AvanceClientes,
             self::EstadoCuentas => 'comercial.contrato.ver',
             self::Alertas => 'operaciones.alerta.ver',
+            // El permiso de la pantalla de órdenes de aplicación, que es la
+            // que este donut resume (tarea 136).
+            self::EstadoOrdenesAplicacion => 'operaciones.orden.ver',
             self::MiLiquidacion => 'finanzas.devengo.ver',
             // Sin permiso propio: son las sesiones y los drones de quien
             // mira, derivados de su `persona_id`. No hay nada que gatear que
