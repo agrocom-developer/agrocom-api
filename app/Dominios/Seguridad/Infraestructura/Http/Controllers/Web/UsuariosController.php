@@ -3,6 +3,7 @@
 namespace App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web;
 
 use App\Dominios\Comercial\Contratos\LecturaContrato;
+use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Personal\Contratos\LecturaFichaPersona;
 use App\Dominios\Seguridad\Aplicacion\AlternarBloqueoUsuario;
 use App\Dominios\Seguridad\Aplicacion\AsignarRolesUsuario;
@@ -87,10 +88,7 @@ final class UsuariosController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
-        // Un arreglo en la query (`?q[]=x`, `?tipo[]=interno`) no es un filtro: `string()` lo
-        // convertiría a texto y Laravel eleva esa conversión a excepción (500). Solo se acepta un texto.
-        $busquedaCruda = $request->query('q');
-        $busqueda = is_string($busquedaCruda) ? $busquedaCruda : '';
+        $busqueda = TextoDeFiltro::de($request, 'q');
         $tipoCrudo = $request->query('tipo');
         $tipo = is_string($tipoCrudo) ? TipoUsuario::tryFrom($tipoCrudo) : null;
         $usuarios = $listarUsuarios->ejecutar($busqueda !== '' ? $busqueda : null, $tipo);
