@@ -7,11 +7,11 @@
     `confirm-modal` para la baja (antes era la confirmación nativa del
     navegador y el `<form class="ag-filtros">` anterior).
 
-    Sin acción de editar (invariante de esta tarea: una carga es inmutable
-    salvo baja, ver Aplicacion/CrearCombustible) y sin buscador: los cinco
-    filtros (base, cuadrilla, campaña y rango de fechas) son todos del panel.
-    La única acción de la fila es «Eliminar», así que sin ese permiso la tabla
-    no lleva columna de acciones.
+    "Editar" en la fila (tarea 134), gateado por `$puedeEditar` — sin
+    `rendicion_id`, una carga siempre admite corregirse, sin política de
+    dominio adicional. Sin buscador: los cinco filtros (base, cuadrilla,
+    campaña y rango de fechas) son todos del panel. Sin `$puedeEditar` ni
+    `$puedeEliminar` la tabla no lleva columna de acciones.
 
     Una carga no tiene máquina de estados ni activo/inactivo: no lleva pasos,
     badge de estado ni columna de activo (guía §6.2).
@@ -37,6 +37,7 @@
       BigDecimal: la vista solo los formatea (`FormatoMonto`, sin `float`),
       nunca calcula con ellos (invariante 6).
     - $puedeEliminar (bool): gatea el botón "Eliminar" por fila.
+    - $puedeEditar (bool): gatea el botón "Editar" por fila (tarea 134).
 
     Gateada por `finanzas.combustible.ver`, verificado server-side en el
     controlador. El botón "Nueva carga" y "Eliminar" se ocultan con `@puede`
@@ -187,7 +188,7 @@
                     />
                 @endif
             @else
-                <x-molecules.index-table :columns="'3rem minmax(0, 0.9fr) minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 1.3fr) minmax(0, 0.9fr) minmax(0, 1fr)'.($puedeEliminar ? ' var(--ag-row-actions-width)' : '')">
+                <x-molecules.index-table :columns="'3rem minmax(0, 0.9fr) minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 1.3fr) minmax(0, 0.9fr) minmax(0, 1fr)'.(($puedeEditar || $puedeEliminar) ? ' var(--ag-row-actions-width)' : '')">
                     <x-slot:head>
                         <span role="columnheader" class="ag-index-table__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('finanzas.combustible.col_fecha') }}</span>
@@ -196,7 +197,7 @@
                         <span role="columnheader">{{ __('finanzas.combustible.col_recurso') }}</span>
                         <span role="columnheader" class="ag-index-table__cifra-head">{{ __('finanzas.combustible.col_litros') }}</span>
                         <span role="columnheader" class="ag-index-table__cifra-head">{{ __('finanzas.combustible.col_monto') }}</span>
-                        @if ($puedeEliminar)
+                        @if ($puedeEditar || $puedeEliminar)
                             <span role="columnheader" class="ag-index-table__acciones-head">{{ __('ui.tabla.col_acciones') }}</span>
                         @endif
                     </x-slot:head>
@@ -218,7 +219,7 @@
                             <span role="cell" class="ag-index-table__cifra">{{ __('finanzas.combustible.litros_valor', ['litros' => FormatoMonto::decimal($combustible->litros)]) }}</span>
                             <span role="cell" class="ag-index-table__cifra">{{ __('finanzas.combustible.monto_valor', ['monto' => FormatoMonto::decimal($combustible->monto)]) }}</span>
 
-                            @if ($puedeEliminar)
+                            @if ($puedeEditar || $puedeEliminar)
                                 <span role="cell" class="ag-index-table__acciones">
                                     {{-- Form y modal FUERA de row-actions a propósito: ese organism
                                          repite su slot dos veces (visible/menú, ver su docblock),
@@ -226,30 +227,45 @@
                                          duplicaría — y el que cae dentro del menú ⋮ queda oculto
                                          con él y nunca abre. El disparador sí va adentro (es un
                                          botón sin id propio). Mismo criterio que repuestos/index. --}}
-                                    <form id="{{ $formIdEliminar }}" method="POST" action="{{ route('panel.combustible.destroy', $combustible) }}">
-                                        @csrf
-                                        @method('DELETE')
-                                    </form>
+                                    @if ($puedeEliminar)
+                                        <form id="{{ $formIdEliminar }}" method="POST" action="{{ route('panel.combustible.destroy', $combustible) }}">
+                                            @csrf
+                                            @method('DELETE')
+                                        </form>
 
-                                    <x-molecules.confirm-modal
-                                        :id="$modalIdEliminar"
-                                        :form-id="$formIdEliminar"
-                                        :title="__('finanzas.combustible.confirmar_baja_titulo')"
-                                        :message="__('finanzas.combustible.confirmar_baja')"
-                                        :confirm-label="__('finanzas.combustible.eliminar_accion')"
-                                    />
+                                        <x-molecules.confirm-modal
+                                            :id="$modalIdEliminar"
+                                            :form-id="$formIdEliminar"
+                                            :title="__('finanzas.combustible.confirmar_baja_titulo')"
+                                            :message="__('finanzas.combustible.confirmar_baja')"
+                                            :confirm-label="__('finanzas.combustible.eliminar_accion')"
+                                        />
+                                    @endif
 
                                     <x-organisms.row-actions>
-                                        <x-atoms.button
-                                            type="button"
-                                            data-bs-toggle="modal"
-                                            :data-bs-target="'#'.$modalIdEliminar"
-                                            variant="danger-outline"
-                                            size="sm"
-                                            icon="delete"
-                                        >
-                                            {{ __('finanzas.combustible.eliminar_accion') }}
-                                        </x-atoms.button>
+                                        @if ($puedeEditar)
+                                            <x-atoms.button
+                                                :href="route('panel.combustible.edit', $combustible)"
+                                                variant="warning-outline"
+                                                size="sm"
+                                                icon="edit"
+                                            >
+                                                {{ __('finanzas.combustible.editar_accion') }}
+                                            </x-atoms.button>
+                                        @endif
+
+                                        @if ($puedeEliminar)
+                                            <x-atoms.button
+                                                type="button"
+                                                data-bs-toggle="modal"
+                                                :data-bs-target="'#'.$modalIdEliminar"
+                                                variant="danger-outline"
+                                                size="sm"
+                                                icon="delete"
+                                            >
+                                                {{ __('finanzas.combustible.eliminar_accion') }}
+                                            </x-atoms.button>
+                                        @endif
                                     </x-organisms.row-actions>
                                 </span>
                             @endif
