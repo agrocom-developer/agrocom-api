@@ -165,8 +165,13 @@ final class ArmarDashboard
      *
      * El caso `default` es el agrupamiento original de la tarea 67
      * (resumen/mapa/lotes/multimedia): sigue siendo el de cualquier rol que
-     * todavía no tenga el suyo propio (137 a 139 lo agregan cada uno por su
+     * todavía no tenga el suyo propio (138 y 139 lo agregan cada uno por su
      * cuenta).
+     *
+     * Piloto y auxiliar comparten el agrupamiento (tarea 137): ven las mismas
+     * tres secciones —todas acotadas a su `persona_id`— y solo cambia de
+     * quién son. `auxiliar` es la clave de `sec_role`; el panel lo rotula
+     * «Ayudante» (`seguridad.rol.meta.auxiliar.nombre`).
      *
      * @return list<array{id: string, label: string, claves: list<string>}>
      */
@@ -205,6 +210,18 @@ final class ArmarDashboard
                     'id' => 'resumen-vuelos',
                     'label' => __('seguridad.dashboard.tab_resumen_vuelos'),
                     'claves' => [SeccionDashboard::ResumenVuelos->value],
+                ],
+            ],
+            'piloto', 'auxiliar' => [
+                [
+                    'id' => 'mis-devengos',
+                    'label' => __('seguridad.dashboard.tab_mis_devengos'),
+                    'claves' => [SeccionDashboard::MiLiquidacion->value],
+                ],
+                [
+                    'id' => 'mis-trabajos',
+                    'label' => __('seguridad.dashboard.tab_mis_trabajos'),
+                    'claves' => [SeccionDashboard::MisSesiones->value, SeccionDashboard::MisEquipos->value],
                 ],
             ],
             default => [

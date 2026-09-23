@@ -384,6 +384,11 @@ return [
         'tab_proceso_trabajos' => 'Proceso de los trabajos',
         'tab_resumen_vuelos' => 'Resumen de vuelos',
 
+        // Tabs del piloto y del ayudante (tarea 137): lo que devengan y el
+        // trabajo que hicieron.
+        'tab_mis_devengos' => 'Mis devengos',
+        'tab_mis_trabajos' => 'Mis trabajos',
+
         'seccion_ordenes_estado' => 'Órdenes de aplicación por estado',
         'ordenes_estado_total' => 'Órdenes en total',
         'ordenes_estado_ver' => 'Ver órdenes',
