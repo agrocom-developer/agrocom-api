@@ -114,6 +114,7 @@ return [
         'titulo' => 'Stock por base',
         'subtitulo' => 'Stock agregado por repuesto y base, con alerta al cruzar el mínimo.',
         'nuevo_movimiento' => 'Registrar movimiento',
+        'ver_movimientos' => 'Ver movimientos',
         'filtro_busqueda_placeholder' => 'Código o descripción del repuesto…',
         'filtro_base' => 'Base',
         'filtro_todos' => 'Todas',
@@ -165,6 +166,35 @@ return [
         'error_repuesto_requerido' => 'Elige el repuesto.',
         'error_base_requerida' => 'Elige la base.',
         'error_cantidad_requerida' => 'Ingresa la cantidad.',
+    ],
+
+    // Pantalla de panel "Stock › Movimientos" (tarea 133): el detalle de
+    // solo lectura de cada asiento que explica el saldo agregado de Stock.
+    'movimientos' => [
+        'titulo' => 'Movimientos de stock',
+        'subtitulo' => 'Cada compra, salida, ajuste o traslado registrado, del más reciente al más viejo.',
+        'volver' => 'Volver a stock',
+        'kpi_movimientos' => 'Movimientos',
+        'kpi_movimientos_pie' => 'Con los filtros de abajo',
+        'filtro_repuesto' => 'Repuesto',
+        'filtro_repuesto_todos' => 'Todos',
+        'filtro_base' => 'Base',
+        'filtro_base_todas' => 'Todas',
+        'filtro_vacio_titulo' => 'Ningún movimiento coincide',
+        'filtro_vacio_detalle' => 'Prueba con otro repuesto o con otra base, o quita los filtros.',
+        'vacio_titulo' => 'Todavía no hay movimientos registrados',
+        'vacio_detalle' => 'Cada compra, salida, ajuste o traslado queda anotado acá al registrarse.',
+        'col_fecha' => 'Fecha',
+        'col_tipo' => 'Tipo',
+        'col_repuesto' => 'Repuesto',
+        'col_base' => 'Base',
+        'col_base_destino' => 'Base de destino',
+        'col_cantidad' => 'Cantidad',
+        'col_costo_unitario' => 'Costo unitario',
+        'col_motivo' => 'Motivo',
+        'costo_valor' => 'Bs :monto',
+        'sin_dato' => '—',
+        'paginacion_aria' => 'Paginación de movimientos de stock',
     ],
 
     // Mensajes de error.

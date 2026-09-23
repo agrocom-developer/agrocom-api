@@ -941,6 +941,12 @@ Route::middleware('auth:interno')->group(function () {
         Route::get('/panel/stock', [StockController::class, 'index'])
             ->name('panel.stock.index');
 
+        // Listado de solo lectura de los asientos (tarea 133): antes del
+        // alta, mismo criterio de orden que las demás rutas con prefijo
+        // compartido (ver ordenes-trabajo).
+        Route::get('/panel/stock/movimientos', [StockController::class, 'movimientos'])
+            ->name('panel.stock.movimientos.index');
+
         Route::get('/panel/stock/movimientos/crear', [StockController::class, 'create'])
             ->name('panel.stock.movimientos.create');
 
