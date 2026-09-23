@@ -117,7 +117,7 @@
             <input
                 type="search"
                 name="q"
-                value="{{ request()->routeIs('panel.buscar') ? request()->string('q') : '' }}"
+                value="{{ request()->routeIs('panel.buscar') ? \App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro::de(request(), 'q') : '' }}"
                 class="ag-mobile-topbar__search-input"
                 placeholder="{{ __('ui.header.buscador_placeholder') }}"
                 aria-label="{{ __('ui.header.buscador_aria') }}"
