@@ -1,32 +1,15 @@
 {{--
     Page: rendiciones/create (GET /panel/rendiciones/crear, panel.rendiciones.create)
-    Alta de una rendición (HU-34, tarea 48) — arquetipo Formulario, §6.3 de
-    docs/diseno/guia_pantalla_panel.md. Homogeneizado en la tarea 119 con
-    `form-layout` (sin aside: ver más abajo), `form-section` y el "Volver" del
-    catálogo. Sin partial `_formulario` compartido con una edición: no existe
-    caso de uso de edición (ver `Aplicacion/CrearRendicion`) — este archivo ES
-    el formulario completo.
-
-    Sin aside: un registro que todavía no existe no tiene nada relacionado que
-    resumir (guía §6.3.1). Sin `edit()` no hay a dónde quedarse: tras guardar
-    se vuelve al listado con su aviso (guía §6.3.2) — la nueva rendición queda
-    primera, y desde su «Ver» se le asocian los gastos.
+    Alta de una rendición (HU-34, tarea 48): el formulario real vive en
+    `_formulario.blade.php`, compartido con `edit.blade.php` (tarea 134).
 
     Datos esperados (ver RendicionesController::create()): la cáscara de
-    CascaraPanel, más:
-    - $basesDisponibles (Collection<int, string>): id => nombre.
-    - $personasDisponibles (Collection<int, string>): id => nombre.
+    CascaraPanel, más $basesDisponibles / $personasDisponibles
+    (Collection<int, string>) — todo lo que el `@include` hereda tal cual.
 
     Estilos en resources/css/pages/rendiciones.css — cero color hardcodeado
     (CLAUDE.md invariante 11).
 --}}
-@php
-    $baseId = old('base_id', '');
-    $jefeId = old('jefe_campo_id', '');
-    $fecha = old('fecha', now()->toDateString());
-    $descripcion = old('descripcion', '');
-@endphp
-
 <x-templates.panel-shell :title="__('finanzas.rendiciones.titulo_crear')" :tema="$tema">
     <x-templates.panel-layout
         :menu="$menu"
@@ -40,82 +23,6 @@
         :version="$version"
         :vista-actual="__('finanzas.rendiciones.titulo_crear')"
     >
-        <form
-            method="POST"
-            action="{{ route('panel.rendiciones.store') }}"
-            class="ag-rendiciones-form"
-            novalidate
-        >
-            @csrf
-
-            <x-organisms.page-header
-                :title="__('finanzas.rendiciones.titulo_crear')"
-                :subtitle="__('finanzas.rendiciones.subtitulo_form')"
-            >
-                <x-slot:actions>
-                    <x-molecules.boton-volver :href="route('panel.rendiciones.index')" :label="__('finanzas.rendiciones.volver')" />
-                </x-slot:actions>
-            </x-organisms.page-header>
-
-            @if (session('estado'))
-                <x-molecules.alert-strip variant="success" icon="check_circle">
-                    {{ session('estado') }}
-                </x-molecules.alert-strip>
-            @endif
-
-            <x-molecules.form-layout>
-                <x-molecules.form-section
-                    :title="__('finanzas.rendiciones.seccion_datos')"
-                    :count="__('finanzas.rendiciones.campos_contador', ['cantidad' => 4])"
-                >
-                    <x-atoms.select
-                        name="base_id"
-                        id="base_id"
-                        :label="__('finanzas.rendiciones.campo_base')"
-                        :options="$basesDisponibles"
-                        :value="(string) $baseId"
-                        :placeholder="__('finanzas.rendiciones.campo_base_placeholder')"
-                        :error="$errors->first('base_id')"
-                        required
-                    />
-
-                    <x-atoms.select
-                        name="jefe_campo_id"
-                        id="jefe_campo_id"
-                        :label="__('finanzas.rendiciones.campo_jefe_campo')"
-                        :options="$personasDisponibles"
-                        :value="(string) $jefeId"
-                        :placeholder="__('finanzas.rendiciones.campo_jefe_campo_placeholder')"
-                        :error="$errors->first('jefe_campo_id')"
-                        required
-                    />
-
-                    <x-atoms.date
-                        name="fecha"
-                        :label="__('finanzas.rendiciones.campo_fecha')"
-                        :value="$fecha"
-                        required
-                        :error="$errors->first('fecha')"
-                    />
-
-                    <x-atoms.textarea
-                        class="ag-form-section__field--full"
-                        name="descripcion"
-                        :label="__('finanzas.rendiciones.campo_descripcion')"
-                        :value="$descripcion"
-                        :error="$errors->first('descripcion')"
-                    />
-                </x-molecules.form-section>
-
-                <x-organisms.form-actions-bar :status="__('finanzas.rendiciones.estado_form')">
-                    <x-slot:actions>
-                        <x-molecules.boton-volver :href="route('panel.rendiciones.index')" cancelar />
-                        <x-atoms.button type="submit" variant="primary">
-                            {{ __('ui.action.save') }}
-                        </x-atoms.button>
-                    </x-slot:actions>
-                </x-organisms.form-actions-bar>
-            </x-molecules.form-layout>
-        </form>
+        @include('finanzas::pages.rendiciones._formulario', ['rendicion' => null])
     </x-templates.panel-layout>
 </x-templates.panel-shell>
