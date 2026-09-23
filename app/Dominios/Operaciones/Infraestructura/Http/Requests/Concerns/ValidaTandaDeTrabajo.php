@@ -3,8 +3,6 @@
 namespace App\Dominios\Operaciones\Infraestructura\Http\Requests\Concerns;
 
 use App\Dominios\Finanzas\Contratos\ModalidadPago;
-use App\Dominios\Operaciones\Dominio\ProductoCalda;
-use App\Dominios\Operaciones\Dominio\TipoInsumo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Validation\Rule;
@@ -17,33 +15,25 @@ use Illuminate\Validation\Rule;
  * (`parametros` compartidos de la tanda + `equipos[]` con sus lotes/turno) —
  * evita repetir el mismo bloque de reglas en los dos Requests.
  *
+ * Las reglas de las indicaciones compartidas (`parametros.*`, sin `equipos`)
+ * viven en {@see ValidaIndicacionesOrdenTrabajo} (tarea 127): las reusa
+ * también `ActualizarOrdenTrabajoRequest`, que no toca el reparto.
+ *
  * Solo valida FORMA: que cada equipo/lote exista, que las hectáreas sean
- * positivas, que el turno sea uno de los tres valores (sus horas son
- * opcionales, pero si vienen las dos el fin es posterior al inicio), y
- * que Ph y litros por hectárea solo vengan si la orden es de insumo líquido
- * (y kilos por hectárea, solo si es de sólido). La vigencia del
- * equipo, el tope de hectáreas por lote y que la orden esté vigente NO se
- * validan acá: son las guardas de negocio de `AsignarEquiposOrden`.
+ * positivas, y que el turno sea uno de los tres valores (sus horas son
+ * opcionales, pero si vienen las dos el fin es posterior al inicio). La
+ * vigencia del equipo, el tope de hectáreas por lote y que la orden esté
+ * vigente NO se validan acá: son las guardas de negocio de `AsignarEquiposOrden`.
  */
 trait ValidaTandaDeTrabajo
 {
+    use ValidaIndicacionesOrdenTrabajo;
+
     /** @return array<string, mixed> */
     private function reglasParametrosYEquipos(?int $ordenId): array
     {
         return [
-            'parametros.humedad_min_pct' => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'parametros.humedad_max_pct' => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'parametros.viento_max_kmh' => ['nullable', 'numeric', 'gt:0'],
-            'parametros.temperatura_max_c' => ['nullable', 'numeric', 'gt:-10', 'lt:60'],
-            'parametros.altura_vuelo_m' => ['nullable', 'numeric', 'gt:0'],
-            'parametros.velocidad_vuelo_kmh' => ['nullable', 'numeric', 'gt:0'],
-            'parametros.ancho_pasada_m' => ['nullable', 'numeric', 'gt:0'],
-            'parametros.ph_agua' => ['nullable', 'numeric', 'min:0', 'max:14'],
-            'parametros.ph_calda' => ['nullable', 'numeric', 'min:0', 'max:14'],
-            'parametros.litros_ha' => ['nullable', 'numeric', 'gt:0'],
-            'parametros.kilos_ha' => ['nullable', 'numeric', 'gt:0'],
-            'parametros.calda_productos' => ['nullable', 'array'],
-            'parametros.calda_productos.*' => ['distinct', Rule::enum(ProductoCalda::class)],
+            ...$this->reglasIndicaciones(),
             'parametros.calda' => ['nullable', 'array'],
             'parametros.calda.*.producto' => ['required_with:parametros.calda', 'string', 'max:120'],
             'parametros.calda.*.cantidad' => ['required_with:parametros.calda', 'numeric', 'gt:0'],
@@ -86,23 +76,13 @@ trait ValidaTandaDeTrabajo
     }
 
     /**
-     * Cross-checks comunes: rango de humedad de `parametros`, horario de
-     * turno de cada lote, y Ph/calda solo si `$orden` es de insumo líquido.
-     * `$orden` puede ser `null` (el Request no pudo resolverla todavía —
-     * `CrearOrdenTrabajoRequest` valida `orden_id` en la misma pasada) — en
-     * ese caso se omite el chequeo de líquido/sólido, ya cubierto por el
-     * error de `orden_id` en sí.
+     * Cross-checks: los de {@see ValidaIndicacionesOrdenTrabajo::validarIndicaciones()}
+     * (humedad, Ph/litros/kilos según el insumo) más el horario de turno de
+     * cada lote, propio del reparto — esta clase es la única que lo valida.
      */
     private function validarParametrosYEquipos(Validator $validator, ?OrdenAplicacion $orden): void
     {
-        $parametros = (array) $this->input('parametros', []);
-
-        $humedadMin = $parametros['humedad_min_pct'] ?? null;
-        $humedadMax = $parametros['humedad_max_pct'] ?? null;
-
-        if ($humedadMin !== null && $humedadMin !== '' && $humedadMax !== null && $humedadMax !== '' && (float) $humedadMin > (float) $humedadMax) {
-            $validator->errors()->add('parametros.humedad_min_pct', __('operaciones.asignacion_equipos.error_humedad_rango'));
-        }
+        $this->validarIndicaciones($validator, $orden);
 
         foreach ((array) $this->input('equipos', []) as $indiceEquipo => $equipo) {
             foreach ((array) ($equipo['lotes'] ?? []) as $indiceLote => $lote) {
@@ -116,25 +96,6 @@ trait ValidaTandaDeTrabajo
                     );
                 }
             }
-        }
-
-        $esLiquido = $orden?->categoriaInsumo?->tipo_insumo === TipoInsumo::Liquido;
-
-        if (! $esLiquido && ($parametros['ph_agua'] ?? null) !== null && $parametros['ph_agua'] !== '') {
-            $validator->errors()->add('parametros.ph_agua', __('operaciones.asignacion_equipos.error_ph_solo_liquido'));
-        }
-
-        if (! $esLiquido && ($parametros['ph_calda'] ?? null) !== null && $parametros['ph_calda'] !== '') {
-            $validator->errors()->add('parametros.ph_calda', __('operaciones.asignacion_equipos.error_ph_solo_liquido'));
-        }
-
-        // Litros por hectárea es de insumo líquido; kilos por hectárea, de sólido.
-        if (! $esLiquido && ($parametros['litros_ha'] ?? null) !== null && $parametros['litros_ha'] !== '') {
-            $validator->errors()->add('parametros.litros_ha', __('operaciones.ordenes_trabajo.error_litros_solo_liquido'));
-        }
-
-        if ($esLiquido && ($parametros['kilos_ha'] ?? null) !== null && $parametros['kilos_ha'] !== '') {
-            $validator->errors()->add('parametros.kilos_ha', __('operaciones.ordenes_trabajo.error_kilos_solo_solido'));
         }
     }
 }
