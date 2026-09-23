@@ -3,11 +3,13 @@
 namespace App\Dominios\Inventario\Infraestructura\Http\Controllers\Web;
 
 use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
+use App\Dominios\Inventario\Aplicacion\ListarMovimientosStock;
 use App\Dominios\Inventario\Aplicacion\ListarStock;
 use App\Dominios\Inventario\Aplicacion\RegistrarMovimientoStock;
 use App\Dominios\Inventario\Contratos\Excepciones\StockInsuficiente;
 use App\Dominios\Inventario\Dominio\SentidoAjusteInventario;
 use App\Dominios\Inventario\Dominio\TipoMovimientoInventario;
+use App\Dominios\Inventario\Infraestructura\Eloquent\MovimientoStock;
 use App\Dominios\Inventario\Infraestructura\Eloquent\Repuesto;
 use App\Dominios\Inventario\Infraestructura\Http\Requests\RegistrarMovimientoRequest;
 use App\Dominios\Personal\Contratos\LecturaPanelPersonal;
@@ -39,12 +41,35 @@ use Illuminate\View\View;
  * mismo filtro que la tabla; el movimiento de stock no se edita ni se borra
  * —es un asiento—, así que la fila no lleva acciones y `store()` vuelve al
  * listado con su aviso (no hay `edit()` al que volver).
+ *
+ * `movimientos()` (tarea 133) es la mitad de LECTURA que faltaba: el saldo
+ * de arriba es un agregado, este es el detalle de cada asiento que lo
+ * explica. Mismo permiso `.ver`, misma ausencia de acciones por la misma
+ * razón (un asiento no se edita ni se borra) — {@see ListarMovimientosStock}
+ * hace la consulta, este método solo resuelve filtros y nombres de base.
  */
 final class StockController
 {
     private const PERMISO_VER = 'inventario.movimiento.ver';
 
     private const PERMISO_CREAR = 'inventario.movimiento.crear';
+
+    /**
+     * Tono del badge de cada tipo de movimiento (§6.3.4 de la guía de
+     * pantalla), lo lee `stock/movimientos/index.blade.php`. Las cuatro son
+     * categorías del negocio, no un estado bueno/malo: eje gris↔verde para
+     * `salida` (consumo normal) y `compra` (entrada normal), `info` para el
+     * ajuste administrativo y `distintivo-1` para el traslado, que no suma
+     * ni resta la existencia total. Nunca ámbar: no es una alerta.
+     *
+     * @var array<string, string>
+     */
+    public const array TONO_POR_TIPO = [
+        'compra' => 'success',
+        'salida' => 'neutral',
+        'ajuste' => 'info',
+        'traslado' => 'distintivo-1',
+    ];
 
     public function __construct(
         private readonly AutorizacionPanelWeb $autorizacion,
@@ -69,6 +94,41 @@ final class StockController
             'etiquetasBase' => $this->lecturaPersonal->nombresDeBases($stock->pluck('base_id')->unique()->values()->all()),
             'basesDisponibles' => $this->lecturaPersonal->basesDisponibles(),
             'filtros' => ['q' => $busqueda, 'base_id' => $baseId],
+        ]);
+    }
+
+    public function movimientos(Request $request, ListarMovimientosStock $listarMovimientos): View
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
+
+        $cascara = $this->autorizacion->cascara($request);
+
+        $repuestoQuery = TextoDeFiltro::de($request, 'repuesto_id');
+        $repuestoId = $repuestoQuery !== '' ? (int) $repuestoQuery : null;
+        $baseQuery = TextoDeFiltro::de($request, 'base_id');
+        $baseId = $baseQuery !== '' ? (int) $baseQuery : null;
+
+        $movimientos = $listarMovimientos->ejecutar(
+            repuestoId: $repuestoId,
+            baseId: $baseId,
+            zonaHoraria: (string) ($cascara['zonaHoraria'] ?? config('app.timezone')),
+        );
+
+        $basesIds = $movimientos->getCollection()
+            ->flatMap(fn (MovimientoStock $movimiento): array => [$movimiento->base_id, $movimiento->base_destino_id])
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        return view('inventario::pages.stock.movimientos.index', [
+            ...$cascara,
+            'movimientos' => $movimientos,
+            'etiquetasBase' => $this->lecturaPersonal->nombresDeBases($basesIds),
+            'basesDisponibles' => $this->lecturaPersonal->basesDisponibles(),
+            'repuestosDisponibles' => $this->repuestosDisponibles(),
+            'tonoPorTipo' => self::TONO_POR_TIPO,
+            'filtros' => ['repuesto_id' => $repuestoId, 'base_id' => $baseId],
         ]);
     }
 
