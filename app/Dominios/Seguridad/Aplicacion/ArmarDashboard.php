@@ -4,6 +4,7 @@ namespace App\Dominios\Seguridad\Aplicacion;
 
 use App\Dominios\Campania\Contratos\LecturaCampania;
 use App\Dominios\Comercial\Contratos\AvanceClientePanel;
+use App\Dominios\Comercial\Contratos\EstadoCuentaContratoPanel;
 use App\Dominios\Comercial\Contratos\LecturaPanelComercial;
 use App\Dominios\Comercial\Contratos\LecturaPropiedades;
 use App\Dominios\Finanzas\Contratos\LecturaPanelFinanzas;
@@ -13,8 +14,10 @@ use App\Dominios\Operaciones\Contratos\AlertaPanel;
 use App\Dominios\Operaciones\Contratos\EquipoPersonaPanel;
 use App\Dominios\Operaciones\Contratos\EvidenciaPanel;
 use App\Dominios\Operaciones\Contratos\LecturaPanelOperaciones;
+use App\Dominios\Operaciones\Contratos\ResumenEquipoTrabajoPanel;
 use App\Dominios\Operaciones\Contratos\ResumenLotePanel;
 use App\Dominios\Operaciones\Contratos\SesionPanel;
+use App\Dominios\Personal\Contratos\DatosEquipoTrabajo;
 use App\Dominios\Personal\Contratos\LecturaEquipoTrabajo;
 use App\Dominios\Seguridad\Dominio\SeccionDashboard;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
@@ -57,6 +60,8 @@ final class ArmarDashboard
     private const DEVENGOS = 10;
 
     private const ANTICIPOS = 5;
+
+    private const ESTADO_CUENTAS = 5;
 
     private const PERMISO_CREAR_CAMPANIA = 'campania.campania.crear';
 
@@ -135,6 +140,64 @@ final class ArmarDashboard
             SeccionDashboard::MisSesiones => $this->misSesiones($personaId),
             SeccionDashboard::MisEquipos => $this->misEquipos($personaId),
             SeccionDashboard::MiLiquidacion => $this->miLiquidacion($personaId),
+            SeccionDashboard::EstadoCuentas => $this->estadoCuentas(),
+            SeccionDashboard::TrabajosPorEquipo => $this->trabajosPorEquipo(),
+            SeccionDashboard::ProgresoCampania => $this->progresoCampania(),
+        };
+    }
+
+    /**
+     * Agrupamiento de secciones en tabs, por rol activo (tarea 135). Es una
+     * TABLA, no una vista por rol: el rol activo no elige plantilla, elige
+     * qué claves de {@see SeccionDashboard} se agrupan bajo qué pestaña —
+     * mismo criterio que {@see SeccionDashboard::permiso()}. Cada tab se
+     * muestra solo si alguna de sus claves quedó en `visibles` (lo decide la
+     * vista, con el mismo `array_intersect` de siempre).
+     *
+     * El caso `default` es el agrupamiento original de la tarea 67
+     * (resumen/mapa/lotes/multimedia): sigue siendo el de cualquier rol que
+     * todavía no tenga el suyo propio (136 a 139 lo agregan cada uno por su
+     * cuenta).
+     *
+     * @return list<array{id: string, label: string, claves: list<string>}>
+     */
+    public function tabsPara(string $rolClave): array
+    {
+        return match ($rolClave) {
+            'dueno' => [
+                [
+                    'id' => 'estado-cuentas',
+                    'label' => __('seguridad.dashboard.tab_estado_cuentas'),
+                    'claves' => [SeccionDashboard::EstadoCuentas->value],
+                ],
+                [
+                    'id' => 'trabajos-equipo',
+                    'label' => __('seguridad.dashboard.tab_trabajos_equipo'),
+                    'claves' => [SeccionDashboard::TrabajosPorEquipo->value],
+                ],
+                [
+                    'id' => 'progreso-campania',
+                    'label' => __('seguridad.dashboard.tab_progreso_campania'),
+                    'claves' => [SeccionDashboard::ProgresoCampania->value],
+                ],
+            ],
+            default => [
+                [
+                    'id' => 'resumen',
+                    'label' => __('seguridad.dashboard.tab_resumen'),
+                    'claves' => [
+                        SeccionDashboard::Alertas->value, SeccionDashboard::DistribucionSesiones->value,
+                        SeccionDashboard::HectareasPorDia->value, SeccionDashboard::ColaValidacion->value,
+                        SeccionDashboard::MisSesiones->value, SeccionDashboard::MisEquipos->value,
+                        SeccionDashboard::MiLiquidacion->value, SeccionDashboard::Pausas->value,
+                        SeccionDashboard::Stock->value, SeccionDashboard::AvanceClientes->value,
+                        SeccionDashboard::DiasEnHacienda->value,
+                    ],
+                ],
+                ['id' => 'mapa', 'label' => __('seguridad.dashboard.tab_mapa'), 'claves' => [SeccionDashboard::Mapa->value]],
+                ['id' => 'lotes', 'label' => __('seguridad.dashboard.tab_resumen_lote'), 'claves' => [SeccionDashboard::ResumenPorLote->value]],
+                ['id' => 'multimedia', 'label' => __('seguridad.dashboard.tab_multimedia'), 'claves' => [SeccionDashboard::Multimedia->value]],
+            ],
         };
     }
 
@@ -387,15 +450,7 @@ final class ArmarDashboard
         return [
             'total_dias' => $dias['total_dias'],
             'en_curso' => $dias['en_curso'],
-            'por_cuadrilla' => $filas($dias['por_cuadrilla'], function (int $id) use ($cuadrillas): string {
-                $cuadrilla = $cuadrillas[$id] ?? null;
-
-                return match (true) {
-                    $cuadrilla === null => "#{$id}",
-                    $cuadrilla->nombre === null || $cuadrilla->nombre === '' => $cuadrilla->codigo,
-                    default => "{$cuadrilla->codigo} — {$cuadrilla->nombre}",
-                };
-            }),
+            'por_cuadrilla' => $filas($dias['por_cuadrilla'], fn (int $id): string => $this->nombreCuadrilla($id, $cuadrillas)),
             'por_propiedad' => $filas($dias['por_propiedad'], fn (int $id): string => isset($propiedades[$id]) ? $propiedades[$id]->etiqueta() : "#{$id}"),
         ];
     }
@@ -431,11 +486,111 @@ final class ArmarDashboard
         return $avances === [] ? null : $avances;
     }
 
+    /**
+     * Estado de cuentas de clientes y contratos (tab del dueño, tarea 135):
+     * la mitad en plata de {@see avanceClientes()}, que solo da hectáreas.
+     *
+     * @return list<EstadoCuentaContratoPanel>|null
+     */
+    private function estadoCuentas(): ?array
+    {
+        $estados = $this->comercial->estadoDeCuentas(self::ESTADO_CUENTAS);
+
+        return $estados === [] ? null : $estados;
+    }
+
     /** @return list<AlertaPanel>|null */
     private function alertas(): ?array
     {
         $alertas = $this->operaciones->alertasRecientes(self::ALERTAS);
 
         return $alertas === [] ? null : $alertas;
+    }
+
+    /**
+     * Resumen de trabajos actuales por equipo (tab del dueño, tarea 135):
+     * lo que cada equipo tiene abierto AHORA, con los lotes y el nombre ya
+     * resueltos — `Operaciones` solo sabe ids. Del más cargado al menos
+     * (hectáreas declaradas), mismo criterio que {@see avanceClientes()} y
+     * {@see diasEnHacienda()}: lo que más pesa, primero.
+     *
+     * @return list<array<string, mixed>>|null
+     */
+    private function trabajosPorEquipo(): ?array
+    {
+        $porEquipo = $this->operaciones->trabajosAbiertosPorEquipo();
+
+        if ($porEquipo === []) {
+            return null;
+        }
+
+        $equipos = $this->cuadrillas->porIds(array_keys($porEquipo));
+
+        $filas = array_map(fn (ResumenEquipoTrabajoPanel $resumen): array => [
+            'equipoTrabajoId' => $resumen->equipoTrabajoId,
+            'equipo' => $this->nombreCuadrilla($resumen->equipoTrabajoId, $equipos),
+            'trabajosAbiertos' => $resumen->trabajosAbiertos,
+            'hectareasDeclaradas' => $resumen->hectareasDeclaradas,
+            'lotes' => array_map(fn (int $loteId) => $this->nombres->lote($loteId)->codigo ?? "#{$loteId}", $resumen->loteIds),
+            'ultimoInicio' => $resumen->ultimoInicio,
+        ], array_values($porEquipo));
+
+        usort($filas, fn (array $a, array $b) => (float) $b['hectareasDeclaradas'] <=> (float) $a['hectareasDeclaradas']);
+
+        return $filas;
+    }
+
+    /**
+     * Progreso en toda la campaña (tab del dueño, tarea 135): el MISMO
+     * {@see resumenPorLote()} totalizado en vez de fila por fila —
+     * {@see filaLote()} calcula hectáreas totales y aplicadas por lote, acá
+     * se suman esas dos columnas y se le aplica la MISMA fórmula de
+     * porcentaje, no una segunda.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function progresoCampania(): ?array
+    {
+        $resumen = $this->operaciones->resumenPorLote();
+
+        if ($resumen === []) {
+            return null;
+        }
+
+        $hectareasTotales = 0.0;
+        $hectareasAplicadas = 0.0;
+        $sesiones = 0;
+        $sesionesValidadas = 0;
+
+        foreach ($resumen as $loteId => $avance) {
+            $fila = $this->filaLote($loteId, $avance);
+
+            $hectareasTotales += (float) ($fila['hectareasLote'] ?? 0);
+            $hectareasAplicadas += (float) $fila['hectareasAplicadas'];
+            $sesiones += (int) $fila['sesiones'];
+            $sesionesValidadas += (int) $fila['sesionesValidadas'];
+        }
+
+        return [
+            'lotes' => count($resumen),
+            'hectareasTotales' => number_format($hectareasTotales, 2, '.', ''),
+            'hectareasAplicadas' => number_format($hectareasAplicadas, 2, '.', ''),
+            'hectareasPendientes' => number_format(max(0.0, $hectareasTotales - $hectareasAplicadas), 2, '.', ''),
+            'pctCompletado' => $hectareasTotales > 0.0 ? min(100.0, round($hectareasAplicadas / $hectareasTotales * 100, 1)) : 0.0,
+            'sesiones' => $sesiones,
+            'sesionesValidadas' => $sesionesValidadas,
+        ];
+    }
+
+    /** @param  array<int, DatosEquipoTrabajo>  $equipos */
+    private function nombreCuadrilla(int $equipoTrabajoId, array $equipos): string
+    {
+        $equipo = $equipos[$equipoTrabajoId] ?? null;
+
+        return match (true) {
+            $equipo === null => "#{$equipoTrabajoId}",
+            $equipo->nombre === null || $equipo->nombre === '' => $equipo->codigo,
+            default => "{$equipo->codigo} — {$equipo->nombre}",
+        };
     }
 }
