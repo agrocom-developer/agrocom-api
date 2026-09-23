@@ -14,6 +14,11 @@ use Illuminate\Pagination\LengthAwarePaginator;
  * Filtra por `orden_id` (para el vínculo "Ver tandas" desde el detalle de
  * una Orden de aplicación, mismo criterio que ya usaba `orden_id` en el
  * `ListarTrabajos` viejo) y por `q` (nro. de aplicación, búsqueda simple).
+ *
+ * `trabajos.sesiones` viaja precargada (tarea 127) para que el listado
+ * pueda calcular `Trabajo::estadoTablero()` de cada tanda —y con él,
+ * `PoliticaEdicionOrdenTrabajo::admiteEdicion()` para el botón «Editar»—
+ * sin una consulta nueva por fila.
  */
 final class ListarOrdenesTrabajo
 {
@@ -24,7 +29,7 @@ final class ListarOrdenesTrabajo
         int $porPagina = 15,
     ): LengthAwarePaginator {
         return OrdenTrabajo::query()
-            ->with('trabajos')
+            ->with('trabajos.sesiones')
             ->when($ordenId !== null, fn ($consulta) => $consulta->where('orden_id', $ordenId))
             ->when($nroAplicacion !== null, fn ($consulta) => $consulta->where('nro_aplicacion', $nroAplicacion))
             ->orderByDesc('id')

@@ -3,8 +3,6 @@
 namespace App\Dominios\Operaciones\Aplicacion;
 
 use App\Dominios\Finanzas\Contratos\CondicionPago;
-use App\Dominios\Finanzas\Contratos\LecturaTarifasPago;
-use App\Dominios\Finanzas\Contratos\ModalidadPago;
 use App\Dominios\Mezclas\Contratos\EscrituraMezclas;
 use App\Dominios\Mezclas\Contratos\RegistroMezcla;
 use App\Dominios\Operaciones\Aplicacion\MaquinaEstados\MaquinaEstadosTrabajo;
@@ -74,7 +72,7 @@ final class CrearOrdenTrabajo
         private readonly LecturaEquipoTrabajo $equipos,
         private readonly MaquinaEstadosTrabajo $maquinaTrabajo,
         private readonly EscrituraMezclas $mezclas,
-        private readonly LecturaTarifasPago $tarifas,
+        private readonly ResolverCondicionPago $resolverCondicionPago,
     ) {}
 
     /**
@@ -115,7 +113,7 @@ final class CrearOrdenTrabajo
         $condiciones = [];
 
         foreach ($equipos as $equipo) {
-            $condiciones[$equipo['equipo_trabajo_id']] = $this->resolverCondicion($equipo['pago']);
+            $condiciones[$equipo['equipo_trabajo_id']] = $this->resolverCondicionPago->ejecutar($equipo['pago']);
         }
 
         /** @var Collection<int, OrdenLote> $lotesOrden */
@@ -202,36 +200,6 @@ final class CrearOrdenTrabajo
 
             return $ordenTrabajo->refresh()->load('trabajos');
         });
-    }
-
-    /**
-     * @param  array{tarifa_id: int|null, negociado: bool, modalidad: string|null, monto_piloto: string|null, monto_auxiliar: string|null, motivo: string|null}  $pago
-     *
-     * @throws TarifaNoDisponible
-     */
-    private function resolverCondicion(array $pago): CondicionPago
-    {
-        $tarifa = $pago['tarifa_id'] !== null ? $this->tarifas->porId($pago['tarifa_id']) : null;
-
-        if ($pago['tarifa_id'] !== null && $tarifa === null) {
-            throw TarifaNoDisponible::porId($pago['tarifa_id']);
-        }
-
-        if (! $pago['negociado']) {
-            if ($tarifa === null) {
-                throw TarifaNoDisponible::porId((int) $pago['tarifa_id']);
-            }
-
-            return $tarifa->comoCondicion();
-        }
-
-        return new CondicionPago(
-            modalidad: ModalidadPago::from((string) $pago['modalidad']),
-            montoPiloto: (string) $pago['monto_piloto'],
-            montoAuxiliar: (string) $pago['monto_auxiliar'],
-            tarifaId: $tarifa?->id,
-            negociada: true,
-        );
     }
 
     /**
