@@ -33,6 +33,10 @@
     - $puedeEditar / $puedeEliminar (bool, ya cruzados con "no validado"),
       $puedeVerReporte (bool).
     - $vinculos (list), $actividad (list).
+    - $etiquetasPiloto (array<int, string>): nombre real por `piloto_id`
+      (tarea 131), resuelto en lote vía `LecturaPanelPersonal`. Sin entrada
+      para el id (persona borrada o inexistente): fallback a `#id`, mismo
+      criterio que `$etiquetasBase`/`$etiquetasContrato` en otras pantallas.
 
     Gateada por `operaciones.trabajo.ver`, verificado server-side en el
     controlador.
@@ -237,7 +241,7 @@
 
                                 @foreach ($trabajo->sesiones as $sesion)
                                     <div class="ag-index-table__row" role="row">
-                                        <span role="cell">{{ __('operaciones.trabajos.sesion_piloto', ['id' => $sesion->piloto_id]) }}</span>
+                                        <span role="cell">{{ $etiquetasPiloto[$sesion->piloto_id] ?? "#{$sesion->piloto_id}" }}</span>
                                         <span role="cell">{{ $sesion->dron?->identificador ?? '—' }}</span>
                                         <span role="cell" class="ag-ordenes__mono">{{ number_format((float) $sesion->hectareas_declaradas, 2, ',', '.') }}</span>
                                         <span role="cell">
