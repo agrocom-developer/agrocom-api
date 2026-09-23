@@ -265,6 +265,22 @@
                                         </x-atoms.button>
                                     @endpuede
 
+                                    @puede('seguridad.usuario.bloquear')
+                                        <x-atoms.button
+                                            type="button"
+                                            data-bs-toggle="modal"
+                                            :data-bs-target="'#'.$modalIdBloqueo"
+                                            :variant="$tonoPorEstado[$estadoDestino].'-outline'"
+                                            size="sm"
+                                            :icon="$usuario->state ? 'lock' : 'lock_open'"
+                                        >
+                                            {{ __($usuario->state ? 'seguridad.usuarios.bloquear' : 'seguridad.usuarios.desbloquear') }}
+                                        </x-atoms.button>
+                                    @endpuede
+
+                                    {{-- Tercera a propósito: `row-actions` deja a la vista solo las dos
+                                         primeras (Editar y Bloquear) y manda el resto al menú ⋮. «Ver como»
+                                         es una herramienta de soporte, no una acción de todos los días. --}}
                                     @puede('seguridad.usuario.ver_como')
                                         @if ($puedeVerComoEsta)
                                             <x-atoms.button
@@ -278,19 +294,6 @@
                                                 {{ __('seguridad.vista_como.accion') }}
                                             </x-atoms.button>
                                         @endif
-                                    @endpuede
-
-                                    @puede('seguridad.usuario.bloquear')
-                                        <x-atoms.button
-                                            type="button"
-                                            data-bs-toggle="modal"
-                                            :data-bs-target="'#'.$modalIdBloqueo"
-                                            :variant="$tonoPorEstado[$estadoDestino].'-outline'"
-                                            size="sm"
-                                            :icon="$usuario->state ? 'lock' : 'lock_open'"
-                                        >
-                                            {{ __($usuario->state ? 'seguridad.usuarios.bloquear' : 'seguridad.usuarios.desbloquear') }}
-                                        </x-atoms.button>
                                     @endpuede
 
                                     @puede('seguridad.usuario.eliminar')
