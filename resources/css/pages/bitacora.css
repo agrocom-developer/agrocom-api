@@ -25,10 +25,13 @@
     overflow: hidden;
 }
 
+/* La última columna tiene piso propio: con `auto` a secas medía lo que su
+   contenido — «DETALLE» en la cabecera y «Ver detalle» en las filas — y cada
+   grid (la cabecera y cada fila son el suyo) repartía las columnas distinto. */
 .ag-bitacora__head,
 .ag-bitacora__fila {
     display: grid;
-    grid-template-columns: 3rem 2fr 1.5fr 1.2fr 0.8fr auto;
+    grid-template-columns: 3rem 2fr 1.5fr 1.2fr 0.8fr minmax(6rem, auto);
     gap: var(--ag-space-4);
     align-items: start;
     padding: var(--ag-space-3) var(--ag-space-4);
@@ -77,32 +80,51 @@
     font-size: var(--ag-font-size-xs);
 }
 
-/* Details y tabla de cambios */
+/* Disparador del detalle: solo esto vive en la última columna, así que abrir o
+   cerrar la fila nunca cambia el ancho de ninguna columna. Texto con
+   `primary-emphasis` (no `primary`): en el tema oscuro `primary` es un verde de
+   relleno que sobre la superficie oscura no se lee. */
 
-.ag-bitacora__details {
-    all: unset;
-    display: block;
-    cursor: pointer;
-}
-
-.ag-bitacora__summary {
-    cursor: pointer;
-    color: var(--ag-color-primary);
+.ag-bitacora__toggle {
+    padding: var(--ag-space-1) 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    color: var(--ag-color-primary-emphasis);
     text-decoration: underline;
     text-decoration-color: transparent;
-    padding: var(--ag-space-1) 0;
+    cursor: pointer;
     transition: text-decoration-color 150ms ease;
 }
 
-.ag-bitacora__summary:hover,
-.ag-bitacora__summary:focus-visible {
-    text-decoration-color: var(--ag-color-primary);
-    outline: none;
+.ag-bitacora__toggle:hover,
+.ag-bitacora__toggle:focus-visible {
+    text-decoration-color: var(--ag-color-primary-emphasis);
 }
 
-.ag-bitacora__details[open] > .ag-bitacora__summary {
-    margin-bottom: var(--ag-space-3);
+.ag-bitacora__toggle:focus-visible {
+    outline: 2px solid var(--ag-color-focus-ring);
+    outline-offset: 2px;
 }
+
+/* Sub-fila con la tabla de cambios: hija directa de la fila (que es su propio
+   grid), abarca de la primera a la última columna y cae en una línea nueva sin
+   tocar a ninguna otra fila. Cerrada es `display: none` (Bootstrap `.collapse`),
+   así que no deja ni una línea vacía ni un `gap` de más. `min-width: 0` evita que
+   el contenido ancho de la tabla ensanche las columnas `fr` que abarca. El relleno
+   va en el interior: Bootstrap anima la `height` del contenedor al abrir. */
+
+.ag-bitacora__cambios {
+    grid-column: 1 / -1;
+    min-width: 0;
+}
+
+.ag-bitacora__cambios-interior {
+    padding-top: var(--ag-space-1);
+    overflow-x: auto;
+}
+
+/* Tabla de cambios */
 
 .ag-bitacora__diff {
     width: 100%;
@@ -128,8 +150,18 @@
     border-top: 1px solid var(--ag-color-border-row);
     font-family: var(--ag-font-family-mono);
     word-break: break-word;
-    max-width: 300px;
     overflow-wrap: break-word;
+}
+
+/* Con el ancho completo de la fila, «antes» y «después» se reparten lo que deja
+   el nombre del campo a partes iguales (el tope de 300 px de cada celda era
+   para cuando la tabla vivía apretada en la columna «Detalle»). */
+.ag-bitacora__diff th:first-child {
+    width: 20%;
+}
+
+.ag-bitacora__diff th:not(:first-child) {
+    width: 40%;
 }
 
 /* Nombre de columna (identificador corto, p. ej. "description"): nunca se
@@ -137,7 +169,6 @@
    largos, necesitan el break-word de arriba. */
 .ag-bitacora__diff td:first-child {
     white-space: nowrap;
-    max-width: none;
 }
 
 .ag-bitacora__diff tbody tr:hover {
@@ -147,7 +178,7 @@
 .ag-bitacora__diff-vacio {
     color: var(--ag-color-text-muted);
     font-size: var(--ag-font-size-xs);
-    margin: var(--ag-space-3) 0 0 0;
+    margin: 0;
     padding: var(--ag-space-2) var(--ag-space-3);
 }
 
@@ -165,5 +196,12 @@
 
     .ag-bitacora__indice {
         display: none;
+    }
+
+    /* La sub-fila ya ocupa la única columna; sin ancho para repartir 20/40/40,
+       la tabla de cambios deja que cada columna tome lo que necesita. */
+    .ag-bitacora__diff th:first-child,
+    .ag-bitacora__diff th:not(:first-child) {
+        width: auto;
     }
 }
