@@ -760,6 +760,15 @@ class SeguridadSeeder extends Seeder
         'operaciones.estadia.ver',
         'operaciones.estadia.crear',
         'operaciones.estadia.editar',
+        // Tarea 138 (dashboard del jefe de campo): el dueño le pidió ver los
+        // recursos que se ocupan o faltan, qué lleva cada cuadrilla y cómo van
+        // todas las órdenes de aplicación. Solo lectura, un permiso por cada
+        // pantalla que el tablero resume: `ArmarDashboard` gatea cada sección
+        // con el permiso de su pantalla completa (tarea 62), así que sin estos
+        // tres el jefe no vería esas pestañas. Sin `.crear`/`.editar` de ninguno.
+        'operaciones.orden.ver',
+        'inventario.movimiento.ver',
+        'personal.equipo_trabajo.ver',
     ];
 
     /**

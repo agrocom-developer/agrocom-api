@@ -9,9 +9,11 @@ use App\Dominios\Operaciones\Contratos\EquipoPersonaPanel;
 use App\Dominios\Operaciones\Contratos\EvidenciaPanel;
 use App\Dominios\Operaciones\Contratos\GranularidadVuelos;
 use App\Dominios\Operaciones\Contratos\LecturaPanelOperaciones;
+use App\Dominios\Operaciones\Contratos\OrdenAplicacionPanel;
 use App\Dominios\Operaciones\Contratos\ResumenEquipoTrabajoPanel;
 use App\Dominios\Operaciones\Contratos\ResumenLotePanel;
 use App\Dominios\Operaciones\Contratos\SesionPanel;
+use App\Dominios\Operaciones\Contratos\TandaDeEquipoPanel;
 use App\Dominios\Operaciones\Dominio\EstadoAlerta;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Dominio\EstadoSesion;
@@ -21,6 +23,7 @@ use App\Dominios\Operaciones\Infraestructura\Eloquent\Alerta;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Dron;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Evidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenLote;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
 use App\Dominios\Operaciones\Infraestructura\Http\PasosDeOrden;
@@ -439,6 +442,142 @@ final class LecturaPanelOperacionesEloquent implements LecturaPanelOperaciones
         }
 
         return $resumen;
+    }
+
+    public function tandasAbiertasPorEquipo(): array
+    {
+        $ordenes = OrdenAplicacion::query()
+            ->whereIn('estado', EstadoOrdenAplicacion::valoresAbiertos())
+            ->get(['id', 'nro_aplicacion', 'estado'])
+            ->keyBy('id');
+
+        if ($ordenes->isEmpty()) {
+            return [];
+        }
+
+        $trabajos = Trabajo::query()
+            ->whereIn('orden_id', $ordenes->keys()->all())
+            ->whereNotNull('equipo_trabajo_id')
+            ->whereNotNull('orden_trabajo_id')
+            ->orderBy('id')
+            ->get(['orden_id', 'orden_trabajo_id', 'equipo_trabajo_id', 'lote_id', 'estado', 'hectareas_declaradas']);
+
+        /** @var array<int, array<int, array{orden: int, lotes: list<int>, abiertos: int, total: int, hectareas: BigDecimal}>> $acumulado equipo → tanda */
+        $acumulado = [];
+
+        foreach ($trabajos as $trabajo) {
+            $equipoId = (int) $trabajo->equipo_trabajo_id;
+            $tandaId = (int) $trabajo->orden_trabajo_id;
+            $loteId = (int) $trabajo->lote_id;
+
+            $fila = $acumulado[$equipoId][$tandaId]
+                ?? ['orden' => (int) $trabajo->orden_id, 'lotes' => [], 'abiertos' => 0, 'total' => 0, 'hectareas' => BigDecimal::zero()];
+
+            $fila['total']++;
+            $fila['abiertos'] += $trabajo->estado === EstadoTrabajo::Abierto ? 1 : 0;
+            $fila['hectareas'] = $fila['hectareas']->plus(BigDecimal::of($trabajo->hectareas_declaradas));
+
+            if (! in_array($loteId, $fila['lotes'], true)) {
+                $fila['lotes'][] = $loteId;
+            }
+
+            $acumulado[$equipoId][$tandaId] = $fila;
+        }
+
+        $porEquipo = [];
+
+        foreach ($acumulado as $equipoId => $tandas) {
+            krsort($tandas);
+
+            foreach ($tandas as $tandaId => $fila) {
+                $orden = $ordenes->get($fila['orden']);
+
+                if ($orden === null) {
+                    continue;
+                }
+
+                $porEquipo[$equipoId][] = new TandaDeEquipoPanel(
+                    equipoTrabajoId: $equipoId,
+                    ordenTrabajoId: $tandaId,
+                    ordenId: $fila['orden'],
+                    nroAplicacion: $orden->nro_aplicacion,
+                    estadoOrden: $orden->estado->value,
+                    tonoOrden: PasosDeOrden::TONO_POR_ESTADO[$orden->estado->value],
+                    loteIds: $fila['lotes'],
+                    trabajosAbiertos: $fila['abiertos'],
+                    trabajosTotal: $fila['total'],
+                    hectareasDeclaradas: $this->aEscalaDos($fila['hectareas']),
+                );
+            }
+        }
+
+        return $porEquipo;
+    }
+
+    public function ordenesAplicacionConEquipos(int $cerradas): array
+    {
+        $abiertas = EstadoOrdenAplicacion::valoresAbiertos();
+
+        $ordenes = OrdenAplicacion::query()
+            ->whereIn('estado', $abiertas)
+            ->orderByDesc('fecha_emision')
+            ->orderByDesc('id')
+            ->get();
+
+        if ($cerradas > 0) {
+            $ordenes = $ordenes->concat(
+                OrdenAplicacion::query()
+                    ->whereNotIn('estado', $abiertas)
+                    ->orderByDesc('fecha_emision')
+                    ->orderByDesc('id')
+                    ->limit($cerradas)
+                    ->get(),
+            );
+        }
+
+        if ($ordenes->isEmpty()) {
+            return [];
+        }
+
+        $ids = $ordenes->pluck('id')->all();
+
+        /** @var array<int, list<int>> $lotesPorOrden */
+        $lotesPorOrden = [];
+
+        foreach (OrdenLote::query()->whereIn('orden_id', $ids)->orderBy('id')->get(['orden_id', 'lote_id']) as $fila) {
+            $lotesPorOrden[(int) $fila->orden_id][] = (int) $fila->lote_id;
+        }
+
+        /** @var array<int, list<int>> $equiposPorOrden */
+        $equiposPorOrden = [];
+
+        $trabajos = Trabajo::query()
+            ->whereIn('orden_id', $ids)
+            ->whereNotNull('equipo_trabajo_id')
+            ->orderBy('equipo_trabajo_id')
+            ->get(['orden_id', 'equipo_trabajo_id']);
+
+        foreach ($trabajos as $trabajo) {
+            $equipoId = (int) $trabajo->equipo_trabajo_id;
+            $ordenId = (int) $trabajo->orden_id;
+
+            if (! in_array($equipoId, $equiposPorOrden[$ordenId] ?? [], true)) {
+                $equiposPorOrden[$ordenId][] = $equipoId;
+            }
+        }
+
+        return $ordenes->map(fn (OrdenAplicacion $orden): OrdenAplicacionPanel => new OrdenAplicacionPanel(
+            id: (int) $orden->id,
+            nroAplicacion: $orden->nro_aplicacion,
+            estado: $orden->estado->value,
+            // El tono lo define UNA vez `PasosDeOrden` para el listado: acá se lee.
+            tono: PasosDeOrden::TONO_POR_ESTADO[$orden->estado->value],
+            abierta: $orden->estado->estaAbierta(),
+            fechaEmision: $orden->fecha_emision->toDateString(),
+            equiposNecesarios: $orden->cantidad_equipos_necesarios,
+            loteIds: $lotesPorOrden[(int) $orden->id] ?? [],
+            equipoTrabajoIds: $equiposPorOrden[(int) $orden->id] ?? [],
+        ))->values()->all();
     }
 
     public function totalesDelMesPorPersona(int $personaId): array

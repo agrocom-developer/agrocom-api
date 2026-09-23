@@ -146,4 +146,27 @@ interface LecturaPanelOperaciones
      * @return array<int, ResumenEquipoTrabajoPanel> indexado por equipoTrabajoId
      */
     public function trabajosAbiertosPorEquipo(): array;
+
+    /**
+     * Las Órdenes de Trabajo (tandas) de las órdenes de aplicación que todavía
+     * se ejecutan (emitida, vigente, pausada), agrupadas por cada cuadrilla
+     * que trabaja en ellas (tarea 138). Una tanda con dos cuadrillas figura en
+     * las dos, cada vez con lo de esa cuadrilla. Las tandas sin cuadrilla
+     * asignada (trabajos nacidos por sync) no figuran: no hay a quién
+     * agruparlas. Dentro de cada cuadrilla, la tanda más nueva primero.
+     *
+     * @return array<int, list<TandaDeEquipoPanel>> indexado por equipoTrabajoId
+     */
+    public function tandasAbiertasPorEquipo(): array;
+
+    /**
+     * Las órdenes de aplicación con su estado, sus lotes y las cuadrillas que
+     * las trabajan (tarea 138): TODAS las abiertas (emitida, vigente,
+     * pausada), más nuevas primero, y después las `$cerradas` más recientes de
+     * las que ya terminaron (consumida, cancelada, vencida) para dar contexto
+     * sin listar todo el historial.
+     *
+     * @return list<OrdenAplicacionPanel>
+     */
+    public function ordenesAplicacionConEquipos(int $cerradas): array;
 }
