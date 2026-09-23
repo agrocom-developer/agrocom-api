@@ -37,6 +37,12 @@
       la mitad entrante del salto login → selección de rol (la saliente,
       `pages/login.blade.php`, arma su propio <head> y la incluye ahí).
 
+    Vista "como otro usuario" (tarea 140): si `AplicarVistaComo` compartió
+    `$vistaComo`, el `<html>` lleva `data-ag-vista-como`. Es la señal para que
+    `theme-toggle.js` y `timezone-badge.js` NO persistan preferencias: esa vista
+    es de solo lectura y el servidor rechazaría el POST — además, guardar tema o
+    zona horaria sería escribir sobre la cuenta observada.
+
     Slot (default): el cuerpo completo de la página.
 --}}
 @props([
@@ -48,7 +54,7 @@
 ])
 
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-bs-theme="{{ $tema }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-bs-theme="{{ $tema }}" @isset($vistaComo) data-ag-vista-como @endisset>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">

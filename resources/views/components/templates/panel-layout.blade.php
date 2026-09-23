@@ -149,7 +149,10 @@
 
     $vistaActual ??= $itemActivo !== null ? __($itemActivo['label']) : null;
 
-    $tieneVariosRoles = count($roles) > 1;
+    // Tarea 140: en una vista "como otro usuario" no se ofrece cambiar de rol
+    // (es escribir la sesión de la cuenta observada); el rol con el que se la ve
+    // ya lo eligió el administrador al entrar.
+    $tieneVariosRoles = count($roles) > 1 && ! isset($vistaComo);
     $cambiarRolHref = $tieneVariosRoles ? route('panel.rol-activo.selector', ['cambiar' => 1]) : null;
     // Tarea 62 (fuga 2): el engranaje ya no se ofrece a un rol sin
     // `seguridad.organizacion.ver` — antes era un atajo visible para
@@ -172,6 +175,9 @@
     />
 
     <div class="ag-panel__main">
+        {{-- Tarea 140: franja persistente de "viendo como" (sin `$vistaComo` no pinta nada). --}}
+        <x-organisms.vista-como-banner />
+
         <x-organisms.topbar
             :modulo-label="$moduloActivo !== null ? __($moduloActivo['label']) : null"
             :vista-actual="$vistaActual"
