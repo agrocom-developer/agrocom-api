@@ -15,6 +15,7 @@ import './organisms/login-form.js';
 import './organisms/topbar.js';
 import './organisms/role-selection.js';
 import './organisms/module-sidebar.js';
+import './organisms/vista-como-banner.js';
 import './templates/auth-layout.js';
 import './pages/login.js';
 import './pages/clientes-form.js';

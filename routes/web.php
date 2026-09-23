@@ -65,6 +65,7 @@ use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\RolesController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\SesionController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\SesionPortalController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\UsuariosController;
+use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\VistaComoController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -147,6 +148,16 @@ Route::middleware('auth:interno')->group(function () {
     Route::post('/panel/rol-activo', [RolActivoController::class, 'update'])
         ->name('panel.rol-activo.actualizar');
 
+    // Salida de la vista "como otro usuario" (tarea 140). Sin `rol.activo` por
+    // la misma razón que el cambio de rol: mientras hay una vista abierta, la
+    // sesión guarda el rol activo de la cuenta OBSERVADA, que no es un rol del
+    // administrador — con ese middleware la salida rebotaría al selector. Es
+    // además la única escritura que `AplicarVistaComo` deja pasar en ese modo,
+    // y la única ruta donde ese middleware NO sustituye el guard: la bitácora
+    // tiene que firmar el regreso con el administrador real.
+    Route::post('/vista-como/salir', [VistaComoController::class, 'salir'])
+        ->name('vista-como.salir');
+
     // Selector de rol (GET): misma vía de escape que la ruta de arriba,
     // deliberadamente sin `rol.activo` — ver RolActivoController::create().
     Route::get('/panel/seleccionar-rol', [RolActivoController::class, 'create'])
@@ -203,6 +214,14 @@ Route::middleware('auth:interno')->group(function () {
         // bloquear NO es una baja, sigue vivo — ver AlternarBloqueoUsuario.
         Route::post('/panel/usuarios/{usuario}/bloqueo', [UsuariosController::class, 'alternarBloqueo'])
             ->name('panel.usuarios.bloqueo');
+
+        // Tarea 140: mirar el panel o el portal COMO esta cuenta, en solo
+        // lectura. Permiso propio `seguridad.usuario.ver_como` (solo
+        // `admin_plataforma`), verificado dentro del controlador contra el ROL
+        // ACTIVO. No cambia nada de la cuenta observada: abre una bandera de
+        // sesión y una fila de bitácora — ver IniciarVistaComo.
+        Route::post('/panel/usuarios/{usuario}/ver-como', [VistaComoController::class, 'iniciar'])
+            ->name('panel.usuarios.ver-como');
 
         // Administración del catálogo de roles y de la matriz rol↔permiso.
         // Es lo último del modelo `sec_*` que solo existía como seeder: los
@@ -1100,10 +1119,12 @@ Route::middleware('auth:interno')->group(function () {
 
         // HU-33 (tarea 47): "como encargado, quiero cargar gastos con su
         // categoría y comprobante, para que la campaña tenga costo real" —
-        // ABM acotado (sin edición), gateado por tres permisos de grano fino
-        // (`finanzas.gasto.ver`/`.crear`/`.eliminar`), verificados DENTRO
-        // del controlador contra el ROL ACTIVO, mismo criterio que las
-        // rutas de arriba.
+        // gateado por tres permisos de grano fino (`finanzas.gasto.ver`/
+        // `.crear`/`.eliminar`), verificados DENTRO del controlador contra
+        // el ROL ACTIVO, mismo criterio que las rutas de arriba. Edición
+        // agregada en la tarea 134 (reusa `.eliminar`, no existe `.editar`):
+        // se corrige mientras su rendición asociada, si tiene una, siga
+        // `abierta` (`Dominio/PoliticaEdicionGasto`).
         Route::get('/panel/gastos', [GastosController::class, 'index'])
             ->name('panel.gastos.index');
 
@@ -1112,6 +1133,12 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::post('/panel/gastos', [GastosController::class, 'store'])
             ->name('panel.gastos.store');
+
+        Route::get('/panel/gastos/{gasto}/editar', [GastosController::class, 'edit'])
+            ->name('panel.gastos.edit');
+
+        Route::put('/panel/gastos/{gasto}', [GastosController::class, 'update'])
+            ->name('panel.gastos.update');
 
         Route::delete('/panel/gastos/{gasto}', [GastosController::class, 'destroy'])
             ->name('panel.gastos.destroy');
@@ -1150,7 +1177,9 @@ Route::middleware('auth:interno')->group(function () {
         // criterio que las rutas de arriba. El aprobador nunca puede ser el
         // mismo jefe de campo que rindió (invariante 4 de CLAUDE.md,
         // `PoliticaAprobacionRendicion`) — eso lo resuelve el caso de uso,
-        // no el permiso.
+        // no el permiso. Edición de CABECERA agregada en la tarea 134 (reusa
+        // `.presentar`, no existe `.editar`): solo mientras sigue `abierta`
+        // (`Dominio/PoliticaEdicionRendicion`) — nunca `estado`/`monto`.
         Route::get('/panel/rendiciones', [RendicionesController::class, 'index'])
             ->name('panel.rendiciones.index');
 
@@ -1163,6 +1192,12 @@ Route::middleware('auth:interno')->group(function () {
         Route::get('/panel/rendiciones/{rendicion}', [RendicionesController::class, 'show'])
             ->name('panel.rendiciones.show');
 
+        Route::get('/panel/rendiciones/{rendicion}/editar', [RendicionesController::class, 'edit'])
+            ->name('panel.rendiciones.edit');
+
+        Route::put('/panel/rendiciones/{rendicion}', [RendicionesController::class, 'update'])
+            ->name('panel.rendiciones.update');
+
         Route::post('/panel/rendiciones/{rendicion}/gastos/{gasto}', [RendicionesController::class, 'asociarGasto'])
             ->name('panel.rendiciones.asociar_gasto');
 
@@ -1174,12 +1209,13 @@ Route::middleware('auth:interno')->group(function () {
 
         // HU-35 (tarea 49): "como encargado, quiero registrar el
         // combustible del generador y de los vehículos, para imputarlo a la
-        // campaña" — cierra Sprint 10. ABM acotado (sin edición), gateado
-        // por tres permisos de grano fino (`finanzas.combustible.ver`/
-        // `.crear`/`.eliminar`), verificados DENTRO del controlador contra
-        // el ROL ACTIVO, mismo criterio que las rutas de arriba. Entidad
-        // independiente de `ope_recargas.litros_combustible_generador` —
-        // ver el docblock de la migración.
+        // campaña" — cierra Sprint 10. Gateado por tres permisos de grano
+        // fino (`finanzas.combustible.ver`/`.crear`/`.eliminar`), verificados
+        // DENTRO del controlador contra el ROL ACTIVO, mismo criterio que
+        // las rutas de arriba. Entidad independiente de
+        // `ope_recargas.litros_combustible_generador` — ver el docblock de
+        // la migración. Edición agregada en la tarea 134 (reusa `.eliminar`,
+        // no existe `.editar`): sin `rendicion_id`, siempre se corrige.
         Route::get('/panel/combustible', [CombustibleController::class, 'index'])
             ->name('panel.combustible.index');
 
@@ -1188,6 +1224,12 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::post('/panel/combustible', [CombustibleController::class, 'store'])
             ->name('panel.combustible.store');
+
+        Route::get('/panel/combustible/{combustible}/editar', [CombustibleController::class, 'edit'])
+            ->name('panel.combustible.edit');
+
+        Route::put('/panel/combustible/{combustible}', [CombustibleController::class, 'update'])
+            ->name('panel.combustible.update');
 
         Route::delete('/panel/combustible/{combustible}', [CombustibleController::class, 'destroy'])
             ->name('panel.combustible.destroy');

@@ -34,9 +34,8 @@ use Illuminate\Support\Carbon;
  * verifica que el recurso estuviera asignado al equipo elegido en la fecha
  * de la carga antes de guardar.
  *
- * Inmutable salvo baja (mismo criterio que `Gasto`/`Anticipo`): sin caso de
- * uso de edición — si está mal, se da de baja (`EliminarCombustible`) y se
- * recarga.
+ * Editable (tarea 134, `Aplicacion/ActualizarCombustible`) — a diferencia de
+ * `Gasto`, sin `rendicion_id` que la bloquee, siempre se corrige.
  *
  * `RegistraBitacora` (invariante 9 de CLAUDE.md): es dinero, mismo criterio
  * que `Gasto`/`Anticipo`/`DevengoPersonal`.

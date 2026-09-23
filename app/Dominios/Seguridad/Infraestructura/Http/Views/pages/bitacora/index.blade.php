@@ -159,9 +159,24 @@
                                 @endswitch
                             </span>
 
+                            {{-- En la celda «Detalle» vive solo el disparador: el panel de
+                                 cambios es una celda hermana que abarca las 6 columnas, o la
+                                 última columna (`auto`) crecería con la tabla y descuadraría
+                                 la cabecera. El colapso es el de Bootstrap (como el acordeón
+                                 de reportes-comerciales): el botón se opera con Enter/Espacio. --}}
                             <span role="cell" class="ag-bitacora__detalle">
-                                <details class="ag-bitacora__details">
-                                    <summary class="ag-bitacora__summary">{{ __('seguridad.bitacora.ver_detalle') }}</summary>
+                                <button
+                                    type="button"
+                                    class="ag-bitacora__toggle collapsed"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#bitacora-cambios-{{ $fila->id }}"
+                                    aria-expanded="false"
+                                    aria-controls="bitacora-cambios-{{ $fila->id }}"
+                                >{{ __('seguridad.bitacora.ver_detalle') }}</button>
+                            </span>
+
+                            <div role="cell" aria-colspan="6" id="bitacora-cambios-{{ $fila->id }}" class="ag-bitacora__cambios collapse">
+                                <div class="ag-bitacora__cambios-interior">
                                     @if (count($fila->diff) === 0)
                                         <p class="ag-bitacora__diff-vacio">{{ __('seguridad.bitacora.diff_sin_datos') }}</p>
                                     @else
@@ -184,8 +199,8 @@
                                             </tbody>
                                         </table>
                                     @endif
-                                </details>
-                            </span>
+                                </div>
+                            </div>
                         </div>
                     @endforeach
                 </div>

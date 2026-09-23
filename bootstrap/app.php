@@ -2,7 +2,9 @@
 
 use App\Dominios\Compartido\Infraestructura\Http\ErroresHttpEnEspanol;
 use App\Dominios\Compartido\Infraestructura\Http\Middleware\RecordarOrigenNavegacion;
+use App\Dominios\Seguridad\Infraestructura\Http\Middleware\AplicarVistaComo;
 use App\Dominios\Seguridad\Infraestructura\Http\Middleware\ResolverRolActivo;
+use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -34,6 +36,20 @@ return Application::configure(basePath: dirname(__DIR__))
             'rol.activo' => ResolverRolActivo::class,
             'origen.navegacion' => RecordarOrigenNavegacion::class,
         ]);
+
+        // Tarea 140: "ver como otro usuario". Va en el grupo `web` (todo el
+        // panel y el portal) y, en la lista de prioridad, JUSTO ANTES de la
+        // autenticación: `auth:interno`/`auth:cliente` tienen que preguntar
+        // "¿quién está autenticado?" cuando la cuenta observada ya está puesta
+        // en el guard — si corriera después, un administrador que mira el
+        // portal rebotaría a `/login` porque el guard `cliente` está vacío.
+        // Sin lista de prioridad, el orden depende de dónde caiga en el
+        // arreglo del grupo respecto de `SubstituteBindings`.
+        $middleware->web(append: [AplicarVistaComo::class]);
+        $middleware->prependToPriorityList(
+            before: AuthenticatesRequests::class,
+            prepend: AplicarVistaComo::class,
+        );
 
         // Un solo login para todos (16/9/2026): sin sesión, sea cual sea el
         // guard que rechazó el request (`interno` o el `cliente` del portal),

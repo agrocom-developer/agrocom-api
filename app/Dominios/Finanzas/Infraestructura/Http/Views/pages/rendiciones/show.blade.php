@@ -24,10 +24,12 @@
     - $vinculos (list), $actividad (list).
     - $tonoPorEstado (array<string, string>).
     - $puedeCrear / $puedePresentar / $puedeAprobar (bool): permisos.
+    - $puedeEditarEsta (bool, tarea 134): permiso `finanzas.rendicion.presentar`
+      (reusado) Y la rendición sigue `Abierta` (`Dominio/PoliticaEdicionRendicion`).
 
-    Gateada por `finanzas.rendicion.ver`. Los botones "Presentar" y "Aprobar"
-    se ocultan según permiso y estado; el backend revalida con `abort(403)`
-    si se fuerza.
+    Gateada por `finanzas.rendicion.ver`. Los botones "Editar", "Presentar" y
+    "Aprobar" se ocultan según permiso y estado; el backend revalida con
+    `abort(403)` (o redirige, en el caso de "Editar") si se fuerza.
 
     Estilos en resources/css/pages/rendiciones.css y
     resources/css/pages/detalle.css (arquetipo Detalle) — cero color
@@ -68,6 +70,12 @@
 
                 <x-slot:actions>
                     <x-molecules.boton-volver :href="route('panel.rendiciones.index')" :label="__('finanzas.rendiciones.volver')" />
+
+                    @if ($puedeEditarEsta)
+                        <x-atoms.button :href="route('panel.rendiciones.edit', $rendicion)" variant="warning-outline" icon="edit">
+                            {{ __('finanzas.rendiciones.editar_accion') }}
+                        </x-atoms.button>
+                    @endif
 
                     @if ($puedePresentarEsta)
                         <x-atoms.button

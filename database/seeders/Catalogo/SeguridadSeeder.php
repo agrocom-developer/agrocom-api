@@ -53,6 +53,11 @@ class SeguridadSeeder extends Seeder
         // a dueño y encargado_operaciones (ver PERMISOS_ENCARGADO_OPERACIONES
         // más abajo; dueño lo recibe con el resto del catálogo).
         'seguridad.usuario.portal' => 'Crear/editar cuentas de portal del cliente (además de crear/editar)',
+        // Tarea 140: mirar el panel o el portal COMO otro usuario, en solo
+        // lectura. Permiso propio y a propósito fuera de `dueno` (ver
+        // PERMISOS_SOLO_ADMIN_PLATAFORMA más abajo): es una herramienta de
+        // soporte de la plataforma, no del negocio del cliente.
+        'seguridad.usuario.ver_como' => 'Ver el panel o el portal como otro usuario (solo lectura)',
         // Administración del catálogo de roles y de la matriz rol↔permiso.
         // Era lo último del modelo `sec_*` sin pantalla: roles, permisos y
         // sus asignaciones solo se tocaban editando este archivo. Los cinco
@@ -326,11 +331,13 @@ class SeguridadSeeder extends Seeder
         'comercial.reporte.ver' => 'Ver el reporte comercial de avance por contrato (exclusivo del dueño)',
         // HU-33 (tarea 47): "como encargado, quiero cargar gastos con su
         // categoría y comprobante, para que la campaña tenga costo real" —
-        // abre Sprint 10. Grano fino sin `.editar`: un gasto, una vez
-        // cargado, es inmutable salvo baja (ver `Aplicacion/CrearGasto`).
+        // abre Sprint 10. Sin `.editar` propio: la tarea 134 agregó edición
+        // reusando `.eliminar` (mientras la rendición asociada, si tiene
+        // una, siga abierta — ver `Dominio/PoliticaEdicionGasto`), mismo
+        // criterio que `finanzas.rendicion.presentar` para su cabecera.
         'finanzas.gasto.ver' => 'Ver el listado de gastos de campaña',
         'finanzas.gasto.crear' => 'Cargar un gasto con su categoría y comprobante',
-        'finanzas.gasto.eliminar' => 'Dar de baja (lógica) un gasto registrado por error',
+        'finanzas.gasto.eliminar' => 'Dar de baja (lógica) o editar un gasto registrado por error (tarea 134)',
         // HU-34 (tarea 48): "como jefe de campo, quiero rendir los gastos que
         // hice en campo; el encargado los aprueba para reponer el fondo".
         // Grano fino con máquina de estados propia (abierta → presentada →
@@ -339,19 +346,21 @@ class SeguridadSeeder extends Seeder
         // abajo) — a diferencia de `finanzas.planilla.aprobar`, que es
         // exclusivo del dueño: acá la guarda real de que el aprobador nunca
         // sea quien rindió ya la resuelve `PoliticaAprobacionRendicion`/la
-        // máquina de estados por PERSONA, no el permiso.
+        // máquina de estados por PERSONA, no el permiso. Sin `.editar`
+        // propio: la tarea 134 agregó edición de CABECERA reusando
+        // `.presentar` (solo mientras sigue `abierta`).
         'finanzas.rendicion.ver' => 'Ver el listado y detalle de rendiciones de campo',
         'finanzas.rendicion.crear' => 'Crear una rendición de campo y asociarle gastos',
-        'finanzas.rendicion.presentar' => 'Presentar una rendición de campo para su aprobación',
+        'finanzas.rendicion.presentar' => 'Presentar una rendición de campo para su aprobación, o editar su cabecera mientras siga abierta (tarea 134)',
         'finanzas.rendicion.aprobar' => 'Aprobar una rendición de campo presentada, para reponer el fondo',
         // HU-35 (tarea 49): "como encargado, quiero registrar el
         // combustible del generador y de los vehículos, para imputarlo a la
-        // campaña" — cierra Sprint 10. Grano fino sin `.editar`: una carga,
-        // una vez cargada, es inmutable salvo baja (ver
-        // `Aplicacion/CrearCombustible`), mismo criterio que gasto/anticipo.
+        // campaña" — cierra Sprint 10. Sin `.editar` propio: la tarea 134
+        // agregó edición reusando `.eliminar` — sin `rendicion_id` que la
+        // bloquee (a diferencia de gasto), siempre se corrige.
         'finanzas.combustible.ver' => 'Ver el listado de cargas de combustible',
         'finanzas.combustible.crear' => 'Cargar combustible del generador o de un vehículo',
-        'finanzas.combustible.eliminar' => 'Dar de baja (lógica) una carga de combustible registrada por error',
+        'finanzas.combustible.eliminar' => 'Dar de baja (lógica) o editar una carga de combustible registrada por error (tarea 134)',
         // HU-40 (tarea 50): "como encargado, quiero administrar los
         // vehículos con su asignación a base" — abre Sprint 11 y el módulo
         // `Mantenimiento` (ADR 0011, extensión 3/9/2026). Grano fino, mismo
@@ -435,6 +444,20 @@ class SeguridadSeeder extends Seeder
         'campania.campania.editar' => 'Editar los datos de una campaña',
         'campania.campania.cambiar_estado' => 'Cambiar el estado de una campaña (abrir, cerrar) — exclusivo del dueño',
         'campania.campania.eliminar' => 'Dar de baja (lógica) una campaña',
+    ];
+
+    /**
+     * Permisos que el catálogo entrega ÚNICAMENTE a `admin_plataforma`, no a
+     * `dueno` (que por lo demás recibe "todo el catálogo, sin excepción"):
+     * capacidades de soporte técnico de la plataforma. Un dueño puede
+     * otorgárselos a otro rol a propósito desde la matriz de permisos
+     * (`seguridad.rol.asignar_permiso`), pero ninguna siembra los activa por
+     * defecto (tarea 140).
+     *
+     * @var list<string>
+     */
+    private const PERMISOS_SOLO_ADMIN_PLATAFORMA = [
+        'seguridad.usuario.ver_como',
     ];
 
     /**
@@ -801,11 +824,16 @@ class SeguridadSeeder extends Seeder
             fn (string $description, string $code) => [$code => $this->permiso($code, $description)],
         );
 
-        // dueno: todos los permisos del catálogo, sin excepción (diseño §2).
-        $this->asignar($roles['dueno'], $permisos->values()->all());
+        // dueno: todos los permisos del catálogo (diseño §2), salvo los que
+        // son solo de la plataforma (tarea 140).
+        $this->asignar(
+            $roles['dueno'],
+            $permisos->except(self::PERMISOS_SOLO_ADMIN_PLATAFORMA)->values()->all(),
+        );
 
-        // admin_plataforma (tarea 100): mismo criterio que dueno, sin
-        // excepción — es dato de catálogo puro, corre en TODOS los entornos
+        // admin_plataforma (tarea 100): TODO el catálogo, sin excepción — a
+        // diferencia de dueno, recibe también PERMISOS_SOLO_ADMIN_PLATAFORMA
+        // (tarea 140). Es dato de catálogo puro, corre en TODOS los entornos
         // (un rol sin usuarios asignados no daña nada en producción). Quien
         // recibe usuarios asignados a este rol es AdminPlataformaSeeder, que
         // sí está gateado a local/staging.

@@ -3,7 +3,7 @@
 namespace App\Dominios\Finanzas\Aplicacion;
 
 use App\Dominios\Campania\Contratos\LecturaCampania;
-use App\Dominios\Finanzas\Dominio\Excepciones\CampaniaNoAbierta;
+use App\Dominios\Finanzas\Aplicacion\Concerns\VerificaCampaniaAbierta;
 use App\Dominios\Finanzas\Dominio\Excepciones\RecursoNoAsignadoAlEquipo;
 use App\Dominios\Finanzas\Infraestructura\Eloquent\Combustible;
 use App\Dominios\Personal\Contratos\LecturaEquipoTrabajo;
@@ -30,12 +30,14 @@ use App\Dominios\Personal\Contratos\LecturaEquipoTrabajo;
  *   forma de saber si no existe, si pertenece a otro equipo o si ya no está
  *   vigente — cualquiera de esas razones basta para rechazarlo igual.
  *
- * Inmutable salvo baja (mismo criterio que `Gasto`/`Anticipo`): sin caso de
- * uso de edición — si está mal, se da de baja (`EliminarCombustible`) y se
- * recarga.
+ * Editable después (tarea 134, `Aplicacion/ActualizarCombustible`): a
+ * diferencia de `Gasto`, sin `rendicion_id` que la bloquee — siempre se
+ * corrige, con las mismas dos guardas que el alta.
  */
 final class CrearCombustible
 {
+    use VerificaCampaniaAbierta;
+
     public function __construct(
         private readonly LecturaCampania $lecturaCampania,
         private readonly LecturaEquipoTrabajo $lecturaEquipoTrabajo,
@@ -52,7 +54,7 @@ final class CrearCombustible
         string $monto,
         ?string $descripcion,
     ): Combustible {
-        $this->verificarCampania($campaniaId);
+        $this->verificarCampaniaAbierta($this->lecturaCampania, $campaniaId);
         $this->verificarRecursoAsignado($equipoTrabajoId, $recursoTipo, $recursoId, $fecha);
 
         return Combustible::query()->create([
@@ -66,20 +68,6 @@ final class CrearCombustible
             'monto' => $monto,
             'descripcion' => $descripcion,
         ]);
-    }
-
-    /** @throws CampaniaNoAbierta si la campaña elegida no está `abierta`. */
-    private function verificarCampania(?int $campaniaId): void
-    {
-        if ($campaniaId === null) {
-            return;
-        }
-
-        $campania = $this->lecturaCampania->obtener($campaniaId);
-
-        if ($campania !== null && ! $campania->admiteImputaciones()) {
-            throw CampaniaNoAbierta::paraCampania($campania->codigo, $campania->cerrada);
-        }
     }
 
     /** @throws RecursoNoAsignadoAlEquipo si el recurso no estaba asignado al equipo en `$fecha`. */

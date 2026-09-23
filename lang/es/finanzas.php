@@ -172,13 +172,15 @@ return [
     ],
 
     // HU-33 (tarea 47): "como encargado, quiero cargar gastos con su
-    // categoría y comprobante, para que la campaña tenga costo real" — ABM
-    // acotado, sin edición: alta, listado y baja. Abre Sprint 10.
+    // categoría y comprobante, para que la campaña tenga costo real" — abre
+    // Sprint 10. Edición agregada en la tarea 134: se corrige mientras su
+    // rendición asociada, si tiene una, siga abierta.
     'gastos' => [
         'titulo' => 'Gastos',
         'subtitulo' => 'Gastos reales de la campaña, con su categoría y comprobante.',
         'nuevo' => 'Nuevo gasto',
         'creado' => 'Gasto registrado correctamente.',
+        'actualizado' => 'Gasto actualizado correctamente.',
         'eliminado' => 'Gasto dado de baja correctamente.',
         'filtro_rubro' => 'Rubro',
         'filtro_rubro_placeholder' => 'Todos',
@@ -216,12 +218,14 @@ return [
         'comprobante_ver' => 'Comprobante',
         'comprobante_sin' => 'Sin comprobante',
         'eliminar_accion' => 'Eliminar',
+        'editar_accion' => 'Editar',
         'confirmar_baja_titulo' => '¿Dar de baja este gasto?',
         'confirmar_baja' => 'Esta acción no se puede deshacer.',
         'paginacion_aria' => 'Paginación de gastos',
         'trabajo_etiqueta' => 'Trabajo #:id (lote #:lote, aplicación :aplicacion)',
 
         'titulo_crear' => 'Nuevo gasto',
+        'titulo_editar' => 'Editar gasto',
         'subtitulo_form' => 'Carga un gasto con su rubro, monto y comprobante opcional.',
         'seccion_datos' => 'Datos del gasto',
         'seccion_imputacion' => 'A qué se imputa',
@@ -247,6 +251,7 @@ return [
         'campo_comprobante' => 'Comprobante (opcional)',
         'campo_comprobante_ayuda' => 'Imagen o PDF, hasta 10 MB.',
         'campo_comprobante_elegir' => 'Elegir archivo',
+        'campo_comprobante_actual' => 'Ya tiene un comprobante adjunto. Elige otro archivo para reemplazarlo, o deja este campo vacío para conservarlo.',
         'estado_form' => 'Sin guardar',
         'error_rubro_requerido' => 'Elige el rubro del gasto.',
         'error_rubro_invalido' => 'El rubro seleccionado no es válido.',
@@ -256,17 +261,25 @@ return [
         'error_cantidad_requerida' => 'Ingresa la cantidad del gasto.',
         'error_precio_unitario_requerido' => 'Ingresa el precio unitario.',
         'volver' => 'Volver a gastos',
+
+        'aside_rendicion_titulo' => 'Rendición asociada',
+        'aside_rendicion_estado' => 'Estado',
+        'aside_rendicion_ver' => 'Ver rendición',
+        'aside_sin_rendicion_titulo' => 'Sin rendición asociada',
+        'aside_sin_rendicion_detalle' => 'Este gasto todavía no forma parte de ninguna rendición de campo.',
     ],
 
     // HU-34 (tarea 48): "como jefe de campo, quiero rendir los gastos que
     // hice en campo; el encargado los aprueba para reponer el fondo" — cierra
     // Sprint 10. Máquina de estados propia (abierta/presentada/aprobada), a
-    // diferencia de gastos/anticipos.
+    // diferencia de gastos/anticipos. Edición de cabecera agregada en la
+    // tarea 134: solo mientras sigue abierta.
     'rendiciones' => [
         'titulo' => 'Rendiciones',
         'subtitulo' => 'Rendiciones de gastos de campo, presentadas por el jefe de campo y aprobadas por el encargado.',
         'nueva' => 'Nueva rendición',
         'creada' => 'Rendición creada correctamente.',
+        'actualizada' => 'Rendición actualizada correctamente.',
         'presentada' => 'Rendición presentada para aprobación.',
         'aprobada' => 'Rendición aprobada: se repone el fondo.',
         'gasto_asociado' => 'Gasto asociado a la rendición.',
@@ -300,10 +313,13 @@ return [
         ],
         'estado_cambio_de_a' => 'Cambio de estado: de :desde a :hacia',
         'ver_accion' => 'Ver',
+        'editar_accion' => 'Editar',
         'paginacion_aria' => 'Paginación de rendiciones',
 
         'titulo_crear' => 'Nueva rendición',
+        'titulo_editar' => 'Editar rendición',
         'subtitulo_form' => 'Registra una rendición de campo para empezar a asociarle gastos.',
+        'subtitulo_form_editar' => 'Corrige los datos de esta rendición mientras siga abierta.',
         'seccion_datos' => 'Datos de la rendición',
         'campos_contador' => ':cantidad campos',
         'campo_base' => 'Base',
@@ -359,19 +375,25 @@ return [
         'actividad_creada' => 'Rendición creada',
         'actividad_presentada' => 'Rendición presentada',
         'actividad_aprobada' => 'Aprobada por :persona',
+
+        'aside_relacionado_titulo' => 'Relacionado',
+        'aside_relacionado_gastos' => 'Gastos asociados',
+        'aside_relacionado_monto' => 'Monto actual',
+        'aside_relacionado_ver' => 'Ver ficha completa',
     ],
 
     // HU-35 (tarea 49): "como encargado, quiero registrar el combustible del
     // generador y de los vehículos, para imputarlo a la campaña" — cierra
     // Sprint 10. Reescrito por la tarea 73 (HU-50): la carga se imputa al
     // equipo de trabajo y al recurso concreto (dron/vehículo/generador) que
-    // la consumió, no solo a un "destino" genérico. ABM acotado sin
-    // edición, mismo criterio que gastos/anticipos.
+    // la consumió, no solo a un "destino" genérico. Edición agregada en la
+    // tarea 134: sin `rendicion_id`, siempre se corrige.
     'combustible' => [
         'titulo' => 'Combustible',
         'subtitulo' => 'Combustible cargado por cuadrilla, recurso, base y fecha.',
         'nuevo' => 'Nueva carga',
         'creado' => 'Carga de combustible registrada correctamente.',
+        'actualizado' => 'Carga de combustible actualizada correctamente.',
         'eliminado' => 'Carga de combustible dada de baja correctamente.',
         'filtro_base' => 'Base',
         'filtro_base_placeholder' => 'Todas',
@@ -406,11 +428,13 @@ return [
         'litros_valor' => ':litros L',
         'monto_valor' => 'Bs :monto',
         'eliminar_accion' => 'Eliminar',
+        'editar_accion' => 'Editar',
         'confirmar_baja_titulo' => '¿Dar de baja esta carga?',
         'confirmar_baja' => 'Esta acción no se puede deshacer.',
         'paginacion_aria' => 'Paginación de combustible',
 
         'titulo_crear' => 'Nueva carga de combustible',
+        'titulo_editar' => 'Editar carga de combustible',
         'subtitulo_form' => 'Elige el equipo y la fecha para ver qué recursos tenía asignados, y carga litros y monto.',
         'seccion_origen' => 'Cuadrilla y recurso',
         'seccion_carga' => 'Litros y costo',
@@ -440,6 +464,9 @@ return [
         'error_litros_requerido' => 'Ingresa los litros cargados.',
         'error_monto_requerido' => 'Ingresa el monto de la carga.',
         'volver' => 'Volver a combustible',
+
+        'aside_equipo_titulo' => 'Cuadrilla',
+        'aside_equipo_ver' => 'Ver cuadrilla',
     ],
 
     // Mensajes de error.
@@ -515,6 +542,7 @@ return [
         'anticipo_excede_tope' => 'El anticipo excede el tope disponible: el máximo que se puede adelantar ahora es Bs :disponible.',
         'campania_cerrada' => "La campaña ':codigo' está cerrada: no admite nuevas imputaciones.",
         'campania_no_abierta' => "La campaña ':codigo' todavía no está abierta: ábrela antes de imputarle gastos.",
+        'gasto_no_editable' => "El gasto ya está asociado a la rendición #:rendicion_id, en estado ':estado': no se puede editar.",
         'gasto_ya_asociado_a_rendicion' => 'El gasto #:gasto_id ya está asociado a una rendición.',
         'jefe_campo_no_puede_aprobar_propia_rendicion' => 'El jefe de campo de la rendición #:rendicion_id no puede aprobar su propia rendición.',
         'tarifa_duplicada' => "Ya existe una tarifa llamada ':nombre'.",
@@ -523,6 +551,7 @@ return [
         'recurso_no_asignado_al_equipo' => "El recurso ':recurso_tipo' #:recurso_id no estaba asignado al equipo #:equipo_trabajo_id el :fecha.",
         'rendicion_no_acepta_gastos' => "La rendición #:rendicion_id no acepta gastos: ya no está 'abierta'.",
         'rendicion_no_aprobable' => "La rendición #:rendicion_id no se puede aprobar: está en ':estado_actual', no en 'presentada'.",
+        'rendicion_no_editable' => "La rendición #:rendicion_id no se puede editar: está en ':estado', no en 'abierta'.",
         'rendicion_no_presentable' => "La rendición #:rendicion_id no se puede presentar: está en ':estado_actual', no en 'abierta'.",
         'rendicion_sin_gastos_asociados' => 'La rendición #:rendicion_id no se puede presentar: no tiene ningún gasto asociado.',
     ],

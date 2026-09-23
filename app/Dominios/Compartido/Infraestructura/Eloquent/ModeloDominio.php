@@ -18,6 +18,8 @@ use Illuminate\Support\Carbon;
  *   (un modelo no puede tomar SoftDeletes y "olvidar" la guarda) y porque un
  *   test de arquitectura puede exigir "todo modelo extiende ModeloDominio".
  * - Autoría por fila (`created_by` / `updated_by`) vía {@see RegistraAutoria}.
+ * - Respeto del modo de solo lectura ({@see ModoSoloLectura}, tarea 140): con
+ *   el modo activo, guardar, borrar o restaurar lanza en vez de escribir.
  *
  * Cobertura de la guarda: `forceDelete()`, `forceDeleteQuietly()` y
  * `forceDestroy()` terminan en el `forceDelete()` de la instancia, así que
@@ -34,6 +36,7 @@ use Illuminate\Support\Carbon;
 abstract class ModeloDominio extends Model
 {
     use RegistraAutoria;
+    use RespetaModoSoloLectura;
     use SoftDeletes;
 
     /**

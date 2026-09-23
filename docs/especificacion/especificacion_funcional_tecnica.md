@@ -572,6 +572,10 @@ Acceso separado, de solo lectura, limitado al contrato del usuario. Ve: reportes
 
 Alta, baja (lógica) y bloqueo de usuarios; asignación de uno o más roles y base, con un único login por persona; reseteo de contraseña. Roles del sistema: piloto, auxiliar, jefe de campo, encargado de operaciones, dueño, cliente. Un usuario puede tener más de un rol (ver sección 3 y ADR 0004); la regla de que nadie valida su propio trabajo se aplica a nivel de persona, no de rol.
 
+### Ver como otro usuario (soporte de la plataforma)
+
+El administrador de plataforma puede mirar el panel como una cuenta interna —con uno de sus roles— o el portal como una cuenta de cliente, para ver exactamente lo que esa persona ve. Es **solo lectura**: ninguna creación, edición, transición de estado ni baja está disponible durante la vista (el servidor las rechaza con 403, no solo se esconde el botón), y un aviso persistente indica «Viendo como: <nombre> — <rol o Cliente>» con el modo «Volver a mi vista». La sesión de autenticación del administrador no se reemplaza; en el portal, el contrato sale de la cuenta observada igual que en una sesión real (invariante 5). Cada entrada y cada salida quedan en la bitácora a nombre del administrador real. Exige el permiso propio `seguridad.usuario.ver_como`, que solo tiene el rol `admin_plataforma`; hoy nada impide que quien administra la matriz de permisos se lo otorgue a otro rol, y si esa delegación debe prohibirse o acotarse es una decisión pendiente del dueño. No es suplantación: no se actúa en nombre de nadie.
+
 ---
 
 ## 14.1 Convenciones transversales: borrado lógico y bitácora de auditoría

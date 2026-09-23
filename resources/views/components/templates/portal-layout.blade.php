@@ -35,6 +35,9 @@
 @endphp
 
 <div class="ag-portal">
+    {{-- Tarea 140: franja persistente de "viendo como" (sin `$vistaComo` no pinta nada). --}}
+    <x-organisms.vista-como-banner />
+
     <header class="ag-portal__header">
         <div class="ag-portal__brand">
             <x-atoms.logo size="sm" />
@@ -64,16 +67,21 @@
 
             <x-molecules.theme-toggle />
 
-            <button
-                type="button"
-                class="ag-portal__logout"
-                data-ag-logout
-                data-ag-logout-url="{{ route('portal.logout') }}"
-                data-ag-logout-redirect="{{ route('login.form') }}"
-            >
-                <x-atoms.icon name="logout" size="sm" />
-                {{ __('portal.chrome.cerrar_sesion') }}
-            </button>
+            {{-- Sin cerrar sesión en una vista "como otro usuario" (tarea 140):
+                 esa sesión es del administrador, y salir se hace con «Volver a
+                 mi vista» del banner. --}}
+            @unless (isset($vistaComo))
+                <button
+                    type="button"
+                    class="ag-portal__logout"
+                    data-ag-logout
+                    data-ag-logout-url="{{ route('portal.logout') }}"
+                    data-ag-logout-redirect="{{ route('login.form') }}"
+                >
+                    <x-atoms.icon name="logout" size="sm" />
+                    {{ __('portal.chrome.cerrar_sesion') }}
+                </button>
+            @endunless
         </div>
     </header>
 
