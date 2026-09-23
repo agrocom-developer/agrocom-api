@@ -24,10 +24,10 @@ use Illuminate\Support\Carbon;
  * gasto — camino PRINCIPAL de imputación (el formulario lo ofrece antes que
  * base/trabajo), pero nullable: el gasto general sigue existiendo.
  *
- * Inmutable salvo baja (misma decisión que `Anticipo`, documentada en
- * `Aplicacion/CrearGasto`): un gasto cargado no se edita — si está mal, se da
- * de baja y se recarga. Evita que el monto de un gasto cambie por debajo de
- * una rendición en curso (HU-34, tarea 48).
+ * Editable (tarea 134, `Aplicacion/ActualizarGasto`) mientras su rendición
+ * asociada, si tiene una, siga `Abierta` — ver `Dominio/PoliticaEdicionGasto`.
+ * Evita que el monto de un gasto cambie por debajo de una rendición que ya
+ * lo sumó a su total congelado (HU-34, tarea 48, invariante 2 de CLAUDE.md).
  *
  * `rendicion_id` (HU-34, tarea 48, `ALTER TABLE`): a diferencia de
  * `base_id`/`trabajo_id`, `Rendicion` SÍ es del mismo módulo (Finanzas), así
