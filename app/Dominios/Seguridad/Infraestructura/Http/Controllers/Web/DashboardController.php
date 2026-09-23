@@ -53,11 +53,13 @@ final class DashboardController
         /** @var Collection<int, SecRole> $roles */
         $roles = $datosCascara['roles'];
         $rolActivo = $roles->firstWhere('id', $idRolActivo);
+        $rolClave = $rolActivo->name ?? '';
 
         return view('seguridad::pages.dashboard', [
             ...$datosCascara,
             ...$armarDashboard->ejecutar($usuario, $idRolActivo),
-            'tabs' => $armarDashboard->tabsPara($rolActivo->name ?? ''),
+            'tabs' => $armarDashboard->tabsPara($rolClave),
+            'tecnico' => $armarDashboard->esTecnico($rolClave),
         ]);
     }
 }

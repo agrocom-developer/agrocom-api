@@ -67,6 +67,25 @@ final class ListarBitacora
         ))->withQueryString();
     }
 
+    /**
+     * Las últimas `$cantidad` filas, sin filtros y sin paginar: para el tablero
+     * (tarea 139), que solo quiere lo más reciente y no debe pagar el conteo
+     * total de una tabla que crece con cada mutación del sistema.
+     *
+     * @return list<FilaBitacora>
+     */
+    public function recientes(string $zonaQueVe, int $cantidad): array
+    {
+        $bitacoras = $this->consulta($zonaQueVe, null, null, null, null, null, null)
+            ->orderByDesc('created_at')
+            ->limit($cantidad)
+            ->get();
+
+        $actores = $this->actoresPorId($bitacoras->pluck('user_id')->filter()->unique()->all());
+
+        return array_values($bitacoras->map(fn (Bitacora $fila): FilaBitacora => $this->aFila($fila, $zonaQueVe, $actores))->all());
+    }
+
     /** @return Builder<Bitacora> */
     private function consulta(
         string $zonaQueVe,

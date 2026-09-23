@@ -10,11 +10,12 @@
     ver su docblock) en vez del `.ag-dash__header` propio que tenía antes —
     el slot `chip` es exactamente para este caso.
 
-    Espera: $rol (string|null) — nombre legible del rol activo.
+    Espera: $rol (string|null) — nombre legible del rol activo; $tecnico
+    (bool) — el rol es técnico (tarea 139) y lleva su propio título y bajada.
 --}}
 <x-organisms.page-header
-    :title="__('seguridad.dashboard.titulo')"
-    :subtitle="__('seguridad.dashboard.bajada', [
+    :title="__($tecnico ? 'seguridad.dashboard.titulo_tecnico' : 'seguridad.dashboard.titulo')"
+    :subtitle="__($tecnico ? 'seguridad.dashboard.bajada_tecnica' : 'seguridad.dashboard.bajada', [
         'fecha' => \Illuminate\Support\Str::ucfirst(now()->locale(app()->getLocale())->isoFormat('dddd D [de] MMMM')),
     ])"
 >
