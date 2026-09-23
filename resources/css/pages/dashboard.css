@@ -221,6 +221,106 @@
     min-width: 680px;
 }
 
+/* ---------- Tabs del encargado de operaciones (tarea 136) ---------- */
+
+/* Órdenes de aplicación por estado: donut + lista de cifras. La lista es un
+   grid de dos columnas (punto | nombre | cifra) para que las cifras queden
+   alineadas entre filas. */
+.ag-dash__estados {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    gap: var(--ag-space-5);
+    align-items: center;
+}
+
+.ag-dash__estados-lista {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ag-dash__estados-item {
+    display: grid;
+    grid-template-columns: 8px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-2) 0;
+    border-bottom: 1px solid var(--ag-color-border-row);
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text);
+}
+
+/* El total no lleva punto: su nombre ocupa las dos primeras columnas. */
+.ag-dash__estados-item--total {
+    grid-template-columns: minmax(0, 1fr) auto;
+    border-bottom: none;
+    font-weight: var(--ag-font-weight-bold);
+}
+
+.ag-dash__estados-punto {
+    width: 8px;
+    height: 8px;
+    border-radius: var(--ag-radius-pill);
+    background: var(--ag-color-text-faint);
+}
+
+.ag-dash__estados-punto--success {
+    background: var(--ag-color-success);
+}
+
+.ag-dash__estados-punto--warning {
+    background: var(--ag-color-warning);
+}
+
+.ag-dash__estados-punto--info {
+    background: var(--ag-color-info);
+}
+
+.ag-dash__estados-punto--danger {
+    background: var(--ag-color-danger);
+}
+
+.ag-dash__estados-valor {
+    font-family: var(--ag-font-family-mono);
+    font-variant-numeric: tabular-nums;
+    font-weight: var(--ag-font-weight-bold);
+}
+
+/* Resumen de vuelos: título a la izquierda y selector de granularidad a la
+   derecha; en pantallas angostas el selector baja debajo del título. */
+.ag-dash__vuelos-cabecera {
+    flex-wrap: wrap;
+}
+
+.ag-dash__vuelos-total {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: var(--ag-space-3);
+    margin: var(--ag-space-3) 0 var(--ag-space-2);
+}
+
+.ag-dash__vuelos-cifra {
+    font-size: var(--ag-font-size-xl);
+    font-weight: var(--ag-font-weight-bold);
+    font-variant-numeric: tabular-nums;
+    color: var(--ag-color-text);
+}
+
+.ag-dash__vuelos-unidad {
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-regular);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-dash__vuelos-nota {
+    margin: var(--ag-space-2) 0 0;
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+}
+
 /* Segunda línea dentro de una celda: el campo bajo el lote, el modelo bajo
    el identificador del dron. Contexto, no una columna más. */
 .ag-table__sub {
@@ -533,6 +633,12 @@
     background: var(--ag-color-accent);
 }
 
+/* `_seccion-pausas` pide este tono desde que el tablero es real (tarea 67) y
+   la clase no existía: las barras de pausas salían vacías. */
+.ag-bars__fill--warning {
+    background: var(--ag-color-warning);
+}
+
 .ag-bars__fill--info {
     background: var(--ag-color-info-strong);
 }
@@ -623,6 +729,10 @@
         grid-template-columns: 1fr 1fr;
     }
 
+    .ag-dash__estados {
+        grid-template-columns: 1fr;
+    }
+
     .ag-dash__grid {
         grid-template-columns: 1fr;
     }
@@ -633,12 +743,6 @@
 
     /* Excepción: la tabla de clientes no tiene variante de tablet, se
        mantiene con scroll horizontal (ver .ag-table-scroll arriba). Mismo
-/* `_seccion-pausas` pide este tono desde que el tablero es real (tarea 67) y
-   la clase no existía: las barras de pausas salían vacías. */
-.ag-bars__fill--warning {
-    background: var(--ag-color-warning);
-}
-
        criterio para las dos tablas nuevas del dueño (tarea 135): estado de
        cuentas y trabajos por equipo. */
     .ag-table.ag-table--clientes,
