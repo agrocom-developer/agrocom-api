@@ -827,8 +827,9 @@ class SeguridadSeeder extends Seeder
             $permisos->except(self::PERMISOS_SOLO_ADMIN_PLATAFORMA)->values()->all(),
         );
 
-        // admin_plataforma (tarea 100): mismo criterio que dueno, sin
-        // excepción — es dato de catálogo puro, corre en TODOS los entornos
+        // admin_plataforma (tarea 100): TODO el catálogo, sin excepción — a
+        // diferencia de dueno, recibe también PERMISOS_SOLO_ADMIN_PLATAFORMA
+        // (tarea 140). Es dato de catálogo puro, corre en TODOS los entornos
         // (un rol sin usuarios asignados no daña nada en producción). Quien
         // recibe usuarios asignados a este rol es AdminPlataformaSeeder, que
         // sí está gateado a local/staging.
