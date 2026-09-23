@@ -16,12 +16,21 @@
     Datos esperados (ver ValidacionSesionesController::index()): la cáscara
     de CascaraPanel, más:
     - $sesiones (Collection<Sesion>): `cerrado` y sin `anulada_en`, fin más
-      antiguo primero (la cola se vacía en orden de llegada).
+      antiguo primero (la cola se vacía en orden de llegada), con `trabajo`
+      precargado.
     - $personaId (int|null): persona del jefe autenticado — si coincide con
       `piloto_id` de la fila, esa fila no ofrece la acción de validar/rechazar
       (invariante 4: el piloto no decide sobre su propia sesión). El servidor
       revalida esto igual en ValidacionSesionesController — ocultar el botón
       es presentación, no la única barrera.
+    - $etiquetasPiloto (array<int, string>): nombre real por `piloto_id`
+      (tarea 131), resuelto en lote vía `LecturaPanelPersonal`. Sin entrada
+      para el id (persona borrada o inexistente): fallback a `#id`, mismo
+      criterio que `$etiquetasBase`/`$etiquetasContrato` en otras pantallas.
+    - $loteLabelPorTrabajo (array<int, string>): subtítulo opcional bajo el
+      código de trabajo, indexado por `trabajo_id`; sin entrada, no se pinta.
+    - $puedeVerTrabajos (bool): gatea el enlace de la columna «Trabajo» a su
+      ficha (`operaciones.trabajo.ver`) — sin el permiso, texto plano.
 
     Sin toolbar de filtros: la cola es el universo entero (lo que está
     `cerrado` y sin anular), y se vacía sola a medida que se decide cada
@@ -96,8 +105,19 @@
                         <div class="ag-index-table__row" role="row">
                             <span role="cell" class="ag-index-table__indice">{{ $loop->iteration }}</span>
                             <span role="cell" class="ag-sesiones-validacion__mono">#{{ $sesion->id }}</span>
-                            <span role="cell" class="ag-sesiones-validacion__mono">#{{ $sesion->trabajo_id }}</span>
-                            <span role="cell">{{ __('operaciones.trabajos.sesion_piloto', ['id' => $sesion->piloto_id]) }}</span>
+                            <span role="cell">
+                                <span class="ag-sesiones-validacion__mono">
+                                    @if ($puedeVerTrabajos)
+                                        <a href="{{ route('panel.trabajos.detalle', $sesion->trabajo_id) }}" class="ag-sesiones-validacion__link">#{{ $sesion->trabajo_id }}</a>
+                                    @else
+                                        #{{ $sesion->trabajo_id }}
+                                    @endif
+                                </span>
+                                @if (($loteLabelPorTrabajo[$sesion->trabajo_id] ?? null) !== null)
+                                    <span class="ag-sesiones-validacion__sub">{{ $loteLabelPorTrabajo[$sesion->trabajo_id] }}</span>
+                                @endif
+                            </span>
+                            <span role="cell">{{ $etiquetasPiloto[$sesion->piloto_id] ?? "#{$sesion->piloto_id}" }}</span>
                             <span role="cell" class="ag-sesiones-validacion__mono">{{ $sesion->hectareas_declaradas }}</span>
                             <span role="cell" class="ag-sesiones-validacion__mono">
                                 {{ $sesion->fin?->format('d/m/Y H:i') ?? __('operaciones.trabajos.sin_fin') }}
