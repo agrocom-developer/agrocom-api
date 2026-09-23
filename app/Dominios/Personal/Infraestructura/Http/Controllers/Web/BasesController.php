@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Personal\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Inventario\Contratos\LecturaStockPorBase;
 use App\Dominios\Mantenimiento\Contratos\LecturaEquipamientoPorBase;
 use App\Dominios\Personal\Aplicacion\ActualizarBase;
@@ -46,7 +47,7 @@ final class BasesController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
-        $busqueda = $request->string('q')->toString();
+        $busqueda = TextoDeFiltro::de($request, 'q');
 
         return view('personal::pages.bases.index', [
             ...$this->autorizacion->cascara($request),

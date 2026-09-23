@@ -3,6 +3,7 @@
 namespace App\Dominios\Personal\Infraestructura\Http\Controllers\Web;
 
 use App\Dominios\Compartido\Infraestructura\Http\PasosDeEstado;
+use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Mantenimiento\Contratos\LecturaEquipamiento;
 use App\Dominios\Mantenimiento\Contratos\RecursoCatalogo;
 use App\Dominios\Operaciones\Contratos\DatosResumenCuadrilla;
@@ -109,10 +110,10 @@ final class CuadrillasController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
-        $busqueda = $request->string('q')->toString();
-        $baseQuery = $request->string('base_id')->toString();
+        $busqueda = TextoDeFiltro::de($request, 'q');
+        $baseQuery = TextoDeFiltro::de($request, 'base_id');
         $baseId = $baseQuery !== '' ? (int) $baseQuery : null;
-        $estadoQuery = $request->string('estado')->toString();
+        $estadoQuery = TextoDeFiltro::de($request, 'estado');
         $estado = $estadoQuery !== '' ? EstadoEquipoTrabajo::tryFrom($estadoQuery) : null;
 
         $equipos = $listarEquiposTrabajo->ejecutar(
