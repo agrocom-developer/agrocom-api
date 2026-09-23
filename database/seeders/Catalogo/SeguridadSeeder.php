@@ -326,11 +326,13 @@ class SeguridadSeeder extends Seeder
         'comercial.reporte.ver' => 'Ver el reporte comercial de avance por contrato (exclusivo del dueño)',
         // HU-33 (tarea 47): "como encargado, quiero cargar gastos con su
         // categoría y comprobante, para que la campaña tenga costo real" —
-        // abre Sprint 10. Grano fino sin `.editar`: un gasto, una vez
-        // cargado, es inmutable salvo baja (ver `Aplicacion/CrearGasto`).
+        // abre Sprint 10. Sin `.editar` propio: la tarea 134 agregó edición
+        // reusando `.eliminar` (mientras la rendición asociada, si tiene
+        // una, siga abierta — ver `Dominio/PoliticaEdicionGasto`), mismo
+        // criterio que `finanzas.rendicion.presentar` para su cabecera.
         'finanzas.gasto.ver' => 'Ver el listado de gastos de campaña',
         'finanzas.gasto.crear' => 'Cargar un gasto con su categoría y comprobante',
-        'finanzas.gasto.eliminar' => 'Dar de baja (lógica) un gasto registrado por error',
+        'finanzas.gasto.eliminar' => 'Dar de baja (lógica) o editar un gasto registrado por error (tarea 134)',
         // HU-34 (tarea 48): "como jefe de campo, quiero rendir los gastos que
         // hice en campo; el encargado los aprueba para reponer el fondo".
         // Grano fino con máquina de estados propia (abierta → presentada →
@@ -339,19 +341,21 @@ class SeguridadSeeder extends Seeder
         // abajo) — a diferencia de `finanzas.planilla.aprobar`, que es
         // exclusivo del dueño: acá la guarda real de que el aprobador nunca
         // sea quien rindió ya la resuelve `PoliticaAprobacionRendicion`/la
-        // máquina de estados por PERSONA, no el permiso.
+        // máquina de estados por PERSONA, no el permiso. Sin `.editar`
+        // propio: la tarea 134 agregó edición de CABECERA reusando
+        // `.presentar` (solo mientras sigue `abierta`).
         'finanzas.rendicion.ver' => 'Ver el listado y detalle de rendiciones de campo',
         'finanzas.rendicion.crear' => 'Crear una rendición de campo y asociarle gastos',
-        'finanzas.rendicion.presentar' => 'Presentar una rendición de campo para su aprobación',
+        'finanzas.rendicion.presentar' => 'Presentar una rendición de campo para su aprobación, o editar su cabecera mientras siga abierta (tarea 134)',
         'finanzas.rendicion.aprobar' => 'Aprobar una rendición de campo presentada, para reponer el fondo',
         // HU-35 (tarea 49): "como encargado, quiero registrar el
         // combustible del generador y de los vehículos, para imputarlo a la
-        // campaña" — cierra Sprint 10. Grano fino sin `.editar`: una carga,
-        // una vez cargada, es inmutable salvo baja (ver
-        // `Aplicacion/CrearCombustible`), mismo criterio que gasto/anticipo.
+        // campaña" — cierra Sprint 10. Sin `.editar` propio: la tarea 134
+        // agregó edición reusando `.eliminar` — sin `rendicion_id` que la
+        // bloquee (a diferencia de gasto), siempre se corrige.
         'finanzas.combustible.ver' => 'Ver el listado de cargas de combustible',
         'finanzas.combustible.crear' => 'Cargar combustible del generador o de un vehículo',
-        'finanzas.combustible.eliminar' => 'Dar de baja (lógica) una carga de combustible registrada por error',
+        'finanzas.combustible.eliminar' => 'Dar de baja (lógica) o editar una carga de combustible registrada por error (tarea 134)',
         // HU-40 (tarea 50): "como encargado, quiero administrar los
         // vehículos con su asignación a base" — abre Sprint 11 y el módulo
         // `Mantenimiento` (ADR 0011, extensión 3/9/2026). Grano fino, mismo

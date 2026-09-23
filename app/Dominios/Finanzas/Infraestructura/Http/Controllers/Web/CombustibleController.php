@@ -3,12 +3,14 @@
 namespace App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web;
 
 use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
+use App\Dominios\Finanzas\Aplicacion\ActualizarCombustible;
 use App\Dominios\Finanzas\Aplicacion\CrearCombustible;
 use App\Dominios\Finanzas\Aplicacion\EliminarCombustible;
 use App\Dominios\Finanzas\Aplicacion\ListarCombustibles;
 use App\Dominios\Finanzas\Dominio\Excepciones\CampaniaNoAbierta;
 use App\Dominios\Finanzas\Dominio\Excepciones\RecursoNoAsignadoAlEquipo;
 use App\Dominios\Finanzas\Infraestructura\Eloquent\Combustible;
+use App\Dominios\Finanzas\Infraestructura\Http\Requests\ActualizarCombustibleRequest;
 use App\Dominios\Finanzas\Infraestructura\Http\Requests\CrearCombustibleRequest;
 use App\Dominios\Personal\Contratos\DatosRecursoEquipo;
 use App\Dominios\Personal\Contratos\LecturaEquipoTrabajo;
@@ -20,19 +22,22 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 /**
- * `GET/POST/DELETE /panel/combustible*` (HU-35, tarea 49; reescrito por la
- * tarea 73, HU-50): "como encargado, quiero registrar el combustible del
- * generador y de los vehículos, para imputarlo a la campaña" — ahora
- * imputado al equipo de trabajo y al recurso concreto que lo consumió.
- * Mismo molde que `GastosController` — ABM acotado sin edición: alta,
- * listado y baja lógica.
+ * `GET/POST/PUT/DELETE /panel/combustible*` (HU-35, tarea 49; reescrito por
+ * la tarea 73, HU-50; edición agregada en la tarea 134): "como encargado,
+ * quiero registrar el combustible del generador y de los vehículos, para
+ * imputarlo a la campaña" — imputado al equipo de trabajo y al recurso
+ * concreto que lo consumió. Alta, listado, edición y baja lógica.
  *
  * Tres permisos de grano fino (`finanzas.combustible.ver`/`.crear`/
  * `.eliminar`), verificados DENTRO del controlador contra el ROL ACTIVO vía
- * {@see AutorizacionPanelWeb} — mismo criterio que el resto del panel.
- * Ninguna regla de negocio acá: el alta, la guarda de campaña cerrada y la
- * guarda de "el recurso pertenecía al equipo esa fecha" viven en
- * `Aplicacion/CrearCombustible`.
+ * {@see AutorizacionPanelWeb} — mismo criterio que el resto del panel. La
+ * edición reusa `finanzas.combustible.eliminar` (no existe `.editar` en el
+ * catálogo, tarea 134: "no crees uno nuevo sin falta"). Ninguna regla de
+ * negocio acá: el alta/edición, la guarda de campaña cerrada y la guarda de
+ * "el recurso pertenecía al equipo esa fecha" viven en
+ * `Aplicacion/CrearCombustible`/`Aplicacion/ActualizarCombustible`. A
+ * diferencia de `Gasto`, sin `rendicion_id` que la bloquee: siempre se
+ * corrige, sin política de dominio adicional.
  *
  * `equipo_trabajo_id`/`fecha` viajan como query string en el formulario de
  * alta (`GET /panel/combustible/crear?equipo_trabajo_id=...&fecha=...`),
@@ -56,6 +61,9 @@ final class CombustibleController
     private const PERMISO_CREAR = 'finanzas.combustible.crear';
 
     private const PERMISO_ELIMINAR = 'finanzas.combustible.eliminar';
+
+    /** Reusado para gatear la edición (tarea 134): no existe `finanzas.combustible.editar`. */
+    private const PERMISO_EDITAR = self::PERMISO_ELIMINAR;
 
     /** @var array<string, string> */
     private const TABLA_POR_TIPO = [
@@ -100,6 +108,7 @@ final class CombustibleController
             ],
             'resumen' => $listarCombustibles->resumen($baseId, $desdeFiltro, $hastaFiltro, $equipoTrabajoId, $campaniaId),
             'puedeEliminar' => $this->autorizacion->tienePermiso($request, self::PERMISO_ELIMINAR),
+            'puedeEditar' => $this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR),
         ]);
     }
 
@@ -113,11 +122,13 @@ final class CombustibleController
 
         return view('finanzas::pages.combustible.create', [
             ...$this->autorizacion->cascara($request),
+            'combustible' => null,
             'basesDisponibles' => $this->basesDisponibles(),
             'equiposDisponibles' => $this->equiposDisponibles(),
             'campaniasDisponibles' => $this->campaniasAbiertas(),
             'equipoTrabajoIdSeleccionado' => $equipoTrabajoId,
             'fechaSeleccionada' => $fecha,
+            'recursoActual' => null,
             'recursosDisponibles' => $equipoTrabajoId !== null
                 ? $this->recursosDisponibles($lectura, $equipoTrabajoId, $fecha)
                 : collect(),
@@ -158,6 +169,89 @@ final class CombustibleController
         return redirect()
             ->route('panel.combustible.index')
             ->with('estado', __('finanzas.combustible.creado'));
+    }
+
+    /**
+     * `GET /panel/combustible/{combustible}/editar` (tarea 134). Mismo
+     * patrón de recarga que `create()`: equipo y fecha parten de la carga
+     * actual salvo que la query los pise (al cambiar el equipo o la fecha en
+     * el propio formulario), para repoblar `recursosDisponibles` con lo que
+     * ESE equipo tenía asignado ESE día.
+     */
+    public function edit(Request $request, Combustible $combustible, LecturaEquipoTrabajo $lectura): View
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
+
+        $equipoTrabajoId = $request->integer('equipo_trabajo_id') ?: $combustible->equipo_trabajo_id;
+        $fechaQuery = $request->string('fecha')->toString();
+        $fecha = $fechaQuery !== '' ? $fechaQuery : $combustible->fecha->toDateString();
+        $recursosDisponibles = $this->recursosDisponibles($lectura, $equipoTrabajoId, $fecha);
+        $recursoActual = "{$combustible->recurso_tipo}:{$combustible->recurso_id}";
+
+        // El recurso que la carga ya tenía se agrega igual si la recarga (otro
+        // equipo/fecha en pantalla, o un cambio de asignación real desde
+        // entonces) lo dejó afuera — si no, el <select> lo mostraría vacío y
+        // el PUT le cambiaría el recurso sin que el usuario lo haya pedido.
+        if (! $recursosDisponibles->has($recursoActual)) {
+            $etiqueta = $this->etiquetasRecurso([new DatosRecursoEquipo(
+                id: 0,
+                recursoTipo: $combustible->recurso_tipo,
+                recursoId: $combustible->recurso_id,
+                desde: '',
+                hasta: null,
+            )])[$recursoActual] ?? $recursoActual;
+
+            $recursosDisponibles->put($recursoActual, $etiqueta);
+        }
+
+        return view('finanzas::pages.combustible.edit', [
+            ...$this->autorizacion->cascara($request),
+            'combustible' => $combustible,
+            'basesDisponibles' => $this->basesDisponibles(),
+            'equiposDisponibles' => $this->equiposDisponibles(),
+            'campaniasDisponibles' => $this->campaniasParaFormulario($combustible->campania_id),
+            'equipoTrabajoIdSeleccionado' => $equipoTrabajoId,
+            'fechaSeleccionada' => $fecha,
+            'recursoActual' => $recursoActual,
+            'recursosDisponibles' => $recursosDisponibles,
+        ]);
+    }
+
+    public function update(ActualizarCombustibleRequest $request, Combustible $combustible, ActualizarCombustible $actualizarCombustible): RedirectResponse
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
+
+        $datos = $request->validated();
+        [$recursoTipo, $recursoId] = explode(':', (string) $datos['recurso'], 2);
+
+        try {
+            $actualizarCombustible->ejecutar(
+                combustible: $combustible,
+                fecha: (string) $datos['fecha'],
+                baseId: (int) $datos['base_id'],
+                equipoTrabajoId: (int) $datos['equipo_trabajo_id'],
+                campaniaId: isset($datos['campania_id']) ? (int) $datos['campania_id'] : null,
+                recursoTipo: $recursoTipo,
+                recursoId: (int) $recursoId,
+                litros: (string) $datos['litros'],
+                monto: (string) $datos['monto'],
+                descripcion: $datos['descripcion'] ?? null,
+            );
+        } catch (CampaniaNoAbierta $excepcion) {
+            return redirect()
+                ->route('panel.combustible.edit', ['combustible' => $combustible, ...$this->parametrosCascada($datos)])
+                ->withInput()
+                ->withErrors(['campania_id' => $excepcion->getMessage()]);
+        } catch (RecursoNoAsignadoAlEquipo $excepcion) {
+            return redirect()
+                ->route('panel.combustible.edit', ['combustible' => $combustible, ...$this->parametrosCascada($datos)])
+                ->withInput()
+                ->withErrors(['recurso' => $excepcion->getMessage()]);
+        }
+
+        return redirect()
+            ->route('panel.combustible.index')
+            ->with('estado', __('finanzas.combustible.actualizado'));
     }
 
     public function destroy(Request $request, Combustible $combustible, EliminarCombustible $eliminarCombustible): RedirectResponse
@@ -229,6 +323,28 @@ final class CombustibleController
             ->where('estado', 'abierta')
             ->orderBy('codigo')
             ->pluck('codigo', 'id');
+    }
+
+    /**
+     * Campañas para el formulario de edición (tarea 134): las abiertas, más
+     * la actual de la carga si ya se cerró — mismo criterio que
+     * `GastosController::datosFormulario()`, para no perderla del `<select>`.
+     *
+     * @return Collection<int, non-falsy-string>
+     */
+    private function campaniasParaFormulario(?int $campaniaActualId): Collection
+    {
+        $campaniasDisponibles = $this->campaniasAbiertas();
+
+        if ($campaniaActualId !== null && ! $campaniasDisponibles->has($campaniaActualId)) {
+            $etiqueta = $this->todasLasCampanias()->get($campaniaActualId);
+
+            if ($etiqueta !== null) {
+                $campaniasDisponibles->put($campaniaActualId, $etiqueta);
+            }
+        }
+
+        return $campaniasDisponibles;
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web;
 
 use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
+use App\Dominios\Finanzas\Aplicacion\ActualizarRendicion;
 use App\Dominios\Finanzas\Aplicacion\AprobarRendicion;
 use App\Dominios\Finanzas\Aplicacion\AsociarGastoARendicion;
 use App\Dominios\Finanzas\Aplicacion\CrearRendicion;
@@ -12,9 +13,12 @@ use App\Dominios\Finanzas\Dominio\EstadoRendicion;
 use App\Dominios\Finanzas\Dominio\Excepciones\GastoYaAsociadoARendicion;
 use App\Dominios\Finanzas\Dominio\Excepciones\RendicionNoAceptaGastos;
 use App\Dominios\Finanzas\Dominio\Excepciones\RendicionNoAprobable;
+use App\Dominios\Finanzas\Dominio\Excepciones\RendicionNoEditable;
 use App\Dominios\Finanzas\Dominio\Excepciones\RendicionNoPresentable;
+use App\Dominios\Finanzas\Dominio\PoliticaEdicionRendicion;
 use App\Dominios\Finanzas\Infraestructura\Eloquent\Gasto;
 use App\Dominios\Finanzas\Infraestructura\Eloquent\Rendicion;
+use App\Dominios\Finanzas\Infraestructura\Http\Requests\ActualizarRendicionRequest;
 use App\Dominios\Finanzas\Infraestructura\Http\Requests\CrearRendicionRequest;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\RedirectResponse;
@@ -24,12 +28,13 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 /**
- * `GET/POST /panel/rendiciones*` (HU-34, tarea 48): "como jefe de campo,
- * quiero rendir los gastos que hice en campo; el encargado los aprueba para
- * reponer el fondo". Máquina de estados `abierta → presentada → aprobada`
- * (a diferencia de `AnticiposController`, sin ella) — mismo criterio de
- * controlador delgado que `PlanillasController`/`GastosController`: ninguna
- * regla de negocio acá, todo vive en `Aplicacion/`.
+ * `GET/POST/PUT /panel/rendiciones*` (HU-34, tarea 48; edición de CABECERA
+ * agregada en la tarea 134): "como jefe de campo, quiero rendir los gastos
+ * que hice en campo; el encargado los aprueba para reponer el fondo".
+ * Máquina de estados `abierta → presentada → aprobada` (a diferencia de
+ * `AnticiposController`, sin ella) — mismo criterio de controlador delgado
+ * que `PlanillasController`/`GastosController`: ninguna regla de negocio
+ * acá, todo vive en `Aplicacion/`.
  *
  * Cuatro permisos de grano fino (`finanzas.rendicion.ver`/`.crear`/
  * `.presentar`/`.aprobar`), verificados DENTRO del controlador contra el ROL
@@ -38,7 +43,10 @@ use Illuminate\View\View;
  * `finanzas.rendicion.aprobar` SÍ lo tiene el encargado (`SeguridadSeeder`):
  * la guarda real de "el aprobador nunca es quien rinde" la resuelve
  * `Aplicacion/AprobarRendicion` vía `PoliticaAprobacionRendicion`, por
- * PERSONA — no el permiso.
+ * PERSONA — no el permiso. La edición de cabecera (`edit()`/`update()`)
+ * reusa `finanzas.rendicion.presentar` (no existe `.editar`) y solo se
+ * admite mientras la rendición sigue `Abierta`
+ * (`Dominio/PoliticaEdicionRendicion`) — nunca toca `estado`/`monto`.
  *
  * `aprobar()` toma la `persona_id` del usuario autenticado con
  * `AutorizacionPanelWeb::personaId()`, fail-closed (`abort_if(... === null,
@@ -77,6 +85,9 @@ final class RendicionesController
 
     private const PERMISO_APROBAR = 'finanzas.rendicion.aprobar';
 
+    /** Reusado para gatear la edición de cabecera (tarea 134): no existe `finanzas.rendicion.editar`. */
+    private const PERMISO_EDITAR = self::PERMISO_PRESENTAR;
+
     /** Tarea 126: el vínculo "Relacionado" a la base gatea por SU permiso, mismo criterio que `CuadrillasController`. */
     private const PERMISO_VER_BASE = 'personal.base.editar';
 
@@ -105,6 +116,7 @@ final class RendicionesController
             'puedeCrear' => $this->autorizacion->tienePermiso($request, self::PERMISO_CREAR),
             'puedePresentar' => $this->autorizacion->tienePermiso($request, self::PERMISO_PRESENTAR),
             'puedeAprobar' => $this->autorizacion->tienePermiso($request, self::PERMISO_APROBAR),
+            'puedeEditar' => $this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR),
         ]);
     }
 
@@ -183,7 +195,57 @@ final class RendicionesController
             'puedeCrear' => $this->autorizacion->tienePermiso($request, self::PERMISO_CREAR),
             'puedePresentar' => $this->autorizacion->tienePermiso($request, self::PERMISO_PRESENTAR),
             'puedeAprobar' => $this->autorizacion->tienePermiso($request, self::PERMISO_APROBAR),
+            'puedeEditarEsta' => $this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR)
+                && PoliticaEdicionRendicion::admiteEdicion($rendicion->estado),
         ]);
+    }
+
+    /**
+     * `GET /panel/rendiciones/{rendicion}/editar` (tarea 134). Mismo criterio
+     * de guarda de redirección que `GastosController::edit()`.
+     */
+    public function edit(Request $request, Rendicion $rendicion): View|RedirectResponse
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
+
+        if (! PoliticaEdicionRendicion::admiteEdicion($rendicion->estado)) {
+            return redirect()
+                ->route('panel.rendiciones.show', $rendicion)
+                ->withErrors(['estado' => RendicionNoEditable::porEstado($rendicion->id, $rendicion->estado->value)->getMessage()]);
+        }
+
+        return view('finanzas::pages.rendiciones.edit', [
+            ...$this->autorizacion->cascara($request),
+            'rendicion' => $rendicion,
+            'basesDisponibles' => $this->basesDisponibles(),
+            'personasDisponibles' => $this->personasDisponibles(),
+            'gastosAsociadosCount' => $rendicion->gastos()->count(),
+        ]);
+    }
+
+    public function update(ActualizarRendicionRequest $request, Rendicion $rendicion, ActualizarRendicion $actualizarRendicion): RedirectResponse
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
+
+        $datos = $request->validated();
+
+        try {
+            $actualizarRendicion->ejecutar(
+                rendicion: $rendicion,
+                baseId: (int) $datos['base_id'],
+                jefeCampoId: (int) $datos['jefe_campo_id'],
+                fecha: (string) $datos['fecha'],
+                descripcion: isset($datos['descripcion']) && $datos['descripcion'] !== '' ? (string) $datos['descripcion'] : null,
+            );
+        } catch (RendicionNoEditable $excepcion) {
+            return redirect()
+                ->route('panel.rendiciones.show', $rendicion)
+                ->withErrors(['estado' => $excepcion->getMessage()]);
+        }
+
+        return redirect()
+            ->route('panel.rendiciones.show', $rendicion)
+            ->with('estado', __('finanzas.rendiciones.actualizada'));
     }
 
     public function asociarGasto(Request $request, Rendicion $rendicion, Gasto $gasto, AsociarGastoARendicion $asociarGasto): RedirectResponse

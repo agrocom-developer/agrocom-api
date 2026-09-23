@@ -3,13 +3,12 @@
 namespace App\Dominios\Finanzas\Aplicacion;
 
 use App\Dominios\Campania\Contratos\LecturaCampania;
-use App\Dominios\Finanzas\Dominio\Excepciones\CampaniaNoAbierta;
+use App\Dominios\Finanzas\Aplicacion\Concerns\GuardaComprobanteGasto;
+use App\Dominios\Finanzas\Aplicacion\Concerns\VerificaCampaniaAbierta;
 use App\Dominios\Finanzas\Infraestructura\Eloquent\Gasto;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * Alta de un gasto de campaña (HU-33, tarea 47): "como encargado, quiero
@@ -26,12 +25,11 @@ use Illuminate\Support\Facades\Storage;
  * idempotencia por `uuid_cliente` que proteger — un alta humana del panel no
  * se reintenta sola.
  *
- * Inmutable salvo baja (misma decisión que `RegistrarAnticipo`, ver docblock
- * de `Gasto`): no hay caso de uso de edición — un gasto cargado no se edita,
- * si está mal se da de baja (`EliminarGasto`) y se recarga. Evita que un
- * gasto ya asociado a una rendición (HU-34, `fin_rendiciones`, todavía sin
- * columna `rendicion_id`) cambie de monto por debajo de una rendición en
- * curso.
+ * Editable después (tarea 134, `Aplicacion/ActualizarGasto`) mientras su
+ * rendición asociada, si tiene una, siga `Abierta` — ver
+ * `Dominio/PoliticaEdicionGasto`. `verificarCampaniaAbierta()`/
+ * `guardarComprobante()` viven en `Concerns/` para que la edición los
+ * reutilice sin duplicar la regla.
  *
  * `campaniaId` (ADR 0015 punto 6, tarea 69) es OPCIONAL — vacío es gasto
  * interno que no pertenece a ninguna campaña — y, si viene, no puede
@@ -48,6 +46,9 @@ use Illuminate\Support\Facades\Storage;
  */
 final class CrearGasto
 {
+    use GuardaComprobanteGasto;
+    use VerificaCampaniaAbierta;
+
     public function __construct(private readonly LecturaCampania $lecturaCampania) {}
 
     public function ejecutar(
@@ -62,7 +63,7 @@ final class CrearGasto
         ?UploadedFile $comprobante,
         ?int $equipoTrabajoId = null,
     ): Gasto {
-        $this->verificarCampania($campaniaId);
+        $this->verificarCampaniaAbierta($this->lecturaCampania, $campaniaId);
 
         $monto = (string) BigDecimal::of($cantidad)
             ->multipliedBy($precioUnitario)
@@ -86,41 +87,5 @@ final class CrearGasto
         }
 
         return $gasto->refresh();
-    }
-
-    /** @throws CampaniaNoAbierta si la campaña elegida no está `abierta`. */
-    private function verificarCampania(?int $campaniaId): void
-    {
-        if ($campaniaId === null) {
-            return;
-        }
-
-        $campania = $this->lecturaCampania->obtener($campaniaId);
-
-        if ($campania !== null && ! $campania->admiteImputaciones()) {
-            throw CampaniaNoAbierta::paraCampania($campania->codigo, $campania->cerrada);
-        }
-    }
-
-    private function guardarComprobante(Gasto $gasto, UploadedFile $comprobante): void
-    {
-        $hash = (string) hash_file('sha256', $comprobante->getRealPath());
-        $extension = $comprobante->extension() ?: 'bin';
-        $momento = Carbon::parse($gasto->fecha);
-
-        $ruta = sprintf(
-            'gastos/%s/%s/%d.%s',
-            $momento->format('Y'),
-            $momento->format('m'),
-            $gasto->id,
-            $extension,
-        );
-
-        Storage::disk('r2')->put($ruta, (string) file_get_contents($comprobante->getRealPath()));
-
-        $gasto->update([
-            'comprobante_url' => $ruta,
-            'comprobante_hash' => $hash,
-        ]);
     }
 }

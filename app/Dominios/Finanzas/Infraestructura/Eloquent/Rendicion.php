@@ -15,7 +15,9 @@ use Illuminate\Support\Carbon;
  * `Finanzas/Aplicacion/MaquinaEstados/MaquinaEstadosRendicion::generar()`;
  * sus transiciones de `estado` (abierta → presentada → aprobada) pasan por
  * esa misma clase (invariante 7 de CLAUDE.md) — este modelo no ofrece
- * atajos para mutarlas.
+ * atajos para mutarlas. Su CABECERA (`base_id`/`jefe_campo_id`/`fecha`/
+ * `descripcion`) se edita vía `Aplicacion/ActualizarRendicion` (tarea 134)
+ * mientras siga `Abierta` — ver `Dominio/PoliticaEdicionRendicion`.
  *
  * `base_id`/`jefe_campo_id`/`aprobado_por` referencian `per_bases`/
  * `per_personas` solo por FK + entero plano (ADR 0003 regla 3, mismo

@@ -2,14 +2,18 @@
 
 namespace App\Dominios\Finanzas\Infraestructura\Http\Requests;
 
+use App\Dominios\Finanzas\Infraestructura\Http\Requests\Concerns\ReglasCombustible;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 /**
  * `POST /panel/combustible` (HU-35, tarea 49; reescrito por la tarea 73,
  * HU-50). La autorización (permiso `finanzas.combustible.crear`) se
  * verifica en el controlador, contra el rol activo — no acá, mismo criterio
  * que `CrearGastoRequest`.
+ *
+ * Reglas en `Concerns/ReglasCombustible` (tarea 134): compartidas con
+ * `ActualizarCombustibleRequest`, la edición no cambia ni un campo respecto
+ * del alta.
  *
  * `litros`/`monto` > 0 replican los `CHECK` de la migración de creación —
  * así el usuario ve un error de validación de Laravel, nunca el
@@ -38,34 +42,17 @@ use Illuminate\Validation\Rule;
  */
 final class CrearCombustibleRequest extends FormRequest
 {
+    use ReglasCombustible;
+
     /** @return array<string, mixed> */
     public function rules(): array
     {
-        return [
-            'fecha' => ['required', 'date'],
-            'base_id' => ['required', 'integer', Rule::exists('per_bases', 'id')->whereNull('deleted_at')],
-            'equipo_trabajo_id' => ['required', 'integer', Rule::exists('per_equipos_trabajo', 'id')->whereNull('deleted_at')],
-            'campania_id' => ['nullable', 'integer', Rule::exists('cpn_campanias', 'id')->whereNull('deleted_at')],
-            'recurso' => ['required', 'regex:/^(dron|vehiculo|generador):\d+$/'],
-            'litros' => ['required', 'numeric', 'gt:0'],
-            'monto' => ['required', 'numeric', 'gt:0'],
-            'descripcion' => ['nullable', 'string', 'max:200'],
-        ];
+        return $this->reglasCombustible();
     }
 
     /** @return array<string, string> */
     public function messages(): array
     {
-        return [
-            'base_id.required' => __('finanzas.combustible.error_base_requerida'),
-            'base_id.exists' => __('finanzas.combustible.error_base_invalida'),
-            'equipo_trabajo_id.required' => __('finanzas.combustible.error_equipo_requerido'),
-            'equipo_trabajo_id.exists' => __('finanzas.combustible.error_equipo_invalido'),
-            'recurso.required' => __('finanzas.combustible.error_recurso_requerido'),
-            'recurso.regex' => __('finanzas.combustible.error_recurso_invalido'),
-            'fecha.required' => __('finanzas.combustible.error_fecha_requerida'),
-            'litros.required' => __('finanzas.combustible.error_litros_requerido'),
-            'monto.required' => __('finanzas.combustible.error_monto_requerido'),
-        ];
+        return $this->mensajesCombustible();
     }
 }
