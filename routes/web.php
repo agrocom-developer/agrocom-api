@@ -347,6 +347,15 @@ Route::middleware('auth:interno')->group(function () {
         Route::get('/panel/trabajos/{ordenTrabajo}', [OrdenesTrabajoController::class, 'show'])
             ->name('panel.trabajos.show');
 
+        // Tarea 127: edición de la cabecera de la tanda y de la condición de
+        // pago por equipo — mismo permiso que ya edita un `Trabajo` puntual
+        // (`operaciones.trabajo.editar`, sin permiso nuevo).
+        Route::get('/panel/trabajos/{ordenTrabajo}/editar', [OrdenesTrabajoController::class, 'edit'])
+            ->name('panel.trabajos.edit');
+
+        Route::put('/panel/trabajos/{ordenTrabajo}', [OrdenesTrabajoController::class, 'update'])
+            ->name('panel.trabajos.update');
+
         // Detalle de UN `Trabajo` puntual (equipo×lote): sesiones, acta,
         // reporte, evidencias, editar/eliminar (HU-93). Prefijo `detalle/`
         // para no chocar con `panel.trabajos.show` del maestro de arriba
