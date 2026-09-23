@@ -2130,3 +2130,39 @@ ver la tarea que encargó estas piezas):
     confirm-label="{{ __('comercial.propiedades.campo_color_modal_aplicar') }}"
 />
 ```
+
+## 22. Tarea 141 (23/9/2026) — `molecules/notifications-menu`: avisos con destino y «Marcar todas como leídas»
+
+La campana deja de ser decorativa. La molécula sigue siendo la misma que
+comparten `organisms/topbar` y `organisms/mobile-topbar` (los dos llamadores
+no cambian de API), pero cada aviso de la lista puede traer dos claves más:
+
+- **`href`** (opcional): con él la fila es un enlace real. Sin él sigue siendo
+  texto plano, como antes. El destino lo resuelve el servidor contra el rol
+  activo (`panel.notificaciones.abrir`, ADR 0025 punto 6): el aviso nunca sabe
+  a qué URL lleva.
+- **`id`** (opcional): lo traen los avisos que nacen del motor de
+  `Notificaciones`; las alertas técnicas de `ope_alertas` no lo llevan porque
+  se atienden en su propia pantalla. Si hay al menos un aviso con `id` sin leer,
+  el popover suma el pie **«Marcar todas como leídas»** (`ui.topbar.mark_all_read`,
+  un `POST` con `@csrf`); sin ninguno, el pie no aparece.
+
+Marcado y estilos:
+
+- La fila es siempre un `<a class="ag-notification-item">` dentro de un `<li>`:
+  un `<a>` sin `href` es un marcador de posición válido, así el markup y el
+  estilo son idénticos con y sin destino.
+- Hover/foco de una fila con destino: `--ag-color-bg-row-hover`. Una fila «sin
+  leer» ya está tintada de `--ag-color-primary-subtle`, así que su hover suma un
+  borde propio (`--ag-color-primary-border-subtle`, regla 4 de §8) en vez de
+  cambiar a otro verde parecido.
+- `.ag-notifications-popover__footer` / `__mark-all`: acción secundaria en
+  texto plano, con fondo sutil y transición al pasar el puntero (regla 5 de §8).
+  Solo tokens, ningún color propio; se comporta igual en tema claro y oscuro.
+- Prop nueva documentada en `organisms/topbar`: `notifications` es ahora
+  `{icon, title, time, unread, href?, id?}`.
+
+Qué entra en la lista lo decide `Seguridad\...\Presentacion\CampanaDeAvisos`
+(no la molécula): todo lo no leído primero, hasta el tope de 10, y después los
+leídos más recientes. Así el badge —que cuenta lo no leído de la lista que
+recibe— sigue siendo exacto hasta «9+».
