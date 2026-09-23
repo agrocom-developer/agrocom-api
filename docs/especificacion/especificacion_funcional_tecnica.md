@@ -578,6 +578,12 @@ El administrador de plataforma puede mirar el panel como una cuenta interna —c
 
 ---
 
+### Mi perfil (`/panel/perfil`)
+
+Cada cuenta interna ve y edita lo suyo: su correo y su contraseña. El nombre lo cambia un administrador desde Usuarios, porque la bitácora resuelve el nombre del actor por ese valor. Además ve, **en solo lectura**, dos cosas más. Los **datos de la persona** a la que su cuenta está vinculada (nombre, cargo, base, documento, celular, correo y dirección): salen siempre de la cuenta que mira, nunca de la petición, y una cuenta sin persona —el administrador de plataforma, por ejemplo— o con la persona dada de baja lo dice. Y los **accesos rápidos** de su rol activo: hasta seis pantallas elegidas entre las de su propio menú, así que un acceso nunca aparece si el menú no lo mostraría y no hay un permiso aparte.
+
+Quién puede cambiar los datos de una persona: solo quien tiene `personal.persona.editar` (`admin_plataforma`, `dueno` y `encargado_operaciones`), desde Personal; para ellos la tarjeta ofrece ir a editarla. Jefe de campo, piloto y ayudante no tienen `personal.persona.ver` ni `.editar`: el perfil es el único lugar donde ven sus datos, y si algo no está correcto lo corrige un administrador. Los portales de cliente no tienen persona ni accesos por rol: su perfil sigue siendo correo y contraseña.
+
 ## 14.1 Convenciones transversales: borrado lógico y bitácora de auditoría
 
 Dos reglas que aplican a **todo** el sistema, no solo a usuarios — detalladas en ADR 0007:
