@@ -19,6 +19,10 @@
     bloqueó, el administrador perdió el permiso), `session('vista_como_fin')`
     trae el aviso y se muestra una vez, en el mismo lugar.
 
+    Comportamiento en resources/js/organisms/vista-como-banner.js: frena el envío
+    de formularios que escriben y avisa por qué (cortesía; la defensa es el 403 del
+    servidor). El texto del aviso viaja en `data-ag-vista-como-mensaje`.
+
     Estilos en resources/css/components/vista-como-banner.css — solo tokens.
 --}}
 @if (session('vista_como_fin'))
@@ -29,7 +33,7 @@
 @endif
 
 @isset($vistaComo)
-    <div class="ag-vista-como" role="status" data-ag-vista-como-banner>
+    <div class="ag-vista-como" role="status" data-ag-vista-como-banner data-ag-vista-como-mensaje="{{ __('seguridad.errores.vista_como_solo_lectura') }}">
         <x-atoms.icon name="visibility" size="sm" class="ag-vista-como__icono" />
 
         <p class="ag-vista-como__texto">

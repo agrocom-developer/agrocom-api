@@ -97,6 +97,29 @@
     font-size: var(--ag-font-size-sm);
 }
 
+/* Aviso breve cuando se intenta guardar durante la vista (ver el .js). Fijo,
+   abajo al centro; superficie de aviso `info`, no un relleno de estado. */
+.ag-vista-como-aviso {
+    position: fixed;
+    inset-inline: var(--ag-space-4);
+    bottom: var(--ag-space-5);
+    z-index: 1090;
+    max-width: 34rem;
+    margin-inline: auto;
+    padding: var(--ag-space-3) var(--ag-space-4);
+    border: 1px solid var(--ag-color-info-border);
+    border-radius: var(--ag-radius-md);
+    /* El `-subtle` de info es translúcido en tema oscuro: sobre un aviso que flota
+       encima del contenido se le pone una base opaca, para que no se lea lo de atrás. */
+    background:
+        linear-gradient(var(--ag-color-info-subtle), var(--ag-color-info-subtle)),
+        var(--ag-color-bg-chrome);
+    color: var(--ag-color-info-strong);
+    font-size: var(--ag-font-size-sm);
+    line-height: 1.4;
+    box-shadow: var(--ag-shadow-md);
+}
+
 @media (max-width: 767.98px) {
     .ag-vista-como {
         padding-inline: var(--ag-space-4);
