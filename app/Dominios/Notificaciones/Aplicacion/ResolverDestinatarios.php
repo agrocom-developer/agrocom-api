@@ -6,6 +6,7 @@ use App\Dominios\Notificaciones\Dominio\Destinatario;
 use App\Dominios\Personal\Contratos\LecturaEquipoTrabajo;
 use App\Dominios\Seguridad\Contratos\LecturaUsuarioDePersona;
 use App\Dominios\Seguridad\Contratos\LecturaUsuariosPorRol;
+use Throwable;
 
 /**
  * Convierte lo que una regla declara (roles, personas, equipos) en las
@@ -19,6 +20,10 @@ use App\Dominios\Seguridad\Contratos\LecturaUsuariosPorRol;
  *   avisar y no es un error.
  * - `equipo`: los integrantes vigentes en `$fecha` → sus personas → sus
  *   cuentas.
+ *
+ * Cada destinatario se resuelve aislado: si uno falla, se reporta y los demás
+ * siguen — el aviso de una orden de trabajo con dos equipos no se pierde entero
+ * porque uno de ellos tenga un dato roto.
  */
 final class ResolverDestinatarios
 {
@@ -39,8 +44,14 @@ final class ResolverDestinatarios
         $cuentas = [];
 
         foreach ($destinatarios as $destinatario) {
-            foreach ($this->cuentasDe($destinatario, $fecha) as $usuarioId) {
-                $cuentas[$usuarioId] = $usuarioId;
+            // Cada destinatario se resuelve aislado: uno con datos rotos (p. ej. un equipo
+            // con un integrante dado de baja) se reporta y no anula el aviso de los demás.
+            try {
+                foreach ($this->cuentasDe($destinatario, $fecha) as $usuarioId) {
+                    $cuentas[$usuarioId] = $usuarioId;
+                }
+            } catch (Throwable $excepcion) {
+                report($excepcion);
             }
         }
 
