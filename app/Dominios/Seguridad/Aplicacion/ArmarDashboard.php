@@ -8,6 +8,8 @@ use App\Dominios\Comercial\Contratos\EstadoCuentaContratoPanel;
 use App\Dominios\Comercial\Contratos\LecturaPanelComercial;
 use App\Dominios\Comercial\Contratos\LecturaPropiedades;
 use App\Dominios\Comercial\Contratos\LotePanel;
+use App\Dominios\Distribucion\Contratos\LecturaVersionesApk;
+use App\Dominios\Distribucion\Contratos\VersionApkPanel;
 use App\Dominios\Finanzas\Contratos\LecturaPanelFinanzas;
 use App\Dominios\Inventario\Contratos\LecturaPanelInventario;
 use App\Dominios\Inventario\Contratos\StockPanel;
@@ -25,6 +27,8 @@ use App\Dominios\Personal\Contratos\DatosEquipoTrabajo;
 use App\Dominios\Personal\Contratos\DatosIntegranteEquipo;
 use App\Dominios\Personal\Contratos\LecturaEquipoTrabajo;
 use App\Dominios\Seguridad\Dominio\SeccionDashboard;
+use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
+use App\Dominios\Seguridad\Infraestructura\Eloquent\SecTokenDispositivo;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
@@ -77,6 +81,11 @@ final class ArmarDashboard
     /** Órdenes ya terminadas que acompañan a las abiertas en el estado de órdenes (tarea 138). */
     private const ORDENES_TERMINADAS = 4;
 
+    /** Dispositivos y filas de bitácora que muestra el tablero del administrador (tarea 139). */
+    private const DISPOSITIVOS = 5;
+
+    private const BITACORA = 8;
+
     private const PERMISO_CREAR_CAMPANIA = 'campania.campania.crear';
 
     public function __construct(
@@ -90,6 +99,10 @@ final class ArmarDashboard
         private readonly LecturaEquipoTrabajo $cuadrillas,
         private readonly LecturaPropiedades $propiedades,
         private readonly CatalogoEquipamientoPanel $equipamiento,
+        private readonly ResumirUsuariosPorRol $resumenUsuarios,
+        private readonly ListarDispositivosRegistrados $dispositivos,
+        private readonly ListarBitacora $bitacora,
+        private readonly LecturaVersionesApk $versiones,
     ) {}
 
     /**
@@ -104,7 +117,7 @@ final class ArmarDashboard
                 continue;
             }
 
-            $contenido = $this->contenido($seccion, $usuario->persona_id);
+            $contenido = $this->contenido($seccion, $usuario);
 
             // Una sección sin contenido no se muestra vacía: se omite. Es el
             // mismo criterio que la tarea 60 aplicó a los badges del menú —
@@ -138,8 +151,10 @@ final class ArmarDashboard
         return $permiso === null || $usuario->tienePermisoEnRol($permiso, $idRolActivo);
     }
 
-    private function contenido(SeccionDashboard $seccion, ?int $personaId): mixed
+    private function contenido(SeccionDashboard $seccion, SecUser $usuario): mixed
     {
+        $personaId = $usuario->persona_id;
+
         return match ($seccion) {
             SeccionDashboard::Mapa => $this->mapa->ejecutar($this->nombres->lotes()),
             SeccionDashboard::DistribucionSesiones => $this->distribucion(),
@@ -163,6 +178,13 @@ final class ArmarDashboard
             SeccionDashboard::RecursosEnUso => $this->recursosEnUso(),
             SeccionDashboard::OrdenesTrabajoPorCuadrilla => $this->ordenesTrabajoPorCuadrilla(),
             SeccionDashboard::OrdenesConEquipamiento => $this->ordenesConEquipamiento(),
+            SeccionDashboard::UsuariosPorRol => $this->usuariosPorRol(),
+            SeccionDashboard::DispositivosConSesion => $this->dispositivosConSesion(),
+            SeccionDashboard::VersionesApk => $this->versionesApk(),
+            SeccionDashboard::BitacoraReciente => $this->bitacoraReciente($usuario),
+            // Un acceso directo no lleva contenido: el permiso ya decidió que
+            // se muestra, y a dónde lleva lo sabe la vista.
+            SeccionDashboard::AccesoConfiguracion, SeccionDashboard::AccesoOrganizacion => true,
         };
     }
 
@@ -176,7 +198,8 @@ final class ArmarDashboard
      *
      * El caso `default` es el agrupamiento original de la tarea 67
      * (resumen/mapa/lotes/multimedia): sigue siendo el de cualquier rol que
-     * todavía no tenga el suyo propio (la 139 agrega el del administrador).
+     * no tenga el suyo propio — los seis del catálogo base ya lo tienen, así
+     * que hoy solo lo recibe un rol creado desde el panel.
      *
      * Piloto y auxiliar comparten el agrupamiento (tarea 137): ven las mismas
      * tres secciones —todas acotadas a su `persona_id`— y solo cambia de
@@ -255,6 +278,29 @@ final class ArmarDashboard
                     'claves' => [SeccionDashboard::OrdenesConEquipamiento->value],
                 ],
             ],
+            // El administrador de plataforma es un rol técnico, no del negocio
+            // del cliente (tarea 139): solo ve lo que administra el sistema en
+            // sí — cuentas y accesos, bitácora y configuración. Tiene todos los
+            // permisos del catálogo, así que lo operativo y lo financiero quedan
+            // fuera por lo que esta tabla NO nombra, no por falta de permiso.
+            'admin_plataforma' => [
+                [
+                    'id' => 'usuarios-accesos',
+                    'label' => __('seguridad.dashboard.tab_usuarios_accesos'),
+                    'claves' => [
+                        SeccionDashboard::UsuariosPorRol->value, SeccionDashboard::DispositivosConSesion->value,
+                        SeccionDashboard::VersionesApk->value,
+                    ],
+                ],
+                [
+                    'id' => 'bitacora-configuracion',
+                    'label' => __('seguridad.dashboard.tab_bitacora_configuracion'),
+                    'claves' => [
+                        SeccionDashboard::BitacoraReciente->value, SeccionDashboard::AccesoConfiguracion->value,
+                        SeccionDashboard::AccesoOrganizacion->value,
+                    ],
+                ],
+            ],
             default => [
                 [
                     'id' => 'resumen',
@@ -273,6 +319,16 @@ final class ArmarDashboard
                 ['id' => 'multimedia', 'label' => __('seguridad.dashboard.tab_multimedia'), 'claves' => [SeccionDashboard::Multimedia->value]],
             ],
         };
+    }
+
+    /**
+     * Si el tablero del rol es técnico y no del negocio (tarea 139): solo el
+     * administrador de plataforma. Su encabezado no habla de operación de hoy
+     * ni de corte de planilla — copy pensado para los roles que sí la operan.
+     */
+    public function esTecnico(string $rolClave): bool
+    {
+        return $rolClave === 'admin_plataforma';
     }
 
     /** @return list<array<string, mixed>>|null */
@@ -868,6 +924,63 @@ final class ArmarDashboard
                     : [],
             ];
         }, $ordenes);
+    }
+
+    /**
+     * Cuentas internas activas por rol del catálogo (tab «Usuarios y accesos»
+     * del administrador, tarea 139). Sin ninguna cuenta la sección se omite.
+     *
+     * @return array{total: int, portal: int, roles: list<array{rol: SecRole, usuarios: int}>}|null
+     */
+    private function usuariosPorRol(): ?array
+    {
+        $resumen = $this->resumenUsuarios->ejecutar();
+
+        return $resumen['total'] > 0 ? $resumen : null;
+    }
+
+    /**
+     * Dispositivos de campo con sesión abierta: cuántos son y los primeros del
+     * mismo listado que `/panel/dispositivos` (misma consulta, no una copia).
+     *
+     * @return array{total: int, dispositivos: list<SecTokenDispositivo>}|null
+     */
+    private function dispositivosConSesion(): ?array
+    {
+        $vivos = $this->dispositivos->ejecutar(porPagina: self::DISPOSITIVOS);
+
+        return $vivos->total() > 0
+            ? ['total' => $vivos->total(), 'dispositivos' => array_values($vivos->items())]
+            : null;
+    }
+
+    /**
+     * La versión del APK autorizada hoy y las que esperan autorización. Sin
+     * ninguna de las dos (ni una versión registrada) la sección se omite.
+     *
+     * @return array{vigente: VersionApkPanel|null, pendientes: list<VersionApkPanel>}|null
+     */
+    private function versionesApk(): ?array
+    {
+        $vigente = $this->versiones->vigente();
+        $pendientes = $this->versiones->pendientesDeAutorizar();
+
+        return $vigente === null && $pendientes === [] ? null : ['vigente' => $vigente, 'pendientes' => $pendientes];
+    }
+
+    /**
+     * Lo último que quedó en la bitácora de auditoría, con las fechas en la
+     * zona de quien mira (misma resolución que `/panel/bitacora`).
+     *
+     * @return list<FilaBitacora>|null
+     */
+    private function bitacoraReciente(SecUser $usuario): ?array
+    {
+        $zona = (string) ($usuario->preferencia->zona_horaria ?? config('app.timezone'));
+
+        $filas = $this->bitacora->recientes($zona, self::BITACORA);
+
+        return $filas === [] ? null : $filas;
     }
 
     /**

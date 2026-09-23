@@ -44,6 +44,12 @@ enum SeccionDashboard: string
     case RecursosEnUso = 'recursos_en_uso';
     case OrdenesTrabajoPorCuadrilla = 'ordenes_trabajo_por_cuadrilla';
     case OrdenesConEquipamiento = 'ordenes_con_equipamiento';
+    case UsuariosPorRol = 'usuarios_por_rol';
+    case DispositivosConSesion = 'dispositivos_con_sesion';
+    case VersionesApk = 'versiones_apk';
+    case BitacoraReciente = 'bitacora_reciente';
+    case AccesoConfiguracion = 'acceso_configuracion';
+    case AccesoOrganizacion = 'acceso_organizacion';
 
     /**
      * El mapa se gatea con `operaciones.trabajo.ver` y no con
@@ -90,6 +96,14 @@ enum SeccionDashboard: string
             // recursos — es el contenido de la pantalla de cuadrillas, y con
             // su permiso se gatea (tarea 138).
             self::RecursosEnUso => 'personal.equipo_trabajo.ver',
+            // Las seis del administrador de plataforma (tarea 139): cada una
+            // con el permiso de la pantalla que resume o a la que lleva.
+            self::UsuariosPorRol => 'seguridad.usuario.ver',
+            self::DispositivosConSesion => 'seguridad.dispositivo.ver',
+            self::VersionesApk => 'distribucion.version.autorizar',
+            self::BitacoraReciente => 'seguridad.bitacora.ver',
+            self::AccesoConfiguracion => 'seguridad.configuracion.ver',
+            self::AccesoOrganizacion => 'seguridad.organizacion.ver',
             self::MiLiquidacion => 'finanzas.devengo.ver',
             // Sin permiso propio: son las sesiones y los drones de quien
             // mira, derivados de su `persona_id`. No hay nada que gatear que

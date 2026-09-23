@@ -444,6 +444,43 @@ return [
         'vuelos_periodo_semana' => 'Últimas :cantidad semanas',
         'vuelos_periodo_mes' => 'Últimos :cantidad meses',
         'vuelos_nota_semana' => 'Cada punto es una semana, de lunes a domingo; la fecha es la del lunes.',
+
+        // Tablero del administrador de plataforma (tarea 139): el título y la
+        // bajada no hablan de operación ni de planilla; y sus dos tabs, las
+        // cuentas y los accesos, y la bitácora con los atajos a la
+        // configuración.
+        'titulo_tecnico' => 'Estado de la plataforma',
+        'bajada_tecnica' => ':fecha · usuarios, accesos y registros del sistema.',
+        'tab_usuarios_accesos' => 'Usuarios y accesos',
+        'tab_bitacora_configuracion' => 'Bitácora y configuración',
+
+        'seccion_usuarios_por_rol' => 'Usuarios activos por rol',
+        'usuarios_por_rol_col_rol' => 'Rol',
+        'usuarios_por_rol_col_usuarios' => 'Usuarios',
+        'usuarios_por_rol_total' => 'Cuentas internas activas',
+        'usuarios_por_rol_portal' => 'Cuentas del portal de clientes',
+        'usuarios_por_rol_nota' => 'Una cuenta con varios roles cuenta en cada uno.',
+        'usuarios_por_rol_ver' => 'Ver usuarios',
+
+        'seccion_dispositivos' => 'Dispositivos con sesión abierta',
+        'dispositivos_ver' => '{1} Ver el dispositivo|[2,*] Ver los :cantidad dispositivos',
+
+        'seccion_versiones_apk' => 'Versiones del APK',
+        'versiones_apk_vigente' => 'Versión autorizada',
+        'versiones_apk_sin_vigente' => 'Ninguna versión autorizada',
+        'versiones_apk_pendientes' => 'Pendientes de autorizar',
+        'versiones_apk_sin_pendientes' => 'No hay versiones pendientes de autorizar',
+        'versiones_apk_codigo' => 'código :codigo',
+        'versiones_apk_ver' => 'Ver versiones',
+
+        'seccion_bitacora_reciente' => 'Últimos cambios en la bitácora',
+        'bitacora_reciente_ver' => 'Ver bitácora',
+
+        'seccion_accesos' => 'Accesos directos',
+        'acceso_configuracion_titulo' => 'Configuración del sistema',
+        'acceso_configuracion_detalle' => 'Mapas y correo',
+        'acceso_organizacion_titulo' => 'Organización',
+        'acceso_organizacion_detalle' => 'Empresa, plan y facturación',
     ],
 
     // HU-45 (tarea 39): alta y mantenimiento de usuarios internos del panel,
