@@ -4,8 +4,11 @@
     que las ejecuta. Una misma tanda con dos cuadrillas figura bajo las dos, cada
     vez con lo de esa cuadrilla.
 
-    Solo lectura: «Ver» lleva a la ficha de la tanda; asignar o reasignar
+    Solo lectura: el número de la tanda lleva a su ficha; asignar o reasignar
     cuadrillas vive en su pantalla, no acá.
+
+    Bajo 768 px la tabla no scrollea: cada fila se apila y `data-label` rotula
+    cada dato (ver dashboard.css).
 
     Espera: $secciones['ordenes_trabajo_por_cuadrilla'] (list<{equipoTrabajoId,
     equipo, tandas: list<{ordenTrabajoId, ordenId, nroAplicacion, estado, tono,
@@ -44,15 +47,15 @@
                                 <span class="ag-table__strong" role="cell">
                                     <a class="ag-dash__link" href="{{ route('panel.trabajos.show', $tanda['ordenTrabajoId']) }}">#{{ $tanda['ordenTrabajoId'] }}</a>
                                 </span>
-                                <span role="cell">
+                                <span role="cell" data-label="{{ __('seguridad.dashboard.ordenes_cuadrillas_col_aplicacion') }}">
                                     {{ __('seguridad.dashboard.ordenes_cuadrillas_aplicacion', ['id' => $tanda['ordenId'], 'nro' => $tanda['nroAplicacion']]) }}
                                 </span>
-                                <span role="cell" class="ag-table__sub">{{ implode(', ', $tanda['lotes']) }}</span>
-                                <span role="cell" class="ag-table__ha">
+                                <span role="cell" class="ag-table__sub" data-label="{{ __('seguridad.dashboard.ordenes_cuadrillas_col_lotes') }}">{{ implode(', ', $tanda['lotes']) }}</span>
+                                <span role="cell" class="ag-table__ha" data-label="{{ __('seguridad.dashboard.ordenes_cuadrillas_col_trabajos') }}">
                                     {{ __('seguridad.dashboard.ordenes_cuadrillas_abiertos', ['abiertos' => $tanda['trabajosAbiertos'], 'total' => $tanda['trabajosTotal']]) }}
                                 </span>
-                                <span role="cell" class="ag-table__ha">{{ number_format((float) $tanda['hectareasDeclaradas'], 2, ',', '.') }}</span>
-                                <span role="cell" class="ag-table__estado">
+                                <span role="cell" class="ag-table__ha" data-label="{{ __('seguridad.dashboard.ordenes_cuadrillas_col_hectareas') }}">{{ number_format((float) $tanda['hectareasDeclaradas'], 2, ',', '.') }}</span>
+                                <span role="cell" class="ag-table__estado" data-label="{{ __('seguridad.dashboard.ordenes_cuadrillas_col_estado') }}">
                                     <span class="ag-table__dot ag-table__dot--{{ $tanda['tono'] }}" aria-hidden="true"></span>{{ __('operaciones.estado.'.$tanda['estado']) }}
                                 </span>
                             </div>

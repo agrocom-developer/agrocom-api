@@ -10,6 +10,9 @@
     nombran solo las piezas que NO están operativas; el detalle completo vive en
     la pestaña «Recursos».
 
+    Bajo 768 px la tabla no scrollea: cada fila se apila y `data-label` rotula
+    cada dato (ver dashboard.css).
+
     Solo lectura: el número de cada orden y «Ver órdenes» llevan a su pantalla,
     cuyo permiso (`operaciones.orden.ver`) es el mismo que gatea esta sección.
 
@@ -45,16 +48,16 @@
                                 <span class="ag-table__sub">{{ implode(', ', $orden['clientes']) }}</span>
                             </span>
 
-                            <span role="cell" class="ag-table__estado">
+                            <span role="cell" class="ag-table__estado" data-label="{{ __('seguridad.dashboard.ordenes_equipamiento_col_estado') }}">
                                 <span class="ag-table__dot ag-table__dot--{{ $orden['tono'] }}" aria-hidden="true"></span>{{ __('operaciones.estado.'.$orden['estado']) }}
                             </span>
 
-                            <span role="cell">
+                            <span role="cell" data-label="{{ __('seguridad.dashboard.ordenes_equipamiento_col_haciendas') }}">
                                 {{ implode(', ', $orden['haciendas']) }}
                                 <span class="ag-table__sub">{{ __('seguridad.dashboard.ordenes_equipamiento_hectareas', ['hectareas' => number_format((float) $orden['hectareas'], 2, ',', '.')]) }}</span>
                             </span>
 
-                            <span role="cell">
+                            <span role="cell" data-label="{{ __('seguridad.dashboard.ordenes_equipamiento_col_cuadrillas') }}">
                                 @if ($orden['abierta'])
                                     {{ __('seguridad.dashboard.ordenes_equipamiento_cuadrillas', ['asignadas' => $orden['cuadrillasAsignadas'], 'necesarias' => $orden['equiposNecesarios']]) }}
                                 @else
@@ -62,7 +65,7 @@
                                 @endif
                             </span>
 
-                            <span role="cell" class="ag-dash__equipamiento-orden">
+                            <span role="cell" class="ag-dash__equipamiento-orden" data-label="{{ __('seguridad.dashboard.ordenes_equipamiento_col_equipamiento') }}">
                                 @if (! $orden['abierta'])
                                     <span class="ag-dash__mono-note">—</span>
                                 @elseif ($orden['cuadrillas'] === [])
