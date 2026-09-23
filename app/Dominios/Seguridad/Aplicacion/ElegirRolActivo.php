@@ -53,6 +53,39 @@ final class ElegirRolActivo
     }
 
     /**
+     * Fija el rol activo de la sesión para una vista "como otro usuario"
+     * (tarea 140) SIN registrar nada: ni `ultimo_rol_id` ni ninguna otra fila.
+     * {@see self::ejecutar()} escribe la preferencia del usuario cuyo rol se
+     * activa, y en una vista de solo lectura ese usuario es la cuenta
+     * OBSERVADA — mirarla no puede cambiarle el "último rol usado".
+     *
+     * No revalida contra la base: el rol ya lo validó `ResolverVistaComo`, que
+     * corre en cada request justo antes. Sigue siendo esta clase el único
+     * escritor de la clave de sesión; solo que acá no hay efecto colateral.
+     */
+    public function fijarParaVistaComo(SecRole $rol): void
+    {
+        Session::put(self::CLAVE_SESION, $rol->id);
+    }
+
+    /**
+     * Devuelve a la sesión el rol activo con el que el administrador ENTRÓ a
+     * una vista "como otro usuario" (tarea 140), al salir de ella. Si ese rol
+     * ya no es válido (se lo revocaron mientras miraba) no se inventa otro: se
+     * borra la clave y `ResolverRolActivo` resuelve el rol en el request
+     * siguiente, con las mismas reglas de siempre (rol único, preferido o
+     * selector).
+     */
+    public function restaurarTrasVistaComo(SecUser $admin, int $idRol): void
+    {
+        try {
+            $this->ejecutar($admin, $idRol);
+        } catch (RolNoAsignado) {
+            Session::forget(self::CLAVE_SESION);
+        }
+    }
+
+    /**
      * Registra `sec_user_preferencia.ultimo_rol_id` (badge "ÚLTIMO USADO" de
      * la pantalla de selección, quinta vuelta — maqueta 5c). Va acá y no en
      * cada llamador porque esta clase ya es el ÚNICO punto que activa roles
