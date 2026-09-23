@@ -116,4 +116,14 @@ interface LecturaPanelOperaciones
      * @return array{sesiones: int, hectareas: string, sesionesValidadas: int}
      */
     public function totalesDelMesPorPersona(int $personaId): array;
+
+    /**
+     * Trabajos abiertos ahora mismo, agrupados por el equipo al que el jefe
+     * de campo se los asignó (`equipo_trabajo_id`). Los trabajos sin equipo
+     * asignado (nacidos por sync sin pasar por `AsignarEquiposOrden`) quedan
+     * fuera: no hay "equipo sin nombre" que mostrar.
+     *
+     * @return array<int, ResumenEquipoTrabajoPanel> indexado por equipoTrabajoId
+     */
+    public function trabajosAbiertosPorEquipo(): array;
 }
