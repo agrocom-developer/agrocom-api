@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Inventario\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Inventario\Aplicacion\ListarStock;
 use App\Dominios\Inventario\Aplicacion\RegistrarMovimientoStock;
 use App\Dominios\Inventario\Contratos\Excepciones\StockInsuficiente;
@@ -54,8 +55,8 @@ final class StockController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
-        $busqueda = $request->string('q')->toString();
-        $baseQuery = $request->string('base_id')->toString();
+        $busqueda = TextoDeFiltro::de($request, 'q');
+        $baseQuery = TextoDeFiltro::de($request, 'base_id');
         $baseId = $baseQuery !== '' ? (int) $baseQuery : null;
         $textoBusqueda = $busqueda !== '' ? $busqueda : null;
 

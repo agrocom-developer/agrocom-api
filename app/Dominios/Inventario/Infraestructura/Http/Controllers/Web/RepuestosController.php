@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Inventario\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Inventario\Aplicacion\ActualizarRepuesto;
 use App\Dominios\Inventario\Aplicacion\CrearRepuesto;
 use App\Dominios\Inventario\Aplicacion\EliminarRepuesto;
@@ -48,7 +49,7 @@ final class RepuestosController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
-        $busqueda = $request->string('q')->toString();
+        $busqueda = TextoDeFiltro::de($request, 'q');
 
         $repuestos = $listarRepuestos->ejecutar(busqueda: $busqueda !== '' ? $busqueda : null);
 

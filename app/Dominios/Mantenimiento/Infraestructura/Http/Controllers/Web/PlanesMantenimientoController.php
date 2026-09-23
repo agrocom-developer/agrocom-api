@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Mantenimiento\Aplicacion\ActualizarPlanMantenimiento;
 use App\Dominios\Mantenimiento\Aplicacion\CrearPlanMantenimiento;
 use App\Dominios\Mantenimiento\Aplicacion\EliminarPlanMantenimiento;
@@ -51,7 +52,7 @@ final class PlanesMantenimientoController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
-        $busqueda = trim($request->string('q')->toString());
+        $busqueda = trim(TextoDeFiltro::de($request, 'q'));
 
         return view('mantenimiento::pages.planes.index', [
             ...$this->autorizacion->cascara($request),
