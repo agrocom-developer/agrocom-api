@@ -11,6 +11,7 @@ use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use App\Dominios\Seguridad\Dominio\Excepciones\PermisoDenegado;
 use App\Dominios\Seguridad\Dominio\Excepciones\RolDuplicado;
 use App\Dominios\Seguridad\Dominio\Excepciones\RolProtegido;
+use App\Dominios\Seguridad\Dominio\PermisosReservados;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
 use App\Dominios\Seguridad\Infraestructura\Http\Presentacion\PresentadorRol;
 use App\Dominios\Seguridad\Infraestructura\Http\Requests\AsignarPermisosRolRequest;
@@ -198,7 +199,7 @@ final class RolesController
                 $otorgados,
                 $this->catalogo->idsPermisoConPortadorUnico($rol->id),
             )),
-            'concedibles' => $this->idsConcediblesPorElActor($request),
+            'concedibles' => $this->idsConcediblesPorElActor($request, $rol, $otorgados),
         ]);
     }
 
@@ -231,14 +232,28 @@ final class RolesController
 
     /**
      * Permisos que el actor puede conceder o retirar: los que él mismo tiene
-     * en su ROL ACTIVO. Es el reflejo en la vista de la guarda anti-escalada
-     * del caso de uso — presentación, no autorización: el servidor revalida.
+     * en su ROL ACTIVO, menos los de plataforma (`PermisosReservados`) en un
+     * rol que no es `admin_plataforma` — salvo que ya los tenga, para poder
+     * quitarlos. Es el reflejo en la vista de las guardas del caso de uso —
+     * presentación, no autorización: el servidor revalida.
      *
+     * @param  list<int>  $otorgados  los que el rol que se edita ya tiene.
      * @return list<int>
      */
-    private function idsConcediblesPorElActor(Request $request): array
+    private function idsConcediblesPorElActor(Request $request, SecRole $rol, array $otorgados): array
     {
-        return $this->catalogo->idsPermisoDeRol($this->rolActivoId($request));
+        $delActor = $this->catalogo->idsPermisoDeRol($this->rolActivoId($request));
+
+        if (PermisosReservados::admiteElRol((string) $rol->name)) {
+            return $delActor;
+        }
+
+        $reservadosSinOtorgar = array_diff(
+            $this->catalogo->idsPermisoPorCodigo(PermisosReservados::SOLO_ADMIN_PLATAFORMA),
+            $otorgados,
+        );
+
+        return array_values(array_diff($delActor, $reservadosSinOtorgar));
     }
 
     /**

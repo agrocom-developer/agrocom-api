@@ -62,6 +62,23 @@ final class CatalogoDePermisos
     }
 
     /**
+     * IDs de los permisos vivos que corresponden a estos códigos.
+     *
+     * @param  list<string>  $codigos
+     * @return list<int>
+     */
+    public function idsPermisoPorCodigo(array $codigos): array
+    {
+        return DB::table('sec_permission')
+            ->whereIn('code', $codigos)
+            ->whereNull('deleted_at')
+            ->pluck('id')
+            ->map(static fn (int|string $id): int => (int) $id)
+            ->values()
+            ->all();
+    }
+
+    /**
      * IDs de rol VIVOS Y HABILITADOS que tienen otorgado un permiso, por su
      * código. Es la pregunta con la que se decide si queda alguna llave.
      *

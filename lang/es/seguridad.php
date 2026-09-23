@@ -895,6 +895,7 @@ return [
         'rol_protegido_ultima_llave' => "No se puede dejar el sistema sin ningún rol activo que tenga ':permiso': sería la última llave, y nadie podría volver a otorgarla desde el panel.",
         'rol_protegido_rol_activo_propio' => "No puedes quitarle ':permiso' al rol con el que estás operando: perderías el acceso a esta pantalla en el próximo clic.",
         'rol_protegido_ultimo_portador' => "':permiso' quedaría sin ningún rol activo que lo tenga. Otórgaselo antes a otro rol: nadie puede conceder un permiso que no tiene, así que un permiso huérfano no se recupera desde el panel.",
+        'rol_protegido_permiso_reservado' => "':permiso' es exclusivo del administrador de plataforma: no se puede otorgar al rol ':rol'.",
         'rol_protegido_tiene_usuarios_uno' => "El rol ':rol' tiene :cantidad usuario asignado. Reasígnalos antes de darlo de baja.",
         'rol_protegido_tiene_usuarios_varios' => "El rol ':rol' tiene :cantidad usuarios asignados. Reasígnalos antes de darlo de baja.",
         'rol_protegido_es_rol_activo' => "No puedes dar de baja ni desactivar ':rol': es el rol con el que estás operando.",

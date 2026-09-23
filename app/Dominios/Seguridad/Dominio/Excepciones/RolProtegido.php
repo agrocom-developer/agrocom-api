@@ -60,6 +60,19 @@ final class RolProtegido extends DomainException
         return new self(Texto::de('seguridad.errores.rol_protegido_ultimo_portador', ['permiso' => $codigoPermiso]));
     }
 
+    /**
+     * Permiso de plataforma (`PermisosReservados`) que se quiere otorgar a un
+     * rol que no es el de administrador de plataforma: quien lo tuviera
+     * podría, por ejemplo, ver como un dueño y leer finanzas.
+     */
+    public static function porPermisoReservado(string $codigoPermiso, string $nombreRol): self
+    {
+        return new self(Texto::de('seguridad.errores.rol_protegido_permiso_reservado', [
+            'permiso' => $codigoPermiso,
+            'rol' => $nombreRol,
+        ]));
+    }
+
     /** Roles con cuentas vivas detrás: dar de baja el rol las dejaría sin él. */
     public static function porTenerUsuarios(string $nombreRol, int $cantidad): self
     {

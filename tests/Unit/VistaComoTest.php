@@ -8,6 +8,7 @@ use App\Dominios\Seguridad\Aplicacion\ResolverVistaComo;
 use App\Dominios\Seguridad\Aplicacion\TerminarVistaComo;
 use App\Dominios\Seguridad\Dominio\Excepciones\EscrituraEnVistaComo;
 use App\Dominios\Seguridad\Dominio\MotivoFinVistaComo;
+use App\Dominios\Seguridad\Dominio\PermisosReservados;
 use App\Dominios\Seguridad\Dominio\TipoUsuario;
 use App\Dominios\Seguridad\Dominio\VistaComoActiva;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUsuarioCliente;
@@ -351,10 +352,10 @@ it('el permiso ver_como es solo del administrador de plataforma', function () us
             ->and($coincidencia[1] ?? '')->not->toContain($codigo);
     }
 
-    // …está declarado como exclusivo de la plataforma y el dueño lo deja afuera.
-    preg_match('/private const PERMISOS_SOLO_ADMIN_PLATAFORMA = \[(.*?)\];/s', $semilla, $exclusivos);
-
-    expect($exclusivos[1] ?? '')->toContain($codigo)
+    // …está en la lista de plataforma —la misma que `AsignarPermisosRol` hace cumplir para que
+    // no se delegue— y el seeder la toma de ahí; el dueño la deja afuera.
+    expect(PermisosReservados::SOLO_ADMIN_PLATAFORMA)->toContain($codigo)
+        ->and($semilla)->toContain('private const PERMISOS_SOLO_ADMIN_PLATAFORMA = PermisosReservados::SOLO_ADMIN_PLATAFORMA;')
         ->and($semilla)->toMatch('/\$roles\[\'dueno\'\],\s*\$permisos->except\(self::PERMISOS_SOLO_ADMIN_PLATAFORMA\)/');
 });
 
