@@ -81,6 +81,14 @@ final class VistaComoController
             return redirect('/');
         }
 
+        // La bandera es de OTRO administrador (una sesión mezclada, que no debería
+        // darse): no se escribe nada a nombre de quien no la abrió, solo se descarta.
+        if ((int) $request->user('interno')?->getAuthIdentifier() !== $vista->adminId) {
+            $request->session()->forget(VistaComoActiva::CLAVE_SESION);
+
+            return redirect('/');
+        }
+
         $terminarVistaComo->ejecutar($vista, MotivoFinVistaComo::Manual);
 
         // Con el rol del administrador ya restaurado, este permiso se evalúa
