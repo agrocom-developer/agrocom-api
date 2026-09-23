@@ -947,7 +947,7 @@ final class ArmarDashboard
      */
     private function dispositivosConSesion(): ?array
     {
-        $vivos = $this->dispositivos->ejecutar(porPagina: self::DISPOSITIVOS);
+        $vivos = $this->dispositivos->ejecutar(porPagina: self::DISPOSITIVOS, pagina: 1);
 
         return $vivos->total() > 0
             ? ['total' => $vivos->total(), 'dispositivos' => array_values($vivos->items())]
