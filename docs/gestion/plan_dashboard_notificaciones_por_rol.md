@@ -133,7 +133,24 @@ mismo comentario ("mismo patrón que `FinanzasServiceProvider` con
   sistema. Mapea casi directo a permisos que ya existen:
   `seguridad.usuario.ver`, `seguridad.bitacora.ver`,
   `seguridad.configuracion.ver`, `seguridad.organizacion.ver`,
-  `seguridad.dispositivo.ver`, `distribucion.version.autorizar`.
+  `seguridad.dispositivo.ver`, `distribucion.version.autorizar`. Hecha el
+  23/9/2026, en dos tabs de solo lectura: `Usuarios y accesos`
+  (`UsuariosPorRol`: las cuentas internas activas de cada rol del catálogo,
+  con el total y las cuentas del portal aparte; `DispositivosConSesion`: los
+  dispositivos de campo con sesión abierta, de la misma consulta que
+  `/panel/dispositivos`; `VersionesApk`: la versión autorizada y las que
+  esperan autorización) y `Bitácora y configuración` (`BitacoraReciente`: las
+  8 últimas entradas de la auditoría, con la fecha en la zona de quien mira; y
+  dos accesos directos —`AccesoConfiguracion` y `AccesoOrganizacion`— que son
+  solo enlaces). Seis `SeccionDashboard` nuevos, cada uno con el permiso de su
+  pantalla. El rol tiene todos los permisos del catálogo, así que lo
+  operativo y lo financiero quedan fuera por lo que `tabsPara('admin_plataforma')`
+  NO nombra. «Pendiente de autorizar» es una versión `pendiente` más nueva que
+  la vigente: al autorizar otra, la anterior vuelve a `pendiente` (no a
+  `rechazada`) y no espera autorización de nadie. Contrato nuevo en
+  `Distribucion` (`LecturaVersionesApk`); ningún otro módulo se tocó. El
+  encabezado del tablero también es propio de este rol (`Estado de la
+  plataforma`, sin «operación de hoy» ni «corte de planilla»).
 
 Ninguna de las cuatro tareas de rol (136-139) depende de las otras — cada
 una toca su propio agrupamiento de tabs y, cuando haga falta, una sección
