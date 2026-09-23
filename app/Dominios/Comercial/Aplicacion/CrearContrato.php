@@ -6,6 +6,7 @@ use App\Dominios\Campania\Contratos\LecturaCampania;
 use App\Dominios\Comercial\Aplicacion\Contrato\VerificadorCultivoDelContrato;
 use App\Dominios\Comercial\Aplicacion\Contrato\VerificadorLotesDelContrato;
 use App\Dominios\Comercial\Aplicacion\MaquinaEstados\MaquinaEstadosContrato;
+use App\Dominios\Comercial\Contratos\Eventos\ContratoCreado;
 use App\Dominios\Comercial\Dominio\Excepciones\CampaniaNoAbierta;
 use App\Dominios\Comercial\Dominio\Excepciones\LoteAjenoAlCliente;
 use App\Dominios\Comercial\Dominio\Excepciones\LotesDeDistintoCultivo;
@@ -31,7 +32,8 @@ use Illuminate\Support\Facades\DB;
  *
  * El estado inicial (`borrador`) lo fija
  * {@see MaquinaEstadosContrato::crear()}, nunca esta clase directamente
- * (invariante 7).
+ * (invariante 7). Con el alta confirmada, anuncia {@see ContratoCreado} (tarea
+ * 141): quien decide a quién avisar es el módulo `Notificaciones`, no esta clase.
  *
  * Guarda central de HU-46 (ADR 0015 punto 1, corregida el 15/9/2026): la
  * campaña elegida no puede estar `cerrada` — ya no se verifica de qué
@@ -87,7 +89,7 @@ final class CrearContrato
         // Un contrato agrupa lotes del mismo cultivo y la misma etapa (22/9/2026).
         VerificadorCultivoDelContrato::verificar($loteIds, (int) $datosContrato['campania_id']);
 
-        return DB::transaction(function () use ($datosContrato, $lotes, $loteIds): Contrato {
+        $contrato = DB::transaction(function () use ($datosContrato, $lotes, $loteIds): Contrato {
             $this->verificarLotesLibres($loteIds, (int) $datosContrato['campania_id']);
 
             $datosContrato['monto_total'] = $this->calcularMontoTotal(
@@ -104,6 +106,18 @@ final class CrearContrato
 
             return $contrato->refresh();
         });
+
+        // Recién con el alta confirmada (contrato y lotes): el aviso a
+        // operaciones (tarea 141, ADR 0025) no anuncia un contrato que
+        // todavía podría deshacerse.
+        event(new ContratoCreado(
+            contratoId: $contrato->id,
+            clienteId: $contrato->cliente_id,
+            cliente: $contrato->cliente->razon_social,
+            hectareas: (string) $contrato->hectareas_contratadas,
+        ));
+
+        return $contrato;
     }
 
     /**

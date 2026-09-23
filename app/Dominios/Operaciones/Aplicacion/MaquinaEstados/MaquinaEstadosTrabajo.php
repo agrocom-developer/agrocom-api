@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Operaciones\Aplicacion\MaquinaEstados;
 
+use App\Dominios\Operaciones\Contratos\Eventos\TrabajoCerrado;
 use App\Dominios\Operaciones\Dominio\EstadoTrabajo;
 use App\Dominios\Operaciones\Dominio\Excepciones\TransicionTrabajoNoPermitida;
 use App\Dominios\Operaciones\Dominio\MaquinaEstados\TransicionesTrabajo;
@@ -25,7 +26,8 @@ use Carbon\CarbonImmutable;
  * (p. ej. cerrar algo ya cerrado) — nunca deja pasar un `estado = ...`
  * inválido. La decisión de SI corresponde cerrar (idempotencia del evento de
  * cierre, pertenencia) es de quien invoca, no de esta clase: acá solo se
- * aplica la transición o se rechaza.
+ * aplica la transición o se rechaza. Ya aplicada, anuncia {@see TrabajoCerrado}
+ * (tarea 141, ADR 0025).
  */
 final class MaquinaEstadosTrabajo
 {
@@ -77,6 +79,17 @@ final class MaquinaEstadosTrabajo
         $trabajo->cierre_uuid_cliente = $cierreUuidCliente;
         $trabajo->fin = self::normalizarUtc($fin);
         $trabajo->save();
+
+        // Recién DESPUÉS de persistir la transición (mismo criterio que
+        // `SesionValidada`/`AplicacionCerrada`); no cambia ninguna guarda.
+        // Tarea 141: quien se entera lo decide `Notificaciones`.
+        event(new TrabajoCerrado(
+            trabajoId: $trabajo->id,
+            ordenId: $trabajo->orden_id,
+            ordenTrabajoId: $trabajo->orden_trabajo_id,
+            nroAplicacion: $trabajo->nro_aplicacion,
+            hectareas: (string) $trabajo->hectareas_declaradas,
+        ));
 
         return $trabajo;
     }
