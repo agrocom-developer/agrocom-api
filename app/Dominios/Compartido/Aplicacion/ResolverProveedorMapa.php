@@ -1,14 +1,18 @@
 <?php
 
-namespace App\Dominios\Comercial\Aplicacion;
+namespace App\Dominios\Compartido\Aplicacion;
 
 use App\Dominios\Compartido\Contratos\LecturaConfiguracion;
 
 /**
- * Caso de uso: qué proveedor de mapa usa el editor de perímetro del lote
+ * Caso de uso: qué proveedor de mapa usa cualquier editor de mapa del panel
  * (tarea 79, HU-56) — primer consumidor real de {@see LecturaConfiguracion}
- * (tarea 78). Compartido por `CamposController` y `LotesController`: las dos
- * puertas de entrada al mismo formulario de lote.
+ * (tarea 78). Vive en Compartido (movido de `Comercial\Aplicacion` en la
+ * tarea 132) porque no depende de nada específico de un módulo: es
+ * configuración de plataforma (`mapas.*`), consumida hoy por
+ * `Comercial\Infraestructura\Http\Controllers\Web\LotesController`,
+ * `PropiedadMapaController` y `Personal\Infraestructura\Http\Controllers\Web\BasesController`
+ * — módulos que no pueden importarse `Aplicacion` entre sí (ADR 0003, regla 2).
  *
  * Reglas (`config/configuracion.php`, claves `mapas.*`):
  * - `mapas.proveedor_preferido === 'leaflet'` fuerza Leaflet aunque haya

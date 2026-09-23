@@ -8,8 +8,9 @@
     - $lote (array{geometria?: string}), $prefijo (string): mismo par que
       `_lote-fila.blade.php` — ver su docblock.
     - $proveedorMapa (array{proveedor: 'google'|'leaflet', googleMapsApiKey: ?string}):
-      resuelto por ResolverProveedorMapa (Comercial/Aplicacion), que a su vez
-      consulta LecturaConfiguracion (Compartido, tarea 78). SIEMPRE llega
+      resuelto por ResolverProveedorMapa (Compartido/Aplicacion, movido de
+      Comercial en la tarea 132), que a su vez consulta LecturaConfiguracion
+      (Compartido, tarea 78). SIEMPRE llega
       desde afuera vía el scope compartido de @include — LotesController lo
       agrega a `create`/`edit`. La llave solo se imprime cuando el proveedor
       elegido es Google: es lo que evita que `google_maps_api_key` viaje al
