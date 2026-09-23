@@ -1,9 +1,8 @@
 /*
- * Pages: stock/index, stock/create
+ * Pages: stock/index, stock/create, stock/movimientos/index
  * (app/Dominios/Inventario/Infraestructura/Http/Views/pages/stock/) —
- * HU-36, tarea 52: stock agregado por (repuesto, base) y alta de
- * movimientos; homogeneizadas en la tarea 117. Todo color y medida por token
- * (CLAUDE.md invariante 11).
+ * HU-36, tarea 52 (saldo y alta) y tarea 133 (detalle de movimientos, de
+ * solo lectura). Todo color y medida por token (CLAUDE.md invariante 11).
  *
  * La tabla, el filtro, el buscador, el layout del formulario y la paginación
  * los resuelve el catálogo (`index-table`, `filter-panel`, `table-search`,
@@ -12,7 +11,8 @@
  */
 
 .ag-stock,
-.ag-stock-form {
+.ag-stock-form,
+.ag-stock-movimientos {
     display: flex;
     flex-direction: column;
     gap: var(--ag-space-5);
@@ -74,6 +74,56 @@
 }
 
 .ag-stock__unidad {
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-xs);
+}
+
+/* Link de navegación por fila hacia el detalle filtrado de movimientos —
+   mismo estilo que `.ag-ordenes__crear-trabajo` (ordenes.css). */
+.ag-stock__ver-movimientos {
+    display: inline-block;
+    width: fit-content;
+    padding: var(--ag-space-1) var(--ag-space-2);
+    margin-left: calc(var(--ag-space-2) * -1);
+    border-radius: var(--ag-radius-sm);
+    color: var(--ag-color-info-strong);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-medium);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+    transition: background-color 120ms ease;
+}
+
+.ag-stock__ver-movimientos:hover,
+.ag-stock__ver-movimientos:focus-visible {
+    background-color: var(--ag-color-info-subtle);
+    color: var(--ag-color-info-strong);
+}
+
+/* stock/movimientos/index: una sola tarjeta de KPI, ancho fijo (no se
+   estira a todo el panel como la franja de 4 de Stock). */
+.ag-stock-movimientos__kpis {
+    display: grid;
+    grid-template-columns: minmax(0, 16rem);
+}
+
+.ag-stock-movimientos__repuesto {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-1);
+    min-width: 0;
+}
+
+.ag-stock-movimientos__codigo {
+    font-weight: var(--ag-font-weight-medium);
+}
+
+.ag-stock-movimientos__descripcion {
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-xs);
+}
+
+.ag-stock-movimientos__unidad {
     color: var(--ag-color-text-muted);
     font-size: var(--ag-font-size-xs);
 }

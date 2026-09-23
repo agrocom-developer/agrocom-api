@@ -39,7 +39,12 @@
     Gateada por `inventario.movimiento.ver`, verificado server-side en el
     controlador. El botón "Registrar movimiento" se oculta con `@puede`
     (presentación, no autorización — el servidor revalida en
-    StockController).
+    StockController). El botón "Ver movimientos" (tarea 133) no lleva
+    `@puede` propio: exige el mismo permiso `.ver` que ya gatea la página
+    entera. El link "Ver movimientos" por fila (junto al código del
+    repuesto) navega al mismo listado ya filtrado a ese repuesto y esa base
+    — mismo patrón que `ag-ordenes__crear-trabajo` de Órdenes, pero de solo
+    navegación.
 
     Estilos en resources/css/pages/stock.css — cero color hardcodeado
     (CLAUDE.md invariante 11).
@@ -63,13 +68,16 @@
                 :title="__('inventario.stock.titulo')"
                 :subtitle="__('inventario.stock.subtitulo')"
             >
-                @puede('inventario.movimiento.crear')
-                    <x-slot:actions>
+                <x-slot:actions>
+                    <x-atoms.button :href="route('panel.stock.movimientos.index')" variant="outline" icon="receipt_long">
+                        {{ __('inventario.stock.ver_movimientos') }}
+                    </x-atoms.button>
+                    @puede('inventario.movimiento.crear')
                         <x-atoms.button :href="route('panel.stock.movimientos.create')" variant="primary" icon="add">
                             {{ __('inventario.stock.nuevo_movimiento') }}
                         </x-atoms.button>
-                    </x-slot:actions>
-                @endpuede
+                    @endpuede
+                </x-slot:actions>
             </x-organisms.page-header>
 
             @if (session('estado'))
@@ -180,6 +188,14 @@
                             <span role="cell" class="ag-stock__repuesto">
                                 <span class="ag-stock__codigo">{{ $fila->repuesto->codigo }}</span>
                                 <span class="ag-stock__descripcion">{{ $fila->repuesto->descripcion }}</span>
+                                {{-- Mismo patrón que `ag-ordenes__crear-trabajo`: link de solo
+                                     navegación, ya filtrado a este repuesto y esta base. --}}
+                                <a
+                                    href="{{ route('panel.stock.movimientos.index', ['repuesto_id' => $fila->repuesto_id, 'base_id' => $fila->base_id]) }}"
+                                    class="ag-stock__ver-movimientos"
+                                >
+                                    {{ __('inventario.stock.ver_movimientos') }}
+                                </a>
                             </span>
                             <span role="cell">{{ $etiquetasBase[$fila->base_id] ?? "#{$fila->base_id}" }}</span>
                             <span role="cell" class="ag-stock__cantidad">
